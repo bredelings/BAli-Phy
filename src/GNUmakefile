@@ -1,10 +1,11 @@
 all: bali-phy
 
 #----------------- Definitions
-LI=${CXX}
-EXACTFLAGS = -pipe
+EXACTFLAGS = -pipe --param inline-unit-growth=300 --param max-inline-insns-auto=300
 
-ARCH := $(if ${ARCH},${ARCH},pentium4)
+ifeq ($(origin ARCH), undefined)
+ARCH = pentium4
+endif
 
 LANGO := fast-math
 DEFS  := NDEBUG_UBLAS NDEBUG_DP NDEBUG
@@ -15,16 +16,16 @@ LDFLAGS :=
 ifeq (${DEBUG},y)
 DEBUG := g3
 else
-OPT   += march=${ARCH} O3
-LANGO += tracer prefetch-loop-arrays
+OPT   += march=${ARCH} O3 
+LANGO += tracer prefetch-loop-arrays 
 ifneq (${PROF},y)
 LANGO += omit-frame-pointer
 endif
 endif
 
 ifeq (${PROF},y)
-LDFLAGS += $(if ${PROF},, -pg)
-DEBUG   += $(if ${PROF},, pg)
+LDFLAGS += -pg
+DEBUG   += pg
 endif
 
 ifeq (${STATIC},y)
@@ -123,6 +124,7 @@ CXX=g++-3.4
 CPP = $(CC) -E  	# This might vary from machine to machine
 CPPFLAGS = $(patsubst %,-I%,$(subst :, ,$(includes)))
 CXXFLAGS = ${LANGO:%=-f%} ${WARN:%=-W%} ${DEBUG:%=-%} ${OPT:%=-%} ${DEFS:%=-D%} ${EXACTFLAGS}
+LI=${CXX}
 
 
 GNUmakefile : ${SOURCES:%=.%.d} 
