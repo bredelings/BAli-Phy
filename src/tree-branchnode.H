@@ -120,6 +120,8 @@ public:
   node_edges_iterator(node_t *b):start(b),here(b) {
     if (here->out == here) here=NULL;
   }
+
+  virtual ~node_edges_iterator() {}
 };
 
 class nodeview;
