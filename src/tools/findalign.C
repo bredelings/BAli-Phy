@@ -1,24 +1,59 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "arguments.H"
 #include "alphabet.H"
 #include "alignment.H"
 #include "alignmentutil.H"
 #include "clone.H"
 
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
+
 using namespace std;
 
-int main(int argc,char* argv[]) { 
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("tag", value<string>(),"only read alignments preceded by 'align[<tag>'")
+    ;
+
+  // positional options
+  positional_options_description p;
+  p.add("align", 1);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: alignment-find [OPTIONS] < in-file \n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
+
+int main(int argc,char* argv[]) 
+{ 
   try {
-    Arguments args;
-    args.read(argc,argv);
-    args.print(std::cerr);
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
 
     /* --------------- Determine the tag ---------------- */
-    string tag = "align[MAP";
-    if (args.set("tag"))
-      tag = args["tag"];
+    string tag = "align[";
+    if (args.count("tag"))
+      tag += args["tag"].as<string>();
 
     /* --------------- Alphabets to try ---------------- */
     vector<OwnedPointer<alphabet> > alphabets;
