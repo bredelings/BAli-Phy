@@ -82,7 +82,7 @@ bool separated_by(const vector<double>& CI1,const vector<double>& CI2,double dx)
   return false;
 }
 
-bool report_sample(std::ostream& o,const valarray<bool>& sample1_in,const valarray<bool>& sample2_in,int pseudocount,double dx=-1) {
+bool report_sample(std::ostream& o,const valarray<bool>& sample1_in,const valarray<bool>& sample2_in,int pseudocount,int blocksize, double dx=-1) {
   o.precision(3);
   o.setf(ios::fixed);
 
@@ -99,11 +99,6 @@ bool report_sample(std::ostream& o,const valarray<bool>& sample1_in,const valarr
   const double P2 = double(n2)/N2;
 
   /*---------- Bootstrap samples of P -------------*/
-  int blocksize1 = N1/100+1;
-  int blocksize2 = N2/100+1;
-  
-  int blocksize = std::min(blocksize1,blocksize2);
-
   valarray<double> values1 = bootstrap_apply<bool,double>(sample1,statistics::Pr,10000,blocksize);
 
   valarray<double> values2 = bootstrap_apply<bool,double>(sample2,statistics::Pr,10000,blocksize);
@@ -223,7 +218,6 @@ int main(int argc,char* argv[]) {
       
     tree_sample tree_dist1(file1,remove);
 
-    
     if (not args.set("file2"))
       throw myexception()<<"First tree file not specified!";
     ifstream file2(args["file2"].c_str());
@@ -233,6 +227,16 @@ int main(int argc,char* argv[]) {
     
     SequenceTree MAP_tree_1 = tree_dist1.tree_mean[tree_dist1.order[0]];
     SequenceTree MAP_tree_2 = tree_dist2.tree_mean[tree_dist2.order[0]];
+
+    //----------  Determine block size ----------//
+
+    int blocksize1 = tree_dist1.size()/100+1;
+    int blocksize2 = tree_dist2.size()/100+1;
+  
+    int blocksize = std::min(blocksize1,blocksize2);
+    blocksize = args.loadvalue("blocksize",blocksize);
+    
+    std::cout<<"blocksize = "<<blocksize<<endl<<endl;
 
     //----------  Calculate mask of leaf taxa to ignore in partitions ----------//
     valarray<bool> mask = valarray<bool>(true,MAP_tree_1.leaves());
@@ -312,6 +316,7 @@ int main(int argc,char* argv[]) {
 				topology_series1[i],
 				topology_series2[i],
 				pseudocount,
+				blocksize,
 				compare_dx);
 
       if (not show)
@@ -348,6 +353,7 @@ int main(int argc,char* argv[]) {
 				partition_series1[i],
 				partition_series2[i],
 				pseudocount,
+				blocksize,
 				compare_dx);
 
       //-------- Determine and print the partition -----------//
