@@ -54,9 +54,7 @@ namespace substitution {
   };
 
   struct peeling_info: public vector<peeling_branch_info> {
-    int rb1_loc;
-    int rb2_loc;
-    int rb3_loc;
+    vector<int> rb_loc;
 
     int root;
 
@@ -66,31 +64,16 @@ namespace substitution {
     int scratch;
 
     peeling_info(const Tree&T, const Likelihood_Cache& LC)
-      :rb1_loc(-1),rb2_loc(-1),rb3_loc(-1),
-       root(LC.root),
+      :root(LC.root),
        B(LC.n_branches()),
        M(LC.n_models()),
        A(LC.n_letters()),
        scratch(LC.scratch())
     {
-      const_in_edges_iterator i = T[root].branches_in();
+      for(const_in_edges_iterator i = T[root].branches_in();i;i++)
+	rb_loc.push_back(LC.location(*i));
 
-      assert(i); // We had better have at least one neighbor!
-
-      rb1_loc = LC.location(*i);
-      i++;
-
-      if (i) {
-	rb2_loc = LC.location(*i);
-	i++;
-      }
-
-      if (i) {
-	rb3_loc = LC.location(*i);
-	i++;
-      }
-
-      assert(not i);
+      assert(rb_loc.size()); // We had better have at least one neighbor!
 
       reserve(T.n_branches());
     }
@@ -110,16 +93,14 @@ namespace substitution {
 
       Matrix& DM = distributions[m];
       //-------------- Propagate and collect information at 'root' -----------//
-      for(int l=0;l<asize;l++)
-	DM(scratch,l) = DM(ops.rb1_loc,l);
-
-      if (ops.rb2_loc != -1)
-	for(int l=0;l<asize;l++)
-	  DM(scratch,l) *= DM(ops.rb2_loc,l);
-
-      if (ops.rb3_loc != -1)
-	for(int l=0;l<asize;l++)
-	  DM(scratch,l) *= DM(ops.rb3_loc,l);
+      for(int i=0;i<ops.rb_loc.size();i++) {
+	if (i==0)
+	  for(int l=0;l<asize;l++) 
+	    DM(scratch,l) = DM(ops.rb_loc[i],l);
+	else
+	  for(int l=0;l<asize;l++) 
+	    DM(scratch,l) * DM(ops.rb_loc[i],l);
+      }
 
       //-------------- Take into account letters at 'root' -------------//
       //FIXME - we could avoid calculations for other letters...
@@ -132,10 +113,10 @@ namespace substitution {
 
 
   /// Peel along each branch in work-list @branches 
-  inline void peel(const peeling_info& ops,
-		   vector<Matrix>& distributions,
-		   const vector<int>& residues,
-		   const MatCache& transition_P)
+  void peel(const peeling_info& ops,
+	    vector<Matrix>& distributions,
+	    const vector<int>& residues,
+	    const MatCache& transition_P)
   {
     
     // The number of directed branches is twice the number of undirected branches
