@@ -81,16 +81,18 @@ namespace substitution {
   };
 
 
+  typedef Column_Likelihood_Cache column_cache_t;
+
   /// Compute the letter likelihoods at the root
   void calc_root_likelihoods(const vector<int>& residues, 
-			     vector<RefMatrix>& distributions,
+			     column_cache_t distributions,
 			     const peeling_info& pi) 
   {
-    const int scratch = distributions.size()-1;
+    const int scratch = distributions.scratch();
 
-    const int n_models = distributions[scratch].size1();
+    const int n_models = distributions.n_models();
 
-    const int asize = distributions[scratch].size2();
+    const int asize = distributions.n_letters();
 
     for(int m=0;m<n_models;m++) {
 
@@ -118,16 +120,16 @@ namespace substitution {
 
   /// Peel along each branch in work-list @branches 
   inline void peel(const peeling_info& branches,
-		   vector< RefMatrix> & distributions,
+		   column_cache_t distributions,
 		   const vector<int>& residues,
 		   const MatCache& transition_P)
   {
     
 
     // The number of directed branches is twice the number of undirected branches
-    const int B        = distributions.size()/2;
-    const int n_models = distributions[0].size1();
-    const int asize    = distributions[0].size2();
+    const int B        = distributions.n_branches();
+    const int n_models = distributions.n_models();
+    const int asize    = distributions.n_letters();
 
     // record if this distribution is just '*'
     valarray<bool> uninformative(false,2*B);  // how much speedup does this give?
@@ -159,7 +161,7 @@ namespace substitution {
 
       // cache the source distribution, or not?
       else {
-	const int scratch = distributions.size()-1;
+	const int scratch = distributions.scratch();
 
 	for(int m=0;m<n_models;m++) {
 	  
@@ -196,7 +198,7 @@ namespace substitution {
 
 
   /// Compute an ordered list of branches to process
-  inline peeling_info get_branches(const Tree& T, int root, const vector<bool>& up_to_date) 
+  inline peeling_info get_branches(const Tree& T, int root, const Likelihood_Cache& LC) 
   {
     //------- Get ordered list of not up_to_date branches ----------///
     peeling_info peeling_operations(T,root);
@@ -206,7 +208,7 @@ namespace substitution {
 
     for(int i=0;i<branches.size();i++) {
 	const const_branchview& db = branches[i];
-	if (not up_to_date[db]) {
+	if (not LC.up_to_date(db)) {
 	  append(db.branches_before(),branches);
 	  peeling_operations.push_back(peeling_branch_info(db,T));
 	}
@@ -225,18 +227,17 @@ namespace substitution {
 			 const MatCache& transition_P,int root) 
   {
     //------ Allocate space and mark all branches out of date -------//
-    vector<RefMatrix> distributions = Likelihood_Cache(T,MModel).unshareable_column();
-
-    vector<bool> up_to_date(2*T.n_branches(),false);
+    Likelihood_Cache LC(T,MModel,1);
+    column_cache_t distributions = LC[0];
 
     //----------- determine the operations to perform -----------------//
-    peeling_info branches = get_branches(T,root,up_to_date);
+    peeling_info branches = get_branches(T,root,LC);
     
     //-------- propagate info along branches ---------//
     peel(branches,distributions,residues,transition_P);
 
     //----------- return the result ------------------//
-    const int scratch = distributions.size()-1;
+    const int scratch = distributions.scratch();
 
     return distributions[scratch];
   }
@@ -255,14 +256,14 @@ namespace substitution {
 
 
   double Pr(const vector<int>& residues, const peeling_info& branches, const MultiModel& MModel,
-	    const MatCache& transition_P, vector<RefMatrix> distributions)
+	    const MatCache& transition_P, column_cache_t distributions)
   {
     const alphabet& a = MModel.Alphabet();
 
     //-------- propagate info along branches ---------//
     peel(branches,distributions,residues,transition_P);
 
-    const int scratch = distributions.size()-1;
+    const int scratch = distributions.scratch();
 
     double total = 0;
     for(int m=0;m<MModel.nmodels();m++) {
@@ -287,12 +288,12 @@ namespace substitution {
       residues[i] = A(column,i);
   
     //------ Allocate space and mark all branches out of date -------//
-    vector<RefMatrix> distributions = Likelihood_Cache(T,MModel).unshareable_column();
+    Likelihood_Cache LC(T,MModel,1);
+    column_cache_t distributions = LC[0];
 
     //---------- determine the operations to perform ----------------//
-    vector<bool> up_to_date(2*T.n_branches(),false);
     int root = T.n_nodes()-1;
-    peeling_info operations = get_branches(T,root,up_to_date);
+    peeling_info operations = get_branches(T,root,LC);
     
     //---------------- sum the column likelihoods -------------------//
     return Pr(residues,operations,MModel,MC,distributions);
@@ -305,7 +306,7 @@ namespace substitution {
 
     //---------- determine the operations to perform ----------------//
     int root = L.root;
-    peeling_info operations = get_branches(T,root,L.up_to_date);
+    peeling_info operations = get_branches(T,root,L);
     
     //---------------- sum the column likelihoods -------------------//
     vector<int> residues(A.size2());
@@ -318,11 +319,11 @@ namespace substitution {
 
 #ifndef NDEBUG
       {
-	vector<RefMatrix> distributions = Likelihood_Cache(T,MModel).unshareable_column();
+	Likelihood_Cache LC(T,MModel,1);
+	column_cache_t distributions = LC[0];
 
 	int node = myrandom(0,T.n_nodes());
-	vector<bool> up_to_date(2*T.n_branches(),false);
-	peeling_info operations2 = get_branches(T,node,up_to_date);
+	peeling_info operations2 = get_branches(T,node,LC);
 	double p2 = Pr(residues,operations2,MModel,MC,distributions);
 	
 	if (std::abs(p2-p) > 1.0e-9) {
@@ -338,7 +339,7 @@ namespace substitution {
     }
 
     for(int i=0;i<operations.size();i++)
-      L.up_to_date[operations[i].b] = true;
+      L.mark_branch_up_to_date(operations[i].b);
 
     //std::cerr<<"Peeled on "<<operations.size()<<" branches.\n";
     //std::cerr<<" substitution: P="<<P<<std::endl;
@@ -347,12 +348,12 @@ namespace substitution {
 
   double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC) {
     //------ Allocate space and mark all branches out of date -------//
-    vector<RefMatrix> distributions = Likelihood_Cache(T,MModel).unshareable_column();
+    Likelihood_Cache LC(T,MModel,1);
+    column_cache_t distributions = LC[0];
 
     //---------- determine the operations to perform ----------------//
-    vector<bool> up_to_date(2*T.n_branches(),false);
     int root = T.n_nodes()-1;
-    peeling_info operations = get_branches(T,root,up_to_date);
+    peeling_info operations = get_branches(T,root,LC);
     
     //---------------- sum the column likelihoods -------------------//
     vector<int> residues(A.size2());

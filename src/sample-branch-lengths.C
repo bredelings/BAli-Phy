@@ -81,13 +81,11 @@ MCMC::result_t change_branch_length_cached(const alignment& A, Parameters& P,int
   int n1 = P.T.branch(b).source();
   int n2 = P.T.branch(b).target();
   P.LC.root = std::max(n1,n2);
-  P.LC.invalidate_all();
 
   Parameters P2 = P;
   P2.setlength(b,newlength);
 
   if (do_MH_move(A,P,P2)) {
-    P = P2;
     std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
     result[1] = 1;
     result[3] = std::abs(length - newlength);
