@@ -183,6 +183,8 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
     lines++;
     if (lines > skip)
       trees.push_back(line);
+  // quit if we've read in 'max' trees
+    if (max >= 0 and trees.size() == max) break;
   }
 
   if (trees.size() == 0)
@@ -221,9 +223,6 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
       tree_mean[i].branch(b).length() += T.branch(b).length();
       tree_var[i].branch(b).length() += pow(T.branch(b).length(),2);
     }
-
-    // quit if we've read in 'max' trees
-    if (max >= 0 and topologies.size() == max) break;
   }
 
   //----------- Normalize the expectations --------------//
