@@ -5,23 +5,8 @@
 #include "3way.H"
 #include "likelihood.H"
 
-MCMC::result_t slide_branch_lengths_one(alignment& A, Parameters& P,int b) {
-
-  if (not P.SModel().full_tree) 
-    return MCMC::result_t(0.0,6); // no_result
-
-  bool up = true;
-  if (myrandom(2))
-    up = false;
-
-  if (b < P.T.leaves())
-    up = true;
-  return slide_branch_length(A,P,b,up);
-}
-
-
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
-  if (not P.SModel().full_tree and b>=P.T.leaves())
+  if (not P.SModel().full_tree and b>=P.T.n_leaves())
     return MCMC::result_t(0.0,6); // no_result
 
   return change_branch_length(A,P,b);
@@ -32,13 +17,13 @@ MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
 
   const SequenceTree& T = P.T;
 
-  int node1 = T.branch(b).parent();
-  int node2 = T.branch(b).child();
+  int node1 = T.branch(b).target();
+  int node2 = T.branch(b).source();
 
   if (myrandomf() < 0.5)
     std::swap(node1,node2);
 
-  if (node1 < T.leaves())
+  if (node1 < T.n_leaves())
     std::swap(node1,node2);
     
   A = tri_sample_alignment(A,P,node1,node2);
@@ -47,7 +32,7 @@ MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
 }
 
 MCMC::result_t sample_tri_branch_one(alignment& A, Parameters& P,int b) {
-  if (not P.SModel().full_tree and b>=P.T.leaves())
+  if (not P.SModel().full_tree and b>=P.T.n_leaves())
     return MCMC::result_t(0.0,4); // no_result
 
   MCMC::result_t result(0.0,4);
@@ -58,13 +43,13 @@ MCMC::result_t sample_tri_branch_one(alignment& A, Parameters& P,int b) {
 
   const SequenceTree& T = P.T;
 
-  int node1 = T.branch(b).parent();
-  int node2 = T.branch(b).child();
+  int node1 = T.branch(b).target();
+  int node2 = T.branch(b).source();
 
   if (myrandomf() < 0.5)
     std::swap(node1,node2);
 
-  if (node1 < T.leaves())
+  if (node1 < T.n_leaves())
     std::swap(node1,node2);
     
   const double sigma = 0.3/2;
@@ -102,13 +87,13 @@ MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
   vector<int> nodes = A3::get_nodes_random(P.T,n0);
   int n1 = -1;
   for(int i=1;i<nodes.size();i++)
-    if (P.T.internal_node(nodes[i])) {
+    if (P.T[ nodes[i] ].is_internal_node()) {
       n1 = nodes[i];
       break;
     }
   assert(n1 != 1);
 
-  int b = P.T.find_branch(n0,n1);
+  int b = P.T.branch(n0,n1);
 
   A = sample_two_nodes(A,P,b);
 

@@ -63,16 +63,16 @@ namespace substitution {
     int b;
     int b1;
     int b2;
-    int child;
+    int source;
 
-    peeling_info(const directed_branchview& db,const tree& T,vector<directed_branchview>& before)
+    peeling_info(const const_branchview& db,const Tree& T,vector<const_branchview>& before)
       :b(db),
        b1(-1),
        b2(-1),
-       child(db.child())
+       source(db.source())
     {
       before.clear();
-      T.get_branches_before(db,before);
+      append(db.branches_before(),before);
       if (before.size() >= 1)
 	b1 = before[0];
 
@@ -105,7 +105,7 @@ namespace substitution {
       int b     = branches[i].b;     // directed branch from source -> target
       int b1    = branches[i].b1;    // directed branch from n1     -> source, -1 if leaf(source)
       int b2    = branches[i].b2;    // directed branch from n2     -> source, -1 if leaf(source)
-      int source = branches[i].child;   // = T.directed_branch(b).child();
+      int source = branches[i].source;   // = T.directed_branch(b).source();
 
       // Propogate info along branch - doesn't depend on direction of b
       const Matrix& Q = transition_P[b%B];
@@ -147,19 +147,20 @@ namespace substitution {
 
 
   /// Compute an ordered list of branches to process
-  inline vector<peeling_info> get_branches(const tree& T, int root, const vector<bool>& up_to_date) 
+  inline vector<peeling_info> get_branches(const Tree& T, int root, const vector<bool>& up_to_date) 
   {
     //------- Get ordered list of not up_to_date branches ----------///
     vector<peeling_info> peeling_operations;
     peeling_operations.reserve(T.n_branches());
 
-    vector<directed_branchview> temp; temp.reserve(3);
-    vector<directed_branchview> branches = T.get_branches_in(root);
+    vector<const_branchview> temp; temp.reserve(3);
+    vector<const_branchview> branches; branches.reserve(T.n_branches());
+    append(T[root].branches_in(),branches);
 
     for(int i=0;i<branches.size();i++) {
-	const directed_branchview& db = branches[i];
+	const const_branchview& db = branches[i];
 	if (not up_to_date[db]) {
-	  T.get_branches_before(db,branches);
+	  append(db.branches_before(),branches);
 	  peeling_operations.push_back(peeling_info(db,T,temp));
 	}
     }
@@ -176,21 +177,22 @@ namespace substitution {
 
   /// Compute the letter likelihoods at the root
   valarray<double> get_root_likelihoods(const vector<int>& residues, const Matrix& distributions,
-					const tree& T,int root) {
+					const Tree& T,int root) {
     const int asize = distributions.size2();
 
     valarray<double> distribution(asize);
 
-    vector<directed_branchview> b_in = T.get_branches_in(root);
+    const_in_edges_iterator i = T[root].branches_in();
+    assert(i); // We had better have at least one neighbor!
 
     //-------------- Propagate and collect information at 'root' -----------//
-    assert(not b_in.empty());
     for(int l=0;l<asize;l++)
-      distribution[l] = distributions(b_in[0],l);
+      distribution[l] = distributions(*i,l);
+    i++;
 
-    for(int i=1;i<b_in.size();i++)
+    for(;i;i++)
       for(int l=0;l<asize;l++)
-	distribution[l] *= distributions(b_in[i],l);
+	distribution[l] *= distributions(*i,l);
 
     //-------------- Take into account letters at 'root' -------------//
     if (alphabet::letter(residues[root]))
@@ -212,7 +214,7 @@ namespace substitution {
     \param root The node at which we are assessing the probabilities
     \param group The nodes from which to consider info
   */
-  valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
+  valarray<double> peel(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
 			const vector<Matrix>& transition_P,int root) {
     const alphabet& a = SModel.Alphabet();
 
@@ -241,7 +243,7 @@ namespace substitution {
     \param root The node at which we are assessing the probabilities
     \param group The nodes from which to consider info
   */
-  valarray<double> peel(vector<int> residues,const tree& T,const ReversibleModel& SModel,
+  valarray<double> peel(vector<int> residues,const Tree& T,const ReversibleModel& SModel,
 			const vector<Matrix>& transition_P,int root, const valarray<bool>& group) {
     for(int i=0;i<residues.size();i++)
       if (not group[i]) residues[i] = alphabet::not_gap;
@@ -251,9 +253,9 @@ namespace substitution {
 
 
 
-  double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
+  double Pr(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
 	    const vector<Matrix>& transition_P,int root) {
-    assert(residues.size() == T.num_nodes()-1);
+    assert(residues.size() == T.n_nodes());
 
     valarray<double> rootD = peel(residues,T,SModel,transition_P,root);
 
@@ -262,18 +264,18 @@ namespace substitution {
     return rootD.sum();
   }
 
-  double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
+  double Pr(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
 	    const vector<Matrix>& transition_P) {
 
-    int root = T.get_nth(T.num_nodes()-2);
+    int root = T.n_nodes()-1;
     double p = Pr(residues,T,SModel,transition_P,root);
 
 #ifndef NDEBUG  
-    int node = myrandom(0,T.num_nodes()-1);
+    int node = myrandom(0,T.n_nodes());
     double p2 = Pr(residues,T,SModel,transition_P,node);
 
     if (std::abs(p2-p) > 1.0e-9) {
-      for(int i=0;i<T.leaves();i++)
+      for(int i=0;i<T.n_leaves();i++)
 	std::cerr<<SModel.Alphabet().lookup(residues[i])<<" ";
       std::cerr<<p<<" "<<log(p)<<"     "<<p2<<"      "<<log(p2)<<endl;
       std::abort(); //FIXME - try this check!
@@ -303,7 +305,7 @@ namespace substitution {
       return SModel.frequencies()[letter];
   }
 
-  double Pr(const alignment& A, const tree& T, const MultiModel& MModel, const MatCache& MC,int column) {
+  double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC,int column) {
     
     vector<int> residues(A.size2());
     for(int i=0;i<residues.size();i++)
@@ -332,7 +334,7 @@ namespace substitution {
     return log(total);
   }
 
-  double Pr(const alignment& A, const tree& T, const MultiModel& MModel, const MatCache& SM) {
+  double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& SM) {
     double p = 0.0;
 
     // Do each node before its parent
@@ -355,17 +357,17 @@ namespace substitution {
   }
 
 
-  double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SModel,
+  double Pr_star(const vector<int>& column,const Tree& T,const ReversibleModel& SModel,
 		 const vector<Matrix>& transition_P) {
     const alphabet& a = SModel.Alphabet();
 
-    if (T.leaves() == 2)
+    if (T.n_leaves() == 2)
       return Pr(column,T,SModel,transition_P);
 
     double p=0;
     for(int lroot=0;lroot<a.size();lroot++) {
       double temp=SModel.frequencies()[lroot];
-      for(int b=0;b<T.leaves();b++) {
+      for(int b=0;b<T.n_leaves();b++) {
 	const Matrix& Q = transition_P[b];
 
 	int lleaf = column[b];
@@ -381,7 +383,7 @@ namespace substitution {
     return p;
   }
 
-  double Pr_star(const alignment& A, const tree& T, const MultiModel& MModel, const MatCache& MC) {
+  double Pr_star(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC) {
 
     double p = 0.0;
   
@@ -414,25 +416,25 @@ namespace substitution {
   }
 
   double Pr_star_constant(const alignment& A,const Parameters& P) {
-    const tree& T1 = P.T;
+    const Tree& T1 = P.T;
     Parameters P2 = P;
 
     //----------- Get Distance Matrix --------------//
-    Matrix D(T1.leaves(),T1.leaves());
-    for(int i=0;i<T1.leaves();i++) 
-      for(int j=0;j<T1.leaves();j++) 
+    Matrix D(T1.n_leaves(),T1.n_leaves());
+    for(int i=0;i<T1.n_leaves();i++) 
+      for(int j=0;j<T1.n_leaves();j++) 
 	D(i,j) = T1.distance(i,j);
 
     //----------- Get Average Distance -------------//
     double sum=0;
-    for(int i=0;i<T1.leaves();i++) 
+    for(int i=0;i<T1.n_leaves();i++) 
       for(int j=0;j<i;j++) 
 	sum += D(i,j);
-    const int n = (T1.leaves()*(T1.leaves()-1))/2;
+    const int n = (T1.n_leaves()*(T1.n_leaves()-1))/2;
     double ave = sum/n;
 
     //-------- Set branch lengths to ave/2  ----------//
-    for(int b=0;b<T1.leafbranches();b++)
+    for(int b=0;b<T1.n_leafbranches();b++)
       P2.setlength(b,ave/2.0);
 
 
@@ -441,27 +443,27 @@ namespace substitution {
   }
 
   double Pr_star_estimate(const alignment& A,const Parameters& P) {
-    const tree& T1 = P.T;
+    const Tree& T1 = P.T;
     Parameters P2 = P;
     
     //----------- Get Distance Matrix --------------//
-    Matrix D(T1.leaves(),T1.leaves());
-    for(int i=0;i<T1.leaves();i++) 
-      for(int j=0;j<T1.leaves();j++) 
+    Matrix D(T1.n_leaves(),T1.n_leaves());
+    for(int i=0;i<T1.n_leaves();i++) 
+      for(int j=0;j<T1.n_leaves();j++) 
 	D(i,j) = T1.distance(i,j);
     
     
     //---- Set branch lengths to ave/2 per branch ----//
-    for(int i=0;i<T1.leaves();i++) {
+    for(int i=0;i<T1.n_leaves();i++) {
       double ave=0;
-      for(int j=0;j<T1.leaves();j++) {
+      for(int j=0;j<T1.n_leaves();j++) {
 	if (i==j) continue;
 	ave += log(D(i,j));
       }
-      ave /= (T1.leaves()-1);
+      ave /= (T1.n_leaves()-1);
    
       int b = i;
-      if (T1.leaves() == 2) b=0;
+      if (T1.n_leaves() == 2) b=0;
 
       P2.setlength(b,exp(ave)/2.0);
     }

@@ -19,27 +19,6 @@ double probability3(const alignment& A,const Parameters& P) {
 }
 
 
-double log_double_factorial(int n) {
-  double x = 0;
-  for(int i=3;i<=n;i+=2)
-    x += log(i);
-  return x;
-}
-
-double log_num_branches(int n) {
-  return log(2*n-3);
-}
-
-double log_num_topologies(int n) {
-  return log_double_factorial(2*n-5);
-}
-
-double log_num_topologies_in_partition(int n1,int n2) {
-  double total = log_num_topologies(n1) + log_num_topologies(n2);
-  total += log_num_branches(n1) + log_num_branches(n2);
-  return total;
-}
-
 /// FIXME if X ~ Exp(mu), then g(y) = exp(y-exp(y)/mu)/mu
 ///                         ln g(y) = log(mu) + (y-exp(y))/mu 
 
@@ -49,11 +28,11 @@ double prior(const SequenceTree& T,double branch_mean) {
   double p = 0;
 
   /* ----- 1/(number of topologies) -----*/
-  if (T.leaves()>3)
-    p = -log_num_topologies(T.leaves());
+  if (T.n_leaves()>3)
+    p = -log_num_topologies(T.n_leaves());
 
   /* ---- PROD_i exp(- T[i] / mu )/ mu ---- */
-  for(int i=0;i<T.branches();i++) 
+  for(int i=0;i<T.n_branches();i++) 
     p += (-log(branch_mean) - T.branch(i).length()/branch_mean );
   return p;
 }
@@ -79,9 +58,9 @@ double prior(const Parameters& P) {
   return p;
 }
 
-/** FIXME - numerically check that choice of root node doesn't matter **/
-double prior_branch(const alignment& A,const IndelModel& IModel,int parent,int child) {
-  vector<int> state = get_path(A,parent,child);
+/// Probability of a pairwise alignment
+double prior_branch(const alignment& A,const IndelModel& IModel,int target,int source) {
+  vector<int> state = get_path(A,target,source);
 
   double P = log_0;
   for(int i=0;i<4;i++)
@@ -93,17 +72,18 @@ double prior_branch(const alignment& A,const IndelModel& IModel,int parent,int c
   return P;
 }
 
-/** FIXME - numerically check that choice of root node doesn't matter **/
-double prior_branch_Given(const alignment& A,const IndelModel& IModel,int parent,int child) {
-  double Pr = prior_branch(A,IModel,parent,child);
+/// Probability of a pairwise alignment given the source length
+double prior_branch_given(const alignment& A,const IndelModel& IModel,int target,int source) {
+  double Pr = prior_branch(A,IModel,target,source);
 
-  Pr -= IModel.lengthp(A.seqlength(parent));
+  Pr -= IModel.lengthp(A.seqlength(source));
 
   return Pr;
 }
 
+/// Probability of a multiple alignment if branch alignments independant
 double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
-  const tree& T = P.T;
+  const Tree& T = P.T;
 
   double Pr = 0;
 
@@ -111,70 +91,55 @@ double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
   check_internal_nodes_connected(A,P.T);
 #endif
   
-  for(int b=0;b<T.branches();b++) {
-    int parent = T.branch(b).parent();
-    int child  = T.branch(b).child();
-    double p = prior_branch(A, P.IModel(),parent,child);
+  for(int b=0;b<T.n_branches();b++) {
+    int target = T.branch(b).target();
+    int source  = T.branch(b).source();
+    double p = prior_branch(A, P.IModel(),target,source);
     Pr += p;
   }
   
   return Pr;
 }
 
+//FIXME - this will have to change if we ever have sequences at internal nodes
+//        that have other than 3 neighbors
 double prior_HMM(const alignment& A,const Parameters& P) {
-  const tree& T = P.T;
+  const Tree& T = P.T;
 
-#ifndef NDEBUG
-  check_internal_nodes_connected(A,P.T);
-#endif
+  // collected the prior on independant pairwise alignment
+  double Pr = prior_HMM_nogiven(A,P);
 
-  int highest_node = T.get_nth(T.num_nodes()-2);
-  highest_node = T.branch_up(highest_node).parent();
-  double Pr = P.IModel().lengthp(A.seqlength(highest_node));
+  // account for the condition that alignments agree on shared node lengths
+  for(int i=T.n_leaves();i<T.n_nodes();i++)
+    Pr -= P.IModel().lengthp(A.seqlength(i))*2.0;
 
-  for(int b=0;b<T.branches();b++) {
-    int parent = T.branch(b).parent();
-    int child  = T.branch(b).child();
-    Pr += prior_branch_Given(A, P.IModel(), parent, child);
+  return Pr;
+}
+
+double prior_HMM_notree_nogiven(const alignment& A,const Parameters& P) {
+  const Tree& T =P.T;
+
+  double Pr = 0;
+  for(int b=0;b<T.n_leafbranches();b++) {
+    int target = b;
+    int source  = T.n_leaves();
+    // If only two sequences, then no central node
+    if (source == 2) source = 1;
+    double p = prior_branch(A, P.IModel(),target,source);
+    Pr += p;
   }
   
   return Pr;
 }
 
-double prior_branch_notree_nogiven(const alignment& A,const IndelModel& IModel,int child) {
-  const vector<double>& pi = IModel.pi;
-  const Matrix& Q = IModel.Q;
-
-  vector<int> state(A.length()+1);
-  for(int column=0;column<A.length();column++) {
-    state[column] = 0;
-    if (A.gap(column,child))
-      state[column] = 2;
-  }
-  state[A.length()] = 3;
-
-  double Pr = log_0;
-  for(int i=0;i<4;i++)
-    Pr = logsum(Pr,pi[i] + Q(i,state[0]) );
-
-  for(int i=1;i<state.size();i++) 
-    Pr += Q(state[i-1],state[i]);
-  
-  return Pr;
-}
-
-double prior_branch_notree(const alignment& A,const IndelModel& IModel,int child) {
-  double Pr = prior_branch_notree_nogiven(A,IModel,child);
-  Pr -= IModel.length_plus_p(A.length());
-  return Pr;
-}
 
 double prior_HMM_notree(const alignment& A,const Parameters& P) {
-  const tree& T =P.T;
+  const Tree& T =P.T;
 
-  double Pr = P.IModel().lengthp(A.length());
-  for(int b=0;b<T.branches();b++) 
-    Pr += prior_branch_notree(A, P.IModel(), b);
+  double Pr = prior_HMM_notree_nogiven(A,P);
+
+  if (T.n_leaves() > 2)
+    Pr -= T.n_leaves() * P.IModel().lengthp(A.seqlength(T.n_leaves()));
 
   return Pr;
 }

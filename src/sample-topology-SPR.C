@@ -57,9 +57,9 @@ SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
   vector<int> branches;
   vector<double> lengths;
 
-  for(int i=0;i<T1.branches();i++) {
-    if (not subtree_nodes[T1.branch(i).parent()] or 
-	not subtree_nodes[T1.branch(i).child()]) {
+  for(int i=0;i<T1.n_branches();i++) {
+    if (not subtree_nodes[T1.branch(i).target()] or 
+	not subtree_nodes[T1.branch(i).source()]) {
       branches.push_back(i);
       lengths.push_back(T1.branch(i).length());
     }
@@ -70,18 +70,20 @@ SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
   SequenceTree T2 = T1;
 
   //------ Generate the new topology ------//
-  if (T2.branch(b2).parent() == n1 or T2.branch(b2).child() == n1)
+  if (T2.branch(b2).target() == n1 or T2.branch(b2).source() == n1)
     ;
-  else
-    T2.SPR(n1,n2,b2);
+  else {
+    int b_temp = T2.directed_branch(n1,n2);
+    T2.SPR(b_temp,b2);
+  }
 
   //------ Find the two new branches ------//
   vector<int> connected;
-  for(int i=0;i<T2.branches();i++) {
+  for(int i=0;i<T2.n_branches();i++) {
     if (i == b1) 
       continue;
 
-    if (T2.branch(i).parent() == n1 or T2.branch(i).child() == n1)
+    if (T2.branch(i).target() == n1 or T2.branch(i).source() == n1)
       connected.push_back(i);
   }
   assert(connected.size() == 2);
@@ -106,11 +108,11 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P1,int b) {
   SequenceTree& T2 = P2.T;
 
   //----- Get nodes for directed branch ------//
-  int n1 = T1.branch(b).parent();
-  int n2 = T1.branch(b).child();
+  int n1 = T1.branch(b).target();
+  int n2 = T1.branch(b).source();
   if (myrandomf()< 0.5)
     std::swap(n1,n2);
-  if (T1[n1].leaf())
+  if (T1[n1].is_leaf_node())
     std::swap(n1,n2);
 
   //----- Generate the Different Topologies ----//

@@ -109,9 +109,11 @@ void load_T(Arguments& args,const alignment& A,SequenceTree& T,bool random_tree_
       s.push_back(A.seq(i).name);
     T = RandomTree(s,0.05);
   }
-  else 
-    T.read(args["tree"]);
-  T.unroot();
+  else {
+    RootedSequenceTree RT;
+    RT.read(args["tree"]);
+    T = remove_root( RT );
+  }
 }
 
 
@@ -127,10 +129,10 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 }
 
 /// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const tree& T,const vector<int>& ignore) {
+void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore) {
   for(int column=0;column<A.length();column++) {
-    valarray<bool> present(T.n_nodes()-1);
-    for(int i=0;i<T.n_nodes()-1;i++) 
+    valarray<bool> present(T.n_nodes());
+    for(int i=0;i<T.n_nodes();i++) 
       present[i] = not A.gap(column,i);
     
     if (not all_characters_connected(T,present,ignore))
@@ -142,18 +144,18 @@ void check_internal_nodes_connected(const alignment& A,const tree& T,const vecto
 void link(alignment& A,SequenceTree& T,bool internal_sequences) {
 
   //------ Make sure A at least has enough leaf sequences ----------//
-  if (A.num_sequences() < T.leaves())
-    throw myexception()<<"Tree has "<<T.leaves()<<" leaves but Alignment only has "
+  if (A.num_sequences() < T.n_leaves())
+    throw myexception()<<"Tree has "<<T.n_leaves()<<" leaves but Alignment only has "
 		       <<A.num_sequences()<<" sequences.";
 
-  else if (A.num_sequences() == T.leaves()) {
+  else if (A.num_sequences() == T.n_leaves()) {
     //------- If we just have leaf sequences, add internal sequences -----------//
     if (internal_sequences) {
       sequence s(A.get_alphabet());
       s.resize(A.length());
       for(int column=0;column<A.length();column++)
 	s[column] = alphabet::not_gap;
-      for(int i=T.leaves();i<T.num_nodes()-1;i++) {
+      for(int i=T.n_leaves();i<T.n_nodes();i++) {
 	s.name = string("A") + convertToString(i);
 	A.add_sequence(s);
       }
@@ -162,13 +164,13 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
 
   //----- If we have ancestral sequences, make sure we have the right number -----//
   else {
-    if (A.num_sequences() > T.num_nodes() -1) {
+    if (A.num_sequences() > T.n_nodes()) {
       if (internal_sequences)
 	throw myexception()<<"More sequences than tree nodes!";
       else
 	throw myexception()<<"More sequences than tree nodes!\n Not removing ancestral sequences";
     }
-    else if (A.num_sequences() < T.num_nodes() -1)
+    else if (A.num_sequences() < T.n_nodes())
       if (internal_sequences)
 	throw myexception()<<"Less sequences than tree nodes!";
       else
@@ -178,27 +180,27 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
 
 	check_internal_sequences_composition(A,T.n_leaves());
 
-	while(A.size2() > T.leaves())
-	  A.del_sequence(T.leaves());
+	while(A.size2() > T.n_leaves())
+	  A.del_sequence(T.n_leaves());
       }
     }
   }
   
   //---------- Check that we have the right number of sequences ---------//
   if (internal_sequences)
-    assert(A.size2() == T.n_nodes()-1);
+    assert(A.size2() == T.n_nodes());
   else
-    assert(A.size2() == T.leaves());
+    assert(A.size2() == T.n_leaves());
 
   //------- Check that internal sequences don't contain letters --------//
   if (internal_sequences)
     check_internal_sequences_composition(A,T.n_leaves());
 
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
-  vector<int> mapping(T.leaves());
-  for(int i=0;i<T.leaves();i++) {
+  vector<int> mapping(T.n_leaves());
+  for(int i=0;i<T.n_leaves();i++) {
     int target = -1;
-    for(int j=0;j<T.leaves();j++) {
+    for(int j=0;j<T.n_leaves();j++) {
       if (T.seq(i) == A.seq(j).name) {
 	target = j;
 	break;
@@ -231,12 +233,12 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
 
   //---------------- Randomize alignment? -----------------//
   if (args.set("randomize_alignment"))
-    A = randomize(A,T.leaves());
+    A = randomize(A,T.n_leaves());
   
   //------------------ Analyze 'internal'------------------//
   if (args["internal"] == "+" or args.set("randomize_alignment"))
     for(int column=0;column< A.length();column++) {
-      for(int i=T.leaves();i<A.size2();i++) 
+      for(int i=T.n_leaves();i<A.size2();i++) 
 	A(column,i) = alphabet::not_gap;
     }
 

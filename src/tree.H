@@ -4,464 +4,266 @@
 #include <cassert>
 #include <vector>
 #include <valarray>
-/***************** struct tree ********************/
+#include <list>
+#include "tree-branchnode.H"
 
-struct Branch;
-
-//FIXME - I should include the name of the branch and its length ...
-//          - I could still keep the node-view and branch-view classes
-
-//FIXME - I have the coordinate system - should I write the iterator classes?
-//        Can I force a root somewhere, now?
-//        I need to do bottom up, as well as top down... 
-
-struct node {
-  node* parent;
-  node* left;
-  node* right;
-
-  Branch* parent_branch;
-
-  int name;
-  int order;
-
-  node():parent(0),left(0),right(0),parent_branch(0),name(-1),order(-1) {}
-};
-
-struct Branch {
-  node* parent;
-  node* child;
-  double length;
-
-  int name;
-  bool up;
-
-  Branch(): parent(0),child(0),length(0.0),name(-1),up(true) {}
-};
-
-// Split these out into
-//  1. Just a Tree class (tree.H)
-//  2. A tree class w/ Branches
-//  3. A tree class w/ Branches and named leaves
-
-
-// All internal nodes should be number higher than all leaves
-
-/* These trees are going to be rooted.  
- *   o But we'll ignore the root I guess.
- *   o The root should have 2 neighbors
- * How do you store this?  Its a binary tree, but with labelled edges...
- */
-
-
-// shouldn't we be able to have a 'copy(const tree&)' non-member function?
-
-// TV1 = TV2 means TV1.root = TV2.root
+//---------------------------------- TreeView --------------------------//
 
 class TreeView {
 protected:
-  node* root;
+  BranchNode* root;
 
-  static void destroy_tree(node*);
-  static void copy_tree(node*);
+  static void destroy_tree(BranchNode*);
+  static BranchNode* copy_node(BranchNode*);
+  static BranchNode* copy_tree(BranchNode*);
+
 public:
-  void destroy() {destroy_tree(root);}
-  static void exchange_cousins(node*,node*);
+  /// Exchange the subtrees pointed to by b1 and b2
+  static void exchange_subtrees(BranchNode* b1,BranchNode* b2);
+
+  /// Remove subtree 'b', and point 'b' to it
+  static BranchNode* create_node_on_branch(BranchNode* b,int new_branchname);
+  static int  remove_node_from_branch(BranchNode* n1);
+
+  static void merge_nodes(BranchNode* n1,BranchNode* n2);
+  static BranchNode* unlink_subtree(BranchNode* b);
 
   TreeView copy() const;
+  void destroy() {destroy_tree(root);}
 
-  operator node*() {return root;}
+  operator BranchNode*() {return root;}
 
-  TreeView(node* n):root(n) {}
+  TreeView(BranchNode* b):root(b) {}
   ~TreeView() {}
 };
 
-class const_branchview;
 
-class nodeview {
-  const node* n;
-public:
-  bool leaf() const {return not n->left and not n->right;}
+//------------------------------------ Tree -----------------------------//
 
-  bool has_left() const {return bool(n->left);}
-  bool has_right() const {return bool(n->right);}
-  
-  int name() const {return n->name;}
-  int order() const {return n->order;}
-
-  nodeview left() const {assert(has_left());return n->left;}
-  nodeview right() const {assert(has_right());return n->right;}
-  nodeview parent() const {
-    node* p = n->parent;
-    if (not p->parent) {
-      if (p->left != n)
-	p = p->left;
-      else
-	p = p->right;
-    }
-    return nodeview(p);
-  }
-
-  operator int() {return name();}
-  nodeview(const node* n_):n(n_) {}
-};
-
-class branchview {
+class Tree {
 protected:
-  Branch* b;
-public:
-  nodeview parent() const {
-    if (b->parent->parent)
-      return b->parent;
-    else
-      return b->parent->right;
-  }
-  nodeview child() const { return b->child;}
-
-  int& name() {return b->name;}
-  const int& name() const {return b->name;}
-
-  double& length() {return b->length;}
-  const double& length() const {return b->length;}
-
-  operator int() const {return name();}
-  branchview(Branch* b_):b(b_) {}
-};
-
-class const_branchview {
-protected:
-  const Branch* b;
-public:
-  nodeview parent() const {
-    if (b->parent->parent)
-      return b->parent;
-    else
-      return b->parent->right;
-  }
-  nodeview child() const {return b->child;}
-
-  int name() const {return b->name;}
-  double length() const {return b->length;}
-
-  operator int() const {return name();}
-  const_branchview(const Branch* b_):b(b_) {}
-};
-
-
-class directed_branchview:public const_branchview {
-  bool up;
-  const class tree* T;
-
-public:
-  nodeview parent() const {
-    if (not (up xor b->up))
-      return const_branchview::parent();
-    else
-      return const_branchview::child();
-  }
-
-  nodeview child() const {
-    if (not (up xor b->up))
-      return const_branchview::child();
-    else
-      return const_branchview::parent();
-  }
-
-  void toggle() {up = not up;}
-
-  int name() const;
-
-  double length() const {return const_branchview::length();}
-
-  operator int() const {return name();}
-
-  directed_branchview(const_branchview bv,bool dir,const tree& T1)
-    :const_branchview(bv),up(dir),T(&T1)
-  {}
-};
-
-class tree {
   int n_leaves_;
 
-  std::vector<node*> order;
+  std::vector< std::valarray<bool> > cached_partitions;
 
-  std::vector<Branch*> branches_;
-protected:
-  std::vector<node*> names;
-  node* root;
+  friend class branchview;
+  friend class const_branchview;
 
-  void add_left(node*,const tree&);
-  void add_right(node*,const tree&);
-  virtual void remove_subtree(node*);
+  std::vector<BranchNode*> nodes_;
 
-  std::vector< std::valarray<bool> > ancestors;
+  std::vector<BranchNode*> branches_;
 
-  void compute_ancestors();
+  std::vector<double> lengths;
 
-  void check_structure() const;
+  void restore_branch_lengths(const std::vector<BranchNode*>&,const std::vector<double>&);
 
-  //auxiliary
-  void do_swap(node*,node*);
-  //re-compute everything from the root, put tree in sane state
-  void reanalyze();
-  //re-calculate the order of the nodes
-  void reorder();
+  void compute_partitions();
 
-  void add_root(); 
+  /// re-compute everything given leaf names
+  virtual void reanalyze(BranchNode*);
 
-  double distance2(int,int) const;
+  virtual void recompute(BranchNode*,bool=true);
+
+  virtual void check_structure() const;
 
   /// Get the Branch* to the branch connecting node1 and node2
-  Branch* find_branch_pointer(int node1,int node2) const {
-    assert(0 <= node1 and node1 < names.size());
-    assert(0 <= node2 and node2 < names.size());
+  BranchNode* find_branch_pointer(int node1,int node2) const {
+    assert(0 <= node1 and node1 < nodes_.size());
+    assert(0 <= node2 and node2 < nodes_.size());
 
-    node* n1 = names[node1];
-    node* n2 = names[node2];
+    BranchNode* n1 = nodes_[node1];
 
-    Branch* b;
-    if (n1->parent == n2)
-      b = n1->parent_branch;
-    else if (n2->parent == n1)
-      b = n2->parent_branch;
-    else {
-      b = root->left->parent_branch;
-      assert((root->left == n1 and root->right == n2) or 
-	     (root->left == n2 and root->right == n1));
+    while(n1->out->node != node2) {
+      n1=n1->next;
+      if (n1 == nodes_[node1]) break;
     }
 
-    return b;
+    if (n1->out->node == node2)
+      return n1;
+    else
+      return NULL;
   }
 
 public:
-  void unroot() {
-    if (root->right)
-      root->right->parent_branch->length=0.0;
+
+  TreeView copy(int n) const {
+    assert(0 <= n and n < nodes_.size());
+
+    return TreeView(nodes_[n]).copy();
+  }
+
+  TreeView copy() const {
+    if (nodes_.size()) 
+      return copy(0);
+    else
+      return 0;
+  }
+
+  int n_nodes() const {return nodes_.size();}
+  int n_leaves() const {return n_leaves_;}
+  int n_leafbranches() const {return (n_leaves()==2)?1:n_leaves();}
+  int n_branches() const {return branches_.size()/2;}
+
+  const std::vector<double>& branch_lengths() const {return lengths;}
+
+  /// Get the branch with name 'b'
+  const_branchview branch(int b) const {
+    assert(0 <= b and b<n_branches());
+    return branches_[b];
   }
 
   /// Get the branch with name 'b'
   branchview branch(int b) {
-    assert(0 <= b and b<branches_.size()-1);
-    assert(branches_[b]->parent == branches_[b]->child->parent);
+    assert(0 <= b and b<n_branches());
     return branches_[b];
   }
 
-  /// Get the branch with name 'b'
-  const_branchview branch(int b) const {
-    assert(0 <= b and b<branches_.size()-1);
-    assert(branches_[b]->parent == branches_[b]->child->parent);
-    return branches_[b];
-  }
-  
-  /// Get the branch connecting n1 <-> n2
-  const_branchview find_branch(int n1,int n2) const {
-    return find_branch_pointer(n1,n2);
-  }
-  
   /// Get the directed branch w/ name 'b'
-  directed_branchview directed_branch(int b) const {
-    bool up = b < n_branches();
-
-    if (not up)
-      b -= n_branches();
-
-    return directed_branchview(branches_[b],up,*this);
+  const_branchview directed_branch(int b) const {
+    assert(0 <= b and b < 2*n_branches());
+    return branches_[b];
   };
 
   /// Get the directed branch from 'node1' -> 'node2'
-  directed_branchview directed_branch(int node1,int node2) const {
-    directed_branchview db(find_branch_pointer(node1,node2),true,*this);
-    if (db.child() != node1)
-      db.toggle();
-
-    assert(db.child() == node1 and db.parent() == node2);
-
-    return db;
-  };
-
-protected:
-  void get_branches_(int n,std::vector<directed_branchview>& dbs) const {
-    dbs.push_back(directed_branchview(branch_up(n),true,*this));
-
-    if (names[n]->left)
-      dbs.push_back(directed_branchview(names[n]->left->parent_branch,true,*this));
-    
-    if (names[n]->right)
-      dbs.push_back(directed_branchview(names[n]->right->parent_branch,true,*this));
+  branchview directed_branch(int n1,int n2) const {
+    return find_branch_pointer(n1,n2);
   }
 
-public:
-  void get_branches_in(int n,std::vector<directed_branchview>& dbs) const {
-    int start = dbs.size();
+  /// Get the branch connecting n1 <-> n2
+  branchview branch(int n1,int n2) {
+    branchview bv = find_branch_pointer(n1,n2);
 
-    get_branches_(n,dbs);
+    bv = bv.undirected();
 
-    for(int i=start;i<dbs.size();i++) {
-      if (dbs[i].parent() != n)
-	dbs[i].toggle();
-      assert(dbs[i].parent() == n);
-    }
+    return bv;
+  }
+  
+  /// Get the branch connecting n1 <-> n2
+  const_branchview branch(int n1,int n2) const {
+    branchview bv = find_branch_pointer(n1,n2);
+
+    bv = bv.undirected();
+
+    return bv;
+  }
+  
+        nodeview operator[](int i)       {return nodes_[i];}
+  const_nodeview operator[](int i) const {return nodes_[i];}
+
+  bool is_connected(int node1,int node2) const {
+    return find_branch_pointer(node1,node2) != NULL;
   }
 
-
-  std::vector<directed_branchview> get_branches_in(int n) const {
-    std::vector<directed_branchview> dbs;
-    get_branches_in(n,dbs);
-    return dbs;
-  }
-
-
-  void get_branches_out(int n,std::vector<directed_branchview>& dbs) const {
-    int start = dbs.size();
-
-    get_branches_(n,dbs);
-
-    for(int i=start;i<dbs.size();i++) {
-      if (dbs[i].parent() != n)
-	dbs[i].toggle();
-      assert(dbs[i].child() == n);
-    }
-  }
-
-
-  std::vector<directed_branchview> get_branches_out(int n) const {
-    std::vector<directed_branchview> dbs;
-    get_branches_out(n,dbs);
-    return dbs;
-  }
-
-  void get_branches_before(int b,std::vector<directed_branchview>& dbs) const 
-  {
-    int start = dbs.size();
-
-    directed_branchview db = directed_branch(b);
-    int parent = db.parent();
-    int child = db.child();
-
-    get_branches_in(child,dbs);
-
-    for(int i=dbs.size()-1;i>=start;i--) {
-      if (dbs[i].child().name() == parent)
-	dbs.erase(dbs.begin()+i);
-    }
-  }
-
-  std::vector<directed_branchview> get_branches_before(int b) const {
-    std::vector<directed_branchview> dbs;
-    get_branches_before(b,dbs);
-    return dbs;
-  }
-
-
-  void get_branches_after(int b,std::vector<directed_branchview>& dbs) const {
-    int start = dbs.size();
-
-    directed_branchview db = directed_branch(b);
-    int parent = db.parent();
-    int child = db.child();
-
-    get_branches_out(parent,dbs);
-
-    for(int i=dbs.size()-1;i>=start;i--) {
-      if (dbs[i].parent().name() == child)
-	dbs.erase(dbs.begin()+i);
-    }
-  }
-
-
-  std::vector<directed_branchview> get_branches_after(int b) const {
-    std::vector<directed_branchview> dbs;
-    get_branches_after(b,dbs);
-    return dbs;
-  }
-
-
-  const nodeview operator[](int i) const { return nodeview(names[i]);}
-  //  node& operator[](int i) { return *names[i];}
-
-  int get_nth(int i) const {return order[i]->name;}
-
-  std::vector<int> neighbors(int node) const;
-  bool connected(int node1,int node2) const;
-
-  int leaves() const {return n_leaves_;}
-  int branches() const {return branches_.size()-1;}
-  int leafbranches() const {return (n_leaves_==2)?1:n_leaves_;}
-  int num_nodes() const {return order.size();}
-
-  int n_nodes() const {return num_nodes();}
-  int n_leaves() const {return leaves();}
-  int n_leafbranches() const {return leafbranches();}
-  int n_branches() const {return branches();}
-
-  bool leaf_node(int n) const {return n < n_leaves();}
-  bool internal_node(int n) const {return not leaf_node(n);}
-
-  branchview branch_up(int);
-  const_branchview branch_up(int) const;
-
-  // These change don't change the tree itself, how it is stored/referenced
-  void swap_children(int n);
-  std::vector<int> standardize(bool=true);
-  std::vector<int> standardize(const std::vector<int>&,bool=true);
-
-  /// The common ancestor of nodes i and j
-  int common_ancestor(int i,int j) const;
+  // walk path from i->j instead...
   /// The distance between nodes i and j
   double distance(int i,int j) const;
 
-
   // n1 is an ancestor of n2, n2 is a descendant of n1
-  bool ancestor(int n1, int n2) const {return ancestors[n1][n2];}
-  std::valarray<bool> partition(int n1,int n2) const;
+  std::valarray<bool> partition(int b) const {
+    return cached_partitions[b];
+  }
 
-  TreeView copy() const {return TreeView(root).copy();}
-  void remove_subtree(int i);
-  void exchange(int,int);
-  void SPR(int,int,int);
-  void reroot(int);
-  
-  tree& operator=(const tree&);
+  std::valarray<bool> partition(int n1,int n2) const {
+    return partition(directed_branch(n1,n2));
+  }
 
-  tree():root(0) {n_leaves_=0;}
-  tree(const tree& t1):root(0) {operator=(t1);}
+  // FIXME - not really implemented yet
+  virtual std::vector<int> standardize();
+  virtual std::vector<int> standardize(const std::vector<int>&);
 
-  tree(const tree& t1,const tree& t2);
-  tree(const tree& t1,double b1,const tree& t2,double b2);
-  virtual ~tree() {TreeView(root).destroy();}
+  /// is 'n' contained in the subtree delineated by 'b' 
+  bool subtree_contains(int b,int n) const {return partition(b)[n];}
+
+  /// switch subtrees 'b1' and 'b2'
+  void exchange_subtrees(int b1,int b2);
+
+  /// Prune subtree 'b1' and regraft into branch 'b2'
+  void SPR(int b1,int b2);
+
+  /// Add a node onto a branch 'b', splitting it into two sub-neighbors
+  nodeview create_node_on_branch(int b);
+
+  /// Remove a node 'n' with exactly two neighbors, merging two branches
+  void remove_node_from_branch(int n);
+
+  /// remove a subtree
+  virtual nodeview prune_subtree(int b);
+
+  /// merge node 'tn' from subtree 'T' to node 'n'
+  virtual void merge_tree(int n,const Tree& T,int tn);
+
+  /// create a node
+  virtual void add_first_node();
+
+  /// add a node, linking to node 'n'
+  nodeview add_node(int n);
+
+  Tree& operator=(const Tree& T); 
+
+  Tree():n_leaves_(0) {}
+  Tree(const Tree& T);
+
+  virtual ~Tree();
 };
 
-inline bool leaf(const node& n) {
-  return (not n.left and not n.right);
-}
+inline double& branchview::length() const {return b->tree->lengths[undirected_name()];}
+inline double const_branchview::length() const {return b->tree->lengths[undirected_name()];}
 
-inline tree operator+(const tree& t1,const tree& t2) {
-  tree t3(t1,t2);
+
+//---------------------------- RootedTree -----------------------//
+
+// In rooted_tree, we will assume that nodes_[i] gives the TOP node in a ring
+
+class RootedTree: public Tree {
+protected:
+  BranchNode* root_;
+
+  void recompute(BranchNode*,bool=true);
+
+  void check_structure() const;
+public:
+  const_nodeview root() const {return root_;}
+        nodeview root()       {return root_;}
+
+  /// More the root from the current node to node 'n'
+  void reroot(int n);
+
+  std::vector<int> standardize() {return Tree::standardize();}
+  std::vector<int> standardize(const std::vector<int>&);
+
+  /// The common ancestor of nodes i and j
+  int common_ancestor(int i,int j) const;
+
+  /// n1 is an ancestor of n2, n2 is a descendant of n1
+  bool ancestor(int n1, int n2) const;
+
+  /// remove a subtree
+  nodeview prune_subtree(int b);
+
+  void add_first_node();
+
+  RootedTree& operator=(const RootedTree&);
+
+  RootedTree():root_(NULL) {}
+  RootedTree(const Tree&,int r);
+  RootedTree(const RootedTree&);
+
+  RootedTree(const RootedTree& t1,const RootedTree& t2);
+
+  ~RootedTree() {}
+};
+
+
+RootedTree add_root(Tree T,int b);
+
+Tree remove_root(const RootedTree& RT);
+
+inline RootedTree operator+(const RootedTree& t1,const RootedTree& t2) {
+  RootedTree t3(t1,t2);
 
   return t3;
 }
 
-/// Are nodes node1 and node2 connected? (Unrooted topology)
-inline bool tree::connected(int node1,int node2) const {
-  assert(0 <= node1 and node1 < names.size()-1);
-  assert(0 <= node2 and node2 < names.size()-1);
 
-  node* n1 = names[node1];
-  node* n2 = names[node2];
-
-  if (n1->parent == n2)
-    return true;
-  if (n2->parent == n1)
-    return true;
-    
-  if (n1->parent == root and n2->parent == root)
-    return true;
-
-  return false;
-}
-
-inline int directed_branchview::name() const {
-  return const_branchview::name() + (up?0:T->n_branches());
-}
 
 #endif

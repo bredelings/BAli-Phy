@@ -16,10 +16,10 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 
   //--------------- Find our branch, and orientation ----------------//
   const SequenceTree& T = P.T;
-  int root = T.branch(b).parent();      //this is an arbitrary choice
+  int root = T.branch(b).target();      //this is an arbitrary choice
 
-  int node1 = T.branch(b).child();
-  int node2 = T.branch(b).parent();
+  int node1 = T.branch(b).source();
+  int node2 = T.branch(b).target();
   if (not up) std::swap(node1,node2);
 
   valarray<bool> group = T.partition(node1,node2);
@@ -31,10 +31,10 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
 						  const vector<int>& seq,int b,bool up) {
   //--------------- Find our branch, and orientation ----------------//
   const SequenceTree& T = P.T;
-  int root = T.branch(b).parent();      //this is an arbitrary choice
+  int root = T.branch(b).target();      //this is an arbitrary choice
 
-  int node1 = T.branch(b).child();
-  int node2 = T.branch(b).parent();
+  int node1 = T.branch(b).source();
+  int node2 = T.branch(b).target();
   if (not up) std::swap(node1,node2);
 
   valarray<bool> group = T.partition(node1,node2);
@@ -48,15 +48,15 @@ typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parame
 alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   assert(P.IModel().full_tree);
 
-  const tree& T = P.T;
+  const Tree& T = P.T;
 
   const vector<double>& pi = P.IModel().pi;
 
   const substitution::MultiModel& MModel = P.SModel();
   const valarray<double>& frequency = MModel.frequencies();
 
-  int node1 = T.branch(b).parent();
-  int node2 = T.branch(b).child();
+  int node1 = T.branch(b).target();
+  int node2 = T.branch(b).source();
 
   valarray<bool> group1 = T.partition(node2,node1);
 

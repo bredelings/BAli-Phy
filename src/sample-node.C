@@ -1,11 +1,3 @@
-// This is version 2 of the routine to sample the sequence at an internal node.
-// Unlike v1, v2 uses a DP routine to sample from the distribution of 3 linked HMMs.
-// However, a slight fixup is still required.  This is done as an MH rejection in this
-// routine.
-
-// FIXME - separate sampling from proposal distribution into sample_node_base!
-// MH fixup will be done in the caller
-
 #include <valarray>
 #include <iostream>
 #include <cmath>
@@ -18,9 +10,7 @@
 #include "3way.H"
 #include "alignment-sums.H"
 #include "alignment-util.H"
-
-// for prior_HMM_nogiven
-#include "likelihood.H"
+#include "likelihood.H"    // for prior()
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with
@@ -40,7 +30,7 @@ using std::valarray;
 using namespace A3;
 
 DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
-  const tree& T = P.T;
+  const Tree& T = P.T;
 
   assert(P.IModel().full_tree);
 
@@ -205,7 +195,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore(false,p[0].T.n_nodes()-1);
+  valarray<bool> ignore(false,p[0].T.n_nodes());
   ignore[ nodes[0][0] ] = true;
 
   // Check that our constraints are met
@@ -296,7 +286,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
 
 
 alignment sample_node(const alignment& old,const Parameters& P,int node) {
-  const tree& T = P.T;
+  const Tree& T = P.T;
 
   alignment A = old;
 

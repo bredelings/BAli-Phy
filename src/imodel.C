@@ -43,12 +43,6 @@ void IndelModel::recalc() {
 }
 
 
-// FIXME - if we ever actually sample with a star gap model,
-//         then we need to fix this.
-double IndelModel::length_plus_p(int l, int G) const {
-  return lengthp(l,G);
-}
-
 // f_M(s) = [ ME  + s(MGxGE - MExGG) ] / [ 1 - s(GG + MM) + s^2(MMxGG - MGxGM) ]
 
 double IndelModel::lengthp(int l,int G) const {

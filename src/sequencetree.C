@@ -5,88 +5,142 @@
 
 using namespace std;
 
-/************************** SequenceTree methods *****************************/
-string SequenceTree::write(int n,bool lengths) const {
-  assert(0 <= n and n < num_nodes());
-  string output;
-
-  if (n<leaves()) {
-    output = seq(n);
-  }
-  else {
-    int left = names[n]->left->name;
-    int right = names[n]->right->name;
-    double llength = names[left]->parent_branch->length;
-    double rlength = names[right]->parent_branch->length;
-
-    output = string("(") + write(left,lengths);
-
-    if (lengths)
-      output = output + ":" + convertToString(llength);
-
-    output = output + "," + write(right,lengths);
-
-    if (lengths)
-      output = output + ":" + convertToString(rlength);
-
-    output += ")";
-  }
-
-  return output;
-}
-
-void SequenceTree::remove_subtree(node* n) {
-  vector<node*> leaves1(leaves());
-  for(int i=0;i<leaves1.size();i++)
-    leaves1[i] = names[i];
-  
-  tree::remove_subtree(n);
-  
-  vector<node*> leaves2(leaves());
-  for(int i=0;i<leaves2.size();i++)
-    leaves2[i] = names[i];
-
-  vector<string> newnames;
-  for(int i=0;i<leaves2.size();i++) {
-    int index = find_index(leaves1,leaves2[i]);
-    if (index != -1)
-      newnames.push_back(sequences[index]);
-  }
-  assert(newnames.size() == leaves2.size());
-  sequences = newnames;
-}
-
-
-string SequenceTree::write(bool lengths) const {
-  return write(num_nodes()-1,lengths) + ";";
-}
-
-
-int SequenceTree::index(const string& s) const {
-  for(int i=0;i<sequences.size();i++) {
+int SequenceSet::index(const string& s) const {
+  for(int i=0;i<sequences.size();i++)
     if (sequences[i] == s) return i;
-  }
   return -1;
 }
 
 
-vector<int> SequenceTree::standardize(bool do_reroot) {
-  return tree::standardize(do_reroot);
+//-------------------------- SequenceTree methods ----------------------------//
+nodeview SequenceTree::prune_subtree(int branch) {
+  // get pointers to current leaves
+  vector<BranchNode*> leaves1(n_leaves());
+  for(int i=0;i<leaves1.size();i++)
+    leaves1[i] = nodes_[i];
+  
+  // remove the subtree
+  nodeview node_remainder = Tree::prune_subtree(branch);
+  
+  // get pointers to NEW leaves
+  vector<BranchNode*> leaves2(n_leaves());
+  for(int i=0;i<leaves2.size();i++)
+    leaves2[i] = nodes_[i];
+
+  // figure out the mapping
+  vector<string> newnames;
+  for(int i=0;i<leaves2.size();i++) {
+    int index = find_index(leaves1,leaves2[i]);
+    if (index == -1)
+      break;
+    else
+      newnames.push_back(sequences[index]);
+  }
+  assert(newnames.size() == leaves2.size());
+
+  // select the new names
+  sequences = newnames;
+
+  return node_remainder;
 }
 
 
-vector<int> SequenceTree::standardize(const vector<int>& lnames,bool do_reroot) {
+vector<int> SequenceTree::standardize() {
+  return Tree::standardize();
+}
+
+
+vector<int> SequenceTree::standardize(const vector<int>& lnames) {
   assert(lnames.size() == sequences.size());
 
   vector<string> old = sequences;
   for(int i=0;i<sequences.size();i++)
     sequences[lnames[i]] = old[i];
 
-  return tree::standardize(lnames,do_reroot);
+  return Tree::standardize(lnames);
+}
+
+SequenceTree::SequenceTree(const RootedSequenceTree& RT) 
+  :Tree(RT),SequenceSet(RT)
+{ }
+
+//-------------------------- SequenceTree methods ----------------------------//
+nodeview RootedSequenceTree::prune_subtree(int branch) {
+  // get pointers to current leaves
+  vector<BranchNode*> leaves1(n_leaves());
+  for(int i=0;i<leaves1.size();i++)
+    leaves1[i] = nodes_[i];
+  
+  // remove the subtree
+  nodeview node_remainder = RootedTree::prune_subtree(branch);
+  
+  // get pointers to NEW leaves
+  vector<BranchNode*> leaves2(n_leaves());
+  for(int i=0;i<leaves2.size();i++)
+    leaves2[i] = nodes_[i];
+
+  // figure out the mapping
+  vector<string> newnames;
+  for(int i=0;i<leaves2.size();i++) {
+    int index = find_index(leaves1,leaves2[i]);
+    if (index == -1)
+      break;
+    else
+      newnames.push_back(sequences[index]);
+  }
+
+  assert( (newnames.size() == n_leaves()) or 
+	  ((newnames.size() == n_leaves()-1) and (root_->node == n_leaves())) );
+
+  // select the new names
+  sequences = newnames;
+
+  return node_remainder;
 }
 
 
-void SequenceTree::read(const string& filename) {
+string RootedSequenceTree::write(const_branchview b,bool print_lengths) const {
+  string output;
+
+  // If this is a leaf node, then print the name
+  if (b.target().is_leaf_node())
+    output += sequences[b.target()];
+  // If this is an internal node, then print the subtrees
+  else {
+    output = "(";
+    for(const_out_edges_iterator i = b.branches_after();i;) {
+      output += write(*i,print_lengths);
+      i++;
+      if (i)
+	output += ",";
+    }
+    output += ")";
+  }
+
+  // print the branch length if requested
+  if (print_lengths)
+    output += ":" + convertToString(b.length());
+
+  return output;
+}
+
+string RootedSequenceTree::write(bool print_lengths) const {
+  string output = "(";
+  for(const_out_edges_iterator i = root_;i;) {
+    const_branchview b = *i;
+    output += write(b,print_lengths);
+
+    i++;
+    if (i)
+      output += ',';
+  }
+  output += ");";
+  return output;
+}
+
+
+
+void RootedSequenceTree::read(const string& filename) {
   ifstream file(filename.c_str());
   if (not file) 
     throw myexception()<<"Couldn't open file '"<<filename<<"'";
@@ -95,7 +149,7 @@ void SequenceTree::read(const string& filename) {
 }
 
 
-void SequenceTree::read(istream& file) {
+void RootedSequenceTree::read(istream& file) {
   assert(file);
 
   string total;
@@ -106,30 +160,12 @@ void SequenceTree::read(istream& file) {
 }
 
 
-void add_left(node*,node*);
-void add_right(node*,node*);
-
-
-node* connect(node* l,double lb,node* r,double rb) {
-  node* n = new node;
-  add_left(n,l);
-  add_right(n,r);
-
-  l->parent_branch->length = lb;
-  r->parent_branch->length = rb;
-
-  return n;
-}
-
-
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit
-void SequenceTree::parse(const string& line) {
+void RootedSequenceTree::parse(const string& line) {
 
   if (line[0] != '(') {
-    (*this) = SequenceTree();
-    add_root();
-    sequences.push_back(line);
+    (*this) = RootedSequenceTree(line);
     return;
   }
 
@@ -138,50 +174,40 @@ void SequenceTree::parse(const string& line) {
 
   //how to turn pos into a string?
 
-  vector<node*> tree_stack;
-  vector<double> branch_stack;
+  vector<RootedSequenceTree> tree_stack;
 
-  string name;
+  string word;
   for(int i=0;i<line.size();i++) {
     char c = line[i];
 
-    /******* Read the data from 'name' into the stacks *******/
+    //------* Read the data from 'word' into the stacks ------//
     if (c== ':') {
-      if (name.length() != 0) {
-	node* n = new node;
-	n->name = sequences.size();
-	sequences.push_back(name);
-	tree_stack.push_back(n);
-
-	name = "";
+      if (word.length() != 0) {
+	tree_stack.push_back(RootedSequenceTree(word));
+	word = "";
       }
     }
     else if (c== ',' or c==')') {
-      branch_stack.push_back(convertTo<double>(name));
-      name = "";
+      (*tree_stack.back().root().branches_out()).length() = convertTo<double>(word);
+      word = "";
     }
 
 
-    /****** Process the data given the current state *******/
+    //------ Process the data given the current state ------//
     if (c == '(') {
       depth++;
-      if (name.length()!=0) 
-	throw myexception(string("In tree file, found '(' in the middle of name \"") +name
-			  +string("\""));
+      if (word.length()!=0) 
+	throw myexception(string("In tree file, found '(' in the middle of word \"") +
+			  word + string("\""));
     }
     else if (c== ')') {
       assert(tree_stack.size() >= 2);
-      assert(tree_stack.size() == branch_stack.size());
 
-      double b2 = branch_stack.back();branch_stack.pop_back();
-      double b1 = branch_stack.back();branch_stack.pop_back();
+      RootedSequenceTree T1 = tree_stack.back();tree_stack.pop_back();
+      RootedSequenceTree T2 = tree_stack.back();tree_stack.pop_back();
 
-      node* n2 = tree_stack.back();tree_stack.pop_back();
-      node* n1 = tree_stack.back();tree_stack.pop_back();
-
-      node* n3 = connect(n1,b1,n2,b2);
-      tree_stack.push_back(n3);
-      //      std::cerr<<"    leaves: "<<T1.leaves()<<" + "<<T2.leaves()<<" = "<<Join.leaves()<<endl;
+      tree_stack.push_back(RootedSequenceTree(T1,T2));
+      //      std::cerr<<"    leaves: "<<T1.n_leaves()<<" + "<<T2.n_leaves()<<" = "<<Join.n_leaves()<<endl;
       depth--;
       if (depth < 0) 
 	throw myexception(string("In tree file, too many end parenthesis."));
@@ -189,57 +215,94 @@ void SequenceTree::parse(const string& line) {
     else if (c== ' ' or c=='\n' or c == 9) 
       ;
     else if (c != ':' and c != ',')
-      name += c;
-    //    std::cerr<<"char = "<<c<<"    depth = "<<depth<<"   stack size = "<<tree_stack.size()<<"    name = "<<name<<endl;
+      word += c;
+    //    std::cerr<<"char = "<<c<<"    depth = "<<depth<<"   stack size = "<<tree_stack.size()<<"    word = "<<word<<endl;
 
     pos++;
     if (depth <1) break;
   }
   assert(tree_stack.size() == 1);
 
-  TreeView(root).destroy();
-  root = tree_stack[0];
 
-  reanalyze();
+  (*this) = tree_stack[0];
+}
+
+vector<int> RootedSequenceTree::standardize() {
+  return RootedTree::standardize();
 }
 
 
-SequenceTree::SequenceTree(const string& s)
+vector<int> RootedSequenceTree::standardize(const vector<int>& lnames) {
+  assert(lnames.size() == sequences.size());
+
+  vector<string> old = sequences;
+  for(int i=0;i<sequences.size();i++)
+    sequences[lnames[i]] = old[i];
+
+  return RootedTree::standardize(lnames);
+}
+
+RootedSequenceTree::RootedSequenceTree(const SequenceTree& T,int r) 
+  :RootedTree(T,r),SequenceSet(T)
+{ }
+
+
+RootedSequenceTree::RootedSequenceTree(const string& s)
 {
-  add_root();
+  add_first_node();
   sequences.push_back(s);
 }
 
-SequenceTree::SequenceTree(const SequenceTree& T1, const SequenceTree& T2):tree(T1,T2) {
-  
-  // We will create new names which will be the same as
-  //  T1.order + T2.order
-  for(int i=0;i<T1.leaves();i++) 
-    sequences.push_back(T1.seq(T1.get_nth(i)));
-  for(int i=0;i<T2.leaves();i++) 
-    sequences.push_back(T2.seq(T2.get_nth(i)));
-}
-
-
-SequenceTree::SequenceTree(const SequenceTree& T1, double b1, const SequenceTree& T2, double b2)
-  :tree(T1,b1,T2,b2) {
-  
-  // We will create new names which will be the same as
-  //  T1.order + T2.order
-  for(int i=0;i<T1.leaves();i++) 
-    sequences.push_back(T1.seq(T1.get_nth(i)));
-  for(int i=0;i<T2.leaves();i++) 
-    sequences.push_back(T2.seq(T2.get_nth(i)));
-}
-
-SequenceTree::SequenceTree(istream& file) {
+RootedSequenceTree::RootedSequenceTree(istream& file) {
   read(file);
 }
 
+RootedSequenceTree::RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2):
+  RootedTree(T1,T2) {
+  
+  // We will create new names which will be the same as
+  //  T1.order + T2.order
+  for(int i=0;i<T1.get_sequences().size();i++) 
+    sequences.push_back(T1.seq(i));
+  for(int i=0;i<T2.get_sequences().size();i++) 
+    sequences.push_back(T2.seq(i));
+}
 
 //FIXME T.seq(i) -> T.leafname(i)
 //FIXME T.get_sequences -> T.leafnames()
 void delete_node(SequenceTree& T,const std::string& name) {
+  std::abort(); // this isn't quite right yet..
   int index = find_index(T.get_sequences(),name);
-  T.remove_subtree(index);
+  T.prune_subtree(index);
 }
+
+
+
+RootedSequenceTree add_root(SequenceTree T,int b) {
+  int r = T.create_node_on_branch(b);
+  return RootedSequenceTree(T,r);
+}
+  
+SequenceTree remove_root(const RootedSequenceTree& RT) {
+  SequenceTree T(RT);
+  T.remove_node_from_branch(RT.root());
+  return T;
+}
+						      
+RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTree& t2) 
+{
+  RootedSequenceTree t3(t1,t2);
+  int new_root = t3.add_node(t3.root());
+  t3.reroot(new_root);
+
+  return t3;
+}
+
+std::ostream& operator <<(std::ostream& o,const RootedSequenceTree& T) {
+  return o<<T.write();
+}
+
+std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
+  return o<<add_root(T,0);
+}
+

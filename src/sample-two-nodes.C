@@ -40,7 +40,7 @@ using namespace A5;
 
 DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
 
-  const tree& T = P.T;
+  const Tree& T = P.T;
   alignment old = A;
 
   const vector<double>& pi = P.IModel().pi;
@@ -220,7 +220,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore(false,p[0].T.n_nodes()-1);
+  valarray<bool> ignore(false,p[0].T.n_nodes());
   ignore[ nodes[0][4] ] = true;
   ignore[ nodes[0][5] ] = true;
 

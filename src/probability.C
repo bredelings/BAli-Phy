@@ -3,6 +3,27 @@
 
 using std::valarray;
 
+double log_double_factorial(int n) {
+  double x = 0;
+  for(int i=3;i<=n;i+=2)
+    x += log(i);
+  return x;
+}
+
+double log_num_branches(int n) {
+  return log(2*n-3);
+}
+
+double log_num_topologies(int n) {
+  return log_double_factorial(2*n-5);
+}
+
+double log_num_topologies_in_partition(int n1,int n2) {
+  double total = log_num_topologies(n1) + log_num_topologies(n2);
+  total += log_num_branches(n1) + log_num_branches(n2);
+  return total;
+}
+
 double dirichlet_log_pdf(const valarray<double>& p,const valarray<double>& n) {
   assert(p.size() == n.size());
 

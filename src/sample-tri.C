@@ -10,9 +10,8 @@
 #include "3way.H"
 #include "alignment-sums.H"
 #include "alignment-util.H"
+#include "likelihood.H"    // for prior()
 
-// for prior_HMM_nogiven
-#include "likelihood.H"
 
 //Assumptions:
 //  a) we assume that the internal node is the parent sequence in each of the sub-alignments
@@ -26,13 +25,13 @@ using namespace A3;
 // FIXME - actually resample the path multiple times - pick one on
 // opposite side of the middle 
 DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
-  const tree& T = P.T;
+  const Tree& T = P.T;
 
   assert(P.IModel().full_tree);
 
-  assert(T.connected(nodes[0],nodes[1]));
-  assert(T.connected(nodes[0],nodes[2]));
-  assert(T.connected(nodes[0],nodes[3]));
+  assert(T.is_connected(nodes[0],nodes[1]));
+  assert(T.is_connected(nodes[0],nodes[2]));
+  assert(T.is_connected(nodes[0],nodes[3]));
 
   const vector<double>& pi = P.IModel().pi;
   const valarray<double>& frequency = P.SModel().frequencies();
@@ -212,8 +211,8 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
   valarray<bool> ignore1A = not p[0].T.partition(nodes[0][0],nodes[0][1]);
   valarray<bool> ignore2A = not (p[0].T.partition(nodes[0][0],nodes[0][2]) or p[0].T.partition(nodes[0][0],nodes[0][3]) );
-  valarray<bool> ignore1(p[0].T.n_nodes()-1); 
-  valarray<bool> ignore2(p[0].T.n_nodes()-1); 
+  valarray<bool> ignore1(p[0].T.n_nodes()); 
+  valarray<bool> ignore2(p[0].T.n_nodes()); 
   for(int i=0;i<ignore1.size();i++) {
     ignore1[i] = ignore1A[i];
     ignore2[i] = ignore2A[i];

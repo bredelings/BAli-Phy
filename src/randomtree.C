@@ -17,22 +17,33 @@ vector<int> permutation(int n) {
 }
 
 SequenceTree RandomTree(const vector<string>& s,double branch_mean) {
-  vector<SequenceTree> trees;
-  for(int i=0;i<s.size();i++)
-    trees.push_back(SequenceTree(s[i]));
+  vector<RootedSequenceTree> trees;
+  for(int i=0;i<s.size();i++) {
+    RootedSequenceTree RT(s[i]);
+    int node = RT.add_node(RT.root());
+    RT.reroot(node);
+    trees.push_back(RT);
+  }
 
   while(trees.size() > 1) {
     int i1 = myrandom(trees.size());
-    SequenceTree T1 = trees[i1];trees.erase(trees.begin()+i1);
+    RootedSequenceTree T1 = trees[i1];trees.erase(trees.begin()+i1);
 
     int i2 = myrandom(trees.size());
-    SequenceTree T2 = trees[i2];
+    RootedSequenceTree T2 = trees[i2];
 
     trees[i2] = (T1+T2);
   }
 
-  for(int i=0;i<trees[0].branches();i++) 
+  nodeview r1 = trees[0].root();
+  nodeview r2 = *(trees[0].root().neighbors());
+  trees[0].reroot(0);
+
+  r2 = trees[0].prune_subtree(trees[0].directed_branch(r2,r1));
+  trees[0].remove_node_from_branch(r2);
+
+  for(int i=0;i<trees[0].n_branches();i++) 
     trees[0].branch(i).length() = exponential(branch_mean);
 
-  return trees[0];
+  return SequenceTree(trees[0]);
 }

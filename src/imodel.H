@@ -56,9 +56,6 @@ public:
   /// Probability that an alignment has a sequence with length 'i'
   double lengthp(int i,int G=1) const;
 
-  /// Probability that an alignment has a sequence with length 'i' in paths without G1
-  double length_plus_p(int i,int G=1) const;
-
   /// The model's name
   virtual std::string name() const =0;
 

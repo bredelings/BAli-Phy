@@ -12,4 +12,9 @@ double exp_exponential_pdf(double y,double mu,double delta=0.0);
 
 double shift_laplace_pdf(double x, double mu, double sigma);
 
+// -------- Topology counting functions ------ //
+double log_num_branches(int n);
+double log_num_topologies(int n);
+double log_num_topologies_in_partition(int n1, int n2);
+
 #endif

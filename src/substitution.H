@@ -11,32 +11,32 @@ class Parameters;
 namespace substitution {
 
   /// Find the probabilities of all the data give each letter at the root
-  std::valarray<double> peel(const vector<int>&,const tree&,const ReversibleModel&, 
+  std::valarray<double> peel(const vector<int>&,const Tree&,const ReversibleModel&, 
 			     const vector<Matrix>&,int);
 
   /// Find the probabilities of the data in 'group' given each letter at the root
-  std::valarray<double> peel(vector<int>,const tree&,const ReversibleModel&, 
+  std::valarray<double> peel(vector<int>,const Tree&,const ReversibleModel&, 
 			     const vector<Matrix>&,int,const std::valarray<bool>& group);
 
   /// Column likelihood - for a specific rate
-  double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
+  double Pr(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
 	    const vector<Matrix>& transition_P);
 
   /// Full Likelihood of one column
-  double Pr(const alignment& A, const tree& T, const MultiModel& SModel, const MatCache& SM,int);
+  double Pr(const alignment& A, const Tree& T, const MultiModel& SModel, const MatCache& SM,int);
 
   /// Full Likelihood - all columns, all rates
-  double Pr(const alignment& A, const tree& T, const MultiModel& SModel, const MatCache& MC);
+  double Pr(const alignment& A, const Tree& T, const MultiModel& SModel, const MatCache& MC);
 
   /// Full likelihood - all columns, all rates
   double Pr(const alignment& A, const Parameters& P);
 
 
   // Column likelihood - specific rate (star tree)
-  double Pr_star(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
+  double Pr_star(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
 		 const vector<Matrix>& transition_P);
   // Full likelihood - all columns, all rates (star tree)
-  double Pr_star(const alignment& A, const tree& T, const MultiModel& MModel, const MatCache& MC);
+  double Pr_star(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC);
 
   // Full likelihood - all columns, all rates (star tree)
   double Pr_star(const alignment& A,const Parameters& P);

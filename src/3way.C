@@ -67,17 +67,22 @@ vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
 
 namespace A3 {
 
-  vector<int> get_nodes(const tree& T,int n0) {
+  vector<int> get_nodes(const Tree& T,int n0) {
+    assert(T[n0].is_internal_node());
+    
     vector<int> nodes(4);
     nodes[0] = n0;
-    nodes[1] = T[n0].parent();
-    nodes[2] = T[n0].left();
-    nodes[3] = T[n0].right();
+    
+    vector<const_nodeview> neighbors;
+    append(T[n0].neighbors(),neighbors);
+    nodes[1] = neighbors[0];
+    nodes[2] = neighbors[1];
+    nodes[3] = neighbors[2];
     
     return nodes;
   }
   
-  vector<int> get_nodes_random(const tree& T,int n0) {
+  vector<int> get_nodes_random(const Tree& T,int n0) {
     vector<int> nodes = get_nodes(T,n0);
     
     vector<int> nodes2;
@@ -91,18 +96,11 @@ namespace A3 {
   }
 
   /// Setup node names, with nodes[0]=node1 and nodes[1]=node2
-  vector<int> get_nodes_branch_random(const tree& T,int node1,int node2) {
+  vector<int> get_nodes_branch_random(const Tree& T,int node1,int node2) {
 
-    assert( T.connected(node1,node2) );
+    assert( T.is_connected(node1,node2) );
 
-    vector<int> nodes(4);
-    
-    assert(node1 >= T.leaves());
-    
-    nodes[0] = node1;
-    nodes[1] = T[nodes[0]].parent();
-    nodes[2] = T[nodes[0]].left();
-    nodes[3] = T[nodes[0]].right();
+    vector<int> nodes = get_nodes(T,node1);
     
     // make sure nodes[1] == node2
     if (node2 == nodes[1])
@@ -364,7 +362,7 @@ namespace A3 {
   //  - columns in seq1, seq2, and seq3 should remain in increasing order.
 
   alignment construct(const alignment& old, const vector<int>& path, 
-		      int n0,int n1,int n2,int n3,const tree& T,
+		      int n0,int n1,int n2,int n3,const Tree& T,
 		      const vector<int>& seq1,const vector<int>& seq2, const vector<int>& seq3) {
 
     valarray<bool> group1 = T.partition(n0,n1);
@@ -479,7 +477,7 @@ namespace A3 {
     assert(c6 == seq3.size());
     assert(l == path.size()-1);
 
-    for(int i=0;i<T.leaves();i++) 
+    for(int i=0;i<T.n_leaves();i++) 
       assert(A.seqlength(i) == old.seqlength(i));
 
     //  std::cerr<<"new = "<<A<<endl;  

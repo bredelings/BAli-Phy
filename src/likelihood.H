@@ -17,15 +17,15 @@ double prior(const Parameters&);
 
 //-------------- Alignment Priors -----------------//
 
-// Full Model: t-gaps
+// single branch-alignment priors
 double prior_branch(const alignment&,const IndelModel&,int parent,int child);
-double prior_HMM_nogiven(const alignment&,const Parameters&);
-double prior_HMM(const alignment&,const Parameters&);
+double prior_branch_given(const alignment&,const IndelModel&,int parent,int child);
 
-// Reduced Model: s-gaps
-double prior_branch_notree_nogiven(const alignment&,const IndelModel&,int);
-double prior_branch_notree(const alignment&,const IndelModel&,int);
+// multiple-alignment priors
+double prior_HMM(const alignment&,const Parameters&);
+double prior_HMM_nogiven(const alignment&,const Parameters&);
 double prior_HMM_notree(const alignment&,const Parameters&);
+double prior_HMM_notree_nogiven(const alignment&,const Parameters&);
 
 // --------------- Probability Models -----------------------//
 double Pr_tgaps_tletters(const alignment&,const Parameters&);
@@ -38,10 +38,5 @@ double prior3(const alignment& A,const Parameters& P);
 double likelihood3(const alignment& A,const Parameters& P);
 double probability3(const alignment& A,const Parameters& P);
 
-
-// -------- Topology counting functions ------ //
-double log_num_branches(int n);
-double log_num_topologies(int n);
-double log_num_topologies_in_partition(int n1, int n2);
 
 #endif

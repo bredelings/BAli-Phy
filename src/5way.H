@@ -13,8 +13,8 @@ namespace A5 {
 
   namespace states = A2::states;
 
-  vector<int> get_nodes(const tree& T,int b);
-  vector<int> get_nodes_random(const tree& T,int b);
+  vector<int> get_nodes(const Tree& T,int b);
+  vector<int> get_nodes_random(const Tree& T,int b);
 
   // 21 bits used total:
   // bits 5,4,3,2,1,0     = node present mask
@@ -42,7 +42,7 @@ namespace A5 {
 
   /// Construct a new alignment, from alignment 'old' and 5way alignment 'path'
   alignment construct(const alignment& old, const vector<int>& path, 
-		      const vector<int>& nodes,const tree& T,
+		      const vector<int>& nodes,const Tree& T,
 		      const vector< vector<int> >& seqs,
 		      const vector<int>& states_list);
 

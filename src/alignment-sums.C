@@ -21,29 +21,33 @@ double other_subst(const alignment& A, const Parameters& P, const vector<int>& n
 }
 
 double other_prior(const alignment& A, const Parameters& P,const vector<int>& nodes) {
-  const tree& T = P.T;
+  const Tree& T = P.T;
 
-  double p = 0.0;
+  double p = 0;
 
   // Add in the branch alignments
-  for(int b=0;b<T.branches();b++) {
-    int parent = T.branch(b).parent();
-    int child = T.branch(b).child();
+  for(int b=0;b<T.n_branches();b++) {
+    int target = T.branch(b).target();
+    int source = T.branch(b).source();
 
-    if (includes(nodes,parent) and includes(nodes,child))
+    if (includes(nodes,target) and includes(nodes,source))
       continue;
 
-    p += prior_branch(A,P.IModel(),parent,child);
+    p += prior_branch(A,P.IModel(),target,source);
   }
 
 
   // Add in the node length corrections
-  for(int n=0;n<T.num_nodes()-1;n++) {
-    if (T.leaf_node(n))
+  for(int n=0;n<T.n_nodes();n++) {
+    if (T[n].is_leaf_node())
       continue;
 
     if (includes(nodes,n)) {
-      vector<int> neighbors = T.neighbors(n);
+      vector<const_nodeview> neighbors_NV;
+      append(T[n].neighbors(),neighbors_NV);
+      vector<int> neighbors(neighbors_NV.size());
+      for(int i=0;i<neighbors.size();i++)
+	neighbors[i] = neighbors_NV[i];
       if (includes(nodes,neighbors))
 	continue;
     }
@@ -72,7 +76,7 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
       for(int l=0;l<a.size();l++)
 	dist[column](m,l) = 1.0;
 
-      for(int n=0;n<T.leaves();n++) {
+      for(int n=0;n<T.n_leaves();n++) {
 	if (not group[n]) continue;
 
 	int letter = A(seq[column],n);

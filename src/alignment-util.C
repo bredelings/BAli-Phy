@@ -97,8 +97,8 @@ bool bit_set(const valarray<bool>& v) {
 
 
 /// Check that any two present nodes are connected by a path of present nodes
-bool all_characters_connected(const tree& T,valarray<bool> present,const vector<int>& _ignore) {
-  assert(present.size() == T.n_nodes()-1);
+bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<int>& _ignore) {
+  assert(present.size() == T.n_nodes());
 
   //--------- set the ignored nodes to 'not present' -----------//
   valarray<bool> ignore(false,present.size());
@@ -109,12 +109,13 @@ bool all_characters_connected(const tree& T,valarray<bool> present,const vector<
   }
 
   //---------- for each internal node... -------------//
-  for(int n1=T.leaves(); n1<T.n_nodes()-1; n1++) {
+  for(int n1=T.n_leaves(); n1<T.n_nodes(); n1++) {
 
     if (present[n1] or ignore[n1]) continue;
       
     //------- if it is '-' and not ignored ... -------//
-    vector<int> neighbors = T.neighbors(n1);
+    vector<const_nodeview> neighbors;
+    append(T[n1].neighbors(),neighbors);
     assert(neighbors.size() == 3);
 
     //---- check the three attatched subtrees ... ----//

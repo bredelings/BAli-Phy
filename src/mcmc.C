@@ -65,7 +65,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
-  for(int i=0;i<P.T.leaves();i++) {
+  for(int i=0;i<P.T.n_leaves();i++) {
     vector<int> s;
     for(int column=0;column<A.length();column++)
       if (not A.gap(column,i))
@@ -476,13 +476,13 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   bool MAP_printed = true;
 
   // make sure that the Alignment and Tree are linked
-  assert(A.num_sequences() == T.num_nodes()-1);
-  for(int i=0;i<T.leaves();i++)
+  assert(A.num_sequences() == T.n_nodes());
+  for(int i=0;i<T.n_leaves();i++)
     assert(T.seq(i) == A.seq(i).name);
   
   /*--------- Determine some values for this chain -----------*/
   if (subsample <= 0)
-    subsample = 2*int(log(T.leaves()))+1;
+    subsample = 2*int(log(T.n_leaves()))+1;
 
   int total_samples = 0;
 
