@@ -62,13 +62,13 @@ namespace substitution {
     ublas::matrix<int> subA(A.length(),b.size());
 
     // get criteria for being in a sub-A
-    vector<vector<int> > members;
+    vector<vector<int> > leaves;
     for(int i=0;i<b.size();i++) {
-      members.push_back(vector<int>());
-      members.back().reserve(A.size2());
+      leaves.push_back(vector<int>());
+      leaves.back().reserve(A.size2());
       valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
       for(int i=0;i<T.n_leaves();i++)
-	if (p[i]) members.back().push_back(i);
+	if (p[i]) leaves.back().push_back(i);
     }
       
     // declare the index for the nodes
@@ -77,8 +77,54 @@ namespace substitution {
     for(int c=0;c<A.length();c++) {
       bool empty=true;
       for(int j=0;j<b.size();j++) {
-	subA(l,j) = inc(index[j],members[j],A,c);
+	subA(l,j) = inc(index[j],leaves[j],A,c);
 	if (subA(l,j) != alphabet::gap) empty=false;
+      }
+      if (not empty) l++;
+    }
+
+    //resize the matrix, and send it back...
+    ublas::matrix<int> temp(l,b.size());
+    for(int i=0;i<temp.size1();i++)
+      for(int j=0;j<temp.size2();j++)
+	temp(i,j) = subA(i,j);
+    
+    return temp;
+  }
+
+
+  ublas::matrix<int> get_subA_relationships2(const vector<int>& b,const vector<int>& req,
+					     const alignment& A,const Tree& T) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA(A.length(),b.size());
+
+    // get criteria for being in a sub-A
+    vector<vector<int> > leaves;
+    for(int i=0;i<b.size();i++) {
+      leaves.push_back(vector<int>());
+      leaves.back().reserve(A.size2());
+      valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
+      for(int i=0;i<T.n_leaves();i++)
+	if (p[i]) leaves.back().push_back(i);
+    }
+      
+    // declare the index for the nodes
+    vector<int> index(b.size(),-1);
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+
+      // write the indices for sub-alignments into the current column
+      for(int j=0;j<b.size();j++)
+	subA(l,j) = inc(index[j],leaves[j],A,c);
+
+      // check to see if we have a REQUIRED node here.
+      bool empty=true;
+      for(int j=0;j<req.size();j++) {
+	if (not A.gap(c,req[j])) {
+	  empty = false;
+	  break;
+	}
       }
       if (not empty) l++;
     }
@@ -337,11 +383,9 @@ namespace substitution {
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
   vector<Matrix>
-  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,bool flag)
+  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,const vector<int>& req)
   {
     const Tree& T = P.T;
-    const MatCache& MC = P;
-    const MultiModel& MModel = P.SModel();
     Likelihood_Cache& cache = P.LC;
 
     //------ Check that all branches point to a 'root' node -----------//
@@ -351,45 +395,40 @@ namespace substitution {
       assert(T.directed_branch(b[i]).target() == root);
     cache.root = root;
 
-    // get sources
-    vector<int> source(b.size());
-    for(int i=0;i<source.size();i++) 
-      source[i] = T.directed_branch(b[i]).source();
-    if (flag) source.push_back(root);
+    ublas::matrix<int> index = get_subA_relationships2(b,req,A,T);
 
-    vector<int> index(source.size(),-1);
-
-    //----------- determine the operations to perform -----------------//
-    peeling_info ops = get_branches(T,cache);
-    
-    //-------- propagate info along branches ---------//
-    for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],cache,A,T,MC,MModel);
+    calculate_caches(A,P,cache);
 
     vector<Matrix> L;
     L.reserve(A.length());
 
-    const int M = cache.scratch(0).size1();
-    const int asize = cache.scratch(0).size2();
+    const int n_models = cache.scratch(0).size1();
+    const int asize    = cache.scratch(0).size2();
 
-    for(int c=0;c<A.length();c++) {
-      if (not inc(index,source,A,c)) continue;
+    for(int i=0;i<index.size1();i++) {
 
-      // if the ROOT not is the criterion, then bail when its missing
-      if (flag and A.gap(c,root)) continue;
+      Matrix S(n_models,asize);
 
-      Matrix S(M,asize);
-      for(int i=0;i<S.size1();i++)
-	for(int j=0;j<S.size2();j++)
-	  S(i,j) = 1;
+      for(int m=0;m<n_models;m++) {
+	for(int l=0;l<asize;l++) 
+	  S(m,l) = 1;
 
-      for(int i=0;i<b.size();i++)
-	if (not A.gap(c,source[i]))
-	  for(int j=0;j<S.size1();j++)
-	    for(int k=0;k<S.size2();k++)
-	      S(j,j) *= cache(index[i],b[i])(j,k);
+	//-------------- Propagate and collect information at 'root' -----------//
+	for(int j=0;j<b.size();j++) {
+	  int i0 = index(i,j);
+	  if (i0 != alphabet::gap)
+	    for(int l=0;l<asize;l++) 
+	      S(m,l) *= cache(i0,b[j])(m,l);
+	}
 
-
+	if (root < T.n_leaves()) {
+	  int rl = A.seq(root)[i];
+	  if (alphabet::letter(rl))
+	    for(int l=0;l<asize;l++)
+	      if (l != rl) 
+		S(m,l) = 0;
+	}
+      }
       L.push_back(S);
     }
     return L;
@@ -426,42 +465,30 @@ namespace substitution {
 
   double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) {
     const Tree& T = P.T;
-    const column_cache_t cache = P.LC;
-    calculate_caches(A,P,cache);
+    const MultiModel& MModel = P.SModel();
+    Likelihood_Cache& cache = P.LC;
 
-    double p1 = 0;
+    calc_root_likelihoods(A,T,cache);
 
-    // compute the leaf branches for the subtree
-    vector<int> branches;
-    for(int i=0;i<nodes.size();i++) {
-      vector<int> neighbors;
-      append(T[nodes[i]].neighbors(),neighbors);
+    int root = cache.root;
 
-      int outside = -1;
-      int inside = -1;
-      for(int j=0;j<neighbors.size();j++)
-	if (nodes[neighbors[j]])
-	  inside = neighbors[j];
-	else
-	  outside = neighbors[j];
-      if (outside != -1 and inside != -1)
-	branches.push_back(T.directed_branch(nodes[i],inside));
+    // compute root branches
+    vector<int> rb;
+    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
+      rb.push_back(*i);
+
+    // get the relationships with the sub-alignments
+    ublas::matrix<int> index = get_subA_relationships(rb,A,T);
+
+    double total = 0;
+    for(int i=0;i<index.size1();i++) {
+
+      Matrix & S = cache.scratch(i);
+
+      total += Pr(S,MModel);
     }
 
-    double p2 = 0;
-    for(int column=0;column < A.length();column++) {
-      bool present = false;
-      for(int i=0;i<nodes.size();i++) {
-	if (not A.gap(column,nodes[i]))
-	  present = true;
-      }
-      if (present) continue;
-      
-      p2 += Pr(A, P, column);
-    }
-
-    assert(std::abs(p1 - p2) < 1.0e-9);
-    return p1;
+    return total;
   }
 
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {

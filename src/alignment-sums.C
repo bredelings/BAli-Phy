@@ -98,9 +98,15 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const
     if (group[neighbors[i]])
       branches.push_back(T.directed_branch(neighbors[i],root));
 
-  bool flag = group[root];
+  vector<int> required;
+  if (group[root])
+    required.push_back(root);
+  else {
+    for(int i=0;i<branches.size();i++)
+      required.push_back(T.directed_branch(branches[i]).source());
+  }
 
-  vector< Matrix > dist = substitution::get_column_likelihoods(A,P,branches,flag);
+  vector< Matrix > dist = substitution::get_column_likelihoods(A,P,branches,required);
   // note: we could normalize frequencies to sum to 1
   assert(dist.size() == seq.size());
 
