@@ -226,11 +226,10 @@ vector<int> Tree::standardize() {
 
 vector<int> Tree::standardize(const vector<int>& lnames) {
 
-  //----------- Set the leaf names ------------//
-  assert(lnames.size() == n_leaves());
-
   vector<BranchNode*> old_nodes = nodes_;
 
+  //----------- Set the leaf names ------------//
+  assert(lnames.size() == n_leaves());
   for(int i=0;i<n_leaves();i++)
     nodes_[i]->node = lnames[i];
 
@@ -241,8 +240,6 @@ vector<int> Tree::standardize(const vector<int>& lnames) {
   vector<int> mapping(old_nodes.size());
   for(int i=0;i<mapping.size();i++)
     mapping[i] = old_nodes[i]->node;
-
-  //FIXME - write some code to determine the order of prev/next
 
   return mapping;
 }
@@ -910,4 +907,28 @@ Tree remove_root(const RootedTree& RT) {
   T.remove_node_from_branch(RT.root());
   return T;
 }
+
+bool branch_order(const const_branchview& b1,const const_branchview& b2) {
+    return b1.target().name() < b2.target().name();
+}
+
+vector<const_branchview> sorted_neighbors(const_nodeview n) {
+  vector<const_branchview> branches;
+  append(n.branches_out(),branches);
+
+  std::sort(branches.begin(),branches.end(),branch_order);
+
+  return branches;
+}
+
+
+vector<const_branchview> sorted_branches_after(const_branchview b) {
+  vector<const_branchview> branches;
+  append(b.branches_after(),branches);
+
+  std::sort(branches.begin(),branches.end(),branch_order);
+
+  return branches;
+}
+
 

@@ -140,11 +140,12 @@ string RootedSequenceTree::write(const_branchview b,bool print_lengths) const {
     output += sequences[b.target()];
   // If this is an internal node, then print the subtrees
   else {
+    vector<const_branchview> branches = sorted_branches_after(b);
     output = "(";
-    for(const_out_edges_iterator i = b.branches_after();i;) {
-      output += write(*i,print_lengths);
-      i++;
-      if (i)
+    for(int i=0;i<branches.size();i++) {
+      output += write(branches[i],print_lengths);
+
+      if (i+1<branches.size())
 	output += ",";
     }
     output += ")";
@@ -157,14 +158,14 @@ string RootedSequenceTree::write(const_branchview b,bool print_lengths) const {
   return output;
 }
 
-string RootedSequenceTree::write(bool print_lengths) const {
-  string output = "(";
-  for(const_out_edges_iterator i = root_;i;) {
-    const_branchview b = *i;
-    output += write(b,print_lengths);
+string RootedSequenceTree::write(bool print_lengths) const 
+{
+  vector<const_branchview> branches = sorted_neighbors(root());
 
-    i++;
-    if (i)
+  string output = "(";
+  for(int i=0;i<branches.size();i++) {
+    output += write(branches[i],print_lengths);
+    if (i+1 < branches.size())
       output += ',';
   }
   output += ");";

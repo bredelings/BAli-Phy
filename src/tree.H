@@ -270,5 +270,7 @@ std::vector<const_branchview> branches_after(const Tree& T,int b);
 std::vector<const_branchview> branches_from_node(const Tree& T,int n);
 std::vector<const_branchview> branches_toward_node(const Tree& T,int n);
 
+std::vector<const_branchview> sorted_neighbors(const_nodeview n);
+std::vector<const_branchview> sorted_branches_after(const_branchview b);
 
 #endif
