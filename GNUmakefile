@@ -31,12 +31,12 @@ all: bali-phy
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math tracer prefetch-loop-arrays omit-frame-pointer # profile-use
+LANGO = fast-math # tracer prefetch-loop-arrays omit-frame-pointer # profile-use
 DEBUG = pipe g3 #gdwarf-2 #pg 
 EXACTFLAGS =  # --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS =   NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
+DEFS =   # NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual # effc++
-OPT =  march=pentium4 O3 # malign-double
+OPT =  march=pentium4 #O3 # malign-double
 LDFLAGS = # -fprofile-generate #-pg # -static
 LI=${CXX}
 
@@ -77,7 +77,7 @@ tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rn
 
 tools/alignment-draw: tree.o alignment.o sequencetree.o arguments.o \
 	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
-	randomtree.o ${LINKLIBS} 
+	randomtree.o alignment-random.o ${LINKLIBS} 
 
 tools/alignment-translate: alignment.o alphabet.o sequence.o arguments.o sequence-format.o \
 	util.o	

@@ -21,14 +21,21 @@ class HMM {
 
   double HMM::generalize_P_one(vector<int>::const_iterator,int) const;
 
+  void find_and_index_silent_network_states();
+
 public:
+  /// The 'temperature' - e.g. scale log(P) => log(P)/T
+  double T;
+
   /// The transition matrix for the HMM
   Matrix Q;
 
   /// The 'generalized' transition matrix - silent loops removed
   Matrix GQ;
 
-  bool connected(int S1,int S2) {return GQ(S1,S2) > log_limit;}
+  bool connected_Q(int S1,int S2) const {return Q(S1,S2) > log_limit;}
+
+  bool connected(int S1,int S2) const {return GQ(S1,S2) > log_limit;}
 
   /// Probabilities of starting in each state
   vector<double> start_P;
@@ -64,7 +71,7 @@ public:
   double path_Q_path(const vector<int>& g_path) const;
 
   /// Construct an HMM from the emission characteristics of the states, the start probabilities, and the transition matrix
-  HMM(const vector<int>&,const vector<double>&,const Matrix&);
+  HMM(const vector<int>&,const vector<double>&,const Matrix&,double);
 
   virtual ~HMM() {}
 };

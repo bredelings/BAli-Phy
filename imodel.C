@@ -45,7 +45,7 @@ void IndelModel::construct_lengthp() {
   start_P.erase(start_P.begin()+3);
 
   // Compute probabilities for pairs of lengths
-  DPmatrixNoEmit Matrices(size1,size2,state_emit,start_P,Q);
+  DPmatrixNoEmit Matrices(size1,size2,state_emit,start_P,Q,1.0);
   Matrices.forward_cell(0,0,0,0);
   Matrices.forward_square(0,0,size1,size2);
 

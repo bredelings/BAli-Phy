@@ -98,6 +98,14 @@ bool includes(const std::vector<T>& v, const T& t) {
   return (std::find(v.begin(),v.end(),t) != v.end());
 }
 
+template <typename T>
+bool includes(const std::vector<T>& v1, const std::vector<T>& v2) {
+  for(int i=0;i<v2.size();i++)
+    if (not includes(v1,v2[i]))
+      return false;
+  return true;
+}
+
 std::vector<std::string> split(const std::string&,char);
 
 template<class T>

@@ -5,10 +5,11 @@
 
 class DPengine: public HMM {
 public:
+
   /// Sample a path from the HMM
   virtual vector<int> sample_path() const =0;
 
-  /// Compute the probability of all possible paths through theHMM
+  /// Calculates the (log) probability of all possible paths through theHMM
   virtual double Pr_sum_all_paths() const =0;
 
   /// Calculates the (log) probability that this path is sampled by the generalized HMM
@@ -25,7 +26,7 @@ public:
   /// Check of the relative probabilities of path1 and path2 agree with lp1+ls1 and lp2+ls2
   double check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) const;
 
-  DPengine(const vector<int>&,const vector<double>&,const Matrix&);
+  DPengine(const vector<int>&,const vector<double>&,const Matrix&,double Temp);
 };
 
 
@@ -58,7 +59,7 @@ public:
   double Pr_sum_all_paths() const;
 
   /// Construct an 1D DP matrix from a length, and an HMM
-  DParray(int,const vector<int>&,const vector<double>&,const Matrix&);
+  DParray(int,const vector<int>&,const vector<double>&,const Matrix&,double Temp);
 
   virtual ~DParray() {}
 };
@@ -85,7 +86,7 @@ public:
   void prune();
 
   /// Construct an 1D DP matrix from a length, and an HMM
-  DParrayConstrained(int,const vector<int>&,const vector<double>&,const Matrix&);
+  DParrayConstrained(int,const vector<int>&,const vector<double>&,const Matrix&, double Temp);
 
   virtual ~DParrayConstrained() {}
 };
@@ -141,7 +142,8 @@ public:
 		     int i2,
 		     const vector<int>& v1,
 		     const vector<double>& v2,
-		     const Matrix& M);
+		     const Matrix& M,
+		     double Temp);
   virtual ~DPmatrix() {}
 };
 
@@ -158,11 +160,13 @@ public:
   double path_Q_subst(const vector<int>& path) const {return 0;}
 
   DPmatrixNoEmit::DPmatrixNoEmit(int i1,
-		     int i2,
-		     const vector<int>& v1,
-		     const vector<double>& v2,
-		     const Matrix& M)
-    :DPmatrix(i1,i2,v1,v2,M) 
+				 int i2,
+				 const vector<int>& v1,
+				 const vector<double>& v2,
+				 const Matrix& M,
+				 double Temp
+				 )
+    :DPmatrix(i1,i2,v1,v2,M,Temp) 
   {}
 
   virtual ~DPmatrixNoEmit() {}
@@ -205,6 +209,7 @@ public:
   DPmatrixEmit::DPmatrixEmit(const vector<int>&,
 			     const vector<double>&,
 			     const Matrix&,
+			     double Temp,
 			     const vector< double >&,
 			     const vector< vector< valarray<double> > >&,
 			     const vector< vector< valarray<double> > >&, 
@@ -223,11 +228,12 @@ public:
   DPmatrixSimple(const vector<int> & v1,
 		 const vector<double> & v2,
 		 const Matrix& M,
+		 double Temp,
 		 const vector< double >& d0,
 		 const vector< vector< valarray<double> > >& d1,
 		 const vector< vector< valarray<double> > >& d2, 
 		 const valarray<double>& f):
-    DPmatrixEmit(v1,v2,M,d0,d1,d2,f)
+    DPmatrixEmit(v1,v2,M,Temp,d0,d1,d2,f)
   { }
 
   virtual ~DPmatrixSimple() {}
@@ -248,12 +254,13 @@ public:
   void prune();
 
   DPmatrixConstrained(const vector<int> & v1,
-	      const vector<double> & v2,
-	      const Matrix& M,
-	      const vector< double >& d0,
-	      const vector< vector< valarray<double> > >& d1,const vector< vector< valarray<double> > >& d2, 
-	      const valarray<double>& f):
-    DPmatrixEmit(v1,v2,M,d0,d1,d2,f), allowed_states(d2.size()+1)
+		      const vector<double> & v2,
+		      const Matrix& M,
+		      double Temp,
+		      const vector< double >& d0,
+		      const vector< vector< valarray<double> > >& d1,const vector< vector< valarray<double> > >& d2, 
+		      const valarray<double>& f):
+    DPmatrixEmit(v1,v2,M,Temp,d0,d1,d2,f), allowed_states(d2.size()+1)
   { }
 
   virtual ~DPmatrixConstrained() {}

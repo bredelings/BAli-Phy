@@ -385,10 +385,14 @@ double MoveEach::sum(int arg) const {
   for(int i=0;i<lambda.size();i++)
     if (submove_has_arg(i,arg) and moves[i]->enabled())
       total += lambda[i];
+
+  assert(total > 0);
   return total;
 }
 
 int MoveEach::choose(int arg) const {
+  assert(moves.size() > 0);
+
   double r = myrandomf()*sum(arg);
 
   double sum = 0;
@@ -403,7 +407,8 @@ int MoveEach::choose(int arg) const {
   }
 
   // is sum(arg) > 0 ?
-  assert(i < moves.size());
+  if (i >= moves.size())
+    assert(i < moves.size());
 
   return i;
 }

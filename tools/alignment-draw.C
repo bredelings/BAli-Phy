@@ -127,11 +127,6 @@ int main(int argc,char* argv[]) {
     cerr.precision(10);
     cout.precision(10);
     
-    SequenceTree T;
-    if (not args.set("tree"))
-      throw myexception("Tree file not specified! (tree=<filename>)");
-    T.read(args["tree"]);
-
     bool columncolors = args.set("columncolors");
 
     bool show_column_numbers = args.set("positions");
@@ -142,15 +137,9 @@ int main(int argc,char* argv[]) {
       throw myexception("Alignment file not specified! (align=<filename>)");
 
     /* ----- Alphabets to try ------ */
-    vector<alphabet> alphabets;
-    alphabets.push_back(alphabet("DNA nucleotides","AGTC","N"));
-    alphabets.push_back(alphabet("RNA nucleotides","AGUC","N"));
-    alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
     alignment A;
-    A.load(alphabets,args["align"]);
-
-    /*------ Link Alignment and Tree ----------*/
-    link(A,T);
+    SequenceTree T;
+    load_A_and_T(args,A,T);
 
     /*------- Find mapping from colorfile to alignment sequence order -------*/
     if (not args.set("colors"))
@@ -237,7 +226,7 @@ int main(int argc,char* argv[]) {
 	  int s = i;
 
 	  for(int column=pos;column<pos+width and column < end; column++) {
-	    char c = a.lookup(A(column,s));
+	    string c = a.lookup(A(column,s));
 	    double sscale=1.0;
 	    if (A.gap(column,s)) {
 	      sscale = 0.3;

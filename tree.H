@@ -199,6 +199,7 @@ public:
 
   int get_nth(int i) const {return order[i]->name;}
 
+  std::vector<int> neighbors(int node) const;
   bool connected(int node1,int node2) const;
   int find_branch(int node1,int node2) const;
 
@@ -211,6 +212,9 @@ public:
   int n_leaves() const {return leaves();}
   int n_leafbranches() const {return leafbranches();}
   int n_branches() const {return branches();}
+
+  bool leaf_node(int n) const {return n < n_leaves();}
+  bool internal_node(int n) const {return not leaf_node(n);}
 
   branchview branch_up(int);
   const_branchview branch_up(int) const;
@@ -273,6 +277,5 @@ inline bool tree::connected(int node1,int node2) const {
 
   return false;
 }
-
 
 #endif

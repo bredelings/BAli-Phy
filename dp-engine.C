@@ -16,11 +16,8 @@ double DPengine::check(const vector<int>& path1,const vector<int>& path2,double 
   vector<int> path1_G = generalize(path1);
   vector<int> path2_G = generalize(path2);
 
-  double p1 = path_P(path1_G); 
-  double p2 = path_P(path2_G); 
-
-  p1 += generalize_P(path1);
-  p2 += generalize_P(path2);
+  double p1 = path_P(path1_G) + generalize_P(path1);
+  double p2 = path_P(path2_G) + generalize_P(path2); 
 
   // get the probabilities of the path through the 3-way HMM
   double qp1 = path_Q_path(path1_G) + generalize_P(path1);
@@ -43,21 +40,21 @@ double DPengine::check(const vector<int>& path1,const vector<int>& path2,double 
     std::cerr<<endl;
 
     // Do the likelihood and HMM substitition probabilities agree?
-    std::cerr<<"LS1 = "<<ls1<<"     LS2 = "<<ls2<<"   LS2 - LS1 = "<<ls2-ls1<<endl;
     std::cerr<<"QS1 = "<<qs1<<"     QS2 = "<<qs2<<"   QS2 - QS1 = "<<qs2-qs1<<endl;
+    std::cerr<<"LS1 = "<<ls1<<"     LS2 = "<<ls2<<"   LS2 - LS1 = "<<ls2-ls1<<endl;
     std::cerr<<endl;
 
     // Do the likelihood and HMM path probabilities agree?
-    std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<"   LS2 - LS1 = "<<lp2-lp1<<endl;
-    std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<"   QS2 - QS1 = "<<qp2-qp1<<endl;
+    std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<"   QP2 - QP1 = "<<qp2-qp1<<endl;
+    std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<"   LP2 - LP1 = "<<lp2-lp1<<endl;
     std::cerr<<endl;
   }
 
   return diff;
 }
 
-DPengine::DPengine(const vector<int>& v1,const vector<double>& v2, const Matrix&M)
-  :HMM(v1,v2,M) 
+DPengine::DPengine(const vector<int>& v1,const vector<double>& v2, const Matrix&M,double Temp)
+  :HMM(v1,v2,M,Temp) 
 { }
 
 
@@ -187,8 +184,9 @@ double DParray::Pr_sum_all_paths() const {
   return total;
 }
 
-DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M)
-  :DPengine(v1,v2,M),vector< vector<double> >(nstates(),vector<double>(l+1,log_0)),length(l+1)
+DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
+  :DPengine(v1,v2,M,Temp),
+   vector< vector<double> >(nstates(),vector<double>(l+1,log_0)),length(l+1)
 { 
   for(int s=0;s<start_P.size();s++)
     (*this)[s][0] = start_P[s];
@@ -265,8 +263,8 @@ void DParrayConstrained::prune() {
   std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<endl;
 }
 
-DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M)
-  :DParray(l,v1,v2,M),allowed_states(l+1)
+DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
+  :DParray(l,v1,v2,M,Temp),allowed_states(l+1)
 { }
 
 
@@ -557,8 +555,9 @@ DPmatrix::DPmatrix(int i1,
 		   int i2,
 		   const vector<int>& v1,
 		   const vector<double>& v2,
-		   const Matrix& M)
-  :DPengine(v1,v2,M),
+		   const Matrix& M,
+		   double Temp)
+  :DPengine(v1,v2,M,Temp),
    vector<Matrix>(nstates(),Matrix(i1+1,i2+1)),
    S1(i1+1),
    S2(i2+1)
@@ -620,7 +619,7 @@ inline double DPmatrixEmit::emitMM(int i,int j) const {
     total += distribution[r]*temp;
   }
 
-  return log(total);
+  return log(total)/T;
 }
 
 inline double DPmatrixEmit::emitM_(int i,int j) const {
@@ -666,11 +665,12 @@ double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
 DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 			   const vector<double>& v2,
 			   const Matrix& M,
+			   double Temp,
 			   const vector< double >& d0,
 			   const vector< vector< valarray<double> > >& d1,
 			   const vector< vector< valarray<double> > >& d2, 
 			   const valarray<double>& f)
-  :DPmatrix(d1.size(),d2.size(),v1,v2,M),
+  :DPmatrix(d1.size(),d2.size(),v1,v2,M,Temp),
    s1_sub(d1.size()),s2_sub(d2.size()),
    distribution(d0),
    dists1(d1),dists2(d2),frequency(f)
@@ -681,14 +681,14 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
     double total=0;
     for(int r=0;r<nrates();r++)
       total += distribution[r]*sum( dists1[i][r] * frequency );
-    s1_sub[i] = log(total);
+    s1_sub[i] = log(total)/T;
   }
   
   for(int i=0;i<dists2.size();i++) {
     double total=0;
     for(int r=0;r<nrates();r++)
       total += distribution[r]*sum( dists2[i][r] * frequency );
-    s2_sub[i] = log(total);
+    s2_sub[i] = log(total)/T;
   }
 }
 

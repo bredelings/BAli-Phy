@@ -9,58 +9,8 @@
 #include "3way.H"
 #include "alignment-sums.H"
 
-void check_match_P(const alignment& A,const Parameters& P, double OS, double OP, const vector<int>& path, const DPengine& Matrices) {
-
-  /*------------------- Check offsets from path_Q -> P -----------------*/
-  vector<int> path_g = Matrices.generalize(path);
-
-  double qs = Matrices.path_Q_subst(path_g) + OS;
-  double ls = P.likelihood(A,P);
-
-  double qp = Matrices.path_Q_path(path_g) + Matrices.generalize_P(path) + OP;
-  double lp = prior_HMM(A,P);
-
-  double qt = qs + qp + prior(P);
-  double lt = P.probability(A,P);
-
-  std::cerr<<"qs = "<<qs<<"    ls = "<<ls<<endl;
-  std::cerr<<"qp = "<<qp<<"    lp = "<<lp<<endl;
-  std::cerr<<"qt = "<<qt<<"    lt = "<<lt<<endl;
-
-  if ( (std::abs(qs - ls) > 1.0e-9) or (std::abs(qp - lp) > 1.0e-9) or (std::abs(qt - lt) > 1.0e-9)) {
-    std::cerr<<A<<endl;
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-  }
-
-}
-
-vector<double> sample_P(const alignment& A,const Parameters& P,
-			double OS, double OP, double P_choice,
-			const vector<int>& path, const DPengine& Matrices) 
-{
-  vector<double> PR(3);
-
-  vector<int> path_g = Matrices.generalize(path);
-
-  // Probability
-  PR[0] = P.probability(A,P);
-
-  // Probability of sampling 
-  PR[1] = P_choice + Matrices.path_P(path_g) + Matrices.generalize_P(path);
-
-  std::cerr<<"PrS = "<<P_choice<<" + "<<Matrices.path_P(path_g)<<" + "<<Matrices.generalize_P(path)<<endl;
-
-  PR[2] = Matrices.path_Q(path_g) + Matrices.generalize_P(path)+ prior(P) + OS + OP;
-
-  return PR;
-}
-
-
 ///Sample between 2 topologies, ignoring gap priors on each case
 bool topology_sample_SPR_fgaps(alignment& A,Parameters& P1,const Parameters& P2,int n1,int n2) {
-
-  MCMC::result_t result(0.0,2);
-  result[0] = 1.0;
 
   //----------- Generate the Different Matrices ---------//
 
@@ -83,9 +33,9 @@ bool topology_sample_SPR_fgaps(alignment& A,Parameters& P1,const Parameters& P2,
   //-------- Calculate corrections to path probabilities ---------//
 
   vector<double> OP(3);
-  OP[0] = other_prior(a[0],p[0],nodes[0][0]);
+  OP[0] = other_prior(a[0],p[0],nodes[0]);
   OP[1] = OP[0];
-  OP[2] = other_prior(a[2],p[2],nodes[2][0]);
+  OP[2] = other_prior(a[2],p[2],nodes[2]);
   
   vector<double> OS(3);
   OS[0] = p[1].likelihood(a[1],p[1]);
@@ -96,8 +46,8 @@ bool topology_sample_SPR_fgaps(alignment& A,Parameters& P1,const Parameters& P2,
   
   vector<double> Pr(2);
   
-  Pr[0] = Matrices[1].Pr_sum_all_paths() + OS[1] + OP[1] + prior(p[1]);
-  Pr[1] = Matrices[2].Pr_sum_all_paths() + OS[2] + OP[2] + prior(p[2]);
+  Pr[0] = Matrices[1].Pr_sum_all_paths() + OS[1] + OP[1] + prior(p[1])/p[1].Temp;
+  Pr[1] = Matrices[2].Pr_sum_all_paths() + OS[2] + OP[2] + prior(p[2])/p[2].Temp;
   
   int C = 1 + choose(Pr);
   
@@ -110,9 +60,7 @@ bool topology_sample_SPR_fgaps(alignment& A,Parameters& P1,const Parameters& P2,
     vector<int> path   = get_path_3way(A3::project(a[i],nodes[i]),0,1,2,3);
     paths.push_back( path ); 
 
-    int length = a[i].seqlength(nodes[i][0]);
-
-    double OP_i = OP[i] - 2.0*p[i].IModel().lengthp( length );
+    double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
 
     check_match_P(a[i], p[i], OS[i], OP_i, path, Matrices[i]);
   }
@@ -128,7 +76,7 @@ bool topology_sample_SPR_fgaps(alignment& A,Parameters& P1,const Parameters& P2,
       P_choice = choose_P(i-1,Pr);
 
     PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
-    PR[i][0] += 2.0*p[i].IModel().lengthp( a[i].seqlength(nodes[i][0]) );
+    PR[i][0] += A3::log_correction(a[i],p[i],nodes[i]);
   }
 
 
@@ -168,9 +116,6 @@ bool topology_sample_SPR_fgaps(alignment& A,Parameters& P1,const Parameters& P2,
 ///Sample between 2 topologies, ignoring gap priors on each case
 bool sample_SPR_and_A(alignment& A,Parameters& P1,const Parameters& P2,int n1,int n2) {
 
-  MCMC::result_t result(0.0,2);
-  result[0] = 1.0;
-
   //----------- Generate the Different Matrices ---------//
 
   vector<alignment> a(3,A);
@@ -192,9 +137,9 @@ bool sample_SPR_and_A(alignment& A,Parameters& P1,const Parameters& P2,int n1,in
   //-------- Calculate corrections to path probabilities ---------//
 
   vector<double> OP(3);
-  OP[0] = other_prior(a[0],p[0],nodes[0][0]);
+  OP[0] = other_prior(a[0],p[0],nodes[0]);
   OP[1] = OP[0];
-  OP[2] = other_prior(a[2],p[2],nodes[2][0]);
+  OP[2] = other_prior(a[2],p[2],nodes[2]);
   
   vector<double> OS(3);
   OS[0] = other_subst(a[1],p[1],nodes[1]);  
@@ -205,8 +150,8 @@ bool sample_SPR_and_A(alignment& A,Parameters& P1,const Parameters& P2,int n1,in
   
   vector<double> Pr(2);
   
-  Pr[0] = Matrices[1].Pr_sum_all_paths() + OS[1] + OP[1] + prior(p[1]);
-  Pr[1] = Matrices[2].Pr_sum_all_paths() + OS[2] + OP[2] + prior(p[2]);
+  Pr[0] = Matrices[1].Pr_sum_all_paths() + OS[1] + OP[1] + prior(p[1])/p[1].Temp;
+  Pr[1] = Matrices[2].Pr_sum_all_paths() + OS[2] + OP[2] + prior(p[2])/p[1].Temp;
   
   int C = 1 + choose(Pr);
   
@@ -219,8 +164,7 @@ bool sample_SPR_and_A(alignment& A,Parameters& P1,const Parameters& P2,int n1,in
     vector<int> path   = get_path_3way(A3::project(a[i],nodes[i]),0,1,2,3);
     paths.push_back( path ); 
 
-    int length = a[i].seqlength(nodes[i][0]);
-    double OP_i = OP[i] - 2.0*p[i].IModel().lengthp( length );
+    double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
 
     check_match_P(a[i], p[i], OS[i], OP_i, path, Matrices[i]);
   }
@@ -236,7 +180,7 @@ bool sample_SPR_and_A(alignment& A,Parameters& P1,const Parameters& P2,int n1,in
       P_choice = choose_P(i-1,Pr);
 
     PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
-    PR[i][0] += 2.0*p[i].IModel().lengthp( a[i].seqlength(nodes[i][0]) );
+    PR[i][0] += A3::log_correction(a[i],p[i],nodes[i]);
   }
 
 

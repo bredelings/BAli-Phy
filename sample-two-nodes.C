@@ -50,7 +50,7 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   vector<int> columns = getorder(old,nodes);
 
   //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
-  //  std::cerr<<"old (reordered) = "<<project(old,n0,n1,n2,n3)<<endl;
+  //  std::cerr<<"old (reordered) = "<<project(old,nodes)<<endl;
 
   // Find sub-alignments and sequences
   vector<vector<int> > seqs(5);
@@ -111,7 +111,7 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   const Matrix Q = createQ(P.IModel(),A5::states_list);
 
   // Actually create the Matrices & Chain
-  DParrayConstrained Matrices(seqall.size(), state_emit_1D, get_start_P(pi,A5::states_list), Q);
+  DParrayConstrained Matrices(seqall.size(), state_emit_1D, get_start_P(pi,A5::states_list), Q, P.Temp);
 
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices.size();c2++) {
@@ -157,9 +157,17 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   vector<int> path_g = Matrices.sample_path();
   vector<int> path = Matrices.ungeneralize(path_g);
 
+  std::cerr<<"generalized A = \n"<<construct(old,path_g,nodes,T,seqs,A5::states_list)<<endl;
+  std::cerr<<"ungeneralized A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
+
   A = construct(old,path,nodes,T,seqs,A5::states_list);
 
+  //  std::cerr<<"A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
+
 #ifndef NDEBUG_DP
+  if (not (Matrices.generalize_P(path) > log_limit ))
+    assert(Matrices.generalize_P(path) > log_limit );
+
   vector<int> newnodes;
   for(int i=0;i<6;i++)
     newnodes.push_back(i);
@@ -172,6 +180,7 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   // get the generalized paths - no sequential silent states that can loop
   vector<int> path_new_g = Matrices.generalize(path_new);
   assert(path_new_g == path_g);
+  assert(path_new   == path);
   assert(valid(A));
 #endif
 
@@ -197,12 +206,18 @@ alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
 
   vector<int> path_old = get_path(project(old,nodes),newnodes,A5::states_list);
   vector<int> path_new = get_path(project(A,nodes),newnodes,A5::states_list);
+
+  std::cerr<<project(old,nodes)<<endl;
+
+  check_match_P(old, P, P.likelihood(old,P), other_prior(old,P,nodes) - A5::log_correction(old,P,nodes), path_old, Matrices);
+  check_match_P(A  , P, P.likelihood(A  ,P), other_prior(A  ,P,nodes) - A5::log_correction(A,  P,nodes), path_new, Matrices);
+
   //-------------- Check relative path probabilities --------------//
   double s1 = P.likelihood(old,P);
   double s2 = P.likelihood(A,P);
 
-  double lp1 = prior_HMM_nogiven(old,P);
-  double lp2 = prior_HMM_nogiven(A  ,P);
+  double lp1 = prior_HMM_nogiven(old,P)/P.Temp;
+  double lp2 = prior_HMM_nogiven(A  ,P)/P.Temp;
 
   double diff = Matrices.check(path_old,path_new,lp1,s1,lp2,s2);
 

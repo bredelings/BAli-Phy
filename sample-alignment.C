@@ -90,8 +90,8 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   vector<double> start_P = pi;
   start_P.erase(start_P.begin()+3);
 
-  DPmatrixSimple Matrices(state_emit,start_P,P.IModel().Q,
-			  P.SModel().distribution(),dists1,dists2,frequency);
+  DPmatrixSimple Matrices(state_emit, start_P, P.IModel().Q, P.Temp,
+			  P.SModel().distribution(), dists1, dists2, frequency);
 
   /*------------------ Compute the DP matrix ---------------------*/
 
@@ -132,10 +132,12 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
 
   // Calculate the probability of (L1,L2)
-  DPmatrixNoEmit Matrices2(seq1.size(),seq2.size(),state_emit,start_P,P.IModel().Q);
-  Matrices2.forward_square(0,0,seq1.size(),seq2.size());
-  double length2_p = Matrices2.Pr_sum_all_paths();
-  std::cerr<<"P(l1,l2|Lambda) = "<<length2_p<<std::endl;
+  if (P.Temp == 1.0) {
+    DPmatrixNoEmit Matrices2(seq1.size(), seq2.size(), state_emit, start_P,P.IModel().Q, P.Temp);
+    Matrices2.forward_square(0,0,seq1.size(),seq2.size());
+    double length2_p = Matrices2.Pr_sum_all_paths();
+    std::cerr<<"P(l1,l2|Lambda) = "<<length2_p<<std::endl;
+  }
 
 #endif
   /*--------------------------------------------------------------*/

@@ -495,12 +495,14 @@ namespace A5 {
     int l1 = A.seqlength(nodes[4]);
     int l2 = A.seqlength(nodes[5]);
 
-    return 2.0*( P.IModel().lengthp(l1) + P.IModel().lengthp(l2) );
+    return 2.0*( P.IModel().lengthp(l1) + P.IModel().lengthp(l2) )/P.Temp;
   }
 
 
   double log_acceptance_ratio(const alignment& A1,const Parameters& P1,const vector<int>& nodes1,
 			      const alignment& A2,const Parameters& P2,const vector<int>& nodes2) {
+    assert(P1.Temp == P2.Temp);
+
     double log_ratio = log_correction(A1,P1,nodes1) - log_correction(A2,P2,nodes2);
 
     return log_ratio;

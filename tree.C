@@ -485,6 +485,22 @@ const_branchview tree::branch_up(int node1) const {
 }
 
 
+std::vector<int> tree::neighbors(int i) const {
+  assert(0 <= i and i < num_nodes()-1);
+
+  std::vector<int> nodes;
+  nodes.reserve(3);
+  nodes.push_back( (*this)[i].parent() );
+
+  node* n = names[i];
+  if (n->left)
+    nodes.push_back(n->left->name);
+  if (n->right)
+    nodes.push_back(n->right->name);
+  
+  return nodes;
+}
+
 // ***** "exchange_cousins" and "exchange": *****
 // We exchange the subtrees specified by node1 and node2
 // o The subtrees are specified by only one node - the direction

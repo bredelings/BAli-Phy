@@ -109,7 +109,7 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
   const Matrix Q = createQ(P.IModel());
 
   // Actually create the Matrices & Chain
-  DParrayConstrained Matrices(seq123.size(),state_emit,get_start_P(pi),Q);
+  DParrayConstrained Matrices(seq123.size(),state_emit,get_start_P(pi),Q, P.Temp);
 
   // Determine state order
   vector<int> state_order(nstates);
@@ -200,8 +200,8 @@ alignment sample_node(const alignment& old,const Parameters& P,int node) {
   double s1 = P.likelihood(old,P);
   double s2 = P.likelihood(A,P);
 
-  double lp1 = prior_HMM_nogiven(old,P);
-  double lp2 = prior_HMM_nogiven(A  ,P);
+  double lp1 = prior_HMM_nogiven(old,P)/P.Temp;
+  double lp2 = prior_HMM_nogiven(A  ,P)/P.Temp;
 
   double diff = Matrices.check(path_old,path_new,lp1,s1,lp2,s2);
 

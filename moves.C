@@ -2,6 +2,7 @@
 #include "rng.H"
 #include <algorithm>
 #include "mcmc.H"
+#include "3way.H"
 
 MCMC::result_t slide_branch_lengths_one(alignment& A, Parameters& P,int b) {
 
@@ -94,8 +95,19 @@ MCMC::result_t sample_node_move(alignment& A, Parameters& P,int node) {
   return MCMC::result_t(); // no_result
 }
 
-MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int b) {
+MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
   assert(P.IModel().full_tree); 
+
+  vector<int> nodes = A3::get_nodes_random(P.T,n0);
+  int n1 = -1;
+  for(int i=1;i<nodes.size();i++)
+    if (P.T.internal_node(nodes[i])) {
+      n1 = nodes[i];
+      break;
+    }
+  assert(n1 != 1);
+
+  int b = P.T.find_branch(n0,n1);
 
   A = sample_two_nodes(A,P,b);
 

@@ -104,8 +104,8 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   const Matrix Q = createQ(P.IModel());
 
   // Actually create the Matrices & Chain
-  DPmatrixConstrained Matrices(get_state_emit(),get_start_P(pi),Q,
-		       P.SModel().distribution(),dists1,dists23,frequency);
+  DPmatrixConstrained Matrices(get_state_emit(), get_start_P(pi), Q, P.Temp,
+		       P.SModel().distribution(), dists1, dists23, frequency);
 
   // Determine state order - FIXME - make this part of dpmatrix.H (part of HMM)
   vector<int> state_order(nstates);
@@ -198,8 +198,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node
   double s1 = P.likelihood(old,P);
   double s2 = P.likelihood(A,P);
 
-  double lp1 = prior_HMM_nogiven(old,P);
-  double lp2 = prior_HMM_nogiven(A  ,P);
+  double lp1 = prior_HMM_nogiven(old,P)/P.Temp;
+  double lp2 = prior_HMM_nogiven(A  ,P)/P.Temp;
 
   double diff = Matrices.check(path_old,path_new,lp1,s1,lp2,s2);
 
@@ -229,104 +229,89 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node
 
 /// Assumptions:
 ///  We assume that the probably of the other branch alignments is unaffected...
-bool tri_sample_alignment_branch(alignment& old,Parameters& P1,
+bool tri_sample_alignment_branch(alignment& A,Parameters& P1,
 				 int node1,int node2,int b,double length2)
 {
-  Parameters P2 = P1;
-  P2.setlength(b,length2);
-
-  alignment A = old;
-  alignment A2 = old;
-
-  /*-------------- Create alignment matrices and sample from them---------------*/
+  //----------- Generate the Different Matrices ---------//
+  vector<alignment> a(3,A);
+  vector<Parameters> p(3,P1);
+  p[2].setlength(b,length2);
 
   vector<int> nodes = get_nodes_branch_random(P1.T,node1,node2);
 
-  DPmatrixConstrained Matrices1 = tri_sample_alignment_base(A,P1,nodes);
 
-  DPmatrixConstrained Matrices2 = tri_sample_alignment_base(A2,P2,nodes);
-
-
+  vector<DPmatrixConstrained> Matrices;
+  Matrices.push_back(tri_sample_alignment_base(a[1],p[1],nodes) );
+  Matrices.push_back(Matrices[0]);
+  Matrices.push_back(tri_sample_alignment_base(a[2],p[2],nodes) );
+  
   /*----------------------- Choose between P1 and P2 --------------------------*/
 
-  const bool gibbs = true;
+  vector<double> Pr(2);
+  Pr[0] = Matrices[1].Pr_sum_all_paths() + prior(p[1])/p[1].Temp;
+  Pr[1] = Matrices[2].Pr_sum_all_paths() + prior(p[2])/p[2].Temp;
 
-  double Pr1 = Matrices1.Pr_sum_all_paths() + prior(P1);
-  double Pr2 = Matrices2.Pr_sum_all_paths() + prior(P2);
-
-  int choice = 0;
-  if (gibbs)
-    choice = choose2(Pr1,Pr2);
-  else if (myrandomf() < exp(Pr2 - Pr1))
-    choice = 1;
-
-  Parameters*  ChosenP = &P1;
-  DPmatrixConstrained* ChosenMatrices = &Matrices1;
-  if (choice == 1) {
-    A = A2;
-    ChosenMatrices = &Matrices2;
-    ChosenP = &P2;
-  }
-
-  int length_old = old.seqlength(node1);
-  int length_new = A.seqlength(node1);
+  int C = 1 + choose(Pr);
 
 #ifndef NDEBUG_DP
-  /*---------- get the paths through the 3way alignment, from the entire alignment ----------*/
-  vector<int> path_old = get_path_3way(project(old,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
-  vector<int> path_old_g = Matrices1.generalize(path_old);
+  vector< vector<int> > paths;
+  vector<double> OP(3);
+  vector<double> OS(3);
 
-  vector<int> path_new = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
-  vector<int> path_new_g = ChosenMatrices->generalize(path_new);
+  //------------------- Check offsets from path_Q -> P -----------------//
+  for(int i=0;i<3;i++) {
+    vector<int> path   = get_path_3way(A3::project(a[i],nodes),0,1,2,3);
+    paths.push_back( path ); 
 
-  //-------------- Check relative path probabilities --------------//
-  double PrOld = P1.probability(old,P1) + 2.0*P1.IModel().lengthp(length_old);
-  double PrNew = P1.probability(A,*ChosenP) + 2.0*P1.IModel().lengthp(length_new);
+    OP[i] = other_prior(a[i],p[i],nodes);
+    OS[i] = other_subst(a[i],p[i],nodes);
+    double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes);
 
-  double PrS1 = choose3_P(0,Pr1,Pr2,log_0)+Matrices1.path_P(path_old_g)
-    + Matrices1.generalize_P(path_old);
-
-  std::cerr<<"PrS1 = "<<choose3_P(0,Pr1,Pr2,log_0)<<" + "<<Matrices1.path_P(path_old_g)<<" + "<< Matrices1.generalize_P(path_old)<<endl;
-
-  double PrS2 = choose3_P(choice,Pr1,Pr2,log_0)+ChosenMatrices->path_P(path_new_g)
-    + ChosenMatrices->generalize_P(path_new);
-
-  std::cerr<<"PrS2 = "<<choose3_P(choice,Pr1,Pr2,log_0)<<" + "<<ChosenMatrices->path_P(path_new_g)<<" + "<< ChosenMatrices->generalize_P(path_new)<<endl;
-
-  double PrQ1 = Matrices1.path_Q(path_old_g) + 
-    Matrices1.generalize_P(path_old)+ prior(P1);
-
-  double PrQ2 = ChosenMatrices->path_Q(path_new_g) + 
-    ChosenMatrices->generalize_P(path_new) + prior(*ChosenP);
-
-  std::cerr<<"Gibbs = "<<gibbs<<endl;
-  std::cerr<<" Pr1  = "<<PrOld<<"    Pr2  = "<<PrNew<<"    Pr2  - Pr1  = "<<PrNew - PrOld<<endl;
-  std::cerr<<" PrQ1 = "<<PrQ1<<"    PrQ2 = "<<PrQ2<<"    PrQ2 - PrQ1 = "<<PrQ2 - PrQ1<<endl;
-  std::cerr<<" PrS1 = "<<PrS1<<"    PrS2 = "<<PrS2<<"    PrS2 - PrS1 = "<<PrS2 - PrS1<<endl;
+    check_match_P(a[i], p[i], OS[i], OP_i, path, Matrices[i]);
+  }
 
 
-  double diff = (PrS2 - PrS1) - (PrNew - PrOld);
+  //--------- Compute path probabilities and sampling probabilities ---------//
+  vector< vector<double> > PR(3);
+
+  for(int i=0;i<3;i++) {
+    double P_choice = 0;
+    if (i==0)
+      P_choice = choose_P(0,Pr);
+    else
+      P_choice = choose_P(i-1,Pr);
+
+    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
+    PR[i][0] += A3::log_correction(a[i],p[i],nodes);
+  }
+
+
+  std::cerr<<"choice = "<<C<<endl;
+  std::cerr<<" Pr1  = "<<PR[0][0]<<"    Pr2  = "<<PR[C][0]<<"    Pr2  - Pr1  = "<<PR[C][0] - PR[0][0]<<endl;
+  std::cerr<<" PrQ1 = "<<PR[0][2]<<"    PrQ2 = "<<PR[C][2]<<"    PrQ2 - PrQ1 = "<<PR[C][2] - PR[0][2]<<endl;
+  std::cerr<<" PrS1 = "<<PR[0][1]<<"    PrS2 = "<<PR[C][1]<<"    PrS2 - PrS1 = "<<PR[C][1] - PR[0][1]<<endl;
+
+  double diff = (PR[C][1] - PR[0][1]) - (PR[C][0] - PR[0][0]);
   std::cerr<<"diff = "<<diff<<endl;
-  if (abs(diff) > 1.0e-9 and gibbs) {
-    std::cerr<<old<<endl;
-    std::cerr<<A<<endl;
+  if (std::abs(diff) > 1.0e-9) {
+    std::cerr<<a[0]<<endl;
+    std::cerr<<a[C]<<endl;
 
-    std::cerr<<project(old,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
-    std::cerr<<project(A,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
+    std::cerr<<A3::project(a[0],nodes)<<endl;
+    std::cerr<<A3::project(a[C],nodes)<<endl;
 
     throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 #endif
 
-  /*---------------- Adjust for length of node1 (nodes[0]) changing --------------------*/
+  /*---------------- Adjust for length of node0 (nodes[0]) changing --------------------*/
 
-  double log_ratio = 2.0*(P1.IModel().lengthp(length_new)-P1.IModel().lengthp(length_old));
-  if (myrandomf() < exp(log_ratio)) {
-    old=A;
-    if (choice) {
-      P1 = P2;
-      return true;
-    }
+  bool success = false;
+  if (myrandomf() < exp( A3::log_acceptance_ratio(a[0],p[0],nodes,a[C],p[C],nodes)))  {
+    success = (C == 2);
+    A = a[C];
+    P1 = p[C];
   }
-  return false;
+
+  return success;
 }

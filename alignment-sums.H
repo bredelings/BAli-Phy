@@ -25,7 +25,7 @@ vector< vector<valarray<double> > > distributions_tree(const alignment& A,const 
 double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes);
 
 /// Sum of branch priors for branches not connected to no
-double other_prior(const alignment& A, const Parameters& P, int n0);
+double other_prior(const alignment& A, const Parameters& P, const vector<int>& nodes);
 
 /// Routine for summing/sampling possibilities for sequences at an internal node
 DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
@@ -35,5 +35,14 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
 
 /// Routine for summing/sampling possibilities for sequence at an internal node, and an adjacent alignment
 DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
+
+
+//------------------- Checking Routines ------------------------//
+
+void check_match_P(const alignment& A,const Parameters& P, double OS, double OP, const vector<int>& path, const DPengine& Matrices);
+
+
+vector<double> sample_P(const alignment& A,const Parameters& P,double OS, double OP, double P_choice,
+			const vector<int>& path, const DPengine& Matrices);
 
 #endif

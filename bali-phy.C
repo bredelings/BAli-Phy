@@ -87,7 +87,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   if (P.T.leaves() >= 4)
     nodes_moves.add(1,MoveArgSingle("sample_two_nodes:nodes",
 				   sample_two_nodes_move,
-				   internal_branches)
+				   internal_nodes)
 		   );
 
   alignment_moves.add(2, nodes_moves);
@@ -307,6 +307,8 @@ int main(int argc,char* argv[]) {
 	P.i_fixed[pI] = true;
       }
     }
+
+    P.Temp = args.loadvalue("T",1.0);
 
 
     //---------------Do something------------------//

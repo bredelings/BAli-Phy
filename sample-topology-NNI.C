@@ -76,11 +76,11 @@ bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P
   // Choose from one of the (Ai,Pi) pairs
   double PS1 = P1.likelihood(A1,P1);
   double PA1 = Matrices1.Pr_sum_all_paths();
-  double PP1 = prior(P1);
+  double PP1 = prior(P1)/P1.Temp;
 
   double PS2 = P1.likelihood(A2,P2);
   double PA2 = Matrices2.Pr_sum_all_paths();
-  double PP2 = prior(P2);
+  double PP2 = prior(P2)/P2.Temp;
 
   vector<double> P(2);
   P[0] = PS1 + PA1 + PP1;
@@ -187,11 +187,11 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
   // Choose from one of the (Ai,Pi) pairs
   double PS1 = P1.likelihood(A1,P1);
   double PA1 = Matrices1.Pr_sum_all_paths();
-  double PP1 = prior(P1);
+  double PP1 = prior(P1)/P1.Temp;
 
   double PS2 = P1.likelihood(A2,P2);
   double PA2 = Matrices2.Pr_sum_all_paths();
-  double PP2 = prior(P2);
+  double PP2 = prior(P2)/P2.Temp;
 
   vector<double> P(2);
   P[0] = PS1 + PA1 + PP1;
@@ -269,111 +269,106 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
 /// This has to be Gibbs, and use the same substitution::Model in each case...
 bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Parameters& P2, 
 		      const Parameters& P3,int b) {
-  alignment old = A;
 
-  alignment A1 = old;
-  alignment A2 = old;
-  alignment A3 = old;
+  //----------- Generate the different states and Matrices ---------//
 
-  /*---------------- Setup node names ------------------*/
-  assert(b >= P1.T.leafbranches());
-  const vector<int> nodes1 = A5::get_nodes_random(P1.T,b);
-  const vector<int> nodes2 = A5::get_nodes_random(P2.T,b);
-  const vector<int> nodes3 = A5::get_nodes_random(P3.T,b);
+  vector<alignment> a(4,A);
 
-  // sample the path from each matrix, remember the gap probability of that topology
-  DParrayConstrained Matrices1 = sample_two_nodes_base(A1,P1,nodes1);
-  DParrayConstrained Matrices2 = sample_two_nodes_base(A2,P2,nodes2);
-  DParrayConstrained Matrices3 = sample_two_nodes_base(A3,P3,nodes3);
+  vector<Parameters> p;
+  p.push_back(P1);
+  p.push_back(P2);
+  p.push_back(P3);
 
-  // Choose from one of the (Ai,Pi) pairs
-  double PS1 = P1.likelihood(A1,P1);
-  double PA1 = Matrices1.Pr_sum_all_paths();
-  double PP1 = prior(P1);
+  vector< vector<int> > nodes;
+  for(int i=0;i<3;i++)
+    nodes.push_back( A5::get_nodes_random(p[i].T,b) );
 
-  double PS2 = P1.likelihood(A2,P2);
-  double PA2 = Matrices2.Pr_sum_all_paths();
-  double PP2 = prior(P2);
+  vector< DParrayConstrained > Matrices;
+  for(int i=0;i<3;i++)
+    Matrices.push_back( sample_two_nodes_base(a[i],p[i],nodes[i]) );
 
-  double PS3 = P1.likelihood(A3,P3);
-  double PA3 = Matrices3.Pr_sum_all_paths();
-  double PP3 = prior(P3);
+  //---------------- Calculate choice probabilities --------------//
 
-  vector<double> P(3);
-  P[0] = PS1 + PA1 + PP1;
-  P[1] = PS2 + PA2 + PP2;
-  P[2] = PS3 + PA3 + PP3;
-
-  int choice = choose(P);
-
-  // Get some pointers to the chosen one.
-  DParrayConstrained const* CM = &Matrices1;
-  alignment const* CA = &A1;
-  Parameters const* CP = &P1;
-  vector<int> nodes_old = nodes1;
-  vector<int> nodes_new = nodes1;
-  
-  if (choice == 1){
-    CM = &Matrices2;
-    CA = &A2;
-    CP = &P2;
-    nodes_new = nodes2;
+  vector<double> OS(3);
+  vector<double> OP(3);
+  for(int i=0; i<3; i++) {
+    OS[i] = p[i].likelihood(a[i],p[i]);
+    OP[i] = 0;
   }
-  else if (choice == 2){
-    CM = &Matrices3;
-    CA = &A3;
-    CP = &P3;
-    nodes_new = nodes3;
-  }
+
+  vector<double> Pr(3);
+  for(int i=0;i<3;i++)
+    Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
+
+
+  int C = choose(Pr);
 
 #ifndef NDEBUG_DP
-  /*------- Get the Probabilities of the new and old states --------*/
-  double Pr1 = probability3(old,P1) + A5::log_correction(old,P1,nodes_old);
-  double Pr2 = probability3(*CA,*CP) + A5::log_correction(*CA,*CP,nodes_new);
+  // Add another entry for the incoming configuration
+  p.push_back( p[0] );
+  nodes.push_back(nodes[0]);
+  Matrices.push_back( Matrices[0] );
+  OS.push_back( OS[0] );
+  OP.push_back( OP[0] );
 
-  vector<int> states_list = construct_states();
+  vector< vector<int> > paths;
 
-  /*--------------- Get the new and old paths ---------------*/
   assert(b >= P1.T.leafbranches());
   vector<int> newnodes;
   for(int i=0;i<6;i++)
     newnodes.push_back(i);
 
-  vector<int> path_old = get_path(project(old,nodes_old),newnodes,states_list);
-  //  vector<int> path_old = A5::get_path(old,nodes_old,states_list);
-  vector<int> path_g_old = Matrices1.generalize(path_old);
+  //------------------- Check offsets from path_Q -> P -----------------//
+  for(int i=0;i<p.size();i++) {
+    paths.push_back( get_path(A5::project(a[i],nodes[i]),newnodes,states_list) );
 
-  vector<int> path_new = get_path(project(*CA,nodes_new),newnodes,states_list);
-  //  vector<int> path_new = A5::get_path(*CA,nodes_new,states_list);
-  vector<int> path_g_new = CM->generalize(path_new);
+    OP[i] = other_prior(a[i],p[i],nodes[i]);
 
-  /*--------------- Compute the sampling probabilities ---------------*/
-  double SP1 = choose_P(0,P) + Matrices1.path_P(path_g_old) + Matrices1.generalize_P(path_old);
-  double SP2 = choose_P(choice,P) + CM->path_P(path_g_new) + CM->generalize_P(path_new);
+    double OP_i = OP[i] - A5::log_correction(a[i],p[i],nodes[i]);
 
-  double diff = (Pr2 - Pr1) - (SP2 - SP1);
-  std::cerr<<"diff = "<<diff<<std::endl;
-  if (abs(diff) > 1.0e-9) {
-    std::cerr<<old<<endl;
-    std::cerr<<A<<endl;
+    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
+  }
 
-    std::cerr<<project(old,nodes_old)<<endl;
-    std::cerr<<project(A,nodes_new)<<endl;
+  //--------- Compute path probabilities and sampling probabilities ---------//
+  vector< vector<double> > PR(p.size());
+
+  for(int i=0;i<p.size();i++) {
+    double P_choice = 0;
+    if (i<Pr.size())
+      P_choice = choose_P(i,Pr);
+    else
+      P_choice = choose_P(0,Pr);
+
+    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
+    PR[i][0] += A5::log_correction(a[i],p[i],nodes[i]);
+  }
+
+  std::cerr<<"choice = "<<C<<endl;
+  std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[C][0]<<"    Pr2  - Pr1  = "<<PR[C][0] - PR[0][0]<<endl;
+  std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[C][2]<<"    PrQ2 - PrQ1 = "<<PR[C][2] - PR[0][2]<<endl;
+  std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[C][1]<<"    PrS2 - PrS1 = "<<PR[C][1] - PR[0][1]<<endl;
+
+  double diff = (PR[C][1] - PR.back()[1]) - (PR[C][0] - PR.back()[0]);
+  std::cerr<<"diff = "<<diff<<endl;
+  if (std::abs(diff) > 1.0e-9) {
+    std::cerr<<a.back()<<endl;
+    std::cerr<<a[C]<<endl;
+    
+    std::cerr<<A5::project(a.back(),nodes.back());
+    std::cerr<<A5::project(a[C],nodes[C]);
 
     throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 #endif
 
-  /*---------------- Adjust for length of n4 and n5 changing --------------------*/
+  //---------------- Adjust for length of n4 and n5 changing --------------------//
 
   // if we accept the move, then record the changes
   bool success = false;
-  if (myrandomf() < exp(log_acceptance_ratio(old,P1,nodes_old,*CA,*CP,nodes_new))) {
-    A = *CA;
-    if (choice != 0) {
-      success = true;
-      P1 = *CP;
-    }
+  if (myrandomf() < exp(log_acceptance_ratio(a.back(),p.back(),nodes.back(),a[C],p[C],nodes[C]))) {
+    success = (C > 0);
+    A = a[C];
+    P1 = p[C];
   }
 
   return success;
@@ -555,211 +550,126 @@ alignment swap(const alignment& old,int n1,int n2) {
   return A;
 }
 
+///FIXME - make a generic routine (templates?)
+
+bool three_way_NNI_and_A(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes) {
+
+  //----------- Generate the different states and Matrices ---------//
+
+  vector<alignment> a(4,A);
+
+  vector< DPmatrixConstrained > Matrices;
+  for(int i=0;i<3;i++)
+    Matrices.push_back( tri_sample_alignment_base(a[i],p[i],nodes[i]) );
+
+  //---------------- Calculate choice probabilities --------------//
+
+  vector<double> OS(3);
+  vector<double> OP(3);
+  for(int i=0; i<3; i++) {
+    OS[i] = other_subst(a[i],p[i],nodes[i]);
+    OP[i] = other_prior(a[i],p[i],nodes[i]);
+  }
+
+  vector<double> Pr(3);
+  for(int i=0;i<3;i++)
+    Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
+
+  int C = choose(Pr);
+
+#ifndef NDEBUG_DP
+  // Add another entry for the incoming configuration
+  p.push_back( p[0] );
+  nodes.push_back(nodes[0]);
+  Matrices.push_back( Matrices[0] );
+  OS.push_back( OS[0] );
+  OP.push_back( OP[0] );
+
+  vector< vector<int> > paths;
+
+  vector<int> newnodes;
+  for(int i=0;i<6;i++)
+    newnodes.push_back(i);
+
+  //------------------- Check offsets from path_Q -> P -----------------//
+  for(int i=0;i<p.size();i++) {
+    paths.push_back( get_path_3way(A3::project(a[i],nodes[i]),0,1,2,3) );
+
+    OP[i] = other_prior(a[i],p[i],nodes[i]);
+
+    double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
+
+    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
+  }
+
+  //--------- Compute path probabilities and sampling probabilities ---------//
+  vector< vector<double> > PR(p.size());
+
+  for(int i=0;i<p.size();i++) {
+    double P_choice = 0;
+    if (i<Pr.size())
+      P_choice = choose_P(i,Pr);
+    else
+      P_choice = choose_P(0,Pr);
+
+    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
+    PR[i][0] += A3::log_correction(a[i],p[i],nodes[i]);
+  }
+
+  std::cerr<<"choice = "<<C<<endl;
+  std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[C][0]<<"    Pr2  - Pr1  = "<<PR[C][0] - PR[0][0]<<endl;
+  std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[C][2]<<"    PrQ2 - PrQ1 = "<<PR[C][2] - PR[0][2]<<endl;
+  std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[C][1]<<"    PrS2 - PrS1 = "<<PR[C][1] - PR[0][1]<<endl;
+
+  double diff = (PR[C][1] - PR.back()[1]) - (PR[C][0] - PR.back()[0]);
+  std::cerr<<"diff = "<<diff<<endl;
+  if (std::abs(diff) > 1.0e-9) {
+    std::cerr<<a.back()<<endl;
+    std::cerr<<a[C]<<endl;
+    
+    std::cerr<<A3::project(a.back(),nodes.back());
+    std::cerr<<A3::project(a[C],nodes[C]);
+
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
+  }
+#endif
+
+  //---------------- Adjust for length of n4 and n5 changing --------------------//
+
+  // if we accept the move, then record the changes
+  bool success = false;
+  if (myrandomf() < exp(A3::log_acceptance_ratio(a.back(),p.back(),nodes.back(),a[C],p[C],nodes[C]))) {
+    success = (C > 0);
+    A = a[C];
+    p.back() = p[C];
+  }
+
+  return success;
+}
 
 MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& P,int b) {
+  assert(b >= P.T.leafbranches());
+
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
 
-  alignment oldA = A;
-  Parameters oldP = P;
 
-  vector<int> nodes = A5::get_nodes_random(P.T,b);
+  vector<int> two_way_nodes = A5::get_nodes_random(P.T,b);
 
   //--------- Generate the Different Topologies -------//
+  // We ALWAYS resample the connection between two_way_nodes [0] and [4].
 
-  // do topology2
-  vector<int> nodes1(4);
-  nodes1[0] = nodes[4];
-  nodes1[1] = nodes[0];
-  nodes1[2] = nodes[1];
-  nodes1[3] = nodes[5];
-  if (myrandomf()< 0.5)
-    std::swap(nodes1[2],nodes1[3]);
-  alignment a1 = A;
-  Parameters P1 = P;
-  DPmatrixConstrained Matrices1 = tri_sample_alignment_base(a1,P1,nodes1);
+  vector<Parameters> p(3,P);
+  p[1].T.exchange(two_way_nodes[1],two_way_nodes[2]);
+  p[2].T.exchange(two_way_nodes[1],two_way_nodes[3]);
 
+  vector< vector< int> > nodes;
+  for(int i=0;i<p.size();i++)
+    nodes.push_back(A3::get_nodes_branch_random(p[i].T, two_way_nodes[4], two_way_nodes[0]) );
 
-  // do topology2
-  vector<int> nodes2(4);
-  nodes2[0] = nodes[4];
-  nodes2[1] = nodes[0];
-  nodes2[2] = nodes[2];
-  nodes2[3] = nodes[5];
-  if (myrandomf()< 0.5)
-    std::swap(nodes2[2],nodes2[3]);
-  alignment a2 = A;
-  Parameters P2 = P1;
-  P2.T.exchange(nodes[1],nodes[2]);
-  DPmatrixConstrained Matrices2 = tri_sample_alignment_base(a2,P2,nodes2);
-
-
-  // do topology3
-  vector<int> nodes3(4);
-  nodes3[0] = nodes[4];
-  nodes3[1] = nodes[0];
-  nodes3[2] = nodes[3];
-  nodes3[3] = nodes[5];
-  if (myrandomf()< 0.5)
-    std::swap(nodes3[2],nodes3[3]);
-  alignment a3 = A;
-  Parameters P3 = P1;
-  P3.T.exchange(nodes[1],nodes[3]);
-  DPmatrixConstrained Matrices3 = tri_sample_alignment_base(a3,P3,nodes3);
-
-
-  /*--------------- Calculate corrections to path probabilities --------------*/
-
-  double OS1 = other_subst(a1,P1,nodes1); 
-  double OP1 = other_prior(a1,P1,nodes1[0]);
-
-  double OS2 = other_subst(a2,P2,nodes2); 
-  double OP2 = other_prior(a2,P2,nodes2[0]);
-
-  double OS3 = other_subst(a3,P3,nodes3); 
-  double OP3 = other_prior(a3,P3,nodes3[0]);
-
-  /*-------------------- Choose between the topologies (P1,P2,P3) ------------------------*/
-
-  vector<double> Pr(3);
-
-  Pr[0] = Matrices1.Pr_sum_all_paths() + OS1 + OP1 + prior(P1);
-  Pr[1] = Matrices2.Pr_sum_all_paths() + OS2 + OP2 + prior(P2);
-  Pr[2] = Matrices3.Pr_sum_all_paths() + OS3 + OP3 + prior(P3);
-
-  int choice = choose(Pr);
-
-  DPmatrixConstrained* CM = 0;
-  double OSnew = OS1;
-  double OPnew = OP1;
-  vector<int> nodes_new = nodes1;
-  if (choice == 0) {
-    CM = &Matrices1;
-    A = a1;
-  }
-  else if (choice == 1) {
-    CM = &Matrices2;
-    A = a2;
-    P = P2;
-    OSnew = OS2;
-    OPnew = OP2;
-    nodes_new = nodes2;
-  }
-  else if (choice == 2) {
-    CM = &Matrices3;
-    A = a3;
-    P = P3;
-    OSnew = OS3;
-    OPnew = OP3;
-    nodes_new = nodes3;
-  }
-
-
-  int length_old = oldA.seqlength(nodes[4]);
-  int length_new = A.seqlength(nodes[4]);
-
-#ifndef NDEBUG_DP
-  /*------------------- Check offsets from path_Q -> P -----------------*/
-
-  vector<int> path_old = get_path_3way(A3::project(oldA,nodes1[0],nodes1[1],nodes1[2],nodes1[3]),0,1,2,3);
-  vector<int> path_old_g = Matrices1.generalize(path_old);
-
-  double qs1 = Matrices1.path_Q_subst(path_old) + OS1;
-  double ls1 = oldP.likelihood(oldA,oldP);
-
-  double qp1 = Matrices1.path_Q_path(path_old_g) + Matrices1.generalize_P(path_old) + OP1;
-  double lp1 = prior_HMM(oldA,oldP) + 2.0*oldP.IModel().lengthp(length_old);
-
-  double qt1 = qs1 + qp1 + prior(oldP);
-  double lt1 = oldP.probability(oldA,oldP) + 2.0*oldP.IModel().lengthp(length_old);
-
-  std::cerr<<"qs1 = "<<qs1<<"    ls1 = "<<ls1<<endl;
-  std::cerr<<"qp1 = "<<qp1<<"    lp1 = "<<lp1<<endl;
-  std::cerr<<"qt1 = "<<qt1<<"    lt1 = "<<lt1<<endl;
-
-  if ( (std::abs(qs1 - ls1) > 1.0e-9) or (std::abs(qp1 - lp1) > 1.0e-9) or (std::abs(qt1 - lt1) > 1.0e-9)) {
-    std::cerr<<A3::project(oldA,nodes[0],nodes[1],nodes[2],nodes[3]);
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-  }
-
-  /*---------------- Check new topology versus old topology --------------------*/
-
-  vector<int> path_new = get_path_3way(A3::project(A,nodes_new[0],nodes_new[1],nodes_new[2],nodes_new[3]),0,1,2,3);
-  vector<int> path_new_g = CM->generalize(path_new);
-
-  double qs2 = CM->path_Q_subst(path_new) + OSnew;
-  double ls2 = P.likelihood(A,P);
-
-  double qp2 = CM->path_Q_path(path_new_g) + CM->generalize_P(path_new) + OPnew;
-  double lp2 = prior_HMM(A,P) + 2.0*P.IModel().lengthp(length_new);
-
-  double qt2 = qs2 + qp2 + prior(P);
-  double lt2 = P.likelihood(A,P) + prior_HMM(A,P) + prior(P) + 2.0*P.IModel().lengthp(length_new);
-
-  std::cerr<<"qs2 = "<<qs2<<"    ls2 = "<<ls2<<endl;
-  std::cerr<<"qp2 = "<<qp2<<"    lp2 = "<<lp2<<endl;
-  std::cerr<<"qt2 = "<<qt2<<"    lt2 = "<<lt2<<endl;
-
-  if ( (std::abs(qs2 - ls2) > 1.0e-9) or (std::abs(qp2 - lp2) > 1.0e-9) or (std::abs(qt2 - lt2) > 1.0e-9)) {
-    std::cerr<<A3::project(A,nodes[0],nodes[1],nodes[2],nodes[3]);
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-  }
-
-  
-
-  //-------------- Check relative path probabilities --------------//
-  double PrOld = oldP.probability(oldA,oldP) + 2.0*oldP.IModel().lengthp(length_old);
-  double PrNew =    P.probability(A,P)       + 2.0*   P.IModel().lengthp(length_new);
-
-  double PrS1 = choose_P(0,Pr)      + Matrices1.path_P(path_old_g)       + Matrices1.generalize_P(path_old);
-
-  std::cerr<<"PrS1 = "<<choose_P(0,Pr)<<" + "<<Matrices1.path_P(path_old_g)<<" + "<< Matrices1.generalize_P(path_old)<<endl;
-
-  double PrS2 = choose_P(choice,Pr) + CM->path_P(path_new_g) + CM->generalize_P(path_new);
-
-  std::cerr<<"PrS2 = "<<choose_P(choice,Pr)<<" + "<<CM->path_P(path_new_g)<<" + "<< CM->generalize_P(path_new)<<endl;
-
-  double PrQ1 = Matrices1.path_Q(path_old_g) + Matrices1.generalize_P(path_old)+ prior(oldP) + OS1 + OP1;
-
-  double PrQ2 = CM->path_Q(path_new_g) + CM->generalize_P(path_new) + prior(P) + OSnew + OPnew;
-
-  std::cerr<<"choice = "<<choice<<endl;
-  std::cerr<<" Pr1  = "<<PrOld<<"    Pr2  = "<<PrNew<<"    Pr2  - Pr1  = "<<PrNew - PrOld<<endl;
-  std::cerr<<" PrQ1 = "<<PrQ1<<"    PrQ2 = "<<PrQ2<<"    PrQ2 - PrQ1 = "<<PrQ2 - PrQ1<<endl;
-  std::cerr<<" PrS1 = "<<PrS1<<"    PrS2 = "<<PrS2<<"    PrS2 - PrS1 = "<<PrS2 - PrS1<<endl;
-
-
-  std::cerr.flush();
-  double diff = (PrS2 - PrS1) - (PrNew - PrOld);
-  std::cerr<<"diff = "<<diff<<endl;
-  if (abs(diff) > 1.0e-9) {
-    std::cerr<<oldA<<endl;
-    std::cerr<<A<<endl;
-
-    std::cerr<<A3::project(oldA,nodes1[0],nodes1[1],nodes1[2],nodes1[3])<<endl;
-    std::cerr<<A3::project(A,nodes_new[0],nodes_new[1],nodes_new[2],nodes_new[3])<<endl;
-
-    std::cerr.flush();
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-  }
-
-
-#endif
-
-  /*---------------- Adjust for length of node0 (nodes[4]) changing --------------------*/
-
-  double log_ratio = 2.0*(P.IModel().lengthp(length_old) - oldP.IModel().lengthp(length_new));
-
-  bool success = false;
-  if (myrandomf() < exp(log_ratio))
-    success = (choice != 0);
-  else {
-    A = oldA;
-    P = oldP;
-  }
-
-  if (success)
+  if (three_way_NNI_and_A(A,p,nodes))
     result[1] = 1;
+  P = p.back();
 
   return result;
 }
