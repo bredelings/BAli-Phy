@@ -170,8 +170,10 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
   vector<alignment> a(p.size(),A);
 
   vector< DParrayConstrained > Matrices;
-  for(int i=0;i<p.size();i++)
+  for(int i=0;i<p.size();i++) {
     Matrices.push_back( sample_node_base(a[i],p[i],nodes[i]) );
+    p[i].LC.invalidate_node(p[i].T,nodes[i][0]);
+  }
 
   //-------- Calculate corrections to path probabilities ---------//
 

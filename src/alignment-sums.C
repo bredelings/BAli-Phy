@@ -14,7 +14,7 @@ double other_subst(const alignment& A, const Parameters& P, const vector<int>& n
     }
     if (present) continue;
 
-    p += substitution::Pr(A, P.T, P.SModel(), P, column);
+    p += substitution::Pr(A, P, column);
   }
 
   return p/P.Temp;

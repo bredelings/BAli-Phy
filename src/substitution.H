@@ -25,6 +25,7 @@ namespace substitution {
   double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache&);
 
   /// Full likelihood - all columns, all rates
+  double Pr(const alignment& A, const Parameters& P,int column);
   double Pr(const alignment& A, const Parameters& P);
 
 

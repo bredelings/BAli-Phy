@@ -139,7 +139,7 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   }
 #else
   P.LC.set_length(A.length());
-  P.invalidate_alignment_branch(T,b);
+  P.LC.invalidate_alignment_branch(T,b);
 #endif
 
   /*--------------------------------------------------------------*/
