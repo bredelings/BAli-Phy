@@ -192,11 +192,19 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
   
   //----------- Generate the different states and Matrices ---------//
 
+  Parameters P_save = p[0];
+
   vector<alignment> a(p.size(),A);
 
   vector< DParrayConstrained > Matrices;
-  for(int i=0;i<p.size();i++)
+  for(int i=0;i<p.size();i++) {
     Matrices.push_back( sample_two_nodes_base(a[i],p[i],nodes[i]) );
+    p[i].LC.invalidate_node(p[i].T,nodes[i][4]);
+    p[i].LC.invalidate_node(p[i].T,nodes[i][5]);
+#ifndef NDEBUG
+    p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
+#endif
+  }
 
   //-------- Calculate corrections to path probabilities ---------//
 
@@ -235,7 +243,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
 
   // Add another entry for the incoming configuration
   a.push_back( A );
-  p.push_back( p[0] );
+  p.push_back( P_save );
   nodes.push_back(nodes[0]);
   Matrices.push_back( Matrices[0] );
   OS.push_back( OS[0] );
@@ -289,8 +297,9 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
       
       std::cerr<<A5::project(a.back(),nodes.back());
       std::cerr<<A5::project(a[C],nodes[C]);
-      
-      throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
+
+      std::cerr<<"sampling probabilities were incorrect"<<std::endl;
+      std::abort();
     }
   }
 #endif
@@ -307,15 +316,14 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
     if (success)
       p[0] = p[C];
   }
+  else
+    p[0] = P_save;
 
   return success;
 }
 
 
-alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
-
-
-  alignment A = old;
+void sample_two_nodes(alignment& A, Parameters& P,int b) {
 
   vector<Parameters> p(1,P);
 
@@ -323,6 +331,5 @@ alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
   nodes[0] = A5::get_nodes_random(P.T,b);
 
   sample_two_nodes_multi(A,p,nodes,false,false);
-
-  return A;
+  P = p[0];
 }

@@ -400,7 +400,7 @@ namespace A3 {
     // position in sub-alignment
     vector<int> cA(seq.size(),0);
     for(int column=0;column<A.length();column++) {
-      std::cerr<<column<<":  "<<cA[0]<<" "<<cS[0]<<"  "<<cA[1]<<" "<<cS[1]<<"   "<<cA[2]<<"  "<<cS[2]<<"  "<<l<<endl;
+      //      std::cerr<<column<<":  "<<cA[0]<<" "<<cS[0]<<"  "<<cA[1]<<" "<<cS[1]<<"   "<<cA[2]<<"  "<<cS[2]<<"  "<<l<<endl;
 
       //--------------- Check that we're putting in all the subA columns ---------------//
       for(int i=0;i<seq.size();i++) {

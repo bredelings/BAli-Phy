@@ -106,7 +106,7 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const
       required.push_back(T.directed_branch(branches[i]).source());
   }
 
-  vector< Matrix > dist = substitution::get_column_likelihoods(A,P,branches,required);
+  vector< Matrix > dist = substitution::get_column_likelihoods(A,P,branches,required,seq);
   // note: we could normalize frequencies to sum to 1
   assert(dist.size() == seq.size());
 
@@ -120,7 +120,7 @@ void check_match_P(const alignment& A,const Parameters& P, double OS, double OP,
 
   double qs = Matrices.path_Q_subst(path_g) + OS;
   double ls = P.likelihood(A,P);
-
+  
   double qpGQ = Matrices.path_GQ_path(path_g) + Matrices.generalize_P(path);
   double qpQ  = Matrices.path_Q_path(path);
   std::cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
@@ -139,7 +139,8 @@ void check_match_P(const alignment& A,const Parameters& P, double OS, double OP,
 
   if ( (std::abs(qs - ls) > 1.0e-9) or (std::abs(qp - lp) > 1.0e-9) or (std::abs(qt - lt) > 1.0e-9)) {
     std::cerr<<A<<endl;
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
+    std::cerr<<"Can't match up DP probabilities to real probabilities!\n";
+    std::abort();
   }
 
 }

@@ -10,11 +10,11 @@
 bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
   if (P.accept_MH(A,P,P2)) {
     P=P2;
-    std::cerr<<"accepted\n";
+    //    std::cerr<<"accepted\n";
     return true;
   }
   else {
-    std::cerr<<"rejected\n";
+    //    std::cerr<<"rejected\n";
     return false;
   }
 }
@@ -50,13 +50,13 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
   P2.setlength(b,newlength);
 
   if (do_MH_move(A,P,P2)) {
-    std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
+    //    std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
     result[1] = 1;
     result[3] = std::abs(length - newlength);
     result[5] = std::abs(log((newlength+0.001)/(length+0.001)));
   }
   else
-    std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
+    ;//    std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
   return result;
 }
 
@@ -93,13 +93,13 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
     /********** Do the M-H step if OK**************/
 
     if (do_MH_move(A,P,P2)) {
-      std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
+      //      std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
       result[1] = 1;
       result[3] = 1;
       result[7] = std::abs(newlength - length);
     }
     else
-      std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
+      ;//      std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
   }
   // If the length is NOT positive, then propose a T change as well
   else {

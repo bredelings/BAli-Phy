@@ -45,10 +45,11 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
 typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parameters&,
 							      const vector<int>&,int,bool);
 
-alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
+void sample_alignment(alignment& A,Parameters& P,int b) {
   assert(P.IModel().full_tree);
 
   const Tree& T = P.T;
+  alignment old = A;
 
   const vector<double>& pi = P.IModel().pi;
 
@@ -70,7 +71,7 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
       seq2.push_back(column);
   }
 
-  if (not seq1.size() or not seq2.size()) return old;
+  if (not seq1.size() or not seq2.size()) return;
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
   distributions_t_local distributions = distributions_tree;
@@ -99,7 +100,7 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   path.erase(path.begin()+path.size()-1);
 
-  alignment A = construct(old,path,group1,seq1,seq2);
+  A = construct(old,path,group1,seq1,seq2);
 
   std::cerr<<"bandwidth = "<<bandwidth(Matrices,path)<<std::endl;
 
@@ -111,6 +112,11 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   path.push_back(3);
   assert(path_new == path);
+  vector<int> nodes;
+  nodes.push_back(node1);
+  nodes.push_back(node2);
+  check_match_P(old,P,other_subst(old,P,nodes),other_prior(old,P,nodes),path_old,Matrices);
+  check_match_P(A  ,P,other_subst(A  ,P,nodes),other_prior(A,  P,nodes),path_new,Matrices);
 
   double ls1 = P.likelihood(old,P);
   P.LC.set_length(A.length());
@@ -145,7 +151,6 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   /*--------------------------------------------------------------*/
   assert(valid(A));
-  return A;
 }
 
 

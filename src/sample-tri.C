@@ -190,6 +190,10 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
     p[i].LC.set_length(a[i].length());
     int b = p[i].T.branch(nodes[i][0],nodes[i][1]);
     p[i].LC.invalidate_branch_alignment(p[i].T, b);
+    p[i].LC.invalidate_node(p[i].T,nodes[i][0]);
+#ifndef NDEBUG
+    p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
+#endif
   }
 
   //-------- Calculate corrections to path probabilities ---------//
@@ -303,17 +307,17 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
     if (success)
       p[0] = p[C];
   }
+  else
+    p[0] = P_save;
 
   return success;
 }
 
 
 
-alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node1,int node2) {
+void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
 
   /*------------(Gibbs) sample from proposal distribution ------------------*/
-
-  alignment A = old;
 
   vector<Parameters> p(1,P);
 
@@ -321,9 +325,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node
   nodes[0] = get_nodes_branch_random(P.T,node1,node2);
 
   sample_tri_multi(A,p,nodes,false,false);
-  P.LC.set_length(A.length());
-
-  return A;
+  P = p[0];
 }
 
 /// Resample branch alignment, internal nodes, and branch length

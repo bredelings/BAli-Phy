@@ -34,7 +34,7 @@ MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
   if (node1 < T.n_leaves())
     std::swap(node1,node2);
     
-  A = tri_sample_alignment(A,P,node1,node2);
+  tri_sample_alignment(A,P,node1,node2);
 
   return MCMC::result_t(); // no_result
 }
@@ -77,14 +77,15 @@ MCMC::result_t sample_tri_branch_one(alignment& A, Parameters& P,int b) {
 MCMC::result_t sample_alignments_one(alignment& A, Parameters& P,int b) {
   assert(P.IModel().full_tree); 
 
-  A = sample_alignment(A,P,b);
+  sample_alignment(A,P,b);
+
   return MCMC::result_t(); // no_result
 }
 
 MCMC::result_t sample_node_move(alignment& A, Parameters& P,int node) {
   assert(P.IModel().full_tree); 
 
-  A = sample_node(A,P,node);
+  sample_node(A,P,node);
 
   return MCMC::result_t(); // no_result
 }
@@ -103,7 +104,7 @@ MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
 
   int b = P.T.branch(n0,n1);
 
-  A = sample_two_nodes(A,P,b);
+  sample_two_nodes(A,P,b);
 
   return MCMC::result_t(); // no_result
 }

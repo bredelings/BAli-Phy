@@ -13,7 +13,8 @@ namespace substitution {
 
   /// Find the probabilities of all the data give each letter at the root
   vector<Matrix>
-  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,const vector<int>& req);
+  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
+			 const vector<int>& req, const vector<int>& seq);
 
   /// Full likelihood - all columns, all rates
   double Pr(const alignment& A, const Parameters& P);

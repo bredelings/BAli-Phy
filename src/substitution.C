@@ -30,19 +30,6 @@ namespace substitution {
   typedef Likelihood_Cache& column_cache_t;
 
   /// move increment indexes for nodes 'source' in column 'c' of 'A'
-  inline bool inc(vector<int>& index,const vector<int>& source, const alignment& A,int c) {
-    assert(index.size() == source.size());
-    bool all_gaps = true;
-    for(int i=0;i<index.size();i++) {
-      if (not A.gap(c,source[i])) {
-	all_gaps = false;
-	index[i]++;
-      }
-    }
-    return not all_gaps;
-  }
-
-  /// move increment indexes for nodes 'source' in column 'c' of 'A'
   inline int inc(int& index,const vector<int>& mask, 
 		 const alignment& A,int c) 
   {
@@ -56,7 +43,7 @@ namespace substitution {
     return ret;
   }
 
-  ublas::matrix<int> get_subA_relationships(const vector<int>& b,const alignment& A,const Tree& T) 
+  ublas::matrix<int> subA_index(const vector<int>& b,const alignment& A,const Tree& T) 
   {
     // the alignment of sub alignments
     ublas::matrix<int> subA(A.length(),b.size());
@@ -93,8 +80,8 @@ namespace substitution {
   }
 
 
-  ublas::matrix<int> get_subA_relationships2(const vector<int>& b,const vector<int>& req,
-					     const alignment& A,const Tree& T) 
+  ublas::matrix<int> subA_index_req(const vector<int>& b,const alignment& A,const Tree& T,
+				    const vector<int>& req) 
   {
     // the alignment of sub alignments
     ublas::matrix<int> subA(A.length(),b.size());
@@ -139,7 +126,56 @@ namespace substitution {
   }
 
 
-  ublas::matrix<int> subA_index_other(const vector<int>& b,const alignment& A,const Tree& T,const vector<int>& exclude) 
+  ublas::matrix<int> subA_index_req(const vector<int>& b,const alignment& A,const Tree& T,
+				    const vector<int>& req, const vector<int>& seq) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA(A.length(),b.size());
+
+    // get criteria for being in a sub-A
+    vector<vector<int> > leaves;
+    for(int i=0;i<b.size();i++) {
+      leaves.push_back(vector<int>());
+      leaves.back().reserve(A.size2());
+      valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
+      for(int i=0;i<T.n_leaves();i++)
+	if (p[i]) leaves.back().push_back(i);
+    }
+      
+    // declare the index for the nodes
+    vector<int> index(b.size(),-1);
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+
+      // write the indices for sub-alignments into the current column
+      for(int j=0;j<b.size();j++)
+	subA(c,j) = inc(index[j],leaves[j],A,c);
+
+      // check to see if we have a REQUIRED node here.
+      bool empty=true;
+      for(int j=0;j<req.size();j++) {
+	if (not A.gap(c,req[j])) {
+	  empty = false;
+	  break;
+	}
+      }
+
+      if (not empty) l++;
+    }
+    assert(l == seq.size());
+
+    //resize the matrix, and send it back...
+    ublas::matrix<int> temp(l,b.size());
+    for(int i=0;i<temp.size1();i++)
+      for(int j=0;j<temp.size2();j++) {
+	temp(i,j) = subA(seq[i],j);
+      }
+    return temp;
+  }
+
+
+  ublas::matrix<int> subA_index_other(const vector<int>& b,const alignment& A,const Tree& T,
+				      const vector<int>& exclude) 
   {
     // the alignment of sub alignments
     ublas::matrix<int> subA(A.length(),b.size());
@@ -209,16 +245,20 @@ namespace substitution {
     return log(total);
   }
 
-  double calc_root_probability(const alignment& A, const Tree& T,column_cache_t cache,
-			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
+
+  double calc_root_probability(const alignment& A, const Parameters& P,const vector<int>& rb,
+			       const ublas::matrix<int>& index) 
   {
+    const Tree& T = P.T;
+    const MultiModel& MModel = P.SModel();
+    Likelihood_Cache& cache = P.LC;
+
     const int root = cache.root;
 
-    const int n_models = cache.scratch(0).size1();
-    const int asize    = cache.scratch(0).size2();
-
     // scratch matrix 
-    Matrix S(n_models,asize);
+    Matrix & S = cache.scratch(0);
+    const int n_models = S.size1();
+    const int asize    = S.size2();
 
     // cache matrix of frequencies
     Matrix F(n_models,asize);
@@ -271,10 +311,10 @@ namespace substitution {
       assert(0 < p_col and p_col <= 1.00000000001);
 
       total += log(p_col);
+      //      std::cerr<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<std::endl;
     }
     return total;
   }
-
 
   void peel_branch(int b0,column_cache_t cache, const alignment& A, const Tree& T, 
 		   const MatCache& transition_P,const MultiModel& MModel)
@@ -285,16 +325,19 @@ namespace substitution {
       b.push_back(*i);
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index = get_subA_relationships(b,A,T);
+    ublas::matrix<int> index = subA_index(b,A,T);
 
     // The number of directed branches is twice the number of undirected branches
     const int B        = T.n_branches();
-    const int n_models = cache.scratch(0).size1();
-    const int asize    = cache.scratch(0).size2();
+
+    // scratch matrix
+    Matrix& S = cache.scratch(0);
+    const int n_models = S.size1();
+    const int asize    = S.size2();
 
     const int length = index.size1()?index.size1():A.seqlength(b0);
 
-    std::cerr<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
+    //    std::cerr<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
     for(int i=0;i<length;i++) {
 
       // compute the distribution at the parent node - single letter
@@ -317,7 +360,6 @@ namespace substitution {
       else if (b.size() == 2) 
       {
 	// compute the source distribution from 2 branch distributions
-	Matrix& S = cache.scratch(i);
 	int i0 = index(i,0);
 	int i1 = index(i,1);
 	if (i0 != alphabet::gap and i1 != alphabet::gap)
@@ -346,7 +388,9 @@ namespace substitution {
 	    R(m,l) = temp;
 	  }
 	}
-	//Pr(R,MModel);
+#ifndef NDEBUG
+	Pr(R,MModel);
+#endif
       }
       else
 	std::abort();
@@ -391,31 +435,6 @@ namespace substitution {
       peel_branch(ops[i],cache,A,T,MC,P.SModel());
   }
 
-  double sum_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
-    const Tree& T = P.T;
-    const MultiModel& MModel = P.SModel();
-
-    assert(get_branches(T, P.LC).size() == 0);
-
-    int root = cache.root;
-
-    // compute root branches
-    vector<int> rb;
-    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
-      rb.push_back(*i);
-
-    // get the relationships with the sub-alignments
-    ublas::matrix<int> index = get_subA_relationships(rb,A,T);
-
-    // get the probability
-    double Pr = calc_root_probability(A,T,cache,MModel,rb,index);
-
-    // cache the value
-    cache.old_value = Pr;
-
-    return Pr;
-  }
-
   /// I could make peel_branch a generate routine which takes 
   //  a) a number of branches, which point to -> vector<Matrix>
   //  b) optionally peels along vector<Matrix> which is the transition matrices for each model
@@ -429,7 +448,8 @@ namespace substitution {
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
   vector<Matrix>
-  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,const vector<int>& req)
+  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
+			 const vector<int>& req,const vector<int>& seq)
   {
     const Tree& T = P.T;
     Likelihood_Cache& cache = P.LC;
@@ -443,7 +463,7 @@ namespace substitution {
       assert(T.directed_branch(b[i]).target() == root);
     cache.root = root;
 
-    ublas::matrix<int> index = get_subA_relationships2(b,req,A,T);
+    ublas::matrix<int> index = subA_index_req(b,A,T,req,seq);
 
     calculate_caches(A,P,cache);
 
@@ -482,18 +502,13 @@ namespace substitution {
     return L;
   }
 
-  /*
-    We could make this call calc_root_probability w/ a single-column index corresponding to 'column'
-  double Pr(const alignment& A, const Parameters& P, int column) {
-  }
-  */
-
   double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) 
   {
     const Tree& T = P.T;
-    const MultiModel &MModel = P.SModel();
     Likelihood_Cache& cache = P.LC;
     int root = cache.root;
+
+    calculate_caches(A,P,cache);
 
     // compute root branches
     vector<int> rb;
@@ -501,22 +516,63 @@ namespace substitution {
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index = subA_index_other(rb,A,T,nodes);
+    ublas::matrix<int> index1 = subA_index_other(rb,A,T,nodes);
+#ifndef NDEBUG
+    ublas::matrix<int> index2 = subA_index_req(rb,A,T,nodes);
+    ublas::matrix<int> index  = subA_index(rb,A,T);
 
-    return  calc_root_probability(A,T,cache,MModel,rb,index);
+    double Pr1 = calc_root_probability(A,P,rb,index1);
+    double Pr2 = calc_root_probability(A,P,rb,index2);
+    double Pr  = calc_root_probability(A,P,rb,index);
+
+    assert(std::abs(Pr1 + Pr2 - Pr) < 1.0e-9);
+#endif
+
+    return Pr1;
   }
 
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
-    calculate_caches(A,P,cache);
-    double total = sum_caches(A,P,cache);
+    const Tree& T = P.T;
 
-    //std::cerr<<" substitution: P="<<total<<std::endl;
-    return total;
+    //    std::cerr<<" substitution: root = "<<cache.root<<std::endl;
+    int root = cache.root;
+
+    calculate_caches(A,P,cache);
+
+    assert(get_branches(T, P.LC).size() == 0);
+
+    // compute root branches
+    vector<int> rb;
+    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
+      rb.push_back(*i);
+
+    // get the relationships with the sub-alignments
+    ublas::matrix<int> index = subA_index(rb,A,T);
+
+    //    std::cerr<<"length of subA for root "<<cache.root<<" is "<<index.size1()<<"\n";
+
+    // get the probability
+    double Pr = calc_root_probability(A,P,rb,index);
+
+    // cache the value
+    cache.old_value = Pr;
+
+    //std::cerr<<" substitution: P="<<Pr<<std::endl;
+    return Pr;
   }
 
   double Pr(const alignment& A,const Parameters& P) {
-    //P.LC.invalidate_all();
-    double result = Pr(A,P,P.LC);
+    double result = Pr(A, P, P.LC);
+#ifndef NDEBUG
+    Parameters P2 = P;
+    P2.LC.invalidate_all();
+    double result2 = Pr(A, P2, P2.LC);
+    if (std::abs(result - result2)  > 1.0e-9) {
+      std::cerr<<"Pr: diff = "<<result-result2<<std::endl;
+      std::abort();
+    }
+
+#endif
     return result;
   }
 }

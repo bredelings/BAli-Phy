@@ -369,3 +369,14 @@ Can I simply call prior() less often?
 10.2(24)  (10.24 -> 10.0 or 10.05 w/ disable=g_parameters)
 31.6(48)
 Actually, I made a small change, so the above will actually be r543
+
+
+549-likelihood-NDEBUG
+
+0.19 (5/5S-rRNA)
+0.89 (5)
+3.06 (12)
+8.25 (24)
+26.13 (48)
+
+There is still some non-linear scaling: based on (5), (48) should be about 8.54

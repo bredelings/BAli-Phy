@@ -13,21 +13,21 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& Theta,int b)
 MCMC::result_t change_branch_length_multi(const alignment& A, Parameters& P,int b);
 
 
+/// Resample the alignment parent->child
+void sample_alignment(alignment& A,Parameters&,int b);
+
 /// Resample the 3-star alignment, holding the n2/n3 order constant.
-alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,int node1,int node2);
+void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2);
 
 /// Resample the 3-star alignment and branch length, holding the n2/n3 order constant.
 bool tri_sample_alignment_branch(alignment&,Parameters&,
 				 int node1,int node2,int b,double length2);
 
-/// Resample the alignment parent->child
-alignment sample_alignment(const alignment& old,const Parameters&,int b);
-
 /// Resample gap/non-gap for internal nodes, where not already determined
-alignment sample_node(const alignment& old,const Parameters&,int node);
+void sample_node(alignment& A,Parameters&,int node);
 
 /// Resample gap/non-gap for 2 adjacent internal nodes, where not already determined
-alignment sample_two_nodes(const alignment& old,const Parameters& P,int b);
+void sample_two_nodes(alignment& A,Parameters& P,int b);
 
 /// Resample between 3 NNI topologies around branch b
 bool three_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,const Parameters& P3,int b);
