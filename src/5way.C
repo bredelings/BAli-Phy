@@ -344,7 +344,7 @@ namespace A5 {
 
   /// Create the full transition matrix
   eMatrix createQ(const indel::PairHMM& P,const vector<int>& states) {
-    Matrix Q(states.size(),states.size());
+    eMatrix Q(states.size(),states.size());
 
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)

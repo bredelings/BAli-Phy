@@ -109,7 +109,7 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
 
 
   int b = T.find_branch(nodes[0],nodes[1]);
-  const Matrix Q = createQ(P.branch_HMMs[b]);
+  const eMatrix Q = createQ(P.branch_HMMs[b]);
   
 
   // Actually create the Matrices & Chain

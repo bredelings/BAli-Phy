@@ -29,7 +29,7 @@ else
     OPT += march=${ARCH}
   endif	
   OPT += O3
-  LANGO += tracer prefetch-loop-arrays 
+#  LANGO += tracer prefetch-loop-arrays 
   ifneq (${PROF},y)
     LANGO += omit-frame-pointer
   endif
@@ -141,8 +141,8 @@ MAKEFILES = GNUmakefile
 includes += ../include/
 includes += .
 
-CC=gcc
-CXX=g++
+CC=gcc-3.4
+CXX=g++-3.4
 CPP = $(CC) -E  	# This might vary from machine to machine
 CPPFLAGS += $(patsubst %,-I%,$(subst :, ,$(includes)))
 CXXFLAGS += ${LANGO:%=-f%} ${WARN:%=-W%} ${DEBUG:%=-%} ${OPT:%=-%} ${DEFS:%=-D%} ${EXACTFLAGS}
