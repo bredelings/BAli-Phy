@@ -19,7 +19,7 @@ namespace MCMC {
   using std::valarray;
   using std::cerr;
   using std::cout;
-
+  using std::clog;
 
 Move::Move(const string& v)
   :enabled_(true),attributes(split(v,':')),iterations(0)
@@ -60,18 +60,18 @@ void Move::show_enabled(int depth) const {
 
 void Move::print_move_stats(int depth) const {
   for(int i=0;i<depth;i++)
-    cerr<<"  ";
-  cerr<<"move "<<attributes[0]<<": ";
-  cerr<<"     cycles = "<<iterations;
-  cerr<<"     ";
+    clog<<"  ";
+  clog<<"move "<<attributes[0]<<": ";
+  clog<<"     cycles = "<<iterations;
+  clog<<"     ";
 
   assert(total_results.size() %2 == 0);
 
   for(int i=0;i<total_results.size()/2;i++) {
-    cerr<<" E X"<<i<<" = "<<total_results[2*i+1]/total_results[2*i]
+    clog<<" E X"<<i<<" = "<<total_results[2*i+1]/total_results[2*i]
 	<<" [n"<<i<<"="<<total_results[2*i]<<"]";
   }
-  cerr<<endl;
+  clog<<endl;
 }
 
 void MoveGroupBase::add(double l,const Move& m,bool enabled) {
@@ -158,8 +158,8 @@ result_t MoveGroup::iterate(alignment& A,Parameters& P,int i) {
   assert(i < order.size());
 
 #ifndef NDEBUG
-  cerr<<" move = "<<attributes[0]<<endl;
-  cerr<<"   submove = "<<moves[order[i]]->attributes[0]<<endl;
+  clog<<" move = "<<attributes[0]<<endl;
+  clog<<"   submove = "<<moves[order[i]]->attributes[0]<<endl;
 #endif
 
   result_t r = moves[order[i]]->iterate(A,P,suborder[i]);
@@ -248,7 +248,7 @@ void MoveOne::getorder(double l) {
 
 result_t SingleMove::iterate(alignment& A,Parameters& P,int) 
 {
-  cerr<<" [single]move = "<<attributes[0]<<endl;
+  clog<<" [single]move = "<<attributes[0]<<endl;
 
   iterations++;
   result_t r = (*m)(A,P);
@@ -400,7 +400,7 @@ void MoveEach::print_move_stats(int depth) const {
 
 result_t MoveArgSingle::operator()(alignment& A,Parameters& P,int arg) {
 
-  cerr<<" [single]move = "<<attributes[0]<<endl;
+  clog<<" [single]move = "<<attributes[0]<<endl;
 
   iterations++;
   result_t r = (*m)(A,P,args[arg]);
@@ -425,9 +425,6 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
 void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   P.recalc();
   const SequenceTree& T = P.T;
-  Parameters MAP_P = P;
-  alignment MAP_alignment = A;
-  bool MAP_printed = true;
 
   // make sure that the Alignment and Tree are linked
   assert(A.num_sequences() == T.n_nodes());
@@ -435,28 +432,13 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     assert(T.seq(i) == A.seq(i).name);
   
   /*--------- Determine some values for this chain -----------*/
-  if (subsample <= 0)
-    subsample = 2*int(log(T.n_leaves()))+1;
+  if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
 
-  int total_samples = 0;
-
-  double Pr_prior = P.prior(A,P);
-  double Pr_likelihood = P.likelihood(A,P);
-  double Pr = Pr_prior + Pr_likelihood;
-
-  double MAP_score = Pr;
+  double MAP_score = log_0;
 
   string tag = string("sample (")+convertToString(subsample)+")";
 
-  /*--------- Print out info about this chain -----------*/
-  //  cout<<"rate matrix = \n";
-  //  for(int i=0;i<P.get_alphabet().size();i++) {
-  //    for(int j=0;j<P.get_alphabet().size();j++) 
-  //      cout<<P.SModel().BaseModel().rates()(i,j)<<" ";
-  //    cout<<endl;
-  //  }
-  cout<<endl;
-  cout<<endl<<endl;
+  cout<<"\n\n\n";
 
   if (const Codons* C = dynamic_cast<const Codons*>(&P.get_alphabet()) ) {
     cout<<"nucleotide frequencies = "<<endl;
@@ -468,79 +450,44 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     //    cout<<endl<<endl;
   }
   
-  //  Matrix T1 = P.SModel().BaseModel().transition_p(0.1);
-  //  Matrix T1a = prod(T1,T1);
-  //  Matrix T2 = P.SModel().BaseModel().transition_p(0.2);
-  //  cout<<T1<<endl<<endl;
-  //  cout<<T1a<<endl<<endl;
-  //  cout<<T2<<endl<<endl;
-
-
-  cout<<"Initial Alignment = \n";
-  print_stats(cout,cout,cout,cout,A,P,"Initial");
-    
-  cout<<"Initial Tree = \n";
-  cout<<T<<endl<<endl;
-
-  ofstream tree_stream("trees");
-  ofstream pS_stream("pS");
-  ofstream pI_stream("pI");
-  ofstream map_stream("MAP");
-  ofstream Pr_stream("Pr");
+  ofstream tree_stream("trees"), pS_stream("pS"), pI_stream("pI"), map_stream("MAP"), Pr_stream("Pr");
 
   //---------------- Run the MCMC chain -------------------//
-
   for(int iterations=0; iterations < max; iterations++) {
-    cerr<<"iterations = "<<iterations<<endl;;
-    Pr_stream<<"iterations = "<<iterations
-	     <<"    prior = "<<Pr_prior
-	     <<"    likelihood = "<<Pr_likelihood
-	     <<"    logp = "<<Pr
-	     <<"    weight = "<<Pr*(1.0 - 1.0/P.Temp)
-	     <<endl;
 
     //------------------ record statistics ---------------------//
-    cout<<"iterations = "<<iterations<<endl;
+    cout<<"iterations = "<<iterations<<"\n";
+    clog<<"iterations = "<<iterations<<"\n";
+
     if (iterations%subsample == 0) {
       bool show_alignment = (iterations%(10*subsample) == 0);
       print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag,show_alignment);
-      cout<<endl<<endl;
+    }
+
+    double Pr = P.basic_prior(A,P) + P.basic_likelihood(A,P);
+    Pr_stream<<"iterations = "<<iterations
+	     <<"    prior = "<<P.basic_prior(A,P)
+	     <<"    likelihood = "<<P.basic_likelihood(A,P)
+	     <<"    logp = "<<Pr
+	     <<"    weight = "<<Pr*(1.0 - 1.0/P.Temp)<<"\n\n";
+
+    if (iterations%50 == 0) print_move_stats();
+
+    //---------------------- estimate MAP ----------------------//
+    if (Pr > MAP_score) {
+      MAP_score = Pr;
+      map_stream<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
+      print_stats(map_stream,map_stream,map_stream,map_stream,A,P,"MAP");
     }
 
     //------------------- move to new position -----------------//
     iterate(A,P);
 
-    Pr_prior = P.basic_prior(A,P);
-    Pr_likelihood = P.basic_likelihood(A,P);
-    Pr = Pr_prior + Pr_likelihood;
-
-    //---------------------- estimate MAP ----------------------//
-    if (Pr > MAP_score) {
-      // arguably I could optimize these for a few iterations
-      MAP_score = Pr;
-      MAP_P = P;
-      MAP_alignment = A;
-
-      MAP_printed = false;
-    }
-
-    if (not MAP_printed and iterations % 50 == 0) {
-      map_stream<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<endl;
-      print_stats(map_stream,map_stream,map_stream,map_stream,MAP_alignment,MAP_P,"MAP");
-      MAP_printed = true;
-    }
-
-    //----------------- print diagnostic output -----------------//
-
-    if (iterations%50 == 0)
-      print_move_stats();
   }
-  tree_stream.close();
-  map_stream.close();
-  pS_stream.close();
-  pI_stream.close();
-  Pr_stream.close();
-  cerr<<"total samples = "<<total_samples<<endl;
+
+  // Close all the streams, and write a notification that we finished all the iterations.
+  tree_stream.close();  map_stream.close();   pS_stream.close();   pI_stream.close();   Pr_stream.close();
+  cout<<"total samples = "<<max<<endl;
 }
 
 
