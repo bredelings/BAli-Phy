@@ -1,7 +1,7 @@
 #ifndef DP_MATRIX_H
 #define DP_MATRIX_H
 
-#include <valarray>
+#include <vector>
 #include "dp-engine.H"
 #include "refcount.H"
 
@@ -11,8 +11,8 @@ class state_matrix: public RefObject
   int s2;
   int s3;
 
-  valarray<double> data;
-  valarray<int> scale_;
+  vector<double> data;
+  vector<int> scale_;
 
 public:
   int size1() const {return s1;}
