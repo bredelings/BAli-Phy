@@ -477,7 +477,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
 
   cout<<"Initial Alignment = \n";
-  print_stats(cout,cout,cout,cout,A,P,"Initial");
+  print_stats(cout,cout,cout,cout,A,P.T,"Initial");
     
   cout<<"Initial Tree = \n";
   cout<<T<<endl<<endl;
@@ -503,7 +503,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     cout<<"iterations = "<<iterations<<endl;
     if (iterations%subsample == 0) {
       bool show_alignment = (iterations%(10*subsample) == 0);
-      print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag,show_alignment);
+      print_stats(cout,tree_stream,pS_stream,pI_stream,A,P.T,tag,show_alignment);
       cout<<endl<<endl;
     }
 
@@ -526,7 +526,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
     if (not MAP_printed and iterations % 50 == 0) {
       map_stream<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<endl;
-      print_stats(map_stream,map_stream,map_stream,map_stream,MAP_alignment,MAP_P,"MAP");
+      print_stats(map_stream,map_stream,map_stream,map_stream,MAP_alignment,MAP_P.T,"MAP");
       MAP_printed = true;
     }
 

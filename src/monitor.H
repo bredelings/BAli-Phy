@@ -9,7 +9,7 @@
 #include "smodel.H"
 
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
-		 const alignment& A,const Parameters& P,const std::string& tag,bool=true);
+		 const alignment& A,const Tree& T,const std::string& tag,bool=true);
 
 void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel);
 void show_parameters(std::ostream& o,const Model& M);

@@ -37,53 +37,21 @@ void show_parameters(std::ostream& o,const Model& M) {
 }
 
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
-		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment) {
+		 const alignment& A,const Tree& T,const string& tag,bool print_alignment) {
   
-  check_alignment(A,P.T,"print_stats:in");
-  o<<endl;
-  //  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]"<<endl;
-  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
-  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-  //  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
-  
-  check_alignment(A,P.T,"print_stats:1");
-  double Pr_prior = P.basic_prior(A,P);
-  double Pr_likelihood = P.basic_likelihood(A,P);
-  double Pr = Pr_prior + Pr_likelihood;
+  check_alignment(A,T,"print_stats:in");
 
-  o<<"    prior = "<<Pr_prior
-   <<"    likelihood = "<<Pr_likelihood
-   <<"    logp = "<<Pr
-   <<"    temp = "<<P.Temp
-   <<"    weight = "<<Pr*(1.0-1.0/P.Temp)
-   <<endl;
-
-
-  if (print_alignment) {
     o<<"align["<<tag<<"] = "<<endl;
-    o<<standardize(A,P.T)<<endl<<endl;
-  }
+    //    alignment A2 = standardize(A,P.T);
+    alignment A2 = A;
+    alignment A3 = A2;
+    alignment A4 = A3;
+    check_alignment(A,T,"print_stats:2a");
+    check_alignment(A2,T,"print_stats:2b");
+    check_alignment(A3,T,"print_stats:2c");
+    check_alignment(A4,T,"print_stats:2d");
+    o<<A4<<endl<<endl;
   
-  check_alignment(A,P.T,"print_stats:2");
-  trees<<P.T<<endl;
-  
-  pS<<  "    mu = "<<P.branch_mean<<"   ";
-  show_parameters(pS,P.SModel());
-
-  show_parameters(pI,P.IModel());
-  
-  for(int i=0;i<P.SModel().n_base_models();i++)
-    o<<"    rate"<<i<<" = "<<P.SModel().base_model(i).rate();
-  o<<endl<<endl;
-
-  o<<"frequencies = "<<endl;
-  show_frequencies(o,P.SModel());
-  o<<endl<<endl;
-
-  // The leaf sequences should NOT change during alignment
-#ifndef NDEBUG
-  check_alignment(A,P.T,"print_stats:out");
-#endif
+  check_alignment(A,T,"print_stats:out");
 }
 

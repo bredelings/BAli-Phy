@@ -285,10 +285,10 @@ int main(int argc,char* argv[]) {
     int it=0;
     while(it < maxit) {
       it++;
-      for(int b=0;b<P.T.n_branches();b++) {
-	check_alignment(A,P.T,"main:1");
-	print_stats(std::cout,std::cout,std::cout,std::cout,A,P,"debug");
-	check_alignment(A,P.T,"main:2");
+      for(int b=0;b<T.n_branches();b++) {
+	check_alignment(A,T,"main:1");
+	print_stats(std::cout,std::cout,std::cout,std::cout,A,T,"debug");
+	check_alignment(A,T,"main:2");
       }
     }
   }
