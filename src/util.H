@@ -131,4 +131,14 @@ std::vector<int> randomize(const std::vector<int>&);
 
 std::vector<std::string> truncate_names(const std::vector<std::string>&);
 
+template<class T>
+T argmin(const std::vector<T>& v) {
+  int argmin = 0;
+  for(int i=1;i<v.size();i++)
+    if (v[i] < v[argmin])
+      argmin = i;
+
+  return argmin;
+}
+
 #endif
