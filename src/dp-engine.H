@@ -20,7 +20,7 @@ public:
   /// Calculate the (log) substitution probability along the path
   virtual double path_Q_subst(const vector<int>& g_path) const=0;
 
-  /// Calculate the (log) substitution probability of this path
+  /// Calculate the (log) probability of this path
   virtual double path_Q(const vector<int>& g_path) const {
     return path_GQ_path(g_path) + this->path_Q_subst(g_path);
   }
