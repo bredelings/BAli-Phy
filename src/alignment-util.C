@@ -253,7 +253,7 @@ vector<const_branchview> branches_toward_from_node(const Tree& T,int n) {
 ublas::matrix<int> get_SM(const alignment& A,const Tree& T) {
   ublas::matrix<int> SM(A.length(),2*T.n_branches());
     
-  vector<const_branchview> branches = branches_toward_from_node(T,T.n_nodes());
+  vector<const_branchview> branches = branches_toward_from_node(T,T.n_leaves());
 
   // Compute the sub-alignments
   vector<const_branchview> temp;temp.reserve(2);
