@@ -157,7 +157,7 @@ int main(int argc,char* argv[])
     }
     else
       seed = myrand_init();
-    cout<<"random seed = "<<seed<<endl<<endl;
+    cerr<<"random seed = "<<seed<<endl<<endl;
 
     vector<double> data;
 

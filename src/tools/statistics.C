@@ -8,13 +8,6 @@ using std::vector;
 //FIXME - add 'hat'?
 namespace statistics {
 
-  unsigned count(const valarray<bool>& v) {
-    int sum=0;
-    for(int i=0;i<v.size();i++)
-      if (v[i]) sum++;
-    return sum;
-  }
-  
   double fraction(const valarray<bool>& v) {
     return double(count(v))/v.size();
   }

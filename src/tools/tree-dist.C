@@ -544,10 +544,9 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
       else
 	partition = partition and mask;
       
-      if (statistics::count(partition) < 2) continue;
-      if (statistics::count((not partition) and mask) < 2) continue;
-
       assert(partition.size() == T.n_leaves());
+
+      // FIXME - we are doing the lookup twice
       int& C = counts[partition];
       
       // add the partition if it wasn't good before, but is now
@@ -576,6 +575,9 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
   for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
     const valarray<bool>& partition =(*p)->first;
  
+    if (statistics::count(partition) < 2) continue;
+    if (statistics::count((not partition) and mask) < 2) continue;
+
     partitions.push_back(Partition(names,partition,mask) );
   }
 

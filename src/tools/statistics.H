@@ -20,7 +20,12 @@ namespace statistics {
 
   double Var(const std::valarray<double>& v);
 
-  unsigned count(const std::valarray<bool>& v);
+  inline unsigned count(const std::valarray<bool>& v) {
+    unsigned sum=0;
+    for(unsigned i=0;i<v.size();i++)
+      if (v[i]) sum++;
+    return sum;
+  }
 
   double fraction(const std::valarray<bool>& v);
 
