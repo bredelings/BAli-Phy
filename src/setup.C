@@ -59,36 +59,28 @@ valarray<double> empirical_frequencies(Arguments& args,const alignment& A) {
 
 /// Load an alignment from command line args align=filename
 void load_A(Arguments& args,alignment& A) {
+  OwnedPointer<AminoAcids> aa = AminoAcids();
+  if (args.set("Use Stop"))
+    *aa = AminoAcidsWithStop();
+
   vector<OwnedPointer<alphabet> > alphabets;
   if (args["alphabet"] == "Codons") {
     {
       string dna_filename = args["datadir"] + "/" + "genetic_code_dna.dat";
-
-      ifstream genetic_code(dna_filename.c_str());
-      if (not genetic_code) 
-	throw myexception()<<"Couldn't open file '"<<dna_filename<<"'";
-      Translation_Table T(Codons(DNA()),AminoAcids(),genetic_code);
-      genetic_code.close();
-
+      Translation_Table T(Codons(DNA()),*aa,dna_filename);
       alphabets.push_back(T.getCodons());
     }
 
     {
       string rna_filename = args["datadir"] + "/" + "genetic_code_rna.dat";
-
-      ifstream genetic_code(rna_filename.c_str());
-      if (not genetic_code)
-	throw myexception()<<"Couldn't open file '"<<rna_filename<<"'";
-      Translation_Table T(Codons(RNA()),AminoAcids(),genetic_code);
-      genetic_code.close();
-
+      Translation_Table T(Codons(RNA()),*aa,rna_filename);
       alphabets.push_back(T.getCodons());
     }
   }
   else {
     alphabets.push_back(DNA());
     alphabets.push_back(RNA());
-    alphabets.push_back(AminoAcids());
+    alphabets.push_back(*aa);
   }
   
   /* ----- Try to load alignment ------ */

@@ -67,7 +67,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     else if (a == RNA_table.getCodons())
       model_stack.push_back(YangCodonModel(RNA_table));
     else
-    throw myexception()<<"Can't figure out how to make a codon model from alphabet '"<<a.name<<";";
+      throw myexception()<<"Can't figure out how to make a codon model from alphabet '"<<a.name<<";";
   }
   else
     return false;
