@@ -163,7 +163,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   if (P.T.leaves() >2) {
     sampler.add(sample_nodes,1,"sample_nodes:nodes");
-    sampler.add(sample_tri,1,"sample_tri:alignment:nodes:tri");
+    sampler.add(sample_tri,0.25,"sample_tri:alignment:nodes:tri");
   }
 
   if (P.T.leaves() >3)

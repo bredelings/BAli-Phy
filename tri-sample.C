@@ -8,6 +8,7 @@
 #include "choose.H"
 #include "bits.H"
 #include "util.H"
+#include "myrandom.H"
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with
@@ -48,8 +49,13 @@ namespace states {
 // bits 3,2,1,0     = node present mask
 // bits 98,76,54    = sub-alignment state
 // bits 12,11,10    = sub-alignment not-present mask
-const int nstates = 1+3+3+1+3*16;
+
+// Three G1-type states, each of which stores state for two alignments
+//  - these alignment can only have 3 states each (M,G1,G2, not E) and so
+//    total 3*3 = 9 states.  
+const int nstates = 1+3+3+1+3*9;
 const int bitsmask = 15;
+const int emitmask = 14;
 
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
 static int bits_to_states(int bits) {
@@ -108,21 +114,21 @@ inline int getstates(int S) {
   }
   else {
     S -=8;
-    if (S/16 == 0) 
+    if (S/9 == 0) 
       bits |= (1<<1);
-    else if (S/16 == 1) 
+    else if (S/9 == 1) 
       bits |= (1<<2);
-    else if (S/16 == 2) 
+    else if (S/9 == 2) 
       bits |= (1<<3);
-    S = S%16;
+    S = S%9;
   }
 
   //-------- Get states --------
   int states = bits_to_states(bits);
   for(int i=0;i<3;i++)
     if (not bitset(states,6+i)) {
-      int s = S&3;
-      S >>= 2;
+      int s = S%3;
+      S /= 3;
       states |= (s<<(2*i));
     }
 
@@ -183,8 +189,9 @@ inline double getQ(int S1,int S2,const IndelModel& IModel) {
 
   // If states are unordered, then force numerical order
   //  - this means that sequence 3 comes first
-  if (not (states1 & states2 & bitsmask))
-    if (states1 & bitsmask >= states2 & bitsmask)
+  // Note that the end state IS ordered
+  if (not (states1 & states2 & bitsmask) and S1 != nstates and S2 != nstates)
+    if ((states1 & bitsmask) >= (states2 & bitsmask))
       return log_0;
 
   double P=0;
@@ -225,6 +232,14 @@ Matrix createQ(const IndelModel& IModel) {
     for(int j=0;j<Q.size2();j++)
       Q(i,j) = getQ(i,j,IModel);
 
+
+  for(int i=0;i<Q.size1();i++) {
+    double sum = log_0;
+    for(int j=0;j<Q.size2();j++)
+      sum = logsum(sum,Q(i,j));
+    //    assert(sum == 0);
+  }
+
   return Q;
 }
 
@@ -235,6 +250,13 @@ Matrix createGQ(const IndelModel& IModel) {
   for(int i=0;i<GQ.size1();i++)
     for(int j=0;j<GQ.size2();j++)
       GQ(i,j) = getGQ(i,j,IModel);
+
+  for(int i=0;i<GQ.size1();i++) {
+    double sum = log_0;
+    for(int j=0;j<GQ.size2();j++)
+      sum = logsum(sum,GQ(i,j));
+    //    assert(sum == 0);
+  }
 
   return GQ;
 }
@@ -364,11 +386,12 @@ inline void DPmatrixHMM::forward(int i2,int c2,const Matrix& GQ) {
   }
 }     
 
-alignment reorder(const alignment& A1,const vector<int>& order) {
+alignment reorder(const alignment& A1,const vector<int>& columns) {
   alignment A2 = A1;
+  A2.changelength(columns.size());
   for(int column=0;column<A2.length();column++) 
     for(int s=0;s<A2.size2();s++) 
-      A2(order[column],s) = A1(column,s);
+      A2(column,s) = A1(columns[column],s);
 
   return A2;
 }
@@ -420,11 +443,92 @@ vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
   return path;
 }
 
+bool silent(int S) {
+  if (S==nstates)
+    return false;
+
+  int states = getstates(S);
+  if (states&emitmask)
+    return false;
+  else
+    return true;
+}
+
 vector<int> generalize(const vector<int>& path) {
-  return path;
+  vector<int> path_g = path;
+  for(int i=path_g.size()-1;i>0;i--) {
+    int S1 = path_g[i-1];
+    int S2 = path_g[i];
+    if (silent(S1) and silent(S2))
+      path_g.erase(path_g.begin()+i);
+  }
+  return path_g;
+}
+
+// FIXME - this doesn't deal with when there is more than one silent state!
+double generalize_P(const vector<int>& path, const Matrix& Q) {
+  double Pr = 0;
+  for(int i=1; i<path.size(); i++) {
+    int S1 = path[i-1];
+    int S2 = path[i];
+
+    if (silent(S1)) {
+      if (silent(S2))
+	Pr += Q(S1,S2);
+      else
+	Pr += log(1.0-exp(Q(S1,S1)));
+    }
+  }
+  return Pr;
+}
+
+double path_check(const vector<int>& path, const DPmatrix& Matrices, const Matrix& GQ) {
+
+  double Pr=0;
+  
+  const int I = Matrices.size1()-1;
+  const int C = Matrices.size2()-1;
+  int i = 0;
+  int c = 0;
+  int l = 0;
+
+  // we don't look at transitions FROM the end state, because we 
+  //  bail at looking at transitions FROM (I,C) 
+  // FIXME - but what if this is actually not E but 7?
+  while(true) {
+    assert(l<path.size());
+
+    int state1 = path[l];
+
+    if (di(state1)) i++;
+    if (dj(state1) or dk(state1)) c++;
+
+    if (i>I or c>C or state1 == nstates)
+      break;
+
+    int state2 = path[l+1];
+
+    vector<double> transition(nstates);
+    for(int s=0;s<nstates;s++)
+      transition[s] = Matrices[s](i,c)+GQ(s,state2);
+
+    double p = choose_P(state1,transition);
+    assert(p > log_0/100);
+    
+    l++;
+    Pr += p;
+
+    assert(i<=I and c<=C);
+  }
+  assert(l == path.size()-1);
+  assert(i == I and c == C);
+  assert(Pr > log_0/100);
+
+  return Pr;
 }
 
 double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& GQ) {
+  double P2 = path_check(path,Matrices,GQ);
 
   const int I = Matrices.size1()-1;
   const int C = Matrices.size2()-1;
@@ -434,6 +538,8 @@ double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& G
 
   int l = path.size()-1;
   int state2 = path[l];
+
+  //FIXME - what if the first state is actually state 7?
   while (i>0 or c>0) {
     assert(l>0);
 
@@ -443,6 +549,7 @@ double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& G
 
     int state1 = path[l-1];
     double p = choose_P(state1,transition);
+    assert(p > log_0/100);
 
     if (di(state1)) i--;
     if (dj(state1) or dk(state1)) c--;
@@ -455,6 +562,7 @@ double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& G
   }
   assert(l == 0);
   assert(i == 0 and c == 0);
+  assert(Pr > log_0);
 
   return Pr;
 }
@@ -469,6 +577,7 @@ vector<int> sample_path(const DPmatrix& Matrices,const Matrix& GQ) {
   int c = C;
 
   int state2 = nstates;
+  //FIXME - what if the first state is silent (e.g. state 7)?
   while (i>0 or c>0) {
     vector<double> transition(nstates);
     for(int state1=0;state1<nstates;state1++)
@@ -491,12 +600,12 @@ vector<int> sample_path(const DPmatrix& Matrices,const Matrix& GQ) {
 }
 
 // Does this routine depend on order of unordered columns?
-// - no, it depends on order of path[], except for filling in {subA}-{seq}.
+//  - No: columns in subA1 but not in seq1 are ordered only in respect to columns in subA1
+//  - columns in seq1, seq2, and seq3 should remain in increasing order.
 
 alignment construct(const alignment& old, const vector<int>& path, 
 		    int n0,int n1,int n2,int n3,const tree& T,
-		    const vector<int>& seq1,const vector<int>& seq2, const vector<int>& seq3,
-		    const vector<int>& order) {
+		    const vector<int>& seq1,const vector<int>& seq2, const vector<int>& seq3) {
 
   valarray<bool> group1 = T.partition(n0,n1);
   valarray<bool> group2 = T.partition(n0,n2);
@@ -532,13 +641,6 @@ alignment construct(const alignment& old, const vector<int>& path,
     assert(c1 <= subA1.size());
     assert(c3 <= subA2.size());
     assert(c5 <= subA3.size());
-
-    if (c1<subA1.size() and c2<seq1.size())
-      assert(order[subA1[c1]] <= order[seq1[c2]]);
-    if (c3<subA2.size() and c4<seq2.size())
-      assert(order[subA2[c3]] <= order[seq2[c4]]);
-    if (c5<subA3.size() and c6<seq3.size())
-      assert(order[subA3[c5]] <= order[seq3[c6]]);
 
     if (c1 < subA1.size() and (c2 == seq1.size() or (c2<seq1.size() and subA1[c1] != seq1[c2]))) {
       for(int i=0;i<A.size2();i++) {
@@ -588,7 +690,6 @@ alignment construct(const alignment& old, const vector<int>& path,
 	    A(column,i) = old(seq3[c6],i);
 	}
 	else {
-	  // FIXME!! - this is SUPPOSED to be random
 	  assert(i==n0);
 	  if (dl(path[l]))
 	    A(column,i) = alphabet::not_gap;
@@ -661,59 +762,43 @@ vector<valarray<double> > distributions23(const alignment& A,const Parameters& T
   return dist;
 }
 
-// The order of the columns in the path through the current alignment
-//   depends also on (say) sequences 0 and 1.  
-// Though since we chose an order in which any column with bits 2 or 3
-//   comes before columns without, perhaps this is moot
-
-inline bool before(const valarray<bool>& v1,const valarray<bool>& v2,int n0,int n1,int n2,int n3) {
-  assert(v1.size() == v2.size());
-
-  for(int i=0;i<v1.size();i++)
-    if (v1[i] and v2[i])
-      return false;
-
-  int bits1=0;
-  if (v1[n0]) bits1 |= (1<<0);
-  if (v1[n1]) bits1 |= (1<<1);
-  if (v1[n2]) bits1 |= (1<<2);
-  if (v1[n3]) bits1 |= (1<<3);
-
-  int bits2=0;
-  if (v2[n0]) bits2 |= (1<<0);
-  if (v2[n1]) bits2 |= (1<<1);
-  if (v2[n2]) bits2 |= (1<<2);
-  if (v2[n3]) bits2 |= (1<<3);
-
-  if (bits1 < bits2)
-    return true;
-  else
-    return false;
-}
-
+// If we are just getting the order of the columns in the 3-way alignment
+// the this shouldn't affect anything else, should it??
 vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3) {
-  vector<int> order(A.length());
-  for(int c=0;c<order.size();c++)
-    order[c] = c;
 
-  vector<valarray<bool> > present(A.length());
-  for(int c=0;c<A.length();c++) {
-    present[c].resize(A.size2());
-    for(int s=0;s<A.size2();s++)
-      present[c][s] = not A.gap(c,s);
-  }
-    
-  int c=0;
-  while(c<A.length()-1) {
-    if (not before(present[order[c+1]],present[order[c]],n0,n1,n2,n3)) {
-      c++;
-      continue;
+  vector<int> columns;
+  vector<int> bits;
+  //----- Record which features present per column ------//
+  for(int column=0;column<A.length();column++) {
+    int mask=0;
+    if (not A.gap(column,n0))
+      mask |= (1<<0);
+    if (not A.gap(column,n1))
+      mask |= (1<<1);
+    if (not A.gap(column,n2))
+      mask |= (1<<2);
+    if (not A.gap(column,n3))
+      mask |= (1<<3);
+
+    bits.push_back(mask);
+    if (mask) {
+      columns.push_back(column);
     }
-    std::swap(order[c],order[c+1]);
-    if (c>0) c--;
   }
 
-  return order;
+  //----- Re-order unordered columns by bits order ------//
+  for(int i=0;i<columns.size()-1;) {
+    int bits1 = bits[columns[i  ]];
+    int bits2 = bits[columns[i+1]];
+    if (not (bits1&bits2) and bits[columns[i]] > bits[columns[i+1]]) {
+      std::swap(columns[i],columns[i+1]);
+      if (i>0) i--;
+    }
+    else
+      i++;
+  }
+
+  return columns;
 }
 
 alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
@@ -744,23 +829,23 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     assert(0);
 
 
-  /*----------- Compute sequence properties ------------*/
+  /*------------- Compute sequence properties --------------*/
   valarray<bool> group1 = T.partition(n0,n1);
   valarray<bool> group2 = T.partition(n0,n2);
   valarray<bool> group3 = T.partition(n0,n3);
 
-  vector<int> orderi = getorder(old,n0,n1,n2,n3);
-  vector<int> order = invert(orderi);
+  vector<int> columns = getorder(old,n0,n1,n2,n3);
 
-  std::cerr<<"old (reordered) = "<<reorder(old,order)<<endl;
+  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
+  std::cerr<<"old (reordered) = "<<reorder(old,columns)<<endl;
 
   // Find sub-alignments and sequences
   vector<int> seq1;
   vector<int> seq2;
   vector<int> seq3;
   vector<int> seq23;
-  for(int o=0;o<old.length();o++) {
-    int column = orderi[o];
+  for(int i=0;i<columns.size();i++) {
+    int column = columns[i];
     if (not old.gap(column,n1))
       seq1.push_back(column);
     if (not old.gap(column,n2))
@@ -772,10 +857,9 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
       seq23.push_back(column);
   }
 
+  // Map columns with n2 or n3 to single index 'c'
   vector<int> jcol(seq23.size()+1);
   vector<int> kcol(seq23.size()+1);
-
-  //Does this work with the ordering constraint that I have now??
 
   jcol[0] = 0;
   kcol[0] = 0;
@@ -789,23 +873,30 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   }
 
 
-  //------------------ Precompute distributions at n0 ------------------//
+  // Precompute distributions at n0
   vector< valarray<double> > dists1 = distributions(old,Theta,seq1,n0,n1);
   vector< valarray<double> > dists23 = distributions23(old,Theta,seq23,n0,n1);
 
 
-  //------------------- Create alignment matrices ----------------------//
-  const int size1 = seq1.size()+1;
-  const int size2 = seq23.size()+1;
+  /*-------------- Create alignment matrices ---------------*/
   DPmatrixHMM Matrices(nstates,dists1,dists23,frequency);
 
+  // Cache state info
   for(int S2=0;S2<nstates+1;S2++)
     Matrices.getstate[S2] = getstates(S2);
 
+  // Determine state order
+  vector<int> state_order(nstates);
+  for(int i=0;i<state_order.size();i++)
+    state_order[i] = i;
+  std::swap(7,nstates-1);
+
+  // Determine which states are allowed to match (,c)
   for(int c2=0;c2<Matrices.size2();c2++) {
     int j2 = jcol[c2];
     int k2 = kcol[c2];
-    for(int S2=0;S2<nstates;S2++) {
+    for(int i=0;i<state_order.size();i++) {
+      int S2 = state_order[i];
 
       int j1 = j2;
       int k1 = k2;
@@ -829,7 +920,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   }
 
 
-  //-------------------- Initialize the Start  ------------------------//
+  // Initialize the start probabilities at (0,0)
   double sum=log_0;
   int count = 0;
   for(int S=0;S<nstates;S++) {
@@ -856,36 +947,29 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     count++;
     sum = logsum(sum,Matrices[S](0,0));
   }
+
+  // check that the sum of Matrices[S](0,0) is 1, number of states examined is 27
   std::cerr<<"sum = "<<sum<<std::endl;
   assert(count==27);
 
-  //check that the sum of Matrices[S](0,0) is 1, number of states examined is 27
 
-  //------------------ Compute the DP matrix ---------------------//
+  /*------------------ Compute the DP matrix ---------------------*/
   const Matrix& GQ = createGQ(Theta.IModel);
+  const Matrix& Q = createQ(Theta.IModel);
 
-  const int maxlength = std::max(size1,size2);
-  for(int n=1; n<maxlength; n++) {
-    if (n<size2)
-      for(int i=0;i<n and i<size1;i++) 
-	Matrices.forward(i,n,GQ);
-
-    if (n<size1)
-      for(int i=0;i<=n and i<size2;i++)
-	Matrices.forward(n,i,GQ);
-  }
-
+  Matrices.forward(0,0,seq1.size(),seq23.size(),GQ);
 
   //------------- Sample a path from the matrix -------------------//
 
   vector<int> path = sample_path(Matrices,GQ);
 
-  alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3,order);
+  // FIXME!! - need to insert extra ---+ states according to a geometric
+  alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
 
   //------------- Check relative path probabilities ---------------//
   path.push_back(nstates);
 
-  vector<int> path_old = get_path_3way(reorder(old,order),n0,n1,n2,n3);
+  vector<int> path_old = get_path_3way(reorder(old,columns),n0,n1,n2,n3);
   vector<int> path_new = get_path_3way(A,n0,n1,n2,n3);
 
   vector<int> path_old_G = generalize(path_old);
@@ -895,8 +979,14 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   double l1 = probability3(old,Theta);
   double l2 = probability3(A,Theta);
 
+  double PrOld=0;
+  for(int i=0;i<path_old.size()-1;i++) {
+    PrOld += Q(path_old[i],path_old[i+1]);
+    assert(PrOld > log_0/100);
+  }
+
   double p1 = path_P(path_old_G,Matrices,GQ); 
-  double p2 = path_P(path_new_G,Matrices,GQ);
+  double p2 = path_P(path_new_G,Matrices,GQ); 
 
   // Adjust for length of n0 changing
   int length_old = old.seqlength(n0);
@@ -904,6 +994,9 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
   p1 -= 2.0*Theta.IModel.lengthp(length_old);
   p2 -= 2.0*Theta.IModel.lengthp(length_new);
+
+  p1 += generalize_P(path_old,Q);
+  p2 += generalize_P(path_new,Q);
 
   double diff = p2-p1-(l2-l1);
   double rdiff = diff/(l2-l1);
@@ -922,10 +1015,15 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   }
 
   assert(isnan(rdiff) or abs(diff) < 1.0e-8);
+  assert(valid(A));
 
   /*--------------------------------------------------------------*/
-  assert(valid(A));
-  return A;
+
+  double log_ratio = 2.0*(Theta.IModel.lengthp(length_new)-Theta.IModel.lengthp(length_old));
+  if (myrandomf() < exp(log_ratio))
+    return A;
+  else
+    return old;
 }
 
 
