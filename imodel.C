@@ -106,7 +106,7 @@ void IndelModel1::fiddle() {
     double E_length = exp(lambda_E - logdiff(0,lambda_E) );
     E_length += gaussian(0,sigma);
     E_length = std::abs(E_length);
-    lambda_E = log( (E_length/(1.0 - E_length) ) );
+    lambda_E = log( (E_length/(1.0 + E_length) ) );
   }
   
   recalc();
@@ -348,7 +348,7 @@ void UpweightedIndelModel::fiddle() {
     double E_length = exp(lambda_E - logdiff(0,lambda_E) );
     E_length += gaussian(0,sigma);
     E_length = std::abs(E_length);
-    lambda_E = log( (E_length/(1.0 - E_length) ) );
+    lambda_E = log( (E_length/(1.0 + E_length) ) );
   }
   
   recalc();
