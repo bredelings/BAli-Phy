@@ -1,43 +1,15 @@
 1. Fix indexing of sub-alignments! 
 
 2. fp_scale speedups
+  a) find out how much time we are spending doing I/O...
 
-[HARD]
-  a) speed up forward_cell( ) by putting a boundary around the matrix :)
-     i) right now we only run SILENT states for (0,0)
-	- in the new scheme, we would run ALL the states, even ones which run off the boundary.
-        - how does this affect our check for being done?
-          * it may be OK - (-1,-1) does go to silent states at (0,0)
-        - how will we do EMISSION PROBABILITIES for the new states?
-   iii) we leave the corner boundary cell un-initialized
-        - but we need to put start_P in (0,0), not (-1,-1) (?)
-        - we need to treat (0,0) specially.
-        - would could to this at the level of forward_cell( ) 
-          or, better yet, forward_square( ).
-
-  b) 20% - DPmatrix( )
-     i) initialize as we go forward (how much slowdown)?
-        - cells must be zero-d, even if (i1<x1) or (j1<y1) <- depends previous
-	- forward_square( ) must initialize the buffer zones on boundaries <- depends previous
-        - this would make alignment constraints work.
-    ii) we need to specialize DPmatrixConstrained::sample_path( ) to ignore
-        states not visited on the way up.
-   iii) then remove universal initialization in dpmatrix::dpmatrix( )
-        (how much speedup?)
-
-  c) find out how much time we are spending doing I/O...
-
-  d) pre-convert Branch_HMM values to log_double_t? (speed up prior_branch() ?)
-  e) make different forward_square( ) routines for DPmatrix{Simple,Constrained}
-
-  f) shift s12_sub( , ) so that we can remove we can remove i-- and j--
-     - if so, also shift s1_sub & s2_sub by adding zero-filled matrix to front.
-     - perhaps shift in in the function which creates them...
+  b) pre-convert Branch_HMM values to log_double_t? (speed up prior_branch() ?)
+  c) make different forward_square( ) routines for DPmatrix{Simple,Constrained}
 
 [CHECK] - check for more!
    I) does increasing inlining limits make a difference?
   II) check w/ fp_scale::cutoff = 1.0e-1 ? or 1.0e-10?
- III) try some profile-drive optimization
+ III) try some profile-guided optimization
 
 [?]
   * sample_two_nodes_base( ): 
@@ -254,4 +226,17 @@ the prior, because we never want to use it  differently.
        * inlined di,dj,dk,dl,dc in 3way.H from 3way.C
        * stopped copying a whole bunch of state_{array,matrix}'s around
        * move initialization of s12_sub(,) to forward_cell( ).
+
+[DONE] DPmatrix speedup - phase 2
+       * add a boundary, and shift everything by (+1,+1)
+       i then we can remove check to optionally break out of the inner loop
+       * side effect is that we initialize as we go, even states whose predecessor
+         is out of the square.
+       * initialize boundaries in forward_square, with special case for (1,1)=S(0,0)
+       * special case sample_path() for DPmatrixConstrained( ) because we don't initialize
+         illegeal state / location pairs.
+      ii REMOVE THE FULL INITIALIZATION in DPmatrix::DPmatrix( )!
+
+       Also:
+       * shift s1_sub, s2_sub, s12_sub to matrix coordinates by adding padding to the beginning.
 
