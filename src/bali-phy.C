@@ -15,6 +15,7 @@
 #include "arguments.H"
 #include "util.H"
 #include "setup.H"
+#include "alignment-constraint.H"
 
 using std::cout;
 using std::cin;
@@ -288,6 +289,8 @@ int main(int argc,char* argv[]) {
     if (not P.IModel().full_tree)
       cout<<", *-tree";
     cout<<endl<<endl;
+
+    P.alignment_constraint = load_alignment_constraint(args,A,T);
 
     P.Temp = args.loadvalue("T",1.0);
 

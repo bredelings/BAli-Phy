@@ -267,8 +267,8 @@ DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<
 { }
 
 
-void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
-  assert(x1 < x2 or y1 < y2);
+inline void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
+  assert(x1 <= x2 or y1 <= y2);
   assert(x2 < size1());
   assert(y2 < size2());
 
@@ -309,92 +309,32 @@ void DPmatrix::forward_band(int bw) {
 
 
 // FIXME - must fix entire columns, row, not chosen based on the path
-void DPmatrix::forward_pinned(const vector<int>& path,double bandwidth) {
-  vector<int> icol;
-  vector<int> jcol;
+void DPmatrix::forward_constrained(const vector< vector<int> >& pins) {
+  const int I = size1()-1;
+  const int J = size2()-1;
 
-  int i=0;
-  int j=0;
-  icol.push_back(i);
-  jcol.push_back(j);
-  for(int c=0;c < path.size();c++) {
+  if (pins[0].size() == 0) 
+    forward_square(0,0,I,J);
+  else {
+    const vector<int>& x = pins[0];
+    const vector<int>& y = pins[1];
 
-    if (di(path[c]))
-      i++;
-    if (dj(path[c]))
-      j++;
+    // Propogate from S to first pin
+    forward_square(0,0,x[0],y[0]);
 
-    if (not silent(path[c])) {
-      icol.push_back(i);
-      jcol.push_back(j);
-    }
-  }
+    // Propogate from first pin to other pins (if any)
+    for(int i=0;i<(int)x.size()-2;i++)
+      forward_square(x[i]+1,y[i]+1,x[i+1],y[i+1]);
 
-  assert(icol[icol.size()-1] == size1()-1 );
-  assert(jcol[jcol.size()-1] == size2()-1 );
-
-  vector<int> pins;
-  int column=0;
-  while(column < icol.size()-1) {
-    pins.push_back(column);
-    column += geometric(1.0/bandwidth);
-  }
-  pins.push_back(icol.size()-1);
-
-  // Deal with silent states at (0,0)
-  forward_cell(0,0,0,0);
-
-  // Process the squares generated
-  for(int i=0;i<pins.size()-1;i++) {
-    forward_square(icol[pins[i]],jcol[pins[i]],
-		   icol[pins[i+1]],jcol[pins[i+1]]);
+    int p = x.size()-1;
+    forward_square(x[p]+1,y[p]+1,I,J);
   }
 }
 
-vector<int> DPmatrix::forward(int features,int bandwidth,const vector<int>& path_old_g) {
-  vector<int> path_new_g;
-
-  bool banding = features&(1<<1);
-  bool pinning = features&(1<<0);
-
-  //-------------------- Banding -------------------//
-  if (banding) {
-    const double f = 0.02;
-
-    int b1 = bandwidth2(*this,path_old_g);
-    //---------- withing the band -----------//
-    if (b1 <= bandwidth) {
-      if (myrandomf() < f)
-	forward_square();
-      else
-	forward_band(bandwidth);
-      path_new_g = sample_path();
-    }
-    //--------------- without --------------//
-    else {
-      forward_square();
-      path_new_g = sample_path();
-
-      int b2 = bandwidth2(*this,path_new_g);
-      if (b2 <= bandwidth)
-	if (myrandomf() < f)
-	  ;
-	else
-	  path_new_g = path_old_g;
-    }
-  }
-  //-------------------- Pinning -------------------//
-  else if (pinning) {
-    forward_pinned(path_old_g,bandwidth);
-    path_new_g = sample_path();
-  }
-  //------------------ Full Square ------------------//
-  else {
-    forward_square();
-    path_new_g = sample_path();
-  }
-
-  return path_new_g;
+vector<int> DPmatrix::forward(const vector<vector<int> >& pins) 
+{
+  forward_constrained(pins);
+  return sample_path();
 }
 
 

@@ -10,6 +10,7 @@
 #include "3way.H"
 #include "alignment-sums.H"
 #include "alignment-util.H"
+#include "alignment-constraint.H"
 
 // for peel
 #include "substitution.H"
@@ -147,8 +148,8 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   //  vector<int> path_old_g = Matrices.generalize(path_old);
 
   //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
-  Matrices.forward_square();
-  vector<int> path_g = Matrices.sample_path();
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 or group3,seq1,seq23);
+  vector<int> path_g = Matrices.forward(pins);
 
   vector<int> path = Matrices.ungeneralize(path_g);
 

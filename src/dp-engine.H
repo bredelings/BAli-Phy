@@ -123,13 +123,13 @@ public:
   void forward_band(int);
 
   /// compute FP for entire matrix, with some points on path pinned
-  void forward_pinned(const vector<int>&,double);
-
-  /// Compute the forward probabilities
-  vector<int> forward(int,int,const vector<int>&);
+  void forward_constrained(const vector<vector<int> >&);
 
   /// Sample a path from the HMM
   vector<int> sample_path() const;
+
+  /// Compute the forward probabilities and back sample
+  vector<int> forward(const vector<vector<int> >&);
 
   double path_P(const vector<int>& path) const;
 

@@ -4,6 +4,7 @@
 #include "sample.H"
 #include "2way.H"
 #include "alignment-sums.H"
+#include "alignment-constraint.H"
 
 // for peel()
 #include "substitution.H"
@@ -92,7 +93,8 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   /*------------------ Compute the DP matrix ---------------------*/
 
   vector<int> path_old = get_path(old,node1,node2);
-  vector<int> path = Matrices.forward(P.features,(int)P.constants[0],path_old);
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,old,group1,not group1,seq1,seq2);
+  vector<int> path = Matrices.forward(pins);
 
   path.erase(path.begin()+path.size()-1);
 

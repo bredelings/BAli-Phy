@@ -61,6 +61,9 @@ public:
   /// The Tree
   SequenceTree T;
 
+  /// Alignment constraint
+  ublas::matrix<int> alignment_constraint;
+
   /// The IndelModel
   const IndelModel& IModel() const {return *IModel_;}
   /// The IndelModel
