@@ -88,7 +88,7 @@ namespace statistics {
     for(int j=0;j<pseudocount;i++,j++)
       sample2[i] = true;
     
-    for(;i<sample1.size();i++)
+    for(int j=0;j<sample1.size();i++,j++)
       sample2[i] = sample1[i];
     
     for(int j=0;j<pseudocount;i++,j++)
