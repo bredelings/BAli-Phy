@@ -7,73 +7,84 @@
 #include "refcount.H"
 #include "smodel.H"
 
-struct storage: public RefObject, public Matrix {
-  storage(int i,int j):Matrix(i,j) {}
-};
-
-template<> inline void RefPtr<storage>::uniquify() {
-  if (data) {
-    storage* old_data = data;
-    data = new storage(old_data->size1(),old_data->size2());
-    data->inc();
-    old_data->dec();
-  }
-}
-
-class Multi_Likelihood_Cache: public std::vector< std::vector<Matrix> >,
+class Multi_Likelihood_Cache: public std::vector< Matrix >,
 			      public RefObject 
 {
-  mutable int cursor;
-
-  int B; // # branches (including scratch)
   int M; // # models
   int A; // # letters
 
-  vector<int> mapping;
-  vector<int> i_mapping;
+  // mapping[token](column,branch) -> location
+  vector<ublas::matrix<int> > mapping;
 
+  // number of users of each location
+  vector<int> uses;
+
+  // a stack of unused_locations
+  vector<int> unused_locations;
+
+  // is each token in use or not?
   vector<bool> active;
 
-  int index(int token,int branch) const {return branch + token*B;}
-  int token_from(int i) const {return i/B;}
-  int branch_from(int i) const {return i%B;}
+  // length of each active cache (in columns)
+  vector<int> length;
 
-  int unused_location() const;
+  int get_unused_location();
+  void release_location(int loc);
 
-  void calc_imapping();
+  void allocate(int s);
+
 public:
+
+  ublas::matrix_row<ublas::matrix<int> > column_map(int t,int c) {
+    return ublas::matrix_row<ublas::matrix<int> >(mapping[t],c);
+  }
+
+  int n_unused_locations() const {return size()-unused_locations.size();}
 
   vector<bool> up_to_date_;
 
-  int operator()(int token,int branch) const {return mapping[index(token,branch)];}
+  bool up_to_date(int token,int branch) const {
+    return up_to_date_[mapping[token](0,branch)];
+  }
+  void validate_branch(int token,int branch);
+  void validate_location(int loc) {up_to_date_[loc]=true;}
 
-  bool up_to_date(int token,int branch) const {return up_to_date_[(*this)(token,branch)];}
-  void mark_branch_up_to_date(int token,int branch)  {up_to_date_[(*this)(token,branch)]=true;}
-  void mark_location_up_to_date(int loc) {up_to_date_[loc]=true;}
-
-  int n_slots() const {return B;}
-  int scratch() const {return B-1;}
-  int n_branches() const {return B/2;}
   int n_models() const {return M;}
   int n_letters() const {return A;}
 
   void invalidate_one_branch(int token,int branch);
   void invalidate_all(int token);
 
-  void set_length(int l);
+  void set_length(int token, int l);
+  int  get_length(int token) const {return length[token];}
 
   int find_free_token() const;
-  int add_token();
-  int claim_token();
+  int add_token(int B);
+  int claim_token(int C,int B);
   void copy_token(int token1,int token2);
+  void init_token(int token);
   void release_token(int token);
   
-  Multi_Likelihood_Cache(const Tree& T, const substitution::MultiModel& M,int l=0);
+  Multi_Likelihood_Cache(const substitution::MultiModel& M);
+};
+
+class Column_Interface {
+  vector<Matrix>& cache;
+  ublas::matrix_row<ublas::matrix<int> > mapping;
+public:
+
+  Matrix& operator[](int i) {return cache[mapping[i]];}
+
+  Column_Interface(Multi_Likelihood_Cache& MLC,int token,int column)
+    :cache(MLC),mapping(MLC.column_map(token,column))
+  {}
 };
 
 
 class Likelihood_Cache {
   RefPtr<Multi_Likelihood_Cache> cache;
+
+  int B;
 
   int token;
 
@@ -82,8 +93,9 @@ public:
 
   int root;
 
-  int scratch() const {return (*cache)(token,cache->scratch());}
-  int n_branches() const {return cache->n_branches();}
+  int length() const {return cache->get_length(token);}
+  int scratch() const {return B-1;}
+  int n_branches() const {return B/2;}
   int n_models() const {return cache->n_models();}
   int n_letters() const {return cache->n_letters();}
 
@@ -97,13 +109,10 @@ public:
 
   void set_length(int);
 
-  int location(int b) const {return (*cache)(token,b);}
-
   bool up_to_date(int b) const {return cache->up_to_date(token,b);}
-  void mark_branch_up_to_date(int b) {cache->mark_branch_up_to_date(token,b);}
-  void mark_location_up_to_date(int loc) {cache->mark_location_up_to_date(loc);}
+  void validate_branch(int b) {cache->validate_branch(token,b);}
 
-  vector<Matrix>& operator[](int col) {return (*cache)[col];}
+  Column_Interface operator[](int col) {return Column_Interface(*cache,token,col);}
 
   Likelihood_Cache& operator=(const Likelihood_Cache&);
 

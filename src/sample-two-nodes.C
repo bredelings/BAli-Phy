@@ -203,8 +203,15 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
   vector<double> OS(p.size(),0);
   vector<double> OP(p.size(),0);
   for(int i=0; i<p.size(); i++) {
-    if (do_OS)
-      OS[i] = p[i].likelihood(a[i],p[i]);
+    if (do_OS) {
+      OS[i] = p[i].likelihood(A,p[i]);
+#ifndef NDEBUG
+      p[i].LC.set_length(a[i].length());
+      double OS2 = p[i].likelihood(a[i],p[i]);
+      assert(std::abs(OS[i] - OS2) < 1.0e-9);
+#endif
+    }
+
     if (do_OP)
       OP[i] = other_prior(a[i],p[i],nodes[i]);
   }
