@@ -300,8 +300,4 @@ inline void DPmatrixHMM::forward(int i2,int j2) {
   }
 }     
 
-inline void DPmatrixHMM::forward(int i1,int j1,int i2,int j2) {
-  DPmatrix::forward(i1,j1,i2,j2);
-}
-
 #endif

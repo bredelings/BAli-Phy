@@ -23,7 +23,7 @@ all: sampler
 # try -fforce-addr
 
 #----------------- Definitions
-LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0 # inline-functions inline-limit=3000 keep-inline-functions
+LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0 inline-limit=3000 keep-inline-functions
 DEBUG = pipe pg # g3
 DEFS = NDEBUG 
 WARN = all no-sign-compare overloaded-virtual
@@ -64,5 +64,5 @@ DEVEL = ../..
 # includes += /usr/local/include/
 src      += 
 include $(DEVEL)/GNUmakefile
-# CC=gcc-3.4
-# CXX=g++-3.4
+CC=gcc-3.4
+CXX=g++-3.4

@@ -42,7 +42,7 @@ int A3::bits_to_states(int bits) {
   return S;
 }
 
-inline int A3::getstates(int S) {
+int A3::getstates(int S) {
   assert(0 <= S and S<nstates+1);
 
   if (S==endstate)
