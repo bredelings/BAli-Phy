@@ -21,7 +21,7 @@ LANGO = prefetch-loop-arrays fast-math unroll-loops
 DEBUG = pipe g # pg
 DEFS = NDEBUG 
 WARN = all no-sign-compare
-OPT =  malign-double mfpmath=sse msse2 march=pentium4
+OPT =  O3 malign-double mfpmath=sse msse2 march=pentium4
 LDFLAGS =  # -pg 
 
 #------------------- Main 

@@ -3,7 +3,7 @@
 
 #include "mytypes.H"
 #include "sequence.H"
-
+#include <istream>
 /***************** struct tree ********************/
 
 struct node {
@@ -104,7 +104,7 @@ public:
 
   tree(const tree& t1,const tree& t2);
   tree(const tree& t1,double d1,const tree& t2,double d2);
-  ~tree() {TreeView(root).destroy();}
+ ~tree() {TreeView(root).destroy();}
 };
 
 inline bool leaf(const node& n) {
@@ -161,6 +161,7 @@ public:
   explicit SequenceTree(const string&);
   SequenceTree(const sequence& s);
   SequenceTree(const SequenceTree& T1, const SequenceTree& T2);
+  SequenceTree(std::istream&);   //load a tree from a file
 };
 
 inline SequenceTree operator+(const SequenceTree& t1,const SequenceTree& t2) {

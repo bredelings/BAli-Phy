@@ -24,6 +24,9 @@ public:
   double lambda_O;
   double lambda_E;
 
+  // parameter for exponential prior on branch length
+  double branch_mean; 
+
   std::valarray<double> frequency;
 
   Parameters(const alphabet& a_,const SequenceTree& t);

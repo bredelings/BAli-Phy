@@ -338,5 +338,43 @@ SequenceTree::SequenceTree(const SequenceTree& T1, const SequenceTree& T2):tree(
     sequences.push_back(T2.seq(i));
 }
 
+// count depth -> if we are at depth 0, and have
+// one object on the stack then we quit
+SequenceTree::SequenceTree(std::istream& file) {
+  assert(file);
 
+  int depth = 0;
+
+  vector<SequenceTree> tree_stack;
+
+  string name;
+  do {
+    char c;
+    file>>c;
+    if (c == '(') {
+      depth++;
+      //should not be in the middle of a name
+    }
+    else if (c== ')') {
+      tree_stack.push_back(SequenceTree(name));
+      name = "";
+      assert(tree_stack.size() >= 2);
+      SequenceTree T1 = tree_stack.back();tree_stack.pop_back();
+      SequenceTree T2 = tree_stack.back();tree_stack.pop_back();
+      SequenceTree Join = SequenceTree(T1,T2);
+      tree_stack.push_back(Join);
+      depth--;
+      // depth should never be negative;
+    }
+    else if (c== ',') {
+      tree_stack.push_back(SequenceTree(name));
+      name = "";
+    }
+    else 
+      name += c;
+
+  } while (file);
+  assert(tree_stack.size() == 1);
+  (*this) = tree_stack[0];
+}
 

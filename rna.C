@@ -12,33 +12,51 @@
 #include "sample.H"
 #include "parameters.H"
 
+static int total_samples = 0;
+
 void print_stats(const alignment& A,int n1,int n2) {
-  
+  int pos1=0,new_pos1=0;
+  int pos2=0,new_pos2=0;
+  for(int column=0;column<A.length();column++) {
+    if (A(column,n1) == alphabet::gap && A(column,n2) == alphabet::gap) 
+      continue;
+
+    if (A(column,n1) != alphabet::gap) 
+      new_pos1++;
+    if (A(column,n2) != alphabet::gap) 
+      new_pos2++;
+
+    std::cout<<n1<<" "<<n2<<" :     "<<pos1<<" "<<pos2<<"   "<<new_pos1<<"   "<<new_pos2<<endl;
+	     
+    pos1 = new_pos1;
+    pos2 = new_pos2;
+  }
 }
 
 void print_stats(const alignment& A) {
-  print_stats(A,0,1);
+  total_samples++;
   print_stats(A,0,2);
-  print_stats(A,0,3);
-  print_stats(A,1,2);
-  print_stats(A,1,3);
-  print_stats(A,2,3);
+  print_stats(A,0,4);
+  print_stats(A,0,6);
+  print_stats(A,2,4);
+  print_stats(A,2,6);
+  print_stats(A,4,6);
 }
 
 void MCMC2(alignment& A,Parameters& Theta,
 	   const int max,double probability(const alignment&,const Parameters&)) {
   const SequenceTree& T = Theta.T;
   A.create_internal(T);
-  std::cout<<A<<endl;
+  std::cerr<<A<<endl;
 
-  int correlation_time = int(2.0*T.leaves()*log(T.leaves()));
+  const int correlation_time = int(7.0*T.leaves()*log(T.leaves()));
 
   double p=probability(A,Theta);
   double new_p=0;
   for(int iterations=0; iterations < max; iterations++) {
-    std::cout<<"iterations: "<<iterations<<"    logp = "<<p<<endl;
+    std::cerr<<"iterations: "<<iterations<<"    logp = "<<p<<endl;
 
-    if (iterations > 1000 && iterations%correlation_time == 0) 
+    if (iterations > 8000 && iterations%correlation_time == 0) 
       print_stats(A);
 
 
@@ -46,17 +64,17 @@ void MCMC2(alignment& A,Parameters& Theta,
     new_p = probability(NewA,Theta);
 
     if (iterations %50 == 0 or fabs(p - new_p)>8) {
-      std::cout<<"previous = "<<
+      std::cerr<<"previous = "<<
 	probability_no_tree(A,Theta)<<"  "<<
 	//	probability_simple_tree(A,Theta)<<"  "<<
 	probability(A,Theta)<<"  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl;
 
-      std::cout<<A<<endl;
-      std::cout<<"new = "<<
+      std::cerr<<A<<endl;
+      std::cerr<<"new = "<<
 	probability_no_tree(NewA,Theta)<<"  "<<
 	//	probability_simple_tree(NewA,Theta)<<"  "<<
 	probability(NewA,Theta)<<"  ["<<probability2(NewA,Theta)<<": "<<prior_internal(NewA,Theta)<<" + "<<substitution(NewA,Theta)<<"]"<<endl;
-      std::cout<<NewA<<endl;
+      std::cerr<<NewA<<endl;
       NewA.print_fasta(std::cerr);
     }
 
@@ -87,6 +105,8 @@ void MCMC2(alignment& A,Parameters& Theta,
 // 13. Put letters in the rate matrix file
 
 // 14. How to read in tree structures in a text file?
+
+// 15. Need to actually alter branch lengths w/ MCMC moves (use exp prior - estimate length parameter)
 
 int main(int argc,char* argv[]) {
 
@@ -123,6 +143,8 @@ int main(int argc,char* argv[]) {
   SequenceTree T2 = (Metazoa + Sulfur)+(Eubacteria+Salt);
   SequenceTree T3 = (Metazoa + Eubacteria) + (Sulfur + Salt);
   
+  //  ifstream tree_file("rna_tree.txt");
+  //  SequenceTree T4(tree_file);
   /**********  Set up the alignment ***********/
   alignment A;
 
@@ -135,7 +157,7 @@ int main(int argc,char* argv[]) {
   ifstream file(argv[1]);
   if (file) {
     A.load_fasta(nucleotides,file);
-    std::cout<<A<<endl;
+    std::cerr<<A<<endl;
   }
   else {
     std::cerr<<"Error: can't open alignment file '"<<argv[1]<<"'"<<endl;
@@ -148,7 +170,7 @@ int main(int argc,char* argv[]) {
     A1>>lambda_O;
     std::stringstream A2(argv[3]);
     A2>>lambda_E;
-    std::cout<<lambda_O<<"  "<<lambda_E<<endl;
+    std::cerr<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl;
   }
 
 
@@ -166,8 +188,10 @@ int main(int argc,char* argv[]) {
     Theta.load_rates("DNA");
     Theta.lambda_O = lambda_O;
     Theta.lambda_E = lambda_E;
-    MCMC2(A,Theta,10000,probability2);
+    MCMC2(A,Theta,60000,probability2);
   }
+  std::cerr<<"total sample = "<<total_samples<<endl;
+  return 0;
 
   {
     Parameters Theta(nucleotides,T3);
@@ -189,3 +213,9 @@ int main(int argc,char* argv[]) {
 
   return 0;
 }
+
+
+/************************** ToDo -> Done! *****************************/
+
+
+// 9. Add branch lengths
