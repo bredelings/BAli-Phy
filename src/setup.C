@@ -115,30 +115,6 @@ void load_T(Arguments& args,const alignment& A,SequenceTree& T,bool random_tree_
 }
 
 
-/// Check that internal nodes don't have letters 
-void check_internal_sequences_composition(const alignment& A,int n_leaves) {
-
-  for(int column=0;column<A.length();column++)
-    for(int i=n_leaves;i<A.size2();i++) 
-      if (alphabet::letter(A(column,i)) )
-	throw myexception()<<"Found a letter in column "<<column
-			   <<" of internal sequence '"<<A.seq(i).name
-			   <<"': only - and * are allowed";
-}
-
-/// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore) {
-  for(int column=0;column<A.length();column++) {
-    valarray<bool> present(T.n_nodes());
-    for(int i=0;i<T.n_nodes();i++) 
-      present[i] = not A.gap(column,i);
-    
-    if (not all_characters_connected(T,present,ignore))
-      throw myexception()<<"Internal node states are inconsistent in column "<<column;
-  }
-}
-
-
 void link(alignment& A,SequenceTree& T,bool internal_sequences) {
 
   //------ Make sure A at least has enough leaf sequences ----------//

@@ -14,14 +14,15 @@ install: program tools
 	mv bali-phy ${TOOLS} ../bin
 
 #----------------- Definitions
-EXACTFLAGS = -pipe 
+EXACTFLAGS = -pipe -pthread
 
-LANGO := fast-math
+LANGO := fast-math 
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
 LDFLAGS := 
 
 ifeq (${DEBUG},y)
   DEBUG := g3
+  DEFS += _GLIBCPP_CONCEPT_CHECKS _GLIBCXX_DEBUG
 else
   ifeq ($(origin DEFS), undefined)
      DEFS += NDEBUG_UBLAS NDEBUG_DP NDEBUG
@@ -65,11 +66,12 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  monitor.C
 
 LIBS = gsl gslcblas m
-ifeq (${STLPORT},y)
-	DEFS += _STLP_DEBUG
-	LIBS += stlportstlg
-	VPATH += /usr/local/STLport/lib/
-	includes += /usr/include/c++/stlport
+ifeq (${STLPORT},y) 
+  DEFS += _STLP_DEBUG
+  LIBS += stlportstlg
+
+  VPATH += /usr/local/STLport/lib/
+  includes += /usr/include/c++/stlport
 endif
 
 LINKLIBS = ${LIBS:%=-l%}
@@ -143,6 +145,11 @@ tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	dpmatrix.o choose.o tools/optimize.o inverse.o setup.o rates.o matcache.o \
 	sequence-format.o randomtree.o model.o ${LINKLIBS}
 
+test-smodel: alignment.o alphabet.o sequence.o arguments.o tree.o sequencetree.o util.o \
+	setup-smodel.o smodel.o randomtree.o model.o sequence-format.o rates.o \
+	probability.o rng.o setup-smodel.o exponential.o eigenvalue.o alignment-util.o \
+	setup.o	imodel.o ${LINKLIBS}
+
 tools/cut-range: arguments.o util.o
 
 tools/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
@@ -151,6 +158,8 @@ tools/truckgraph2: alignment.o arguments.o alphabet.o sequence.o util.o \
 		tools/alignmentutil.o rng.o ${LINKLIBS}
 
 tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
+
+test: ${LINKLIBS}
 
 #------------------- End
 

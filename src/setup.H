@@ -23,12 +23,6 @@ void load_A(Arguments& args, alignment& A);
 /// Load a tree from command line args align=filename
 void load_T(Arguments& args,const alignment& A,SequenceTree& T,bool random_tree_ok);
 
-/// Check that internal nodes don't have letters 
-void check_internal_sequences_composition(const alignment& A,int n_leaves);
-
-/// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore=vector<int>());
-
 /// Hook up the leaf nodes of T to the leaf of A
 /// Also, make sure that A has the right number of internal sequences.
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);

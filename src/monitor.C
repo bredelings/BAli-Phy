@@ -4,6 +4,7 @@
 #include "substitution.H"
 #include "likelihood.H"
 #include "setup.H"
+#include "alignment-util.H"
 
 using std::valarray;
 
@@ -78,14 +79,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
-  for(int i=0;i<P.T.n_leaves();i++) {
-    vector<int> s;
-    for(int column=0;column<A.length();column++)
-      if (not A.gap(column,i))
-	s.push_back(A(column,i));
-
-    assert(s == A.seq(i));
-  }
+  check_alignment(A,P.T,"print_stats:end");
 #endif
 }
 
