@@ -131,7 +131,7 @@ namespace substitution {
 
     g_sigma = exp(log_g_sigma);
     double alpha = 1.0/(g_sigma*g_sigma);
-    if (alpha < 1000000)
+    if (alpha < 100000)
       v[0] = g_sigma;
 
     parameters(v);
