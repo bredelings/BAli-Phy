@@ -17,16 +17,22 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
 				  const vector<OwnedPointer<alphabet> >& alphabets, int maxalignments) {
   vector<alignment> alignments;
   
-  // we are using every 'skip-th' line
+  // we are using every 'skip-th' alignment
   int skip = 1;
 
-  // for each line (nth is the line counter)
   string line;
   for(int nth=0;getline(ifile,line);) {
     
+    // Continue with the next line IF no alignment begins here
     if (not match_tag(line,tag)) continue;
 
-    // READ the next alignments, if we match the tag
+    // Increment the counter SINCE we saw an alignment
+    nth++;
+
+    // Skip this alignment IF it isn't the right multiple
+    if (nth%skip != 0) continue;
+
+    // READ the next alignment
     alignment A;
     try {
       if (not alignments.size())
@@ -35,11 +41,10 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
 	A.load_sequences(alignments[0].get_alphabet(),sequence_format::read_phylip,ifile);
     }
     catch (std::exception& e) {
-      std::cerr<<"Warning: Error load alignments, Ignoring unread alignments."<<endl;
+      std::cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
       std::cerr<<"  Exception: "<<e.what()<<endl;
       break;
     }
-    
 
     // strip out empty columns
     remove_empty_columns(A);
@@ -49,7 +54,7 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
       throw myexception(string("Alignment didn't contain any sequences!"));
     
     // STORE the alignment if we're not going to skip it
-    if (nth%skip ==0) alignments.push_back(A);
+    alignments.push_back(A);
 
     // If there are too many alignments
     if (alignments.size() > 2*maxalignments) {
@@ -65,8 +70,6 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
 
     }
 
-    // Increment the counter IF we saw an alignment
-    nth++;
   }
 
   // If we have too many alignments
