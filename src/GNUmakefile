@@ -1,7 +1,7 @@
 all: bali-phy
 
 #----------------- Definitions
-EXACTFLAGS = -pipe --param inline-unit-growth=300 --param max-inline-insns-auto=300
+EXACTFLAGS = -pipe # --param inline-unit-growth=300 --param max-inline-insns-auto=300
 
 LANGO := fast-math
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
@@ -55,7 +55,7 @@ tools/statreport: tools/statistics.o
 
 tools/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o tools/alignmentutil.o \
-	setup.o smodel.o rates.o exponential.o eigenvalue.o sequence-format.o \
+	setup.o imodel.o probability.o sequence-format.o \
 	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
 
 tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
