@@ -20,6 +20,7 @@
 #include "setup.H"
 #include "alignment-constraint.H"
 #include "monitor.H"
+#include "pow2.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -348,6 +349,7 @@ int main(int argc,char* argv[]) {
 
   try {
 
+    fp_scale::initialize();
     le_double_t::initialize();
     cerr.precision(10);
     cout.precision(10);
