@@ -27,6 +27,22 @@ namespace substitution {
 
   typedef Likelihood_Cache& column_cache_t;
 
+  static inline bool order(const alignment& A,int c1,int c2,const vector<int>& leaves) {
+    int order=0;
+    for(int i=0;i<leaves.size();i++) {
+      bool P1 = not A.gap(c1,leaves[i]);
+      bool P2 = not A.gap(c2,leaves[i]);
+      if (P1 and P2)
+	return 0;
+      if (P1)
+	order = -1;
+      else if (P2)
+	order = +1;
+    }
+    assert(order != 0);
+    return order;
+  }
+
   static inline bool any_shared(const alignment& A,int c1,int c2,const vector<int>& leaves) {
     for(int i=0;i<leaves.size();i++)
       if (not A.gap(c1,leaves[i]) and not A.gap(c2,leaves[i]))
@@ -111,15 +127,21 @@ namespace substitution {
     return leaves;
   }
 
+  static inline bool any_present(const alignment& A,int c, const vector<int>& nodes) {
+    for(int i=0;i<nodes.size();i++)
+      if (not A.gap(c,nodes[i])) 
+	return true;
+    return false;
+  }
+
   /// increment and return the index if any nodes in 'mask' are present in column 'c'
   inline int inc(int& index,const vector<int>& mask, 
 		 const alignment& A,int c) 
   {
-    for(int i=0;i<mask.size();i++)
-      if (not A.gap(c,mask[i])) {
-	return ++index;
-      }
-    return alphabet::gap;
+    if (any_present(A,c,mask))
+      return ++index;
+    else
+      return alphabet::gap;
   }
 
   static ublas::matrix<int> subA_index_simple(const alignment& A, 
@@ -152,16 +174,21 @@ namespace substitution {
     return columns;
   }
 
+  //FIXME - decrease memory allocation...
+  // decrease number of passes?
+  //  - order columns "on-line" as they are found?
   static ublas::matrix<int> subA_index_sort(const alignment& A, 
 					    const vector<vector<int> >& leaves) 
   {
     // the alignment of sub alignments
     ublas::matrix<int> subA = subA_index_simple(A,leaves);
     
+    vector<int> columns; columns.reserve(A.length());
+    vector<int> mapping; mapping.reserve(A.length());
     for(int i=0;i<subA.size2();i++) {
       // get the mapping from the alignment order to the sorted order of the columns
-      vector<int> columns = get_columns(subA,i);
-      vector<int> mapping = sort_subtree_columns(A,columns,leaves[i]);
+      columns = get_columns(subA,i);
+      mapping = sort_subtree_columns(A,columns,leaves[i]);
 
       int l=0;
       for(int c=0;c<subA.size1();c++) 
@@ -207,13 +234,6 @@ namespace substitution {
     return subA_select(subA);
   }
 
-
-  bool any_present(const alignment& A, int c, const vector<int>& nodes) {
-    for(int j=0;j<nodes.size();j++)
-      if (not A.gap(c,nodes[j]))
-	return true;
-    return false;
-  }
 
   ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
 				    const vector<int>& nodes) 
