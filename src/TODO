@@ -1,20 +1,6 @@
-1. WRite paper!
+1. Fix indexing of sub-alignments! 
 
-2. Indel model - fix so that prior probabilities exist!
-
-3. Fix indexing of sub-alignments! 
-
-4. Start making some "nice" pictures to put up on the website.
-    a) include pictures to give to Dr. Lake's lab
-    b) include pictures to give to Dr. Sabatti
-
-*5. MCMCMC
-    a) Make the temperature affect only the likelihood...
-    b) test speedups...
-    c) begin to implement the forking code / temperature identifier.
-    d) begin to implement the separate random number generators.
-
- 5.5. fp_scale speedups
+2. fp_scale speedups
 
 [HARD]
   a) speed up forward_cell by putting a boundary around the matrix :)
@@ -25,7 +11,7 @@
     iv) we leave the corner boundary cell un-initialized
         - but we need to put start_P in (0,0), not -1,-1 (?)
         - well, just put start_P in (-1,-1)
-        - OK, then we need to modify our checks!
+        - OK, then we need to modify our checks & path_( )!
 
   b) 20% - DPmatrix( )
      i) initialize as we go forward (how much slowdown)?
@@ -41,6 +27,7 @@
   e) find and check all the double -> efloat_t conversions!
 
   f) pre-convert Branch_HMM values to log_double_t? (speed up prior_branch() ?)
+  g) make different forward_square( ) routines for DPmatrix{Simple,Constrained}
 
 [CHECK] - check for more!
    I) does increasing inlining limits make a difference?
@@ -74,11 +61,17 @@
   * subA_index( )
     - we spend 25% of substitution time in subA_index
 
-[DONE] * shifted to using fp_scale architecture for DP sampling.
-       * move created of std::vector< > temporary variables out of loops.
-       * switched to using std::valarray< > instead of std::vector< > for state_{array,matrix}
-       * inlined di,dj,dk,dl,dc in 3way.H from 3way.C
-       * stopped copying a whole bunch of state_{array,matrix}'s around
+3. Indel model - fix so that prior probabilities exist!
+
+4. Start making some "nice" pictures to put up on the website.
+    a) include pictures to give to Dr. Lake's lab
+    b) include pictures to give to Dr. Sabatti
+
+*5. MCMCMC
+    a) Make the temperature affect only the likelihood...
+    b) test speedups...
+    c) begin to implement the forking code / temperature identifier.
+    d) begin to implement the separate random number generators.
 
 6. Make a more general substitution::Model class, so that we can e.g.
     have tree with 2 sets of branch lengths...
@@ -248,3 +241,12 @@ the prior, because we never want to use it  differently.
 [DONE] Make standardized checks for indexing problems in sample-node / sample-two-nodes.
 
 [DONE] Rename YangCodonModel to YangM0
+
+[DONE] Using regular FP math for DP, with a scaling factor per cell.
+       * move created of std::vector< > temporary variables out of loops.
+       * switched to using std::valarray< > instead of std::vector< > 
+         for state_{array,matrix}
+       * inlined di,dj,dk,dl,dc in 3way.H from 3way.C
+       * stopped copying a whole bunch of state_{array,matrix}'s around
+       * move initialization of s12_sub(,) to forward_cell( ).
+
