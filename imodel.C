@@ -9,7 +9,7 @@ using std::vector;
 
 double shift_laplace_pdf(double x, double mu, double sigma) {
   double a = sigma/sqrt(2);
-  return gsl_ran_laplace_pdf(std::abs(x-mu),a);
+  return gsl_ran_laplace_pdf(x-mu,a);
 }
 
 void IndelModel::construct_length_plus_p() {
