@@ -58,11 +58,7 @@ namespace substitution {
     return temp;
   }
 
-  ublas::matrix<int> subA_index(const vector<int>& b,const alignment& A,const Tree& T) 
-  {
-    // the alignment of sub alignments
-    ublas::matrix<int> subA(A.length(),b.size());
-
+  static vector<vector<int> > get_subtree_leaves(const vector<int>& b,const Tree& T) {
     // get criteria for being in a sub-A
     vector<vector<int> > leaves;
     for(int i=0;i<b.size();i++) {
@@ -72,6 +68,18 @@ namespace substitution {
       for(int i=0;i<T.n_leaves();i++)
 	if (p[i]) leaves.back().push_back(i);
     }
+
+    return leaves;
+  }
+
+
+  ublas::matrix<int> subA_index(const vector<int>& b,const alignment& A,const Tree& T) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA(A.length(),b.size());
+
+    // get ordered ist of leaves in each subtree
+    vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
     // declare the index for the nodes
     vector<int> index(b.size(),-1);
@@ -101,15 +109,8 @@ namespace substitution {
     // the alignment of sub alignments
     ublas::matrix<int> subA(A.length(),b.size());
 
-    // get criteria for being in a sub-A
-    vector<vector<int> > leaves;
-    for(int i=0;i<b.size();i++) {
-      leaves.push_back(vector<int>());
-      leaves.back().reserve(A.size2());
-      valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
-      for(int i=0;i<T.n_leaves();i++)
-	if (p[i]) leaves.back().push_back(i);
-    }
+    // get ordered ist of leaves in each subtree
+    vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
     // declare the index for the nodes
     vector<int> index(b.size(),-1);
@@ -147,15 +148,8 @@ namespace substitution {
     // the alignment of sub alignments
     ublas::matrix<int> subA(A.length(),b.size());
 
-    // get criteria for being in a sub-A
-    vector<vector<int> > leaves;
-    for(int i=0;i<b.size();i++) {
-      leaves.push_back(vector<int>());
-      leaves.back().reserve(A.size2());
-      valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
-      for(int i=0;i<T.n_leaves();i++)
-	if (p[i]) leaves.back().push_back(i);
-    }
+    // get ordered ist of leaves in each subtree
+    vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
     // declare the index for the nodes
     vector<int> index(b.size(),-1);
@@ -195,15 +189,8 @@ namespace substitution {
     // the alignment of sub alignments
     ublas::matrix<int> subA(A.length(),b.size());
 
-    // get criteria for being in a sub-A
-    vector<vector<int> > leaves;
-    for(int i=0;i<b.size();i++) {
-      leaves.push_back(vector<int>());
-      leaves.back().reserve(A.size2());
-      valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
-      for(int i=0;i<T.n_leaves();i++)
-	if (p[i]) leaves.back().push_back(i);
-    }
+    // get ordered list of leaves in each subtree
+    vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
     // declare the index for the nodes
     vector<int> index(b.size(),-1);
