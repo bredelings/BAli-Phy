@@ -116,10 +116,8 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
       residues[j] = A(seq[i],j);
 
     // get the likelihoods for all sub-models
-    for(int m=0;m<MModel.nmodels();m++) {
-      dist[i] = substitution::get_column_likelihoods(residues,T,MModel,MC,
-						     root,group);
-    }
+    dist[i] = substitution::get_column_likelihoods(residues,T,MModel,MC,
+						   root,group);
 
     // note: we could normalize frequencies to sum to 1
   }
