@@ -8,7 +8,10 @@ TOOLS = tools/model_P tools/statreport tools/alignment-blame \
 
 tools: ${TOOLS}
 
-`all: bali-phy tools
+all: bali-phy tools
+
+install: program tools
+	mv bali-phy ${TOOLS} ../bin
 
 #----------------- Definitions
 EXACTFLAGS = -pipe # --param inline-unit-growth=300 --param max-inline-insns-auto=300
