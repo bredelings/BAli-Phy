@@ -89,36 +89,40 @@ namespace substitution {
 		   const vector<int>& residues,
 		   const vector<Matrix>& transition_P)
   {
+    
+
     // The number of directed branches is twice the number of undirected branches
     const int B     = distributions.size1()/2;
     const int asize = distributions.size2();
 
     // record if this distribution is just '*'
-    //    valarray<bool> uninformative(false,2*B);   - how much speedup does this give?
+    valarray<bool> uninformative(false,2*B);  // how much speedup does this give?
 
     for(int i=0;i<branches.size();i++) {
 
       // Get info 
-      int b     = branches[i].b;      // directed branch from source -> target
-      int b1    = branches[i].b1;     // directed branch from n1     -> source, -1 if leaf(source)
-      int b2    = branches[i].b2;     // directed branch from n2     -> source, -1 if leaf(source)
+      int b     = branches[i].b;     // directed branch from source -> target
+      int b1    = branches[i].b1;    // directed branch from n1     -> source, -1 if leaf(source)
+      int b2    = branches[i].b2;    // directed branch from n2     -> source, -1 if leaf(source)
       int source = branches[i].child;   // = T.directed_branch(b).child();
 
       // Propogate info along branch - doesn't depend on direction of b
       const Matrix& Q = transition_P[b%B];
 
-      if (b1 < 0) {
-	// compute the distribution at the target (parent) node - single letter
-	if (alphabet::letter(residues[source]))
-	  for(int i=0;i<asize;i++)
-	    distributions(b,i) = Q(i,residues[source]);
-	// compute the distribution at the target (parent) node - wildcard
-	else
-	  for(int i=0;i<asize;i++)
-	    distributions(b,i) = 1.0;
+      // compute the distribution at the target (parent) node - single letter
+      if (b1 < 0 and alphabet::letter(residues[source])) 
+	for(int i=0;i<asize;i++)
+	  distributions(b,i) = Q(i,residues[source]);
+
+      // compute the distribution at the target (parent) node - wildcard
+      else if (b1 < 0 or (uninformative[b1] and uninformative[b2])) {
+	for(int i=0;i<asize;i++)
+	  distributions(b,i) = 1.0;
+	uninformative[b] = true;
       }
+
+      // cache the source distribution, or not?
       else {
-	// cache the source distribution, or not?
 	const int scratch = distributions.size1()-1;
 	for(int j=0;j<asize;j++)
 	  distributions(scratch,j) = distributions(b1,j)*distributions(b2,j);
