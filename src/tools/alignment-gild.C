@@ -35,6 +35,53 @@ inline double log_fact(int n) {
   return total;
 }
 
+// v[i][j] represents the column of the feature j in alignment i.
+// so if v[i][j] == v[i][k] then j and k are paired in alignment i.
+Matrix counts_to_probability(const Tree& T,const vector< vector<int> >& v) {
+  assert(v.size() > 0);
+  assert(v[0].size() > 0);
+
+  int N = v[0].size();
+
+
+  const double pseudocount = 1;
+  const double edge_prior = 0.25/T.n_branches();
+  const double prior = 0.25;
+
+  // initialize the matrix, and add a pseudocount for a conjugate prior
+  Matrix Pr_align_pair(N,N);
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      Pr_align_pair(i,j)=pseudocount*(prior + edge_prior*T.edges_distance(i,j));
+
+  // For each label, count all present pairs
+  for(int i=0;i<v.size();i++) {
+    const vector<int>& label = v[i];
+    for(int l1=0;l1<label.size();l1++) 
+      for(int l2=0;l2<l1;l2++) 
+	if (label[l1] == label[l2]) {
+	  Pr_align_pair(l1,l2)++;
+	  Pr_align_pair(l2,l1)++;
+	}
+  }
+
+  // Divide by count to yield an average
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      Pr_align_pair(i,j) /= (v.size() + pseudocount*(prior + edge_prior*T.edges_distance(i,j)));
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      if (std::abs(Pr_align_pair(i,j) -Pr_align_pair(j,i)) > 1.0e-9) {
+	std::cerr<<"("<<i<<","<<j<<") = "<<Pr_align_pair(i,j)<<std::endl;
+	std::cerr<<"("<<j<<","<<i<<") = "<<Pr_align_pair(j,i)<<std::endl;
+	std::abort();
+      }
+
+  return Pr_align_pair;
+}
+
+
 /// Function to optimize for the star tree algorithm
 class alignment_probability: public function {
   int leaves;
@@ -172,28 +219,7 @@ public:
   SSE_match_pairs(const vector< vector<int> >& v1,const Tree& T1)
     :T(T1),Pr_align_pair(T.n_leaves(),T.n_leaves())
   { 
-    assert(v1.size() > 0);
-    assert(T.n_leaves() == v1[0].size());
-
-    const double pseudocount = 1;
-    // initialize the matrix, and add a pseudocount for a conjugate prior
-    for(int i=0;i<T.n_leaves();i++)
-      for(int j=0;j<T.n_leaves();j++)
-	Pr_align_pair(i,j)=pseudocount*0.5;
-
-    // For each label, count all present pairs
-    for(int i=0;i<v1.size();i++) {
-      const vector<int>& label = v1[i];
-      for(int l1=0;l1<label.size();l1++) 
-	for(int l2=0;l2<l1;l2++) 
-	  if (label[l1] == label[l2])
-	    Pr_align_pair(l1,l2)++;
-    }
-    
-    // Divide by count to yield an average
-    for(int i=0;i<T.n_leaves();i++)
-      for(int j=0;j<T.n_leaves();j++)
-	Pr_align_pair(i,j) /= (v1.size() + pseudocount);
+    Pr_align_pair = counts_to_probability(T,v1);
   }
 };
 
@@ -223,72 +249,21 @@ double SSE_match_pairs::operator()(const optimize::Vector& v) const {
 class LeastSquares: public function {
   Tree T;
   Matrix Pr_align_pair;
+  Matrix D;
 public:
   const Tree& t() const {return T;}
   double operator()(const optimize::Vector& v) const;
 
   LeastSquares(const vector< vector<int> >& v1,const Tree& T1)
-    :T(T1),Pr_align_pair(T.n_leaves(),T.n_leaves())
-  { 
-    assert(v1.size() > 0);
-    assert(T.n_leaves() == v1[0].size());
-
-    const double pseudocount = 1;
-    // initialize the matrix, and add a pseudocount for a conjugate prior
-    for(int i=0;i<T.n_leaves();i++)
-      for(int j=0;j<T.n_leaves();j++)
-	Pr_align_pair(i,j)=pseudocount*0.5;
-
-    // For each label, count all present pairs
-    for(int i=0;i<v1.size();i++) {
-      const vector<int>& label = v1[i];
-      for(int l1=0;l1<label.size();l1++) 
-	for(int l2=0;l2<l1;l2++) 
-	  if (label[l1] == label[l2])
-	    Pr_align_pair(l1,l2)++;
-    }
+    :T(T1),
+     Pr_align_pair(T.n_leaves(),T.n_leaves()),
+     D(T.n_leaves(),T.n_leaves())
     
-    // Divide by count to yield an average
-    for(int i=0;i<T.n_leaves();i++)
-      for(int j=0;j<T.n_leaves();j++)
-	Pr_align_pair(i,j) /= (v1.size() + pseudocount);
+  { 
+    Pr_align_pair = counts_to_probability(T,v1);
+    D = probability_to_distance(Pr_align_pair);
   }
 };
-
-// v[i][j] represents the column of the feature j in alignment i.
-// so if v[i][j] == v[i][k] then j and k are paired in alignment i.
-Matrix counts_to_probability(const vector< vector<int> >& v) {
-  assert(v.size() > 0);
-  assert(v[0].size() > 0);
-
-  int N = v[0].size();
-
-
-  const double pseudocount = 1;
-
-  // initialize the matrix, and add a pseudocount for a conjugate prior
-  Matrix Pr_align_pair(N,N);
-  for(int i=0;i<N;i++)
-    for(int j=0;j<N;j++)
-      Pr_align_pair(i,j)=pseudocount*0.5;
-
-  // For each label, count all present pairs
-  for(int i=0;i<v.size();i++) {
-    const vector<int>& label = v[i];
-    for(int l1=0;l1<label.size();l1++) 
-      for(int l2=0;l2<l1;l2++) 
-	if (label[l1] == label[l2])
-	  Pr_align_pair(l1,l2)++;
-  }
-    
-  // Divide by count to yield an average
-  for(int i=0;i<N;i++)
-    for(int j=0;j<N;j++)
-      Pr_align_pair(i,j) /= (v.size() + pseudocount);
-
-  return Pr_align_pair;
-}
-
 
 double LeastSquares::operator()(const optimize::Vector& v) const {
   // We get one length for each branch, and they should all be positive
@@ -296,14 +271,14 @@ double LeastSquares::operator()(const optimize::Vector& v) const {
 
   Tree temp = T;
   for(int b=0;b<T.n_branches();b++) {
-    if (v[b] <= 0) return log_0;
+    if (v[b] < 0) return log_0;
     temp.branch(b).set_length(v[b]);
   }
 
   double SSE=0;
   for(int l1=0;l1<T.n_leaves();l1++) 
     for(int l2=0;l2<l1;l2++) {
-      double D1 = -log(Pr_align_pair(l1,l2));
+      double D1 = D(l1,l2);
       double D2 = temp.distance(l1,l2);
       double E2 = (D1-D2)*(D1-D2);
       SSE += E2;
@@ -323,25 +298,7 @@ public:
   poisson_match_pairs(const vector< vector<int> >& v1,const Tree& T1)
     :T(T1),Pr_align_pair(T.n_leaves(),T.n_leaves())
   { 
-    assert(v1.size() > 0);
-    assert(T.n_leaves() == v1[0].size());
-
-    const int pseudocount = 1;
-    // initialize the matrix, and add a pseudocount for a conjugate prior
-    for(int i=0;i<T.n_leaves();i++)
-      for(int j=0;j<T.n_leaves();j++)
-	Pr_align_pair(i,j)=pseudocount*0.5;
-
-    // For each label, count all present pairs
-    for(int i=0;i<v1.size();i++) {
-      const vector<int>& label = v1[i];
-      for(int l1=0;l1<label.size();l1++) 
-	for(int l2=0;l2<l1;l2++) 
-	  if (label[l1] == label[l2])
-	    Pr_align_pair(l1,l2)++;
-    }
-    
-    n = v1.size() + pseudocount;
+    Pr_align_pair = counts_to_probability(T,v1);
   }
 };
 
@@ -401,11 +358,13 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
   //----------- Load and link template A and T -----------------//
   load_A_and_T(args,A,T,false);
 
+  /*
   Matrix D = DistanceMatrix(T);
   vector<double> ls_b = FastLeastSquares(T,D);
   for(int b=0;b<T.n_branches();b++) {
     std::cerr<<T.branch(b).length()<<"  "<<ls_b[b]<<std::endl;
   }
+  */
     
   //------------ Try to load alignments -----------//
   int maxalignments = args.loadvalue("maxalignments",1000);
@@ -416,12 +375,14 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
 
   vector< OwnedPointer<alphabet> > alphabets;
   alphabets.push_back(A.get_alphabet());
+  std::cerr<<"Loading alignments...";
   alignments = load_alignments(std::cin,tag,alphabets,maxalignments);
+  std::cerr<<"done."<<std::endl;
 
   //-------- Check compatability of estimate & samples-------//
   assert(A.size2() == T.n_leaves());
   
-  if (alignments[0].size2() != T.n_nodes()-1)
+  if (alignments[0].size2() != T.n_nodes())
     throw myexception()<<"Number of sequences in alignment estimate is NOT equal to number of tree nodes!";
   
   for(int i=0;i<A.size2();i++) {
@@ -537,8 +498,9 @@ int main(int argc,char* argv[]) {
     find_root(T,rootb,rootd);
     std::cerr<<"root branch = "<<rootb<<std::endl;
     std::cerr<<"x = "<<rootd<<std::endl;
+    std::cerr<<"distances from root:"<<std::endl;
     for(int i=0;i<T.n_leaves();i++)
-      std::cerr<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
+      std::cerr<<" "<<T.seq(i)<<":  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
 
     //----------- Construct alignment indexes ----------//
     vector< vector< vector<int> > >  column_indexes;
@@ -573,33 +535,34 @@ int main(int argc,char* argv[]) {
       for(int i=0;i<alignments.size();i++)
 	labels.push_back(getlabels(alignments[i],column,column_indexes[i]));
 
+      //Get initial estimate using fast least squares
+      vector<double> branch_lengths(T.n_branches());
+      branch_lengths = FastLeastSquares(T,probability_to_distance(counts_to_probability(T,labels)));
+      for(int b=0;b<branch_lengths.size();b++)
+	if (branch_lengths[b] < 0) branch_lengths[b] = 0;
+
+
       // alignment_probability f(labels);
       function * f = NULL;
-      if (args["type"] == "SSE")
+      if (args["refine"] == "SSE")
 	f = new SSE_match_pairs(labels,T);
-      else if (args["type"] == "Poisson")
+      else if (args["refine"] == "Poisson")
 	f = new poisson_match_pairs(labels,T);
-      else if (args["type"] == "LeastSquares")
-	f = new LeastSquares(labels,T);
-      else
+      else if (args["refine"] == "LeastSquares")
 	f = new LeastSquares(labels,T);
 
-      vector<double> branch_lengths(T.n_branches());
+      // refine initial estimate if called-for
       if (f) {
-	optimize::Vector start(0.01,T.n_branches());
-	assert((*f)(start) > log_0);
+	optimize::Vector x(T.n_branches());
+	for(int i=0;i<branch_lengths.size();i++)
+	  x[i] = branch_lengths[i];
 
-	optimize::Vector end = search_gradient(start,*f,1.0e-5,20);
-	end = search_basis(end,*f,1.0e-5,500);
-	end = search_gradient(end,*f,1.0e-5,20);
+	x = search_gradient(x,*f,1.0e-5,3);
 	delete f;
 
 	for(int i=0;i<branch_lengths.size();i++)
-	  branch_lengths[i] = end[i];
+	  branch_lengths[i] = x[i];
       }
-      else
-	branch_lengths = FastLeastSquares(T,probability_to_distance(counts_to_probability(labels)));
-
       
       // Print uncertainty values for the letters
       Tree T2 = T;
