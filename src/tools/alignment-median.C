@@ -2,6 +2,7 @@
 #include <string>
 #include <cmath>
 #include <vector>
+#include <list>
 #include "myexception.H"
 #include "alignment.H"
 #include "arguments.H"
@@ -26,11 +27,7 @@
 //            5. distance between the two medians, and the MAP...
 //            6. E (average distance) and Var (average distance)
 
-using std::cin;
-using std::cout;
-using std::cerr;
-using std::istream;
-using std::ifstream;
+using namespace std;
 
 
 void do_setup(Arguments& args,vector<alignment>& alignments) 
@@ -50,7 +47,8 @@ void do_setup(Arguments& args,vector<alignment>& alignments)
 
   // --------------------- try ---------------------- //
   std::cerr<<"Loading alignments...";
-  alignments = load_alignments(std::cin,tag,alphabets,maxalignments);
+  list<alignment> As = load_alignments(std::cin,tag,alphabets,maxalignments);
+  alignments.insert(alignments.begin(),As.begin(),As.end());
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
 }
 
