@@ -670,8 +670,8 @@ namespace substitution {
     recalc();
   }
 
-  DualModel::DualModel(const std::vector<OwnedPointer<MultiModel> >& models)
-    :MultiModel(2),SuperModelOver<MultiModel>(models,2)
+  DualModel::DualModel(const std::vector<OwnedPointer<ReversibleAdditiveModel> >& models)
+    :MultiModel(2),SuperModelOver<ReversibleAdditiveModel>(models,2)
   {
     parameters_[0] = 0.5;
     parameters_[1] = 1.0;

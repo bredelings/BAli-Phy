@@ -154,9 +154,18 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (model_stack.size() < 2)
       throw myexception()<<"Dual: can't find 2 models to combine";
 
-    OwnedPointer<MultiModel> M2 ( dynamic_cast<MultiModel*>(model_stack.back().get()) );
+    OwnedPointer<MultiModel> M2;
+    if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
+      M2 = dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
+    else
+      throw myexception()<<"Dual: second model isn't reversible+additive";
     model_stack.pop_back();
-    OwnedPointer<MultiModel> M1 ( dynamic_cast<MultiModel*>(model_stack.back().get()) );
+
+    OwnedPointer<MultiModel> M1;
+    if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
+      M1 = dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
+    else
+      throw myexception()<<"Dual: second model isn't reversible+additive";
     model_stack.pop_back();
 
     vector <OwnedPointer<MultiModel> > models;

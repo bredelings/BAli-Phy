@@ -749,7 +749,7 @@ namespace substitution {
     INV_Model(const MultiRateModel& M);
   };
 
-  class DualModel:public MultiModel,public SuperModelOver<MultiModel> {
+  class DualModel:public MultiModel,public SuperModelOver<ReversibleAdditiveModel> {
     double super_prior() const;
     void super_fiddle(const std::valarray<bool>&);
     void recalc();
@@ -757,7 +757,7 @@ namespace substitution {
   public:
     virtual DualModel* clone() const {return new DualModel(*this);}
 
-    const MultiModel& get_model(int m) const {return SubModels(m);}
+    const ReversibleAdditiveModel& get_model(int m) const {return SubModels(m);}
 
     /// Get the equilibrium frequencies
     const std::valarray<double>& frequencies() const {return get_model(0).frequencies();}
