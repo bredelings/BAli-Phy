@@ -154,7 +154,7 @@ namespace substitution {
 
       // compute the distribution at the parent node - single letter
       if (not b.size()) {
-	int l2 = index(i,0);
+	int l2 = A.note(0,i+1,b0);
 	if (alphabet::letter(l2))
 	  for(int m=0;m<n_models;m++) {
 	    const Matrix& Q = transition_P[m][b0%B];
