@@ -1,21 +1,12 @@
-2. Estimate best alignment by finding the alignment with the greatest
-   sum of PP(i ~ j) for all aligned pairs (i,j);
+-1.  Add comments!
 
-3. boost::program_options
+0. Update tools directory to use boost::program_options.
 
-4. Make alignment-draw be able to output EPS
+1. Get intel compiler
 
-5. implement: new framework for fixing things
-	a) disable=alignment  -> fixed=A fixed=alignment
-	b) disable=alignment_branch -> fixed=A- fixed=leaves-alignment
-	c) disable=tree             -> fixed=tau fixed=topology
-	d) disable=frequencies      -> fixed=pi  fixed=frequencies
+2. Fix setting of 'fixed' flags in model.H/C, allow 'unfixing' flags.
 
-6. Debugging framework - test on other platforms
-   Also, try with stlport again
-   Also, compare some things with mrbayes, bambe
-
-8. Why did I think that I needed to invalidate branches on sample_nodes
+3. Why did I think that I needed to invalidate branches on sample_nodes
    again?
    a) well, the INDEXING from alignment to conditional likelihood changes.
       but we recompute that anyway.
@@ -45,35 +36,66 @@
    that does not depend on features of the alignment, like column
    number that may change w/o changing the conditional likelihoods.
 
-12. how does P(data|model) depend on number of frequency bins?
-13. Fix setting of 'fixed' flags in model.H/C, allow 'unfixing' flags.
-14. Fix crash when alignment contains only 1 sequence (also check 0,2,3,4 sequences)
-15. How to make priors specified on command line?
-16. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
-17. Make align-constraint= work with sample_tri_multi (there is no regular sample_multi)
-18. Make A3-stripped.fasta work with alphabet=Codons
+4. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
+5. Make align-constraint= work with sample_tri_multi (there is no regular sample_multi)
+6. Make A3-stripped.fasta work with alphabet=Codons
    a) smodel parameters aren't being sampled??
    b) we could also implement models besides M0...
-19. tree-dist-compare: 
+
+7. tree-dist-compare: 
 	a) by default, only show 1 topology per file
 	b) allow consensus to take a comma-separated list of values
 	c) 
-20. Make alignment-draw simply use 'plain' (or something) if AU-file
+8. Make alignment-draw simply use 'plain' (or something) if AU-file
     not specified.
 
-21. write code to load joint (A,T) distributions...  argh.
+9. write code to load joint (A,T) distributions...
 
-22. Speed up sample_path() for DParrayConstrained by only considering
+10. Speed up sample_path() for DParrayConstrained by only considering
     allowed states for each column...
+    a) check how fast we are gaps=full_tree but alignment is not fixed... 
+    b) remove invalidation in 3way and 5way sampling... 
+    c) see how much speed gain we get for 48 taxa...
 
-23. Clean up ColorMap-s in alignment-draw, and sanitize naming scheme.
+11. Fix "showonly" - think of better name.
+
+11.5: Write simple MPI code for MCMCMC....
+
+12. Clean up ColorMap-s in alignment-draw, and sanitize naming scheme.
     a) put all colormaps on the same scale by making colormaps nested
        and colorschemes not nested.
     b) allow names like colorscheme=plain+AA+whiten scale=LOD
                         colorscheme=plain-AA-whiten scale=LOD
        where minus means affect the fg instead of the background.
 
-24. Fix "showonly" - think of better name.
+
+------
+13. How to make priors specified on command line?
+
+14. Debugging framework 
+   a) platforms
+     1) intel c++
+     2) cygwin
+     3) MS Visual C++
+  b) stlport
+  c) compare
+     1) MrBayes
+     2) bambe
+     3) BEAST
+
+15. Make alignment-draw be able to output EPS
+
+16. how does P(data|model) depend on number of frequency bins?
+
+17. Allow alignment to contain only 2 sequences?
+
+18. Find a better distance measure for alignment-median?
+
+19. implement: new framework for fixing things
+	a) disable=alignment  -> fixed=A fixed=alignment
+	b) disable=alignment_branch -> fixed=A- fixed=leaves-alignment
+	c) disable=tree             -> fixed=tau fixed=topology
+	d) disable=frequencies      -> fixed=pi  fixed=frequencies
 
 A. fix: gamma+frequency+INV
 
@@ -83,7 +105,7 @@ C. sample lengths/topologies MORE often when alignment sampling also?
 
 D. A new ggobi is available!  Try multidimensional scaling...
 
-D. Start proposing INV::p on the log odds scale. It is OK to change
+E. Start proposing INV::p on the log odds scale. It is OK to change
 the prior, because we never want to use it  differently.
 
 
@@ -111,3 +133,9 @@ the prior, because we never want to use it  differently.
 [DONE]  alignment-gild: use list<alignment> instead of vector<>...
 
 [DONE]  alignment-draw: implement bg-colors=type, bg-whiteness = uncertainty
+
+[DONE]  Use boost::program_options and remove arguments.{H,C}
+
+[DONE]  Estimate best alignment by finding the alignment with the greatest
+   sum of PP(i ~ j) for all aligned pairs (i,j);
+
