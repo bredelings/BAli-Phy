@@ -32,11 +32,11 @@ all: sampler
 
 #----------------- Definitions
 LANGO = fast-math prefetch-loop-arrays tracer omit-frame-pointer 
-DEBUG = pipe gdwarf-2 #pg 
+DEBUG = pipe g3 #gdwarf-2 #pg 
 EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS = # NDEBUG NDEBUG_DP # USE_UBLAS
+DEFS = NDEBUG NDEBUG_DP # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
-OPT =  march=pentium4 #O3 # malign-double msse mmmx msse2 
+OPT =  march=pentium4 O3 # malign-double msse mmmx msse2 
 LDFLAGS = #-pg # -static 
 LI=${CXX}
 
@@ -45,7 +45,7 @@ PROGNAME = sampler
 NAME = sampler
 SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C branch-sample.C exponential.C \
-          eigenvalue.C parameters.C likelihood.C mcmc.C topology-sample.C \
+          eigenvalue.C parameters.C likelihood.C mcmc.C \
 	  choose.C sequencetree.C branch-lengths.C arguments.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C \

@@ -708,15 +708,15 @@ void tree::swap_children(int n) {
 
 // recompute everything from new leaf names
 
-vector<int> tree::standardize() {
+vector<int> tree::standardize(bool do_reroot) {
   vector<int> lnames(leaves());
   for(int i=0;i<lnames.size();i++)
     lnames[i] = i;
-  return standardize(lnames);
+  return standardize(lnames,do_reroot);
 }
 
   
-vector<int> tree::standardize(const vector<int>& lnames) {
+vector<int> tree::standardize(const vector<int>& lnames,bool do_reroot) {
 
   /********** Set the leaf names ***********/
   assert(lnames.size() == leaves());
@@ -735,7 +735,8 @@ vector<int> tree::standardize(const vector<int>& lnames) {
   // newroot is actually a branch...
   if (leaves() == 2)
     newroot=0;
-  reroot(newroot);
+  if (do_reroot)
+    reroot(newroot);
 
   /********** Input new leaf order *************/
   for(int i=0;i<leaves();i++)

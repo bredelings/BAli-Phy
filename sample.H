@@ -34,12 +34,14 @@ alignment sample_node2(const alignment& old,const Parameters&,int node);
 /// Resample gap/non-gap for 2 adjacent internal nodes, where not already determined
 alignment sample_two_nodes(const alignment& old,const Parameters& P,int b);
 
-bool sample_topology_sgaps(alignment& A,Parameters& P1,const Parameters& P2,
-			   const Parameters& P3,int b);
+/// Resample between 3 NNI topologies around branch b
+bool three_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,const Parameters& P3,int b);
 
-/// Resample gap/non-gap for 2 internal nodes, and the topology, with specified branch lengths
+/// Resample between 2 NNI topologies around branch b
+bool two_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,int b);
+
+/// Resample gap/non-gap for 2 internal nodes, and the topology, with specified branch lengths (Old method)
 bool sample_topology(alignment& A,Parameters&,const Parameters&, const Parameters&, int);
-bool topology_sample2(alignment& A,Parameters&,const Parameters&, const Parameters&, int);
 
 /// Which nodes are adjacent to this branch?
 vector<int> get_nodes(const alignment& A, const tree& T,int b);
@@ -54,7 +56,7 @@ MCMC::result_t sample_nodes2_one(alignment& A, Parameters& Theta,int);
 MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& Theta,int);
 
 MCMC::result_t sample_topology(alignment& A,Parameters&,int);
-MCMC::result_t sample_topology2(alignment& A,Parameters&,int);
+MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P1,int b);
 
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& Theta,int b);
 MCMC::result_t slide_branch_lengths_one(alignment& A, Parameters& Theta,int);

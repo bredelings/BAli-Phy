@@ -2,6 +2,8 @@
 #include "sample.H"
 #include "mcmc.H"
 #include "util.H"
+#include "5way.H"
+
 
 //FIXME - are we not guaranteed that leaf nodes will be the children of
 // their branch?
@@ -120,9 +122,6 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
 MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
   MCMC::result_t result(0.0,10);
 
-  if (not P.SModel().full_tree)
-    return result; //no_result
-
   result[0] = 1.0;
   
 
@@ -157,27 +156,136 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
     result[4] = 1.0;
     result[8] = 1.0;
 
-    vector<int> nodes = get_nodes(A,P.T,b);
     
     /****** Generate the Different Topologies *******/
     Parameters P2 = P;
-    Parameters P3 = P;
     
     SequenceTree& T2 = P2.T;
-    SequenceTree& T3 = P3.T;
     
+    vector<int> nodes = A5::get_nodes_random(P.T,b);
     T2.exchange(nodes[1],nodes[2]);
-    T3.exchange(nodes[1],nodes[3]);
     
     P2.setlength(b,-newlength);
-    P3.setlength(b,-newlength);
     
-    if (topology_sample2(A,P,P2,P3,b)) {
+    if (two_way_topology_sample(A,P,P2,b)) {
       result[1] = 1;
       result[5] = 1;
       result[9] = std::abs(length - newlength);
     }
   }
+  return result;
+}
+
+int find_branch(const tree& T,int node1, int node2) {
+  for(int b=0;b<T.branches();b++) {
+    if (T.branch(b).child() == node1 and T.branch(b).parent() == node2)
+      return b;
+    if (T.branch(b).child() == node2 and T.branch(b).parent() == node1)
+      return b;
+  }
+  throw myexception()<<"Couldn't find branch with nodes "<<node1<<" and "<<node2;
+}
+
+
+/// Walk a subtree across the tree - (different kind of sliding that other 'slide' routine)
+MCMC::result_t slide_branch_and_T(alignment& A, Parameters& P,int branch) {
+  MCMC::result_t result(0.0,10);
+
+  result[0] = 1.0;
+  
+  SequenceTree& T1 = P.T;
+
+  /*------- Propose increment 'epsilon' ----------*/
+  const double sigma = P.branch_mean/2;
+  double epsilon = gaussian(0,sigma);
+
+
+  /*------- Pick a direction ---------------*/
+
+  int node = T1.branch(branch).child();
+  if (T1[node].leaf() or myrandomf()< 0.5)
+    node = T1[node].parent();
+  assert(not T1[node].leaf());
+
+  /*------- Find adjacent branches ---------------*/
+
+  vector<int> branches;
+  for(int b=0;b<T1.branches();b++) {
+    if (T1.branch(b).child() == node or T1.branch(b).parent() == node) {
+      if (b == branch) continue;
+      branches.push_back(b);
+    }
+  }
+  assert(branches.size() == 2);
+  int b1 = branches[0];
+  int b2 = branches[1];
+ 
+
+  /*-------------- Make new tree -----------------*/
+
+  double newlength1 = T1.branch(b1).length() + epsilon;
+  double newlength2 = T1.branch(b1).length() - epsilon;
+
+  // Just change the branch length - this is the simple case
+  if (newlength1 >= 0 and newlength2 >= 0) {
+    Parameters P2 = P;
+    SequenceTree& T2 = P2.T;
+    P2.setlength(b1,newlength1);
+    P2.setlength(b2,newlength2);
+    if (do_MH_move(A,P,P2)) {
+      std::cerr<<" slide :  ("<<T1.branch(b1).length()<<","<<T1.branch(b2).length()<<")  ->  ";
+      std::cerr<<        "  ("<<T2.branch(b1).length()<<","<<T2.branch(b2).length()<<")\n";
+      
+      result[1] = 1;
+      result[3] = 1;
+      result[7] = std::abs(epsilon);
+    }
+    else {
+      std::cerr<<" slide :  ("<<T1.branch(b1).length()<<","<<T1.branch(b2).length()<<")  -/->  ";
+      std::cerr<<        "  ("<<T2.branch(b1).length()<<","<<T2.branch(b2).length()<<")\n";
+    }
+
+  }
+  // Move branch 'branch' across branch b1
+  else if (newlength1 < 0) {
+    Parameters P2 = P;
+    SequenceTree& T2 = P2.T;
+
+    vector<int> nodes = A5::get_nodes_random(T1,b1);
+    if (nodes[2]==node or nodes[3]==node) {
+      std::swap(nodes[0],nodes[2]);
+      std::swap(nodes[1],nodes[3]);
+      std::swap(nodes[4],nodes[5]);
+    }
+    if (nodes[1] == node) {
+      std::swap(nodes[0],nodes[1]);
+    }
+    assert(nodes[0] == node);
+    int b3 = find_branch(T1,nodes[5],nodes[3]);
+    double alpha = wrap(-newlength1,T1.branch(b3).length());
+
+
+    T2.exchange(nodes[0],nodes[2]);
+
+    // middle branch is now length alpha
+    P2.setlength(b1,alpha);
+    // sister branch adds in former middle length to keep sum of lengths constant.
+    P2.setlength(b2,T1.branch(b2).length()+T1.branch(b1).length());
+    // the branch we moved to has lost alpha from its length
+    P2.setlength(b3,T1.branch(b3).length()-alpha);
+
+    if (two_way_topology_sample(A,P,P2,branch)) {
+      result[1] = 1;
+      result[5] = 1;
+      result[9] = std::abs(epsilon);
+    }
+  }
+  else if (newlength2 < 0) {
+  }
+  else {
+    std::abort();
+  }
+
   return result;
 }
 

@@ -181,12 +181,12 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   // tree
   MoveAll tree_moves("tree");
   MoveEach topology_move("topology");
-  topology_move.add(1,MoveArgSingle("sample_topologies:nodes:topology",
-				    sample_topology,
-				    internal_branches)
-		    ,false);
+  //  topology_move.add(1,MoveArgSingle("sample_topologies:nodes:topology",
+  //				    sample_topology,
+  //				    internal_branches)
+  //		    ,false);
   topology_move.add(1,MoveArgSingle("sample_topologies2:nodes:topology",
-				    sample_topology2,
+				    three_way_topology_sample,
 				    internal_branches)
 		    );
 
@@ -205,7 +205,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
     length_moves1.add(100,MoveArgSingle("change_branch_length_and_T:length:nodes:topology",
 					change_branch_length_and_T,
 					internal_branches)
-		   );
+		   ,false);
   length_moves.add(1,length_moves1);
   if (P.SModel().full_tree)
     length_moves.add(1,MoveArgSingle("slide_branch_length:length",

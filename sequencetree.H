@@ -21,8 +21,8 @@ public:
   const std::string& seq(int i) const {return sequences[i];}
   const std::vector<std::string>& get_sequences() const {return sequences;}
 
-  std::vector<int> standardize();
-  std::vector<int> standardize(const std::vector<int>&);
+  std::vector<int> standardize(bool=true);
+  std::vector<int> standardize(const std::vector<int>&,bool=true);
 
   int index(const std::string&) const;
 

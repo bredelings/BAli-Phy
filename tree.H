@@ -201,8 +201,8 @@ public:
 
   // These change don't change the tree itself, how it is stored/referenced
   void swap_children(int n);
-  std::vector<int> standardize();
-  std::vector<int> standardize(const std::vector<int>&);
+  std::vector<int> standardize(bool=true);
+  std::vector<int> standardize(const std::vector<int>&,bool=true);
 
   /// The common ancestor of nodes i and j
   int common_ancestor(int i,int j) const;

@@ -100,7 +100,7 @@ int main(int argc,char* argv[]) {
     /*------ Link Alignment and Tree ----------*/
     link(A,T);
 
-
+    
     /*------- Re-root the tree appropriately  --------*/
 
     int rootb=-1;
@@ -110,7 +110,6 @@ int main(int argc,char* argv[]) {
     std::cerr<<"x = "<<rootd<<std::endl;
     for(int i=0;i<T.leaves();i++)
       std::cerr<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
-    T.branch(rootb).length() = 4.0;
 
     T.reroot(rootb);   // we don't care about the lengths anymore
     
@@ -122,22 +121,24 @@ int main(int argc,char* argv[]) {
 
     vector<int> mapping1 = find_mapping(T.get_sequences(),names);
 
-    T.standardize(mapping1);
+    T.standardize(mapping1,false);
+
 
     /*-------- Compute final mapping  -------*/
     vector<int> mapping2 = get_leaf_order(T);
 
+    //    vector<int> mapping = compose(mapping1,mapping2);
+    //    vector<int> mapping = mapping2;
+    vector<int> mapping = compose(mapping2,invert(mapping1));
 
-    vector<int> mapping = compose(mapping1,mapping2);
-
-    for(int i=0;i<mapping.size();i++)
-      cerr<<T.seq(mapping[i])<<" ";
+    for(int i=0;i<mapping2.size();i++)
+      cerr<<T.seq(mapping2[i])<<" ";
     cerr<<std::endl;
 
     cerr<<"tree = "<<T.write()<<"\n";
 
     /*------- Print out the alignment -------*/
-    alignment A2 = A;
+    alignment A2;
     for(int i=0;i<T.leaves();i++) {
       sequence s(A.seq(mapping[i]));
       s.resize(A.length());
