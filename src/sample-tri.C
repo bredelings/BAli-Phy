@@ -13,6 +13,7 @@
 #include "alignment-constraint.H"
 #include "likelihood.H"    // for prior()
 #include "refcount.H"
+#include "dp-matrix.H"
 
 //Assumptions:
 //  a) we assume that the internal node is the parent sequence in each of the sub-alignments

@@ -13,6 +13,7 @@
 #include "likelihood.H"    // for prior()
 #include "substitution-index.H"
 #include "refcount.H"
+#include "dp-array.H"
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with

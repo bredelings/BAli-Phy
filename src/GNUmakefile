@@ -55,9 +55,9 @@ else
 #  EXACTFLAGS += --param max-inline-insns-recursive=300
 #  EXACTFLAGS += --param max-inline-insns-recursive-auto=300
 
-#  EXACTFLAGS += --param large-function-insns=2700
-#  EXACTFLAGS += --param large-function-growth=100
-#  EXACTFLAGS += --param inline-unit-growth=200
+ EXACTFLAGS += --param large-function-insns=5700
+ EXACTFLAGS += --param large-function-growth=100
+ EXACTFLAGS += --param inline-unit-growth=300
 
   EXACTFLAGS += --param max-gcse-passes=2
 endif
@@ -80,8 +80,8 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C exponential.C eigenvalue.C parameters.C likelihood.C mcmc.C \
 	  choose.C sequencetree.C sample-branch-lengths.C \
 	  util.C randomtree.C alphabet.C smodel.C bali-phy.C \
-	  sample-tri.C hmm.C dp-engine.C 3way.C 2way.C sample-alignment.C \
-	  sample-node.C imodel.C 5way.C sample-topology-NNI.C \
+	  hmm.C dp-engine.C dp-array.C dp-matrix.C 3way.C 2way.C sample-alignment.C \
+	  sample-tri.C sample-node.C imodel.C 5way.C sample-topology-NNI.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
 	  alignment-sums.C alignment-util.C probability.C model.C le-double.C \

@@ -14,6 +14,7 @@
 #include "substitution-index.H"
 #include <boost/numeric/ublas/io.hpp>
 #include "refcount.H"
+#include "dp-array.H"
 
 // for prior(p[i])
 #include "likelihood.H"

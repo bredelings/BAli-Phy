@@ -6,6 +6,7 @@
 #include "alignment-sums.H"
 #include "alignment-constraint.H"
 #include "alignment-util.H"
+#include "dp-matrix.H"
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
