@@ -378,12 +378,15 @@ int main(int argc,char* argv[]) {
 	MAP_trees[i].branch(b).set_length(1.0);
       for(int b=MAP_trees[i].n_leaves();b<MAP_trees[i].n_branches();b++)
 	MAP_trees[i].branch(b).set_length( partition_support[ branch_to_partitions[i][b] ][i] );
+
       cout<<"MAPsupport_"<<i<<" = "<<MAP_trees[i]<<endl<<endl;
     }
 
+    double level = args.loadvalue("consensus",0.5);
+    cout<<"\n\nConsensus trees ["<<level*100<<"% level]\n";
     for(int i=0;i<tree_dists.size();i++) {
-      SequenceTree MF = get_mf_tree(dist_partitions[i]);
-      std::cout<<"mf"<<i<<" = "<<MF<<std::endl;
+      SequenceTree MF = get_mf_tree(get_Ml_partitions(tree_dists[i],level));
+      cout<<"consensus0"<<i<<" = "<<MF<<std::endl;
     }
   }
   catch (std::exception& e) {
