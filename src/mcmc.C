@@ -43,7 +43,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   
   pS<<  "    mu = "<<P.branch_mean<<"   ";
   for(int i=0;i<P.SModel().parameters().size();i++)
-    pS<<"    pS"<<i<<" = "<<P.SModel().parameters()[i];
+    pS<<"    "<<P.SModel().parameter_name(i)<<" = "<<P.SModel().parameters()[i];
   pS<<endl;
   
   for(int i=0;i<P.IModel().parameters().size();i++)

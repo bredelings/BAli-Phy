@@ -19,7 +19,7 @@ class Parameters: public MatCache {
   OwnedPointer<IndelModel> IModel_;
 
   /// The substitution::Model
-  OwnedPointer<substitution::MultiRateModel> SModel_;
+  OwnedPointer<substitution::MultiModel> SModel_;
 
 public:
 
@@ -64,9 +64,9 @@ public:
   IndelModel& IModel() {return *IModel_;}
 
   /// Get the substitution::Model
-  const substitution::MultiRateModel& SModel() const {return *SModel_;}
+  const substitution::MultiModel& SModel() const {return *SModel_;}
   /// Get the substitution::Model
-  substitution::MultiRateModel& SModel() {return *SModel_;}
+  substitution::MultiModel& SModel() {return *SModel_;}
 
   /// Get the alphabet
   const alphabet& get_alphabet() const {return SModel_->Alphabet();}

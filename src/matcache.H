@@ -34,12 +34,12 @@ public:
   }
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
-  void setlength(int b,double l,tree&,const substitution::MultiRateModel&);
+  void setlength(int b,double l,tree&,const substitution::MultiModel&);
   
   /// Recalculate all the cached transition matrices
-  void recalc(const tree&,const substitution::MultiRateModel&);
+  void recalc(const tree&,const substitution::MultiModel&);
 
-  MatCache(const tree& T,const substitution::MultiRateModel& SM);
+  MatCache(const tree& T,const substitution::MultiModel& SM);
 };
 
 #endif

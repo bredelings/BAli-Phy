@@ -48,8 +48,10 @@ namespace substitution {
       recalc();
     }
 
+    virtual std::string parameter_name(int i) const;
+
     /// The prior on the current parameters
-    virtual double prior() const {return 0.0;}
+    virtual double prior() const {return 0;}
 
     /// Symmetrically propose another vector of parameters (calls recalc)
     virtual void fiddle(const std::valarray<bool>&) = 0; 
@@ -76,6 +78,8 @@ namespace substitution {
     /// Fiddle the parameters of the upper model
     virtual void super_fiddle(const std::valarray<bool>&) =0;
 
+    virtual std::string super_parameter_name(int i) const;
+
   public:
     /// Make a copy of ourselves
     NestedModel* clone() const =0;
@@ -84,6 +88,7 @@ namespace substitution {
     virtual const Model& SubModel() const=0;
     virtual Model& SubModel()=0;
 
+    std::string parameter_name(int i) const;
 
     double prior() const {return super_prior() + SubModel().prior();}
 
@@ -93,7 +98,7 @@ namespace substitution {
 	parameters_[i] = SubModel().parameters()[i];
       super_fiddle(fixed);
     }
-
+    
     /// We have the same alphabet as our submodel
     const alphabet& Alphabet() const {return SubModel().Alphabet();}
 
@@ -150,14 +155,41 @@ namespace substitution {
     /// The transition probability matrix over time t
     virtual Matrix transition_p(double t) const =0;
 
-    /// The equilibrium frequencies
+    /// Get the equilibrium frequencies
     virtual const std::valarray<double>& frequencies() const=0;
+
+    /// Set the equilibrium frequencies
+    virtual void frequencies(const std::valarray<double>&) =0;
 
     ReversibleModel() {}
   };
 
+  /// An AdditiveModel depends only on t2-t1
 
-  class IndependantAdditiveModel: virtual public Model {
+  /// In additive models P(X[t+tau]=b|X[t]=a) = P(X[tau]=b|X[0]=a)
+  /// Also E f(X,(a,b)) = E f(X,(0,b-a))
+
+  class AdditiveModel: virtual public Model {
+  public:
+    virtual AdditiveModel* clone() const=0;
+
+    virtual double rate() const =0;
+    virtual void set_rate(double) =0;
+
+    AdditiveModel() {}
+  };
+
+
+  class ReversibleAdditiveModel: public ReversibleModel, virtual public AdditiveModel {
+  public:
+    virtual ReversibleAdditiveModel* clone() const=0;
+  };
+
+  // With an Independant Model, you can chain transition matrices.
+  // Q_t(a,b) = sum_c Q[0,tau](a,c) x Q[tau,t](c,b)
+
+  // In an independant additive
+  class IndependantAdditiveModel: virtual public AdditiveModel {
 
   public:
     virtual IndependantAdditiveModel* clone() const=0;
@@ -169,11 +201,12 @@ namespace substitution {
   };
 
   class Independant_Additive_Reversible_Model: public ReversibleModel, 
-					    public IndependantAdditiveModel
+					       virtual public IndependantAdditiveModel
   {
   public:
     virtual Independant_Additive_Reversible_Model* clone() const=0;
 
+    /// The transition probability matrix
     virtual Matrix transition_p(double) const=0;
   };
 
@@ -181,7 +214,7 @@ namespace substitution {
   //------------------------- Markov Substitution Model ----------------------------//
 
   /// A substitution model which obeys the Markov property
-  class MarkovModel: virtual public Model {
+  class MarkovModel: virtual public IndependantAdditiveModel {
 
   protected:
 
@@ -193,7 +226,7 @@ namespace substitution {
     virtual MarkovModel* clone() const =0;
 
     /// The transition rate matrix
-    virtual const Matrix& rates() const {return Q;}
+    virtual const Matrix& transition_rates() const {return Q;}
 
     /// The transition probability matrix
     virtual Matrix transition_p(double t) const =0;
@@ -213,17 +246,17 @@ namespace substitution {
   // FIXME - cache the eigensystem!
   // Store S2 = pi^0.5 * S * pi^0.5
   // Store EigenValues(S2) -> D,O
+  // Is this worth it?  Try it later...
 
   // exp(Qt) ->
   //   1. get Dt = D*exp(t)
   //   2. get O*Dt*O
   //   3. return DN*(O*Dt*O)*DP
-  // Is this worth it?  Try it later...
-
 
   /// A Markov substitution model which is reversible
-  class ReversibleMarkovModel: public MarkovModel,public ReversibleModel {
-
+  class ReversibleMarkovModel: public MarkovModel,
+			       public Independant_Additive_Reversible_Model 
+  {
   protected:
     /// The equilibrium frequencies
     std::valarray<double> pi;
@@ -233,6 +266,9 @@ namespace substitution {
 
     virtual void recalc();
   public:
+    double rate() const;
+    void set_rate(double);
+
     Matrix getD() const;
 
     const Matrix& getS() const {return S;}
@@ -247,9 +283,11 @@ namespace substitution {
     const std::valarray<double>& frequencies() const {return pi;}
 
     /// Set the equilibrium frequencies
-    virtual void frequencies(const std::valarray<double>& pi_) {pi=pi_; recalc();}
+    void frequencies(const std::valarray<double>& pi_) {pi=pi_; recalc();}
   
     string name() const;
+
+    double prior() const;
 
     /// Construct a reversible Markov model on alphabet 'a_'
     ReversibleMarkovModel(const alphabet& a):
@@ -260,45 +298,57 @@ namespace substitution {
     ~ReversibleMarkovModel() {}
   };
 
-    class Gamma_Branch_Model:public Independant_Additive_Reversible_Model,public NestedModelOver<ReversibleMarkovModel> 
-    {
-    public:
-      virtual Gamma_Branch_Model* clone() const {return new Gamma_Branch_Model(*this);}
+  // Perhaps this is just a REVERSIBLE Model?
+  class Gamma_Branch_Model:public Independant_Additive_Reversible_Model,public NestedModelOver<ReversibleMarkovModel> 
+  {
+    void super_fiddle(const std::valarray<bool>&);
+    double super_prior() const;
+  public:
+    virtual Gamma_Branch_Model* clone() const {return new Gamma_Branch_Model(*this);}
+    
+    double rate() const {return SubModel().rate();}
+    void set_rate(double r) {SubModel().set_rate(r);}
+    
+    string name() const;
       
-      void super_fiddle(const std::valarray<bool>&);
-      double super_prior() const;
-      string name() const;
-      
-      /// Get the equilibrium frequencies
-      const std::valarray<double>& frequencies() const {return SubModel().frequencies();}
-      
-      Matrix transition_p(double t) const;
-      Gamma_Branch_Model(const ReversibleMarkovModel& M)
-	:NestedModelOver<ReversibleMarkovModel>(M,1) {
-	parameters_[parameters_.size()-1]=0.1;
-      }
-    };
+    /// Get the equilibrium frequencies
+    const std::valarray<double>& frequencies() const {return SubModel().frequencies();}
+    /// Set the equilibrium frequencies
+    void frequencies(const std::valarray<double>& f) {SubModel().frequencies(f);}
+
+    Matrix transition_p(double t) const;
+    Gamma_Branch_Model(const ReversibleMarkovModel& M)
+      :NestedModelOver<ReversibleMarkovModel>(M,1) {
+      parameters_[parameters_.size()-1]=0.1;
+    }
+  };
 
 
 
-    class Gamma_Stretched_Branch_Model:public Independant_Additive_Reversible_Model,public NestedModelOver<ReversibleMarkovModel> 
-    {
-    public:
-      virtual Gamma_Stretched_Branch_Model* clone() const {return new Gamma_Stretched_Branch_Model(*this);}
-      
-      void super_fiddle(const std::valarray<bool>&);
-      double super_prior() const;
-      string name() const;
-      
-      /// Get the equilibrium frequencies
-      const std::valarray<double>& frequencies() const {return SubModel().frequencies();}
-      
-      Matrix transition_p(double t) const;
-      Gamma_Stretched_Branch_Model(const ReversibleMarkovModel& M)
-	:NestedModelOver<ReversibleMarkovModel>(M,1) {
-	parameters_[parameters_.size()-1]=0.1;
-      }
-    };
+  class Gamma_Stretched_Branch_Model:public Independant_Additive_Reversible_Model,public NestedModelOver<ReversibleMarkovModel> 
+  {
+    void super_fiddle(const std::valarray<bool>&);
+    double super_prior() const;
+  public:
+    virtual Gamma_Stretched_Branch_Model* clone() const {return new Gamma_Stretched_Branch_Model(*this);}
+    
+    double rate() const {return SubModel().rate();}
+    void set_rate(double r) {SubModel().set_rate(r);}
+    
+    string name() const;
+    
+    /// Get the equilibrium frequencies
+    const std::valarray<double>& frequencies() const {return SubModel().frequencies();}
+    
+    /// Set the equilibrium frequencies
+    void frequencies(const std::valarray<double>& f) {SubModel().frequencies(f);}
+
+    Matrix transition_p(double t) const;
+    Gamma_Stretched_Branch_Model(const ReversibleMarkovModel& M)
+      :NestedModelOver<ReversibleMarkovModel>(M,1) {
+      parameters_[parameters_.size()-1]=0.1;
+    }
+  };
 
 
 
@@ -337,6 +387,8 @@ namespace substitution {
     double kappa() const {return parameters_[0];}
     /// Set the parameter 'kappa' (transition/transversion ratio)
     void kappa(double k) {parameters_[0]=k;recalc();}
+
+    string parameter_name(int i) const;
 
     virtual double prior() const;
 
@@ -439,6 +491,8 @@ namespace substitution {
     /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
     void omega(double w) {parameters_[1]=w;recalc();}
 
+    std::string parameter_name(int i) const;
+
     /// Set the equilibrium frequencies
     void frequencies(const std::valarray<double>& pi_);
     
@@ -451,39 +505,85 @@ namespace substitution {
   };
 
 
+  //FIXME - we are generalizing this to 
+  // include a linear combination of reversible models with the same
+  // alphabet and equilibrium frequencies
 
-  //----------------------- MultiRateModel ---------------------------*/
+  // For now, we assume that all models can be generated by one base model...
 
-  /// A substitution model based on running a ReversibleModel at different rates
-  class MultiRateModel: virtual public NestedModel {
+  //----------------------- MultiModel ---------------------------*/
+
+  /// A linear combination of reversible additive models identical equilibria
+
+  class MultiModel: public ReversibleAdditiveModel {
   protected:
-    /// The probability of each rate
+    /// The probability of each model
     vector<double> distribution_;
-    /// The different rates
-    vector<double> rates_;
 
+    /// The probability of each model
+    vector<double> rates_;
+  public:
+    MultiModel* clone() const =0;
+
+    void recalc();
+
+    /// The number of models
+    int nmodels() const {return distribution_.size();}
+
+    virtual const ReversibleAdditiveModel& get_model(int i) const=0;
+
+    double rate() const;
+    void set_rate(double);
+
+    /// Get the probability of the models
+    const vector<double>& distribution() const {return distribution_;}
+
+    /// Get a transition probability matrix for time 't', averaging over models
+    virtual Matrix transition_p(double t) const;
+
+    /// Get a transition probability matrix for time 't' and model 'm'
+    virtual Matrix transition_p(double t,int m) const {return get_model(m).transition_p(t*rates_[m]); }
+
+    MultiModel(int n_models):distribution_(n_models) {}
+
+    ~MultiModel() {}
+  };
+
+
+  /// A substitution model based on running Reversible Models with the same equilibrium at different rates
+  class MultiRateModel: public MultiModel, virtual public NestedModel {
   public:
     MultiRateModel* clone() const =0;
 
     void recalc();
 
     /// The Reversible model which is run at different rates
-    virtual const ReversibleModel& BaseModel() const =0;
+    virtual const ReversibleAdditiveModel& BaseModel() const =0;
     /// The Reversible model which is run at different rates
-    virtual ReversibleModel& BaseModel() =0;
+    virtual ReversibleAdditiveModel& BaseModel() =0;
   
+    double rate() const;
+    void set_rate(double);
+    const ReversibleAdditiveModel& get_model(int i) const;
+
     /// The number of rates
-    int nrates() const {return rates_.size();}
+    int nrates() const {return nmodels();}
 
     /// Get the rates
     const vector<double>& rates() const {return rates_;}
-    /// Get the probability of the rates
-    const vector<double>& distribution() const {return distribution_;}
+
+    /// Get the equilibrium frequencies
+    const std::valarray<double>& frequencies() const {return BaseModel().frequencies();}
+    /// Set the equilibrium frequencies
+    void frequencies(const std::valarray<double>& f) {BaseModel().frequencies(f);}
+
+    /// Get a transition probability matrix for time 't', averaging over models
+    Matrix transition_p(double t) const { return MultiModel::transition_p(t);}
 
     /// Get a transition probability matrix for time 't' and rate 'r'
-    Matrix transition_p(double t,int r) const {return BaseModel().transition_p(t*rates_[r]);}
+    Matrix transition_p(double t,int r) const { return BaseModel().transition_p(t*rates_[r]); }
 
-    MultiRateModel(int nr):distribution_(nr),rates_(nr) {}
+    MultiRateModel(int nr):MultiModel(nr) {}
 
     ~MultiRateModel() {}
   };
@@ -496,39 +596,39 @@ namespace substitution {
   public:
     virtual MultiRateModelOver<SubModel_t>* clone() const=0;
 
-    const ReversibleModel& BaseModel() const {return SubModel().BaseModel();}
-    ReversibleModel& BaseModel() {return SubModel().BaseModel();}
+    const ReversibleAdditiveModel& BaseModel() const {return SubModel().BaseModel();}
+    ReversibleAdditiveModel& BaseModel() {return SubModel().BaseModel();}
 
     MultiRateModelOver(const SubModel_t& M, int dp, int nr)
       :MultiRateModel(nr),
        NestedModelOver<SubModel_t>(M,dp)
-    {}
+    { }
   };
 
 
   /// A MultiRate Model which is directly over a ReversibleModel
   template<>
-  class MultiRateModelOver<ReversibleModel>: public MultiRateModel, public NestedModelOver<ReversibleModel> {
+  class MultiRateModelOver<ReversibleAdditiveModel>: public MultiRateModel, public NestedModelOver<ReversibleAdditiveModel> {
 
   public:
-    virtual MultiRateModelOver<ReversibleModel>* clone() const =0;
+    virtual MultiRateModelOver<ReversibleAdditiveModel>* clone() const =0;
 
-    const ReversibleModel& SubModel() const {return *sub_model;}
-    ReversibleModel& SubModel() {return *sub_model;}
+    const ReversibleAdditiveModel& SubModel() const {return *sub_model;}
+    ReversibleAdditiveModel& SubModel() {return *sub_model;}
 
-    const ReversibleModel& BaseModel() const {return SubModel();}
-    ReversibleModel& BaseModel() {return SubModel();}
+    const ReversibleAdditiveModel& BaseModel() const {return SubModel();}
+    ReversibleAdditiveModel& BaseModel() {return SubModel();}
 
-    MultiRateModelOver<ReversibleModel>(const ReversibleModel& M, int dp, int nr)
+    MultiRateModelOver<ReversibleAdditiveModel>(const ReversibleAdditiveModel& M, int dp, int nr)
       :MultiRateModel(nr),
-       NestedModelOver<ReversibleModel>(M,dp)
+       NestedModelOver<ReversibleAdditiveModel>(M,dp)
     {}
 
   };
 
 
   /// A MultiRate Model with a single rate
-  class SingleRateModel: public MultiRateModelOver<ReversibleModel> {
+  class SingleRateModel: public MultiRateModelOver<ReversibleAdditiveModel> {
 
   protected:
     double super_prior() const {return 0;}
@@ -538,7 +638,7 @@ namespace substitution {
 
     string name() const;
 
-    SingleRateModel(const ReversibleModel& M):MultiRateModelOver<ReversibleModel>(M,0,1) {
+    SingleRateModel(const ReversibleAdditiveModel& M):MultiRateModelOver<ReversibleAdditiveModel>(M,0,1) {
       rates_[0] = 1.0;
       distribution_[0] = 1.0;
     }
@@ -548,13 +648,15 @@ namespace substitution {
 
   /// A discrete-gamma Model
 
-  class DistributionRateModel:  public MultiRateModelOver<ReversibleModel> {
+  class DistributionRateModel:  public MultiRateModelOver<ReversibleAdditiveModel> {
   protected:
     double super_prior() const;
     void super_fiddle(const std::valarray<bool>&);
     void recalc();
 
     OwnedPointer<RateDistribution> D;
+
+    int param;
 
   public:
 
@@ -563,20 +665,22 @@ namespace substitution {
     const RateDistribution& distribution() const {return *D;}
 
     string name() const;
-    
-    DistributionRateModel(const ReversibleModel& M, const RateDistribution& RD,int n);
+
+    DistributionRateModel(const ReversibleAdditiveModel& M, const RateDistribution& RD,int n,int p=-1);
   };
 
   /// A discrete-gamma Model
   //  Only has one parameter: the shape parameter for the gamma
   class GammaRateModel: public DistributionRateModel {
+    string super_parameter_name(int i) const;
+
   public:
     virtual GammaRateModel* clone() const {return new GammaRateModel(*this);}
 
     string name() const;
 
     /// Construct a discrete gamma model on top of 'M', with 'n' bins
-    GammaRateModel(const ReversibleModel& M,int n);
+    GammaRateModel(const ReversibleAdditiveModel& M,int n);
   };
 
   /// A discrete-lognormal Model
@@ -588,7 +692,7 @@ namespace substitution {
     string name() const;
 
     /// Construct a discrete gamma model on top of 'M', with 'n' bins
-    LogNormalRateModel(const ReversibleModel& M,int n);
+    LogNormalRateModel(const ReversibleAdditiveModel& M,int n);
   };
 
 
@@ -606,16 +710,12 @@ namespace substitution {
     double super_prior() const;
 
     void super_fiddle(const std::valarray<bool>&);
+
+    string super_parameter_name(int i) const;
+
     void recalc();
   public:
     virtual INV_Model* clone() const {return new INV_Model(*this);}
-
-    // submodel is a multirate model
-    //    const MultiRateModel& SubModel() const {return *(MultiRateModel*)sub_model;};
-    //    MultiRateModel& SubModel() {return *(MultiRateModel*)sub_model;}
-
-    //    const ReversibleModel& BaseModel() const {return SubModel().BaseModel();}
-    //    ReversibleModel& BaseModel() {return SubModel().BaseModel();}
 
     string name() const;
 

@@ -7,12 +7,17 @@
 #include <gsl/gsl_sf.h>
 #include "logsum.H"
 #include "likelihood.H"
+#include "probability.H"
 
 using std::valarray;
 using std::string;
 using std::vector;
 
 namespace substitution {
+
+  string Model::parameter_name(int i) const {
+    return string("pS") + convertToString(i);
+  }
 
   Model::Model(int s)
     :parameters_(s),
@@ -99,11 +104,25 @@ namespace substitution {
 
   string MarkovModel::name() const { return "MarkovModel";}
 
+  double ReversibleMarkovModel::rate() const {
+    // Rescale so that expected mutation rate is 1
+    double scale=0;
+    for(int i=0;i<S.size1();i++) 
+      scale -= pi[i]*Q(i,i);
+
+    assert(scale > 0);
+
+    return scale;
+  }
+
+  void ReversibleMarkovModel::set_rate(double r)  {
+    Q /= r;
+    S /= r;
+  }
+
   string ReversibleMarkovModel::name() const  {
     return "ReversibleMarkovModel";
   }
-
-
 
   void ReversibleMarkovModel::recalc() {
 
@@ -117,27 +136,15 @@ namespace substitution {
       S(i,i) = -sum/pi[i];
     }
 
-    // Rescale so that expected mutation rate is 1
-    double scale=0;
-    for(int i=0;i<S.size1();i++) 
-      scale += pi[i]*S(i,i)*pi[i];
-
-    S /= -scale;
-
     // Move from 'S' to 'S+F'
     for(int i=0;i<S.size1();i++)
       for(int j=0;j<S.size2();j++)
 	Q(i,j) = S(i,j)*pi[j];
 
-
-    // Rescale so expected that mutation rate is 1
-    scale = 0;
-    for(int i=0;i<S.size1();i++) 
-      scale += pi[i]*Q(i,i);
-
 #ifndef NDEBUG
-    std::cerr<<"scale = "<<scale<<endl;
+    std::cerr<<"scale = "<<rate()<<endl;
 #endif
+
     // Maybe assert that 
     //  A) the sum_j Q_ij = 0
     //  B) sum_i pi_i Q_ij = pi_j
@@ -156,6 +163,18 @@ namespace substitution {
     return exp(S,getD(),t);
   }
 
+  double ReversibleMarkovModel::prior() const {
+    valarray<double> q(1.0/frequencies().size(),frequencies().size());
+    return dirichlet_log_pdf(frequencies(),q,10);
+  }
+
+  string NestedModel::parameter_name(int i) const {
+    if (i<SubModel().parameters().size())
+      return SubModel().parameter_name(i);
+    else
+      return super_parameter_name(i-SubModel().parameters().size());
+  }
+
   void NestedModel::recalc() {
     vector<double> sub_p = SubModel().parameters();
     for(int i=0;i<sub_p.size();i++)
@@ -166,6 +185,11 @@ namespace substitution {
 
   string HKY::name() const {
     return "HKY[" + Alphabet().name + "]";
+  }
+
+  string HKY::parameter_name(int i) const {
+    assert(i==0);
+    return "kappa";
   }
 
   void HKY::fiddle(const valarray<bool>& fixed) {
@@ -182,7 +206,9 @@ namespace substitution {
   /// return the LOG of the prior
   double HKY::prior() const {
     double k = log(kappa());
-    return log(shift_laplace_pdf(k, log(2), 0.5));
+    double P = log(shift_laplace_pdf(k, log(2), 0.5));
+    P += ReversibleMarkovModel::prior();
+    return P;
   }
 
   void HKY::recalc() {
@@ -239,10 +265,22 @@ namespace substitution {
   }
 
   //------------------------ Codon Models -------------------//
+
+  string YangCodonModel::parameter_name(int i) const {
+    if (i==0)
+      return "kappa";
+    else if (i==1)
+      return "omega";
+    else
+      throw myexception()<<"YangCodonModel::parameter_name(int): can't find parameter "<<i;
+  }
+
+
   double YangCodonModel::prior() const {
     double P = 0;
     P += log(shift_laplace_pdf(log(kappa()), log(2), 0.5));
     P += log(shift_laplace_pdf(log(omega()), 0, 0.1));
+    P += ReversibleMarkovModel::prior();
     return P;
   }
 
@@ -331,16 +369,49 @@ namespace substitution {
 
   /*--------------- MultiRate Models ----------------*/
 
+  double MultiModel::rate() const {
+    double r=0;
+    for(int m=0;m<nmodels();m++)
+      r += distribution_[m]*rates_[m]*get_model(m).rate();
+    return r;
+  }
+
+  void MultiModel::set_rate(double r)  {
+    double scale = r/rate();
+    for(int i=0;i<nmodels();i++)
+      rates_[i] *= scale;
+  }
+
+  void MultiModel::recalc() {
+    set_rate(1);
+  }
+
+  Matrix MultiModel::transition_p(double t) const {
+    Matrix P = distribution_[0] * transition_p(t,0);
+    for(int m=1;m<nmodels();m++)
+      P += distribution_[m] * transition_p(t,m);
+    return P;
+  }
+
+  double MultiRateModel::rate() const {
+    double scale=0;
+    for(int i=0;i<nrates();i++)
+      scale += rates_[i]*distribution_[i];
+    return scale;
+  }
+
+  void MultiRateModel::set_rate(double r)  {
+    MultiModel::set_rate(r);
+  }
+
+  const ReversibleAdditiveModel& MultiRateModel::get_model(int m) const {
+    return BaseModel();
+  }
 
   void MultiRateModel::recalc() {
-    double mean=0;
-    for(int i=0;i<nrates();i++)
-      mean += rates_[i]*distribution_[i];
-
-    for(int i=0;i<nrates();i++)
-      rates_[i] /= mean;
-
     NestedModel::recalc();
+    BaseModel().set_rate(1);
+    MultiModel::recalc();
   }
 
 
@@ -373,15 +444,17 @@ namespace substitution {
       temp[i] = parameters_[sub_model->parameters().size() + i];
     D->parameters(temp);
 
-    for(int i=0;i<nrates();i++)
+    for(int i=0;i<nrates();i++) {
       rates_[i] = D->quantile( double(2*i+1)/(2.0*nrates()) );
+    }
 
     MultiRateModel::recalc();
   }
 
-  DistributionRateModel::DistributionRateModel(const ReversibleModel& M,const RateDistribution& RD, int n)
-    :MultiRateModelOver<ReversibleModel>(M,RD.parameters().size(),n),
-     D(RD)
+  DistributionRateModel::DistributionRateModel(const ReversibleAdditiveModel& M,const RateDistribution& RD, int n,int p)
+    :MultiRateModelOver<ReversibleAdditiveModel>(M,RD.parameters().size(),n),
+     D(RD),
+     param(p)
   {
     // This never changes - since we use quantiles for the bins
     for(int i=0;i<nrates();i++)
@@ -396,11 +469,19 @@ namespace substitution {
 
   /*--------------- Gamma Sites Model----------------*/
 
+  string GammaRateModel::super_parameter_name(int i) const {
+    if (i==0)
+      return "sigma";
+    else
+      std::abort();
+  }
+
+
   string GammaRateModel::name() const {
     return sub_model->name() + " + Gamma(" + convertToString(rates_.size()) + ")";
   }
 
-  GammaRateModel::GammaRateModel(const ReversibleModel& M,int n)
+  GammaRateModel::GammaRateModel(const ReversibleAdditiveModel& M,int n)
     :DistributionRateModel(M,Gamma(),n)
   {}
 
@@ -411,7 +492,7 @@ namespace substitution {
     return sub_model->name() + " + LogNormal(" + convertToString(rates_.size()) + ")";
   }
 
-  LogNormalRateModel::LogNormalRateModel(const ReversibleModel& M,int n)
+  LogNormalRateModel::LogNormalRateModel(const ReversibleAdditiveModel& M,int n)
     :DistributionRateModel(M,LogNormal(),n)
   {}
 
@@ -458,6 +539,13 @@ namespace substitution {
     p = wrap(p,1.0);
 
     recalc();
+  }
+
+  string INV_Model::super_parameter_name(int i) const {
+    if (i==0)
+      return "INV::p";
+    else
+      std::abort();
   }
 
   void INV_Model::recalc() {

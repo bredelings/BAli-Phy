@@ -163,3 +163,20 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
 
   return result;
 }
+
+MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
+  MCMC::result_t result(0.0,2);
+  result[0] = 1.0;
+
+  Parameters P2 = P;
+  valarray<double> f = P2.SModel().frequencies();
+  f = dirichlet_fiddle(f,0.25/sqrt(f.size()));
+  P2.SModel().frequencies(f);
+
+  if (P.accept_MH(A,P,A,P2)) {
+    P = P2;
+    result[1] = 1;
+  }
+
+  return result;
+}
