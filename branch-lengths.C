@@ -57,7 +57,7 @@ MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool 
     b3 = T.branch_up(b3);
   }
 
-  /*-------------- Find out how much to slide ---------------*/
+  //-------------- Find out how much to slide ---------------//
   const double sigma = 0.3/2;
   const double min = std::min(T.branch(b2).length(),T.branch(b3).length());
   double length = T.branch(b).length();
@@ -68,13 +68,13 @@ MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool 
   newlength = wrap(newlength,max);
   double epsilon = newlength - length;
 
-  /*------------------Calculate P2-------------------*/
+  //------------------Calculate P2-------------------//
   Parameters P2 = P;
   P2.setlength(b,newlength);
   P2.setlength(b2,T.branch(b2).length()-epsilon);
   P2.setlength(b3,T.branch(b3).length()-epsilon);
   
-  /*--------------- Do the M-H step if OK---------------*/
+  //--------------- Do the M-H step if OK---------------//
   
   bool success = do_MH_move(A,P,P2);
   if (success) {
