@@ -302,8 +302,10 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {
   double e = exp(parameters_[1]);
 
   // (1-e) * delta / (1-delta) = P(indel)
-  double P_indel = 1.0 - exp(-rate*t);
-  double A = P_indel/(1.0-e);
+  // But move the (1-e) into the RATE to make things work
+  double mu = rate*t/(1.0-e);
+  double P_indel = 1.0 - exp(-mu);
+  double A = P_indel;
   double delta = A/(1+A);
 
   if (1 - 2*delta <0)
