@@ -342,4 +342,3 @@ void remove_empty_columns(alignment& A) {
     }
   }
 }
-

@@ -95,7 +95,7 @@ vector<int> SequenceTree::standardize(const vector<int>& lnames,bool do_reroot) 
 void SequenceTree::read(const string& filename) {
   ifstream file(filename.c_str());
   if (not file) 
-    throw myexception(string("Couldn't open file '")+filename+"'");
+    throw myexception()<<"Couldn't open file '"<<filename<<"'";
   read(file);
   file.close();
 }

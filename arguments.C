@@ -15,6 +15,7 @@ void Arguments::read(istream& input) {
   string line;
   if (not input)
     return;
+  input>>line;
   while(getline(input,line)) {
     if (!line.size()) continue;
     if (line[0] == '#') continue;

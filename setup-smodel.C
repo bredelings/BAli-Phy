@@ -7,28 +7,36 @@ using std::vector;
 using std::valarray;
 
 substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_frequencies) {
-
-  /*------ Define some alphabets for reference ------*/
-  alphabet dna("DNA nucleotides","AGTC","NYR");
-  alphabet rna("RNA nucleotides","AGUC","NYR");
-  alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
-
   /*------ Get the base markov model (Reversible Markov) ------*/
   substitution::ReversibleMarkovModel* base_markov_smodel = 0;
     
   if (args.set("smodel") and args["smodel"] == "EQU")
     base_markov_smodel = new substitution::EQU(a);
-  else if (a == dna)
-    base_markov_smodel = new substitution::HKY(dna);
-  else if (a == rna)
-    base_markov_smodel = new substitution::HKY(rna);
-  else if (a == amino_acids) {
+  else if (a == DNA())
+    base_markov_smodel = new substitution::HKY(DNA());
+  else if (a == RNA())
+    base_markov_smodel = new substitution::HKY(RNA());
+  else if (a == AminoAcids()) {
     string filename = "wag";
     if (args.set("Empirical"))
       filename = args["Empirical"];
     filename = string("Data/") + filename + ".dat";
 
-    base_markov_smodel = new substitution::Empirical(amino_acids,filename);
+    base_markov_smodel = new substitution::Empirical(AminoAcids(),filename);
+  }
+  else if (a == Codons(DNA())) {
+    ifstream genetic_code("Data/genetic_code_dna.dat");
+    if (not genetic_code)
+      throw myexception()<<"Couldn't open file 'Data/genetic_code_dna.dat'";
+    base_markov_smodel = new substitution::YangCodonModel(Translation_Table(Codons(DNA()),AminoAcids(),genetic_code));
+    genetic_code.close();
+  }
+  else if (a == Codons(RNA())) {
+    ifstream genetic_code("Data/genetic_code_rna.dat");
+    if (not genetic_code)
+      throw myexception()<<"Couldn't open file 'Data/genetic_code_rna.dat'";
+    base_markov_smodel = new substitution::YangCodonModel(Translation_Table(Codons(RNA()),AminoAcids(),genetic_code));
+    genetic_code.close();
   }
   else
     assert(0);

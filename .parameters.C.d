@@ -1,1 +1,1 @@
-.parameters.C.d parameters.o: parameters.C parameters.H alphabet.H mytypes.H   myexception.H sequencetree.H tree.H smodel.H rates.H imodel.H   alignment.H sequence.H sequence-format.H matcache.H rng.H   substitution.H likelihood.H
+.parameters.C.d parameters.o: parameters.C parameters.H alphabet.H myexception.H clone.H   mytypes.H sequencetree.H tree.H smodel.H rates.H imodel.H alignment.H   sequence.H sequence-format.H matcache.H rng.H substitution.H   likelihood.H

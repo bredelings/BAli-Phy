@@ -549,7 +549,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     }
 
     if (not MAP_printed and iterations % 50 == 0) {
-      cout<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<endl;
+      map_stream<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<endl;
       print_stats(map_stream,map_stream,map_stream,map_stream,MAP_alignment,MAP_P,"MAP");
       MAP_printed = true;
     }

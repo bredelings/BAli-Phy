@@ -46,32 +46,6 @@ void Parameters::recalc() {
   MatCache::recalc(T,*SModel_);
 }
 
-Parameters& Parameters::operator=(const Parameters& P) {
-  MatCache::operator=(P);
-
-  delete SModel_;
-  SModel_ = P.SModel_->clone();
-
-  delete IModel_;
-  IModel_ = P.IModel_->clone();
-
-  T = P.T;
-
-  branch_mean = P.branch_mean;
-
-  features = P.features;
-  constants = P.constants;
-
-  return (*this);
-}
-
-Parameters::Parameters(const Parameters& P):
-  MatCache(P),
-  IModel_(P.IModel_->clone()),SModel_(P.SModel_->clone()),
-  constants(P.constants),features(P.features),T(P.T),branch_mean(P.branch_mean)
-{ }
-
-
 Parameters::Parameters(const substitution::MultiRateModel& SM,const IndelModel& IM,const SequenceTree& t)
   :MatCache(t,SM),
    IModel_(IM.clone()),

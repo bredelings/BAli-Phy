@@ -1,1 +1,1 @@
-.alphabet.C.d alphabet.o: alphabet.C alphabet.H mytypes.H myexception.H
+.alphabet.C.d alphabet.o: alphabet.C alphabet.H myexception.H clone.H

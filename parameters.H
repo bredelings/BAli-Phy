@@ -9,7 +9,7 @@
 #include "imodel.H"
 #include "alignment.H"
 #include "matcache.H"
-
+#include "clone.H"
 
 /******************************* parameter-containing class **************************/
 /// A class to contain all the MCMC state except the alignment
@@ -17,10 +17,10 @@ class Parameters: public MatCache {
 
   /*-------- We own these ----------*/
   /// The IndelModel
-  IndelModel* IModel_;
+  OwnedPointer<IndelModel> IModel_;
 
   /// The substitution::Model
-  substitution::MultiRateModel* SModel_;
+  OwnedPointer<substitution::MultiRateModel> SModel_;
 
 public:
   /// Is pinning enabled or not?
@@ -70,11 +70,7 @@ public:
   /// parameter for exponential prior on branch length
   double branch_mean; 
 
-  Parameters& operator=(const Parameters&);
-
-  Parameters(const Parameters&);
   Parameters(const substitution::MultiRateModel&,const IndelModel&,const SequenceTree&);
-  ~Parameters() {delete SModel_; delete IModel_;}
 };
 
 #endif

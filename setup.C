@@ -56,9 +56,15 @@ void link(alignment& A,SequenceTree& T) {
 
 void load_A(Arguments& args,alignment& A) {
   vector<alphabet> alphabets;
-  alphabets.push_back(alphabet("DNA nucleotides","AGTC","NYR"));
-  alphabets.push_back(alphabet("RNA nucleotides","AGUC","NYR"));
-  alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
+  if (args.set("Use Codons")) {
+    alphabets.push_back(Codons(DNA()));
+    alphabets.push_back(Codons(RNA()));
+  }
+  else {
+    alphabets.push_back(DNA());
+    alphabets.push_back(RNA());
+    alphabets.push_back(AminoAcids());
+  }
   
   /* ----- Try to load alignment ------ */
   if (not args.set("align")) 

@@ -20,6 +20,15 @@ bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
   }
 }
 
+double branch_twiddle(double T,double mu,double sigma1=0.3,double sigma2=0.3) {
+  if (myrandomf() < 0.5)
+    T += gaussian(0,mu*sigma1);
+  else 
+    T = exp(log(T) + gaussian(mu,sigma2));
+
+  return T;
+}
+
 MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool up) {
   const SequenceTree& T = P.T;
 
@@ -99,10 +108,10 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
   
   Parameters P2 = P;
   /********* Propose increment 'epsilon' ***********/
-  const double sigma = 0.3/2;
   const double length = P2.T.branch(b).length();
-  double newlength = length + gaussian(0,sigma);
-  if (newlength<0) newlength = -newlength;
+
+  double newlength = branch_twiddle(length,P.branch_mean);
+  newlength = std::abs(newlength);
   
   /******** Calculate propsal ratio ***************/
   P2.setlength(b,newlength);
@@ -126,9 +135,8 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
   
 
   /********* Propose increment 'epsilon' ***********/
-  const double sigma = 0.4/2;
   const double length = P.T.branch(b).length();
-  double newlength = length + gaussian(0,sigma);
+  double newlength = branch_twiddle(length,P.branch_mean);
 
   std::cerr<<" old length = "<<P.T.branch(b).length()<<"  new length = "<<newlength<<std::endl;
 

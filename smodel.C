@@ -91,8 +91,8 @@ namespace substitution {
   }
 
   Matrix ReversibleMarkovModel::getD() const {
-    BMatrix D(a.size(),a.size());
-    for(int i=0;i<a.size();i++)
+    BMatrix D(pi.size(),pi.size());
+    for(int i=0;i<pi.size();i++)
       D(i,i) = pi[i];
 
     return D;
@@ -100,6 +100,14 @@ namespace substitution {
 
   Matrix ReversibleMarkovModel::transition_p(double t) const {
     return exp(S,getD(),t);
+  }
+
+  void NestedModel::recalc() {
+    vector<double> sub_p = SubModel().parameters();
+    for(int i=0;i<sub_p.size();i++)
+      sub_p[i] = parameters_[i];
+
+    SubModel().parameters(sub_p);
   }
 
   string HKY::name() const {
@@ -121,37 +129,18 @@ namespace substitution {
   }
 
   void HKY::recalc() {
-    assert(a.size()==4);
+    assert(Alphabet().size()==4);
 
-    S(A,G) = kappa();
-    S(A,C) = 1;
-    S(A,T) = 1;
-
-    S(G,A) = kappa();
-    S(G,C) = 1;
-    S(G,T) = 1;
-
-    S(C,A) = 1;
-    S(C,G) = 1;
-    S(C,T) = kappa();
-
-    S(T,A) = 1;
-    S(T,G) = 1;
-    S(T,C) = kappa();
+    for(int i=0;i<Alphabet().size();i++)
+      for(int j=0;j<Alphabet().size();j++) {
+	if (i==j) continue;
+	if (Alphabet().transversion(i,j))
+	  S(i,j) = 1;
+	else
+	  S(i,j) = kappa();
+      }
 
     ReversibleMarkovModel::recalc();
-  }
-
-  void HKY::setup_alphabet() {
-    A = a['A'];
-    G = a['G'];
-    C = a['C'];
-    try {
-      T = a['T'];
-    }
-    catch (bad_letter& e) {
-      T = a['U'];
-    }
   }
 
   string EQU::name() const {
@@ -159,8 +148,8 @@ namespace substitution {
   }
 
   void EQU::recalc() {
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++)
+    for(int i=0;i<Alphabet().size();i++)
+      for(int j=0;j<Alphabet().size();j++)
 	S(i,j) = 1;
 
     ReversibleMarkovModel::recalc();
@@ -182,24 +171,104 @@ namespace substitution {
     if (not ifile)
       throw myexception(string("Couldn't open file '")+filename+"'");
 
-    for(int i=0;i<a.size();i++)
+    for(int i=0;i<Alphabet().size();i++)
       for(int j=0;j<i;j++) {
 	ifile>>S(i,j);
 	S(j,i) = S(i,j);
       }
 
-    for(int i=0;i<a.size();i++)
+    for(int i=0;i<Alphabet().size();i++)
       ifile>>pi[i];
   }
 
-
-  void NestedModel::recalc() {
-    vector<double> sub_p = SubModel().parameters();
-    for(int i=0;i<sub_p.size();i++)
-      sub_p[i] = parameters_[i];
-
-    SubModel().parameters(sub_p);
+  //------------------------ Codon Models -------------------//
+  double YangCodonModel::prior() const {
+    double P = 0;
+    P += log(gsl_ran_lognormal_pdf(kappa(),0,3));
+    P += log(gsl_ran_lognormal_pdf(omega(),0,3));
+    return P;
   }
+
+  void YangCodonModel::fiddle() {
+    double k = log( kappa() );
+    double w = log( omega() );
+
+    k += gaussian(0,0.2);
+    w += gaussian(0,0.2);
+
+    parameters_[0] = exp(k);
+    parameters_[1] = exp(w);
+
+    recalc();
+  }
+
+  string YangCodonModel::name() const {
+    return ReversibleMarkovModel::name() + "::Yang-94[" + Alphabet().name + "]";
+  }
+
+
+  const std::valarray<double>& YangCodonModel::frequencies() const {
+    return ReversibleMarkovModel::frequencies();
+  }
+
+  void YangCodonModel::frequencies(const std::valarray<double>& pi_) {
+    throw myexception()<<"Giving non-zero frequency to stop codon "<<Alphabet().lookup(0)<<"!";
+    
+    assert(pi_.size() == frequencies().size());
+    for(int i=0;i<pi_.size();i++) {
+      if (T.stop_codon(i)) {
+	std::cerr<<"Stop codon!\n";
+	if (pi_[i] >0)
+	  throw myexception()<<"Giving non-zero frequency to stop codon "<<Alphabet().lookup(i)<<"!";
+      }
+    }
+    ReversibleMarkovModel::frequencies(pi_);
+  }
+
+  void YangCodonModel::recalc() {
+    for(int i=0;i<Alphabet().size();i++) {
+      for(int j=0;j<Alphabet().size();j++) {
+
+	if (i==j) continue;
+
+	int nmuts=0;
+	int pos=-1;
+	for(int p=0;p<3;p++)
+	  if (Alphabet().sub_nuc(i,p) != Alphabet().sub_nuc(j,p)) {
+	    nmuts++;
+	    pos=p;
+	  }
+
+
+	double rate=1.0;
+	if (nmuts > 1 or T.stop_codon(i) or T.stop_codon(j))
+	  rate=0;
+	else {
+	  if (Alphabet().getNucleotides().transition(Alphabet().sub_nuc(i,pos),Alphabet().sub_nuc(j,pos)))
+	    rate *= kappa();
+
+	  if (AminoAcid(i) != AminoAcid(j))
+	    rate *= omega();
+	}
+	
+	S(i,j) = rate;
+      }
+    }
+
+    ReversibleMarkovModel::recalc();
+  }
+
+  YangCodonModel::YangCodonModel(const Translation_Table& T1)
+      :Model(2),ReversibleMarkovModel(T1.getCodons()),ModelWithAlphabet<Codons>(T1.getCodons()),T(T1)
+    {
+      parameters_[0] = 1.0;
+      parameters_[1] = 1.0;
+      recalc();
+    }
+  YangCodonModel::~YangCodonModel() {}
+
+  /*--------------- MultiRate Models ----------------*/
+
 
   void MultiRateModel::recalc() {
     double mean=0;

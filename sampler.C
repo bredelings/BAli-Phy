@@ -151,7 +151,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				   branches)
 		   );
   if (P.SModel().full_tree)
-    length_moves1.add(100,MoveArgSingle("change_branch_length_and_T:length:nodes:topology",
+    length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T:length:nodes:topology",
 					change_branch_length_and_T,
 					internal_branches)
 		      );
@@ -287,6 +287,8 @@ int main(int argc,char* argv[]) {
       imodel->full_tree = true;
     
     /*-------------Create the Parameters object--------------*/
+    std::cout<<"using smodel: "<<full_smodel->name()<<endl;
+
     Parameters P(*full_smodel,*imodel,T);
     std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
     std::cout<<"Using substitution model: "<<P.SModel().name()<<endl;
