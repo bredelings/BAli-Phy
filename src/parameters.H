@@ -83,7 +83,7 @@ public:
   /// parameter for exponential prior on branch length
   double branch_mean; 
 
-  Parameters(const substitution::MultiRateModel&,const IndelModel&,const SequenceTree&);
+  Parameters(const substitution::MultiModel&,const IndelModel&,const SequenceTree&);
 };
 
 #endif

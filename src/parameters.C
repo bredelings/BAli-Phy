@@ -57,7 +57,7 @@ void Parameters::recalc() {
   MatCache::recalc(T,*SModel_);
 }
 
-Parameters::Parameters(const substitution::MultiRateModel& SM,const IndelModel& IM,const SequenceTree& t)
+Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,const SequenceTree& t)
   :MatCache(t,SM),
    IModel_(IM.clone()),
    SModel_(SM.clone()),

@@ -140,4 +140,6 @@ namespace dng {
   void init();
 };
 
+valarray<double> dirichlet_fiddle(const valarray<double>& p1,double sigma);
+
 #endif

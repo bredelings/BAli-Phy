@@ -38,7 +38,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   assert(T.connected(nodes[0],nodes[3]));
 
   const vector<double>& pi = P.IModel().pi;
-  const valarray<double>& frequency = P.SModel().BaseModel().frequencies();
+  const valarray<double>& frequency = P.SModel().frequencies();
 
   // std::cerr<<"A = "<<A<<endl;
 

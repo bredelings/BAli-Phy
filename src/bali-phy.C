@@ -249,7 +249,7 @@ int main(int argc,char* argv[]) {
     load_A_and_T(args,A,T);
 
     //--------- Set up the substitution model --------//
-    substitution::MultiRateModel *full_smodel = get_smodel(args,A);
+    substitution::MultiModel *full_smodel = get_smodel(args,A);
     
     if (not full_smodel->full_tree)
       for(int i=T.leaves();i<T.branches();i++)

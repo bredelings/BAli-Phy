@@ -18,7 +18,7 @@ bool match(vector<string>& sstack,const string& s) {
 
 
 //FIXME - use dynamic_cast to see if we are in certain subclasses...
-substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_frequencies) {
+substitution::MultiModel* get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_frequencies) {
   vector<string> smodel;
   if (args["smodel"] != "")
     smodel = split(args["smodel"],'+');
@@ -102,7 +102,7 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
     base_markov_smodel->frequencies(default_frequencies);
 
   /*-------- Get the base IA model -----------*/
-  substitution::ReversibleModel* base_smodel=0;
+  substitution::ReversibleAdditiveModel* base_smodel=0;
 
   if (match(smodel,"gamma_branch"))
     base_smodel = new substitution::Gamma_Branch_Model(*base_markov_smodel);
@@ -114,7 +114,7 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
     base_smodel = base_markov_smodel;
 
   /*------ Get the multi-rate model over the base model ------*/
-  substitution::MultiRateModel *full_smodel = 0;
+  substitution::MultiModel *full_smodel = 0;
   if (match(smodel,"gamma_plus_uniform")) {
     int n=4;
     if (args.set("gamma_plus_uniform") and args["gamma_plus_uniform"] != "gamma_plus_uniform")
@@ -142,8 +142,10 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
   delete base_smodel;
 
   if (match(smodel,"INV")) {
-    substitution::MultiRateModel *temp = full_smodel;
-    full_smodel = new substitution::INV_Model(*full_smodel);
+    const substitution::MultiRateModel *temp = dynamic_cast<const substitution::MultiRateModel*>(full_smodel);
+    if (not temp)
+      throw myexception()<<"We can only create INV models on top of MultiRateModels";
+    full_smodel = new substitution::INV_Model(*temp);
     delete temp;
   }
 
@@ -171,7 +173,7 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
   return full_smodel;
 }
 
-substitution::MultiRateModel* get_smodel(Arguments& args, const alignment& A) {
+substitution::MultiModel* get_smodel(Arguments& args, const alignment& A) {
   return get_smodel(args,A.get_alphabet(),empirical_frequencies(args,A));
 }
 

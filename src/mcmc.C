@@ -50,8 +50,8 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
     pI<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
   pI<<endl;
   
-  for(int i=0;i<P.SModel().nrates();i++)
-    o<<"    rate"<<i<<" = "<<P.SModel().rates()[i];
+  for(int i=0;i<P.SModel().nmodels();i++)
+    o<<"    rate"<<i<<" = "<<P.SModel().rates()[i]*P.SModel().get_model(i).rate();
   o<<endl<<endl;
 
 
@@ -500,12 +500,12 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   //  }
   cout<<endl;
   cout<<"frequencies = "<<endl;
-  show_frequencies(cout,P.get_alphabet(),P.SModel().BaseModel().frequencies());
+  show_frequencies(cout,P.get_alphabet(),P.SModel().frequencies());
   cout<<endl<<endl;
 
   if (const Codons* C = dynamic_cast<const Codons*>(&P.get_alphabet()) ) {
     cout<<"nucleotide frequencies = "<<endl;
-    valarray<double> fC = P.SModel().BaseModel().frequencies();
+    valarray<double> fC = P.SModel().frequencies();
     valarray<double> fN = get_nucleotide_counts_from_codon_counts(*C,fC);
     fN /= fN.sum();
 

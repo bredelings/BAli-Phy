@@ -19,10 +19,10 @@ namespace substitution {
 	    const vector<Matrix>& transition_P);
 
   /// Full Likelihood of one column
-  double Pr(const alignment& A, const tree& T, const MultiRateModel& SModel, const MatCache& SM,int);
+  double Pr(const alignment& A, const tree& T, const MultiModel& SModel, const MatCache& SM,int);
 
   /// Full Likelihood - all columns, all rates
-  double Pr(const alignment& A, const tree& T, const MultiRateModel& SModel, const MatCache& MC);
+  double Pr(const alignment& A, const tree& T, const MultiModel& SModel, const MatCache& MC);
 
   /// Full likelihood - all columns, all rates
   double Pr(const alignment& A, const Parameters& P);
@@ -32,7 +32,7 @@ namespace substitution {
   double Pr_star(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
 		 const vector<Matrix>& transition_P);
   // Full likelihood - all columns, all rates (star tree)
-  double Pr_star(const alignment& A, const tree& T, const MultiRateModel& MRModel, const MatCache& MC);
+  double Pr_star(const alignment& A, const tree& T, const MultiModel& MModel, const MatCache& MC);
 
   // Full likelihood - all columns, all rates (star tree)
   double Pr_star(const alignment& A,const Parameters& P);

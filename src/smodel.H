@@ -75,10 +75,10 @@ namespace substitution {
     /// The prior for the parameters of the upper model
     virtual double super_prior() const =0;
 
-    /// Fiddle the parameters of the upper model
-    virtual void super_fiddle(const std::valarray<bool>&) =0;
+    /// Fiddle the parameters of the upper model (may need to call recalc)
+    virtual void super_fiddle(const std::valarray<bool>&) {recalc();}
 
-    virtual std::string super_parameter_name(int i) const;
+    virtual std::string super_parameter_name(int i) const {return Model::parameter_name(i);}
 
   public:
     /// Make a copy of ourselves
@@ -92,6 +92,7 @@ namespace substitution {
 
     double prior() const {return super_prior() + SubModel().prior();}
 
+    /// Symmetrically propose parameters (calls recalc through super_fiddle if necessary)
     void fiddle(const std::valarray<bool>& fixed) {
       SubModel().fiddle(fixed);
       for(int i=0;i<SubModel().parameters().size();i++)
@@ -113,12 +114,6 @@ namespace substitution {
   protected:
     /// The sub-model this model is build upon
     OwnedPointer<SubModel_t> sub_model;
-
-    /// The prior for the parameters of the upper model
-    virtual double super_prior() const =0;
-
-    /// Fiddle the parameters of the upper model
-    virtual void super_fiddle(const std::valarray<bool>&) =0;
 
   public:
     /// Make a copy of ourselves
@@ -200,7 +195,7 @@ namespace substitution {
     IndependantAdditiveModel() {}
   };
 
-  class Independant_Additive_Reversible_Model: public ReversibleModel, 
+  class Independant_Additive_Reversible_Model: public ReversibleAdditiveModel, 
 					       virtual public IndependantAdditiveModel
   {
   public:
@@ -532,6 +527,9 @@ namespace substitution {
 
     virtual const ReversibleAdditiveModel& get_model(int i) const=0;
 
+    /// Get the rates at which we run the individual models
+    const vector<double>& rates() const {return rates_;}
+
     double rate() const;
     void set_rate(double);
 
@@ -544,7 +542,7 @@ namespace substitution {
     /// Get a transition probability matrix for time 't' and model 'm'
     virtual Matrix transition_p(double t,int m) const {return get_model(m).transition_p(t*rates_[m]); }
 
-    MultiModel(int n_models):distribution_(n_models) {}
+    MultiModel(int n_models):distribution_(n_models),rates_(n_models) {}
 
     ~MultiModel() {}
   };
@@ -569,13 +567,10 @@ namespace substitution {
     /// The number of rates
     int nrates() const {return nmodels();}
 
-    /// Get the rates
-    const vector<double>& rates() const {return rates_;}
-
     /// Get the equilibrium frequencies
     const std::valarray<double>& frequencies() const {return BaseModel().frequencies();}
     /// Set the equilibrium frequencies
-    void frequencies(const std::valarray<double>& f) {BaseModel().frequencies(f);}
+    void frequencies(const std::valarray<double>& f) {BaseModel().frequencies(f);recalc();}
 
     /// Get a transition probability matrix for time 't', averaging over models
     Matrix transition_p(double t) const { return MultiModel::transition_p(t);}
@@ -602,7 +597,7 @@ namespace substitution {
     MultiRateModelOver(const SubModel_t& M, int dp, int nr)
       :MultiRateModel(nr),
        NestedModelOver<SubModel_t>(M,dp)
-    { }
+    { recalc(); }
   };
 
 
@@ -632,7 +627,6 @@ namespace substitution {
 
   protected:
     double super_prior() const {return 0;}
-    void super_fiddle(const std::valarray<bool>&) {}; 
   public:
     virtual SingleRateModel* clone() const {return new SingleRateModel(*this);}
 
@@ -656,8 +650,6 @@ namespace substitution {
 
     OwnedPointer<RateDistribution> D;
 
-    int param;
-
   public:
 
     DistributionRateModel* clone() const {return new DistributionRateModel(*this);}
@@ -666,7 +658,7 @@ namespace substitution {
 
     string name() const;
 
-    DistributionRateModel(const ReversibleAdditiveModel& M, const RateDistribution& RD,int n,int p=-1);
+    DistributionRateModel(const ReversibleAdditiveModel& M, const RateDistribution& RD,int n);
   };
 
   /// A discrete-gamma Model

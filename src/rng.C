@@ -143,21 +143,16 @@ tuple Multinomial::operator()(const valarray<double>& p,unsigned long n1) {
 }
 
 
+valarray<double> dirichlet_fiddle(const valarray<double>& p1,double sigma) {
 
-/*
-  Hey!  I could plug this into the other Multinomial, so that whenever the "n" decreases to less than
-  k*(p.size()-i) we switch algorithms...
-
-  tuple m(0,p.size());
-  if (n < p.size()) {
-    double r = random();
-    double sum=0;
-    for(int i=0;i<p.size();i++) {
-      sum += p[i];
-      if (r<=sum) {
-	m[i]++;
-	break;
-      }
-    }
+  double total=0;
+  valarray<double> p2=p1;
+  for(int i=0;i<p2.size();i++) {
+    p2[i] *= exp(gaussian(0,sigma));
+    total += p2[i];
   }
-*/
+
+  p2 /= total;
+
+  return p2;
+}

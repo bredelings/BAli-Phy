@@ -49,6 +49,4 @@ double exp_exponential_pdf(double y,double mu,double delta=0.0);
 
 double shift_laplace_pdf(double x, double mu, double sigma);
 
-std::vector<double> dirichlet_fiddle(const std::valarray<double>& p1,double sigma);
-
 #endif

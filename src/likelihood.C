@@ -230,16 +230,3 @@ double Pr_sgaps_sletters(const alignment& A,const Parameters& P) {
 }
 
 
-valarray<double> dirichlet_fiddle(const valarray<double>& p1,double sigma) {
-
-  double total=0;
-  valarray<double> p2=p1;
-  for(int i=0;i<p2.size();i++) {
-    p2[i] *= exp(gaussian(0,sigma));
-    total += p2[i];
-  }
-
-  p2 /= total;
-
-  return p2;
-}

@@ -28,6 +28,7 @@ namespace substitution {
     :full_tree(true)
   { }
 
+
   //--------------------- Gamma_Branch_Model -----------------------------//
   Matrix Gamma_Branch_Model::transition_p(double t) const {
     double beta = parameters_.back();
@@ -116,8 +117,9 @@ namespace substitution {
   }
 
   void ReversibleMarkovModel::set_rate(double r)  {
-    Q /= r;
-    S /= r;
+    double scale = r/rate();
+    Q *= scale;
+    S *= scale;
   }
 
   string ReversibleMarkovModel::name() const  {
@@ -172,7 +174,7 @@ namespace substitution {
     if (i<SubModel().parameters().size())
       return SubModel().parameter_name(i);
     else
-      return super_parameter_name(i-SubModel().parameters().size());
+      return super_parameter_name(i);
   }
 
   void NestedModel::recalc() {
@@ -384,6 +386,9 @@ namespace substitution {
 
   void MultiModel::recalc() {
     set_rate(1);
+#ifndef NDEBUG
+    std::cerr<<"scale = "<<rate()<<endl;
+#endif
   }
 
   Matrix MultiModel::transition_p(double t) const {
@@ -451,10 +456,9 @@ namespace substitution {
     MultiRateModel::recalc();
   }
 
-  DistributionRateModel::DistributionRateModel(const ReversibleAdditiveModel& M,const RateDistribution& RD, int n,int p)
+  DistributionRateModel::DistributionRateModel(const ReversibleAdditiveModel& M,const RateDistribution& RD, int n)
     :MultiRateModelOver<ReversibleAdditiveModel>(M,RD.parameters().size(),n),
-     D(RD),
-     param(p)
+     D(RD)
   {
     // This never changes - since we use quantiles for the bins
     for(int i=0;i<nrates();i++)
@@ -470,6 +474,7 @@ namespace substitution {
   /*--------------- Gamma Sites Model----------------*/
 
   string GammaRateModel::super_parameter_name(int i) const {
+    i -= SubModel().parameters().size();
     if (i==0)
       return "sigma";
     else
@@ -542,6 +547,7 @@ namespace substitution {
   }
 
   string INV_Model::super_parameter_name(int i) const {
+    i -= SubModel().parameters().size();
     if (i==0)
       return "INV::p";
     else

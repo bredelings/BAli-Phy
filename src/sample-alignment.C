@@ -55,8 +55,8 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   const vector<double>& pi = P.IModel().pi;
 
-  const substitution::MultiRateModel& MRModel = P.SModel();
-  const valarray<double>& frequency = MRModel.BaseModel().frequencies();
+  const substitution::MultiModel& MModel = P.SModel();
+  const valarray<double>& frequency = MModel.frequencies();
 
   int node1 = T.branch(b).parent();
   int node2 = T.branch(b).child();
