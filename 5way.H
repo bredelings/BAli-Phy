@@ -11,7 +11,7 @@
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
 namespace A5 {
 
-  using A2::states;
+  namespace states = A2::states;
 
   vector<int> get_nodes(const tree& T,int b);
   vector<int> get_nodes_random(const tree& T,int b);

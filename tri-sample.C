@@ -236,10 +236,12 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   Matrices.prune();
   
-  vector<int> path_old = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
-  vector<int> path_old_g = Matrices.generalize(path_old);
+  //  vector<int> path_old = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
+  //  vector<int> path_old_g = Matrices.generalize(path_old);
 
-  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
+  //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
+  Matrices.forward_square();
+  vector<int> path_g = Matrices.sample_path();
 
   vector<int> path = Matrices.ungeneralize(path_g);
 

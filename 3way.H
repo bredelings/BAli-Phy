@@ -10,7 +10,7 @@
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
 namespace A3 {
 
-  using A2::states;
+  namespace states = A2::states;
 
 // bits 3,2,1,0     = node present mask
 // bits 98,76,54    = sub-alignment state
