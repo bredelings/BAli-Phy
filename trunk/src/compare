@@ -1,0 +1,140 @@
+align=5S-rRNA/5d.fasta
+
+gcc-3.3.3 -ffast-math -O1 -march=pentium3
+16.4	 on a P4,10 iterations
+
+gcc-3.4 -ffast-math -O1 -march=pentium3
+21.7     on a P4,10 iterations
+
+gcc-3.3.3 -ffast-math -O1 -march=pentium3 -NDEBUG -NDEBUG-DP
+6.5      on a P4,10 iterations
+33.1	 on a P4,50 iterations
+
+
+gcc-3.4 -ffast-math -O1 -march=pentium3 -NDEBUG -NDEBUG-DP
+7.56     on a P4,10 iterations
+39.6     on a P4,50 iterations
+
+
+At O1, w/ NDEBUG, we have a 14% slowdown
+At O1, w/o NDEBUG, we have a 25% slowdown
+-----------------------------------------------------
+gcc-3.3.3 -ffast-math -O2 -march=pentium3 -NDEBUG -NDEBUG-DP
+6.1	on a P4, 10 iterations
+31.0	on a P4, 50 iterations
+
+
+gcc-3.4 -ffast-math -O2 -march=pentium3 -NDEBUG -NDEBUG-DP
+6.7	on a P4, 10 iterations
+33.5	on a P4, 50 iterations
+
+-----------------------------------------------------
+gcc-3.3.3 -ffast-math -O3 -march=pentium3 -NDEBUG -NDEBUG-DP
+6.1	on a P4, 10 iterations
+31.1	on a P4, 50 iterations
+
+
+gcc-3.4 -ffast-math -O3 -march=pentium4 -NDEBUG -NDEBUG-DP
+6.7	on a P4, 10 iterations
+33.7	on a P4, 50 iterations
+
+-----------------------------------------------------
+gcc-3.3 ful
+6.0	on a P4, 10 iterations
+30.3	on a P4, 50 iterations
+
+gcc-3.4 full
+6.5	on a P4, 10 iterations
+32.9	on a P4, 50 iterations
+
+-----------------------------------------------------
+OLD
+
+single,EF-Tu/5 iterations=10
+user    1m9.510s
+user    1m9.423s
+
+
+gamma,EF-Tu/5 iterations=10
+user    1m14.287s
+user    1m14.205s
+
+single,EF-Tu/12 iterations=3
+user    1m21.529s
+
+gamma,EF-Tu/12 iterations=3
+user    1m57.720s
+
+single,5S-rRNA/5 iterations=40
+user    0m29.627s
+
+gamma,5S-rRNA/5 iterations=40
+user    0m34.558s
+
+----------------------------------------
+1.8.12
+[EF-Tu/5d](10)
+user	1m11.000s
+user	1m11.300s
+
+user    1m9.250s [gamma]
+
+[EF-Tu/12d](3)
+user    1m38.100s
+user    1m34.410s
+
+user    0m18.047s [disable=alignment]
+user    0m17.678s [disable=alignment]
+
+user    0m9.317s  [gaps=star] 
+user    0m9.170s  [gaps=star] 
+
+user    1m58.054s [gamma][0**]
+user    1m54.520s [gamma]
+user    2m5.196s  [gamma]
+
+user    1m54.440s [gamma][0*]
+user    1m53.310s [gamma][0**]
+ 
+user    0m46.725s [gamma][disable=alignment]
+user    0m37.711s [gamma][gaps=star]
+
+[EF-Tu/24](3)
+user    8m53.922s [gamma](3)
+user    4m36.467s []
+
+user    1m7.145s  [disable=alignment]
+
+user    3m59.839s [gamma,gaps=star]
+user      42.406s [gaps=star]
+
+[5S-rRNA/4](40)
+user    0m33.060s
+user    0m35.590s [gamma]
+
+[Data/HIV-Shankarappa/P1/014-stripped.fasta,"Use Codons"](5)
+user    1m38.060s
+user    1m38.110s [*]
+user    1m38.320s [gamma]
+
+
+
+Analysis:
+
+time =    9 [topology & other likelihood calculations]
+       +8.3 [internal nodes analysis]
+      +80.7 [alignment analysis]
+
+time =    9*4 [topology & other likelihood calculations]
+       +  9   [internal nodes analysis]
+       +   67 [alignment analysis]
+
+The alignment analysis time does NOT seem to strongly correlate w/ the number of rates...
+The extra time spent in dealing with multiple rates DOES come from the likelihood calculation!
+
+------------------
+New times for 1.8.14-B (after svn import, and SPR fix)
+
+ - 3m48.77 [3.4.1]
+ - 5min    [3.5.0 7/5/2004] (??? do I need "--disable-checking" ?)
+ - 3m45.76 [3.4.1]

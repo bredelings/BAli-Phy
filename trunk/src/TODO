@@ -1,0 +1,11 @@
+TODO 
+ - fix bandwidth code...
+ - speed up branch length calculations - 
+ - CHECK acceptance/rejection ratios - alter things.
+ - profile DEBUG vs NDEBUG, make DEBUG faster
+ - profile NDEBUG code to see where we are spending (in each data set!)
+ - truncate ends of EF-Tu/48a.fasta sequences?
+ - we can get a factor-of-3 speedup by
+   + running tree_moves once instead of twice per iteration
+   + running length_moves once instead of twice per tree_move
+   + running only 1+B/3 branch adjustments per length_moves

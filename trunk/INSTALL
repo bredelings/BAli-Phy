@@ -1,0 +1,29 @@
+BAli-Phy
+
+*Requirements*
+
+BAli-Phy relies only on a modern C++ compiler and the GSL library.
+GCC will work if it is version 3.4.0 or higher.
+
+*Compilation*
+
+The makefiles provided require GNU make.  They also assumes that the
+compiler is called 'g++-3.4'.  To change this, or to change other
+compilation options, edit the makefile src/GNUmakefile.
+
+In order to compile the program on UNIX, simply enter the src/
+directory and type 'make' at the shell prompt. This will produce an
+executable called 'bali-phy'.
+
+On windows, this may with in the cygwin environment, which emulates a
+UNIX environment.
+
+On MacOSX, this procedure may need to be modified slightly.  By using
+the 'Fink' system, you can probably install GNU make.  In addition,
+'jam' may work using the Jamfile provided.
+
+*Other tools*
+
+Sources for tools are in the src/tools directory.  The makefile is not
+up-to-date for every tool.  However, try running e.g. "make
+tools/model_P". 
