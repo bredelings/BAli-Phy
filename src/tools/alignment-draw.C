@@ -48,6 +48,14 @@ vector<int> hsv(double h,double s,double v) {
   return result;
 }
 
+string rgb_to_csv(double R, double G, double B) {
+  string style = "rgb(";
+  style += convertToString(R*256) + ",";
+  style += convertToString(G*256) + ",";
+  style += convertToString(B*256) + ")";
+  return style;
+}
+
 string getrgb(const vector<int>& RGB) {
   string style = "rgb(";
   style += convertToString(RGB[0]) + ",";
@@ -65,16 +73,16 @@ inline double f(double x) {
 
 vector<int> rgb_bgcolor(double x, double sscale,bool color) {
   if (color) {
-    double start = 0.71;
+    double start = 0.75;
     double end = 0.0;
     
-    double hstart = 0.4;
+    double hstart = 0.3;
     double hend   = 0.95;
     
-    double h = start + x * (end-start);
-    double s = hstart + x * (hend - hstart);
+    double color = start + x * x * x *(end-start);
+    double s = hstart + x * x * (hend - hstart);
     
-    return hsv(h,s*sscale,1);
+    return hsv(color,s*sscale,0.9);
   }
   else
     return hsv(0,0,1.0 - f(x*sscale));
@@ -86,10 +94,10 @@ string getbgcolor(double x,double sscale,bool color) {
 
 string getfgcolor(double x,double sscale,bool color) {
   if (color)
-    if (1.0 - f(x*sscale) < 0.25)
-      return getrgb(hsv(0,0,1));
+    if (x > 0.80)
+      return getrgb(hsv(0, 0, 0.99));
     else
-      return getrgb(hsv(0,0,0));
+      return getrgb(hsv(0, 0, 0.2));
   else {
     if (1.0 - f(x*sscale) < 0.5)
       return getrgb(hsv(0,0,1));

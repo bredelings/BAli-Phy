@@ -279,12 +279,12 @@ int main(int argc,char* argv[]) {
     Parameters P(*full_smodel,*imodel,T);
     cout<<"subst model = "<<P.SModel().name();
     if (not P.SModel().full_tree)
-      cout<<",*-tree";
+      cout<<", *-tree";
     cout<<endl<<endl;
 
     cout<<"indel model = "<<P.IModel().name();
     if (not P.IModel().full_tree)
-      cout<<",*-tree";
+      cout<<", *-tree";
     cout<<endl<<endl;
 
     P.Temp = args.loadvalue("T",1.0);

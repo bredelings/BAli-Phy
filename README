@@ -123,6 +123,12 @@ OTHER ARGUMENTS
    pS1,... etc (substitution parameters) or pI0, pI1, ... etc (indel
    parameters).
 
+-  "Use Stop"
+
+   When considering amino acid alphabets, include a "stop" letter.
+   This also affects codon models, by not removing stop codons from
+   the alphabet.
+
 EXAMPLES:
 
 % bali-phy align=Data/EF-Tu/5d.fasta randomize_alignment >out 2>err
