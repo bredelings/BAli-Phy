@@ -13,7 +13,8 @@ compilation options, edit the makefile src/GNUmakefile.
 
 In order to compile the program on UNIX, simply enter the src/
 directory and type 'make' at the shell prompt. This will produce an
-executable called 'bali-phy'.
+executable called 'bali-phy'.  To generate a faster executuable you
+can instead type 'ARCH=pentium4' or 'ARCH=athlon-xp'.
 
 On windows, this may with in the cygwin environment, which emulates a
 UNIX environment.
