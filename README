@@ -1,0 +1,121 @@
+We will use square brackes (e.g. []) to represent example arguments,
+which you must replace with the actual argument.  We will use curly
+branches (e.g. {}) to represent a list of possbility choices.
+
+In order to run the program, note that in many cases it is
+necessary to specify the location of the data directory.  The data
+directory will be "./Data" it not explicitly set. (See "datadir").
+
+The simplest ways to run bali-phy is simply to specify some input
+sequences:  
+
+% bali-phy align=[file.fasta]
+
+The "align" argument is the only REQUIRED argument, and can take both
+FASTA (*.fasta) and PHYLIP (*.phy) files.  The file must contain one
+of these two suffixes or it won't know how to read the file.
+
+OTHER ARGUMENTS
+
+ - tree=[treefile]   
+
+   Specifies the INITIAL tree. The treefile must be in Newick
+   format), and end with a semicolon. 
+
+ - gaps=star         
+
+   Revert to the standard model, w/o gaps.  This turns off MCMC
+   transition kernels which assume a gap model.
+
+ - smodel=[substitution model]
+
+   The model is follows the following pattern: [base model]+gamma+INV
+   Each term may be left out, but the terms must be separated by '+'
+   signs, and must appear in the specified order.
+
+   The base model is a reversible continuous time Markov chain (CTMC)
+   model.  Base models that we have implemented include HKY, EQU,
+   YangCodonModel, and empirically estimated reversible models
+   such as the WAG model.  See the 'Empirical' parameter to specify
+   the transition matrix. 
+   
+ - alphabet=Codons
+
+   This puts codon alphabets on the list of alphabets to try.
+
+ - frequencies=[frequences]
+
+   Frequencies are specified as a comma-separated list of values.
+   Note that frequencies that are very near 0 can cause a crash
+   in exponentiating the rate matrix.
+
+ - Empirical=[model]
+
+   This causes the program to look in the file [datadir]/[model].dat
+   for the exchangeability parameters of the Q matrix used in the
+   Empirical model.
+
+ - datadir=[dir]
+
+   This is set to "./Data/" by default, and specifies where to look
+   for translation tables (for the codon model) and empirical
+   transition matrices.
+
+ - s_parameters=[parameters]
+
+   Specifies the INITIAL value of the parameters of the substitution
+   model.  This is a comma-separated list of values.
+
+ - letters=star
+
+   Uses a star tree for the peeling algorithm.
+
+ - randomize_alignment
+
+   Randomizes the alignment before starting the chain.
+
+ - seed=[random seed]
+
+   Specify a seed to the random number generator, so that runs can be
+   repeated. 
+
+ - lambda_O=[value]
+
+   Specify the gap opening penalty.  This is ln(delta)
+
+ - lambda_E=[value]
+
+   Specify the gap extension penalty.  This is ln(epsilon)
+
+ - imodel={single_indels,upweighted,symmetric}
+
+   Select the indel model.  We used "upweighted" in our paper.  The
+   "symmetric" model is downweighted.
+
+ - internal=+
+
+   Set each internal sequence to * (a Felsenstein wildcard) in every
+   column. 
+
+ - file=[filename]
+
+   Load additional arguments from a file.  Giving '-' reads from
+   stdin.  This is a way to make scripts.
+
+ - disable=[list of transition kernels]
+ - enable=[list of transition kernels]
+
+   Disables or enables a list of transition kernels.  To find out
+   kernel names, look at STDOUT at the beginning of a run.  Moves also
+   have attributes by which they can be mentioned.  Try attributes
+   such as alignment, alignment_branch, nodes, lengths.  For example,
+   enable sampling of gap parameters, include "enable=g_parameters"
+   
+
+EXAMPLES:
+
+% bali-phy align=Data/EF-Tu/5d.fasta randomize_alignment >out 2>err
+
+% bali-phy align=Data/EF-Tu/5d.fasta gaps=star >out 2>err
+
+% bali-phy align=

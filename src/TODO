@@ -1,6 +1,5 @@
 TODO 
  - fix bandwidth code...
- - make a 'src' directory...?
  - speed up branch length calculations - 
  - CHECK acceptance/rejection ratios - alter things.
  - profile DEBUG vs NDEBUG, make DEBUG faster
