@@ -17,44 +17,52 @@
  5.5. fp_scale speedups
 
 [HARD]
-  a) 10% - DPmatrixEmit::DPmatrix: try to remove unneeded initialization or speed it up.
-     - initialize as we go forward
-     - for DPmatrixConstrained, this means that we need to ignore states on
-       backsampling if we don't initialize cells on the forward pass
+  a) speed up forward_cell by putting a boundary around the matrix :)
+     i) right now we only run SILENT states for the corner
+    ii) in the new scheme, we would run ALL the states
+   iii) we could have forward_square( ) initialize the buffer zones on boundaries
+        - this would make alignment constraints work.
+    iv) we leave the corner boundary cell un-initialized
+        - but we need to put start_P in (0,0), not -1,-1 (?)
+        - well, just put start_P in (-1,-1)
+        - OK, then we need to modify our checks!
 
-  b) speed up forward_cell by putting a boundary around the matrix :)
+  b) 20% - DPmatrix( )
+     i) initialize as we go forward (how much slowdown)?
+    ii) we need to specialize DPmatrixConstrained::sample_path( ) to ignore
+        states not visited on the way up.
+   iii) then remove universal initialization in dpmatrix::dpmatrix( )
+        (how much speedup?)
+    iv) can we move initialization of s12_sub to forward_cell( )?
 
-  c) alter calling conventions for state_{array,matrix} so that we don't (ever?)
-     copy them.  
-     ? - should we make the copy constructor/operator= private?
+  c) find out how much time we are spending doing I/O...
 
-  d) find out how much time we are spending doing I/O...
+  d) find and check all the efloat_t -> double conversions!
+  e) find and check all the double -> efloat_t conversions!
 
+  f) pre-convert Branch_HMM values to log_double_t? (speed up prior_branch() ?)
 
-[EASY] - check for more!
-  f) why aren't we inlining vector<int>::operator[]  [49]?
-  g) we spend 21% of substitution time in subA_index
-  h) compare times w/ g++-4.0 times...  after improving the code a bit more.
-     - try -fprofile-generate and -fprofile-use
-  i) check w/ fp_scale::cutoff = 1.0e-1 ? or 1.0e-10?
+[CHECK] - check for more!
+   I) does increasing inlining limits make a difference?
+  II) check w/ fp_scale::cutoff = 1.0e-1 ? or 1.0e-10?
+ III) try some profile-drive optimization
 
 [?]
-  * sample_tri_multi:
-    - spends 50% of its time copying vector<DPmatrixConstrained>..
-  * sample_two_nodes_multi( ):
-    - spend 15% of its time in copying vector<DParrayConstrained>...
   * sample_two_nodes_base( ): 
-    - takes 15.4% of total time!  (costs 80.3% of time in sample_two_nodes_base( ).)
-    - spends 21% of its time in A5::createQ( )
-    - spends ONLY 27% of time in DParrayConstrained::forward()
-  * DPmatrixEmit( )
+    - takes 18%/20% of total time!
+    - spends 21%/18% of its time in A5::createQ( )
+    - spends ONLY 27%/50% of time in DParrayConstrained::forward()
+  * DPmatrixEmit( ):
     - takes 21% of total time!
     - takes 35% of sample_alignment( )
     - takes 34% of tri_sample_alignment_base( )
     - spends 80% of its time in DPmatrix( )
-  * DPmatrix::DPmatrix( )
+  * DPmatrix::DPmatrix( ) - probably in zero-ing the matrix
     - takes 17% of total time!
     - spends time locally, not from children
+  * DParray::sample_path( ) 
+    - takes 8% / 3.4% of total time!
+    - only sample legal states?
   * A5::createQ( )
     - takes 4% of total time
     - HOW does it spend 40% of its time NOT in getQ( )?
@@ -63,11 +71,14 @@
     - spends 23% of its time in subA_index( )
   * print_stats( )
     - takes ~ 0.7% of total time...
+  * subA_index( )
+    - we spend 25% of substitution time in subA_index
 
 [DONE] * shifted to using fp_scale architecture for DP sampling.
        * move created of std::vector< > temporary variables out of loops.
        * switched to using std::valarray< > instead of std::vector< > for state_{array,matrix}
        * inlined di,dj,dk,dl,dc in 3way.H from 3way.C
+       * stopped copying a whole bunch of state_{array,matrix}'s around
 
 6. Make a more general substitution::Model class, so that we can e.g.
     have tree with 2 sets of branch lengths...
