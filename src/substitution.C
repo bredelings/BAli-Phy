@@ -215,11 +215,15 @@ namespace substitution {
     double total=0;
     for(int m=0;m<MModel.n_base_models();m++) {
       double p=0;
-      p = MModel.distribution()[m] * Pr(residues,
-					T,
-					MModel.base_model(m),
-					MC.transition_P(m)
-					);
+      p = Pr(residues,
+	     T,
+	     MModel.base_model(m),
+	     MC.transition_P(m)
+	     );
+      std::cerr<<"    p("<<m<<") = "<<p;
+      p *= MModel.distribution()[m];
+      std::cerr<<"    f(m)*p("<<m<<") = "<<p<<std::endl;
+
       total += p;
     }
 

@@ -136,12 +136,13 @@ public:
   SuperModelOver(const std::vector< OwnedPointer<SubModel_t> >& models,int dp)
     :sub_models(models)
   {
-    set_n_parameters(dp);
+    super_parameters_.resize(dp);
 
     int total=0;
     for(int m=0;m<n_submodels();m++)
       total += SubModels(m).parameters().size();
-    parameters_.resize(dp + total);
+
+    set_n_parameters(total + dp);
     
     read();
   }

@@ -508,6 +508,17 @@ namespace substitution {
     return dist;
   }
 
+    /// Get the equilibrium frequencies
+  const std::valarray<double>& MultiParameterModel::frequencies() const {
+    return SubModel().frequencies();
+  }
+
+  /// Set the equilibrium frequencies
+  void MultiParameterModel::frequencies(const std::valarray<double>& f) {
+    SubModel().frequencies(f);
+    recalc();
+  }
+  
 
   // Um, summed-over parameter lives on as its MEAN
 
@@ -519,7 +530,8 @@ namespace substitution {
     // recalc sub-models
     vector<double> params = SubModel().parameters();
     for(int m=0;m<n_base_models();m++) {
-      //      base_model(m) = SubModel();
+      sub_parameter_models[m] = &SubModel();
+      //base_model(m).frequencies(SubModel().frequencies());
       if (p_change == -1)
 	base_model(m).set_rate(p_values[m]);
       else {
@@ -615,6 +627,23 @@ namespace substitution {
 
   //--------------- Invariant Sites Model----------------//
 
+  /// Get the equilibrium frequencies
+  const std::valarray<double>& WithINV::frequencies() const {
+    return NestedModelOver<MultiModel>::SubModel().frequencies();
+  }
+
+  void WithINV::recalc() {
+    INV->frequencies(SubModel().frequencies());
+    write();
+  }
+
+  /// Set the equilibrium frequencies
+  void WithINV::frequencies(const std::valarray<double>& f) {
+    SubModel().frequencies(f);
+    INV->frequencies(SubModel().frequencies());
+  }
+  
+
   string WithINV::name() const {
     return SubModel().name() + " + INV";
   }
@@ -649,7 +678,7 @@ namespace substitution {
     if (fixed[parameters_.size()-1] )
       return;
 
-    double &p = super_parameters_[0];
+    double &p = parameters_[0];
 
     // fiddle Invariant fraction
     const double sigma = 0.04;

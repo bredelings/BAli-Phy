@@ -45,7 +45,7 @@ public:
 
   // Get a copy of an object
   OwnedPointer& operator=(const OwnedPointer& O) throw() {
-    if (data != O.data and data != 0)
+    if (data != O.data and data != NULL)
       delete data;
 
     data = O->clone();
@@ -56,11 +56,31 @@ public:
   // Get a copy of an object which is a SUB-CLASS of T
   template <typename T2>
   OwnedPointer& operator=(const OwnedPointer<T2>& O) throw() {
-    if (data != O.data and data != 0)
+    if (data != O.data and data != NULL)
       delete data;
 
     data = O->clone();
 
+    return *this;
+  }
+
+  // Get a copy of an object
+  OwnedPointer& operator=(const T* t) throw() {
+    if (data != t and data != NULL)
+      delete data;
+
+    data = t->clone();
+
+    return *this;
+  }
+  
+  // Get a copy of an object which is a SUB-CLASS of T
+  template <typename T2>
+  OwnedPointer& operator=(const T2* t) throw() {
+    if ((T2*)data != t and data != NULL)
+      delete data;
+
+    data = t->clone();
     return *this;
   }
 

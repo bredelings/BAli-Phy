@@ -148,7 +148,6 @@ void check_match_P(const alignment& A,const Parameters& P, double OS, double OP,
 
   if ( (std::abs(qs - ls) > 1.0e-9) or (std::abs(qp - lp) > 1.0e-9) or (std::abs(qt - lt) > 1.0e-9)) {
     std::cerr<<A<<endl;
-    double lp = prior_HMM(A,P)/P.Temp;
     throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 

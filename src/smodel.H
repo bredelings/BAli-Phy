@@ -633,6 +633,12 @@ namespace substitution {
     /// Get the probability of each base models
     std::vector<double> distribution() const;
 
+    /// Get the equilibrium frequencies
+    const std::valarray<double>& frequencies() const;
+
+    /// Set the equilibrium frequencies
+    void frequencies(const std::valarray<double>&);
+  
     MultiParameterModel(const MultiModel& M,int dp,int p,int n_bins);
 
     ~MultiParameterModel() {}
@@ -700,6 +706,8 @@ namespace substitution {
   public:
     virtual WithINV* clone() const {return new WithINV(*this);}
 
+    void recalc();
+
     double super_prior() const;
 
     /// The number of models
@@ -711,6 +719,12 @@ namespace substitution {
 
     std::vector<double> distribution() const;
 
+    /// Get the equilibrium frequencies
+    const std::valarray<double>& frequencies() const;
+
+    /// Set the equilibrium frequencies
+    void frequencies(const std::valarray<double>&);
+  
     string name() const;
     string super_parameter_name(int i) const;
 

@@ -13,9 +13,26 @@
 #include "substitution.H"
 #include "setup.H"           // for standardize
 
-void show_frequencies(std::ostream& o,const alphabet& a,const valarray<double>& f) {
-  for(int i=0;i<a.size();i++)
-    o<<"f"<<a.lookup(i)<<" = "<<f[i]<<endl;
+void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
+  const alphabet& a = MModel.Alphabet();
+
+  if (MModel.n_base_models() == 1) {
+    const valarray<double>& f = MModel.base_model(0).frequencies();
+    for(int i=0;i<a.size();i++)
+      o<<"f"<<a.lookup(i)<<" = "<<f[i]<<endl;
+  }
+  else {
+
+    for(int i=0;i<a.size();i++) {
+      double total = 0;
+      for(int m=0;m<MModel.n_base_models();m++) {
+	const valarray<double>& f = MModel.base_model(m).frequencies();
+	o<<"f"<<a.lookup(i)<<m+1<<" = "<<f[i]<<"     ";
+	total += MModel.distribution()[m] * f[i];
+      }
+      o<<"f"<<a.lookup(i)<<" = "<<total<<std::endl;
+    }
+  }
 }
 
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
@@ -60,7 +77,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   o<<endl<<endl;
 
   o<<"frequencies = "<<endl;
-  show_frequencies(o,P.get_alphabet(),P.SModel().frequencies());
+  show_frequencies(o,P.SModel());
   o<<endl<<endl;
 
   // The leaf sequences should NOT change during alignment
@@ -511,8 +528,8 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     valarray<double> fN = get_nucleotide_counts_from_codon_counts(*C,fC);
     fN /= fN.sum();
 
-    show_frequencies(cout,C->getNucleotides(),fN);
-    cout<<endl<<endl;
+    //    show_frequencies(cout,C->getNucleotides(),fN);
+    //    cout<<endl<<endl;
   }
   
   //  Matrix T1 = P.SModel().BaseModel().transition_p(0.1);
