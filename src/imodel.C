@@ -208,7 +208,9 @@ void UpweightedIndelModel::fiddle(const std::valarray<bool>& fixed) {
 
   if (not fixed[0]) {
     lambda_O += gaussian(0,sigma);
-    lambda_O = std::abs(lambda_O);
+    double max = log(0.5);
+    if (lambda_O > max)
+      lambda_O = max - (lambda_O-max);
   }
   
   if (not fixed[1]) {
@@ -310,7 +312,9 @@ void SingleIndelModel::fiddle(const std::valarray<bool>& fixed) {
   const double sigma = 0.35;
 
   lambda_O += gaussian(0,sigma);
-  if (lambda_O >= 0) lambda_O = -lambda_O;
+  double max = log(0.5);
+  if (lambda_O > max)
+    lambda_O = max - (lambda_O-max);
 
   recalc();
 }
