@@ -4,7 +4,8 @@ TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/alignment-reorder tools/alignment-draw tools/findalign \
 	tools/tree-to-srq tools/tree-names-trunc tools/tree-reroot \
 	tools/srq-to-plot tools/srq-analyze tools/phy_to_fasta \
-	tools/tree-dist-compare tools/cut-range tools/alignment-chop-internal
+	tools/tree-dist-compare tools/cut-range tools/alignment-chop-internal \
+	tools/alignment-median
 
 tools: ${TOOLS}
 
