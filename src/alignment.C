@@ -85,9 +85,9 @@ int alignment::seqlength(int i) const {
 }
 
 alignment& alignment::operator=(const alignment& A) {
-  //letters_OK(*this,"operator=(): in");
   letters_OK(A,"operator=(): before1");
   sequences = A.sequences;
+  letters_OK(*this,"operator=(): in");
   letters_OK(A,"operator=(): before2");
 
   array.resize(A.array.size1(),A.array.size2());
