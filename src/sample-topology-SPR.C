@@ -10,45 +10,40 @@
 #include "alignment-sums.H"
 
 ///Sample between 2 topologies, ignoring gap priors on each case
-bool sample_SPR_and_A(alignment& A,Parameters& P1,const Parameters& P2,int n1,int n2) {
-
-  //----------- Generate the Different Matrices ---------//
-  vector<Parameters> p(2,P1);
-  p[1] = P2;
-
+bool sample_SPR_and_A(alignment& A,Parameters& P,vector<Parameters>& p,int n1, int n2) 
+{
+  //----------- Generate the Different node lists ---------//
   vector< vector<int> > nodes(2);
-  nodes[0] = A3::get_nodes_branch_random(P1.T,n1,n2);
-  nodes[1] = A3::get_nodes_branch_random(P2.T,n1,n2);
+  nodes[0] = A3::get_nodes_branch_random(p[0].T,n1,n2);
+  nodes[1] = A3::get_nodes_branch_random(p[1].T,n1,n2);
 
   bool success = sample_tri_multi(A,p,nodes,true,true);
-  P1 = p[0];
+  P = p[0];
 
   return success;
 }
 
 ///Sample between 2 topologies, ignoring gap priors on each case
-bool topology_sample_SPR_sgaps(alignment& A,Parameters& P1,const Parameters& P2) {
-  double Pr1 = P1.probability(A,P1);
-  double Pr2 = P1.probability(A,P2);
+bool topology_sample_SPR_sgaps(alignment& A,Parameters& P,vector<Parameters>& p) {
+  double Pr1 = p[0].probability(A,p[0]);
+  double Pr2 = p[0].probability(A,p[1]);
 
   /*********** Choose A Topology ************/
   int choice = choose2(Pr1,Pr2);
 
-  bool success = false;
-  if (choice == 1) {
-    P1 = P2;
-    success = true;
-  }
-  return success;
+  P = p[choice];
+  return (choice != 0);
 }
 
-bool topology_sample_SPR(alignment& A,Parameters& P1,const Parameters& P2,int n1, int n2) {
-  assert(P1.IModel().full_tree == P2.IModel().full_tree);
+bool topology_sample_SPR(alignment& A,Parameters& P,vector<Parameters>& p,int n1, int n2) 
+{
+  assert(   P.IModel().full_tree == p[0].IModel().full_tree);
+  assert(p[0].IModel().full_tree == p[1].IModel().full_tree);
 
-  if (P1.IModel().full_tree)
-    return sample_SPR_and_A(A,P1,P2,n1,n2);
+  if (P.IModel().full_tree)
+    return sample_SPR_and_A(A,P,p,n1,n2);
   else
-    return topology_sample_SPR_sgaps(A,P1,P2);
+    return topology_sample_SPR_sgaps(A,P,p);
 }
 
 SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
@@ -107,11 +102,11 @@ void remove_duplicates(vector<int>& v) {
   }
 }
 
-MCMC::result_t sample_SPR(alignment& A,Parameters& P1,int b) {
+MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b) {
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
 
-  SequenceTree& T1 = P1.T;
+  SequenceTree& T1 = P.T;
 
   //----- Get nodes for directed branch ------//
   int n1 = T1.branch(b).target();
@@ -122,11 +117,10 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P1,int b) {
     std::swap(n1,n2);
 
   //----- Generate the Different Topologies ----//
-  P1.LC.root = n1;
-  Parameters P2 = P1;
+  P.LC.root = n1;
+  vector<Parameters> p(2,P);
 
-  SequenceTree& T2 = P2.T;
-
+  SequenceTree& T2 = p[1].T;
 
   // find the changed branches
   vector<int> branches;
@@ -147,11 +141,10 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P1,int b) {
   assert(branches.size() <= 3);
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
-    P2.setlength(b,P2.T.branch(b).length());
+    p[1].setlength(b,p[1].T.branch(b).length());
   }
   
-
-  bool success = topology_sample_SPR(A,P1,P2,n1,n2);
+  bool success = topology_sample_SPR(A,P,p,n1,n2);
 
   if (success)
     result[1] = 1;
