@@ -194,6 +194,8 @@ public:
   vector<int> standardize();
   vector<int> standardize(const vector<int>&);
 
+
+  // n1 is an ancestor of n2, n2 is a descendant of n1
   bool ancestor(int n1, int n2) const {return ancestors[n1][n2];}
   std::valarray<bool> partition(int n1,int n2) const;
 

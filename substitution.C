@@ -65,16 +65,20 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
 
   for(int i=0;i<T.num_nodes()-1;i++) {
     int child = T.get_nth(i);
+
+    // don't propogate from the root, or non-members
     if (not group[child] or child == root) continue;
 
-    if (child != node2 and T.ancestor(child,node2)) {
+    // if we are above the root, then propagate down to it
+    if (child != root and T.ancestor(child,root)) {
       int parent = T[child].left();
-      if (not T.ancestor(parent,node2))
+      if (not T.ancestor(parent,root))
 	parent = T[child].right();
       int b = T.branch_up(parent);
 
       branches2.push_back(b);
     }
+    // otherwise propagate up to a node that is >= the root
     else {
       int b = T.branch_up(child);
       branches1.push_back(b);
@@ -82,10 +86,10 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
   }
   std::reverse(branches2.begin(),branches2.end());
   branches1.insert(branches1.end(),branches2.begin(),branches2.end());
-  //  if (branches2.size()) assert(node2 is parent of node1);
+  if (branches2.size()) assert(T.ancestor(node2,node1));
 
   /**************** Propogate info along branches ******************/
-  valarray<double> dist(a.size());   // declare a temporary for use in the loop
+  valarray<double> dist(a.size());   // declare a temporary for use in the loop.
                                      // profile this w/ modern
                                      // compiler and with code in
                                      // separate routine

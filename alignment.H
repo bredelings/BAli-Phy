@@ -78,6 +78,7 @@ bool valid(const alignment&);
 void remove_empty_columns(alignment&);
 
 vector<int> get_path(const alignment&,int,int);
+vector<int> get_path_3way(const alignment&,int,int,int,int);
 
 std::valarray<double> empirical_frequencies(const alignment& A);
 alignment randomize(const alignment&);

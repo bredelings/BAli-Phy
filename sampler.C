@@ -265,7 +265,7 @@ int main(int argc,char* argv[]) {
     do_setup(args,A,T);
     
     /*------------ Specify Gap Penalties ----------*/
-    double lambda_O = -12;
+    double lambda_O = -8;
     double lambda_E = -1;
     
     if (args.set("lambda_O")) lambda_O = convertTo<double>(args["lambda_O"]);
