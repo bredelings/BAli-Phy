@@ -22,19 +22,17 @@ class alignment {
 
   OwnedPointer<alphabet> a;
 
-  vector<ublas::matrix<int> > notes;
-
+  mutable vector<ublas::matrix<int> > notes;
+  
 public:
 
   int n_notes() const {return notes.size();}
 
-  int add_note(int l);
+  int add_note(int l) const;
 
-  ublas::matrix<int>& note(int n) {return notes[n];}
-  const ublas::matrix<int>& note(int n) const {return notes[n];}
+  ublas::matrix<int>& note(int n) const {return notes[n];}
 
-  int& note(int n,int i,int j) {return notes[n](i,j);}
-  int note(int n,int i,int j) const {return notes[n](i,j);}
+  int& note(int n,int i,int j) const {return notes[n](i,j);}
 
   /// The order of the sequence named s
   int index(const string& s) const;
