@@ -36,7 +36,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-gild <alignment-file> <tree-file> ... [OPTIONS]\n";
+    cout<<"Usage: alignment-indices <alignment-file> [OPTIONS]\n";
     cout<<all<<"\n";
     exit(0);
   }
