@@ -71,23 +71,20 @@ pIreport: pInames pIall
 MAP.tree: tc
 	pickout MAPtree_0 < $< > $@
 
-MAP-unordered.phy: out
+MAP-unordered.fasta: out
 	findalign < MAP > $@
 
-median-unordered.phy: samples-${SKIP}+${SIZE}
-	alignment-median maxalignments=400 type=splits < $< > $@
+median-unordered.fasta: samples-${SKIP}+${SIZE}
+	alignment-median maxalignments=2000 type=splits < $< > $@ 2>median.err
 
-%.phy: MAP.tree-trunc %-unordered.phy
-	alignment-reorder align=$*-unordered.phy tree=MAP.tree-trunc > $@ 2>/dev/null
+%.fasta: MAP.tree %-unordered.fasta
+	alignment-reorder align=$*-unordered.fasta tree=MAP.tree > $@ 2>/dev/null
 
-%-AU.prob: %-unordered.phy samples-${SKIP}+${SIZE} MAP.tree-trunc 
-	alignment-gild align=$*-unordered.phy tree=MAP.tree-trunc maxalignments=500 < samples-${SKIP}+${SIZE} > $@ 2>$*-AU.err
+%-AU.prob: %-unordered.fasta samples-${SKIP}+${SIZE} MAP.tree
+	alignment-gild align=$*-unordered.fasta tree=MAP.tree maxalignments=500 < samples-${SKIP}+${SIZE} > $@ 2>$*-AU.err
 
-%.tree-trunc: %.tree
-	tree-names-trunc tree=$< > $@
-
-%-AU.html: %-AU.prob MAP.tree-trunc %.phy 
-	alignment-draw width=120 tree=MAP.tree-trunc align=$*.phy AU-file=$*-AU.prob > $@
+%-AU.html: %-AU.prob MAP.tree %.fasta
+	alignment-draw width=120 tree=MAP.tree align=$*.fasta AU-file=$*-AU.prob > $@
 
 tree.srq: trees MAP.tree 
 	tree-to-srq tree=MAP.tree < trees > tree.srq
@@ -107,5 +104,5 @@ Pmarg: Likelihood.from.${SKIP}+${SIZE}
 clean:
 	rm pS* pI* Report header samples tc trees MAP.tree analysis
 
-%.fasta: %.phy
-	phy_to_fasta < $< > $@
+#%.fasta: %.phy
+#	phy_to_fasta < $< > $@
