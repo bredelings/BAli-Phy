@@ -12,6 +12,7 @@
 #include "util.H"
 #include "setup.H"
 #include "alignmentutil.H"
+#include "alignment-util.H"
 
 // FIXME - also show which COLUMNS are more that 99% conserverd?
 
@@ -31,22 +32,6 @@ inline double log_fact(int n) {
     total += log(i);
 
   return total;
-}
-
-/// Return a mapping of letters to columns for each leaf sequence
-vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
-  vector< vector<int> > result;
-
-  for(int i=0;i<nleaves;i++) {
-    vector<int> columns;
-    for(int column=0;column<A.length();column++) {
-      if (not A.gap(column,i))
-	columns.push_back(column);
-    }
-    result.push_back(columns);
-  }
-
-  return result;
 }
 
 /// Function to optimize for the star tree algorithm
@@ -431,23 +416,6 @@ vector<int> getlabels(const alignment& A,
   
 
   return label;
-}
-
-alignment M(const alignment& A1) {
-  alignment A2 = A1;
-  for(int i=0;i<A2.size2();i++) {
-    int pos=0;
-    for(int column=0;column<A2.length();column++) {
-      if (not A2.gap(column,i)) {
-	A2(column,i) = pos;
-	pos++;
-      }
-    }
-
-    assert(pos == A2.seqlength(i));
-
-  }
-  return A2;
 }
 
 //using namespace boost::numeric::ublas;

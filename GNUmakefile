@@ -69,7 +69,7 @@ tools/statreport: tools/statistics.o
 tools/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o tools/alignmentutil.o \
 	setup.o smodel.o rates.o exponential.o eigenvalue.o sequence-format.o \
-	alignment-random.o randomtree.o ${GSLLIBS}
+	alignment-random.o alignment-util.o randomtree.o ${GSLLIBS}
 
 tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o smodel.o \
