@@ -3,6 +3,7 @@
 #include "util.H"
 #include "rates.H"
 #include "alphabet.H"
+#include "alignment-util.H"
 
 using std::vector;
 using std::valarray;
@@ -114,49 +115,6 @@ void load_T(Arguments& args,const alignment& A,SequenceTree& T,bool random_tree_
   T.unroot();
 }
 
-
-bool bit_set(const valarray<bool>& v) {
-  for(int i=0;i<v.size();i++)
-    if (v[i]) return true;
-  return false;
-}
-
-
-/// Check that any two present nodes are connected by a path of present nodes
-bool all_characters_connected(const tree& T,valarray<bool> present,const vector<int>& _ignore) {
-  assert(present.size() == T.n_nodes()-1);
-
-  //--------- set the ignored nodes to 'not present' -----------//
-  valarray<bool> ignore(false,present.size());
-  for(int i=0;i<_ignore.size();i++) {
-    int n = _ignore[i];
-    present[n] = false;
-    ignore[n] = true;
-  }
-
-  //---------- for each internal node... -------------//
-  for(int n1=T.leaves(); n1<T.n_nodes()-1; n1++) {
-
-    if (present[n1] or ignore[n1]) continue;
-      
-    //------- if it is '-' and not ignored ... -------//
-    vector<int> neighbors = T.neighbors(n1);
-    assert(neighbors.size() == 3);
-
-    //---- check the three attatched subtrees ... ----//
-    int total=0;
-    for(int i=0;i<neighbors.size();i++) {
-      valarray<bool> group = T.partition(n1,neighbors[i]);
-      if (bit_set(present and group))
-	total++;
-    }
-
-    //----- nodes should be present in only one. -----//
-    if (total > 1)
-      return false;
-  }
-  return true;
-}
 
 /// Check that internal nodes don't have letters 
 void check_internal_sequences_composition(const alignment& A,int n_leaves) {

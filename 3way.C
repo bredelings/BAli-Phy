@@ -375,13 +375,9 @@ namespace A3 {
     vector<int> subA2;
     vector<int> subA3;
 
-    vector<int> internal(1,n0);
-
     for(int column=0;column<old.length();column++) {
-
-#ifndef NDEBUG
-      check_internal_nodes_connected(old,T,internal);
-#endif
+      // We have no guarantee about the consistancy of the columns before in the 
+      //  old alignment.  We will construct a consistant alignment from the path.
 
       if (not all_gaps(old,column,group1))
 	subA1.push_back(column);

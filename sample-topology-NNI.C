@@ -179,7 +179,7 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
   nodes[1] = A5::get_nodes_random(p[1].T,b);
 
   bool success = sample_two_nodes_multi(A,p,nodes,true,false);
-  P1 = p.back();
+  P1 = p[0];
 
   return success;
 }
@@ -198,7 +198,7 @@ bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Paramete
   nodes[2] = A5::get_nodes_random(p[2].T,b);
 
   bool success = sample_two_nodes_multi(A,p,nodes,true,false);
-  P1 = p.back();
+  P1 = p[0];
 
   return success;
 }
@@ -401,7 +401,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
 
   if (sample_tri_multi(A,p,nodes,true,true))
     result[1] = 1;
-  P = p.back();
+  P = p[0];
 
   return result;
 }

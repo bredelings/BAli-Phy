@@ -31,12 +31,12 @@ all: bali-phy
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math  tracer prefetch-loop-arrays omit-frame-pointer # profile-use
-DEBUG = pipe # g3 #gdwarf-2 #pg 
+LANGO = fast-math  # tracer prefetch-loop-arrays omit-frame-pointer # profile-use
+DEBUG = pipe g3 #gdwarf-2 #pg 
 EXACTFLAGS =  # --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
 DEFS =   NDEBUG_UBLAS # NDEBUG_DP # NDEBUG #__NO_MATH_INLINES # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual strict-aliasing # effc++
-OPT =  march=pentium4 O3 # malign-double
+OPT =  march=pentium4 O #O3 # malign-double
 LDFLAGS = # -fprofile-generate #-pg # -static
 LI=${CXX}
 
@@ -51,7 +51,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  sample-node.C imodel.C 5way.C sample-topology-NNI.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
-	  alignment-sums.C
+	  alignment-sums.C alignment-util.C
 
 LIBS = gsl gslcblas m 
 GSLLIBS = ${LIBS:%=-l%}

@@ -10,8 +10,9 @@
 #include "rng.H"
 #include "5way.H"
 #include "alignment-sums.H"
+#include "alignment-util.H"
 
-// for prior_HMM_nogiven
+// for prior(p[i])
 #include "likelihood.H"
 
 // We are sampling from a 5-way alignment (along 5 branches)
@@ -186,17 +187,18 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
 ///FIXME - make a generic routine (templates?)
 
 bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
+
   assert(p.size() == nodes.size());
   
   //----------- Generate the different states and Matrices ---------//
 
-  vector<alignment> a(p.size()+1,A);
+  vector<alignment> a(p.size(),A);
 
   vector< DParrayConstrained > Matrices;
   for(int i=0;i<p.size();i++)
     Matrices.push_back( sample_two_nodes_base(a[i],p[i],nodes[i]) );
 
-  //---------------- Calculate choice probabilities --------------//
+  //-------- Calculate corrections to path probabilities ---------//
 
   vector<double> OS(p.size(),0);
   vector<double> OP(p.size(),0);
@@ -207,6 +209,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
       OP[i] = other_prior(a[i],p[i],nodes[i]);
   }
 
+  //---------------- Calculate choice probabilities --------------//
   vector<double> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
     Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
@@ -214,7 +217,24 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
   int C = choose(Pr);
 
 #ifndef NDEBUG_DP
+  std::cerr<<"choice = "<<C<<endl;
+
+  // One mask for all p[i] assumes that only ignored nodes can be renamed
+  valarray<bool> ignore(false,p[0].T.n_nodes()-1);
+  ignore[ nodes[0][4] ] = true;
+  ignore[ nodes[0][5] ] = true;
+
+  // Check that our constraints are met
+  for(int i=0;i<a.size();i++) {
+    if (not (A_constant(A,a[i],ignore))) {
+      std::cerr<<A<<endl;
+      std::cerr<<a[i]<<endl;
+      assert(A_constant(A,a[i],ignore));
+    }
+  }
+
   // Add another entry for the incoming configuration
+  a.push_back( A );
   p.push_back( p[0] );
   nodes.push_back(nodes[0]);
   Matrices.push_back( Matrices[0] );
@@ -253,21 +273,25 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
     PR[i][0] += A5::log_correction(a[i],p[i],nodes[i]);
   }
 
-  std::cerr<<"choice = "<<C<<endl;
-  std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[C][0]<<"    Pr2  - Pr1  = "<<PR[C][0] - PR[0][0]<<endl;
-  std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[C][2]<<"    PrQ2 - PrQ1 = "<<PR[C][2] - PR[0][2]<<endl;
-  std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[C][1]<<"    PrS2 - PrS1 = "<<PR[C][1] - PR[0][1]<<endl;
+  //--------- Check that each choice is sampled w/ the correct Probability ---------//
+  for(int i=0;i<PR.size();i++) {
+    std::cerr<<"option = "<<i<<endl;
 
-  double diff = (PR[C][1] - PR.back()[1]) - (PR[C][0] - PR.back()[0]);
-  std::cerr<<"diff = "<<diff<<endl;
-  if (std::abs(diff) > 1.0e-9) {
-    std::cerr<<a.back()<<endl;
-    std::cerr<<a[C]<<endl;
+    std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[i][0]<<"    Pr2  - Pr1  = "<<PR[i][0] - PR[0][0]<<endl;
+    std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[i][2]<<"    PrQ2 - PrQ1 = "<<PR[i][2] - PR[0][2]<<endl;
+    std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[i][1]<<"    PrS2 - PrS1 = "<<PR[i][1] - PR[0][1]<<endl;
     
-    std::cerr<<A5::project(a.back(),nodes.back());
-    std::cerr<<A5::project(a[C],nodes[C]);
-
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
+    double diff = (PR[i][1] - PR.back()[1]) - (PR[i][0] - PR.back()[0]);
+    std::cerr<<"diff = "<<diff<<endl;
+    if (std::abs(diff) > 1.0e-9) {
+      std::cerr<<a.back()<<endl;
+      std::cerr<<a[i]<<endl;
+      
+      std::cerr<<A5::project(a.back(),nodes.back());
+      std::cerr<<A5::project(a[C],nodes[C]);
+      
+      throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
+    }
   }
 #endif
 
@@ -275,10 +299,13 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
 
   // if we accept the move, then record the changes
   bool success = false;
-  if (myrandomf() < exp(A5::log_acceptance_ratio(a.back(),p.back(),nodes.back(),a[C],p[C],nodes[C]))) {
+  if (myrandomf() < exp(A5::log_acceptance_ratio(A,p[0],nodes[0],a[C],p[C],nodes[C]))) {
     success = (C > 0);
+
     A = a[C];
-    p.back() = p[C];
+
+    if (success)
+      p[0] = p[C];
   }
 
   return success;

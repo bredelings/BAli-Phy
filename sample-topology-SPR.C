@@ -21,7 +21,7 @@ bool sample_SPR_and_A(alignment& A,Parameters& P1,const Parameters& P2,int n1,in
   nodes[1] = A3::get_nodes_branch_random(P2.T,n1,n2);
 
   bool success = sample_tri_multi(A,p,nodes,true,true);
-  P1 = p.back();
+  P1 = p[0];
 
   return success;
 }
