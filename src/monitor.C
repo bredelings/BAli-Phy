@@ -14,7 +14,7 @@ void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
   if (MModel.n_base_models() == 1) {
     const valarray<double>& f = MModel.base_model(0).frequencies();
     for(int i=0;i<a.size();i++)
-      o<<"f"<<a.lookup(i)<<" = "<<f[i]<<endl;
+      o<<"f"<<a.lookup(i)<<" = "<<f[i]<<"\n";
   }
   else {
 
@@ -62,7 +62,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
     o<<standardize(A,P.T)<<"\n\n";
   }
   
-  trees<<P.T<<endl;
+  trees<<P.T<<"\n";
   
   pS<<  "    mu = "<<P.branch_mean<<"   ";
   show_parameters(pS,P.SModel());
@@ -71,11 +71,11 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   
   for(int i=0;i<P.SModel().n_base_models();i++)
     o<<"    rate"<<i<<" = "<<P.SModel().base_model(i).rate();
-  o<<endl<<endl;
+  o<<"\n\n";
 
-  o<<"frequencies = "<<endl;
+  o<<"frequencies = "<<"\n";
   show_frequencies(o,P.SModel());
-  o<<endl<<endl;
+  o<<"\n\n";
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
