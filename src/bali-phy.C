@@ -24,25 +24,11 @@
 namespace po = boost::program_options;
 using po::variables_map;
 
-using std::cout;
 using std::cin;
-
-void do_showonly(const alignment& A,const Parameters& P) {
-  double PS = P.likelihood(A,P);
-  double PA = prior_HMM(A,P);
-  double PT = prior(P.T,P.branch_mean);
-  double PP = P.SModel().prior();
-
-  cout<<"ln P(data,A,t,T,Theta) =  "<<PS + PA + PT + PP<<" = "
-	   <<PS<<" + "
-	   <<PA<<" + "
-	   <<PT<<" + "
-	   <<PP<<endl<<endl;
-
-  cout<<A<<endl<<endl;
-  cout<<P.T<<endl<<endl;
-}
-
+using std::cout;
+using std::cerr;
+using std::clog;
+using std::endl;
 
 void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int max_iterations) 
 {
@@ -250,7 +236,7 @@ void set_parameters(Parameters& P, const variables_map& args) {
 
   // fix parameters
   for(int i=0;i<fix.size();i++) {
-    std::cerr<<fix[i]<<std::endl;
+    cerr<<fix[i]<<endl;
     int p=-1;
     if (p=find_parameter(P.SModel(),fix[i]),p!=-1)
       P.SModel().fixed[p] = true;
@@ -300,7 +286,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description general("General options");
   general.add_options()
     ("help", "produce help message")
-    ("showonly","analyze the initial values and exit")
+    ("show-only","analyze the initial values and exit")
     ("seed", value<unsigned long>(),"random seed")
     ("datadir", value<string>()->default_value("Data"),"data directory")
     ("random-tree-ok","generate a random tree if initial tree not specified")
@@ -370,11 +356,13 @@ int main(int argc,char* argv[]) {
 
   try {
 
+    le_double_t::initialize();
+    cerr.precision(10);
+    cout.precision(10);
+
+    //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
      
-    //---------- Get input, from file if necessary -------//
-    le_double_t::initialize();
-
     //---------- Initialize random seed -----------//
     unsigned long seed = 0;
     if (args.count("seed")) {
@@ -385,9 +373,6 @@ int main(int argc,char* argv[]) {
       seed = myrand_init();
     cout<<"random seed = "<<seed<<endl<<endl;
     
-    std::cerr.precision(10);
-    cout.precision(10);
-    
     //---------- Determine Data dir ---------------//
     {
       string filename = args["datadir"].as<string>() + "/wag.dat";
@@ -395,8 +380,8 @@ int main(int argc,char* argv[]) {
       if (temp)
 	temp.close();
       else {
-	std::cerr<<"Warning: couldn't open file '"<<filename<<"'"<<std::endl;
-	std::cerr<<"         Is '"<<args["datadir"].as<string>()<<"' a valid Data/ directory?\n\n";
+	cerr<<"Warning: couldn't open file '"<<filename<<"'"<<endl;
+	cerr<<"         Is '"<<args["datadir"].as<string>()<<"' a valid Data/ directory?\n\n";
       }
     }
     
@@ -451,9 +436,8 @@ int main(int argc,char* argv[]) {
 
     P.LC.set_length(A.length());
     //---------------Do something------------------//
-    if (args.count("showonly"))
+    if (args.count("show-only"))
       print_stats(cout,cout,cout,cout,A,P,"Initial");
-    //      do_showonly(A,P);
     else {
       long int max_iterations = args["iterations"].as<long int>();
 
@@ -461,12 +445,12 @@ int main(int argc,char* argv[]) {
     }
   }
   catch (std::bad_alloc) {
-    std::cerr<<"Doh!  Some kind of memory problem?\n";
+    cerr<<"Doh!  Some kind of memory problem?\n";
     report_mem();
     exit(1);
   }
   catch (std::exception& e) {
-    std::cerr<<"Error: "<<e.what()<<endl;
+    cerr<<"Error: "<<e.what()<<endl;
     exit(1);
   }
 
