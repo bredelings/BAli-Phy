@@ -42,7 +42,7 @@ double prior(const SequenceTree& T,double branch_mean) {
 double prior(const Parameters& P) {
   double p = 0;
 
-  const double branch_mean_mean = 0.4;
+  const double branch_mean_mean = 0.04;
 
   // prior on the mu, the mean branch length
   p += exp_exponential_pdf(log(P.branch_mean),branch_mean_mean);
