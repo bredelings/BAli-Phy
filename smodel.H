@@ -139,6 +139,7 @@ namespace substitution {
 
     /// Get the equilibrium frequencies
     const std::valarray<double>& frequencies() const {return pi;}
+
     /// Set the equilibrium frequencies
     virtual void frequencies(const std::valarray<double>& pi_) {pi=pi_; recalc();}
   

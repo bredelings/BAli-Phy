@@ -3,6 +3,7 @@
 #include "dpmatrix.H"
 #include "rng.H"
 #include <gsl/gsl_randist.h>
+#include "myexception.H"
 
 using std::vector;
 
@@ -193,7 +194,10 @@ void IndelModel2::fiddle() {
 
   if (not fixed[2] and myrandomf() < 0.3) {
     double beta_2 = lambda_O + beta;
+    // log-normal proposal density
     beta_2 += gaussian(0,sigma_beta);
+
+    // beta*delta can't be more than exp(0)...
     if (beta_2 >= 0) beta_2 = -beta_2;
 
     beta = beta_2 - lambda_O;
@@ -218,6 +222,15 @@ void IndelModel2::recalc() {
   double epsilon = exp(parameters_[1]);
   double beta    = exp(parameters_[2]);
   double tau     = 1.0e-3;
+
+  if (1.0 - 2.0*delta <0.0)
+    throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
+
+  if (epsilon >= 1.0)
+    throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<epsilon;
+    
+  if (beta*delta > 1.0)
+    throw myexception()<<"indel model: we need (beta*delta<= 1), but beta*delta = "<<beta*delta;
 
   assert(delta > 0 and delta <= 1);
   assert(epsilon > 0 and epsilon <= 1);
@@ -294,7 +307,7 @@ double IndelModel2::prior() const {
   // Calculate prior on beta - should be lognormal
   {
     double sigma = 0.3;
-    P += log( gsl_ran_gaussian_pdf(beta,sigma) );
+    P += gsl_ran_gaussian_pdf(beta,sigma);
   }
 
   return P;
@@ -306,6 +319,118 @@ IndelModel2::IndelModel2(double lambda_O,double lambda_E,double b)
   parameters_[0] = lambda_O;
   parameters_[1] = lambda_E;
   parameters_[2] = b;
+
+  recalc();
+}
+
+void UpweightedIndelModel::fiddle() { 
+  double& lambda_O = parameters_[0];
+  double& lambda_E = parameters_[1];
+
+  const double sigma = 0.20;
+
+  if (not fixed[0]) {
+    lambda_O += gaussian(0,sigma);
+    if (lambda_O>=0) lambda_O = -lambda_O;
+  }
+    
+  if (not fixed[1]) {
+    lambda_E += gaussian(0,sigma);
+    if (lambda_E>=0) lambda_E = -lambda_E;
+  }
+
+  recalc();
+}
+
+void UpweightedIndelModel::recalc() {
+  double delta   = exp(parameters_[0]);
+  double epsilon = exp(parameters_[1]);
+  double tau     = 1.0e-3;
+
+  if (1.0 - 2.0*delta <0.0)
+    throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
+
+  if (epsilon >= 1.0)
+    throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<epsilon;
+    
+  assert(delta > 0 and delta <= 1);
+  assert(epsilon > 0 and epsilon <= 1);
+  
+  /* Chain w/o transitions to End state */
+  P(0,0) = log(1.0 - 2.0*delta);
+  P(0,1) = log(delta);
+  P(0,2) = log(delta);
+  P(0,3) = log_0;
+
+  P(1,0) = log(1.0 - epsilon) + log(1.0 - 2.0*delta);
+  P(1,1) = log(epsilon + (1.0-epsilon)*delta);
+  P(1,2) = log(1.0 - epsilon) + log(delta);
+  P(1,3) = log_0;
+
+  P(2,0) = log(1.0 - epsilon) + log(1.0 - 2.0*delta);
+  P(2,1) = log(1.0 - epsilon) + log(2.0*delta/2.0);
+  P(2,2) = log(epsilon + (1.0-epsilon)*delta);
+  P(2,3) = log_0;
+
+  P(3,0) = log_0;
+  P(3,1) = log_0;
+  P(3,2) = log_0;
+  P(3,3) = 0;
+
+  /* Chain with transitions to End state */
+  Q = P;
+  for(int i=0;i<3;i++) {
+    for(int j=0;j<3;j++) 
+      Q(i,j) += log(1.0 - tau);
+    Q(i,3) = log(tau);
+  }
+
+  /* Initial Distribution */
+  /* This is for the character before the first character - can't be E */
+  pi[0] = 0;
+  pi[1] = log_0;
+  pi[2] = log_0;
+  pi[3] = log_0;  // must be log_0
+
+  //  pi[0] = log(1.0-2.0*delta);
+  //  pi[1] = log(delta);
+  //  pi[2] = log(delta);
+  //  pi[3] = log_0;  // must be log_0
+
+  IndelModel::recalc();
+}
+
+double UpweightedIndelModel::prior() const {
+  double lambda_O = parameters_[0];
+  double lambda_E = parameters_[1];
+
+
+  double P = 0;
+
+  // Calculate prior on lambda_O
+  const double mean = -5.5;
+
+  double delta = exp(lambda_O);
+  double mu = -log(1.0-delta);
+
+  P += log( gsl_ran_gaussian_pdf(log(mu)-mean,1.0) );
+
+  // Calculate prior on lambda_E - shouldn't depend on lambda_O
+  double epsilon = exp(lambda_E);
+  double E_length = 1.0/(1.0 - epsilon);
+  double E_length_mean = 4.5;
+
+  P += (-log(E_length_mean) - E_length/E_length_mean);
+
+
+  return P;
+}
+
+UpweightedIndelModel::UpweightedIndelModel(double lambda_O,double lambda_E)
+  :IndelModel(2)
+{
+  parameters_[0] = lambda_O;
+  parameters_[1] = lambda_E;
 
   recalc();
 }

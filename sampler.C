@@ -31,8 +31,8 @@
 void do_setup(Arguments& args,alignment& A,SequenceTree& T)
 {
   /* ----- Alphabets to try ------ */
-  alphabet dna("DNA nucleotides","AGTC","N");
-  alphabet rna("RNA nucleotides","AGUC","N");
+  alphabet dna("DNA nucleotides","AGTC","NY");
+  alphabet rna("RNA nucleotides","AGUC","NY");
   alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
 
   /* ----- Try to load alignment ------ */
@@ -291,7 +291,6 @@ int main(int argc,char* argv[]) {
     
     /*------------ Specify Gap Penalties ----------*/
     double lambda_O = -8;
-    
     if (args.set("lambda_O")) lambda_O = convertTo<double>(args["lambda_O"]);
 
     double lambda_E = lambda_O/10.0;
@@ -316,6 +315,10 @@ int main(int argc,char* argv[]) {
     else if (args["imodel"] == "single_indels") {
       std::cout<<"imodel = single indels\n";
       imodel = new SingleIndelModel(lambda_O);
+    }
+    else if (args["imodel"] == "upweighted") {
+      std::cout<<"imodel = adjacent gaps upweighted by 2\n";
+      imodel = new UpweightedIndelModel(lambda_O,lambda_E);
     }
     else {
       std::cout<<"imodel = symmetric\n";

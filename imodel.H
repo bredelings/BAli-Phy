@@ -130,6 +130,37 @@ public:
   explicit IndelModel2(double LO,double LE,double b=0);
 };
 
+
+class UpweightedIndelModel : public IndelModel {
+public:
+  void fiddle();
+
+  void recalc();
+
+  double prior() const;
+
+  UpweightedIndelModel* clone() const {return new UpweightedIndelModel(*this);}
+
+  ///probability of going -> E
+  double tau;     
+
+  ///probability of starting a gap: M -> G1,G2
+  double delta;   
+
+  ///probability of extending a gap: G1->G1,  G2->G2
+  double epsilon; 
+
+  ///unweighting factor for adjacent G1/G2 gaps
+  double beta;    
+
+  explicit UpweightedIndelModel(double LO,double LE);
+};
+
+
+
+
+
+/// An IndelModel which assumes indels consist of only one letter
 class SingleIndelModel : public IndelModel {
 
 public:
@@ -149,5 +180,7 @@ public:
 
   explicit SingleIndelModel(double LO);
 };
+
+
 
 #endif
