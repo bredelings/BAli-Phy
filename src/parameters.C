@@ -96,12 +96,10 @@ void Parameters::setlength(int b,double l) {
 
 Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,const SequenceTree& t)
   :MatCache(t,SM),
-   IModel_(IM.clone()),
-   SModel_(SM.clone()),
+   IModel_(IM),
+   SModel_(SM),
    branch_HMMs(t.n_branches()),
    Temp(1.0),
-   i_fixed(false,IModel_->parameters().size()),
-   s_fixed(false,SModel_->parameters().size()),
    features(0),
    T(t),
    LC(T,SModel())
