@@ -360,6 +360,8 @@ namespace A3 {
   alignment construct(const alignment& old, const vector<int>& path, 
 		      int n0,int n1,int n2,int n3,const Tree& T,
 		      const vector<int>& seq1,const vector<int>& seq2, const vector<int>& seq3) {
+    letters_OK(old,"3way:old,1st");
+
     vector< vector<int> > seq;
     seq.push_back(seq1); seq.push_back(seq2); seq.push_back(seq3);
 

@@ -23,6 +23,7 @@ MCMC::result_t change_branch_length_multi_move(alignment& A, Parameters& P,int b
 }
 
 MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
+  letters_OK(A,"sample_tri:in");
   assert(P.IModel().full_tree); 
 
   const SequenceTree& T = P.T;
@@ -38,6 +39,7 @@ MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
     
   tri_sample_alignment(A,P,node1,node2);
 
+  letters_OK(A,"sample_tri:out");
   return MCMC::result_t(); // no_result
 }
 
@@ -77,10 +79,12 @@ MCMC::result_t sample_tri_branch_one(alignment& A, Parameters& P,int b) {
 
 
 MCMC::result_t sample_alignments_one(alignment& A, Parameters& P,int b) {
+  letters_OK(A,"sample_A:in");
   assert(P.IModel().full_tree); 
 
   sample_alignment(A,P,b);
 
+  letters_OK(A,"sample_A:out");
   return MCMC::result_t(); // no_result
 }
 
@@ -243,6 +247,7 @@ MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
 
 
 MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
+  letters_OK(A,"sample_alignments_walk_tree:in");
   vector<int> branches = walk_tree_path(P.T,P.LC.root);
 
   MCMC::result_t result;
@@ -258,6 +263,7 @@ MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
       sample_alignments_one(A,P,b);
   }
   
+  letters_OK(A,"sample_alignments_walk_tree:out");
   return result;
 }
 
