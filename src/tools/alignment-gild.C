@@ -2,6 +2,7 @@
 #include <string>
 #include <cmath>
 #include <vector>
+#include <list>
 #include "myexception.H"
 #include "alignment.H"
 #include "arguments.H"
@@ -22,6 +23,7 @@ using std::cout;
 using std::cerr;
 using std::istream;
 using std::ifstream;
+using std::list;
 using namespace optimize;
 
 inline double log_fact(int n) {
@@ -205,7 +207,7 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
 }
 
 
-void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,SequenceTree& T) {
+void do_setup(Arguments& args,list<alignment>& alignments,alignment& A,SequenceTree& T) {
   //----------- Load and link template A and T -----------------//
   load_A_and_T(args,A,T,false);
 
@@ -225,14 +227,14 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
   //-------- Check compatability of estimate & samples-------//
   assert(A.size2() == T.n_leaves());
   
-  if (alignments[0].size2() != T.n_nodes())
+  if (alignments.front().size2() != T.n_nodes())
     throw myexception()<<"Number of sequences in alignment estimate is NOT equal to number of tree nodes!";
   
   for(int i=0;i<A.size2();i++) {
-    if (A.seq(i).name != alignments[0].seq(i).name)
+    if (A.seq(i).name != alignments.front().seq(i).name)
       throw myexception()<<"Alignment estimate has different sequences or sequence order than alignment samples";
     
-    if (A.seq(i).name != alignments[0].seq(i).name)
+    if (A.seq(i).name != alignments.front().seq(i).name)
       throw myexception()<<"Sequence "<<i<<" has different length in alignment estimate and alignment samples!";
     
   }
@@ -253,10 +255,11 @@ vector<int> get_column(const ublas::matrix<int>& MA,int c,int nleaves) {
 
 
 double get_column_probability(const vector<int>& column, 
-			      const vector<alignment>& alignments,
+			      const list<alignment>& alignments,
 			      const vector< vector< vector<int> > >& column_indexes) {
   unsigned int count=0;
-  for(int i=0;i<alignments.size();i++) {
+  int i=0;
+  foreach(A,alignments) {
     bool found=true;
 
     // Can we find a common column for all features?
@@ -285,16 +288,16 @@ double get_column_probability(const vector<int>& column,
       if (column[j] != -1 ) continue;
 
       // if the template doesn't have a gap, then this doesn't match
-      if (not alignments[i].gap(c,j))
+      if (not A->gap(c,j))
 	found = false;
     }
 
     if (found) count++;
+    i++;
   }
 
   return double(0.5+count)/(1.0+alignments.size());
 }
-
 
 //FIXME - use rooted trees?  How?
 
@@ -307,11 +310,11 @@ int main(int argc,char* argv[]) {
     //----------- Load alignment and tree ---------//
     alignment A;
     SequenceTree T;
-    vector<alignment> alignments;
+    list<alignment> alignments;
     vector<ublas::matrix<int> > Ms;
     do_setup(args,alignments,A,T);
-    for(int i=0;i<alignments.size();i++)
-      Ms.push_back(M(alignments[i]));
+    foreach(i,alignments)
+      Ms.push_back(M(*i));
 
     //----------- Find root branch ---------//
     int rootb=-1;
@@ -325,8 +328,8 @@ int main(int argc,char* argv[]) {
 
     //----------- Construct alignment indexes ----------//
     vector< vector< vector<int> > >  column_indexes;
-    for(int i = 0;i<alignments.size();i++)
-      column_indexes.push_back( column_lookup(alignments[i],T.n_leaves()) );
+    foreach(i,alignments)
+      column_indexes.push_back( column_lookup(*i,T.n_leaves()) );
 
     //------- Convert template to index form-------//
     ublas::matrix<int> MA = M(A);
