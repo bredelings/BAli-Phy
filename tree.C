@@ -614,8 +614,17 @@ void tree::exchange(int node1,int node2) {
   check_structure();
 }
 
+//FIXME - we COULD require that if (n_leaves() > 2) then 
+// names[n]->parent_branch->name == n for ALL leaf nodes,
+// instead of doing the branch_up() hack.
+
+// We would just have to swap_children(root->name) if root->right
+// is a leaf...
+
 void tree::SPR(int n1, int n2, int b) {
   assert(root->right->parent_branch->length == 0.0);
+
+  assert(n_leaves_ > 2);
 
   // don't regraft to the sub-branches we are being pruned from
   assert(branch(b).parent() != n1 and branch(b).child() != n1);
@@ -636,12 +645,34 @@ void tree::SPR(int n1, int n2, int b) {
   }
   assert(ancestor(n1,n2));
     
-  // avoid messing with the root's right branch...
+  // avoid messing with the root's right branch... (REMOVAL)
+  //    - no name fixups (not too hard)
+  //    - no length fixups (messy)
+  // This require root->right to be an INTERNAL node, so we see
+  //    that both swap_children()s can't fire in the same call of this funct'n
   if (names[n1] == root->right)
     swap_children(root->name);
 
+  // In removing branches, remove the non-leaf branch!
+  int b_U = names[n1]->parent_branch->name;
+
+  if (b_U < n_leaves()) {
+    int b_D = names[n1]->left->parent_branch->name;
+    if (branches_[b_D]->child->name == n2)
+      b_D = names[n1]->right->parent_branch->name;
+
+    std::swap(branches_[b_D],branches_[b_U]);
+    branches_[b_D]->name = b_D;
+    branches_[b_U]->name = b_U;
+  }
+
   // cut out n2, fix up the length
   ::remove_subtree(names[n2],root);
+
+  // ensure that names[n]->parent_branch->name == n for leaf nodes (INSERTION)
+  //   - now inserting the new branch as the upper branch is OK
+  if (n_leaves() > 2 and root->right->name < n_leaves()) 
+    swap_children(root->name);
 
   // re-insert n1->n2
   insert_subtree(names[n2],branches_[b]->child );

@@ -318,8 +318,6 @@ int MoveArg::reset(double l) {
       if (myrandomf() < (l2-n))
 	n++;
       assert(n < v.size());
-      if (not (n<v.size()))
-	std::abort();
       v.erase(v.begin()+n,v.end());
     }
 
@@ -401,6 +399,10 @@ int MoveEach::choose(int arg) const {
     sum += lambda[i];
     if (r<sum) break;
   }
+
+  // is sum(arg) > 0 ?
+  assert(i < moves.size());
+
   return i;
 }
 

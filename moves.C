@@ -120,10 +120,12 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
 #ifndef NDEBUG  
   for(int i=0;i<P.SModel().parameters().size();i++)
     std::cerr<<"    p"<<i<<" = "<<P.SModel().parameters()[i];
+  std::cerr<<P.probability(A,P);
   std::cerr<<endl<<endl;
 
   for(int i=0;i<P2.SModel().parameters().size();i++)
     std::cerr<<"    p"<<i<<" = "<<P2.SModel().parameters()[i];
+  std::cerr<<P.probability(A,P2);
   std::cerr<<endl<<endl;
 #endif
 

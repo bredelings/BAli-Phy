@@ -82,7 +82,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   }
   alignment_moves.add(1, alignment_branch_moves);
 
-  /*---------- alignment::nodes_master (nodes_moves) ----------*/
+  //---------- alignment::nodes_master (nodes_moves) ----------//
   MoveEach nodes_moves("nodes_master:nodes");
   if (P.T.leaves() >= 3)
     nodes_moves.add(10,MoveArgSingle("sample_node:alignment:nodes",
@@ -97,7 +97,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   alignment_moves.add(2, nodes_moves);
 
-  /*------------------- tree (tree_moves)--------------------*/
+  //------------------- tree (tree_moves)--------------------//
   MoveAll tree_moves("tree");
   MoveAll topology_move("topology");
   MoveEach NNI_move("NNI");
@@ -128,21 +128,21 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
     NNI_move.add(0.05,MoveArgSingle("three_way_NNI_and_A:alignment:nodes:topology",
 				   three_way_topology_and_alignment_sample,
 				   internal_branches)
-		 ,false
 		 );
 
 
-  SPR_move.add(1,MoveArgSingle("SPR_and_node:nodes:topology:length:alignment",
+  // FIXME - awkward...
+  // We don't mention 'alignment' because this stops messing with the alignment if gaps=star...
+  SPR_move.add(1,MoveArgSingle("SPR_and_node:topology:length:nodes",
 			       sample_SPR,
 			       branches)
 	       );
 
-  if (P.IModel().full_tree)
-    SPR_move.add(0.07,MoveArgSingle("SPR_and_A:nodes:topology:length:alignment_branch",
-				    sample_SPR_and_A,
-				    branches)
+  if (P.IModel().full_tree) 
+    SPR_move.add(1,MoveArgSingle("SPR_and_node:nodes:topology:length:alignment",
+				 sample_SPR,
+				 branches)
 		 );
-
 
   topology_move.add(1,NNI_move);
   topology_move.add(0.4,SPR_move);

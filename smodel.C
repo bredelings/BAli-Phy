@@ -168,14 +168,13 @@ namespace substitution {
   }
 
   void HKY::fiddle(const valarray<bool>& fixed) {
-    if (fixed[0]) return;
+    double k = log(kappa());
 
-    const double sigma = 0.05;
-    double k = kappa() + gaussian(0,sigma);
-    if (k<0) k = -k;
-    if (k==0) k = kappa();
+    const double sigma = 0.15;
+    k += gaussian(0,sigma);
 
-    kappa(k);
+    if (not fixed[0])
+      kappa(exp(k));
   }
 
   /// return the LOG of the prior
@@ -248,18 +247,14 @@ namespace substitution {
     double k = log( kappa() );
     double w = log( omega() );
 
-    k += gaussian(0,0.1);
-    w += gaussian(0,0.1);
+    k += gaussian(0,0.15);
+    w += gaussian(0,0.15);
 
-    if (not fixed[0]) {
+    if (not fixed[0])
       parameters_[0] = exp(k);
-      std::cerr<<"fiddling kappa\n";
-    }
 
-    if (not fixed[1]) {
+    if (not fixed[1])
       parameters_[1] = exp(w);
-      std::cerr<<"fiddling omega\n";
-    }
 
     recalc();
   }

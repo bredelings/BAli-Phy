@@ -34,12 +34,13 @@ bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 
 
 void Parameters::fiddle() {
-  SModel_->fiddle(s_fixed);
-  recalc();
-  
-  const double sigma = 0.05;
-  branch_mean += gaussian(0,sigma);
-  if (branch_mean < 0) branch_mean = -branch_mean;
+    SModel_->fiddle(s_fixed);
+    recalc();
+
+    double x = log(branch_mean);
+    const double sigma = 0.10;
+    x += gaussian(0,sigma);
+    branch_mean = exp(x);
 }
 
 void Parameters::recalc() {

@@ -365,6 +365,7 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P1,int b) {
   std::cerr<<"before = "<<T1<<endl;
 
   T2 = do_SPR(T1,n1,n2,b);
+  P2.recalc();
   
   std::cerr<<"after = "<<T2<<endl;
 
@@ -400,6 +401,7 @@ MCMC::result_t sample_SPR_and_A(alignment& A,Parameters& P1,int b) {
   std::cerr<<"before = "<<T1<<endl;
 
   T2 = do_SPR(T1,n1,n2,b);
+  P2.recalc();
   
   std::cerr<<"after = "<<T2<<endl;
 

@@ -31,12 +31,12 @@ all: sampler
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math tracer prefetch-loop-arrays omit-frame-pointer # profile-use
-DEBUG = pipe # g3 #gdwarf-2 #pg 
+LANGO = fast-math # tracer prefetch-loop-arrays omit-frame-pointer # profile-use
+DEBUG = pipe g3 #gdwarf-2 #pg 
 EXACTFLAGS =  # --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS =   NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
+DEFS =   # NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual # effc++
-OPT =  march=pentium4 O3 # malign-double
+OPT =  march=pentium4 # O3 # malign-double
 LDFLAGS = # -fprofile-generate #-pg # -static
 LI=${CXX}
 
@@ -46,7 +46,7 @@ NAME = sampler
 SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C branch-sample.C exponential.C \
           eigenvalue.C parameters.C likelihood.C mcmc.C \
-	  choose.C sequencetree.C branch-lengths.C arguments.C \
+	  choose.C sequencetree.C sample-branch-lengths.C arguments.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  sample-tri.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
 	  sample-node.C imodel.C 5way.C sample-topology-NNI.C inverse.C \

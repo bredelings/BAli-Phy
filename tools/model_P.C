@@ -58,7 +58,7 @@ double Pr_smoothed(const valarray<double>& v) {
   while (std::abs(deltaP) > 1.0e-3) {
 
     double g1 = Pr_smoothed(v,delta,Pdata) - Pdata;
-    std::cerr<<"iterations = "<<iterations<<"  Pdata = "<<Pdata<<"   g = "<<g1<<endl;
+    //    std::cerr<<"iterations = "<<iterations<<"  Pdata = "<<Pdata<<"   g = "<<g1<<endl;
 
     double Pdata2 = Pdata + g1;
 
@@ -90,8 +90,8 @@ double Pr_smoothed(const valarray<double>& v) {
       Pdata += g1;
     }
 
-    std::cerr<<" Pdata2 = "<<Pdata2<<"   g = "<<g2<<endl;
-    std::cerr<<" Pdata3 = "<<Pdata3<<"   g = "<<g3<<"        dg/dx = "<<dgdx<<endl;
+    //    std::cerr<<" Pdata2 = "<<Pdata2<<"   g = "<<g2<<endl;
+    //    std::cerr<<" Pdata3 = "<<Pdata3<<"   g = "<<g3<<"        dg/dx = "<<dgdx<<endl;
 
     iterations++;
 
