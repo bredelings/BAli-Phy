@@ -116,7 +116,9 @@ public:
     return s;
   }
 
-  node_edges_iterator(node_t *b):start(b),here(b) {}
+  node_edges_iterator(node_t *b):start(b),here(b) {
+    if (not here->out) here=NULL;
+  }
 };
 
 class nodeview;
