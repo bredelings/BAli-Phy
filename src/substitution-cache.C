@@ -73,6 +73,11 @@ void Multi_Likelihood_Cache::set_length(int t,int l) {
       for(int j=0;j<delta;j++)
 	(*this)[i].push_back(Matrix(M,A));
   }
+  for(int i=0;i<size();i++) {
+    assert((*this)[i].size() == C);
+    assert((*this)[i].size() >= l);
+  }
+  
 
   // If 
   length[t] = l;
