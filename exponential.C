@@ -19,10 +19,10 @@ Matrix exp(const SMatrix& S,const BMatrix& D,const double t) {
     DN(i,i) = 1.0/DP(i,i);
   }
   
-  SMatrix S2 = prod(DP,prod(S,DP));
+  SMatrix S2 = prod(DP,prod<Matrix>(S,DP));
 
   Matrix E = exp(S2,t);
-  E = prod(DN,prod(E,DP));
+  E = prod(DN,prod<Matrix>(E,DP));
 
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++) {

@@ -39,6 +39,7 @@ bool sample_topology_sgaps(alignment& A,Parameters& P1,const Parameters& P2,
 
 /// Resample gap/non-gap for 2 internal nodes, and the topology, with specified branch lengths
 bool sample_topology(alignment& A,Parameters&,const Parameters&, const Parameters&, int);
+bool topology_sample2(alignment& A,Parameters&,const Parameters&, const Parameters&, int);
 
 /// Which nodes are adjacent to this branch?
 vector<int> get_nodes(const alignment& A, const tree& T,int b);

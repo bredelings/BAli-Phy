@@ -24,7 +24,7 @@ all: sampler
 LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0
 DEBUG = pipe g3 # pg
 EXACTFLAGS = --param max-inline-insns-single=500 --param max-inline-insns-auto=150
-DEFS = # NDEBUG # NDEBUG_DP 
+DEFS = #NDEBUG # NDEBUG_DP 
 WARN = all no-sign-compare overloaded-virtual
 OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 # O3
 LDFLAGS = #-pg # -static 
@@ -48,7 +48,8 @@ ALLSOURCES = ${SOURCES}
 ${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%} /usr/local/lib/liblapack.a /usr/local/lib/libcblas.a /usr/local/lib/libatlas.a # libgsl.a libgslcblas.a libm.a
 
 
-bin/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o bin/optimize.o ${LIBS:%=-l%}
+bin/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
+	tree.o sequencetree.o bin/optimize.o bin/findroot.o ${LIBS:%=-l%}
 
 bin/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
 

@@ -196,8 +196,10 @@ public:
   vector<int> standardize();
   vector<int> standardize(const vector<int>&);
 
-  int common_ancestor(int,int) const;
-  double distance(int,int) const;
+  /// The common ancestor of nodes i and j
+  int common_ancestor(int i,int j) const;
+  /// The distance between nodes i and j
+  double distance(int i,int j) const;
 
 
   // n1 is an ancestor of n2, n2 is a descendant of n1

@@ -1,11 +1,13 @@
 #include <fstream>
 #include <string>
+#include <cmath>
 #include "myexception.H"
 #include "alignment.H"
 #include "arguments.H"
 #include "mytypes.H"
 #include "logsum.H"
 #include "optimize.H"
+#include "findroot.H"
 
 using std::cin;
 using std::cout;
@@ -41,7 +43,7 @@ vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
   return result;
 }
 
-
+/// Function to optimize for the star tree algorithm
 class alignment_probability: public function {
   int leaves;
   int leafbranches;
@@ -168,6 +170,123 @@ double alignment_probability::operator()(const vector<double>& v) const {
 }
 
 
+class SSE_match_pairs: public function {
+  tree T;
+  Matrix Pr_align_pair;
+public:
+  const tree& t() const {return T;}
+  double operator()(const vector<double>& v) const;
+
+  SSE_match_pairs(const vector< vector<int> >& v1,const tree& T1)
+    :T(T1),Pr_align_pair(T.leaves(),T.leaves())
+  { 
+    assert(v1.size() > 0);
+    assert(T.leaves() == v1[0].size());
+
+    const double pseudocount = 1;
+    // initialize the matrix, and add a pseudocount for a conjugate prior
+    for(int i=0;i<T.leaves();i++)
+      for(int j=0;j<T.leaves();j++)
+	Pr_align_pair(i,j)=pseudocount;
+
+    // For each label, count all present pairs
+    for(int i=0;i<v1.size();i++) {
+      const vector<int>& label = v1[i];
+      for(int l1=0;l1<label.size();l1++) 
+	for(int l2=0;l2<l1;l2++) 
+	  if (label[l1] == label[l2])
+	    Pr_align_pair(l1,l2)++;
+    }
+    
+    // Divide by count to yield an average
+    for(int i=0;i<T.leaves();i++)
+      for(int j=0;j<T.leaves();j++)
+	Pr_align_pair(i,j) /= (v1.size() + pseudocount);
+  }
+};
+
+double SSE_match_pairs::operator()(const vector<double>& v) const {
+  // We get one length for each branch, and they should all be positive
+  assert(v.size() == T.branches());
+
+  tree temp = T;
+  for(int b=0;b<T.branches();b++) {
+    if (v[b] <= 0) return log_0;
+    temp.branch(b).length() = v[b];
+  }
+
+  double SSE=0;
+  for(int l1=0;l1<T.leaves();l1++) 
+    for(int l2=0;l2<l1;l2++) {
+      double length = temp.distance(l1,l2);
+      double P2 = 1.0 - exp(-length);
+      double P1 = 1.0 - Pr_align_pair(l1,l2);
+      double E = log(P2 + 0.0001) - log(P1 + 0.0001);
+      SSE += E*E;
+    }
+  return -SSE;
+}
+
+
+class poisson_match_pairs: public function {
+  int n;
+  tree T;
+  Matrix Pr_align_pair;
+public:
+  const tree& t() const {return T;}
+  double operator()(const vector<double>& v) const;
+
+  poisson_match_pairs(const vector< vector<int> >& v1,const tree& T1)
+    :T(T1),Pr_align_pair(T.leaves(),T.leaves())
+  { 
+    assert(v1.size() > 0);
+    assert(T.leaves() == v1[0].size());
+
+    const int pseudocount = 1;
+    // initialize the matrix, and add a pseudocount for a conjugate prior
+    for(int i=0;i<T.leaves();i++)
+      for(int j=0;j<T.leaves();j++)
+	Pr_align_pair(i,j)=pseudocount;
+
+    // For each label, count all present pairs
+    for(int i=0;i<v1.size();i++) {
+      const vector<int>& label = v1[i];
+      for(int l1=0;l1<label.size();l1++) 
+	for(int l2=0;l2<l1;l2++) 
+	  if (label[l1] == label[l2])
+	    Pr_align_pair(l1,l2)++;
+    }
+    
+    n = v1.size() + pseudocount;
+  }
+};
+
+double poisson_match_pairs::operator()(const vector<double>& v) const {
+  // We get one length for each branch, and they should all be positive
+  assert(v.size() == T.branches());
+
+  tree temp = T;
+  for(int b=0;b<T.branches();b++) {
+    if (v[b] <= 0) return log_0;
+    temp.branch(b).length() = v[b];
+  }
+
+  double Pr=0;
+  for(int l1=0;l1<T.leaves();l1++) 
+    for(int l2=0;l2<l1;l2++) {
+      double length = temp.distance(l1,l2);
+      //probability of remaining aligned
+      double p = exp(-length);
+      // number of times we remained aligned
+      int count = Pr_align_pair(l1,l2) + 0.5;
+
+      // binomial probability of being aligned count times out of n
+      Pr += log_fact(n) - log_fact(count) - log_fact(n-count);
+      Pr += count*log(p) + (n-count)*log(1-p);
+    }
+  return Pr;
+}
+
 
 bool match_tag(const string& line,const string& tag) {
   if (line.size() < tag.size())
@@ -176,13 +295,13 @@ bool match_tag(const string& line,const string& tag) {
   return (line.substr(0,tag.size()) == tag);
 }
 
-void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A) {
-  //  /*------ Try to load tree -------------*/
-  //  if (not args.set("tree"))
-  //    throw myexception("Tree file not specified! (tree=<filename>)");
-  //  else 
-  //    T.read(args["tree"]);
-
+void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,SequenceTree& T) {
+  /*------ Try to load tree -------------*/
+  if (not args.set("tree"))
+    throw myexception("Tree file not specified! (tree=<filename>)");
+  else 
+    T.read(args["tree"]);
+  
   /* ----- Alphabets to try ------ */
   vector<alphabet> alphabets;
   alphabets.push_back(alphabet("DNA nucleotides","AGTC","N"));
@@ -264,11 +383,20 @@ int main(int argc,char* argv[]) {
 
     /*----------- Load alignment and tree ---------*/
     alignment A;
+    SequenceTree T;
     vector<alignment> alignments;
-    do_setup(args,alignments,A);
+    do_setup(args,alignments,A,T);
     const int n = A.size2()/2 + 1;
 
     cerr<<"Read "<<alignments.size()<<" alignments\n";
+
+    int rootb=-1;
+    double rootd = -1;
+    find_root(T,rootb,rootd);
+    std::cerr<<"root branch = "<<rootb<<std::endl;
+    std::cerr<<"x = "<<rootd<<std::endl;
+    for(int i=0;i<T.leaves();i++)
+      std::cerr<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
 
     /*------- Convert template to index form-------*/
     A = M(A);
@@ -281,12 +409,28 @@ int main(int argc,char* argv[]) {
       for(int i=0;i<alignments.size();i++)
 	labels.push_back(getlabels(alignments[i],column));
 
-      alignment_probability f(labels);
-      vector<double> start(n+1,0.1);
-      vector<double> end = search_basis(start,f);
-      for(int i=0;i<end.size()-1;i++)
-	std::cout<<end[i]+end[n]/n<<" ";
+      // alignment_probability f(labels);
+      function * f;
+      if (args["type"] == "SSE")
+	f = new SSE_match_pairs(labels,T);
+      else
+	f = new poisson_match_pairs(labels,T);
+      vector<double> start(T.branches(),0.1);
+      vector<double> end = search_basis(start,*f);
+      
+      // Print uncertainty values for the letters
+      tree T2 = T;
+      for(int b=0;b<T2.branches();b++)
+	T2.branch(b).length() = end[b];
+
+      for(int i=0;i<T2.leaves();i++) {
+	double length = rootdistance(T2,i,rootb,rootd);
+	double P = exp(-length);  // probability that the letter IS alignment to
+	std::cout<<P<<" ";        // the root node
+      }
       std::cout<<endl;
+
+      delete f;
     }
     
   }

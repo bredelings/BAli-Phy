@@ -172,7 +172,7 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
     P2.setlength(b,-newlength);
     P3.setlength(b,-newlength);
     
-    if (sample_topology(A,P,P2,P3,b)) {
+    if (topology_sample2(A,P,P2,P3,b)) {
       result[1] = 1;
       result[5] = 1;
       result[9] = std::abs(length - newlength);

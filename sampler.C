@@ -196,7 +196,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
     alignment_branch_moves.add(0.1,MoveArgSingle("sample_tri_branch:alignment:nodes:length",
 						 sample_tri_branch_one,
 						 branches)
-			       );
+			       ,false);
   }
   alignment_moves.add(1, alignment_branch_moves);
 
@@ -218,7 +218,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   topology_move.add(1,MoveArgSingle("sample_topologies:nodes:topology",
 				    sample_topology,
 				    internal_branches)
-		    );
+		    ,false);
   topology_move.add(1,MoveArgSingle("sample_topologies2:nodes:topology",
 				    sample_topology2,
 				    internal_branches)

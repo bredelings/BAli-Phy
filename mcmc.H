@@ -89,7 +89,7 @@ namespace MCMC {
 
   public:
     int nmoves() const {return moves.size();}
-    void add(double,const Move& m);
+    void add(double,const Move& m,bool=true);
 
     MoveGroupBase& operator=(const MoveGroupBase&);
     MoveGroupBase(const MoveGroupBase&);
@@ -212,7 +212,7 @@ namespace MCMC {
   public:
     MoveEach* clone() const {return new MoveEach(*this);}
 
-    void add(double l,const MoveArg& m);
+    void add(double l,const MoveArg& m,bool=true);
 
     void enable(const string&);
     void disable(const string&);

@@ -67,8 +67,11 @@ void Move::print_move_stats(int depth) const {
   cerr<<endl;
 }
 
-void MoveGroupBase::add(double l,const Move& m) {
-  moves.push_back(m.clone());
+void MoveGroupBase::add(double l,const Move& m,bool enabled) {
+  Move* m2 = m.clone();
+  if (not enabled)
+    m2->disable();
+  moves.push_back(m2);
   lambda.push_back(l);
 }
 
@@ -272,8 +275,8 @@ result_t MoveArg::iterate(alignment& A,Parameters& P,int i) {
 }
 
 
-void MoveEach::add(double l,const MoveArg& m) {
-  MoveGroupBase::add(l,m);
+void MoveEach::add(double l,const MoveArg& m,bool enabled) {
+  MoveGroupBase::add(l,m,enabled);
 
   subarg.push_back(vector<int>(args.size(),-1));
   
