@@ -627,6 +627,8 @@ efloat_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
 
 void DPmatrixEmit::prepare_cell(int i,int j) 
 {
+  if (i==0) return;
+  if (j==0) return;
   i--;
   j--;
 
