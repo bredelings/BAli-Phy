@@ -50,12 +50,8 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   double Pr_likelihood = P.basic_likelihood(A,P);
   double Pr = Pr_prior + Pr_likelihood;
 
-  o<<"    prior = "<<Pr_prior
-   <<"    likelihood = "<<Pr_likelihood
-   <<"    logp = "<<Pr
-   <<"    temp = "<<P.Temp
-   <<"    weight = "<<Pr*(1.0-1.0/P.Temp)
-   <<"\n";
+  o<<"    prior = "<<Pr_prior<<"    likelihood = "<<Pr_likelihood<<"    logp = "<<Pr
+   <<"    temp = " <<P.Temp  <<"    weight = "    <<Pr*(1.0-1.0/P.Temp)<<"\n";
 
   if (print_alignment) {
     o<<"align["<<tag<<"] = "<<"\n";
