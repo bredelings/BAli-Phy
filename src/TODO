@@ -73,6 +73,8 @@
                         colorscheme=plain-AA-whiten scale=LOD
        where minus means affect the fg instead of the background.
 
+24. Fix "showonly" - think of better name.
+
 A. fix: gamma+frequency+INV
 
 B. model: Make INV categories depend on letters, somehow...
