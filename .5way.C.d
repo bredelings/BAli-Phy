@@ -1,1 +1,1 @@
-
+.5way.C.d 5way.o: 5way.C 5way.H mytypes.H alignment.H alphabet.H myexception.H   clone.H sequence.H sequence-format.H tree.H parameters.H sequencetree.H   smodel.H rates.H imodel.H matcache.H 2way.H bits.H logsum.H rng.H

@@ -350,7 +350,7 @@ bool tri_sample_alignment_branch(alignment& old,Parameters& P1,
 
   int choice = 0;
   if (gibbs)
-    choice = choose(Pr1,Pr2);
+    choice = choose2(Pr1,Pr2);
   else if (myrandomf() < exp(Pr2 - Pr1))
     choice = 1;
 
@@ -377,15 +377,15 @@ bool tri_sample_alignment_branch(alignment& old,Parameters& P1,
   double PrOld = P1.probability(old,P1) + 2.0*P1.IModel().lengthp(length_old);
   double PrNew = P1.probability(A,*ChosenP) + 2.0*P1.IModel().lengthp(length_new);
 
-  double PrS1 = choose_P(0,Pr1,Pr2,log_0)+Matrices1.path_P(path_old_g)
+  double PrS1 = choose3_P(0,Pr1,Pr2,log_0)+Matrices1.path_P(path_old_g)
     + Matrices1.generalize_P(path_old);
 
-  std::cerr<<"PrS1 = "<<choose_P(0,Pr1,Pr2,log_0)<<" + "<<Matrices1.path_P(path_old_g)<<" + "<< Matrices1.generalize_P(path_old)<<endl;
+  std::cerr<<"PrS1 = "<<choose3_P(0,Pr1,Pr2,log_0)<<" + "<<Matrices1.path_P(path_old_g)<<" + "<< Matrices1.generalize_P(path_old)<<endl;
 
-  double PrS2 = choose_P(choice,Pr1,Pr2,log_0)+ChosenMatrices->path_P(path_new_g)
+  double PrS2 = choose3_P(choice,Pr1,Pr2,log_0)+ChosenMatrices->path_P(path_new_g)
     + ChosenMatrices->generalize_P(path_new);
 
-  std::cerr<<"PrS2 = "<<choose_P(choice,Pr1,Pr2,log_0)<<" + "<<ChosenMatrices->path_P(path_new_g)<<" + "<< ChosenMatrices->generalize_P(path_new)<<endl;
+  std::cerr<<"PrS2 = "<<choose3_P(choice,Pr1,Pr2,log_0)<<" + "<<ChosenMatrices->path_P(path_new_g)<<" + "<< ChosenMatrices->generalize_P(path_new)<<endl;
 
   double PrQ1 = Matrices1.path_Q(path_old_g) + 
     Matrices1.generalize_P(path_old)+ prior(P1);

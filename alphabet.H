@@ -167,7 +167,9 @@ class Translation_Table {
 public:
 
   bool stop_codon(int codon) const {
-    return table[codon] == (*A)["!"];
+    assert(0 <= codon && codon < C->size() );
+    int aa = table[codon];
+    return A->lookup(aa) == "!";
   }
 
   int operator[](int codon) const {

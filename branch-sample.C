@@ -111,7 +111,7 @@ double path_P(const vector<int>& path,const Matrix& M,const Matrix& G1,const Mat
   while(k>0 or l>0) {
     assert(i>0);
     int state1 = path[i-1];
-    double p = choose_P( state1,
+    double p = choose3_P( state1,
 			 M(k,l) + Q(0,state2),
 			 G1(k,l) + Q(1,state2),
 			 G2(k,l) + Q(2,state2) );
@@ -154,7 +154,7 @@ vector<int> sample_path(const Matrix& M,const Matrix& G1,const Matrix& G2,const 
 
   int state2 = 3;
   while (k>0 or l>0) {
-    int state1 = choose( M(k,l) + Q(0,state2),
+    int state1 = choose3( M(k,l) + Q(0,state2),
 			 G1(k,l) + Q(1,state2),
 			 G2(k,l) + Q(2,state2) );
 

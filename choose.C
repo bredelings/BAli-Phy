@@ -5,17 +5,24 @@
 
 using std::vector;
 
-int choose(double x, double y) {
+int choose2(double x, double y,double T) {
+  x /= T;
+  y /= T;
+
   double sum = logsum(x,y);
   double r = log_unif();
-  if (sum + r < x)
+  if (sum + r < x/T)
     return 0;
   else
     return 1;
   std::abort();
 }
 
-int choose(double x, double y, double z) {
+int choose3(double x, double y, double z, double T) {
+  x /= T;
+  y /= T;
+  z /= T;
+
   int choice=2;
   double sum = logsum(z,logsum(x,y));
   //  double x_ = exp(x-sum), y_ = exp(y-sum),z_ = exp(z-sum);
@@ -31,12 +38,12 @@ int choose(double x, double y, double z) {
 }
 
 
-int choose(vector<double>::const_iterator here,int size) {
+int choose(vector<double>::const_iterator here,int size,double T) {
   vector<double> sum(size);
 
-  sum[0] = *here;here++;
+  sum[0] = *here/T;here++;
   for(int i=1;i<sum.size();i++) {
-    sum[i] = logsum(*here,sum[i-1]);
+    sum[i] = logsum(*here/T,sum[i-1]);
     here++;  
   }
 
@@ -49,12 +56,16 @@ int choose(vector<double>::const_iterator here,int size) {
   std::abort();
 }
 
-int choose(const vector<double>& P) {
-  return choose(P.begin(),P.size());
+int choose(const vector<double>& P,double T) {
+  return choose(P.begin(),P.size(),T);
 }
 
 
-double choose_P(int c,double x, double y, double z) {
+double choose3_P(int c,double x, double y, double z, double T) {
+  x /= T;
+  y /= T;
+  z /= T;
+
   double sum = logsum(z,logsum(x,y));
   if (c==0)
     return x-sum;
@@ -65,13 +76,29 @@ double choose_P(int c,double x, double y, double z) {
   std::abort();
 }
 
-double choose_P(int s, const std::vector<double>& P) {
+double choose_P(int s, const std::vector<double>& P, double T) {
   assert(s >= 0 and s < P.size());
 
   double sum = log_0;
   for(int i=0;i<P.size();i++)
-    sum = logsum(sum,P[i]);
+    sum = logsum(sum,P[i]/T);
 
-  return P[s] - sum;
+  return P[s]/T - sum;
 }
 
+int choose_nonlog(const vector<double>& P) {
+
+  double sum = 0;
+  for(int i=0;i<P.size();i++)
+    sum += P[i];
+  double R = myrandomf()*sum;
+  
+  sum=0;
+  for(int i=0; i<P.size();i++) {
+    sum += P[i];
+    if (R <= sum)
+      return i;
+  }
+
+  std::abort();
+}

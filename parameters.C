@@ -3,14 +3,14 @@
 #include "substitution.H"
 #include "likelihood.H"
 
-double Parameters::likelihood(const alignment& A,const Parameters& P) const {
+double Parameters::basic_likelihood(const alignment& A,const Parameters& P) const {
   if (SModel_->full_tree)
     return substitution::Pr(A,P);
   else
     return substitution::Pr_star(A,P);
 }
 
-double Parameters::prior(const alignment& A,const Parameters& P) const {
+double Parameters::basic_prior(const alignment& A,const Parameters& P) const {
   if (IModel_->full_tree)
     return prior3(A,P);
   else
@@ -50,6 +50,7 @@ Parameters::Parameters(const substitution::MultiRateModel& SM,const IndelModel& 
   :MatCache(t,SM),
    IModel_(IM.clone()),
    SModel_(SM.clone()),
+   Temp(1.0),
    i_fixed(false,IModel_->parameters().size()),
    s_fixed(false,SModel_->parameters().size()),
    features(0),

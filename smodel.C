@@ -180,7 +180,7 @@ namespace substitution {
 
   /// return the LOG of the prior
   double HKY::prior() const {
-    return log(gsl_ran_lognormal_pdf(kappa(), 0, 1));
+    return log(gsl_ran_lognormal_pdf(kappa(), 0, 0.5));
   }
 
   void HKY::recalc() {
@@ -239,8 +239,8 @@ namespace substitution {
   //------------------------ Codon Models -------------------//
   double YangCodonModel::prior() const {
     double P = 0;
-    P += log(gsl_ran_lognormal_pdf(kappa(), 0, 1));
-    P += log(gsl_ran_lognormal_pdf(omega(), 0, 1));
+    P += log(gsl_ran_lognormal_pdf(kappa(), 0, 0.5));
+    P += log(gsl_ran_lognormal_pdf(omega(), 0, 0.5));
     return P;
   }
 

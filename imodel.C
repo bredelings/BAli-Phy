@@ -166,7 +166,7 @@ double delta_prior(double D,double delta) {
   // mean_lambda = exp(-5.5)/0.25 (approximation based on log(1+x) = x + ...)
 
   // This doesn't allow mu to be negative... just very small...
-  return log( gsl_ran_gaussian_pdf(log(lambda)-log(mean_lambda),1.2) );
+  return log( gsl_ran_gaussian_pdf(log(lambda)-log(mean_lambda),0.5) );
 }
 
 // P(no insertion) = 1-delta = exp(-lambda*D)

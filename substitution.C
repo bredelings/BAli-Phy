@@ -3,12 +3,6 @@
 #include <cmath>
 #include <valarray>
 
-#include <boost/numeric/bindings/atlas/cblas2.hpp>
-#include <boost/numeric/bindings/traits/ublas_matrix.hpp>
-#include <boost/numeric/ublas/operation.hpp>
-
-namespace atlas = boost::numeric::bindings::atlas;
-
 using std::valarray;
 
 // This file assumes that 
@@ -49,10 +43,6 @@ namespace substitution {
   {
     const int asize = distributions.size2();
 
-#ifdef USE_UBLAS
-    //    ublas::vector<double,std::vector<double> > temp(asize);
-    ublas::vector<double> temp(asize);
-#endif
     for(int i=0;i<branches.size();i++) {
       int b = branches[i];
       int child = T.branch(b).child();
@@ -71,20 +61,12 @@ namespace substitution {
 	for(int i=0;i<asize;i++)
 	  distributions(parent,i) *= Q(i,residues[child])*distributions(child,residues[child]);
       else {
-#ifdef USE_UBLAS
-	noalias(temp) = prod(Q,ublas::matrix_row<Matrix>(distributions,child));
-	// atlas::gemv(Q,matrix_row<Matrix>(distributions,child),temp); [doesn't compile]
-	// axpy_prod(Q,matrix_row(distributions,child),temp,true); [bad!] 
-	for(int i=0;i<asize;i++)
-	  distributions(parent,i) *= temp[i];
-#else
 	for(int i=0;i<asize;i++) {
 	  double temp=0;
 	  for(int j=0;j<asize;j++)
 	    temp += Q(i,j)*distributions(child,j);
 	  distributions(parent,i) *= temp;
 	}
-#endif
       }
 
       // Update info at parent

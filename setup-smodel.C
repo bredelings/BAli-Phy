@@ -81,7 +81,6 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
   else
     base_smodel = base_markov_smodel;
 
-  std::cerr<<"got here\n";
   /*------ Get the multi-rate model over the base model ------*/
   substitution::MultiRateModel *full_smodel = 0;
   if (match(smodel,"gamma_plus_uniform")) {
@@ -109,8 +108,6 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
   else 
     full_smodel = new substitution::SingleRateModel(*base_smodel);
   delete base_smodel;
-
-  std::cerr<<"got here2\n";
 
   if (match(smodel,"INV")) {
     substitution::MultiRateModel *temp = full_smodel;

@@ -145,7 +145,7 @@ public:
 };
 
 class tree {
-  int n_leaves;
+  int n_leaves_;
 
   std::vector<node*> order;
 
@@ -173,6 +173,11 @@ protected:
 
   double distance2(int,int) const;
 public:
+  void unroot() {
+    if (root->right)
+      root->right->parent_branch->length=0.0;
+  }
+
   void remove_subtree(int i);
 
   branchview branch(int i) {
@@ -195,10 +200,16 @@ public:
   bool connected(int node1,int node2) const;
   int find_branch(int node1,int node2) const;
 
-  int leaves() const {return n_leaves;}
+  int leaves() const {return n_leaves_;}
   int branches() const {return branches_.size()-1;}
-  int leafbranches() const {return (n_leaves==2)?1:n_leaves;}
+  int leafbranches() const {return (n_leaves_==2)?1:n_leaves_;}
   int num_nodes() const {return order.size();}
+
+  int n_nodes() const {return num_nodes();}
+  int n_leaves() const {return leaves();}
+  int n_leafbranches() const {return leafbranches();}
+  int n_branches() const {return branches();}
+
   branchview branch_up(int);
   const_branchview branch_up(int) const;
 
@@ -219,11 +230,12 @@ public:
 
   TreeView copy() const {return TreeView(root).copy();}
   void exchange(int,int);
+  void SPR(int,int,int);
   void reroot(int);
   
   tree& operator=(const tree&);
 
-  tree():root(0) {n_leaves=0;}
+  tree():root(0) {n_leaves_=0;}
   tree(const tree& t1):root(0) {operator=(t1);}
 
   tree(const tree& t1,const tree& t2);

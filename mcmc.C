@@ -29,7 +29,8 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
 
   o<<"    prior = "<<Pr_prior
    <<"    likelihood = "<<Pr_likelihood
-   <<"    logp = "<<Pr<<endl;
+   <<"    logp = "<<Pr
+   <<"    temp = "<<P.Temp<<endl;
 
   o<<"align["<<tag<<"] = "<<endl;
   o<<standardize(A,P.T)<<endl<<endl;

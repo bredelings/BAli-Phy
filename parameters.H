@@ -14,7 +14,6 @@
 /******************************* parameter-containing class **************************/
 /// A class to contain all the MCMC state except the alignment
 class Parameters: public MatCache {
-
   /*-------- We own these ----------*/
   /// The IndelModel
   OwnedPointer<IndelModel> IModel_;
@@ -23,6 +22,10 @@ class Parameters: public MatCache {
   OwnedPointer<substitution::MultiRateModel> SModel_;
 
 public:
+
+  /// Temperature, for heated chains
+  double Temp;
+
   /// Is each IndelModel parameter fixed or not?
   std::valarray<bool> i_fixed;
 
@@ -35,10 +38,12 @@ public:
   int features;
 
   /// The likelihood function
-  double likelihood(const alignment& A,const Parameters& P) const; 
+  double basic_likelihood(const alignment& A,const Parameters& P) const; 
+  double likelihood(const alignment& A,const Parameters& P) const {return basic_likelihood(A,P)/Temp;}
 
   /// The prior
-  double prior(const alignment& A,const Parameters& P) const;
+  double basic_prior(const alignment& A,const Parameters& P) const;
+  double prior(const alignment& A,const Parameters& P) const {return basic_prior(A,P)/Temp;}
 
   /// Now we can link moves into probability model?
   double probability(const alignment& A,const Parameters& P) const {

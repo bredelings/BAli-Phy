@@ -21,7 +21,7 @@ void link(alignment& A,SequenceTree& T) {
     for(int column=0;column<A.length();column++)
       s[column] = alphabet::not_gap;
     for(int i=T.leaves();i<T.num_nodes()-1;i++) {
-      s.name = convertToString(i);
+      s.name = string("A") + convertToString(i);
       A.add_sequence(s);
     }
   }
@@ -113,6 +113,7 @@ void load_T(Arguments& args,const alignment& A,SequenceTree& T,bool random_tree_
   }
   else 
     T.read(args["tree"]);
+  T.unroot();
 }
 
 

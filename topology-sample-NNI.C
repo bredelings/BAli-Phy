@@ -388,7 +388,7 @@ bool three_way_topology_sample_sgaps(alignment& A,Parameters& P1,const Parameter
   double Pr3 = P1.probability(A,P3);
 
   /*********** Choose A Topology ************/
-  int choice = choose(Pr1,Pr2,Pr3);
+  int choice = choose3(Pr1,Pr2,Pr3);
 
   bool success = false;
   if (choice == 1) {
@@ -399,7 +399,7 @@ bool three_way_topology_sample_sgaps(alignment& A,Parameters& P1,const Parameter
     P1 = P3;
     success = true;
   }
-  return true;
+  return success;
 }
 
 ///Sample between 2 topologies, ignoring gap priors on each case
@@ -408,14 +408,14 @@ bool two_way_topology_sample_sgaps(alignment& A,Parameters& P1,const Parameters&
   double Pr2 = P1.probability(A,P2);
 
   /*********** Choose A Topology ************/
-  int choice = choose(Pr1,Pr2);
+  int choice = choose2(Pr1,Pr2);
 
   bool success = false;
   if (choice == 1) {
     P1 = P2;
     success = true;
   }
-  return true;
+  return success;
 }
 
 ///Sample between 2 topologies, ignoring gap priors on each case

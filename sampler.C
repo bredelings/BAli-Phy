@@ -99,23 +99,25 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   /*------------------- tree (tree_moves)--------------------*/
   MoveAll tree_moves("tree");
-  MoveEach topology_move("topology");
+  MoveAll topology_move("topology");
+  MoveEach NNI_move("NNI");
+  MoveEach SPR_move("SPR");
 
-  topology_move.add(1,MoveArgSingle("three_way_NNI:nodes:topology",
+  NNI_move.add(1,MoveArgSingle("three_way_NNI:nodes:topology",
 				    three_way_topology_sample,
 				    internal_branches)
-		    );
-  topology_move.add(1,MoveArgSingle("two_way_NNI:nodes:topology",
+	       );
+  NNI_move.add(1,MoveArgSingle("two_way_NNI:nodes:topology",
 				    two_way_topology_sample,
 				    internal_branches)
 		    ,false
 		    );
-  topology_move.add(1,MoveArgSingle("two_way_NNI_MH:nodes:topology",
+  NNI_move.add(1,MoveArgSingle("two_way_NNI_MH:nodes:topology",
 				    two_way_topology_sample_MH,
 				    internal_branches)
 		    ,false
 		    );
-  topology_move.add(1,MoveArgSingle("two_way_NNI2:nodes:topology",
+  NNI_move.add(1,MoveArgSingle("two_way_NNI2:nodes:topology",
 				    two_way_topology_sample2,
 				    internal_branches)
 		    ,false
@@ -123,12 +125,21 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   //FIXME - doesn't yet deal with gaps=star
   if (P.SModel().full_tree)
-    topology_move.add(0.2,MoveArgSingle("three_way_NNI_and_A:alignment:nodes:topology",
-					three_way_topology_and_alignment_sample,
-					internal_branches)
-		      ,false
-		      );
+    NNI_move.add(0.2,MoveArgSingle("three_way_NNI_and_A:alignment:nodes:topology",
+				   three_way_topology_and_alignment_sample,
+				   internal_branches)
+		 ,false
+		 );
 
+
+  SPR_move.add(1,MoveArgSingle("SPR:nodes:topology:length",
+			       sample_SPR,
+			       branches)
+	       );
+
+
+  topology_move.add(1,NNI_move);
+  topology_move.add(0.1,SPR_move);
   if (P.T.leaves() >3)
     tree_moves.add(1,topology_move);
   
