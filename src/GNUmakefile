@@ -114,7 +114,7 @@ test4: /usr/local/lib/libmudflap.so #model.o smodel.o rates.o exponential.o eige
 tools/alignment-draw: tree.o alignment.o sequencetree.o arguments.o \
 	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
 	randomtree.o alignment-random.o imodel.o probability.o \
-	alignment-util.o model.o ${LINKLIBS} 
+	alignment-util.o model.o tools/colors.o ${LINKLIBS} 
 
 tools/alignment-translate: alignment.o alphabet.o sequence.o arguments.o sequence-format.o \
 	util.o	

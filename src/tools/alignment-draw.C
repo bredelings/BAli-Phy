@@ -6,64 +6,15 @@
 #include "arguments.H"
 #include "util.H"
 #include "setup.H"
+#include "colors.H"
 
-vector<int> hsv(double h,double s,double v) {
-  h *= 6;
-
-  int i = (int)h;
-  double f = h-i;
-  double p = v*(1-s);
-  double q = v*(1-(s*f));
-  double t = v*(1 - (s * (1-f)));
-
-  vector<double> RGB(3);
-  if (i==0) {
-    RGB[0] = v; RGB[1] = t; RGB[2] = p;
-  }
-  else if (i==1) {
-    RGB[0] = q; RGB[1] = v; RGB[2] = p;
-  }
-  else if (i==2) {
-    RGB[0] = p; RGB[1] = v; RGB[2] = t;
-  }
-  else if (i==3) {
-    RGB[0] = p; RGB[1] = q; RGB[2] = v;
-  }
-  else if (i==4) {
-    RGB[0] = t; RGB[1] = p; RGB[2] = v;
-  }
-  else if (i==5) {
-    RGB[0] = v; RGB[1] = p; RGB[2] = q;
-  }
-  else
-    std::abort();
-
-  vector<int> result(3);
-  for(int i=0;i<3;i++)
-    result[i] = (int)(RGB[i]*256);
-  return result;
-}
-
-static vector<int> black = hsv(0,0,0);
-static vector<int> white = hsv(0,0,1);
-
-string rgb_to_csv(double R, double G, double B) {
-  string style = "rgb(";
-  style += convertToString(R*256) + ",";
-  style += convertToString(G*256) + ",";
-  style += convertToString(B*256) + ")";
-  return style;
-}
-
-string rgb_to_csv(const vector<int>& RGB) {
-  return rgb_to_csv(RGB[0],RGB[1],RGB[2]);
-}
+using namespace colors;
 
 double identity(double x) {return x;}
 double square(double x) {return x*x;}
 double cube(double x) {return x*x*x;}
 
-double LOD(double x) {return log(x) - log(1.0-x);}
+double LOD10(double x) {return log10(x) - log10(1.0-x);}
 
 /// A representation of a transformation of [0,1] onto [min,max]
 struct Scale {
@@ -98,19 +49,19 @@ class ColorMap {
 public:
   virtual ColorMap* clone() const=0;
 
-  virtual vector<int> bg_color(double x,const string& s) const=0;
-  virtual vector<int> fg_color(double x,const string& s) const=0;
+  virtual RGB bg_color(double x,const string& s) const=0;
+  virtual RGB fg_color(double x,const string& s) const=0;
 };
 
 struct BW_ColorMap: public ColorMap {
 public:
   BW_ColorMap* clone() const {return new BW_ColorMap(*this);}
 
-  vector<int> bg_color(double x,const string& s) const {
-    return hsv(0,0,1.0-x);
+  RGB bg_color(double x,const string& s) const {
+    return HSV(0,0,1.0-x);
   }
 
-  vector<int> fg_color(double x,const string& s) const {
+  RGB fg_color(double x,const string& s) const {
     if (x < 0.5)
       return black;
     else
@@ -119,50 +70,61 @@ public:
 };
 
 struct Rainbow_ColorMap: public ColorMap {
+  double h_start;
+  double h_end;
+
+  double s_start;
+  double s_end;
+
 public:
   Rainbow_ColorMap* clone() const {return new Rainbow_ColorMap(*this);}
 
-  vector<int> bg_color(double x,const string& s) const {
+  RGB bg_color(double x,const string& s) const {
     if ((s == "-") or (s == "---")) {
       double v_uncertain = 1.0;
-      double v_certain   = 0.5;
+      double v_certain   = 0.6;
       double value = v_uncertain + x*(v_certain - v_uncertain);
 
-      return hsv(0,0,value);
+      return HSV(0,0,value).to_RGB();
     }
     else {
-      double c_start = 0.75;  // certain - Red
-      double c_end   = 0;     // certain - Blue
-      double color = c_start + x*(c_end - c_start);
+      double hue     = h_start + x*(h_end - h_start);
 
+      double saturation = s_start + x*(s_end - s_start);
 
-      double h_start = 0.0;  // uncertain - white
-      double h_end = 0.95;   // certain   - color
-
-      double hue = h_start + x*(h_end - h_start);
-
-      return hsv(color,hue,0.95);
+      return HSV(hue,saturation,0.95).to_RGB();
     }
   }
 
-  vector<int> fg_color(double x,const string& s) const {
+  RGB fg_color(double x,const string& s) const {
     if (x < 0.5)
       return black;
     else
       return white;
       
   }
+
+  Rainbow_ColorMap() :h_start(0.75),h_end(0),s_start(0.3),s_end(0.95)
+  { }
+
+  Rainbow_ColorMap(double h1,double h2)
+    :h_start(h1),h_end(h2),s_start(0.3),s_end(0.95)
+  { }
+
+  Rainbow_ColorMap(double h1,double h2,double s1,double s2)
+    :h_start(h1),h_end(h2),s_start(s1),s_end(s2)
+  { }
 };
 
 class ColorScheme {
   Scale scale;
   OwnedPointer<ColorMap> color_map;
 public:
-  vector<int> bg_color(double x,const string& s) const {
+  RGB bg_color(double x,const string& s) const {
     return color_map->bg_color(scale(x),s);
   }
 
-  vector<int> fg_color(double x,const string& s) const {
+  RGB fg_color(double x,const string& s) const {
     return color_map->fg_color(scale(x),s);
   }
 
@@ -179,8 +141,8 @@ using std::endl;
 
 
 string getstyle(double d,const string& s,const ColorScheme& color_scheme) {
-  string style = string("background: ") + rgb_to_csv(color_scheme.bg_color(d,s)) + ";" ;
-  style += "color: " + rgb_to_csv(color_scheme.fg_color(d,s)) + ";" ;
+  string style = string("background: ") +color_scheme.bg_color(d,s).to_css() + ";" ;
+  style += "color: " + color_scheme.fg_color(d,s).to_css() + ";" ;
   return style;
 }
 
@@ -229,6 +191,64 @@ ublas::matrix<double> read_alignment_certainty(const alignment& A, const Sequenc
   return colors;
 }
 
+void draw_legend(std::ostream& o,ColorScheme& color_scheme,const string& letter) {
+  o<<"<P>uncertain ";
+  const int nsquares = 40;
+  for(int i = 0;i < nsquares;i++) {
+    double p = (0.5+i)/nsquares;
+    string style = getstyle(p,letter,color_scheme);
+    o<<"<span style=\""<<style<<"\">&nbsp;</span>";
+  }
+  o<<" certain";
+}
+
+ColorScheme get_color_scheme(Arguments& args) 
+{
+    OwnedPointer<ColorMap> color_map;
+
+    if (args["color"] == "no" or args["color"] == "bw") {
+      color_map = OwnedPointer<ColorMap>(new BW_ColorMap);
+      std::cerr<<"BW colormap\n";
+    }
+    else if (args["color"] == "RedBlue") {
+      color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1,0.95,0.95));
+      std::cerr<<"Red Blue colormap\n";
+    }
+    else if (args["color"] == "BlueRed") {
+      color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7,0.95,0.95));
+      std::cerr<<"Blue Red colormap\n";
+    }
+    else {
+      color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap);
+      std::cerr<<"Rainbow colormap\n";
+    }
+
+    Scale scale;
+    if (args["scale"] == "identity") {
+      scale.f = identity;
+      scale.min = args.loadvalue("min",0.0);
+      scale.max = args.loadvalue("max",1.0);
+    }
+    else if (args["scale"] == "square") {
+      scale.f = square;
+      scale.min = args.loadvalue("min",0.0);
+      scale.max = args.loadvalue("max",1.0);
+    }
+    else if (args["scale"] == "cube") {
+      scale.f = cube;
+      scale.min = args.loadvalue("min",0.0);
+      scale.max = args.loadvalue("max",1.0);
+    }
+    else {
+      scale.f = LOD10;
+      scale.min = args.loadvalue("min",-0.5);
+      scale.max = args.loadvalue("max",2.0);
+    }
+
+    
+    return ColorScheme (scale,*color_map);
+}
+
 int main(int argc,char* argv[]) { 
   Arguments args;
   args.read(argc,argv);
@@ -257,29 +277,8 @@ int main(int argc,char* argv[]) {
 
     ublas::matrix<double> colors = read_alignment_certainty(A,T,args["colors"].c_str());
 
-    /*-------------------- Get color or b/w ------------------*/
-    OwnedPointer<ColorMap> color_map;
+    ColorScheme color_scheme = get_color_scheme(args);
 
-    if (args["color"] == "no" or args["color"] == "bw") 
-      color_map = OwnedPointer<ColorMap>(new BW_ColorMap);
-    else
-      color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap);
-
-    Scale scale;
-    if (args["scale"] != "uniform") {
-      scale.f = LOD;
-      scale.min = args.loadvalue("min",-3);
-      scale.max = args.loadvalue("max",3);
-    }
-    else {
-      scale.f = identity;
-      scale.min = args.loadvalue("min",0);
-      scale.max = args.loadvalue("max",1);
-    }
-
-    ColorScheme color_scheme(scale,*color_map);
-
-    double gapscale = args.loadvalue("gapscale",0.3);
     bool showgaps = true;
     if (args["showgaps"] == "no")
       showgaps = false;
@@ -323,7 +322,7 @@ int main(int argc,char* argv[]) {
 	cout<<"\\begin{tabular}{";
 	for(int i=0;i<width;i++)
 	  cout<<"c";
-	cout<<"}"<<endl;
+	cout<<"}\n";
 	
 	for(int i=0;i<T.n_leaves();i++) {
 	  int s = i;
@@ -333,11 +332,11 @@ int main(int argc,char* argv[]) {
 	    string latexcolor = "";//latex_get_bgcolor(colors(column,s),sscale,color);
 	    if (column != pos)
 	      cout<<"& ";
-	    cout<<"\\multicolumn{1}{>{\\columncolor{"<<latexcolor<<"}}c}{"<<c<<"}"<<endl;
+	    cout<<"\\multicolumn{1}{>{\\columncolor{"<<latexcolor<<"}}c}{"<<c<<"}"<<"\n";
 	  }
-	  cout<<"\\\\"<<endl;
+	  cout<<"\\\\\n";
 	}
-	cout<<"\\end{tabular}"<<endl;
+	cout<<"\\end{tabular}\n";
 	pos += width;
       }
       
@@ -376,13 +375,8 @@ SPAN {\n\
       
       //-------------------- Print a legend ------------------------//
       if (args["legend"] != "no") {
-	cout<<"<P>From 0 to 1: ";
-	const int nsquares = 20;
-	for(int i = 0;i < nsquares+1;i++) {
-	  double p = i*1.0/nsquares;
-	  string style = getstyle(p,"",color_scheme);
-	  cout<<"<span style=\""<<style<<"\">&nbsp;</span>";
-	}
+	draw_legend(cout,color_scheme,"");
+	draw_legend(cout,color_scheme,"-");
       }
 
       cout<<"<br><br>";
@@ -404,7 +398,7 @@ SPAN {\n\
     
       int pos=start;
       while(pos<end) {
-	cout<<"<table>"<<endl;
+	cout<<"<table>\n";
 
 	// Print columns positions
 	if (show_column_numbers) {
@@ -423,8 +417,8 @@ SPAN {\n\
 
 	for(int i=0;i<T.n_leaves();i++) {
 	  int s = i;
-	  cout<<"  <tr>"<<endl;
-	  cout<<"    <td class=\"sequencename\">"<<T.seq(s)<<"</td>"<<endl;
+	  cout<<"  <tr>\n";
+	  cout<<"    <td class=\"sequencename\">"<<T.seq(s)<<"</td>\n";
 	  cout<<"    <td>";
 	  for(int column=pos;column<pos+width and column < end; column++) {
 	    string c;
@@ -437,7 +431,7 @@ SPAN {\n\
 	    cout<<"<span style=\""<<style<<"\">"<<c<<"</span>";
 	  }
 	  cout<<"    </td>";
-	  cout<<"  </tr>"<<endl;
+	  cout<<"  </tr>\n";
 	}
 	cout<<"<tr><td></td><td><span>&nbsp;</span></td><tr>\n";
 	cout<<"</table>"<<endl;
@@ -451,3 +445,20 @@ SPAN {\n\
   return 0;
 
 }
+
+
+//FIXME - IMPLEMENT
+// EPS output - use libplot - unmaintained for 4 years?
+// make a STACK of things which modify the previous one - e.g. whiten the color
+//    - We still need a bottom layer
+// can we make the cutoff (e.g. min) different for hue and saturation?
+//    - It seems that hsv is a good model - if plugins modify it, then different 
+//      plugins could have different mins. (But it should perhaps be independant of 
+//      the "scale" used.)
+
+// plugins:
+//   : color-gaps-differently.
+//   : whiten-below-0.5
+//   : fore-ground-colors (AA)
+//   : whiten-according to uncertainty
+
