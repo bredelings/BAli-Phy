@@ -4,16 +4,33 @@ all: bali-phy
 LI=${CXX}
 EXACTFLAGS = -pipe
 
-LANGO   = fast-math tracer prefetch-loop-arrays omit-frame-pointer
-DEBUG   = # g3
-DEFS    = NDEBUG_UBLAS NDEBUG_DP NDEBUG
-WARN    = all no-sign-compare overloaded-virtual strict-aliasing
-OPT     = march=${ARCH} O3
-LDFLAGS = 
+ARCH := $(if ${ARCH},${ARCH},pentium4)
 
-LDFLAGS += $(if ${STATIC},, -static)
+LANGO := fast-math
+DEFS  := NDEBUG_UBLAS NDEBUG_DP NDEBUG
+WARN  := all no-sign-compare overloaded-virtual strict-aliasing
+OPT := 
+LDFLAGS := 
+
+ifeq (${DEBUG},y)
+DEBUG := g3
+else
+OPT   += march=${ARCH} O3
+LANGO += tracer prefetch-loop-arrays
+ifneq (${PROF},y)
+LANGO += omit-frame-pointer
+endif
+endif
+
+ifeq (${PROF},y)
 LDFLAGS += $(if ${PROF},, -pg)
 DEBUG   += $(if ${PROF},, pg)
+endif
+
+ifeq (${STATIC},y)
+.LIBPATTERNS = lib%.a,
+LDFLAGS += -static
+endif
 
 #------------------- Main 
 PROGNAME = bali-phy
@@ -29,10 +46,8 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 
 LIBS = gsl gslcblas m 
 LINKLIBS = ${LIBS:%=-l%}
-.LIBPATTERNS = $(if ${STATIC},lib%.a,lib%.so lib%.a)
 
 ${PROGNAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
-# 	@echo ${.LIBPATTERNS}
 
 tools/model_P: tools/statistics.o rng.o arguments.o ${LINKLIBS} 
 
