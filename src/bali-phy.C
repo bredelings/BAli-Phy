@@ -129,7 +129,8 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   if (P.IModel().full_tree)
     NNI_move.add(0.025,MoveArgSingle("three_way_NNI_and_A:alignment:alignment_branch:nodes:topology",
 				   three_way_topology_and_alignment_sample,
-				   internal_branches)
+				     internal_branches)
+		 ,false
 		 );
 
 
@@ -145,7 +146,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 		 );
 
   topology_move.add(1,NNI_move);
-  topology_move.add(0.3,SPR_move);
+  topology_move.add(0.04,SPR_move);
   if (P.T.leaves() >3 and P.SModel().full_tree)
     tree_moves.add(1,topology_move);
   
