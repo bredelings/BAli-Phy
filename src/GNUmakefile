@@ -55,7 +55,8 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  sample-node.C imodel.C 5way.C sample-topology-NNI.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
-	  alignment-sums.C alignment-util.C probability.C model.C le-double.C
+	  alignment-sums.C alignment-util.C probability.C model.C le-double.C \
+	  alignment-constraint.C
 
 LIBS = gsl gslcblas m 
 LINKLIBS = ${LIBS:%=-l%}
@@ -70,6 +71,11 @@ tools/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o tools/alignmentutil.o \
 	setup.o imodel.o probability.o sequence-format.o \
 	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
+
+tools/alignment-indices: tree.o alignment.o sequencetree.o arguments.o \
+	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
+	randomtree.o alignment-random.o imodel.o probability.o \
+	alignment-util.o model.o ${LINKLIBS}
 
 tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o imodel.o \
