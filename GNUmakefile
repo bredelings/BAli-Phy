@@ -31,10 +31,10 @@ all: sampler
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math  tracer  prefetch-loop-arrays abi-version=0 omit-frame-pointer
+LANGO = fast-math  tracer  prefetch-loop-arrays omit-frame-pointer
 DEBUG = pipe #pg #g3 #gdwarf-2 #pg 
 EXACTFLAGS =  --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS =  NDEBUG NDEBUG_DP # USE_UBLAS
+DEFS =  NDEBUG_UBLAS NDEBUG_DP NDEBUG # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
 OPT =  march=pentium4 O3 # malign-double msse mmmx msse2 
 LDFLAGS = #-pg # -static 
@@ -112,8 +112,8 @@ bin/findalign: alignment.o alphabet.o arguments.o sequence.o bin/alignmentutil.o
 OTHERFILES += 
 
 #------------------- End
-DEVEL = ../..
-includes += /usr/local/include/
+DEVEL = ../../..
+includes += ./include/
 includes += .
 src      += 
 include $(DEVEL)/GNUmakefile
