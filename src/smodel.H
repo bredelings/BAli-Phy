@@ -512,7 +512,7 @@ namespace substitution {
     ~CodonModel();
   };
 
-  class YangCodonModel: public CodonModel,
+  class YangM0: public CodonModel,
 			public NestedModelOver<ReversibleMarkovNucleotideModel>
   {
     void super_fiddle();
@@ -522,7 +522,7 @@ namespace substitution {
 
     efloat_t prior() const;
 
-    YangCodonModel* clone() const {return new YangCodonModel(*this);}
+    YangM0* clone() const {return new YangM0(*this);}
 
     /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
     double omega() const;
@@ -532,9 +532,9 @@ namespace substitution {
     string name() const;
     std::string super_parameter_name(int i) const;
 
-    YangCodonModel(const Codons& C,const ReversibleMarkovNucleotideModel& M);
+    YangM0(const Codons& C,const ReversibleMarkovNucleotideModel& M);
 
-    ~YangCodonModel();
+    ~YangM0();
   };
 
 
@@ -806,7 +806,7 @@ namespace substitution {
     /// Get the probability of each base models
     std::vector<double> distribution() const;
 
-    YangM2(const YangCodonModel& M1);
+    YangM2(const YangM0& M1);
   };
 
 
@@ -822,7 +822,7 @@ namespace substitution {
     string name() const;
     string super_parameter_name(int i) const;
 
-    YangM3(const YangCodonModel& M1);
+    YangM3(const YangM0& M1);
   };
 
 

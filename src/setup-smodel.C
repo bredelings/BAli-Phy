@@ -88,9 +88,9 @@ bool process_stack_Markov(vector<string>& string_stack,
     Codons RNA_codons(RNA(),*AA,rna_filename);
 
     if (a == DNA_codons)
-      model_stack.push_back(YangCodonModel(DNA_codons,HKY(DNA())));
+      model_stack.push_back(YangM0(DNA_codons,HKY(DNA())));
     else if (a == RNA_codons)
-      model_stack.push_back(YangCodonModel(RNA_codons,HKY(RNA())));
+      model_stack.push_back(YangM0(RNA_codons,HKY(RNA())));
     else
       throw myexception()<<"Can't figure out how to make a codon model from alphabet '"<<a.name<<";";
   }
@@ -244,11 +244,11 @@ bool process_stack_Multi(vector<string>& string_stack,
     model_stack.push_back(MixtureModel(models));
   }
   else if (match(string_stack,"YangM2",arg)) {
-    if (not dynamic_cast<YangCodonModel*>(model_stack.back().get()))
+    if (not dynamic_cast<YangM0*>(model_stack.back().get()))
       throw myexception()<<"Trying to construct a Yang M2 model from a '"<<model_stack.back().get()->name()
 			 <<"' model, which is not a YangM0 model.";
 
-    OwnedPointer<YangCodonModel> YM = *dynamic_cast<YangCodonModel*>(model_stack.back().get());
+    OwnedPointer<YangM0> YM = *dynamic_cast<YangM0*>(model_stack.back().get());
     model_stack.pop_back();
     model_stack.push_back(YangM2(*YM));
   }

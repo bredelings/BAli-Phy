@@ -408,18 +408,18 @@ namespace substitution {
   CodonModel::~CodonModel() {}
 
     /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  double YangCodonModel::omega() const {
+  double YangM0::omega() const {
     return super_parameters_[1];
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  void YangCodonModel::omega(double w) {
+  void YangM0::omega(double w) {
     super_parameters_[1]=w;
     read();
     recalc();
   }
 
-  void YangCodonModel::super_fiddle() {
+  void YangM0::super_fiddle() {
     double sigma = 0.15;
     if (not fixed(1))
       super_parameters_[1] *= exp(gaussian(0,sigma));
@@ -428,7 +428,7 @@ namespace substitution {
     recalc();
   }
 
-  void YangCodonModel::recalc() {
+  void YangM0::recalc() {
     for(int i=0;i<Alphabet().size();i++) {
       for(int j=0;j<i;j++) {
 
@@ -459,21 +459,21 @@ namespace substitution {
     ReversibleMarkovModel::recalc();
   }
 
-  efloat_t YangCodonModel::super_prior() const {
+  efloat_t YangM0::super_prior() const {
     efloat_t P = ReversibleMarkovModel::prior();
     P *= shift_laplace_pdf(log(omega()), 0, 0.1);
     return P;
   }
 
-  efloat_t YangCodonModel::prior() const {
+  efloat_t YangM0::prior() const {
     return NestedModelOver<ReversibleMarkovNucleotideModel>::prior();
   }
 
-  string YangCodonModel::name() const {
+  string YangM0::name() const {
     return SubModel().name() + " * YangM0";
   }
 
-  string YangCodonModel::super_parameter_name(int i) const {
+  string YangM0::super_parameter_name(int i) const {
     if (i==0)
       return "YangM0::f";
     if (i==1)
@@ -482,11 +482,11 @@ namespace substitution {
       return s_parameter_name(i,2);
   }
 
-  //  const valarray<double>& YangCodonModel::frequencies() const {
+  //  const valarray<double>& YangM0::frequencies() const {
   //    return ReversibleMarkovModel::frequencies();
   //  }
 
-  //  void YangCodonModel::frequencies(const valarray<double>& pi_) {
+  //  void YangM0::frequencies(const valarray<double>& pi_) {
   //    assert(pi_.size() == frequencies().size());
 
     /*
@@ -501,7 +501,7 @@ namespace substitution {
   //    ReversibleMarkovModel::frequencies(pi_);
   //  }
 
-  YangCodonModel::YangCodonModel(const Codons& C,const ReversibleMarkovNucleotideModel& M)
+  YangM0::YangM0(const Codons& C,const ReversibleMarkovNucleotideModel& M)
     :CodonModel(C),NestedModelOver<ReversibleMarkovNucleotideModel>(M,2)
   { 
     super_parameters_[0] = 1.0;
@@ -510,7 +510,7 @@ namespace substitution {
     omega(1.0);
   }
 
-  YangCodonModel::~YangCodonModel() {}
+  YangM0::~YangM0() {}
 
   /*--------------- MultiRate Models ----------------*/
 
@@ -1029,7 +1029,7 @@ namespace substitution {
     return dist;
   }
 
-  YangM2::YangM2(const YangCodonModel& M1) 
+  YangM2::YangM2(const YangM0& M1) 
     :MultiParameterModel(UnitModel(M1),4,1,3)
   {
     super_parameters_[0] = 1.0/3;
