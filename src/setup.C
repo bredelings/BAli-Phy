@@ -59,28 +59,26 @@ valarray<double> empirical_frequencies(Arguments& args,const alignment& A) {
 
 /// Load an alignment from command line args align=filename
 void load_A(Arguments& args,alignment& A) {
-  OwnedPointer<AminoAcids> aa = AminoAcids();
+  OwnedPointer<AminoAcids> AA = AminoAcids();
   if (args.set("Use Stop"))
-    *aa = AminoAcidsWithStop();
-
+    *AA = AminoAcidsWithStop();
+  
   vector<OwnedPointer<alphabet> > alphabets;
   if (args["alphabet"] == "Codons") {
     {
       string dna_filename = args["datadir"] + "/" + "genetic_code_dna.dat";
-      Translation_Table T(Codons(DNA()),*aa,dna_filename);
-      alphabets.push_back(T.getCodons());
+      alphabets.push_back(Codons(DNA(),*AA,dna_filename));
     }
 
     {
       string rna_filename = args["datadir"] + "/" + "genetic_code_rna.dat";
-      Translation_Table T(Codons(RNA()),*aa,rna_filename);
-      alphabets.push_back(T.getCodons());
+      alphabets.push_back(Codons(RNA(),*AA,rna_filename));
     }
   }
   else {
     alphabets.push_back(DNA());
     alphabets.push_back(RNA());
-    alphabets.push_back(*aa);
+    alphabets.push_back(*AA);
   }
   
   /* ----- Try to load alignment ------ */

@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include "tree.H"
@@ -5,11 +6,6 @@
 #include "arguments.H"
 #include "util.H"
 #include "setup.H"
-
-using std::cout;
-using std::cerr;
-using std::endl;
-
 
 vector<int> hsv(double h,double s,double v) {
   h *= 6;
@@ -48,6 +44,9 @@ vector<int> hsv(double h,double s,double v) {
   return result;
 }
 
+static vector<int> black = hsv(0,0,0);
+static vector<int> white = hsv(0,0,1);
+
 string rgb_to_csv(double R, double G, double B) {
   string style = "rgb(";
   style += convertToString(R*256) + ",";
@@ -56,7 +55,7 @@ string rgb_to_csv(double R, double G, double B) {
   return style;
 }
 
-string getrgb(const vector<int>& RGB) {
+string rgb_to_csv(const vector<int>& RGB) {
   string style = "rgb(";
   style += convertToString(RGB[0]) + ",";
   style += convertToString(RGB[1]) + ",";
@@ -64,52 +63,124 @@ string getrgb(const vector<int>& RGB) {
   return style;
 }
 
-inline double f(double x) {
-  //  x = x + 0.5*(x*x - x);
-  x *= x;
-  x *= 0.95;
-  return x;
-}
 
-vector<int> rgb_bgcolor(double x, double sscale,bool color) {
-  if (color) {
-    double start = 0.75;
-    double end = 0.0;
-    
-    double hstart = 0.3;
-    double hend   = 0.95;
-    
-    double color = start + x * x * x *(end-start);
-    double s = hstart + x * x * (hend - hstart);
-    
-    return hsv(color,s*sscale,0.9);
-  }
-  else
-    return hsv(0,0,1.0 - f(x*sscale));
-}
+double identity(double x) {return x;}
+double square(double x) {return x*x;}
+double cube(double x) {return x*x*x;}
 
-string getbgcolor(double x,double sscale,bool color) {
-  return getrgb(rgb_bgcolor(x,sscale,color));
-}
+double LOD(double x) {return log(x) - log(1.0-x);}
 
-string getfgcolor(double x,double sscale,bool color) {
-  if (color)
-    if (x > 0.80)
-      return getrgb(hsv(0, 0, 0.99));
+/// A representation of a transformation of [0,1] onto [min,max]
+struct Scale {
+  double min;
+  double max;
+  double (*f)(double);
+
+  double operator()(double p) const {
+    double v = f(p);
+    if (v < min) 
+      return 0;
+    else if (v > max) 
+      return 1;
     else
-      return getrgb(hsv(0, 0, 0.2));
-  else {
-    if (1.0 - f(x*sscale) < 0.5)
-      return getrgb(hsv(0,0,1));
-    else
-      return getrgb(hsv(0,0,0));
+      return (v-min)/(max-min);
   }
-}
+
+  Scale():f(NULL) {}
+
+  Scale(double d1,double d2,double (*g)(double))
+    :min(d1),max(d2),f(g)
+  { }
+};
 
 
-string getstyle(double d,double sscale=1.0,bool color=true) {
-  string style = string("background: ") + getbgcolor(d,sscale,color) + ";" ;
-  style += "color: " + getfgcolor(d,sscale,color) + ";" ;
+class ColorMap {
+public:
+  virtual ColorMap* clone() const=0;
+
+  virtual vector<int> bg_color(double x,const string& s) const=0;
+  virtual vector<int> fg_color(double x,const string& s) const=0;
+};
+
+struct BW_ColorMap: public ColorMap {
+public:
+  BW_ColorMap* clone() const {return new BW_ColorMap(*this);}
+
+  vector<int> bg_color(double x,const string& s) const {
+    return hsv(0,0,1.0-x);
+  }
+
+  vector<int> fg_color(double x,const string& s) const {
+    if (x < 0.5)
+      return black;
+    else
+      return white;
+  }
+};
+
+struct Rainbow_ColorMap: public ColorMap {
+public:
+  Rainbow_ColorMap* clone() const {return new Rainbow_ColorMap(*this);}
+
+  vector<int> bg_color(double x,const string& s) const {
+    if ((s == "-") or (s == "---")) {
+      double v_uncertain = 1.0;
+      double v_certain   = 0.5;
+      double value = v_uncertain + x*(v_certain - v_uncertain);
+
+      return hsv(0,0,value);
+    }
+    else {
+      double c_start = 0.75;  // certain - Red
+      double c_end   = 0;     // certain - Blue
+      double color = c_start + x*(c_end - c_start);
+
+
+      double h_start = 0.0;  // uncertain - white
+      double h_end = 0.95;   // certain   - color
+
+      double hue = h_start + x*(h_end - h_start);
+
+      return hsv(color,hue,0.95);
+    }
+  }
+
+  vector<int> fg_color(double x,const string& s) const {
+    if (x < 0.5)
+      return black;
+    else
+      return white;
+      
+  }
+};
+
+class ColorScheme {
+  Scale scale;
+  OwnedPointer<ColorMap> color_map;
+public:
+  vector<int> bg_color(double x,const string& s) const {
+    return color_map->bg_color(scale(x),s);
+  }
+
+  vector<int> fg_color(double x,const string& s) const {
+    return color_map->fg_color(scale(x),s);
+  }
+
+  ColorScheme(const Scale& S, const ColorMap& CM)
+    :scale(S),color_map(CM)
+  { }
+};
+
+
+using std::cout;
+using std::cerr;
+using std::endl;
+
+
+
+string getstyle(double d,const string& s,const ColorScheme& color_scheme) {
+  string style = string("background: ") + rgb_to_csv(color_scheme.bg_color(d,s)) + ";" ;
+  style += "color: " + rgb_to_csv(color_scheme.fg_color(d,s)) + ";" ;
   return style;
 }
 
@@ -126,7 +197,7 @@ string latex_rgb(const vector<int>& RGB) {
 
 
 string latex_get_bgcolor(double d,double sscale=1.0,bool color=true) {
-  return latex_rgb(rgb_bgcolor(d,sscale,color));
+  return "";
 }
 
 
@@ -164,7 +235,7 @@ int main(int argc,char* argv[]) {
       getline(colorfile,line);
       vector<string> colornames = split(line,' ');
       vector<string> leafnames = T.get_sequences();
-      leafnames.erase(leafnames.begin()+T.leaves());
+      leafnames.erase(leafnames.begin()+T.n_leaves());
       mapping = compute_mapping(colornames,T.get_sequences());
     }
 
@@ -172,7 +243,7 @@ int main(int argc,char* argv[]) {
     mapping.push_back(mapping.size());
 
     /*------------------ Read in the colors ------------------------*/
-    ublas::matrix<double> colors(A.length(),T.leaves()+1);
+    ublas::matrix<double> colors(A.length(),T.n_leaves()+1);
     for(int column=0;column<colors.size1();column++) 
       for(int i=0;i<colors.size2();i++) {
 	double d;
@@ -183,9 +254,26 @@ int main(int argc,char* argv[]) {
     colorfile.close();
 
     /*-------------------- Get color or b/w ------------------*/
-    bool color = true;
-    if (args["color"] == "no")
-      color = false;
+    OwnedPointer<ColorMap> color_map;
+
+    if (args["color"] == "no" or args["color"] == "bw") 
+      color_map = OwnedPointer<ColorMap>(new BW_ColorMap);
+    else
+      color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap);
+
+    Scale scale;
+    if (args["scale"] != "uniform") {
+      scale.f = LOD;
+      scale.min = args.loadvalue("min",-3);
+      scale.max = args.loadvalue("max",3);
+    }
+    else {
+      scale.f = identity;
+      scale.min = args.loadvalue("min",0);
+      scale.max = args.loadvalue("max",1);
+    }
+
+    ColorScheme color_scheme(scale,*color_map);
 
     double gapscale = args.loadvalue("gapscale",0.3);
     bool showgaps = true;
@@ -233,7 +321,7 @@ int main(int argc,char* argv[]) {
 	  cout<<"c";
 	cout<<"}"<<endl;
 	
-	for(int i=0;i<T.leaves();i++) {
+	for(int i=0;i<T.n_leaves();i++) {
 	  int s = i;
 
 	  for(int column=pos;column<pos+width and column < end; column++) {
@@ -242,7 +330,7 @@ int main(int argc,char* argv[]) {
 	    if (A.gap(column,s)) {
 	      sscale = 0.3;
 	    }
-	    string latexcolor = latex_get_bgcolor(colors(column,s),sscale,color);
+	    string latexcolor = "";//latex_get_bgcolor(colors(column,s),sscale,color);
 	    if (column != pos)
 	      cout<<"& ";
 	    cout<<"\\multicolumn{1}{>{\\columncolor{"<<latexcolor<<"}}c}{"<<c<<"}"<<endl;
@@ -286,20 +374,20 @@ SPAN {\n\
   </head>\n\
   <body>\n";
       
-      /*-------------------- Print a legend ------------------------*/
+      //-------------------- Print a legend ------------------------//
       if (args["legend"] != "no") {
 	cout<<"<P>From 0 to 1: ";
 	const int nsquares = 20;
 	for(int i = 0;i < nsquares+1;i++) {
 	  double p = i*1.0/nsquares;
-	  string style = getstyle(p,1,color);
+	  string style = getstyle(p,"",color_scheme);
 	  cout<<"<span style=\""<<style<<"\">&nbsp;</span>";
 	}
       }
 
       cout<<"<br><br>";
 
-      /*----------- Compute the position headings -------------------*/
+      //----------- Compute the position headings -------------------//
       string positions(A.length(),'.');
 
       positions[0]='1';
@@ -311,7 +399,7 @@ SPAN {\n\
       }
 
 
-      /*-------------------- Print the alignment ------------------------*/
+      //-------------------- Print the alignment ------------------------//
       const alphabet& a = A.get_alphabet();
     
       int pos=start;
@@ -323,8 +411,8 @@ SPAN {\n\
 	  cout<<"<tr><td></td><td>";
 	  
 	  for(int column=pos;column<pos+width and column < end; column++) {
-	    double P=colors(column,T.leaves());
-	    string style = getstyle(P,1.0,color);
+	    double P=colors(column,T.n_leaves());
+	    string style = getstyle(P,"",color_scheme);
 	    if (columncolors)
 	      cout<<"<span style=\""<<style<<"\">"<<positions[column]<<"</span>";
 	    else
@@ -333,7 +421,7 @@ SPAN {\n\
 	  cout<<"</tr>\n";
 	}
 
-	for(int i=0;i<T.leaves();i++) {
+	for(int i=0;i<T.n_leaves();i++) {
 	  int s = i;
 	  cout<<"  <tr>"<<endl;
 	  cout<<"    <td class=\"sequencename\">"<<T.seq(s)<<"</td>"<<endl;
@@ -347,7 +435,7 @@ SPAN {\n\
 	      if (not showgaps)
 		c = "&nbsp;";
 	    }
-	    string style = getstyle(colors(column,s),sscale,color);
+	    string style = getstyle(colors(column,s),c,color_scheme);
 	    cout<<"<span style=\""<<style<<"\">"<<c<<"</span>";
 	  }
 	  cout<<"    </td>";

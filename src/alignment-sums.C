@@ -63,12 +63,12 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
   const substitution::MultiModel& MModel = P.SModel();
   const SequenceTree& T = P.T;
 
-  vector< Matrix > dist(seq.size(), Matrix(MModel.nmodels(),a.size()) );
+  vector< Matrix > dist(seq.size(), Matrix(MModel.n_base_models(),a.size()) );
 
   for(int column=0;column<dist.size();column++) {
     vector<int> residues(A.size2());
 
-    for(int m=0;m<MModel.nmodels();m++) {
+    for(int m=0;m<MModel.n_base_models();m++) {
       for(int l=0;l<a.size();l++)
 	dist[column](m,l) = 1.0;
 
@@ -99,17 +99,17 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
   const alphabet& a = A.get_alphabet();
   const substitution::MultiModel& MModel = P.SModel();
 
-  vector< Matrix > dist(seq.size(), Matrix(MModel.nmodels(),a.size()) );
+  vector< Matrix > dist(seq.size(), Matrix(MModel.n_base_models(),a.size()) );
 
   for(int i=0;i<dist.size();i++) {
     vector<int> residues(A.size2());
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
 
-    for(int m=0;m<MModel.nmodels();m++) {
+    for(int m=0;m<MModel.n_base_models();m++) {
       valarray<double> temp = substitution::peel(residues,
 						 P.T,
-						 MModel.get_model(m),
+						 MModel.base_model(m),
 						 P.transition_P(m),
 						 root,group);
       for(int l=0;l<a.size();l++)

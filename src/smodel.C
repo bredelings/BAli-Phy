@@ -268,6 +268,10 @@ namespace substitution {
       return s_parameter_name(i,2);
   }
 
+  string EQU::parameter_name(int i) const {
+    return s_parameter_name(i,0);
+  }
+
   string EQU::name() const {
     return "EQU";
   }
@@ -282,6 +286,10 @@ namespace substitution {
 
   string Empirical::name() const {
     return "Empirical(" + modelname +")";
+  }
+
+  string Empirical::parameter_name(int i) const {
+    return s_parameter_name(i,0);
   }
 
   void Empirical::recalc() {
@@ -676,12 +684,14 @@ namespace substitution {
   string YangM2::super_parameter_name(int i) const {
     if (i==0)
       return "YangM2::f[AA INV]";
-    if (i==1)
+    else if (i==1)
       return "YangM2::f[Neutral]";
-    if (i==2)
+    else if (i==2)
       return "YangM2::f[Positive]";
-    if (i==3)
+    else if (i==3)
       return "YangM2::omega";
+    else
+      return s_parameter_name(i,4);
   }
 
   /// Get the probability of each base models
@@ -746,6 +756,7 @@ namespace substitution {
 
       p = wrap(p,1.0);
     }
+
     if (not fixed[parameters_.size()-1]) {
       double & r = parameters_[1];
       r *= exp(gaussian(0,0.3));
@@ -763,6 +774,26 @@ namespace substitution {
       return SubModels(1).base_model(m);
 
     std::abort();
+  }
+
+  MultiModel::Base_Model_t& DualModel::base_model(int m) {
+    if (m<SubModels(0).n_base_models())
+      return SubModels(0).base_model(m);
+    m -= SubModels(0).n_base_models();
+
+    if (m<SubModels(1).n_base_models())
+      return SubModels(1).base_model(m);
+
+    std::abort();
+  }
+
+  string DualModel::super_parameter_name(int i) const {
+    if (i==0)
+      return "Dual::p";
+    else if (i==1)
+      return "Dual::r";
+    else
+      return s_parameter_name(i,2);
   }
 
   string DualModel::name() const {

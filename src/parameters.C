@@ -41,7 +41,7 @@ bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 void Parameters::fiddle() {
   if (SModel_->parameters().size()) {
     // Fiddle substitution parameters and recalculate rate matrices
-    SModel_->fiddle(s_fixed);
+    SModel_->fiddle();
 
     // Recalculate the branch transition matrices
     recalc();

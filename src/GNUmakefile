@@ -4,7 +4,7 @@ TOOLS = tools/model_P tools/statreport tools/alignment-blame \
 	tools/alignment-reorder tools/alignment-draw tools/findalign \
 	tools/tree-to-srq tools/tree-names-trunc tools/tree-reroot \
 	tools/srq-to-plot tools/srq-analyze tools/phy_to_fasta \
-	tools/tree-dist-compare tools/cut-range
+	tools/tree-dist-compare tools/cut-range tools/alignment-chop-internal
 
 tools: ${TOOLS}
 
@@ -55,7 +55,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  sample-node.C imodel.C 5way.C sample-topology-NNI.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
-	  alignment-sums.C alignment-util.C probability.C
+	  alignment-sums.C alignment-util.C probability.C model.C
 
 LIBS = gsl gslcblas m 
 LINKLIBS = ${LIBS:%=-l%}
@@ -75,6 +75,9 @@ tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rn
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o imodel.o \
 	sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o \
 	${LINKLIBS}
+
+tools/alignment-chop-internal: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
+	tree.o sequencetree.o setup.o imodel.o sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o ${LINKLIBS}
 
 #smodel.o \
 #	rates.o exponential.o eigenvalue.o sequence-format.o randomtree.o 

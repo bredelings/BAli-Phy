@@ -55,8 +55,8 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
     pI<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
   pI<<endl;
   
-  for(int i=0;i<P.SModel().nmodels();i++)
-    o<<"    rate"<<i<<" = "<<P.SModel().rates()[i]*P.SModel().get_model(i).rate();
+  for(int i=0;i<P.SModel().n_base_models();i++)
+    o<<"    rate"<<i<<" = "<<P.SModel().base_model(i).rate();
   o<<endl<<endl;
 
   o<<"frequencies = "<<endl;

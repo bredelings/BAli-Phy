@@ -229,19 +229,13 @@ namespace substitution {
       residues[i] = A(column,i);
   
     double total=0;
-    for(int m=0;m<MModel.nmodels();m++) {
+    for(int m=0;m<MModel.n_base_models();m++) {
       double p=0;
-      double model_rate = MModel.rates()[m]*MModel.get_model(m).rate();
-      if (model_rate == 0.0) 
-	p = MModel.distribution()[m] * Pr_INV(residues,
-					      MModel.get_model(m)
-					      );      
-      else
-	p = MModel.distribution()[m] * Pr(residues,
-					  T,
-					  MModel.get_model(m),
-					  MC.transition_P(m)
-					  );
+      p = MModel.distribution()[m] * Pr(residues,
+					T,
+					MModel.base_model(m),
+					MC.transition_P(m)
+					);
       total += p;
     }
 
@@ -312,10 +306,10 @@ namespace substitution {
 	residues[i] = A(column,i);
 
       double total=0;
-      for(int m=0;m<MModel.nmodels();m++)
+      for(int m=0;m<MModel.n_base_models();m++)
 	total += MModel.distribution()[m] * Pr_star(residues,
 						    T,
-						    MModel.get_model(m),
+						    MModel.base_model(m),
 						    MC.transition_P(m)
 						    );
 
