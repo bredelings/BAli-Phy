@@ -12,6 +12,7 @@
 #include "alignment-util.H"
 #include "likelihood.H"    // for prior()
 #include "substitution-index.H"
+#include "refcount.H"
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with
@@ -30,7 +31,7 @@ using std::valarray;
 
 using namespace A3;
 
-DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
+RefPtr<DParrayConstrained> sample_node_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const Tree& T = P.T;
 
   assert(P.IModel().full_tree);
@@ -108,15 +109,15 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
   
 
   // Actually create the Matrices & Chain
-  DParrayConstrained Matrices(seq123.size(),state_emit,start_P,Q, P.Temp);
+  RefPtr<DParrayConstrained> Matrices = new DParrayConstrained(seq123.size(),state_emit,start_P,Q, P.Temp);
 
   // Determine which states are allowed to match (c2)
-  for(int c2=0;c2<Matrices.size();c2++) {
+  for(int c2=0;c2<Matrices->size();c2++) {
     int i2 = icol[c2];
     int j2 = jcol[c2];
     int k2 = kcol[c2];
-    for(int i=0;i<Matrices.nstates();i++) {
-      int S2 = Matrices.order(i);
+    for(int i=0;i<Matrices->nstates();i++) {
+      int S2 = Matrices->order(i);
 
       //---------- Get (,j1,k1) ----------
       int i1 = i2;
@@ -132,7 +133,7 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
       if (c2==0 
 	  or (i1 == i2 and j1 == j2 and k1 == k2) 
 	  or (i1 == icol[c2-1] and j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
-	Matrices.states(c2).push_back(S2);
+	Matrices->states(c2).push_back(S2);
       else
 	; // this state not allowed here
     }
@@ -141,12 +142,12 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
 
   /*------------------ Compute the DP matrix ---------------------*/
   // Matrices.prune();  prune is broken!
-  Matrices.forward();
+  Matrices->forward();
 
   //------------- Sample a path from the matrix -------------------//
 
-  vector<int> path_g = Matrices.sample_path();
-  vector<int> path = Matrices.ungeneralize(path_g);
+  vector<int> path_g = Matrices->sample_path();
+  vector<int> path = Matrices->ungeneralize(path_g);
 
   A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
 
@@ -157,7 +158,7 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
                                  //    but its not a NECESSARY effect of the routine.
 
   // get the generalized paths - no sequential silent states that can loop
-  vector<int> path_new_g = Matrices.generalize(path_new);
+  vector<int> path_new_g = Matrices->generalize(path_new);
   assert(path_new_g == path_g);
   assert(valid(A));
 
@@ -178,7 +179,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
 
   vector<alignment> a(p.size(),A);
 
-  vector< DParrayConstrained > Matrices;
+  vector< RefPtr<DParrayConstrained> > Matrices;
   for(int i=0;i<p.size();i++) {
     Matrices.push_back( sample_node_base(a[i],p[i],nodes[i]) );
     //    p[i].LC.invalidate_node(p[i].T,nodes[i][0]);
@@ -202,7 +203,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
   //---------------- Calculate choice probabilities --------------//
   vector<efloat_t> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = OS[i] * Matrices[i].Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
+    Pr[i] = OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
 
   int C = choose(Pr);
 
@@ -241,7 +242,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
 
     efloat_t OP_i = OP[i] / A3::correction(a[i],p[i],nodes[i]);
 
-    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
+    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], *Matrices[i]);
   }
 
   //--------- Compute path probabilities and sampling probabilities ---------//
@@ -254,7 +255,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
     else
       P_choice = choose_P(0,Pr);
 
-    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
+    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], *Matrices[i]);
     PR[i][0] *= A3::correction(a[i],p[i],nodes[i]);
   }
 

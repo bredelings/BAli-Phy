@@ -15,7 +15,6 @@
     d) begin to implement the separate random number generators.
 
  5.5. fp_scale speedups
-  c) std::fill_n<> is having a REAL problem with 3.4!
 
 [HARD]
   a) 10% - DPmatrixEmit::DPmatrix: try to remove unneeded initialization or speed it up.

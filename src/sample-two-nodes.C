@@ -13,6 +13,7 @@
 #include "alignment-util.H"
 #include "substitution-index.H"
 #include <boost/numeric/ublas/io.hpp>
+#include "refcount.H"
 
 // for prior(p[i])
 #include "likelihood.H"
@@ -40,7 +41,7 @@ using namespace A5;
 // We can choose between them with the total_sum (I mean, sum_all_paths).
 // Then, we can just debug one routine, basically.
 
-DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
+RefPtr<DParrayConstrained> sample_two_nodes_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
 
   const Tree& T = P.T;
   alignment old = A;
@@ -119,20 +120,20 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   vector<double> start_P = get_start_P(P.branch_HMMs,branches,A5::states_list);
 
   // Actually create the Matrices & Chain
-  DParrayConstrained Matrices(seqall.size(), 
-			      state_emit_1D, 
-			      start_P,
-			      Q, 
-			      P.Temp);
+  RefPtr<DParrayConstrained> Matrices = new DParrayConstrained(seqall.size(), 
+							       state_emit_1D, 
+							       start_P,
+							       Q, 
+							       P.Temp);
 
   // Determine which states are allowed to match (c2)
-  for(int c2=0;c2<Matrices.size();c2++) {
+  for(int c2=0;c2<Matrices->size();c2++) {
     int i2 = icol[c2];
     int j2 = jcol[c2];
     int k2 = kcol[c2];
     int l2 = lcol[c2];
-    for(int i=0;i<Matrices.nstates();i++) {
-      int S2 = Matrices.order(i);
+    for(int i=0;i<Matrices->nstates();i++) {
+      int S2 = Matrices->order(i);
       int state2 = A5::states_list[S2];
 
       //---------- Get (,j1,k1) ----------
@@ -152,7 +153,7 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
       if (c2==0 
 	  or (i1 == i2 and j1 == j2 and k1 == k2 and l1 == l2) 
 	  or (i1 == icol[c2-1] and j1 == jcol[c2-1] and k1 == kcol[c2-1] and l1 == lcol[c2-1]) )
-	Matrices.states(c2).push_back(S2);
+	Matrices->states(c2).push_back(S2);
       else
 	; // this state not allowed here
     }
@@ -161,12 +162,12 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   /*------------------ Compute the DP matrix ---------------------*/
 
   //  Matrices.prune(); broken!
-  Matrices.forward();
+  Matrices->forward();
 
   //------------- Sample a path from the matrix -------------------//
 
-  vector<int> path_g = Matrices.sample_path();
-  vector<int> path = Matrices.ungeneralize(path_g);
+  vector<int> path_g = Matrices->sample_path();
+  vector<int> path = Matrices->ungeneralize(path_g);
 
   //  std::cerr<<"generalized A = \n"<<construct(old,path_g,nodes,T,seqs,A5::states_list)<<endl;
   //  std::cerr<<"ungeneralized A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
@@ -186,7 +187,7 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
                                  //    but its not a NECESSARY effect of the routine.
 
   // get the generalized paths - no sequential silent states that can loop
-  vector<int> path_new_g = Matrices.generalize(path_new);
+  vector<int> path_new_g = Matrices->generalize(path_new);
   assert(path_new_g == path_g);
   assert(path_new   == path);
   assert(valid(A));
@@ -206,7 +207,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
 
   vector<alignment> a(p.size(),A);
 
-  vector< DParrayConstrained > Matrices;
+  vector< RefPtr<DParrayConstrained> > Matrices;
   for(int i=0;i<p.size();i++) {
     Matrices.push_back( sample_two_nodes_base(a[i],p[i],nodes[i]) );
     //    p[i].LC.invalidate_node(p[i].T,nodes[i][4]);
@@ -231,7 +232,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
   //---------------- Calculate choice probabilities --------------//
   vector<efloat_t> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = OS[i] * Matrices[i].Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
+    Pr[i] = OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
 
   int C = choose(Pr);
 
@@ -275,7 +276,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
 
     efloat_t OP_i = OP[i] / A5::correction(a[i],p[i],nodes[i]);
 
-    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
+    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], *Matrices[i]);
   }
 
   //--------- Compute path probabilities and sampling probabilities ---------//
@@ -288,7 +289,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
     else
       P_choice = choose_P(0,Pr);
 
-    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
+    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], *Matrices[i]);
     PR[i][0] *= A5::correction(a[i],p[i],nodes[i]);
   }
 
