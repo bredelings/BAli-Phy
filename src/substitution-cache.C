@@ -33,14 +33,12 @@ void Multi_Likelihood_Cache::allocate(int s) {
   n_uses.reserve(new_size);
   up_to_date_.reserve(new_size);
   unused_locations.reserve(new_size);
-  sum_.reserve(new_size);
 
   for(int i=0;i<s;i++) {
     push_back(vector<Matrix>(C,Matrix(M,A)));
     n_uses.push_back(0);
     up_to_date_.push_back(false);
     unused_locations.push_back(old_size+i);
-    sum_.push_back(-1);
   }
 }
 

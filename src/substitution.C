@@ -42,6 +42,57 @@ namespace substitution {
     return not all_gaps;
   }
 
+  /// move increment indexes for nodes 'source' in column 'c' of 'A'
+  inline int inc(int& index,const vector<int>& mask, 
+		 const alignment& A,int c) 
+  {
+    int ret = alphabet::gap;
+    for(int i=0;i<mask.size();i++)
+      if (not A.gap(c,mask[i])) {
+	index++;
+	ret = index;
+	break;
+      }
+    return ret;
+  }
+
+  ublas::matrix<int> get_subA_relationships(const vector<int>& b,const alignment& A,const Tree& T) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA(A.length(),b.size());
+
+    // get criteria for being in a sub-A
+    vector<vector<int> > members;
+    for(int i=0;i<b.size();i++) {
+      members.push_back(vector<int>());
+      members.back().reserve(A.size2());
+      valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
+      for(int i=0;i<T.n_leaves();i++)
+	if (p[i]) members.back().push_back(i);
+    }
+      
+    // declare the index for the nodes
+    vector<int> index(b.size(),-1);
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+      bool empty=true;
+      for(int j=0;j<b.size();j++) {
+	subA(l,j) = inc(index[j],members[j],A,c);
+	if (subA(l,j) != alphabet::gap) empty=false;
+      }
+      if (not empty) l++;
+    }
+
+    //resize the matrix, and send it back...
+    ublas::matrix<int> temp(l,b.size());
+    for(int i=0;i<temp.size1();i++)
+      for(int j=0;j<temp.size2();j++)
+	temp(i,j) = subA(i,j);
+    
+    return temp;
+  }
+
+
   //FIXME - cache the frequencies in a matrix, for quick access.
 
   /// compute log(probability) from conditional likelihoods (S) and equilibrium frequencies as in MModel
@@ -83,44 +134,39 @@ namespace substitution {
     for(const_in_edges_iterator i = T[root].branches_in();i;i++)
       rb.push_back(*i);
 
-    // compute source node for root branches
-    vector<int> source;
-    for(int i=0;i<rb.size();i++)
-      source.push_back(T.directed_branch(rb[i]).source());
-    source.push_back(root);
-
-    // declare the index for the nodes
-    vector<int> index(source.size(),-1);
+    // get the relationships with the sub-alignments
+    ublas::matrix<int> index = get_subA_relationships(rb,A,T);
 
     const int n_models = cache.scratch(0).size1();
     const int asize    = cache.scratch(0).size2();
 
-    for(int c=0;c<A.length();c++) {
+    for(int i=0;i<index.size1();i++) {
 
-      // compute indices, and skip column if no relevant nodes present
-      if (not inc(index,source,A,c)) continue;
-
-      Matrix & S = cache.scratch(index.back());
+      Matrix & S = cache.scratch(i);
 
       for(int m=0;m<n_models;m++) {
 	for(int l=0;l<asize;l++) 
 	  S(m,l) = 1;
 
 	//-------------- Propagate and collect information at 'root' -----------//
-	for(int i=0;i<rb.size();i++) 
-	  if (not A.gap(c,source[i]))
+	for(int j=0;j<rb.size();j++) {
+	  int i0 = index(i,j);
+	  if (i0 != alphabet::gap)
 	    for(int l=0;l<asize;l++) 
-	      S(m,l) *= cache(index[i],rb[i])(m,l);
+	      S(m,l) *= cache(i0,rb[j])(m,l);
+	}
 
-	//-------------- Take into account letters at 'root' -------------//
-	//FIXME - we could avoid calculations for other letters...
-	if (alphabet::letter(A(c,root)))
-	  for(int l=0;l<asize;l++)
-	    if (l != A(c,root))
-	      S(m,l) = 0;
+	if (root < T.n_leaves()) {
+	  int rl = A.seq(root)[i];
+	  if (alphabet::letter(rl))
+	    for(int l=0;l<asize;l++)
+	      if (l != rl) 
+		S(m,l) = 0;
+	}
       }
     }
   }
+
 
   double calc_root_probability(const alignment& A, const Tree& T,column_cache_t cache,
 			       const MultiModel& MModel) 
@@ -134,130 +180,98 @@ namespace substitution {
     for(const_in_edges_iterator i = T[root].branches_in();i;i++)
       rb.push_back(*i);
 
-    // compute source node for root branches
-    vector<int> source;
-    for(int i=0;i<rb.size();i++)
-      source.push_back(T.directed_branch(rb[i]).source());
-    source.push_back(root);
-
-    // declare the index for the nodes
-    vector<int> index(source.size(),-1);
+    // get the relationships with the sub-alignments
+    ublas::matrix<int> index = get_subA_relationships(rb,A,T);
 
     double total = 0;
-    for(int c=0;c<A.length();c++) {
+    for(int i=0;i<index.size1();i++) {
 
-      // compute indices, and skip column if no relevant nodes present
-      if (not inc(index,source,A,c)) continue;
+      Matrix & S = cache.scratch(i);
 
-      total += Pr(cache.scratch(index.back()),MModel);
+      total += Pr(S,MModel);
     }
-    for(int i=0;i<rb.size();i++)
-      total += cache.sum(rb[i]);
 
     return total;
-  } 
+  }
+
 
 
   void peel_branch(int b0,column_cache_t cache, const alignment& A, const Tree& T, 
 		   const MatCache& transition_P,const MultiModel& MModel)
   {
-    double total = 0;
-    int s0 = T.directed_branch(b0).source();
-
     // compute branches-in
     vector<int> b;
     for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
       b.push_back(*i);
 
-    // compute source nodes for branches-in
-    vector<int> source;
-    for(int i=0;i<b.size();i++)
-      source.push_back(T.directed_branch(b[i]).source());
-    source.push_back(T.directed_branch(b0).source());
-
-    // declare the index for the nodes
-    vector<int> index(source.size(),-1);
+    // get the relationships with the sub-alignments
+    ublas::matrix<int> index = get_subA_relationships(b,A,T);
 
     // The number of directed branches is twice the number of undirected branches
     const int B        = T.n_branches();
     const int n_models = cache.scratch(0).size1();
     const int asize    = cache.scratch(0).size2();
 
-    for(int c=0;c<A.length();c++) {
+    const int length = index.size1()?index.size1():A.seqlength(b0);
 
-      // increment indices and bail if nothing is present in this column
-      if (not inc(index,source,A,c)) continue;
-
-      // if the target not is '-', then also bail
-      if (A.gap(c,s0)) {
-	for(int i=0;i<source.size()-1;i++)
-	  if (not A.gap(c,source[i])) {
-	    total += Pr(cache(index[i],b[i]),MModel);
-	    break;
-	    // there had BETTER not be more than one + connected to a -!
-	  }
-	continue;
-      }
+    std::cerr<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
+    for(int i=0;i<length;i++) {
 
       // compute the distribution at the parent node - single letter
-      if (not b.size() and alphabet::letter(A(c,s0))) 
-	for(int m=0;m<n_models;m++) {
-	  const Matrix& Q = transition_P[m][b0%B];
-	  for(int i=0;i<asize;i++)
-	    cache(index.back(),b0)(m,i) = Q(i,A(c,source.back()));
-	}
-
-      // compute the distribution at the target (parent) node - wildcard
-      else if (b.size() == 0) {
-	for(int m=0;m<n_models;m++) 
-	  for(int i=0;i<asize;i++)
-	    cache(index.back(),b0)(m,i) = 1.0;
+      if (not b.size()) {
+	int l2 = A.seq(b0)[i];
+	if (alphabet::letter(l2))
+	  for(int m=0;m<n_models;m++) {
+	    const Matrix& Q = transition_P[m][b0%B];
+	    for(int l1=0;l1<asize;l1++)
+	      cache(i,b0)(m,l1) = Q(l1,l2);
+	  }
+	else
+	  for(int m=0;m<n_models;m++) 
+	    for(int l=0;l<asize;l++)
+	      cache(i,b0)(m,l) = 1;
       }
-
       // compute the distribution at the target (parent) node - 2 branch distributions
       else if (b.size() == 1 and false)
 	; // compute the source distribution from model-switching matrix
       else if (b.size() == 2) 
       {
 	// compute the source distribution from 2 branch distributions
-	Matrix& S = cache.scratch(index.back());
-	if (not A.gap(c,source[0]) and not A.gap(c,source[1]))
+	Matrix& S = cache.scratch(i);
+	int i0 = index(i,0);
+	int i1 = index(i,1);
+	if (i0 != alphabet::gap and i1 != alphabet::gap)
 	  for(int m=0;m<n_models;m++) 
 	    for(int j=0;j<asize;j++)
-	      S(m,j) = cache(index[0],b[0])(m,j)* cache(index[1],b[1])(m,j);
-	else if (not A.gap(c,source[0]))
-	  S = cache(index[0],b[0]);
-	else if (not A.gap(c,source[1]))
-	  S = cache(index[1],b[1]);
+	      S(m,j) = cache(i0,b[0])(m,j)* cache(i1,b[1])(m,j);
+	else if (i0 != alphabet::gap)
+	  S = cache(i0,b[0]);
+	else if (i1 != alphabet::gap)
+	  S = cache(i1,b[1]);
 	else
-	  for(int m=0;m<n_models;m++) 
-	    for(int j=0;j<asize;j++)
-	      S(m,j) = 1.0;
+	  std::abort();
 
 	// propagate from the source distribution
-	Matrix& R = cache(index.back(),b0);            //name result matrix
+	Matrix& R = cache(i,b0);            //name result matrix
 	for(int m=0;m<n_models;m++) {
 
 	  // FIXME!!! - switch order of MatCache to be MC[b][m]
 	  const Matrix& Q = transition_P[m][b0%B];
 
 	  // compute the distribution at the target (parent) node - multiple letters
-	  for(int i=0;i<asize;i++) {
+	  for(int l=0;l<asize;l++) {
 	    double temp=0;
 	    for(int j=0;j<asize;j++)
-	      temp += Q(i,j)*S(m,j);
-	    R(m,i) = temp;
+	      temp += Q(l,j)*S(m,j);
+	    R(m,l) = temp;
 	  }
 	}
-	
+	Pr(R,MModel);
       }
       else
 	std::abort();
 
     }
-    for(int i=0;i<b.size();i++)
-      total += cache.sum(b[i]);
-    cache.sum(b0) = total;
     cache.validate_branch(b0);
   }
 
@@ -434,9 +448,6 @@ namespace substitution {
 	branches.push_back(T.directed_branch(nodes[i],inside));
     }
 
-    for(int i=0;i<branches.size();i++)
-      p1 += cache.sum(branches[i]);
-
     double p2 = 0;
     for(int column=0;column < A.length();column++) {
       bool present = false;
@@ -466,6 +477,4 @@ namespace substitution {
     double result = Pr(A,P,P.LC);
     return result;
   }
-
-
 }

@@ -39,8 +39,6 @@ protected:
 
   std::vector<bool> up_to_date_;
 
-  std::vector<double> sum_;
-
 public:
 
   int location(int t,int b) const {return mapping[t][b];}
@@ -49,14 +47,6 @@ public:
 
   bool up_to_date(int token,int branch) const {
     return up_to_date_[ mapping[token][branch] ];
-  }
-
-  double sum(int token,int branch) const {
-    return sum_ [ mapping[token][branch] ];
-  }
-
-  double& sum(int token,int branch) {
-    return sum_ [ mapping[token][branch] ];
   }
 
   void validate_branch(int token,int branch);
@@ -113,9 +103,6 @@ public:
 
   bool up_to_date(int b) const {return cache->up_to_date(token,b);}
   void validate_branch(int b) {cache->validate_branch(token,b);}
-
-  double sum(int b) const {return cache->sum(token,b);}
-  double& sum(int b) {return cache->sum(token,b);}
 
   Matrix& operator()(int i,int b) {
     int loc = cache->location(token,b);
