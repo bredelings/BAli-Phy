@@ -89,7 +89,7 @@ namespace statistics {
       sample2[i] = true;
     
     for(int j=0;j<sample1.size();i++,j++)
-      sample2[i] = sample1[i];
+      sample2[i] = sample1[j];
     
     for(int j=0;j<pseudocount;i++,j++)
       sample2[i] = false;
