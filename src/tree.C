@@ -348,6 +348,22 @@ double Tree::distance(int i,int j) const {
   return d;
 }
 
+int Tree::edges_distance(int i,int j) const {
+  int d=0;
+
+  BranchNode* b = nodes_[i];
+
+  while (b->node != j) {
+    if (subtree_contains(b->branch,j)) {
+      d++;
+      b = b->out;
+    }
+    else 
+      b = b->next;
+  }
+  return d;
+}
+
 void Tree::add_first_node() {
   if (nodes_.size())
     throw myexception()<<"Trying to add first node to tree which is not empty";

@@ -134,7 +134,7 @@ bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<
 }
 
 
-bool letters_OK(const alignment& A) {
+bool letters_OK(const alignment& A,const char* key) {
   const alphabet& a = A.get_alphabet();
 
   bool bad=false;
@@ -144,7 +144,10 @@ bool letters_OK(const alignment& A) {
 	bad = true;
 	std::cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<std::endl;
       }
-  if (bad) std::abort();
+  if (bad) {
+    std::cerr<<"key = "<<key<<"\n";
+    std::abort();
+  }
   return not bad;
 }
 

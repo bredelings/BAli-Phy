@@ -470,9 +470,9 @@ namespace A3 {
 
     //  std::cerr<<"new = "<<A<<endl;  
     //  std::cerr<<"new(reordered) = "<<project(A,n0,n1,n2,n3)<<endl;
-    letters_OK(old);
+    letters_OK(old,"3way:old");
     assert(valid(A));
-    letters_OK(A);
+    letters_OK(A,"3way:new");
 
     return A;
   }

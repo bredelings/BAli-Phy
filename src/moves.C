@@ -6,6 +6,7 @@
 #include "likelihood.H"
 #include "util-random.H"
 #include "monitor.H"
+#include "alignment-util.H"
 
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
@@ -121,10 +122,12 @@ vector<int> get_cost(const Tree& T) {
   }
     
   while(not stack1.empty()) {
+    // fill 'stack2' with branches before 'stack1'
     stack2.clear();
     for(int i=0;i<stack1.size();i++)
       append(stack1[i].branches_before(),stack2);
 
+    // clear 'stack1'
     stack1.clear();
 
     for(int i=0;i<stack2.size();i++) {
@@ -132,14 +135,12 @@ vector<int> get_cost(const Tree& T) {
       append(stack2[i].branches_after(),children);
 
       assert(children.size() == 2);
-      if (cost[children[0]] != -1 and cost[children[1]] != -1) {
-	int cost_l = cost[children[0]];
-	if (not children[0].is_leaf_branch())
-	  cost_l++;
+      int cost_l = cost[children[0]];
+      int cost_r = cost[children[1]];
+      if (cost_l != -1 and cost_r != -1) {
+	if (not children[0].is_leaf_branch()) cost_l++;
 
-	int cost_r = cost[children[1]];
-	if (not children[1].is_leaf_branch())
-	  cost_r++;
+	if (not children[1].is_leaf_branch()) cost_r++;
 
 	if (cost_l > cost_r)
 	  std::swap(cost_l,cost_r);
@@ -150,15 +151,20 @@ vector<int> get_cost(const Tree& T) {
     }
   }
   
+  // check that all the costs have been calculated
   for(int i=0;i<cost.size();i++)
     assert(cost[i] != -1);
 
   return cost;
 }
 
-vector<int> walk_tree_path(const Tree& T) {
+vector<int> walk_tree_path(const Tree& T,int root) {
 
   vector<int> cost = get_cost(T);
+
+  vector<int> tcost = cost;
+  for(int i=0;i<cost.size();i++)
+    tcost[i] += T.edges_distance(T.directed_branch(i).target(),root);
 
   vector<const_branchview> b_stack;
   b_stack.reserve(T.n_branches());
@@ -167,13 +173,11 @@ vector<int> walk_tree_path(const Tree& T) {
   vector<const_branchview> children;
   children.reserve(3);
 
-  // put a random leaf branch on both the stack and the list
-  // FIXME - It would still be good to pick a leaf node on a long diagonal path
-  // put a random leaf branch on both the stack and the list
+  // get a leaf with minimum 'tcost'
   int leaf = 0;
   leaf = myrandom(T.n_leaves());
   for(int b=0;b<T.n_leaves();b++)
-    if (cost[T.directed_branch(b)] < cost[T.directed_branch(leaf)])
+    if (tcost[T.directed_branch(b)] < tcost[T.directed_branch(leaf)])
       leaf = b;
 
   assert(T.directed_branch(leaf).source() == leaf);
@@ -215,7 +219,9 @@ vector<int> walk_tree_path(const Tree& T) {
 }
 
 MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
-  vector<int> branches = walk_tree_path(P.T);
+  letters_OK(A,"NNI_walk_tree:in");
+
+  vector<int> branches = walk_tree_path(P.T,P.LC.root);
 
   MCMC::result_t result;
 
@@ -231,12 +237,13 @@ MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
     change_branch_length(A,P,b);
   }
 
+  letters_OK(A,"NNI_walk_tree:out");
   return result;
 }
 
 
 MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
-  vector<int> branches = walk_tree_path(P.T);
+  vector<int> branches = walk_tree_path(P.T,P.LC.root);
 
   MCMC::result_t result;
 
@@ -309,6 +316,8 @@ MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
 
+  letters_OK(A,"frequencies:in");
+
   Parameters P2 = P;
   valarray<double> f = P2.SModel().frequencies();
   f = dirichlet_fiddle(f,0.25/sqrt(f.size()));
@@ -319,6 +328,8 @@ MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
     P = P2;
     result[1] = 1;
   }
+
+  letters_OK(A,"frequencies:out");
 
   return result;
 }
