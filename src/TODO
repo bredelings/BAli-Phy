@@ -35,7 +35,13 @@
       and thus so would b.  So, we could sort b1,..bn in increasing
       order by their first leaf node.  Then we would have a way of
       ordering columns that truly depends only on the leaves.
-   
+
+    * the presence of wildcard characters does affect the ordering.
+
+    * in order to make subA_index order independant of A order, we have to
+      a) sort the columns of subA_index
+      b) be able to compute the columns of subA_index from the SORTED columns
+	 of the branch subAs...
 
    Write in paper: we need a method for caching likelihood frequencies
    that does not depend on features of the alignment, like column
@@ -47,6 +53,7 @@
 check: how does P(data|model) depend on number of frequency bins?
 13. Fix setting of 'fixed' flags in model.H/C
 14. Fix crash when alignment contains only 1 sequence (also check 0,2,3,4 sequences)
+15. How to make priors specified on command line?
 
 fix: gamma+frequency+INV
 
