@@ -212,6 +212,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
     //    p[i].LC.invalidate_node(p[i].T,nodes[i][4]);
     //    p[i].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
+    if (i==0) check_subA(A,a[0],p[0].T);
     p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
 #endif
   }
