@@ -353,6 +353,7 @@ int main(int argc,char* argv[]) {
     le_double_t::initialize();
     cerr.precision(10);
     cout.precision(10);
+    std::ios::sync_with_stdio(false);
 
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
