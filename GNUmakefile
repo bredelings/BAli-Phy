@@ -22,11 +22,11 @@ all: sampler
 
 #----------------- Definitions
 LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0
-DEBUG = pipe g3 #pg 
+DEBUG = pipe g3 # pg
 EXACTFLAGS = --param max-inline-insns-single=500 --param max-inline-insns-auto=150
-DEFS =  NDEBUG 
+DEFS =  # NDEBUG # NDEBUG_DP
 WARN = all no-sign-compare overloaded-virtual
-OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 O3
+OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 # O3
 LDFLAGS = #-pg # -static 
 LI=${CXX}
 
@@ -63,5 +63,5 @@ DEVEL = ../..
 # includes += /usr/local/include/
 src      += 
 include $(DEVEL)/GNUmakefile
-CC=gcc-3.4
-CXX=g++-3.4
+# CC=gcc-3.4
+# CXX=g++-3.4

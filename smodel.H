@@ -23,6 +23,8 @@ protected:
   virtual void recalc() =0;
 public:
 
+  bool full_tree;
+
   /// The alphabet we are modelling substitution on
   virtual const alphabet& Alphabet() const =0;
 
@@ -325,7 +327,8 @@ public:
   {
     for(int i=0;i<M.parameters().size();i++)
       parameters_[i] = M.parameters()[i];
-    
+
+    full_tree = M.full_tree;
   }
 
   virtual ~NestedModel() {delete sub_model;}

@@ -1,5 +1,4 @@
 #include "sample.H"
-#include "likelihood.H"
 #include "rng.H"
 #include <algorithm>
 #include "mcmc.H"
@@ -58,17 +57,6 @@ MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
   return MCMC::no_result;
 }
 
-MCMC::result_t sample_tri(alignment& A, Parameters& P) {
-  const SequenceTree& T = P.T;
-
-  for(int i=0;i<T.leaves();i++) {
-    int b = myrandom(T.branches());
-    sample_tri_one(A,P,b);
-  }
-  return MCMC::no_result;
-}
-
-
 MCMC::result_t sample_alignments_one(alignment& A, Parameters& P,int b) {
   A = sample_alignment(A,P,b);
   return MCMC::no_result;
@@ -123,15 +111,6 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
 
   P2.fiddle();
 
-  double LS1 = likelihood3(A,P);
-  double LP1 = prior3(A,P);
-
-  double LS2 = likelihood3(A,P2);
-  double LP2 = prior3(A,P2);
-
-  double lL_1 = LS1 + LP1;
-  double lL_2 = LS2 + LP2;
-
 #ifndef NDEBUG  
   for(int i=0;i<P.SModel().parameters().size();i++)
     std::cerr<<"    p"<<i<<" = "<<P.SModel().parameters()[i];
@@ -140,18 +119,19 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
   for(int i=0;i<P2.SModel().parameters().size();i++)
     std::cerr<<"    p"<<i<<" = "<<P2.SModel().parameters()[i];
   std::cerr<<endl<<endl;
-
-  std::cerr<<"L1 = "<<lL_1<<" = "<<LS1<<" + "<<LP1<<endl;
-  std::cerr<<"L2 = "<<lL_2<<" = "<<LS2<<" + "<<LP2<<endl;
 #endif
 
-  if (myrandomf() < exp(lL_2 - lL_1)) {
+  if (P.accept_MH(A,P,A,P2)) {
     P = P2;
-    //    std::cerr<<"accepted"<<endl;
+#ifndef NDEBUG
+    std::cerr<<"success\n";
+#endif
     return MCMC::success;
   }
   else {
-    //    std::cerr<<"rejected"<<endl;
+#ifndef NDEBUG
+    std::cerr<<"failure\n";
+#endif
     return MCMC::failure;
   }
   

@@ -9,7 +9,8 @@
 
 namespace substitution {
 
-Model::Model() {}
+Model::Model():full_tree(true)
+{ }
 
 // Q(i,j) = S(i,j)*pi[j]   for i!=j
 // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]

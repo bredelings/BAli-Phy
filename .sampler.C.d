@@ -1,1 +1,1 @@
-.sampler.C.d sampler.o: sampler.C myexception.H mytypes.H tree.H substitution.H   alignment.H alphabet.H sequence.H parameters.H smodel.H imodel.H rng.H   sample.H mcmc.H likelihood.H arguments.H util.H
+.sampler.C.d sampler.o: sampler.C myexception.H mytypes.H tree.H alignment.H   alphabet.H sequence.H rng.H sample.H parameters.H smodel.H imodel.H   mcmc.H likelihood.H arguments.H util.H

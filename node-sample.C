@@ -3,7 +3,6 @@
 #include <algorithm>
 #include "sample.H"
 #include <iostream>
-#include "likelihood.H"
 #include "logsum.H"
 #include "choose.H"
 #include "bits.H"

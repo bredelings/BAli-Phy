@@ -1,5 +1,20 @@
 #include "likelihood.H"
 #include "logsum.H"
+#include "substitution.H"
+
+double prior3(const alignment& A,const Parameters& P) {
+  return prior_HMM(A,P) + prior(P);
+}
+
+double likelihood3(const alignment& A,const Parameters& P) {
+  return substitution::Pr(A,P); // also deals w/ frequencies
+}
+
+double probability3(const alignment& A,const Parameters& P) {
+  return likelihood3(A,P) + prior3(A,P);
+}
+
+
 
 double log_double_factorial(int n) {
   double x = 0;

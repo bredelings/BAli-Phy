@@ -244,23 +244,13 @@ namespace MCMC {
 
   /// A Sampler: based on a collection of moves to run every iteration
   class Sampler: public MoveAll {
-    /// Form of Probability functions
-    typedef double(&Pr_func)(const alignment&,const Parameters&);
-
-    Pr_func prior;
-    Pr_func likelihood;
-
-    // How do we link moves into probability model?
-    double probability(const alignment& A,const Parameters& P) {
-      return prior(A,P) + likelihood(A,P);
-    }
 
   public:
     /// Run the sampler for 'max' iterations
     void go(alignment& A, Parameters& P, int max);
 
-    Sampler(const string& name,Pr_func pf1,Pr_func pf2)
-      :MoveAll(name),prior(pf1),likelihood(pf2) {};
+    Sampler(const string& name)
+      :MoveAll(name) {};
   };
 
 }

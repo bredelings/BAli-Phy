@@ -1,5 +1,4 @@
 #include "rng.H"
-#include "likelihood.H"
 #include "sample.H"
 #include "mcmc.H"
 #include "util.H"
@@ -8,13 +7,7 @@
 // their branch?
 
 MCMC::result_t do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
-  
-  double p1 = probability3(A,P);
-  double p2 = probability3(A,P2);
-  
-  std::cerr<<" MH ["<<p2-p1<<"] : ";
-
-  if (myrandomf() < exp(p2-p1)) {
+  if (P.accept_MH(A,P,A,P2)) {
     P=P2;
     std::cerr<<"accepted\n";
     return MCMC::success;

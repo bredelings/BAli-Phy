@@ -1,1 +1,1 @@
-.branch-sample2.C.d branch-sample2.o: branch-sample2.C sample.H mytypes.H alignment.H   alphabet.H myexception.H sequence.H tree.H parameters.H smodel.H   imodel.H mcmc.H rng.H substitution.H logsum.H likelihood.H choose.H   dpmatrix.H 2way.H
+.branch-sample2.C.d branch-sample2.o: branch-sample2.C sample.H mytypes.H alignment.H   alphabet.H myexception.H sequence.H tree.H parameters.H smodel.H   imodel.H mcmc.H rng.H logsum.H choose.H dpmatrix.H 2way.H   substitution.H

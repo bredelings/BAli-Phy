@@ -6,6 +6,10 @@
 
 using std::valarray;
 
+// Can I make Q into a general function, backed by a matrix in some cases?
+
+
+/// A Hidden Markov Model - represented by the transition matrix and accessory functions
 class HMM {
 public:
   Matrix Q;
@@ -19,6 +23,7 @@ public:
   bool silent(int S) {return not state_emit[S];}
   bool silent_network(int S);
 
+  // perhaps I should change this NOT to do a '-1'
   int nstates() const {return state_emit.size()-1;}
   int endstate() const {return nstates();}
 

@@ -2,36 +2,18 @@
 #include <iostream>
 #include <cmath>
 #include "sample.H"
-#include "substitution.H"
 #include "logsum.H"
-#include "likelihood.H"
 #include "choose.H"
 #include "2way.H"
 
-
-//TODO - 1. calculate the probability of 
-//  a) the path we came in with
-//  b) the path we chose
-//  c) the most probable path?
-
-// 2. Calculate the likelihood of the reassembled matrix and the original matrix
-//     - see if the difference is the same as the difference between the path probabilities
+// for peel()
+#include "substitution.H"
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
 
 using std::abs;
 using namespace A2;
-
-double sPr(const alignment& A,const Parameters& P,int node1,int node2) {
-  double Pr=0;
-  for(int column=0;column<A.length();column++) {
-    if (not A.gap(column,node1) or not A.gap(column,node2))
-      Pr += substitution::Pr(A,P,column);
-  }
-  return Pr;
-}
-
 
 inline double sum(const valarray<double>& v) {
   return v.sum();
@@ -115,8 +97,8 @@ double path_Q_subst(const vector<int>& path,
 
 
 
-double path_P(const vector<int>& path,const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& Theta) {
-  const Matrix& Q = Theta.IModel.Q;
+double path_P(const vector<int>& path,const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& P) {
+  const Matrix& Q = P.IModel.Q;
 
   const int I = M.size1()-1;
   const int J = M.size2()-1;
@@ -161,8 +143,8 @@ using std::valarray;
 
 // g1 -> g2, never g2 -> g1
 
-vector<int> sample_path(const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& Theta) {
-  const Matrix& Q = Theta.IModel.Q;
+vector<int> sample_path(const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& P) {
+  const Matrix& Q = P.IModel.Q;
 
   vector<int> path;
   const int I = M.size1()-1;
@@ -194,10 +176,10 @@ vector<int> sample_path(const Matrix& M,const Matrix& G1,const Matrix& G2,const 
   return path;
 }
 
-static vector< vector<valarray<double> > > distributions(const alignment& A,const Parameters& Theta,
+static vector< vector<valarray<double> > > distributions(const alignment& A,const Parameters& P,
 					const vector<int>& seq,int b,bool up) {
   const alphabet& a = A.get_alphabet();
-  const substitution::MultiRateModel& MRModel = Theta.SModel();
+  const substitution::MultiRateModel& MRModel = P.SModel();
 
   vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
 
@@ -209,9 +191,9 @@ static vector< vector<valarray<double> > > distributions(const alignment& A,cons
     for(int r=0;r<MRModel.nrates();r++) {
       dist[i][r].resize(a.size());
       dist[i][r] = substitution::peel(residues,
-				      Theta.T,
+				      P.T,
 				      MRModel.BaseModel(),
-				      Theta.transition_P(r),
+				      P.transition_P(r),
 				      b,up);
     }
 
@@ -226,13 +208,13 @@ static vector< vector<valarray<double> > > distributions(const alignment& A,cons
   return dist;
 }
 
-alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
-  const tree& T = Theta.T;
-  const Matrix& Q = Theta.IModel.Q;
+alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
+  const tree& T = P.T;
+  const Matrix& Q = P.IModel.Q;
 
-  const vector<double>& pi = Theta.IModel.pi;
+  const vector<double>& pi = P.IModel.pi;
 
-  const substitution::MultiRateModel& MRModel = Theta.SModel();
+  const substitution::MultiRateModel& MRModel = P.SModel();
   const valarray<double>& frequency = MRModel.BaseModel().frequencies();
 
   int node1 = T.branch(b).parent();
@@ -252,8 +234,8 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
 
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
-  vector< vector< valarray<double> > > dists1 = distributions(old,Theta,seq1,b,true);
-  vector< vector< valarray<double> > > dists2 = distributions(old,Theta,seq2,b,false);
+  vector< vector< valarray<double> > > dists1 = distributions(old,P,seq1,b,true);
+  vector< vector< valarray<double> > > dists2 = distributions(old,P,seq2,b,false);
 
   valarray<double> g1_sub(seq2.size());
   for(int i=0;i<seq2.size();i++) {
@@ -372,27 +354,27 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
 
   /************** Sample a path from the matrix ********************/
 
-  vector<int> path = sample_path(M,G1,G2,Theta);
+  vector<int> path = sample_path(M,G1,G2,P);
 
   alignment A = construct(old,path,group1,seq1,seq2);
   /*--------------------------------------------------------------*/
-#ifndef NDEBUG
+#ifndef NDEBUG_DP
   vector<int> path1 = get_path(old,node1,node2);
   vector<int> path2 = get_path(A,node1,node2);
   path.push_back(3);
   assert(path2 == path);
 
-  double ls1 = sPr(old,Theta,node1,node2);
-  double ls2 = sPr(A  ,Theta,node1,node2);
+  double ls1 = P.likelihood(old,P);
+  double ls2 = P.likelihood(A  ,P);
 
-  double lp1 = prior_branch(old,Theta.IModel,node1,node2);
-  double lp2 = prior_branch(A  ,Theta.IModel,node1,node2);
+  double lp1 = P.prior(old,P);
+  double lp2 = P.prior(A,P);
 
-  double p1 = path_P(path1,M,G1,G2,Theta);
-  double p2 = path_P(path2,M,G1,G2,Theta);
+  double p1 = path_P(path1,M,G1,G2,P);
+  double p2 = path_P(path2,M,G1,G2,P);
 
-  double l1 = probability3(old,Theta);
-  double l2 = probability3(A,Theta);
+  double l1 = P.probability(old,P);
+  double l2 = P.probability(A,P);
 
   double l1B = ls1 + lp1;
   double l2B = ls2 + lp2;

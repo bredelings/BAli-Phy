@@ -6,7 +6,6 @@
 #include "myexception.H"
 #include "mytypes.H"
 #include "tree.H"
-#include "substitution.H"
 #include "alignment.H"
 #include "rng.H"
 #include "sample.H"
@@ -139,7 +138,7 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
 }
 
 void do_showonly(const alignment& A,const Parameters& P) {
-  double PS = substitution::Pr(A,P);
+  double PS = P.likelihood(A,P);
   double PA = prior_HMM(A,P);
   double PT = prior(P.T,P.branch_mean);
   double PP = P.SModel().prior();
@@ -197,7 +196,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   alignment_moves.add(1, alignment_branch_moves);
 
   // aligment :: sample_nodes
-  MoveEach internal_nodes_move("nodes");
+  MoveEach internal_nodes_move("nodes_master");
   MoveArgSingle nodes_move1("sample_nodes:alignment:nodes",sample_nodes_one,internal_nodes);
   MoveArgSingle nodes_move2("sample_nodes2:alignment:nodes",sample_nodes2_one,internal_nodes);
   internal_nodes_move.add(1,nodes_move1);
@@ -238,13 +237,13 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   // parameters
   SingleMove parameter_moves(change_parameters,"parameters");
 
+  //FIXME - use the right prior and likelihood here!
   // full sampler
-  Sampler sampler("sampler",prior3,likelihood3);
+  Sampler sampler("sampler");
   sampler.add(1,alignment_moves);
   sampler.add(1,tree_moves);
   sampler.add(P.T.branches(),parameter_moves);
 
-  //FIXME - make MCMC inherit from the collection of moves.
   vector<string> disable;
   vector<string> enable;
   if (args.set("disable"))
@@ -356,6 +355,8 @@ int main(int argc,char* argv[]) {
       delete temp;
     }
 
+    if (args.set("star-letters"))
+      full_smodel->full_tree = false;
     
     /*-------------Choose an indel model--------------*/
     int IMlength = 500;    //FIXME - perhaps we should choose \tau here

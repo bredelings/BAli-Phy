@@ -2,9 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include "sample.H"
-#include "substitution.H"
 #include "logsum.H"
-#include "likelihood.H"
 #include "choose.H"
 #include "bits.H"
 #include "util.H"
@@ -12,6 +10,8 @@
 #include "3way.H"
 #include "dpmatrix.H"
 
+// for prior_HMM_nogiven
+#include "likelihood.H"
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with
@@ -193,7 +193,7 @@ alignment sample_node2(const alignment& old,const Parameters& P,int node) {
 
   alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
 
-#ifndef NDEBUG
+#ifndef NDEBUG_DP
   //--------------- Check alignment construction ------------------//
 
   // get the paths through the 3way alignment, from the entire alignment
@@ -211,23 +211,15 @@ alignment sample_node2(const alignment& old,const Parameters& P,int node) {
   assert(valid(A));
 
   //-------------- Check relative path probabilities --------------//
-  double s1 = substitution::Pr(old,P);
-  double s2 = substitution::Pr(A,P);
+  double s1 = P.likelihood(old,P);
+  double s2 = P.likelihood(A,P);
 
-  double lp1 = prior_branch(project(old,n0,n1,n2,n3),P.IModel,0,1) +
-    prior_branch(project(old,n0,n1,n2,n3),P.IModel,0,2) +
-    prior_branch(project(old,n0,n1,n2,n3),P.IModel,0,3);
-
-  double lp2 = prior_branch(project(A,n0,n1,n2,n3),P.IModel,0,1) +
-    prior_branch(project(A,n0,n1,n2,n3),P.IModel,0,2) +
-    prior_branch(project(A,n0,n1,n2,n3),P.IModel,0,3);
+  double lp1 = prior_HMM_nogiven(old,P);
+  double lp2 = prior_HMM_nogiven(A  ,P);
 
   double diff = Matrices.check(path_old,path_new,lp1,s1,lp2,s2);
 
   if (abs(diff) > 1.0e-9) {
-    std::cerr<<prior_HMM_nogiven(old,P) - lp1<<endl;
-    std::cerr<<prior_HMM_nogiven(A  ,P) - lp2<<endl;
-
     std::cerr<<old<<endl;
     std::cerr<<A<<endl;
 

@@ -1,5 +1,33 @@
 #include "parameters.H"
 #include "rng.H"
+#include "substitution.H"
+#include "likelihood.H"
+
+double Parameters::likelihood(const alignment& A,const Parameters& P) const {
+  if (SModel_->full_tree)
+    return substitution::Pr(A,P);
+  else
+    return substitution::Pr_star(A,P);
+}
+
+double Parameters::prior(const alignment& A,const Parameters& P) const {
+  return prior3(A,P);
+}
+
+bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
+		 const alignment& A2,const Parameters& P2) const {
+  double p1 = probability3(A1,P1);
+  double p2 = probability3(A2,P2);
+
+#ifndef NDEBUG
+  std::cerr<<" MH ["<<p2-p1<<"] : ";
+#endif
+
+  if (myrandomf() < exp(p2-p1)) 
+    return true;
+  else
+    return false;
+}
 
 
 void Parameters::fiddle() {

@@ -2,9 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include "sample.H"
-#include "substitution.H"
 #include "logsum.H"
-#include "likelihood.H"
 #include "choose.H"
 #include "bits.H"
 #include "util.H"
@@ -12,26 +10,57 @@
 #include "3way.H"
 #include "dpmatrix.H"
 
+// for peel
+#include "substitution.H"
 
-//TODO - 1. calculate the probability of 
-//  a) the path we came in with
-//  b) the path we chose
-//  c) the most probable path?
-
-// 2. Calculate the likelihood of the reassembled matrix and the original matrix
-//     - see if the difference is the same as the difference between the path probabilities
+// for prior_HMM_nogiven
+#include "likelihood.H"
 
 //Assumptions:
-//  a) we assume that the internal node is the parent
-//     sequence in each of the sub-alignments
+//  a) we assume that the internal node is the parent sequence in each of the sub-alignments
 
 using std::abs;
 using std::valarray;
 
 using namespace A3;
 
-vector< vector<valarray<double> > > distributions(const alignment& A,const Parameters& P,
-					const vector<int>& seq,int n0,int n1) {
+vector< vector<valarray<double> > > distributions_star(const alignment& A,const Parameters& P,
+					const vector<int>& seq,int n0,const valarray<bool>& group) {
+  const alphabet& a = A.get_alphabet();
+  const substitution::MultiRateModel& MRModel = P.SModel();
+  const SequenceTree& T = P.T;
+
+  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
+
+  for(int i=0;i<dist.size();i++) {
+    vector<int> residues(A.size2());
+
+    for(int r=0;r<MRModel.nrates();r++) {
+      dist[i][r].resize(a.size(),1.0);
+
+      for(int n=0;n<T.leaves();n++) {
+	if (not group[n]) continue;
+
+	int letter = A(seq[i],n);
+	if (not a.letter(letter)) continue;
+
+	const Matrix& Q = P.transition_P(r,n);
+
+	// Pr(root=l) includes Pr(l->letter)
+	for(int l=0;l<a.size();l++)
+	  dist[i][r][l] *= Q(l,letter);
+
+      }
+    }
+  }
+
+  return dist;
+}
+
+
+// FIXME - convert this to just take a valarray<bool> and a root, and pass them directly to substitution.C
+vector< vector<valarray<double> > > distributions_tree(const alignment& A,const Parameters& P,
+					const vector<int>& seq,int n0,const valarray<bool>& group) {
   const alphabet& a = A.get_alphabet();
   const substitution::MultiRateModel& MRModel = P.SModel();
 
@@ -47,7 +76,7 @@ vector< vector<valarray<double> > > distributions(const alignment& A,const Param
 				      P.T,
 				      MRModel.BaseModel(),
 				      P.transition_P(r),
-				      n0,n1,n0);
+				      n0,group);
     }
 
     // note: we could normalize frequencies to sum to 1
@@ -56,51 +85,14 @@ vector< vector<valarray<double> > > distributions(const alignment& A,const Param
   return dist;
 }
 
-//FIXME - with a modified 'peel' routine, we could just pass in a 'group' valarray:
-//  - voila: only one routine!
-//  - then perhaps we could merge with the 'distributions' routine in branch-sample.C
-
-vector< vector<valarray<double> > > distributions23(const alignment& A,const Parameters& P,
-					  const vector<int>& seq,int n0,int n1) {
-  const alphabet& a = A.get_alphabet();
-  const substitution::MultiRateModel& MRModel = P.SModel();
-
-  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
-
-  for(int i=0;i<dist.size();i++) {
-    vector<int> residues(A.size2());
-    for(int j=0;j<residues.size();j++)
-      residues[j] = A(seq[i],j);
-    for(int r=0;r<MRModel.nrates();r++) {
-      dist[i][r].resize(a.size());
-      dist[i][r] = substitution::peel(residues,
-				      P.T,
-				      MRModel.BaseModel(),
-				      P.transition_P(r),
-				      n1,n0,n0);
-    }
-
-    // note: we could normalize frequencies to sum to 1
-  }
-
-  return dist;
-}
-
-//alignment tri_sample_alignment(const alignment& old,const Parameters& P,
-//			       int node1,int node2) {
-
-
-// FIXME - randomly try any order - but n0 has to be first, somehow
-// Generate the division into n0|n1|n2,n3 independantly of the ordering
-
-// FIXME - write a routine which takes On0,On1,On2,On3, and also n0,n1,n2,n3
-//         make another routine which just take n0 (which could become
-//         tri_sample_one() )
+typedef vector< vector< valarray<double> > > (*distributions_t)(const alignment&, const Parameters&,
+							      const vector<int>&,int,const valarray<bool>&);
 
 // FIXME - actually resample the path multiple times - pick one on
 // opposite side of the middle 
 alignment tri_sample_alignment(const alignment& old,const Parameters& P,
-			   int node1,int node2) {
+			       int node1,int node2)
+{
   const tree& T = P.T;
 
   const vector<double>& pi = P.IModel.pi;
@@ -117,15 +109,19 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
   int n2 = T[n0].left();
   int n3 = T[n0].right();
 
+  // make sure n1 == node2
   if (node2 == n1)
-    ;
+    ; // good
   else if (node2 == n2)
-    std::swap(n1,n2);
+    std::swap(n1,n2); // 
   else if (node2 == n3)
     std::swap(n1,n3);
   else
     assert(0);
 
+  // randomize the order here
+  if (myrandom(2) == 1)
+    std::swap(n2,n3);
 
   /*------------- Compute sequence properties --------------*/
   valarray<bool> group1 = T.partition(n0,n1);
@@ -170,10 +166,13 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
     kcol[c] = k;
   }
 
-
   // Precompute distributions at n0
-  vector< vector< valarray<double> > > dists1 = distributions(old,P,seq1,n0,n1);
-  vector< vector< valarray<double> > > dists23 = distributions23(old,P,seq23,n0,n1);
+  distributions_t distributions = distributions_tree;
+  if (not P.SModel().full_tree)
+    distributions = distributions_star;
+
+  vector< vector< valarray<double> > > dists1 = distributions(old,P,seq1,n0,group1);
+  vector< vector< valarray<double> > > dists23 = distributions(old,P,seq23,n0,group2|group3);
 
 
   /*-------------- Create alignment matrices ---------------*/
@@ -282,7 +281,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
 
   alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
 
-#ifndef NDEBUG
+#ifndef NDEBUG_DP
   //--------------- Check alignment construction ------------------//
 
   // get the paths through the 3way alignment, from the entire alignment
@@ -300,23 +299,15 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
   assert(valid(A));
 
   //-------------- Check relative path probabilities --------------//
-  double s1 = substitution::Pr(old,P);
-  double s2 = substitution::Pr(A,P);
+  double s1 = P.likelihood(old,P);
+  double s2 = P.likelihood(A,P);
 
-  double lp1 = prior_branch(project(old,n0,n1,n2,n3),P.IModel,0,1) +
-    prior_branch(project(old,n0,n1,n2,n3),P.IModel,0,2) +
-    prior_branch(project(old,n0,n1,n2,n3),P.IModel,0,3);
-
-  double lp2 = prior_branch(project(A,n0,n1,n2,n3),P.IModel,0,1) +
-    prior_branch(project(A,n0,n1,n2,n3),P.IModel,0,2) +
-    prior_branch(project(A,n0,n1,n2,n3),P.IModel,0,3);
+  double lp1 = prior_HMM_nogiven(old,P);
+  double lp2 = prior_HMM_nogiven(A  ,P);
 
   double diff = Matrices.check(path_old,path_new,lp1,s1,lp2,s2);
 
   if (abs(diff) > 1.0e-9) {
-    std::cerr<<prior_HMM_nogiven(old,P) - lp1<<endl;
-    std::cerr<<prior_HMM_nogiven(A  ,P) - lp2<<endl;
-
     std::cerr<<old<<endl;
     std::cerr<<A<<endl;
 

@@ -1,1 +1,1 @@
-.branch-lengths.C.d branch-lengths.o: branch-lengths.C rng.H likelihood.H alignment.H   alphabet.H mytypes.H myexception.H sequence.H tree.H parameters.H   smodel.H imodel.H substitution.H sample.H mcmc.H rng.H util.H
+.branch-lengths.C.d branch-lengths.o: branch-lengths.C rng.H sample.H mytypes.H alignment.H   alphabet.H myexception.H sequence.H tree.H parameters.H smodel.H   imodel.H mcmc.H util.H

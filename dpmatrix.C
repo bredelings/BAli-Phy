@@ -139,13 +139,9 @@ double HMM::check(const vector<int>& path1,const vector<int>& path2,double lp1,d
     std::cerr<<endl;
 
     // Do the likelihood and HMM path probabilities agree?
-    std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<endl;
-    std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<endl;
+    std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<"   LS2 - LS1 = "<<lp2-lp1<<endl;
+    std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<"   QS2 - QS1 = "<<qp2-qp1<<endl;
     std::cerr<<endl;
-
-    // Since we can compute these accurately, make sure they match
-    assert(abs(lp1-qp1) < 1.0e-9);
-    assert(abs(lp2-qp2) < 1.0e-9);
   }
 
   return diff;

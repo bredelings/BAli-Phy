@@ -2,20 +2,13 @@
 #include <iostream>
 #include <cmath>
 #include "sample.H"
-#include "substitution.H"
 #include "logsum.H"
-#include "likelihood.H"
 #include "choose.H"
 #include "dpmatrix.H"
 #include "2way.H"
 
-//TODO - 1. calculate the probability of 
-//  a) the path we came in with
-//  b) the path we chose
-//  c) the most probable path?
-
-// 2. Calculate the likelihood of the reassembled matrix and the original matrix
-//     - see if the difference is the same as the difference between the path probabilities
+// for peel()
+#include "substitution.H"
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
@@ -34,6 +27,7 @@ static vector< vector<valarray<double> > > distributions(const alignment& A,cons
     vector<int> residues(A.size2());
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
+
     for(int r=0;r<MRModel.nrates();r++) {
       dist[i][r].resize(a.size());
       dist[i][r] = substitution::peel(residues,
@@ -116,24 +110,21 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
   alignment A = construct(old,path,group1,seq1,seq2);
 
   /*--------------------------------------------------------------*/
-#ifndef NDEBUG
+#ifndef NDEBUG_DP
   vector<int> path_old = get_path(old,node1,node2);
   vector<int> path_new = get_path(A,node1,node2);
 
   path.push_back(3);
   assert(path_new == path);
 
-  double ls1 = substitution::Pr(old,P);
-  double ls2 = substitution::Pr(A  ,P);
+  double ls1 = P.likelihood(old,P);
+  double ls2 = P.likelihood(A  ,P);
 
-  double lp1 = prior_branch(old,P.IModel,node1,node2);
-  double lp2 = prior_branch(A  ,P.IModel,node1,node2);
+  double lp1 = P.prior(old,P);
+  double lp2 = P.prior(A  ,P);
 
   double diff = Matrices.check(path_old,path_new,lp1,ls1,lp2,ls2);
   if (abs(diff) > 1.0e-9) {
-    std::cerr<<prior_HMM_nogiven(old,P) - lp1<<endl;
-    std::cerr<<prior_HMM_nogiven(A  ,P) - lp2<<endl;
-
     std::cerr<<old<<endl;
     std::cerr<<A<<endl;
 

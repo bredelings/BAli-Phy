@@ -7,6 +7,7 @@
 #include <valarray>
 #include "smodel.H"
 #include "imodel.H"
+#include "alignment.H"
 
 /******************************* parameter-containing class **************************/
 /// A class to contain all the MCMC state except the alignment
@@ -17,11 +18,30 @@ class Parameters {
   /// The substitution::Model
   substitution::MultiRateModel* SModel_;
 
+
 public:
   /// Is pinning enabled or not?
   vector<double> constants;
   /// Is pinning enabled or not?
   int features;
+
+  /// Which model are we currently running
+  int model;
+
+
+  /// The likelihood function
+  double likelihood(const alignment& A,const Parameters& P) const; 
+
+  /// The prior
+  double prior(const alignment& A,const Parameters& P) const;
+
+  /// Now we can link moves into probability model?
+  double probability(const alignment& A,const Parameters& P) const {
+    return prior(A,P) + likelihood(A,P);
+  }
+
+  bool accept_MH(const alignment& A1,const Parameters& P1,
+		 const alignment& A2,const Parameters& P2) const;
 
   /// The IndelModel
   IndelModel IModel;

@@ -1,13 +1,14 @@
 #include <cmath>
 #include <valarray>
 #include <algorithm>
-#include "sample.H"
 #include <iostream>
-#include "likelihood.H"
+#include "sample.H"
 #include "logsum.H"
 #include "choose.H"
 #include "bits.H"
 #include "mcmc.H"
+// for prior(P) [versus prior(A,P) ]
+#include "likelihood.H"
 
 //CHECK - all those states that can't be reached - can s2_ == s2?
 //CHECK (how?) - do the differences for both +/- (5 alignments) and 
@@ -398,9 +399,23 @@ MCMC::result_t sample_topology(alignment& A,Parameters& P1,const Parameters& P2,
 
   std::cerr<<" PA1 = "<<PA1<<"       PA2 = "<<PA2<<"       PA3 = "<<PA3<<std::endl;
 
-  double PS1 = substitution::Pr(A,P1);
-  double PS2 = substitution::Pr(A,P2);
-  double PS3 = substitution::Pr(A,P3);
+  double PS1 = 0;
+  double PS2 = 0;
+  double PS3 = 0;
+
+  if (P1.SModel().full_tree) {
+    PS1 = P1.likelihood(A,P1);
+    PS2 = P1.likelihood(A,P2);
+    PS3 = P1.likelihood(A,P3);
+  }
+  else {
+#ifndef NDEBUG
+    PS1 = P1.likelihood(A,P1);
+    PS2 = P1.likelihood(A,P2);
+    PS3 = P1.likelihood(A,P3);
+#endif
+  }
+
 
   std::cerr<<" PS1 = "<<PS1<<"       PS2 = "<<PS2<<"       PS3 = "<<PS3<<std::endl;
 
@@ -439,8 +454,8 @@ MCMC::result_t sample_topology(alignment& A,Parameters& P1,const Parameters& P2,
 
   //  std::cerr<<old<<endl<<endl;
   //  std::cerr<<A<<endl<<endl;
-  double l1 = PS1 + prior3(old,P1);
-  double l2 = PS + prior3(A,*chosen_P);
+  double l1 = PS1 + P1.prior(old,P1);
+  double l2 = PS + P1.prior(A,*chosen_P);
 
   std::cerr<<" L1 = "<<l1<<"    L2 = "<<l2<<std::endl;
 

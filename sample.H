@@ -12,7 +12,7 @@ MCMC::result_t slide_branch_length(const alignment& A, Parameters& Theta,int b,b
 MCMC::result_t change_branch_length(const alignment& A, Parameters& Theta,int b);
 
 
-// Resample the 3-star alignment, holding the 2/3 order constant.
+/// Resample the 3-star alignment, holding the n2/n3 order constant.
 alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 			       int node1,int node2);
 
@@ -56,7 +56,6 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& Theta,int b)
 
 MCMC::result_t change_parameters(alignment& A,Parameters& Theta);
 
-//MCMC::result_t sample_tri(alignment&, Parameters&);
 MCMC::result_t sample_tri_one(alignment&, Parameters&,int);
 
 #endif

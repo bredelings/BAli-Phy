@@ -115,14 +115,19 @@ namespace substitution {
   }
 
 
-valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
-		      const vector<Matrix>& transition_P,int node1, int node2, int root) {
-  const alphabet& a = SModel.Alphabet();
+  /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
 
-  /**************** Find our branch, and orientation *****************/
-  valarray<bool> group(true,T.num_nodes());
-  if (node1 != node2)
-    group = T.partition(node1,node2);
+  /*!
+    \param residues The letters/gaps/non-gaps at each node
+    \param T The tree
+    \param SModel The substitution Model
+    \param transition_P The transition matrices for each branch
+    \param root The node at which we are assessing the probabilities
+    \param group The nodes from which to consider info
+   */
+valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
+		      const vector<Matrix>& transition_P,int root, const valarray<bool>& group) {
+  const alphabet& a = SModel.Alphabet();
 
   /******* Put the info from the letters into the distribution *******/
   bool any_letters = false;
@@ -172,14 +177,19 @@ valarray<double> peel(const vector<int>& residues,const tree& T,const Reversible
   int node2 = T.branch(b).parent();
   if (not up) std::swap(node1,node2);
 
-  return peel(residues,T,SModel,transition_P,node1,node2,root);
+  valarray<bool> group = T.partition(node1,node2);
+
+  return peel(residues,T,SModel,transition_P,root,group); 
 }
+
 
 double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
 	  const vector<Matrix>& transition_P,int root) {
   assert(residues.size() == T.num_nodes()-1);
 
-  valarray<double> rootD = peel(residues,T,SModel,transition_P,root,root,root);
+  valarray<double> rootD = peel(residues,T,SModel,transition_P,
+				root,valarray<bool>(true,T.num_nodes())
+				);
 
   rootD *= SModel.frequencies();
 
@@ -250,7 +260,7 @@ double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SM
   double p=0;
   for(int lroot=0;lroot<a.size();lroot++) {
     double temp=SModel.frequencies()[lroot];
-    for(int b=0;b<T.branches();b++) {
+    for(int b=0;b<T.leaves();b++) {
       const Matrix& Q = transition_P[b];
 
       int lleaf = column[b];

@@ -1,9 +1,12 @@
 #include "mcmc.H"
 #include "sample.H"
-#include "likelihood.H"
 #include "myexception.H"
 #include "rng.H"
 #include "util.H"
+
+//for the different models used in print_stats()
+#include "likelihood.H"
+#include "substitution.H"
 
 namespace MCMC {
 using std::valarray;
@@ -383,8 +386,7 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
 }
 
 
-void print_stats(std::ostream& o,const alignment& A,const Parameters& P,
-		 double probability(const alignment&,const Parameters&)) {
+void print_stats(std::ostream& o,const alignment& A,const Parameters& P) {
   o<<endl;
   o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
   o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
@@ -440,7 +442,7 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
   std::cout<<endl;
   
   std::cout<<"Initial Alignment = \n";
-  print_stats(std::cout,A,P,probability3);
+  print_stats(std::cout,A,P);
     
   std::cout<<"Initial Tree = \n";
   std::cout<<T<<endl<<endl;
@@ -449,8 +451,8 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
   const int start_after = 100;// 600*correlation_time;
   int total_samples = 0;
 
-  double Pr_prior = prior(A,P);
-  double Pr_likelihood = likelihood(A,P);
+  double Pr_prior = P.prior(A,P);
+  double Pr_likelihood = P.likelihood(A,P);
   double Pr = Pr_prior + Pr_likelihood;
 
   double MAP_score = Pr;
@@ -465,7 +467,7 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
     if (iterations > start_after) {
       if (iterations%correlation_time == 0) {
 	std::cout<<"iterations = "<<iterations<<endl;
-	print_stats(std::cout,A,P,probability3);
+	print_stats(std::cout,A,P);
 	std::cout<<endl<<endl;
       }
     }
@@ -476,8 +478,8 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
 
     iterate(A2,P2);
 
-    double new_prior = prior(A2,P2);
-    double new_likelihood = likelihood(A2,P2);
+    double new_prior = P.prior(A2,P2);
+    double new_likelihood = P.likelihood(A2,P2);
     double new_Pr = new_prior + new_likelihood;
 
     /*---------------------- estimate MAP ----------------------*/
@@ -492,7 +494,7 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
 
     if (not MAP_printed and iterations % 50 == 0) {
       std::cout<<"iterations = "<<iterations<<"       ML = "<<MAP_score<<endl;
-      print_stats(std::cout,MAP_alignment,MAP_P,probability3);
+      print_stats(std::cout,MAP_alignment,MAP_P);
       MAP_printed = true;
     }
 
@@ -501,8 +503,8 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
     if (iterations%50 == 0 or std::abs(Pr - new_Pr)>12) {
       print_move_stats();
 #ifndef NDEBUG
-      print_stats(std::cerr,A,P,probability3);
-      print_stats(std::cerr,A2,P2,probability3);
+      print_stats(std::cerr,A,P);
+      print_stats(std::cerr,A2,P2);
 
       A2.print_fasta(std::cerr);
 #endif
