@@ -13,9 +13,9 @@ using std::vector;
 
 namespace substitution {
 
-  double shift_lapace_pdf(double x, double mu, double sigma) {
+  double shift_laplace_pdf(double x, double mu, double sigma) {
     double a = sigma/sqrt(2);
-    return gsl_ran_laplace(std::abs(x-mu),a);
+    return gsl_ran_laplace_pdf(std::abs(x-mu),a);
   }
 
   Model::Model(int s)
