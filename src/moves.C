@@ -226,7 +226,7 @@ MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
 
-    std::cerr<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if (P.T.branch(b).is_internal_branch())
       three_way_topology_sample(A,P,b);
@@ -247,7 +247,7 @@ MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
 
-    std::cerr<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if ((myrandomf() < 0.15) and (P.T.n_leaves() >2))
       sample_tri_one(A,P,b);
@@ -268,25 +268,25 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
   P2.fiddle_smodel();
   
 #ifndef NDEBUG  
-  show_parameters(std::cerr,P.SModel());
-  std::cerr<<P.probability(A,P)<<" = "<<P.likelihood(A,P)<<" + "<<P.prior(A,P);
-  std::cerr<<endl<<endl;
+  show_parameters(std::clog,P.SModel());
+  std::clog<<P.probability(A,P)<<" = "<<P.likelihood(A,P)<<" + "<<P.prior(A,P);
+  std::clog<<endl<<endl;
 
-  show_parameters(std::cerr,P2.SModel());
-  std::cerr<<P.probability(A,P2)<<" = "<<P.likelihood(A,P2)<<" + "<<P.prior(A,P2);
-  std::cerr<<endl<<endl;
+  show_parameters(std::clog,P2.SModel());
+  std::clog<<P.probability(A,P2)<<" = "<<P.likelihood(A,P2)<<" + "<<P.prior(A,P2);
+  std::clog<<endl<<endl;
 #endif
 
   if (P.accept_MH(A,P,A,P2)) {
     P = P2;
     result[1] = 1;
 #ifndef NDEBUG
-    std::cerr<<"success\n";
+    std::clog<<"success\n";
 #endif
   }
   else {
 #ifndef NDEBUG
-    std::cerr<<"failure\n";
+    std::clog<<"failure\n";
 #endif
   }
   return result;

@@ -272,7 +272,7 @@ namespace sequence_format {
     const int length = sequences[0].size();
 
     // Write header
-    file<<nsequences<<" "<<length<<endl;
+    file<<nsequences<<" "<<length<<"\n";
 
     const int letters_length = 65;
 
@@ -294,11 +294,12 @@ namespace sequence_format {
 	file<<header;
 	file<<" ";
 	file<<sequences[seq].substr(pos,letters_length);
-	file<<endl;
+	file<<"\n";
       }
       // write one blank line;
-      file<<endl;
+      file<<"\n";
     }
+    file.flush();
   }
 
   /// Read an alignments letters and names from a file in fasta format
@@ -309,10 +310,11 @@ namespace sequence_format {
     const int letters_length = 70;
 
     for(int i=0;i<sequences.size();i++) {
-      file<<">"<<names[i]<<endl;
+      file<<">"<<names[i]<<"\n";
       for(int j=0;j<sequences[i].size();j+=letters_length)
 	file<<sequences[i].substr(j,letters_length);
-      file<<endl;
+      file<<"\n";;
     }
+    file.flush();
   }
 }

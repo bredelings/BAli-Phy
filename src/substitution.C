@@ -308,7 +308,7 @@ namespace substitution {
       assert(0 < p_col and p_col <= 1.00000000001);
 
       total += log(p_col);
-      //      std::cerr<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<std::endl;
+      //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
     return total;
   }
@@ -334,7 +334,7 @@ namespace substitution {
 
     const int length = index.size1()?index.size1():A.seqlength(b0);
 
-    //    std::cerr<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
+    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
     for(int i=0;i<length;i++) {
 
       // compute the distribution at the parent node - single letter
@@ -425,11 +425,12 @@ namespace substitution {
 
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches(T, cache);
-    std::cerr<<"Peeled on "<<ops.size()<<" branches.\n";
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
       peel_branch(ops[i],cache,A,T,MC,P.SModel());
+
+    std::clog<<"Peeled on "<<ops.size()<<" branches.\n";
   }
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'

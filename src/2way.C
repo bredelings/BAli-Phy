@@ -25,11 +25,11 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
   A.changelength(newlength);
   assert(A.length() == newlength);
 
-  //  std::cerr<<"old = "<<old<<endl;
+  //  std::clog<<"old = "<<old<<"\n";
 
   int c1=0,c2=0,c3=0,c4=0,l=0;
   for(int column=0;column<A.length();column++) {
-    //    std::cout<<column<<" "<<c1<<" "<<c2<<" "<<c3<<" "<<c4<<"  "<<l<<endl;
+    //    std::clog<<column<<" "<<c1<<" "<<c2<<" "<<c3<<" "<<c4<<"  "<<l<<"\n";
 
     assert(c1>=c2);
     assert(c3>=c4);
@@ -86,7 +86,7 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
       c1++;c2++;l++;
       assert(not all_gaps(A,column));
     }
-    //    std::cout<<column<<" "<<c1<<" "<<c2<<" "<<c3<<" "<<c4<<"  "<<l<<endl;
+    //    std::clog<<column<<" "<<c1<<" "<<c2<<" "<<c3<<" "<<c4<<"  "<<l<<"\n";;
     assert(not all_gaps(A,column));
   }
 
