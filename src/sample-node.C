@@ -114,19 +114,13 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
   // Actually create the Matrices & Chain
   DParrayConstrained Matrices(seq123.size(),state_emit,get_start_P(pi),Q, P.Temp);
 
-  // Determine state order
-  vector<int> state_order(nstates);
-  for(int i=0;i<state_order.size();i++)
-    state_order[i] = i;
-  std::swap(state_order[7],state_order[nstates-1]);        // silent states must be last
-
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices.size();c2++) {
     int i2 = icol[c2];
     int j2 = jcol[c2];
     int k2 = kcol[c2];
-    for(int i=0;i<state_order.size();i++) {
-      int S2 = state_order[i];
+    for(int i=0;i<Matrices.nstates();i++) {
+      int S2 = Matrices.order(i);
 
       //---------- Get (,j1,k1) ----------
       int i1 = i2;
@@ -150,7 +144,7 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
 
 
   /*------------------ Compute the DP matrix ---------------------*/
-  Matrices.prune();
+  // Matrices.prune();  prune is broken!
   Matrices.forward();
 
   //------------- Sample a path from the matrix -------------------//

@@ -110,18 +110,12 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   DPmatrixConstrained Matrices(get_state_emit(), get_start_P(pi), Q, P.Temp,
 		       P.SModel().distribution(), dists1, dists23, frequency);
 
-  // Determine state order - FIXME - make this part of dpmatrix.H (part of HMM)
-  vector<int> state_order(nstates);
-  for(int i=0;i<state_order.size();i++)
-    state_order[i] = i;
-  std::swap(state_order[7],state_order[nstates-1]);        // silent states must be last
-
   // Determine which states are allowed to match (,c2)
   for(int c2=0;c2<Matrices.size2();c2++) {
     int j2 = jcol[c2];
     int k2 = kcol[c2];
-    for(int i=0;i<state_order.size();i++) {
-      int S2 = state_order[i];
+    for(int i=0;i<Matrices.nstates();i++) {
+      int S2 = Matrices.order(i);
 
       //---------- Get (,j1,k1) ----------
       int j1 = j2;
@@ -143,7 +137,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   /*------------------ Compute the DP matrix ---------------------*/
 
-  Matrices.prune();
+  //   Matrices.prune(); prune is broken!
   
   //  vector<int> path_old = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
   //  vector<int> path_old_g = Matrices.generalize(path_old);
