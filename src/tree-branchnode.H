@@ -92,7 +92,6 @@ class node_edges_iterator
 protected:
   node_t const* start;
   node_t* here;
-  unsigned circuits_;
 
 public:
   virtual view_t operator*() const =0;
