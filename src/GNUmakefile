@@ -3,10 +3,6 @@ all: bali-phy
 #----------------- Definitions
 EXACTFLAGS = -pipe --param inline-unit-growth=300 --param max-inline-insns-auto=300
 
-ifeq ($(origin ARCH), undefined)
-  ARCH = pentium4
-endif
-
 LANGO := fast-math
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
 OPT := 
@@ -16,7 +12,10 @@ ifeq (${DEBUG},y)
   DEBUG := g3
 else
   DEFS  := NDEBUG_UBLAS NDEBUG_DP NDEBUG
-  OPT   += march=${ARCH} O3 
+  ifneq ($(origin ARCH), undefined)
+    OPT += march=${ARCH}
+  endif	
+  OPT += O3
   LANGO += tracer prefetch-loop-arrays 
   ifneq (${PROF},y)
     LANGO += omit-frame-pointer
