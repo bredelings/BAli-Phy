@@ -13,7 +13,6 @@
 
 
 #include "3way.H"
-#include "substitution.H"
 #include "sample.H"
 
 

@@ -11,9 +11,6 @@
 #include "alignment-sums.H"
 #include "alignment-util.H"
 
-// for peel
-#include "substitution.H"
-
 // for prior_HMM_nogiven
 #include "likelihood.H"
 

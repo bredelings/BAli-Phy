@@ -880,11 +880,3 @@ double tree::distance(int i,int j) const {
   return distance2(i,ancestor)+distance2(j,ancestor);
 }
 
-int tree::find_branch(int node1,int node2) const {
-  for(int b=0;b<n_branches();b++) {
-    if (branch(b).child() == node1 and branch(b).parent() == node2) return b;
-    if (branch(b).child() == node2 and branch(b).parent() == node1) return b;
-  }
-  throw myexception()<<__PRETTY_FUNCTION__<<": no branch connects those nodes";
-}
-

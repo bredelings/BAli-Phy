@@ -5,9 +5,6 @@
 #include "2way.H"
 #include "alignment-sums.H"
 
-// for peel()
-#include "substitution.H"
-
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
 
