@@ -196,6 +196,7 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) {
   cache = LC.cache;
   token = cache->claim_token();
   cache->copy_token(token,LC.token);
+  root = LC.root;
   recalc();
 
   return *this;
@@ -205,7 +206,7 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
   :cache(LC.cache),
    token(cache->claim_token()),
    mapping(cache->n_slots()),
-   root(n_branches()-1)
+   root(LC.root)
 {
   cache->copy_token(token,LC.token);
   recalc();
