@@ -23,6 +23,8 @@ public:
 
   void parse(const std::string&);
   void add(const std::string&,const std::string&);
+  
+  void print(std::ostream&);
 };
 
 #endif

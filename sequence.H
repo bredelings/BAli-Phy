@@ -2,40 +2,7 @@
 #define SEQUENCE_H
 
 #include "mytypes.H"
-#include <valarray>
-#include "myexception.H"
-
-/***************** struct alphabet ********************/
-struct bad_letter:public myexception {
-  char c;
-
-  bad_letter(char c)
-    :myexception(string("Letter '") + c + string("' not in alphabet."))
-  {}
-
-  virtual ~bad_letter() throw() {}
-};
-
-struct alphabet {
-
-  vector<char> data;
-  static const int gap = -1;
-  static const int not_gap = -2;
-
-  int operator[](char c) const;
-  vector<int> operator()(const string&) const;
-  char lookup(int) const;
-  int size() const { return data.size(); }
-
-  static bool letter(int l) {return (l>=0);}
-
-
-  friend bool operator==(const alphabet&,const alphabet&);
-
-  alphabet(const char*);
-};
-
-inline bool operator!=(const alphabet& a1,const alphabet& a2) {return not (a1==a2);}
+#include "alphabet.H"
 
 /***************** struct sequence ********************/
 struct sequence: public vector<int> {

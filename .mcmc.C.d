@@ -1,1 +1,1 @@
-.mcmc.C.d mcmc.o: mcmc.C mcmc.H alignment.H sequence.H mytypes.H myexception.H   tree.H parameters.H sample.H likelihood.H substitution.H
+.mcmc.C.d mcmc.o: mcmc.C mcmc.H mytypes.H alignment.H alphabet.H myexception.H   sequence.H tree.H parameters.H sample.H likelihood.H substitution.H   rng.H

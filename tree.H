@@ -2,7 +2,6 @@
 #define ETREE_H
 
 #include "mytypes.H"
-#include "sequence.H"
 #include <istream>
 #include <vector>
 #include <string>
@@ -242,6 +241,8 @@ public:
 TreeFunc<int> mark_tree(const vector<int>&,const tree&);
 
 
+/***************** class SequenceTree ****************/
+
 class SequenceTree: public tree {
   vector<string> sequences;
   string write(int n,bool) const;
@@ -281,6 +282,5 @@ inline std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
 bool same_topology(const SequenceTree&,const SequenceTree&);
 
 SequenceTree RandomTree(const vector<string>&,double=1.0);
-/***************** class SequenceTree ****************/
 
 #endif

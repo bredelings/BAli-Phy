@@ -32,9 +32,9 @@
 void do_setup(Arguments& args,alignment& A,SequenceTree& T)
 {
   /* ----- Alphabets to try ------ */
-  alphabet dna("AGTC");
-  alphabet rna("AGUC");
-  alphabet amino_acids("ARNDCQEGHILKMFPSTWYV");
+  alphabet dna("DNA nucleotides","AGTC","N");
+  alphabet rna("RNA nucleotides","AGUC","N");
+  alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
 
   /* ----- Try to load alignment ------ */
   if (not args.set("align")) 
@@ -46,7 +46,14 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
   catch (bad_letter& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
 
-    A.load_fasta(amino_acids,args["align"]);
+    try {
+      A.load_fasta(rna,args["align"]);
+    }
+    catch (bad_letter& e) {
+      std::cerr<<"Exception: "<<e.what()<<endl;
+      
+      A.load_fasta(amino_acids,args["align"]);
+    }
   }
 
   if (A.num_sequences() == 0) 
@@ -58,7 +65,6 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
     for(int i=0;i<A.num_sequences();i++)
       s.push_back(A.seq(i).name);
     T = RandomTree(s);
-    std::cout<<T<<endl;
   }
   else 
     T.read(args["tree"]);
@@ -70,7 +76,7 @@ int main(int argc,char* argv[]) {
   try {
     Arguments args;
     args.read(argc,argv);
-
+    args.print(std::cout);
 
     if (args.set("file")) {
       if (args["file"] == "-")
@@ -97,13 +103,19 @@ int main(int argc,char* argv[]) {
     std::cout.precision(10);
     
     /*------- Nucleotide Substitution Models -------*/
-    alphabet nucleotides("AGTC");
+    alphabet dna("DNA nucleotides","AGTC","N");
     
-    EQU EQU_nuc(nucleotides);
-    HKY HKY_nuc(nucleotides);
+    EQU EQU_dna(dna);
+    HKY HKY_dna(dna);
+    
+    /*------- Nucleotide Substitution Models -------*/
+    alphabet rna("RNA nucleotides","AGUC","N");
+    
+    EQU EQU_rna(rna);
+    HKY HKY_rna(rna);
     
     /*------- Amino Acid Substitution Models -------*/
-    alphabet amino_acids("ARNDCQEGHILKMFPSTWYV");
+    alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
     
     EQU EQU_animo(amino_acids);
     Empirical WAG(amino_acids,"Data/wag.dat");
@@ -120,23 +132,47 @@ int main(int argc,char* argv[]) {
     if (args.set("lambda_O")) lambda_O = convertTo<double>(args["lambda_O"]);
     if (args.set("lambda_E")) lambda_E = convertTo<double>(args["lambda_E"]);
     
-    std::cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl;
+    std::cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl<<endl;
     
     /*--------- Set up the substitution model --------*/
     SubstitutionModel* smodel = 0;
     
-    if (A.get_alphabet() == nucleotides)
-      smodel = &HKY_nuc;
+    if (A.get_alphabet() == dna)
+      smodel = &HKY_dna;
+    else if (A.get_alphabet() == rna)
+      smodel = &HKY_rna;
     else if (A.get_alphabet() == amino_acids)
       smodel = &WAG;
     else
       assert(0);
-    
+
+    std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
     smodel->frequencies(empirical_frequencies(A));
     
     /*------------ Start the Sampling ---------------*/
     Parameters Theta(*smodel,lambda_O,lambda_E,T);
-    MCMC(A,Theta,1000000,probability3);
+    MCMC sampler;
+    sampler.add(sample_alignments,1,"sample_alignments");
+    sampler.add(sample_nodes,1,"sample_nodes");
+    sampler.add(sample_topologies,1,"sample_topologies");
+    sampler.add(change_branch_lengths,1,"change_branch_lengths");
+    sampler.add(change_parameters,1,"change_parameters");
+
+    //FIXME - maybe just store name in object, use vector, search for name?
+    //FIXME - make MCMC inherit from the collection of moves.
+    for(typeof(sampler.moves.begin()) here = sampler.moves.begin();here != sampler.moves.end();here++) {
+      std::cout<<"move "<<here->first<<": ";
+      if (args.set(here->first) and args[here->first] == "disable") {
+	sampler.disable(here->first);
+	std::cout<<"DISABLED.\n";
+      }
+      else {
+	std::cout<<"enabled.\n";
+      }
+    }
+    std::cout<<"\n";
+
+    sampler.iterate(A,Theta,1000000);
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

@@ -1,6 +1,7 @@
 #ifndef ALIGNMENT_H
 #define ALIGNMENT_H
 
+#include "alphabet.H"
 #include "sequence.H"
 #include "tree.H"
 #include <iostream>

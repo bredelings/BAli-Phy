@@ -8,23 +8,24 @@ vector<int> permutation(int n) {
   else {
     p = permutation(n-1);
     int i = myrandom(n);
-    p.insert(p.begin()+i,n);
+    p.insert(p.begin()+i,n-1);
   }
   return p;
 }
 
-//FIXME - structure isn't random!
 SequenceTree RandomTree(const vector<string>& s,double branch_mean) {
   vector<SequenceTree> trees;
-  vector<int> pi = permutation(s.size());
   for(int i=0;i<s.size();i++)
-    trees.push_back(SequenceTree(s[pi[i]]));
+    trees.push_back(SequenceTree(s[i]));
 
   while(trees.size() > 1) {
-    SequenceTree T1 = trees.back();trees.pop_back();
-    SequenceTree T2 = trees.back();trees.pop_back();
-    SequenceTree T3 = (T1+T2);
-    trees.push_back(T3);
+    int i1 = myrandom(trees.size());
+    SequenceTree T1 = trees[i1];trees.erase(trees.begin()+i1);
+
+    int i2 = myrandom(trees.size());
+    SequenceTree T2 = trees[i2];
+
+    trees[i2] = (T1+T2);
   }
 
   for(int i=0;i<trees[0].branches();i++) 

@@ -2,51 +2,12 @@
 #include "sequence.H"
 #include "myexception.H"
 
-int alphabet::operator[](char c) const {
-  if (c=='-') 
-    return alphabet::gap;
-  for(int i=0;i<size();i++) {
-    if (data[i]==c)
-      return i;
-  }
-  std::cerr<<int(c)<<endl;
-  throw bad_letter(c);
-}
-
-vector<int> alphabet::operator() (const string& s) const{
-  vector<int> v(s.size());
-  for(int i=0;i<v.size();i++)
-    v[i] = operator[](s[i]);
-  return v;
-}
-
-
-char alphabet::lookup(int i) const {
-  if (i == gap)
-    return '-';
-  else if (i == not_gap)
-    return '*';
-  assert(0 <=i && i < data.size());
-  return data[i];
-}
-
-
-bool operator==(const alphabet& a1,const alphabet& a2) {
-  return a1.data == a2.data;
-}
-
-alphabet::alphabet(const char* s) {
-  string letters(s);
-  for(int i=0;i<letters.length();i++)
-    data.push_back(letters[i]);
-}
-
 void sequence::parse(const string& line,const string& letters) {
-  /* ------- Delete '>' from label --------*/
+  /*------------ Delete '>' from label -----------*/
   assert(line[0] == '>');
   string label = line.substr(1);
 
-  /*-------- Parse label with name and comments -------*/
+  /*------Parse label with name and comments------*/
   name = label;
   comment = "";
   int where = label.find_first_of(" \t");
@@ -57,7 +18,7 @@ void sequence::parse(const string& line,const string& letters) {
     comment =  label.substr(where);
   }
 
-  /*---------- Load the actual letters -------------*/
+  /*--------- Load the actual letters ------------*/
   vector<int>::operator=(a(letters));
 }
 

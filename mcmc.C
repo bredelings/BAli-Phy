@@ -1,6 +1,8 @@
 #include "mcmc.H"
 #include "sample.H"
 #include "likelihood.H"
+#include "myexception.H"
+#include "rng.H"
 
 using std::valarray;
 static int total_samples = 0;
@@ -69,7 +71,7 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& Theta,
   o<<endl<<" old  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl
    <<" HMM  ["<<probability3(A,Theta)<<": "<<prior_HMM(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl<<endl;
   
-  //  o<<A<<endl<<endl;
+  o<<A<<endl<<endl;
 
   o<<"tree = "<<Theta.T<<endl<<endl;
 }
@@ -92,9 +94,68 @@ valarray<double> autocorrelation(valarray<double> v) {
   return w;
 }
 
+MCMC::move_info& MCMC::find(const string& s) {
+  typeof(moves.begin()) here = moves.find(s);
+  if (here == moves.end())
+   throw myexception(string("Tried to lookup non-existant move '")+s+"'!");
+  return here->second;
+}
 
-void MCMC(alignment& A,Parameters& Theta,
-	   const int max,double probability(const alignment&,const Parameters&)) {
+const MCMC::move_info& MCMC::find(const string& s) const {
+  typeof(moves.begin()) here = moves.find(s);
+  if (here == moves.end())
+    throw myexception(string("Tried to lookup non-existant move '")+s+"'!");
+  return here->second;
+}
+
+void MCMC::recalc() {
+  sum_enabled_weights = 0;
+  for(typeof(moves.begin()) here = moves.begin();here != moves.end();here++) {
+    if (here->second.enabled)
+      sum_enabled_weights += here->second.weight;
+  }
+};
+
+bool MCMC::enabled(const string& s) const {
+  const move_info& value = find(s);
+  return value.enabled;
+}
+
+void MCMC::enable(const string& s) {
+  move_info& value = find(s);
+  value.enabled = true;
+
+  recalc();
+}
+
+void MCMC::disable(const string& s) {
+  move_info& value = find(s);
+  value.enabled = false;
+
+  recalc();
+}
+
+void MCMC::sample(alignment& A,Parameters& Theta) const {
+  double r = myrandomf()*sum_enabled_weights;
+
+  double sum = 0;
+  typeof(moves.begin()) here = moves.begin();
+  for(;here != moves.end();here++) {
+    if (not here->second.enabled) continue;
+    sum += here->second.weight;
+    if (r<sum) break;
+  }
+  assert(here != moves.end());
+  (*(here->second.m))(A,Theta);
+}
+
+void MCMC::add(move m,double weight,const string& key) {
+  moves[key] = move_info(m,weight,true);
+  sum_enabled_weights += weight;
+}
+
+
+void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
   const SequenceTree& T = Theta.T;
   SequenceTree ML_tree = T;
   alignment ML_alignment = A;
@@ -187,3 +248,6 @@ void MCMC(alignment& A,Parameters& Theta,
 }
 
 
+MCMC::MCMC() : sum_enabled_weights(0), probability(probability3)
+{
+}

@@ -31,8 +31,8 @@ NAME = sampler
 SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C node-sample.C branch-sample.C exponential.C \
           eigenvalue.C parameters.C likelihood.C mcmc.C topology-sample.C \
-	  choose.C map.C sequencetree.C branch-lengths.C arguments.C \
-	  util.C randomtree.C
+	  choose.C sequencetree.C branch-lengths.C arguments.C \
+	  util.C randomtree.C alphabet.C # map.C
 LIBS = gsl gslcblas m
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 
@@ -46,7 +46,7 @@ treecount: treecount.o tree.o sequencetree.o
 OTHERFILES += 
 
 #------------------- End
-DEVEL = ../../..
+DEVEL = ../..
 # includes += /usr/local/include/
 src      += 
 include $(DEVEL)/GNUmakefile

@@ -39,8 +39,14 @@ void Arguments::parse(const string& s) {
 }
 
 void Arguments::add(const string& key, const string& value) {
-  cerr<<key<<"="<<value<<endl;
   if (set(key))
     cerr<<"Warning: over-writing "<<key<<" = "<<(*this)[key]<<endl;
   (*this)[key] = value;
+}
+
+
+void Arguments::print(std::ostream& o) {
+  for(typeof(begin()) i=begin();i!=end();i++)
+    o<<i->first<<" = "<<i->second<<std::endl;
+  o<<std::endl;
 }

@@ -13,7 +13,7 @@ void change_branch_lengths(alignment& A, Parameters& Theta) {
   }
 }
 
-void sample_alignments(alignment& A,const Parameters& Theta) {
+void sample_alignments(alignment& A, Parameters& Theta) {
   for(int i=0;i<Theta.T.leaves();i++) {
     int b = myrandom(Theta.T.branches());
 
@@ -21,7 +21,7 @@ void sample_alignments(alignment& A,const Parameters& Theta) {
   }
 }
 
-void sample_nodes(alignment& A,const Parameters& Theta) {
+void sample_nodes(alignment& A, Parameters& Theta) {
   for(int i=0;i<Theta.T.num_nodes()-Theta.T.leaves();i++) {
     int node = myrandom(Theta.T.leaves(),Theta.T.num_nodes()-1);
 
@@ -36,7 +36,7 @@ void sample_topologies(alignment& A,Parameters& Theta) {
   }
 }
 
-void change_parameters(const alignment& A,Parameters& Theta) {
+void change_parameters(alignment& A,Parameters& Theta) {
   Parameters Theta2 = Theta;
 
   //  Theta2.SModel->fiddle();
@@ -46,20 +46,5 @@ void change_parameters(const alignment& A,Parameters& Theta) {
   if (myrandomf() < exp(lL_2 - lL_1)) {
     Theta = Theta2;
   }
-}
-
-void sample(alignment& A,Parameters& Theta) {
-  double r = myrandomf();
-
-  if (r < 0.2) 
-    sample_alignments(A,Theta);
-  else if (r < 0.4) 
-    sample_nodes(A,Theta);
-  else if (r<0.6) 
-    sample_topologies(A,Theta);
-  else if (r<2.0)
-    change_branch_lengths(A,Theta);
-  else
-    change_parameters(A,Theta);
 }
 

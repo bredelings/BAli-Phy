@@ -1,7 +1,7 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
-#include "sequence.H"
+#include "alphabet.H"
 #include "mytypes.H"
 #include "tree.H"
 #include <valarray>
@@ -88,6 +88,13 @@ public:
 
 class HKY: public EquilibriumModel {
   virtual void recalc();
+
+  int A;
+  int T;
+  int G;
+  int C;
+
+  void setup_alphabet();
 public:
 
   virtual SubstitutionModel* clone() const {return new HKY(*this);}
@@ -100,16 +107,19 @@ public:
 
   HKY(const alphabet& a): EquilibriumModel(a,1)
   { 
+    setup_alphabet();
     kappa(1);
   }
 
   HKY(const alphabet& a,double k): EquilibriumModel(a,1)
   {
+    setup_alphabet();
     kappa(k);
   }
 
   HKY(const alphabet& a,double k,const std::valarray<double>& f): EquilibriumModel(a,1)
   {
+    setup_alphabet();
     kappa(k);
     frequencies(f);
   }

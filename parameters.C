@@ -57,11 +57,6 @@ void HKY::fiddle() {
 void HKY::recalc() {
   assert(a->size()==4);
 
-  const int A = (*a)['A'];
-  const int G = (*a)['G'];
-  const int C = (*a)['C'];
-  const int T = (*a)['T'];
-
   S(A,G) = kappa();
   S(A,C) = 1;
   S(A,T) = 1;
@@ -79,6 +74,18 @@ void HKY::recalc() {
   S(T,C) = kappa();
 
   EquilibriumModel::recalc();
+}
+
+void HKY::setup_alphabet() {
+  A = (*a)['A'];
+  G = (*a)['G'];
+  C = (*a)['C'];
+  try {
+    T = (*a)['T'];
+  }
+  catch (bad_letter& e) {
+    T = (*a)['U'];
+  }
 }
 
 void EQU::recalc() {

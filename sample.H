@@ -21,9 +21,17 @@ void sample_topology(alignment& A,Parameters&,int);
 //Resample gap/non-gap for 2 internal nodes, and the topology, with specified branch lengths
 void sample_topology(alignment& A,Parameters&,const SequenceTree&, const SequenceTree&, int);
 
-//interface to the above samplers
-void sample(alignment& A,Parameters& T);
-
 // which nodes are adjacent to this branch
 vector<int> get_nodes(const alignment& A, const tree& T,int b);
 #endif
+
+/*-------------- Top Level Sampling Routines -----------*/
+
+void sample_alignments(alignment& A, Parameters& Theta);
+void sample_nodes(alignment& A, Parameters& Theta);
+void sample_topologies(alignment& A,Parameters& Theta);
+void change_branch_lengths(alignment& A, Parameters& Theta);
+void change_parameters(alignment& A,Parameters& Theta);
+
+
+
