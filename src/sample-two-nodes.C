@@ -11,6 +11,8 @@
 #include "5way.H"
 #include "alignment-sums.H"
 #include "alignment-util.H"
+#include "substitution-index.H"
+#include <boost/numeric/ublas/io.hpp>
 
 // for prior(p[i])
 #include "likelihood.H"
@@ -194,7 +196,6 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
 }
 
 ///FIXME - make a generic routine (templates?)
-
 bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
 
   assert(p.size() == nodes.size());
@@ -229,7 +230,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
   //---------------- Calculate choice probabilities --------------//
   vector<double> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
+    Pr[i] = OS[i] + log(Matrices[i].Pr_sum_all_paths()) + OP[i] + prior(p[i])/p[i].Temp;
 
   int C = choose_log(Pr);
 

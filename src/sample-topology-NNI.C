@@ -74,11 +74,11 @@ bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P
 
   // Choose from one of the (Ai,Pi) pairs
   double PS1 = P1.likelihood(A1,P1);
-  double PA1 = Matrices1.Pr_sum_all_paths();
+  double PA1 = log(Matrices1.Pr_sum_all_paths());
   double PP1 = prior(P1)/P1.Temp;
 
   double PS2 = P1.likelihood(A2,P2);
-  double PA2 = Matrices2.Pr_sum_all_paths();
+  double PA2 = log(Matrices2.Pr_sum_all_paths());
   double PP2 = prior(P2)/P2.Temp;
 
   vector<double> P(2);
@@ -124,8 +124,8 @@ bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P
   double Pr1 = probability3(old,P1) + A5::log_correction(old,P1,nodes_old);
   double Pr2 = probability3(*CA,*CP) + A5::log_correction(*CA,*CP,nodes_new);
 
-  double SP1 = choose_P_log(0,P) + Matrices1.path_P(path_g_old) + Matrices1.generalize_P(path_old);
-  double SP2 = choose_P_log(choice,P) + CM->path_P(path_g_new) + CM->generalize_P(path_new);
+  double SP1 = choose_P_log(0,P) + log( Matrices1.path_P(path_g_old) * Matrices1.generalize_P(path_old) );
+  double SP2 = choose_P_log(choice,P)  + log( CM->path_P(path_g_new) * CM->generalize_P(path_new) );
 
   double diff1 = (Pr2 - Pr1) - (SP2 - SP1);
   std::cerr<<"diff1 = "<<diff1<<std::endl;
@@ -134,8 +134,8 @@ bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P
   if (choice) a_ij = log(rho) + a12;
   std::cerr<<"a_ij = "<<a_ij<<std::endl;
 
-  double P_ij = a_ij +       CM->path_P(path_g_new) +       CM->generalize_P(path_new);
-  double P_ji =        Matrices1.path_P(path_g_old) + Matrices1.generalize_P(path_old);
+  double P_ij = a_ij +    log(CM->path_P(path_g_new) *       CM->generalize_P(path_new) );
+  double P_ji =     log(Matrices1.path_P(path_g_old) * Matrices1.generalize_P(path_old) );
 
   std::cerr<<"P_ij = "<<P_ij<<std::endl;
   std::cerr<<"P_ji = "<<P_ji<<std::endl;

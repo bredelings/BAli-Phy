@@ -16,16 +16,16 @@ double DPengine::check(const vector<int>& path1,const vector<int>& path2,double 
   vector<int> path1_G = generalize(path1);
   vector<int> path2_G = generalize(path2);
 
-  double p1 = path_P(path1_G) + generalize_P(path1);
-  double p2 = path_P(path2_G) + generalize_P(path2); 
+  double p1 = log( path_P(path1_G) * generalize_P(path1) );
+  double p2 = log( path_P(path2_G) * generalize_P(path2) ); 
 
   // get the probabilities of the path through the 3-way HMM
-  double qp1 = path_GQ_path(path1_G) + generalize_P(path1);
-  double qs1 = path_Q_subst(path1_G);
+  double qp1 = log( path_GQ_path(path1_G) * generalize_P(path1) );
+  double qs1 = log( path_Q_subst(path1_G) );
   double q1 = qp1 + qs1;
 
-  double qp2 = path_GQ_path(path2_G) + generalize_P(path2);
-  double qs2 = path_Q_subst(path2_G);
+  double qp2 = log( path_GQ_path(path2_G) * generalize_P(path2) );
+  double qs2 = log( path_Q_subst(path2_G) );
   double q2 = qp2 + qs2;
 
   double diff = p2-p1-(l2-l1);
@@ -102,7 +102,7 @@ int bandwidth2(const DPmatrix& M,const vector<int>& path) {
 }
 
 
-double DParray::path_P(const vector<int>& g_path) const {
+efloat_t DParray::path_P(const vector<int>& g_path) const {
   const int I = size()-1;
   int i=I;
   int l=g_path.size()-1;
@@ -139,7 +139,7 @@ double DParray::path_P(const vector<int>& g_path) const {
   Pr *= p;
 
   assert(Pr > 0.0);
-  return log(Pr);
+  return Pr;
 }
 
 void DParray::forward() {
@@ -174,14 +174,14 @@ vector<int> DParray::sample_path() const {
   return path;
 }
 
-double DParray::Pr_sum_all_paths() const {
+efloat_t DParray::Pr_sum_all_paths() const {
   const int I = size()-1;
 
   efloat_t total = 0.0;
   for(int state1=0;state1<nstates();state1++)
     total += (*this)[state1][I] * GQ(state1,endstate());
 
-  return log(total);
+  return total;
 }
 
 DParray::DParray(int l,const vector<int>& v1,const vector<efloat_t>& v2,const eMatrix& M,double Temp)
@@ -338,7 +338,7 @@ vector<int> DPmatrix::forward(const vector<vector<int> >& pins)
 }
 
 
-double DPmatrix::path_check(const vector<int>& path) const {
+efloat_t DPmatrix::path_check(const vector<int>& path) const {
   efloat_t Pr=1.0;
   
   const int I = size1()-1;
@@ -384,10 +384,10 @@ double DPmatrix::path_check(const vector<int>& path) const {
   assert(i == I and j == J);
   assert(Pr > 0.0);
 
-  return log(Pr);
+  return Pr;
 }
 
-double DPmatrix::path_P(const vector<int>& path) const {
+efloat_t DPmatrix::path_P(const vector<int>& path) const {
   double P2 = path_check(path);
   std::cerr<<"P(path)2 = "<<P2<<std::endl;
 
@@ -442,7 +442,7 @@ double DPmatrix::path_P(const vector<int>& path) const {
 
   assert(Pr > 0.0);
   std::cerr<<"P(path) = "<<log(Pr)<<std::endl;
-  return log(Pr);
+  return Pr;
 }
 
 vector<int> DPmatrix::sample_path() const {
@@ -478,7 +478,7 @@ vector<int> DPmatrix::sample_path() const {
   return path;
 }
 
-double DPmatrix::Pr_sum_all_paths() const {
+efloat_t DPmatrix::Pr_sum_all_paths() const {
   const int I = size1()-1;
   const int J = size2()-1;
 
@@ -486,7 +486,7 @@ double DPmatrix::Pr_sum_all_paths() const {
   for(int state1=0;state1<nstates();state1++)
     total += (*this)[state1](I,J)*GQ(state1,endstate());
 
-  return log(total);
+  return total;
 }
 
 
@@ -581,7 +581,7 @@ inline efloat_t DPmatrixEmit::emit__(int i,int j) const {
   return 1.0;
 }
 
-double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
+efloat_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
   efloat_t P_sub=1.0;
   int i=0,j=0;
   for(int l=0;l<path.size();l++) {
@@ -606,7 +606,7 @@ double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
     P_sub *= sub;
   }
   assert(i == size1()-1 and j == size2()-1);
-  return log(P_sub);
+  return P_sub;
 }
 
 

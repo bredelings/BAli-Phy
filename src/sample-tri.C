@@ -147,7 +147,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 or group3,seq1,seq23);
   vector<int> path_g = Matrices.forward(pins);
 
-  if (Matrices.Pr_sum_all_paths() <= log_limit)
+  if (log(Matrices.Pr_sum_all_paths()) <= log_limit)
     return Matrices;
 
   vector<int> path = Matrices.ungeneralize(path_g);
@@ -222,7 +222,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   //---------------- Calculate choice probabilities --------------//
   vector<double> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
+    Pr[i] = OS[i] + log(Matrices[i].Pr_sum_all_paths()) + OP[i] + prior(p[i])/p[i].Temp;
   assert(Pr[0] > log_limit);
 
   int C = choose_log(Pr);
@@ -244,7 +244,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
   // Don't check impossible combinations
   for(int i=a.size()-1;i>=1;i--) {
-    if (Matrices[i].Pr_sum_all_paths() >log_limit) continue;
+    if (log(Matrices[i].Pr_sum_all_paths()) >log_limit) continue;
 
     a.erase(a.begin()+i);
     p.erase(p.begin()+i);

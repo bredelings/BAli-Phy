@@ -1,4 +1,11 @@
+-10. WRite paper!
+
 -9. Indel model...
+
+-8. Standardized checks for indexing problems, in sample-node, f.e.
+    a) standard check for altered index patterns
+    b) (?) also check for change in likelihood - unset cached_value_up-to-date
+       somehow
 
 -7. convert Pr_sum_all_paths( ) and other stuff to efloat_t?
     a) simplifies implementation of choose( )...
@@ -15,6 +22,7 @@
          smodel2->fiddle(i)
          accept/reject(smodel,smodel2)
        }
+    c) some kind of interface for non-symmetric proposals?
 
 -4. Make a more general substitution::Model class, so that we can e.g.
     have tree with 2 sets of branch lengths...
@@ -32,6 +40,9 @@
   a) alter GNUmakefile so that building w/ mudflap is easy.
 
 1. test fix for crashing bug.
+   a) we could try to cache some of the results from ordering branches
+      under this branch.
+   b) we could just compute the full order w/ what we have now.
 
 *2. MCMCMC
     a) Make the temperature affect only the likelihood...

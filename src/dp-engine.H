@@ -3,8 +3,6 @@
 
 #include "hmm.H"
 
-typedef double efloat;
-
 class DPengine: public HMM {
 public:
 
@@ -12,16 +10,16 @@ public:
   virtual vector<int> sample_path() const =0;
 
   /// Calculates the (log) probability of all possible paths through theHMM
-  virtual double Pr_sum_all_paths() const =0;
+  virtual efloat_t Pr_sum_all_paths() const =0;
 
   /// Calculates the (log) probability that this path is sampled by the generalized HMM
-  virtual double path_P(const vector<int>& g_path) const =0;
+  virtual efloat_t path_P(const vector<int>& g_path) const =0;
 
   /// Calculate the (log) substitution probability along the path
-  virtual double path_Q_subst(const vector<int>& g_path) const=0;
+  virtual efloat_t path_Q_subst(const vector<int>& g_path) const=0;
 
   /// Calculate the (log) probability of this path
-  virtual double path_Q(const vector<int>& g_path) const {
+  virtual efloat_t path_Q(const vector<int>& g_path) const {
     return path_GQ_path(g_path) + this->path_Q_subst(g_path);
   }
 
@@ -38,7 +36,7 @@ class DParray : public DPengine, public vector< vector<efloat_t> > {
   /// Length of the DP array
   int length;
 public:
-  double path_Q_subst(const vector<int>& path) const {return 0;}
+  efloat_t path_Q_subst(const vector<int>& path) const {return 1;}
 
   /// Does state S emit?
   bool di(int S) const {bool e = false; if (state_emit[S]&(1<<0)) e=true;return e;}
@@ -46,7 +44,7 @@ public:
   /// Return the size of the array
   unsigned size() const {return length;}
 
-  double path_P(const vector<int>& path) const;
+  efloat_t path_P(const vector<int>& path) const;
 
   /// compute FP for the whole array
   void forward();
@@ -58,7 +56,7 @@ public:
   vector<int> sample_path() const;
 
   /// Compute the probability of all possible paths through theHMM
-  double Pr_sum_all_paths() const;
+  efloat_t Pr_sum_all_paths() const;
 
   /// Construct an 1D DP matrix from a length, and an HMM
   DParray(int,const vector<int>&,const vector<efloat_t>&,const eMatrix&,double Temp);
@@ -131,13 +129,13 @@ public:
   /// Compute the forward probabilities and back sample
   vector<int> forward(const vector<vector<int> >&);
 
-  double path_P(const vector<int>& path) const;
+  efloat_t path_P(const vector<int>& path) const;
 
   /// Auxiliary method for computing probability of sampling a path
-  double path_check(const vector<int>& path) const;
+  efloat_t path_check(const vector<int>& path) const;
 
   /// compute the probability of all possible paths through the HMM
-  double Pr_sum_all_paths() const;
+  efloat_t Pr_sum_all_paths() const;
 
   /// Construct a 2D DP matrix from the dimensions, and an HMM
   DPmatrix::DPmatrix(int i1,
@@ -159,7 +157,7 @@ public:
   /// Compute the forward probabilities for a cell
   void forward_cell(int,int,int,int);
 
-  double path_Q_subst(const vector<int>& path) const {return 0;}
+  efloat_t path_Q_subst(const vector<int>& path) const {return 1;}
 
   DPmatrixNoEmit::DPmatrixNoEmit(int i1,
 				 int i2,
@@ -198,7 +196,7 @@ public:
   /// The number of different rates
   int nrates() const {return dists1[0].size1();}
 
-  double path_Q_subst(const vector<int>& path) const;
+  efloat_t path_Q_subst(const vector<int>& path) const;
 
   /// Emission probabilities for ++
   efloat_t emitMM(int i,int j) const;

@@ -134,7 +134,7 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
     throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 
-  std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<Matrices.Pr_sum_all_paths()<<endl;
+  std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<log(Matrices.Pr_sum_all_paths())<<endl;
 
 #else
   P.LC.set_length(A.length());

@@ -73,7 +73,7 @@ vector<int> HMM::ungeneralize(const vector<int>& g_path) const {
   return path;
 }
 
-double HMM::generalize_P_one(vector<int>::const_iterator s1,int n) const {
+efloat_t HMM::generalize_P_one(vector<int>::const_iterator s1,int n) const {
   efloat_t Pr = 1;
 
   int S_end = *(s1 + n);
@@ -100,7 +100,7 @@ double HMM::generalize_P_one(vector<int>::const_iterator s1,int n) const {
 
 /// What is the probability that the generalized path corresponding to this
 /// path would emit this ungeneralized path?
-double HMM::generalize_P(const vector<int>& path) const {
+efloat_t HMM::generalize_P(const vector<int>& path) const {
   efloat_t Pr = 1;
   for(int i=0; i<path.size()-1; i++) {
     if (silent_network(path[i])) {
@@ -112,14 +112,14 @@ double HMM::generalize_P(const vector<int>& path) const {
     }
   }
   assert(Pr > 0.0);
-  return log(Pr);
+  return Pr;
 }
 //      if (silent_network(S2))
 //	Pr += Q(S1,S2);
 //      else
 //	Pr += log(1.0-exp(Q(S1,S1)));
 
-double HMM::path_Q_path(const vector<int>& g_path) const {
+efloat_t HMM::path_Q_path(const vector<int>& g_path) const {
 
   efloat_t Pr = 0.0;
   for(int S=0;S<nstates();S++)
@@ -129,10 +129,10 @@ double HMM::path_Q_path(const vector<int>& g_path) const {
   for(int l=1;l<g_path.size();l++)
     Pr *= Q(g_path[l-1],g_path[l]);
 
-  return log(Pr);
+  return Pr;
 }
 
-double HMM::path_GQ_path(const vector<int>& g_path) const {
+efloat_t HMM::path_GQ_path(const vector<int>& g_path) const {
 
   efloat_t Pr = 0.0;
   for(int S=0;S<nstates();S++)
@@ -142,7 +142,7 @@ double HMM::path_GQ_path(const vector<int>& g_path) const {
   for(int l=1;l<g_path.size();l++)
     Pr *= GQ(g_path[l-1],g_path[l]);
 
-  return log(Pr);
+  return Pr;
 }
 
 // IF (and only if) T > 1, then GQ(i,j) can be > 0....

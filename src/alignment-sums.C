@@ -119,22 +119,22 @@ void check_match_P(const alignment& A,const Parameters& P, double OS, double OP,
   /*------------------- Check offsets from path_Q -> P -----------------*/
   vector<int> path_g = Matrices.generalize(path);
 
-  double qs = Matrices.path_Q_subst(path_g) + OS;
+  double qs = log( Matrices.path_Q_subst(path_g) ) + OS;
   double ls = P.likelihood(A,P);
   
-  double qpGQ = Matrices.path_GQ_path(path_g) + Matrices.generalize_P(path);
-  double qpQ  = Matrices.path_Q_path(path);
+  double qpGQ = log( Matrices.path_GQ_path(path_g) *  Matrices.generalize_P(path) );
+  double qpQ  = log( Matrices.path_Q_path(path) );
   std::cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
   assert(std::abs(qpGQ-qpQ) < 1.0e-9);
   
-  double qp = Matrices.path_GQ_path(path_g) + Matrices.generalize_P(path) + OP;
+  double qp = log( Matrices.path_GQ_path(path_g) * Matrices.generalize_P(path) ) + OP;
   double lp = prior_HMM(A,P)/P.Temp;
 
   double qt = qs + qp + prior(P)/P.Temp;
   double lt = P.probability(A,P);
 
   std::cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;
-  std::cerr<<"lp = "<<lp<<"    qp = "<<qp<<" = "<<Matrices.path_GQ_path(path_g)<<" + "<<Matrices.generalize_P(path)<<" + "<<OP<<endl;
+  std::cerr<<"lp = "<<lp<<"    qp = "<<qp<<" = "<<log(Matrices.path_GQ_path(path_g))<<" + "<<log(Matrices.generalize_P(path))<<" + "<<OP<<endl;
   std::cerr<<"lt = "<<lt<<"    qt = "<<qt<<endl;
   std::cerr<<endl;
 
@@ -146,6 +146,7 @@ void check_match_P(const alignment& A,const Parameters& P, double OS, double OP,
 
 }
 
+// FIXME - we could change this to return vector<efloat_t>
 vector<double> sample_P(const alignment& A,const Parameters& P,
 			double OS, double OP, double P_choice,
 			const vector<int>& path, const DPengine& Matrices) 
@@ -158,11 +159,11 @@ vector<double> sample_P(const alignment& A,const Parameters& P,
   PR[0] = P.probability(A,P);
 
   // Probability of sampling 
-  PR[1] = P_choice + Matrices.path_P(path_g) + Matrices.generalize_P(path);
+  PR[1] = P_choice + log( Matrices.path_P(path_g) * Matrices.generalize_P(path) );
 
-  std::cerr<<"PrS = "<<P_choice<<" + "<<Matrices.path_P(path_g)<<" + "<<Matrices.generalize_P(path)<<endl;
+  std::cerr<<"PrS = "<<P_choice<<" + "<<log(Matrices.path_P(path_g))<<" + "<<log(Matrices.generalize_P(path))<<endl;
 
-  PR[2] = Matrices.path_Q(path_g) + Matrices.generalize_P(path)+ prior(P)/P.Temp + OS + OP;
+  PR[2] = log( Matrices.path_Q(path_g) * Matrices.generalize_P(path)) + prior(P)/P.Temp + OS + OP;
 
   return PR;
 }

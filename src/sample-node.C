@@ -200,7 +200,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
   //---------------- Calculate choice probabilities --------------//
   vector<double> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
+    Pr[i] = OS[i] + log(Matrices[i].Pr_sum_all_paths()) + OP[i] + prior(p[i])/p[i].Temp;
 
   int C = choose_log(Pr);
 
