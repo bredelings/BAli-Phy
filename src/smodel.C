@@ -601,11 +601,20 @@ namespace substitution {
   }
 
   void DualModel::recalc() {
-    distribution_[0] = parameters_[0];
-    distribution_[1] = 1.0 - distribution_[0];
+    int n1 = SubModels(0).nmodels();
+    int n2 = SubModels(1).nmodels();
+    double p = parameters_[parameters_.size()-2];
+    double r = parameters_[parameters_.size()-1];
 
-    rates_[0] = 1.0;
-    rates_[1] = parameters_[1];
+    for(int i=0;i<n1;i++) {
+      distribution_[i] = SubModels(0).distribution()[i]*p;
+      rates_[i]        = SubModels(0).rates()[i];
+    }
+
+    for(int i=0;i<n2;i++) {
+      distribution_[i+n1] = SubModels(1).distribution()[i]*(1.0-p);
+      rates_[i+n1]        = SubModels(1).rates()[i]*r;
+    }
 
     //recalculate submodels;
     SuperModel::recalc();
@@ -621,7 +630,8 @@ namespace substitution {
   double DualModel::super_prior() const {
     double P=0;
 
-    double p = parameters_[0];
+    double p = parameters_[parameters_.size()-2];
+    double r = parameters_[parameters_.size()-1];
 
     const double frac_mode = 0.5;
     const double N = 20;
@@ -633,7 +643,7 @@ namespace substitution {
     else 
       P += log(gsl_ran_beta_pdf(p,a,b));
 
-    double log_r = log(parameters_[0]);
+    double log_r = log(r);
     P += log(shift_laplace_pdf(log_r,0,0.2));
 
     return P;
@@ -642,7 +652,7 @@ namespace substitution {
   void DualModel::super_fiddle(const valarray<bool>& fixed) {
     if (not fixed[parameters_.size()-2]) {
 
-      double& p = parameters_[0];
+      double& p = parameters_[parameters_.size()-1];
 
       // fiddle Invariant fraction
       const double sigma = 0.04;
@@ -658,6 +668,15 @@ namespace substitution {
     recalc();
   }
 
+  const MultiModel& DualModel::get_model(int m) const {
+    int total = SubModels(0).nmodels() + SubModels(1).nmodels();
+    assert(0 <= m and m < total);
+    if (m<SubModels(0).nmodels())
+      return SubModels(0);
+    else
+      return SubModels(1);
+  }
+
   string DualModel::name() const {
     return string("DualModel(") + SubModels(0).name() + "," + SubModels(1).name() + ")";
   }
@@ -668,12 +687,14 @@ namespace substitution {
     recalc();
   }
 
-  DualModel::DualModel(const std::vector<OwnedPointer<ReversibleAdditiveModel> >& models)
-    :MultiModel(2),SuperModelOver<ReversibleAdditiveModel>(models,2)
+  DualModel::DualModel(const std::vector<OwnedPointer<MultiModel> >& models)
+    :MultiModel(models[0]->nmodels() + models[1]->nmodels()),
+     SuperModelOver<MultiModel>(models,2)
   {
-    parameters_[0] = 0.5;
-    parameters_[1] = 1.0;
+    parameters_[parameters_.size()-2] = 0.5;
+    parameters_[parameters_.size()-1] = 1.0;
 
+    // this includes a recalc
     frequencies(frequencies());
   }
 }

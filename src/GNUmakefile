@@ -122,8 +122,8 @@ includes += .
 CC=gcc-3.4
 CXX=g++-3.4
 CPP = $(CC) -E  	# This might vary from machine to machine
-CPPFLAGS = $(patsubst %,-I%,$(subst :, ,$(includes)))
-CXXFLAGS = ${LANGO:%=-f%} ${WARN:%=-W%} ${DEBUG:%=-%} ${OPT:%=-%} ${DEFS:%=-D%} ${EXACTFLAGS}
+CPPFLAGS += $(patsubst %,-I%,$(subst :, ,$(includes)))
+CXXFLAGS += ${LANGO:%=-f%} ${WARN:%=-W%} ${DEBUG:%=-%} ${OPT:%=-%} ${DEFS:%=-D%} ${EXACTFLAGS}
 LI=${CXX}
 
 

@@ -63,4 +63,6 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& Theta);
 MCMC::result_t sample_tri_one(alignment&, Parameters&,int);
 MCMC::result_t sample_tri_branch_one(alignment&,Parameters&,int);
 
+MCMC::result_t sample_frequencies(alignment& A,Parameters& P);
+
 #endif

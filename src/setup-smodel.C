@@ -116,7 +116,15 @@ bool process_stack_Multi(vector<string>& string_stack,
 
   ReversibleAdditiveModel* RA = dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
   MultiRateModel* MRM = dynamic_cast<MultiRateModel*>(model_stack.back().get());
-  if (match(string_stack,"gamma_plus_uniform")) {
+  if (match(string_stack,"single")) {
+    if (RA)
+      model_stack.back() = SingleRateModel(*RA);
+    else if (model_stack.empty())
+      throw myexception()<<"single: couldn't find any model to use.";
+    else
+      throw myexception()<<"single: couldn't find a reversible+additive model to use.";
+  }
+  else if (match(string_stack,"gamma_plus_uniform")) {
     int n=4;
     if (args.set("gamma_plus_uniform") and args["gamma_plus_uniform"] != "gamma_plus_uniform")
       n = convertTo<int>(args["gamma_plus_uniform"]);
@@ -170,21 +178,25 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (model_stack.size() < 2)
       throw myexception()<<"Dual: can't find 2 models to combine";
 
-    OwnedPointer<ReversibleAdditiveModel> M2;
-    if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
-      M2 = *dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
+    OwnedPointer<MultiModel> M2;
+    if (dynamic_cast<MultiModel*>(model_stack.back().get()) )
+      M2 = *dynamic_cast<MultiModel*>(model_stack.back().get());
+    else if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
+      M2 = SingleRateModel(*dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) );
     else
-      throw myexception()<<"Dual: second model isn't reversible+additive";
+      throw myexception()<<"Dual: second model isn't reversible+additive or a multi-model";
     model_stack.pop_back();
 
-    OwnedPointer<ReversibleAdditiveModel> M1;
-    if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
-      M1 = *dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
+    OwnedPointer<MultiModel> M1;
+    if (dynamic_cast<MultiModel*>(model_stack.back().get()) )
+      M1 = *dynamic_cast<MultiModel*>(model_stack.back().get());
+    else if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
+      M1 = SingleRateModel(*dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) );
     else
-      throw myexception()<<"Dual: second model isn't reversible+additive";
+      throw myexception()<<"Dual: first model isn't reversible+additive or a multi-model";
     model_stack.pop_back();
 
-    vector <OwnedPointer<ReversibleAdditiveModel> > models;
+    vector <OwnedPointer<MultiModel> > models;
     models.push_back(M1);
     models.push_back(M2);
 

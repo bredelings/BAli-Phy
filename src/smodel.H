@@ -332,7 +332,7 @@ namespace substitution {
     ~ReversibleMarkovModel() {}
   };
 
-  // Perhaps this is just a REVERSIBLE Model?
+  // This models is not really additive: E N ~ t but Var N ~ t^2 so that sigma/mu is constant
   class Gamma_Branch_Model:public Independant_Additive_Reversible_Model,public NestedModelOver<ReversibleMarkovModel> 
   {
     void super_fiddle(const std::valarray<bool>&);
@@ -351,6 +351,7 @@ namespace substitution {
     void frequencies(const std::valarray<double>& f) {SubModel().frequencies(f);}
 
     Matrix transition_p(double t) const;
+
     Gamma_Branch_Model(const ReversibleMarkovModel& M)
       :NestedModelOver<ReversibleMarkovModel>(M,1) {
       parameters_[parameters_.size()-1]=0.1;
@@ -359,6 +360,7 @@ namespace substitution {
 
 
 
+  // This models is truly additive: E N ~ t and Var N ~ t, where N is number of changes.
   class Gamma_Stretched_Branch_Model:public Independant_Additive_Reversible_Model,public NestedModelOver<ReversibleMarkovModel> 
   {
     void super_fiddle(const std::valarray<bool>&);
@@ -750,7 +752,7 @@ namespace substitution {
     INV_Model(const MultiRateModel& M);
   };
 
-  class DualModel:public MultiModel,public SuperModelOver<ReversibleAdditiveModel> {
+  class DualModel:public MultiModel,public SuperModelOver<MultiModel> {
     double super_prior() const;
     void super_fiddle(const std::valarray<bool>&);
     void recalc();
@@ -758,7 +760,7 @@ namespace substitution {
   public:
     virtual DualModel* clone() const {return new DualModel(*this);}
 
-    const ReversibleAdditiveModel& get_model(int m) const {return SubModels(m);}
+    const MultiModel& get_model(int m) const;
 
     /// Get the equilibrium frequencies
     const std::valarray<double>& frequencies() const {return get_model(0).frequencies();}
@@ -767,7 +769,7 @@ namespace substitution {
 
     string name() const;
 
-    DualModel(const std::vector<OwnedPointer<ReversibleAdditiveModel> >& models);
+    DualModel(const std::vector<OwnedPointer<MultiModel> >& models);
   };
 
 }
