@@ -127,11 +127,13 @@ vector<double> DPmatrix::path_Q(const vector<int>& path,const Matrix& GQ) {
 
     double sub=0;
     if (di(state2) and dj(state2))
-      sub = log(sum(dists1[i-1] * frequency * dists2[j-1]));
+      sub = emitMM(i,j);
     else if (di(state2))
-      sub = s1_sub[i-1];
+      sub = emitM_(i,j);
     else if (dj(state2))
-      sub = s2_sub[j-1];
+      sub = emit_M(i,j);
+    else
+      sub = emit__(i,j);
 
     P_sub += sub;
   }

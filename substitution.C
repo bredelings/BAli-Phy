@@ -315,8 +315,8 @@ double Pr(const alignment& A, const Parameters& P) {
   const tree& T = P.T;
 
   double sum = 0;
-  for(int i=0;i<SModel.nrates();i++)
-    sum += Pr(A,T,SModel.BaseModel(),P.transition_P(i))*SModel.distribution()[i];
+  for(int r=0;r<SModel.nrates();r++)
+    sum += Pr(A,T,SModel.BaseModel(),P.transition_P(r))*SModel.distribution()[r];
 
   return sum;
 }
@@ -326,8 +326,8 @@ double Pr_star(const alignment& A, const Parameters& P) {
   const tree& T = P.T;
 
   double sum = 0;
-  for(int i=0;i<SModel.nrates();i++)
-    sum += Pr_star(A,T,SModel.BaseModel(),P.transition_P(i))*SModel.distribution()[i];
+  for(int r=0;r<SModel.nrates();r++)
+    sum += Pr_star(A,T,SModel.BaseModel(),P.transition_P(r))*SModel.distribution()[r];
 
   return sum;
 }
@@ -338,8 +338,8 @@ double Pr_star_constant(const alignment& A, const Parameters& P) {
   const tree& T = P.T;
 
   double sum = 0;
-  for(int i=0;i<SModel.nrates();i++)
-    sum += Pr_star_constant(A,T,SModel.BaseModel(),P.transition_P(i))*SModel.distribution()[i];
+  for(int r=0;r<SModel.nrates();r++)
+    sum += Pr_star_constant(A,T,SModel.BaseModel(),P.transition_P(r))*SModel.distribution()[r];
 
   return sum;
 }
@@ -350,8 +350,8 @@ double Pr_star_estimate(const alignment& A, const Parameters& P) {
   const tree& T = P.T;
 
   double sum = 0;
-  for(int i=0;i<SModel.nrates();i++)
-    sum += Pr_star_estimate(A,T,SModel.BaseModel(),P.transition_P(i))*SModel.distribution()[i];
+  for(int r=0;r<SModel.nrates();r++)
+    sum += Pr_star_estimate(A,T,SModel.BaseModel(),P.transition_P(r))*SModel.distribution()[r];
 
   return sum;
 }

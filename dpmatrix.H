@@ -23,9 +23,11 @@ public:
   vector<int> state_emit;
 
   // data for emission probabilities 
-  const vector< valarray<double> >& dists1;
-  const vector< valarray<double> >& dists2;
+  const vector<double>& distribution;
+  const vector< vector< valarray<double> > >& dists1;
+  const vector< vector< valarray<double> > >& dists2;
   const valarray<double>& frequency;
+  int nrates() const {return dists1[0].size();}
 
   // accessor functions
   int size1() const {return s1;}
@@ -57,16 +59,24 @@ public:
   double path_P(const vector<int>& path, const Matrix& GQ);
   double path_check(const vector<int>& path, const Matrix& GQ);
 
-
   double check(const Matrix&,const Matrix&,const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2);
 
+  double emitMM(int i,int j);
+  double emit_M(int i,int j);
+  double emitM_(int i,int j);
+  double emit__(int i,int j);
+
+
   DPmatrix(int nstates,
-	   const vector< valarray<double> >& d1,const vector< valarray<double> >& d2, 
+	   const vector< double >& d0,
+	   const vector< vector< valarray<double> > >& d1,
+	   const vector< vector< valarray<double> > >& d2, 
 	   const valarray<double>& f)
     :vector<Matrix>(nstates,Matrix(d1.size()+1,d2.size()+1)), 
      s1(d1.size()+1),s2(d2.size()+1), 
      s1_sub(d1.size()),s2_sub(d2.size()),
      state_emit(nstates+1),
+     distribution(d0),
      dists1(d1),dists2(d2),frequency(f)
   {
 
@@ -77,15 +87,43 @@ public:
 	  (*this)[S](i,j)  = log_0;
 
     //----- cache G1,G2 emission probabilities -----//
-    for(int i=0;i<dists1.size();i++)  
-      s1_sub[i] = log(sum( dists1[i] * frequency ));
+    for(int i=0;i<dists1.size();i++) {
+      double total=0;
+      for(int r=0;r<nrates();r++)
+	total += distribution[r]*sum( dists1[i][r] * frequency );
+      s1_sub[i] = log(total);
+    }
 
-    for(int i=0;i<dists2.size();i++)
-      s2_sub[i] = log(sum( dists2[i] * frequency ));
+    for(int i=0;i<dists2.size();i++) {
+      double total=0;
+      for(int r=0;r<nrates();r++)
+	total += distribution[r]*sum( dists2[i][r] * frequency );
+      s2_sub[i] = log(total);
+    }
   }
 
   virtual ~DPmatrix() {}
 };
+
+inline double DPmatrix::emitMM(int i,int j) {
+  double total=0;
+  for(int r=0;r<nrates();r++) 
+    total += distribution[r]*sum(dists1[i-1][r] * frequency * dists2[j-1][r]);
+
+  return log(total);
+}
+
+inline double DPmatrix::emitM_(int i,int j) {
+  return s1_sub[i-1];
+}
+
+inline double DPmatrix::emit_M(int i,int j) {
+  return s2_sub[j-1];
+}
+
+inline double DPmatrix::emit__(int i,int j) {
+  return 0;
+}
 
 class DPmatrixHMM: public DPmatrix {
   vector< vector<int> > allowed_states;
@@ -98,9 +136,10 @@ public:
   void forward(int,int,const Matrix& GQ);
 
   DPmatrixHMM(int nstates,
-	      const vector< valarray<double> >& d1,const vector< valarray<double> >& d2, 
+	      const vector< double >& d0,
+	      const vector< vector< valarray<double> > >& d1,const vector< vector< valarray<double> > >& d2, 
 	      const valarray<double>& f):
-    DPmatrix(nstates,d1,d2,f), allowed_states(d2.size()+1)
+    DPmatrix(nstates,d0,d1,d2,f), allowed_states(d2.size()+1)
   { }
 
   virtual ~DPmatrixHMM() {}
@@ -140,13 +179,13 @@ inline void DPmatrixHMM::forward(int i2,int j2,const Matrix& GQ) {
     //--- Include Emission Probability----
     double sub;
     if (i1 != i2 and j1 != j2)
-      sub = log(sum( dists1[i2-1] * frequency * dists2[j2-1] ));
+      sub = emitMM(i2,j2);
     else if (i1 != i2)
-      sub = s1_sub[i2-1];
+      sub = emitM_(i2,j2);
     else if (j1 != j2)
-      sub = s2_sub[j2-1];
+      sub = emit_M(i2,j2);
     else          // silent state - nothing emitted
-      sub = 0;
+      sub = emit__(i2,j2);
 
 
     FS2(i2,j2) += sub;

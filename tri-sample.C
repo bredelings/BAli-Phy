@@ -242,18 +242,25 @@ alignment construct(const alignment& old, const vector<int>& path,
 }
 
 
-vector<valarray<double> > distributions(const alignment& A,const Parameters& Theta,
+vector< vector<valarray<double> > > distributions(const alignment& A,const Parameters& Theta,
 					const vector<int>& seq,int n0,int n1) {
   const alphabet& a = A.get_alphabet();
+  const substitution::MultiRateModel& MRModel = Theta.SModel();
 
-  vector< valarray<double> > dist(seq.size());
+  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
 
   for(int i=0;i<dist.size();i++) {
     vector<int> residues(A.size2());
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
-    dist[i].resize(a.size());
-    dist[i] = substitution::peel(residues,Theta,n0,n1,n0);
+    for(int r=0;r<MRModel.nrates();r++) {
+      dist[i][r].resize(a.size());
+      dist[i][r] = substitution::peel(residues,
+				      Theta.T,
+				      MRModel.BaseModel(),
+				      Theta.transition_P(r),
+				      n0,n1,n0);
+    }
 
     // note: we could normalize frequencies to sum to 1
   }
@@ -261,18 +268,25 @@ vector<valarray<double> > distributions(const alignment& A,const Parameters& The
   return dist;
 }
 
-vector<valarray<double> > distributions23(const alignment& A,const Parameters& Theta,
+vector< vector<valarray<double> > > distributions23(const alignment& A,const Parameters& Theta,
 					  const vector<int>& seq,int n0,int n1) {
   const alphabet& a = A.get_alphabet();
+  const substitution::MultiRateModel& MRModel = Theta.SModel();
 
-  vector< valarray<double> > dist(seq.size());
+  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
 
   for(int i=0;i<dist.size();i++) {
     vector<int> residues(A.size2());
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
-    dist[i].resize(a.size());
-    dist[i] = substitution::peel(residues,Theta,n1,n0,n0);
+    for(int r=0;r<MRModel.nrates();r++) {
+      dist[i][r].resize(a.size());
+      dist[i][r] = substitution::peel(residues,
+				      Theta.T,
+				      MRModel.BaseModel(),
+				      Theta.transition_P(r),
+				      n1,n0,n0);
+    }
 
     // note: we could normalize frequencies to sum to 1
   }
@@ -415,12 +429,12 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
 
   // Precompute distributions at n0
-  vector< valarray<double> > dists1 = distributions(old,Theta,seq1,n0,n1);
-  vector< valarray<double> > dists23 = distributions23(old,Theta,seq23,n0,n1);
+  vector< vector< valarray<double> > > dists1 = distributions(old,Theta,seq1,n0,n1);
+  vector< vector< valarray<double> > > dists23 = distributions23(old,Theta,seq23,n0,n1);
 
 
   /*-------------- Create alignment matrices ---------------*/
-  DPmatrixHMM Matrices(nstates,dists1,dists23,frequency);
+  DPmatrixHMM Matrices(nstates,Theta.SModel().distribution(),dists1,dists23,frequency);
 
   // Cache which states emit which sequences
   for(int S2=0;S2<nstates+1;S2++) {

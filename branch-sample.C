@@ -206,11 +206,11 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
 }
 
 
-vector<valarray<double> > distributions(const alignment& A,const Parameters& Theta,
+vector< vector<valarray<double> > > distributions(const alignment& A,const Parameters& Theta,
 					const vector<int>& seq,int b,bool up) {
   const alphabet& a = A.get_alphabet();
 
-  vector< valarray<double> > dist(seq.size());
+  vector< vector< valarray<double> > > dist(seq.size());
 
   for(int i=0;i<dist.size();i++) {
     vector<int> residues(A.size2());
@@ -254,8 +254,8 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
 
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
-  vector< valarray<double> > dists1 = distributions(old,Theta,seq1,b,true);
-  vector< valarray<double> > dists2 = distributions(old,Theta,seq2,b,false);
+  vector< vector< valarray<double> > > dists1 = distributions(old,Theta,seq1,b,true);
+  vector< vector< valarray<double> > > dists2 = distributions(old,Theta,seq2,b,false);
 
   valarray<double> g1_sub(seq2.size());
   for(int i=0;i<seq2.size();i++)  
