@@ -169,11 +169,11 @@ double IndelModel1::prior() const {
   // Calculate prior on lambda_O
   double delta_LOD = parameters_[0] - logdiff(0,parameters_[0]);
 
-  P += log( shift_laplace_pdf(delta_LOD,-5.5,0.25) );
+  P += log( shift_laplace_pdf(delta_LOD,-6, 0.5) );
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double epsilon = exp(parameters_[1]);
-  double E_length = 1.0/(1.0 - epsilon);
+  double E_length = epsilon/(1.0 - epsilon);
   double E_length_mean = 5.0;
 
   P += (-log(E_length_mean) - E_length/E_length_mean);
@@ -304,7 +304,7 @@ double IndelModel2::prior() const {
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double epsilon = exp(lambda_E);
-  double E_length = 1.0/(1.0 - epsilon);
+  double E_length = epsilon/(1.0 - epsilon);
   double E_length_mean = 4.5;
 
   P += (-log(E_length_mean) - E_length/E_length_mean);
@@ -418,11 +418,11 @@ double UpweightedIndelModel::prior() const {
   // Calculate prior on lambda_O
   double delta_LOD = parameters_[0] - logdiff(0,parameters_[0]);
 
-  P += log( shift_laplace_pdf(delta_LOD,-5.5,0.25) );
+  P += log( shift_laplace_pdf(delta_LOD, -6, 0.5) );
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double epsilon = exp(parameters_[1]);
-  double E_length = 1.0/(1.0 - epsilon);
+  double E_length = epsilon/(1.0 - epsilon);
   double E_length_mean = 5.0;
 
   P += (-log(E_length_mean) - E_length/E_length_mean);
@@ -442,20 +442,22 @@ UpweightedIndelModel::UpweightedIndelModel(double lambda_O,double lambda_E)
 void SingleIndelModel::fiddle() { 
   double& lambda_O = parameters_[0];
 
-  const double sigma = 0.15;
-  lambda_O += gaussian(0,sigma);
-  if (lambda_O >= 0) lambda_O = -lambda_O;
+  if (not fixed[0]) {
+    const double sigma = 0.15;
 
+    double delta_LOD = lambda_O - logdiff(0,lambda_O);
+    delta_LOD += gaussian(0,sigma);
+    lambda_O = delta_LOD - logsum(0,delta_LOD);
+  }
+  
   recalc();
 }
 
 double SingleIndelModel::prior() const {
-  const double mean = -5.5;
+  // Calculate prior on lambda_O
+  double delta_LOD = parameters_[0] - logdiff(0,parameters_[0]);
 
-  double delta = exp(parameters_[0]);
-  double mu = -log(1.0-delta);
-
-  return gsl_ran_gaussian_pdf(log(mu)-mean,1.0);
+  return log( shift_laplace_pdf(delta_LOD, -6, 0.5) );
 }
 
 void SingleIndelModel::recalc() {
