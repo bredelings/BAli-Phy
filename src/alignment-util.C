@@ -234,6 +234,7 @@ void check_leaf_sequences(const alignment& A,int n_leaves,const char* tag) {
 
   for(int i=0;i<n_leaves;i++) {
 
+    sequences[i].strip_gaps();
     if (not (sequences[i] == A.seq(i))) {
       std::cerr<<tag<<" - leaf sequence "<<i<<" corrupted!\n";
 

@@ -85,6 +85,8 @@ int alignment::seqlength(int i) const {
 }
 
 alignment& alignment::operator=(const alignment& A) {
+  a = A.a;
+
   sequences = A.sequences;
 
   array.resize(A.array.size1(),A.array.size2());

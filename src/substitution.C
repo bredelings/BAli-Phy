@@ -38,6 +38,26 @@ namespace substitution {
     return alphabet::gap;
   }
 
+  ublas::matrix<int> leaf_index(int b,const alignment& A) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA(A.length(),1);
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+      if (not A.gap(c,b))
+	subA(l++,0) = A(c,b);
+    }
+
+    assert(l == A.seqlength(b));
+
+    //resize the matrix, and send it back...
+    ublas::matrix<int> temp(l,1);
+    for(int i=0;i<temp.size1();i++)
+      temp(i,0) = subA(i,0);
+    
+    return temp;
+  }
+
   ublas::matrix<int> subA_index(const vector<int>& b,const alignment& A,const Tree& T) 
   {
     // the alignment of sub alignments
@@ -319,7 +339,7 @@ namespace substitution {
       b.push_back(*i);
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index = subA_index(b,A,T);
+    ublas::matrix<int> index = (b.size())?subA_index(b,A,T):leaf_index(b0,A);
 
     // The number of directed branches is twice the number of undirected branches
     const int B        = T.n_branches();
@@ -329,14 +349,14 @@ namespace substitution {
     const int n_models = S.size1();
     const int asize    = S.size2();
 
-    const int length = index.size1()?index.size1():A.seqlength(b0);
+    const int length = index.size1();
 
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
     for(int i=0;i<length;i++) {
 
       // compute the distribution at the parent node - single letter
       if (not b.size()) {
-	int l2 = A.seq(b0)[i];
+	int l2 = index(i,0);
 	if (alphabet::letter(l2))
 	  for(int m=0;m<n_models;m++) {
 	    const Matrix& Q = transition_P[m][b0%B];
