@@ -98,8 +98,8 @@ public:
 
   int n_nodes() const {return nodes_.size();}
   int n_leaves() const {return n_leaves_;}
-  int n_leafbranches() const {return (n_leaves()==2)?1:n_leaves();}
   int n_branches() const {return branches_.size()/2;}
+  int n_leafbranches() const {return (n_branches()==1)?1:n_leaves();}
 
   /// Get the branch with name 'b'
   const_branchview branch(int b) const {

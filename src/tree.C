@@ -551,67 +551,62 @@ void Tree::SPR(int br1,int br2) {
   recompute(b1);
 }
 
-/// Return a pointer to the BN in @start which points to the only unnamed neighbor of @start.
-BranchNode* get_parent(BranchNode* start,BranchNode* root) {
+/// Return a pointer to the BN in @start which points towards the root
+BranchNode* get_parent(BranchNode* start) {
   BranchNode* BN = start;
-  BranchNode* node = NULL;
+  BranchNode* first = NULL;
 
-  // if we are at the root node, then there is no parent
-  if (root->node != -1 and root->node == start->node)
-    return NULL;
+  assert(start->node == -1);
 
-  // otherwise, the root node is either adjacent or in 
-  // the direction of the ONLY unnamed neighbor
+  // find the first non-visited neighbor
   do {
-    if (BN->out->node == -1 or BN->out->node == root->node) {
-      if (node)
-	return NULL;
-      else 
-	node = BN;
+    if (BN->out->node == -1) {
+      if (first)
+	return NULL;  // >1 unvisited neighbors - let them do it
+
+      first = BN;
     }
     BN = BN->next;
   } while (BN != start);
 
-  // if the parent direction is toward a ALREADY-NAMED root, then don't do it!
-  if (node and node->branch != -1) {
-    // and the already named node had better be the root node
-    assert(root->node != -1);
-    assert(node->out->node == root->node);
+  if (first)      // point to the unnamed neighbor
+    return first; 
+  else            // no un-visited neighbors - somebody is already doing this one.
     return NULL;
-  }
-
-  return node;
 }
 
 //NOTE: both of these routines assume that prev,next, and old pointers are correct
 
-/// This routine assumes only that leaf nodes have proper names and are indexed in nodes_
-void Tree::reanalyze(BranchNode* root) {
+/// This routine assumes only that leaf nodes have proper names
+void Tree::reanalyze(BranchNode* start) {
 
   nodes_.clear();
   branches_.clear();
 
-  //------------- Clear all names -------------//
+  //--------------- Count nodes ---------------//
   n_leaves_ = 0;
   int total_branch_nodes = 0;
-
-  for(BN_iterator BN(root);BN;BN++) {
-    (*BN)->node = -1;
-    (*BN)->branch = -1;
-
-    total_branch_nodes = 0;
+  for(BN_iterator BN(start);BN;BN++) {
+    total_branch_nodes++;
     if (is_leaf_node(*BN))
       n_leaves_++;
   }
+  nodes_.resize(1+total_branch_nodes/2);
   branches_.resize(total_branch_nodes);
 
   //----------- Set the leaf names ------------//
-  vector<BranchNode*> work(n_leafbranches());
-  for(BN_iterator BN(root);BN;BN++)
+  vector<BranchNode*> work(n_leaves());
+  for(BN_iterator BN(start);BN;BN++)
     if (is_leaf_node(*BN))
       work[(*BN)->node] = (*BN);
 
-  //--------- recompute other names -----------//
+  //------------- Clear all names -------------//
+  for(BN_iterator BN(start);BN;BN++) {
+    (*BN)->node = -1;
+    (*BN)->branch = -1;
+  }
+
+  //----------- recompute all names -----------//
   int n=0;
   int b=0;
   const int B = branches_.size()/2;
@@ -625,33 +620,22 @@ void Tree::reanalyze(BranchNode* root) {
       // name the node
       name_node(temp[i],n++);
 
-      // name the branch out of the node
-      temp[i]->branch = b++;
-      temp[i]->out->branch = temp[i]->branch + B;
+      if (temp[i]->branch == -1) {
+	// name the branch out of the node
+	temp[i]->branch = b++;
+	temp[i]->out->branch = temp[i]->branch + B;
 
       // add the parent to the list if we are its last child
-      BranchNode* next = get_parent(temp[i]->out,root);
-      if (next) temp.push_back(next);
+	BranchNode* next = get_parent(temp[i]->out);
+	if (next) work.push_back(next);
+      }
     }
   } 
-
   assert(b == B);
-
-  // name the last node
-  if (is_leaf_node(root) and root->node < n_leafbranches()) {
-    assert(root->out->node == -1);
-    name_node(root->out,n++);
-  }
-  else {
-    assert(root->node == -1);
-    name_node(root,n++);
-  }
-  nodes_.resize(n);
-
-  branches_.resize(total_branch_nodes);
+  assert(n == nodes_.size());
 
   // give names to nodes and branches
-  recompute(root);
+  recompute(start);
 }
 
 /// Computes nodes_[] and branch_[] indices, and cached_partitions[]
