@@ -75,42 +75,10 @@ void Move::print_move_stats(int depth) const {
 }
 
 void MoveGroupBase::add(double l,const Move& m,bool enabled) {
-  Move* m2 = m.clone();
+  moves.push_back(m);
   if (not enabled)
-    m2->disable();
-  moves.push_back(m2);
+    moves.back()->disable();
   lambda.push_back(l);
-}
-
-MoveGroupBase& MoveGroupBase::operator=(const MoveGroupBase& m) {
-  for(int i=0;i<moves.size();i++) {
-    assert(moves[i]);
-    delete moves[i];
-  }
-
-  moves = m.moves;
-  lambda = m.lambda;
-
-  for(int i=0;i<moves.size();i++)
-    moves[i] = moves[i]->clone();
-
-  return *this;
-}
-
-MoveGroupBase::MoveGroupBase(const MoveGroupBase& m) {
-  moves = m.moves;
-  lambda = m.lambda;
-
-  for(int i=0;i<moves.size();i++)
-    moves[i] = moves[i]->clone();
-}
-
-
-MoveGroupBase::~MoveGroupBase() {
-  for(int i=0;i<moves.size();i++) {
-    assert(moves[i]);
-    delete moves[i];
-  }
 }
 
 double MoveGroup::sum() const {
@@ -379,7 +347,11 @@ int MoveEach::choose(int arg) const {
 result_t MoveEach::operator()(alignment& A,Parameters& P,int arg) {
   iterations += 1.0/args.size();
   int m = choose(arg);
-  return (*(MoveArg*)moves[m])(A,P,subarg[m][arg]);
+  MoveArg* temp = dynamic_cast<MoveArg*>(&*moves[m]);
+  if (not temp)
+    std::abort();
+  else
+    return (*temp)(A,P,subarg[m][arg]);
 }
 
 

@@ -82,7 +82,7 @@ namespace MCMC {
   class MoveGroupBase {
   protected:
     /// This list of moves
-    std::vector<Move*> moves;
+    std::vector<OwnedPointer<Move> > moves;
 
     /// This weight of each move
     std::vector<double> lambda;
@@ -91,11 +91,7 @@ namespace MCMC {
     int nmoves() const {return moves.size();}
     void add(double,const Move& m,bool=true);
 
-    MoveGroupBase& operator=(const MoveGroupBase&);
-    MoveGroupBase(const MoveGroupBase&);
     MoveGroupBase() {}
-
-    ~MoveGroupBase();
   };
 
   /// A Move which runs parts of a number of submoves each round
