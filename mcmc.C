@@ -539,8 +539,8 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     if (iterations%50 == 0 or std::abs(Pr - new_Pr)>12) {
       print_move_stats();
 #ifndef NDEBUG
-      print_stats(cerr,A,P,"check (A1)");
-      print_stats(cerr,A2,P2,"check (A2)");
+      print_stats(cerr,true,A,P,"check (A1)");
+      print_stats(cerr,true,A2,P2,"check (A2)");
 
       A2.print_fasta(cerr);
 #endif
