@@ -8,7 +8,7 @@
 #include "alphabet.H"
 #include "rates.H"
 
-/************ Abstract class Substitution Model **************/
+//----------- Abstract class Substitution Model -------------//
 namespace substitution {
 
   using std::string;
@@ -407,7 +407,6 @@ namespace substitution {
   protected:
     double super_prior() const {return 0;}
     void super_fiddle() {}; 
-    void recalc() {};
   public:
     virtual SingleRateModel* clone() const {return new SingleRateModel(*this);}
 
