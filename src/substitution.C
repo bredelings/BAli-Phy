@@ -26,7 +26,6 @@ namespace substitution {
     peeling_info(const Tree&T) { reserve(T.n_branches()); }
   };
 
-  typedef alignment::column_t column_t;
   typedef Likelihood_Cache& column_cache_t;
 
   /// move increment indexes for nodes 'source' in column 'c' of 'A'
@@ -219,8 +218,6 @@ namespace substitution {
     return temp;
   }
 
-
-  //FIXME - cache the frequencies in a matrix, for quick access.
 
   /// compute log(probability) from conditional likelihoods (S) and equilibrium frequencies as in MModel
   double Pr(const Matrix& S,const MultiModel& MModel) {
@@ -428,23 +425,12 @@ namespace substitution {
 
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches(T, cache);
-    //std::cerr<<"Peeled on "<<ops.size()<<" branches.\n";
+    // std::cerr<<"Peeled on "<<ops.size()<<" branches.\n";
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
       peel_branch(ops[i],cache,A,T,MC,P.SModel());
   }
-
-  /// I could make peel_branch a generate routine which takes 
-  //  a) a number of branches, which point to -> vector<Matrix>
-  //  b) optionally peels along vector<Matrix> which is the transition matrices for each model
-  //  c) writes the result into a vector<Matrix>& which is passed in
-  //     c.1) if a list of nodes specified in a vector<int> are present in that column
-  //     c.2) otherwise accumulates the column probability to a double& which is passed in....
-
-  // in this case, then I could use peel_branch for
-  // a) get_column_likelihoods
-  // b) calc_root_likelihoods...
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
   vector<Matrix>
@@ -470,12 +456,11 @@ namespace substitution {
     vector<Matrix> L;
     L.reserve(A.length());
 
-    const int n_models = cache.scratch(0).size1();
-    const int asize    = cache.scratch(0).size2();
+    Matrix& S = cache.scratch(0);
+    const int n_models = S.size1();
+    const int asize    = S.size2();
 
     for(int i=0;i<index.size1();i++) {
-
-      Matrix S(n_models,asize);
 
       for(int m=0;m<n_models;m++) {
 	for(int l=0;l<asize;l++) 
@@ -506,24 +491,22 @@ namespace substitution {
   {
     const Tree& T = P.T;
     Likelihood_Cache& cache = P.LC;
-    int root = cache.root;
 
     calculate_caches(A,P,cache);
 
     // compute root branches
     vector<int> rb;
-    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
+    for(const_in_edges_iterator i = T[cache.root].branches_in();i;i++)
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
     ublas::matrix<int> index1 = subA_index_other(rb,A,T,nodes);
-#ifndef NDEBUG
-    ublas::matrix<int> index2 = subA_index_req(rb,A,T,nodes);
-    ublas::matrix<int> index  = subA_index(rb,A,T);
-#endif
     double Pr1 = calc_root_probability(A,P,rb,index1);
 
 #ifndef NDEBUG
+    ublas::matrix<int> index2 = subA_index_req(rb,A,T,nodes);
+    ublas::matrix<int> index  = subA_index(rb,A,T);
+
     double Pr2 = calc_root_probability(A,P,rb,index2);
     double Pr  = calc_root_probability(A,P,rb,index);
 
@@ -536,22 +519,15 @@ namespace substitution {
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
     const Tree& T = P.T;
 
-    //    std::cerr<<" substitution: root = "<<cache.root<<std::endl;
-    int root = cache.root;
-
     calculate_caches(A,P,cache);
-
-    assert(get_branches(T, P.LC).size() == 0);
 
     // compute root branches
     vector<int> rb;
-    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
+    for(const_in_edges_iterator i = T[cache.root].branches_in();i;i++)
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
     ublas::matrix<int> index = subA_index(rb,A,T);
-
-    //    std::cerr<<"length of subA for root "<<cache.root<<" is "<<index.size1()<<"\n";
 
     // get the probability
     double Pr = calc_root_probability(A,P,rb,index);
@@ -559,12 +535,12 @@ namespace substitution {
     // cache the value
     cache.old_value = Pr;
 
-    //std::cerr<<" substitution: P="<<Pr<<std::endl;
     return Pr;
   }
 
   double Pr(const alignment& A,const Parameters& P) {
     double result = Pr(A, P, P.LC);
+
 #ifndef NDEBUG
     Parameters P2 = P;
     P2.LC.invalidate_all();
@@ -573,8 +549,8 @@ namespace substitution {
       std::cerr<<"Pr: diff = "<<result-result2<<std::endl;
       std::abort();
     }
-
 #endif
+
     return result;
   }
 }

@@ -165,9 +165,9 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   assert(valid(A));
 #endif
 
-  std::cerr<<"[tri]bandwidth = "<<bandwidth(Matrices,path_g)<<std::endl;
+  //  std::cerr<<"[tri]bandwidth = "<<bandwidth(Matrices,path_g)<<std::endl;
 
-  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
+  //  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
 
   return Matrices;
 }
