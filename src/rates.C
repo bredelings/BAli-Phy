@@ -153,7 +153,7 @@ namespace substitution {
   }
 
   string Gamma::parameter_name(int i) const {
-    return "gamma:sigma\mu";
+    return "gamma:sigma\\mu";
   }
 
   double Gamma::cdf(double x) const {
