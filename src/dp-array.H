@@ -1,8 +1,9 @@
 #ifndef DP_ARRAY_H
 #define DP_ARRAY_H
 
-#include "dp-engine.H"
 #include <valarray>
+#include "dp-engine.H"
+#include "refcount.H"
 
 class state_array: public RefObject
 {
@@ -11,7 +12,7 @@ class state_array: public RefObject
   int s3;
 
   valarray<double> data;
-  vector<int> scale_;
+  valarray<int> scale_;
 
 public:
   int size1() const {return s1;}

@@ -1,9 +1,9 @@
 #ifndef DP_MATRIX_H
 #define DP_MATRIX_H
 
+#include <valarray>
 #include "dp-engine.H"
 #include "refcount.H"
-#include <valarray>
 
 class state_matrix: public RefObject
 {
@@ -11,9 +11,9 @@ class state_matrix: public RefObject
   int s2;
   int s3;
 
-  //CHECK - does valarray make this faster?
   valarray<double> data;
-  vector<int> scale_;
+  valarray<int> scale_;
+
 public:
   int size1() const {return s1;}
   int size2() const {return s2;}
@@ -56,26 +56,29 @@ public:
 
 
 /// 2D Dynamic Programming Matrix
-class DPmatrix : public DPengine, public state_matrix {
-  /// Size of first dimension: 0...L1 = 0...S1-1
-  int S1;
-  /// Size of second dimension: 0...L2 = 0...S2-1
-  int S2;
-public:
+class DPmatrix : public DPengine, public state_matrix 
+{
+protected:
   /// Access size of dim 1
-  int size1() const {return S1;}
+  int size1() const {return state_matrix::size1();}
   /// Access size of dim 2
-  int size2() const {return S2;}
+  int size2() const {return state_matrix::size2();}
 
+public:
   /// Does state S emit in dimension 1?
   bool di(int S) const {bool e = false; if (state_emit[S]&(1<<0)) e=true;return e;}
   /// Does state S emit in dimension 2?
   bool dj(int S) const {bool e = false; if (state_emit[S]&(1<<1)) e=true;return e;}
 
-  /// Compute the forward probabilities for a square
+  /// Zero out all (relevant) probabilities for a cell
+  virtual void clear_cell(int,int);
+
+  /// Compute the forward probabilities for a cell
+  void forward_first_cell(int,int);
   virtual void forward_cell(int,int)=0;
 
   /// Compute the forward probabilities for a square
+  void forward_square_first(int,int,int,int);
   void forward_square(int,int,int,int);
   void forward_square();
 
@@ -92,9 +95,6 @@ public:
   vector<int> forward(const vector<vector<int> >&);
 
   efloat_t path_P(const vector<int>& path) const;
-
-  /// Auxiliary method for computing probability of sampling a path
-  efloat_t path_check(const vector<int>& path) const;
 
   /// compute the probability of all possible paths through the HMM
   efloat_t Pr_sum_all_paths() const;
@@ -218,6 +218,7 @@ public:
   const vector<int>& states(int j) const {return allowed_states[j];}
   vector<int>& states(int j) {return allowed_states[j];}
 
+  void clear_cell(int,int);
   void forward_cell(int,int);
 
   void prune();
@@ -230,7 +231,7 @@ public:
 		      const vector< Matrix >& d1,
 		      const vector< Matrix >& d2, 
 		      const Matrix& f):
-    DPmatrixEmit(v1,v2,M,Temp,d0,d1,d2,f), allowed_states(d2.size()+1)
+    DPmatrixEmit(v1,v2,M,Temp,d0,d1,d2,f), allowed_states(d2.size())
   { }
 
   virtual ~DPmatrixConstrained() {}

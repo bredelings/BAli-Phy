@@ -58,6 +58,8 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
   const substitution::MultiModel& MModel = P.SModel();
   const SequenceTree& T = P.T;
 
+  //FIXME modify this to add a shift of 2
+
   vector< Matrix > dist(seq.size(), Matrix(MModel.n_base_models(),a.size()) );
 
   for(int column=0;column<dist.size();column++) {
@@ -108,9 +110,9 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const
       required.push_back(T.directed_branch(branches[i]).source());
   }
 
-  vector< Matrix > dist = substitution::get_column_likelihoods(A,P,branches,required,seq);
+  vector< Matrix > dist = substitution::get_column_likelihoods(A,P,branches,required,seq,2);
   // note: we could normalize frequencies to sum to 1
-  assert(dist.size() == seq.size());
+  assert(dist.size() == seq.size()+2);
 
   return dist;
 }

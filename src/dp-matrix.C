@@ -5,51 +5,55 @@
 
 using std::max;
 
-int bandwidth(const DPmatrix& M,const vector<int>& path) {
-  int max = 0;
-
-  int i=0;
-  int j=0;
-  for(int c=0;c < path.size();c++) {
-
-    if (M.di(path[c]))
-      i++;
-    if (M.dj(path[c]))
-      j++;
-
-    if (std::abs(i-j) > max)
-      max = std::abs(i-j);
-  }
-  return max;
+inline void DPmatrix::clear_cell(int i2,int j2) 
+{
+  scale(i2,j2) = INT_MIN;
+  for(int S=0;S<nstates();S++)
+    (*this)(i2,j2,S) = 0;
 }
 
+inline void DPmatrix::forward_first_cell(int i2,int j2) 
+{ 
+  assert(0 < i2 and i2 < size1());
+  assert(0 < j2 and j2 < size2());
 
-int bandwidth2(const DPmatrix& M,const vector<int>& path) {
-  int max = 0;
+  // determine initial scale for this cell
+  scale(i2,j2) = 0;
 
-  const int I = M.size1()-1;
-  const int J = M.size2()-1;
+  double maximum = 0;
 
-  int i=0;
-  int j=0;
-  for(int c=0;c < path.size();c++) {
+  for(int S2=0;S2<nstates();S2++) 
+  {
+    double temp;
+    if (di(S2) or dj(S2))
+      temp = start_P[S2];
+    else {
+      //--- compute arrival probability ----
+      temp  = 0;
+      for(int S1=0;S1<nstates();S1++)
+	temp += (*this)(i2,j2,S1) * GQ(S1,S2);
+    }
 
-    if (M.di(path[c]))
-      i++;
-    if (M.dj(path[c]))
-      j++;
+    // record maximum
+    if (temp > maximum) maximum = temp;
 
-    double w1 = std::abs(  i - double(j)*I/J );
-    double w2 = std::abs(  j - double(i)*J/I );
-    double w = std::max(w1,w2);
-    if ((int)w > ceil(max))
-      max = (int)w;
+    // store the result
+    (*this)(i2,j2,S2) = temp;
   }
-  return max;
-}
 
+  //------- if exponent is too low, rescale ------//
+  if (maximum > 0 and maximum < fp_scale::cutoff) {
+    int logs = -(int)log2(maximum);
+    double scale_ = pow2(logs);
+    for(int S2=0;S2<nstates();S2++) 
+      (*this)(i2,j2,S2) *= scale_;
+    scale(i2,j2) -= logs;
+  }
+} 
 
-inline void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
+inline void DPmatrix::forward_square_first(int x1,int y1,int x2,int y2) {
+  assert(0 < x1);
+  assert(0 < y1);
   assert(x1 <= x2 or y1 <= y2);
   assert(x2 < size1());
   assert(y2 < size2());
@@ -57,52 +61,68 @@ inline void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
   // Since we are using M(0,0) instead of S(0,0), we need to run only the silent states at (0,0)
   // We can only use non-silent states at (0,0) to simulate S
 
-  for(int x=x1;x<=x2;x++)
+  // clear left border
+  for(int y=y1;y<=y2;y++)
+    clear_cell(x1-1,y);
+
+  // forward first row, with exception for S(0,0)
+  clear_cell(x1,y1-1);
+  forward_first_cell(x1,y1);
+  for(int y=y1+1;y<=y2;y++)
+    forward_cell(x1,y);
+
+  // forward other rows
+  for(int x=x1+1;x<=x2;x++) {
+    clear_cell(x,y1-1);
     for(int y=y1;y<=y2;y++)
       forward_cell(x,y);
+  }
+}
+
+inline void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
+  assert(0 < x1);
+  assert(0 < y1);
+  assert(x1 <= x2 or y1 <= y2);
+  assert(x2 < size1());
+  assert(y2 < size2());
+
+  // Since we are using M(0,0) instead of S(0,0), we need to run only the silent states at (0,0)
+  // We can only use non-silent states at (0,0) to simulate S
+
+  // clear left border
+  for(int y=y1;y<=y2;y++)
+    clear_cell(x1-1,y);
+
+  for(int x=x1;x<=x2;x++) {
+    clear_cell(x,y1-1);
+    for(int y=y1;y<=y2;y++)
+      forward_cell(x,y);
+  }
 }
 
 void DPmatrix::forward_square() {
   const int I = size1()-1;
   const int J = size2()-1;
 
-  forward_square(0,0,I,J);
+  forward_square_first(1,1,I,J);
 }
 
-void DPmatrix::forward_band(int bw) {
-  const int I = size1()-1;
-  const int J = size2()-1;
-
-  double b = std::max(double(bw),double(bw)*J/I)+0.00001;
-
-  for(int x=0;x<=I;x++) {
-    double y_bot = double(x)*J/I - b;
-    double y_top = double(x)*J/I + b;
-
-    int y1 = (int)ceil(y_bot);
-    y1 = std::max(0,y1);
-    int y2 = (int)floor(y_top);
-    y2 = std::min(J,y2);
-    
-    for(int y=y1;y<=y2;y++)
-      forward_cell(x,y);
-  }
-}
-
-
-// FIXME - must fix entire columns, row, not chosen based on the path
-void DPmatrix::forward_constrained(const vector< vector<int> >& pins) {
+// FIXME - fix up pins for new matrix coordinates
+void DPmatrix::forward_constrained(const vector< vector<int> >& pins) 
+{
   const int I = size1()-1;
   const int J = size2()-1;
 
   if (pins[0].size() == 0) 
-    forward_square(0,0,I,J);
+    forward_square();
   else {
+    std::abort();
+
     const vector<int>& x = pins[0];
     const vector<int>& y = pins[1];
 
     // Propogate from S to first pin
-    forward_square(0,0,x[0],y[0]);
+    forward_square_first(1,1,x[0],y[0]);
 
     // Propogate from first pin to other pins (if any)
     for(int i=0;i<(int)x.size()-1;i++)
@@ -120,61 +140,8 @@ vector<int> DPmatrix::forward(const vector<vector<int> >& pins)
 }
 
 
-efloat_t DPmatrix::path_check(const vector<int>& path) const 
+efloat_t DPmatrix::path_P(const vector<int>& path) const 
 {
-  efloat_t Pr=1.0;
-  
-  const int I = size1()-1;
-  const int J = size2()-1;
-
-  int i = 0;
-  int j = 0;
-
-  int l = 0;
-
-  vector<double> transition(nstates());
-
-  // we don't look at transitions FROM the end state, because we 
-  //  bail at looking at transitions FROM (I,C) 
-  // FIXME - but what if this is actually not E but 7?
-  while(true) {
-    assert(l<path.size());
-
-    int state1 = path[l];
-
-    if (di(state1)) i++;
-    if (dj(state1)) j++;
-
-    if (state1 == endstate())
-      break;
-
-    int state2 = path[l+1];
-
-    for(int s=0;s<nstates();s++)
-      transition[s] = (*this)(i,j,s)*GQ(s,state2);
-    
-    double p = choose_P(state1,transition);
-    assert((*this)(i,j,state1) > 0.0);
-    assert(GQ(state1,state2) > 0.0);
-    assert(p > 0.0);
-    
-    l++;
-    Pr *= p;
-
-    assert(i<=I and j<=J);
-  }
-
-  assert(l == path.size()-1);
-  assert(i == I and j == J);
-  assert(Pr > 0.0);
-
-  return Pr;
-}
-
-efloat_t DPmatrix::path_P(const vector<int>& path) const {
-  efloat_t P2 = path_check(path);
-  std::cerr<<"P(path)2 = "<<P2<<std::endl;
-
   const int I = size1()-1;
   const int J = size2()-1;
   int i = I;
@@ -210,11 +177,11 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const {
     Pr *= p;
   }
   assert(l == 0);
-  assert(i == 0 and j == 0);
+  assert(i == 1 and j == 1);
 
   // include probability of choosing 'Start' vs ---+ !
   for(int state1=0;state1<nstates();state1++)
-    transition[state1] = (*this)(0,0,state1) * GQ(state1,state2);
+    transition[state1] = (*this)(1,1,state1) * GQ(state1,state2);
 
   // Get the probability that the previous state was 'Start'
   double p=0.0;
@@ -246,7 +213,7 @@ vector<int> DPmatrix::sample_path() const
   // - since the start state is simulated by a non-silent state
   //   NS(0,0) we should go negative
   // - check that we came from (0,0) though
-  while (i>=0 and j>=0) {
+  while (i>=1 and j>=1) {
     path.push_back(state2);
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
@@ -258,7 +225,7 @@ vector<int> DPmatrix::sample_path() const
 
     state2 = state1;
   }
-  assert(i+di(state2)==0 and j+dj(state2)==0);
+  assert(i+di(state2)==1 and j+dj(state2)==1);
 
   std::reverse(path.begin(),path.end());
   return path;
@@ -283,34 +250,23 @@ DPmatrix::DPmatrix(int i1,
 		   const Matrix& M,
 		   double Temp)
   :DPengine(v1,v2,M,Temp),
-   state_matrix(i1+1,i2+1,nstates()),
-   S1(i1+1),
-   S2(i2+1)
+   state_matrix(i1,i2,nstates())
 {
 
   //----- zero-initialize matrices ------//
-  for(int i=0;i<size1();i++)
-    for(int j=0;j<size2();j++) 
-      for(int S=0;S<nstates();S++)
-	(*this)(i,j,S)  = 0;
-
-  //----- set up start probabilities -----//
-  for(int S=0;S<start_P.size();S++)
-    (*this)(0,0,S) = start_P[S];
+  //  for(int i=0;i<state_matrix::size1();i++)
+  //    for(int j=0;j<state_matrix::size2();j++) 
+  //      for(int S=0;S<nstates();S++)
+  //	(*this)(i,j,S)  = 0;
 }
 
 inline void DPmatrixNoEmit::forward_cell(int i2,int j2) 
 { 
-  assert(i2<size1());
-  assert(j2<size2());
+  assert(0 < i2 and i2 < size1());
+  assert(0 < j2 and j2 < size2());
 
   // determine initial scale for this cell
-  if (i2 > 0 and j2 > 0)
-    scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
-  else if (i2 > 0)
-    scale(i2,j2) = scale(i2-1,j2);
-  else if (j2 > 0)
-    scale(i2,j2) = scale(i2,j2-1);
+  scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
 
   double maximum = 0;
 
@@ -322,10 +278,6 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2)
 
     int j1 = j2;
     if (dj(S2)) j1--;
-
-    //--- don't go off the boundary -----
-    if (i1<0 or j1<0)
-      continue;
 
     //--- compute arrival probability ----
     double temp  = 0;
@@ -358,35 +310,35 @@ inline double sum(const valarray<double>& v) {
 }
 
 // switching dists1[] to matrices actually made things WORSE!
-
 inline double DPmatrixEmit::emitMM(int i,int j) const {
-  return s12_sub(i-1,j-1);
+  return s12_sub(i,j);
 }
 
 inline double DPmatrixEmit::emitM_(int i,int j) const {
-  return s1_sub[i-1];
+  return s1_sub[i];
 }
 
 inline double DPmatrixEmit::emit_M(int i,int j) const {
-  return s2_sub[j-1];
+  return s2_sub[j];
 }
 
 inline double DPmatrixEmit::emit__(int i,int j) const {
   return 1.0;
 }
 
-efloat_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
+efloat_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const 
+{
   efloat_t P_sub=1.0;
-  int i=0,j=0;
-  for(int l=0;l<path.size();l++) {
-
+  int i=1,j=1;
+  for(int l=0;l<path.size();l++) 
+  {
     int state2 = path[l];
     if (di(state2))
       i++;
     if (dj(state2))
       j++;
 
-    double sub=0.0;
+    double sub;
     if (di(state2) and dj(state2))
       sub = emitMM(i,j);
     else if (di(state2))
@@ -396,7 +348,6 @@ efloat_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
     else
       sub = emit__(i,j);
 
-
     P_sub *= sub;
   }
   assert(i == size1()-1 and j == size2()-1);
@@ -405,11 +356,9 @@ efloat_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
 
 void DPmatrixEmit::prepare_cell(int i,int j) 
 {
-  if (i==0) return;
-  if (j==0) return;
-  i--;
-  j--;
-
+  assert(i > 0);
+  assert(j > 0);
+  
   const Matrix& M1 = dists1[i];
   const Matrix& M2 = dists2[j];
 
@@ -471,20 +420,15 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 }
 
 
-inline void DPmatrixSimple::forward_cell(int i2,int j2) {
-
-  assert(i2<size1());
-  assert(j2<size2());
+inline void DPmatrixSimple::forward_cell(int i2,int j2) 
+{
+  assert(0 < i2 and i2 < size1());
+  assert(0 < j2 and j2 < size2());
 
   prepare_cell(i2,j2);
 
   // determine initial scale for this cell
-  if (i2 > 0 and j2 > 0)
-    scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
-  else if (i2 > 0)
-    scale(i2,j2) = scale(i2-1,j2);
-  else if (j2 > 0)
-    scale(i2,j2) = scale(i2,j2-1);
+  scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
 
   double maximum = 0;
 
@@ -496,10 +440,6 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2) {
 
     int j1 = j2;
     if (dj(S2)) j1--;
-
-    //--- Don't go off the boundary -----
-    if (i1<0 or j1<0) 
-      continue;
 
     //--- Compute Arrival Probability ----
     double temp  = 0;
@@ -541,20 +481,22 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2) {
   }
 } 
 
-inline void DPmatrixConstrained::forward_cell(int i2,int j2) {
+inline void DPmatrixConstrained::clear_cell(int i2,int j2) 
+{
+  scale(i2,j2) = INT_MIN;
+  for(int S=0;S<nstates();S++)
+    (*this)(i2,j2,S) = 0;
+}
 
-  assert(i2<size1());
-  assert(j2<size2());
+inline void DPmatrixConstrained::forward_cell(int i2,int j2) 
+{
+  assert(0 < i2 and i2 < size1());
+  assert(0 < j2 and j2 < size2());
 
   prepare_cell(i2,j2);
 
   // determine initial scale for this cell
-  if (i2 > 0 and j2 > 0)
-    scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
-  else if (i2 > 0)
-    scale(i2,j2) = scale(i2-1,j2);
-  else if (j2 > 0)
-    scale(i2,j2) = scale(i2,j2-1);
+  scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
 
   double maximum = 0;
 
@@ -568,10 +510,6 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2) {
 
     int j1 = j2;
     if (dj(S2)) j1--;
-
-    //--- Don't go off the boundary -----
-    if (i1<0 or j1<0) 
-      continue;
 
     //--- Compute Arrival Probability ----
     double temp = 0.0;
@@ -624,7 +562,6 @@ vector<int> DPmatrixConstrained::sample_path() const
   const int I = size1()-1;
   const int J = size2()-1;
 
-
   // we are at S1(i,j) coming from S2, and see to determine S1
   int S2 = endstate();
   int i = I;
@@ -636,7 +573,7 @@ vector<int> DPmatrixConstrained::sample_path() const
   // - since the start state is simulated by a non-silent state
   //   NS(0,0) we should go negative
   // - check that we came from (0,0) though
-  while (i>=0 and j>=0) 
+  while (i>=1 and j>=1) 
   {
     path.push_back(S2);
 
@@ -655,7 +592,7 @@ vector<int> DPmatrixConstrained::sample_path() const
 
     S2 = S1;
   }
-  assert(i+di(S2)==0 and j+dj(S2)==0);
+  assert(i+di(S2)==1 and j+dj(S2)==1);
 
   std::reverse(path.begin(),path.end());
   return path;

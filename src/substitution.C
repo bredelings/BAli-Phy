@@ -339,7 +339,7 @@ namespace substitution {
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
   vector<Matrix>
   get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
-			 const vector<int>& req,const vector<int>& seq)
+			 const vector<int>& req,const vector<int>& seq,int delta)
   {
     const Tree& T = P.T;
     Likelihood_Cache& cache = P.LC;
@@ -358,13 +358,22 @@ namespace substitution {
     std::clog<<"get_column_likelihoods: Peeled on "<<n_br<<" branches.\n";
 #endif
 
-
     vector<Matrix> L;
-    L.reserve(A.length());
+    L.reserve(A.length()+2);
 
     Matrix& S = cache.scratch(0);
     const int n_models = S.size1();
     const int asize    = S.size2();
+
+    //Add the padding matrices
+    {
+      for(int i=0;i<S.size1();i++)
+	for(int j=0;j<S.size2();j++)
+	  S(i,j) = 0;
+
+      for(int i=0;i<delta;i++)
+	L.push_back(S);
+    }
 
     for(int i=0;i<index.size1();i++) {
 

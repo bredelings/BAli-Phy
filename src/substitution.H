@@ -14,7 +14,7 @@ namespace substitution {
   /// Find the probabilities of all the data give each letter at the root
   vector<Matrix>
   get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
-			 const vector<int>& req, const vector<int>& seq);
+			 const vector<int>& req, const vector<int>& seq,int delta=0);
 
   Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
 				const MultiModel& MModel);
