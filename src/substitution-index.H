@@ -36,4 +36,27 @@ namespace substitution {
   void check_subA(const alignment& A1,const alignment& A2,const Tree& T);
 }
 
+inline int leaf_seq_length(const alignment& A,int i) {
+  assert(i < A.note(0).size2());
+  return A.note(0,0,i);
+}
+
+
+int add_subA_index_note(const alignment& A,int b);
+
+inline int subA_length(const alignment& A,int b) {
+  assert(b < A.note(1).size2());
+  return A.note(1,0,b);
+}
+
+inline bool subA_index_valid(const alignment& A,int b) {
+  return subA_length(A,b) >= 0;
+}
+
+void invalidate_subA_index_all(const alignment& A);
+void invalidate_subA_index_branch(const alignment& A,const Tree& T,int b);
+void invalidate_subA_index_directed_branch(const alignment& A,const Tree& T,int b);
+
+void update_subA_index(const alignment& A,const Tree& T,int b);
+
 #endif

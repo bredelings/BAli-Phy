@@ -408,7 +408,135 @@ namespace substitution {
       }
     }
   }
+} // end namespace substitition
 
-
+inline void invalidate_subA_index_one(const alignment& A,int b) {
+  A.note(1,0,b) = -1;
 }
 
+void invalidate_subA_index_all(const alignment& A) 
+{
+  for(int i=0;i<A.note(1).size2();i++)
+    invalidate_subA_index_one(A,i);
+}
+
+void invalidate_subA_index_directed_branch(const alignment& A,const Tree& T,int b) {
+  vector<const_branchview> branches = branches_after(T,b);
+
+  for(int i=0;i<branches.size();i++)
+    invalidate_subA_index_one(A,branches[i]);
+}
+
+
+void invalidate_subA_index_branch(const alignment& A,const Tree& T,int b) {
+  invalidate_subA_index_directed_branch(A,T,b);
+  invalidate_subA_index_directed_branch(A,T,T.directed_branch(b).reverse());
+}
+
+
+
+/// create a note with leaf sequences ...
+int add_subA_index_note(const alignment& A,int b) 
+
+{
+  int index = A.add_note(2*b);
+
+  invalidate_subA_index_all(A);
+
+  return index;
+}
+
+/// return index of lowest-numbered node behind b
+int rank(const Tree& T,int b) {
+  return T.leaf_partition_set(T.directed_branch(b).reverse())[0];
+}
+
+
+void update_subA_index_single(const alignment& A,int b,const Tree& T) {
+  // notes for leaf sequences
+  if (b < T.n_leaves()) {
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+      if (A.gap(c,b))
+	A.note(1,c+1,b) = alphabet::gap;
+      else
+	A.note(1,c+1,b) = l++;
+    }
+    assert(l == leaf_seq_length(A,b));
+    A.note(1,0,b) = l;
+  }
+  else {
+    // get 2 branches leading into this one
+    vector<const_branchview> branches;
+    append(T.directed_branch(b).branches_before(),branches);
+    for(int i=0;i<branches.size();i++) 
+      assert(subA_index_valid(A,branches[i]));
+
+    assert(branches.size() == 2);
+
+    // sort branches by rank
+    if (rank(T,branches[0]) > rank(T,branches[1]))
+      std::swap(branches[0],branches[1]);
+
+    // get mappings of previous subA indicies into alignment
+    vector<vector<int> > mappings;
+    for(int i=0;i<mappings.size();i++)
+      mappings.push_back(vector<int>(subA_length(A,branches[i]),-1));
+
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+      bool present = false;
+      for(int i=0;i<mappings.size();i++) {
+	int index = A.note(1,c,branches[i]);
+	if (index != -1) {
+	  mappings[i][index] = c;
+	  present = true;
+	}
+      }
+      if (present) {
+	l++;
+	A.note(1,c,b) = -2;
+      }
+      else
+	A.note(1,c,b) = -1;
+    }
+
+    // create subA index for this branch
+    A.note(1,0,b) = l;
+    l = 0;
+    for(int i=0;i<mappings.size();i++) {
+      for(int j=0;j<mappings[i].size();j++) {
+	int c = mappings[i][j];
+
+	// all the subA columns should map to an existing, unique columns of A
+	assert(c != -1);
+
+	// subA for b should be present here
+	assert(A.note(1,c,b) != -1);
+
+	if (A.note(1,c,b) == -2)
+	  A.note(1,c,b) = l++;
+      }
+    }
+    assert(l == A.note(1,0,b));
+  }
+}
+
+void update_subA_index(const alignment& A,const Tree& T,int b) 
+{
+  // get ordered list of branches to process before this one
+  vector<const_branchview> branches; branches.reserve(T.n_branches());
+  branches.push_back(T.directed_branch(b));
+  
+  for(int i=0;i<branches.size();i++) {
+    const const_branchview& db = branches[i];
+    if (not subA_index_valid(A,db))
+      append(db.branches_before(),branches);
+  }
+  
+  std::reverse(branches.begin(),branches.end());
+
+  // update the branches in order 
+  for(int i=0;i<branches.size();i++)
+    update_subA_index_single(A,branches[i],T);
+}

@@ -5,6 +5,7 @@
 #include "alphabet.H"
 #include "alignment-util.H"
 #include "tree-util.H"
+#include "substitution-index.H"
 
 using std::vector;
 using std::valarray;
@@ -182,6 +183,7 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
 
 
   add_leaf_seq_note(A,T.n_leaves());
+  add_subA_index_note(A,T.n_branches());
 }
 
 OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
