@@ -386,6 +386,8 @@ struct compare_complete_partitions {
     for(int i=0;i<p1.size();i++) {
       if (p2[i] and not p1[i])
 	return true;
+      if (p1[i] and not p2[i])
+	return false;
     }
     return false;
   }
@@ -399,6 +401,8 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
 
   // use a linked list of pointers to <partition,count> records.
   list<map<valarray<bool>,int,compare_complete_partitions >::iterator > majority;
+
+  vector<string> names = sample.topologies[0].T.get_sequences();
 
   for(int i=0;i<sample.size();i++) {
     const SequenceTree& T = sample.topologies[ sample.which_topology[i] ].T;
@@ -417,7 +421,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
       assert(partition.size() == T.n_leaves());
       int& C = counts[partition];
       
-      // add the partition it wasn't good before, but is now
+      // add the partition if it wasn't good before, but is now
       if (C<min_old and C+1 >= min_new)
 	majority.push_back(counts.find(partition));
 
@@ -438,7 +442,6 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
     }
   }
 
-  vector<string> names = sample.topologies[0].T.get_sequences();
   vector<Partition> partitions;
   partitions.reserve(majority.size());
   for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
