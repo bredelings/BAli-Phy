@@ -7,12 +7,16 @@ using namespace ublas;
 
 
 
+// exp(Q) = D^-a * exp(E) * D^a
+// E = exp(D^a * Q * D^-a) = exp(D^1/2 * S * D^1/2)
+
 // how do we make the M constant? - const_cast?
 // return inline matrix_expression?
 
-Matrix exp(const SMatrix& S,const BMatrix& D,const double t) {
+Matrix exp(const SMatrix& S,const BMatrix& D,double t,double f) {
   const int n = S.size1();
 
+  // compute S2 = D^1/2 * S * D^1/2
   double DP[n];
   double DN[n];
   for(int i=0;i<D.size1();i++) {
@@ -20,21 +24,27 @@ Matrix exp(const SMatrix& S,const BMatrix& D,const double t) {
     DN[i] = 1.0/DP[i];
   }
 
-  //  S2 = prod(DP,prod<Matrix>(S,DP));
   SMatrix S2 = S;
   for(int i=0;i<S2.size1();i++)
     for(int j=0;j<=i;j++)
       S2(i,j) *= DP[i]*DP[j];
 
 
+  // compute E = exp(S2)
   Matrix E = exp(S2,t);
 
-  //  E = prod(DN,prod<Matrix>(E,DP));
+  // Compute D^-a * E * D^a
+  double a = f-0.5;
+  for(int i=0;i<n;i++) {
+    DP[i] = pow(D(i,i),a);
+    DN[i] = 1.0/DP[i];
+  }
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++)
       E(i,j) *= DN[i]*DP[j];
 
 
+  // Double-check that E(i,j) is always positive
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++) {
       assert(E(i,j) >= -1.0e-13);
@@ -45,7 +55,7 @@ Matrix exp(const SMatrix& S,const BMatrix& D,const double t) {
   return E;
 }
 
-Matrix exp(const EigenValues& solution,const double t) {
+Matrix exp(const EigenValues& solution,double t) {
 
   Matrix O = solution.Rotation();
   std::vector<double> D = solution.Diagonal();
@@ -75,19 +85,22 @@ Matrix exp(const EigenValues& solution,const double t) {
   return E;
 }
 
-Matrix exp(const EigenValues& eigensystem,const BMatrix& D,const double t) {
+Matrix exp(const EigenValues& eigensystem,const BMatrix& D,const double t,double f) {
   const int n = D.size1();
 
+  // Compute D^-a * E * D^a
+  double a = f-0.5;
   double DP[n];
   double DN[n];
   for(int i=0;i<D.size1();i++) {
-    DP[i] = sqrt(D(i,i));
+    DP[i] = pow(D(i,i),a);
     DN[i] = 1.0/DP[i];
   }
 
+  // compute E = exp(S2)
   Matrix E = exp(eigensystem,t);
 
-  //  E = prod(DN,prod<Matrix>(E,DP));
+  // Compute D^-a * E * D^a
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++)
       E(i,j) *= DN[i]*DP[j];
