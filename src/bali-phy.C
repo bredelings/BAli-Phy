@@ -449,6 +449,7 @@ int main(int argc,char* argv[]) {
     // fix, unfix, and set parameters
     set_parameters(P,args);
 
+    P.LC.set_length(A.length());
     //---------------Do something------------------//
     if (args.count("showonly"))
       print_stats(cout,cout,cout,cout,A,P,"Initial");
@@ -456,7 +457,6 @@ int main(int argc,char* argv[]) {
     else {
       long int max_iterations = args["iterations"].as<long int>();
 
-      P.LC.set_length(A.length());
       do_sampling(args,A,P,max_iterations);
     }
   }
