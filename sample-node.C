@@ -41,6 +41,8 @@ using namespace A3;
 DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const tree& T = P.T;
 
+  assert(P.IModel().full_tree);
+
   alignment old = A;
 
   const vector<double>& pi = P.IModel().pi;

@@ -5,9 +5,6 @@
 #include "5way.H"
 
 
-//FIXME - are we not guaranteed that leaf nodes will be the children of
-// their branch?
-
 bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
   if (P.accept_MH(A,P,A,P2)) {
     P=P2;
@@ -20,11 +17,11 @@ bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
   }
 }
 
-double branch_twiddle(double T,double mu,double sigma1=0.3,double sigma2=0.3) {
-  if (myrandomf() < 0.5)
+double branch_twiddle(double T,double mu,double sigma1=0.4,double sigma2=0.4) {
+  if (myrandomf() < 0.3)
     T += gaussian(0,mu*sigma1);
   else 
-    T = exp(log(T) + gaussian(mu,sigma2));
+    T *= exp( gaussian(0,sigma2) );
 
   return T;
 }

@@ -73,35 +73,61 @@ user    0m34.558s
 
 ----------------------------------------
 1.8.12
-single,EF-Tu/5d, iterations=10
+[EF-Tu/5d](10)
 user	1m11.000s
 user	1m11.300s
 
-gamma,EF-Tu/5d iterations=10
-user    1m9.250s
+user    1m9.250s [gamma]
 
-single,EF-Tu/12d iterations=3
+[EF-Tu/12d](3)
 user    1m38.100s
+user    1m34.410s
 
-gamma,EF-Tu/12d iterations=3
-user    1m54.520s
-[*]user    1m54.440s
-[**]user    1m53.310s
+user    0m18.047s [disable=alignment]
+user    0m17.678s [disable=alignment]
 
-single, 5S-rRNA/4, iterations=40
+user    0m9.317s  [gaps=star] 
+user    0m9.170s  [gaps=star] 
+
+user    1m58.054s [gamma][0**]
+user    1m54.520s [gamma]
+user    2m5.196s  [gamma]
+
+user    1m54.440s [gamma][0*]
+user    1m53.310s [gamma][0**]
+ 
+user    0m46.725s [gamma][disable=alignment]
+user    0m37.711s [gamma][gaps=star]
+
+[EF-Tu/24](3)
+user    8m53.922s [gamma](3)
+user    4m36.467s []
+
+user    1m7.145s  [disable=alignment]
+
+user    3m59.839s [gamma,gaps=star]
+user      42.406s [gaps=star]
+
+[5S-rRNA/4](40)
 user    0m33.060s
+user    0m35.590s [gamma]
 
-gamma, 5S-rRNA/4, iterations=40
-user    0m35.590s
-
-+++seed=0 align=Data/HIV-Shankarappa/P1/014-stripped.fasta "Use Codons"
-
-single,iterations=5
+[Data/HIV-Shankarappa/P1/014-stripped.fasta,"Use Codons"](5)
 user    1m38.060s
-
-gamma,iterations=5
-user    1m38.320s
-[*]user    1m38.110s
+user    1m38.110s [*]
+user    1m38.320s [gamma]
 
 
 
+Analysis:
+
+time =    9 [topology & other likelihood calculations]
+       +8.3 [internal nodes analysis]
+      +80.7 [alignment analysis]
+
+time =    9*4 [topology & other likelihood calculations]
+       +  9   [internal nodes analysis]
+       +   67 [alignment analysis]
+
+The alignment analysis time does NOT seem to strongly correlate w/ the number of rates...
+The extra time spent in dealing with multiple rates DOES come from the likelihood calculation!

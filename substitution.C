@@ -237,7 +237,14 @@ double Pr(const alignment& A, const tree& T, const MultiRateModel& MRModel, cons
 }
 
 double Pr(const alignment& A,const Parameters& P) {
-  return Pr(A,P.T,P.SModel(),P);
+  double result = Pr(A,P.T,P.SModel(),P);
+#ifndef NDEBUG
+  Parameters P2 = P;
+  P2.recalc();
+  double result2 = Pr(A,P.T,P.SModel(),P2);
+  assert(result == result2);
+#endif
+  return result;
 }
 
 

@@ -59,14 +59,14 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   MoveAll alignment_moves("alignment");
 
   //--------------- alignment::alignment_branch -----------------//
-  MoveEach alignment_branch_moves("alignment_branch");
+  MoveEach alignment_branch_moves("alignment_branch:alignment");
   alignment_branch_moves.add(1.0,
-			     MoveArgSingle("sample_alignments:alignment",
+			     MoveArgSingle("sample_alignments:alignment:alignment_branch",
 					   sample_alignments_one,
 					   branches)
 			     );
   if (P.T.leaves() >2) {
-    alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri:alignment:nodes",
+    alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri:alignment:alignment_branch:nodes",
 						 sample_tri_one,
 						 branches)
 			       );
@@ -120,21 +120,26 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   //FIXME - doesn't yet deal with gaps=star
   if (P.IModel().full_tree)
-    NNI_move.add(0.05,MoveArgSingle("three_way_NNI_and_A:alignment:nodes:topology",
+    NNI_move.add(0.05,MoveArgSingle("three_way_NNI_and_A:alignment:alignment_branch:nodes:topology",
 				   three_way_topology_and_alignment_sample,
 				   internal_branches)
 		 );
 
 
-  // FIXME - awkward...
-  // We don't mention 'alignment' because this stops messing with the alignment if gaps=star...
-  SPR_move.add(1,MoveArgSingle("SPR_and_node:topology:length:nodes",
-			       sample_SPR,
-			       branches)
-	       );
+  if (P.IModel().full_tree)
+    SPR_move.add(1,MoveArgSingle("SPR_and_node:topology:length:nodes",
+				 sample_SPR,
+				 branches)
+		 );
+  else
+    SPR_move.add(1,MoveArgSingle("SPR_and_node:topology:length",
+				 sample_SPR,
+				 branches)
+		 );
+
 
   if (P.IModel().full_tree)
-    SPR_move.add(0.07,MoveArgSingle("SPR_and_A:nodes:topology:length:alignment_branch",
+    SPR_move.add(0.07,MoveArgSingle("SPR_and_A:nodes:topology:length:alignment:alignment_branch",
 				    sample_SPR_and_A,
 				    branches)
 		 );
@@ -175,7 +180,8 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   // full sampler
   Sampler sampler("sampler");
-  sampler.add(1,alignment_moves);
+  if (P.IModel().full_tree)
+    sampler.add(1,alignment_moves);
   sampler.add(2,tree_moves);
   sampler.add(1,parameter_moves);
 

@@ -17,6 +17,11 @@ double Parameters::basic_prior(const alignment& A,const Parameters& P) const {
     return prior_HMM_notree(A,P);
 }
 
+double Parameters::weight(const alignment& A,const Parameters& P) const {
+  double Pr = basic_prior(A,P) + basic_likelihood(A,P);
+  return Pr * (1.0-1.0/P.Temp);
+}
+
 bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 		 const alignment& A2,const Parameters& P2) const {
   double p1 = probability3(A1,P1);

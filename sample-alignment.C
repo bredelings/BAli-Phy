@@ -49,6 +49,8 @@ typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parame
 							      const vector<int>&,int,bool);
 
 alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
+  assert(P.IModel().full_tree);
+
   const tree& T = P.T;
 
   const vector<double>& pi = P.IModel().pi;

@@ -23,14 +23,16 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
   o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
   
-  double Pr_prior = P.prior(A,P);
-  double Pr_likelihood = P.likelihood(A,P);
+  double Pr_prior = P.basic_prior(A,P);
+  double Pr_likelihood = P.basic_likelihood(A,P);
   double Pr = Pr_prior + Pr_likelihood;
 
   o<<"    prior = "<<Pr_prior
    <<"    likelihood = "<<Pr_likelihood
    <<"    logp = "<<Pr
-   <<"    temp = "<<P.Temp<<endl;
+   <<"    temp = "<<P.Temp
+   <<"    weight = "<<Pr*(1.0-1.0/P.Temp)
+   <<endl;
 
   if (print_alignment) {
     o<<"align["<<tag<<"] = "<<endl;
@@ -478,7 +480,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   /*--------- Determine some values for this chain -----------*/
   if (subsample <= 0)
     subsample = 2*int(log(T.leaves()))+1;
-  const int start_after = 0;// 600*correlation_time;
+
   int total_samples = 0;
 
   double Pr_prior = P.prior(A,P);
@@ -533,41 +535,38 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
   print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag);
 
-  /*---------------- Run the MCMC chain -------------------*/
+  //---------------- Run the MCMC chain -------------------//
 
   for(int iterations=0; iterations < max; iterations++) {
     cerr<<"iterations = "<<iterations<<endl;;
-    Pr_stream<<"iterations = "<<iterations<<
-      "    prior = "<<Pr_prior<<
-      "    likelihood = "<<Pr_likelihood<<
-      "    logp = "<<Pr<<endl;
+    Pr_stream<<"iterations = "<<iterations
+	     <<"    prior = "<<Pr_prior
+	     <<"    likelihood = "<<Pr_likelihood
+	     <<"    logp = "<<Pr
+	     <<"    weight = "<<Pr*(1.0 - 1.0/P.Temp)
+	     <<endl;
 
-    /*------------------ record statistics ---------------------*/
-    if (iterations > start_after) {
-      cout<<"iterations = "<<iterations<<endl;
-      if (iterations%subsample == 0) {
-	bool show_alignment = (iterations%(10*subsample) == 0);
-	print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag,show_alignment);
-	cout<<endl<<endl;
-      }
+    //------------------ record statistics ---------------------//
+    cout<<"iterations = "<<iterations<<endl;
+    if (iterations%subsample == 0) {
+      bool show_alignment = (iterations%(10*subsample) == 0);
+      print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag,show_alignment);
+      cout<<endl<<endl;
     }
 
-    /*--------------------- get new position -------------------*/
-    alignment A2 = A;
-    Parameters P2 = P;
+    //------------------- move to new position -----------------//
+    iterate(A,P);
 
-    iterate(A2,P2);
+    Pr_prior = P.basic_prior(A,P);
+    Pr_likelihood = P.basic_likelihood(A,P);
+    Pr = Pr_prior + Pr_likelihood;
 
-    double new_prior = P.prior(A2,P2);
-    double new_likelihood = P.likelihood(A2,P2);
-    double new_Pr = new_prior + new_likelihood;
-
-    /*---------------------- estimate MAP ----------------------*/
-    if (new_Pr > MAP_score) {
+    //---------------------- estimate MAP ----------------------//
+    if (Pr > MAP_score) {
       // arguably I could optimize these for a few iterations
-      MAP_score = new_Pr;
-      MAP_P = P2;
-      MAP_alignment = A2;
+      MAP_score = Pr;
+      MAP_P = P;
+      MAP_alignment = A;
 
       MAP_printed = false;
     }
@@ -578,26 +577,10 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
       MAP_printed = true;
     }
 
-    /*----------------- print diagnostic output -----------------*/
+    //----------------- print diagnostic output -----------------//
 
-    if (iterations%50 == 0 or std::abs(Pr - new_Pr)>12) {
+    if (iterations%50 == 0)
       print_move_stats();
-#ifndef NDEBUG
-      print_stats(cerr,cerr,cerr,cerr,A,P,"check (A1)");
-      print_stats(cerr,cerr,cerr,cerr,A2,P2,"check (A2)");
-
-      A2.print_fasta(cerr);
-#endif
-
-    }
-
-    /*------------------ move to new position -------------------*/
-    A = A2;
-    P = P2;
-
-    Pr_prior = new_prior;
-    Pr_likelihood = new_likelihood;
-    Pr = new_Pr;
   }
   tree_stream.close();
   map_stream.close();

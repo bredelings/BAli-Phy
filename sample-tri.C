@@ -30,6 +30,8 @@ using namespace A3;
 DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const tree& T = P.T;
 
+  assert(P.IModel().full_tree);
+
   assert(T.connected(nodes[0],nodes[1]));
   assert(T.connected(nodes[0],nodes[2]));
   assert(T.connected(nodes[0],nodes[3]));
