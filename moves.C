@@ -49,8 +49,8 @@ void change_parameters(const alignment& A,Parameters& Theta) {
 }
 
 void sample(alignment& A,Parameters& Theta) {
-
   double r = myrandomf();
+
   if (r < 0.2) 
     sample_alignments(A,Theta);
   else if (r < 0.4) 

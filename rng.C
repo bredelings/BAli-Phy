@@ -45,6 +45,10 @@ double gaussian(double mu,double sigma) {
   return rng::standard->gaussian(mu,sigma);
 }
 
+double exponential(double mu) {
+  return rng::standard->exponential(mu);
+}
+
 /*************** Functions for rng,dng and RNG **************/
 void dng::init() { }
 

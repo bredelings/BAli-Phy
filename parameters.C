@@ -95,6 +95,10 @@ void Empirical::recalc() {
 
 void Empirical::load_file(const char* filename) {
   std::ifstream ifile(filename);
+
+  if (not ifile)
+    throw myexception(string("Couldn't open file '")+filename+"'");
+
   for(int i=0;i<a->size();i++)
     for(int j=0;j<i;j++) {
       ifile>>S(i,j);
@@ -251,8 +255,25 @@ void Parameters::recalc() {
 }
 
 
+Parameters& Parameters::operator=(const Parameters& P) {
+  substitution_ = P.substitution_;
+  delete SModel;
+  SModel = P.SModel->clone();
+  IModel = P.IModel;
+  T = P.T;
+  branch_mean = P.branch_mean;
+
+  return (*this);
+}
+
+Parameters::Parameters(const Parameters& P):
+  substitution_(P.substitution_),SModel(P.SModel->clone()),IModel(P.IModel),T(P.T),
+  branch_mean(P.branch_mean)
+{ }
+
+
 Parameters::Parameters(SubstitutionModel& SM,double lambda_O,double lambda_E,const SequenceTree& t)
-  :SModel(&SM),IModel(lambda_O,lambda_E),T(t)
+  :SModel(SM.clone()),IModel(lambda_O,lambda_E),T(t)
 {
   branch_mean = 1.0;
   recalc();

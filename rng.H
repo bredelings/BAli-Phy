@@ -22,9 +22,11 @@ double myrandomf();
 // return the log of a variable that is uniform on [0,1)
 double log_unif();
 
-// return the log of a variable that is uniform on [0,1)
-double gaussian(double,double);
+// return a normal random variate
+double gaussian(double mu,double sigma);
 
+// return an exponentially distributed variable
+double exponential(double mu);
 
 namespace rng {
 
@@ -53,6 +55,8 @@ namespace rng {
     double log_unif() {return -gsl_ran_exponential(generator,1.0);}
 
     double gaussian(double mu,double sigma) {return gsl_ran_gaussian(generator,sigma)+mu;}
+
+    double exponential(double mu) {return gsl_ran_exponential(generator,mu);}
 
     RNG();
     ~RNG();

@@ -26,6 +26,8 @@ protected:
 public:
   const alphabet& Alphabet() const { return *a;}
 
+  virtual SubstitutionModel* clone() const =0;
+
   // get/set parameters
   const vector<double>& parameters() const {return parameters_;}
   virtual void parameters(const vector<double>& p) {parameters_=p; recalc();}
@@ -66,6 +68,7 @@ protected:
 
   virtual void recalc();
 public:
+
   // transition rates
   virtual const Matrix& rates() const {return Q;}
 
@@ -86,6 +89,8 @@ public:
 class HKY: public EquilibriumModel {
   virtual void recalc();
 public:
+
+  virtual SubstitutionModel* clone() const {return new HKY(*this);}
 
   // change kappa
   virtual void fiddle(); 
@@ -109,7 +114,7 @@ public:
     frequencies(f);
   }
 
-  ~HKY() {}
+  virtual ~HKY() {}
 };
 
 /******************************* EQU Substitution Model *****************************/
@@ -117,6 +122,8 @@ public:
 class EQU: public EquilibriumModel {
   virtual void recalc();
 public:
+
+  virtual SubstitutionModel* clone() const {return new EQU(*this);}
 
   EQU(const alphabet& a): EquilibriumModel(a) 
   { recalc(); }
@@ -127,7 +134,7 @@ public:
     frequencies(f);
   }
 
-  ~EQU() {}
+  virtual ~EQU() {}
 };
 
 /************************ Empirical Substitution Model **************************/
@@ -136,6 +143,8 @@ class Empirical: public EquilibriumModel {
   void load_file(const char* filename);
   virtual void recalc();
 public:
+
+  virtual SubstitutionModel* clone() const {return new Empirical(*this);}
 
   Empirical(const alphabet& a,const char* filename) 
     : EquilibriumModel(a)
@@ -148,7 +157,7 @@ public:
     frequencies(f);
   }
 
-  ~Empirical() {}
+  virtual ~Empirical() {}
 };
 
 
@@ -173,7 +182,7 @@ public:
 
   double lengthp(int i) const {return p_length[i];}
 
-  IndelModel(double LO,double LE);
+  explicit IndelModel(double LO,double LE);
 };
 
 
@@ -185,10 +194,10 @@ class Parameters {
 
 public:
   //FIXME - this should be private - need an interface for changing branch lengths (?)
-  //FIXME - need to have our own SModel!
 
-  /* Stuff for Substitution Model */
-  SubstitutionModel const* SModel;
+  /*-------We own this----------*/
+  SubstitutionModel* SModel;
+
   const alphabet& get_alphabet() const {return SModel->Alphabet();}
 
   const std::valarray<double>& frequencies() const {return SModel->frequencies();}
@@ -207,7 +216,11 @@ public:
   // parameter for exponential prior on branch length
   double branch_mean; 
 
+  Parameters& operator=(const Parameters&);
+
+  Parameters(const Parameters&);
   Parameters(SubstitutionModel&,double,double,const SequenceTree&);
+  ~Parameters() {delete SModel;}
 };
 
 #endif

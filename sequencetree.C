@@ -179,10 +179,10 @@ void SequenceTree::parse(const string& line) {
 }
 
 
-SequenceTree::SequenceTree(const sequence& s)
+SequenceTree::SequenceTree(const string& s)
 {
   add_root();
-  sequences.push_back(s.name);
+  sequences.push_back(s);
 }
 
 SequenceTree::SequenceTree(const SequenceTree& T1, const SequenceTree& T2):tree(T1,T2) {

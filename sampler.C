@@ -53,8 +53,13 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
     throw myexception(string("Alignment file") + args["align"] + "didn't contain any sequences!");
     
   /*------ Try to load tree -------------*/
-  if (not args.set("tree")) 
-    throw myexception("Tree file not specified! (tree=<filename>)");
+  if (not args.set("tree")) {
+    vector<string> s;
+    for(int i=0;i<A.num_sequences();i++)
+      s.push_back(A.seq(i).name);
+    T = RandomTree(s);
+    std::cout<<T<<endl;
+  }
   else 
     T.read(args["tree"]);
 }
@@ -101,7 +106,7 @@ int main(int argc,char* argv[]) {
     alphabet amino_acids("ARNDCQEGHILKMFPSTWYV");
     
     EQU EQU_animo(amino_acids);
-    Empirical WAG(amino_acids,"../Data/wag.dat");
+    Empirical WAG(amino_acids,"Data/wag.dat");
     
     /*----------- Load alignment and tree ---------*/
     alignment A;

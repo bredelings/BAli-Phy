@@ -9,10 +9,31 @@ double prior_no_tree(const alignment&,const Parameters&);
 double prior_internal(const alignment&,const Parameters&);
 double prior_HMM(const alignment&,const Parameters&);
 
+inline double log_double_factorial(int n) {
+  double x = 0;
+  for(int i=3;i<=n;i+=2)
+    x += log(i);
+  return x;
+}
+
+inline double prior(const SequenceTree& T,double branch_mean) {
+  double p = 0;
+
+  /* ----- 1/(number of topologies) -----*/
+  if (T.leaves()>3)
+    p = -log_double_factorial(2*T.leaves()-5);
+
+  /* ---- PROD_i exp(-lambda * T[i]) ---- */
+  for(int i=0;i<T.branches();i++) 
+    p -= branch_mean*T.branch(i).length();
+  return p;
+}
+
 inline double prior(const Parameters& Theta) {
   double p = 0;
-  for(int i=0;i<Theta.T.branches();i++) 
-    p -= Theta.branch_mean*Theta.T.branch(i).length();
+
+  p += prior(Theta.T,Theta.branch_mean);
+
   return p;
 }
 

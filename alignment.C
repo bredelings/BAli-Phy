@@ -19,22 +19,19 @@ bool valid(const alignment& A) {
   return true;
 }
 
-void alignment::pad(int column) {
-  for(int i=0;i<sequences.size();i++)
-    for(int j=column;j<length();j++)
-      array(j,i) = alphabet::gap;
-}
-
-
+// use 'swap' instead of '=' at end?  initialize array2 with '-'?
 void alignment::resize(int s1,int s2) {
   ublas::matrix<int> array2(s1,s2);
   
+  for(int i=0;i<array2.size1();i++)
+    for(int j=0;j<array2.size2();j++)
+      array2(i,j) = alphabet::gap;
+
   for(int i=0;i<array.size1() and i<array2.size1();i++)
     for(int j=0;j< array.size2() and j<array2.size2();j++)
       array2(i,j) = array(i,j);
-  
-  array.resize(array2.size1(),array2.size2());
-  array = array2;
+
+  array.swap(array2);
 }
 
 int alignment::index(const string& s) const {
@@ -60,8 +57,7 @@ bool alignment::changelength(int l) {
 
 void alignment::delete_column(int column) {
   for(int i=0;i<size2();i++) 
-    if (i<sequences.size()) 
-      assert(array(column,i) == alphabet::gap);
+    assert(array(column,i) == alphabet::gap);
 
   ublas::matrix<int> array2(array.size1()-1,array.size2());
   
@@ -72,24 +68,26 @@ void alignment::delete_column(int column) {
       array2(i,j) = array(c,j);
     }
   
-  array.resize(array2.size1(),array2.size2());
-  array = array2;
+  array.swap(array2);
 }
 
-
-void alignment::remap(const vector<string>& order) {
-  if (order.size() >sequences.size())
-    throw myexception("Too many sequences in tree");
+// i -> mapping[i]
+void alignment::remap(const vector<int>& mapping) {
+  ublas::matrix<int> old_array = array;
+  for(int column=0;column<array.size1();column++) {
+    for(int i=0;i<sequences.size();i++)
+      array(column,mapping[i]) = old_array(column,i);
+  }
 
   vector<sequence> old_order = sequences;
   
-  bool mismatch = false;
-  for(int i=0;i<sequences.size() and not mismatch;i++) {
-    if (sequences[i].name != order[i]) 
-      mismatch = true;
-  }
+  for(int i=0;i<sequences.size();i++)
+    sequences[mapping[i]] = old_order[i];
+}
 
-  if (not mismatch) return;
+void alignment::remap(const vector<string>& order) {
+  if (order.size() > sequences.size())
+    throw myexception("Too many sequences in tree");
 
   vector<int> mapping(sequences.size());
   for(int i=0;i<mapping.size();i++) {
@@ -103,14 +101,7 @@ void alignment::remap(const vector<string>& order) {
     mapping[i] = target;
   }
 
-  ublas::matrix<int> old_array = array;
-  for(int column=0;column<array.size1();column++) {
-    for(int i=0;i<sequences.size();i++)
-      array(column,mapping[i]) = old_array(column,i);
-  }
-
-  for(int i=0;i<sequences.size();i++)
-    sequences[mapping[i]] = old_order[i];
+  remap(mapping);
 }
 
 
@@ -124,40 +115,21 @@ int alignment::seqlength(int i) const {
 }
 
 alignment& alignment::operator=(const alignment& A) {
-  sequences.clear();
-  for(int i=0;i<A.num_sequences();i++)
-    sequences.push_back(A.seq(i));
+  sequences = A.sequences;
 
-  // This copy could be sped up a lot
-  array.resize(A.length(),A.size2());
-  for(int species=0;species<array.size2();species++)
-    for(int column=0;column<array.size1();column++)
-      array(column,species) = A(column,species);
+  array.resize(A.array.size1(),A.array.size2());
+  array = A.array;
 
   return *this;
 }
 
-void alignment::set_row(int index,const vector<int>& v) {
-  int position=0;
-  for(;position<v.size();position++)
-    array(position,index) = v[position];
-
-  for(;position<length();position++)
-    array(position,index) = alphabet::gap;
-}
-
-//FIXME - interface to changing lengths and making sure
-// extra characters are set to gaps should be condensed
-// and somewhat restricted
 void alignment::add_row(const vector<int>& v) {
-  int old_length = length();
   int new_length = std::max(length(),(int)v.size());
 
   resize(new_length,size2()+1);
 
-  pad(old_length);
-
-  set_row(array.size2()-1,v);
+  for(int position=0;position<v.size();position++)
+    array(position,size2()-1) = v[position];
 }
 
 
@@ -258,6 +230,49 @@ void alignment::print(std::ostream& file) const{
     start = end;
     file<<endl<<endl;
   }
+#ifndef NDEBUG
+  for(int i=0;i<sequences.size();i++) {
+    vector<int> s;
+    for(int column=0;column<length();column++)
+      if (not gap(column,i))
+	s.push_back(array(column,i));
+
+    assert(s == sequences[i]);
+  }
+#endif
+}
+
+void alignment::print_phylip(std::ostream& file,bool othernodes) const {
+  const alphabet& a = get_alphabet();
+  file<<num_sequences()<<" "<<length()<<endl;
+
+  const int header_length = 10;
+  const int line_length = 70;
+
+  int pos=0;
+  while(pos<length()) {
+    int start = pos;
+    int end = pos + (line_length - header_length);
+    int nsequences = num_sequences();
+    if (othernodes)
+      nsequences = size2();
+    for(int seq = 0;seq < nsequences;seq++) {
+      string header = string(header_length,' ');
+      if (pos == 0 and seq<num_sequences()) {
+	string name = sequences[seq].name;
+	if (name.size() > (header_length-2))
+	  name = name.substr(0,header_length-2);
+	header = name + string(header_length-name.size(),' ');
+      }
+      file<<header;
+      for(int column=start;column<end and column<length();column++)
+	file<<a.lookup(array(column,seq));
+      file<<endl;
+    }
+    file<<endl<<endl;
+    pos = end;
+  }
+
 #ifndef NDEBUG
   for(int i=0;i<sequences.size();i++) {
     vector<int> s;

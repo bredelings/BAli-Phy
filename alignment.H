@@ -12,10 +12,10 @@ class alignment {
   
   void resize(int,int);
   void pad(int);
+  void remap(const vector<int>&);
   void remap(const vector<string>&);
   void gap_fixup(int,int,int,int,int);
 
-  void set_row(int,const vector<int>&);
   void add_row(const vector<int>&);
 public:
   int index(const string&) const;
@@ -30,7 +30,7 @@ public:
   void create_internal(const SequenceTree&);
   void print(std::ostream&) const;
   void print_fasta(std::ostream&) const;
-  void print_phy(std::ostream&) const;
+  void print_phylip(std::ostream&,bool=false) const;
 
   bool changelength(int l);
   void delete_column(int i);
@@ -61,7 +61,7 @@ public:
 };
 
 inline std::ostream& operator<<(std::ostream& file,const alignment& A) {
-  A.print(file);
+  A.print_phylip(file);
   return file;
 }
 

@@ -261,8 +261,7 @@ public:
   void parse(const string&);
 
   SequenceTree() {}
-  explicit SequenceTree(const string& s) {read(s);}
-  SequenceTree(const sequence& s); //FIXME - consider removing
+  SequenceTree(const string& s);
   SequenceTree(const SequenceTree& T1, const SequenceTree& T2);
   SequenceTree(const SequenceTree& T1, double b1,const SequenceTree& T2,double b2);
 
@@ -281,6 +280,7 @@ inline std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
 
 bool same_topology(const SequenceTree&,const SequenceTree&);
 
+SequenceTree RandomTree(const vector<string>&,double=1.0);
 /***************** class SequenceTree ****************/
 
 #endif
