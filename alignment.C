@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "alignment.H"
+#include "myexception.H"
 
 int num_non_gaps(const alignment& A,int column) {
   int count=0;
@@ -123,7 +124,8 @@ void alignment::delete_column(int column) {
 
 
 void alignment::remap(const vector<string>& order) {
-  assert(sequences.size() == order.size());
+  if (order.size() >sequences.size())
+    throw myexception("Too many sequences in tree");
 
   vector<sequence> old_order = sequences;
   
@@ -142,7 +144,8 @@ void alignment::remap(const vector<string>& order) {
       if (order[j] == sequences[i].name)
 	target = j;
     }
-    assert(target != -1);// FIXME - make this an exception "can't find sequence X in tree"
+    if (target == -1)
+      throw myexception(string("Couldn't find sequence \"")+sequences[i].name+"\" in tree");
     mapping[i] = target;
   }
 
