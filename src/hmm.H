@@ -29,10 +29,10 @@ public:
   double T;
 
   /// The transition matrix for the HMM
-  eMatrix Q;
+  Matrix Q;
 
   /// The 'generalized' transition matrix - silent loops removed
-  eMatrix GQ;
+  Matrix GQ;
 
   bool connected_Q(int S1,int S2) const {return Q(S1,S2) != 0.0;}
 
@@ -75,7 +75,7 @@ public:
   efloat_t path_GQ_path(const vector<int>& g_path) const;
 
   /// Construct an HMM from the emission characteristics of the states, the start probabilities, and the transition matrix
-  HMM(const vector<int>&,const vector<efloat_t>&,const eMatrix&,double);
+  HMM(const vector<int>&,const vector<efloat_t>&,const Matrix&,double);
 
   virtual ~HMM() {}
 };
