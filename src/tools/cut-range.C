@@ -4,38 +4,74 @@
 #include <sstream>
 #include <iostream>
 #include "util.H"
-#include "arguments.H"
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
 
 using std::string;
+using std::cout;
+
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("key", value<string>()->default_value("iterations"),"cut based on values of <key>=value")
+    ("skip",value<int>(),"the number of samples to skip")
+    ("size",value<int>(),"maximum number of samples to use")
+    ("until",value<int>(),"last sample to use")
+    ;
+
+  variables_map args;     
+  store(parse_command_line(argc, argv, all), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: cut-range [OPTIONS]\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
 
 
-// assumptions the value of 'key' is increasing
+
+
+
+// assumptions: the value of 'key' is increasing
 
 int main(int argc,char* argv[]) {
-  Arguments args;
-  args.read(argc,argv);
-
   try {
 
-    if (not args.set("key")) 
-      throw myexception()<<"argument 'key' not set.";
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
 
-    if (args.set("size") and args.set("until"))
+    if (not args.count("key")) 
+      throw myexception()<<"argument 'key' not set.";
+    if (args.count("size") and args.count("until"))
       throw myexception()<<"cannot set both arguments 'size' and 'until'.";
 
-    bool is_min = args.set("skip");
-    double min = args.loadvalue("skip",0.0);
+    bool is_min = args.count("skip");
+    double min = 0;
+    if (is_min) min = args["skip"].as<int>();
 
-    bool is_max = args.set("size") or args.set("until");
-    double max = args.loadvalue("size",0) + min;
+    bool is_max = args.count("size") or args.count("until");
+    double max = min;
+    if (args.count("size"))
+      max = min + args["size"].as<int>();
 
-    if (args.set("until"))
-      max = args.loadvalue<double>("until");
-
+    if (args.count("until"))
+      max = std::min(max,(double)args["until"].as<int>());
     if (is_min and is_max and max < min)
       throw myexception()<<"error: maximum value < minimum value";
 
-    string pattern = args["key"] + " = ";
+    string pattern = args["key"].as<string>() + " = ";
 
     string line;
 

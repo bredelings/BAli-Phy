@@ -23,7 +23,7 @@ EXACTFLAGS = -pipe
 
 LANGO := fast-math 
 
-WARN  := all no-sign-compare overloaded-virtual strict-aliasing
+WARN  := all overloaded-virtual strict-aliasing
 LDFLAGS := 
 
 ifeq (${BOUNDS_CHECK},y)
@@ -167,7 +167,7 @@ test-smodel: alignment.o alphabet.o sequence.o tree.o sequencetree.o util.o \
 	probability.o rng.o setup-smodel.o exponential.o eigenvalue.o alignment-util.o \
 	setup.o	imodel.o alignment-random.o ${LINKLIBS}
 
-tools/cut-range: util.o
+tools/cut-range: util.o -lboost_program_options
 
 tools/truckgraph: alignment.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 

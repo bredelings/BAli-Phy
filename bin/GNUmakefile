@@ -19,7 +19,7 @@ header: out Pmarg
 	echo ; } > $@
 
 samples-${SKIP}+${SIZE}: out
-	cut-range key=iterations skip=${SKIP} ${SIZE:size=%} < $< > $@
+	cut-range --skip ${SKIP} ${SIZE:--size %} < $< > $@
 
 %.from.${SKIP}: %
 	tail -n +${SKIP} $< > $@
@@ -31,7 +31,7 @@ samples-${SKIP}+${SIZE}: out
 	cp $< $@ 
 
 tc : trees.from.${SKIP}+${SIZE}
-	tree-dist-compare files=$< > $@
+	tree-dist-compare $< > $@
 
 # If there are no Substitution parameters, don't bail out
 
@@ -81,7 +81,7 @@ median-unordered.fasta: samples-${SKIP}+${SIZE}
 	alignment-reorder align=$*-unordered.fasta tree=MAP.tree > $@ 2>/dev/null
 
 %-AU.prob: %-unordered.fasta samples-${SKIP}+${SIZE} MAP.tree
-	alignment-gild align=$*-unordered.fasta tree=MAP.tree maxalignments=500 < samples-${SKIP}+${SIZE} > $@ 2>$*-AU.err
+	alignment-gild $*-unordered.fasta --tree MAP.tree --max-alignments 500 < samples-${SKIP}+${SIZE} > $@ 2>$*-AU.err
 
 %-AU.html: %-AU.prob MAP.tree %.fasta
 	alignment-draw width=120 tree=MAP.tree align=$*.fasta AU-file=$*-AU.prob > $@
