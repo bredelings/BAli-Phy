@@ -1,6 +1,3 @@
-0. Merge tools/alignmentutil into tools/alignment-util
-  a) add a 'first/last' argument to 
-
 1. Update tools directory to use boost::program_options.
 
 2. Fix tools/analyze-distances: make an interface to get likelihoods by column...
@@ -135,4 +132,6 @@ the prior, because we never want to use it  differently.
 [DONE]  tree-dist-compare: 
 	a) by default, only show 1 topology per file
 	b) allow consensus to take a comma-separated list of values
+
+[DONE] add '--first' and '--last' arguments to alignment-find
 
