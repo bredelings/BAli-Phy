@@ -78,7 +78,7 @@ median-unordered.fasta: samples-${SKIP}+${SIZE}
 	alignment-median maxalignments=2000 type=splits < $< > $@ 2>median.err
 
 %.fasta: MAP.tree %-unordered.fasta
-	alignment-reorder align=$*-unordered.fasta tree=MAP.tree > $@ 2>/dev/null
+	alignment-reorder $*-unordered.fasta MAP.tree > $@ 2>/dev/null
 
 %-AU.prob: %-unordered.fasta samples-${SKIP}+${SIZE} MAP.tree
 	alignment-gild $*-unordered.fasta --tree MAP.tree --max-alignments 500 < samples-${SKIP}+${SIZE} > $@ 2>$*-AU.err
@@ -86,6 +86,7 @@ median-unordered.fasta: samples-${SKIP}+${SIZE}
 %-AU.html: %-AU.prob MAP.tree %.fasta
 	alignment-draw width=120 tree=MAP.tree align=$*.fasta AU-file=$*-AU.prob > $@
 
+#FIXME - are these SRQ plots, or not?
 tree.srq: trees MAP.tree 
 	tree-to-srq tree=MAP.tree < trees > tree.srq
 
