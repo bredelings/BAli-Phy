@@ -72,17 +72,18 @@ class tree {
   void compute_ancestors();
   void renumber();
 
-  vector<Branch> branches;
+  vector<Branch> branches_;
 public:
   enum direction { left , right, up };
 
-  Branch& branch(int i) {return branches[i];}
-  const Branch& branch(int i) const {return branches[i];}
+  Branch& branch(int i) {return branches_[i];}
+  const Branch& branch(int i) const {return branches_[i];}
   
   const node& operator[](int i) const { return *lookup[i];}
   node& operator[](int i) { return *lookup[i];}
 
   int leaves() const {return n_leaves;}
+  int branches() const {return num_nodes()-2;}
   int num_nodes() const {return lookup.size();}
   vector<int> path(int,int) const;
 
@@ -147,5 +148,27 @@ public:
   TreeFunc(const tree& t1): t(t1),values(t1.num_nodes()) {}
   TreeFunc(const tree& t1,RangeType value): t(t1),values(t1.num_nodes(),value) {}
 };
+
+TreeFunc<int> mark_tree(const vector<int>&,const tree&);
+
+
+class SequenceTree: public tree {
+  vector<string> sequences;
+public:
+  const string& seq(int i) const {return sequences[i];}
+  const vector<string>& get_sequences() const {return sequences;}
+
+  explicit SequenceTree(const string&);
+  SequenceTree(const sequence& s);
+  SequenceTree(const SequenceTree& T1, const SequenceTree& T2);
+};
+
+inline SequenceTree operator+(const SequenceTree& t1,const SequenceTree& t2) {
+  SequenceTree t3(t1,t2);
+
+  return t3;
+}
+
+/***************** class SequenceTree ****************/
 
 #endif

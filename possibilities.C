@@ -57,67 +57,6 @@ vector<possibility> get_pos_subtree(const tree& T,const edge& e,const TreeFunc<i
 
 
 
-TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
-  //Step 0: Set all nodes as not-considered
-  TreeFunc<int> present(T,-1);
-
-  //Step 1: Load leaf information
-  for(int i=0;i<present_leaf.size();i++) 
-    present(i) = present_leaf[i];
-
-  //Step 2: Connect the cluster of 'present' nodes
-  int top = -1;
-  for(int i=0;i<present_leaf.size();i++) {
-    if (present(i) != 1) continue;
-
-    if (top == -1)
-      top = i;
-    else {
-      int here=i;
-      while(!T.ancestor(here,top)) {
-	here = T[here].parent->name;
-	present(here) = 1;
-      }
-      int parent = here;
-      
-      here = top;
-      while(here != parent) {
-	here = T[here].parent->name;
-	present(here) = 1;
-      }
-      
-      if (parent>top) top=parent;
-    }
-  }
-  
-  assert(top != -1); //at least one node must be present
-
-  // Step 3: connect the 'missing' nodes to the cluster of 'present' nodes
-  for(int i=0;i<present_leaf.size();i++) {
-    if (present_leaf[i] != 0) continue;
-
-    int here=i;
-    int parent;
-    while(!T.ancestor(here,top)) {
-      here = T[here].parent->name;
-      if (present(here) != -1)
-	goto done;
-      present(here) = 0;
-    }
-    parent = here;
-    
-    here = top;
-    while(here != parent) {
-      here = T[here].parent->name;
-      present(here) = 0;
-    }
-  done: continue;
-  }
-
-  return present;
-}
-
-
 int num_shared(const possibility& prev_edges,const possibility& edges) {
   int extended = 0;
   for(int l=0;l<edges.size();l++) 

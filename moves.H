@@ -1,7 +1,7 @@
 #ifndef MOVES_H
 #define  MOVES_H
 #include "alignment.H"
-#include "etree.H"
+#include "tree.H"
 
 alignment swap_gap(const alignment&);
 alignment inc_length(const alignment&);

@@ -3,7 +3,7 @@
 
 int alphabet::operator[](char c) const {
   if (c=='-') 
-    return -1;
+    return alphabet::gap;
   for(int i=0;i<size();i++) {
     if (data[i]==c)
       return i;
@@ -29,21 +29,10 @@ char alphabet::lookup(int i) const {
 }
 
 
-alphabet::alphabet(const char* s,const char* filename) {
+alphabet::alphabet(const char* s) {
   string letters(s);
   for(int i=0;i<letters.length();i++)
     data.push_back(letters[i]);
-
-  frequency.resize(size(),1.0/size());
-  substitution.resize(size(),size());
-
-  ifstream matrix_file(filename);
-
-  for(int i=0;i<size();i++) 
-    for(int j=0;j<size();j++) 
-      matrix_file>>substitution(i,j);
-      
-  matrix_file.close();
 }
 
 

@@ -6,9 +6,6 @@
 
 using std::valarray;
 
-const double gap_init = exp(-16);
-const double gap_extend = exp(-4);
-
 const double max_float = 3.40282347e+38F;
 
 const double log_0 = -max_float;
@@ -76,7 +73,9 @@ int mask(int i) {
 }
 
 
-alignment sample(const alignment& old,const tree& T,int node) {
+alignment sample(const alignment& old,const Parameters& Theta,int node) {
+  const tree& T = Theta.T;
+
   assert(T[node].left);
   assert(T[node].right);
 
@@ -172,11 +171,12 @@ alignment sample(const alignment& old,const tree& T,int node) {
 
 	int opened = gaps - extended;
 	
-	double p = log(gap_extend)*extended + log(gap_init)*opened;
+	double p = Theta.lambda_E*extended + Theta.lambda_O*opened;
 	
 	P[column][target] = logsum(P[column][target],p + P[column-1][64+i]);
       }
     }
+
     for(int i=0;i<8;i++) {
       for(int j=0;j<8;j++)
 	P[column][64+i] = logsum(P[column][64+i],P[column][(j<<3)+i]);
@@ -206,16 +206,16 @@ alignment sample(const alignment& old,const tree& T,int node) {
   return A;
 }
 
-alignment sample(const alignment& old,const tree& T) {
+alignment sample(const alignment& old,const Parameters& Theta) {
   alignment A;
   if (myrandomf() < 0.5) {
-    int node1 = myrandom(0,T.num_nodes()-3);
-    int node2 = T.parent(node1);
-    A = sample(old,T,node1,node2);
+    int node1 = myrandom(0,Theta.T.num_nodes()-3);
+    int node2 = Theta.T.parent(node1);
+    A = sample(old,Theta,node1,node2);
   }
   else {
-    int node = myrandom(T.leaves(),T.num_nodes()-2);
-    A = sample(old,T,node);
+    int node = myrandom(Theta.T.leaves(),Theta.T.num_nodes()-2);
+    A = sample(old,Theta,node);
   }
   return A;
 }

@@ -1,4 +1,4 @@
-#include "etree.H"
+#include "tree.H"
 #include "exponential.H"
 
 void TreeView::destroy(node** n) {
@@ -220,6 +220,11 @@ void tree::add_root() {
 tree& tree::operator=(const tree& t1) {
   root = t1.copy();
   renumber();
+
+  // numbers shouldn't change across copies
+  for(int i=0;i<num_nodes()-2;i++) 
+    branches_.push_back(t1.branch(i));
+
   return *this;
 }
 
@@ -231,13 +236,13 @@ tree::tree(const tree& t1, const tree& t2) {
   add_left(*root,t1);
   add_right(*root,t2);
 
-  /*
   for(int i=0;i<num_nodes()-2;i++) {
-    branches[i].node1 = i;
-    branches[i].node2 = parent(i);
-    branches[i].length = 1.0;
+    Branch b;
+    b.node1 = i;
+    b.node2 = parent(i);
+    b.length = 1.0;
+    branches_.push_back(b);
   }
-  */
 }
 
 tree::tree(const tree& t1, double d1, const tree& t2, double d2) {
@@ -250,5 +255,88 @@ tree::tree(const tree& t1, double d1, const tree& t2, double d2) {
   //  add_edge(t1_root,new_root,d1)
   //  add_edge(t2_root,new_root,d2)
 }
+
+
+TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
+  //Step 0: Set all nodes as not-considered
+  TreeFunc<int> present(T,-1);
+
+  //Step 1: Load leaf information
+  for(int i=0;i<present_leaf.size();i++) 
+    present(i) = present_leaf[i];
+
+  //Step 2: Connect the cluster of 'present' nodes
+  int top = -1;
+  for(int i=0;i<present_leaf.size();i++) {
+    if (present(i) != 1) continue;
+
+    if (top == -1)
+      top = i;
+    else {
+      int here=i;
+      while(!T.ancestor(here,top)) {
+	here = T[here].parent->name;
+	present(here) = 1;
+      }
+      int parent = here;
+      
+      here = top;
+      while(here != parent) {
+	here = T[here].parent->name;
+	present(here) = 1;
+      }
+      
+      if (parent>top) top=parent;
+    }
+  }
+  
+  assert(top != -1); //at least one node must be present
+
+  // Step 3: connect the 'missing' nodes to the cluster of 'present' nodes
+  for(int i=0;i<present_leaf.size();i++) {
+    if (present_leaf[i] != 0) continue;
+
+    int here=i;
+    int parent;
+    while(!T.ancestor(here,top)) {
+      here = T[here].parent->name;
+      if (present(here) != -1)
+	goto done;
+      present(here) = 0;
+    }
+    parent = here;
+    
+    here = top;
+    while(here != parent) {
+      here = T[here].parent->name;
+      present(here) = 0;
+    }
+  done: continue;
+  }
+
+  return present;
+}
+
+/************************** SequenceTree methods *****************************/
+
+SequenceTree::SequenceTree(const string& s)
+{
+  add_root();
+  sequences.push_back(s);
+}
+
+SequenceTree::SequenceTree(const sequence& s)
+{
+  add_root();
+  sequences.push_back(s.name);
+}
+
+SequenceTree::SequenceTree(const SequenceTree& T1, const SequenceTree& T2):tree(T1,T2) {
+  for(int i=0;i<T1.leaves();i++) 
+    sequences.push_back(T1.seq(i));
+  for(int i=0;i<T2.leaves();i++) 
+    sequences.push_back(T2.seq(i));
+}
+
 
 

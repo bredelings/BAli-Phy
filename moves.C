@@ -64,13 +64,6 @@ int num_non_gaps(const alignment& A,int column) {
   return count;
 }
 
-bool valid(const alignment& A) {
-  for(int column=0;column<A.length();column++)
-    if (num_non_gaps(A,column)==0)
-      return false;
-  return true;
-}
-
 alignment swap_gap(const alignment& old) {
   std::cerr<<"swap_gap"<<endl;
   alignment A = old;

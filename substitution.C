@@ -5,8 +5,10 @@
 using std::valarray;
 
 
-valarray<double> peel(const alphabet& a, const vector<int>& residues,const tree& T,
+valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
 		      int node1, int node2) {
+  const alphabet& a = Theta.get_alphabet();
+  const tree& T = Theta.T;
   
   // we are spending too much work creating AND destroying this thing
   TreeFunc< valarray<double> > distributions(T);
@@ -36,13 +38,13 @@ valarray<double> peel(const alphabet& a, const vector<int>& residues,const tree&
       if (residues[n] == alphabet::gap)
 	continue;
       for(int i=0;i<a.size();i++)
-	dist[i] = a.substitution(i,residues[n]);
+	dist[i] = Theta.substitution(n)(i,residues[n]);
     }
     else {
       dist = 0.0;
       for(int i=0;i<a.size();i++)
 	for(int j=0;j<a.size();j++)
-	  dist[i] += a.substitution(i,j)*distributions(n)[j];
+	  dist[i] += Theta.substitution(n)(i,j)*distributions(n)[j];
     }
 
     int parent = T.parent(n);
@@ -69,7 +71,7 @@ valarray<double> peel(const alphabet& a, const vector<int>& residues,const tree&
     dist = 0.0;
     for(int i=0;i<a.size();i++)
       for(int j=0;j<a.size();j++)
-	dist[i] += a.substitution(i,j)*distributions(n)[j];
+	dist[i] += Theta.substitution(parent)(i,j)*distributions(n)[j];
     
     if (!distributions(parent).size()) {
       distributions(parent).resize(a.size());
@@ -107,26 +109,27 @@ valarray<double> peel(const alphabet& a, const vector<int>& residues,const tree&
   return distributions(root);
 }
 
-double substitution(const alphabet& a,const vector<int>& residues,const tree& T,
+double substitution(const vector<int>& residues,const Parameters& Theta,
 		    TreeFunc< valarray<double> >& distributions) {
+  const tree& T = Theta.T;
   assert(residues.size() == T.leaves());
 
   int root = T.num_nodes()-1;
   int left = T[root].left->name;
   int right = T[root].right->name;
       
-  valarray<double> leftD = peel(a,residues,T,right,left);
-  valarray<double> rightD = peel(a,residues,T,left,right);
+  valarray<double> leftD = peel(residues,Theta,right,left);
+  valarray<double> rightD = peel(residues,Theta,left,right);
   
-  valarray<double> rootD = leftD * a.frequency * rightD;
+  valarray<double> rootD = leftD * Theta.frequency * rightD;
 
   double p = rootD.sum();
 
   /*
   left = 13;
   right = T.parent(left);
-  leftD = peel(a,residues,T,right,left);
-  rightD = peel(a,residues,T,left,right);
+  leftD = peel(residues,T,right,left);
+  rightD = peel(residues,T,left,right);
   rootD = leftD * a.frequency * rightD;
   double p2 = rootD.sum();
 
@@ -138,10 +141,10 @@ double substitution(const alphabet& a,const vector<int>& residues,const tree& T,
   return log(p);
 }
 
-double substitution(const alignment& A,const tree& T) {
+double substitution(const alignment& A,const Parameters& Theta) {
   double P = 0.0;
   
-  TreeFunc< valarray<double> > distributions(T);
+  TreeFunc< valarray<double> > distributions(Theta.T);
 
   vector<int> residues(A.num_sequences());
 
@@ -149,7 +152,7 @@ double substitution(const alignment& A,const tree& T) {
   for(int column=0;column<A.length();column++) {
     for(int i=0;i<residues.size();i++)
       residues[i] = A(column,i);
-    P += substitution(A.get_alphabet(),residues,T,distributions);
+    P += substitution(residues,Theta,distributions);
   }
 
   return P;

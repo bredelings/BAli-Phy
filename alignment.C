@@ -2,6 +2,21 @@
 #include "alignment.H"
 #include "possibilities.H"
 
+int num_non_gaps(const alignment& A,int column) {
+  int count=0;
+  for(int i=0;i<A.num_sequences();i++) 
+    if (A(column,i) != alphabet::gap)
+      count++;
+  return count;
+}
+
+bool valid(const alignment& A) {
+  for(int column=0;column<A.length();column++)
+    if (num_non_gaps(A,column)==0)
+      return false;
+  return true;
+}
+
 void alignment::pad(int column) {
   for(int i=0;i<sequences.size();i++)
     for(int j=column;j<length();j++)

@@ -2,7 +2,7 @@
 #define POSSIBILITIES_H
 
 #include "mytypes.H"
-#include "etree.H"
+#include "tree.H"
 
 struct edge {
   int node1;
@@ -20,7 +20,6 @@ int num_shared(const possibility&,const possibility&);
 //which indels could generate the pattern present/missing leaves?
 vector<possibility> get_possibilities(const vector<int>&,const tree&);
 
-TreeFunc<int> mark_tree(const vector<int>&,const tree&);
 vector<edge> get_children(const tree&,const edge&,const TreeFunc<int>&);
 
 #endif

@@ -11,15 +11,12 @@ struct alphabet {
   static const int gap = -1;
   static const int not_gap = -2;
 
-  std::valarray<double> frequency;
-  Matrix substitution;
-
   int operator[](char c) const;
   vector<int> operator()(const string&) const;
   char lookup(int) const;
   int size() const { return data.size(); }
 
-  alphabet(const char*,const char*);
+  alphabet(const char*);
 };
 
 /***************** struct sequence ********************/

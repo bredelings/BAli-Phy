@@ -17,19 +17,19 @@ all: tree2
 # try -fforce-addr
 
 #----------------- Definitions
-LANGO = # prefetch-loop-arrays fast-math unroll-loops
+LANGO = prefetch-loop-arrays fast-math unroll-loops
 DEBUG = pipe g # pg
-DEFS = # NDEBUG 
+DEFS = NDEBUG 
 WARN = all no-sign-compare
-OPT =  O# 3 malign-double mfpmath=sse msse march=pentium3
+OPT =  malign-double mfpmath=sse msse2 march=pentium4
 LDFLAGS =  # -pg 
 
 #------------------- Main 
 PROGNAME = tree2
 NAME = tree2
-SOURCES = sequence.C etree.C alignment.C substitution.C gaps.C seq_tree.C \
-          moves.C myrandom.C possibilities.C sample.C sample2.C exponential.C \
-          eigenvalue.C
+SOURCES = sequence.C tree.C alignment.C substitution.C gaps.C  \
+          myrandom.C possibilities.C sample.C sample2.C exponential.C \
+          eigenvalue.C parameters.C likelihood.C
 LIBS = 
 PROGNAMES = ${NAME} rna
 ALLSOURCES = ${SOURCES} 

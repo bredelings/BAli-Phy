@@ -1,6 +1,7 @@
 #include <valarray>
 #include <iostream>
 #include <cmath>
+#include "gaps.H"
 #include "sample.H"
 #include "myrandom.H"
 #include "substitution.H"
@@ -47,7 +48,7 @@ int choose(double x, double y, double z) {
 
 // g2 -> g1, never g1 -> g2
 
-vector<int> sample_path(const Matrix& m,const Matrix& g1,const Matrix& g2,const Parameters& Theta) {
+vector<int> sample_path(const Matrix& m,const Matrix& g1,const Matrix& g2) {
   vector<int> path;
   int k = m.size1() - 1;
   int l = m.size2() - 1;
@@ -64,14 +65,14 @@ vector<int> sample_path(const Matrix& m,const Matrix& g1,const Matrix& g2,const 
       double corrected_g1 = g1(k,l);
       double corrected_g2 = g2(k,l);
       if (last == 1) {
-	corrected_m +=  Theta.lambda_O;
-	corrected_g1 += Theta.lambda_E;
-	corrected_g2 += Theta.lambda_O;
+	corrected_m += lambda_O;
+	corrected_g1 += lambda_E;
+	corrected_g2 += lambda_O;
       }
       else if (last==2) {
-	corrected_m += Theta.lambda_O;
+	corrected_m += lambda_O;
 	corrected_g1 += log_0;
-	corrected_g2 += Theta.lambda_E;
+	corrected_g2 += lambda_E;
       }
       //      std::cerr<<"path: "<<k<<", "<<l<<endl;
       move = choose(corrected_m, corrected_g1, corrected_g2) ;
@@ -189,19 +190,18 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
 }
 
 
-vector<valarray<double> > distributions(const alignment& A,const Parameters& Theta,const vector<int>& seq,int node1,int node2) {
+vector< valarray<double> > distributions(const alignment& A,const tree& T,const vector<int>& seq,int node1,int node2) {
   const alphabet& a = A.get_alphabet();
-
   vector< valarray<double> > dist(seq.size());
 
   for(int i=0;i<dist.size();i++) {
-    vector<int> residues(Theta.T.leaves());
+    vector<int> residues(T.leaves());
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
     dist[i].resize(a.size());
-    dist[i] = peel(residues,Theta,node1,node2);
+    dist[i] = peel(a,residues,T,node1,node2);
 
-    // double sum = dist[i].sum();
+    double sum = dist[i].sum();
     // it IS possible to have no leaves if internal sequences is non-gap
     //    if (sum < a.size()-1) {
     //      assert(sum <= 1.00000001);
@@ -212,13 +212,14 @@ vector<valarray<double> > distributions(const alignment& A,const Parameters& The
   return dist;
 }
 
-alignment sample(const alignment& old,const Parameters& Theta,int node1,int node2) {
-  const tree& T = Theta.T;
-  const double& lambda_O = Theta.lambda_O;
-  const double& lambda_E = Theta.lambda_E;
-  const valarray<double>& frequency = Theta.frequency;
-
+alignment sample(const alignment& old,const tree& T,int node1,int node2) {
+  const alphabet& a = old.get_alphabet();
   if (node2<node1) std::swap(node1,node2);
+
+  //  std::cerr<<"-------------------------------------"<<endl;
+  //  std::cerr<<"entering sample "<<node1<<":"<<node2<<endl;
+  //  std::cerr<<"old="<<endl;
+  //  std::cerr<<old<<endl;
 
   valarray<bool> group1 = T.partition(node2,node1);
 
@@ -232,42 +233,73 @@ alignment sample(const alignment& old,const Parameters& Theta,int node1,int node
       seq2.push_back(column);
   }
 
-  /******** Precompute distributions at node2 from the 2 subtrees **********/
-  vector< valarray<double> > dists1 = distributions(old,Theta,seq1,node2,node1);
-  vector< valarray<double> > dists2 = distributions(old,Theta,seq2,node1,node2);
-
-  valarray<double> g1_sub(seq2.size());
-  for(int i=0;i<seq2.size();i++)  
-    g1_sub[i] = log(sum( dists2[i] * frequency ));
-
-  valarray<double> g2_sub(seq1.size());
-  for(int i=0;i<seq1.size();i++)
-    g2_sub[i] = log(sum( dists1[i] * frequency ));
-
-
   /********************* Create alignment matrices ***********************/
+  Matrix m(seq1.size()+1,seq2.size()+1);
+  Matrix g1(seq1.size()+1,seq2.size()+1);
+  Matrix g2(seq1.size()+1,seq2.size()+1);
+
   Matrix M(seq1.size()+1,seq2.size()+1);
   Matrix G1(seq1.size()+1,seq2.size()+1);
   Matrix G2(seq1.size()+1,seq2.size()+1);
 
-  for(int i=0;i<M.size1();i++)
-    for(int j=0;j<M.size2();j++) {
+  for(int i=0;i<m.size1();i++)
+    for(int j=0;j<m.size2();j++) {
+      m(i,j)  = log_0;
+      g1(i,j) = log_0;
+      g2(i,j)  = log_0;
+
       M(i,j)  = log_0;
       G1(i,j) = log_0;
       G2(i,j)  = log_0;
     }
-  /***********    Initialize the Boundary    ************/
+
+  /******** Precompute distributions at node2 from the 2 subtrees **********/
+  vector< valarray<double> > dists1 = distributions(old,T,seq1,node2,node1);
+  vector< valarray<double> > dists2 = distributions(old,T,seq2,node1,node2);
+
+  vector<double> sum1(dists1.size());
+  for(int i=0;i<dists1.size();i++)
+    sum1[i] = log(dists1[i].sum());
+
+  vector<double> sum2(dists2.size());
+  for(int i=0;i<dists2.size();i++)
+    sum2[i] = log(dists2[i].sum());
+
+  valarray<double> g1_sub(seq2.size());
+  for(int i=0;i<seq2.size();i++)
+    g1_sub[i] = log(sum( dists2[i] * a.frequency ));
+
+  valarray<double> g2_sub(seq1.size());
+  for(int i=0;i<seq1.size();i++)
+    g2_sub[i] = log(sum( dists1[i] * a.frequency ));
+
+
+  /***************** Initialize the Boundary *************************/
+  m(0,0) = 0;
+  g1(0,0) = log_0;
+  g2(0,0) = log_0;
+
   M(0,0) = 0;
   G1(0,0) = log_0;
   G2(0,0) = log_0;
 
-  for(int i=1;i<M.size1();i++) {
+  for(int i=1;i<m.size1();i++) {
+    m(i,0) = log_0;
+    g1(i,0) = log_0;
+    g2(i,0) = g2_sub[i-1] + logsum(lambda_E + g2(i-1,0),lambda_O + m(i-1,0))
+      - sum1[i-1];
+  
     M(i,0) = log_0;
     G1(i,0) = log_0;
     G2(i,0) = g2_sub[i-1] + logsum(lambda_E + G2(i-1,0),lambda_O + M(i-1,0));
   }
 
-  for(int i=1;i<M.size2();i++) {
+  for(int i=1;i<m.size2();i++) {
+    m(0,i) = log_0;
+    g1(0,i) = g1_sub[i-1] + logsum(lambda_E + g1(0,i-1),lambda_O + logsum(g2(0,i-1),m(0,i-1)))
+      -sum2[i-1];
+    g2(0,i) = log_0;
+
     M(0,i) = log_0;
     G1(0,i) = g1_sub[i-1] + logsum(lambda_E + G1(0,i-1),lambda_O + logsum(G2(0,i-1),M(0,i-1)));
     G2(0,i) = log_0;
@@ -275,41 +307,111 @@ alignment sample(const alignment& old,const Parameters& Theta,int node1,int node
 
 
   /******************* Compute the DP matrix **********************/
-  const int maxlength = std::max(M.size1(),M.size2());
-  for(int n=0; n<maxlength; n++) {
-    if (n<M.size2())
-      for(int i=1;i<n && i<M.size1();i++) {
+  valarray<double> temp(a.size());
 
-	double sub = log(sum( dists1[i-1] * frequency * dists2[n-1] ));
+  const int maxlength = std::max(m.size1(),m.size2());
+  for(int n=0; n<maxlength; n++) {
+    if (n<m.size2())
+      for(int i=1;i<n && i<m.size1();i++) {
+
+	double sub = log(sum( dists1[i-1] * a.frequency * dists2[n-1] ));
+	m(i,n) = sub + logsum(m(i-1,n-1),logsum(g1(i-1,n-1),g2(i-1,n-1)))
+	  -sum1[i-1] - sum2[n-1];
 	M(i,n) = sub + logsum(M(i-1,n-1),logsum(G1(i-1,n-1),G2(i-1,n-1)));
 
+	g1(i,n) = g1_sub[n-1] + logsum(lambda_E + g1(i,n-1),lambda_O + logsum(g2(i,n-1),m(i,n-1)))
+	  -sum2[n-1];
 	G1(i,n) = g1_sub[n-1] + logsum(lambda_E + G1(i,n-1),lambda_O + logsum(G2(i,n-1),M(i,n-1)));
 
+	g2(i,n) = g2_sub[i-1] + logsum(lambda_E + g2(i-1,n),lambda_O + m(i-1,n))
+	  -sum1[i-1];
 	G2(i,n) = g2_sub[i-1] + logsum(lambda_E + G2(i-1,n),lambda_O + M(i-1,n));
       }
 
-    if (n<M.size1())
-      for(int i=1;i<=n && i<M.size2();i++) {
+    if (n<m.size1())
+      for(int i=1;i<=n && i<m.size2();i++) {
 
-	double sub = log(sum( dists1[n-1] * frequency * dists2[i-1] ));
+	double sub = log(sum( dists1[n-1]*a.frequency*dists2[i-1] ));
+	m(n,i) = sub + logsum(m(n-1,i-1),logsum(g1(n-1,i-1),g2(n-1,i-1)))
+	  -sum1[n-1] - sum2[i-1];
 	M(n,i) = sub + logsum(M(n-1,i-1),logsum(G1(n-1,i-1),G2(n-1,i-1)));
 
+	g1(n,i) = g1_sub[i-1] + logsum(lambda_E + g1(n,i-1),lambda_O + logsum(g2(n,i-1),m(n,i-1)))
+	  -sum2[i-1];
 	G1(n,i) = g1_sub[i-1] + logsum(lambda_E + G1(n,i-1),lambda_O + logsum(G2(n,i-1),M(n,i-1)));
 
+	g2(n,i) = g2_sub[n-1] + logsum(lambda_E + g2(n-1,i),lambda_O + m(n-1,i))
+	  -sum1[n-1];
 	G2(n,i) = g2_sub[n-1] + logsum(lambda_E + G2(n-1,i),lambda_O + M(n-1,i));
 	
       }
   }
 
+  std::cerr<<"first\n";
+  for(int i=0;i<m.size1();i++) {
+    for(int j=0;j<m.size2();j++) {
+      std::cerr<<i<<"  "<<j<<"  "<<m(i,j)<<endl;
+    }
+    std::cerr<<endl;
+  }
+  std::cerr<<endl;
+
+  std::cerr<<"second\n";
+  for(int i=0;i<M.size1();i++) {
+    for(int j=0;j<M.size2();j++) {
+      std::cerr<<i<<"  "<<j<<"  "<<M(i,j)<<endl;
+    }
+    std::cerr<<endl;
+  }
+  std::cerr<<endl;
+
+
+  Matrix MN(seq1.size()+1,seq2.size()+1);
+  Matrix G1N(seq1.size()+1,seq2.size()+1);
+  Matrix G2N(seq1.size()+1,seq2.size()+1);
+
+  for(int i=1;i<sum1.size();i++)
+    sum1[i] += sum1[i-1];
+
+  for(int i=1;i<sum2.size();i++)
+    sum2[i] += sum2[i-1];
+
+  for(int i=0;i<M.size1();i++) {
+    for(int j=0;j<M.size2();j++) {
+      double temp = 0;
+      if (i>0) temp += sum1[i-1];
+      if (j>0) temp += sum2[j-1];
+
+      MN(i,j) = M(i,j) - temp;
+      G1N(i,j) = G1N(i,j) - temp;
+      G2N(i,j) = G2N(i,j) - temp;
+    }
+  }
+
+  std::cerr<<"third\n";
+  for(int i=0;i<MN.size1();i++) {
+    for(int j=0;j<MN.size2();j++) {
+      std::cerr<<i<<"  "<<j<<"  "<<MN(i,j)<<endl;
+    }
+    std::cerr<<endl;
+  }
+  std::cerr<<endl;
+
 
   /************** Sample a path from the matrix ********************/
 
-  vector<int> path = sample_path(M,G1,G2,Theta);
+  vector<int> path = sample_path(m,g1,g2);
+
+  //  for(int i=0;i<path.size();i++)
+  //    std::cerr<<path[i];
+  //  std::cerr<<endl;
+
+  //  for(int i=0;i<m.size1()&& i<m.size2();i++)
+  //    std::cerr<<i<<"  "<<m(i,i)<<"  "<<g1(i,i)<<"  "<<g2(i,i)<<"  "<<g1(i,i)-m(i,i)<<"   "<<g2(i,i)-m(i,i)<<endl;
 
   alignment A = construct(old,path,group1,seq1,seq2);
 
   assert(valid(A));
-
   return A;
 }
 

@@ -1,8 +1,9 @@
 #include "alignment.H"
-#include "etree.H"
+#include "tree.H"
+#include "parameters.H"
 
-std::valarray<double> peel(const alphabet&, const vector<int>&,const tree&,int,int);
+std::valarray<double> peel(const vector<int>&,const Parameters&,int,int);
 
-double substitution(const alignment& A,const tree& T);
-double substitution(const alphabet& a,const vector<int>& residues,const tree& T,
+double substitution(const alignment& A,const Parameters& Theta);
+double substitution(const vector<int>& residues,const Parameters& Theta,
 		    TreeFunc< std::valarray<double> >& distributions);

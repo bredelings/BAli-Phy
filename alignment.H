@@ -3,7 +3,7 @@
 
 #include "mytypes.H"
 #include "sequence.H"
-#include "seq_tree.H"
+#include "tree.H"
 #include <iostream>
 
 class alignment {

@@ -1,5 +1,5 @@
 #include <cmath>
-#include "gaps.H"
+#include "likelihood.H"
 #include "possibilities.H"
 
 const double gap_init = exp(-16);
@@ -85,7 +85,8 @@ vector<int> get_boundaries(const alignment& A,int first,int last) {
 
 // Version 1.0
 //  1. Ignore branch lengths - just use penalty!
-double prior(const alignment& A,const tree& T) {
+double prior(const alignment& A,const Parameters& Theta) {
+  const tree& T = Theta.T;
 
   assert(A.num_sequences() == T.leaves());
   vector<int> start = get_boundaries(A,0,A.length()-1);
@@ -131,54 +132,4 @@ double prior(const alignment& A,const tree& T) {
 	   possibilities[column],possibilities[column-1]);
   
   return accumulation[A.length()][0];
-}
-
-
-double prior_no_tree(const alignment& A) {
-  int total_gaps = A.length()*A.num_sequences();
-  for(int i=0;i<A.num_sequences();i++) 
-    total_gaps -= A.seq(i).size();
-
-  int init_gaps=0;
-  for(int column=0;column<A.length();column++) {
-    for(int i=0;i<A.num_sequences();i++) {
-      if (A(column,i) == alphabet::gap &&
-	  (column == 0 || A(column-1,i) != alphabet::gap))
-	init_gaps++;
-
-    }    
-  }
-  int extend_gaps = total_gaps - init_gaps;
-  return log(gap_init)*init_gaps + log(gap_extend)*extend_gaps;
-}
-
-double prior_branch(const alignment& A,const tree& T,int n1,int n2) {
-  int gap = 0;
-  int init_gaps = 0;
-  int extend_gaps = 0;
-  for(int column=0;column<A.length();column++) {
-    if (A(column,n1) == alphabet::gap && A(column,n2) != alphabet::gap) {
-      if (gap == 1) extend_gaps++;
-      else init_gaps++;
-      gap = 1;
-    }
-    else if (A(column,n1) != alphabet::gap && A(column,n2) == alphabet::gap) {
-      if (gap == 2) extend_gaps++;
-      else init_gaps++;
-      gap = 2;
-    }
-    else if (A(column,n1) != alphabet::gap && A(column,n2) != alphabet::gap)
-      gap=0;
-  }
-  return log(gap_init)*init_gaps + log(gap_extend)*extend_gaps;
-}
-
-
-double prior_internal(const alignment& A,const tree& T) {
-  double P=0;
-  for(int i=0;i<T.num_nodes()-2;i++) {
-    int parent = T.parent(i);
-    P += prior_branch(A,T,i,parent);
-  }
-  return P;
 }

@@ -3,8 +3,8 @@
 #include <cassert>
 #include <iostream>
 #include "mytypes.H"
-#include "seq_tree.H"
-#include "gaps.H"
+#include "tree.H"
+#include "likelihood.H"
 #include "substitution.H"
 #include "alignment.H"
 #include "moves.H"
