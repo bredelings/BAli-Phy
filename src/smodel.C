@@ -167,6 +167,8 @@ namespace substitution {
     double scale = r/rate();
     Q *= scale;
     S *= scale;
+    for(int i=0;i<eigensystem.Diagonal().size();i++)
+      eigensystem.Diagonal()[i] *= scale ;
   }
 
   string ReversibleMarkovModel::name() const  {

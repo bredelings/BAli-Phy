@@ -20,6 +20,7 @@ public:
   int size() const {return D.size();}
 
   const std::vector<double>& Diagonal() const {return D;}
+  std::vector<double>& Diagonal() {return D;}
 
   const Matrix& Rotation() const {return O;}
 
