@@ -412,8 +412,45 @@ struct compare_complete_partitions {
   }
 };
 
+vector<Partition> strict_consensus_partitions(const tree_sample& sample) 
+{
+  vector<Partition> partitions;
+
+  const SequenceTree& T = sample.topologies[0].T;
+
+  vector<string> names = T.get_sequences();
+
+  // Get the partitions in the first tree
+  for(int b=T.n_leaves();b<T.n_branches();b++) {
+      std::valarray<bool> partition = branch_partition(T,b);
+
+      partitions.push_back(Partition(names,partition));
+  }
+
+  for(int i=1;i<sample.topologies.size();i++) 
+  {
+    const SequenceTree& T = sample.topologies[i].T;
+    
+    for(int j=0;j<partitions.size();) {
+      if (not contains_partition(T,partitions[j]))
+	partitions.erase(partitions.begin()+j);
+      else
+	j++;
+    }
+
+    if (not partitions.size()) break;
+  }
+  return partitions;
+}
+
 vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
-  if (l < 0.5) throw myexception() << "get_Ml_partitition: l must be >= 0.5";
+  if (l < 0.5)
+    throw myexception()<<"Consensus level for majority tree must be > 0.5";
+  if (l > 1.0)
+    throw myexception()<<"Consensus level for majority tree must be < 1.0";
+
+  if (l == 1.0)
+    return strict_consensus_partitions(sample);
 
   // use a sorted list of <partition,count>, sorted by partition.
   map<valarray<bool>,int,compare_complete_partitions > counts;

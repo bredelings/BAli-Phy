@@ -1,35 +1,29 @@
+1. Update tools directory to use boost::program_options.
 
+2. Fix tools/analyze-distances: make an interface to get likelihoods by column...
 
-
-0. Update tools directory to use boost::program_options.
-
-
-10. Speed up sample_path() for DParrayConstrained by only considering
+3. Speed up sample_path() for DParrayConstrained by only considering
     allowed states for each column...
     a) check how fast we are when gaps=full_tree but alignment_branch is 
        fixed... 
     c) see how much speed gain we get for 48 taxa...
 
--2. consider ignoring letters if they are wildcards...
+4. consider ignoring letters if they are wildcards...
+    a) first 
 
--1.  Add comments!
+5.  Add comments!
 
-4. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
-5. Make align-constraint= work with sample_tri_multi (there is no regular sample_multi)
+6. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
+7. Make align-constraint= work with sample_tri_multi (there is no regular sample_multi)
 
-7. tree-dist-compare: 
-	a) by default, only show 1 topology per file
-	b) allow consensus to take a comma-separated list of values
-	c) 
+8. Get intel compiler
 
-1. Get intel compiler
-
-8. Make alignment-draw simply use 'plain' (or something) if AU-file
+9. Make alignment-draw simply use 'plain' (or something) if AU-file
     not specified.
 
-9. write code to load joint (A,T) distributions...
+10. write code to load joint (A,T) distributions...
 
-11.5: Write simple MPI code for MCMCMC....
+11: Write simple MPI code for MCMCMC....
    a) FIX problem where 1/(1-Q(z,z)) is NEGATIVE.
 
 12. Clean up ColorMap-s in alignment-draw, and sanitize naming scheme.
@@ -125,4 +119,9 @@ the prior, because we never want to use it  differently.
 
 
 [DONE]  Implement sorting of subA columns to provide stable names when columns are re-ordered.
-[DONE]  Remove invalidation in 3way and 5way sampling... 
+[DONE]  Remove invalidation in 3way sampling, 5way sampling, and tri-sampling.
+
+[DONE]  tree-dist-compare: 
+	a) by default, only show 1 topology per file
+	b) allow consensus to take a comma-separated list of values
+

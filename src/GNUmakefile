@@ -88,31 +88,31 @@ LINKLIBS = ${LIBS:%=-l%}
 
 ${PROGNAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
 
-tools/model_P: tools/statistics.o rng.o arguments.o ${LINKLIBS} 
+tools/model_P: tools/statistics.o rng.o ${LINKLIBS} 
 
 tools/statreport: tools/statistics.o
 
-tools/alignment-gild: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
+tools/alignment-gild: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o tools/alignmentutil.o \
 	setup.o imodel.o probability.o sequence-format.o model.o tools/distance-methods.o \
 	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
 
-tools/alignment-median: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
+tools/alignment-median: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/alignmentutil.o util-random.o \
 	setup.o imodel.o probability.o sequence-format.o model.o  \
 	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
 
-tools/alignment-indices: tree.o alignment.o sequencetree.o arguments.o \
+tools/alignment-indices: tree.o alignment.o sequencetree.o \
 	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
 	randomtree.o alignment-random.o imodel.o probability.o \
 	alignment-util.o model.o ${LINKLIBS}
 
-tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
+tools/alignment-reorder: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o imodel.o \
 	sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o \
 	model.o ${LINKLIBS}
 
-tools/alignment-chop-internal: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
+tools/alignment-chop-internal: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o setup.o imodel.o sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o model.o ${LINKLIBS}
 
 test3: model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o \
@@ -120,40 +120,40 @@ test3: model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o \
 
 test4: -lmudflap #model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o probability.o rng.o ${LINKLIBS} 
 
-tools/alignment-draw: tree.o alignment.o sequencetree.o arguments.o \
+tools/alignment-draw: tree.o alignment.o sequencetree.o \
 	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
 	randomtree.o alignment-random.o imodel.o probability.o \
 	alignment-util.o model.o tools/colors.o ${LINKLIBS} 
 
-tools/alignment-translate: alignment.o alphabet.o sequence.o arguments.o sequence-format.o \
+tools/alignment-translate: alignment.o alphabet.o sequence.o sequence-format.o \
 	util.o	
 
-tools/findalign: alignment.o alphabet.o arguments.o sequence.o tools/alignmentutil.o \
+tools/findalign: alignment.o alphabet.o sequence.o tools/alignmentutil.o \
 	rng.o ${LINKLIBS} util.o sequence-format.o
 
-tools/treecount: tree.o sequencetree.o arguments.o util.o rng.o tools/statistics.o ${LINKLIBS}
+tools/treecount: tree.o sequencetree.o util.o rng.o tools/statistics.o ${LINKLIBS}
 
-tools/tree-dist-compare: tree.o sequencetree.o tools/tree-dist.o arguments.o util.o \
+tools/tree-dist-compare: tree.o sequencetree.o tools/tree-dist.o util.o \
 	 rng.o tools/statistics.o ${LINKLIBS}
 
-tools/tree-dist-autocorrelation: tree.o sequencetree.o arguments.o tools/tree-dist.o
+tools/tree-dist-autocorrelation: tree.o sequencetree.o tools/tree-dist.o
 
-tools/tree-dist-cvars: tree.o sequencetree.o arguments.o util.o tools/tree-dist.o
+tools/tree-dist-cvars: tree.o sequencetree.o util.o tools/tree-dist.o
 
 tools/tree-to-srq: tree.o sequencetree.o arguments.o
 
-tools/tree-names-trunc: tree.o sequencetree.o arguments.o util.o
+tools/tree-names-trunc: tree.o sequencetree.o util.o
 
 tools/tree-reroot: tree.o sequencetree.o arguments.o
 
 tools/srq-to-plot: arguments.o
 
-tools/srq-analyze: arguments.o rng.o tools/statistics.o ${LINKLIBS}
+tools/srq-analyze: rng.o tools/statistics.o ${LINKLIBS}
 
-tools/make_random_tree: tree.o sequencetree.o arguments.o util.o\
+tools/make_random_tree: tree.o sequencetree.o util.o\
 	 rng.o  ${LINKLIBS}
 
-tools/alignment-convert: alignment.o sequence.o arguments.o alphabet.o \
+tools/alignment-convert: alignment.o sequence.o alphabet.o \
 	util.o sequence-format.o
 
 tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
@@ -162,19 +162,19 @@ tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	choose.o tools/optimize.o setup.o rates.o matcache.o \
 	sequence-format.o randomtree.o model.o ${LINKLIBS}
 
-test-smodel: alignment.o alphabet.o sequence.o arguments.o tree.o sequencetree.o util.o \
+test-smodel: alignment.o alphabet.o sequence.o tree.o sequencetree.o util.o \
 	setup-smodel.o smodel.o randomtree.o model.o sequence-format.o rates.o \
 	probability.o rng.o setup-smodel.o exponential.o eigenvalue.o alignment-util.o \
 	setup.o	imodel.o alignment-random.o ${LINKLIBS}
 
-tools/cut-range: arguments.o util.o
+tools/cut-range: util.o
 
-tools/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
+tools/truckgraph: alignment.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 
-tools/truckgraph2: alignment.o arguments.o alphabet.o sequence.o util.o \
+tools/truckgraph2: alignment.o alphabet.o sequence.o util.o \
 		tools/alignmentutil.o rng.o ${LINKLIBS}
 
-tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
+tools/truckgraph3d: alignment.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 
 test: ${LINKLIBS}
 

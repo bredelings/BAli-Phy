@@ -18,11 +18,15 @@
 #include <list>
 
 #include "sequencetree.H"
-#include "arguments.H"
 #include "util.H"
 #include "statistics.H"
 #include "bootstrap.H"
 #include "tree-dist.H"
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
 
 using namespace std;
 
@@ -124,7 +128,7 @@ bool report_sample(std::ostream& o,const vector<valarray<bool> >& sample_in,int 
     Ne[i] = P[i]*(1.0-P[i])/Var_bootstrap[i];
   }
 
-  bool different=(dx < 0) or sample.size()==1;
+  bool different=(dx <= 0) or sample.size()==1;
   if (not different) {
     for(int i=0;i<sample.size();i++)
       for(int j=0;j<i;j++)
@@ -165,45 +169,99 @@ bool report_sample(std::ostream& o,const vector<valarray<bool> >& sample_in,int 
 }
 
 
-int main(int argc,char* argv[]) { 
-  Arguments args;
-  args.read(argc,argv);
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
 
-  std::cout.precision(3);
-  std::cout.setf(ios::fixed);
+  // named options
+  options_description input("Input options");
+  input.add_options()
+    ("help", "produce help message")
+    ("delete", value<string>(),"comma-separate list of taxa to remove from trees")
+    ("ignore", value<string>(),"comma-separate list of taxa to ignore in partitions")
+    ("skip",value<int>()->default_value(0),"number of trees to skip")
+    ("files",value<vector<string> >()->multitoken(),"tree files to examine")
+    ;
+  
+  options_description bootstrap("Block bootstrap options");
+  bootstrap.add_options()
+    ("pseudocount",value<int>()->default_value(0),"extra 0/1 to add to bootstrap samples")
+    ("blocksize",value<int>(),"block size to use in block boostrap")
+    ("seed", value<unsigned long>(),"random seed")
+    ;
+    
+  options_description reporting("Reporting options");
+  reporting.add_options()
+    ("separation",value<double>()->default_value(0),"Only report trees/partitions if they differ by this many LODs")
+    ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file")
+    ("consensus",value<vector<double> >(),"consensus level for majority tree (>=0.5)")
+    ;
+    
+  
 
+  options_description all("All options");
+  all.add(input).add(bootstrap).add(reporting);
+
+  // positional options
+  positional_options_description p;
+  p.add("files", -1);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: tree-dist-compare <file1> <file2> ... [OPTIONS]\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
+
+int main(int argc,char* argv[]) 
+{ 
   try {
+
+    std::cout.precision(3);
+    std::cout.setf(ios::fixed);
+
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
+
     //--------------------- Initialize ---------------------//
     unsigned long seed = 0;
-    if (args.set("seed")) {
-      seed = convertTo<unsigned long>(args["seed"]);
+    if (args.count("seed")) {
+      seed = args["seed"].as<unsigned long>();
       myrand_init(seed);
     }
     else
       seed = myrand_init();
-    std::cout<<"random seed = "<<seed<<endl<<endl;
+    cout<<"random seed = "<<seed<<endl<<endl;
     
-    int pseudocount = args.loadvalue("pseudocount",0);
+    int pseudocount = args["pseudocount"].as<int>();
     std::cout<<"pseudocount = "<<pseudocount<<endl<<endl;
 
     vector<string> remove;
-    if (args.set("delete"))
-      remove = split(args["delete"],':');
+    if (args.count("delete"))
+      remove = split(args["delete"].as<string>(),',');
 
-    double compare_dx = -1;
-    if (args.set("compare_only"))
-      compare_dx=1.0;
-    compare_dx = args.loadvalue("separation",compare_dx);
+    double compare_dx = args["separation"].as<double>();
     
-    int skip = args.loadvalue("skip",0);
+    int skip = args["skip"].as<int>();
 
-    int max = args.loadvalue("max",-1);
+    int max = -1;
+    if (args.count("max"))
+      max = args["max"].as<int>();
 
     //-------------- Read in tree distributions --------------//
-    if (not args.set("files") or args["files"] == "")
+    if (not args.count("files"))
       throw myexception()<<"Tree files not specified!";
 
-    vector<string> files = split(args["files"],',');
+    vector<string> files = args["files"].as< vector<string> >();
     vector<tree_sample> tree_dists;
     vector<SequenceTree> MAP_trees;
 
@@ -227,7 +285,8 @@ int main(int argc,char* argv[]) {
     for(int i=1;i<tree_dists.size();i++)
       blocksize = std::min(blocksize,tree_dists[i].size()/100+1);
 
-    blocksize = args.loadvalue("blocksize",blocksize);
+    if (args.count("blocksize"))
+      blocksize = args["blocksize"].as<int>();
     
     std::cout<<"blocksize = "<<blocksize<<endl<<endl;
 
@@ -248,8 +307,8 @@ int main(int argc,char* argv[]) {
     valarray<bool> mask = valarray<bool>(true,MAP_trees[0].n_leaves());
 
     vector<string> ignore;
-    if (args.set("ignore") and args["ignore"].size() > 0)
-      ignore = split(args["ignore"],':');
+    if (args.count("ignore") and args["ignore"].as<string>().size() > 0)
+      ignore = split(args["ignore"].as<string>(),',');
 
     for(int i=0;i<ignore.size();i++) {
       int j = find_index(MAP_trees[0].get_sequences(),ignore[i]);
@@ -288,9 +347,9 @@ int main(int argc,char* argv[]) {
 
     //------  Topologies to analyze -----//
     vector<string> topologies;
-    for(int i=0;topologies.size() < 10 and i<5 ;i++) {
+    for(int j=0;j<tree_dists.size();j++) {
 
-      for(int j=0;j<tree_dists.size();j++) {
+      for(int i=0;topologies.size() < args["map-trees"].as<int>() ;i++) {
 
 	if (i < tree_dists[j].topologies.size()) {
 	  string t = tree_dists[j].topologies[tree_dists[j].order[i]].topology;
@@ -382,15 +441,24 @@ int main(int argc,char* argv[]) {
       cout<<"MAPsupport_"<<i<<" = "<<MAP_trees[i]<<endl<<endl;
     }
 
-    double level = args.loadvalue("consensus",0.5);
-    cout<<"\n\nConsensus trees ["<<level*100<<"% level]\n";
-    for(int i=0;i<tree_dists.size();i++) {
-      vector<Partition> partitions = get_Ml_partitions(tree_dists[i],level);
-      SequenceTree MF = get_mf_tree(partitions);
-      cout<<"\nSample "<<i<<": "<<partitions.size()<<"/"<<MAP_trees[i].n_leaves()-3<<" internal bi-partitions supported.\n";
-      valarray<bool> support = tree_dists[i].supports_partitions(partitions);
-      cout<<"PP = "<<statistics::Pr(support)<<"\n";;
-      cout<<" consensus"<<i<<" = "<<MF.write(false)<<std::endl;
+    vector<double> levels;
+    if (args.count("consensus"))
+      levels = args["consensus"].as<vector<double> >();
+    else 
+      levels.push_back(0.5);
+
+    for(int l=0;l<levels.size();l++) {
+      cout<<"\n\nConsensus trees ["<<levels[l]*100<<"% level]\n";
+	
+      for(int i=0;i<tree_dists.size();i++) {
+	vector<Partition> partitions = get_Ml_partitions(tree_dists[i],levels[l]);
+	SequenceTree MF = get_mf_tree(partitions);
+	cout<<"\nSample "<<i<<": "<<partitions.size()<<"/"<<MAP_trees[i].n_leaves()-3<<" internal bi-partitions supported.\n";
+	valarray<bool> support = tree_dists[i].supports_partitions(partitions);
+	cout<<"PP = "<<statistics::Pr(support)<<"\n";;
+	cout<<" consensus"<<i<<" = "<<MF.write(false)<<std::endl;
+      }
+      cout<<std::endl;
     }
   }
   catch (std::exception& e) {
