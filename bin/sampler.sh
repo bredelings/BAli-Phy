@@ -42,4 +42,9 @@ if [ ! -e Data ] ; then
 fi
 
 #------ start the sampler with the specified args ----
-qsub -o out -e err ~/bin/run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@"
+qsub=$(which qsub)
+if [ "$qsub" ] ; then
+    qsub -o out -e err ~/bin/run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@"
+else
+    (nohup ~/bin/run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@" >out 2>err &)
+fi
