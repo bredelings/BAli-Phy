@@ -45,7 +45,7 @@ vector<int> hsv(double h,double s,double v) {
 
   vector<int> result(3);
   for(int i=0;i<3;i++)
-    result[i] = RGB[i]*256;
+    result[i] = (int)(RGB[i]*256);
   return result;
 }
 
@@ -63,7 +63,7 @@ inline double f(double x) {
   return x;
 }
 
-string getbgcolor(double x,double sscale,bool color) {
+vector<int> rgb_bgcolor(double x, double sscale,bool color) {
   if (color) {
     double start = 0.71;
     double end = 0.0;
@@ -74,11 +74,14 @@ string getbgcolor(double x,double sscale,bool color) {
     double h = start + x * (end-start);
     double s = hstart + x * (hend - hstart);
     
-    return getrgb(hsv(h,s*sscale,1));
+    return hsv(h,s*sscale,1);
   }
-  else {
-    return getrgb(hsv(0,0,1.0 - f(x*sscale)));
-  }
+  else
+    return hsv(0,0,1.0 - f(x*sscale));
+}
+
+string getbgcolor(double x,double sscale,bool color) {
+  return getrgb(rgb_bgcolor(x,sscale,color));
 }
 
 string getfgcolor(double x,double sscale,bool color) {
@@ -99,44 +102,22 @@ string getstyle(double d,double sscale=1.0,bool color=true) {
   return style;
 }
 
+string latex_rgb(const vector<int>& RGB) {
+  string color = "{rgb}{";
 
-double objective_function(const alignment& A,const tree& T,const vector<int>& mapping) {
-  double total = 0;
-  for(int i=0;i<T.leaves()-1;i++) {
-    total += T.distance(mapping[i],mapping[i+1]);
-  }
-  return total;
+  color += convertToString(double(RGB[0])/256.0) + ",";
+  color += convertToString(double(RGB[1])/256.0) + ",";
+  color += convertToString(double(RGB[2])/256.0) + "}";
+
+  return string("c2");
+  return color;
 }
 
 
-vector<int> optimize_mapping(const alignment& A,const tree& T) {
-  vector<int> mapping(T.leaves());
-  for(int i=0;i<T.leaves();i++)
-    mapping[i] = i;
-
-  double y = objective_function(A,T,mapping);
-  int iterations=0;
-  while(1) {
-    int i = myrandom(T.leaves());
-    int j = myrandom(T.leaves()-1);
-    if (j >=i) j++;
-    
-    vector<int> mapping2 = mapping;
-    std::swap(mapping2[i],mapping2[j]);
-    double y2 = objective_function(A,T,mapping2);
-
-    if (y2 < y) {
-      mapping = mapping2;
-      y = y2;
-      iterations=0;
-    }
-    else
-      iterations++;
-
-    if (iterations > 100) break;
-  }
-  return mapping;
+string latex_get_bgcolor(double d,double sscale=1.0,bool color=true) {
+  return latex_rgb(rgb_bgcolor(d,sscale,color));
 }
+
 
 int main(int argc,char* argv[]) { 
   Arguments args;
@@ -160,6 +141,10 @@ int main(int argc,char* argv[]) {
       throw myexception("Tree file not specified! (tree=<filename>)");
     T.read(args["tree"]);
 
+    bool columncolors = args.set("columncolors");
+
+    bool show_column_numbers = args.set("positions");
+
     /* ----- Try to load alignment ------ */
 
     if (not args.set("align")) 
@@ -170,88 +155,53 @@ int main(int argc,char* argv[]) {
     alphabets.push_back(alphabet("DNA nucleotides","AGTC","N"));
     alphabets.push_back(alphabet("RNA nucleotides","AGUC","N"));
     alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
-    std::ifstream afile(args["align"].c_str());    
     alignment A;
-    A.load_phylip(alphabets,afile);
-    afile.close();
+    A.load(alphabets,args["align"]);
 
     /*------ Link Alignment and Tree ----------*/
     link(A,T);
 
-    /*------- Find mapping which puts nearby things together -------*/
-    vector<int> mapping = optimize_mapping(A,T);
-
-    for(int i=0;i<mapping.size();i++)
-      cerr<<T.seq(mapping[i])<<" ";
-    cerr<<std::endl;
-
-    if (args.set("just_reorder")) {
-      alignment A2;
-      for(int i=0;i<T.leaves();i++) {
-	sequence s(A.seq(mapping[i]));
-	s.resize(A.length());
-	for(int column=0;column<A.length();column++)
-	  s[column] = A(column,mapping[i]);
-	A2.add_sequence(s);
-      }
-
-      A2.print_phylip(std::cout,true);
-      exit(1);
-    }
-
-    /*------------------ Read in the colors-- ----------------------*/
+    /*------- Find mapping from colorfile to alignment sequence order -------*/
     if (not args.set("colors"))
       throw myexception("color file not specified! (colors=<filename>)");
-    ublas::matrix<double> colors(A.length(),T.leaves());
+
     ifstream colorfile(args["colors"].c_str());
-    for(int column=0;column<A.length();column++) 
-      for(int i=0;i<T.leaves();i++) {
+
+    vector<int> mapping;
+    {
+      string line;
+      getline(colorfile,line);
+      vector<string> colornames = split(line,' ');
+      vector<string> leafnames = T.get_sequences();
+      leafnames.erase(leafnames.begin()+T.leaves());
+      mapping = compute_mapping(colornames,T.get_sequences());
+    }
+
+    // map the 
+    mapping.push_back(mapping.size());
+
+    /*------------------ Read in the colors ------------------------*/
+    ublas::matrix<double> colors(A.length(),T.leaves()+1);
+    for(int column=0;column<colors.size1();column++) 
+      for(int i=0;i<colors.size2();i++) {
 	double d;
 	colorfile >> d;
-	colors(column,i) = d;
+	colors(column,mapping[i]) = d;
       }
 	
     colorfile.close();
 
-    /*-------------------- Print Things Out ------------------------*/
+    /*-------------------- Get color or b/w ------------------*/
     bool color = true;
     if (args["color"] == "no")
       color = false;
 
-    /*-------------------- Print Things Out ------------------------*/
+    /*-------------------- Get width ------------------------*/
     int width =67;
     if (args.set("width"))
       width = convertTo<int>(args["width"]);
 
-    cout<<"\
-<HTML>\n\
-  <head>\n\
-    <STYLE>\n\
-TD{ font-size: 11pt }\n\
-SPAN {\n\
-   font-family: courier new, courier-new, courier, monospace;\n\
-   font-weight: bold;\n\
-   font-size: 11pt;\n\
-   line-height: 100%;\n\
-}\n\
-    </STYLE>\n\
-  </head>\n\
-  <body>\n";
-
-    /*-------------------- Print a legend ------------------------*/
-    if (args["legend"] != "no") {
-      cout<<"<P>From 0 to 1: ";
-      const int nsquares = 20;
-      for(int i = 0;i < nsquares+1;i++) {
-	double p = i*1.0/nsquares;
-	string style = getstyle(p,1,color);
-	cout<<"<span style=\""<<style<<"\">&nbsp;</span>";
-      }
-    }
-
-    cout<<"<br><br>";
-    /*-------------------- Print the alignment ------------------------*/
-
+    /*-------------------- Get start ------------------------*/
     int start=0;
     if (args.set("start")) {
       start = convertTo<int>(args["start"]);
@@ -260,7 +210,8 @@ SPAN {\n\
       if (not (start < A.length()))
 	throw myexception()<<"Parameter 'start' must be less than the length of the alignment ("<<A.length()<<").";
     }
-
+    
+    /*-------------------- Get end ------------------------*/
     int end = A.length()-1;
     if (args.set("end")) {
       end = convertTo<int>(args["end"]);
@@ -272,30 +223,136 @@ SPAN {\n\
 	throw myexception()<<"Parameter 'end' must be >= than parameter 'start'"<<A.length()<<").";
     }
 
-    const alphabet& a = A.get_alphabet();
+    if (args["format"] == "latex") {
+      std::cout<<"\\documentclass[10pt]{article}\n\
+\\usepackage{colortbl}\n\
+\\begin{document}\n\
+\\definecolor{c2}{rgb}{1.0,0.5,0.0}\n";
+
+      /*-------------------- Print the alignment ------------------------*/
+      const alphabet& a = A.get_alphabet();
     
-    int pos=start;
-    while(pos<end) {
-      cout<<"<table>"<<endl;
-      for(int i=0;i<T.leaves();i++) {
-	int s = mapping[i];
-	cout<<"  <tr>"<<endl;
-	cout<<"    <td>"<<T.seq(s)<<"</td>"<<endl;
-	cout<<"    <td>";
-	for(int column=pos;column<pos+width and column < end; column++) {
-	  char c = a.lookup(A(column,s));
-	  double sscale=1.0;
-	  if (c == '-')
-	    sscale = 0.3;
-	  string style = getstyle(colors(column,s),sscale,color);
-	  cout<<"<span style=\""<<style<<"\">"<<c<<"</span>";
+      int pos=start;
+      while(pos<end) {
+	cout<<"\\begin{tabular}{";
+	for(int i=0;i<width;i++)
+	  cout<<"c";
+	cout<<"}"<<endl;
+	
+	for(int i=0;i<T.leaves();i++) {
+	  int s = i;
+
+	  for(int column=pos;column<pos+width and column < end; column++) {
+	    char c = a.lookup(A(column,s));
+	    double sscale=1.0;
+	    if (A.gap(column,s))
+	      sscale = 0.3;
+	    string latexcolor = latex_get_bgcolor(colors(column,s),sscale,color);
+	    if (column != pos)
+	      cout<<"& ";
+	    cout<<"\\multicolumn{1}{>{\\columncolor{"<<latexcolor<<"}}c}{"<<c<<"}"<<endl;
+	  }
+	  cout<<"\\\\"<<endl;
 	}
-	cout<<"    </td>";
-	cout<<"  </tr>"<<endl;
+	cout<<"\\end{tabular}"<<endl;
+	pos += width;
       }
-      cout<<"</table>"<<endl;
-      cout<<"<P>"<<endl;
-      pos += width;
+      
+    }
+    else {
+
+      cout<<"\
+<HTML>\n\
+  <head>\n\
+    <STYLE>\n\
+TD { \n\
+   font-size: 11pt; \n\
+   padding: 0;\n\
+   padding-right: 1em;\n\
+   }\n\
+\n\
+TABLE {\n\
+   border-spacing: 0\n\
+   }\n\
+\n\
+SPAN {\n\
+   font-family: courier new, courier-new, courier, monospace;\n\
+   font-weight: bold;\n\
+   font-size: 11pt;\n\
+   line-height: 100%;\n\
+   padding: 0;\n\
+}\n\
+    </STYLE>\n\
+  </head>\n\
+  <body>\n";
+      
+      /*-------------------- Print a legend ------------------------*/
+      if (args["legend"] != "no") {
+	cout<<"<P>From 0 to 1: ";
+	const int nsquares = 20;
+	for(int i = 0;i < nsquares+1;i++) {
+	  double p = i*1.0/nsquares;
+	  string style = getstyle(p,1,color);
+	  cout<<"<span style=\""<<style<<"\">&nbsp;</span>";
+	}
+      }
+
+      cout<<"<br><br>";
+
+      /*----------- Compute the position headings -------------------*/
+      string positions(A.length(),'.');
+
+      positions[0]='1';
+      for(int pos=10;pos<A.length();pos+=10) {
+	string position = convertToString(pos);
+	const int start = pos - position.size()+1;
+	for(int j=0;j<position.size();j++) 
+	  positions[start + j]=position[j];
+      }
+
+
+      /*-------------------- Print the alignment ------------------------*/
+      const alphabet& a = A.get_alphabet();
+    
+      int pos=start;
+      while(pos<end) {
+	cout<<"<table>"<<endl;
+
+	// Print columns positions
+	if (show_column_numbers) {
+	  cout<<"<tr><td></td><td>";
+	  
+	  for(int column=pos;column<pos+width and column < end; column++) {
+	    double P=colors(column,T.leaves());
+	    string style = getstyle(P,1.0,color);
+	    if (columncolors)
+	      cout<<"<span style=\""<<style<<"\">"<<positions[column]<<"</span>";
+	    else
+	      cout<<"<span>"<<positions[column]<<"</span>";
+	  }
+	  cout<<"</tr>\n";
+	}
+
+	for(int i=0;i<T.leaves();i++) {
+	  int s = i;
+	  cout<<"  <tr>"<<endl;
+	  cout<<"    <td class=\"sequencename\">"<<T.seq(s)<<"</td>"<<endl;
+	  cout<<"    <td>";
+	  for(int column=pos;column<pos+width and column < end; column++) {
+	    char c = a.lookup(A(column,s));
+	    double sscale=1.0;
+	    if (c == '-')
+	      sscale = 0.3;
+	    string style = getstyle(colors(column,s),sscale,color);
+	    cout<<"<span style=\""<<style<<"\">"<<c<<"</span>";
+	  }
+	  cout<<"    </td>";
+	  cout<<"  </tr>"<<endl;
+	}
+	cout<<"</table>"<<endl;
+	cout<<"<P>"<<endl;
+	pos += width;
+      }
     }
   }
   catch (std::exception& e) {

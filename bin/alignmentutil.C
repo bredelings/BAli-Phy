@@ -1,5 +1,6 @@
 #include "alignmentutil.H"
 #include "myexception.H"
+#include "sequence-format.H"
 
 using std::vector;
 using std::string;
@@ -28,7 +29,10 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
     // READ the next alignments, if we match the tag
     alignment A;
     try {
-      A.load_phylip(alphabets,ifile);
+      if (not alignments.size())
+	A.load_sequences(alphabets,sequence_format::read_phylip,ifile);
+      else
+	A.load_sequences(alignments[0].get_alphabet(),sequence_format::read_phylip,ifile);
     }
     catch (std::exception& e) {
       std::cerr<<"Warning: Error load alignments, Ignoring unread alignments."<<endl;
@@ -98,7 +102,7 @@ alignment find_last_alignment(std::istream& ifile, const string& tag,
     // READ the next alignments, if we match the tag
     try {
       alignment A2;
-      A2.load_phylip(alphabets,ifile);
+      A2.load_sequences(alphabets,sequence_format::read_phylip,ifile);
       A = A2;
     }
     catch (std::exception& e) {

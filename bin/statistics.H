@@ -28,6 +28,10 @@ namespace statistics {
 
   double odds(const std::valarray<bool>& v);
 
+  inline double odds(double P) {
+    return P/(1.0-P);
+  }
+
   double log_odds(const std::valarray<bool>& v);
 
   std::vector<double> confidence_interval(const std::valarray<double>& values, double P);

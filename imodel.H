@@ -150,9 +150,6 @@ public:
   ///probability of extending a gap: G1->G1,  G2->G2
   double epsilon; 
 
-  ///unweighting factor for adjacent G1/G2 gaps
-  double beta;    
-
   explicit UpweightedIndelModel(double LO,double LE);
 };
 

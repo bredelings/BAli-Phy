@@ -27,6 +27,27 @@ std::string convertToString(T t)
   return "conversion error";
 } 
 
+template <class T>
+std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& v2) {
+  assert(v1.size() == v2.size());
+
+  std::vector<int> mapping(v1.size());
+  for(int i=0;i<v1.size();i++) {
+    int target = -1;
+    for(int j=0;j<v2.size();j++) {
+      if (v1[i] == v2[j]) {
+	target = j;
+	break;
+      }
+    }
+    if (target == -1)
+      throw myexception()<<"Vector v2 does not contain all elements of v1!";
+    mapping[i] = target;
+  }
+
+  return mapping;
+}
+
 inline double wrap(double x,double max) {
   if (max == 0)
     return 0;

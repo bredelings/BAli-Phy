@@ -232,6 +232,62 @@ double SSE_match_pairs::operator()(const optimize::Vector& v) const {
   return -SSE;
 }
 
+class LeastSquares: public function {
+  tree T;
+  Matrix Pr_align_pair;
+public:
+  const tree& t() const {return T;}
+  double operator()(const optimize::Vector& v) const;
+
+  LeastSquares(const vector< vector<int> >& v1,const tree& T1)
+    :T(T1),Pr_align_pair(T.leaves(),T.leaves())
+  { 
+    assert(v1.size() > 0);
+    assert(T.leaves() == v1[0].size());
+
+    const double pseudocount = 1;
+    // initialize the matrix, and add a pseudocount for a conjugate prior
+    for(int i=0;i<T.leaves();i++)
+      for(int j=0;j<T.leaves();j++)
+	Pr_align_pair(i,j)=pseudocount;
+
+    // For each label, count all present pairs
+    for(int i=0;i<v1.size();i++) {
+      const vector<int>& label = v1[i];
+      for(int l1=0;l1<label.size();l1++) 
+	for(int l2=0;l2<l1;l2++) 
+	  if (label[l1] == label[l2])
+	    Pr_align_pair(l1,l2)++;
+    }
+    
+    // Divide by count to yield an average
+    for(int i=0;i<T.leaves();i++)
+      for(int j=0;j<T.leaves();j++)
+	Pr_align_pair(i,j) /= (v1.size() + pseudocount);
+  }
+};
+
+double LeastSquares::operator()(const optimize::Vector& v) const {
+  // We get one length for each branch, and they should all be positive
+  assert(v.size() == T.branches());
+
+  tree temp = T;
+  for(int b=0;b<T.branches();b++) {
+    if (v[b] <= 0) return log_0;
+    temp.branch(b).length() = v[b];
+  }
+
+  double SSE=0;
+  for(int l1=0;l1<T.leaves();l1++) 
+    for(int l2=0;l2<l1;l2++) {
+      double D1 = -log(1.0-Pr_align_pair(l1,l2));
+      double D2 = temp.distance(l1,l2);
+      double E2 = (D1-D2)*(D1-D2);
+      SSE += E2;
+    }
+  return -SSE;
+}
+
 
 class poisson_match_pairs: public function {
   int n;
@@ -332,11 +388,8 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
   if (not args.set("align")) 
     throw myexception("Alignment file not specified! (align=<filename>)");
 
-  ifstream ifile(args["align"].c_str());
-  A.load_phylip(alphabets,ifile);
+  A.load(alphabets,args["align"]);
 
-  ifile.close();
-  
 
   /*------ Link Alignment and Tree ----------*/
   link(A,T);
@@ -353,8 +406,9 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
   alignments = load_alignments(std::cin,tag,alphabets,maxalignments);
 }
 
-vector<int> getlabels(const alignment& A,const vector<int>& column) {
-  vector< vector<int> > columns = column_lookup(A,column.size());
+vector<int> getlabels(const alignment& A,
+		      const vector<int>& column,
+		      const vector< vector<int> >& columns) {
   vector<int> label(column.size());
   for(int i=0;i<label.size();i++) {
     if (column[i] == -1)
@@ -387,14 +441,63 @@ alignment M(const alignment& A1) {
 	A2(column,i) = pos;
 	pos++;
       }
-      if (pos != A2.seq(i).size())
-	std::abort();
     }
+
+    assert(pos == A2.seqlength(i));
+
   }
   return A2;
 }
 
 using boost::numeric::ublas;
+
+vector<int> get_column(const alignment& A,int c,int nleaves) {
+  vector<int> column(nleaves);
+  for(int i=0;i<nleaves;i++)
+    column[i] = A(c,i);
+  return column;
+}
+
+
+
+
+double get_column_probability(const vector<int>& column, 
+			      const vector<alignment>& alignments,
+			      const vector< vector< vector<int> > >& column_indexes) {
+  unsigned int count=0;
+  for(int i=0;i<alignments.size();i++) {
+    bool found=true;
+
+    // Can we find a common column for all features?
+    int c=-1;
+    for(int j=0;j<column.size() and found;j++) {
+      if (column[j] == -1) continue;
+
+      int cj = column_indexes[i][j][column[j]];
+
+      if (c == -1)
+	c = cj;
+      else if (c != cj)
+	found = false;
+
+    }
+    
+    assert(c != -1);
+
+    // Does this column have gaps in the right place?
+    for(int j=0;j<column.size() and found;j++) {
+      if (column[j] != -1 ) continue;
+
+      if (not alignments[i].gap(c,j))
+	found = false;
+    }
+
+    if (found) count++;
+  }
+
+  return double(0.5+count)/(1.0+alignments.size());
+}
+
 
 int main(int argc,char* argv[]) { 
   try {
@@ -407,11 +510,10 @@ int main(int argc,char* argv[]) {
     SequenceTree T;
     vector<alignment> alignments;
     do_setup(args,alignments,A,T);
-
+    cerr<<"Read "<<alignments.size()<<" alignments\n";
     const int n = T.leaves();
 
-    cerr<<"Read "<<alignments.size()<<" alignments\n";
-
+    /*----------- Find root branch ---------*/
     int rootb=-1;
     double rootd = -1;
     find_root(T,rootb,rootd);
@@ -420,20 +522,59 @@ int main(int argc,char* argv[]) {
     for(int i=0;i<T.leaves();i++)
       std::cerr<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
 
+    /*----------- Construct alignment indexes ----------*/
+    vector< vector< vector<int> > >  column_indexes;
+    for(int i = 0;i<alignments.size();i++)
+      column_indexes.push_back( column_lookup(alignments[i],n) );
+
     /*------- Convert template to index form-------*/
     A = M(A);
+
+    /*--------- Compute full entire column probabilities -------- */
+
+    vector<double> column_probabilities(A.length());
+    for(int c=0;c<A.length();c++)
+      column_probabilities[c] = get_column_probability(get_column(A,c,n),
+						       alignments,
+						       column_indexes
+						       );
+
+    /*-------- Check compatability of estimate & samples-------*/
+    if (A.size2() != alignments[0].size2())
+      throw myexception()<<"Alignment estimate has different not of sequences than alignment samples!";
+
+    for(int i=0;i<A.size2();i++) {
+      if (A.seq(i).name != alignments[0].seq(i).name)
+	throw myexception()<<"Alignment estimate has different sequences or sequence order than alignment samples";
+
+      if (A.seq(i).name != alignments[0].seq(i).name)
+	throw myexception()<<"Sequence "<<i<<" has different length in alignment estimate and alignment samples!";
+      
+    }
+
+    /*------- Print column names -------*/
+    for(int i=0;i<T.leaves();i++) {
+      std::cout<<T.seq(i);
+      if (i != T.leaves()-1)
+	std::cout<<" ";
+      else
+	std::cout<<endl;
+    }
+    
+
+    /*------- Analyze the columns -------*/
     for(int c=0;c<A.length();c++) {
-      vector<int> column(n);
-      for(int i=0;i<n;i++)
-	column[i] = A(c,i);
+      vector<int> column = get_column(A,c,n);
 
       vector< vector<int> > labels;
       for(int i=0;i<alignments.size();i++)
-	labels.push_back(getlabels(alignments[i],column));
+	labels.push_back(getlabels(alignments[i],column,column_indexes[i]));
 
       // alignment_probability f(labels);
       function * f;
       if (args["type"] == "SSE")
+	f = new SSE_match_pairs(labels,T);
+      else if (args["type"] == "LeastSquares")
 	f = new SSE_match_pairs(labels,T);
       else
 	f = new poisson_match_pairs(labels,T);
@@ -448,10 +589,11 @@ int main(int argc,char* argv[]) {
 
       for(int i=0;i<T2.leaves();i++) {
 	double length = rootdistance(T2,i,rootb,rootd);
+	assert(length >= 0.0);
 	double P = exp(-length);  // P(no events between leaf and root)
 	std::cout<<P<<" ";
       }
-      std::cout<<endl;
+      std::cout<<column_probabilities[c]<<endl;
 
       delete f;
     }

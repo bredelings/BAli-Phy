@@ -18,6 +18,7 @@
 #include "arguments.H"
 #include "util.H"
 #include "statistics.H"
+#include "bootstrap.H"
 
 using namespace std;
 using namespace __gnu_cxx;
@@ -136,9 +137,93 @@ double moment(const vector<double>& v,int n) {
 }
 
 
-void do_analyze() {
+unsigned changes(const valarray<bool>& sample,bool value) {
+  unsigned count=0;
+  for(int i=0;i<sample.size()-1;i++) {
+    if (sample[i] == value and sample[i+1] != value)
+      count++;
+  }
+  return count;
 }
 
+
+valarray<bool> add_pseudocount(const valarray<bool>& sample1,int pseudocount) {
+  valarray<bool> sample2(sample1.size() + 2*pseudocount);
+
+  int i=0;
+  for(int j=0;j<pseudocount;i++,j++)
+    sample2[i] = true;
+
+  for(;i<sample1.size();i++)
+    sample2[i] = sample1[i];
+
+  for(int j=0;j<pseudocount;i++,j++)
+    sample2[i] = false;
+
+  return sample2;
+}
+
+void report_sample(std::ostream& o,const valarray<bool>& sample_in,int pseudocount,const string& tag) {
+  valarray<bool> sample = add_pseudocount(sample_in,pseudocount);
+
+  /*---------- Basic statistics -------------*/
+  const int N = sample.size();
+  const int n = statistics::count(sample);
+  const double P = double(n)/N;
+
+  /*---------- Bootstrap samples of P -------------*/
+  int blocksize = N/100+1;
+  valarray<double> values = bootstrap_apply<bool,double>(sample,statistics::Pr,10000,blocksize);
+
+  /*---------- Confidence Interval -------------*/
+  vector<double> CI =  statistics::confidence_interval(values,0.99);
+
+  /*------- Numbers of Constant blocks ---------*/
+  unsigned nchanges1 = changes(sample,true);
+  unsigned nchanges0 = changes(sample,false);
+  unsigned nchanges  = nchanges1 + nchanges0;
+  double nchanges_ave = (double(nchanges1) + nchanges0 +1)/2.0;
+
+  double nchanges_perfect = (N-1)*P*(1.0-P)*2.0;
+  
+  /*----------------- Variances ---------------*/
+  double Var_perfect = P*(1-P)/N;
+  double Var_bootstrap = statistics::Var(values);
+
+  double stddev_bootstrap = sqrt( Var_bootstrap );
+  double Ne = P*(1.0-P)/Var_bootstrap;
+
+  /*------------- Write things out -------------*/
+  o<<"   P = "<<P<<"  in  ("<<CI[0]<<","<<CI[1]<<")             (1="<<n<<"  0="<<N-n<<")  ["<<nchanges_ave<<"]"<<endl;
+  o<<" 10s = "<<log10(statistics::odds(P))<<"  in  ("<<log10(statistics::odds(CI[0]))<<","<<log10(statistics::odds(CI[1]))<<")";
+  o<<"           odds = "<<statistics::odds(P)<<endl<<endl;
+
+  o<<"   sigma = "<<stddev_bootstrap;
+  if (nchanges > 4) {
+    o<<"                     [Var]x = "<<Var_bootstrap/Var_perfect;
+    o<<"   Ne = "<<Ne;
+  }
+  o<<endl;
+
+  o<<"   block switches = "<<nchanges;
+  if (nchanges <= 4) {
+    o<<" [!!!]";
+  }
+  else if (nchanges <= 20) {
+    o<<" [!!]";
+  }
+  else if (nchanges <= 50) {
+    o<<" [!]";
+  }
+
+  if (nchanges > 4) {
+    o<<"        [switches]x = "<<nchanges_perfect/nchanges;
+    o<<"  Ne = "<<N*nchanges/nchanges_perfect;
+  }
+  else {
+  }
+  o<<endl;
+}
 
 SequenceTree standardized(const string& t,const vector<string>& remove) {
   SequenceTree T;
@@ -185,7 +270,23 @@ int main(int argc,char* argv[]) {
   Arguments args;
   args.read(argc,argv);
 
+  std::cout.precision(3);
+  std::cout.setf(ios::fixed);
+
   try {
+    /*---------- Initialize random seed -----------*/
+    unsigned long seed = 0;
+    if (args.set("seed")) {
+      seed = convertTo<unsigned long>(args["seed"]);
+      myrand_init(seed);
+    }
+    else
+      seed = myrand_init();
+    std::cout<<"random seed = "<<seed<<endl<<endl;
+    
+    int pseudocount = args.loadvalue("pseudocount",0);
+    std::cout<<"pseudocount = "<<pseudocount<<endl<<endl;
+
     list<string> trees;
     
     hash_map<string,int,hash<string>,eqstr> index(10000);
@@ -198,12 +299,12 @@ int main(int argc,char* argv[]) {
     if (args.set("delete"))
       remove = split(args["delete"],':');
     
-    /********** Load the trees (as strings) from STDIN *******/
+    /*--------- Load the trees (as strings) from STDIN ------*/
     while(getline(cin,line)) {
       trees.push_back(line);
     }
 
-    /********** Count how many of each topology ************/
+    /*--------- Count how many of each topology -----------*/
     foreach(mytree,trees) {
       
       SequenceTree T = standardized(*mytree,remove);
@@ -227,7 +328,7 @@ int main(int argc,char* argv[]) {
     cout<<endl;
     cout<<endl;
     
-    /*****************  Sort topologies by count  ****************/
+    /*---------------*  Sort topologies by count  ---------------*/
     vector<int> order(topologies.size());
     for(int i=0;i<order.size();i++)
       order[i] = i;
@@ -237,7 +338,7 @@ int main(int argc,char* argv[]) {
     int numtrees = maxtrees;
     if (topologies.size() < numtrees) numtrees = topologies.size();
     
-    /********** If called as analyze, show topo vs time ********/
+    /*--------- If called as analyze, show topo vs time -------*/
     vector<int> iorder = invert(order);
     if (args.set("analyze")) {
       int iteration=0;
@@ -257,7 +358,7 @@ int main(int argc,char* argv[]) {
       exit(0);
     }
 
-    /************  Get tree examples for best topologies  ************/
+    /*-----------  Get tree examples for best topologies  -----------*/
     vector< SequenceTree > best_trees(numtrees);
     foreach(mytree,trees) {
       SequenceTree T = standardized(*mytree,remove);
@@ -281,14 +382,14 @@ int main(int argc,char* argv[]) {
 	break;
     }
 
-    /************  Choose tree to example splits from  ************/
+    /*-----------  Choose tree to example splits from  -----------*/
     SequenceTree best;
     if (args.set("tree"))
       best.read(args["tree"]);
     else
       best = best_trees[0];
 
-    /***************  Calculate mask of taxa to ignore  ***************/
+    /*-------------*  Calculate mask of taxa to ignore  --------------*/
     valarray<bool> mask = valarray<bool>(true,best.leaves());
     vector<string> ignore;
     if (args.set("ignore") and args["ignore"].size() > 0)
@@ -302,7 +403,7 @@ int main(int argc,char* argv[]) {
     const int nleaves = best.leaves();
     const int nbranches = best.branches();
     
-    /*******  Check branch length and confidence ******/
+    /*-----*  Check branch length and confidence -----*/
     
     // data structure for branch length info
     vector<  vector< double > > branch_m1(best_trees.size(),vector<double>(nbranches));
@@ -355,55 +456,44 @@ int main(int argc,char* argv[]) {
       }
     }
     
-    /****************  Summarize best trees ****************/
+    /*---------------  Summarize best trees ---------------*/
     cout<<"Best Trees: \n";
     for(int i=0;i<best_trees.size();i++) {
       int t = order[order.size() - 1 - i];
+      cout<<"------------------------------------------------------------------"<<endl;
       cout<<topologies[t]<<endl;
-      const int N = trees.size();
-      const double P = double(count[t])/N;
 
-      cout<<P<<"            ("<<count[t]<<")"<<endl;
-      cout<<"Theoretical stddev = "<<sqrt( P*(1-P)/N )<<"\n";
+      report_sample(std::cout,
+		    topology_series[i],
+		    pseudocount,
+		    string("topology")+convertToString(i));
+      cout<<endl;
 
-      //Var(sum(X_i)/N) = Var(X_0)/N, if independant
-      for(int block=0;;block++) {
-	const int blocksize = (1<<block);
-
-	valarray<double> sample = block_sample(topology_series[i],1<<block);
-	if (sample.size() < 10) break;
-
-	const int N2 = sample.size() * blocksize;
-	cout<<"  blocksize = "<<(1<<block);
-	cout<<"       E P = "<<getsum(sample)/N2;
-	double Var = statistics::Var(sample)*sample.size()/(N2*N2);
-	Var *= double(N2)/N;
-	cout<<"       SD P = "<<sqrt(Var);
-	cout<<"\n";
-      }
-
+      SequenceTree Tmean = best_trees[i];
+      SequenceTree Tsignal = best_trees[i];
       for(int b=0;b< best_trees[i].branches();b++) {
 	double m1 = branch_m1[i][b];
 	double m2 = branch_m2[i][b];
-	double stddev = sqrt(m2 - m1*m1);
+	double sigma = sqrt(m2 - m1*m1);
 	
-	best_trees[i].branch(b).length() = m1;
-	cout<<b<<"  "<<m1<<"    "<<stddev<<endl;
+	Tmean.branch(b).length() = m1;
+	Tsignal.branch(b).length() = sigma/m1;
       }
-      cout<<i<<"MAPtree = "<<best_trees[i]<<endl;
-      cout<<endl<<endl;
+      cout<<"  "<<i<<"MAPtree = "<<Tmean<<endl;
+      cout<<endl;
+      cout<<"  "<<i<<"signal/noise = "<<Tsignal<<endl;
+      cout<<endl<<endl<<endl;
     }
     cout<<endl<<endl;
     
-    /******** Print out support for each partition *********/
-    cout<<"Support for the different partitions: \n";
+    /*------- Print out support for each partition --------*/
+    cout<<"Support for the different partitions: \n\n";
     for(int b=best.leaves();b<best.branches();b++) {
+
+      /*-------- Determine and print the partition -----------*/
       valarray<bool> temp = branch_partition(best,b);
       Partition p1(temp,mask);
       
-      const int N = trees.size();
-      const double P = double(branch_count[b])/N;
-
       for(int i=0;i<best.leaves();i++)
 	if (p1.split[i] and p1.mask[i])
 	  cout<<best.seq(i)<<" ";
@@ -412,26 +502,13 @@ int main(int argc,char* argv[]) {
 	if (not p1.split[i] and p1.mask[i])
 	  cout<<best.seq(i)<<" ";
       cout<<endl;
-      cout<<P<<
-	"    ("<<branch_count[b]<<")"<<endl<<endl;
 
+      report_sample(std::cout,
+		    partition_series[b-best.leaves()],
+		    pseudocount,
+		    string("partition")+convertToString(b-best.leaves()));
 
-      cout<<"Theoretical stddev = "<<sqrt( P*(1-P)/N )<<"\n";
-      for(int block=0;;block++) {
-	const int blocksize = (1<<block);
-
-	valarray<double> sample = block_sample(partition_series[b-best.leaves()],blocksize);
-	if (sample.size() < 10) break;
-
-	const int N2 = sample.size()*blocksize;
-	cout<<"  blocksize = "<<blocksize;
-	cout<<"       E P = "<<getsum(sample)/N2;
-	double Var = statistics::Var(sample)*sample.size()/(N2*N2);
-	Var *= double(N2)/N;
-	cout<<"       SD P = "<<sqrt(Var);
-	cout<<"\n";
-      }
-
+      std::cout<<endl<<endl;
     }
   }
   catch (std::exception& e) {

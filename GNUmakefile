@@ -31,12 +31,12 @@ all: sampler
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math  # tracer  prefetch-loop-arrays abi-version=0 omit-frame-pointer
-DEBUG = pipe g3 #gdwarf-2 #pg 
+LANGO = fast-math  tracer  prefetch-loop-arrays abi-version=0 # omit-frame-pointer
+DEBUG = pipe #pg #g3 #gdwarf-2 #pg 
 EXACTFLAGS =  --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS = # NDEBUG NDEBUG_DP # USE_UBLAS
+DEFS =  NDEBUG NDEBUG_DP # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
-OPT =  march=athlon-xp # O3 # malign-double msse mmmx msse2 
+OPT =  march=pentium4 O3 # malign-double msse mmmx msse2 
 LDFLAGS = #-pg # -static 
 LI=${CXX}
 
@@ -63,7 +63,7 @@ ${NAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
 
 bin/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o bin/optimize.o bin/findroot.o bin/alignmentutil.o \
-	setup.o smodel.o rates.o exponential.o eigenvalue.o ${GSLLIBS}
+	setup.o smodel.o rates.o exponential.o eigenvalue.o sequence-format.o ${GSLLIBS}
 
 bin/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o bin/optimize.o bin/findroot.o setup.o smodel.o \
@@ -93,7 +93,7 @@ bin/make_random_tree: tree.o sequencetree.o arguments.o util.o\
 
 bin/drawalignment: tree.o alignment.o sequencetree.o arguments.o \
 	rng.o alphabet.o sequence.o util.o setup.o smodel.o exponential.o \
-	eigenvalue.o rates.o ${LINKLIBS}
+	eigenvalue.o rates.o sequence-format.o ${LINKLIBS}
 
 bin/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
 	rng.o util.o sequence-format.o ${LIBS:%=-l%}

@@ -136,7 +136,7 @@ void link(alignment& A,SequenceTree& T) {
       }
     }
     if (target == -1)
-      throw myexception(string("Couldn't find sequence \"")+T.seq(i)+"\" in alignment");
+      throw myexception()<<"Couldn't find sequence \""<<T.seq(i)<<"\" in alignment";
     mapping[i] = target;
   }
 

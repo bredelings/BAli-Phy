@@ -659,7 +659,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
 
   /*---------------- Adjust for length of node0 (nodes[4]) changing --------------------*/
 
-  double log_ratio = 2.0*(P.IModel().lengthp(length_new)-oldP.IModel().lengthp(length_old));
+  double log_ratio = 2.0*(P.IModel().lengthp(length_old) - oldP.IModel().lengthp(length_new));
 
   bool success = false;
   if (myrandomf() < exp(log_ratio))

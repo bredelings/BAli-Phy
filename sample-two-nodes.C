@@ -180,14 +180,18 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
 #endif
 
   /*---------------- Adjust for length of n0 changing --------------------*/
+  // FIXME! This might not matter, but technically, we need to do this 
+  // in the caller, because they be comparing two different P's, in which case 
+  // the old length is NOT given by the incoming matrix 'old'...
+
   int l1_old = old.seqlength(nodes[4]);
   int l1_new = A.seqlength(nodes[4]);
 
   int l2_old = old.seqlength(nodes[5]);
   int l2_new = A.seqlength(nodes[5]);
 
-  double log_ratio = 2.0*(P.IModel().lengthp(l1_new)-P.IModel().lengthp(l1_old));
-  log_ratio += 2.0*(P.IModel().lengthp(l2_new)-P.IModel().lengthp(l2_old));
+  double log_ratio = 2.0*(P.IModel().lengthp(l1_old)-P.IModel().lengthp(l1_new));
+  log_ratio += 2.0*(P.IModel().lengthp(l2_old)-P.IModel().lengthp(l2_new));
 
   // if we DON'T make the MH move, go back.
   if (not(myrandomf() < exp(log_ratio)))
