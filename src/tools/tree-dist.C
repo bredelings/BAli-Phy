@@ -173,7 +173,7 @@ bool implies(const Partition& p1, const Partition& p2) {
 }
 
 /// Does any branch in T imply the partition p?
-bool contains_partition(const SequenceTree& T,const Partition& p) {
+bool implies(const SequenceTree& T,const Partition& p) {
   bool result = false;
   for(int b=0;b<T.n_branches() and not result;b++) {
     valarray<bool> bp = branch_partition(T,b);
@@ -217,7 +217,7 @@ valarray<bool> tree_sample::supports_partition(const Partition& P) const {
     const SequenceTree& T = topologies[ which_topology[i] ].T;
 
     
-    result[i] = contains_partition(T,P);
+    result[i] = implies(T,P);
   }
   return result;
 }
@@ -233,7 +233,7 @@ valarray<bool> tree_sample::supports_partitions(const vector<Partition>& partiti
     
     result[i] = true;
     for(int p=0;p<partitions.size() and result[i];p++)
-      result[i] = contains_partition(T,partitions[p]);
+      result[i] = implies(T,partitions[p]);
   }
   return result;
 }
@@ -414,7 +414,7 @@ struct compare_complete_partitions {
   }
 };
 
-vector<Partition> strict_consensus_partitions(const tree_sample& sample) 
+vector<Partition> strict_consensus_partitions(const tree_sample& sample,const valarray<bool>& mask) 
 {
   vector<Partition> partitions;
 
@@ -426,7 +426,7 @@ vector<Partition> strict_consensus_partitions(const tree_sample& sample)
   for(int b=T.n_leaves();b<T.n_branches();b++) {
       std::valarray<bool> partition = branch_partition(T,b);
 
-      partitions.push_back(Partition(names,partition));
+      partitions.push_back(Partition(names,partition,mask));
   }
 
   for(int i=1;i<sample.topologies.size();i++) 
@@ -434,7 +434,7 @@ vector<Partition> strict_consensus_partitions(const tree_sample& sample)
     const SequenceTree& T = sample.topologies[i].T;
     
     for(int j=0;j<partitions.size();) {
-      if (not contains_partition(T,partitions[j]))
+      if (not implies(T,partitions[j]))
 	partitions.erase(partitions.begin()+j);
       else
 	j++;
@@ -445,14 +445,26 @@ vector<Partition> strict_consensus_partitions(const tree_sample& sample)
   return partitions;
 }
 
-vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
+vector<Partition> strict_consensus_partitions(const tree_sample& sample) {
+  valarray<bool> mask(true,sample.topologies[0].T.n_leaves());
+  return strict_consensus_partitions(sample,mask);
+}
+
+vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const valarray<bool>&  mask) 
+{
+  // find the first bit
+  int first=0;
+  while(first<mask.size() and not mask[first])
+    first++;
+  assert(first < mask.size());
+
   if (l < 0.5)
     throw myexception()<<"Consensus level for majority tree must be > 0.5";
   if (l > 1.0)
     throw myexception()<<"Consensus level for majority tree must be < 1.0";
 
   if (l == 1.0)
-    return strict_consensus_partitions(sample);
+    return strict_consensus_partitions(sample,mask);
 
   // use a sorted list of <partition,count>, sorted by partition.
   map<valarray<bool>,int,compare_complete_partitions > counts;
@@ -472,8 +484,10 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
     for(int b=T.n_leaves();b<T.n_branches();b++) {
       std::valarray<bool> partition = branch_partition(T,b);
 
-      if (not partition[0])
-	partition = not partition;
+      if (not partition[first])
+	partition = (not partition) and mask;
+      else
+	partition = partition and mask;
       
       assert(partition.size() == T.n_leaves());
       int& C = counts[partition];
@@ -508,5 +522,10 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
   }
 
   return partitions;
+}
+
+vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
+  valarray<bool> mask(true,sample.topologies[0].T.n_leaves());
+  return get_Ml_partitions(sample,l,mask);
 }
 

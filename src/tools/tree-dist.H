@@ -60,7 +60,7 @@ bool consistent(const Partition& p1, const Partition& p2);
 bool implies(const Partition& p1, const Partition& p2);
 
 /// Does any branch in @T imply the partition @p?
-bool contains_partition(const SequenceTree& T,const Partition& p);
+bool implies(const SequenceTree& T,const Partition& p);
 
 /// Output the partition P to stream o (requires 'names' to be set)
 std::ostream& operator<<(std::ostream& o, const Partition& P);
@@ -125,6 +125,8 @@ double branch_distance(const SequenceTree& T1, const SequenceTree& T2);
 double topology_distance(const SequenceTree& T1, const SequenceTree& T2);
 
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);
+std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, 
+					 const std::valarray<double>&);
 
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
 			 const std::vector<Partition>& partitions);
