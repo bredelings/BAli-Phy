@@ -4,7 +4,7 @@ all: bali-phy
 EXACTFLAGS = -pipe --param inline-unit-growth=300 --param max-inline-insns-auto=300
 
 ifeq ($(origin ARCH), undefined)
-ARCH = pentium4
+  ARCH = pentium4
 endif
 
 LANGO := fast-math
@@ -14,23 +14,23 @@ OPT :=
 LDFLAGS := 
 
 ifeq (${DEBUG},y)
-DEBUG := g3
+  DEBUG := g3
 else
-OPT   += march=${ARCH} O3 
-LANGO += tracer prefetch-loop-arrays 
-ifneq (${PROF},y)
-LANGO += omit-frame-pointer
-endif
+  OPT   += march=${ARCH} O3 
+  LANGO += tracer prefetch-loop-arrays 
+  ifneq (${PROF},y)
+    LANGO += omit-frame-pointer
+  endif
 endif
 
 ifeq (${PROF},y)
-LDFLAGS += -pg
-DEBUG   += pg
+  LDFLAGS += -pg
+  DEBUG   += pg
 endif
 
 ifeq (${STATIC},y)
-.LIBPATTERNS = lib%.a,
-LDFLAGS += -static
+  .LIBPATTERNS = lib%.a
+  LDFLAGS += -static
 endif
 
 #------------------- Main 
