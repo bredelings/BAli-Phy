@@ -104,5 +104,8 @@ Pmarg: Likelihood.from.${SKIP}+${SIZE}
 clean:
 	rm pS* pI* Report header samples tc trees MAP.tree analysis
 
-#%.fasta: %.phy
-#	phy_to_fasta < $< > $@
+%.fasta: %.phy
+	alignment-convert output=fasta < $< > $@
+
+%.phy: %.fasta
+	alignment-convert output=phylip < $< > $@
