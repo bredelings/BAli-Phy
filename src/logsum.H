@@ -48,8 +48,4 @@ inline double logdiff(double x, double y) {
   else
     return (x + log1p(-exp(temp)));
 }
-
-inline double logsum(double x, double y, double z) {
-  return logsum(x,logsum(y,z));
-}
 #endif

@@ -210,11 +210,8 @@ inline void DParrayConstrained::forward(int i2) {
     FS2[i2] = log_0;
     for(int s1=0;s1<states(i1).size();s1++) {
       int S1 = states(i1)[s1];
-      if (not connected(S1,S2)) continue;
 
       vector<double>& FS1 = (*this)[S1];
-
-      if (FS1[i1] < log_limit) continue;
 
       FS2[i2] = logsum(FS2[i2],FS1[i1] + GQ(S1,S2));
     }
@@ -237,6 +234,8 @@ int DParrayConstrained::order_of_computation() const {
 
 
 void DParrayConstrained::prune() {
+
+  std::abort();
 
   unsigned order1 = order_of_computation();
 
@@ -753,11 +752,7 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
     //--- Compute Arrival Probability ----
     FS2(i2,j2) = log_0;
     for(int S1=0;S1<nstates();S1++) {
-      if (not connected(S1,S2)) continue;
-
       Matrix& FS1 = (*this)[S1];
-
-      if (FS1(i1,j1) < log_limit) continue;
 
       FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
     }
@@ -803,12 +798,8 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
     for(int s=0;s<states(j1).size();s++) {
       int S1 = states(j1)[s];
 
-      if (not connected(S1,S2)) continue;
-
       Matrix& FS1 = (*this)[S1];
       
-      if (FS1(i1,j1) < log_limit) continue;
-
       FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
     }
 
@@ -837,6 +828,8 @@ int DPmatrixConstrained::order_of_computation() const {
 
 
 void DPmatrixConstrained::prune() {
+
+  std::abort();
 
   unsigned order1 = order_of_computation();
 
