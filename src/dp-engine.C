@@ -377,7 +377,7 @@ efloat_t DPmatrix::path_check(const vector<int>& path) const
 }
 
 efloat_t DPmatrix::path_P(const vector<int>& path) const {
-  double P2 = path_check(path);
+  efloat_t P2 = path_check(path);
   std::cerr<<"P(path)2 = "<<P2<<std::endl;
 
   const int I = size1()-1;

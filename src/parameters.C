@@ -19,16 +19,16 @@ efloat_t Parameters::basic_prior(const alignment& A,const Parameters& P) const {
 }
 
 efloat_t Parameters::weight(const alignment& A,const Parameters& P) const {
-  double Pr = basic_prior(A,P) * basic_likelihood(A,P);
+  efloat_t Pr = basic_prior(A,P) * basic_likelihood(A,P);
   return pow(Pr,(1.0-1.0/P.Temp));
 }
 
 bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 		 const alignment& A2,const Parameters& P2) const {
-  double p1 = probability(A1,P1);
-  double p2 = probability(A2,P2);
+  efloat_t p1 = probability(A1,P1);
+  efloat_t p2 = probability(A2,P2);
 
-  if (myrandomf() < exp(p2-p1)) 
+  if (myrandomf() < p2/p1) 
     return true;
   else
     return false;
@@ -38,7 +38,7 @@ bool Parameters::accept_MH(const alignment& A,const Parameters& P1,const Paramet
   efloat_t p1 = likelihood(A,P1) * ::prior(P1);
   efloat_t p2 = likelihood(A,P2) * ::prior(P2);
 
-  if (myrandomf() < exp(p2/p1)) 
+  if (myrandomf() < p2/p1) 
     return true;
   else
     return false;
