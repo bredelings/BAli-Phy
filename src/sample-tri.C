@@ -246,6 +246,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
     double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
 
+    p[i].LC.set_length(a[i].length());
     check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
   }
 
@@ -315,6 +316,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node
   nodes[0] = get_nodes_branch_random(P.T,node1,node2);
 
   sample_tri_multi(A,p,nodes,false,false);
+  P.LC.set_length(A.length());
 
   return A;
 }
@@ -335,6 +337,7 @@ bool tri_sample_alignment_branch(alignment& A,Parameters& P,
 
   bool success = sample_tri_multi(A,p,nodes,false,false);
   P = p[0];
+  P.LC.set_length(A.length());
 
   return success;
 }

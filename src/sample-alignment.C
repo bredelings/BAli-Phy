@@ -101,7 +101,6 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   alignment A = construct(old,path,group1,seq1,seq2);
 
-
   std::cerr<<"bandwidth = "<<bandwidth(Matrices,path)<<std::endl;
 
   std::cerr<<"bandwidth2 = "<<bandwidth2(Matrices,path)<<std::endl;
@@ -114,6 +113,7 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   assert(path_new == path);
 
   double ls1 = P.likelihood(old,P);
+  P.LC.set_length(A.length());
   double ls2 = P.likelihood(A  ,P);
 
   double lp1 = P.prior(old,P);
@@ -137,8 +137,10 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
     double length2_p = Matrices2.Pr_sum_all_paths();
     std::cerr<<"P(l1,l2|Lambda) = "<<length2_p<<std::endl;
   }
-
+#else
+  P.LC.set_length(A.length());
 #endif
+
   /*--------------------------------------------------------------*/
   assert(valid(A));
   return A;
