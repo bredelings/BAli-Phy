@@ -53,7 +53,8 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   //  std::cerr<<"old (reordered) = "<<project(old,nodes)<<endl;
 
   // Find sub-alignments and sequences
-  vector<vector<int> > seqs(5);
+  vector<vector<int> > seqs(4);
+  vector<int> seqall;
   for(int i=0;i<columns.size();i++) {
     int column = columns[i];
     for(int i=0;i<4;i++)
@@ -64,9 +65,8 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
 	not old.gap(column,nodes[1]) or 
 	not old.gap(column,nodes[2]) or 
 	not old.gap(column,nodes[3]))
-      seqs[4].push_back(column);
+      seqall.push_back(column);
   }
-  const vector<int>& seqall = seqs[4];
 
   // Map columns with n2 or n3 to single index 'c'
   //  vector< vector<int> > cols(4,vector<int>(seqall.size()+1));
