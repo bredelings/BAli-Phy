@@ -2,6 +2,7 @@
 #define DPMATRIX_H
 
 #include "hmm.H"
+#include <valarray>
 
 
 class state_array
@@ -11,7 +12,7 @@ class state_array
   int s3;
 
   //CHECK - does valarray make this faster?
-  vector<double> data;
+  valarray<double> data;
   vector<int> scale_;
 
 public:
@@ -55,7 +56,7 @@ class state_matrix
   int s3;
 
   //CHECK - does valarray make this faster?
-  vector<double> data;
+  valarray<double> data;
   vector<int> scale_;
 public:
   int size1() const {return s1;}
@@ -66,14 +67,14 @@ public:
     assert(0 <= i and i < s1);
     assert(0 <= j and j < s2);
     assert(0 <= k and k < s3);
-    return data[i*s2*s3+j*s3+k];
+    return data[s3*(i*s2+j)+k];
   }
 
   double operator()(int i,int j,int k) const {
     assert(0 <= i and i < s1);
     assert(0 <= j and j < s2);
     assert(0 <= k and k < s3);
-    return data[i*s2*s3+j*s3+k];
+    return data[s3*(i*s2+j)+k];
   }
 
   int& scale(int i,int j) {
