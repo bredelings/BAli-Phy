@@ -218,7 +218,12 @@ int main(int argc,char* argv[]) {
 	break;
     }
     
-    const SequenceTree& best = best_trees[0];
+    SequenceTree best;
+    if (args.set("tree"))
+      best.read(args["tree"]);
+    else
+      best = best_trees[0];
+
     const int nleaves = best.leaves();
     const int nbranches = best.branches();
     

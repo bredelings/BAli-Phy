@@ -23,11 +23,11 @@ all: sampler
 # try -fforce-addr
 
 #----------------- Definitions
-LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0
+LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0 # inline-functions inline-limit=3000 keep-inline-functions
 DEBUG = pipe g3 # pg
-DEFS = # NDEBUG 
+DEFS = NDEBUG 
 WARN = all no-sign-compare overloaded-virtual
-OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 # O3
+OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 O2 # O3
 LDFLAGS = # -pg # -static 
 LI=${CXX}
 

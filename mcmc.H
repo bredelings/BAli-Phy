@@ -130,12 +130,18 @@ namespace MCMC {
   };
 
   class MoveArg: public Move {
+    vector<int> order;
   public:
     MoveArg* clone() const=0;
 
     vector<int> args;
 
-    
+    int reset(double);
+    void iterate(alignment&,Parameters&);
+    result_t iterate(alignment&,Parameters&,int);
+
+    virtual result_t operator()(alignment&,Parameters&,int)=0;
+
 
     MoveArg(const string& s):Move(s) { }
 
@@ -158,9 +164,10 @@ namespace MCMC {
 
     void add(double l,const MoveArg& m);
 
-    int reset(double);
-    void iterate(alignment&,Parameters&);
-    result_t iterate(alignment&,Parameters&,int);
+    void enable(const string&);
+    void disable(const string&);
+
+    result_t operator()(alignment&,Parameters&,int);
     
     void show_enabled(int depth=0) const;
     void print_move_stats(int depth=0) const;
@@ -176,10 +183,7 @@ namespace MCMC {
   public:
     MoveArgSingle* clone() const {return new MoveArgSingle(*this);}
 
-    int reset(double l) {return poisson(l);};
-    void iterate(alignment& A,Parameters& P) { iterate(A,P,0);};
-
-    result_t iterate(alignment&,Parameters&,int arg);
+    result_t operator()(alignment&,Parameters&,int);
 
     MoveArgSingle(const string& s,atomic_move_arg m1,const vector<int>& a)
       :MoveArg(s),m(m1) 
@@ -192,13 +196,21 @@ namespace MCMC {
 
   // This makes a Sampler out of a move
   class Sampler: public MoveAll {
+    typedef double(&Pr_func)(const alignment&,const Parameters&);
+
+    Pr_func prior;
+    Pr_func likelihood;
 
     // How do we link moves into probability model?
-    double(&probability)(const alignment&,const Parameters&);
+    double probability(const alignment& A,const Parameters& P) {
+      return prior(A,P) + likelihood(A,P);
+    }
+
   public:
     void go(alignment& A, Parameters& P, int max);
 
-    Sampler(const string& name,double(&p)(const alignment&,const Parameters&)):MoveAll(name),probability(p) {};
+    Sampler(const string& name,Pr_func pf1,Pr_func pf2)
+      :MoveAll(name),prior(pf1),likelihood(pf2) {};
   };
 
 }

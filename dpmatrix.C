@@ -29,6 +29,25 @@ vector<int> HMM::generalize(const vector<int>& path) {
 
 // FIXME - this doesn't deal with silent networks that have more than
 //         one silent state!
+vector<int> HMM::ungeneralize(const vector<int>& g_path) {
+  vector<int> path = g_path;
+  for(int i=path.size()-1;i>0;i--) {
+    int S1 = path[i];
+    if (silent_network(S1)) {
+
+      //success is leaving the silent network
+      double p_success = 1.0 - exp(Q(S1,S1));  
+
+      int n = geometric(p_success);
+      path.insert(path.begin()+i,n-1,S1);
+    }
+  }
+
+  return path;
+}
+
+// FIXME - this doesn't deal with silent networks that have more than
+//         one silent state!
 double HMM::generalize_P(const vector<int>& path) {
   double Pr = 0;
   for(int i=1; i<path.size(); i++) {
@@ -83,15 +102,19 @@ DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matr
 { }
 
 void DPmatrix::forward(int x1,int y1,int x2,int y2) {
+  assert(x1 < x2 or y1 < y2);
+  assert(x2 < size1());
+  assert(y2 < size2());
+
   const int maxdelta = std::max(x2-x1,y2-y1);
 
   for(int delta=1; delta<=maxdelta; delta++) {
-    if (delta<size2())
-      for(int i=0;i<delta and i<size1();i++) 
+    if (y1 + delta <= y2)
+      for(int i=0;i<delta and x1+i <= x2;i++) 
 	forward(x1+i,y1+delta);
 
-    if (delta<size1())
-      for(int i=0;i<=delta and i<size2();i++)
+    if (x1 + delta <= x2)
+      for(int i=0;i<=delta and y1+i <= y2;i++)
 	forward(x1+delta,y1+i);
   } 
 }
@@ -124,7 +147,7 @@ void DPmatrix::forward(const vector<int>& path,int bandwidth) {
   int column=0;
   while(column < icol.size()-1) {
     pins.push_back(column);
-    column += geometric(bandwidth)+1;
+    column += geometric(1.0/bandwidth);
   }
   pins.push_back(icol.size()-1);
 
@@ -398,4 +421,47 @@ DPmatrix::DPmatrix(const vector<int>& v1,
   for(int S=0;S<start_P.size();S++)
     (*this)[S](0,0) = start_P[S];
 }
+
+void DPmatrixHMM::forward(const vector<int>& path,int bandwidth) {
+  vector<int> icol;
+  vector<int> jcol;
+
+  int i=0;
+  int j=0;
+  icol.push_back(i);
+  jcol.push_back(j);
+  for(int c=0;c < path.size();c++) {
+
+    if (di(path[c]))
+      i++;
+    if (dj(path[c]))
+      j++;
+
+    if (not silent(path[c])) {
+      icol.push_back(i);
+      jcol.push_back(j);
+    }
+  }
+
+  assert(icol[icol.size()-1] == size1()-1 );
+  assert(jcol[jcol.size()-1] == size2()-1 );
+
+  vector<int> pins;
+  int column=0;
+  while(column < icol.size()-1) {
+    pins.push_back(column);
+    column += geometric(1.0/bandwidth);
+  }
+  pins.push_back(icol.size()-1);
+
+  // Deal with silent states at (0,0)
+  forward(0,0);
+
+  // Process the squares generated
+  for(int i=0;i<pins.size()-1;i++) {
+    forward(icol[pins[i]],jcol[pins[i]],
+	    icol[pins[i+1]],jcol[pins[i+1]]);
+  }
+}
+
 

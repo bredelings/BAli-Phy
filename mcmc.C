@@ -139,10 +139,8 @@ void MoveGroup::iterate(alignment& A,Parameters& P) {
 result_t MoveGroup::iterate(alignment& A,Parameters& P,int i) {
   assert(i < order.size());
 
-#ifndef NDEBUG
   std::cerr<<" move = "<<attributes[0]<<endl;
   std::cerr<<"   submove = "<<moves[order[i]]->attributes[0]<<endl;
-#endif
 
   result_t r = moves[order[i]]->iterate(A,P,suborder[i]);
   if (r == success)
@@ -226,9 +224,8 @@ void MoveOne::getorder(double l) {
 
 result_t SingleMove::iterate(alignment& A,Parameters& P,int) 
 {
-#ifndef NDEBUG
   std::cerr<<" [single]move = "<<attributes[0]<<endl;
-#endif
+
   iterations++;
   result_t r = (*m)(A,P);
   if (r == success)
@@ -237,6 +234,34 @@ result_t SingleMove::iterate(alignment& A,Parameters& P,int)
     failures++;
   return r;
 }
+
+int MoveArg::reset(double l) {
+  vector<int> numbers(args.size());
+  for(int i=0;i<numbers.size();i++)
+    numbers[i] = i;
+
+  order.clear();
+  while(l>0) {
+    vector<int> v = randomize(numbers);
+    if (l < 1) {
+      int n = poisson(l*numbers.size());
+      v.erase(v.begin()+n,v.end());
+    }
+    order.insert(order.end(),v.begin(),v.end());
+    l--;
+  }
+  return order.size();
+}
+
+void MoveArg::iterate(alignment& A,Parameters& P) {
+  for(int i=0;i<order.size();i++)
+    iterate(A,P,i);
+}
+
+result_t MoveArg::iterate(alignment& A,Parameters& P,int i) {
+  return (*this)(A,P,order[i]);
+}
+
 
 void MoveEach::add(double l,const MoveArg& m) {
   MoveGroupBase::add(l,m);
@@ -258,6 +283,24 @@ void MoveEach::add(double l,const MoveArg& m) {
 
     subarg[subarg.size()-1][found] = i;
   }
+}
+
+void MoveEach::enable(const string& s) {
+  // Operate on this move
+  Move::enable(s);
+
+  // Operate on children
+  for(int i=0;i<moves.size();i++)
+    moves[i]->enable(s);
+}
+
+void MoveEach::disable(const string& s) {
+  // Operate on this move
+  Move::disable(s);
+
+  // Operate on children
+  for(int i=0;i<moves.size();i++)
+    moves[i]->disable(s);
 }
 
 double MoveEach::sum(int arg) const {
@@ -284,37 +327,12 @@ int MoveEach::choose(int arg) const {
   return i;
 }
 
-int MoveEach::reset(double l) {
-  iterations += l;
-
-  vector<int> numbers(args.size());
-  for(int i=0;i<numbers.size();i++)
-    numbers[i] = i;
-
-  order.clear();
-  while(l>0) {
-    vector<int> v = randomize(numbers);
-    if (l < 1) {
-      int n = poisson(l*numbers.size());
-      v.erase(v.begin()+n,v.end());
-    }
-    order.insert(order.end(),v.begin(),v.end());
-    l--;
-  }
-  return order.size();
-}
-
-void MoveEach::iterate(alignment& A,Parameters& P) {
-  for(int i=0;i<order.size();i++)
-    iterate(A,P,order[i]);
-}
-
-result_t MoveEach::iterate(alignment& A,Parameters& P,int arg) {
-  // FIXME - this is trying to mean both order[i] and arg[i]
-  // better make a separate operator() to mean arg[i] and call down with that
+result_t MoveEach::operator()(alignment& A,Parameters& P,int arg) {
+  iterations += 1.0/args.size();
   int m = choose(arg);
-  return moves[m]->iterate(A,P,subarg[m][arg]);
+  return (*(MoveArg*)moves[m])(A,P,subarg[m][arg]);
 }
+
 
 void MoveEach::show_enabled(int depth) const {
   Move::show_enabled(depth);
@@ -331,11 +349,9 @@ void MoveEach::print_move_stats(int depth) const {
     moves[i]->print_move_stats(depth+1);
 }
 
-result_t MoveArgSingle::iterate(alignment& A,Parameters& P,int arg) {
+result_t MoveArgSingle::operator()(alignment& A,Parameters& P,int arg) {
 
-#ifndef NDEBUG
   std::cerr<<" [single]move = "<<attributes[0]<<endl;
-#endif
 
   iterations++;
   result_t r = (*m)(A,P,args[arg]);
@@ -396,9 +412,9 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& P,
 
 void Sampler::go(alignment& A,Parameters& P,const int max) {
   const SequenceTree& T = P.T;
-  Parameters ML_P = P;
-  alignment ML_alignment = A;
-  bool ML_printed = true;
+  Parameters MAP_P = P;
+  alignment MAP_alignment = A;
+  bool MAP_printed = true;
 
   // make sure that the Alignment and Tree are linked
   assert(A.num_sequences() == T.num_nodes()-1);
@@ -420,7 +436,7 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
   std::cout<<endl;
   
   std::cout<<"Initial Alignment = \n";
-  print_stats(std::cout,A,P,probability);
+  print_stats(std::cout,A,P,probability3);
     
   std::cout<<"Initial Tree = \n";
   std::cout<<T<<endl<<endl;
@@ -429,20 +445,23 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
   const int start_after = 0;// 600*correlation_time;
   int total_samples = 0;
 
-  double p=probability(A,P);
-  double ML_score = p;
-  double new_p=0;
+  double Pr_prior = prior(A,P);
+  double Pr_likelihood = likelihood(A,P);
+  double Pr = Pr_prior + Pr_likelihood;
 
-  valarray<double> v(p,5000);
+  double MAP_score = Pr;
 
   for(int iterations=0; iterations < max; iterations++) {
-    std::cerr<<"iterations = "<<iterations<<"    logp = "<<p<<endl;
+    std::cerr<<"iterations = "<<iterations<<
+      "    prior = "<<Pr_prior<<
+      "    likelihood = "<<Pr_likelihood<<
+      "    logp = "<<Pr<<endl;
 
     /*------------------ record statistics ---------------------*/
     if (iterations > start_after) {
       if (iterations%correlation_time == 0) {
 	std::cout<<"iterations = "<<iterations<<endl;
-	print_stats(std::cout,A,P,probability);
+	print_stats(std::cout,A,P,probability3);
 	std::cout<<endl<<endl;
       }
     }
@@ -453,29 +472,31 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
 
     iterate(A2,P2);
 
-    new_p = probability(A2,P2);
+    double new_prior = prior(A2,P2);
+    double new_likelihood = likelihood(A2,P2);
+    double new_Pr = new_prior + new_likelihood;
 
     /*---------------------- estimate MAP ----------------------*/
-    if (new_p > ML_score) {
+    if (new_Pr > MAP_score) {
       // arguably I could optimize these for a few iterations
-      ML_score = new_p;
-      ML_P = P2;
-      ML_alignment = A2;
+      MAP_score = new_Pr;
+      MAP_P = P2;
+      MAP_alignment = A2;
 
-      ML_printed = false;
+      MAP_printed = false;
     }
 
-    if (not ML_printed and iterations % 100 == 0) {
-      std::cout<<"iterations = "<<iterations<<"       ML = "<<ML_score<<endl;
-      print_stats(std::cout,ML_alignment,ML_P,probability);
-      ML_printed = true;
+    if (not MAP_printed and iterations % 50 == 0) {
+      std::cout<<"iterations = "<<iterations<<"       ML = "<<MAP_score<<endl;
+      print_stats(std::cout,MAP_alignment,MAP_P,probability3);
+      MAP_printed = true;
     }
 
     /*----------------- print diagnostic output -----------------*/
 
-    if (iterations %100 == 0 or std::abs(p - new_p)>12) {
-      print_stats(std::cerr,A,P,probability);
-      print_stats(std::cerr,A2,P2,probability);
+    if (iterations %50 == 0 or std::abs(Pr - new_Pr)>12) {
+      print_stats(std::cerr,A,P,probability3);
+      print_stats(std::cerr,A2,P2,probability3);
 
       A2.print_fasta(std::cerr);
 
@@ -485,7 +506,10 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
     /*------------------ move to new position -------------------*/
     A = A2;
     P = P2;
-    p = new_p;
+
+    Pr_prior = new_prior;
+    Pr_likelihood = new_likelihood;
+    Pr = new_Pr;
   }
   std::cerr<<"total samples = "<<total_samples<<endl;
 }

@@ -242,10 +242,10 @@ alignment construct(const alignment& old, const vector<int>& path,
 }
 
 
-vector< vector<valarray<double> > > distributions(const alignment& A,const Parameters& Theta,
+vector< vector<valarray<double> > > distributions(const alignment& A,const Parameters& P,
 					const vector<int>& seq,int n0,int n1) {
   const alphabet& a = A.get_alphabet();
-  const substitution::MultiRateModel& MRModel = Theta.SModel();
+  const substitution::MultiRateModel& MRModel = P.SModel();
 
   vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
 
@@ -256,9 +256,9 @@ vector< vector<valarray<double> > > distributions(const alignment& A,const Param
     for(int r=0;r<MRModel.nrates();r++) {
       dist[i][r].resize(a.size());
       dist[i][r] = substitution::peel(residues,
-				      Theta.T,
+				      P.T,
 				      MRModel.BaseModel(),
-				      Theta.transition_P(r),
+				      P.transition_P(r),
 				      n0,n1,n0);
     }
 
@@ -268,10 +268,10 @@ vector< vector<valarray<double> > > distributions(const alignment& A,const Param
   return dist;
 }
 
-vector< vector<valarray<double> > > distributions23(const alignment& A,const Parameters& Theta,
+vector< vector<valarray<double> > > distributions23(const alignment& A,const Parameters& P,
 					  const vector<int>& seq,int n0,int n1) {
   const alphabet& a = A.get_alphabet();
-  const substitution::MultiRateModel& MRModel = Theta.SModel();
+  const substitution::MultiRateModel& MRModel = P.SModel();
 
   vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
 
@@ -282,9 +282,9 @@ vector< vector<valarray<double> > > distributions23(const alignment& A,const Par
     for(int r=0;r<MRModel.nrates();r++) {
       dist[i][r].resize(a.size());
       dist[i][r] = substitution::peel(residues,
-				      Theta.T,
+				      P.T,
 				      MRModel.BaseModel(),
-				      Theta.transition_P(r),
+				      P.transition_P(r),
 				      n1,n0,n0);
     }
 
@@ -356,12 +356,12 @@ alignment project(const alignment& A1,int n0,int n1,int n2,int n3) {
 }
 
 
-alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
+alignment tri_sample_alignment(const alignment& old,const Parameters& P,
 			   int node1,int node2) {
-  const tree& T = Theta.T;
+  const tree& T = P.T;
 
-  const vector<double>& pi = Theta.IModel.pi;
-  const valarray<double>& frequency = Theta.SModel().BaseModel().frequencies();
+  const vector<double>& pi = P.IModel.pi;
+  const valarray<double>& frequency = P.SModel().BaseModel().frequencies();
 
   //  std::cerr<<"old = "<<old<<endl;
 
@@ -429,8 +429,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
 
   // Precompute distributions at n0
-  vector< vector< valarray<double> > > dists1 = distributions(old,Theta,seq1,n0,n1);
-  vector< vector< valarray<double> > > dists23 = distributions23(old,Theta,seq23,n0,n1);
+  vector< vector< valarray<double> > > dists1 = distributions(old,P,seq1,n0,n1);
+  vector< vector< valarray<double> > > dists23 = distributions23(old,P,seq23,n0,n1);
 
 
   /*-------------- Create alignment matrices ---------------*/
@@ -481,11 +481,11 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   assert(count==27);
 
 
-  const Matrix Q = createQ(Theta.IModel);
+  const Matrix Q = createQ(P.IModel);
 
   // Actually create the Matrices & Chain
   DPmatrixHMM Matrices(state_emit,start_P,Q,
-		       Theta.SModel().distribution(),dists1,dists23,frequency);
+		       P.SModel().distribution(),dists1,dists23,frequency);
 
   // Determine state order
   vector<int> state_order(nstates);
@@ -522,14 +522,20 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
   // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
   // We can only use non-silent states at (0,0) to simulate S
-  Matrices.forward(0,0);
+  if (P.features & (1<<0)) {
+    vector<int> path_old = get_path_3way(project(old,n0,n1,n2,n3),0,1,2,3);
+    Matrices.forward(path_old,P.constants[0]);
+  }
+  else {
+    Matrices.forward(0,0);
   
-  Matrices.forward(0,0,seq1.size(),seq23.size());
+    Matrices.forward(0,0,seq1.size(),seq23.size());
+  }
 
   //------------- Sample a path from the matrix -------------------//
 
-  vector<int> path = Matrices.sample_path();
-
+  vector<int> path_g = Matrices.sample_path();
+  vector<int> path = Matrices.ungeneralize(path_g);
   // FIXME!! - need to insert extra ---+ states according to a geometric
   alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
 
@@ -546,27 +552,27 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
                                  //    but its not a NECESSARY effect of the routine.
 
   // get the generalized paths - no sequential silent states that can loop
-  vector<int> path_new_G = Matrices.generalize(path_new);
-  assert(path_new_G == path);
+  vector<int> path_new_g = Matrices.generalize(path_new);
+  assert(path_new_g == path_g);
   assert(valid(A));
 
   //-------------- Check relative path probabilities --------------//
-  double s1 = substitution::Pr(old,Theta);
-  double s2 = substitution::Pr(A,Theta);
+  double s1 = substitution::Pr(old,P);
+  double s2 = substitution::Pr(A,P);
 
-  double lp1 = prior_branch(project(old,n0,n1,n2,n3),Theta.IModel,0,1) +
-    prior_branch(project(old,n0,n1,n2,n3),Theta.IModel,0,2) +
-    prior_branch(project(old,n0,n1,n2,n3),Theta.IModel,0,3);
+  double lp1 = prior_branch(project(old,n0,n1,n2,n3),P.IModel,0,1) +
+    prior_branch(project(old,n0,n1,n2,n3),P.IModel,0,2) +
+    prior_branch(project(old,n0,n1,n2,n3),P.IModel,0,3);
 
-  double lp2 = prior_branch(project(A,n0,n1,n2,n3),Theta.IModel,0,1) +
-    prior_branch(project(A,n0,n1,n2,n3),Theta.IModel,0,2) +
-    prior_branch(project(A,n0,n1,n2,n3),Theta.IModel,0,3);
+  double lp2 = prior_branch(project(A,n0,n1,n2,n3),P.IModel,0,1) +
+    prior_branch(project(A,n0,n1,n2,n3),P.IModel,0,2) +
+    prior_branch(project(A,n0,n1,n2,n3),P.IModel,0,3);
 
   double diff = Matrices.check(path_old,path_new,lp1,s1,lp2,s2);
 
   if (abs(diff) > 1.0e-9) {
-    std::cerr<<prior_HMM_nogiven(old,Theta) - lp1<<endl;
-    std::cerr<<prior_HMM_nogiven(A  ,Theta) - lp2<<endl;
+    std::cerr<<prior_HMM_nogiven(old,P) - lp1<<endl;
+    std::cerr<<prior_HMM_nogiven(A  ,P) - lp2<<endl;
 
     std::cerr<<old<<endl;
     std::cerr<<A<<endl;
@@ -582,7 +588,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   int length_old = old.seqlength(n0);
   int length_new = A.seqlength(n0);
 
-  double log_ratio = 2.0*(Theta.IModel.lengthp(length_new)-Theta.IModel.lengthp(length_old));
+  double log_ratio = 2.0*(P.IModel.lengthp(length_new)-P.IModel.lengthp(length_old));
   if (myrandomf() < exp(log_ratio))
     return A;
   else

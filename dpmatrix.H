@@ -23,6 +23,7 @@ public:
   int endstate() const {return nstates();}
 
   vector<int> generalize(const vector<int>& path);
+  vector<int> ungeneralize(const vector<int>& path_g);
   double generalize_P(const vector<int>& path);
 
   double path_Q_path(const vector<int>& path);
@@ -151,6 +152,9 @@ public:
   void forward(int i1,int j1,int i2,int j2);
 
   void forward(int,int);
+
+  // compute FP for entire matrix, with some points on path pinned
+  void forward(const vector<int>&,int);
 
   DPmatrixHMM(const vector<int> & v1,
 	      const vector<double> & v2,

@@ -30,8 +30,16 @@ double Pr_tgaps_sletters(const alignment&,const Parameters&);
 double Pr_sgaps_tletters(const alignment&,const Parameters&);
 double Pr_sgaps_sletters(const alignment&,const Parameters&);
 
+inline double prior3(const alignment& A,const Parameters& P) {
+  return prior_HMM(A,P) + prior(P);
+}
+
+inline double likelihood3(const alignment& A,const Parameters& P) {
+  return substitution::Pr(A,P); // also deals w/ frequencies
+}
+
 inline double probability3(const alignment& A,const Parameters& P) {
-  return Pr_tgaps_tletters(A,P);
+  return likelihood3(A,P) + prior3(A,P);
 }
 
 #endif

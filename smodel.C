@@ -18,6 +18,14 @@ Model::Model() {}
 // Then Q = S*D, and we can easily compute the exponential
 // So, S(i,j) = Q(i,i)/pi[i]
 
+string MarkovModel::name() const { return "MarkovModel";}
+
+string ReversibleModel::name() const  {
+  return MarkovModel::name() + "::ReversibleModel";
+}
+
+
+
 void ReversibleModel::recalc() {
 
   // Set S(i,i) so that Q(i,i) = S(i,i)*pi[i]
@@ -64,6 +72,9 @@ Matrix ReversibleModel::transition_p(double t) const {
   return exp(S,D,t);
 }
 
+string HKY::name() const {
+  return ReversibleModel::name() + "::HKY[" + Alphabet().name + "]";
+}
 
 void HKY::fiddle() {
   const double sigma = 0.05;
@@ -112,6 +123,10 @@ void HKY::setup_alphabet() {
   }
 }
 
+string EQU::name() const {
+  return ReversibleModel::name() + "::EQU[" + Alphabet().name + "]";
+}
+
 void EQU::recalc() {
   for(int i=0;i<a.size();i++)
     for(int j=0;j<a.size();j++)
@@ -120,11 +135,17 @@ void EQU::recalc() {
   ReversibleModel::recalc();
 }
 
+string Empirical::name() const {
+  return ReversibleModel::name() + "::Empirical/" + modelname +"[" + Alphabet().name + "]";
+}
+
 void Empirical::recalc() {
   ReversibleModel::recalc();
 }
 
 void Empirical::load_file(const char* filename) {
+  modelname = filename;
+
   std::ifstream ifile(filename);
 
   if (not ifile)
@@ -152,6 +173,15 @@ void NestedModel::parameters(const vector<double>& p) {
 }
 
 /*--------------- Invariant Sites Model----------------*/
+
+string SingleRateModel::name() const {
+  return sub_model->name();
+}
+
+string GammaRateModel::name() const {
+  return string("Gamma(") + convertToString(rates_.size()) + ")(" + sub_model->name() + ")";
+}
+
 
 double gamma_pdf(double x,double a,double b) {
   return gsl_ran_gamma_pdf(x,a,b);
@@ -196,7 +226,7 @@ void GammaRateModel::super_fiddle() {
   if (p2 < 0) p2 = -p2;
 
   double alpha = 1.0/(p2*p2);
-  if (alpha < 1000)
+  if (alpha < 10000)
     p = p2;
 
   recalc();
@@ -232,6 +262,10 @@ GammaRateModel::GammaRateModel(const ReversibleModel& M,int n)
 
 
 /*--------------- Invariant Sites Model----------------*/
+
+string INV_Model::name() const {
+  return string("INV(") + sub_model->name() + ")";
+}
 
 INV_Model::INV_Model(const MultiRateModel& M)
   :MultiRateModel(M,1,M.nrates()+1)

@@ -36,6 +36,9 @@ inline valarray<double> peel(int letter,const Matrix& P,const valarray<double>& 
 
 // (dist.size()==0) does not mean "gap", but means no info so far.
 
+// If we are going to return distributions(root), then we must make sure
+//  that there is no information there from the WRONG side of the tree
+
 valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
 		      const vector<Matrix>& transition_P,int node1, int node2, int root) {
   const alphabet& a = SModel.Alphabet();
@@ -48,8 +51,9 @@ valarray<double> peel(const vector<int>& residues,const tree& T,const Reversible
   bool any_letters = false;
   TreeFunc< valarray<double> > distributions(T);  //doing a lot of work here
   for(int i=0;i<residues.size();i++) {
-    // need to specify group[i] so that we can use nodes for which we are
-    // ignoring their info
+    // we DO use distributions() for wrong side of tree, so can't put 
+    // info about letters from wrong side into them
+
     if (alphabet::letter(residues[i]) and group[i]) {
       distributions(i).resize(a.size(),0.0);
       distributions(i)[residues[i]] = 1.0;
@@ -207,19 +211,13 @@ double Pr(const alignment& A,const Parameters& P,int column) {
     residues[i] = A(column,i);
     
   
-  std::cerr<<"Pr: ("<<column<<")  ";
   double total=0;
-  for(int r=0;r<MRModel.nrates();r++) {
-    double temp = MRModel.distribution()[r] * Pr(residues,
-						 P.T,
-						 MRModel.BaseModel(),
-						 P.transition_P(r)
-						 );
-
-    std::cerr<<temp<<"   ";
-    total += temp;
-  }
-  std::cerr<<"  total = "<<total<<"   log(total) = "<<log(total)<<endl;
+  for(int r=0;r<MRModel.nrates();r++) 
+    total += MRModel.distribution()[r] * Pr(residues,
+					    P.T,
+					    MRModel.BaseModel(),
+					    P.transition_P(r)
+					    );
   assert(0 < total and total <= 1);
   return log(total);
 }

@@ -280,12 +280,15 @@ Parameters& Parameters::operator=(const Parameters& P) {
 
   branch_mean = P.branch_mean;
 
+  features = P.features;
+  constants = P.constants;
+
   return (*this);
 }
 
 Parameters::Parameters(const Parameters& P):
-  transition_P_(P.transition_P_),SModel_(P.SModel_->clone()),IModel(P.IModel),T(P.T),
-  branch_mean(P.branch_mean)
+  transition_P_(P.transition_P_),SModel_(P.SModel_->clone()),
+  constants(P.constants),features(P.features),IModel(P.IModel),T(P.T),branch_mean(P.branch_mean)
 { }
 
 
@@ -299,10 +302,11 @@ Parameters::Parameters(const substitution::MultiRateModel& SM,const IndelModel& 
 					  ) 
 		 ),
    SModel_(SM.clone()),IModel(IM),
+   features(0),
    T(t)
 {
   branch_mean = 0.1;
   recalc();
-
+  constants.push_back(-1);
   
 }

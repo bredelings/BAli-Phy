@@ -76,34 +76,25 @@ double path_Q_subst(const vector<int>& path,
 
     double sub=0;
     if (di(state2) and dj(state2)) {
-      std::cerr<<"Q: ("<<l<<":"<<i<<","<<j<<")  ";
       for(int r=0;r<MRModel.nrates();r++) {
  	double temp = MRModel.distribution()[r]* 
 	  sum( dists1[i-1][r] * frequency * dists2[j-1][r] );
  	sub += temp;
- 	std::cerr<<temp<<"   ";
       }
-      std::cerr<<"  total = "<<sub<<"   log(total) = "<<log(sub)<<endl;
     }
     else if (di(state2)) {
-      std::cerr<<"Q: ("<<l<<":"<<i<<","<<j<<")  ";
       for(int r=0;r<MRModel.nrates();r++) {
 	double temp = MRModel.distribution()[r]* 
 	  sum( dists1[i-1][r] * frequency);
 	sub += temp;
- 	std::cerr<<temp<<"   ";
       }
-      std::cerr<<"  total = "<<sub<<"   log(total) = "<<log(sub)<<endl;
     }
     else if (dj(state2)) {
-      std::cerr<<"Q: ("<<l<<":"<<i<<","<<j<<")  ";
       for(int r=0;r<MRModel.nrates();r++) {
 	double temp = MRModel.distribution()[r]* 
 	  sum( dists2[j-1][r] * frequency);
 	sub += temp;
- 	std::cerr<<temp<<"   ";
       }
-      std::cerr<<"  total = "<<sub<<"   log(total) = "<<log(sub)<<endl;
     }
     else
       sub = 1.0;

@@ -33,6 +33,8 @@ public:
   // how to sample from the distribution of parameters?
   virtual void fiddle() = 0; 
 
+  virtual string name() const =0;
+
   Model();
 
   virtual ~Model() {}
@@ -73,6 +75,8 @@ public:
   // transition probabilities
   virtual Matrix transition_p(double t) const =0;
 
+  string name() const;
+
   MarkovModel(const alphabet& a_):
     a(a_),
     Q(a.size(),a.size())
@@ -109,6 +113,8 @@ public:
   const std::valarray<double>& frequencies() const {return pi;}
   virtual void frequencies(const std::valarray<double>& pi_) {pi=pi_; recalc();}
   
+  string name() const;
+
   ReversibleModel(const alphabet& a_):
     MarkovModel(a_), pi(1.0/a_.size(),a_.size()), 
     S(a_.size(),a_.size())
@@ -143,6 +149,8 @@ public:
 
   virtual double prior() const;
 
+  string name() const;
+
   HKY(const alphabet& a): ReversibleModel(a,1)
   { 
     setup_alphabet();
@@ -174,6 +182,8 @@ public:
 
   virtual EQU* clone() const {return new EQU(*this);}
 
+  string name() const;
+
   EQU(const alphabet& a): ReversibleModel(a) 
   { recalc(); }
 
@@ -189,12 +199,16 @@ public:
 /************************ Empirical Substitution Model **************************/
 
 class Empirical: public ReversibleModel {
+  string modelname;
+
   void load_file(const char* filename);
   virtual void recalc();
 public:
   virtual void fiddle() {}
 
   virtual Empirical* clone() const {return new Empirical(*this);}
+
+  string name() const;
 
   Empirical(const alphabet& a,const char* filename) 
     : ReversibleModel(a)
@@ -320,6 +334,8 @@ protected:
 public:
   virtual SingleRateModel* clone() const {return new SingleRateModel(*this);}
 
+  string name() const;
+
   SingleRateModel(const ReversibleModel& M):MultiRateOnReversible(M,0,1) {
     rates_[0] = 1.0;
     distribution_[0] = 1.0;
@@ -335,6 +351,8 @@ protected:
   void recalc();
 public:
   virtual GammaRateModel* clone() const {return new GammaRateModel(*this);}
+
+  string name() const;
 
   GammaRateModel(const ReversibleModel& M,int n);
   virtual ~GammaRateModel() {}
@@ -358,6 +376,8 @@ public:
 
   const ReversibleModel& BaseModel() const {return SubModel().BaseModel();}
   ReversibleModel& BaseModel() {return SubModel().BaseModel();}
+
+  string name() const;
 
   INV_Model(const MultiRateModel& M);
 };

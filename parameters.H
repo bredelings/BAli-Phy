@@ -70,6 +70,9 @@ class Parameters {
   substitution::MultiRateModel* SModel_;
 
 public:
+  vector<double> constants;
+  int features;
+
   /*---------Indel Model---------*/
   IndelModel IModel;
 
