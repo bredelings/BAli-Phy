@@ -8,13 +8,10 @@ using std::vector;
 
 int choose2(efloat_t x, efloat_t y) 
 {
-  efloat_t sum = x+y;
+  std::vector<efloat_t> Pr(2);
+  Pr[0] = x;
+  Pr[1] = y;
 
-  efloat_t r = myrandomf();
-
-  if (r*sum < x)
-    return 0;
-  else
-    return 1;
+  return choose_scratch(Pr);
 }
 

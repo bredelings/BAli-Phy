@@ -65,11 +65,11 @@ efloat_t DParray::path_P(const vector<int>& g_path) const
   int l=g_path.size()-1;
   int state2 = g_path[l];
 
+  vector<double> transition(nstates());
+
   efloat_t Pr=1.0;
   while (l>0) 
   {
-    // we don't need to consider scaling here :)
-    vector<double> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,state1)*GQ(state1,state2);
 
@@ -85,7 +85,6 @@ efloat_t DParray::path_P(const vector<int>& g_path) const
   }
 
   // include probability of choosing 'Start' vs ---+ !
-  vector<double> transition(nstates());
   for(int state1=0;state1<nstates();state1++)
     transition[state1] = (*this)(0,state1) * GQ(state1,state2);
 
@@ -115,13 +114,14 @@ vector<int> DParray::sample_path() const {
 
   int state2 = endstate();
 
+  vector<double> transition(nstates());
+
   while(i >= 0) {
     path.push_back(state2);
-    vector<double> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,state1)*GQ(state1,state2);
 
-    int state1 = choose(transition);
+    int state1 = choose_scratch(transition);
 
     if (di(state1)) i--;
 
@@ -337,6 +337,8 @@ efloat_t DPmatrix::path_check(const vector<int>& path) const
 
   int l = 0;
 
+  vector<double> transition(nstates());
+
   // we don't look at transitions FROM the end state, because we 
   //  bail at looking at transitions FROM (I,C) 
   // FIXME - but what if this is actually not E but 7?
@@ -353,7 +355,6 @@ efloat_t DPmatrix::path_check(const vector<int>& path) const
 
     int state2 = path[l+1];
 
-    vector<double> transition(nstates());
     for(int s=0;s<nstates();s++)
       transition[s] = (*this)(i,j,s)*GQ(s,state2);
     
@@ -388,6 +389,8 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const {
   int l = path.size()-1;
   int state2 = path[l];
 
+  vector<double> transition(nstates());
+
   //We should really stop when we reach the Start state.
   // - since the start state is simulated by a non-silent state
   //   NS(0,0) we should go negative
@@ -397,7 +400,6 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const {
   //   is at path[-1]
   while (l>0) {
 
-    vector<double> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
 
@@ -416,7 +418,6 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const {
   assert(i == 0 and j == 0);
 
   // include probability of choosing 'Start' vs ---+ !
-  vector<double> transition(nstates());
   for(int state1=0;state1<nstates();state1++)
     transition[state1] = (*this)(0,0,state1) * GQ(state1,state2);
 
@@ -433,7 +434,8 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const {
   return Pr;
 }
 
-vector<int> DPmatrix::sample_path() const {
+vector<int> DPmatrix::sample_path() const 
+{
   vector<int> path;
 
   const int I = size1()-1;
@@ -443,17 +445,18 @@ vector<int> DPmatrix::sample_path() const {
 
   int state2 = endstate();
 
+  vector<double> transition(nstates());
+
   //We should really stop when we reach the Start state.
   // - since the start state is simulated by a non-silent state
   //   NS(0,0) we should go negative
   // - check that we came from (0,0) though
   while (i>=0 and j>=0) {
     path.push_back(state2);
-    vector<double> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
 
-    int state1 = choose(transition);
+    int state1 = choose_scratch(transition);
 
     if (di(state1)) i--;
     if (dj(state1)) j--;
