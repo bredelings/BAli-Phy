@@ -29,6 +29,12 @@ double gaussian(double mu,double sigma);
 // return an exponentially distributed variable
 double exponential(double mu);
 
+// return a poisson random variate
+double poisson(double mu);
+
+// return a geometric random variate
+int geometric(double mu);
+
 namespace rng {
 
   typedef int amount_t;
@@ -58,6 +64,8 @@ namespace rng {
     double gaussian(double mu,double sigma) {return gsl_ran_gaussian(generator,sigma)+mu;}
 
     double exponential(double mu) {return gsl_ran_exponential(generator,mu);}
+    int geometric (double mu) {return gsl_ran_geometric(generator,mu);}
+    double poisson(double mu) {return gsl_ran_poisson(generator,mu);}
 
     RNG();
     ~RNG();

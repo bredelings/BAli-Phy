@@ -39,10 +39,13 @@ public:
   bool silent_network(int S);
 
   // compute FP for a square
-  inline void forward(int,int,int,int,const Matrix& GQ);
+  void forward(int,int,int,int,const Matrix& GQ);
 
   // compute FP for a cell
-  virtual void forward(int,int,const Matrix& GQ) = 0;
+  virtual void forward(int,int,const Matrix& GQ)=0;
+
+  // compute FP for entire matrix, with some points on path pinned
+  void forward(const vector<int>&,int,const Matrix& GQ);
 
   // functions on paths
   vector<int> sample_path(const Matrix& GQ);
@@ -84,32 +87,15 @@ public:
   virtual ~DPmatrix() {}
 };
 
-inline void DPmatrix::forward(int x1,int y1,int x2,int y2,const Matrix& GQ) {
-  const int maxdelta = std::max(x2-x1,y2-y1);
-
-  for(int delta=1; delta<=maxdelta; delta++) {
-    if (delta<size2())
-      for(int i=0;i<delta and i<size1();i++) 
-	forward(x1+i,y1+delta,GQ);
-
-    if (delta<size1())
-      for(int i=0;i<=delta and i<size2();i++)
-	forward(x1+delta,y1+i,GQ);
-  } 
- 
-}
-
-
 class DPmatrixHMM: public DPmatrix {
   vector< vector<int> > allowed_states;
 public:
   const vector<int>& states(int j) const {return allowed_states[j];}
   vector<int>& states(int j) {return allowed_states[j];}
 
-  inline void forward(int i1,int j1,int i2,int j2,const Matrix& GQ) 
-  {DPmatrix::forward(i1,j1,i2,j2,GQ);}
+  void forward(int i1,int j1,int i2,int j2,const Matrix& GQ);
 
-  inline void forward(int,int,const Matrix& GQ);
+  void forward(int,int,const Matrix& GQ);
 
   DPmatrixHMM(int nstates,
 	      const vector< valarray<double> >& d1,const vector< valarray<double> >& d2, 
@@ -166,5 +152,9 @@ inline void DPmatrixHMM::forward(int i2,int j2,const Matrix& GQ) {
     FS2(i2,j2) += sub;
   }
 }     
+
+inline void DPmatrixHMM::forward(int i1,int j1,int i2,int j2,const Matrix& GQ) {
+  DPmatrix::forward(i1,j1,i2,j2,GQ);
+}
 
 #endif

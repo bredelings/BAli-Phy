@@ -234,7 +234,7 @@ alignment construct(const alignment& old, const vector<int>& path,
   for(int i=0;i<T.leaves();i++) 
     assert(A.seqlength(i) == old.seqlength(i));
 
-  std::cerr<<"new = "<<A<<endl;  
+  //  std::cerr<<"new = "<<A<<endl;  
   //  std::cerr<<"new(reordered) = "<<project(A,n0,n1,n2,n3)<<endl;
   assert(valid(A));
 
@@ -349,7 +349,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   const vector<double>& pi = Theta.IModel.pi;
   const valarray<double>& frequency = Theta.frequencies();
 
-  std::cerr<<"old = "<<old<<endl;
+  //  std::cerr<<"old = "<<old<<endl;
 
 
   /*---------------- Setup node names ------------------*/
@@ -377,8 +377,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
   vector<int> columns = getorder(old,n0,n1,n2,n3);
 
-  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
-  std::cerr<<"old (reordered) = "<<project(old,n0,n1,n2,n3)<<endl;
+  //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
+  //  std::cerr<<"old (reordered) = "<<project(old,n0,n1,n2,n3)<<endl;
 
   // Find sub-alignments and sequences
   vector<int> seq1;
@@ -537,13 +537,13 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   double s1 = substitution(old,Theta);
   double s2 = substitution(A,Theta);
 
-  double lp1 = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,1) +
-    prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,2) +
-    prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,3);
+  double lp1 = prior_branch(project(old,n0,n1,n2,n3),Theta.IModel,0,1) +
+    prior_branch(project(old,n0,n1,n2,n3),Theta.IModel,0,2) +
+    prior_branch(project(old,n0,n1,n2,n3),Theta.IModel,0,3);
 
-  double lp2 = prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,1) +
-    prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,2) +
-    prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,3);
+  double lp2 = prior_branch(project(A,n0,n1,n2,n3),Theta.IModel,0,1) +
+    prior_branch(project(A,n0,n1,n2,n3),Theta.IModel,0,2) +
+    prior_branch(project(A,n0,n1,n2,n3),Theta.IModel,0,3);
 
   double diff = Matrices.check(Q,GQ,path_old,path_new,lp1,s1,lp2,s2);
 
@@ -551,11 +551,11 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     std::cerr<<prior_HMM_nogiven(old,Theta) - lp1<<endl;
     std::cerr<<prior_HMM_nogiven(A  ,Theta) - lp2<<endl;
 
-    old.print(std::cerr);
-    A.print(std::cerr);
+    std::cerr<<old<<endl;
+    std::cerr<<A<<endl;
 
-    project(old,n0,n1,n2,n3).print(std::cerr);
-    project(A,n0,n1,n2,n3).print(std::cerr);
+    std::cerr<<project(old,n0,n1,n2,n3)<<endl;
+    std::cerr<<project(A,n0,n1,n2,n3)<<endl;
 
     assert(0);
   }
@@ -571,5 +571,3 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   else
     return old;
 }
-
-

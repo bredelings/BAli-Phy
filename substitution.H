@@ -13,6 +13,9 @@ double substitution(const alignment& A,const Parameters&);
 
 
 // Star likelihood of a column or alignment
-// FIXME - need to pick a root and get branch lengths by summing from that!
+// FIXME - need to get the STAR branch-lengths, non BINARY branch-lengths
+//         - estimate by minimizing sum of squares from true distance?
 double substitution_star(const vector<int>&,const Parameters&);
 double substitution_star(const alignment& A,const Parameters&);
+double substitution_star_constant(const alignment& A,const Parameters&);
+double substitution_star_estimate(const alignment& A,const Parameters&);

@@ -682,3 +682,35 @@ vector<int> tree::standardize(const vector<int>& lnames) {
 
   return mapping;
 }
+
+int tree::common_ancestor(int i,int j) const {
+  assert(0 <= i and i < num_nodes()); 
+  assert(0 <= j and j < num_nodes()); 
+
+  node* ni = names[i];
+  while (not ancestors[ni->name][j])
+    ni = ni->parent;
+
+  return ni->name;
+}
+
+
+double tree::distance2(int i,int j) const {
+  assert(ancestors[j][i]);
+
+  double d=0;
+  node* ni = names[i];
+  node* nj = names[j];
+  while(ni != nj) {
+    d += ni->parent_branch->length;
+    ni = ni->parent;
+  }
+
+  return d;
+}
+
+double tree::distance(int i,int j) const {
+  int ancestor = common_ancestor(i,j);
+
+  return distance2(i,ancestor)+distance2(j,ancestor);
+}

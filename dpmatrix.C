@@ -1,8 +1,66 @@
 #include "dpmatrix.H"
 #include "logsum.H"
 #include "choose.H"
+#include "rng.H"
 
 using std::abs;
+
+void DPmatrix::forward(int x1,int y1,int x2,int y2,const Matrix& GQ) {
+  const int maxdelta = std::max(x2-x1,y2-y1);
+
+  for(int delta=1; delta<=maxdelta; delta++) {
+    if (delta<size2())
+      for(int i=0;i<delta and i<size1();i++) 
+	forward(x1+i,y1+delta,GQ);
+
+    if (delta<size1())
+      for(int i=0;i<=delta and i<size2();i++)
+	forward(x1+delta,y1+i,GQ);
+  } 
+}
+
+void DPmatrix::forward(const vector<int>& path,int bandwidth,const Matrix& GQ) {
+  vector<int> icol;
+  vector<int> jcol;
+
+  int i=0;
+  int j=0;
+  icol.push_back(i);
+  jcol.push_back(j);
+  for(int c=0;c < path.size();c++) {
+
+    if (di(path[c]))
+      i++;
+    if (dj(path[c]))
+      j++;
+
+    if (not silent(path[c])) {
+      icol.push_back(i);
+      jcol.push_back(j);
+    }
+  }
+
+  assert(icol[icol.size()-1] == size1()-1 );
+  assert(jcol[jcol.size()-1] == size2()-1 );
+
+  vector<int> pins;
+  int column=0;
+  while(column < icol.size()-1) {
+    pins.push_back(column);
+    column += geometric(bandwidth)+1;
+  }
+  pins.push_back(icol.size()-1);
+
+  // Deal with silent states at (0,0)
+  forward(0,0,GQ);
+
+  // Process the squares generated
+  for(int i=0;i<pins.size()-1;i++) {
+    forward(icol[pins[i]],jcol[pins[i]],
+	    icol[pins[i+1]],jcol[pins[i+1]],GQ);
+  }
+}
+
 
 // Is this state silent and in a loop of silent states?
 bool DPmatrix::silent_network(int S) {

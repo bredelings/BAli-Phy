@@ -165,6 +165,7 @@ protected:
 
   void add_root(); 
 
+  double distance2(int,int) const;
 public:
   branchview branch(int i) {
     assert(i<branches_.size()-1);
@@ -193,6 +194,9 @@ public:
   void swap_children(int n);
   vector<int> standardize();
   vector<int> standardize(const vector<int>&);
+
+  int common_ancestor(int,int) const;
+  double distance(int,int) const;
 
 
   // n1 is an ancestor of n2, n2 is a descendant of n1

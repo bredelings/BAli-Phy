@@ -254,3 +254,61 @@ double substitution_star(const alignment& A,const Parameters& P) {
   return Pr;
 }
 
+double substitution_star_constant(const alignment& A,const Parameters& P) {
+  Parameters P2 = P;
+  const SequenceTree& T1 = P.T;
+  SequenceTree& T2 = P2.T;
+
+  //----------- Get Distance Matrix --------------//
+  Matrix D(T1.leaves(),T1.leaves());
+  for(int i=0;i<T1.leaves();i++) 
+    for(int j=0;j<T1.leaves();j++) 
+      D(i,j) = T1.distance(i,j);
+
+  //----------- Get Average Distance -------------//
+  double sum=0;
+  for(int i=0;i<T1.leaves();i++) 
+    for(int j=0;j<i;j++) 
+      sum += D(i,j);
+  const int n = (T1.leaves()*(T1.leaves()+1))/2;
+  double ave = sum/n;
+
+  //-------- Set branch lengths to ave/2  ----------//
+  for(int i=0;i<T2.leaves();i++)
+    T2.branch(i).length() = ave/2.0;
+
+
+  //----------- Get log L w/ new tree  -------------//
+  return substitution_star(A,P2);
+}
+
+double substitution_star_estimate(const alignment& A,const Parameters& P) {
+  Parameters P2 = P;
+
+  const SequenceTree& T1 = P.T;
+  SequenceTree& T2 = P2.T;
+
+  //----------- Get Distance Matrix --------------//
+  Matrix D(T1.leaves(),T1.leaves());
+  for(int i=0;i<T1.leaves();i++) 
+    for(int j=0;j<T1.leaves();j++) 
+      D(i,j) = T1.distance(i,j);
+
+
+  //---- Set branch lengths to ave/2 per branch ----//
+  for(int i=0;i<T2.leaves();i++) {
+    double ave=0;
+    for(int j=0;j<T2.leaves();j++) {
+      if (i==j) continue;
+      ave += log(D(i,j));
+    }
+    ave /= (T2.leaves()-1);
+    T2.branch(i).length() = exp(ave)/2.0;
+  }
+  for(int i=T2.leaves();i<T2.branches();i++) {
+    T2.branch(i).length() = 0;
+  }
+
+  //----------- Get log L w/ new tree  -------------//
+  return substitution_star(A,P2);
+}
