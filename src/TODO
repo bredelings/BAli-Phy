@@ -15,6 +15,8 @@
     d) begin to implement the separate random number generators.
 
  5.5. fp_scale speedups
+  c) std::fill_n<> is having a REAL problem with 3.4!
+
 [HARD]
   a) 10% - DPmatrixEmit::DPmatrix: try to remove unneeded initialization or speed it up.
      - initialize as we go forward
@@ -23,16 +25,51 @@
 
   b) speed up forward_cell by putting a boundary around the matrix :)
 
+  c) alter calling conventions for state_{array,matrix} so that we don't (ever?)
+     copy them.  
+     ? - should we make the copy constructor/operator= private?
+
+  d) find out how much time we are spending doing I/O...
+
+
 [EASY] - check for more!
-  c) do vector<double>'s always INITIALIZE them all to zero? 
-      Why does choose<double>( ) call std::fill_n( )?
-  d) DPmatrix::sample_path() const [42] -> spends HALF its time in vector<double>::vector(int) ?
-  e) how does createQ spend so much of its time NOT in getQ?
   f) why aren't we inlining vector<int>::operator[]  [49]?
   g) we spend 21% of substitution time in subA_index
   h) compare times w/ g++-4.0 times...  after improving the code a bit more.
+     - try -fprofile-generate and -fprofile-use
   i) check w/ fp_scale::cutoff = 1.0e-1 ? or 1.0e-10?
-                 
+
+[?]
+  * sample_tri_multi:
+    - spends 50% of its time copying vector<DPmatrixConstrained>..
+  * sample_two_nodes_multi( ):
+    - spend 15% of its time in copying vector<DParrayConstrained>...
+  * sample_two_nodes_base( ): 
+    - takes 15.4% of total time!  (costs 80.3% of time in sample_two_nodes_base( ).)
+    - spends 21% of its time in A5::createQ( )
+    - spends ONLY 27% of time in DParrayConstrained::forward()
+  * DPmatrixEmit( )
+    - takes 21% of total time!
+    - takes 35% of sample_alignment( )
+    - takes 34% of tri_sample_alignment_base( )
+    - spends 80% of its time in DPmatrix( )
+  * DPmatrix::DPmatrix( )
+    - takes 17% of total time!
+    - spends time locally, not from children
+  * A5::createQ( )
+    - takes 4% of total time
+    - HOW does it spend 40% of its time NOT in getQ( )?
+  * substitution::Pr( ): 
+    - takes 2.9% of time (OK)
+    - spends 23% of its time in subA_index( )
+  * print_stats( )
+    - takes ~ 0.7% of total time...
+
+[DONE] * shifted to using fp_scale architecture for DP sampling.
+       * move created of std::vector< > temporary variables out of loops.
+       * switched to using std::valarray< > instead of std::vector< > for state_{array,matrix}
+       * inlined di,dj,dk,dl,dc in 3way.H from 3way.C
+
 6. Make a more general substitution::Model class, so that we can e.g.
     have tree with 2 sets of branch lengths...
 
