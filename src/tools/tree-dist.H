@@ -42,28 +42,12 @@ struct Partition {
 
   int size() const {return group1.size();}
 
-  Partition(const std::valarray<bool>& g) 
-    :group1(g),group2(~g)
-  { }
+  Partition(const std::valarray<bool>& g);
+  Partition(const std::valarray<bool>& g,const std::valarray<bool>& mask); 
 
-  Partition(const std::valarray<bool>& g,const std::valarray<bool>& mask) 
-    :group1(g & mask),group2((~g)&mask)
-  {
-    assert(g.size() == mask.size());
-  }
-
-  Partition(const std::vector<std::string>& n,const std::valarray<bool>& g) 
-    :names(n),group1(g),group2(~ g)
-  {
-    assert(n.size() == g.size());
-  }
+  Partition(const std::vector<std::string>& n,const std::valarray<bool>& g); 
  
-  Partition(const std::vector<std::string>& n,const std::valarray<bool>& g,const std::valarray<bool>& mask) 
-    :names(n),group1(g & mask),group2((~g)&mask)
-  {
-    assert(n.size() == g.size());
-    assert(g.size() == mask.size());
-  }
+  Partition(const std::vector<std::string>& n,const std::valarray<bool>& g,const std::valarray<bool>& mask);
 };
 
 bool operator==(const Partition& p1, const Partition& p2);

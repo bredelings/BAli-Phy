@@ -14,6 +14,34 @@ using std::endl;
 using std::cerr;
 using std::cout;
 
+Partition::Partition(const valarray<bool>& g) 
+  :group1(g),group2(not g)
+{ 
+  assert(empty(group1 and group2));
+}
+
+Partition::Partition(const valarray<bool>& g,const valarray<bool>& mask) 
+  :group1(g and mask),group2((not g) and mask)
+{
+  assert(g.size() == mask.size());
+  assert(empty(group1 and group2));
+}
+
+Partition::Partition(const vector<string>& n,const valarray<bool>& g) 
+  :names(n),group1(g),group2(not g)
+{
+  assert(n.size() == g.size());
+  assert(empty(group1 and group2));
+}
+
+Partition::Partition(const vector<string>& n,const valarray<bool>& g,const valarray<bool>& mask) 
+  :names(n),group1(g and mask),group2((not g) and mask)
+{
+  assert(n.size() == g.size());
+  assert(g.size() == mask.size());
+  assert(empty(group1 and not group1));
+  assert(empty(group1 and group2));
+}
 
 SequenceTree standardized(const string& t) {
   SequenceTree T;
@@ -77,6 +105,13 @@ bool empty(const valarray<bool>& v) {
   return true;
 }
 
+int n_elements(const valarray<bool>& v) {
+  int count = 0;
+  for(int i=0;i<v.size() ;i++)  
+    if (v[i]) count++;
+  return count;
+}
+
 bool equal(const valarray<bool>& v1,const valarray<bool>& v2) {
   assert(v1.size() == v2.size());
   for(int i=0;i<v1.size();i++)
@@ -85,13 +120,13 @@ bool equal(const valarray<bool>& v1,const valarray<bool>& v2) {
   return true;
 }
 
-bool intersect(const std::valarray<bool>& v1,const std::valarray<bool>& v2) 
+bool intersect(const valarray<bool>& v1,const valarray<bool>& v2) 
 {
   assert(v1.size() == v2.size());
   return not empty(v1&v2);
 }
 
-bool implies(const std::valarray<bool>& v1,const std::valarray<bool>& v2) {
+bool implies(const valarray<bool>& v1,const valarray<bool>& v2) {
   assert(v1.size() == v2.size());
   for(int i=0;i<v1.size();i++)
     if (v2[i] and not v1[i])
@@ -101,14 +136,29 @@ bool implies(const std::valarray<bool>& v1,const std::valarray<bool>& v2) {
 
 std::ostream& operator<<(std::ostream& o, const Partition& P) 
 {
-  for(int i=0;i<P.size();i++)
-    if (P.group1[i]) o<<P.names[i]<<" ";
+  assert(empty(P.group1 and P.group2));
 
-  o<<"| ";
-
-  for(int i=0;i<P.size();i++)
-    if (P.group2[i]) o<<P.names[i]<<" ";
-  o<<endl;
+  if (n_elements(P.group1)<n_elements(P.group2)) {
+    for(int i=0;i<P.size();i++)
+      if (P.group1[i]) o<<P.names[i]<<" ";
+    
+    o<<"| ";
+    
+    for(int i=0;i<P.size();i++)
+      if (P.group2[i]) o<<P.names[i]<<" ";
+    o<<endl;
+  }
+  else {
+    for(int i=0;i<P.size();i++)
+      if (P.group2[i]) o<<P.names[i]<<" ";
+    
+    o<<"| ";
+    
+    for(int i=0;i<P.size();i++)
+      if (P.group1[i]) o<<P.names[i]<<" ";
+    o<<endl;
+  }
+      
 
   return o;
 }
