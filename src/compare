@@ -360,3 +360,12 @@ DISADVANTAGE to putting the operations close together?
 
 Routines to cut:  prior_branch()  12%
 Can I simply call prior() less often?
+
+542-likelihood-NDEBUG:  (we haven't even sped up calc-root likelihood yet!)
+
+0.14(5/5S)
+1.12(5)
+3.9 (12)
+10.2(24)  (10.24 -> 10.0 or 10.05 w/ disable=g_parameters)
+31.6(48)
+Actually, I made a small change, so the above will actually be r543
