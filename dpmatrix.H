@@ -235,13 +235,13 @@ protected:
 
 public:
   /// Probabilities of the different rates
-  const vector<double> distribution;
+  vector<double> distribution;
   /// Emission probabilities for first sequence
-  const vector< vector< valarray<double> > > dists1;
+  vector< vector< valarray<double> > > dists1;
   /// Emission probabilities for second sequence
-  const vector< vector< valarray<double> > > dists2;
+  vector< vector< valarray<double> > > dists2;
   /// Frequencies at the root node - and equilibrium frequencies
-  const valarray<double> frequency;
+  valarray<double> frequency;
   /// The number of different rates
   int nrates() const {return dists1[0].size();}
 

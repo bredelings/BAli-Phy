@@ -198,7 +198,6 @@ alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
 
   vector<int> path_old = get_path(project(old,nodes),newnodes,A5::states_list);
   vector<int> path_new = get_path(project(A,nodes),newnodes,A5::states_list);
-
   //-------------- Check relative path probabilities --------------//
   double s1 = P.likelihood(old,P);
   double s2 = P.likelihood(A,P);

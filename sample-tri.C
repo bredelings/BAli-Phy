@@ -89,36 +89,6 @@ vector< vector<valarray<double> > > distributions_tree(const alignment& A,const 
   return dist;
 }
 
-/// Setup node names 
-vector<int> getnodes(const tree& T,int node1,int node2) {
-
-  vector<int> nodes(4);
-
-  assert(node1 >= T.leaves());
-
-  nodes[0] = node1;
-  nodes[1] = T[nodes[0]].parent();
-  nodes[2] = T[nodes[0]].left();
-  nodes[3] = T[nodes[0]].right();
-
-  // make sure nodes[1] == node2
-  if (node2 == nodes[1])
-    ; // good
-  else if (node2 == nodes[2])
-    std::swap(nodes[1],nodes[2]); // 
-  else if (node2 == nodes[3])
-    std::swap(nodes[1],nodes[3]);
-  else
-    std::abort();
-
-  // randomize the order here
-  if (myrandom(2) == 1)
-    std::swap(nodes[2],nodes[3]);
-
-
-  return nodes;
-}
-
 // FIXME - actually resample the path multiple times - pick one on
 // opposite side of the middle 
 DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
@@ -249,16 +219,16 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
 #ifndef NDEBUG_DP
   //--------------- Check alignment construction ------------------//
-  vector<int> path_new = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
+  vector<int> path_new = get_path_3way(project(A,nodes),0,1,2,3);
 
-  vector<int> path_new2 = get_path_3way(A,nodes[0],nodes[1],nodes[2],nodes[3]);
+  vector<int> path_new2 = get_path_3way(A,nodes);
   assert(path_new == path_new2); // <- current implementation probably guarantees this
                                  //    but its not a NECESSARY effect of the routine.
                                  //    due to ordering stuff required in the path but
                                  //    not store in the alignment A.
   vector<int> path_new_g = Matrices.generalize(path_new);
   if (path_new_g != path_g) {
-    std::clog<<"A' (reordered) = "<<project(A,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
+    std::clog<<"A' (reordered) = "<<project(A,nodes)<<endl;
     std::clog<<"A' = "<<A<<endl;
     std::abort();
   }
@@ -279,14 +249,14 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node
   /*------------(Gibbs) sample from proposal distribution ------------------*/
 
   alignment A = old;
-  vector<int> nodes = getnodes(P.T,node1,node2);
+  vector<int> nodes = get_nodes_branch_random(P.T,node1,node2);
 
   DPmatrixConstrained Matrices =  tri_sample_alignment_base(A,P,nodes);
 
 #ifndef NDEBUG_DP
   /*---------- get the paths through the 3way alignment, from the entire alignment ----------*/
-  vector<int> path_old = get_path_3way(project(old,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
-  vector<int> path_new = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
+  vector<int> path_old = get_path_3way(project(old,nodes),0,1,2,3);
+  vector<int> path_new = get_path_3way(project(A,nodes),0,1,2,3);
 
   //-------------- Check relative path probabilities --------------//
   double s1 = P.likelihood(old,P);
@@ -301,8 +271,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node
     std::cerr<<old<<endl;
     std::cerr<<A<<endl;
 
-    std::cerr<<project(old,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
-    std::cerr<<project(A,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
+    std::cerr<<project(old,nodes)<<endl;
+    std::cerr<<project(A,nodes)<<endl;
 
     std::abort();
   }
@@ -334,7 +304,7 @@ bool tri_sample_alignment_branch(alignment& old,Parameters& P1,
 
   /*-------------- Create alignment matrices and sample from them---------------*/
 
-  vector<int> nodes = getnodes(P1.T,node1,node2);
+  vector<int> nodes = get_nodes_branch_random(P1.T,node1,node2);
 
   DPmatrixConstrained Matrices1 = tri_sample_alignment_base(A,P1,nodes);
 

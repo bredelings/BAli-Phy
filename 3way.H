@@ -12,6 +12,11 @@ namespace A3 {
 
   namespace states = A2::states;
 
+  vector<int> get_nodes(const tree& T,int n0);
+  vector<int> get_nodes_random(const tree& T,int n0);
+
+  vector<int> get_nodes_branch_random(const tree& T,int n0,int n1);
+
 // bits 3,2,1,0     = node present mask
 // bits 98,76,54    = sub-alignment state
 // bits 12,11,10    = sub-alignment not-present mask
@@ -55,10 +60,18 @@ namespace A3 {
 
   vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3);
   alignment project(const alignment& A1,int n0,int n1,int n2,int n3);
+  alignment project(const alignment& A1,const vector<int>&);
+
+  /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
+  double log_correction(const alignment& A,const Parameters& P,const vector<int>& nodes);
+
+  double log_acceptance_ratio(const alignment& A1,const Parameters& P1,const vector<int>&,
+			      const alignment& A2,const Parameters& P2,const vector<int>&);
 };
 
 
 vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3);
+vector<int> get_path_3way(const alignment& A,const vector<int>& nodes);
 
 
 #endif

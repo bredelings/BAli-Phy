@@ -38,26 +38,20 @@ using std::valarray;
 
 using namespace A3;
 
-alignment sample_node(const alignment& old,const Parameters& P,int node) {
+DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const tree& T = P.T;
+
+  alignment old = A;
 
   const vector<double>& pi = P.IModel().pi;
 
   //  std::cerr<<"old = "<<old<<endl;
 
-  /*---------------- Setup node names ------------------*/
-  assert(node >= T.leaves());
-
-  int n0 = node;
-  int n1 = T[node].parent();
-  int n2 = T[node].left();
-  int n3 = T[node].right();
-
-  // choose a random order;
-  vector<int> nodes(3);nodes[0] = n1;nodes[1] = n2; nodes[2] = n3;
-  nodes = randomize(nodes); n1 = nodes[0]; n2 = nodes[1]; n3 = nodes[2];
-
   /*------------- Compute sequence properties --------------*/
+  int n0 = nodes[0];
+  int n1 = nodes[1];
+  int n2 = nodes[2];
+  int n3 = nodes[3];
   vector<int> columns = getorder(old,n0,n1,n2,n3);
 
   //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
@@ -161,16 +155,10 @@ alignment sample_node(const alignment& old,const Parameters& P,int node) {
   vector<int> path_g = Matrices.sample_path();
   vector<int> path = Matrices.ungeneralize(path_g);
 
-  alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
+  A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
 
-#ifndef NDEBUG_DP
-  //--------------- Check alignment construction ------------------//
-
-  // get the paths through the 3way alignment, from the entire alignment
-  vector<int> path_old = get_path_3way(project(old,n0,n1,n2,n3),0,1,2,3);
+#ifndef NDEBUG
   vector<int> path_new = get_path_3way(project(A,n0,n1,n2,n3),0,1,2,3);
-
-  vector<int> path_old2 = get_path_3way(old,n0,n1,n2,n3);
   vector<int> path_new2 = get_path_3way(A,n0,n1,n2,n3);
   assert(path_new == path_new2); // <- current implementation probably guarantees this
                                  //    but its not a NECESSARY effect of the routine.
@@ -179,6 +167,34 @@ alignment sample_node(const alignment& old,const Parameters& P,int node) {
   vector<int> path_new_g = Matrices.generalize(path_new);
   assert(path_new_g == path_g);
   assert(valid(A));
+
+
+#endif
+
+  return Matrices;
+}
+
+
+
+alignment sample_node(const alignment& old,const Parameters& P,int node) {
+  const tree& T = P.T;
+
+  alignment A = old;
+
+  //---------------- Setup node names ------------------//
+  assert(node >= T.leaves());
+
+  // choose a random order;
+  vector<int> nodes = A3::get_nodes_random(T,node);
+
+  DParrayConstrained Matrices = sample_node_base(A,P,nodes);
+
+#ifndef NDEBUG_DP
+  //--------------- Check alignment construction ------------------//
+
+  // get the paths through the 3way alignment, from the entire alignment
+  vector<int> path_old = get_path_3way(project(old,nodes),0,1,2,3);
+  vector<int> path_new = get_path_3way(project(A,nodes),0,1,2,3);
 
   //-------------- Check relative path probabilities --------------//
   double s1 = P.likelihood(old,P);
@@ -193,20 +209,21 @@ alignment sample_node(const alignment& old,const Parameters& P,int node) {
     std::cerr<<old<<endl;
     std::cerr<<A<<endl;
 
-    std::cerr<<project(old,n0,n1,n2,n3)<<endl;
-    std::cerr<<project(A,n0,n1,n2,n3)<<endl;
+    std::cerr<<A3::project(old,nodes)<<endl;
+    std::cerr<<A3::project(A,nodes)<<endl;
 
     std::abort();
   }
 #endif
 
   /*---------------- Adjust for length of n0 changing --------------------*/
-  int length_old = old.seqlength(n0);
-  int length_new = A.seqlength(n0);
+  int length_old = old.seqlength(nodes[0]);
+  int length_new = A.seqlength(nodes[0]);
 
   double log_ratio = 2.0*(P.IModel().lengthp(length_old)-P.IModel().lengthp(length_new));
   if (myrandomf() < exp(log_ratio))
     return A;
   else
     return old;
+
 }

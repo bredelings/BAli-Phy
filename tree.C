@@ -305,7 +305,7 @@ void tree::reroot(int b) {
 
   reorder();
   compute_ancestors();
-  assert(root->right->parent_branch->length == 0.0);
+  check_structure();
 }
 
 // This routine (re)computes everything, starting with
@@ -532,6 +532,36 @@ void tree::do_swap(node* c1,node* c2) {
 }
 
 
+void tree::check_structure() const {
+#ifndef NDEBUG
+  //----- Check that our lookup tables are right ------//
+  assert(names.size() == order.size());
+  for(int i=0;i<names.size();i++) {
+    assert(names[i]->name == i);
+    assert(order[i]->order == i);
+    if (i<n_branches())
+      assert(branches_[i]->name == i);
+  }
+
+  //------------ Check pointer structure --------------//
+  for(int i=0;i<names.size();i++) {
+    if (names[i]->left or names[i]->right)
+      assert(names[i]->left and names[i]->right);
+    if (names[i]->parent) {
+      assert(names[i]->parent == names[i]->parent_branch->parent);
+      assert(names[i] == names[i]->parent->left or names[i] == names[i]->parent->right);
+    }
+  }
+
+  //-----for leaves, branch names and node names should correspond -----//
+  if (this->n_leaves()>2)
+    for(int i=0;i<this->n_leaves();i++)
+      assert(branch_up(i) == i);
+
+  assert(root->right->parent_branch->length == 0.0);
+#endif
+}
+
 void tree::exchange(int node1,int node2) {
   if (ancestor(node1,node2))
     std::swap(node1,node2);
@@ -579,23 +609,9 @@ void tree::exchange(int node1,int node2) {
   // doesn't mess with the names
   reorder();
 
-  /***** Check that our lookup tables are right *****/
-  assert(names.size() == order.size());
-  for(int i=0;i<names.size();i++) {
-    assert(names[i]->name == i);
-    assert(order[i]->order == i);
-    if (i<n_branches())
-      assert(branches_[i]->name == i);
-  }
-
-  /******* for leaves, branch names and node names should correspond *******/
-  if (this->n_leaves()>2)
-    for(int i=0;i<this->n_leaves();i++)
-      assert(branch_up(i) == i);
-
-
   compute_ancestors();
 
+  check_structure();
 }
 
 void tree::SPR(int n1, int n2, int b) {
@@ -620,34 +636,22 @@ void tree::SPR(int n1, int n2, int b) {
   }
   assert(ancestor(n1,n2));
     
+  // avoid messing with the root's right branch...
+  if (names[n1] == root->right)
+    swap_children(root->name);
+
   // cut out n2, fix up the length
   ::remove_subtree(names[n2],root);
 
-  // fix up lengths of hacked branch
-  assert(root->left and root->right);
-  if (root->right->parent_branch->length != 0) {
-    root->left->parent_branch->length += root->right->parent_branch->length;
-    root->right->parent_branch->length = 0;
-  }
-
-  // fix up naming so that root->right->parent_branch->name == n_branches()
-  if (root->right->parent_branch->name != n_branches()) {
-    int b1 = root->right->parent_branch->name;
-    int b2 = n_branches();
-    std::swap(branches_[b1],branches_[b2]);
-    branches_[b1]->name = b1;
-    branches_[b2]->name = b2;
-  }
-
-
   // re-insert n1->n2
-  insert_subtree(names[n2],names[ branch(b).child() ] );
+  insert_subtree(names[n2],branches_[b]->child );
 
   // recompute ordering, and ancestors
   reorder();
+
   compute_ancestors();
 
-  assert(root->right->parent_branch->length == 0.0);
+  check_structure();
 }
 
 

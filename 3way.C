@@ -1,10 +1,21 @@
 #include "3way.H"
 #include "bits.H"
 #include "logsum.H"
+#include "util.H"
+#include "rng.H"
 
 using std::valarray;
 
 using namespace A3;
+
+vector<int> get_path_3way(const alignment& A,const vector<int>& nodes) {
+  int n0 = nodes[0];
+  int n1 = nodes[1];
+  int n2 = nodes[2];
+  int n3 = nodes[3];
+  return get_path_3way(A,n0,n1,n2,n3);
+}
+
 
 vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
 
@@ -54,6 +65,59 @@ vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
 }
 
 namespace A3 {
+
+  vector<int> get_nodes(const tree& T,int n0) {
+    vector<int> nodes(4);
+    nodes[0] = n0;
+    nodes[1] = T[n0].parent();
+    nodes[2] = T[n0].left();
+    nodes[3] = T[n0].right();
+    
+    return nodes;
+  }
+  
+  vector<int> get_nodes_random(const tree& T,int n0) {
+    vector<int> nodes = get_nodes(T,n0);
+    
+    vector<int> nodes2;
+    nodes2.insert(nodes2.end(),nodes.begin()+1,nodes.end());
+    randomize(nodes2);
+    nodes[1] = nodes2[0];
+    nodes[2] = nodes2[1];
+    nodes[3] = nodes2[2];
+    
+    return nodes;
+  }
+
+  /// Setup node names 
+  vector<int> get_nodes_branch_random(const tree& T,int node1,int node2) {
+    
+    vector<int> nodes(4);
+    
+    assert(node1 >= T.leaves());
+    
+    nodes[0] = node1;
+    nodes[1] = T[nodes[0]].parent();
+    nodes[2] = T[nodes[0]].left();
+    nodes[3] = T[nodes[0]].right();
+    
+    // make sure nodes[1] == node2
+    if (node2 == nodes[1])
+      ; // good
+    else if (node2 == nodes[2])
+      std::swap(nodes[1],nodes[2]); // 
+    else if (node2 == nodes[3])
+      std::swap(nodes[1],nodes[3]);
+    else
+      std::abort();
+    
+    // randomize the order here
+    if (myrandom(2) == 1)
+      std::swap(nodes[2],nodes[3]);
+    
+    return nodes;
+  }
+  
 
   vector<int> get_state_emit() {
     vector<int> state_emit(nstates+1);
@@ -468,6 +532,15 @@ namespace A3 {
     return columns;
   }
 
+  alignment project(const alignment& A,const vector<int>& nodes) {
+    int n0 = nodes[0];
+    int n1 = nodes[1];
+    int n2 = nodes[2];
+    int n3 = nodes[3];
+    return project(A,n0,n1,n2,n3);
+  }
+
+
   alignment project(const alignment& A1,int n0,int n1,int n2,int n3) {
     alignment A2;
     A2.add_sequence(A1.seq(n0));
@@ -485,6 +558,20 @@ namespace A3 {
     }
 
     return A2;
+  }
+
+  double log_correction(const alignment& A,const Parameters& P,const vector<int>& nodes) {
+    int length = A.seqlength(nodes[0]);
+
+    return 2.0*( P.IModel().lengthp(length) );
+  }
+
+
+  double log_acceptance_ratio(const alignment& A1,const Parameters& P1,const vector<int>& nodes1,
+			      const alignment& A2,const Parameters& P2,const vector<int>& nodes2) {
+    double log_ratio = log_correction(A1,P1,nodes1) - log_correction(A2,P2,nodes2);
+
+    return log_ratio;
   }
 
 }

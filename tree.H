@@ -162,6 +162,8 @@ protected:
 
   void compute_ancestors();
 
+  void check_structure() const;
+
   //auxiliary
   void do_swap(node*,node*);
   //re-compute everything from the root, put tree in sane state
