@@ -246,8 +246,8 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   const vector<double>& pi = Theta.IModel.pi;
   const valarray<double>& frequency = Theta.frequencies();
 
-  int node1 = T.branch(b).node1;
-  int node2 = T.branch(b).node2;
+  int node1 = T.branch(b).parent();
+  int node2 = T.branch(b).child();
   assert(node1 > node2);
 
   int old_length1 = old.seqlength(node1);

@@ -229,7 +229,7 @@ void alignment::create_internal(const SequenceTree& T) {
   // Make sure there are no G2->G1 transitions
   for(int n2=0;n2<T.branches();n2++) {
     assert(0);  //FIXME - not how we deal w/ branches!
-    int n1 = T.parent(n2);
+    int n1 = T[n2].parent();
 
     int g1 = -1,g2 = -1;
     for(int column=0;column<length();column++) {

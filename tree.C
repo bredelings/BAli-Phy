@@ -66,9 +66,6 @@ void TreeView::exchange_cousins(node* node1, node* node2) {
 
   // We assume that either node is an ancestor of the other
 
-  // Neither node is a child of the root
-  assert(p1->parent and p2->parent);
-
   if (p1->left == node1)
     p1->left = node2;
   else
@@ -275,8 +272,20 @@ std::valarray<bool> tree::partition(int n1,int n2) const {
   return mask;
 }
 
-int tree::branch_up(int node1) const {
-  return up_branches[node1];
+branchview tree::branch_up(int node1) {
+  node* n1 = names[node1];
+  if (not n1->parent->parent)
+    return n1->parent->parent->left->parent_branch;
+  else
+    return n1->parent_branch;
+}
+
+const_branchview tree::branch_up(int node1) const {
+  node* n1 = names[node1];
+  if (not n1->parent->parent)
+    return n1->parent->parent->left->parent_branch;
+  else
+    return n1->parent_branch;
 }
 
 
@@ -303,52 +312,70 @@ int tree::branch_up(int node1) const {
 // if parent(node1) == parent(node2), which can happen at the top
 // of the tree when p1 != p2, then 
 
-void tree::exchange(int node1, int node2) {
+void do_swap(node* c1,node* c2) {
+  node* n1 = c1->parent;
+  node* n2 = c2->parent;
+
+  assert(n2->order > n1->order);
+
+  Branch* b1 = n1->parent_branch;
+  Branch* b2 = n2->left->parent_branch;
+  if (c1 == n2->left)
+    b2 = n2->right->parent_branch;
+
+  std::swap(n1->name,n2->name);
+  TreeView::exchange_cousins(c1,c2);
+
+  std::swap(b1->name,b2->name);
+  std::swap(b1->length,b2->length);
+}
+
+
+void tree::exchange(int node1,int node2) {
   if (ancestor(node1,node2))
     std::swap(node1,node2);
 
-  if (parent(node1) == parent(node2))
-    return;
-  else if (ancestor(node2,node1) or not names[node2]->parent->parent) {  
+  node* n1 = names[node1];
+  node* n2 = names[node2];
 
-    vector<int> intermediate;
-    int here = parent(node1);
+  // Always want to deal with LEFT branch under root
+  if (n1 == root->right or n2 == root->right) {
+    // Swap the left and right branches
+    std::swap(root->left->parent_branch->child,root->right->parent_branch->child);
+    std::swap(root->left->parent_branch,root->right->parent_branch);
+
+    // Swap the left and right nodes
+    std::swap(root->left,root->right);
+  }
+
+  if (n1->parent == n2->parent)
+    return;
+  else if (ancestor(node2,node1)) {
+
+    vector<node*> intermediate;
+    node* here = n1->parent;
 
     /****** Find the intermediate children *******/
-    assert(here != node2);
+    assert(here != n2);
     do {
-      intermediate.push_back(here);
-      here = parent(here);
+      node* there = here->left;
+      if (ancestor(there->name,node1))
+	  there = here->right;
+      intermediate.push_back(there);
+      here = here->parent;
     }
-    while(here != node2);
-
-    //FIXME - implement new algorithm!
-    assert(0);
+    while(here != n2);
 
     /******  Invert the order of the intermediate nodes ****/
     for(int i=0;i<intermediate.size()/2;i++) {
       int j = intermediate.size()-1-i;
-
-      // exchange their names 
-      int pi = parent(intermediate[i]);
-      int pj = parent(intermediate[j]);
-      std::swap(names[pi],names[pj]);
-      names[pi]->name = pi;
-      names[pj]->name = pj;
-
-      // exchange their subtrees
-      TreeView::exchange_cousins(intermediate[i],intermediate[j]);
+      node* nodei = intermediate[i];
+      node* nodej = intermediate[j];
+      do_swap(nodei,nodej);
     }
-
-    //***** Get the intermediate nodes *********/
-    for(int i=0;i<intermediate.size();i++)
-      intermediate[i] = parent(intermediate[i]);
-
-    assert(parent(intermediate[0]) == node2);
-    assert(parent(node1) == intermediate[intermediate.size()-1]);
   }
   else     
-    TreeView::exchange_cousins(node1,node2);
+    TreeView::exchange_cousins(n1,n2);
 
   reorder();
 }
@@ -485,13 +512,13 @@ void SequenceTree::write(std::ostream& o,int n) const {
     int right = T[n].right();
     o<<"(";
     write(o,left);
-    o<<":"<<T.branch(left).length<<",";
+    o<<":"<<T.branch(left).length()<<",";
     write(o,right);
 
     if (right>= branches())
       o<<":"<<0<<")";
     else
-      o<<":"<<T.branch(right).length<<")";
+      o<<":"<<T.branch(right).length()<<")";
   }
   o.flags(old_flags);
 }

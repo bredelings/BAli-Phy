@@ -19,6 +19,7 @@ double prior_no_tree(const alignment& A,const Parameters& Theta) {
   return Theta.IModel.lambda_O*init_gaps + Theta.IModel.lambda_E*extend_gaps;
 }
 
+// Symmetric - doesn't matter which is parent and child
 double prior_branch(const alignment& A,const IndelModel& IModel,int n1,int n2) {
   int gap = 0;
   int init_gaps = 0;
@@ -42,20 +43,22 @@ double prior_branch(const alignment& A,const IndelModel& IModel,int n1,int n2) {
 
 
 double prior_internal(const alignment& A,const Parameters& Theta) {
+  const tree& T = Theta.T;
+
   double P=0;
-  for(int i=0;i<Theta.T.branches();i++) {
-    assert(0); //FIXME - wrong method of dealing w/ branches!
-    int parent = Theta.T.parent(i);
-    P += prior_branch(A,Theta.IModel,i,parent);
+  for(int b=0;b<T.branches();b++) {
+    int parent = T.branch(b).parent();
+    int child  = T.branch(b).child();
+    P += prior_branch(A,Theta.IModel,parent,child);
   }
   return P;
 }
 
 /** FIXME - numerically check that choice of root node doesn't matter **/
-double prior_branch_HMM(const alignment& A,const IndelModel& IModel,int n1,int n2) {
-  vector<int> state = get_path(A,n1,n2);
+double prior_branch_HMM(const alignment& A,const IndelModel& IModel,int parent,int child) {
+  vector<int> state = get_path(A,parent,child);
 
-  int length1 = A.seqlength(n1);
+  int length1 = A.seqlength(parent);
 
   double P = log_0;
   for(int i=0;i<4;i++)
@@ -76,14 +79,17 @@ double prior_branch_HMM(const alignment& A,const IndelModel& IModel,int n1,int n
 }
 
 double prior_HMM(const alignment& A,const Parameters& Theta) {
+  const tree& T = Theta.T;
+
   assert(0); //FIXME - wrong way to find highest node
   int highest_node = Theta.T.num_nodes()-2;
   double P = Theta.IModel.lengthp(A.seqlength(highest_node));
 
-  for(int i=0;i<Theta.T.branches();i++) {
-    assert(0); //FIXME - wrong method of dealing w/ branches!
-    int parent = Theta.T.parent(i);
-    P += prior_branch_HMM(A,Theta.IModel,parent,i);
+  for(int b=0;b<T.branches();b++) {
+    int parent = T.branch(b).parent();
+    int child  = T.branch(b).child();
+    P += prior_branch_HMM(A,Theta.IModel,parent,child);
   }
+
   return P;
 }

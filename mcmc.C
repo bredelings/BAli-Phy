@@ -105,8 +105,6 @@ void MCMC(alignment& A,Parameters& Theta,
   A.create_internal(T);
   std::cerr<<A<<endl;
 
-  SequenceTree Sum = T;
-
   const int correlation_time = int(T.leaves()*log(T.leaves()));
   const int start_after = int( 600.0*T.leaves()*log(T.leaves()) );
   int total_samples = 0;
@@ -128,23 +126,8 @@ void MCMC(alignment& A,Parameters& Theta,
 
     /******************** Record Statistics *******************/
     if (iterations > start_after) {
-
-
       if (iterations%correlation_time == 0) 
       	print_alignments(A,Theta);
-
-      for(int i=0;i<T.num_nodes();i++)
-	Sum.branch(i).length += T.branch(i).length;
-      total_samples++;
-
-      if (iterations % 100 == 0) {
-	SequenceTree Average = Sum;
-	for(int i=0;i<T.num_nodes();i++)
-
-	std::cout<<"------begin tree---------\n";
-	std::cout<<Average<<endl;
-	std::cout<<"------end tree---------\n";
-      }
     }
 
 

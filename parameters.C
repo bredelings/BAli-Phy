@@ -194,15 +194,15 @@ IndelModel::IndelModel(double LO,double LE)
 void Parameters::setlength(int b,double l) {
   assert(l >= 0);
   assert(b >= 0 and b < T.branches());
-  T.branch(b).length = l;
-  substitution_[b] = SModel->transition_p(T.branch(b).length);
+  T.branch(b).length() = l;
+  substitution_[b] = SModel->transition_p(T.branch(b).length());
 }
 
 
 void Parameters::recalc() {
   substitution_.clear();
   for(int b=0;b<T.branches();b++) 
-    substitution_.push_back(SModel->transition_p(T.branch(b).length));
+    substitution_.push_back(SModel->transition_p(T.branch(b).length()));
 }
 
 

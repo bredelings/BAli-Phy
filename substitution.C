@@ -5,8 +5,12 @@
 using std::valarray;
 
 //FIXME - should be some way to avoid duplication matrix multiply?
-//how to deal with directionality of top edge?  sometime peel down,
-// sometimes peel up
+
+valarray<double> peel(int letter,const Matrix& P,const valarray<double>& dist) {
+  if (letter = alphabet::
+}
+
+
 valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
 		      int node1, int node2) {
   const alphabet& a = Theta.get_alphabet();
@@ -15,9 +19,32 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
   // we are spending too much work creating AND destroying this thing
   TreeFunc< valarray<double> > distributions(T);
 
+  // Directionality is determined solely by which node is the top node
+  // We arbitrarily pick this based on which node is parent in the branch
+  // So, indirectly, branch directionality DOES matter
+  /*************** Find our branch, and orientation ****************/
+  bool down = false;
+  int b = T.branch_up(node1);
+  if (T.branch(b).parent() == node2)
+    true; // well and good
+  else {
+    b = T.branch_up(node2);
+    down = true;
+  }
+
+  if (down)
+    assert(node1 == T.branch(b).parent() and node2 == T.branch(b).child());
+  else
+    assert(node2 == T.branch(b).parent() and node1 == T.branch(b).child());
+
+  //Which node is the root in these calculations - we collect everything here
+  int top_node = T.branch(b).parent();
+
+  /***************** end branch and orientation ******************/
+
   valarray<bool> group = T.partition(node1,node2);
-  if (node1 != T.parent(node2)) group[node2] = false; // don't propagate from node2
-  assert(0);//FIXME - the above test doesn't work for top branch
+  //If node2 is the top node (the root), don't propogate up from it
+  if (not down) group[node2] = false; 
 
   // what nodes do we need to work in the second pass
   vector<int> work;
@@ -26,11 +53,11 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
   // declare a temporary for use in the loop
   valarray<double> dist(a.size());
 
-  // peel up as far as possible
+  /******* Pass 1: Peel down to all nodes below top_node ***********/
   for(int n=0;n<T.num_nodes()-1;n++) {
     if (!group[n]) continue;
     
-    if (node1 != T.parent(node2) and T.ancestor(n,node2)) {
+    if (not down and T.ancestor(n,node2)) {
       work.push_back(n);
       continue;
     }
@@ -53,7 +80,7 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
 	  dist[i] += Q(i,j)*distributions(n)[j];
     }
 
-    int parent = T.parent(n);
+    int parent = T[n].parent();
     if (!distributions(parent).size()) {
       distributions(parent).resize(a.size());
       distributions(parent) = dist;
@@ -63,9 +90,9 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
   }
   
   if (work.size())
-    assert(node1 != T.parent(node2));
+    assert(node1 != T[node2].parent());
 
-  // peel down to node2
+  /******* Pass 2: Peel down top_node ***********/
   for(int i=work.size()-1;i>=0;i--) {
     int n = work[i];
     if (!distributions(n).size()) continue;

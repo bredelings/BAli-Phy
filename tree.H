@@ -68,6 +68,8 @@ public:
   ~TreeView() {}
 };
 
+class const_branchview;
+
 class nodeview {
   const node* n;
 public:
@@ -96,6 +98,35 @@ public:
   nodeview(const node* n_):n(n_) {}
 };
 
+class branchview {
+  Branch* b;
+public:
+  nodeview parent() const {return b->parent;}
+  nodeview child() const {return b->child;}
+
+  int& name() {return b->name;}
+  const int& name() const {return b->name;}
+
+  double& length() {return b->length;}
+  const double& length() const {return b->length;}
+
+  operator int() {return name();}
+  branchview(Branch* b_):b(b_) {}
+};
+
+class const_branchview {
+  const Branch* b;
+public:
+  nodeview parent() const {return b->parent;}
+  nodeview child() const {return b->child;}
+
+  int name() const {return b->name;}
+  double length() const {return b->length;}
+
+  operator int() {return name();}
+  const_branchview(const Branch* b_):b(b_) {}
+};
+
 class tree {
   int n_leaves;
   node* root;
@@ -119,14 +150,16 @@ protected:
   void add_root(); 
 
 public:
-  Branch& branch(int i) {
+  branchview branch(int i) {
+    assert(i<branches_.size()-1);
     assert(branches_[i]->parent == branches_[i]->child->parent);
-    return *branches_[i];
+    return branches_[i];
   }
-  
-  const Branch& branch(int i) const {
+
+  const_branchview branch(int i) const {
+    assert(i<branches_.size()-1);
     assert(branches_[i]->parent == branches_[i]->child->parent);
-    return *branches_[i];
+    return branches_[i];
   }
   
   const nodeview operator[](int i) const { return nodeview(names[i]);}
@@ -137,16 +170,15 @@ public:
   int leaves() const {return n_leaves;}
   int branches() const {return branches_.size()-1;}
   int num_nodes() const {return order.size();}
-  int branch_up(int) const;
+  branchview branch_up(int);
+  const_branchview branch_up(int) const;
 
   bool ancestor(int n1, int n2) const {return ancestors[n1][n2];}
   std::valarray<bool> partition(int n1,int n2) const;
 
-  TreeView copy() const;
+  TreeView copy() const {return TreeView(root).copy();}
   void exchange(int,int);
   
-  inline int parent(int) const;
-
   tree& operator=(const tree&);
 
   tree():root(0) {n_leaves=0;}
@@ -159,18 +191,6 @@ public:
 
 inline bool leaf(const node& n) {
   return (not n.left and not n.right);
-}
-
-inline int tree::parent(int n) const {
-  assert(names[n]->parent);
-  int p = names[n]->parent->name;
-  if (not names[p]->parent) {
-    if (names[p]->left->name != n)
-      p = names[p]->left->name;
-    else
-      p = names[p]->right->name;
-  }
-  return p;
 }
 
 inline tree operator+(const tree& t1,const tree& t2) {

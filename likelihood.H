@@ -12,7 +12,7 @@ double prior_HMM(const alignment&,const Parameters&);
 inline double prior(const Parameters& Theta) {
   double p = 0;
   for(int i=0;i<Theta.T.branches();i++) 
-    p -= Theta.branch_mean*Theta.T.branch(i).length;
+    p -= Theta.branch_mean*Theta.T.branch(i).length();
   return p;
 }
 

@@ -263,9 +263,9 @@ vector<int> get_path(const alignment& A,int b) {
 vector<int> get_nodes(const alignment& A, const tree& T,int b) {
   vector<int> nodes(5);
 
-  nodes[4] = T.branch(b).node2;
-  nodes[5] = T.branch(b).node1;
-  assert(nodes[5] = T.parent(nodes[4]));
+  nodes[4] = T.branch(b).child();
+  nodes[5] = T.branch(b).parent();
+  assert(nodes[5] = T[nodes[4]].parent());
   
   // This must be an internal branch
   nodes[0] = T[nodes[4]].left();
@@ -274,9 +274,9 @@ vector<int> get_nodes(const alignment& A, const tree& T,int b) {
   nodes[3] = T[nodes[5]].right();
   
   if (nodes[2] == nodes[4])
-    nodes[2] = T.parent(nodes[5]);
+    nodes[2] = T[nodes[5]].parent();
   else if (nodes[3]==nodes[4])
-    nodes[3] = T.parent(nodes[5]);
+    nodes[3] = T[nodes[5]].parent();
   
   return nodes;
 }

@@ -8,7 +8,7 @@ void change_branch_length(const alignment& A, Parameters& Theta,int b) {
     Parameters Theta2 = Theta;
     /********* Propose increment 'epsilon' ***********/
     const double sigma = 1.0/2;
-    const double length = Theta2.T.branch(b).length;
+    const double length = Theta2.T.branch(b).length();
     double lower = length - sigma;
     double higher = length + sigma;
     if (lower < 0) lower = 0;
@@ -30,7 +30,7 @@ void change_branch_length(const alignment& A, Parameters& Theta,int b) {
     // accept w/ probability (a2/a1)*(p21/p12)
     if (myrandomf() < exp(lL_2 - lL_1)*density21/density12) {
       Theta=Theta2;
-      std::cerr<<Theta2.T.branch(b).length<<" "<<Theta.T.branch(b).length<<endl;
+      std::cerr<<Theta2.T.branch(b).length()<<" "<<Theta.T.branch(b).length()<<endl;
       std::cerr<<"branch "<<b<<":  "<<length<<" -> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
       
     }
@@ -59,8 +59,8 @@ void move_node(const alignment& A, Parameters& Theta,int node) {
   }
 
   // change the length of branch b1, using other two to pick up slack
-  double min = -T.branch(b1).length;
-  double max = std::max(T.branch(b2).length,T.branch(b3).length);
+  double min = -T.branch(b1).length();
+  double max = std::max(T.branch(b2).length(),T.branch(b3).length());
   double s = 1.0/4;
   if (min < -s) min = -s;
   if (max > s) max = s;
@@ -69,9 +69,9 @@ void move_node(const alignment& A, Parameters& Theta,int node) {
 
   Parameters Theta2 = Theta;
 
-  Theta2.setlength(b1,T.branch(b1).length + delta);
-  Theta2.setlength(b2,T.branch(b2).length - delta);
-  Theta2.setlength(b3,T.branch(b3).length - delta);
+  Theta2.setlength(b1,T.branch(b1).length() + delta);
+  Theta2.setlength(b2,T.branch(b2).length() - delta);
+  Theta2.setlength(b3,T.branch(b3).length() - delta);
 }
 
 void sample(alignment& A,Parameters& Theta) {
