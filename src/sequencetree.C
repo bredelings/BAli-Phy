@@ -44,6 +44,29 @@ nodeview SequenceTree::prune_subtree(int branch) {
   return node_remainder;
 }
 
+void SequenceTree::read(const string& filename) {
+  RootedSequenceTree RT;
+  RT.read(filename);
+  
+  // FIXME - but what if I WANT the node there?
+  if (RT.root().neighbors().size() == 2)
+    (*this) = remove_root(RT);
+}
+
+void SequenceTree::read(std::istream& file) {
+  RootedSequenceTree RT;
+  RT.read(file);
+  
+  // FIXME - but what if I WANT the node there?
+  if (RT.root().neighbors().size() == 2)
+    (*this) = remove_root(RT);
+}
+
+string SequenceTree::write(bool print_lengths) const 
+{
+  RootedSequenceTree RT = add_root(*this,0);
+  return RT.write(print_lengths);
+}
 
 vector<int> SequenceTree::standardize() {
   return Tree::standardize();
@@ -59,6 +82,16 @@ vector<int> SequenceTree::standardize(const vector<int>& lnames) {
 
   return Tree::standardize(lnames);
 }
+
+void SequenceTree::parse(const string& s) {
+  RootedSequenceTree RT;
+  RT.parse(s);
+
+  // FIXME - but what if I WANT the node there?
+  if (RT.root().neighbors().size() == 2)
+    (*this) = remove_root(RT);
+}
+
 
 SequenceTree::SequenceTree(const RootedSequenceTree& RT) 
   :Tree(RT),SequenceSet(RT)
@@ -318,11 +351,38 @@ RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTr
   return t3;
 }
 
-std::ostream& operator <<(std::ostream& o,const RootedSequenceTree& T) {
+std::istream& operator >>(std::istream& i,SequenceTree& T) 
+{
+  string line;
+  while(getline(i,line)) {
+    if (not line.empty()) {
+      T.parse(line);
+      return i;
+    }
+  }
+  throw myexception()<<"Failed to read tree: file ended.";
+}
+
+std::istream& operator >>(std::istream& i,RootedSequenceTree& RT) 
+{
+  string line;
+  while(getline(i,line)) {
+    if (not line.empty()) {
+      RT.parse(line);
+      return i;
+    }
+  }
+  throw myexception()<<"Failed to read tree: file ended.";
+}
+
+
+std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
   return o<<T.write();
 }
 
-std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
-  return o<<add_root(T,0);
+std::ostream& operator <<(std::ostream& o,const RootedSequenceTree& RT) {
+  return o<<RT.write();
 }
+
+
 

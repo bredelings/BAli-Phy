@@ -24,15 +24,24 @@ public:
 };
 
 class SequenceTree: public Tree, public SequenceSet {
+
 public:
-  /// remove a subtree - SequenceTree variance duplicated  in both {U,R}SequenceTree
+  /// remove a subtree - SequenceTree variants duplicated  in both {U,R}SequenceTree
   nodeview prune_subtree(int b);
 
-  /// standardize - SequenceTree variance duplicated  in both {U,R}SequenceTree
+  /// standardize - SequenceTree variants duplicated  in both {U,R}SequenceTree
   std::vector<int> standardize();
   std::vector<int> standardize(const std::vector<int>&);
 
+  std::string write(bool=true) const;
+
+  void read(const std::string&);
+  void read(std::istream&);
+  void parse(const std::string&);
+
   SequenceTree() {}
+  explicit SequenceTree(std::istream&);   //load a tree from a file
+  explicit SequenceTree(const std::string& s);
   explicit SequenceTree(const class RootedSequenceTree&);
 };
 
@@ -40,10 +49,10 @@ class RootedSequenceTree: public RootedTree, public SequenceSet {
   std::string write(const_branchview,bool) const;
 
 public:
-  /// remove a subtree - SequenceTree variance duplicated  in both {U,R}SequenceTree
+  /// remove a subtree - SequenceTree variants duplicated  in both {U,R}SequenceTree
   nodeview prune_subtree(int b);
 
-  /// standardize - SequenceTree variance duplicated  in both {U,R}SequenceTree
+  /// standardize - SequenceTree variants duplicated  in both {U,R}SequenceTree
   std::vector<int> standardize();
   std::vector<int> standardize(const std::vector<int>&);
 
@@ -60,14 +69,15 @@ public:
 
   //conversions...
   explicit  RootedSequenceTree(const SequenceTree&,int r);
-
-  ~RootedSequenceTree() {}
 };
 
 RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTree& t2);
 
 RootedSequenceTree add_root(SequenceTree,int b);
 SequenceTree remove_root(const RootedSequenceTree&);
+
+std::istream& operator >>(std::istream& i,SequenceTree& T);
+std::istream& operator >>(std::istream& i,RootedSequenceTree& T);
 
 std::ostream& operator <<(std::ostream& o,const SequenceTree& T);
 std::ostream& operator <<(std::ostream& o,const RootedSequenceTree& T);
