@@ -45,9 +45,7 @@ Matrix exp(const SMatrix& S,const BMatrix& D,const double t) {
   return E;
 }
 
-Matrix exp(const SMatrix& M,const double t) {
-
-  EigenValues solution(M);
+Matrix exp(const EigenValues& solution,const double t) {
 
   Matrix O = solution.Rotation();
   std::vector<double> D = solution.Diagonal();
@@ -75,6 +73,41 @@ Matrix exp(const SMatrix& M,const double t) {
       assert(E(i,j) >= -1.0e-13);
 
   return E;
+}
+
+Matrix exp(const EigenValues& eigensystem,const BMatrix& D,const double t) {
+  const int n = D.size1();
+
+  double DP[n];
+  double DN[n];
+  for(int i=0;i<D.size1();i++) {
+    DP[i] = sqrt(D(i,i));
+    DN[i] = 1.0/DP[i];
+  }
+
+  Matrix E = exp(eigensystem,t);
+
+  //  E = prod(DN,prod<Matrix>(E,DP));
+  for(int i=0;i<E.size1();i++)
+    for(int j=0;j<E.size2();j++)
+      E(i,j) *= DN[i]*DP[j];
+
+
+  for(int i=0;i<E.size1();i++)
+    for(int j=0;j<E.size2();j++) {
+      assert(E(i,j) >= -1.0e-13);
+      if (E(i,j)<0)
+	E(i,j)=0;
+    }
+
+  return E;
+}
+
+Matrix exp(const SMatrix& M,const double t) {
+
+  EigenValues solution(M);
+
+  return exp(solution,t);
 }
 
 // for stretch branches: gamma_exp(S,D,t/beta,beta)
