@@ -4,7 +4,7 @@ TOOLS = tools/model_P tools/statreport tools/alignment-blame \
 	tools/alignment-reorder tools/alignment-draw tools/findalign \
 	tools/tree-to-srq tools/tree-names-trunc tools/tree-reroot \
 	tools/srq-to-plot tools/srq-analyze tools/phy_to_fasta \
-	tools/tree-dist-compare
+	tools/tree-dist-compare tools/cut-range
 
 tools: ${TOOLS}
 
@@ -120,6 +120,8 @@ tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	parameters.o exponential.o setup-smodel.o smodel.o imodel.o rng.o likelihood.o \
 	dpmatrix.o choose.o tools/optimize.o inverse.o setup.o rates.o matcache.o \
 	sequence-format.o randomtree.o ${LINKLIBS}
+
+tools/cut-range: arguments.o util.o
 
 tools/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 
