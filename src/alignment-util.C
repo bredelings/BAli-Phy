@@ -479,7 +479,10 @@ alignment load_A(const variables_map& args,bool keep_internal)
     throw myexception("Alignment file not specified! (--align <filename>)");
   
   alignment A;
-  A.load(alphabets,args["align"].as<string>());
+  if (args["align"].as<string>() == "-")
+    A.load(alphabets,sequence_format::read_guess,std::cin);
+  else
+    A.load(alphabets,args["align"].as<string>());
   
   remove_empty_columns(A);
   

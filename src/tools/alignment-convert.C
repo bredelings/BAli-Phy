@@ -17,15 +17,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help", "produce help message")
-    ("align", value<string>(),"file with sequences and initial alignment")
-    ("tree",value<string>(),"file with initial tree")
-    ("with-stop","include stop codons in amino-acid alphabets")
+    ("align", value<string>()->default_value("-"),"file with alignment to convert (default STDIN)")
+    ("output", value<string>(),"which output format: fasta or phylip?")
     ;
 
   // positional options
   positional_options_description p;
   p.add("align", 1);
-  p.add("tree", 2);
   
   variables_map args;     
   store(command_line_parser(argc, argv).
@@ -34,7 +32,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    std::cout<<"Usage: alignment-convert <alignment-file> <tree-file> ... [OPTIONS]\n";
+    std::cout<<"Usage: alignment-convert <alignment-file> [OPTIONS]\n";
     std::cout<<all<<"\n";
     exit(0);
   }
