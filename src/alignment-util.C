@@ -475,8 +475,26 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args) {
   return alphabets;
 }
 
+/// create a note with leaf sequences ...
+int add_leaf_seq_note(alignment& A,int n) 
+{
+  assert(n < A.n_sequences());
 
+  int index = A.add_note(n);
 
+  for(int i=0;i<n;i++) {
+    int l=0;
+    for(int c=0;c<A.length();c++)
+      if (not A.gap(c,i)) {
+	A.note(index,l+1,i) = A(c,i);
+	l++;
+      }
+    A.note(index,0,i) = l;
+    assert(l == A.seqlength(i));
+  }
+
+  return index;
+}
 
 /// Load an alignment from command line args "--align filename"
 alignment load_A(const variables_map& args,bool keep_internal) 

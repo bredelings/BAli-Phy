@@ -7,6 +7,27 @@
 
 using std::string;
 
+void resize(ublas::matrix<int>& M1,int s1,int s2,int clear=0) 
+{
+  ublas::matrix<int> M2(s1,s2);
+  
+  for(int i=0;i<M2.size1();i++)
+    for(int j=0;j<M2.size2();j++)
+      M2(i,j) = clear;
+
+  for(int i=0;i<M1.size1() and i<M2.size1();i++)
+    for(int j=0;j< M1.size2() and j<M2.size2();j++)
+      M2(i,j) = M1(i,j);
+
+  M1.swap(M2);
+}
+
+
+int alignment::add_note(int l) {
+  notes.push_back(ublas::matrix<int>(length()+1,l));
+  return notes.size()-1;
+}
+
 bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask) {
   for(int i=0;i<A.size2();i++)
     if (mask[i] and not A.gap(column,i))
@@ -34,17 +55,10 @@ void alignment::clear() {
 }
 
 void alignment::resize(int s1,int s2) {
-  ublas::matrix<int> array2(s1,s2);
-  
-  for(int i=0;i<array2.size1();i++)
-    for(int j=0;j<array2.size2();j++)
-      array2(i,j) = alphabet::gap;
+  ::resize(array,s1,s2,alphabet::gap);
 
-  for(int i=0;i<array.size1() and i<array2.size1();i++)
-    for(int j=0;j< array.size2() and j<array2.size2();j++)
-      array2(i,j) = array(i,j);
-
-  array.swap(array2);
+  for(int i=0;i<notes.size();i++)
+    ::resize(notes[i],s1+1,notes[i].size2(),-1);
 }
 
 int alignment::index(const string& s) const {
