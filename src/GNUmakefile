@@ -16,7 +16,7 @@ install: program tools
 	mv ${TOOLS} ../bin
 
 #----------------- Definitions
-EXACTFLAGS = -pipe -pthread
+EXACTFLAGS = -pipe
 
 LANGO := fast-math 
 
@@ -72,6 +72,7 @@ LIBS = gsl gslcblas m
 ifeq (${STLPORT},y) 
   DEFS += _STLP_DEBUG
   LIBS += stlportstlg
+  EXACTFLAGS += -pthread
 
   VPATH += /usr/local/STLport/lib/
   includes += /usr/include/c++/stlport
