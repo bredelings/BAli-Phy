@@ -2,8 +2,8 @@
 #define FINDROOT_H
 #include "tree.H"
 
-double rootdistance(const tree& T,int leaf,int b,double dist);
+double rootdistance(const Tree& T,int leaf,int b,double dist);
 
-void find_root(const tree& T,int& rootb,double& rootd);
+void find_root(const Tree& T,int& rootb,double& rootd);
 
 #endif

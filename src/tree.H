@@ -151,6 +151,7 @@ public:
   // walk path from i->j instead...
   /// The distance between nodes i and j
   double distance(int i,int j) const;
+  int edges_distance(int i,int j) const;
 
   // n1 is an ancestor of n2, n2 is a descendant of n1
   std::valarray<bool> partition(int b) const {

@@ -26,6 +26,10 @@ ublas::matrix<int> load_alignment_constraint(Arguments& args,const alignment& A,
     vector<vector<int> > constraints;
     while(getline(constraint_file,line)) {
 
+      int loc = line.find('#');
+      if (loc != -1)
+	line = line.substr(0,loc);
+
       // lex contraint line
       vector<string> entries = split(line,' ');
       if (entries.size() != T.n_leaves())

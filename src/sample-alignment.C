@@ -5,6 +5,7 @@
 #include "2way.H"
 #include "alignment-sums.H"
 #include "alignment-constraint.H"
+#include "alignment-util.H"
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
@@ -47,6 +48,7 @@ typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parame
 							      const vector<int>&,int,bool);
 
 void sample_alignment(alignment& A,Parameters& P,int b) {
+  letters_OK(A,"sample_alignment:in");
   assert(P.IModel().full_tree);
 
   const Tree& T = P.T;
@@ -96,7 +98,9 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
 
   path.erase(path.begin()+path.size()-1);
 
+  letters_OK(A,"sample_alignment:before");
   A = construct(old,path,group1,seq1,seq2);
+  letters_OK(A,"sample_alignment:after");
 
   //  std::cerr<<"bandwidth = "<<bandwidth(Matrices,path)<<std::endl;
 
@@ -133,11 +137,14 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
   std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<Matrices.Pr_sum_all_paths()<<endl;
 
 #else
+  letters_OK(A,"sample_alignment:1");
   P.LC.set_length(A.length());
+  letters_OK(A,"sample_alignment:2");
   P.LC.invalidate_branch_alignment(T,b);
 #endif
 
   /*--------------------------------------------------------------*/
+  letters_OK(A,"sample_alignment:out");
   assert(valid(A));
 }
 

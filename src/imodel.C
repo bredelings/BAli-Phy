@@ -259,6 +259,7 @@ void NewIndelModel::recalc() {
 void NewIndelModel::fiddle() {
   double& rate = parameters_[0];
   double& lambda_E = parameters_[1];
+  double& i = parameters_[2];
 
   const double sigma = 0.35;
 
@@ -273,6 +274,9 @@ void NewIndelModel::fiddle() {
     E_length += gaussian(0,sigma);
     lambda_E = E_length - logsum(0,E_length);
   }
+
+  if (not fixed[2])
+    i = wrap(i+gaussian(0,0.02),1.0);
   
   recalc();
 }
@@ -292,6 +296,10 @@ double NewIndelModel::prior() const {
 
   P += exp_exponential_log_pdf(E_length,E_length_mean);
 
+  // Calculate prior on invariant fraction
+  double i = parameters_[2];
+  P += beta_log_pdf(i,0.01,20);
+
   return P;
 }
 
@@ -300,10 +308,13 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {
 
   double rate    = exp(parameters_[0]);
   double e = exp(parameters_[1]);
+  double i = parameters_[2];
 
   // (1-e) * delta / (1-delta) = P(indel)
-  double P_indel = 1.0 - exp(-rate*t);
-  double A = P_indel/(1.0-e);
+  // But move the (1-e) into the RATE to make things work
+  double mu = rate*t/(1.0-e);
+  double P_indel = 1.0 - exp(-mu);
+  double A = P_indel*(1.0-i);
   double delta = A/(1+A);
 
   if (1 - 2*delta <0)
@@ -366,8 +377,10 @@ string NewIndelModel::parameter_name(int i) const {
     return "NEW::lambda";
   else if (i==1)
     return "NEW::epsilon";
+  else if (i==2)
+    return "NEW::invariant";
   else
-    return i_parameter_name(i,2);
+    return i_parameter_name(i,3);
 }
 
 double NewIndelModel::lengthp(int l) const {
@@ -375,10 +388,11 @@ double NewIndelModel::lengthp(int l) const {
 }
 
 NewIndelModel::NewIndelModel()
-  :IndelModel(2)
+  :IndelModel(3)
 {
   parameters_[0] = -5;
   parameters_[1] = -0.5;
+  parameters_[2] = 0.1;
 
   recalc();
 }

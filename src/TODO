@@ -9,22 +9,43 @@ fix: gamma+frequency+INV
 
 model: Make INV categories depend on letters, somehow...
 
-fix: s-parameters aren't accepted/sampled often enough.
-
 sample lengths/topologies MORE often when alignment sampling also?
-
-fix: make change_parameters() debugging code call a function which output
-     substitution parameters.
-
-fix: we really need to start proposing INV::p on the log odds scale.
-     It is OK to change the prior, because we never want to use it
-     differently.
 
 debug: we also want to guard each routine with assert(letters_ok(A)) on
        both sides so that we can figure out where the problem is coming
        from.
 
-debug: check 48-D-? for strange rejections.  Why is the probability decreasing so much? (turn on debugging for this step, but disable debugging of caching)
+debug: check 48-D-? for strange rejections.  Why is the probability
+decreasing so much, when it should increase? (turn on debugging for
+this step, but disable debugging of caching) 
 
-debug: make a separate DEBUG_SUBST.
+make tree-dist-compare consider all partitions, not just the MAP tree.
+(perhaps just all OBSERVED partitions?)
+
+A new ggobi is available!  Try multidimensional scaling...
+
+implement: new framework for fixing things
+	a) disable=alignment 
+	a) disable=alignment
+	b) disable=tree
+	c) disable=frequencies
+
+------------------------------------------------------------------------------
+[FIXED]: s-parameters aren't accepted/sampled often enough.
+
+[IMPLEMENT]: allow comments in the alignment constraint file, and make
+the alignment index program spit out the actual letters for each
+column as comments. 
+
+
+[DEBUG]: make a separate DEBUG_CACHING
+
+
+[FIX]: make change_parameters() debugging code call a function which output
+       substitution parameters.
+
+
+[FIX]: we really need to start proposing INV::p on the log odds scale.
+     It is OK to change the prior, because we never want to use it
+     differently.
 

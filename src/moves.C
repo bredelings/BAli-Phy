@@ -5,6 +5,8 @@
 #include "3way.H"
 #include "likelihood.H"
 #include "util-random.H"
+#include "monitor.H"
+#include "alignment-util.H"
 
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
@@ -21,6 +23,7 @@ MCMC::result_t change_branch_length_multi_move(alignment& A, Parameters& P,int b
 }
 
 MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
+  letters_OK(A,"sample_tri:in");
   assert(P.IModel().full_tree); 
 
   const SequenceTree& T = P.T;
@@ -36,6 +39,7 @@ MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
     
   tri_sample_alignment(A,P,node1,node2);
 
+  letters_OK(A,"sample_tri:out");
   return MCMC::result_t(); // no_result
 }
 
@@ -75,22 +79,27 @@ MCMC::result_t sample_tri_branch_one(alignment& A, Parameters& P,int b) {
 
 
 MCMC::result_t sample_alignments_one(alignment& A, Parameters& P,int b) {
+  letters_OK(A,"sample_A:in");
   assert(P.IModel().full_tree); 
 
   sample_alignment(A,P,b);
 
+  letters_OK(A,"sample_A:out");
   return MCMC::result_t(); // no_result
 }
 
 MCMC::result_t sample_node_move(alignment& A, Parameters& P,int node) {
+  letters_OK(A,"sample_node:in");
   assert(P.IModel().full_tree); 
 
   sample_node(A,P,node);
 
+  letters_OK(A,"sample_node:out");
   return MCMC::result_t(); // no_result
 }
 
 MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
+  letters_OK(A,"sample_two_nodes:in");
   assert(P.IModel().full_tree); 
 
   vector<int> nodes = A3::get_nodes_random(P.T,n0);
@@ -106,6 +115,7 @@ MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
 
   sample_two_nodes(A,P,b);
 
+  letters_OK(A,"sample_two_nodes:out");
   return MCMC::result_t(); // no_result
 }
 
@@ -120,10 +130,12 @@ vector<int> get_cost(const Tree& T) {
   }
     
   while(not stack1.empty()) {
+    // fill 'stack2' with branches before 'stack1'
     stack2.clear();
     for(int i=0;i<stack1.size();i++)
       append(stack1[i].branches_before(),stack2);
 
+    // clear 'stack1'
     stack1.clear();
 
     for(int i=0;i<stack2.size();i++) {
@@ -131,14 +143,12 @@ vector<int> get_cost(const Tree& T) {
       append(stack2[i].branches_after(),children);
 
       assert(children.size() == 2);
-      if (cost[children[0]] != -1 and cost[children[1]] != -1) {
-	int cost_l = cost[children[0]];
-	if (not children[0].is_leaf_branch())
-	  cost_l++;
+      int cost_l = cost[children[0]];
+      int cost_r = cost[children[1]];
+      if (cost_l != -1 and cost_r != -1) {
+	if (not children[0].is_leaf_branch()) cost_l++;
 
-	int cost_r = cost[children[1]];
-	if (not children[1].is_leaf_branch())
-	  cost_r++;
+	if (not children[1].is_leaf_branch()) cost_r++;
 
 	if (cost_l > cost_r)
 	  std::swap(cost_l,cost_r);
@@ -149,15 +159,20 @@ vector<int> get_cost(const Tree& T) {
     }
   }
   
+  // check that all the costs have been calculated
   for(int i=0;i<cost.size();i++)
     assert(cost[i] != -1);
 
   return cost;
 }
 
-vector<int> walk_tree_path(const Tree& T) {
+vector<int> walk_tree_path(const Tree& T,int root) {
 
   vector<int> cost = get_cost(T);
+
+  vector<int> tcost = cost;
+  for(int i=0;i<cost.size();i++)
+    tcost[i] += T.edges_distance(T.directed_branch(i).target(),root);
 
   vector<const_branchview> b_stack;
   b_stack.reserve(T.n_branches());
@@ -166,13 +181,11 @@ vector<int> walk_tree_path(const Tree& T) {
   vector<const_branchview> children;
   children.reserve(3);
 
-  // put a random leaf branch on both the stack and the list
-  // FIXME - It would still be good to pick a leaf node on a long diagonal path
-  // put a random leaf branch on both the stack and the list
+  // get a leaf with minimum 'tcost'
   int leaf = 0;
   leaf = myrandom(T.n_leaves());
   for(int b=0;b<T.n_leaves();b++)
-    if (cost[T.directed_branch(b)] < cost[T.directed_branch(leaf)])
+    if (tcost[T.directed_branch(b)] < tcost[T.directed_branch(leaf)])
       leaf = b;
 
   assert(T.directed_branch(leaf).source() == leaf);
@@ -214,14 +227,16 @@ vector<int> walk_tree_path(const Tree& T) {
 }
 
 MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
-  vector<int> branches = walk_tree_path(P.T);
+  letters_OK(A,"NNI_walk_tree:in");
+
+  vector<int> branches = walk_tree_path(P.T,P.LC.root);
 
   MCMC::result_t result;
 
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
 
-    std::cerr<<"\n\n Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+    std::cerr<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if (P.T.branch(b).is_internal_branch())
       three_way_topology_sample(A,P,b);
@@ -230,6 +245,29 @@ MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
     change_branch_length(A,P,b);
   }
 
+  letters_OK(A,"NNI_walk_tree:out");
+  return result;
+}
+
+
+MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
+  letters_OK(A,"sample_alignments_walk_tree:in");
+  vector<int> branches = walk_tree_path(P.T,P.LC.root);
+
+  MCMC::result_t result;
+
+  for(int i=0;i<branches.size();i++) {
+    int b = branches[i];
+
+    std::cerr<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+
+    if ((myrandomf() < 0.15) and (P.T.n_leaves() >2))
+      sample_tri_one(A,P,b);
+    else
+      sample_alignments_one(A,P,b);
+  }
+  
+  letters_OK(A,"sample_alignments_walk_tree:out");
   return result;
 }
 
@@ -240,19 +278,15 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
 
   Parameters P2 = P;
 
-  P2.fiddle();
-
+  P2.fiddle_smodel();
+  
 #ifndef NDEBUG  
-  for(int i=0;i<P.SModel().parameters().size();i++)
-    std::cerr<<"    p"<<i<<" = "<<P.SModel().parameters()[i];
-  std::cerr<<endl;
-  std::cerr<<P.probability(A,P);
+  show_parameters(std::cerr,P.SModel());
+  std::cerr<<P.probability(A,P)<<" = "<<P.likelihood(A,P)<<" + "<<P.prior(A,P);
   std::cerr<<endl<<endl;
 
-  for(int i=0;i<P2.SModel().parameters().size();i++)
-    std::cerr<<"    p"<<i<<" = "<<P2.SModel().parameters()[i];
-  std::cerr<<endl;
-  std::cerr<<P.probability(A,P2);
+  show_parameters(std::cerr,P2.SModel());
+  std::cerr<<P.probability(A,P2)<<" = "<<P.likelihood(A,P2)<<" + "<<P.prior(A,P2);
   std::cerr<<endl<<endl;
 #endif
 
@@ -276,7 +310,7 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
   result[0] = 1.0;
 
   Parameters P2 = P;
-  P2.IModel().fiddle();
+  P2.fiddle_imodel();
 
   if (P.accept_MH(A,P,A,P2)) {
     P = P2;
@@ -288,10 +322,11 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
 
 
 
-
 MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
+
+  letters_OK(A,"frequencies:in");
 
   Parameters P2 = P;
   valarray<double> f = P2.SModel().frequencies();
@@ -303,6 +338,8 @@ MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
     P = P2;
     result[1] = 1;
   }
+
+  letters_OK(A,"frequencies:out");
 
   return result;
 }

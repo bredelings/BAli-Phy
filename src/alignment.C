@@ -4,6 +4,7 @@
 #include "myexception.H"
 #include "util.H"
 #include "rng.H"
+#include "alignment-util.H"
 
 using std::string;
 
@@ -84,10 +85,15 @@ int alignment::seqlength(int i) const {
 }
 
 alignment& alignment::operator=(const alignment& A) {
+  letters_OK(A,"operator=(): before1");
   sequences = A.sequences;
+  letters_OK(*this,"operator=(): in");
+  letters_OK(A,"operator=(): before2");
 
   array.resize(A.array.size1(),A.array.size2());
   array = A.array;
+  letters_OK(A,"operator=(): after");
+  letters_OK(*this,"operator=(): out");
 
   return *this;
 }

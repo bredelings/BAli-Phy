@@ -425,7 +425,7 @@ namespace substitution {
 
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches(T, cache);
-    // std::cerr<<"Peeled on "<<ops.size()<<" branches.\n";
+    std::cerr<<"Peeled on "<<ops.size()<<" branches.\n";
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
@@ -440,7 +440,7 @@ namespace substitution {
     const Tree& T = P.T;
     Likelihood_Cache& cache = P.LC;
 
-    calculate_caches(A,P,cache);
+    //calculate_caches(A,P,cache);  - WHY was this duplicated?
 
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
@@ -541,7 +541,7 @@ namespace substitution {
   double Pr(const alignment& A,const Parameters& P) {
     double result = Pr(A, P, P.LC);
 
-#ifndef NDEBUG
+#ifdef DEBUG_CACHING
     Parameters P2 = P;
     P2.LC.invalidate_all();
     double result2 = Pr(A, P2, P2.LC);

@@ -147,9 +147,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
   }
   else if (match(string_stack,"gamma")) {
-    int n=4;
-    if (args.set("gamma") and args["gamma"] != "gamma")
-      n = convertTo<int>(args["gamma"]);
+    int n=args.loadvalue("gamma_bins",4);
 
     if (MM)
       model_stack.back() = GammaParameterModel(*MM,n);
@@ -161,9 +159,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       throw myexception()<<"gamma: couldn't find a reversible+additive model to use.";
   }
   else if (match(string_stack,"double_gamma")) {
-    int n=4;
-    if (args.set("double_gamma") and args["double_gamma"] != "double_gamma")
-      n = convertTo<int>(args["double_gamma"]);
+    int n=args.loadvalue("double_gamma_bins",4);
 
     if (RA)
       model_stack.back() = DistributionParameterModel(UnitModel(*RA),
@@ -176,12 +172,13 @@ bool process_stack_Multi(vector<string>& string_stack,
       throw myexception()<<"gamma: couldn't find a reversible+additive model to use.";
   }
   else if (match(string_stack,"multi_freq")) {
+    int n = args.loadvalue("multi_freq_bins",4);
     if (MM)
       model_stack.back() = MultiFrequencyModel(*MM,4);
     else if (model_stack.empty())
       throw myexception()<<"multi_freq: couldn't find any model to use.";
     else if (RA)
-      model_stack.back() = MultiFrequencyModel(UnitModel(*RA),4);
+      model_stack.back() = MultiFrequencyModel(UnitModel(*RA),n);
     else
       throw myexception()<<"We can only create multi_freq models on top of MultiRateModels or Markov models";
   }

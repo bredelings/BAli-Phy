@@ -23,36 +23,39 @@ vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
 }
 
 /// Replace each letter with its position in its sequence
-alignment M(const alignment& A1) {
-  alignment A2 = A1;
+ublas::matrix<int> M(const alignment& A1) {
+  ublas::matrix<int> A2(A1.length(),A1.size2());
   for(int i=0;i<A2.size2();i++) {
     int pos=0;
-    for(int column=0;column<A2.length();column++) {
-      if (not A2.gap(column,i)) {
+    for(int column=0;column<A2.size1();column++) {
+      if (not A1.gap(column,i)) {
 	A2(column,i) = pos;
 	pos++;
       }
+      else
+	A2(column,i) = alphabet::gap;
     }
 
-    assert(pos == A2.seqlength(i));
+    assert(pos == A1.seqlength(i));
 
   }
   return A2;
 }
 
 /// Is the homology A1(column,s1)::A1(column,s2) preserved in A2 ?
-bool A_match(const alignment& A1, int column, int s1, int s2, const alignment& A2,
+bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2, 
+	     const ublas::matrix<int>& M2,
 	     const vector< vector< int> >& column_indices) {
-  if (A1.gap(column,s1) and A1.gap(column,s2))
+  if (M1(column,s1) == alphabet::gap and M1(column,s2)==alphabet::gap)
     return true;
 
   // Turn this into a statement about what s1[column] matches
-  if (A1.gap(column,s1))
+  if (M1(column,s1)==alphabet::gap)
     std::swap(s1,s2);
 
   // which column in A2 has the A1(column,s1)-th feature of s1 ?
-  int column2 = column_indices[s1][ A1(column,s1) ];
-  return (A2(column2,s2) == A1(column,s2));
+  int column2 = column_indices[s1][ M1(column,s1) ];
+  return (M2(column2,s2) == M1(column,s2));
 }
 
 
@@ -61,14 +64,14 @@ bool A_constant(alignment A1, alignment A2, const valarray<bool>& ignore) {
   assert(ignore.size() == A1.size2());
 
   // convert to feature-number notation
-  A1 = M(A1);
-  A2 = M(A2);
+  ublas::matrix<int> M1 = M(A1);
+  ublas::matrix<int> M2 = M(A2);
 
   // lookup and cache the column each feature is in
   vector< vector< int> > column_indices = column_lookup(A2);
 
   //----- Check that the sequence lengths match ------//
-  for(int i=0;i<A1.size2();i++) {
+  for(int i=0;i<M1.size2();i++) {
     if (ignore[i]) continue;
 
     if (A1.seqlength(i) != A2.seqlength(i))
@@ -81,7 +84,7 @@ bool A_constant(alignment A1, alignment A2, const valarray<bool>& ignore) {
       if (ignore[s1]) continue;
       for(int s2=s1+1; s2 < A1.size2(); s2++) {
 	if (ignore[s2]) continue;
-	if (not A_match(A1,column,s1,s2,A2,column_indices))
+	if (not A_match(M1,column,s1,s2,M2,column_indices))
 	  return false;
       }
     }
@@ -134,7 +137,7 @@ bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<
 }
 
 
-bool letters_OK(const alignment& A) {
+bool letters_OK(const alignment& A,const char* key) {
   const alphabet& a = A.get_alphabet();
 
   bool bad=false;
@@ -144,6 +147,11 @@ bool letters_OK(const alignment& A) {
 	bad = true;
 	std::cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<std::endl;
       }
+  if (bad) {
+    std::cerr<<"key = "<<key<<"\n";
+    std::cerr.flush();
+    std::abort();
+  }
   return not bad;
 }
 

@@ -42,7 +42,7 @@ valarray<double> empirical_frequencies(Arguments& args,const alignment& A) {
     }
   }
 
-  counts = counts/counts.sum() * A.length();
+  counts /= (counts.sum() * A.length());
 
   // Setup the default frequences for the pseudocounts (uniform)
   double pseudocount = 5+4*a.size();
@@ -247,7 +247,6 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
   }
 }
 
-//FIXME - need to give indel models a name!
 OwnedPointer<IndelModel> get_imodel(Arguments& args) {
   //-------------Choose an indel model--------------//
   OwnedPointer<IndelModel> imodel;
@@ -266,6 +265,14 @@ OwnedPointer<IndelModel> get_imodel(Arguments& args) {
   }
   else
     imodel->full_tree = true;
+
+  vector<double> p = imodel->parameters();
+  for(int i=0;i<p.size();i++) {
+    if (args.set(imodel->parameter_name(i)))
+      p[i] = convertTo<double>(args[imodel->parameter_name(i)]);
+  }
+  imodel->parameters(p);
+    
 
   return imodel;
 }
