@@ -5,7 +5,6 @@
 #include <string>
 #include <map>
 
-
 namespace arguments_local {
   struct lstr {
     bool operator()(const std::string& s1, const std::string& s2) const {

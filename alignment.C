@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <sstream>
 #include "alignment.H"
 #include "myexception.H"
+#include "util.H"
 
 int num_non_gaps(const alignment& A,int column) {
   int count=0;
@@ -19,7 +21,6 @@ bool valid(const alignment& A) {
   return true;
 }
 
-// use 'swap' instead of '=' at end?  initialize array2 with '-'?
 void alignment::resize(int s1,int s2) {
   ublas::matrix<int> array2(s1,s2);
   
@@ -155,6 +156,86 @@ void alignment::load_fasta(const alphabet& a,std::istream& file) {
     add_sequence(sequences[i]);
 }
 
+bool phylip_section(std::istream& file,int ntaxa, vector<string>& names,vector<string>& letters) {
+  names.clear();
+  letters.clear();
+  int indent = -1;
+  for(int i=0;i<ntaxa;i++) {
+    string line;
+    getline(file,line);
+    while(i==0 and line.size()==0 and file.good())
+      getline(file,line);
+    if (not file) return false;
+
+    int pos = line.find_first_not_of(" \t");
+    if (pos >9)
+      names.push_back(string(""));
+    else {
+      int name_start = pos;
+      pos = line.find_first_of(" \t",pos);
+      names.push_back(line.substr(name_start,pos));
+    
+      pos = std::max(pos,9);
+    }
+    pos = line.find_first_not_of(" \t",pos+1);
+    if (indent == -1)
+      indent = pos;
+    else
+      assert(indent == pos);
+    letters.push_back(line.substr(indent));
+  }
+  return file;
+}
+
+void alignment::load_phylip(const alphabet& a,const std::string& filename) {
+  ifstream file(filename.c_str());
+
+  string line;
+  getline(file,line);
+  int ntaxa = -1;
+  int length = -1;
+  {
+    std::istringstream linestream(line);
+    linestream>>ntaxa;
+    linestream>>length;
+  }
+
+  vector<string> sequences;
+  vector<string> letters;
+  vector<string> names;
+  vector<string> names2;
+  phylip_section(file,ntaxa,names,sequences);
+  while(phylip_section(file,ntaxa,names2,letters)) {
+    for(int i=0;i<ntaxa;i++)
+      sequences[i] += letters[i];
+  }
+
+  for(int i=0;i<ntaxa;i++) 
+    sequences[i] = strip(sequences[i],' ');
+
+  for(int i=0;i<ntaxa;i++) {
+    sequence s(a);
+    s.parse(string(">")+names[i],sequences[i]);
+    add_sequence(s);
+  }
+    
+  if (length > 0 and length != this->length())
+    throw myexception(string("Sequences in file '") + filename + "' have length " + convertToString(this->length()) + " instead of specified length " + convertToString(length) + ".");
+
+  for(int i=0;i<ntaxa;i++) {
+    std::cerr<<">"<<names[i]<<endl;
+    std::cerr<<sequences[i]<<endl;
+    std::cerr<<endl;
+  }
+}
+
+void alignment::load(const alphabet& a,const std::string& filename) {
+  if (filename.substr(filename.size()-4) == ".phy")
+    load_phylip(a,filename);
+  else
+    load_fasta(a,filename);
+}
+
 void alignment::gap_fixup(int n1,int n2,int g1,int g2,int m) {
   std::cerr<<"FIXME: in sequences "<<n1<<" and "<<n2<<" we have \
   a g2 @ "<<g2<<" followed by a g1 @ "<<g1<<std::endl;
@@ -242,12 +323,29 @@ void alignment::print(std::ostream& file) const{
 #endif
 }
 
+string shorten_name(const string& s,int good_length = 9) {
+  string s2 = s;
+  int pos = s2.find('.');
+  if (s.size() > good_length and pos != -1 and pos > 1) {
+    int species_length = s.size()-pos;
+    int genuslength = good_length - species_length;
+    if (genuslength<2)
+      genuslength=2;
+    
+    s2 = s2.substr(0,genuslength) + s2.substr(pos);
+    
+  }
+  return s2;
+}
+
 void alignment::print_phylip(std::ostream& file,bool othernodes) const {
   const alphabet& a = get_alphabet();
   file<<num_sequences()<<" "<<length()<<endl;
 
-  const int header_length = 10;
+  const int header_length = 15;
   const int line_length = 70;
+
+  bool always_print_names = true;
 
   int pos=0;
   while(pos<length()) {
@@ -258,8 +356,8 @@ void alignment::print_phylip(std::ostream& file,bool othernodes) const {
       nsequences = size2();
     for(int seq = 0;seq < nsequences;seq++) {
       string header = string(header_length,' ');
-      if (pos == 0 and seq<num_sequences()) {
-	string name = sequences[seq].name;
+      if ((pos == 0 or always_print_names) and seq<num_sequences()) {
+	string name = shorten_name(sequences[seq].name,header_length-2);
 	if (name.size() > (header_length-2))
 	  name = name.substr(0,header_length-2);
 	header = name + string(header_length-name.size(),' ');
@@ -347,4 +445,15 @@ std::valarray<double> empirical_frequencies(const alignment& A) {
   }
   f /= total;
   return f;
+}
+
+void remove_empty_columns(alignment& A) {
+  for(int column=A.length()-1;column>=0;column--) {
+    bool only_internal = (num_non_gaps(A,column) == 0);
+
+    if (only_internal) {
+      A.delete_column(column);
+      std::cerr<<"Deleted a column!"<<std::endl;
+    }
+  }
 }

@@ -235,16 +235,7 @@ alignment sample_node(const alignment& old,const Parameters& Theta,int node) {
   }
 
   /************** Remove columns w/ only gaps *************/
-  for(int column=A.length()-1;column>=0;column--) {
-    bool only_internal = true;
-    for(int j=0;j<A.size2();j++) 
-      if (A(column,j) != alphabet::gap)
-	only_internal = false;
-    if (only_internal) {
-      A.delete_column(column);
-      std::cerr<<"Deleted a column!"<<std::endl;
-    }
-  }
+  remove_empty_columns(A);
 
   assert(valid(A));
   return A;

@@ -116,11 +116,6 @@ void MCMC::recalc() {
   }
 };
 
-bool MCMC::enabled(const string& s) const {
-  const move_info& value = find(s);
-  return value.enabled;
-}
-
 void MCMC::enable(const string& s) {
   move_info& value = find(s);
   value.enabled = true;

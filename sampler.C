@@ -41,20 +41,22 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
     throw myexception("Alignment file not specified! (align=<filename>)");
 
   try {
-    A.load_fasta(dna,args["align"]);
+    A.load(dna,args["align"]);
   }
   catch (bad_letter& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
 
     try {
-      A.load_fasta(rna,args["align"]);
+      A.load(rna,args["align"]);
     }
     catch (bad_letter& e) {
       std::cerr<<"Exception: "<<e.what()<<endl;
       
-      A.load_fasta(amino_acids,args["align"]);
+      A.load(amino_acids,args["align"]);
     }
   }
+
+  remove_empty_columns(A);
 
   if (A.num_sequences() == 0) 
     throw myexception(string("Alignment file") + args["align"] + "didn't contain any sequences!");

@@ -1,6 +1,13 @@
 #include "alphabet.H"
 #include <cassert>
 
+bad_letter::bad_letter(char c)
+  :myexception(string("Letter '") + c + string("' not in alphabet."))
+{}
+bad_letter::bad_letter(char c,string name)
+  :myexception(string("Letter '") + c + string("' not in alphabet '") + name + "'.")
+{}
+
 int alphabet::operator[](char c) const {
   // Check the letters
   for(int i=0;i<size();i++) {
@@ -19,7 +26,7 @@ int alphabet::operator[](char c) const {
   }
 
   // We don't have this letter!
-  throw bad_letter(c);
+  throw bad_letter(c,name);
 }
 
 vector<int> alphabet::operator() (const string& s) const{

@@ -28,6 +28,9 @@ public:
   void load_fasta(const alphabet&,const std::string&);
   void load_fasta(const alphabet&,std::istream&);
 
+  void load_phylip(const alphabet&,const std::string&);
+  void load(const alphabet&,const std::string&);
+
   void create_internal(const SequenceTree&);
   void print(std::ostream&) const;
   void print_fasta(std::ostream&) const;
@@ -71,7 +74,9 @@ inline std::istream& operator>>(std::istream& file,alignment& A) {
   return file;
 }
 
-bool valid(const alignment& A);
+bool valid(const alignment&);
+
+void remove_empty_columns(alignment&);
 
 vector<int> get_path(const alignment&,int,int);
 

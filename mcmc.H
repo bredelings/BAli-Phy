@@ -15,6 +15,8 @@ namespace mcmc_local {
 };
 
 
+//FIXME - Index by int isntead of string, give each move string attributes
+
 class MCMC {
 
   typedef void (*move)(alignment&,Parameters&);
@@ -23,6 +25,8 @@ class MCMC {
     move m;
     double weight;
     bool enabled;
+    vector<string> attributes;
+
     move_info() {}
     move_info(move a1,double a2,bool a3):m(a1),weight(a2),enabled(a3) {}
   };
@@ -38,7 +42,6 @@ class MCMC {
 public:
   std::map<string,move_info,mcmc_local::lstr> moves;
 
-  bool enabled(const string&) const;
   void enable(const string&);
   void disable(const string&);
   void add(move,double,const string&);

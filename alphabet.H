@@ -7,9 +7,9 @@
 struct bad_letter:public myexception {
   char c;
 
-  bad_letter(char c)
-    :myexception(string("Letter '") + c + string("' not in alphabet."))
-  {}
+  bad_letter(char c);
+  bad_letter(char c,string name);
+
   virtual ~bad_letter() throw() {}
 };
 
