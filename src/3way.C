@@ -360,121 +360,114 @@ namespace A3 {
   // Does this routine depend on order of unordered columns?
   //  - No: columns in subA1 but not in seq1 are ordered only in respect to columns in subA1
   //  - columns in seq1, seq2, and seq3 should remain in increasing order.
+  const unsigned bitsmask = 15;
 
   alignment construct(const alignment& old, const vector<int>& path, 
 		      int n0,int n1,int n2,int n3,const Tree& T,
 		      const vector<int>& seq1,const vector<int>& seq2, const vector<int>& seq3) {
+    vector< vector<int> > seq;
+    seq.push_back(seq1); seq.push_back(seq2); seq.push_back(seq3);
 
-    valarray<bool> group1 = T.partition(n0,n1);
-    valarray<bool> group2 = T.partition(n0,n2);
-    valarray<bool> group3 = T.partition(n0,n3);
+    vector< valarray<bool> > group;
+    group.push_back( T.partition(n0,n1) );
+    group.push_back( T.partition(n0,n2) );
+    group.push_back( T.partition(n0,n3) );
 
-    vector<int> subA1;
-    vector<int> subA2;
-    vector<int> subA3;
+    vector< vector<int> > subA(seq.size());
 
     for(int column=0;column<old.length();column++) {
       // We have no guarantee about the consistancy of the columns before in the 
       //  old alignment.  We will construct a consistant alignment from the path.
-
-      if (not all_gaps(old,column,group1))
-	subA1.push_back(column);
-      if (not all_gaps(old,column,group2))
-	subA2.push_back(column);
-      if (not all_gaps(old,column,group3))
-	subA3.push_back(column);
+      for(int i=0;i<seq.size();i++)
+	if (not all_gaps(old,column,group[i]))
+	  subA[i].push_back(column);
     }
 
   
     // Account for silent end state with "-1"
-    const int newlength = path.size() - 1 + 
-      (subA1.size()-seq1.size()) + (subA2.size() - seq2.size()) + (subA3.size() - seq3.size());
+    int newlength = path.size() - 1;
+    // Add in columns not present in the 5way alignment
+    for(int i=0;i<seq.size();i++)
+      newlength += (subA[i].size() - seq[i].size());
 
     alignment A = old;
     A.changelength(newlength);
     assert(A.length() == newlength);
 
-    int c1=0,c2=0,c3=0,c4=0,c5=0,c6=0,l=0;
+    int l=0;
+    // position in sequence
+    vector<int> cS(seq.size(),0);
+    // position in sub-alignment
+    vector<int> cA(seq.size(),0);
     for(int column=0;column<A.length();column++) {
-      //    std::cout<<column<<":  "<<c1<<" "<<c2<<"  "<<c3<<" "<<c4<<"   "<<c5<<"  "<<c6<<"  "<<l<<endl;
+      std::cerr<<column<<":  "<<cA[0]<<" "<<cS[0]<<"  "<<cA[1]<<" "<<cS[1]<<"   "<<cA[2]<<"  "<<cS[2]<<"  "<<l<<endl;
 
-      assert(c1>=c2);
-      assert(c3>=c4);
-      assert(c5>=c6);
-      assert(c1 <= subA1.size());
-      assert(c3 <= subA2.size());
-      assert(c5 <= subA3.size());
+      //--------------- Check that we're putting in all the subA columns ---------------//
+      for(int i=0;i<seq.size();i++) {
+	assert(cA[i] >= cS[i]);
+	assert(cA[i] <= subA[i].size());
+      }
+      //--------------- Do we have any columns subA[i] to insert? ---------------------//
+      bool done=false;
+      for(int i=0;i<seq.size();i++) {
+	if (cA[i] < subA[i].size() and 
+	    (cS[i] == seq[i].size() or 
+	     (cS[i] < seq[i].size() and subA[i][cA[i]] != seq[i][cS[i]]))) {
+	  for(int s=0;s<A.size2();s++){
+	    if (group[i][s])
+	      A(column,s) = old(subA[i][cA[i]],s);
+	    else
+	      A(column,s) = alphabet::gap;
+	  }
+	  cA[i]++;
+	  done = true;
+	  break;
+	}
+      }
+      if (done) continue;
+      
+      //----------------- Insert a column corresponding to path[l] -------------------//
+      int bits = getstates(path[l]) & bitsmask;
+      for(int s=0;s<A.size2();s++) 
+	A(column,s) = alphabet::gap;
+      
+      for(int s=0;s<A.size2();s++) {
+	if (s == n0) {
+	  if (dl(path[l]))
+	    A(column,s) = alphabet::not_gap;
+	}
+	else {
+	  // which group is sequence 's' in?
+	  int j = -1;
+	  for(int i=0;i<group.size();i++)
+	    if (group[i][s]) {
+	      j = i;
+	      break;
+	    }
+	  assert(j != -1);
 
-      if (c1 < subA1.size() and (c2 == seq1.size() or (c2<seq1.size() and subA1[c1] != seq1[c2]))) {
-	for(int i=0;i<A.size2();i++) {
-	  if (group1[i])
-	    A(column,i) = old(subA1[c1],i);
-	  else
-	    A(column,i) = alphabet::gap;
+	  // copy from the  correct column, based on the group 'j'
+	  if (bitset(bits,1+j))
+	    A(column,s) = old(seq[j][cS[j]],s);
 	}
-	c1++;
-	assert(not all_gaps(A,column));
       }
-      else if (c3 < subA2.size() and (c4 == seq2.size() or (c4<seq2.size() and subA2[c3] != seq2[c4]))) {
-	for(int i=0;i<A.size2();i++) {
-	  if (group2[i])
-	    A(column,i) = old(subA2[c3],i);
-	  else
-	    A(column,i) = alphabet::gap;
-	}
-	c3++;
-	assert(not all_gaps(A,column));
-      }
-      else if (c5 < subA3.size() and (c6 == seq3.size() or (c6<seq3.size() and subA3[c5] != seq3[c6]))) {
-	for(int i=0;i<A.size2();i++) {
-	  if (group3[i])
-	    A(column,i) = old(subA3[c5],i);
-	  else
-	    A(column,i) = alphabet::gap;
-	}
-	c5++;
-	assert(not all_gaps(A,column));
-      }
-      else{
-	for(int i=0;i<A.size2();i++) 
-	  A(column,i) = alphabet::gap;
 
-	for(int i=0;i<A.size2();i++) {
-	  if (group1[i]) {
-	    if (di(path[l]))
-	      A(column,i) = old(seq1[c2],i);
-	  }
-	  else if (group2[i]) {
-	    if (dj(path[l]))
-	      A(column,i) = old(seq2[c4],i);
-	  }
-	  else if (group3[i]) {
-	    if (dk(path[l]))
-	      A(column,i) = old(seq3[c6],i);
-	  }
-	  else {
-	    assert(i==n0);
-	    if (dl(path[l]))
-	      A(column,i) = alphabet::not_gap;
-	  }
+      for(int i=0;i<seq.size();i++) {
+	if (bitset(bits,1+i)) {
+	  cS[i]++;
+	  cA[i]++;
 	}
-
-	if (di(path[l])) {c1++;c2++;}
-	if (dj(path[l])) {c3++;c4++;}
-	if (dk(path[l])) {c5++;c6++;}
-	l++;
-	assert(not all_gaps(A,column));
       }
+      l++;
+
       //    std::cout<<column<<":  "<<c1<<" "<<c2<<"  "<<c3<<" "<<c4<<"   "<<c5<<"  "<<c6<<"  "<<l<<endl<<endl;
       assert(not all_gaps(A,column));
     }
 
-    assert(c1 == subA1.size());
-    assert(c2 == seq1.size());
-    assert(c3 == subA2.size());
-    assert(c4 == seq2.size());
-    assert(c5 == subA3.size());
-    assert(c6 == seq3.size());
+    for(int i=0;i<seq.size();i++) {
+      assert(cA[i] == subA[i].size());
+      assert(cS[i] == seq[i].size());
+    }
     assert(l == path.size()-1);
 
     for(int i=0;i<T.n_leaves();i++) 
