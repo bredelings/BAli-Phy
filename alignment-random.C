@@ -1,9 +1,12 @@
 #include "alignment.H"
 #include "rng.H"
 
-alignment randomize(const alignment& A) {
+alignment randomize(const alignment& A,int n=-1) {
+  if (n==-1)
+    n = A.size2();
+
   int maxlength = -1;
-  for(int s=0;s<A.size2();s++) {
+  for(int s=0;s<n;s++) {
     if (A.seqlength(s) > maxlength)
       maxlength = A.seqlength(s);
   }

@@ -228,7 +228,12 @@ void report_sample(std::ostream& o,const valarray<bool>& sample_in,int pseudocou
 SequenceTree standardized(const string& t,const vector<string>& remove) {
   SequenceTree T;
   T.parse(t);
+  return standardized(T,remove);
+}
   
+
+
+SequenceTree standardized(SequenceTree T,const vector<string>& remove) {
   for(int i=0;i<remove.size();i++)
     delete_node(T,remove[i]);
 
@@ -385,10 +390,12 @@ int main(int argc,char* argv[]) {
 	break;
     }
 
-    /*-----------  Choose tree to example splits from  -----------*/
+    //-------  Choose tree from which to take example splits -------//
     SequenceTree best;
-    if (args.set("tree"))
+    if (args.set("tree")) {
       best.read(args["tree"]);
+      best = standardized(best,remove);
+    }
     else
       best = best_trees[0];
 

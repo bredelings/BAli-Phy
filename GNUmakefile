@@ -80,6 +80,8 @@ tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o $
 
 tools/treecount: tree.o sequencetree.o arguments.o util.o rng.o tools/statistics.o ${LIBS:%=-l%}
 
+tools/tree-dist-compare: tree.o sequencetree.o tools/tree-dist.o arguments.o util.o rng.o tools/statistics.o ${LIBS:%=-l%}
+
 tools/treedist: tree.o sequencetree.o arguments.o
 
 tools/tree-to-srq: tree.o sequencetree.o arguments.o

@@ -6,15 +6,7 @@
 #include <map>
 #include "util.H"
 
-namespace arguments_local {
-  struct lstr {
-    bool operator()(const std::string& s1, const std::string& s2) const {
-      return strcmp(s1.c_str(), s2.c_str()) < 0;
-    }
-  };
-}
-
-class Arguments: public std::map<std::string,std::string,arguments_local::lstr> {
+class Arguments: public std::map<std::string,std::string,lstr> {
 public:
   bool set(const std::string&) const;
 

@@ -107,7 +107,7 @@ vector<int> get_path(const alignment&,int,int);
 vector<int> get_path_3way(const alignment&,int,int,int,int);
 
 /// Generate a randomize alignment
-alignment randomize(const alignment&);
+alignment randomize(const alignment&,int n=-1);
 #endif
 
 

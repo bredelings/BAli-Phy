@@ -8,6 +8,15 @@
 #include <algorithm>
 #include "myexception.H"
 
+#define foreach(a,b) for(typeof((b).begin()) a=(b).begin();a != (b).end();a++)
+
+// over-ride less<string> to make this a binary predicate?
+struct lstr {
+  bool operator()(const std::string& s1, const std::string& s2) const {
+   return strcmp(s1.c_str(), s2.c_str()) < 0;
+  }
+};
+
 template <class T>
 T convertTo(const std::string& s) { 
   std::istringstream i(s);
@@ -82,6 +91,11 @@ inline double wrap(double x,double max) {
 template <typename T>
 int find_index(const std::vector<T>& v,const T& t) {
   return std::find(v.begin(),v.end(),t) - v.begin();
+}
+
+template <typename T>
+bool includes(const std::vector<T>& v, const T& t) {
+  return (std::find(v.begin(),v.end(),t) != v.end());
 }
 
 std::vector<std::string> split(const std::string&,char);

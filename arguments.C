@@ -41,7 +41,7 @@ void Arguments::parse(const string& s) {
 
 void Arguments::add(const string& key, const string& value) {
   if (set(key))
-    cerr<<"Warning: over-writing "<<key<<" = "<<(*this)[key]<<endl;
+    throw myexception()<<"Error: over-writing "<<key<<" = "<<(*this)[key]<<" with "<<key<<" = "<<value;
   (*this)[key] = value;
 }
 

@@ -296,6 +296,8 @@ public:
 
 TreeFunc<int> mark_tree(const std::vector<int>&,const tree&);
 
-double distance1(const tree& T1, const tree& T2);
+double branch_distance(const tree& T1, const tree& T2);
+double topology_distance(const tree& T1, const tree& T2);
+
 
 #endif

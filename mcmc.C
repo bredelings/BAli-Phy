@@ -14,7 +14,7 @@
 #include "setup.H"           // for standardize
 
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
-		 const alignment& A,const Parameters& P,const string& tag) {
+		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment=true) {
   
   o<<endl;
   o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
@@ -538,10 +538,11 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     /*------------------ record statistics ---------------------*/
     if (iterations > start_after) {
       cout<<"iterations = "<<iterations<<endl;
-      bool full_sample = (iterations%subsample == 0);
-      if (full_sample)
-	print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag);
-      cout<<endl<<endl;
+      if (iterations%subsample == 0) {
+	bool show_alignment = (iterations%(10*subsample) == 0);
+	print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag,show_alignment);
+	cout<<endl<<endl;
+      }
     }
 
     /*--------------------- get new position -------------------*/

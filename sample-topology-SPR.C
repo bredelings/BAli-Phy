@@ -362,12 +362,13 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P1,int b) {
     std::swap(n1,n2);
 
   //----- Generate the Different Topologies ----//
-  std::cerr<<"before = "<<T1<<endl;
+
+  //  std::cerr<<"before = "<<T1<<endl;
 
   T2 = do_SPR(T1,n1,n2,b);
   P2.recalc();
   
-  std::cerr<<"after = "<<T2<<endl;
+  //  std::cerr<<"after = "<<T2<<endl;
 
   bool success = topology_sample_SPR(A,P1,P2,n1,n2);
 

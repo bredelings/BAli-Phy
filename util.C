@@ -64,13 +64,6 @@ vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2) {
   return mapping;
 }
 
-struct lstr {
-  bool operator()(const string& s1, const string& s2) const {
-   return strcmp(s1.c_str(), s2.c_str()) < 0;
-  }
-};
-
-
 std::vector<std::string> truncate_names(const std::vector<std::string>& names) {
   std::vector<std::string> names2 = names;
 
