@@ -1,6 +1,7 @@
 #!/bin/sh
-#$ -l serial -V -S /bin/sh -cwd
+#$ -V -S /bin/sh -cwd
 
+ulimit -t unlimited
 progname=$1
 shift
 echo working directory: $(pwd)

@@ -1,9 +1,9 @@
 #!/bin/sh
-#$ -l serial -V -S /bin/sh -cwd
+#$ -V -S /bin/sh -cwd
 
 # A script for running bali-phy on the Sun Grid Engine (SGE)
 
-#### CLASS=[class] VERSION=[version] sampler.sh align=data.fasta [optargs]
+#### CLASS=[class] VERSION=[version] sampler.sh data.fasta [optargs]
 
 # CLASS is optional, but VERSION is required.
 
