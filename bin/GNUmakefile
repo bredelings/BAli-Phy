@@ -6,7 +6,7 @@ SHELL=/bin/sh
 
 .PRECIOUS: %.prob %.from.${SKIP}+${SIZE}
 
-analysis: Report tc tree.plot MAP.tree MAP.phy MAP.fasta # AU.html
+analysis: Report tc tree.plot MAP.tree MAP.phy MAP.fasta # MAP-AU.html median-AU.html
 	echo "Started analyzing from iteration ${SKIP}" > analysis
 	echo "Analyzed $$(wc -l trees.from.${SKIP}+${SIZE}) " >> analysis
 	echo "Finished on date $$(date)" >> analysis
@@ -18,8 +18,8 @@ header: out Pmarg
 	{ ~/bin/genreport.pl; \
 	echo ; } > $@
 
-samples: out
-	cut-range key=iterations skip=${SKIP} size=${SIZE} < $< > $@
+samples-${SKIP}+${SIZE}: out
+	cut-range key=iterations skip=${SKIP} ${SIZE:size=%} < $< > $@
 
 %.from.${SKIP}: %
 	tail -n +${SKIP} $< > $@
@@ -74,20 +74,20 @@ MAP.tree: tc
 MAP-unordered.phy: out
 	findalign < MAP > $@
 
-%-chopped.phy: %.phy
-	alignment-chop-internal align=$< > $@
+median-unordered.phy: samples-${SKIP}+${SIZE}
+	alignment-median maxalignments=400 type=splits < $< > $@
 
-MAP.phy: MAP.tree-trunc MAP-unordered-chopped.phy
-	alignment-reorder align=MAP-unordered-chopped.phy tree=MAP.tree-trunc > $@ 2>/dev/null
+%.phy: MAP.tree-trunc %-unordered.phy
+	alignment-reorder align=$*-unordered.phy tree=MAP.tree-trunc > $@ 2>/dev/null
 
-AU.prob: samples MAP.tree-trunc MAP-unordered.phy
-	alignment-gild align=MAP-unordered.phy tree=MAP.tree-trunc maxalignments=500 < samples > $@ 2>/dev/null
+%-AU.prob: %-unordered.phy samples-${SKIP}+${SIZE} MAP.tree-trunc 
+	alignment-gild align=$*-unordered.phy tree=MAP.tree-trunc maxalignments=500 < samples-${SKIP}+${SIZE} > $@ 2>$*-AU.err
 
 %.tree-trunc: %.tree
 	tree-names-trunc tree=$< > $@
 
-%.html: %.prob MAP.tree MAP.phy
-	alignment-draw width=80 tree=MAP.tree-trunc align=MAP.phy AU-file=$< > $@
+%-AU.html: %-AU.prob MAP.tree-trunc %.phy 
+	alignment-draw width=120 tree=MAP.tree-trunc align=$*.phy AU-file=$*-AU.prob > $@
 
 tree.srq: trees MAP.tree 
 	tree-to-srq tree=MAP.tree < trees > tree.srq
