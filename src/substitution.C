@@ -520,8 +520,10 @@ namespace substitution {
 #ifndef NDEBUG
     ublas::matrix<int> index2 = subA_index_req(rb,A,T,nodes);
     ublas::matrix<int> index  = subA_index(rb,A,T);
-
+#endif
     double Pr1 = calc_root_probability(A,P,rb,index1);
+
+#ifndef NDEBUG
     double Pr2 = calc_root_probability(A,P,rb,index2);
     double Pr  = calc_root_probability(A,P,rb,index);
 
