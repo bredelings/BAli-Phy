@@ -65,13 +65,14 @@ namespace substitution {
     int b2;
     int child;
 
-    peeling_info(const directed_branchview& db,const tree& T)
+    peeling_info(const directed_branchview& db,const tree& T,vector<directed_branchview>& before)
       :b(db),
        b1(-1),
        b2(-1),
        child(db.child())
     {
-      vector<directed_branchview> before = T.get_branches_before(db);
+      before.clear();
+      T.get_branches_before(db,before);
       if (before.size() >= 1)
 	b1 = before[0];
 
@@ -152,13 +153,14 @@ namespace substitution {
     vector<peeling_info> peeling_operations;
     peeling_operations.reserve(T.n_branches());
 
+    vector<directed_branchview> temp; temp.reserve(3);
     vector<directed_branchview> branches = T.get_branches_in(root);
 
     for(int i=0;i<branches.size();i++) {
 	const directed_branchview& db = branches[i];
 	if (not up_to_date[db]) {
 	  T.get_branches_before(db,branches);
-	  peeling_operations.push_back(peeling_info(db,T));
+	  peeling_operations.push_back(peeling_info(db,T,temp));
 	}
     }
 
@@ -220,6 +222,7 @@ namespace substitution {
 
     //----------- determine the operations to perform -----------------//
     vector<peeling_info> branches = get_branches(T,root,up_to_date);
+    branches = get_branches(T,root,up_to_date);
 
     //-------- propagate info along branches ---------//
     peel(branches,distributions,residues,transition_P);
