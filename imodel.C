@@ -283,7 +283,7 @@ void IndelModel2::recalc() {
 double IndelModel2::prior() const {
   double lambda_O = parameters_[0];
   double lambda_E = parameters_[1];
-  double beta     = parameters_[2];
+  double log_beta = parameters_[2];
 
 
   double P = 0;
@@ -304,10 +304,10 @@ double IndelModel2::prior() const {
   P += (-log(E_length_mean) - E_length/E_length_mean);
 
 
-  // Calculate LOG prior on beta - should be lognormal
+  // 
   {
     double sigma = 0.3;
-    P += log(gsl_ran_gaussian_pdf(log(beta),sigma));
+    P += log(gsl_ran_gaussian_pdf(log_beta,sigma));
   }
 
   return P;

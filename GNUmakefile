@@ -31,12 +31,12 @@ all: sampler
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math  tracer omit-frame-pointer prefetch-loop-arrays
-DEBUG = pipe #g3 #gdwarf-2 #pg 
+LANGO = fast-math  tracer  prefetch-loop-arrays abi-version=0 # omit-frame-pointer
+DEBUG = pipe g3 #gdwarf-2 #pg 
 EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS = NDEBUG NDEBUG_DP # USE_UBLAS
+DEFS = # NDEBUG NDEBUG_DP # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
-OPT =  march=pentium3 O3 # malign-double msse mmmx msse2 
+OPT =  march=pentium3 # O3 # malign-double msse mmmx msse2 
 LDFLAGS = #-pg # -static 
 LI=${CXX}
 
@@ -50,7 +50,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
 	  node-sample2.C imodel.C 5way.C topology-sample2.C inverse.C \
-	  setup.C rates.C matcache.C
+	  setup.C rates.C matcache.C sample-two-nodes.C
 
 LIBS = gsl gslcblas m 
 GSLLIBS = ${LIBS:%=-l%}

@@ -323,10 +323,10 @@ int bandwidth2(const DPmatrix& M,const vector<int>& path,int I,int J) {
     if (M.dj(path[c]))
       j++;
 
-    double w1 = i - double(j)*I/J;
-    double w2 = j - double(i)*J/I;
+    double w1 = std::abs(  i - double(j)*I/J );
+    double w2 = std::abs(  j - double(i)*J/I );
     double w = std::max(w1,w2);
-    if (max > (int)w)
+    if ((int)w > max)
       max = (int)w;
   }
   return max;

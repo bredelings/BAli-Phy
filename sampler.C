@@ -252,7 +252,6 @@ int main(int argc,char* argv[]) {
     /*---------- Get input, from file if necessary -------*/
     Arguments args;
     args.read(argc,argv);
-    args.print(std::cout);
 
     if (args.set("file")) {
       if (args["file"] == "-")
@@ -265,6 +264,8 @@ int main(int argc,char* argv[]) {
 	input.close();
       }
     }
+
+    args.print(std::cout);
     
     /*---------- Initialize random seed -----------*/
     unsigned long seed = 0;
