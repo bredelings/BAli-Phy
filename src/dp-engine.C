@@ -625,6 +625,22 @@ efloat_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
   return P_sub;
 }
 
+void DPmatrixEmit::prepare_cell(int i,int j) 
+{
+  i--;
+  j--;
+
+  const Matrix& M1 = dists1[i];
+  const Matrix& M2 = dists2[j];
+
+  double total=0;
+  for(int m=0;m<M1.size1();m++) {
+    for(int l=0;l<M1.size2();l++)
+      total += M1(m,l) * M2(m,l);
+  }
+  s12_sub(i,j) = total;
+  //      s12_sub(i,j) = pow(s12_sub(i,j),1.0/T);
+}
 
 DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 			   const vector<double>& v2,
@@ -672,21 +688,6 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
       for(int l=0;l<dists2[i][m].size();l++)
 	dists2[i](m,l) *= distribution[m] * frequency(m,l);
   }
-
-  //----- cache M emission probabilities -----//
-  for(int i=0;i<s12_sub.size1();i++)
-    for(int j=0;j<s12_sub.size2();j++) {
-      const Matrix& M1 = dists1[i];
-      const Matrix& M2 = dists2[j];
-      double total=0;
-      for(int m=0;m<M1.size1();m++) {
-	for(int l=0;l<M1.size2();l++)
-	  total += M1(m,l) * M2(m,l);
-      }
-      s12_sub(i,j) = total;
-      //      s12_sub(i,j) = pow(s12_sub(i,j),1.0/T);
-    }
-
 }
 
 
@@ -694,6 +695,8 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
 
   assert(i2<size1());
   assert(j2<size2());
+
+  prepare_cell(i2,j2);
 
   // determine initial scale for this cell
   if (i2 > 0 and j2 > 0)
@@ -761,6 +764,8 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
 
   assert(i2<size1());
   assert(j2<size2());
+
+  prepare_cell(i2,j2);
 
   // determine initial scale for this cell
   if (i2 > 0 and j2 > 0)

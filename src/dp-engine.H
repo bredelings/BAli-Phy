@@ -12,7 +12,6 @@ class state_array: public RefObject
   int s2;
   int s3;
 
-  //CHECK - does valarray make this faster?
   valarray<double> data;
   vector<int> scale_;
 
@@ -276,6 +275,8 @@ protected:
   std::vector<double> s1_sub;
   /// Precomputed emission probabilies for -+
   std::vector<double> s2_sub;
+
+  inline void prepare_cell(int i,int j);
 
 public:
   /// Probabilities of the different rates
