@@ -181,19 +181,26 @@ int TreeView::remove_node_from_branch(BranchNode* n1) {
 }
 
 BranchNode* TreeView::unlink_subtree(BranchNode* b) {
-  BranchNode* prev = b->prev;
+  if (not is_leaf_node(b)) {
+    BranchNode* prev = b->prev;
 
-  // disconnect from tree
-  b->prev->next = b->next;
-  b->next->prev = b->prev;
+    // disconnect from tree
+    b->prev->next = b->next;
+    b->next->prev = b->prev;
 
-  // re-link this node as a leaf node
-  b->prev = b->next = b;
+    // re-link this node as a leaf node
+    b->prev = b->next = b;
 
-  if (prev == b)
-    return NULL;
-  else
     return prev;
+  }
+  else {
+    BranchNode* copy = new BranchNode;
+    copy->prev = copy->next = copy->out = copy;
+    copy->node = b->node;
+    copy->branch = b->branch;
+
+    return copy;
+  }
 }
 
 //------------------------ Begin definition of Tree::* routines ------------------------//
@@ -590,6 +597,11 @@ void Tree::reanalyze(BranchNode* start) {
   nodes_.resize(1+total_branch_nodes/2);
   branches_.resize(total_branch_nodes);
 
+  if (n_leaves_ == 1) {
+    recompute(start);
+    return;
+  }
+
   //----------- Set the leaf names ------------//
   vector<BranchNode*> work(n_leaves());
   for(BN_iterator BN(start);BN;BN++)
@@ -621,7 +633,7 @@ void Tree::reanalyze(BranchNode* start) {
 	temp[i]->branch = b++;
 	temp[i]->out->branch = temp[i]->branch + B;
 
-      // add the parent to the list if we are its last child
+	// add the parent to the list if we are its last child
 	BranchNode* next = get_parent(temp[i]->out);
 	if (next) work.push_back(next);
       }
@@ -896,7 +908,7 @@ void RootedTree::check_structure() const {
 
 nodeview RootedTree::prune_subtree(int br) {
   if (cached_partitions[br][root_->node])
-    throw myexception()<<"Can't deleted a subtree containing the root node!";
+    throw myexception()<<"Can't delete a subtree containing the root node!";
 
   if (root_ == branches_[br]) 
     root_ = root_->next;

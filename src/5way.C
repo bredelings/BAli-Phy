@@ -494,7 +494,7 @@ namespace A5 {
   }
 
   alignment project(const alignment& A1,const vector<int>& nodes) {
-    alignment A2;
+    alignment A2(A1.get_alphabet());
 
     for(int i=0;i<nodes.size();i++)
       A2.add_sequence(A1.seq(nodes[i]));

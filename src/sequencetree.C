@@ -193,16 +193,6 @@ void RootedSequenceTree::read(istream& file) {
   parse(total);
 }
 
-SequenceTree remove_root_branch(RootedSequenceTree RT) {
-  nodeview r1 = RT.root();
-  nodeview r2 = *(RT.root().neighbors());
-  RT.reroot(0);
-
-  r2 = RT.prune_subtree(RT.directed_branch(r2,r1));
-  RT.remove_node_from_branch(r2);
-  return SequenceTree(RT);
-}
-
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit
 void RootedSequenceTree::parse(const string& line) {

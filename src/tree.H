@@ -293,4 +293,6 @@ bool implies(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
 
 int n_elements(const std::valarray<bool>& v);
 
+Tree RandomTree(int n,double=1.0);
+
 #endif

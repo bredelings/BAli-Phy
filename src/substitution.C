@@ -268,6 +268,9 @@ namespace substitution {
 
     const int root = cache.root;
 
+    if (P.T[root].is_leaf_node())
+      throw myexception()<<"Trying to accumulate conditional likelihoods at a root node is not allowed.";
+
     // scratch matrix 
     Matrix & S = cache.scratch(0);
     const int n_models = S.size1();

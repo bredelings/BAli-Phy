@@ -278,6 +278,9 @@ int main(int argc,char* argv[]) {
 
     cout<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
 
+    if (A.n_sequences() < 3)
+      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<A.n_sequences()<<".";
+
     //--------- Set up the substitution model --------//
     OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
     

@@ -536,7 +536,7 @@ namespace A3 {
 
 
   alignment project(const alignment& A1,int n0,int n1,int n2,int n3) {
-    alignment A2;
+    alignment A2(A1.get_alphabet());
     A2.add_sequence(A1.seq(n0));
     A2.add_sequence(A1.seq(n1));
     A2.add_sequence(A1.seq(n2));
