@@ -467,9 +467,9 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args) {
     }
   }
   else {
-    alphabets.push_back(*AA);
     alphabets.push_back(DNA());
     alphabets.push_back(RNA());
+    alphabets.push_back(*AA);
   }
 
   return alphabets;
