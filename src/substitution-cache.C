@@ -5,6 +5,16 @@ using std::vector;
 
 
 int Multi_Likelihood_Cache::get_unused_location() {
+#ifdef CONSERVE_MEM
+  if (not unused_locations.size()) {
+    double s = size();
+    int ns = int(s*1.25)+1;
+    int delta = ns - size();
+    assert(delta > 0);
+    allocate(delta);
+  }
+#endif
+
   assert(unused_locations.size());
 
   int loc = unused_locations.back();
@@ -28,6 +38,8 @@ void Multi_Likelihood_Cache::release_location(int loc) {
 void Multi_Likelihood_Cache::allocate(int s) {
   int old_size = size();
   int new_size = old_size + s;
+  std::cerr<<"Allocating "<<old_size<<" -> "<<new_size<<" branches ("<<s<<")\n";
+  std::cerr<<"  Each branch has "<<C<<" columns."<<std::endl;
 
   reserve(new_size);
   n_uses.reserve(new_size);
@@ -72,14 +84,13 @@ void Multi_Likelihood_Cache::set_length(int t,int l) {
     for(int i=0;i<size();i++)
       for(int j=0;j<delta;j++)
 	(*this)[i].push_back(Matrix(M,A));
+    std::clog<<"MLC is now has "<<C<<" columns and "<<size()<<" branches.\n";
   }
   for(int i=0;i<size();i++) {
     assert((*this)[i].size() == C);
     assert((*this)[i].size() >= l);
   }
-  
 
-  // If 
   length[t] = l;
 }
 
@@ -102,8 +113,12 @@ int Multi_Likelihood_Cache::add_token(int B) {
   length.push_back(0);
   mapping.push_back(std::vector<int>(B));
 
+#ifndef CONSERVE_MEM
   // add space used by the token
   allocate(B);
+#endif
+
+  std::clog<<"There are now "<<active.size()<<" tokens.\n";
 
   return token;
 }
