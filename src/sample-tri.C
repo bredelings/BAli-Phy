@@ -27,7 +27,7 @@ using namespace A3;
 // opposite side of the middle 
 DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const Tree& T = P.T;
-  check_alignment(A,T,"sample_tri_base:in");
+  check_letters_OK(A,"sample_tri_base:in");
 
   assert(P.IModel().full_tree);
 
@@ -186,7 +186,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
 bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
 
-  letters_OK(A,"sample_tri_multi:in");
+  check_letters_OK(A,"sample_tri_multi:in");
   assert(p.size() == nodes.size());
 
   Parameters P_save = p[0];
@@ -334,7 +334,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
 
   /*------------(Gibbs) sample from proposal distribution ------------------*/
-
+  check_alignment(A,P.T,"tri_sample_alignment:in");
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
@@ -342,6 +342,7 @@ void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
 
   sample_tri_multi(A,p,nodes,false,false);
   P = p[0];
+  check_alignment(A,P.T,"tri_sample_alignment:out");
 }
 
 /// Resample branch alignment, internal nodes, and branch length
