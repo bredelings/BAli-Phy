@@ -190,7 +190,6 @@ namespace substitution {
 
   //------------------------- Reversible Substitution Model -----------------------//
 
-  // FIXME - cache the eigensystem!
   // Store S2 = pi^0.5 * S * pi^0.5
   // Store EigenValues(S2) -> D,O
   // Is this worth it?  Try it later...
@@ -214,6 +213,15 @@ namespace substitution {
     EigenValues eigensystem;
 
     virtual void recalc();
+
+    /// Construct a reversible Markov model on alphabet 'a_'
+    ReversibleMarkovModel(const alphabet& a,int dp):
+      MarkovModel(a), pi(1.0/a.size(),a.size()), 
+      S(a.size(),a.size()),
+      eigensystem(a.size())
+    { set_n_parameters(dp+1);parameters_[0] = 1;}
+    
+
   public:
     double rate() const;
     void set_rate(double);
@@ -395,7 +403,7 @@ namespace substitution {
 
     virtual void recalc();
   public:
-    virtual void fiddle() {}
+    virtual void fiddle();
 
     virtual Empirical* clone() const {return new Empirical(*this);}
 
@@ -404,7 +412,7 @@ namespace substitution {
 
     /// Construct an HKY model on alphabet 'a' with matrix from 'filename'
     Empirical(const alphabet& a,const string& filename) 
-      : ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a)
+      : ReversibleMarkovModel(a,0),ModelWithAlphabet<alphabet>(a)
     { 
       load_file(filename); 
       recalc();
@@ -420,8 +428,8 @@ namespace substitution {
   public:
     ReversibleMarkovNucleotideModel* clone() const=0;
     
-    ReversibleMarkovNucleotideModel(const Nucleotides& N)
-      :ReversibleMarkovModel(N),
+    ReversibleMarkovNucleotideModel(const Nucleotides& N,int dp=0)
+      :ReversibleMarkovModel(N,dp),
        ModelWithAlphabet<Nucleotides>(N)
     { }
   };
@@ -441,9 +449,9 @@ namespace substitution {
     virtual void fiddle(); 
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa() const {return parameters_[0];}
+    double kappa() const {return parameters_[1];}
     /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa(double k) {parameters_[0]=k;recalc();}
+    void kappa(double k) {parameters_[1]=k;recalc();}
 
     virtual double prior() const;
 
@@ -452,7 +460,7 @@ namespace substitution {
 
     /// Construct an HKY model on alphabet 'a'
     HKY(const Nucleotides& N)
-      : Model(1),ReversibleMarkovNucleotideModel(N)
+      : ReversibleMarkovNucleotideModel(N,1)
     { 
       kappa(2);
     }
@@ -467,14 +475,14 @@ namespace substitution {
     virtual void fiddle(); 
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa1() const {return parameters_[0];}
+    double kappa1() const {return parameters_[1];}
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa2() const {return parameters_[1];}
+    double kappa2() const {return parameters_[2];}
 
     /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa1(double k) {parameters_[0]=k;recalc();}
+    void kappa1(double k) {parameters_[1]=k;recalc();}
     /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa2(double k) {parameters_[1]=k;recalc();}
+    void kappa2(double k) {parameters_[2]=k;recalc();}
 
     virtual double prior() const;
 
@@ -483,7 +491,7 @@ namespace substitution {
 
     /// Construct an HKY model on alphabet 'a'
     TNY(const Nucleotides& N)
-      : Model(2),ReversibleMarkovNucleotideModel(N)
+      : ReversibleMarkovNucleotideModel(N,2)
     { 
       kappa1(2);
       kappa2(2);
@@ -517,9 +525,9 @@ namespace substitution {
     YangCodonModel* clone() const {return new YangCodonModel(*this);}
 
     /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
-    double omega() const {return parameters_[0];}
+    double omega() const {return parameters_[1];}
     /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-    void omega(double w) {parameters_[0]=w;recalc();}
+    void omega(double w) {parameters_[1]=w;recalc();}
 
     string name() const;
     std::string super_parameter_name(int i) const;

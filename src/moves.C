@@ -5,6 +5,7 @@
 #include "3way.H"
 #include "likelihood.H"
 #include "util-random.H"
+#include "monitor.H"
 
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
@@ -240,19 +241,15 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
 
   Parameters P2 = P;
 
-  P2.fiddle();
-
+  P2.fiddle_smodel();
+  
 #ifndef NDEBUG  
-  for(int i=0;i<P.SModel().parameters().size();i++)
-    std::cerr<<"    p"<<i<<" = "<<P.SModel().parameters()[i];
-  std::cerr<<endl;
-  std::cerr<<P.probability(A,P);
+  show_parameters(std::cerr,P.SModel());
+  std::cerr<<P.probability(A,P)<<" = "<<P.likelihood(A,P)<<" + "<<P.prior(A,P);
   std::cerr<<endl<<endl;
 
-  for(int i=0;i<P2.SModel().parameters().size();i++)
-    std::cerr<<"    p"<<i<<" = "<<P2.SModel().parameters()[i];
-  std::cerr<<endl;
-  std::cerr<<P.probability(A,P2);
+  show_parameters(std::cerr,P2.SModel());
+  std::cerr<<P.probability(A,P2)<<" = "<<P.likelihood(A,P2)<<" + "<<P.prior(A,P2);
   std::cerr<<endl<<endl;
 #endif
 
@@ -276,7 +273,7 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
   result[0] = 1.0;
 
   Parameters P2 = P;
-  P2.IModel().fiddle();
+  P2.fiddle_imodel();
 
   if (P.accept_MH(A,P,A,P2)) {
     P = P2;
@@ -285,7 +282,6 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
 
   return result;
 }
-
 
 
 

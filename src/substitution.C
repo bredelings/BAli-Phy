@@ -541,7 +541,7 @@ namespace substitution {
   double Pr(const alignment& A,const Parameters& P) {
     double result = Pr(A, P, P.LC);
 
-#ifndef NDEBUG
+#ifdef DEBUG_CACHING
     Parameters P2 = P;
     P2.LC.invalidate_all();
     double result2 = Pr(A, P2, P2.LC);

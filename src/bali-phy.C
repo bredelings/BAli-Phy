@@ -16,6 +16,7 @@
 #include "util.H"
 #include "setup.H"
 #include "alignment-constraint.H"
+#include "monitor.H"
 
 using std::cout;
 using std::cin;

@@ -144,6 +144,7 @@ bool letters_OK(const alignment& A) {
 	bad = true;
 	std::cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<std::endl;
       }
+  if (bad) std::abort();
   return not bad;
 }
 

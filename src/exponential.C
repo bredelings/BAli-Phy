@@ -7,34 +7,40 @@ using namespace ublas;
 
 
 
+// exp(Q) = D^-a * exp(E) * D^a
+// E = exp(D^a * Q * D^-a) = exp(D^1/2 * S * D^1/2)
+
 // how do we make the M constant? - const_cast?
 // return inline matrix_expression?
 
-Matrix exp(const SMatrix& S,const BMatrix& D,const double t) {
+Matrix exp(const SMatrix& S,const BMatrix& D,double t,double f) {
   const int n = S.size1();
 
+  // compute S2 = D^1/2 * S * D^1/2
+  double DB[n];
   double DP[n];
   double DN[n];
   for(int i=0;i<D.size1();i++) {
+    DB[i] = pow(D(i,i),f - 0.5);
     DP[i] = sqrt(D(i,i));
     DN[i] = 1.0/DP[i];
   }
 
-  //  S2 = prod(DP,prod<Matrix>(S,DP));
   SMatrix S2 = S;
   for(int i=0;i<S2.size1();i++)
     for(int j=0;j<=i;j++)
-      S2(i,j) *= DP[i]*DP[j];
+      S2(i,j) *= DB[i]*DB[j];
 
 
+  // compute E = exp(S2)
   Matrix E = exp(S2,t);
 
-  //  E = prod(DN,prod<Matrix>(E,DP));
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++)
       E(i,j) *= DN[i]*DP[j];
 
 
+  // Double-check that E(i,j) is always positive
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++) {
       assert(E(i,j) >= -1.0e-13);
@@ -45,7 +51,7 @@ Matrix exp(const SMatrix& S,const BMatrix& D,const double t) {
   return E;
 }
 
-Matrix exp(const EigenValues& solution,const double t) {
+Matrix exp(const EigenValues& solution,double t) {
 
   Matrix O = solution.Rotation();
   std::vector<double> D = solution.Diagonal();
@@ -75,9 +81,10 @@ Matrix exp(const EigenValues& solution,const double t) {
   return E;
 }
 
-Matrix exp(const EigenValues& eigensystem,const BMatrix& D,const double t) {
+Matrix exp(const EigenValues& eigensystem,const BMatrix& D,const double t,double f) {
   const int n = D.size1();
 
+  // Compute D^-a * E * D^a
   double DP[n];
   double DN[n];
   for(int i=0;i<D.size1();i++) {
@@ -85,9 +92,10 @@ Matrix exp(const EigenValues& eigensystem,const BMatrix& D,const double t) {
     DN[i] = 1.0/DP[i];
   }
 
+  // compute E = exp(S2)
   Matrix E = exp(eigensystem,t);
 
-  //  E = prod(DN,prod<Matrix>(E,DP));
+  // Compute D^-a * E * D^a
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++)
       E(i,j) *= DN[i]*DP[j];

@@ -61,7 +61,8 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
 	  alignment-sums.C alignment-util.C probability.C model.C le-double.C \
-	  alignment-constraint.C substitution-cache.C substitution-star.C
+	  alignment-constraint.C substitution-cache.C substitution-star.C \
+	  monitor.C
 
 LIBS = gsl gslcblas m 
 LINKLIBS = ${LIBS:%=-l%}
