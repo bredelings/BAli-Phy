@@ -6,7 +6,11 @@
 #include "alignment.H"
 #include "tree.H"
 
-alignment chop_internal(const alignment& A);
+// Remove sequences to A corresponding to internal nodes in T
+alignment chop_internal(alignment A);
+
+// Add sequences to A corresponding to internal nodes in T
+alignment add_internal(alignment A,const Tree& T);
 
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
@@ -31,12 +35,12 @@ void check_internal_nodes_connected(const alignment& A,const Tree& T,const vecto
 /// Are all un-ignored characters in column 'present' connected on T?
 bool all_characters_connected(const Tree& T,std::valarray<bool> present,const std::vector<int>& ignore);
 
-void check_leaf_sequences(const alignment& A,int n_leaves,const char* tag);
+void check_leaf_sequences(const alignment& A,int n_leaves);
 
-void check_letters_OK(const alignment& A,const char* tag);
-void letters_OK(const alignment& A,const char* tag);
+void check_letters_OK(const alignment& A);
+void letters_OK(const alignment& A);
 
-void check_alignment(const alignment& A,const Tree& T,const char* tag);
+void check_alignment(const alignment& A,const Tree& T,bool internal_sequences);
 
 vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
 				   int column,

@@ -1,5 +1,3 @@
--3. Stop requiring --random-tree-ok
-
 10. Speed up sample_path() for DParrayConstrained by only considering
     allowed states for each column...
     a) check how fast we are when gaps=full_tree but alignment_branch is 
@@ -147,4 +145,7 @@ the prior, because we never want to use it  differently.
 [DONE]  Make A3-stripped.fasta work with alphabet=Codons
 
 [DONE]  Implement YangM2
+
+[DONE]  Stop requiring --random-tree-ok
+
 

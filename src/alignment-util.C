@@ -4,7 +4,7 @@
 using std::vector;
 using std::valarray;
 
-alignment chop_internal(const alignment& A) 
+alignment chop_internal(alignment A) 
 {
   int N = (A.size2()+2)/2;
 
@@ -25,11 +25,32 @@ alignment chop_internal(const alignment& A)
   if (not internal_nodes)
     return A;
 
-  alignment A2 = A;
-  while(A2.n_sequences() > N)
-    A2.del_sequence(N);
+  while(A.n_sequences() > N)
+    A.del_sequence(N);
 
-  return A2;
+  return A;
+}
+
+alignment add_internal(alignment A,const Tree& T) 
+{
+  // Complain if A and T don't correspond
+  if (A.n_sequences() != T.n_leaves())
+    throw myexception()<<"Number of sequence in alignment doesn't match number of leaves in tree"
+		       <<"- can't add internal sequences";
+
+  // Add empty sequences
+  for(int i=T.n_leaves();i<T.n_nodes();i++) {
+    sequence s;
+    s.name = string("A") + convertToString(i);
+    A.add_sequence(s);
+  }
+
+  // Set them to all wildcards
+  for(int column=0;column<A.length();column++)
+    for(int i=T.n_leaves();i<T.n_nodes();i++)
+      A(column,i) = alphabet::not_gap;
+
+  return A;
 }
 
 
@@ -197,11 +218,11 @@ void check_internal_nodes_connected(const alignment& A,const Tree& T,const vecto
   }
 }
 
-void letters_OK(const alignment& A,const char* tag) {
-  check_letters_OK(A,tag);
+void letters_OK(const alignment& A) {
+  check_letters_OK(A);
 }
 
-void check_letters_OK(const alignment& A,const char* tag) {
+void check_letters_OK(const alignment& A) {
   const alphabet& a = A.get_alphabet();
 
   bool bad=false;
@@ -217,14 +238,11 @@ void check_letters_OK(const alignment& A,const char* tag) {
 	bad = true;
 	std::cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<std::endl;
       }
-  if (bad) {
-    std::cerr<<"key = "<<tag<<"\n";
-    std::cerr.flush();
+  if (bad)
     std::abort();
-  }
 }
 
-void check_leaf_sequences(const alignment& A,int n_leaves,const char* tag) {
+void check_leaf_sequences(const alignment& A,int n_leaves) {
 
   vector<sequence> sequences = A.get_sequences();
 
@@ -232,7 +250,7 @@ void check_leaf_sequences(const alignment& A,int n_leaves,const char* tag) {
 
     sequences[i].strip_gaps();
     if (not (sequences[i] == A.seq(i))) {
-      std::cerr<<tag<<" - leaf sequence "<<i<<" corrupted!\n";
+      std::cerr<<"leaf sequence "<<i<<" corrupted!\n";
 
       std::cerr<<sequences[i]<<std::endl;
 
@@ -243,16 +261,18 @@ void check_leaf_sequences(const alignment& A,int n_leaves,const char* tag) {
   }
 }
 
-void check_alignment(const alignment& A,const Tree& T,const char* tag) {
+void check_alignment(const alignment& A,const Tree& T,bool internal_sequences) {
   // First check that there are no illegal letters
-  check_letters_OK(A,tag);
+  check_letters_OK(A);
 
   // Next check that the internal sequences haven't changed
-  check_leaf_sequences(A,T.n_leaves(),tag);
+  check_leaf_sequences(A,T.n_leaves());
+
+  if (not internal_sequences) return;
 
   // Next check that only * and - are found at internal nodes
   check_internal_sequences_composition(A,T.n_leaves());
-
+  
   // Finally check that the internal node states are consistent
   check_internal_nodes_connected(A,T);
 }

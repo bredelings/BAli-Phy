@@ -17,7 +17,11 @@ using namespace boost::program_options;
 alignment standardize(const alignment& A, const SequenceTree& T) {
   alignment A2 = A;
   SequenceTree T2 = T;
+
+  // standardize NON-LEAF node and branch names in T
   vector<int> mapping = T2.standardize();
+
+  // FIXME - remove imapping and do this forwards instead of backwards?
   vector<int> imapping = invert(mapping);
 
   for(int i=0;i<A.num_sequences();i++) {
@@ -59,12 +63,15 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
 }
 
 
-/// Load an alignment from command line args align=filename
-void load_A(const variables_map& args,alignment& A) {
+/// Load an alignment from command line args "--align filename"
+alignment load_A(const variables_map& args,bool keep_internal) 
+{
+  // should our AA alphabet include the stop codon?
   OwnedPointer<AminoAcids> AA = AminoAcids();
-  if (args.count("Use Stop"))
+  if (args.count("with-stop"))
     *AA = AminoAcidsWithStop();
   
+  // make a list of alphabets to try
   vector<OwnedPointer<alphabet> > alphabets;
   if (args.count("alphabet") and args["alphabet"].as<string>() == "Codons") {
     {
@@ -83,97 +90,78 @@ void load_A(const variables_map& args,alignment& A) {
     alphabets.push_back(*AA);
   }
   
-  /* ----- Try to load alignment ------ */
+  // ----- Try to load alignment ------ //
   if (not args.count("align")) 
-    throw myexception("Alignment file not specified! (align=<filename>)");
+    throw myexception("Alignment file not specified! (--align <filename>)");
   
+  alignment A;
   A.load(alphabets,args["align"].as<string>());
   
   remove_empty_columns(A);
   
   if (A.num_sequences() == 0)
     throw myexception()<<"Alignment file "<<args["align"].as<string>()<<" didn't contain any sequences!";
+
+  if (not keep_internal)
+    A = chop_internal(A);
+
+  return A;
 }
 
 
-/// Load a tree from command line args align=filename
-void load_T(const variables_map& args,const alignment& A,SequenceTree& T,bool random_tree_ok) {
-  /*------ Try to load tree -------------*/
-  if (not args.count("tree")) {
-    if (not random_tree_ok)
-      throw myexception()<<"Tree file not specified! (tree=<filename>)";
-
-    // FIXME - this assumes that alignment doesn't specify internal nodes...
-    vector<string> s;
-    for(int i=0;i<A.num_sequences();i++)
-      s.push_back(A.seq(i).name);
-    T = RandomTree(s,0.05);
-  }
-  else {
-    RootedSequenceTree RT;
-    RT.read(args["tree"].as<string>());
-    T = remove_root( RT );
-  }
+/// Load a tree from command line args "--tree filename"
+SequenceTree load_T(const variables_map& args,const alignment& A) {
+  if (not args.count("tree"))
+    throw myexception()<<"Tree file not specified! (--tree <filename>)";
+    
+  RootedSequenceTree RT;
+  RT.read(args["tree"].as<string>());
+  SequenceTree T = remove_root( RT );
+  return T;
 }
 
 
+/// Make a random tree which matches the alignment;
+SequenceTree get_random_T(const alignment& A) {
+  // FIXME - this assumes that alignment doesn't specify internal nodes...
+  vector<string> s;
+  for(int i=0;i<A.num_sequences();i++)
+    s.push_back(A.seq(i).name);
+  SequenceTree T = RandomTree(s,0.05);
+  return T;
+}
+
+
+/// Remap T leaf indices to match A: check the result
 void link(alignment& A,SequenceTree& T,bool internal_sequences) {
 
-  //------ Make sure A at least has enough leaf sequences ----------//
-  if (A.num_sequences() < T.n_leaves())
+  //------ IF sequences < leaf nodes THEN complain ---------//
+  if (A.n_sequences() < T.n_leaves())
     throw myexception()<<"Tree has "<<T.n_leaves()<<" leaves but Alignment only has "
-		       <<A.num_sequences()<<" sequences.";
+		       <<A.n_sequences()<<" sequences.";
 
-  else if (A.num_sequences() == T.n_leaves()) {
-    //------- If we just have leaf sequences, add internal sequences -----------//
-    if (internal_sequences) {
-      // add the sequences
-      for(int i=T.n_leaves();i<T.n_nodes();i++) {
-	sequence s;
-	s.name = string("A") + convertToString(i);
-	A.add_sequence(s);
-      }
+  //----- IF sequences = leaf nodes THEN maybe add internal sequences.
+  else if (A.n_sequences() == T.n_leaves()) 
+    if (internal_sequences)
+      A = add_internal(A,T);
 
-      // set them to all wildcards
-      for(int column=0;column<A.length();column++)
-	for(int i=T.n_leaves();i<T.n_nodes();i++)
-	  A(column,i) = alphabet::not_gap;
-    }
-  }
-
-  //----- If we have ancestral sequences, make sure we have the right number -----//
+  //----- IF sequences > leaf nodes THEN maybe complain -------//
   else {
-    if (A.num_sequences() > T.n_nodes()) {
-      if (internal_sequences)
-	throw myexception()<<"More sequences than tree nodes!";
-      else
-	throw myexception()<<"More sequences than tree nodes!\n Not removing ancestral sequences";
-    }
+    if (not internal_sequences)
+      throw myexception()<<"More sequences than leaf nodes!";
+
+    if (A.num_sequences() > T.n_nodes())
+      throw myexception()<<"More sequences than tree nodes!";
     else if (A.num_sequences() < T.n_nodes())
-      if (internal_sequences)
-	throw myexception()<<"Less sequences than tree nodes!";
-      else
-	throw myexception()<<"Less sequences than tree nodes!\n Not removing ancestral sequences";
-    else {
-      if (not internal_sequences) {
-
-	check_internal_sequences_composition(A,T.n_leaves());
-
-	while(A.size2() > T.n_leaves())
-	  A.del_sequence(T.n_leaves());
-      }
-    }
+      throw myexception()<<"Less sequences than tree nodes!";
   }
   
-  //---------- Check that we have the right number of sequences ---------//
+  //---------- double-check that we have the right number of sequences ---------//
   if (internal_sequences)
     assert(A.size2() == T.n_nodes());
   else
     assert(A.size2() == T.n_leaves());
 
-  //------- Check that internal sequences don't contain letters --------//
-  if (internal_sequences)
-    check_internal_sequences_composition(A,T.n_leaves());
 
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   vector<int> mapping(T.n_leaves());
@@ -193,22 +181,17 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
   T.standardize(mapping);
 
 
-  //------ Check to see that internal nodes satisfy constraints ------//
-  if (internal_sequences)
-    check_internal_sequences_composition(A,T.n_leaves());
+  //---- Check to see that internal nodes satisfy constraints ----//
+  check_alignment(A,T,internal_sequences);
 }
 
 
-
+// FIXME - should I make this more generic, so that it doesn't rely on a file?
 void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
 {
-  bool random_tree_ok = args.count("random-tree-ok");
+  A = load_A(args,internal_sequences);
 
-  load_A(args, A);
-  if (not internal_sequences)
-    A = chop_internal(A);
-
-  load_T(args, A, T, random_tree_ok);
+  T = load_T(args, A);
 
   //------------- Link Alignment and Tree -----------------//
   link(A,T,internal_sequences);
@@ -226,10 +209,32 @@ void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool in
     }
 
   //---- Check that internal sequence satisfy constraints ----//
-  if (internal_sequences) {
-    check_internal_sequences_composition(A,T.n_leaves());
-    check_internal_nodes_connected(A,T);
-  }
+  check_alignment(A,T,internal_sequences);
+}
+
+void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
+{
+  A = load_A(args,internal_sequences);
+
+  T = get_random_T(A);
+
+  //------------- Link Alignment and Tree -----------------//
+  link(A,T,internal_sequences);
+
+  //---------------- Randomize alignment? -----------------//
+  if (args.count("randomize-alignment"))
+    A = randomize(A,T.n_leaves());
+  
+  //------------------ Analyze 'internal'------------------//
+  if ((args.count("internal") and args["internal"].as<string>() == "+")
+      or args.count("randomize-alignment"))
+    for(int column=0;column< A.length();column++) {
+      for(int i=T.n_leaves();i<A.size2();i++) 
+	A(column,i) = alphabet::not_gap;
+    }
+
+  //---- Check that internal sequence satisfy constraints ----//
+  check_alignment(A,T,internal_sequences);
 }
 
 OwnedPointer<IndelModel> get_imodel(const variables_map& args) {

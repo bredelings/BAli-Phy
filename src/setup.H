@@ -19,12 +19,14 @@ std::valarray<double> empirical_frequencies(const boost::program_options::variab
 //----------------- Load trees and alignments ---------------------//
 
 /// Load an alignment from command line args align=filename
-void load_A(const boost::program_options::variables_map& args, 
-	    alignment& A);
+alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
+
 
 /// Load a tree from command line args align=filename
-void load_T(const boost::program_options::variables_map& args,
-	    const alignment& A,SequenceTree& T,bool random_tree_ok);
+SequenceTree load_T(const boost::program_options::variables_map& args,
+		    const alignment& A);
+
+SequenceTree get_random_T(const alignment& A);
 
 /// Hook up the leaf nodes of T to the leaf of A
 /// Also, make sure that A has the right number of internal sequences.
@@ -32,6 +34,9 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
 void load_A_and_T(const boost::program_options::variables_map& args,
 		  alignment& A,SequenceTree& T,bool internal_sequences=true);
+
+void load_A_and_random_T(const boost::program_options::variables_map& args,
+			 alignment& A,SequenceTree& T,bool internal_sequences=true);
 
 //------------------------ Substitution stuff ----------------------//
 

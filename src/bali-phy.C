@@ -289,9 +289,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("show-only","analyze the initial values and exit")
     ("seed", value<unsigned long>(),"random seed")
     ("datadir", value<string>()->default_value("Data"),"data directory")
-    ("random-tree-ok","generate a random tree if initial tree not specified")
     ("align-constraint",value<string>(),"file with alignment constraints")
-    ("Use Stop","include stop codons in amino-acid alphabets")
+    ("with-stop","include stop codons in amino-acid alphabets")
     ("internal",value<string>(),"if set to '+', then make all internal node entries wildcards")
     ("gaps",value<string>()->default_value("full_tree"),"if set to 'star', then don't use indel information")
     ("letters",value<string>()->default_value("full_tree"),"if set to 'star', then use a star tree for substitution")
@@ -388,7 +387,7 @@ int main(int argc,char* argv[]) {
     //----------- Load alignment and tree ---------//
     alignment A;
     SequenceTree T;
-    load_A_and_T(args,A,T);
+    load_A_and_random_T(args,A,T);
 
     cout<<"data = "<<args["align"].as<string>()<<endl<<endl;
 
