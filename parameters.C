@@ -39,9 +39,10 @@ void EquilibriumModel::recalc() {
 }
 
 Matrix EquilibriumModel::transition_p(double t) const {
-  BMatrix D(a->size(),a->size());
-  for(int i=0;i<a->size();i++)
+  BMatrix D(a.size(),a.size());
+  for(int i=0;i<a.size();i++)
     D(i,i) = pi[i];
+
   return exp(S,D,t);
 }
 
@@ -55,7 +56,7 @@ void HKY::fiddle() {
 }
 
 void HKY::recalc() {
-  assert(a->size()==4);
+  assert(a.size()==4);
 
   S(A,G) = kappa();
   S(A,C) = 1;
@@ -77,20 +78,20 @@ void HKY::recalc() {
 }
 
 void HKY::setup_alphabet() {
-  A = (*a)['A'];
-  G = (*a)['G'];
-  C = (*a)['C'];
+  A = a['A'];
+  G = a['G'];
+  C = a['C'];
   try {
-    T = (*a)['T'];
+    T = a['T'];
   }
   catch (bad_letter& e) {
-    T = (*a)['U'];
+    T = a['U'];
   }
 }
 
 void EQU::recalc() {
-  for(int i=0;i<a->size();i++)
-    for(int j=0;j<a->size();j++)
+  for(int i=0;i<a.size();i++)
+    for(int j=0;j<a.size();j++)
       S(i,j) = 1;
 
   EquilibriumModel::recalc();
@@ -106,13 +107,13 @@ void Empirical::load_file(const char* filename) {
   if (not ifile)
     throw myexception(string("Couldn't open file '")+filename+"'");
 
-  for(int i=0;i<a->size();i++)
+  for(int i=0;i<a.size();i++)
     for(int j=0;j<i;j++) {
       ifile>>S(i,j);
       S(j,i) = S(i,j);
     }
 
-  for(int i=0;i<a->size();i++)
+  for(int i=0;i<a.size();i++)
     ifile>>pi[i];
 }
 

@@ -9,7 +9,7 @@
 
 class EigenValues {
   const int size_;
-  mutable JAMA::Eigenvalue<double> solution;
+  JAMA::Eigenvalue<double>* solution;
 public:
   int size() const {return size_;}
 
@@ -17,6 +17,7 @@ public:
   Matrix Rotation() const;
 
   EigenValues(const Matrix& M);
+  ~EigenValues() {delete solution;}
 };
 
 #endif

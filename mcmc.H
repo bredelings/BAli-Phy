@@ -16,7 +16,9 @@ namespace mcmc_local {
 
 
 class MCMC {
+
   typedef void (*move)(alignment&,Parameters&);
+
   struct move_info {
     move m;
     double weight;
@@ -24,6 +26,7 @@ class MCMC {
     move_info() {}
     move_info(move a1,double a2,bool a3):m(a1),weight(a2),enabled(a3) {}
   };
+
   double sum_enabled_weights;
 
   move_info& find(const string& s);
@@ -31,6 +34,7 @@ class MCMC {
 
   void recalc();
   double(&probability)(const alignment&,const Parameters&);
+
 public:
   std::map<string,move_info,mcmc_local::lstr> moves;
 

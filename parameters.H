@@ -11,7 +11,7 @@
 
 class SubstitutionModel {
 protected:
-  const alphabet * const a;
+  alphabet a;
 
   // the current frequencies
   std::valarray<double> pi;
@@ -19,12 +19,12 @@ protected:
   // model parameters
   vector<double> parameters_;
 
-  SubstitutionModel(const alphabet& a_,int s):a(&a_), pi(1.0/a->size(),a->size()), parameters_(s) 
+  SubstitutionModel(const alphabet& a_,int s):a(a_), pi(1.0/a.size(),a.size()), parameters_(s) 
   { }
 
   virtual void recalc() =0;
 public:
-  const alphabet& Alphabet() const { return *a;}
+  const alphabet& Alphabet() const { return a;}
 
   virtual SubstitutionModel* clone() const =0;
 
@@ -45,7 +45,7 @@ public:
   // how to sample from the distribution of parameters?
   virtual void fiddle() {}; 
 
-  SubstitutionModel(const alphabet& a_): a(&a_), pi(1.0/a->size(),a->size()) 
+  SubstitutionModel(const alphabet& a_): a(a_), pi(1.0/a.size(),a.size()) 
   { }
 
   virtual ~SubstitutionModel() {}
@@ -63,7 +63,7 @@ protected:
   // the computed rate matrix
   Matrix Q;
 
-  EquilibriumModel(const alphabet& a_,int s):SubstitutionModel(a_,s),S(a->size(),a->size()), Q(a->size(),a->size())
+  EquilibriumModel(const alphabet& a_,int s):SubstitutionModel(a_,s),S(a.size(),a.size()), Q(a.size(),a.size())
   { }
 
   virtual void recalc();
@@ -75,7 +75,7 @@ public:
   // transition probabilities
   virtual Matrix transition_p(double t) const;
 
-  EquilibriumModel(const alphabet& a_):SubstitutionModel(a_),S(a->size(),a->size()), Q(a->size(),a->size())
+  EquilibriumModel(const alphabet& a_):SubstitutionModel(a_),S(a.size(),a.size()), Q(a.size(),a.size())
   { }
 
   virtual ~EquilibriumModel() {}
