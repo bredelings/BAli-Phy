@@ -240,7 +240,7 @@ namespace substitution {
   /// return the LOG of the prior
   double HKY::prior() const {
     double k = log(kappa());
-    double P = log(shift_laplace_pdf(k, log(2), 0.5));
+    double P = log(shift_laplace_pdf(k, log(2), 0.25));
     P += ReversibleMarkovModel::prior();
     return P;
   }
@@ -312,7 +312,7 @@ namespace substitution {
 
   double YangCodonModel::prior() const {
     double P = 0;
-    P += log(shift_laplace_pdf(log(kappa()), log(2), 0.5));
+    P += log(shift_laplace_pdf(log(kappa()), log(2), 0.25));
     P += log(shift_laplace_pdf(log(omega()), 0, 0.1));
     P += ReversibleMarkovModel::prior();
     return P;
