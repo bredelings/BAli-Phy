@@ -34,7 +34,7 @@ namespace substitution {
 
   void Gamma_Branch_Model::super_fiddle() {
     const double sigma = 0.05;
-    if (not fixed[parameters_.size()-1]) {
+    if (not fixed[0]) {
       double beta = parameters_.back() + gaussian(0,sigma);
       if (beta<0) beta = -beta;
       if (beta >0) parameters_.back() = beta;
@@ -121,21 +121,23 @@ namespace substitution {
   }
 
   void ReversibleMarkovModel::recalc() {
+    double f = parameters_[0];
+
+    vector<double> pf(pi.size());
+    for(int i=0;i<pf.size();i++)
+      pf[i] = pow(pi[i],f);
 
     // Set S(i,i) so that Q(i,i) = S(i,i)*pi[i]
     for(int i=0;i<S.size1();i++) {
       double sum=0;
       for(int j=0;j<S.size2();j++) {
 	if (i==j) continue;
-	sum += S(i,j)*pi[j];
+	Q(i,j) = S(i,j)*pf[i]*pf[j]/pi[i];
+	sum += Q(i,j);
       }
-      S(i,i) = -sum/pi[i];
+      Q(i,i) = -sum;
+      S(i,i) = Q(i,i)*pi[i]/(pf[i]*pf[i]);
     }
-
-    // Move from 'S' to 'S+F'
-    for(int i=0;i<S.size1();i++)
-      for(int j=0;j<S.size2();j++)
-	Q(i,j) = S(i,j)*pi[j];
 
 #ifndef NDEBUG
     std::cerr<<"scale = "<<rate()<<endl;
@@ -148,17 +150,14 @@ namespace substitution {
     //---------- OK, calculate and cache eigensystem ----------//
     int n = pi.size();
 
-    double DP[n];
-    double DN[n];
-    for(int i=0;i<n;i++) {
-      DP[i] = sqrt(pi[i]);
-      DN[i] = 1.0/DP[i];
-    }
+    double DB[n];
+    for(int i=0;i<n;i++)
+      DB[i] = pow(pi[i],f - 0.5);
     
     SMatrix S2 = S;
     for(int i=0;i<S2.size1();i++)
       for(int j=0;j<=i;j++)
-	S2(i,j) *= DP[i]*DP[j];
+	S2(i,j) *= DB[i]*DB[j];
 
     eigensystem = EigenValues(S2);
   }
@@ -173,7 +172,8 @@ namespace substitution {
 
   Matrix ReversibleMarkovModel::transition_p(double t) const {
     //return exp(SMatrix(S),getD(),t);
-    return exp(eigensystem,getD(),t);
+    double f = parameters_[0];
+    return exp(eigensystem,getD(),t,f);
   }
 
   double ReversibleMarkovModel::prior() const {
@@ -227,8 +227,12 @@ namespace substitution {
   }
 
   string HKY::parameter_name(int i) const {
-    assert(i==0);
-    return "HKY::kappa";
+    if (i==0)
+      return "RMM::f";
+    else if (i==1)
+      return "HKY::kappa";
+    else
+      return s_parameter_name(i,2);
   }
 
   void HKY::fiddle() {
@@ -319,8 +323,10 @@ namespace substitution {
   string TNY::parameter_name(int i) const {
     assert(i==0 or i==1);
     if (i==0)
+      return "RMM::f";
+    if (i==1)
       return "TNY::kappa(pur)";
-    else if (i==1)
+    else if (i==2)
       return "TNY::kappa(pyr)";
     else
       return s_parameter_name(i,2);
@@ -342,12 +348,30 @@ namespace substitution {
     ReversibleMarkovModel::recalc();
   }
 
+  void Empirical::fiddle() {
+    if (not fixed[0]) {
+
+      double& p = parameters_[0];
+
+      // fiddle Invariant fraction
+      const double sigma = 0.04;
+      p += gaussian(0,sigma);
+
+      p = wrap(p,1.0);
+    }
+    
+    // recalc() not needed because f() value not cached
+  }
+
   string Empirical::name() const {
     return "Empirical(" + modelname +")";
   }
 
   string Empirical::parameter_name(int i) const {
-    return s_parameter_name(i,0);
+    if (i==0)
+      return "RMM::f";
+    else
+      return s_parameter_name(i,1);
   }
 
   void Empirical::recalc() {
@@ -435,9 +459,11 @@ namespace substitution {
 
   string YangCodonModel::super_parameter_name(int i) const {
     if (i==0)
+      return "RMM::f";
+    if (i==1)
       return "Yang::omega";
     else
-      throw myexception()<<"YangCodonModel::parameter_name(int): can't find parameter "<<i;
+      return s_parameter_name(i,2);
   }
 
   //  const valarray<double>& YangCodonModel::frequencies() const {
@@ -460,8 +486,9 @@ namespace substitution {
   //  }
 
   YangCodonModel::YangCodonModel(const Codons& C,const ReversibleMarkovNucleotideModel& M)
-    :CodonModel(C),NestedModelOver<ReversibleMarkovNucleotideModel>(M,1)
+    :CodonModel(C),NestedModelOver<ReversibleMarkovNucleotideModel>(M,2)
   { 
+    parameters_[0] = 1.0;
     omega(1.0);
   }
 
@@ -849,21 +876,22 @@ namespace substitution {
 
     if (p <= 0.0 or p >= 1.0)
       return log_0;
-    else 
-      return log(gsl_ran_beta_pdf(p,a,b));
+    else
+      return log( gsl_ran_beta_pdf(p,a,b) * p*(1.0-p) );
   }
 
   void WithINV::super_fiddle() {
-    if (fixed[parameters_.size()-1] )
+    if (fixed[0] )
       return;
 
     double &p = parameters_[0];
 
-    // fiddle Invariant fraction
-    const double sigma = 0.04;
-    p += gaussian(0,sigma);
-
-    p = wrap(p,1.0);
+    // fiddle Invariant fraction on the LOD scale
+    const double sigma = 0.25;
+    double LOD_p = LOD(p);
+    LOD_p += gaussian(0,sigma);
+    p = ILOD(LOD_p);
+    assert( 0 <= p and p <= 1.0);
 
     recalc();
   }
@@ -997,9 +1025,9 @@ namespace substitution {
   }
 
   void DualModel::super_fiddle() {
-    if (not fixed[parameters_.size()-2]) {
+    if (not fixed[0]) {
 
-      double& p = parameters_[parameters_.size()-1];
+      double& p = parameters_[0];
 
       // fiddle Invariant fraction
       const double sigma = 0.04;
@@ -1008,7 +1036,7 @@ namespace substitution {
       p = wrap(p,1.0);
     }
 
-    if (not fixed[parameters_.size()-1]) {
+    if (not fixed[1]) {
       double & r = parameters_[1];
       r *= exp(gaussian(0,0.3));
     }

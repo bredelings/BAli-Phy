@@ -247,7 +247,6 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
   }
 }
 
-//FIXME - need to give indel models a name!
 OwnedPointer<IndelModel> get_imodel(Arguments& args) {
   //-------------Choose an indel model--------------//
   OwnedPointer<IndelModel> imodel;

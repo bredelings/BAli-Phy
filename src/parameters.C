@@ -14,6 +14,7 @@ double Parameters::basic_prior(const alignment& A,const Parameters& P) const {
   if (IModel_->full_tree)
     return prior3(A,P);
   else
+    //FIXME!
     return prior3(A,P);
 }
 

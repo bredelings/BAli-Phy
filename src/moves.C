@@ -5,6 +5,7 @@
 #include "3way.H"
 #include "likelihood.H"
 #include "util-random.H"
+#include "monitor.H"
 
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())

@@ -17,9 +17,11 @@ Matrix exp(const SMatrix& S,const BMatrix& D,double t,double f) {
   const int n = S.size1();
 
   // compute S2 = D^1/2 * S * D^1/2
+  double DB[n];
   double DP[n];
   double DN[n];
   for(int i=0;i<D.size1();i++) {
+    DB[i] = pow(D(i,i),f - 0.5);
     DP[i] = sqrt(D(i,i));
     DN[i] = 1.0/DP[i];
   }
@@ -27,18 +29,12 @@ Matrix exp(const SMatrix& S,const BMatrix& D,double t,double f) {
   SMatrix S2 = S;
   for(int i=0;i<S2.size1();i++)
     for(int j=0;j<=i;j++)
-      S2(i,j) *= DP[i]*DP[j];
+      S2(i,j) *= DB[i]*DB[j];
 
 
   // compute E = exp(S2)
   Matrix E = exp(S2,t);
 
-  // Compute D^-a * E * D^a
-  double a = f-0.5;
-  for(int i=0;i<n;i++) {
-    DP[i] = pow(D(i,i),a);
-    DN[i] = 1.0/DP[i];
-  }
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++)
       E(i,j) *= DN[i]*DP[j];
@@ -89,11 +85,10 @@ Matrix exp(const EigenValues& eigensystem,const BMatrix& D,const double t,double
   const int n = D.size1();
 
   // Compute D^-a * E * D^a
-  double a = f-0.5;
   double DP[n];
   double DN[n];
   for(int i=0;i<D.size1();i++) {
-    DP[i] = pow(D(i,i),a);
+    DP[i] = sqrt(D(i,i));
     DN[i] = 1.0/DP[i];
   }
 
