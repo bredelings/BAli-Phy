@@ -3,31 +3,35 @@
 2. fp_scale speedups
 
 [HARD]
-  a) speed up forward_cell by putting a boundary around the matrix :)
-     i) right now we only run SILENT states for the corner
-    ii) in the new scheme, we would run ALL the states
-   iii) we could have forward_square( ) initialize the buffer zones on boundaries
-        - this would make alignment constraints work.
-    iv) we leave the corner boundary cell un-initialized
-        - but we need to put start_P in (0,0), not -1,-1 (?)
-        - well, just put start_P in (-1,-1)
-        - OK, then we need to modify our checks & path_( )!
-
-  b) 20% - DPmatrix( )
+  a) 20% - DPmatrix( )
      i) initialize as we go forward (how much slowdown)?
+        - cells must be zero-d, even if (i1<x1) or (j1<y1)
+	- forward_square( ) must initialize the buffer zones on boundaries
+        - this would make alignment constraints work.
     ii) we need to specialize DPmatrixConstrained::sample_path( ) to ignore
         states not visited on the way up.
    iii) then remove universal initialization in dpmatrix::dpmatrix( )
         (how much speedup?)
-    iv) can we move initialization of s12_sub to forward_cell( )?
+
+  b) speed up forward_cell( ) by putting a boundary around the matrix :)
+     i) right now we only run SILENT states for (0,0)
+	- in the new scheme, we would run ALL the states
+        - how does this affect our check for being done?
+          * it may be OK - (-1,-1) does go to silent states at (0,0)
+        - how will we do EMISSION PROBABILITIES for the new states?
+   iii) we leave the corner boundary cell un-initialized
+        - but we need to put start_P in (0,0), not (-1,-1) (?)
+        - well, just put start_P in (-1,-1)
+        - OK, then we need to modify our checks & path_( )!
 
   c) find out how much time we are spending doing I/O...
 
-  d) find and check all the efloat_t -> double conversions!
-  e) find and check all the double -> efloat_t conversions!
+  d) pre-convert Branch_HMM values to log_double_t? (speed up prior_branch() ?)
+  e) make different forward_square( ) routines for DPmatrix{Simple,Constrained}
 
-  f) pre-convert Branch_HMM values to log_double_t? (speed up prior_branch() ?)
-  g) make different forward_square( ) routines for DPmatrix{Simple,Constrained}
+  f) shift s12_sub( , ) ?
+     - we would have to not define it on the boundaries, still...
+     - but we could remove i-- and j--
 
 [CHECK] - check for more!
    I) does increasing inlining limits make a difference?
