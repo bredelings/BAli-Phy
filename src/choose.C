@@ -129,6 +129,22 @@ log_double_t choose_P(int s,const std::vector<log_double_t>& P,double T) {
   return pow(P[s],1.0/T)/sum;
 }
 
+int choose(const std::vector<le_double_t>& P) {
+  vector<le_double_t> sum(P.size());
+
+  sum[0] = P[0];
+  for(int i=1;i<sum.size();i++)
+    sum[i] = sum[i-1] + P[i];
+
+  le_double_t r = le_double_t(myrandomf()) * sum[sum.size()-1];
+
+  for(int i=0;i<sum.size();i++) 
+    if (r < sum[i])
+      return i;
+
+  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen";
+}
+
 int choose(const std::vector<le_double_t>& P,double T) {
   vector<le_double_t> sum(P.size());
 
@@ -143,6 +159,16 @@ int choose(const std::vector<le_double_t>& P,double T) {
       return i;
 
   throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen";
+}
+
+le_double_t choose_P(int s,const std::vector<le_double_t>& P) {
+  assert(s >= 0 and s < P.size());
+
+  le_double_t sum = 0.0;
+  for(int i=0;i<P.size();i++)
+    sum  += P[i];
+
+  return P[s]/sum;
 }
 
 le_double_t choose_P(int s,const std::vector<le_double_t>& P,double T) {
