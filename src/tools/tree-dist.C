@@ -376,7 +376,7 @@ double topology_distance(const SequenceTree& T1, const SequenceTree& T2) {
 }
 
 struct compare_complete_partitions {
-  bool operator()(const vector<bool>& p1,const vector<bool>& p2) const {
+  bool operator()(const valarray<bool>& p1,const valarray<bool>& p2) const {
     if (p1.size() != p2.size())
       std::cerr<<"p1.size() = "<<p1.size()<<" and p2.size() = "<<p2.size()<<"\n";
     assert(p1.size() == p2.size());
@@ -395,10 +395,10 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
   if (l < 0.5) throw myexception() << "get_Ml_partitition: l must be >= 0.5";
 
   // use a sorted list of <partition,count>, sorted by partition.
-  map<vector<bool>,int,compare_complete_partitions > counts;
+  map<valarray<bool>,int,compare_complete_partitions > counts;
 
   // use a linked list of pointers to <partition,count> records.
-  list<map<vector<bool>,int,compare_complete_partitions >::iterator > majority;
+  list<map<valarray<bool>,int,compare_complete_partitions >::iterator > majority;
 
   for(int i=0;i<sample.size();i++) {
     const SequenceTree& T = sample.topologies[ sample.which_topology[i] ].T;
@@ -409,15 +409,10 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
 
     // for partition in the next tree
     for(int b=T.n_leaves();b<T.n_branches();b++) {
-      std::valarray<bool> temp = branch_partition(T,b);
+      std::valarray<bool> partition = branch_partition(T,b);
 
-      std::vector<bool> partition(temp.size(),false);
-      for(int j=0;j<temp.size();j++)
-	partition[j] = temp[j];
-      
       if (not partition[0])
-	for(int j=0;j<partition.size();j++)
-	  partition[j] = not partition[j];
+	partition = not partition;
       
       assert(partition.size() == T.n_leaves());
       int& C = counts[partition];
@@ -447,12 +442,9 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
   vector<Partition> partitions;
   partitions.reserve(majority.size());
   for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
-    const vector<bool>& partition =(*p)->first;
-    valarray<bool> temp(partition.size());
-    for(int i=0;i<partition.size();i++)
-      temp[i] = partition[i];
+    const valarray<bool>& partition =(*p)->first;
  
-    partitions.push_back(Partition(names,temp) );
+    partitions.push_back(Partition(names,partition) );
   }
 
   return partitions;
