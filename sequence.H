@@ -28,17 +28,32 @@ struct alphabet {
   int size() const { return data.size(); }
 
   static bool letter(int l) {return (l>=0);}
+
+
+  friend bool operator==(const alphabet&,const alphabet&);
+
   alphabet(const char*);
 };
 
-/***************** struct sequence ********************/
-struct sequence:vector<int> {
-  const alphabet* a;
-  string name;
+inline bool operator!=(const alphabet& a1,const alphabet& a2) {return not (a1==a2);}
 
-  void load(const char*);
-  sequence(const alphabet& a1): a(&a1) {}
-  sequence(const alphabet& a1,const char* s): a(&a1),name(s) {}
+/***************** struct sequence ********************/
+struct sequence: public vector<int> {
+  alphabet a;
+  string name;
+  string comment;
+
+  void parse(const string&,const string&);
+  void read(const string&);
+
+  void strip_gaps();
+
+  sequence(const alphabet& a1): a(a1) {}
+  sequence(const alphabet& a1,const string& filename): a(a1) {read(filename);}
+  sequence(const alphabet& a1,const string& n,const string& c): a(a1),name(n),comment(c) {}
 };
+
+vector<sequence> load_fasta(const alphabet&,const std::string&);
+vector<sequence> load_fasta(const alphabet&,std::istream& file);
 
 #endif

@@ -58,6 +58,20 @@ double prior_internal(const alignment& A,const Parameters& Theta) {
 double prior_branch_HMM(const alignment& A,const IndelModel& IModel,int parent,int child) {
   vector<int> state = get_path(A,parent,child);
 
+  double P = log_0;
+  for(int i=0;i<4;i++)
+    P = logsum(P,IModel.pi[i] + IModel.P[i][state[0]]);
+
+  for(int i=1;i<state.size();i++) 
+    P += IModel.Q[state[i-1]][state[i]];
+  
+  return P;
+}
+
+/** FIXME - numerically check that choice of root node doesn't matter **/
+double prior_branch_HMM_Given(const alignment& A,const IndelModel& IModel,int parent,int child) {
+  vector<int> state = get_path(A,parent,child);
+
   int length1 = A.seqlength(parent);
 
   double P = log_0;
@@ -75,6 +89,12 @@ double prior_branch_HMM(const alignment& A,const IndelModel& IModel,int parent,i
   }
   assert(l1 == length1);
   
+  //  double P12 = prior_branch_HMM(A,IModel,parent,child);
+  //  double P12O1 = P12 - IModel.lengthp(A.seqlength(parent));
+  //  std::cerr<<"P(A12) = "<<P12<<endl;
+  //  std::cerr<<"P(A12)/P(1) = "<<P12O1<<endl;
+  //  std::cerr<<"P(A12|1) = "<<P<<endl;
+
   return P;
 }
 
@@ -88,7 +108,7 @@ double prior_HMM(const alignment& A,const Parameters& Theta) {
   for(int b=0;b<T.branches();b++) {
     int parent = T.branch(b).parent();
     int child  = T.branch(b).child();
-    P += prior_branch_HMM(A,Theta.IModel,parent,child);
+    P += prior_branch_HMM_Given(A,Theta.IModel,parent,child);
   }
 
   return P;

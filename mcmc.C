@@ -69,7 +69,7 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& Theta,
   o<<endl<<" old  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl
    <<" HMM  ["<<probability3(A,Theta)<<": "<<prior_HMM(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl<<endl;
   
-  o<<A<<endl<<endl;
+  //  o<<A<<endl<<endl;
 
   o<<"tree = "<<Theta.T<<endl<<endl;
 }
@@ -122,7 +122,7 @@ void MCMC(alignment& A,Parameters& Theta,
   std::cout<<"Initial Tree = \n";
   std::cout<<T<<endl<<endl;
 
-  const int correlation_time = int(T.leaves()*log(T.leaves()));
+  const int correlation_time = int(log(T.leaves()));
   const int start_after = 0;// 600*correlation_time;
   int total_samples = 0;
 
@@ -135,20 +135,16 @@ void MCMC(alignment& A,Parameters& Theta,
   for(int iterations=0; iterations < max; iterations++) {
     std::cerr<<"iterations = "<<iterations<<"    logp = "<<p<<endl;
 
-    //    v = v.shift(-1); memory leak?
-    //    v[0] = p;
-
-    /******************** Record Statistics *******************/
+    /*------------------ record statistics ---------------------*/
     if (iterations > start_after) {
       if (iterations%correlation_time == 0) {
 	std::cout<<"iterations = "<<iterations<<endl;
 	print_stats(std::cout,A,Theta,probability);
-	//print_alignments(A,Theta);
 	std::cout<<endl<<endl;
       }
     }
 
-    /******************* Propose new position *********************/
+    /*--------------------- get new position -------------------*/
     alignment A2 = A;
     Parameters Theta2 = Theta;
 
@@ -156,7 +152,7 @@ void MCMC(alignment& A,Parameters& Theta,
 
     new_p = probability(A2,Theta2);
 
-
+    /*---------------------- estimate MAP ----------------------*/
     if (new_p > ML_score) {
       // arguably I could optimize these for a few iterations
       ML_score = new_p;
@@ -173,21 +169,16 @@ void MCMC(alignment& A,Parameters& Theta,
       ML_printed = true;
     }
 
-    /***************** Print Diagnostic Output ********************/
+    /*----------------- print diagnostic output -----------------*/
 
-    if (iterations %200 == 0 or std::abs(p - new_p)>8) {
-      //      valarray<double> w = autocorrelation(v);
-      //      for(int i=0;i<w.size();i++) {
-      //	std::cout<<i<<"   "<<w[i]<<std::endl;
-      //      }
-
+    if (iterations %200 == 0 or std::abs(p - new_p)>12) {
       print_stats(std::cerr,A,Theta,probability);
       print_stats(std::cerr,A2,Theta2,probability);
 
       A2.print_fasta(std::cerr);
     }
 
-    /*****************Actually Move to new position ***************/
+    /*------------------ move to new position -------------------*/
     A = A2;
     Theta = Theta2;
     p = new_p;

@@ -13,27 +13,12 @@
 #include "parameters.H"
 #include "mcmc.H"
 #include "likelihood.H"
-
-
-/**** TODO:  A. check likelihoods against someone else
-             D. Benchmark (w,w/o fast-math?)
-             B. Normalize/Parameterize rate matrix?
-
-             C. Write code to change tree topology
-	        (Need an interface so that node NAME doesn't change!)
- ****/
-
-
-// 3. write a routine to load the Phylip files -> check out CAR.phy
+#include "arguments.H"
+#include "util.H"
 
 // 5. Read Marc's references on actually altering the tree
 
-// 7. Can we somehow ESTIMATE lambda_O and lambda_E?
-
 // 8. Use ublas::matrix<double>(a.size()) instead of valarray<double> in substitution.C
-
-// 10. Why is the distribution of log scores so WIDE?
-//     Why are we often so much below the ML?
 
 // 13. Put letters in the rate matrix file
 
@@ -41,126 +26,112 @@
 
 // 20. How can we show conservation in the graph? (for 2 species?  more?)
 
-// 24. Measure the correlation time - see how sorting by center of mass of alignment
-//    look at the probability that an aligned node pair at time t is still aligned
-//    at time t+deltat
-
-//     and moving from k->N-k decreases it...
-//
-//     Perhaps we could output more samples than we are now...
-
-
-// 25. Benchmark, and see how the speed depends on sequence length
-
 // 28. Make sampling routines return P(Alignment|Data,Tree, etc)
-//     I'd NEED to do this in order to use the value anyway -> it should
-//     only return things on the order of lambda_e and lambda_o...
-//     modify the 'choose' routine.
-
 //     Check to make sure that this is proportional to the likelihood...
-//     This is important, because while the probability ratio between 2
-//      alignment won't change, the ratio between 2 likelihood levels
-//      WILL change!  So this will change at least the "plot 'logp'"
-//      graphs!
 
-
-// How to check these samplers, and find cases where they are not working???
-// These seems to be something in the tail region of the 5S rna data that is triggering a bug
-
-int main(int argc,char* argv[]) {
-
-  myrand_init();
-
-  std::cerr.precision(10);
-  std::cout.precision(10);
-
-  /******* Nucleotide Substitution Model *******/
-  alphabet nucleotides("AGTC");
-
-  std::valarray<double> f(0.0,4);
-  f[0] = 0.25;f[1]=0.25;f[2]=0.25;f[3]=0.25;
-  
-  HKY smodel1(nucleotides,2.0,f);
-  EQU smodel2(nucleotides);
-
-  /******* Amino Acid Substitution Model *******/
+void do_setup(Arguments& args,alignment& A,SequenceTree& T)
+{
+  /* ----- Alphabets to try ------ */
+  alphabet dna("AGTC");
+  alphabet rna("AGUC");
   alphabet amino_acids("ARNDCQEGHILKMFPSTWYV");
 
-  EQU smodel3(amino_acids);
-  Empirical smodel4(amino_acids,"../Data/wag.dat");
+  /* ----- Try to load alignment ------ */
+  if (not args.set("align")) 
+    throw myexception("Alignment file not specified! (align=<filename>)");
 
-  /**********  Set up the alignment ***********/
-  alignment A;
-
-
-  /* ----- Parse command line ------------*/
-  if (argc != 5) {
-    std::cerr<<"Usage: "<<argv[0]<<" <alignment file.fasta> <tree file> <lambda_O> <lambda_E>\n";
-    exit(1);
-  }
-
-  ifstream file(argv[1]);
-  if (not file) {
-    std::cerr<<"Error: can't open alignment file '"<<argv[1]<<"'"<<endl;
-    std::cerr<<"Usage: "<<argv[0]<<" <alignment file.fasta> <tree file> <lambda_O> <lambda_E>\n";
-    exit(1);
-  }
-
-  ifstream file2(argv[2]);
-  if (not file2) {
-    std::cerr<<"Error: can't open tree file '"<<argv[2]<<"'"<<endl;
-    std::cerr<<"Usage: "<<argv[0]<<" <alignment file.fasta> <tree file> <lambda_O> <lambda_E>\n";
-    exit(1);
-  }
-
-  double lambda_O=0;
-  double lambda_E=0;
-  {
-    std::stringstream A1(argv[3]);
-    A1>>lambda_O;
-    std::stringstream A2(argv[4]);
-    A2>>lambda_E;
-    std::cerr<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl;
-  }
-
-
-  // FIXME: Can't construct trees w/ branch lengths right now
-
-  /*********** Start the sampling ***********/
-  std::cerr.precision(10);
-  std::cout.precision(10);
-
-  SubstitutionModel* smodel = &smodel1;
-  
   try {
-    try {
-      A.load_fasta(nucleotides,file);
-    }
-    catch (bad_letter& e) {
-      file.close();
-      file.open(argv[1]);
-      std::cerr<<"Exception: "<<e.what()<<endl;
-      A.load_fasta(amino_acids,file);
-      smodel = &smodel4;
-    }
-    if (A.num_sequences() == 0) {
-      std::cerr<<"Alignment file \""<<argv[1]<<"\" didn't  contain any sequences!\n";
-      exit(1);
+    A.load_fasta(dna,args["align"]);
+  }
+  catch (bad_letter& e) {
+    std::cerr<<"Exception: "<<e.what()<<endl;
+
+    A.load_fasta(amino_acids,args["align"]);
+  }
+
+  if (A.num_sequences() == 0) 
+    throw myexception(string("Alignment file") + args["align"] + "didn't contain any sequences!");
+    
+  /*------ Try to load tree -------------*/
+  if (not args.set("tree")) 
+    throw myexception("Tree file not specified! (tree=<filename>)");
+  else 
+    T.read(args["tree"]);
+}
+
+
+
+int main(int argc,char* argv[]) { 
+  try {
+    Arguments args;
+    args.read(argc,argv);
+
+
+    if (args.set("file")) {
+      if (args["file"] == "-")
+	args.read(std::cin);
+      else {
+	std::ifstream input(args["file"].c_str());
+	if (not input)
+	  throw myexception(string("Couldn't open file '")+args["file"]+"'");
+	args.read(input);
+	input.close();
+      }
     }
     
-    SequenceTree T1(file2);
-
-    {
-      std::cout<<"rate matrix = \n";
-      for(int i=0;i<smodel->rates().size1();i++) {
-	for(int j=0;j<smodel->rates().size2();j++) 
-	  std::cout<<smodel->rates()(i,j)<<" ";
-	std::cout<<endl;
-      }
-      
-      Parameters Theta(*smodel,lambda_O,lambda_E,T1);
-      MCMC(A,Theta,50000,probability3);
+    unsigned long seed = 0;
+    if (args.set("seed")) {
+      seed = convertTo<unsigned long>(args["seed"]);
+      myrand_init(seed);
     }
+    else
+      seed = myrand_init();
+    std::cout<<"random seed = "<<seed<<endl<<endl;
+    
+    std::cerr.precision(10);
+    std::cout.precision(10);
+    
+    /*------- Nucleotide Substitution Models -------*/
+    alphabet nucleotides("AGTC");
+    
+    EQU EQU_nuc(nucleotides);
+    HKY HKY_nuc(nucleotides);
+    
+    /*------- Amino Acid Substitution Models -------*/
+    alphabet amino_acids("ARNDCQEGHILKMFPSTWYV");
+    
+    EQU EQU_animo(amino_acids);
+    Empirical WAG(amino_acids,"../Data/wag.dat");
+    
+    /*----------- Load alignment and tree ---------*/
+    alignment A;
+    SequenceTree T;
+    do_setup(args,A,T);
+    
+    /*------------ Specify Gap Penalties ----------*/
+    double lambda_O = -12;
+    double lambda_E = -1;
+    
+    if (args.set("lambda_O")) lambda_O = convertTo<double>(args["lambda_O"]);
+    if (args.set("lambda_E")) lambda_E = convertTo<double>(args["lambda_E"]);
+    
+    std::cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl;
+    
+    /*--------- Set up the substitution model --------*/
+    SubstitutionModel* smodel = 0;
+    
+    if (A.get_alphabet() == nucleotides)
+      smodel = &HKY_nuc;
+    else if (A.get_alphabet() == amino_acids)
+      smodel = &WAG;
+    else
+      assert(0);
+    
+    smodel->frequencies(empirical_frequencies(A));
+    
+    /*------------ Start the Sampling ---------------*/
+    Parameters Theta(*smodel,lambda_O,lambda_E,T);
+    MCMC(A,Theta,1000000,probability3);
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

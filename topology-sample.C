@@ -341,6 +341,21 @@ alignment construct(const alignment& old,const tree& T,const vector<int>& path,i
     else
       A(columns[character],nodes[5]) = alphabet::gap;
   }
+
+  /************** Remove columns w/ only gaps *************/
+  for(int column=A.length()-1;column>=0;column--) {
+    bool only_internal = true;
+    for(int j=0;j<A.size2();j++) 
+      if (A(column,j) != alphabet::gap)
+	only_internal = false;
+    if (only_internal) {
+      A.delete_column(column);
+      std::cerr<<"Deleted a column!"<<std::endl;
+    }
+  }
+
+  assert(valid(A));
+
   return A;
 }
 
@@ -442,9 +457,6 @@ void sample_topology(alignment& A,Parameters& Theta1,
   std::cerr<<" choice = "<<choice<<std::endl;
   if (choice != 0) 
     Theta1 = *chosen_Theta;
-
-  assert(valid(A));
-
 }
 
 void sample_topology(alignment& A,Parameters& Theta1,int b) {

@@ -6,6 +6,9 @@
 #include "tree.H"
 #include "parameters.H"
 
+void change_branch_length(const alignment& A, Parameters& Theta,int b);
+void change_branch_length_and_T(alignment& A, Parameters& Theta,int b);
+
 //Resample the alignment parent->child
 alignment sample_alignment(const alignment& old,const Parameters&,int b);
 

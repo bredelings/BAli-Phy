@@ -2,6 +2,7 @@
 #include "parameters.H"
 #include "exponential.H"
 #include "logsum.H"
+#include "rng.H"
 
 
 void EquilibriumModel::recalc() {
@@ -16,6 +17,13 @@ void EquilibriumModel::recalc() {
     S(i,i) = -sum;
   }
 
+  // Rescale so expected that mutation rate is 1
+  double scale=0;
+  for(int i=0;i<S.size1();i++) 
+    scale += pi[i]*S(i,i)*pi[i];
+
+  S /= -scale;
+
   // Move from 'S' to 'S+F'
   for(int i=0;i<S.size1();i++)
     for(int j=0;j<S.size2();j++)
@@ -23,20 +31,11 @@ void EquilibriumModel::recalc() {
 
 
   // Rescale so expected that mutation rate is 1
-  double scale=0;
+  scale = 0;
   for(int i=0;i<S.size1();i++) 
-    scale += rates()(i,i)*pi[i];
+    scale += pi[i]*Q(i,i);
 
-  Q /= -scale;
-
-  std::cerr<<"scale1 = "<<scale<<endl;
-
-  scale=0;
-  for(int i=0;i<S.size1();i++) 
-    scale += rates()(i,i)*pi[i];
-
-  std::cerr<<"scale2 = "<<scale<<endl;
-
+  std::cerr<<"scale = "<<scale<<endl;
 }
 
 Matrix EquilibriumModel::transition_p(double t) const {
@@ -44,6 +43,15 @@ Matrix EquilibriumModel::transition_p(double t) const {
   for(int i=0;i<a->size();i++)
     D(i,i) = pi[i];
   return exp(S,D,t);
+}
+
+
+void HKY::fiddle() {
+  const double sigma = 0.05;
+  double k = kappa() + gaussian(0,sigma);
+  if (k<0) k = -k;
+  if (k==0) k = kappa();
+  recalc();
 }
 
 void HKY::recalc() {
@@ -225,7 +233,7 @@ IndelModel::IndelModel(double LO,double LE)
   pi[2] = log(delta *(1.0-delta) );
   pi[3] = log_0;  // must be log_0
 
-  construct_lengthp(1000);
+  construct_lengthp(2000);
 }
 
 void Parameters::setlength(int b,double l) {

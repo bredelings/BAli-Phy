@@ -31,7 +31,8 @@ NAME = sampler
 SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C node-sample.C branch-sample.C exponential.C \
           eigenvalue.C parameters.C likelihood.C mcmc.C topology-sample.C \
-	  choose.C map.C sequencetree.C 
+	  choose.C map.C sequencetree.C branch-lengths.C arguments.C \
+	  util.o
 LIBS = gsl gslcblas m
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 

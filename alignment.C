@@ -4,16 +4,18 @@
 
 int num_non_gaps(const alignment& A,int column) {
   int count=0;
-  for(int i=0;i<A.num_sequences();i++) 
-    if (A(column,i) != alphabet::gap)
+  for(int i=0;i<A.size2();i++) 
+    if (not A.gap(column,i))
       count++;
   return count;
 }
 
 bool valid(const alignment& A) {
   for(int column=0;column<A.length();column++)
-    if (num_non_gaps(A,column)==0)
+    if (num_non_gaps(A,column)==0) {
+      assert(0);
       return false;
+    }
   return true;
 }
 
@@ -36,58 +38,10 @@ void alignment::resize(int s1,int s2) {
 }
 
 int alignment::index(const string& s) const {
-  for(int i=0;i<sequences.size();i++) {
+  for(int i=0;i<sequences.size();i++) 
     if (sequences[i].name == s) return i;
-  }
+
   return -1;
-}
-
-void alignment::add_sequence(const sequence& s) {
-  sequences.push_back(s);
-
-  add_sequence(reinterpret_cast<const vector<int>& >(s));
-}
-
-
-void alignment::add_sequence(const alphabet& a,const string& line,const string& letters) {
-  vector<int> v = a(letters);
-  add_sequence(v);
- 
-  string name;
-  int where = line.find_first_of(" \t");
-  if (where == -1)
-    name = line;
-  else
-    name = line.substr(0,where);
-
-
-  sequence s(a,name.c_str());
-  for(int i=0;i<v.size();i++) {
-    if (v[i] != alphabet::gap)
-      s.push_back(v[i]);
-  }
-  sequences.push_back(s);
-}
-
-void alignment::add_sequence(const vector<int>& v) {
-  int old_length = length();
-  int new_length = std::max(length(),(int)v.size());
-
-  resize(new_length,sequences.size()+1);
-
-  set_sequence(array.size2()-1,v);
-
-  pad(old_length);
-}
-
-
-void alignment::set_sequence(int index,const vector<int>& v) {
-  int position=0;
-  for(;position<v.size();position++)
-    array(position,index) = v[position];
-
-  for(;position<length();position++)
-    array(position,index) = alphabet::gap;
 }
 
 bool alignment::changelength(int l) {
@@ -163,7 +117,7 @@ void alignment::remap(const vector<string>& order) {
 int alignment::seqlength(int i) const {
   int count =0;
   for(int column=0;column<length();column++) {
-    if ((*this)(column,i) != alphabet::gap)
+    if (not gap(column,i))
       count++;
   }
   return count;
@@ -183,30 +137,50 @@ alignment& alignment::operator=(const alignment& A) {
   return *this;
 }
 
+void alignment::set_row(int index,const vector<int>& v) {
+  int position=0;
+  for(;position<v.size();position++)
+    array(position,index) = v[position];
+
+  for(;position<length();position++)
+    array(position,index) = alphabet::gap;
+}
+
+//FIXME - interface to changing lengths and making sure
+// extra characters are set to gaps should be condensed
+// and somewhat restricted
+void alignment::add_row(const vector<int>& v) {
+  int old_length = length();
+  int new_length = std::max(length(),(int)v.size());
+
+  resize(new_length,size2()+1);
+
+  pad(old_length);
+
+  set_row(array.size2()-1,v);
+}
+
+
+void alignment::add_sequence(const sequence& s) {
+  if (sequences.size()>1)   // All the sequences should have the same alphabet
+    assert(s.a == get_alphabet());
+
+  add_row(s);
+
+  sequences.push_back(s);
+  sequences.back().strip_gaps();
+}
+
+void alignment::load_fasta(const alphabet& a,const std::string& filename) {
+  vector<sequence> sequences = ::load_fasta(a,filename);
+  for(int i=0;i<sequences.size();i++)
+    add_sequence(sequences[i]);
+}
 
 void alignment::load_fasta(const alphabet& a,std::istream& file) {
-
-  string current;
-  string name;
-
-  string line;
-  while(getline(file,line)) {
-    if (!line.size()) continue;
-
-    if (line[0] != '>') {
-      current += line;
-      continue;
-    }
-    
-    if (not name.empty()) 
-      add_sequence(a,name,current);
-    
-    name = string(line.c_str()+1);
-    current.clear();
-    continue;
-  }
-  if (not name.empty()) 
-    add_sequence(a,name,current);
+  vector<sequence> sequences = ::load_fasta(a,file);
+  for(int i=0;i<sequences.size();i++)
+    add_sequence(sequences[i]);
 }
 
 void alignment::gap_fixup(int n1,int n2,int g1,int g2,int m) {
@@ -228,7 +202,7 @@ void alignment::create_internal(const SequenceTree& T) {
   for(int column=0;column< length();column++) {
     vector<int> present_leaf(T.leaves());
     for(int i=0;i<T.leaves();i++)
-      present_leaf[i] = array(column,i)!=alphabet::gap;
+      present_leaf[i] = not gap(column,i);
     TreeFunc<int> present = mark_tree(present_leaf,T);
     for(int i=T.leaves();i<array.size2();i++) {
       if (present(i))
@@ -266,37 +240,29 @@ void alignment::create_internal(const SequenceTree& T) {
 
 }
 
-void alignment::load(std::istream& file) {
-  const alphabet& a = get_alphabet();
-
-  int temp;
-  file>>temp;
-  array.resize(temp,sequences.size());
-
-  for(int i=0;i<sequences.size();i++) {
-    for(int column=0;column<length();column++) {
-      char c;
-      file>>c;
-      array(column,i) = a[c];
-    }
-  }
-}
-
 void alignment::print(std::ostream& file) const{
   const alphabet& a = get_alphabet();
   file<<length()<<endl;
-  for(int i=0;i<array.size2();i++) {
-    for(int column=0;column<array.size1();column++) {
-      file<<a.lookup(array(column,i));
-    }
-    file<<endl;
-  }
+  for(int start = 0;start<length();) {
 
+    int end = start + 80;
+    if (end > length()) end = length();
+
+    for(int i=0;i<array.size2();i++) {
+      for(int column=start;column<end;column++) {
+	file<<a.lookup(array(column,i));
+      }
+      file<<endl;
+    }
+
+    start = end;
+    file<<endl<<endl;
+  }
 #ifndef NDEBUG
   for(int i=0;i<sequences.size();i++) {
     vector<int> s;
     for(int column=0;column<length();column++)
-      if (array(column,i) != alphabet::gap)
+      if (not gap(column,i))
 	s.push_back(array(column,i));
 
     assert(s == sequences[i]);
@@ -321,7 +287,7 @@ void alignment::print_fasta(std::ostream& file) const {
   for(int i=0;i<sequences.size();i++) {
     vector<int> s;
     for(int column=0;column<length();column++)
-      if (array(column,i) != alphabet::gap)
+      if (not gap(column,i))
 	s.push_back(array(column,i));
 
     assert(s == sequences[i]);
@@ -350,4 +316,20 @@ vector<int> get_path(const alignment& A,int node1, int node2) {
   
   state.push_back(3);
   return state;
+}
+
+std::valarray<double> empirical_frequencies(const alignment& A) {
+  std::valarray<double> f(0.0,A.get_alphabet().size());
+
+  int total=0;
+  for(int i=0;i<A.length();i++) {
+    for(int j=0;j<A.size2();j++) {
+      if (alphabet::letter(A(i,j))) {
+	total++;
+	f[A(i,j)]++;
+      }
+    }
+  }
+  f /= total;
+  return f;
 }

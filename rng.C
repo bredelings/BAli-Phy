@@ -1,38 +1,51 @@
 #include <cassert>
 #include <ctime>
 #include <cmath>
-
+#include <fstream>
 #include <iostream>
 
 #include "rng.H"
 
-namespace MyRandom {
-  static rng::RNG generator;
+/************* Interfaces to rng::standard *********************/
+namespace rng {
+  static RNG* standard;
+};
+
+unsigned long myrand_init() {
+  assert(not rng::standard);
+  rng::init();
+  unsigned long s = rng::standard->seed();
+  
+  assert(rng::standard);
+  return s;
 }
 
-unsigned myrand_init(int i) {
+unsigned long myrand_init(unsigned long s) {
+  assert(not rng::standard);
   rng::init();
-  if (i != -1)
-    MyRandom::generator.seed(i);
-  return i; //FIXME
+  s = rng::standard->seed(s);
+  
+  assert(rng::standard);
+  return s;
 }
 
 unsigned long myrandom(unsigned long max) {
-  return (unsigned long)MyRandom::generator.uniform_int(max);
+  return (unsigned long)rng::standard->uniform_int(max);
 }
 
 double myrandomf() {
-  return MyRandom::generator.uniform();
+  return rng::standard->uniform();
 }
 
 double log_unif() {
-  return MyRandom::generator.log_unif();
+  return rng::standard->log_unif();
 }
 
 double gaussian(double mu,double sigma) {
-  return MyRandom::generator.gaussian(mu,sigma);
+  return rng::standard->gaussian(mu,sigma);
 }
 
+/*************** Functions for rng,dng and RNG **************/
 void dng::init() { }
 
 using namespace rng;
@@ -40,24 +53,32 @@ using namespace rng;
 void rng::init() {
   // set up default generator and default seed from environment
   gsl_rng_env_setup();
+  standard = new RNG;
 }
 
-void RNG::seed(unsigned long int s) {
+unsigned long RNG::seed() {
+  unsigned long s=0;
+
+  std::ifstream random("/dev/urandom");
+  for(int i=0;i<sizeof(s);i++) {
+    unsigned char c;
+    random >> c;
+    s <<= 8;
+    s |=  c;
+  }
+  return seed(s);
+  random.close();
+}
+
+unsigned long RNG::seed(unsigned long int s) {
   assert(generator != NULL);
   gsl_rng_set(generator,s);
+  return s;
 }
-
-void RNG::seed_random() {
-  time_t t = time(NULL);
-
-  seed(t);  
-}
-
 
 RNG::RNG() {
   generator = gsl_rng_alloc(gsl_rng_default);
 
-  seed_random();
 }
 
 RNG::~RNG() {

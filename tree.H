@@ -255,7 +255,10 @@ public:
   int index(const string&) const;
 
   string write(bool=true) const;
+
   void read(const string&);
+  void read(std::istream&);
+  void parse(const string&);
 
   SequenceTree() {}
   explicit SequenceTree(const string& s) {read(s);}

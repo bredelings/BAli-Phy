@@ -87,6 +87,9 @@ class HKY: public EquilibriumModel {
   virtual void recalc();
 public:
 
+  // change kappa
+  virtual void fiddle(); 
+
   double kappa() const {return parameters_[0];}
   void kappa(double k) {parameters_[0]=k;recalc();}
 
@@ -182,6 +185,7 @@ class Parameters {
 
 public:
   //FIXME - this should be private - need an interface for changing branch lengths (?)
+  //FIXME - need to have our own SModel!
 
   /* Stuff for Substitution Model */
   SubstitutionModel const* SModel;

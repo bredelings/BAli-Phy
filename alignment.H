@@ -14,18 +14,19 @@ class alignment {
   void pad(int);
   void remap(const vector<string>&);
   void gap_fixup(int,int,int,int,int);
+
+  void set_row(int,const vector<int>&);
+  void add_row(const vector<int>&);
 public:
   int index(const string&) const;
 
   const sequence& seq(int i) const { return sequences[i];}
 
+  // Load sequences into the alignment
   void add_sequence(const sequence&);
-  void add_sequence(const alphabet& a,const string&, const string&);
-  void add_sequence(const vector<int>&);
-  void set_sequence(int,const vector<int>&);
-
-  void load(std::istream&);
+  void load_fasta(const alphabet&,const std::string&);
   void load_fasta(const alphabet&,std::istream&);
+
   void create_internal(const SequenceTree&);
   void print(std::ostream&) const;
   void print_fasta(std::ostream&) const;
@@ -44,16 +45,16 @@ public:
   //Number of leaf sequences
   int num_sequences() const { return sequences.size() ;}
 
-  //Number of total sequences
-  int size2() const {return array.size2();}
-
   //Length of alignment
   int length() const {return array.size1();}
+
+  //Number of total sequences
+  int size2() const {return array.size2();}
 
   //Length of a particular sequence
   int seqlength(int) const;
 
-  const alphabet& get_alphabet() const {return *sequences[0].a;}
+  const alphabet& get_alphabet() const {return sequences[0].a;}
 
   alignment() {}
   alignment(const alignment& A) {operator=(A);}
@@ -65,7 +66,7 @@ inline std::ostream& operator<<(std::ostream& file,const alignment& A) {
 }
 
 inline std::istream& operator>>(std::istream& file,alignment& A) {
-  A.load(file);
+  A.load_fasta(A.get_alphabet(),file);
   return file;
 }
 
@@ -73,4 +74,5 @@ bool valid(const alignment& A);
 
 vector<int> get_path(const alignment&,int,int);
 
+std::valarray<double> empirical_frequencies(const alignment& A);
 #endif

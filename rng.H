@@ -4,7 +4,8 @@
 
 using std::valarray;
 
-unsigned myrand_init(int=-1);
+unsigned long myrand_init();
+unsigned long myrand_init(unsigned long);
 
 // returns a value in [0,max-1]
 unsigned long myrandom(unsigned long max);
@@ -34,11 +35,11 @@ namespace rng {
 
   protected:
     gsl_rng* generator;
-
+    
 
   public:
-    void seed_random();
-    void seed(unsigned long int);
+    unsigned long int seed(unsigned long int);
+    unsigned long int seed();
     
     unsigned long min() const { return gsl_rng_min(generator); }
     unsigned long max() const { return gsl_rng_max(generator); }
@@ -85,7 +86,6 @@ namespace rng {
   };
 
   void init();
-
 };
 
 namespace dng {
@@ -112,7 +112,6 @@ namespace dng {
 
 
   void init();
-
 };
 
 

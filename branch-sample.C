@@ -69,6 +69,13 @@ bool all_gaps(const alignment& A,int column,const valarray<bool>& mask) {
   return true;
 }
 
+bool all_gaps(const alignment& A,int column) {
+  for(int i=0;i<A.size2();i++)
+    if (not A.gap(column,i))
+      return false;
+  return true;
+}
+
 
 // g1 -> g2, never g2 -> g1
 
@@ -145,6 +152,7 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
 	  A(column,i) = alphabet::gap;
       }
       c1++;
+      assert(not all_gaps(A,column));
     }
     else if (c3 < subA2.size() and (c4 == seq2.size() or (c4<seq2.size() and subA2[c3] < seq2[c4]))) {
       for(int i=0;i<A.size2();i++) {
@@ -154,6 +162,7 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
 	  A(column,i) = old(subA2[c3],i);
       }
       c3++;
+      assert(not all_gaps(A,column));
     }
     else if (path[l]==0) {
       for(int i=0;i<A.size2();i++) {
@@ -163,6 +172,7 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
 	  A(column,i) = old(seq2[c4],i);
       }
       c1++;c2++;c3++;c4++;l++;
+      assert(not all_gaps(A,column));
     }
     else if (path[l]==1) {
       for(int i=0;i<A.size2();i++) {
@@ -172,6 +182,7 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
 	  A(column,i) = old(seq2[c4],i);
       }
       c3++;c4++;l++;
+      assert(not all_gaps(A,column));
     }
     else {
       for(int i=0;i<A.size2();i++) {
@@ -181,8 +192,10 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
 	  A(column,i) = alphabet::gap;
       }
       c1++;c2++;l++;
+      assert(not all_gaps(A,column));
     }
     //    std::cout<<column<<" "<<c1<<" "<<c2<<" "<<c3<<" "<<c4<<endl<<endl;
+    assert(not all_gaps(A,column));
   }
 
   assert(c1 == subA1.size());
@@ -194,19 +207,9 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
   for(int i=0;i<A.size2();i++) 
     assert(A.seqlength(i) == old.seqlength(i));
 
-  // FIXME - this is cheating!
-  // We need to actually DEAL with extra columns
-  // But we should delete it if its all gaps
-  for(int column=A.length()-1;column>=0;column--) {
-    bool only_internal = true;
-    for(int j=0;j<A.num_sequences();j++) 
-      if (A(column,j) != alphabet::gap)
-	only_internal = false;
-    if (only_internal) {
-      A.delete_column(column);
-      std::cerr<<"Deleted a column!"<<std::endl;
-    }
-  }
+  //  std::cerr<<"old = "<<old<<endl;
+  //  std::cerr<<"new = "<<A<<endl;  
+  assert(valid(A));
 
   return A;
 }
@@ -351,17 +354,13 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
 
   vector<int> path = sample_path(M,G1,G2,Theta);
 
-
   alignment A = construct(old,path,group1,seq1,seq2);
-
-  assert(valid(A));
-
   /*--------------------------------------------------------------*/
 
   vector<int> path1 = get_path(old,node1,node2);
   vector<int> path2 = get_path(A,node1,node2);
   path.push_back(3);
-  //  assert(path2 == path);  if we delete columns, this doesn't work...
+  assert(path2 == path);
 
   double p1 = path_P(path1,M,G1,G2,Theta);
   double p2 = path_P(path2,M,G1,G2,Theta);
@@ -372,7 +371,9 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<"           L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<std::endl<<std::endl;
   double diff = p2-p1-(l2-l1);
   std::cerr<<"diff = "<<diff<<std::endl;
-  std::cerr<<"rdiff = "<<diff/(p2-p1)<<std::endl;
+  double rdiff = diff/(l2-l1);
+  std::cerr<<"rdiff = "<<rdiff<<std::endl;
+  //  if (diff != 0.0) assert(std::abs(rdiff) < 1.0e-8);
 
   /*--------------------------------------------------------------*/
 
