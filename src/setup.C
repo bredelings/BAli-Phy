@@ -75,12 +75,12 @@ alignment load_A(const variables_map& args,bool keep_internal)
   vector<OwnedPointer<alphabet> > alphabets;
   if (args.count("alphabet") and args["alphabet"].as<string>() == "Codons") {
     {
-      string dna_filename = args["datadir"].as<string>() + "/" + "genetic_code_dna.dat";
+      string dna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_dna.dat";
       alphabets.push_back(Codons(DNA(),*AA,dna_filename));
     }
 
     {
-      string rna_filename = args["datadir"].as<string>() + "/" + "genetic_code_rna.dat";
+      string rna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_rna.dat";
       alphabets.push_back(Codons(RNA(),*AA,rna_filename));
     }
   }

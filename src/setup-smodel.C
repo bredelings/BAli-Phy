@@ -58,13 +58,13 @@ bool process_stack_Markov(vector<string>& string_stack,
   }
   else if (match(string_stack,"Empirical")) {
     string filename = args["Empirical"].as<string>();
-    filename = args["datadir"].as<string>() + "/" + filename + ".dat";
+    filename = args["data-dir"].as<string>() + "/" + filename + ".dat";
 
     model_stack.push_back(Empirical(a,filename));
   }
   else if (match(string_stack,"YangM0")) {
-    string dna_filename = args["datadir"].as<string>() + "/" + "genetic_code_dna.dat";
-    string rna_filename = args["datadir"].as<string>() + "/" + "genetic_code_rna.dat";
+    string dna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_dna.dat";
+    string rna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_rna.dat";
 
     Codons DNA_codons(DNA(),*AA,dna_filename);
     Codons RNA_codons(RNA(),*AA,rna_filename);

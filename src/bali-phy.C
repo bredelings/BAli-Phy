@@ -288,7 +288,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "produce help message")
     ("show-only","analyze the initial values and exit")
     ("seed", value<unsigned long>(),"random seed")
-    ("datadir", value<string>()->default_value("Data"),"data directory")
+    ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("align-constraint",value<string>(),"file with alignment constraints")
     ("with-stop","include stop codons in amino-acid alphabets")
     ("internal",value<string>(),"if set to '+', then make all internal node entries wildcards")
@@ -374,13 +374,13 @@ int main(int argc,char* argv[]) {
     
     //---------- Determine Data dir ---------------//
     {
-      string filename = args["datadir"].as<string>() + "/wag.dat";
+      string filename = args["data-dir"].as<string>() + "/wag.dat";
       ifstream temp(filename.c_str());
       if (temp)
 	temp.close();
       else {
 	cerr<<"Warning: couldn't open file '"<<filename<<"'"<<endl;
-	cerr<<"         Is '"<<args["datadir"].as<string>()<<"' a valid Data/ directory?\n\n";
+	cerr<<"         Is '"<<args["data-dir"].as<string>()<<"' a valid Data/ directory?\n\n";
       }
     }
     
