@@ -55,6 +55,7 @@ check: how does P(data|model) depend on number of frequency bins?
 14. Fix crash when alignment contains only 1 sequence (also check 0,2,3,4 sequences)
 15. How to make priors specified on command line?
 16. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
+17. Make align-constraint= work with sample_tri_multi (there is no regular sample_multi)
 
 fix: gamma+frequency+INV
 
