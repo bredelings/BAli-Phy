@@ -194,6 +194,8 @@ int main(int argc,char* argv[]) {
     
     int skip = args.loadvalue("skip",0);
 
+    int max = args.loadvalue("max",-1);
+
     //-------------- Read in tree distributions --------------//
     if (not args.set("files") or args["files"] == "")
       throw myexception()<<"Tree files not specified!";
@@ -208,7 +210,7 @@ int main(int argc,char* argv[]) {
       if (not file)
 	throw myexception()<<"Couldn't open file "<<files[i];
       
-      tree_dists.push_back(tree_sample(file,remove,skip));
+      tree_dists.push_back(tree_sample(file,remove,skip,max));
 
       MAP_trees.push_back( tree_dists.back().tree_mean[tree_dists.back().order[0]] );
 

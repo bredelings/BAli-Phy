@@ -174,7 +174,7 @@ struct ordering {
 
 
 
-tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int skip) 
+tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int skip,int max) 
 {
   //--------- Load the trees (as strings) from STDIN ------//
   int lines=0;
@@ -221,6 +221,9 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
       tree_mean[i].branch(b).length() += T.branch(b).length();
       tree_var[i].branch(b).length() += pow(T.branch(b).length(),2);
     }
+
+    // quit if we've read in 'max' trees
+    if (max >= 0 and topologies.size() == max) break;
   }
 
   //----------- Normalize the expectations --------------//
