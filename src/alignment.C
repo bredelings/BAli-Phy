@@ -130,20 +130,20 @@ void alignment::add_sequence(const sequence& s)
   sequences.back().strip_gaps();
 }
 
-void alignment::load(const vector<sequence>& sequences) {
+void alignment::load(const vector<sequence>& seqs) {
   clear();
 
   // Add the sequences to the alignment
-  for(int i=0;i<sequences.size();i++)
-    add_sequence(sequences[i]);
+  for(int i=0;i<seqs.size();i++)
+    add_sequence(seqs[i]);
 }
 
-void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<sequence>& sequences) {
+void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<sequence>& seqs) {
 
   for(int i=0;i<alphabets.size();i++) {
     try {
       a = alphabets[i];
-      load(sequences);
+      load(seqs);
     }
     catch (bad_letter& e) {
       a = NULL;
@@ -158,10 +158,10 @@ void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vect
 void alignment::load(sequence_format::loader_t loader,std::istream& file) 
 {
   // read file
-  vector<sequence> sequences = loader(file);
+  vector<sequence> seqs = loader(file);
 
   // load sequences into alignment
-  load(sequences);
+  load(seqs);
 }
 
 
@@ -169,10 +169,10 @@ void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets, sequence_
 			       std::istream& file) 
 {
   // read file
-  vector<sequence> sequences = loader(file);
+  vector<sequence> seqs = loader(file);
 
   // load sequences into alignment
-  load(alphabets,sequences);
+  load(alphabets,seqs);
 }
 
 
@@ -187,10 +187,10 @@ string get_extension(const string& s) {
 void alignment::load(const string& filename) 
 {
   // read from file
-  vector<sequence> sequences = sequence_format::load_from_file(filename);
+  vector<sequence> seqs = sequence_format::load_from_file(filename);
 
   // load sequences into alignment
-  load(sequences);
+  load(seqs);
 }
 
 void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const string& filename) {

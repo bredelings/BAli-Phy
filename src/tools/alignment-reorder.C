@@ -126,7 +126,7 @@ int main(int argc,char* argv[]) {
       A2.add_sequence(s);
     }
 
-    A2.print_phylip(std::cout,true);
+    std::cout<<A2;
 
   }
   catch (std::exception& e) {

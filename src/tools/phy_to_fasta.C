@@ -33,7 +33,7 @@ int main(int argc,char* argv[]) {
       alphabets.push_back(AminoAcids());
     }
     
-    A.load_sequences(alphabets,sequence_format::read_phylip,std::cin);
+    A.load(alphabets,sequence_format::read_phylip,std::cin);
     
     remove_empty_columns(A);
     

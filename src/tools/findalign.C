@@ -30,7 +30,7 @@ int main(int argc,char* argv[]) {
     alignment A = find_last_alignment(std::cin, tag, alphabets);
 
     /*---------------- Print it out ----------------*/
-    A.print_phylip(std::cout,true);
+    std::cout<<A;
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

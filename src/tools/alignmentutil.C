@@ -20,6 +20,7 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
   // we are using every 'skip-th' alignment
   int skip = 1;
 
+  alignment A;
   string line;
   for(int nth=0;getline(ifile,line);) {
     
@@ -33,12 +34,11 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
     if (nth%skip != 0) continue;
 
     // READ the next alignment
-    alignment A;
     try {
       if (not alignments.size())
-	A.load_sequences(alphabets,sequence_format::read_phylip,ifile);
-      else
-	A.load_sequences(alignments[0].get_alphabet(),sequence_format::read_phylip,ifile);
+	A.load(alphabets,sequence_format::read_guess,ifile);
+      else 
+	ifile>>A;
     }
     catch (std::exception& e) {
       std::cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
@@ -95,7 +95,7 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
 alignment find_last_alignment(std::istream& ifile, const string& tag,
 				       const vector<OwnedPointer<alphabet> >& alphabets) {
   alignment A;
-  
+
   // for each line (nth is the line counter)
   string line;
   while(getline(ifile,line)) {
@@ -105,7 +105,7 @@ alignment find_last_alignment(std::istream& ifile, const string& tag,
     // READ the next alignments, if we match the tag
     try {
       alignment A2;
-      A2.load_sequences(alphabets,sequence_format::read_phylip,ifile);
+      A2.load(alphabets,sequence_format::read_guess,ifile);
       A = A2;
     }
     catch (std::exception& e) {

@@ -30,7 +30,7 @@ int main(int argc,char* argv[]) {
     /*------- Print out the alignment -------*/
 
     alignment A2 = chop_internal(A);
-    A2.print_phylip(std::cout,true);
+    std::cout<<A2<<std::endl;
 
   }
   catch (std::exception& e) {
