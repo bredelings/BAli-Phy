@@ -278,14 +278,14 @@ valarray<double> Triplets::get_frequencies_from_counts(const valarray<double>& c
 }
 
 Triplets::Triplets(const Nucleotides& a)
-  :alphabet(string("Triplets of ")+a.name,getTriplets(a)),N(a.clone())
+  :alphabet(string("Triplets of ")+a.name,getTriplets(a)),N(a)
 {
   missing.back() = "***";
   gap_letter = "---";
 }
 
 Triplets::Triplets(const string& s,const Nucleotides& a)
-  :alphabet(s,getTriplets(a)),N(a.clone())
+  :alphabet(s,getTriplets(a)),N(a)
 {
   missing.back() = "***";
   gap_letter = "---";
