@@ -14,17 +14,30 @@ compilation options, edit the makefile src/GNUmakefile.
 In order to compile the program on UNIX, simply enter the src/
 directory and type 'make' at the shell prompt. This will produce an
 executable called 'bali-phy'.  To generate a faster executuable you
-can instead type 'ARCH=pentium4' or 'ARCH=athlon-xp'.
+can instead type 
 
-On windows, this may with in the cygwin environment, which emulates a
-UNIX environment.
+% ARCH=pentium4 make
+       or
+% ARCH=athlon-xp' make
+
+To compile both bali-phy and associated tools (which is recommended)
+instead specify 'make install'.  This will compile bali-phy and the 
+tools, and will copy them both to the bali-phy-<VERSION>/bin/ directory.
+
+*Windows and Mac platforms*
+On windows, this may work with in the cygwin environment, which
+emulates a UNIX environment.
 
 On MacOSX, this procedure may need to be modified slightly.  By using
-the 'Fink' system, you can probably install GNU make.  In addition,
-'jam' may work using the Jamfile provided.
+the 'Fink' system, you can probably install GNU make.
 
-*Other tools*
 
-Sources for tools are in the src/tools directory.  The makefile is not
-up-to-date for every tool.  However, try running e.g. "make
-tools/model_P". 
+*Final Installation*
+
+It is recommended that you make both bali-phy and the tools, as described
+above.  You must then copy these tools into a directory in your path, or
+add the bali-phy ./bin directory to your path.  In addition, it is recommended
+that you make a bali-phy/ directory, and copy the bali-phy executable to the
+location bali-phy/<VERSION>-NDEBUG.  This will allow the ./bin/sampler.sh script
+to use your executable in the SGE (sun grid engine) environment.
+
