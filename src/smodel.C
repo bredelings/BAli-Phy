@@ -109,8 +109,6 @@ namespace substitution {
     for(int i=0;i<S.size1();i++) 
       scale -= pi[i]*Q(i,i);
 
-    assert(scale > 0);
-
     return scale;
   }
 
@@ -163,6 +161,47 @@ namespace substitution {
     valarray<double> q(1.0/frequencies().size(),frequencies().size());
     return dirichlet_log_pdf(frequencies(),q,10);
   }
+
+  //---------------------- INV_Model --------------------------//
+
+  void INV_Model::set_rate(double r)  {
+    assert(std::abs(r) == 0);
+  }
+
+
+  Matrix INV_Model::transition_p(double t) const 
+  {
+    return P;
+  }
+
+  string INV_Model::name() const {
+    return "INV";
+  }
+
+  string INV_Model::parameter_name(int i) const {
+    return s_parameter_name(i,0);
+  }
+
+  INV_Model::INV_Model(const alphabet& a)
+    :ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a),
+     P(S.size1(),S.size2())
+  {
+    // Calculate S matrix
+    for(int i=0;i<S.size1();i++)
+      for(int j=0;j<S.size2();j++)
+	if (i==j)
+	  S(i,j) = 1;
+	else
+	  S(i,j) = 0;
+
+    P = S;
+
+    // Calculate Q matrix once-for-all
+    ReversibleMarkovModel::recalc();
+  }
+      
+
+  //------------------------- HKY -----------------------------//
 
   string HKY::name() const {
     return "HKY";
@@ -475,12 +514,12 @@ namespace substitution {
   void MultiParameterModel::recalc() {
 
     // recalc sub-model
-    NestedModel::recalc();
+    //NestedModel::recalc(); called from parent!
 
     // recalc sub-models
     vector<double> params = SubModel().parameters();
     for(int m=0;m<n_base_models();m++) {
-      base_model(m) = SubModel();
+      //      base_model(m) = SubModel();
       if (p_change == -1)
 	base_model(m).set_rate(p_values[m]);
       else {
@@ -521,6 +560,8 @@ namespace substitution {
 
   // This is supposed to push things out from parameters_
   void DistributionParameterModel::recalc() {
+    write();
+
     D->parameters(super_parameters_);
 
     for(int i=0;i<p_values.size();i++)
@@ -553,6 +594,8 @@ namespace substitution {
 
     super_parameters_ = D->parameters();
 
+    read();
+
     recalc();
   }
 
@@ -577,9 +620,12 @@ namespace substitution {
   }
 
   WithINV::WithINV(const MultiModel& M)
-    :ReversibleWrapperOver<MultiModel>(M,1)
+    :ReversibleWrapperOver<MultiModel>(M,1),
+     INV(INV_Model(M.Alphabet()))
   {
     super_parameters_[0] = 0.01;
+
+    read();
 
     recalc();
   }
@@ -641,9 +687,9 @@ namespace substitution {
 
     vector<double> dist = SubModel().distribution();
     for(int i=0;i<dist.size();i++)
-      dist[i] *= p;
+      dist[i] *= (1-p);
 
-    dist.push_back(1-p);
+    dist.push_back(p);
     return dist;
   }
 
@@ -819,8 +865,10 @@ namespace substitution {
   DualModel::DualModel(const std::vector<OwnedPointer<MultiModel> >& models)
     :SuperDerivedModelOver<MultiModel,Model>(models,2)
   {
-    parameters_[parameters_.size()-2] = 0.5;
-    parameters_[parameters_.size()-1] = 1.0;
+    super_parameters_[0] = 0.5;
+    super_parameters_[1] = 1.0;
+
+    read();
 
     // this includes a recalc
     frequencies(frequencies());

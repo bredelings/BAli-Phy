@@ -42,6 +42,7 @@ void Parameters::fiddle() {
   if (SModel_->parameters().size()) {
     // Fiddle substitution parameters and recalculate rate matrices
     SModel_->fiddle();
+    SModel_->set_rate(1);
 
     // Recalculate the branch transition matrices
     recalc();

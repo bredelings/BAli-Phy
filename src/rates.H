@@ -13,7 +13,9 @@ namespace substitution {
   class RateDistribution: virtual public Model {
   protected:
     /// Construct a RateDistribution with np parameters
-    RateDistribution(int np): Model(np) {};
+    RateDistribution(int np) {
+      parameters_.resize(np);
+    };
 
   public:
     /// Make a copy of this object

@@ -29,7 +29,9 @@ namespace substitution {
   protected:
 
     /// Construct an empty model
-    Model(int s): ::Model(s),full_tree(true) {}
+    Model(int s):full_tree(true) {
+      parameters_.resize(s);
+    }
 
   public:
     
@@ -258,18 +260,22 @@ namespace substitution {
 
   class INV_Model: public ReversibleMarkovModel,public ModelWithAlphabet<alphabet> 
   {
+    Matrix P;
   public:
     INV_Model* clone() const {return new INV_Model(*this);}
 
+    void set_rate(double);
+
+    void recalc() {}
+
     void fiddle() {}
+
+    Matrix transition_p(double t) const;
 
     string name() const;
     string parameter_name(int i) const;
       
-    INV_Model(const alphabet& a):
-      ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a)
-    {}
-      
+    INV_Model(const alphabet& a);
   };
 
 

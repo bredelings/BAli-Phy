@@ -47,6 +47,13 @@ bool process_stack_Markov(vector<string>& string_stack,
     else
       throw myexception()<<"HKY:: Unrecognized alphabet '"<<a.name<<"'";
   }
+  else if (match(string_stack,"TNY")) {
+    const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
+    if (N)
+      model_stack.push_back(TNY(*N));
+    else
+      throw myexception()<<"TNY:: Unrecognized alphabet '"<<a.name<<"'";
+  }
   else if (match(string_stack,"Empirical")) {
     if (not args.set("Empirical"))
       args["Empirical"] = "wag";
