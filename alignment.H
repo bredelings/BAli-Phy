@@ -66,7 +66,7 @@ public:
 };
 
 inline std::ostream& operator<<(std::ostream& file,const alignment& A) {
-  A.print_phylip(file);
+  A.print(file);
   return file;
 }
 

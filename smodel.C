@@ -3,19 +3,28 @@
 #include "exponential.H"
 #include "rng.H"
 
+
+
+// Q(i,j) = S(i,j)*pi[j]   for i!=j
+// Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
+
+// We want to set S(i,i) so that Q(i,j) = S(i,j)*pi[j] for all i,j
+// Then Q = S*D, and we can easily compute the exponential
+// So, S(i,j) = Q(i,i)/pi[i]
+
 void EquilibriumModel::recalc() {
 
-  // Determine diagonal entries
+  // Set S(i,i) so that Q(i,i) = S(i,i)*pi[i]
   for(int i=0;i<S.size1();i++) {
     double sum=0;
     for(int j=0;j<S.size2();j++) {
       if (i==j) continue;
-      sum += S(i,j);
+      sum += S(i,j)*pi[j];
     }
-    S(i,i) = -sum;
+    S(i,i) = -sum/pi[i];
   }
 
-  // Rescale so expected that mutation rate is 1
+  // Rescale so that expected mutation rate is 1
   double scale=0;
   for(int i=0;i<S.size1();i++) 
     scale += pi[i]*S(i,i)*pi[i];
@@ -34,6 +43,11 @@ void EquilibriumModel::recalc() {
     scale += pi[i]*Q(i,i);
 
   std::cerr<<"scale = "<<scale<<endl;
+
+  // Maybe assert that 
+  //  A) the sum_j Q_ij = 0
+  //  B) sum_i pi_i Q_ij = pi_j
+
 }
 
 Matrix EquilibriumModel::transition_p(double t) const {

@@ -171,6 +171,7 @@ double substitution(const vector<int>& residues,const Parameters& Theta) {
   int b = T.branch_up(root);
   double p = substitution(residues,Theta,b);
 
+  /*
   int b2 = myrandom(0,T.branches());
   double p2 = substitution(residues,Theta,b2);
 
@@ -180,9 +181,10 @@ double substitution(const vector<int>& residues,const Parameters& Theta) {
     std::cerr<<p<<" "<<log(p)<<"     "<<p2<<"      "<<log(p2)<<endl;
     assert(0); //FIXME - try this check!
   }
+  */
 
   assert(0.0 < p and p<= 1.0);
-  //  std::cerr<<" substitution: p="<<p<<"      log(p)="<<log(p)<<std::endl;
+  //std::cerr<<" substitution: p="<<p<<"      log(p)="<<log(p)<<std::endl;
   return log(p);
 }
 

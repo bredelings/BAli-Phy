@@ -361,6 +361,7 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   alignment A = construct(old,path,group1,seq1,seq2);
   /*--------------------------------------------------------------*/
 
+  /*
   vector<int> path1 = get_path(old,node1,node2);
   vector<int> path2 = get_path(A,node1,node2);
   path.push_back(3);
@@ -396,9 +397,10 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   }
 
   assert(isnan(rdiff) or abs(diff) < 1.0e-8);
+  */
 
   /*--------------------------------------------------------------*/
-
+  assert(valid(A));
   return A;
 }
 

@@ -21,7 +21,7 @@ LANGO = fast-math unroll-loops prefetch-loop-arrays
 DEBUG = pipe g  #pg
 DEFS = # NDEBUG 
 WARN = all no-sign-compare
-OPT =  malign-double mfpmath=sse msse2 march=pentium4
+OPT =  malign-double mfpmath=sse msse2 march=pentium4 O3
 LDFLAGS = # -pg # -static 
 LI=${CXX}
 
@@ -55,4 +55,5 @@ DEVEL = ../..
 # includes += /usr/local/include/
 src      += 
 include $(DEVEL)/GNUmakefile
-
+#CC=gcc-3.3
+#CXX=g++-3.3

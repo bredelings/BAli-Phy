@@ -94,7 +94,7 @@ void do_showonly(const alignment& A,const Parameters& P) {
 }
 
 
-void do_sampling(Arguments& args,alignment& A,Parameters& P) {
+void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterations) {
   MCMC sampler;
   sampler.add(sample_alignments,1,"sample_alignments:alignment");
 
@@ -137,7 +137,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P) {
   move_stats.push_back(move_stat("t-sample-branch-based"));
 
 
-  sampler.iterate(A,P,1000000);
+  sampler.iterate(A,P,max_iterations);
 }
 
 
@@ -234,8 +234,12 @@ int main(int argc,char* argv[]) {
     /*---------------Do something------------------*/
     if (args.set("showonly"))
       do_showonly(A,Theta);
-    else
-      do_sampling(args,A,Theta);
+    else {
+      long int max_iterations = 1000000;
+      if (args.set("iterations"))
+	max_iterations = convertTo<long int>(args["iterations"]);
+      do_sampling(args,A,Theta,max_iterations);
+    }
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
