@@ -15,52 +15,59 @@ int main(int argc,char* argv[]) {
   Arguments args;
   args.read(argc,argv);
 
-  if (not args.set("key")) 
-    throw myexception()<<"argument 'key' not set.";
+  try {
 
-  if (args.set("size") and args.set("until"))
-    throw myexception()<<"cannot set both arguments 'size' and 'until'.";
+    if (not args.set("key")) 
+      throw myexception()<<"argument 'key' not set.";
 
-  bool is_min = args.set("skip");
-  double min = args.loadvalue("skip",0.0);
+    if (args.set("size") and args.set("until"))
+      throw myexception()<<"cannot set both arguments 'size' and 'until'.";
 
-  bool is_max = args.set("size") or args.set("max");
-  double max = args.loadvalue<double>("size") + min;
+    bool is_min = args.set("skip");
+    double min = args.loadvalue("skip",0.0);
 
-  if (args.set("until"))
-    max = args.loadvalue<double>("until");
+    bool is_max = args.set("size") or args.set("until");
+    double max = args.loadvalue("size",0) + min;
 
-  if (is_min and is_max and max < min)
-    throw myexception()<<"error: maximum value < minimum value";
+    if (args.set("until"))
+      max = args.loadvalue<double>("until");
 
-  string pattern = args["key"] + " = ";
+    if (is_min and is_max and max < min)
+      throw myexception()<<"error: maximum value < minimum value";
 
-  string line;
+    string pattern = args["key"] + " = ";
 
-  bool in_interval=is_min;
-  while(getline(std::cin,line)) {
+    string line;
 
-    // look for the pattern
-    int where = line.find(pattern);
+    bool in_interval=is_min;
+    while(getline(std::cin,line)) {
 
-    // if no pattern, then
-    if (where != -1) {
+      // look for the pattern
+      int where = line.find(pattern);
 
-      // move PAST the pattern
-      where += pattern.size();
-      double value = convertTo<double>(line.substr(where));
-      in_interval = true;
-      if (is_min and value < min)
-	in_interval = false;
-      if (is_max and value > max)
-	in_interval = false;
+      // if no pattern, then
+      if (where != -1) {
 
-      //    std::cerr<<line<<std::endl;
-      //    std::cerr<<"where = "<<where<<std::endl;
-      //    std::cerr<<value<<std::endl;
+	// move PAST the pattern
+	where += pattern.size();
+	double value = convertTo<double>(line.substr(where));
+	in_interval = true;
+	if (is_min and value <= min)
+	  in_interval = false;
+	if (is_max and value > max)
+	  in_interval = false;
+
+	//    std::cerr<<line<<std::endl;
+	//    std::cerr<<"where = "<<where<<std::endl;
+	//    std::cerr<<value<<std::endl;
+      }
+
+      if (in_interval)
+	std::cout<<line<<std::endl;
     }
-
-    if (in_interval)
-      std::cout<<line<<std::endl;
+  }
+  catch (std::exception& e) {
+    std::cerr<<"Exception: "<<e.what()<<std::endl;
+    exit(1);
   }
 }
