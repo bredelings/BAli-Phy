@@ -11,6 +11,12 @@
 /// A generic insertion/deletion model
 class IndelModel {
 protected:
+  /// The transition matrix with G2 state removed
+  ublas::matrix<double> Q1;
+
+  /// The transition matrix with G1 state removed
+  ublas::matrix<double> Q2;
+
   /// Transition matrix w/o the end state
   ublas::matrix<double> P;
 
@@ -26,7 +32,7 @@ public:
   virtual void fiddle(const std::valarray<bool>&)=0;
 
   /// Update structures from the model parameters
-  virtual void recalc() {}
+  virtual void recalc();
 
   /// Get the model parameters
   virtual const vector<double>& parameters() const {return parameters_;}
