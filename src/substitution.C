@@ -155,7 +155,7 @@ namespace substitution {
 
       // A specific model (e.g. the INV model) could be impossible
       assert(0 <= p and p <= 1.00000000001);
-      total += p;
+      total += p * MModel.distribution()[m];
     }
 
     // SOME model must be possible
@@ -214,7 +214,78 @@ namespace substitution {
   }
 
 
+  /// Compute the letter likelihoods at the root
   double calc_root_probability(const alignment& A, const Tree& T,column_cache_t cache,
+			       const MultiModel& MModel) 
+  {
+    int root = cache.root;
+
+    // compute root branches
+    vector<int> rb;
+    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
+      rb.push_back(*i);
+
+    // get the relationships with the sub-alignments
+    ublas::matrix<int> index = get_subA_relationships(rb,A,T);
+
+    const int n_models = cache.scratch(0).size1();
+    const int asize    = cache.scratch(0).size2();
+
+    // scratch matrix 
+    Matrix S(n_models,asize);
+
+    // cache matrix of frequencies
+    Matrix F(n_models,asize);
+    for(int m=0;m<n_models;m++) {
+      double p = MModel.distribution()[m];
+      const valarray<double>& f = MModel.get_model(m).frequencies();
+      for(int l=0;l<asize;l++) 
+	F(m,l) = f[l]*p;
+    }
+
+    double total = 0;
+    for(int i=0;i<index.size1();i++) {
+
+      double p_col=0;
+      for(int m=0;m<n_models;m++) {
+	double p_model = 0;
+	for(int l=0;l<asize;l++) 
+	  S(m,l) = F(m,l);
+
+	//-------------- Propagate and collect information at 'root' -----------//
+	for(int j=0;j<rb.size();j++) {
+	  int i0 = index(i,j);
+	  if (i0 != alphabet::gap)
+	    for(int l=0;l<asize;l++) 
+	      S(m,l) *= cache(i0,rb[j])(m,l);
+	}
+
+	if (root < T.n_leaves()) {
+	  int rl = A.seq(root)[i];
+	  if (alphabet::letter(rl))
+	    for(int l=0;l<asize;l++)
+	      if (l != rl) 
+		S(m,l) = 0;
+	}
+
+	for(int l=0;l<asize;l++)
+	  p_model += S(m,l);
+
+	// A specific model (e.g. the INV model) could be impossible
+	assert(0 <= p_model and p_model <= 1.00000000001);
+	p_col += p_model;
+      }
+
+      // SOME model must be possible
+      assert(0 < p_col and p_col <= 1.00000000001);
+
+      total += log(p_col);
+    }
+    return total;
+  }
+
+
+  double calc_root_probability2(const alignment& A, const Tree& T,column_cache_t cache,
 			       const MultiModel& MModel) 
   {
     calc_root_likelihoods(A,T,cache);
@@ -387,6 +458,8 @@ namespace substitution {
   {
     const Tree& T = P.T;
     Likelihood_Cache& cache = P.LC;
+
+    calculate_caches(A,P,cache);
 
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
