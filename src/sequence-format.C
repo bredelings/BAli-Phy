@@ -1,56 +1,100 @@
+#include <fstream>
 #include "sequence-format.H"
 #include "util.H"
 
+using namespace std;
 
 namespace sequence_format {
-  using std::vector;
-  using std::string;
 
-  vector<sequence> load_fasta(const alphabet& a,std::istream& file) {
+  sequence fasta_parse_header(const string& line)
+  {
+    //------------ Delete '>' from label -----------//
+    assert(line[0] == '>');
+    string label = line.substr(1);
+
+    //------Parse label with name and comments------//
+    string name = label;
+    string comment = "";
+
+    int where = label.find_first_of(" \t");
+    if (where != -1) {
+      name = label.substr(0,where);
+      
+      where = label.find_first_not_of(" \t",where+1);
+      comment =  label.substr(where);
+    }
+    
+    return sequence(name,comment);
+  }
+
+  vector<sequence> read_fasta(std::istream& file) {
+
     vector<sequence> sequences;
 
-    string label;
-    string letters;
-
     string line;
-    while(getline(file,line)) {
 
-      //quit on empty lines -- perhaps we should quit on TWO empty lines?
-      //this allows us to put a sequence of alignments in a larger file
-      if (!line.size()) break;
+    bool done = false;
 
-      if (line[0] == '>') {
+    while(not done and getline(file,line)) {
 
-	if (not label.empty()) {
-	  sequence s(a);
-	  s.parse(label,letters);
-	  sequences.push_back(s);
-	}
+      // quit reading after a blank line
+      if (not line.size()) break;
+
+      // compare if expectations are met...
+      if (line[0] != '>') 
+	throw myexception()<<"FASTA sequence doesn't start with '>'";
+
+      // Parse the header
+      sequence s = fasta_parse_header(line);
+
+      // Parse the letters
+      string& letters = s;
+
+      while (file) {
+	char c = file.get();
+
+	// bail on EOF
+	if (not file) { done = true; break;}
+
+	file.putback(c);
 	
-	label = line;
-	letters.clear();
-      }
-      else
+	// finish this sequence before beginning of next sequence
+	if (c == '>') break;
+
+	// read the next line of letters
+	getline(file,line);
+
+	// quit reading after a blank line
+	if (not line.size()) { done = true; break;}
+	
+	// add the letters in
 	letters += line;
-	
-    }
+      }
+      letters = strip(letters," \t");
 
-    if (not label.empty()) {
-      sequence s(a);
-      s.parse(label,letters);
+      // Add the sequence to the list
       sequences.push_back(s);
     }
 
     return sequences;
   }
 
-  vector<sequence> load_fasta(const alphabet& a,const string& filename) {
-    ifstream file(filename.c_str());
-    if (not file)
-      throw myexception()<<"Couldn't open file '"<<filename<<"'";
-    vector<sequence> sequences = load_fasta(a,file);
-    file.close();
-    return sequences;
+  /// Read an alignments letters and names from a file in fasta format
+  void write_fasta(std::ostream& file, std::vector<sequence>& sequences) {
+    assert(sequences.size() > 0);
+
+    const int letters_length = 70;
+
+    for(int i=0;i<sequences.size();i++) {
+      file<<">"<<sequences[i].name<<"   "<<sequences[i].comment<<"\n";
+
+      for(int j=0;j<sequences[i].size();j+=letters_length)
+	file<<sequences[i].substr(j,letters_length);
+      file<<"\n";;
+    }
+    // write one blank line;
+    file<<"\n";
+    file.flush();
   }
 
   string strip_begin_end(const string& s) {
@@ -93,13 +137,12 @@ namespace sequence_format {
   }
 
   /// Read the first phylip section, including names
-  bool phylip_header_section(std::istream& file,int ntaxa, vector<string>& names,vector<string>& letters) {
+  bool phylip_header_section(std::istream& file,int ntaxa, vector<sequence>& sequences) {
     bool interleaved=true;
 
-    names.clear();
-    letters.clear();
+    sequences.clear();
 
-    while(names.size() < ntaxa or not interleaved) {
+    while(sequences.size() < ntaxa or not interleaved) {
       string name;
       string line_letters;
 
@@ -109,33 +152,32 @@ namespace sequence_format {
       if (empty_line) break;
 
       // If the first line has no name, bail out
-      if (not name.size() and names.size() == 0)
+      if (not name.size() and sequences.size() == 0)
 	throw myexception()<<"[Error reading PHYLIP alignment] First taxon has no name.";
 
       // If the second line has no name, assume non-interleaved
-      if (not name.size() and names.size() == 1)
+      if (not name.size() and sequences.size() == 1)
 	interleaved = false;
 
       // If interleaved, assume that this is a new empty name.
       // If non-interleaved, lines w/o names go w/ the last name.
       if (name.size() or interleaved) {
-	names.push_back(name);
-	letters.push_back("");
+	sequences.push_back(sequence(name,""));
 
 	if (not name.size())
-	  std::cerr<<"[Warning reading PHYLIP alignment]: taxon "<<names.size()+1<<" has an empty name!\n";
+	  std::cerr<<"[Warning reading PHYLIP alignment]: taxon "<<sequences.size()+1<<" has an empty name!\n";
       }
 
-      letters.back() += line_letters;
+      sequences.back() += line_letters;
     }
 
 
-    if (names.size() < ntaxa)
-      throw myexception()<<"[Error reading PHYLIP alignment] Read an empty line after "<<names.size()<<" out of "<<ntaxa<<" sequences in the first stanza.";
+    if (sequences.size() < ntaxa)
+      throw myexception()<<"[Error reading PHYLIP alignment] Read an empty line after "<<sequences.size()<<" out of "<<ntaxa<<" sequences in the first stanza.";
 
-    for(int i=1;i<letters.size();i++) 
-      if (letters[i].size() != letters[0].size())
-	throw myexception()<<"[Error reading PHYLIP alignment] Sequence '"<<names[i]<<"' has only "<<letters[i].size()<<" out of "<<letters[0].size()<<"letters in the first stanza";
+    for(int i=1;i<sequences.size();i++) 
+      if (sequences[i].size() != sequences[0].size())
+	throw myexception()<<"[Error reading PHYLIP alignment] Sequence '"<<sequences[i].name<<"' has only "<<sequences[i].size()<<" out of "<<sequences[0].size()<<"letters in the first stanza";
 
     return interleaved;
   }
@@ -163,7 +205,7 @@ namespace sequence_format {
     return file.good();
   }
 
-  void read_phylip(std::istream& file,vector<string>& names,vector<string>& sequences) {
+  void read_phylip(std::istream& file,vector<sequence>& sequences) {
 
     // parse phylip header
     string line;
@@ -179,7 +221,7 @@ namespace sequence_format {
     int stanza=1;
 
     // Get the letters and names from first section
-    bool interleaved = phylip_header_section(file,ntaxa,names,sequences);
+    bool interleaved = phylip_header_section(file,ntaxa,sequences);
 
     if (interleaved) {
       // Get the letters from following sections
@@ -216,64 +258,8 @@ namespace sequence_format {
   }
 
 
-  string get_label(const string& line) {
-
-    /*------------ Delete '>' from label -----------*/
-    assert(line[0] == '>');
-    string label = line.substr(1);
-
-    /*------Parse label with name and comments------*/
-    int where = label.find_first_of(" \t");
-    if (where != -1)
-      label = label.substr(0,where);
-
-    return label;
-  }
-
-
-  void read_fasta(std::istream& file,vector<string>& names,vector<string>& sequences) {
-
-    string label;
-    string letters;
-
-    string line;
-    while(getline(file,line)) {
-      if (!line.size()) continue;
-
-      if (line[0] != '>') {
-	letters += line;
-	continue;
-      }
-    
-      if (not label.empty()) {
-	names.push_back(label);
-
-	// Strip out space characters from the letters
-	letters = strip(letters," \t");
-	sequences.push_back(letters);
-      }
-    
-      label = get_label(line);
-      letters.clear();
-      continue;
-    }
-
-    if (not label.empty()) {
-      names.push_back(label);
-      sequences.push_back(letters);
-    }
-  }
-
   /// Read an alignments letters and names from a file in phylip format
   void write_phylip(std::ostream& file, std::vector<sequence>& sequences) {
-
-    vector<string> letters;
-    for(int i = 0;i < sequences.size() ;i++) {
-      string s;
-      for(int j=0;j<s.size();j++)
-	s += sequences[i].Alphabet().lookup(sequences[i][j]);
-      letters.push_back(s);
-    }
 
     //    vector<string> names = truncate_names(names_in);
 
@@ -303,7 +289,7 @@ namespace sequence_format {
 	// write out the line
 	file<<header;
 	file<<" ";
-	file<<letters[seq].substr(pos,letters_length);
+	file<<sequences[seq].substr(pos,letters_length);
 	file<<"\n";
       }
       // write one blank line;
@@ -314,27 +300,23 @@ namespace sequence_format {
     file.flush();
   }
 
-  // FIXME - make the 'sequence' class store letter directly, instead of indices??
-
-  /// Read an alignments letters and names from a file in fasta format
-  void write_fasta(std::ostream& file, std::vector<sequence>& sequences) {
-    assert(sequences.size() > 0);
-
-    const int letters_length = 70;
-
-    for(int i=0;i<sequences.size();i++) {
-      file<<">"<<sequences[i].name<<"   "<<sequences[i].comment<<"\n";
-
-      string letters;
-      for(int j=0;j<letters.size();j++)
-	letters += sequences[i].Alphabet().lookup(sequences[i][j]);
-
-      for(int j=0;j<sequences[i].size();j+=letters_length)
-	file<<letters.substr(j,letters_length);
-      file<<"\n";;
-    }
-    // write one blank line;
-    file<<"\n";
-    file.flush();
+  vector<sequence> load_from_file(loader_t loader,const string& filename) {
+    ifstream file(filename.c_str());
+    if (not file)
+      throw myexception()<<"Couldn't open file '"<<filename<<"'";
+    vector<sequence> sequences = loader(file);
+    file.close();
+    return sequences;
   }
+
+  vector<sequence> write_to_file(dumper_t dumper,const vector<sequence>& sequences,
+				 const string& filename) {
+    ofstream file(filename.c_str());
+    if (not file)
+      throw myexception()<<"Couldn't open file '"<<filename<<"'";
+    dumper(file,sequences);
+    file.close();
+    return sequences;
+  }
+
 }
