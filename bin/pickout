@@ -9,6 +9,7 @@ while(<STDIN>) {
     for($i=0; $i <= $#namelist; $i++) {
 	$value = "";
 	$name = $namelist[$i];
+	$name =~ s|\\|\\\\|g;
 
 	if (/$name = ([^ ]+)( |$)/) {
 	    $value = $1;
