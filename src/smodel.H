@@ -131,7 +131,7 @@ namespace substitution {
     
       total=0;
       for(int m=0;m<n_submodels();m++) {
-	for(int i=0;i<SubModels(i).parameters().size();i++)
+	for(int i=0;i<SubModels(m).parameters().size();i++)
 	  parameters_[i+total] = SubModels(i).parameters()[i];
 	total += SubModels(m).parameters().size();
       }
@@ -766,7 +766,7 @@ namespace substitution {
 
     string name() const;
 
-    DualModel(const std::vector<OwnedPointer<MultiModel> >& models);
+    DualModel(const std::vector<OwnedPointer<ReversibleAdditiveModel> >& models);
   };
 
 }

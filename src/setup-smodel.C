@@ -69,6 +69,8 @@ bool process_stack_Markov(vector<string>& string_stack,
     else
     throw myexception()<<"Can't figure out how to make a codon model from alphabet '"<<a.name<<";";
   }
+  else
+    return false;
 
   return true;
 }
@@ -80,15 +82,21 @@ bool process_stack_IA(vector<string>& string_stack,
 		      Arguments& args) 
 {
   ReversibleMarkovModel* markov = dynamic_cast<ReversibleMarkovModel*>(model_stack.back().get());
+
   if (match(string_stack,"gamma_branch")) {
     if (markov)
       model_stack.back() = Gamma_Branch_Model(*markov);
-    else
+    else if (model_stack.empty())
+      throw myexception()<<"gamma_branch: no model to use.";
+    else 
       throw myexception()<<"gamma_branch: couldn't find a Markov model to use.";
+    
   }
   else if (match(string_stack,"gamma_stretched_branch")) {
     if (markov)
       model_stack.back() = Gamma_Stretched_Branch_Model(*markov);
+    else if (model_stack.empty())
+      throw myexception()<<"gamma_branch: no model to use.";
     else
       throw myexception()<<"gamma_stretched_branch: couldn't find a Markov model to use.";
   }
@@ -105,9 +113,9 @@ bool process_stack_Multi(vector<string>& string_stack,
 			 const alphabet& a,
 			 Arguments& args) 
 {
+
   ReversibleAdditiveModel* RA = dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
   MultiRateModel* MRM = dynamic_cast<MultiRateModel*>(model_stack.back().get());
-
   if (match(string_stack,"gamma_plus_uniform")) {
     int n=4;
     if (args.set("gamma_plus_uniform") and args["gamma_plus_uniform"] != "gamma_plus_uniform")
@@ -116,6 +124,8 @@ bool process_stack_Multi(vector<string>& string_stack,
       model_stack.back() = DistributionRateModel(*RA,
 						 Uniform() + Gamma(),
 						 n);
+    else if (model_stack.empty())
+      throw myexception()<<"gamma_plus_uniform: couldn't find any model to use.";
     else
       throw myexception()<<"gamma_plus_uniform: couldn't find a reversible+additive model to use.";
 
@@ -127,6 +137,8 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     if (RA)
       model_stack.back() = GammaRateModel(*RA,n);
+    else if (model_stack.empty())
+      throw myexception()<<"gamma_plus_uniform: couldn't find any model to use.";
     else
       throw myexception()<<"gamma: couldn't find a reversible+additive model to use.";
   }
@@ -139,12 +151,16 @@ bool process_stack_Multi(vector<string>& string_stack,
       model_stack.back() = DistributionRateModel(*RA,
 						 Gamma() + Gamma(),
 						 n);
+    else if (model_stack.empty())
+      throw myexception()<<"gamma_plus_uniform: couldn't find any model to use.";
     else
       throw myexception()<<"gamma: couldn't find a reversible+additive model to use.";
   }
   else if (match(string_stack,"INV")) {
     if (MRM)
       model_stack.back() = INV_Model(*MRM);
+    else if (model_stack.empty())
+      throw myexception()<<"gamma_plus_uniform: couldn't find any model to use.";
     else if (RA)
       model_stack.back() = INV_Model(SingleRateModel(*RA));
     else
@@ -154,21 +170,21 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (model_stack.size() < 2)
       throw myexception()<<"Dual: can't find 2 models to combine";
 
-    OwnedPointer<MultiModel> M2;
+    OwnedPointer<ReversibleAdditiveModel> M2;
     if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
-      M2 = dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
+      M2 = *dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
     else
       throw myexception()<<"Dual: second model isn't reversible+additive";
     model_stack.pop_back();
 
-    OwnedPointer<MultiModel> M1;
+    OwnedPointer<ReversibleAdditiveModel> M1;
     if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
-      M1 = dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
+      M1 = *dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
     else
       throw myexception()<<"Dual: second model isn't reversible+additive";
     model_stack.pop_back();
 
-    vector <OwnedPointer<MultiModel> > models;
+    vector <OwnedPointer<ReversibleAdditiveModel> > models;
     models.push_back(M1);
     models.push_back(M2);
 
