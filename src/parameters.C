@@ -39,13 +39,18 @@ bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 
 
 void Parameters::fiddle() {
+  if (SModel_->parameters().size()) {
+    // Fiddle substitution parameters and recalculate rate matrices
     SModel_->fiddle(s_fixed);
-    recalc();
 
-    double x = log(branch_mean);
-    const double sigma = 0.10;
-    x += gaussian(0,sigma);
-    branch_mean = exp(x);
+    // Recalculate the branch transition matrices
+    recalc();
+  }
+
+  double x = log(branch_mean);
+  const double sigma = 0.10;
+  x += gaussian(0,sigma);
+  branch_mean = exp(x);
 }
 
 void Parameters::recalc() {
