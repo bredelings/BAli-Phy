@@ -411,10 +411,27 @@ nodeview Tree::add_node(int node) {
 }
 
 
+void get_branches_before(vector<const_branchview>& branch_list) {
+  for(int i=0;i<branch_list.size();i++)
+    append(branch_list[i].branches_before(),branch_list);
+}
+
+
 void get_branches_after(vector<const_branchview>& branch_list) {
   for(int i=0;i<branch_list.size();i++)
     append(branch_list[i].branches_after(),branch_list);
 }
+
+vector<const_branchview> branches_before(const Tree& T,int b) {
+  vector<const_branchview> branch_list;
+  branch_list.reserve(T.n_branches());
+
+  branch_list.push_back(T.directed_branch(b));
+  get_branches_before(branch_list);
+
+  return branch_list;
+}
+
 
 vector<const_branchview> branches_after(const Tree& T,int b) {
   vector<const_branchview> branch_list;

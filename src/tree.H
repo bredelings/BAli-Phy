@@ -272,7 +272,9 @@ inline RootedTree operator+(const RootedTree& t1,const RootedTree& t2) {
   return t3;
 }
 
+void get_branches_before(std::vector<const_branchview>& branch_list);
 void get_branches_after(std::vector<const_branchview>& branch_list);
+std::vector<const_branchview> branches_before(const Tree& T,int b);
 std::vector<const_branchview> branches_after(const Tree& T,int b);
 std::vector<const_branchview> branches_from_node(const Tree& T,int n);
 std::vector<const_branchview> branches_toward_node(const Tree& T,int n);
