@@ -4,6 +4,9 @@
 #include "alignment-util.H"
 #include "setup.H"
 
+using std::cout;
+using std::cerr;
+
 int main(int argc,char* argv[]) { 
   Arguments args;
   args.read(argc,argv);
@@ -14,37 +17,45 @@ int main(int argc,char* argv[]) {
     if (not args.set("align")) 
       throw myexception("Alignment file not specified! (align=<filename>)");
 
-    /* ----- Alphabets to try ------ */
     alignment A;
     load_A(args,A);
 
     alignment MA = M(A);
 
 
+    //------- Write the sequence names ------//
     for(int i=0;i<MA.size2();i++) {
-      std::cout<<MA.seq(i).name;
+      cout<<MA.seq(i).name;
       if (i==MA.size2()-1)
-	std::cout<<std::endl;
+	cout<<std::endl;
       else
-	std::cout<<" ";
+	cout<<" ";
     }
       
-    
+    const alphabet& a = MA.get_alphabet();
+
+    //------- Write the columns ------//
     for(int c=0;c<MA.length();c++) {
+      // write the indices
       for(int i=0;i<MA.size2();i++) {
 	if (MA(c,i) == -1)
-	  std::cout<<"-";
+	  cout<<"-";
 	else
-	  std::cout<<MA(c,i);
-	if (i==MA.size2()-1)
-	  std::cout<<std::endl;
-	else
-	  std::cout<<" ";
+	  cout<<MA(c,i);
+	cout<<" ";
       } 
+
+      // start a comment
+      cout<<"    #  ";
+
+      // write the letters
+      for(int i=0;i<MA.size2();i++)
+	cout<<a.lookup(A(c,i))<<" ";
+      cout<<std::endl;
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"Exception: "<<e.what()<<endl;
   }
   return 0;
 }
