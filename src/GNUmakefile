@@ -117,8 +117,8 @@ tools/alignment-indices: alignment.o alphabet.o sequence.o util.o tree.o \
 tools/alignment-draw: alignment.o alphabet.o sequence.o sequence-format.o util.o \
 	alignment-util.o tools/colors.o tree.o  ${LINKLIBS} 
 
-tools/alignment-translate: alignment.o alphabet.o sequence.o sequence-format.o \
-	util.o	
+tools/alignment-translate: alignment.o alignment-util.o alphabet.o sequence.o \
+	sequence-format.o util.o tree.o -lboost_program_options
 
 tools/alignment-find: alignment.o alphabet.o sequence.o tools/alignmentutil.o \
 	rng.o ${LINKLIBS} util.o sequence-format.o
@@ -133,7 +133,7 @@ tools/tree-dist-autocorrelation: tree.o sequencetree.o tools/tree-dist.o
 
 tools/tree-dist-cvars: tree.o sequencetree.o util.o tools/tree-dist.o
 
-tools/tree-to-srq: tree.o sequencetree.o -lboost_program_options
+tools/tree-to-srq: tree.o sequencetree.o tools/tree-dist.o tree-util.o -lboost_program_options
 
 tools/tree-reroot: tree.o sequencetree.o tree-util.o -lboost_program_options
 

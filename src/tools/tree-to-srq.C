@@ -9,9 +9,20 @@
 
 #include "myexception.H"
 #include "sequencetree.H"
-#include "arguments.H"
+#include "tree-dist.H"
+#include "tree-util.H"
 
 using namespace std;
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
+
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::string;
 
 double moment(const vector<double>& v,int n) {
   double total=0.0;
@@ -24,59 +35,58 @@ double moment(const vector<double>& v,int n) {
   return total/v.size();
 }
 
-SequenceTree standardized(const SequenceTree& T1) {
-  SequenceTree T = T1;
-  map<string,int,lstr> sequences;
-
-  for(int i=0;i<T.get_sequences().size();i++) {
-    sequences.insert(pair<string,int>(T.get_sequences()[i],i));
-  }
-
-  vector<int> newnames(T.n_leaves());
-
-  int i=0;
-  foreach(s,sequences) {
-    pair<string,int> p = *s;
-    newnames[p.second] = i;
-    i++;
-  }
-
-  //  cerr<<t<<endl;
-  //  cerr<<T.write()<<endl;
-  //  cerr<<T.write(false)<<endl;
-  T.SequenceTree::standardize(newnames);
-  //  cerr<<T.write(false)<<endl;
-  return T;
-}
-
-SequenceTree standardized(const string& t) {
-  SequenceTree T;
-  T.parse(t);
-  
-  return standardized(T);
-}
-
 string topology(const string& t) {
   SequenceTree T = standardized(t);
   return T.write(false);
 }
 
-int main(int argc,char* argv[]) { 
-  Arguments args;
-  args.read(argc,argv);
+string topology(const SequenceTree& T) {
+  SequenceTree T2 = T;
+  standardize(T2);
+  return T2.write(false);
+}
 
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("tree", value<string>(),"tree to re-root")
+    ;
+
+  // positional options
+  positional_options_description p;
+  p.add("tree", 1);
+  p.add("outgroup", 2);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: tree-to-srq <tree-file> < in-file\n";
+    //    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
+int main(int argc,char* argv[]) 
+{ 
   try {
-    // Load the target tree
-    SequenceTree target;
-    string target_string;
-    if (args.set("tree")) {
-      target.read(args["tree"]);
-      target_string = target.write(false);
-    }
-    else 
-      throw myexception("Tree not specified! (tree=<filename> )");
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
 
-    
+    // Load the target tree
+    SequenceTree target = load_T(args);
+
+    string target_string = topology(target);
+
     string line;
     while(getline(cin,line)) {
       SequenceTree T = standardized(line);

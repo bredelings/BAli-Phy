@@ -14,6 +14,7 @@
 #include "sequencetree.H"
 #include "util.H"
 
+SequenceTree standardized(const std::string& t);
 SequenceTree standardized(const std::string& t,const std::vector<std::string>& remove);
 
 void standardize(SequenceTree& T);
