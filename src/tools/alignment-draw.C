@@ -86,7 +86,10 @@ string getbgcolor(double x,double sscale,bool color) {
 
 string getfgcolor(double x,double sscale,bool color) {
   if (color)
-    return getrgb(hsv(0,0,0));
+    if (1.0 - f(x*sscale) < 0.5)
+      return getrgb(hsv(0,0,1));
+    else
+      return getrgb(hsv(0,0,0));
   else {
     if (1.0 - f(x*sscale) < 0.5)
       return getrgb(hsv(0,0,1));
