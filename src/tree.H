@@ -45,6 +45,7 @@ protected:
   int n_leaves_;
 
   std::vector< std::valarray<bool> > cached_partitions;
+  std::vector< std::vector<int> > cached_partition_sets;
 
   friend class branchview;
   friend class const_branchview;
@@ -160,6 +161,15 @@ public:
 
   std::valarray<bool> partition(int n1,int n2) const {
     return partition(directed_branch(n1,n2));
+  }
+
+  // n1 is an ancestor of n2, n2 is a descendant of n1
+  std::vector<int> leaf_partition_set(int b) const {
+    return cached_partition_sets[b];
+  }
+
+  std::vector<int> leaf_partition_set(int n1,int n2) const {
+    return leaf_partition_set(directed_branch(n1,n2));
   }
 
   // FIXME - not really implemented yet

@@ -452,11 +452,21 @@ vector<const_branchview> branches_toward_node(const Tree& T,int n) {
 
 void Tree::compute_partitions() {
   vector<const_branchview> branch_list = branches_from_node(*this,nodes_[0]->node);
-  vector<const_branchview> temp; temp.reserve(3);
 
+  // set up cached partition masks
   cached_partitions.clear();
-  cached_partitions = vector< valarray<bool> >(branches_.size(),valarray<bool>(false,n_nodes()));
+  cached_partitions = vector< valarray<bool> >(2*n_branches(),valarray<bool>(false,n_nodes()));
 
+  // set up cached partition sets
+  if (cached_partition_sets.size() != 2*n_branches())
+    cached_partition_sets = vector< vector<int> >(2*n_branches());
+  for(int i=0;i<cached_partition_sets.size();i++) {
+    cached_partition_sets[i].clear();
+    cached_partition_sets[i].reserve(T.n_leaves());
+  }
+
+  // compute partition masks
+  vector<const_branchview> temp; temp.reserve(3);
   for(int i=0;i<branch_list.size();i++) {
     const_branchview b = branch_list[i];
 
@@ -471,6 +481,12 @@ void Tree::compute_partitions() {
 
     cached_partitions[b.reverse()] = not cached_partitions[b];
   }
+
+  // compute LEAF partition sets
+  for(int b=0;b<2*n_branches();i++)
+    for(int i=0;i<n_leaves();i++) 
+      if (cached_partitions[b][i]) 
+	cached_partition_sets[b].push_back(i);
 }
 
 
