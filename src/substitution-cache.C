@@ -3,12 +3,13 @@
 
 using std::vector;
 
+#define CONSERVE_MEM 1
 
 int Multi_Likelihood_Cache::get_unused_location() {
 #ifdef CONSERVE_MEM
   if (not unused_locations.size()) {
     double s = size();
-    int ns = int(s*1.25)+1;
+    int ns = int(s*1.1)+4;
     int delta = ns - size();
     assert(delta > 0);
     allocate(delta);
@@ -38,8 +39,8 @@ void Multi_Likelihood_Cache::release_location(int loc) {
 void Multi_Likelihood_Cache::allocate(int s) {
   int old_size = size();
   int new_size = old_size + s;
-  std::cerr<<"Allocating "<<old_size<<" -> "<<new_size<<" branches ("<<s<<")\n";
-  std::cerr<<"  Each branch has "<<C<<" columns."<<std::endl;
+  std::clog<<"Allocating "<<old_size<<" -> "<<new_size<<" branches ("<<s<<")\n";
+  std::clog<<"  Each branch has "<<C<<" columns.\n";
 
   reserve(new_size);
   n_uses.reserve(new_size);
@@ -123,7 +124,15 @@ int Multi_Likelihood_Cache::add_token(int B) {
   return token;
 }
 
+int countt(const vector<bool>& v) {
+  int c=0;
+  for(int i=0;i<v.size();i++)
+    if (v[i]) c++;
+  return c;
+}
+
 int Multi_Likelihood_Cache::claim_token(int l,int B) {
+  //  std::clog<<"claim_token: "<<countt(active)<<"/"<<active.size()<<" -> ";
   int token = find_free_token();
 
   if (token == -1)
@@ -134,6 +143,7 @@ int Multi_Likelihood_Cache::claim_token(int l,int B) {
   
   active[token] = true;
 
+  //  std::cerr<<"-> "<<countt(active)<<"/"<<active.size()<<std::endl;
   return token;
 }
 
@@ -155,10 +165,12 @@ void Multi_Likelihood_Cache::copy_token(int token1, int token2) {
 }
 
 void Multi_Likelihood_Cache::release_token(int token) {
+  //  std::cerr<<"release_token: "<<countt(active)<<"/"<<active.size()<<" -> ";
   for(int b=0;b<mapping[token].size();b++)
     release_location( mapping[token][b] );
 
   active[token] = false;
+  //  std::cerr<<"-> "<<countt(active)<<"/"<<active.size()<<std::endl;
 }
 
 
