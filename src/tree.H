@@ -279,53 +279,99 @@ public:
     return db;
   };
 
-  std::vector<directed_branchview> get_branches_before(int b) const {
-    directed_branchview db = directed_branch(b);
-    int parent = db.parent();
-    int child = db.child();
+protected:
+  void get_branches_(int n,std::vector<directed_branchview>& dbs) const {
+    dbs.push_back(directed_branchview(branch_up(n),true,*this));
 
-    std::vector<directed_branchview> dbs;
-    std::vector<int> nodes = neighbors(child);
-    for(int i=0;i<nodes.size();i++)
-      if (nodes[i] != parent)
-	dbs.push_back(directed_branch(nodes[i],child));
-
-    return dbs;
+    if (names[n]->left)
+      dbs.push_back(directed_branchview(names[n]->left->parent_branch,true,*this));
+    
+    if (names[n]->right)
+      dbs.push_back(directed_branchview(names[n]->right->parent_branch,true,*this));
   }
 
-  std::vector<directed_branchview> get_branches_after(int b) const {
-    directed_branchview db = directed_branch(b);
-    int parent = db.parent();
-    int child = db.child();
+public:
+  void get_branches_in(int n,std::vector<directed_branchview>& dbs) const {
+    int start = dbs.size();
 
-    std::vector<directed_branchview> dbs;
-    std::vector<int> nodes = neighbors(parent);
-    for(int i=0;i<nodes.size();i++)
-      if (nodes[i] != child)
-	dbs.push_back(directed_branch(parent,nodes[i]));
+    get_branches_(n,dbs);
 
-    return dbs;
+    for(int i=start;i<dbs.size();i++) {
+      if (dbs[i].parent() != n)
+	dbs[i].toggle();
+      assert(dbs[i].parent() == n);
+    }
   }
 
 
   std::vector<directed_branchview> get_branches_in(int n) const {
     std::vector<directed_branchview> dbs;
-
-    std::vector<int> nodes = neighbors(n);
-    for(int i=0;i<nodes.size();i++)
-      dbs.push_back(directed_branch(nodes[i],n));
-
+    get_branches_in(n,dbs);
     return dbs;
+  }
+
+
+  void get_branches_out(int n,std::vector<directed_branchview>& dbs) const {
+    int start = dbs.size();
+
+    get_branches_(n,dbs);
+
+    for(int i=start;i<dbs.size();i++) {
+      if (dbs[i].parent() != n)
+	dbs[i].toggle();
+      assert(dbs[i].child() == n);
+    }
   }
 
 
   std::vector<directed_branchview> get_branches_out(int n) const {
     std::vector<directed_branchview> dbs;
+    get_branches_out(n,dbs);
+    return dbs;
+  }
 
-    std::vector<int> nodes = neighbors(n);
-    for(int i=0;i<nodes.size();i++)
-      dbs.push_back(directed_branch(n,nodes[i]));
+  void get_branches_before(int b,std::vector<directed_branchview>& dbs) const 
+  {
+    int start = dbs.size();
 
+    directed_branchview db = directed_branch(b);
+    int parent = db.parent();
+    int child = db.child();
+
+    get_branches_in(child,dbs);
+
+    for(int i=dbs.size()-1;i>=start;i--) {
+      if (dbs[i].child().name() == parent)
+	dbs.erase(dbs.begin()+i);
+    }
+  }
+
+  std::vector<directed_branchview> get_branches_before(int b) const {
+    std::vector<directed_branchview> dbs;
+    get_branches_before(b,dbs);
+    return dbs;
+  }
+
+
+  void get_branches_after(int b,std::vector<directed_branchview>& dbs) const {
+    int start = dbs.size();
+
+    directed_branchview db = directed_branch(b);
+    int parent = db.parent();
+    int child = db.child();
+
+    get_branches_out(parent,dbs);
+
+    for(int i=dbs.size()-1;i>=start;i--) {
+      if (dbs[i].parent().name() == child)
+	dbs.erase(dbs.begin()+i);
+    }
+  }
+
+
+  std::vector<directed_branchview> get_branches_after(int b) const {
+    std::vector<directed_branchview> dbs;
+    get_branches_after(b,dbs);
     return dbs;
   }
 

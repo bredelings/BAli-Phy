@@ -152,19 +152,16 @@ namespace substitution {
     vector<peeling_info> peeling_operations;
     peeling_operations.reserve(T.n_branches());
 
-    vector<directed_branchview> new_branches = T.get_branches_in(root);
-    while(not new_branches.empty()) {
-      vector<directed_branchview> new_branches2;
+    vector<directed_branchview> branches = T.get_branches_in(root);
 
-      for(int i=0;i<new_branches.size();i++) {
-	const directed_branchview& db = new_branches[i];
+    for(int i=0;i<branches.size();i++) {
+	const directed_branchview& db = branches[i];
 	if (not up_to_date[db]) {
+	  T.get_branches_before(db,branches);
 	  peeling_operations.push_back(peeling_info(db,T));
-	  add(new_branches2,T.get_branches_before(db));
 	}
-      }
-      new_branches = new_branches2;
     }
+
     std::reverse(peeling_operations.begin(),peeling_operations.end());
 
     //    std::cerr<<"root = "<<root<<std::endl;
