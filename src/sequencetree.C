@@ -212,7 +212,8 @@ void RootedSequenceTree::parse(const string& line) {
     return;
   }
 
-  vector< vector<RootedSequenceTree> > tree_stack(1);
+  vector< vector<BranchNode*> > tree_stack(1);
+  sequences.clear();
 
   string word;
   for(int i=0;i<line.size();i++) {
@@ -223,22 +224,26 @@ void RootedSequenceTree::parse(const string& line) {
     //------- Read the data from 'word' into the stacks ------//
     if (c == ':') {
       if (word.length() != 0) {
-	RootedSequenceTree RT(word);
-	int node = RT.add_node(RT.root());
-	RT.reroot(node);
-	tree_stack.back().push_back(RT);
+	BranchNode* BN = new BranchNode(-1,sequences.size(),-1);
+	BN->out = BN->next = BN->prev = BN;
+	BN = ::add_node(BN);
+	tree_stack.back().push_back(BN);
+
+	sequences.push_back(word);
 	word = "";
       }
     }
     else if (c== ',' or c==')') {
-      (*tree_stack.back().back().root().branches_out()).set_length(convertTo<double>(word));
+      BranchNode* BN = tree_stack.back().back();
+      BN->length = convertTo<double>(word);
+      BN->out->length = BN->length;
       word = "";
     }
 
 
     //------ Process the data given the current state ------//
     if (c == '(') {
-      tree_stack.push_back(vector<RootedSequenceTree>());
+      tree_stack.push_back(vector<BranchNode*>());
       if (word.length()!=0) 
 	throw myexception()<<"In tree file, found '(' in the middle of word \""<<word<<"\"";
     }
@@ -247,16 +252,13 @@ void RootedSequenceTree::parse(const string& line) {
       if (tree_stack.size() < 2)
 	throw myexception()<<"In tree file, too many end parenthesis.";
 
-      // We need at least 2 trees to merge
-      const vector<RootedSequenceTree>& trees = tree_stack.back();
-      if (not trees.size() == 2)
-	throw myexception()<<"We can only handle binary trees";
-      assert(trees.size() >= 2);
+      // merge the trees in the top level, and put them in the next level down
+      BranchNode* BN = tree_stack.back()[0];
+      for(int i=1;i<tree_stack.back().size();i++)
+	TreeView::merge_nodes(BN,tree_stack.back()[i]);
+      tree_stack[tree_stack.size()-2].push_back(::add_node(BN));
 
-      // add the trees in the bottom level, and put them in the next level up
-      tree_stack[tree_stack.size()-2].push_back(trees[0] + trees[1]);
-
-      // destroy the bottom level
+      // destroy the top level
       tree_stack.pop_back();
 
       //      std::cerr<<"    leaves: "<<T1.n_leaves()<<" + "<<T2.n_leaves()<<" = "<<Join.n_leaves()<<endl;
@@ -273,12 +275,11 @@ void RootedSequenceTree::parse(const string& line) {
   if (tree_stack.back().size() != 1)
     throw myexception()<<"Multiple trees on the same line";
 
-  (*this) = tree_stack.back()[0];
+  BranchNode* remainder = tree_stack.back()[0];
+  root_ = TreeView::unlink_subtree(remainder->out);
+  TreeView(remainder).destroy();
 
-  nodeview r1 = root();
-  nodeview r2 = *(root().neighbors());
-  reroot(r2);
-  r2 = prune_subtree(directed_branch(r2,r1));
+  reanalyze(root_);
 }
 
 vector<int> RootedSequenceTree::standardize() {
