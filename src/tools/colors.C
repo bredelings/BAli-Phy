@@ -89,8 +89,15 @@ namespace colors {
     std::abort();
   }
 
-  RGB black(0,0,0);
-  RGB white(1,1,1);
+  RGB black    (0, 0, 0);
+  RGB white    (1, 1, 1);
+  RGB grey   (0.8, 0.8, 0.8);
+  RGB yellow (0.9, 0.9, 0.1);
+  RGB blue   (0.1, 0.1, 0.9);
+  RGB orange (0.9, 0.7, 0.3);
+  RGB red    (0.9, 0.1, 0.1);
+  RGB green  (0.1, 0.9, 0.1);
+  RGB purple (0.9, 0.1, 0.9);
 
 }
 

@@ -1,6 +1,9 @@
 #include <vector>
 #include <string>
 
+//TODO - make a unified color class, which can be accessed through
+//       BOTH RGB and HSV;
+
 namespace colors {
 
   class RGB:public std::vector<double> {
@@ -44,5 +47,11 @@ namespace colors {
 
   extern RGB black;
   extern RGB white;
-
+  extern RGB grey;
+  extern RGB yellow;
+  extern RGB blue;
+  extern RGB orange;
+  extern RGB red;
+  extern RGB green;
+  extern RGB purple;
 }
