@@ -385,8 +385,10 @@ int main(int argc,char* argv[]) {
     double level = args.loadvalue("consensus",0.5);
     cout<<"\n\nConsensus trees ["<<level*100<<"% level]\n";
     for(int i=0;i<tree_dists.size();i++) {
-      SequenceTree MF = get_mf_tree(get_Ml_partitions(tree_dists[i],level));
-      cout<<"consensus0"<<i<<" = "<<MF<<std::endl;
+      vector<Partition> partitions = get_Ml_partitions(tree_dists[i],level);
+      SequenceTree MF = get_mf_tree(partitions);
+      cout<<"Sample "<<i<<": "<<partitions.size()<<"/"<<MAP_trees[i].n_leaves()-3<<" internal bi-partitions supported.\n";
+      cout<<" consensus"<<i<<" = "<<MF<<std::endl;
     }
   }
   catch (std::exception& e) {
