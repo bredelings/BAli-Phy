@@ -297,8 +297,10 @@ double NewIndelModel::prior() const {
   P += exp_exponential_log_pdf(E_length,E_length_mean);
 
   // Calculate prior on invariant fraction
-  double i = parameters_[2];
-  P += beta_log_pdf(i,0.01,20);
+  if (not fixed[2]) {
+    double i = parameters_[2];
+    P += beta_log_pdf(i,0.01,20);
+  }
 
   return P;
 }
