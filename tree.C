@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <sstream>
 
+using std::vector;
 using std::valarray;
 
 void TreeView::destroy_tree(node* n) {
@@ -143,6 +144,47 @@ void add_right(node* parent,node* child) {
   child->parent_branch->parent = parent;
 }
 
+void remove_subtree(node* n,node* &root) {
+  // don't remove the root!
+  assert(n->parent);
+
+  // get parent and grandparent
+  node* parent = n->parent;
+  node* sibling = n->parent->right;
+  if (n == sibling) sibling = n->parent->left;
+
+  // this node must have a sibling
+  assert(sibling);
+
+  // connect sibling to parent->parent (as its parent)
+  sibling->parent = parent->parent;
+  //FIXME - we have unneeded pointers here...
+  if (parent->parent)
+    sibling->parent_branch->parent = sibling->parent;
+  else {
+    delete sibling->parent_branch;
+    sibling->parent_branch=0;
+  }
+
+  // set grandparent pointer to point to sibling (as its child)
+  if (not parent->parent)
+    root = sibling;
+  else {
+    // connect parent->parent to sibling (as its child)
+    if (parent->parent->right == parent)
+      parent->parent->right = sibling;
+    else
+      parent->parent->left = sibling;
+
+    // Merge the two branch lengths
+    sibling->parent_branch->length += parent->parent_branch->length;
+    delete parent->parent_branch;
+  }
+
+  // delete the parent node
+  delete parent;
+}
+
 // Do I need to export an interface which maps each node name
 // on the two old trees into a node name in the current tree?
 // I could put a field 'old_name' in the 'struct node' for this...
@@ -174,6 +216,31 @@ void tree::add_right(node* parent,const tree& T) {
   // compute order and internal names from leaf names
   reanalyze();
 }
+
+/// Remove the subtree with root node n
+void tree::remove_subtree(node* n) {
+  // Take the subtree @ n out of the tree
+  ::remove_subtree(n,root);
+
+  // Then free up the removed subtree
+  TreeView(n).destroy();
+  
+  // Fix-up branch lengths so that branch right of root doesn't count
+  if (root->right) {
+    root->left->parent_branch->length += root->right->parent_branch->length;
+    root->right->parent_branch->length = 0;
+  }
+
+  // re-compute the leaf names - can't preserve...
+  // I could present some, decrease others by one, if helpful...
+  vector<node*> leaves = find_leaves(root);
+  for(int i=0;i<leaves.size();i++)
+    leaves[i]->name = i;
+
+  // Reconstruct everything
+  reanalyze();
+}
+
 
 void tree::add_root() {
   assert(not root);
@@ -277,10 +344,11 @@ void tree::reanalyze() {
 
 // order shouldn't depend on left/right stuff
 
-// This routine depends on sanity introduced by previous routine
-//   o order contains all the nodes
-//   o names hash for leaves is right
+/// Compute the order hash into the nodes, and mark nodes w/ their order
 
+/// This routine depends on sanity introduced by previous routine(s)
+///   o order contains all the nodes
+///   o names hash for leaves is right
 void tree::reorder() {
 
   int old_size = order.size();
@@ -713,6 +781,11 @@ double tree::distance2(int i,int j) const {
   }
 
   return d;
+}
+
+void tree::remove_subtree(int i) {
+  assert(0 <= i and i < names.size());
+  remove_subtree(names[i]);
 }
 
 double tree::distance(int i,int j) const {

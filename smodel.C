@@ -290,7 +290,9 @@ namespace substitution {
     P += -log(inv_frac_mean) - p/inv_frac_mean;
     P += -log(max_inv_rate); //prior on r
     
-    if (p < 0 or p > 1 or r < 0)
+    if (p < 0 or p > 1)
+      return log_0;
+    else if (r < 0 or r > 0.01)
       return log_0;
     else
       return P;

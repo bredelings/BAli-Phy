@@ -223,20 +223,18 @@ double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SMode
   return p;
 }
 
-double Pr(const alignment& A,const Parameters& P,int column) {
-  const MultiRateModel& MRModel = P.SModel();
+double Pr(const alignment& A, const tree& T, const MultiRateModel& MRModel, const MatCache& MC,int column) {
 
   vector<int> residues(A.size2());
   for(int i=0;i<residues.size();i++)
     residues[i] = A(column,i);
-    
   
   double total=0;
   for(int r=0;r<MRModel.nrates();r++) 
     total += MRModel.distribution()[r] * Pr(residues,
-					    P.T,
+					    T,
 					    MRModel.BaseModel(),
-					    P.transition_P(r)
+					    MC.transition_P(r)
 					    );
 
   // we don't get too close to zero, normally
@@ -245,16 +243,21 @@ double Pr(const alignment& A,const Parameters& P,int column) {
   return log(total);
 }
 
-double Pr(const alignment& A,const Parameters& P) {
+double Pr(const alignment& A, const tree& T, const MultiRateModel& MRModel, const MatCache& SM) {
   double p = 0.0;
 
   // Do each node before its parent
   for(int column=0;column<A.length();column++) 
-    p += Pr(A,P,column);
+    p += Pr(A,T,MRModel,SM,column);
 
     //    std::cerr<<" substitution: P="<<P<<std::endl;
   return p;
 }
+
+double Pr(const alignment& A,const Parameters& P) {
+  return Pr(A,P.T,P.SModel(),P);
+}
+
 
 double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SModel,
 	       const vector<Matrix>& transition_P) {
@@ -282,10 +285,9 @@ double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SM
   return p;
 }
 
-double Pr_star(const alignment& A,const Parameters& P) {
+double Pr_star(const alignment& A, const tree& T, const MultiRateModel& MRModel, const MatCache& MC) {
 
   double p = 0.0;
-  const MultiRateModel& MRModel = P.SModel();
   
   vector<int> residues(A.size2());
 
@@ -297,9 +299,9 @@ double Pr_star(const alignment& A,const Parameters& P) {
     double total=0;
     for(int r=0;r<MRModel.nrates();r++)
       total += MRModel.distribution()[r] * Pr_star(residues,
-						   P.T,
+						   T,
 						   MRModel.BaseModel(),
-						   P. transition_P(r)
+						   MC.transition_P(r)
 						   );
 
     // we don't get too close to zero, normally
@@ -309,6 +311,10 @@ double Pr_star(const alignment& A,const Parameters& P) {
   }
 
   return p;
+}
+
+double Pr_star(const alignment& A,const Parameters& P) {
+  return Pr_star(A, P.T, P.SModel(), P);
 }
 
 double Pr_star_constant(const alignment& A,const Parameters& P) {

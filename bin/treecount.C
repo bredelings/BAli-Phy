@@ -7,7 +7,7 @@
 #include <map>
 #include <cmath>
 
-#include "tree.H"
+#include "sequencetree.H"
 #include "arguments.H"
 #include "util.H"
 
@@ -117,10 +117,13 @@ void do_analyze() {
 }
 
 
-SequenceTree standardized(const string& t) {
+SequenceTree standardized(const string& t,const vector<string>& remove) {
   SequenceTree T;
   T.parse(t);
   
+  for(int i=0;i<remove.size();i++)
+    delete_node(T,remove[i]);
+
   map<string,int,lstr> sequences;
 
   for(int i=0;i<T.get_sequences().size();i++) {
@@ -144,11 +147,6 @@ SequenceTree standardized(const string& t) {
   return T;
 }
 
-
-string topology(const string& t) {
-  SequenceTree T = standardized(t);
-  return T.write(false);
-}
 
 struct ordering {
   vector<int> count;
@@ -176,11 +174,15 @@ int main(int argc,char* argv[]) {
     while(getline(cin,line)) {
       trees.push_back(line);
     }
+
+    vector<string> remove;
+    if (args.set("delete"))
+      remove = split(args["delete"],':');
     
     /*************** Count how many of each type ***************/
     foreach(mytree,trees) {
       
-      SequenceTree T = standardized(*mytree);
+      SequenceTree T = standardized(*mytree,remove);
       string t = T.write(false);
       
       typeof(index.begin()) here = index.find(t);
@@ -213,7 +215,7 @@ int main(int argc,char* argv[]) {
     vector<int> iorder = invert(order);
     if (args.set("analyze")) {
       foreach(mytree,trees) {
-	SequenceTree T = standardized(*mytree);
+	SequenceTree T = standardized(*mytree,remove);
 	string t = T.write(false);
       
 	typeof(index.begin()) here = index.find(t);
@@ -233,7 +235,7 @@ int main(int argc,char* argv[]) {
     /***************  Get examples of best trees ***************/
     vector< SequenceTree > best_trees(numtrees);
     foreach(mytree,trees) {
-      SequenceTree T = standardized(*mytree);
+      SequenceTree T = standardized(*mytree,remove);
       string t = T.write(false);
       
       bool done = true;
@@ -251,7 +253,7 @@ int main(int argc,char* argv[]) {
       if (done)
 	break;
     }
-    
+
     SequenceTree best;
     if (args.set("tree"))
       best.read(args["tree"]);
@@ -266,7 +268,6 @@ int main(int argc,char* argv[]) {
       int j = find_index(best.get_sequences(),ignore[i]);
       assert(j != best.get_sequences().size());
       mask[j] = false;
-      std::cerr<<"ignore"<<i<<"   "<<ignore[i]<<"    index = "<<j<<"\n";
     }
       
     const int nleaves = best.leaves();
@@ -282,7 +283,7 @@ int main(int argc,char* argv[]) {
     vector<int> branch_count(nbranches,0);
     
     foreach(mytree,trees) {
-      SequenceTree thisone = standardized(*mytree);
+      SequenceTree thisone = standardized(*mytree,remove);
       
       // collect branch length info
       string topo = thisone.write(false);
@@ -328,7 +329,7 @@ int main(int argc,char* argv[]) {
 	best_trees[i].branch(b).length() = m1;
 	cout<<b<<"  "<<m1<<"    "<<stddev<<endl;
       }
-      cout<<best_trees[i]<<endl;
+      cout<<i<<"MAPtree = "<<best_trees[i]<<endl;
       cout<<endl<<endl;
     }
     cout<<endl<<endl;

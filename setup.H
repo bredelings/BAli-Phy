@@ -5,7 +5,7 @@
 #include "smodel.H"
 #include "arguments.H"
 #include "alignment.H"
-#include "tree.H"
+#include "sequencetree.H"
 
 /// Return a substitution::Model specified by args
 substitution::MultiRateModel* get_smodel(Arguments& args,const alphabet& a,const std::valarray<double>& default_frequencies);

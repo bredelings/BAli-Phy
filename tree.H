@@ -1,13 +1,19 @@
 #ifndef ETREE_H
 #define ETREE_H
 
-#include "mytypes.H"
-#include <istream>
+#include <cassert>
 #include <vector>
-#include <string>
+#include <valarray>
 /***************** struct tree ********************/
 
 struct Branch;
+
+//FIXME - I should include the name of the branch and its length ...
+//          - I could still keep the node-view and branch-view classes
+
+//FIXME - I have the coordinate system - should I write the iterator classes?
+//        Can I force a root somewhere, now?
+//        I need to do bottom up, as well as top down... 
 
 struct node {
   node* parent;
@@ -141,18 +147,18 @@ public:
 class tree {
   int n_leaves;
 
-  vector<node*> names;
-  vector<node*> order;
+  std::vector<node*> order;
 
-  vector<Branch*> branches_;
-
+  std::vector<Branch*> branches_;
 protected:
+  std::vector<node*> names;
   node* root;
 
   void add_left(node*,const tree&);
   void add_right(node*,const tree&);
+  virtual void remove_subtree(node*);
 
-  vector< std::valarray<bool> > ancestors;
+  std::vector< std::valarray<bool> > ancestors;
 
   void compute_ancestors();
 
@@ -167,6 +173,8 @@ protected:
 
   double distance2(int,int) const;
 public:
+  void remove_subtree(int i);
+
   branchview branch(int i) {
     assert(i<branches_.size()-1);
     assert(branches_[i]->parent == branches_[i]->child->parent);
@@ -193,8 +201,8 @@ public:
 
   // These change don't change the tree itself, how it is stored/referenced
   void swap_children(int n);
-  vector<int> standardize();
-  vector<int> standardize(const vector<int>&);
+  std::vector<int> standardize();
+  std::vector<int> standardize(const std::vector<int>&);
 
   /// The common ancestor of nodes i and j
   int common_ancestor(int i,int j) const;
@@ -217,7 +225,7 @@ public:
 
   tree(const tree& t1,const tree& t2);
   tree(const tree& t1,double b1,const tree& t2,double b2);
-  ~tree() {TreeView(root).destroy();}
+  virtual ~tree() {TreeView(root).destroy();}
 };
 
 inline bool leaf(const node& n) {
@@ -237,7 +245,7 @@ template<class RangeType>
 class TreeFunc {
   const tree& t;
 
-  vector<RangeType> values;
+  std::vector<RangeType> values;
 public:
   RangeType& operator()(int i) {return values[i];} 
   const RangeType& operator()(int i) const {return values[i];} 
@@ -249,67 +257,8 @@ public:
   TreeFunc(const tree& t1,RangeType value): t(t1),values(t1.num_nodes(),value) {}
 };
 
-TreeFunc<int> mark_tree(const vector<int>&,const tree&);
-
-
-// Perhaps this is more of a directed node class?
-// Or is this a branch class, and do we need a node class in addition?
-// basically, we need something to keep track of which node we are thinking
-// of as the root node!
-
-struct const_branch_iterator {
-  const_branchview b;
-  bool up;
-
-  const_branch_iterator left() const;
-  const_branch_iterator right() const;
-
-  const_branch_iterator(const_branchview a1,bool a2): b(a1),up(a2) { }
-};  
-
-
-/***************** class SequenceTree ****************/
-
-class SequenceTree: public tree {
-  vector<string> sequences;
-  string write(int n,bool) const;
-public:
-  const string& seq(int i) const {return sequences[i];}
-  const vector<string>& get_sequences() const {return sequences;}
-
-  vector<int> standardize();
-  vector<int> standardize(const vector<int>&);
-
-  int index(const string&) const;
-
-  string write(bool=true) const;
-
-  void read(const string&);
-  void read(std::istream&);
-  void parse(const string&);
-
-  SequenceTree() {}
-  SequenceTree(const string& s);
-  SequenceTree(const SequenceTree& T1, const SequenceTree& T2);
-  SequenceTree(const SequenceTree& T1, double b1,const SequenceTree& T2,double b2);
-
-  SequenceTree(std::istream&);   //load a tree from a file
-};
-
-inline SequenceTree operator+(const SequenceTree& t1,const SequenceTree& t2) {
-  SequenceTree t3(t1,t2);
-
-  return t3;
-}
-
-inline std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
-  return o<<T.write();
-}
-
-bool same_topology(const SequenceTree&,const SequenceTree&);
+TreeFunc<int> mark_tree(const std::vector<int>&,const tree&);
 
 double distance1(const tree& T1, const tree& T2);
-
-SequenceTree RandomTree(const vector<string>&,double=1.0);
 
 #endif

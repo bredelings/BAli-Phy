@@ -1,6 +1,10 @@
 #include "findroot.H"
 #include "optimize.H"
 
+#include <vector>
+
+using std::vector;
+
 const double max_float = 3.40282347e+38F;
 
 double rootdistance(const tree& T,int leaf,int b,double x) {
@@ -32,7 +36,7 @@ class rooterror: public function {
   int b;
   double total;
 public:
-  double operator()(const vector<double>& v) const;
+  double operator()(const optimize::Vector& v) const;
   rooterror(const tree& T1,int i1): T(T1),b(i1) 
   {
     for(int b=0;b<T.branches();b++)
@@ -41,7 +45,7 @@ public:
   }
 };
 
-double rooterror::operator()(const vector<double>& v) const {
+double rooterror::operator()(const optimize::Vector& v) const {
   assert(v.size() == 1);
   double x = v[0];
   if (x < 0) return -max_float;
@@ -72,8 +76,8 @@ void find_root(const tree& T,int& rootb,double& rootd) {
 
   for(int b=0;b<T.branches();b++) {
     rooterror f(T,b);
-    vector<double> start(1,0.5);
-    vector<double> end = search_basis(start,f);
+    optimize::Vector start(0.5,1);
+    optimize::Vector end = search_basis(start,f);
     E[b] = f(end);
     x[b] = end[0];
   }

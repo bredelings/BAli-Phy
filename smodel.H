@@ -370,7 +370,7 @@ namespace substitution {
     const vector<double>& distribution() const {return distribution_;}
 
     /// Get a transition probability matrix for time 't' and rate 'r'
-    Matrix transition_p(double t,int r) {return BaseModel().transition_p(t*rates_[r]);}
+    Matrix transition_p(double t,int r) const {return BaseModel().transition_p(t*rates_[r]);}
 
     /// Construct a MultiRate model based on 'M', with 'dp' extra parameters, and 'nr' rates
     MultiRateModel(const Model& M, int dp, int nr): 

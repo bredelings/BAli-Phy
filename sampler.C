@@ -5,7 +5,7 @@
 #include <valarray>
 #include "myexception.H"
 #include "mytypes.H"
-#include "tree.H"
+#include "sequencetree.H"
 #include "alignment.H"
 #include "rng.H"
 #include "sample.H"

@@ -42,24 +42,23 @@ string SequenceTree::write(int n,bool lengths) const {
 }
 
 void SequenceTree::remove_subtree(node* n) {
-  vector<node*> leaves1(leaves());
-  for(int i=0;i<leaves1.size();i++)
-    leaves1[i] = names[i];
+  vector<node*> leaves(n_leaves);
+  for(int i=0;i<leaves.size();i++)
+    leaves[i] = names[i];
   
   tree::remove_subtree(n);
   
-  vector<node*> leaves2(leaves());
-  for(int i=0;i<leaves2.size();i++)
+  vector<node*> leaves2(n_leaves);
+  for(int i=0;i<leaves.size();i++)
     leaves2[i] = names[i];
 
   vector<string> newnames;
   for(int i=0;i<leaves2.size();i++) {
-    int index = find_index(leaves1,leaves2[i]);
+    int index = find_index(leaves,leaves2[i]);
     if (index != -1)
       newnames.push_back(sequences[index]);
   }
   assert(newnames.size() == leaves2.size());
-  sequences = newnames;
 }
 
 

@@ -1,5 +1,8 @@
-#include "tree.H"
+#include "sequencetree.H"
 #include "rng.H"
+
+using std::vector;
+using std::string;
 
 vector<int> permutation(int n) {
   vector<int> p;

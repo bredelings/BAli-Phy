@@ -31,8 +31,8 @@ all: sampler
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math prefetch-loop-arrays tracer omit-frame-pointer 
-DEBUG = pipe # g3 # pg
+LANGO = fast-math  tracer # omit-frame-pointer # prefetch-loop-arrays
+DEBUG = pipe g3 # pg
 EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
 DEFS = NDEBUG NDEBUG_DP # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
@@ -50,11 +50,11 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
 	  node-sample2.C imodel.C 5way.C topology-sample2.C inverse.C \
-	  setup.C rates.C
+	  setup.C rates.C matcache.C
 
 LIBS = gsl gslcblas m 
-SLIBS =  gsl gslcblas m lapack cblas atlas
-LINKLIBS = ${LIBS:%=-l%} ${SLIBS:%=lib%.a}
+SLIBS =  lapack cblas atlas # gsl gslcblas m 
+LINKLIBS = ${LIBS:%=-l%} /usr/local/lib/liblapack.a /usr/local/lib/libcblas.a /usr/local/lib/libatlas.a
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 
 
@@ -62,8 +62,7 @@ ${NAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
 
 bin/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o bin/optimize.o bin/findroot.o \
-	setup.o exponential.o eigenvalue.o \  # needed for setup
-	${LIBS:%=-l%}
+	setup.o smodel.o rates.o exponential.o eigenvalue.o ${LINKLIBS}
 
 bin/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
 
@@ -88,7 +87,7 @@ bin/make_random_tree: tree.o sequencetree.o arguments.o util.o\
 
 bin/drawalignment: tree.o alignment.o sequencetree.o arguments.o \
 	rng.o alphabet.o sequence.o util.o setup.o smodel.o exponential.o \
-	eigenvalue.o ${LIBS:%=-l%}
+	eigenvalue.o rates.o ${LINKLIBS}
 
 bin/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
 	rng.o util.o ${LIBS:%=-l%}
@@ -96,7 +95,7 @@ bin/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
 bin/analyze_distances: alignment.o alphabet.o sequence.o arguments.o alphabet.o \
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \
 	parameters.o exponential.o smodel.o imodel.o rng.o likelihood.o \
-	dpmatrix.o choose.o bin/optimize.o inverse.o setup.o rates.o ${LIBS:%=-l%} /usr/local/lib/liblapack.a /usr/local/lib/libcblas.a /usr/local/lib/libatlas.a
+	dpmatrix.o choose.o bin/optimize.o inverse.o setup.o rates.o matcache.o ${LINKLIBS}
 
 #-----------------Other Files
 OTHERFILES += 

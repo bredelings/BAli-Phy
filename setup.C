@@ -1,7 +1,9 @@
+#include <vector>
 #include "setup.H"
 #include "util.H"
 #include "rates.H"
 
+using std::vector;
 using std::valarray;
 
 substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_frequencies) {

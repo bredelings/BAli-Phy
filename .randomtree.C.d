@@ -1,1 +1,1 @@
-.randomtree.C.d randomtree.o: randomtree.C tree.H mytypes.H rng.H
+.randomtree.C.d randomtree.o: randomtree.C sequencetree.H tree.H rng.H

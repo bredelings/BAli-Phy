@@ -3,16 +3,15 @@
 #include "tree.H"
 #include "alignment.H"
 #include "arguments.H"
-#include "imodel.H"
 #include "smodel.H"
 #include "substitution.H"
-#include "parameters.H"
+#include "matcache.H"
 #include "rng.H"
 #include "logsum.H"
 #include "util.H"
 #include "optimize.H"
 #include "setup.H"
-
+#include "likelihood.H"
 #include <boost/numeric/ublas/io.hpp>
 
 using std::cout;
@@ -23,12 +22,11 @@ using namespace optimize;
 
 vector<double> get_post_rate_probs(const alignment& A,const substitution::MultiRateModel& SM,const SequenceTree& T) {
 
-  SingleIndelModel temp(-6);
-  Parameters P(SM,temp,T);
+  MatCache MC(T,SM);
 
   const int nbins = SM.rates().size();
   valarray<double> f(nbins);
-
+  
   for(int column =0;column<A.length();column++) {
     // get the residues
     vector<int> residues(A.size2());
@@ -39,10 +37,10 @@ vector<double> get_post_rate_probs(const alignment& A,const substitution::MultiR
     valarray<double> L(nbins);
     for(int r=0;r<nbins;r++)
       L[r] = SM.distribution()[r] * substitution::Pr(residues,
-				       P.T,
-				       SM.BaseModel(),
-				       P.transition_P(r)
-				       );
+						     T,
+						     SM.BaseModel(),
+						     MC.transition_P(r)
+						     );
     // normalize rate likelihoods
     L /= L.sum();
     
@@ -58,25 +56,34 @@ vector<double> get_post_rate_probs(const alignment& A,const substitution::MultiR
   return f2;
 }
 
-class substitution_score: public function {
+class likelihood: public function {
+protected:
   alignment A;
   SequenceTree T;
   substitution::MultiRateModel *smodel;
-  IndelModel* imodel;
+public:
+  likelihood(const alignment& A1,
+		     const substitution::MultiRateModel& SM,
+		     const SequenceTree& T1)
+    : A(A1),T(T1),smodel(SM.clone())
+  { }
+  ~likelihood() {delete smodel;}
+};
+
+class branch_likelihood: public likelihood {
 
 public:
   double operator()(const optimize::Vector&) const;
 
-  substitution_score(const alignment& A1,
+  branch_likelihood(const alignment& A1,
 		     const substitution::MultiRateModel& SM,
 		     const SequenceTree& T1)
-    : A(A1),T(T1),smodel(SM.clone()),imodel(new SingleIndelModel(-6))
+    : likelihood(A1,SM,T1)
   { }
 
-  ~substitution_score() {delete smodel;delete imodel;}
 };
 
-double substitution_score::operator()(const optimize::Vector& v) const {
+double branch_likelihood::operator()(const optimize::Vector& v) const {
   if (v.size() == T.branches())
     ;
   else if (v.size() == T.branches() + smodel->parameters().size()) {
@@ -88,7 +95,6 @@ double substitution_score::operator()(const optimize::Vector& v) const {
   else 
     std::abort();
 
-
   SequenceTree T2 = T;
   for(int i=0;i<T.branches();i++) {
     if (v[i] <= 0)
@@ -96,9 +102,9 @@ double substitution_score::operator()(const optimize::Vector& v) const {
     T2.branch(i).length() = v[i];
   }
 
-  Parameters P(*smodel,*imodel,T2);
+  MatCache MC(T2,*smodel);
 
-  return substitution::Pr(A,P)+smodel->prior();
+  return substitution::Pr(A,T2,*smodel,MC) + smodel->prior() + prior(T2,0.2);
 }
 
 double getSimilarity(double t,substitution::MultiRateModel& SM) {
@@ -230,6 +236,7 @@ int main(int argc,char* argv[]) {
     std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
 
     /*------------- Show Similarity/Distances between sequences ---------*/
+    std::cout.precision(3);
     Matrix S = getSimilarity(A);
 
     std::cout<<"similarity = \n";
@@ -264,7 +271,7 @@ int main(int argc,char* argv[]) {
 
     cout<<" Posterior rate = "<<post_rate<<endl;;
     for(int i=0;i<full_smodel->nrates();i++)
-      cout<<"    prior_bin_f"<<i<<" = "<<post_bin_f[i];
+      cout<<"    post_bin_f"<<i<<" = "<<post_bin_f[i];
     cout<<endl<<endl;
 
     for(int i=0;i<full_smodel->nrates();i++)
@@ -274,15 +281,15 @@ int main(int argc,char* argv[]) {
 
     /* ------- Estimate branch lengths -------------*/
     SequenceTree T2 = T;
-    substitution_score score(A,*full_smodel,T2);
+    branch_likelihood score(A,*full_smodel,T2);
     int delta=0;
     if (args["search"] == "model_parameters")
       delta = full_smodel->parameters().size();
     optimize::Vector start(0.1,T2.branches()+delta);
-    //    for(int b=0;b<T.branches();b++)
-    //      start[b] = T.branch(b).length();
-    //    for(int b=T.branches();b<start.size();b++)
-    //      start[b] = full_smodel->parameters()[b-T.branches()];
+    for(int b=0;b<T.branches();b++)
+      start[b] = T.branch(b).length();
+    for(int b=T.branches();b<start.size();b++)
+      start[b] = full_smodel->parameters()[b-T.branches()];
     optimize::Vector end = search_gradient(start,score);
     //    optimize::Vector end = search_basis(start,score);
     for(int b=0;b<T.branches();b++)
@@ -296,7 +303,6 @@ int main(int argc,char* argv[]) {
     /* ------- Set up function to maximize -------- */
 
     Matrix S1 = getSimilarity(T,*full_smodel);
-    print_lower(std::cout,T.get_sequences(),C(S1))<<"\n";
 
     std::cout<<"tree distances (input) = \n";
     print_lower(std::cout,T.get_sequences(),DistanceMatrix(T))<<"\n";
@@ -309,7 +315,6 @@ int main(int argc,char* argv[]) {
     print_lower(std::cout,T.get_sequences(),DistanceMatrix(T2))<<"\n\n";
     std::cout<<"%difference (from estimated tree) = \n";
     print_lower(std::cout,T.get_sequences(),C(S2))<<"\n\n";
-
 
     delete full_smodel;
   }

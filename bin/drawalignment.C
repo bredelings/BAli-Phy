@@ -49,16 +49,21 @@ vector<int> hsv(double h,double s,double v) {
   return result;
 }
 
-vector<int> getcolor(double x) {
-  double start = 1.0;
-  double end = 0;
+vector<int> getcolor(double x,double sscale) {
+  double start = 0.71;
+  double end = 0.0;
+
+  double hstart = 0.4;
+  double hend   = 0.95;
     
   double h = start + x * (end-start);
-  return hsv(h,x,1);
+  double s = hstart + x * (hend - hstart);
+
+  return hsv(h,s*sscale,1);
 }
 
-string getstyle(double d) {
-  vector<int> RGB = getcolor(d);
+string getstyle(double d,double sscale=1.0) {
+  vector<int> RGB = getcolor(d,sscale);
   string style = "background: rgb(";
   style += convertToString(RGB[0]) + ",";
   style += convertToString(RGB[1]) + ",";
@@ -191,10 +196,28 @@ int main(int argc,char* argv[]) {
 <HTML>\n\
   <head>\n\
     <STYLE>\n\
-BODY {font-family: monospace;}\n\
+TD{ font-size: 11pt }\n\
+SPAN {\n\
+   font-family: courier new, courier-new, courier, monospace;\n\
+   font-weight: bold;\n\
+   font-size: 11pt;\n\
+   line-height: 100%;\n\
+}\n\
     </STYLE>\n\
   </head>\n\
   <body>\n";
+
+    /*-------------------- Print a legend ------------------------*/
+    cout<<"<P>From 0 to 1: ";
+    const int nsquares = 20;
+    for(int i = 0;i < nsquares+1;i++) {
+      double p = i*1.0/nsquares;
+      string style = getstyle(p);
+      cout<<"<span style=\""<<style<<"\">&nbsp;</span>";
+    }
+
+    cout<<"<br><br>";
+    /*-------------------- Print the alignment ------------------------*/
 
     const alphabet& a = A.get_alphabet();
     while(pos<A.length()) {
@@ -206,7 +229,10 @@ BODY {font-family: monospace;}\n\
 	cout<<"    <td>";
 	for(int column=pos;column<pos+width and column < A.length();column++) {
 	  char c = a.lookup(A(column,s));
-	  string style = getstyle(colors(column,s));
+	  double sscale=1.0;
+	  if (c == '-')
+	    sscale = 0.3;
+	  string style = getstyle(colors(column,s),sscale);
 	  cout<<"<span style=\""<<style<<"\">"<<c<<"</span>";
 	}
 	cout<<"    </td>";

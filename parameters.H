@@ -3,16 +3,17 @@
 
 #include "alphabet.H"
 #include "mytypes.H"
-#include "tree.H"
+#include "sequencetree.H"
 #include <valarray>
 #include "smodel.H"
 #include "imodel.H"
 #include "alignment.H"
+#include "matcache.H"
+
 
 /******************************* parameter-containing class **************************/
 /// A class to contain all the MCMC state except the alignment
-class Parameters {
-  vector< vector<Matrix> > transition_P_;
+class Parameters: public MatCache {
 
   /*-------- We own these ----------*/
   /// The IndelModel
@@ -60,19 +61,8 @@ public:
   /// Symmetrically propose another state
   void fiddle();
 
-  //FIXME - why this hack?
-  const vector< Matrix > & transition_P(int r) const { return transition_P_[r]; }
-
-  /// Get the transition matrix for branch 'b', and rate 'r'
-  const Matrix& transition_P(int r,int b) const 
-  {
-    assert(b != T.num_nodes()-2);
-    if (b==T.num_nodes()-2) b--;
-    return transition_P_[r][b];
-  }
-
   /// Set branch 'b' to have length 'l', and compute the transition matrices
-  void setlength(int b,double l);
+  void setlength(int b,double l) {MatCache::setlength(b,l,T,*SModel_); }
   
   /// Recalculate all the cached transition matrices
   void recalc();

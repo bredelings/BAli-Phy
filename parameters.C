@@ -42,23 +42,12 @@ void Parameters::fiddle() {
   if (branch_mean < 0) branch_mean = -branch_mean;
 }
 
-void Parameters::setlength(int b,double l) {
-  assert(l >= 0);
-  assert(b >= 0 and b < T.branches());
-  T.branch(b).length() = l;
-  for(int r=0;r<SModel().nrates();r++)
-    transition_P_[r][b] = SModel_->transition_p(l,r);
-}
-
-
 void Parameters::recalc() {
-  for(int b=0;b<T.branches();b++) 
-    setlength(b,T.branch(b).length());
+  MatCache::recalc(T,*SModel_);
 }
-
 
 Parameters& Parameters::operator=(const Parameters& P) {
-  transition_P_ = P.transition_P_;
+  MatCache::operator=(P);
 
   delete SModel_;
   SModel_ = P.SModel_->clone();
@@ -77,26 +66,19 @@ Parameters& Parameters::operator=(const Parameters& P) {
 }
 
 Parameters::Parameters(const Parameters& P):
-  transition_P_(P.transition_P_),
+  MatCache(P),
   IModel_(P.IModel_->clone()),SModel_(P.SModel_->clone()),
   constants(P.constants),features(P.features),T(P.T),branch_mean(P.branch_mean)
 { }
 
 
 Parameters::Parameters(const substitution::MultiRateModel& SM,const IndelModel& IM,const SequenceTree& t)
-  :transition_P_(vector< vector <Matrix> >(SM.nrates(),
-					  vector<Matrix>(t.branches(),
-							 Matrix(SM.Alphabet().size(),
-								SM.Alphabet().size()
-								)
-							 ) 
-					  ) 
-		 ),
-   IModel_(IM.clone()),SModel_(SM.clone()),
-   features(0),T(t)
+  :MatCache(t,SM),
+   IModel_(IM.clone()),
+   SModel_(SM.clone()),
+   features(0),
+   T(t)
 {
   branch_mean = 0.1;
-  recalc();
   constants.push_back(-1);
-  
 }

@@ -54,12 +54,12 @@ class alignment_probability: public function {
   vector< vector<int> > branch_to_group;
 
   vector< vector< vector<int> > > groups;
-  double alignment_probability::Pr(const vector<double>&,int,int) const;
+  double alignment_probability::Pr(const optimize::Vector&,int,int) const;
 
-  double alignment_probability::Pr(const vector<double>&,int) const;
+  double alignment_probability::Pr(const optimize::Vector&,int) const;
 
 public:
-  double operator()(const vector<double>& v) const;
+  double operator()(const optimize::Vector& v) const;
 
   alignment_probability(const vector< vector<int> >& v1):labels(v1)
   { 
@@ -104,7 +104,7 @@ public:
 
 };
 
-double alignment_probability::Pr(const vector<double>& v,int L,int mask) const
+double alignment_probability::Pr(const optimize::Vector& v,int L,int mask) const
 {
   const vector<int>& label = labels[L];
   double total=0;
@@ -142,7 +142,7 @@ double alignment_probability::Pr(const vector<double>& v,int L,int mask) const
 }
 
 
-double alignment_probability::Pr(const vector<double>& v,int L) const {
+double alignment_probability::Pr(const optimize::Vector& v,int L) const {
   const int max = 1<<labels[L].size();
   assert(max != 0);
 
@@ -155,7 +155,7 @@ double alignment_probability::Pr(const vector<double>& v,int L) const {
 }
 
 
-double alignment_probability::operator()(const vector<double>& v) const {
+double alignment_probability::operator()(const optimize::Vector& v) const {
   assert(v.size() == leafbranches+1);
 
   // probability need to be positive :P
@@ -177,7 +177,7 @@ class SSE_match_pairs: public function {
   Matrix Pr_align_pair;
 public:
   const tree& t() const {return T;}
-  double operator()(const vector<double>& v) const;
+  double operator()(const optimize::Vector& v) const;
 
   SSE_match_pairs(const vector< vector<int> >& v1,const tree& T1)
     :T(T1),Pr_align_pair(T.leaves(),T.leaves())
@@ -207,7 +207,7 @@ public:
   }
 };
 
-double SSE_match_pairs::operator()(const vector<double>& v) const {
+double SSE_match_pairs::operator()(const optimize::Vector& v) const {
   // We get one length for each branch, and they should all be positive
   assert(v.size() == T.branches());
 
@@ -236,7 +236,7 @@ class poisson_match_pairs: public function {
   Matrix Pr_align_pair;
 public:
   const tree& t() const {return T;}
-  double operator()(const vector<double>& v) const;
+  double operator()(const optimize::Vector& v) const;
 
   poisson_match_pairs(const vector< vector<int> >& v1,const tree& T1)
     :T(T1),Pr_align_pair(T.leaves(),T.leaves())
@@ -263,7 +263,7 @@ public:
   }
 };
 
-double poisson_match_pairs::operator()(const vector<double>& v) const {
+double poisson_match_pairs::operator()(const optimize::Vector& v) const {
   // We get one length for each branch, and they should all be positive
   assert(v.size() == T.branches());
 
@@ -445,8 +445,8 @@ int main(int argc,char* argv[]) {
 	f = new SSE_match_pairs(labels,T);
       else
 	f = new poisson_match_pairs(labels,T);
-      vector<double> start(T.branches(),0.1);
-      vector<double> end = search_basis(start,*f,1.0e-5,500);
+      optimize::Vector start(0.1,T.branches());
+      optimize::Vector end = search_basis(start,*f,1.0e-5,500);
       
       // Print uncertainty values for the letters
       tree T2 = T;

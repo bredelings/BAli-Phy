@@ -160,7 +160,9 @@ double IndelModel1::prior() const {
   double delta = exp(parameters_[0]);
   double mu = -log(1.0-delta);
 
-  P += log( gsl_ran_gaussian_pdf(log(mu)-mean,1.0) );
+  // LO = -5.5 -> mu = -5.5 (approximation based on log(1+x) = x + ...)
+  // This doesn't allow mu to be negative... just very small...
+  P += log( gsl_ran_gaussian_pdf(log(mu)-mean,3.0) );
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double epsilon = exp(parameters_[1]);
