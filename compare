@@ -131,3 +131,9 @@ time =    9*4 [topology & other likelihood calculations]
 
 The alignment analysis time does NOT seem to strongly correlate w/ the number of rates...
 The extra time spent in dealing with multiple rates DOES come from the likelihood calculation!
+
+------------------
+New times for 1.8.14-B (after svn import, and SPR fix)
+
+ - 3m48.77 [3.4.1]
+ - 5min    [3.5.0 7/5/2004]

@@ -87,7 +87,7 @@ void IndelModel1::fiddle(const std::valarray<bool>& fixed) {
   double& lambda_E = parameters_[1];
 
 
-  const double sigma = 0.15;
+  const double sigma = 0.30;
   if (not fixed[0]) {
     lambda_O += gaussian(0,sigma);
     if (lambda_O>=0) lambda_O = -lambda_O;
@@ -201,7 +201,7 @@ void IndelModel2::fiddle(const std::valarray<bool>& fixed) {
   double& lambda_E = parameters_[1];
   double& beta     = parameters_[2];
 
-  const double sigma = 0.20;
+  const double sigma = 0.30;
   const double sigma_beta = 0.10;
 
   if (not fixed[2] and myrandomf() < 0.3) {
