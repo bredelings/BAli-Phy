@@ -781,7 +781,7 @@ namespace substitution {
     vector<double> params = SubModel().parameters();
     for(int b=0;b<fraction.size();b++) {
       sub_parameter_models[b] = &SubModel();
-      //base_model(m).frequencies(SubModel().frequencies());
+
       if (p_change == -1)
 	sub_parameter_models[b]->set_rate(p_values[b]);
       else {
@@ -799,11 +799,11 @@ namespace substitution {
      p_values(n)
   { 
     // start with sane values for p_values
-    for(int i=0;i<n_base_models();i++)
+    for(int m=0;m<p_values.size();m++)
       if (p_change == -1)
-	p_values[i] = M.rate();
+	p_values[m] = M.rate();
       else
-	p_values[i] = M.parameters()[p_change];
+	p_values[m] = M.parameters()[p_change];
 
     SubModel().fixed(p_change,true);
   }
