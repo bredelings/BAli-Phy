@@ -198,6 +198,22 @@ namespace substitution {
     //  A) the sum_j Q_ij = 0
     //  B) sum_i pi_i Q_ij = pi_j
 
+    int n = pi.size();
+
+    double DP[n];
+    double DN[n];
+    for(int i=0;i<n;i++) {
+      DP[i] = sqrt(pi[i]);
+      DN[i] = 1.0/DP[i];
+    }
+    
+    //  S2 = prod(DP,prod<Matrix>(S,DP));
+    SMatrix S2 = S;
+    for(int i=0;i<S2.size1();i++)
+      for(int j=0;j<=i;j++)
+	S2(i,j) *= DP[i]*DP[j];
+
+    eigensystem = EigenValues(S2);
   }
 
   Matrix ReversibleMarkovModel::getD() const {
@@ -209,7 +225,7 @@ namespace substitution {
   }
 
   Matrix ReversibleMarkovModel::transition_p(double t) const {
-    return exp(S,getD(),t);
+    return exp(SMatrix(S),getD(),t);
   }
 
   double ReversibleMarkovModel::prior() const {

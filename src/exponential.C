@@ -50,11 +50,11 @@ Matrix exp(const SMatrix& M,const double t) {
   EigenValues solution(M);
 
   Matrix O = solution.Rotation();
-  banded_matrix<double> D = solution.Diagonal();
+  std::vector<double> D = solution.Diagonal();
 
   // Exponentiate Eigenvalues
   for(int i=0;i<solution.size();i++)
-    D(i,i) = exp(t*D(i,i));
+    D[i] = exp(t*D[i]);
 
 
   //Matrix E = prod(O,prod(D,trans(O)));
@@ -65,7 +65,7 @@ Matrix exp(const SMatrix& M,const double t) {
     for(int j=0;j<size;j++) {
       double temp =0;
       for(int k=0;k<size;k++)
-	temp += O(i,k)*O(j,k)*D(k,k);
+	temp += O(i,k)*O(j,k)*D[k];
       E(i,j) = temp;
     }
 	
@@ -110,11 +110,11 @@ Matrix gamma_exp(const SMatrix& M,double alpha,double beta){
   EigenValues solution(M);
 
   Matrix O = solution.Rotation();
-  banded_matrix<double> D = solution.Diagonal();
+  std::vector<double> D = solution.Diagonal();
 
   // Exponentiate Eigenvalues
   for(int i=0;i<solution.size();i++)
-    D(i,i) = pow(1.0-beta*D(i,i),-alpha);
+    D[i] = pow(1.0-beta*D[i],-alpha);
 
 
   //Matrix E = prod(O,prod(D,trans(O)));
@@ -125,7 +125,7 @@ Matrix gamma_exp(const SMatrix& M,double alpha,double beta){
     for(int j=0;j<size;j++) {
       double temp =0;
       for(int k=0;k<size;k++)
-	temp += O(i,k)*O(j,k)*D(k,k);
+	temp += O(i,k)*O(j,k)*D[k];
       E(i,j) = temp;
     }
 	

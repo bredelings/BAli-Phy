@@ -43,9 +43,16 @@ public:
     :data(O->clone())
   {}
 
+  template <typename T2>
+  void attatch(T2* p) {
+    if (data) delete data;
+
+    data = p;
+  }
+
   // Get a copy of an object
   OwnedPointer& operator=(const OwnedPointer& O) throw() {
-    if (data != O.data and data != 0)
+    if (data and data != O.data)
       delete data;
 
     data = O->clone();
@@ -56,7 +63,7 @@ public:
   // Get a copy of an object which is a SUB-CLASS of T
   template <typename T2>
   OwnedPointer& operator=(const OwnedPointer<T2>& O) throw() {
-    if (data != O.data and data != 0)
+    if (data and data != O.data)
       delete data;
 
     data = O->clone();

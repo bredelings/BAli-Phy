@@ -154,7 +154,7 @@ int main(int argc,char* argv[]) {
 
     /*------- Find mapping from colorfile to alignment sequence order -------*/
     if (not args.set("colors"))
-      throw myexception("color file not specified! (colors=<filename>)");
+      throw myexception()<<"color file not specified! (colors=<filename>)";
 
     ifstream colorfile(args["colors"].c_str());
 

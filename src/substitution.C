@@ -99,7 +99,7 @@ namespace substitution {
 	    DM(scratch,l) = DM(ops.rb_loc[i],l);
 	else
 	  for(int l=0;l<asize;l++) 
-	    DM(scratch,l) * DM(ops.rb_loc[i],l);
+	    DM(scratch,l) *= DM(ops.rb_loc[i],l);
       }
 
       //-------------- Take into account letters at 'root' -------------//
