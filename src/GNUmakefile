@@ -1,6 +1,6 @@
 program: bali-phy
 
-TOOLS = tools/model_P tools/statreport tools/alignment-blame \
+TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/alignment-reorder tools/alignment-draw tools/findalign \
 	tools/tree-to-srq tools/tree-names-trunc tools/tree-reroot \
 	tools/srq-to-plot tools/srq-analyze tools/phy_to_fasta \
@@ -86,9 +86,9 @@ tools/model_P: tools/statistics.o rng.o arguments.o ${LINKLIBS}
 
 tools/statreport: tools/statistics.o
 
-tools/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
+tools/alignment-gild: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o tools/alignmentutil.o \
-	setup.o imodel.o probability.o sequence-format.o model.o \
+	setup.o imodel.o probability.o sequence-format.o model.o tools/distance-methods.o \
 	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
 
 tools/alignment-indices: tree.o alignment.o sequencetree.o arguments.o \
