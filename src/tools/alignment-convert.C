@@ -33,14 +33,19 @@ int main(int argc,char* argv[]) {
       alphabets.push_back(AminoAcids());
     }
     
-    A.load(alphabets,sequence_format::read_phylip,std::cin);
+    A.load(alphabets,sequence_format::read_guess,std::cin);
     
     remove_empty_columns(A);
     
     if (A.num_sequences() == 0)
-      throw myexception()<<"Alignment file "<<args["align"]<<"didn't contain any sequences!";
+      throw myexception()<<"Alignment file (from stdin) didn't contain any sequences!";
 
-    A.print_fasta(std::cout);
+    if (args["output"] == "phylip")
+      A.print_phylip(std::cout);
+    else if (args["output"] == "fasta")
+      A.print_fasta(std::cout);
+    else
+      throw myexception()<<"Don't recognized requested format '"<<args["output"]<<"'";
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

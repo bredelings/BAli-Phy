@@ -3,7 +3,7 @@ program: bali-phy
 TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/alignment-reorder tools/alignment-draw tools/findalign \
 	tools/tree-to-srq tools/tree-names-trunc tools/tree-reroot \
-	tools/srq-to-plot tools/srq-analyze tools/phy_to_fasta \
+	tools/srq-to-plot tools/srq-analyze tools/alignment-convert \
 	tools/tree-dist-compare tools/cut-range tools/alignment-chop-internal \
 	tools/alignment-median
 
@@ -153,8 +153,8 @@ tools/srq-analyze: arguments.o rng.o tools/statistics.o ${LINKLIBS}
 tools/make_random_tree: tree.o sequencetree.o arguments.o util.o\
 	 rng.o  ${LINKLIBS}
 
-tools/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
-	rng.o util.o sequence-format.o ${LINKLIBS}
+tools/alignment-convert: alignment.o sequence.o arguments.o alphabet.o \
+	util.o sequence-format.o
 
 tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \
