@@ -87,7 +87,7 @@ AU.prob: samples MAP.tree-trunc MAP-unordered.phy
 	tree-names-trunc tree=$< > $@
 
 %.html: %.prob MAP.tree MAP.phy
-	alignment-draw width=80 tree=MAP.tree-trunc align=MAP.phy colors=$< > $@
+	alignment-draw width=80 tree=MAP.tree-trunc align=MAP.phy AU-file=$< > $@
 
 tree.srq: trees MAP.tree 
 	tree-to-srq tree=MAP.tree < trees > tree.srq
