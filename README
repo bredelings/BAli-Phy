@@ -1,37 +1,87 @@
-We will use square brackes (e.g. []) to represent example arguments,
-which you must replace with the actual argument.  We will use curly
-branches (e.g. {}) to represent a list of possbility choices.
+*RUNNING THE PROGRAM*
 
 In order to run the program, note that in many cases it is
 necessary to specify the location of the data directory.  The data
-directory will be "./Data" it not explicitly set. (See "datadir").
+directory will be "./Data" it not explicitly set. (See "data-dir").
 
-The simplest ways to run bali-phy is simply to specify some input
+The simplest way to run bali-phy is simply to specify some input
 sequences:  
 
-% bali-phy align=[file.fasta]
+% ./bali-phy <sequence-file> >out 2>err
+
+The RECOMMENDED way to run the program is to copy it to ~/bin/bali-phy/<version>-NDEBUG
+and run (in a bourne-shell)
+
+% VERSION=<version> CLASS=<class> sampler.sh <sequence-file>
+
+This will create a unique directory <class>-<num> for each invocation of the program,
+and run it inside this directory.
+
+
+
+*COMMAND LINE ARGUMENTS*
 
 The "align" argument is the only REQUIRED argument, and can take both
 FASTA (*.fasta) and PHYLIP (*.phy) files.  The file must contain one
-of these two suffixes or it won't know how to read the file.
+of these two suffixes or it won't know how to read the file.  In addition
+your FASTA file should not any blank lines.
 
-OTHER ARGUMENTS
+Usage: bali-phy <sequence-file> [OPTIONS]
+All options:
 
- - tree=[treefile]   
+General options:
+  --help                     : produce help message
+  --show-only                : analyze the initial values and exit
+  --seed arg                 : random seed
+  --data-dir arg (=Data)     : data directory
+  --align-constraint arg     : file with alignment constraints
+  --with-stop                : include stop codons in amino-acid alphabets
+  --internal arg             : if set to '+', then make all internal node entries wildcards
+  --gaps arg (=full_tree)    : if set to 'star', then don't use indel information
+  --letters arg (=full_tree) : if set to 'star', then use a star tree for substitution
 
-   Specifies the INITIAL tree. The treefile must be in Newick
-   format), and end with a semicolon. 
+MCMC options:
+  --iterations arg (=100000) : the number of iterations to run
+  --subsample arg (=1)       : factor by which to subsample
+  --T arg (=1)               : MCMCMC temperature
+  --enable arg               : comma-separated list of kernels to enable
+  --disable arg              : comma-separated list of kernels to disable
 
- - gaps=star         
+Parameter options:
+  --align arg            : file with sequences and initial alignment
+  --tree arg             : file with initial tree
+  --set arg              : set parameter=<value>
+  --fix arg              : fix parameter[=<value>]
+  --unfix arg            : un-fix parameter
+  --randomize-alignment  : randomly realign the sequences before using
+  --smodel arg           : substitution model
+  --imodel arg (=new)    : indel model
+
+Substitution model options:
+  --frequencies arg      : comma-separated vector of frequencies to use as initial condition
+  --alphabet arg         : set to 'Codons' to prefer codon alphabets
+  --CFNF                 : make codon frequencies from nucleotide frequencies
+
+DETAILS:
+
+ --gaps star         
 
    Revert to the standard model, w/o gaps.  This turns off MCMC
    transition kernels which assume a gap model.
 
- - smodel=[substitution model]
+ --smodel <substitution model>
 
-   The model is follows the following pattern: [base model]+gamma+INV
+   The model is follows this pattern: 
+	<base model>+modifier+modifier
+   For example, an allowable model name is
+	Empirical+gamma+INV
    Each term may be left out, but the terms must be separated by '+'
    signs, and must appear in the specified order.
+
+   Some terms take an argument in this fashion
+	name[argument]
+   For example, you can specify the JTT model as "Empirical[jtt]" and you
+   can specify 6 bins for the discrete gamma by writing "gamma[6]"
 
    The base model is a reversible continuous time Markov chain (CTMC)
    model.  Base models that we have implemented include HKY, EQU,
@@ -39,76 +89,49 @@ OTHER ARGUMENTS
    such as the WAG model.  See the 'Empirical' parameter to specify
    the transition matrix. 
    
- - alphabet=Codons
+ --alphabet Codons
 
    This puts codon alphabets on the list of alphabets to try.
 
- - frequencies=[frequences]
+ --frequencies <frequencies>
 
    Frequencies are specified as a comma-separated list of values.
    Note that frequencies that are very near 0 can cause a crash
    in exponentiating the rate matrix.
 
- - Empirical=[model]
-
-   This causes the program to look in the file [datadir]/[model].dat
-   for the exchangeability parameters of the Q matrix used in the
-   Empirical model.
-
- - datadir=[dir]
+ --data-dir <dir>
 
    This is set to "./Data/" by default, and specifies where to look
    for translation tables (for the codon model) and empirical
    transition matrices.
 
- - s_parameters=[parameters]
-
-   Specifies the INITIAL value of the parameters of the substitution
-   model.  This is a comma-separated list of values.
-
- - g_parameters=[parameters]
-
-   Specifies the INITIAL value of the parameters of the indel
-   model.  This is a comma-separated list of values.
-
- - letters=star
+ --letters star
 
    Uses a star tree for the peeling algorithm.
 
- - randomize_alignment
+ --randomize-alignment
 
    Randomizes the alignment before starting the chain.
 
- - seed=[random seed]
+ --seed <random seed>
 
    Specify a seed to the random number generator, so that runs can be
    repeated. 
 
- - lambda_O=[value]
+ --imodel {simple,new}
 
-   Specify the gap opening penalty.  This is ln(delta)
+   Select the indel model.  We used "simple" model in our paper.  The
+   "new" model assumes all indels are of unit length.  We can simulate
+   a model where all indels are of unit length by forcing epsilon to be
+   very small.
 
- - lambda_E=[value]
-
-   Specify the gap extension penalty.  This is ln(epsilon)
-
- - imodel={single_indels,upweighted}
-
-   Select the indel model.  We used "upweighted" in our paper.  The
-   "single_indels" model assumes all indels are of unit length.
-
- - internal=+
+ --internal +
 
    Set each internal sequence to * (a Felsenstein wildcard) in every
    column. 
 
- - file=[filename]
-
-   Load additional arguments from a file.  Giving '-' reads from
-   stdin.  This is a way to make scripts.
-
- - disable=[list of transition kernels]
- - enable=[list of transition kernels]
+ --disable <list of transition kernels>
+ --enable <list of transition kernels>
 
    Disables or enables a list of transition kernels.  To find out
    kernel names, look at STDOUT at the beginning of a run.  Moves also
@@ -116,20 +139,11 @@ OTHER ARGUMENTS
    such as alignment, alignment_branch, nodes, lengths.  For example,
    enable sampling of gap parameters, include "enable=g_parameters"
    
--  fixed=[comma separated list of parameters]
-
-   This specifies that proposals aren't supposed to perturb the
-   specified parameters.  Parameter names are of the form pS0,
-   pS1,... etc (substitution parameters) or pI0, pI1, ... etc (indel
-   parameters).
-
--  "Use Stop"
+ --with-stop
 
    When considering amino acid alphabets, include a "stop" letter.
    This also affects codon models, by not removing stop codons from
    the alphabet.
-
--  align-constraint=[filename]
 
 EXAMPLES:
 
