@@ -6,7 +6,7 @@ using std::vector;
 void MatCache::setlength(int b,double l,Tree& T,const substitution::MultiModel& SModel) {
   assert(l >= 0);
   assert(b >= 0 and b < T.n_branches());
-  T.branch(b).length() = l;
+  T.branch(b).set_length(l);
   for(int r=0;r<SModel.nmodels();r++)
     transition_P_[r][b] = SModel.transition_p(l,r);
 }

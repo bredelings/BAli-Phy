@@ -53,10 +53,6 @@ protected:
 
   std::vector<BranchNode*> branches_;
 
-  std::vector<double> lengths;
-
-  void restore_branch_lengths(const std::vector<BranchNode*>&,const std::vector<double>&);
-
   void compute_partitions();
 
   /// re-compute everything given leaf names
@@ -104,8 +100,6 @@ public:
   int n_leafbranches() const {return (n_leaves()==2)?1:n_leaves();}
   int n_branches() const {return branches_.size()/2;}
 
-  const std::vector<double>& branch_lengths() const {return lengths;}
-
   /// Get the branch with name 'b'
   const_branchview branch(int b) const {
     assert(0 <= b and b<n_branches());
@@ -140,7 +134,7 @@ public:
   
   /// Get the branch connecting n1 <-> n2
   const_branchview branch(int n1,int n2) const {
-    branchview bv = find_branch_pointer(n1,n2);
+    const_branchview bv = find_branch_pointer(n1,n2);
 
     bv = bv.undirected();
 
@@ -205,10 +199,6 @@ public:
 
   virtual ~Tree();
 };
-
-inline double& branchview::length() const {return b->tree->lengths[undirected_name()];}
-inline double const_branchview::length() const {return b->tree->lengths[undirected_name()];}
-
 
 //---------------------------- RootedTree -----------------------//
 

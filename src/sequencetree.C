@@ -188,7 +188,7 @@ void RootedSequenceTree::parse(const string& line) {
       }
     }
     else if (c== ',' or c==')') {
-      (*tree_stack.back().root().branches_out()).length() = convertTo<double>(word);
+      (*tree_stack.back().root().branches_out()).set_length(convertTo<double>(word));
       word = "";
     }
 

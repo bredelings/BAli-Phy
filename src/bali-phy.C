@@ -261,7 +261,7 @@ int main(int argc,char* argv[]) {
     
     if (not full_smodel->full_tree)
       for(int i=T.n_leaves();i<T.n_branches();i++)
-	T.branch(i).length() = 0;
+	T.branch(i).set_length(0);
 
     //-------------Choose an indel model--------------//
     OwnedPointer<IndelModel> imodel = get_imodel(args);

@@ -18,7 +18,6 @@ EXACTFLAGS = -pipe # --param inline-unit-growth=300 --param max-inline-insns-aut
 
 LANGO := fast-math
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
-OPT := 
 LDFLAGS := 
 
 ifeq (${DEBUG},y)

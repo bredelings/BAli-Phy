@@ -91,8 +91,8 @@ SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
 
   //------- Place the split randomly -------//
   double total = T2.branch(connected[0]).length() + T2.branch(connected[1]).length();
-  T2.branch(connected[0]).length() = myrandomf() * total;
-  T2.branch(connected[1]).length() = total - T2.branch(connected[0]).length();
+  T2.branch(connected[0]).set_length( myrandomf() * total );
+  T2.branch(connected[1]).set_length( total - T2.branch(connected[0]).length() );
 
   return T2;
 }

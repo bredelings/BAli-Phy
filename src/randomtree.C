@@ -43,7 +43,7 @@ SequenceTree RandomTree(const vector<string>& s,double branch_mean) {
   trees[0].remove_node_from_branch(r2);
 
   for(int i=0;i<trees[0].n_branches();i++) 
-    trees[0].branch(i).length() = exponential(branch_mean);
+    trees[0].branch(i).set_length( exponential(branch_mean) );
 
   return SequenceTree(trees[0]);
 }

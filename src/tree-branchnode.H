@@ -12,10 +12,10 @@ struct BranchNode {
   BranchNode *next;
   BranchNode *out;
 
-  class Tree* tree;
+  double length;
 
-  BranchNode():branch(-1),node(-1),prev(NULL),next(NULL),out(NULL),tree(NULL) {}
-  BranchNode(int b,int n):branch(b),node(n),prev(NULL),next(NULL),out(NULL),tree(NULL) {}
+  BranchNode():branch(-1),node(-1),prev(NULL),next(NULL),out(NULL),length(-1) {}
+  BranchNode(int b,int n,double l):branch(b),node(n),prev(NULL),next(NULL),out(NULL),length(l) {}
 };
 
 inline bool is_leaf_node(const BranchNode* n) {
@@ -84,16 +84,16 @@ void append(const iterator_t& start,std::vector<T>& v) {
 
 
 //------------------------ node_edges_iterator (base) ---------------------//
-template <class T>
+template <class node_t,class view_t>
 class node_edges_iterator 
 {
 protected:
-  const BranchNode* start;
-  const BranchNode* here;
+  node_t* start;
+  node_t* here;
   unsigned circuits_;
 
 public:
-  virtual T operator*() const =0;
+  virtual view_t operator*() const =0;
 
   void operator++() {
     here = here->next;
@@ -107,7 +107,7 @@ public:
   operator bool() const {return here;}
 
   unsigned size() const {
-    BranchNode* temp = start->next;
+    node_t* temp = start->next;
     unsigned s = 1;
     while(temp != start) {
       temp = temp->next;
@@ -116,7 +116,7 @@ public:
     return s;
   }
 
-  node_edges_iterator(const BranchNode *b):start(b),here(b) {}
+  node_edges_iterator(node_t *b):start(b),here(b) {}
 };
 
 class nodeview;
@@ -126,51 +126,72 @@ class branchview;
 class const_branchview;
 
 // Neighbors
-class neighbors_iterator:public node_edges_iterator<nodeview> {
-public:
-  nodeview operator*() const;
-
-  neighbors_iterator(const BranchNode* b):node_edges_iterator<nodeview>(b) {}
-};
-
-class const_neighbors_iterator:public node_edges_iterator<const_nodeview> {
+class const_neighbors_iterator:public node_edges_iterator<const BranchNode,const_nodeview> {
 public:
   const_nodeview operator*() const;
 
-  const_neighbors_iterator(const BranchNode* b):node_edges_iterator<const_nodeview>(b) {}
+  const_neighbors_iterator(const BranchNode* b):node_edges_iterator<const BranchNode,const_nodeview>(b) {}
+};
+
+class neighbors_iterator:public node_edges_iterator<BranchNode,nodeview> {
+public:
+  nodeview operator*() const;
+
+  neighbors_iterator(BranchNode* b):node_edges_iterator<BranchNode,nodeview>(b) {}
 };
 
 // in_edges
-class in_edges_iterator:public node_edges_iterator<branchview> {
-public:
-  branchview operator*() const;
-
-  in_edges_iterator(const BranchNode* b):node_edges_iterator<branchview>(b) {}
-};
-
-class const_in_edges_iterator:public node_edges_iterator<const_branchview> {
+class const_in_edges_iterator:public node_edges_iterator<const BranchNode,const_branchview> {
 public:
   const_branchview operator*() const;
 
-  const_in_edges_iterator(const BranchNode* b):node_edges_iterator<const_branchview>(b) {}
+  const_in_edges_iterator(const BranchNode* b):node_edges_iterator<const BranchNode,const_branchview>(b) {}
+};
+
+class in_edges_iterator:public node_edges_iterator<BranchNode,branchview> {
+public:
+  branchview operator*() const;
+
+  in_edges_iterator(BranchNode* b):node_edges_iterator<BranchNode,branchview>(b) {}
 };
 
 // out_edges
-class out_edges_iterator:public node_edges_iterator<branchview> {
-public:
-  branchview operator*() const;
-
-  out_edges_iterator(const BranchNode* b):node_edges_iterator<branchview>(b) {}
-};
-
-class const_out_edges_iterator:public node_edges_iterator<const_branchview> {
+class const_out_edges_iterator:public node_edges_iterator<const BranchNode,const_branchview> {
 public:
   const_branchview operator*() const;
 
-  const_out_edges_iterator(const BranchNode* b):node_edges_iterator<const_branchview>(b) {}
+  const_out_edges_iterator(const BranchNode* b):node_edges_iterator<const BranchNode,const_branchview>(b) {}
+};
+
+class out_edges_iterator:public node_edges_iterator<BranchNode,branchview> {
+public:
+  branchview operator*() const;
+
+  out_edges_iterator(BranchNode* b):node_edges_iterator<BranchNode,branchview>(b) {}
 };
 
 //-------------------------------- nodeview ---------------------------------//
+
+class nodeview 
+{
+protected:
+  BranchNode* n;
+
+  friend class const_nodeview;
+public:
+  bool is_leaf_node() const {return ::is_leaf_node(n);}
+  bool is_internal_node() const {return ::is_internal_node(n);}
+
+  int name() const {return n->node;}
+
+  neighbors_iterator neighbors() const {return n;}
+  in_edges_iterator  branches_in() const {return n;}
+  out_edges_iterator branches_out() const {return n;}
+  
+  operator int() const {return name();}
+
+  nodeview(BranchNode* bn):n(bn) {}
+};
 
 class const_nodeview {
 protected:
@@ -186,19 +207,9 @@ public:
   const_out_edges_iterator branches_out() const {return n;}
   
   operator int() const {return name();}
-
+ 
   const_nodeview(const BranchNode* bn):n(bn) {}
-};
-
-class nodeview: public const_nodeview {
-protected:
-  nodeview(const const_nodeview& nv):const_nodeview(nv) {}
-public:
-  const neighbors_iterator neighbors() const {return n;}
-  const in_edges_iterator  branches_in() const {return n;}
-  const out_edges_iterator branches_out() const {return n;}
-  
-  nodeview(const BranchNode* bn):const_nodeview(bn) {}
+  const_nodeview(const nodeview& nv):n(nv.n) {}
 };
 
 inline nodeview neighbors_iterator::operator*() const {
@@ -213,7 +224,7 @@ inline const_nodeview const_neighbors_iterator::operator*() const {
 
 class edges_before_iterator: public in_edges_iterator {
 public:
-  edges_before_iterator(const BranchNode* b)
+  edges_before_iterator(BranchNode* b)
     :in_edges_iterator(b)
   {
     (*this)++;
@@ -233,7 +244,7 @@ public:
 
 class edges_after_iterator: public out_edges_iterator {
 public:
-  edges_after_iterator(const BranchNode* b)
+  edges_after_iterator(BranchNode* b)
     :out_edges_iterator(b->out)
   {
     (*this)++;
@@ -251,6 +262,45 @@ public:
 };
 
 
+class branchview {
+protected:
+  BranchNode* b;
+public:
+  nodeview source() const { return b;}
+  nodeview target() const { return b->out;}
+
+  int name() const {return b->branch;}
+  int undirected_name() const { return std::min(b->branch,b->out->branch); }
+
+  branchview undirected() const {
+    BranchNode* BN = b;
+
+    assert(BN->out->branch != BN->branch);
+    if (BN->out->branch < BN->branch)
+      BN = BN->out;
+
+    return BN;
+  }
+
+  bool is_leaf_branch() const {return ::is_leaf_branch(b);}
+  bool is_internal_branch() const {return ::is_internal_branch(b);}
+
+  branchview reverse() const {return b->out;}
+
+  edges_before_iterator branches_before() const  {return b;}
+
+  edges_after_iterator branches_after() const {return b;}
+
+  double length() const {assert(b->length >= 0);return b->length;}
+
+  void set_length(double d) const {b->out->length = b->length = d;}
+
+  operator int() const {return name();}
+  branchview(BranchNode* bn):b(bn) {
+    assert(bn);
+  }
+};
+
 class const_branchview {
 protected:
   const BranchNode* b;
@@ -263,8 +313,11 @@ public:
 
   const_branchview undirected() const {
     const BranchNode* BN = b;
+
+    assert(BN->out->branch != BN->branch);
     if (BN->out->branch < BN->branch)
       BN = BN->out;
+
     return BN;
   }
 
@@ -277,29 +330,12 @@ public:
 
   const_edges_after_iterator branches_after() const {return b;}
 
-  double length() const;
+  double length() const {return b->length;}
 
   operator int() const {return name();}
-  const_branchview(const BranchNode* b_):b(b_) {}
-};
-
-class branchview: public const_branchview 
-{
-protected:
-  branchview(const const_branchview& bv):const_branchview(bv) {}
-public:
-  branchview undirected() const {return branchview::undirected();}
-
-  branchview reverse() const {return branchview::reverse();}
-
-  edges_before_iterator branches_before() const  {return b;}
-
-  edges_after_iterator branches_after() const {return b;}
-
-  double& length() const;
-
-  operator int() const {return name();}
-  branchview(const BranchNode* bn):const_branchview(bn) {}
+  const_branchview(const BranchNode* bn):b(bn) {
+    assert(bn);
+  }
 };
 
 inline const_branchview const_in_edges_iterator::operator*() const {
