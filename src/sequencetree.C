@@ -271,7 +271,7 @@ void RootedSequenceTree::parse(const string& line) {
   if (tree_stack.size() != 1)
     throw myexception()<<"Attempted to read w/o enough left parenthesis";
   if (tree_stack.back().size() != 1)
-    throw myexception()<<"Multiple trees one the same line";
+    throw myexception()<<"Multiple trees on the same line";
 
   (*this) = tree_stack.back()[0];
 
