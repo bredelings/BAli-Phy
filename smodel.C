@@ -180,7 +180,7 @@ namespace substitution {
 
   /// return the LOG of the prior
   double HKY::prior() const {
-    return log(gsl_ran_lognormal_pdf(kappa(),0,0.1));
+    return log(gsl_ran_lognormal_pdf(kappa(), 0, 1));
   }
 
   void HKY::recalc() {
@@ -239,8 +239,8 @@ namespace substitution {
   //------------------------ Codon Models -------------------//
   double YangCodonModel::prior() const {
     double P = 0;
-    P += log(gsl_ran_lognormal_pdf(kappa(),0,1));
-    P += log(gsl_ran_lognormal_pdf(omega(),0,1));
+    P += log(gsl_ran_lognormal_pdf(kappa(), 0, 1));
+    P += log(gsl_ran_lognormal_pdf(omega(), 0, 1));
     return P;
   }
 
@@ -300,13 +300,15 @@ namespace substitution {
 	    pos=p;
 	  }
 	assert(nmuts>0);
+	assert(pos >= 0 and pos < 3);
 
 	double rate=1.0;
-	if (nmuts > 1 or T.stop_codon(i) or T.stop_codon(j))
-	  rate=0;
+	if (nmuts > 1) rate=0;
 
 	int l1 = Alphabet().sub_nuc(i,pos);
 	int l2 = Alphabet().sub_nuc(j,pos);
+	assert(l1 != l2);
+
 	if (Alphabet().getNucleotides().transition(l1,l2))
 	  rate *= kappa();
 	

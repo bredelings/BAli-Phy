@@ -99,7 +99,7 @@ bin/drawalignment: tree.o alignment.o sequencetree.o arguments.o \
 bin/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
 	rng.o util.o sequence-format.o ${LIBS:%=-l%}
 
-bin/analyze_distances: alignment.o alphabet.o sequence.o arguments.o alphabet.o \
+bin/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \
 	parameters.o exponential.o setup-smodel.o smodel.o imodel.o rng.o likelihood.o \
 	dpmatrix.o choose.o bin/optimize.o inverse.o setup.o rates.o matcache.o \
@@ -111,6 +111,9 @@ bin/findalign: alignment.o alphabet.o arguments.o sequence.o bin/alignmentutil.o
 	rng.o ${GSLLIBS} util.o sequence-format.o
 
 bin/model_P: bin/statistics.o rng.o arguments.o ${LINKLIBS} 
+
+bin/alignment-translate: alignment.o alphabet.o sequence.o arguments.o sequence-format.o \
+	util.o
 
 #-----------------Other Files
 OTHERFILES += 

@@ -11,6 +11,21 @@ bad_letter::bad_letter(const string& l,const string& name)
   :myexception(string("Letter '") + l + string("' not in alphabet '") + name + "'."),letter(l)
 {}
 
+bool alphabet::contains(char l) const {
+  string s(1U,l);
+  return contains(s);
+}
+
+bool alphabet::contains(const std::string& l) const {
+  // Check the letters
+  for(int i=0;i<size();i++) {
+    if (data[i]==l)
+      return true;
+  }
+  return false;
+}
+
+
 int alphabet::operator[](char l) const {
   string s(1U,l);  
   return (*this)[s];
@@ -185,6 +200,12 @@ AminoAcids::AminoAcids()
   :alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X")
 {}
 
+AminoAcidsWithStop::AminoAcidsWithStop() 
+{
+  name = "Amino Acids + Stop";
+  data.push_back("!");
+}
+
 
 int Codons::sub_nuc(int codon,int pos) const {
   assert( 0 <= pos and pos <= 3);
@@ -266,14 +287,14 @@ Codons::Codons(const string& s,const Nucleotides& a)
   gap_letter = "---";
 }
 
-
+// FIXME - should I make a separate class that removes stop codons?
 void Translation_Table::setup_table(vector<string> cc,vector<string> aa) {
   assert(cc.size() == aa.size());
   assert(cc.size() == C->size());
 
-  // Remove codons which don't map to any amino acid
-  for(int i=cc.size()-1;i>=0;i--) {
-    if ((*A)[ aa[i] ] == alphabet::gap) {
+  // Remove codons which don't map to any SPECIFIED amino acid
+  for(int i=cc.size()-1; i>=0; i--) {
+    if (not A->contains(aa[i])) {
       C->remove(cc[i]);
       cc.erase(cc.begin()+i);
       aa.erase(aa.begin()+i);

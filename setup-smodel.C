@@ -24,13 +24,11 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
 
   /*------ Get the base markov model (Reversible Markov) ------*/
   substitution::ReversibleMarkovModel* base_markov_smodel = 0;
-  {   
-    ifstream genetic_code("Data/genetic_code_dna.dat");
-    if (not genetic_code)
-      throw myexception()<<"Couldn't open file 'Data/genetic_code_dna.dat'";
-    base_markov_smodel = new substitution::YangCodonModel(Translation_Table(Codons(DNA()),AminoAcids(),genetic_code));
-    genetic_code.close();
-  }
+
+  OwnedPointer<AminoAcids> aa = AminoAcids();
+  if (args.set("Use Stop"))
+    *aa = AminoAcidsWithStop();
+
 
   if (match(smodel,"EQU"))
     base_markov_smodel = new substitution::EQU(a);
@@ -44,11 +42,11 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
       filename = args["Empirical"];
     filename = string("Data/") + filename + ".dat";
 
-    base_markov_smodel = new substitution::Empirical(AminoAcids(),filename);
+    base_markov_smodel = new substitution::Empirical(*aa,filename);
   }
   else {
-    Translation_Table DNA_table(Codons(DNA()),AminoAcids(),"Data/genetic_code_dna.dat");
-    Translation_Table RNA_table(Codons(RNA()),AminoAcids(),"Data/genetic_code_rna.dat");
+    Translation_Table DNA_table(Codons(DNA()),*aa,"Data/genetic_code_dna.dat");
+    Translation_Table RNA_table(Codons(RNA()),*aa,"Data/genetic_code_rna.dat");
 
     if (a == DNA_table.getCodons())
       base_markov_smodel = new substitution::YangCodonModel(DNA_table);

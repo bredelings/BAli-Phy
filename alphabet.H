@@ -45,6 +45,10 @@ public:
   /// Index of an unknown letter ('*')
   static const int not_gap = -2;
 
+  /// Do we contain the letter 'c'
+  bool contains(char c) const;
+  bool contains(const std::string&) const;
+
   /// Get the index for letter 'c'
   int operator[](char l) const;
   int operator[](const std::string&) const;
@@ -126,7 +130,11 @@ public:
   virtual AminoAcids* clone() const {return new AminoAcids(*this);}
 
   AminoAcids();
-  ~AminoAcids() {};
+};
+
+class AminoAcidsWithStop: public AminoAcids {
+public:
+  AminoAcidsWithStop();
 };
 
 
@@ -144,10 +152,10 @@ public:
 
   Codons(const Nucleotides& N);
   Codons(const std::string& s,const Nucleotides& N);
-
-  ~Codons() {};
 };
 
+
+//------------------------------- Codons ------------------------------//
 
 class Translation_Table {
   OwnedPointer<Codons> C;
@@ -159,10 +167,12 @@ class Translation_Table {
 public:
 
   bool stop_codon(int codon) const {
-    return table[codon] == alphabet::gap;
+    return table[codon] == (*A)["!"];
   }
 
   int operator[](int codon) const {
+    if (codon == alphabet::gap or codon==alphabet::not_gap)
+      return codon;
     assert(codon >= 0 and codon < table.size() );
     return table[codon];
   }
