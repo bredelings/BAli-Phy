@@ -12,24 +12,23 @@ class Parameters;
 namespace substitution {
 
   /// Find the probabilities of all the data give each letter at the root
-  std::valarray<double> get_column_likelihoods(const vector<int>&,const Tree&,const ReversibleModel&, 
-			     const vector<Matrix>&,int);
+  Matrix get_column_likelihoods(const vector<int>&,const Tree&,const MultiModel&,const MatCache&,int);
 
   /// Find the probabilities of the data in 'group' given each letter at the root
-  std::valarray<double> get_column_likelihoods(      vector<int> ,const Tree&,const ReversibleModel&, 
-			     const vector<Matrix>&,int,const std::valarray<bool>& group);
+  Matrix get_column_likelihoods(      vector<int> ,const Tree&,const MultiModel&,const MatCache&,int,
+				const std::valarray<bool>& group);
 
   /// Full Likelihood of one column
-  double Pr(const alignment& A, const Tree& T, const MultiModel& SModel, const MatCache& SM,int);
+  double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache&,int);
 
   /// Full Likelihood - all columns, all rates
-  double Pr(const alignment& A, const Tree& T, const MultiModel& SModel, const MatCache& MC);
+  double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache&);
 
   /// Full likelihood - all columns, all rates
   double Pr(const alignment& A, const Parameters& P);
 
 
-  double Pr(const alignment& A, const Parameters& P,Conditional_Likelihoods& L);
+  double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& LC);
 
   // Column likelihood - specific rate (star tree)
   double Pr_star(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,

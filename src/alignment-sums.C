@@ -101,23 +101,24 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
 				    const vector<int>& seq,int root,const valarray<bool>& group) {
   const alphabet& a = A.get_alphabet();
+  const Tree& T = P.T;
   const substitution::MultiModel& MModel = P.SModel();
+  const MatCache& MC = P;
 
   vector< Matrix > dist(seq.size(), Matrix(MModel.nmodels(),a.size()) );
 
+  vector<int> residues(A.size2());
+
   for(int i=0;i<dist.size();i++) {
-    vector<int> residues(A.size2());
+
+    // create the column vector
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
 
+    // get the likelihoods for all sub-models
     for(int m=0;m<MModel.nmodels();m++) {
-      valarray<double> temp = substitution::get_column_likelihoods(residues,
-								   P.T,
-								   MModel.get_model(m),
-								   P.transition_P(m),
-								   root,group);
-      for(int l=0;l<a.size();l++)
-	dist[i](m,l) = temp[l];
+      dist[i] = substitution::get_column_likelihoods(residues,T,MModel,MC,
+						     root,group);
     }
 
     // note: we could normalize frequencies to sum to 1

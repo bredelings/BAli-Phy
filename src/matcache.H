@@ -19,6 +19,9 @@ public:
   /// For a given rate, Show all the matrices for each branch
   const std::vector< Matrix > & transition_P(int r) const { return transition_P_[r]; }
 
+  /// For a given rate, Show all the matrices for each branch
+  const std::vector< Matrix > & operator[](int r) const { return transition_P_[r]; }
+
   /// For a given rate, and branch, show the matrix
   const Matrix& transition_P(int r,int b) const 
   {

@@ -35,17 +35,23 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
   result[2] = 1.0;
   result[4] = 1.0;
   
-  Parameters P2 = P;
-  /********* Propose increment 'epsilon' ***********/
-  const double length = P2.T.branch(b).length();
+  //-------- Propose increment 'epsilon' ----------//
+  const double length = P.T.branch(b).length();
 
   double newlength = branch_twiddle(length,P.branch_mean);
   newlength = std::abs(newlength);
   
-  /******** Calculate propsal ratio ***************/
+  //----------- Calculate propsal ratio -----------//
+  int n1 = P.T.branch(b).source();
+  int n2 = P.T.branch(b).target();
+  P.LC.root = std::max(n1,n2);
+  P.LC.invalidate_all();
+
+  Parameters P2 = P;
+  P2.LC.invalidate_all();
   P2.setlength(b,newlength);
   
-  /********** Do the M-H step if OK**************/
+  //------------- Do the M-H step if OK -----------//
   if (do_MH_move(A,P,P2)) {
     std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
     result[1] = 1;
@@ -63,37 +69,24 @@ MCMC::result_t change_branch_length_cached(const alignment& A, Parameters& P,int
   result[2] = 1.0;
   result[4] = 1.0;
   
-  Parameters P2 = P;
   /********* Propose increment 'epsilon' ***********/
-  const double length = P2.T.branch(b).length();
+  const double length = P.T.branch(b).length();
 
   double newlength = branch_twiddle(length,P.branch_mean);
   newlength = std::abs(newlength);
   
   /******** Calculate propsal ratio ***************/
-  P2.setlength(b,newlength);
   
   /********** Do the M-H step if OK**************/
   int n1 = P.T.branch(b).source();
   int n2 = P.T.branch(b).target();
-  int root = std::max(n1,n2);
-  //  Conditional_Likelihoods L(P.T,root,P.SModel().Alphabet().size());
-  
-  P.CL->set_length(A.length());
-  P.CL->root = root;
-  P.CL->invalidate_all();
-  double l1 = substitution::Pr(A,P,*P.CL);
-  P.CL->invalidate_branch(P.T,b);
-  P.CL->invalidate_branch(P.T,P.T.directed_branch(b).reverse());
-  double l2 = substitution::Pr(A,P2,*P.CL);
-  
+  P.LC.root = std::max(n1,n2);
+  P.LC.invalidate_all();
 
-  double p1 = l1 + prior3(A,P);
-  double p2 = l2 + prior3(A,P2);
+  Parameters P2 = P;
+  P2.setlength(b,newlength);
 
-  bool success=(myrandomf() < exp(p2-p1));
-
-  if (success) {
+  if (do_MH_move(A,P,P2)) {
     P = P2;
     std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
     result[1] = 1;

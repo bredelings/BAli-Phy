@@ -314,6 +314,7 @@ int main(int argc,char* argv[]) {
     else {
       long int max_iterations = args.loadvalue("iterations",(long int)1000000);
 
+      P.LC.set_length(A.length());
       do_sampling(args,A,P,max_iterations);
     }
   }

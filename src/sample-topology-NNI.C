@@ -256,10 +256,15 @@ MCMC::result_t two_way_topology_sample(alignment& A, Parameters& P,int b) {
 
   vector<int>nodes = A5::get_nodes_random(P.T,b);
 
+  P.LC.root = std::max(P.T.branch(b).source().name(),
+		       P.T.branch(b).target().name());
+
   Parameters P2 = P;
   int b1 = P2.T.directed_branch(nodes[4],nodes[1]);
   int b2 = P2.T.directed_branch(nodes[5],nodes[2]);
-  P2.T.exchange_subtrees(b1,b2);
+  P2.T.exchange_subtrees(b1, b2);
+
+  P2.LC.invalidate_branch(P2.T, b, true);
   
   bool success = two_way_topology_sample(A,P,P2,b);
   if (success)
@@ -306,6 +311,9 @@ MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P1,int b) {
   vector<int> nodes = A5::get_nodes(P1.T,b);
 
   /****** Generate the Different Topologies *******/
+  P1.LC.root = std::max(P1.T.branch(b).source().name(),
+			P1.T.branch(b).target().name());
+
   Parameters P2 = P1;
   Parameters P3 = P1;
 
@@ -316,7 +324,10 @@ MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P1,int b) {
   int b3 = P1.T.directed_branch(nodes[5],nodes[3]);
 
   T2.exchange_subtrees(b1,b2);
+  P2.LC.invalidate_branch(P2.T, b, true);
+
   T3.exchange_subtrees(b1,b3);
+  P3.LC.invalidate_branch(P3.T, b, true);
   
   bool success = three_way_topology_sample(A,P1,P2,P3,b);
 

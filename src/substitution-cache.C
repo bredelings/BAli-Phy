@@ -2,38 +2,62 @@
 
 using std::vector;
 
-void Conditional_Likelihoods::invalidate_all() {
-  for(int b=0;b<up_to_date.size();b++)
-    up_to_date[b] = false;
+void Likelihood_Cache::invalidate_one_branch(int b,bool unique) {
+  up_to_date[b] = false;
+  if (unique)
+    for(int i=0;i<size();i++)
+      (*this)[i][b].uniquify();
 }
 
-void Conditional_Likelihoods::invalidate_branch(const Tree& T,int b) {
+void Likelihood_Cache::invalidate_all(bool unique) {
+  for(int b=0;b<up_to_date.size();b++)
+    invalidate_one_branch(b,unique);
+}
+
+void Likelihood_Cache::invalidate_directed_branch(const Tree& T,int b,bool unique) {
   vector<const_branchview> branch_list = branches_after(T,b);
   for(int i=0;i<branch_list.size();i++)
-    up_to_date[branch_list[i]] = false;
+    invalidate_one_branch(branch_list[i],unique);
 }
 
-void Conditional_Likelihoods::invalidate_node(const Tree& T,int n) {
+void Likelihood_Cache::invalidate_branch(const Tree& T,int b,bool unique) {
+  invalidate_directed_branch(T,b,unique);
+  invalidate_directed_branch(T,T.directed_branch(b).reverse());
+}
+
+void Likelihood_Cache::invalidate_node(const Tree& T,int n,bool unique) {
   vector<const_branchview> branch_list = branches_from_node(T,n);
   for(int i=0;i<branch_list.size();i++)
-    up_to_date[branch_list[i]] = false;
+    invalidate_one_branch(branch_list[i],unique);
 }
 
-void Conditional_Likelihoods::set_length(int l2) {
+void Likelihood_Cache::set_length(int l2) {
   int delta = l2 - size();
   if (delta <= 0) return;
 
+  vector< RefMatrix > column = unshareable_column();
+
   reserve(l2);
   for(int i=0;i<delta;i++)
-    push_back(Matrix(2*n_branches+1,asize));
+    push_back(column);
 }
 
 
-Conditional_Likelihoods::Conditional_Likelihoods(const Tree& T, int r, int s) 
-  :root(r),
-   asize(s),
+vector<RefMatrix> Likelihood_Cache::unshareable_column() {
+  RefMatrix M(n_models,asize);
+  M.mark_unshareable();
+  vector< RefMatrix > column(2*n_branches+1,M);
+  for(int i=0;i<column.size();i++)
+    column[i].mark_unshareable();
+  return column;
+}
+
+Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModel& M,int l)
+  :root(T.n_branches()-1),
    n_branches(T.n_branches()),
+   n_models(M.nmodels()),
+   asize(M.Alphabet().size()),
    up_to_date(2*T.n_branches(),false)
 {
-  
+  set_length(l);
 }

@@ -57,6 +57,11 @@ void Parameters::recalc() {
   MatCache::recalc(T,*SModel_);
 }
 
+void Parameters::setlength(int b,double l) {
+  MatCache::setlength(b,l,T,*SModel_); 
+  LC.invalidate_branch(T,b,true);
+}
+
 Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,const SequenceTree& t)
   :MatCache(t,SM),
    IModel_(IM.clone()),
@@ -66,10 +71,8 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
    s_fixed(false,SModel_->parameters().size()),
    features(0),
    T(t),
-   CL(NULL)
+   LC(T,SModel())
 {
   branch_mean = 0.1;
   constants.push_back(-1);
-
-  CL = new Conditional_Likelihoods(T,0,SModel().Alphabet().size());
 }

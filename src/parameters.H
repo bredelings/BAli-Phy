@@ -14,8 +14,8 @@
 
 /******************************* parameter-containing class **************************/
 /// A class to contain all the MCMC state except the alignment
-class Parameters: public MatCache {
-  /*-------- We own these ----------*/
+class Parameters: public MatCache
+{
   /// The IndelModel
   OwnedPointer<IndelModel> IModel_;
 
@@ -59,7 +59,8 @@ public:
   /// The Tree
   SequenceTree T;
 
-  Conditional_Likelihoods* CL;
+  /// Cached Conditional Likelihoods
+  mutable Likelihood_Cache LC;
 
   /// The IndelModel
   const IndelModel& IModel() const {return *IModel_;}
@@ -78,7 +79,7 @@ public:
   void fiddle();
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
-  void setlength(int b,double l) {MatCache::setlength(b,l,T,*SModel_); }
+  void setlength(int b,double l); 
   
   /// Recalculate all the cached transition matrices
   void recalc();
