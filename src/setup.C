@@ -125,14 +125,17 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
   else if (A.num_sequences() == T.n_leaves()) {
     //------- If we just have leaf sequences, add internal sequences -----------//
     if (internal_sequences) {
-      sequence s(A.get_alphabet());
-      s.resize(A.length());
-      for(int column=0;column<A.length();column++)
-	s[column] = alphabet::not_gap;
+      // add the sequences
       for(int i=T.n_leaves();i<T.n_nodes();i++) {
+	sequence s;
 	s.name = string("A") + convertToString(i);
 	A.add_sequence(s);
       }
+
+      // set them to all wildcards
+      for(int column=0;column<A.length();column++)
+	for(int i=T.n_leaves();i<T.n_nodes();i++)
+	  A(column,i) = alphabet::not_gap;
     }
   }
 

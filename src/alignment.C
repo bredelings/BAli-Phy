@@ -122,41 +122,31 @@ void alignment::del_sequence(int ds) {
   array.swap(array2);
 }
 
-void alignment::add_sequence(const sequence& s) {
-  if (sequences.size()>1)   // All the sequences should have the same alphabet
-    assert(s.Alphabet() == get_alphabet());
-
-  add_row(s);
+void alignment::add_sequence(const sequence& s) 
+{
+  add_row((*a)(s));
 
   sequences.push_back(s);
   sequences.back().strip_gaps();
 }
 
-void alignment::load(const alphabet& a,const vector<string>& names, const vector<string>& sequences) {
+void alignment::load(const vector<sequence>& sequences) {
   clear();
 
-  // load and check number of taxa
-  int ntaxa = names.size();
-  assert(sequences.size() == ntaxa);
-
   // Add the sequences to the alignment
-  for(int i=0;i<ntaxa;i++) {
-    sequence s(a);
-    s.parse(string(">")+names[i],sequences[i]);
-    add_sequence(s);
-  }
+  for(int i=0;i<sequences.size();i++)
+    add_sequence(sequences[i]);
 }
 
-void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<string>& names, const vector<string>& sequences) {
+void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<sequence>& sequences) {
 
-  bool success = false;
   for(int i=0;i<alphabets.size();i++) {
     try {
-      load(*alphabets[i],names,sequences);
-      success=true;
-      break;
+      a = alphabets[i];
+      load(sequences);
     }
     catch (bad_letter& e) {
+      a = NULL;
       if (i<alphabets.size()-1)
 	;//	std::cerr<<"Exception: "<<e.what()<<endl;
       else
@@ -165,54 +155,26 @@ void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vect
   }
 }
 
-void alignment::load_sequences(const alphabet& a, sequence_format::loader_t loader,
-		    std::istream& file) {
-
-  if (not file)
-    throw myexception()<<"Reading sequences: bad file!";
-
+void alignment::load(sequence_format::loader_t loader,std::istream& file) 
+{
   // read file
-  vector<string> names;
-  vector<string> sequences;
-  loader(file,names,sequences);
+  vector<sequence> sequences = loader(file);
 
   // load sequences into alignment
-  load(a,names,sequences);
+  load(sequences);
 }
 
 
-void alignment::load_sequences(const vector<OwnedPointer<alphabet> >& alphabets, sequence_format::loader_t loader,
-		    std::istream& file) {
-
-  if (not file)
-    throw myexception()<<"Reading sequences: bad file!";
-
+void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets, sequence_format::loader_t loader,
+			       std::istream& file) 
+{
   // read file
-  vector<string> names;
-  vector<string> sequences;
-  loader(file,names,sequences);
+  vector<sequence> sequences = loader(file);
 
   // load sequences into alignment
-  load(alphabets,names,sequences);
+  load(alphabets,sequences);
 }
 
-
-void alignment::load(const alphabet& a,const std::string& filename) {
-  std::ifstream file(filename.c_str());
-
-  if (not file)
-    throw myexception()<<"Couldn't open file '"<<filename<<"'";
-
-  string extension = filename.substr(filename.size()-4);
-  if (extension == ".phy")
-    load_sequences(a,sequence_format::read_phylip,file);
-  else if (extension == ".fasta")
-    load_sequences(a,sequence_format::read_fasta,file);
-  else
-    throw myexception()<<"Alignment file \""<<filename<<"\" doesn't have a recognized extension.";
-
-  file.close();
-}
 
 string get_extension(const string& s) {
   int pos = s.rfind('.');
@@ -222,21 +184,21 @@ string get_extension(const string& s) {
     return s.substr(pos);
 }
 
-void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const std::string& filename) {
-  std::ifstream file(filename.c_str());
+void alignment::load(const string& filename) 
+{
+  // read from file
+  vector<sequence> sequences = sequence_format::load_from_file(filename);
 
-  if (not file)
-    throw myexception()<<"Couldn't open file '"<<filename<<"'";
+  // load sequences into alignment
+  load(sequences);
+}
 
-  string extension = get_extension(filename);
-  if (extension == ".phy")
-    load_sequences(alphabets,sequence_format::read_phylip,file);
-  else if (extension == ".fasta")
-    load_sequences(alphabets,sequence_format::read_fasta,file);
-  else
-    throw myexception()<<"Alignment file \""<<filename<<"\" doesn't have a recognized extension.";
+void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const string& filename) {
+  // read from file
+  vector<sequence> seqs = sequence_format::load_from_file(filename);
 
-  file.close();
+  // load sequences into alignment
+  load(alphabets,seqs);
 }
 
 void alignment::print(std::ostream& file) const{
@@ -259,8 +221,8 @@ void alignment::print(std::ostream& file) const{
   }
 }
 
-vector<sequence> alignment::prepare_write() const {
-  const alphabet& a = get_alphabet();
+vector<sequence> alignment::get_sequences() const 
+{
 
   vector<sequence> seqs(n_sequences());
 
@@ -268,17 +230,18 @@ vector<sequence> alignment::prepare_write() const {
     seqs[i].name = sequences[i].name;
     seqs[i].comment = sequences[i].comment;
 
-    seqs[i].resize(length());
+    string& letters = seqs[i];
+    letters = "";
     for(int c=0;c<length();c++)
-      seqs[i] = A(c,i);
+      letters += a->lookup( (*this)(c,i) );
   }
 
   return seqs;
 }
 
 void alignment::write_sequences(sequence_format::dumper_t method,std::ostream& file) const {
-  vector<sequences> = prepare_write();
-  (*method)(file,sequences);
+  vector<sequence> seqs = get_sequences();
+  (*method)(file,seqs);
 }
 
 void alignment::print_fasta(std::ostream& file) const {
@@ -287,6 +250,21 @@ void alignment::print_fasta(std::ostream& file) const {
 
 void alignment::print_phylip(std::ostream& file) const {
   write_sequences(sequence_format::write_phylip,file);
+}
+
+alignment::alignment(const alphabet& a1) 
+  :a(a1)
+{}
+
+alignment::alignment(const alignment& A) 
+{
+  operator=(A);
+}
+
+alignment::alignment(const alphabet& a1,const string& filename) 
+    :a(a1)
+{ 
+  load(filename); 
 }
 
 vector<int> get_path(const alignment& A,int node1, int node2) {
@@ -327,13 +305,7 @@ std::ostream& operator<<(std::ostream& file,const alignment& A) {
 }
 
 std::istream& operator>>(std::istream& file,alignment& A) {
-
-  char c = file.get();
-  file.putback(c);
-  if (c=='>')
-    A.load_sequences(A.get_alphabet(),sequence_format::read_fasta,file);
-  else
-    A.load_sequences(A.get_alphabet(),sequence_format::read_phylip,file);
+  A.load(sequence_format::read_guess,file);
   return file;
 }
 

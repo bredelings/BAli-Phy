@@ -14,4 +14,5 @@ struct sequence: public std::string
   sequence(const std::string& n,const std::string& c);
 };
 
+bool operator==(const sequence&,const sequence&);
 #endif

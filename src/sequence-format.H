@@ -6,13 +6,13 @@
 #include <string>
 
 #include "sequence.H"
-#include "alphabet.H"
-
-//FIXME - make 'sequence' contain only letters, not indices?
 
 namespace sequence_format {
 
   typedef std::vector<sequence> (loader_t)(std::istream& file);
+
+  /// Read an alignments letters and names from a file in phylip format
+  std::vector<sequence> read_guess(std::istream& file);
 
   /// Read an alignments letters and names from a file in phylip format
   std::vector<sequence> read_phylip(std::istream& file);
@@ -31,8 +31,11 @@ namespace sequence_format {
   void write_fasta(std::ostream& file, const std::vector<sequence>& sequences);
 
 
+
   // load a format from a file.
   std::vector<sequence> load_from_file(loader_t loader,const std::string&);
+
+  std::vector<sequence> load_from_file(const std::string&);
 
   // write a format to a file.
   void write_to_file(loader_t loader,const std::vector<sequence>&,const std::string&);

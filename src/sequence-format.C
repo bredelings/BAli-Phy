@@ -29,6 +29,9 @@ namespace sequence_format {
 
   vector<sequence> read_fasta(std::istream& file) {
 
+    if (not file)
+      throw myexception()<<"Reading sequences: file read error";
+
     vector<sequence> sequences;
 
     string line;
@@ -80,7 +83,7 @@ namespace sequence_format {
   }
 
   /// Read an alignments letters and names from a file in fasta format
-  void write_fasta(std::ostream& file, std::vector<sequence>& sequences) {
+  void write_fasta(std::ostream& file, const std::vector<sequence>& sequences) {
     assert(sequences.size() > 0);
 
     const int letters_length = 70;
@@ -205,7 +208,10 @@ namespace sequence_format {
     return file.good();
   }
 
-  void read_phylip(std::istream& file,vector<sequence>& sequences) {
+  vector<sequence> read_phylip(std::istream& file) {
+
+    if (not file)
+      throw myexception()<<"Reading sequences: file read error";
 
     // parse phylip header
     string line;
@@ -219,6 +225,8 @@ namespace sequence_format {
     }
 
     int stanza=1;
+
+    vector<sequence> sequences;
 
     // Get the letters and names from first section
     bool interleaved = phylip_header_section(file,ntaxa,sequences);
@@ -255,11 +263,13 @@ namespace sequence_format {
       throw myexception()<<
 	"Sequences have length "<<sequences[0].size()<<
 	" instead of specified length "<<length<<".";
+
+    return sequences;
   }
 
 
   /// Read an alignments letters and names from a file in phylip format
-  void write_phylip(std::ostream& file, std::vector<sequence>& sequences) {
+  void write_phylip(std::ostream& file, const std::vector<sequence>& sequences) {
 
     //    vector<string> names = truncate_names(names_in);
 
@@ -300,6 +310,19 @@ namespace sequence_format {
     file.flush();
   }
 
+  vector<sequence> read_guess(std::istream& file) {
+    char c = file.get();
+    if (not file) 
+      return vector<sequence>();
+
+    file.putback(c);
+
+    if (c == '>')
+      return read_fasta(file);
+    else
+      return read_phylip(file);
+  }
+
   vector<sequence> load_from_file(loader_t loader,const string& filename) {
     ifstream file(filename.c_str());
     if (not file)
@@ -307,6 +330,28 @@ namespace sequence_format {
     vector<sequence> sequences = loader(file);
     file.close();
     return sequences;
+  }
+
+  string get_extension(const string& s) {
+    int pos = s.rfind('.');
+    if (pos == -1)
+      return "";
+    else
+      return s.substr(pos);
+  }
+
+  vector<sequence> load_from_file(const string& filename) {
+    
+    loader_t *loader = read_guess;
+
+    string extension = get_extension(filename);
+    if (extension == ".phy")
+      loader = read_phylip;
+    else if (extension == ".fasta")
+      loader = read_fasta;
+    
+    // read from file
+    return load_from_file(loader,filename);
   }
 
   vector<sequence> write_to_file(dumper_t dumper,const vector<sequence>& sequences,

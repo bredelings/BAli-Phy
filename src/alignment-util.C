@@ -230,23 +230,16 @@ void check_letters_OK(const alignment& A,const char* tag) {
 
 void check_leaf_sequences(const alignment& A,int n_leaves,const char* tag) {
 
-  for(int i=0;i<n_leaves;i++) {
-    vector<int> s;
-    for(int column=0;column<A.length();column++)
-      if (not A.gap(column,i))
-	s.push_back(A(column,i));
+  vector<sequence> sequences = A.get_sequences();
 
-    if (not (s == A.seq(i))) {
-      const alphabet& a = A.get_alphabet();
+  for(int i=0;i<n_leaves;i++) {
+
+    if (not (sequences[i] == A.seq(i))) {
       std::cerr<<tag<<" - leaf sequence "<<i<<" corrupted!\n";
 
-      for(int j=0;j<s.size();j++)
-	std::cerr<<a.lookup(s[j]);
-      std::cerr<<std::endl;
+      std::cerr<<sequences[i]<<std::endl;
 
-      for(int j=0;j<A.seq(i).size();j++)
-	std::cerr<<a.lookup(A.seq(i)[j]);
-      std::cerr<<std::endl;
+      std::cerr<<A.seq(i)<<std::endl;
 
       std::abort();
     }

@@ -1,5 +1,3 @@
-1. Make tree-dist-compare consider all partitions w/ PP > 0.5
-
 2. Estimate best alignment by finding the alignment with the greatest
    sum of PP(i ~ j) for all aligned pairs (i,j);
 
@@ -48,6 +46,7 @@
 11. alignment-gild: use list<alignment> instead of vector<>...
 12. remove print_phylip second argument, a boolean to not print ancestral taxa.
 check: how does P(data|model) depend on number of frequency bins?
+13. Fix setting of 'fixed' flags in model.H/C
 
 fix: gamma+frequency+INV
 
@@ -79,4 +78,6 @@ differently.
         the alignment index program spit out the actual letters for each
         column as comments. 
 
+
+[DONE]  Make tree-dist-compare consider all partitions w/ PP > 0.5
 

@@ -17,7 +17,10 @@ alignment randomize(const alignment& A,int n) {
 
   const int temp = alphabet::gap;
   for(int i=0;i<n;i++) {
-    vector<int> s = A.seq(i);
+    vector<int> s(A.length());
+    for(int c=0;c<s.size();c++)
+      s[c] = A(c,i);
+
     while(s.size() < newlength) {
       int pos = myrandom(s.size()+1);
       s.insert(s.begin()+pos,temp);

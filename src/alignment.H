@@ -20,6 +20,8 @@ class alignment {
 
   void add_row(const vector<int>&);
 
+  OwnedPointer<alphabet> a;
+
 public:
 
   /// The order of the sequence named s
@@ -39,19 +41,21 @@ public:
   void del_sequence(int);
   /// Add sequence 's' to the alignment
   void add_sequence(const sequence& s);
-  /// Add sequences called names, using a as the alphabet
-  void load(const alphabet& a,const vector<string>& names, const vector<string>& sequences);
-  /// Add sequences called names, using the first alphabet in alphabets that works
-  void load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<string>& names, const vector<string>& sequences);
 
-  void load_sequences(const alphabet&,sequence_format::loader_t,std::istream&);
-  void load_sequences(const vector<OwnedPointer<alphabet> >&,sequence_format::loader_t,std::istream&);
+  /// Add sequences called names, using a as the alphabet
+  void load(const vector<sequence>& sequences);
+  /// Add sequences called names, using the first alphabet in alphabets that works
+  void load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<sequence>& sequences);
+
+  void load(sequence_format::loader_t,std::istream&);
+  void load(const vector<OwnedPointer<alphabet> >&,sequence_format::loader_t,std::istream&);
 
   /// Load PHYLIP or FASTA file 'filename', depending on extentime
-  void load(const alphabet&,const std::string& filename);
+  void load(const std::string& filename);
   void load(const vector<OwnedPointer<alphabet> >&,const std::string& filename);
 
-  vector<sequence> prepare_write() const;
+  vector<sequence> get_sequences() const;
+
   void write_sequences(sequence_format::dumper_t,std::ostream&) const;
 
   void print(std::ostream&) const;
@@ -87,11 +91,15 @@ public:
   ///Length of a particular sequence
   int seqlength(int) const;
 
-  const alphabet& get_alphabet() const {return sequences[0].Alphabet();}
+  const alphabet& get_alphabet() const {return *a;}
 
   alignment() {}
-  alignment(const alphabet& a,const std::string& filename) { load(a,filename); }
-  alignment(const alignment& A) {operator=(A);}
+
+  alignment(const alphabet&);
+
+  alignment(const alignment&);
+
+  alignment(const alphabet&,const std::string&);
 };
 
 std::ostream& operator<<(std::ostream& file,const alignment& A);
