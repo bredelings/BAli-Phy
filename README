@@ -111,6 +111,12 @@ OTHER ARGUMENTS
    such as alignment, alignment_branch, nodes, lengths.  For example,
    enable sampling of gap parameters, include "enable=g_parameters"
    
+-  fixed=[comma separated list of parameters]
+
+   This specifies that proposals aren't supposed to perturb the
+   specified parameters.  Parameter names are of the form pS0,
+   pS1,... etc (substitution parameters) or pI0, pI1, ... etc (indel
+   parameters).
 
 EXAMPLES:
 
