@@ -82,7 +82,7 @@ public:
 
   std::valarray<bool> supports_topology(const std::string& t) const;
 
-  tree_sample(std::istream&,const std::vector<std::string>& remove);
+  tree_sample(std::istream&,const std::vector<std::string>& remove,int skip=0);
 };
 
 SequenceTree standardized(const std::string& t);

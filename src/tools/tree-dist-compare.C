@@ -32,17 +32,6 @@ double getsum(const valarray<double>& v) {
   return v.sum();
 }
 
-valarray<double> block_sample(const valarray<bool>& v,int blocksize=1) {
-  valarray<double> temp(v.size()/blocksize);
-  for(int block=0;block<temp.size();block++) {
-    temp[block]=0;
-    for(int i=blocksize*block;i<blocksize*(block+1);i++) 
-      if (v[i]) temp[block]++;
-    
-  }
-  return temp;
-}
-
 unsigned changes(const valarray<bool>& sample,bool value) {
   unsigned count=0;
   for(int i=0;i<sample.size()-1;i++) {
@@ -53,21 +42,17 @@ unsigned changes(const valarray<bool>& sample,bool value) {
 }
 
 
-valarray<bool> add_pseudocount(const valarray<bool>& sample1,int pseudocount) {
-  valarray<bool> sample2(sample1.size() + 2*pseudocount);
-
-  int i=0;
-  for(int j=0;j<pseudocount;i++,j++)
-    sample2[i] = true;
-
-  for(;i<sample1.size();i++)
-    sample2[i] = sample1[i];
-
-  for(int j=0;j<pseudocount;i++,j++)
-    sample2[i] = false;
-
-  return sample2;
+double conservative(const vector<double>& CI) {
+  if (0.5 <= CI[0])
+    return CI[0];
+  else if (CI[0] <= 0.5 and 0.5 <= CI[1])
+    return 0.5;
+  else if (CI[1] <= 0.5)
+    return CI[1];
+  else
+    std::abort();
 }
+  
 
 bool separated_by(const vector<double>& CI1,const vector<double>& CI2,double dx) {
   assert(CI1.size() == 2);
@@ -82,99 +67,97 @@ bool separated_by(const vector<double>& CI1,const vector<double>& CI2,double dx)
   return false;
 }
 
-bool report_sample(std::ostream& o,const valarray<bool>& sample1_in,const valarray<bool>& sample2_in,int pseudocount,int blocksize, double dx=-1) {
+bool report_sample(std::ostream& o,const vector<valarray<bool> >& sample_in,int pseudocount,vector<double>& support,
+		   int blocksize, double dx=-1) {
   o.precision(3);
   o.setf(ios::fixed);
 
-  valarray<bool> sample1 = add_pseudocount(sample1_in,pseudocount);
-  valarray<bool> sample2 = add_pseudocount(sample2_in,pseudocount);
+  vector<valarray<bool> > sample;
+  for(int i=0;i<sample_in.size();i++)
+    sample.push_back( statistics::add_pseudocount(sample_in[i],pseudocount) );
 
+  support.resize(sample.size());
   /*---------- Basic statistics -------------*/
-  const int N1 = sample1.size();
-  const int n1 = statistics::count(sample1);
-  const double P1 = double(n1)/N1;
+  vector<int> N(sample.size());
+  vector<int> n(sample.size());
+  vector<double> P(sample.size());
+  for(int i=0;i<sample.size();i++) {
+    N[i] = sample[i].size();
+    n[i] = statistics::count(sample[i]);
+    P[i] = double(n[i])/N[i];
+  }
 
-  const int N2 = sample2.size();
-  const int n2 = statistics::count(sample2);
-  const double P2 = double(n2)/N2;
+  vector< valarray<double> > values;
+  vector< vector<double> > CI(sample.size());
+  vector< unsigned > nchanges ( sample.size());
+  vector< unsigned > nchanges_ave (sample.size());
 
-  /*---------- Bootstrap samples of P -------------*/
-  valarray<double> values1 = bootstrap_apply<bool,double>(sample1,statistics::Pr,10000,blocksize);
+  vector<double> Var_perfect(sample.size());
+  vector<double> Var_bootstrap(sample.size());
+  vector<double> stddev_bootstrap(sample.size());
+  vector<double> Ne(sample.size());
 
-  valarray<double> values2 = bootstrap_apply<bool,double>(sample2,statistics::Pr,10000,blocksize);
+  for(int i=0;i<sample.size();i++) {
 
-  /*---------- Confidence Interval -------------*/
-  vector<double> CI1 =  statistics::confidence_interval(values1,0.95);
-  vector<double> CI2 =  statistics::confidence_interval(values2,0.95);
+    //---------- Bootstrap samples of P -------------//
+    values.push_back( bootstrap_apply<bool,double>(sample[i],statistics::Pr,10000,blocksize) );
 
-  /*------- Numbers of Constant blocks ---------*/
-  unsigned nchanges1 = changes(sample1,true) + changes(sample1,false);
-  unsigned nchanges2 = changes(sample2,true) + changes(sample2,false);
+    //---------- Confidence Interval -------------//
+    CI[i] = statistics::confidence_interval(values[i],0.95);
+    support[i] = conservative(CI[i]);
 
-  unsigned nchanges1_ave = (nchanges1 + 1)/2;
-  unsigned nchanges2_ave = (nchanges2 + 1)/2;
+    /*------- Numbers of Constant blocks ---------*/
+    nchanges[i] = changes(sample[i],true) + changes(sample[i],false);
 
-  //  double nchanges1_perfect = (N1-1)*P1*(1.0-P1)*2.0;
-  //  double nchanges2_perfect = (N2-1)*P2*(1.0-P2)*2.0;
+    nchanges_ave[i] = (nchanges[i] + 1)/2;
+
+    //  double nchanges_perfect[i] = (N[i]-1)*P[i]*(1.0-P[i])*2.0;
   
-  /*----------------- Variances ---------------*/
-  double Var1_perfect = P1*(1.0-P1)/N1;
-  double Var1_bootstrap = statistics::Var(values1);
+    //----------------- Variances ---------------//
+    Var_perfect[i] = P[i]*(1.0-P[i])/N[i];
+    Var_bootstrap[i] = statistics::Var(values[i]);
 
-  double Var2_perfect = P2*(1.0-P2)/N2;
-  double Var2_bootstrap = statistics::Var(values2);
+    stddev_bootstrap[i] = sqrt( Var_bootstrap[i] );
 
-  double stddev1_bootstrap = sqrt( Var1_bootstrap );
-  double stddev2_bootstrap = sqrt( Var2_bootstrap );
+    Ne[i] = P[i]*(1.0-P[i])/Var_bootstrap[i];
+  }
 
-  double Ne1 = P1*(1.0-P1)/Var1_bootstrap;
-  double Ne2 = P2*(1.0-P2)/Var2_bootstrap;
-
-  if (dx > 0 and not separated_by(CI1,CI2,dx))
+  bool different=(dx < 0) or sample.size()==1;
+  if (not different) {
+    for(int i=0;i<sample.size();i++)
+      for(int j=0;j<i;j++)
+	if (separated_by(CI[i],CI[j],dx))
+	  different = true;
+  }
+  if (not different)
     return false;
 
-  /*------------- Write things out -------------*/
-  o<<"   P1 = "<<P1<<"  in  ("<<CI1[0]<<","<<CI1[1]<<")        (1="<<n1<<"  0="<<N1-n1<<")  ["<<nchanges1_ave;
-  if (nchanges1 <= 4) {
-    o<<" !!!";
-  }
-  else if (nchanges1 <= 20) {
-    o<<" !!";
-  }
-  else if (nchanges1 <= 50) {
-    o<<" !";
-  }
-  o<<"]";
-  if (nchanges1_ave > 6)
-    o<<"     sigma = "<<stddev1_bootstrap;
-  o<<endl;
 
-
-  o<<"   P2 = "<<P2<<"  in  ("<<CI2[0]<<","<<CI2[1]<<")        (1="<<n2<<"  0="<<N2-n2<<")  ["<<nchanges2_ave;
-  if (nchanges2 <= 4) {
-    o<<" !!!";
+  for(int i=0;i<sample.size();i++) {
+    //------------- Write things out -------------//
+    o<<"   P"<<i<<" = "<<P[i]<<"  in  ("<<CI[i][0]<<","<<CI[i][1]<<")        (1="<<n[i]<<"  0="<<N[i]-n[i]<<")  ["<<nchanges_ave[i];
+    if (nchanges[i] <= 4) {
+      o<<" !!!";
+    }
+    else if (nchanges[i] <= 20) {
+      o<<" !!";
+    }
+    else if (nchanges[i] <= 50) {
+      o<<" !";
+    }
+    o<<"]";
+    if (nchanges_ave[i] > 6)
+      o<<"     sigma = "<<stddev_bootstrap[i];
+    o<<endl;
+  }    
+  o<<endl;
+    
+  for(int i=0;i<sample.size();i++) {
+    o<<"   10s = "<<log10(statistics::odds(P[i]))<<"  in  ("<<log10(statistics::odds(CI[i][0]))<<","<<log10(statistics::odds(CI[i][1]))<<")";
+    if (nchanges_ave[i] > 6)
+      o<<"    [Var]x = "<<Var_bootstrap[i]/Var_perfect[i]<<"          Ne = "<<Ne[i];
+    o<<endl;
   }
-  else if (nchanges2 <= 20) {
-    o<<" !!";
-  }
-  else if (nchanges2 <= 50) {
-    o<<" !";
-  }
-  o<<"]";
-  if (nchanges2_ave > 6)
-    o<<"     sigma = "<<stddev2_bootstrap;
-  o<<endl;
-
-  o<<endl;
-
-  o<<"   10s = "<<log10(statistics::odds(P1))<<"  in  ("<<log10(statistics::odds(CI1[0]))<<","<<log10(statistics::odds(CI1[1]))<<")";
-  if (nchanges1_ave > 6)
-    o<<"    [Var]x = "<<Var1_bootstrap/Var1_perfect<<"          Ne = "<<Ne1;
-  o<<endl;
-  o<<"   10s = "<<log10(statistics::odds(P2))<<"  in  ("<<log10(statistics::odds(CI2[0]))<<","<<log10(statistics::odds(CI2[1]))<<")";
-  if (nchanges2_ave > 6)
-    o<<"    [Var]x = "<<Var2_bootstrap/Var2_perfect<<"          Ne = "<<Ne2;
-  o<<endl;
 
   return true;
 }
@@ -209,113 +192,128 @@ int main(int argc,char* argv[]) {
       compare_dx=1.0;
     compare_dx = args.loadvalue("separation",compare_dx);
     
+    int skip = args.loadvalue("skip",0);
+
     //-------------- Read in tree distributions --------------//
-    if (not args.set("file1"))
-      throw myexception()<<"First tree file not specified!";
-    ifstream file1(args["file1"].c_str());
-    if (not file1)
-      throw myexception()<<"Couldn't open file "<<args["file1"];
+    if (not args.set("files") or args["files"] == "")
+      throw myexception()<<"Tree files not specified!";
+
+    vector<string> files = split(args["files"],',');
+    vector<tree_sample> tree_dists;
+    vector<SequenceTree> MAP_trees;
+
+    for(int i=0;i<files.size();i++) {
+
+      ifstream file(files[i].c_str());
+      if (not file)
+	throw myexception()<<"Couldn't open file "<<files[i];
       
-    tree_sample tree_dist1(file1,remove);
+      tree_dists.push_back(tree_sample(file,remove,skip));
 
-    if (not args.set("file2"))
-      throw myexception()<<"First tree file not specified!";
-    ifstream file2(args["file2"].c_str());
-    if (not file2)
-      throw myexception()<<"Couldn't open file "<<args["file2"];
-    tree_sample tree_dist2(file2,remove);
+      MAP_trees.push_back( tree_dists.back().tree_mean[tree_dists.back().order[0]] );
+
+      if (i > 0 and MAP_trees[i].get_sequences() != MAP_trees[i-1].get_sequences())
+	throw myexception()<<"Tree load from file '"<<files[i]<<"' has different taxa that previous trees.";
+    }
     
-    SequenceTree MAP_tree_1 = tree_dist1.tree_mean[tree_dist1.order[0]];
-    SequenceTree MAP_tree_2 = tree_dist2.tree_mean[tree_dist2.order[0]];
-
     //----------  Determine block size ----------//
 
-    int blocksize1 = tree_dist1.size()/100+1;
-    int blocksize2 = tree_dist2.size()/100+1;
-  
-    int blocksize = std::min(blocksize1,blocksize2);
+    int blocksize = tree_dists[0].size()/100+1;
+    for(int i=1;i<tree_dists.size();i++)
+      blocksize = std::min(blocksize,tree_dists[i].size()/100+1);
+
     blocksize = args.loadvalue("blocksize",blocksize);
     
     std::cout<<"blocksize = "<<blocksize<<endl<<endl;
 
+    //--------------- Distance between MAP trees ----------//
+
+    cout<<endl;
+    for(int i=0;i<tree_dists.size();i++)
+      for(int j=0;j<i;j++) {
+	cout<<"Distance between MAP trees for "<<i<<" and "<<j<<" = "<<topology_distance(MAP_trees[i],MAP_trees[j])<<endl;
+	cout<<"Distance between MAP trees for "<<i<<" and "<<j<<" = "<<branch_distance(MAP_trees[i],MAP_trees[j])<<endl;
+      }
+    cout<<endl;
+
+    for(int i=0;i<tree_dists.size();i++) 
+      cout<<"MAPtree_"<<i<<" = "<<MAP_trees[i]<<endl<<endl;
+
     //----------  Calculate mask of leaf taxa to ignore in partitions ----------//
-    valarray<bool> mask = valarray<bool>(true,MAP_tree_1.leaves());
+    valarray<bool> mask = valarray<bool>(true,MAP_trees[0].leaves());
+
     vector<string> ignore;
     if (args.set("ignore") and args["ignore"].size() > 0)
       ignore = split(args["ignore"],':');
+
     for(int i=0;i<ignore.size();i++) {
-      int j = find_index(MAP_tree_1.get_sequences(),ignore[i]);
-      assert(j != MAP_tree_1.get_sequences().size());
+      int j = find_index(MAP_trees[0].get_sequences(),ignore[i]);
+      assert(j != MAP_trees[0].get_sequences().size());
       mask[j] = false;
     }
       
     //------  Compute partitions to analyze -----//
     vector< Partition > partitions;
-    for(int b=MAP_tree_1.leaves();b<MAP_tree_1.branches();b++) {
-      valarray<bool> p1 = branch_partition(MAP_tree_1,b);
+    vector< vector< int> > branch_to_partitions(tree_dists.size());
 
-      partitions.push_back( Partition(MAP_tree_1.get_sequences(),p1,mask) );
-    }
+    for(int i=0;i<tree_dists.size();i++) {
+      branch_to_partitions[i].resize(MAP_trees[i].branches());
 
-    for(int b=MAP_tree_2.leaves();b<MAP_tree_2.branches();b++) {
-      valarray<bool> p1 = branch_partition(MAP_tree_2,b);
+      for(int b=MAP_trees[i].leaves();b<MAP_trees[i].branches();b++) {
+	valarray<bool> p1 = branch_partition(MAP_trees[i],b);
 
-      Partition p(MAP_tree_2.get_sequences(),p1,mask);
+	Partition p(MAP_trees[i].get_sequences(),p1,mask);
 
-      if (not includes(partitions,p))
-	partitions.push_back(p);
+	if (not includes(partitions,p)) {
+	  branch_to_partitions[i][b] = partitions.size();
+	  partitions.push_back(p);
+	}
+	else
+	  branch_to_partitions[i][b] = find_index(partitions,p);
+      }
+
     }
 
     //------  Topologies to analyze -----//
-    const int maxtopologies = 4;
-
     vector<string> topologies;
-    for(int i=0;i<maxtopologies and i < tree_dist1.topologies.size();i++) {
-      topologies.push_back(tree_dist1.topologies[tree_dist1.order[i]]);
-    }
-    for(int i=0;i<maxtopologies and i < tree_dist2.topologies.size();i++) {
-      string t = tree_dist2.topologies[tree_dist2.order[i]];
+    for(int i=0;topologies.size() < 10 and i<5 ;i++) {
 
-      if (not includes(topologies,t))
-	topologies.push_back(t);
+      for(int j=0;j<tree_dists.size();j++) {
+
+	if (i < tree_dists[j].topologies.size()) {
+	  string t = tree_dists[j].topologies[tree_dists[j].order[i]];
+
+	  if (not includes(topologies,t))
+	    topologies.push_back(t);
+	}
+      }
     }
 
     //------ Create support bitvectors for the hypotheses (topology,partitions) ----//
 
-    vector< valarray<bool> > topology_series1;
-    vector< valarray<bool> > topology_series2;
+    vector< vector< valarray<bool> > > topology_series(topologies.size());
 
-    for(int i=0;i<topologies.size();i++) {
-      topology_series1.push_back( tree_dist1.supports_topology( topologies[i] ) );
-      topology_series2.push_back( tree_dist2.supports_topology( topologies[i] ) );
-    }
 
-    vector< valarray<bool> > partition_series1;
-    vector< valarray<bool> > partition_series2;
+    for(int i=0;i<topologies.size();i++)
+      for(int j=0;j<tree_dists.size();j++)
+	topology_series[i].push_back( tree_dists[j].supports_topology( topologies[i] ) );
 
-    for(int i=0;i<partitions.size();i++) {
-      partition_series1.push_back( tree_dist1.supports_partition( partitions[i] ) );
-      partition_series2.push_back( tree_dist2.supports_partition( partitions[i] ) );
-    }
 
-    //--------------- Distance between MAP trees ----------//
+    vector< vector< valarray<bool> > >partition_series(partitions.size());
 
-    cout<<endl;
-    cout<<"Distance between two MAP trees = "<<topology_distance(MAP_tree_1,MAP_tree_2)<<endl;
-    cout<<"Distance between two MAP trees = "<<branch_distance(MAP_tree_1,MAP_tree_2)<<endl;
-    cout<<endl;
-
-    cout<<"MAPtree_1 = "<<MAP_tree_1<<endl<<endl;
-    cout<<"MAPtree_2 = "<<MAP_tree_2<<endl<<endl;
+    for(int i=0;i<partitions.size();i++) 
+      for(int j=0;j<tree_dists.size();j++)
+	partition_series[i].push_back( tree_dists[j].supports_partition( partitions[i] ) );
 
     //---------------  Summarize best trees ---------------//
     cout<<"Best Topologies: \n";
     for(int i=0;i<topologies.size();i++) {
       std::ostringstream report;
+      vector<double> support;
       bool show = report_sample(report,
-				topology_series1[i],
-				topology_series2[i],
+				topology_series[i],
 				pseudocount,
+				support,
 				blocksize,
 				compare_dx);
 
@@ -329,30 +327,26 @@ int main(int argc,char* argv[]) {
 	
       cout<<endl;
       
-      int index1 = tree_dist1.get_index(topologies[i]);
-      if (index1 >= 0)
-	cout<<"  "<<i<<"MAPtree1 = "<<tree_dist1.tree_mean[index1]<<endl;
-      else 
-	cout<<"  Topology "<<i<<" not found in sample 1."<<endl;
+      for(int j=0;j<tree_dists.size();j++) {
+	int index = tree_dists[j].get_index(topologies[i]);
+	if (index >= 0)
+	  cout<<"  "<<i<<"MAPtree"<<j<<" = "<<tree_dists[j].tree_mean[index]<<endl;
+	else 
+	  cout<<"  Topology "<<i<<" not found in sample "<<j<<"."<<endl;
+      }
       cout<<endl;
-      
-      int index2 = tree_dist2.get_index(topologies[i]);
-      if (index2 >= 0) 
-	cout<<"  "<<i<<"MAPtree2 = "<<tree_dist2.tree_mean[index2]<<endl;
-      else 
-	cout<<"  Topology "<<i<<" not found in sample 2."<<endl;
-      cout<<endl<<endl;
     }
     cout<<endl<<endl;
 
     //------- Print out support for each partition --------//
+    vector< vector<double> > partition_support(partition_series.size());
     cout<<"Support for the different partitions: \n\n";
     for(int i=0;i<partitions.size();i++) {
       std::ostringstream report;
       bool show = report_sample(report,
-				partition_series1[i],
-				partition_series2[i],
+				partition_series[i],
 				pseudocount,
+				partition_support[i],
 				blocksize,
 				compare_dx);
 
@@ -366,6 +360,14 @@ int main(int argc,char* argv[]) {
       cout<<endl<<endl;
     }
 
+
+    for(int i=0;i<tree_dists.size();i++) {
+      for(int b=0;b<MAP_trees[i].leaves();b++)
+	MAP_trees[i].branch(b).length() = 1.0;
+      for(int b=MAP_trees[i].leaves();b<MAP_trees[i].branches();b++)
+	MAP_trees[i].branch(b).length() = partition_support[ branch_to_partitions[i][b] ][i];
+      cout<<"MAPsupport_"<<i<<" = "<<MAP_trees[i]<<endl<<endl;
+    }
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

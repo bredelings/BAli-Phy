@@ -29,6 +29,8 @@ SequenceTree standardized(const string& t,const vector<string>& remove) {
   
 SequenceTree standardized(SequenceTree T) {
 
+  T.unroot();
+
   map<string,int,lstr> sequences;
 
   for(int i=0;i<T.get_sequences().size();i++) {
@@ -172,12 +174,16 @@ struct ordering {
 
 
 
-tree_sample::tree_sample(std::istream& file,const vector<string>& remove) 
+tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int skip) 
 {
   //--------- Load the trees (as strings) from STDIN ------//
+  int lines=0;
   string line;
-  while(getline(file,line))
-    trees.push_back(line);
+  while(getline(file,line)) {
+    lines++;
+    if (lines > skip)
+      trees.push_back(line);
+  }
 
   if (trees.size() == 0)
     throw myexception()<<"No trees were read in!";

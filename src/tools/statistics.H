@@ -37,5 +37,7 @@ namespace statistics {
   std::vector<double> confidence_interval(const std::valarray<double>& values, double P);
   double lower_confidence_bound(const std::valarray<double>& values, double P);
   double upper_confidence_bound(const std::valarray<double>& values, double P);
+
+  std::valarray<bool> add_pseudocount(const std::valarray<bool>& sample1,int pseudocount);
 }
 #endif

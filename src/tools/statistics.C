@@ -80,5 +80,23 @@ namespace statistics {
     int skip = 1+(int)(values.size()*(1.0-P));
     return values2[values2.size()-1-skip];
   }
+
+  valarray<bool> add_pseudocount(const valarray<bool>& sample1,int pseudocount) {
+    valarray<bool> sample2(sample1.size() + 2*pseudocount);
+    
+    int i=0;
+    for(int j=0;j<pseudocount;i++,j++)
+      sample2[i] = true;
+    
+    for(;i<sample1.size();i++)
+      sample2[i] = sample1[i];
+    
+    for(int j=0;j<pseudocount;i++,j++)
+      sample2[i] = false;
+    
+    return sample2;
+  }
+
+
 }
 

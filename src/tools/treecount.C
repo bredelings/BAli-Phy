@@ -31,17 +31,6 @@ double getsum(const valarray<double>& v) {
   return v.sum();
 }
 
-valarray<double> block_sample(const valarray<bool>& v,int blocksize=1) {
-  valarray<double> temp(v.size()/blocksize);
-  for(int block=0;block<temp.size();block++) {
-    temp[block]=0;
-    for(int i=blocksize*block;i<blocksize*(block+1);i++) 
-      if (v[i]) temp[block]++;
-    
-  }
-  return temp;
-}
-
 valarray<bool> branch_partition(const tree& T,int b) {
   int parent = T.branch(b).parent();
   int child = T.branch(b).child();
