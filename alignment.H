@@ -40,20 +40,21 @@ public:
   int& operator()(int l,int s) {return array(l,s); }
   const int& operator()(int l,int s) const {return array(l,s); }
 
+  /// Does sequence i have a gap at position j ?
   bool gap(int i,int j) const {return array(i,j)==alphabet::gap;}
 
   alignment& operator=(const alignment&);
 
-  //Number of leaf sequences
+  /// Number of leaf sequences (I think)
   int num_sequences() const { return sequences.size() ;}
 
   //Length of alignment
   int length() const {return array.size1();}
 
-  //Number of total sequences
+  /// Total number of sequences
   int size2() const {return array.size2();}
 
-  //Length of a particular sequence
+  ///Length of a particular sequence
   int seqlength(int) const;
 
   const alphabet& get_alphabet() const {return sequences[0].a;}
@@ -85,6 +86,8 @@ vector<int> get_path(const alignment&,int,int);
 vector<int> get_path_3way(const alignment&,int,int,int,int);
 
 std::valarray<double> empirical_frequencies(const alignment& A);
+
+/// Generate a randomize alignment
 alignment randomize(const alignment&);
 #endif
 

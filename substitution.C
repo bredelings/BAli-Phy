@@ -44,13 +44,20 @@ inline valarray<double> peel(int letter,const Matrix& P,const valarray<double>& 
 // If we are going to return distributions(root), then we must make sure
 //  that there is no information there from the WRONG side of the tree
 
+
+// things to do:  (look at Sampler Todo.sxw)
+// 1. make the distributions(i) never change size - use a vector<int> or vector<bool>
+//    to store whether or not things have information.
+// 2. then separate out part of the routine as an inline function, to which 'distributions'
+//    is passed.   (change 'distributions' into a matrix?)
 valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
 		      const vector<Matrix>& transition_P,int node1, int node2, int root) {
   const alphabet& a = SModel.Alphabet();
 
   /**************** Find our branch, and orientation *****************/
-  assert(root == node1 or root == node2);
-  valarray<bool> group = T.partition(node1,node2);
+  valarray<bool> group(true,T.num_nodes());
+  if (node1 != node2)
+    group = T.partition(node1,node2);
 
   /******* Put the info from the letters into the distribution *******/
   bool any_letters = false;
@@ -69,6 +76,9 @@ valarray<double> peel(const vector<int>& residues,const tree& T,const Reversible
   }
 
   /******** Compute the ordered list of branches to process *********/
+
+  //FIXME - walk up the tree from peeling 'root' to the tree root, 
+  // instead of computing branches2 and using 'reverse'
   vector<int> branches1;
   branches1.reserve(T.num_nodes());
   vector<int> branches2;
@@ -97,7 +107,6 @@ valarray<double> peel(const vector<int>& residues,const tree& T,const Reversible
   }
   std::reverse(branches2.begin(),branches2.end());
   branches1.insert(branches1.end(),branches2.begin(),branches2.end());
-  if (branches2.size()) assert(T.ancestor(node2,node1));
 
   /**************** Propogate info along branches ******************/
   valarray<double> dist(a.size());   // declare a temporary for use in the loop.
@@ -171,30 +180,25 @@ valarray<double> peel(const vector<int>& residues,const tree& T,const Reversible
 }
 
 double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
-	  const vector<Matrix>& transition_P,int b) {
+	  const vector<Matrix>& transition_P,int root) {
   assert(residues.size() == T.num_nodes()-1);
 
-  valarray<double> leftD  = peel(residues,T,SModel,transition_P,b,false);
-  valarray<double> rightD = peel(residues,T,SModel,transition_P,b,true);
-  
-  valarray<double> rootD = leftD * SModel.frequencies() * rightD;
+  valarray<double> rootD = peel(residues,T,SModel,transition_P,root,root,root);
 
-  double p = rootD.sum();
+  rootD *= SModel.frequencies();
 
-  return p;
+  return rootD.sum();
 }
 
 double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
 	  const vector<Matrix>& transition_P) {
 
   int root = T.get_nth(T.num_nodes()-2);
-  root = T.branch_up(root).parent();
+  double p = Pr(residues,T,SModel,transition_P,root);
 
-  int b = T.branch_up(root);
-  double p = Pr(residues,T,SModel,transition_P,b);
-
-  int b2 = myrandom(0,T.branches());
-  double p2 = Pr(residues,T,SModel,transition_P,b2);
+#ifndef NDEBUG  
+  int node = myrandom(0,T.num_nodes()-1);
+  double p2 = Pr(residues,T,SModel,transition_P,node);
 
   if (std::abs(p2-p) > 1.0e-9) {
     for(int i=0;i<T.leaves();i++)
@@ -202,6 +206,7 @@ double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SMode
     std::cerr<<p<<" "<<log(p)<<"     "<<p2<<"      "<<log(p2)<<endl;
     assert(0); //FIXME - try this check!
   }
+#endif
 
   // we don't get too close to zero, normally
   assert(0 <= p and p <= 1.00000000001);

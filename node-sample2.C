@@ -54,7 +54,7 @@ alignment sample_node2(const alignment& old,const Parameters& P,int node) {
   valarray<bool> group2 = T.partition(n0,n2);
   valarray<bool> group3 = T.partition(n0,n3);
 
-  vector<int> seq123 = getorder(old,n0,n1,n2,n3);
+  vector<int> columns = getorder(old,n0,n1,n2,n3);
 
   //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
   //  std::cerr<<"old (reordered) = "<<project(old,n0,n1,n2,n3)<<endl;
@@ -63,14 +63,17 @@ alignment sample_node2(const alignment& old,const Parameters& P,int node) {
   vector<int> seq1;
   vector<int> seq2;
   vector<int> seq3;
-  for(int i=0;i<seq123.size();i++) {
-    int column = seq123[i];
+  vector<int> seq123;
+  for(int i=0;i<columns.size();i++) {
+    int column = columns[i];
     if (not old.gap(column,n1))
       seq1.push_back(column);
     if (not old.gap(column,n2))
       seq2.push_back(column);
     if (not old.gap(column,n3))
       seq3.push_back(column);
+    if (not old.gap(column,n1) or not old.gap(column,n2) or not old.gap(column,n3))
+      seq123.push_back(column);
   }
 
   // Map columns with n2 or n3 to single index 'c'

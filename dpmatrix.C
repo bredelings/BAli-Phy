@@ -179,6 +179,7 @@ double DParray::path_P(const vector<int>& path) {
   for(int state1=0;state1<nstates();state1++)
     transition[state1] = (*this)[state1][0] + GQ(state1,state2);
 
+  // Get the probability that the previous state was 'Start'
   double p=log_0;
   for(int state1=0;state1<nstates();state1++)  
     if (not silent(state1))
@@ -449,6 +450,7 @@ double DPmatrix::path_P(const vector<int>& path) {
   for(int state1=0;state1<nstates();state1++)
     transition[state1] = (*this)[state1](0,0) + GQ(state1,state2);
 
+  // Get the probability that the previous state was 'Start'
   double p=log_0;
   for(int state1=0;state1<nstates();state1++)  
     if (not silent(state1))

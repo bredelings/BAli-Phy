@@ -45,7 +45,8 @@ int choose(vector<double>::const_iterator here,int size) {
   for(int i=0;i<sum.size();i++) 
     if (r < sum[i])
       return i;
-  assert(0);
+
+  std::abort();
 }
 
 int choose(const vector<double>& P) {

@@ -16,7 +16,7 @@ namespace MCMC {
   typedef result_t (*atomic_move)(alignment&,Parameters&);
   typedef result_t (*atomic_move_arg)(alignment&,Parameters&,int);
 
-  // The basic 'Move' class
+  /// The basic 'Move' class
   class Move {
 
     bool enabled_;
@@ -32,32 +32,59 @@ namespace MCMC {
     int failures;
     int successes;
 
+    /// Make a copy of this object
     virtual Move* clone() const =0;
 
+    /// Is this move enabled?
     bool enabled() {return enabled_;}
+
+    /// Enable this move
     void enable() {enabled_=true;}
+
+    /// Disable this move
     void disable() {enabled_=false;}
     
-    virtual void enable(const string&);
-    virtual void disable(const string&);
+    /// Enable this move or any submove with attribute 's'
+    virtual void enable(const string& s);
 
-    virtual int reset(double) =0;
+    /// Disable this move or any submove with attribute 's'
+    virtual void disable(const string& s);
+
+    /// Set up for an iteration of length l, return number of subiterations
+    virtual int reset(double l) =0;
+
+    /// Do a complete iteration (a top-level routine)
     virtual void iterate(alignment&,Parameters&) =0;
-    virtual result_t iterate(alignment&,Parameters&,int) =0;
 
+    /// Do the i-th iteration for this round (not a top-level routine)
+    virtual result_t iterate(alignment&,Parameters&,int i) =0;
+
+    /// Show enabled-ness for this move and submoves
     virtual void show_enabled(int depth=0) const;
+
+    /// Show acceptance rates for this move and submoves
     virtual void print_move_stats(int depth=0) const;
 
-    Move(const string&);
+    /// construct a new move called 's'
+    Move(const string& s);
 
     virtual ~Move() {}
   };
 
+  // FIXME? We could make this inherit from virtual public Move...
+  //    but that seems to introduce problems...
+  // We could also move the code to this class, and call it from the classes
+  //    that use it.
 
+  /// A collection of moves
   class MoveGroupBase {
   protected:
+    /// This list of moves
     std::vector<Move*> moves;
+
+    /// This weight of each move
     std::vector<double> lambda;
+
   public:
     int nmoves() const {return moves.size();}
     void add(double,const Move& m);
@@ -69,12 +96,19 @@ namespace MCMC {
     ~MoveGroupBase();
   };
 
+  /// A Move which runs parts of a number of submoves each round
   class MoveGroup: public Move,public MoveGroupBase {
   protected:
+
+    /// An ordered list of submoves to run this round
     vector<int> order;
+
+    /// suborder[i] is the n-th time we've run order[i]
     vector<int> suborder;
     
     double sum() const;
+
+    /// Setup 'order' and 'suborder' for this round
     virtual void getorder(double l)=0;
   public:
 
@@ -95,6 +129,7 @@ namespace MCMC {
     virtual ~MoveGroup() {}
   };
 
+  /// A Move which runs all submoves each round
   class MoveAll: public MoveGroup {
     void getorder(double l);
   public:
@@ -104,6 +139,7 @@ namespace MCMC {
     virtual ~MoveAll() {}
   };
 
+  /// A Move which runs one submoves each round
   class MoveOne: public MoveGroup {
     int choose() const;
     void getorder(double l);
@@ -114,6 +150,7 @@ namespace MCMC {
     virtual ~MoveOne() {}
   };
 
+  /// A Move which runs a specific moves each round
   class SingleMove: public Move {
     atomic_move m;
   public:
@@ -129,19 +166,23 @@ namespace MCMC {
       :Move(v),m(m1) {}
   };
 
+  /// A move which takes an integer argument from a supplied list
   class MoveArg: public Move {
+    /// The ordered list of args to operate on this round
     vector<int> order;
+
   public:
     MoveArg* clone() const=0;
 
+    /// A list of arguments to be passed to submoves
     vector<int> args;
 
     int reset(double);
     void iterate(alignment&,Parameters&);
     result_t iterate(alignment&,Parameters&,int);
 
-    virtual result_t operator()(alignment&,Parameters&,int)=0;
-
+    /// Operate on the 'a'-th arg
+    virtual result_t operator()(alignment&,Parameters&,int a)=0;
 
     MoveArg(const string& s):Move(s) { }
 
@@ -149,15 +190,22 @@ namespace MCMC {
   };
 
 
-  // can I make this inherit from MoveGroup?
-  class MoveEach: public MoveArg, protected MoveGroupBase {
-    vector<int> order;
+  /// Apply this move to Each arg
 
+  /// Apply this move to Each arg, choosing for each arg from
+  /// among the moves that apply to that arg.
+  class MoveEach: public MoveArg, protected MoveGroupBase {
+
+    /// The n-th arg of this move, is the subarg[m][n]-th arg of move m
     vector< vector<int> > subarg;
 
-    double sum(int) const;
-    int choose(int) const;
+    /// Get the sum of the weights for the i-th arg
+    double sum(int i) const;
 
+    /// Choose an submove to apply to arg i
+    int choose(int i) const;
+
+    /// Is the arg-th arg is available for the m-th move?
     bool submove_has_arg(int m,int arg) const {return subarg[m][arg] != -1;}
   public:
     MoveEach* clone() const {return new MoveEach(*this);}
@@ -177,7 +225,7 @@ namespace MCMC {
     virtual ~MoveEach() {}
   };
 
-
+  /// A single move with an integer argument, and the arguments it takes
   class MoveArgSingle: public MoveArg {
     atomic_move_arg m;
   public:
@@ -194,8 +242,9 @@ namespace MCMC {
 
 
 
-  // This makes a Sampler out of a move
+  /// A Sampler: based on a collection of moves to run every iteration
   class Sampler: public MoveAll {
+    /// Form of Probability functions
     typedef double(&Pr_func)(const alignment&,const Parameters&);
 
     Pr_func prior;
@@ -207,6 +256,7 @@ namespace MCMC {
     }
 
   public:
+    /// Run the sampler for 'max' iterations
     void go(alignment& A, Parameters& P, int max);
 
     Sampler(const string& name,Pr_func pf1,Pr_func pf2)
