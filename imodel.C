@@ -99,7 +99,7 @@ void IndelModel1::fiddle() {
   if (not fixed[1]) {
     double E_length = lambda_E - logdiff(0,lambda_E);
     E_length += gaussian(0,sigma);
-    lambda_E = E_length - logsum(0,lambda_E);
+    lambda_E = E_length + logsum(0,E_length);
   }
   
   recalc();
@@ -338,7 +338,7 @@ void UpweightedIndelModel::fiddle() {
   if (not fixed[1]) {
     double E_length = lambda_E - logdiff(0,lambda_E);
     E_length += gaussian(0,sigma);
-    lambda_E = E_length - logsum(0,lambda_E);
+    lambda_E = E_length + logsum(0,E_length);
   }
   
   recalc();
