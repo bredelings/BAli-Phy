@@ -10,13 +10,38 @@ using std::vector;
 
 // 0->0 1->G 2->3
 int recode(int i,int G) {
-  assert(G==1 or G==2);
-  if (i==1)
-    i=G;
-  if (i==2)
-    i=3;
+  if (i >= G) i++;
   return i;
 }
+
+Matrix remove_one_state(const Matrix& M,int S) {
+  assert(M.size1() == M.size2());
+  Matrix M2(M.size1()-1,M.size2()-1);
+
+  double temp = logdiff(0,M(S,S));
+  for(int i=0;i<M2.size1();i++) {
+    int i1 = recode(i,S);
+    for(int j=0;j<M2.size2();j++) {
+      int j1 = recode(j,S);
+      M2(i,j) = logsum(M(i1,j1), M(i1,S)+M(S,j1) - temp);
+    }
+  }
+  return M2;
+}
+
+void IndelModel::recalc() {
+
+  Q1 = remove_one_state(Q,1);
+  Q2 = remove_one_state(Q,2);
+
+  for(int i=0;i<Q1.size1();i++) {
+    for(int j=0;j<Q1.size2();j++) {
+      Q1(i,j) = exp( Q1(i,j) );
+      Q2(i,j) = exp( Q2(i,j) );
+    }
+  }
+}
+
 
 // FIXME - if we ever actually sample with a star gap model,
 //         then we need to fix this.
@@ -29,18 +54,6 @@ double IndelModel::length_plus_p(int l, int G) const {
 double IndelModel::lengthp(int l,int G) const {
 
   //--------------- Remove the 'G2' State ----------------------//
-  Matrix Q2(2,3);
-
-  double OMQ22 = logdiff(0,Q(2,2));
-  for(int i=0;i<Q2.size1();i++) {
-    int i1 = recode(i,G);
-    for(int j=0;j<Q2.size2();j++) {
-      int j1 = recode(j,G);
-      Q2(i,j) = logsum(Q(i1,j1), Q(i1,2)+Q(2,j1)-OMQ22);
-      Q2(i,j) = exp( Q2(i,j) );
-    }
-  }
-
   double MM = Q2(0,0);
   double MG = Q2(0,1);
   double ME = Q2(0,2);
@@ -49,23 +62,36 @@ double IndelModel::lengthp(int l,int G) const {
   double GG = Q2(1,1);
   double GE = Q2(1,2);
 
+  if (G==2) {
+    MM = Q1(0,0);
+    MG = Q1(0,1);
+    ME = Q1(0,2);
+
+    GM = Q1(1,0);
+    GG = Q1(1,1);
+    GE = Q1(1,2);
+  }
+
   //----- Calculate roots of q(s); we assume its quadratic -----//
   double C = 1;
   double B = -(GG + MM);
   double A = MM*GG - MG*GM;
 
-  double determinant = B*B-4.0*A*C;
-  double r1 = (-B - sqrt(determinant))/(2*A);
-  double r2 = (-B + sqrt(determinant))/(2*A);
+  double sqr_det = sqrt(B*B-4.0*A*C);
+  double r1 = (-B - sqr_det)/(2*A);
+  double r2 = (-B + sqr_det)/(2*A);
 
   //------------ Calculate the coefficients f_M[l] ------------//
   double P;
   if (l==0)
     P = ME;
   else {
+    double P1 = pow(r1,-l-1);
+    double P2 = pow(r2,-l-1);
+
     // Calculate q[l] and q[l-i] (I've proved that all q[i]>=0)
-    double q_l   = 1.0/ (A*(r2-r1)) * (pow(r1,-l-1) - pow(r2,-l-1));
-    double q_lm1 = 1.0/ (A*(r2-r1)) * (pow(r1,-l)   - pow(r2,-l));
+    double q_l   = 1.0/ (A*(r2-r1)) * (P1 - P2);
+    double q_lm1 = 1.0/ (A*(r2-r1)) * (P1*r1 - P2*r2);
 
     // Calculate f_M[l] from the q[i] (*IS* this always positive?)
     P = ME*q_l + (MG*GE - ME*GG)*q_lm1;
@@ -74,12 +100,12 @@ double IndelModel::lengthp(int l,int G) const {
 }
 
 IndelModel::IndelModel(int s)
-  : P(4,4),parameters_(s),fixed(s,false),full_tree(true),pi(4),Q(4,4)
+  : Q1(3,3),Q2(3,3),P(4,4),parameters_(s),fixed(s,false),full_tree(true),pi(4),Q(4,4)
 { }
 
 
 IndelModel::IndelModel()
-  : P(4,4),full_tree(true),pi(4),Q(4,4)
+  : Q1(3,3),Q2(3,3),P(4,4),full_tree(true),pi(4),Q(4,4)
 { }
 
 
