@@ -390,7 +390,7 @@ int main(int argc,char* argv[]) {
       cout<<"\nSample "<<i<<": "<<partitions.size()<<"/"<<MAP_trees[i].n_leaves()-3<<" internal bi-partitions supported.\n";
       valarray<bool> support = tree_dists[i].supports_partitions(partitions);
       cout<<"PP = "<<statistics::Pr(support)<<"\n";;
-      cout<<" consensus"<<i<<" = "<<MF<<std::endl;
+      cout<<" consensus"<<i<<" = "<<MF.write(false)<<std::endl;
     }
   }
   catch (std::exception& e) {
