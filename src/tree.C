@@ -231,22 +231,18 @@ vector<int> Tree::standardize(const vector<int>& lnames) {
 
   vector<BranchNode*> old_nodes = nodes_;
 
-  //---------- Input new leaf order -----------//
   for(int i=0;i<n_leaves();i++)
     nodes_[i]->node = lnames[i];
 
   //---------- recompute everything -----------//
-
-  //FIXME - write some code to determine the order of prev/next
-
-
   reanalyze(nodes_[0]);
-  
 
   //------------- compute mapping -------------//
   vector<int> mapping(old_nodes.size());
   for(int i=0;i<mapping.size();i++)
     mapping[i] = old_nodes[i]->node;
+
+  //FIXME - write some code to determine the order of prev/next
 
   return mapping;
 }
@@ -555,59 +551,107 @@ void Tree::SPR(int br1,int br2) {
   recompute(b1);
 }
 
+/// Return a pointer to the BN in @start which points to the only unnamed neighbor of @start.
+BranchNode* get_parent(BranchNode* start,BranchNode* root) {
+  BranchNode* BN = start;
+  BranchNode* node = NULL;
+
+  // if we are at the root node, then there is no parent
+  if (root->node != -1 and root->node == start->node)
+    return NULL;
+
+  // otherwise, the root node is either adjacent or in 
+  // the direction of the ONLY unnamed neighbor
+  do {
+    if (BN->out->node == -1 or BN->out->node == root->node) {
+      if (node)
+	return NULL;
+      else 
+	node = BN;
+    }
+    BN = BN->next;
+  } while (BN != start);
+
+  // if the parent direction is toward a ALREADY-NAMED root, then don't do it!
+  if (node and node->branch != -1) {
+    // and the already named node had better be the root node
+    assert(root->node != -1);
+    assert(node->out->node == root->node);
+    return NULL;
+  }
+
+  return node;
+}
+
 //NOTE: both of these routines assume that prev,next, and old pointers are correct
 
 /// This routine assumes only that leaf nodes have proper names and are indexed in nodes_
-void Tree::reanalyze(BranchNode* start) {
+void Tree::reanalyze(BranchNode* root) {
 
   nodes_.clear();
   branches_.clear();
+
+  //------------- Clear all names -------------//
   n_leaves_ = 0;
   int total_branch_nodes = 0;
 
-  //------- Initialize leaf nodes && clear other nodes --------//
-  for(BN_iterator BN(start);BN;BN++) {
-    
-    if (is_leaf_node(*BN)) {
+  for(BN_iterator BN(root);BN;BN++) {
+    (*BN)->node = -1;
+    (*BN)->branch = -1;
+
+    total_branch_nodes = 0;
+    if (is_leaf_node(*BN))
       n_leaves_++;
-      (*BN)->branch      = (*BN)->node;
-    }
-    else {
-      (*BN)->node = -1;
-      (*BN)->branch = -1;
-    }
-    
-    total_branch_nodes++;
   }
+  branches_.resize(total_branch_nodes);
+
+  //----------- Set the leaf names ------------//
+  vector<BranchNode*> work(n_leafbranches());
+  for(BN_iterator BN(root);BN;BN++)
+    if (is_leaf_node(*BN))
+      work[(*BN)->node] = (*BN);
+
+  //--------- recompute other names -----------//
+  int n=0;
+  int b=0;
+  const int B = branches_.size()/2;
+
+  while(work.size()) 
+  {
+    vector<BranchNode*> temp = work;
+    work.clear();
+
+    for(int i=0;i<temp.size();i++) {
+      // name the node
+      name_node(temp[i],n++);
+
+      // name the branch out of the node
+      temp[i]->branch = b++;
+      temp[i]->out->branch = temp[i]->branch + B;
+
+      // add the parent to the list if we are its last child
+      BranchNode* next = get_parent(temp[i]->out,root);
+      if (next) temp.push_back(next);
+    }
+  } 
+
+  assert(b == B);
+
+  // name the last node
+  if (is_leaf_node(root) and root->node < n_leafbranches()) {
+    assert(root->out->node == -1);
+    name_node(root->out,n++);
+  }
+  else {
+    assert(root->node == -1);
+    name_node(root,n++);
+  }
+  nodes_.resize(n);
 
   branches_.resize(total_branch_nodes);
 
-  int total_nodes = n_leaves_;
-  int total_branches = n_leaves_;
-
-  //---------- Compute node and branch names -----------------//
-  for(BN_iterator BN(start);BN;BN++) {
-    // name the node 
-    if ((*BN)->node == -1) {
-      assert(not(is_leaf_node(*BN)));
-      name_node(*BN,total_nodes);
-      total_nodes++;
-    }
-
-    if ((*BN)->branch == -1) {
-      if ((*BN)->out->branch == -1) {
-	(*BN)->branch = total_branches++;
-	(*BN)->out->branch = (*BN)->branch + n_branches();
-      }
-      else
-	(*BN)->branch = (*BN)->out->branch + n_branches();
-    }
-  }
-  
-  nodes_.resize(total_nodes);
-  
   // give names to nodes and branches
-  recompute(start);
+  recompute(root);
 }
 
 /// Computes nodes_[] and branch_[] indices, and cached_partitions[]
