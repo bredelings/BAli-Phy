@@ -161,4 +161,13 @@ template<> inline log_double_t expe<log_double_t>(double x) {
   return y;
 }
 
+template<class T> T powe(double,double);
+
+template<> inline log_double_t powe<log_double_t>(double x,double p) {
+  log_double_t y;
+  y.log() = p * ::log(x);
+  return y;
+}
+
+
 #endif
