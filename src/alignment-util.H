@@ -21,4 +21,7 @@ bool A_constant(alignment A1, alignment A2, const std::valarray<bool>& ignore);
 
 /// Are all un-ignored characters in column 'present' connected on T?
 bool all_characters_connected(const tree& T,std::valarray<bool> present,const std::vector<int>& ignore);
+
+bool letters_OK(const alignment& A);
+
 #endif

@@ -132,3 +132,15 @@ bool all_characters_connected(const tree& T,valarray<bool> present,const vector<
   return true;
 }
 
+bool letters_OK(const alignment& A) {
+  const alphabet& a = A.get_alphabet();
+
+  bool bad=false;
+  for(int i=0;i<A.length();i++)
+    for(int j=0;j<A.size2();j++)
+      if (A(i,j) < -2 or A(i,j) >= a.size()) {
+	bad = true;
+	std::cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<std::endl;
+      }
+  return not bad;
+}
