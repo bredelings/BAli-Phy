@@ -8,7 +8,8 @@
 #include "choose.H"
 #include "bits.H"
 #include "util.H"
-#include "myrandom.H"
+#include "rng.H"
+#include "dpmatrix.H"
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with
@@ -270,129 +271,6 @@ Matrix createGQ(const IndelModel& IModel) {
 }
 
 
-inline double sum(const valarray<double>& v) {
-  return v.sum();
-}
-
-class DPmatrix : public vector<Matrix> {
-  int size1_;
-  int size2_;
-  vector< vector<int> > allowed_states;
-public:
-  const vector<int>& states(int j) const {return allowed_states[j];}
-  vector<int>& states(int j) {return allowed_states[j];}
-
-  vector<int> getstate;
-
-  int size1() const {return size1_;}
-  int size2() const {return size2_;}
-  int nstates() const {return size();}
-
-  DPmatrix(int nstates,int s1,int s2):vector<Matrix>(nstates,Matrix(s1,s2)),
-				      allowed_states(s2),getstate(nstates+1)
-  {
-    size1_ = s1;
-    size2_ = s2;
-    
-    //----- zero-initialize matrices ------//
-    for(int i=0;i<s1;i++)
-      for(int j=0;j<s2;j++) 
-	for(int S=0;S<nstates;S++)
-	  (*this)[S](i,j)  = log_0;
-  }
-};
-
-class DPmatrixHMM: public DPmatrix {
-
-public:
-  const vector< valarray<double> >& dists1;
-  const vector< valarray<double> >& dists2;
-  const valarray<double>& frequency;
-
-  valarray<double> s1_sub;
-  valarray<double> s2_sub;
-
-  inline void forward(int,int,const Matrix& GQ);
-
-  inline void forward(int,int,int,int,const Matrix& GQ);
-
-  DPmatrixHMM(int nstates,
-	      const vector< valarray<double> >& d1,const vector< valarray<double> >& d2, 
-	      const valarray<double>& f):
-    DPmatrix(nstates,d1.size()+1,d2.size()+1),
-    dists1(d1),dists2(d2),frequency(f),s1_sub(d1.size()+1),s2_sub(d2.size()+1) 
-  {
-    for(int i=0;i<dists1.size();i++)  
-      s1_sub[i] = log(sum( dists1[i] * frequency ));
-
-    for(int i=0;i<dists2.size();i++)
-      s2_sub[i] = log(sum( dists2[i] * frequency ));
-  }
-};
-
-inline void DPmatrixHMM::forward(int x1,int y1,int x2,int y2,const Matrix& GQ) {
-  const int maxdelta = std::max(x2-x1,y2-y1);
-
-  for(int delta=1; delta<=maxdelta; delta++) {
-    if (delta<size2())
-      for(int i=0;i<delta and i<size1();i++) 
-	forward(x1+i,y1+delta,GQ);
-
-    if (delta<size1())
-      for(int i=0;i<=delta and i<size2();i++)
-	forward(x1+delta,y1+i,GQ);
-  } 
- 
-}
-
-inline void DPmatrixHMM::forward(int i2,int c2,const Matrix& GQ) {
-
-  assert(i2<size1());
-  assert(c2<size2());
-
-  for(int i=0;i<states(c2).size();i++) {
-    int S2 = states(c2)[i];
-    Matrix& FS2 = (*this)[S2];
-
-    int i1 = i2;
-    int c1 = c2;
-    
-    if (getstate[S2]&(1<<1))
-      i1--;
-    if (getstate[S2]&((1<<2)|(1<<3)))
-      c1--;
-
-    // check that S2 is valid at c2?
-
-    //--- Don't go off the boundary -----
-    if (i1<0 or c1<0)
-      continue;
-
-    //--- Compute Arrival Probability ----
-    FS2(i2,c2) = log_0;
-    for(int j=0;j<states(c1).size();j++) {
-      int S1 = states(c1)[j];
-      Matrix& FS1 = (*this)[S1];
-
-      FS2(i2,c2) = logsum(FS2(i2,c2), FS1(i1,c1) + GQ(S1,S2));
-    }
-
-    //--- Include Emission Probability----
-    double sub;
-    if (i1 != i2 and c1 != c2)
-      sub = log(sum( dists1[i2-1] * frequency * dists2[c2-1] ));
-    else if (i1 != i2)
-      sub = s1_sub[i2-1];
-    else if (c1 != c2)
-      sub = s2_sub[c2-1];
-    else          // silent state - nothing emitted
-      sub = 0;
-
-
-    FS2(i2,c2) += sub;
-  }
-}     
-
 vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
 
   //----- Store whether or not characters are present -----//
@@ -467,150 +345,6 @@ double generalize_P(const vector<int>& path, const Matrix& Q) {
   }
   return Pr;
 }
-
-double path_check(const vector<int>& path, const DPmatrix& Matrices, const Matrix& GQ) {
-
-  double Pr=0;
-  
-  const int I = Matrices.size1()-1;
-  const int C = Matrices.size2()-1;
-  int i = 0;
-  int c = 0;
-  int l = 0;
-
-  // we don't look at transitions FROM the end state, because we 
-  //  bail at looking at transitions FROM (I,C) 
-  // FIXME - but what if this is actually not E but 7?
-  while(true) {
-    assert(l<path.size());
-
-    int state1 = path[l];
-
-    if (di(state1)) i++;
-    if (dj(state1) or dk(state1)) c++;
-
-    if (state1 == endstate)
-      break;
-
-    int state2 = path[l+1];
-
-    vector<double> transition(nstates);
-    for(int s=0;s<nstates;s++)
-      transition[s] = Matrices[s](i,c)+GQ(s,state2);
-
-    double p = choose_P(state1,transition);
-    assert(p > log_0/100);
-    
-    l++;
-    Pr += p;
-
-    assert(i<=I and c<=C);
-  }
-  assert(l == path.size()-1);
-  assert(i == I and c == C);
-  assert(Pr > log_0/100);
-
-  return Pr;
-}
-
-vector<double> path_Q(const vector<int>& path,const DPmatrixHMM& Matrices,const Matrix& GQ) {
-  double P_path=0;
-  double P_sub=0;
-  int i=0,c=0;
-  for(int l=0;l<path.size();l++) {
-
-    int state2 = path[l];
-    if (di(state2))
-      i++;
-    if (dc(state2))
-      c++;
-
-    if (l == 0) {
-      double sum=log_0;
-      for(int S=0;S<nstates;S++)
-	if (S != 7)
-	  sum = logsum(sum,Matrices[S](0,0)+GQ(S,state2));
-      P_path += sum;
-    }
-    else {
-      P_path += GQ(path[l-1],state2);
-    }
-
-    double sub=0;
-    if (di(state2) and dc(state2))
-      sub = log(sum(Matrices.dists1[i-1] * Matrices.frequency * Matrices.dists2[c-1]));
-    else if (di(state2))
-      sub = Matrices.s1_sub[i-1];
-    else if (dc(state2))
-      sub = Matrices.s2_sub[c-1];
-
-    P_sub += sub;
-  }
-  assert(i == Matrices.size1()-1 and c == Matrices.size2()-1);
-  vector<double> p;
-  p.push_back(P_path);
-  p.push_back(P_sub);
-  return p;
-}
-
-
-double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& GQ) {
-  double P2 = path_check(path,Matrices,GQ);
-  std::cerr<<"P(path)2 = "<<P2<<std::endl;
-
-  const int I = Matrices.size1()-1;
-  const int C = Matrices.size2()-1;
-  int i = I;
-  int c = C;
-  double Pr=0;
-
-  int l = path.size()-1;
-  int state2 = path[l];
-
-  //We should really stop when we reach the Start state.
-  // - since the start state is simulated by a non-silent state
-  //   NS(0,0) we should go negative
-  // - but we would have to check path[-1] to see which state
-  //   made sample_path go negative
-  // - instead we can check if l==0 - we know that the start state
-  //   is at path[-1]
-  while (l>0) {
-
-    vector<double> transition(nstates);
-    for(int state1=0;state1<nstates;state1++)
-      transition[state1] = Matrices[state1](i,c)+GQ(state1,state2);
-
-    int state1 = path[l-1];
-    double p = choose_P(state1,transition);
-    assert(p > log_0/100);
-
-    if (di(state1)) i--;
-    if (dj(state1) or dk(state1)) c--;
-
-    l--;
-    state2 = state1;
-    Pr += p;
-  }
-  assert(l == 0);
-  assert(i == 0 and c == 0);
-
-  // include probability of choosing 'Start' vs ---+ !
-  vector<double> transition(nstates);
-  for(int state1=0;state1<nstates;state1++)
-    transition[state1] = Matrices[state1](0,0)+GQ(state1,state2);
-
-  double p=log_0;
-  for(int state1=0;state1<nstates;state1++)  
-    if (not silent(state1))
-      p = logsum(p, choose_P(state1,transition) );
-
-  Pr += p;
-
-  assert(Pr > log_0);
-  std::cerr<<"P(path) = "<<Pr<<std::endl;
-  return Pr;
-}
-
 
 vector<int> sample_path(const DPmatrix& Matrices,const Matrix& GQ) {
   vector<int> path;
@@ -952,9 +686,16 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   /*-------------- Create alignment matrices ---------------*/
   DPmatrixHMM Matrices(nstates,dists1,dists23,frequency);
 
-  // Cache state info
-  for(int S2=0;S2<nstates+1;S2++)
-    Matrices.getstate[S2] = getstates(S2);
+  // Cache which states emit which sequences
+  for(int S2=0;S2<nstates+1;S2++) {
+    Matrices.state_emit[S2] = 0;
+
+    if (di(S2)) 
+      Matrices.state_emit[S2] |= (1<<0);
+
+    if (dc(S2)) 
+      Matrices.state_emit[S2] |= (1<<1);
+  }
 
   // Determine state order
   vector<int> state_order(nstates);
@@ -969,21 +710,17 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     for(int i=0;i<state_order.size();i++) {
       int S2 = state_order[i];
 
-      int j1 = j2;
-      int k1 = k2;
-
       //---------- Get (,j1,k1) ----------
-      if (Matrices.getstate[S2]&(1<<2))
+      int j1 = j2;
+      if (dj(S2)) 
 	j1--;
-      if (Matrices.getstate[S2]&(1<<3))
+
+      int k1 = k2;
+      if (dk(S2)) 
 	k1--;
       
       //------ Get c1, check if valid ------
-      if (c2==0)
-	Matrices.states(c2).push_back(S2);
-      else if (j1 == j2 and k1 == k2)
-	Matrices.states(c2).push_back(S2);
-      else if (j1 == jcol[c2-1] and k1 == kcol[c2-1])
+      if (c2==0 or (j1 == j2 and k1 == k2) or (j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
 	Matrices.states(c2).push_back(S2);
       else
 	; // this state not allowed here
@@ -1087,37 +824,22 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,3);
 
   // get the probabilities of sampling each of the paths
-  double p1 = path_P(path_old_G,Matrices,GQ); 
-  double p2 = path_P(path_new_G,Matrices,GQ); 
+  double p1 = Matrices.path_P(path_old_G,GQ); 
+  double p2 = Matrices.path_P(path_new_G,GQ); 
 
   // get the probabilities of the path through the 3-way HMM
-  vector<double> QP = path_Q(path_old_G,Matrices,GQ);
+  vector<double> QP = Matrices.path_Q(path_old_G,GQ);
   double qp1 = QP[0];
   double qs1 = QP[1];
   double q1 = qp1 + qs1;
 
-  QP = path_Q(path_new_G,Matrices,GQ);
+  QP = Matrices.path_Q(path_new_G,GQ);
   double qp2 = QP[0];
   double qs2 = QP[1];
   double q2 = qp2 + qs2;
 
-  // Adjust for length of n0 changing
-  int length_old = old.seqlength(n0);
-  int length_new = A.seqlength(n0);
-
-    std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
-    std::cerr<<"Q1 = "<<q1<<"     Q2 = "<<q2<<"     Q2 - Q1 = "<<q2-q1<<endl;
-
-
-
-    //  p1 -= 2.0*Theta.IModel.lengthp(length_old);
-    //  p2 -= 2.0*Theta.IModel.lengthp(length_new);
-
   p1 += generalize_P(path_old,Q);
   p2 += generalize_P(path_new,Q);
-
-  //  q1 -= 2.0*Theta.IModel.lengthp(length_old);
-  //  q2 -= 2.0*Theta.IModel.lengthp(length_new);
 
   q1 += generalize_P(path_old,Q);
   q2 += generalize_P(path_new,Q);
@@ -1159,7 +881,9 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   assert(isnan(rdiff) or abs(diff) < 1.0e-8);
   assert(valid(A));
 
-  /*--------------------------------------------------------------*/
+  /*---------------- Adjust for length of n0 changing --------------------*/
+  int length_old = old.seqlength(n0);
+  int length_new = A.seqlength(n0);
 
   double log_ratio = 2.0*(Theta.IModel.lengthp(length_new)-Theta.IModel.lengthp(length_old));
   if (myrandomf() < exp(log_ratio))
