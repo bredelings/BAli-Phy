@@ -323,11 +323,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("frequencies",value<string>(),"comma-separated vector of frequencies to use as initial condition") 
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("CFNF","make codon frequencies from nucleotide frequencies")
-    ("Empirical",value<string>()->default_value("wag"),"rate matrix to use for empirical substitution models")
-    ("gamma_plus_uniform",value<int>()->default_value(4),"number of bins to use for the gamma_plus_uniform distributed rate variation")
-    ("gamma_bins",value<int>()->default_value(4),"number of bins to use for gamma distributed rate variation")
-    ("double_gamma_bins",value<int>()->default_value(4),"number of bins to use for double_gamma distributed rate variation")
-    ("multi_freq_bins",value<int>()->default_value(4),"number of different frequency classes to use")
     ;
   options_description all("All options");
   all.add(general).add(mcmc).add(parameters).add(smodel);
