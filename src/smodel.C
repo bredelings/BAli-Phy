@@ -432,7 +432,7 @@ namespace substitution {
 
 
   double INV_Model::super_prior() const {
-    double p = parameters()[parameters().size()-2];
+    double p = parameters()[parameters().size()-1];
 
     const double frac_mode = 0.02;
     const double N = 20;
