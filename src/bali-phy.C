@@ -127,7 +127,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   //FIXME - doesn't yet deal with gaps=star
   if (P.IModel().full_tree)
-    NNI_move.add(0.05,MoveArgSingle("three_way_NNI_and_A:alignment:alignment_branch:nodes:topology",
+    NNI_move.add(0.025,MoveArgSingle("three_way_NNI_and_A:alignment:alignment_branch:nodes:topology",
 				   three_way_topology_and_alignment_sample,
 				   internal_branches)
 		 );
