@@ -109,3 +109,73 @@ double prior_HMM(const alignment& A,const Parameters& Theta) {
   return P;
 }
 
+double prior_branch_HMM_star_nogiven(const alignment& A,const IndelModel& IModel,int child) {
+  const vector<double>& pi = IModel.pi;
+  const Matrix& Q = IModel.Q;
+
+  vector<int> state(A.length()+1);
+  for(int column=0;column<A.length();column++) {
+    state[column] = 0;
+    if (A.gap(column,child))
+      state[column] = 2;
+  }
+  state[A.length()] = 3;
+
+  double Pr = log_0;
+  for(int i=0;i<4;i++)
+    Pr = logsum(Pr,pi[i] + Q(i,state[0]) );
+
+  for(int i=1;i<state.size();i++) 
+    Pr += Q(state[i-1],state[i]);
+  
+  return Pr;
+}
+
+double prior_branch_HMM_star(const alignment& A,const IndelModel& IModel,int child) {
+  double Pr = prior_branch_HMM_star_nogiven(A,IModel,child);
+  Pr -= IModel.length_plus_p(A.length());
+  return Pr;
+}
+
+double prior_HMM_star(const alignment& A,const Parameters& P) {
+  const tree& T =P.T;
+
+  double Pr = P.IModel.lengthp(A.length());
+  for(int b=0;b<T.branches();b++) 
+    Pr += prior_branch_HMM_star(A,P.IModel,b);
+
+  return Pr;
+}
+
+double Pr_tgaps_tletters(const alignment& A,const Parameters& P) {
+  double Pr=0;
+  Pr += prior_HMM(A,P);
+  Pr += substitution(A,P); // also deals w/ frequencies
+  Pr += prior(P);
+  return Pr;
+}
+
+double Pr_tgaps_sletters(const alignment& A,const Parameters& P) {
+  double Pr=0;
+  Pr += prior_HMM(A,P);
+  Pr += substitution_star(A,P); // also deals w/ frequencies
+  Pr += prior(P);
+  return Pr;
+}
+
+double Pr_sgaps_tletters(const alignment& A,const Parameters& P) {
+  double Pr=0;
+  Pr += prior_HMM_star(A,P);
+  Pr += substitution(A,P); // also deals w/ frequencies
+  Pr += prior(P);
+  return Pr;
+}
+
+double Pr_sgaps_sletters(const alignment& A,const Parameters& P) {
+  double Pr=0;
+  Pr += prior_HMM_star(A,P);
+  Pr += substitution_star(A,P); // also deals w/ frequencies
+  Pr += prior(P);
+  return Pr;
+}
+

@@ -7,14 +7,12 @@ std::valarray<double> peel(const vector<int>&,const Parameters&,int,bool);
 std::valarray<double> peel(const vector<int>&,const Parameters&,int,int,int);
 
 
-// Process a whole tree/column
+// Full likelihood of a column or alignment
 double substitution(const vector<int>&,const Parameters&);
-
-// Process all the columns in A
 double substitution(const alignment& A,const Parameters&);
 
-// Process a whole tree/column - star tree
-double substitution_star(const vector<int>&,const Parameters&);
 
-// Process a whole tree/column - star tree
+// Star likelihood of a column or alignment
+// FIXME - need to pick a root and get branch lengths by summing from that!
+double substitution_star(const vector<int>&,const Parameters&);
 double substitution_star(const alignment& A,const Parameters&);

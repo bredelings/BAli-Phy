@@ -5,11 +5,28 @@
 #include "parameters.H"
 #include "substitution.H"
 
+
+// Reduced Model: s-gaps (but w/o HMM);
 double prior_no_tree(const alignment&,const Parameters&);
+
+// Full Model: t-gaps (but w/o HMM)
 double prior_internal(const alignment&,const Parameters&);
+
+// Full Model: t-gaps
 double prior_HMM(const alignment&,const Parameters&);
 double prior_HMM_nogiven(const alignment&,const Parameters&);
 double prior_branch_HMM(const alignment&,const IndelModel&,int parent,int child);
+
+// Reduced Model: s-gaps
+double prior_branch_HMM_star_nogiven(const alignment&,const IndelModel&,int);
+double prior_branch_HMM_star(const alignment&,const IndelModel&,int);
+double prior_HMM_star(const alignment&,const Parameters&);
+
+// Full probabilities
+double Pr_tgaps_tletters(const alignment&,const Parameters&);
+double Pr_tgaps_sletters(const alignment&,const Parameters&);
+double Pr_sgaps_tletters(const alignment&,const Parameters&);
+double Pr_sgaps_sletters(const alignment&,const Parameters&);
 
 inline double log_double_factorial(int n) {
   double x = 0;
@@ -39,19 +56,6 @@ inline double prior(const Parameters& Theta) {
 
   return p;
 }
-
-/*  Now defunct - I don't want to maintain possibilities.C and gaps.C
-double prior(const alignment&,const Parameters&);
-// ln(P(A,Data|T)) = ln(P(A|T)) + ln(P(Data|A,T))
-inline double probability_simple_tree(const alignment& A,const Parameters& Theta) {
-  double p = 0;
-  p += prior(A,Theta);  
-  p += substitution(A,Theta); // also deals w/ frequencies
-  p += prior(Theta);
-
-  return p;
-}
-*/
 
 // ln(P(A,Data|T)) = ln(P(A)) + ln(P(Data|A,T))
 inline double probability_no_tree(const alignment& A,const Parameters& Theta) {

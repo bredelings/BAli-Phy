@@ -46,8 +46,13 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
 
 void print_stats(std::ostream& o,const alignment& A,const Parameters& P,
 		 double probability(const alignment&,const Parameters&)) {
-  o<<endl<<" old  ["<<probability2(A,P)<<": "<<prior_internal(A,P)<<" + "<<substitution(A,P)<<"]"<<endl
-   <<" HMM  ["<<probability3(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution(A,P)<<"]"<<endl<<endl;
+  o<<endl;
+  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_star(A,P)<<" + "<<substitution_star(A,P)<<"]"<<endl;
+  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_star(A,P)<<" + "<<substitution(A,P)<<"]"<<endl;
+  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution_star(A,P)<<"]"<<endl;
+  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution(A,P)<<"]"<<endl;
+  o<<" old   ["<<probability2(A,P)<<": "<<prior_internal(A,P)<<" + "<<substitution(A,P)<<"]"<<endl;
+  o<<" HMM   ["<<probability3(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution(A,P)<<"]"<<endl;
   
   o<<standardize(A,P.T)<<endl<<endl;
 

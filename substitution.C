@@ -224,11 +224,14 @@ double substitution_star(const vector<int>& column, const Parameters& P) {
   const tree& T = P.T;
 
   double sum=0;
-  for(int l=0;l<a.size();l++) {
-    double temp=0;
+  for(int lroot=0;lroot<a.size();lroot++) {
+    double temp=P.frequencies()[lroot];
     for(int b=0;b<T.branches();b++) {
       const Matrix& Q = P.substitution(b);
-      temp *= Q(column[b],l);
+
+      int lleaf = column[b];
+      if (a.letter(lleaf))
+	temp *= Q(lleaf,lroot);
     }
     sum += temp;
   }
