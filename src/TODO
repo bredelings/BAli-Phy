@@ -43,6 +43,10 @@
    that does not depend on features of the alignment, like column
    number that may change w/o changing the conditional likelihoods.
 
+9. Use read a sequence of FASTA alignments, find the last FASTA alignment...
+10. alignment-draw: implement bg-colors=type, bg-whiteness = uncertainty
+11. alignment-gild: use list<alignment> instead of vector<>...
+12. remove print_phylip second argument, a boolean to not print ancestral taxa.
 check: how does P(data|model) depend on number of frequency bins?
 
 fix: gamma+frequency+INV
