@@ -7,7 +7,7 @@ void Model::set_n_parameters(int n) {
   parameters_.resize(n);
 
   int s = fixed.size();
-  fixed.resize(s);
+  fixed.resize(n);
   for(int i=s;i<fixed.size();i++)
     fixed[i] = false;
 }
