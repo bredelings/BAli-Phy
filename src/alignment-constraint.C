@@ -1,4 +1,5 @@
 #include <sstream>
+#include <iostream>
 #include "alignment-constraint.H"
 #include "alignment-util.H"
 #include "util.H"
@@ -129,4 +130,46 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
   }
 
   return pins;
+}
+
+
+valarray<bool> constraint_satisfied(const ublas::matrix<int>& constraint,const alignment& A) {
+  vector<vector<int> > column_indices = column_lookup(A);
+
+
+  // determine which constraints are satisfied, and can be enforced
+  valarray<bool> satisfied(true,constraint.size1());
+
+  for(int i=0;i<constraint.size1();i++) {
+
+    // check if all the constrained residues are in the same column
+    int col = -1;
+    for(int j=0;j<constraint.size2();j++) {
+      if (constraint(i,j) == -1) continue;
+
+      int this_col = column_indices[j][constraint(i,j)];
+      if (col == -1)
+	col = this_col;
+      else
+	if (col != this_col) {
+	  satisfied[i] = false;
+	  break;
+	}
+    }
+  }
+
+  return satisfied;
+}
+
+
+void report_constraints(const valarray<bool>& s1, const valarray<bool>& s2) {
+  assert(s1.size() == s2.size());
+  for(int i=0;i<s1.size();i++) {
+    if (s1[i] and not s2[i])
+      throw myexception()<<"Constraint "<<i<<" went from satisfied -> unsatisfied!";
+    if (s2[i] and not s2[i])
+      std::cerr<<"Constraint "<<i<<" satisfied."<<std::endl;
+  }
+  if (s1.sum() != s1.size() and s2.sum() == s2.size())
+    std::cerr<<"All constraints satisfied."<<std::endl;
 }

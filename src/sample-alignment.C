@@ -50,6 +50,8 @@ typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parame
 void sample_alignment(alignment& A,Parameters& P,int b) {
   assert(P.IModel().full_tree);
 
+  valarray<bool> s1 = constraint_satisfied(P.alignment_constraint,A);
+
   const Tree& T = P.T;
   alignment old = A;
 
@@ -141,6 +143,8 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
 
   /*--------------------------------------------------------------*/
   assert(valid(A));
+  valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
+  report_constraints(s1,s2);
 }
 
 

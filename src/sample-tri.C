@@ -326,6 +326,8 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
 void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
 
+  valarray<bool> s1 = constraint_satisfied(P.alignment_constraint,A);
+
   /*------------(Gibbs) sample from proposal distribution ------------------*/
 #ifndef NDEBUG
   check_alignment(A,P.T,"tri_sample_alignment:in");
@@ -341,6 +343,9 @@ void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
 #ifndef NDEBUG
   check_alignment(A,P.T,"tri_sample_alignment:out");
 #endif
+
+  valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
+  report_constraints(s1,s2);
 }
 
 /// Resample branch alignment, internal nodes, and branch length

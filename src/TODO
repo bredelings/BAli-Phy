@@ -1,5 +1,3 @@
-2. Fix tools/analyze-distances: make an interface to get likelihoods by column...
-
 *3. Write alignment-consensus
 
 4. In smodel description, allow a * argument, or perhaps a [] format so -> 
@@ -8,9 +6,6 @@
    c) or [WAG] + gamma[4]
 
 5. Add comments!
-
-*6. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
-*7. Make align-constraint= work with sample_tri_multi (there is no regular sample_multi)
 
 8. Get intel compiler
 
@@ -135,3 +130,7 @@ the prior, because we never want to use it  differently.
 
 [DONE] Update tools to use boost::program_options.
 
+[DONE] Fix tools/analyze-distances: make an interface to get likelihoods by column...
+
+[DONE] Record when each constraint is first satisfied, and when all are satisfied
+[DONE] Make align-constraint= work SPR_and_A

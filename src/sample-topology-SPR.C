@@ -8,6 +8,7 @@
 
 #include "3way.H"
 #include "alignment-sums.H"
+#include "alignment-constraint.H"
 
 ///Sample between 2 topologies, ignoring gap priors on each case
 bool sample_SPR_and_A(alignment& A,Parameters& P,vector<Parameters>& p,int n1, int n2) 
@@ -17,8 +18,18 @@ bool sample_SPR_and_A(alignment& A,Parameters& P,vector<Parameters>& p,int n1, i
   nodes[0] = A3::get_nodes_branch_random(p[0].T,n1,n2);
   nodes[1] = A3::get_nodes_branch_random(p[1].T,n1,n2);
 
+  alignment A0 = A;
+  valarray<bool> s1 = constraint_satisfied(P.alignment_constraint,A);
   bool success = sample_tri_multi(A,p,nodes,true,true);
-  P = p[0];
+  valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
+
+  // back out if the new tree topology make some constraints impossible
+  if ((s1 and not s2).sum())
+    A = A0;
+  else
+    P = p[0];
+
+  report_constraints(s1,s2);
 
   return success;
 }
@@ -144,6 +155,9 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b) {
     p[1].setlength(b,p[1].T.branch(b).length());
   }
   
+  alignment A0 = A;
+  Parameters P0 = P;
+
   bool success = topology_sample_SPR(A,P,p,n1,n2);
 
   if (success)
