@@ -85,6 +85,11 @@ public:
   tree_sample(std::istream&,const std::vector<std::string>& remove);
 };
 
+SequenceTree standardized(const std::string& t);
+SequenceTree standardized(const std::string& t,const std::vector<std::string>& remove);
+SequenceTree standardized(SequenceTree T);
+SequenceTree standardized(SequenceTree T,const std::vector<std::string>& remove);
+
 double branch_distance(const SequenceTree& T1, const SequenceTree& T2);
 double topology_distance(const SequenceTree& T1, const SequenceTree& T2);
 

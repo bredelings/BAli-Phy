@@ -56,7 +56,9 @@ tools/treecount: tree.o sequencetree.o arguments.o util.o rng.o tools/statistics
 tools/tree-dist-compare: tree.o sequencetree.o tools/tree-dist.o arguments.o util.o \
 	 rng.o tools/statistics.o ${LIBS:%=-l%}
 
-tools/tree-dist-autocorrelation: tree.o sequencetree.o sequencetree.o arguments.o tools/tree-dist.o
+tools/tree-dist-autocorrelation: tree.o sequencetree.o arguments.o tools/tree-dist.o
+
+tools/tree-dist-cvars: tree.o sequencetree.o arguments.o util.o tools/tree-dist.o
 
 tools/tree-to-srq: tree.o sequencetree.o arguments.o
 

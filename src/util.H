@@ -106,6 +106,8 @@ bool includes(const std::vector<T>& v1, const std::vector<T>& v2) {
   return true;
 }
 
+std::string join(const std::vector<std::string>&,char);
+
 std::vector<std::string> split(const std::string&,char);
 
 template<class T>

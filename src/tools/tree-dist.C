@@ -1,3 +1,4 @@
+#include <map>
 #include "tree-dist.H"
 #include "rng.H"
 
@@ -14,16 +15,19 @@ using std::cerr;
 using std::cout;
 
 
+SequenceTree standardized(const string& t) {
+  SequenceTree T;
+  T.parse(t);
+  return standardized(T);
+}
+  
 SequenceTree standardized(const string& t,const vector<string>& remove) {
   SequenceTree T;
   T.parse(t);
   return standardized(T,remove);
 }
   
-
-SequenceTree standardized(SequenceTree T,const vector<string>& remove) {
-  for(int i=0;i<remove.size();i++)
-    delete_node(T,remove[i]);
+SequenceTree standardized(SequenceTree T) {
 
   map<string,int,lstr> sequences;
 
@@ -46,6 +50,13 @@ SequenceTree standardized(SequenceTree T,const vector<string>& remove) {
   T.SequenceTree::standardize(newnames);
   //  cerr<<T.write(false)<<endl;
   return T;
+}
+
+SequenceTree standardized(SequenceTree T,const vector<string>& remove) {
+  for(int i=0;i<remove.size();i++)
+    delete_node(T,remove[i]);
+
+  return standardized(T);
 }
 
 valarray<bool> branch_partition(const tree& T,int b) {

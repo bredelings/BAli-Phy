@@ -3,6 +3,18 @@
 using std::vector;
 using std::string;
 
+string join(const vector<string>& v,char c) {
+  string s;
+  if (v.size())
+    s = v[0];
+  for(int i=1;i<v.size();i++) {
+    s += string(1,c);
+    s += v[i];
+  }
+  return s;
+}
+
+
 vector<string> split(const string& s, char c) {
   vector<string> strings;
   int length=0;
