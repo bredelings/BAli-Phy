@@ -329,7 +329,13 @@ std::ostream& operator<<(std::ostream& file,const alignment& A) {
 }
 
 std::istream& operator>>(std::istream& file,alignment& A) {
-  A.load_sequences(A.get_alphabet(),sequence_format::read_fasta,file);
+
+  char c = file.getc();
+  file.putback(c);
+  if (c=='>')
+    A.load_sequences(A.get_alphabet(),sequence_format::read_fasta,file);
+  else
+    A.load_sequences(A.get_alphabet(),sequence_format::read_phylip,file);
   return file;
 }
 
