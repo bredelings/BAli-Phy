@@ -68,7 +68,7 @@ void Multi_Likelihood_Cache::set_length(int l2) {
   int delta = l2 - size();
   if (delta <= 0) return;
 
-  vector< Matrix > column = vector<Matrix>(B*active.size(),Matrix(M,A));
+  vector< Matrix > column = vector<Matrix>(M,Matrix(B*active.size(),A));
 
   reserve(l2);
   for(int i=0;i<delta;i++)
@@ -91,9 +91,11 @@ int Multi_Likelihood_Cache::add_token() {
   active.push_back(false);
 
   // allocate the extra cache space
-  for(int c=0;c<size();c++)
-    for(int b=0;b<B;b++)
-      (*this)[c].push_back(Matrix(M,A));
+  int length = size();
+  clear();
+  set_length(length);
+  for(int i=0;i<up_to_date_.size();i++)
+    up_to_date_[i] = false;
 
   // increase the size of the indexes
   for(int i=0;i<B;i++) {
@@ -189,6 +191,7 @@ void Likelihood_Cache::set_length(int l2) {
 
 
 Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) {
+  old_value = LC.old_value;
   cache->release_token(token);
   cache = LC.cache;
   token = cache->claim_token();
@@ -201,6 +204,7 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) {
 Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC) 
   :cache(LC.cache),
    token(cache->claim_token()),
+   old_value(LC.old_value),
    root(LC.root)
 {
   cache->copy_token(token,LC.token);
@@ -209,6 +213,7 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
 Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModel& M,int l)
   :cache(new Multi_Likelihood_Cache(T,M,l)),
    token(cache->claim_token()),
+   old_value(0),
    root(T.n_nodes()-1)
 {
   set_length(l);
@@ -218,3 +223,11 @@ Likelihood_Cache::~Likelihood_Cache() {
   cache->release_token(token);
 }
 
+void select_root(int n1,int n2,Likelihood_Cache& LC) {
+  if (n1 > n2)
+    std::swap(n1,n2);
+  if (LC.root == n1)
+    std::swap(n1,n2);
+
+  LC.root = n2;
+}

@@ -311,8 +311,10 @@ MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P1,int b) {
   vector<int> nodes = A5::get_nodes(P1.T,b);
 
   /****** Generate the Different Topologies *******/
-  P1.LC.root = std::max(P1.T.branch(b).source().name(),
-			P1.T.branch(b).target().name());
+  select_root(P1.T.branch(b).source().name(),
+	      P1.T.branch(b).target().name(),
+	      P1.LC);
+  
 
   Parameters P2 = P1;
   Parameters P3 = P1;

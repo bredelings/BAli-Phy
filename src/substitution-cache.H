@@ -78,6 +78,8 @@ class Likelihood_Cache {
   int token;
 
 public:
+  double old_value;
+
   int root;
 
   int scratch() const {return (*cache)(token,cache->scratch());}
@@ -110,5 +112,7 @@ public:
 
   ~Likelihood_Cache();
 };
+
+void select_root(int n1,int n2,Likelihood_Cache& LC);
 
 #endif

@@ -396,7 +396,6 @@ double MoveEach::sum(int arg) const {
     if (submove_has_arg(i,arg) and moves[i]->enabled())
       total += lambda[i];
 
-  assert(total > 0);
   return total;
 }
 
@@ -407,7 +406,11 @@ int MoveEach::choose(int arg) const {
 
   double sum = 0;
   int i = 0;
+  int enabled_submoves=0;
   for(;i < moves.size();i++) {
+
+    if (moves[i]->enabled())
+      enabled_submoves++;
 
     if (not submove_has_arg(i,arg) or not moves[i]->enabled())
       continue;
@@ -415,6 +418,9 @@ int MoveEach::choose(int arg) const {
     sum += lambda[i];
     if (r<sum) break;
   }
+
+  if (not enabled_submoves)
+    throw myexception()<<"move "<<attributes[0]<<" has no enabled submoves";
 
   // is sum(arg) > 0 ?
   if (i >= moves.size())

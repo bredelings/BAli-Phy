@@ -35,23 +35,20 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
   result[2] = 1.0;
   result[4] = 1.0;
   
-  //-------- Propose increment 'epsilon' ----------//
+  /********* Propose increment 'epsilon' ***********/
   const double length = P.T.branch(b).length();
 
   double newlength = branch_twiddle(length,P.branch_mean);
   newlength = std::abs(newlength);
   
-  //----------- Calculate propsal ratio -----------//
-  int n1 = P.T.branch(b).source();
-  int n2 = P.T.branch(b).target();
-  P.LC.root = std::max(n1,n2);
-  P.LC.invalidate_all();
+  /******** Calculate propsal ratio ***************/
+  
+  /********** Do the M-H step if OK**************/
+  select_root(P.T.branch(b).source(),P.T.branch(b).target(),P.LC);
 
   Parameters P2 = P;
-  P2.LC.invalidate_all();
   P2.setlength(b,newlength);
-  
-  //------------- Do the M-H step if OK -----------//
+
   if (do_MH_move(A,P,P2)) {
     std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
     result[1] = 1;
@@ -63,36 +60,11 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
   return result;
 }
 
-MCMC::result_t change_branch_length_cached(const alignment& A, Parameters& P,int b) {
-  MCMC::result_t result(0.0,6);
-  result[0] = 1.0;
-  result[2] = 1.0;
-  result[4] = 1.0;
-  
-  /********* Propose increment 'epsilon' ***********/
-  const double length = P.T.branch(b).length();
-
-  double newlength = branch_twiddle(length,P.branch_mean);
-  newlength = std::abs(newlength);
-  
-  /******** Calculate propsal ratio ***************/
-  
-  /********** Do the M-H step if OK**************/
-  int n1 = P.T.branch(b).source();
-  int n2 = P.T.branch(b).target();
-  P.LC.root = std::max(n1,n2);
-
-  Parameters P2 = P;
-  P2.setlength(b,newlength);
-
-  if (do_MH_move(A,P,P2)) {
-    std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
-    result[1] = 1;
-    result[3] = std::abs(length - newlength);
-    result[5] = std::abs(log((newlength+0.001)/(length+0.001)));
-  }
-  else
-    std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
+MCMC::result_t change_branch_length_multi(const alignment& A, Parameters& P,int b) {
+  const int n=3;
+  MCMC::result_t result = change_branch_length(A,P,b);
+  for(int i=1;i<n;i++)
+    result += change_branch_length(A,P,b);
   return result;
 }
 
@@ -107,6 +79,10 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
   double newlength = branch_twiddle(length,P.branch_mean);
 
   std::cerr<<" old length = "<<P.T.branch(b).length()<<"  new length = "<<newlength<<std::endl;
+
+  int n1 = P.T.branch(b).source();
+  int n2 = P.T.branch(b).target();
+  P.LC.root = std::max(n1,n2);
 
   // If the length is positive, simply propose a length change
   if (newlength >= 0) {

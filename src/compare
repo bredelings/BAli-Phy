@@ -347,3 +347,9 @@ Future: stop allocating 'uninformative' inside the peel() routine...
 Future: only run branch-lengths 1 time per iteration, but re-sample each branch multiple times (e.g. 4)
 
 Profile???
+
+
+DISADVANTAGE to putting the operations close together?
+3.8 -> 4.1 (12)
+11.4->11.8 (24)
+35.8->43   (48)

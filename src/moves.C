@@ -12,11 +12,11 @@ MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
   return change_branch_length(A,P,b);
 }
 
-MCMC::result_t change_branch_length_cached_move(alignment& A, Parameters& P,int b) {
+MCMC::result_t change_branch_length_multi_move(alignment& A, Parameters& P,int b) {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
     return MCMC::result_t(0.0,6); // no_result
 
-  return change_branch_length_cached(A,P,b);
+  return change_branch_length_multi(A,P,b);
 }
 
 MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
@@ -107,6 +107,63 @@ MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
   return MCMC::result_t(); // no_result
 }
 
+vector<int> get_branch_list(const Tree& T) {
+  vector<const_branchview> b_stack;
+  b_stack.reserve(T.n_branches());
+  vector<const_branchview> branches;
+  branches.reserve(T.n_branches());
+
+  // put a random leaf branch on the stack
+  int leaf = myrandom(T.n_leafbranches());
+  if (T.directed_branch(leaf).target() == leaf)
+    leaf = T.directed_branch(leaf).reverse();
+  b_stack.push_back(T.directed_branch(leaf));
+
+  while(not b_stack.empty()) {
+    // move branch from stack to list
+    branches.push_back(b_stack.back());
+    b_stack.pop_back();
+
+    // add children to stack, and count them
+    int i = b_stack.size();
+    append(branches.back().branches_after(),b_stack);
+    int j = b_stack.size();
+
+    // try to put an internal branch at the top of the stack
+    if (b_stack.size() and not b_stack.back().is_internal_branch())
+      for(int k=1;k<j-i;k++)
+	if (b_stack[j-k-1].is_internal_branch()) {
+	  std::swap(branches[j-k-1],branches.back());
+	  break;
+	}
+  }
+
+  assert(branches.size() == T.n_branches());
+
+  vector<int> branches2(branches.size());
+  for(int i=0;i<branches.size();i++)
+    branches2[i] = branches[i].undirected_name();
+
+  return branches2;
+}
+
+
+MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
+  vector<int> branches = get_branch_list(P.T);
+
+  MCMC::result_t result;
+
+  for(int i=0;i<branches.size();i++) {
+    int b = branches[i];
+    change_branch_length(A,P,b);
+    if (P.T.branch(b).is_internal_branch())
+      three_way_topology_sample(A,P,b);
+  }
+
+  return result;
+}
+
+
 MCMC::result_t change_parameters(alignment& A,Parameters& P) {
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
@@ -158,6 +215,9 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
 
   return result;
 }
+
+
+
 
 MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
   MCMC::result_t result(0.0,2);
