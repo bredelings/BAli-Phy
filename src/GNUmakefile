@@ -1,11 +1,12 @@
 program: bali-phy
 
-TOOLS=
-
-tools: tools/model_P tools/statreport tools/alignment-blame \
+TOOLS = tools/model_P tools/statreport tools/alignment-blame \
 	tools/alignment-reorder tools/alignment-draw tools/findalign \
 	tools/tree-to-srq tools/tree-names-trunc tools/tree-reroot \
-	tools/srq-to-plot tools/srq-analyze tools/phy_to_fasta
+	tools/srq-to-plot tools/srq-analyze tools/phy_to_fasta \
+	tools/tree-dist-compare
+
+tools: ${TOOLS}
 
 `all: bali-phy tools
 
@@ -149,7 +150,7 @@ GNUmakefile : ${SOURCES:%=.%.d}
 	@echo ${shell \
 	  ${CPP} -MM ${CPPFLAGS} $< | sed 's/\(^.*\):/$@ \1:/g'} > $@
 clean:
-	-@rm -f *.o *~ *# *.tar *.gz ${PROGNAME} Makefile core
+	-@rm -f *.o *~ *# *.tar *.gz ${PROGNAME} Makefile core ${TOOLS} tools/*.o
 
 # we are missing sources in the tools/ directory ...
 ALLSOURCES=${SOURCES}
