@@ -23,11 +23,10 @@ namespace A3 {
 //  - these alignment can only have 3 states each (M,G1,G2, not E) and so
 //    total 3*3 = 9 states.  
 
-
+  /// The number of states, minus the end state (state state also ignored)
   const int nstates = 1+3+3+1+3*9;
+  /// The name of the E (end) state
   const int endstate = nstates;
-  const int bitsmask = 15;
-  const int emitmask = 14;
 
   int bits_to_states(int bits);
 
@@ -35,16 +34,19 @@ namespace A3 {
 
   int findstate(int states);
 
+  /// Does state S emit in sequence 1?
   int di(int S);
+  /// Does state S emit in sequence 2?
   int dj(int S);
+  /// Does state S emit in sequence 3?
   int dk(int S);
-  int dc(int S);
+  /// Does state S emit in sequence 0?
   int dl(int S);
+  /// Does state S emit in sequence 2 or 3?
+  int dc(int S);
 
   double getQ(int S1,int S2,const IndelModel& IModel);
-  double getGQ(int S1,int S2,const IndelModel& IModel);
   Matrix createQ(const IndelModel& IModel);
-  Matrix createGQ(const IndelModel& IModel);
 
   alignment construct(const alignment& old, const vector<int>& path, 
 		      int n0,int n1,int n2,int n3,const tree& T,
@@ -53,8 +55,6 @@ namespace A3 {
   vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3);
   alignment project(const alignment& A1,int n0,int n1,int n2,int n3);
 };
-
-//using namespace A3;
 
 
 vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3);

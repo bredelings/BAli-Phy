@@ -5,7 +5,7 @@
 #---------------------------------------------------------------------------
 PROJECT_NAME           = Sampler
 PROJECT_NUMBER         = .
-OUTPUT_DIRECTORY       = Doc
+OUTPUT_DIRECTORY       = /home/bredelin/Devel/Sampler/Doc/
 OUTPUT_LANGUAGE        = English
 USE_WINDOWS_ENCODING   = NO
 EXTRACT_ALL            = YES
@@ -61,7 +61,14 @@ INPUT                  = .
 FILE_PATTERNS          = *.C \
                          *.H
 RECURSIVE              = NO
-EXCLUDE                = 
+EXCLUDE                = a-confidence.C \
+                         cutafter.C \
+                         cutat.C \
+                         dos2unix.C \
+                         make_gaps.C \
+                         make_random_tree.C \
+                         reroot.C \
+                         treecount.C
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
 EXAMPLE_PATH           = 

@@ -45,7 +45,19 @@ Matrix exp(const SMatrix& M,const double t) {
   for(int i=0;i<solution.size();i++)
     D(i,i) = exp(t*D(i,i));
 
-  Matrix E = prod(O,prod(D,trans(O)));
+
+  //Matrix E = prod(O,prod(D,trans(O)));
+
+  int size = O.size1();
+  Matrix E(size,size);
+  for(int i=0;i<size;i++)
+    for(int j=0;j<size;j++) {
+      double temp =0;
+      for(int k=0;k<size;k++)
+	temp += O(i,k)*O(j,k)*D(k,k);
+      E(i,j) = temp;
+    }
+	
 
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++)

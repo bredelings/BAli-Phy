@@ -28,9 +28,9 @@ alignment sample_node(const alignment& old,const Parameters&,int node);
 alignment sample_node2(const alignment& old,const Parameters&,int node);
 
 //Resample gap/non-gap for 2 internal nodes, and the topology, with specified branch lengths
-MCMC::result_t sample_topology(alignment& A,Parameters&,const SequenceTree&, const SequenceTree&, int);
+MCMC::result_t sample_topology(alignment& A,Parameters&,const Parameters&, const Parameters&, int);
 
-// which nodes are adjacent to this branch
+/// Which nodes are adjacent to this branch?
 vector<int> get_nodes(const alignment& A, const tree& T,int b);
 
 /*-------------- Top Level Sampling Routines -----------*/

@@ -15,25 +15,6 @@ using std::valarray;
 // * 
 namespace substitution {
 
-inline valarray<double> peel(int letter,const Matrix& P,const valarray<double>& dist1) {
-  valarray<double> dist2(0.0,P.size1());
-  
-  //This is a speedup in this case
-  if (alphabet::letter(letter)) {
-    for(int i=0;i<dist2.size();i++)
-      dist2[i] = P(i,letter)*dist1[letter];
-  }
-  // But this still works in all cases
-  else {
-    for(int i=0;i<dist2.size();i++)
-      for(int j=0;j<dist2.size();j++)
-	dist2[i] += P(i,j)*dist1[j];
-  }
-
-  return dist2;
-}
-
-
 // 1. make an inner 'peel' that <distributions> as a parameter
 //   a. this contains the info from 'residues' and 'group'
 // 2. alter 'peel' to go over the whole tree
@@ -46,10 +27,94 @@ inline valarray<double> peel(int letter,const Matrix& P,const valarray<double>& 
 
 
 // things to do:  (look at Sampler Todo.sxw)
-// 1. make the distributions(i) never change size - use a vector<int> or vector<bool>
+// 1. Make the distributions(i) never change size - use a vector<int> or vector<bool>
 //    to store whether or not things have information.
-// 2. then separate out part of the routine as an inline function, to which 'distributions'
+// 2. Then separate out part of the routine as an inline function, to which 'distributions'
 //    is passed.   (change 'distributions' into a matrix?)
+// 3. Make the 'branches' array not depend on 'group'...
+//    In the common case (doing the full tree) this might be a speedup...
+
+  /// Actually propogate info along branches
+												       
+												       
+  inline void peel(const vector<int>& branches, valarray<bool>& used,
+		   Matrix& distributions,
+		   const vector<int>& residues, const tree& T, 
+		   const vector<Matrix>& transition_P,int root) 
+  {
+    const int asize = distributions.size2();
+
+    for(int i=0;i<branches.size();i++) {
+      int b = branches[i];
+      int child = T.branch(b).child();
+      int parent = T.branch(b).parent();
+      
+      // Are we going up or down the branch?
+      if (T.ancestor(child,root))
+	std::swap(child,parent);
+
+      // Skip if no info going out
+      if (not used[child]) continue;
+
+      // Propogate info along branch
+      const Matrix& Q = transition_P[b];
+      if (alphabet::letter(residues[child])) 
+	for(int i=0;i<asize;i++)
+	  distributions(parent,i) *= Q(i,residues[child])*distributions(child,residues[child]);
+      else {
+	for(int i=0;i<asize;i++) {
+	  double temp=0;
+	  for(int j=0;j<asize;j++)
+	    temp += Q(i,j)*distributions(child,j);
+	  distributions(parent,i) *= temp;
+	}
+      }
+
+      // Update info at parent
+      used[parent] = true;
+    }
+  }
+
+  //  inline vector<int> get_branches(const tree& T, int root) __attribute((always_inline))
+
+  /// Compute an ordered list of branches to process
+  inline vector<int> get_branches(const tree& T, int root) {
+
+    //FIXME - walk up the tree from peeling 'root' to the tree root, 
+    // instead of computing branches2 and using 'reverse'
+    vector<int> branches1;
+    branches1.reserve(T.num_nodes());
+    vector<int> branches2;
+    branches2.reserve(T.num_nodes());
+
+    for(int i=0;i<T.num_nodes()-1;i++) {
+      int child = T.get_nth(i);
+
+      // don't propogate from the root, or non-members
+      if (child == root) continue;
+
+      // if we are above the root, then propagate down to it
+      if (child != root and T.ancestor(child,root)) {
+	int parent = T[child].left();
+	if (not T.ancestor(parent,root))
+	  parent = T[child].right();
+	int b = T.branch_up(parent);
+
+	branches2.push_back(b);
+      }
+      // otherwise propagate up to a node that is >= the root
+      else {
+	int b = T.branch_up(child);
+	branches1.push_back(b);
+      }
+    }
+    std::reverse(branches2.begin(),branches2.end());
+    branches1.insert(branches1.end(),branches2.begin(),branches2.end());
+  
+    return branches1;
+  }
+
+
 valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
 		      const vector<Matrix>& transition_P,int node1, int node2, int root) {
   const alphabet& a = SModel.Alphabet();
@@ -61,110 +126,40 @@ valarray<double> peel(const vector<int>& residues,const tree& T,const Reversible
 
   /******* Put the info from the letters into the distribution *******/
   bool any_letters = false;
-  TreeFunc< valarray<double> > distributions(T);  //doing a lot of work here
-  for(int i=0;i<residues.size();i++) {
-    // we DO use distributions() for wrong side of tree, so can't put 
-    // info about letters from wrong side into them
 
-    if (alphabet::letter(residues[i]) and group[i]) {
-      distributions(i).resize(a.size(),0.0);
-      distributions(i)[residues[i]] = 1.0;
-
-      //are there ANY letters at all?
-      any_letters = true;
-    }
-  }
-
-  /******** Compute the ordered list of branches to process *********/
-
-  //FIXME - walk up the tree from peeling 'root' to the tree root, 
-  // instead of computing branches2 and using 'reverse'
-  vector<int> branches1;
-  branches1.reserve(T.num_nodes());
-  vector<int> branches2;
-  branches2.reserve(T.num_nodes());
+  valarray<bool> used(false,T.num_nodes()-1);
+  Matrix distributions(T.num_nodes()-1,a.size());
 
   for(int i=0;i<T.num_nodes()-1;i++) {
-    int child = T.get_nth(i);
+    if (alphabet::letter(residues[i]) and group[i]) {
+      //are there ANY letters at all?
+      any_letters = true;
 
-    // don't propogate from the root, or non-members
-    if (not group[child] or child == root) continue;
+      used[i] = true;
 
-    // if we are above the root, then propagate down to it
-    if (child != root and T.ancestor(child,root)) {
-      int parent = T[child].left();
-      if (not T.ancestor(parent,root))
-	parent = T[child].right();
-      int b = T.branch_up(parent);
-
-      branches2.push_back(b);
+      for(int j=0;j<a.size();j++)
+      	distributions(i,j) = 0;
+      distributions(i,residues[i]) = 1;
     }
-    // otherwise propagate up to a node that is >= the root
+    // If we always replaced unused nodes instead of multiplying, we could remove this
     else {
-      int b = T.branch_up(child);
-      branches1.push_back(b);
+      for(int j=0;j<a.size();j++)
+      	distributions(i,j) = 1;
     }
   }
-  std::reverse(branches2.begin(),branches2.end());
-  branches1.insert(branches1.end(),branches2.begin(),branches2.end());
 
-  /**************** Propogate info along branches ******************/
-  valarray<double> dist(a.size());   // declare a temporary for use in the loop.
-                                     // profile this w/ modern
-                                     // compiler and with code in
-                                     // separate routine
-  
+  vector<int> branches = get_branches(T,root);
 
-  for(int i=0;i<branches1.size();i++) {
-    int b = branches1[i];
-    int child = T.branch(b).child();
-    int parent = T.branch(b).parent();
+  peel(branches,used,distributions,residues,T,transition_P,root);
 
-    // Are we going up or down the branch?
-    if (T.ancestor(child,root))
-      std::swap(child,parent);
+  //This can only happen if none of our nodes has info
+  assert(used[root] or not any_letters);
 
-    // Skip if no info going out
-    if (not distributions(child).size()) continue;
-
-    // Propogate info along branch
-    const Matrix& Q = transition_P[b];
-    dist = peel(residues[child],Q,distributions(child));
-
-    // Update info at parent
-    if (not distributions(parent).size()) {
-      distributions(parent).resize(a.size());
-      distributions(parent) = dist;
-    }
-    else 
-      distributions(parent) *= dist;
-  }
-
-  /***************** If no info, return vector(1.0) ***************/
-  if (not distributions(root).size()) {
-    distributions(root).resize(a.size());
-    distributions(root) = 1.0;
-
-    //This can only happen if none of our nodes has info
-    assert(not any_letters);
-  }
-
-  /*
-  std::cerr<<"nodes: "<<node1<<" "<<node2<<endl;
-  for(int i=0;i<residues.size();i++)
-    if (group[i])
-      std::cerr<<a.lookup(residues[i])<<" ";
-    else
-      std::cerr<<". ";
-  std::cerr<<distributions(root).sum()<<" "<<log(distributions(root).sum())<<endl;
-
-  if (not up)
-    assert(node1 == T.branch(b).parent() and node2 == T.branch(b).child());
-  else
-    assert(node2 == T.branch(b).parent() and node1 == T.branch(b).child());
-  */
-
-  return distributions(root);
+  /*----------- return the result ------------------*/
+  valarray<double> result(a.size());
+  for(int i=0;i<a.size();i++)
+    result[i] = distributions(root,i);
+  return result;
 }
 
 valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,

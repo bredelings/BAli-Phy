@@ -139,13 +139,13 @@ static int alignments_to_chain(int bits2,int all_states2) {
   return s2;
 }
 
-static double p_move(int states1, int states2,const IndelModel& Theta) {
+static double p_move(int states1, int states2,const IndelModel& IModel) {
   double P=0;
   for(int i=0;i<5;i++) {
     if (not bitset(states2,10+i)) {    // this sub-alignment is present in this column
       int s1 = (states1>>(2*i))&3;
       int s2 = (states2>>(2*i))&3;
-      P += Theta.Q[s1][s2];
+      P += IModel.Q[s1][s2];
     }
   }
   return P;
@@ -352,19 +352,14 @@ alignment construct(const alignment& old,const tree& T,const vector<int>& path,i
 }
 
 
-MCMC::result_t sample_topology(alignment& A,Parameters& Theta1,
-		     const SequenceTree& T2,const SequenceTree& T3,int b) {
-  const IndelModel& IModel = Theta1.IModel;
+/// Do a Gibbs sample between a set of three topologies/parameters
+MCMC::result_t sample_topology(alignment& A,Parameters& P1,const Parameters& P2, 
+			       const Parameters& P3,int b) {
+  const IndelModel& IModel = P1.IModel;
 
-  SequenceTree& T1 = Theta1.T;
-
-  Parameters Theta2 = Theta1;
-  Theta2.T = T2;
-  Theta2.recalc();
-
-  Parameters Theta3 = Theta1;
-  Theta3.T = T3;
-  Theta3.recalc();
+  SequenceTree& T1 = P1.T;
+  const SequenceTree& T2 = P2.T;
+  const SequenceTree& T3 = P3.T;
 
   vector <int> bits1 = get_bits(A,T1,b);
   vector <int> bits2 = get_bits(A,T2,b);
@@ -377,8 +372,8 @@ MCMC::result_t sample_topology(alignment& A,Parameters& Theta1,
   assert(bits3.size() == bits2.size());
 
   /*** Set up initial conditions (for character -1) ***/
-  vector< vector<double> > P1;
-  P1.push_back(vector<double>(nstates,log_0));
+  vector< vector<double> > DP1;
+  DP1.push_back(vector<double>(nstates,log_0));
   
   for(int s1=0;s1<3;s1++)
     for(int s2=0;s2<3;s2++)
@@ -386,88 +381,91 @@ MCMC::result_t sample_topology(alignment& A,Parameters& Theta1,
 	for(int s4 = 0;s4<3;s4++)
 	  for(int s5 = 0;s5<3;s5++) {
 	    int h = (s5<<8)|(s4<<6)|(s3<<4)|(s2<<2)|s1;
-	    P1[0][h] = IModel.pi[s1] + IModel.pi[s2] + IModel.pi[s3]
+	    DP1[0][h] = IModel.pi[s1] + IModel.pi[s2] + IModel.pi[s3]
 	      + IModel.pi[s4] + IModel.pi[s5];
       }
 
   for(int i=0;i<bits1.size()-1;i++) 
-    P1.push_back(vector<double>(nstates,log_0));
+    DP1.push_back(vector<double>(nstates,log_0));
 
-  vector< vector<double> > P2 = P1;
-  vector< vector<double> > P3 = P1;
+  vector< vector<double> > DP2 = DP1;
+  vector< vector<double> > DP3 = DP1;
 
   /********* Calculate Forward Probabilities **********/
-  double PA1 = get_DP_array(P1,bits1,IModel);
-  double PA2 = get_DP_array(P2,bits2,IModel);
-  double PA3 = get_DP_array(P3,bits3,IModel);
+  double PA1 = get_DP_array(DP1,bits1,IModel);
+  double PA2 = get_DP_array(DP2,bits2,IModel);
+  double PA3 = get_DP_array(DP3,bits3,IModel);
 
   std::cerr<<" PA1 = "<<PA1<<"       PA2 = "<<PA2<<"       PA3 = "<<PA3<<std::endl;
 
-  double PS1 = substitution::Pr(A,Theta1);
-  double PS2 = substitution::Pr(A,Theta2);
-  double PS3 = substitution::Pr(A,Theta3);
+  double PS1 = substitution::Pr(A,P1);
+  double PS2 = substitution::Pr(A,P2);
+  double PS3 = substitution::Pr(A,P3);
 
   std::cerr<<" PS1 = "<<PS1<<"       PS2 = "<<PS2<<"       PS3 = "<<PS3<<std::endl;
 
-  double PP1 = prior(Theta1);
-  double PP2 = prior(Theta2);
-  double PP3 = prior(Theta3);
+  double PP1 = prior(P1);
+  double PP2 = prior(P2);
+  double PP3 = prior(P3);
 
   /*********** Choose A Topology ************/
   int choice = choose(PA1+PS1+PP1, PA2+PS2+PP2, PA3+PS3+PP3);
 
-  vector<int>* chosen_bits = &bits1;
-  vector< vector<double> >* chosen_P = &P1;
-  Parameters* chosen_Theta = &Theta1;
+  const vector<int>* chosen_bits = &bits1;
+  const vector< vector<double> >* chosen_DP = &DP1;
+  const Parameters* chosen_P = &P1;
   double PS = PS1;
 
   if (choice == 1) {
     chosen_bits = &bits2;
+    chosen_DP = &DP2;
     chosen_P = &P2;
-    chosen_Theta = &Theta2;
     PS = PS2;
   }
   else if (choice == 2) {
     chosen_bits = &bits3;
+    chosen_DP = &DP3;
     chosen_P = &P3;
-    chosen_Theta = &Theta3;
     PS = PS3;
   }
   
   // do traceback - how to calculate probability of observing 
   vector<int> path1 = get_path(A,b);
-  vector<int> path2 = sample_path(*chosen_P,*chosen_bits,IModel);
+  vector<int> path2 = sample_path(*chosen_DP,*chosen_bits,IModel);
 
   /****************** Do traceback ********************/
   const alignment old = A;
-  A = construct(A,chosen_Theta->T,path2,b);
+  A = construct(A,chosen_P->T,path2,b);
 
   //  std::cerr<<old<<endl<<endl;
   //  std::cerr<<A<<endl<<endl;
-  double l1 = PS1 + prior3(old,Theta1);
-  double l2 = PS + prior3(A,*chosen_Theta);
+  double l1 = PS1 + prior3(old,P1);
+  double l2 = PS + prior3(A,*chosen_P);
 
   std::cerr<<" L1 = "<<l1<<"    L2 = "<<l2<<std::endl;
 
   std::cerr<<" choice = "<<choice<<std::endl;
   if (choice != 0) {
-    Theta1 = *chosen_Theta;
+    P1 = *chosen_P;
     return MCMC::success;
   }
   else
     return MCMC::failure;
 }
 
-MCMC::result_t sample_topology(alignment& A,Parameters& Theta1,int b) {
-  vector<int> nodes = get_nodes(A,Theta1.T,b);
+MCMC::result_t sample_topology(alignment& A,Parameters& P1,int b) {
+  vector<int> nodes = get_nodes(A,P1.T,b);
 
   /****** Generate the Different Topologies *******/
-  SequenceTree T2 = Theta1.T;
-  SequenceTree T3 = Theta1.T;
+  Parameters P2 = P1;
+  Parameters P3 = P1;
+
+  SequenceTree& T2 = P2.T;
+  SequenceTree& T3 = P3.T;
 
   T2.exchange(nodes[1],nodes[2]);
   T3.exchange(nodes[1],nodes[3]);
-
-  return sample_topology(A,Theta1,T2,T3,b);
+  
+  return sample_topology(A,P1,P2,P3,b);
 }
 

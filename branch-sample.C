@@ -80,9 +80,11 @@ double path_Q_subst(const vector<int>& path,
     double sub=0;
     if (di(state2) and dj(state2)) {
       for(int r=0;r<MRModel.nrates();r++) {
- 	double temp = MRModel.distribution()[r]* 
-	  sum( dists1[i-1][r] * frequency * dists2[j-1][r] );
- 	sub += temp;
+	double temp=0;
+	// double temp = sum( dists1[i-1][r] * frequency * dists2[j-1][r] );  HANDCODED
+	for(int l=0;l<frequency.size();l++)
+	  temp += dists1[i-1][r][l]*frequency[l]*dists2[j-1][r][l];
+ 	sub += MRModel.distribution()[r]*temp;
       }
     }
     else if (di(state2)) {
@@ -196,6 +198,7 @@ static vector< vector<valarray<double> > > distributions(const alignment& A,cons
   const substitution::MultiRateModel& MRModel = Theta.SModel();
 
   vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
+
 
   for(int i=0;i<dist.size();i++) {
     vector<int> residues(A.size2());

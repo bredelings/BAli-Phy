@@ -7,6 +7,7 @@
 #include <iostream>
 #include "mytypes.H"
 
+/// A multiple alignment between a group of sequences
 class alignment {
   vector<sequence> sequences;
   ublas::matrix<int> array;
@@ -17,27 +18,39 @@ class alignment {
 
   void add_row(const vector<int>&);
 public:
-  int index(const string&) const;
 
+  /// The order of the sequence named s
+  int index(const string& s) const;
+
+  /// The i-th sequence
   const sequence& seq(int i) const { return sequences[i];}
+  /// The i-th sequence
   sequence& seq(int i) { return sequences[i];}
 
-  // Load sequences into the alignment
-  void add_sequence(const sequence&);
-  void load_fasta(const alphabet&,const std::string&);
-  void load_fasta(const alphabet&,std::istream&);
+  /// Add sequence 's' to the alignment
+  void add_sequence(const sequence& s);
+  /// Add all sequences in FASTA file 'filename' to the alignment
+  void load_fasta(const alphabet&,const std::string& filename);
+  /// Add all sequences from FASTA stream 'file' to the alignment
+  void load_fasta(const alphabet&,std::istream& file);
 
-  void load_phylip(const alphabet&,const std::string&);
-  void load(const alphabet&,const std::string&);
+  /// Add sequences from PHYLIP file 'filename' to the alignment
+  void load_phylip(const alphabet&,const std::string& filename);
+  /// Load PHYLIP or FASTA file 'filename', depending on extentime
+  void load(const alphabet&,const std::string& filename);
 
   void print(std::ostream&) const;
+  /// Print alignment in FASTA format
   void print_fasta(std::ostream&) const;
+  /// Print alignment in PHYLIP format, optionally printing internal nodes
   void print_phylip(std::ostream&,bool=false) const;
 
   void changelength(int l);
   void delete_column(int i);
 
+  /// The feature (letter,gap,non-gap) of sequence s in column l
   int& operator()(int l,int s) {return array(l,s); }
+  /// The feature (letter,gap,non-gap) of sequence s in column l
   const int& operator()(int l,int s) const {return array(l,s); }
 
   /// Does sequence i have a gap at position j ?

@@ -133,16 +133,19 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
       vector<int> nodes = get_nodes(A,P.T,b);
 
       /****** Generate the Different Topologies *******/
-      SequenceTree T2 = P.T;
-      SequenceTree T3 = P.T;
+      Parameters P2 = P;
+      Parameters P3 = P;
+
+      SequenceTree& T2 = P2.T;
+      SequenceTree& T3 = P3.T;
       
       T2.exchange(nodes[1],nodes[2]);
       T3.exchange(nodes[1],nodes[3]);
 
-      T2.branch(b).length() = -newlength;
-      T3.branch(b).length() = -newlength;
+      P2.setlength(b,-newlength);
+      P3.setlength(b,-newlength);
 
-      return sample_topology(A,P,T2,T3,b);
+      return sample_topology(A,P,P2,P3,b);
     }
 }
 

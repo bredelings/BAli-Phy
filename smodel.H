@@ -409,7 +409,8 @@ public:
 
 /// A discrete-gamma Model
 
-/// A discrete-gamma Model - only has one parameter: the shape parameter for the gamma
+/// A discrete-gamma Model
+//  Only has one parameter: the shape parameter for the gamma
 class GammaRateModel: public MultiRateOnReversible {
 protected:
   double super_prior() const;

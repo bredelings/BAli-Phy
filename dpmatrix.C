@@ -596,6 +596,7 @@ void DPmatrixSimple::forward(const vector<int>& path,double bandwidth) {
   }
 }
 
+
 inline void DPmatrixHMM::forward(int x1,int y1,int x2,int y2) {
   assert(x1 < x2 or y1 < y2);
   assert(x2 < size1());

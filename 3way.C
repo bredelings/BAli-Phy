@@ -4,134 +4,7 @@
 
 using std::valarray;
 
-// Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
-int A3::bits_to_states(int bits) {
-  int S=(1<<6)|(1<<7)|(1<<8);
-  if (not bitset(bits,0)) {
-    if (bitset(bits,1))
-      S |= (states::G1<<0);
-    else
-      S = clearbit(S,6);
-
-    if (bitset(bits,2))
-      S |= (states::G1<<2);
-    else
-      S = clearbit(S,7);
-
-    if (bitset(bits,3))
-      S |= (states::G1<<4);
-    else
-      S = clearbit(S,8);
-  }
-  else {
-    if (bitset(bits,1))
-      S |= (states::M<<0);
-    else
-      S |= (states::G2<<0);
-      
-    if (bitset(bits,2))
-      S |= (states::M<<2);
-    else
-      S |= (states::G2<<2);
-
-    if (bitset(bits,3))
-      S |= (states::M<<4);
-    else
-      S |= (states::G2<<4);
-  }
-  return S;
-}
-
-int A3::getstates(int S) {
-  assert(0 <= S and S<nstates+1);
-
-  if (S==endstate)
-    return (1<<12)|(1<<11)|(1<<10)|(states::E<<8)|(states::E<<6)|(states::E<<4);
-
-  int bits=0;
-
-  //--------- Set bits ---------
-  if (S<8) {
-    //internal node present
-    bits |= (1<<0);
-
-    // other nodes present according to S
-    bits |= ((~S)&7)<<1;
-  }
-  else {
-    S -=8;
-    if (S/9 == 0) 
-      bits |= (1<<1);
-    else if (S/9 == 1) 
-      bits |= (1<<2);
-    else if (S/9 == 2) 
-      bits |= (1<<3);
-    S = S%9;
-  }
-
-  //-------- Get states --------
-  int states = bits_to_states(bits);
-  for(int i=0;i<3;i++)
-    if (not bitset(states,6+i)) {
-      int s = S%3;
-      S /= 3;
-      states |= (s<<(2*i));
-    }
-
-  //---------- Merge ----------
-  return (states<<4)|bits;
-}
-
-inline int A3::findstate(int states) {
-  unsigned int mask = ~((~0)<<10);
-  for(int S=0;S<=nstates;S++) {
-    if ((getstates(S)&mask) == (states&mask))
-      return S;
-  }
-  //couldn't find it?
-  assert(0);
-}
-
 using namespace A3;
-
-int A3::di(int S) {
-  S = getstates(S);
-  if (S&(1<<1))
-    return 1;
-  else
-    return 0;
-}
-
-int A3::dj(int S) {
-  S = getstates(S);
-  if (S&(1<<2))
-    return 1;
-  else
-    return 0;
-}
-
-int A3::dk(int S) {
-  S = getstates(S);
-  if (S&(1<<3))
-    return 1;
-  else
-    return 0;
-}
-
-int A3::dc(int S) {
-  if (dj(S)==0 and dk(S)==0)
-    return 0;
-  else
-    return 1;
-}
-
-int A3::dl(int S) {
-  S = getstates(S);
-  if (S&(1<<0))
-    return 1;
-  else
-    return 0;
-}
 
 vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
 
@@ -180,7 +53,137 @@ vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
   return path;
 }
 
-inline double A3::getQ(int S1,int S2,const IndelModel& IModel) {
+namespace A3 {
+/// Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
+int bits_to_states(int bits) {
+  int S=(1<<6)|(1<<7)|(1<<8);
+  if (not bitset(bits,0)) {
+    if (bitset(bits,1))
+      S |= (states::G1<<0);
+    else
+      S = clearbit(S,6);
+
+    if (bitset(bits,2))
+      S |= (states::G1<<2);
+    else
+      S = clearbit(S,7);
+
+    if (bitset(bits,3))
+      S |= (states::G1<<4);
+    else
+      S = clearbit(S,8);
+  }
+  else {
+    if (bitset(bits,1))
+      S |= (states::M<<0);
+    else
+      S |= (states::G2<<0);
+      
+    if (bitset(bits,2))
+      S |= (states::M<<2);
+    else
+      S |= (states::G2<<2);
+
+    if (bitset(bits,3))
+      S |= (states::M<<4);
+    else
+      S |= (states::G2<<4);
+  }
+  return S;
+}
+
+int getstates(int S) {
+  assert(0 <= S and S<nstates+1);
+
+  if (S==endstate)
+    return (1<<12)|(1<<11)|(1<<10)|(states::E<<8)|(states::E<<6)|(states::E<<4);
+
+  int bits=0;
+
+  //--------- Set bits ---------
+  if (S<8) {
+    //internal node present
+    bits |= (1<<0);
+
+    // other nodes present according to S
+    bits |= ((~S)&7)<<1;
+  }
+  else {
+    S -=8;
+    if (S/9 == 0) 
+      bits |= (1<<1);
+    else if (S/9 == 1) 
+      bits |= (1<<2);
+    else if (S/9 == 2) 
+      bits |= (1<<3);
+    S = S%9;
+  }
+
+  //-------- Get states --------
+  int states = bits_to_states(bits);
+  for(int i=0;i<3;i++)
+    if (not bitset(states,6+i)) {
+      int s = S%3;
+      S /= 3;
+      states |= (s<<(2*i));
+    }
+
+  //---------- Merge ----------
+  return (states<<4)|bits;
+}
+
+inline int findstate(int states) {
+  unsigned int mask = ~((~0)<<10);
+  for(int S=0;S<=nstates;S++) {
+    if ((getstates(S)&mask) == (states&mask))
+      return S;
+  }
+  //couldn't find it?
+  std::abort();
+}
+
+using namespace A3;
+
+int di(int S) {
+  S = getstates(S);
+  if (S&(1<<1))
+    return 1;
+  else
+    return 0;
+}
+
+int dj(int S) {
+  S = getstates(S);
+  if (S&(1<<2))
+    return 1;
+  else
+    return 0;
+}
+
+int dk(int S) {
+  S = getstates(S);
+  if (S&(1<<3))
+    return 1;
+  else
+    return 0;
+}
+
+int dc(int S) {
+  if (dj(S)==0 and dk(S)==0)
+    return 0;
+  else
+    return 1;
+}
+
+int dl(int S) {
+  S = getstates(S);
+  if (S&(1<<0))
+    return 1;
+  else
+    return 0;
+}
+
+inline double getQ(int S1,int S2,const IndelModel& IModel) {
   assert(0 <= S1 and S1 < nstates+1);
   assert(0 <= S2 and S2 < nstates+1);
 
@@ -216,18 +219,7 @@ inline double A3::getQ(int S1,int S2,const IndelModel& IModel) {
   return P;
 }
 
-inline double A3::getGQ(int S1,int S2,const IndelModel& IModel) {
-  double q = getQ(S1,S2,IModel);
-  if (S1 == 7) {
-    if (S2 == S1)
-      q = log_0;
-    else
-      q += -log(1.0-exp(getQ(S1,S1,IModel)));
-  }
-  return q;
-}
-
-Matrix A3::createQ(const IndelModel& IModel) {
+Matrix createQ(const IndelModel& IModel) {
   Matrix Q(nstates+1,nstates+1);
 
   for(int i=0;i<Q.size1();i++)
@@ -246,30 +238,11 @@ Matrix A3::createQ(const IndelModel& IModel) {
 }
 
 
-Matrix A3::createGQ(const IndelModel& IModel) {
-  Matrix GQ(nstates+1,nstates+1);
-
-  for(int i=0;i<GQ.size1();i++)
-    for(int j=0;j<GQ.size2();j++)
-      GQ(i,j) = getGQ(i,j,IModel);
-
-  for(int i=0;i<GQ.size1();i++) {
-    double sum = log_0;
-    for(int j=0;j<GQ.size2();j++)
-      sum = logsum(sum,GQ(i,j));
-    //    assert(sum == 0);
-  }
-
-  return GQ;
-}
-
-
-
 // Does this routine depend on order of unordered columns?
 //  - No: columns in subA1 but not in seq1 are ordered only in respect to columns in subA1
 //  - columns in seq1, seq2, and seq3 should remain in increasing order.
 
-alignment A3::construct(const alignment& old, const vector<int>& path, 
+alignment construct(const alignment& old, const vector<int>& path, 
 		    int n0,int n1,int n2,int n3,const tree& T,
 		    const vector<int>& seq1,const vector<int>& seq2, const vector<int>& seq3) {
 
@@ -395,7 +368,7 @@ alignment A3::construct(const alignment& old, const vector<int>& path,
 
 // If we are just getting the order of the columns in the 3-way alignment
 // the this shouldn't affect anything else, should it??
-vector<int> A3::getorder(const alignment& A,int n0,int n1,int n2,int n3) {
+vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3) {
 
   vector<int> columns;
   vector<int> AP;                     // alignments present
@@ -435,7 +408,7 @@ vector<int> A3::getorder(const alignment& A,int n0,int n1,int n2,int n3) {
   return columns;
 }
 
-alignment A3::project(const alignment& A1,int n0,int n1,int n2,int n3) {
+alignment project(const alignment& A1,int n0,int n1,int n2,int n3) {
   alignment A2;
   A2.add_sequence(A1.seq(n0));
   A2.add_sequence(A1.seq(n1));
@@ -454,3 +427,4 @@ alignment A3::project(const alignment& A1,int n0,int n1,int n2,int n3) {
   return A2;
 }
 
+}

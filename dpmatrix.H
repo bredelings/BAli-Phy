@@ -145,8 +145,15 @@ inline double sum(const valarray<double>& v) {
 
 inline double DPmatrix::emitMM(int i,int j) {
   double total=0;
-  for(int r=0;r<nrates();r++) 
-    total += distribution[r]*sum(dists1[i-1][r] * frequency * dists2[j-1][r]);
+  for(int r=0;r<nrates();r++) {
+    //    total += distribution[r]*sum(dists1[i-1][r] * frequency * dists2[j-1][r]);   HANDCODED
+    double temp=0;
+    const valarray<double>& v1 = dists1[i-1][r];
+    const valarray<double>& v2 = dists2[j-1][r];
+    for(int l=0;l<v1.size();l++)
+      temp += v1[l]*frequency[l]*v2[l];
+    total += distribution[r]*temp;
+  }
 
   return log(total);
 }
@@ -166,7 +173,7 @@ inline double DPmatrix::emit__(int i,int j) {
 
 class DPmatrixSimple: public DPmatrix {
 public:
-  void forward(int,int);
+  inline void forward(int,int) __attribute__((always_inline));
   void forward(int i1,int j1,int i2,int j2);
 
   // compute FP for entire matrix, with some points on path pinned
@@ -185,7 +192,7 @@ public:
   virtual ~DPmatrixSimple() {}
 };
 
-inline void DPmatrixSimple::forward(int i2,int j2) {
+inline void DPmatrixSimple::forward(int i2,int j2) { 
 
   assert(i2<size1());
   assert(j2<size2());
@@ -226,7 +233,7 @@ inline void DPmatrixSimple::forward(int i2,int j2) {
 
     FS2(i2,j2) += sub;
   }
-}     
+} 
 
 class DPmatrixHMM: public DPmatrix {
   vector< vector<int> > allowed_states;
@@ -234,7 +241,7 @@ public:
   const vector<int>& states(int j) const {return allowed_states[j];}
   vector<int>& states(int j) {return allowed_states[j];}
 
-  void forward(int,int);
+  inline void forward(int,int) __attribute__((always_inline));
 
   void forward(int i1,int j1,int i2,int j2);
 
@@ -253,7 +260,7 @@ public:
   virtual ~DPmatrixHMM() {}
 };
 
-inline void DPmatrixHMM::forward(int i2,int j2) {
+inline void DPmatrixHMM::forward(int i2,int j2) { 
 
   assert(i2<size1());
   assert(j2<size2());
@@ -298,6 +305,6 @@ inline void DPmatrixHMM::forward(int i2,int j2) {
 
     FS2(i2,j2) += sub;
   }
-}     
+}
 
 #endif
