@@ -71,7 +71,7 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& Theta,
   
   o<<A<<endl<<endl;
 
-  std::cout<<"tree = "<<Theta.T<<endl<<endl;
+  o<<"tree = "<<Theta.T<<endl<<endl;
 }
 
 valarray<double> autocorrelation(valarray<double> v) {
@@ -109,7 +109,7 @@ void MCMC(alignment& A,Parameters& Theta,
   std::cout<<T<<endl<<endl;
 
   const int correlation_time = int(T.leaves()*log(T.leaves()));
-  const int start_after = int( 600.0*T.leaves()*log(T.leaves()) );
+  const int start_after = 0;// 600*correlation_time;
   int total_samples = 0;
 
   double p=probability(A,Theta);
@@ -127,9 +127,12 @@ void MCMC(alignment& A,Parameters& Theta,
 
     /******************** Record Statistics *******************/
     if (iterations > start_after) {
-      std::cout<<"tree = "<<Theta.T<<std::endl;
-      if (iterations%correlation_time == 0) 
-      	print_alignments(A,Theta);
+      if (iterations%correlation_time == 0) {
+	std::cout<<"iterations = "<<iterations<<endl;
+	print_stats(std::cout,A,Theta,probability);
+	//print_alignments(A,Theta);
+	std::cout<<endl<<endl;
+      }
     }
 
 
@@ -158,7 +161,8 @@ void MCMC(alignment& A,Parameters& Theta,
     }
 
     /***************** Print Diagnostic Output ********************/
-    if (iterations %50 == 0 or std::abs(p - new_p)>8) {
+
+    if (iterations %200 == 0 or std::abs(p - new_p)>8) {
       //      valarray<double> w = autocorrelation(v);
       //      for(int i=0;i<w.size();i++) {
       //	std::cout<<i<<"   "<<w[i]<<std::endl;

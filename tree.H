@@ -4,6 +4,8 @@
 #include "mytypes.H"
 #include "sequence.H"
 #include <istream>
+#include <vector>
+#include <string>
 /***************** struct tree ********************/
 
 struct Branch;
@@ -153,6 +155,10 @@ class tree {
 
   void compute_ancestors();
 
+  //auxiliary
+  void do_swap(node*,node*);
+  //re-compute everything from the root, put tree in sane state
+  void reanalyze();
   //re-calculate the order of the nodes
   void reorder();
 
@@ -183,7 +189,11 @@ public:
   branchview branch_up(int);
   const_branchview branch_up(int) const;
 
-  bool ancestor(int n1, int n2) const {return ancestors[n1][n2];}
+  // These change don't change the tree itself, how it is stored/referenced
+  void swap_children(int n);
+  void standardize(const vector<int>&);
+
+  bool ancestor(int n1, int n2) const {return ancestors[names[n1]->order][names[n2]->order];}
   std::valarray<bool> partition(int n1,int n2) const;
 
   TreeView copy() const {return TreeView(root).copy();}
@@ -195,8 +205,8 @@ public:
   tree(const tree& t1):root(0) {operator=(t1);}
 
   tree(const tree& t1,const tree& t2);
-  tree(const tree& t1,double d1,const tree& t2,double d2);
- ~tree() {TreeView(root).destroy();}
+  tree(const tree& t1,double b1,const tree& t2,double b2);
+  ~tree() {TreeView(root).destroy();}
 };
 
 inline bool leaf(const node& n) {
@@ -233,19 +243,25 @@ TreeFunc<int> mark_tree(const vector<int>&,const tree&);
 
 class SequenceTree: public tree {
   vector<string> sequences;
-  void write(std::ostream&,int n) const;
+  string write(int n,bool) const;
 
 public:
   const string& seq(int i) const {return sequences[i];}
   const vector<string>& get_sequences() const {return sequences;}
 
+  void standardize(const vector<int>&);
+
   int index(const string&) const;
 
-  void write(std::ostream&) const;
+  string write(bool=true) const;
+  void read(const string&);
 
-  explicit SequenceTree(const string&);
-  SequenceTree(const sequence& s);
+  SequenceTree() {}
+  explicit SequenceTree(const string& s) {read(s);}
+  SequenceTree(const sequence& s); //FIXME - consider removing
   SequenceTree(const SequenceTree& T1, const SequenceTree& T2);
+  SequenceTree(const SequenceTree& T1, double b1,const SequenceTree& T2,double b2);
+
   SequenceTree(std::istream&);   //load a tree from a file
 };
 
@@ -256,9 +272,10 @@ inline SequenceTree operator+(const SequenceTree& t1,const SequenceTree& t2) {
 }
 
 inline std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
-  T.write(o);
-  return o;
+  return o<<T.write();
 }
+
+bool same_topology(const SequenceTree&,const SequenceTree&);
 
 /***************** class SequenceTree ****************/
 

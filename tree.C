@@ -1,7 +1,7 @@
 #include "tree.H"
-#include "myexception.H"
 #include "exponential.H"
 #include <algorithm>
+#include <sstream>
 
 void TreeView::destroy_tree(node* n) {
   if (not n) return;
@@ -84,10 +84,12 @@ void TreeView::exchange_cousins(node* node1, node* node2) {
 }
 
 vector<node*> find_nodes(node* root) {
-  vector<node*> order;
-  
-  order.push_back(root);
+  assert(root);
 
+  vector<node*> order;
+
+  order.push_back(root);
+  
   int start=0;
   do {
     int end = order.size();
@@ -99,22 +101,19 @@ vector<node*> find_nodes(node* root) {
     }
     start = end;
   }  while(start<order.size());
-
   return order;
 }
 
 
-void find_leaves(node* n,vector<node*>& leaves) {
-  if (not n)
-    return;
+vector<node*> find_leaves(node* root) {
+  vector<node*> nodes = find_nodes(root);
+  vector<node*> leaves;
 
-  if (leaf(*n)) {
-    leaves.push_back(n);
-    return;
-  }
+  for(int i=0;i<nodes.size();i++)
+    if (leaf(*nodes[i]))
+      leaves.push_back(nodes[i]);
 
-  find_leaves(n->left,leaves);
-  find_leaves(n->right,leaves);
+  return leaves;
 }
 
 /**************** Begin 'tree' implementation ***************/
@@ -146,18 +145,32 @@ void add_right(node* parent,node* child) {
 // on the two old trees into a node name in the current tree?
 // I could put a field 'old_name' in the 'struct node' for this...
 
-// subtree(root,tree:left) = T
+// subtree(root,tree::left) = T
 void tree::add_left(node* parent,const tree& T) {
   node* child = T.copy();
   ::add_left(parent,child);
-  reorder();
+
+  // re-name the leaves in the newly added subtree
+  vector<node*> leaves = find_leaves(child);
+  for(int i=0;i<leaves.size();i++)
+    leaves[i]->name += n_leaves;
+
+  // compute order and internal names from leaf names
+  reanalyze();
 }
 
-// subtree(root,tree:right) = T
+// subtree(root,tree::right) = T
 void tree::add_right(node* parent,const tree& T) {
   node* child = T.copy();
   ::add_right(parent,child);
-  reorder();
+
+  // re-name the leaves in the newly added subtree
+  vector<node*> leaves = find_leaves(child);
+  for(int i=0;i<leaves.size();i++)
+    leaves[i]->name += n_leaves;
+
+  // compute order and internal names from leaf names
+  reanalyze();
 }
 
 void tree::add_root() {
@@ -168,88 +181,50 @@ void tree::add_root() {
   // No branches
   n_leaves = 1;
   root->name = 0;
+  root->order = 0;
 }
 
-/* This routine computes 'Layer 2' from 'Layer 1'.
- * Layer 1: pointer structure, in memory
- * Layer 2: node names, node orders
- *
- * If the number of nodes remains unchanged, then 
- * the node and branch names remain the same.
- */
+// This routine (re)computes everything, starting with
+//   o the tree structure at @root
+//   o the names of the leaves
 
-void tree::reorder() {
-  int old_size = order.size();
+void tree::reanalyze() {
 
+  // find the leaves, and count them
+  vector<node*> leaves = find_leaves(root);
+  n_leaves = leaves.size();
+
+  // compute the name hash for just the leaves
+  names = vector<node*>(n_leaves);
+  for(int i=0;i<leaves.size();i++)
+    names[leaves[i]->name] = leaves[i];
+
+  // compute the order hash
   order = find_nodes(root);
-  int new_size = order.size();
+  reorder();
 
-  // Mark all nodes as non-visted
-  for(int i=0;i<order.size();i++) 
-    order[i]->order = -1;
 
-  // Fill order with the leaves, and order them
-  order.clear();
-  find_leaves(root,order);
-  for(int i=0;i<order.size();i++)
-    order[i]->order = i;
+  // compute the names from the order
+  names = order;
+  for(int i=0;i<names.size();i++)
+    names[i]->name = i;
 
-  n_leaves = order.size();
-
-  /* Add nodes in order of distance from leaves */
-  int start=0;
-  do {
-    int end = order.size();
-    for(int i=start;i<end;i++) {
-      node* parent = order[i]->parent;
-      if (not parent) continue; // actually this would be a good exit condition
-
-      if (parent->left and parent->right) {  // if there are 2 children
-	if (parent->left->order == -1) continue;  // both children 
-	if (parent->right->order == -1) continue; // must go on first
-	if (order[i]->order < parent->left->order or 
-	    order[i]->order < parent->right->order)
-	  continue; // and only the second child puts the parent on
-      }
-      parent->order = order.size();
-      order.push_back(parent);
-    }
-    start = end;
-  } while (start < order.size());
-
-  assert(new_size == order.size());
-  for(int i=0;i<order.size();i++)
-    assert(order[i]->order == i);
-
-  /***** assign names and branches if the tree has changed *****/
-  if (names.size() < order.size()) {
-    names = order;
-    for(int i=0;i<names.size();i++)
-      names[i]->name = i;
-
+  if (num_nodes()>1) {
+    // compute the branches_ hash
     branches_ = vector<Branch*>(names.size()-1,0);
     for(int i=0;i<branches_.size();i++) {
       branches_[i] = names[i]->parent_branch;
       branches_[i]-> name = i;
     }
-  }
-  /******** otherwise recompute the index ********/
-  else {
-    for(int i=0;i<order.size();i++) {
-      node* n = order[i];
-      names[n->name] = n;
-      if (n->parent_branch)
-	branches_[n->parent_branch->name] = n->parent_branch;
-    }
-  }
 
-  //Force the highest number branch to the right of root
-  if (root->right and
-      branches_[branches_.size()-1]->child != root->right) {
-    int i = branches_.size()-1;
-    int j = root->right->parent_branch->name;
-    std::swap(branches_[i]->name,branches_[j]->name);
-    std::swap(branches_[i],branches_[j]);
+    // force the highest number branch to the right of root
+    if (root->right and
+	branches_[branches_.size()-1]->child != root->right) {
+      int i = branches_.size()-1;
+      int j = root->right->parent_branch->name;
+      std::swap(branches_[i]->name,branches_[j]->name);
+      std::swap(branches_[i],branches_[j]);
+    }
   }
 
   /***** Check that our lookup tables are right *****/
@@ -260,28 +235,80 @@ void tree::reorder() {
     if (i<branches())
       assert(branches_[i]->name == i);
   }
+}
+
+// order shouldn't depend on left/right stuff
+
+// This routine depends on sanity introduced by previous routine
+//   o order contains all the nodes
+//   o names hash for leaves is right
+
+void tree::reorder() {
+
+  int old_size = order.size();
+  
+  // Mark all nodes as non-visted
+  for(int i=0;i<order.size();i++) 
+    order[i]->order = -1;
+
+  // Get the leaf order from the names
+  order.clear();
+  for(int i=0;i<n_leaves;i++) {
+    order.push_back(names[i]);
+    order[i]->order = i;
+  }
+
+  /* Add nodes in order of distance from leaves */
+  int start=0;
+  do {
+    int end = order.size();
+    for(int i=start;i<end;i++) {
+      node* parent = order[i]->parent;
+
+      // the root doesn't have a parent
+      if (not parent) continue;
+
+      // skip if parent already added
+      if (parent->order != -1) continue;
+	
+      // skip if left child not ready
+      if (parent->left and parent->left->order == -1)
+	continue;
+
+      // skip if right child not ready
+      if (parent->right and parent->right->order == -1)
+	continue;
+
+      parent->order = order.size();
+      order.push_back(parent);
+    }
+    start = end;
+  } while (start < order.size());
+
+  assert(old_size == order.size());
+  for(int i=0;i<order.size();i++)
+    assert(order[i]->order == i);
 
   compute_ancestors();
 }
 
-// Names need to be set up already for this
+// orderr needs to be already set up for this
 void tree::compute_ancestors() {
 
   ancestors.clear();
   ancestors.insert(ancestors.begin(),num_nodes(),
 		   std::valarray<bool>(false,num_nodes()));
-  for(int i=0;i<num_nodes();i++) {
-    int n = get_nth(i);
+  for(int n=0;n<num_nodes();n++) {
     ancestors[n][n] = true;
 
-    if (names[n]->left) {
-      int n_left = order[i]->left->name;
-      ancestors[n] |= ancestors[ n_left ];
+    if (order[n]->left) {
+      int o_left = order[n]->left->order;
+      ancestors[n] |= ancestors[ o_left ];
     }
     
-    if (names[n]->right) {
-      int n_right = order[i]->right->name;
-      ancestors[n] |= ancestors[ n_right ];
+    if (order[n]->right) {
+      int o_right = order[n]->right->order;
+      ancestors[n] |= ancestors[ o_right ];
     }
   }
 }
@@ -342,7 +369,7 @@ const_branchview tree::branch_up(int node1) const {
 // if parent(node1) == parent(node2), which can happen at the top
 // of the tree when p1 != p2, then 
 
-void do_swap(node* c1,node* c2) {
+void tree::do_swap(node* c1,node* c2) {
   node* n1 = c1->parent;
   node* n2 = c2->parent;
 
@@ -353,11 +380,17 @@ void do_swap(node* c1,node* c2) {
   if (c2 == n2->left)
     b2 = n2->right->parent_branch;
 
+  // swap the names for n1 and n2
+  std::swap(names[n1->name],names[n2->name]);
   std::swap(n1->name,n2->name);
-  TreeView::exchange_cousins(c1,c2);
 
+  // swap the branch names and lengths for b1 and b2
+  std::swap(branches_[b1->name],branches_[b2->name]);
   std::swap(b1->name,b2->name);
   std::swap(b1->length,b2->length);
+
+  // swap the subtrees c1 and c2
+  TreeView::exchange_cousins(c1,c2);
 }
 
 
@@ -369,17 +402,15 @@ void tree::exchange(int node1,int node2) {
   node* n2 = names[node2];
 
   // Always want to deal with LEFT branch under root
-  if (n1 == root->right or n2 == root->right) {
-    // Swap the left and right branches
-    std::swap(root->left->parent_branch->child,root->right->parent_branch->child);
-    std::swap(root->left->parent_branch,root->right->parent_branch);
+  if (n1 == root->right or n2 == root->right) 
+    swap_children(root->name);
 
-    // Swap the left and right nodes
-    std::swap(root->left,root->right);
-  }
-
-  if (n1->parent == n2->parent)
-    return;
+  if (n1->parent == n2->parent) 
+    assert(0);                     // this is like swap_children
+  else if (n1->parent == root and n2->parent->parent == root)
+    assert(0);                     // this is a topology change
+  else if (n2->parent == root and n1->parent->parent == root)
+    assert(0);                     // this is a topology change
   else if (ancestor(node2,node1)) {
 
     vector<node*> intermediate;
@@ -408,9 +439,20 @@ void tree::exchange(int node1,int node2) {
     TreeView::exchange_cousins(n1,n2);
 
   reorder();
+
+
+  /***** Check that our lookup tables are right *****/
+  assert(names.size() == order.size());
+  for(int i=0;i<names.size();i++) {
+    assert(names[i]->name == i);
+    assert(order[i]->order == i);
+    if (i<branches())
+      assert(branches_[i]->name == i);
+  }
+
+  /******* for leaves, branch names and node names should correspond *******/
   for(int i=0;i<leaves();i++)
     assert(branch_up(i) == i);
-
 }
 
 
@@ -419,12 +461,14 @@ tree& tree::operator=(const tree& t1) {
 
   n_leaves = t1.leaves();
   root = t1.copy();
-  vector<node*> nodes = find_nodes(root);
+  vector<node*> nodes;
+  if (root)
+    nodes = find_nodes(root);
   order = nodes;
   names = nodes;
   
   // Reconstruct the 'order' and 'names' hashes
-  if (nodes.size() > 1)
+  if (nodes.size() > 1) {
     for(int i=0;i<nodes.size();i++) {
       int o = nodes[i]->order;
       int n = nodes[i]->name;
@@ -435,11 +479,12 @@ tree& tree::operator=(const tree& t1) {
       order[o] = nodes[i];
     }
 
-  // index numbers shouldn't change across copies
-  branches_ = vector<Branch*>(names.size()-1,0);
-  for(int i=0;i<branches_.size();i++) {
-    int name = names[i]->parent_branch->name;
-    branches_[name] = names[i]->parent_branch;
+    // index numbers shouldn't change across copies
+    branches_ = vector<Branch*>(names.size()-1,0);
+    for(int i=0;i<branches_.size();i++) {
+      int name = names[i]->parent_branch->name;
+      branches_[name] = names[i]->parent_branch;
+    }
   }
 
   compute_ancestors();
@@ -451,6 +496,7 @@ tree& tree::operator=(const tree& t1) {
 tree::tree(const tree& t1, const tree& t2) {
   root = new node;            // *here = new node;
   root->parent = 0;
+  n_leaves = 0;
 
   add_left(root,t1);
   add_right(root,t2);
@@ -459,15 +505,16 @@ tree::tree(const tree& t1, const tree& t2) {
   root->right->parent_branch->length = 0.2;
 }
 
-tree::tree(const tree& t1, double d1, const tree& t2, double d2) {
+tree::tree(const tree& t1, double b1, const tree& t2, double b2) {
   root = new node;            // *here = new node;
   root->parent = 0;
+  n_leaves = 0;
 
   add_left(root,t1);
   add_right(root,t2);
   
-  root->left->parent_branch->length = d1;
-  root->right->parent_branch->length = d2;
+  root->left->parent_branch->length = b1;
+  root->right->parent_branch->length = b2;
 }
 
 
@@ -531,120 +578,35 @@ TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
   return present;
 }
 
-/************************** SequenceTree methods *****************************/
+void tree::swap_children(int n) {
+  node* p = names[n];
 
-void SequenceTree::write(std::ostream& o,int n) const {
-  const std::ios_base::fmtflags old_flags = o.flags(o.flags() | std::ios::fixed);
-  assert(0 <= n and n < num_nodes());
-  if (n<leaves()) {
-    o<<seq(n);
+  // make sure that the left branch stays left
+  if (n == num_nodes()-1) {
+    std::swap(p->left->parent_branch->child,p->right->parent_branch->child);
+    std::swap(p->left->parent_branch,p->right->parent_branch);
   }
-  else {
-    const tree& T = *this;
-    int left = T[n].left();
-    int right = T[n].right();
-    o<<"(";
-    write(o,left);
-    o<<":"<<T.branch_up(left).length()<<",";
-    write(o,right);
 
-    if (right>= branches())
-      o<<":"<<0<<")";
-    else
-      o<<":"<<T.branch_up(right).length()<<")";
+  std::swap(p->left,p->right);
+} 
+
+
+// recompute everything from new leaf names
+
+void tree::standardize(const vector<int>& lnames) {
+
+  /********** Set the leaf names ***********/
+  assert(lnames.size() == leaves());
+
+  for(int i=0;i<leaves();i++)
+    names[i]->name = lnames[i];
+
+  /********* recompute everything ************/
+  reanalyze();
+
+  /******** Set the left/right order ********/
+  for(int i=leaves();i<num_nodes();i++) {
+    if (names[i]->left->order > names[i]->right->order)
+      swap_children(i);
   }
-  o.flags(old_flags);
 }
-
-
-void SequenceTree::write(std::ostream& o) const {
-  write(o,num_nodes()-1);
-  o<<";\n";
-}
-
-
-int SequenceTree::index(const string& s) const {
-  for(int i=0;i<sequences.size();i++) {
-    if (sequences[i] == s) return i;
-  }
-  return -1;
-}
-
-
-SequenceTree::SequenceTree(const string& s)
-{
-  add_root();
-  sequences.push_back(s);
-}
-
-SequenceTree::SequenceTree(const sequence& s)
-{
-  add_root();
-  sequences.push_back(s.name);
-}
-
-SequenceTree::SequenceTree(const SequenceTree& T1, const SequenceTree& T2):tree(T1,T2) {
-  
-  // We will create new names which will be the same as
-  //  T1.order + T2.order
-  for(int i=0;i<T1.leaves();i++) 
-    sequences.push_back(T1.seq(T1.get_nth(i)));
-  for(int i=0;i<T2.leaves();i++) 
-    sequences.push_back(T2.seq(T2.get_nth(i)));
-}
-
-
-// count depth -> if we are at depth 0, and have
-// one object on the stack then we quit
-SequenceTree::SequenceTree(std::istream& file) {
-  assert(file);
-
-  int depth = 0;
-  int pos=0;
-  //how to turn pos into a string?
-
-  vector<SequenceTree> tree_stack;
-
-  string name;
-  do {
-    char c;
-    file>>c;
-    if (c == '(') {
-      depth++;
-      if (name.length()!=0) 
-	throw myexception(string("In tree file, found '(' in the middle of name \"") +name
-			  +string("\""));
-    }
-    else if (c== ')') {
-      if (name.length() != 0) {
-	tree_stack.push_back(SequenceTree(name));
-	name = "";
-      }
-      assert(tree_stack.size() >= 2);
-      SequenceTree T2 = tree_stack.back();tree_stack.pop_back();
-      SequenceTree T1 = tree_stack.back();tree_stack.pop_back();
-      SequenceTree Join = SequenceTree(T1,T2);
-      tree_stack.push_back(Join);
-      //      std::cerr<<"    leaves: "<<T1.leaves()<<" + "<<T2.leaves()<<" = "<<Join.leaves()<<endl;
-      depth--;
-      if (depth < 0) 
-	throw myexception(string("In tree file, too many end parenthesis."));
-    }
-    else if (c== ',') {
-      if (name.length() != 0) {
-	tree_stack.push_back(SequenceTree(name));
-	name = "";
-      }
-    }
-    else if (c== ' ' or c=='\n' or c == 9) 
-      ;
-    else 
-      name += c;
-    //    std::cerr<<"char = "<<c<<"    depth = "<<depth<<"   stack size = "<<tree_stack.size()<<"    name = "<<name<<endl;
-
-    pos++;
-  } while (file and depth > 0);
-  assert(tree_stack.size() == 1);
-  (*this) = tree_stack[0];
-}
-

@@ -17,12 +17,13 @@ all: sampler
 # try -fforce-addr
 
 #----------------- Definitions
-LANGO = prefetch-loop-arrays fast-math unroll-loops
+LANGO = fast-math unroll-loops # prefetch-loop-arrays 
 DEBUG = pipe g # pg
 DEFS = # NDEBUG 
 WARN = all no-sign-compare
-OPT =  malign-double mfpmath=sse msse2 march=pentium4 O3
+OPT =  malign-double mfpmath=sse msse march=pentium3 #O1
 LDFLAGS =   # -pg 
+LI=${CXX}
 
 #------------------- Main 
 PROGNAME = sampler
@@ -30,18 +31,21 @@ NAME = sampler
 SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C node-sample.C branch-sample.C exponential.C \
           eigenvalue.C parameters.C likelihood.C mcmc.C topology-sample.C \
-	  choose.C map.C
+	  choose.C map.C sequencetree.C
 LIBS = gsl gslcblas m
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 
 
 ${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%}
 
+
+treecount: treecount.o tree.o sequencetree.o
+
 #-----------------Other Files
 OTHERFILES += 
 
 #------------------- End
-DEVEL = ../..
+DEVEL = ../../..
 includes += 
 src      += 
 include $(DEVEL)/GNUmakefile

@@ -83,7 +83,7 @@
 
 int main(int argc,char* argv[]) {
 
-  myrand_init(0);
+  myrand_init();
   alphabet nucleotides("AGTC");
   
   std::cerr.precision(10);

@@ -207,6 +207,7 @@ void alignment::gap_fixup(int n1,int n2,int g1,int g2,int m) {
 //FIXME - make all internal nodes present - see how that does
 //FIXME - also try un-aligning everything - see if we can rediscover
 //        the right alignment
+//FIXME - make this not a member function
 void alignment::create_internal(const SequenceTree& T) {
   remap(T.get_sequences());
 

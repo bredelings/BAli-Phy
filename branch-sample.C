@@ -375,8 +375,9 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   alignment A = construct(old,path,group1,seq1,seq2);
 
   assert(valid(A));
-  // we are sampling while fixing the length of seqeuence1
-  assert(A.seqlength(node1) == old_length1);
+  // the lengths of 
+  assert(A.seqlength(node1) == old.seqlength(node1));
+  assert(A.seqlength(node2) == old.seqlength(node2));
 
   /*--------------------------------------------------------------*/
 
