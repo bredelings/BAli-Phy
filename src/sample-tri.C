@@ -282,7 +282,6 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
     double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
 
-    p[i].LC.set_length(a[i].length());
     check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
   }
 
