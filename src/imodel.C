@@ -99,7 +99,7 @@ void IndelModel1::fiddle(const std::valarray<bool>& fixed) {
     double E_length = exp(lambda_E - logdiff(0,lambda_E) );
     E_length += gaussian(0,sigma);
     E_length = std::abs(E_length);
-    lambda_E = log( (E_length/(1.0 - E_length) ) );
+    lambda_E = log( (E_length/(1.0 + E_length) ) );
   }
   
   recalc();
@@ -218,7 +218,7 @@ void UpweightedIndelModel::fiddle(const std::valarray<bool>& fixed) {
     double E_length = exp(lambda_E - logdiff(0,lambda_E) );
     E_length += gaussian(0,sigma);
     E_length = std::abs(E_length);
-    lambda_E = log( (E_length/(1.0 - E_length) ) );
+    lambda_E = log( (E_length/(1.0 + E_length) ) );
   }
 
   recalc();
@@ -292,8 +292,8 @@ double UpweightedIndelModel::prior(double D) const {
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double epsilon = exp(lambda_E);
-  double E_length = 1.0/(1.0 - epsilon);
-  double E_length_mean = 4.5;
+  double E_length = epsilon/(1.0 - epsilon);
+  double E_length_mean = 5;
 
   P += (-log(E_length_mean) - E_length/E_length_mean);
 
