@@ -6,10 +6,10 @@
 4. Make alignment-draw be able to output EPS
 
 5. implement: new framework for fixing things
-	a) disable=alignment 
-	b) disable=alignment_branch
-	c) disable=tree
-	d) disable=frequencies
+	a) disable=alignment  -> fixed=A fixed=alignment
+	b) disable=alignment_branch -> fixed=A- fixed=leaves-alignment
+	c) disable=tree             -> fixed=tau fixed=topology
+	d) disable=frequencies      -> fixed=pi  fixed=frequencies
 
 6. Debugging framework - test on other platforms
    Also, try with stlport again
@@ -45,8 +45,6 @@
    that does not depend on features of the alignment, like column
    number that may change w/o changing the conditional likelihoods.
 
-10. alignment-draw: implement bg-colors=type, bg-whiteness = uncertainty
-11. alignment-gild: use list<alignment> instead of vector<>...
 12. how does P(data|model) depend on number of frequency bins?
 13. Fix setting of 'fixed' flags in model.H/C, allow 'unfixing' flags.
 14. Fix crash when alignment contains only 1 sequence (also check 0,2,3,4 sequences)
@@ -67,6 +65,13 @@
 
 22. Speed up sample_path() for DParrayConstrained by only considering
     allowed states for each column...
+
+23. Clean up ColorMap-s in alignment-draw, and sanitize naming scheme.
+    a) put all colormaps on the same scale by making colormaps nested
+       and colorschemes not nested.
+    b) allow names like colorscheme=plain+AA+whiten scale=LOD
+                        colorscheme=plain-AA-whiten scale=LOD
+       where minus means affect the fg instead of the background.
 
 A. fix: gamma+frequency+INV
 
@@ -101,3 +106,6 @@ the prior, because we never want to use it  differently.
 
 [DONE]  Stop using PHYLIP.  Dealing with truncated names is too painful!
 
+[DONE]  alignment-gild: use list<alignment> instead of vector<>...
+
+[DONE]  alignment-draw: implement bg-colors=type, bg-whiteness = uncertainty
