@@ -3,9 +3,10 @@
 
 #include "hmm.H"
 #include <valarray>
+#include "refcount.H"
 
 
-class state_array
+class state_array: public RefObject
 {
   int s1;
   int s2;
@@ -49,7 +50,7 @@ public:
 };
 
 
-class state_matrix
+class state_matrix: public RefObject
 {
   int s1;
   int s2;

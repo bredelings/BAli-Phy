@@ -12,7 +12,7 @@
 #include "alignment-util.H"
 #include "alignment-constraint.H"
 #include "likelihood.H"    // for prior()
-
+#include "refcount.H"
 
 //Assumptions:
 //  a) we assume that the internal node is the parent sequence in each of the sub-alignments
@@ -25,7 +25,7 @@ using namespace A3;
 
 // FIXME - actually resample the path multiple times - pick one on
 // opposite side of the middle 
-DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
+RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const Tree& T = P.T;
 
   assert(P.IModel().full_tree);
@@ -98,7 +98,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   vector< Matrix > dists23 = distributions(A,P,seq23,nodes[0],group2|group3);
 
 
-  /*-------------- Create alignment matrices ---------------*/
+  //-------------- Create alignment matrices ---------------//
 
   vector<int> branches;
   for(int i=1;i<nodes.size();i++)
@@ -108,15 +108,15 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   vector<double> start_P = get_start_P(P.branch_HMMs,branches);
 
   // Actually create the Matrices & Chain
-  DPmatrixConstrained Matrices(get_state_emit(), start_P, Q, P.Temp,
-			       P.SModel().distribution(), dists1, dists23, frequency);
+  RefPtr<DPmatrixConstrained> Matrices = new DPmatrixConstrained(get_state_emit(), start_P, Q, P.Temp,
+								 P.SModel().distribution(), dists1, dists23, frequency);
 
   // Determine which states are allowed to match (,c2)
-  for(int c2=0;c2<Matrices.size2();c2++) {
+  for(int c2=0;c2<Matrices->size2();c2++) {
     int j2 = jcol[c2];
     int k2 = kcol[c2];
-    for(int i=0;i<Matrices.nstates();i++) {
-      int S2 = Matrices.order(i);
+    for(int i=0;i<Matrices->nstates();i++) {
+      int S2 = Matrices->order(i);
 
       //---------- Get (,j1,k1) ----------
       int j1 = j2;
@@ -129,7 +129,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
       
       //------ Get c1, check if valid ------
       if (c2==0 or (j1 == j2 and k1 == k2) or (j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
-	Matrices.states(c2).push_back(S2);
+	Matrices->states(c2).push_back(S2);
       else
 	; // this state not allowed here
     }
@@ -145,12 +145,12 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 or group3,seq1,seq23);
-  vector<int> path_g = Matrices.forward(pins);
+  vector<int> path_g = Matrices->forward(pins);
 
-  if (Matrices.Pr_sum_all_paths() <= 0.0)
+  if (Matrices->Pr_sum_all_paths() <= 0.0)
     return Matrices;
 
-  vector<int> path = Matrices.ungeneralize(path_g);
+  vector<int> path = Matrices->ungeneralize(path_g);
 
   A = construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
 
@@ -163,7 +163,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
                                  //    but its not a NECESSARY effect of the routine.
                                  //    due to ordering stuff required in the path but
                                  //    not store in the alignment A.
-  vector<int> path_new_g = Matrices.generalize(path_new);
+  vector<int> path_new_g = Matrices->generalize(path_new);
   if (path_new_g != path_g) {
     std::clog<<"A' (reordered) = "<<project(A,nodes)<<endl;
     std::clog<<"A' = "<<A<<endl;
@@ -184,8 +184,6 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 }
 
 
-///FIXME - make a generic routine (templates?)
-
 bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
 
   assert(p.size() == nodes.size());
@@ -195,10 +193,11 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
   vector<alignment> a(p.size(),A);
 
-  vector< DPmatrixConstrained > Matrices;
-  for(int i=0;i<p.size();i++) {
-    DPmatrixConstrained temp = tri_sample_alignment_base(a[i],p[i],nodes[i]);
-    Matrices.push_back( temp );
+  vector<RefPtr<DPmatrixConstrained> > Matrices;
+  for(int i=0;i<p.size();i++) 
+  {
+    Matrices.push_back( tri_sample_alignment_base(a[i],p[i],nodes[i]) );
+
     p[i].LC.set_length(a[i].length());
     int b = p[i].T.branch(nodes[i][0],nodes[i][1]);
     p[i].LC.invalidate_branch_alignment(p[i].T, b);
@@ -222,7 +221,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   //---------------- Calculate choice probabilities --------------//
   vector<efloat_t> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = OS[i] * Matrices[i].Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
+    Pr[i] = OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
   assert(Pr[0] > 0.0);
 
   int C = choose(Pr);
@@ -244,7 +243,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
   // Don't check impossible combinations
   for(int i=a.size()-1;i>=1;i--) {
-    if (Matrices[i].Pr_sum_all_paths() > 0.0) continue;
+    if (Matrices[i]->Pr_sum_all_paths() > 0.0) continue;
 
     a.erase(a.begin()+i);
     p.erase(p.begin()+i);
@@ -282,7 +281,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
     efloat_t OP_i = OP[i] / A3::correction(a[i],p[i],nodes[i]);
 
-    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
+    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], *Matrices[i]);
   }
 
   //--------- Compute path probabilities and sampling probabilities ---------//
@@ -295,7 +294,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
     else
       P_choice = choose_P(0,Pr);
 
-    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
+    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], *Matrices[i]);
     PR[i][0] *= A3::correction(a[i],p[i],nodes[i]);
   }
 
