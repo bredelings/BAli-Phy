@@ -3,6 +3,7 @@
 #include "myrandom.H"
 #include "sample.H"
 #include <iostream>
+#include "likelihood.H"
 
 using std::valarray;
 
@@ -203,20 +204,6 @@ alignment sample(const alignment& old,const Parameters& Theta,int node) {
   }
 
   assert(valid(A));
-  return A;
-}
-
-alignment sample(const alignment& old,const Parameters& Theta) {
-  alignment A;
-  if (myrandomf() < 0.5) {
-    int node1 = myrandom(0,Theta.T.num_nodes()-3);
-    int node2 = Theta.T.parent(node1);
-    A = sample(old,Theta,node1,node2);
-  }
-  else {
-    int node = myrandom(Theta.T.leaves(),Theta.T.num_nodes()-2);
-    A = sample(old,Theta,node);
-  }
   return A;
 }
 

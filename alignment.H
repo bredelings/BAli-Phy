@@ -14,6 +14,8 @@ class alignment {
   void pad(int);
   void remap(const vector<string>&);
 public:
+  int index(const string&) const;
+
   const sequence& seq(int i) const { return sequences[i];}
 
   void add_sequence(const sequence&);

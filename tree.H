@@ -154,9 +154,15 @@ TreeFunc<int> mark_tree(const vector<int>&,const tree&);
 
 class SequenceTree: public tree {
   vector<string> sequences;
+  void write(std::ostream&,int n) const;
+
 public:
   const string& seq(int i) const {return sequences[i];}
   const vector<string>& get_sequences() const {return sequences;}
+
+  int index(const string&) const;
+
+  void write(std::ostream&) const;
 
   explicit SequenceTree(const string&);
   SequenceTree(const sequence& s);
@@ -168,6 +174,11 @@ inline SequenceTree operator+(const SequenceTree& t1,const SequenceTree& t2) {
   SequenceTree t3(t1,t2);
 
   return t3;
+}
+
+inline std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
+  T.write(o);
+  return o;
 }
 
 /***************** class SequenceTree ****************/

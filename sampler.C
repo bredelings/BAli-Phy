@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iostream>
 #include <valarray>
+#include "myexception.H"
 #include "mytypes.H"
 #include "tree.H"
 #include "likelihood.H"
@@ -39,7 +40,7 @@ void print_stats(const alignment& A,const string& s1,const string& s2) {
   }
 }
 
-void print_stats(const alignment& A) {
+void print_stats(const alignment& A,const Parameters& Theta) {
   total_samples++;
 
   print_stats(A,"H_sapiens","Sulfaci1");
@@ -48,28 +49,67 @@ void print_stats(const alignment& A) {
   print_stats(A,"Sulfaci1","Halomari");
   print_stats(A,"Sulfaci1","Esch_coli3");
   print_stats(A,"Halomari","Esch_coli3");
+  
+  std::cout<<endl;
+  for(int i=0;i<Theta.T.branches();i++) 
+    std::cout<<"branch "<<i<<" "<<Theta.T.branch(i).length<<endl;
+  std::cout<<endl;
 }
 
+/*
+void print_stats(const alignment& A) {
+  total_samples++;
+
+  print_stats(A,"CAR4081","consGenv");
+  print_stats(A,"CAR4081","consAenv");
+  print_stats(A,"CAR4081","consBenv");
+  print_stats(A,"consGenv","consAenv");
+  print_stats(A,"consGenv","consGenv");
+  print_stats(A,"consAenv","consBenv");
+
+}
+*/
 void MCMC2(alignment& A,Parameters& Theta,
 	   const int max,double probability(const alignment&,const Parameters&)) {
   const SequenceTree& T = Theta.T;
   A.create_internal(T);
   std::cerr<<A<<endl;
 
-  const int correlation_time = int(7.0*T.leaves()*log(T.leaves()));
+  SequenceTree Sum = T;
+
+  const int correlation_time = int(8.0*T.leaves()*log(T.leaves()));
+  const int start_after = 20000;
+  int total_samples = 0;
 
   double p=probability(A,Theta);
   double new_p=0;
   for(int iterations=0; iterations < max; iterations++) {
     std::cerr<<"iterations: "<<iterations<<"    logp = "<<p<<endl;
 
-    if (iterations > 8000 && iterations%correlation_time == 0) 
-      print_stats(A);
+    /******************** Record Statistics *******************/
+    if (iterations > start_after) {
+      if (iterations%correlation_time == 0) 
+	print_stats(A,Theta);
+      for(int i=0;i<T.num_nodes();i++)
+	Sum.branch(i).length += T.branch(i).length;
+      total_samples++;
+      if (iterations % 100 == 0) {
+	SequenceTree Average = Sum;
+	for(int i=0;i<T.num_nodes();i++)
+	  Average.branch(i).length /= total_samples;
+	std::cout<<"------begin tree---------\n";
+	std::cout<<Average<<endl;
+	std::cout<<"------end tree---------\n";
+
+      }
+    }
 
 
+    /******************* Propose new position *********************/
     alignment NewA = sample(A,Theta);
     new_p = probability(NewA,Theta);
 
+    /***************** Print Diagnostic Output ********************/
     if (iterations %50 == 0 or fabs(p - new_p)>8) {
       std::cerr<<"previous = "<<
 	probability_no_tree(A,Theta)<<"  "<<
@@ -85,23 +125,23 @@ void MCMC2(alignment& A,Parameters& Theta,
       NewA.print_fasta(std::cerr);
     }
 
+
+    /*****************Actually Move to new position ***************/
     A = NewA;
     p = new_p;
   }
 }
-  
 
-/**** TODO: other data (CAR), output marginal distributions (m01,m12..), change branch lengths  ****/
 
-// 2. Check to make sure that the gap-resamping works
+/**** TODO:  Output and plot the trees!  ****/
+
+
+// 2. Check to make sure that the gap-resamping works - do we need to store TWO states?
+//     or can we just modify choices depending on previous state?
 
 // 3. write a routine to load the Phylip files -> check out CAR.phy
 
-// 4. make some output statistics so we can observe the probability distribution
-
 // 5. Read Marc's references on actually altering the tree
-
-// 6. Make it possible to specify Alignment(Sequences) and Tree on command line
 
 // 7. Can we somehow ESTIMATE lambda_O and lambda_E?
 
@@ -111,9 +151,17 @@ void MCMC2(alignment& A,Parameters& Theta,
 
 // 13. Put letters in the rate matrix file
 
-// 14. How to read in tree structures in a text file?
-
 // 15. Need to actually alter branch lengths w/ MCMC moves (use exp prior - estimate length parameter)
+
+// 16. *Better* output statistics?  Specify species to look at on command line?
+
+// 17. Output an ML phylogeny?
+
+// 18. Normalize rate matrix so that Sum(m) lambda(m,m)*pi(m) = -1
+
+// 20. How can we show conservation in the graph?
+
+// 21. Look at paper on RNA phylogenetics?
 
 int main(int argc,char* argv[]) {
 
@@ -129,25 +177,22 @@ int main(int argc,char* argv[]) {
   /* ----- Parse command line ------------*/
   if (argc != 5) {
     std::cerr<<"Usage: "<<argv[0]<<" <alignment file.fasta> <tree file> <lambda_O> <lambda_E>\n";
-    exit(0);
+    exit(1);
   }
 
   ifstream file(argv[1]);
-  if (file) {
-    A.load_fasta(nucleotides,file);
-    std::cerr<<A<<endl;
-  }
-  else {
+  if (!file) {
     std::cerr<<"Error: can't open alignment file '"<<argv[1]<<"'"<<endl;
+    std::cerr<<"Usage: "<<argv[0]<<" <alignment file.fasta> <tree file> <lambda_O> <lambda_E>\n";
     exit(1);
   }
 
   ifstream file2(argv[2]);
   if (!file2) {
     std::cerr<<"Error: can't open tree file '"<<argv[2]<<"'"<<endl;
+    std::cerr<<"Usage: "<<argv[0]<<" <alignment file.fasta> <tree file> <lambda_O> <lambda_E>\n";
     exit(1);
   }
-
 
   double lambda_O=0;
   double lambda_E=0;
@@ -169,16 +214,27 @@ int main(int argc,char* argv[]) {
 
   /*********** Start the sampling ***********/
   
-  SequenceTree T1(file2);
-
-  {
-    Parameters Theta(nucleotides,T1);
-    Theta.load_rates("DNA");
-    Theta.lambda_O = lambda_O;
-    Theta.lambda_E = lambda_E;
-    MCMC2(A,Theta,60000,probability2);
+  try {
+    A.load_fasta(nucleotides,file);
+    std::cerr<<A<<endl;
+    
+    SequenceTree T1(file2);
+    std::cout<<"------begin tree---------\n";
+    std::cout<<T1<<endl;
+    std::cout<<"------end tree---------\n";
+    
+    {
+      Parameters Theta(nucleotides,T1);
+      Theta.load_rates("DNA");
+      Theta.lambda_O = lambda_O;
+      Theta.lambda_E = lambda_E;
+      MCMC2(A,Theta,250000,probability2);
+    }
+    std::cerr<<"total sample = "<<total_samples<<endl;
   }
-  std::cerr<<"total sample = "<<total_samples<<endl;
+  catch (std::exception& e) {
+    std::cerr<<"Exception: "<<e.what()<<endl;
+  }
   return 0;
 }
 
@@ -186,4 +242,14 @@ int main(int argc,char* argv[]) {
 /************************** ToDo -> Done! *****************************/
 
 
+// 4. make some output statistics so we can observe the probability distribution
+
+// 6. Make it possible to specify Alignment(Sequences) and Tree on command line
+
 // 9. Add branch lengths
+
+// 14. How to read in tree structures in a text file?
+
+// 19. Does operator= work for parameters, or not? !!
+//      operator= was working only the first time for trees - FIXED
+

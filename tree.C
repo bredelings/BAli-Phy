@@ -1,4 +1,5 @@
 #include "tree.H"
+#include "myexception.H"
 #include "exponential.H"
 
 void TreeView::destroy(node** n) {
@@ -221,8 +222,9 @@ tree& tree::operator=(const tree& t1) {
   root = t1.copy();
   renumber();
 
-  // numbers shouldn't change across copies
-  for(int i=0;i<num_nodes()-2;i++) 
+  // index numbers shouldn't change across copies
+  branches_.clear();
+  for(int i=0;i<num_nodes()-2;i++)
     branches_.push_back(t1.branch(i));
 
   return *this;
@@ -319,6 +321,42 @@ TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
 
 /************************** SequenceTree methods *****************************/
 
+void SequenceTree::write(std::ostream& o,int n) const {
+  const std::ios_base::fmtflags old_flags = o.flags(o.flags() | std::ios::fixed);
+  assert(0 <= n and n < num_nodes());
+  if (n<leaves()) {
+    o<<seq(n);
+  }
+  else {
+    const tree& T = *this;
+    assert(T[n].left);
+    assert(T[n].right);
+    int left = T[n].left->name;
+    int right = T[n].right->name;
+    o<<"(";
+    write(o,left);
+    o<<":"<<T.branch(left).length<<",";
+    write(o,right);
+    o<<":"<<T.branch(right).length<<")";
+  }
+  o.flags(old_flags);
+}
+
+
+void SequenceTree::write(std::ostream& o) const {
+  write(o,num_nodes()-1);
+  o<<";\n";
+}
+
+
+int SequenceTree::index(const string& s) const {
+  for(int i=0;i<sequences.size();i++) {
+    if (sequences[i] == s) return i;
+  }
+  return -1;
+}
+
+
 SequenceTree::SequenceTree(const string& s)
 {
   add_root();
@@ -344,6 +382,8 @@ SequenceTree::SequenceTree(std::istream& file) {
   assert(file);
 
   int depth = 0;
+  int pos=0;
+  //how to turn pos into a string?
 
   vector<SequenceTree> tree_stack;
 
@@ -353,27 +393,39 @@ SequenceTree::SequenceTree(std::istream& file) {
     file>>c;
     if (c == '(') {
       depth++;
-      //should not be in the middle of a name
+      if (name.length()!=0) 
+	throw myexception(string("In tree file, found '(' in the middle of name \"") +name
+			  +string("\""));
     }
     else if (c== ')') {
-      tree_stack.push_back(SequenceTree(name));
-      name = "";
+      if (name.length() != 0) {
+	tree_stack.push_back(SequenceTree(name));
+	name = "";
+      }
       assert(tree_stack.size() >= 2);
       SequenceTree T1 = tree_stack.back();tree_stack.pop_back();
       SequenceTree T2 = tree_stack.back();tree_stack.pop_back();
       SequenceTree Join = SequenceTree(T1,T2);
       tree_stack.push_back(Join);
+      //      std::cerr<<"    leaves: "<<T1.leaves()<<" + "<<T2.leaves()<<" = "<<Join.leaves()<<endl;
       depth--;
-      // depth should never be negative;
+      if (depth < 0) 
+	throw myexception(string("In tree file, too many end parenthesis."));
     }
     else if (c== ',') {
-      tree_stack.push_back(SequenceTree(name));
-      name = "";
+      if (name.length() != 0) {
+	tree_stack.push_back(SequenceTree(name));
+	name = "";
+      }
     }
+    else if (c== ' ' || c=='\n' || c == 9) 
+      ;
     else 
       name += c;
+    //    std::cerr<<"char = "<<c<<"    depth = "<<depth<<"   stack size = "<<tree_stack.size()<<"    name = "<<name<<endl;
 
-  } while (file);
+    pos++;
+  } while (file && depth > 0);
   assert(tree_stack.size() == 1);
   (*this) = tree_stack[0];
 }

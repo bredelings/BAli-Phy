@@ -35,6 +35,13 @@ void alignment::resize(int s1,int s2) {
   array = array2;
 }
 
+int alignment::index(const string& s) const {
+  for(int i=0;i<sequences.size();i++) {
+    if (sequences[i].name == s) return i;
+  }
+  return -1;
+}
+
 void alignment::add_sequence(const sequence& s) {
   sequences.push_back(s);
 

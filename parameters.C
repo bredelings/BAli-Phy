@@ -13,6 +13,14 @@ void Parameters::load_rates(const char* filename) {
   recalc();
 }
 
+void Parameters::setlength(int b,double l) {
+  assert(l >= 0);
+  assert(b >= 0 and b < T.branches());
+  T.branch(b).length = l;
+  substitution_[b] = exp(rates,T.branch(b).length);
+}
+
+
 void Parameters::recalc() {
   substitution_.clear();
   for(int i=0;i<T.branches();i++) {
@@ -31,5 +39,6 @@ Parameters::Parameters(const alphabet& a_,const SequenceTree& t)
       rates(i,j) = 0;
     }
   }
+  branch_mean = 1.0;
   recalc();
 }

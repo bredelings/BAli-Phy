@@ -11,9 +11,14 @@ class Parameters {
   Matrix rates;
 
   vector<Matrix> substitution_;
-  void recalc();
 
+  void recalc();
 public:
+  //FIXME - this should be private - need an interface
+  // for changing branch lengths
+
+  void setlength(int,double);
+
   const alphabet& get_alphabet() const {return *a;}
   void load_rates(const char*);
 

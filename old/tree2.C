@@ -1,211 +1,135 @@
 /* Version 2: based on operating on multiple alignments */
 
+#include <cassert>
+#include <iostream>
 #include "mytypes.H"
-#include "etree.H"
+#include "myexception.H"
+#include "tree.H"
+#include "likelihood.H"
 #include "substitution.H"
 #include "alignment.H"
+#include "moves.H"
+#include "myrandom.H"
+#include "sample.H"
 
-
-/**************** probabilities *********************/
-
-double gap_init;
-double gap_extend;
-
-struct possibility {
-  vector<edge> edges;
-};
-
-vector<possibility> get_possibilities(const vector<bool>& missing,const tree& T) {
-  vector<possibility> v;
-  bool any_missing=false;
-  for(int i=0;i<missing.size();i++) {
-    if (missing[i]) {
-      any_missing=true;
-      break;
-    }
-  }
-  if (!any_missing) return v;
-
-  //Step 0: Set all nodes as un-marked
-  TreeFunc<int> f(T);
-  for(int i=0;i<missing.size();i++)
-    f(i)=0;
-
-  //Step 1: Look at all pairs of non-missing nodes:
-  //         All nodes on paths connecting them are non-missing also
-  for(int i=0;i<missing.size();i++) {
-    if (missing[i]) continue;
-
-    for(int j=0;j<i;j++) {
-      if (missing[j]) continue;
-
-      vector<int> path = T.path(i,j);
-      for(int k=0;k<path.size();k++) 
-	f(path[k])=1;
-    }
-  }
-
-  //Step 2: Look at all unmarked nodes that are next to marked nodes
-  vector<edge> indel_edges;
-  for(int i=0;i<T.num_nodes();i++) {
-    if (!f(i)) continue;
-
-    vector<int> neighbors = get_neighbors(T[i]);
-
-    for(int j=0;j<neighbors.size();j++) {
-      int neighbor = neighbors[j];
-      if (!f(neighbor))
-	indel_edges.push_back(edge(i,neighbor)); // can't get added twice
-    }
-  }
-
-  
-  // Because of tree topology, each (directed) edge is the root of a subtree that is
-  // not connected to the other subtrees.
-
-  //Step 3 - Expand out all the actual possibility
-  //  Hmmm... should we use the roots of the subtrees to REPRESENT all the possibilities,
-  //   since they can be computed from the roots? (FIXME - actually code step 3)
-
-  possibility p;
-  p.edges = indel_edges;
-
-  v.push_back(p);
-  return v;
-}
-
-// Version 1.0
-//  1. Ignore branch lengths - just use penalty!
-//  2. Don't sum over possibilities - just take max!
-double prior(const alignment& A,const tree& T) {
-  vector<vector<possibility> > possibilities(A.length());
-
-  //Step 1: construct the list of possible indels for each column
-  for(int column=0;column<A.length();column++) {
-    vector<bool> missing(A.num_sequences());
-    for(int i=0;i<A.num_sequences();i++) {
-      if (A(column,i) == alphabet::gap) 
-	missing[i]=true;
-      else
-	missing[i]=false;
-    }
-    possibilities[column] = get_possibilities(missing,T);
-  }
-
-  //Step 2: Look at all the possibilities - use a maximization 
-  // Step 2.1: Divide into blocks
-  vector<int> starts;
-  vector<int> ends;
-
-  int in_region=false;
-  for(int column=0;column<A.length();column++) {
-    vector<possibility>& here = possibilities[column];
-    if (here.size() ==0 || here.size()==1) { // no indels, or the indels are certain
-      if (in_region) ends.push_back(column);
-      in_region=false;
-    }
-    else {
-      if (!in_region) starts.push_back(column);
-      in_region=true;
-    }
-  }
-  if (in_region) ends.push_back(A.length());
-
-
-
-  // Step 2.2: Maximize each block, sum blocks
-
-
-  // Implicit Step 3: For each assignment, extend the gaps.
-  // Part 4: Edge handling:
-  return 1.0;
-}
-
-
-
-
-// ln(P(A,Data)) = ln(P(A)) + ln(P(Data|A))
-// FIXME - convert to ln(P)
-double probability(const alignment& A,const tree& T) {
-  double p = prior(A,T);  // should A include the tree, or vice versa?
-  p *= substitution(A,T);
+// ln(P(A,Data|T)) = ln(P(A|T)) + ln(P(Data|A,T))
+double probability(const alignment& A,const SequenceTree& T) {
+  double p = 0;
+  p += prior(A,T);  
+  p += substitution(A,T); // also deals w/ frequencies
 
   return p;
 }
 
+// ln(P(A,Data|T)) = ln(P(A)) + ln(P(Data|A,T))
+double probability_no_tree(const alignment& A,const SequenceTree& T) {
+  double p = 0;
+  p += prior_no_tree(A);  
+  p += substitution(A,T); // also deals w/ frequencies
+
+  return p;
+}
+
+// ln(P(A,Data|T)) = ln(P(A)) + ln(P(Data|A,T))
+double probability2(const alignment& A,const SequenceTree& T) {
+  double p = 0;
+  p += prior_internal(A,T);
+  p += substitution(A,T); // also deals w/ frequencies
+  return p;
+}
 
 
+  //FIXME: How to store our sample statistics?
 
+void MCMC(alignment& A,const SequenceTree& T,const int max,double probability(const alignment&,const SequenceTree&)) {
+  std::cout<<A<<endl;
+
+  double logp = probability(A,T);
+  int moves = 0;
+  for(int iterations=0; iterations < max; iterations++) {
+    std::cout<<"iterations: "<<iterations<<endl;
+
+    alignment NewA = move(A,T);
+    NewA = sample(A,T);
+    double new_logp = probability(NewA,T);
+
+    if (iterations %50 == 0) {
+      std::cout<<A<<endl;
+      std::cout<<NewA<<endl;
+    }
+    double ratio = exp(new_logp-logp);
+
+    std::cout<<"templogp = "<<logp<<"  ratio = "<<new_logp-logp<<endl;
+    
+    if (ratio >= 1.0 || myrandomf() < ratio) {
+      moves++;
+      std::cout<<A<<endl;
+      std::cout<<NewA<<endl;
+      A = NewA;
+      logp = new_logp;
+      std::cout<<"iteration = "<<iterations<<"  move = "<<moves<<"  LogP = "<<logp<<"  "<<new_logp-logp<<endl;
+    }
+  }
+}
+  
+void MCMC2(alignment& A,const SequenceTree& T,const int max,double probability(const alignment&,const SequenceTree&)) {
+  A.create_internal(T);
+  std::cout<<A<<endl;
+
+  for(int iterations=0; iterations < max; iterations++) {
+    std::cout<<"iterations: "<<iterations<<"    logp = "<<probability(A,T)<<endl;
+
+    alignment NewA = sample(A,T);
+
+    if (iterations %50 == 0) {
+      std::cout<<"previous = "<<probability_no_tree(A,T)<<"  "<<probability(A,T)<<"  "<<probability2(A,T)<<endl;
+      std::cout<<A<<endl;
+      std::cout<<"new = "<<probability_no_tree(NewA,T)<<"  "<<probability(NewA,T)<<"  "<<probability2(NewA,T)<<endl;
+      std::cout<<NewA<<endl;
+    }
+
+    A = NewA;
+  }
+}
+  
+// use some of Marc's data now!
+
+// PROBLEM!!! - something is inserting gaps for no reason!
+
+/**** How to load data ****/
+// sequences
+// (?) initial alignment
+// alphabet
+// tree
 int main() {
 
-  alphabet nucleotides("ATGC","DNA");
+  myrand_init();
+  alphabet nucleotides("AGTC","DNA");
 
-  sequence human        (nucleotides,"hemoglobin_nuc_hs");
-  sequence chimp        (nucleotides,"hemoglobin_nuc_cz");
-  sequence gorilla      (nucleotides,"hemoglobin_nuc_go");
-  sequence orangutan    (nucleotides,"hemoglobin_nuc_or");
+  //  alphabet amino_acids("ARNDCQEGHILKMFPTWYV","PAM");
 
-  alphabet amino_acids("ARNDCQEGHILKMFPTWYV","PAM");
+  /*************  Set up the tree **************/
+  SequenceTree T1 = SequenceTree("1");
+  SequenceTree T2 = SequenceTree("2");
+  SequenceTree T3 = SequenceTree("3");
+  SequenceTree T4 = SequenceTree("4");
 
-  sequence human_aa     (amino_acids,"hemoglobin_hs");
-  sequence chimp_aa     (amino_acids,"hemoglobin_cz");
-  sequence gorilla_aa   (amino_acids,"hemoglobin_go");
-  sequence orangutan_aa (amino_acids,"hemoglobin_or");
+  SequenceTree T = (T1+T2)+(T3+T4);
 
+  /**********  Set up the alignment ***********/
   alignment A;
-  A << human << chimp << gorilla << orangutan;
 
-  tree t = human + chimp;
-  t = (human + chimp) + (gorilla + orangutan);
-  tree t2 = tree( tree(human,1,chimp,2),1,tree(gorilla,2,orangutan,2),2);
+  ifstream file("test.fasta");
+  A.load_fasta(nucleotides,file);
+  std::cout<<A<<endl;
 
-  double p = probability(A,t);
-  return 1;
+  // FIXME: I don't have any branch lengths right now!
+  //  tree t3 = tree( tree(human,1,chimp,2),1,tree(gorilla,2,orangutan,2),2);
 
-  while(1) {
-    alignment A1;
-    // propose a new alignment
 
-    double p1 = probability(A1,t);
-  }
+  /*********** Start the MCMC sampling ***********/
+  
+  MCMC2(A,T,2000,probability2);
 
   return 1;
 }
-/****************************************************************
- Iterator:
-
-
-  here = iterator(node,direction)
-  here = there      // here.(node,direction) = there.(node,direction)
-
-  
-  *here = *there    // make here.(node,direction) go to wherever there.(node,dirction) does.
-  *here = new node; // make here.(node,direction) point to the new node;
-
-
-
-  subtree(here) = subtree(there); //the subtree starting from here.(node,direction) 
-  subtree(here) = t2;
-
--------------
-  2 levels:
-
- Level 1:
-
- *here = new node;    // *(here.pointer) = new node;
-
- iterator there(t2);
- *here = *there;      // *(here.pointer) = t2.root;
-
- Level 2:
- 
-  *here = new node;   // *(here.pointer) = new node; (*(here.pointer))->parent = here.node;
-
-  subtree(here) = t2; // 
-    t3 = t2.copy();
-    iterator there(t3);
-    
-
-
-            this should probably connect up 
-*/

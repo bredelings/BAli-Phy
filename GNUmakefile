@@ -1,6 +1,6 @@
 # Insertions and deletions work:  "crossovers" and duplications don't.
 
-all: tree2
+all: sampler
 
 # -fomit-frame-pointer
 # -fprefetch-loop-arrays
@@ -19,24 +19,22 @@ all: tree2
 #----------------- Definitions
 LANGO = prefetch-loop-arrays fast-math unroll-loops
 DEBUG = pipe g # pg
-DEFS = NDEBUG 
+DEFS = # NDEBUG 
 WARN = all no-sign-compare
-OPT =  O3 malign-double mfpmath=sse msse2 march=pentium4
+OPT =  O3 malign-double mfpmath=sse msse march=pentium3
 LDFLAGS =  # -pg 
 
 #------------------- Main 
-PROGNAME = tree2
-NAME = tree2
-SOURCES = sequence.C tree.C alignment.C substitution.C gaps.C  \
+PROGNAME = sampler
+NAME = sampler
+SOURCES = sequence.C tree.C alignment.C substitution.C gaps.C moves.C \
           myrandom.C possibilities.C sample.C sample2.C exponential.C \
           eigenvalue.C parameters.C likelihood.C
 LIBS = 
-PROGNAMES = ${NAME} rna
+PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 
 
 ${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%}
-
-rna : ${SOURCES:%.C=%.o} ${LIBS:%=-l%}
 
 #-----------------Other Files
 OTHERFILES += 
