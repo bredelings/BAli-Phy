@@ -26,7 +26,6 @@ EXACTFLAGS = -pipe
 LANGO := fast-math 
 
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
-LDFLAGS := 
 
 ifeq (${BOUNDS_CHECK},y)
   DEFS += _GLIBCXX_DEBUG
