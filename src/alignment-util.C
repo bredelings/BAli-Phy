@@ -451,7 +451,7 @@ long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> 
 
 vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args) {
   OwnedPointer<AminoAcids> AA = AminoAcids();
-  if (args.count("Use Stop"))
+  if (args.count("with-stop"))
     AA = AminoAcidsWithStop();
 
   vector<OwnedPointer<alphabet> > alphabets; 

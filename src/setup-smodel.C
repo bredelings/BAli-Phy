@@ -54,7 +54,7 @@ bool process_stack_Markov(vector<string>& string_stack,
 
   //------ Get the base markov model (Reversible Markov) ------//
   OwnedPointer<AminoAcids> AA = AminoAcids();
-  if (args.count("Use Stop"))
+  if (args.count("with-stop"))
     *AA = AminoAcidsWithStop();
 
   if (match(string_stack,"EQU",arg))
