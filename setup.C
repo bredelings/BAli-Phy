@@ -128,7 +128,7 @@ bool all_characters_connected(const tree& T,valarray<bool> present,const vector<
 
   //--------- set the ignored nodes to 'not present' -----------//
   valarray<bool> ignore(false,present.size());
-  for(int i=0;i<ignore.size();i++) {
+  for(int i=0;i<_ignore.size();i++) {
     int n = _ignore[i];
     present[n] = false;
     ignore[n] = true;
@@ -145,8 +145,8 @@ bool all_characters_connected(const tree& T,valarray<bool> present,const vector<
 
     //---- check the three attatched subtrees ... ----//
     int total=0;
-    for(int n2=0;n2<neighbors.size();n2++) {
-      valarray<bool> group = T.partition(n1,n2);
+    for(int i=0;i<neighbors.size();i++) {
+      valarray<bool> group = T.partition(n1,neighbors[i]);
       if (bit_set(present and group))
 	total++;
     }
