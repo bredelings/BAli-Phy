@@ -68,6 +68,8 @@ std::string strip(const std::string&,const std::string&);
 
 std::vector<int> invert(const std::vector<int>&);
 
+std::vector<int> compose(const std::vector<int>&,const std::vector<int>&);
+
 std::vector<int> randomize(const std::vector<int>&);
 
 #endif

@@ -54,6 +54,17 @@ vector<int> invert(const vector<int>& mapping) {
   return imapping;
 }
 
+vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2) {
+  assert(mapping1.size() == mapping2.size());
+
+  vector<int> mapping(mapping1.size());
+
+  for(int i=0;i<mapping.size();i++)
+    mapping[i] = mapping2[mapping1[i]];
+
+  return mapping;
+}
+
 vector<int> randomize(const std::vector<int>& v) {
   vector<int> work = v;
 

@@ -167,7 +167,7 @@ namespace optimize {
   double derivative2(const function& f,const Vector& x,
 		     const Vector& v,const double dt) {
 
-    assert(x.size() == dx.size());
+    assert(x.size() == v.size());
 
     double min,max;
     getlimits(x,v,min,max);
@@ -223,7 +223,7 @@ namespace optimize {
   }
 
   Vector Proj(const Vector& v, const Vector& x) {
-    assert(v.size() = x.size());
+    assert(v.size() == x.size());
     Vector v2 = v;
     for(int i=0;i<x.size();i++)
       if (x[i] <= 0 and v2[i] < 0) v2[i] = 0;
