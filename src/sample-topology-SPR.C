@@ -34,8 +34,8 @@ bool sample_SPR_and_A(alignment& A,Parameters& P,vector<Parameters>& p,int n1, i
 
 ///Sample between 2 topologies, ignoring gap priors on each case
 bool topology_sample_SPR_sgaps(alignment& A,Parameters& P,vector<Parameters>& p) {
-  double Pr1 = p[0].probability(A,p[0]);
-  double Pr2 = p[0].probability(A,p[1]);
+  efloat_t Pr1 = p[0].probability(A,p[0]);
+  efloat_t Pr2 = p[0].probability(A,p[1]);
 
   /*********** Choose A Topology ************/
   int choice = choose2(Pr1,Pr2);
