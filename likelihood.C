@@ -1,6 +1,7 @@
 #include "likelihood.H"
 #include "logsum.H"
 #include "substitution.H"
+#include "setup.H"
 
 double prior3(const alignment& A,const Parameters& P) {
   return prior_HMM(A,P) + prior(P);
@@ -101,6 +102,10 @@ double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
 
   double Pr = 0;
 
+#ifndef NDEBUG
+  check_internal_nodes_connected(A,P.T);
+#endif
+  
   for(int b=0;b<T.branches();b++) {
     int parent = T.branch(b).parent();
     int child  = T.branch(b).child();
@@ -113,6 +118,10 @@ double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
 
 double prior_HMM(const alignment& A,const Parameters& P) {
   const tree& T = P.T;
+
+#ifndef NDEBUG
+  check_internal_nodes_connected(A,P.T);
+#endif
 
   int highest_node = T.get_nth(T.num_nodes()-2);
   highest_node = T.branch_up(highest_node).parent();
