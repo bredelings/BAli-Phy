@@ -371,12 +371,8 @@ void Tree::add_first_node() {
   n_leaves_ = 1;
 }
 
-nodeview Tree::add_node(int node) {
-  assert(0 <= node and node < nodes_.size());
-
-  // Add a node to the ring at node 'node'.
-  BranchNode* n = nodes_[node];
-
+BranchNode* add_node(BranchNode* n) 
+{
   // The spot to which to link the new node.
   BranchNode* n_link = NULL;
   if (n->out == n)
@@ -391,10 +387,20 @@ nodeview Tree::add_node(int node) {
   }
 
   // Add a new leaf node, and an edge to node 'node'
-  BranchNode* n_leaf = new BranchNode(-1,n_leaves_,-1);
+  BranchNode* n_leaf = new BranchNode;
   n_leaf->prev = n_leaf->next = n_leaf;
   n_leaf->out = n_link;
   n_link->out = n_leaf;
+
+  return n_leaf;
+}
+
+
+nodeview Tree::add_node(int node) {
+  assert(0 <= node and node < nodes_.size());
+
+  BranchNode* n_leaf = ::add_node(nodes_[node]);
+  n_leaf->node = n_leaves_;
 
   reanalyze(n_leaf);
 
@@ -459,17 +465,14 @@ void Tree::compute_partitions() {
   }
 
   // compute partition masks
-  vector<const_branchview> temp; temp.reserve(3);
   for(int i=0;i<branch_list.size();i++) {
     const_branchview b = branch_list[i];
 
     cached_partitions[b][b.target()] = true;
 
     if (b.target().is_internal_node()) {
-      temp.clear();
-      append(b.branches_after(),temp);
-      for(int i=0;i<temp.size();i++)
-	cached_partitions[b] |= cached_partitions[temp[i]];
+      for(const_edges_after_iterator b2 = b.branches_after();b2;b2++)
+	cached_partitions[b] |= cached_partitions[*b2];
     }
 
     cached_partitions[b.reverse()] = not cached_partitions[b];
@@ -738,7 +741,7 @@ Tree::Tree(const Tree& T)
 {
     // recalculate pointer indices
     BranchNode* start = T.copy();
-    recompute(start);
+    recompute(start,false);
 
     //operator=(T); 
 }

@@ -37,6 +37,7 @@ public:
   ~TreeView() {}
 };
 
+BranchNode* add_node(BranchNode*);
 
 //------------------------------------ Tree -----------------------------//
 
@@ -272,5 +273,7 @@ std::vector<const_branchview> branches_toward_node(const Tree& T,int n);
 
 std::vector<const_branchview> sorted_neighbors(const_nodeview n);
 std::vector<const_branchview> sorted_branches_after(const_branchview b);
+
+
 
 #endif
