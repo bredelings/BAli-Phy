@@ -37,8 +37,12 @@ void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
 }
 
 void show_parameters(std::ostream& o,const Model& M) {
-  for(int i=0;i<M.parameters().size();i++)
-    o<<"    "<<M.parameter_name(i)<<" = "<<M.parameters()[i];
+  for(int i=0;i<M.parameters().size();i++) {
+    o<<"    ";
+    if (M.fixed[i]) 
+      o<<"*";
+    o<<M.parameter_name(i)<<" = "<<M.parameters()[i];
+  }
   o<<"\n";
 }
 
