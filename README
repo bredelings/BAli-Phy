@@ -66,6 +66,11 @@ OTHER ARGUMENTS
    Specifies the INITIAL value of the parameters of the substitution
    model.  This is a comma-separated list of values.
 
+ - g_parameters=[parameters]
+
+   Specifies the INITIAL value of the parameters of the indel
+   model.  This is a comma-separated list of values.
+
  - letters=star
 
    Uses a star tree for the peeling algorithm.
