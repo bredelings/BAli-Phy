@@ -27,7 +27,7 @@ LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0
 DEBUG = pipe g3 # pg
 DEFS = # NDEBUG 
 WARN = all no-sign-compare overloaded-virtual
-OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 # O3
+OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 O3
 LDFLAGS = # -pg # -static 
 LI=${CXX}
 
