@@ -6,7 +6,7 @@ SHELL=/bin/sh
 
 .PRECIOUS: %.prob %.from.${SKIP}+${SIZE}
 
-analysis: Report tc tree.plot MAP.tree MAP.phy MAP.fasta # blame.html
+analysis: Report tc tree.plot MAP.tree MAP.phy MAP.fasta # AU.html
 	echo "Started analyzing from iteration ${SKIP}" > analysis
 	echo "Analyzed $$(wc -l trees.from.${SKIP}+${SIZE}) " >> analysis
 	echo "Finished on date $$(date)" >> analysis
@@ -80,11 +80,14 @@ MAP.tree: tc
 MAP-unordered.phy: cout
 	findalign < MAP > $@
 
-MAP.phy: MAP.tree-trunc MAP-unordered.phy
-	alignment-reorder align=MAP-unordered.phy tree=MAP.tree-trunc > $@ 2>/dev/null
+%-chopped.phy: %.phy
+	alignment-chop-internal align=$< > $@
 
-blame.prob: samples MAP.tree-trunc MAP-unordered.phy
-	alignment-blame align=MAP-unordered.phy tree=MAP.tree-trunc maxalignments=500 < samples > $@ 2>/dev/null
+MAP.phy: MAP.tree-trunc MAP-unordered-chopped.phy
+	alignment-reorder align=MAP-unordered-chopped.phy tree=MAP.tree-trunc > $@ 2>/dev/null
+
+AU.prob: samples MAP.tree-trunc MAP-unordered.phy
+	alignment-gild align=MAP-unordered.phy tree=MAP.tree-trunc maxalignments=500 < samples > $@ 2>/dev/null
 
 %.tree-trunc: %.tree
 	tree-names-trunc tree=$< > $@
