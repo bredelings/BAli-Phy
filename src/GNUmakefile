@@ -23,7 +23,7 @@ LDFLAGS :=
 
 ifeq (${DEBUG},y)
   DEBUG := g3
-  DEFS += _GLIBCPP_CONCEPT_CHECKS _GLIBCXX_DEBUG
+  DEFS += _GLIBCXX_DEBUG
 else
   ifeq ($(origin DEFS), undefined)
      DEFS += NDEBUG_UBLAS NDEBUG_DP NDEBUG

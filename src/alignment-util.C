@@ -142,9 +142,9 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 
   for(int column=0;column<A.length();column++)
     for(int i=n_leaves;i<A.size2();i++) 
-      if (A(column,i) == alphabet:gap)
+      if (A(column,i) == alphabet::gap)
 	;
-      else if (A(column,i) == alphabet:not_gap)
+      else if (A(column,i) == alphabet::not_gap)
 	;
       else
 	throw myexception()<<"Found a illegal index "<<A(column,i)
