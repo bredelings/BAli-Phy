@@ -5,7 +5,7 @@ TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/tree-to-srq tools/tree-reroot tools/alignment-chop-internal \
 	tools/srq-to-plot tools/srq-analyze tools/alignment-convert \
 	tools/tree-dist-compare tools/cut-range tools/alignment-translate \
-	tools/alignment-median tools/alignment-indices \
+	tools/alignment-median tools/alignment-indices tools/pickout
 
 
 tools: ${TOOLS}

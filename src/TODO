@@ -9,9 +9,6 @@
 
 5. Add comments!
 
-9. Make alignment-draw simply use 'plain' (or something) if AU-file
-    not specified.
-
 10. write code to load joint (A,T) distributions...
 
 *11: Write simple MPI code for MCMCMC....
@@ -23,9 +20,9 @@
     c) see how much speed gain we get for 48 taxa...
 
 4. consider ignoring letters if they are wildcards...
-    a) first 
 
 12: Change YangCodonModel to YangM0? (short name)
+
 12.5: Allow specifying another model than HKY (e.g. TNY) underneath YangCodonModel
 ------
 *13. How to make priors specified on command line?
@@ -136,4 +133,6 @@ the prior, because we never want to use it  differently.
 
 
 [DONE] Allow name[arg] formath in smodel description -> Empirical[wag] + gamma[4]
+
+[DONE] Make alignment-draw simply use 'plain' if AU-file not specified.
 
