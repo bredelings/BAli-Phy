@@ -470,6 +470,7 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
 }
 
 void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
+  P.recalc();
   const SequenceTree& T = P.T;
   Parameters MAP_P = P;
   alignment MAP_alignment = A;

@@ -718,9 +718,6 @@ namespace substitution {
     //remove submodel rates
     SubModels(0).set_rate(1);
     SubModels(1).set_rate(r);
-
-    //set this rate to 1
-    MultiModel::recalc();
   }
 
   double DualModel::super_prior() const {
@@ -785,6 +782,19 @@ namespace substitution {
       return SubModels(1).base_model(m);
 
     std::abort();
+  }
+
+  vector<double> DualModel::distribution() const {
+    vector<double> dist(n_base_models());
+    int m=0;
+    double f1 = super_parameters()[0];
+    double f2 = 1.0-f1;
+    for(int i=0;i<SubModels(0).n_base_models();i++)
+      dist[m++] = f1*SubModels(0).distribution()[i];
+    for(int i=0;i<SubModels(1).n_base_models();i++)
+      dist[m++] = f2*SubModels(1).distribution()[i];
+
+    return dist;
   }
 
   string DualModel::super_parameter_name(int i) const {

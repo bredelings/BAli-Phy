@@ -54,6 +54,7 @@ void Parameters::fiddle() {
 }
 
 void Parameters::recalc() {
+  SModel_->set_rate(1);
   MatCache::recalc(T,*SModel_);
 }
 

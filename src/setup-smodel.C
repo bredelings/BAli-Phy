@@ -29,14 +29,14 @@ void guess_markov_model(vector<string>& string_stack,const alphabet& a) {
 }
 
 bool process_stack_Markov(vector<string>& string_stack,
-			  vector<OwnedPointer<Model> >& model_stack,
+			  vector<OwnedPointer<substitution::Model> >& model_stack,
 			  const alphabet& a,
 			  Arguments& args) 
 {
   //------ Get the base markov model (Reversible Markov) ------//
-  OwnedPointer<AminoAcids> aa = AminoAcids();
+  OwnedPointer<AminoAcids> AA = AminoAcids();
   if (args.set("Use Stop"))
-    *aa = AminoAcidsWithStop();
+    *AA = AminoAcidsWithStop();
 
   if (match(string_stack,"EQU"))
     model_stack.push_back(EQU(a));
@@ -59,13 +59,13 @@ bool process_stack_Markov(vector<string>& string_stack,
     string dna_filename = args["datadir"] + "/" + "genetic_code_dna.dat";
     string rna_filename = args["datadir"] + "/" + "genetic_code_rna.dat";
 
-    Translation_Table DNA_table(Codons(DNA()),*aa,dna_filename);
-    Translation_Table RNA_table(Codons(RNA()),*aa,rna_filename);
+    Codons DNA_codons(DNA(),*AA,dna_filename);
+    Codons RNA_codons(RNA(),*AA,rna_filename);
 
-    if (a == DNA_table.getCodons())
-      model_stack.push_back(YangCodonModel(DNA_table));
-    else if (a == RNA_table.getCodons())
-      model_stack.push_back(YangCodonModel(RNA_table));
+    if (a == DNA_codons)
+      model_stack.push_back(YangCodonModel(DNA_codons,HKY(DNA())));
+    else if (a == RNA_codons)
+      model_stack.push_back(YangCodonModel(RNA_codons,HKY(RNA())));
     else
       throw myexception()<<"Can't figure out how to make a codon model from alphabet '"<<a.name<<";";
   }
@@ -77,7 +77,7 @@ bool process_stack_Markov(vector<string>& string_stack,
 
 
 bool process_stack_IA(vector<string>& string_stack,  
-		      vector<OwnedPointer<Model> >& model_stack,
+		      vector<OwnedPointer<substitution::Model> >& model_stack,
 		      const alphabet& a,
 		      Arguments& args) 
 {
@@ -109,16 +109,16 @@ bool process_stack_IA(vector<string>& string_stack,
 
 
 bool process_stack_Multi(vector<string>& string_stack,  
-			 vector<OwnedPointer<Model> >& model_stack,
+			 vector<OwnedPointer<substitution::Model> >& model_stack,
 			 const alphabet& a,
 			 Arguments& args) 
 {
 
   ReversibleAdditiveModel* RA = dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
-  MultiRateModel* MRM = dynamic_cast<MultiRateModel*>(model_stack.back().get());
+  MultiModel* MM = dynamic_cast<MultiModel*>(model_stack.back().get());
   if (match(string_stack,"single")) {
     if (RA)
-      model_stack.back() = SingleRateModel(*RA);
+      model_stack.back() = UnitModel(*RA);
     else if (model_stack.empty())
       throw myexception()<<"single: couldn't find any model to use.";
     else
@@ -129,9 +129,10 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (args.set("gamma_plus_uniform") and args["gamma_plus_uniform"] != "gamma_plus_uniform")
       n = convertTo<int>(args["gamma_plus_uniform"]);
     if (RA)
-      model_stack.back() = DistributionRateModel(*RA,
-						 Uniform() + Gamma(),
-						 n);
+      model_stack.back() = DistributionParameterModel(UnitModel(*RA),
+						      Uniform() + Gamma(),
+						      -1,//rate!
+						      n);
     else if (model_stack.empty())
       throw myexception()<<"gamma_plus_uniform: couldn't find any model to use.";
     else
@@ -144,7 +145,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(args["gamma"]);
 
     if (RA)
-      model_stack.back() = GammaRateModel(*RA,n);
+      model_stack.back() = GammaParameterModel(UnitModel(*RA),n);
     else if (model_stack.empty())
       throw myexception()<<"gamma_plus_uniform: couldn't find any model to use.";
     else
@@ -156,21 +157,22 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(args["double_gamma"]);
 
     if (RA)
-      model_stack.back() = DistributionRateModel(*RA,
-						 Gamma() + Gamma(),
-						 n);
+      model_stack.back() = DistributionParameterModel(UnitModel(*RA),
+						      Gamma() + Gamma(),
+						      -1,//rate!
+						      n);
     else if (model_stack.empty())
       throw myexception()<<"gamma_plus_uniform: couldn't find any model to use.";
     else
       throw myexception()<<"gamma: couldn't find a reversible+additive model to use.";
   }
   else if (match(string_stack,"INV")) {
-    if (MRM)
-      model_stack.back() = INV_Model(*MRM);
+    if (MM)
+      model_stack.back() = WithINV(*MM);
     else if (model_stack.empty())
       throw myexception()<<"gamma_plus_uniform: couldn't find any model to use.";
     else if (RA)
-      model_stack.back() = INV_Model(SingleRateModel(*RA));
+      model_stack.back() = WithINV(UnitModel(*RA));
     else
       throw myexception()<<"We can only create INV models on top of MultiRateModels or Markov models";
   }
@@ -182,7 +184,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (dynamic_cast<MultiModel*>(model_stack.back().get()) )
       M2 = *dynamic_cast<MultiModel*>(model_stack.back().get());
     else if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
-      M2 = SingleRateModel(*dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) );
+      M2 = UnitModel(*dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) );
     else
       throw myexception()<<"Dual: second model isn't reversible+additive or a multi-model";
     model_stack.pop_back();
@@ -191,7 +193,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (dynamic_cast<MultiModel*>(model_stack.back().get()) )
       M1 = *dynamic_cast<MultiModel*>(model_stack.back().get());
     else if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
-      M1 = SingleRateModel(*dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) );
+      M1 = UnitModel(*dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) );
     else
       throw myexception()<<"Dual: first model isn't reversible+additive or a multi-model";
     model_stack.pop_back();
@@ -217,7 +219,7 @@ get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_fr
     string_stack = split(args["smodel"],'+');
   std::reverse(string_stack.begin(),string_stack.end());
 
-  vector<OwnedPointer<Model> > model_stack;
+  vector<OwnedPointer<substitution::Model> > model_stack;
 
   if (not process_stack_Markov(string_stack,model_stack,a,args)) {
     guess_markov_model(string_stack,a);
@@ -251,7 +253,7 @@ get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_fr
   if (MM)
     full_smodel = *MM;
   else if (RA)
-    full_smodel = SingleRateModel(*RA);
+    full_smodel = UnitModel(*RA);
   else 
     throw myexception()<<"Model cannot be convert to a MultiModel";
 

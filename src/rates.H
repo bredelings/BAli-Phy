@@ -106,6 +106,8 @@ namespace substitution {
 
     Uniform():RateDistribution(0) 
     {}
+
+    ~Uniform();
   };
 
   /// A sum of distributions for rate variation
@@ -126,14 +128,14 @@ namespace substitution {
 
     /// Fraction of sub-distribution i
     double fraction(int i) const {
-      assert(0 <= i and i < distributions.size());
-      return parameters_[i];
+      assert(0 <= i and i < n_dists());
+      return super_parameters_[i];
     }
 
     /// Fraction of sub-distribution i
     double& fraction(int i) {
-      assert(0 <= i and i < distributions.size());
-      return parameters_[i];
+      assert(0 <= i and i < n_dists());
+      return super_parameters_[i];
     }
 
     std::string name() const;

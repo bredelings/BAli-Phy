@@ -167,7 +167,7 @@ public:
   virtual Codons* clone() const {return new Codons(*this);}
 
   bool stop_codon(int codon) const {
-    assert(0 <= codon && codon < C->size() );
+    assert(0 <= codon && codon <table.size() );
     int aa = table[codon];
     return A->lookup(aa) == "!";
   }

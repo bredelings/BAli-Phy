@@ -5,11 +5,13 @@
 #include <gsl/gsl_cdf.h>
 #include "probability.H"
 #include "rng.H"
+#include "util.H"
 
 namespace substitution {
 
   using std::vector;
   using std::valarray;
+  using std::string;
   /*--------------- RateDistribution -----------------*/
 
   double RateDistribution::pdf(double x,double dx) const {
@@ -110,6 +112,15 @@ namespace substitution {
 
   /*--------------- UniformRateDistribution -----------------*/
 
+  string Uniform::name() const {
+    return "Uniform";
+  }
+
+  string Uniform::parameter_name(int) const {
+    std::abort();
+  }
+
+  Uniform::~Uniform() {}
 
   /*--------------- GammaRateDistribution -----------------*/
   
@@ -135,6 +146,14 @@ namespace substitution {
       v[0] = g_sigma;
 
     parameters(v);
+  }
+
+  string Gamma::name() const {
+    return "gamma";
+  }
+
+  string Gamma::parameter_name(int i) const {
+    return "gamma:sigma/mu";
   }
 
   double Gamma::cdf(double x) const {
@@ -214,6 +233,14 @@ namespace substitution {
     return gsl_cdf_lognormal_Pinv(P,lmu,lsigma);
   }
 
+  string LogNormal::name() const {
+    return "log-normal";
+  }
+
+  string LogNormal::parameter_name(int i) const {
+    return "log-normal:sigma/mu";
+  }
+
   /*-------------- MultipleDistribution ----------------*/
 
   void MultipleDistribution::super_fiddle() {
@@ -268,4 +295,23 @@ namespace substitution {
 
     recalc();
   }
+
+  string MultipleDistribution::name() const {
+    string n="multi:(";
+    for(int i=0;i<n_submodels();i++) {
+      n += SubModels(i).name();
+      if (i+1 < n_submodels())
+	n += " + ";
+    }
+    n += ")";
+    return n;
+  }
+
+  string MultipleDistribution::super_parameter_name(int i) const {
+    string n = "multi:p";
+    n += convertToString(i);
+    return n;
+  }
+
+
 }

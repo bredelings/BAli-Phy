@@ -294,7 +294,7 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
 // FIXME - should I make a separate class that removes stop codons?
 void Codons::setup_table(vector<string> cc,vector<string> aa) {
   assert(cc.size() == aa.size());
-  assert(cc.size() == C->size());
+  assert(cc.size() == table.size());
 
   // Remove codons which don't map to any SPECIFIED amino acid
   for(int i=cc.size()-1; i>=0; i--) {

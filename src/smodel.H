@@ -661,7 +661,7 @@ namespace substitution {
     virtual GammaParameterModel* clone() const {return new GammaParameterModel(*this);}
 
     /// Construct a discrete gamma model on top of 'M', with 'n' bins
-    GammaParameterModel(const MultiModel& M,int n);
+    GammaParameterModel(const MultiModel& M, int n);
   };
 
   /// A discrete-lognormal Model
@@ -671,7 +671,7 @@ namespace substitution {
     virtual LogNormalParameterModel* clone() const {return new LogNormalParameterModel(*this);}
 
     /// Construct a discrete gamma model on top of 'M', with 'n' bins
-    LogNormalParameterModel(const MultiModel& M,int n);
+    LogNormalParameterModel(const MultiModel& M, int n);
   };
 
 
