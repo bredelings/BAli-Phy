@@ -141,7 +141,7 @@ void alignment::load(const vector<sequence>& seqs) {
 }
 
 void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<sequence>& seqs) {
-
+  string errors = "Sequences don't fit any of the alphabets:";
   for(int i=0;i<alphabets.size();i++) {
     try {
       a = alphabets[i];
@@ -150,10 +150,12 @@ void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vect
     }
     catch (bad_letter& e) {
       a = NULL;
+      errors += "\n";
+      errors += e.what();
       if (i<alphabets.size()-1)
-	;//	std::cerr<<"Exception: "<<e.what()<<endl;
+	;
       else
-	throw e;
+	throw myexception(errors);
     }
   }
 }
