@@ -31,6 +31,7 @@ MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool 
   /*--------------- Find the branch names ----------------*/
   int b2 = -1;
   int b3 = -1;
+
   if (up) {
     int child = T.branch(b).child();
     int parent = T.branch(b).parent();

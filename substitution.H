@@ -22,6 +22,8 @@ double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SMode
 	  const vector<Matrix>& transition_P);
 // Full likelihood - all columns, all rates
 double Pr(const alignment& A, const Parameters& P);
+// Likelihood of one column
+double Pr(const alignment& A, const Parameters& P,int);
 
 
 // Column likelihood - specific rate (star tree)

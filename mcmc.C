@@ -224,10 +224,24 @@ void MoveOne::getorder(double l) {
   }
 }
 
+result_t SingleMove::iterate(alignment& A,Parameters& P,int) 
+{
+#ifndef NDEBUG
+  std::cerr<<" [single]move = "<<attributes[0]<<endl;
+#endif
+  iterations++;
+  result_t r = (*m)(A,P);
+  if (r == success)
+    successes++;
+  if (r == failure)
+    failures++;
+  return r;
+}
+
 void MoveEach::add(double l,const MoveArg& m) {
   MoveGroupBase::add(l,m);
 
-  present.push_back(vector<bool>(args.size(),false));
+  subarg.push_back(vector<int>(args.size(),-1));
   
   for(int i=0;i<m.args.size();i++) {
     int found = -1;
@@ -237,20 +251,19 @@ void MoveEach::add(double l,const MoveArg& m) {
     }
     if (found == -1) {
       args.push_back(m.args[i]);
-      for(int k=0;k<present.size();k++) 
-	present[k].push_back(false);
-      present[present.size()-1][args.size()-1] = true;
+      for(int k=0;k<subarg.size();k++) 
+	subarg[k].push_back(-1);
+      found = args.size()-1;
     }
-    else {
-      present[present.size()-1][found] = true;
-    }
+
+    subarg[subarg.size()-1][found] = i;
   }
 }
 
 double MoveEach::sum(int arg) const {
   double total=0;
   for(int i=0;i<lambda.size();i++)
-    if (present[i][arg])
+    if (submove_has_arg(i,arg) and moves[i]->enabled())
       total += lambda[i];
   return total;
 }
@@ -262,7 +275,7 @@ int MoveEach::choose(int arg) const {
   int i = 0;
   for(;i < moves.size();i++) {
 
-    if (not present[i][arg])
+    if (not submove_has_arg(i,arg) or not moves[i]->enabled())
       continue;
 
     sum += lambda[i];
@@ -272,6 +285,8 @@ int MoveEach::choose(int arg) const {
 }
 
 int MoveEach::reset(double l) {
+  iterations += l;
+
   vector<int> numbers(args.size());
   for(int i=0;i<numbers.size();i++)
     numbers[i] = i;
@@ -291,15 +306,14 @@ int MoveEach::reset(double l) {
 
 void MoveEach::iterate(alignment& A,Parameters& P) {
   for(int i=0;i<order.size();i++)
-    iterate(A,P,i);
+    iterate(A,P,order[i]);
 }
 
-result_t MoveEach::iterate(alignment& A,Parameters& P,int i) {
+result_t MoveEach::iterate(alignment& A,Parameters& P,int arg) {
   // FIXME - this is trying to mean both order[i] and arg[i]
   // better make a separate operator() to mean arg[i] and call down with that
-  sdfsdf
-  int m = choose(order[i]);
-  return moves[m]->iterate(A,P,args[order[i]]);
+  int m = choose(arg);
+  return moves[m]->iterate(A,P,subarg[m][arg]);
 }
 
 void MoveEach::show_enabled(int depth) const {
@@ -316,6 +330,22 @@ void MoveEach::print_move_stats(int depth) const {
   for(int i=0;i<moves.size();i++)
     moves[i]->print_move_stats(depth+1);
 }
+
+result_t MoveArgSingle::iterate(alignment& A,Parameters& P,int arg) {
+
+#ifndef NDEBUG
+  std::cerr<<" [single]move = "<<attributes[0]<<endl;
+#endif
+
+  iterations++;
+  result_t r = (*m)(A,P,args[arg]);
+  if (r == success)
+    successes++;
+  if (r == failure)
+    failures++;
+  return r;
+}
+    
 
 
 alignment standardize(const alignment& A, const SequenceTree& T) {

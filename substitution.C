@@ -48,12 +48,14 @@ valarray<double> peel(const vector<int>& residues,const tree& T,const Reversible
   bool any_letters = false;
   TreeFunc< valarray<double> > distributions(T);  //doing a lot of work here
   for(int i=0;i<residues.size();i++) {
-    if (alphabet::letter(residues[i])) {
+    // need to specify group[i] so that we can use nodes for which we are
+    // ignoring their info
+    if (alphabet::letter(residues[i]) and group[i]) {
       distributions(i).resize(a.size(),0.0);
       distributions(i)[residues[i]] = 1.0;
 
       //are there ANY letters at all?
-      if (group[i]) any_letters = true;
+      any_letters = true;
     }
   }
 
@@ -182,45 +184,52 @@ double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SMode
   int b = T.branch_up(root);
   double p = Pr(residues,T,SModel,transition_P,b);
 
-  /*
   int b2 = myrandom(0,T.branches());
-  double p2 = Pr(residues,Theta,b2);
+  double p2 = Pr(residues,T,SModel,transition_P,b2);
 
-  if (std::abs((p2-p)/p) > 1.0e-7) {
+  if (std::abs(p2-p) > 1.0e-9) {
     for(int i=0;i<T.leaves();i++)
-      std::cerr<<Theta.get_alphabet().lookup(residues[i])<<" ";
+      std::cerr<<SModel.Alphabet().lookup(residues[i])<<" ";
     std::cerr<<p<<" "<<log(p)<<"     "<<p2<<"      "<<log(p2)<<endl;
     assert(0); //FIXME - try this check!
   }
-  */
 
   //  std::cerr<<" Pr: p="<<p<<"      log(p)="<<log(p)<<std::endl;
   assert(0.0 <= p and p <= 1.0);
   return p;
 }
 
+double Pr(const alignment& A,const Parameters& P,int column) {
+  const MultiRateModel& MRModel = P.SModel();
+
+  vector<int> residues(A.size2());
+  for(int i=0;i<residues.size();i++)
+    residues[i] = A(column,i);
+    
+  
+  std::cerr<<"Pr: ("<<column<<")  ";
+  double total=0;
+  for(int r=0;r<MRModel.nrates();r++) {
+    double temp = MRModel.distribution()[r] * Pr(residues,
+						 P.T,
+						 MRModel.BaseModel(),
+						 P.transition_P(r)
+						 );
+
+    std::cerr<<temp<<"   ";
+    total += temp;
+  }
+  std::cerr<<"  total = "<<total<<"   log(total) = "<<log(total)<<endl;
+  assert(0 < total and total <= 1);
+  return log(total);
+}
+
 double Pr(const alignment& A,const Parameters& P) {
   double p = 0.0;
-  const MultiRateModel& MRModel = P.SModel();
-  
-  vector<int> residues(A.size2());
 
   // Do each node before its parent
-  for(int column=0;column<A.length();column++) {
-    for(int i=0;i<residues.size();i++)
-      residues[i] = A(column,i);
-    
-    double total=0;
-    for(int r=0;r<MRModel.nrates();r++)
-      total += MRModel.distribution()[r] * Pr(residues,
-					      P.T,
-					      MRModel.BaseModel(),
-					      P.transition_P(r)
-					      );
-
-    assert(0.0 < total and total <= 1.0);
-    p += log(total);
-  }
+  for(int column=0;column<A.length();column++) 
+    p += Pr(A,P,column);
 
     //    std::cerr<<" substitution: P="<<P<<std::endl;
   return p;

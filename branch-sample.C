@@ -20,6 +20,103 @@
 
 using std::abs;
 
+double sPr(const alignment& A,const Parameters& P,int node1,int node2) {
+  double Pr=0;
+  for(int column=0;column<A.length();column++) {
+    if (not A.gap(column,node1) or not A.gap(column,node2))
+      Pr += substitution::Pr(A,P,column);
+  }
+  return Pr;
+}
+
+
+inline double sum(const valarray<double>& v) {
+  return v.sum();
+}
+
+
+double path_Q_path(const vector<int>& path,const Matrix& Q,const vector<double>& pi) {
+  double Pr = log_0;
+  for(int S=0;S<3;S++)
+    Pr = logsum(Pr,pi[S] + Q(S,path[0]));
+
+  for(int l=1;l<path.size();l++)
+    Pr += Q(path[l-1],path[l]);
+
+  return Pr;
+}
+
+bool di(int state) {
+  return (state == 0 or state==2);
+}
+
+bool dj(int state) {
+  return (state == 0 or state==1);
+}
+
+double path_Q_subst(const vector<int>& path,
+		    const vector< vector< valarray<double> > >& dists1,
+		    const vector< vector< valarray<double> > >& dists2,
+		    const substitution::MultiRateModel& MRModel)
+{
+  const valarray<double>& frequency = MRModel.BaseModel().frequencies();
+
+  double P_sub=0;
+  int i=0,j=0;
+  const int I = dists1.size();
+  const int J = dists2.size();
+
+  for(int l=0;l<path.size();l++) {
+
+    int state2 = path[l];
+    if (di(state2))
+      i++;
+    if (dj(state2))
+      j++;
+
+    double sub=0;
+    if (di(state2) and dj(state2)) {
+      std::cerr<<"Q: ("<<l<<":"<<i<<","<<j<<")  ";
+      for(int r=0;r<MRModel.nrates();r++) {
+ 	double temp = MRModel.distribution()[r]* 
+	  sum( dists1[i-1][r] * frequency * dists2[j-1][r] );
+ 	sub += temp;
+ 	std::cerr<<temp<<"   ";
+      }
+      std::cerr<<"  total = "<<sub<<"   log(total) = "<<log(sub)<<endl;
+    }
+    else if (di(state2)) {
+      std::cerr<<"Q: ("<<l<<":"<<i<<","<<j<<")  ";
+      for(int r=0;r<MRModel.nrates();r++) {
+	double temp = MRModel.distribution()[r]* 
+	  sum( dists1[i-1][r] * frequency);
+	sub += temp;
+ 	std::cerr<<temp<<"   ";
+      }
+      std::cerr<<"  total = "<<sub<<"   log(total) = "<<log(sub)<<endl;
+    }
+    else if (dj(state2)) {
+      std::cerr<<"Q: ("<<l<<":"<<i<<","<<j<<")  ";
+      for(int r=0;r<MRModel.nrates();r++) {
+	double temp = MRModel.distribution()[r]* 
+	  sum( dists2[j-1][r] * frequency);
+	sub += temp;
+ 	std::cerr<<temp<<"   ";
+      }
+      std::cerr<<"  total = "<<sub<<"   log(total) = "<<log(sub)<<endl;
+    }
+    else
+      sub = 1.0;
+
+    P_sub += log(sub);
+  }
+  assert(i == I and j == J);
+  return P_sub;
+}
+
+
+
+
 double path_P(const vector<int>& path,const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& Theta) {
   const Matrix& Q = Theta.IModel.Q;
 
@@ -98,11 +195,6 @@ vector<int> sample_path(const Matrix& M,const Matrix& G1,const Matrix& G2,const 
   std::reverse(path.begin(),path.end());
   return path;
 }
-
-inline double sum(const valarray<double>& v) {
-  return v.sum();
-}
-
 
 // This can affect the ordering!  Make sure this is OK
 alignment construct(const alignment& old, const vector<int>& path, const valarray<bool>& group1, 
@@ -379,27 +471,56 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   path.push_back(3);
   assert(path2 == path);
 
+  double ls1 = sPr(old,Theta,node1,node2);
+  double ls2 = sPr(A  ,Theta,node1,node2);
+
+  double lp1 = prior_branch(old,Theta.IModel,node1,node2);
+  double lp2 = prior_branch(A  ,Theta.IModel,node1,node2);
+
   double p1 = path_P(path1,M,G1,G2,Theta);
   double p2 = path_P(path2,M,G1,G2,Theta);
 
   double l1 = probability3(old,Theta);
   double l2 = probability3(A,Theta);
 
-  double l1B = substitution::Pr(old,Theta) + prior_branch(old,Theta.IModel,node1,node2);
-  double l2B = substitution::Pr(A  ,Theta) + prior_branch(A  ,Theta.IModel,node1,node2);
+  double l1B = ls1 + lp1;
+  double l2B = ls2 + lp2;
+
   double diff = p2-p1-(l2-l1);
   double rdiff = diff/(l2-l1);
 
   double diffB = p2-p1-(l2B-l1B);
   double rdiffB = diffB/(l2B-l1B);
 
+  double qp1 = path_Q_path(path1,Q,pi);
+  double qs1 = path_Q_subst(path1,dists1,dists2,MRModel);
+  double q1 = qp1 + qs1;
+
+  double qp2 = path_Q_path(path2,Q,pi);
+  double qs2 = path_Q_subst(path2,dists1,dists2,MRModel);
+  double q2 = qp2 + qs2;
+
   if (path1 != path2) {
     std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
+    std::cerr<<"Q1 = "<<q1<<"     Q2 = "<<q2<<"     Q2 - Q1 = "<<q2-q1<<endl;
     std::cerr<<"L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<endl;
     std::cerr<<"L1B = "<<l1B<<"     L2B = "<<l2B<<"     L2B - L1B = "<<l2B-l1B<<endl<<endl;
     std::cerr<<"diff = "<<diff<<std::endl;
     std::cerr<<"rdiff = "<<rdiff<<std::endl;
     std::cerr<<"rdiffB = "<<rdiffB<<std::endl;
+
+    // Do the likelihood and HMM substitition probabilities agree?
+    std::cerr<<"LS1 = "<<ls1<<"     LS2 = "<<ls2<<"   LS2 - LS1 = "<<ls2-ls1<<endl;
+    std::cerr<<"QS1 = "<<qs1<<"     QS2 = "<<qs2<<"   QS2 - QS1 = "<<qs2-qs1<<endl;
+    std::cerr<<endl;
+
+    // Do the likelihood and HMM path probabilities agree?
+    std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<endl;
+    std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<endl;
+    std::cerr<<endl;
+
+
+
     if (diff != 0.0) {
       if (std::abs(rdiff) > 1.0e-8) {
 	old.print(std::cerr);

@@ -123,19 +123,7 @@ namespace MCMC {
 
     void iterate(alignment& A,Parameters& P) { iterate(A,P,0); }
 
-    result_t iterate(alignment& A,Parameters& P,int) 
-    {
-#ifndef NDEBUG
-      std::cerr<<" [single]move = "<<attributes[0]<<endl;
-#endif
-      iterations++;
-      result_t r = (*m)(A,P);
-      if (r == success)
-	successes++;
-      if (r == failure)
-	failures++;
-      return r;
-    }
+    result_t iterate(alignment& A,Parameters& P,int);
 
     SingleMove(atomic_move m1,const string& v)
       :Move(v),m(m1) {}
@@ -147,6 +135,8 @@ namespace MCMC {
 
     vector<int> args;
 
+    
+
     MoveArg(const string& s):Move(s) { }
 
     virtual ~MoveArg() {}
@@ -157,10 +147,12 @@ namespace MCMC {
   class MoveEach: public MoveArg, protected MoveGroupBase {
     vector<int> order;
 
-    vector< vector<bool> > present;
+    vector< vector<int> > subarg;
 
     double sum(int) const;
     int choose(int) const;
+
+    bool submove_has_arg(int m,int arg) const {return subarg[m][arg] != -1;}
   public:
     MoveEach* clone() const {return new MoveEach(*this);}
 
@@ -187,20 +179,8 @@ namespace MCMC {
     int reset(double l) {return poisson(l);};
     void iterate(alignment& A,Parameters& P) { iterate(A,P,0);};
 
-    result_t iterate(alignment& A,Parameters& P,int a) 
-    {
-#ifndef NDEBUG
-      std::cerr<<" [single]move = "<<attributes[0]<<endl;
-#endif
-      iterations++;
-      result_t r = (*m)(A,P,a);
-      if (r == success)
-	successes++;
-      if (r == failure)
-	failures++;
-      return r;
-    }
-    
+    result_t iterate(alignment&,Parameters&,int arg);
+
     MoveArgSingle(const string& s,atomic_move_arg m1,const vector<int>& a)
       :MoveArg(s),m(m1) 
     {args=a;}

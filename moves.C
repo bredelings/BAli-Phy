@@ -8,6 +8,9 @@ MCMC::result_t slide_branch_lengths_one(alignment& A, Parameters& P,int b) {
   bool up = true;
   if (myrandom(2))
     up = false;
+
+  if (b < P.T.leaves())
+    up = true;
   return slide_branch_length(A,P,b,up);
 }
 
