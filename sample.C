@@ -93,6 +93,8 @@ alignment sample(const alignment& old,const Parameters& Theta,int node) {
     indels.push_back(vector<int>(2,0));
   }
 
+  // Determine which indels are present if the internal node at 'column'
+  // is absent (indels[column][0]) or present (indels[column][1])
   for(int column=0;column<A.length();column++) {
     int num_present=0;
     if (A(column,n1) != alphabet::gap)
@@ -135,6 +137,12 @@ alignment sample(const alignment& old,const Parameters& Theta,int node) {
   P[0][63] = 0; /// 111-111
   P[0][71] = 0; /// 111
   P[0][73] = 0; /// 1
+  
+  // If current node is '-', then we have class I edges (e.g. 1->4)
+  // If current node is '+', then we have class II edges (e.g. 4->1)
+
+  // Edges can only be hidden if current node is '-' in the first case.
+  // But only the second kind of edges can be hidden.
 
   // If we store 00+10->0 and 10+11->1 then we halve calls to logsum
   for(int column=1;column<P.size();column++) {
@@ -152,24 +160,27 @@ alignment sample(const alignment& old,const Parameters& Theta,int node) {
 	
 	int prev_indel = indels[column-1][prev_state];
 
-	int target=(i<<3)+7; // i ->111
-	if (!state) {
-	  if (prev_state)
-	    target = (i<<3)+(prev_indel & mask(indel));
-	  else
-	    target = (i<<3)+(i & mask(indel));
+	int target=-1;
+	if (state==0) {
+	  if (prev_state==0) // What edges hidden BY previous column?
+	                     // (None of its edges can be hidden)
+	    target = i;
+	  else if (prev_state==1)
+		             // What edges exist IN previous column?
+		             // (It can't hide edges)
+	    target = prev_indel;
+
+	  //  Of those edges, this column can hide ones in mask(indel)
+	  target &= mask(indel);
 	}
+	else if (state==1)
+	  target=7; // i ->111
 	
+	target = (i<<3)+target;
+
 	int gaps = num_gaps(indel);
 	
-	int extended = num_shared(prev_indel,indel);
-	if (i != 7) {
-	  int extended2 = num_shared(prev_indel|i,indel);
-	  if (extended2>extended)
-	    assert(state == 1);
-	  extended = extended2;
-	}
-
+	int extended = num_shared(prev_indel|i,indel);
 	int opened = gaps - extended;
 	
 	double p = Theta.lambda_E*extended + Theta.lambda_O*opened;

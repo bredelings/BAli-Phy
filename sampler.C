@@ -40,6 +40,7 @@ void print_stats(const alignment& A,const string& s1,const string& s2) {
   }
 }
 
+/* 
 void print_stats(const alignment& A,const Parameters& Theta) {
   total_samples++;
 
@@ -55,20 +56,20 @@ void print_stats(const alignment& A,const Parameters& Theta) {
     std::cout<<"branch "<<i<<" "<<Theta.T.branch(i).length<<endl;
   std::cout<<endl;
 }
+*/
 
-/*
-void print_stats(const alignment& A) {
+void print_stats(const alignment& A,const Parameters& Theta) {
   total_samples++;
 
   print_stats(A,"CAR4081","consGenv");
   print_stats(A,"CAR4081","consAenv");
   print_stats(A,"CAR4081","consBenv");
   print_stats(A,"consGenv","consAenv");
-  print_stats(A,"consGenv","consGenv");
+  print_stats(A,"consGenv","consBenv");
   print_stats(A,"consAenv","consBenv");
 
 }
-*/
+
 void MCMC2(alignment& A,Parameters& Theta,
 	   const int max,double probability(const alignment&,const Parameters&)) {
   const SequenceTree& T = Theta.T;
@@ -78,7 +79,7 @@ void MCMC2(alignment& A,Parameters& Theta,
   SequenceTree Sum = T;
 
   const int correlation_time = int(8.0*T.leaves()*log(T.leaves()));
-  const int start_after = 20000;
+  const int start_after = 600.0*T.leaves()*log(T.leaves());
   int total_samples = 0;
 
   double p=probability(A,Theta);
@@ -113,13 +114,13 @@ void MCMC2(alignment& A,Parameters& Theta,
     if (iterations %50 == 0 or fabs(p - new_p)>8) {
       std::cerr<<"previous = "<<
 	probability_no_tree(A,Theta)<<"  "<<
-	//	probability_simple_tree(A,Theta)<<"  "<<
+	probability_simple_tree(A,Theta)<<"  "<<
 	probability(A,Theta)<<"  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl;
 
       std::cerr<<A<<endl;
       std::cerr<<"new = "<<
 	probability_no_tree(NewA,Theta)<<"  "<<
-	//	probability_simple_tree(NewA,Theta)<<"  "<<
+	probability_simple_tree(NewA,Theta)<<"  "<<
 	probability(NewA,Theta)<<"  ["<<probability2(NewA,Theta)<<": "<<prior_internal(NewA,Theta)<<" + "<<substitution(NewA,Theta)<<"]"<<endl;
       std::cerr<<NewA<<endl;
       NewA.print_fasta(std::cerr);

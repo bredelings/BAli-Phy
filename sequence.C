@@ -1,5 +1,6 @@
 #include <cassert>
 #include "sequence.H"
+#include "myexception.H"
 
 int alphabet::operator[](char c) const {
   if (c=='-') 
@@ -8,6 +9,8 @@ int alphabet::operator[](char c) const {
     if (data[i]==c)
       return i;
   }
+  std::cerr<<int(c)<<endl;
+  throw myexception(string("Letter '") + c + string("' not in alphabet."));
   assert(0);
 }
 
