@@ -4,7 +4,7 @@
 #include "rng.H"
 #include <gsl/gsl_randist.h>
 #include "myexception.H"
-#include "likelihood.H"
+#include "probability.H"
 
 using std::vector;
 

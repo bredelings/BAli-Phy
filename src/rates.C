@@ -3,7 +3,7 @@
 #include <valarray>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
-#include "likelihood.H"
+#include "probability.H"
 #include "rng.H"
 
 namespace substitution {

@@ -7,4 +7,9 @@ double dirichlet_log_pdf(const std::valarray<double>& p,const std::valarray<doub
 double dirichlet_log_pdf(const std::valarray<double>& p,const std::valarray<double>& q
 			 ,double N);
 
+double exp_exponential_log_pdf(double y,double mu,double delta=0.0);
+double exp_exponential_pdf(double y,double mu,double delta=0.0);
+
+double shift_laplace_pdf(double x, double mu, double sigma);
+
 #endif

@@ -59,8 +59,12 @@ tools/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.
 	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
 
 tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
-	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o smodel.o \
-	rates.o exponential.o eigenvalue.o sequence-format.o randomtree.o ${LINKLIBS}
+	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o imodel.o \
+	sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o \
+	${LINKLIBS}
+
+#smodel.o \
+#	rates.o exponential.o eigenvalue.o sequence-format.o randomtree.o 
 
 tools/alignment-draw: tree.o alignment.o sequencetree.o arguments.o \
 	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
