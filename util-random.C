@@ -13,6 +13,7 @@ vector<int> randomize(const std::vector<int>& v) {
     work.erase(work.begin()+j);
   }
   assert(work.size()==0);
+  assert(newv.size() == v.size());
 
   return newv;
 }

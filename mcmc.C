@@ -311,11 +311,20 @@ int MoveArg::reset(double l) {
   order.clear();
   while(l>0) {
     vector<int> v = randomize(numbers);
+
     if (l < 1) {
-      int n = poisson(l*numbers.size());
+      double l2 = l*numbers.size();
+      int n = (int)l2;
+      if (myrandomf() < (l2-n))
+	n++;
+      assert(n < v.size());
+      if (not (n<v.size()))
+	std::abort();
       v.erase(v.begin()+n,v.end());
     }
+
     order.insert(order.end(),v.begin(),v.end());
+
     l--;
   }
   return order.size();

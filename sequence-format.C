@@ -249,10 +249,11 @@ namespace sequence_format {
 
   /// Read an alignments letters and names from a file in phylip format
   void write_phylip(std::ostream& file, std::vector<std::string>& names_in, std::vector<std::string>& sequences) {
+    vector<string> names = truncate_names(names_in);
+
     assert(names.size() == sequences.size());
     assert(names.size() > 0);
 
-    vector<string> names = truncate_names(names_in);
 
     const int nsequences = names.size();
     const int length = sequences[0].size();

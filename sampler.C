@@ -124,7 +124,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 		    );
 
   //FIXME - doesn't yet deal with gaps=star
-  if (P.SModel().full_tree)
+  if (P.IModel().full_tree)
     NNI_move.add(0.05,MoveArgSingle("three_way_NNI_and_A:alignment:nodes:topology",
 				   three_way_topology_and_alignment_sample,
 				   internal_branches)
@@ -137,16 +137,16 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 			       branches)
 	       );
 
-  if (P.SModel().full_tree)
-    SPR_move.add(0.05,MoveArgSingle("SPR_and_A:nodes:topology:length:alignment_branch",
+  if (P.IModel().full_tree)
+    SPR_move.add(0.07,MoveArgSingle("SPR_and_A:nodes:topology:length:alignment_branch",
 				    sample_SPR_and_A,
 				    branches)
 		 );
 
 
   topology_move.add(1,NNI_move);
-  topology_move.add(0.1,SPR_move);
-  if (P.T.leaves() >3)
+  topology_move.add(0.4,SPR_move);
+  if (P.T.leaves() >3 and P.SModel().full_tree)
     tree_moves.add(1,topology_move);
   
   //-------------- tree::lengths (length_moves) -------------//
@@ -181,7 +181,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   // full sampler
   Sampler sampler("sampler");
   sampler.add(1,alignment_moves);
-  sampler.add(1,tree_moves);
+  sampler.add(2,tree_moves);
   sampler.add(1,parameter_moves);
 
   vector<string> disable;
