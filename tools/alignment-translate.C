@@ -20,13 +20,17 @@ int main(int argc,char* argv[]) {
     cerr.precision(10);
     cout.precision(10);
     
+    OwnedPointer<AminoAcids> aa = AminoAcids();
+    if (args.set("Use Stop"))
+      *aa = AminoAcidsWithStop();
+
     vector<OwnedPointer<alphabet> > alphabets;
     Translation_Table *Tp=0;
     {
       ifstream genetic_code("Data/genetic_code_dna.dat");
       if (not genetic_code)
 	throw myexception()<<"Couldn't open file 'Data/genetic_code_dna.dat'";
-      Tp = new Translation_Table(Codons(DNA()),AminoAcids(),genetic_code);
+      Tp = new Translation_Table(Codons(DNA()),*aa,genetic_code);
 
       genetic_code.close();
 
@@ -37,7 +41,7 @@ int main(int argc,char* argv[]) {
       ifstream genetic_code("Data/genetic_code_rna.dat");
       if (not genetic_code)
 	throw myexception()<<"Couldn't open file 'Data/genetic_code_rna.dat'";
-      Tp = new Translation_Table(Codons(RNA()),AminoAcids(),genetic_code);
+      Tp = new Translation_Table(Codons(RNA()),*aa,genetic_code);
       genetic_code.close();
 
       alphabets.push_back(Tp->getCodons());
