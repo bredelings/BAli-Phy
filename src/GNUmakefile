@@ -55,9 +55,9 @@ else
 #  EXACTFLAGS += --param max-inline-insns-recursive=300
 #  EXACTFLAGS += --param max-inline-insns-recursive-auto=300
 
- EXACTFLAGS += --param large-function-insns=5700
- EXACTFLAGS += --param large-function-growth=100
- EXACTFLAGS += --param inline-unit-growth=300
+#  EXACTFLAGS += --param large-function-insns=5700
+#  EXACTFLAGS += --param large-function-growth=100
+#  EXACTFLAGS += --param inline-unit-growth=300
 
   EXACTFLAGS += --param max-gcse-passes=2
 endif
@@ -202,8 +202,8 @@ includes += /usr/local/include
 includes += ../include/
 includes += .
 
-CC=gcc-3.4
-CXX=g++-3.4
+CC=gcc-cvs
+CXX=g++-cvs
 CPP = $(CC) -E  	# This might vary from machine to machine
 CPPFLAGS += $(patsubst %,-I%,$(subst :, ,$(includes)))
 CXXFLAGS += ${LANGO:%=-f%} ${WARN:%=-W%} ${DEBUG:%=-%} ${OPT:%=-%} ${DEFS:%=-D%} ${EXACTFLAGS}
