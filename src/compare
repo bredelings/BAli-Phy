@@ -380,3 +380,22 @@ Actually, I made a small change, so the above will actually be r543
 26.13 (48)
 
 There is still some non-linear scaling: based on (5), (48) should be about 8.54
+
+
+-------------------------------------
+764-PROF-NDEBUG
+Flat profile:
+
+  6.45     52.68     4.84     4132     0.00     0.00  substitution::subA_index_sort(alignment const&, std::vector<std::vector<int, std::allocator<int> >, std::allocator<std::vector<int, std::allocator<int> > > > const&)
+  4.02     55.70     3.02    26436     0.00     0.00  get_path(alignment const&, int, int)
+  3.53     61.35     2.65    14155     0.00     0.00  substitution::sort_subtree_columns(alignment const&, std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const&)
+  1.60     63.75     1.20    26436     0.00     0.00  prior_branch(alignment const&, indel::PairHMM const&, int, int)
+  1.45     64.84     1.09     4132     0.00     0.00  substitution::subA_select(boost::numeric::ublas::matrix<int, boost::numeric::ublas::row_major, boost::numeric::ublas::unbounded_array<int, std::allocator<int> > > const&)
+  1.08     65.65     0.81    14155     0.00     0.00  substitution::get_columns(boost::numeric::ublas::matrix<int, boost::numeric::ublas::row_major, boost::numeric::ublas::unbounded_array<int, std::allocator<int> > > const&, int)
+  0.89     66.32     0.67     2196     0.00     0.00  substitution::leaf_index(int, alignment const&)
+  0.52     67.16     0.39    12440     0.00     0.00  alignment::seqlength(int) const
+  0.27     68.88     0.20     4132     0.00     0.00  substitution::subA_index(std::vector<int, std::allocator<int> > const&, alignment const&, Tree const&)
+  ----
+ 19.81
+
+  Also, how much time do we spend calculating all those probabilities in print_stats()?
