@@ -27,7 +27,7 @@ void guess_markov_model(vector<string>& string_stack,const alphabet& a) {
   else if (dynamic_cast<const AminoAcids*>(&a))
     string_stack.push_back("Empirical");
   else if (dynamic_cast<const Codons*>(&a))
-    string_stack.push_back("YangCodonModel");
+    string_stack.push_back("YangM0");
 }
 
 bool process_stack_Markov(vector<string>& string_stack,
@@ -62,7 +62,7 @@ bool process_stack_Markov(vector<string>& string_stack,
 
     model_stack.push_back(Empirical(a,filename));
   }
-  else if (match(string_stack,"YangCodonModel")) {
+  else if (match(string_stack,"YangM0")) {
     string dna_filename = args["datadir"].as<string>() + "/" + "genetic_code_dna.dat";
     string rna_filename = args["datadir"].as<string>() + "/" + "genetic_code_rna.dat";
 
@@ -217,6 +217,15 @@ bool process_stack_Multi(vector<string>& string_stack,
     models.push_back(M2);
 
     model_stack.push_back(DualModel(models));
+  }
+  else if (match(string_stack,"YangM2")) {
+    if (not dynamic_cast<YangCodonModel*>(model_stack.back().get()))
+      throw myexception()<<"Trying to construct a Yang M2 model from a '"<<model_stack.back().get()->name()
+			 <<"' model, which is not a YangM0 model.";
+
+    OwnedPointer<YangCodonModel> YM = *dynamic_cast<YangCodonModel*>(model_stack.back().get());
+    model_stack.pop_back();
+    model_stack.push_back(YangM2(*YM));
   }
   else
     return false;

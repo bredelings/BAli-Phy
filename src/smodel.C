@@ -582,19 +582,32 @@ namespace substitution {
       super_parameters_[offset+i] = f[i];
   }
 
+  void dirichlet_fiddle(vector<double>& v,int start, int n,double sigma) 
+  {
+    // copy to valarray
+    valarray<double> fract(n);
+    for(int i=0;i<fract.size();i++)
+      fract[i] = v[start+i];
 
+    // fiddle
+    fract = ::dirichlet_fiddle(fract,sigma);
+
+    //copy from valarray
+    for(int i=0;i<fract.size();i++)
+      v[start + i] = fract[i];
+  }
+
+  void dirichlet_fiddle(vector<double>& v,double sigma) 
+  {
+    dirichlet_fiddle(v,0,v.size(),sigma);
+  }
 
   void MultiFrequencyModel::super_fiddle() {
-    valarray<double> fract(fraction.size());
-    for(int i=0;i<fract.size();i++)
-      fract[i] = super_parameters_[i];
-    fract = dirichlet_fiddle(fract,0.10);
-    for(int i=0;i<fract.size();i++)
-      super_parameters_[i] = fract[i];
+    dirichlet_fiddle(super_parameters_,0.10);
 
     for(int m=0;m<fraction.size();m++) {
       valarray<double> f = get_freq(m);
-      f = dirichlet_fiddle(f,0.10);
+      f = ::dirichlet_fiddle(f,0.10);
       set_freq(m,f);
     }
     read();
@@ -957,6 +970,7 @@ namespace substitution {
 
   void YangM2::super_fiddle() {
     // dirichlet fiddle the first 3 parameters, sigma = ?
+    dirichlet_fiddle(super_parameters_, 0, 3, 0.1);
 
     // log-laplace fiddle the 4th parameter, wrapped so that it is always >= 1
     super_parameters_[3] *= exp(shift_laplace(0,0.2));
@@ -981,7 +995,7 @@ namespace substitution {
     double P = dirichlet_log_pdf(p,q,10);
 
     double omega = super_parameters()[3];
-    P += exponential_log_pdf(log(omega),0.05);
+    P += exponential_log_pdf(log(omega),0.1);
     return P;
   }
 
@@ -995,7 +1009,7 @@ namespace substitution {
     else if (i==1)
       return "YangM2::f[Neutral]";
     else if (i==2)
-      return "YangM2::f[Positive]";
+      return "YangM2::f[Selected]";
     else if (i==3)
       return "YangM2::omega";
     else
@@ -1015,6 +1029,14 @@ namespace substitution {
   YangM2::YangM2(const YangCodonModel& M1) 
     :MultiParameterModel(UnitModel(M1),4,0,3)
   {
+    super_parameters_[0] = 1.0/3;
+    super_parameters_[1] = 1.0/3;
+    super_parameters_[2] = 1.0 - super_parameters_[0] - super_parameters_[1];
+    super_parameters_[3] = 1.0;
+
+    read();
+
+    recalc();
   }
 
   void DualModel::recalc() {

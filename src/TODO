@@ -1,3 +1,5 @@
+-3. Stop requiring --random-tree-ok
+
 10. Speed up sample_path() for DParrayConstrained by only considering
     allowed states for each column...
     a) check how fast we are when gaps=full_tree but alignment_branch is 
@@ -12,8 +14,6 @@
 0. Update tools directory to use boost::program_options.
 
 1. Get intel compiler
-
-2. Fix setting of 'fixed' flags in model.H/C, allow 'unfixing' flags.
 
 3. Why did I think that I needed to invalidate branches on sample_nodes
    again?
@@ -47,9 +47,6 @@
 
 4. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
 5. Make align-constraint= work with sample_tri_multi (there is no regular sample_multi)
-6. Make A3-stripped.fasta work with alphabet=Codons
-   a) smodel parameters aren't being sampled??
-   b) we could also implement models besides M0...
 
 7. tree-dist-compare: 
 	a) by default, only show 1 topology per file
@@ -69,7 +66,7 @@
                         colorscheme=plain-AA-whiten scale=LOD
        where minus means affect the fg instead of the background.
 
-
+12.5: Allow specifying another model than HKY (e.g. TNY) underneath YangCodonModel
 ------
 13. How to make priors specified on command line?
 
@@ -140,5 +137,14 @@ the prior, because we never want to use it  differently.
 [DONE]  Estimate best alignment by finding the alignment with the greatest
    sum of PP(i ~ j) for all aligned pairs (i,j);
 
-[DONE]  Fix "showonly" - think of better name.
+[DONE]  Fix "showonly" - think of better name. (urgh - picked show-only)
+
+[DONE]  Fix setting of 'fixed' flags in model.H/C, to allow 'unfixing' parameters
+        and also modifying fixed/unfixed for sub-models.
+
+[DONE]  Fix smodel parameters aren't being sampled.
+
+[DONE]  Make A3-stripped.fasta work with alphabet=Codons
+
+[DONE]  Implement YangM2
 
