@@ -15,7 +15,7 @@ class alignment {
   void pad(int);
   void remap(const vector<int>&);
   void remap(const vector<string>&);
-  void gap_fixup(int,int,int,int,int);
+  void gap_fixup(int,int,int);
 
   void add_row(const vector<int>&);
 public:

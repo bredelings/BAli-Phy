@@ -3,6 +3,7 @@
 #include "likelihood.H"
 #include "myexception.H"
 #include "rng.H"
+#include "util.H"
 
 using std::valarray;
 static int total_samples = 0;
@@ -74,6 +75,10 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& Theta,
   o<<A<<endl<<endl;
 
   o<<"tree = "<<Theta.T<<endl<<endl;
+
+  for(int i=0;i<Theta.SModel->parameters().size();i++)
+    o<<"    p"<<i<<" = "<<Theta.SModel->parameters()[i];
+  o<<endl<<endl;
 }
 
 valarray<double> autocorrelation(valarray<double> v) {
@@ -94,38 +99,33 @@ valarray<double> autocorrelation(valarray<double> v) {
   return w;
 }
 
-MCMC::move_info& MCMC::find(const string& s) {
-  typeof(moves.begin()) here = moves.find(s);
-  if (here == moves.end())
-   throw myexception(string("Tried to lookup non-existant move '")+s+"'!");
-  return here->second;
-}
-
-const MCMC::move_info& MCMC::find(const string& s) const {
-  typeof(moves.begin()) here = moves.find(s);
-  if (here == moves.end())
-    throw myexception(string("Tried to lookup non-existant move '")+s+"'!");
-  return here->second;
-}
-
 void MCMC::recalc() {
   sum_enabled_weights = 0;
-  for(typeof(moves.begin()) here = moves.begin();here != moves.end();here++) {
-    if (here->second.enabled)
-      sum_enabled_weights += here->second.weight;
-  }
+  for(int i=0;i<moves.size();i++)
+    if (moves[i].enabled)
+      sum_enabled_weights += moves[i].weight;
 };
 
 void MCMC::enable(const string& s) {
-  move_info& value = find(s);
-  value.enabled = true;
+  for(int i=0;i<moves.size();i++) {
+    for(int j=0;j<moves[i].attributes.size();j++)
+      if (moves[i].attributes[j] == s or s == "all") {
+	moves[i].enabled = true;
+	break;
+      }
+  }
 
   recalc();
 }
 
 void MCMC::disable(const string& s) {
-  move_info& value = find(s);
-  value.enabled = false;
+  for(int i=0;i<moves.size();i++) {
+    for(int j=0;j<moves[i].attributes.size();j++)
+      if (moves[i].attributes[j] == s or s == "all") {
+	moves[i].enabled = false;
+	break;
+      }
+  }
 
   recalc();
 }
@@ -134,19 +134,22 @@ void MCMC::sample(alignment& A,Parameters& Theta) const {
   double r = myrandomf()*sum_enabled_weights;
 
   double sum = 0;
-  typeof(moves.begin()) here = moves.begin();
-  for(;here != moves.end();here++) {
-    if (not here->second.enabled) continue;
-    sum += here->second.weight;
+  int i = 0;
+  for(;i < moves.size();i++) {
+
+    if (not moves[i].enabled) continue;
+    sum += moves[i].weight;
     if (r<sum) break;
   }
-  assert(here != moves.end());
-  (*(here->second.m))(A,Theta);
+  assert(i < moves.size());
+  (moves[i].m)(A,Theta);
 }
 
-void MCMC::add(move m,double weight,const string& key) {
-  moves[key] = move_info(m,weight,true);
+void MCMC::add(move m,double weight,const string& keys) {
+  move_info mi(m,weight,true);
+  mi.attributes = split(keys,':');
   sum_enabled_weights += weight;
+  moves.push_back(mi);
 }
 
 

@@ -66,7 +66,7 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
     vector<string> s;
     for(int i=0;i<A.num_sequences();i++)
       s.push_back(A.seq(i).name);
-    T = RandomTree(s);
+    T = RandomTree(s,0.05);
   }
   else 
     T.read(args["tree"]);
@@ -154,23 +154,33 @@ int main(int argc,char* argv[]) {
     /*------------ Start the Sampling ---------------*/
     Parameters Theta(*smodel,lambda_O,lambda_E,T);
     MCMC sampler;
-    sampler.add(sample_alignments,1,"sample_alignments");
-    sampler.add(sample_nodes,1,"sample_nodes");
-    sampler.add(sample_topologies,1,"sample_topologies");
-    sampler.add(change_branch_lengths,1,"change_branch_lengths");
-    sampler.add(change_parameters,1,"change_parameters");
+    sampler.add(sample_alignments,1,"sample_alignments:alignment");
+    sampler.add(sample_nodes,1,"sample_nodes:nodes");
+    sampler.add(sample_topologies,1,"sample_topologies:nodes:topology");
+    sampler.add(change_branch_lengths,1,"change_branch_lengths:nodes:lengths:topology");
+    sampler.add(change_parameters,1,"change_parameters:parameters");
 
     //FIXME - maybe just store name in object, use vector, search for name?
     //FIXME - make MCMC inherit from the collection of moves.
-    for(typeof(sampler.moves.begin()) here = sampler.moves.begin();here != sampler.moves.end();here++) {
-      std::cout<<"move "<<here->first<<": ";
-      if (args.set(here->first) and args[here->first] == "disable") {
-	sampler.disable(here->first);
-	std::cout<<"DISABLED.\n";
-      }
-      else {
+    vector<string> disable;
+    vector<string> enable;
+    if (args.set("disable"))
+      disable = split(args["disable"],':');
+    if (args.set("enable"))
+      enable = split(args["enable"],':');
+    
+    for(int i=0;i<disable.size();i++)
+      sampler.disable(disable[i]);
+
+    for(int i=0;i<enable.size();i++)
+      sampler.enable(enable[i]);
+
+    for(int i=0;i<sampler.moves.size();i++) {
+      std::cout<<"move "<<sampler.moves[i].attributes[0]<<": ";
+      if (sampler.moves[i].enabled)
 	std::cout<<"enabled.\n";
-      }
+      else 
+	std::cout<<"DISABLED.\n";
     }
     std::cout<<"\n";
 

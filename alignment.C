@@ -173,11 +173,11 @@ bool phylip_section(std::istream& file,int ntaxa, vector<string>& names,vector<s
     else {
       int name_start = pos;
       pos = line.find_first_of(" \t",pos);
-      names.push_back(line.substr(name_start,pos));
+      names.push_back(line.substr(name_start,pos-name_start));
     
-      pos = std::max(pos,9);
+      pos = std::max(pos+1,10);
     }
-    pos = line.find_first_not_of(" \t",pos+1);
+    pos = line.find_first_not_of(" \t",pos);
     if (indent == -1)
       indent = pos;
     else
@@ -236,10 +236,9 @@ void alignment::load(const alphabet& a,const std::string& filename) {
     load_fasta(a,filename);
 }
 
-void alignment::gap_fixup(int n1,int n2,int g1,int g2,int m) {
+void alignment::gap_fixup(int n1,int n2,int m) {
   std::cerr<<"FIXME: in sequences "<<n1<<" and "<<n2<<" we have \
-  a g2 @ "<<g2<<" followed by a g1 @ "<<g1<<std::endl;
-  assert(0);
+  a g2 followed by a g1 @ "<<m<<std::endl;
 }
 
 //FIXME - make all internal nodes present - see how that does
@@ -270,24 +269,10 @@ void alignment::create_internal(const SequenceTree& T) {
     int n1 = T.branch(b).parent();
     int n2 = T.branch(b).child();
 
-    int g1 = -1,g2 = -1;
-    for(int column=0;column<length();column++) {
-      if (gap(column,n1) and not gap(column,n2)) { //G1
-	if (g1 != -1) 
-	  g1 = column;
-      }
-      else if (not gap(column,n1) and gap(column,n2)) { //G2
-	if (g2 != -1) 
-	  g2 = column;
-      }    
-      else {
-	if (g1 != -1 and g2 != -1 and g1 > g2) {
-	  gap_fixup(n1,n2,g1,g2,column);
-	}
-	
-	g1 = -1;
-	g2 = -1;
-      }
+    vector<int> state = get_path(*this,n1,n2);
+    for(int i=0;i<state.size()-1;i++) {
+      if (state[i] == 1 and state[i+1] == 2)
+	gap_fixup(n1,n2,i);
     }
   }
 

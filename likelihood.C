@@ -60,11 +60,13 @@ double prior_branch_HMM(const alignment& A,const IndelModel& IModel,int parent,i
 
   double P = log_0;
   for(int i=0;i<4;i++)
-    P = logsum(P,IModel.pi[i] + IModel.P[i][state[0]]);
+    P = logsum(P,IModel.pi[i] + IModel.P(i,state[0]));
 
   for(int i=1;i<state.size();i++) 
-    P += IModel.Q[state[i-1]][state[i]];
+    P += IModel.Q(state[i-1],state[i]);
   
+  assert(P > log_0/10);
+
   return P;
 }
 
@@ -76,15 +78,16 @@ double prior_branch_HMM_Given(const alignment& A,const IndelModel& IModel,int pa
 
   double P = log_0;
   for(int i=0;i<4;i++)
-    P = logsum(P,IModel.pi[i] + IModel.P[i][state[0]]);
+    P = logsum(P,IModel.pi[i] + IModel.P(i,state[0]));
 
   int l1 = (state[0]==0 or state[0]==2)?1:0;
   for(int i=1;i<state.size();i++) {
     if (l1<length1)
-      P += IModel.P[state[i-1]][state[i]];
+      P += IModel.P(state[i-1], state[i]);
     else 
-      P += IModel.R[state[i-1]][state[i]];
+      P += IModel.R(state[i-1], state[i]);
 
+    assert(P > log_0/10);
     if (state[i]==0 or state[i]==2) l1++;
   }
   assert(l1 == length1);
@@ -94,6 +97,8 @@ double prior_branch_HMM_Given(const alignment& A,const IndelModel& IModel,int pa
   //  std::cerr<<"P(A12) = "<<P12<<endl;
   //  std::cerr<<"P(A12)/P(1) = "<<P12O1<<endl;
   //  std::cerr<<"P(A12|1) = "<<P<<endl;
+
+  assert(P > log_0/10);
 
   return P;
 }
@@ -110,6 +115,8 @@ double prior_HMM(const alignment& A,const Parameters& Theta) {
     int child  = T.branch(b).child();
     P += prior_branch_HMM_Given(A,Theta.IModel,parent,child);
   }
+  
+  assert(P > log_0/10);
 
   return P;
 }

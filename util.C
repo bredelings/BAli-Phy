@@ -5,13 +5,16 @@ using std::string;
 
 vector<string> split(const string& s, char c) {
   vector<string> strings;
-  int p=0;
+  int length=0;
   for(int i=0;i<s.size();i++)
-    if (s[i] == 'c') {
-      strings.push_back(s.substr(p,i-1));
-      p = i+1;
+    if (s[i] == c) {
+      strings.push_back(s.substr(i-length,length));
+      length = 0;
     }
-  strings.push_back(s.substr(p,s.size()-1));
+    else
+      length++;
+  
+  strings.push_back(s.substr(s.size()-length,length));
   return strings;
 }
 
