@@ -667,6 +667,22 @@ namespace substitution {
     return SubModel().name() + " * multi_freq";
   }
   string MultiFrequencyModel::super_parameter_name(int i) const {
+    if (i < fraction.size()) {
+      string s = "multi_freq::p";
+      s += convertToString(i+1);
+      return s;
+    }
+    i -= fraction.size();
+    if (i < fraction.size()*Alphabet().size()) {
+      int m = i/Alphabet().size() +1;
+      int l = i%Alphabet().size();
+      string s = "f";
+      s += Alphabet().lookup(l);
+      s += convertToString(m);
+      return s;
+    }
+    
+
     return s_parameter_name(i,super_parameters_.size());
   }
 
