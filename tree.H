@@ -193,7 +193,7 @@ public:
   void swap_children(int n);
   void standardize(const vector<int>&);
 
-  bool ancestor(int n1, int n2) const {return ancestors[names[n1]->order][names[n2]->order];}
+  bool ancestor(int n1, int n2) const {return ancestors[n1][n2];}
   std::valarray<bool> partition(int n1,int n2) const;
 
   TreeView copy() const {return TreeView(root).copy();}

@@ -16,7 +16,7 @@ struct alphabet {
   char lookup(int) const;
   int size() const { return data.size(); }
 
-  static bool letter(int l) {return (l>0);}
+  static bool letter(int l) {return (l>=0);}
   alphabet(const char*);
 };
 

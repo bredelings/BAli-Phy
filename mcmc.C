@@ -119,11 +119,10 @@ void MCMC(alignment& A,Parameters& Theta,
   valarray<double> v(p,5000);
 
   for(int iterations=0; iterations < max; iterations++) {
-    int id = aid(A);
-    std::cerr<<"iterations: "<<iterations<<"    logp = "<<p<<"      id = "<<id<<endl;
+    std::cerr<<"iterations = "<<iterations<<"    logp = "<<p<<endl;
 
-    v = v.shift(-1);
-    v[0] = p;
+    //    v = v.shift(-1); memory leak?
+    //    v[0] = p;
 
     /******************** Record Statistics *******************/
     if (iterations > start_after) {
@@ -135,7 +134,6 @@ void MCMC(alignment& A,Parameters& Theta,
       }
     }
 
-
     /******************* Propose new position *********************/
     alignment A2 = A;
     Parameters Theta2 = Theta;
@@ -143,6 +141,7 @@ void MCMC(alignment& A,Parameters& Theta,
     sample(A2,Theta2);
 
     new_p = probability(A2,Theta2);
+
 
     if (new_p > ML_score) {
       // arguably I could optimize these for a few iterations
@@ -173,7 +172,6 @@ void MCMC(alignment& A,Parameters& Theta,
 
       A2.print_fasta(std::cerr);
     }
-
 
     /*****************Actually Move to new position ***************/
     A = A2;

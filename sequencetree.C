@@ -34,7 +34,7 @@ string SequenceTree::write(int n,bool lengths) const {
     int left = T[n].left();
     int right = T[n].right();
     double llength = T.branch_up(left).length();
-    double rlength = T.branch_up(left).length();
+    double rlength = T.branch_up(right).length();
 
     if (right >= branches())
       rlength = 0;

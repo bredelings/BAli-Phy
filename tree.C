@@ -235,6 +235,15 @@ void tree::reanalyze() {
     if (i<branches())
       assert(branches_[i]->name == i);
   }
+
+  /******* for leaves, branch names and node names should correspond *******/
+  if (this->leaves()>2)
+    for(int i=0;i<this->leaves();i++)
+      assert(branch_up(i) == i);
+
+
+  /****** Re-compute ancestor relation *******/
+  compute_ancestors();
 }
 
 // order shouldn't depend on left/right stuff
@@ -289,27 +298,29 @@ void tree::reorder() {
   for(int i=0;i<order.size();i++)
     assert(order[i]->order == i);
 
-  compute_ancestors();
 }
 
-// orderr needs to be already set up for this
+// names need to be already set up for this
 void tree::compute_ancestors() {
 
   ancestors.clear();
   ancestors.insert(ancestors.begin(),num_nodes(),
 		   std::valarray<bool>(false,num_nodes()));
-  for(int n=0;n<num_nodes();n++) {
+  for(int i=0;i<num_nodes();i++) {
+    int n = get_nth(i);
     ancestors[n][n] = true;
 
-    if (order[n]->left) {
-      int o_left = order[n]->left->order;
-      ancestors[n] |= ancestors[ o_left ];
-    }
-    
-    if (order[n]->right) {
-      int o_right = order[n]->right->order;
-      ancestors[n] |= ancestors[ o_right ];
-    }
+    node* N = names[n];
+    assert(N->name == n);
+
+    if (N->parent) 
+      ancestors[N->parent->name] |= ancestors[n];
+  }
+
+  for(int i=0;i<num_nodes()-1;i++) {
+    int c = i;
+    int p = names[c]->parent->name;
+    assert(ancestor(p,c));
   }
 }
 
@@ -438,8 +449,8 @@ void tree::exchange(int node1,int node2) {
   else     
     TreeView::exchange_cousins(n1,n2);
 
+  // doesn't mess with the names
   reorder();
-
 
   /***** Check that our lookup tables are right *****/
   assert(names.size() == order.size());
@@ -451,8 +462,13 @@ void tree::exchange(int node1,int node2) {
   }
 
   /******* for leaves, branch names and node names should correspond *******/
-  for(int i=0;i<leaves();i++)
-    assert(branch_up(i) == i);
+  if (this->leaves()>2)
+    for(int i=0;i<this->leaves();i++)
+      assert(branch_up(i) == i);
+
+
+  compute_ancestors();
+
 }
 
 

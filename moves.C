@@ -7,7 +7,7 @@ void change_branch_length(const alignment& A, Parameters& Theta,int b) {
 
     Parameters Theta2 = Theta;
     /********* Propose increment 'epsilon' ***********/
-    const double sigma = 1.0/2;
+    const double sigma = 0.1/2;
     const double length = Theta2.T.branch(b).length();
     double lower = length - sigma;
     double higher = length + sigma;
@@ -36,6 +36,7 @@ void change_branch_length(const alignment& A, Parameters& Theta,int b) {
     }
     else
       std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
+    std::cerr<<" "<<Theta.T<<std::endl;
 }
 
 void move_node(const alignment& A, Parameters& Theta,int node) {
