@@ -137,15 +137,19 @@ bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<
 }
 
 
-/// Check that internal nodes don't have letters 
+/// Check that internal nodes don't have letters (or anything wierder!)
 void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 
   for(int column=0;column<A.length();column++)
     for(int i=n_leaves;i<A.size2();i++) 
-      if (alphabet::letter(A(column,i)) )
-	throw myexception()<<"Found a letter in column "<<column
-			   <<" of internal sequence '"<<A.seq(i).name
-			   <<"': only - and * are allowed";
+      if (A(column,i) == alphabet:gap)
+	;
+      else if (A(column,i) == alphabet:not_gap)
+	;
+      else
+	throw myexception()<<"Found a illegal index "<<A(column,i)
+			   <<"in column "<<column<<" of internal sequence '"
+			   <<A.seq(i).name<<"': only - and * are allowed";
 }
 
 /// Check that internal node states are consistent
@@ -156,7 +160,8 @@ void check_internal_nodes_connected(const alignment& A,const Tree& T,const vecto
       present[i] = not A.gap(column,i);
     
     if (not all_characters_connected(T,present,ignore)) {
-      std::cerr<<"Internal node states are inconsistent in column "<<column;
+      std::cerr<<"Internal node states are inconsistent in column "<<column<<std::endl;
+      std::cerr<<A<<std::endl;
       std::abort();
       throw myexception()<<"Internal node states are inconsistent in column "<<column;
     }
