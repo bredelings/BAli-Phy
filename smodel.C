@@ -3,7 +3,7 @@
 #include "exponential.H"
 #include "rng.H"
 
-
+namespace substitution {
 
 // Q(i,j) = S(i,j)*pi[j]   for i!=j
 // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
@@ -12,7 +12,7 @@
 // Then Q = S*D, and we can easily compute the exponential
 // So, S(i,j) = Q(i,i)/pi[i]
 
-void EquilibriumModel::recalc() {
+void ReversibleModel::recalc() {
 
   // Set S(i,i) so that Q(i,i) = S(i,i)*pi[i]
   for(int i=0;i<S.size1();i++) {
@@ -50,7 +50,7 @@ void EquilibriumModel::recalc() {
 
 }
 
-Matrix EquilibriumModel::transition_p(double t) const {
+Matrix ReversibleModel::transition_p(double t) const {
   BMatrix D(a.size(),a.size());
   for(int i=0;i<a.size();i++)
     D(i,i) = pi[i];
@@ -91,7 +91,7 @@ void HKY::recalc() {
   S(T,G) = 1;
   S(T,C) = kappa();
 
-  EquilibriumModel::recalc();
+  ReversibleModel::recalc();
 }
 
 void HKY::setup_alphabet() {
@@ -111,11 +111,11 @@ void EQU::recalc() {
     for(int j=0;j<a.size();j++)
       S(i,j) = 1;
 
-  EquilibriumModel::recalc();
+  ReversibleModel::recalc();
 }
 
 void Empirical::recalc() {
-  EquilibriumModel::recalc();
+  ReversibleModel::recalc();
 }
 
 void Empirical::load_file(const char* filename) {
@@ -134,3 +134,92 @@ void Empirical::load_file(const char* filename) {
     ifile>>pi[i];
 }
 
+
+void NestedModel::parameters(const vector<double>& p) {
+  vector<double> sub_p = sub_model->parameters();
+  for(int i=0;i<sub_p.size();i++)
+    sub_p[i] = p[i];
+
+  SubModel().parameters(sub_p);
+  
+  Model::parameters(p);
+}
+
+
+double GammaRateModel::super_prior() const {
+  return 1;
+}
+
+void GammaRateModel::super_fiddle() {
+  double& alpha = parameters_[parameters_.size()-1];
+
+  const double sigma = 0.1;
+  alpha += gaussian(0,sigma);
+  if (alpha < 0) alpha = -alpha;
+
+  recalc();
+}
+
+double gamma_quantile(double x,double a, double b) {
+  int max = 20;
+  return x;
+}
+
+
+void GammaRateModel::recalc() {
+  double alpha = parameters_[parameters_.size()-1];
+
+  double mean=0;
+  for(int i=0;i<nrates();i++) {
+    rates_[i] = gamma_quantile(double(2*i+1)/(2.0*nrates()),alpha,1.0/alpha);
+    mean += rates_[i];
+    
+  }
+  mean /= nrates();
+
+  for(int i=0;i<nrates();i++)
+    rates_[i] /= mean;
+}
+
+GammaRateModel::GammaRateModel(const ReversibleModel& M,int n)
+  :MultiRateWithBase(M,1,n)
+{
+  double& alpha = parameters_[parameters_.size()-1];
+  alpha = 1.0;
+  for(int i=0;i<nrates();i++)
+    distribution_[i] = 1.0/nrates();
+
+  recalc();
+}
+
+
+
+
+INV_Model::INV_Model(const MultiRateModel& M)
+  :MultiRateModel(M,1,M.rates().size()+1)
+{
+  distribution_[ sub_model->distribution().size() ] = 0.0;
+}    
+
+
+void INV_Model::super_fiddle() {
+  double &p = parameters_[parameters_.size()-1];
+  const double sigma = 0.1;
+  p += gaussian(0,sigma);
+  if (p<0) p=-p;
+  while(p>1)
+    p--;
+
+  recalc();
+}
+
+void INV_Model::recalc() {
+  double p = parameters()[parameters().size()-1];
+
+  distribution_[nrates()-1] = p;
+  
+  for(int i=0;i<sub_model->distribution().size();i++)
+    distribution_[i] = sub_model->distribution()[i]*(1.0-p);
+}
+
+}

@@ -22,9 +22,6 @@ protected:
   ublas::matrix<double> P;
 
 public:
-  double lambda_O;
-  double lambda_E;
-
   vector<double> pi;
   ublas::matrix<double> Q;
 
@@ -65,12 +62,12 @@ public:
 /******************************* parameter-containing class **************************/
 
 class Parameters {
-  vector<Matrix> substitution_;
+  vector< vector<Matrix> > transition_P_;
 
   //FIXME - this should be private - need an interface for changing branch lengths (?)
 
   /*--------We own this----------*/
-  SubstitutionModel* SModel_;
+  substitution::MultiRateModel* SModel_;
 
 public:
   /*---------Indel Model---------*/
@@ -79,16 +76,22 @@ public:
   /*------------tree-------------*/
   SequenceTree T;
 
-  const SubstitutionModel& SModel() const {return *SModel_;}
+  const substitution::MultiRateModel& SModel() const {return *SModel_;}
 
   const alphabet& get_alphabet() const {return SModel_->Alphabet();}
-
-  const std::valarray<double>& frequencies() const {return SModel_->frequencies();}
 
   void fiddle() {SModel_->fiddle();recalc();}
 
   //FIXME - why this hack?
-  const Matrix& substitution(int i) const {if (i==T.num_nodes()-2) i--;return substitution_[i];}
+
+  const vector< Matrix > & transition_P(int r) const { return transition_P_[r]; }
+
+  const Matrix& transition_P(int r,int b) const 
+  {
+    assert(b != T.num_nodes()-2);
+    if (b==T.num_nodes()-2) b--;
+    return transition_P_[r][b];
+  }
 
   void setlength(int,double);
   
@@ -100,7 +103,7 @@ public:
   Parameters& operator=(const Parameters&);
 
   Parameters(const Parameters&);
-  Parameters(const SubstitutionModel&,const IndelModel&,const SequenceTree&);
+  Parameters(const substitution::MultiRateModel&,const IndelModel&,const SequenceTree&);
   ~Parameters() {delete SModel_;}
 };
 

@@ -74,10 +74,10 @@ void change_parameters(alignment& A,Parameters& Theta) {
 
   Theta2.fiddle();
 
-  double lL_1 = substitution(A,Theta)  + prior(Theta);
-  double lL_2 = substitution(A,Theta2) + prior(Theta2);
-  std::cerr<<"L1 = "<<lL_1<<" = "<<substitution(A,Theta)<<" + "<<prior(Theta)<<endl;
-  std::cerr<<"L2 = "<<lL_2<<" = "<<substitution(A,Theta2)<<" + "<<prior(Theta2)<<endl;
+  double lL_1 = substitution::Pr(A,Theta)  + prior(Theta);
+  double lL_2 = substitution::Pr(A,Theta2) + prior(Theta2);
+  std::cerr<<"L1 = "<<lL_1<<" = "<<substitution::Pr(A,Theta)<<" + "<<prior(Theta)<<endl;
+  std::cerr<<"L2 = "<<lL_2<<" = "<<substitution::Pr(A,Theta2)<<" + "<<prior(Theta2)<<endl;
 
   if (myrandomf() < exp(lL_2 - lL_1)) {
     Theta = Theta2;

@@ -127,7 +127,7 @@ double prior_HMM_notree(const alignment& A,const Parameters& P) {
 double Pr_tgaps_tletters(const alignment& A,const Parameters& P) {
   double Pr=0;
   Pr += prior_HMM(A,P);
-  Pr += substitution(A,P); // also deals w/ frequencies
+  Pr += substitution::Pr(A,P); // also deals w/ frequencies
   Pr += prior(P);
   return Pr;
 }
@@ -135,7 +135,7 @@ double Pr_tgaps_tletters(const alignment& A,const Parameters& P) {
 double Pr_tgaps_sletters(const alignment& A,const Parameters& P) {
   double Pr=0;
   Pr += prior_HMM(A,P);
-  Pr += substitution_star_estimate(A,P); // also deals w/ frequencies
+  Pr += substitution::Pr_star_estimate(A,P); // also deals w/ frequencies
   Pr += prior(P);
   return Pr;
 }
@@ -143,7 +143,7 @@ double Pr_tgaps_sletters(const alignment& A,const Parameters& P) {
 double Pr_sgaps_tletters(const alignment& A,const Parameters& P) {
   double Pr=0;
   Pr += prior_HMM_notree(A,P);
-  Pr += substitution(A,P); // also deals w/ frequencies
+  Pr += substitution::Pr(A,P); // also deals w/ frequencies
   Pr += prior(P);
   return Pr;
 }
@@ -151,7 +151,7 @@ double Pr_sgaps_tletters(const alignment& A,const Parameters& P) {
 double Pr_sgaps_sletters(const alignment& A,const Parameters& P) {
   double Pr=0;
   Pr += prior_HMM_notree(A,P);
-  Pr += substitution_star_estimate(A,P); // also deals w/ frequencies
+  Pr += substitution::Pr_star_estimate(A,P); // also deals w/ frequencies
   Pr += prior(P);
   return Pr;
 }

@@ -217,7 +217,7 @@ vector<valarray<double> > distributions(const alignment& A,const Parameters& The
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
     dist[i].resize(a.size());
-    dist[i] = peel(residues,Theta,b,up);
+    dist[i] = substitution::peel(residues,Theta,b,up);
 
     // double sum = dist[i].sum();
     // it IS possible to have no leaves if internal sequences is non-gap
@@ -235,7 +235,7 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   const Matrix& Q = Theta.IModel.Q;
 
   const vector<double>& pi = Theta.IModel.pi;
-  const valarray<double>& frequency = Theta.frequencies();
+  const valarray<double>& frequency = Theta.SModel().BaseModel().frequencies();
 
   int node1 = T.branch(b).parent();
   int node2 = T.branch(b).child();

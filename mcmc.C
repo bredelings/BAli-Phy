@@ -46,14 +46,11 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
 void print_stats(std::ostream& o,const alignment& A,const Parameters& P,
 		 double probability(const alignment&,const Parameters&)) {
   o<<endl;
-  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution_star_estimate(A,P)<<"]"<<endl;
-  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution(A,P)<<"]"<<endl;
-  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution_star_estimate(A,P)<<"]"<<endl;
-  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution(A,P)<<"]"<<endl;
+  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
+  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
+  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
+  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
 
-  //  o<<" old   ["<<probability2(A,P)<<": "<<prior_internal(A,P)<<" + "<<substitution(A,P)<<"]"<<endl;
-  //  o<<" HMM   ["<<probability3(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution(A,P)<<"]"<<endl;
-  
   o<<standardize(A,P.T)<<endl<<endl;
 
   o<<"tree = "<<P.T<<endl<<endl;
@@ -160,13 +157,13 @@ void MCMC::iterate(alignment& A,Parameters& P,const int max) {
   std::cout<<"rate matrix = \n";
   for(int i=0;i<P.get_alphabet().size();i++) {
     for(int j=0;j<P.get_alphabet().size();j++) 
-      std::cout<<P.SModel().rates()(i,j)<<" ";
+      std::cout<<P.SModel().BaseModel().rates()(i,j)<<" ";
     std::cout<<endl;
   }
   std::cout<<endl;
   std::cout<<"frequencies = ";
   for(int i=0;i<P.get_alphabet().size();i++) {
-    std::cout<<P.SModel().frequencies()[i]<<" ";
+    std::cout<<P.SModel().BaseModel().frequencies()[i]<<" ";
   }
   std::cout<<endl;
   std::cout<<endl;

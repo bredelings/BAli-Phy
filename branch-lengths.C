@@ -70,8 +70,8 @@ void slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up) {
   Theta2.setlength(b3,T.branch(b3).length()-epsilon);
   
   /*--------------- Do the M-H step if OK---------------*/
-  double lL_1 = substitution(A,Theta) + prior(Theta);
-  double lL_2 = substitution(A,Theta2) + prior(Theta2);
+  double lL_1 = substitution::Pr(A,Theta) + prior(Theta);
+  double lL_2 = substitution::Pr(A,Theta2) + prior(Theta2);
   
   bool success = false;
   if (myrandomf() < exp(lL_2 - lL_1)) {
@@ -100,8 +100,8 @@ void change_branch_length(const alignment& A, Parameters& Theta,int b) {
     Theta2.setlength(b,newlength);
 
     /********** Do the M-H step if OK**************/
-    double lL_1 = substitution(A,Theta) + prior(Theta);
-    double lL_2 = substitution(A,Theta2) + prior(Theta);
+    double lL_1 = substitution::Pr(A,Theta) + prior(Theta);
+    double lL_2 = substitution::Pr(A,Theta2) + prior(Theta);
 
     // accept w/ probability (a2/a1)*(p21/p12)
     bool success = false;
@@ -132,8 +132,8 @@ void change_branch_length_and_T(alignment& A, Parameters& Theta,int b) {
       Theta2.setlength(b,newlength);
 
       /********** Do the M-H step if OK**************/
-      double lL_1 = substitution(A,Theta) + prior(Theta);
-      double lL_2 = substitution(A,Theta2) + prior(Theta);
+      double lL_1 = substitution::Pr(A,Theta) + prior(Theta);
+      double lL_2 = substitution::Pr(A,Theta2) + prior(Theta);
       
       // accept w/ probability (a12/a21)*(p21/p12)
       bool success = false;

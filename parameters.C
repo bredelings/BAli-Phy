@@ -95,15 +95,12 @@ void IndelModel::construct_lengthp(int n) {
 }
 
 IndelModel::IndelModel()
-  : pi(4),P(4,4),Q(4,4)
+  : P(4,4),pi(4),Q(4,4)
 { }
 
 
-IndelModel1::IndelModel1(int maxlength,double LO,double LE)
+IndelModel1::IndelModel1(int maxlength,double lambda_O,double lambda_E)
 {
-  lambda_O = LO;
-  lambda_E = LE;
-
   epsilon = exp(lambda_E);
   delta   = exp(lambda_O)/(1.0-epsilon);
   tau     = 1.0e-3;
@@ -155,11 +152,8 @@ IndelModel1::IndelModel1(int maxlength,double LO,double LE)
   construct_length_plus_p(maxlength);
 }
 
-IndelModel2::IndelModel2(int maxlength,double LO,double LE,double b)
+IndelModel2::IndelModel2(int maxlength,double lambda_O,double lambda_E,double b)
 {
-  lambda_O = LO;
-  lambda_E = LE;
-
   epsilon = exp(lambda_E);
   delta   = exp(lambda_O)/(1.0-epsilon);
   beta    = exp(b);
@@ -263,37 +257,52 @@ void Parameters::setlength(int b,double l) {
   assert(l >= 0);
   assert(b >= 0 and b < T.branches());
   T.branch(b).length() = l;
-  substitution_[b] = SModel_->transition_p(T.branch(b).length());
+  for(int r=0;r<SModel().nrates();r++)
+    transition_P_[r][b] = SModel_->transition_p(l,r);
 }
 
 
 void Parameters::recalc() {
-  substitution_.clear();
   for(int b=0;b<T.branches();b++) 
-    substitution_.push_back(SModel_->transition_p(T.branch(b).length()));
+    setlength(b,T.branch(b).length());
 }
 
 
 Parameters& Parameters::operator=(const Parameters& P) {
-  substitution_ = P.substitution_;
+  transition_P_ = P.transition_P_;
+
   delete SModel_;
   SModel_ = P.SModel_->clone();
+
   IModel = P.IModel;
+
   T = P.T;
+
   branch_mean = P.branch_mean;
 
   return (*this);
 }
 
 Parameters::Parameters(const Parameters& P):
-  substitution_(P.substitution_),SModel_(P.SModel_->clone()),IModel(P.IModel),T(P.T),
+  transition_P_(P.transition_P_),SModel_(P.SModel_->clone()),IModel(P.IModel),T(P.T),
   branch_mean(P.branch_mean)
 { }
 
 
-Parameters::Parameters(const SubstitutionModel& SM,const IndelModel& IM,const SequenceTree& t)
-  :SModel_(SM.clone()),IModel(IM),T(t)
+Parameters::Parameters(const substitution::MultiRateModel& SM,const IndelModel& IM,const SequenceTree& t)
+  :SModel_(SM.clone()),IModel(IM),
+   transition_P_(vector< vector <Matrix> >(SM.nrates(),
+					  vector<Matrix>(t.branches(),
+							 Matrix(SM.Alphabet().size(),
+								SM.Alphabet().size()
+								)
+							 ) 
+					  ) 
+		 ),
+   T(t)
 {
   branch_mean = 0.1;
   recalc();
+
+  
 }

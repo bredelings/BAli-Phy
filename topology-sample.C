@@ -403,9 +403,9 @@ bool sample_topology(alignment& A,Parameters& Theta1,
 
   std::cerr<<" PA1 = "<<PA1<<"       PA2 = "<<PA2<<"       PA3 = "<<PA3<<std::endl;
 
-  double PS1 = substitution(A,Theta1);
-  double PS2 = substitution(A,Theta2);
-  double PS3 = substitution(A,Theta3);
+  double PS1 = substitution::Pr(A,Theta1);
+  double PS2 = substitution::Pr(A,Theta2);
+  double PS3 = substitution::Pr(A,Theta3);
 
   std::cerr<<" PS1 = "<<PS1<<"       PS2 = "<<PS2<<"       PS3 = "<<PS3<<std::endl;
 

@@ -141,7 +141,7 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
 }
 
 void do_showonly(const alignment& A,const Parameters& P) {
-  double PS = substitution(A,P);
+  double PS = substitution::Pr(A,P);
   double PA = prior_HMM(A,P);
   double PT = prior(P.T,P.branch_mean);
   double PP = P.SModel().prior();
@@ -243,20 +243,20 @@ int main(int argc,char* argv[]) {
     /*------- Nucleotide Substitution Models -------*/
     alphabet dna("DNA nucleotides","AGTC","N");
     
-    EQU EQU_dna(dna);
-    HKY HKY_dna(dna);
+    substitution::EQU EQU_dna(dna);
+    substitution::HKY HKY_dna(dna);
     
     /*------- Nucleotide Substitution Models -------*/
     alphabet rna("RNA nucleotides","AGUC","N");
     
-    EQU EQU_rna(rna);
-    HKY HKY_rna(rna);
+    substitution::EQU EQU_rna(rna);
+    substitution::HKY HKY_rna(rna);
     
     /*------- Amino Acid Substitution Models -------*/
     alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
     
-    EQU EQU_animo(amino_acids);
-    Empirical WAG(amino_acids,"Data/wag.dat");
+    substitution::EQU EQU_animo(amino_acids);
+    substitution::Empirical WAG(amino_acids,"Data/wag.dat");
     
     /*----------- Load alignment and tree ---------*/
     alignment A;
@@ -273,19 +273,22 @@ int main(int argc,char* argv[]) {
     std::cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl<<endl;
     
     /*--------- Set up the substitution model --------*/
-    SubstitutionModel* smodel = 0;
+    substitution::ReversibleModel* base_smodel = 0;
     
     if (A.get_alphabet() == dna)
-      smodel = &HKY_dna;
+      base_smodel = &HKY_dna;
     else if (A.get_alphabet() == rna)
-      smodel = &HKY_rna;
+      base_smodel = &HKY_rna;
     else if (A.get_alphabet() == amino_acids)
-      smodel = &WAG;
+      base_smodel = &WAG;
     else
       assert(0);
     
     std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
-    smodel->frequencies(empirical_frequencies(A));
+    base_smodel->frequencies(empirical_frequencies(A));
+    
+    substitution::SingleRateModel Single(*base_smodel);
+    substitution::INV_Model       INV(Single);
     
     /*-------------Choose an indel model--------------*/
     int IMlength = 500;    //FIXME - perhaps we should choose \tau here
@@ -297,7 +300,7 @@ int main(int argc,char* argv[]) {
     if (args.set("Imodel") and args["Imodel"] == "ordered")
       imodel= &IM1;
 
-    Parameters Theta(*smodel,*imodel,T);
+    Parameters Theta(INV,*imodel,T);
 
 
     /*---------------Do something------------------*/

@@ -253,7 +253,7 @@ vector<valarray<double> > distributions(const alignment& A,const Parameters& The
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
     dist[i].resize(a.size());
-    dist[i] = peel(residues,Theta,n0,n1,n0);
+    dist[i] = substitution::peel(residues,Theta,n0,n1,n0);
 
     // note: we could normalize frequencies to sum to 1
   }
@@ -272,7 +272,7 @@ vector<valarray<double> > distributions23(const alignment& A,const Parameters& T
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
     dist[i].resize(a.size());
-    dist[i] = peel(residues,Theta,n1,n0,n0);
+    dist[i] = substitution::peel(residues,Theta,n1,n0,n0);
 
     // note: we could normalize frequencies to sum to 1
   }
@@ -347,7 +347,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   const tree& T = Theta.T;
 
   const vector<double>& pi = Theta.IModel.pi;
-  const valarray<double>& frequency = Theta.frequencies();
+  const valarray<double>& frequency = Theta.SModel().BaseModel().frequencies();
 
   //  std::cerr<<"old = "<<old<<endl;
 

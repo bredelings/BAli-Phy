@@ -13,6 +13,7 @@ using std::valarray;
 // * we don't need to work in log space for a single column
 //
 // * 
+namespace substitution {
 
 inline valarray<double> peel(int letter,const Matrix& P,const valarray<double>& dist1) {
   valarray<double> dist2(0.0,P.size1());
@@ -35,10 +36,9 @@ inline valarray<double> peel(int letter,const Matrix& P,const valarray<double>& 
 
 // (dist.size()==0) does not mean "gap", but means no info so far.
 
-valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
-		      int node1, int node2, int root) {
-  const alphabet& a = Theta.get_alphabet();
-  const tree& T = Theta.T;
+valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
+		      const vector<Matrix>& transition_P,int node1, int node2, int root) {
+  const alphabet& a = SModel.Alphabet();
 
   /**************** Find our branch, and orientation *****************/
   assert(root == node1 or root == node2);
@@ -108,7 +108,7 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
     if (not distributions(child).size()) continue;
 
     // Propogate info along branch
-    const Matrix& Q = Theta.substitution(b);
+    const Matrix& Q = transition_P[b];
     dist = peel(residues[child],Q,distributions(child));
 
     // Update info at parent
@@ -147,10 +147,8 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
   return distributions(root);
 }
 
-valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
-		      int b,bool up) {
-  const tree& T = Theta.T;
-
+valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
+		      const vector<Matrix>& transition_P,int b,bool up) {
   /**************** Find our branch, and orientation *****************/
   int root = T.branch(b).parent();      //this is an arbitrary choice
 
@@ -158,35 +156,35 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
   int node2 = T.branch(b).parent();
   if (not up) std::swap(node1,node2);
 
-  return peel(residues,Theta,node1,node2,root);
+  return peel(residues,T,SModel,transition_P,node1,node2,root);
 }
 
-double substitution(const vector<int>& residues,const Parameters& Theta,int b) {
-  const tree& T = Theta.T;
+double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
+	  const vector<Matrix>& transition_P,int b) {
   assert(residues.size() == T.num_nodes()-1);
 
-  valarray<double> leftD = peel(residues,Theta,b,false);
-  valarray<double> rightD = peel(residues,Theta,b,true);
+  valarray<double> leftD  = peel(residues,T,SModel,transition_P,b,false);
+  valarray<double> rightD = peel(residues,T,SModel,transition_P,b,true);
   
-  valarray<double> rootD = leftD * Theta.frequencies() * rightD;
+  valarray<double> rootD = leftD * SModel.frequencies() * rightD;
 
   double p = rootD.sum();
 
   return p;
 }
 
-double substitution(const vector<int>& residues,const Parameters& Theta) {
-  const tree& T = Theta.T;
+double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
+	  const vector<Matrix>& transition_P) {
 
   int root = T.get_nth(T.num_nodes()-2);
   root = T.branch_up(root).parent();
 
   int b = T.branch_up(root);
-  double p = substitution(residues,Theta,b);
+  double p = Pr(residues,T,SModel,transition_P,b);
 
   /*
   int b2 = myrandom(0,T.branches());
-  double p2 = substitution(residues,Theta,b2);
+  double p2 = Pr(residues,Theta,b2);
 
   if (std::abs((p2-p)/p) > 1.0e-7) {
     for(int i=0;i<T.leaves();i++)
@@ -197,11 +195,12 @@ double substitution(const vector<int>& residues,const Parameters& Theta) {
   */
 
   assert(0.0 < p and p<= 1.0);
-  //std::cerr<<" substitution: p="<<p<<"      log(p)="<<log(p)<<std::endl;
+  //std::cerr<<" Pr: p="<<p<<"      log(p)="<<log(p)<<std::endl;
   return log(p);
 }
 
-double substitution(const alignment& A,const Parameters& Theta) {
+double Pr(const alignment& A,const tree& T,const ReversibleModel& SModel,
+	  const vector<Matrix>& transition_P) {
   double P = 0.0;
   
   vector<int> residues(A.size2());
@@ -210,7 +209,7 @@ double substitution(const alignment& A,const Parameters& Theta) {
   for(int column=0;column<A.length();column++) {
     for(int i=0;i<residues.size();i++)
       residues[i] = A(column,i);
-    P += substitution(residues,Theta);
+    P += Pr(residues,T,SModel,transition_P);
     //    std::cerr<<" substitution: P="<<P<<std::endl;
   }
 
@@ -219,15 +218,15 @@ double substitution(const alignment& A,const Parameters& Theta) {
 
 
  
-double substitution_star(const vector<int>& column, const Parameters& P) {
-  const alphabet& a = P.get_alphabet();
-  const tree& T = P.T;
+double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SModel,
+	       const vector<Matrix>& transition_P) {
+  const alphabet& a = SModel.Alphabet();
 
   double sum=0;
   for(int lroot=0;lroot<a.size();lroot++) {
-    double temp=P.frequencies()[lroot];
+    double temp=SModel.frequencies()[lroot];
     for(int b=0;b<T.branches();b++) {
-      const Matrix& Q = P.substitution(b);
+      const Matrix& Q = transition_P[b];
 
       int lleaf = column[b];
       if (a.letter(lleaf))
@@ -238,7 +237,8 @@ double substitution_star(const vector<int>& column, const Parameters& P) {
   return log(sum);
 }
 
-double substitution_star(const alignment& A,const Parameters& P) {
+double Pr_star(const alignment& A,const tree& T,const ReversibleModel& SModel,
+	       const vector<Matrix>& transition_P) {
   double Pr = 0.0;
   
   vector<int> residues(A.size2());
@@ -247,17 +247,16 @@ double substitution_star(const alignment& A,const Parameters& P) {
   for(int column=0;column<A.length();column++) {
     for(int i=0;i<residues.size();i++)
       residues[i] = A(column,i);
-    Pr += substitution_star(residues,P);
+    Pr += Pr_star(residues,T,SModel,transition_P);
     //    std::cerr<<" substitution: P="<<P<<std::endl;
   }
 
   return Pr;
 }
 
-double substitution_star_constant(const alignment& A,const Parameters& P) {
-  Parameters P2 = P;
-  const SequenceTree& T1 = P.T;
-  SequenceTree& T2 = P2.T;
+double Pr_star_constant(const alignment& A,const tree& T1,const ReversibleModel& SModel,
+			const vector<Matrix>& transition_P) {
+  tree T2 = T1;
 
   //----------- Get Distance Matrix --------------//
   Matrix D(T1.leaves(),T1.leaves());
@@ -279,14 +278,12 @@ double substitution_star_constant(const alignment& A,const Parameters& P) {
 
 
   //----------- Get log L w/ new tree  -------------//
-  return substitution_star(A,P2);
+  return Pr_star(A,T2,SModel,transition_P);
 }
 
-double substitution_star_estimate(const alignment& A,const Parameters& P) {
-  Parameters P2 = P;
-
-  const SequenceTree& T1 = P.T;
-  SequenceTree& T2 = P2.T;
+double Pr_star_estimate(const alignment& A,const tree& T1,const ReversibleModel& SModel,
+			const vector<Matrix>& transition_P) {
+  tree T2 = T1;
 
   //----------- Get Distance Matrix --------------//
   Matrix D(T1.leaves(),T1.leaves());
@@ -310,5 +307,56 @@ double substitution_star_estimate(const alignment& A,const Parameters& P) {
   }
 
   //----------- Get log L w/ new tree  -------------//
-  return substitution_star(A,P2);
+  return Pr_star(A,T2,SModel,transition_P);
+}
+
+double Pr(const alignment& A, const Parameters& P) {
+  const MultiRateModel& SModel = P.SModel();
+  const tree& T = P.T;
+
+  double sum = 0;
+  for(int i=0;i<SModel.nrates();i++)
+    sum += Pr(A,T,SModel.BaseModel(),P.transition_P(i))*SModel.distribution()[i];
+
+  return sum;
+}
+
+double Pr_star(const alignment& A, const Parameters& P) {
+  const MultiRateModel& SModel = P.SModel();
+  const tree& T = P.T;
+
+  double sum = 0;
+  for(int i=0;i<SModel.nrates();i++)
+    sum += Pr_star(A,T,SModel.BaseModel(),P.transition_P(i))*SModel.distribution()[i];
+
+  return sum;
+}
+
+
+double Pr_star_constant(const alignment& A, const Parameters& P) {
+  const MultiRateModel& SModel = P.SModel();
+  const tree& T = P.T;
+
+  double sum = 0;
+  for(int i=0;i<SModel.nrates();i++)
+    sum += Pr_star_constant(A,T,SModel.BaseModel(),P.transition_P(i))*SModel.distribution()[i];
+
+  return sum;
+}
+
+
+double Pr_star_estimate(const alignment& A, const Parameters& P) {
+  const MultiRateModel& SModel = P.SModel();
+  const tree& T = P.T;
+
+  double sum = 0;
+  for(int i=0;i<SModel.nrates();i++)
+    sum += Pr_star_estimate(A,T,SModel.BaseModel(),P.transition_P(i))*SModel.distribution()[i];
+
+  return sum;
+}
+
+
+
+
 }
