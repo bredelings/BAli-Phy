@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include <cassert>
+#include <algorithm>
 
 template <class T>
 T convertTo(const std::string& s) { 
@@ -43,6 +44,11 @@ inline double wrap(double x,double max) {
 
   assert(x >= 0 and x <= max);
   return x;
+}
+
+template <typename T>
+int find_index(const std::vector<T>& v,const T& t) {
+  return std::find(v.begin(),v.end(),t) - v.begin();
 }
 
 std::vector<std::string> split(const std::string&,char);

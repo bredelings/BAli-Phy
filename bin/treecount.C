@@ -11,15 +11,80 @@
 #include "arguments.H"
 #include "util.H"
 
+using namespace std;
+using namespace __gnu_cxx;
+
+// What if everything in 'split' is true?
+// What if everything in 'split' is true, but 1 taxa?
+//  These are true by definition...
+
+valarray<bool> branch_partition(const tree& T,int b) {
+  int parent = T.branch(b).parent();
+  int child = T.branch(b).child();
+
+  valarray<bool> temp = T.partition(parent,child);
+  valarray<bool> p(T.leaves());
+  for(int i=0;i<p.size();i++)
+    p[i] = temp[i];
+
+  return p;
+}
+
+/// Represents a division of some of the taxa into 2 groups
+struct Partition {
+
+  valarray<bool> split;
+  valarray<bool> mask;
+
+  bool implied_by(const valarray<bool>& bm) const;
+
+  Partition(const valarray<bool>& v) 
+    :split(v),mask(true,v.size()) 
+  {}
+ 
+  Partition(const valarray<bool>& v1,const valarray<bool>& v2) 
+    :split(v1),mask(v2)
+  {
+    split &= mask;
+    assert(v1.size() == v2.size());
+  }
+};
+
+bool equal(const valarray<bool>& v1,const valarray<bool>& v2) {
+  assert(v1.size() == v2.size());
+  bool match = true;
+  for(int i=0;i<v1.size() && match;i++)
+    if (v1[i] != v2[i])
+      match = false;
+  return match;
+}
+
+/// Does the grouping of all nodes bm, imply *this?
+bool Partition::implied_by(const valarray<bool>& bm) const {
+  assert(bm.size() == split.size());
+  return (equal(split,bm&mask) or  equal(split,(not bm)&mask));
+}
+// There should be a way to check 'consistent' (might imply),
+// not consistent (implies not *this)
+
+/// Does any branch in T imply the partition p?
+bool contains_partition(const SequenceTree& T,const Partition& p) {
+  bool result = false;
+  for(int b=0;b<T.branches() and not result;b++) {
+    valarray<bool> bp = branch_partition(T,b);
+
+    if (p.implied_by(bp))
+      result = true;
+  }
+  return result;
+}
+
 namespace __gnu_cxx {
   template<> struct hash<string> {
     size_t hash<string>::operator()(const string& s) const {return __stl_hash_string(s.c_str());}
   };
 
 };
-
-using namespace std;
-using namespace __gnu_cxx;
 
 struct eqstr {
   bool operator()(const string& s1, const string& s2) const
@@ -47,37 +112,6 @@ double moment(const vector<double>& v,int n) {
   return total/v.size();
 }
 
-int contains_partition(const SequenceTree& T,const valarray<bool>& p) {
-  int match = -1;
-  for(int b=T.leaves();b<T.branches();b++) {
-    int parent2 = T.branch(b).parent();
-    int child2 = T.branch(b).child();
-
-    valarray<bool> p2 = T.partition(parent2,child2);
-
-    //	cerr<<b<<" ";
-    //	for(int i=0;i<p2.size();i++)
-    //	  cerr<<p2[i]<<" ";
-    //	cerr<<endl;
-
-
-    if (p[0] != p2[0])
-      p2 = !p2;
-
-    assert(p[0] == p2[0]);
-
-    bool m = true;
-    for(int i=0;i<T.leaves();i++)
-      if (p[i] != p2[i])
-	m = false;
-
-    if (m) {
-      match = b;
-      break;
-    }
-  }
-  return match;
-}
 
 void do_analyze() {
 }
@@ -224,6 +258,17 @@ int main(int argc,char* argv[]) {
     else
       best = best_trees[0];
 
+    valarray<bool> mask = valarray<bool>(true,best.leaves());
+    vector<string> ignore;
+    if (args.set("ignore") and args["ignore"].size() > 0)
+      ignore = split(args["ignore"],':');
+    for(int i=0;i<ignore.size();i++) {
+      int j = find_index(best.get_sequences(),ignore[i]);
+      assert(j != best.get_sequences().size());
+      mask[j] = false;
+      std::cerr<<"ignore"<<i<<"   "<<ignore[i]<<"    index = "<<j<<"\n";
+    }
+      
     const int nleaves = best.leaves();
     const int nbranches = best.branches();
     
@@ -250,16 +295,11 @@ int main(int argc,char* argv[]) {
 	    branch_m2[i][b] += d*d;
 	  }
       }
-      
+
       // collect branch confidence info
       for(int b=nleaves;b<nbranches;b++) {
-	int parent = best.branch(b).parent();
-	int child = best.branch(b).child();
-	valarray<bool> p1 = best.partition(parent,child);
-	
-	int match = contains_partition(thisone,p1);
-	
-	if (match != -1)
+	valarray<bool> p1 = branch_partition(best,b);
+	if (contains_partition(thisone,Partition(p1,mask)))
 	  branch_count[b]++;
       }
     }
@@ -296,16 +336,15 @@ int main(int argc,char* argv[]) {
     /******** Print out support for each partition *********/
     cout<<"Support for the different partitions: \n";
     for(int b=best.leaves();b<best.branches();b++) {
-      int parent = best.branch(b).parent();
-      int child = best.branch(b).child();
-      valarray<bool> p1 = best.partition(parent,child);
+      valarray<bool> temp = branch_partition(best,b);
+      Partition p1(temp,mask);
       
       for(int i=0;i<best.leaves();i++)
-	if (p1[i])
+	if (p1.split[i] and p1.mask[i])
 	  cout<<best.seq(i)<<" ";
       cout<<"| ";
       for(int i=0;i<best.leaves();i++)
-	if (not p1[i])
+	if (not p1.split[i] and p1.mask[i])
 	  cout<<best.seq(i)<<" ";
       cout<<endl;
       cout<<double(branch_count[b])/trees.size()<<
