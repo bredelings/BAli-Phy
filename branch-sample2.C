@@ -160,7 +160,7 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
   std::cerr<<"bandwidth2 = "<<bandwidth2(Matrices,path)<<std::endl;
   //--------------------------------------------------------------//
 #ifndef NDEBUG_DP
-  vector<int> path_old = get_path(old,node1,node2);
+  //  vector<int> path_old = get_path(old,node1,node2);
   vector<int> path_new = get_path(A,node1,node2);
 
   path.push_back(3);
@@ -185,7 +185,7 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
 
   // Calculate the probability of (L1,L2)
   DPmatrixNoEmit Matrices2(seq1.size(),seq2.size(),state_emit,start_P,P.IModel().Q);
-  Matrices2.forward(0,0,seq1.size(),seq2.size());
+  Matrices2.forward_square(0,0,seq1.size(),seq2.size());
   double length2_p = Matrices2.Pr_sum_all_paths();
   std::cerr<<"P(l1,l2|Lambda) = "<<length2_p<<std::endl;
 

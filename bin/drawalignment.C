@@ -11,7 +11,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-
 vector<int> hsv(double h,double s,double v) {
   h *= 6;
 

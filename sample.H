@@ -50,6 +50,7 @@ MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& Theta,int);
 
 MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P,int b);
 MCMC::result_t two_way_topology_sample(alignment& A,Parameters& P,int b);
+MCMC::result_t two_way_topology_sample_MH(alignment& A,Parameters& P,int b);
 MCMC::result_t two_way_topology_sample2(alignment& A,Parameters& P,int b);
 MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& P,int b);
 
