@@ -1,3 +1,10 @@
+// FIXME -  Try to put the variance and stuff on one line:
+//   0.656 (56/100)   +- 0.007 -> 0.070
+
+// Find some way to put the correlation into the model
+// So tha the correlation doesn't keep on going up w/
+// Distance, but goes up quickly
+
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -429,6 +436,7 @@ int main(int argc,char* argv[]) {
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
+    exit(1);
   }
   return 0;
 

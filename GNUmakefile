@@ -32,11 +32,11 @@ all: sampler
 
 #----------------- Definitions
 LANGO = fast-math  tracer # omit-frame-pointer # prefetch-loop-arrays
-DEBUG = pipe g3 # pg
+DEBUG = pipe gdwarf-2 # pg
 EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
 DEFS = NDEBUG NDEBUG_DP # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
-OPT =  march=pentium4 O3 # malign-double msse mmmx msse2 
+OPT =  march=pentium2 O3 # malign-double msse mmmx msse2 
 LDFLAGS = # -pg # -static 
 LI=${CXX}
 
@@ -53,20 +53,22 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  setup.C rates.C matcache.C
 
 LIBS = gsl gslcblas m 
-SLIBS =  lapack cblas atlas # gsl gslcblas m 
-LINKLIBS = ${LIBS:%=-l%} /usr/local/lib/liblapack.a /usr/local/lib/libcblas.a /usr/local/lib/libatlas.a
+GSLLIBS = ${LIBS:%=-l%}
+SLIBS =  #lapack cblas atlas # gsl gslcblas m 
+LINKLIBS = ${LIBS:%=-l%} ${SLIBS:%=lib%.a} /usr/local/lib/liblapack.a /usr/local/lib/libcblas.a /usr/local/lib/libatlas.a
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 
 
 ${NAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
 
 bin/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
-	tree.o sequencetree.o bin/optimize.o bin/findroot.o \
-	setup.o smodel.o rates.o exponential.o eigenvalue.o ${LINKLIBS}
+	tree.o sequencetree.o bin/optimize.o bin/findroot.o bin/alignmentutil.o \
+	setup.o smodel.o rates.o exponential.o eigenvalue.o ${GSLLIBS}
 
 bin/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
 
-bin/truckgraph2: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
+bin/truckgraph2: alignment.o arguments.o alphabet.o sequence.o util.o \
+		bin/alignmentutil.o rng.o ${GSLLIBS}
 
 bin/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
 
@@ -96,6 +98,11 @@ bin/analyze_distances: alignment.o alphabet.o sequence.o arguments.o alphabet.o 
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \
 	parameters.o exponential.o smodel.o imodel.o rng.o likelihood.o \
 	dpmatrix.o choose.o bin/optimize.o inverse.o setup.o rates.o matcache.o ${LINKLIBS}
+
+bin/statreport: bin/statistics.o
+
+bin/findalign: alignment.o alphabet.o arguments.o sequence.o bin/alignmentutil.o \
+	rng.o ${GSLLIBS} util.o
 
 #-----------------Other Files
 OTHERFILES += 

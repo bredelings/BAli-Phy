@@ -49,26 +49,47 @@ vector<int> hsv(double h,double s,double v) {
   return result;
 }
 
-vector<int> getcolor(double x,double sscale) {
-  double start = 0.71;
-  double end = 0.0;
-
-  double hstart = 0.4;
-  double hend   = 0.95;
-    
-  double h = start + x * (end-start);
-  double s = hstart + x * (hend - hstart);
-
-  return hsv(h,s*sscale,1);
-}
-
-string getstyle(double d,double sscale=1.0) {
-  vector<int> RGB = getcolor(d,sscale);
-  string style = "background: rgb(";
+string getrgb(const vector<int>& RGB) {
+  string style = "rgb(";
   style += convertToString(RGB[0]) + ",";
   style += convertToString(RGB[1]) + ",";
   style += convertToString(RGB[2]) + ")";
+  return style;
+}
 
+string getbgcolor(double x,double sscale,bool color) {
+  if (color) {
+    double start = 0.71;
+    double end = 0.0;
+    
+    double hstart = 0.4;
+    double hend   = 0.95;
+    
+    double h = start + x * (end-start);
+    double s = hstart + x * (hend - hstart);
+    
+    return getrgb(hsv(h,s*sscale,1));
+  }
+  else {
+    return getrgb(hsv(0,0,1.0 - x*x*sscale));
+  }
+}
+
+string getfgcolor(double x,double sscale,bool color) {
+  if (color)
+    return getrgb(hsv(0,0,0));
+  else {
+    if (1.0 - x*x*sscale < 0.3)
+      return getrgb(hsv(0,0,1));
+    else
+      return getrgb(hsv(0,0,0));
+  }
+}
+
+
+string getstyle(double d,double sscale=1.0,bool color=true) {
+  string style = string("background: ") + getbgcolor(d,sscale,color) + ";" ;
+  style += "color: " + getfgcolor(d,sscale,color) + ";" ;
   return style;
 }
 
@@ -187,7 +208,11 @@ int main(int argc,char* argv[]) {
     colorfile.close();
 
     /*-------------------- Print Things Out ------------------------*/
-    int pos=0;
+    bool color = true;
+    if (args["color"] == "no")
+      color = false;
+
+    /*-------------------- Print Things Out ------------------------*/
     int width =67;
     if (args.set("width"))
       width = convertTo<int>(args["width"]);
@@ -208,31 +233,55 @@ SPAN {\n\
   <body>\n";
 
     /*-------------------- Print a legend ------------------------*/
-    cout<<"<P>From 0 to 1: ";
-    const int nsquares = 20;
-    for(int i = 0;i < nsquares+1;i++) {
-      double p = i*1.0/nsquares;
-      string style = getstyle(p);
-      cout<<"<span style=\""<<style<<"\">&nbsp;</span>";
+    if (args["legend"] != "no") {
+      cout<<"<P>From 0 to 1: ";
+      const int nsquares = 20;
+      for(int i = 0;i < nsquares+1;i++) {
+	double p = i*1.0/nsquares;
+	string style = getstyle(p,1,color);
+	cout<<"<span style=\""<<style<<"\">&nbsp;</span>";
+      }
     }
 
     cout<<"<br><br>";
     /*-------------------- Print the alignment ------------------------*/
 
+    int start=0;
+    if (args.set("start")) {
+      start = convertTo<int>(args["start"]);
+      if (start < 0)
+	throw myexception()<<"Parameter 'start' must be positive.";
+      if (not (start < A.length()))
+	throw myexception()<<"Parameter 'start' must be less than the length of the alignment ("<<A.length()<<").";
+    }
+
+    int end = A.length()-1;
+    if (args.set("end")) {
+      end = convertTo<int>(args["end"]);
+      if (end < 0)
+	throw myexception()<<"Parameter 'end' must be positive.";
+      if (not (end < A.length()))
+	throw myexception()<<"Parameter 'end' must be less than the length of the alignment ("<<A.length()<<").";
+      if (end < start)
+	throw myexception()<<"Parameter 'end' must be >= than parameter 'start'"<<A.length()<<").";
+    }
+
     const alphabet& a = A.get_alphabet();
-    while(pos<A.length()) {
+    
+    int pos=start;
+    while(pos<end) {
       cout<<"<table>"<<endl;
       for(int i=0;i<T.leaves();i++) {
 	int s = mapping[i];
 	cout<<"  <tr>"<<endl;
 	cout<<"    <td>"<<T.seq(s)<<"</td>"<<endl;
 	cout<<"    <td>";
-	for(int column=pos;column<pos+width and column < A.length();column++) {
+	for(int column=pos;column<pos+width and column < end; column++) {
 	  char c = a.lookup(A(column,s));
 	  double sscale=1.0;
 	  if (c == '-')
 	    sscale = 0.3;
-	  string style = getstyle(colors(column,s),sscale);
+	  string style = getstyle(colors(column,s),sscale,color);
 	  cout<<"<span style=\""<<style<<"\">"<<c<<"</span>";
 	}
 	cout<<"    </td>";

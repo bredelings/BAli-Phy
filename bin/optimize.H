@@ -23,10 +23,10 @@ namespace optimize {
   Vector gradient(const function& f,const Vector& x,const Vector& dx);
 
   /// Derivative of f in direction dx, using scale*dx as the delta
-  double derivative(const function& f,const Vector& x,Vector dx,const double scale=0.01);
+  double derivative(const function& f,const Vector& x,const Vector& dx,const double scale=0.1);
 
   /// 2nd Derivative of f in direction dx, using scale*dx as the delta
-  double derivative2(const function& f,const Vector& x,Vector dx,const double scale=0.01);
+  double derivative2(const function& f,const Vector& x,const Vector& dx,const double scale=0.1);
 
   Vector search_basis(const Vector& start,const function& f,double delta = 1.0e-6,int maxiterations=200);
 

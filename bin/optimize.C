@@ -107,6 +107,8 @@ namespace optimize {
       done = true;
       for(int i=0;i<basis.size();i++)
 	if (std::abs(basis[i]) > delta) done = false;
+      if (done)
+	std::cerr<<"BASIS: final = "<<value<<"       iterations = "<<iterations<<"\n";
     }
     if (not done)
       std::cerr<<"Convergence failed!\n";
@@ -114,63 +116,196 @@ namespace optimize {
     return v;
   }
 
+  void getlimits(const Vector& x,const Vector& v,double& min,double& max) {
+    assert(x.size() == v.size());
+
+    min = -1.0/0;
+    max = 1.0/0;
+
+    for(int i=0;i<x.size();i++) {
+      if (v[i] < 0)
+	max = std::min(max,-x[i]/v[i]);
+      else if (v[i] > 0)
+	min = std::max(min,-x[i]/v[i]);
+    }
+  }
+
+
+  /// Calculate the first derivate of f in the direction dx
   double derivative(const function& f,const Vector& x,
-		    Vector dx,const double scale) {
-    dx *= (scale*0.5);
+		    const Vector& v,const double dt) {
+
+    assert(x.size() == v.size());
+
+    double min,max;
+    getlimits(x,v,min,max);
+
+    std::cerr<<" min = "<<min<<"   max = "<<max<<"\n";
+    // Use a centered derivative, if possible
+    double t1 = -0.5*dt;
+    double t2 = 0.5*dt;
+    
+    // But adjust it to fit
+    if (min > t1) 
+      t1 = min * 0.99;
+    if (max < t2)
+      t2 = max * 0.99;
+    double deltat = t2 - t1;
+    
+    std::cerr<<"  t1 = "<<t1<<"    t2 = "<<t2<<"\n";
+
+    // Calculate the derivative at [x + v*(
+    double f1 = f(x + t1 * v);
+    double f2 = f(x + t2 * v);
+
+    std::cerr<<" f1 = "<<f1<<"    f2 = "<<f2<<"\n";
+
+    return (f2-f1)/deltat;
+  }
+
+  /// Calculate the second derivate of f in the direction dx
+  double derivative2(const function& f,const Vector& x,
+		     const Vector& v,const double dt) {
+
     assert(x.size() == dx.size());
 
-    double f1 = f(x-dx);
-    double f2 = f(x+dx);
+    double min,max;
+    getlimits(x,v,min,max);
 
-    return (f2-f1)/scale;
+    // Use a centered derivative, if possible
+    double t1 = -dt;
+    double t3 = dt;
+    
+    // But adjust it to fit
+    if (min > t1) 
+      t1 = min * 0.99;
+    if (max < t3)
+      t3 = max * 0.99;
+
+    double deltat = t3 - t1;
+    double t2 = (t1+t3)/2;
+
+    // Calculate the 2-derivative at nx + dt*dx_pos
+    double f1 = f(x + t1*v);
+    double f2 = f(x + t2*v);
+    double f3 = f(x + t3*v);
+
+    return (f3 - f2*2 + f1)/(deltat*deltat);
   }
 
-  double derivative2(const function& f,const Vector& x,
-		     Vector dx,const double scale) {
-    dx *= (scale*0.5);
-    double f1 = f(x-dx);
-    double f2 = f(x);
-    double f3 = f(x+dx);
 
-    return (f3 - (2*f2) + f1)/(0.25*scale*scale);
-  }
-
-
-  
+  /// Calculate the gradient of the function f at x, w/ dx as the vector of delta-x's
   Vector gradient(const function& f,const Vector& x,const Vector& dx) {
     Vector g(x.size());
 
     assert(x.size() == dx.size());
 
     for(int i=0;i<x.size();i++) {
-      Vector nx = x; 
-      nx[i] -= dx[i]/2.0;
-      double f1 = f(nx);
+      double f1 = f(x);
 
-      nx[i] += dx[i];
+      Vector nx = x;
+      double dxi = std::abs(dx[i]);
+      nx[i] += dxi;
       double f2 = f(nx);
-      g[i] = (f2-f1)/dx[i];
+      g[i] = (f2-f1)/dxi;
     }
 
     return g;
   }
 
 
+  Vector Proj(const Vector& x) {
+    Vector x2 = x;
+    for(int i=0;i<x2.size();i++)
+      if (x2[i] < 0) x2[i] = 0;
+
+    return x2;
+  }
+
+  Vector Proj(const Vector& v, const Vector& x) {
+    assert(v.size() = x.size());
+    Vector v2 = v;
+    for(int i=0;i<x.size();i++)
+      if (x[i] <= 0 and v2[i] < 0) v2[i] = 0;
+
+    return v2;
+  }
+
+
+  /// FIXME - we should probably do a more general lower/upper bound thingy
+  ///  But how to specify the BOUNDS on the model parameter bounds?
+  //   Probably have to add that to the model...
+
+  /// FIXME - This could be improved to do a search in the neigborhood of the best point found
+
+  /// Do a line search from x to x+direction for maximizing function f...
+  bool line_search(Vector& x,const function& f,const Vector& direction,int ntries) {
+
+    const double value1 = f(x);
+    const Vector x1 = x;
+
+    // Start line search
+    bool moved = false;
+    double scale = 1.0;
+    double cvalue = value1;
+    for(int i=0;i<ntries;i++) {
+
+      Vector x2a = Proj(x1 + direction*scale);
+      Vector x2b = Proj(x1 + direction/scale);
+      double value2a = f(x2a);
+      double value2b = f(x2b);
+
+      Vector x2 = x2a;
+      double value2 = value2a;
+      if (value2b > value2) {
+	x2 = x2b;
+	value2 = value2b;
+      }
+
+      std::cerr<<"  retry = "<<i<<"      value = "<<value2<<std::endl;
+
+      if (value2 > cvalue and not isnan(value2)) {
+	std::cerr<<"move: "<<value2<<" > "<<cvalue<<"\n";
+	x = x2;
+	cvalue = value2;
+	moved=true;
+      }
+      else if (moved)
+	break;
+	
+      
+      scale *= 0.6;
+    }
+    
+    return moved;
+  }
+
+  double infnorm(const Vector& x) {
+    double d=0;
+    for(int i=0;i<x.size();i++)
+      if (std::abs(x[i]) > d)
+	d = std::abs(x[i]);
+    return d;
+  }
+
+
+  // How are we going to deal w/ boundaries?
+
+  // Also - we're running into precision limitsf on D2 - we need to use a larger delta...
+
+  // We can get away with a smaller one for D1
 
   Vector search_gradient(const Vector& start,const function& f, 
 				 double delta,int maxiterations) 
   {
-    const int ntries = 10;
-
     Vector x = start;
     Vector dx(1.0e-5,start.size());
     double value = f(x);
     double df = 1.0;
 
     bool done = false;
-    for(int i=0;i<maxiterations and not done;i++) {
-      std::cerr<<"iteration = "<<i<<"   f = "<<value<<std::endl;
-
+    for(int iteration=0;iteration<maxiterations and not done;iteration++) {
+      std::cerr<<"iteration = "<<iteration<<"   f = "<<value<<std::endl;
 
       std::cerr<<"x = ";
       for(int i=0;i<x.size();i++)
@@ -182,50 +317,111 @@ namespace optimize {
 	std::cerr<<dx[i]<<" ";
       std::cerr<<"\n\n";
 
-      Vector del_f = gradient(f,x,dx);
-      double lambda = df/dot(del_f,del_f)/100.0;
+      /*----------------- Calculate the gradient ----------------------*/
+      Vector del_f = Proj(gradient(f,x,dx),x);
+      double lambda = df/dot(del_f,del_f);
       Vector dx2 = del_f*lambda;
       
+      std::cerr<<"del_f = ";
+      for(int i=0;i<del_f.size();i++)
+	std::cerr<<del_f[i]<<" ";
+      std::cerr<<"\n\n";
+
+      std::cerr<<"dx2 = ";
+      for(int i=0;i<dx2.size();i++)
+	std::cerr<<dx2[i]<<" ";
+      std::cerr<<"\n\n";
+
+      /*--------------- Estimate Distance using Newton-Raphson -------------*/
+
       // we have a path x+t*dx2
-      double D1 = derivative(f,x,dx2);
-      double D2 = derivative2(f,x,dx2);
+      double D1 = derivative(f,x,dx2,0.125);
+      double D2 = derivative2(f,x,dx2,0.25);
 
       double t = -D1/D2;
 
-      bool moved = false;
-      Vector dx3 = dx2*t;
+      Vector dxNR = t*dx2; // Newton-Raphson estimate
 
-      std::cerr<<"dx3 = ";
-      for(int i=0;i<dx.size();i++)
-	std::cerr<<dx3[i]<<" ";
+      std::cerr<<"df = "<<df<<"\n";
+      std::cerr<<"D1 = "<<D1<<"     D2 = "<<D2<<"  !\n";
+
+      D1 = derivative(f,x,dx2,0.125);
+      D2 = derivative2(f,x,dx2,0.125);
+      std::cerr<<"D1 = "<<D1<<"     D2 = "<<D2<<"  !\n";
+
+      D1 = derivative(f,x,dx2,0.25);
+      D2 = derivative2(f,x,dx2,0.25);
+      std::cerr<<"D1 = "<<D1<<"     D2 = "<<D2<<"  !\n";
+
+      std::cerr<<"NR predicted df = "<<dot(del_f,dxNR)<<"\n";
+
+      std::cerr<<"dxNR = ";
+      for(int i=0;i<dxNR.size();i++)
+	std::cerr<<dxNR[i]<<" ";
       std::cerr<<"\n\n";
 
-      for(int i=0;i<ntries;i++) {
-	Vector x2 = x + dx3;
-	double value2 = f(x2);
-	std::cerr<<"  retry = "<<i<<"      value = "<<value2<<std::endl;
-	if (value2 > value) {
-	  x = x2;
-	  df = value2-value;
-	  value = value2;
-	  dx = dx3*1.0/100;
-	  moved=true;
-	  break;
-	}
-	dx3 *= 0.1;
+
+      /*------------------------- Do line search ----------------------*/
+
+      bool moved = false;
+      const Vector x1 = x;
+      if (t > 0) {
+	moved = line_search(x,f,dxNR,5);
+	if (moved)
+	  std::cerr<<"NR succeeded...\n";
+	else
+	  std::cerr<<"NR failed...\n";
       }
 
+      std::cerr<<"x = ";
+      for(int i=0;i<x.size();i++)
+	std::cerr<<x[i]<<" ";
+      std::cerr<<"\n\n";
+
+       
+      if (line_search(x,f,dx2,15)) {
+	  std::cerr<<"REGULAR succeeded...\n";
+	  moved = true;
+      }
+      else
+	std::cerr<<"REGULAR failed...\n";
+
+      std::cerr<<"x = ";
+      for(int i=0;i<x.size();i++)
+	std::cerr<<x[i]<<" ";
+      std::cerr<<"\n\n";
+
+
+      /*------------ Update State based on moved/not moved --------------*/
       if (moved) {
-	// Are we done yet?
-	done = true;
-	for(int i=0;i<dx3.size();i++)
-	  if (std::abs(dx3[i]) > delta) done = false;
+	double value2 = f(x);
+	df = value2-value;
+	value = value2;
+	Vector deltax = (x - x1)/10;
+	for(int i=0;i<deltax.size();i++)
+	  if (deltax[i] > 1.0e-9*(1.0+std::abs(x[i])))
+	    dx[i] = deltax[i];
       }
       else {
-	dx *= 0.5;
+	Vector deltax = dx/2.0;
+	for(int i=0;i<deltax.size();i++)
+	  if (deltax[i] > 1.0e-9*(1.0+std::abs(x[i])))
+	    dx[i] = deltax[i];
 	df *= 0.5;
       }
-      
+
+      /*------------------------- Are we done yet ----------------------*/
+      if (infnorm(dxNR) < delta*(1.0+infnorm(x)) 
+	  and infnorm(del_f) < delta*std::abs(1.0+value)) {
+	done = true;
+	std::cerr<<"not done:  ||dx||/(1+||x||) = "<<infnorm(dxNR)/(1+infnorm(x))<<"         ";
+	std::cerr<<"||del fx||/(1+||f||) = "<<infnorm(del_f)/(1+std::abs(1.0+value))<<"\n";
+	std::cerr<<"GRADIENT: final = "<<value<<"       iterations = "<<iteration<<"\n";
+      }
+      else {
+	std::cerr<<"not done:  ||dx||/(1+||x||) = "<<infnorm(dxNR)/(1+infnorm(x))<<"         ";
+	std::cerr<<"||del fx||/(1+||f||) = "<<infnorm(del_f)/(1+std::abs(1.0+value))<<"\n";
+      }
     }
     return x;
   }

@@ -26,7 +26,7 @@ public:
     // is this to make it work when we just have a pair?
     // Then we can't hack out the second branch...
     // Hmm.. could we make one node the root?
-    int nbranches == transition_P_[0].size();
+    int nbranches = transition_P_[0].size();
     assert(b < nbranches);
     if (b == nbranches) b--;
 #endif

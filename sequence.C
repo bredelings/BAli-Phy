@@ -80,7 +80,7 @@ vector<sequence> load_fasta(const alphabet& a,std::istream& file) {
 vector<sequence> load_fasta(const alphabet& a,const string& filename) {
   ifstream file(filename.c_str());
   if (not file)
-    throw myexception(string("Couldn't open file '")+filename+"'");
+    throw myexception()<<"Couldn't open file '"<<filename<<"'";
   vector<sequence> sequences = load_fasta(a,file);
   file.close();
   return sequences;

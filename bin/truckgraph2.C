@@ -5,20 +5,10 @@
 #include "alignment.H"
 #include "arguments.H"
 #include "mytypes.H"
+#include "alignmentutil.H"
+#include "util.H"
 
 using std::map;
-using std::cin;
-using std::cout;
-using std::cerr;
-using std::istream;
-using std::ifstream;
-
-bool match_tag(const string& line,const string& tag) {
-  if (line.size() < tag.size())
-    return false;
-
-  return (line.substr(0,tag.size()) == tag);
-}
 
 void do_setup(Arguments& args,vector<alignment>& alignments) {
 
@@ -29,22 +19,15 @@ void do_setup(Arguments& args,vector<alignment>& alignments) {
   alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
 
   /* ----- Try to load alignments ------ */
+  int maxalignments = 1000;
+  if (args.set("maxalignments"))
+    maxalignments = convertTo<int>(args["maxalignments"]);
+
   string tag = "align[sample";
   if (args.set("tag"))
     tag = args["tag"];
 
-  string line;
-  while(getline(cin,line)) {
-    if (match_tag(line,tag)) {
-      alignment A;
-      A.load_phylip(alphabets,cin);
-
-      remove_empty_columns(A);
-      if (A.num_sequences() == 0) 
-	throw myexception(string("Alignment didn't contain any sequences!"));
-      alignments.push_back(A);
-    }
-  }
+  alignments = load_alignments(std::cin,tag,alphabets,maxalignments);
 }
 
 bool after(int c1, int c2, const alignment& A,const vector<int>& nodes) {
@@ -146,69 +129,81 @@ struct edge_lessthan {
   }
 };
 
+void write_truck_graph(std::ostream& ofile,const vector<alignment>& alignments,int t1,int t2,
+		       const vector<string>& taxa) {
+
+  map<edge,int,edge_lessthan> edges;
+	
+  /*---------- Count the edges ----------*/
+  for(int i=0;i<alignments.size();i++) {
+    const alignment& A = alignments[i];
+
+    int n1 = A.index(taxa[t1]);
+    if (n1 == -1)
+      throw myexception(string("sequence ") + taxa[t1] + " not found.");
+
+    int n2 = A.index(taxa[t2]);
+    if (n2 == -1)
+      throw myexception(string("sequence ") + taxa[t2] + " not found.");
+
+    vector<int> bits = getorder(A,n1,n2);
+      
+    vector<int> cx;
+    vector<int> cy;
+    getpath(A,bits,cx,cy);
+
+    for(int j=0;j<cx.size()-1;j++) {
+      int x1 = cx[j];
+      int y1 = cy[j];
+
+      int x2 = cx[j+1];
+      int y2 = cy[j+1];
+
+      edges[edge(x1,y1,x2,y2)]++;
+    }
+  }
+  
+  /*----------- Write out header ----------*/
+  ofile<<alignments.size()<<" "<<edges.size()<<" "<<taxa[t1]<<" "<<taxa[t2]<<endl;
+
+  /*----------- Write out edges and counts ----------*/
+  for(map<edge,int,edge_lessthan>::iterator here = edges.begin();
+      here != edges.end();here++) {
+    ofile<<here->first.x1<<" "
+	<<here->first.y1<<" "
+	<<here->first.x2<<" "
+	<<here->first.y2<<" "
+	<<here->second<<endl;
+  }
+}
+
+
 int main(int argc,char* argv[]) { 
   try {
     Arguments args;
     args.read(argc,argv);
     args.print(std::cerr);
 
-    string name1 = argv[1];
-    string name2 = argv[2];
+    /*--------------------- Get taxon names --------------------*/
+    if (not args.set("taxa") or args["taxa"] == "")
+      throw myexception(string("No taxa specified [taxa=name1:name2:...]"));
 
-    /*----------- Load alignment and tree ---------*/
+    vector<string> taxa = split(args["taxa"],':');
+
+    /*---------------- Load alignment and tree -----------------*/
     vector<alignment> alignments;
     do_setup(args,alignments);
 
-    cerr<<"Read "<<alignments.size()<<" alignments\n";
+    std::cerr<<"Read "<<alignments.size()<<" alignments\n";
 
-    map<edge,int,edge_lessthan> edges;
-
-    /*---------- Count the edges ----------*/
-    int nlines=0;
-    for(int i=0;i<alignments.size();i++) {
-      const alignment& A = alignments[i];
-
-      int n1 = A.index(name1);
-      if (n1 == -1)
-	throw myexception(string("sequence ") + name1 + " not found.");
-
-      int n2 = A.index(name2);
-      if (n2 == -1)
-	throw myexception(string("sequence ") + name2 + " not found.");
-
-      vector<int> bits = getorder(A,n1,n2);
-
-      vector<int> cx;
-      vector<int> cy;
-      getpath(A,bits,cx,cy);
-
-      for(int i=0;i<cx.size()-1;i++) {
-	int x1 = cx[i];
-	int y1 = cy[i];
-
-	int x2 = cx[i+1];
-	int y2 = cy[i+1];
-
-	edges[edge(x1,y1,x2,y2)]++;
-	nlines++;
-      }
-    }
-
-    cout<<alignments.size()<<" "<<nlines<<" "<<name1<<" "<<name2<<endl;
-
-    /*----------- Write out edges and counts ----------*/
-    for(map<edge,int,edge_lessthan>::iterator here = edges.begin();
-	here != edges.end();here++) {
-      cout<<here->first.x1<<" "
-	  <<here->first.y1<<" "
-	  <<here->first.x2<<" "
-	  <<here->first.y2<<" "
-	  <<here->second<<endl;
-    }
-    
+    /*-------- Print the probabilistic truck graph for each pair -------*/
+    for(int t1=0;t1<taxa.size();t1++)
+      for(int t2=0;t2<t1;t2++)
+	write_truck_graph(std::cout,alignments,t1,t2,taxa);
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
+    exit(1);
   }
   return 0;
 }

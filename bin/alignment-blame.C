@@ -10,6 +10,9 @@
 #include "findroot.H"
 #include "util.H"
 #include "setup.H"
+#include "alignmentutil.H"
+
+// FIXME - also show which COLUMNS are more that 99% conserverd?
 
 using std::cin;
 using std::cout;
@@ -269,7 +272,7 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
 
   tree temp = T;
   for(int b=0;b<T.branches();b++) {
-    if (v[b] <= 0) return log_0;
+    if (v[b] < 0) return log_0;
     temp.branch(b).length() = v[b];
   }
 
@@ -312,13 +315,6 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
 }
 
 
-bool match_tag(const string& line,const string& tag) {
-  if (line.size() < tag.size())
-    return false;
-
-  return (line.substr(0,tag.size()) == tag);
-}
-
 void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,SequenceTree& T) {
   /*------ Try to load tree -------------*/
   if (not args.set("tree"))
@@ -338,6 +334,7 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
 
   ifstream ifile(args["align"].c_str());
   A.load_phylip(alphabets,ifile);
+
   ifile.close();
   
 
@@ -345,22 +342,15 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
   link(A,T);
 
   /* ----- Try to load alignments ------ */
+  int maxalignments = 1000;
+  if (args.set("maxalignments"))
+    maxalignments = convertTo<int>(args["maxalignments"]);
+
   string tag = "align[sample";
   if (args.set("tag"))
     tag = args["tag"];
 
-  string line;
-  while(getline(cin,line)) {
-    if (match_tag(line,tag)) {
-      alignment A;
-      A.load_phylip(alphabets,cin);
-
-      remove_empty_columns(A);
-      if (A.num_sequences() == 0) 
-	throw myexception(string("Alignment didn't contain any sequences!"));
-      alignments.push_back(A);
-    }
-  }
+  alignments = load_alignments(std::cin,tag,alphabets,maxalignments);
 }
 
 vector<int> getlabels(const alignment& A,const vector<int>& column) {
@@ -397,6 +387,8 @@ alignment M(const alignment& A1) {
 	A2(column,i) = pos;
 	pos++;
       }
+      if (pos != A2.seq(i).size())
+	std::abort();
     }
   }
   return A2;
@@ -445,8 +437,9 @@ int main(int argc,char* argv[]) {
 	f = new SSE_match_pairs(labels,T);
       else
 	f = new poisson_match_pairs(labels,T);
-      optimize::Vector start(0.1,T.branches());
+      optimize::Vector start(0.01,T.branches());
       optimize::Vector end = search_basis(start,*f,1.0e-5,500);
+      // optimize::Vector end = search_gradient(start,*f,1.0e-5,500);
       
       // Print uncertainty values for the letters
       tree T2 = T;
@@ -466,6 +459,7 @@ int main(int argc,char* argv[]) {
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
+    exit(1);
   }
   return 0;
 }

@@ -104,7 +104,8 @@ void link(alignment& A,SequenceTree& T) {
 
   /*------ Make sure A has enough leaf sequences ----------*/
   if (A.num_sequences() < T.leaves())
-    throw myexception(string("Tree has ") + convertToString(T.leaves()) + "leaves but Alignment only has " + convertToString(A.num_sequences()) + "sequences.");
+    throw myexception()<<"Tree has "<<T.leaves()<<" leaves but Alignment only has "
+		       <<A.num_sequences()<<" sequences.";
 
   /*----- If we just have leaf sequences, add internal sequences --------*/
   if (A.num_sequences() == T.leaves()) {

@@ -155,7 +155,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 					   branches)
 			     );
   if (P.T.leaves() >2) {
-    alignment_branch_moves.add(0.1,MoveArgSingle("sample_tri:alignment:nodes",
+    alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri:alignment:nodes",
 						 sample_tri_one,
 						 branches)
 			       );
@@ -363,6 +363,7 @@ int main(int argc,char* argv[]) {
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
+    exit(1);
   }
 
   return 0;

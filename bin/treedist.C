@@ -59,6 +59,15 @@ SequenceTree standardized(const string& t) {
   return T;
 }
 
+
+// use magic-squares...
+// That is a good way to get pairs.
+// It is still random though.
+
+// We can cull to some specific length... e.g. 1000
+
+// Add trees1 vs trees2 arguments to compare distances from different programs
+
 int main(int argc,char* argv[]) { 
   Arguments args;
   args.read(argc,argv);
@@ -110,6 +119,7 @@ int main(int argc,char* argv[]) {
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
+    exit(1);
   }
   return 0;
 
