@@ -462,7 +462,7 @@ void Tree::compute_partitions() {
     cached_partition_sets = vector< vector<int> >(2*n_branches());
   for(int i=0;i<cached_partition_sets.size();i++) {
     cached_partition_sets[i].clear();
-    cached_partition_sets[i].reserve(T.n_leaves());
+    cached_partition_sets[i].reserve(n_leaves());
   }
 
   // compute partition masks
@@ -483,7 +483,7 @@ void Tree::compute_partitions() {
   }
 
   // compute LEAF partition sets
-  for(int b=0;b<2*n_branches();i++)
+  for(int b=0;b<2*n_branches();b++)
     for(int i=0;i<n_leaves();i++) 
       if (cached_partitions[b][i]) 
 	cached_partition_sets[b].push_back(i);

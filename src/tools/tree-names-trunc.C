@@ -15,7 +15,7 @@ int main(int argc,char* argv[]) {
     if (not args.set("tree"))
       throw myexception("Tree file not specified! (tree=<filename>)");
     
-    SequenceTree T;
+    RootedSequenceTree T;
     T.read(args["tree"]);
     
     T.get_sequences() = truncate_names( T.get_sequences() );
