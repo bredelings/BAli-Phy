@@ -9,40 +9,40 @@ using namespace ublas;
 // how do we make the M constant? - const_cast?
 // return inline matrix_expression?
 
-Matrix exp(const Matrix& M,const double t) {
+Matrix exp(const SMatrix& S,const BMatrix& D,const double t) {
+  const int n = S.size1();
+
+  BMatrix DP(n,n);
+  BMatrix DN(n,n);
+  for(int i=0;i<D.size1();i++) {
+    DP(i,i) = sqrt(D(i,i));
+    DN(i,i) = 1.0/DP(i,i);
+  }
+  
+  SMatrix S2 = prod(DP,prod(S,DP));
+
+  Matrix E = exp(S2,t);
+  E = prod(DN,prod(E,DP));
+
+  for(int i=0;i<E.size1();i++)
+    for(int j=0;j<E.size2();j++)
+      assert(E(i,j) >= 0.0);
+
+  return E;
+}
+
+Matrix exp(const SMatrix& M,const double t) {
 
   EigenValues solution(M);
 
   Matrix O = solution.Rotation();
   banded_matrix<double> D = solution.Diagonal();
 
-  for(int i=0;i<D.size1();i++)
-    std::cerr<<"eigenvalue "<<i<<" = "<<D(i,i)<<std::endl;
-  std::cerr<<std::endl;
-
   // Exponentiate Eigenvalues
   for(int i=0;i<solution.size();i++)
     D(i,i) = exp(t*D(i,i));
 
-  // this is wrong - because O isn't scaled as an orthogonal matrix!
-  // need to take the inverse!  I think O is orthogonal only if 
-  // M is symmetric
-  Matrix LU = 0;
-  Matrix DOinverse = D;
-  atlas::lu_solve(O,D);
-  Matrix E = prod(O,DOinverse);
-
-  for(int i=0;i<D.size1();i++)
-    std::cerr<<"exp eigenvalue "<<i<<" = "<<D(i,i)<<std::endl;
-  std::cerr<<std::endl;
-
-  std::cerr<<"O = \n";
-  for(int i=0;i<O.size1();i++) {
-    for(int j=0;j<O.size2();j++)
-      std::cerr<<O(i,j)<<" ";
-    std::cerr<<endl;
-  }
-  
+  Matrix E = prod(O,prod(D,trans(O)));
 
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++)

@@ -37,6 +37,3 @@ EigenValues::EigenValues(const Matrix& M)
     assert(D4[i] == 0);
 #endif
 }
-
-
-

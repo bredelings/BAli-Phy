@@ -182,8 +182,8 @@ double substitution(const vector<int>& residues,const Parameters& Theta) {
   }
 
   */
-  assert(0.0 <= p and p<= 1.0);
-  std::cerr<<" substitution: p="<<p<<"      log(p)="<<log(p)<<std::endl;
+  assert(0.0 < p and p<= 1.0);
+  //  std::cerr<<" substitution: p="<<p<<"      log(p)="<<log(p)<<std::endl;
   return log(p);
 }
 
@@ -197,7 +197,7 @@ double substitution(const alignment& A,const Parameters& Theta) {
     for(int i=0;i<residues.size();i++)
       residues[i] = A(column,i);
     P += substitution(residues,Theta);
-    std::cerr<<" substitution: P="<<P<<std::endl;
+    //    std::cerr<<" substitution: P="<<P<<std::endl;
   }
 
   return P;

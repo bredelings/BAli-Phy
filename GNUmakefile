@@ -46,7 +46,7 @@ OTHERFILES +=
 
 #------------------- End
 DEVEL = ../../..
-includes += /usr/local/include/
+# includes += /usr/local/include/
 src      += 
 include $(DEVEL)/GNUmakefile
 

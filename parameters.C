@@ -4,7 +4,7 @@
 #include "logsum.H"
 
 
-void SubstitutionModel::recalc() {
+void EquilibriumModel::recalc() {
 
   // Determine diagonal entries
   for(int i=0;i<S.size1();i++) {
@@ -39,8 +39,11 @@ void SubstitutionModel::recalc() {
 
 }
 
-Matrix SubstitutionModel::transition_p(double t) const {
-  return exp(Q,t);
+Matrix EquilibriumModel::transition_p(double t) const {
+  BMatrix D(a->size(),a->size());
+  for(int i=0;i<a->size();i++)
+    D(i,i) = pi[i];
+  return exp(S,D,t);
 }
 
 void HKY::recalc() {
@@ -67,7 +70,7 @@ void HKY::recalc() {
   S(T,G) = 1;
   S(T,C) = kappa();
 
-  SubstitutionModel::recalc();
+  EquilibriumModel::recalc();
 }
 
 void EQU::recalc() {
@@ -75,11 +78,11 @@ void EQU::recalc() {
     for(int j=0;j<a->size();j++)
       S(i,j) = 1;
 
-  SubstitutionModel::recalc();
+  EquilibriumModel::recalc();
 }
 
 void Empirical::recalc() {
-  SubstitutionModel::recalc();
+  EquilibriumModel::recalc();
 }
 
 void Empirical::load_file(const char* filename) {

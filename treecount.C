@@ -234,8 +234,10 @@ int main() {
   for(int i=0;i<best_trees.size();i++) {
     int j = order [ order.size() - 1 - i];
     int num = count[j];
-    for(int b=0;b<best_trees[i].branches();b++) 
+    for(int b=0;b<best_trees[i].branches();b++) {
       branch_m1[i][b] /= double(num);
+      branch_m2[i][b] /= double(num);
+    }
   }
 
   /****************  Summarize best trees ****************/

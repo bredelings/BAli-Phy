@@ -9,10 +9,6 @@
 
 /******************************* Abstract class Substitution Model ***********************/
 
-// FIXME - I could make a more general class which doesn't specify implementation
-//         and then make a derived class which offers the implementation, and then
-//         derive the classes which share the implementation from that.
-
 class SubstitutionModel {
 protected:
   const alphabet * const a;
@@ -20,19 +16,13 @@ protected:
   // the current frequencies
   std::valarray<double> pi;
 
-  // the exchangeability matrix
-  Matrix S;
-
-  // the computed rate matrix
-  Matrix Q;
-
   // model parameters
   vector<double> parameters_;
 
-  SubstitutionModel(const alphabet& a_,int s):
-    a(&a_), pi(1.0/a->size(),a->size()), S(a->size(),a->size()), Q(a->size(),a->size()),parameters_(s) { }
+  SubstitutionModel(const alphabet& a_,int s):a(&a_), pi(1.0/a->size(),a->size()), parameters_(s) 
+  { }
 
-  virtual void recalc();
+  virtual void recalc() =0;
 public:
   const alphabet& Alphabet() const { return *a;}
 
@@ -45,42 +35,72 @@ public:
   virtual void frequencies(const std::valarray<double>& pi_) {pi=pi_; recalc();}
   
   // transition rates
-  virtual const Matrix& rates() const {return Q;}
+  virtual const Matrix& rates() const =0;
 
   // transition probabilities
-  virtual Matrix transition_p(double t) const;
+  virtual Matrix transition_p(double t) const =0;
 
   // how to sample from the distribution of parameters?
   virtual void fiddle() {}; 
 
-  SubstitutionModel(const alphabet& a_):
-    a(&a_), pi(1.0/a->size(),a->size()), S(a->size(),a->size()), Q(a->size(),a->size()) { }
+  SubstitutionModel(const alphabet& a_): a(&a_), pi(1.0/a->size(),a->size()) 
+  { }
 
   virtual ~SubstitutionModel() {}
 };
 
 // FIXME - cache the eigensystem!
 
+/************************** Equilibrium Substitution Model ************************/
+
+class EquilibriumModel: public SubstitutionModel{
+protected:
+  // the exchangeability matrix
+  Matrix S;
+
+  // the computed rate matrix
+  Matrix Q;
+
+  EquilibriumModel(const alphabet& a_,int s):SubstitutionModel(a_,s),S(a->size(),a->size()), Q(a->size(),a->size())
+  { }
+
+  virtual void recalc();
+public:
+  // transition rates
+  virtual const Matrix& rates() const {return Q;}
+
+  // transition probabilities
+  virtual Matrix transition_p(double t) const;
+
+  EquilibriumModel(const alphabet& a_):SubstitutionModel(a_),S(a->size(),a->size()), Q(a->size(),a->size())
+  { }
+
+  virtual ~EquilibriumModel() {}
+};
+
+
+
+
 /******************************* HKY Substitution Model *****************************/
 
-class HKY: public SubstitutionModel {
+class HKY: public EquilibriumModel {
   virtual void recalc();
 public:
 
   double kappa() const {return parameters_[0];}
   void kappa(double k) {parameters_[0]=k;recalc();}
 
-  HKY(const alphabet& a): SubstitutionModel(a,1)
+  HKY(const alphabet& a): EquilibriumModel(a,1)
   { 
     kappa(1);
   }
 
-  HKY(const alphabet& a,double k): SubstitutionModel(a,1)
+  HKY(const alphabet& a,double k): EquilibriumModel(a,1)
   {
     kappa(k);
   }
 
-  HKY(const alphabet& a,double k,const std::valarray<double>& f): SubstitutionModel(a,1)
+  HKY(const alphabet& a,double k,const std::valarray<double>& f): EquilibriumModel(a,1)
   {
     kappa(k);
     frequencies(f);
@@ -91,15 +111,15 @@ public:
 
 /******************************* EQU Substitution Model *****************************/
 
-class EQU: public SubstitutionModel {
+class EQU: public EquilibriumModel {
   virtual void recalc();
 public:
 
-  EQU(const alphabet& a): SubstitutionModel(a) 
+  EQU(const alphabet& a): EquilibriumModel(a) 
   { recalc(); }
 
   EQU(const alphabet& a,const std::valarray<double>& f)
-    : SubstitutionModel(a)
+    : EquilibriumModel(a)
   {
     frequencies(f);
   }
@@ -109,17 +129,17 @@ public:
 
 /************************ Empirical Substitution Model **************************/
 
-class Empirical: public SubstitutionModel {
+class Empirical: public EquilibriumModel {
   void load_file(const char* filename);
   virtual void recalc();
 public:
 
   Empirical(const alphabet& a,const char* filename) 
-    : SubstitutionModel(a)
+    : EquilibriumModel(a)
   { load_file(filename); recalc();}
 
   Empirical(const alphabet& a,const char* filename,const std::valarray<double>& f)
-    : SubstitutionModel(a)
+    : EquilibriumModel(a)
   {
     load_file(filename);
     frequencies(f);
