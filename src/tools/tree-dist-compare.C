@@ -195,6 +195,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("separation",value<double>()->default_value(0),"Only report trees/partitions if they differ by this many LODs")
     ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file")
     ("consensus",value<vector<double> >(),"consensus level for majority tree (>=0.5)")
+    ("sub-partitions","look for partitions revealed by deleting subtrees")
     ;
     
   
@@ -324,7 +325,10 @@ int main(int argc,char* argv[])
     for(int i=0;i<tree_dists.size();i++) {
 
       // add Ml partitions to 'partitions' if not yet there
-      dist_partitions[i] = get_Ml_sub_partitions(tree_dists[i],0.5,2.0);
+      if (args.count("sub-partitions"))
+	dist_partitions[i] = get_Ml_sub_partitions(tree_dists[i],0.5,2.0);
+      else
+	dist_partitions[i] = get_Ml_partitions(tree_dists[i],0.5);
       for(int j=0;j<dist_partitions[i].size();j++)
 	if (not includes(partitions,dist_partitions[i][j])) 
 	  partitions.push_back(dist_partitions[i][j]);
@@ -452,9 +456,8 @@ int main(int argc,char* argv[])
 	
       for(int i=0;i<tree_dists.size();i++) {
 	vector<Partition> partitions = get_Ml_partitions(tree_dists[i],levels[l]);
-	vector<Partition> partitions2 = get_Ml_sub_partitions(tree_dists[i],levels[l],2.0);
 	SequenceTree MF = get_mf_tree(MAP_trees[i].get_sequences(),partitions);
-	cout<<"\nSample "<<i<<": "<<partitions.size()<<"/"<<MAP_trees[i].n_leaves()-3<<" internal bi-partitions supported. ("<<partitions2.size()<<" sub-partitions supported)\n";
+	cout<<"\nSample "<<i<<": "<<partitions.size()<<"/"<<MAP_trees[i].n_leaves()-3<<" internal bi-partitions supported.\n";
 	cout<<"PP = "<<tree_dists[i].PP(partitions)<<"\n";;
 	cout<<" consensus"<<i<<" = "<<MF.write(false)<<std::endl;
       }
