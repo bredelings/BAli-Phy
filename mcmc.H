@@ -16,6 +16,8 @@ class MCMC {
     bool enabled;
     vector<string> attributes;
 
+    int attempts;
+    int successful;
     move_info() {}
     move_info(move a1,double a2,bool a3):m(a1),weight(a2),enabled(a3) {}
   };

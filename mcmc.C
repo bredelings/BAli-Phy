@@ -181,7 +181,7 @@ void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
   std::cout<<"Initial Tree = \n";
   std::cout<<T<<endl<<endl;
 
-  const int correlation_time = int(log(T.leaves()));
+  const int correlation_time = 2*int(log(T.leaves()))+1;
   const int start_after = 0;// 600*correlation_time;
   int total_samples = 0;
 

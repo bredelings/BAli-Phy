@@ -222,11 +222,11 @@ void alignment::load_phylip(const alphabet& a,const std::string& filename) {
   if (length > 0 and length != this->length())
     throw myexception(string("Sequences in file '") + filename + "' have length " + convertToString(this->length()) + " instead of specified length " + convertToString(length) + ".");
 
-  for(int i=0;i<ntaxa;i++) {
-    std::cerr<<">"<<names[i]<<endl;
-    std::cerr<<sequences[i]<<endl;
-    std::cerr<<endl;
-  }
+  //  for(int i=0;i<ntaxa;i++) {
+  //    std::cerr<<">"<<names[i]<<endl;
+  //    std::cerr<<sequences[i]<<endl;
+  //    std::cerr<<endl;
+  //  }
 }
 
 void alignment::load(const alphabet& a,const std::string& filename) {

@@ -71,6 +71,58 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
     T.read(args["tree"]);
 }
 
+void do_showonly(const alignment& A,const Parameters& P) {
+  double PS = substitution(A,P);
+  double PA = prior_HMM(A,P);
+  double PT = prior(P.T,P.branch_mean);
+  double PP = P.SModel().prior();
+
+  std::cerr<<"ln P(data,A,t,T,Theta) =  "<<PS + PA + PT + PP<<" = "
+	   <<PS<<" + "
+	   <<PA<<" + "
+	   <<PT<<" + "
+	   <<PP<<endl<<endl;
+
+  std::cerr<<A<<endl<<endl;
+  std::cerr<<P.T<<endl<<endl;
+}
+
+
+void do_sampling(Arguments& args,alignment& A,Parameters& P) {
+  MCMC sampler;
+  sampler.add(sample_alignments,1,"sample_alignments:alignment");
+  sampler.add(sample_nodes,1,"sample_nodes:nodes");
+  sampler.add(sample_topologies,1,"sample_topologies:nodes:topology");
+  sampler.add(change_branch_lengths,1,"change_branch_lengths:nodes:lengths:topology");
+  sampler.add(change_parameters,1,"change_parameters:parameters");
+
+  //FIXME - maybe just store name in object, use vector, search for name?
+  //FIXME - make MCMC inherit from the collection of moves.
+  vector<string> disable;
+  vector<string> enable;
+  if (args.set("disable"))
+    disable = split(args["disable"],':');
+  if (args.set("enable"))
+    enable = split(args["enable"],':');
+  
+  for(int i=0;i<disable.size();i++)
+    sampler.disable(disable[i]);
+  
+  for(int i=0;i<enable.size();i++)
+    sampler.enable(enable[i]);
+  
+  for(int i=0;i<sampler.moves.size();i++) {
+    std::cout<<"move "<<sampler.moves[i].attributes[0]<<": ";
+    if (sampler.moves[i].enabled)
+      std::cout<<"enabled.\n";
+    else 
+      std::cout<<"DISABLED.\n";
+  }
+  std::cout<<"\n";
+  
+  sampler.iterate(A,P,1000000);
+}
+
 
 int main(int argc,char* argv[]) { 
   try {
@@ -145,56 +197,25 @@ int main(int argc,char* argv[]) {
       smodel = &WAG;
     else
       assert(0);
-
+    
     std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
     smodel->frequencies(empirical_frequencies(A));
     
     /*-------------Choose an indel model--------------*/
-    int maxlength = 2000;
-    if (maxlength < 2*A.length())
-      maxlength = 2*A.length();
-
-    IndelModel1 IM1(maxlength,lambda_O,lambda_E);
-    IndelModel2 IM2(maxlength,lambda_O,lambda_E);
+    IndelModel1 IM1(2000,lambda_O,lambda_E);
+    IndelModel2 IM2(2000,lambda_O,lambda_E);
     IndelModel* imodel = &IM2;
     if (args.set("Imodel") and args["Imodel"] == "ordered")
       imodel= &IM1;
 
     Parameters Theta(*smodel,*imodel,T);
 
-    /*-------------Start the Sampling----------------*/
-    MCMC sampler;
-    sampler.add(sample_alignments,1,"sample_alignments:alignment");
-    sampler.add(sample_nodes,1,"sample_nodes:nodes");
-    sampler.add(sample_topologies,1,"sample_topologies:nodes:topology");
-    sampler.add(change_branch_lengths,1,"change_branch_lengths:nodes:lengths:topology");
-    sampler.add(change_parameters,1,"change_parameters:parameters");
 
-    //FIXME - maybe just store name in object, use vector, search for name?
-    //FIXME - make MCMC inherit from the collection of moves.
-    vector<string> disable;
-    vector<string> enable;
-    if (args.set("disable"))
-      disable = split(args["disable"],':');
-    if (args.set("enable"))
-      enable = split(args["enable"],':');
-    
-    for(int i=0;i<disable.size();i++)
-      sampler.disable(disable[i]);
-
-    for(int i=0;i<enable.size();i++)
-      sampler.enable(enable[i]);
-
-    for(int i=0;i<sampler.moves.size();i++) {
-      std::cout<<"move "<<sampler.moves[i].attributes[0]<<": ";
-      if (sampler.moves[i].enabled)
-	std::cout<<"enabled.\n";
-      else 
-	std::cout<<"DISABLED.\n";
-    }
-    std::cout<<"\n";
-
-    sampler.iterate(A,Theta,1000000);
+    /*---------------Do something------------------*/
+    if (args.set("showonly"))
+      do_showonly(A,Theta);
+    else
+      do_sampling(args,A,Theta);
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
