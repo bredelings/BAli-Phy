@@ -19,7 +19,7 @@ namespace substitution {
   class Model: public Cloneable {
   protected:
     /// Model parameters
-    vector<double> parameters_;
+    std::vector<double> parameters_;
 
   public:
 
@@ -39,10 +39,10 @@ namespace substitution {
     virtual Model* clone() const =0;
 
     /// Get the model parameters
-    virtual const vector<double>& parameters() const {return parameters_;}
+    virtual const std::vector<double>& parameters() const {return parameters_;}
 
     /// Set the model parameters
-    virtual void parameters(const vector<double>& p) {
+    virtual void parameters(const std::vector<double>& p) {
       assert(parameters_.size() == p.size()) ; 
       parameters_=p; 
       recalc();
@@ -67,9 +67,10 @@ namespace substitution {
 
 
   //----------------------- Nested Models ------------------------///
+  // FIXME - I need to expand this to store multiple submodels
 
   /// Abstract class for substitution models built on a submodel
-  class NestedModel: virtual public Model {
+  class SuperModel: virtual public Model {
 
   protected:
     /// The prior for the parameters of the upper model
@@ -78,62 +79,99 @@ namespace substitution {
     /// Fiddle the parameters of the upper model (may need to call recalc)
     virtual void super_fiddle(const std::valarray<bool>&) {recalc();}
 
-    virtual std::string super_parameter_name(int i) const {return Model::parameter_name(i);}
-
-  public:
-    /// Make a copy of ourselves
-    NestedModel* clone() const =0;
+    virtual std::string super_parameter_name(int i) const;
 
     /// Access the submodel
-    virtual const Model& SubModel() const=0;
-    virtual Model& SubModel()=0;
+    virtual const Model& SubModels(int) const=0;
+    virtual Model& SubModels(int)=0;
+    virtual int n_submodels() const=0;
+
+    void recalc();
+  public:
+    /// Make a copy of ourselves
+    SuperModel* clone() const =0;
 
     std::string parameter_name(int i) const;
 
-    double prior() const {return super_prior() + SubModel().prior();}
+    double prior() const;
 
     /// Symmetrically propose parameters (calls recalc through super_fiddle if necessary)
-    void fiddle(const std::valarray<bool>& fixed) {
-      SubModel().fiddle(fixed);
-      for(int i=0;i<SubModel().parameters().size();i++)
-	parameters_[i] = SubModel().parameters()[i];
-      super_fiddle(fixed);
-    }
+    void fiddle(const std::valarray<bool>& fixed); 
     
-    /// We have the same alphabet as our submodel
-    const alphabet& Alphabet() const {return SubModel().Alphabet();}
-
-    void recalc();
+    /// We have the same alphabet as our submodels
+    const alphabet& Alphabet() const {return SubModels(0).Alphabet();}
   };
 
 
   /// This is a substitution model built over a submodel of a particular type
   template <class SubModel_t>
-  class NestedModelOver: virtual public NestedModel {
+  class SuperModelOver: virtual public SuperModel {
 
   protected:
-    /// The sub-model this model is build upon
-    OwnedPointer<SubModel_t> sub_model;
+    /// The sub-models this model is build upon
+    std::vector< OwnedPointer<SubModel_t> > sub_models;
+
+    /// Reference the submodels
+    const SubModel_t& SubModels(int i) const {return *sub_models[i];}
+    SubModel_t& SubModels(int i) {return *sub_models[i];}
+    int n_submodels() const {return sub_models.size();}
+
+  public:
+    /// Make a copy of ourselves
+    SuperModelOver<SubModel_t>* clone() const =0;
+
+    /// Construct a Nested model based on model 'M', with 'dp' extra parameters
+    SuperModelOver(const std::vector< OwnedPointer<SubModel_t> >& models,int dp)
+      :sub_models(models)
+    {
+      int total=0;
+      for(int m=0;m<n_submodels();m++)
+	total += SubModels(m).parameters().size();
+      parameters_.resize(total + dp);
+    
+      total=0;
+      for(int m=0;m<n_submodels();m++) {
+	for(int i=0;i<SubModels(i).parameters().size();i++)
+	  parameters_[i+total] = SubModels(i).parameters()[i];
+	total += SubModels(m).parameters().size();
+      }
+
+      full_tree = SubModels(0).full_tree;
+    }
+  };
+
+
+  /// Abstract class for substitution models built on a single submodel
+  class NestedModel: virtual public SuperModel {
+
+  protected:
+    /// Access the submodel
+    virtual const Model& SubModel() const=0;
+    virtual Model& SubModel()=0;
+
+  public:
+    /// Make a copy of ourselves
+    NestedModel* clone() const =0;
+  };
+
+
+  /// This is a substitution model built over a submodel of a particular type
+  template <class SubModel_t>
+  class NestedModelOver: virtual public NestedModel, public SuperModelOver<SubModel_t> {
+
+  protected:
+    /// Access the submodel
+    const SubModel_t& SubModel() const {return SubModels(0);}
+    SubModel_t& SubModel() {return SubModels(0);}
 
   public:
     /// Make a copy of ourselves
     NestedModelOver<SubModel_t>* clone() const =0;
 
-    /// Reference the submodel
-    virtual const SubModel_t& SubModel() const {return *sub_model;};
-    virtual SubModel_t& SubModel() {return *sub_model;}
-
     /// Construct a Nested model based on model 'M', with 'dp' extra parameters
     NestedModelOver(const SubModel_t& M,int dp)
-      :sub_model(M.clone()) 
-    {
-      parameters_.resize(M.parameters().size()+dp);
-
-      for(int i=0;i<M.parameters().size();i++)
-	parameters_[i] = M.parameters()[i];
-
-      full_tree = M.full_tree;
-    }
+      :SuperModelOver<SubModel_t>(vector< OwnedPointer<SubModel_t> >(1,M),dp)
+    { }
   };
 
 
@@ -513,14 +551,14 @@ namespace substitution {
   class MultiModel: public ReversibleAdditiveModel {
   protected:
     /// The probability of each model
-    vector<double> distribution_;
+    std::vector<double> distribution_;
 
     /// The probability of each model
-    vector<double> rates_;
-  public:
-    MultiModel* clone() const =0;
+    std::vector<double> rates_;
 
     void recalc();
+  public:
+    MultiModel* clone() const =0;
 
     /// The number of models
     int nmodels() const {return distribution_.size();}
@@ -528,13 +566,13 @@ namespace substitution {
     virtual const ReversibleAdditiveModel& get_model(int i) const=0;
 
     /// Get the rates at which we run the individual models
-    const vector<double>& rates() const {return rates_;}
+    const std::vector<double>& rates() const {return rates_;}
 
     double rate() const;
     void set_rate(double);
 
     /// Get the probability of the models
-    const vector<double>& distribution() const {return distribution_;}
+    const std::vector<double>& distribution() const {return distribution_;}
 
     /// Get a transition probability matrix for time 't', averaging over models
     virtual Matrix transition_p(double t) const;
@@ -550,10 +588,10 @@ namespace substitution {
 
   /// A substitution model based on running Reversible Models with the same equilibrium at different rates
   class MultiRateModel: public MultiModel, virtual public NestedModel {
+  protected:
+    void recalc();
   public:
     MultiRateModel* clone() const =0;
-
-    void recalc();
 
     /// The Reversible model which is run at different rates
     virtual const ReversibleAdditiveModel& BaseModel() const =0;
@@ -607,9 +645,6 @@ namespace substitution {
 
   public:
     virtual MultiRateModelOver<ReversibleAdditiveModel>* clone() const =0;
-
-    const ReversibleAdditiveModel& SubModel() const {return *sub_model;}
-    ReversibleAdditiveModel& SubModel() {return *sub_model;}
 
     const ReversibleAdditiveModel& BaseModel() const {return SubModel();}
     ReversibleAdditiveModel& BaseModel() {return SubModel();}
@@ -693,7 +728,7 @@ namespace substitution {
 
   /// The Invariant-sites model: a certain fraction of the sites don't change
   /// The only parameter is 'p', the fraction of sites which don't change
-  /// To keep branch lenghts the same, inflate rates by 1/(1-p).
+  /// To keep branch lengths the same, inflate rates by 1/(1-p).
   class INV_Model: public MultiRateModelOver<MultiRateModel> {
     static double const inv_frac_mean = 0.1;
     static double const max_inv_rate = 0.01;
@@ -712,6 +747,26 @@ namespace substitution {
     string name() const;
 
     INV_Model(const MultiRateModel& M);
+  };
+
+  class DualModel:public MultiModel,public SuperModelOver<MultiModel> {
+    double super_prior() const;
+    void super_fiddle(const std::valarray<bool>&);
+    void recalc();
+    
+  public:
+    virtual DualModel* clone() const {return new DualModel(*this);}
+
+    const MultiModel& get_model(int m) const {return SubModels(m);}
+
+    /// Get the equilibrium frequencies
+    const std::valarray<double>& frequencies() const {return get_model(0).frequencies();}
+    /// Set the equilibrium frequencies
+    void frequencies(const std::valarray<double>& f);
+
+    string name() const;
+
+    DualModel(const std::vector<OwnedPointer<MultiModel> >& models);
   };
 
 }

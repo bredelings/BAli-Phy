@@ -256,7 +256,7 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
 }
 
 //FIXME - need to give indel models a name!
-IndelModel* get_imodel(Arguments& args) {
+OwnedPointer<IndelModel> get_imodel(Arguments& args) {
   //------------ Specify Gap Penalties ----------//
   double lambda_O = args.loadvalue("lambda_O",-5);
   
@@ -265,21 +265,21 @@ IndelModel* get_imodel(Arguments& args) {
   cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl<<endl;
 
   //-------------Choose an indel model--------------//
-  IndelModel* imodel = 0;
+  OwnedPointer<IndelModel> imodel;
 
   if (not args.set("imodel")) args["imodel"] = "upweighted";
   
   if (args["imodel"] == "ordered") {
     cout<<"imodel = ordered\n";
-    imodel = new IndelModel1(lambda_O,lambda_E);
+    imodel = IndelModel1(lambda_O,lambda_E);
   }
   else if (args["imodel"] == "single_indels") {
     cout<<"imodel = single indels\n";
-    imodel = new SingleIndelModel(lambda_O);
+    imodel = SingleIndelModel(lambda_O);
   }
   else if (args["imodel"] == "upweighted") {
     cout<<"imodel = adjacent gaps upweighted by 2\n";
-    imodel = new UpweightedIndelModel(lambda_O,lambda_E);
+    imodel = UpweightedIndelModel(lambda_O,lambda_E);
   }
   else
     throw myexception()<<"Unrecognized indel model '"<<args["imodel"]<<"'";

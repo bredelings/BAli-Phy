@@ -7,6 +7,7 @@
 #include "arguments.H"
 #include "alignment.H"
 #include "sequencetree.H"
+#include "clone.H"
 
 /// Reorder internal sequences of A to correspond to standardized node names for T
 alignment standardize(const alignment& A, const SequenceTree& T);
@@ -37,11 +38,11 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
 //------------------------ Substitution stuff ----------------------//
 
 /// Return a substitution::Model specified by args
-substitution::MultiModel* get_smodel(Arguments& args,const alphabet& a,const std::valarray<double>& default_frequencies);
+OwnedPointer<substitution::MultiModel> get_smodel(Arguments& args,const alphabet& a,const std::valarray<double>& default_frequencies);
 /// Return a substitution::Model specified by args
-substitution::MultiModel* get_smodel(Arguments& args,const alignment& A);
+OwnedPointer<substitution::MultiModel> get_smodel(Arguments& args,const alignment& A);
 
 //--------------------------- Indel stuff --------------------------//
-IndelModel* get_imodel(Arguments& args);
+OwnedPointer<IndelModel> get_imodel(Arguments& args);
 
 #endif 

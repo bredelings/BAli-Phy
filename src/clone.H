@@ -18,6 +18,11 @@ private:
 public:
 
   // Get a copy of an object
+  OwnedPointer() throw() 
+    : data(0) 
+  {}
+
+  // Get a copy of an object
   OwnedPointer(const T& t) throw() 
     : data(t.clone()) 
   {}

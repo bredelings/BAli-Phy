@@ -9,9 +9,9 @@
 #include "likelihood.H"
 #include "probability.H"
 
+using std::vector;
 using std::valarray;
 using std::string;
-using std::vector;
 
 namespace substitution {
 
@@ -28,6 +28,53 @@ namespace substitution {
     :full_tree(true)
   { }
 
+
+  //--------------------- Nested models -----------------------------//
+  std::string SuperModel::super_parameter_name(int p) const {
+    for(int i=0;i<n_submodels();i++)
+      p += SubModels(i).parameters().size();
+    return Model::parameter_name(p);
+  }
+
+  string SuperModel::parameter_name(int p) const {
+    for(int i=0;i<n_submodels();i++) {
+      if (p<SubModels(i).parameters().size())
+	return SubModels(i).parameter_name(p);
+      p -= SubModels(i).parameters().size();
+    }
+    return super_parameter_name(p);
+  }
+
+  double SuperModel::prior() const {
+    double P = super_prior();
+    for(int i=0;i<n_submodels();i++)
+      P += SubModels(i).prior();
+    return P;
+  }
+
+  void SuperModel::fiddle(const std::valarray<bool>& fixed) {
+    int total=0;
+    for(int m=0;m<n_submodels();m++) {
+      SubModels(m).fiddle(fixed);
+      for(int i=0;i<SubModels(m).parameters().size();i++)
+	parameters_[i+total] = SubModels(m).parameters()[i];
+
+      total += SubModels(m).parameters().size();
+    }
+    super_fiddle(fixed);
+  }
+
+  void SuperModel::recalc() {
+    int total=0;
+    for(int m=0;m<n_submodels();m++) {
+      vector<double> sub_p = SubModels(m).parameters();
+      for(int i=0;i<sub_p.size();i++)
+	sub_p[i] = parameters_[i+total];
+      SubModels(m).parameters(sub_p);
+
+      total += SubModels(m).parameters().size();
+    }
+  }
 
   //--------------------- Gamma_Branch_Model -----------------------------//
   Matrix Gamma_Branch_Model::transition_p(double t) const {
@@ -52,7 +99,7 @@ namespace substitution {
   }
 
   string Gamma_Branch_Model::name() const {
-    return string("GammaBranch(") + sub_model->name() + ")";
+    return string("GammaBranch(") + SubModel().name() + ")";
   }
 
   //-------------------- Gamma_Stretched_Branch_Model ----------------------//
@@ -91,7 +138,7 @@ namespace substitution {
   }
 
   string Gamma_Stretched_Branch_Model::name() const {
-    return string("GammaStretchedBranch(") + sub_model->name() + ")";
+    return string("GammaStretchedBranch(") + SubModel().name() + ")";
   }
 
 
@@ -170,28 +217,13 @@ namespace substitution {
     return dirichlet_log_pdf(frequencies(),q,10);
   }
 
-  string NestedModel::parameter_name(int i) const {
-    if (i<SubModel().parameters().size())
-      return SubModel().parameter_name(i);
-    else
-      return super_parameter_name(i);
-  }
-
-  void NestedModel::recalc() {
-    vector<double> sub_p = SubModel().parameters();
-    for(int i=0;i<sub_p.size();i++)
-      sub_p[i] = parameters_[i];
-
-    SubModel().parameters(sub_p);
-  }
-
   string HKY::name() const {
     return "HKY[" + Alphabet().name + "]";
   }
 
   string HKY::parameter_name(int i) const {
     assert(i==0);
-    return "kappa";
+    return "HKY::kappa";
   }
 
   void HKY::fiddle(const valarray<bool>& fixed) {
@@ -270,9 +302,9 @@ namespace substitution {
 
   string YangCodonModel::parameter_name(int i) const {
     if (i==0)
-      return "kappa";
+      return "Yang::kappa";
     else if (i==1)
-      return "omega";
+      return "Yang::omega";
     else
       throw myexception()<<"YangCodonModel::parameter_name(int): can't find parameter "<<i;
   }
@@ -421,13 +453,13 @@ namespace substitution {
 
 
   string SingleRateModel::name() const {
-    return sub_model->name();
+    return SubModel().name();
   }
 
   /*--------------- Distribution-based Model----------------*/
 
   string DistributionRateModel::name() const {
-    return string("Distribution(") + convertToString(rates_.size()) + ")(" + sub_model->name() + ")";
+    return string("Distribution(") + convertToString(rates_.size()) + ")(" + SubModel().name() + ")";
   }
 
   double DistributionRateModel::super_prior() const {
@@ -437,7 +469,7 @@ namespace substitution {
   void DistributionRateModel::super_fiddle(const valarray<bool>& fixed) {
     D->fiddle(fixed);
     for(int i=0;i<D->parameters().size();i++)
-      parameters_[sub_model->parameters().size() + i] = D->parameters()[i];
+      parameters_[SubModel().parameters().size() + i] = D->parameters()[i];
     
     recalc();
   }
@@ -446,7 +478,7 @@ namespace substitution {
   void DistributionRateModel::recalc() {
     vector<double> temp(D->parameters().size());
     for(int i=0;i<D->parameters().size();i++)
-      temp[i] = parameters_[sub_model->parameters().size() + i];
+      temp[i] = parameters_[SubModel().parameters().size() + i];
     D->parameters(temp);
 
     for(int i=0;i<nrates();i++) {
@@ -466,7 +498,7 @@ namespace substitution {
 
     // Read in the parameters from the distribution
     for(int i=0;i<D->parameters().size();i++)
-      parameters_[sub_model->parameters().size() + i] = D->parameters()[i];
+      parameters_[SubModel().parameters().size() + i] = D->parameters()[i];
 
     recalc();
   }
@@ -476,14 +508,14 @@ namespace substitution {
   string GammaRateModel::super_parameter_name(int i) const {
     i -= SubModel().parameters().size();
     if (i==0)
-      return "sigma";
+      return "Gamma::sigma";
     else
       std::abort();
   }
 
 
   string GammaRateModel::name() const {
-    return sub_model->name() + " + Gamma(" + convertToString(rates_.size()) + ")";
+    return SubModel().name() + " + Gamma(" + convertToString(rates_.size()) + ")";
   }
 
   GammaRateModel::GammaRateModel(const ReversibleAdditiveModel& M,int n)
@@ -494,7 +526,7 @@ namespace substitution {
   /*--------------- LogNormal Sites Model----------------*/
 
   string LogNormalRateModel::name() const {
-    return sub_model->name() + " + LogNormal(" + convertToString(rates_.size()) + ")";
+    return SubModel().name() + " + LogNormal(" + convertToString(rates_.size()) + ")";
   }
 
   LogNormalRateModel::LogNormalRateModel(const ReversibleAdditiveModel& M,int n)
@@ -505,7 +537,7 @@ namespace substitution {
   //--------------- Invariant Sites Model----------------//
 
   string INV_Model::name() const {
-    return sub_model->name() + " + INV";
+    return SubModel().name() + " + INV";
   }
 
   INV_Model::INV_Model(const MultiRateModel& M)
@@ -514,7 +546,7 @@ namespace substitution {
     parameters_.back() = 0.01;
 
     recalc();
-  }    
+  }
 
 
   double INV_Model::super_prior() const {
@@ -570,4 +602,80 @@ namespace substitution {
     MultiRateModel::recalc();
   }
 
+  void DualModel::recalc() {
+    distribution_[0] = parameters_[0];
+    distribution_[1] = 1.0 - distribution_[0];
+
+    rates_[0] = 1.0;
+    rates_[1] = parameters_[1];
+
+    //recalculate submodels;
+    SuperModel::recalc();
+
+    //remove submodel rates
+    SubModels(0).set_rate(1);
+    SubModels(1).set_rate(1);
+
+    //set this rate to 1
+    MultiModel::recalc();
+  }
+
+  double DualModel::super_prior() const {
+    double P=0;
+
+    double p = parameters_[0];
+
+    const double frac_mode = 0.5;
+    const double N = 20;
+    const double a  = 1.0 + N * frac_mode;
+    const double b  = 1.0 + N * (1.0 - frac_mode);
+
+    if (p <= 0.0 or p >= 1.0)
+      P += log_0;
+    else 
+      P += log(gsl_ran_beta_pdf(p,a,b));
+
+    double log_r = log(parameters_[0]);
+    P += log(shift_laplace_pdf(log_r,0,0.2));
+
+    return P;
+  }
+
+  void DualModel::super_fiddle(const valarray<bool>& fixed) {
+    if (not fixed[parameters_.size()-2]) {
+
+      double& p = parameters_[0];
+
+      // fiddle Invariant fraction
+      const double sigma = 0.04;
+      p += gaussian(0,sigma);
+
+      p = wrap(p,1.0);
+    }
+    if (not fixed[parameters_.size()-1]) {
+      double & r = parameters_[1];
+      r *= exp(gaussian(0,0.3));
+    }
+    
+    recalc();
+  }
+
+  string DualModel::name() const {
+    return string("DualModel(") + SubModels(0).name() + "," + SubModels(1).name() + ")";
+  }
+
+  void DualModel::frequencies(const std::valarray<double>& f) { 
+    SubModels(0).frequencies(f);
+    SubModels(1).frequencies(f);
+    recalc();
+  }
+
+  DualModel::DualModel(const std::vector<OwnedPointer<MultiModel> >& models)
+    :MultiModel(2),SuperModelOver<MultiModel>(models,2)
+  {
+    parameters_[0] = 0.5;
+    parameters_[1] = 1.0;
+
+    frequencies(frequencies());
+  }
 }

@@ -249,14 +249,14 @@ int main(int argc,char* argv[]) {
     load_A_and_T(args,A,T);
 
     //--------- Set up the substitution model --------//
-    substitution::MultiModel *full_smodel = get_smodel(args,A);
+    OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
     
     if (not full_smodel->full_tree)
       for(int i=T.leaves();i<T.branches();i++)
 	T.branch(i).length() = 0;
 
     //-------------Choose an indel model--------------//
-    IndelModel* imodel = get_imodel(args);
+    OwnedPointer<IndelModel> imodel = get_imodel(args);
     
     //-------------Create the Parameters object--------------//
     Parameters P(*full_smodel,*imodel,T);
@@ -299,10 +299,6 @@ int main(int argc,char* argv[]) {
 
       do_sampling(args,A,P,max_iterations);
     }
-
-    // this isn't quite right in case of exceptions...
-    delete imodel;
-    delete full_smodel;
   }
   catch (std::exception& e) {
     std::cerr<<"Error: "<<e.what()<<endl;
