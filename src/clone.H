@@ -28,12 +28,9 @@ public:
   {}
 
   // Take ownership of object t
-  explicit OwnedPointer(const T* t) throw() 
-    : data(NULL) 
-  {
-    if (t)
-      data = t->clone();
-  }
+  explicit OwnedPointer(T* t) throw() 
+    : data(t) 
+  { }
 
   // Get a copy of an object
   OwnedPointer(const OwnedPointer& O) throw() 
