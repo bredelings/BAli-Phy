@@ -32,6 +32,8 @@ ublas::matrix<int> M(const alignment& A1) {
 	A2(column,i) = pos;
 	pos++;
       }
+      else
+	A2(column,i) = alphabet::gap;
     }
 
     assert(pos == A1.seqlength(i));

@@ -151,7 +151,7 @@ tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o $
 SHELL = /bin/sh
 MAKEFILES = GNUmakefile
 
-includes += /usr/local/include/stlport
+# includes += /home/bredelin/STLport/STLport/stlport
 includes += /usr/local/include
 includes += ../include/
 includes += .
