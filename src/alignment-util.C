@@ -1,5 +1,6 @@
 #include "alignment-util.H"
 #include "util.H"
+#include "setup.H"
 
 using std::vector;
 using std::valarray;
@@ -447,32 +448,40 @@ long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> 
     + asymmetric_splits_distance(M2,M1,column_indices1);
 }
 
-/// Load an alignment from command line args "--align filename"
-alignment load_A(const variables_map& args,bool keep_internal) 
-{
-  // should our AA alphabet include the stop codon?
+
+vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args) {
   OwnedPointer<AminoAcids> AA = AminoAcids();
-  if (args.count("with-stop"))
-    *AA = AminoAcidsWithStop();
-  
-  // make a list of alphabets to try
-  vector<OwnedPointer<alphabet> > alphabets;
-  if (args.count("alphabet") and args["alphabet"].as<string>() == "Codons") {
+  if (args.count("Use Stop"))
+    AA = AminoAcidsWithStop();
+
+  vector<OwnedPointer<alphabet> > alphabets; 
+  if (args.count("alphabet") && args["alphabet"].as<string>() == "Codons") {
     {
-      string dna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_dna.dat";
+      string dna_filename = args["datadir"].as<string>() + "/" + "genetic_code_dna.dat";
       alphabets.push_back(Codons(DNA(),*AA,dna_filename));
     }
-
+    
     {
-      string rna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_rna.dat";
+      string rna_filename = args["datadir"].as<string>() + "/" + "genetic_code_rna.dat";
       alphabets.push_back(Codons(RNA(),*AA,rna_filename));
     }
   }
   else {
+    alphabets.push_back(*AA);
     alphabets.push_back(DNA());
     alphabets.push_back(RNA());
-    alphabets.push_back(*AA);
   }
+
+  return alphabets;
+}
+
+
+
+
+/// Load an alignment from command line args "--align filename"
+alignment load_A(const variables_map& args,bool keep_internal) 
+{
+  vector<OwnedPointer<alphabet> > alphabets = load_alphabets(args);
   
   // ----- Try to load alignment ------ //
   if (not args.count("align")) 

@@ -1,3 +1,9 @@
+-9. Indel model...
+
+-8. Apply for dissertation year fellowship - go to the meeting :)
+
+-7. Finish integrating joint-A-T and then integrate the 'hack'?
+
 -6. Do we want to hard-code the concepts of transition kernels and priors
     into models?  Each can have parameters...
 
@@ -9,7 +15,6 @@
 
 -2. tree-dist-compare w/ sub-partitions
   a) speed up get_Ml_partitions, get_Ml_sub_partitions
-  b) only enable sub-partition checking with a switch..
   c) arrange 
   d) test Kallikrein - which one had a wandering taxon.  
   e) also test SIV?

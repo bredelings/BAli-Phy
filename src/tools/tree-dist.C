@@ -15,6 +15,21 @@ using std::endl;
 using std::cerr;
 using std::cout;
 
+Partition partition_from_names(const vector<string>& allnames, const vector<string>& inames) 
+{
+  valarray<bool> pbits(false,allnames.size());
+
+  for(int i=0; i<inames.size(); i++) {
+    if (includes(allnames,inames[i]))
+      pbits[find_index(allnames,inames[i])] = true;
+    else
+      throw myexception()<<"Can't find taxon '"<<inames[i]<<"' in taxa set.";
+  }
+
+  return Partition(allnames,pbits);
+}
+
+
 Partition::Partition(const valarray<bool>& g) 
   :group1(g),group2(not g)
 { 
@@ -194,6 +209,15 @@ bool implies(const SequenceTree& T,const std::vector<Partition>& partitions)
     if (not implies(T,partitions[p]))
       return false;
   return true;
+}
+
+int which_partition(const SequenceTree& T, const Partition& p) {
+  for(int b=0; b<T.n_branches(); b++) {
+    valarray<bool> bp = branch_partition(T,b);
+    if( implies(bp,p) )
+      return b;
+  }
+  throw myexception(string("Partition not found in tree!"));
 }
 
 int tree_sample::get_index(const string& t) const {

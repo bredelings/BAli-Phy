@@ -50,6 +50,8 @@ struct Partition {
   Partition(const std::vector<std::string>& n,const std::valarray<bool>& g,const std::valarray<bool>& mask);
 };
 
+Partition partition_from_names(const std::vector<std::string>&,const std::vector<std::string>&);
+
 /// are both partitions the same?
 bool operator==(const Partition& p1, const Partition& p2);
 
@@ -64,6 +66,8 @@ bool implies(const SequenceTree& T,const Partition& p);
 
 /// Does any branch in @T imply the partition @p?
 bool implies(const SequenceTree& T,const std::vector<Partition>&);
+
+int which_partition(const SequenceTree& T, const Partition& p);
 
 /// Output the partition P to stream o (requires 'names' to be set)
 std::ostream& operator<<(std::ostream& o, const Partition& P);

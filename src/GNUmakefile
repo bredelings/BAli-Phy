@@ -5,7 +5,8 @@ TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/tree-to-srq tools/tree-reroot tools/alignment-chop-internal \
 	tools/srq-to-plot tools/srq-analyze tools/alignment-convert \
 	tools/tree-dist-compare tools/cut-range tools/alignment-translate \
-	tools/alignment-median tools/alignment-indices tools/pickout
+	tools/alignment-median tools/alignment-indices tools/pickout \
+	tools/joint-A-T
 
 
 tools: ${TOOLS}
@@ -126,6 +127,12 @@ tools/alignment-indices: alignment.o alphabet.o sequence.o util.o tree.o \
 tools/alignment-draw: alignment.o alphabet.o sequence.o sequence-format.o util.o \
 	alignment-util.o tools/colors.o tree.o  ${LINKLIBS} 
 
+tools/joint-A-T: alignment.o alphabet.o sequence.o util.o rng.o \
+	tree.o sequencetree.o tools/optimize.o tools/findroot.o tree-util.o \
+	setup.o imodel.o probability.o sequence-format.o model.o tools/distance-methods.o \
+	alignment-random.o alignment-util.o randomtree.o tools/tree-dist.o \
+	tools/statistics.o ${LINKLIBS}
+
 tools/alignment-translate: alignment.o alignment-util.o alphabet.o sequence.o \
 	sequence-format.o util.o tree.o -lboost_program_options
 
@@ -176,7 +183,7 @@ tools/truckgraph3d: alignment.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 
 test: ${LINKLIBS}
 
-le-test/2 le-test/3 le-test/2a: le-double.C
+le-test/2 le-test/3 le-test/4 le-test/2a: le-double.C
 
 test3: model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o \
 	probability.o rng.o ${LINKLIBS} -lmudflap

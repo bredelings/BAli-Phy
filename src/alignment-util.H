@@ -85,5 +85,8 @@ alignment find_last_alignment(std::istream& ifile, const string& tag,
 alignment find_first_alignment(std::istream& ifile, const string& tag,
 			       const vector<OwnedPointer<alphabet> >& alphabets);
 
+bool match_tag(const string& line, const string& tag);
+
+vector<OwnedPointer<alphabet> > load_alphabets(const boost::program_options::variables_map& args);
 
 #endif
