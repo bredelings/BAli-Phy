@@ -142,9 +142,12 @@ SequenceTree get_mf_tree(const vector<Partition>& partitions) {
 }
 
 bool operator==(const Partition& p1, const Partition& p2) {
-  return (p1.names == p2.names) and
-    equal(p1.group1,p2.group1) and
-    equal(p1.group2,p2.group2);
+  return 
+    (p1.names == p2.names) and 
+    (
+     (equal(p1.group1,p2.group1) and equal(p1.group2,p2.group2)) or
+     (equal(p1.group1,p2.group2) and equal(p1.group2,p2.group1))
+    );
 }
 
 bool consistent(const Partition& p1, const Partition& p2) {
@@ -407,9 +410,8 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
   for(int i=0;i<sample.size();i++) {
     const SequenceTree& T = sample.topologies[ sample.which_topology[i] ].T;
 
-    int min_old = (i+1) /2;
-    if (min_old == 0) min_old = 1;
-    int min_new = (i+2) /2;
+    int min_old = 1+(int)(l*i);
+    int min_new = 1+(int(l*(i+1)));
 
     // for partition in the next tree
     for(int b=T.n_leaves();b<T.n_branches();b++) {
