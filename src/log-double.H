@@ -96,7 +96,7 @@ inline bool operator> (log_double_t x,log_double_t y) {
 
 inline bool operator>(log_double_t x,double y) {
   if (y==0.0)
-    return log(x) > log_0;
+    return log(x) > log_limit;
   else
     return x > log_double_t(y);
 }
@@ -114,7 +114,7 @@ inline bool operator==(log_double_t x,log_double_t y) {
 
 inline bool operator==(log_double_t x,double y) {
   if (y==0.0)
-    return log(x) == log_0;
+    return log(x) <= log_limit;
   else if (y==1)
     return log(x) == 0.0;
   else
@@ -138,7 +138,7 @@ inline bool operator!=(log_double_t x,log_double_t y) {
 
 inline bool operator!=(log_double_t x,double y) {
   if (y==0.0)
-    return log(x) != log_0;
+    return log(x) > log_limit;
   else if (y==1)
     return log(x) != 0.0;
   else
@@ -146,6 +146,7 @@ inline bool operator!=(log_double_t x,double y) {
 }
 
 #undef decl_double
+
 
 inline log_double_t pow(log_double_t x,double p) {
   x.log() *= p;

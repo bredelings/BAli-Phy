@@ -8,7 +8,7 @@ using std::log;
 
 const double max_float = 3.40282347e+38F;
 const double log_limit = -max_float/100;
-const double log_0 = -1.0/0.0;
+const double log_0 = -max_float;
 
 // For Pentium I (exp & log are base 2)
 // fadd = 3,1
@@ -32,9 +32,9 @@ inline double logsum_nocheck(double x, double y) {
 inline double logsum(double x, double y)
 {
   double temp = y-x;
-  if (temp > NATS)
+  if (temp > NATS or x < log_limit)
     return y;
-  else if (temp < -NATS or y==log_0)
+  else if (temp < -NATS or y < log_limit)
     return x;
   else
     return (x + log1p(exp(temp)));
@@ -43,9 +43,9 @@ inline double logsum(double x, double y)
 inline void loginc(double& x, double y)
 {
   double temp = y-x;
-  if (temp > NATS)
+  if (temp > NATS or x < log_limit)
     x=y;
-  else if (temp < -NATS or y==log_0)
+  else if (temp < -NATS or y < log_limit)
     ;
   else
     x += log1p(exp(temp));
