@@ -10,8 +10,6 @@ using std::valarray;
 
 /// A Hidden Markov Model - represented by the transition matrix and accessory functions
 
-typedef ublas::matrix<efloat_t> eMatrix;
-
 class HMM {
   /// Is each state part of the silent network?
   vector<int> silent_network_;

@@ -46,10 +46,26 @@ inline log_double_t operator+(log_double_t x,log_double_t y) {
   return z;
 }
 
+inline log_double_t operator+(double x,log_double_t y) {
+  return log_double_t(x)+y;
+}
+
+inline log_double_t operator+(log_double_t x,double y) {
+  return x+log_double_t(y);
+}
+
 inline log_double_t operator-(log_double_t x,log_double_t y) {
   log_double_t z = x;
   z -= y;
   return z;
+}
+
+inline log_double_t operator-(double x,log_double_t y) {
+  return log_double_t(x)-y;
+}
+
+inline log_double_t operator-(log_double_t x,double y) {
+  return x-log_double_t(y);
 }
 
 inline log_double_t operator*(log_double_t x,log_double_t y) {

@@ -13,17 +13,17 @@ using std::vector;
 using namespace A2;
 
 namespace indel {
-  PairHMM::PairHMM(): Matrix(5,5) {}
+  PairHMM::PairHMM(): eMatrix(5,5) {}
 
-  double PairHMM::start(int s) const {
-    double total = log_0;
+  efloat_t PairHMM::start(int s) const {
+    efloat_t total = 0;
     for(int i=0;i<n_states();i++)
-      total = logsum(total,(*this)(n_states(),i) + (*this)(i,s));
+      total += (*this)(n_states(),i)*(*this)(i,s);
     return total;
   }
 
-  vector<double> PairHMM::start_pi() const {
-    vector<double> pi(n_states()-1);
+  vector<efloat_t> PairHMM::start_pi() const {
+    vector<efloat_t> pi(n_states()-1);
     for(int i=0;i<n_states();i++)
       pi[i] = start_pi(i);
     return pi;
@@ -36,10 +36,10 @@ string i_parameter_name(int i,int n) {
   return string("pI") + convertToString(i);
 }
 
-void remove_one_state(Matrix& Q,int S) {
+void remove_one_state(eMatrix& Q,int S) {
   assert(Q.size1() == Q.size2());
 
-  double temp = logdiff(0,Q(S,S));
+  efloat_t temp = efloat_t(1) - Q(S,S);
 
   // compute transitions from i!=S -> j  [ depends on Q(S->j) ]
   for(int i=0;i<Q.size1();i++) {
@@ -47,14 +47,14 @@ void remove_one_state(Matrix& Q,int S) {
       // compute transitions from i!=S -> j!=S  [ depends on Q(i->S) and Q(S->j) ]
       for(int j=0;j<Q.size2();j++) 
 	if (j != S)
-	  Q(i,j) = logsum(Q(i,j), Q(i,S) + Q(S,j) - temp);
+	  Q(i,j) +=  Q(i,S) * Q(S,j) / temp;
     }
-    Q(i,S) = log_0;
+    Q(i,S) = 0;
   }
 
   // compute transitions from S -> j  
   for(int j=0;j<Q.size2();j++) 
-    Q(S,j) -= temp;
+    Q(S,j) /= temp;
 
 }
 
@@ -142,58 +142,58 @@ void SimpleIndelModel::fiddle() {
 indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
   using namespace states;
 
-  double delta   = exp(parameters_[0]);
-  double e       = exp(parameters_[1]);
-  double t     = exp(parameters_[2]);
+  efloat_t delta   = exp(parameters_[0]);
+  efloat_t e       = exp(parameters_[1]);
+  efloat_t t       = exp(parameters_[2]);
 
-  if (1 - 2*delta <0)
+  if (delta > 0.5)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
 
-  if (e >= 1)
+  if (e >= 1.0)
     throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<e;
     
-  assert(delta > 0 and delta <= 1);
-  assert(e > 0 and e <= 1);
+  assert(delta > 0.0 and delta <= 1.0);
+  assert(e > 0.0 and e <= 1.0);
   
   indel::PairHMM Q;
 
-  Q(S,S ) = log_0;
-  Q(S,M ) = log(1 - 2*delta);
-  Q(S,G1) = log(delta);
-  Q(S,G2) = log(delta);
-  Q(S,E ) = log_0;
+  Q(S,S ) = 0;
+  Q(S,M ) = 1.0 - 2.0*delta;
+  Q(S,G1) = delta;
+  Q(S,G2) = delta;
+  Q(S,E ) = 0;
 
-  Q(M,S)   = log(1-t);
-  Q(M,M)   = log_0;
-  Q(M,G1)  = log_0;
-  Q(M,G2)  = log_0;
-  Q(M,E)   = log(t);
+  Q(M,S)   = 1.0-t;
+  Q(M,M)   = 0;
+  Q(M,G1)  = 0;
+  Q(M,G2)  = 0;
+  Q(M,E)   = t;
 
-  Q(G1,S)  = log(1-e) + log(1-t);
-  Q(G1,M)  = log_0;
-  Q(G1,G1) = log(e) + log(1-t);
-  Q(G1,G2) = log_0;
-  Q(G1,E)  = log(t);
+  Q(G1,S)  = (1.0-e) * (1.0-t);
+  Q(G1,M)  = 0;
+  Q(G1,G1) = e * (1.0-t);;
+  Q(G1,G2) = 0;
+  Q(G1,E)  = t;
 
-  Q(G2,S)  = log(1-e) + log(1-t);
-  Q(G2,M)  = log_0;
-  Q(G2,G1) = log_0;
-  Q(G2,G2) = log(e) + log(1-t);
-  Q(G2,E)  = log(t);
+  Q(G2,S)  = (1.0-e) * (1.0-t);
+  Q(G2,M)  = 0;
+  Q(G2,G1) = 0;
+  Q(G2,G2) = e * (1.0-t);
+  Q(G2,E)  = t;
 
-  Q(E,S)   = log_0;
-  Q(E,M)   = log_0;
-  Q(E,G1)  = log_0;
-  Q(E,G2)  = log_0;
-  Q(E,E)   = 0;
+  Q(E,S)   = 0;
+  Q(E,M)   = 0;
+  Q(E,G1)  = 0;
+  Q(E,G2)  = 0;
+  Q(E,E)   = 1;
 
   remove_one_state(Q,states::S);
 
-  Q(S,S ) = log_0;
-  Q(S,M ) = 0;
-  Q(S,G1) = log_0;
-  Q(S,G2) = log_0;
-  Q(S,E ) = log_0;
+  Q(S,S ) = 0;
+  Q(S,M ) = 1;
+  Q(S,G1) = 0;
+  Q(S,G2) = 0;
+  Q(S,E ) = 0;
 
   return Q;
 }
