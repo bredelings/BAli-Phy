@@ -202,7 +202,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   if (P.T.leaves() >3)
     tree_moves.add(1,topology_move);
   
-  /*-------------- tree::lengths (length_moves) -------------*/
+  //-------------- tree::lengths (length_moves) -------------//
   MoveEach length_moves("lengths");
   MoveEach length_moves1("lengths1");
 
@@ -221,9 +221,9 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				     slide_branch_lengths_one,
 				     branches)
 		     );
-  tree_moves.add(1,length_moves);
+  tree_moves.add(4,length_moves);
 
-  /*------------- parameters (parameters_moves) --------------*/
+  //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
   parameter_moves.add(P.T.branches(),SingleMove(change_parameters,"s_parameters:parameters"));
   parameter_moves.add(1+P.T.branches()/3,SingleMove(change_gap_parameters,"g_parameters:parameters"),false);
@@ -234,7 +234,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   // full sampler
   Sampler sampler("sampler");
   sampler.add(1,alignment_moves);
-  sampler.add(1,tree_moves);
+  sampler.add(2,tree_moves);
   sampler.add(1,parameter_moves);
 
   vector<string> disable;

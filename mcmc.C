@@ -397,41 +397,36 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
 }
 
 
-void print_stats(std::ostream& o,bool full_sample,
-		 const alignment& A,const Parameters& P,
-		 const string& tag) {
+void print_stats(std::ostream& o,std::ostream& trees,const alignment& A,const Parameters& P,const string& tag) {
   
-  if (full_sample) {
-    o<<endl;
-    o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
-    o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-    o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
-    o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-    o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
-    
-    o<<"align["<<tag<<"] = "<<endl;
-    o<<standardize(A,P.T)<<endl<<endl;
-    
-    o<<"tree = "<<P.T<<endl<<endl;
-    
-    o<<"mu = "<<P.branch_mean<<endl;
+  o<<endl;
+  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
+  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
+  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
+  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
+  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
+  
+  o<<"align["<<tag<<"] = "<<endl;
+  o<<standardize(A,P.T)<<endl<<endl;
+  
+  o<<"tree = "<<P.T<<endl<<endl;
+  trees<<"tree = "<<P.T<<endl<<endl;
+  
+  o<<"mu = "<<P.branch_mean<<endl;
+  
+  
+  for(int i=0;i<P.SModel().parameters().size();i++)
+    o<<"    pS"<<i<<" = "<<P.SModel().parameters()[i];
+  o<<endl<<endl;
+  
+  for(int i=0;i<P.IModel().parameters().size();i++)
+    o<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
+  o<<endl<<endl;
+  
+  for(int i=0;i<P.SModel().nrates();i++)
+    o<<"    rate"<<i<<" = "<<P.SModel().rates()[i];
+  o<<endl<<endl;
 
-
-    for(int i=0;i<P.SModel().parameters().size();i++)
-      o<<"    pS"<<i<<" = "<<P.SModel().parameters()[i];
-    o<<endl<<endl;
-    
-    for(int i=0;i<P.IModel().parameters().size();i++)
-      o<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
-    o<<endl<<endl;
-
-    for(int i=0;i<P.SModel().nrates();i++)
-      o<<"    rate"<<i<<" = "<<P.SModel().rates()[i];
-    o<<endl<<endl;
-  }
-  else {
-    o<<"tree = "<<P.T<<endl<<endl;
-  }
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
@@ -457,7 +452,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   for(int i=0;i<T.leaves();i++)
     assert(T.seq(i) == A.seq(i).name);
   
-  /*--------- Determin some values for this chain -----------*/
+  /*--------- Determine some values for this chain -----------*/
   if (subsample <= 0)
     subsample = 2*int(log(T.leaves()))+1;
   const int start_after = 0;// 600*correlation_time;
@@ -469,8 +464,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
   double MAP_score = Pr;
 
-  string tag_full = string("sample (")+convertToString(subsample)+")";
-  string tag = string("sample ");
+  string tag = string("sample (")+convertToString(subsample)+")";
 
   /*--------- Print out info about this chain -----------*/
   cout<<"rate matrix = \n";
@@ -488,10 +482,12 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   cout<<endl;
   
   cout<<"Initial Alignment = \n";
-  print_stats(cout,true,A,P,"Initial");
+  print_stats(cout,cout,A,P,"Initial");
     
   cout<<"Initial Tree = \n";
   cout<<T<<endl<<endl;
+
+  ofstream tree_stream("trees.orig");
 
   /*---------------- Run the MCMC chain -------------------*/
 
@@ -506,9 +502,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
       cout<<"iterations = "<<iterations<<endl;
       bool full_sample = (iterations%subsample == 0);
       if (full_sample)
-	print_stats(cout,true,A,P,tag_full);
-      else
-	print_stats(cout,false,A,P,tag);
+	print_stats(cout,tree_stream,A,P,tag);
       cout<<endl<<endl;
     }
 
@@ -534,7 +528,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
     if (not MAP_printed and iterations % 50 == 0) {
       cout<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<endl;
-      print_stats(cout,true,MAP_alignment,MAP_P,"MAP");
+      print_stats(cout,cout,MAP_alignment,MAP_P,"MAP");
       MAP_printed = true;
     }
 
@@ -543,8 +537,8 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     if (iterations%50 == 0 or std::abs(Pr - new_Pr)>12) {
       print_move_stats();
 #ifndef NDEBUG
-      print_stats(cerr,true,A,P,"check (A1)");
-      print_stats(cerr,true,A2,P2,"check (A2)");
+      print_stats(cerr,cerr,A,P,"check (A1)");
+      print_stats(cerr,cerr,A2,P2,"check (A2)");
 
       A2.print_fasta(cerr);
 #endif
@@ -559,6 +553,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     Pr_likelihood = new_likelihood;
     Pr = new_Pr;
   }
+  tree_stream.close();
   cerr<<"total samples = "<<total_samples<<endl;
 }
 
