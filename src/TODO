@@ -19,6 +19,29 @@
 
 7. Stop using PHYLIP.  Dealing with truncated names is too painful!
 
+8. Why did I think that I needed to invalidate branches on sample_nodes
+   again?
+   a) well, the INDEXING from alignment to conditional likelihood changes.
+      but we recompute that anyway.
+
+   b) the representation that we have depends only on the leaves
+
+    * the problem is that ORDER of columns changes!  So, if LC(b,*) is 
+      constructed from LC(b1,*) and LC(b2,*), I need a way of
+      specifying the order of (-,+) and (+,-) columns that is
+      independant of the alignment in order for sample_nodes not to
+      affect LC(b,*).  
+
+    * we can depend on the topologies of the subtrees under b1 and b2,
+      because if one of them changed, it would be invalidated anyway,
+      and thus so would b.  So, we could sort b1,..bn in increasing
+      order by their first leaf node.  Then we would have a way of
+      ordering columns that truly depends only on the leaves.
+   
+
+   Write in paper: we need a method for caching likelihood frequencies
+   that does not depend on features of the alignment, like column
+   number that may change w/o changing the conditional likelihoods.
 
 check: how does P(data|model) depend on number of frequency bins?
 
