@@ -47,6 +47,7 @@
 12. remove print_phylip second argument, a boolean to not print ancestral taxa.
 check: how does P(data|model) depend on number of frequency bins?
 13. Fix setting of 'fixed' flags in model.H/C
+14. Fix crash when alignment contains only 1 sequence (also check 0,2,3,4 sequences)
 
 fix: gamma+frequency+INV
 
