@@ -13,6 +13,11 @@ using std::vector;
 
 namespace substitution {
 
+  double shift_lapace_pdf(double x, double mu, double sigma) {
+    double a = sigma/sqrt(2);
+    return gsl_ran_laplace(std::abs(x-mu),a);
+  }
+
   Model::Model(int s)
     :parameters_(s),
      full_tree(true)
@@ -179,7 +184,7 @@ namespace substitution {
 
   /// return the LOG of the prior
   double HKY::prior() const {
-    return log(gsl_ran_lognormal_pdf(kappa(), log(2), 1.0));
+    return log(shift_laplace_pdf(kappa(), log(2), 0.5));
   }
 
   void HKY::recalc() {
@@ -238,8 +243,8 @@ namespace substitution {
   //------------------------ Codon Models -------------------//
   double YangCodonModel::prior() const {
     double P = 0;
-    P += log(gsl_ran_lognormal_pdf(kappa(), log(2), 1.0));
-    P += log(gsl_ran_lognormal_pdf(omega(), 0, 1.0));
+    P += log(shift_laplace_pdf(kappa(), log(2), 0.5));
+    P += log(shift_laplace_pdf(omega(), 0, 0.1));
     return P;
   }
 

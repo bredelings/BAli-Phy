@@ -1,5 +1,4 @@
 TODO 
- - is log1p(x) as fast as log(1+x)?
  - fix bandwidth code...
  - make a 'src' directory...?
  - speed up branch length calculations - 
