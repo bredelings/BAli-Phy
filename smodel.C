@@ -57,8 +57,9 @@ void ReversibleModel::recalc() {
   for(int i=0;i<S.size1();i++) 
     scale += pi[i]*Q(i,i);
 
+#ifndef NDEBUG
   std::cerr<<"scale = "<<scale<<endl;
-
+#endif
   // Maybe assert that 
   //  A) the sum_j Q_ij = 0
   //  B) sum_i pi_i Q_ij = pi_j

@@ -11,6 +11,11 @@ using std::valarray;
 
 /// A Hidden Markov Model - represented by the transition matrix and accessory functions
 class HMM {
+  /// Is each state part of the silent network?
+  vector<bool> silent_network_;
+
+  /// An ordered list of states, for DP
+  vector<int> order_;
 public:
   /// The transition matrix for the HMM
   Matrix Q;
@@ -25,10 +30,13 @@ public:
   vector<int> state_emit;
 
   /// Is state S a silent state?
-  bool silent(int S) {return not state_emit[S];}
+  bool silent(int S) const {return not state_emit[S];}
 
   /// Is state S part of a loop of silent states?
-  bool silent_network(int S);
+  bool silent_network(int S) const;
+
+  /// What is the n-th state, in the correct order for DP?
+  int order(int n) const;
 
   /// Number of states, minus the end state
   int nstates() const {return state_emit.size()-1;}

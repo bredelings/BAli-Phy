@@ -1,6 +1,7 @@
 #include <valarray>
 #include <iostream>
 #include <cmath>
+#include <cassert>
 #include "sample.H"
 #include "logsum.H"
 #include "choose.H"
@@ -13,22 +14,28 @@
 // for prior_HMM_nogiven
 #include "likelihood.H"
 
-//TODO - 1. calculate the probability of 
-//  a) the path we came in with
-//  b) the path we chose
-//  c) the most probable path?
+// We are sampling from a 5-way alignment (along 5 branches)
 
-// 2. Calculate the likelihood of the reassembled matrix and the original matrix
-//     - see if the difference is the same as the difference between the path probabilities
+// Its a 4-way dynamic programming, though - so the only thing
+// that matters is the order of the 4D path. (I think...)
 
-//Assumptions:
-//  a) we assume that the internal node is the parent
-//     sequence in each of the sub-alignments
+// We want to scramble the sorting method for the branches
+// Perhaps that should be the NEXT step?  We can scramble the
+// node names, though - we use those to know which leaf node
+// is connected to which internal node.
+
+// Branches are labelled 0-3, as are the leaves.  Internal nodes
+// are 4,5; internal branch is 5.
 
 using std::abs;
 using std::valarray;
 
 using namespace A5;
+
+// IDEA: make a routine which encapsulates this sampling, and passes back
+//  the total_sum.  Then we can just call sample_two_nodes w/ each of the 3 trees.
+// We can choose between them with the total_sum (I mean, sum_all_paths).
+// Then, we can just debug one routine, basically.
 
 alignment sample_two_nodes(const alignment& old,const Parameters& P,int b) {
   const tree& T = P.T;
@@ -38,14 +45,12 @@ alignment sample_two_nodes(const alignment& old,const Parameters& P,int b) {
   //  std::cerr<<"old = "<<old<<endl;
 
   /*---------------- Setup node names ------------------*/
-  assert(node >= T.leaves());
+  assert(b >= T.leafbranches());
 
-  const vector<int> nodes    = get_nodes(old,T,b);
-  const vector<int> branches = get_nodes(old,T,b);
-  const vector<int> obranches = randomize(branches);
+  const vector<int> nodes    = A5::get_nodes(old,T,b);
   
   /*------------- Compute sequence properties --------------*/
-  vector<int> columns = getorder(old,obranches);
+  vector<int> columns = getorder(old,nodes);
 
   //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
   //  std::cerr<<"old (reordered) = "<<project(old,n0,n1,n2,n3)<<endl;
@@ -55,13 +60,13 @@ alignment sample_two_nodes(const alignment& old,const Parameters& P,int b) {
   for(int i=0;i<columns.size();i++) {
     int column = columns[i];
     for(int i=0;i<4;i++)
-      if (not old.gap(column,nodes[2+i]))
+      if (not old.gap(column,nodes[i]))
 	seqs[i].push_back(column);
 
-    if (not old.gap(column,nodes[2]) or 
-	not old.gap(column,nodes[3]) or 
-	not old.gap(column,nodes[4]) or 
-	not old.gap(column,nodes[5]))
+    if (not old.gap(column,nodes[0]) or 
+	not old.gap(column,nodes[1]) or 
+	not old.gap(column,nodes[2]) or 
+	not old.gap(column,nodes[3]))
       seqs[4].push_back(column);
   }
   const vector<int>& seqall = seqs[4];
@@ -78,13 +83,13 @@ alignment sample_two_nodes(const alignment& old,const Parameters& P,int b) {
   kcol[0] = 0;
   lcol[0] = 0;
   for(int c=1,i=0,j=0,k=0,l=0;c<seqall.size()+1;c++) {
-    if (not old.gap(seqall[c-1],nodes[2]))
+    if (not old.gap(seqall[c-1],nodes[0]))
       i++;    
-    if (not old.gap(seqall[c-1],nodes[3]))
+    if (not old.gap(seqall[c-1],nodes[1]))
       j++;    
-    if (not old.gap(seqall[c-1],nodes[4]))
+    if (not old.gap(seqall[c-1],nodes[2]))
       k++;
-    if (not old.gap(seqall[c-1],nodes[5]))
+    if (not old.gap(seqall[c-1],nodes[3]))
       l++;
     icol[c] = i;
     jcol[c] = j;
@@ -95,26 +100,24 @@ alignment sample_two_nodes(const alignment& old,const Parameters& P,int b) {
 
   /*-------------- Create alignment matrices ---------------*/
 
-  // Cache which states emit which sequences
-  vector<int> state_emit(nstates+1);
-  for(int S2=0;S2<state_emit.size();S2++) {
-    state_emit[S2] = 0;
+  // Construct the list of bits and states (hidden, or not) for each sub alignment
+  vector<int> states_list = construct_states();
 
-    if (di(S2) or dj(S2) or dk(S2) or dl(S2)) 
-      state_emit[S2] |= (1<<0);
+  // Construct the 1D state-emit matrix from the 6D one
+  vector<int> state_emit_1D = states_list;
+  for(int S2=0;S2<state_emit_1D.size();S2++) {
+    int state_emit = state_emit_1D[S2]&leafbitsmask;
+    if (state_emit)
+      state_emit_1D[S2] = 1;
+    else
+      state_emit_1D[S2] = 0;
   }
-
-  const Matrix Q = createQ(P.IModel());
+  
+  // Create the transition matrix first using just the current, fixed ordering
+  const Matrix Q = createQ(P.IModel(),states_list);
 
   // Actually create the Matrices & Chain
-  DParrayConstrained Matrices(seqall.size(),state_emit,get_start_P(pi),Q);
-
-  // Determine state order
-  vector<int> state_order(nstates);
-  for(int i=0;i<state_order.size();i++)
-    state_order[i] = i;
-  assert(0);
-  // FIXME  - this needs to be internalized into DParray!
+  DParrayConstrained Matrices(seqall.size(), state_emit_1D, get_start_P(pi,states_list), Q);
 
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices.size();c2++) {
@@ -122,26 +125,27 @@ alignment sample_two_nodes(const alignment& old,const Parameters& P,int b) {
     int j2 = jcol[c2];
     int k2 = kcol[c2];
     int l2 = lcol[c2];
-    for(int i=0;i<state_order.size();i++) {
-      int S2 = state_order[i];
+    for(int i=0;i<Matrices.nstates();i++) {
+      int S2 = Matrices.order(i);
+      int state2 = states_list[S2];
 
       //---------- Get (,j1,k1) ----------
       int i1 = i2;
-      if (di(S2)) i1--;
+      if (bitset(state2,0)) i1--;
 
       int j1 = j2;
-      if (dj(S2)) j1--;
+      if (bitset(state2,1)) j1--;
 
       int k1 = k2;
-      if (dk(S2)) k1--;
+      if (bitset(state2,2)) k1--;
 
       int l1 = l2;
-      if (dl(S2)) l1--;
+      if (bitset(state2,3)) l1--;
       
       //------ Get c1, check if valid ------
       if (c2==0 
 	  or (i1 == i2 and j1 == j2 and k1 == k2 and l1 == l2) 
-	  or (i1 == icol[c2-1] and j1 == jcol[c2-1] and k1 == kcol[c2-1] and l1 = lcol[c2-1]) )
+	  or (i1 == icol[c2-1] and j1 == jcol[c2-1] and k1 == kcol[c2-1] and l1 == lcol[c2-1]) )
 	Matrices.states(c2).push_back(S2);
       else
 	; // this state not allowed here
@@ -158,17 +162,26 @@ alignment sample_two_nodes(const alignment& old,const Parameters& P,int b) {
   vector<int> path_g = Matrices.sample_path();
   vector<int> path = Matrices.ungeneralize(path_g);
 
-  alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
+  alignment A = construct(old,path,nodes,T,seqs,states_list);
 
 #ifndef NDEBUG_DP
   //--------------- Check alignment construction ------------------//
+    std::cerr<<old<<endl;
+    std::cerr<<A<<endl;
+
+    std::cerr<<project(old,nodes)<<endl;
+    std::cerr<<project(A,nodes)<<endl;
+
 
   // get the paths through the 3way alignment, from the entire alignment
-  vector<int> path_old = get_path_3way(project(old,n0,n1,n2,n3),0,1,2,3);
-  vector<int> path_new = get_path_3way(project(A,n0,n1,n2,n3),0,1,2,3);
+  vector<int> newnodes;
+  for(int i=0;i<6;i++)
+    newnodes.push_back(i);
+  vector<int> path_old = get_path(project(old,nodes),newnodes,states_list);
+  vector<int> path_new = get_path(project(A,nodes),newnodes,states_list);
 
-  vector<int> path_old2 = get_path_3way(old,n0,n1,n2,n3);
-  vector<int> path_new2 = get_path_3way(A,n0,n1,n2,n3);
+  vector<int> path_old2 = get_path(old,nodes,states_list);
+  vector<int> path_new2 = get_path(A,nodes,states_list);
   assert(path_new == path_new2); // <- current implementation probably guarantees this
                                  //    but its not a NECESSARY effect of the routine.
 
@@ -190,18 +203,23 @@ alignment sample_two_nodes(const alignment& old,const Parameters& P,int b) {
     std::cerr<<old<<endl;
     std::cerr<<A<<endl;
 
-    std::cerr<<project(old,n0,n1,n2,n3)<<endl;
-    std::cerr<<project(A,n0,n1,n2,n3)<<endl;
+    std::cerr<<project(old,nodes)<<endl;
+    std::cerr<<project(A,nodes)<<endl;
 
     assert(0);
   }
 #endif
 
   /*---------------- Adjust for length of n0 changing --------------------*/
-  int length_old = old.seqlength(n0);
-  int length_new = A.seqlength(n0);
+  int l1_old = old.seqlength(nodes[4]);
+  int l1_new = A.seqlength(nodes[4]);
 
-  double log_ratio = 2.0*(P.IModel().lengthp(length_new)-P.IModel().lengthp(length_old));
+  int l2_old = old.seqlength(nodes[5]);
+  int l2_new = A.seqlength(nodes[5]);
+
+  double log_ratio = 2.0*(P.IModel().lengthp(l1_new)-P.IModel().lengthp(l1_old));
+  log_ratio += 2.0*(P.IModel().lengthp(l2_new)-P.IModel().lengthp(l2_old));
+
   if (myrandomf() < exp(log_ratio))
     return A;
   else

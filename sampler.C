@@ -215,6 +215,11 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				    sample_topology,
 				    internal_branches)
 		    );
+  topology_move.add(1,MoveArgSingle("two_nodes:nodes",
+				    sample_two_nodes_move,
+				    internal_branches)
+		    );
+
   if (P.T.leaves() >3)
     tree_moves.add(1,topology_move);
   

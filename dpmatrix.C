@@ -6,14 +6,14 @@
 using std::abs;
 
 // Is this state silent and in a loop of silent states?
-bool HMM::silent_network(int S) {
-  if (S==endstate())
-    return false;
+bool HMM::silent_network(int S) const {
+  assert(S <= nstates()+1);
+  return silent_network_[S];
+}
 
-  if (state_emit[S])
-    return false;
-  else
-    return true;
+int HMM::order(int i) const {
+  assert(i <= nstates()+1);
+  return order_[i];
 }
 
 vector<int> HMM::generalize(const vector<int>& path) {
@@ -79,22 +79,76 @@ double HMM::path_Q_path(const vector<int>& g_path) {
 
 
 HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
-  :Q(M),GQ(M),start_P(v2),state_emit(v1) 
+  :silent_network_(v1.size()),Q(M),GQ(M),
+   start_P(v2),state_emit(v1) 
 {
   assert(start_P.size() == nstates());
 
+  // Compute which nodes are part of the silent network
+
+  //  o First see if silent nodes are connected to silent nodes
+  for(int S1=0;S1<nstates()+1;S1++) {
+    if (state_emit[S1])
+      silent_network_[S1] = false;
+    else {
+      bool connected=false;
+      for(int S2=0;S2<nstates()+1;S2++) {
+	if (Q(S1,S2) > log_0/100 and not state_emit[S2]) {
+	  connected=true;
+	  break;
+	}
+      }
+      silent_network_[S1] = connected;
+    }
+  }
+  silent_network_[endstate()] = false;
+
+  //  o Then see if some of these silent nodes aren't actually part of the network
+  bool changed=true;
+  while(changed) {
+    changed=false;
+    for(int S1=0;S1<nstates()+1;S1++) {
+      if (not silent_network_[S1]) continue;
+
+      bool connected = false;
+      for(int S2=0;S2<nstates()+1;S2++) {
+	if (Q(S1,S2) > log_0/100 and silent_network_[S2]) {
+	  connected = true;
+	}
+      }
+      silent_network_[S1] = connected;
+      if (not connected) changed = true;
+    }
+  }
+
+  // Compute the Generalized Transition Matrix
   for(int S1=0;S1<GQ.size1();S1++) {
     if (not silent_network(S1)) continue;
     for(int S2=0;S2<GQ.size1();S2++) {
-      if (silent_network(S2)) {
+      if (silent_network(S2))
 	GQ(S1,S2) = log_0;
-	assert(S1==S2); // this isn't the generalized version...
-      }
       else {
+	// FIXME - this isn't really the right expression
 	GQ(S1,S2) += -log(1.0-exp(Q(S1,S1)));
       }
     }
   }
+
+  // Compute the state order
+  vector<int> temp_silent;
+  for(int S1=0;S1<nstates()+1;S1++) {
+    // we haven't implemented this case yet - see fixme
+    assert(not silent(S1) or silent_network(S1) or S1 == endstate());
+    if (silent(S1))
+      temp_silent.push_back(S1);
+    else
+      order_.push_back(S1);
+  }
+
+  order_.insert(order_.end(),temp_silent.begin(),temp_silent.end());
+
+  // FIXME - If there are silent states that aren't part of the silent network,
+  // then their order matters - they must be before states they lead to
 }
 
 double HMM::check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) {  

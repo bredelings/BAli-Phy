@@ -101,6 +101,14 @@ MCMC::result_t sample_nodes2_one(alignment& A, Parameters& P,int node) {
   return MCMC::result_t(); // no_result
 }
 
+MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int b) {
+  assert(P.IModel().full_tree); 
+
+  A = sample_two_nodes(A,P,b);
+
+  return MCMC::result_t(); // no_result
+}
+
 MCMC::result_t change_parameters(alignment& A,Parameters& P) {
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
