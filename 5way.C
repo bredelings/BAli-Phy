@@ -186,18 +186,41 @@ namespace A5 {
   }
 
 
+  /// Are all the bits connected?
+  bool legal(int bits) {
+    int nl = 0;
+    int nr = 0;
+    if (bitset(bits,0)) nl++;
+    if (bitset(bits,1)) nl++;
+
+    if (bitset(bits,2)) nr++;
+    if (bitset(bits,3)) nr++;
+  
+    // Look at all paths connecting leaf nodes
+    if (nl == 2 and not bitset(bits,4)) return false;
+    if (nr == 2 and not bitset(bits,5)) return false;
+    if (nl and nr and not (bitset(bits,4) and bitset(bits,5))) return false;
+
+    // Look at all paths connecting leaf and internal nodes
+    if (nl and bitset(bits,5) and not bitset(bits,4)) return false;
+    if (nr and bitset(bits,4) and not bitset(bits,5)) return false;
+
+    return true;
+  }
+
   /// Construct a list of states (this also assigns them names)
   vector<int> construct_states() {
     vector<int> states;
 
     // Consider all bit patterns except "no bits anywhere"
     for(int bits=1;bits<(1<<6);bits++)
-      for(int substates=0;substates<(1<<10);substates++)
-	if (bits_match_substates(bits,substates)) {
-	  int ss = bits_to_substates(bits);
-	  ss |= substates;
-	  states.push_back(bits | (ss<<6));
-	}
+      if (legal(bits))
+	for(int substates=0;substates<(1<<10);substates++)
+	  if (bits_match_substates(bits,substates)) {
+	    int ss = bits_to_substates(bits);
+	    ss |= substates;
+	    states.push_back(bits | (ss<<6));
+	  }
 
     
     // Now add the E state - empty, but all the subA's are present
@@ -219,7 +242,10 @@ namespace A5 {
     double sum = log_0;
 
     vector<double> start_P(states_list.size()-1,log_0);
-    start_P[668] = 0;
+    int allmatch = (bits_to_substates(63)<<6)|63;
+    allmatch = findstate(allmatch,states_list);
+
+    start_P[allmatch] = 0;
     return start_P;
 
     //FIXME - the general case is difficult - won't do it now

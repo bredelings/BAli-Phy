@@ -66,6 +66,8 @@ double choose_P(int c,double x, double y, double z) {
 }
 
 double choose_P(int s, const std::vector<double>& P) {
+  assert(s >= 0 and s < P.size());
+
   double sum = log_0;
   for(int i=0;i<P.size();i++)
     sum = logsum(sum,P[i]);

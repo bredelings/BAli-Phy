@@ -2,13 +2,14 @@
 #include "logsum.H"
 #include "choose.H"
 #include "rng.H"
+#include "inverse.H"
 
 using std::abs;
 
 // Is this state silent and in a loop of silent states?
 bool HMM::silent_network(int S) const {
   assert(S <= nstates()+1);
-  return silent_network_[S];
+  return (silent_network_[S] != -1);
 }
 
 int HMM::order(int i) const {
@@ -16,7 +17,10 @@ int HMM::order(int i) const {
   return order_[i];
 }
 
-vector<int> HMM::generalize(const vector<int>& path) {
+/// Replace a sequence of silent_network states with just
+/// the first state in the sequence, producing a path that
+/// would be emitted from the generalized HMM.
+vector<int> HMM::generalize(const vector<int>& path) const {
   vector<int> g_path = path;
   for(int i=g_path.size()-1;i>0;i--) {
     int S1 = g_path[i-1];
@@ -27,44 +31,91 @@ vector<int> HMM::generalize(const vector<int>& path) {
   return g_path;
 }
 
-// FIXME - this doesn't deal with silent networks that have more than
-//         one silent state!
-vector<int> HMM::ungeneralize(const vector<int>& g_path) {
+/// Expand generalized states (i.e. silent network states in the
+/// generalized HMM) into a sequence of silent network states, as
+/// we might observe in the normal HMM.  This is a random process,
+/// and the distribution is chosen so that sampling from the generalized
+/// HMM and then ungeneralizing is like sampling from the ungeneralized
+/// HMM. (But we can't sample from the ungeneralized HMM using DP)
+vector<int> HMM::ungeneralize(const vector<int>& g_path) const {
   vector<int> path = g_path;
+
+  // Go backwards along the path, expanding silent states
   for(int i=path.size()-1;i>0;i--) {
     int S1 = path[i];
+
     if (silent_network(S1)) {
+      int S_end = path[i+1];
+      vector<int> extra_states;
 
-      //success is leaving the silent network
-      double p_success = 1.0 - exp(Q(S1,S1));  
+      // Choose the extra states... S1->S2->.....>S_end
+      do {
+	vector<double> P(silent_network_states.size()+1);
+	for(int s2=0;s2<silent_network_states.size();s2++) {
+	  int S2 = silent_network_states[s2];
+	  P[s2] = Q(S1,S2) + GQ(S2,S_end);
+	}
+	P[silent_network_states.size()] = Q(S1,S_end);
 
-      int n = geometric(p_success);
-      path.insert(path.begin()+i,n-1,S1);
+	int next = choose(P);
+	if (next == silent_network_states.size())
+	  break;
+	else
+	  extra_states.push_back(silent_network_states[next]);
+      } while (1);
+
+      // Insert the extra states after the current position
+      path.insert(path.begin()+i+1,extra_states.begin(),extra_states.end());
     }
   }
 
   return path;
 }
 
-// FIXME - this doesn't deal with silent networks that have more than
-//         one silent state!
-double HMM::generalize_P(const vector<int>& path) {
+double HMM::generalize_P_one(vector<int>::const_iterator s1,int n) const {
   double Pr = 0;
-  for(int i=1; i<path.size(); i++) {
-    int S1 = path[i-1];
-    int S2 = path[i];
 
-    if (silent_network(S1)) {
-      if (silent_network(S2))
-	Pr += Q(S1,S2);
-      else
-	Pr += log(1.0-exp(Q(S1,S1)));
+  int S_end = *(s1 + n);
+  assert(not silent_network(S_end));
+
+  for(int i=0;i<n;i++) {
+    int S1 = *(s1 + i);
+
+    vector<double> P(silent_network_states.size()+1);
+    for(int s2=0;s2<silent_network_states.size();s2++) {
+      int S2 = silent_network_states[s2];
+      P[s2] = Q(S1,S2) + GQ(S2,S_end);
     }
+    P[silent_network_states.size()] = Q(S1,S_end);
+    int choice = silent_network_states.size();
+    if (i+1 != n)
+      choice = silent_network_[ *(s1+i+1) ];
+    Pr += choose_P(choice,P);
   }
   return Pr;
 }
 
-double HMM::path_Q_path(const vector<int>& g_path) {
+/// What is the probability that the generalized path corresponding to this
+/// path would emit this ungeneralized path?
+double HMM::generalize_P(const vector<int>& path) const {
+  double Pr = 0;
+  for(int i=0; i<path.size()-1; i++) {
+    if (silent_network(path[i])) {
+      int start = i;
+      // look along until we find a state not in the silent network (terminates at E)
+      while(silent_network(path[i]))
+	i++;
+      Pr += generalize_P_one(path.begin()+start,i-start);
+    }
+  }
+  return Pr;
+}
+//      if (silent_network(S2))
+//	Pr += Q(S1,S2);
+//      else
+//	Pr += log(1.0-exp(Q(S1,S1)));
+
+double HMM::path_Q_path(const vector<int>& g_path) const {
 
   double Pr = log_0;
   for(int S=0;S<nstates();S++)
@@ -89,7 +140,7 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
   //  o First see if silent nodes are connected to silent nodes
   for(int S1=0;S1<nstates()+1;S1++) {
     if (state_emit[S1])
-      silent_network_[S1] = false;
+      silent_network_[S1] = -1;
     else {
       bool connected=false;
       for(int S2=0;S2<nstates()+1;S2++) {
@@ -98,17 +149,17 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
 	  break;
 	}
       }
-      silent_network_[S1] = connected;
+      silent_network_[S1] = connected?1:-1;
     }
   }
-  silent_network_[endstate()] = false;
+  silent_network_[endstate()] = -1;
 
   //  o Then see if some of these silent nodes aren't actually part of the network
   bool changed=true;
   while(changed) {
     changed=false;
     for(int S1=0;S1<nstates()+1;S1++) {
-      if (not silent_network_[S1]) continue;
+      if (silent_network_[S1] == -1) continue;
 
       bool connected = false;
       for(int S2=0;S2<nstates()+1;S2++) {
@@ -116,42 +167,79 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
 	  connected = true;
 	}
       }
-      silent_network_[S1] = connected;
+      silent_network_[S1] = connected?1:-1;
       if (not connected) changed = true;
     }
   }
 
-  // Compute the Generalized Transition Matrix
-  for(int S1=0;S1<GQ.size1();S1++) {
-    if (not silent_network(S1)) continue;
-    for(int S2=0;S2<GQ.size1();S2++) {
-      if (silent_network(S2))
-	GQ(S1,S2) = log_0;
-      else {
-	// FIXME - this isn't really the right expression
-	GQ(S1,S2) += -log(1.0-exp(Q(S1,S1)));
-      }
+  // Compute the backwards mapping: silent_network_ -> silent_network_states
+  for(int S1=0;S1<nstates();S1++) {
+    if (silent_network(S1)) {
+      silent_network_states.push_back(S1);
+      silent_network_[S1] = silent_network_states.size()-1;  
     }
   }
 
+  // FIXME - If there are silent states that aren't part of the silent network,
+  // then their order matters - they must be before states they lead to.
+  // We don't deal with that in computing the state ordering yet (see below) :
+
   // Compute the state order
-  vector<int> temp_silent;
+  vector<int> temp;
   for(int S1=0;S1<nstates()+1;S1++) {
-    // we haven't implemented this case yet - see fixme
+    // we haven't implemented this case yet - see FIXME above
     assert(not silent(S1) or silent_network(S1) or S1 == endstate());
     if (silent(S1))
-      temp_silent.push_back(S1);
+      temp.push_back(S1);
     else
       order_.push_back(S1);
   }
+  order_.insert(order_.end(),temp.begin(),temp.end());
 
-  order_.insert(order_.end(),temp_silent.begin(),temp_silent.end());
 
-  // FIXME - If there are silent states that aren't part of the silent network,
-  // then their order matters - they must be before states they lead to
+  // Compute the Generalized Transition Matrix, if we've got silent_network states
+  if (silent_network_states.size()) {
+
+    // construct a mapping from node index to non-silent-node index
+    vector<int> non_silent_network;
+    for(int S=0;S<nstates()+1;S++)
+      if (not silent_network(S))
+	non_silent_network.push_back(S);
+
+    // Solve equation G = Q2 + Q1*G for G; IMQ1 = I - Q1
+    Matrix IMQ1(silent_network_states.size(),silent_network_states.size());
+    Matrix Q2(silent_network_states.size(),non_silent_network.size());
+    
+    // fill Q1
+    for(int i=0;i<silent_network_states.size();i++)
+      for(int j=0;j<silent_network_states.size();j++)
+	IMQ1(i,j) = 1.0 - exp( Q(silent_network_states[i],silent_network_states[j]) );
+    
+    // fill Q2
+    for(int i=0;i<silent_network_states.size();i++)
+      for(int a=0;a<non_silent_network.size();a++)
+	Q2(i,a) = exp ( Q(silent_network_states[i],non_silent_network[a]) );
+    
+    Matrix G = solve(IMQ1,Q2);
+    
+    // Actually modify the elements of GQ
+    for(int i=0;i<silent_network_states.size();i++) {
+      int S1 = silent_network_states[i];
+      // silent network -> not silent network
+      for(int j=0;j<non_silent_network.size();j++) {
+	int S2 = non_silent_network[j];
+	GQ(S1,S2) = G(i,j);
+      }
+      // silent network -> not silent network (not allowed)
+      for(int j=0;j<silent_network_states.size();j++) {
+	int S2 = non_silent_network[j];
+	GQ(S1,S2) = log_0;
+      }
+    }
+  }
 }
 
-double HMM::check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) {  
+double HMM::check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) const {  
 
   // Add up the full likelihoods
   double l1 = lp1 + ls1;
@@ -201,7 +289,7 @@ double HMM::check(const vector<int>& path1,const vector<int>& path2,double lp1,d
   return diff;
 }
 
-double DParray::path_P(const vector<int>& g_path) {
+double DParray::path_P(const vector<int>& g_path) const {
   const int I = size()-1;
   int i=I;
   int l=g_path.size()-1;
@@ -247,7 +335,7 @@ void DParray::forward() {
 }
 
 
-vector<int> DParray::sample_path() {
+vector<int> DParray::sample_path() const {
   vector<int> path;
   
   const int I = size()-1;
@@ -273,7 +361,7 @@ vector<int> DParray::sample_path() {
   return path;
 }
 
-double DParray::Pr_sum_all_paths() {
+double DParray::Pr_sum_all_paths() const {
   const int I = size()-1;
 
   double total = log_0;
@@ -388,7 +476,7 @@ void DPmatrix::forward(const vector<int>& path,double bandwidth) {
 }
 
 
-double DPmatrix::path_check(const vector<int>& path) {
+double DPmatrix::path_check(const vector<int>& path) const {
   double Pr=0;
   
   const int I = size1()-1;
@@ -437,7 +525,7 @@ double DPmatrix::path_check(const vector<int>& path) {
   return Pr;
 }
 
-double DPmatrix::path_P(const vector<int>& path) {
+double DPmatrix::path_P(const vector<int>& path) const {
   double P2 = path_check(path);
   std::cerr<<"P(path)2 = "<<P2<<std::endl;
 
@@ -495,7 +583,7 @@ double DPmatrix::path_P(const vector<int>& path) {
   return Pr;
 }
 
-vector<int> DPmatrix::sample_path() {
+vector<int> DPmatrix::sample_path() const {
   vector<int> path;
 
   const int I = size1()-1;
@@ -528,7 +616,7 @@ vector<int> DPmatrix::sample_path() {
   return path;
 }
 
-double DPmatrix::Pr_sum_all_paths() {
+double DPmatrix::Pr_sum_all_paths() const {
   const int I = size1()-1;
   const int J = size2()-1;
 
@@ -565,7 +653,7 @@ void DPmatrixNoEmit::forward(int x1,int y1,int x2,int y2) {
   return DPmatrix::forward(x1,y1,x2,y2);
 }
 
-double DPmatrixEmit::path_Q_subst(const vector<int>& path) {
+double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
   double P_sub=0;
   int i=0,j=0;
   for(int l=0;l<path.size();l++) {

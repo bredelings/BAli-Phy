@@ -39,13 +39,13 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  choose.C sequencetree.C branch-lengths.C arguments.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
-	  node-sample2.C imodel.C 5way.C topology-sample2.C # map.C 
+	  node-sample2.C imodel.C 5way.C topology-sample2.C inverse.o
 
-LIBS = gsl gslcblas m
+LIBS = gsl gslcblas m 
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 
 
-${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%} # libgsl.a libgslcblas.a libm.a
+${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%} /usr/local/lib/liblapack.a /usr/local/lib/libcblas.a /usr/local/lib/libatlas.a # libgsl.a libgslcblas.a libm.a
 
 
 bin/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o bin/optimize.o ${LIBS:%=-l%}
@@ -72,7 +72,7 @@ OTHERFILES +=
 
 #------------------- End
 DEVEL = ../..
-# includes += /usr/local/include/
+includes += /usr/local/include/
 includes += .
 src      += 
 include $(DEVEL)/GNUmakefile
