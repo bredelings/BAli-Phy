@@ -141,6 +141,16 @@ int argmin(const std::vector<T>& v) {
   return argmin;
 }
 
+template<class T>
+int argmax(const std::vector<T>& v) {
+  int argmax = 0;
+  for(int i=1;i<v.size();i++)
+    if (v[i] > v[argmax])
+      argmax = i;
+
+  return argmax;
+}
+
 template <typename T>
 struct sequence_order {
   const std::vector<T>& v;
