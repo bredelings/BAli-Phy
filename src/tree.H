@@ -166,11 +166,11 @@ public:
   }
 
   // n1 is an ancestor of n2, n2 is a descendant of n1
-  std::vector<int> leaf_partition_set(int b) const {
+  const std::vector<int>& leaf_partition_set(int b) const {
     return cached_partition_sets[b];
   }
 
-  std::vector<int> leaf_partition_set(int n1,int n2) const {
+  const std::vector<int>& leaf_partition_set(int n1,int n2) const {
     return leaf_partition_set(directed_branch(n1,n2));
   }
 
