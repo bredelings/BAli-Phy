@@ -159,6 +159,15 @@ void RootedSequenceTree::read(istream& file) {
   parse(total);
 }
 
+SequenceTree remove_root_branch(RootedSequenceTree RT) {
+  nodeview r1 = RT.root();
+  nodeview r2 = *(RT.root().neighbors());
+  RT.reroot(0);
+
+  r2 = RT.prune_subtree(RT.directed_branch(r2,r1));
+  RT.remove_node_from_branch(r2);
+  return SequenceTree(RT);
+}
 
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit
@@ -169,48 +178,54 @@ void RootedSequenceTree::parse(const string& line) {
     return;
   }
 
-  int depth = 0;
-  int pos=0;
-
-  //how to turn pos into a string?
-
-  vector<RootedSequenceTree> tree_stack;
+  vector< vector<RootedSequenceTree> > tree_stack(1);
 
   string word;
   for(int i=0;i<line.size();i++) {
     char c = line[i];
 
-    //------* Read the data from 'word' into the stacks ------//
-    if (c== ':') {
+    if (c == ';') break;
+
+    //------- Read the data from 'word' into the stacks ------//
+    if (c == ':') {
       if (word.length() != 0) {
-	tree_stack.push_back(RootedSequenceTree(word));
+	RootedSequenceTree RT(word);
+	int node = RT.add_node(RT.root());
+	RT.reroot(node);
+	tree_stack.back().push_back(RT);
 	word = "";
       }
     }
     else if (c== ',' or c==')') {
-      (*tree_stack.back().root().branches_out()).set_length(convertTo<double>(word));
+      (*tree_stack.back().back().root().branches_out()).set_length(convertTo<double>(word));
       word = "";
     }
 
 
     //------ Process the data given the current state ------//
     if (c == '(') {
-      depth++;
+      tree_stack.push_back(vector<RootedSequenceTree>());
       if (word.length()!=0) 
-	throw myexception(string("In tree file, found '(' in the middle of word \"") +
-			  word + string("\""));
+	throw myexception()<<"In tree file, found '(' in the middle of word \""<<word<<"\"";
     }
     else if (c== ')') {
-      assert(tree_stack.size() >= 2);
+      // We need at least 2 levels of trees
+      if (tree_stack.size() < 2)
+	throw myexception()<<"In tree file, too many end parenthesis.";
 
-      RootedSequenceTree T1 = tree_stack.back();tree_stack.pop_back();
-      RootedSequenceTree T2 = tree_stack.back();tree_stack.pop_back();
+      // We need at least 2 trees to merge
+      const vector<RootedSequenceTree>& trees = tree_stack.back();
+      if (not trees.size() == 2)
+	throw myexception()<<"We can only handle binary trees";
+      assert(trees.size() >= 2);
 
-      tree_stack.push_back(RootedSequenceTree(T1,T2));
+      // add the trees in the bottom level, and put them in the next level up
+      tree_stack[tree_stack.size()-2].push_back(trees[0] + trees[1]);
+
+      // destroy the bottom level
+      tree_stack.pop_back();
+
       //      std::cerr<<"    leaves: "<<T1.n_leaves()<<" + "<<T2.n_leaves()<<" = "<<Join.n_leaves()<<endl;
-      depth--;
-      if (depth < 0) 
-	throw myexception(string("In tree file, too many end parenthesis."));
     }
     else if (c== ' ' or c=='\n' or c == 9) 
       ;
@@ -218,13 +233,18 @@ void RootedSequenceTree::parse(const string& line) {
       word += c;
     //    std::cerr<<"char = "<<c<<"    depth = "<<depth<<"   stack size = "<<tree_stack.size()<<"    word = "<<word<<endl;
 
-    pos++;
-    if (depth <1) break;
   }
-  assert(tree_stack.size() == 1);
+  if (tree_stack.size() != 1)
+    throw myexception()<<"Attempted to read w/o enough left parenthesis";
+  if (tree_stack.back().size() != 1)
+    throw myexception()<<"Multiple trees one the same line";
 
+  (*this) = tree_stack.back()[0];
 
-  (*this) = tree_stack[0];
+  nodeview r1 = root();
+  nodeview r2 = *(root().neighbors());
+  reroot(r2);
+  r2 = prune_subtree(directed_branch(r2,r1));
 }
 
 vector<int> RootedSequenceTree::standardize() {

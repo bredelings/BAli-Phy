@@ -14,7 +14,7 @@ install: program tools
 	mv bali-phy ${TOOLS} ../bin
 
 #----------------- Definitions
-EXACTFLAGS = -pipe # --param inline-unit-growth=300 --param max-inline-insns-auto=300
+EXACTFLAGS = -pipe 
 
 LANGO := fast-math
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
@@ -32,6 +32,7 @@ else
   ifneq (${PROF},y)
     LANGO += omit-frame-pointer
   endif
+#  EXACTFLAGS += --param inline-unit-growth=300 --param max-inline-insns-auto=300
 endif
 
 ifeq (${PROF},y)

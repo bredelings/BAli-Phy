@@ -27,6 +27,9 @@ BranchNode* TreeView::copy_node(BranchNode* start) {
   BranchNode* start2 = new BranchNode(n1->branch,n1->node,n1->length);
   BranchNode* n2 = start2;
 
+  if (start->out == start)
+    start2->out == start2;
+
   do {
 
     n1 = n1->next;
@@ -46,6 +49,7 @@ BranchNode* TreeView::copy_node(BranchNode* start) {
 
 
 BranchNode* TreeView::copy_tree(BranchNode* start) {
+
   BranchNode* here1 = start;
   BranchNode* start2 = copy_node(start);
   BranchNode* here2 = start2;
@@ -351,6 +355,7 @@ void Tree::add_first_node() {
 
   BranchNode* BN = new BranchNode(0,0,-1);
   BN->prev = BN->next = BN;
+  BN->out = BN;
 
   nodes_.push_back(BN);
   branches_.push_back(BN);
@@ -366,7 +371,9 @@ nodeview Tree::add_node(int node) {
 
   // The spot to which to link the new node.
   BranchNode* n_link = NULL;
-  if (n->out) {
+  if (n->out == n)
+    n_link = n;
+  else {
     n_link = new BranchNode(-1,n->node,-1);
     n_link->prev = n; 
     n_link->next = n->next;
@@ -374,8 +381,6 @@ nodeview Tree::add_node(int node) {
     n_link->prev->next = n_link;
     n_link->next->prev = n_link;
   }
-  else
-    n_link = n;
 
   // Add a new leaf node, and an edge to node 'node'
   BranchNode* n_leaf = new BranchNode(-1,n_leaves_,-1);
@@ -751,6 +756,9 @@ void RootedTree::check_structure() const {
 nodeview RootedTree::prune_subtree(int br) {
   if (cached_partitions[br][root_->node])
     throw myexception()<<"Can't deleted a subtree containing the root node!";
+
+  if (root_ == branches_[br]) 
+    root_ = root_->next;
 
   return Tree::prune_subtree(br);
 }

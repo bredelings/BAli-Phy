@@ -35,15 +35,10 @@ SequenceTree RandomTree(const vector<string>& s,double branch_mean) {
     trees[i2] = (T1+T2);
   }
 
-  nodeview r1 = trees[0].root();
-  nodeview r2 = *(trees[0].root().neighbors());
-  trees[0].reroot(0);
+  SequenceTree ST = remove_root_branch(trees[0]);
 
-  r2 = trees[0].prune_subtree(trees[0].directed_branch(r2,r1));
-  trees[0].remove_node_from_branch(r2);
+  for(int i=0;i<ST.n_branches();i++) 
+    ST.branch(i).set_length( exponential(branch_mean) );
 
-  for(int i=0;i<trees[0].n_branches();i++) 
-    trees[0].branch(i).set_length( exponential(branch_mean) );
-
-  return SequenceTree(trees[0]);
+  return ST;
 }

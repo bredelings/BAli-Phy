@@ -38,7 +38,7 @@ inline bool is_internal_branch(const BranchNode* b) {
 
 /// FORWARD circular iterator for going over every BranchNode in a tree
 class BN_iterator {
-  BranchNode* start;
+  BranchNode const* start;
   BranchNode* here;
   unsigned circuits_;
 public:
@@ -79,7 +79,7 @@ public:
 
 
 template<class iterator_t,typename T>
-void append(const iterator_t& start,std::vector<T>& v) {
+inline void append(const iterator_t& start,std::vector<T>& v) {
   for(iterator_t i(start);i;i++)
     v.push_back(*i);
 }
@@ -90,7 +90,7 @@ template <class node_t,class view_t>
 class node_edges_iterator 
 {
 protected:
-  node_t* start;
+  node_t const* start;
   node_t* here;
   unsigned circuits_;
 
@@ -119,7 +119,7 @@ public:
   }
 
   node_edges_iterator(node_t *b):start(b),here(b) {
-    if (not here->out) here=NULL;
+    if (here->out == here) here=NULL;
   }
 };
 
@@ -132,14 +132,14 @@ class const_branchview;
 // Neighbors
 class const_neighbors_iterator:public node_edges_iterator<const BranchNode,const_nodeview> {
 public:
-  const_nodeview operator*() const;
+  inline const_nodeview operator*() const;
 
   const_neighbors_iterator(const BranchNode* b):node_edges_iterator<const BranchNode,const_nodeview>(b) {}
 };
 
 class neighbors_iterator:public node_edges_iterator<BranchNode,nodeview> {
 public:
-  nodeview operator*() const;
+  inline nodeview operator*() const;
 
   neighbors_iterator(BranchNode* b):node_edges_iterator<BranchNode,nodeview>(b) {}
 };
@@ -147,14 +147,14 @@ public:
 // in_edges
 class const_in_edges_iterator:public node_edges_iterator<const BranchNode,const_branchview> {
 public:
-  const_branchview operator*() const;
+  inline const_branchview operator*() const;
 
   const_in_edges_iterator(const BranchNode* b):node_edges_iterator<const BranchNode,const_branchview>(b) {}
 };
 
 class in_edges_iterator:public node_edges_iterator<BranchNode,branchview> {
 public:
-  branchview operator*() const;
+  inline branchview operator*() const;
 
   in_edges_iterator(BranchNode* b):node_edges_iterator<BranchNode,branchview>(b) {}
 };
@@ -162,14 +162,14 @@ public:
 // out_edges
 class const_out_edges_iterator:public node_edges_iterator<const BranchNode,const_branchview> {
 public:
-  const_branchview operator*() const;
+  inline const_branchview operator*() const;
 
   const_out_edges_iterator(const BranchNode* b):node_edges_iterator<const BranchNode,const_branchview>(b) {}
 };
 
 class out_edges_iterator:public node_edges_iterator<BranchNode,branchview> {
 public:
-  branchview operator*() const;
+  inline branchview operator*() const;
 
   out_edges_iterator(BranchNode* b):node_edges_iterator<BranchNode,branchview>(b) {}
 };

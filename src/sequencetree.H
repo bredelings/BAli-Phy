@@ -78,4 +78,6 @@ SequenceTree RandomTree(const std::vector<std::string>&,double=1.0);
 
 void delete_node(SequenceTree& T,const std::string& name);
 
+SequenceTree remove_root_branch(RootedSequenceTree RT);
+
 #endif
