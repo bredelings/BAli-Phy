@@ -12,6 +12,7 @@ namespace states {
   const int G1 = 1;
   const int G2 = 2;
   const int E  = 3;
+  const int S  = 4;
 };
 
   alignment construct(const alignment& old, const std::vector<int>& path, const std::valarray<bool>& group1, 

@@ -3,6 +3,15 @@
 using std::vector;
 using std::string;
 
+void Model::set_n_parameters(int n) {
+  parameters_.resize(n);
+
+  int s = fixed.size();
+  fixed.resize(s);
+  for(int i=s;i<fixed.size();i++)
+    fixed[i] = false;
+}
+
 void SuperModel::read() {
   // load super_parameters
   for(int i=0;i<super_parameters_.size();i++)

@@ -2,6 +2,7 @@
 #define IMODEL_H
 
 #include "mytypes.H"
+#include "model.H"
 
 /******************************* InDel Models ***********************************/
 
@@ -9,144 +10,86 @@
 
 //FIXME - add a 'name' method, and names for parameters.
 
+namespace indel {
+  class PairHMM: public Matrix {
+  public:
+    int n_states() const {return size1()-1;}
+    double start(int i) const;
+    double start_pi(int i) const {return (*this)(n_states(),i);}
+    std::vector<double> start_pi() const;
+   PairHMM();
+  };
+}
 
 /// A generic insertion/deletion model
-class IndelModel {
+class IndelModel:public Model {
 protected:
-  /// The transition matrix with G2 state removed
-  ublas::matrix<double> Q1;
-
-  /// The transition matrix with G1 state removed
-  ublas::matrix<double> Q2;
-
-  /// Transition matrix w/o the end state
-  ublas::matrix<double> P;
-
-  /// Model parameters
-  vector<double> parameters_;
-
   IndelModel(int s);
+
 public:
   /// Are we using a binary tree (instead of a star tree) for the gap prior?
   bool full_tree;
 
-  /// Change the model parameters
-  virtual void fiddle(const std::valarray<bool>&)=0;
-
-  /// Update structures from the model parameters
-  virtual void recalc();
-
-  /// Get the model parameters
-  virtual const vector<double>& parameters() const {return parameters_;}
-
-  /// Set the model parameters
-  virtual void parameters(const vector<double>& p) {parameters_=p; recalc();}
-
-  /// The prior on the current parameters
-  virtual double prior(double) const {return 0.0;}
-
   virtual IndelModel* clone() const =0;
 
-  /// The probability that we start in each state (a way of not dealing with start states)
-  vector<double> pi;
-
-  /// The transition matrix
-  ublas::matrix<double> Q;
-
   /// Probability that an alignment has a sequence with length 'i'
-  double lengthp(int i,int G=1) const;
+  virtual double lengthp(int i) const=0;
 
-  /// Probability that an alignment has a sequence with length 'i' in paths without G1
-  double length_plus_p(int i,int G=1) const;
-
-  /// The model's name
-  virtual std::string name() const =0;
+  /// Alignment distribution for a branch of time t
+  virtual indel::PairHMM get_branch_HMM(double t) const=0;
 
   IndelModel();
 
   virtual ~IndelModel();
 };
 
-class IndelModel1 : public IndelModel {
-public:
-
-  void fiddle(const std::valarray<bool>&);
-
+class SimpleIndelModel : public IndelModel {
+protected:
   void recalc();
 
-  double prior(double) const;
+  /// The transition matrix with G2 state removed
+  indel::PairHMM Q1;
 
-  IndelModel1* clone() const {return new IndelModel1(*this);}
+  /// The transition matrix with G1 state removed
+  indel::PairHMM Q2;
 
-  ////probability of going -> E
-  double tau;     
-
-  ///probability of starting a gap: M -> G1,G2
-  double delta;   
-
-  ///probability of extending a gap: G1->G1,  G2->G2
-  double epsilon; 
-
-  explicit IndelModel1(double LO,double LE);
-
-  /// The model's name
-  std::string name() const;
-
-
-  ~IndelModel1() {};
-};
-
-class UpweightedIndelModel : public IndelModel {
 public:
-  void fiddle(const std::valarray<bool>&);
+  void fiddle();
+  double prior() const;
 
-  void recalc();
+  SimpleIndelModel* clone() const {return new SimpleIndelModel(*this);}
 
-  double prior(double) const;
+  double lengthp(int i) const;
 
-  UpweightedIndelModel* clone() const {return new UpweightedIndelModel(*this);}
+  indel::PairHMM get_branch_HMM(double t) const;
 
-  ///probability of going -> E
-  double tau;     
-
-  ///probability of starting a gap: M -> G1,G2
-  double delta;   
-
-  ///probability of ending the sequence
-  double epsilon; 
-
-  /// The model's name
   std::string name() const;
 
-  explicit UpweightedIndelModel(double LO,double LE);
+  std::string parameter_name(int) const;
+
+  explicit SimpleIndelModel();
 };
 
 
-
-/// An IndelModel which assumes indels consist of only one letter
-class SingleIndelModel : public IndelModel {
-
-public:
-  void fiddle(const std::valarray<bool>&);
-
+class NewIndelModel: public IndelModel {
+protected:
   void recalc();
+public:
+  void fiddle();
+  double prior() const;
 
-  double prior(double) const;
+  NewIndelModel* clone() const {return new NewIndelModel(*this);}
 
-  SingleIndelModel* clone() const {return new SingleIndelModel(*this);}
+  double lengthp(int i) const;
 
-  ///probability of going -> E
-  double tau;
+  indel::PairHMM get_branch_HMM(double t) const;
 
-  ///probability of starting a gap: M -> G1,G2
-  double delta;
-
-  /// The model's name
   std::string name() const;
 
-  explicit SingleIndelModel(double LO);
-};
+  std::string parameter_name(int) const;
 
+  explicit NewIndelModel();
+};
 
 
 #endif

@@ -15,6 +15,8 @@ protected:
   /// Recalculate internal data based on current parameters
   virtual void recalc() =0;
 
+  void set_n_parameters(int);
+
   /// Construct an empty model w/ s parameters
   Model(int s): parameters_(s) {};
 
@@ -134,7 +136,7 @@ public:
   SuperModelOver(const std::vector< OwnedPointer<SubModel_t> >& models,int dp)
     :sub_models(models)
   {
-    super_parameters_.resize(dp);
+    set_n_parameters(dp);
 
     int total=0;
     for(int m=0;m<n_submodels();m++)

@@ -137,7 +137,7 @@ namespace A3 {
   }
 
 
-  vector<double> get_start_P(const vector<double>& pi) {
+  vector<double> get_start_P(const indel::PairHMM& Q) {
     int count = 0;
     double sum = log_0;
 
@@ -162,7 +162,7 @@ namespace A3 {
 	if (not bitset(states,12)) continue;
       }
       
-      start_P[S] = pi[s1] + pi[s2] + pi[s3];
+      start_P[S] = Q.start_pi(s1) + Q.start_pi(s2) + Q.start_pi(s3);
       count++;
       sum = logsum(sum,start_P[S]);
     }    
@@ -304,7 +304,7 @@ namespace A3 {
       return 0;
   }
 
-  inline double getQ(int S1,int S2,const IndelModel& IModel) {
+  inline double getQ(int S1,int S2,const indel::PairHMM& Q) {
     assert(0 <= S1 and S1 < nstates+1);
     assert(0 <= S2 and S2 < nstates+1);
 
@@ -325,7 +325,7 @@ namespace A3 {
       int s1 = (states1>>(2*i+4))&3;
       int s2 = (states2>>(2*i+4))&3;
       if (bitset(states2,10+i))     // this sub-alignment is present in this column
-	P += IModel.Q(s1,s2);
+	P += Q(s1,s2);
       else if (s1 != s2)            // require state info from s1 hidden in s2
 	return log_0;
     }
@@ -340,12 +340,12 @@ namespace A3 {
     return P;
   }
 
-  Matrix createQ(const IndelModel& IModel) {
+  Matrix createQ(const indel::PairHMM& P) {
     Matrix Q(nstates+1,nstates+1);
 
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
-	Q(i,j) = getQ(i,j,IModel);
+	Q(i,j) = getQ(i,j,P);
 
 
     for(int i=0;i<Q.size1();i++) {

@@ -18,13 +18,11 @@ double prior(const Parameters&);
 //-------------- Alignment Priors -----------------//
 
 // Full Model: t-gaps
-double prior_branch(const alignment&,const IndelModel&,int parent,int child);
+double prior_branch(const alignment&,const indel::PairHMM&,int parent,int child);
 double prior_HMM_nogiven(const alignment&,const Parameters&);
 double prior_HMM(const alignment&,const Parameters&);
 
 // Reduced Model: s-gaps
-double prior_branch_notree_nogiven(const alignment&,const IndelModel&,int);
-double prior_branch_notree(const alignment&,const IndelModel&,int);
 double prior_HMM_notree(const alignment&,const Parameters&);
 
 // --------------- Probability Models -----------------------//

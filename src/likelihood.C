@@ -74,32 +74,20 @@ double prior(const Parameters& P) {
   p += P.SModel().prior();
 
   // prior on the insertion/deletion model
-  p += P.IModel().prior(P.branch_mean);
+  p += P.IModel().prior(); // prior(branch_mean)?
 
   return p;
 }
 
 /** FIXME - numerically check that choice of root node doesn't matter **/
-double prior_branch(const alignment& A,const IndelModel& IModel,int parent,int child) {
+double prior_branch(const alignment& A,const indel::PairHMM& Q,int parent,int child) {
   vector<int> state = get_path(A,parent,child);
 
-  double P = log_0;
-  for(int i=0;i<4;i++)
-    P = logsum(P,IModel.pi[i] + IModel.Q(i,state[0]));
-
+  double P = Q.start(state[0]);
   for(int i=1;i<state.size();i++) 
-    P += IModel.Q(state[i-1],state[i]);
+    P += Q(state[i-1],state[i]);
   
   return P;
-}
-
-/** FIXME - numerically check that choice of root node doesn't matter **/
-double prior_branch_Given(const alignment& A,const IndelModel& IModel,int parent,int child) {
-  double Pr = prior_branch(A,IModel,parent,child);
-
-  Pr -= IModel.lengthp(A.seqlength(parent));
-
-  return Pr;
 }
 
 double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
@@ -114,7 +102,7 @@ double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
   for(int b=0;b<T.branches();b++) {
     int parent = T.branch(b).parent();
     int child  = T.branch(b).child();
-    double p = prior_branch(A, P.IModel(),parent,child);
+    double p = prior_branch(A, P.branch_HMMs[b], parent,child);
     Pr += p;
   }
   
@@ -128,54 +116,29 @@ double prior_HMM(const alignment& A,const Parameters& P) {
   check_internal_nodes_connected(A,P.T);
 #endif
 
-  int highest_node = T.get_nth(T.num_nodes()-2);
-  highest_node = T.branch_up(highest_node).parent();
-  double Pr = P.IModel().lengthp(A.seqlength(highest_node));
-
+  double Pr = 0;
   for(int b=0;b<T.branches();b++) {
     int parent = T.branch(b).parent();
     int child  = T.branch(b).child();
-    Pr += prior_branch_Given(A, P.IModel(), parent, child);
+    Pr += prior_branch(A, P.branch_HMMs[b], parent, child);
   }
   
-  return Pr;
-}
-
-double prior_branch_notree_nogiven(const alignment& A,const IndelModel& IModel,int child) {
-  const vector<double>& pi = IModel.pi;
-  const Matrix& Q = IModel.Q;
-
-  vector<int> state(A.length()+1);
-  for(int column=0;column<A.length();column++) {
-    state[column] = 0;
-    if (A.gap(column,child))
-      state[column] = 2;
-  }
-  state[A.length()] = 3;
-
-  double Pr = log_0;
-  for(int i=0;i<4;i++)
-    Pr = logsum(Pr,pi[i] + Q(i,state[0]) );
-
-  for(int i=1;i<state.size();i++) 
-    Pr += Q(state[i-1],state[i]);
-  
-  return Pr;
-}
-
-double prior_branch_notree(const alignment& A,const IndelModel& IModel,int child) {
-  double Pr = prior_branch_notree_nogiven(A,IModel,child);
-  Pr -= IModel.length_plus_p(A.length());
+  for(int i=T.n_leaves();i<T.n_nodes()-1;i++)
+    Pr -= 2.0*P.IModel().lengthp( A.seqlength(i) );
   return Pr;
 }
 
 double prior_HMM_notree(const alignment& A,const Parameters& P) {
-  const tree& T =P.T;
+  const tree& T = P.T;
 
-  double Pr = P.IModel().lengthp(A.length());
-  for(int b=0;b<T.branches();b++) 
-    Pr += prior_branch_notree(A, P.IModel(), b);
+  int node = P.T.leafbranches();
+  double Pr = P.IModel().lengthp(A.seqlength(node));
 
+  for(int b=0;b<T.n_leafbranches();b++)
+    Pr += prior_branch(A, P.branch_HMMs[b], node, b);
+  
+  if (T.n_leafbranches() > 1)
+    Pr -= P.IModel().lengthp( A.seqlength(node) )*T.n_leaves();
   return Pr;
 }
 
@@ -197,7 +160,7 @@ double Pr_tgaps_sletters(const alignment& A,const Parameters& P) {
 
 double Pr_sgaps_tletters(const alignment& A,const Parameters& P) {
   double Pr=0;
-  Pr += prior_HMM_notree(A,P);
+  Pr += prior_HMM(A,P);
   Pr += substitution::Pr(A,P); // also deals w/ frequencies
   Pr += prior(P);
   return Pr;
@@ -205,7 +168,7 @@ double Pr_sgaps_tletters(const alignment& A,const Parameters& P) {
 
 double Pr_sgaps_sletters(const alignment& A,const Parameters& P) {
   double Pr=0;
-  Pr += prior_HMM_notree(A,P);
+  Pr += prior_HMM(A,P);
   Pr += substitution::Pr_star_estimate(A,P); // also deals w/ frequencies
   Pr += prior(P);
   return Pr;

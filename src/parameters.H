@@ -23,6 +23,9 @@ class Parameters: public MatCache {
 
 public:
 
+  /// cached branch HMMs
+  vector<indel::PairHMM> branch_HMMs;
+
   /// Temperature, for heated chains: when heated we aren't normalized...
   double Temp;
 

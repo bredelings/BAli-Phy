@@ -37,7 +37,6 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   assert(T.connected(nodes[0],nodes[2]));
   assert(T.connected(nodes[0],nodes[3]));
 
-  const vector<double>& pi = P.IModel().pi;
   const valarray<double>& frequency = P.SModel().frequencies();
 
   // std::cerr<<"A = "<<A<<endl;
@@ -104,10 +103,11 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   /*-------------- Create alignment matrices ---------------*/
 
-  const Matrix Q = createQ(P.IModel());
+  int b = T.find_branch(nodes[0],nodes[1]);
+  const Matrix Q = createQ(P.branch_HMMs[b]);
 
   // Actually create the Matrices & Chain
-  DPmatrixConstrained Matrices(get_state_emit(), get_start_P(pi), Q, P.Temp,
+  DPmatrixConstrained Matrices(get_state_emit(), get_start_P(P.branch_HMMs[b]), Q, P.Temp,
 		       P.SModel().distribution(), dists1, dists23, frequency);
 
   // Determine which states are allowed to match (,c2)

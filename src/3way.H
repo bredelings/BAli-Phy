@@ -32,7 +32,7 @@ namespace A3 {
 
   vector<int> get_state_emit();
 
-  vector<double> get_start_P(const vector<double>&);
+  vector<double> get_start_P(const indel::PairHMM&);
 
   int bits_to_states(int bits);
 
@@ -51,8 +51,8 @@ namespace A3 {
   /// Does state S emit in sequence 2 or 3?
   int dc(int S);
 
-  double getQ(int S1,int S2,const IndelModel& IModel);
-  Matrix createQ(const IndelModel& IModel);
+  double getQ(int S1,int S2,const indel::PairHMM& Q);
+  Matrix createQ(const indel::PairHMM& P);
 
   alignment construct(const alignment& old, const vector<int>& path, 
 		      int n0,int n1,int n2,int n3,const tree& T,

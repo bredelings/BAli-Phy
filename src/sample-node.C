@@ -46,8 +46,6 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
 
   alignment old = A;
 
-  const vector<double>& pi = P.IModel().pi;
-
   //  std::cerr<<"old = "<<old<<endl;
 
   /*------------- Compute sequence properties --------------*/
@@ -109,10 +107,13 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
       state_emit[S2] |= (1<<0);
   }
 
-  const Matrix Q = createQ(P.IModel());
+
+  int b = T.find_branch(nodes[0],nodes[1]);
+  const Matrix Q = createQ(P.branch_HMMs[b]);
+  
 
   // Actually create the Matrices & Chain
-  DParrayConstrained Matrices(seq123.size(),state_emit,get_start_P(pi),Q, P.Temp);
+  DParrayConstrained Matrices(seq123.size(),state_emit,get_start_P(P.branch_HMMs[b]),Q, P.Temp);
 
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices.size();c2++) {

@@ -5,72 +5,72 @@
 #include <gsl/gsl_randist.h>
 #include "myexception.H"
 #include "probability.H"
+#include "util.H"
+#include "2way.H"
+#include "logsum.H"
 
 using std::vector;
+using namespace A2;
 
-// 0->0 1->G 2->3
-int recode(int i,int G) {
-  if (i >= G) i++;
-  return i;
-}
+namespace indel {
+  PairHMM::PairHMM(): Matrix(5,5) {}
 
-Matrix remove_one_state(const Matrix& M,int S) {
-  assert(M.size1() == M.size2());
-  Matrix M2(M.size1()-1,M.size2()-1);
-
-  double temp = logdiff(0,M(S,S));
-  for(int i=0;i<M2.size1();i++) {
-    int i1 = recode(i,S);
-    for(int j=0;j<M2.size2();j++) {
-      int j1 = recode(j,S);
-      M2(i,j) = logsum(M(i1,j1), M(i1,S)+M(S,j1) - temp);
-    }
+  double PairHMM::start(int s) const {
+    double total = log_0;
+    for(int i=0;i<n_states();i++)
+      total = logsum(total,(*this)(n_states(),i) + (*this)(i,s));
+    return total;
   }
-  return M2;
-}
 
-void IndelModel::recalc() {
-
-  Q1 = remove_one_state(Q,1);
-  Q2 = remove_one_state(Q,2);
-
-  for(int i=0;i<Q1.size1();i++) {
-    for(int j=0;j<Q1.size2();j++) {
-      Q1(i,j) = exp( Q1(i,j) );
-      Q2(i,j) = exp( Q2(i,j) );
-    }
+  vector<double> PairHMM::start_pi() const {
+    vector<double> pi(n_states()-1);
+    for(int i=0;i<n_states();i++)
+      pi[i] = start_pi(i);
+    return pi;
   }
+};
+
+string i_parameter_name(int i,int n) {
+  if (i>=n)
+    throw myexception()<<"substitution model: refered to parameter "<<i<<" but there are only "<<n<<" parameters.";
+  return string("pI") + convertToString(i);
 }
 
+void remove_one_state(Matrix& Q,int S) {
+  assert(Q.size1() == Q.size2());
 
-// FIXME - if we ever actually sample with a star gap model,
-//         then we need to fix this.
-double IndelModel::length_plus_p(int l, int G) const {
-  return lengthp(l,G);
+  double temp = logdiff(0,Q(S,S));
+
+  // compute transitions from i!=S -> j  [ depends on Q(S->j) ]
+  for(int i=0;i<Q.size1();i++) {
+    if (i != S) {
+      // compute transitions from i!=S -> j!=S  [ depends on Q(i->S) and Q(S->j) ]
+      for(int j=0;j<Q.size2();j++) 
+	if (j != S)
+	  Q(i,j) = logsum(Q(i,j), Q(i,S) + Q(S,j) - temp);
+    }
+    Q(i,S) = log_0;
+  }
+
+  // compute transitions from S -> j  
+  for(int j=0;j<Q.size2();j++) 
+    Q(S,j) -= temp;
+
 }
 
 // f_M(s) = [ ME  + s(MGxGE - MExGG) ] / [ 1 - s(GG + MM) + s^2(MMxGG - MGxGM) ]
 
-double IndelModel::lengthp(int l,int G) const {
+double SimpleIndelModel::lengthp(int l) const {
+  using namespace states;
 
   //--------------- Remove the 'G2' State ----------------------//
-  double MM = Q2(0,0);
-  double MG = Q2(0,1);
-  double ME = Q2(0,2);
+  double MM = Q1(M,M);
+  double MG = Q1(M,G1);
+  double ME = Q1(M,E);
 
-  double GM = Q2(1,0);
-  double GG = Q2(1,1);
-  double GE = Q2(1,2);
-
-  if (G==2) {
-    MM = Q1(0,0);
-    MG = Q1(0,1);
-    ME = Q1(0,2);
-
-    GM = Q1(1,0);
-    GG = Q1(1,1);
-    GE = Q1(1,2);
-  }
+  double GM = Q1(G1,M);
+  double GG = Q1(G1,G1);
+  double GE = Q1(G1,E);
 
   //----- Calculate roots of q(s); we assume its quadratic -----//
   double C = 1;
@@ -100,19 +100,21 @@ double IndelModel::lengthp(int l,int G) const {
 }
 
 IndelModel::IndelModel(int s)
-  : Q1(3,3),Q2(3,3),P(4,4),parameters_(s),full_tree(true),pi(4),Q(4,4)
-{ }
+  : full_tree(true)
+{ 
+  set_n_parameters(s);
+}
 
 
 IndelModel::IndelModel()
-  : Q1(3,3),Q2(3,3),P(4,4),full_tree(true),pi(4),Q(4,4)
+  : full_tree(true)
 { }
 
 
 IndelModel::~IndelModel() {}
 
 
-void IndelModel1::fiddle(const std::valarray<bool>& fixed) { 
+void SimpleIndelModel::fiddle() {
 
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
@@ -137,172 +139,84 @@ void IndelModel1::fiddle(const std::valarray<bool>& fixed) {
   recalc();
 }
 
-void IndelModel1::recalc() {
+indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
+  using namespace states;
+
   double delta   = exp(parameters_[0]);
-  double epsilon = exp(parameters_[1]);
-  double tau     = 1.0e-3;
+  double e       = exp(parameters_[1]);
+  double t     = exp(parameters_[2]);
 
-  assert(delta > 0.0);
-  
-  /* Chain w/o transitions to End state */
-  P(0,0) = log(1.0-delta-delta*(1.0-delta) );
-  P(0,1) = log(delta);
-  P(0,2) = log(delta *(1.0-delta) );
-  P(0,3) = log_0;
-
-  P(1,0) = log(1.0 - epsilon) + log(1.0 - delta);
-  P(1,1) = log(epsilon);
-  P(1,2) = log(1.0 - epsilon) + log(delta);
-  P(1,3) = log_0;
-
-  P(2,0) = log(1.0 - epsilon);
-  P(2,1) = log_0;
-  P(2,2) = log(epsilon);
-  P(2,3) = log_0;
-
-  P(3,0) = log_0;
-  P(3,1) = log_0;
-  P(3,2) = log_0;
-  P(3,3) = 0;
-
-  /* Chain with transitions to End state */
-  Q = P;
-  for(int i=0;i<3;i++) {
-    for(int j=0;j<3;j++) 
-      Q(i,j) += log(1.0 - tau);
-    Q(i,3) = log(tau);
-  }
-
-  /* Initial Distribution */
-  /* This is for the character before the first character - can't be E */
-  pi[0] = 0;
-  pi[1] = log_0;
-  pi[2] = log_0;
-  pi[3] = log_0;  // must be log_0
-
-  //  pi[0] = log(1.0-delta-delta*(1.0-delta) );
-  //  pi[1] = log(delta);
-  //  pi[2] = log(delta *(1.0-delta) );
-  //  pi[3] = log_0;  // must be log_0
-
-  IndelModel::recalc();
-}
-
-double IndelModel1::prior(double D) const {
-  double P=0;
-
-  // Calculate prior on lambda_O
-  double lambda_O = parameters_[0];
-  double pdel =  lambda_O-logdiff(0,lambda_O);
-  double rate =  log(-logdiff(0,pdel)) - log(D);
-
-  P += log( shift_laplace_pdf(rate,-5, 0.5) );
-
-  // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double lambda_E = parameters_[1];
-  double E_length = lambda_E - logdiff(0,lambda_E);
-  double E_length_mean = 5.0;
-
-  P += exp_exponential_log_pdf(E_length,E_length_mean);
-
-  return P;
-}
-
-string IndelModel1::name() const {return "Ordered [HMM]";}
-
-IndelModel1::IndelModel1(double lambda_O,double lambda_E)
-  :IndelModel(2)
-{
-  parameters_[0] = lambda_O;
-  parameters_[0] = lambda_E;
-
-  recalc();
-}
-
-void UpweightedIndelModel::fiddle(const std::valarray<bool>& fixed) { 
-
-  double& lambda_O = parameters_[0];
-  double& lambda_E = parameters_[1];
-
-  const double sigma = 0.35;
-
-  if (not fixed[0]) {
-    double pdel =  lambda_O-logdiff(0,lambda_O);
-    double rate =  log(-logdiff(0,pdel));
-
-    rate        += gaussian(0,sigma);
-    pdel        =  logdiff(0,-exp(rate));
-    lambda_O    =  pdel - logsum(0,pdel);
-  }
-  
-  if (not fixed[1]) {
-    double E_length = lambda_E - logdiff(0,lambda_E);
-    E_length += gaussian(0,sigma);
-    lambda_E = E_length - logsum(0,E_length);
-  }
-  
-  recalc();
-}
-
-void UpweightedIndelModel::recalc() {
-  double delta   = exp(parameters_[0]);
-  double epsilon = exp(parameters_[1]);
-  double tau     = 1.0e-3;
-
-  if (1.0 - 2.0*delta <0.0)
+  if (1 - 2*delta <0)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
 
-  if (epsilon >= 1.0)
-    throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<epsilon;
+  if (e >= 1)
+    throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<e;
     
   assert(delta > 0 and delta <= 1);
-  assert(epsilon > 0 and epsilon <= 1);
+  assert(e > 0 and e <= 1);
   
-  /* Chain w/o transitions to End state */
-  P(0,0) = log(1.0 - 2.0*delta);
-  P(0,1) = log(delta);
-  P(0,2) = log(delta);
-  P(0,3) = log_0;
+  indel::PairHMM Q;
 
-  P(1,0) = log(1.0 - epsilon) + log(1.0 - 2.0*delta);
-  P(1,1) = log(epsilon + (1.0-epsilon)*delta);
-  P(1,2) = log(1.0 - epsilon) + log(delta);
-  P(1,3) = log_0;
+  Q(S,S ) = log_0;
+  Q(S,M ) = log(1 - 2*delta);
+  Q(S,G1) = log(delta);
+  Q(S,G2) = log(delta);
+  Q(S,E ) = log_0;
 
-  P(2,0) = log(1.0 - epsilon) + log(1.0 - 2.0*delta);
-  P(2,1) = log(1.0 - epsilon) + log(2.0*delta/2.0);
-  P(2,2) = log(epsilon + (1.0-epsilon)*delta);
-  P(2,3) = log_0;
+  Q(M,S)   = log(1-t);
+  Q(M,M)   = log_0;
+  Q(M,G1)  = log_0;
+  Q(M,G2)  = log_0;
+  Q(M,E)   = log(t);
 
-  P(3,0) = log_0;
-  P(3,1) = log_0;
-  P(3,2) = log_0;
-  P(3,3) = 0;
+  Q(G1,S)  = log(1-e) + log(1-t);
+  Q(G1,M)  = log_0;
+  Q(G1,G1) = log(e) + log(1-t);
+  Q(G1,G2) = log_0;
+  Q(G1,E)  = log(t);
 
-  /* Chain with transitions to End state */
-  Q = P;
-  for(int i=0;i<3;i++) {
-    for(int j=0;j<3;j++) 
-      Q(i,j) += log(1.0 - tau);
-    Q(i,3) = log(tau);
-  }
+  Q(G2,S)  = log(1-e) + log(1-t);
+  Q(G2,M)  = log_0;
+  Q(G2,G1) = log_0;
+  Q(G2,G2) = log(e) + log(1-t);
+  Q(G2,E)  = log(t);
 
-  /* Initial Distribution */
-  /* This is for the character before the first character - can't be E */
-  pi[0] = 0;
-  pi[1] = log_0;
-  pi[2] = log_0;
-  pi[3] = log_0;  // must be log_0
+  Q(E,S)   = log_0;
+  Q(E,M)   = log_0;
+  Q(E,G1)  = log_0;
+  Q(E,G2)  = log_0;
+  Q(E,E)   = 0;
 
-  //  pi[0] = log(1.0-2.0*delta);
-  //  pi[1] = log(delta);
-  //  pi[2] = log(delta);
-  //  pi[3] = log_0;  // must be log_0
+  remove_one_state(Q,states::S);
 
-  IndelModel::recalc();
+  Q(S,S ) = log_0;
+  Q(S,M ) = 0;
+  Q(S,G1) = log_0;
+  Q(S,G2) = log_0;
+  Q(S,E ) = log_0;
+
+  return Q;
 }
 
-double UpweightedIndelModel::prior(double D) const {
+
+void SimpleIndelModel::recalc() {
+
+  /* Chain with transitions to End state */
+  Q1 = Q2 = get_branch_HMM(1);
+
+  remove_one_state(Q1,states::G2);
+  remove_one_state(Q2,states::G1);
+
+  for(int i=0;i<Q1.size1();i++) {
+    for(int j=0;j<Q1.size2();j++) {
+      Q1(i,j) = exp( Q1(i,j) );
+      Q2(i,j) = exp( Q2(i,j) );
+    }
+  }
+}
+
+double SimpleIndelModel::prior() const {
+  double D = 0.5;
   double P = 0;
 
   // Calculate prior on lambda_O
@@ -322,94 +236,148 @@ double UpweightedIndelModel::prior(double D) const {
   return P;
 }
 
-string UpweightedIndelModel::name() const {return "multiple indels [HMM]";}
+string SimpleIndelModel::name() const {return "simple indels [HMM]";}
 
-UpweightedIndelModel::UpweightedIndelModel(double lambda_O,double lambda_E)
-  :IndelModel(2)
+string SimpleIndelModel::parameter_name(int i) const {
+  if (i==0)
+    return "SIMPLE::delta";
+  else if (i==1)
+    return "SIMPLE::epsilon";
+  else if (i==2)
+    return "SIMPLE::tau";
+  else
+    return i_parameter_name(i,3);
+}
+
+SimpleIndelModel::SimpleIndelModel()
+  :IndelModel(3)
 {
-  parameters_[0] = lambda_O;
-  parameters_[1] = lambda_E;
+  parameters_[0] = -5;
+  parameters_[1] = -0.5;
+  parameters_[2] = log(.001);
 
   recalc();
 }
 
-void SingleIndelModel::fiddle(const std::valarray<bool>& fixed) { 
-  double& lambda_O = parameters_[0];
+void NewIndelModel::recalc() {
+}
+
+void NewIndelModel::fiddle() {
+  double& rate = parameters_[0];
+  double& lambda_E = parameters_[1];
 
   const double sigma = 0.35;
 
   if (not fixed[0]) {
-    double pdel =  lambda_O-logdiff(0,lambda_O);
-    double rate =  log(-logdiff(0,pdel));
-
     rate        += gaussian(0,sigma);
-    pdel        =  logdiff(0,-exp(rate));
-    lambda_O    =  pdel - logsum(0,pdel);
+    if (rate > 0) 
+      rate = -rate;
+  }
+  
+  if (not fixed[1]) {
+    double E_length = lambda_E - logdiff(0,lambda_E);
+    E_length += gaussian(0,sigma);
+    lambda_E = E_length - logsum(0,E_length);
   }
   
   recalc();
 }
 
-double SingleIndelModel::prior(double D) const {
+double NewIndelModel::prior() const {
+  double P = 0;
+
   // Calculate prior on lambda_O
-  double lambda_O = parameters_[0];
-  double pdel =  lambda_O-logdiff(0,lambda_O);
-  double rate =  log(-logdiff(0,pdel)) - log(D);
+  double rate = parameters_[0];
 
-  return log( shift_laplace_pdf(rate,-5, 0.5) );
+  P += log( shift_laplace_pdf(rate,-5, 0.5) );
+
+  // Calculate prior on lambda_E - shouldn't depend on lambda_O
+  double lambda_E = parameters_[1];
+  double E_length = lambda_E - logdiff(0,lambda_E);
+  double E_length_mean = 5.0;
+
+  P += exp_exponential_log_pdf(E_length,E_length_mean);
+
+  return P;
 }
 
-void SingleIndelModel::recalc() {
-  double delta = exp(parameters_[0]);
-  double tau   = 1.0e-3;
+indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {
+  using namespace states;
 
+  double rate    = exp(parameters_[0]);
+  double e = exp(parameters_[1]);
+
+  // (1-e) * delta / (1-delta) = P(indel)
+  double P_indel = 1.0 - exp(-rate*t);
+  double A = P_indel/(1.0-e);
+  double delta = A/(1+A);
+
+  if (1 - 2*delta <0)
+    throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
+
+  if (e >= 1)
+    throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<e;
+    
   assert(delta > 0 and delta <= 1);
+  assert(e > 0 and e <= 1);
+  
+  indel::PairHMM Q;
 
-  /* Chain w/o transitions to End state */
-  P(0,0) = log(1.0 - 2.0*delta);
-  P(0,1) = log(delta);
-  P(0,2) = log(delta);
-  P(0,3) = log_0;
+  Q(S ,M ) = log_0;
+  Q(S ,M ) = log(1 - 2*delta);
+  Q(S ,G1) = log(delta);
+  Q(S ,G2) = log(delta);
+  Q(S ,E)  = 0;
 
-  P(1,0) = log(1.0 - 2.0*delta);
-  P(1,1) = log(delta);
-  P(1,2) = log(delta);
-  P(1,3) = log_0;
+  Q(M ,S ) = log(1-e);
+  Q(M ,M ) = log(e);
+  Q(M ,G1) = log_0;
+  Q(M ,G2) = log_0;
+  Q(M ,E)  = log_0;
 
-  P(2,0) = log(1.0 - 2.0*delta);
-  P(2,1) = log(delta);
-  P(2,2) = log(delta);
-  P(2,3) = log_0;
+  Q(G1,S ) = log(1-e);
+  Q(G1,M ) = log_0;
+  Q(G1,G1) = log(e);
+  Q(G1,G2) = log_0;
+  Q(G1,E ) = log_0;
 
-  P(3,0) = log_0;
-  P(3,1) = log_0;
-  P(3,2) = log_0;
-  P(3,3) = 0;
+  Q(G1,S ) = log(1-e);
+  Q(G2,M ) = log_0;
+  Q(G2,G1) = log_0;
+  Q(G2,G2) = log(e);
+  Q(G2,E ) = log_0;
 
-  /* Chain with transitions to End state */
-  Q = P;
-  for(int i=0;i<3;i++) {
-    for(int j=0;j<3;j++) 
-      Q(i,j) += log(1.0 - tau);
-    Q(i,3) = log(tau);
-  }
+  Q(E, S ) = log_0;
+  Q(E ,M ) = log_0;
+  Q(E ,G1) = log_0;
+  Q(E ,G2) = log_0;
+  Q(E ,E ) = 0;
 
-  /* Initial Distribution */
-  /* This is for the character before the first character - can't be E */
-  pi[0] = 0;
-  pi[1] = log_0;
-  pi[2] = log_0;
-  pi[3] = log_0;  // must be log_0
+  remove_one_state(Q,S);
 
-  IndelModel::recalc();
+  return Q;
 }
 
-string SingleIndelModel::name() const {return "unit indels [HMM]";}
+string NewIndelModel::name() const {return "new indels [HMM]";}
 
-SingleIndelModel::SingleIndelModel(double LO)
-  :IndelModel(1)
+string NewIndelModel::parameter_name(int i) const {
+  if (i==0)
+    return "NEW::lambda";
+  else if (i==1)
+    return "NEW::epsilon";
+  else
+    return i_parameter_name(i,2);
+}
+
+double NewIndelModel::lengthp(int l) const {
+  return 1;
+}
+
+NewIndelModel::NewIndelModel()
+  :IndelModel(2)
 {
-  parameters_[0] = LO;
+  parameters_[0] = -5;
+  parameters_[1] = -0.5;
+
   recalc();
 }
-

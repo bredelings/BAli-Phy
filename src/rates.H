@@ -14,7 +14,7 @@ namespace substitution {
   protected:
     /// Construct a RateDistribution with np parameters
     RateDistribution(int np) {
-      parameters_.resize(np);
+      set_n_parameters(np);
     };
 
   public:

@@ -662,7 +662,9 @@ double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
     else
       sub = emit__(i,j);
 
+
     P_sub += sub;
+    std::cerr<<l<<"    p = "<<sub<<"    total = "<<P_sub<<std::endl;
   }
   assert(i == size1()-1 and j == size2()-1);
   return P_sub;

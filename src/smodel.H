@@ -30,7 +30,7 @@ namespace substitution {
 
     /// Construct an empty model
     Model(int s):full_tree(true) {
-      parameters_.resize(s);
+      set_n_parameters(s);
     }
 
   public:

@@ -43,8 +43,6 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   const tree& T = P.T;
   alignment old = A;
 
-  const vector<double>& pi = P.IModel().pi;
-
   //  std::cerr<<"old = "<<old<<endl;
 
   /*------------- Compute sequence properties --------------*/
@@ -109,10 +107,15 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   }
   
   // Create the transition matrix first using just the current, fixed ordering
-  const Matrix Q = createQ(P.IModel(),A5::states_list);
+  int b = T.find_branch(nodes[0],nodes[4]);
+  const Matrix Q = createQ(P.branch_HMMs[b],A5::states_list);
 
   // Actually create the Matrices & Chain
-  DParrayConstrained Matrices(seqall.size(), state_emit_1D, get_start_P(pi,A5::states_list), Q, P.Temp);
+  DParrayConstrained Matrices(seqall.size(), 
+			      state_emit_1D, 
+			      get_start_P(P.branch_HMMs[b],A5::states_list), 
+			      Q, 
+			      P.Temp);
 
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices.size();c2++) {

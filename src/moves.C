@@ -157,7 +157,7 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
   result[0] = 1.0;
 
   Parameters P2 = P;
-  P2.IModel().fiddle(P.i_fixed);
+  P2.IModel().fiddle();
 
   if (P.accept_MH(A,P,A,P2)) {
     P = P2;

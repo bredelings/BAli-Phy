@@ -205,22 +205,6 @@ namespace substitution {
     return p;
   }
 
-  double Pr_INV(const vector<int>& residues, const ReversibleModel& SModel) {
-    int letter = alphabet::gap;
-
-    for(int i=0;i<residues.size();i++) {
-      if (alphabet::letter(residues[i]))
-	if (letter == alphabet::gap)
-	  letter=residues[i];
-	else if (letter != residues[i])
-	  return 0.0;
-      ;
-    }
-    if (letter == alphabet::gap)
-      return 1.0;
-    else
-      return SModel.frequencies()[letter];
-  }
 
   double Pr(const alignment& A, const tree& T, const MultiModel& MModel, const MatCache& MC,int column) {
     
@@ -249,8 +233,11 @@ namespace substitution {
     double p = 0.0;
 
     // Do each node before its parent
-    for(int column=0;column<A.length();column++) 
-      p += Pr(A,T,MModel,SM,column);
+    for(int column=0;column<A.length();column++) {
+      double P = Pr(A,T,MModel,SM,column);
+      p += P;
+      std::cerr<<column<<"  ln P = "<<P<<"     ln total = "<<p<<std::endl;
+    }
 
     //    std::cerr<<" substitution: P="<<P<<std::endl;
     return p;

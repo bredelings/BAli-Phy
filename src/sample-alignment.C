@@ -53,8 +53,6 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   const tree& T = P.T;
 
-  const vector<double>& pi = P.IModel().pi;
-
   const substitution::MultiModel& MModel = P.SModel();
   const valarray<double>& frequency = MModel.frequencies();
 
@@ -89,10 +87,7 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   state_emit[2] |= (1<<0);
   state_emit[3] |= 0;
 
-  vector<double> start_P = pi;
-  start_P.erase(start_P.begin()+3);
-
-  DPmatrixSimple Matrices(state_emit, start_P, P.IModel().Q, P.Temp,
+  DPmatrixSimple Matrices(state_emit, P.branch_HMMs[b].start_pi(),P.branch_HMMs[b], P.Temp,
 			  P.SModel().distribution(), dists1, dists2, frequency);
 
   /*------------------ Compute the DP matrix ---------------------*/
@@ -115,6 +110,11 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   path.push_back(3);
   assert(path_new == path);
+  vector<int> nodes;
+  nodes.push_back(node1);
+  nodes.push_back(node2);
+  check_match_P(old,P,other_subst(old,P,nodes),other_prior(old,P,nodes),path_old,Matrices);
+  check_match_P(A  ,P,other_subst(A  ,P,nodes),other_prior(A,  P,nodes),path_new,Matrices);
 
   double ls1 = P.likelihood(old,P);
   double ls2 = P.likelihood(A  ,P);
@@ -132,14 +132,6 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<Matrices.Pr_sum_all_paths()<<endl;
 
-
-  // Calculate the probability of (L1,L2)
-  if (P.Temp == 1.0) {
-    DPmatrixNoEmit Matrices2(seq1.size(), seq2.size(), state_emit, start_P,P.IModel().Q, P.Temp);
-    Matrices2.forward_square(0,0,seq1.size(),seq2.size());
-    double length2_p = Matrices2.Pr_sum_all_paths();
-    std::cerr<<"P(l1,l2|Lambda) = "<<length2_p<<std::endl;
-  }
 
 #endif
   /*--------------------------------------------------------------*/

@@ -14,7 +14,7 @@ double Parameters::basic_prior(const alignment& A,const Parameters& P) const {
   if (IModel_->full_tree)
     return prior3(A,P);
   else
-    return prior_HMM_notree(A,P);
+    return prior3(A,P);
 }
 
 double Parameters::weight(const alignment& A,const Parameters& P) const {
@@ -57,12 +57,15 @@ void Parameters::fiddle() {
 void Parameters::recalc() {
   SModel_->set_rate(1);
   MatCache::recalc(T,*SModel_);
+  for(int b=0;b<branch_HMMs.size();b++)
+    branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
 }
 
 Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,const SequenceTree& t)
   :MatCache(t,SM),
    IModel_(IM.clone()),
    SModel_(SM.clone()),
+   branch_HMMs(t.n_branches()),
    Temp(1.0),
    i_fixed(false,IModel_->parameters().size()),
    s_fixed(false,SModel_->parameters().size()),

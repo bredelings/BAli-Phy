@@ -247,22 +247,15 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
 
 //FIXME - need to give indel models a name!
 OwnedPointer<IndelModel> get_imodel(Arguments& args) {
-  //------------ Specify Gap Penalties ----------//
-  double lambda_O = args.loadvalue("lambda_O",-5);
-  
-  double lambda_E = args.loadvalue("lambda_E",lambda_O/10.0);
-  
   //-------------Choose an indel model--------------//
   OwnedPointer<IndelModel> imodel;
 
-  if (not args.set("imodel")) args["imodel"] = "upweighted";
+  if (not args.set("imodel")) args["imodel"] = "simple";
   
-  if (args["imodel"] == "ordered")
-    imodel = IndelModel1(lambda_O,lambda_E);
-  else if (args["imodel"] == "single_indels")
-    imodel = SingleIndelModel(lambda_O);
-  else if (args["imodel"] == "upweighted")
-    imodel = UpweightedIndelModel(lambda_O,lambda_E);
+  if (args["imodel"] == "simple")
+    imodel = SimpleIndelModel();
+  else if (args["imodel"] == "new")
+    imodel = NewIndelModel();
   else
     throw myexception()<<"Unrecognized indel model '"<<args["imodel"]<<"'";
   
