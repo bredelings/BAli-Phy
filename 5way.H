@@ -1,19 +1,17 @@
-#ifndef TWAY_H
-#define TWAY_H
+#ifndef FIVEWAY_H
+#define FIVEWAY_H
 
 #include "mytypes.H"
 #include "alignment.H"
 #include "parameters.H"
+#include "2way.H"
 
-namespace states {
-  const int M  = 0;
-  const int G1 = 1;
-  const int G2 = 2;
-  const int E  = 3;
-};
+
 
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
 namespace A5 {
+
+  using A2::states;
 
   vector<int> get_nodes(const tree& T,int b);
   vector<int> get_nodes_random(const tree& T,int b);

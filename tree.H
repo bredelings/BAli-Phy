@@ -192,6 +192,8 @@ public:
 
   int get_nth(int i) const {return order[i]->name;}
 
+  bool connected(int node1,int node2) const;
+
   int leaves() const {return n_leaves;}
   int branches() const {return branches_.size()-1;}
   int leafbranches() const {return (n_leaves==2)?1:n_leaves;}
@@ -237,6 +239,26 @@ inline tree operator+(const tree& t1,const tree& t2) {
 
   return t3;
 }
+
+/// Are nodes node1 and node2 connected? (Unrooted topology)
+inline bool tree::connected(int node1,int node2) const {
+  assert(0 <= node1 and node1 < names.size()-1);
+  assert(0 <= node2 and node2 < names.size()-1);
+
+  node* n1 = names[node1];
+  node* n2 = names[node2];
+
+  if (n1->parent == n2)
+    return true;
+  if (n2->parent == n1)
+    return true;
+    
+  if (n1->parent == root and n2->parent == root)
+    return true;
+
+  return false;
+}
+
 
 
 /****************** class TreeFunc *******************/

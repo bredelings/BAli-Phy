@@ -1,7 +1,9 @@
 #include <cmath>
+#include <cassert>
 #include "statistics.H"
 
 using std::valarray;
+using std::vector;
 
 //FIXME - add 'hat'?
 namespace statistics {
@@ -28,7 +30,7 @@ namespace statistics {
   }
 
   double log_odds(const valarray<bool>& v) {
-    log(odds(v));
+    return log(odds(v));
   }
 
   double Var(const valarray<double>& v) {
@@ -37,5 +39,46 @@ namespace statistics {
     return m2 - m1*m1;
   }
 
+
+  vector<double> confidence_interval(const valarray<double>& values,double P) {
+    assert(values.size() > 4);
+
+    vector<double> values2(values.size());
+    for(int i=0;i<values.size();i++)
+      values2[i] = values[i];
+    std::sort(values2.begin(),values2.end());
+    
+    int skip = 1+(int)(values.size()*(1.0-P)/2);
+    
+    vector<double> interval(2);
+    interval[0] = values2[skip];
+    interval[1] = values2[values.size()-1-skip];
+    
+    return interval;
+  }
+
+  double lower_confidence_bound(const valarray<double>& values,double P) {
+    assert(values.size() > 4);
+
+    vector<double> values2(values.size());
+    for(int i=0;i<values.size();i++)
+      values2[i] = values[i];
+    std::sort(values2.begin(),values2.end());
+    
+    int skip = 1+(int)(values.size()*(1.0-P));
+    return values2[skip];
+  }
+  
+  double upper_confidence_bound(const valarray<double>& values,double P) {
+    assert(values.size() > 4);
+
+    vector<double> values2(values.size());
+    for(int i=0;i<values.size();i++)
+      values2[i] = values[i];
+    std::sort(values2.begin(),values2.end());
+    
+    int skip = 1+(int)(values.size()*(1.0-P));
+    return values2[values2.size()-1-skip];
+  }
 }
 

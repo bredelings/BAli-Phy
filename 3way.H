@@ -1,19 +1,16 @@
-#ifndef TWAY_H
-#define TWAY_H
+#ifndef THREEWAY_H
+#define THREEWAY_H
 
 #include "mytypes.H"
 #include "alignment.H"
 #include "parameters.H"
+#include "2way.H"
 
-namespace states {
-  const int M  = 0;
-  const int G1 = 1;
-  const int G2 = 2;
-  const int E  = 3;
-};
 
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
 namespace A3 {
+
+  using A2::states;
 
 // bits 3,2,1,0     = node present mask
 // bits 98,76,54    = sub-alignment state

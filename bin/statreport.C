@@ -11,7 +11,7 @@ using std::vector;
 using std::valarray;
 
 int main(int argc,char* argv[]) { 
-  assert(argc == 1);
+  assert(argc == 2);
   std::string label = argv[1];
 
   std::cout.precision(3);
@@ -33,4 +33,11 @@ int main(int argc,char* argv[]) {
   // Print out reports on the statistics
   std::cout<<" E "<<label<<" = "<<statistics::average(values2);
   std::cout<<" [+- "<<sqrt(statistics::Var(values2))<<"]";
+
+
+  double P = 0.95;
+
+  vector<double> interval = statistics::confidence_interval(values2,P);
+
+  std::cout<<"  ("<<interval[0]<<","<<interval[1]<<")";
 }

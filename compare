@@ -1,0 +1,48 @@
+align=5S-rRNA/5d.fasta
+
+gcc-3.3.3 -ffast-math -O1 -march=pentium3
+16.4	 on a P4,10 iterations
+
+gcc-3.4 -ffast-math -O1 -march=pentium3
+21.7     on a P4,10 iterations
+
+gcc-3.3.3 -ffast-math -O1 -march=pentium3 -NDEBUG -NDEBUG-DP
+6.5      on a P4,10 iterations
+33.1	 on a P4,50 iterations
+
+
+gcc-3.4 -ffast-math -O1 -march=pentium3 -NDEBUG -NDEBUG-DP
+7.56     on a P4,10 iterations
+39.6     on a P4,50 iterations
+
+
+At O1, w/ NDEBUG, we have a 14% slowdown
+At O1, w/o NDEBUG, we have a 25% slowdown
+-----------------------------------------------------
+gcc-3.3.3 -ffast-math -O2 -march=pentium3 -NDEBUG -NDEBUG-DP
+6.1	on a P4, 10 iterations
+31.0	on a P4, 50 iterations
+
+
+gcc-3.4 -ffast-math -O2 -march=pentium3 -NDEBUG -NDEBUG-DP
+6.7	on a P4, 10 iterations
+33.5	on a P4, 50 iterations
+
+-----------------------------------------------------
+gcc-3.3.3 -ffast-math -O3 -march=pentium3 -NDEBUG -NDEBUG-DP
+6.1	on a P4, 10 iterations
+31.1	on a P4, 50 iterations
+
+
+gcc-3.4 -ffast-math -O3 -march=pentium4 -NDEBUG -NDEBUG-DP
+6.7	on a P4, 10 iterations
+33.7	on a P4, 50 iterations
+
+-----------------------------------------------------
+gcc-3.3 ful
+6.0	on a P4, 10 iterations
+30.3	on a P4, 50 iterations
+
+gcc-3.4 full
+6.5	on a P4, 10 iterations
+32.9	on a P4, 50 iterations

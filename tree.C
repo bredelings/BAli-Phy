@@ -431,8 +431,10 @@ valarray<bool> tree::partition(int node1,int node2) const {
   if ((n1==n2->parent) or
       (not n1->parent->parent and not n2->parent->parent))
     mask = ancestors[node2];
-  else 
+  else if (n2 == n1->parent)
     mask = !ancestors[node1];
+  else // the two nodes are connected!
+    std::abort();
     
   return mask;
 }

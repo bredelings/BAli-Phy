@@ -11,49 +11,6 @@
 
 using namespace std;
 
-
-
-
-
-vector<double> confidence_interval(const valarray<double>& values) {
-{
-
-  vector<double> values2(values.size());
-  for(int i=0;i<values.size();i++)
-    values2[i] = values[i];
-  std::sort(values2.begin(),values2.end());
-
-  int skip = (int)(values.size()*(1.0-P)/2);
-
-  vector<double> interval(2);
-  interval[0] = values2[skip];
-  interval[1] = values2[values.size()-1-skip];
-
-  return interval;
-}
-
-vector<double> lower_confidence_bound(const valarray<double>& values) {
-{
-  vector<double> values2(values.size());
-  for(int i=0;i<values.size();i++)
-    values2[i] = values[i];
-  std::sort(values2.begin(),values2.end());
-
-  int skip = (int)(values.size()*(1.0-P));
-  return values2[skip];
-}
-
-vector<double> upper_confidence_bound(const valarray<double>& values) {
-{
-  vector<double> values2(values.size());
-  for(int i=0;i<values.size();i++)
-    values2[i] = values[i];
-  std::sort(values2.begin(),values2.end());
-
-  int skip = (int)(values.size()*(1.0-P));
-  return values2[values2.size()-1-skip];
-}
-
 vector<double> confidence_interval(const valarray<bool>& sample,
 				   double (*statistic)(const valarray<bool>&),
 				   double P,
@@ -62,7 +19,7 @@ vector<double> confidence_interval(const valarray<bool>& sample,
 {
   valarray<double> values = bootstrap_apply<bool,double>(sample,statistic,n,blocksize);
 
-  return confidence_interval(values);
+  return statistics::confidence_interval(values,P);
 }
 
 double lower_confidence_bound(const valarray<bool>& sample,
@@ -71,16 +28,10 @@ double lower_confidence_bound(const valarray<bool>& sample,
 			      int n=10000,
 			      int blocksize=100) 
 {
+
   valarray<double> values = bootstrap_apply<bool,double>(sample,statistic,n,blocksize);
 
-  vector<double> values2(values.size());
-  for(int i=0;i<values.size();i++)
-    values2[i] = values[i];
-  std::sort(values2.begin(),values2.end());
-
-  int skip = (int)(values.size()*(1.0-P));
-
-  return values2[skip];
+  return statistics::lower_confidence_bound(values,P);
 }
 
 int main(int argc,char* argv[]) { 

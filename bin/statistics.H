@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <valarray>
+#include <vector>
 
 namespace statistics {
 
@@ -29,5 +30,8 @@ namespace statistics {
 
   double log_odds(const std::valarray<bool>& v);
 
+  std::vector<double> confidence_interval(const std::valarray<double>& values, double P);
+  double lower_confidence_bound(const std::valarray<double>& values, double P);
+  double upper_confidence_bound(const std::valarray<double>& values, double P);
 }
 #endif

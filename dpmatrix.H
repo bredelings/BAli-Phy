@@ -20,6 +20,7 @@ class HMM {
   vector<int> order_;
 
   double HMM::generalize_P_one(vector<int>::const_iterator,int) const;
+
 public:
   /// The transition matrix for the HMM
   Matrix Q;
@@ -119,6 +120,7 @@ public:
 
 /// 1D Dynamic Programming Matrix - with constraints on which states are allowed at each position
 class DParrayConstrained: public DParray {
+  int order_of_computation() const;
   /// The list of allowed states for each position
   vector< vector<int> > allowed_states;
 public:
@@ -132,6 +134,8 @@ public:
 
   /// Compute the forward probabilities for one cell
   void forward(int);
+
+  void prune();
 
   /// Construct an 1D DP matrix from a length, and an HMM
   DParrayConstrained(int,const vector<int>&,const vector<double>&,const Matrix&);
@@ -386,6 +390,7 @@ inline void DPmatrixSimple::forward(int i2,int j2) {
 
 /// Dynamic Programming matrix with constraints on the states
 class DPmatrixHMM: public DPmatrixEmit {
+  int order_of_computation() const;
   vector< vector<int> > allowed_states;
 public:
   const vector<int>& states(int j) const {return allowed_states[j];}
@@ -397,6 +402,8 @@ public:
 
   // compute FP for entire matrix, with some points on path pinned
   void forward(const vector<int>&,double);
+
+  void prune();
 
   DPmatrixHMM(const vector<int> & v1,
 	      const vector<double> & v2,

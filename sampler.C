@@ -185,9 +185,18 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   //				    sample_topology,
   //				    internal_branches)
   //		    ,false);
-  topology_move.add(1,MoveArgSingle("sample_topologies2:nodes:topology",
+  topology_move.add(1,MoveArgSingle("three_way_NNI:nodes:topology",
 				    three_way_topology_sample,
 				    internal_branches)
+		    );
+  topology_move.add(1,MoveArgSingle("two_way_NNI:nodes:topology",
+				    three_way_topology_sample,
+				    internal_branches)
+		    );
+  topology_move.add(.1,MoveArgSingle("three_way_t_and_A:alignment:nodes:topology",
+				    three_way_topology_and_alignment_sample,
+				    internal_branches)
+		    ,false
 		    );
 
   if (P.T.leaves() >3)

@@ -145,7 +145,7 @@ alignment sample_node2(const alignment& old,const Parameters& P,int node) {
 
 
   /*------------------ Compute the DP matrix ---------------------*/
-
+  Matrices.prune();
   Matrices.forward();
 
   //------------- Sample a path from the matrix -------------------//

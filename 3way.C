@@ -348,20 +348,20 @@ namespace A3 {
       }
       else if (c3 < subA2.size() and (c4 == seq2.size() or (c4<seq2.size() and subA2[c3] != seq2[c4]))) {
 	for(int i=0;i<A.size2();i++) {
-	  if (group1[i])
-	    A(column,i) = alphabet::gap;
-	  else
+	  if (group2[i])
 	    A(column,i) = old(subA2[c3],i);
+	  else
+	    A(column,i) = alphabet::gap;
 	}
 	c3++;
 	assert(not all_gaps(A,column));
       }
       else if (c5 < subA3.size() and (c6 == seq3.size() or (c6<seq3.size() and subA3[c5] != seq3[c6]))) {
 	for(int i=0;i<A.size2();i++) {
-	  if (group1[i])
-	    A(column,i) = alphabet::gap;
-	  else
+	  if (group3[i])
 	    A(column,i) = old(subA3[c5],i);
+	  else
+	    A(column,i) = alphabet::gap;
 	}
 	c5++;
 	assert(not all_gaps(A,column));

@@ -7,14 +7,14 @@
 #include "parameters.H"
 #include "mcmc.H"
 
-MCMC::result_t slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up);
 
+// These have const A, cant be a "move"
+MCMC::result_t slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up);
 MCMC::result_t change_branch_length(const alignment& A, Parameters& Theta,int b);
 
 
 /// Resample the 3-star alignment, holding the n2/n3 order constant.
-alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
-			       int node1,int node2);
+alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,int node1,int node2);
 
 /// Resample the 3-star alignment and branch length, holding the n2/n3 order constant.
 bool tri_sample_alignment_branch(alignment&,Parameters&,
@@ -40,12 +40,6 @@ bool three_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,
 /// Resample between 2 NNI topologies around branch b
 bool two_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,int b);
 
-/// Resample gap/non-gap for 2 internal nodes, and the topology, with specified branch lengths (Old method)
-bool sample_topology(alignment& A,Parameters&,const Parameters&, const Parameters&, int);
-
-/// Which nodes are adjacent to this branch?
-vector<int> get_nodes(const alignment& A, const tree& T,int b);
-
 /*-------------- Top Level Sampling Routines -----------*/
 
 //Resample the alignment parent->child
@@ -55,8 +49,10 @@ MCMC::result_t sample_alignments2_one(alignment& old,Parameters&,int b);
 MCMC::result_t sample_nodes2_one(alignment& A, Parameters& Theta,int);
 MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& Theta,int);
 
-MCMC::result_t sample_topology(alignment& A,Parameters&,int);
-MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P1,int b);
+MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P,int b);
+MCMC::result_t two_way_topology_sample(alignment& A,Parameters& P,int b);
+MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& P,int b);
+
 
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& Theta,int b);
 MCMC::result_t slide_branch_lengths_one(alignment& A, Parameters& Theta,int);

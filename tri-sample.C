@@ -124,20 +124,32 @@ vector<int> getnodes(const tree& T,int node1,int node2) {
 DPmatrixHMM tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const tree& T = P.T;
 
+  assert(T.connected(nodes[0],nodes[1]));
+  assert(T.connected(nodes[0],nodes[2]));
+  assert(T.connected(nodes[0],nodes[3]));
+
   const vector<double>& pi = P.IModel().pi;
   const valarray<double>& frequency = P.SModel().BaseModel().frequencies();
 
-  //  std::cerr<<"A = "<<A<<endl;
+  // std::cerr<<"A = "<<A<<endl;
 
   /*------------- Compute sequence properties --------------*/
   valarray<bool> group1 = T.partition(nodes[0],nodes[1]);
   valarray<bool> group2 = T.partition(nodes[0],nodes[2]);
   valarray<bool> group3 = T.partition(nodes[0],nodes[3]);
 
+  //  std::clog<<"n0 = "<<nodes[0]<<"   n1 = "<<nodes[1]<<"    n2 = "<<nodes[2]<<"    n3 = "<<nodes[3]<<std::endl;
+  //  std::clog<<"A (reordered) = "<<project(A,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
+
+  //  THIS is not the same as getorder(project(...)) because, even if we select the same columns
+  // they may have different indices (remember that project(A) is shorter than A).
+  //  Since we use the columns from A, we need to use getorder(A)...
+  // However, the NUMBER of columns should be the same. 
+  // Hmm.. how to check that we get the same columns - need to deal w/ renaming issue...
   vector<int> columns = getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
 
-  //  std::cerr<<"n0 = "<<nodes[0]<<"   n1 = "<<nodes[1]<<"    n2 = "<<nodes[2]<<"    n3 = "<<nodes[3]<<std::endl;
-  //  std::cerr<<"A (reordered) = "<<project(A,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
+  vector<int> columns2 = getorder(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
+  assert(columns.size() == columns2.size());
 
   // Find sub-alignments and sequences
   vector<int> seq1;
@@ -227,6 +239,7 @@ DPmatrixHMM tri_sample_alignment_base(alignment& A,const Parameters& P,const vec
     Matrices.forward(path_old,P.constants[0]);
   }
   else {
+    Matrices.prune();
     // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
     // We can only use non-silent states at (0,0) to simulate S
     Matrices.forward(0,0);
@@ -251,7 +264,11 @@ DPmatrixHMM tri_sample_alignment_base(alignment& A,const Parameters& P,const vec
                                  //    due to ordering stuff required in the path but
                                  //    not store in the alignment A.
   vector<int> path_new_g = Matrices.generalize(path_new);
-  assert(path_new_g == path_g);
+  if (path_new_g != path_g) {
+    std::clog<<"A' (reordered) = "<<project(A,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
+    std::clog<<"A' = "<<A<<endl;
+    std::abort();
+  }
 
   assert(valid(A));
 #endif
@@ -271,7 +288,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node
   alignment A = old;
   vector<int> nodes = getnodes(P.T,node1,node2);
 
-  DPmatrixHMM Matrices( tri_sample_alignment_base(A,P,nodes) );
+  DPmatrixHMM Matrices =  tri_sample_alignment_base(A,P,nodes);
 
 #ifndef NDEBUG_DP
   /*---------- get the paths through the 3way alignment, from the entire alignment ----------*/

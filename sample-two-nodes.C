@@ -153,6 +153,7 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
 
   /*------------------ Compute the DP matrix ---------------------*/
 
+  Matrices.prune();
   Matrices.forward();
 
   //------------- Sample a path from the matrix -------------------//
