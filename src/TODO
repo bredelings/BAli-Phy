@@ -4,6 +4,11 @@
 
 3. Write alignment-consensus
 
+4. In smodel description, allow a * argument, or perhaps a [] format so -> 
+   a) Empirical[WAG] + gamma[4] + 
+   b) or just WAG + gamma[4]
+   c) or [WAG] + gamma[4]
+
 5. Add comments!
 
 6. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
