@@ -35,7 +35,9 @@ void Move::disable(const string& s) {
       }
 }
 
-void Move::show_enabled() const {
+void Move::show_enabled(int depth) const {
+  for(int i=0;i<depth;i++)
+    std::cout<<"  ";
   std::cout<<"move "<<attributes[0]<<": ";
   if (enabled_)
     std::cout<<"enabled.\n";
@@ -44,7 +46,9 @@ void Move::show_enabled() const {
 }
 
 
-void Move::print_move_stats() const {
+void Move::print_move_stats(int depth) const {
+  for(int i=0;i<depth;i++)
+    std::cerr<<"  ";
   std::cerr<<"move "<<attributes[0]<<": ";
   std::cerr<<"     cycles = "<<iterations;
   int total = successes + failures;
@@ -53,6 +57,42 @@ void Move::print_move_stats() const {
     std::cerr<<" ("<<successes<<"/"<<total<<")";
   }
   std::cerr<<endl;
+}
+
+void MoveGroupBase::add(double l,const Move& m) {
+  moves.push_back(m.clone());
+  lambda.push_back(l);
+}
+
+MoveGroupBase& MoveGroupBase::operator=(const MoveGroupBase& m) {
+  for(int i=0;i<moves.size();i++) {
+    assert(moves[i]);
+    delete moves[i];
+  }
+
+  moves = m.moves;
+  lambda = m.lambda;
+
+  for(int i=0;i<moves.size();i++)
+    moves[i] = moves[i]->clone();
+
+  return *this;
+}
+
+MoveGroupBase::MoveGroupBase(const MoveGroupBase& m) {
+  moves = m.moves;
+  lambda = m.lambda;
+
+  for(int i=0;i<moves.size();i++)
+    moves[i] = moves[i]->clone();
+}
+
+
+MoveGroupBase::~MoveGroupBase() {
+  for(int i=0;i<moves.size();i++) {
+    assert(moves[i]);
+    delete moves[i];
+  }
 }
 
 double MoveGroup::sum() const {
@@ -81,17 +121,12 @@ void MoveGroup::disable(const string& s) {
     moves[i]->disable(s);
 }
 
-void MoveGroup::add(double l,const Move& m) {
-  moves.push_back(m.clone());
-  lambda.push_back(l);
-}
-
-void MoveGroup::print_move_stats() const {
-  Move::print_move_stats();
+void MoveGroup::print_move_stats(int depth) const {
+  Move::print_move_stats(depth);
 
   // Operate on children
   for(int i=0;i<moves.size();i++)
-    moves[i]->print_move_stats();
+    moves[i]->print_move_stats(depth+1);
 }
 
 void MoveGroup::iterate(alignment& A,Parameters& P) {
@@ -110,7 +145,6 @@ result_t MoveGroup::iterate(alignment& A,Parameters& P,int i) {
 #endif
 
   result_t r = moves[order[i]]->iterate(A,P,suborder[i]);
-  iterations++;
   if (r == success)
     successes++;
   if (r == failure)
@@ -119,6 +153,7 @@ result_t MoveGroup::iterate(alignment& A,Parameters& P,int i) {
 }
 
 int MoveGroup::reset(double l) {
+  iterations += l;
   getorder(l);
   order = randomize(order);
 
@@ -133,48 +168,11 @@ int MoveGroup::reset(double l) {
   return order.size();
 }
 
-void MoveGroup::show_enabled() const {
-  Move::show_enabled();
+void MoveGroup::show_enabled(int depth) const {
+  Move::show_enabled(depth);
   
   for(int i=0;i<nmoves();i++)
-    moves[i]->show_enabled();
-}
-
-MoveGroup& MoveGroup::operator=(const MoveGroup& m) {
-  for(int i=0;i<moves.size();i++) {
-    assert(moves[i]);
-    delete moves[i];
-  }
-
-  Move::operator=(m);
-  order = m.order;
-  suborder = m.suborder;
-  moves = m.moves;
-  lambda = m.lambda;
-
-  for(int i=0;i<moves.size();i++)
-    moves[i] = moves[i]->clone();
-
-  return *this;
-}
-
-MoveGroup::MoveGroup(const MoveGroup& m):Move(m) {
-  Move::operator=(m);
-  order = m.order;
-  suborder = m.suborder;
-  moves = m.moves;
-  lambda = m.lambda;
-
-  for(int i=0;i<moves.size();i++)
-    moves[i] = moves[i]->clone();
-}
-
-
-MoveGroup::~MoveGroup() {
-  for(int i=0;i<moves.size();i++) {
-    assert(moves[i]);
-    delete moves[i];
-  }
+    moves[i]->show_enabled(depth+1);
 }
 
 void MoveAll::getorder(double l) {
@@ -225,6 +223,100 @@ void MoveOne::getorder(double l) {
     order.insert(order.end(),n,i);
   }
 }
+
+void MoveEach::add(double l,const MoveArg& m) {
+  MoveGroupBase::add(l,m);
+
+  present.push_back(vector<bool>(args.size(),false));
+  
+  for(int i=0;i<m.args.size();i++) {
+    int found = -1;
+    for(int j=0;j<args.size();j++) {
+      if (args[j] == m.args[i])
+	found=j;
+    }
+    if (found == -1) {
+      args.push_back(m.args[i]);
+      for(int k=0;k<present.size();k++) 
+	present[k].push_back(false);
+      present[present.size()-1][args.size()-1] = true;
+    }
+    else {
+      present[present.size()-1][found] = true;
+    }
+  }
+}
+
+double MoveEach::sum(int arg) const {
+  double total=0;
+  for(int i=0;i<lambda.size();i++)
+    if (present[i][arg])
+      total += lambda[i];
+  return total;
+}
+
+int MoveEach::choose(int arg) const {
+  double r = myrandomf()*sum(arg);
+
+  double sum = 0;
+  int i = 0;
+  for(;i < moves.size();i++) {
+
+    if (not present[i][arg])
+      continue;
+
+    sum += lambda[i];
+    if (r<sum) break;
+  }
+  return i;
+}
+
+int MoveEach::reset(double l) {
+  vector<int> numbers(args.size());
+  for(int i=0;i<numbers.size();i++)
+    numbers[i] = i;
+
+  order.clear();
+  while(l>0) {
+    vector<int> v = randomize(numbers);
+    if (l < 1) {
+      int n = poisson(l*numbers.size());
+      v.erase(v.begin()+n,v.end());
+    }
+    order.insert(order.end(),v.begin(),v.end());
+    l--;
+  }
+  return order.size();
+}
+
+void MoveEach::iterate(alignment& A,Parameters& P) {
+  for(int i=0;i<order.size();i++)
+    iterate(A,P,i);
+}
+
+result_t MoveEach::iterate(alignment& A,Parameters& P,int i) {
+  // FIXME - this is trying to mean both order[i] and arg[i]
+  // better make a separate operator() to mean arg[i] and call down with that
+  sdfsdf
+  int m = choose(order[i]);
+  return moves[m]->iterate(A,P,args[order[i]]);
+}
+
+void MoveEach::show_enabled(int depth) const {
+  Move::show_enabled(depth);
+  
+  for(int i=0;i<nmoves();i++)
+    moves[i]->show_enabled(depth+1);
+}
+
+void MoveEach::print_move_stats(int depth) const {
+  Move::print_move_stats(depth);
+
+  // Operate on children
+  for(int i=0;i<moves.size();i++)
+    moves[i]->print_move_stats(depth+1);
+}
+
 
 alignment standardize(const alignment& A, const SequenceTree& T) {
   alignment A2 = A;
@@ -351,7 +443,7 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
 
     /*----------------- print diagnostic output -----------------*/
 
-    if (iterations %200 == 0 or std::abs(p - new_p)>12) {
+    if (iterations %100 == 0 or std::abs(p - new_p)>12) {
       print_stats(std::cerr,A,P,probability);
       print_stats(std::cerr,A2,P2,probability);
 

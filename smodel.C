@@ -196,7 +196,7 @@ void GammaRateModel::super_fiddle() {
   if (p2 < 0) p2 = -p2;
 
   double alpha = 1.0/(p2*p2);
-  if (alpha < 10000)
+  if (alpha < 1000)
     p = p2;
 
   recalc();

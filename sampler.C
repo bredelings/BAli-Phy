@@ -157,27 +157,75 @@ void do_showonly(const alignment& A,const Parameters& P) {
 
 void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterations) {
 
+  // args for branch-based stuff
+  vector<int> branches(P.T.branches());
+  for(int i=0;i<branches.size();i++)
+    branches[i] = i;
+
+  // args for branch-based stuff
+  vector<int> internal_nodes;
+  for(int i=P.T.leaves();i<P.T.num_nodes()-1;i++)
+    internal_nodes.push_back(i);
+
+  // args for branch-based stuff
+  vector<int> internal_branches;
+  for(int i=P.T.leaves();i<P.T.branches();i++)
+    internal_branches.push_back(i);
+
   using namespace MCMC;
 
-  // alignments
+  // alignment
   MoveAll alignment_moves("alignment");
-  alignment_moves.add(1,SingleMove(sample_alignments,"sample_alignments:alignment"));
-  if (P.T.leaves() >2) {
-    alignment_moves.add(1,SingleMove(sample_nodes,"sample_nodes:alignment:nodes"));
-    alignment_moves.add(0.1,SingleMove(sample_tri,"sample_tri:alignment:nodes"));
-  }
 
+  // alignment :: alignment_branch
+  MoveEach alignment_branch_moves("alignment_branch");
+  alignment_branch_moves.add(1.0,
+			     MoveArgSingle("sample_alignments:alignment",
+					   sample_alignments_one,
+					   branches)
+			     );
+  if (P.T.leaves() >2) 
+    alignment_branch_moves.add(0.1,MoveArgSingle("sample_tri:alignment:nodes",
+						 sample_tri_one,
+						 branches)
+			       );
+  alignment_moves.add(1, alignment_branch_moves);
+
+  // aligment :: sample_nodes
+  MoveEach internal_nodes_move("nodes");
+  MoveArgSingle temp("sample_nodes:alignment:nodes",sample_nodes_one,internal_nodes);
+  internal_nodes_move.add(1,temp);
+
+  if (P.T.leaves() >2)
+    alignment_moves.add(1,internal_nodes_move);
 
   // tree
   MoveAll tree_moves("tree");
-  MoveAll topology_moves("topology");
+  MoveEach topology_move("topology");
+  topology_move.add(1,MoveArgSingle("sample_topologies:nodes:topology",
+				    sample_topology,
+				    internal_branches)
+		    );
   if (P.T.leaves() >3)
-    topology_moves.add(1,SingleMove(sample_topologies,"sample_topologies:nodes:topology"));
+    tree_moves.add(1,topology_move);
+  
+  // tree :: lengths
+  MoveEach length_moves("lengths");
+  MoveEach length_moves1("lengths1");
 
-  MoveOne length_moves("lengths");
-  length_moves.add(1,SingleMove(change_branch_lengths,"change_branch_lengths:nodes:lengths:topology"));
-  length_moves.add(1,SingleMove(slide_branch_lengths,"slide_branch_lengths:nodes:lengths:topology"));
-  tree_moves.add(1,topology_moves);
+  length_moves1.add(1,MoveArgSingle("change_branch_length:length",
+				   change_branch_length_move,
+				   branches)
+		   );
+  length_moves1.add(100,MoveArgSingle("change_branch_length_and_T:length:nodes:topology",
+				     change_branch_length_and_T,
+				     internal_branches)
+		   );
+  length_moves.add(1,length_moves1);
+  length_moves.add(1,MoveArgSingle("slide_branch_length:length",
+				   slide_branch_lengths_one,
+				   branches)
+		   );
   tree_moves.add(1,length_moves);
 
   // parameters
@@ -187,7 +235,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   Sampler sampler("sampler",probability3);
   sampler.add(1,alignment_moves);
   sampler.add(1,tree_moves);
-  sampler.add(1,parameter_moves);
+  sampler.add(P.T.branches(),parameter_moves);
 
 
   //FIXME - make MCMC inherit from the collection of moves.

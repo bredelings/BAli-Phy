@@ -4,58 +4,86 @@
 #include <algorithm>
 #include "mcmc.H"
 
+MCMC::result_t slide_branch_lengths_one(alignment& A, Parameters& P,int b) {
+  bool up = true;
+  if (myrandom(2))
+    up = false;
+  return slide_branch_length(A,P,b,up);
+}
+
+
+
 MCMC::result_t slide_branch_lengths(alignment& A, Parameters& P) {
   for(int i=0;i<P.T.leaves();i++) {
     int b = myrandom(P.T.branches());
 
-    bool up = true;
-    if (myrandom(2))
-      up = false;
+    slide_branch_lengths_one(A,P,b);
 
-    slide_branch_length(A,P,b,up);
   }
   return MCMC::no_result;
+}
+
+MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
+  return change_branch_length(A,P,b);
 }
 
 MCMC::result_t change_branch_lengths(alignment& A, Parameters& P) {
   for(int i=0;i<P.T.leaves();i++) {
     int b = myrandom(P.T.branches());
-    //    if (b<P.T.leaves())
-      change_branch_length(A,P,b);
-      //    else
-      //      change_branch_length_and_T(A,P,b);
+    if (b<P.T.leaves())
+      change_branch_length_move(A,P,b);
+    else
+      change_branch_length_and_T(A,P,b);
   }
   return MCMC::no_result;
 }
 
+MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
+  const SequenceTree& T = P.T;
+
+  int node1 = T.branch(b).parent();
+  int node2 = T.branch(b).child();
+
+  if (myrandomf() < 0.5)
+    std::swap(node1,node2);
+
+  if (node1 < T.leaves())
+    std::swap(node1,node2);
+    
+  A = tri_sample_alignment(A,P,node1,node2);
+
+  return MCMC::no_result;
+}
 
 MCMC::result_t sample_tri(alignment& A, Parameters& P) {
   const SequenceTree& T = P.T;
 
   for(int i=0;i<T.leaves();i++) {
     int b = myrandom(T.branches());
-
-    int node1 = T.branch(b).parent();
-    int node2 = T.branch(b).child();
-
-    if (myrandomf() < 0.5)
-      std::swap(node1,node2);
-
-    if (node1 < T.leaves())
-      std::swap(node1,node2);
-    
-    A = tri_sample_alignment(A,P,node1,node2);
+    sample_tri_one(A,P,b);
   }
   return MCMC::no_result;
 }
 
 
+MCMC::result_t sample_alignments_one(alignment& A, Parameters& P,int b) {
+  A = sample_alignment(A,P,b);
+  return MCMC::no_result;
+}
+
 MCMC::result_t sample_alignments(alignment& A, Parameters& P) {
   for(int i=0;i<P.T.leaves();i++) {
     int b = myrandom(P.T.branches());
 
-    A = sample_alignment(A,P,b);
+    sample_alignments_one(A,P,b);
   }
+  return MCMC::no_result;
+}
+
+
+MCMC::result_t sample_nodes_one(alignment& A, Parameters& P,int node) {
+  A = sample_node(A,P,node);
+
   return MCMC::no_result;
 }
 
@@ -63,7 +91,7 @@ MCMC::result_t sample_nodes(alignment& A, Parameters& P) {
   for(int i=0;i<P.T.num_nodes()-P.T.leaves();i++) {
     int node = myrandom(P.T.leaves(),P.T.num_nodes()-1);
 
-    A = sample_node(A,P,node);
+    sample_nodes_one(A,P,node);
   }
   return MCMC::no_result;
 }

@@ -28,7 +28,7 @@ namespace MCMC {
   public:
     vector<string> attributes;
 
-    int iterations;
+    double iterations;
     int failures;
     int successes;
 
@@ -45,8 +45,8 @@ namespace MCMC {
     virtual void iterate(alignment&,Parameters&) =0;
     virtual result_t iterate(alignment&,Parameters&,int) =0;
 
-    virtual void show_enabled() const;
-    virtual void print_move_stats() const;
+    virtual void show_enabled(int depth=0) const;
+    virtual void print_move_stats(int depth=0) const;
 
     Move(const string&);
 
@@ -54,39 +54,45 @@ namespace MCMC {
   };
 
 
-  class MoveGroup: public Move {
+  class MoveGroupBase {
+  protected:
+    std::vector<Move*> moves;
+    std::vector<double> lambda;
+  public:
+    int nmoves() const {return moves.size();}
+    void add(double,const Move& m);
+
+    MoveGroupBase& operator=(const MoveGroupBase&);
+    MoveGroupBase(const MoveGroupBase&);
+    MoveGroupBase() {}
+
+    ~MoveGroupBase();
+  };
+
+  class MoveGroup: public Move,public MoveGroupBase {
   protected:
     vector<int> order;
     vector<int> suborder;
     
-    std::vector<Move*> moves;
-    std::vector<double> lambda;
-
     double sum() const;
     virtual void getorder(double l)=0;
   public:
 
     MoveGroup* clone() const =0;
 
-    MoveGroup& operator=(const MoveGroup&);
-
     void enable(const string&);
     void disable(const string&);
-
-    int nmoves() const {return moves.size();}
-    void add(double,const Move& m);
 
     int reset(double);
     void iterate(alignment&,Parameters&);
     result_t iterate(alignment&,Parameters&,int);
 
+    void show_enabled(int depth=0) const;
+    void print_move_stats(int depth=0) const;
+
     MoveGroup(const string& s):Move(s) {}
-    MoveGroup(const MoveGroup&);
 
-    void show_enabled() const;
-    void print_move_stats() const;
-
-    virtual ~MoveGroup();
+    virtual ~MoveGroup() {}
   };
 
   class MoveAll: public MoveGroup {
@@ -108,7 +114,6 @@ namespace MCMC {
     virtual ~MoveOne() {}
   };
 
-
   class SingleMove: public Move {
     atomic_move m;
   public:
@@ -121,7 +126,7 @@ namespace MCMC {
     result_t iterate(alignment& A,Parameters& P,int) 
     {
 #ifndef NDEBUG
-      std::cerr<<" move = "<<attributes[0]<<endl;
+      std::cerr<<" [single]move = "<<attributes[0]<<endl;
 #endif
       iterations++;
       result_t r = (*m)(A,P);
@@ -135,6 +140,75 @@ namespace MCMC {
     SingleMove(atomic_move m1,const string& v)
       :Move(v),m(m1) {}
   };
+
+  class MoveArg: public Move {
+  public:
+    MoveArg* clone() const=0;
+
+    vector<int> args;
+
+    MoveArg(const string& s):Move(s) { }
+
+    virtual ~MoveArg() {}
+  };
+
+
+  // can I make this inherit from MoveGroup?
+  class MoveEach: public MoveArg, protected MoveGroupBase {
+    vector<int> order;
+
+    vector< vector<bool> > present;
+
+    double sum(int) const;
+    int choose(int) const;
+  public:
+    MoveEach* clone() const {return new MoveEach(*this);}
+
+    void add(double l,const MoveArg& m);
+
+    int reset(double);
+    void iterate(alignment&,Parameters&);
+    result_t iterate(alignment&,Parameters&,int);
+    
+    void show_enabled(int depth=0) const;
+    void print_move_stats(int depth=0) const;
+
+    MoveEach(const string& s):MoveArg(s) {}
+
+    virtual ~MoveEach() {}
+  };
+
+
+  class MoveArgSingle: public MoveArg {
+    atomic_move_arg m;
+  public:
+    MoveArgSingle* clone() const {return new MoveArgSingle(*this);}
+
+    int reset(double l) {return poisson(l);};
+    void iterate(alignment& A,Parameters& P) { iterate(A,P,0);};
+
+    result_t iterate(alignment& A,Parameters& P,int a) 
+    {
+#ifndef NDEBUG
+      std::cerr<<" [single]move = "<<attributes[0]<<endl;
+#endif
+      iterations++;
+      result_t r = (*m)(A,P,a);
+      if (r == success)
+	successes++;
+      if (r == failure)
+	failures++;
+      return r;
+    }
+    
+    MoveArgSingle(const string& s,atomic_move_arg m1,const vector<int>& a)
+      :MoveArg(s),m(m1) 
+    {args=a;}
+
+    ~MoveArgSingle() {}
+  };
+
+
 
   // This makes a Sampler out of a move
   class Sampler: public MoveAll {
