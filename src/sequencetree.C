@@ -387,4 +387,19 @@ std::ostream& operator <<(std::ostream& o,const RootedSequenceTree& RT) {
 }
 
 
+SequenceTree::SequenceTree(const Tree& T,const vector<string>& vs)
+  :Tree(T),SequenceSet(vs)
+{ }
 
+RootedSequenceTree::RootedSequenceTree(const RootedTree& T,const vector<string>& vs)
+  :RootedTree(T),SequenceSet(vs)
+{ }
+
+SequenceTree star_tree(const vector<string>& names) 
+{
+  BranchNode* center = get_first_node();
+  for(int i=0;i<names.size();i++)
+    add_node(center)->node = i;
+
+  return SequenceTree(Tree(center),names);
+}

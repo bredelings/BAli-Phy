@@ -21,6 +21,9 @@ public:
   const std::vector<std::string>& get_sequences() const {return sequences;}
 
   int index(const std::string&) const;
+
+  SequenceSet() {}
+  SequenceSet(const std::vector<std::string>& vs):sequences(vs) {}
 };
 
 class SequenceTree: public Tree, public SequenceSet {
@@ -41,6 +44,7 @@ public:
 
   SequenceTree() {}
   explicit SequenceTree(std::istream&);   //load a tree from a file
+  explicit SequenceTree(const Tree&,const std::vector<std::string>&);
   explicit SequenceTree(const std::string& s);
   explicit SequenceTree(const class RootedSequenceTree&);
 };
@@ -65,6 +69,7 @@ public:
   RootedSequenceTree() {}
   explicit RootedSequenceTree(std::istream&);   //load a tree from a file
   explicit RootedSequenceTree(const std::string& s);
+  explicit RootedSequenceTree(const RootedTree&,const std::vector<std::string>&);
   RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2);
 
   //conversions...
@@ -89,5 +94,7 @@ SequenceTree RandomTree(const std::vector<std::string>&,double=1.0);
 void delete_node(SequenceTree& T,const std::string& name);
 
 SequenceTree remove_root_branch(RootedSequenceTree RT);
+
+SequenceTree star_tree(const std::vector<std::string>&);
 
 #endif
