@@ -8,7 +8,6 @@ using std::valarray;
 
 // Can I make Q into a general function, backed by a matrix in some cases?
 
-
 /// A Hidden Markov Model - represented by the transition matrix and accessory functions
 class HMM {
   /// Is each state part of the silent network?
@@ -27,6 +26,8 @@ public:
 
   /// The 'generalized' transition matrix - silent loops removed
   Matrix GQ;
+
+  bool connected(int S1,int S2) {return GQ(S1,S2) > log_limit;}
 
   /// Probabilities of starting in each state
   vector<double> start_P;
@@ -184,6 +185,9 @@ public:
   virtual ~DPmatrix() {}
 };
 
+int bandwidth(const DPmatrix&,const vector<int>&);
+int bandwidth2(const DPmatrix&,const vector<int>&,int,int);
+
 
 /// 2D Dynamic Programming Matrix for chains which only emit or don't emit
 class DPmatrixNoEmit: public DPmatrix {
@@ -333,7 +337,7 @@ public:
   virtual ~DPmatrixSimple() {}
 };
 
-inline void DPmatrixSimple::forward(int i2,int j2) { 
+inline void DPmatrixSimple::forward(int i2,int j2) {
 
   assert(i2<size1());
   assert(j2<size2());
@@ -355,7 +359,11 @@ inline void DPmatrixSimple::forward(int i2,int j2) {
     //--- Compute Arrival Probability ----
     FS2(i2,j2) = log_0;
     for(int S1=0;S1<nstates();S1++) {
+      if (not connected(S1,S2)) continue;
+
       Matrix& FS1 = (*this)[S1];
+
+      if (FS1(i1,j1) < log_limit) continue;
 
       FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
     }
@@ -402,7 +410,7 @@ public:
   virtual ~DPmatrixHMM() {}
 };
 
-inline void DPmatrixHMM::forward(int i2,int j2) { 
+inline void DPmatrixHMM::forward(int i2,int j2) {
 
   assert(i2<size1());
   assert(j2<size2());
@@ -428,7 +436,12 @@ inline void DPmatrixHMM::forward(int i2,int j2) {
     FS2(i2,j2) = log_0;
     for(int s=0;s<states(j1).size();s++) {
       int S1 = states(j1)[s];
+
+      if (not connected(S1,S2)) continue;
+
       Matrix& FS1 = (*this)[S1];
+      
+      if (FS1(i1,j1) < log_limit) continue;
 
       FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
     }
@@ -443,7 +456,6 @@ inline void DPmatrixHMM::forward(int i2,int j2) {
       sub = emit_M(i2,j2);
     else          // silent state - nothing emitted
       sub = emit__(i2,j2);
-
 
     FS2(i2,j2) += sub;
   }

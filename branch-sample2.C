@@ -166,6 +166,10 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
 
   alignment A = construct(old,path,group1,seq1,seq2);
 
+
+  std::cerr<<"bandwidth = "<<bandwidth(Matrices,path)<<std::endl;
+
+  std::cerr<<"bandwidth2 = "<<bandwidth2(Matrices,path,seq1.size(),seq2.size())<<std::endl;
   /*--------------------------------------------------------------*/
 #ifndef NDEBUG_DP
   vector<int> path_old = get_path(old,node1,node2);

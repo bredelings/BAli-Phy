@@ -164,14 +164,12 @@ namespace substitution {
   }
 
 
-  void NestedModel::parameters(const vector<double>& p) {
+  void NestedModel::recalc() {
     vector<double> sub_p = sub_model->parameters();
     for(int i=0;i<sub_p.size();i++)
-      sub_p[i] = p[i];
+      sub_p[i] = parameters_[i];
 
     SubModel().parameters(sub_p);
-  
-    Model::parameters(p);
   }
 
   void MultiRateModel::recalc() {
@@ -183,6 +181,8 @@ namespace substitution {
 
     for(int i=0;i<nrates();i++)
       rates_[i] /= mean;
+
+    NestedModel::recalc();
   }
 
 
@@ -190,6 +190,72 @@ namespace substitution {
     return sub_model->name();
   }
 
+  /*--------------- Distribution-based Model----------------*/
+
+  string DistributionRateModel::name() const {
+    return string("Distribution(") + convertToString(rates_.size()) + ")(" + sub_model->name() + ")";
+  }
+
+  double DistributionRateModel::super_prior() const {
+    return D->prior();
+  }
+
+  void DistributionRateModel::super_fiddle() {
+    D->fiddle();
+    for(int i=0;i<D->parameters().size();i++)
+      parameters_[sub_model->parameters().size() + i] = D->parameters()[i];
+    
+    recalc();
+  }
+
+  // This is supposed to push things out from parameters_
+  void DistributionRateModel::recalc() {
+    vector<double> temp(D->parameters().size());
+    for(int i=0;i<D->parameters().size();i++)
+      temp[i] = parameters_[sub_model->parameters().size() + i];
+    D->parameters(temp);
+
+    for(int i=0;i<nrates();i++)
+      rates_[i] = D->quantile( double(2*i+1)/(2.0*nrates()) );
+
+    MultiRateModel::recalc();
+  }
+
+  DistributionRateModel& DistributionRateModel::operator=(const DistributionRateModel& M) {
+    MultiRateOnReversible::operator=(M);
+    if (D) delete D;
+
+    D = M.distribution().clone();
+
+    return (*this);
+  }
+
+
+  DistributionRateModel::DistributionRateModel(const DistributionRateModel& M)
+    :MultiRateOnReversible(M),
+     D(M.distribution().clone())
+  { }
+  
+
+  DistributionRateModel::DistributionRateModel(const ReversibleModel& M,const RateDistribution& RD, int n)
+    :MultiRateOnReversible(M,RD.parameters().size(),n),
+     D(RD.clone())
+  {
+    // This never changes - since we use quantiles for the bins
+    for(int i=0;i<nrates();i++)
+      distribution_[i] = 1.0/nrates();
+
+    // Read in the parameters from the distribution
+    for(int i=0;i<D->parameters().size();i++)
+      parameters_[sub_model->parameters().size() + i] = D->parameters()[i];
+
+    recalc();
+  }
+
+  DistributionRateModel::~DistributionRateModel() {
+    if (D)
+      delete D;
+  }
 
   /*--------------- Gamma Sites Model----------------*/
 
@@ -197,77 +263,9 @@ namespace substitution {
     return string("Gamma(") + convertToString(rates_.size()) + ")(" + sub_model->name() + ")";
   }
 
-
-  double gamma_pdf(double x,double a,double b) {
-    return gsl_ran_gamma_pdf(x,a,b);
-  }
-
-  double gamma_cdf(double x, double a,double b) {
-    return gsl_sf_gamma_inc_P(a,x/b);
-  }
-
-  double gamma_quantile(double p,double a, double b) {
-    int iterations=0;
-
-    double x = 1.0;
-    double dx = 1.0;
-    while(std::abs(dx) > 1.0e-9) {
-      double f = gamma_cdf(x,a,b)-p;
-      double dfdx = gamma_pdf(x,a,b);
-      dx = -f/dfdx;
-
-      if (x+dx < 0)
-	x = x/2.0;
-      else
-	x = x + dx;
-      iterations++;
-      assert(iterations<max);
-    }
-    return x;
-  }
-
-
-  double GammaRateModel::super_prior() const {
-    double p = parameters_[parameters_.size()-1];
-    return -p/0.2;
-  }
-
-  void GammaRateModel::super_fiddle() {
-    double& p = parameters_[parameters_.size()-1];
- 
-    const double sigma = 0.04;
-    double p2 = p + gaussian(0,sigma);
-    if (p2 < 0) p2 = -p2;
-
-    double alpha = 1.0/(p2*p2);
-    if (alpha < 10000)
-      p = p2;
-
-    recalc();
-  }
-
-  void GammaRateModel::recalc() {
-    double alpha = parameters_[parameters_.size()-1];
-    alpha = 1.0/(alpha*alpha);
-
-    for(int i=0;i<nrates();i++)
-      rates_[i] = gamma_quantile(double(2*i+1)/(2.0*nrates()),alpha,1.0/alpha);
-
-    MultiRateModel::recalc();
-  }
-
   GammaRateModel::GammaRateModel(const ReversibleModel& M,int n)
-    :MultiRateOnReversible(M,1,n)
-  {
-    double& p = parameters_[parameters_.size()-1];
-    p = 0.1;
-
-    // This never changes - since we use quantiles for the bins
-    for(int i=0;i<nrates();i++)
-      distribution_[i] = 1.0/nrates();
-
-    recalc();
-  }
+    :DistributionRateModel(M,Gamma(),n)
+  {}
 
 
   /*--------------- Invariant Sites Model----------------*/
@@ -277,7 +275,7 @@ namespace substitution {
   }
 
   INV_Model::INV_Model(const MultiRateModel& M)
-    :MultiRateModel(M,1,M.nrates()+2)
+    :MultiRateModel(M,2,M.nrates()+1)
   {
     parameters_[ parameters_.size()-2 ] = 0.01;
     parameters_[ parameters_.size()-1 ] = 0.01;
@@ -307,6 +305,8 @@ namespace substitution {
     double p = parameters_[parameters_.size()-2];
     double r = parameters_[parameters_.size()-1];
 
+    // Thus, r is the RELATIVE rate to the other model
+    // Should we try to specify an absolute rate?
     rates_[nrates()-1] = r;
     distribution_[nrates()-1] = p;
   

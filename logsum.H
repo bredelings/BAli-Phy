@@ -17,6 +17,14 @@ inline double logsum(double x, double y)
     return (x + log(1 + exp(temp)));
 }
 
+inline double logsum_nocheck(double x, double y) {
+  if (std::abs(x-y) > 308)
+    return ((x > y) ? x : y);
+  else
+    return (x + log(1 + exp(y - x)));
+}
+
+
 inline double logsum(double x, double y, double z) {
   return logsum(x,logsum(y,z));
 }

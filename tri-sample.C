@@ -235,6 +235,10 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
 
   alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
 
+  std::cerr<<"[tri]bandwidth = "<<bandwidth(Matrices,path_g)<<std::endl;
+
+  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g,seq1.size(),seq23.size())<<std::endl;
+
 #ifndef NDEBUG_DP
   //--------------- Check alignment construction ------------------//
 

@@ -2,32 +2,42 @@
 
 all: sampler
 
-# -fomit-frame-pointer
-# -fprefetch-loop-arrays
+# Hurts:
+# -mfpmath=sse     1:23 -> 1:30
+# -mfpmath=387,sse 1:22->1:24
+
+# No effect:
+# -malign-double
+# -mmmx, -msse, -msse2 (w/ or w/o -mfpmath=sse)
+# -O3
+
+# Helps:
+# -fomit-frame-pointer: 1:23.7 -> 1:23.2
 # -ffast-math 
+# -fprefetch-loop-arrays
+# -march=pentium4
 
 # -fexpensive-optimizations
 # -fno-strength-reduce?
 # -fno-exceptions -fno-rtti
 
+
 # try -ffast-math, -march=pentium4, -malign-double, -mfpmath=sse,387
 #     -msse2
 
-# -mmmx -m3dnow -msse
-# -mmmx -msse   -msse2
 # -fomit-frame-pointer -pipe -fexpensive-optimizations -fpic -frerun-cse-after-loop -frerun-loop-opt -foptimize-register-move
-# -freorder-blocks -fprefetch-loop-arrays
+# -freorder-blocks
 
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0
-DEBUG = pipe g3 pg
+LANGO = fast-math prefetch-loop-arrays tracer omit-frame-pointer 
+DEBUG = pipe # g3 # pg
 EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS = NDEBUG NDEBUG_DP 
+DEFS = NDEBUG NDEBUG_DP # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
-OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 O3
-LDFLAGS = -pg # -static 
+OPT =  march=pentium4 O3 # malign-double msse mmmx msse2 
+LDFLAGS = # -pg # -static 
 LI=${CXX}
 
 #------------------- Main 
@@ -40,7 +50,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
 	  node-sample2.C imodel.C 5way.C topology-sample2.C inverse.C \
-	  setup.o
+	  setup.C rates.C
 
 LIBS = gsl gslcblas m 
 PROGNAMES = ${NAME} 

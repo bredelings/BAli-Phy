@@ -1,5 +1,6 @@
 #include "setup.H"
 #include "util.H"
+#include "rates.H"
 
 using std::valarray;
 
@@ -45,11 +46,27 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
     
   /*------ Get the multi-rate model over the base model ------*/
   substitution::MultiRateModel *full_smodel = 0;
-  if (args.set("gamma")) {
+  if (args.set("gamma_plus_uniform")) {
+    int n=4;
+    if (args["gamma_plus_uniform"] != "gamma_plus_uniform")
+      n = convertTo<int>(args["gamma_plus_uniform"]);
+    full_smodel = new substitution::DistributionRateModel(*base_smodel,
+							  substitution::Uniform() + substitution::Gamma(),
+							  n);
+  }
+  else if (args.set("gamma")) {
     int n=4;
     if (args["gamma"] != "gamma")
       n = convertTo<int>(args["gamma"]);
     full_smodel = new substitution::GammaRateModel(*base_smodel,n);
+  }
+  else if (args.set("double_gamma")) {
+    int n=4;
+    if (args["double_gamma"] != "double_gamma")
+      n = convertTo<int>(args["double_gamma"]);
+    full_smodel = new substitution::DistributionRateModel(*base_smodel,
+							  substitution::Gamma() + substitution::Gamma(),
+							  n);
   }
   else 
     full_smodel = new substitution::SingleRateModel(*base_smodel);

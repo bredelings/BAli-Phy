@@ -140,7 +140,7 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
     else {
       bool connected=false;
       for(int S2=0;S2<nstates()+1;S2++) {
-	if (Q(S1,S2) > log_0/100 and not state_emit[S2]) {
+	if (Q(S1,S2) > log_limit and not state_emit[S2]) {
 	  connected=true;
 	  break;
 	}
@@ -159,7 +159,7 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
 
       bool connected = false;
       for(int S2=0;S2<nstates()+1;S2++) {
-	if (Q(S1,S2) > log_0/100 and silent_network_[S2] == 1)
+	if (Q(S1,S2) > log_limit and silent_network_[S2] == 1)
 	  connected = true;
       }
       silent_network_[S1] = connected?1:-1;
@@ -226,7 +226,7 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
       // silent network -> not silent network
       for(int j=0;j<non_silent_network.size();j++) {
 	int S2 = non_silent_network[j];
-	if (Q(S1,S2) < log_0/100)
+	if (Q(S1,S2) < log_limit)
 	  GQ(S1,S2) = log_0;
 	else {
 	  assert(G(i,j) > 0);
@@ -292,6 +292,47 @@ double HMM::check(const vector<int>& path1,const vector<int>& path2,double lp1,d
   return diff;
 }
 
+int bandwidth(const DPmatrix& M,const vector<int>& path) {
+  int max = 0;
+
+  int i=0;
+  int j=0;
+  for(int c=0;c < path.size();c++) {
+
+    if (M.di(path[c]))
+      i++;
+    if (M.dj(path[c]))
+      j++;
+
+    if (std::abs(i-j) > max)
+      max = std::abs(i-j);
+  }
+  return max;
+}
+
+
+int bandwidth2(const DPmatrix& M,const vector<int>& path,int I,int J) {
+  int max = 0;
+
+  int i=0;
+  int j=0;
+  for(int c=0;c < path.size();c++) {
+
+    if (M.di(path[c]))
+      i++;
+    if (M.dj(path[c]))
+      j++;
+
+    double w1 = i - double(j)*I/J;
+    double w2 = j - double(i)*J/I;
+    double w = std::max(w1,w2);
+    if (max > (int)w)
+      max = (int)w;
+  }
+  return max;
+}
+
+
 double DParray::path_P(const vector<int>& g_path) const {
   const int I = size()-1;
   int i=I;
@@ -307,7 +348,7 @@ double DParray::path_P(const vector<int>& g_path) const {
 
     int state1 = g_path[l-1];
     double p = choose_P(state1,transition);
-    assert(p > log_0/100);
+    assert(p > log_limit);
 
     if (di(state1)) i--;
 
@@ -399,7 +440,11 @@ inline void DParrayConstrained::forward(int i2) {
     FS2[i2] = log_0;
     for(int s1=0;s1<states(i1).size();s1++) {
       int S1 = states(i1)[s1];
+      if (not connected(S1,S2)) continue;
+
       vector<double>& FS1 = (*this)[S1];
+
+      if (FS1[i1] < log_limit) continue;
 
       FS2[i2] = logsum(FS2[i2],FS1[i1] + GQ(S1,S2));
     }
@@ -511,9 +556,9 @@ double DPmatrix::path_check(const vector<int>& path) const {
       transition[s] = (*this)[s](i,j)+GQ(s,state2);
 
     double p = choose_P(state1,transition);
-    assert((*this)[state1](i,j) > log_0/100);
-    assert(GQ(state1,state2) > log_0/100);
-    assert(p > log_0/100);
+    assert((*this)[state1](i,j) > log_limit);
+    assert(GQ(state1,state2) > log_limit);
+    assert(p > log_limit);
     
     l++;
     Pr += p;
@@ -523,7 +568,7 @@ double DPmatrix::path_check(const vector<int>& path) const {
 
   assert(l == path.size()-1);
   assert(i == I and j == J);
-  assert(Pr > log_0/100);
+  assert(Pr > log_limit);
 
   return Pr;
 }
@@ -556,7 +601,7 @@ double DPmatrix::path_P(const vector<int>& path) const {
 
     int state1 = path[l-1];
     double p = choose_P(state1,transition);
-    assert(p > log_0/100);
+    assert(p > log_limit);
 
     if (di(state1)) i--;
     if (dj(state1)) j--;
@@ -643,9 +688,9 @@ DPmatrix::DPmatrix(int i1,
 {
 
   //----- zero-initialize matrices ------//
-  for(int i=0;i<size1();i++)
-    for(int j=0;j<size2();j++) 
-      for(int S=0;S<nstates();S++)
+  for(int S=0;S<nstates();S++)
+    for(int i=0;i<size1();i++)
+      for(int j=0;j<size2();j++) 
 	(*this)[S](i,j)  = log_0;
 
   //----- set up start probabilities -----//
@@ -653,6 +698,7 @@ DPmatrix::DPmatrix(int i1,
     (*this)[S](0,0) = start_P[S];
 }
 
+/*
 void DPmatrixNoEmit::forward(int x1,int y1,int x2,int y2) {
   assert(x1 < x2 or y1 < y2);
   assert(x2 < size1());
@@ -669,6 +715,17 @@ void DPmatrixNoEmit::forward(int x1,int y1,int x2,int y2) {
       for(int i=0;i<=delta and y1+i <= y2;i++)
 	forward(x1+delta,y1+i);
   } 
+}
+*/
+
+void DPmatrixNoEmit::forward(int x1,int y1,int x2,int y2) {
+  assert(x1 < x2 or y1 < y2);
+  assert(x2 < size1());
+  assert(y2 < size2());
+
+  for(int x=x1;x<=x2;x++)
+    for(int y=y1;y<=y2;y++)
+      forward(x,y);
 }
 
 double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
@@ -729,7 +786,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 }
 
 
-
+/*
 inline void DPmatrixSimple::forward(int x1,int y1,int x2,int y2) {
   assert(x1 < x2 or y1 < y2);
   assert(x2 < size1());
@@ -746,6 +803,18 @@ inline void DPmatrixSimple::forward(int x1,int y1,int x2,int y2) {
       for(int i=0;i<=delta and y1+i <= y2;i++)
 	forward(x1+delta,y1+i);
   }
+}
+
+*/
+
+inline void DPmatrixSimple::forward(int x1,int y1,int x2,int y2) {
+  assert(x1 < x2 or y1 < y2);
+  assert(x2 < size1());
+  assert(y2 < size2());
+
+  for(int x=x1;x<=x2;x++)
+    for(int y=y1;y<=y2;y++)
+      forward(x,y);
 }
 
 
@@ -792,6 +861,7 @@ void DPmatrixSimple::forward(const vector<int>& path,double bandwidth) {
 }
 
 
+/*
 inline void DPmatrixHMM::forward(int x1,int y1,int x2,int y2) {
   assert(x1 < x2 or y1 < y2);
   assert(x2 < size1());
@@ -808,6 +878,17 @@ inline void DPmatrixHMM::forward(int x1,int y1,int x2,int y2) {
       for(int i=0;i<=delta and y1+i <= y2;i++)
 	forward(x1+delta,y1+i);
   } 
+}
+*/
+
+inline void DPmatrixHMM::forward(int x1,int y1,int x2,int y2) {
+  assert(x1 < x2 or y1 < y2);
+  assert(x2 < size1());
+  assert(y2 < size2());
+
+  for(int x=x1;x<=x2;x++)
+    for(int y=y1;y<=y2;y++)
+      forward(x,y);
 }
 
 

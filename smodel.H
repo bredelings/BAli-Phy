@@ -6,6 +6,7 @@
 #include <string>
 #include "mytypes.H"
 #include "alphabet.H"
+#include "rates.H"
 
 /************ Abstract class Substitution Model **************/
 namespace substitution {
@@ -316,9 +317,7 @@ namespace substitution {
       return (*this);
     }
 
-    // set parameters
-    virtual const vector<double>& parameters() const {return parameters_;}
-    virtual void parameters(const vector<double>& p);
+    void recalc();
 
     // when copying, get our own copy of the submodel
     NestedModel(const NestedModel& M):Model(M),sub_model(M.sub_model->clone()) 
@@ -419,13 +418,33 @@ namespace substitution {
 
   /// A discrete-gamma Model
 
-  /// A discrete-gamma Model
-  //  Only has one parameter: the shape parameter for the gamma
-  class GammaRateModel: public MultiRateOnReversible {
+  class DistributionRateModel: public MultiRateOnReversible {
   protected:
     double super_prior() const;
     void super_fiddle();
     void recalc();
+
+    RateDistribution* D;
+
+  public:
+
+    DistributionRateModel* clone() const {return new DistributionRateModel(*this);}
+
+    const RateDistribution& distribution() const {return *D;}
+
+    string name() const;
+    
+    DistributionRateModel& operator=(const DistributionRateModel&);
+
+    DistributionRateModel(const DistributionRateModel&);
+
+    DistributionRateModel(const ReversibleModel& M, const RateDistribution& RD,int n);
+    ~DistributionRateModel();
+  };
+
+  /// A discrete-gamma Model
+  //  Only has one parameter: the shape parameter for the gamma
+  class GammaRateModel: public DistributionRateModel {
   public:
     virtual GammaRateModel* clone() const {return new GammaRateModel(*this);}
 
