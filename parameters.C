@@ -107,7 +107,7 @@ void IndelModel::construct_lengthp(int n) {
 	totals[s] = exp(totals[s]);
       }
       
-      std::cout<<"t = "<<t-1<<
+      std::cerr<<"t = "<<t-1<<
 	"  totalM = "<<totals[0]<<
 	"  totalG1 = "<<totals[1]<<
 	"  totalG2 = "<<totals[2]<<
@@ -126,7 +126,7 @@ void IndelModel::construct_lengthp(int n) {
 
   p_length = p1[3];
   for(int i=0;i<p_length.size();i++)
-    std::cout<<i<<"  "<<p_length[i]<<std::endl;
+    std::cerr<<i<<"  "<<p_length[i]<<std::endl;
 
 }
 

@@ -9,8 +9,8 @@ double prior_no_tree(const alignment& A,const Parameters& Theta) {
   int init_gaps=0;
   for(int column=0;column<A.length();column++) {
     for(int i=0;i<A.num_sequences();i++) {
-      if (A(column,i) == alphabet::gap &&
-	  (column == 0 || A(column-1,i) != alphabet::gap))
+      if (A(column,i) == alphabet::gap and
+	  (column == 0 or A(column-1,i) != alphabet::gap))
 	init_gaps++;
 
     }    
@@ -25,17 +25,17 @@ double prior_branch(const alignment& A,const IndelModel& IModel,int n1,int n2) {
   int init_gaps = 0;
   int extend_gaps = 0;
   for(int column=0;column<A.length();column++) {
-    if (A(column,n1) == alphabet::gap && A(column,n2) != alphabet::gap) {
+    if (A(column,n1) == alphabet::gap and A(column,n2) != alphabet::gap) {
       if (gap == 1) extend_gaps++;
       else init_gaps++;
       gap = 1;
     }
-    else if (A(column,n1) != alphabet::gap && A(column,n2) == alphabet::gap) {
+    else if (A(column,n1) != alphabet::gap and A(column,n2) == alphabet::gap) {
       if (gap == 2) extend_gaps++;
       else init_gaps++;
       gap = 2;
     }
-    else if (A(column,n1) != alphabet::gap && A(column,n2) != alphabet::gap)
+    else if (A(column,n1) != alphabet::gap and A(column,n2) != alphabet::gap)
       gap=0;
   }
   return IModel.lambda_O*init_gaps + IModel.lambda_E*extend_gaps;
@@ -81,8 +81,8 @@ double prior_branch_HMM(const alignment& A,const IndelModel& IModel,int parent,i
 double prior_HMM(const alignment& A,const Parameters& Theta) {
   const tree& T = Theta.T;
 
-  assert(0); //FIXME - wrong way to find highest node
-  int highest_node = Theta.T.num_nodes()-2;
+  int highest_node = T.get_nth(T.num_nodes()-2);
+  highest_node = T.branch_up(highest_node).parent();
   double P = Theta.IModel.lengthp(A.seqlength(highest_node));
 
   for(int b=0;b<T.branches();b++) {

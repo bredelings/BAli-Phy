@@ -365,6 +365,12 @@ void sample_topology(alignment& A,Parameters& Theta1,int b) {
   vector <int> bits2 = get_bits(A,T2,b);
   vector <int> bits3 = get_bits(A,T3,b);
 
+  //FIXME - assert something here are having the same nodes
+  //for the different topologies w/ get_nodes
+  //Also check the tree topologies
+  assert(bits1.size() == bits2.size());
+  assert(bits3.size() == bits2.size());
+
   /*** Set up initial conditions (for character -1) ***/
   vector< vector<double> > P1;
   P1.push_back(vector<double>(nstates,log_0));
@@ -423,8 +429,8 @@ void sample_topology(alignment& A,Parameters& Theta1,int b) {
   /****************** Do traceback ********************/
   A = construct(A,chosen_Theta->T,path2,b);
 
-  std::cerr<<old<<endl<<endl;
-  std::cerr<<A<<endl<<endl;
+  //  std::cerr<<old<<endl<<endl;
+  //  std::cerr<<A<<endl<<endl;
   double l1 = probability3(old,Theta1);
   double l2 = probability3(A,*chosen_Theta);
 

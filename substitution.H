@@ -2,8 +2,12 @@
 #include "tree.H"
 #include "parameters.H"
 
-std::valarray<double> peel(const vector<int>&,const Parameters&,int,int);
+// Process half of a tree/column
+std::valarray<double> peel(const vector<int>&,const Parameters&,int,bool);
 
-double substitution(const alignment& A,const Parameters& Theta);
-double substitution(const vector<int>& residues,const Parameters& Theta,
-		    TreeFunc< std::valarray<double> >& distributions);
+
+// Process a whole tree/column
+double substitution(const vector<int>&,const Parameters&);
+
+// Process all the columns in A
+double substitution(const alignment& A,const Parameters&);

@@ -31,11 +31,11 @@ void change_branch_length(const alignment& A, Parameters& Theta,int b) {
     if (myrandomf() < exp(lL_2 - lL_1)*density21/density12) {
       Theta=Theta2;
       std::cerr<<Theta2.T.branch(b).length()<<" "<<Theta.T.branch(b).length()<<endl;
-      std::cerr<<"branch "<<b<<":  "<<length<<" -> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
+      std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
       
     }
     else
-      std::cerr<<"branch "<<b<<":  "<<length<<" !-> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
+      std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
 }
 
 void move_node(const alignment& A, Parameters& Theta,int node) {
@@ -77,24 +77,16 @@ void move_node(const alignment& A, Parameters& Theta,int node) {
 void sample(alignment& A,Parameters& Theta) {
 
   double r = myrandomf();
-  if (r < 0.5) {
-    //    int node1 = myrandom(Theta.T.leaves()-1,Theta.T.num_nodes()-3);
+  if (r < 0.25) {
     int b = myrandom(Theta.T.branches());
 
     A = sample_alignment(A,Theta,b);
-    std::cerr<<"logp = BLANK"<<std::endl;
   }
-  else if (r < -0.70) {
+  else if (r < 0.5) {
     int node = myrandom(Theta.T.leaves(),Theta.T.num_nodes()-1);
     A = sample_node(A,Theta,node);
   }
-  //  else if (r < 0.75) {
-  //    int node = myrandom(T.leaves(),T.num_nodes-1);
-  //
-  //    move_node(A,Theta,node);
-  //    
-  //  }
-  else if (r<1.9) {
+  else if (r<0.75) {
     int b = myrandom(Theta.T.leaves(),Theta.T.branches());
     sample_topology(A,Theta,b);
   }

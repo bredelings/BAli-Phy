@@ -216,17 +216,18 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
 }
 
 
-vector<valarray<double> > distributions(const alignment& A,const Parameters& Theta,const vector<int>& seq,int node1,int node2) {
+vector<valarray<double> > distributions(const alignment& A,const Parameters& Theta,
+					const vector<int>& seq,int b,bool up) {
   const alphabet& a = A.get_alphabet();
 
   vector< valarray<double> > dist(seq.size());
 
   for(int i=0;i<dist.size();i++) {
-    vector<int> residues(Theta.T.leaves());
+    vector<int> residues(A.size2());
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
     dist[i].resize(a.size());
-    dist[i] = peel(residues,Theta,node1,node2);
+    dist[i] = peel(residues,Theta,b,up);
 
     // double sum = dist[i].sum();
     // it IS possible to have no leaves if internal sequences is non-gap
@@ -248,7 +249,6 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
 
   int node1 = T.branch(b).parent();
   int node2 = T.branch(b).child();
-  assert(node1 > node2);
 
   int old_length1 = old.seqlength(node1);
 
@@ -265,8 +265,8 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   }
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
-  vector< valarray<double> > dists1 = distributions(old,Theta,seq1,node2,node1);
-  vector< valarray<double> > dists2 = distributions(old,Theta,seq2,node1,node2);
+  vector< valarray<double> > dists1 = distributions(old,Theta,seq1,b,true);
+  vector< valarray<double> > dists2 = distributions(old,Theta,seq2,b,false);
 
   valarray<double> g1_sub(seq2.size());
   for(int i=0;i<seq2.size();i++)  

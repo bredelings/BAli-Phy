@@ -10,15 +10,15 @@ static int total_samples = 0;
 // This method of printing alignments is too large
 void print_alignments(const alignment& A,const string& s1,const string& s2) {
   int n1 = A.index(s1);
-  assert(n1 != -1);
+  if (n1 != -1) return;
 
   int n2 = A.index(s2);
-  assert(n2 != -1);
+  if (n2 != -1) return;
 
   int pos1=0,new_pos1=0;
   int pos2=0,new_pos2=0;
   for(int column=0;column<A.length();column++) {
-    if (A(column,n1) == alphabet::gap && A(column,n2) == alphabet::gap) 
+    if (A(column,n1) == alphabet::gap and A(column,n2) == alphabet::gap) 
       continue;
 
     if (A(column,n1) != alphabet::gap) 
@@ -64,16 +64,14 @@ inline int aid(const alignment& A) {
   return id;
 }
 
-void print_stats(const alignment& A,const Parameters& Theta,
+void print_stats(std::ostream& o,const alignment& A,const Parameters& Theta,
 		 double probability(const alignment&,const Parameters&)) {
-  std::cerr<<"previous = "<<
-    probability_no_tree(A,Theta)<<"  "<<
-    probability3(A,Theta)<<"  "<<
-    probability(A,Theta)<<endl
-	   <<"old  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl
-	   <<"HMM  ["<<probability3(A,Theta)<<": "<<prior_HMM(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl;
+  o<<endl<<" old  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl
+   <<" HMM  ["<<probability3(A,Theta)<<": "<<prior_HMM(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl<<endl;
   
-  std::cerr<<A<<endl;
+  o<<A<<endl<<endl;
+
+  std::cout<<"tree = "<<Theta.T<<endl<<endl;
 }
 
 valarray<double> autocorrelation(valarray<double> v) {
@@ -103,7 +101,12 @@ void MCMC(alignment& A,Parameters& Theta,
   bool ML_printed = true;
   
   A.create_internal(T);
-  std::cerr<<A<<endl;
+
+  std::cout<<"Initial Alignment = \n";
+  print_stats(std::cout,A,Theta,probability);
+    
+  std::cout<<"Initial Tree = \n";
+  std::cout<<T<<endl<<endl;
 
   const int correlation_time = int(T.leaves()*log(T.leaves()));
   const int start_after = int( 600.0*T.leaves()*log(T.leaves()) );
@@ -112,8 +115,6 @@ void MCMC(alignment& A,Parameters& Theta,
   double p=probability(A,Theta);
   double ML_score = p;
   double new_p=0;
-
-  print_stats(A,Theta,probability);
 
   valarray<double> v(p,5000);
 
@@ -126,6 +127,7 @@ void MCMC(alignment& A,Parameters& Theta,
 
     /******************** Record Statistics *******************/
     if (iterations > start_after) {
+      std::cout<<"tree = "<<Theta.T<<std::endl;
       if (iterations%correlation_time == 0) 
       	print_alignments(A,Theta);
     }
@@ -148,7 +150,7 @@ void MCMC(alignment& A,Parameters& Theta,
       ML_printed = false;
     }
 
-    if (!ML_printed and iterations % 100 == 0) {
+    if (not ML_printed and iterations % 100 == 0) {
       std::cerr<<"ML = "<<ML_score<<endl;
       std::cerr<<ML_alignment<<endl;
       std::cerr<<ML_tree<<endl;
@@ -157,13 +159,13 @@ void MCMC(alignment& A,Parameters& Theta,
 
     /***************** Print Diagnostic Output ********************/
     if (iterations %50 == 0 or std::abs(p - new_p)>8) {
-      valarray<double> w = autocorrelation(v);
-      for(int i=0;i<w.size();i++) {
-	std::cout<<i<<"   "<<w[i]<<std::endl;
-      }
+      //      valarray<double> w = autocorrelation(v);
+      //      for(int i=0;i<w.size();i++) {
+      //	std::cout<<i<<"   "<<w[i]<<std::endl;
+      //      }
 
-      print_stats(A,Theta,probability);
-      print_stats(A2,Theta2,probability);
+      print_stats(std::cerr,A,Theta,probability);
+      print_stats(std::cerr,A2,Theta2,probability);
 
       A2.print_fasta(std::cerr);
     }

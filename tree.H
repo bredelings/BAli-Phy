@@ -101,8 +101,13 @@ public:
 class branchview {
   Branch* b;
 public:
-  nodeview parent() const {return b->parent;}
-  nodeview child() const {return b->child;}
+  nodeview parent() const {
+    if (b->parent->parent)
+      return b->parent;
+    else
+      return b->parent->right;
+  }
+  nodeview child() const { return b->child;}
 
   int& name() {return b->name;}
   const int& name() const {return b->name;}
@@ -117,7 +122,12 @@ public:
 class const_branchview {
   const Branch* b;
 public:
-  nodeview parent() const {return b->parent;}
+  nodeview parent() const {
+    if (b->parent->parent)
+      return b->parent;
+    else
+      return b->parent->right;
+  }
   nodeview child() const {return b->child;}
 
   int name() const {return b->name;}
@@ -165,7 +175,7 @@ public:
   const nodeview operator[](int i) const { return nodeview(names[i]);}
   //  node& operator[](int i) { return *names[i];}
 
-  int get_nth(int i) {return order[i]->name;}
+  int get_nth(int i) const {return order[i]->name;}
 
   int leaves() const {return n_leaves;}
   int branches() const {return branches_.size()-1;}

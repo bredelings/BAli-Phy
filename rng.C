@@ -96,7 +96,7 @@ tuple Multinomial::operator()(const valarray<double>& p,unsigned long n1) {
 
   tuple m(0,p.size());
   double remaining = 1.0;
-  for(int i=1;n && i<p.size();i++) {
+  for(int i=1;n and i<p.size();i++) {
     m[i] = Bin(p[i]/remaining,n);
     n -= m[i];
     remaining -= p[i];

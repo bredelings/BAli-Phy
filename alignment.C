@@ -26,8 +26,8 @@ void alignment::pad(int column) {
 void alignment::resize(int s1,int s2) {
   ublas::matrix<int> array2(s1,s2);
   
-  for(int i=0;i<array.size1() && i<array2.size1();i++)
-    for(int j=0;j< array.size2() && j<array2.size2();j++)
+  for(int i=0;i<array.size1() and i<array2.size1();i++)
+    for(int j=0;j< array.size2() and j<array2.size2();j++)
       array2(i,j) = array(i,j);
   
   array.resize(array2.size1(),array2.size2());
@@ -88,7 +88,7 @@ bool alignment::changelength(int l) {
       if (l < sequences[i].size())
 	can_do = false;
   }
-  if (!can_do) return false;
+  if (not can_do) return false;
 
   resize(l,array.size2());
 
@@ -120,21 +120,21 @@ void alignment::remap(const vector<string>& order) {
   vector<sequence> old_order = sequences;
   
   bool mismatch = false;
-  for(int i=0;i<sequences.size() && !mismatch;i++) {
+  for(int i=0;i<sequences.size() and not mismatch;i++) {
     if (sequences[i].name != order[i]) 
       mismatch = true;
   }
 
-  if (!mismatch) return;
+  if (not mismatch) return;
 
   vector<int> mapping(sequences.size());
   for(int i=0;i<mapping.size();i++) {
     int target = -1;
-    for(int j=0;j<order.size() && target == -1;j++) {
+    for(int j=0;j<order.size() and target == -1;j++) {
       if (order[j] == sequences[i].name)
 	target = j;
     }
-    assert(target != -1);
+    assert(target != -1);// FIXME - make this an exception "can't find sequence X in tree"
     mapping[i] = target;
   }
 
@@ -187,14 +187,14 @@ void alignment::load_fasta(const alphabet& a,std::istream& file) {
       continue;
     }
     
-    if (!name.empty()) 
+    if (not name.empty()) 
       add_sequence(a,name,current);
     
     name = string(line.c_str()+1);
     current.clear();
     continue;
   }
-  if (!name.empty()) 
+  if (not name.empty()) 
     add_sequence(a,name,current);
 }
 
@@ -227,17 +227,17 @@ void alignment::create_internal(const SequenceTree& T) {
   }
 
   // Make sure there are no G2->G1 transitions
-  for(int n2=0;n2<T.branches();n2++) {
-    assert(0);  //FIXME - not how we deal w/ branches!
-    int n1 = T[n2].parent();
+  for(int b=0;b<T.branches();b++) {
+    int n1 = T.branch(b).parent();
+    int n2 = T.branch(b).child();
 
     int g1 = -1,g2 = -1;
     for(int column=0;column<length();column++) {
-      if (gap(column,n1) and !gap(column,n2)) { //G1
+      if (gap(column,n1) and not gap(column,n2)) { //G1
 	if (g1 != -1) 
 	  g1 = column;
       }
-      else if (!gap(column,n1) and gap(column,n2)) { //G2
+      else if (not gap(column,n1) and gap(column,n2)) { //G2
 	if (g2 != -1) 
 	  g2 = column;
       }    

@@ -83,7 +83,7 @@
 
 int main(int argc,char* argv[]) {
 
-  myrand_init();
+  myrand_init(0);
   alphabet nucleotides("AGTC");
   
   std::cerr.precision(10);
@@ -102,14 +102,14 @@ int main(int argc,char* argv[]) {
   }
 
   ifstream file(argv[1]);
-  if (!file) {
+  if (not file) {
     std::cerr<<"Error: can't open alignment file '"<<argv[1]<<"'"<<endl;
     std::cerr<<"Usage: "<<argv[0]<<" <alignment file.fasta> <tree file> <lambda_O> <lambda_E>\n";
     exit(1);
   }
 
   ifstream file2(argv[2]);
-  if (!file2) {
+  if (not file2) {
     std::cerr<<"Error: can't open tree file '"<<argv[2]<<"'"<<endl;
     std::cerr<<"Usage: "<<argv[0]<<" <alignment file.fasta> <tree file> <lambda_O> <lambda_E>\n";
     exit(1);
@@ -138,27 +138,25 @@ int main(int argc,char* argv[]) {
       std::cerr<<"Alignment file \""<<argv[1]<<"\" didn't  contain any sequences!\n";
       exit(1);
     }
-    std::cerr<<A<<endl;
     
     SequenceTree T1(file2);
-    std::cout<<"------begin tree---------\n";
-    std::cout<<T1<<endl;
-    std::cout<<"------end tree---------\n";
-    
+
     {
       std::valarray<double> f(0.0,4);
       f[0] = 0.25;f[1]=0.25;f[2]=0.25;f[3]=0.25;
 
       HKY smodel(nucleotides,2.0,f);
 
-      std::cerr<<"rate matrix = \n";
+      std::cout<<"rate matrix = \n";
       for(int i=0;i<4;i++) {
 	for(int j=0;j<4;j++) 
-	  std::cerr<<smodel.rates()(i,j)<<" ";
-	std::cerr<<endl;
+	  std::cout<<smodel.rates()(i,j)<<" ";
+	std::cout<<endl;
       }
+      std::cout<<endl;
+
       Parameters Theta(smodel,lambda_O,lambda_E,T1);
-      MCMC(A,Theta,250000,probability3);
+      MCMC(A,Theta,50000,probability3);
     }
   }
   catch (std::exception& e) {

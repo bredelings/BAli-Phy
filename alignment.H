@@ -41,9 +41,16 @@ public:
 
   alignment& operator=(const alignment&);
 
+  //Number of leaf sequences
   int num_sequences() const { return sequences.size() ;}
+
+  //Number of total sequences
   int size2() const {return array.size2();}
+
+  //Length of alignment
   int length() const {return array.size1();}
+
+  //Length of a particular sequence
   int seqlength(int) const;
 
   const alphabet& get_alphabet() const {return *sequences[0].a;}

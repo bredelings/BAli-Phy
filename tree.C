@@ -44,7 +44,7 @@ void TreeView::copy_tree(node* n) {
 }
 
 TreeView TreeView::copy() const {
-  if (!root)
+  if (not root)
     return TreeView(0);
 
   node* top = new node(*root);
@@ -105,7 +105,7 @@ vector<node*> find_nodes(node* root) {
 
 
 void find_leaves(node* n,vector<node*>& leaves) {
-  if (!n)
+  if (not n)
     return;
 
   if (leaf(*n)) {
@@ -161,7 +161,7 @@ void tree::add_right(node* parent,const tree& T) {
 }
 
 void tree::add_root() {
-  assert(!root);
+  assert(not root);
   root = new node;
   order.push_back(root);
   names.push_back(root);
@@ -185,7 +185,7 @@ void tree::reorder() {
   int new_size = order.size();
 
   // Mark all nodes as non-visted
-  for(int i=0;i<order.size();i++)
+  for(int i=0;i<order.size();i++) 
     order[i]->order = -1;
 
   // Fill order with the leaves, and order them
@@ -202,7 +202,7 @@ void tree::reorder() {
     int end = order.size();
     for(int i=start;i<end;i++) {
       node* parent = order[i]->parent;
-      if (!parent) continue; // actually this would be a good exit condition
+      if (not parent) continue; // actually this would be a good exit condition
 
       if (parent->left and parent->right) {  // if there are 2 children
 	if (parent->left->order == -1) continue;  // both children 
@@ -221,8 +221,8 @@ void tree::reorder() {
   for(int i=0;i<order.size();i++)
     assert(order[i]->order == i);
 
-  /***** re-assign names if the tree has changed *****/
-  if (not names.size() or old_size != new_size) {
+  /***** assign names and branches if the tree has changed *****/
+  if (names.size() < order.size()) {
     names = order;
     for(int i=0;i<names.size();i++)
       names[i]->name = i;
@@ -232,6 +232,33 @@ void tree::reorder() {
       branches_[i] = names[i]->parent_branch;
       branches_[i]-> name = i;
     }
+  }
+  /******** otherwise recompute the index ********/
+  else {
+    for(int i=0;i<order.size();i++) {
+      node* n = order[i];
+      names[n->name] = n;
+      if (n->parent_branch)
+	branches_[n->parent_branch->name] = n->parent_branch;
+    }
+  }
+
+  //Force the highest number branch to the right of root
+  if (root->right and
+      branches_[branches_.size()-1]->child != root->right) {
+    int i = branches_.size()-1;
+    int j = root->right->parent_branch->name;
+    std::swap(branches_[i]->name,branches_[j]->name);
+    std::swap(branches_[i],branches_[j]);
+  }
+
+  /***** Check that our lookup tables are right *****/
+  assert(names.size() == order.size());
+  for(int i=0;i<names.size();i++) {
+    assert(names[i]->name == i);
+    assert(order[i]->order == i);
+    if (i<branches())
+      assert(branches_[i]->name == i);
   }
 
   compute_ancestors();
@@ -260,14 +287,17 @@ void tree::compute_ancestors() {
 }
 
 //Unrooted Tree
-std::valarray<bool> tree::partition(int n1,int n2) const {
+std::valarray<bool> tree::partition(int node1,int node2) const {
+  node* n1 = names[node1];
+  node* n2 = names[node2];
+
   std::valarray<bool> mask(num_nodes());;
 
-  if (n1 > n2 or
-      (!names[n1]->parent->parent and !names[n2]->parent->parent))
-    mask = ancestors[n2];
+  if ((n1==n2->parent) or
+      (not n1->parent->parent and not n2->parent->parent))
+    mask = ancestors[node2];
   else 
-    mask = !ancestors[n1];
+    mask = !ancestors[node1];
     
   return mask;
 }
@@ -275,7 +305,7 @@ std::valarray<bool> tree::partition(int n1,int n2) const {
 branchview tree::branch_up(int node1) {
   node* n1 = names[node1];
   if (not n1->parent->parent)
-    return n1->parent->parent->left->parent_branch;
+    return n1->parent->left->parent_branch;
   else
     return n1->parent_branch;
 }
@@ -283,7 +313,7 @@ branchview tree::branch_up(int node1) {
 const_branchview tree::branch_up(int node1) const {
   node* n1 = names[node1];
   if (not n1->parent->parent)
-    return n1->parent->parent->left->parent_branch;
+    return n1->parent->left->parent_branch;
   else
     return n1->parent_branch;
 }
@@ -320,7 +350,7 @@ void do_swap(node* c1,node* c2) {
 
   Branch* b1 = n1->parent_branch;
   Branch* b2 = n2->left->parent_branch;
-  if (c1 == n2->left)
+  if (c2 == n2->left)
     b2 = n2->right->parent_branch;
 
   std::swap(n1->name,n2->name);
@@ -378,6 +408,9 @@ void tree::exchange(int node1,int node2) {
     TreeView::exchange_cousins(n1,n2);
 
   reorder();
+  for(int i=0;i<leaves();i++)
+    assert(branch_up(i) == i);
+
 }
 
 
@@ -455,7 +488,7 @@ TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
       top = i;
     else {
       int here=i;
-      while(!T.ancestor(here,top)) {
+      while(not T.ancestor(here,top)) {
 	here = T[here].parent();
 	present(here) = 1;
       }
@@ -479,7 +512,7 @@ TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
 
     int here=i;
     int parent;
-    while(!T.ancestor(here,top)) {
+    while(not T.ancestor(here,top)) {
       here = T[here].parent();
       if (present(here) != -1)
 	goto done;
@@ -512,13 +545,13 @@ void SequenceTree::write(std::ostream& o,int n) const {
     int right = T[n].right();
     o<<"(";
     write(o,left);
-    o<<":"<<T.branch(left).length()<<",";
+    o<<":"<<T.branch_up(left).length()<<",";
     write(o,right);
 
     if (right>= branches())
       o<<":"<<0<<")";
     else
-      o<<":"<<T.branch(right).length()<<")";
+      o<<":"<<T.branch_up(right).length()<<")";
   }
   o.flags(old_flags);
 }
@@ -551,12 +584,13 @@ SequenceTree::SequenceTree(const sequence& s)
 }
 
 SequenceTree::SequenceTree(const SequenceTree& T1, const SequenceTree& T2):tree(T1,T2) {
-  assert(0); //associations between leaves and sequence names
-  // can get screwed up - CHECK this - it could be OK.
+  
+  // We will create new names which will be the same as
+  //  T1.order + T2.order
   for(int i=0;i<T1.leaves();i++) 
-    sequences.push_back(T1.seq(i));
+    sequences.push_back(T1.seq(T1.get_nth(i)));
   for(int i=0;i<T2.leaves();i++) 
-    sequences.push_back(T2.seq(i));
+    sequences.push_back(T2.seq(T2.get_nth(i)));
 }
 
 

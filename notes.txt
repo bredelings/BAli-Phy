@@ -38,3 +38,4 @@ if (bitset(bits1,5))   // clear bits in alignments to calculate
   states1 &= ~present01;
 
 // so alignment 4 is cleared if 
+------------------------

@@ -196,7 +196,7 @@ alignment sample_node(const alignment& old,const Parameters& Theta,int node) {
     choices[s1] = P[P.size()-1][s1] + p_move(states1,endstates,Theta.IModel);
   }
 
-  std::cerr<<old<<endl<<endl;
+  //  std::cerr<<old<<endl<<endl;
 
   int s2 = choose(choices);
   for(int character=P.size()-1;;) {
@@ -234,7 +234,7 @@ alignment sample_node(const alignment& old,const Parameters& Theta,int node) {
     s2 = choose(choices);
   }
 
-  std::cerr<<A<<endl<<endl;
+  //  std::cerr<<A<<endl<<endl;
 
   assert(valid(A));
   return A;
