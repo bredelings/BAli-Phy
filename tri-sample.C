@@ -54,6 +54,7 @@ namespace states {
 //  - these alignment can only have 3 states each (M,G1,G2, not E) and so
 //    total 3*3 = 9 states.  
 const int nstates = 1+3+3+1+3*9;
+const int endstate = nstates;
 const int bitsmask = 15;
 const int emitmask = 14;
 
@@ -99,7 +100,7 @@ static int bits_to_states(int bits) {
 inline int getstates(int S) {
   assert(0 <= S and S<nstates+1);
 
-  if (S==nstates)
+  if (S==endstate)
     return (1<<12)|(1<<11)|(1<<10)|(states::E<<8)|(states::E<<6)|(states::E<<4);
 
   int bits=0;
@@ -171,12 +172,30 @@ inline int dk(int S) {
     return 0;
 }
 
+inline int dc(int S) {
+  if (dj(S)==0 and dk(S)==0)
+    return 0;
+  else
+    return 1;
+}
+
 inline int dl(int S) {
   S = getstates(S);
   if (S&(1<<0))
     return 1;
   else
     return 0;
+}
+
+bool silent(int S) {
+  if (S==endstate)
+    return false;
+
+  int states = getstates(S);
+  if (states&emitmask)
+    return false;
+  else
+    return true;
 }
 
 
@@ -190,7 +209,7 @@ inline double getQ(int S1,int S2,const IndelModel& IModel) {
   // If states are unordered, then force numerical order
   //  - this means that sequence 3 comes first
   // Note that the end state IS ordered
-  if (not (states1 & states2 & bitsmask) and S1 != nstates and S2 != nstates)
+  if (not (states1 & states2 & bitsmask) and S1 != endstate and S2 != endstate)
     if ((states1 & bitsmask) >= (states2 & bitsmask))
       return log_0;
 
@@ -204,8 +223,8 @@ inline double getQ(int S1,int S2,const IndelModel& IModel) {
       return log_0;
   }
 
-  if (S1==nstates) {
-    if (S2==nstates)
+  if (S1==endstate) {
+    if (S2==endstate)
       assert(P==0);
     else
       assert(P<log_0/100);
@@ -342,7 +361,6 @@ inline void DPmatrixHMM::forward(int i2,int c2,const Matrix& GQ) {
   assert(i2<size1());
   assert(c2<size2());
 
-  // FIXME   - we need to make silent states (e.g. state 7) last
   for(int i=0;i<states(c2).size();i++) {
     int S2 = states(c2)[i];
     Matrix& FS2 = (*this)[S2];
@@ -385,16 +403,6 @@ inline void DPmatrixHMM::forward(int i2,int c2,const Matrix& GQ) {
     FS2(i2,c2) += sub;
   }
 }     
-
-alignment reorder(const alignment& A1,const vector<int>& columns) {
-  alignment A2 = A1;
-  A2.changelength(columns.size());
-  for(int column=0;column<A2.length();column++) 
-    for(int s=0;s<A2.size2();s++) 
-      A2(column,s) = A1(columns[column],s);
-
-  return A2;
-}
 
 vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
 
@@ -439,19 +447,8 @@ vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
     path.push_back(S);
   }
   
-  path.push_back(nstates);
+  path.push_back(endstate);
   return path;
-}
-
-bool silent(int S) {
-  if (S==nstates)
-    return false;
-
-  int states = getstates(S);
-  if (states&emitmask)
-    return false;
-  else
-    return true;
 }
 
 vector<int> generalize(const vector<int>& path) {
@@ -503,7 +500,7 @@ double path_check(const vector<int>& path, const DPmatrix& Matrices, const Matri
     if (di(state1)) i++;
     if (dj(state1) or dk(state1)) c++;
 
-    if (i>I or c>C or state1 == nstates)
+    if (i>I or c>C or state1 == endstate)
       break;
 
     int state2 = path[l+1];
@@ -527,8 +524,50 @@ double path_check(const vector<int>& path, const DPmatrix& Matrices, const Matri
   return Pr;
 }
 
+vector<double> path_Q(const vector<int>& path,const DPmatrixHMM& Matrices,const Matrix& GQ) {
+  double P_path=0;
+  double P_sub=0;
+  int i=0,c=0;
+  for(int l=0;l<path.size();l++) {
+
+    int state2 = path[l];
+    if (di(state2))
+      i++;
+    if (dc(state2))
+      c++;
+
+    if (l == 0) {
+      double sum=log_0;
+      for(int S=0;S<nstates;S++)
+	if (S != 7)
+	  sum = logsum(sum,Matrices[S](0,0)+GQ(S,state2));
+      P_path += sum;
+    }
+    else {
+      P_path += GQ(path[l-1],state2);
+    }
+
+    double sub=0;
+    if (di(state2) and dc(state2))
+      sub = log(sum(Matrices.dists1[i-1] * Matrices.frequency * Matrices.dists2[c-1]));
+    else if (di(state2))
+      sub = Matrices.s1_sub[i-1];
+    else if (dc(state2))
+      sub = Matrices.s2_sub[c-1];
+
+    P_sub += sub;
+  }
+  assert(i == Matrices.size1()-1 and c == Matrices.size2()-1);
+  vector<double> p;
+  p.push_back(P_path);
+  p.push_back(P_sub);
+  return p;
+}
+
+
 double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& GQ) {
   double P2 = path_check(path,Matrices,GQ);
+  std::cerr<<"P(path)2 = "<<P2<<std::endl;
 
   const int I = Matrices.size1()-1;
   const int C = Matrices.size2()-1;
@@ -539,9 +578,14 @@ double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& G
   int l = path.size()-1;
   int state2 = path[l];
 
-  //FIXME - what if the first state is actually state 7?
-  while (i>0 or c>0) {
-    assert(l>0);
+  //We should really stop when we reach the Start state.
+  // - since the start state is simulated by a non-silent state
+  //   NS(0,0) we should go negative
+  // - but we would have to check path[-1] to see which state
+  //   made sample_path go negative
+  // - instead we can check if l==0 - we know that the start state
+  //   is at path[-1]
+  while (l>0) {
 
     vector<double> transition(nstates);
     for(int state1=0;state1<nstates;state1++)
@@ -557,13 +601,11 @@ double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& G
     l--;
     state2 = state1;
     Pr += p;
-
-    assert(i>=0 and c>=0);
   }
   assert(l == 0);
   assert(i == 0 and c == 0);
   assert(Pr > log_0);
-
+  std::cerr<<"P(path) = "<<Pr<<std::endl;
   return Pr;
 }
 
@@ -576,9 +618,14 @@ vector<int> sample_path(const DPmatrix& Matrices,const Matrix& GQ) {
   int i = I;
   int c = C;
 
-  int state2 = nstates;
-  //FIXME - what if the first state is silent (e.g. state 7)?
-  while (i>0 or c>0) {
+  int state2 = endstate;
+
+  //We should really stop when we reach the Start state.
+  // - since the start state is simulated by a non-silent state
+  //   NS(0,0) we should go negative
+  // - check that we came from (0,0) though
+  while (i>=0 and c>=0) {
+    path.push_back(state2);
     vector<double> transition(nstates);
     for(int state1=0;state1<nstates;state1++)
       transition[state1] = Matrices[state1](i,c)+GQ(state1,state2);
@@ -588,12 +635,9 @@ vector<int> sample_path(const DPmatrix& Matrices,const Matrix& GQ) {
     if (di(state1)) i--;
     if (dj(state1) or dk(state1)) c--;
 
-    path.push_back(state1);
     state2 = state1;
-
-    assert(i>=0 and c>=0);
   }
-  assert(i == 0 and c == 0);
+  assert(i+di(state2)==0 and c+dc(state2)==0);
 
   std::reverse(path.begin(),path.end());
   return path;
@@ -623,8 +667,9 @@ alignment construct(const alignment& old, const vector<int>& path,
       subA3.push_back(column);
   }
 
-
-  const int newlength = path.size() + 
+  
+  // Account for silent end state with "-1"
+  const int newlength = path.size() - 1 + 
     (subA1.size()-seq1.size()) + (subA2.size() - seq2.size()) + (subA3.size() - seq3.size());
 
   alignment A = old;
@@ -712,12 +757,13 @@ alignment construct(const alignment& old, const vector<int>& path,
   assert(c4 == seq2.size());
   assert(c5 == subA3.size());
   assert(c6 == seq3.size());
-  assert(l == path.size());
+  assert(l == path.size()-1);
 
   for(int i=0;i<T.leaves();i++) 
     assert(A.seqlength(i) == old.seqlength(i));
 
   std::cerr<<"new = "<<A<<endl;  
+  //  std::cerr<<"new(reordered) = "<<project(A,n0,n1,n2,n3)<<endl;
   assert(valid(A));
 
   return A;
@@ -801,6 +847,26 @@ vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3) {
   return columns;
 }
 
+alignment project(const alignment& A1,int n0,int n1,int n2,int n3) {
+  alignment A2;
+  A2.add_sequence(A1.seq(n0));
+  A2.add_sequence(A1.seq(n1));
+  A2.add_sequence(A1.seq(n2));
+  A2.add_sequence(A1.seq(n3));
+
+  vector<int> columns = getorder(A1,n0,n1,n2,n3);
+  A2.changelength(columns.size());
+  for(int i=0;i<A2.length();i++) {
+    A2(i,0) = A1(columns[i],n0);
+    A2(i,1) = A1(columns[i],n1);
+    A2(i,2) = A1(columns[i],n2);
+    A2(i,3) = A1(columns[i],n3);
+  }
+
+  return A2;
+}
+
+
 alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 			   int node1,int node2) {
   const tree& T = Theta.T;
@@ -837,7 +903,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   vector<int> columns = getorder(old,n0,n1,n2,n3);
 
   std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
-  std::cerr<<"old (reordered) = "<<reorder(old,columns)<<endl;
+  std::cerr<<"old (reordered) = "<<project(old,n0,n1,n2,n3)<<endl;
 
   // Find sub-alignments and sequences
   vector<int> seq1;
@@ -889,9 +955,9 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   vector<int> state_order(nstates);
   for(int i=0;i<state_order.size();i++)
     state_order[i] = i;
-  std::swap(7,nstates-1);
+  std::swap(state_order[7],state_order[nstates-1]);        // silent states must be last
 
-  // Determine which states are allowed to match (,c)
+  // Determine which states are allowed to match (,c2)
   for(int c2=0;c2<Matrices.size2();c2++) {
     int j2 = jcol[c2];
     int k2 = kcol[c2];
@@ -901,7 +967,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
       int j1 = j2;
       int k1 = k2;
 
-      //---------- Get (i1,j1,k1) ----------
+      //---------- Get (,j1,k1) ----------
       if (Matrices.getstate[S2]&(1<<2))
 	j1--;
       if (Matrices.getstate[S2]&(1<<3))
@@ -957,6 +1023,11 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   const Matrix& GQ = createGQ(Theta.IModel);
   const Matrix& Q = createQ(Theta.IModel);
 
+  // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
+  // We can only use non-silent states at (0,0) to simulate S
+  Matrices.forward(0,0,GQ);
+
+  
   Matrices.forward(0,0,seq1.size(),seq23.size(),GQ);
 
   //------------- Sample a path from the matrix -------------------//
@@ -967,9 +1038,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
 
   //------------- Check relative path probabilities ---------------//
-  path.push_back(nstates);
 
-  vector<int> path_old = get_path_3way(reorder(old,columns),n0,n1,n2,n3);
+  vector<int> path_old = get_path_3way(project(old,n0,n1,n2,n3),0,1,2,3);
   vector<int> path_new = get_path_3way(A,n0,n1,n2,n3);
 
   vector<int> path_old_G = generalize(path_old);
@@ -988,9 +1058,24 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   double p1 = path_P(path_old_G,Matrices,GQ); 
   double p2 = path_P(path_new_G,Matrices,GQ); 
 
+  vector<double> QP = path_Q(path_old_G,Matrices,GQ);
+  double qp1 = QP[0];
+  double qs1 = QP[1];
+  double q1 = qp1 + qs1;
+
+  QP = path_Q(path_new_G,Matrices,GQ);
+  double qp2 = QP[0];
+  double qs2 = QP[1];
+  double q2 = qp2 + qs2;
+
   // Adjust for length of n0 changing
   int length_old = old.seqlength(n0);
   int length_new = A.seqlength(n0);
+
+    std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
+    std::cerr<<"Q1 = "<<q1<<"     Q2 = "<<q2<<"     Q2 - Q1 = "<<q2-q1<<endl;
+
+
 
   p1 -= 2.0*Theta.IModel.lengthp(length_old);
   p2 -= 2.0*Theta.IModel.lengthp(length_new);
@@ -998,18 +1083,50 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   p1 += generalize_P(path_old,Q);
   p2 += generalize_P(path_new,Q);
 
+  q1 -= 2.0*Theta.IModel.lengthp(length_old);
+  q2 -= 2.0*Theta.IModel.lengthp(length_new);
+
+  q1 += generalize_P(path_old,Q);
+  q2 += generalize_P(path_new,Q);
+
   double diff = p2-p1-(l2-l1);
   double rdiff = diff/(l2-l1);
 
+  double s1 = substitution(old,Theta);
+  double s2 = substitution(A,Theta);
+
+  double lp1 = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,1) +
+    prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,2) +
+    prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,3);
+
+  double lp2 = prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,1) +
+    prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,2) +
+    prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,3);
+
   if (path_old_G != path_new_G) {
+    
+
     std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
-    std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
+    std::cerr<<"Q1 = "<<q1<<"     Q2 = "<<q2<<"     Q2 - Q1 = "<<q2-q1<<endl;
+
     std::cerr<<"L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<endl;
     std::cerr<<"diff = "<<diff<<std::endl;
+
+    std::cerr<<endl;
+    std::cerr<<"S1  = "<<s1<<"     S2  = "<<s2<<"     S2 - S2 = "<<s2-s1<<endl;
+    std::cerr<<"QS1 = "<<qs1<<"     QS2 = "<<qs2<<"     S2 - S2 = "<<qs2-qs1<<endl;
+
+    std::cerr<<endl;
+    std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<endl;
+    std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<endl;
+
     if (diff != 0.0) {
       if (std::abs(rdiff) > 1.0e-8) {
 	old.print(std::cerr);
 	A.print(std::cerr);
+
+	project(old,n0,n1,n2,n3).print(std::cerr);
+	project(A,n0,n1,n2,n3).print(std::cerr);
       }
     }
   }

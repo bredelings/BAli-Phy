@@ -332,40 +332,25 @@ void remove_empty_columns(alignment& A) {
 }
 
 alignment randomize(const alignment& A) {
-  vector< vector<int> > sequences(A.num_sequences());
-
-  for(int s=0;s<sequences.size();s++) {
-    int pos=0;
-    int length = A.seqlength(s);
-    while(pos<length) {
-      if (myrandomf()< 0.1) {
-	int temp = alphabet::gap;
-	sequences[s].push_back(temp);
-      }
-      else
-	sequences[s].push_back(A.seq(s)[pos++]);
-    }
-  }
-
   int maxlength = -1;
-  for(int s=0;s<sequences.size();s++) {
-    if ((int)sequences[s].size() > maxlength)
-      maxlength = sequences[s].size();
+  for(int s=0;s<A.size2();s++) {
+    if (A.seqlength(s) > maxlength)
+      maxlength = A.seqlength(s);
   }
 
   alignment A2 = A;
-  A2.changelength(maxlength);
+  int newlength = int( maxlength + 2 + 0.1*maxlength*(A2.size2()-1) );
+  A2.changelength(newlength);
 
-  for(int s=0;s<sequences.size();s++) {
-    int temp = alphabet::gap;
-    while(sequences[s].size() < maxlength) {
-      if (myrandomf() < 0.5)
-	sequences[s].push_back(temp);
-      else
-	sequences[s].insert(sequences[s].begin(),temp);
+  const int temp = alphabet::gap;
+  for(int i=0;i<A.num_sequences();i++) {
+    vector<int> s = A.seq(i);
+    while(s.size() < newlength) {
+      int pos = myrandom(s.size()+1);
+      s.insert(s.begin()+pos,temp);
     }
     for(int c=0;c<A2.length();c++)
-      A2(c,s) = sequences[s][c];
+      A2(c,i) = s[c];
   }
 
   remove_empty_columns(A2);
