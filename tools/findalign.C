@@ -5,6 +5,7 @@
 #include "alphabet.H"
 #include "alignment.H"
 #include "alignmentutil.H"
+#include "clone.H"
 
 using namespace std;
 
@@ -20,10 +21,10 @@ int main(int argc,char* argv[]) {
       tag = args["tag"];
 
     /* --------------- Alphabets to try ---------------- */
-    vector<alphabet> alphabets;
-    alphabets.push_back(alphabet("DNA nucleotides","AGTC","N"));
-    alphabets.push_back(alphabet("RNA nucleotides","AGUC","N"));
-    alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
+    vector<OwnedPointer<alphabet> > alphabets;
+    alphabets.push_back(DNA());
+    alphabets.push_back(RNA());
+    alphabets.push_back(AminoAcids());
 
     /*---------------- Find the alignment ----------------*/
     alignment A = find_last_alignment(std::cin, tag, alphabets);

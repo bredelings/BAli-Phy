@@ -49,6 +49,17 @@ std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& 
   return mapping;
 }
 
+template <class T>
+std::vector<T> apply_mapping(const std::vector<T>& v1,const std::vector<int>& mapping) {
+  std::vector<T> v2(v1.size());
+  for(int i=0;i<v2.size();i++)
+    v2[mapping[i]] = v1[i];
+
+  return v2;
+}
+
+
+
 inline double wrap(double x,double max) {
   if (max == 0)
     return 0;
@@ -93,5 +104,7 @@ std::vector<int> invert(const std::vector<int>&);
 std::vector<int> compose(const std::vector<int>&,const std::vector<int>&);
 
 std::vector<int> randomize(const std::vector<int>&);
+
+std::vector<std::string> truncate_names(const std::vector<std::string>&);
 
 #endif

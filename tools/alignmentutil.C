@@ -14,7 +14,7 @@ bool match_tag(const string& line,const string& tag) {
 
 
 vector<alignment> load_alignments(std::istream& ifile, const string& tag,
-				  const vector<alphabet>& alphabets, int maxalignments) {
+				  const vector<OwnedPointer<alphabet> >& alphabets, int maxalignments) {
   vector<alignment> alignments;
   
   // we are using every 'skip-th' line
@@ -90,7 +90,7 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
 
 
 alignment find_last_alignment(std::istream& ifile, const string& tag,
-				       const vector<alphabet>& alphabets) {
+				       const vector<OwnedPointer<alphabet> >& alphabets) {
   alignment A;
   
   // for each line (nth is the line counter)

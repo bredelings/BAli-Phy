@@ -31,13 +31,13 @@ all: sampler
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math #tracer prefetch-loop-arrays omit-frame-pointer
+LANGO = fast-math tracer prefetch-loop-arrays omit-frame-pointer#  profile-use
 DEBUG = pipe g3 #gdwarf-2 #pg 
 EXACTFLAGS =  # --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS =   NDEBUG # NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
+DEFS =   NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual # effc++
-OPT =  march=pentium4 O # O3 # malign-double
-LDFLAGS = #-pg # -static 
+OPT =  march=pentium4 O3 # malign-double
+LDFLAGS = # -fprofile-generate #-pg # -static
 LI=${CXX}
 
 #------------------- Main 
@@ -69,7 +69,7 @@ tools/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.
 
 tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o smodel.o \
-	rates.o exponential.o eigenvalue.o ${GSLLIBS}
+	rates.o exponential.o eigenvalue.o sequence-format.o randomtree.o ${GSLLIBS}
 
 tools/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
 
@@ -115,6 +115,9 @@ tools/model_P: tools/statistics.o rng.o arguments.o ${LINKLIBS}
 
 tools/alignment-translate: alignment.o alphabet.o sequence.o arguments.o sequence-format.o \
 	util.o
+
+tools/tree-names-trunc: tree.o sequencetree.o arguments.o util.o
+
 
 #-----------------Other Files
 OTHERFILES += 

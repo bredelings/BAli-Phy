@@ -64,3 +64,44 @@ vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2) {
   return mapping;
 }
 
+struct lstr {
+  bool operator()(const string& s1, const string& s2) const {
+   return strcmp(s1.c_str(), s2.c_str()) < 0;
+  }
+};
+
+
+std::vector<std::string> truncate_names(const std::vector<std::string>& names) {
+  std::vector<std::string> names2 = names;
+
+  std::sort(names2.begin(),names2.end(),lstr());
+
+  vector<int> mapping = compute_mapping(names,names2);
+
+  //--------------- Do the truncation --------------//
+  for(int i=0;i<names2.size();i++)
+      if (names2[i].size() > 10)
+	names2[i] = names2[i].substr(0,10);
+
+  //----------- Check for collisions --------------//
+  vector<int> multiplicity(names2.size(),0);
+
+  for(int i=0;i<names2.size();i++)
+    for(int j=0;j<i;j++) {
+
+      if (names2[i] != names2[j]) continue;
+
+      //      cerr<<names2[i]<<" and "<<names2[j]<<" both map to "<<names2[i]<<endl;
+
+      if (not multiplicity[j])
+	multiplicity[j]++;	    
+
+      multiplicity[j]++;
+      
+      string number = convertToString(multiplicity[j]);
+      names2[i].replace( names2[i].size()-number.size(),number.size(),number);
+      //      cerr<<"Rewriting "<<names[i]<<" => "<<names2[i]<<endl;
+    }
+
+  return apply_mapping(names2,invert(mapping));
+}

@@ -77,28 +77,10 @@ int main(int argc,char* argv[]) {
     cerr.precision(10);
     cout.precision(10);
     
-    /* ----- Try to load tree ------ */
-    SequenceTree T;
-    if (not args.set("tree"))
-      throw myexception("Tree file not specified! (tree=<filename>)");
-    T.read(args["tree"]);
-
-    /* ----- Try to load alignment ------ */
-
-    if (not args.set("align")) 
-      throw myexception("Alignment file not specified! (align=<filename>)");
-
-    vector<alphabet> alphabets;
-    alphabets.push_back(alphabet("DNA nucleotides","AGTC","N"));
-    alphabets.push_back(alphabet("RNA nucleotides","AGUC","N"));
-    alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
-
+    //----------- Load alignment and tree ---------//
     alignment A;
-    A.load(alphabets,args["align"]);
-
-    /*------ Link Alignment and Tree ----------*/
-    link(A,T);
-
+    SequenceTree T;
+    load_A_and_T(args,A,T,true);
     
     /*------- Re-root the tree appropriately  --------*/
 
