@@ -92,7 +92,7 @@ tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o $
 SHELL = /bin/sh
 MAKEFILES = GNUmakefile
 
-includes += ./include/
+includes += ../include/
 includes += .
 
 CC=gcc-3.4
