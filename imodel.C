@@ -1,35 +1,12 @@
 #include <cmath>
 #include "imodel.H"
 #include "logsum.H"
-#include "dpmatrix.H"
 #include "rng.H"
 #include <gsl/gsl_randist.h>
 #include "myexception.H"
 #include "likelihood.H"
 
 using std::vector;
-
-void IndelModel::construct_length_plus_p() {
-  const int n = 200;
-
-  vector<double>& f_E = p_length_plus;
-
-  vector<double> f_M(n);
-  vector<double> f_G2(n);
-  f_E.resize(n);
-
-
-
-  f_M[0] = pi[0];
-  f_G2[0] = pi[2];
-  f_E[0] = pi[3]; 
-
-  for(int i=1;i<n;i++) {
-    f_M[i] = logsum(f_M[i-1]+Q(0,0),f_G2[i-1]+Q(2,0));
-    f_G2[i] = logsum(f_M[i-1]+Q(0,2),f_G2[i-1]+Q(2,2));
-    f_E[i] = logsum(f_M[i]+Q(0,3),f_G2[i]+Q(2,3));
-  }
-}
 
 // 0->0 1->G 2->3
 int recode(int i,int G) {
@@ -41,9 +18,15 @@ int recode(int i,int G) {
   return i;
 }
 
+// FIXME - if we ever actually sample with a star gap model,
+//         then we need to fix this.
+double IndelModel::length_plus_p(int l, int G) const {
+  return lengthp(l,G);
+}
+
 // f_M(s) = [ ME  + s(MGxGE - MExGG) ] / [ 1 - s(GG + MM) + s^2(MMxGG - MGxGM) ]
 
-double IndelModel::lengthp2(int l,int G) const {
+double IndelModel::lengthp(int l,int G) const {
 
   //--------------- Remove the 'G2' State ----------------------//
   Matrix Q2(2,3);
@@ -88,49 +71,6 @@ double IndelModel::lengthp2(int l,int G) const {
     P = ME*q_l + (MG*GE - ME*GG)*q_lm1;
   }
   return log(P);
-}
-
-void IndelModel::construct_lengthp() {
-  const int size1=50;
-  const int size2=100;
-
-  // Store emission characteristics
-  vector<int> state_emit(4,0);
-  state_emit[0] |= (1<<1)|(1<<0);
-  state_emit[1] |= (1<<1);
-  state_emit[2] |= (1<<0);
-  state_emit[3] |= 0;
-
-  // Store start probabilities
-  vector<double> start_P = pi;
-  start_P.erase(start_P.begin()+3);
-
-  // Compute probabilities for pairs of lengths
-  DPmatrixNoEmit Matrices(size1,size2,state_emit,start_P,Q);
-  Matrices.forward(0,0);
-  Matrices.forward(0,0,size1,size2);
-
-  // Compute probabilities for a single length
-  vector<double> l1;
-  //  vector<double> l2;
-  
-  for(int i=0;i<Matrices.size1();i++) {
-    double total1 = log_0;
-    //    double total2 = log_0;
-    for(int j=0;j<Matrices.size2();j++) {
-      for(int S=0;S<Matrices.nstates();S++) {
-	total1 = logsum(total1,Matrices[S](i,j)+Q(S,3));
-	//	total2 = logsum(total2,Matrices[S](j,i)+Q(S,3));
-      }
-    }
-    l1.push_back(total1);
-    //    l2.push_back(total2);
-  }
-  p_length = l1;
-
-  //  for(int i=0;i<p_length.size();i++) {
-  //    assert(l1[i] == l2[i]);
-  //  }
 }
 
 IndelModel::IndelModel(int s)

@@ -8,16 +8,6 @@
 /// A generic insertion/deletion model
 class IndelModel {
 protected:
-  /// (log) probability that a sequences has length i
-  std::vector<double> p_length;
-  /// (log) probability that a sequences has length i in the clustal model
-  std::vector<double> p_length_plus;
-  
-  /// Calculate the sequence length distribution
-  void construct_lengthp();
-  /// Calculate the sequence length distribution in the clustal model
-  void construct_length_plus_p();
-
   /// Transition matrix w/o the end state
   ublas::matrix<double> P;
 
@@ -36,10 +26,7 @@ public:
   virtual void fiddle()=0;
 
   /// Update structures from the model parameters
-  virtual void recalc() {
-    construct_lengthp();
-    construct_length_plus_p();
-  }
+  virtual void recalc() {}
 
   /// Get the model parameters
   virtual const vector<double>& parameters() const {return parameters_;}
@@ -58,27 +45,11 @@ public:
   /// The transition matrix
   ublas::matrix<double> Q;
 
-  double lengthp2(int i,int G=1) const;
-
   /// Probability that an alignment has a sequence with length 'i'
-  double lengthp(int i) const {
-    if (i<p_length.size()) 
-      return p_length[i];
-    else {
-      int j1 = p_length.size()-1;
-      return p_length[j1] + (i-j1)*(p_length[j1]-p_length[j1-1]);
-    }
-  }
+  double lengthp(int i,int G=1) const;
 
   /// Probability that an alignment has a sequence with length 'i' in paths without G1
-  double length_plus_p(int i) const {
-    if (i<p_length_plus.size())
-      return p_length_plus[i];
-    else {
-      int j1 = p_length_plus.size()-1;
-      return p_length_plus[j1] + (i-j1)*(p_length_plus[j1]-p_length_plus[j1-1]);
-    }
-  }
+  double length_plus_p(int i,int G=1) const;
 
   IndelModel();
 
