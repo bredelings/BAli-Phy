@@ -198,11 +198,14 @@ namespace substitution {
   }
 
   string INV_Model::parameter_name(int i) const {
-    return s_parameter_name(i,0);
+    if (i==0)
+      return "RMM::f";
+    else
+      return s_parameter_name(i,1);
   }
 
   INV_Model::INV_Model(const alphabet& a)
-    :ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a),
+    :ReversibleMarkovModel(a,0),ModelWithAlphabet<alphabet>(a),
      P(S.size1(),S.size2())
   {
     // Calculate S matrix
