@@ -1,6 +1,7 @@
 #include <map>
 #include "tree-dist.H"
 #include "rng.H"
+#include "statistics.H"
 
 using std::vector;
 using std::list;
@@ -87,11 +88,9 @@ void standardize(SequenceTree& T,const vector<string>& remove) {
   standardize(T);
 }
 
-valarray<bool> branch_partition(const Tree& T,int b) {
-  int parent = T.branch(b).target();
-  int child = T.branch(b).source();
-
-  valarray<bool> temp = T.partition(parent,child);
+valarray<bool> branch_partition(const Tree& T,int b) 
+{
+  valarray<bool> temp = T.partition(b);
   valarray<bool> p(T.n_leaves());
   for(int i=0;i<p.size();i++)
     p[i] = temp[i];
@@ -401,8 +400,8 @@ struct compare_complete_partitions {
     if (p1.size() != p2.size())
       std::cerr<<"p1.size() = "<<p1.size()<<" and p2.size() = "<<p2.size()<<"\n";
     assert(p1.size() == p2.size());
-    assert(p1[0]);
-    assert(p2[0]);
+    //    assert(p1[0]);
+    //    assert(p2[0]);
     
     for(int i=0;i<p1.size();i++) {
       if (p2[i] and not p1[i])
@@ -489,6 +488,9 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
       else
 	partition = partition and mask;
       
+      if (statistics::count(partition) < 2) continue;
+      if (statistics::count((not partition) and mask) < 2) continue;
+
       assert(partition.size() == T.n_leaves());
       int& C = counts[partition];
       
@@ -518,7 +520,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
   for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
     const valarray<bool>& partition =(*p)->first;
  
-    partitions.push_back(Partition(names,partition) );
+    partitions.push_back(Partition(names,partition,mask) );
   }
 
   return partitions;
@@ -528,4 +530,43 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
   valarray<bool> mask(true,sample.topologies[0].T.n_leaves());
   return get_Ml_partitions(sample,l,mask);
 }
+
+vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,double r) {
+  vector<Partition> partitions = get_Ml_partitions(sample,l);
+
+  vector<double> support(partitions.size());
+  for(int i=0;i<partitions.size();i++)
+    support[i] = statistics::Pr(sample.supports_partition(partitions[i]) );
+
+  // break branches in the ***M_0.5*** tree? (more branches we could break - if we are only breaking 1)
+
+  SequenceTree MF = get_mf_tree(sample.topologies[0].T.get_sequences(),partitions);
+
+  vector<const_branchview> branches = branches_from_leaves(MF);  
+
+  for(int b=0;b<branches.size();b++) {
+    // get sub-partitions and support
+    valarray<bool> mask = branch_partition(MF,branches[b]);
+    vector<Partition> sub_partitions = get_Ml_partitions(sample,l,mask);
+    vector<double> sub_support(sub_partitions.size());
+    for(int i=0;i<sub_partitions.size();i++) {
+      sub_support[i] = statistics::Pr(sample.supports_partition(sub_partitions[i]) );
+      assert(sub_support[i] >= l);
+    }
+
+    // check if we are already implied
+    for(int i=0;i<sub_partitions.size();i++) {
+      bool ok = true;
+      for(int j=0;j<partitions.size() and ok;j++)
+	if (implies(partitions[j],sub_partitions[i]))
+	  ok = statistics::odds(sub_support[i])/statistics::odds(support[j]) > r;
+
+      if (ok)
+	partitions.push_back(sub_partitions[i]);
+    }
+  }
+
+  return partitions;
+}
+
 

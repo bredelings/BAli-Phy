@@ -195,6 +195,8 @@ public:
   
   operator int() const {return name();}
 
+  bool valid() const {return n;}
+
   nodeview(BranchNode* bn):n(bn) {}
 };
 
@@ -213,6 +215,8 @@ public:
   
   operator int() const {return name();}
  
+  bool valid() const {return n;}
+
   const_nodeview(const BranchNode* bn):n(bn) {}
   const_nodeview(const nodeview& nv):n(nv.n) {}
 };
@@ -303,7 +307,8 @@ public:
   void set_length(double d) const {b->out->length = b->length = d;}
 
   operator int() const {return name();}
-  branchview(BranchNode* bn):b(bn) { assert(b); }
+  bool valid() const {return b;}
+  branchview(BranchNode* bn):b(bn) { }
 };
 
 class const_branchview {
@@ -338,8 +343,9 @@ public:
   double length() const {return b->length;}
 
   operator int() const {return name();}
-  const_branchview(const BranchNode* bn):b(bn)   { assert(b); }
-  const_branchview(const branchview& bv):b(bv.b) { assert(b) ;}
+  bool valid() const {return b;}
+  const_branchview(const BranchNode* bn):b(bn)   {}
+  const_branchview(const branchview& bv):b(bv.b) {}
 };
 
 inline const_branchview const_in_edges_iterator::operator*() const {

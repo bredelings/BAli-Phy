@@ -124,6 +124,7 @@ SequenceTree standardized(SequenceTree T,const std::vector<std::string>& remove)
 double branch_distance(const SequenceTree& T1, const SequenceTree& T2);
 double topology_distance(const SequenceTree& T1, const SequenceTree& T2);
 
+std::vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,double r);
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, 
 					 const std::valarray<double>&);

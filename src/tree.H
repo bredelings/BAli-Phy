@@ -276,6 +276,7 @@ void get_branches_after(std::vector<const_branchview>& branch_list);
 std::vector<const_branchview> branches_after(const Tree& T,int b);
 std::vector<const_branchview> branches_from_node(const Tree& T,int n);
 std::vector<const_branchview> branches_toward_node(const Tree& T,int n);
+std::vector<const_branchview> branches_from_leaves(const Tree& T);
 
 std::vector<const_branchview> sorted_neighbors(const_nodeview n);
 std::vector<const_branchview> sorted_branches_after(const_branchview b);

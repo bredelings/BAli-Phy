@@ -452,6 +452,50 @@ vector<const_branchview> branches_toward_node(const Tree& T,int n) {
   return branch_list;
 }  
 
+vector<const_branchview> branches_from_leaves(const Tree& T) {
+  vector<const_branchview> branch_list;
+  valarray<bool> visited(false,2*T.n_branches());
+
+  for(int i=0;i<T.n_leaves();i++) {
+    branch_list.push_back(T.branch(i));
+    visited[i] = true;
+  }
+  
+  for(int i=0;i<branch_list.size();i++) {
+    // get branches point in to target node
+    vector<const_branchview> in;
+    append(branch_list[i].target().branches_in(),in);
+
+    // determine if 0,1,or more branches have not been visited
+    const_branchview first = NULL;
+    for(int j=0;j<in.size();j++) {
+      if (not visited[in[j]]) {
+	if (not first.valid())
+	  first = in[j];
+	else
+	  in.clear();
+      }
+    }
+
+    // if 1 branch has not been visited, then just process that branch
+    if (first.valid()) {
+      in.clear();
+      in.push_back(first);
+    }
+
+    // put out-going branches on the branch-list
+    for(int j=0;j<in.size();j++) {
+      if (not visited[in[j].reverse()]) {
+	visited[in[j].reverse()] = true;
+	branch_list.push_back(in[j].reverse());
+      }
+    }
+  }
+  assert(branch_list.size() == 2*T.n_branches());
+
+  return branch_list;
+}
+
 void Tree::compute_partitions() {
   vector<const_branchview> branch_list = branches_from_node(*this,nodes_[0]->node);
 
