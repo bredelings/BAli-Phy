@@ -335,6 +335,7 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
   :Triplets(N1),A(A1),table(size())
 {
   setup_table(cc,aa);
+  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
 }
 
 
@@ -343,6 +344,7 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
   :Triplets(N1),A(A1),table(size())
 {
   setup_table(file);
+  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
 }
 
 Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
@@ -357,4 +359,6 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
   setup_table(genetic_code);
 
   genetic_code.close();
+
+  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
 }
