@@ -37,9 +37,13 @@ protected:
   /// Allocate space for s new 'branches'
   void allocate(int s);
 
-  std::vector<bool> up_to_date_;
+  std::vector<int> up_to_date_;
+  std::vector<int> cv_up_to_date_;
 
 public:
+
+  int  cv_up_to_date(int t) const {return cv_up_to_date_[t];}
+  int& cv_up_to_date(int t)       {return cv_up_to_date_[t];}
 
   int location(int t,int b) const {return mapping[t][b];}
 
@@ -79,6 +83,9 @@ class Likelihood_Cache {
 
 public:
   double cached_value;
+
+  int  cv_up_to_date() const {return cache->cv_up_to_date(token);}
+  int& cv_up_to_date()       {return cache->cv_up_to_date(token);}
 
   int root;
 

@@ -312,7 +312,7 @@ namespace substitution {
     }
 
     P.LC.cached_value = total;
-
+    P.LC.cv_up_to_date() = true;
     return total;
   }
 
@@ -422,7 +422,7 @@ namespace substitution {
     return peeling_operations;
   }
 
-  bool calculate_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
+  void calculate_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
     const Tree& T = P.T;
     const MatCache& MC = P;
 
@@ -436,8 +436,6 @@ namespace substitution {
 #ifndef NDEBUG
     std::clog<<"Peeled on "<<ops.size()<<" branches.\n";
 #endif
-
-    return (ops.size() > 0);
   }
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
@@ -525,9 +523,10 @@ namespace substitution {
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
     const Tree& T = P.T;
 
-    if (not calculate_caches(A,P,cache))
-      ;
+    //    if (cache.cv_up_to_date())
     //      return cache.cached_value;
+
+    calculate_caches(A,P,cache);
 
     // compute root branches
     vector<int> rb;

@@ -68,6 +68,8 @@ void Multi_Likelihood_Cache::invalidate_one_branch(int token, int b) {
   }
   else
     up_to_date_[loc] = false;
+
+  cv_up_to_date_[token] = false;
 }
 
 void Multi_Likelihood_Cache::invalidate_all(int token) {
@@ -113,6 +115,7 @@ int Multi_Likelihood_Cache::add_token(int B) {
   active.push_back(false);
   length.push_back(0);
   mapping.push_back(std::vector<int>(B));
+  cv_up_to_date_.push_back(false);
 
 #ifndef CONSERVE_MEM
   // add space used by the token
@@ -150,6 +153,8 @@ int Multi_Likelihood_Cache::claim_token(int l,int B) {
 void Multi_Likelihood_Cache::init_token(int token) {
   for(int b=0;b<mapping[token].size();b++)
     mapping[token][b] = get_unused_location();
+
+  cv_up_to_date_[token] = false;
 }
 
 // initialize token1 mappings from the mappings of token2
@@ -157,6 +162,8 @@ void Multi_Likelihood_Cache::copy_token(int token1, int token2) {
   assert(mapping[token1].size() == mapping[token2].size());
 
   mapping[token1] = mapping[token2];
+
+  cv_up_to_date_[token1] = cv_up_to_date_[token2];
 
   set_length(token1,length[token2]);
 
