@@ -19,12 +19,27 @@ vector<string> split(const string& s, char c) {
   return strings;
 }
 
-
 string strip(const string& s,char c) {
   string s2;
   for(int i=0;i<s.size();i++)
     if (s[i] != c)
       s2 += s[i];
+
+  return s2;
+}
+
+
+string strip(const string& s,const string& chars) {
+  string s2;
+  for(int i=0;i<s.size();i++) {
+    bool found = false;
+    for(int j=0;j<chars.size() and not found;j++) {
+      if (s[i] == chars[j])
+	found = true;
+    }
+    if (not found)
+      s2 += s[i];
+  }
 
   return s2;
 }

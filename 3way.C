@@ -422,6 +422,12 @@ alignment construct(const alignment& old, const vector<int>& path,
 
 // If we are just getting the order of the columns in the 3-way alignment
 // the this shouldn't affect anything else, should it??
+
+// The reason we must look at alignments is that +/- and -/+ ARE ordered
+// inside pairwise alignments.
+
+// What happens if we care about alignments that aren't part of the 3way?
+// Does this block stuff?  I think it did...
 vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3) {
 
   vector<int> columns;

@@ -12,11 +12,13 @@ class alignment {
   vector<sequence> sequences;
   ublas::matrix<int> array;
   
+  void clear();
   void resize(int,int);
   void pad(int);
   void gap_fixup(int,int,int);
 
   void add_row(const vector<int>&);
+
 public:
 
   /// The order of the sequence named s
@@ -29,6 +31,11 @@ public:
 
   /// Add sequence 's' to the alignment
   void add_sequence(const sequence& s);
+  /// Add sequences called names, using a as the alphabet
+  void load(const alphabet& a,const vector<string>& names, const vector<string>& sequences);
+  /// Add sequences called names, using the first alphabet in alphabets that works
+  void load(const vector<alphabet>& alphabets,const vector<string>& names, const vector<string>& sequences);
+
   /// Add all sequences in FASTA file 'filename' to the alignment
   void load_fasta(const alphabet&,const std::string& filename);
   /// Add all sequences from FASTA stream 'file' to the alignment
@@ -36,6 +43,11 @@ public:
 
   /// Add sequences from PHYLIP file 'filename' to the alignment
   void load_phylip(const alphabet&,const std::string& filename);
+  /// Add sequences from PHYLIP stream 'file' to the alignment
+  void load_phylip(const alphabet&,std::istream& file);
+  /// Add sequences from PHYLIP stream 'file' to the alignment
+  void load_phylip(const vector<alphabet>&,std::istream& file);
+
   /// Load PHYLIP or FASTA file 'filename', depending on extentime
   void load(const alphabet&,const std::string& filename);
 

@@ -394,7 +394,7 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
 }
 
 
-void print_stats(std::ostream& o,const alignment& A,const Parameters& P) {
+void print_stats(std::ostream& o,const alignment& A,const Parameters& P,const string& tag) {
   o<<endl;
   o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
   o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
@@ -402,6 +402,7 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& P) {
   o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
   o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
 
+  o<<"align["<<tag<<"] = "<<endl;
   o<<standardize(A,P.T)<<endl<<endl;
 
   o<<"tree = "<<P.T<<endl<<endl;
@@ -451,13 +452,13 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
   cout<<endl;
   
   cout<<"Initial Alignment = \n";
-  print_stats(cout,A,P);
+  print_stats(cout,A,P,"Initial");
     
   cout<<"Initial Tree = \n";
   cout<<T<<endl<<endl;
 
   const int correlation_time = 2*int(log(T.leaves()))+1;
-  const int start_after = 100;// 600*correlation_time;
+  const int start_after = 0;// 600*correlation_time;
   int total_samples = 0;
 
   double Pr_prior = P.prior(A,P);
@@ -476,7 +477,7 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
     if (iterations > start_after) {
       if (iterations%correlation_time == 0) {
 	cout<<"iterations = "<<iterations<<endl;
-	print_stats(cout,A,P);
+	print_stats(cout,A,P,string("sample (")+convertToString(correlation_time)+")");
 	cout<<endl<<endl;
       }
     }
@@ -502,8 +503,8 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
     }
 
     if (not MAP_printed and iterations % 50 == 0) {
-      cout<<"iterations = "<<iterations<<"       ML = "<<MAP_score<<endl;
-      print_stats(cout,MAP_alignment,MAP_P);
+      cout<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<endl;
+      print_stats(cout,MAP_alignment,MAP_P,"MAP");
       MAP_printed = true;
     }
 
@@ -512,8 +513,8 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
     if (iterations%50 == 0 or std::abs(Pr - new_Pr)>12) {
       print_move_stats();
 #ifndef NDEBUG
-      print_stats(cerr,A,P);
-      print_stats(cerr,A2,P2);
+      print_stats(cerr,A,P,"check (A1)");
+      print_stats(cerr,A2,P2,"check (A2)");
 
       A2.print_fasta(cerr);
 #endif

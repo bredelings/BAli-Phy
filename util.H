@@ -58,6 +58,7 @@ std::vector<T> split(const std::string& s,char c) {
 }
 
 std::string strip(const std::string&,char);
+std::string strip(const std::string&,const std::string&);
 
 std::vector<int> invert(const std::vector<int>&);
 

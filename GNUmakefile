@@ -48,19 +48,21 @@ ALLSOURCES = ${SOURCES}
 ${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%} # libgsl.a libgslcblas.a libm.a
 
 
-bin/treecount: treecount.o tree.o sequencetree.o arguments.o util.o rng.o ${LIBS:%=-l%}
+bin/a-confidence: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
 
-bin/treedist: treedist.o tree.o sequencetree.o arguments.o
+bin/treecount: tree.o sequencetree.o arguments.o util.o rng.o ${LIBS:%=-l%}
 
-bin/treetosrq: treetosrq.o tree.o sequencetree.o arguments.o
+bin/treedist: tree.o sequencetree.o arguments.o
+
+bin/treetosrq: tree.o sequencetree.o arguments.o
 
 bin/srqtoplot: arguments.o
 
-bin/srqanalyze: srqanalyze.o arguments.o rng.o ${LIBS:%=-l%}
+bin/srqanalyze: arguments.o rng.o ${LIBS:%=-l%}
 
-bin/reroot: reroot.o tree.o sequencetree.o arguments.o
+bin/reroot: tree.o sequencetree.o arguments.o
 
-bin/make_random_tree: randomtree.o tree.o sequencetree.o arguments.o util.o\
+bin/make_random_tree: tree.o sequencetree.o arguments.o util.o\
 	 rng.o  ${LIBS:%=-l%}
 
 #-----------------Other Files

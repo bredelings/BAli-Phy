@@ -37,6 +37,11 @@ bool valid(const alignment& A) {
   return true;
 }
 
+void alignment::clear() {
+  sequences.clear();
+  array.resize(0,0);
+}
+
 void alignment::resize(int s1,int s2) {
   ublas::matrix<int> array2(s1,s2);
   
@@ -116,6 +121,42 @@ void alignment::add_sequence(const sequence& s) {
   sequences.back().strip_gaps();
 }
 
+void alignment::load(const alphabet& a,const vector<string>& names, const vector<string>& sequences) {
+  clear();
+
+  // load and check number of taxa
+  int ntaxa = names.size();
+  assert(sequences.size() == ntaxa);
+
+  // Add the sequences to the alignment
+  for(int i=0;i<ntaxa;i++) {
+    sequence s(a);
+    s.parse(string(">")+names[i],sequences[i]);
+    add_sequence(s);
+  }
+}
+
+void alignment::load(const vector<alphabet>& alphabets,const vector<string>& names, const vector<string>& sequences) {
+  string error;
+
+  bool success = false;
+  for(int i=0;i<alphabets.size();i++) {
+    try {
+      load(alphabets[i],names,sequences);
+      success=true;
+      break;
+    }
+    catch (bad_letter& e) {
+      error += string(e.what()) + "\n";
+    }
+  }
+
+  if (not success) {
+    error = string("All alphabets failed:\n") + error;
+    throw myexception(error);
+  }
+}
+
 void alignment::load_fasta(const alphabet& a,const std::string& filename) {
   vector<sequence> sequences = ::load_fasta(a,filename);
   for(int i=0;i<sequences.size();i++)
@@ -128,80 +169,30 @@ void alignment::load_fasta(const alphabet& a,std::istream& file) {
     add_sequence(sequences[i]);
 }
 
-bool phylip_section(std::istream& file,int ntaxa, vector<string>& names,vector<string>& letters) {
-  names.clear();
-  letters.clear();
-  int indent = -1;
-  for(int i=0;i<ntaxa;i++) {
-    string line;
-    getline(file,line);
-    while(i==0 and line.size()==0 and file.good()) {
-      getline(file,line);
-      // FIXME - eat whitespace
-    }
-    if (not file) return false;
-
-    int pos = line.find_first_not_of(" \t");
-    if (pos >9)
-      names.push_back(string(""));
-    else {
-      int name_start = pos;
-      pos = line.find_first_of(" \t",pos);
-      names.push_back(line.substr(name_start,pos-name_start));
-    
-      pos = std::max(pos+1,10);
-    }
-    pos = line.find_first_not_of(" \t",pos);
-    if (indent == -1)
-      indent = pos;
-    else
-      assert(indent == pos);
-    letters.push_back(line.substr(indent));
-  }
-  return file;
-}
-
 void alignment::load_phylip(const alphabet& a,const std::string& filename) {
   ifstream file(filename.c_str());
-
   string line;
   getline(file,line);
-  int ntaxa = -1;
-  int length = -1;
-  {
-    std::istringstream linestream(line);
-    linestream>>ntaxa;
-    linestream>>length;
-  }
 
-  vector<string> sequences;
-  vector<string> letters;
+  load_phylip(a,file);
+}
+
+void alignment::load_phylip(const alphabet& a,std::istream& file) {
+  vector<alphabet> alphabets;
+  alphabets.push_back(a);
+
+  load_phylip(alphabets,file);
+}
+
+void alignment::load_phylip(const vector<alphabet>& alphabets,std::istream& file) {
+
   vector<string> names;
-  vector<string> names2;
-  phylip_section(file,ntaxa,names,sequences);
-  //FIXME - make it stop when its done (e.g. use supplied length)
-  while(phylip_section(file,ntaxa,names2,letters)) {
-    for(int i=0;i<ntaxa;i++)
-      sequences[i] += letters[i];
-  }
+  vector<string> sequences;
 
-  for(int i=0;i<ntaxa;i++) 
-    sequences[i] = strip(sequences[i],' ');
+  bool success = read_phylip(file,names,sequences);
+  assert(success);
 
-  for(int i=0;i<ntaxa;i++) {
-    sequence s(a);
-    s.parse(string(">")+names[i],sequences[i]);
-    add_sequence(s);
-  }
-    
-  if (length > 0 and length != this->length())
-    throw myexception(string("Sequences in file '") + filename + "' have length " + convertToString(this->length()) + " instead of specified length " + convertToString(length) + ".");
-
-  //  for(int i=0;i<ntaxa;i++) {
-  //    std::cerr<<">"<<names[i]<<endl;
-  //    std::cerr<<sequences[i]<<endl;
-  //    std::cerr<<endl;
-  //  }
+  load(alphabets,names,sequences);
 }
 
 void alignment::load(const alphabet& a,const std::string& filename) {
@@ -238,6 +229,8 @@ void alignment::print(std::ostream& file) const{
 
 void alignment::print_phylip(std::ostream& file,bool othernodes) const {
   const alphabet& a = get_alphabet();
+
+  // Write header
   file<<num_sequences()<<" "<<length()<<endl;
 
   // Find length of longest name
@@ -252,26 +245,30 @@ void alignment::print_phylip(std::ostream& file,bool othernodes) const {
   if (not othernodes)
     nsequences = nsequences/2+1;
 
-  bool always_print_names = true;
-
   int pos=0;
   while(pos<length()) {
     int start = pos;
     int end = pos + (line_length - header_length);
+
     for(int seq = 0;seq < nsequences;seq++) {
+
+      // get the line header (e.g. sequence name or spaces)
       string header = string(header_length,' ');
-      if ((pos == 0 or always_print_names) and seq<num_sequences()) {
+      if ((pos == 0) and seq<num_sequences()) {
 	string name = sequences[seq].name;
 	assert(name.size() <= header_length-2);
 
 	header = name + string(header_length-name.size(),' ');
       }
+
+      // write out the line
       file<<header;
       for(int column=start;column<end and column<length();column++)
 	file<<a.lookup(array(column,seq));
       file<<endl;
     }
-    file<<endl<<endl;
+    // write one blank line;
+    file<<endl;
     pos = end;
   }
 }

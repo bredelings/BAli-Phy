@@ -23,4 +23,8 @@ struct sequence: public vector<int> {
 vector<sequence> load_fasta(const alphabet&,const std::string&);
 vector<sequence> load_fasta(const alphabet&,std::istream& file);
 
+/// Read an alignments letters and names from a file in phylip format
+bool read_phylip(std::istream& file, vector<string>& names, vector<string>& sequences);
+
+
 #endif
