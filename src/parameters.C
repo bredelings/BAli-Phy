@@ -65,8 +65,11 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
    i_fixed(false,IModel_->parameters().size()),
    s_fixed(false,SModel_->parameters().size()),
    features(0),
-   T(t)
+   T(t),
+   CL(NULL)
 {
   branch_mean = 0.1;
   constants.push_back(-1);
+
+  CL = new Conditional_Likelihoods(T,0,SModel().Alphabet().size());
 }

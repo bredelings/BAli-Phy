@@ -3,18 +3,20 @@
 using std::vector;
 
 void Conditional_Likelihoods::invalidate_all() {
+  for(int b=0;b<up_to_date.size();b++)
+    up_to_date[b] = false;
 }
 
 void Conditional_Likelihoods::invalidate_branch(const Tree& T,int b) {
   vector<const_branchview> branch_list = branches_after(T,b);
   for(int i=0;i<branch_list.size();i++)
-    up_to_date[i] = false;
+    up_to_date[branch_list[i]] = false;
 }
 
 void Conditional_Likelihoods::invalidate_node(const Tree& T,int n) {
   vector<const_branchview> branch_list = branches_from_node(T,n);
   for(int i=0;i<branch_list.size();i++)
-    up_to_date[i] = false;
+    up_to_date[branch_list[i]] = false;
 }
 
 void Conditional_Likelihoods::set_length(int l2) {

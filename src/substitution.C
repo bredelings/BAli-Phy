@@ -414,7 +414,11 @@ namespace substitution {
     for(int column=0;column<A.length();column++) 
       p += Pr(A,operations,MModel,MC,column,L[column]);
 
-    //    std::cerr<<" substitution: P="<<P<<std::endl;
+    for(int i=0;i<operations.size();i++)
+      L.up_to_date[operations[i].b] = true;
+
+    //std::cerr<<"Peeled on "<<operations.size()<<" branches.\n";
+    //std::cerr<<" substitution: P="<<P<<std::endl;
     return p;
   }
 

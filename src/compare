@@ -214,3 +214,18 @@ EF-Tu/5d: .1 -> .4   @ dna
 
 EF-Tu/12d: .1 -> .4  @ dna
 17.5->13.4
+
+---------------------------
+1.8.23-tree-NDEBUG.5
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.5 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=alignment:topology:g_parameters:change_branch_length >out 2>err
+
+real    0m21.544s
+user    0m16.720s
+sys     0m4.220s
+
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.5 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=alignment:topology:g_parameters:change_branch_length_cached >out 2>err
+
+real    0m13.476s
+user    0m13.360s
+sys     0m0.100s

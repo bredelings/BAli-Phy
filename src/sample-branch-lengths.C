@@ -77,12 +77,15 @@ MCMC::result_t change_branch_length_cached(const alignment& A, Parameters& P,int
   int n1 = P.T.branch(b).source();
   int n2 = P.T.branch(b).target();
   int root = std::max(n1,n2);
-  Conditional_Likelihoods L(P.T,root,P.SModel().Alphabet().size());
-  L.set_length(A.length());
-  double l1 = substitution::Pr(A,P,L);
-  L.invalidate_branch(P.T,b);
-  L.invalidate_branch(P.T,P.T.directed_branch(b).reverse());
-  double l2 = substitution::Pr(A,P2,L);
+  //  Conditional_Likelihoods L(P.T,root,P.SModel().Alphabet().size());
+  
+  P.CL->set_length(A.length());
+  P.CL->root = root;
+  P.CL->invalidate_all();
+  double l1 = substitution::Pr(A,P,*P.CL);
+  P.CL->invalidate_branch(P.T,b);
+  P.CL->invalidate_branch(P.T,P.T.directed_branch(b).reverse());
+  double l2 = substitution::Pr(A,P2,*P.CL);
   
 
   double p1 = l1 + prior3(A,P);

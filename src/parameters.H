@@ -10,6 +10,7 @@
 #include "alignment.H"
 #include "matcache.H"
 #include "clone.H"
+#include "substitution-cache.H"
 
 /******************************* parameter-containing class **************************/
 /// A class to contain all the MCMC state except the alignment
@@ -57,6 +58,8 @@ public:
 
   /// The Tree
   SequenceTree T;
+
+  Conditional_Likelihoods* CL;
 
   /// The IndelModel
   const IndelModel& IModel() const {return *IModel_;}
