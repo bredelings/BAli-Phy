@@ -4,6 +4,7 @@
 #include "rates.H"
 #include "alphabet.H"
 #include "alignment-util.H"
+#include "tree-util.H"
 
 using std::vector;
 using std::valarray;
@@ -62,18 +63,6 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
   valarray<double> frequencies = A.get_alphabet().get_frequencies_from_counts(counts,pseudocount);
 
   return frequencies;
-}
-
-
-/// Load a tree from command line args "--tree filename"
-SequenceTree load_T(const variables_map& args,const alignment& A) {
-  if (not args.count("tree"))
-    throw myexception()<<"Tree file not specified! (--tree <filename>)";
-    
-  RootedSequenceTree RT;
-  RT.read(args["tree"].as<string>());
-  SequenceTree T = remove_root( RT );
-  return T;
 }
 
 
@@ -141,13 +130,12 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
   check_alignment(A,T,internal_sequences);
 }
 
-
 // FIXME - should I make this more generic, so that it doesn't rely on a file?
 void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
 {
   A = load_A(args,internal_sequences);
 
-  T = load_T(args, A);
+  T = load_T(args);
 
   //------------- Link Alignment and Tree -----------------//
   link(A,T,internal_sequences);

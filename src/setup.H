@@ -19,10 +19,6 @@ std::valarray<double> empirical_frequencies(const boost::program_options::variab
 //----------------- Load trees and alignments ---------------------//
 
 
-/// Load a tree from command line args align=filename
-SequenceTree load_T(const boost::program_options::variables_map& args,
-		    const alignment& A);
-
 SequenceTree get_random_T(const alignment& A);
 
 /// Hook up the leaf nodes of T to the leaf of A

@@ -1,7 +1,6 @@
 #include <iostream>
 #include "alignment.H"
 #include "alignment-util.H"
-#include "setup.H"
 
 #include <boost/program_options.hpp>
 
