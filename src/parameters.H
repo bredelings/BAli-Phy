@@ -22,6 +22,8 @@ class Parameters: public MatCache
   /// The substitution::Model
   OwnedPointer<substitution::MultiModel> SModel_;
 
+  void recalc_imodel();
+  void recalc_smodel();
 public:
 
   /// cached branch HMMs
@@ -83,8 +85,11 @@ public:
   /// Get the alphabet
   const alphabet& get_alphabet() const {return SModel_->Alphabet();}
 
-  /// Symmetrically propose another state
-  void fiddle();
+  /// Symmetrically propose another state for the substitution model
+  void fiddle_smodel();
+
+  /// Symmetrically propose another state for the indel model
+  void fiddle_imodel();
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 

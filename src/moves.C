@@ -240,8 +240,8 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
 
   Parameters P2 = P;
 
-  P2.fiddle();
-
+  P2.fiddle_smodel();
+  
 #ifndef NDEBUG  
   for(int i=0;i<P.SModel().parameters().size();i++)
     std::cerr<<"    p"<<i<<" = "<<P.SModel().parameters()[i];
@@ -276,7 +276,7 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
   result[0] = 1.0;
 
   Parameters P2 = P;
-  P2.IModel().fiddle();
+  P2.fiddle_imodel();
 
   if (P.accept_MH(A,P,A,P2)) {
     P = P2;
@@ -285,7 +285,6 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
 
   return result;
 }
-
 
 
 

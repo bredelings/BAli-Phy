@@ -43,15 +43,37 @@ bool Parameters::accept_MH(const alignment& A,const Parameters& P1,const Paramet
     return false;
 }
 
+void Parameters::recalc_imodel() {
+  // recalculate the cached branch HMMs
+  for(int b=0;b<branch_HMMs.size();b++)
+    branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
+}
 
-void Parameters::fiddle() {
+void Parameters::recalc_smodel() {
+  // set the rate to one
+  SModel_->set_rate(1);
+
+  //invalidate cached conditional likelihoods in case the model has changed
+  LC.invalidate_all();
+
+  //invalidate the cached transition probabilities in case the model has changed
+  MatCache::recalc(T,*SModel_);
+}
+
+void Parameters::recalc() {
+  recalc_smodel();
+  recalc_imodel();
+}
+
+
+void Parameters::fiddle_smodel() {
   if (SModel_->parameters().size()) {
     // Fiddle substitution parameters and recalculate rate matrices
     SModel_->fiddle();
     SModel_->set_rate(1);
 
     // Recalculate the branch transition matrices
-    recalc();
+    recalc_smodel();
   }
 
   double x = log(branch_mean);
@@ -60,16 +82,14 @@ void Parameters::fiddle() {
   branch_mean = exp(x);
 }
 
-void Parameters::recalc() {
-  SModel_->set_rate(1);
-  MatCache::recalc(T,*SModel_);
-  for(int b=0;b<branch_HMMs.size();b++)
-    branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
-  LC.invalidate_all();
+void Parameters::fiddle_imodel() {
+  IModel_->fiddle();
+  recalc_imodel();
 }
 
 void Parameters::setlength(int b,double l) {
   MatCache::setlength(b,l,T,*SModel_); 
+  branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
   LC.invalidate_branch(T,b);
 }
 

@@ -33,3 +33,14 @@ debug: make a separate DEBUG_SUBST.
 implement: allow comments in the alignment constraint file, and make
 the alignment index program spit out the actual letters for each
 column as comments. 
+
+make tree-dist-compare consider all partitions, not just the MAP tree.
+(perhaps just all OBSERVED partitions?)
+
+A new ggobi is available!  Try multidimensional scaling...
+
+implement: new framework for fixing things
+	a) disable=alignment 
+	a) disable=alignment
+	b) disable=tree
+	c) disable=frequencies
