@@ -1,13 +1,10 @@
 TODO 
- - write sample_node_multi, but remove topology-sample-SPR-fgaps(!)
  - fix bandwidth code...
- - put boost code into include directory...
  - make a 'src' directory...?
  - speed up branch length calculations - 
  - CHECK acceptance/rejection ratios - alter things.
  - update stuff so that we can use -Weffc++
- - compare code from g++-3.4 && g++-3.4.1
  + profile DEBUG vs NDEBUG, make DEBUG faster
    - define a macro to set ublas debugging on/off separate from NDEBUG
  - profile NDEBUG code to see where we are spending (compare different data sets)
- - use -Wstrict-aliasing
+

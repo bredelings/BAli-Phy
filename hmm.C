@@ -2,7 +2,6 @@
 #include "hmm.H"
 #include "logsum.H"
 #include "choose.H"
-#include "inverse.H"
 
 using std::abs;
 
@@ -146,58 +145,9 @@ double HMM::path_GQ_path(const vector<int>& g_path) const {
   return Pr;
 }
 
-Matrix GQ_exit(const Matrix& Q,const vector<int>& silent_network_states,const vector<int>& non_silent_network) {
-
-  typedef ublas::matrix<double,ublas::column_major> MatrixC;
-
-  // Solve equation G = Q2 + Q1*G for G; IMQ1 = I - Q1
-  MatrixC IMQ1(silent_network_states.size(),silent_network_states.size());
-  MatrixC Q2(silent_network_states.size(),non_silent_network.size());
-  
-  //------------------- Calculate G, scale -> log scale -------------//
-  // fill IMQ1 = I - Q1
-  for(int i=0;i<silent_network_states.size();i++)
-    for(int j=0;j<silent_network_states.size();j++) {
-      IMQ1(i,j) = - exp( Q(silent_network_states[i],silent_network_states[j]) );
-      if (i==j) IMQ1(i,j) += 1.0;
-    }
-  
-  // fill Q2
-  for(int i=0;i<silent_network_states.size();i++)
-    for(int a=0;a<non_silent_network.size();a++)
-      Q2(i,a) = exp ( Q(silent_network_states[i],non_silent_network[a]) );
-  
-  Matrix G = solve(IMQ1,Q2);
-
-
-  //-----------------------  scale -> log scale ---------------------//
-  for(int s1=0;s1<G.size1();s1++)
-    for(int ns=0;ns<G.size2();ns++) {
-      assert(G(s1,ns) >= 0);
-      G(s1,ns) = log( G(s1,ns) );
-    }
-  
-  //---------------------------- Check G ---------------------------//
-  for(int s1=0;s1<G.size1();s1++)
-    for(int ns=0;ns<G.size2();ns++) {
-      int S1 = silent_network_states[s1];
-      int NS = non_silent_network[ns];
-      if (Q(S1,NS) > log_limit)
-	assert(G(s1,ns) >= Q(S1,NS));
-      for(int s2 =0;s2<silent_network_states.size();s2++) {
-	int S2 = silent_network_states[s2];
-	if (Q(S1,S2) > log_limit and Q(S2,NS) > log_limit)
-	  assert(G(s1,ns) >= Q(S1,S2)+Q(S2,NS));
-      }
-    }
-  
-  return G;
-}
-
-
 // IF (and only if) T > 1, then GQ(i,j) can be > 0....
 
-Matrix GQ_exit2(const Matrix& Q,const vector<int>& silent_network_states,const vector<int>& non_silent_network) {
+Matrix GQ_exit(const Matrix& Q,const vector<int>& silent_network_states,const vector<int>& non_silent_network) {
 
   const int n_S = silent_network_states.size();
   const int n_NS = non_silent_network.size();
@@ -347,9 +297,8 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double T
       non_silent_network.push_back(S);
   
   //---------------- compute the probability of -------------------//
-  //  Matrix G = GQ_exit(Q,silent_network_states,non_silent_network);
 
-  Matrix G = GQ_exit2(Q,silent_network_states,non_silent_network);
+  Matrix G = GQ_exit(Q,silent_network_states,non_silent_network);
 
 
   //---------------- Actually modify the elements of GQ ----------------//
