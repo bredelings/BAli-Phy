@@ -1,30 +1,3 @@
-/*
- * COPYRIGHT NOTICE, LICENSE AND DISCLAIMER
- * 
- * (c) 1994 by Peter Yianilos and Eric Sven Ristad.  All rights reserved.
- *
- *
- * Permission to use, copy, modify, and distribute this software and its
- * documentation without fee for not-for-profit academic or research
- * purposes is hereby granted, provided that the above copyright notice
- * appears in all copies and that both the copyright notice and this
- * permission notice and warranty disclaimer appear in supporting
- * documentation, and that neither the authors' names nor the name of any
- * entity or institution to which they are related be used in advertising
- * or publicity pertaining to distribution of the software without
- * specific, written prior permission.
- * 
- * The authors disclaim all warranties with regard to this software,
- * including all implied warranties of merchantability and fitness.  In
- * no event shall the authors or any entities or institutions to which
- * they are related be liable for any special, indirect or consequential
- * damages or any damages whatsoever resulting from loss of use, data or
- * profits, whether in an action of contract, negligence or other
- * tortious action, arising out of or in connection with the use or
- * performance of this software.
- * 
- */
-
 #include <cassert>
 #include <cmath>
 #include <vector>
