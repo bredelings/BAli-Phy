@@ -84,10 +84,14 @@ int alignment::seqlength(int i) const {
 }
 
 alignment& alignment::operator=(const alignment& A) {
+  letters_OK(*this,"operator=(): in");
+  letters_OK(A,"operator=(): before");
   sequences = A.sequences;
 
   array.resize(A.array.size1(),A.array.size2());
   array = A.array;
+  letters_OK(A,"operator=(): after");
+  letters_OK(*this,"operator=(): out");
 
   return *this;
 }
