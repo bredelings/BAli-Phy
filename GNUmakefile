@@ -29,11 +29,12 @@ all: sampler
 # -freorder-blocks
 
 #-mfpmath=sse,387 ?
-
+# sched2-use-traces move-all-moveables reduce-all-givs unroll-loops rename-registers peel-loops
 #----------------- Definitions
-LANGO = fast-math  tracer  prefetch-loop-arrays omit-frame-pointer
-DEBUG = pipe #pg #g3 #gdwarf-2 #pg 
-EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
+LANGO = fast-math  tracer  prefetch-loop-arrays omit-frame-pointer unswitch-loops
+DEBUG = #pg #g3
+# EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
+EXACTFLAGS = -pipe --param inline-unit-growth=300  --param large-function-growth=300
 DEFS =  NDEBUG_UBLAS NDEBUG_DP NDEBUG # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
 OPT =  march=pentium4 O3 # malign-double msse mmmx msse2 
@@ -117,5 +118,5 @@ includes += ./include/
 includes += .
 src      += 
 include $(DEVEL)/GNUmakefile
-# CC=gcc-3.4
-# CXX=g++-3.4
+CC=gcc-3.4
+CXX=g++-3.4

@@ -5,6 +5,7 @@
 #include <gsl/gsl_cdf.h>
 
 #include "rng.H"
+#include "likelihood.H"
 
 namespace substitution {
 
@@ -103,21 +104,23 @@ namespace substitution {
   /*--------------- GammaRateDistribution -----------------*/
   
   double Gamma::prior() const {
-    const double mean_stddev = 0.2;
-    return log(mean_stddev) - parameters_[0]/mean_stddev;
+    double g_sigma = parameters_[0];
+    double log_g_sigma = log(g_sigma);
+    return log(shift_laplace_pdf(log_g_sigma,-4,0.5));
   }
 
   void Gamma::fiddle() {
     vector<double> v = parameters_;
-    double& p = v[0];
- 
-    const double sigma = 0.04;
-    double p2 = p + gaussian(0,sigma);
-    if (p2 < 0) p2 = -p2;
+    double g_sigma = v[0];
+    double log_g_sigma = log(g_sigma);
 
-    double alpha = 1.0/(p2*p2);
-    if (alpha < 10000)
-      p = p2;
+    const double sigma = 0.25;
+    log_g_sigma += gaussian(0,sigma);
+
+    g_sigma = exp(log_g_sigma);
+    double alpha = 1.0/(g_sigma*g_sigma);
+    if (alpha < 100000)
+      v[0] = g_sigma;
 
     parameters(v);
   }
@@ -134,6 +137,13 @@ namespace substitution {
     double b = 1.0/a;
 
     return gsl_ran_gamma_pdf(x,a,b);
+  }
+
+  double Gamma::quantile(double p,double) const {
+    double a = 1.0/(parameters_[0]*parameters_[0]);
+    double b = 1.0/a;
+    
+    return gsl_cdf_gamma_Pinv(p,a,b);
   }
 
   Gamma::~Gamma() {}
