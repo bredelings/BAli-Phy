@@ -35,7 +35,7 @@ ifeq (${DEBUG},y)
   DEBUG := g3
 else
   ifeq ($(origin DEFS), undefined)
-     DEFS += NDEBUG_UBLAS NDEBUG_DP NDEBUG
+     DEFS += NDEBUG_DP NDEBUG
   endif
 
   ifneq ($(origin ARCH), undefined)
@@ -43,12 +43,22 @@ else
   endif	
 
   OPT += O3 # mfpmath=sse,387 msse2
-#  LANGO += tracer prefetch-loop-arrays 
+  LANGO += unroll-loops web
 
   ifneq (${PROF},y)
     LANGO += omit-frame-pointer
   endif
-#  EXACTFLAGS += --param inline-unit-growth=300 --param max-inline-insns-auto=300
+
+#  EXACTFLAGS += --param max-inline-insns-single=300
+#  EXACTFLAGS += --param max-inline-insns-auto=175
+#  EXACTFLAGS += --param max-inline-insns-recursive=300
+#  EXACTFLAGS += --param max-inline-insns-recursive-auto=300
+
+#  EXACTFLAGS += --param large-function-insns=2700
+#  EXACTFLAGS += --param large-function-growth=100
+#  EXACTFLAGS += --param inline-unit-growth=200
+
+  EXACTFLAGS += --param max-gcse-passes=2
 endif
 
 ifeq (${PROF},y)
@@ -182,8 +192,8 @@ includes += /usr/local/include
 includes += ../include/
 includes += .
 
-CC=gcc-3.4
-CXX=g++-3.4
+CC=gcc-cvs
+CXX=g++-cvs
 CPP = $(CC) -E  	# This might vary from machine to machine
 CPPFLAGS += $(patsubst %,-I%,$(subst :, ,$(includes)))
 CXXFLAGS += ${LANGO:%=-f%} ${WARN:%=-W%} ${DEBUG:%=-%} ${OPT:%=-%} ${DEFS:%=-D%} ${EXACTFLAGS}
