@@ -17,6 +17,9 @@
    Also, try with stlport again
    Also, compare some things with mrbayes, bambe
 
+7. Stop using PHYLIP.  Dealing with truncated names is too painful!
+
+
 check: how does P(data|model) depend on number of frequency bins?
 
 fix: gamma+frequency+INV
