@@ -216,7 +216,9 @@ void MoveOne::getorder(double l) {
 
 result_t SingleMove::iterate(alignment& A,Parameters& P,int) 
 {
+#ifndef NDEBUG
   clog<<" [single]move = "<<attributes[0]<<endl;
+#endif
 
   iterations++;
   result_t r = (*m)(A,P);
@@ -370,9 +372,11 @@ void MoveEach::print_move_stats(int depth) const {
     moves[i]->print_move_stats(depth+1);
 }
 
-result_t MoveArgSingle::operator()(alignment& A,Parameters& P,int arg) {
-
+result_t MoveArgSingle::operator()(alignment& A,Parameters& P,int arg) 
+{
+#ifndef NDEBUG
   clog<<" [single]move = "<<attributes[0]<<endl;
+#endif
 
   iterations++;
   result_t r = (*m)(A,P,args[arg]);
