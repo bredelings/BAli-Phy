@@ -3,6 +3,7 @@
 #include "alignment.H"
 #include "myexception.H"
 #include "util.H"
+#include "rng.H"
 
 int num_non_gaps(const alignment& A,int column) {
   int count=0;
@@ -419,7 +420,7 @@ vector<int> get_path(const alignment& A,int node1, int node2) {
 std::valarray<double> empirical_frequencies(const alignment& A) {
   std::valarray<double> f(0.0,A.get_alphabet().size());
 
-  int total=0;
+  double total=0;
   for(int i=0;i<A.length();i++) {
     for(int j=0;j<A.size2();j++) {
       if (alphabet::letter(A(i,j))) {
@@ -428,6 +429,14 @@ std::valarray<double> empirical_frequencies(const alignment& A) {
       }
     }
   }
+
+  // Use Pseudo-counts to stability the estimates
+  const double count = 10;
+  for(int i=0;i<f.size();i++)
+    f[i] += count/f.size();
+  total += count;
+
+
   f /= total;
   return f;
 }
@@ -441,4 +450,46 @@ void remove_empty_columns(alignment& A) {
       std::cerr<<"Deleted a column!"<<std::endl;
     }
   }
+}
+
+alignment randomize(const alignment& A) {
+  vector< vector<int> > sequences(A.num_sequences());
+
+  for(int s=0;s<sequences.size();s++) {
+    int pos=0;
+    int length = A.seqlength(s);
+    while(pos<length) {
+      if (myrandomf()< 0.1) {
+	int temp = alphabet::gap;
+	sequences[s].push_back(temp);
+      }
+      else
+	sequences[s].push_back(A.seq(s)[pos++]);
+    }
+  }
+
+  int maxlength = -1;
+  for(int s=0;s<sequences.size();s++) {
+    if ((int)sequences[s].size() > maxlength)
+      maxlength = sequences[s].size();
+  }
+
+  alignment A2 = A;
+  A2.changelength(maxlength);
+
+  for(int s=0;s<sequences.size();s++) {
+    int temp = alphabet::gap;
+    while(sequences[s].size() < maxlength) {
+      if (myrandomf() < 0.5)
+	sequences[s].push_back(temp);
+      else
+	sequences[s].insert(sequences[s].begin(),temp);
+    }
+    for(int c=0;c<A2.length();c++)
+      A2(c,s) = sequences[s][c];
+  }
+
+  remove_empty_columns(A2);
+  std::cerr<<A2<<endl;
+  return A2;
 }

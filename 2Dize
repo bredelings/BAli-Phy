@@ -1,0 +1,21 @@
+#!/usr/bin/perl -w
+
+
+my $size1 = shift;
+my $size2 = shift;
+my @A1 = ();
+
+while(<STDIN>) {
+    chomp;
+    my $num = $_;
+    @A1 = (@A1,$num);
+}
+
+for(my $i=0;$i<$size1;$i++) {
+    for(my $j=0;$j<$size2;$j++) {
+	print "$i $j ";
+	print $A1[$j + $i*$size2];
+	print "\n";
+    }
+    print "\n";
+}

@@ -8,6 +8,7 @@
 double prior_no_tree(const alignment&,const Parameters&);
 double prior_internal(const alignment&,const Parameters&);
 double prior_HMM(const alignment&,const Parameters&);
+double prior_branch_HMM(const alignment&,const IndelModel&,int parent,int child);
 
 inline double log_double_factorial(int n) {
   double x = 0;

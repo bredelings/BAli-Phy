@@ -7,6 +7,7 @@
 #include "logsum.H"
 #include "choose.H"
 #include "bits.H"
+#include "rng.H"
 
 using std::valarray;
 
@@ -236,8 +237,24 @@ alignment sample_node(const alignment& old,const Parameters& Theta,int node) {
 
   /************** Remove columns w/ only gaps *************/
   remove_empty_columns(A);
-
   assert(valid(A));
-  return A;
+
+
+  /*------------------Do MH fixup-------------------*/
+  int length_old = old.seqlength(node);
+  int length_new = A.seqlength(node);
+
+  int highest_node = T.get_nth(T.num_nodes()-2);
+  highest_node = T.branch_up(highest_node).parent();
+
+  double log_ratio = 2.0*(Theta.IModel.lengthp(length_new)-Theta.IModel.lengthp(length_old));
+  if (node == highest_node)
+    log_ratio = 3.0*(Theta.IModel.lengthp(length_new)-Theta.IModel.lengthp(length_old));
+  std::cerr<<"ln(ratio) = "<<log_ratio<<std::endl;
+
+  if (myrandomf() < exp(log_ratio))
+    return A;
+  else
+    return old;
 }
 

@@ -63,6 +63,9 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
   if (A.num_sequences() == 0) 
     throw myexception(string("Alignment file") + args["align"] + "didn't contain any sequences!");
     
+  if (args.set("randomize_alignment"))
+    A = randomize(A);
+
   /*------ Try to load tree -------------*/
   if (not args.set("tree")) {
     vector<string> s;
@@ -94,9 +97,15 @@ void do_showonly(const alignment& A,const Parameters& P) {
 void do_sampling(Arguments& args,alignment& A,Parameters& P) {
   MCMC sampler;
   sampler.add(sample_alignments,1,"sample_alignments:alignment");
-  sampler.add(sample_nodes,1,"sample_nodes:nodes");
-  sampler.add(sample_topologies,1,"sample_topologies:nodes:topology");
+
+  if (P.T.leaves() >2)
+    sampler.add(sample_nodes,1,"sample_nodes:nodes");
+
+  if (P.T.leaves() >3)
+    sampler.add(sample_topologies,1,"sample_topologies:nodes:topology");
+
   sampler.add(change_branch_lengths,1,"change_branch_lengths:nodes:lengths:topology");
+
   sampler.add(change_parameters,1,"change_parameters:parameters");
 
   //FIXME - maybe just store name in object, use vector, search for name?
@@ -210,8 +219,11 @@ int main(int argc,char* argv[]) {
     smodel->frequencies(empirical_frequencies(A));
     
     /*-------------Choose an indel model--------------*/
-    IndelModel1 IM1(2000,lambda_O,lambda_E);
-    IndelModel2 IM2(2000,lambda_O,lambda_E);
+    int IMlength = 2000;    //FIXME - perhaps we should choose \tau here
+    if (IMlength < A.length()*3)
+      IMlength = A.length()*3;
+    IndelModel1 IM1(IMlength,lambda_O,lambda_E);
+    IndelModel2 IM2(IMlength,lambda_O,lambda_E);
     IndelModel* imodel = &IM2;
     if (args.set("Imodel") and args["Imodel"] == "ordered")
       imodel= &IM1;

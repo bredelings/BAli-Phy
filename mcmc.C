@@ -258,7 +258,7 @@ void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
 	int times = move_stats[i].times;
 	int successes = move_stats[i].successes;
 
-	std::cerr<<move_stats[i].name<<": "<<double(successes)/times<<"    ("<<successes<<"/"<<times<<")\n";
+	std::cerr<<move_stats[i].name<<" = "<<double(successes)/times<<"    ("<<successes<<"/"<<times<<")\n";
       }
     }
 

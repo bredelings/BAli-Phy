@@ -61,6 +61,7 @@ public:
   const alphabet& get_alphabet() const {return sequences[0].a;}
 
   alignment() {}
+  alignment(const alphabet& a,const std::string& filename) { load(a,filename); }
   alignment(const alignment& A) {operator=(A);}
 };
 
@@ -81,4 +82,5 @@ void remove_empty_columns(alignment&);
 vector<int> get_path(const alignment&,int,int);
 
 std::valarray<double> empirical_frequencies(const alignment& A);
+alignment randomize(const alignment&);
 #endif

@@ -18,6 +18,8 @@
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
 
+using std::abs;
+
 double path_P(const vector<int>& path,const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& Theta) {
   const Matrix& Q = Theta.IModel.Q;
 
@@ -284,12 +286,14 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
     for(int j=0;j<M.size2();j++) {
       M(i,j)  = log_0;
       G1(i,j) = log_0;
-      G2(i,j)  = log_0;
+      G2(i,j) = log_0;
     }
   /***********    Initialize the Boundary    ************/
   M(0,0)  = pi[0];
   G1(0,0) = pi[1];
   G2(0,0) = pi[2];
+
+  
 
   for(int i=1;i<M.size1();i++) {
     M(i,0) = log_0;
@@ -326,7 +330,7 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
 
 	G2(i,n) = g2_sub[i-1] + logsum(M (i-1,n) + Q(0,2),
 				       G1(i-1,n) + Q(1,2),
-				       G2(i-1,n) + Q(1,2));
+				       G2(i-1,n) + Q(2,2));
       }
 
     if (n<M.size1())
@@ -368,12 +372,30 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   double l1 = probability3(old,Theta);
   double l2 = probability3(A,Theta);
 
-  std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<"           L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<std::endl<<std::endl;
+  double l1B = substitution(old,Theta) + prior_branch_HMM(old,Theta.IModel,node1,node2);
+  double l2B = substitution(A  ,Theta) + prior_branch_HMM(A  ,Theta.IModel,node1,node2);
   double diff = p2-p1-(l2-l1);
-  std::cerr<<"diff = "<<diff<<std::endl;
   double rdiff = diff/(l2-l1);
-  std::cerr<<"rdiff = "<<rdiff<<std::endl;
-  //  if (diff != 0.0) assert(std::abs(rdiff) < 1.0e-8);
+
+  double diffB = p2-p1-(l2B-l1B);
+  double rdiffB = diffB/(l2B-l1B);
+
+  if (path1 != path2) {
+    std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
+    std::cerr<<"L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<endl;
+    std::cerr<<"L1B = "<<l1B<<"     L2B = "<<l2B<<"     L2B - L1B = "<<l2B-l1B<<endl<<endl;
+    std::cerr<<"diff = "<<diff<<std::endl;
+    std::cerr<<"rdiff = "<<rdiff<<std::endl;
+    std::cerr<<"rdiffB = "<<rdiffB<<std::endl;
+    if (diff != 0.0) {
+      if (std::abs(rdiff) > 1.0e-8) {
+	old.print(std::cerr);
+	A.print(std::cerr);
+      }
+    }
+  }
+
+  assert(isnan(rdiff) or abs(diff) < 1.0e-8);
 
   /*--------------------------------------------------------------*/
 
