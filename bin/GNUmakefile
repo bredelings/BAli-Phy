@@ -42,34 +42,34 @@ tc : trees.from.${SKIP}+${SIZE}
 # If there are no Substitution parameters, don't bail out
 
 pSnames : pS
-	getnames.pl pS < $< > $@
+	getnames.pl < $< > $@
 
 pSall : pSnames	pS.from.${SKIP}+${SIZE}
 	for i in $$(cat $<); do \
-	  pickout $$i < pS.from.${SKIP}+${SIZE} > $$i; \
+	  pickout "$$i" < pS.from.${SKIP}+${SIZE} > "$$i"; \
 	done
 
 pSreport: pSnames pSall
 	rm -f $@; \
 	for i in $$(cat $<); do \
-	  statreport $$i < $$i >> $@ ; \
+	  statreport "$$i" < "$$i" >> $@ ; \
 	  echo "   " >> $@ ; \
 	done; \
 	echo "   " >> $@ ;
 
 # If there are no Indel parameters, don't bail out
 pInames : pI
-	getnames.pl pI < $< > $@
+	getnames.pl < $< > $@
 
 pIall : pInames	pI.from.${SKIP}+${SIZE}
 	for i in $$(cat $<); do \
-	  pickout $$i < pI.from.${SKIP}+${SIZE} > $$i; \
+	  pickout "$$i" < pI.from.${SKIP}+${SIZE} > "$$i"; \
 	done
 
 pIreport: pInames pIall
 	rm -f $@; \
 	for i in $$(cat $<); do \
-	  statreport $$i < $$i >> $@ ; \
+	  statreport "$$i" < "$$i" >> $@ ; \
 	  echo "   " >> $@ ; \
 	done; \
 	echo "   " >> $@ ; 
