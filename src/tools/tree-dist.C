@@ -129,8 +129,10 @@ std::ostream& operator<<(std::ostream& o, const Partition& P)
   return o;
 }
 
-SequenceTree get_mf_tree(const vector<Partition>& partitions) {
-  SequenceTree T = star_tree(partitions[0].names);
+SequenceTree get_mf_tree(const std::vector<std::string>& names,
+			 const std::vector<Partition>& partitions) 
+{
+  SequenceTree T = star_tree(names);
 
   for(int i=0;i<partitions.size();i++)
     T.induce_partition(partitions[i].group1);

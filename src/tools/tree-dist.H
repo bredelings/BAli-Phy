@@ -126,6 +126,7 @@ double topology_distance(const SequenceTree& T1, const SequenceTree& T2);
 
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);
 
-SequenceTree get_mf_tree(const std::vector<Partition>& partitions);
+SequenceTree get_mf_tree(const std::vector<std::string>& names,
+			 const std::vector<Partition>& partitions);
 
 #endif
