@@ -47,6 +47,7 @@ typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parame
 							      const vector<int>&,int,bool);
 
 void sample_alignment(alignment& A,Parameters& P,int b) {
+  letters_OK(A,"sample_alignment:in");
   assert(P.IModel().full_tree);
 
   const Tree& T = P.T;
@@ -96,7 +97,9 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
 
   path.erase(path.begin()+path.size()-1);
 
+  letters_OK(A,"sample_alignment:before");
   A = construct(old,path,group1,seq1,seq2);
+  letters_OK(A,"sample_alignment:after");
 
   //  std::cerr<<"bandwidth = "<<bandwidth(Matrices,path)<<std::endl;
 
@@ -138,6 +141,7 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
 #endif
 
   /*--------------------------------------------------------------*/
+  letters_OK(A,"sample_alignment:out");
   assert(valid(A));
 }
 
