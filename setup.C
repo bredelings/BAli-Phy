@@ -123,7 +123,7 @@ bool bit_set(const valarray<bool>& v) {
 
 
 /// Check that any two present nodes are connected by a path of present nodes
-bool all_characters_connected(const SequenceTree& T,valarray<bool> present,const vector<int>& _ignore) {
+bool all_characters_connected(const tree& T,valarray<bool> present,const vector<int>& _ignore) {
   assert(present.size() == T.n_nodes()-1);
 
   //--------- set the ignored nodes to 'not present' -----------//
@@ -170,7 +170,7 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 }
 
 /// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const SequenceTree& T,const vector<int>& ignore) {
+void check_internal_nodes_connected(const alignment& A,const tree& T,const vector<int>& ignore) {
   for(int column=0;column<A.length();column++) {
     valarray<bool> present(T.n_nodes()-1);
     for(int i=0;i<T.n_nodes()-1;i++) 

@@ -3,6 +3,7 @@
 #include "logsum.H"
 #include "util.H"
 #include "rng.H"
+#include "setup.H"
 
 using std::valarray;
 
@@ -373,7 +374,13 @@ namespace A3 {
     vector<int> subA1;
     vector<int> subA2;
     vector<int> subA3;
+
+    vector<int> internal(1,n0);
+
     for(int column=0;column<old.length();column++) {
+
+      check_internal_nodes_connected(old,T,internal);
+
       if (not all_gaps(old,column,group1))
 	subA1.push_back(column);
       if (not all_gaps(old,column,group2))
