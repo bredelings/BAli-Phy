@@ -287,7 +287,7 @@ double NewIndelModel::prior() const {
   // Calculate prior on lambda_O
   double rate = parameters_[0];
 
-  P += log( shift_laplace_pdf(rate,-5, 0.5) );
+  P += log( shift_laplace_pdf(rate,parameters_[3], parameters_[4]) );
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = parameters_[1];
@@ -381,8 +381,12 @@ string NewIndelModel::parameter_name(int i) const {
     return "NEW::epsilon";
   else if (i==2)
     return "NEW::invariant";
+  else if (i==3)
+    return "NEW::prior_median";
+  else if (i==4)
+    return "NEW::prior_stddev";
   else
-    return i_parameter_name(i,3);
+    return i_parameter_name(i,5);
 }
 
 double NewIndelModel::lengthp(int l) const {
@@ -390,11 +394,13 @@ double NewIndelModel::lengthp(int l) const {
 }
 
 NewIndelModel::NewIndelModel()
-  :IndelModel(3)
+  :IndelModel(5)
 {
   parameters_[0] = -5;
   parameters_[1] = -0.5;
   parameters_[2] = 0.1;
+  parameters_[3] = -5;
+  parameters_[4] = 0.5;
 
   recalc();
 }
