@@ -24,7 +24,12 @@ debug: we also want to guard each routine with assert(letters_ok(A)) on
        both sides so that we can figure out where the problem is coming
        from.
 
-debug: check 48-D-? for strange rejections.  Why is the probability decreasing so much? (turn on debugging for this step, but disable debugging of caching)
+debug: check 48-D-? for strange rejections.  Why is the probability
+decreasing so much, when it should increase? (turn on debugging for
+this step, but disable debugging of caching) 
 
 debug: make a separate DEBUG_SUBST.
 
+implement: allow comments in the alignment constraint file, and make
+the alignment index program spit out the actual letters for each
+column as comments. 

@@ -129,6 +129,8 @@ OTHER ARGUMENTS
    This also affects codon models, by not removing stop codons from
    the alphabet.
 
+-  align-constraint=[filename]
+
 EXAMPLES:
 
 % bali-phy align=Data/EF-Tu/5d.fasta randomize_alignment >out 2>err
@@ -186,3 +188,33 @@ will be produced:
 
  - blame.html (An AU plot)
  - blame.prob (the probabilities for each letter in the AU plot)
+
+
+To pin columns of the alignment, specify alignment constraints in a
+file as follows:
+  1. Use the argument "align-constraint=[filename]"
+  2. The filename refers to a file in which each line represents a constraint.
+
+Each line consists of a list of sequence positions, with the first
+position corresponding to the first leaf sequence, the second position
+corresponding to the second leaf sequence, etc.  Thus, if there are
+<n> leaf taxa, then each line corresponds to a space-separated list of
+<n> integers.
+
+For example,
+
+1 2 2
+
+means that position 1 of leaf sequence 1 is aligned to position 2 of
+leaf sequences 2 and 3. 
+
+Note that the first position in a sequence is position 0.
+
+Optionally, one may use a '-' instead of an integer, which denotes a
+lack of constraint for that sequence.  This can be useful as follows:
+
+1 1 - -
+- - 1 1
+
+the above constraint forces alignment between sequences 1&2 and
+between sequences 3&4.
