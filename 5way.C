@@ -368,9 +368,9 @@ namespace A5 {
     group.push_back(T.partition(nodes[5],nodes[3]));
 
     // Construct the list of columns present in the 4 sub-alignments
-    vector< vector<int> > subA(4);
+    vector< vector<int> > subA(seq.size());
     for(int column=0;column<old.length();column++) {
-      for(int i=0;i<4;i++)
+      for(int i=0;i<seq.size();i++)
 	if (not all_gaps(old,column,group[i]))
 	  subA[i].push_back(column);
     }
@@ -378,7 +378,7 @@ namespace A5 {
     // Account for silent end state with "-1"
     int newlength = path.size() - 1;
     // Add in columns not present in the 5way alignment
-    for(int i=0;i<4;i++)
+    for(int i=0;i<seq.size();i++)
       newlength += (subA[i].size() - seq[i].size());
 
     alignment A = old;
@@ -388,23 +388,22 @@ namespace A5 {
     // position in path
     int l=0;
     // position in sequence
-    vector<int> cS(4,0);
+    vector<int> cS(seq.size(),0);
     // position in sub-alignment
-    vector<int> cA(4,0);
+    vector<int> cA(seq.size(),0);
 
     for(int column=0;column<A.length();column++) {
       //    std::cout<<column<<":  "<<c1<<" "<<c2<<"  "<<c3<<" "<<c4<<"   "<<c5<<"  "<<c6<<"  "<<l<<endl;
 
-      int bits = states_list[path[l]] & bitsmask;
-
-      for(int i=0;i<4;i++) {
+      //--------------- Check that we're putting in all the subA columns ---------------//
+      for(int i=0;i<seq.size();i++) {
 	assert(cA[i] >= cS[i]);
 	assert(cA[i] <= subA[i].size());
       }
 
+      //--------------- Do we have any columns subA[i] to insert? ---------------------//
       bool done=false;
-
-      for(int i=0;i<4;i++) {
+      for(int i=0;i<seq.size();i++) {
 	if (cA[i] < subA[i].size() and 
 	    (cS[i] == seq[i].size() or 
 	     (cS[i] < seq[i].size() and subA[i][cA[i]] != seq[i][cS[i]]))) {
@@ -419,8 +418,11 @@ namespace A5 {
 	  break;
 	}
       }
-
       if (done) continue;
+
+
+      //----------------- Insert a column corresponding to path[l] -------------------//
+      int bits = states_list[path[l]] & bitsmask;
 
       for(int s=0;s<A.size2();s++) 
 	A(column,s) = alphabet::gap;
@@ -435,6 +437,7 @@ namespace A5 {
 	    A(column,s) = alphabet::not_gap;
 	}
 	else {
+	  // which group is sequence 's' in?
 	  int j = -1;
 	  for(int i=0;i<group.size();i++)
 	    if (group[i][s]) {
@@ -442,12 +445,14 @@ namespace A5 {
 	      break;
 	    }
 	  assert(j != -1);
+
+	  // copy from the  correct column, based on the group 'j'
 	  if (bitset(bits,j))
 	    A(column,s) = old(seq[j][cS[j]],s);
 	}
       }
 
-      for(int i=0;i<4;i++) {
+      for(int i=0;i<seq.size();i++) {
 	if (bitset(bits,i)) {
 	  cS[i]++;
 	  cA[i]++;
@@ -461,7 +466,7 @@ namespace A5 {
       assert(not all_gaps(A,column));
     }
 
-    for(int i=0;i<4;i++) {
+    for(int i=0;i<seq.size();i++) {
       assert(cA[i] == subA[i].size());
       assert(cS[i] == seq[i].size());
     }
