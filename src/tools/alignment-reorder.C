@@ -33,31 +33,38 @@ vector<int> find_mapping(const vector<string>& v1,const vector<string>& v2) {
   return mapping;
 }
 
-/// get an order list of leaves under T[n]
-vector<int> get_leaf_order(const Tree& T,int n) {
-  if (T[n].leaf()) {
+/// get an ordered list of leaves under T[n]
+vector<int> get_leaf_order(const RootedTree& T,int b) {
+  if (T.directed_branch(b).target().is_leaf_node()) {
     vector<int> mapping;
-    mapping.push_back(n);
+    mapping.push_back( T.directed_branch(b).target() );
     return mapping;
   }
 
-  vector<int> lmapping;
-  if (T[n].has_left())
-    lmapping = get_leaf_order(T,T[n].left());
-  vector<int> rmapping;
-  if (T[n].has_right())
-    rmapping = get_leaf_order(T,T[n].right());
-  
+  vector<const_branchview> branches;
+  append(T.directed_branch(b).branches_after(),branches);
+
+  vector<int> lmapping = get_leaf_order(T,branches[0]);
+  vector<int> rmapping = get_leaf_order(T,branches[1]);
+
   lmapping.insert(lmapping.end(),rmapping.begin(),rmapping.end());
+
+  assert(lmapping.size() == T.n_leaves());
   return lmapping;
 }
 
 /// get an order list of the leaves of T
-vector<int> get_leaf_order(const Tree& T) {
-  int root = T.num_nodes() - 1;
-  vector<int> mapping = get_leaf_order(T,root);
-  assert(mapping.size() == T.n_leaves());
-  return mapping;
+vector<int> get_leaf_order(const RootedTree& RT) {
+  vector<const_branchview> branches;
+  append(RT.root().branches_out(),branches);
+
+  vector<int> lmapping = get_leaf_order(RT,branches[0]);
+  vector<int> rmapping = get_leaf_order(RT,branches[1]);
+
+  lmapping.insert(lmapping.end(),rmapping.begin(),rmapping.end());
+
+  assert(lmapping.size() == RT.n_leaves());
+  return lmapping;
 }
 
 
@@ -71,21 +78,20 @@ int main(int argc,char* argv[]) {
     
     //----------- Load alignment and tree ---------//
     alignment A;
-    SequenceTree T;
-    load_A_and_T(args,A,T,true);
+    SequenceTree UT;
+    load_A_and_T(args,A,UT,true);
     
     /*------- Re-root the tree appropriately  --------*/
 
     int rootb=-1;
     double rootd = -1;
-    find_root(T,rootb,rootd);
+    find_root(UT,rootb,rootd);
     std::cerr<<"root branch = "<<rootb<<std::endl;
     std::cerr<<"x = "<<rootd<<std::endl;
-    for(int i=0;i<T.n_leaves();i++)
-      std::cerr<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
+    for(int i=0;i<UT.n_leaves();i++)
+      std::cerr<<UT.seq(i)<<"  "<<rootdistance(UT,i,rootb,rootd)<<std::endl;
 
-    T.reroot(rootb);   // we don't care about the lengths anymore
-    
+    RootedSequenceTree T = add_root(UT,rootb);  // we don't care about the lengths anymore
 
     /*----- Standardize order by alphabetical order of names ----*/
     vector<string> names = T.get_sequences();
@@ -94,7 +100,7 @@ int main(int argc,char* argv[]) {
 
     vector<int> mapping1 = find_mapping(T.get_sequences(),names);
 
-    T.standardize(mapping1,false);
+    T.standardize(mapping1);
 
 
     /*-------- Compute final mapping  -------*/
