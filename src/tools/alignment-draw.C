@@ -56,13 +56,8 @@ string rgb_to_csv(double R, double G, double B) {
 }
 
 string rgb_to_csv(const vector<int>& RGB) {
-  string style = "rgb(";
-  style += convertToString(RGB[0]) + ",";
-  style += convertToString(RGB[1]) + ",";
-  style += convertToString(RGB[2]) + ")";
-  return style;
+  return rgb_to_csv(RGB[0],RGB[1],RGB[2]);
 }
-
 
 double identity(double x) {return x;}
 double square(double x) {return x*x;}
@@ -84,29 +79,19 @@ struct Scale {
       return 1;
     else
       return (v-min)/(max-min);
-=======
-vector<int> rgb_bgcolor(double x, double sscale,bool color) {
-  if (color) {
-    double start = 0.75;
-    double end = 0.0;
-    
-    double hstart = 0.3;
-    double hend   = 0.95;
-    
-    double color = start + x * x * x *(end-start);
-    double s = hstart + x * x * (hend - hstart);
-    
-    return hsv(color,s*sscale,0.9);
->>>>>>> .merge-right.r554
   }
 
   Scale():f(NULL) {}
 
-<<<<<<< .working
   Scale(double d1,double d2,double (*g)(double))
     :min(d1),max(d2),f(g)
   { }
 };
+
+// Make separate schemes for fg and bg color, so that we can separate them?
+
+// But then, how can we determine one color in reference to the other color?
+
 
 
 class ColorMap {
@@ -128,14 +113,7 @@ public:
   vector<int> fg_color(double x,const string& s) const {
     if (x < 0.5)
       return black;
-=======
-string getfgcolor(double x,double sscale,bool color) {
-  if (color)
-    if (x > 0.80)
-      return getrgb(hsv(0, 0, 0.99));
->>>>>>> .merge-right.r554
     else
-<<<<<<< .working
       return white;
   }
 };
@@ -170,12 +148,6 @@ public:
   vector<int> fg_color(double x,const string& s) const {
     if (x < 0.5)
       return black;
-=======
-      return getrgb(hsv(0, 0, 0.2));
-  else {
-    if (1.0 - f(x*sscale) < 0.5)
-      return getrgb(hsv(0,0,1));
->>>>>>> .merge-right.r554
     else
       return white;
       
@@ -224,10 +196,38 @@ string latex_rgb(const vector<int>& RGB) {
 }
 
 
-string latex_get_bgcolor(double d,double sscale=1.0,bool color=true) {
-  return "";
-}
+ublas::matrix<double> read_alignment_certainty(const alignment& A, const SequenceTree& T,
+				const char* filename) 
+{
+  ifstream colorfile(filename);
 
+  vector<int> mapping;
+  {
+    string line;
+    getline(colorfile,line);
+    vector<string> colornames = split(line,' ');
+    vector<string> leafnames = T.get_sequences();
+    leafnames.erase(leafnames.begin()+T.n_leaves());
+    mapping = compute_mapping(colornames,T.get_sequences());
+  }
+
+  // Add an entry for the ENTIRE COLUMN
+  mapping.push_back(mapping.size());
+
+  //------------------ Read in the colors ------------------------//
+  ublas::matrix<double> colors(A.length(),T.n_leaves()+1);
+  for(int column=0;column<colors.size1();column++) 
+    //TODO - use an istringstream to make things properly per-line
+    for(int i=0;i<colors.size2();i++) {
+      double d;
+      colorfile >> d;
+      colors(column,mapping[i]) = d;
+    }
+  
+  colorfile.close();
+
+  return colors;
+}
 
 int main(int argc,char* argv[]) { 
   Arguments args;
@@ -255,31 +255,7 @@ int main(int argc,char* argv[]) {
     if (not args.set("colors"))
       throw myexception()<<"color file not specified! (colors=<filename>)";
 
-    ifstream colorfile(args["colors"].c_str());
-
-    vector<int> mapping;
-    {
-      string line;
-      getline(colorfile,line);
-      vector<string> colornames = split(line,' ');
-      vector<string> leafnames = T.get_sequences();
-      leafnames.erase(leafnames.begin()+T.n_leaves());
-      mapping = compute_mapping(colornames,T.get_sequences());
-    }
-
-    // map the 
-    mapping.push_back(mapping.size());
-
-    /*------------------ Read in the colors ------------------------*/
-    ublas::matrix<double> colors(A.length(),T.n_leaves()+1);
-    for(int column=0;column<colors.size1();column++) 
-      for(int i=0;i<colors.size2();i++) {
-	double d;
-	colorfile >> d;
-	colors(column,mapping[i]) = d;
-      }
-	
-    colorfile.close();
+    ublas::matrix<double> colors = read_alignment_certainty(A,T,args["colors"].c_str());
 
     /*-------------------- Get color or b/w ------------------*/
     OwnedPointer<ColorMap> color_map;
@@ -354,10 +330,6 @@ int main(int argc,char* argv[]) {
 
 	  for(int column=pos;column<pos+width and column < end; column++) {
 	    string c = a.lookup(A(column,s));
-	    double sscale=1.0;
-	    if (A.gap(column,s)) {
-	      sscale = 0.3;
-	    }
 	    string latexcolor = "";//latex_get_bgcolor(colors(column,s),sscale,color);
 	    if (column != pos)
 	      cout<<"& ";
@@ -457,9 +429,7 @@ SPAN {\n\
 	  for(int column=pos;column<pos+width and column < end; column++) {
 	    string c;
 	    c+= a.lookup(A(column,s));
-	    double sscale=1.0;
 	    if (A.gap(column,s)) {
-	      sscale = gapscale;
 	      if (not showgaps)
 		c = "&nbsp;";
 	    }
