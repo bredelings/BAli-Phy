@@ -567,6 +567,8 @@ namespace substitution {
 
     super_parameters_ = D->parameters();
 
+    read();
+
     recalc();
   }
 
