@@ -4,6 +4,24 @@
 
 using std::valarray;
 
+unsigned myrand_init(int=-1);
+
+// returns a value in [0,max]
+unsigned long myrandom(unsigned long max);
+
+// returns a value in [min,max]
+inline long myrandom(long min,long max) {
+  unsigned long diff = max - min;
+  return myrandom(diff)+min;
+}
+
+// returns a value in [0,1)
+double myrandomf();
+
+// return the log of a variable that is uniform on [0,1)
+double log_unif();
+
+
 namespace rng {
 
   typedef int amount_t;
@@ -16,8 +34,20 @@ namespace rng {
 
 
   public:
+    void seed_random();
     void seed(unsigned long int);
     
+    unsigned long min() const { return gsl_rng_min(generator); }
+    unsigned long max() const { return gsl_rng_max(generator); }
+
+    unsigned long get() { return gsl_rng_get(generator) ;}
+
+    double uniform() { return gsl_rng_uniform(generator); }
+    
+    double uniform_int(unsigned long int n) { return gsl_rng_uniform_int(generator,n); }
+
+    double log_unif() {return -gsl_ran_exponential(generator,1.0);}
+
     RNG();
     ~RNG();
   };
@@ -34,13 +64,20 @@ namespace rng {
     unsigned operator()(double lambda);
   };
   
-  
+
   class Multinomial {
     Binomial Bin;
   public:
     tuple operator()(const valarray<double>& p,unsigned long n);
   };
 
+  class Exponential: public RNG {
+    double mu;
+  public:
+    double operator()();
+
+    Exponential(double d):mu(d) { assert(mu>0.0); }
+  };
 
   void init();
 

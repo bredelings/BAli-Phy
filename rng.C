@@ -6,6 +6,29 @@
 
 #include "rng.H"
 
+namespace MyRandom {
+  static rng::RNG generator;
+}
+
+unsigned myrand_init(int i) {
+  rng::init();
+  if (i != -1)
+    MyRandom::generator.seed(i);
+  return i; //FIXME
+}
+
+unsigned long myrandom(unsigned long max) {
+  return MyRandom::generator.uniform_int(max);
+}
+
+double myrandomf() {
+  return MyRandom::generator.uniform();
+}
+
+double logunif() {
+  return MyRandom::generator.log_unif();
+}
+
 void dng::init() { }
 
 using namespace rng;
@@ -20,12 +43,17 @@ void RNG::seed(unsigned long int s) {
   gsl_rng_set(generator,s);
 }
 
+void RNG::seed_random() {
+  time_t t = time(NULL);
+
+  seed(t);  
+}
+
 
 RNG::RNG() {
   generator = gsl_rng_alloc(gsl_rng_default);
-  time_t t = time(NULL);
 
-  seed(t);
+  seed_random();
 }
 
 RNG::~RNG() {
@@ -46,6 +74,10 @@ unsigned Binomial::operator()(double p,unsigned long n1) {
   return gsl_ran_binomial(generator,p,n);
 }
 
+double Exponential::operator()() {
+  return gsl_ran_exponential(generator,mu);
+}
+
 
 unsigned Poisson::operator()(double lambda) {
   //  cerr<<"lambda = "<<lambda<<endl;
@@ -60,7 +92,7 @@ tuple Multinomial::operator()(const valarray<double>& p,unsigned long n1) {
   unsigned n = (unsigned)n1;
   assert((unsigned long)(n) == n1);
 
-  assert(abs(double(p.sum())-1.0) < 1e-10);
+  assert(std::abs(double(p.sum())-1.0) < 1e-10);
 
   tuple m(0,p.size());
   double remaining = 1.0;

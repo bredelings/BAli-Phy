@@ -6,19 +6,24 @@ my $skip = shift;
 if (!defined($skip)) {$skip = 0;}
 
 my %count = ();
+my %ll = ();
 
 my $i=0;
 my $total=0;
-print STDERR "Skipping 10\n";
+print STDERR "Skipping $skip\n";
 while(<STDIN>) {
     chomp;
     $i++;
+    my ($value,$id) = split(/ /);
+    my $key = "$value:$id";
+    $ll{$key} = $value;
     next if ($i < $skip);
-    if (!defined($count{$_})) {
-	$count{$_}=1;
+
+    if (!defined($count{$key})) {
+	$count{$key}=1;
     } 
     else {
-	$count{$_}++;
+	$count{$key}++;
     }
     $total++;
 }
@@ -29,33 +34,38 @@ my %CDF = ();
 my %ECDF = ();
 
 my $max = undef;
-foreach my $value (sort {$a <=> $b} keys(%count)) {
-    if (!defined($max) || $value > $max) {
-	$max = $value;
+my @keys = sort {$ll{$a} <=> $ll{$b}} keys(%count);
+
+
+foreach my $key (@keys) {
+    if (!defined($max) || $ll{$key}> $max) {
+	$max = $ll{$key};
     }
 }
 
 
 my $csum = 0;
-foreach my $value (sort {$a <=> $b} keys(%count)) {
-    $Pr{$value} = exp($value-$max);
-    $sum += $Pr{$value};
-    print STDERR "$value $Pr{$value} $sum\n";
-    $CDF{$value} = $sum;
-    $csum += $count{$value};
-    $ECDF{$value} = $csum; 
+foreach my $key (@keys) {
+    my $value = $ll{$key};
+
+    $Pr{$key} = exp($value-$max);
+    $sum += $Pr{$key};
+    print STDERR "$value $Pr{$key} $sum\n";
+    $CDF{$key} = $sum;
+    $csum += $count{$key};
+    $ECDF{$key} = $csum; 
 }
 print STDERR "sum = $sum\n";
 
-foreach my $value (sort {$a <=> $b} keys(%Pr)) {
+foreach my $key (@keys) {
 #    print STDERR "key = $value  sum = $sum   cdf = $CDF{$value}\n";
-    $Pr{$value} /= $sum;
-    $CDF{$value}  /= $sum;
-    $ECDF{$value} /= $total;
+    $Pr{$key} /= $sum;
+    $CDF{$key}  /= $sum;
+    $ECDF{$key} /= $total;
 }
 
 
 
-foreach my $value (sort {$a <=> $b} keys(%Pr)) {
-    print "value = $value   p = $Pr{$value}    cdf = $CDF{$value}   ECDF = $ECDF{$value}\n";
+foreach my $key (@keys) {
+    print "ll = $ll{$key}   p = $Pr{$key}    cdf = $CDF{$key}   ECDF = $ECDF{$key}\n";
 }

@@ -76,8 +76,6 @@ void move_node(const alignment& A, Parameters& Theta,int node) {
   Theta2.setlength(b3,T.branch(b3).length - delta);
 }
 
-
-
 // FIXME - this doesn't really deal correctly with modifying parameters
 alignment sample(const alignment& old,Parameters& Theta) {
 

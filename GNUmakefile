@@ -17,20 +17,20 @@ all: sampler
 # try -fforce-addr
 
 #----------------- Definitions
-LANGO = prefetch-loop-arrays fast-math unroll-loops
+LANGO = # prefetch-loop-arrays fast-math unroll-loops
 DEBUG = pipe g # pg
 DEFS = #NDEBUG 
 WARN = all no-sign-compare
-OPT =  O3 malign-double mfpmath=sse msse2 march=pentium4
+OPT =  # O3 malign-double mfpmath=sse msse march=pentium3
 LDFLAGS =  # -pg 
 
 #------------------- Main 
 PROGNAME = sampler
 NAME = sampler
 SOURCES = sequence.C tree.C alignment.C substitution.C gaps.C moves.C \
-          myrandom.C possibilities.C sample.C sample2.C exponential.C \
+          rng.C possibilities.C sample.C sample2.C exponential.C \
           eigenvalue.C parameters.C likelihood.C
-LIBS = 
+LIBS = gsl gslcblas m
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 
 

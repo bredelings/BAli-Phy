@@ -70,6 +70,16 @@ void print_stats(const alignment& A,const Parameters& Theta) {
 
 }
 
+inline int aid(const alignment& A) {
+  int id=0;
+  for(int species=0;species < A.size2();species++) {
+    for(int column=0;column < A.length();column++) {
+      id = A(column,species)+ id*684822857;
+    }
+  }
+  return id;
+}
+
 void MCMC2(alignment& A,Parameters& Theta,
 	   const int max,double probability(const alignment&,const Parameters&)) {
   const SequenceTree& T = Theta.T;
@@ -79,13 +89,15 @@ void MCMC2(alignment& A,Parameters& Theta,
   SequenceTree Sum = T;
 
   const int correlation_time = int(8.0*T.leaves()*log(T.leaves()));
-  const int start_after = int( 600.0*T.leaves()*log(T.leaves()) );
+  const int start_after = 2000000;
+  //  const int start_after = int( 600.0*T.leaves()*log(T.leaves()) );
   int total_samples = 0;
 
   double p=probability(A,Theta);
   double new_p=0;
   for(int iterations=0; iterations < max; iterations++) {
-    std::cerr<<"iterations: "<<iterations<<"    logp = "<<p<<endl;
+    int id = aid(A);
+    std::cerr<<"iterations: "<<iterations<<"    logp = "<<p<<"      id = "<<id<<endl;
 
     /******************** Record Statistics *******************/
     if (iterations > start_after) {
