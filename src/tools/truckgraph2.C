@@ -19,8 +19,8 @@ void do_setup(Arguments& args,vector<alignment>& alignments) {
 
   /* ----- Try to load alignments ------ */
   int maxalignments = 1000;
-  if (args.set("maxalignments"))
-    maxalignments = convertTo<int>(args["maxalignments"]);
+  if (args.set("max-alignments"))
+    maxalignments = convertTo<int>(args["max-alignments"]);
 
   string tag = "align[sample";
   if (args.set("tag"))
