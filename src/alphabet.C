@@ -248,7 +248,6 @@ valarray<double> get_nucleotide_counts_from_codon_counts(const Codons& C,const v
 }
 
 valarray<double> get_codon_frequencies_from_independant_nucleotide_frequencies(const Codons& C,const valarray<double>& fN ) {
-  std::cerr<<"Codon frequencies are:\n";
     valarray<double> fC(C.size());
     for(int i=0;i<fC.size();i++) {
       fC[i] = 1.0;
