@@ -14,14 +14,15 @@ int main(int argc,char* argv[]) {
     if (not args.set("tree"))
       throw myexception("Tree file not specified! (tree=<filename>)");
     
-    SequenceTree T;
-    T.read(args["tree"]);
+    RootedSequenceTree RT;
+    RT.read(args["tree"]);
+    SequenceTree T = remove_root( RT );
     
     if (not args.set("root"))
-      throw myexception("new root specified! (root=<sequence name>)");
+      throw myexception("new root not specified! (root=<sequence name>)");
 
     int leaf=-1;
-    for(int i=0;i<T.leaves();i++) {
+    for(int i=0;i<T.n_leaves();i++) {
       if (T.seq(i) == args["root"]) {
 	leaf=i;
 	break;
@@ -31,9 +32,7 @@ int main(int argc,char* argv[]) {
     if (leaf == -1)
       throw myexception("root not found in tree!");
 
-    T.reroot(leaf);
-    
-    std::cout<<T<<endl;
+    std::cout<<add_root(T,leaf)<<endl;
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
