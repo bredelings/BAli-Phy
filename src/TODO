@@ -1,6 +1,39 @@
+-6. Do we want to hard-code the concepts of transition kernels and priors
+    into models?  Each can have parameters...
+
+-5. Find a way to allow substitution models to propose a lot of different
+    changes each time we try to propose new parameters.
+
+-4. Make a more general substitution::Model class, so that we can e.g.
+    have tree with 2 sets of branch lengths...
+
+-3. Better multi_freq model.  
+    * The frequency of the underlying model will be the frequency of the
+      whole model.
+    * f(m,i) = a(m,i) * f(i)
+    * sum_i a(m,i) = 1
+    * sum_m a(m,i) = distribution(m) / |alphabet|
+    * two moves
+      - i.  change a(m,i) for a single m.  
+	ii. Scale the other entries in each row so that row still sums to 1.
+
+      - i.   get distributions from a(m,i)
+        ii.  dirichlet_fiddle it.
+        iii. put it back
+    * prior = each row is dirichlet
+
+    * make a dual-mode which is a sum of the unit mode and the multi_freq
+      model
+        
+Base each of the submodels on the frequency
+    of the underlying model.  Each submodel has n parameters a_{mi} so that
+    \pi_{mi} = f_i*a_{mi}/max_i a{m_i}.  Then let a_i be dirichlet...
+
+    * 
+
 -2. tree-dist-compare w/ sub-partitions
   a) speed up get_Ml_partitions, get_Ml_sub_partitions
-  b) print number of taxa in mask when printing partitions
+  b) only enable sub-partition checking with a switch..
   c) arrange 
   d) test Kallikrein - which one had a wandering taxon.  
   e) also test SIV?
