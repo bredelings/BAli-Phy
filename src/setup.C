@@ -227,7 +227,7 @@ OwnedPointer<IndelModel> get_imodel(Arguments& args) {
   //-------------Choose an indel model--------------//
   OwnedPointer<IndelModel> imodel;
 
-  if (not args.set("imodel")) args["imodel"] = "simple";
+  if (not args.set("imodel")) args["imodel"] = "new";
   
   if (args["imodel"] == "simple")
     imodel = SimpleIndelModel();
