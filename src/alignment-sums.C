@@ -4,18 +4,7 @@
 #include "util.H"
 
 double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) {
-  double p = 0.0;
-
-  for(int column=0;column < A.length();column++) {
-    bool present = false;
-    for(int i=0;i<nodes.size();i++) {
-      if (not A.gap(column,nodes[i]))
-	present = true;
-    }
-    if (present) continue;
-
-    p += substitution::Pr(A, P, column);
-  }
+  double p = substitution::other_subst(A,P,nodes);
 
   return p/P.Temp;
 }
@@ -61,8 +50,8 @@ double other_prior(const alignment& A, const Parameters& P,const vector<int>& no
 
 
 /// Distributions function for a star tree
-vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
-				    const vector<int>& seq,int root,const valarray<bool>& group) {
+vector< Matrix > distributions_star(const alignment& A,const Parameters& P,const vector<int>& seq,int root,const valarray<bool>& group)
+{
   const alphabet& a = A.get_alphabet();
   const substitution::MultiModel& MModel = P.SModel();
   const SequenceTree& T = P.T;
@@ -98,29 +87,22 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 
 
 /// Distributions function for a full tree
-vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
-				    const vector<int>& seq,int root,const valarray<bool>& group) {
-  const alphabet& a = A.get_alphabet();
+vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const vector<int>& seq,int root,const valarray<bool>& group)
+{
   const Tree& T = P.T;
-  const substitution::MultiModel& MModel = P.SModel();
-  const MatCache& MC = P;
 
-  vector< Matrix > dist(seq.size(), Matrix(MModel.nmodels(),a.size()) );
+  vector<int> branches;
+  vector<const_nodeview> neighbors;
+  append(T[root].neighbors(),neighbors);
+  for(int i=0;i<neighbors.size();i++)
+    if (group[neighbors[i]])
+      branches.push_back(T.directed_branch(neighbors[i],root));
 
-  vector<int> residues(A.size2());
+  bool flag = group[root];
 
-  for(int i=0;i<dist.size();i++) {
-
-    // create the column vector
-    for(int j=0;j<residues.size();j++)
-      residues[j] = A(seq[i],j);
-
-    // get the likelihoods for all sub-models
-    dist[i] = substitution::get_column_likelihoods(residues,T,MModel,MC,
-						   root,group);
-
-    // note: we could normalize frequencies to sum to 1
-  }
+  vector< Matrix > dist = substitution::get_column_likelihoods(A,P,branches,flag);
+  // note: we could normalize frequencies to sum to 1
+  assert(dist.size() == seq.size());
 
   return dist;
 }

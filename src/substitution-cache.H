@@ -39,6 +39,8 @@ protected:
 
   std::vector<bool> up_to_date_;
 
+  std::vector<double> sum_;
+
 public:
 
   int location(int t,int b) const {return mapping[t][b];}
@@ -47,6 +49,14 @@ public:
 
   bool up_to_date(int token,int branch) const {
     return up_to_date_[ mapping[token][branch] ];
+  }
+
+  double sum(int token,int branch) const {
+    return sum_ [ mapping[token][branch] ];
+  }
+
+  double& sum(int token,int branch) {
+    return sum_ [ mapping[token][branch] ];
   }
 
   void validate_branch(int token,int branch);
@@ -82,8 +92,6 @@ public:
 
   int root;
 
-  ublas::matrix<int>* SM;
-
   int length() const {return cache->get_length(token);}
   int scratch() const {return B-1;}
   int n_branches() const {return B/2;}
@@ -101,24 +109,24 @@ public:
   void invalidate_node(const Tree&,int n);
 
   void set_length(int);
+  int get_length() const {return cache->get_length(token);}
 
   bool up_to_date(int b) const {return cache->up_to_date(token,b);}
   void validate_branch(int b) {cache->validate_branch(token,b);}
 
-  bool informative(int c,int b) const {
-    return (*SM)(c,b) != -1;
-  }
+  double sum(int b) const {return cache->sum(token,b);}
+  double& sum(int b) {return cache->sum(token,b);}
 
-  Matrix& operator()(int c,int b) {
+  Matrix& operator()(int i,int b) {
     int loc = cache->location(token,b);
-    int index = (*SM)(c,b);
-    assert(index != -1);
-    return (*cache)[loc][index];
+    assert(0 <= i and i < get_length());
+    return (*cache)[loc][i];
   }
 
-  Matrix& scratch(int c) {
+  Matrix& scratch(int i) {
     int loc = cache->location(token,B-1);
-    return (*cache)[loc][c];
+    assert(0 <= i and i < get_length());
+    return (*cache)[loc][i];
   }
 
   Likelihood_Cache& operator=(const Likelihood_Cache&);

@@ -33,12 +33,14 @@ void Multi_Likelihood_Cache::allocate(int s) {
   n_uses.reserve(new_size);
   up_to_date_.reserve(new_size);
   unused_locations.reserve(new_size);
+  sum_.reserve(new_size);
 
   for(int i=0;i<s;i++) {
     push_back(vector<Matrix>(C,Matrix(M,A)));
     n_uses.push_back(0);
     up_to_date_.push_back(false);
     unused_locations.push_back(old_size+i);
+    sum_.push_back(-1);
   }
 }
 
@@ -212,8 +214,7 @@ Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModel
    B(T.n_branches()*2+1),
    token(cache->claim_token(C,B)),
    old_value(0),
-   root(T.n_nodes()-1),
-   SM(NULL)
+   root(T.n_nodes()-1)
 {
   cache->init_token(token);
 }

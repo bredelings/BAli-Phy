@@ -12,22 +12,13 @@ class Parameters;
 namespace substitution {
 
   /// Find the probabilities of all the data give each letter at the root
-  Matrix get_column_likelihoods(const alignment::column_t&,const Tree&,const MultiModel&,const MatCache&,int);
-
-  /// Find the probabilities of the data in 'group' given each letter at the root
-  Matrix get_column_likelihoods(      vector<int> ,const Tree&,const MultiModel&,const MatCache&,int,
-				const std::valarray<bool>& group);
-
-  /// Full Likelihood of one column
-  double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache&,int);
-
-  /// Full Likelihood - all columns, all rates
-  double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache&);
+  vector<Matrix>
+  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,bool flag);
 
   /// Full likelihood - all columns, all rates
-  double Pr(const alignment& A, const Parameters& P,int column);
   double Pr(const alignment& A, const Parameters& P);
 
+  double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes);
 
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& LC);
 
