@@ -39,6 +39,26 @@
 -1. Run with mudflap...
   a) alter GNUmakefile so that building w/ mudflap is easy.
 
+0. Don't spend so much time initializing:
+[HARD]
+  a) 10% - DPmatrixEmit::DPmatrix: try to remove unneeded initialization or speed it up.
+     - initialize as we go forward
+     - for DPmatrixConstrained, this means that we need to ignore states on
+       backsampling if we don't initialize cells on the forward pass
+
+  b) speed up forward_cell by putting a boundary around the matrix :)
+
+[EASY] - check for more!
+  c) do vector<double>'s always INITIALIZE them all to zero? 
+      Why does choose<double>( ) call std::fill_n( )?
+  d) DPmatrix::sample_path() const [42] -> spends HALF its time in vector<double>::vector(int) ?
+  e) how does createQ spend so much of its time NOT in getQ?
+  f) why aren't we inlining vector<int>::operator[]  [49]?
+  g) we spend 21% of substitution time in subA_index
+  h) compare times w/ g++-4.0 times...  after improving the code a bit more.
+  i) check w/ fp_scale::cutoff = 1.0e-1 ? or 1.0e-10?
+                 
+
 1. test fix for crashing bug.
    a) we could try to cache some of the results from ordering branches
       under this branch.
