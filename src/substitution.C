@@ -163,10 +163,10 @@ namespace substitution {
     }
     std::reverse(peeling_operations.begin(),peeling_operations.end());
 
-    std::cerr<<"root = "<<root<<std::endl;
-    for(int i=0;i<peeling_operations.size();i++)
-      std::cerr<<peeling_operations[i].b<<"  ";
-    std::cerr<<std::endl<<std::endl;
+    //    std::cerr<<"root = "<<root<<std::endl;
+    //    for(int i=0;i<peeling_operations.size();i++)
+    //      std::cerr<<peeling_operations[i].b<<"  ";
+    //    std::cerr<<std::endl<<std::endl;
   
     return peeling_operations;
   }
