@@ -86,7 +86,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
 	  alignment-sums.C alignment-util.C probability.C model.C le-double.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
-	  monitor.C substitution-index.C tree-util.C myexception.C
+	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C
 
 LIBS = gsl gslcblas m boost_program_options
 ifeq (${STLPORT},y) 
