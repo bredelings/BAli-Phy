@@ -3,7 +3,7 @@
 #include <string>
 #include "alphabet.H"
 #include "alignment.H"
-#include "alignmentutil.H"
+#include "alignment-util.H"
 #include "clone.H"
 
 #include <boost/program_options.hpp>
@@ -22,6 +22,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("tag", value<string>(),"only read alignments preceded by 'align[<tag>'")
+    ("first", "get the first alignment in the file")
+    ("last", "get the last alignment in the file (default)")
     ;
 
   // positional options
@@ -52,21 +54,28 @@ int main(int argc,char* argv[])
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    /* --------------- Determine the tag ---------------- */
+    // --------------- Determine the tag --------------- //
     string tag = "align[";
     if (args.count("tag"))
       tag += args["tag"].as<string>();
 
-    /* --------------- Alphabets to try ---------------- */
+    // --------------- Alphabets to try ---------------- //
     vector<OwnedPointer<alphabet> > alphabets;
     alphabets.push_back(DNA());
     alphabets.push_back(RNA());
     alphabets.push_back(AminoAcids());
 
-    /*---------------- Find the alignment ----------------*/
-    alignment A = find_last_alignment(std::cin, tag, alphabets);
+    //--------------- Find the alignment ----------------//
+    alignment A;
+    if (args.count("first") and args.count("last"))
+      throw myexception()<<"You must choose either --first or --last, not both";
 
-    /*---------------- Print it out ----------------*/
+    if (args.count("first"))
+      A = find_first_alignment(std::cin, tag, alphabets);
+    else
+      A = find_last_alignment(std::cin, tag, alphabets);
+
+    //------------------ Print it out -------------------//
     std::cout<<A;
   }
   catch (std::exception& e) {

@@ -94,12 +94,12 @@ tools/model_P: tools/statistics.o rng.o ${LINKLIBS}
 tools/statreport: tools/statistics.o
 
 tools/alignment-gild: alignment.o alphabet.o sequence.o util.o rng.o \
-	tree.o sequencetree.o tools/optimize.o tools/findroot.o tools/alignmentutil.o \
+	tree.o sequencetree.o tools/optimize.o tools/findroot.o \
 	setup.o imodel.o probability.o sequence-format.o model.o tools/distance-methods.o \
 	alignment-random.o alignment-util.o randomtree.o tree-util.o ${LINKLIBS}
 
 tools/alignment-median: alignment.o alphabet.o sequence.o util.o rng.o \
-	tree.o sequencetree.o tools/alignmentutil.o util-random.o \
+	tree.o sequencetree.o util-random.o \
 	setup.o imodel.o probability.o sequence-format.o model.o  \
 	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
 
@@ -120,7 +120,7 @@ tools/alignment-draw: alignment.o alphabet.o sequence.o sequence-format.o util.o
 tools/alignment-translate: alignment.o alignment-util.o alphabet.o sequence.o \
 	sequence-format.o util.o tree.o -lboost_program_options
 
-tools/alignment-find: alignment.o alphabet.o sequence.o tools/alignmentutil.o \
+tools/alignment-find: alignment.o alphabet.o sequence.o alignment-util.o \
 	rng.o ${LINKLIBS} util.o sequence-format.o
 
 tools/alignment-convert: alignment.o alignment-util.o sequence.o alphabet.o util.o \
@@ -159,7 +159,7 @@ tools/cut-range: util.o -lboost_program_options
 tools/truckgraph: alignment.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 
 tools/truckgraph2: alignment.o alphabet.o sequence.o util.o \
-		tools/alignmentutil.o rng.o ${LINKLIBS}
+		alignment-util.o rng.o ${LINKLIBS}
 
 tools/truckgraph3d: alignment.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 

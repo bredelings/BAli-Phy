@@ -3,9 +3,14 @@
 
 #include <vector>
 #include <valarray>
-#include "alignment.H"
-#include "tree.H"
 #include <boost/program_options.hpp>
+#include <istream>
+#include <string>
+
+#include "alignment.H"
+#include "alphabet.H"
+#include "tree.H"
+#include "clone.H"
 
 // Remove sequences to A corresponding to internal nodes in T
 alignment chop_internal(alignment A);
@@ -70,4 +75,15 @@ long int splits_distance(const alignment& A1,const alignment& A2);
 
 long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
 			 const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2);
+
+std::list<alignment> load_alignments(std::istream& ifile, const std::string& tag,
+				     const std::vector<OwnedPointer<alphabet> >& alphabets, int maxalignments);
+
+alignment find_last_alignment(std::istream& ifile, const string& tag,
+			       const vector<OwnedPointer<alphabet> >& alphabets);
+
+alignment find_first_alignment(std::istream& ifile, const string& tag,
+			       const vector<OwnedPointer<alphabet> >& alphabets);
+
+
 #endif

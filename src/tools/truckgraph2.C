@@ -3,9 +3,8 @@
 #include <map>
 #include "myexception.H"
 #include "alignment.H"
-#include "arguments.H"
 #include "mytypes.H"
-#include "alignmentutil.H"
+#include "alignment-util.H"
 #include "util.H"
 
 using std::map;

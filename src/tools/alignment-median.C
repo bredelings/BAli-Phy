@@ -13,7 +13,6 @@
 #include "findroot.H"
 #include "util.H"
 #include "setup.H"
-#include "alignmentutil.H"
 #include "alignment-util.H"
 #include "distance-methods.H"
 #include "rng.H"
