@@ -265,44 +265,7 @@ namespace A3 {
 
   using namespace A3;
 
-  int di(int S) {
-    S = getstates(S);
-    if (S&(1<<1))
-      return 1;
-    else
-      return 0;
-  }
 
-  int dj(int S) {
-    S = getstates(S);
-    if (S&(1<<2))
-      return 1;
-    else
-      return 0;
-  }
-
-  int dk(int S) {
-    S = getstates(S);
-    if (S&(1<<3))
-      return 1;
-    else
-      return 0;
-  }
-
-  int dc(int S) {
-    if (dj(S)==0 and dk(S)==0)
-      return 0;
-    else
-      return 1;
-  }
-
-  int dl(int S) {
-    S = getstates(S);
-    if (S&(1<<0))
-      return 1;
-    else
-      return 0;
-  }
 
   inline double getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br)
   {

@@ -41,15 +41,53 @@ namespace A3 {
   int findstate(int states);
 
   /// Does state S emit in sequence 1?
-  int di(int S);
+  inline
+  bool di(int S) {
+    S = getstates(S);
+    if (S&(1<<1))
+      return 1;
+    else
+      return 0;
+  }
+
   /// Does state S emit in sequence 2?
-  int dj(int S);
+  inline
+  bool dj(int S) {
+    S = getstates(S);
+    if (S&(1<<2))
+      return 1;
+    else
+      return 0;
+  }
+
   /// Does state S emit in sequence 3?
-  int dk(int S);
+  inline
+  bool dk(int S) {
+    S = getstates(S);
+    if (S&(1<<3))
+      return 1;
+    else
+      return 0;
+  }
+
   /// Does state S emit in sequence 0?
-  int dl(int S);
+  inline
+  bool dl(int S) {
+    S = getstates(S);
+    if (S&(1<<0))
+      return 1;
+    else
+      return 0;
+  }
+
   /// Does state S emit in sequence 2 or 3?
-  int dc(int S);
+  inline 
+  bool dc(int S) {
+    if (dj(S)==0 and dk(S)==0)
+      return 0;
+    else
+      return 1;
+  }
 
   double getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br);
 
