@@ -2,6 +2,7 @@
 #define RATES_H
 
 #include <vector>
+#include <valarray>
 #include <cassert>
 #include <cmath>
 #include "clone.H"
@@ -28,7 +29,7 @@ namespace substitution {
     virtual double prior() const =0;
 
     /// Symmetrically propose another vector of parameters
-    virtual void fiddle() = 0;
+    virtual void fiddle(const std::valarray<bool>&) = 0; 
 
     /// Get the distribution parameters_
     virtual const std::vector<double>& parameters() const {return parameters_;}
@@ -61,7 +62,7 @@ namespace substitution {
 
     double prior() const;
 
-    void fiddle();
+    void fiddle(const std::valarray<bool>&); 
 
     Gamma()
       :RateDistribution(1) 
@@ -81,7 +82,7 @@ namespace substitution {
 
     double prior() const;
 
-    void fiddle();
+    void fiddle(const std::valarray<bool>&); 
 
     LogNormal()
       :RateDistribution(1)
@@ -105,7 +106,7 @@ namespace substitution {
 
     double prior() const { return log(0.5);}
 
-    void fiddle() {}
+    void fiddle(const std::valarray<bool>&) {}
 
     double quantile(double p,double) const {return 2*p;}
 
@@ -159,7 +160,7 @@ namespace substitution {
       return parameters_[distributions.size()+i];
     };
 
-    void fiddle();
+    void fiddle(const std::valarray<bool>&); 
 
     const std::vector<double>& parameters() const {return parameters_;}
 

@@ -359,7 +359,7 @@ namespace substitution {
   }
 
   void DistributionRateModel::super_fiddle(const valarray<bool>& fixed) {
-    D->fiddle();
+    D->fiddle(fixed);
     for(int i=0;i<D->parameters().size();i++)
       parameters_[sub_model->parameters().size() + i] = D->parameters()[i];
     

@@ -3,7 +3,7 @@
 #include <valarray>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
-
+#include "likelihood.H"
 #include "rng.H"
 
 namespace substitution {
@@ -114,21 +114,25 @@ namespace substitution {
   /*--------------- GammaRateDistribution -----------------*/
   
   double Gamma::prior() const {
-    const double mean_stddev = 0.01;
-    return log(mean_stddev) - parameters_[0]/mean_stddev; 
- }
+    double g_sigma = parameters_[0];
+    double log_g_sigma = log(g_sigma);
+    return log(shift_laplace_pdf(log_g_sigma,-4,0.5));
+  }
 
-  void Gamma::fiddle() {
+  void Gamma::fiddle(const std::valarray<bool>& fixed) {
+    if (fixed[0]) return;
+
     vector<double> v = parameters_;
-    double& p = v[0];
- 
-    const double sigma = 0.04;
-    double p2 = p + gaussian(0,sigma);
-    if (p2 < 0) p2 = -p2;
+    double g_sigma = v[0];
+    double log_g_sigma = log(g_sigma);
 
-    double alpha = 1.0/(p2*p2);
-    if (alpha < 10000)
-      p = p2;
+    const double sigma = 0.25;
+    log_g_sigma += gaussian(0,sigma);
+
+    g_sigma = exp(log_g_sigma);
+    double alpha = 1.0/(g_sigma*g_sigma);
+    if (alpha < 1000000)
+      v[0] = g_sigma;
 
     parameters(v);
   }
@@ -168,7 +172,7 @@ namespace substitution {
     return log(mean_stddev) - parameters_[0]/mean_stddev;
   }
 
-  void LogNormal::fiddle() {
+  void LogNormal::fiddle(const std::valarray<bool>& fixed) {
     vector<double> v = parameters_;
     double& p = v[0];
  
@@ -276,10 +280,24 @@ namespace substitution {
     }
   }
 
+  std::valarray<bool> subvector(const std::valarray<bool>& v1,int s, int l) {
+    std::valarray<bool> v2(l);
+    for(int i=0;i<l;i++)
+      v2[i] = v1[s+i];
+    return v2;
+  }
 
-  void MultipleDistribution::fiddle() {
-    for(int i=0;i<distributions.size();i++)
-      distributions[i]->fiddle();
+  void MultipleDistribution::fiddle(const std::valarray<bool>& fixed) {
+
+    for(int i=0,start=0;
+	i<distributions.size();
+	start+=distributions[i]->parameters().size(),
+	  i++)
+      distributions[i]->fiddle(subvector(fixed,
+					 start,
+					 distributions[i]->parameters().size()
+					 )
+			       );
 
     read();
 
