@@ -10,29 +10,38 @@
 
 using namespace std;
 
-
-
-void write_header(const SequenceTree& T) {
+void write_header(const SequenceTree& T,bool leaves) {
 
   vector<string> names;
-  for(int n1=0;n1<T.n_nodes()-1;n1++)
-    for(int n2=0;n2<n1;n2++) {
-      string field = string("D")+convertToString(n1)+"-"+convertToString(n2);
-      names.push_back(field);
-    }
+
+  if (leaves) {
+    for(int n1=0;n1<T.leaves();n1++)
+      names.push_back(string("L")+convertToString(n1));
+  }
+  else {
+    for(int n1=0;n1<T.n_nodes()-1;n1++)
+      for(int n2=0;n2<n1;n2++) {
+	string field = string("D")+convertToString(n1)+"-"+convertToString(n2);
+	names.push_back(field);
+      }
+  }
 
   
   std::cout<<join(names,',')<<endl;
 }
 
-
-void write_out(const SequenceTree& T) {
+void write_out(const SequenceTree& T,bool leaves) {
 
   vector<string> lengths;
-  for(int n1=0;n1<T.n_nodes()-1;n1++)
-    for(int n2=0;n2<n1;n2++)
-      lengths.push_back(convertToString(T.distance(n1,n2)));
-  
+  if (leaves) {
+    for(int n1=0;n1<T.leaves();n1++)
+      lengths.push_back(convertToString(T.branch(n1).length()));
+  }
+  else {
+    for(int n1=0;n1<T.n_nodes()-1;n1++)
+      for(int n2=0;n2<n1;n2++)
+	lengths.push_back(convertToString(T.distance(n1,n2)));
+  }
   std::cout<<join(lengths,',')<<endl;
 }
 
@@ -47,6 +56,7 @@ int main(int argc,char* argv[]) {
       topology_only = true;
 
 
+    bool leaves = args.set("leaves_only");
     bool header=false;
 
     // read in the trees
@@ -59,9 +69,9 @@ int main(int argc,char* argv[]) {
 
       if (not header) {
 	header=true;
-	write_header(T);
+	write_header(T,leaves);
       }
-      write_out(T);
+      write_out(T,leaves);
     }
   }
   catch (std::exception& e) {
