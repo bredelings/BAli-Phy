@@ -7,9 +7,8 @@ all: sampler
 # -mfpmath=387,sse 1:22->1:24
 
 # No effect:
+# -mmmx,sse etc come from -march
 # -malign-double
-# -mmmx, -msse, -msse2 (w/ or w/o -mfpmath=sse)
-# -O3
 
 # Helps:
 # -fomit-frame-pointer: 1:23.7 -> 1:23.2
@@ -21,23 +20,17 @@ all: sampler
 # -fno-strength-reduce?
 # -fno-exceptions -fno-rtti
 
-
-# try -ffast-math, -march=pentium4, -malign-double, -mfpmath=sse,387
-#     -msse2
-
 # -fomit-frame-pointer -pipe -fexpensive-optimizations -fpic -frerun-cse-after-loop -frerun-loop-opt -foptimize-register-move
 # -freorder-blocks
 
-#-mfpmath=sse,387 ?
-
 #----------------- Definitions
-LANGO = fast-math abi-version=1 #tracer prefetch-loop-arrays omit-frame-pointer
-DEBUG = pipe g3 #gdwarf-2 #pg 
-EXACTFLAGS =  # --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS =  # NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
+LANGO = fast-math tracer prefetch-loop-arrays omit-frame-pointer
+DEBUG = pipe #g3 #gdwarf-2 #pg 
+EXACTFLAGS =  --param max-inline-insns-single=750 --param max-inline-insns-auto=80
+DEFS =   NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
-OPT =  march=pentium4 #O3 msse2 # malign-double msse mmmx msse2 
-LDFLAGS = #-pg # -static 
+OPT =  march=pentium4 O3 # malign-double msse mmmx msse2 
+LDFLAGS = # -static 
 LI=${CXX}
 
 #------------------- Main 

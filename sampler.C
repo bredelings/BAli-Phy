@@ -169,7 +169,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   parameter_moves.add(1+P.T.branches()/3,SingleMove(change_gap_parameters,"g_parameters:parameters"),false);
   
 
-  int subsample = args.loadvalue("subsample",0);
+  int subsample = args.loadvalue("subsample",1);
 
   // full sampler
   Sampler sampler("sampler");
@@ -244,7 +244,7 @@ int main(int argc,char* argv[]) {
       A = randomize(A);
     
     /*------------ Specify Gap Penalties ----------*/
-    double lambda_O = args.loadvalue("lambda_O",-8);
+    double lambda_O = args.loadvalue("lambda_O",-5);
 
     double lambda_E = args.loadvalue("lambda_E",lambda_O/10.0);
     

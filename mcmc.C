@@ -508,6 +508,8 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   ofstream map_stream("MAP");
   ofstream Pr_stream("Pr");
 
+  print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag);
+
   /*---------------- Run the MCMC chain -------------------*/
 
   for(int iterations=0; iterations < max; iterations++) {

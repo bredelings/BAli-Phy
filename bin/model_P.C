@@ -52,7 +52,7 @@ double Pr_smoothed(const valarray<double>& v) {
   double deltaP = 1.0;
 
   int iterations = 0;
-  while (std::abs(deltaP) > 1.0e-8) {
+  while (std::abs(deltaP) > 1.0e-6) {
     deltaP = Pr_smoothed(v,delta,Pdata) - Pdata;
     Pdata += deltaP;
 
@@ -104,15 +104,17 @@ int main(int argc,char* argv[]) {
   double PM = Pr_smoothed(values);
 
   cout<<"P(M|data) = "<<PM<<"  ";
+  cout.flush();
 
   //---------- Get bootstrap sample --------------/
 
-  const int blocksize = data.size()/100+1;
-  valarray<double> values2 = bootstrap_apply<double,double>(values,Pr_smoothed,1000,blocksize);
+  int blocksize = data.size()/100+2;
+  if (blocksize > values.size())
+    blocksize = values.size();
 
-  double P = 0.95;
+  valarray<double> values2 = bootstrap_apply<double,double>(values,Pr_smoothed,100,blocksize);
 
-  vector<double> interval = statistics::confidence_interval(values2,P);
+  double stddev = sqrt( statistics::Var(values2) );
 
-  std::cout<<"  ("<<interval[0]<<","<<interval[1]<<")"<<endl;
+  std::cout<<"  +- "<<stddev<<endl;
 }
