@@ -55,15 +55,13 @@ vector<int> HMM::ungeneralize(const vector<int>& g_path) const {
 	int next = choose(P);
 
 	if (next == silent_network_states.size()) {
-	  std::cerr<<S1<<"  -> "<<S_end<<"(last)"<<endl<<endl;
+	  //	  std::cerr<<S1<<"  -> "<<S_end<<"(last)"<<endl<<endl;
 	  break;
 	}
 	else {
-	  if (extra_states.size())
-	    assert(connected_Q(extra_states.back(),silent_network_states[next]) );
-	  extra_states.push_back(silent_network_states[next]);
 	  assert(connected_Q(S1,silent_network_states[next]));
-	  std::cerr<<S1<<"  -> "<<silent_network_states[next]<<endl;
+	  extra_states.push_back(silent_network_states[next]);
+	  //	  std::cerr<<S1<<"  -> "<<silent_network_states[next]<<endl;
 	}
 	S1 = extra_states.back();
       } while (1);

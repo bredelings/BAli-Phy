@@ -177,6 +177,8 @@ public:
 /// 2D Dynamic Programming Matrix for chains which emit different things
 class DPmatrixEmit : public DPmatrix {
 protected:
+
+  Matrix s12_sub;
   /// Precomputed emission probabilies for +-
   valarray<double> s1_sub;
   /// Precomputed emission probabilies for -+
@@ -186,13 +188,13 @@ public:
   /// Probabilities of the different rates
   vector<double> distribution;
   /// Emission probabilities for first sequence
-  vector< vector< valarray<double> > > dists1;
+  vector< Matrix > dists1;
   /// Emission probabilities for second sequence
-  vector< vector< valarray<double> > > dists2;
+  vector< Matrix > dists2;
   /// Frequencies at the root node - and equilibrium frequencies
   valarray<double> frequency;
   /// The number of different rates
-  int nrates() const {return dists1[0].size();}
+  int nrates() const {return dists1[0].size1();}
 
   double path_Q_subst(const vector<int>& path) const;
 
@@ -211,8 +213,8 @@ public:
 			     const Matrix&,
 			     double Temp,
 			     const vector< double >&,
-			     const vector< vector< valarray<double> > >&,
-			     const vector< vector< valarray<double> > >&, 
+			     const vector< Matrix >&,
+			     const vector< Matrix >&, 
 			     const valarray<double>&);
   
   virtual ~DPmatrixEmit() {}
@@ -230,8 +232,8 @@ public:
 		 const Matrix& M,
 		 double Temp,
 		 const vector< double >& d0,
-		 const vector< vector< valarray<double> > >& d1,
-		 const vector< vector< valarray<double> > >& d2, 
+		 const vector< Matrix >& d1,
+		 const vector< Matrix >& d2, 
 		 const valarray<double>& f):
     DPmatrixEmit(v1,v2,M,Temp,d0,d1,d2,f)
   { }
@@ -258,7 +260,8 @@ public:
 		      const Matrix& M,
 		      double Temp,
 		      const vector< double >& d0,
-		      const vector< vector< valarray<double> > >& d1,const vector< vector< valarray<double> > >& d2, 
+		      const vector< Matrix >& d1,
+		      const vector< Matrix >& d2, 
 		      const valarray<double>& f):
     DPmatrixEmit(v1,v2,M,Temp,d0,d1,d2,f), allowed_states(d2.size()+1)
   { }

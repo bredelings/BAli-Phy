@@ -57,19 +57,20 @@ double other_prior(const alignment& A, const Parameters& P,const vector<int>& no
 
 
 /// Distributions function for a star tree
-vector< vector<valarray<double> > > distributions_star(const alignment& A,const Parameters& P,
-						       const vector<int>& seq,int root,const valarray<bool>& group) {
+vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
+				    const vector<int>& seq,int root,const valarray<bool>& group) {
   const alphabet& a = A.get_alphabet();
   const substitution::MultiRateModel& MRModel = P.SModel();
   const SequenceTree& T = P.T;
 
-  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
+  vector< Matrix > dist(seq.size(), Matrix(MRModel.nrates(),a.size()) );
 
   for(int i=0;i<dist.size();i++) {
     vector<int> residues(A.size2());
 
     for(int r=0;r<MRModel.nrates();r++) {
-      dist[i][r].resize(a.size(),1.0);
+      for(int l=0;l<a.size();l++)
+	dist[i][r][l] = 1.0;
 
       for(int n=0;n<T.leaves();n++) {
 	if (not group[n]) continue;
@@ -93,24 +94,26 @@ vector< vector<valarray<double> > > distributions_star(const alignment& A,const 
 
 
 /// Distributions function for a full tree
-vector< vector<valarray<double> > > distributions_tree(const alignment& A,const Parameters& P,
-					const vector<int>& seq,int root,const valarray<bool>& group) {
+vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
+				    const vector<int>& seq,int root,const valarray<bool>& group) {
   const alphabet& a = A.get_alphabet();
   const substitution::MultiRateModel& MRModel = P.SModel();
 
-  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
+  vector< Matrix > dist(seq.size(), Matrix(MRModel.nrates(),a.size()) );
 
   for(int i=0;i<dist.size();i++) {
     vector<int> residues(A.size2());
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
+
     for(int r=0;r<MRModel.nrates();r++) {
-      dist[i][r].resize(a.size());
-      dist[i][r] = substitution::peel(residues,
-				      P.T,
-				      MRModel.BaseModel(),
-				      P.transition_P(r),
-				      root,group);
+      valarray<double> temp = substitution::peel(residues,
+						 P.T,
+						 MRModel.BaseModel(),
+						 P.transition_P(r),
+						 root,group);
+      for(int l=0;l<a.size();l++)
+	dist[i](r,l) = temp[l];
     }
 
     // note: we could normalize frequencies to sum to 1

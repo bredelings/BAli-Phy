@@ -704,6 +704,9 @@ void tree::SPR(int n1, int n2, int b) {
 
 
 tree& tree::operator=(const tree& t1) {
+  if (&t1 == this)
+    return *this;
+
   TreeView(root).destroy();
 
   n_leaves_ = t1.n_leaves();

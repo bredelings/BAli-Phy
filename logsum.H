@@ -17,7 +17,7 @@ const double log_limit = log_0/100;
 
 // NATS is 52*log(2) for 52 bits of precision
 // HMM... the long doubles have 64 bits of precision...
-const double NATS = 303;
+const double NATS = 40;
 
 inline double logsum(double x, double y)
 {

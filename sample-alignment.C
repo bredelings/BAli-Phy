@@ -14,9 +14,24 @@
 using std::abs;
 using namespace A2;
 
-vector< vector<valarray<double> > > distributions_star(const alignment& A,const Parameters& P,
+vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 						  const vector<int>& seq,int b,bool up) {
 
+  //--------------- Find our branch, and orientation ----------------//
+  const SequenceTree& T = P.T;
+  int root = T.branch(b).parent();      //this is an arbitrary choice
+
+  int node1 = T.branch(b).child();
+  int node2 = T.branch(b).parent();
+  if (not up) std::swap(node1,node2);
+
+  valarray<bool> group = T.partition(node1,node2);
+
+  return ::distributions_star(A,P,seq,root,group);
+}
+
+vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
+						  const vector<int>& seq,int b,bool up) {
   //--------------- Find our branch, and orientation ----------------//
   const SequenceTree& T = P.T;
   int root = T.branch(b).parent();      //this is an arbitrary choice
@@ -30,22 +45,7 @@ vector< vector<valarray<double> > > distributions_star(const alignment& A,const 
   return ::distributions_tree(A,P,seq,root,group);
 }
 
-vector< vector<valarray<double> > > distributions_tree(const alignment& A,const Parameters& P,
-						  const vector<int>& seq,int b,bool up) {
-  //--------------- Find our branch, and orientation ----------------//
-  const SequenceTree& T = P.T;
-  int root = T.branch(b).parent();      //this is an arbitrary choice
-
-  int node1 = T.branch(b).child();
-  int node2 = T.branch(b).parent();
-  if (not up) std::swap(node1,node2);
-
-  valarray<bool> group = T.partition(node1,node2);
-
-  return ::distributions_tree(A,P,seq,root,group);
-}
-
-typedef vector< vector< valarray<double> > > (*distributions_t_local)(const alignment&, const Parameters&,
+typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parameters&,
 							      const vector<int>&,int,bool);
 
 alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
@@ -78,8 +78,8 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   if (not P.SModel().full_tree)
     distributions = distributions_star;
 
-  vector< vector< valarray<double> > > dists1 = distributions(old,P,seq1,b,true);
-  vector< vector< valarray<double> > > dists2 = distributions(old,P,seq2,b,false);
+  vector< Matrix > dists1 = distributions(old,P,seq1,b,true);
+  vector< Matrix > dists2 = distributions(old,P,seq2,b,false);
 
   vector<int> state_emit(4,0);
   state_emit[0] |= (1<<1)|(1<<0);

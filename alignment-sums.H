@@ -3,21 +3,22 @@
 
 #include <vector>
 
+#include "mytypes.H"
 #include "dp-engine.H"
 #include "alignment.H"
 #include "parameters.H"
 
 /// Define type for a function which return the distributions for each column and rate give SOME leaves
-typedef vector< vector< valarray<double> > > (*distributions_t)(const alignment&, const Parameters&,
+typedef vector< Matrix > (*distributions_t)(const alignment&, const Parameters&,
 							      const vector<int>&,int,const valarray<bool>&);
 
 
 /// Distributions function for a star tree
-vector< vector<valarray<double> > > distributions_star(const alignment& A,const Parameters& P,
+vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 						       const vector<int>& seq,int root,const valarray<bool>& group);
 
 /// Distributions function for a full tree
-vector< vector<valarray<double> > > distributions_tree(const alignment& A,const Parameters& P,
+vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
 						       const vector<int>& seq,int root,const valarray<bool>& group);
 
 

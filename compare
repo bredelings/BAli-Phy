@@ -70,3 +70,38 @@ user    0m29.627s
 
 gamma,5S-rRNA/5 iterations=40
 user    0m34.558s
+
+----------------------------------------
+1.8.12
+single,EF-Tu/5d, iterations=10
+user	1m11.000s
+user	1m11.300s
+
+gamma,EF-Tu/5d iterations=10
+user    1m9.250s
+
+single,EF-Tu/12d iterations=3
+user    1m38.100s
+
+gamma,EF-Tu/12d iterations=3
+user    1m54.520s
+[*]user    1m54.440s
+[**]user    1m53.310s
+
+single, 5S-rRNA/4, iterations=40
+user    0m33.060s
+
+gamma, 5S-rRNA/4, iterations=40
+user    0m35.590s
+
++++seed=0 align=Data/HIV-Shankarappa/P1/014-stripped.fasta "Use Codons"
+
+single,iterations=5
+user    1m38.060s
+
+gamma,iterations=5
+user    1m38.320s
+[*]user    1m38.110s
+
+
+

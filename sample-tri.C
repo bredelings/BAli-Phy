@@ -95,8 +95,8 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   if (not P.SModel().full_tree)
     distributions = distributions_star;
 
-  vector< vector< valarray<double> > > dists1 = distributions(A,P,seq1,nodes[0],group1);
-  vector< vector< valarray<double> > > dists23 = distributions(A,P,seq23,nodes[0],group2|group3);
+  vector< Matrix > dists1 = distributions(A,P,seq1,nodes[0],group1);
+  vector< Matrix > dists23 = distributions(A,P,seq23,nodes[0],group2|group3);
 
 
   /*-------------- Create alignment matrices ---------------*/

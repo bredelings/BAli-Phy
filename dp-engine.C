@@ -53,7 +53,7 @@ double DPengine::check(const vector<int>& path1,const vector<int>& path2,double 
   return diff;
 }
 
-DPengine::DPengine(const vector<int>& v1,const vector<double>& v2, const Matrix&M,double Temp)
+DPengine::DPengine(const vector<int>& v1,const vector<double>& v2, const Matrix&M, double Temp)
   :HMM(v1,v2,M,Temp) 
 { }
 
@@ -607,6 +607,7 @@ inline double sum(const valarray<double>& v) {
   return v.sum();
 }
 
+/*
 inline double DPmatrixEmit::emitMM(int i,int j) const {
   double total=0;
   for(int r=0;r<nrates();r++) {
@@ -620,6 +621,13 @@ inline double DPmatrixEmit::emitMM(int i,int j) const {
   }
 
   return log(total)/T;
+}
+*/
+
+// switching dists1[] to matrices actually made things WORSE!
+
+inline double DPmatrixEmit::emitMM(int i,int j) const {
+  return s12_sub(i-1,j-1);
 }
 
 inline double DPmatrixEmit::emitM_(int i,int j) const {
@@ -667,10 +675,11 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 			   const Matrix& M,
 			   double Temp,
 			   const vector< double >& d0,
-			   const vector< vector< valarray<double> > >& d1,
-			   const vector< vector< valarray<double> > >& d2, 
+			   const vector< Matrix >& d1,
+			   const vector< Matrix >& d2, 
 			   const valarray<double>& f)
   :DPmatrix(d1.size(),d2.size(),v1,v2,M,Temp),
+   s12_sub(d1.size(),d2.size()),
    s1_sub(d1.size()),s2_sub(d2.size()),
    distribution(d0),
    dists1(d1),dists2(d2),frequency(f)
@@ -679,17 +688,46 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
   //----- cache G1,G2 emission probabilities -----//
   for(int i=0;i<dists1.size();i++) {
     double total=0;
-    for(int r=0;r<nrates();r++)
-      total += distribution[r]*sum( dists1[i][r] * frequency );
+    for(int r=0;r<nrates();r++) {
+      double temp=0;
+      for(int l=0;l<dists1[i].size2();l++)
+	temp += frequency[l]*dists1[i](r,l);
+      total += temp*distribution[r];
+    }
     s1_sub[i] = log(total)/T;
   }
-  
+
   for(int i=0;i<dists2.size();i++) {
     double total=0;
-    for(int r=0;r<nrates();r++)
-      total += distribution[r]*sum( dists2[i][r] * frequency );
+    for(int r=0;r<nrates();r++) {
+      double temp=0;
+      for(int l=0;l<dists2[i].size2();l++)
+	temp += frequency[l]*dists2[i](r,l);
+      total += temp*distribution[r];
+    }
     s2_sub[i] = log(total)/T;
   }
+
+  //----- pre-calculate scaling factors --------//
+  for(int i=0;i<dists2.size();i++) {
+    for(int r=0;r<nrates();r++)
+      for(int l=0;l<dists2[i][r].size();l++)
+	dists2[i](r,l) *= distribution[r] * frequency[l];
+  }
+
+  //----- cache M emission probabilities -----//
+  for(int i=0;i<s12_sub.size1();i++)
+    for(int j=0;j<s12_sub.size2();j++) {
+      const Matrix& M1 = dists1[i];
+      const Matrix& M2 = dists2[j];
+      double total=0;
+      for(int r=0;r<M1.size1();r++) {
+	for(int l=0;l<M1.size2();l++)
+	  total += M1(r,l) * M2(r,l);
+      }
+      s12_sub(i,j) = log(total)/T;
+    }
+
 }
 
 
