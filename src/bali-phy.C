@@ -190,9 +190,9 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   vector<string> disable;
   vector<string> enable;
   if (args.set("disable"))
-    disable = split(args["disable"],':');
+    disable = split(args["disable"],',');
   if (args.set("enable"))
-    enable = split(args["enable"],':');
+    enable = split(args["enable"],',');
   
   for(int i=0;i<disable.size();i++)
     sampler.disable(disable[i]);
