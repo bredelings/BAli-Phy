@@ -1,3 +1,15 @@
+Changes in 1.8.17
+ * [BUGFIX] Make sure proposals and priors are on the same scale.
+ * [BUGFIX] We MUST sample both nodes and alignment in SPR moves.
+ * [NEW]    Add some documentation.
+ * [NEW]    Make tool 'tree-dist-compare' compare any number of 
+            tree distributions.
+ * [CHANGE] Increase mixing for epsilon...
+ * [CHANGE] Sanitize the interface.
+ * [CHANGE] Make the makefile self-contained.
+ * [CHANGE] Introduce shift_laplace prior to allow data to overpower
+            prior.  Use in prior on kappa + omega.
+
 Changes in 1.8.13:
  * [BUGFIX] Our branch length proposal was biased upwards! Fixed.
  * [CHANGE] Sanitize move attributes

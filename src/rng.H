@@ -63,7 +63,9 @@ namespace rng {
     double gaussian(double mu,double sigma) {return gsl_ran_gaussian(generator,sigma/sqrt(2))+mu;}
 
     double exponential(double mu) {return gsl_ran_exponential(generator,mu);}
+
     int geometric (double mu) {return gsl_ran_geometric(generator,mu);}
+
     unsigned poisson(double mu) {return gsl_ran_poisson(generator,mu);}
 
     RNG();
