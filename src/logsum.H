@@ -2,6 +2,7 @@
 #define LOGSUM_H
 
 #include <cmath>
+#include <cassert>
 
 using std::exp;
 using std::log;

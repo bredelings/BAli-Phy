@@ -42,7 +42,7 @@ valarray<double> empirical_frequencies(Arguments& args,const alignment& A) {
     }
   }
 
-  counts = counts/counts.sum() * A.length();
+  counts /= (counts.sum() * A.length());
 
   // Setup the default frequences for the pseudocounts (uniform)
   double pseudocount = 5+4*a.size();

@@ -195,7 +195,8 @@ void MoveAll::getorder(double l) {
     if (not moves[i]->enabled()) continue;
 
     int n = moves[i]->reset(l*lambda[i]);
-    order.insert(order.end(),n,i);
+    for(int j=0;j<n;j++)
+      order.insert(order.end(),i);
   }
 }
 
@@ -234,7 +235,8 @@ void MoveOne::getorder(double l) {
     int n = moves[i]->reset(count[i]);
     if (not moves[i]->enabled())
       assert(n==0);
-    order.insert(order.end(),n,i);
+    for(int j=0;j<n;j++)
+      order.insert(order.end(),i);
   }
 }
 

@@ -22,9 +22,10 @@ LDFLAGS :=
 
 ifeq (${DEBUG},y)
   DEBUG := g3
+  DEFS += _STLP_DEBUG
 else
   ifeq ($(origin DEFS), undefined)
-     DEFS  := NDEBUG_UBLAS NDEBUG_DP NDEBUG
+     DEFS += NDEBUG_UBLAS NDEBUG_DP NDEBUG
   endif
 
   ifneq ($(origin ARCH), undefined)
@@ -64,7 +65,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C
 
-LIBS = gsl gslcblas m 
+LIBS = gsl gslcblas m
 LINKLIBS = ${LIBS:%=-l%}
 
 ${PROGNAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
@@ -150,6 +151,8 @@ tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o $
 SHELL = /bin/sh
 MAKEFILES = GNUmakefile
 
+includes += /usr/local/include/stlport
+includes += /usr/local/include
 includes += ../include/
 includes += .
 

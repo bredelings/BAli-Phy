@@ -108,14 +108,14 @@ int Multi_Likelihood_Cache::add_token(int B) {
   return token;
 }
 
-int Multi_Likelihood_Cache::claim_token(int C,int B) {
+int Multi_Likelihood_Cache::claim_token(int l,int B) {
   int token = find_free_token();
 
   if (token == -1)
     token = add_token(B);
 
   // set the length correctly
-  set_length(token,C);
+  set_length(token,l);
   
   active[token] = true;
 

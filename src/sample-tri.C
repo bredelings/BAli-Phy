@@ -197,8 +197,10 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   vector< DPmatrixConstrained > Matrices;
   for(int i=0;i<p.size();i++) {
     letters_OK(a[i],"sample_tri_multi:before");
-    Matrices.push_back( tri_sample_alignment_base(a[i],p[i],nodes[i]) );
-    letters_OK(a[i],"sample_tri_multi:after");
+    DPmatrixConstrained temp = tri_sample_alignment_base(a[i],p[i],nodes[i]);
+    letters_OK(a[i],"sample_tri_multi:after1"); 
+    Matrices.push_back( temp );
+    letters_OK(a[i],"sample_tri_multi:after2"); 
     p[i].LC.set_length(a[i].length());
     int b = p[i].T.branch(nodes[i][0],nodes[i][1]);
     p[i].LC.invalidate_branch_alignment(p[i].T, b);

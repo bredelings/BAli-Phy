@@ -29,7 +29,7 @@ public:
   static void initialize() {
     table = new double[BITS+1];
     for(int i=0;i<=BITS;i++)
-      table[i] = pow(2,-i);
+      table[i] = pow(2.0,-i);
     initialized=true;
   }
 
