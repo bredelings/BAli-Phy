@@ -114,6 +114,7 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   double ls1 = P.likelihood(old,P);
   P.LC.set_length(A.length());
+  P.LC.invalidate_branch_alignment(T,b);
   double ls2 = P.likelihood(A  ,P);
 
   double lp1 = P.prior(old,P);
@@ -139,7 +140,7 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   }
 #else
   P.LC.set_length(A.length());
-  //  P.LC.invalidate_alignment_branch(T,b);
+  P.LC.invalidate_branch_alignment(T,b);
 #endif
 
   /*--------------------------------------------------------------*/

@@ -178,14 +178,19 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
 
   assert(p.size() == nodes.size());
-  
+
+  Parameters P_save = p[0];
   //----------- Generate the different states and Matrices ---------//
 
   vector<alignment> a(p.size(),A);
 
   vector< DPmatrixConstrained > Matrices;
-  for(int i=0;i<p.size();i++)
+  for(int i=0;i<p.size();i++) {
     Matrices.push_back( tri_sample_alignment_base(a[i],p[i],nodes[i]) );
+    p[i].LC.set_length(a[i].length());
+    int b = p[i].T.branch(nodes[i][0],nodes[i][1]);
+    p[i].LC.invalidate_branch_alignment(p[i].T, b);
+  }
 
   //-------- Calculate corrections to path probabilities ---------//
 
@@ -229,7 +234,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   }
   // Add another entry for the incoming configuration
   a.push_back( A );
-  p.push_back( p[0] );
+  p.push_back( P_save );
   nodes.push_back(nodes[0]);
   Matrices.push_back( Matrices[0] );
   OS.push_back( OS[0] );
