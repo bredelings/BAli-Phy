@@ -168,21 +168,6 @@ valarray<double> peel(const vector<int>& residues,const tree& T,const Reversible
   return result;
 }
 
-valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
-		      const vector<Matrix>& transition_P,int b,bool up) {
-  /**************** Find our branch, and orientation *****************/
-  int root = T.branch(b).parent();      //this is an arbitrary choice
-
-  int node1 = T.branch(b).child();
-  int node2 = T.branch(b).parent();
-  if (not up) std::swap(node1,node2);
-
-  valarray<bool> group = T.partition(node1,node2);
-
-  return peel(residues,T,SModel,transition_P,root,group); 
-}
-
-
 double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
 	  const vector<Matrix>& transition_P,int root) {
   assert(residues.size() == T.num_nodes()-1);
@@ -265,7 +250,7 @@ double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SM
 
       int lleaf = column[b];
       if (a.letter(lleaf))
-	temp *= Q(lleaf,lroot);
+	temp *= Q(lroot,lleaf);
     }
     p += temp;
   }
@@ -357,5 +342,22 @@ double Pr_star_estimate(const alignment& A,const Parameters& P) {
   //----------- Get log L w/ new tree  -------------//
   return Pr_star(A,P2);
 }
+  double Pr_unaligned(const alignment& A,const Parameters& P) {
+    const alphabet& a = A.get_alphabet();
 
+    vector<double> count(a.size(),0);
+
+    for(int i=0;i<A.num_sequences();i++) {
+      for(int column=0;column<A.length();column++) {
+	int l = A(column,i);
+	if (a.letter(l))
+	  count[l]++;
+      }
+    }
+    
+    double total=0;
+    for(int l=0;l<count.size();l++)
+      total += log(P.SModel().BaseModel().frequencies()[l])*count[l];
+    return total;
+  }
 }

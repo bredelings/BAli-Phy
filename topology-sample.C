@@ -353,10 +353,34 @@ alignment construct(const alignment& old,const tree& T,const vector<int>& path,i
 }
 
 
+MCMC::result_t sample_topology_sgaps(alignment& A,Parameters& P1,const Parameters& P2, 
+				     const Parameters& P3,int b) {
+  const IndelModel& IModel = P1.IModel();
+
+  double Pr1 = P1.probability(A,P1);
+  double Pr2 = P1.probability(A,P2);
+  double Pr3 = P1.probability(A,P3);
+
+  /*********** Choose A Topology ************/
+  int choice = choose(Pr1,Pr2,Pr3);
+
+  MCMC::result_t result = MCMC::failure;
+  if (choice == 1) {
+    P1 = P2;
+    result = MCMC::success;
+  }
+  else if (choice == 2) {
+    P1 = P3;
+    result = MCMC::success;
+  }
+  return result;
+}
+
+
 /// Do a Gibbs sample between a set of three topologies/parameters
 MCMC::result_t sample_topology(alignment& A,Parameters& P1,const Parameters& P2, 
 			       const Parameters& P3,int b) {
-  const IndelModel& IModel = P1.IModel;
+  const IndelModel& IModel = P1.IModel();
 
   SequenceTree& T1 = P1.T;
   const SequenceTree& T2 = P2.T;
@@ -399,23 +423,9 @@ MCMC::result_t sample_topology(alignment& A,Parameters& P1,const Parameters& P2,
 
   std::cerr<<" PA1 = "<<PA1<<"       PA2 = "<<PA2<<"       PA3 = "<<PA3<<std::endl;
 
-  double PS1 = 0;
-  double PS2 = 0;
-  double PS3 = 0;
-
-  if (P1.SModel().full_tree) {
-    PS1 = P1.likelihood(A,P1);
-    PS2 = P1.likelihood(A,P2);
-    PS3 = P1.likelihood(A,P3);
-  }
-  else {
-#ifndef NDEBUG
-    PS1 = P1.likelihood(A,P1);
-    PS2 = P1.likelihood(A,P2);
-    PS3 = P1.likelihood(A,P3);
-#endif
-  }
-
+  double PS1 = P1.likelihood(A,P1);
+  double PS2 = P1.likelihood(A,P2);
+  double PS3 = P1.likelihood(A,P3);
 
   std::cerr<<" PS1 = "<<PS1<<"       PS2 = "<<PS2<<"       PS3 = "<<PS3<<std::endl;
 
@@ -481,6 +491,9 @@ MCMC::result_t sample_topology(alignment& A,Parameters& P1,int b) {
   T2.exchange(nodes[1],nodes[2]);
   T3.exchange(nodes[1],nodes[3]);
   
-  return sample_topology(A,P1,P2,P3,b);
+  if (P1.IModel().full_tree)
+    return sample_topology(A,P1,P2,P3,b);
+  else
+    return sample_topology_sgaps(A,P1,P2,P3,b);
 }
 

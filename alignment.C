@@ -135,8 +135,10 @@ bool phylip_section(std::istream& file,int ntaxa, vector<string>& names,vector<s
   for(int i=0;i<ntaxa;i++) {
     string line;
     getline(file,line);
-    while(i==0 and line.size()==0 and file.good())
+    while(i==0 and line.size()==0 and file.good()) {
       getline(file,line);
+      // FIXME - eat whitespace
+    }
     if (not file) return false;
 
     int pos = line.find_first_not_of(" \t");
@@ -177,7 +179,7 @@ void alignment::load_phylip(const alphabet& a,const std::string& filename) {
   vector<string> names;
   vector<string> names2;
   phylip_section(file,ntaxa,names,sequences);
-  //FIXME - make it stop when its done.
+  //FIXME - make it stop when its done (e.g. use supplied length)
   while(phylip_section(file,ntaxa,names2,letters)) {
     for(int i=0;i<ntaxa;i++)
       sequences[i] += letters[i];

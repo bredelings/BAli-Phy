@@ -11,7 +11,10 @@ double Parameters::likelihood(const alignment& A,const Parameters& P) const {
 }
 
 double Parameters::prior(const alignment& A,const Parameters& P) const {
-  return prior3(A,P);
+  if (IModel_->full_tree)
+    return prior3(A,P);
+  else
+    return prior_HMM_notree(A,P);
 }
 
 bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
@@ -32,6 +35,7 @@ bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 
 void Parameters::fiddle() {
   SModel_->fiddle();recalc();
+  IModel_->fiddle();
   
   const double sigma = 0.05;
   branch_mean += gaussian(0,sigma);
@@ -59,7 +63,8 @@ Parameters& Parameters::operator=(const Parameters& P) {
   delete SModel_;
   SModel_ = P.SModel_->clone();
 
-  IModel = P.IModel;
+  delete IModel_;
+  IModel_ = P.IModel_->clone();
 
   T = P.T;
 
@@ -72,8 +77,9 @@ Parameters& Parameters::operator=(const Parameters& P) {
 }
 
 Parameters::Parameters(const Parameters& P):
-  transition_P_(P.transition_P_),SModel_(P.SModel_->clone()),
-  constants(P.constants),features(P.features),IModel(P.IModel),T(P.T),branch_mean(P.branch_mean)
+  transition_P_(P.transition_P_),
+  IModel_(P.IModel_->clone()),SModel_(P.SModel_->clone()),
+  constants(P.constants),features(P.features),T(P.T),branch_mean(P.branch_mean)
 { }
 
 
@@ -86,9 +92,8 @@ Parameters::Parameters(const substitution::MultiRateModel& SM,const IndelModel& 
 							 ) 
 					  ) 
 		 ),
-   SModel_(SM.clone()),IModel(IM),
-   features(0),
-   T(t)
+   IModel_(IM.clone()),SModel_(SM.clone()),
+   features(0),T(t)
 {
   branch_mean = 0.1;
   recalc();

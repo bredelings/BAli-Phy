@@ -100,23 +100,26 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
 }
 
 MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
+  if (not P.SModel().full_tree)
+    return MCMC::no_result;
 
-    /********* Propose increment 'epsilon' ***********/
-    const double sigma = 0.4/2;
-    const double length = P.T.branch(b).length();
-    double newlength = length + gaussian(0,sigma);
 
-    std::cerr<<" old length = "<<P.T.branch(b).length()<<"  new length = "<<newlength<<std::endl;\
+  /********* Propose increment 'epsilon' ***********/
+  const double sigma = 0.4/2;
+  const double length = P.T.branch(b).length();
+  double newlength = length + gaussian(0,sigma);
 
-    // If the length is positive, simply propose a length change
-    if (newlength >= 0) {
-      Parameters P2 = P;
-      P2.setlength(b,newlength);
+  std::cerr<<" old length = "<<P.T.branch(b).length()<<"  new length = "<<newlength<<std::endl;
 
-      /********** Do the M-H step if OK**************/
-      MCMC::result_t r = do_MH_move(A,P,P2);
-      if (r == MCMC::success) 
-	std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
+  // If the length is positive, simply propose a length change
+  if (newlength >= 0) {
+    Parameters P2 = P;
+    P2.setlength(b,newlength);
+
+    /********** Do the M-H step if OK**************/
+    MCMC::result_t r = do_MH_move(A,P,P2);
+    if (r == MCMC::success) 
+      std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
       else
 	std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
       return r;

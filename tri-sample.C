@@ -95,7 +95,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
 {
   const tree& T = P.T;
 
-  const vector<double>& pi = P.IModel.pi;
+  const vector<double>& pi = P.IModel().pi;
   const valarray<double>& frequency = P.SModel().BaseModel().frequencies();
 
   //  std::cerr<<"old = "<<old<<endl;
@@ -223,7 +223,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
   assert(count==27);
 
 
-  const Matrix Q = createQ(P.IModel);
+  const Matrix Q = createQ(P.IModel());
 
   // Actually create the Matrices & Chain
   DPmatrixHMM Matrices(state_emit,start_P,Q,
@@ -322,7 +322,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
   int length_old = old.seqlength(n0);
   int length_new = A.seqlength(n0);
 
-  double log_ratio = 2.0*(P.IModel.lengthp(length_new)-P.IModel.lengthp(length_old));
+  double log_ratio = 2.0*(P.IModel().lengthp(length_new)-P.IModel().lengthp(length_old));
   if (myrandomf() < exp(log_ratio))
     return A;
   else

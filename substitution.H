@@ -11,10 +11,6 @@ namespace substitution {
   std::valarray<double> peel(const vector<int>&,const tree&,const ReversibleModel&, 
 			     const vector<Matrix>&,int,const std::valarray<bool>& group);
 
-  /// Find the probabilities of each letter at parent of branch 'b', given data on one side of 'b'
-  std::valarray<double> peel(const vector<int>&,const tree&,const ReversibleModel&, 
-			     const vector<Matrix>&,int b,bool up);
-
   /// Column likelihood - for a specific rate
   double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
 	    const vector<Matrix>& transition_P);
@@ -34,6 +30,9 @@ namespace substitution {
   
   double Pr_star_constant(const alignment& A,const Parameters& P);
   double Pr_star_estimate(const alignment& A,const Parameters& P);
+
+  // Full likelihood - if everything is unaligned....
+  double Pr_unaligned(const alignment& A,const Parameters& P);
 
 }
 

@@ -23,7 +23,7 @@ double log_double_factorial(int n) {
   return x;
 }
 
-// Tree prior: branch lengths & topology
+/// Tree prior: branch lengths & topology
 double prior(const SequenceTree& T,double branch_mean) {
   double p = 0;
 
@@ -86,7 +86,7 @@ double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
   for(int b=0;b<T.branches();b++) {
     int parent = T.branch(b).parent();
     int child  = T.branch(b).child();
-    double p = prior_branch(A, P.IModel,parent,child);
+    double p = prior_branch(A, P.IModel(),parent,child);
     Pr += p;
   }
   
@@ -98,12 +98,12 @@ double prior_HMM(const alignment& A,const Parameters& P) {
 
   int highest_node = T.get_nth(T.num_nodes()-2);
   highest_node = T.branch_up(highest_node).parent();
-  double Pr = P.IModel.lengthp(A.seqlength(highest_node));
+  double Pr = P.IModel().lengthp(A.seqlength(highest_node));
 
   for(int b=0;b<T.branches();b++) {
     int parent = T.branch(b).parent();
     int child  = T.branch(b).child();
-    Pr += prior_branch_Given(A, P.IModel, parent, child);
+    Pr += prior_branch_Given(A, P.IModel(), parent, child);
   }
   
   return Pr;
@@ -140,9 +140,9 @@ double prior_branch_notree(const alignment& A,const IndelModel& IModel,int child
 double prior_HMM_notree(const alignment& A,const Parameters& P) {
   const tree& T =P.T;
 
-  double Pr = P.IModel.lengthp(A.length());
+  double Pr = P.IModel().lengthp(A.length());
   for(int b=0;b<T.branches();b++) 
-    Pr += prior_branch_notree(A, P.IModel, b);
+    Pr += prior_branch_notree(A, P.IModel(), b);
 
   return Pr;
 }
@@ -178,4 +178,5 @@ double Pr_sgaps_sletters(const alignment& A,const Parameters& P) {
   Pr += prior(P);
   return Pr;
 }
+
 

@@ -196,10 +196,8 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   alignment_moves.add(1, alignment_branch_moves);
 
   // aligment :: sample_nodes
-  MoveEach internal_nodes_move("nodes_master");
-  MoveArgSingle nodes_move1("sample_nodes:alignment:nodes",sample_nodes_one,internal_nodes);
+  MoveEach internal_nodes_move("nodes_master:nodes");
   MoveArgSingle nodes_move2("sample_nodes2:alignment:nodes",sample_nodes2_one,internal_nodes);
-  internal_nodes_move.add(1,nodes_move1);
   internal_nodes_move.add(1,nodes_move2);
 
   if (P.T.leaves() >2)
@@ -223,14 +221,16 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				   change_branch_length_move,
 				   branches)
 		   );
-  length_moves1.add(100,MoveArgSingle("change_branch_length_and_T:length:nodes:topology",
-				     change_branch_length_and_T,
-				     internal_branches)
+  if (P.SModel().full_tree)
+    length_moves1.add(100,MoveArgSingle("change_branch_length_and_T:length:nodes:topology",
+					change_branch_length_and_T,
+					internal_branches)
 		   );
   length_moves.add(1,length_moves1);
-  length_moves.add(1,MoveArgSingle("slide_branch_length:length",
-				   slide_branch_lengths_one,
-				   branches)
+  if (P.SModel().full_tree)
+    length_moves.add(1,MoveArgSingle("slide_branch_length:length",
+				     slide_branch_lengths_one,
+				     branches)
 		   );
   tree_moves.add(1,length_moves);
 
@@ -297,17 +297,11 @@ int main(int argc,char* argv[]) {
     /*------- Nucleotide Substitution Models -------*/
     alphabet dna("DNA nucleotides","AGTC","N");
     
-    substitution::HKY HKY_dna(dna);
-    
     /*------- Nucleotide Substitution Models -------*/
     alphabet rna("RNA nucleotides","AGUC","N");
     
-    substitution::HKY HKY_rna(rna);
-    
     /*------- Amino Acid Substitution Models -------*/
     alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
-    
-    substitution::Empirical WAG(amino_acids,"Data/wag.dat");
     
     /*----------- Load alignment and tree ---------*/
     alignment A;
@@ -330,11 +324,11 @@ int main(int argc,char* argv[]) {
     if (args.set("smodel") and args["smodel"] == "EQU")
       base_smodel = new substitution::EQU(A.get_alphabet());
     else if (A.get_alphabet() == dna)
-      base_smodel = HKY_dna.clone();
+      base_smodel = new substitution::HKY(dna);
     else if (A.get_alphabet() == rna)
-      base_smodel = HKY_rna.clone();
+      base_smodel = new substitution::HKY(rna);
     else if (A.get_alphabet() == amino_acids)
-      base_smodel = WAG.clone();
+      base_smodel = new substitution::Empirical(amino_acids,"Data/wag.dat");
     else
       assert(0);
     
@@ -355,9 +349,14 @@ int main(int argc,char* argv[]) {
       delete temp;
     }
 
-    if (args.set("star-letters"))
+    if (args["letters"]== "star") {
       full_smodel->full_tree = false;
-    
+
+      for(int i=T.leaves();i<T.branches();i++) {
+      	T.branch(i).length() = 0;
+      }
+    }
+
     /*-------------Choose an indel model--------------*/
     int IMlength = 500;    //FIXME - perhaps we should choose \tau here
     if (IMlength < A.length()*3)
@@ -377,7 +376,12 @@ int main(int argc,char* argv[]) {
       std::cout<<"imodel = symmetric\n";
       imodel = new IndelModel2(IMlength,lambda_O,lambda_E);
     }
+    if (args["gaps"]== "star") {
+      imodel->full_tree = false;
+    }
+    
 
+    /*-------------Create the Parameters object--------------*/
     Parameters P(*full_smodel,*imodel,T);
     std::cout<<"Using substitution model: "<<P.SModel().name()<<endl<<endl;
 

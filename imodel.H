@@ -15,6 +15,12 @@ protected:
   ublas::matrix<double> P;
 
 public:
+  bool full_tree;
+
+  virtual void fiddle()=0;
+
+  virtual IndelModel* clone() const =0;
+
   /// The probability that we start in each state (a way of not dealing with start states)
   vector<double> pi;
 
@@ -28,10 +34,16 @@ public:
   double length_plus_p(int i) const {return p_length_plus[i];}
 
   IndelModel();
+
+  virtual ~IndelModel() {}
 };
 
 class IndelModel1 : public IndelModel {
 public:
+  void fiddle() {};
+
+  IndelModel1* clone() const {return new IndelModel1(*this);}
+
   ////probability of going -> E
   double tau;     
 
@@ -46,6 +58,10 @@ public:
 
 class IndelModel2 : public IndelModel {
 public:
+  void fiddle() {};
+
+  IndelModel2* clone() const {return new IndelModel2(*this);}
+
   ///probability of going -> E
   double tau;     
 
@@ -64,6 +80,10 @@ public:
 class SingleIndelModel : public IndelModel {
 
 public:
+  void fiddle() {};
+
+  SingleIndelModel* clone() const {return new SingleIndelModel(*this);}
+
   ///probability of going -> E
   double tau;
 

@@ -14,20 +14,18 @@
 class Parameters {
   vector< vector<Matrix> > transition_P_;
 
-  /*--------We own this----------*/
+  /*-------- We own these ----------*/
+  /// The IndelModel
+  IndelModel* IModel_;
+
   /// The substitution::Model
   substitution::MultiRateModel* SModel_;
-
 
 public:
   /// Is pinning enabled or not?
   vector<double> constants;
   /// Is pinning enabled or not?
   int features;
-
-  /// Which model are we currently running
-  int model;
-
 
   /// The likelihood function
   double likelihood(const alignment& A,const Parameters& P) const; 
@@ -43,11 +41,11 @@ public:
   bool accept_MH(const alignment& A1,const Parameters& P1,
 		 const alignment& A2,const Parameters& P2) const;
 
-  /// The IndelModel
-  IndelModel IModel;
-
-  /*------------tree-------------*/
+  /// The Tree
   SequenceTree T;
+
+  /// The IndelModel
+  const IndelModel& IModel() const {return *IModel_;}
 
   /// Get the substitution::Model
   const substitution::MultiRateModel& SModel() const {return *SModel_;}
@@ -82,7 +80,7 @@ public:
 
   Parameters(const Parameters&);
   Parameters(const substitution::MultiRateModel&,const IndelModel&,const SequenceTree&);
-  ~Parameters() {delete SModel_;}
+  ~Parameters() {delete SModel_; delete IModel_;}
 };
 
 #endif

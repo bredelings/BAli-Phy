@@ -388,6 +388,7 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
 
 void print_stats(std::ostream& o,const alignment& A,const Parameters& P) {
   o<<endl;
+  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
   o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
   o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
   o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;

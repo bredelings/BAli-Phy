@@ -4,6 +4,9 @@
 #include "mcmc.H"
 
 MCMC::result_t slide_branch_lengths_one(alignment& A, Parameters& P,int b) {
+  if (not P.SModel().full_tree)
+    return MCMC::no_result;
+
   bool up = true;
   if (myrandom(2))
     up = false;
@@ -14,33 +17,16 @@ MCMC::result_t slide_branch_lengths_one(alignment& A, Parameters& P,int b) {
 }
 
 
-
-MCMC::result_t slide_branch_lengths(alignment& A, Parameters& P) {
-  for(int i=0;i<P.T.leaves();i++) {
-    int b = myrandom(P.T.branches());
-
-    slide_branch_lengths_one(A,P,b);
-
-  }
-  return MCMC::no_result;
-}
-
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
+  if (not P.SModel().full_tree and b>=P.T.leaves())
+    return MCMC::no_result;
+
   return change_branch_length(A,P,b);
 }
 
-MCMC::result_t change_branch_lengths(alignment& A, Parameters& P) {
-  for(int i=0;i<P.T.leaves();i++) {
-    int b = myrandom(P.T.branches());
-    if (b<P.T.leaves())
-      change_branch_length_move(A,P,b);
-    else
-      change_branch_length_and_T(A,P,b);
-  }
-  return MCMC::no_result;
-}
-
 MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
+  assert(P.IModel().full_tree); 
+
   const SequenceTree& T = P.T;
 
   int node1 = T.branch(b).parent();
@@ -58,51 +44,24 @@ MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
 }
 
 MCMC::result_t sample_alignments_one(alignment& A, Parameters& P,int b) {
+  assert(P.IModel().full_tree); 
+
   A = sample_alignment(A,P,b);
   return MCMC::no_result;
 }
 
 MCMC::result_t sample_alignments2_one(alignment& A, Parameters& P,int b) {
+  assert(P.IModel().full_tree); 
+
   A = sample_alignment2(A,P,b);
   return MCMC::no_result;
 }
 
-MCMC::result_t sample_alignments(alignment& A, Parameters& P) {
-  for(int i=0;i<P.T.leaves();i++) {
-    int b = myrandom(P.T.branches());
-
-    sample_alignments_one(A,P,b);
-  }
-  return MCMC::no_result;
-}
-
-
-MCMC::result_t sample_nodes_one(alignment& A, Parameters& P,int node) {
-  A = sample_node(A,P,node);
-
-  return MCMC::no_result;
-}
-
 MCMC::result_t sample_nodes2_one(alignment& A, Parameters& P,int node) {
+  assert(P.IModel().full_tree); 
+
   A = sample_node2(A,P,node);
 
-  return MCMC::no_result;
-}
-
-MCMC::result_t sample_nodes(alignment& A, Parameters& P) {
-  for(int i=0;i<P.T.num_nodes()-P.T.leaves();i++) {
-    int node = myrandom(P.T.leaves(),P.T.num_nodes()-1);
-
-    sample_nodes_one(A,P,node);
-  }
-  return MCMC::no_result;
-}
-
-MCMC::result_t sample_topologies(alignment& A,Parameters& P) {
-  for(int i=0;i<P.T.branches()-P.T.leaves();i++) {
-    int b = myrandom(P.T.leaves(),P.T.branches());
-    sample_topology(A,P,b);
-  }
   return MCMC::no_result;
 }
 

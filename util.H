@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <cassert>
 
 template <class T>
 T convertTo(const std::string& s) { 
@@ -37,6 +38,7 @@ inline double wrap(double x,double max) {
   if (x > max)
     x = max*2 - x;
 
+  assert(x >= 0 and x <= max);
   return x;
 }
 

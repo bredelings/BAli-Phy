@@ -98,7 +98,7 @@ double path_Q_subst(const vector<int>& path,
 
 
 double path_P(const vector<int>& path,const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& P) {
-  const Matrix& Q = P.IModel.Q;
+  const Matrix& Q = P.IModel().Q;
 
   const int I = M.size1()-1;
   const int J = M.size2()-1;
@@ -144,7 +144,7 @@ using std::valarray;
 // g1 -> g2, never g2 -> g1
 
 vector<int> sample_path(const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& P) {
-  const Matrix& Q = P.IModel.Q;
+  const Matrix& Q = P.IModel().Q;
 
   vector<int> path;
   const int I = M.size1()-1;
@@ -176,43 +176,22 @@ vector<int> sample_path(const Matrix& M,const Matrix& G1,const Matrix& G2,const 
   return path;
 }
 
-static vector< vector<valarray<double> > > distributions(const alignment& A,const Parameters& P,
-					const vector<int>& seq,int b,bool up) {
-  const alphabet& a = A.get_alphabet();
-  const substitution::MultiRateModel& MRModel = P.SModel();
+// This function is defined in the NEW version of branch-sample (branch-sample2.C)
+vector< vector<valarray<double> > > distributions_tree(const alignment& A,const Parameters& P,
+						  const vector<int>& seq,int b,bool up);
 
-  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
+// This function is defined in the NEW version of branch-sample (branch-sample2.C)
+vector< vector<valarray<double> > > distributions_star(const alignment& A,const Parameters& P,
+						  const vector<int>& seq,int b,bool up);
 
-
-  for(int i=0;i<dist.size();i++) {
-    vector<int> residues(A.size2());
-    for(int j=0;j<residues.size();j++)
-      residues[j] = A(seq[i],j);
-    for(int r=0;r<MRModel.nrates();r++) {
-      dist[i][r].resize(a.size());
-      dist[i][r] = substitution::peel(residues,
-				      P.T,
-				      MRModel.BaseModel(),
-				      P.transition_P(r),
-				      b,up);
-    }
-
-    // double sum = dist[i].sum();
-    // it IS possible to have no leaves if internal sequences is non-gap
-    //    if (sum < a.size()-1) {
-    //      assert(sum <= 1.00000001);
-    //      dist[i] /= sum;
-    //    }
-  }
-
-  return dist;
-}
+typedef vector< vector< valarray<double> > > (*distributions_t)(const alignment&, const Parameters&,
+							      const vector<int>&,int,bool);
 
 alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   const tree& T = P.T;
-  const Matrix& Q = P.IModel.Q;
+  const Matrix& Q = P.IModel().Q;
 
-  const vector<double>& pi = P.IModel.pi;
+  const vector<double>& pi = P.IModel().pi;
 
   const substitution::MultiRateModel& MRModel = P.SModel();
   const valarray<double>& frequency = MRModel.BaseModel().frequencies();
@@ -234,6 +213,10 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
+  distributions_t distributions = distributions_tree;
+  if (not P.SModel().full_tree)
+    distributions = distributions_star;
+
   vector< vector< valarray<double> > > dists1 = distributions(old,P,seq1,b,true);
   vector< vector< valarray<double> > > dists2 = distributions(old,P,seq2,b,false);
 

@@ -94,7 +94,7 @@ void IndelModel::construct_lengthp(int n) {
 }
 
 IndelModel::IndelModel()
-  : P(4,4),pi(4),Q(4,4)
+  : P(4,4),full_tree(true),pi(4),Q(4,4)
 { }
 
 
