@@ -48,7 +48,7 @@ public:
 
 class Likelihood_Cache: public std::vector< std::vector< RefMatrix > > {
 protected:
-  void invalidate_one_branch(int b,bool unique=false);
+  void invalidate_one_branch(int b);
 
 public:
   int root;
@@ -63,13 +63,13 @@ public:
 
   vector<RefMatrix> unshareable_column();
 
-  void invalidate_all(bool unique=false);
+  void invalidate_all();
 
-  void invalidate_directed_branch(const Tree&,int b,bool unique=false);
+  void invalidate_directed_branch(const Tree&,int b);
 
-  void invalidate_branch(const Tree&,int b,bool unique=false);
+  void invalidate_branch(const Tree&,int b);
 
-  void invalidate_node(const Tree&,int n,bool unique=false);
+  void invalidate_node(const Tree&,int n);
 
   void set_length(int);
 

@@ -97,15 +97,21 @@ SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
   return T2;
 }
 
+void remove_duplicates(vector<int>& v) {
+  for(int i=v.size()-1;i>=0;i--) {
+    bool dup=false;
+    for(int j=0;j<i and not dup;j++)
+      if (v[j] == v[i]) dup=true;
+    if (dup)
+      v.erase(v.begin()+i);
+  }
+}
 
 MCMC::result_t sample_SPR(alignment& A,Parameters& P1,int b) {
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
 
-  Parameters P2 = P1;
-
   SequenceTree& T1 = P1.T;
-  SequenceTree& T2 = P2.T;
 
   //----- Get nodes for directed branch ------//
   int n1 = T1.branch(b).target();
@@ -116,13 +122,34 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P1,int b) {
     std::swap(n1,n2);
 
   //----- Generate the Different Topologies ----//
+  P1.LC.root = n1;
+  Parameters P2 = P1;
 
+  SequenceTree& T2 = P2.T;
+
+
+  // find the changed branches
+  vector<int> branches;
+  for(edges_after_iterator i=T2.directed_branch(n2,n1).branches_after();
+      i;i++)
+    branches.push_back((*i).undirected_name());
   //  std::cerr<<"before = "<<T1<<endl;
-
   T2 = do_SPR(T1,n1,n2,b);
-  P2.recalc();
-  
   //  std::cerr<<"after = "<<T2<<endl;
+  for(edges_after_iterator i=T2.directed_branch(n2,n1).branches_after();
+      i;i++)
+    branches.push_back((*i).undirected_name());
+
+
+  remove_duplicates(branches);
+    
+  // recompute/invalidate caches associated with changed branch lengths
+  assert(branches.size() <= 3);
+  for(int i=0;i<branches.size();i++) {
+    int b = branches[i];
+    P2.setlength(b,P2.T.branch(b).length());
+  }
+  
 
   bool success = topology_sample_SPR(A,P1,P2,n1,n2);
 

@@ -374,7 +374,7 @@ namespace substitution {
     Parameters P2 = P;
     P2.recalc();
     double result2 = Pr(A,P.T,P.SModel(),P2);
-    assert(result == result2);
+    assert(std::abs(result - result2) < 1.0e-9);
 #endif
     return result;
   }

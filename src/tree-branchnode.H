@@ -269,6 +269,8 @@ public:
 class branchview {
 protected:
   BranchNode* b;
+
+  friend class const_branchview;
 public:
   nodeview source() const { return b;}
   nodeview target() const { return b->out;}
@@ -300,9 +302,7 @@ public:
   void set_length(double d) const {b->out->length = b->length = d;}
 
   operator int() const {return name();}
-  branchview(BranchNode* bn):b(bn) {
-    assert(bn);
-  }
+  branchview(BranchNode* bn):b(bn) { assert(b); }
 };
 
 class const_branchview {
@@ -337,9 +337,8 @@ public:
   double length() const {return b->length;}
 
   operator int() const {return name();}
-  const_branchview(const BranchNode* bn):b(bn) {
-    assert(bn);
-  }
+  const_branchview(const BranchNode* bn):b(bn)   { assert(b); }
+  const_branchview(const branchview& bv):b(bv.b) { assert(b) ;}
 };
 
 inline const_branchview const_in_edges_iterator::operator*() const {

@@ -55,11 +55,12 @@ void Parameters::fiddle() {
 
 void Parameters::recalc() {
   MatCache::recalc(T,*SModel_);
+  LC.invalidate_all();
 }
 
 void Parameters::setlength(int b,double l) {
   MatCache::setlength(b,l,T,*SModel_); 
-  LC.invalidate_branch(T,b,true);
+  LC.invalidate_branch(T,b);
 }
 
 Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,const SequenceTree& t)

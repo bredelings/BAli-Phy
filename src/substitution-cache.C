@@ -2,33 +2,32 @@
 
 using std::vector;
 
-void Likelihood_Cache::invalidate_one_branch(int b,bool unique) {
+void Likelihood_Cache::invalidate_one_branch(int b) {
   up_to_date[b] = false;
-  if (unique)
-    for(int i=0;i<size();i++)
-      (*this)[i][b].uniquify();
+  for(int i=0;i<size();i++)
+    (*this)[i][b].uniquify();
 }
 
-void Likelihood_Cache::invalidate_all(bool unique) {
+void Likelihood_Cache::invalidate_all() {
   for(int b=0;b<up_to_date.size();b++)
-    invalidate_one_branch(b,unique);
+    invalidate_one_branch(b);
 }
 
-void Likelihood_Cache::invalidate_directed_branch(const Tree& T,int b,bool unique) {
+void Likelihood_Cache::invalidate_directed_branch(const Tree& T,int b) {
   vector<const_branchview> branch_list = branches_after(T,b);
   for(int i=0;i<branch_list.size();i++)
-    invalidate_one_branch(branch_list[i],unique);
+    invalidate_one_branch(branch_list[i]);
 }
 
-void Likelihood_Cache::invalidate_branch(const Tree& T,int b,bool unique) {
-  invalidate_directed_branch(T,b,unique);
+void Likelihood_Cache::invalidate_branch(const Tree& T,int b) {
+  invalidate_directed_branch(T,b);
   invalidate_directed_branch(T,T.directed_branch(b).reverse());
 }
 
-void Likelihood_Cache::invalidate_node(const Tree& T,int n,bool unique) {
+void Likelihood_Cache::invalidate_node(const Tree& T,int n) {
   vector<const_branchview> branch_list = branches_from_node(T,n);
   for(int i=0;i<branch_list.size();i++)
-    invalidate_one_branch(branch_list[i],unique);
+    invalidate_one_branch(branch_list[i]);
 }
 
 void Likelihood_Cache::set_length(int l2) {
