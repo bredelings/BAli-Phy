@@ -133,3 +133,56 @@ bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<
   return true;
 }
 
+vector<const_branchview> branches_toward_from_node(const Tree& T,int n) {
+  vector<const_branchview> branches;
+  branches.reserve(2*T.n_branches());
+
+  branches = branches_from_node(T,n);
+  std::reverse(branches.begin(),branches.end());
+  for(int i=0;i<T.n_branches();i++)
+    branches.push_back(branches[i]);
+
+  for(int i=0;i<T.n_branches();i++)
+    branches[i] = branches[branches.size()-1-i].reverse();
+
+  return branches; 
+}
+
+
+ublas::matrix<int> get_SM(const alignment& A,const Tree& T) {
+  ublas::matrix<int> SM(A.length(),2*T.n_branches());
+    
+  vector<const_branchview> branches = branches_toward_from_node(T,T.n_nodes()-1);
+
+  // Compute the sub-alignments
+  vector<const_branchview> temp;temp.reserve(2);
+  for(int i=0;i<branches.size();i++) {
+    int b = branches[i];
+
+
+    int l=0;
+    for(int c=0;c<SM.size1();c++) {
+      SM(c,b) = alphabet::gap;
+
+      // for leaf branches fill from the alignment
+      if (branches[i].source().is_leaf_node()) {
+	if (not A.gap(c,b))
+	  SM(c,b) = l++;
+      }
+
+      // for internal branches fill from the previous branches
+      else {
+	temp.clear();
+	append(T.directed_branch(b).branches_before(),temp);
+	assert(temp.size() == 2);
+
+	if (SM(c,temp[0]) != -1 or SM(c,temp[1]) != -1)
+	  SM(c,b) = l++;
+      }
+
+    }
+  }
+
+  return SM;
+}
+
