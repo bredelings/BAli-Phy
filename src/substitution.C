@@ -27,22 +27,6 @@ namespace substitution {
 
   typedef Likelihood_Cache& column_cache_t;
 
-  static inline bool order(const alignment& A,int c1,int c2,const vector<int>& leaves) {
-    int order=0;
-    for(int i=0;i<leaves.size();i++) {
-      bool P1 = not A.gap(c1,leaves[i]);
-      bool P2 = not A.gap(c2,leaves[i]);
-      if (P1 and P2)
-	return 0;
-      if (P1)
-	order = -1;
-      else if (P2)
-	order = +1;
-    }
-    assert(order != 0);
-    return order;
-  }
-
   static inline bool any_shared(const alignment& A,int c1,int c2,const vector<int>& leaves) {
     for(int i=0;i<leaves.size();i++)
       if (not A.gap(c1,leaves[i]) and not A.gap(c2,leaves[i]))
