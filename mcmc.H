@@ -4,6 +4,6 @@
 #include "alignment.H"
 #include "parameters.H"
 
-void MCMC(alignment&,Parameters&,
-	  const int max,double probability(const alignment&,const Parameters&));
+void MCMC(alignment&,Parameters&,int max,
+	  double probability(const alignment&,const Parameters&) );
 #endif

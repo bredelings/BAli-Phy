@@ -44,6 +44,7 @@ double prior_branch(const alignment& A,const IndelModel& IModel,int n1,int n2) {
 double prior_internal(const alignment& A,const Parameters& Theta) {
   double P=0;
   for(int i=0;i<Theta.T.branches();i++) {
+    assert(0); //FIXME - wrong method of dealing w/ branches!
     int parent = Theta.T.parent(i);
     P += prior_branch(A,Theta.IModel,i,parent);
   }
@@ -75,10 +76,12 @@ double prior_branch_HMM(const alignment& A,const IndelModel& IModel,int n1,int n
 }
 
 double prior_HMM(const alignment& A,const Parameters& Theta) {
+  assert(0); //FIXME - wrong way to find highest node
   int highest_node = Theta.T.num_nodes()-2;
   double P = Theta.IModel.lengthp(A.seqlength(highest_node));
 
   for(int i=0;i<Theta.T.branches();i++) {
+    assert(0); //FIXME - wrong method of dealing w/ branches!
     int parent = Theta.T.parent(i);
     P += prior_branch_HMM(A,Theta.IModel,parent,i);
   }

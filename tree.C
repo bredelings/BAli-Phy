@@ -3,56 +3,87 @@
 #include "exponential.H"
 #include <algorithm>
 
-void TreeView::destroy(node** n) {
-  assert(n);
-  if (!*n) return;
-  destroy(&((*n)->left));
-  destroy(&((*n)->right));
-  delete *n;
-  *n=0;
+void TreeView::destroy_tree(node* n) {
+  if (not n) return;
+
+  if (n->parent_branch) {
+    delete n->parent_branch;
+    n->parent_branch = 0;
+  }
+
+  destroy_tree(n->left);
+  n->left = 0;
+
+  destroy_tree(n->right);
+  n->right = 0;
+
+  delete n;
+}
+
+void TreeView::copy_tree(node* n) {
+
+  if (n->parent) {
+    assert(n->parent_branch);
+
+    n->parent_branch = new Branch( *(n->parent_branch) );
+    n->parent_branch->parent = n->parent;
+    n->parent_branch->child = n;
+  }
+
+  if (n->left) {
+    n->left = new node( *(n->left) );
+    n->left->parent = n;
+    copy_tree(n->left);
+  }
+
+  if (n->right) {
+    n->right = new node( *(n->right) );
+    n->right->parent = n;
+    copy_tree(n->right);
+  }
 }
 
 TreeView TreeView::copy() const {
-  node* top=0;
   if (!root)
-    return TreeView(top);
+    return TreeView(0);
 
-  top = new node;
-  *top = *root;
-  top->parent = 0;
+  node* top = new node(*root);
 
-  top->left = (node*)TreeView(root->left).copy();
-  if (top->left) top->left->parent = top;
-
-  top->right = (node*)TreeView(root->right).copy();
-  if (top->right) top->right->parent = top;
+  copy_tree(top);
 
   return TreeView(top);
 }
 
-// exclude root node
-vector<int> get_neighbors(const node& n) {
-  vector<int> neighbors;
-  if (n.left) neighbors.push_back(n.left->name);
-  if (n.right) neighbors.push_back(n.right->name);
+void TreeView::exchange_cousins(node* node1, node* node2) {
+  node* p1 = node1->parent;
+  node* p2 = node2->parent;
 
-  assert(n.parent);  // don't deal w/ root node
+  // The nodes are distinct
+  assert(node1 != node2);
 
-  if (n.parent->parent)
-    neighbors.push_back(n.parent->name);
-  else {
-    node* parent = n.parent->left;
-    if (&n == parent)
-      parent = n.parent->right;
-    neighbors.push_back(parent->name);
-  }
+  // The nodes don't have the same parent
+  assert(p1 != p2);
 
-  return neighbors;
-}
+  // We assume that either node is an ancestor of the other
 
+  // Neither node is a child of the root
+  assert(p1->parent and p2->parent);
 
-TreeView tree::copy() const {
-  return TreeView(root).copy();
+  if (p1->left == node1)
+    p1->left = node2;
+  else
+    p1->right = node2;
+
+  if (p2->left == node2)
+    p2->left = node1;
+  else
+    p2->right = node1;
+
+  node1->parent = p2;
+  node2->parent = p1;
+
+  node1->parent_branch->parent = node1->parent;
+  node2->parent_branch->parent = node2->parent;
 }
 
 vector<node*> find_nodes(node* root) {
@@ -89,7 +120,66 @@ void find_leaves(node* n,vector<node*>& leaves) {
   find_leaves(n->right,leaves);
 }
 
-/* If we aren't deleting or adding nodes, then we don't change the leaf names */
+/**************** Begin 'tree' implementation ***************/
+// Until stated otherwise, the tree is considered rooted
+
+void add_left(node* parent,node* child) {
+  assert(not parent->left);
+
+  parent->left = child;
+  child->parent = parent;
+
+  child->parent_branch = new Branch;
+  child->parent_branch->child = child;
+  child->parent_branch->parent = parent;
+}
+
+void add_right(node* parent,node* child) {
+  assert(not parent->right);
+
+  parent->right = child;
+  child->parent = parent;
+
+  child->parent_branch = new Branch;
+  child->parent_branch->child = child;
+  child->parent_branch->parent = parent;
+}
+
+// Do I need to export an interface which maps each node name
+// on the two old trees into a node name in the current tree?
+// I could put a field 'old_name' in the 'struct node' for this...
+
+// subtree(root,tree:left) = T
+void tree::add_left(node* parent,const tree& T) {
+  node* child = T.copy();
+  ::add_left(parent,child);
+  reorder();
+}
+
+// subtree(root,tree:right) = T
+void tree::add_right(node* parent,const tree& T) {
+  node* child = T.copy();
+  ::add_right(parent,child);
+  reorder();
+}
+
+void tree::add_root() {
+  assert(!root);
+  root = new node;
+  order.push_back(root);
+  names.push_back(root);
+  // No branches
+  n_leaves = 1;
+  root->name = 0;
+}
+
+/* This routine computes 'Layer 2' from 'Layer 1'.
+ * Layer 1: pointer structure, in memory
+ * Layer 2: node names, node orders
+ *
+ * If the number of nodes remains unchanged, then 
+ * the node and branch names remain the same.
+ */
 
 void tree::reorder() {
   int old_size = order.size();
@@ -99,9 +189,9 @@ void tree::reorder() {
 
   // Mark all nodes as non-visted
   for(int i=0;i<order.size();i++)
-    order[i]->name = -1;
+    order[i]->order = -1;
 
-  // Fill order with the leaves, and name them
+  // Fill order with the leaves, and order them
   order.clear();
   find_leaves(root,order);
   for(int i=0;i<order.size();i++)
@@ -134,46 +224,23 @@ void tree::reorder() {
   for(int i=0;i<order.size();i++)
     assert(order[i]->order == i);
 
-  /***** re-assign names if the tree has change *****/
+  /***** re-assign names if the tree has changed *****/
   if (not names.size() or old_size != new_size) {
     names = order;
-    for(int i=0;i<num_nodes();i++)
+    for(int i=0;i<names.size();i++)
       names[i]->name = i;
+
+    branches_ = vector<Branch*>(names.size()-1,0);
+    for(int i=0;i<branches_.size();i++) {
+      branches_[i] = names[i]->parent_branch;
+      branches_[i]-> name = i;
+    }
   }
 
   compute_ancestors();
 }
 
-// With iterator, this would be:  *left  = (node* tv1);
-void tree::add_left(node& parent,node& child) {
-  parent.left = &child;
-  parent.left->parent = &parent;
-}
-
-// With iterator, this would be:  *right  = (node* tv1);
-void tree::add_right(node& parent,node& child) {
-  parent.right = &child;
-  parent.right->parent = &parent;
-}
-
-// Do I need to export an interface which maps each node name
-// on the two old trees into a node name in the current tree?
-// I could put a field 'old_name' in the 'struct node' for this...
-
-// subtree(root,tree:left) = T
-void tree::add_left(node& parent,const tree& T) {
-  TreeView tv = T.copy();
-  add_left(parent,*(node*)tv);
-  reorder();
-}
-
-// subtree(root,tree:right) = T
-void tree::add_right(node& parent,const tree& T) {
-  TreeView tv = T.copy();
-  add_right(parent,*(node*)tv);
-  reorder();
-}
-
+// Names need to be set up already for this
 void tree::compute_ancestors() {
 
   ancestors.clear();
@@ -195,42 +262,7 @@ void tree::compute_ancestors() {
   }
 }
 
-vector<int> tree::path(int n1,int n2) const {
-  vector<int> result;
-
-  if (ancestor(n1,n2)) {
-    for(const node* here = names[n2];here->name != n1;here = here->parent)
-      result.insert(result.begin(),here->name);
-    result.insert(result.begin(),n1);
-  }
-  else if (ancestor(n2,n1)) {
-    for(const node* here = names[n1];here->name != n2;here = here->parent)
-      result.insert(result.end(),here->name);
-    result.insert(result.end(),n2);
-  }
-  else {
-    int top = n1;
-    while(!ancestor(top,n2))
-      top = names[top]->parent->name;
-    result = path(n1,top);
-    result.pop_back();
-    vector<int> temp = path(top,n2);
-    result.insert(result.end(),temp.begin(),temp.end());
-  }
-  return result;
-}
-
-int tree::branch_up(int n1) const {
-  if (n1 == num_nodes()-2)
-    return branch_up(parent(n1));
-  for(int i=0;i<branches();i++) {
-    if (branch(i).node2 == n1)
-      return i;
-  }
-  assert(0);
-}
-
-
+//Unrooted Tree
 std::valarray<bool> tree::partition(int n1,int n2) const {
   std::valarray<bool> mask(num_nodes());;
 
@@ -243,14 +275,10 @@ std::valarray<bool> tree::partition(int n1,int n2) const {
   return mask;
 }
 
-void tree::add_root() {
-  assert(!root);
-  root = new node;
-  order.push_back(root);
-  names.push_back(root);
-  n_leaves = 1;
-  root->name = 0;
+int tree::branch_up(int node1) const {
+  return up_branches[node1];
 }
+
 
 // ***** "exchange_cousins" and "exchange": *****
 // We exchange the subtrees specified by node1 and node2
@@ -267,44 +295,6 @@ void tree::add_root() {
 //    - p1->n1:l1, p1->n2:l2  becomes p1->n2:l2,p2->n1:l1
 //    - this is easy in exchange_cousins, but takes works after reorder
 
-void tree::exchange_cousins(int n1, int n2) {
-  // Our [only] caller guarantees these won't happen
-
-  // The nodes are distinct
-  assert(n1 != n2);
-
-  // Neither node is an ancestory of the other
-  assert(not ancestor(n1,n2) and not ancestor(n2,n1));
-
-  // The nodes don't have the same parent
-  assert(parent(n1) != parent(n2));
-
-  // Neither node is a child of the root
-  assert(names[n1]->parent->parent and names[n2]->parent->parent);
-
-  node* node1 = names[n1];
-  node* node2 = names[n2];
-
-  node* p1 = node1->parent;
-  node* p2 = node2->parent;
-
-  if (p1->left == node1)
-    p1->left = node2;
-  else
-    p1->right = node2;
-
-  if (p2->left == node2)
-    p2->left = node1;
-  else
-    p2->right = node1;
-
-  node1->parent = p2;
-  node2->parent = p1;
-
-  branches_[n1].node1 = node1->parent->name;
-  branches_[n2].node1 = node2->parent->name;
-}
-
 
 // if one of the subtrees contains the 
 // branch connect the children of the root then
@@ -314,59 +304,53 @@ void tree::exchange_cousins(int n1, int n2) {
 // of the tree when p1 != p2, then 
 
 void tree::exchange(int node1, int node2) {
-  // make node2 > node1
   if (ancestor(node1,node2))
     std::swap(node1,node2);
 
   if (parent(node1) == parent(node2))
-    ;
-  else if (ancestor(node2,node1) or node2>num_nodes()-4) {  
+    return;
+  else if (ancestor(node2,node1) or not names[node2]->parent->parent) {  
 
     vector<int> intermediate;
     int here = parent(node1);
 
-    /****** Find the intermediate nodes *******/
+    /****** Find the intermediate children *******/
     assert(here != node2);
     do {
-      int there = names[here]->left->name;
-      if (ancestor(there,node1))
-	  there = names[here]->right->name;
-
-      intermediate.push_back(there);
+      intermediate.push_back(here);
       here = parent(here);
     }
     while(here != node2);
+
+    //FIXME - implement new algorithm!
+    assert(0);
 
     /******  Invert the order of the intermediate nodes ****/
     for(int i=0;i<intermediate.size()/2;i++) {
       int j = intermediate.size()-1-i;
 
       // exchange their names 
-      int pi = names[i]->parent->name;
-      int pj = names[j]->parent->name;
+      int pi = parent(intermediate[i]);
+      int pj = parent(intermediate[j]);
       std::swap(names[pi],names[pj]);
       names[pi]->name = pi;
       names[pj]->name = pj;
 
       // exchange their subtrees
-      exchange_cousins(intermediate[i],intermediate[j]);
+      TreeView::exchange_cousins(intermediate[i],intermediate[j]);
     }
+
+    //***** Get the intermediate nodes *********/
+    for(int i=0;i<intermediate.size();i++)
+      intermediate[i] = parent(intermediate[i]);
 
     assert(parent(intermediate[0]) == node2);
     assert(parent(node1) == intermediate[intermediate.size()-1]);
-
-    for(int i=0;i<branches();i++) {
-      Branch& b = branch(i);
-      if (b.node1 == node2) 
-	b.node2 = intermediate[0];
-      else if (b.node2 == node1) 
-	b.node1 = intermediate[intermediate.size()-1];
-      if (b.node1 < b.node2)
-	std::swap(b.node1,b.node2);
-    }
   }
-  else
-    exchange_cousins(node1,node2);
+  else     
+    TreeView::exchange_cousins(node1,node2);
+
+  reorder();
 }
 
 
@@ -391,12 +375,14 @@ tree& tree::operator=(const tree& t1) {
       order[o] = nodes[i];
     }
 
-  compute_ancestors();
-  
   // index numbers shouldn't change across copies
-  branches_.clear();
-  for(int i=0;i<num_nodes()-2;i++)
-    branches_.push_back(t1.branch(i));
+  branches_ = vector<Branch*>(names.size()-1,0);
+  for(int i=0;i<branches_.size();i++) {
+    int name = names[i]->parent_branch->name;
+    branches_[name] = names[i]->parent_branch;
+  }
+
+  compute_ancestors();
 
   return *this;
 }
@@ -406,29 +392,22 @@ tree::tree(const tree& t1, const tree& t2) {
   root = new node;            // *here = new node;
   root->parent = 0;
 
-  add_left(*root,t1);
-  add_right(*root,t2);
+  add_left(root,t1);
+  add_right(root,t2);
 
-  for(int i=0;i<num_nodes()-2;i++) {
-    Branch b;
-    b.node1 = parent(i);
-    b.node2 = i;
-    b.length = 0.2;
-    branches_.push_back(b);
-  }
+  root->left->parent_branch->length = 0.2;
+  root->right->parent_branch->length = 0.2;
 }
 
 tree::tree(const tree& t1, double d1, const tree& t2, double d2) {
   root = new node;            // *here = new node;
   root->parent = 0;
 
-  add_left(*root,t1);
-  add_right(*root,t2);
+  add_left(root,t1);
+  add_right(root,t2);
   
-  assert(0); // this doesn't really work yet;
-
-  //  add_edge(t1_root,new_root,d1)
-  //  add_edge(t2_root,new_root,d2)
+  root->left->parent_branch->length = d1;
+  root->right->parent_branch->length = d2;
 }
 
 
@@ -545,11 +524,14 @@ SequenceTree::SequenceTree(const sequence& s)
 }
 
 SequenceTree::SequenceTree(const SequenceTree& T1, const SequenceTree& T2):tree(T1,T2) {
+  assert(0); //associations between leaves and sequence names
+  // can get screwed up - CHECK this - it could be OK.
   for(int i=0;i<T1.leaves();i++) 
     sequences.push_back(T1.seq(i));
   for(int i=0;i<T2.leaves();i++) 
     sequences.push_back(T2.seq(i));
 }
+
 
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit

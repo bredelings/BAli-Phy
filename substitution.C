@@ -4,7 +4,9 @@
 #include <valarray>
 using std::valarray;
 
-
+//FIXME - should be some way to avoid duplication matrix multiply?
+//how to deal with directionality of top edge?  sometime peel down,
+// sometimes peel up
 valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
 		      int node1, int node2) {
   const alphabet& a = Theta.get_alphabet();
@@ -15,6 +17,7 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
 
   valarray<bool> group = T.partition(node1,node2);
   if (node1 != T.parent(node2)) group[node2] = false; // don't propagate from node2
+  assert(0);//FIXME - the above test doesn't work for top branch
 
   // what nodes do we need to work in the second pass
   vector<int> work;

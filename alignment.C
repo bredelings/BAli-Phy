@@ -1,6 +1,5 @@
 #include <algorithm>
 #include "alignment.H"
-#include "possibilities.H"
 
 int num_non_gaps(const alignment& A,int column) {
   int count=0;
@@ -205,6 +204,9 @@ void alignment::gap_fixup(int n1,int n2,int g1,int g2,int m) {
   assert(0);
 }
 
+//FIXME - make all internal nodes present - see how that does
+//FIXME - also try un-aligning everything - see if we can rediscover
+//        the right alignment
 void alignment::create_internal(const SequenceTree& T) {
   remap(T.get_sequences());
 
@@ -226,6 +228,7 @@ void alignment::create_internal(const SequenceTree& T) {
 
   // Make sure there are no G2->G1 transitions
   for(int n2=0;n2<T.branches();n2++) {
+    assert(0);  //FIXME - not how we deal w/ branches!
     int n1 = T.parent(n2);
 
     int g1 = -1,g2 = -1;

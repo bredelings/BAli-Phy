@@ -6,49 +6,29 @@
 #include <istream>
 /***************** struct tree ********************/
 
+struct Branch;
+
 struct node {
   node* parent;
   node* left;
   node* right;
 
+  Branch* parent_branch;
+
   int name;
   int order;
 
-  node():parent(0),left(0),right(0),name(-1),order(-1) {}
+  node():parent(0),left(0),right(0),parent_branch(0),name(-1),order(-1) {}
 };
-
-class nodeview {
-  const node* n;
-public:
-  bool leaf() const {return not n->left and not n->right;}
-
-  bool has_left() const {return bool(n->left);}
-  bool has_right() const {return bool(n->right);}
-  
-  int name() const {return n->name;}
-  nodeview left() const {assert(has_left());return n->left;}
-  nodeview right() const {assert(has_right());return n->right;}
-  nodeview parent() const {
-    node* p = n->parent;
-    if (not p->parent) {
-      if (p->left != n)
-	p = p->left;
-      else
-	p = p->right;
-    }
-    return nodeview(p);
-  }
-
-  operator int() {return name();}
-  nodeview(const node* n_):n(n_) {}
-};
-
-vector<int> get_neighbors(const node& n);
 
 struct Branch {
-  int node1;
-  int node2;
+  node* parent;
+  node* child;
   double length;
+
+  int name;
+
+  Branch(): parent(0),child(0),length(0.0),name(-1) {}
 };
 
 // Split these out into
@@ -74,9 +54,11 @@ class TreeView {
 protected:
   node* root;
 
-  void destroy(node**);
+  static void destroy_tree(node*);
+  static void copy_tree(node*);
 public:
-  void destroy() {if (root) destroy(&root);}
+  void destroy() {destroy_tree(root);}
+  static void exchange_cousins(node*,node*);
 
   TreeView copy() const;
 
@@ -86,6 +68,34 @@ public:
   ~TreeView() {}
 };
 
+class nodeview {
+  const node* n;
+public:
+  bool leaf() const {return not n->left and not n->right;}
+
+  bool has_left() const {return bool(n->left);}
+  bool has_right() const {return bool(n->right);}
+  
+  int name() const {return n->name;}
+  int order() const {return n->order;}
+
+  nodeview left() const {assert(has_left());return n->left;}
+  nodeview right() const {assert(has_right());return n->right;}
+  nodeview parent() const {
+    node* p = n->parent;
+    if (not p->parent) {
+      if (p->left != n)
+	p = p->left;
+      else
+	p = p->right;
+    }
+    return nodeview(p);
+  }
+
+  operator int() {return name();}
+  nodeview(const node* n_):n(n_) {}
+};
+
 class tree {
   int n_leaves;
   node* root;
@@ -93,15 +103,10 @@ class tree {
   vector<node*> names;
   vector<node*> order;
 
-  // cache results of which branch is which way
-  vector<int> left_branches;
-  vector<int> right_branches;
-  vector<int> up_branches;
+  vector<Branch*> branches_;
 
-  void add_left(node&,node&);
-  void add_right(node&,node&);
-  void add_left(node&,const tree&);
-  void add_right(node&,const tree&);
+  void add_left(node*,const tree&);
+  void add_right(node*,const tree&);
 
   vector< std::valarray<bool> > ancestors;
 
@@ -110,20 +115,18 @@ class tree {
   //re-calculate the order of the nodes
   void reorder();
 
-  vector<Branch> branches_;
-  void  exchange_cousins(int,int);
 protected:
   void add_root(); 
 
 public:
   Branch& branch(int i) {
-    assert(branches_[i].node1 == parent(branches_[i].node2));
-    return branches_[i];
+    assert(branches_[i]->parent == branches_[i]->child->parent);
+    return *branches_[i];
   }
   
   const Branch& branch(int i) const {
-    assert(branches_[i].node1 == parent(branches_[i].node2));
-    return branches_[i];
+    assert(branches_[i]->parent == branches_[i]->child->parent);
+    return *branches_[i];
   }
   
   const nodeview operator[](int i) const { return nodeview(names[i]);}
@@ -132,9 +135,8 @@ public:
   int get_nth(int i) {return order[i]->name;}
 
   int leaves() const {return n_leaves;}
-  int branches() const {return num_nodes()-2;}
+  int branches() const {return branches_.size()-1;}
   int num_nodes() const {return order.size();}
-  vector<int> path(int,int) const;
   int branch_up(int) const;
 
   bool ancestor(int n1, int n2) const {return ancestors[n1][n2];}

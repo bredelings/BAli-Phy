@@ -8,10 +8,7 @@
 #include "choose.H"
 #include "bits.H"
 
-//FIXME - these files are so complicated that we NEED to check the 
-// results
 //CHECK - all those states that can't be reached - can s2_ == s2?
-//FIGURE OUT - how to factor in substitution differences?
 //CHECK (how?) - do the differences for both +/- (5 alignments) and 
 //               different substitution scores, match?
 
@@ -401,32 +398,41 @@ void sample_topology(alignment& A,Parameters& Theta1,int b) {
 
   std::cerr<<"PS1 = "<<PS1<<"       PS2 = "<<PS2<<"       PS3 = "<<PS3<<std::endl;
 
+  /*********** Choose A Topology ************/
   int choice = choose(PA1+PS1, PA2+PS2, PA3+PS3);
-  vector<int>* bits_c = &bits1;
-  vector< vector<double> >* P_c = P1;
+
+  vector<int>* chosen_bits = &bits1;
+  vector< vector<double> >* chosen_P = &P1;
+  Parameters* chosen_Theta = &Theta1;
+
   if (choice == 1) {
-    bits = &bits2;
-    P = &P2;
-    Theta1 = Theta2;
+    chosen_bits = &bits2;
+    chosen_P = &P2;
+    chosen_Theta = &Theta2;
   }
   else if (choice == 2) {
-    Theta1 = Theta3;
+    chosen_bits = &bits3;
+    chosen_P = &P3;
+    chosen_Theta = &Theta3;
   }
   
   // do traceback - how to calculate probability of observing 
   vector<int> path1 = get_path(old,b);
-  vector<int> path2 = sample_path(P1,bits1,IModel);
-
+  vector<int> path2 = sample_path(*chosen_P,*chosen_bits,IModel);
 
   /****************** Do traceback ********************/
-  A = construct(A,T1,path2,b);
+  A = construct(A,chosen_Theta->T,path2,b);
 
   std::cerr<<old<<endl<<endl;
   std::cerr<<A<<endl<<endl;
   double l1 = probability3(old,Theta1);
-  double l2 = probability3(A,Theta1);
+  double l2 = probability3(A,*chosen_Theta);
 
   std::cerr<<"L1 = "<<l1<<"    L2 = "<<l2<<std::endl;
+
+  if (choice != 0)
+    Theta1 = *chosen_Theta;
+
   assert(valid(A));
 }
 
