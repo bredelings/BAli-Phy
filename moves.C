@@ -76,20 +76,18 @@ void move_node(const alignment& A, Parameters& Theta,int node) {
   Theta2.setlength(b3,T.branch(b3).length - delta);
 }
 
-// FIXME - this doesn't really deal correctly with modifying parameters
-alignment sample(const alignment& old,Parameters& Theta) {
+void sample(alignment& A,Parameters& Theta) {
 
-  alignment A;
   double r = myrandomf();
-  if (r < 1.35) {
-    int node1 = myrandom(Theta.T.leaves()-1,Theta.T.num_nodes()-3);
-    //    int node1 = myrandom(0,Theta.T.num_nodes()-3);
+  if (r < 0.35) {
+    //    int node1 = myrandom(Theta.T.leaves()-1,Theta.T.num_nodes()-3);
+    int node1 = myrandom(0,Theta.T.num_nodes()-3);
     int node2 = Theta.T.parent(node1);
-    A = sample(old,Theta,node1,node2);
+    A = sample(A,Theta,node1,node2);
   }
-  else if (r < -0.7) {
+  else if (r < 0.7) {
     int node = myrandom(Theta.T.leaves(),Theta.T.num_nodes()-2);
-    A = sample(old,Theta,node);
+    A = sample(A,Theta,node);
   }
   //  else if (r < 0.75) {
   //    int node = myrandom(T.leaves(),T.num_nodes-1);
@@ -99,9 +97,7 @@ alignment sample(const alignment& old,Parameters& Theta) {
   //  }
   else {
     int b = myrandom(0,Theta.T.branches()-1);
-    A = old;
     change_branch_length(A,Theta,b);
   }
-  return A;
 }
 

@@ -242,7 +242,7 @@ tree::tree(const tree& t1, const tree& t2) {
     Branch b;
     b.node1 = i;
     b.node2 = parent(i);
-    b.length = 1.0;
+    b.length = 0.2;
     branches_.push_back(b);
   }
 }

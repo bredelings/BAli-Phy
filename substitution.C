@@ -121,7 +121,7 @@ double substitution(const vector<int>& residues,const Parameters& Theta,
   valarray<double> leftD = peel(residues,Theta,right,left);
   valarray<double> rightD = peel(residues,Theta,left,right);
   
-  valarray<double> rootD = leftD * Theta.frequency * rightD;
+  valarray<double> rootD = leftD * Theta.frequencies() * rightD;
 
   double p = rootD.sum();
 

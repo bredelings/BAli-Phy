@@ -1,3 +1,4 @@
+#include <cmath>
 #include <valarray>
 #include <algorithm>
 #include "myrandom.H"
@@ -13,7 +14,7 @@ const double log_0 = -max_float;
 
 inline double logsum(double r, double q)
 {
-  if (fabs(r-q) > 308)
+  if (std::abs(r-q) > 308)
     return ((r > q) ? r : q);
   
   return (r + log(1 + exp(q - r)));
@@ -34,7 +35,7 @@ int num_shared(int a,int b) {
 
 int choose(double x, double y) {
   double sum = logsum(x,y);
-  double r = log(myrandomf());
+  double r = log_unif();
   if (sum + r < x)
     return 0;
   else
@@ -51,7 +52,7 @@ int choose(vector<double>::const_iterator here,int size) {
     here++;  
   }
 
-  double r = log(myrandomf()) + sum[sum.size()-1];
+  double r = log_unif() + sum[sum.size()-1];
 
   for(int i=0;i<sum.size();i++) 
     if (r < sum[i])

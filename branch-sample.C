@@ -34,7 +34,7 @@ int choose(double x, double y, double z) {
   double sum = logsum(z,logsum(x,y));
   //  double x_ = exp(x-sum), y_ = exp(y-sum),z_ = exp(z-sum);
   //  std::cerr<<x_<<"  "<<y_<<"  "<<z_;
-  double r = log(myrandomf());
+  double r = log_unif();
   if (sum + r < x)
     choice=0;
   else if (sum + r < logsum(x,y))
@@ -216,7 +216,7 @@ alignment sample(const alignment& old,const Parameters& Theta,int node1,int node
   const tree& T = Theta.T;
   const double& lambda_O = Theta.lambda_O;
   const double& lambda_E = Theta.lambda_E;
-  const valarray<double>& frequency = Theta.frequency;
+  const valarray<double>& frequency = Theta.frequencies();
 
   if (node2<node1) std::swap(node1,node2);
 

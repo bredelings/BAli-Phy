@@ -1,156 +1,26 @@
 /* Version 2: based on operating on multiple alignments */
 
-#include <cassert>
+#include <cmath>
 #include <iostream>
 #include <valarray>
 #include "myexception.H"
 #include "mytypes.H"
 #include "tree.H"
-#include "likelihood.H"
 #include "substitution.H"
 #include "alignment.H"
 #include "myrandom.H"
 #include "sample.H"
 #include "parameters.H"
-
-static int total_samples = 0;
-
-void print_stats(const alignment& A,const string& s1,const string& s2) {
-  int n1 = A.index(s1);
-  assert(n1 != -1);
-
-  int n2 = A.index(s2);
-  assert(n2 != -1);
-
-  int pos1=0,new_pos1=0;
-  int pos2=0,new_pos2=0;
-  for(int column=0;column<A.length();column++) {
-    if (A(column,n1) == alphabet::gap && A(column,n2) == alphabet::gap) 
-      continue;
-
-    if (A(column,n1) != alphabet::gap) 
-      new_pos1++;
-    if (A(column,n2) != alphabet::gap) 
-      new_pos2++;
-
-    std::cout<<s1<<" "<<s2<<" :     "<<pos1<<" "<<pos2<<"   "<<new_pos1<<"   "<<new_pos2<<endl;
-	     
-    pos1 = new_pos1;
-    pos2 = new_pos2;
-  }
-}
-
-/* 
-void print_stats(const alignment& A,const Parameters& Theta) {
-  total_samples++;
-
-  print_stats(A,"H_sapiens","Sulfaci1");
-  print_stats(A,"H_sapiens","Halomari");
-  print_stats(A,"H_sapiens","Esch_coli3");
-  print_stats(A,"Sulfaci1","Halomari");
-  print_stats(A,"Sulfaci1","Esch_coli3");
-  print_stats(A,"Halomari","Esch_coli3");
-  
-  std::cout<<endl;
-  for(int i=0;i<Theta.T.branches();i++) 
-    std::cout<<"branch "<<i<<" "<<Theta.T.branch(i).length<<endl;
-  std::cout<<endl;
-}
-*/
-
-void print_stats(const alignment& A,const Parameters& Theta) {
-  total_samples++;
-
-  print_stats(A,"CAR4081","consGenv");
-  print_stats(A,"CAR4081","consAenv");
-  print_stats(A,"CAR4081","consBenv");
-  print_stats(A,"consGenv","consAenv");
-  print_stats(A,"consGenv","consBenv");
-  print_stats(A,"consAenv","consBenv");
-
-}
-
-inline int aid(const alignment& A) {
-  int id=0;
-  for(int species=0;species < A.size2();species++) {
-    for(int column=0;column < A.length();column++) {
-      id = A(column,species)+ id*684822857;
-    }
-  }
-  return id;
-}
-
-void MCMC2(alignment& A,Parameters& Theta,
-	   const int max,double probability(const alignment&,const Parameters&)) {
-  const SequenceTree& T = Theta.T;
-  A.create_internal(T);
-  std::cerr<<A<<endl;
-
-  SequenceTree Sum = T;
-
-  const int correlation_time = int(8.0*T.leaves()*log(T.leaves()));
-  const int start_after = 2000000;
-  //  const int start_after = int( 600.0*T.leaves()*log(T.leaves()) );
-  int total_samples = 0;
-
-  double p=probability(A,Theta);
-  double new_p=0;
-  for(int iterations=0; iterations < max; iterations++) {
-    int id = aid(A);
-    std::cerr<<"iterations: "<<iterations<<"    logp = "<<p<<"      id = "<<id<<endl;
-
-    /******************** Record Statistics *******************/
-    if (iterations > start_after) {
-      if (iterations%correlation_time == 0) 
-      	print_stats(A,Theta);
-      for(int i=0;i<T.num_nodes();i++)
-	Sum.branch(i).length += T.branch(i).length;
-      total_samples++;
-      if (iterations % 100 == 0) {
-	SequenceTree Average = Sum;
-	for(int i=0;i<T.num_nodes();i++)
-	  Average.branch(i).length /= total_samples;
-	std::cout<<"------begin tree---------\n";
-	std::cout<<Average<<endl;
-	std::cout<<"------end tree---------\n";
-
-      }
-    }
+#include "mcmc.H"
+#include "likelihood.H"
 
 
-    /******************* Propose new position *********************/
-    alignment NewA = sample(A,Theta);
-    new_p = probability(NewA,Theta);
-
-    /***************** Print Diagnostic Output ********************/
-    if (iterations %250 == 0 or fabs(p - new_p)>5) {
-      std::cerr<<"previous = "<<
-	probability_no_tree(A,Theta)<<"  "<<
-	probability_simple_tree(A,Theta)<<"  "<<
-	probability(A,Theta)<<"  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl;
-
-      std::cerr<<A<<endl;
-      std::cerr<<"new = "<<
-	probability_no_tree(NewA,Theta)<<"  "<<
-	probability_simple_tree(NewA,Theta)<<"  "<<
-	probability(NewA,Theta)<<"  ["<<probability2(NewA,Theta)<<": "<<prior_internal(NewA,Theta)<<" + "<<substitution(NewA,Theta)<<"]"<<endl;
-      std::cerr<<NewA<<endl;
-      NewA.print_fasta(std::cerr);
-    }
-
-
-    /*****************Actually Move to new position ***************/
-    A = NewA;
-    p = new_p;
-  }
-}
-
-
-/**** TODO:  A. Check distribution of logs - now use RNA data
+/**** TODO:  A. check likelihoods against someone else
+             D. Benchmark (w,w/o fast-math?)
              B. Normalize/Parameterize rate matrix?
+
              C. Write code to change tree topology
 	        (Need an interface so that node NAME doesn't change!)
-             D. Benchmark
  ****/
 
 
@@ -162,10 +32,8 @@ void MCMC2(alignment& A,Parameters& Theta,
 
 // 8. Use ublas::matrix<double>(a.size()) instead of valarray<double> in substitution.C
 
-// 10. We still have problems jumping logs I think??
-//     Why is the distribution of log scores so WIDE?
-//     At least, with the HIV stuff, there seems to be a clear maximum!
-//     Check various moves with this!  First cut out the branch-length code.
+// 10. Why is the distribution of log scores so WIDE?
+//     Why are we often so much below the ML?
 
 // 13. Put letters in the rate matrix file
 
@@ -175,7 +43,7 @@ void MCMC2(alignment& A,Parameters& Theta,
 
 // 18. Normalize rate matrix so that Sum(m) lambda(m,m)*pi(m) = -1
 
-// 20. How can we show conservation in the graph?
+// 20. How can we show conservation in the graph? (for 2 species?  more?)
 
 // 22. ALL internal-node-resampling is 1D!  We can resample adjacent
 //       internal nodes simultaneously w/ a 1D algorithm!
@@ -185,6 +53,9 @@ void MCMC2(alignment& A,Parameters& Theta,
 // 23. Finish writing the new branch-length MH sampler
 
 // 24. Measure the correlation time - see how sorting by center of mass of alignment
+//    look at the probability that an aligned node pair at time t is still aligned
+//    at time t+deltat
+
 //     and moving from k->N-k decreases it...
 //
 //     Perhaps we could output more samples than we are now...
@@ -192,12 +63,21 @@ void MCMC2(alignment& A,Parameters& Theta,
 
 // 25. Benchmark, and see how the speed depends on sequence length
 
-// 27. Make output less verbose?
+// 28. Make sampling routines return P(Alignment|Data,Tree, etc)
+//     I'd NEED to do this in order to use the value anyway -> it should
+//     only return things on the order of lambda_e and lambda_o...
+//     modify the 'choose' routine.
+
+//     Check to make sure that this is proportional to the likelihood...
+//     This is important, because while the probability ratio between 2
+//      alignment won't change, the ratio between 2 likelihood levels
+//      WILL change!  So this will change at least the "plot 'logp'"
+//      graphs!
 
 int main(int argc,char* argv[]) {
 
   myrand_init();
-  alphabet nucleotides("AGUC");
+  alphabet nucleotides("AGTC");
   
   //  alphabet amino_acids("ARNDCQEGHILKMFPTWYV","PAM");
 
@@ -236,12 +116,7 @@ int main(int argc,char* argv[]) {
   }
 
 
-
-  // FIXME: I don't have any branch lengths right now!
-  //  tree t3 = tree( tree(human,1,chimp,2),1,tree(gorilla,2,orangutan,2),2);
-
-  //  We could have classes derive from the parameters struct!  
-  //    maybe classes of matrix
+  // FIXME: Can't construct trees w/ branch lengths right now
 
   /*********** Start the sampling ***********/
   
@@ -257,13 +132,22 @@ int main(int argc,char* argv[]) {
     std::cout<<"------end tree---------\n";
     
     {
-      Parameters Theta(nucleotides,T1);
-      Theta.load_rates("DNA");
+      std::valarray<double> f(0.0,4);
+      f[0] = 0.25;f[1]=0.25;f[2]=0.25;f[3]=0.25;
+
+      HKY smodel(nucleotides,2.0,f);
+
+      std::cerr<<"rate matrix = \n";
+      for(int i=0;i<4;i++) {
+	for(int j=0;j<4;j++) 
+	  std::cerr<<smodel.rates()(i,j)<<" ";
+	std::cerr<<endl;
+      }
+      Parameters Theta(smodel,T1);
       Theta.lambda_O = lambda_O;
       Theta.lambda_E = lambda_E;
-      MCMC2(A,Theta,250000,probability2);
+      MCMC(A,Theta,250000,probability2);
     }
-    std::cerr<<"total sample = "<<total_samples<<endl;
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
@@ -298,3 +182,6 @@ int main(int argc,char* argv[]) {
 
 // 26. Put priors on branch lengths and parameters and stuff into probability() functions
 
+// HIV1: -426.4
+// HIV2: -421.5
+// HIV3: -416.4 

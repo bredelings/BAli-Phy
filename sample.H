@@ -13,6 +13,6 @@ alignment sample(const alignment& old,const Parameters&,int node1, int node2);
 alignment sample(const alignment& old,const Parameters&,int node);
 
 //interface to the previous samplers
-alignment sample(const alignment& old,Parameters& T);
+void sample(alignment& A,Parameters& T);
 
 #endif

@@ -25,7 +25,7 @@ double myrandomf() {
   return MyRandom::generator.uniform();
 }
 
-double logunif() {
+double log_unif() {
   return MyRandom::generator.log_unif();
 }
 

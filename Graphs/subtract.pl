@@ -11,7 +11,7 @@ my $count3 = {};
 
 subtract($count1,$count2,$count3);
 
-print_count($count3);
+print_count($count3,$count1,$count2);
 
 sub count {
     my $filename = shift;
@@ -86,7 +86,7 @@ sub subtract_half {
 		    if (!defined($temp2)) {
 			$temp2 = 0;
 		    }
-		    if ($temp > $temp2) {
+		    if ($temp >= $temp2) {
 			$c3->{$x1}{$y1}{$x2}{$y2} = $temp-$temp2;
 		    }
 		}
@@ -97,6 +97,8 @@ sub subtract_half {
 
 sub print_count {
     my $c1 = shift;
+    my $c2 = shift;
+    my $c3 = shift;
     my %count = %$c1;
     for my $x1 (sort {$a <=> $b} (keys(%count))) {
 	my $hash2 = $count{$x1};
@@ -106,7 +108,11 @@ sub print_count {
 		my $hash4 = $hash3->{$x2};
 		for my $y2 (keys(%$hash4)) {
 		    my $temp = $hash4->{$y2};
-		    print "$x1 $y1 $x2 $y2  $temp\n";
+		    my $count1 = $c2->{$x1}{$y1}{$x2}{$y2};
+		    my $count2 = $c3->{$x1}{$y1}{$x2}{$y2};
+		    $count1 = 0 if (!defined($count1));
+		    $count2 = 0 if (!defined($count2));
+		    print "$x1 $y1 $x2 $y2  $temp $count1 $count2\n";
 		}
 	    }
 	}
