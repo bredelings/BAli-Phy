@@ -192,7 +192,7 @@ namespace substitution {
 
 #ifndef NDEBUG
     // check reqs...
-    for(int c=0;c<subA.size1();c++) 
+    for(int c=0;c<subA.size1();c++) {
       bool present = false;
       for(int j=0;j<nodes.size();j++) {
 	if (not A.gap(c,nodes[j])) {
