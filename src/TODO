@@ -25,12 +25,6 @@
     * make a dual-mode which is a sum of the unit mode and the multi_freq
       model
         
-Base each of the submodels on the frequency
-    of the underlying model.  Each submodel has n parameters a_{mi} so that
-    \pi_{mi} = f_i*a_{mi}/max_i a{m_i}.  Then let a_i be dirichlet...
-
-    * 
-
 -2. tree-dist-compare w/ sub-partitions
   a) speed up get_Ml_partitions, get_Ml_sub_partitions
   b) only enable sub-partition checking with a switch..
