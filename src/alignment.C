@@ -23,7 +23,7 @@ void resize(ublas::matrix<int>& M1,int s1,int s2,int clear=0)
 }
 
 
-int alignment::add_note(int l) {
+int alignment::add_note(int l) const {
   notes.push_back(ublas::matrix<int>(length()+1,l));
   return notes.size()-1;
 }
@@ -104,6 +104,8 @@ alignment& alignment::operator=(const alignment& A) {
 
   array.resize(A.array.size1(),A.array.size2());
   array = A.array;
+
+  notes = A.notes;
 
   return *this;
 }
