@@ -60,7 +60,13 @@
 	a) by default, only show 1 topology per file
 	b) allow consensus to take a comma-separated list of values
 	c) 
+20. Make alignment-draw simply use 'plain' (or something) if AU-file
+    not specified.
 
+21. write code to load joint (A,T) distributions...  argh.
+
+22. Speed up sample_path() for DParrayConstrained by only considering
+    allowed states for each column...
 
 A. fix: gamma+frequency+INV
 
