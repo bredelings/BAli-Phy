@@ -92,10 +92,9 @@ int main(int argc,char* argv[]) {
     alphabets.push_back(alphabet("DNA nucleotides","AGTC","N"));
     alphabets.push_back(alphabet("RNA nucleotides","AGUC","N"));
     alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
-    std::ifstream afile(args["align"].c_str());    
+
     alignment A;
-    A.load_phylip(alphabets,afile);
-    afile.close();
+    A.load(alphabets,args["align"]);
 
     /*------ Link Alignment and Tree ----------*/
     link(A,T);

@@ -125,16 +125,16 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   using namespace MCMC;
 
-  // alignment
+  /*--------------- alignment -----------------*/
   MoveAll alignment_moves("alignment");
 
-  // alignment :: alignment_branch
+  /*--------------- alignment::alignment_branch -----------------*/
   MoveEach alignment_branch_moves("alignment_branch");
   alignment_branch_moves.add(0.5,
 			     MoveArgSingle("sample_alignments:alignment",
 					   sample_alignments_one,
 					   branches)
-			     );
+			     ,false);
   alignment_branch_moves.add(0.5,
 			     MoveArgSingle("sample_alignments2:alignment",
 					   sample_alignments2_one,
@@ -152,25 +152,25 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   }
   alignment_moves.add(1, alignment_branch_moves);
 
-  // aligment :: sample_nodes
-  MoveEach internal_nodes_move("nodes_master:nodes");
-  MoveArgSingle nodes_move2("sample_nodes2:alignment:nodes",sample_nodes2_one,internal_nodes);
-  internal_nodes_move.add(0.01,nodes_move2);
-  internal_nodes_move.add(1,MoveArgSingle("two_nodes:nodes",
-					  sample_two_nodes_move,
-					  internal_branches)
-			  ,false);
+  /*---------- alignment::nodes_master (nodes_moves) ----------*/
+  MoveEach nodes_moves("nodes_master:nodes");
+  if (P.T.leaves() >= 3)
+    nodes_moves.add(10,MoveArgSingle("sample_node:alignment:nodes",
+				   sample_node_move,
+				   internal_nodes)
+		   );
+  if (P.T.leaves() >= 4)
+    nodes_moves.add(1,MoveArgSingle("sample_two_nodes:nodes",
+				   sample_two_nodes_move,
+				   internal_branches)
+		   );
 
-  if (P.T.leaves() >2)
-    alignment_moves.add(1,internal_nodes_move);
+  alignment_moves.add(4, nodes_moves);
 
-  // tree
+  /*------------------- tree (tree_moves)--------------------*/
   MoveAll tree_moves("tree");
   MoveEach topology_move("topology");
-  //  topology_move.add(1,MoveArgSingle("sample_topologies:nodes:topology",
-  //				    sample_topology,
-  //				    internal_branches)
-  //		    ,false);
+
   topology_move.add(1,MoveArgSingle("three_way_NNI:nodes:topology",
 				    three_way_topology_sample,
 				    internal_branches)
@@ -178,21 +178,21 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   topology_move.add(1,MoveArgSingle("two_way_NNI:nodes:topology",
 				    two_way_topology_sample,
 				    internal_branches)
-		    );
-  topology_move.add(1,MoveArgSingle("two_way_NNI2:nodes:topology",
-				    two_way_topology_sample,
-				    internal_branches)
-		    );
-  topology_move.add(0.5,MoveArgSingle("three_way_t_and_A:alignment:nodes:topology",
-				    three_way_topology_and_alignment_sample,
-				    internal_branches)
 		    ,false
 		    );
+
+  //FIXME - doesn't yet deal with gaps=star
+  if (P.SModel().full_tree)
+    topology_move.add(0.5,MoveArgSingle("three_way_NNI_and_A:alignment:nodes:topology",
+					three_way_topology_and_alignment_sample,
+					internal_branches)
+		      ,false
+		      );
 
   if (P.T.leaves() >3)
     tree_moves.add(1,topology_move);
   
-  // tree :: lengths
+  /*-------------- tree::lengths (length_moves) -------------*/
   MoveEach length_moves("lengths");
   MoveEach length_moves1("lengths1");
 
@@ -213,13 +213,14 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 		     );
   tree_moves.add(1,length_moves);
 
-  // parameters
+  /*------------- parameters (parameters_moves) --------------*/
   MoveAll parameter_moves("parameters");
   parameter_moves.add(P.T.branches(),SingleMove(change_parameters,"s_parameters:parameters"));
   parameter_moves.add(1+P.T.branches()/3,SingleMove(change_gap_parameters,"g_parameters:parameters"));
   
 
-  //FIXME - use the right prior and likelihood here!
+  int subsample = args.loadvalue("subsample",0);
+
   // full sampler
   Sampler sampler("sampler");
   sampler.add(1,alignment_moves);
@@ -242,7 +243,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   sampler.show_enabled();
   std::cout<<"\n";
 
-  sampler.go(A,P,max_iterations);
+  sampler.go(A,P,subsample,max_iterations);
 }
 
 

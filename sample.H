@@ -28,8 +28,6 @@ alignment sample_alignment2(const alignment& old,const Parameters&,int b);
 
 /// Resample gap/non-gap for internal nodes, where not already determined
 alignment sample_node(const alignment& old,const Parameters&,int node);
-/// Resample gap/non-gap for internal nodes, where not already determined
-alignment sample_node2(const alignment& old,const Parameters&,int node);
 
 /// Resample gap/non-gap for 2 adjacent internal nodes, where not already determined
 alignment sample_two_nodes(const alignment& old,const Parameters& P,int b);
@@ -46,7 +44,7 @@ bool two_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,in
 MCMC::result_t sample_alignments_one(alignment& old,Parameters&,int b);
 MCMC::result_t sample_alignments2_one(alignment& old,Parameters&,int b);
 
-MCMC::result_t sample_nodes2_one(alignment& A, Parameters& Theta,int);
+MCMC::result_t sample_node_move(alignment& A, Parameters& Theta,int);
 MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& Theta,int);
 
 MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P,int b);

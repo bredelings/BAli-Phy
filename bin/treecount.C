@@ -477,7 +477,7 @@ int main(int argc,char* argv[]) {
 	double sigma = sqrt(m2 - m1*m1);
 	
 	Tmean.branch(b).length() = m1;
-	Tsignal.branch(b).length() = sigma/m1;
+	Tsignal.branch(b).length() = m1/sigma;
       }
       cout<<"  "<<i<<"MAPtree = "<<Tmean<<endl;
       cout<<endl;

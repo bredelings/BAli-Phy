@@ -23,13 +23,28 @@ double log_double_factorial(int n) {
   return x;
 }
 
+double log_num_branches(int n) {
+  return log(2*n-3);
+}
+
+double log_num_topologies(int n) {
+  return log_double_factorial(2*n-5);
+}
+
+double log_num_topologies_in_partition(int n1,int n2) {
+  double total = log_num_topologies(n1) + log_num_topologies(n2);
+  total += log_num_branches(n1) + log_num_branches(n2);
+  return total;
+}
+
+
 /// Tree prior: branch lengths & topology
 double prior(const SequenceTree& T,double branch_mean) {
   double p = 0;
 
   /* ----- 1/(number of topologies) -----*/
   if (T.leaves()>3)
-    p = -log_double_factorial(2*T.leaves()-5);
+    p = -log_num_topologies(T.leaves());
 
   /* ---- PROD_i exp(- T[i] / mu )/ mu ---- */
   for(int i=0;i<T.branches();i++) 

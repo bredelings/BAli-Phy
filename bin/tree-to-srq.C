@@ -8,7 +8,7 @@
 #include <cmath>
 
 #include "myexception.H"
-#include "tree.H"
+#include "sequencetree.H"
 #include "arguments.H"
 
 using namespace std;

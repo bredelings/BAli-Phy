@@ -39,6 +39,35 @@ using std::valarray;
 
 using namespace A5;
 
+// Do we need the different sample_two_nodes_base routines to use the same
+// sub-alignment ordering?
+//  o Sub-alignment order should affect only which paths are considered
+//  o We are essentially considering a set of paths for each topology
+//    (So have ALMOST marginalized over the paths: we don't consider some column orders though)
+//  o We then divide them up unto groups (topologies)
+//  o choose between the groups,
+//  o choose between the topologies
+// The fact that we don't consider some paths should not make this non-reversible
+// We are sampling between tagged paths, in a sense (topology is the tag).
+// The column ordering could be different for different topologies, this just might
+//  not mix quite as well as if we could sum out all column ordering.
+// However, since the ordering is random, there should be no consistent bias
+//  (we don't choose the ordering based on the current topology/path.
+
+
+//NOTE: in order to compare the trees which we are summing over different branches,
+//      we would have to somehow incorporate the differences in the rest of the likelihood.
+//      But in the current code we are ignoring that.
+//         - FIXME: calculate the full likelihood, subtract the current alignment, and the add
+//           in the sum over all alignments.  (alignment = alignments in the HMM here... )
+
+
+//FIXME - cleanup in several ways.  Firstly, index alignments, as in NewA[0],NewA[1]..
+// This should get rid of the pointers to the chosen onee... (just have NewA[choice])
+// Keep track of the old, and go BACK if it doesn't work?
+
+//FIXME - separate HMM out into its own file?
+
 bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters& P2,int b) {
   alignment old = A;
 
@@ -73,30 +102,22 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
   DParrayConstrained const* CM = &Matrices1;
   alignment const* CA = &A1;
   Parameters const* CP = &P1;
-  const vector<int>* Cnodes = &nodes1;
+  vector<int> nodes_old = nodes1;
+  vector<int> nodes_new = nodes1;
   if (choice == 1){
     CM = &Matrices2;
     CA = &A2;
     CP = &P2;
-    Cnodes = &nodes2;
+    nodes_new = nodes2;
   }
+
 
 #ifndef NDEBUG_DP
   /*------- Get the Probabilities of the new and old states --------*/
-  const vector<int>& nodes_old    = nodes1;
-  const vector<int> nodes_new     = *Cnodes;
-
-  int l1_old = old.seqlength(nodes_old[4]);
-  int l1_new = CA->seqlength(nodes_old[4]);
-
-  int l2_old = old.seqlength(nodes_old[5]);
-  int l2_new = CA->seqlength(nodes_old[5]);
-
-  double Pr1 = probability3(old,P1) + 2.0*(P1.IModel().lengthp(l1_old) + P1.IModel().lengthp(l2_old));
-  double Pr2 = probability3(*CA,*CP) + 2.0*(P1.IModel().lengthp(l1_new) + P1.IModel().lengthp(l2_new));;
+  double Pr1 = probability3(old,P1) + A5::log_correction(old,P1,nodes_old);
+  double Pr2 = probability3(*CA,*CP) + A5::log_correction(*CA,*CP,nodes_new);
 
   vector<int> states_list = construct_states();
-
 
   /*--------------- Get the new and old paths ---------------*/
   assert(b >= P1.T.leafbranches());
@@ -129,38 +150,17 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
   }
 #endif
 
-  // Go ahead with the choice
-  if (choice != 0) {
-    A  = *CA;
-    P1 = *CP;
+  /*---------------- Adjust for length of n4 and n5 changing --------------------*/
+
+  // if we accept the move, the record the changes
+  if (myrandomf() < exp(log_acceptance_ratio(old,P1,nodes_old,*CA,*CP,nodes_new))) {
+    A = *CA;
+    if (choice != 0)
+      P1 = *CP;
   }
 
   return (choice != 0);
 }
-
-// Do we need the different sample_two_nodes_base routines to use the same
-// branch ordering?  We are just 
-//  o considering a set of paths (w/ associated topologies)
-//  o dividing them up unto groups
-//  o choosing between the groups
-//  o choosing between the paths in each group
-// However, we need the routine to be gibbs.  That is, we need to have each
-// input sequence propose the others 
-
-// We could consider a set of moves, each of which has a specified branch ordering
-// or something.  Then we would need to have each propose the others condition
-// on the branch ordering for the 4 leaf branches.
-
-// We could probably have a set ordering for each topology, as long as each
-// proposed the other.... (this would be nice!)
-
-
-//NOTE: in order to compare the trees which we are summing over different branches,
-//      we would have to somehow incorporate the differences in the rest of the likelihood.
-//      But in the current code we are ignoring that.
-//         - FIXME: calculate the full likelihood, subtract the current alignment, and the add
-//           in the sum over all alignments.  (alignment = alignments in the HMM here... )
-
 
 /// This has to be Gibbs, and use the same substitution::Model in each case...
 bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Parameters& P2, 
@@ -206,36 +206,28 @@ bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Paramete
   DParrayConstrained const* CM = &Matrices1;
   alignment const* CA = &A1;
   Parameters const* CP = &P1;
-  const vector<int>* Cnodes = &nodes1;
+  vector<int> nodes_old = nodes1;
+  vector<int> nodes_new = nodes1;
+  
   if (choice == 1){
     CM = &Matrices2;
     CA = &A2;
     CP = &P2;
-    Cnodes = &nodes2;
+    nodes_new = nodes2;
   }
   else if (choice == 2){
     CM = &Matrices3;
     CA = &A3;
     CP = &P3;
-    Cnodes = &nodes3;
+    nodes_new = nodes2;
   }
 
 #ifndef NDEBUG_DP
   /*------- Get the Probabilities of the new and old states --------*/
-  const vector<int>& nodes_old    = nodes1;
-  const vector<int> nodes_new     = *Cnodes;
-
-  int l1_old = old.seqlength(nodes_old[4]);
-  int l1_new = CA->seqlength(nodes_old[4]);
-
-  int l2_old = old.seqlength(nodes_old[5]);
-  int l2_new = CA->seqlength(nodes_old[5]);
-
-  double Pr1 = probability3(old,P1) + 2.0*(P1.IModel().lengthp(l1_old) + P1.IModel().lengthp(l2_old));
-  double Pr2 = probability3(*CA,*CP) + 2.0*(P1.IModel().lengthp(l1_new) + P1.IModel().lengthp(l2_new));;
+  double Pr1 = probability3(old,P1) + A5::log_correction(old,P1,nodes_old);
+  double Pr2 = probability3(*CA,*CP) + A5::log_correction(*CA,*CP,nodes_new);
 
   vector<int> states_list = construct_states();
-
 
   /*--------------- Get the new and old paths ---------------*/
   assert(b >= P1.T.leafbranches());
@@ -268,10 +260,13 @@ bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Paramete
   }
 #endif
 
-  // Go ahead with the choice
-  if (choice != 0) {
-    A  = *CA;
-    P1 = *CP;
+  /*---------------- Adjust for length of n4 and n5 changing --------------------*/
+
+  // if we accept the move, the record the changes
+  if (myrandomf() < exp(log_acceptance_ratio(old,P1,nodes_old,*CA,*CP,nodes_new))) {
+    A = *CA;
+    if (choice != 0)
+      P1 = *CP;
   }
 
   return (choice != 0);

@@ -93,10 +93,10 @@ MCMC::result_t sample_alignments2_one(alignment& A, Parameters& P,int b) {
   return MCMC::result_t(); // no_result
 }
 
-MCMC::result_t sample_nodes2_one(alignment& A, Parameters& P,int node) {
+MCMC::result_t sample_node_move(alignment& A, Parameters& P,int node) {
   assert(P.IModel().full_tree); 
 
-  A = sample_node2(A,P,node);
+  A = sample_node(A,P,node);
 
   return MCMC::result_t(); // no_result
 }

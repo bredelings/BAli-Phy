@@ -397,33 +397,41 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
 }
 
 
-void print_stats(std::ostream& o,const alignment& A,const Parameters& P,const string& tag) {
-  o<<endl;
-  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
-  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
-  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
+void print_stats(std::ostream& o,bool full_sample,
+		 const alignment& A,const Parameters& P,
+		 const string& tag) {
+  
+  if (full_sample) {
+    o<<endl;
+    o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
+    o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
+    o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
+    o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
+    o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
+    
+    o<<"align["<<tag<<"] = "<<endl;
+    o<<standardize(A,P.T)<<endl<<endl;
+    
+    o<<"tree = "<<P.T<<endl<<endl;
+    
+    o<<"mu = "<<P.branch_mean<<endl;
 
-  o<<"align["<<tag<<"] = "<<endl;
-  o<<standardize(A,P.T)<<endl<<endl;
 
-  o<<"tree = "<<P.T<<endl<<endl;
+    for(int i=0;i<P.SModel().parameters().size();i++)
+      o<<"    pS"<<i<<" = "<<P.SModel().parameters()[i];
+    o<<endl<<endl;
+    
+    for(int i=0;i<P.IModel().parameters().size();i++)
+      o<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
+    o<<endl<<endl;
 
-  o<<"mu = "<<P.branch_mean<<endl;
-
-
-  for(int i=0;i<P.SModel().parameters().size();i++)
-    o<<"    pS"<<i<<" = "<<P.SModel().parameters()[i];
-  o<<endl<<endl;
-
-  for(int i=0;i<P.IModel().parameters().size();i++)
-    o<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
-  o<<endl<<endl;
-
-  for(int i=0;i<P.SModel().nrates();i++)
-    o<<"    rate"<<i<<" = "<<P.SModel().rates()[i];
-  o<<endl<<endl;
+    for(int i=0;i<P.SModel().nrates();i++)
+      o<<"    rate"<<i<<" = "<<P.SModel().rates()[i];
+    o<<endl<<endl;
+  }
+  else {
+    o<<"tree = "<<P.T<<endl<<endl;
+  }
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
@@ -438,7 +446,7 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& P,const st
 #endif
 }
 
-void Sampler::go(alignment& A,Parameters& P,const int max) {
+void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   const SequenceTree& T = P.T;
   Parameters MAP_P = P;
   alignment MAP_alignment = A;
@@ -449,6 +457,22 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
   for(int i=0;i<T.leaves();i++)
     assert(T.seq(i) == A.seq(i).name);
   
+  /*--------- Determin some values for this chain -----------*/
+  if (subsample <= 0)
+    subsample = 2*int(log(T.leaves()))+1;
+  const int start_after = 0;// 600*correlation_time;
+  int total_samples = 0;
+
+  double Pr_prior = P.prior(A,P);
+  double Pr_likelihood = P.likelihood(A,P);
+  double Pr = Pr_prior + Pr_likelihood;
+
+  double MAP_score = Pr;
+
+  string tag_full = string("sample (")+convertToString(subsample)+")";
+  string tag = string("sample ");
+
+  /*--------- Print out info about this chain -----------*/
   cout<<"rate matrix = \n";
   for(int i=0;i<P.get_alphabet().size();i++) {
     for(int j=0;j<P.get_alphabet().size();j++) 
@@ -464,20 +488,12 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
   cout<<endl;
   
   cout<<"Initial Alignment = \n";
-  print_stats(cout,A,P,"Initial");
+  print_stats(cout,true,A,P,"Initial");
     
   cout<<"Initial Tree = \n";
   cout<<T<<endl<<endl;
 
-  const int correlation_time = 2*int(log(T.leaves()))+1;
-  const int start_after = 0;// 600*correlation_time;
-  int total_samples = 0;
-
-  double Pr_prior = P.prior(A,P);
-  double Pr_likelihood = P.likelihood(A,P);
-  double Pr = Pr_prior + Pr_likelihood;
-
-  double MAP_score = Pr;
+  /*---------------- Run the MCMC chain -------------------*/
 
   for(int iterations=0; iterations < max; iterations++) {
     cerr<<"iterations = "<<iterations<<
@@ -487,11 +503,13 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
 
     /*------------------ record statistics ---------------------*/
     if (iterations > start_after) {
-      if (iterations%correlation_time == 0) {
-	cout<<"iterations = "<<iterations<<endl;
-	print_stats(cout,A,P,string("sample (")+convertToString(correlation_time)+")");
-	cout<<endl<<endl;
-      }
+      cout<<"iterations = "<<iterations<<endl;
+      bool full_sample = (iterations%subsample == 0);
+      if (full_sample)
+	print_stats(cout,true,A,P,tag_full);
+      else
+	print_stats(cout,false,A,P,tag);
+      cout<<endl<<endl;
     }
 
     /*--------------------- get new position -------------------*/
@@ -516,7 +534,7 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
 
     if (not MAP_printed and iterations % 50 == 0) {
       cout<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<endl;
-      print_stats(cout,MAP_alignment,MAP_P,"MAP");
+      print_stats(cout,true,MAP_alignment,MAP_P,"MAP");
       MAP_printed = true;
     }
 

@@ -1,3 +1,11 @@
+// This is version 2 of the routine to sample the sequence at an internal node.
+// Unlike v1, v2 uses a DP routine to sample from the distribution of 3 linked HMMs.
+// However, a slight fixup is still required.  This is done as an MH rejection in this
+// routine.
+
+// FIXME - separate sampling from proposal distribution into sample_node_base!
+// MH fixup will be done in the caller
+
 #include <valarray>
 #include <iostream>
 #include <cmath>
@@ -30,7 +38,7 @@ using std::valarray;
 
 using namespace A3;
 
-alignment sample_node2(const alignment& old,const Parameters& P,int node) {
+alignment sample_node(const alignment& old,const Parameters& P,int node) {
   const tree& T = P.T;
 
   const vector<double>& pi = P.IModel().pi;

@@ -249,7 +249,7 @@ namespace MCMC {
 
   public:
     /// Run the sampler for 'max' iterations
-    void go(alignment& A, Parameters& P, int max);
+    void go(alignment& A, Parameters& P, int subsample, int max);
 
     Sampler(const string& name)
       :MoveAll(name) {};

@@ -31,7 +31,7 @@ all: sampler
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math  tracer  prefetch-loop-arrays abi-version=0 # omit-frame-pointer
+LANGO = fast-math  tracer  prefetch-loop-arrays abi-version=0 omit-frame-pointer
 DEBUG = pipe #pg #g3 #gdwarf-2 #pg 
 EXACTFLAGS =  --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
 DEFS =  NDEBUG NDEBUG_DP # USE_UBLAS
@@ -49,7 +49,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  choose.C sequencetree.C branch-lengths.C arguments.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
-	  node-sample2.C imodel.C 5way.C topology-sample2.C inverse.C \
+	  sample-node.C imodel.C 5way.C topology-sample2.C inverse.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C
 
 LIBS = gsl gslcblas m 
@@ -82,7 +82,7 @@ bin/treedist: tree.o sequencetree.o arguments.o
 
 bin/tree-to-srq: tree.o sequencetree.o arguments.o
 
-bin/srqtoplot: arguments.o
+bin/srq-to-plot: arguments.o
 
 bin/srqanalyze: arguments.o rng.o bin/statistics.o ${LIBS:%=-l%}
 

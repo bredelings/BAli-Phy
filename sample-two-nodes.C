@@ -179,24 +179,6 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   assert(valid(A));
 #endif
 
-  /*---------------- Adjust for length of n0 changing --------------------*/
-  // FIXME! This might not matter, but technically, we need to do this 
-  // in the caller, because they be comparing two different P's, in which case 
-  // the old length is NOT given by the incoming matrix 'old'...
-
-  int l1_old = old.seqlength(nodes[4]);
-  int l1_new = A.seqlength(nodes[4]);
-
-  int l2_old = old.seqlength(nodes[5]);
-  int l2_new = A.seqlength(nodes[5]);
-
-  double log_ratio = 2.0*(P.IModel().lengthp(l1_old)-P.IModel().lengthp(l1_new));
-  log_ratio += 2.0*(P.IModel().lengthp(l2_old)-P.IModel().lengthp(l2_new));
-
-  // if we DON'T make the MH move, go back.
-  if (not(myrandomf() < exp(log_ratio)))
-    A = old;
-
   return Matrices;
 }
 
@@ -211,14 +193,9 @@ alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
   DParrayConstrained Matrices = sample_two_nodes_base(A,P,nodes);
 
 #ifndef NDEBUG_DP
+
   // Construct the list of bits and states (hidden, or not) for each sub alignment
   vector<int> states_list = construct_states();
-
-
-  //--------------- Check alignment construction ------------------//
-    std::cerr<<project(old,nodes)<<endl;
-    std::cerr<<project(A,nodes)<<endl;
-
 
   // get the paths through the 3way alignment, from the entire alignment
   vector<int> newnodes;
@@ -246,9 +223,16 @@ alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
 
     std::abort();
   }
+
 #endif
 
+  /*---------------- Adjust for length of n0 changing --------------------*/
 
+  // if we DON'T make the MH move, go back.
+  if (myrandomf() < exp(log_acceptance_ratio(old,P,nodes,A,P,nodes)))
+    ;
+  else
+    A = old;
 
   return A;
 }
