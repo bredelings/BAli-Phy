@@ -16,11 +16,16 @@ namespace substitution {
   get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
 			 const vector<int>& req, const vector<int>& seq);
 
+  Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
+				const MultiModel& MModel);
+
   /// Full likelihood - all columns, all rates
   double Pr(const alignment& A, const Parameters& P);
 
   double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes);
 
+  double Pr(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
+	    const MultiModel& MModel);
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& LC);
 
   // Full likelihood - all columns, all rates (star tree)

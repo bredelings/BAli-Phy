@@ -313,4 +313,27 @@ namespace substitution {
     return subA_select(subA);
   }
 
+  ublas::matrix<int> subA_index_columns(int root,const alignment& A,const Tree& T) 
+  {
+    // compute root branches
+    vector<int> b;
+    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
+      b.push_back(*i);
+
+    // get ordered ist of leaves in each subtree
+    vector<vector<int> > leaves = get_subtree_leaves(b,T);
+      
+    // the alignment of sub alignments
+    ublas::matrix<int> subA = subA_index_sort(A,leaves);
+
+    assert(subA.size1() == A.length());
+
+    const int I = leaves.size()-1;
+    for(int c=0;c<subA.size1();c++)
+      subA(c,I) = c;
+
+    // return processed indices
+    return subA_select(subA);
+  }
 }
+

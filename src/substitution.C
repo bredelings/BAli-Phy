@@ -52,17 +52,12 @@ namespace substitution {
     return log(total);
   }
 
-
-  double calc_root_probability(const alignment& A, const Parameters& P,const vector<int>& rb,
-			       const ublas::matrix<int>& index) 
+  double calc_root_probability(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& cache,
+			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
-    const Tree& T = P.T;
-    const MultiModel& MModel = P.SModel();
-    Likelihood_Cache& cache = P.LC;
-
     const int root = cache.root;
 
-    if (P.T[root].is_leaf_node())
+    if (T[root].is_leaf_node())
       throw myexception()<<"Trying to accumulate conditional likelihoods at a root node is not allowed.";
 
     // scratch matrix 
@@ -125,6 +120,12 @@ namespace substitution {
     }
 
     return total;
+  }
+
+  double calc_root_probability(const alignment& A, const Parameters& P,const vector<int>& rb,
+			       const ublas::matrix<int>& index) 
+  {
+    return calc_root_probability(A,P,P.T,P.LC,P.SModel(),rb,index);
   }
 
   void peel_branch(int b0,column_cache_t cache, const alignment& A, const Tree& T, 
@@ -233,19 +234,107 @@ namespace substitution {
     return peeling_operations;
   }
 
-  int calculate_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
-    const Tree& T = P.T;
-    const MatCache& MC = P;
-
+  int calculate_caches(const alignment& A, const MatCache& MC, const Tree& T,column_cache_t cache,
+		       const MultiModel& MModel) {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches(T, cache);
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],cache,A,T,MC,P.SModel());
+      peel_branch(ops[i],cache,A,T,MC,MModel);
 
     return ops.size();
   }
+
+  int calculate_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
+    const Tree& T = P.T;
+    const MatCache& MC = P;
+
+    return calculate_caches(A,MC,T,cache,P.SModel());
+  }
+
+  Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,column_cache_t cache,
+				const MultiModel& MModel)
+  {
+    const int root = cache.root;
+    
+    // make sure that we are up-to-date
+    calculate_caches(A,MC,T,cache,MModel);
+
+    // declare a matrix to store our results in
+    Matrix probs(A.length(),MModel.n_base_models());
+
+    // initialize the entries to prior probability of each sub-model
+    for(int m=0;m<probs.size2();m++)
+      for(int c=0;c<probs.size1();c++)
+	probs(c,m) = MModel.distribution()[m];
+
+    // compute root branches
+    vector<int> rb;
+    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
+      rb.push_back(*i);
+
+    // get the index
+    ublas::matrix<int> index = subA_index_columns(root,A,T);
+
+    // scratch matrix 
+    Matrix & S = cache.scratch(0);
+    const int n_models = S.size1();
+    const int asize    = S.size2();
+
+    // cache matrix of frequencies
+    Matrix F(n_models,asize);
+    for(int m=0;m<n_models;m++) {
+      double p = MModel.distribution()[m];
+      const valarray<double>& f = MModel.base_model(m).frequencies();
+      for(int l=0;l<asize;l++) 
+	F(m,l) = f[l]*p;
+    }
+
+    for(int i=0;i<index.size1();i++) {
+      double p_col = 0;
+      for(int m=0;m<n_models;m++) {
+
+	//-------------- Set letter & model prior probabilities  ---------------//
+	for(int l=0;l<asize;l++) 
+	  S(m,l) = F(m,l);
+
+	//-------------- Propagate and collect information at 'root' -----------//
+	for(int j=0;j<rb.size();j++) {
+	  int i0 = index(i,j);
+	  if (i0 != alphabet::gap)
+	    for(int l=0;l<asize;l++) 
+	      S(m,l) *= cache(i0,rb[j])(m,l);
+	}
+
+	//--------- If there is a letter at the root, condition on it ---------//
+	if (root < T.n_leaves()) {
+	  int rl = A.seq(root)[i];
+	  if (alphabet::letter(rl))
+	    for(int l=0;l<asize;l++)
+	      if (l != rl) 
+		S(m,l) = 0;
+	}
+
+	//--------- If there is a letter at the root, condition on it ---------//
+	probs(i,m) = 0;
+	for(int l=0;l<asize;l++)
+	  probs(i,m) += S(m,l);
+
+	// A specific model (e.g. the INV model) could be impossible
+	assert(0 <= probs(i,m) and probs(i,m) <= 1.00000000001);
+
+	p_col += probs(i,m);
+      }
+
+      // SOME model must be possible
+      assert(0 < p_col and p_col <= 1.00000000001);
+      for(int m=0;m<n_models;m++)
+	probs(i,m) /= p_col;
+    }
+    return probs;
+  }
+
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
   vector<Matrix>
@@ -336,9 +425,9 @@ namespace substitution {
     return Pr1;
   }
 
-  double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
-    const Tree& T = P.T;
-
+  double Pr(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& cache,
+	    const MultiModel& MModel)
+  {
     if (cache.cv_up_to_date()) {
 #ifndef NDEBUG
       std::clog<<"Pr: Using cached value "<<cache.cached_value<<"\n";
@@ -346,7 +435,7 @@ namespace substitution {
       return cache.cached_value;
     }
 
-    int n_br = calculate_caches(A,P,cache);
+    int n_br = calculate_caches(A,MC,T,cache,MModel);
 #ifndef NDEBUG
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -360,12 +449,16 @@ namespace substitution {
     ublas::matrix<int> index = subA_index(rb,A,T);
 
     // get the probability
-    double Pr = calc_root_probability(A,P,rb,index);
+    double Pr = calc_root_probability(A,MC,T,cache,MModel,rb,index);
 
     cache.cached_value = Pr;
     cache.cv_up_to_date() = true;
 
     return Pr;
+  }
+
+  double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
+    return Pr(A,P,P.T,cache,P.SModel());
   }
 
   double Pr(const alignment& A,const Parameters& P) {

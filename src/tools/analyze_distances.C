@@ -2,9 +2,9 @@
 #include <fstream>
 #include "tree.H"
 #include "alignment.H"
-#include "arguments.H"
 #include "smodel.H"
 #include "substitution.H"
+#include "substitution-cache.H"
 #include "matcache.H"
 #include "rng.H"
 #include "logsum.H"
@@ -14,60 +14,51 @@
 #include "likelihood.H"
 #include <boost/numeric/ublas/io.hpp>
 #include "distance-methods.H"
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
+
 using std::cout;
 using std::cerr;
 using std::endl;
 
 using namespace optimize;
 
-vector<double> get_post_rate_probs(const alignment& A,const substitution::MultiModel& SM,const SequenceTree& T) {
-
-  MatCache MC(T,SM);
-
-  const int nbins = SM.n_base_models();
-  valarray<double> f(nbins);
+vector<double> get_post_rate_probs(const Matrix& P) 
+{
+  vector<double> f(P.size2());
   
-  for(int column =0;column<A.length();column++) {
-    // get the residues
-    vector<int> residues(A.size2());
-    for(int i=0;i<residues.size();i++)
-      residues[i] = A(column,i);
-    
-    // get the rate likelihoods
-    valarray<double> L(nbins);
-    for(int r=0;r<nbins;r++)
-      L[r] = SM.distribution()[r] * substitution::Pr(residues,
-						     T,
-						     SM.base_model(r),
-						     MC.transition_P(r)
-						     );
-    // normalize rate likelihoods
-    L /= L.sum();
-    
-    f += L;
-  }
+  // compute the total probability for each sub-model
+  for(int m=0;m<P.size2();m++)
+    for(int c=0; c<P.size1(); c++) 
+      f[m] += P(c,m);
+  
+  // compute the total probability
+  double total=0;
+  for(int m=0;m<P.size2();m++)
+    total += f[m];
 
-  f /= A.length();
+  // normalize sub-model probabilities
+  for(int m=0;m<P.size2();m++)
+    f[m] /= total;
 
-  vector<double> f2(f.size());
-  for(int i=0;i<f.size();i++)
-    f2[i] = f[i];
-
-  return f2;
+  return f;
 }
 
 class likelihood: public function {
 protected:
   alignment A;
   SequenceTree T;
-  substitution::MultiModel *smodel;
+  OwnedPointer<substitution::MultiModel> smodel;
+  mutable Likelihood_Cache LC;
 public:
   likelihood(const alignment& A1,
 		     const substitution::MultiModel& SM,
 		     const SequenceTree& T1)
-    : A(A1),T(T1),smodel(SM.clone())
+    : A(A1),T(T1),smodel(SM),LC(T,*smodel,A.length())
   { }
-  ~likelihood() {delete smodel;}
 };
 
 class branch_likelihood: public likelihood {
@@ -104,7 +95,7 @@ double branch_likelihood::operator()(const optimize::Vector& v) const {
 
   MatCache MC(T2,*smodel);
 
-  return substitution::Pr(A,T2,*smodel,MC) + smodel->prior() + prior(T2,0.2);
+  return substitution::Pr(A,MC,T2,LC,*smodel) + smodel->prior() + prior(T2,0.2);
 }
 
 double getSimilarity(double t,substitution::MultiModel& SM) {
@@ -225,23 +216,66 @@ std::ostream& print_entire(std::ostream& o,vector<string> labels, const Matrix& 
   return o;
 }
 
-int main(int argc,char* argv[]) { 
-  Arguments args;
-  args.read(argc,argv);
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
 
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("align", value<string>(),"file with sequences and initial alignment")
+    ("tree",value<string>(),"file with initial tree")
+    ("letters",value<string>()->default_value("full_tree"),"if set to 'star', then use a star tree for substitution")
+    ("smodel",value<string>(),"substitution model")
+    ("set",value<vector<string> >()->multitoken(),"set parameter=<value>")
+    ("fix",value<vector<string> >()->multitoken(),"fix parameter[=<value>]")
+    ("unfix",value<vector<string> >()->multitoken(),"un-fix parameter")
+    ("frequencies",value<string>(),"comma-separated vector of frequencies to use as initial condition") 
+    ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+    ("search",value<string>(),"search model_parameters?")
+    ;
+
+  // positional options
+  positional_options_description p;
+  p.add("align", 1);
+  p.add("tree", 2);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: analyze-distances <alignment-file> <tree-file> [OPTIONS]\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
+
+int main(int argc,char* argv[]) 
+{ 
   try {
+    cerr.precision(10);
+    cout.precision(10);
+
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
+
+    //---------- Initialize random seed -----------//
     unsigned long seed = 0;
-    if (args.set("seed")) {
-      seed = convertTo<unsigned long>(args["seed"]);
+    if (args.count("seed")) {
+      seed = args["seed"].as<unsigned long>();
       myrand_init(seed);
     }
     else
       seed = myrand_init();
-    cerr<<"random seed = "<<seed<<endl<<endl;
+    cout<<"random seed = "<<seed<<endl<<endl;
     
-    cerr.precision(10);
-    cout.precision(10);
-
     alignment A;
     SequenceTree T;
     load_A_and_T(args,A,T);
@@ -266,9 +300,13 @@ int main(int argc,char* argv[]) {
     OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
     std::cout<<"Using substitution model: "<<full_smodel->name()<<endl;
 
-    /* ----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- */
+    // ----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
+    Likelihood_Cache LC(T,*full_smodel,A.length());
+    MatCache MC(T,*full_smodel);
+    Matrix rate_probs = get_rate_probabilities(A,MC,T,LC,*full_smodel);
+
     vector<double> prior_bin_f = full_smodel->distribution();
-    vector<double> post_bin_f = get_post_rate_probs(A,*full_smodel,T);
+    vector<double> post_bin_f = get_post_rate_probs(rate_probs);
     
     double prior_rate=0;
     double post_rate=0;
@@ -300,7 +338,7 @@ int main(int argc,char* argv[]) {
     SequenceTree T2 = T;
     branch_likelihood score(A,*full_smodel,T2);
     int delta=0;
-    if (args["search"] == "model_parameters")
+    if (args.count("search") and args["search"].as<string>() == "model_parameters")
       delta = full_smodel->parameters().size();
     optimize::Vector start(0.1,T2.n_branches()+delta);
     for(int b=0;b<T.n_branches();b++)

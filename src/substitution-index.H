@@ -25,6 +25,9 @@ namespace substitution {
   /// align sub-alignments corresponding to branches in b, and reject columns with a node in @nodes
   ublas::matrix<int> subA_index_none(const std::vector<int>& b,const alignment& A,const Tree& T,
 				     const std::vector<int>& nodes);
+
+  ublas::matrix<int> subA_index_columns(int root,const alignment& A,const Tree& T); 
+
 }
 
 #endif
