@@ -27,17 +27,6 @@ namespace substitution {
 
   typedef Likelihood_Cache& column_cache_t;
 
-  /// increment and return the index if any nodes in 'mask' are present in column 'c'
-  inline int inc(int& index,const vector<int>& mask, 
-		 const alignment& A,int c) 
-  {
-    for(int i=0;i<mask.size();i++)
-      if (not A.gap(c,mask[i])) {
-	return ++index;
-      }
-    return alphabet::gap;
-  }
-
   ublas::matrix<int> leaf_index(int b,const alignment& A) 
   {
     // the alignment of sub alignments
@@ -60,10 +49,9 @@ namespace substitution {
 
   static vector<vector<int> > get_subtree_leaves(const vector<int>& b,const Tree& T) {
     // get criteria for being in a sub-A
-    vector<vector<int> > leaves;
+    vector<vector<int> > leaves(b.size());
     for(int i=0;i<b.size();i++) {
-      leaves.push_back(vector<int>());
-      leaves.back().reserve(A.size2());
+      leaves.back().reserve(T.n_leaves());
       valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
       for(int i=0;i<T.n_leaves();i++)
 	if (p[i]) leaves.back().push_back(i);
@@ -72,153 +60,188 @@ namespace substitution {
     return leaves;
   }
 
+  /// increment and return the index if any nodes in 'mask' are present in column 'c'
+  inline int inc(int& index,const vector<int>& mask, 
+		 const alignment& A,int c) 
+  {
+    for(int i=0;i<mask.size();i++)
+      if (not A.gap(c,mask[i])) {
+	return ++index;
+      }
+    return alphabet::gap;
+  }
+
+  static ublas::matrix<int> subA_index_simple(const alignment& A, 
+					      const vector<vector<int> >& leaves) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA(A.length(),leaves.size()+1);
+
+    // declare the index for the nodes
+    vector<int> index(leaves.size(),-1);
+
+    // calculate the index of each column
+    for(int c=0;c<A.length();c++) {
+      for(int j=0;j<leaves.size();j++) 
+	subA(c,j) = inc(index[j],leaves[j],A,c);
+      subA(c,leaves.size()) = c;
+    }
+
+    return subA;
+  }
+
+  static bool column_empty(const ublas::matrix<int>& M,int c) {
+    for(int i=0;i<M.size2();i++)
+      if (M(c,i) != alphabet::gap)
+	return false;
+    return true;
+  }
+
+  ublas::matrix<int> subA_select(const ublas::matrix<int>& subA1) {
+    const int I = subA1.size2()-1;
+
+    // count the number of columns to keep
+    int L=0;
+    for(int c=0;c<subA1.size1();c++)
+      if (subA1(c,I) != alphabet::gap) L++;
+
+    ublas::matrix<int> subA2(subA1.size1(),subA2.size2()-1);
+
+    for(int c=0;c<subA1.size2();c++) {
+      int c2 = subA1(c,I);
+      if (c2 == alphabet::gap) continue;
+
+      for(int j=0;j<subA2.size1();j++)
+	subA2(c2,j) = subA1(c,j);
+    }
+
+    return subA2;
+  }
 
   ublas::matrix<int> subA_index(const vector<int>& b,const alignment& A,const Tree& T) 
   {
-    // the alignment of sub alignments
-    ublas::matrix<int> subA(A.length(),b.size());
-
     // get ordered ist of leaves in each subtree
     vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
-    // declare the index for the nodes
-    vector<int> index(b.size(),-1);
-    int l=0;
-    for(int c=0;c<A.length();c++) {
-      bool empty=true;
-      for(int j=0;j<b.size();j++) {
-	subA(l,j) = inc(index[j],leaves[j],A,c);
-	if (subA(l,j) != alphabet::gap) empty=false;
-      }
-      if (not empty) l++;
-    }
+    // the alignment of sub alignments
+    ublas::matrix<int> subA = subA_index_simple(A,leaves);
 
-    //resize the matrix, and send it back...
-    ublas::matrix<int> temp(l,b.size());
-    for(int i=0;i<temp.size1();i++)
-      for(int j=0;j<temp.size2();j++)
-	temp(i,j) = subA(i,j);
-    
-    return temp;
+    // select and order the columns we want to keep
+    const int I = leaves.size();
+    int l=0;
+    for(int c=0;c<subA.size1();c++)
+      if (column_empty(subA,c))
+	subA(c,I) = alphabet::gap;
+      else
+	subA(c,I) = l++;
+
+    // return processed indices
+    return subA_select(subA);
   }
 
 
   ublas::matrix<int> subA_index_req(const vector<int>& b,const alignment& A,const Tree& T,
-				    const vector<int>& req) 
+				    const vector<int>& nodes) 
   {
-    // the alignment of sub alignments
-    ublas::matrix<int> subA(A.length(),b.size());
-
-    // get ordered ist of leaves in each subtree
+    // get ordered list of leaves in each subtree
     vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
-    // declare the index for the nodes
-    vector<int> index(b.size(),-1);
+    // the alignment of sub alignments
+    ublas::matrix<int> subA = subA_index_simple(A,leaves);
+
+    // select and order the columns we want to keep
+    const int I = leaves.size();
     int l=0;
-    for(int c=0;c<A.length();c++) {
+    for(int c=0;c<subA.size1();c++) {
 
-      // write the indices for sub-alignments into the current column
-      for(int j=0;j<b.size();j++)
-	subA(l,j) = inc(index[j],leaves[j],A,c);
-
-      // check to see if we have a REQUIRED node here.
-      bool empty=true;
-      for(int j=0;j<req.size();j++) {
-	if (not A.gap(c,req[j])) {
-	  empty = false;
+      bool present = false;
+      for(int j=0;j<nodes.size();j++) {
+	if (not A.gap(c,nodes[j])) {
+	  present = true;
 	  break;
 	}
       }
-      if (not empty) l++;
+
+      if (present)
+	subA(c,I) = l++;
+      else
+	subA(c,I) = alphabet::gap;
     }
 
-    //resize the matrix, and send it back...
-    ublas::matrix<int> temp(l,b.size());
-    for(int i=0;i<temp.size1();i++)
-      for(int j=0;j<temp.size2();j++)
-	temp(i,j) = subA(i,j);
-    
-    return temp;
+    // return processed indices
+    return subA_select(subA);
   }
 
 
   ublas::matrix<int> subA_index_req(const vector<int>& b,const alignment& A,const Tree& T,
-				    const vector<int>& req, const vector<int>& seq) 
+				    const vector<int>& nodes, const vector<int>& seq) 
   {
-    // the alignment of sub alignments
-    ublas::matrix<int> subA(A.length(),b.size());
-
-    // get ordered ist of leaves in each subtree
+    // get ordered list of leaves in each subtree
     vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
-    // declare the index for the nodes
-    vector<int> index(b.size(),-1);
-    int l=0;
-    for(int c=0;c<A.length();c++) {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA = subA_index_simple(A,leaves);
 
-      // write the indices for sub-alignments into the current column
-      for(int j=0;j<b.size();j++)
-	subA(c,j) = inc(index[j],leaves[j],A,c);
+    // select and order the columns we want to keep
+    const int I = leaves.size();
+    for(int c=0;c<subA.size1();c++) 
+      subA(c,I) = alphabet::gap;
 
-      // check to see if we have a REQUIRED node here.
-      bool empty=true;
-      for(int j=0;j<req.size();j++) {
-	if (not A.gap(c,req[j])) {
-	  empty = false;
+    for(int i=0;i<seq.size();i++) 
+      subA(seq[i],I) = i;
+
+#ifndef NDEBUG
+    // check reqs...
+    for(int c=0;c<subA.size1();c++) 
+      bool present = false;
+      for(int j=0;j<nodes.size();j++) {
+	if (not A.gap(c,nodes[j])) {
+	  present = true;
 	  break;
 	}
       }
 
-      if (not empty) l++;
+      if (present)
+	assert(subA(c,I)!=alphabet::gap);
+      else
+	assert(subA(c,I)==alphabet::gap);
     }
-    assert(l == seq.size());
+#endif
 
-    //resize the matrix, and send it back...
-    ublas::matrix<int> temp(l,b.size());
-    for(int i=0;i<temp.size1();i++)
-      for(int j=0;j<temp.size2();j++) {
-	temp(i,j) = subA(seq[i],j);
-      }
-    return temp;
+    return subA_select(subA);
   }
 
 
   ublas::matrix<int> subA_index_other(const vector<int>& b,const alignment& A,const Tree& T,
-				      const vector<int>& exclude) 
+				      const vector<int>& nodes) 
   {
-    // the alignment of sub alignments
-    ublas::matrix<int> subA(A.length(),b.size());
-
     // get ordered list of leaves in each subtree
     vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
-    // declare the index for the nodes
-    vector<int> index(b.size(),-1);
+    // the alignment of sub alignments
+    ublas::matrix<int> subA = subA_index_simple(A,leaves);
+
+    // select and order the columns we want to keep
+    const int I = leaves.size();
     int l=0;
-    for(int c=0;c<A.length();c++) {
+    for(int c=0;c<subA.size1();c++) {
 
-      // write the indices for sub-alignments into the current column
-      for(int j=0;j<b.size();j++)
-	subA(l,j) = inc(index[j],leaves[j],A,c);
-
-      // check to see if we have a REQUIRED node here.
-      bool do_exclude=false;
-      for(int j=0;j<exclude.size();j++) {
-	if (not A.gap(c,exclude[j])) {
-	  do_exclude = true;
+      bool present = true;
+      for(int j=0;j<nodes.size();j++) {
+	if (not A.gap(c,nodes[j])) {
+	  present = false;
 	  break;
 	}
       }
-      if (not do_exclude) l++;
+
+      if (not present)
+	subA(c,I) = l++;
+      else
+	subA(c,I) = alphabet::gap;
     }
 
-    //resize the matrix, and send it back...
-    ublas::matrix<int> temp(l,b.size());
-    for(int i=0;i<temp.size1();i++)
-      for(int j=0;j<temp.size2();j++)
-	temp(i,j) = subA(i,j);
-    
-    return temp;
+    // return processed indices
+    return subA_select(subA);
   }
 
 
