@@ -15,7 +15,7 @@ double Parameters::basic_prior(const alignment& A,const Parameters& P) const {
     return prior3(A,P);
   else
     //FIXME!
-    return prior3(A,P);
+    return 0;
 }
 
 double Parameters::weight(const alignment& A,const Parameters& P) const {
