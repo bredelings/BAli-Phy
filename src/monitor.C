@@ -41,11 +41,11 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   
   check_alignment(A,P.T,"print_stats:in");
   o<<endl;
-  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]"<<endl;
+  //  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]"<<endl;
   o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
   o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
   o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
+  //  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
   
   check_alignment(A,P.T,"print_stats:1");
   double Pr_prior = P.basic_prior(A,P);
@@ -65,6 +65,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
     o<<standardize(A,P.T)<<endl<<endl;
   }
   
+  check_alignment(A,P.T,"print_stats:2");
   trees<<P.T<<endl;
   
   pS<<  "    mu = "<<P.branch_mean<<"   ";

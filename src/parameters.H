@@ -33,10 +33,10 @@ public:
   double Temp;
 
   /// Is each IndelModel parameter fixed or not?
-  std::valarray<bool> i_fixed;
+  std::vector<bool> i_fixed;
 
   /// Is each substitution::Model parameter fixed or not?
-  std::valarray<bool> s_fixed;
+  std::vector<bool> s_fixed;
 
   /// Is pinning enabled or not?
   vector<double> constants;
