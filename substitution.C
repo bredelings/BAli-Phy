@@ -145,7 +145,6 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
 
 valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
 		      int b,bool up) {
-  const alphabet& a = Theta.get_alphabet();
   const tree& T = Theta.T;
 
   /**************** Find our branch, and orientation *****************/
