@@ -18,10 +18,17 @@ struct node {
 
 vector<int> get_neighbors(const node& n);
 
-struct branch {
+struct Branch {
   int node1;
   int node2;
+  double length;
 };
+
+// Split these out into
+//  1. Just a Tree class (tree.H)
+//  2. A tree class w/ Branches
+//  3. A tree class w/ Branches and named leaves
+
 
 // All internal nodes should be number higher than all leaves
 
@@ -65,11 +72,12 @@ class tree {
   void compute_ancestors();
   void renumber();
 
+  vector<Branch> branches;
 public:
   enum direction { left , right, up };
 
-  vector<branch> branches;
-  vector<double> lengths;
+  Branch& branch(int i) {return branches[i];}
+  const Branch& branch(int i) const {return branches[i];}
   
   const node& operator[](int i) const { return *lookup[i];}
   node& operator[](int i) { return *lookup[i];}

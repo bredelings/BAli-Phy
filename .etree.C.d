@@ -1,1 +1,1 @@
-.etree.C.d etree.o: etree.C etree.H mytypes.H sequence.H
+.etree.C.d etree.o: etree.C etree.H mytypes.H sequence.H exponential.H

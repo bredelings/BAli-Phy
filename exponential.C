@@ -1,39 +1,31 @@
-#include "mytypes.H"
-#include <iostream>
+#include "exponential.H"
+#include "eigenvalue.H"
 
-#include "tnt/tnt_array2d.h"
-#include "tnt/jama_eig.h"
-#include <boost/numeric/ublas/banded.hpp>
-#include <boost/numeric/ublas/config.hpp>
-#include <boost/numeric/ublas/io.hpp>
 
 using namespace ublas;
 
-//return inline matrix_expression?
-Matrix exp(Matrix& M,const double t=1.0) {
-  const int size = M.size1();
-  assert(M.size2() == size);
 
-  TNT::Array2D<double> array(size,size,M.data().begin());
+// how do we make the M constant? - const_cast?
+// return inline matrix_expression?
 
-  JAMA::Eigenvalue<double> solution(array);
+Matrix exp(const Matrix& M,const double t) {
 
-  ublas::banded_matrix<double> D(size,size);
-  TNT::Array1D<double> D2(size,D.data().begin()); // diagonal
-  solution.getRealEigenvalues(D2);
+  EigenValues solution(M);
 
-  for(int i=0;i<size;i++)
-    D2[i] = exp(t*D2[i]);
+  Matrix O = solution.Rotation();
+  banded_matrix<double> D = solution.Diagonal();
 
-  Matrix O(size,size);   // rotation matrix
-  TNT::Array2D<double> O2(size,size,O.data().begin());
-  solution.getV(O2); // for some reason, this doesn't actually set O,
-                     // because it make a NEW thing to point to, that
-                     // has the solution
-  Matrix E = prod(O,prod(D,trans(O)));
-  return E;
+  // Exponentiate Eigenvalues
+  for(int i=0;i<solution.size();i++)
+    D(i,i) = exp(t*D(i,i));
+
+  return  prod(O,prod(D,trans(O)));
 }
 
+#ifdef TEST_EXP
+
+#include <iostream>
+#include <boost/numeric/ublas/io.hpp>
 
 const double alpha = .03;
 
@@ -52,9 +44,22 @@ int main() {
     }
     rate(i,i) = -sum;
   }
+
+  //  rate[0][0] = alpha;
+  //  rate[0][1] = -alpha;
+  //  rate[1][0] = alpha;
+  //  rate[1][1] = alpha;
   
+  Matrix result = exp(rate,1.0);
+
+
   std::cout<<rate<<std::endl;
-  Matrix result = exp(rate);
+  Matrix result2 = exp(rate,2.0);
   std::cout<<result<<std::endl;
+  std::cout<<prod(result,result)<<std::endl;
+  std::cout<<result2<<std::endl;
+
   return 1;
 }
+
+#endif //TEST_EXP

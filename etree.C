@@ -1,5 +1,5 @@
 #include "etree.H"
-
+#include "exponential.H"
 
 void TreeView::destroy(node** n) {
   assert(n);
@@ -230,6 +230,14 @@ tree::tree(const tree& t1, const tree& t2) {
 
   add_left(*root,t1);
   add_right(*root,t2);
+
+  /*
+  for(int i=0;i<num_nodes()-2;i++) {
+    branches[i].node1 = i;
+    branches[i].node2 = parent(i);
+    branches[i].length = 1.0;
+  }
+  */
 }
 
 tree::tree(const tree& t1, double d1, const tree& t2, double d2) {

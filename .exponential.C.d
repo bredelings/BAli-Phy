@@ -1,0 +1,1 @@
+.exponential.C.d exponential.o: exponential.C exponential.H mytypes.H eigenvalue.H   ../include/tnt/tnt_array2d.h ../include/tnt/jama_eig.h   ../include/tnt/tnt_array1d.h ../include/tnt/tnt_math_utils.h

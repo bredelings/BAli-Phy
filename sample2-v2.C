@@ -238,47 +238,27 @@ alignment sample(const alignment& old,const tree& T,int node1,int node2) {
   Matrix g1(seq1.size()+1,seq2.size()+1);
   Matrix g2(seq1.size()+1,seq2.size()+1);
 
-  Matrix M(seq1.size()+1,seq2.size()+1);
-  Matrix G1(seq1.size()+1,seq2.size()+1);
-  Matrix G2(seq1.size()+1,seq2.size()+1);
-
   for(int i=0;i<m.size1();i++)
     for(int j=0;j<m.size2();j++) {
       m(i,j)  = log_0;
       g1(i,j) = log_0;
       g2(i,j)  = log_0;
-
-      M(i,j)  = log_0;
-      G1(i,j) = log_0;
-      G2(i,j)  = log_0;
     }
 
   m(0,0) = 0;
   g1(0,0) = log_0;
   g2(0,0) = log_0;
 
-  M(0,0) = 0;
-  G1(0,0) = log_0;
-  G2(0,0) = log_0;
-
   for(int i=1;i<m.size1();i++) {
     m(i,0) = log_0;
     g1(i,0) = log_0;
     g2(i,0) = lambda_O + (i-1)*lambda_E;
-  
-    M(i,0) = log_0;
-    G1(i,0) = log_0;
-    G2(i,0) = lambda_O + (i-1)*lambda_E;
   }
 
   for(int i=1;i<m.size2();i++) {
     m(0,i) = log_0;
     g1(0,i) = lambda_O + (i-1)*lambda_E;
     g2(0,i) = log_0;
-
-    M(0,i) = log_0;
-    G1(0,i) = lambda_O + (i-1)*lambda_E;
-    G2(0,i) = log_0;
   }
 
 
@@ -296,11 +276,11 @@ alignment sample(const alignment& old,const tree& T,int node1,int node2) {
 
   valarray<double> g1_sub(seq2.size());
   for(int i=0;i<seq2.size();i++)
-    g1_sub[i] = log(sum( dists2[i] * a.frequency ));
+    g1_sub[i] = log(sum( dists2[i] * a.frequency )) - sum2[i];
 
   valarray<double> g2_sub(seq1.size());
   for(int i=0;i<seq1.size();i++)
-    g2_sub[i] = log(sum( dists1[i] * a.frequency ));
+    g2_sub[i] = log(sum( dists1[i] * a.frequency )) - sum1[i];
 
 
 
@@ -312,57 +292,26 @@ alignment sample(const alignment& old,const tree& T,int node1,int node2) {
     if (n<m.size2())
       for(int i=1;i<n && i<m.size1();i++) {
 
-	double sub = log(sum( dists1[i-1] * a.frequency * dists2[n-1] ));
-	m(i,n) = sub + logsum(m(i-1,n-1),logsum(g1(i-1,n-1),g2(i-1,n-1)))
-	  -sum1[i-1] - sum2[n-1];
-	M(i,n) = sub + logsum(M(i-1,n-1),logsum(G1(i-1,n-1),G2(i-1,n-1)));
+	double sub = log(sum( dists1[i-1] * a.frequency * dists2[n-1] )) - sum1[i-1]-sum2[n-1];
+	m(i,n) = sub + logsum(m(i-1,n-1),logsum(g1(i-1,n-1),g2(i-1,n-1)));
 
-	g1(i,n) = g1_sub[n-1] + logsum(lambda_E + g1(i,n-1),lambda_O + logsum(g2(i,n-1),m(i,n-1)))
-	  -sum2[n-1];
-	G1(i,n) = g1_sub[n-1] + logsum(lambda_E + G1(i,n-1),lambda_O + logsum(G2(i,n-1),M(i,n-1)));
+	g1(i,n) = g1_sub[n-1] + logsum(lambda_E + g1(i,n-1),lambda_O + logsum(g2(i,n-1),m(i,n-1)));
 
-	g2(i,n) = g2_sub[i-1] + logsum(lambda_E + g2(i-1,n),lambda_O + m(i-1,n))
-	  -sum1[i-1];
-	G2(i,n) = g2_sub[i-1] + logsum(lambda_E + G2(i-1,n),lambda_O + M(i-1,n));
+	g2(i,n) = g2_sub[i-1] + logsum(lambda_E + g2(i-1,n),lambda_O + m(i-1,n));
       }
 
     if (n<m.size1())
       for(int i=1;i<=n && i<m.size2();i++) {
 
-	double sub = log(sum( dists1[n-1]*a.frequency*dists2[i-1] ));
-	m(n,i) = sub + logsum(m(n-1,i-1),logsum(g1(n-1,i-1),g2(n-1,i-1)))
-	  -sum1[n-1] - sum2[i-1];
-	M(n,i) = sub + logsum(M(n-1,i-1),logsum(G1(n-1,i-1),G2(n-1,i-1)));
+	double sub = log(sum( dists1[n-1]*a.frequency*dists2[i-1] )) - sum1[n-1] - sum2[i-1];
+	m(n,i) = sub + logsum(m(n-1,i-1),logsum(g1(n-1,i-1),g2(n-1,i-1)));
 
-	g1(n,i) = g1_sub[i-1] + logsum(lambda_E + g1(n,i-1),lambda_O + logsum(g2(n,i-1),m(n,i-1)))
-	  -sum2[i-1];
-	G1(n,i) = g1_sub[i-1] + logsum(lambda_E + G1(n,i-1),lambda_O + logsum(G2(n,i-1),M(n,i-1)));
+	g1(n,i) = g1_sub[i-1] + logsum(lambda_E + g1(n,i-1),lambda_O + logsum(g2(n,i-1),m(n,i-1)));
 
-	g2(n,i) = g2_sub[n-1] + logsum(lambda_E + g2(n-1,i),lambda_O + m(n-1,i))
-	  -sum1[n-1];
-	G2(n,i) = g2_sub[n-1] + logsum(lambda_E + G2(n-1,i),lambda_O + M(n-1,i));
+	g2(n,i) = g2_sub[n-1] + logsum(lambda_E + g2(n-1,i),lambda_O + m(n-1,i));
 	
       }
   }
-
-  std::cerr<<"first\n";
-  for(int i=0;i<m.size1();i++) {
-    for(int j=0;j<m.size2();j++) {
-      std::cerr<<i<<"  "<<j<<"  "<<m(i,j)<<endl;
-    }
-    std::cerr<<endl;
-  }
-  std::cerr<<endl;
-
-  std::cerr<<"second\n";
-  for(int i=0;i<M.size1();i++) {
-    for(int j=0;j<M.size2();j++) {
-      std::cerr<<i<<"  "<<j<<"  "<<M(i,j)<<endl;
-    }
-    std::cerr<<endl;
-  }
-  std::cerr<<endl;
-
 
   for(int i=1;i<sum1.size();i++)
     sum1[i] += sum1[i-1];
@@ -370,27 +319,17 @@ alignment sample(const alignment& old,const tree& T,int node1,int node2) {
   for(int i=1;i<sum2.size();i++)
     sum2[i] += sum2[i-1];
 
-  for(int i=0;i<M.size1();i++) {
-    for(int j=0;j<M.size2();j++) {
-      if (i==0 || j==0)
+  Matrix sums(seq1.size()+1,seq2.size()+1);
+  for(int i=0;i<sums.size1();i++) {
+    for(int j=0;j<sums.size2();j++) {
+      if (i==0 || j=0)
 	;
       else {
-	double temp = sum1[i-1] + sum2[j-1];
-	M(i,j) -= temp;
-	G1(i,j) -= temp;
-	G2(i,j) -= temp;
+	sums(i,j) = sum1[i-1] + sum2[j-1];
       }
     }
   }
 
-  std::cerr<<"third\n";
-  for(int i=0;i<M.size1();i++) {
-    for(int j=0;j<M.size2();j++) {
-      std::cerr<<i<<"  "<<j<<"  "<<M(i,j)<<endl;
-    }
-    std::cerr<<endl;
-  }
-  std::cerr<<endl;
 
 
   /************** Sample a path from the matrix ********************/

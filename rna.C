@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <valarray>
 #include "mytypes.H"
 #include "seq_tree.H"
 #include "gaps.H"
@@ -39,6 +40,7 @@ double probability2(const alignment& A,const SequenceTree& T) {
 
 
 //FIXME: How to store our sample statistics?
+//FIXME: How to recompute the likelihood during the sampling step?
 void MCMC(alignment& A,const SequenceTree& T,const int max,double probability(const alignment&,const SequenceTree&)) {
   std::cout<<A<<endl;
 
@@ -110,6 +112,32 @@ void MCMC2(alignment& A,const SequenceTree& T,const int max,double probability(c
 
 // 7. Can we somehow ESTIMATE lambda_O and lambda_E?
 
+// 8. Use ublas::matrix<double>(a.size()) instead of valarray<double> in substitution.C
+
+// 9. Need to verify the algorithm - why does normalizing make a difference?
+
+// 10. We still have problems jumping logs I think
+
+class EParameters {
+  const alphabet* a;
+
+  Matrix rates;
+
+  vector<Matrix> substitution;
+public:
+  const alphabet& get_alphabet() const {return *a;}
+
+  SequenceTree T;
+
+  double lambda_O;
+  double lambda_E;
+
+  std::valarray<double> frequency;
+
+  EParameters(const alphabet& a_,const SequenceTree& t): a(&a_),T(t) {}
+};
+
+
 int main() {
 
   myrand_init(0);
@@ -156,13 +184,26 @@ int main() {
   // FIXME: I don't have any branch lengths right now!
   //  tree t3 = tree( tree(human,1,chimp,2),1,tree(gorilla,2,orangutan,2),2);
 
+  // FIXME: How do include per-branch substitution matrices?
+  //  I think this is different than per-branch lengths
+  //  Make a seperate 'struct params' that contains parameters for the
+  //    evolutionary process, recomputes and caches per-branch substitution
+  //    matrices, and ???
+  //  It should REFERENCE an alphabet -> but alphabet shouldn't contain frequency
+  //    or substitution information
+  //  We could make the subst matrix file have letters.
+  //  We could have classes derive from the parameters struct!  
+  //    maybe classes of matrix
+
   /*********** Start the MCMC sampling ***********/
   
-  MCMC2(A,T1,10000,probability2);
+  EParameters Theta(nucleotides,T1);
 
+  MCMC2(A,T1,1000,probability2);
+  return 0;
   MCMC2(A,T2,10000,probability2);
 
-  MCMC2(A,T2,10000,probability2);
+  MCMC2(A,T3,10000,probability2);
 
-  return 1;
+  return 0;
 }
