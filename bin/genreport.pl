@@ -2,6 +2,9 @@
 
 use strict;
 
+my $filename = shift;
+$filename = "out" if (!defined($filename));
+
 my $pwd = get_pwd();
 my $data = get_data();
 my $smodel = get_smodel();
@@ -35,16 +38,17 @@ sub get_data {
 
 sub get_smodel {
     my $smodel = get_var("subst model");
-    $smodel =~ s|Empirical\((.*)\)|$1|;
+    $smodel =~ s|Empirical\(([^)]*)\)|$1|;
     $smodel =~ s|Data/||;
     $smodel =~ s|.dat||;
+    $smodel =~ s|rate~||;
     return $smodel;
 }
 
 sub get_var {
     my $var_name = shift;
     my $var=undef;
-    open(INPUT,'cout');
+    open(INPUT,$filename);
     while (<INPUT>) {
 	if (/^$var_name = (.*)/) {
 	    $var = $1;
