@@ -146,6 +146,7 @@ bool letters_OK(const alignment& A,const char* key) {
       }
   if (bad) {
     std::cerr<<"key = "<<key<<"\n";
+    std::cerr.flush();
     std::abort();
   }
   return not bad;
