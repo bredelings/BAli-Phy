@@ -41,7 +41,11 @@ namespace substitution {
     virtual const vector<double>& parameters() const {return parameters_;}
 
     /// Set the model parameters
-    virtual void parameters(const vector<double>& p) {parameters_=p; recalc();}
+    virtual void parameters(const vector<double>& p) {
+      assert(parameters_.size() == p.size()) ; 
+      parameters_=p; 
+      recalc();
+    }
 
     /// The prior on the current parameters
     virtual double prior() const {return 0.0;}
@@ -465,16 +469,7 @@ namespace substitution {
     static double const max_inv_rate = 0.01;
 
   protected:
-    double super_prior() const {
-      double p = parameters()[parameters().size()-2];
-      //      double r = parameters()[parameters().size()-1];
-
-      double P = 0;
-      P += -log(inv_frac_mean) - p/inv_frac_mean;
-      P += -log(max_inv_rate); //prior on r
-
-      return P;
-    }
+    double super_prior() const;
 
     void super_fiddle();
     void recalc();

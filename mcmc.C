@@ -421,6 +421,10 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& P,const st
     o<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
   o<<endl<<endl;
 
+  for(int i=0;i<P.SModel().nrates();i++)
+    o<<"    rate"<<i<<" = "<<P.SModel().rates()[i];
+  o<<endl<<endl;
+
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
   for(int i=0;i<P.T.leaves();i++) {

@@ -53,11 +53,12 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  setup.C rates.C
 
 LIBS = gsl gslcblas m 
+SLIBS =  gsl gslcblas m lapack cblas atlas
+LINKLIBS = ${LIBS:%=-l%} ${SLIBS:%=lib%.a}
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 
 
-${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%} /usr/local/lib/liblapack.a /usr/local/lib/libcblas.a /usr/local/lib/libatlas.a # libgsl.a libgslcblas.a libm.a
-
+${NAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
 
 bin/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o bin/optimize.o bin/findroot.o \
@@ -95,7 +96,7 @@ bin/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
 bin/analyze_distances: alignment.o alphabet.o sequence.o arguments.o alphabet.o \
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \
 	parameters.o exponential.o smodel.o imodel.o rng.o likelihood.o \
-	dpmatrix.o choose.o bin/optimize.o inverse.o setup.o ${LIBS:%=-l%} /usr/local/lib/liblapack.a /usr/local/lib/libcblas.a /usr/local/lib/libatlas.a
+	dpmatrix.o choose.o bin/optimize.o inverse.o setup.o rates.o ${LIBS:%=-l%} /usr/local/lib/liblapack.a /usr/local/lib/libcblas.a /usr/local/lib/libatlas.a
 
 #-----------------Other Files
 OTHERFILES += 

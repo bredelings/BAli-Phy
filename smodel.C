@@ -5,7 +5,7 @@
 #include "util.H"
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>
-
+#include "logsum.H"
 
 namespace substitution {
 
@@ -175,9 +175,7 @@ namespace substitution {
   void MultiRateModel::recalc() {
     double mean=0;
     for(int i=0;i<nrates();i++)
-      mean += rates_[i];
-
-    mean /= nrates();
+      mean += rates_[i]*distribution_[i];
 
     for(int i=0;i<nrates();i++)
       rates_[i] /= mean;
@@ -284,6 +282,20 @@ namespace substitution {
   }    
 
 
+  double INV_Model::super_prior() const {
+    double p = parameters()[parameters().size()-2];
+    double r = parameters()[parameters().size()-1];
+
+    double P = 0;
+    P += -log(inv_frac_mean) - p/inv_frac_mean;
+    P += -log(max_inv_rate); //prior on r
+    
+    if (p < 0 or p > 1 or r < 0)
+      return log_0;
+    else
+      return P;
+  }
+
   void INV_Model::super_fiddle() {
     double &p = parameters_[parameters_.size()-2];
     double &r = parameters_[parameters_.size()-1];
@@ -294,7 +306,7 @@ namespace substitution {
 
     p = wrap(p,1.0);
 
-    // fiddle Invariant raate
+    // fiddle Invariant rate
     r += gaussian(0,0.001);
     r = wrap(r,0.01);
     
