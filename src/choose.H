@@ -17,8 +17,12 @@ double choose_P(int, const std::vector<double>&, double T=1.0);
 int choose_nonlog(const std::vector<double>&);
 
 #include "log-double.H"
+#include "le-double.H"
 int choose(const std::vector<log_double_t>&,double T=1.0);
 log_double_t choose_P(int,const std::vector<log_double_t>&,double T=1.0);
+
+int choose(const std::vector<le_double_t>&,double T=1.0);
+le_double_t choose_P(int,const std::vector<le_double_t>&,double T=1.0);
 
 #endif
 

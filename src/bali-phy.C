@@ -227,6 +227,8 @@ int main(int argc,char* argv[]) {
 
     args.print(cout);
 
+    le_double_t::initialize();
+
     //---------- Initialize random seed -----------//
     unsigned long seed = 0;
     if (args.set("seed")) {

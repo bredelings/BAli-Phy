@@ -39,7 +39,7 @@ string i_parameter_name(int i,int n) {
 void remove_one_state(eMatrix& Q,int S) {
   assert(Q.size1() == Q.size2());
 
-  efloat_t temp = efloat_t(1) - Q(S,S);
+  efloat_t temp = 1.0 - Q(S,S);
 
   // compute transitions from i!=S -> j  [ depends on Q(S->j) ]
   for(int i=0;i<Q.size1();i++) {

@@ -31,8 +31,9 @@ typedef ublas::matrix_row<Matrix> matrix_row;
 typedef ublas::matrix_column<Matrix> matrix_column;
 
 #include "log-double.H"
+#include "le-double.H"
 
-typedef log_double_t efloat_t;
+typedef le_double_t efloat_t;
 typedef ublas::matrix<efloat_t> eMatrix;
 
 #endif
