@@ -157,6 +157,33 @@ Matrix getSimilarity(const alignment& A) {
   return S;
 }
 
+
+/// elements in s1 that are conserved in s2
+double getConserved(const alignment& A,int s1,int s2) {
+  int match=0;
+  int total=0;
+  for(int column=0;column<A.length();column++) {
+    if (A.gap(column,s1)) continue;
+
+    total++;
+
+    if (A(column,s1) == A(column,s2))
+      match++;
+  }
+  return double(match)/total;
+}
+
+Matrix getConserved(const alignment& A) {
+  const int n = A.size2()/2+1;
+  Matrix S(n,n);
+
+  for(int i=0;i<n;i++)
+    for(int j=0;j<n;j++)
+      S(i,j) = getConserved(A,i,j);
+
+  return S;
+}
+
 Matrix DistanceMatrix(const SequenceTree& T) {
   const int n = T.leaves();
   Matrix D(n,n);
@@ -177,12 +204,41 @@ Matrix C(const Matrix& M) {
   return I;
 }
 
+vector<string> standardize_lengths(const vector<string>& labels,char padding=' ') {
+  int max=0;
+  for(int i=0;i<labels.size();i++)
+    if (max < labels[i].size())
+      max = labels[i].size();
 
-std::ostream& print_lower(std::ostream& o,const vector<string>& labels, const Matrix& M) {
+  vector<string> labels2 = labels;
+  for(int i=0;i<labels2.size();i++) {
+    labels2[i] += string(max-labels2[i].size(),padding);
+  }
+
+  return labels2;
+}
+
+
+std::ostream& print_lower(std::ostream& o,vector<string> labels, const Matrix& M) {
+  labels = standardize_lengths(labels);
+
   assert(M.size1() == M.size2());
   for(int i=0;i<M.size1();i++) {
     std::cout<<labels[i]<<"  ";
     for(int j=0;j<i;j++)
+      std::cout<<M(i,j)<<"  ";
+    std::cout<<"\n";
+  }
+  return o;
+}
+
+std::ostream& print_entire(std::ostream& o,vector<string> labels, const Matrix& M) {
+  labels = standardize_lengths(labels);
+
+  assert(M.size1() == M.size2());
+  for(int i=0;i<M.size1();i++) {
+    std::cout<<labels[i]<<"  ";
+    for(int j=0;j<M.size2();j++)
       std::cout<<M(i,j)<<"  ";
     std::cout<<"\n";
   }
@@ -205,38 +261,19 @@ int main(int argc,char* argv[]) {
     
     cerr.precision(10);
     cout.precision(10);
-    
-    SequenceTree T;
-    if (not args.set("tree"))
-      throw myexception("Tree file not specified! (tree=<filename>)");
-    T.read(args["tree"]);
 
-    /* ----- Try to load alignment ------ */
-
-    if (not args.set("align")) 
-      throw myexception("Alignment file not specified! (align=<filename>)");
-
-    /* ----- Alphabets to try ------ */
-    alphabet dna("DNA nucleotides","AGTC","N");
-    alphabet rna("RNA nucleotides","AGUC","N");
-    alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
-    vector<alphabet> alphabets;
-    alphabets.push_back(dna);
-    alphabets.push_back(rna);
-    alphabets.push_back(amino_acids);
-
-
-    std::ifstream afile(args["align"].c_str());    
     alignment A;
-    A.load_phylip(alphabets,afile);
-    afile.close();
-
-    link(A,T);
+    SequenceTree T;
+    load_A_and_T(args,A,T);
 
     std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
 
     /*------------- Show Similarity/Distances between sequences ---------*/
     std::cout.precision(3);
+
+    std::cout<<"conserved = \n";
+    print_entire(std::cout,T.get_sequences(),getConserved(A))<<"\n";
+
     Matrix S = getSimilarity(A);
 
     std::cout<<"similarity = \n";

@@ -467,12 +467,12 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   string tag = string("sample (")+convertToString(subsample)+")";
 
   /*--------- Print out info about this chain -----------*/
-  cout<<"rate matrix = \n";
-  for(int i=0;i<P.get_alphabet().size();i++) {
-    for(int j=0;j<P.get_alphabet().size();j++) 
-      cout<<P.SModel().BaseModel().rates()(i,j)<<" ";
-    cout<<endl;
-  }
+  //  cout<<"rate matrix = \n";
+  //  for(int i=0;i<P.get_alphabet().size();i++) {
+  //    for(int j=0;j<P.get_alphabet().size();j++) 
+  //      cout<<P.SModel().BaseModel().rates()(i,j)<<" ";
+  //    cout<<endl;
+  //  }
   cout<<endl;
   cout<<"frequencies = ";
   for(int i=0;i<P.get_alphabet().size();i++) {

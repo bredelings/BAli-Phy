@@ -39,5 +39,5 @@ int main(int argc,char* argv[]) {
 
   vector<double> interval = statistics::confidence_interval(values2,P);
 
-  std::cout<<"  ("<<interval[0]<<","<<interval[1]<<")";
+  std::cout<<"  ("<<interval[0]<<","<<interval[1]<<")"<<endl;
 }

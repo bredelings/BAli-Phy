@@ -50,7 +50,8 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
 	  sample-node.C imodel.C 5way.C topology-sample2.C inverse.C \
-	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C
+	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
+	  util-random.C alignment-random.C setup-smodel.C
 
 LIBS = gsl gslcblas m 
 GSLLIBS = ${LIBS:%=-l%}
@@ -92,16 +93,17 @@ bin/make_random_tree: tree.o sequencetree.o arguments.o util.o\
 	 rng.o  ${LIBS:%=-l%}
 
 bin/drawalignment: tree.o alignment.o sequencetree.o arguments.o \
-	rng.o alphabet.o sequence.o util.o setup.o smodel.o exponential.o \
-	eigenvalue.o rates.o sequence-format.o ${LINKLIBS}
+	alphabet.o sequence.o sequence-format.o util.o setup.o # rng.o # setup.o \
+	# smodel.o exponential.o eigenvalue.o rates.o sequence-format.o ${LINKLIBS}
 
 bin/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
 	rng.o util.o sequence-format.o ${LIBS:%=-l%}
 
 bin/analyze_distances: alignment.o alphabet.o sequence.o arguments.o alphabet.o \
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \
-	parameters.o exponential.o smodel.o imodel.o rng.o likelihood.o \
-	dpmatrix.o choose.o bin/optimize.o inverse.o setup.o rates.o matcache.o ${LINKLIBS}
+	parameters.o exponential.o setup-smodel.o smodel.o imodel.o rng.o likelihood.o \
+	dpmatrix.o choose.o bin/optimize.o inverse.o setup.o rates.o matcache.o \
+	sequence-format.o randomtree.o ${LINKLIBS}
 
 bin/statreport: bin/statistics.o
 

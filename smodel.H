@@ -69,9 +69,6 @@ namespace substitution {
   class NestedModel: virtual public Model {
 
   protected:
-    /// The sub-model this model is build upon
-    Model* sub_model;
-
     /// The prior for the parameters of the upper model
     virtual double super_prior() const =0;
 
@@ -83,13 +80,14 @@ namespace substitution {
     NestedModel* clone() const =0;
 
     /// Access the submodel
-    virtual const Model& SubModel() const=0
-    virtual Model& SubModel()=0
+    virtual const Model& SubModel() const=0;
+    virtual Model& SubModel()=0;
 
-    double prior() const {return super_prior() + sub_model->prior();}
+
+    double prior() const {return super_prior() + SubModel().prior();}
 
     void fiddle() {
-      sub_model->fiddle();
+      SubModel().fiddle();
       for(int i=0;i<SubModel().parameters().size();i++)
 	parameters_[i] = SubModel().parameters()[i];
       super_fiddle();
@@ -170,7 +168,7 @@ namespace substitution {
     virtual Matrix transition_p(double t) const =0;
 
     /// The equilibrium frequencies
-    virtual const std::valarray<double>& frequencies() const;
+    virtual const std::valarray<double>& frequencies() const=0;
 
     ReversibleModel() {}
   };

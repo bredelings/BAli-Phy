@@ -28,66 +28,6 @@
 
 // 28. Make sampling routines return P(Alignment|Data,Tree, etc)
 //     Check to make sure that this is proportional to the likelihood...
-void do_setup(Arguments& args,alignment& A,SequenceTree& T)
-{
-  vector<alphabet> alphabets;
-  alphabets.push_back(alphabet("DNA nucleotides","AGTC","NYR"));
-  alphabets.push_back(alphabet("RNA nucleotides","AGUC","NYR"));
-  alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
-
-  /* ----- Try to load alignment ------ */
-  if (not args.set("align")) 
-    throw myexception("Alignment file not specified! (align=<filename>)");
-
-  A.load(alphabets,args["align"]);
-
-  remove_empty_columns(A);
-
-  if (A.num_sequences() == 0) 
-    throw myexception(string("Alignment file ") + args["align"] + "didn't contain any sequences!");
-    
-  if (args.set("randomize_alignment"))
-    A = randomize(A);
-
-  /*------ Try to load tree -------------*/
-  if (not args.set("tree")) {
-    // FIXME - assumes that alignment doesn't specify internal nodes...
-    vector<string> s;
-    for(int i=0;i<A.num_sequences();i++)
-      s.push_back(A.seq(i).name);
-    T = RandomTree(s,0.05);
-  }
-  else 
-    T.read(args["tree"]);
-
-  /*------ Link Alignment and Tree ----------*/
-  link(A,T);
-
-  /*-------- Analyze 'internal'-------*/
-  if (args.set("internal")) {
-    if (args["internal"] == "+")
-      for(int column=0;column< A.length();column++) {
-	for(int i=T.leaves();i<A.size2();i++) 
-	  A(column,i) = alphabet::not_gap;
-      }
-    else if (args["internal"] == "search")
-      assert(0); // FIXME - not programmed yet
-    else if (args["internal"] == "guess") 
-      for(int column=0;column< A.length();column++) {
-	vector<int> present_leaf(T.leaves());
-	for(int i=0;i<T.leaves();i++)
-	  present_leaf[i] = not A.gap(column,i);
-	TreeFunc<int> present = mark_tree(present_leaf,T);
-	for(int i=T.leaves();i<A.size2();i++) {
-	  if (present(i))
-	    A(column,i) = alphabet::not_gap;
-	  else
-	    A(column,i) = alphabet::gap;
-	}
-      }
-  }
-
-}
 
 void do_showonly(const alignment& A,const Parameters& P) {
   double PS = P.likelihood(A,P);
@@ -298,7 +238,10 @@ int main(int argc,char* argv[]) {
     /*----------- Load alignment and tree ---------*/
     alignment A;
     SequenceTree T;
-    do_setup(args,A,T);
+    load_A_and_T(args,A,T,true);
+
+    if (args.set("randomize_alignment"))
+      A = randomize(A);
     
     /*------------ Specify Gap Penalties ----------*/
     double lambda_O = args.loadvalue("lambda_O",-8);

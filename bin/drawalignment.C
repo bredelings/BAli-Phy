@@ -3,7 +3,6 @@
 #include "tree.H"
 #include "alignment.H"
 #include "arguments.H"
-#include "rng.H"
 #include "util.H"
 #include "setup.H"
 
@@ -125,15 +124,6 @@ int main(int argc,char* argv[]) {
   args.read(argc,argv);
 
   try {
-    unsigned long seed = 0;
-    if (args.set("seed")) {
-      seed = convertTo<unsigned long>(args["seed"]);
-      myrand_init(seed);
-    }
-    else
-      seed = myrand_init();
-    cerr<<"random seed = "<<seed<<endl<<endl;
-    
     cerr.precision(10);
     cout.precision(10);
     
@@ -197,6 +187,11 @@ int main(int argc,char* argv[]) {
     if (args["color"] == "no")
       color = false;
 
+    double gapscale = args.loadvalue("gapscale",0.3);
+    bool showgaps = true;
+    if (args["showgaps"] == "no")
+      showgaps = false;
+
     /*-------------------- Get width ------------------------*/
     int width =args.loadvalue("width",67);
 
@@ -244,8 +239,9 @@ int main(int argc,char* argv[]) {
 	  for(int column=pos;column<pos+width and column < end; column++) {
 	    char c = a.lookup(A(column,s));
 	    double sscale=1.0;
-	    if (A.gap(column,s))
+	    if (A.gap(column,s)) {
 	      sscale = 0.3;
+	    }
 	    string latexcolor = latex_get_bgcolor(colors(column,s),sscale,color);
 	    if (column != pos)
 	      cout<<"& ";
@@ -275,7 +271,8 @@ TD.sequencename {\n\
    font-family: helvitica;\n\
 }\n\
 TABLE {\n\
-   border-spacing: 0\n\
+   border-spacing: 0;\n\
+   margin-top: 0.4em;\n\
    }\n\
 \n\
 SPAN {\n\
@@ -342,18 +339,22 @@ SPAN {\n\
 	  cout<<"    <td class=\"sequencename\">"<<T.seq(s)<<"</td>"<<endl;
 	  cout<<"    <td>";
 	  for(int column=pos;column<pos+width and column < end; column++) {
-	    char c = a.lookup(A(column,s));
+	    string c;
+	    c+= a.lookup(A(column,s));
 	    double sscale=1.0;
-	    if (c == '-')
-	      sscale = 0.3;
+	    if (A.gap(column,s)) {
+	      sscale = gapscale;
+	      if (not showgaps)
+		c = "&nbsp;";
+	    }
 	    string style = getstyle(colors(column,s),sscale,color);
 	    cout<<"<span style=\""<<style<<"\">"<<c<<"</span>";
 	  }
 	  cout<<"    </td>";
 	  cout<<"  </tr>"<<endl;
 	}
+	cout<<"<tr><td></td><td><span>&nbsp;</span></td><tr>\n";
 	cout<<"</table>"<<endl;
-	cout<<"<P>"<<endl;
 	pos += width;
       }
     }

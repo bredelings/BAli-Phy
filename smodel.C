@@ -22,7 +22,7 @@ namespace substitution {
   string MarkovModel::name() const { return "MarkovModel";}
 
   string ReversibleMarkovModel::name() const  {
-    return MarkovModel::name() + "::ReversibleModel";
+    return MarkovModel::name() + "::ReversibleMarkovModel";
   }
 
 
@@ -75,7 +75,7 @@ namespace substitution {
   }
 
   string HKY::name() const {
-    return ReversibleModel::name() + "::HKY[" + Alphabet().name + "]";
+    return ReversibleMarkovModel::name() + "::HKY[" + Alphabet().name + "]";
   }
 
   void HKY::fiddle() {
@@ -111,7 +111,7 @@ namespace substitution {
     S(T,G) = 1;
     S(T,C) = kappa();
 
-    ReversibleModel::recalc();
+    ReversibleMarkovModel::recalc();
   }
 
   void HKY::setup_alphabet() {
@@ -127,7 +127,7 @@ namespace substitution {
   }
 
   string EQU::name() const {
-    return ReversibleModel::name() + "::EQU[" + Alphabet().name + "]";
+    return ReversibleMarkovModel::name() + "::EQU[" + Alphabet().name + "]";
   }
 
   void EQU::recalc() {
@@ -135,15 +135,15 @@ namespace substitution {
       for(int j=0;j<a.size();j++)
 	S(i,j) = 1;
 
-    ReversibleModel::recalc();
+    ReversibleMarkovModel::recalc();
   }
 
   string Empirical::name() const {
-    return ReversibleModel::name() + "::Empirical/" + modelname +"[" + Alphabet().name + "]";
+    return ReversibleMarkovModel::name() + "::Empirical/" + modelname +"[" + Alphabet().name + "]";
   }
 
   void Empirical::recalc() {
-    ReversibleModel::recalc();
+    ReversibleMarkovModel::recalc();
   }
 
   void Empirical::load_file(const string& filename) {
@@ -166,7 +166,7 @@ namespace substitution {
 
 
   void NestedModel::recalc() {
-    vector<double> sub_p = sub_model->parameters();
+    vector<double> sub_p = SubModel().parameters();
     for(int i=0;i<sub_p.size();i++)
       sub_p[i] = parameters_[i];
 

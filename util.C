@@ -1,5 +1,4 @@
 #include "util.H"
-#include "rng.H"
 
 using std::vector;
 using std::string;
@@ -65,16 +64,3 @@ vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2) {
   return mapping;
 }
 
-vector<int> randomize(const std::vector<int>& v) {
-  vector<int> work = v;
-
-  vector<int> newv = v;
-  for(int i=0;i<newv.size();i++) {
-    int j = myrandom(work.size());
-    newv[i] = work[j];
-    work.erase(work.begin()+j);
-  }
-  assert(work.size()==0);
-
-  return newv;
-}
