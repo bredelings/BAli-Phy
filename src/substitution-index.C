@@ -1,4 +1,5 @@
 #include "substitution-index.H"
+#include "util.H"
 
 using std::valarray;
 using std::vector;
@@ -88,23 +89,23 @@ namespace substitution {
   vector<int> sort_subtree_columns(const alignment& A,const vector<int>& columns,const vector<int>& leaves) 
   {
     // start out with the alignment order
-    vector<int> mapping(columns.size());
-    for(int i=0;i<mapping.size();i++)
-      mapping[i] = i;
+    vector<int> order(columns.size());
+    for(int i=0;i<order.size();i++)
+      order[i] = i;
     
     // add one column at a time to the sorted section
     for(int i=1;i<columns.size();i++) {
       for(int j=i;j>1;j--)
 	// if the previous column shares a residue, then stop moving back
-	if (any_shared(A,columns[mapping[j-1]],columns[mapping[j]],leaves)) break;
+	if (any_shared(A,columns[order[j-1]],columns[order[j]],leaves)) break;
 	// if the previous column is less than us, then stop moving back
-	else if (after(A,columns[mapping[j]],columns[mapping[j-1]],leaves)) break;
+	else if (after(A,columns[order[j]],columns[order[j-1]],leaves)) break;
         // otherwise we have to move back
 	else
-	  std::swap(mapping[j-1],mapping[j]);
+	  std::swap(order[j-1],order[j]);
     }
     
-    return mapping;
+    return order;
   }
 
   static vector<vector<int> > get_subtree_leaves(const vector<int>& b,const Tree& T) 
@@ -192,6 +193,7 @@ namespace substitution {
       // get the mapping from the alignment order to the sorted order of the columns
       columns = get_columns(subA,i);
       mapping = sort_subtree_columns(A,columns,leaves[i]);
+      mapping = invert(mapping);
 
       int l=0;
       for(int c=0;c<subA.size1();c++) 
