@@ -11,9 +11,11 @@ tools: ${TOOLS}
 all: bali-phy tools
 
 install: program tools
-	mkdir ../build
-	mkdir ../build/bin
-	mv ${TOOLS} ../bin
+	mkdir -p ../build
+	mkdir -p ../build/bin
+	cp ${TOOLS} ../build/bin
+	cp ../bin/* ../build/bin
+	cp bali-phy ../build/bin
 
 #----------------- Definitions
 EXACTFLAGS = -pipe
