@@ -2,6 +2,9 @@
 #include "logsum.H"
 #include "substitution.H"
 #include "setup.H"
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_sf.h>
+
 
 double prior3(const alignment& A,const Parameters& P) {
   return prior_HMM(A,P) + prior(P);

@@ -281,10 +281,6 @@ IndelModel* get_imodel(Arguments& args) {
     cout<<"imodel = adjacent gaps upweighted by 2\n";
     imodel = new UpweightedIndelModel(lambda_O,lambda_E);
   }
-  else if (args["imodel"] == "symmetric") {
-    cout<<"imodel = symmetric\n";
-    imodel = new IndelModel2(lambda_O,lambda_E);
-  }
   else
     throw myexception()<<"Unrecognized indel model '"<<args["imodel"]<<"'";
   

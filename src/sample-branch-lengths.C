@@ -17,14 +17,14 @@ bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
   }
 }
 
-double branch_twiddle(double T,double mu,double sigma1=0.4,double sigma2=0.4) {
-  if (myrandomf() < 1.3)
-    T += gaussian(0,mu*sigma1);
-  else 
-    // FIXME - we need to adjust the prior if we are going to do this!
-    T *= exp( gaussian(0,sigma2) );
+double branch_twiddle(double T,double mu,double sigma=0.3) {
+  return T + gaussian(0,mu*sigma);
+}
 
-  return T;
+
+// FIXME - must modify do_MH_move to use log-scale branch priors for this to work
+double log_branch_twiddle(double T, double sigma=0.3) {
+  return T * exp( gaussian(0,sigma) );
 }
 
 MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool up) {
@@ -65,12 +65,11 @@ MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool 
   }
 
   /*-------------- Find out how much to slide ---------------*/
-  const double sigma = 0.3/2;
   const double min = std::min(T.branch(b2).length(),T.branch(b3).length());
   double length = T.branch(b).length();
   const double max = length + min;
 
-  double newlength = length + gaussian(0,sigma);
+  double newlength = branch_twiddle(length,P.branch_mean);
 
   newlength = wrap(newlength,max);
   double epsilon = newlength - length;
