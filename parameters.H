@@ -9,32 +9,52 @@
 
 /******************************* Abstract class Substitution Model ***********************/
 
+// FIXME - I could make a more general class which doesn't specify implementation
+//         and then make a derived class which offers the implementation, and then
+//         derive the classes which share the implementation from that.
+
 class SubstitutionModel {
 protected:
   const alphabet * const a;
 
-  vector<double> parameters_;
-  std::valarray<double> frequencies_;
+  // the current frequencies
+  std::valarray<double> pi;
 
+  // the exchangeability matrix
+  Matrix S;
+
+  // the computed rate matrix
+  Matrix Q;
+
+  // model parameters
+  vector<double> parameters_;
 
   SubstitutionModel(const alphabet& a_,int s):
-    a(&a_), parameters_(s),frequencies_(1.0/a->size(),a->size()) { }
+    a(&a_), pi(1.0/a->size(),a->size()), S(a->size(),a->size()), Q(a->size(),a->size()),parameters_(s) { }
+
+  virtual void recalc();
 public:
   const alphabet& Alphabet() const { return *a;}
 
-  virtual void fiddle()=0;
-
+  // get/set parameters
   const vector<double>& parameters() const {return parameters_;}
-  virtual void parameters(const vector<double>&) =0;
+  virtual void parameters(const vector<double>& p) {parameters_=p; recalc();}
 
-  const std::valarray<double>& frequencies() const {return frequencies_;}
-  virtual void frequencies(const std::valarray<double>&) =0;
+  // get/set frequencies
+  const std::valarray<double>& frequencies() const {return pi;}
+  virtual void frequencies(const std::valarray<double>& pi_) {pi=pi_; recalc();}
   
-  virtual Matrix rates() const =0;
-  virtual Matrix transition_p(double t) const =0;
+  // transition rates
+  virtual const Matrix& rates() const {return Q;}
+
+  // transition probabilities
+  virtual Matrix transition_p(double t) const;
+
+  // how to sample from the distribution of parameters?
+  virtual void fiddle() {}; 
 
   SubstitutionModel(const alphabet& a_):
-    a(&a_), frequencies_(1.0/a->size(),a->size()) { }
+    a(&a_), pi(1.0/a->size(),a->size()), S(a->size(),a->size()), Q(a->size(),a->size()) { }
 
   virtual ~SubstitutionModel() {}
 };
@@ -44,36 +64,23 @@ public:
 /******************************* HKY Substitution Model *****************************/
 
 class HKY: public SubstitutionModel {
-  
-  Matrix rates_;
-
-  void recalc();
+  virtual void recalc();
 public:
+
   double kappa() const {return parameters_[0];}
   void kappa(double k) {parameters_[0]=k;recalc();}
 
-  void fiddle();
-
-  void parameters(const vector<double>& p) {parameters_=p; recalc();}
-  void frequencies(const std::valarray<double>& f) {frequencies_=f; recalc();}
-
-  Matrix rates() const {return rates_;}
-  Matrix transition_p(double t) const;
-
-  HKY(const alphabet& a) 
-    : SubstitutionModel(a,1),rates_(4,4)
+  HKY(const alphabet& a): SubstitutionModel(a,1)
   { 
     kappa(1);
   }
 
-  HKY(const alphabet& a,double k)
-    : SubstitutionModel(a,1),rates_(4,4)
+  HKY(const alphabet& a,double k): SubstitutionModel(a,1)
   {
     kappa(k);
   }
 
-  HKY(const alphabet& a,double k,const std::valarray<double>& f)
-    : SubstitutionModel(a,1),rates_(4,4)
+  HKY(const alphabet& a,double k,const std::valarray<double>& f): SubstitutionModel(a,1)
   {
     kappa(k);
     frequencies(f);
@@ -82,6 +89,47 @@ public:
   ~HKY() {}
 };
 
+/******************************* EQU Substitution Model *****************************/
+
+class EQU: public SubstitutionModel {
+  virtual void recalc();
+public:
+
+  EQU(const alphabet& a): SubstitutionModel(a) 
+  { recalc(); }
+
+  EQU(const alphabet& a,const std::valarray<double>& f)
+    : SubstitutionModel(a)
+  {
+    frequencies(f);
+  }
+
+  ~EQU() {}
+};
+
+/************************ Empirical Substitution Model **************************/
+
+class Empirical: public SubstitutionModel {
+  void load_file(const char* filename);
+  virtual void recalc();
+public:
+
+  Empirical(const alphabet& a,const char* filename) 
+    : SubstitutionModel(a)
+  { load_file(filename); recalc();}
+
+  Empirical(const alphabet& a,const char* filename,const std::valarray<double>& f)
+    : SubstitutionModel(a)
+  {
+    load_file(filename);
+    frequencies(f);
+  }
+
+  ~Empirical() {}
+};
+
+
+/******************************* InDel Models ***********************************/
 
 class IndelModel {
   std::vector<double> p_length;
@@ -107,7 +155,7 @@ public:
 
 
 
-/******************************* paramater-containing class **************************/
+/******************************* parameter-containing class **************************/
 
 class Parameters {
   vector<Matrix> substitution_;

@@ -344,22 +344,20 @@ alignment construct(const alignment& old,const tree& T,const vector<int>& path,i
   return A;
 }
 
-void sample_topology(alignment& A,Parameters& Theta1,int b) {
-  const alignment old = A;
 
-  vector<int> nodes = get_nodes(A,Theta1.T,b);
+void sample_topology(alignment& A,Parameters& Theta1,
+		     const SequenceTree& T2,const SequenceTree& T3,int b) {
   const IndelModel& IModel = Theta1.IModel;
 
-  /****** Generate the Different Topologies *******/
-  Parameters Theta2 = Theta1;
-  Parameters Theta3 = Theta1;
-
   SequenceTree& T1 = Theta1.T;
-  SequenceTree& T2 = Theta2.T;
-  SequenceTree& T3 = Theta3.T;
 
-  T2.exchange(nodes[1],nodes[2]);Theta2.recalc();
-  T3.exchange(nodes[1],nodes[3]);Theta3.recalc();
+  Parameters Theta2 = Theta1;
+  Theta2.T = T2;
+  Theta2.recalc();
+
+  Parameters Theta3 = Theta1;
+  Theta3.T = T3;
+  Theta3.recalc();
 
   vector <int> bits1 = get_bits(A,T1,b);
   vector <int> bits2 = get_bits(A,T2,b);
@@ -404,8 +402,12 @@ void sample_topology(alignment& A,Parameters& Theta1,int b) {
 
   std::cerr<<" PS1 = "<<PS1<<"       PS2 = "<<PS2<<"       PS3 = "<<PS3<<std::endl;
 
+  double PP1 = prior(Theta1);
+  double PP2 = prior(Theta2);
+  double PP3 = prior(Theta3);
+
   /*********** Choose A Topology ************/
-  int choice = choose(PA1+PS1, PA2+PS2, PA3+PS3);
+  int choice = choose(PA1+PS1+PP1, PA2+PS2+PP2, PA3+PS3+PP3);
 
   vector<int>* chosen_bits = &bits1;
   vector< vector<double> >* chosen_P = &P1;
@@ -423,10 +425,11 @@ void sample_topology(alignment& A,Parameters& Theta1,int b) {
   }
   
   // do traceback - how to calculate probability of observing 
-  vector<int> path1 = get_path(old,b);
+  vector<int> path1 = get_path(A,b);
   vector<int> path2 = sample_path(*chosen_P,*chosen_bits,IModel);
 
   /****************** Do traceback ********************/
+  const alignment old = A;
   A = construct(A,chosen_Theta->T,path2,b);
 
   //  std::cerr<<old<<endl<<endl;
@@ -436,9 +439,24 @@ void sample_topology(alignment& A,Parameters& Theta1,int b) {
 
   std::cerr<<" L1 = "<<l1<<"    L2 = "<<l2<<std::endl;
 
-  if (choice != 0)
+  std::cerr<<" choice = "<<choice<<std::endl;
+  if (choice != 0) 
     Theta1 = *chosen_Theta;
 
   assert(valid(A));
+
+}
+
+void sample_topology(alignment& A,Parameters& Theta1,int b) {
+  vector<int> nodes = get_nodes(A,Theta1.T,b);
+
+  /****** Generate the Different Topologies *******/
+  SequenceTree T2 = Theta1.T;
+  SequenceTree T3 = Theta1.T;
+
+  T2.exchange(nodes[1],nodes[2]);
+  T3.exchange(nodes[1],nodes[3]);
+
+  sample_topology(A,Theta1,T2,T3,b);
 }
 

@@ -1,5 +1,5 @@
 #include "substitution.H"
-#include "myrandom.H"
+#include "rng.H"
 #include <cmath>
 #include <valarray>
 using std::valarray;

@@ -21,6 +21,9 @@ double myrandomf();
 // return the log of a variable that is uniform on [0,1)
 double log_unif();
 
+// return the log of a variable that is uniform on [0,1)
+double gaussian(double,double);
+
 
 namespace rng {
 
@@ -47,6 +50,8 @@ namespace rng {
     double uniform_int(unsigned long int n) { return gsl_rng_uniform_int(generator,n); }
 
     double log_unif() {return -gsl_ran_exponential(generator,1.0);}
+
+    double gaussian(double mu,double sigma) {return gsl_ran_gaussian(generator,sigma)+mu;}
 
     RNG();
     ~RNG();

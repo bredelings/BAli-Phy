@@ -29,6 +29,10 @@ double log_unif() {
   return MyRandom::generator.log_unif();
 }
 
+double gaussian(double mu,double sigma) {
+  return MyRandom::generator.gaussian(mu,sigma);
+}
+
 void dng::init() { }
 
 using namespace rng;

@@ -8,7 +8,7 @@
 #include "tree.H"
 #include "substitution.H"
 #include "alignment.H"
-#include "myrandom.H"
+#include "rng.H"
 #include "sample.H"
 #include "parameters.H"
 #include "mcmc.H"
@@ -75,8 +75,8 @@
 //      graphs!
 
 
-//29. make the back-sampling code in the branch-resampling algorithm comput the likelihood change, see if its correct.
-
+//29. make the back-sampling code in the branch-resampling algorithm
+//    compute the likelihood change, see if its correct.  
 
 // How to check these samplers, and find cases where they are not working???
 // These seems to be something in the tail region of the 5S rna data that is triggering a bug
@@ -84,12 +84,24 @@
 int main(int argc,char* argv[]) {
 
   myrand_init();
-  alphabet nucleotides("AGTC");
-  
+
   std::cerr.precision(10);
   std::cout.precision(10);
 
-  //  alphabet amino_acids("ARNDCQEGHILKMFPTWYV","PAM");
+  /******* Nucleotide Substitution Model *******/
+  alphabet nucleotides("AGTC");
+
+  std::valarray<double> f(0.0,4);
+  f[0] = 0.25;f[1]=0.25;f[2]=0.25;f[3]=0.25;
+  
+  HKY smodel1(nucleotides,2.0,f);
+  EQU smodel2(nucleotides);
+
+  /******* Amino Acid Substitution Model *******/
+  alphabet amino_acids("ARNDCQEGHILKMFPSTWYV");
+
+  EQU smodel3(amino_acids);
+  Empirical smodel4(amino_acids,"../Data/wag.dat");
 
   /**********  Set up the alignment ***********/
   alignment A;
@@ -142,20 +154,7 @@ int main(int argc,char* argv[]) {
     SequenceTree T1(file2);
 
     {
-      std::valarray<double> f(0.0,4);
-      f[0] = 0.25;f[1]=0.25;f[2]=0.25;f[3]=0.25;
-
-      HKY smodel(nucleotides,2.0,f);
-
-      std::cout<<"rate matrix = \n";
-      for(int i=0;i<4;i++) {
-	for(int j=0;j<4;j++) 
-	  std::cout<<smodel.rates()(i,j)<<" ";
-	std::cout<<endl;
-      }
-      std::cout<<endl;
-
-      Parameters Theta(smodel,lambda_O,lambda_E,T1);
+      Parameters Theta(smodel2,lambda_O,lambda_E,T1);
       MCMC(A,Theta,50000,probability3);
     }
   }

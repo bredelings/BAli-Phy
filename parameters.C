@@ -1,48 +1,33 @@
+#include <fstream>
 #include "parameters.H"
 #include "exponential.H"
 #include "logsum.H"
 
 
-void HKY::recalc() {
-  assert(a->size()==4);
+void SubstitutionModel::recalc() {
 
-  const std::valarray<double>& pi = frequencies_;
-
-  const int A = (*a)['A'];
-  const int G = (*a)['G'];
-  const int C = (*a)['C'];
-  const int T = (*a)['T'];
-
-  rates_(A,G) = kappa()*pi[G];
-  rates_(A,C) = pi[C];
-  rates_(A,T) = pi[T];
-
-  rates_(G,A) = kappa()*pi[A];
-  rates_(G,C) = pi[C];
-  rates_(G,T) = pi[T];
-
-  rates_(C,A) = pi[A];
-  rates_(C,G) = pi[G];
-  rates_(C,T) = kappa()*pi[T];
-
-  rates_(T,A) = pi[A];
-  rates_(T,G) = pi[G];
-  rates_(T,C) = kappa()*pi[C];
-
+  // Determine diagonal entries
   for(int i=0;i<4;i++) {
     double sum=0;
     for(int j=0;j<4;j++) {
       if (i==j) continue;
-      sum += rates_(i,j);
+      sum += S(i,j);
     }
-    rates_(i,i) = -sum;
+    S(i,i) = -sum;
   }
 
+  // Move from 'S' to 'S+F'
+  for(int i=0;i<S.size1();i++)
+    for(int j=0;j<S.size2();j++)
+      Q(i,j) = S(i,j)*pi[j];
+
+
+  // Rescale so expected that mutation rate is 1
   double scale=0;
   for(int i=0;i<4;i++) 
     scale += rates()(i,i)*pi[i];
 
-  rates_ /= -scale;
+  Q /= -scale;
 
   std::cerr<<"scale1 = "<<scale<<endl;
 
@@ -51,13 +36,62 @@ void HKY::recalc() {
     scale += rates()(i,i)*pi[i];
 
   std::cerr<<"scale2 = "<<scale<<endl;
+
 }
 
-void HKY::fiddle() {
+Matrix SubstitutionModel::transition_p(double t) const {
+  return exp(Q,t);
 }
 
-Matrix HKY::transition_p(double t) const {
-  return exp(rates_,t);
+void HKY::recalc() {
+  assert(a->size()==4);
+
+  const int A = (*a)['A'];
+  const int G = (*a)['G'];
+  const int C = (*a)['C'];
+  const int T = (*a)['T'];
+
+  S(A,G) = kappa();
+  S(A,C) = 1;
+  S(A,T) = 1;
+
+  S(G,A) = kappa();
+  S(G,C) = 1;
+  S(G,T) = 1;
+
+  S(C,A) = 1;
+  S(C,G) = 1;
+  S(C,T) = kappa();
+
+  S(T,A) = 1;
+  S(T,G) = 1;
+  S(T,C) = kappa();
+
+  SubstitutionModel::recalc();
+}
+
+void EQU::recalc() {
+  for(int i=0;i<a->size();i++)
+    for(int j=0;j<a->size();j++)
+      S(i,j) = 1;
+
+  SubstitutionModel::recalc();
+}
+
+void Empirical::recalc() {
+  SubstitutionModel::recalc();
+}
+
+void Empirical::load_file(const char* filename) {
+  std::ifstream ifile(filename);
+  for(int i=0;i<a->size();i++)
+    for(int j=0;j<i;j++) {
+      ifile>>S(i,j);
+      S(j,i) = S(i,j);
+    }
+
+  for(int i=0;i<a->size();i++)
+    ifile>>pi[i];
 }
 
 void IndelModel::construct_lengthp(int n) {

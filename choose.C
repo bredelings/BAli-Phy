@@ -1,5 +1,5 @@
 #include "choose.H"
-#include "myrandom.H"
+#include "rng.H"
 #include "logsum.H"
 
 using std::vector;

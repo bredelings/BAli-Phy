@@ -102,6 +102,20 @@ void MCMC(alignment& A,Parameters& Theta,
   
   A.create_internal(T);
 
+  std::cout<<"rate matrix = \n";
+  for(int i=0;i<Theta.get_alphabet().size();i++) {
+    for(int j=0;j<Theta.get_alphabet().size();j++) 
+      std::cout<<Theta.SModel->rates()(i,j)<<" ";
+    std::cout<<endl;
+  }
+  std::cout<<endl;
+  std::cout<<"frequencies = ";
+  for(int i=0;i<Theta.get_alphabet().size();i++) {
+    std::cout<<Theta.SModel->frequencies()[i]<<" ";
+  }
+  std::cout<<endl;
+  std::cout<<endl;
+  
   std::cout<<"Initial Alignment = \n";
   print_stats(std::cout,A,Theta,probability);
     

@@ -374,10 +374,11 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
 
   alignment A = construct(old,path,group1,seq1,seq2);
 
-  assert(valid(A));
-  // the lengths of 
+  // the lengths of the sequences shouldn't change
   assert(A.seqlength(node1) == old.seqlength(node1));
   assert(A.seqlength(node2) == old.seqlength(node2));
+
+  assert(valid(A));
 
   /*--------------------------------------------------------------*/
 
