@@ -3,6 +3,29 @@
 
 #include "hmm.H"
 
+
+template <class T>
+class state_matrix
+{
+  int s1;
+  int s2;
+  int s3;
+
+  //CHECK - does valarray make this faster?
+  vector<T> data;
+public:
+  int size1() const {return s1;}
+  int size2() const {return s2;}
+  int size3() const {return s3;}
+
+  T& operator()(int i,int j,int k) {return data[i*s2*s3+j*s3+k];}
+  const T& operator()(int i,int j,int k) const {return data[i*s2*s3+j*s3+k];}
+
+  state_matrix(int i1,int i2,int i3):s1(i1),s2(i2),s3(i3),data(i1*i2*i3) {}
+};
+
+
+
 class DPengine: public HMM {
 public:
 
@@ -91,7 +114,7 @@ public:
 
 
 /// 2D Dynamic Programming Matrix
-class DPmatrix : public DPengine, public vector<eMatrix > {
+class DPmatrix : public DPengine, public state_matrix<efloat_t> {
   /// Size of first dimension: 0...L1 = 0...S1-1
   int S1;
   /// Size of second dimension: 0...L2 = 0...S2-1

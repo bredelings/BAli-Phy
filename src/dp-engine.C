@@ -320,10 +320,10 @@ efloat_t DPmatrix::path_check(const vector<int>& path) const {
 
     vector<efloat_t> transition(nstates());
     for(int s=0;s<nstates();s++)
-      transition[s] = (*this)[s](i,j)*GQ(s,state2);
+      transition[s] = (*this)(i,j,s)*GQ(s,state2);
     
     efloat_t p = choose_P(state1,transition);
-    assert((*this)[state1](i,j) > 0.0);
+    assert((*this)(i,j,state1) > 0.0);
     assert(GQ(state1,state2) > 0.0);
     assert(p > 0.0);
     
@@ -364,7 +364,7 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const {
 
     vector<efloat_t> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
-      transition[state1] = (*this)[state1](i,j)*GQ(state1,state2);
+      transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
 
     int state1 = path[l-1];
     efloat_t p = choose_P(state1,transition);
@@ -383,7 +383,7 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const {
   // include probability of choosing 'Start' vs ---+ !
   vector<efloat_t> transition(nstates());
   for(int state1=0;state1<nstates();state1++)
-    transition[state1] = (*this)[state1](0,0) * GQ(state1,state2);
+    transition[state1] = (*this)(0,0,state1) * GQ(state1,state2);
 
   // Get the probability that the previous state was 'Start'
   efloat_t p=0.0;
@@ -416,7 +416,7 @@ vector<int> DPmatrix::sample_path() const {
     path.push_back(state2);
     vector<efloat_t> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
-      transition[state1] = (*this)[state1](i,j)*GQ(state1,state2);
+      transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
 
     int state1 = choose(transition);
 
@@ -437,7 +437,7 @@ efloat_t DPmatrix::Pr_sum_all_paths() const {
 
   efloat_t total = 0.0;
   for(int state1=0;state1<nstates();state1++)
-    total += (*this)[state1](I,J)*GQ(state1,endstate());
+    total += (*this)(I,J,state1)*GQ(state1,endstate());
 
   return total;
 }
@@ -450,20 +450,20 @@ DPmatrix::DPmatrix(int i1,
 		   const eMatrix& M,
 		   double Temp)
   :DPengine(v1,v2,M,Temp),
-   vector<eMatrix >(nstates(),eMatrix(i1+1,i2+1)),
+   state_matrix<efloat_t>(i1+1,i2+1,nstates()),
    S1(i1+1),
    S2(i2+1)
 {
 
   //----- zero-initialize matrices ------//
-  for(int S=0;S<nstates();S++)
-    for(int i=0;i<size1();i++)
-      for(int j=0;j<size2();j++) 
-	(*this)[S](i,j)  = 0;
+  for(int i=0;i<size1();i++)
+    for(int j=0;j<size2();j++) 
+      for(int S=0;S<nstates();S++)
+	(*this)(i,j,S)  = 0;
 
   //----- set up start probabilities -----//
   for(int S=0;S<start_P.size();S++)
-    (*this)[S](0,0) = start_P[S];
+    (*this)(0,0,S) = start_P[S];
 }
 
 inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1) { 
@@ -471,9 +471,8 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1) {
   assert(i2<size1());
   assert(j2<size2());
 
-  for(int S2=0;S2<nstates();S2++) {
-    eMatrix& FS2 = (*this)[S2];
-
+  for(int S2=0;S2<nstates();S2++) 
+  {
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
     if (di(S2)) i1--;
@@ -486,12 +485,9 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1) {
       continue;
 
     //--- Compute Arrival Probability ----
-    FS2(i2,j2) = 0;
-    for(int S1=0;S1<nstates();S1++) {
-      eMatrix& FS1 = (*this)[S1];
-
-      FS2(i2,j2) += FS1(i1,j1) * GQ(S1,S2);
-    }
+    (*this)(i2,j2,S2) = 0;
+    for(int S1=0;S1<nstates();S1++)
+      (*this)(i2,j2,S2) += (*this)(i1,j1,S1) * GQ(S1,S2);
   }
 } 
 
@@ -632,9 +628,8 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
   assert(i2<size1());
   assert(j2<size2());
 
-  for(int S2=0;S2<nstates();S2++) {
-    eMatrix& FS2 = (*this)[S2];
-
+  for(int S2=0;S2<nstates();S2++) 
+  {
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
     if (di(S2)) i1--;
@@ -647,13 +642,9 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
       continue;
 
     //--- Compute Arrival Probability ----
-    FS2(i2,j2) = 0;
-
-    for(int S1=0;S1<nstates();S1++) {
-      eMatrix& FS1 = (*this)[S1];
-
-      FS2(i2,j2) += FS1(i1,j1) * GQ(S1,S2);
-    }
+    (*this)(i2,j2,S2) = 0;
+    for(int S1=0;S1<nstates();S1++)
+      (*this)(i2,j2,S2) += (*this)(i1,j1,S1) * GQ(S1,S2);
 
     //--- Include Emission Probability----
     efloat_t sub;
@@ -667,7 +658,7 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
       sub = emit__(i2,j2);
 
 
-    FS2(i2,j2) *= sub;
+    (*this)(i2,j2,S2) *= sub;
   }
 } 
 inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
@@ -675,9 +666,9 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
   assert(i2<size1());
   assert(j2<size2());
 
-  for(int i=0;i<states(j2).size();i++) {
+  for(int i=0;i<states(j2).size();i++) 
+  {
     int S2 = states(j2)[i];
-    eMatrix& FS2 = (*this)[S2];
 
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
@@ -690,15 +681,11 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
     if (i1<0 or j1<0) 
       continue;
 
-
     //--- Compute Arrival Probability ----
-    FS2(i2,j2) = 0.0;
+    (*this)(i2,j2,S2) = 0.0;
     for(int s=0;s<states(j1).size();s++) {
       int S1 = states(j1)[s];
-
-      eMatrix& FS1 = (*this)[S1];
-      
-      FS2(i2,j2) +=  FS1(i1,j1) * GQ(S1,S2);
+      (*this)(i2,j2,S2) +=  (*this)(i1,j1,S1) * GQ(S1,S2);
     }
 
     //--- Include Emission Probability----
@@ -712,7 +699,7 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
     else          // silent state - nothing emitted
       sub = emit__(i2,j2);
 
-    FS2(i2,j2) *= sub;
+    (*this)(i2,j2,S2) *= sub;
   }
 }
 
