@@ -271,7 +271,7 @@ get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_fr
   else if (RA)
     full_smodel = UnitModel(*RA);
   else 
-    throw myexception()<<"Model cannot be convert to a MultiModel";
+    throw myexception()<<"Model cannot be converted to a MultiModel";
 
   /*------ Set the parameters for all levels of the model ------*/
   if (args.set("s_parameters")) {
