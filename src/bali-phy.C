@@ -269,65 +269,19 @@ int main(int argc,char* argv[]) {
     //--------- Set up the substitution model --------//
     OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
     
-    if (not full_smodel->full_tree)
-      for(int i=T.n_leaves();i<T.n_branches();i++)
-	T.branch(i).set_length(0);
-
     //-------------Choose an indel model--------------//
     OwnedPointer<IndelModel> imodel = get_imodel(args);
     
     //-------------Create the Parameters object--------------//
     Parameters P(*full_smodel,*imodel,T);
-    cout<<"subst model = "<<P.SModel().name();
-    if (not P.SModel().full_tree)
-      cout<<", *-tree";
-    cout<<endl<<endl;
-
-    cout<<"indel model = "<<P.IModel().name();
-    if (not P.IModel().full_tree)
-      cout<<", *-tree";
-    cout<<endl<<endl;
-
-    P.alignment_constraint = load_alignment_constraint(args,A,T);
 
     P.Temp = args.loadvalue("T",1.0);
 
-    P.constants[0] = args.loadvalue("bandwidth",100.0);
-    if (args.set("pinning") and args["pinning"] == "enable")
-      P.features |= (1<<0);
-    if (args.set("banding") and args["banding"] == "enable")
-      P.features |= (1<<1);
-
-    //-------------- Specify fixed parameters ----------------//
-    vector<string> fixed;
-    if (args.set("fixed"))
-      fixed = split(args["fixed"],':');
-
-    for(int i=0;i<fixed.size();i++) {
-      if (fixed[i].size() > 2 and fixed[i].substr(0,2) == "pS") {
-	int pS = convertTo<int>(fixed[i].substr(2,fixed[i].size()-2));
-	P.s_fixed[pS] = true;
-      }
-      else if (fixed[i].size() > 2 and fixed[i].substr(0,2) == "pI") {
-	int pI = convertTo<int>(fixed[i].substr(2,fixed[i].size()-2));
-	P.i_fixed[pI] = true;
-      }
-    }
-
-    //---------------Do something------------------//
-    if (args.set("showonly"))
-      print_stats(cout,cout,cout,cout,A,P,"Initial");
-    //      do_showonly(A,P);
-    // FIXME - use print_stats?
-    else {
-      long int max_iterations = args.loadvalue("iterations",(long int)1000000);
-
-      P.recalc();
-      while(true) {
-	for(int b=0;b<P.T.n_branches();b++) {
-	  print_stats(std::cout,std::cout,std::cout,std::cout,A,P,"debug");
-	  sample_tri_one(A,P,b);
-	}
+    P.recalc();
+    while(true) {
+      for(int b=0;b<P.T.n_branches();b++) {
+	print_stats(std::cout,std::cout,std::cout,std::cout,A,P,"debug");
+	sample_tri_one(A,P,b);
       }
     }
   }

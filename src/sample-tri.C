@@ -91,7 +91,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
     jcol[c] = j;
     kcol[c] = k;
   }
-
+  
   // Precompute distributions at nodes[0]
   distributions_t distributions = distributions_tree;
   if (not P.SModel().full_tree)
@@ -110,6 +110,8 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   const eMatrix Q = createQ(P.branch_HMMs, branches);
   vector<efloat_t> start_P = get_start_P(P.branch_HMMs,branches);
+
+  letters_OK(A,"sample_tri_base:2.5");
 
   // Actually create the Matrices & Chain
   DPmatrixConstrained Matrices(get_state_emit(), start_P, Q, P.Temp,
@@ -150,6 +152,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   //  vector<int> path_old_g = Matrices.generalize(path_old);
 
   //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
+
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 or group3,seq1,seq23);
   vector<int> path_g = Matrices.forward(pins);
 
@@ -183,6 +186,12 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   //  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
 
   letters_OK(A,"sample_tri_base:out");
+
+  for(int i=0;i<20;i++) {
+    vector<DPmatrixConstrained> temp;
+    temp.push_back(Matrices);
+    letters_OK(A,"sample_tri_base:loop");
+  }
   return Matrices;
 }
 
@@ -212,122 +221,8 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 #endif
   }
 
-  //-------- Calculate corrections to path probabilities ---------//
-
-  vector<double> OS(p.size(),0);
-  vector<double> OP(p.size(),0);
-  for(int i=0; i<p.size(); i++) {
-    if (do_OS)
-      OS[i] = other_subst(a[i],p[i],nodes[i]);
-    if (do_OP)
-      OP[i] = other_prior(a[i],p[i],nodes[i]);
-  }
-
-  //---------------- Calculate choice probabilities --------------//
-  vector<double> Pr(p.size());
-  for(int i=0;i<Pr.size();i++)
-    Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
-
-  int C = choose(Pr);
-
-#ifndef NDEBUG_DP
-  std::cerr<<"choice = "<<C<<endl;
-
-  // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore1A = not p[0].T.partition(nodes[0][0],nodes[0][1]);
-  valarray<bool> ignore2A = not (p[0].T.partition(nodes[0][0],nodes[0][2]) or p[0].T.partition(nodes[0][0],nodes[0][3]) );
-  valarray<bool> ignore1(p[0].T.n_nodes()); 
-  valarray<bool> ignore2(p[0].T.n_nodes()); 
-  for(int i=0;i<ignore1.size();i++) {
-    ignore1[i] = ignore1A[i];
-    ignore2[i] = ignore2A[i];
-  }
-
-  // Check that our constraints are met
-  for(int i=0;i<a.size();i++) {
-    if (not(A_constant(A,a[i],ignore1))) {
-      std::cerr<<A<<endl;
-      std::cerr<<a[i]<<endl;
-      assert(A_constant(A,a[i],ignore1));
-    }
-    assert(A_constant(A,a[i],ignore2));
-  }
-  // Add another entry for the incoming configuration
-  a.push_back( A );
-  p.push_back( P_save );
-  nodes.push_back(nodes[0]);
-  Matrices.push_back( Matrices[0] );
-  OS.push_back( OS[0] );
-  OP.push_back( OP[0] );
-
-  vector< vector<int> > paths;
-
-  //------------------- Check offsets from path_Q -> P -----------------//
-  for(int i=0;i<p.size();i++) {
-    paths.push_back( get_path_3way(A3::project(a[i],nodes[i]),0,1,2,3) );
-    
-    OS[i] = other_subst(a[i],p[i],nodes[i]);
-    OP[i] = other_prior(a[i],p[i],nodes[i]);
-
-    double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
-
-    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
-  }
-
-  //--------- Compute path probabilities and sampling probabilities ---------//
-  vector< vector<double> > PR(p.size());
-
-  for(int i=0;i<p.size();i++) {
-    double P_choice = 0;
-    if (i<Pr.size())
-      P_choice = choose_P(i,Pr);
-    else
-      P_choice = choose_P(0,Pr);
-
-    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
-    PR[i][0] += A3::log_correction(a[i],p[i],nodes[i]);
-  }
-
-  //--------- Check that each choice is sampled w/ the correct Probability ---------//
-  for(int i=0;i<PR.size();i++) {
-    std::cerr<<"option = "<<i<<endl;
-
-    std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[i][0]<<"    Pr2  - Pr1  = "<<PR[i][0] - PR[0][0]<<endl;
-    std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[i][2]<<"    PrQ2 - PrQ1 = "<<PR[i][2] - PR[0][2]<<endl;
-    std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[i][1]<<"    PrS2 - PrS1 = "<<PR[i][1] - PR[0][1]<<endl;
-
-    double diff = (PR[i][1] - PR.back()[1]) - (PR[i][0] - PR.back()[0]);
-    std::cerr<<"diff = "<<diff<<endl;
-    if (std::abs(diff) > 1.0e-9) {
-      std::cerr<<a.back()<<endl;
-      std::cerr<<a[i]<<endl;
-      
-      std::cerr<<A3::project(a.back(),nodes.back());
-      std::cerr<<A3::project(a[i],nodes[i]);
-      
-      throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-    }
-  }
-#endif
-
-  //---------------- Adjust for length of n4 and n5 changing --------------------//
-
-  letters_OK(A,"sample_tri_multi:before_choice");
-  // if we accept the move, then record the changes
-  bool success = false;
-  if (myrandomf() < exp(A3::log_acceptance_ratio(A,p[0],nodes[0],a[C],p[C],nodes[C]))) {
-    success = (C > 0);
-
-    A = a[C];
-
-    if (success)
-      p[0] = p[C];
-  }
-  else
-    p[0] = P_save;
-
   letters_OK(A,"sample_tri_multi:out");
-  return success;
+  return true;
 }
 
 
