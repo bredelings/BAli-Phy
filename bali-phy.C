@@ -233,9 +233,10 @@ int main(int argc,char* argv[]) {
     cout.precision(10);
     
     /*----------- Load alignment and tree ---------*/
+    args["random_tree_ok"] = "yes";
     alignment A;
     SequenceTree T;
-    load_A_and_T(args,A,T,true);
+    load_A_and_T(args,A,T);
 
     /*------------ Specify Gap Penalties ----------*/
     double lambda_O = args.loadvalue("lambda_O",-5);
@@ -324,7 +325,7 @@ int main(int argc,char* argv[]) {
     delete full_smodel;
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"Error: "<<e.what()<<endl;
     exit(1);
   }
 

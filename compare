@@ -46,3 +46,27 @@ gcc-3.3 ful
 gcc-3.4 full
 6.5	on a P4, 10 iterations
 32.9	on a P4, 50 iterations
+
+-----------------------------------------------------
+OLD
+
+single,EF-Tu/5 iterations=10
+user    1m9.510s
+user    1m9.423s
+
+
+gamma,EF-Tu/5 iterations=10
+user    1m14.287s
+user    1m14.205s
+
+single,EF-Tu/12 iterations=3
+user    1m21.529s
+
+gamma,EF-Tu/12 iterations=3
+user    1m57.720s
+
+single,5S-rRNA/5 iterations=40
+user    0m29.627s
+
+gamma,5S-rRNA/5 iterations=40
+user    0m34.558s

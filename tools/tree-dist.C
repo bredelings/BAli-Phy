@@ -124,7 +124,7 @@ valarray<bool> tree_sample::supports_topology(const string& t) const {
   typeof(index.begin()) here = index.find(t);
 
   if (here == index.end())
-    valarray<bool>(false,trees.size());
+    return valarray<bool>(false,trees.size());
 
   int t_i = index[t];
 

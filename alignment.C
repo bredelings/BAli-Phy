@@ -102,6 +102,25 @@ void alignment::add_row(const vector<int>& v) {
 }
 
 
+void alignment::del_sequence(int ds) {
+  assert(0 <= ds and ds < size2());
+
+  //----------- Fix the sequence list -------------//
+  sequences.erase(sequences.begin()+ds);
+
+  //-------------- Alter the matrix ---------------//
+  ublas::matrix<int> array2(array.size1(),array.size2()-1);
+  
+  for(int i=0;i<array2.size1();i++)
+    for(int j=0;j<array2.size2();j++) {
+      int s = j;
+      if (s>=ds) s++;
+      array2(i,j) = array(i,s);
+    }
+  
+  array.swap(array2);
+}
+
 void alignment::add_sequence(const sequence& s) {
   if (sequences.size()>1)   // All the sequences should have the same alphabet
     assert(s.Alphabet() == get_alphabet());
@@ -138,7 +157,7 @@ void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vect
     }
     catch (bad_letter& e) {
       if (i<alphabets.size()-1)
-	std::cerr<<"Exception: "<<e.what()<<endl;
+	;//	std::cerr<<"Exception: "<<e.what()<<endl;
       else
 	throw e;
     }

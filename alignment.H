@@ -30,6 +30,8 @@ public:
   /// The i-th sequence
   sequence& seq(int i) { return sequences[i];}
 
+  /// Remove sequence 'i' from the alignment
+  void del_sequence(int);
   /// Add sequence 's' to the alignment
   void add_sequence(const sequence& s);
   /// Add sequences called names, using a as the alphabet

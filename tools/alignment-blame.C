@@ -377,7 +377,7 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
 
 void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,SequenceTree& T) {
   //----------- Load and link template A and T -----------------//
-  load_A_and_T(args,A,T);
+  load_A_and_T(args,A,T,false);
 
   //------------ Try to load alignments -----------//
   int maxalignments = args.loadvalue("maxalignments",1000);
@@ -389,6 +389,22 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
   vector< OwnedPointer<alphabet> > alphabets;
   alphabets.push_back(A.get_alphabet());
   alignments = load_alignments(std::cin,tag,alphabets,maxalignments);
+
+  //-------- Check compatability of estimate & samples-------//
+  assert(A.size2() == T.leaves());
+  
+  if (alignments[0].size2() != T.n_nodes()-1)
+    throw myexception()<<"Number of sequences in alignment estimate is NOT equal to number of tree nodes!";
+  
+  for(int i=0;i<A.size2();i++) {
+    if (A.seq(i).name != alignments[0].seq(i).name)
+      throw myexception()<<"Alignment estimate has different sequences or sequence order than alignment samples";
+    
+    if (A.seq(i).name != alignments[0].seq(i).name)
+      throw myexception()<<"Sequence "<<i<<" has different length in alignment estimate and alignment samples!";
+    
+  }
+
 }
 
 vector<int> getlabels(const alignment& A,
@@ -456,8 +472,11 @@ double get_column_probability(const vector<int>& column,
     // Can we find a common column for all features?
     int c=-1;
     for(int j=0;j<column.size() and found;j++) {
+
+      // if there is a gap in this column, ignore it
       if (column[j] == -1) continue;
 
+      // find the column that for the column[j]-th feature of species j
       int cj = column_indexes[i][j][column[j]];
 
       if (c == -1)
@@ -471,8 +490,11 @@ double get_column_probability(const vector<int>& column,
 
     // Does this column have gaps in the right place?
     for(int j=0;j<column.size() and found;j++) {
+
+      // if there is a NOT gap in this column, ignore it
       if (column[j] != -1 ) continue;
 
+      // if the template doesn't have a gap, then this doesn't match
       if (not alignments[i].gap(c,j))
 	found = false;
     }
@@ -490,7 +512,7 @@ int main(int argc,char* argv[]) {
     args.read(argc,argv);
     args.print(std::cerr);
 
-    /*----------- Load alignment and tree ---------*/
+    //----------- Load alignment and tree ---------//
     alignment A;
     SequenceTree T;
     vector<alignment> alignments;
@@ -498,7 +520,7 @@ int main(int argc,char* argv[]) {
     cerr<<"Read "<<alignments.size()<<" alignments\n";
     const int n = T.leaves();
 
-    /*----------- Find root branch ---------*/
+    //----------- Find root branch ---------//
     int rootb=-1;
     double rootd = -1;
     find_root(T,rootb,rootd);
@@ -507,16 +529,15 @@ int main(int argc,char* argv[]) {
     for(int i=0;i<T.leaves();i++)
       std::cerr<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
 
-    /*----------- Construct alignment indexes ----------*/
+    //----------- Construct alignment indexes ----------//
     vector< vector< vector<int> > >  column_indexes;
     for(int i = 0;i<alignments.size();i++)
       column_indexes.push_back( column_lookup(alignments[i],n) );
 
-    /*------- Convert template to index form-------*/
+    //------- Convert template to index form-------//
     A = M(A);
 
-    /*--------- Compute full entire column probabilities -------- */
-
+    //--------- Compute full entire column probabilities -------- */
     vector<double> column_probabilities(A.length());
     for(int c=0;c<A.length();c++)
       column_probabilities[c] = get_column_probability(get_column(A,c,n),
@@ -524,20 +545,7 @@ int main(int argc,char* argv[]) {
 						       column_indexes
 						       );
 
-    /*-------- Check compatability of estimate & samples-------*/
-    if (A.size2() != alignments[0].size2())
-      throw myexception()<<"Alignment estimate has different not of sequences than alignment samples!";
-
-    for(int i=0;i<A.size2();i++) {
-      if (A.seq(i).name != alignments[0].seq(i).name)
-	throw myexception()<<"Alignment estimate has different sequences or sequence order than alignment samples";
-
-      if (A.seq(i).name != alignments[0].seq(i).name)
-	throw myexception()<<"Sequence "<<i<<" has different length in alignment estimate and alignment samples!";
-      
-    }
-
-    /*------- Print column names -------*/
+    //------- Print column names -------//
     for(int i=0;i<T.leaves();i++) {
       std::cout<<T.seq(i);
       if (i != T.leaves()-1)
@@ -545,9 +553,8 @@ int main(int argc,char* argv[]) {
       else
 	std::cout<<endl;
     }
-    
 
-    /*------- Analyze the columns -------*/
+    //------- Analyze the columns -------//
     for(int c=0;c<A.length();c++) {
       vector<int> column = get_column(A,c,n);
 
@@ -584,7 +591,7 @@ int main(int argc,char* argv[]) {
 
       delete f;
     }
-    
+
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

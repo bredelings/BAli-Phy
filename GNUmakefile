@@ -1,6 +1,6 @@
 # Insertions and deletions work:  "crossovers" and duplications don't.
 
-all: sampler
+all: bali-phy
 
 # Hurts:
 # -mfpmath=sse     1:23 -> 1:30
@@ -31,22 +31,22 @@ all: sampler
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math # tracer prefetch-loop-arrays omit-frame-pointer # profile-use
+LANGO = fast-math tracer prefetch-loop-arrays omit-frame-pointer # profile-use
 DEBUG = pipe g3 #gdwarf-2 #pg 
 EXACTFLAGS =  # --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS =   # NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
+DEFS =   NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual # effc++
-OPT =  march=pentium4 # O3 # malign-double
+OPT =  march=pentium4 O3 # malign-double
 LDFLAGS = # -fprofile-generate #-pg # -static
 LI=${CXX}
 
 #------------------- Main 
-PROGNAME = sampler
-NAME = sampler
+PROGNAME = bali-phy
+NAME = bali-phy
 SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C exponential.C eigenvalue.C parameters.C likelihood.C mcmc.C \
 	  choose.C sequencetree.C sample-branch-lengths.C arguments.C \
-	  util.C randomtree.C alphabet.C smodel.C sampler.C \
+	  util.C randomtree.C alphabet.C smodel.C bali-phy.C \
 	  sample-tri.C hmm.C dp-engine.C 3way.C 2way.C sample-alignment.C \
 	  sample-node.C imodel.C 5way.C sample-topology-NNI.C inverse.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
@@ -68,7 +68,8 @@ tools/statreport: tools/statistics.o
 
 tools/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o tools/alignmentutil.o \
-	setup.o smodel.o rates.o exponential.o eigenvalue.o sequence-format.o randomtree.o ${GSLLIBS}
+	setup.o smodel.o rates.o exponential.o eigenvalue.o sequence-format.o \
+	alignment-random.o randomtree.o ${GSLLIBS}
 
 tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o smodel.o \

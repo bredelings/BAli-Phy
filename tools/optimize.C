@@ -39,6 +39,7 @@ namespace optimize {
 
 	double next_value = f(nextv);
 
+#ifndef NDEBUG
 	// Show some current status
 	if (ii == basis.size()) {
 	  std::cerr<<"iteration = "<<iterations<<
@@ -58,6 +59,7 @@ namespace optimize {
 	    "   old = "<<value<<
 	    "   new = "<<next_value<<std::endl;
 	}
+#endif
 
 	// If we moved, update last1, last2
 	if (next_value > value) {
@@ -82,6 +84,7 @@ namespace optimize {
 
 	// Do the move, if we're better
 	if (next_value > value) {
+#ifndef NDEBUG
 	  std::cerr<<"Moved from  old = "<<value<<
 	    " to new = "<<next_value<<std::endl;
 
@@ -94,6 +97,7 @@ namespace optimize {
 	  for(int j=0;j<nextv.size();j++)
 	    std::cerr<<nextv[j]<<"  ";
 	  std::cerr<<std::endl;
+#endif
 
 	  v = nextv;
 	  value = next_value;
@@ -107,8 +111,10 @@ namespace optimize {
       done = true;
       for(int i=0;i<basis.size();i++)
 	if (std::abs(basis[i]) > delta) done = false;
+#ifndef NDEBUG
       if (done)
 	std::cerr<<"BASIS: final = "<<value<<"       iterations = "<<iterations<<"\n";
+#endif
     }
     if (not done)
       std::cerr<<"Convergence failed!\n";
@@ -140,7 +146,10 @@ namespace optimize {
     double min,max;
     getlimits(x,v,min,max);
 
+
+#ifndef NDEBUG
     std::cerr<<" min = "<<min<<"   max = "<<max<<"\n";
+#endif
     // Use a centered derivative, if possible
     double t1 = -0.5*dt;
     double t2 = 0.5*dt;
@@ -158,7 +167,9 @@ namespace optimize {
     double f1 = f(x + t1 * v);
     double f2 = f(x + t2 * v);
 
+#ifndef NDEBUG
     std::cerr<<" f1 = "<<f1<<"    f2 = "<<f2<<"\n";
+#endif
 
     return (f2-f1)/deltat;
   }
@@ -262,10 +273,14 @@ namespace optimize {
 	value2 = value2b;
       }
 
+#ifndef NDEBUG
       std::cerr<<"  retry = "<<i<<"      value = "<<value2<<std::endl;
+#endif
 
       if (value2 > cvalue and not isnan(value2)) {
+#ifndef NDEBUG
 	std::cerr<<"move: "<<value2<<" > "<<cvalue<<"\n";
+#endif
 	x = x2;
 	cvalue = value2;
 	moved=true;
