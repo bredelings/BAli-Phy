@@ -27,6 +27,47 @@ namespace substitution {
 
   typedef Likelihood_Cache& column_cache_t;
 
+  static inline bool any_shared(const alignment& A,int c1,int c2,const vector<int>& leaves) {
+    for(int i=0;i<leaves.size();i++)
+      if (not A.gap(c1,leaves[i]) and not A.gap(c2,leaves[i]))
+	return true;
+    return false;
+  }
+
+  // the column with the first present leaf character wins
+  static inline bool after(const alignment& A,int c1,int c2,const vector<int>& leaves) {
+    for(int i=0;i<leaves.size();i++) {
+      assert(A.gap(c1,leaves[i]) or A.gap(c2,leaves[i]));
+      if (not A.gap(c1,leaves[i]))
+	return true;
+      else if (not A.gap(c2,leaves[i]))
+	return false;
+    }
+    std::abort(); // each column must have at least one character to call this function
+  }
+
+  vector<int> sort_subtree_columns(const alignment& A,const vector<int>& columns,const vector<int>& leaves) 
+  {
+    // start out with the alignment order
+    vector<int> mapping(columns.size());
+    for(int i=0;i<mapping.size();i++)
+      mapping[i] = i;
+    
+    // add one column at a time to the sorted section
+    for(int i=1;i<columns.size();i++) {
+      for(int j=i;j>1;j--)
+	// if the previous column shares a residue, then stop moving back
+	if (any_shared(A,columns[mapping[j-1]],columns[mapping[j]],leaves)) break;
+	// if the previous column is less than us, then stop moving back
+	else if (after(A,columns[mapping[j]],columns[mapping[j-1]],leaves)) break;
+        // otherwise we have to move back
+	else
+	  std::swap(mapping[j-1],mapping[j]);
+    }
+    
+    return mapping;
+  }
+
   ublas::matrix<int> leaf_index(int b,const alignment& A) 
   {
     // the alignment of sub alignments
@@ -71,6 +112,14 @@ namespace substitution {
     return alphabet::gap;
   }
 
+  static bool column_empty(const ublas::matrix<int>& M,int c) {
+    const int I = M.size2()-1;
+    for(int i=0;i<I;i++)
+      if (M(c,i) != alphabet::gap)
+	return false;
+    return true;
+  }
+
   static ublas::matrix<int> subA_index_simple(const alignment& A, 
 					      const vector<vector<int> >& leaves) 
   {
@@ -81,21 +130,56 @@ namespace substitution {
     vector<int> index(leaves.size(),-1);
 
     // calculate the index of each column
+    const int I = leaves.size();
+    int l=0;
     for(int c=0;c<A.length();c++) {
-      for(int j=0;j<leaves.size();j++) 
+      // get the child subA indices
+      for(int j=0;j<I;j++) 
 	subA(c,j) = inc(index[j],leaves[j],A,c);
-      subA(c,leaves.size()) = c;
+
+      // get the parent subA index - FIXME?: add an item to 'leaves' which contain all the leaves
+      // then I could use 'inc' on ALL of them...
+      // perhaps after I merge get_subtree_leaves into here...
+      if (column_empty(subA,c))
+	subA(c,I) = alphabet::gap;
+      else
+	subA(c,I) = l++; //post-increment vs pre: gives us the length when done
     }
 
     return subA;
   }
 
-  static bool column_empty(const ublas::matrix<int>& M,int c) {
-    const int I = M.size2()-1;
-    for(int i=0;i<I;i++)
-      if (M(c,i) != alphabet::gap)
-	return false;
-    return true;
+  /// find the columns in which the i-th subA is live
+  vector<int> get_columns(const ublas::matrix<int>& subA,int i) {
+    vector<int> columns;
+    columns.reserve(subA.size2());
+    for(int c=0;c<subA.size2();i++) 
+      if (subA(c,i) != alphabet::gap)
+	columns.push_back(c);
+
+    return columns;
+  }
+
+  static ublas::matrix<int> subA_index_sort(const alignment& A, 
+					    const vector<vector<int> >& leaves) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA = subA_index_simple(A,leaves);
+    
+    for(int i=0;i<subA.size2();i++) {
+      // get the mapping from the alignment order to the sorted order of the columns
+      vector<int> columns = get_columns(subA,i);
+      vector<int> mapping = sort_subtree_columns(A,columns,leaves[i]);
+
+      int l=0;
+      for(int c=0;c<subA.size2();i++) 
+	if (subA(c,i) != alphabet::gap)
+	  subA(c,i) = mapping[l++];
+
+      assert(l == columns.size());
+    }
+
+    return subA;
   }
 
   ublas::matrix<int> subA_select(const ublas::matrix<int>& subA1) {
@@ -126,15 +210,6 @@ namespace substitution {
       
     // the alignment of sub alignments
     ublas::matrix<int> subA = subA_index_simple(A,leaves);
-
-    // select and order the columns we want to keep
-    const int I = leaves.size();
-    int l=0;
-    for(int c=0;c<subA.size1();c++)
-      if (column_empty(subA,c))
-	subA(c,I) = alphabet::gap;
-      else
-	subA(c,I) = l++;
 
     // return processed indices
     return subA_select(subA);
