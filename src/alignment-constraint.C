@@ -71,7 +71,8 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,
   return constraint;
 }
 
-bool group_present(const ublas::matrix<int>& constraint,int c,std::valarray<bool> group) {
+bool constrained(const std::valarray<bool>& group,const ublas::matrix<int>& constraint,int c) 
+{
   bool present = false;
   for(int i=0;i<constraint.size2();i++)
     if (group[i] and constraint(c,i) != -1)
@@ -79,48 +80,47 @@ bool group_present(const ublas::matrix<int>& constraint,int c,std::valarray<bool
   return present;
 }
 
+// This procedure bases the constraint columns ENTIRELY on the leaf sequence alignment!
+// Therefore these constrained columns may be unalignable, depending on the internal node
+//  states!
+vector<int> constraint_columns(const ublas::matrix<int>& constraint,const alignment& A) 
+{
+  // determine which constraints are satisfied, and can be enforced
+  vector<int> columns(constraint.size1(),-1);
+
+  // get columns for each residue
+  vector<vector<int> > column_indices = column_lookup(A);
+
+  // for all constraints (i,*) != -1, check...
+  for(int i=0;i<constraint.size1();i++) 
+    for(int j=0;j<constraint.size2();j++) 
+      if (constraint(i,j) != -1) 
+      {
+	int c = column_indices[j][constraint(i,j)];
+
+	if (columns[i] == -1)
+	  columns[i] = c;
+	else if (columns[i] != c) {
+	  columns[i] = -1;
+	  break;
+	}
+      }
+
+  return columns;
+}
 
 vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignment& A,
 			       const valarray<bool>& group1,const valarray<bool>& group2,
 			       const vector<int>& seq1,const vector<int>& seq2) 
 {
-  vector<vector<int> > column_indices = column_lookup(A);
+  // determine which constraints are satisfied (not necessarily enforceable!)
+  vector<int> satisfied = constraint_columns(constraint,A);
 
-
-  // determine which constraints are satisfied, and can be enforced
-  vector<int> satisfied(constraint.size1(),-1);
-  for(int i=0;i<constraint.size1();i++) {
-
-    // this constraint has to apply to both halves of the alignment
-    if (not (group_present(constraint,i,group1) and group_present(constraint,i,group2))) {
-      //std::clog<<"constraint #"<<i+1<<" not relevant.\n";
-      continue;
-    }
-    
-    // check if all the constrained residues are in the same column
-    int col = -1;
-    bool same_column = true;
-    for(int j=0;j<constraint.size2();j++) {
-      if (constraint(i,j) == -1) continue;
-
-      int this_col = column_indices[j][constraint(i,j)];
-      if (col == -1)
-	col = this_col;
-      else
-	if (col != this_col)
-	  same_column = false;
-    }
-      
-    // record the column if this constraint is to be enforced
-    if (same_column) {
-      //      std::cerr<<"constraint #"<<i+1<<" satisfied.\n";
-      satisfied[i] = col;
-    }
-    else
-      ;//      std::cerr<<"constraint #"<<i+1<<" NOT satisfied.\n";
-    
+  for(int i=0;i<satisfied.size();i++) {
+    // ignore columns in which all constrained residues are in either group1 or group2
+    if (not (constrained(group1,constraint,i) and constrained(group2,constraint,i)))
+      satisfied[i] = -1;
   }
-  
 
   // convert columns of enforced constraints to pairs of indices in seq1/seq2
   vector<vector<int> > pins(2);
@@ -138,30 +138,13 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
 }
 
 
-valarray<bool> constraint_satisfied(const ublas::matrix<int>& constraint,const alignment& A) {
-  vector<vector<int> > column_indices = column_lookup(A);
+valarray<bool> constraint_satisfied(const ublas::matrix<int>& constraint,const alignment& A) 
+{
+  vector<int> columns = constraint_columns(constraint,A);
 
-
-  // determine which constraints are satisfied, and can be enforced
-  valarray<bool> satisfied(true,constraint.size1());
-
-  for(int i=0;i<constraint.size1();i++) {
-
-    // check if all the constrained residues are in the same column
-    int col = -1;
-    for(int j=0;j<constraint.size2();j++) {
-      if (constraint(i,j) == -1) continue;
-
-      int this_col = column_indices[j][constraint(i,j)];
-      if (col == -1)
-	col = this_col;
-      else
-	if (col != this_col) {
-	  satisfied[i] = false;
-	  break;
-	}
-    }
-  }
+  valarray<bool> satisfied(columns.size());
+  for(int i=0;i<satisfied.size();i++)
+    satisfied[i] = columns[i] != -1;
 
   return satisfied;
 }
