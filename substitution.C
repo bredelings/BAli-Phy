@@ -219,3 +219,35 @@ double substitution(const alignment& A,const Parameters& Theta) {
 
 
  
+double substitution_star(const vector<int>& column, const Parameters& P) {
+  const alphabet& a = P.get_alphabet();
+  const tree& T = P.T;
+
+  double sum=0;
+  for(int l=0;l<a.size();l++) {
+    double temp=0;
+    for(int b=0;b<T.branches();b++) {
+      const Matrix& Q = P.substitution(b);
+      temp *= Q(column[b],l);
+    }
+    sum += temp;
+  }
+  return log(sum);
+}
+
+double substitution_star(const alignment& A,const Parameters& P) {
+  double Pr = 0.0;
+  
+  vector<int> residues(A.size2());
+
+  // Do each node before its parent
+  for(int column=0;column<A.length();column++) {
+    for(int i=0;i<residues.size();i++)
+      residues[i] = A(column,i);
+    Pr += substitution_star(residues,P);
+    //    std::cerr<<" substitution: P="<<P<<std::endl;
+  }
+
+  return Pr;
+}
+

@@ -31,9 +31,12 @@ public:
   int size1() const {return s1;}
   int size2() const {return s2;}
   int nstates() const {return size();}
+  int endstate() const {return nstates();}
+
   bool di(int S) {bool e = false; if (state_emit[S]&(1<<0)) e=true;return e;}
   bool dj(int S) {bool e = false; if (state_emit[S]&(1<<1)) e=true;return e;}
-  bool silent(int S) {return !di(S) and !dj(S);}
+  bool silent(int S) {return not di(S) and not dj(S);}
+  bool silent_network(int S);
 
   // compute FP for a square
   inline void forward(int,int,int,int,const Matrix& GQ);
@@ -41,10 +44,18 @@ public:
   // compute FP for a cell
   virtual void forward(int,int,const Matrix& GQ) = 0;
 
+  // functions on paths
+  vector<int> sample_path(const Matrix& GQ);
+
+  vector<int> generalize(const vector<int>& path);
+  double generalize_P(const vector<int>& path, const Matrix& Q);
+
   vector<double> path_Q(const vector<int>& path,const Matrix& GQ);
   double path_P(const vector<int>& path, const Matrix& GQ);
   double path_check(const vector<int>& path, const Matrix& GQ);
 
+
+  double check(const Matrix&,const Matrix&,const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2);
 
   DPmatrix(int nstates,
 	   const vector< valarray<double> >& d1,const vector< valarray<double> >& d2, 

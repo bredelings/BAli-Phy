@@ -1,0 +1,50 @@
+#ifndef TWAY_H
+#define TWAY_H
+
+#include "mytypes.H"
+#include "alignment.H"
+
+namespace states {
+  const int M  = 0;
+  const int G1 = 1;
+  const int G2 = 2;
+  const int E  = 3;
+};
+
+// Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
+namespace A3 {
+
+// bits 3,2,1,0     = node present mask
+// bits 98,76,54    = sub-alignment state
+// bits 12,11,10    = sub-alignment not-present mask
+  
+// Three G1-type states, each of which stores state for two alignments
+//  - these alignment can only have 3 states each (M,G1,G2, not E) and so
+//    total 3*3 = 9 states.  
+
+
+  const int nstates = 1+3+3+1+3*9;
+  const int endstate = nstates;
+  const int bitsmask = 15;
+  const int emitmask = 14;
+
+  int bits_to_states(int bits);
+
+  int getstates(int S);
+
+  int findstate(int states);
+
+  int di(int S);
+  int dj(int S);
+  int dk(int S);
+  int dc(int S);
+  int dl(int S);
+};
+
+//using namespace A3;
+
+
+vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3);
+
+
+#endif

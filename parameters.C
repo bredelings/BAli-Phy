@@ -2,6 +2,28 @@
 #include "logsum.H"
 
 
+void IndelModel::construct_length_plus_p(int n) {
+  using std::vector;
+
+  vector<double>& f_E = p_length_plus;
+
+  vector<double> f_M(n);
+  vector<double> f_G2(n);
+  f_E.resize(n);
+
+
+
+  f_M[0] = pi[0];
+  f_G2[0] = pi[2];
+  f_E[0] = pi[3]; 
+
+  for(int i=1;i<n;i++) {
+    f_M[i] = logsum(f_M[i-1]+Q(0,0),f_G2[i-1]+Q(2,0));
+    f_G2[i] = logsum(f_M[i-1]+Q(0,2),f_G2[i-1]+Q(2,2));
+    f_E[i] = logsum(f_M[i]+Q(0,3),f_G2[i]+Q(2,3));
+  }
+}
+
 void IndelModel::construct_lengthp(int n) {
   using std::vector;
 
@@ -73,7 +95,7 @@ void IndelModel::construct_lengthp(int n) {
 }
 
 IndelModel::IndelModel()
-  : pi(4),P(4,4),Q(4,4),R(4,4)  
+  : pi(4),P(4,4),Q(4,4)
 { }
 
 
@@ -117,16 +139,6 @@ IndelModel1::IndelModel1(int maxlength,double LO,double LE)
     Q(i,3) = log(tau);
   }
 
-  /* Chain w/o transitions to M or G1 states */
-  R = Q;
-  for(int i=0;i<3;i++) {
-    R(i,0) = log_0;
-    R(i,2) = log_0;
-    double sum = logsum(R(i,1),R(i,3));
-    R(i,1) -= sum;
-    R(i,3) -= sum;
-  }
-
   /* Initial Distribution */
   /* This is for the character before the first character - can't be E */
   pi[0] = 0;
@@ -140,6 +152,7 @@ IndelModel1::IndelModel1(int maxlength,double LO,double LE)
   //  pi[3] = log_0;  // must be log_0
 
   construct_lengthp(maxlength);
+  construct_length_plus_p(maxlength);
 }
 
 IndelModel2::IndelModel2(int maxlength,double LO,double LE,double b)
@@ -184,14 +197,55 @@ IndelModel2::IndelModel2(int maxlength,double LO,double LE,double b)
     Q(i,3) = log(tau);
   }
 
-  /* Chain w/o transitions to M or G1 states */
-  R = Q;
+  /* Initial Distribution */
+  /* This is for the character before the first character - can't be E */
+  pi[0] = 0;
+  pi[1] = log_0;
+  pi[2] = log_0;
+  pi[3] = log_0;  // must be log_0
+
+  //  pi[0] = log(1.0-2.0*delta);
+  //  pi[1] = log(delta);
+  //  pi[2] = log(delta);
+  //  pi[3] = log_0;  // must be log_0
+
+  construct_lengthp(maxlength);
+  construct_length_plus_p(maxlength);
+}
+
+SingleIndelModel::SingleIndelModel(int maxlength,double LO) {
+  delta=LO;
+
+  assert(delta > 0.0);
+  tau     = 1.0e-3;
+
+  /* Chain w/o transitions to End state */
+  P(0,0) = log(1.0 - 2.0*delta);
+  P(0,1) = log(delta);
+  P(0,2) = log(delta);
+  P(0,3) = log_0;
+
+  P(1,0) = log(1.0 - 2.0*delta);
+  P(1,1) = log(delta);
+  P(1,2) = log(delta);
+  P(1,3) = log_0;
+
+  P(2,0) = log(1.0 - 2.0*delta);
+  P(2,1) = log(delta);
+  P(2,2) = log(delta);
+  P(2,3) = log_0;
+
+  P(3,0) = log_0;
+  P(3,1) = log_0;
+  P(3,2) = log_0;
+  P(3,3) = 0;
+
+  /* Chain with transitions to End state */
+  Q = P;
   for(int i=0;i<3;i++) {
-    R(i,0) = log_0;
-    R(i,2) = log_0;
-    double sum = logsum(R(i,1),R(i,3));
-    R(i,1) -= sum;
-    R(i,3) -= sum;
+    for(int j=0;j<3;j++) 
+      Q(i,j) += log(1.0 - tau);
+    Q(i,3) = log(tau);
   }
 
   /* Initial Distribution */
@@ -200,12 +254,9 @@ IndelModel2::IndelModel2(int maxlength,double LO,double LE,double b)
   pi[1] = log_0;
   pi[2] = log_0;
   pi[3] = log_0;  // must be log_0
-  //  pi[0] = log(1.0-2.0*delta);
-  //  pi[1] = log(delta);
-  //  pi[2] = log(delta);
-  //  pi[3] = log_0;  // must be log_0
 
   construct_lengthp(maxlength);
+  construct_length_plus_p(maxlength);
 }
 
 void Parameters::setlength(int b,double l) {

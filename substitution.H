@@ -12,3 +12,9 @@ double substitution(const vector<int>&,const Parameters&);
 
 // Process all the columns in A
 double substitution(const alignment& A,const Parameters&);
+
+// Process a whole tree/column - star tree
+double substitution_star(const vector<int>&,const Parameters&);
+
+// Process a whole tree/column - star tree
+double substitution_star(const alignment& A,const Parameters&);

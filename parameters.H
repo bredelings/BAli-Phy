@@ -7,15 +7,19 @@
 #include <valarray>
 #include "smodel.H"
 
+//FIXME - need to an other function to compute probability that length=L and
+//        there are no G1 states.   
+
 /******************************* InDel Models ***********************************/
 
 class IndelModel {
 protected:
   std::vector<double> p_length;
+  std::vector<double> p_length_plus;
   
   void construct_lengthp(int);
+  void construct_length_plus_p(int);
   ublas::matrix<double> P;
-  ublas::matrix<double> R;
 
 public:
   double lambda_O;
@@ -25,6 +29,7 @@ public:
   ublas::matrix<double> Q;
 
   double lengthp(int i) const {return p_length[i];}
+  double length_plus_p(int i) const {return p_length_plus[i];}
 
   IndelModel();
 };
@@ -46,6 +51,15 @@ public:
   double beta;    //unweighting factor for adjacent G1/G2 gaps
 
   explicit IndelModel2(int maxlength,double LO,double LE,double b=0);
+};
+
+class SingleIndelModel : public IndelModel {
+
+public:
+  double tau;
+  double delta;
+
+  explicit SingleIndelModel(int maxlength,double LO);
 };
 
 /******************************* parameter-containing class **************************/

@@ -9,7 +9,9 @@
 #include "bits.H"
 #include "util.H"
 #include "rng.H"
+#include "3way.H"
 #include "dpmatrix.H"
+
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with
@@ -26,166 +28,7 @@
 using std::abs;
 using std::valarray;
 
-namespace states {
-  const int M  = 0;
-  const int G1 = 1;
-  const int G2 = 2;
-  const int E  = 3;
-};
-
-// bits 3,2,1,0     = node present mask
-// bits 98,76,54    = sub-alignment state
-// bits 12,11,10    = sub-alignment not-present mask
-
-// Three G1-type states, each of which stores state for two alignments
-//  - these alignment can only have 3 states each (M,G1,G2, not E) and so
-//    total 3*3 = 9 states.  
-
-const int nstates = 1+3+3+1+3*9;
-const int endstate = nstates;
-const int bitsmask = 15;
-const int emitmask = 14;
-
-// Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
-static int bits_to_states(int bits) {
-  int S=(1<<6)|(1<<7)|(1<<8);
-  if (not bitset(bits,0)) {
-    if (bitset(bits,1))
-      S |= (states::G1<<0);
-    else
-      S = clearbit(S,6);
-
-    if (bitset(bits,2))
-      S |= (states::G1<<2);
-    else
-      S = clearbit(S,7);
-
-    if (bitset(bits,3))
-      S |= (states::G1<<4);
-    else
-      S = clearbit(S,8);
-  }
-  else {
-    if (bitset(bits,1))
-      S |= (states::M<<0);
-    else
-      S |= (states::G2<<0);
-      
-    if (bitset(bits,2))
-      S |= (states::M<<2);
-    else
-      S |= (states::G2<<2);
-
-    if (bitset(bits,3))
-      S |= (states::M<<4);
-    else
-      S |= (states::G2<<4);
-  }
-  return S;
-}
-
-
-inline int getstates(int S) {
-  assert(0 <= S and S<nstates+1);
-
-  if (S==endstate)
-    return (1<<12)|(1<<11)|(1<<10)|(states::E<<8)|(states::E<<6)|(states::E<<4);
-
-  int bits=0;
-
-  //--------- Set bits ---------
-  if (S<8) {
-    //internal node present
-    bits |= (1<<0);
-
-    // other nodes present according to S
-    bits |= ((~S)&7)<<1;
-  }
-  else {
-    S -=8;
-    if (S/9 == 0) 
-      bits |= (1<<1);
-    else if (S/9 == 1) 
-      bits |= (1<<2);
-    else if (S/9 == 2) 
-      bits |= (1<<3);
-    S = S%9;
-  }
-
-  //-------- Get states --------
-  int states = bits_to_states(bits);
-  for(int i=0;i<3;i++)
-    if (not bitset(states,6+i)) {
-      int s = S%3;
-      S /= 3;
-      states |= (s<<(2*i));
-    }
-
-  //---------- Merge ----------
-  return (states<<4)|bits;
-}
-
-inline int findstate(int states) {
-  unsigned int mask = ~((~0)<<10);
-  for(int S=0;S<=nstates;S++) {
-    if ((getstates(S)&mask) == (states&mask))
-      return S;
-  }
-  //couldn't find it?
-  assert(0);
-}
-
-
-inline int di(int S) {
-  S = getstates(S);
-  if (S&(1<<1))
-    return 1;
-  else
-    return 0;
-}
-
-inline int dj(int S) {
-  S = getstates(S);
-  if (S&(1<<2))
-    return 1;
-  else
-    return 0;
-}
-
-inline int dk(int S) {
-  S = getstates(S);
-  if (S&(1<<3))
-    return 1;
-  else
-    return 0;
-}
-
-inline int dc(int S) {
-  if (dj(S)==0 and dk(S)==0)
-    return 0;
-  else
-    return 1;
-}
-
-inline int dl(int S) {
-  S = getstates(S);
-  if (S&(1<<0))
-    return 1;
-  else
-    return 0;
-}
-
-bool silent(int S) {
-  if (S==endstate)
-    return false;
-
-  int states = getstates(S);
-  if (states&emitmask)
-    return false;
-  else
-    return true;
-}
-
+using namespace A3;
 
 inline double getQ(int S1,int S2,const IndelModel& IModel) {
   assert(0 <= S1 and S1 < nstates+1);
@@ -271,113 +114,6 @@ Matrix createGQ(const IndelModel& IModel) {
 }
 
 
-vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
-
-  //----- Store whether or not characters are present -----//
-  vector<int> present;
-  for(int column=0;column<A.length();column++) {
-    int bits=0;
-    if (not A.gap(column,n0))
-      bits |= (1<<0);
-    if (not A.gap(column,n1))
-      bits |= (1<<1);
-    if (not A.gap(column,n2))
-      bits |= (1<<2);
-    if (not A.gap(column,n3))
-      bits |= (1<<3);
-    present.push_back(bits);
-  }
-
-  int A10 = states::M;
-  int A20 = states::M;
-  int A30 = states::M;
-
-  vector<int> path;
-  path.reserve(A.length()+1);
-  for(int column=0;column<A.length();column++) {
-    int bits = present[column];
-
-    if (not bits) 
-      continue;
-
-    int states = bits_to_states(bits);
-    if (states & (1<<6))
-      A10 = (states>>0)&3;
-    if (states & (1<<7))
-      A20 = (states>>2)&3;
-    if (states & (1<<8))
-      A30 = (states>>4)&3;
-
-    states |= (A30<<4)|(A20<<2)|(A10<<0);
-    states = (states<<4)|bits;
-    int S = findstate(states);
-    path.push_back(S);
-  }
-  
-  path.push_back(endstate);
-  return path;
-}
-
-vector<int> generalize(const vector<int>& path) {
-  vector<int> path_g = path;
-  for(int i=path_g.size()-1;i>0;i--) {
-    int S1 = path_g[i-1];
-    int S2 = path_g[i];
-    if (silent(S1) and silent(S2))
-      path_g.erase(path_g.begin()+i);
-  }
-  return path_g;
-}
-
-// FIXME - this doesn't deal with when there is more than one silent state!
-double generalize_P(const vector<int>& path, const Matrix& Q) {
-  double Pr = 0;
-  for(int i=1; i<path.size(); i++) {
-    int S1 = path[i-1];
-    int S2 = path[i];
-
-    if (silent(S1)) {
-      if (silent(S2))
-	Pr += Q(S1,S2);
-      else
-	Pr += log(1.0-exp(Q(S1,S1)));
-    }
-  }
-  return Pr;
-}
-
-vector<int> sample_path(const DPmatrix& Matrices,const Matrix& GQ) {
-  vector<int> path;
-
-  const int I = Matrices.size1()-1;
-  const int C = Matrices.size2()-1;
-  int i = I;
-  int c = C;
-
-  int state2 = endstate;
-
-  //We should really stop when we reach the Start state.
-  // - since the start state is simulated by a non-silent state
-  //   NS(0,0) we should go negative
-  // - check that we came from (0,0) though
-  while (i>=0 and c>=0) {
-    path.push_back(state2);
-    vector<double> transition(nstates);
-    for(int state1=0;state1<nstates;state1++)
-      transition[state1] = Matrices[state1](i,c)+GQ(state1,state2);
-
-    int state1 = choose(transition);
-
-    if (di(state1)) i--;
-    if (dj(state1) or dk(state1)) c--;
-
-    state2 = state1;
-  }
-  assert(i+di(state2)==0 and c+dc(state2)==0);
-
-  std::reverse(path.begin(),path.end());
-  return path;
-}
 
 // Does this routine depend on order of unordered columns?
 //  - No: columns in subA1 but not in seq1 are ordered only in respect to columns in subA1
@@ -762,6 +498,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
 
   /*------------------ Compute the DP matrix ---------------------*/
+
+  //FIXME - we should probably send the matrix 'Q' into DPmatrix, and construct GQ
   const Matrix& GQ = createGQ(Theta.IModel);
   const Matrix& Q = createQ(Theta.IModel);
 
@@ -773,12 +511,13 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
   //------------- Sample a path from the matrix -------------------//
 
-  vector<int> path = sample_path(Matrices,GQ);
+  vector<int> path = Matrices.sample_path(GQ);
 
   // FIXME!! - need to insert extra ---+ states according to a geometric
   alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
 
-  //------------- Check relative path probabilities ---------------//
+#ifndef NDEBUG
+  //--------------- Check alignment construction ------------------//
 
   // get the paths through the 3way alignment, from the entire alignment
   vector<int> path_old = get_path_3way(project(old,n0,n1,n2,n3),0,1,2,3);
@@ -786,100 +525,41 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
   vector<int> path_old2 = get_path_3way(old,n0,n1,n2,n3);
   vector<int> path_new2 = get_path_3way(A,n0,n1,n2,n3);
-  assert(path_new == path_new2); // <- this actually isn't necessary, we just need path_new
+  assert(path_new == path_new2); // <- current implementation probably guarantees this
+                                 //    but its not a NECESSARY effect of the routine.
 
   // get the generalized paths - no sequential silent states that can loop
-  vector<int> path_old_G = generalize(path_old);
-  vector<int> path_new_G = generalize(path_new);
+  vector<int> path_new_G = Matrices.generalize(path_new);
   assert(path_new_G == path);
+  assert(valid(A));
 
-  double PrOld=0;
-  for(int i=0;i<path_old.size()-1;i++) {
-    PrOld += Q(path_old[i],path_old[i+1]);
-    assert(PrOld > log_0/100);
-  }
-
-  // get the likelihoods of the new alignments
+  //-------------- Check relative path probabilities --------------//
   double s1 = substitution(old,Theta);
   double s2 = substitution(A,Theta);
 
-  double l1 = prior_HMM_nogiven(old,Theta) + s1;
-  double l2 = prior_HMM_nogiven(A  ,Theta) + s2;
-
-  double a = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,1);
-  double a2 = prior_branch_HMM(old,Theta.IModel,n0,n1);
-  double b = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,2);
-  double b2 = prior_branch_HMM(old,Theta.IModel,n0,n2);
-  double c = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,3);
-  double c2 = prior_branch_HMM(old,Theta.IModel,n0,n3);
-
-  double lp1 = a + b + c;
-
-  assert(abs(a-a2)<1.0e-7);
-  assert(abs(b-b2)<1.0e-7);
-  assert(abs(c-c2)<1.0e-7);
+  double lp1 = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,1) +
+    prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,2) +
+    prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,3);
 
   double lp2 = prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,1) +
     prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,2) +
     prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,3);
 
-  // get the probabilities of sampling each of the paths
-  double p1 = Matrices.path_P(path_old_G,GQ); 
-  double p2 = Matrices.path_P(path_new_G,GQ); 
+  double diff = Matrices.check(Q,GQ,path_old,path_new,lp1,s1,lp2,s2);
 
-  // get the probabilities of the path through the 3-way HMM
-  vector<double> QP = Matrices.path_Q(path_old_G,GQ);
-  double qp1 = QP[0];
-  double qs1 = QP[1];
-  double q1 = qp1 + qs1;
-
-  QP = Matrices.path_Q(path_new_G,GQ);
-  double qp2 = QP[0];
-  double qs2 = QP[1];
-  double q2 = qp2 + qs2;
-
-  p1 += generalize_P(path_old,Q);
-  p2 += generalize_P(path_new,Q);
-
-  q1 += generalize_P(path_old,Q);
-  q2 += generalize_P(path_new,Q);
-
-  double diff = p2-p1-(l2-l1);
-  double rdiff = diff/(l2-l1);
-
-  if (path_old_G != path_new_G) {
-    
-
-    std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
-    std::cerr<<"Q1 = "<<q1<<"     Q2 = "<<q2<<"     Q2 - Q1 = "<<q2-q1<<endl;
-
-    std::cerr<<"L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<endl;
-    std::cerr<<"diff = "<<diff<<std::endl;
-
-    std::cerr<<endl;
-    std::cerr<<"S1  = "<<s1<<"     S2  = "<<s2<<"     S2 - S1 = "<<s2-s1<<endl;
-    std::cerr<<"QS1 = "<<qs1<<"     QS2 = "<<qs2<<"   QS2 - QS1 = "<<qs2-qs1<<endl;
-
-    std::cerr<<endl;
-    std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<endl;
-    std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<endl;
-
+  if (abs(diff) > 1.0e-9) {
     std::cerr<<prior_HMM_nogiven(old,Theta) - lp1<<endl;
     std::cerr<<prior_HMM_nogiven(A  ,Theta) - lp2<<endl;
 
-    if (diff != 0.0) {
-      if (std::abs(rdiff) > 1.0e-8) {
-	old.print(std::cerr);
-	A.print(std::cerr);
+    old.print(std::cerr);
+    A.print(std::cerr);
 
-	project(old,n0,n1,n2,n3).print(std::cerr);
-	project(A,n0,n1,n2,n3).print(std::cerr);
-      }
-    }
+    project(old,n0,n1,n2,n3).print(std::cerr);
+    project(A,n0,n1,n2,n3).print(std::cerr);
+
+    assert(0);
   }
-
-  assert(isnan(rdiff) or abs(diff) < 1.0e-8);
-  assert(valid(A));
+#endif
 
   /*---------------- Adjust for length of n0 changing --------------------*/
   int length_old = old.seqlength(n0);
