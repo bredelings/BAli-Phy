@@ -7,18 +7,20 @@ using std::vector;
 int Multi_Likelihood_Cache::unused_location() const {
   // find an unused location
   int location = -1;
-  for(int i=0;
-      i<i_mapping.size();
-      i++,cursor=(cursor+1)%i_mapping.size()) {
+  for(int i=0;i<i_mapping.size();i++) {
 
-    if (not i_mapping[cursor]) {
-      location = cursor;
+    int l = (i + cursor)%i_mapping.size();
+
+    if (not i_mapping[l]) {
+      location = l;
       break;
     }
   }
   assert(location != -1);
+  assert(0 <= location  and location < i_mapping.size());
 
   cursor = location+1;
+  cursor %= i_mapping.size();
 
   return location;
 }
@@ -46,6 +48,7 @@ void Multi_Likelihood_Cache::invalidate_one_branch(int token, int branch) {
 
     // stop using old,shared location
     i_mapping[location]--;
+    assert(i_mapping[location]>=0);
 
     // pick new,unused location
     location = unused_location();
@@ -156,28 +159,22 @@ Multi_Likelihood_Cache::Multi_Likelihood_Cache(const Tree& T, const substitution
   set_length(l);
 }
 
-void Likelihood_Cache::recalc() {
-  for(int b=0;b<mapping.size();b++)
-    mapping[b] = (*cache)(token,b);
-}
+//------------------------------- Likelihood_Cache------------------------------//
 
 void Likelihood_Cache::invalidate_all() {
   cache->invalidate_all(token);
-  recalc();
 }
 
 void Likelihood_Cache::invalidate_directed_branch(const Tree& T,int b) {
   vector<const_branchview> branch_list = branches_after(T,b);
   for(int i=0;i<branch_list.size();i++)
     cache->invalidate_one_branch(token,branch_list[i]);
-  recalc();
 }
 
 void Likelihood_Cache::invalidate_node(const Tree& T,int n) {
   vector<const_branchview> branch_list = branches_from_node(T,n);
   for(int i=0;i<branch_list.size();i++)
     cache->invalidate_one_branch(token,branch_list[i]);
-  recalc();
 }
 
 void Likelihood_Cache::invalidate_branch(const Tree& T,int b) {
@@ -197,7 +194,6 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) {
   token = cache->claim_token();
   cache->copy_token(token,LC.token);
   root = LC.root;
-  recalc();
 
   return *this;
 }
@@ -205,20 +201,16 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) {
 Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC) 
   :cache(LC.cache),
    token(cache->claim_token()),
-   mapping(cache->n_slots()),
    root(LC.root)
 {
   cache->copy_token(token,LC.token);
-  recalc();
 }
 
 Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModel& M,int l)
   :cache(new Multi_Likelihood_Cache(T,M,l)),
    token(cache->claim_token()),
-   mapping(cache->n_slots()),
    root(T.n_nodes()-1)
 {
-  recalc();
   set_length(l);
 }
 

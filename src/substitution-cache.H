@@ -48,9 +48,14 @@ public:
   int operator()(int token,int branch) const {return mapping[index(token,branch)];}
 
   bool up_to_date(int token,int branch) const {return up_to_date_[(*this)(token,branch)];}
-  void mark_branch_up_to_date(int token,int branch)       {up_to_date_[(*this)(token,branch)]=true;}
+  void mark_branch_up_to_date(int token,int branch)  {up_to_date_[(*this)(token,branch)]=true;}
+  void mark_location_up_to_date(int loc) {up_to_date_[loc]=true;}
 
   int n_slots() const {return B;}
+  int scratch() const {return B-1;}
+  int n_branches() const {return B/2;}
+  int n_models() const {return M;}
+  int n_letters() const {return A;}
 
   void invalidate_one_branch(int token,int branch);
   void invalidate_all(int token);
@@ -67,39 +72,18 @@ public:
 };
 
 
-class Column_Likelihood_Cache {
-  std::vector<Matrix>& data;
-  const std::vector<int>& mapping;
-public:
-  Matrix& operator[](int b) {
-    return data[mapping[b]];
-  }
-
-  int scratch() const {return mapping.size()-1;}
-  int n_branches() const {return mapping.size()/2;}
-  int n_models() const {return data[0].size1();}
-  int n_letters() const {return data[0].size2();}
-
-  Column_Likelihood_Cache(std::vector<Matrix>& v,const std::vector<int>& m)
-    :data(v),
-     mapping(m)
-  { }
-};
-
-
 class Likelihood_Cache {
   RefPtr<Multi_Likelihood_Cache> cache;
 
   int token;
 
-  vector<int> mapping;
-
-  void recalc();
-
 public:
   int root;
 
-  int n_branches() {return mapping.size()/2;}
+  int scratch() const {return (*cache)(token,cache->scratch());}
+  int n_branches() const {return cache->n_branches();}
+  int n_models() const {return cache->n_models();}
+  int n_letters() const {return cache->n_letters();}
 
   void invalidate_all();
 
@@ -111,12 +95,13 @@ public:
 
   void set_length(int);
 
+  int location(int b) const {return (*cache)(token,b);}
+
   bool up_to_date(int b) const {return cache->up_to_date(token,b);}
   void mark_branch_up_to_date(int b) {cache->mark_branch_up_to_date(token,b);}
+  void mark_location_up_to_date(int loc) {cache->mark_location_up_to_date(loc);}
 
-  Column_Likelihood_Cache operator[](int col) {
-    return Column_Likelihood_Cache((*cache)[col],mapping);
-  }
+  vector<Matrix>& operator[](int col) {return (*cache)[col];}
 
   Likelihood_Cache& operator=(const Likelihood_Cache&);
 

@@ -229,3 +229,121 @@ time ~/bin/bali-phy/1.8.23-tree-NDEBUG.5 seed=0 align=Data/EF-Tu/12d.fasta itera
 real    0m13.476s
 user    0m13.360s
 sys     0m0.100s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.5 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length_cached gaps=star >out 2>err
+
+real    0m17.026s
+user    0m16.810s
+sys     0m0.080s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.5 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length gaps=star >out 2>err
+
+real    0m12.983s
+user    0m12.940s
+sys     0m0.040s
+
+---------------------------
+1.8.23-tree-NDEBUG.6
+
+used RefMatrix (a reference-counted Matrix) and 
+performed badly - due to too much memory allocation (
+
+---------------------------
+1.8.23-tree-NDEBUG.7 - OK, we've definate lost some time on the non-cached case here.
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length_cached gaps=star >out 2>err
+
+real    0m17.681s
+user    0m17.560s
+sys     0m0.070s
+
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length gaps=star >out 2>err
+
+real    0m9.084s
+user    0m9.020s
+sys     0m0.060s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length:frequencies:s_parameters gaps=star >out 2>err
+
+real    0m8.564s
+user    0m8.530s
+sys     0m0.030s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=parameters:change_branch_length:SPR gaps=star >out 2>err
+
+real    0m8.039s
+user    0m7.930s
+sys     0m0.040s
+
+
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=20 disable=g_parameters:change_branch_length_cached gaps=star >out 2>err
+
+real    0m35.240s
+user    0m35.070s
+sys     0m0.140s
+
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=20 disable=g_parameters:change_branch_length gaps=star >out 2>err
+
+real    0m18.307s
+user    0m18.200s
+sys     0m0.100s
+
+---------------------------
+1.8.23-tree-NDEBUG.8 - we forgot to set the root correctly before this!!!!!
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.8 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length_cache gaps=star >out 2>err
+
+real    0m12.267s
+user    0m12.160s
+sys     0m0.050s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.8 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length gaps=star >out 2>err
+
+real    0m7.210s
+user    0m7.130s
+sys     0m0.070s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.8 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=parameters:change_branch_length:SPR gaps=star >out 2>err
+
+real    0m6.038s
+user    0m5.950s
+sys     0m0.080s
+
+
+BUG!!!  Add an assert for this case?
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.8 seed=0 align=Data/EF-Tu/24b.fasta iterations=10 disable=g_parameters gaps=star >out 2>err
+Segmentation fault
+
+real    0m0.346s
+user    0m0.330s
+sys     0m0.010s
+
+
+
+(GOOD!  Pr matches Pr-good :)
+
+---------------------------
+1.8.23-tree-NDEBUG.8 - we forgot to set the root correctly before this!!!!!
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.8 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length_cached gaps=star >out 2>err 
+real    0m21.690s
+user    0m21.550s
+sys     0m0.140s
+
+
+Big regression from 16.8! (3.5 seconds)
+
+---------------------------
+
+
+Also: write out the size of peeling:operations!
+
+Future: do mapping[branch] lookup inside get_branches!
+Future: stop allocating 'uninformative' inside the peel() routine...
+Future: only run branch-lengths 1 time per iteration, but re-sample each branch multiple times (e.g. 4)
+
+Profile???

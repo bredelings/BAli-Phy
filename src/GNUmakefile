@@ -23,12 +23,18 @@ LDFLAGS :=
 ifeq (${DEBUG},y)
   DEBUG := g3
 else
-  DEFS  := NDEBUG_UBLAS NDEBUG_DP NDEBUG
+  ifeq ($(origin DEFS), undefined)
+     DEFS  := NDEBUG_UBLAS NDEBUG_DP NDEBUG
+  endif
+
   ifneq ($(origin ARCH), undefined)
     OPT += march=${ARCH}
   endif	
+
   OPT += O3
+
   LANGO += tracer prefetch-loop-arrays 
+
   ifneq (${PROF},y)
     LANGO += omit-frame-pointer
   endif
