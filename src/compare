@@ -399,3 +399,36 @@ Flat profile:
  19.81
 
   Also, how much time do we spend calculating all those probabilities in print_stats()?
+
+
+----
+Job #1: time ~/bin/bali-phy/base Data/EF-Tu/12d.fasta --gaps star --iterations 10 --seed 0 > out 2>err
+Job #1: 
+
+base=g++-cvs -ffast-math -funroll-loops -fomit-frame-pointer -Wall -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing  -march=pentium4 -mtune=pentium4 -O3 -DNDEBUG_DP -DNDEBUG -pipe --param max-gcse-passes=1 -I/usr/local/include -I../include/ -I.  -c -o dp-engine.o dp-engine.C
+
+job1: 3.36 3.33 3.34
+job2: 21.48
+
+job1 web: 3.23 3.21 3.24 3.22
+job2 web: 21.69
+
+job1 gcse=2: 3.28 3.28 3.29
+job2 gcse=2: 21.78
+
+job1 gcse=2 web: 3.15 3.13 3.17
+job2 gcse=2 web: 21.40 21.43
+
+job1 gcse=2 web tree-loop-linear: 3.16 3.12 3.11 (not different <- 24b)
+job2 gcse=2 web tree-loop-linear: 21.53
+
+job1 gcse=2 web tree-loop-ivcanon: 3.14 3.12 3.12 3.14
+job2 gcse=2 web tree-loop-ivcanon: 21.50 
+
+job1 gcse=2 web tree-loop-ivcanon ivopts tree-loop-im: 3.14 3.12 3.12 3.14
+job2 gcse=2 web tree-loop-ivcanon ivopts tree-loop-im: 21.53
+
+job1 gcse=2 web tracer: 3.12 3.15 3.17 3.16
+job2 gcse=2 web tracer: 22.64 22.62
+
+
