@@ -663,6 +663,10 @@ vector<int> tree::standardize(const vector<int>& lnames) {
       newroot = i;
       break;
     }
+
+  // newroot is actually a branch...
+  if (leaves() == 2)
+    newroot=0;
   reroot(newroot);
 
   /********** Input new leaf order *************/

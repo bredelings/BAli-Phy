@@ -1,6 +1,6 @@
 # run as Rexec plot-diff.R test
 
-argv = function(x) {
+argv <- function(x) {
   args = commandArgs()
   offset = 0
   for(i in 1:length(args)) {
@@ -11,26 +11,42 @@ argv = function(x) {
 }
 
 Rreverse <- function(x) {
-	tmp <- c(1:length(x))
-	for(i in 1:length(x)) {
-		tmp[i] <- x[length(x)-i+1]
-	}
-	tmp
+  tmp <- c(1:length(x))
+  for(i in 1:length(x)) {
+    tmp[i] <- x[length(x)-i+1]
+  }
+  tmp
+}
+
+getcolor <- function(x) {
+  if (x>=0) {
+    x = x*x
+    start = 1.0
+    end = 0
+    
+    h = start + x * (end-start)
+  }
+  else {
+    x = -x;
+    x = x*x
+    start = 0.3
+    end = 1
+    
+    h = start + x * (end-start)
+  }
+  hsv(h,x,1)
 }
 
 
 par(mfrow=c(2,3))
 
-ncolors <- 20
+ncolors <- 60
 
 mycolors <- heat.colors(ncolors)
 mycolors <- Rreverse(mycolors)
 mycolors <- c("yellow","orange","green3","blue","black")
 # normal <- 11212
-levelnames <- c("<= 0.25", "0.25 - 0.50", "0.50 - 0.75", "0.75 - 0.95", ">= 0.95")
 #mycolors <- gray((ncolors-1):0 / ncolors)
-
-tnames <- c("CAR4081","consGenv", "consAenv", "consBenv")
 
 mymax <- 0
 
@@ -38,7 +54,7 @@ tsize <- 1.25
 tlab <- 1.25
 
 
-
+# if we are comparing
 plotsegs <- function(normal, edges, lab1, lab2) {
   xa0 <- edges$V1
   ya0 <- edges$V2
@@ -51,12 +67,14 @@ plotsegs <- function(normal, edges, lab1, lab2) {
   poscolors <- hsv(0.3,1:ncolors/ncolors,1);
   negcolors <- hsv(1.0,1:ncolors/ncolors,1);
 
-  if (1) { # best is 0.85??
-    score1 = weight
-    score2 = weight
-    a = seq(1.0,0.8,length=ncolors);
+  if (length(score1) == 0 ) {
+    score1 = weight   # first one is the same as first-second
+    score2 = weight*0 # second is zero
+
+    a = seq(1.0,0.5,length=ncolors);
     b = 1:ncolors/ncolors
-    poscolors = hsv( a,b,1);
+    poscolors = lapply(1:ncolors/ncolors,getcolor)
+    negcolors = c();
   }
 
 #  colors <- c(heat.colors(ncolors),Rreverse(topo.colors(ncolors)))
@@ -67,11 +85,17 @@ plotsegs <- function(normal, edges, lab1, lab2) {
   score1 <- score1 / normal
   score2 <- score2 / normal
 
-  boundaries <- seq(0,ncolors)/ncolors;
-  boundaries2 <- boundaries
-  m <- max(max(weight),-min(weight))
-  boundaries <- m*boundaries
+# boundaries2 is the ABSOLUTE scale
+  boundaries2 <- seq(0,ncolors)/ncolors
+  boundaries <- boundaries2
+
+  if (length(score1) != 0) {
+# boundaries is the RELATIVE scale
+    m <- max(max(weight),-min(weight))
+    boundaries <- m*boundaries
+  }
   
+# data frame with scaled weight and scores
   tmp <- data.frame(xa0,ya0,xa1,ya1,weight,score1,score2)
 
   if( mymax == 0 ) {
@@ -94,51 +118,52 @@ plotsegs <- function(normal, edges, lab1, lab2) {
     
 
   
+  # Draw (in grey) the lines that we all agree on
   for(i in 2:ncolors) {
     tmp4 <- tmp[tmp$score1 >= boundaries2[i] & tmp$score1 <= boundaries2[i+1],]
     
     if (length(tmp4$xa0)>0 ) {
-      print(i)
-      print (1.0-0.*i/ncolors)
+#      print("i = ")
+#      print(i)
+#      print (1.0-0.25*i/ncolors)
       color <- grey(1.0-0.25*i/ncolors)
       segments(tmp4$xa0, tmp4$ya0, tmp4$xa1, tmp4$ya1, col=color, lwd=1)
     }
   }
 
+
+  # Draw (in color) the lines that we disagree on
   for(i in 2:ncolors) {
     # positive
     tmp2 <- tmp[tmp$weight >= boundaries[i] & tmp$weight <= boundaries[i+1],]
     # negative
     tmp3 <- tmp[tmp$weight <= -boundaries[i] & tmp$weight <= -boundaries[i+1],]
 
-    #    print(poscolors[i]);
     if (length(tmp2$xa0)>0 ) {
-      segments(tmp2$xa0, tmp2$ya0, tmp2$xa1, tmp2$ya1, col=poscolors[i], lwd=1)
+      segments(tmp2$xa0, tmp2$ya0, tmp2$xa1, tmp2$ya1, col=getcolor(i/ncolors), lwd=1)
     }
     
     #    print(negcolors[i]);
     if (length(tmp3$xa0)>0 ) {
-      segments(tmp3$xa0, tmp3$ya0, tmp3$xa1, tmp3$ya1, col=negcolors[i], lwd=1)
+      segments(tmp3$xa0, tmp3$ya0, tmp3$xa1, tmp3$ya1, col=getcolor(-i/ncolors), lwd=1)
     }
   }
 
-  labels <- c(Rreverse(negcolors),poscolors)
+
   labels <- c()
-  colors <- c(Rreverse(negcolors),poscolors)
   colors <- c()
 
-  for(i in seq((ncolors+1),2,-4)) {
-    min <- -boundaries[i]
-    max <- -boundaries[i-1]
-    labels <- c(labels,paste(min))
-    colors <- c(colors,negcolors[i-1])
+  if (length(negcolors) > 0) {
+    for(i in seq(-1,1,length=8)) {
+      labels = c(labels,paste(i*m))
+      colors = c(colors,getcolor(i))
+    }
   }
-  
-  for(i in seq(2,(ncolors+1),4)) {
-    min <- boundaries[i-1]
-    max <- boundaries[i]
-    labels <- c(labels,paste(max))
-    colors <- c(colors,poscolors[i-1])
+  else {
+    for(i in seq(0,1,length=11)) {
+      labels = c(labels,paste(i))
+      colors = c(colors,getcolor(i))
+    }
   }
 
   legend(xmin+(xmax-xmin)*0.65,ymin+(ymax-ymin)*0.6,
@@ -149,30 +174,37 @@ plotsegs <- function(normal, edges, lab1, lab2) {
          y.intersp=0.8)
 }
 
-filename = argv(1)
-input = file(filename);
-open(input,"r");
-total = scan(input,n=1,sep=" ")
-name1 = scan(input,what="",n=1,sep=" ")
-name2 = scan(input,what="",n=1,sep=" ")
-close(input)
+plotfile = function(input) {
+  if (is.character(input)) {
+    input <- file(input,"r")
+    on.exit(close(input))
+  }
+  if (!inherits(input, "connection")) 
+    stop("argument `file' must be a character string or connection")
+  if (!isOpen(input)) {
+    open(input, "r")
+    on.exit(close(input))
+  }
 
-d <- read.table(filename,skip=1)
-plotsegs(total,d,name1,name2);
+  total = scan(input,n=1,sep=" ")
+  nlines = scan(input,n=1,sep=" ")
+  name1 = scan(input,what="",n=1,sep=" ")
+  name2 = scan(input,what="",n=1,sep=" ")
+  d <- read.table(input,nrows=nlines)
 
-# d <- read.table("m02")
-# plotsegs(d,tnames[0+1],tnames[2+1])
+  print("Plotting...")
+  plotsegs(total,d,name1,name2);
+}
 
-# d <- read.table("m03")
-# plotsegs(d,tnames[0+1],tnames[3+1])
+ifile = file(argv(1),"r")
+open(ifile,"r")
 
-# d <- read.table("m12")
-# plotsegs(d,tnames[1+1],tnames[2+1])
+plotfile(ifile)
+plotfile(ifile)
+plotfile(ifile)
+plotfile(ifile)
+plotfile(ifile)
+plotfile(ifile)
 
-# d <- read.table("m13")
-# plotsegs(d,tnames[1+1],tnames[3+1])
-
-# d <- read.table("m23")
-# plotsegs(d,tnames[2+1],tnames[3+1])
-
+close(ifile)
 # dev.print(device=postscript,file="test.ps",height=8,width=16,horizontal=T)

@@ -35,8 +35,8 @@ namespace substitution {
 //    In the common case (doing the full tree) this might be a speedup...
 
   /// Actually propogate info along branches
-												       
-												       
+
+
   inline void peel(const vector<int>& branches, valarray<bool>& used,
 		   Matrix& distributions,
 		   const vector<int>& residues, const tree& T, 
@@ -242,6 +242,9 @@ double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SM
 	       const vector<Matrix>& transition_P) {
   const alphabet& a = SModel.Alphabet();
 
+  if (T.leaves() == 2)
+    return Pr(column,T,SModel,transition_P);
+
   double p=0;
   for(int lroot=0;lroot<a.size();lroot++) {
     double temp=SModel.frequencies()[lroot];
@@ -305,11 +308,11 @@ double Pr_star_constant(const alignment& A,const Parameters& P) {
   for(int i=0;i<T1.leaves();i++) 
     for(int j=0;j<i;j++) 
       sum += D(i,j);
-  const int n = (T1.leaves()*(T1.leaves()+1))/2;
+  const int n = (T1.leaves()*(T1.leaves()-1))/2.0;
   double ave = sum/n;
 
   //-------- Set branch lengths to ave/2  ----------//
-  for(int b=0;b<T1.leaves();b++)
+  for(int b=0;b<T1.leafbranches();b++)
     P2.setlength(b,ave/2.0);
 
 
@@ -317,31 +320,36 @@ double Pr_star_constant(const alignment& A,const Parameters& P) {
   return Pr_star(A,P2);
 }
 
-double Pr_star_estimate(const alignment& A,const Parameters& P) {
-  const tree& T1 = P.T;
-  Parameters P2 = P;
+  double Pr_star_estimate(const alignment& A,const Parameters& P) {
+    const tree& T1 = P.T;
+    Parameters P2 = P;
+    
+    //----------- Get Distance Matrix --------------//
+    Matrix D(T1.leaves(),T1.leaves());
+    for(int i=0;i<T1.leaves();i++) 
+      for(int j=0;j<T1.leaves();j++) 
+	D(i,j) = T1.distance(i,j);
+    
+    
+    //---- Set branch lengths to ave/2 per branch ----//
+    for(int i=0;i<T1.leaves();i++) {
+      double ave=0;
+      for(int j=0;j<T1.leaves();j++) {
+	if (i==j) continue;
+	ave += log(D(i,j));
+      }
+      ave /= (T1.leaves()-1);
+   
+      int b = i;
+      if (T1.leaves() == 2) b=0;
 
-  //----------- Get Distance Matrix --------------//
-  Matrix D(T1.leaves(),T1.leaves());
-  for(int i=0;i<T1.leaves();i++) 
-    for(int j=0;j<T1.leaves();j++) 
-      D(i,j) = T1.distance(i,j);
-
-
-  //---- Set branch lengths to ave/2 per branch ----//
-  for(int i=0;i<T1.leaves();i++) {
-    double ave=0;
-    for(int j=0;j<T1.leaves();j++) {
-      if (i==j) continue;
-      ave += log(D(i,j));
+      P2.setlength(b,exp(ave)/2.0);
     }
-    ave /= (T1.leaves()-1);
-    P2.setlength(i,exp(ave)/2.0);
+    
+    //----------- Get log L w/ new tree  -------------//
+    return Pr_star(A,P2);
   }
 
-  //----------- Get log L w/ new tree  -------------//
-  return Pr_star(A,P2);
-}
   double Pr_unaligned(const alignment& A,const Parameters& P) {
     const alphabet& a = A.get_alphabet();
 

@@ -28,6 +28,8 @@ void do_setup(Arguments& args,vector<alignment>& alignments) {
 
   /* ----- Try to load alignments ------ */
   string tag = "align[sample";
+  if (args.set("tag"))
+    tag = args["tag"];
 
   string line;
   while(getline(cin,line)) {
@@ -139,11 +141,16 @@ int main(int argc,char* argv[]) {
 
     vector< ublas::matrix<int> > Matrices;
 
-    cout<<alignments.size()<<" "<<name1<<" "<<name2<<endl;
     for(int i=0;i<alignments.size();i++) {
       const alignment& A = alignments[i];
+
       int n1 = A.index(name1);
+      if (n1 == -1)
+	throw myexception(string("sequence ") + name1 + " not found.");
+
       int n2 = A.index(name2);
+      if (n2 == -1)
+	throw myexception(string("sequence ") + name2 + " not found.");
 
       if (Matrices.size() ==0) {
 	int l1 = A.seqlength(n1);
@@ -186,7 +193,15 @@ int main(int argc,char* argv[]) {
       }
     }
 
-    
+    int nlines=0;
+    for(int m=0;m<3;m++)
+      for(int i=0;i<Matrices[0].size1();i++)
+	for(int j=0;j<Matrices[0].size2();j++)
+	  if (Matrices[m](i,j)) 
+	    nlines++;
+	    
+    cout<<alignments.size()<<" "<<nlines<<" "<<name1<<" "<<name2<<endl;
+
     for(int m=0;m<3;m++)
       for(int i=0;i<Matrices[0].size1();i++)
 	for(int j=0;j<Matrices[0].size2();j++) {

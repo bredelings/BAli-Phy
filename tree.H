@@ -186,6 +186,7 @@ public:
 
   int leaves() const {return n_leaves;}
   int branches() const {return branches_.size()-1;}
+  int leafbranches() const {return (n_leaves==2)?1:n_leaves;}
   int num_nodes() const {return order.size();}
   branchview branch_up(int);
   const_branchview branch_up(int) const;

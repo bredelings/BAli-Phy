@@ -190,6 +190,7 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
     assert(0);
   }
 
+  std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<Matrices.Pr_sum_all_paths()<<endl;
 #endif
   /*--------------------------------------------------------------*/
   assert(valid(A));
