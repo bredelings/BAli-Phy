@@ -303,9 +303,9 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   for(int i=0;i<PR.size();i++) {
     std::cerr<<"option = "<<i<<endl;
 
-    std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[i][0]<<"    Pr2  - Pr1  = "<<PR[i][0] - PR[0][0]<<endl;
-    std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[i][2]<<"    PrQ2 - PrQ1 = "<<PR[i][2] - PR[0][2]<<endl;
-    std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[i][1]<<"    PrS2 - PrS1 = "<<PR[i][1] - PR[0][1]<<endl;
+    std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[i][0]<<"    Pr2  - Pr1  = "<<PR[i][0] - PR.back()[0]<<endl;
+    std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[i][2]<<"    PrQ2 - PrQ1 = "<<PR[i][2] - PR.back()[2]<<endl;
+    std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[i][1]<<"    PrS2 - PrS1 = "<<PR[i][1] - PR.back()[1]<<endl;
 
     double diff = (PR[i][1] - PR.back()[1]) - (PR[i][0] - PR.back()[0]);
     std::cerr<<"diff = "<<diff<<endl;
