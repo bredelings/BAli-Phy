@@ -86,10 +86,10 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
 		       <<A.n_sequences()<<" sequences.";
 
   //----- IF sequences = leaf nodes THEN maybe add internal sequences.
-  else if (A.n_sequences() == T.n_leaves()) 
+  else if (A.n_sequences() == T.n_leaves()) {
     if (internal_sequences)
       A = add_internal(A,T);
-
+  }
   //----- IF sequences > leaf nodes THEN maybe complain -------//
   else {
     if (not internal_sequences)
