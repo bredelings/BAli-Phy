@@ -285,23 +285,20 @@ namespace substitution {
 
   double INV_Model::super_prior() const {
     double p = parameters()[parameters().size()-2];
-    double r = parameters()[parameters().size()-1];
 
-    double P = 0;
-    P += -log(inv_frac_mean) - p/inv_frac_mean;
-    P += -log(max_inv_rate); //prior on r
-    
-    if (p < 0 or p > 1)
+    const double frac_mode = 0.05;
+    const double N = 20;
+    const double a  = 1.0 + N * frac_mode;
+    const double b  = 1.0 + N * (1.0 - frac_mode);
+
+    if (p <= 0.0 or p >= 1.0)
       return log_0;
-    else if (r < 0 or r > 0.01)
-      return log_0;
-    else
-      return P;
+    else 
+      return log(gsl_ran_beta_pdf(p,a,b));
   }
 
   void INV_Model::super_fiddle() {
     double &p = parameters_[parameters_.size()-2];
-    double &r = parameters_[parameters_.size()-1];
 
     // fiddle Invariant fraction
     const double sigma = 0.04;
@@ -309,20 +306,15 @@ namespace substitution {
 
     p = wrap(p,1.0);
 
-    // fiddle Invariant rate
-    r += gaussian(0,0.001);
-    r = wrap(r,0.01);
-    
     recalc();
   }
 
   void INV_Model::recalc() {
     double p = parameters_[parameters_.size()-2];
-    double r = parameters_[parameters_.size()-1];
 
     // Thus, r is the RELATIVE rate to the other model
     // Should we try to specify an absolute rate?
-    rates_[nrates()-1] = r;
+    rates_[nrates()-1] = 0;
     distribution_[nrates()-1] = p;
   
     for(int r=0;r<SubModel().nrates();r++) {

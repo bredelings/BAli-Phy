@@ -58,7 +58,8 @@ string getrgb(const vector<int>& RGB) {
 }
 
 inline double f(double x) {
-  x = x + 0.5*(x*x - x);
+  //  x = x + 0.5*(x*x - x);
+  x *= x;
   x *= 0.95;
   return x;
 }

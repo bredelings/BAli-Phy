@@ -55,6 +55,8 @@ namespace A5 {
   vector<int> get_path(const alignment& A,const vector<int>& nodes,const vector<int>& states);
 
   /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
+  double log_correction(const alignment& A,const Parameters& P,const vector<int>& nodes);
+
   double log_acceptance_ratio(const alignment& A1,const Parameters& P1,const vector<int>&,
 			      const alignment& A2,const Parameters& P2,const vector<int>&);
 

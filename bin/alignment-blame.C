@@ -192,7 +192,7 @@ public:
     // initialize the matrix, and add a pseudocount for a conjugate prior
     for(int i=0;i<T.leaves();i++)
       for(int j=0;j<T.leaves();j++)
-	Pr_align_pair(i,j)=pseudocount;
+	Pr_align_pair(i,j)=pseudocount*0.5;
 
     // For each label, count all present pairs
     for(int i=0;i<v1.size();i++) {
@@ -249,7 +249,7 @@ public:
     // initialize the matrix, and add a pseudocount for a conjugate prior
     for(int i=0;i<T.leaves();i++)
       for(int j=0;j<T.leaves();j++)
-	Pr_align_pair(i,j)=pseudocount;
+	Pr_align_pair(i,j)=pseudocount*0.5;
 
     // For each label, count all present pairs
     for(int i=0;i<v1.size();i++) {
@@ -280,7 +280,7 @@ double LeastSquares::operator()(const optimize::Vector& v) const {
   double SSE=0;
   for(int l1=0;l1<T.leaves();l1++) 
     for(int l2=0;l2<l1;l2++) {
-      double D1 = -log(1.0-Pr_align_pair(l1,l2));
+      double D1 = -log(Pr_align_pair(l1,l2));
       double D2 = temp.distance(l1,l2);
       double E2 = (D1-D2)*(D1-D2);
       SSE += E2;
@@ -307,7 +307,7 @@ public:
     // initialize the matrix, and add a pseudocount for a conjugate prior
     for(int i=0;i<T.leaves();i++)
       for(int j=0;j<T.leaves();j++)
-	Pr_align_pair(i,j)=pseudocount;
+	Pr_align_pair(i,j)=pseudocount*0.5;
 
     // For each label, count all present pairs
     for(int i=0;i<v1.size();i++) {
@@ -351,6 +351,7 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
   for(int b=0;b<v.size();b++)
     Pr += -v[b];
 
+  /*
   // include some kind of pressure to make lengths reflect evolutionary
   // distances
   double sum1 = 0;
@@ -367,6 +368,8 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
 
     Pr -= std::abs(diff)*25;
   }
+  */
+
   return Pr;
 }
 
@@ -575,10 +578,12 @@ int main(int argc,char* argv[]) {
       if (args["type"] == "SSE")
 	f = new SSE_match_pairs(labels,T);
       else if (args["type"] == "LeastSquares")
-	f = new SSE_match_pairs(labels,T);
+	f = new LeastSquares(labels,T);
       else
 	f = new poisson_match_pairs(labels,T);
       optimize::Vector start(0.01,T.branches());
+      assert((*f)(start) > log_0);
+
       optimize::Vector end = search_basis(start,*f,1.0e-5,500);
       // optimize::Vector end = search_gradient(start,*f,1.0e-5,500);
       
