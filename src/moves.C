@@ -247,7 +247,7 @@ MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
 
-    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+    //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if ((myrandomf() < 0.15) and (P.T.n_leaves() >2))
       sample_tri_one(A,P,b);
