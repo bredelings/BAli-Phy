@@ -317,7 +317,7 @@ namespace std {
 
 
 // Enable performance options in release mode
-#ifdef NDEBUG
+#ifdef NDEBUG_UBLAS
 
 #ifdef BOOST_MSVC
 // MSVC has special inlining options
