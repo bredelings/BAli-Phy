@@ -57,7 +57,7 @@ void change_branch_length_and_T(alignment& A, Parameters& Theta,int b) {
 	Theta=Theta2;
 	std::cerr<<Theta2.T.branch(b).length()<<" "<<Theta.T.branch(b).length()<<endl;
 	std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
-	
+	success=true;
       }
       else 
 	std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";

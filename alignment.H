@@ -34,7 +34,7 @@ public:
   void print_fasta(std::ostream&) const;
   void print_phylip(std::ostream&,bool=false) const;
 
-  bool changelength(int l);
+  void changelength(int l);
   void delete_column(int i);
 
   int& operator()(int l,int s) {return array(l,s); }

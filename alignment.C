@@ -43,18 +43,8 @@ int alignment::index(const string& s) const {
   return -1;
 }
 
-bool alignment::changelength(int l) {
-  bool can_do=true;
-  if (l < length()) {
-    for(int i=0;i<sequences.size();i++)
-      if (l < sequences[i].size())
-	can_do = false;
-  }
-  if (not can_do) return false;
-
+void alignment::changelength(int l) {
   resize(l,array.size2());
-
-  return true;
 }
 
 void alignment::delete_column(int column) {

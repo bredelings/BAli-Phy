@@ -143,7 +143,7 @@ void MCMC::add(move m,double weight,const string& keys) {
 
 void MCMC::iterate(alignment& A,Parameters& P,const int max) {
   const SequenceTree& T = P.T;
-  SequenceTree ML_tree = T;
+  Parameters ML_P = P;
   alignment ML_alignment = A;
   bool ML_printed = true;
 
@@ -206,16 +206,15 @@ void MCMC::iterate(alignment& A,Parameters& P,const int max) {
     if (new_p > ML_score) {
       // arguably I could optimize these for a few iterations
       ML_score = new_p;
-      ML_tree = T;
+      ML_P = P2;
       ML_alignment = A2;
 
       ML_printed = false;
     }
 
     if (not ML_printed and iterations % 100 == 0) {
-      std::cerr<<"ML = "<<ML_score<<endl;
-      std::cerr<<ML_alignment<<endl;
-      std::cerr<<ML_tree<<endl;
+      std::cout<<"ML = "<<ML_score<<endl;
+      print_stats(std::cout,ML_alignment,ML_P,probability);
       ML_printed = true;
     }
 
