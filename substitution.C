@@ -35,8 +35,8 @@ namespace substitution {
 //    In the common case (doing the full tree) this might be a speedup...
 
   /// Actually propogate info along branches
-
-
+												       
+												       
   inline void peel(const vector<int>& branches, valarray<bool>& used,
 		   Matrix& distributions,
 		   const vector<int>& residues, const tree& T, 

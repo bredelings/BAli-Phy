@@ -37,7 +37,7 @@ double prior(const SequenceTree& T,double branch_mean) {
   return p;
 }
 
-// Tree prior + SModel prior
+/// Tree prior + SModel prior + IModel prio
 double prior(const Parameters& P) {
   double p = 0;
 
@@ -51,6 +51,9 @@ double prior(const Parameters& P) {
 
   // prior on the substitution model
   p += P.SModel().prior();
+
+  // prior on the insertion/deletion model
+  p += P.IModel().prior();
 
   return p;
 }

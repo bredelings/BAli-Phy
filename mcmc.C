@@ -410,7 +410,11 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& P,const st
   o<<"mu = "<<P.branch_mean<<endl;
 
   for(int i=0;i<P.SModel().parameters().size();i++)
-    o<<"    p"<<i<<" = "<<P.SModel().parameters()[i];
+    o<<"    pS"<<i<<" = "<<P.SModel().parameters()[i];
+  o<<endl<<endl;
+
+  for(int i=0;i<P.IModel().parameters().size();i++)
+    o<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
   o<<endl<<endl;
 
   // The leaf sequences should NOT change during alignment

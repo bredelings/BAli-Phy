@@ -147,11 +147,11 @@ double HMM::check(const vector<int>& path1,const vector<int>& path2,double lp1,d
   return diff;
 }
 
-double DParray::path_P(const vector<int>& path) {
+double DParray::path_P(const vector<int>& g_path) {
   const int I = size()-1;
   int i=I;
-  int l=path.size()-1;
-  int state2 = path[l];
+  int l=g_path.size()-1;
+  int state2 = g_path[l];
 
   double Pr=0;
   while (l>0) {
@@ -160,7 +160,7 @@ double DParray::path_P(const vector<int>& path) {
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)[state1][i]+GQ(state1,state2);
 
-    int state1 = path[l-1];
+    int state1 = g_path[l-1];
     double p = choose_P(state1,transition);
     assert(p > log_0/100);
 
@@ -334,34 +334,6 @@ void DPmatrix::forward(const vector<int>& path,double bandwidth) {
 }
 
 
-double DPmatrix::path_Q_subst(const vector<int>& path) {
-  double P_sub=0;
-  int i=0,j=0;
-  for(int l=0;l<path.size();l++) {
-
-    int state2 = path[l];
-    if (di(state2))
-      i++;
-    if (dj(state2))
-      j++;
-
-    double sub=0;
-    if (di(state2) and dj(state2))
-      sub = emitMM(i,j);
-    else if (di(state2))
-      sub = emitM_(i,j);
-    else if (dj(state2))
-      sub = emit_M(i,j);
-    else
-      sub = emit__(i,j);
-
-    P_sub += sub;
-  }
-  assert(i == size1()-1 and j == size2()-1);
-  return P_sub;
-}
-
-
 double DPmatrix::path_check(const vector<int>& path) {
   double Pr=0;
   
@@ -514,25 +486,71 @@ double DPmatrix::Pr_sum_all_paths() {
 }
 
 
-DPmatrix::DPmatrix(const vector<int>& v1,
+DPmatrix::DPmatrix(int i1,
+		   int i2,
+		   const vector<int>& v1,
 		   const vector<double>& v2,
-		   const Matrix& M,
-		   const vector< double >& d0,
-		   const vector< vector< valarray<double> > >& d1,
-		   const vector< vector< valarray<double> > >& d2, 
-		   const valarray<double>& f)
+		   const Matrix& M)
   :HMM(v1,v2,M),
-   vector<Matrix>(nstates(),Matrix(d1.size()+1,d2.size()+1)), 
-   s1_sub(d1.size()),s2_sub(d2.size()),
-   distribution(d0),
-   dists1(d1),dists2(d2),frequency(f)
+   vector<Matrix>(nstates(),Matrix(i1+1,i2+1)),
+   S1(i1+1),
+   S2(i2+1)
 {
-  
   //----- zero-initialize matrices ------//
   for(int i=0;i<size1();i++)
     for(int j=0;j<size2();j++) 
       for(int S=0;S<nstates();S++)
 	(*this)[S](i,j)  = log_0;
+
+  //----- set up start probabilities -----//
+  for(int S=0;S<start_P.size();S++)
+    (*this)[S](0,0) = start_P[S];
+}
+
+void DPmatrixNoEmit::forward(int x1,int y1,int x2,int y2) {
+  return DPmatrix::forward(x1,y1,x2,y2);
+}
+
+double DPmatrixEmit::path_Q_subst(const vector<int>& path) {
+  double P_sub=0;
+  int i=0,j=0;
+  for(int l=0;l<path.size();l++) {
+
+    int state2 = path[l];
+    if (di(state2))
+      i++;
+    if (dj(state2))
+      j++;
+
+    double sub=0;
+    if (di(state2) and dj(state2))
+      sub = emitMM(i,j);
+    else if (di(state2))
+      sub = emitM_(i,j);
+    else if (dj(state2))
+      sub = emit_M(i,j);
+    else
+      sub = emit__(i,j);
+
+    P_sub += sub;
+  }
+  assert(i == size1()-1 and j == size2()-1);
+  return P_sub;
+}
+
+
+DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
+			   const vector<double>& v2,
+			   const Matrix& M,
+			   const vector< double >& d0,
+			   const vector< vector< valarray<double> > >& d1,
+			   const vector< vector< valarray<double> > >& d2, 
+			   const valarray<double>& f)
+  :DPmatrix(d1.size(),d2.size(),v1,v2,M),
+   s1_sub(d1.size()),s2_sub(d2.size()),
+   distribution(d0),
+   dists1(d1),dists2(d2),frequency(f)
+{
   
   //----- cache G1,G2 emission probabilities -----//
   for(int i=0;i<dists1.size();i++) {
@@ -548,10 +566,9 @@ DPmatrix::DPmatrix(const vector<int>& v1,
       total += distribution[r]*sum( dists2[i][r] * frequency );
     s2_sub[i] = log(total);
   }
-
-  for(int S=0;S<start_P.size();S++)
-    (*this)[S](0,0) = start_P[S];
 }
+
+
 
 inline void DPmatrixSimple::forward(int x1,int y1,int x2,int y2) {
   assert(x1 < x2 or y1 < y2);

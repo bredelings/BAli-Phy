@@ -134,7 +134,6 @@ bool phylip_section(std::istream& file,int ntaxa, vector<string>& names,vector<s
 bool phylip_section(std::istream& file,int ntaxa,vector<string>& letters) {
   letters.clear();
   string line;
-  int indent = -1;
   for(int i=0;i<ntaxa;i++) {
     getline(file,line);
     assert(file);

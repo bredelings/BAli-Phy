@@ -384,23 +384,19 @@ int main(int argc,char* argv[]) {
 
 
     /*-------------Choose an indel model--------------*/
-    int IMlength = 500;    //FIXME - perhaps we should choose \tau here
-    if (IMlength < A.length()*3)
-      IMlength = A.length()*3;
-
     IndelModel* imodel = 0;
 
     if (args["imodel"] == "ordered") {
       std::cout<<"imodel = ordered\n";
-      imodel = new IndelModel1(IMlength,lambda_O,lambda_E);
+      imodel = new IndelModel1(lambda_O,lambda_E);
     }
     else if (args["imodel"] == "single_indels") {
       std::cout<<"imodel = single indels\n";
-      imodel = new SingleIndelModel(IMlength,lambda_O);
+      imodel = new SingleIndelModel(lambda_O);
     }
     else {
       std::cout<<"imodel = symmetric\n";
-      imodel = new IndelModel2(IMlength,lambda_O,lambda_E);
+      imodel = new IndelModel2(lambda_O,lambda_E);
     }
     if (args["gaps"]== "star") {
       imodel->full_tree = false;

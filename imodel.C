@@ -1,8 +1,13 @@
 #include "imodel.H"
 #include "logsum.H"
+#include "dpmatrix.H"
+#include "rng.H"
+#include <gsl/gsl_randist.h>
 
-void IndelModel::construct_length_plus_p(int n) {
-  using std::vector;
+using std::vector;
+
+void IndelModel::construct_length_plus_p() {
+  const int n = 200;
 
   vector<double>& f_E = p_length_plus;
 
@@ -23,86 +28,77 @@ void IndelModel::construct_length_plus_p(int n) {
   }
 }
 
-void IndelModel::construct_lengthp(int n) {
-  using std::vector;
+void IndelModel::construct_lengthp() {
+  const int size1=100;
+  const int size2=200;
 
-  vector< vector<double> > p1;
-  p1.push_back( vector<double>(n,log_0) );
-  p1.push_back( vector<double>(n,log_0) );
-  p1.push_back( vector<double>(n,log_0) );
-  p1.push_back( vector<double>(n,log_0) );
+  // Store emission characteristics
+  vector<int> state_emit(4,0);
+  state_emit[0] |= (1<<1)|(1<<0);
+  state_emit[1] |= (1<<1);
+  state_emit[2] |= (1<<0);
+  state_emit[3] |= 0;
 
-  vector< vector<double> > p2 = p1;
+  // Store start probabilities
+  vector<double> start_P = pi;
+  start_P.erase(start_P.begin()+3);
 
-  p1[0][0] = pi[0];
-  p1[1][0] = pi[1];
-  p1[2][0] = pi[2];
-  p1[3][0] = pi[3];
+  // Compute probabilities for pairs of lengths
+  DPmatrixNoEmit Matrices(size2,size2,state_emit,start_P,Q);
+  Matrices.forward(0,0);
+  Matrices.forward(0,0,size2,size2);
 
-  for(int t=1;t<n;t++) {
-
-    p2[1][0] = log_0;
-    for(int s1=0;s1<4;s1++) 
-      p2[1][0] = logsum(p2[1][0],p1[s1][0] + Q[s1][1]);
-
-    p2[3][0] = log_0;
-    for(int s1=0;s1<4;s1++) 
-      p2[3][0] = logsum(p2[3][0],p1[s1][0] + Q[s1][3]);
-
-    for(int L=1;L<=t;L++) {
-      for(int s2=0;s2<4;s2++) {
-	p2[s2][L] = log_0;
-	for(int s1=0;s1<4;s1++) {
-	  if (s2==0 or s2==2)
-	    p2[s2][L] = logsum(p2[s2][L],p1[s1][L-1]+Q[s1][s2]);
-	  else
-	    p2[s2][L] = logsum(p2[s2][L],p1[s1][L]  +Q[s1][s2]);
-	}
+  // Compute probabilities for a single length
+  vector<double> l1;
+  vector<double> l2;
+  
+  for(int i=0;i<size1;i++) {
+    double total1 = log_0;
+    double total2 = log_0;
+    for(int j=0;j<size2;j++) {
+      for(int S=0;S<Matrices.nstates();S++) {
+	total1 = logsum(total1,Matrices[S](i,j)+Q(S,3));
+	total2 = logsum(total2,Matrices[S](j,i)+Q(S,3));
       }
     }
-
-    if (t%100 == 0) {
-      vector<double> totals(4);
-      for(int s=0;s<4;s++) {
-	totals[s] = log_0;
-	for(int i=0;i<p1[s].size();i++)
-	  totals[s] = logsum(totals[s],p1[s][i]);
-	totals[s] = exp(totals[s]);
-      }
-      
-      std::cerr<<"t = "<<t-1<<
-	"  totalM = "<<totals[0]<<
-	"  totalG1 = "<<totals[1]<<
-	"  totalG2 = "<<totals[2]<<
-	"  totalE = "<<totals[3]<<
-	"  total = "<<totals[0]+totals[1]+totals[2]+totals[3]<<
-	std::endl;
-    }
-
-    p1 = p2;
-    for(int i=0;i<4;i++) {
-      p1[i][n-2] = logsum(p1[i][n-2],p1[i][n-1]);
-      p1[i][n-1] = log_0;
-    }
-
+    l1.push_back(total1);
+    l2.push_back(total2);
   }
+  p_length = l1;
 
-  p_length = p1[3];
-  for(int i=0;i<p_length.size();i++)
-    std::cerr<<i<<"  "<<p_length[i]<<std::endl;
-
+  //  for(int i=0;i<p_length.size();i++) {
+  //    assert(l1[i] == l2[i]);
+  //  }
 }
+
+IndelModel::IndelModel(int s)
+  : P(4,4),parameters_(s),full_tree(true),pi(4),Q(4,4)
+{ }
+
 
 IndelModel::IndelModel()
   : P(4,4),full_tree(true),pi(4),Q(4,4)
 { }
 
 
-IndelModel1::IndelModel1(int maxlength,double lambda_O,double lambda_E)
-{
-  epsilon = exp(lambda_E);
-  delta   = exp(lambda_O); // we don't need to divide by 1-epsilon, do we?
-  tau     = 1.0e-3;
+void IndelModel1::fiddle() { 
+  double& lambda_O = parameters_[0];
+  double& lambda_E = parameters_[1];
+
+  const double sigma = 0.15;
+
+  lambda_O = lambda_O + gaussian(0,sigma);
+  if (lambda_O>=0) lambda_O = -lambda_O;
+
+  lambda_E = lambda_O/10;
+
+  recalc();
+}
+
+void IndelModel1::recalc() {
+  double delta   = exp(parameters_[0]);
+  double epsilon = exp(parameters_[1]);
+  double tau     = 1.0e-3;
 
   assert(delta > 0.0);
   
@@ -147,18 +143,50 @@ IndelModel1::IndelModel1(int maxlength,double lambda_O,double lambda_E)
   //  pi[2] = log(delta *(1.0-delta) );
   //  pi[3] = log_0;  // must be log_0
 
-  construct_lengthp(maxlength);
-  construct_length_plus_p(maxlength);
+  IndelModel::recalc();
 }
 
-IndelModel2::IndelModel2(int maxlength,double lambda_O,double lambda_E,double b)
-{
-  epsilon = exp(lambda_E);
-  delta   = exp(lambda_O); // we don't need to divide by 1-epsilon, do we?
-  beta    = exp(b);
-  tau     = 1.0e-3;
+double IndelModel1::prior() const {
+  const double mean = -5.5;
 
-  assert(delta > 0.0);
+  double delta = exp(parameters_[0]);
+  double mu = -log(1.0-delta);
+
+  return gsl_ran_gaussian_pdf(log(mu)-mean,1.0);
+}
+
+IndelModel1::IndelModel1(double lambda_O,double lambda_E)
+  :IndelModel(2)
+{
+  parameters_[0] = lambda_O;
+  parameters_[0] = lambda_E;
+
+  recalc();
+}
+
+void IndelModel2::fiddle() { 
+  double& lambda_O = parameters_[0];
+  double& lambda_E = parameters_[1];
+
+  const double sigma = 0.15;
+  lambda_O = lambda_O + gaussian(0,sigma);
+  if (lambda_O>=0)
+    lambda_O = -lambda_O;
+  construct_lengthp();
+  construct_length_plus_p();
+
+  lambda_E = lambda_O/10;
+  recalc();
+}
+
+void IndelModel2::recalc() {
+  double delta   = exp(parameters_[0]);
+  double epsilon = exp(parameters_[1]);
+  double beta    = exp(parameters_[2]);
+  double tau     = 1.0e-3;
+
+  assert(delta > 0 and delta <= 1);
+  assert(epsilon > 0 and epsilon <= 1);
   assert(beta*delta < 1.0);
   
   /* Chain w/o transitions to End state */
@@ -202,15 +230,53 @@ IndelModel2::IndelModel2(int maxlength,double lambda_O,double lambda_E,double b)
   //  pi[2] = log(delta);
   //  pi[3] = log_0;  // must be log_0
 
-  construct_lengthp(maxlength);
-  construct_length_plus_p(maxlength);
+  IndelModel::recalc();
 }
 
-SingleIndelModel::SingleIndelModel(int maxlength,double LO) {
-  delta=exp(LO);
+double IndelModel2::prior() const {
+  const double mean = -5.5;
 
-  assert(delta > 0.0);
-  tau     = 1.0e-3;
+  double delta = exp(parameters_[0]);
+  double mu = -log(1.0-delta);
+
+  return gsl_ran_gaussian_pdf(log(mu)-mean,1.0);
+}
+
+IndelModel2::IndelModel2(double lambda_O,double lambda_E,double b)
+  :IndelModel(3)
+{
+  parameters_[0] = lambda_O;
+  parameters_[1] = lambda_E;
+  parameters_[2] = b;
+
+  recalc();
+}
+
+void SingleIndelModel::fiddle() { 
+  double& lambda_O = parameters_[0];
+
+  const double sigma = 0.15;
+  lambda_O = lambda_O + gaussian(0,sigma);
+  if (lambda_O>=0)
+    lambda_O = -lambda_O;
+
+  recalc();
+}
+
+double SingleIndelModel::prior() const {
+  const double mean = -5.5;
+
+  double delta = exp(parameters_[0]);
+  double mu = -log(1.0-delta);
+
+  return gsl_ran_gaussian_pdf(log(mu)-mean,1.0);
+}
+
+void SingleIndelModel::recalc() {
+  double delta = exp(parameters_[0]);
+  double tau   = 1.0e-3;
+
+  assert(delta > 0 and delta <= 1);
 
   /* Chain w/o transitions to End state */
   P(0,0) = log(1.0 - 2.0*delta);
@@ -248,7 +314,13 @@ SingleIndelModel::SingleIndelModel(int maxlength,double LO) {
   pi[2] = log_0;
   pi[3] = log_0;  // must be log_0
 
-  construct_lengthp(maxlength);
-  construct_length_plus_p(maxlength);
+  IndelModel::recalc();
+}
+
+SingleIndelModel::SingleIndelModel(double LO)
+  :IndelModel(1)
+{
+  parameters_[0] = LO;
+  recalc();
 }
 
