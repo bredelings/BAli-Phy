@@ -93,15 +93,9 @@ public:
   alignment(const alignment& A) {operator=(A);}
 };
 
-inline std::ostream& operator<<(std::ostream& file,const alignment& A) {
-  A.print_phylip(file,true);
-  return file;
-}
+std::ostream& operator<<(std::ostream& file,const alignment& A);
 
-inline std::istream& operator>>(std::istream& file,alignment& A) {
-  A.load_sequences(A.get_alphabet(),sequence_format::read_fasta,file);
-  return file;
-}
+std::istream& operator>>(std::istream& file,alignment& A);
 
 bool valid(const alignment&);
 
