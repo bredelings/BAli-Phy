@@ -419,7 +419,7 @@ namespace substitution {
     return peeling_operations;
   }
 
-  void calculate_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
+  int calculate_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
     const Tree& T = P.T;
     const MatCache& MC = P;
 
@@ -430,9 +430,7 @@ namespace substitution {
     for(int i=0;i<ops.size();i++)
       peel_branch(ops[i],cache,A,T,MC,P.SModel());
 
-#ifndef NDEBUG
-    std::clog<<"Peeled on "<<ops.size()<<" branches.\n";
-#endif
+    return ops.size();
   }
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
@@ -452,7 +450,11 @@ namespace substitution {
 
     ublas::matrix<int> index = subA_index_req(b,A,T,req,seq);
 
-    calculate_caches(A,P,cache);
+    int n_br = calculate_caches(A,P,cache);
+#ifndef NDEBUG
+    std::clog<<"get_column_likelihoods: Peeled on "<<n_br<<" branches.\n";
+#endif
+
 
     vector<Matrix> L;
     L.reserve(A.length());
@@ -493,7 +495,10 @@ namespace substitution {
     const Tree& T = P.T;
     Likelihood_Cache& cache = P.LC;
 
-    calculate_caches(A,P,cache);
+    int n_br = calculate_caches(A,P,cache);
+#ifndef NDEBUG
+    std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
+#endif
 
     // compute root branches
     vector<int> rb;
@@ -520,10 +525,17 @@ namespace substitution {
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
     const Tree& T = P.T;
 
-    if (cache.cv_up_to_date())
+    if (cache.cv_up_to_date()) {
+#ifndef NDEBUG
+      std::clog<<"Pr: Using cached value "<<cache.cached_value<<"\n";
+#endif
       return cache.cached_value;
+    }
 
-    calculate_caches(A,P,cache);
+    int n_br = calculate_caches(A,P,cache);
+#ifndef NDEBUG
+    std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
+#endif
 
     // compute root branches
     vector<int> rb;
