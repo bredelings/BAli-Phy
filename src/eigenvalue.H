@@ -12,8 +12,8 @@ class EigenValues: public Cloneable {
   Matrix O;
   std::vector<double> D;
 
-  void EigenValues::get_diagonal(JAMA::Eigenvalue<double>& E);
-  void EigenValues::get_rotation(JAMA::Eigenvalue<double>& E);
+  void get_diagonal(JAMA::Eigenvalue<double>& E);
+  void get_rotation(JAMA::Eigenvalue<double>& E);
 public:
   EigenValues* clone() const {return new EigenValues(*this);}
 
