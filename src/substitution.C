@@ -209,57 +209,6 @@ namespace substitution {
     return log(total);
   }
 
-  // FIXME - divide into two versions
-  //  a) one version which saves the likelihoods in scratch(column)
-  //  b) one version which just compute the probability
-  //  c) when we are fast, time which one is faster!
-
-
-  /// Compute the letter likelihoods at the root
-  void calc_root_likelihoods(const alignment& A, const Tree& T,column_cache_t cache) 
-  {
-    int root = cache.root;
-
-    // compute root branches
-    vector<int> rb;
-    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
-      rb.push_back(*i);
-
-    // get the relationships with the sub-alignments
-    ublas::matrix<int> index = get_subA_relationships(rb,A,T);
-
-    const int n_models = cache.scratch(0).size1();
-    const int asize    = cache.scratch(0).size2();
-
-    for(int i=0;i<index.size1();i++) {
-
-      Matrix & S = cache.scratch(i);
-
-      for(int m=0;m<n_models;m++) {
-	for(int l=0;l<asize;l++) 
-	  S(m,l) = 1;
-
-	//-------------- Propagate and collect information at 'root' -----------//
-	for(int j=0;j<rb.size();j++) {
-	  int i0 = index(i,j);
-	  if (i0 != alphabet::gap)
-	    for(int l=0;l<asize;l++) 
-	      S(m,l) *= cache(i0,rb[j])(m,l);
-	}
-
-	if (root < T.n_leaves()) {
-	  int rl = A.seq(root)[i];
-	  if (alphabet::letter(rl))
-	    for(int l=0;l<asize;l++)
-	      if (l != rl) 
-		S(m,l) = 0;
-	}
-      }
-    }
-  }
-
-
-
   double calc_root_probability(const alignment& A, const Tree& T,column_cache_t cache,
 			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
@@ -324,24 +273,6 @@ namespace substitution {
       total += log(p_col);
     }
     return total;
-  }
-
-
-  /// Compute the letter likelihoods at the root
-  double calc_root_probability(const alignment& A, const Tree& T,column_cache_t cache,
-			       const MultiModel& MModel) 
-  {
-    int root = cache.root;
-
-    // compute root branches
-    vector<int> rb;
-    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
-      rb.push_back(*i);
-
-    // get the relationships with the sub-alignments
-    ublas::matrix<int> index = get_subA_relationships(rb,A,T);
-
-    return  calc_root_probability(A,T,cache,MModel,rb,index);
   }
 
 
@@ -415,7 +346,7 @@ namespace substitution {
 	    R(m,l) = temp;
 	  }
 	}
-	Pr(R,MModel);
+	//Pr(R,MModel);
       }
       else
 	std::abort();
@@ -466,11 +397,23 @@ namespace substitution {
 
     assert(get_branches(T, P.LC).size() == 0);
 
-    //---------------- Compute the root likelihoods -----------------//
-    double total = calc_root_probability(A,T,cache,MModel);
+    int root = cache.root;
 
-    cache.old_value = total;
-    return total;
+    // compute root branches
+    vector<int> rb;
+    for(const_in_edges_iterator i = T[root].branches_in();i;i++)
+      rb.push_back(*i);
+
+    // get the relationships with the sub-alignments
+    ublas::matrix<int> index = get_subA_relationships(rb,A,T);
+
+    // get the probability
+    double Pr = calc_root_probability(A,T,cache,MModel,rb,index);
+
+    // cache the value
+    cache.old_value = Pr;
+
+    return Pr;
   }
 
   /// I could make peel_branch a generate routine which takes 
@@ -539,34 +482,11 @@ namespace substitution {
     return L;
   }
 
+  /*
+    We could make this call calc_root_probability w/ a single-column index corresponding to 'column'
   double Pr(const alignment& A, const Parameters& P, int column) {
-    const column_cache_t cache = P.LC;
-    int root = cache.root;
-
-    calculate_caches(A,P,cache);
-    sum_caches(A,P,cache);
-
-    vector<int> source;
-    for(int i=0;i<A.size2();i++)
-      source.push_back(i);
-
-    vector<int> index(source.size(),-1);
-    for(int c=0;c <= column;c++)
-      inc(index,source,A,c);
-
-    if (not A.gap(column,root)) 
-      return Pr(cache.scratch(index[root]),P.SModel());
-
-    vector<const_branchview> branches = branches_toward_node(P.T, P.LC.root);
-    std::reverse(branches.begin(),branches.end());
-    for(int i=0;i<branches.size();i++) {
-      int b = branches[i].source();
-      if (not A.gap(column,b))
-	return Pr(cache(index[b],b),P.SModel());
-    }
-
-    std::abort();
   }
+  */
 
   double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) 
   {
