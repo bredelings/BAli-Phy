@@ -131,9 +131,10 @@ namespace substitution {
     
       total=0;
       for(int m=0;m<n_submodels();m++) {
-	for(int i=0;i<SubModels(m).parameters().size();i++)
-	  parameters_[i+total] = SubModels(i).parameters()[i];
-	total += SubModels(m).parameters().size();
+	const vector<double>& params_m = SubModels(m).parameters();
+	for(int i=0;i<params_m.size();i++)
+	  parameters_[i+total] = params_m[i];
+	total += params_m.size();
       }
 
       full_tree = SubModels(0).full_tree;

@@ -506,7 +506,6 @@ namespace substitution {
   /*--------------- Gamma Sites Model----------------*/
 
   string GammaRateModel::super_parameter_name(int i) const {
-    i -= SubModel().parameters().size();
     if (i==0)
       return "Gamma::sigma";
     else
@@ -579,7 +578,6 @@ namespace substitution {
   }
 
   string INV_Model::super_parameter_name(int i) const {
-    i -= SubModel().parameters().size();
     if (i==0)
       return "INV::p";
     else
