@@ -243,6 +243,18 @@ int main(int argc,char* argv[]) {
     //---------- Determine Data dir ---------------//
     if (not args.set("datadir")) args["datadir"] = "Data";
 
+    {
+      string filename = args["datadir"] + "/wag.dat";
+      ifstream temp(filename.c_str());
+      if (temp)
+	temp.close();
+      else {
+	std::cerr<<"Warning: couldn't open file '"<<filename<<"'"<<std::endl;
+	std::cerr<<"         Is '"<<args["datadir"]<<"' a valid Data/ directory?\n";
+      }
+    }
+
+    
     //----------- Load alignment and tree ---------//
     args["random_tree_ok"] = "yes";
     alignment A;

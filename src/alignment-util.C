@@ -5,7 +5,7 @@ using std::valarray;
 
 /// Construct a mapping of letters to columns for each leaf sequence
 vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
-  if (nleaves = -1)
+  if (nleaves == -1)
     nleaves = A.size2();
 
   vector< vector<int> > result;

@@ -78,8 +78,8 @@ unsigned long RNG::seed() {
     s <<= 8;
     s |=  c;
   }
-  return seed(s);
   random.close();
+  return seed(s);
 }
 
 unsigned long RNG::seed(unsigned long int s) {
