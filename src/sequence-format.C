@@ -14,21 +14,25 @@ namespace sequence_format {
 
     string line;
     while(getline(file,line)) {
-      if (!line.size()) continue;
 
-      if (line[0] != '>') {
+      //quit on empty lines -- perhaps we should quit on TWO empty lines?
+      //this allows us to put a sequence of alignments in a larger file
+      if (!line.size()) break;
+
+      if (line[0] == '>') {
+
+	if (not label.empty()) {
+	  sequence s(a);
+	  s.parse(label,letters);
+	  sequences.push_back(s);
+	}
+	
+	label = line;
+	letters.clear();
+      }
+      else
 	letters += line;
-	continue;
-      }
-    
-      if (not label.empty()) {
-	sequence s(a);
-	s.parse(label,letters);
-	sequences.push_back(s);
-      }
-    
-      label = line;
-      letters.clear();
+	
     }
 
     if (not label.empty()) {
