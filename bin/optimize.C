@@ -11,6 +11,7 @@ vector<double> search_basis(const vector<double>& start,const function& f, int m
   vector<double> v = start;
 
   // vector of sizes for each direction
+  vector<bool> moved(2*dimension,false);
   vector<double> basis(2*dimension,1);
   for(int i=dimension;i<basis.size();i++)
     basis[i] = -1;
@@ -26,7 +27,7 @@ vector<double> search_basis(const vector<double>& start,const function& f, int m
       vector<double> nextv = v;
       nextv[ii%dimension] += basis[ii];
       double next_value = f(nextv);
-      std::cout<<"iteration = "<<iterations<<
+      std::cerr<<"iteration = "<<iterations<<
 	"   ii = "<<ii<<
 	"   size = "<<basis[ii]<<
 	"   old = "<<value<<
@@ -34,17 +35,23 @@ vector<double> search_basis(const vector<double>& start,const function& f, int m
       if (next_value > value) {
 	v = nextv;
 	value = next_value;
-	k == ii;
-	if (i==0) basis[ii] *= 2.0;
+	k = ii+1;
+	if (moved[ii]) {
+	  basis[ii] *= 2.0;
+	  moved[ii] = false;
+	}
+	else
+	  moved[ii] = true;
 	break;
       }
       else {
+	moved[ii] = false;
 	basis[ii] /= 2.0;
       }
     }
     for(int i=0;i<v.size();i++)
-      std::cout<<v[i]<<"  ";
-    std::cout<<std::endl;
+      std::cerr<<v[i]<<"  ";
+    std::cerr<<std::endl;
 
     done = true;
     for(int i=0;i<basis.size();i++)

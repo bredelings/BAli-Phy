@@ -8,7 +8,7 @@ namespace optimize {
   class function {
   public:
     virtual double operator()(const std::vector<double>&) const =0;
-    ~function() {}
+    virtual ~function() {}
   };
 
   std::vector<double> search_basis(const std::vector<double>& start,const function& f,int maxiterations=200);

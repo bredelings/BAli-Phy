@@ -48,7 +48,9 @@ ALLSOURCES = ${SOURCES}
 ${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%} # libgsl.a libgslcblas.a libm.a
 
 
-bin/a-confidence: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
+bin/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o bin/optimize.o ${LIBS:%=-l%}
+
+bin/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
 
 bin/treecount: tree.o sequencetree.o arguments.o util.o rng.o ${LIBS:%=-l%}
 
