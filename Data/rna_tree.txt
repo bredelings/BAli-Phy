@@ -1,0 +1,11 @@
+(
+	((H_sapiens,X_boreal),
+		((Sulfaci1,Sulfaci2),(Halomari,Halosali))
+	),
+	(Anacy_nidu,
+		((Esch_coli1,Esch_coli2),(Esch_coli3,(Esch_coli4,Esch_coli5)))
+	)
+)
+
+
+

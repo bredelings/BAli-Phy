@@ -79,18 +79,21 @@ int main(int argc,char* argv[]) {
   myrand_init();
   alphabet nucleotides("AGTC");
   
+  std::cerr.precision(10);
+  std::cout.precision(10);
+
   //  alphabet amino_acids("ARNDCQEGHILKMFPTWYV","PAM");
 
   /**********  Set up the alignment ***********/
   alignment A;
 
-  
+
   /* ----- Parse command line ------------*/
   if (argc != 5) {
     std::cerr<<"Usage: "<<argv[0]<<" <alignment file.fasta> <tree file> <lambda_O> <lambda_E>\n";
     exit(1);
   }
-
+x
   ifstream file(argv[1]);
   if (!file) {
     std::cerr<<"Error: can't open alignment file '"<<argv[1]<<"'"<<endl;
@@ -119,9 +122,9 @@ int main(int argc,char* argv[]) {
   // FIXME: Can't construct trees w/ branch lengths right now
 
   /*********** Start the sampling ***********/
-  
   std::cerr.precision(10);
   std::cout.precision(10);
+  
   try {
     A.load_fasta(nucleotides,file);
     std::cerr<<A<<endl;
@@ -143,9 +146,7 @@ int main(int argc,char* argv[]) {
 	  std::cerr<<smodel.rates()(i,j)<<" ";
 	std::cerr<<endl;
       }
-      Parameters Theta(smodel,T1);
-      Theta.lambda_O = lambda_O;
-      Theta.lambda_E = lambda_E;
+      Parameters Theta(smodel,lambda_O,lambda_E,T1);
       MCMC(A,Theta,250000,probability2);
     }
   }

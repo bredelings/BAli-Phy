@@ -81,8 +81,10 @@ void sample(alignment& A,Parameters& Theta) {
   double r = myrandomf();
   if (r < 0.35) {
     //    int node1 = myrandom(Theta.T.leaves()-1,Theta.T.num_nodes()-3);
-    int node1 = myrandom(0,Theta.T.num_nodes()-3);
-    int node2 = Theta.T.parent(node1);
+    int node2 = myrandom(0,Theta.T.num_nodes()-3);
+    int node1 = Theta.T.parent(node2);
+    if (node2>node1) std::swap(node1,node2);
+
     A = sample(A,Theta,node1,node2);
   }
   else if (r < 0.7) {

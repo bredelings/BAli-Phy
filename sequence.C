@@ -10,8 +10,8 @@ int alphabet::operator[](char c) const {
       return i;
   }
   std::cerr<<int(c)<<endl;
-  throw myexception(string("Letter '") + c + string("' not in alphabet."));
   assert(0);
+  throw myexception(string("Letter '") + c + string("' not in alphabet."));
 }
 
 vector<int> alphabet::operator() (const string& s) const{

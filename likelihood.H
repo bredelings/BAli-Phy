@@ -7,8 +7,8 @@
 
 double prior(const alignment&,const Parameters&);
 double prior_no_tree(const alignment&,const Parameters&);
-
 double prior_internal(const alignment&,const Parameters&);
+double prior_HMM(const alignment&,const Parameters&);
 
 inline double prior(const Parameters& Theta) {
   double p = 0;
@@ -47,5 +47,12 @@ inline double probability2(const alignment& A,const Parameters& Theta) {
   return p;
 }
 
+inline double probability3(const alignment& A,const Parameters& Theta) {
+  double p = 0;
+  p += prior_HMM(A,Theta);
+  p += substitution(A,Theta); // also deals w/ frequencies
+  p += prior(Theta);
+  return p;
+}
 
 #endif

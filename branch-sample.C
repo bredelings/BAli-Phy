@@ -64,14 +64,14 @@ vector<int> sample_path(const Matrix& m,const Matrix& g1,const Matrix& g2,const 
       double corrected_g1 = g1(k,l);
       double corrected_g2 = g2(k,l);
       if (last == 1) {
-	corrected_m +=  Theta.lambda_O;
-	corrected_g1 += Theta.lambda_E;
-	corrected_g2 += Theta.lambda_O;
+	corrected_m +=  Theta.IModel.lambda_O;
+	corrected_g1 += Theta.IModel.lambda_E;
+	corrected_g2 += Theta.IModel.lambda_O;
       }
       else if (last==2) {
-	corrected_m += Theta.lambda_O;
+	corrected_m += Theta.IModel.lambda_O;
 	corrected_g1 += log_0;
-	corrected_g2 += Theta.lambda_E;
+	corrected_g2 += Theta.IModel.lambda_E;
       }
       //      std::cerr<<"path: "<<k<<", "<<l<<endl;
       move = choose(corrected_m, corrected_g1, corrected_g2) ;
@@ -214,11 +214,11 @@ vector<valarray<double> > distributions(const alignment& A,const Parameters& The
 
 alignment sample(const alignment& old,const Parameters& Theta,int node1,int node2) {
   const tree& T = Theta.T;
-  const double& lambda_O = Theta.lambda_O;
-  const double& lambda_E = Theta.lambda_E;
+  const double& lambda_O = Theta.IModel.lambda_O;
+  const double& lambda_E = Theta.IModel.lambda_E;
   const valarray<double>& frequency = Theta.frequencies();
 
-  if (node2<node1) std::swap(node1,node2);
+  assert(node1 > node2);
 
   valarray<bool> group1 = T.partition(node2,node1);
 

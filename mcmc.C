@@ -68,6 +68,7 @@ void print_stats(const alignment& A,const Parameters& Theta,
   std::cerr<<"previous = "<<
     probability_no_tree(A,Theta)<<"  "<<
     probability_simple_tree(A,Theta)<<"  "<<
+    probability3(A,Theta)<<"  "<<
     probability(A,Theta)<<"  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl;
   
   std::cerr<<A<<endl;
@@ -80,8 +81,11 @@ void MCMC(alignment& A,Parameters& Theta,
   SequenceTree ML_tree = T;
   alignment ML_alignment = A;
   bool ML_printed = true;
-
+  
   A.create_internal(T);
+  //FIXME - make sure there are no G1-G2 transitions in the representation
+  // eiter at internal, or external, nodes
+  assert(0);
   std::cerr<<A<<endl;
 
   SequenceTree Sum = T;

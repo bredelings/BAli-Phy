@@ -1,2 +1,2 @@
-((CAR4081:0.1,consBenv:0.1):0.05,(consGenv:0.1,consAenv:0.1):0.05);
+((CAR4081,consBenv),(consGenv,consAenv));
 

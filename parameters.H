@@ -39,7 +39,7 @@ public:
   virtual ~SubstitutionModel() {}
 };
 
-// cache the eigensystem!
+// FIXME - cache the eigensystem!
 
 /******************************* HKY Substitution Model *****************************/
 
@@ -84,12 +84,25 @@ public:
 
 
 class IndelModel {
+  std::vector<double> p_length;
+  
+  void construct_lengthp(int);
+public:
   double lambda_O;
-  double lambea_E;
+  double lambda_E;
+
+  vector<double> pi;
+  ublas::matrix<double> P;
+  ublas::matrix<double> Q;
+  ublas::matrix<double> R;
 
   double tau;     //probability of going -> E
   double delta;   //probability of starting a gap: M -> G1,G2
   double epsilon; //probability of extending a gap: G1->G1,  G2->G2
+
+  double lengthp(int i) const {return p_length[i];}
+
+  IndelModel(double LO,double LE);
 };
 
 
@@ -110,15 +123,16 @@ public:
   const Matrix& substitution(int i) const {if (i==T.num_nodes()-2) i--;return substitution_[i];}
   void setlength(int,double);
   
+  /* Indel Model */
+  IndelModel IModel;
+
   SequenceTree T;
 
-  double lambda_O;
-  double lambda_E;
 
   // parameter for exponential prior on branch length
   double branch_mean; 
 
-  Parameters(SubstitutionModel&,const SequenceTree&);
+  Parameters(SubstitutionModel&,double,double,const SequenceTree&);
 };
 
 #endif

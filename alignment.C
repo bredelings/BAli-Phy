@@ -150,6 +150,15 @@ void alignment::remap(const vector<string>& order) {
 }
 
 
+int alignment::seqlength(int i) const {
+  int count =0;
+  for(int column=0;column<length();column++) {
+    if ((*this)(column,i) != alphabet::gap)
+      count++;
+  }
+  return count;
+}
+
 alignment& alignment::operator=(const alignment& A) {
   sequences.clear();
   for(int i=0;i<A.num_sequences();i++)

@@ -30,7 +30,6 @@ public:
   void print_fasta(std::ostream&) const;
   void print_phy(std::ostream&) const;
 
-
   bool changelength(int l);
   void delete_column(int i);
 
@@ -42,6 +41,7 @@ public:
   int num_sequences() const { return sequences.size() ;}
   int size2() const {return array.size2();}
   int length() const {return array.size1();}
+  int seqlength(int) const;
 
   const alphabet& get_alphabet() const {return *sequences[0].a;}
 

@@ -5,21 +5,9 @@
 #include "sample.H"
 #include <iostream>
 #include "likelihood.H"
+#include "logsum.H"
 
 using std::valarray;
-
-const double max_float = 3.40282347e+38F;
-
-const double log_0 = -max_float;
-
-inline double logsum(double r, double q)
-{
-  if (std::abs(r-q) > 308)
-    return ((r > q) ? r : q);
-  
-  return (r + log(1 + exp(q - r)));
-}
-
 
 int num_gaps(int n) {
   int sum=0;
@@ -100,7 +88,7 @@ int hidden(int hidden1,int state2,int indel1,int indel2) {
   return h;
 }
 
-double p_gap(int hidden1,int state2,int indel1, int indel2,const Parameters& Theta) {
+double p_gap(int hidden1,int state2,int indel1, int indel2,const IndelModel& Theta) {
   int gaps = num_gaps(indel2);
   
   int extended = num_shared(indel1, indel2);
@@ -192,7 +180,7 @@ alignment sample(const alignment& old,const Parameters& Theta,int node) {
 
 	int h2 = hidden(h1,state,prev_indel,indel);
 	
-	double p = p_gap(h1,state,prev_indel,indel,Theta);
+	double p = p_gap(h1,state,prev_indel,indel,Theta.IModel);
 	
 	P[column][h2] = logsum(P[column][h2],p + P[column-1][h1]);
       }
@@ -215,7 +203,7 @@ alignment sample(const alignment& old,const Parameters& Theta,int node) {
 	  hidden(h1,current==7,prev_indel,curr_indel) != current)
 	choices[h1] = log_0;
       else
-	choices[h1] = P[i-1][h1] + p_gap(h1,current==7,prev_indel,curr_indel,Theta);
+	choices[h1] = P[i-1][h1] + p_gap(h1,current==7,prev_indel,curr_indel,Theta.IModel);
     }
     int next = choose(choices);
     current = next;
