@@ -81,9 +81,11 @@ void Multi_Likelihood_Cache::invalidate_all(int token) {
 void Multi_Likelihood_Cache::set_length(int t,int l) {
 
   // Increase overall length if necessary
-  int delta = l-C;
-  if (delta > 0) {
-    C = l;
+  if (l>C) {
+    int l2 = 4+(1.1*l);
+    int delta = l2-C;
+    C = l2;
+
     for(int i=0;i<size();i++)
       for(int j=0;j<delta;j++)
 	(*this)[i].push_back(Matrix(M,A));
