@@ -5,52 +5,148 @@
 #include "alignment.H"
 #include "parameters.H"
 #include <vector>
+#include "rng.H"
 
-struct move_stat {
-  int times;
-  int successes;
-  string name;
-  move_stat(const string& s):times(0),successes(0),name(s) { }
-};
+// how to have different models, with different moves
+// and possibly moves between models?
 
-extern vector<move_stat> move_stats;
-void record_move(const string& name,bool success);
-void record_move(int index,bool success);
+namespace MCMC {
+  enum result_t {success,failure,no_result};
 
+  typedef result_t (*atomic_move)(alignment&,Parameters&);
+  typedef result_t (*atomic_move_arg)(alignment&,Parameters&,int);
 
+  // The basic 'Move' class
+  class Move {
 
+    bool enabled_;
 
-class MCMC {
-
-  typedef void (*move)(alignment&,Parameters&);
-
-  struct move_info {
-    move m;
-    double weight;
-    bool enabled;
+    // How do we link moves into probability model?
+    // double(&probability)(const alignment&,const Parameters&);
+    // Could we make a generic MH move here? 
+    
+  public:
     vector<string> attributes;
 
-    move_info() {}
-    move_info(move a1,double a2,bool a3):m(a1),weight(a2),enabled(a3) {}
+    int iterations;
+    int failures;
+    int successes;
+
+    virtual Move* clone() const =0;
+
+    bool enabled() {return enabled_;}
+    void enable() {enabled_=true;}
+    void disable() {enabled_=false;}
+    
+    virtual void enable(const string&);
+    virtual void disable(const string&);
+
+    virtual int reset(double) =0;
+    virtual void iterate(alignment&,Parameters&) =0;
+    virtual result_t iterate(alignment&,Parameters&,int) =0;
+
+    virtual void show_enabled() const;
+    virtual void print_move_stats() const;
+
+    Move(const string&);
+
+    virtual ~Move() {}
   };
 
-  double sum_enabled_weights;
 
-  void recalc();
-  double(&probability)(const alignment&,const Parameters&);
+  class MoveGroup: public Move {
+  protected:
+    vector<int> order;
+    vector<int> suborder;
+    
+    std::vector<Move*> moves;
+    std::vector<double> lambda;
 
-public:
-  std::vector<move_info> moves;
+    double sum() const;
+    virtual void getorder(double l)=0;
+  public:
 
-  void enable(const string&);
-  void disable(const string&);
-  void add(move,double,const string&);
+    MoveGroup* clone() const =0;
 
-  void iterate(alignment&,Parameters&,int);
-  void sample(alignment&,Parameters&) const;
-  void add(move,double);
+    MoveGroup& operator=(const MoveGroup&);
 
-  MCMC();
-};
+    void enable(const string&);
+    void disable(const string&);
+
+    int nmoves() const {return moves.size();}
+    void add(double,const Move& m);
+
+    int reset(double);
+    void iterate(alignment&,Parameters&);
+    result_t iterate(alignment&,Parameters&,int);
+
+    MoveGroup(const string& s):Move(s) {}
+    MoveGroup(const MoveGroup&);
+
+    void show_enabled() const;
+    void print_move_stats() const;
+
+    virtual ~MoveGroup();
+  };
+
+  class MoveAll: public MoveGroup {
+    void getorder(double l);
+  public:
+    MoveAll* clone() const {return new MoveAll(*this);}
+
+    MoveAll(const string& s):MoveGroup(s) {}
+    virtual ~MoveAll() {}
+  };
+
+  class MoveOne: public MoveGroup {
+    int choose() const;
+    void getorder(double l);
+  public:
+    MoveOne* clone() const {return new MoveOne(*this);}
+
+    MoveOne(const string& s):MoveGroup(s) {}
+    virtual ~MoveOne() {}
+  };
+
+
+  class SingleMove: public Move {
+    atomic_move m;
+  public:
+    SingleMove* clone() const {return new SingleMove(*this);}
+
+    int reset(double lambda) {return poisson(lambda);}
+
+    void iterate(alignment& A,Parameters& P) { iterate(A,P,0); }
+
+    result_t iterate(alignment& A,Parameters& P,int) 
+    {
+#ifndef NDEBUG
+      std::cerr<<" move = "<<attributes[0]<<endl;
+#endif
+      iterations++;
+      result_t r = (*m)(A,P);
+      if (r == success)
+	successes++;
+      if (r == failure)
+	failures++;
+      return r;
+    }
+
+    SingleMove(atomic_move m1,const string& v)
+      :Move(v),m(m1) {}
+  };
+
+  // This makes a Sampler out of a move
+  class Sampler: public MoveAll {
+
+    // How do we link moves into probability model?
+    double(&probability)(const alignment&,const Parameters&);
+  public:
+    void go(alignment& A, Parameters& P, int max);
+
+    Sampler(const string& name,double(&p)(const alignment&,const Parameters&)):MoveAll(name),probability(p) {};
+  };
+
+}
 
 #endif

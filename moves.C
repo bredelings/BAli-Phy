@@ -2,8 +2,9 @@
 #include "likelihood.H"
 #include "rng.H"
 #include <algorithm>
+#include "mcmc.H"
 
-void slide_branch_lengths(alignment& A, Parameters& P) {
+MCMC::result_t slide_branch_lengths(alignment& A, Parameters& P) {
   for(int i=0;i<P.T.leaves();i++) {
     int b = myrandom(P.T.branches());
 
@@ -13,9 +14,10 @@ void slide_branch_lengths(alignment& A, Parameters& P) {
 
     slide_branch_length(A,P,b,up);
   }
+  return MCMC::no_result;
 }
 
-void change_branch_lengths(alignment& A, Parameters& P) {
+MCMC::result_t change_branch_lengths(alignment& A, Parameters& P) {
   for(int i=0;i<P.T.leaves();i++) {
     int b = myrandom(P.T.branches());
     //    if (b<P.T.leaves())
@@ -23,10 +25,11 @@ void change_branch_lengths(alignment& A, Parameters& P) {
       //    else
       //      change_branch_length_and_T(A,P,b);
   }
+  return MCMC::no_result;
 }
 
 
-void sample_tri(alignment& A, Parameters& P) {
+MCMC::result_t sample_tri(alignment& A, Parameters& P) {
   const SequenceTree& T = P.T;
 
   for(int i=0;i<T.leaves();i++) {
@@ -43,33 +46,37 @@ void sample_tri(alignment& A, Parameters& P) {
     
     A = tri_sample_alignment(A,P,node1,node2);
   }
+  return MCMC::no_result;
 }
 
 
-void sample_alignments(alignment& A, Parameters& P) {
+MCMC::result_t sample_alignments(alignment& A, Parameters& P) {
   for(int i=0;i<P.T.leaves();i++) {
     int b = myrandom(P.T.branches());
 
     A = sample_alignment(A,P,b);
   }
+  return MCMC::no_result;
 }
 
-void sample_nodes(alignment& A, Parameters& P) {
+MCMC::result_t sample_nodes(alignment& A, Parameters& P) {
   for(int i=0;i<P.T.num_nodes()-P.T.leaves();i++) {
     int node = myrandom(P.T.leaves(),P.T.num_nodes()-1);
 
     A = sample_node(A,P,node);
   }
+  return MCMC::no_result;
 }
 
-void sample_topologies(alignment& A,Parameters& P) {
+MCMC::result_t sample_topologies(alignment& A,Parameters& P) {
   for(int i=0;i<P.T.branches()-P.T.leaves();i++) {
     int b = myrandom(P.T.leaves(),P.T.branches());
     sample_topology(A,P,b);
   }
+  return MCMC::no_result;
 }
 
-void change_parameters(alignment& A,Parameters& P) {
+MCMC::result_t change_parameters(alignment& A,Parameters& P) {
   Parameters P2 = P;
 
   P2.fiddle();
@@ -92,8 +99,12 @@ void change_parameters(alignment& A,Parameters& P) {
   if (myrandomf() < exp(lL_2 - lL_1)) {
     P = P2;
     std::cerr<<"accepted"<<endl;
+    return MCMC::success;
   }
-  else
+  else {
     std::cerr<<"rejected"<<endl;
+    return MCMC::failure;
+  }
+  
 }
 

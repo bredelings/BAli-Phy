@@ -5,25 +5,225 @@
 #include "rng.H"
 #include "util.H"
 
+namespace MCMC {
 using std::valarray;
 
 
-void record_move(int index,bool success) {
-  move_stats[index].times++;
-  if (success)
-    move_stats[index].successes++;
-    
+Move::Move(const string& v)
+  :enabled_(true),attributes(split(v,':')),iterations(0),failures(0),successes(0)
+{ }
+
+void Move::enable(const string& s) {
+  if (s == "all")
+    enable();
+  else 
+    for(int j=0;j<attributes.size();j++)
+      if (attributes[j] == s) {
+	enable();
+	break;
+      }
 }
 
-void record_move(const string& s,bool success) {
-  int index=-1;
-  for(int i=0;i<move_stats.size();i++)
-    if (move_stats[i].name == s) {
-      index=i;
-      break;
-    }
-  assert(index != -1);
-  record_move(index,success);
+void Move::disable(const string& s) {
+  if (s == "all")
+    disable();
+  else 
+    for(int j=0;j<attributes.size();j++)
+      if (attributes[j] == s) {
+	disable();
+	break;
+      }
+}
+
+void Move::show_enabled() const {
+  std::cout<<"move "<<attributes[0]<<": ";
+  if (enabled_)
+    std::cout<<"enabled.\n";
+  else 
+    std::cout<<"DISABLED.\n";
+}
+
+
+void Move::print_move_stats() const {
+  std::cerr<<"move "<<attributes[0]<<": ";
+  std::cerr<<"     cycles = "<<iterations;
+  int total = successes + failures;
+  if (total > 0) {
+    std::cerr<<"         success = "<<double(successes)/total;
+    std::cerr<<" ("<<successes<<"/"<<total<<")";
+  }
+  std::cerr<<endl;
+}
+
+double MoveGroup::sum() const {
+  double total=0;
+  for(int i=0;i<lambda.size();i++)
+    if (moves[i]->enabled())
+	total += lambda[i];
+  return total;
+}
+
+void MoveGroup::enable(const string& s) {
+  // Operate on this move
+  Move::enable(s);
+
+  // Operate on children
+  for(int i=0;i<moves.size();i++)
+    moves[i]->enable(s);
+}
+
+void MoveGroup::disable(const string& s) {
+  // Operate on this move
+  Move::disable(s);
+
+  // Operate on children
+  for(int i=0;i<moves.size();i++)
+    moves[i]->disable(s);
+}
+
+void MoveGroup::add(double l,const Move& m) {
+  moves.push_back(m.clone());
+  lambda.push_back(l);
+}
+
+void MoveGroup::print_move_stats() const {
+  Move::print_move_stats();
+
+  // Operate on children
+  for(int i=0;i<moves.size();i++)
+    moves[i]->print_move_stats();
+}
+
+void MoveGroup::iterate(alignment& A,Parameters& P) {
+  reset(1.0);
+  for(int i=0;i<order.size();i++)
+    iterate(A,P,i);
+}
+
+
+result_t MoveGroup::iterate(alignment& A,Parameters& P,int i) {
+  assert(i < order.size());
+
+#ifndef NDEBUG
+  std::cerr<<" move = "<<attributes[0]<<endl;
+  std::cerr<<"   submove = "<<moves[order[i]]->attributes[0]<<endl;
+#endif
+
+  result_t r = moves[order[i]]->iterate(A,P,suborder[i]);
+  iterations++;
+  if (r == success)
+    successes++;
+  if (r == failure)
+    failures++;
+  return r;
+}
+
+int MoveGroup::reset(double l) {
+  getorder(l);
+  order = randomize(order);
+
+  // calculate suborder
+  vector<int> total(nmoves(),0);
+  suborder.resize(order.size(),0);
+  for(int i=0;i<suborder.size();i++) {
+    suborder[i] = total[order[i]];
+    total[order[i]]++;
+  }
+
+  return order.size();
+}
+
+void MoveGroup::show_enabled() const {
+  Move::show_enabled();
+  
+  for(int i=0;i<nmoves();i++)
+    moves[i]->show_enabled();
+}
+
+MoveGroup& MoveGroup::operator=(const MoveGroup& m) {
+  for(int i=0;i<moves.size();i++) {
+    assert(moves[i]);
+    delete moves[i];
+  }
+
+  Move::operator=(m);
+  order = m.order;
+  suborder = m.suborder;
+  moves = m.moves;
+  lambda = m.lambda;
+
+  for(int i=0;i<moves.size();i++)
+    moves[i] = moves[i]->clone();
+
+  return *this;
+}
+
+MoveGroup::MoveGroup(const MoveGroup& m):Move(m) {
+  Move::operator=(m);
+  order = m.order;
+  suborder = m.suborder;
+  moves = m.moves;
+  lambda = m.lambda;
+
+  for(int i=0;i<moves.size();i++)
+    moves[i] = moves[i]->clone();
+}
+
+
+MoveGroup::~MoveGroup() {
+  for(int i=0;i<moves.size();i++) {
+    assert(moves[i]);
+    delete moves[i];
+  }
+}
+
+void MoveAll::getorder(double l) {
+  order.clear();
+  for(int i=0;i<nmoves();i++) {
+    if (not moves[i]->enabled()) continue;
+
+    int n = moves[i]->reset(l*lambda[i]);
+    order.insert(order.end(),n,i);
+  }
+}
+
+
+int MoveOne::choose() const {
+  double r = myrandomf()*sum();
+
+  double sum = 0;
+  int i = 0;
+  for(;i < moves.size();i++) {
+
+    if (not moves[i]->enabled())
+      continue;
+
+    sum += lambda[i];
+    if (r<sum) break;
+  }
+  return i;
+}
+
+void MoveOne::getorder(double l) {
+  // get total count
+  int total = (int)l;
+  double frac = l-total;
+  total += poisson(frac);
+
+  // get count per type
+  vector<int> count(nmoves(),0);
+  for(int i=0;i<total;i++) {
+    int m = choose();
+    count[m]++;
+  }
+
+  order.clear();
+  for(int i=0;i<nmoves();i++) {
+    int n = moves[i]->reset(count[i]);
+    if (not moves[i]->enabled())
+      assert(n==0);
+    order.insert(order.end(),n,i);
+  }
 }
 
 alignment standardize(const alignment& A, const SequenceTree& T) {
@@ -72,81 +272,7 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& P,
 #endif
 }
 
-valarray<double> autocorrelation(valarray<double> v) {
-  double mean = v.sum()/v.size();
-  v -= mean;
-  valarray<double> w(v.size()/2);
-  for(int i=0;i<w.size();i++) {
-    double sum1=0;
-    double sum2=0;
-    double sum3=0;
-    for(int j=0;j<v.size()-i;j++) {
-      sum1 += v[j]*v[j+i];
-      sum2 += v[j]*v[j];
-      sum3 += v[j+i]*v[j+i];
-    }
-    w[i] = sum1/sqrt(sum2*sum3);
-  }
-  return w;
-}
-
-void MCMC::recalc() {
-  sum_enabled_weights = 0;
-  for(int i=0;i<moves.size();i++)
-    if (moves[i].enabled)
-      sum_enabled_weights += moves[i].weight;
-};
-
-void MCMC::enable(const string& s) {
-  for(int i=0;i<moves.size();i++) {
-    for(int j=0;j<moves[i].attributes.size();j++)
-      if (moves[i].attributes[j] == s or s == "all") {
-	moves[i].enabled = true;
-	break;
-      }
-  }
-
-  recalc();
-}
-
-void MCMC::disable(const string& s) {
-  for(int i=0;i<moves.size();i++) {
-    for(int j=0;j<moves[i].attributes.size();j++)
-      if (moves[i].attributes[j] == s or s == "all") {
-	moves[i].enabled = false;
-	break;
-      }
-  }
-
-  recalc();
-}
-
-void MCMC::sample(alignment& A,Parameters& P) const {
-  double r = myrandomf()*sum_enabled_weights;
-
-  double sum = 0;
-  int i = 0;
-  for(;i < moves.size();i++) {
-
-    if (not moves[i].enabled) continue;
-    sum += moves[i].weight;
-    if (r<sum) break;
-  }
-#ifndef NDEBUG
-  std::cerr<<" move = "<<moves[i].attributes[0]<<endl;
-#endif
-  assert(i < moves.size());
-  (moves[i].m)(A,P);
-}
-
-void MCMC::add(move m,double weight,const string& keys) {
-  move_info mi(m,weight,true);
-  mi.attributes = split(keys,':');
-  sum_enabled_weights += weight;
-  moves.push_back(mi);
-}
-
-void MCMC::iterate(alignment& A,Parameters& P,const int max) {
+void Sampler::go(alignment& A,Parameters& P,const int max) {
   const SequenceTree& T = P.T;
   Parameters ML_P = P;
   alignment ML_alignment = A;
@@ -203,7 +329,7 @@ void MCMC::iterate(alignment& A,Parameters& P,const int max) {
     alignment A2 = A;
     Parameters P2 = P;
 
-    sample(A2,P2);
+    iterate(A2,P2);
 
     new_p = probability(A2,P2);
 
@@ -231,12 +357,7 @@ void MCMC::iterate(alignment& A,Parameters& P,const int max) {
 
       A2.print_fasta(std::cerr);
 
-      for(int i=0;i<move_stats.size();i++) {
-	int times = move_stats[i].times;
-	int successes = move_stats[i].successes;
-
-	std::cerr<<move_stats[i].name<<" = "<<double(successes)/times<<"    ("<<successes<<"/"<<times<<")\n";
-      }
+      print_move_stats();
     }
 
     /*------------------ move to new position -------------------*/
@@ -248,6 +369,5 @@ void MCMC::iterate(alignment& A,Parameters& P,const int max) {
 }
 
 
-MCMC::MCMC() : sum_enabled_weights(0), probability(probability3)
-{
-}
+
+};

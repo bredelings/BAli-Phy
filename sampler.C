@@ -17,8 +17,6 @@
 #include "util.H"
 
 
-vector<move_stat> move_stats;
-
 // 5. Read Marc's references on actually altering the tree
 
 // 8. Use ublas::matrix<double>(a.size()) instead of valarray<double> in substitution.C
@@ -158,22 +156,39 @@ void do_showonly(const alignment& A,const Parameters& P) {
 
 
 void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterations) {
-  MCMC sampler;
-  sampler.add(sample_alignments,1,"sample_alignments:alignment");
 
+  using namespace MCMC;
+
+  // alignments
+  MoveAll alignment_moves("alignment");
+  alignment_moves.add(1,SingleMove(sample_alignments,"sample_alignments:alignment"));
   if (P.T.leaves() >2) {
-    sampler.add(sample_nodes,1,"sample_nodes:nodes");
-    sampler.add(sample_tri,0.1,"sample_tri:alignment:nodes:tri");
+    alignment_moves.add(1,SingleMove(sample_nodes,"sample_nodes:alignment:nodes"));
+    alignment_moves.add(0.1,SingleMove(sample_tri,"sample_tri:alignment:nodes"));
   }
 
+
+  // tree
+  MoveAll tree_moves("tree");
+  MoveAll topology_moves("topology");
   if (P.T.leaves() >3)
-    sampler.add(sample_topologies,1,"sample_topologies:nodes:topology");
+    topology_moves.add(1,SingleMove(sample_topologies,"sample_topologies:nodes:topology"));
 
-  sampler.add(change_branch_lengths,1.5,"change_branch_lengths:nodes:lengths:topology");
+  MoveOne length_moves("lengths");
+  length_moves.add(1,SingleMove(change_branch_lengths,"change_branch_lengths:nodes:lengths:topology"));
+  length_moves.add(1,SingleMove(slide_branch_lengths,"slide_branch_lengths:nodes:lengths:topology"));
+  tree_moves.add(1,topology_moves);
+  tree_moves.add(1,length_moves);
 
-  sampler.add(slide_branch_lengths,1.5,"slide_branch_lengths:lengths");
+  // parameters
+  SingleMove parameter_moves(change_parameters,"parameters");
 
-  sampler.add(change_parameters,1,"change_parameters:parameters");
+  // full sampler
+  Sampler sampler("sampler",probability3);
+  sampler.add(1,alignment_moves);
+  sampler.add(1,tree_moves);
+  sampler.add(1,parameter_moves);
+
 
   //FIXME - make MCMC inherit from the collection of moves.
   vector<string> disable;
@@ -189,24 +204,10 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   for(int i=0;i<enable.size();i++)
     sampler.enable(enable[i]);
   
-  for(int i=0;i<sampler.moves.size();i++) {
-    std::cout<<"move "<<sampler.moves[i].attributes[0]<<": ";
-    if (sampler.moves[i].enabled)
-      std::cout<<"enabled.\n";
-    else 
-      std::cout<<"DISABLED.\n";
-  }
+  sampler.show_enabled();
   std::cout<<"\n";
-  
-  /*-----------Load Stat Counters-------------*/
-  move_stats.push_back(move_stat("t-sample-normal"));
-  move_stats.push_back(move_stat("t-sample-branch-based"));
-  move_stats.push_back(move_stat("length-sample"));
-  move_stats.push_back(move_stat("length-sample-non-negative"));
-  move_stats.push_back(move_stat("length-sample-slide"));
 
-
-  sampler.iterate(A,P,max_iterations);
+  sampler.go(A,P,max_iterations);
 }
 
 

@@ -7,26 +7,25 @@
 //FIXME - are we not guaranteed that leaf nodes will be the children of
 // their branch?
 
-bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
+MCMC::result_t do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
   
   double p1 = probability3(A,P);
   double p2 = probability3(A,P2);
   
   std::cerr<<" MH ["<<p2-p1<<"] : ";
 
-  bool success = false;
   if (myrandomf() < exp(p2-p1)) {
     P=P2;
-    success = true;
     std::cerr<<"accepted\n";
+    return MCMC::success;
   }
-  else
+  else {
     std::cerr<<"rejected\n";
-
-  return success;
+    return MCMC::failure;
+  }
 }
 
-void slide_branch_length(const alignment& A, Parameters& P,int b,bool up) {
+MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool up) {
   const SequenceTree& T = P.T;
 
   /*--------------- Find the branch names ----------------*/
@@ -37,7 +36,7 @@ void slide_branch_length(const alignment& A, Parameters& P,int b,bool up) {
     int parent = T.branch(b).parent();
     if ((int)T.branch_up(child) == (int)T.branch_up(parent)) {
       if (not T[parent].has_left())
-	return;
+	return MCMC::failure;
       b2 = T.branch_up(T[parent].left());
       b3 = T.branch_up(T[parent].right());
     }
@@ -49,7 +48,7 @@ void slide_branch_length(const alignment& A, Parameters& P,int b,bool up) {
     }
   }
   else {
-    if (b < T.leaves()) return;
+    if (b < T.leaves()) return MCMC::failure;
     b2 = T.branch(b).child().left();
     b2 = T.branch_up(b2);
 
@@ -76,17 +75,16 @@ void slide_branch_length(const alignment& A, Parameters& P,int b,bool up) {
   
   /*--------------- Do the M-H step if OK---------------*/
   
-  bool success = do_MH_move(A,P,P2);
-  if (success) 
+  MCMC::result_t r = do_MH_move(A,P,P2);
+  if (r == MCMC::success) 
     std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
   else
     std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
-  
-  record_move("length-sample-slide",success);
+  return r;
 }
 
 
-void change_branch_length(const alignment& A, Parameters& P,int b) {
+MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
 
     Parameters P2 = P;
     /********* Propose increment 'epsilon' ***********/
@@ -99,17 +97,15 @@ void change_branch_length(const alignment& A, Parameters& P,int b) {
     P2.setlength(b,newlength);
 
     /********** Do the M-H step if OK**************/
-    bool success = do_MH_move(A,P,P2);
-    if (success) 
+    MCMC::result_t r = do_MH_move(A,P,P2);
+    if (r == MCMC::success) 
       std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
     else
       std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
-  
-
-    record_move("length-sample",success);
+    return r;
 }
 
-void change_branch_length_and_T(alignment& A, Parameters& P,int b) {
+MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
 
     /********* Propose increment 'epsilon' ***********/
     const double sigma = 0.4/2;
@@ -124,13 +120,12 @@ void change_branch_length_and_T(alignment& A, Parameters& P,int b) {
       P2.setlength(b,newlength);
 
       /********** Do the M-H step if OK**************/
-      bool success = do_MH_move(A,P,P2);
-      if (success) 
+      MCMC::result_t r = do_MH_move(A,P,P2);
+      if (r == MCMC::success) 
 	std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
       else
 	std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
-
-      record_move("length-sample-non-negative",success);
+      return r;
     }
     // If the length is NOT positive, then propose a T change as well
     else {
@@ -146,8 +141,7 @@ void change_branch_length_and_T(alignment& A, Parameters& P,int b) {
       T2.branch(b).length() = -newlength;
       T3.branch(b).length() = -newlength;
 
-      bool success = sample_topology(A,P,T2,T3,b);
-      record_move("t-sample-branch-based",success);
+      return sample_topology(A,P,T2,T3,b);
     }
 }
 

@@ -1,3 +1,6 @@
+#ifndef RNG_H
+#define RNG_H
+
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <valarray>
@@ -7,11 +10,11 @@ using std::valarray;
 
 unsigned long myrand_init();
 unsigned long myrand_init(unsigned long);
-
+ 
 // returns a value in [0,max-1]
 unsigned long myrandom(unsigned long max);
+ 
 
-// returns a value in [min,max-1]
 inline long myrandom(long min,long max) {
   unsigned long diff = max - min;
   return myrandom(diff)+min;
@@ -30,10 +33,10 @@ double gaussian(double mu,double sigma);
 double exponential(double mu);
 
 // return a poisson random variate
-double poisson(double mu);
+unsigned poisson(double mu);
 
 // return a geometric random variate
-int geometric(double mu);
+unsigned geometric(double mu);
 
 namespace rng {
 
@@ -65,7 +68,7 @@ namespace rng {
 
     double exponential(double mu) {return gsl_ran_exponential(generator,mu);}
     int geometric (double mu) {return gsl_ran_geometric(generator,mu);}
-    double poisson(double mu) {return gsl_ran_poisson(generator,mu);}
+    unsigned poisson(double mu) {return gsl_ran_poisson(generator,mu);}
 
     RNG();
     ~RNG();
@@ -127,5 +130,4 @@ namespace dng {
   void init();
 };
 
-
-
+#endif

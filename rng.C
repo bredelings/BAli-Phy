@@ -49,11 +49,11 @@ double exponential(double mu) {
   return rng::standard->exponential(mu);
 }
 
-double poisson(double mu) {
+unsigned poisson(double mu) {
   return rng::standard->poisson(mu);
 }
 
-int geometric(double mu) {
+unsigned geometric(double mu) {
   return rng::standard->geometric(mu);
 }
 

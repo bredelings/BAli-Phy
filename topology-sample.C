@@ -352,7 +352,7 @@ alignment construct(const alignment& old,const tree& T,const vector<int>& path,i
 }
 
 
-bool sample_topology(alignment& A,Parameters& Theta1,
+MCMC::result_t sample_topology(alignment& A,Parameters& Theta1,
 		     const SequenceTree& T2,const SequenceTree& T3,int b) {
   const IndelModel& IModel = Theta1.IModel;
 
@@ -449,13 +449,13 @@ bool sample_topology(alignment& A,Parameters& Theta1,
   std::cerr<<" choice = "<<choice<<std::endl;
   if (choice != 0) {
     Theta1 = *chosen_Theta;
-    return true;
+    return MCMC::success;
   }
   else
-    return false;
+    return MCMC::failure;
 }
 
-void sample_topology(alignment& A,Parameters& Theta1,int b) {
+MCMC::result_t sample_topology(alignment& A,Parameters& Theta1,int b) {
   vector<int> nodes = get_nodes(A,Theta1.T,b);
 
   /****** Generate the Different Topologies *******/
@@ -465,8 +465,6 @@ void sample_topology(alignment& A,Parameters& Theta1,int b) {
   T2.exchange(nodes[1],nodes[2]);
   T3.exchange(nodes[1],nodes[3]);
 
-  bool success = sample_topology(A,Theta1,T2,T3,b);
-
-  record_move("t-sample-normal",success);
+  return sample_topology(A,Theta1,T2,T3,b);
 }
 
