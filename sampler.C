@@ -105,7 +105,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				   internal_branches)
 		   );
 
-  alignment_moves.add(4, nodes_moves);
+  alignment_moves.add(2, nodes_moves);
 
   /*------------------- tree (tree_moves)--------------------*/
   MoveAll tree_moves("tree");
@@ -161,7 +161,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				     slide_branch_lengths_one,
 				     branches)
 		     );
-  tree_moves.add(4,length_moves);
+  tree_moves.add(2,length_moves);
 
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
@@ -174,7 +174,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   // full sampler
   Sampler sampler("sampler");
   sampler.add(1,alignment_moves);
-  sampler.add(2,tree_moves);
+  sampler.add(1,tree_moves);
   sampler.add(1,parameter_moves);
 
   vector<string> disable;

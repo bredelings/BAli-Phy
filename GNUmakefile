@@ -31,12 +31,12 @@ all: sampler
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math  #tracer  prefetch-loop-arrays abi-version=0 omit-frame-pointer
-DEBUG = pipe g3 #gdwarf-2 #pg 
-EXACTFLAGS =  --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS =  #NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
+LANGO = fast-math abi-version=1 tracer prefetch-loop-arrays omit-frame-pointer
+DEBUG = pipe #g3 #gdwarf-2 #pg 
+EXACTFLAGS =  # --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
+DEFS =  NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
-OPT =  march=pentium4 #O3 # malign-double msse mmmx msse2 
+OPT =  march=pentium4 O3 msse2 # malign-double msse mmmx msse2 
 LDFLAGS = #-pg # -static 
 LI=${CXX}
 
@@ -93,8 +93,9 @@ bin/make_random_tree: tree.o sequencetree.o arguments.o util.o\
 	 rng.o  ${LIBS:%=-l%}
 
 bin/drawalignment: tree.o alignment.o sequencetree.o arguments.o \
-	alphabet.o sequence.o sequence-format.o util.o setup.o # rng.o # setup.o \
-	# smodel.o exponential.o eigenvalue.o rates.o sequence-format.o ${LINKLIBS}
+	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
+	randomtree.o ${LINKLIBS} 
+	# smodel.o exponential.o eigenvalue.o rates.o sequence-format.o 
 
 bin/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
 	rng.o util.o sequence-format.o ${LIBS:%=-l%}

@@ -397,7 +397,8 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
 }
 
 
-void print_stats(std::ostream& o,std::ostream& trees,const alignment& A,const Parameters& P,const string& tag) {
+void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
+		 const alignment& A,const Parameters& P,const string& tag) {
   
   o<<endl;
   o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
@@ -409,19 +410,16 @@ void print_stats(std::ostream& o,std::ostream& trees,const alignment& A,const Pa
   o<<"align["<<tag<<"] = "<<endl;
   o<<standardize(A,P.T)<<endl<<endl;
   
-  o<<"tree = "<<P.T<<endl<<endl;
   trees<<P.T<<endl;
   
-  o<<"mu = "<<P.branch_mean<<endl;
-  
-  
+  pS<<  "    mu = "<<P.branch_mean<<"   ";
   for(int i=0;i<P.SModel().parameters().size();i++)
-    o<<"    pS"<<i<<" = "<<P.SModel().parameters()[i];
-  o<<endl<<endl;
+    pS<<"    pS"<<i<<" = "<<P.SModel().parameters()[i];
+  pS<<endl;
   
   for(int i=0;i<P.IModel().parameters().size();i++)
-    o<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
-  o<<endl<<endl;
+    pI<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
+  pI<<endl;
   
   for(int i=0;i<P.SModel().nrates();i++)
     o<<"    rate"<<i<<" = "<<P.SModel().rates()[i];
@@ -482,12 +480,14 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   cout<<endl;
   
   cout<<"Initial Alignment = \n";
-  print_stats(cout,cout,A,P,"Initial");
+  print_stats(cout,cout,cout,cout,A,P,"Initial");
     
   cout<<"Initial Tree = \n";
   cout<<T<<endl<<endl;
 
   ofstream tree_stream("trees");
+  ofstream pS_stream("pS");
+  ofstream pI_stream("pI");
   ofstream map_stream("MAP");
 
   /*---------------- Run the MCMC chain -------------------*/
@@ -503,7 +503,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
       cout<<"iterations = "<<iterations<<endl;
       bool full_sample = (iterations%subsample == 0);
       if (full_sample)
-	print_stats(cout,tree_stream,A,P,tag);
+	print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag);
       cout<<endl<<endl;
     }
 
@@ -529,7 +529,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
     if (not MAP_printed and iterations % 50 == 0) {
       cout<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<endl;
-      print_stats(map_stream,map_stream,MAP_alignment,MAP_P,"MAP");
+      print_stats(map_stream,map_stream,map_stream,map_stream,MAP_alignment,MAP_P,"MAP");
       MAP_printed = true;
     }
 
@@ -538,8 +538,8 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     if (iterations%50 == 0 or std::abs(Pr - new_Pr)>12) {
       print_move_stats();
 #ifndef NDEBUG
-      print_stats(cerr,cerr,A,P,"check (A1)");
-      print_stats(cerr,cerr,A2,P2,"check (A2)");
+      print_stats(cerr,cerr,cerr,cerr,A,P,"check (A1)");
+      print_stats(cerr,cerr,cerr,cerr,A2,P2,"check (A2)");
 
       A2.print_fasta(cerr);
 #endif
@@ -556,6 +556,8 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   }
   tree_stream.close();
   map_stream.close();
+  pS_stream.close();
+  pI_stream.close();
   cerr<<"total samples = "<<total_samples<<endl;
 }
 

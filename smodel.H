@@ -419,12 +419,6 @@ namespace substitution {
   template<class SubModel_t>
   class MultiRateModelOver: public MultiRateModel, public NestedModelOver<SubModel_t> {
 
-  protected:
-    /// The probability of each rate
-    vector<double> distribution_;
-    /// The different rates
-    vector<double> rates_;
-
   public:
     virtual MultiRateModelOver<SubModel_t>* clone() const=0;
 
