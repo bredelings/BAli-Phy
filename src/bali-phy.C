@@ -16,7 +16,6 @@
 #include "parameters.H"
 #include "mcmc.H"
 #include "likelihood.H"
-#include "arguments.H"
 #include "util.H"
 #include "setup.H"
 #include "alignment-constraint.H"

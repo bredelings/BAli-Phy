@@ -4,7 +4,6 @@
 #include <valarray>
 #include "smodel.H"
 #include "imodel.H"
-#include "arguments.H"
 #include "alignment.H"
 #include "sequencetree.H"
 #include "clone.H"

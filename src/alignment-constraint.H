@@ -1,5 +1,4 @@
 #include <boost/program_options.hpp>
-#include "arguments.H"
 #include "alignment.H"
 #include "sequencetree.H"
 
