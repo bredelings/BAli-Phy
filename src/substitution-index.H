@@ -2,6 +2,7 @@
 #define SUBSTITUTION_INDEX_H
 
 #include "mytypes.H"
+#include <iostream>
 #include <vector>
 #include "alignment.H"
 #include "tree.H"
@@ -28,6 +29,11 @@ namespace substitution {
 
   ublas::matrix<int> subA_index_columns(int root,const alignment& A,const Tree& T); 
 
+  bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2);
+
+  std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I);
+
+  void check_subA(const alignment& A1,const alignment& A2,const Tree& T);
 }
 
 #endif

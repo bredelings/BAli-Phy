@@ -337,5 +337,78 @@ namespace substitution {
     // return processed indices
     return subA_select(subA);
   }
+
+  std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I) 
+  {
+    o<<"["<<I.size1()<<","<<I.size2()<<"]\n";
+    for(int j=0;j<I.size2();j++) 
+      for(int i=0;i<I.size1();i++) {
+	o<<I(i,j);
+	if (i<I.size1()-1)
+	  o<<"  ";
+	else
+	  o<<std::endl;
+      }
+    return o;
+  }
+
+  bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2) {
+    bool error = false;
+    if (I1.size1() != I2.size1()) error=true;
+    if (I1.size2() != I2.size2()) error=true;
+    
+    if (not error) 
+      for(int i=0;i<I1.size1() and not error;i++)
+	for(int j=0;j<I1.size2() and not error;j++)
+	  error = (I1(i,j) != I2(i,j));
+    
+    return not error;
+  }
+
+  void check_subA(const alignment& A1,const alignment& A2,const Tree& T) 
+  {
+    for(int b=T.n_leaves();b<2*T.n_branches();b++) 
+    {
+      // compute branches-in
+      vector<int> branches;
+      for(const_in_edges_iterator e = T.directed_branch(b).branches_before();e;e++)
+	branches.push_back(*e);
+      
+      assert(branches.size() == 2);
+	
+      ublas::matrix<int> I1 = substitution::subA_index(branches,A1,T);
+      ublas::matrix<int> I2 = substitution::subA_index(branches,A2,T);
+
+      if (not subA_identical(I1,I2)) 
+      {
+	// print subAs alignments
+	print_subA(std::cerr,I1)<<std::endl;
+	std::cerr<<std::endl;
+	print_subA(std::cerr,I2)<<std::endl;
+
+	// print leaf sets in each subA
+	for(int k=0;k<branches.size();k++) {
+	  std::cerr<<"leaf set #"<<k+1<<" = ";
+	  int lb = T.directed_branch(branches[k]).reverse();
+	    vector<int> leaves = T.leaf_partition_set(lb);
+	    for(int l=0;l<leaves.size();l++)
+	      std::cerr<<leaves[l]<<" ";
+	    std::cerr<<std::endl;
+	}
+	
+	// print alignments
+	std::cerr<<A1<<std::endl;
+	std::cerr<<A2<<std::endl;
+
+	// recompute subAs so we can enter w/ debugger
+	I1 = substitution::subA_index(branches,A1,T);
+	I2 = substitution::subA_index(branches,A2,T);
+
+	std::abort();
+      }
+    }
+  }
+
+
 }
 
