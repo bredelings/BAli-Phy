@@ -79,7 +79,7 @@ namespace substitution {
   }
 
   void HKY::fiddle() {
-    const double sigma = 0.05;
+    const double sigma = 0.15;
     double k = kappa() + gaussian(0,sigma);
     if (k<0) k = -k;
     if (k==0) k = kappa();

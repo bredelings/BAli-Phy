@@ -37,7 +37,7 @@ void Parameters::fiddle() {
   SModel_->fiddle();
   recalc();
   
-  const double sigma = 0.05;
+  const double sigma = 0.15;
   branch_mean += gaussian(0,sigma);
   if (branch_mean < 0) branch_mean = -branch_mean;
 }

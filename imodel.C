@@ -88,7 +88,7 @@ void IndelModel1::fiddle() {
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
 
-  const double sigma = 0.2;
+  const double sigma = 0.35;
 
   if (not fixed[0]) {
     double delta_LOD = lambda_O - logdiff(0,lambda_O);
@@ -188,7 +188,7 @@ void IndelModel2::fiddle() {
   double& lambda_E = parameters_[1];
   double& beta     = parameters_[2];
 
-  const double sigma = 0.20;
+  const double sigma = 0.30;
   const double sigma_beta = 0.10;
 
   if (not fixed[2] and myrandomf() < 0.3) {
@@ -327,7 +327,7 @@ void UpweightedIndelModel::fiddle() {
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
 
-  const double sigma = 0.25;
+  const double sigma = 0.35;
 
   if (not fixed[0]) {
     double delta_LOD = lambda_O - logdiff(0,lambda_O);
