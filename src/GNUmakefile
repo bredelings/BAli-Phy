@@ -8,7 +8,6 @@ ifeq ($(origin ARCH), undefined)
 endif
 
 LANGO := fast-math
-DEFS  := NDEBUG_UBLAS NDEBUG_DP NDEBUG
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
 OPT := 
 LDFLAGS := 
@@ -16,6 +15,7 @@ LDFLAGS :=
 ifeq (${DEBUG},y)
   DEBUG := g3
 else
+  DEFS  := NDEBUG_UBLAS NDEBUG_DP NDEBUG
   OPT   += march=${ARCH} O3 
   LANGO += tracer prefetch-loop-arrays 
   ifneq (${PROF},y)
@@ -140,4 +140,4 @@ clean:
 
 # we are missing sources in the tools/ directory ...
 ALLSOURCES=${SOURCES}
-# -include ${ALLSOURCES:%=.%.d}
+-include ${ALLSOURCES:%=.%.d}
