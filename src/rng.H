@@ -20,6 +20,9 @@ double log_unif();
 // return a normal random variate
 double gaussian(double mu,double sigma);
 
+// return a shifted laplacian random variate
+double shift_laplace(double mu,double sigma);
+
 // return an exponentially distributed variable
 double exponential(double mu);
 
@@ -55,7 +58,9 @@ namespace rng {
 
     double log_unif() {return -gsl_ran_exponential(generator,1.0);}
 
-    double gaussian(double mu,double sigma) {return gsl_ran_gaussian(generator,sigma)+mu;}
+    double shift_laplace(double mu,double sigma) {return gsl_ran_laplace(generator,sigma)+mu;}
+
+    double gaussian(double mu,double sigma) {return gsl_ran_gaussian(generator,sigma/sqrt(2))+mu;}
 
     double exponential(double mu) {return gsl_ran_exponential(generator,mu);}
     int geometric (double mu) {return gsl_ran_geometric(generator,mu);}

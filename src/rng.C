@@ -41,6 +41,10 @@ double gaussian(double mu,double sigma) {
   return rng::standard->gaussian(mu,sigma);
 }
 
+double shift_laplace(double mu,double sigma) {
+  return rng::standard->shift_laplace(mu,sigma);
+}
+
 double exponential(double mu) {
   return rng::standard->exponential(mu);
 }
