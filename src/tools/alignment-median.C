@@ -51,6 +51,8 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
   list<alignment> As = load_alignments(std::cin,tag,alphabets,maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+  if (not alignments.size())
+    throw myexception()<<"Alignment sample is empty.";
 }
 
 
