@@ -64,21 +64,6 @@ double path_P(const vector<int>& path,const Matrix& M,const Matrix& G1,const Mat
 using std::valarray;
 
 
-static bool all_gaps(const alignment& A,int column,const valarray<bool>& mask) {
-  for(int i=0;i<A.size2();i++)
-    if (mask[i] and not A.gap(column,i))
-      return false;
-  return true;
-}
-
-static bool all_gaps(const alignment& A,int column) {
-  for(int i=0;i<A.size2();i++)
-    if (not A.gap(column,i))
-      return false;
-  return true;
-}
-
-
 // g1 -> g2, never g2 -> g1
 
 vector<int> sample_path(const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& Theta) {

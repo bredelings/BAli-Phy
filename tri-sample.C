@@ -25,20 +25,6 @@
 using std::abs;
 using std::valarray;
 
-static bool all_gaps(const alignment& A,int column,const valarray<bool>& mask) {
-  for(int i=0;i<A.size2();i++)
-    if (mask[i] and not A.gap(column,i))
-      return false;
-  return true;
-}
-
-static bool all_gaps(const alignment& A,int column) {
-  for(int i=0;i<A.size2();i++)
-    if (not A.gap(column,i))
-      return false;
-  return true;
-}
-
 namespace states {
   const int M  = 0;
   const int G1 = 1;
@@ -53,6 +39,7 @@ namespace states {
 // Three G1-type states, each of which stores state for two alignments
 //  - these alignment can only have 3 states each (M,G1,G2, not E) and so
 //    total 3*3 = 9 states.  
+
 const int nstates = 1+3+3+1+3*9;
 const int endstate = nstates;
 const int bitsmask = 15;
@@ -608,10 +595,16 @@ double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& G
   assert(i == 0 and c == 0);
 
   // include probability of choosing 'Start' vs ---+ !
-  assert(0);
-  what are the disadvantages of actually having a start state?
-  
+  vector<double> transition(nstates);
+  for(int state1=0;state1<nstates;state1++)
+    transition[state1] = Matrices[state1](0,0)+GQ(state1,state2);
 
+  double p=log_0;
+  for(int state1=0;state1<nstates;state1++)  
+    if (not silent(state1))
+      p = logsum(p, choose_P(state1,transition) );
+
+  Pr += p;
 
   assert(Pr > log_0);
   std::cerr<<"P(path) = "<<Pr<<std::endl;
@@ -687,7 +680,7 @@ alignment construct(const alignment& old, const vector<int>& path,
 
   int c1=0,c2=0,c3=0,c4=0,c5=0,c6=0,l=0;
   for(int column=0;column<A.length();column++) {
-    std::cout<<column<<":  "<<c1<<" "<<c2<<"  "<<c3<<" "<<c4<<"   "<<c5<<"  "<<c6<<"  "<<l<<endl;
+    //    std::cout<<column<<":  "<<c1<<" "<<c2<<"  "<<c3<<" "<<c4<<"   "<<c5<<"  "<<c6<<"  "<<l<<endl;
 
     assert(c1>=c2);
     assert(c3>=c4);
@@ -756,7 +749,7 @@ alignment construct(const alignment& old, const vector<int>& path,
       l++;
       assert(not all_gaps(A,column));
     }
-    std::cout<<column<<":  "<<c1<<" "<<c2<<"  "<<c3<<" "<<c4<<"   "<<c5<<"  "<<c6<<"  "<<l<<endl<<endl;
+    //    std::cout<<column<<":  "<<c1<<" "<<c2<<"  "<<c3<<" "<<c4<<"   "<<c5<<"  "<<c6<<"  "<<l<<endl<<endl;
     assert(not all_gaps(A,column));
   }
 
@@ -1056,8 +1049,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
   vector<int> path_old2 = get_path_3way(old,n0,n1,n2,n3);
   vector<int> path_new2 = get_path_3way(A,n0,n1,n2,n3);
-  assert(path_old == path_old2);
-  assert(path_new == path_new2);
+  assert(path_new == path_new2); // <- this actually isn't necessary, we just need path_new
 
   // get the generalized paths - no sequential silent states that can loop
   vector<int> path_old_G = generalize(path_old);
@@ -1074,8 +1066,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   double s1 = substitution(old,Theta);
   double s2 = substitution(A,Theta);
 
-  double l1 = prior_HMM(old,Theta) + s1;
-  double l2 = prior_HMM(A  ,Theta) + s2;
+  double l1 = prior_HMM_nogiven(old,Theta) + s1;
+  double l2 = prior_HMM_nogiven(A  ,Theta) + s2;
 
   double a = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,1);
   double a2 = prior_branch_HMM(old,Theta.IModel,n0,n1);
@@ -1150,8 +1142,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<endl;
     std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<endl;
 
-    std::cerr<<prior_HMM(old,Theta) - lp1<<endl;
-    std::cerr<<prior_HMM(A  ,Theta) - lp2<<endl;
+    std::cerr<<prior_HMM_nogiven(old,Theta) - lp1<<endl;
+    std::cerr<<prior_HMM_nogiven(A  ,Theta) - lp2<<endl;
 
     if (diff != 0.0) {
       if (std::abs(rdiff) > 1.0e-8) {

@@ -163,19 +163,18 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   if (P.T.leaves() >2) {
     sampler.add(sample_nodes,1,"sample_nodes:nodes");
-    sampler.add(sample_tri,1,"sample_tri:alignment:nodes:tri");
+    sampler.add(sample_tri,0.1,"sample_tri:alignment:nodes:tri");
   }
 
   if (P.T.leaves() >3)
     sampler.add(sample_topologies,1,"sample_topologies:nodes:topology");
 
-  sampler.add(change_branch_lengths,0.5,"change_branch_lengths:nodes:lengths:topology");
+  sampler.add(change_branch_lengths,1.5,"change_branch_lengths:nodes:lengths:topology");
 
-  sampler.add(slide_branch_lengths,0.5,"slide_branch_lengths:lengths");
+  sampler.add(slide_branch_lengths,1.5,"slide_branch_lengths:lengths");
 
   sampler.add(change_parameters,1,"change_parameters:parameters");
 
-  //FIXME - maybe just store name in object, use vector, search for name?
   //FIXME - make MCMC inherit from the collection of moves.
   vector<string> disable;
   vector<string> enable;

@@ -77,7 +77,7 @@ double prior_branch_HMM_Given(const alignment& A,const IndelModel& IModel,int pa
   return P;
 }
 
-double prior_HMM(const alignment& A,const Parameters& Theta) {
+double prior_HMM_nogiven(const alignment& A,const Parameters& Theta) {
   const tree& T = Theta.T;
 
   double P = 0;
@@ -93,7 +93,7 @@ double prior_HMM(const alignment& A,const Parameters& Theta) {
   return P;
 }
 
-double prior_HMM_Given(const alignment& A,const Parameters& Theta) {
+double prior_HMM(const alignment& A,const Parameters& Theta) {
   const tree& T = Theta.T;
 
   int highest_node = T.get_nth(T.num_nodes()-2);

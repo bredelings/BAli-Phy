@@ -8,7 +8,7 @@
 double prior_no_tree(const alignment&,const Parameters&);
 double prior_internal(const alignment&,const Parameters&);
 double prior_HMM(const alignment&,const Parameters&);
-double prior_HMM_Given(const alignment&,const Parameters&);
+double prior_HMM_nogiven(const alignment&,const Parameters&);
 double prior_branch_HMM(const alignment&,const IndelModel&,int parent,int child);
 
 inline double log_double_factorial(int n) {
@@ -74,7 +74,7 @@ inline double probability2(const alignment& A,const Parameters& Theta) {
 
 inline double probability3(const alignment& A,const Parameters& Theta) {
   double p = 0;
-  p += prior_HMM_Given(A,Theta);
+  p += prior_HMM(A,Theta);
   p += substitution(A,Theta); // also deals w/ frequencies
   p += prior(Theta);
   return p;

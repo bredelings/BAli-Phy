@@ -5,6 +5,21 @@
 #include "util.H"
 #include "rng.H"
 
+bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask) {
+  for(int i=0;i<A.size2();i++)
+    if (mask[i] and not A.gap(column,i))
+      return false;
+  return true;
+}
+
+bool all_gaps(const alignment& A,int column) {
+  for(int i=0;i<A.size2();i++)
+    if (not A.gap(column,i))
+      return false;
+  return true;
+}
+
+
 int num_non_gaps(const alignment& A,int column) {
   int count=0;
   for(int i=0;i<A.size2();i++) 

@@ -75,6 +75,10 @@ inline std::istream& operator>>(std::istream& file,alignment& A) {
 
 bool valid(const alignment&);
 
+bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask);
+bool all_gaps(const alignment& A,int column);
+
+
 void remove_empty_columns(alignment&);
 
 vector<int> get_path(const alignment&,int,int);
