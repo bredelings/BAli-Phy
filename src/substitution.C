@@ -144,8 +144,8 @@ namespace substitution {
   /// find the columns in which the i-th subA is live
   vector<int> get_columns(const ublas::matrix<int>& subA,int i) {
     vector<int> columns;
-    columns.reserve(subA.size2());
-    for(int c=0;c<subA.size2();i++) 
+    columns.reserve(subA.size1());
+    for(int c=0;c<subA.size1();c++) 
       if (subA(c,i) != alphabet::gap)
 	columns.push_back(c);
 
@@ -164,7 +164,7 @@ namespace substitution {
       vector<int> mapping = sort_subtree_columns(A,columns,leaves[i]);
 
       int l=0;
-      for(int c=0;c<subA.size2();i++) 
+      for(int c=0;c<subA.size1();c++) 
 	if (subA(c,i) != alphabet::gap)
 	  subA(c,i) = mapping[l++];
 
@@ -201,7 +201,7 @@ namespace substitution {
     vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index_simple(A,leaves);
+    ublas::matrix<int> subA = subA_index_sort(A,leaves);
 
     // return processed indices
     return subA_select(subA);
@@ -222,7 +222,7 @@ namespace substitution {
     vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index_simple(A,leaves);
+    ublas::matrix<int> subA = subA_index_sort(A,leaves);
 
     // select and order the columns we want to keep
     const int I = leaves.size()-1;
@@ -245,7 +245,7 @@ namespace substitution {
     vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index_simple(A,leaves);
+    ublas::matrix<int> subA = subA_index_sort(A,leaves);
 
     // select and order the columns we want to keep
     const int I = leaves.size()-1;
@@ -275,7 +275,7 @@ namespace substitution {
     vector<vector<int> > leaves = get_subtree_leaves(b,T);
       
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index_simple(A,leaves);
+    ublas::matrix<int> subA = subA_index_sort(A,leaves);
 
     // select and order the columns we want to keep
     const int I = leaves.size()-1;
