@@ -156,6 +156,7 @@ valarray<double> peel(const vector<int>& residues,const tree& T,const Reversible
   assert(used[root] or not any_letters);
 
   /*----------- return the result ------------------*/
+  //FIXME - filling this valarray is costing us 2% of the CPU time!
   valarray<double> result(a.size());
   for(int i=0;i<a.size();i++)
     result[i] = distributions(root,i);

@@ -1,1 +1,1 @@
-.likelihood.C.d likelihood.o: likelihood.C likelihood.H alignment.H alphabet.H mytypes.H   myexception.H sequence.H tree.H parameters.H smodel.H substitution.H   logsum.H
+.likelihood.C.d likelihood.o: likelihood.C likelihood.H alignment.H alphabet.H mytypes.H   myexception.H sequence.H mytypes.H alphabet.H tree.H parameters.H   smodel.H imodel.H substitution.H alignment.H logsum.H

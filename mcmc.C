@@ -139,8 +139,10 @@ void MoveGroup::iterate(alignment& A,Parameters& P) {
 result_t MoveGroup::iterate(alignment& A,Parameters& P,int i) {
   assert(i < order.size());
 
+#ifndef NDEBUG
   std::cerr<<" move = "<<attributes[0]<<endl;
   std::cerr<<"   submove = "<<moves[order[i]]->attributes[0]<<endl;
+#endif
 
   result_t r = moves[order[i]]->iterate(A,P,suborder[i]);
   if (r == success)
@@ -393,6 +395,8 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& P,
 
   o<<"tree = "<<P.T<<endl<<endl;
 
+  o<<"mu = "<<P.branch_mean<<endl;
+
   for(int i=0;i<P.SModel().parameters().size();i++)
     o<<"    p"<<i<<" = "<<P.SModel().parameters()[i];
   o<<endl<<endl;
@@ -442,7 +446,7 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
   std::cout<<T<<endl<<endl;
 
   const int correlation_time = 2*int(log(T.leaves()))+1;
-  const int start_after = 0;// 600*correlation_time;
+  const int start_after = 100;// 600*correlation_time;
   int total_samples = 0;
 
   double Pr_prior = prior(A,P);
@@ -494,13 +498,15 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
 
     /*----------------- print diagnostic output -----------------*/
 
-    if (iterations %50 == 0 or std::abs(Pr - new_Pr)>12) {
+    if (iterations%50 == 0 or std::abs(Pr - new_Pr)>12) {
+      print_move_stats();
+#ifndef NDEBUG
       print_stats(std::cerr,A,P,probability3);
       print_stats(std::cerr,A2,P2,probability3);
 
       A2.print_fasta(std::cerr);
+#endif
 
-      print_move_stats();
     }
 
     /*------------------ move to new position -------------------*/

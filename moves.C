@@ -132,6 +132,7 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
   double lL_1 = LS1 + LP1;
   double lL_2 = LS2 + LP2;
 
+#ifndef NDEBUG  
   for(int i=0;i<P.SModel().parameters().size();i++)
     std::cerr<<"    p"<<i<<" = "<<P.SModel().parameters()[i];
   std::cerr<<endl<<endl;
@@ -142,14 +143,15 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
 
   std::cerr<<"L1 = "<<lL_1<<" = "<<LS1<<" + "<<LP1<<endl;
   std::cerr<<"L2 = "<<lL_2<<" = "<<LS2<<" + "<<LP2<<endl;
+#endif
 
   if (myrandomf() < exp(lL_2 - lL_1)) {
     P = P2;
-    std::cerr<<"accepted"<<endl;
+    //    std::cerr<<"accepted"<<endl;
     return MCMC::success;
   }
   else {
-    std::cerr<<"rejected"<<endl;
+    //    std::cerr<<"rejected"<<endl;
     return MCMC::failure;
   }
   

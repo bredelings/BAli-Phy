@@ -80,10 +80,12 @@ double path_Q_subst(const vector<int>& path,
     double sub=0;
     if (di(state2) and dj(state2)) {
       for(int r=0;r<MRModel.nrates();r++) {
-	double temp=0;
 	// double temp = sum( dists1[i-1][r] * frequency * dists2[j-1][r] );  HANDCODED
+	double temp=0;
+	const valarray<double>& v1 = dists1[i-1][r];
+	const valarray<double>& v2 = dists2[j-1][r];
 	for(int l=0;l<frequency.size();l++)
-	  temp += dists1[i-1][r][l]*frequency[l]*dists2[j-1][r][l];
+	  temp += v1[l]*frequency[l]*v2[l];
  	sub += MRModel.distribution()[r]*temp;
       }
     }
@@ -312,10 +314,17 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
       for(int i=1;i<n and i<M.size1();i++) {
 
 	double sub = 0;
-	for(int r=0;r<MRModel.nrates();r++)
-	  sub += MRModel.distribution()[r]* 
-	    sum( dists1[i-1][r] * frequency * dists2[n-1][r] );
-    
+	for(int r=0;r<MRModel.nrates();r++) {
+	  // sub += MRModel.distribution()[r]*
+	  //        sum( dists1[i-1][r] * frequency * dists2[n-1][r] );  HANDCODED
+	  double temp=0;
+	  const valarray<double>& v1 = dists1[i-1][r];
+	  const valarray<double>& v2 = dists2[n-1][r];
+	  for(int l=0;l<frequency.size();l++)
+	    temp += v1[l]*frequency[l]*v2[l];
+	  sub += MRModel.distribution()[r]*temp;
+	}
+
 
 	M(i,n) = log(sub) + logsum(M(i-1,n-1)  + Q(0,0),
 				   G1(i-1,n-1) + Q(1,0),
@@ -334,9 +343,16 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
       for(int i=1;i<=n and i<M.size2();i++) {
 
 	double sub = 0;
-	for(int r=0;r<MRModel.nrates();r++)
-	  sub += MRModel.distribution()[r]* 
-	    sum( dists1[n-1][r] * frequency * dists2[i-1][r] );
+	for(int r=0;r<MRModel.nrates();r++) {
+	  // sub += MRModel.distribution()[r]*
+	  //        sum( dists1[n-1][r] * frequency * dists2[i-1][r] );  HANDCODED
+	  double temp=0;
+	  const valarray<double>& v1 = dists1[n-1][r];
+	  const valarray<double>& v2 = dists2[i-1][r];
+	  for(int l=0;l<frequency.size();l++)
+	    temp += v1[l]*frequency[l]*v2[l];
+	  sub += MRModel.distribution()[r]*temp;
+	}
 
 	M(n,i)  = log(sub) + logsum(M(n-1,i-1)  + Q(0,0),
 				    G1(n-1,i-1) + Q(1,0),

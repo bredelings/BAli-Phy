@@ -86,6 +86,19 @@ vector< vector<valarray<double> > > distributions23(const alignment& A,const Par
   return dist;
 }
 
+//alignment tri_sample_alignment(const alignment& old,const Parameters& P,
+//			       int node1,int node2) {
+
+
+// FIXME - randomly try any order - but n0 has to be first, somehow
+// Generate the division into n0|n1|n2,n3 independantly of the ordering
+
+// FIXME - write a routine which takes On0,On1,On2,On3, and also n0,n1,n2,n3
+//         make another routine which just take n0 (which could become
+//         tri_sample_one() )
+
+// FIXME - actually resample the path multiple times - pick one on
+// opposite side of the middle 
 alignment tri_sample_alignment(const alignment& old,const Parameters& P,
 			   int node1,int node2) {
   const tree& T = P.T;

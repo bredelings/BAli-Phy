@@ -6,89 +6,42 @@
 #include "tree.H"
 #include <valarray>
 #include "smodel.H"
-
-//FIXME - need to an other function to compute probability that length=L and
-//        there are no G1 states.   
-
-/******************************* InDel Models ***********************************/
-
-class IndelModel {
-protected:
-  std::vector<double> p_length;
-  std::vector<double> p_length_plus;
-  
-  void construct_lengthp(int);
-  void construct_length_plus_p(int);
-  ublas::matrix<double> P;
-
-public:
-  vector<double> pi;
-  ublas::matrix<double> Q;
-
-  double lengthp(int i) const {return p_length[i];}
-  double length_plus_p(int i) const {return p_length_plus[i];}
-
-  IndelModel();
-};
-
-class IndelModel1 : public IndelModel {
-public:
-  double tau;     //probability of going -> E
-  double delta;   //probability of starting a gap: M -> G1,G2
-  double epsilon; //probability of extending a gap: G1->G1,  G2->G2
-
-  explicit IndelModel1(int maxlength,double LO,double LE);
-};
-
-class IndelModel2 : public IndelModel {
-public:
-  double tau;     //probability of going -> E
-  double delta;   //probability of starting a gap: M -> G1,G2
-  double epsilon; //probability of extending a gap: G1->G1,  G2->G2
-  double beta;    //unweighting factor for adjacent G1/G2 gaps
-
-  explicit IndelModel2(int maxlength,double LO,double LE,double b=0);
-};
-
-class SingleIndelModel : public IndelModel {
-
-public:
-  double tau;
-  double delta;
-
-  explicit SingleIndelModel(int maxlength,double LO);
-};
+#include "imodel.H"
 
 /******************************* parameter-containing class **************************/
-
+/// A class to contain all the MCMC state except the alignment
 class Parameters {
   vector< vector<Matrix> > transition_P_;
 
-  //FIXME - this should be private - need an interface for changing branch lengths (?)
-
   /*--------We own this----------*/
+  /// The substitution::Model
   substitution::MultiRateModel* SModel_;
 
 public:
+  /// Is pinning enabled or not?
   vector<double> constants;
+  /// Is pinning enabled or not?
   int features;
 
-  /*---------Indel Model---------*/
+  /// The IndelModel
   IndelModel IModel;
 
   /*------------tree-------------*/
   SequenceTree T;
 
+  /// Get the substitution::Model
   const substitution::MultiRateModel& SModel() const {return *SModel_;}
 
+  /// Get the alphabet
   const alphabet& get_alphabet() const {return SModel_->Alphabet();}
 
-  void fiddle() {SModel_->fiddle();recalc();}
+  /// Symmetrically propose another state
+  void fiddle();
 
   //FIXME - why this hack?
-
   const vector< Matrix > & transition_P(int r) const { return transition_P_[r]; }
 
+  /// Get the transition matrix for branch 'b', and rate 'r'
   const Matrix& transition_P(int r,int b) const 
   {
     assert(b != T.num_nodes()-2);
@@ -96,11 +49,13 @@ public:
     return transition_P_[r][b];
   }
 
-  void setlength(int,double);
+  /// Set branch 'b' to have length 'l', and compute the transition matrices
+  void setlength(int b,double l);
   
+  /// Recalculate all the cached transition matrices
   void recalc();
 
-  // parameter for exponential prior on branch length
+  /// parameter for exponential prior on branch length
   double branch_mean; 
 
   Parameters& operator=(const Parameters&);

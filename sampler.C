@@ -298,19 +298,16 @@ int main(int argc,char* argv[]) {
     /*------- Nucleotide Substitution Models -------*/
     alphabet dna("DNA nucleotides","AGTC","N");
     
-    substitution::EQU EQU_dna(dna);
     substitution::HKY HKY_dna(dna);
     
     /*------- Nucleotide Substitution Models -------*/
     alphabet rna("RNA nucleotides","AGUC","N");
     
-    substitution::EQU EQU_rna(rna);
     substitution::HKY HKY_rna(rna);
     
     /*------- Amino Acid Substitution Models -------*/
     alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
     
-    substitution::EQU EQU_amino(amino_acids);
     substitution::Empirical WAG(amino_acids,"Data/wag.dat");
     
     /*----------- Load alignment and tree ---------*/
@@ -331,12 +328,14 @@ int main(int argc,char* argv[]) {
     /*--------- Set up the substitution model --------*/
     substitution::ReversibleModel* base_smodel = 0;
     
-    if (A.get_alphabet() == dna)
-      base_smodel = &HKY_dna;
+    if (args.set("smodel") and args["smodel"] == "EQU")
+      base_smodel = new substitution::EQU(A.get_alphabet());
+    else if (A.get_alphabet() == dna)
+      base_smodel = HKY_dna.clone();
     else if (A.get_alphabet() == rna)
-      base_smodel = &HKY_rna;
+      base_smodel = HKY_rna.clone();
     else if (A.get_alphabet() == amino_acids)
-      base_smodel = &WAG;
+      base_smodel = WAG.clone();
     else
       assert(0);
     
@@ -364,13 +363,19 @@ int main(int argc,char* argv[]) {
       IMlength = A.length()*3;
 
     IndelModel* imodel = 0;
-    if (not args.set("Imodel") or args["Imodel"] == "normal")
-      imodel = new IndelModel2(IMlength,lambda_O,lambda_E);
-    else if (args["Imodel"] == "ordered")
+
+    if (args["imodel"] == "ordered") {
+      std::cout<<"imodel = ordered\n";
       imodel = new IndelModel1(IMlength,lambda_O,lambda_E);
-    else if (args["Imodel"] == "single_indels")
+    }
+    else if (args["imodel"] == "single_indels") {
+      std::cout<<"imodel = single indels\n";
       imodel = new SingleIndelModel(IMlength,lambda_O);
-      
+    }
+    else {
+      std::cout<<"imodel = symmetric\n";
+      imodel = new IndelModel2(IMlength,lambda_O,lambda_E);
+    }
 
     Parameters P(*full_smodel,*imodel,T);
     std::cout<<"Using substitution model: "<<P.SModel().name()<<endl<<endl;
@@ -397,6 +402,7 @@ int main(int argc,char* argv[]) {
     // this isn't quite right in case of exceptions...
     delete imodel;
     delete full_smodel;
+    delete base_smodel;
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

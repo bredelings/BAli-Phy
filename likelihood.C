@@ -16,18 +16,26 @@ double prior(const SequenceTree& T,double branch_mean) {
   if (T.leaves()>3)
     p = -log_double_factorial(2*T.leaves()-5);
 
-  /* ---- PROD_i exp(T[i] / -lambda ) ---- */
+  /* ---- PROD_i exp(- T[i] / mu )/ mu ---- */
   for(int i=0;i<T.branches();i++) 
     p += (-log(branch_mean) - T.branch(i).length()/branch_mean );
   return p;
 }
 
 // Tree prior + SModel prior
-double prior(const Parameters& Theta) {
+double prior(const Parameters& P) {
   double p = 0;
 
-  p += prior(Theta.T,Theta.branch_mean);
-  p += Theta.SModel().prior();
+  const double branch_mean_mean = 0.4;
+
+  // prior on the mu, the mean branch length
+  p += (-log(branch_mean_mean) - P.branch_mean/branch_mean_mean);
+
+  // prior on the topology and branch lengths
+  p += prior(P.T, P.branch_mean);
+
+  // prior on the substitution model
+  p += P.SModel().prior();
 
   return p;
 }
@@ -48,42 +56,42 @@ double prior_branch(const alignment& A,const IndelModel& IModel,int parent,int c
 
 /** FIXME - numerically check that choice of root node doesn't matter **/
 double prior_branch_Given(const alignment& A,const IndelModel& IModel,int parent,int child) {
-  double P = prior_branch(A,IModel,parent,child);
+  double Pr = prior_branch(A,IModel,parent,child);
 
-  P -= IModel.lengthp(A.seqlength(parent));
+  Pr -= IModel.lengthp(A.seqlength(parent));
 
-  return P;
+  return Pr;
 }
 
-double prior_HMM_nogiven(const alignment& A,const Parameters& Theta) {
-  const tree& T = Theta.T;
+double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
+  const tree& T = P.T;
 
-  double P = 0;
+  double Pr = 0;
 
   for(int b=0;b<T.branches();b++) {
     int parent = T.branch(b).parent();
     int child  = T.branch(b).child();
-    double p = prior_branch(A,Theta.IModel,parent,child);
-    P += p;
+    double p = prior_branch(A, P.IModel,parent,child);
+    Pr += p;
   }
   
-  return P;
+  return Pr;
 }
 
-double prior_HMM(const alignment& A,const Parameters& Theta) {
-  const tree& T = Theta.T;
+double prior_HMM(const alignment& A,const Parameters& P) {
+  const tree& T = P.T;
 
   int highest_node = T.get_nth(T.num_nodes()-2);
   highest_node = T.branch_up(highest_node).parent();
-  double P = Theta.IModel.lengthp(A.seqlength(highest_node));
+  double Pr = P.IModel.lengthp(A.seqlength(highest_node));
 
   for(int b=0;b<T.branches();b++) {
     int parent = T.branch(b).parent();
     int child  = T.branch(b).child();
-    P += prior_branch_Given(A,Theta.IModel,parent,child);
+    Pr += prior_branch_Given(A, P.IModel, parent, child);
   }
   
-  return P;
+  return Pr;
 }
 
 double prior_branch_notree_nogiven(const alignment& A,const IndelModel& IModel,int child) {
@@ -119,7 +127,7 @@ double prior_HMM_notree(const alignment& A,const Parameters& P) {
 
   double Pr = P.IModel.lengthp(A.length());
   for(int b=0;b<T.branches();b++) 
-    Pr += prior_branch_notree(A,P.IModel,b);
+    Pr += prior_branch_notree(A, P.IModel, b);
 
   return Pr;
 }
