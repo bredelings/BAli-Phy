@@ -18,16 +18,18 @@ using std::cout;
 SequenceTree standardized(const string& t) {
   SequenceTree T;
   T.parse(t);
-  return standardized(T);
+  standardize(T);
+  return T;
 }
   
 SequenceTree standardized(const string& t,const vector<string>& remove) {
   SequenceTree T;
   T.parse(t);
-  return standardized(T,remove);
+  standardize(T,remove);
+  return T;
 }
   
-SequenceTree standardized(SequenceTree T) {
+void standardize(SequenceTree& T) {
 
   map<string,int,lstr> sequences;
 
@@ -47,17 +49,14 @@ SequenceTree standardized(SequenceTree T) {
   //  cerr<<t<<endl;
   //  cerr<<T.write()<<endl;
   //  cerr<<T.write(false)<<endl;
-  std::abort(); // FIXME
   T.SequenceTree::standardize(newnames);
   //  cerr<<T.write(false)<<endl;
-  return T;
 }
 
-SequenceTree standardized(SequenceTree T,const vector<string>& remove) {
+void standardize(SequenceTree& T,const vector<string>& remove) {
   for(int i=0;i<remove.size();i++)
     delete_node(T,remove[i]);
-
-  return standardized(T);
+  standardize(T);
 }
 
 valarray<bool> branch_partition(const Tree& T,int b) {
