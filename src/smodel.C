@@ -354,13 +354,13 @@ namespace substitution {
   void Empirical::fiddle() {
     if (not fixed[0]) {
 
-      double& p = parameters_[0];
+      double& f = parameters_[0];
 
-      // fiddle Invariant fraction
+      // fiddle RMM::f
       const double sigma = 0.04;
-      p += gaussian(0,sigma);
+      f += gaussian(0,sigma);
 
-      p = wrap(p,1.0);
+      f = wrap(f,1.0);
     }
     
     // recalc() not needed because f() value not cached
@@ -409,9 +409,10 @@ namespace substitution {
 
   void YangCodonModel::super_fiddle() {
     double sigma = 0.15;
-    if (not fixed[0])
-      parameters_[0] *= exp(gaussian(0,sigma));
+    if (not fixed[1])
+      parameters_[1] *= exp(gaussian(0,sigma));
 
+    read();
     recalc();
   }
 
@@ -457,7 +458,8 @@ namespace substitution {
   }
 
   string YangCodonModel::name() const {
-    return "Yang-94";
+    return SubModel().name() + " * Yang-94";
+    //    return "Yang-94";
   }
 
   string YangCodonModel::super_parameter_name(int i) const {

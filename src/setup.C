@@ -11,6 +11,8 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+using namespace boost::program_options;
+
 /// Reorder internal sequences of A to correspond to standardized node names for T
 alignment standardize(const alignment& A, const SequenceTree& T) {
   alignment A2 = A;
@@ -30,7 +32,7 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
 
 
 /// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
-valarray<double> empirical_frequencies(Arguments& args,const alignment& A) {
+valarray<double> empirical_frequencies(const variables_map& args,const alignment& A) {
   const alphabet& a = A.get_alphabet();
 
   // Count the occurrence of the different letters
@@ -47,7 +49,7 @@ valarray<double> empirical_frequencies(Arguments& args,const alignment& A) {
   // Setup the default frequences for the pseudocounts (uniform)
   double pseudocount = 5+4*a.size();
 
-  if (args.set("CFNF")) {
+  if (args.count("CFNF")) {
     pseudocount = 100*counts.size();
   }
 
@@ -58,20 +60,20 @@ valarray<double> empirical_frequencies(Arguments& args,const alignment& A) {
 
 
 /// Load an alignment from command line args align=filename
-void load_A(Arguments& args,alignment& A) {
+void load_A(const variables_map& args,alignment& A) {
   OwnedPointer<AminoAcids> AA = AminoAcids();
-  if (args.set("Use Stop"))
+  if (args.count("Use Stop"))
     *AA = AminoAcidsWithStop();
   
   vector<OwnedPointer<alphabet> > alphabets;
-  if (args["alphabet"] == "Codons") {
+  if (args.count("alphabet") and args["alphabet"].as<string>() == "Codons") {
     {
-      string dna_filename = args["datadir"] + "/" + "genetic_code_dna.dat";
+      string dna_filename = args["datadir"].as<string>() + "/" + "genetic_code_dna.dat";
       alphabets.push_back(Codons(DNA(),*AA,dna_filename));
     }
 
     {
-      string rna_filename = args["datadir"] + "/" + "genetic_code_rna.dat";
+      string rna_filename = args["datadir"].as<string>() + "/" + "genetic_code_rna.dat";
       alphabets.push_back(Codons(RNA(),*AA,rna_filename));
     }
   }
@@ -82,22 +84,22 @@ void load_A(Arguments& args,alignment& A) {
   }
   
   /* ----- Try to load alignment ------ */
-  if (not args.set("align")) 
+  if (not args.count("align")) 
     throw myexception("Alignment file not specified! (align=<filename>)");
   
-  A.load(alphabets,args["align"]);
+  A.load(alphabets,args["align"].as<string>());
   
   remove_empty_columns(A);
   
   if (A.num_sequences() == 0)
-    throw myexception()<<"Alignment file "<<args["align"]<<" didn't contain any sequences!";
+    throw myexception()<<"Alignment file "<<args["align"].as<string>()<<" didn't contain any sequences!";
 }
 
 
 /// Load a tree from command line args align=filename
-void load_T(Arguments& args,const alignment& A,SequenceTree& T,bool random_tree_ok) {
+void load_T(const variables_map& args,const alignment& A,SequenceTree& T,bool random_tree_ok) {
   /*------ Try to load tree -------------*/
-  if (not args.set("tree")) {
+  if (not args.count("tree")) {
     if (not random_tree_ok)
       throw myexception()<<"Tree file not specified! (tree=<filename>)";
 
@@ -109,7 +111,7 @@ void load_T(Arguments& args,const alignment& A,SequenceTree& T,bool random_tree_
   }
   else {
     RootedSequenceTree RT;
-    RT.read(args["tree"]);
+    RT.read(args["tree"].as<string>());
     T = remove_root( RT );
   }
 }
@@ -198,9 +200,9 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
 
 
 
-void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_sequences)
+void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
 {
-  bool random_tree_ok = args.set("random_tree_ok");
+  bool random_tree_ok = args.count("random-tree-ok");
 
   load_A(args, A);
   if (not internal_sequences)
@@ -212,11 +214,12 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
   link(A,T,internal_sequences);
 
   //---------------- Randomize alignment? -----------------//
-  if (args.set("randomize_alignment"))
+  if (args.count("randomize-alignment"))
     A = randomize(A,T.n_leaves());
   
   //------------------ Analyze 'internal'------------------//
-  if (args["internal"] == "+" or args.set("randomize_alignment"))
+  if ((args.count("internal") and args["internal"].as<string>() == "+")
+      or args.count("randomize-alignment"))
     for(int column=0;column< A.length();column++) {
       for(int i=T.n_leaves();i<A.size2();i++) 
 	A(column,i) = alphabet::not_gap;
@@ -229,32 +232,21 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
   }
 }
 
-OwnedPointer<IndelModel> get_imodel(Arguments& args) {
+OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
   //-------------Choose an indel model--------------//
   OwnedPointer<IndelModel> imodel;
 
-  if (not args.set("imodel")) args["imodel"] = "new";
-  
-  if (args["imodel"] == "simple")
+  if (args["imodel"].as<string>() == "simple")
     imodel = SimpleIndelModel();
-  else if (args["imodel"] == "new")
+  else if (args["imodel"].as<string>() == "new")
     imodel = NewIndelModel();
   else
-    throw myexception()<<"Unrecognized indel model '"<<args["imodel"]<<"'";
+    throw myexception()<<"Unrecognized indel model '"<<args["imodel"].as<string>()<<"'";
   
-  if (args["gaps"]== "star") {
+  if (args.count("gaps") and args["gaps"].as<string>() == "star")
     imodel->full_tree = false;
-  }
   else
     imodel->full_tree = true;
-
-  vector<double> p = imodel->parameters();
-  for(int i=0;i<p.size();i++) {
-    if (args.set(imodel->parameter_name(i)))
-      p[i] = convertTo<double>(args[imodel->parameter_name(i)]);
-  }
-  imodel->parameters(p);
-    
 
   return imodel;
 }

@@ -64,7 +64,7 @@ endif
 PROGNAME = bali-phy
 SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C exponential.C eigenvalue.C parameters.C likelihood.C mcmc.C \
-	  choose.C sequencetree.C sample-branch-lengths.C arguments.C \
+	  choose.C sequencetree.C sample-branch-lengths.C \
 	  util.C randomtree.C alphabet.C smodel.C bali-phy.C \
 	  sample-tri.C hmm.C dp-engine.C 3way.C 2way.C sample-alignment.C \
 	  sample-node.C imodel.C 5way.C sample-topology-NNI.C \
@@ -74,7 +74,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C
 
-LIBS = gsl gslcblas m
+LIBS = gsl gslcblas m boost_program_options
 ifeq (${STLPORT},y) 
   DEFS += _STLP_DEBUG
   LIBS += stlportstlg
@@ -116,7 +116,7 @@ tools/alignment-chop-internal: alignment.o arguments.o alphabet.o sequence.o uti
 	tree.o sequencetree.o setup.o imodel.o sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o model.o ${LINKLIBS}
 
 test3: model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o \
-	probability.o rng.o ${LINKLIBS} -lmudflap.so
+	probability.o rng.o ${LINKLIBS} -lmudflap
 
 test4: -lmudflap #model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o probability.o rng.o ${LINKLIBS} 
 

@@ -32,8 +32,19 @@ public:
   /// a symmetrical proposal distribution (calls recalc)
   virtual void fiddle() =0;
 
+  /// Get a model parameter
+  virtual double parameter(int p) const {
+    return parameters_[p];
+  }
+
   /// Get the model parameters
   virtual const std::vector<double>& parameters() const {return parameters_;}
+
+  /// Set a model parameter
+  virtual void parameter(int p,double value) {
+    parameters_[p] = value;
+    recalc();
+  }
 
   /// Set the model parameters
   virtual void parameters(const std::vector<double>& p) {
@@ -202,6 +213,10 @@ public:
     :SuperModelOver<SubModel_t>(std::vector< OwnedPointer<SubModel_t> >(1,M),dp)
   { }
 };
+
+
+int find_parameter(const Model& M,const std::string& name);
+
 
 
 #endif

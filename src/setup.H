@@ -8,35 +8,42 @@
 #include "alignment.H"
 #include "sequencetree.H"
 #include "clone.H"
+#include <boost/program_options.hpp>
 
 /// Reorder internal sequences of A to correspond to standardized node names for T
 alignment standardize(const alignment& A, const SequenceTree& T);
 
 /// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
-std::valarray<double> empirical_frequencies(Arguments& args,const alignment& A);
+std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,
+					    const alignment& A);
 
 //----------------- Load trees and alignments ---------------------//
 
 /// Load an alignment from command line args align=filename
-void load_A(Arguments& args, alignment& A);
+void load_A(const boost::program_options::variables_map& args, 
+	    alignment& A);
 
 /// Load a tree from command line args align=filename
-void load_T(Arguments& args,const alignment& A,SequenceTree& T,bool random_tree_ok);
+void load_T(const boost::program_options::variables_map& args,
+	    const alignment& A,SequenceTree& T,bool random_tree_ok);
 
 /// Hook up the leaf nodes of T to the leaf of A
 /// Also, make sure that A has the right number of internal sequences.
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
-void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_sequences=true);
+void load_A_and_T(const boost::program_options::variables_map& args,
+		  alignment& A,SequenceTree& T,bool internal_sequences=true);
 
 //------------------------ Substitution stuff ----------------------//
 
 /// Return a substitution::Model specified by args
-OwnedPointer<substitution::MultiModel> get_smodel(Arguments& args,const alphabet& a,const std::valarray<double>& default_frequencies);
+OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
+						  const alphabet& a,const std::valarray<double>& default_frequencies);
 /// Return a substitution::Model specified by args
-OwnedPointer<substitution::MultiModel> get_smodel(Arguments& args,const alignment& A);
+OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
+						  const alignment& A);
 
 //--------------------------- Indel stuff --------------------------//
-OwnedPointer<IndelModel> get_imodel(Arguments& args);
+OwnedPointer<IndelModel> get_imodel(const boost::program_options::variables_map& args);
 
 #endif 

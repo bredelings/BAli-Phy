@@ -4,6 +4,9 @@
 #include <iostream>
 #include <valarray>
 #include <new>
+
+#include <boost/program_options.hpp>
+
 #include "myexception.H"
 #include "mytypes.H"
 #include "sequencetree.H"
@@ -18,6 +21,9 @@
 #include "setup.H"
 #include "alignment-constraint.H"
 #include "monitor.H"
+
+namespace po = boost::program_options;
+using po::variables_map;
 
 using std::cout;
 using std::cin;
@@ -39,7 +45,7 @@ void do_showonly(const alignment& A,const Parameters& P) {
 }
 
 
-void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterations) 
+void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int max_iterations) 
 {
   // args for branch-based stuff
   vector<int> branches(P.T.n_branches());
@@ -178,7 +184,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   parameter_moves.add(4+P.T.n_branches()/8,SingleMove(sample_frequencies,"frequencies:parameters"));
   
 
-  int subsample = args.loadvalue("subsample",1);
+  int subsample = args["subsample"].as<int>();
 
   // full sampler
   Sampler sampler("sampler");
@@ -189,10 +195,10 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   vector<string> disable;
   vector<string> enable;
-  if (args.set("disable"))
-    disable = split(args["disable"],',');
-  if (args.set("enable"))
-    enable = split(args["enable"],',');
+  if (args.count("disable"))
+    disable = split(args["disable"].as<string>(),',');
+  if (args.count("enable"))
+    enable = split(args["enable"].as<string>(),',');
   
   for(int i=0;i<disable.size();i++)
     sampler.disable(disable[i]);
@@ -218,32 +224,162 @@ void operator delete(void * p) throw() {
 }
 #endif
 
-int main(int argc,char* argv[]) { 
-  try {
-    //---------- Get input, from file if necessary -------//
-    Arguments args;
-    args.read(argc,argv);
+void set_parameters(Parameters& P, const variables_map& args) {
 
-    if (args.set("file")) {
-      if (args["file"] == "-")
-	args.read(cin);
-      else {
-	std::ifstream input(args["file"].c_str());
-	if (not input)
-	  throw myexception(string("Couldn't open file '")+args["file"]+"'");
-	args.read(input);
-	input.close();
-      }
+    //-------------- Specify fixed parameters ----------------//
+  vector<string>   fix;
+  if (args.count("fix"))
+    fix = args["fix"].as<vector<string> >();
+
+  vector<string> unfix;
+  if (args.count("unfix"))
+    unfix = args["unfix"].as<vector<string> >();
+
+  vector<string> doset;
+  if (args.count("set"))
+    doset = args["set"].as<vector<string> >();
+
+  // separate out 'set' operations from 'fixed'
+  for(int i=0;i<fix.size();i++) {
+    vector<string> parse = split(fix[i],'=');
+    
+    if (parse.size() > 1) {
+      doset.push_back(fix[i]);
+      fix[i] = parse[0];
     }
+  }
 
-    args.print(cout);
+  // fix parameters
+  for(int i=0;i<fix.size();i++) {
+    std::cerr<<fix[i]<<std::endl;
+    int p=-1;
+    if (p=find_parameter(P.SModel(),fix[i]),p!=-1)
+      P.SModel().fixed[p] = true;
+    else if (p=find_parameter(P.SModel(),fix[i]),p!=-1)
+      P.SModel().fixed[p] = false;
+    else
+      throw myexception()<<"Can't find parameter '"<<fix[i]<<"' to fix!";
+  }
 
+  // unfix parameters
+  for(int i=0;i<unfix.size();i++) {
+    int p=-1;
+    if (p=find_parameter(P.SModel(),unfix[i]),p!=-1)
+      P.SModel().fixed[p] = true;
+    else if (p=find_parameter(P.SModel(),unfix[i]),p!=-1)
+      P.SModel().fixed[p] = false;
+    else
+      throw myexception()<<"Can't find parameter '"<<unfix[i]<<"' to fix!";
+  }
+
+  // set parameters
+  for(int i=0;i<doset.size();i++) {
+    //parse
+    vector<string> parse = split(doset[i],'=');
+    if (parse.size() != 2)
+      throw myexception()<<"Ill-formed initial condition '"<<doset[i]<<"'.";
+
+    string name = parse[0];
+    double value = convertTo<double>(parse[1]);
+
+    int p=-1;
+    if (p=find_parameter(P.SModel(),name),p!=-1)
+      P.SModel().parameter(p,value);
+    else if (p=find_parameter(P.SModel(),name),p!=-1)
+      P.SModel().parameter(p,value);
+    else
+      throw myexception()<<"Can't find parameter '"<<name<<"' to fix!";
+  }
+
+}
+
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description general("General options");
+  general.add_options()
+    ("help", "produce help message")
+    ("showonly","analyze the initial values and exit")
+    ("seed", value<unsigned long>(),"random seed")
+    ("datadir", value<string>()->default_value("Data"),"data directory")
+    ("random-tree-ok","generate a random tree if initial tree not specified")
+    ("align-constraint",value<string>(),"file with alignment constraints")
+    ("Use Stop","include stop codons in amino-acid alphabets")
+    ("internal",value<string>(),"if set to '+', then make all internal node entries wildcards")
+    ("gaps",value<string>()->default_value("full_tree"),"if set to 'star', then don't use indel information")
+    ("letters",value<string>()->default_value("full_tree"),"if set to 'star', then use a star tree for substitution")
+    ;
+  
+  options_description mcmc("MCMC options");
+  mcmc.add_options()
+    ("iterations",value<long int>()->default_value(100000),"the number of iterations to run")
+    ("subsample",value<int>()->default_value(1),"factor by which to subsample")
+    ("T",value<double>()->default_value(1.0),"MCMCMC temperature")
+    ("enable",value<string>(),"comma-separated list of kernels to enable")
+    ("disable",value<string>(),"comma-separated list of kernels to disable")
+    ;
+    
+
+  options_description parameters("Parameter options");
+  parameters.add_options()
+    ("align", value<string>(),"file with sequences and initial alignment")
+    ("tree",value<string>(),"file with initial tree")
+    ("set",value<vector<string> >()->multitoken(),"set parameter=<value>")
+    ("fix",value<vector<string> >()->multitoken(),"fix parameter[=<value>]")
+    ("unfix",value<vector<string> >()->multitoken(),"un-fix parameter")
+    ("randomize-alignment","randomly realign the sequences before using")
+    ("smodel",value<string>(),"substitution model")
+    ("imodel",value<string>()->default_value("new"),"indel model")
+    ;
+
+  options_description smodel("Substitution model options");
+  smodel.add_options()
+    ("frequencies",value<string>(),"comma-separated vector of frequencies to use as initial condition") 
+    ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+    ("CFNF","make codon frequencies from nucleotied frequencies")
+    ("Empirical",value<string>()->default_value("wag"),"rate matrix to use for empirical substitution models")
+    ("gamma_plus_uniform",value<int>()->default_value(4),"number of bins to use for the gamma_plus_uniform distributed rate variation")
+    ("gamma_bins",value<int>()->default_value(4),"number of bins to use for gamma distributed rate variation")
+    ("double_gamma_bins",value<int>()->default_value(4),"number of bins to use for double_gamma distributed rate variation")
+    ("multi_freq_bins",value<int>()->default_value(4),"number of different frequency classes to use")
+    ;
+  options_description all("All options");
+  all.add(general).add(mcmc).add(parameters).add(smodel);
+
+  // positional options
+  positional_options_description p;
+  p.add("align", -1);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
+
+int main(int argc,char* argv[]) { 
+
+  try {
+
+    variables_map args = parse_cmd_line(argc,argv);
+     
+    //---------- Get input, from file if necessary -------//
     le_double_t::initialize();
 
     //---------- Initialize random seed -----------//
     unsigned long seed = 0;
-    if (args.set("seed")) {
-      seed = convertTo<unsigned long>(args["seed"]);
+    if (args.count("seed")) {
+      seed = args["seed"].as<unsigned long>();
       myrand_init(seed);
     }
     else
@@ -254,27 +390,23 @@ int main(int argc,char* argv[]) {
     cout.precision(10);
     
     //---------- Determine Data dir ---------------//
-    if (not args.set("datadir")) args["datadir"] = "Data";
-
     {
-      string filename = args["datadir"] + "/wag.dat";
+      string filename = args["datadir"].as<string>() + "/wag.dat";
       ifstream temp(filename.c_str());
       if (temp)
 	temp.close();
       else {
 	std::cerr<<"Warning: couldn't open file '"<<filename<<"'"<<std::endl;
-	std::cerr<<"         Is '"<<args["datadir"]<<"' a valid Data/ directory?\n\n";
+	std::cerr<<"         Is '"<<args["datadir"].as<string>()<<"' a valid Data/ directory?\n\n";
       }
     }
-
     
     //----------- Load alignment and tree ---------//
-    args["random_tree_ok"] = "yes";
     alignment A;
     SequenceTree T;
     load_A_and_T(args,A,T);
 
-    cout<<"data = "<<args["align"]<<endl<<endl;
+    cout<<"data = "<<args["align"].as<string>()<<endl<<endl;
 
     cout<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
 
@@ -305,46 +437,25 @@ int main(int argc,char* argv[]) {
 
     P.alignment_constraint = load_alignment_constraint(args,A,T);
 
-    P.Temp = args.loadvalue("T",1.0);
+    P.Temp = args["T"].as<double>();
 
+    /*
     P.constants[0] = args.loadvalue("bandwidth",100.0);
     if (args.set("pinning") and args["pinning"] == "enable")
       P.features |= (1<<0);
     if (args.set("banding") and args["banding"] == "enable")
       P.features |= (1<<1);
+    */
 
-    //-------------- Specify fixed parameters ----------------//
-    vector<string> fixed;
-    if (args.set("fixed"))
-      fixed = split(args["fixed"],',');
-
-    for(int i=0;i<fixed.size();i++) {
-      bool used=false;
-      for(int j=0;j<P.SModel().parameters().size();j++) {
-	if (fixed[i] == P.SModel().parameter_name(j)) {
-	  P.SModel().fixed[j] = true;
-	  used=true;
-	}
-      }
-
-      for(int j=0;j<P.IModel().parameters().size();j++) {
-	if (fixed[i] == P.IModel().parameter_name(j)) {
-	  P.IModel().fixed[j] = true;
-	  used=true;
-	}
-      }
-
-      if (not used)
-	throw myexception()<<"Can't find parameter '"<<fixed[i]<<"' to fix!";
-    }
+    // fix, unfix, and set parameters
+    set_parameters(P,args);
 
     //---------------Do something------------------//
-    if (args.set("showonly"))
+    if (args.count("showonly"))
       print_stats(cout,cout,cout,cout,A,P,"Initial");
     //      do_showonly(A,P);
-    // FIXME - use print_stats?
     else {
-      long int max_iterations = args.loadvalue("iterations",(long int)1000000);
+      long int max_iterations = args["iterations"].as<long int>();
 
       P.LC.set_length(A.length());
       do_sampling(args,A,P,max_iterations);

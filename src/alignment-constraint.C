@@ -5,15 +5,19 @@
 using std::vector;
 using std::valarray;
 
-ublas::matrix<int> load_alignment_constraint(Arguments& args,const alignment& A,SequenceTree& T) {
+using boost::program_options::variables_map;
+
+ublas::matrix<int> load_alignment_constraint(const variables_map& args,
+					     const alignment& A,SequenceTree& T) 
+{
   ublas::matrix<int> constraint(0,T.n_leaves());
 
-  if (args.set("align-constraint")) {
+  if (args.count("align-constraint")) {
     // Load constraint file
-    ifstream constraint_file(args["align-constraint"].c_str());
+    ifstream constraint_file(args["align-constraint"].as<string>().c_str());
     if (not constraint_file)
 	throw myexception()<<"Couldn't open alignment-constraint file \""<<
-	  args["align-constraint"]<<"\".";
+	  args["align-constraint"].as<string>()<<"\".";
 
     // Map columns to species
     string line;
@@ -82,7 +86,7 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
 
     // this constraint has to apply to both halves of the alignment
     if (not (group_present(constraint,i,group1) and group_present(constraint,i,group2))) {
-      std::cerr<<"constraint #"<<i+1<<" not relevant.\n";
+      //std::clog<<"constraint #"<<i+1<<" not relevant.\n";
       continue;
     }
     
@@ -102,12 +106,12 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
       
     // record the column if this constraint is to be enforced
     if (same_column) {
-      std::cerr<<"constraint #"<<i+1<<" satisfied.\n";
+      //      std::cerr<<"constraint #"<<i+1<<" satisfied.\n";
       satisfied[i] = col;
     }
     else
-      std::cerr<<"constraint #"<<i+1<<" NOT satisfied.\n";
-
+      ;//      std::cerr<<"constraint #"<<i+1<<" NOT satisfied.\n";
+    
   }
   
 

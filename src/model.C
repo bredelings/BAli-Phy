@@ -83,3 +83,10 @@ void SuperModel::recalc() {
   write();
 }
 
+int find_parameter(const Model& M,const string& name) {
+  for(int i=0;i<M.parameters().size();i++) 
+    if (M.parameter_name(i) == name)
+      return i;
+  return -1;
+}
+ 

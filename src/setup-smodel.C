@@ -1,4 +1,5 @@
 #include <vector>
+#include <boost/program_options.hpp>
 #include "setup.H"
 #include "util.H"
 #include "rates.H"
@@ -7,6 +8,7 @@
 using std::vector;
 using std::valarray;
 using namespace substitution;
+using boost::program_options::variables_map;
 
 /// Take something off the string stack, if its present
 bool match(vector<string>& sstack,const string& s) {
@@ -31,11 +33,11 @@ void guess_markov_model(vector<string>& string_stack,const alphabet& a) {
 bool process_stack_Markov(vector<string>& string_stack,
 			  vector<OwnedPointer<substitution::Model> >& model_stack,
 			  const alphabet& a,
-			  Arguments& args) 
+			  const variables_map& args) 
 {
   //------ Get the base markov model (Reversible Markov) ------//
   OwnedPointer<AminoAcids> AA = AminoAcids();
-  if (args.set("Use Stop"))
+  if (args.count("Use Stop"))
     *AA = AminoAcidsWithStop();
 
   if (match(string_stack,"EQU"))
@@ -55,16 +57,14 @@ bool process_stack_Markov(vector<string>& string_stack,
       throw myexception()<<"TNY:: Unrecognized alphabet '"<<a.name<<"'";
   }
   else if (match(string_stack,"Empirical")) {
-    if (not args.set("Empirical"))
-      args["Empirical"] = "wag";
-    string filename = args["Empirical"];
-    filename = args["datadir"] + "/" + filename + ".dat";
+    string filename = args["Empirical"].as<string>();
+    filename = args["datadir"].as<string>() + "/" + filename + ".dat";
 
     model_stack.push_back(Empirical(a,filename));
   }
   else if (match(string_stack,"YangCodonModel")) {
-    string dna_filename = args["datadir"] + "/" + "genetic_code_dna.dat";
-    string rna_filename = args["datadir"] + "/" + "genetic_code_rna.dat";
+    string dna_filename = args["datadir"].as<string>() + "/" + "genetic_code_dna.dat";
+    string rna_filename = args["datadir"].as<string>() + "/" + "genetic_code_rna.dat";
 
     Codons DNA_codons(DNA(),*AA,dna_filename);
     Codons RNA_codons(RNA(),*AA,rna_filename);
@@ -86,7 +86,7 @@ bool process_stack_Markov(vector<string>& string_stack,
 bool process_stack_IA(vector<string>& string_stack,  
 		      vector<OwnedPointer<substitution::Model> >& model_stack,
 		      const alphabet& a,
-		      Arguments& args) 
+		      const variables_map& args) 
 {
   ReversibleMarkovModel* markov = dynamic_cast<ReversibleMarkovModel*>(model_stack.back().get());
 
@@ -118,7 +118,7 @@ bool process_stack_IA(vector<string>& string_stack,
 bool process_stack_Multi(vector<string>& string_stack,  
 			 vector<OwnedPointer<substitution::Model> >& model_stack,
 			 const alphabet& a,
-			 Arguments& args) 
+			 const variables_map& args) 
 {
 
   ReversibleAdditiveModel* RA = dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
@@ -132,9 +132,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       throw myexception()<<"single: couldn't find a reversible+additive model to use.";
   }
   else if (match(string_stack,"gamma_plus_uniform")) {
-    int n=4;
-    if (args.set("gamma_plus_uniform") and args["gamma_plus_uniform"] != "gamma_plus_uniform")
-      n = convertTo<int>(args["gamma_plus_uniform"]);
+    int n=args["gamma_plus_uniform"].as<int>();
     if (RA)
       model_stack.back() = DistributionParameterModel(UnitModel(*RA),
 						      Uniform() + Gamma(),
@@ -147,7 +145,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
   }
   else if (match(string_stack,"gamma")) {
-    int n=args.loadvalue("gamma_bins",4);
+    int n=args["gamma_bins"].as<int>();
 
     if (MM)
       model_stack.back() = GammaParameterModel(*MM,n);
@@ -159,7 +157,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       throw myexception()<<"gamma: couldn't find a reversible+additive model to use.";
   }
   else if (match(string_stack,"double_gamma")) {
-    int n=args.loadvalue("double_gamma_bins",4);
+    int n=args["double_gamma_bins"].as<int>();
 
     if (RA)
       model_stack.back() = DistributionParameterModel(UnitModel(*RA),
@@ -172,7 +170,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       throw myexception()<<"gamma: couldn't find a reversible+additive model to use.";
   }
   else if (match(string_stack,"multi_freq")) {
-    int n = args.loadvalue("multi_freq_bins",4);
+    int n=args["multi_freq_bins"].as<int>();
     if (MM)
       model_stack.back() = MultiFrequencyModel(*MM,4);
     else if (model_stack.empty())
@@ -228,11 +226,11 @@ bool process_stack_Multi(vector<string>& string_stack,
 
 //FIXME - use dynamic_cast to see if we are in certain subclasses...
 OwnedPointer<MultiModel>
-get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_frequencies) {
+get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& default_frequencies) {
 
   vector<string> string_stack;
-  if (args["smodel"] != "")
-    string_stack = split(args["smodel"],'+');
+  if (args.count("smodel") and args["smodel"].as<string>() != "")
+    string_stack = split(args["smodel"].as<string>(),'+');
   std::reverse(string_stack.begin(),string_stack.end());
 
   vector<OwnedPointer<substitution::Model> > model_stack;
@@ -273,26 +271,16 @@ get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_fr
   else 
     throw myexception()<<"Model cannot be converted to a MultiModel";
 
-  /*------ Set the parameters for all levels of the model ------*/
-  if (args.set("s_parameters")) {
-    vector<double> p = split<double>(args["s_parameters"],',');
-    if (p.size() != full_smodel->parameters().size())
-      throw myexception()<<"Substitution model "<<full_smodel->name()<<
-	" takes "<<full_smodel->parameters().size()<<" parameters, but you have supplied "
-			 <<p.size();
-    full_smodel->parameters(p);
-  }
-
   /* ---------- How does the tree fit in? ------------*/
-  if (args["letters"]== "star") 
+  if (args["letters"].as<string>() == "star") 
     full_smodel->full_tree = false;
   else
     full_smodel->full_tree = true;
       
 
   //------ Set frequencies for base markov model ------//
-  if (args.set("frequencies")) {
-    vector<double> f = split<double>(args["frequencies"],',');
+  if (args.count("frequencies")) {
+    vector<double> f = split<double>(args["frequencies"].as<string>(),',');
     if (f.size() != a.size())
       throw myexception()<<"You specified "<<f.size()<<" frequencies, but there are "<<a.size()<<" letters of the alphabet!";
 
@@ -307,7 +295,7 @@ get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_fr
   return full_smodel;
 }
 
-OwnedPointer<MultiModel> get_smodel(Arguments& args, const alignment& A) {
+OwnedPointer<MultiModel> get_smodel(const variables_map& args, const alignment& A) {
   return get_smodel(args,A.get_alphabet(),empirical_frequencies(args,A));
 }
 
