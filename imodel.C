@@ -4,13 +4,9 @@
 #include "rng.H"
 #include <gsl/gsl_randist.h>
 #include "myexception.H"
+#include "likelihood.H"
 
 using std::vector;
-
-double shift_laplace_pdf(double x, double mu, double sigma) {
-  double a = sigma/sqrt(2);
-  return gsl_ran_laplace_pdf(x-mu,a);
-}
 
 void IndelModel::construct_length_plus_p() {
   const int n = 200;
@@ -92,21 +88,18 @@ void IndelModel1::fiddle() {
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
 
-  if (not fixed[0]) {
-    const double sigma = 0.15;
+  const double sigma = 0.2;
 
+  if (not fixed[0]) {
     double delta_LOD = lambda_O - logdiff(0,lambda_O);
     delta_LOD += gaussian(0,sigma);
     lambda_O = delta_LOD - logsum(0,delta_LOD);
   }
   
   if (not fixed[1]) {
-    const double sigma = 0.15;
-    
-    double E_length = exp(lambda_E - logdiff(0,lambda_E) );
+    double E_length = lambda_E - logdiff(0,lambda_E);
     E_length += gaussian(0,sigma);
-    E_length = std::abs(E_length);
-    lambda_E = log( (E_length/(1.0 + E_length) ) );
+    lambda_E = E_length - logsum(0,lambda_E);
   }
   
   recalc();
@@ -172,11 +165,11 @@ double IndelModel1::prior() const {
   P += log( shift_laplace_pdf(delta_LOD,-6, 0.5) );
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double epsilon = exp(parameters_[1]);
-  double E_length = epsilon/(1.0 - epsilon);
+  double lambda_E = parameters_[1];
+  double E_length = lambda_E - logdiff(0,lambda_E);
   double E_length_mean = 5.0;
 
-  P += (-log(E_length_mean) - E_length/E_length_mean);
+  P += exp_exponential_log_pdf(E_length,E_length_mean);
 
   return P;
 }
@@ -334,17 +327,15 @@ void UpweightedIndelModel::fiddle() {
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
 
-  if (not fixed[0]) {
-    const double sigma = 0.15;
+  const double sigma = 0.25;
 
+  if (not fixed[0]) {
     double delta_LOD = lambda_O - logdiff(0,lambda_O);
     delta_LOD += gaussian(0,sigma);
     lambda_O = delta_LOD - logsum(0,delta_LOD);
   }
   
   if (not fixed[1]) {
-    const double sigma = 0.15;
-    
     double E_length = exp(lambda_E - logdiff(0,lambda_E) );
     E_length += gaussian(0,sigma);
     E_length = std::abs(E_length);
@@ -421,11 +412,11 @@ double UpweightedIndelModel::prior() const {
   P += log( shift_laplace_pdf(delta_LOD, -6, 0.5) );
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double epsilon = exp(parameters_[1]);
-  double E_length = epsilon/(1.0 - epsilon);
+  double lambda_E = parameters_[1];
+  double E_length = lambda_E - logdiff(0,lambda_E);
   double E_length_mean = 5.0;
 
-  P += (-log(E_length_mean) - E_length/E_length_mean);
+  P += exp_exponential_log_pdf(E_length,E_length_mean);
 
   return P;
 }
