@@ -7,6 +7,15 @@
 #include "le-double.H"
 #include "mytypes.H"
 
+const unsigned pow2_max = 30;
+const unsigned pow2_shift = pow2_max;
+vector<double> pow2_table(pow2_max*2+1);
+
+// 11 bits for exponent in double precision
+// 10 bits for negative exponents: exponent range in [0,1024)
+// 9 bits usable if we keep at half the exponent range: [0,512) 
+const double cutoff = 1.0e-154;  // 2**-512 == 10**-154
+
 using namespace std;
 
 template <class T>
@@ -27,6 +36,14 @@ public:
 
   dpmatrix(int i1,int i2,int i3):s1(i1),s2(i2),s3(i3),data(i1*i2*i3) {}
 };
+
+
+double mypow2(int i) {
+  if (abs(i) > pow2_max)
+    return pow(2.0,i);
+  else
+    return pow2_table[i+pow2_shift];
+}
 
 
 
@@ -76,6 +93,70 @@ T propagate(dpmatrix<T>& F,const ublas::matrix<T>& G)
 
 }
 
+template<class T>
+T propagate2(dpmatrix<double>& F,ublas::matrix<int> scale,
+	    const ublas::matrix<double>& G) 
+{
+  int I = F.size1()-1;
+  int J = F.size2()-1;
+  for(int t=0;t<50;t++) {
+
+  for (int i = 0; i <= I;i++) {
+    scale(i,0) = 0;
+    for(int S=0;S<3;S++)
+      F(i,0,S) = 0;
+      
+  }
+
+  for (int j = 0; j <= J;j++) {
+    scale(0,j) = 0;
+    for(int S=0;S<3;S++)
+      F(0,j,S) = 0;
+  }
+
+  F(0,0,0) = 1;
+  F(0,0,1) = 0;
+  F(0,0,2) = 0;
+
+  for (int i = 1; i <= I;i++) 
+    for (int j = 1; j <= J;j++) {
+      double maximum = 0;
+      scale(i,j) = max(scale(i-1,j),max(scale(i-1,j-1),scale(i,j-1)));
+
+      for(int S=0;S<3;S++) {
+	int i1=i;
+	int j1=j;
+	if (S==0 or S==1)
+	  i1--;
+	if (S==0 or S==2)
+	  j1--;
+
+	double x = 0;
+	for(int S1=0;S1<3;S1++)
+	  x += F(i1,j1,S1)*G(S1,S);
+
+	if (scale(i1,j1) != scale(i,j))
+	  x *= mypow2(scale(i1,j1)-scale(i,j));
+
+	if (x > maximum) maximum = x;
+
+	F(i,j,S) = x;
+      }
+
+      if (maximum > 0 and maximum < cutoff) {
+	int logs = -(int)log2(maximum);
+	double scale_ = mypow2(logs);
+	for(int S=0;S<3;S++)
+	  F(i,j,S) *= scale_;
+	scale(i,j) -= logs;
+      }
+	
+    }
+  
+  }
+  return (F(I,J,0) + F(I,J,1) + F(I,J,2))*powe<T>(2,scale(I,J));
+}
+
 
 int main(int argn, char *argv[])
 {
@@ -114,7 +195,13 @@ int main(int argn, char *argv[])
 
   int s = atoi(argv[1]);
 
-  double result;
+  double result=-1;
+  pow2_table[pow2_shift] = 1.0;
+  for(int i=0;i<pow2_max;i++) {
+    pow2_table[pow2_shift+i+1] = pow2_table[pow2_shift+i] * 2.0;
+    pow2_table[pow2_shift-i-1] = pow2_table[pow2_shift-i] * 0.5;
+  }
+
   if (s == 1) { /* Simple (double) addition */
     std::cout<<"double addition\n";
     result=propagate(F,G);
@@ -128,13 +215,16 @@ int main(int argn, char *argv[])
     result=propagate(F_le,G_le);
   }
   else if (s==4) {
+    ublas::matrix<int> scale(L,L);
+    std::cout<<"Ben's rescaled double addition\n";
+    result=propagate2<log_double_t>(F,scale,G);
+  }
+  else if (s==5) {
     std::cout<<"Ben's logarithmic addition\n";
     result=propagate(F_log,G_log);
   }
-  else {
-      printf("Please specify a number between 1 and 3.\n");
-      exit(-1);
-  }
+  else
+    std::cout<<"Ben's infinitely fast wrong answer :)\n";
 
   std::cout<<"result = "<<result<<std::endl;
   return 0;

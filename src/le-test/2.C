@@ -53,7 +53,7 @@ int main(int argn, char *argv[])
 
   s = atoi(argv[1]);
 
-  double result;
+  double result=-1;
   if (s == 1) { /* Simple (double) addition */
     std::cout<<"double addition\n";
     result=accumulate<double>(d);
@@ -70,10 +70,9 @@ int main(int argn, char *argv[])
     std::cout<<"Ben's logarithmic addition\n";
     result=accumulate<log_double_t>(bd);
   }
-  else {
-    std::cerr<<"Please specify a number between 1 and 3.\n";
-    exit(-1);
-  }
+  else
+    std::cout<<"Ben's infinitely fast wrong answer :)\n";
+
 
   std::cout<<"result = "<<result<<std::endl;
   return 0;
