@@ -91,9 +91,11 @@ public:
 
   int size() const {return trees.size();}
 
+  std::valarray<bool> supports_topology(const std::string& t) const;
+
   std::valarray<bool> supports_partition(const Partition& P) const;
 
-  std::valarray<bool> supports_topology(const std::string& t) const;
+  std::valarray<bool> supports_partitions(const std::vector<Partition>&) const;
 
   tree_sample(std::istream&,const std::vector<std::string>& remove,int skip=0,int max=-1);
 };

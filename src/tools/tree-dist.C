@@ -220,6 +220,22 @@ valarray<bool> tree_sample::supports_partition(const Partition& P) const {
   return result;
 }
 
+valarray<bool> tree_sample::supports_partitions(const vector<Partition>& partitions) const 
+{
+  valarray<bool> result(trees.size());
+
+  for(int i=0;i<result.size();i++) {
+
+    // Get a tree with the same topology
+    const SequenceTree& T = topologies[ which_topology[i] ].T;
+    
+    result[i] = true;
+    for(int p=0;p<partitions.size() and result[i];p++)
+      result[i] = contains_partition(T,partitions[p]);
+  }
+  return result;
+}
+
 struct ordering {
   const vector<tree_sample::topology_record>& v;
 
