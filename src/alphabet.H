@@ -139,10 +139,11 @@ public:
 
 
 //------------------------------- Codons ------------------------------//
-class Codons: public alphabet {
+class Triplets: public alphabet {
+protected:
   OwnedPointer<Nucleotides> N;
 public:
-  virtual Codons* clone() const {return new Codons(*this);}
+  virtual Triplets* clone() const {return new Triplets(*this);}
 
   const Nucleotides& getNucleotides() const {return *N;}
 
@@ -150,21 +151,20 @@ public:
 
   std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=10.0) const;
 
-  Codons(const Nucleotides& N);
-  Codons(const std::string& s,const Nucleotides& N);
+  Triplets(const Nucleotides& N);
+  Triplets(const std::string& s,const Nucleotides& N);
 };
 
 
-//------------------------------- Codons ------------------------------//
-
-class Translation_Table {
-  OwnedPointer<Codons> C;
+class Codons: public Triplets {
+protected:
   OwnedPointer<AminoAcids> A;
   std::vector<int> table;
 
   void setup_table(std::vector<std::string>,std::vector<std::string>);
   void setup_table(std::istream&);
 public:
+  virtual Codons* clone() const {return new Codons(*this);}
 
   bool stop_codon(int codon) const {
     assert(0 <= codon && codon < C->size() );
@@ -172,27 +172,25 @@ public:
     return A->lookup(aa) == "!";
   }
 
-  int operator[](int codon) const {
+  int translate(int codon) const {
     if (codon == alphabet::gap or codon==alphabet::not_gap)
       return codon;
     assert(codon >= 0 and codon < table.size() );
     return table[codon];
   }
 
-  const Nucleotides& getNucleotides() const {return getCodons().getNucleotides();}
-  const Codons& getCodons() const {return *C;}
   const AminoAcids& getAminoAcids() const {return *A;}
 
-  Translation_Table(const Codons& N1,const AminoAcids& A1,
-		    const std::vector<std::string>&,const std::vector<std::string>&);
+  Codons(const Nucleotides& N1,const AminoAcids& A1,std::vector<std::string>,std::vector<std::string>);
 
-  Translation_Table(const Codons& N1,const AminoAcids& A1,
-		    std::istream&);
+  Codons(const Nucleotides& N1,const AminoAcids& A1,std::istream&);
 
-  Translation_Table(const Codons& N1,const AminoAcids& A1,
-		    const std::string&);
-
+  Codons(const Nucleotides& N1,const AminoAcids& A1,const std::string&);
 };
+
+
+//------------------------------- Codons ------------------------------//
+
 
 inline bool operator!=(const alphabet& a1,const alphabet& a2) {return not (a1==a2);}
 

@@ -119,7 +119,7 @@ namespace substitution {
     return log(shift_laplace_pdf(log_g_sigma,-4,0.5));
   }
 
-  void Gamma::fiddle(const std::valarray<bool>& fixed) {
+  void Gamma::fiddle() {
     if (fixed[0]) return;
 
     vector<double> v = parameters_;
@@ -172,7 +172,7 @@ namespace substitution {
     return log(mean_stddev) - parameters_[0]/mean_stddev;
   }
 
-  void LogNormal::fiddle(const std::valarray<bool>& fixed) {
+  void LogNormal::fiddle() {
     vector<double> v = parameters_;
     double& p = v[0];
  
@@ -216,95 +216,13 @@ namespace substitution {
 
   /*-------------- MultipleDistribution ----------------*/
 
-  double MultipleDistribution::cdf(double x) const {
-    double P=0;
-    for(int i=0;i<distributions.size();i++) 
-      P += fraction(i) * distributions[i]->cdf(x*rate(i));
-
-    return P;
-  }
-
-  double MultipleDistribution::pdf(double x,double dx) const {
-    double density=0;
-    for(int i=0;i<distributions.size();i++) 
-      density += fraction(i) * distributions[i]->pdf(x*rate(i),dx)/rate(i);
-
-    return density;
-  }
-
-  double MultipleDistribution::prior() const {
-    double Pr =0;
-    for(int i=0;i<distributions.size();i++)
-      Pr += distributions[i]->prior();
-
-    // I don't think we need to do anything for the Dirichlet priors... (?)
-    return Pr;
-  }
-
-
-  void dirichlet_fiddle(valarray<double>& v, double sigma) {
-
-    // proposal new point in 
-    for(int i=0;i<v.size();i++) {
-      v[i] += gaussian(0,sigma/v.size());
-      if (v[i] < 0)
-	v[i] = -v[i];
-      else if (v[i] > 1.0)
-	v[i] = 1.0 - v[i];
-    }
-
-    double sum=0;
-    for(int i=0;i<v.size();i++)
-      sum += v[i];
-    
-    for(int i=0;i<v.size();i++)
-      v[i] = v[i]/sum;
-  }
-
-  void MultipleDistribution::read() {
-    // Get the sub-distribution parameters
-    for(int i=0, j=2*distributions.size();i<distributions.size();i++) {
-      for(int k=0;k<distributions[i]->parameters().size();k++)
-	parameters_[j++] = distributions[i]->parameters()[k];
-    }
-  }
-
-
-  void MultipleDistribution::write() {
-    // Get the sub-distribution parameters
-    for(int i=0,j=2*distributions.size();i<distributions.size();i++) {
-      vector<double> temp(distributions[i]->parameters().size());
-      for(int k=0;k<temp.size();k++)
-	temp[k] = parameters_[j++];
-      distributions[i]->parameters(temp);
-    }
-  }
-
-  std::valarray<bool> subvector(const std::valarray<bool>& v1,int s, int l) {
-    std::valarray<bool> v2(l);
-    for(int i=0;i<l;i++)
-      v2[i] = v1[s+i];
-    return v2;
-  }
-
-  void MultipleDistribution::fiddle(const std::valarray<bool>& fixed) {
-
-    for(int i=0,start=0;
-	i<distributions.size();
-	start+=distributions[i]->parameters().size(),
-	  i++)
-      distributions[i]->fiddle(subvector(fixed,
-					 start,
-					 distributions[i]->parameters().size()
-					 )
-			       );
-
+  void MultipleDistribution::super_fiddle() {
     read();
 
     const double sigma = 0.05;
 
     // Read, fiddle, and set f
-    valarray<double> f(ndists());
+    valarray<double> f(n_dists());
     for(int i=0;i<f.size();i++)
       f[i] = fraction(i);
 
@@ -312,91 +230,42 @@ namespace substitution {
 
     for(int i=0;i<f.size();i++)
       fraction(i) = f[i];
-    
+  }
+
+  double MultipleDistribution::super_prior() const {
     // Read, fiddle, and set f
-    valarray<double> r(ndists());
-    for(int i=0;i<r.size();i++)
-      r[i] = rate(i);
+    valarray<double> f(n_dists());
+    for(int i=0;i<f.size();i++)
+      f[i] = fraction(i);
 
-    r /= r.sum();
+    valarray<double> q(1.0/f.size(),f.size());
 
-    dirichlet_fiddle(r,sigma);
-
-    double meanrate = 0;
-    for(int i=0;i<ndists();i++)
-      meanrate += fraction(i) * r[i];
-
-    r /= meanrate;
-
-    for(int i=0;i<r.size();i++)
-      rate(i) = r[i];
+    return dirichlet_log_pdf(f,q,10);
   }
 
-  void MultipleDistribution::parameters(const vector<double>& p) {
-    RateDistribution::parameters(p);
-    write();
+  double MultipleDistribution::cdf(double x) const {
+    double P=0;
+    for(int i=0;i<n_dists();i++) 
+      P += fraction(i) * SubModels(i).cdf(x);
+
+    return P;
   }
 
-  MultipleDistribution& MultipleDistribution::operator=(const MultipleDistribution& M) {
-    RateDistribution::operator=(M);
+  double MultipleDistribution::pdf(double x,double dx) const {
+    double density=0;
+    for(int i=0;i<n_dists();i++) 
+      density += fraction(i) * SubModels(i).pdf(x,dx);
 
-    distributions = M.distributions;
-    for(int i=0;i<distributions.size();i++) {
-      if (distributions[i])
-	delete distributions[i];
-      distributions[i] = distributions[i]->clone();
-    }
-
-    return (*this);
+    return density;
   }
-  
-  MultipleDistribution::MultipleDistribution(const MultipleDistribution& M)
-    :RateDistribution(M)
+
+  MultipleDistribution::MultipleDistribution(const std::vector<OwnedPointer<RateDistribution> >& models) 
+    :SuperDerivedModelOver<RateDistribution,RateDistribution>(models,models.size())
   {
-    distributions = M.distributions;
-    for(int i=0;i<distributions.size();i++) 
-      distributions[i] = distributions[i]->clone();
-  }
-
-
-  int nparams(const vector<const RateDistribution*>& d) {
-    int n=0;
-    for(int i=0;i<d.size();i++) {
-      n += d[i]->parameters().size();
-    }
-    return n;
-  }
-  
-  MultipleDistribution::MultipleDistribution(const vector<const RateDistribution*>& d)
-    :RateDistribution(2*d.size() + nparams(d)),
-     distributions(d.size())
-  {
-    // Get local copies of the distributions
-    for(int i=0;i<distributions.size();i++)
-      distributions[i] = d[i]->clone();
-    
     // Set the rates and fractions
-    for(int i=0;i<ndists();i++) {
-      parameters_[i] = 1.0/distributions.size();
-      parameters_[i + ndists()] = 1.0/distributions.size();
-    }
+    for(int i=0;i<n_dists();i++)
+      parameters_[i] = 1.0/n_dists();
 
-    double meanrate = 0;
-    for(int i=0;i<ndists();i++)
-      meanrate += fraction(i) * rate(i);
-
-    for(int i=0;i<ndists();i++)
-      rate(i) /= meanrate;
-
-    // Get the sub-distribution parameters
-    read();
-
+    recalc();
   }
-
-  MultipleDistribution::~MultipleDistribution() 
-  {
-    for(int i=0;i<distributions.size();i++)
-      delete distributions[i];
-  }
-
 }

@@ -40,6 +40,14 @@ double exp_exponential_pdf(double y, double mu, double delta) {
   return exp(exp_exponential_log_pdf(y,mu));
 }
 
+double exponential_log_pdf(double x, double mu) {
+  return -log(mu) - x/mu;
+}
+
+double exponential_pdf(double x, double mu) {
+  return mu*exp(-x/mu);
+}
+
 double shift_laplace_pdf(double x, double mu, double sigma) {
   double a = sigma/sqrt(2);
   return gsl_ran_laplace_pdf(x-mu,a);

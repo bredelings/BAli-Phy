@@ -2,18 +2,18 @@
 #define RATES_H
 
 #include <vector>
-#include <valarray>
 #include <cassert>
 #include <cmath>
-#include "clone.H"
+#include "model.H"
 
 namespace substitution {
 
   /// A generic distribution for rate variation
   /// We require that if X ~ d, the E(X) = 1
-  class RateDistribution:public  Cloneable {
+  class RateDistribution: virtual public Model {
   protected:
-    std::vector<double> parameters_;
+    /// Construct a RateDistribution with np parameters
+    RateDistribution(int np): Model(np) {};
 
   public:
     /// Make a copy of this object
@@ -25,27 +25,11 @@ namespace substitution {
     /// The probability density function at x, estimated on scale dx
     virtual double pdf(double x,double dx=0.001) const;
 
-    /// The prior on the parameters_, in log space
-    virtual double prior() const =0;
-
-    /// Symmetrically propose another vector of parameters
-    virtual void fiddle(const std::valarray<bool>&) = 0; 
-
-    /// Get the distribution parameters_
-    virtual const std::vector<double>& parameters() const {return parameters_;}
-
-    /// Set the distribution parameters_
-    virtual void parameters(const std::vector<double>& p) {
-      assert(p.size() == parameters_.size());
-      parameters_ = p;
-    }
-
     /// Compute the p-th quantile, with tolerance tol
     virtual double quantile(double p,double tol=1.0e-6) const;
 
     /// Construct a RateDistribution with np parameters
-    RateDistribution(int np): parameters_(np) {};
-
+    RateDistribution() {};
 
     virtual ~RateDistribution();
   };
@@ -53,6 +37,7 @@ namespace substitution {
 
   /// A Gamma distribution for rate variation
   class Gamma: public RateDistribution {
+    void recalc() {}
   public:
     Gamma* clone() const {return new Gamma(*this);}
 
@@ -62,10 +47,12 @@ namespace substitution {
 
     double prior() const;
 
-    void fiddle(const std::valarray<bool>&); 
+    void fiddle(); 
 
-    Gamma()
-      :RateDistribution(1) 
+    std::string name() const;
+    std::string parameter_name(int) const;
+
+    Gamma():RateDistribution(1) 
     {
       parameters_[0] = 0.1;
     }
@@ -73,6 +60,7 @@ namespace substitution {
 
 
   class LogNormal: public RateDistribution {
+    void recalc() {}
   public:
     LogNormal* clone() const {return new LogNormal(*this);}
 
@@ -82,10 +70,12 @@ namespace substitution {
 
     double prior() const;
 
-    void fiddle(const std::valarray<bool>&); 
+    void fiddle(); 
 
-    LogNormal()
-      :RateDistribution(1)
+    std::string name() const;
+    std::string parameter_name(int) const;
+
+    LogNormal():RateDistribution(1)
     {
       parameters_[0] = 0.1;
     }
@@ -94,6 +84,7 @@ namespace substitution {
 
   /// A Uniform distribution for rate variation
   class Uniform: public RateDistribution {
+    void recalc() {}
   public:
     Uniform* clone() const {return new Uniform(*this);}
 
@@ -106,35 +97,32 @@ namespace substitution {
 
     double prior() const { return log(0.5);}
 
-    void fiddle(const std::valarray<bool>&) {}
+    void fiddle() {}
 
     double quantile(double p,double) const {return 2*p;}
 
-    Uniform()
-      :RateDistribution(0) 
+    std::string name() const;
+    std::string parameter_name(int) const;
+
+    Uniform():RateDistribution(0) 
     {}
   };
 
   /// A sum of distributions for rate variation
-  class MultipleDistribution: public RateDistribution {
-    std::vector<RateDistribution*> distributions;
-
-    /// Load parameters from sub-distributions
-    void read();
-
-    /// Write parameters to sub-distributions
-    void write();
+  class MultipleDistribution: public SuperDerivedModelOver<RateDistribution,RateDistribution> 
+  {
+    void super_fiddle(); 
   public:
+
+    double super_prior() const;
 
     MultipleDistribution* clone() const {return new MultipleDistribution(*this);}
 
     double cdf(double) const;
     double pdf(double,double) const;
     
-    double prior() const;
-
     /// Number of sub-distributions
-    int ndists() const {return distributions.size();}
+    int n_dists() const {return n_submodels();}
 
     /// Fraction of sub-distribution i
     double fraction(int i) const {
@@ -148,38 +136,19 @@ namespace substitution {
       return parameters_[i];
     }
 
-    /// Rate of sub-distribution i, where 1 is the average rate
-    double rate(int i) const {
-      assert(0 <= i and i < distributions.size());
-      return parameters_[distributions.size()+i];
-    };
+    std::string name() const;
+    std::string super_parameter_name(int) const;
 
-    /// Rate of sub-distribution i, where 1 is the average rate
-    double& rate(int i) {
-      assert(0 <= i and i < distributions.size());
-      return parameters_[distributions.size()+i];
-    };
+    MultipleDistribution(const std::vector<OwnedPointer<RateDistribution> >&);
 
-    void fiddle(const std::valarray<bool>&); 
-
-    const std::vector<double>& parameters() const {return parameters_;}
-
-    void parameters(const std::vector<double>& p);
-
-    MultipleDistribution& operator=(const MultipleDistribution&);
-
-    MultipleDistribution(const MultipleDistribution&);
-
-    MultipleDistribution(const std::vector<const RateDistribution*>&);
-
-    ~MultipleDistribution();
+    ~MultipleDistribution() {}
   };
 
 
   inline substitution::MultipleDistribution operator+(const substitution::RateDistribution& D1,const substitution::RateDistribution& D2) {
-    std::vector<const substitution::RateDistribution*> temp;
-    temp.push_back(&D1);
-    temp.push_back(&D2);
+    std::vector<OwnedPointer<substitution::RateDistribution> > temp;
+    temp.push_back(D1);
+    temp.push_back(D2);
     return substitution::MultipleDistribution(temp);
   }
 }

@@ -211,7 +211,7 @@ AminoAcidsWithStop::AminoAcidsWithStop()
 //        into the Codon alphabet, and allow a NULL pointer or something if you
 //        don't want that information...
 
-int Codons::sub_nuc(int codon,int pos) const {
+int Triplets::sub_nuc(int codon,int pos) const {
   assert( 0 <= pos and pos <= 3);
 
   pos = 2 - pos;
@@ -220,7 +220,7 @@ int Codons::sub_nuc(int codon,int pos) const {
   return codon;
 }
 
-vector<string> getCodons(const Nucleotides& a) {
+vector<string> getTriplets(const Nucleotides& a) {
   vector<string> v;
   for(int i=0;i<a.size();i++) {
     string s1 = a.lookup(i);
@@ -236,7 +236,7 @@ vector<string> getCodons(const Nucleotides& a) {
 }
 
 
-valarray<double> get_nucleotide_counts_from_codon_counts(const Codons& C,const valarray<double>& C_counts) {
+valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,const valarray<double>& C_counts) {
     const Nucleotides& N = C.getNucleotides();
 
     valarray<double> N_counts(0.0,N.size());
@@ -251,7 +251,7 @@ valarray<double> get_nucleotide_counts_from_codon_counts(const Codons& C,const v
     return N_counts;
 }
 
-valarray<double> get_codon_frequencies_from_independant_nucleotide_frequencies(const Codons& C,const valarray<double>& fN ) {
+valarray<double> get_codon_frequencies_from_independant_nucleotide_frequencies(const Triplets& C,const valarray<double>& fN ) {
     valarray<double> fC(C.size());
     for(int i=0;i<fC.size();i++) {
       fC[i] = 1.0;
@@ -263,7 +263,7 @@ valarray<double> get_codon_frequencies_from_independant_nucleotide_frequencies(c
     return fC;
 }
 
-valarray<double> Codons::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {
+valarray<double> Triplets::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {
 
   //--------- Level 1 pseudocount (nucleotides) ---------------//
   valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*this,counts);
@@ -276,47 +276,48 @@ valarray<double> Codons::get_frequencies_from_counts(const valarray<double>& cou
 
   return f;
 }
-Codons::Codons(const Nucleotides& a)
-  :alphabet(string("Codons of ")+a.name,getCodons(a)),N(a.clone())
+
+Triplets::Triplets(const Nucleotides& a)
+  :alphabet(string("Triplets of ")+a.name,getTriplets(a)),N(a.clone())
 {
   missing.back() = "***";
   gap_letter = "---";
 }
 
-Codons::Codons(const string& s,const Nucleotides& a)
-  :alphabet(s,getCodons(a)),N(a.clone())
+Triplets::Triplets(const string& s,const Nucleotides& a)
+  :alphabet(s,getTriplets(a)),N(a.clone())
 {
   missing.back() = "***";
   gap_letter = "---";
 }
 
 // FIXME - should I make a separate class that removes stop codons?
-void Translation_Table::setup_table(vector<string> cc,vector<string> aa) {
+void Codons::setup_table(vector<string> cc,vector<string> aa) {
   assert(cc.size() == aa.size());
   assert(cc.size() == C->size());
 
   // Remove codons which don't map to any SPECIFIED amino acid
   for(int i=cc.size()-1; i>=0; i--) {
     if (not A->contains(aa[i])) {
-      C->remove(cc[i]);
+      remove(cc[i]);
       cc.erase(cc.begin()+i);
       aa.erase(aa.begin()+i);
-      table.erase(table.begin());
+      table.erase(table.begin()); //?? - is there a more elegant way to do this?
     }
   }
 
   // Compute the indices for the remaining ones
   for(int i=0;i<table.size();i++) {
-    int cc_index = (*C)[ cc[i] ];
-    int aa_index = (*A)[ aa[i] ];
+    int cc_index = (*this)[ cc[i] ];
+    int aa_index =    (*A)[ aa[i] ];
     table[cc_index] = aa_index;
   }
 }
 
-void Translation_Table::setup_table(istream& file) {
+void Codons::setup_table(istream& file) {
   vector<string> cc;
   vector<string> aa;
-  for(int i=0;i<C->size();i++) {
+  for(int i=0;i<size();i++) {
     string temp;
     file>>temp;
     cc.push_back(temp);
@@ -329,29 +330,31 @@ void Translation_Table::setup_table(istream& file) {
 }
 				    
 
-Translation_Table::Translation_Table(const Codons& C1,const AminoAcids& A1,
-				     const vector<string>& cc,const vector<string>& aa) 
-  :C(C1),A(A1),table(C->size())
+Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
+	       const vector<string> cc,const vector<string> aa) 
+  :Triplets(N1),A(A1),table(size())
 {
   setup_table(cc,aa);
 }
 
 
-Translation_Table::Translation_Table(const Codons& C1,const AminoAcids& A1,
-				     istream& file) 
-  :C(C1),A(A1),table(C->size())
+Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
+	       istream& file) 
+  :Triplets(N1),A(A1),table(size())
 {
   setup_table(file);
 }
 
-Translation_Table::Translation_Table(const Codons& C1,const AminoAcids& A1,
-		  const string& filename) 
-  :C(C1),A(A1),table(C->size())
+Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
+	       const string& filename) 
+  :Triplets(N1),A(A1),table(size())
 {
 
   ifstream genetic_code(filename.c_str());
   if (not genetic_code)
     throw myexception()<<"Couldn't open file '"<<filename<<"'";
+
   setup_table(genetic_code);
+
   genetic_code.close();
 }

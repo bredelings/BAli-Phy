@@ -15,65 +15,10 @@ using std::string;
 
 namespace substitution {
 
-  string Model::parameter_name(int i) const {
+  string s_parameter_name(int i,int n) {
+    if (i>=n)
+      throw myexception()<<"substitution model: refered to parameter "<<i<<" but there are only "<<n<<" parameters.";
     return string("pS") + convertToString(i);
-  }
-
-  Model::Model(int s)
-    :parameters_(s),
-     full_tree(true)
-  {}
-
-  Model::Model()
-    :full_tree(true)
-  { }
-
-
-  //--------------------- Nested models -----------------------------//
-  std::string SuperModel::super_parameter_name(int p) const {
-    for(int i=0;i<n_submodels();i++)
-      p += SubModels(i).parameters().size();
-    return Model::parameter_name(p);
-  }
-
-  string SuperModel::parameter_name(int p) const {
-    for(int i=0;i<n_submodels();i++) {
-      if (p<SubModels(i).parameters().size())
-	return SubModels(i).parameter_name(p);
-      p -= SubModels(i).parameters().size();
-    }
-    return super_parameter_name(p);
-  }
-
-  double SuperModel::prior() const {
-    double P = super_prior();
-    for(int i=0;i<n_submodels();i++)
-      P += SubModels(i).prior();
-    return P;
-  }
-
-  void SuperModel::fiddle(const std::valarray<bool>& fixed) {
-    int total=0;
-    for(int m=0;m<n_submodels();m++) {
-      SubModels(m).fiddle(fixed);
-      for(int i=0;i<SubModels(m).parameters().size();i++)
-	parameters_[i+total] = SubModels(m).parameters()[i];
-
-      total += SubModels(m).parameters().size();
-    }
-    super_fiddle(fixed);
-  }
-
-  void SuperModel::recalc() {
-    int total=0;
-    for(int m=0;m<n_submodels();m++) {
-      vector<double> sub_p = SubModels(m).parameters();
-      for(int i=0;i<sub_p.size();i++)
-	sub_p[i] = parameters_[i+total];
-      SubModels(m).parameters(sub_p);
-
-      total += SubModels(m).parameters().size();
-    }
   }
 
   //--------------------- Gamma_Branch_Model -----------------------------//
@@ -83,7 +28,11 @@ namespace substitution {
     return gamma_exp(SubModel().getS(),SubModel().getD(),t/beta,beta);
   }
 
-  void Gamma_Branch_Model::super_fiddle(const valarray<bool>& fixed) {
+  string Gamma_Branch_Model::super_parameter_name(int i) const {
+    return "sigma/mu";
+  }
+
+  void Gamma_Branch_Model::super_fiddle() {
     const double sigma = 0.05;
     if (not fixed[parameters_.size()-1]) {
       double beta = parameters_.back() + gaussian(0,sigma);
@@ -104,6 +53,10 @@ namespace substitution {
 
   //-------------------- Gamma_Stretched_Branch_Model ----------------------//
 
+  string Gamma_Stretched_Branch_Model::super_parameter_name(int i) const {
+    return "sigma/mu";
+  }
+
   // E T = t
   // sigma/mu = parameter[0]
   Matrix Gamma_Stretched_Branch_Model::transition_p(double t) const {
@@ -115,7 +68,7 @@ namespace substitution {
     return gamma_exp(SubModel().getS(),SubModel().getD(),alpha,beta);
   }
 
-  void Gamma_Stretched_Branch_Model::super_fiddle(const valarray<bool>& fixed) {
+  void Gamma_Stretched_Branch_Model::super_fiddle() {
     vector<double> v = parameters_;
     double& p = v.back();
 
@@ -150,8 +103,6 @@ namespace substitution {
   // Then Q = S*D, and we can easily compute the exponential
   // So, S(i,j) = Q(i,i)/pi[i]
 
-  string MarkovModel::name() const { return "MarkovModel";}
-
   double ReversibleMarkovModel::rate() const {
     // Rescale so that expected mutation rate is 1
     double scale=0;
@@ -167,10 +118,6 @@ namespace substitution {
     double scale = r/rate();
     Q *= scale;
     S *= scale;
-  }
-
-  string ReversibleMarkovModel::name() const  {
-    return "ReversibleMarkovModel";
   }
 
   void ReversibleMarkovModel::recalc() {
@@ -218,7 +165,7 @@ namespace substitution {
   }
 
   string HKY::name() const {
-    return "HKY[" + Alphabet().name + "]";
+    return "HKY";
   }
 
   string HKY::parameter_name(int i) const {
@@ -226,7 +173,7 @@ namespace substitution {
     return "HKY::kappa";
   }
 
-  void HKY::fiddle(const valarray<bool>& fixed) {
+  void HKY::fiddle() {
     if (fixed[0]) return;
 
     double k = log(kappa());
@@ -260,8 +207,69 @@ namespace substitution {
     ReversibleMarkovModel::recalc();
   }
 
+  string TNY::name() const {
+    return "TNY";
+  }
+
+  void TNY::fiddle() {
+    const double sigma = 0.15;
+
+    if (not fixed[0]) {
+      double k = kappa1() * exp(gaussian(0,sigma));
+      kappa1(k);
+    }
+
+    if (not fixed[1]) {
+      double k = kappa2() * exp(gaussian(0,sigma));
+      kappa2(k);
+    }
+  }
+
+  // This should be OK - the increments are linear combinations of gaussians...
+
+  /// return the LOG of the prior
+  double TNY::prior() const {
+    double k1 = log(kappa1());
+    double k2 = log(kappa2());
+    
+    double alpha = (k1+k2)/2;
+    double beta  = (k1-k2)/2;
+
+    double P = ReversibleMarkovModel::prior();
+    P += log(shift_laplace_pdf(alpha, log(2), 0.25));
+    P += log(shift_laplace_pdf(beta, 0, 0.10));
+    return P;
+  }
+
+  void TNY::recalc() {
+    assert(Alphabet().size()==4);
+
+    for(int i=0;i<Alphabet().size();i++)
+      for(int j=0;j<Alphabet().size();j++) {
+	if (i==j) continue;
+	if (Alphabet().transversion(i,j))
+	  S(i,j) = 1;
+	else if (Alphabet().purine(i))
+	  S(i,j) = kappa1();
+	else
+	  S(i,j) = kappa2();
+      }
+
+    ReversibleMarkovModel::recalc();
+  }
+
+  string TNY::parameter_name(int i) const {
+    assert(i==0 or i==1);
+    if (i==0)
+      return "TNY::kappa(pur)";
+    else if (i==1)
+      return "TNY::kappa(pyr)";
+    else
+      return s_parameter_name(i,2);
+  }
+
   string EQU::name() const {
-    return "EQU[" + Alphabet().name + "]";
+    return "EQU";
   }
 
   void EQU::recalc() {
@@ -273,7 +281,7 @@ namespace substitution {
   }
 
   string Empirical::name() const {
-    return "Empirical(" + modelname +")[" + Alphabet().name + "]";
+    return "Empirical(" + modelname +")";
   }
 
   void Empirical::recalc() {
@@ -300,62 +308,18 @@ namespace substitution {
 
   //------------------------ Codon Models -------------------//
 
-  string YangCodonModel::parameter_name(int i) const {
-    if (i==0)
-      return "Yang::kappa";
-    else if (i==1)
-      return "Yang::omega";
-    else
-      throw myexception()<<"YangCodonModel::parameter_name(int): can't find parameter "<<i;
-  }
+  CodonModel::CodonModel(const Codons& C)
+    :ReversibleMarkovModel(C),ModelWithAlphabet<Codons>(C)
+  { }
 
+  CodonModel::~CodonModel() {}
 
-  double YangCodonModel::prior() const {
-    double P = 0;
-    P += log(shift_laplace_pdf(log(kappa()), log(2), 0.25));
-    P += log(shift_laplace_pdf(log(omega()), 0, 0.1));
-    P += ReversibleMarkovModel::prior();
-    return P;
-  }
-
-  void YangCodonModel::fiddle(const valarray<bool>& fixed) {
-    double k = log( kappa() );
-    double w = log( omega() );
-
-    k += gaussian(0,0.15);
-    w += gaussian(0,0.15);
-
+  void YangCodonModel::super_fiddle() {
+    double sigma = 0.15;
     if (not fixed[0])
-      parameters_[0] = exp(k);
-
-    if (not fixed[1])
-      parameters_[1] = exp(w);
+      parameters_[0] *= exp(gaussian(0,sigma));
 
     recalc();
-  }
-
-  string YangCodonModel::name() const {
-    return "Yang-94[" + Alphabet().name + "]";
-  }
-
-
-  const valarray<double>& YangCodonModel::frequencies() const {
-    return ReversibleMarkovModel::frequencies();
-  }
-
-  void YangCodonModel::frequencies(const valarray<double>& pi_) {
-    assert(pi_.size() == frequencies().size());
-
-    /*
-    for(int i=0;i<pi_.size();i++) {
-      if (T.stop_codon(i)) {
-	std::cerr<<"Stop codon!\n";
-	if (pi_[i] >0)
-	  throw myexception()<<"Giving non-zero frequency to stop codon "<<Alphabet().lookup(i)<<"!";
-      }
-      }*/
-
-    ReversibleMarkovModel::frequencies(pi_);
   }
 
   void YangCodonModel::recalc() {
@@ -379,177 +343,242 @@ namespace substitution {
 	int l2 = Alphabet().sub_nuc(j,pos);
 	assert(l1 != l2);
 
-	if (Alphabet().getNucleotides().transition(l1,l2))
-	  rate *= kappa();
-	
 	if (AminoAcid(i) != AminoAcid(j))
 	  rate *= omega();
 	
-	S(i,j) = S(j,i) = rate;
+	S(i,j) = S(j,i) = rate * SubModel().getS()(l1,l2);
       }
     }
 
     ReversibleMarkovModel::recalc();
   }
 
-  YangCodonModel::YangCodonModel(const Translation_Table& T1)
-      :Model(2),ReversibleMarkovModel(T1.getCodons()),ModelWithAlphabet<Codons>(T1.getCodons()),T(T1)
-    {
-      parameters_[0] = 2.0;
-      parameters_[1] = 1.0;
-      recalc();
-    }
+  double YangCodonModel::super_prior() const {
+    double P = ReversibleMarkovModel::prior();
+    P += log(shift_laplace_pdf(log(omega()), 0, 0.1));
+    return P;
+  }
+
+  double YangCodonModel::prior() const {
+    return NestedModelOver<ReversibleMarkovNucleotideModel>::prior();
+  }
+
+  string YangCodonModel::name() const {
+    return "Yang-94";
+  }
+
+  string YangCodonModel::super_parameter_name(int i) const {
+    if (i==0)
+      return "Yang::omega";
+    else
+      throw myexception()<<"YangCodonModel::parameter_name(int): can't find parameter "<<i;
+  }
+
+  //  const valarray<double>& YangCodonModel::frequencies() const {
+  //    return ReversibleMarkovModel::frequencies();
+  //  }
+
+  //  void YangCodonModel::frequencies(const valarray<double>& pi_) {
+  //    assert(pi_.size() == frequencies().size());
+
+    /*
+    for(int i=0;i<pi_.size();i++) {
+      if (T.stop_codon(i)) {
+	std::cerr<<"Stop codon!\n";
+	if (pi_[i] >0)
+	  throw myexception()<<"Giving non-zero frequency to stop codon "<<Alphabet().lookup(i)<<"!";
+      }
+      }*/
+
+  //    ReversibleMarkovModel::frequencies(pi_);
+  //  }
+
+  YangCodonModel::YangCodonModel(const Codons& C,const ReversibleMarkovNucleotideModel& M)
+    :CodonModel(C),NestedModelOver<ReversibleMarkovNucleotideModel>(M,1)
+  { 
+    omega(1.0);
+  }
+
   YangCodonModel::~YangCodonModel() {}
 
   /*--------------- MultiRate Models ----------------*/
 
   double MultiModel::rate() const {
     double r=0;
-    for(int m=0;m<nmodels();m++)
-      r += distribution_[m]*rates_[m]*get_model(m).rate();
+    for(int m=0;m<n_base_models();m++)
+      r += distribution()[m]*base_model(m).rate();
     return r;
   }
 
   void MultiModel::set_rate(double r)  {
     double scale = r/rate();
-    for(int i=0;i<nmodels();i++)
-      rates_[i] *= scale;
+    for(int m=0;m<n_base_models();m++) {
+      base_model(m).set_rate(base_model(m).rate()*scale);
+    }
   }
 
-  void MultiModel::recalc() {
-    set_rate(1);
-#ifndef NDEBUG
-    std::cerr<<"scale = "<<rate()<<endl;
-#endif
-  }
-
+  // This is per-branch, per-column - doesn't pool info about each branches across columns
   Matrix MultiModel::transition_p(double t) const {
-    Matrix P = distribution_[0] * transition_p(t,0);
-    for(int m=1;m<nmodels();m++)
-      P += distribution_[m] * transition_p(t,m);
+    Matrix P = distribution()[0] * transition_p(t,0);
+    for(int m=1;m<n_base_models();m++)
+      P += distribution()[m] * transition_p(t,m);
     return P;
   }
 
-  double MultiRateModel::rate() const {
-    double scale=0;
-    for(int i=0;i<nrates();i++)
-      scale += rates_[i]*distribution_[i];
-    return scale;
+  string UnitModel::name() const {
+    return string("[") + SubModel().name() + "]";
   }
 
-  void MultiRateModel::set_rate(double r)  {
-    MultiModel::set_rate(r);
+  string UnitModel::super_parameter_name(int i) const {
+    return s_parameter_name(i,0);
   }
 
-  const ReversibleAdditiveModel& MultiRateModel::get_model(int m) const {
-    return BaseModel();
+
+  const MultiModel::Base_Model_t& MultiParameterModel::base_model(int m) const {
+    int i = m / SubModel().n_base_models();
+    int j = m % SubModel().n_base_models();
+
+    return sub_parameter_models[i]->base_model(j);
   }
 
-  void MultiRateModel::recalc() {
+  MultiModel::Base_Model_t& MultiParameterModel::base_model(int m) {
+    int i = m / SubModel().n_base_models();
+    int j = m % SubModel().n_base_models();
+
+    return sub_parameter_models[i]->base_model(j);
+  }
+  
+  vector<double> MultiParameterModel::distribution() const {
+    vector<double> dist(n_base_models());
+
+    for(int m=0;m<dist.size();m++) {
+      int i = m / SubModel().n_base_models();
+      int j = m % SubModel().n_base_models();
+
+      dist[m] = fraction[i]*sub_parameter_models[i]->distribution()[j];
+    }
+
+    return dist;
+  }
+
+
+  // Um, summed-over parameter lives on as its MEAN
+
+  void MultiParameterModel::recalc() {
+
+    // recalc sub-model
     NestedModel::recalc();
-    BaseModel().set_rate(1);
-    MultiModel::recalc();
+
+    // recalc sub-models
+    vector<double> params = SubModel().parameters();
+    for(int m=0;m<n_base_models();m++) {
+      base_model(m) = SubModel();
+      if (p_change == -1)
+	base_model(m).set_rate(p_values[m]);
+      else {
+	params[p_change] = p_values[m];
+	base_model(m).parameters(params);
+      }
+    }
   }
 
-
-  string SingleRateModel::name() const {
-    return SubModel().name();
+  MultiParameterModel::MultiParameterModel(const MultiModel& M,int dp,int p,int n) 
+    :ReversibleWrapperOver<MultiModel>(M,dp),
+     sub_parameter_models(vector<OwnedPointer<MultiModel> >(n,M)),
+     fraction(n),
+     p_change(p),
+     p_values(n)
+  { 
+    // start with sane values for p_values
+    for(int i=0;i<n_base_models();i++)
+      if (p_change == -1)
+	p_values[i] = M.rate();
+      else
+	p_values[i] = M.parameters()[p_change];
   }
 
   /*--------------- Distribution-based Model----------------*/
 
-  string DistributionRateModel::name() const {
-    return string("Distribution(") + convertToString(rates_.size()) + ")(" + SubModel().name() + ")";
-  }
-
-  double DistributionRateModel::super_prior() const {
+  double DistributionParameterModel::super_prior() const {
     return D->prior();
   }
 
-  void DistributionRateModel::super_fiddle(const valarray<bool>& fixed) {
-    D->fiddle(fixed);
-    for(int i=0;i<D->parameters().size();i++)
-      parameters_[SubModel().parameters().size() + i] = D->parameters()[i];
-    
+  void DistributionParameterModel::super_fiddle() {
+    D->fiddle();
+
+    super_parameters_ = D->parameters();
+
     recalc();
   }
 
   // This is supposed to push things out from parameters_
-  void DistributionRateModel::recalc() {
-    vector<double> temp(D->parameters().size());
-    for(int i=0;i<D->parameters().size();i++)
-      temp[i] = parameters_[SubModel().parameters().size() + i];
-    D->parameters(temp);
+  void DistributionParameterModel::recalc() {
+    D->parameters(super_parameters_);
 
-    for(int i=0;i<nrates();i++) {
-      rates_[i] = D->quantile( double(2*i+1)/(2.0*nrates()) );
-    }
+    for(int i=0;i<p_values.size();i++)
+      p_values[i] = D->quantile( double(2*i+1)/(2.0*p_values.size()) );
+    
 
-    MultiRateModel::recalc();
+    MultiParameterModel::recalc();
   }
 
-  DistributionRateModel::DistributionRateModel(const ReversibleAdditiveModel& M,const RateDistribution& RD, int n)
-    :MultiRateModelOver<ReversibleAdditiveModel>(M,RD.parameters().size(),n),
+  string DistributionParameterModel::name() const {
+    string p_name = "rate";
+    if (p_change > -1)
+      p_name = SubModel().parameter_name(p_change);
+
+    string dist_name = p_name + "~" + D->name() + "(" + convertToString(p_values.size()) + ")";
+    return SubModel().name() + " + " + dist_name;
+  }
+
+  string DistributionParameterModel::super_parameter_name(int i) const {
+    return D->parameter_name(i);
+  }
+
+  DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const RateDistribution& RD, int p, int n)
+    :MultiParameterModel(M,RD.parameters().size(),p,n),
      D(RD)
   {
     // This never changes - since we use quantiles for the bins
-    for(int i=0;i<nrates();i++)
-      distribution_[i] = 1.0/nrates();
+    for(int i=0;i<p_values.size();i++)
+      fraction[i] = 1.0/p_values.size();
 
-    // Read in the parameters from the distribution
-    for(int i=0;i<D->parameters().size();i++)
-      parameters_[SubModel().parameters().size() + i] = D->parameters()[i];
+    super_parameters_ = D->parameters();
 
     recalc();
   }
 
   /*--------------- Gamma Sites Model----------------*/
 
-  string GammaRateModel::super_parameter_name(int i) const {
-    if (i==0)
-      return "Gamma::sigma";
-    else
-      std::abort();
-  }
-
-
-  string GammaRateModel::name() const {
-    return SubModel().name() + " + Gamma(" + convertToString(rates_.size()) + ")";
-  }
-
-  GammaRateModel::GammaRateModel(const ReversibleAdditiveModel& M,int n)
-    :DistributionRateModel(M,Gamma(),n)
+  GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
+    :DistributionParameterModel(M,Gamma(),-1,n)
   {}
 
 
   /*--------------- LogNormal Sites Model----------------*/
 
-  string LogNormalRateModel::name() const {
-    return SubModel().name() + " + LogNormal(" + convertToString(rates_.size()) + ")";
-  }
-
-  LogNormalRateModel::LogNormalRateModel(const ReversibleAdditiveModel& M,int n)
-    :DistributionRateModel(M,LogNormal(),n)
+  LogNormalParameterModel::LogNormalParameterModel(const MultiModel& M,int n)
+    :DistributionParameterModel(M,LogNormal(),-1,n)
   {}
 
 
   //--------------- Invariant Sites Model----------------//
 
-  string INV_Model::name() const {
+  string WithINV::name() const {
     return SubModel().name() + " + INV";
   }
 
-  INV_Model::INV_Model(const MultiRateModel& M)
-    :MultiRateModelOver<MultiRateModel>(M,1,M.nrates()+1)
+  WithINV::WithINV(const MultiModel& M)
+    :ReversibleWrapperOver<MultiModel>(M,1)
   {
-    parameters_.back() = 0.01;
+    super_parameters_[0] = 0.01;
 
     recalc();
   }
 
 
-  double INV_Model::super_prior() const {
-    double p = parameters().back();
+  double WithINV::super_prior() const {
+    double p = super_parameters_[0];
 
     const double frac_mode = 0.02;
     const double N = 20;
@@ -562,11 +591,11 @@ namespace substitution {
       return log(gsl_ran_beta_pdf(p,a,b));
   }
 
-  void INV_Model::super_fiddle(const valarray<bool>& fixed) {
+  void WithINV::super_fiddle() {
     if (fixed[parameters_.size()-1] )
       return;
 
-    double &p = parameters_.back();
+    double &p = super_parameters_[0];
 
     // fiddle Invariant fraction
     const double sigma = 0.04;
@@ -577,51 +606,108 @@ namespace substitution {
     recalc();
   }
 
-  string INV_Model::super_parameter_name(int i) const {
+    /// Access the base models
+  const MultiModel::Base_Model_t& WithINV::base_model(int m) const {
+    if (m<SubModel().n_base_models())
+      return SubModel().base_model(m);
+    else
+      return *INV;
+  }
+
+  MultiModel::Base_Model_t& WithINV::base_model(int m) {
+    if (m<SubModel().n_base_models())
+      return SubModel().base_model(m);
+    else
+      return *INV;
+  }
+
+  string WithINV::super_parameter_name(int i) const {
     if (i==0)
       return "INV::p";
     else
       std::abort();
   }
 
-  void INV_Model::recalc() {
-    double p = parameters_.back();
+  vector<double> WithINV::distribution() const {
+    double p = super_parameters()[0];
 
-    // Thus, r is the RELATIVE rate to the other model
-    // Should we try to specify an absolute rate?
-    rates_[nrates()-1] = 0;
-    distribution_[nrates()-1] = p;
-  
-    for(int r=0;r<SubModel().nrates();r++) {
-      rates_[r] = SubModel().rates()[r];
-      distribution_[r] = SubModel().distribution()[r]*(1.0-p);
-    }
+    vector<double> dist = SubModel().distribution();
+    for(int i=0;i<dist.size();i++)
+      dist[i] *= p;
 
-    MultiRateModel::recalc();
+    dist.push_back(1-p);
+    return dist;
+  }
+
+  void YangM2::super_fiddle() {
+    // dirichlet fiddle the first 3 parameters, sigma = ?
+
+    // log-laplace fiddle the 4th parameter, wrapped so that it is always >= 1
+    super_parameters_[3] *= exp(shift_laplace(0,0.2));
+    if (super_parameters_[3] < 1)
+      super_parameters_[3] = 1.0/super_parameters_[3];
+  }
+
+  void YangM2::recalc() {
+    p_values[0] = 0;
+    p_values[1] = 1;
+    p_values[2] = super_parameters()[3];
+  }
+
+  double YangM2::super_prior() const {
+    //What prior on the fractions?
+    //What prior on the positive rates -> tend towards w=1?
+    valarray<double> p(3);
+    p[0] = super_parameters()[0];
+    p[1] = super_parameters()[1];
+    p[2] = super_parameters()[2];
+    valarray<double> q(1.0/3,3);
+    double P = dirichlet_log_pdf(p,q,10);
+
+    double omega = super_parameters()[3];
+    P += exponential_log_pdf(log(omega),0.05);
+    return P;
+  }
+
+  string YangM2::name() const {
+    return SubModel().name() + " + YangM2";
+  }
+
+  string YangM2::super_parameter_name(int i) const {
+    if (i==0)
+      return "YangM2::f[AA INV]";
+    if (i==1)
+      return "YangM2::f[Neutral]";
+    if (i==2)
+      return "YangM2::f[Positive]";
+    if (i==3)
+      return "YangM2::omega";
+  }
+
+  /// Get the probability of each base models
+  std::vector<double> YangM2::distribution() const {
+    vector<double> dist(3);
+    dist[0] = super_parameters()[0];
+    dist[1] = super_parameters()[1];
+    dist[2] = super_parameters()[2];
+
+    return dist;
+  }
+
+  YangM2::YangM2(const YangCodonModel& M1) 
+    :MultiParameterModel(UnitModel(M1),4,0,3)
+  {
   }
 
   void DualModel::recalc() {
-    int n1 = SubModels(0).nmodels();
-    int n2 = SubModels(1).nmodels();
-    double p = parameters_[parameters_.size()-2];
-    double r = parameters_[parameters_.size()-1];
-
-    for(int i=0;i<n1;i++) {
-      distribution_[i] = SubModels(0).distribution()[i]*p;
-      rates_[i]        = SubModels(0).rates()[i];
-    }
-
-    for(int i=0;i<n2;i++) {
-      distribution_[i+n1] = SubModels(1).distribution()[i]*(1.0-p);
-      rates_[i+n1]        = SubModels(1).rates()[i]*r;
-    }
+    double r = super_parameters()[1];
 
     //recalculate submodels;
     SuperModel::recalc();
 
     //remove submodel rates
     SubModels(0).set_rate(1);
-    SubModels(1).set_rate(1);
+    SubModels(1).set_rate(r);
 
     //set this rate to 1
     MultiModel::recalc();
@@ -649,7 +735,7 @@ namespace substitution {
     return P;
   }
 
-  void DualModel::super_fiddle(const valarray<bool>& fixed) {
+  void DualModel::super_fiddle() {
     if (not fixed[parameters_.size()-2]) {
 
       double& p = parameters_[parameters_.size()-1];
@@ -668,13 +754,15 @@ namespace substitution {
     recalc();
   }
 
-  const MultiModel& DualModel::get_model(int m) const {
-    int total = SubModels(0).nmodels() + SubModels(1).nmodels();
-    assert(0 <= m and m < total);
-    if (m<SubModels(0).nmodels())
-      return SubModels(0);
-    else
-      return SubModels(1);
+  const MultiModel::Base_Model_t& DualModel::base_model(int m) const {
+    if (m<SubModels(0).n_base_models())
+      return SubModels(0).base_model(m);
+    m -= SubModels(0).n_base_models();
+
+    if (m<SubModels(1).n_base_models())
+      return SubModels(1).base_model(m);
+
+    std::abort();
   }
 
   string DualModel::name() const {
@@ -688,8 +776,7 @@ namespace substitution {
   }
 
   DualModel::DualModel(const std::vector<OwnedPointer<MultiModel> >& models)
-    :MultiModel(models[0]->nmodels() + models[1]->nmodels()),
-     SuperModelOver<MultiModel>(models,2)
+    :SuperDerivedModelOver<MultiModel,Model>(models,2)
   {
     parameters_[parameters_.size()-2] = 0.5;
     parameters_[parameters_.size()-1] = 1.0;
