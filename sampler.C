@@ -193,7 +193,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				    three_way_topology_sample,
 				    internal_branches)
 		    );
-  topology_move.add(.1,MoveArgSingle("three_way_t_and_A:alignment:nodes:topology",
+  topology_move.add(1,MoveArgSingle("three_way_t_and_A:alignment:nodes:topology",
 				    three_way_topology_and_alignment_sample,
 				    internal_branches)
 		    ,false
