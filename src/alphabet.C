@@ -207,6 +207,10 @@ AminoAcidsWithStop::AminoAcidsWithStop()
 }
 
 
+//FIXME - I should probably build the association between codons and amino acids 
+//        into the Codon alphabet, and allow a NULL pointer or something if you
+//        don't want that information...
+
 int Codons::sub_nuc(int codon,int pos) const {
   assert( 0 <= pos and pos <= 3);
 

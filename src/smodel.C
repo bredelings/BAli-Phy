@@ -346,14 +346,14 @@ namespace substitution {
   void YangCodonModel::frequencies(const valarray<double>& pi_) {
     assert(pi_.size() == frequencies().size());
 
-    assert(pi_.size() == frequencies().size());
+    /*
     for(int i=0;i<pi_.size();i++) {
       if (T.stop_codon(i)) {
 	std::cerr<<"Stop codon!\n";
 	if (pi_[i] >0)
 	  throw myexception()<<"Giving non-zero frequency to stop codon "<<Alphabet().lookup(i)<<"!";
       }
-    }
+      }*/
 
     ReversibleMarkovModel::frequencies(pi_);
   }
