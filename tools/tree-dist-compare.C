@@ -102,7 +102,7 @@ bool report_sample(std::ostream& o,const valarray<bool>& sample1_in,const valarr
   int blocksize1 = N1/100+1;
   int blocksize2 = N2/100+1;
   
-  int blocksize = std::mid(blocksize1,blocksize2);
+  int blocksize = std::min(blocksize1,blocksize2);
 
   valarray<double> values1 = bootstrap_apply<bool,double>(sample1,statistics::Pr,10000,blocksize);
 
