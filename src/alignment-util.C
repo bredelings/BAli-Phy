@@ -25,14 +25,10 @@ alignment chop_internal(const alignment& A)
   if (not internal_nodes)
     return A;
 
-  alignment A2;
-  for(int i=0;i<N;i++) {
-    sequence s(A.seq(i));
-    s.resize(A.length());
-    for(int column=0;column<A.length();column++)
-      s[column] = A(column,i);
-    A2.add_sequence(s);
-  }
+  alignment A2 = A;
+  while(A2.n_sequences() > N)
+    A2.del_sequence(N);
+
   return A2;
 }
 
