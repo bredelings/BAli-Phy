@@ -34,8 +34,9 @@ struct Branch {
   double length;
 
   int name;
+  bool up;
 
-  Branch(): parent(0),child(0),length(0.0),name(-1) {}
+  Branch(): parent(0),child(0),length(0.0),name(-1),up(true) {}
 };
 
 // Split these out into
@@ -106,6 +107,7 @@ public:
 };
 
 class branchview {
+protected:
   Branch* b;
 public:
   nodeview parent() const {
@@ -127,6 +129,7 @@ public:
 };
 
 class const_branchview {
+protected:
   const Branch* b;
 public:
   nodeview parent() const {
@@ -142,6 +145,34 @@ public:
 
   operator int() {return name();}
   const_branchview(const Branch* b_):b(b_) {}
+};
+
+
+class directed_branchview:public const_branchview {
+  bool up;
+  const class tree& T;
+
+public:
+  nodeview parent() const {
+    if (not (up xor b->up))
+      return const_branchview::parent();
+    else
+      return const_branchview::child();
+  }
+
+  nodeview child() const {
+    if (not (up xor b->up))
+      return const_branchview::child();
+    else
+      return const_branchview::parent();
+  }
+
+  int name() const;
+  double length() const {return const_branchview::length();}
+
+  directed_branchview(const_branchview bv,bool dir,const tree& T1)
+    :const_branchview(bv),up(dir),T(T1)
+  {}
 };
 
 class tree {
@@ -276,6 +307,10 @@ inline bool tree::connected(int node1,int node2) const {
     return true;
 
   return false;
+}
+
+int directed_branchview::name() const {
+  return const_branchview::name() + up?0:T.n_branches();
 }
 
 #endif

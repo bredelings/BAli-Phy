@@ -544,6 +544,10 @@ void tree::do_swap(node* c1,node* c2) {
   std::swap(b1->name,b2->name);
   std::swap(b1->length,b2->length);
 
+  // switch the branch orders: up->down, and down->up
+  b1->up = not b1->up;
+  b2->up = not b2->up;
+
   // swap the subtrees c1 and c2
   TreeView::exchange_cousins(c1,c2);
 }
@@ -638,6 +642,8 @@ void tree::exchange(int node1,int node2) {
 // We would just have to swap_children(root->name) if root->right
 // is a leaf...
 
+
+/// SPR: move the subtree (n1->n2) into branch b
 void tree::SPR(int n1, int n2, int b) {
   assert(root->right->parent_branch->length == 0.0);
 
@@ -775,6 +781,10 @@ void tree::swap_children(int n) {
   if (n == n_nodes()-1) {
     std::swap(p->left->parent_branch->child,p->right->parent_branch->child);
     std::swap(p->left->parent_branch,p->right->parent_branch);
+
+    // NOTE: this and do_swap are the ONLY place where we change 
+    //       change branch directions.
+    p->left->parent_branch->up = not p->left->parent_branch->up;
   }
 
   std::swap(p->left,p->right);
