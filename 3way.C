@@ -379,7 +379,9 @@ namespace A3 {
 
     for(int column=0;column<old.length();column++) {
 
+#ifndef NDEBUG
       check_internal_nodes_connected(old,T,internal);
+#endif
 
       if (not all_gaps(old,column,group1))
 	subA1.push_back(column);

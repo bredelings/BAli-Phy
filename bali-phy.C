@@ -127,25 +127,18 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
 
   if (P.IModel().full_tree)
-    SPR_move.add(1,MoveArgSingle("SPR_and_node:topology:length:nodes",
+    SPR_move.add(1,MoveArgSingle("SPR_and_A:topology:length:nodes:alignment:alignment_branch",
 				 sample_SPR,
 				 branches)
 		 );
   else
-    SPR_move.add(1,MoveArgSingle("SPR_and_node:topology:length",
+    SPR_move.add(1,MoveArgSingle("SPR_and_A:topology:length",
 				 sample_SPR,
 				 branches)
 		 );
 
-
-  if (P.IModel().full_tree)
-    SPR_move.add(0.07,MoveArgSingle("SPR_and_A:nodes:topology:length:alignment:alignment_branch",
-				    sample_SPR_and_A,
-				    branches)
-		 );
-
   topology_move.add(1,NNI_move);
-  topology_move.add(0.4,SPR_move);
+  topology_move.add(0.3,SPR_move);
   if (P.T.leaves() >3 and P.SModel().full_tree)
     tree_moves.add(1,topology_move);
   

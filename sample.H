@@ -52,7 +52,6 @@ MCMC::result_t two_way_topology_sample2(alignment& A,Parameters& P,int b);
 MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& P,int b);
 
 MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b);
-MCMC::result_t sample_SPR_and_A(alignment& A,Parameters& P,int b);
 
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& Theta,int b);
 MCMC::result_t slide_branch_lengths_one(alignment& A, Parameters& Theta,int);
