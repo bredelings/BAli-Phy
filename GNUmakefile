@@ -49,7 +49,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  choose.C sequencetree.C branch-lengths.C arguments.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
-	  sample-node.C imodel.C 5way.C topology-sample2.C inverse.C \
+	  sample-node.C imodel.C 5way.C topology-sample2.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C
 
 LIBS = gsl gslcblas m 
