@@ -117,105 +117,18 @@ bool topology_sample_SPR_fgaps(alignment& A,Parameters& P1,const Parameters& P2,
 bool sample_SPR_and_A(alignment& A,Parameters& P1,const Parameters& P2,int n1,int n2) {
 
   //----------- Generate the Different Matrices ---------//
+  vector<Parameters> p(2,P1);
+  p[1] = P2;
 
-  vector<alignment> a(3,A);
-
-  vector<Parameters> p(3,P1);
-  p[2] = P2;
-
-  vector< vector<int> > nodes(3);
-
+  vector< vector<int> > nodes(2);
   nodes[0] = A3::get_nodes_branch_random(P1.T,n1,n2);
-  nodes[1] = nodes[0];
-  nodes[2] = A3::get_nodes_branch_random(P2.T,n1,n2);
+  nodes[1] = A3::get_nodes_branch_random(P2.T,n1,n2);
 
-  vector<DPmatrixConstrained> Matrices;
-  Matrices.push_back( tri_sample_alignment_base(a[1],p[1],nodes[1]) );
-  Matrices.push_back(Matrices[0]);
-  Matrices.push_back( tri_sample_alignment_base(a[2],p[2],nodes[2]) );
-
-  //-------- Calculate corrections to path probabilities ---------//
-
-  vector<double> OP(3);
-  OP[0] = other_prior(a[0],p[0],nodes[0]);
-  OP[1] = OP[0];
-  OP[2] = other_prior(a[2],p[2],nodes[2]);
-  
-  vector<double> OS(3);
-  OS[0] = other_subst(a[1],p[1],nodes[1]);  
-  OS[1] = OS[0];
-  OS[2] = other_subst(a[2],p[2],nodes[2]);
-
-  //---------- Choose between the topologies (P1,P2,P3) -----------//
-  
-  vector<double> Pr(2);
-  
-  Pr[0] = Matrices[1].Pr_sum_all_paths() + OS[1] + OP[1] + prior(p[1])/p[1].Temp;
-  Pr[1] = Matrices[2].Pr_sum_all_paths() + OS[2] + OP[2] + prior(p[2])/p[1].Temp;
-  
-  int C = 1 + choose(Pr);
-  
-#ifndef NDEBUG_DP
-
-  vector< vector<int> > paths;
-
-  //------------------- Check offsets from path_Q -> P -----------------//
-  for(int i=0;i<3;i++) {
-    vector<int> path   = get_path_3way(A3::project(a[i],nodes[i]),0,1,2,3);
-    paths.push_back( path ); 
-
-    double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
-
-    check_match_P(a[i], p[i], OS[i], OP_i, path, Matrices[i]);
-  }
-
-  //--------- Compute path probabilities and sampling probabilities ---------//
-  vector< vector<double> > PR(3);
-
-  for(int i=0;i<3;i++) {
-    double P_choice = 0;
-    if (i==0)
-      P_choice = choose_P(0,Pr);
-    else
-      P_choice = choose_P(i-1,Pr);
-
-    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
-    PR[i][0] += A3::log_correction(a[i],p[i],nodes[i]);
-  }
-
-
-  std::cerr<<"choice = "<<C<<endl;
-  std::cerr<<" Pr1  = "<<PR[0][0]<<"    Pr2  = "<<PR[C][0]<<"    Pr2  - Pr1  = "<<PR[C][0] - PR[0][0]<<endl;
-  std::cerr<<" PrQ1 = "<<PR[0][2]<<"    PrQ2 = "<<PR[C][2]<<"    PrQ2 - PrQ1 = "<<PR[C][2] - PR[0][2]<<endl;
-  std::cerr<<" PrS1 = "<<PR[0][1]<<"    PrS2 = "<<PR[C][1]<<"    PrS2 - PrS1 = "<<PR[C][1] - PR[0][1]<<endl;
-
-  double diff = (PR[C][1] - PR[0][1]) - (PR[C][0] - PR[0][0]);
-  std::cerr<<"diff = "<<diff<<endl;
-  if (std::abs(diff) > 1.0e-9) {
-    std::cerr<<a[0]<<endl;
-    std::cerr<<a[C]<<endl;
-
-    std::cerr<<A3::project(a[0],nodes[0])<<endl;
-    std::cerr<<A3::project(a[C],nodes[C])<<endl;
-
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-  }
-#endif
-
-  /*---------------- Adjust for length of node0 (nodes[0]) changing --------------------*/
-
-  bool success = false;
-  if (myrandomf() < exp( A3::log_acceptance_ratio(a[0],p[0],nodes[0],a[C],p[C],nodes[C])))  {
-    success = (C == 2);
-    A = a[C];
-    P1 = p[C];
-  }
+  bool success = sample_tri_multi(A,p,nodes,true,true);
+  P1 = p.back();
 
   return success;
 }
-
-
-
 
 ///Sample between 2 topologies, ignoring gap priors on each case
 bool topology_sample_SPR_sgaps(alignment& A,Parameters& P1,const Parameters& P2) {

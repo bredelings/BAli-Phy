@@ -51,20 +51,21 @@ inline double logsum_nocheck(double x, double y) {
 inline double logdiff1(double delta) {
   assert(delta <= 0);
 
-  delta = -delta;
-
-  if (delta < NATS)
+  if (delta < -NATS)
     return 0;
-  else if (delta < NATS/3) {
+
+  else if (delta < -NATS/3) {
     double x = exp(-delta);
     return -(x + x*x/2 + x*x*x/3);
   }
-  else if (delta < .00001) {
-    return log(1.0-exp(-delta));
-  }
+
   else {
-    double EXP = delta - delta*delta/2.0 + delta*delta*delta/6.0;
-    return log(EXP);
+      double y=0;
+      if (delta < -.00001) 
+	y = 1.0 - exp(delta);
+      else
+	y = -(delta + delta*delta/2.0 + delta*delta*delta/6.0 + delta*delta*delta*delta/24.0);
+      return log(y);
   }
 }
 

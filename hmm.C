@@ -127,6 +127,19 @@ double HMM::path_Q_path(const vector<int>& g_path) const {
   double Pr = log_0;
   for(int S=0;S<nstates();S++)
     if (not silent(S))
+      Pr = logsum(Pr,start_P[S] + Q(S,g_path[0]));
+
+  for(int l=1;l<g_path.size();l++)
+    Pr += Q(g_path[l-1],g_path[l]);
+
+  return Pr;
+}
+
+double HMM::path_GQ_path(const vector<int>& g_path) const {
+
+  double Pr = log_0;
+  for(int S=0;S<nstates();S++)
+    if (not silent(S))
       Pr = logsum(Pr,start_P[S] + GQ(S,g_path[0]));
 
   for(int l=1;l<g_path.size();l++)
@@ -181,6 +194,69 @@ Matrix GQ_exit(const Matrix& Q,const vector<int>& silent_network_states,const ve
     }
   
   return G;
+}
+
+
+// IF (and only if) T > 1, then GQ(i,j) can be > 0....
+
+Matrix GQ_exit2(const Matrix& Q,const vector<int>& silent_network_states,const vector<int>& non_silent_network) {
+
+  const int n_S = silent_network_states.size();
+  const int n_NS = non_silent_network.size();
+
+
+  //--------------- Create and fill the matrix G -----------------//
+  Matrix G(n_S,n_S+n_NS);
+  for(int s1=0; s1<G.size1(); s1++) {
+    int S1 = silent_network_states[s1];
+    int j=0;
+    for(;j < n_S; j++) {
+      int S2 = silent_network_states[j];
+      G(s1,j) = Q(S1,S2);
+    }
+    for(;j<G.size2();j++) {
+      int NS = non_silent_network[j-n_S];
+      G(s1,j) = Q(S1,NS);
+    }
+  }
+
+
+  //------------ Compute first hitting probabilities -------------//
+
+  // eliminate 'z' from destination states
+  for(int z=0; z < G.size1(); z++) {
+    // for each destination state
+    for(int j=z+1; j < G.size2(); j++) {
+      G(z,j) -= logdiff(0, G(z,z) );   // calculate G_(k+1)[z,j]
+      for(int i=0;i<G.size1();i++) 
+	if (i != z)
+	  G(i,j) = logsum( G(i,j), G(i,z) + G(z,j) ); // calculate G_(k+1)[i,j]
+    }
+  }
+
+
+  //--------------------- Resize the matrix ------------------------//
+  Matrix G2(n_S,n_NS);
+  for(int i=0;i<G2.size1();i++)
+    for(int j=0;j<G2.size2();j++)
+      G2(i,j) = G(i,n_S + j);
+  
+
+  //---------------------------- Check G ---------------------------//
+  for(int s1=0; s1<G2.size1(); s1++)
+    for(int ns=0; ns<G2.size2(); ns++) {
+      int S1 = silent_network_states[s1];
+      int NS = non_silent_network[ns];
+      if (Q(S1,NS) > log_limit)
+	assert(G2(s1,ns) >= Q(S1,NS));
+      for(int s2 =0; s2<n_S; s2++) {
+	int S2 = silent_network_states[s2];
+	if (Q(S1,S2) > log_limit and Q(S2,NS) > log_limit)
+	  assert(G2(s1,ns) >= Q(S1,S2)+Q(S2,NS));
+      }
+    }
+  
+  return G2;
 }
 
 
@@ -273,7 +349,9 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double T
       non_silent_network.push_back(S);
   
   //---------------- compute the probability of -------------------//
-  Matrix G = GQ_exit(Q,silent_network_states,non_silent_network);
+  //  Matrix G = GQ_exit(Q,silent_network_states,non_silent_network);
+
+  Matrix G = GQ_exit2(Q,silent_network_states,non_silent_network);
 
 
   //---------------- Actually modify the elements of GQ ----------------//

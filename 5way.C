@@ -11,6 +11,8 @@ namespace A5 {
 
   /// Which 5 nodes are adjacent to this branch?
   vector<int> get_nodes(const tree& T,int b) {
+    assert(b >= T.leafbranches());
+
     vector<int> nodes(6);
     
     nodes[4] = T.branch(b).child();

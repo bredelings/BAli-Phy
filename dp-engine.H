@@ -20,7 +20,7 @@ public:
 
   /// Calculate the (log) substitution probability of this path
   virtual double path_Q(const vector<int>& g_path) const {
-    return path_Q_path(g_path) + this->path_Q_subst(g_path);
+    return path_GQ_path(g_path) + this->path_Q_subst(g_path);
   }
 
   /// Check of the relative probabilities of path1 and path2 agree with lp1+ls1 and lp2+ls2

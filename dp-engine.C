@@ -20,11 +20,11 @@ double DPengine::check(const vector<int>& path1,const vector<int>& path2,double 
   double p2 = path_P(path2_G) + generalize_P(path2); 
 
   // get the probabilities of the path through the 3-way HMM
-  double qp1 = path_Q_path(path1_G) + generalize_P(path1);
+  double qp1 = path_GQ_path(path1_G) + generalize_P(path1);
   double qs1 = path_Q_subst(path1_G);
   double q1 = qp1 + qs1;
 
-  double qp2 = path_Q_path(path2_G) + generalize_P(path2);
+  double qp2 = path_GQ_path(path2_G) + generalize_P(path2);
   double qs2 = path_Q_subst(path2_G);
   double q2 = qp2 + qs2;
 

@@ -127,20 +127,24 @@ void check_match_P(const alignment& A,const Parameters& P, double OS, double OP,
   double qs = Matrices.path_Q_subst(path_g) + OS;
   double ls = P.likelihood(A,P);
 
-  double qp = Matrices.path_Q_path(path_g) + Matrices.generalize_P(path) + OP;
+  double qpGQ = Matrices.path_GQ_path(path_g) + Matrices.generalize_P(path);
+  double qpQ  = Matrices.path_Q_path(path);
+  std::cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
+  assert(std::abs(qpGQ-qpQ) < 1.0e-9);
+  
+  double qp = Matrices.path_GQ_path(path_g) + Matrices.generalize_P(path) + OP;
   double lp = prior_HMM(A,P)/P.Temp;
 
   double qt = qs + qp + prior(P)/P.Temp;
   double lt = P.probability(A,P);
 
   std::cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;
-  std::cerr<<"lp = "<<lp<<"    qp = "<<qp<<" = "<<Matrices.path_Q_path(path_g)<<" + "<<Matrices.generalize_P(path)<<" + "<<OP<<endl;
+  std::cerr<<"lp = "<<lp<<"    qp = "<<qp<<" = "<<Matrices.path_GQ_path(path_g)<<" + "<<Matrices.generalize_P(path)<<" + "<<OP<<endl;
   std::cerr<<"lt = "<<lt<<"    qt = "<<qt<<endl;
   std::cerr<<endl;
 
   if ( (std::abs(qs - ls) > 1.0e-9) or (std::abs(qp - lp) > 1.0e-9) or (std::abs(qt - lt) > 1.0e-9)) {
     std::cerr<<A<<endl;
-    Matrices.generalize_P(path);
     throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 

@@ -170,98 +170,16 @@ bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P
 }
 
 bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters& P2,int b) {
-  alignment old = A;
+  
+  vector<Parameters> p(2,P1);
+  p[1] = P2;
 
-  alignment A1 = old;
-  alignment A2 = old;
+  vector< vector<int> > nodes(2);
+  nodes[0] = A5::get_nodes_random(p[0].T,b);
+  nodes[1] = A5::get_nodes_random(p[1].T,b);
 
-  /*---------------- Setup node names ------------------*/
-  assert(b >= P1.T.leafbranches());
-  const vector<int> nodes1 = A5::get_nodes_random(P1.T,b);
-  const vector<int> nodes2 = A5::get_nodes_random(P2.T,b);
-
-  // sample the path from each matrix, remember the gap probability of that topology
-  DParrayConstrained Matrices1 = sample_two_nodes_base(A1,P1,nodes1);
-  DParrayConstrained Matrices2 = sample_two_nodes_base(A2,P2,nodes2);
-
-  // Choose from one of the (Ai,Pi) pairs
-  double PS1 = P1.likelihood(A1,P1);
-  double PA1 = Matrices1.Pr_sum_all_paths();
-  double PP1 = prior(P1)/P1.Temp;
-
-  double PS2 = P1.likelihood(A2,P2);
-  double PA2 = Matrices2.Pr_sum_all_paths();
-  double PP2 = prior(P2)/P2.Temp;
-
-  vector<double> P(2);
-  P[0] = PS1 + PA1 + PP1;
-  P[1] = PS2 + PA2 + PP2;
-
-  int choice = choose(P);
-
-  // Get some pointers to the chosen one.
-  DParrayConstrained const* CM = &Matrices1;
-  alignment const* CA = &A1;
-  Parameters const* CP = &P1;
-  vector<int> nodes_old = nodes1;
-  vector<int> nodes_new = nodes1;
-  if (choice == 1){
-    CM = &Matrices2;
-    CA = &A2;
-    CP = &P2;
-    nodes_new = nodes2;
-  }
-
-
-#ifndef NDEBUG_DP
-  /*------- Get the Probabilities of the new and old states --------*/
-  double Pr1 = probability3(old,P1) + A5::log_correction(old,P1,nodes_old);
-  double Pr2 = probability3(*CA,*CP) + A5::log_correction(*CA,*CP,nodes_new);
-
-  vector<int> states_list = A5::states_list;
-
-  /*--------------- Get the new and old paths ---------------*/
-  assert(b >= P1.T.leafbranches());
-  vector<int> newnodes;
-  for(int i=0;i<6;i++)
-    newnodes.push_back(i);
-
-  vector<int> path_old = get_path(project(old,nodes_old),newnodes,states_list);
-  //  vector<int> path_old = A5::get_path(old,nodes_old,states_list);
-  vector<int> path_g_old = Matrices1.generalize(path_old);
-
-  vector<int> path_new = get_path(project(*CA,nodes_new),newnodes,states_list);
-  //  vector<int> path_new = A5::get_path(*CA,nodes_new,states_list);
-  vector<int> path_g_new = CM->generalize(path_new);
-
-  /*--------------- Compute the sampling probabilities ---------------*/
-  double SP1 = choose_P(0,P) + Matrices1.path_P(path_g_old) + Matrices1.generalize_P(path_old);
-  double SP2 = choose_P(choice,P) + CM->path_P(path_g_new) + CM->generalize_P(path_new);
-
-  double diff = (Pr2 - Pr1) - (SP2 - SP1);
-  std::cerr<<"diff = "<<diff<<std::endl;
-  if (abs(diff) > 1.0e-9) {
-    std::cerr<<old<<endl;
-    std::cerr<<A<<endl;
-
-    std::cerr<<project(old,nodes_old)<<endl;
-    std::cerr<<project(A,nodes_new)<<endl;
-
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-  }
-#endif
-
-  /*---------------- Adjust for length of n4 and n5 changing --------------------*/
-
-  // if we accept the move, the record the changes
-  bool success = false;
-  if (myrandomf() < exp(log_acceptance_ratio(old,P1,nodes_old,*CA,*CP,nodes_new))) {
-    A = *CA;
-    if (choice != 0) {
-      success = true;
-      P1 = *CP;
-    }
-  }
+  bool success = sample_two_nodes_multi(A,p,nodes,true,false);
+  P1 = p.back();
 
   return success;
 }
@@ -269,107 +187,18 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
 /// This has to be Gibbs, and use the same substitution::Model in each case...
 bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Parameters& P2, 
 		      const Parameters& P3,int b) {
+  
+  vector<Parameters> p(3,P1);
+  p[1] = P2;
+  p[2] = P3;
 
-  //----------- Generate the different states and Matrices ---------//
+  vector< vector<int> > nodes(3);
+  nodes[0] = A5::get_nodes_random(p[0].T,b);
+  nodes[1] = A5::get_nodes_random(p[1].T,b);
+  nodes[2] = A5::get_nodes_random(p[2].T,b);
 
-  vector<alignment> a(4,A);
-
-  vector<Parameters> p;
-  p.push_back(P1);
-  p.push_back(P2);
-  p.push_back(P3);
-
-  vector< vector<int> > nodes;
-  for(int i=0;i<3;i++)
-    nodes.push_back( A5::get_nodes_random(p[i].T,b) );
-
-  vector< DParrayConstrained > Matrices;
-  for(int i=0;i<3;i++)
-    Matrices.push_back( sample_two_nodes_base(a[i],p[i],nodes[i]) );
-
-  //---------------- Calculate choice probabilities --------------//
-
-  vector<double> OS(3);
-  vector<double> OP(3);
-  for(int i=0; i<3; i++) {
-    OS[i] = p[i].likelihood(a[i],p[i]);
-    OP[i] = 0;
-  }
-
-  vector<double> Pr(3);
-  for(int i=0;i<3;i++)
-    Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
-
-
-  int C = choose(Pr);
-
-#ifndef NDEBUG_DP
-  // Add another entry for the incoming configuration
-  p.push_back( p[0] );
-  nodes.push_back(nodes[0]);
-  Matrices.push_back( Matrices[0] );
-  OS.push_back( OS[0] );
-  OP.push_back( OP[0] );
-
-  vector< vector<int> > paths;
-
-  assert(b >= P1.T.leafbranches());
-  vector<int> newnodes;
-  for(int i=0;i<6;i++)
-    newnodes.push_back(i);
-
-  //------------------- Check offsets from path_Q -> P -----------------//
-  for(int i=0;i<p.size();i++) {
-    paths.push_back( get_path(A5::project(a[i],nodes[i]),newnodes,states_list) );
-
-    OP[i] = other_prior(a[i],p[i],nodes[i]);
-
-    double OP_i = OP[i] - A5::log_correction(a[i],p[i],nodes[i]);
-
-    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
-  }
-
-  //--------- Compute path probabilities and sampling probabilities ---------//
-  vector< vector<double> > PR(p.size());
-
-  for(int i=0;i<p.size();i++) {
-    double P_choice = 0;
-    if (i<Pr.size())
-      P_choice = choose_P(i,Pr);
-    else
-      P_choice = choose_P(0,Pr);
-
-    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
-    PR[i][0] += A5::log_correction(a[i],p[i],nodes[i]);
-  }
-
-  std::cerr<<"choice = "<<C<<endl;
-  std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[C][0]<<"    Pr2  - Pr1  = "<<PR[C][0] - PR[0][0]<<endl;
-  std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[C][2]<<"    PrQ2 - PrQ1 = "<<PR[C][2] - PR[0][2]<<endl;
-  std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[C][1]<<"    PrS2 - PrS1 = "<<PR[C][1] - PR[0][1]<<endl;
-
-  double diff = (PR[C][1] - PR.back()[1]) - (PR[C][0] - PR.back()[0]);
-  std::cerr<<"diff = "<<diff<<endl;
-  if (std::abs(diff) > 1.0e-9) {
-    std::cerr<<a.back()<<endl;
-    std::cerr<<a[C]<<endl;
-    
-    std::cerr<<A5::project(a.back(),nodes.back());
-    std::cerr<<A5::project(a[C],nodes[C]);
-
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-  }
-#endif
-
-  //---------------- Adjust for length of n4 and n5 changing --------------------//
-
-  // if we accept the move, then record the changes
-  bool success = false;
-  if (myrandomf() < exp(log_acceptance_ratio(a.back(),p.back(),nodes.back(),a[C],p[C],nodes[C]))) {
-    success = (C > 0);
-    A = a[C];
-    P1 = p[C];
-  }
+  bool success = sample_two_nodes_multi(A,p,nodes,true,false);
+  P1 = p.back();
 
   return success;
 }
@@ -550,103 +379,6 @@ alignment swap(const alignment& old,int n1,int n2) {
   return A;
 }
 
-///FIXME - make a generic routine (templates?)
-
-bool three_way_NNI_and_A(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes) {
-
-  //----------- Generate the different states and Matrices ---------//
-
-  vector<alignment> a(4,A);
-
-  vector< DPmatrixConstrained > Matrices;
-  for(int i=0;i<3;i++)
-    Matrices.push_back( tri_sample_alignment_base(a[i],p[i],nodes[i]) );
-
-  //---------------- Calculate choice probabilities --------------//
-
-  vector<double> OS(3);
-  vector<double> OP(3);
-  for(int i=0; i<3; i++) {
-    OS[i] = other_subst(a[i],p[i],nodes[i]);
-    OP[i] = other_prior(a[i],p[i],nodes[i]);
-  }
-
-  vector<double> Pr(3);
-  for(int i=0;i<3;i++)
-    Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
-
-  int C = choose(Pr);
-
-#ifndef NDEBUG_DP
-  // Add another entry for the incoming configuration
-  p.push_back( p[0] );
-  nodes.push_back(nodes[0]);
-  Matrices.push_back( Matrices[0] );
-  OS.push_back( OS[0] );
-  OP.push_back( OP[0] );
-
-  vector< vector<int> > paths;
-
-  vector<int> newnodes;
-  for(int i=0;i<6;i++)
-    newnodes.push_back(i);
-
-  //------------------- Check offsets from path_Q -> P -----------------//
-  for(int i=0;i<p.size();i++) {
-    paths.push_back( get_path_3way(A3::project(a[i],nodes[i]),0,1,2,3) );
-
-    OP[i] = other_prior(a[i],p[i],nodes[i]);
-
-    double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
-
-    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
-  }
-
-  //--------- Compute path probabilities and sampling probabilities ---------//
-  vector< vector<double> > PR(p.size());
-
-  for(int i=0;i<p.size();i++) {
-    double P_choice = 0;
-    if (i<Pr.size())
-      P_choice = choose_P(i,Pr);
-    else
-      P_choice = choose_P(0,Pr);
-
-    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
-    PR[i][0] += A3::log_correction(a[i],p[i],nodes[i]);
-  }
-
-  std::cerr<<"choice = "<<C<<endl;
-  std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[C][0]<<"    Pr2  - Pr1  = "<<PR[C][0] - PR[0][0]<<endl;
-  std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[C][2]<<"    PrQ2 - PrQ1 = "<<PR[C][2] - PR[0][2]<<endl;
-  std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[C][1]<<"    PrS2 - PrS1 = "<<PR[C][1] - PR[0][1]<<endl;
-
-  double diff = (PR[C][1] - PR.back()[1]) - (PR[C][0] - PR.back()[0]);
-  std::cerr<<"diff = "<<diff<<endl;
-  if (std::abs(diff) > 1.0e-9) {
-    std::cerr<<a.back()<<endl;
-    std::cerr<<a[C]<<endl;
-    
-    std::cerr<<A3::project(a.back(),nodes.back());
-    std::cerr<<A3::project(a[C],nodes[C]);
-
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-  }
-#endif
-
-  //---------------- Adjust for length of n4 and n5 changing --------------------//
-
-  // if we accept the move, then record the changes
-  bool success = false;
-  if (myrandomf() < exp(A3::log_acceptance_ratio(a.back(),p.back(),nodes.back(),a[C],p[C],nodes[C]))) {
-    success = (C > 0);
-    A = a[C];
-    p.back() = p[C];
-  }
-
-  return success;
-}
-
 MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& P,int b) {
   assert(b >= P.T.leafbranches());
 
@@ -667,7 +399,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
   for(int i=0;i<p.size();i++)
     nodes.push_back(A3::get_nodes_branch_random(p[i].T, two_way_nodes[4], two_way_nodes[0]) );
 
-  if (three_way_NNI_and_A(A,p,nodes))
+  if (sample_tri_multi(A,p,nodes,true,true))
     result[1] = 1;
   P = p.back();
 

@@ -146,7 +146,6 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
     }
   }
 
-
   /*------------------ Compute the DP matrix ---------------------*/
 
   //  Matrices.prune(); no effect, really?
@@ -157,17 +156,14 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   vector<int> path_g = Matrices.sample_path();
   vector<int> path = Matrices.ungeneralize(path_g);
 
-  std::cerr<<"generalized A = \n"<<construct(old,path_g,nodes,T,seqs,A5::states_list)<<endl;
-  std::cerr<<"ungeneralized A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
+  //  std::cerr<<"generalized A = \n"<<construct(old,path_g,nodes,T,seqs,A5::states_list)<<endl;
+  //  std::cerr<<"ungeneralized A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
 
   A = construct(old,path,nodes,T,seqs,A5::states_list);
 
   //  std::cerr<<"A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
 
 #ifndef NDEBUG_DP
-  if (not (Matrices.generalize_P(path) > log_limit ))
-    assert(Matrices.generalize_P(path) > log_limit );
-
   vector<int> newnodes;
   for(int i=0;i<6;i++)
     newnodes.push_back(i);
@@ -187,61 +183,119 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   return Matrices;
 }
 
-alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
-  alignment A = old;
+///FIXME - make a generic routine (templates?)
 
-  /*---------------- Setup node names ------------------*/
-  assert(b >= P.T.leafbranches());
+bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
+  assert(p.size() == nodes.size());
+  
+  //----------- Generate the different states and Matrices ---------//
 
-  const vector<int> nodes    = A5::get_nodes_random(P.T,b);
+  vector<alignment> a(p.size()+1,A);
 
-  DParrayConstrained Matrices = sample_two_nodes_base(A,P,nodes);
+  vector< DParrayConstrained > Matrices;
+  for(int i=0;i<p.size();i++)
+    Matrices.push_back( sample_two_nodes_base(a[i],p[i],nodes[i]) );
+
+  //---------------- Calculate choice probabilities --------------//
+
+  vector<double> OS(p.size(),0);
+  vector<double> OP(p.size(),0);
+  for(int i=0; i<p.size(); i++) {
+    if (do_OS)
+      OS[i] = p[i].likelihood(a[i],p[i]);
+    if (do_OP)
+      OP[i] = other_prior(a[i],p[i],nodes[i]);
+  }
+
+  vector<double> Pr(p.size());
+  for(int i=0;i<Pr.size();i++)
+    Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
+
+  int C = choose(Pr);
 
 #ifndef NDEBUG_DP
+  // Add another entry for the incoming configuration
+  p.push_back( p[0] );
+  nodes.push_back(nodes[0]);
+  Matrices.push_back( Matrices[0] );
+  OS.push_back( OS[0] );
+  OP.push_back( OP[0] );
 
-  // get the paths through the 3way alignment, from the entire alignment
+  vector< vector<int> > paths;
+
   vector<int> newnodes;
   for(int i=0;i<6;i++)
     newnodes.push_back(i);
 
-  vector<int> path_old = get_path(project(old,nodes),newnodes,A5::states_list);
-  vector<int> path_new = get_path(project(A,nodes),newnodes,A5::states_list);
+  //------------------- Check offsets from path_Q -> P -----------------//
+  for(int i=0;i<p.size();i++) {
+    paths.push_back( get_path(A5::project(a[i],nodes[i]),newnodes,A5::states_list) );
+    
+    OS[i] = p[i].likelihood(a[i],p[i]);
+    OP[i] = other_prior(a[i],p[i],nodes[i]);
 
-  std::cerr<<project(old,nodes)<<endl;
+    double OP_i = OP[i] - A5::log_correction(a[i],p[i],nodes[i]);
 
-  check_match_P(old, P, P.likelihood(old,P), other_prior(old,P,nodes) - A5::log_correction(old,P,nodes), path_old, Matrices);
-  check_match_P(A  , P, P.likelihood(A  ,P), other_prior(A  ,P,nodes) - A5::log_correction(A,  P,nodes), path_new, Matrices);
+    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
+  }
 
-  //-------------- Check relative path probabilities --------------//
-  double s1 = P.likelihood(old,P);
-  double s2 = P.likelihood(A,P);
+  //--------- Compute path probabilities and sampling probabilities ---------//
+  vector< vector<double> > PR(p.size());
 
-  double lp1 = prior_HMM_nogiven(old,P)/P.Temp;
-  double lp2 = prior_HMM_nogiven(A  ,P)/P.Temp;
+  for(int i=0;i<p.size();i++) {
+    double P_choice = 0;
+    if (i<Pr.size())
+      P_choice = choose_P(i,Pr);
+    else
+      P_choice = choose_P(0,Pr);
 
-  double diff = Matrices.check(path_old,path_new,lp1,s1,lp2,s2);
+    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
+    PR[i][0] += A5::log_correction(a[i],p[i],nodes[i]);
+  }
 
-  if (abs(diff) > 1.0e-9) {
-    std::cerr<<old<<endl;
-    std::cerr<<A<<endl;
+  std::cerr<<"choice = "<<C<<endl;
+  std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[C][0]<<"    Pr2  - Pr1  = "<<PR[C][0] - PR[0][0]<<endl;
+  std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[C][2]<<"    PrQ2 - PrQ1 = "<<PR[C][2] - PR[0][2]<<endl;
+  std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[C][1]<<"    PrS2 - PrS1 = "<<PR[C][1] - PR[0][1]<<endl;
 
-    std::cerr<<project(old,nodes)<<endl;
-    std::cerr<<project(A,nodes)<<endl;
+  double diff = (PR[C][1] - PR.back()[1]) - (PR[C][0] - PR.back()[0]);
+  std::cerr<<"diff = "<<diff<<endl;
+  if (std::abs(diff) > 1.0e-9) {
+    std::cerr<<a.back()<<endl;
+    std::cerr<<a[C]<<endl;
+    
+    std::cerr<<A5::project(a.back(),nodes.back());
+    std::cerr<<A5::project(a[C],nodes[C]);
 
     throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
-
 #endif
 
-  /*---------------- Adjust for length of n0 changing --------------------*/
+  //---------------- Adjust for length of n4 and n5 changing --------------------//
 
-  // if we DON'T make the MH move, go back.
-  if (myrandomf() < exp(log_acceptance_ratio(old,P,nodes,A,P,nodes)))
-    ;
-  else
-    A = old;
+  // if we accept the move, then record the changes
+  bool success = false;
+  if (myrandomf() < exp(A5::log_acceptance_ratio(a.back(),p.back(),nodes.back(),a[C],p[C],nodes[C]))) {
+    success = (C > 0);
+    A = a[C];
+    p.back() = p[C];
+  }
 
-  return A;
+  return success;
 }
 
 
+alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
+
+
+  alignment A = old;
+
+  vector<Parameters> p(1,P);
+
+  vector< vector<int> > nodes(1);
+  nodes[0] = A5::get_nodes_random(P.T,b);
+
+  sample_two_nodes_multi(A,p,nodes,false,false);
+
+  return A;
+}
