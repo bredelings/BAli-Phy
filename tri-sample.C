@@ -239,7 +239,7 @@ DPmatrixHMM tri_sample_alignment_base(alignment& A,const Parameters& P,const vec
     Matrices.forward(path_old,P.constants[0]);
   }
   else {
-    Matrices.prune();
+    // Matrices.prune();  prune is broken!
     // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
     // We can only use non-silent states at (0,0) to simulate S
     Matrices.forward(0,0);

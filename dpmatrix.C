@@ -526,8 +526,12 @@ int DParrayConstrained::order_of_computation() const {
 }
 
 
+// prune is broken!  for silent states we need to look back to the CURRENT 
+// column, no the previous column, and the list of allowed states needs to be
+// in order. 
 void DParrayConstrained::prune() {
 
+  std::abort();
   unsigned order1 = order_of_computation();
 
   // For column
@@ -1038,7 +1042,12 @@ int DPmatrixHMM::order_of_computation() const {
 }
 
 
+// prune is broken!  for silent states we need to look back to the CURRENT 
+// column, not the previous column, and the list of allowed states needs to be
+// in order. 
 void DPmatrixHMM::prune() {
+
+  std::abort();
 
   unsigned order1 = order_of_computation();
 
