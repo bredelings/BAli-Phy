@@ -1,5 +1,6 @@
 #include "colors.H"
 #include "util.H"
+#include <iostream>
 
 namespace colors {
 
@@ -31,7 +32,7 @@ namespace colors {
     min = std::min(min,B());
 
     double V = std::max(R(),G());
-    min = std::max(min,B());
+    V = std::max(V,B());
 
     
     double delta = V - min;
@@ -98,8 +99,11 @@ namespace colors {
     
     // decompose color range [0,6) into a discrete color (i) and fraction (f)
     double h = H() * 6;
+    assert(0 <= h and h < 6);
     int i = (int)h;
+    assert(0 <= i and i < 6);
     double f = h-i;
+    assert(0 <= f and f < 1);
 
     double p = V()*(1-S());
     double q = V()*(1-(S()*f));
@@ -121,12 +125,26 @@ namespace colors {
     std::abort();
   }
 
-  RGB whiten(const RGB& rgb,double p) {
+  // this is the OLD whitening function
+  RGB whiten1(const RGB& rgb,double p) {
     RGB W=rgb;
     W.R() = (1.0-p)*W.R() + p;
     W.G() = (1.0-p)*W.G() + p;
     W.B() = (1.0-p)*W.B() + p;
     return W;
+  }
+
+  /// Whiten color @rgb by fraction p.  w[p]*w[q] = w[1-(1-p)*(1-q)]
+  RGB whiten(const RGB& rgb,double p) {
+    HSV W1 = rgb;
+    HSV W2 = W1;
+
+    W2.S() = (1.0-p)*W1.S();
+    W2.V() = 1.0-(1.0-p)*(1.0-W1.V());
+
+    assert(W2.S() <= W1.S());
+    assert(W2.V() >= W1.V());
+    return W2;
   }
 
 

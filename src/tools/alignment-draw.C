@@ -73,8 +73,6 @@ public:
   BW_ColorMap* clone() const {return new BW_ColorMap(*this);}
 
   RGB bg_color(double x,const string& s) const {
-    if (x < 0)
-      throw myexception()<<"You must specify an AU file to use this color scheme";
     return HSV(0,0,1.0-x);
   }
 
@@ -88,18 +86,14 @@ public:
 
 /// ColorMap which represents uncertainty in terms of Rainbow colors
 struct Rainbow_ColorMap: public ColorMap {
-  double h_start;
-  double h_end;
-
-  double s_start;
-  double s_end;
+  double start;
+  double end;
 
 public:
   Rainbow_ColorMap* clone() const {return new Rainbow_ColorMap(*this);}
 
   RGB bg_color(double x,const string& s) const {
-    if (x < 0)
-      throw myexception()<<"You must specify an AU file to use this color scheme";
+
     if ((s == "-") or (s == "---")) {
       double v_uncertain = 1.0;
       double v_certain   = 0.6;
@@ -108,11 +102,9 @@ public:
       return HSV(0,0,value).to_RGB();
     }
     else {
-      double hue     = h_start + x*(h_end - h_start);
+      double hue     = start + x*(end - start);
 
-      double saturation = s_start + x*(s_end - s_start);
-
-      return HSV(hue,saturation,0.95).to_RGB();
+      return HSV(hue,1.0,0.95).to_RGB();
     }
   }
 
@@ -120,15 +112,11 @@ public:
     return black;
   }
  
- Rainbow_ColorMap() :h_start(0.75),h_end(0),s_start(0.3),s_end(0.95)
+ Rainbow_ColorMap() :start(0.666),end(0)
   { }
 
   Rainbow_ColorMap(double h1,double h2)
-    :h_start(h1),h_end(h2),s_start(0.3),s_end(0.95)
-  { }
-
-  Rainbow_ColorMap(double h1,double h2,double s1,double s2)
-    :h_start(h1),h_end(h2),s_start(s1),s_end(s2)
+    :start(h1),end(h2)
   { }
 };
 
@@ -178,15 +166,14 @@ public:
   whiten_colors* clone() const {return new whiten_colors(*this);}
 
   RGB bg_color(double x,const string& s) const {
-    if (x < 0)
-      throw myexception()<<"You must specify an AU file to use this color scheme";
-    if (x<0.35) x = 0.35;
-    return whiten(sub_map->bg_color(x,s),1.0-x*x);
+    double x2 = x;
+    if (x2<0.30) x2 = 0.30;
+    return whiten(sub_map->bg_color(x,s),1.0-sqrt(x2));
   }
 
   RGB fg_color(double x,const string& s) const {
-    if (x<0.25) x = 0.25;
-    return whiten(sub_map->fg_color(x,s),1.0-x);
+    if (x<0.2) x = 0.2;
+    return whiten(sub_map->fg_color(x,s),1.0-sqrt(sqrt(x)));
   }
 
   whiten_colors(const ColorMap& colors)
@@ -214,6 +201,7 @@ public:
 };
 
 
+/// ColorMap which sets the foreground color for best contrast
 class contrast: public ColorMap {
   OwnedPointer<ColorMap> sub_map;
 public:
@@ -225,7 +213,7 @@ public:
 
   RGB fg_color(double x,const string& s) const {
     double whiteness = grayscale(sub_map->bg_color(x,s));
-    if (whiteness < 0.5)
+    if (whiteness < 0.55)
       return white;
     else
       return black;
@@ -235,31 +223,6 @@ public:
     :sub_map(colors) 
   {}
 };
-
-
-
-
-// Hmm... Marc's fg-contrast fits naturally into this scheme.
-
-// Hmm... Marc's fg-contrast fits naturally into this scheme.
-
-// FIXME: add a grayscale function to colors.C.
-
-// FIXME: merge rgb and hsv into a single class? Then only R() or H() could
-//        be a reference, not both...
-
-
-// color-scheme=Rainbow
-// color-scheme=plain
-// color-scheme=bw
-// color-scheme=bw-ify  (get colors, turn it into a greyscale value)
-
-// color-scheme=plain+bg=AminoAcid+bg=fade
-// color-scheme=Rainbow+fg=AminoAcid
-// color-scheme=bw+switch+fg=AminoAcid
-
-// Hmm...  color-scheme=plain+AA+fade ?
-///                    =plain-AA      affect fg instead?
 
 class ColorScheme: public Cloneable {
   Scale scale;
@@ -402,9 +365,9 @@ OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack)
   else if (match(string_stack,"bw"))
     color_map = OwnedPointer<ColorMap>(new BW_ColorMap);    
   else if (match(string_stack,"RedBlue"))
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1,0.95,0.95));
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1));
   else if (match(string_stack,"BlueRed"))
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7,0.95,0.95));
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7));
   else if (match(string_stack,"Rainbow"))
     color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap);
   else if (match(string_stack,"AA"))
@@ -422,6 +385,11 @@ OwnedPointer<ColorMap> get_color_map(const variables_map& args)
   vector<string> string_stack;
   if (args.count("color-scheme"))
     string_stack = split(args["color-scheme"].as<string>(),'+');
+  else if (args.count("AU"))
+    string_stack = split("Rainbow+contrast+fade",'+');
+  else
+    string_stack = split("plain",'+');
+
   std::reverse(string_stack.begin(),string_stack.end());
   if (string_stack.empty())
     throw myexception()<<"Color scheme not specified. (but how?)";
@@ -433,7 +401,7 @@ OwnedPointer<ColorMap> get_color_map(const variables_map& args)
       color_map = switch_fg_bg(*color_map);
     else if (match(string_stack,"contrast"))
       color_map = contrast(*color_map);
-    else if (match(string_stack,"whiten"))
+    else if (match(string_stack,"fade"))
       color_map = whiten_colors(*color_map);
     else
       throw myexception()<<"Unrecognized color scheme modifier '"<<string_stack.back()<<"'";
@@ -478,7 +446,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("format",value<string>()->default_value("HTML"),"produce a plot in this format")
     ("min",value<double>(),"minimum value of scale function")
     ("max",value<double>(),"maximum value of scale function")
-    ("color-scheme",value<string>()->default_value("plain"),"include a length of how certainties map to colors")
+    ("color-scheme",value<string>(),"include a length of how certainties map to colors")
     ("scale",value<string>()->default_value("LOD"),"scale for the uncertainties")
     ;
 
@@ -498,6 +466,15 @@ variables_map parse_cmd_line(int argc,char* argv[])
   if (args.count("help")) {
     cout<<"Usage: alignment-draw <alignment> [<AU file>] [OPTIONS]\n";
     cout<<all<<"\n";
+    cout<<"Base Color Schemes:\n";
+    cout<<"    plain, bw, Rainbow, RedBlue, BlueRed, AA\n";
+    cout<<"\n";
+    cout<<"Modifiers:\n";
+    cout<<"    switch, contrast, fade\n";
+    cout<<"\n";
+    cout<<"Examples:\n";
+    cout<<"    Rainbow+contrast+fade\n";
+    cout<<"    AA+constrast+fade+fade+fade+fade\n";
     exit(0);
   }
 
@@ -537,7 +514,7 @@ int main(int argc,char* argv[])
     else
       for(int i=0;i<colors.size1();i++)
 	for(int j=0;j<colors.size2();j++)
-	  colors(i,j) = -1;
+	  colors(i,j) = 0;
 
     //-------------------- Get width ------------------------//
     int width = args["width"].as<int>();
