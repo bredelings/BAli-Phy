@@ -54,8 +54,10 @@ int main(int argc,char* argv[]) {
 	in_interval = true;
 	if (is_min and value <= min)
 	  in_interval = false;
-	if (is_max and value > max)
+	if (is_max and value > max) {
 	  in_interval = false;
+	  exit(0);
+	}
 
 	//    std::cerr<<line<<std::endl;
 	//    std::cerr<<"where = "<<where<<std::endl;
