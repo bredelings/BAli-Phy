@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include "sample.H"
+#include "setup.H"
 #include "logsum.H"
 #include "choose.H"
 #include "bits.H"
@@ -25,9 +26,10 @@ using namespace A3;
 
 // FIXME - actually resample the path multiple times - pick one on
 // opposite side of the middle 
-DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
+DPmatrixSimple tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   letters_OK(A,"sample_tri_base:in");
   const Tree& T = P.T;
+  check_internal_nodes_connected(A,T,vector<int>());
 
   assert(P.IModel().full_tree);
 
@@ -113,42 +115,25 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   letters_OK(A,"sample_tri_base:2.5");
 
+  {
+    // Actually create the Matrices & Chain
+    DPmatrixConstrained Matrices(get_state_emit(), start_P, Q, P.Temp,
+				 P.SModel().distribution(), dists1, dists23, frequency);
+  }
+  letters_OK(A,"sample_tri_base:2.8");
+
   // Actually create the Matrices & Chain
-  DPmatrixConstrained Matrices(get_state_emit(), start_P, Q, P.Temp,
-			       P.SModel().distribution(), dists1, dists23, frequency);
+  DPmatrixSimple Matrices(get_state_emit(), start_P, Q, P.Temp,
+		   P.SModel().distribution(), dists1, dists23, frequency);
 
   letters_OK(A,"sample_tri_base:3");
-  // Determine which states are allowed to match (,c2)
-  for(int c2=0;c2<Matrices.size2();c2++) {
-    int j2 = jcol[c2];
-    int k2 = kcol[c2];
-    for(int i=0;i<Matrices.nstates();i++) {
-      int S2 = Matrices.order(i);
-
-      //---------- Get (,j1,k1) ----------
-      int j1 = j2;
-      if (dj(S2)) 
-	j1--;
-
-      int k1 = k2;
-      if (dk(S2)) 
-	k1--;
-      
-      //------ Get c1, check if valid ------
-      if (c2==0 or (j1 == j2 and k1 == k2) or (j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
-	Matrices.states(c2).push_back(S2);
-      else
-	; // this state not allowed here
-    }
-  }
-
-  letters_OK(A,"sample_tri_base:out");
 
   for(int i=0;i<20;i++) {
-    vector<DPmatrixConstrained> temp;
+    vector<DPmatrixSimple> temp;
     temp.push_back(Matrices);
     letters_OK(A,"sample_tri_base:loop");
   }
+  check_internal_nodes_connected(A,T,vector<int>());
   return Matrices;
 }
 
@@ -165,10 +150,10 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
   vector<alignment> a(p.size(),A);
 
-  vector< DPmatrixConstrained > Matrices;
+  vector< DPmatrixSimple > Matrices;
   for(int i=0;i<p.size();i++) {
     letters_OK(a[i],"sample_tri_multi:before");
-    DPmatrixConstrained temp = tri_sample_alignment_base(a[i],p[i],nodes[i]);
+    DPmatrixSimple temp = tri_sample_alignment_base(a[i],p[i],nodes[i]);
     letters_OK(a[i],"sample_tri_multi:after1"); 
     Matrices.push_back( temp );
     letters_OK(a[i],"sample_tri_multi:after2"); 

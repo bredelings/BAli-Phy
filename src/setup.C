@@ -128,13 +128,19 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 
 /// Check that internal node states are consistent
 void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore) {
+  letters_OK(A,"internal_nodes_connected:enter");
   for(int column=0;column<A.length();column++) {
     valarray<bool> present(T.n_nodes());
     for(int i=0;i<T.n_nodes();i++) 
       present[i] = not A.gap(column,i);
     
-    if (not all_characters_connected(T,present,ignore))
+    if (not all_characters_connected(T,present,ignore)) {
+      std::cerr<<"Internal node states are inconsistent in column "<<column<<std::endl;
+      letters_OK(A,"internal_nodes_connected:fail");
+      std::cerr<<A<<std::endl;
+      std::abort();
       throw myexception()<<"Internal node states are inconsistent in column "<<column;
+    }
   }
 }
 

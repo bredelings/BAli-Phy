@@ -207,6 +207,8 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
 
 int main(int argc,char* argv[]) { 
+
+  std::set_terminate(std::abort);
   try {
     //---------- Get input, from file if necessary -------//
     Arguments args;
@@ -278,10 +280,13 @@ int main(int argc,char* argv[]) {
     P.Temp = args.loadvalue("T",1.0);
 
     P.recalc();
+    int it=0;
     while(true) {
+      it++;
       for(int b=0;b<P.T.n_branches();b++) {
+	check_internal_nodes_connected(A,P.T,vector<int>());
 	print_stats(std::cout,std::cout,std::cout,std::cout,A,P,"debug");
-	sample_tri_one(A,P,b);
+	check_internal_nodes_connected(A,P.T,vector<int>());
       }
     }
   }

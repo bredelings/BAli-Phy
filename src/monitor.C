@@ -38,6 +38,7 @@ void show_parameters(std::ostream& o,const Model& M) {
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
 		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment) {
   
+  check_internal_nodes_connected(A,P.T,vector<int>());
   o<<endl;
   o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]"<<endl;
   o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
@@ -55,6 +56,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
    <<"    temp = "<<P.Temp
    <<"    weight = "<<Pr*(1.0-1.0/P.Temp)
    <<endl;
+
 
   if (print_alignment) {
     o<<"align["<<tag<<"] = "<<endl;
@@ -87,5 +89,6 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
     assert(s == A.seq(i));
   }
 #endif
+  check_internal_nodes_connected(A,P.T,vector<int>());
 }
 

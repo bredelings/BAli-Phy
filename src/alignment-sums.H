@@ -32,7 +32,7 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const std::
 DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
 
 /// Routine for summing/sampling possibilities for sequence at an internal node, and an adjacent alignment
-DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
+DPmatrixSimple tri_sample_alignment_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
 
 
 /// Routine for simultaneosly sampling between several Parameter choices, and summing out a node
