@@ -26,6 +26,38 @@ namespace colors {
     return style;
   }
 
+  HSV RGB::to_HSV() const {
+    double min = std::min(R(),G());
+    min = std::min(min,B());
+
+    double V = std::max(R(),G());
+    min = std::max(min,B());
+
+    
+    double delta = V - min;
+
+    // Calculate saturation: saturation is 0 if r, g and b are all 0
+    double S=0;
+    if (V >0) S = delta / V;
+
+
+    double H=0;
+
+    if(S>0) {
+      int highest = argmax(*this);
+      if (highest == 0)
+	H =           (1.0/6) * (G() - B()) / delta;
+      else if (highest == 1)
+        H = (1.0/3) + (1.0/6) * (B() - R()) / delta;
+      else if (highest == 2)
+	H = (2.0/3) + (1.0/6) * (R() - G()) / delta;
+
+      if (H < 0)
+	H += 1.0;
+    }
+    return HSV(H,S,V);
+  }
+
   RGB::RGB() :vector<double>(3) 
   {}
 
@@ -88,6 +120,15 @@ namespace colors {
 
     std::abort();
   }
+
+  RGB whiten(const RGB& rgb,double p) {
+    RGB W=rgb;
+    W.R() = (1.0-p)*W.R() + p;
+    W.G() = (1.0-p)*W.G() + p;
+    W.B() = (1.0-p)*W.B() + p;
+    return W;
+  }
+
 
   RGB black    (0, 0, 0);
   RGB white    (1, 1, 1);

@@ -53,6 +53,15 @@ public:
   virtual RGB fg_color(double x,const string& s) const=0;
 };
 
+struct Plain_ColorMap: public ColorMap {
+public:
+  Plain_ColorMap* clone() const {return new Plain_ColorMap(*this);}
+
+  RGB bg_color(double x,const string& s) const { return white; }
+
+  RGB fg_color(double x,const string& s) const { return black; }
+};
+
 struct BW_ColorMap: public ColorMap {
 public:
   BW_ColorMap* clone() const {return new BW_ColorMap(*this);}
@@ -127,6 +136,34 @@ public:
   virtual ~ColorScheme() {}
 };
 
+// FIXME: all the nested stuff should really be color MAPs
+// There should be only one scale, and it should be at the top level
+// That way, all the colormaps will know how they correspond.  
+//   For example, the fade colormap would be able to set the whitening to
+//   correspond to the transition from red to yellow...
+
+// FIXME: make a separate 'scale' argument.
+
+// Hmm... Marc's fg-contrast fits naturally into this scheme.
+
+// FIXME: add a grayscale function to colors.C.
+
+// FIXME: merge rgb and hsv into a single class? Then only R() or H() could
+//        be a reference, not both...
+
+
+// color-scheme=Rainbow
+// color-scheme=plain
+// color-scheme=bw
+// color-scheme=bw-ify  (get colors, turn it into a greyscale value)
+
+// color-scheme=plain+bg=AminoAcid+bg=fade
+// color-scheme=Rainbow+fg=AminoAcid
+// color-scheme=bw+switch+fg=AminoAcid
+
+// Hmm...  color-scheme=plain+AA+fade ?
+///                    =plain-AA      affect fg instead?
+
 class BaseColorScheme: public ColorScheme {
   Scale scale;
   OwnedPointer<ColorMap> color_map;
@@ -156,7 +193,7 @@ RGB AA_color(char aa) {
   else if (strchr("ILMV",aa))
     return green;
   else if (strchr("ACDENQ",aa))
-    return white;
+    return yellow;
   else if (strchr("-*+X ",aa))
     return grey;
   
@@ -226,6 +263,26 @@ public:
   }
 
   switch_fg_bg(const ColorScheme& scheme)
+    :sub_scheme(scheme) 
+  {}
+};
+
+class bg_fade_uncertainty: public ColorScheme {
+  OwnedPointer<ColorScheme> sub_scheme;
+public:
+  bg_fade_uncertainty* clone() const {return new bg_fade_uncertainty(*this);}
+
+  RGB bg_color(double x,const string& s) const {
+    if (x<0.35) x = 0.35;
+    return whiten(sub_scheme->bg_color(x,s),1.0-x*x*x);
+  }
+
+  RGB fg_color(double x,const string& s) const {
+    if (x<0.25) x = 0.25;
+    return whiten(sub_scheme->fg_color(x,s),1.0-x);
+  }
+
+  bg_fade_uncertainty(const ColorScheme& scheme)
     :sub_scheme(scheme) 
   {}
 };
@@ -312,7 +369,9 @@ OwnedPointer<ColorScheme> get_base_color_scheme(Arguments& args,
 						const string& scale_name) 
 {
   OwnedPointer<ColorMap> color_map;
-  if (color_map_name == "bw")
+  if (color_map_name == "plain")
+    color_map = OwnedPointer<ColorMap>(new Plain_ColorMap);    
+  else if (color_map_name == "bw")
     color_map = OwnedPointer<ColorMap>(new BW_ColorMap);    
   else if (color_map_name == "RedBlue") 
     color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1,0.95,0.95));
@@ -386,15 +445,14 @@ OwnedPointer<ColorScheme> get_color_scheme(Arguments& args)
   assert(color_scheme);
 
   while(string_stack.size()) {
-    if (match(string_stack,"switch")) {
+    if (match(string_stack,"switch"))
       color_scheme = switch_fg_bg(*color_scheme);
-    }
-    else if (match(string_stack,"fg=AminoAcid")) {
+    else if (match(string_stack,"fg=AminoAcid"))
       color_scheme = AA_fg_colors(*color_scheme);
-    }
-    else if (match(string_stack,"bg=AminoAcid")) {
+    else if (match(string_stack,"bg=AminoAcid"))
       color_scheme = AA_bg_colors(*color_scheme);
-    }
+    else if (match(string_stack,"bg=fade"))
+      color_scheme = bg_fade_uncertainty(*color_scheme);
     else
       throw myexception()<<"Can't parse color scheme modifier '"<<string_stack.back()<<"'";
   }

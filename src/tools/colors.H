@@ -1,3 +1,5 @@
+#ifndef COLORS_H
+#define COLORS_H
 #include <vector>
 #include <string>
 
@@ -5,6 +7,8 @@
 //       BOTH RGB and HSV;
 
 namespace colors {
+
+  class HSV;
 
   class RGB:public std::vector<double> {
   public:
@@ -17,7 +21,11 @@ namespace colors {
     double  B() const {return (*this)[2];}
     double& B()       {return (*this)[2];}
 
+    HSV to_HSV() const;
+
     std::string to_css() const;
+
+    operator HSV() const;
 
     RGB();
 
@@ -45,6 +53,10 @@ namespace colors {
     HSV(double h,double s,double v);
   };
 
+  inline RGB::operator HSV() const {return to_HSV();}
+
+  RGB whiten(const RGB&,double p);
+
   extern RGB black;
   extern RGB white;
   extern RGB grey;
@@ -55,3 +67,4 @@ namespace colors {
   extern RGB green;
   extern RGB purple;
 }
+#endif
