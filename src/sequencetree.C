@@ -92,6 +92,10 @@ void SequenceTree::parse(const string& s) {
     (*this) = remove_root(RT);
 }
 
+SequenceTree::SequenceTree(const std::string& s) {
+  add_first_node();
+  sequences.push_back(s);
+}
 
 SequenceTree::SequenceTree(const RootedSequenceTree& RT) 
   :Tree(RT),SequenceSet(RT)
