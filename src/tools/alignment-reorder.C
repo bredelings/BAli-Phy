@@ -3,11 +3,15 @@
 #include <string>
 #include "tree.H"
 #include "alignment.H"
-#include "arguments.H"
 #include "alignment-util.H"
 #include "util.H"
 #include "setup.H"
 #include "findroot.H"
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
 
 using std::cout;
 using std::cerr;
@@ -68,14 +72,48 @@ vector<int> get_leaf_order(const RootedTree& RT) {
 }
 
 
-int main(int argc,char* argv[]) { 
-  Arguments args;
-  args.read(argc,argv);
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
 
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("align", value<string>(),"file with sequences and initial alignment")
+    ("tree",value<string>(),"file with initial tree")
+    ;
+
+  // positional options
+  positional_options_description p;
+  p.add("align", 1);
+  p.add("tree", 2);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: alignment-gild <alignment-file> <tree-file> ... [OPTIONS]\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
+
+int main(int argc,char* argv[]) 
+{ 
   try {
     cerr.precision(10);
     cout.precision(10);
     
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
+
     //----------- Load alignment and tree ---------//
     alignment A;
     SequenceTree UT;
