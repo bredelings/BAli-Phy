@@ -21,9 +21,6 @@ double Pr_harmonic(const vector<double>& v) {
 
 
 double Pr_smoothed(const vector<double>& v,double delta,double Pdata) {
-  double sum = 0;
-  for(int i=0;i<v.size();i++)
-    sum += v[i];
 
   double log_delta = log(delta);
   double log_inv_delta = log(1-delta);

@@ -24,7 +24,7 @@ all: sampler
 LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0
 DEBUG = pipe g3 # pg
 EXACTFLAGS = --param max-inline-insns-single=500 --param max-inline-insns-auto=150
-DEFS =  # NDEBUG # NDEBUG_DP
+DEFS = # NDEBUG # NDEBUG_DP 
 WARN = all no-sign-compare overloaded-virtual
 OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 # O3
 LDFLAGS = #-pg # -static 
@@ -39,7 +39,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  choose.C sequencetree.C branch-lengths.C arguments.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
-	  node-sample2.C imodel.C 5way.C topology-sample2.C inverse.o
+	  node-sample2.C imodel.C 5way.C topology-sample2.C inverse.C
 
 LIBS = gsl gslcblas m 
 PROGNAMES = ${NAME} 
@@ -66,6 +66,9 @@ bin/reroot: tree.o sequencetree.o arguments.o
 
 bin/make_random_tree: tree.o sequencetree.o arguments.o util.o\
 	 rng.o  ${LIBS:%=-l%}
+
+bin/drawalignment: tree.o alignment.o sequencetree.o arguments.o \
+	rng.o alphabet.o sequence.o util.o ${LIBS:%=-l%}
 
 #-----------------Other Files
 OTHERFILES += 

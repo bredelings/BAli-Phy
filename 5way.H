@@ -15,7 +15,8 @@ namespace states {
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
 namespace A5 {
 
-  vector<int> get_nodes(const alignment& A, const tree& T,int b);
+  vector<int> get_nodes(const tree& T,int b);
+  vector<int> get_nodes_random(const tree& T,int b);
 
   // 21 bits used total:
   // bits 5,4,3,2,1,0     = node present mask

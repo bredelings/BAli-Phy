@@ -12,7 +12,7 @@ int choose(double x, double y) {
     return 0;
   else
     return 1;
-  assert(0);
+  std::abort();
 }
 
 int choose(double x, double y, double z) {
@@ -62,7 +62,7 @@ double choose_P(int c,double x, double y, double z) {
     return y-sum;
   else if (c==2)
     return z-sum;
-  assert(0);
+  std::abort();
 }
 
 double choose_P(int s, const std::vector<double>& P) {

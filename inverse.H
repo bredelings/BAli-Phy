@@ -3,8 +3,9 @@
 #include "mytypes.H"
 
 /// Compute A^-1
-Matrix inverse(const Matrix& A);
+ublas::matrix<double,ublas::column_major> inverse(const ublas::matrix<double,ublas::column_major>& A);
 
 /// Solve A X = B (e.g. return X)
-Matrix solve(const Matrix& A, const Matrix& B);
+ublas::matrix<double,ublas::column_major> solve(const ublas::matrix<double,ublas::column_major>& A,const ublas::matrix<double,ublas::column_major>& B);
+
 #endif

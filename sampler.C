@@ -203,7 +203,11 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   // aligment :: sample_nodes
   MoveEach internal_nodes_move("nodes_master:nodes");
   MoveArgSingle nodes_move2("sample_nodes2:alignment:nodes",sample_nodes2_one,internal_nodes);
-  internal_nodes_move.add(1,nodes_move2);
+  internal_nodes_move.add(0.01,nodes_move2);
+  internal_nodes_move.add(1,MoveArgSingle("two_nodes:nodes",
+					  sample_two_nodes_move,
+					  internal_branches)
+			  );
 
   if (P.T.leaves() >2)
     alignment_moves.add(1,internal_nodes_move);
@@ -215,8 +219,8 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				    sample_topology,
 				    internal_branches)
 		    );
-  topology_move.add(1,MoveArgSingle("two_nodes:nodes",
-				    sample_two_nodes_move,
+  topology_move.add(1,MoveArgSingle("sample_topologies2:nodes:topology",
+				    sample_topology2,
 				    internal_branches)
 		    );
 

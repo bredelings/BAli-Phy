@@ -446,11 +446,11 @@ void tree::exchange(int node1,int node2) {
     swap_children(root->name);
 
   if (n1->parent == n2->parent) 
-    assert(0);                     // this is like swap_children
+    std::abort();                     // this is like swap_children
   else if (n1->parent == root and n2->parent->parent == root)
-    assert(0);                     // this is a topology change
+    std::abort();                     // this is a topology change
   else if (n2->parent == root and n1->parent->parent == root)
-    assert(0);                     // this is a topology change
+    std::abort();                     // this is a topology change
   else if (ancestor(node2,node1)) {
 
     vector<node*> intermediate;

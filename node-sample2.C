@@ -188,7 +188,7 @@ alignment sample_node2(const alignment& old,const Parameters& P,int node) {
     std::cerr<<project(old,n0,n1,n2,n3)<<endl;
     std::cerr<<project(A,n0,n1,n2,n3)<<endl;
 
-    assert(0);
+    std::abort();
   }
 #endif
 

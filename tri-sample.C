@@ -117,7 +117,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
   else if (node2 == n3)
     std::swap(n1,n3);
   else
-    assert(0);
+    std::abort();
 
   // randomize the order here
   if (myrandom(2) == 1)
@@ -268,7 +268,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
     std::cerr<<project(old,n0,n1,n2,n3)<<endl;
     std::cerr<<project(A,n0,n1,n2,n3)<<endl;
 
-    assert(0);
+    std::abort();
   }
 #endif
 
@@ -315,7 +315,7 @@ bool tri_sample_alignment_branch(alignment& old,Parameters& P1,
   else if (node2 == n3)
     std::swap(n1,n3);
   else
-    assert(0);
+    std::abort();
 
   // randomize the order here
   if (myrandom(2) == 1)
@@ -526,7 +526,7 @@ bool tri_sample_alignment_branch(alignment& old,Parameters& P1,
     std::cerr<<project(old,n0,n1,n2,n3)<<endl;
     std::cerr<<project(A,n0,n1,n2,n3)<<endl;
 
-    assert(0);
+    std::abort();
   }
 #endif
 

@@ -2,8 +2,6 @@
 #include <iostream>
 #include <cmath>
 #include "sample.H"
-#include "logsum.H"
-#include "choose.H"
 #include "dpmatrix.H"
 #include "2way.H"
 
@@ -187,7 +185,7 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
     std::cerr<<old<<endl;
     std::cerr<<A<<endl;
 
-    assert(0);
+    std::abort();
   }
 
   std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<Matrices.Pr_sum_all_paths()<<endl;

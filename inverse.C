@@ -8,15 +8,17 @@
 namespace ublas = boost::numeric::ublas;
 namespace atlas = boost::numeric::bindings::atlas;
 
-Matrix solve(const Matrix& A,const Matrix& B) {
-  Matrix A1 = A;
-  Matrix B1 = B;
+typedef ublas::matrix<double,ublas::column_major> MatrixC;
+
+MatrixC solve(const MatrixC& A,const MatrixC& B) {
+  MatrixC A1 = A;
+  MatrixC B1 = B;
   atlas::gesv (A1, B1);
   return B1;
 }
 
-Matrix inverse(const Matrix& M) {
-  Matrix I(M.size1(),M.size2());
+MatrixC inverse(const MatrixC& M) {
+  MatrixC I(M.size1(),M.size2());
   for(int i=0;i<I.size1();i++)
     for(int j=0;j<I.size2();j++)
       if (i==j)

@@ -206,14 +206,17 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
       if (not silent_network(S))
 	non_silent_network.push_back(S);
 
+    typedef ublas::matrix<double,ublas::column_major> MatrixC;
     // Solve equation G = Q2 + Q1*G for G; IMQ1 = I - Q1
-    Matrix IMQ1(silent_network_states.size(),silent_network_states.size());
-    Matrix Q2(silent_network_states.size(),non_silent_network.size());
+    MatrixC IMQ1(silent_network_states.size(),silent_network_states.size());
+    MatrixC Q2(silent_network_states.size(),non_silent_network.size());
     
-    // fill Q1
+    // fill IMQ1 = I - Q1
     for(int i=0;i<silent_network_states.size();i++)
-      for(int j=0;j<silent_network_states.size();j++)
-	IMQ1(i,j) = 1.0 - exp( Q(silent_network_states[i],silent_network_states[j]) );
+      for(int j=0;j<silent_network_states.size();j++) {
+	IMQ1(i,j) = - exp( Q(silent_network_states[i],silent_network_states[j]) );
+	if (i==j) IMQ1(i,j) += 1.0;
+      }
     
     // fill Q2
     for(int i=0;i<silent_network_states.size();i++)
@@ -228,11 +231,16 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
       // silent network -> not silent network
       for(int j=0;j<non_silent_network.size();j++) {
 	int S2 = non_silent_network[j];
-	GQ(S1,S2) = G(i,j);
+	if (Q(S1,S2) < log_0/100)
+	  GQ(S1,S2) = log_0;
+	else {
+	  assert(G(i,j) > 0);
+	  GQ(S1,S2) = log(G(i,j));
+	}
       }
-      // silent network -> not silent network (not allowed)
+      // silent network -> silent network (not allowed)
       for(int j=0;j<silent_network_states.size();j++) {
-	int S2 = non_silent_network[j];
+	int S2 = silent_network_states[j];
 	GQ(S1,S2) = log_0;
       }
     }

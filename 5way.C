@@ -1,13 +1,14 @@
 #include "5way.H"
 #include "bits.H"
 #include "logsum.H"
+#include "rng.H"
 
 using std::valarray;
 
 namespace A5 {
 
   /// Which 5 nodes are adjacent to this branch?
-  vector<int> get_nodes(const alignment& A, const tree& T,int b) {
+  vector<int> get_nodes(const tree& T,int b) {
     vector<int> nodes(6);
     
     nodes[4] = T.branch(b).child();
@@ -27,6 +28,21 @@ namespace A5 {
     
     return nodes;
   }
+
+  vector<int> get_nodes_random(const tree& T, int b) {
+    vector<int> nodes = get_nodes(T,b);
+    if (myrandomf() < 0.5)
+      std::swap(nodes[0],nodes[1]);
+    if (myrandomf() < 0.5)
+      std::swap(nodes[2],nodes[3]);
+    if (myrandomf() < 0.5) {
+      std::swap(nodes[0],nodes[2]);
+      std::swap(nodes[1],nodes[3]);
+      std::swap(nodes[4],nodes[5]);
+    }
+    return nodes;
+  }
+
 
   // If we are just getting the order of the columns in the 3-way alignment
   // the this shouldn't affect anything else, should it??
@@ -123,7 +139,7 @@ namespace A5 {
     for(int i=0;i<states.size();i++)
       if (states[i] == state)
 	return i;
-    assert(0);
+    std::abort();
   }
 
   int bits_to_state(int bits,int b1,int b2) {

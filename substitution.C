@@ -35,8 +35,7 @@ namespace substitution {
 //    In the common case (doing the full tree) this might be a speedup...
 
   /// Actually propogate info along branches
-												       
-												       
+
   inline void peel(const vector<int>& branches, valarray<bool>& used,
 		   Matrix& distributions,
 		   const vector<int>& residues, const tree& T, 
@@ -195,7 +194,7 @@ double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SMode
     for(int i=0;i<T.leaves();i++)
       std::cerr<<SModel.Alphabet().lookup(residues[i])<<" ";
     std::cerr<<p<<" "<<log(p)<<"     "<<p2<<"      "<<log(p2)<<endl;
-    assert(0); //FIXME - try this check!
+    std::abort(); //FIXME - try this check!
   }
 #endif
 
