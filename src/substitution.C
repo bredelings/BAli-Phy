@@ -32,11 +32,12 @@ namespace substitution {
 
     peeling_branch_info(const const_branchview& db,const Likelihood_Cache& LC)
       :b(db),
-       b_loc(LC.location(db)),
+       b_loc(LC.location(b)),
        b1_loc(-1),
        b2_loc(-1),
        source(db.source())
     {
+      b %= LC.n_branches();
       const_in_edges_iterator i = db.branches_before();
       if (i) {
 	b1_loc = LC.location(*i);
@@ -137,7 +138,6 @@ namespace substitution {
   {
     
     // The number of directed branches is twice the number of undirected branches
-    const int B        = ops.B;
     const int n_models = ops.M;
     const int asize    = ops.A;
     const int scratch  = ops.scratch;
@@ -149,24 +149,22 @@ namespace substitution {
       const int b1     = ops[i].b1_loc;  // directed branch from n1     -> source, -1 if leaf(source)
       const int b2     = ops[i].b2_loc;  // directed branch from n2     -> source, -1 if leaf(source)
       const int source = ops[i].source; // = T.directed_branch(b).source();
-      assert(b_loc <= (int)distributions.size());
-      assert(b1 <= (int)distributions.size());
-      assert(b2 <= (int)distributions.size());
 
+      Matrix& DB = distributions[b_loc];
 
       // compute the distribution at the target (parent) node - single letter
       if (b1 < 0 and alphabet::letter(residues[source])) 
 	for(int m=0;m<n_models;m++) {
-	  const Matrix& Q = transition_P[m][ops[i].b%B];
+	  const Matrix& Q = transition_P[m][ops[i].b];
 	  for(int i=0;i<asize;i++)
-	    distributions[b_loc](m,i) = Q(i,residues[source]);
+	    DB(m,i) = Q(i,residues[source]);
 	}
 
       // compute the distribution at the target (parent) node - wildcard
       else if (b1 < 0) {
 	for(int m=0;m<n_models;m++) 
 	  for(int i=0;i<asize;i++)
-	    distributions[b_loc](m,i) = 1.0;
+	    DB(m,i) = 1.0;
       }
 
       // cache the source distribution, or not?
@@ -183,9 +181,8 @@ namespace substitution {
 	  }
 	  else */
 
-	  Matrix& DB = distributions[b_loc];
 	  Matrix& DS = distributions[scratch];
-	  const Matrix& Q = transition_P[m][ops[i].b%B];
+	  const Matrix& Q = transition_P[m][ops[i].b];
 
 	  for(int j=0;j<asize;j++)
 	    DS(m,j) = distributions[b1](m,j)*distributions[b2](m,j);
