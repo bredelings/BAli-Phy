@@ -29,19 +29,28 @@ public:
 
   // Take ownership of object t
   explicit OwnedPointer(const T* t) throw() 
-    : data(t->clone()) 
-  {}
+    : data(NULL) 
+  {
+    if (t)
+      data = t->clone();
+  }
 
   // Get a copy of an object
   OwnedPointer(const OwnedPointer& O) throw() 
-    :data( O->clone())
-  {}
+    :data(NULL)
+  {
+    if (O)
+      data = O->clone();
+  }
 
   // Get a copy of an object which is a SUB-CLASS of T
   template <typename T2>
   OwnedPointer(const OwnedPointer<T2>& O) throw()
-    :data(O->clone())
-  {}
+    :data(NULL)
+  {
+    if (O)
+      data = O->clone();
+  }
 
   template <typename T2>
   void attatch(T2* p) {
@@ -55,7 +64,10 @@ public:
     if (data != O.data and data != NULL)
       delete data;
 
-    data = O->clone();
+    if (O)
+      data = O->clone();
+    else
+      data = NULL;
 
     return *this;
   }
@@ -66,7 +78,10 @@ public:
     if (data != O.data and data != NULL)
       delete data;
 
-    data = O->clone();
+    if (O)
+      data = O->clone();
+    else
+      data = NULL;
 
     return *this;
   }
@@ -76,7 +91,10 @@ public:
     if (data != t and data != NULL)
       delete data;
 
-    data = t->clone();
+    if (t)
+      data = t->clone();
+    else
+      data == NULL;
 
     return *this;
   }
@@ -87,17 +105,22 @@ public:
     if ((T2*)data != t and data != NULL)
       delete data;
 
-    data = t->clone();
+    if (t)
+      data = t->clone();
+    else
+      data = NULL;
+
     return *this;
   }
 
   // Dispose of object when we are done
   ~OwnedPointer() { 
-    delete data;
+    if (data) delete data;
   }
 
+  operator bool() const {return data;}
+
   T& operator*() const throw() {
-    assert(data != 0);
     return *data;
   }
 
