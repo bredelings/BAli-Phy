@@ -12,7 +12,7 @@ class Parameters;
 namespace substitution {
 
   /// Find the probabilities of all the data give each letter at the root
-  Matrix get_column_likelihoods(const vector<int>&,const Tree&,const MultiModel&,const MatCache&,int);
+  Matrix get_column_likelihoods(const alignment::column_t&,const Tree&,const MultiModel&,const MatCache&,int);
 
   /// Find the probabilities of the data in 'group' given each letter at the root
   Matrix get_column_likelihoods(      vector<int> ,const Tree&,const MultiModel&,const MatCache&,int,

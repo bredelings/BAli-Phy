@@ -79,9 +79,10 @@ namespace substitution {
     }
   };
 
+  typedef alignment::column_t column_t;
 
   /// Compute the letter likelihoods at the root
-  void calc_root_likelihoods(const vector<int>& residues, 
+  void calc_root_likelihoods(const column_t& residues,
 			     vector<Matrix>& distributions,
 			     const peeling_info& ops) 
   {
@@ -115,7 +116,7 @@ namespace substitution {
   /// Peel along each branch in work-list @branches 
   void peel(const peeling_info& ops,
 	    vector<Matrix>& distributions,
-	    const vector<int>& residues,
+	    const column_t& residues,
 	    const MatCache& transition_P)
   {
     
@@ -222,7 +223,7 @@ namespace substitution {
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
   Matrix
-  get_column_likelihoods(const vector<int>& residues,const Tree& T,const MultiModel& MModel,
+  get_column_likelihoods(const column_t& residues,const Tree& T,const MultiModel& MModel,
 			 const MatCache& transition_P,int root) 
   {
     //------ Allocate space and mark all branches out of date -------//
@@ -239,7 +240,7 @@ namespace substitution {
     Matrix M(MModel.nmodels(),MModel.Alphabet().size());
     for(int m=0;m<M.size1();m++)
       for(int l=0;l<M.size2();l++)
-	LC[0][m](ops.scratch,l);
+	M(m,l) = LC[0][m](ops.scratch,l);
 
     return M;
   }
@@ -249,15 +250,21 @@ namespace substitution {
   get_column_likelihoods(vector<int> residues,const Tree& T,const MultiModel& MModel,
 			 const MatCache& transition_P,int root, const valarray<bool>& group) 
   {
+    ublas::matrix<int> M(1,residues.size());
     for(int i=0;i<residues.size();i++)
-      if (not group[i]) residues[i] = alphabet::not_gap;
+      if (group[i]) 
+	M(0,i) = residues[i];
+      else
+	M(0,i) = alphabet::not_gap;
 
-    return get_column_likelihoods(residues,T,MModel,transition_P,root);
+    column_t column(M,0);
+
+    return get_column_likelihoods(column,T,MModel,transition_P,root);
   }
 
 
 
-  double Pr(const vector<int>& residues, const peeling_info& ops, const MultiModel& MModel,
+  double Pr(const column_t& residues, const peeling_info& ops, const MultiModel& MModel,
 	    const MatCache& transition_P, vector<Matrix>& distributions)
   {
     const alphabet& a = MModel.Alphabet();
@@ -287,10 +294,6 @@ namespace substitution {
   }
 
   double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC,int column) {
-    vector<int> residues(A.size2());
-    for(int i=0;i<residues.size();i++)
-      residues[i] = A(column,i);
-  
     //------ Allocate space and mark all branches out of date -------//
     Likelihood_Cache LC(T,MModel,1);
     LC.root = T.n_nodes()-1;
@@ -299,7 +302,7 @@ namespace substitution {
     peeling_info ops = get_branches(T,LC);
     
     //---------------- sum the column likelihoods -------------------//
-    return Pr(residues,ops,MModel,MC,LC[0]);
+    return Pr(A.get_column(column),ops,MModel,MC,LC[0]);
   }
 
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& L) {
@@ -311,18 +314,16 @@ namespace substitution {
     peeling_info ops = get_branches(T,L);
     
     if (not ops.size()) {
-      std::cerr<<"Peeled on 0 branches. (cached result)\n";
+      //std::cerr<<"Peeled on 0 branches. (cached result)\n";
       return L.old_value;
     }
 
     //---------------- sum the column likelihoods -------------------//
-    vector<int> residues(A.size2());
-  
     double total = 0.0;
     for(int column=0;column<A.length();column++) {
-      for(int i=0;i<residues.size();i++)
-	residues[i] = A(column,i);
-      double p = Pr(residues,ops,MModel,MC,L[column]);
+
+      alignment::column_t col = A.get_column(column);
+      double p = Pr(col,ops,MModel,MC,L[column]);
 
 #ifndef NDEBUG
       {
@@ -330,11 +331,11 @@ namespace substitution {
 	LC.root = L.root;//myrandom(0,T.n_nodes());
 
 	peeling_info ops2 = get_branches(T,LC);
-	double p2 = Pr(residues,ops2,MModel,MC,LC[0]);
+	double p2 = Pr(A.get_column(column),ops2,MModel,MC,LC[0]);
 	
 	if (std::abs(p2-p) > 1.0e-9) {
 	  for(int i=0;i<T.n_leaves();i++)
-	    std::cerr<<MModel.Alphabet().lookup(residues[i])<<" ";
+	    std::cerr<<MModel.Alphabet().lookup(A(column,i))<<" ";
 	  std::cerr<<p<<" "<<p2<<endl;
 	  std::abort(); //FIXME - try this check!
 	}
@@ -348,7 +349,7 @@ namespace substitution {
       L.mark_location_up_to_date(ops[i].b_loc);
     L.old_value = total;
 
-    std::cerr<<"Peeled on "<<ops.size()<<" branches.\n";
+    //std::cerr<<"Peeled on "<<ops.size()<<" branches.\n";
     //std::cerr<<" substitution: P="<<total<<std::endl;
     return total;
   }
