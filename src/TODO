@@ -1,4 +1,8 @@
 1. Fix indexing of sub-alignments! 
+  a) make A5::construct reconstruct subA indices (we can assume they are preserved)
+  b) make A3::construct reconstruct subA indices
+    i) when its constant - ?
+   ii) when its partially constant?
 
 2. fp_scale speedups
   a) find out how much time we are spending doing I/O...
