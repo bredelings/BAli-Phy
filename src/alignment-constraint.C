@@ -33,8 +33,13 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,
     while(getline(constraint_file,line)) {
 
       int loc = line.find('#');
-      if (loc != -1)
-	line = line.substr(0,loc);
+      if (loc == -1)
+	loc = line.length();
+
+      while (loc > 0 and line[loc-1] == ' ')
+	loc--;
+
+      line = line.substr(0,loc);
 
       // lex contraint line
       vector<string> entries = split(line,' ');
