@@ -4,6 +4,7 @@
 #include "mcmc.H"
 #include "3way.H"
 #include "likelihood.H"
+#include "util-random.H"
 
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
@@ -107,35 +108,99 @@ MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
   return MCMC::result_t(); // no_result
 }
 
-vector<int> get_branch_list(const Tree& T) {
+vector<int> get_cost(const Tree& T) {
+  vector<int> cost(T.n_branches()*2,-1);
+  vector<const_branchview> stack1; stack1.reserve(T.n_branches()*2);
+  vector<const_branchview> stack2; stack2.reserve(T.n_branches()*2);
+  for(int i=0;i<T.n_leaves();i++) {
+    const_branchview b = T.directed_branch(i).reverse();
+    cost[b] = 0;
+    stack1.push_back(b);
+  }
+    
+  while(not stack1.empty()) {
+    stack2.clear();
+    for(int i=0;i<stack1.size();i++)
+      append(stack1[i].branches_before(),stack2);
+
+    stack1.clear();
+
+    for(int i=0;i<stack2.size();i++) {
+      vector<const_branchview> children;
+      append(stack2[i].branches_after(),children);
+
+      assert(children.size() == 2);
+      if (cost[children[0]] != -1 and cost[children[1]] != -1) {
+	int cost_l = cost[children[0]];
+	if (not children[0].is_leaf_branch())
+	  cost_l++;
+
+	int cost_r = cost[children[1]];
+	if (not children[1].is_leaf_branch())
+	  cost_r++;
+
+	if (cost_l > cost_r)
+	  std::swap(cost_l,cost_r);
+
+	cost[stack2[i]] = 2*cost_l + cost_r;
+	stack1.push_back(stack2[i]);
+      }
+    }
+  }
+  
+  for(int i=0;i<cost.size();i++)
+    assert(cost[i] != -1);
+
+  return cost;
+}
+
+vector<int> walk_tree_path(const Tree& T) {
+
+  vector<int> cost = get_cost(T);
+
   vector<const_branchview> b_stack;
   b_stack.reserve(T.n_branches());
   vector<const_branchview> branches;
   branches.reserve(T.n_branches());
+  vector<const_branchview> children;
+  children.reserve(3);
 
-  // put a random leaf branch on the stack
-  int leaf = myrandom(T.n_leafbranches());
-  if (T.directed_branch(leaf).target() == leaf)
-    leaf = T.directed_branch(leaf).reverse();
+  // put a random leaf branch on both the stack and the list
+  // FIXME - It would still be good to pick a leaf node on a long diagonal path
+  // put a random leaf branch on both the stack and the list
+  int leaf = 0;
+  leaf = myrandom(T.n_leaves());
+  for(int b=0;b<T.n_leaves();b++)
+    if (cost[T.directed_branch(b)] < cost[T.directed_branch(leaf)])
+      leaf = b;
+
+  assert(T.directed_branch(leaf).source() == leaf);
   b_stack.push_back(T.directed_branch(leaf));
 
   while(not b_stack.empty()) {
-    // move branch from stack to list
+    // pop stack into list
     branches.push_back(b_stack.back());
     b_stack.pop_back();
 
-    // add children to stack, and count them
-    int i = b_stack.size();
-    append(branches.back().branches_after(),b_stack);
-    int j = b_stack.size();
+    // get children of the result
+    children.clear();
+    append(branches.back().branches_after(),children);
+    children = randomize(children);
 
-    // try to put an internal branch at the top of the stack
-    if (b_stack.size() and not b_stack.back().is_internal_branch())
-      for(int k=1;k<j-i;k++)
-	if (b_stack[j-k-1].is_internal_branch()) {
-	  std::swap(branches[j-k-1],branches.back());
-	  break;
-	}
+    // sort children in decrease order of cost
+    if (children.size() < 2)
+      ;
+    else {
+      if (children.size() == 2) {
+	if (cost[children[0]] < cost[children[1]])
+	  std::swap(children[0],children[1]);
+      }
+      else
+	std::abort();
+    }
+      
+    // put children onto the stack
+    b_stack.insert(b_stack.end(),children.begin(),children.end());
   }
 
   assert(branches.size() == T.n_branches());
@@ -147,14 +212,16 @@ vector<int> get_branch_list(const Tree& T) {
   return branches2;
 }
 
-
 MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
-  vector<int> branches = get_branch_list(P.T);
+  vector<int> branches = walk_tree_path(P.T);
 
   MCMC::result_t result;
 
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
+
+    std::cerr<<"\n\n Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+
     change_branch_length(A,P,b);
     if (P.T.branch(b).is_internal_branch())
       three_way_topology_sample(A,P,b);

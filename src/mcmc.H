@@ -158,7 +158,7 @@ namespace MCMC {
   public:
     SingleMove* clone() const {return new SingleMove(*this);}
 
-    int reset(double lambda) {return poisson(lambda);}
+    int reset(double lambda);
 
     void iterate(alignment& A,Parameters& P) { iterate(A,P,0); }
 

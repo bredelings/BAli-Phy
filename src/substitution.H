@@ -30,12 +30,6 @@ namespace substitution {
 
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& LC);
 
-  // Column likelihood - specific rate (star tree)
-  //  double Pr_star(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
-  //		 const vector<Matrix>& transition_P);
-  // Full likelihood - all columns, all rates (star tree)
-  //  double Pr_star(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC);
-
   // Full likelihood - all columns, all rates (star tree)
   double Pr_star(const alignment& A,const Parameters& P);
   

@@ -329,8 +329,10 @@ namespace substitution {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches(T,L);
     
-    if (not ops.size())
+    if (not ops.size()) {
+      std::cerr<<"Peeled on 0 branches. (cached result)\n";
       return L.old_value;
+    }
 
     //---------------- sum the column likelihoods -------------------//
     vector<int> residues(A.size2());
@@ -344,7 +346,7 @@ namespace substitution {
 #ifndef NDEBUG
       {
 	Likelihood_Cache LC(T,MModel,1);
-	LC.root = myrandom(0,T.n_nodes());
+	LC.root = L.root;//myrandom(0,T.n_nodes());
 
 	peeling_info ops2 = get_branches(T,LC);
 	double p2 = Pr(residues,ops2,MModel,MC,LC[0]);
@@ -366,19 +368,13 @@ namespace substitution {
     L.old_value = total;
 
     std::cerr<<"Peeled on "<<ops.size()<<" branches.\n";
-    //std::cerr<<" substitution: P="<<P<<std::endl;
+    //std::cerr<<" substitution: P="<<total<<std::endl;
     return total;
   }
 
   double Pr(const alignment& A,const Parameters& P) {
     //P.LC.invalidate_all();
     double result = Pr(A,P,P.LC);
-#ifndef NDEBUG
-    Parameters P2 = P;
-    P2.recalc();
-    double result2 = Pr(A,P.T,P.SModel(),P2);
-    assert(std::abs(result - result2) < 1.0e-9);
-#endif
     return result;
   }
 

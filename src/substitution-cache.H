@@ -113,6 +113,6 @@ public:
   ~Likelihood_Cache();
 };
 
-void select_root(int n1,int n2,Likelihood_Cache& LC);
+void select_root(const Tree& T,int b,Likelihood_Cache& LC);
 
 #endif

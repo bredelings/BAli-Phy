@@ -299,6 +299,12 @@ void MoveOne::getorder(double l) {
   }
 }
 
+  int SingleMove::reset(double lambda) {
+    int l = (int)lambda;
+    lambda -= l;
+    return l + poisson(lambda);
+  }
+
 result_t SingleMove::iterate(alignment& A,Parameters& P,int) 
 {
   cerr<<" [single]move = "<<attributes[0]<<endl;

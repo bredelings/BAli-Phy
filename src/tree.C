@@ -661,6 +661,7 @@ Tree& Tree::operator=(const Tree& T) {
     if (nodes_.size()) TreeView(nodes_[0]).destroy();
 
     n_leaves_ = T.n_leaves_;
+    cached_partitions.clear();
     cached_partitions = T.cached_partitions;
     nodes_ = std::vector<BranchNode*>(T.nodes_.size(),(BranchNode*)NULL);
     branches_ = std::vector<BranchNode*>(T.branches_.size(),(BranchNode*)NULL);

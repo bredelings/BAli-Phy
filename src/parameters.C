@@ -28,7 +28,7 @@ bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
   double p2 = probability3(A2,P2);
 
 #ifndef NDEBUG
-  std::cerr<<" MH ["<<p2-p1<<"] : ";
+  std::cerr<<" MH ["<<p2-p1<<"] : "<<endl;
 #endif
 
   if (myrandomf() < exp(p2-p1)) 

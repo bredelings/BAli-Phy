@@ -223,11 +223,10 @@ Likelihood_Cache::~Likelihood_Cache() {
   cache->release_token(token);
 }
 
-void select_root(int n1,int n2,Likelihood_Cache& LC) {
-  if (n1 > n2)
-    std::swap(n1,n2);
-  if (LC.root == n1)
-    std::swap(n1,n2);
+void select_root(const Tree& T,int b,Likelihood_Cache& LC) {
+  int r = T.directed_branch(b).reverse();
+  if (T.subtree_contains(r,LC.root))
+    b = r;
 
-  LC.root = n2;
+  LC.root = T.directed_branch(b).target();
 }

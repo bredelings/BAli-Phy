@@ -44,7 +44,7 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
   /******** Calculate propsal ratio ***************/
   
   /********** Do the M-H step if OK**************/
-  select_root(P.T.branch(b).source(),P.T.branch(b).target(),P.LC);
+  select_root(P.T, b, P.LC);
 
   Parameters P2 = P;
   P2.setlength(b,newlength);
@@ -80,9 +80,7 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
 
   std::cerr<<" old length = "<<P.T.branch(b).length()<<"  new length = "<<newlength<<std::endl;
 
-  int n1 = P.T.branch(b).source();
-  int n2 = P.T.branch(b).target();
-  P.LC.root = std::max(n1,n2);
+  select_root(P.T, b, P.LC);
 
   // If the length is positive, simply propose a length change
   if (newlength >= 0) {

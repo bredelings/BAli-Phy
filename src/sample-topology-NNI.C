@@ -256,8 +256,7 @@ MCMC::result_t two_way_topology_sample(alignment& A, Parameters& P,int b) {
 
   vector<int>nodes = A5::get_nodes_random(P.T,b);
 
-  P.LC.root = std::max(P.T.branch(b).source().name(),
-		       P.T.branch(b).target().name());
+  select_root(P.T, b, P.LC);
 
   Parameters P2 = P;
   int b1 = P2.T.directed_branch(nodes[4],nodes[1]);
@@ -311,9 +310,7 @@ MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P1,int b) {
   vector<int> nodes = A5::get_nodes(P1.T,b);
 
   /****** Generate the Different Topologies *******/
-  select_root(P1.T.branch(b).source().name(),
-	      P1.T.branch(b).target().name(),
-	      P1.LC);
+  select_root(P1.T, b, P1.LC);
   
 
   Parameters P2 = P1;
