@@ -4,6 +4,7 @@
 #include "tree.H"
 #include "alignment.H"
 #include "arguments.H"
+#include "alignment-util.H"
 #include "util.H"
 #include "setup.H"
 #include "findroot.H"
@@ -49,7 +50,6 @@ vector<int> get_leaf_order(const RootedTree& T,int b) {
 
   lmapping.insert(lmapping.end(),rmapping.begin(),rmapping.end());
 
-  assert(lmapping.size() == T.n_leaves());
   return lmapping;
 }
 
@@ -79,7 +79,7 @@ int main(int argc,char* argv[]) {
     //----------- Load alignment and tree ---------//
     alignment A;
     SequenceTree UT;
-    load_A_and_T(args,A,UT,true);
+    load_A_and_T(args,A,UT,false);
     
     /*------- Re-root the tree appropriately  --------*/
 

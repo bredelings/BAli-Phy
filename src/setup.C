@@ -200,6 +200,9 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
   bool random_tree_ok = args.set("random_tree_ok");
 
   load_A(args, A);
+  if (not internal_sequences)
+    A = chop_internal(A);
+
   load_T(args, A, T, random_tree_ok);
 
   //------------- Link Alignment and Tree -----------------//
