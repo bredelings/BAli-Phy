@@ -199,11 +199,18 @@ void alignment::load_fasta(const alphabet& a,std::istream& file) {
     add_sequence(a,name,current);
 }
 
+void alignment::gap_fixup(int n1,int n2,int g1,int g2,int m) {
+  std::cerr<<"FIXME: in sequences "<<n1<<" and "<<n2<<" we have \
+  a g2 @ "<<g2<<" followed by a g1 @ "<<g1<<std::endl;
+  assert(0);
+}
+
 void alignment::create_internal(const SequenceTree& T) {
   remap(T.get_sequences());
 
   resize(array.size1(),T.num_nodes()-1);
 
+  // Create Internal Nodes
   for(int column=0;column< length();column++) {
     vector<int> present_leaf(T.leaves());
     for(int i=0;i<T.leaves();i++)
@@ -216,6 +223,32 @@ void alignment::create_internal(const SequenceTree& T) {
 	array(column,i) = alphabet::gap;
     }
   }
+
+  // Make sure there are no G2->G1 transitions
+  for(int n2=0;n2<T.branches();n2++) {
+    int n1 = T.parent(n2);
+
+    int g1 = -1,g2 = -1;
+    for(int column=0;column<length();column++) {
+      if (gap(column,n1) and !gap(column,n2)) { //G1
+	if (g1 != -1) 
+	  g1 = column;
+      }
+      else if (!gap(column,n1) and gap(column,n2)) { //G2
+	if (g2 != -1) 
+	  g2 = column;
+      }    
+      else {
+	if (g1 != -1 and g2 != -1 and g1 > g2) {
+	  gap_fixup(n1,n2,g1,g2,column);
+	}
+	
+	g1 = -1;
+	g2 = -1;
+      }
+    }
+  }
+
 }
 
 void alignment::load(std::istream& file) {
@@ -281,3 +314,25 @@ void alignment::print_fasta(std::ostream& file) const {
 #endif
 }
 
+vector<int> get_path(const alignment& A,int node1, int node2) {
+  vector<int> state;
+
+  state.reserve(A.length()+1);
+  for(int column=0;column<A.length();column++) {
+    if (A.gap(column,node1)) {
+      if (A.gap(column,node2)) 
+	continue;
+      else
+	state.push_back(1);
+    }
+    else {
+      if (A.gap(column,node2))
+	state.push_back(2);
+      else
+	state.push_back(0);
+    }
+  }
+  
+  state.push_back(3);
+  return state;
+}

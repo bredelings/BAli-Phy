@@ -18,7 +18,7 @@ unsigned myrand_init(int i) {
 }
 
 unsigned long myrandom(unsigned long max) {
-  return MyRandom::generator.uniform_int(max);
+  return (unsigned long)MyRandom::generator.uniform_int(max);
 }
 
 double myrandomf() {

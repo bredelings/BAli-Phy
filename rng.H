@@ -6,10 +6,10 @@ using std::valarray;
 
 unsigned myrand_init(int=-1);
 
-// returns a value in [0,max]
+// returns a value in [0,max-1]
 unsigned long myrandom(unsigned long max);
 
-// returns a value in [min,max]
+// returns a value in [min,max-1]
 inline long myrandom(long min,long max) {
   unsigned long diff = max - min;
   return myrandom(diff)+min;

@@ -54,6 +54,26 @@ TreeView tree::copy() const {
   return TreeView(root).copy();
 }
 
+vector<node*> find_nodes(node* root) {
+  vector<node*> lookup;
+  
+  lookup.push_back(root);
+
+  int start=0;
+  do {
+    int end = lookup.size();
+    for(int i=start;i<end;i++) {
+      node* left = lookup[i]->left;
+      node* right = lookup[i]->right;
+      if (left) lookup.push_back(left);
+      if (right) lookup.push_back(right);
+    }
+    start = end;
+  }  while(start<lookup.size());
+
+  return lookup;
+}
+
 
 void find_leaves(node* n,vector<node*>& leaves) {
   if (!n)
@@ -68,52 +88,46 @@ void find_leaves(node* n,vector<node*>& leaves) {
   find_leaves(n->right,leaves);
 }
 
-void tree::renumber() {
-  lookup.clear();
-  lookup.push_back(root);
+/* If we aren't deleting or adding nodes, then we don't change the leaf names */
 
+vector<int> tree::renumber() {
+  vector<node*> old_order = lookup;
 
-  /* Mark each node as non-visited */
-  int start=0;
-  do {
-    int end = lookup.size();
-    for(int i=start;i<end;i++) {
-      node* left = lookup[i]->left;
-      node* right = lookup[i]->right;
-      if (left) lookup.push_back(left);
-      if (right) lookup.push_back(right);
-    }
-    start = end;
-  }  while(start<lookup.size());
+  lookup = find_nodes(root);
+  int size1 = lookup.size();
 
+  // Mark all nodes as non-visted
   for(int i=0;i<lookup.size();i++)
     lookup[i]->name = -1;
 
-  int size1 = lookup.size();
+  // Fill lookup with the leaves, and name them
+  if (old_order.size() != lookup.size()) { 
+    lookup.clear();
+    find_leaves(root,lookup);
+    for(int i=0;i<lookup.size();i++)
+      lookup[i]->name = i;
+  }
+  else { // Don't change the leaf names!
+    lookup.clear();
+    for(int i=0;i<old_order.size() and leaf(*old_order[i]);i++)
+      lookup.push_back(old_order[i]);
+  }
+
+  n_leaves = lookup.size();
 
   /* Add nodes in order of distance from leaves */
-
-  lookup.clear();
-  find_leaves(root,lookup);
-  n_leaves = lookup.size();
-  // Here we over-write the leaf names
-  //  so they are determined by the tree struct
-  //  instead of specified from outside
-  for(int i=0;i<lookup.size();i++)
-    lookup[i]->name = i;
-
-  start=0;
+  int start=0;
   do {
     int end = lookup.size();
     for(int i=start;i<end;i++) {
       node* parent = lookup[i]->parent;
       if (!parent) continue; // actually this would be a good exit condition
 
-      if (parent->left && parent->right) {  // if there are 2 children
-	if (parent->left->name == -1) continue;  //both children 
-	if (parent->right->name == -1) continue; //must go on first
-	if (lookup[i]->name < parent->left->name || lookup[i]->name < parent->right->name)
-	  continue; //and only the second child puts the parent on
+      if (parent->left and parent->right) {  // if there are 2 children
+	if (parent->left->name == -1) continue;  // both children 
+	if (parent->right->name == -1) continue; // must go on first
+	if (lookup[i]->name < parent->left->name or lookup[i]->name < parent->right->name)
+	  continue; // and only the second child puts the parent on
       }
       parent->name = lookup.size();
       lookup.push_back(parent);
@@ -122,10 +136,21 @@ void tree::renumber() {
   } while (start < lookup.size());
 
   assert(size1 == lookup.size());
-  for(int i=0;i<lookup.size();i++)
-    assert(lookup[i]->name == i);
+  for(int i=0;i<lookup.size();i++) {
+    if (leaf(*lookup[i]))
+      assert(lookup[i]->name < n_leaves);
+    else
+      assert(lookup[i]->name == i);
+  }
 
   compute_ancestors();
+
+  /* Compute mapping from old to new names */
+  vector<int> mapping(old_order.size());
+  for(int i=0;i<old_order.size();i++)
+    mapping[i] = old_order[i]->name;
+
+  return mapping;
 }
 
 // With iterator, this would be:  *left  = (node* tv1);
@@ -139,6 +164,10 @@ void tree::add_right(node& parent,node& child) {
   parent.right = &child;
   parent.right->parent = &parent;
 }
+
+// Do I need to export an interface which maps each node name
+// on the two old trees into a node name in the current tree?
+// I could put a field 'old_name' in the 'struct node' for this...
 
 // subtree(root,tree:left) = T
 void tree::add_left(node& parent,const tree& T) {
@@ -202,8 +231,8 @@ std::valarray<bool> tree::partition(int n1,int n2) const {
 
   std::valarray<bool> mask(T.num_nodes());;
 
-  if (n1 > n2 ||
-      (!T[n1].parent->parent && !T[n2].parent->parent))
+  if (n1 > n2 or
+      (!T[n1].parent->parent and !T[n2].parent->parent))
     mask = ancestors[n2];
   else 
     mask = !ancestors[n1];
@@ -218,10 +247,58 @@ void tree::add_root() {
   n_leaves = 1;
 }
 
-tree& tree::operator=(const tree& t1) {
-  root = t1.copy();
-  renumber();
+void tree::exchange(int n1, int n2) {
+  assert(not ancestor(n1,n2) and not ancestor(n2,n2));
 
+  node* node1 = lookup[n1];
+  node* node2 = lookup[n2];
+
+  node* p1 = node1->parent;
+  node* p2 = node2->parent;
+
+  if (p1 == p2) return;
+
+  if (p1->left == node1)
+    p1->left = node2;
+  else
+    p1->right = node2;
+
+  if (p2->left == node2)
+    p2->left = node1;
+  else
+    p2->right = node1;
+
+  node1->parent = p2;
+  node2->parent = p1;
+
+  vector<int> mapping = renumber();
+
+  /*** fixup branches ***/
+  vector<Branch> old_branches = branches_;
+
+  for(int i=0;i<mapping.size();i++) {
+    // here we've got i -> mapping[i];
+    branches_[mapping[i]] = old_branches[i];
+  }
+}
+
+tree& tree::operator=(const tree& t1) {
+  n_leaves = t1.leaves();
+  root = t1.copy();
+  vector<node*> nodes = find_nodes(root);
+
+  lookup = nodes;
+
+// should now preserve node names
+  if (nodes.size() > 1)
+    for(int i=0;i<nodes.size();i++) {
+      int j = nodes[i]->name;
+      assert(0 <= j and j < lookup.size());
+      lookup[j] = nodes[i];
+    }
+
+  compute_ancestors();
+  
   // index numbers shouldn't change across copies
   branches_.clear();
   for(int i=0;i<num_nodes()-2;i++)
@@ -418,14 +495,14 @@ SequenceTree::SequenceTree(std::istream& file) {
 	name = "";
       }
     }
-    else if (c== ' ' || c=='\n' || c == 9) 
+    else if (c== ' ' or c=='\n' or c == 9) 
       ;
     else 
       name += c;
     //    std::cerr<<"char = "<<c<<"    depth = "<<depth<<"   stack size = "<<tree_stack.size()<<"    name = "<<name<<endl;
 
     pos++;
-  } while (file && depth > 0);
+  } while (file and depth > 0);
   assert(tree_stack.size() == 1);
   (*this) = tree_stack[0];
 }

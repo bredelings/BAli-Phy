@@ -4,26 +4,86 @@
 #include "sample.H"
 #include "myrandom.H"
 #include "substitution.H"
+#include "logsum.H"
+#include "likelihood.H"
 
+//TODO - 1. calculate the probability of 
+//  a) the path we came in with
+//  b) the path we chose
+//  c) the most probable path?
+
+// 2. Calculate the likelihood of the reassembled matrix and the original matrix
+//     - see if the difference is the same as the difference between the path probabilities
+
+// 3. This won't work for the root node, though.
+
+double choose_P(int c,double x, double y, double z) {
+  double sum = logsum(z,logsum(x,y));
+  if (c==0)
+    return x-sum;
+  else if (c==1)
+    return y-sum;
+  else if (c==2)
+    return z-sum;
+  assert(0);
+}
+
+
+// g1 -> g2, never g2 -> g1
+double path_P(const vector<int>& path,const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& Theta) {
+  const Matrix& P = Theta.IModel.P;
+  const Matrix& R = Theta.IModel.R;
+  
+  const int I = M.size1()-1;
+  const int J = M.size2()-1;
+  int k = I;
+  int l = J;
+  double Pr=0;
+
+  int state2 = 3;
+  int i = path.size()-1; 
+  while(k>0 or l>0) {
+    assert(i>0);
+    int state1 = path[i-1];
+    double p=0;
+    if (k<I)
+      p = choose_P( state1,
+		    M(k,l) + P(0,state2),
+		    G1(k,l) + P(1,state2),
+		    G2(k,l) + P(2,state2) );
+    else
+      p = choose_P( state1,
+		    M(k,l) + R(0,state2),
+		    G1(k,l) + R(1,state2),
+		    G2(k,l) + R(2,state2) );
+    if (state1==0)
+      {k--;l--;}
+    if (state1==1)
+      l--;
+    if (state1==2)
+      k--;
+
+    i--;
+    state2 = state1;
+    Pr += p;
+
+    assert(k>=0 and l>=0);
+  }
+  assert(i==0);
+
+  return Pr;
+}
+
+// What if the problem is primarily that the exact number of extensions varies slightly?
+// Or the number of mismatches?  (so, we aren't creating new gaps)
+// THEN, for every alignment, we would have maybe 
 
 using std::valarray;
-
-const double max_float = 3.40282347e+38F;
-
-const double log_0 = -max_float;
-
-inline double logsum(double r, double q)
-{
-  if (fabs(r-q) > 308)
-    return ((r > q) ? r : q);
-  
-  return (r + log(1 + exp(q - r)));
-}
 
 
 bool all_gaps(const alignment& A,int column,const valarray<bool>& mask) {
   for(int i=0;i<A.size2();i++)
-    if (mask[i] && A(column,i) != alphabet::gap)
+    if (mask[i] and not A.gap(column,i))
       return false;
   return true;
 }
@@ -45,47 +105,41 @@ int choose(double x, double y, double z) {
 }
 
 
-// g2 -> g1, never g1 -> g2
+// g1 -> g2, never g2 -> g1
 
-vector<int> sample_path(const Matrix& m,const Matrix& g1,const Matrix& g2,const Parameters& Theta) {
+vector<int> sample_path(const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& Theta) {
+  const Matrix& P = Theta.IModel.P;
+  const Matrix& R = Theta.IModel.R;
+
   vector<int> path;
-  int k = m.size1() - 1;
-  int l = m.size2() - 1;
+  const int I = M.size1()-1;
+  const int J = M.size2()-1;
+  int k = I;
+  int l = J;
 
-  int last =0;
-  while (k>0 || l>0) {
-    int move=-1;
-    if (k==0)
-      move = 1;
-    else if (l==0)
-      move = 2;
-    else {
-      double corrected_m = m(k,l);
-      double corrected_g1 = g1(k,l);
-      double corrected_g2 = g2(k,l);
-      if (last == 1) {
-	corrected_m +=  Theta.IModel.lambda_O;
-	corrected_g1 += Theta.IModel.lambda_E;
-	corrected_g2 += Theta.IModel.lambda_O;
-      }
-      else if (last==2) {
-	corrected_m += Theta.IModel.lambda_O;
-	corrected_g1 += log_0;
-	corrected_g2 += Theta.IModel.lambda_E;
-      }
-      //      std::cerr<<"path: "<<k<<", "<<l<<endl;
-      move = choose(corrected_m, corrected_g1, corrected_g2) ;
-    }
+  int state2 = 3;
+  while (k>0 or l>0) {
+    int state1 = -1;
+    if (k<I)
+      state1 = choose( M(k,l) + P(0,state2),
+		       G1(k,l) + P(1,state2),
+		       G2(k,l) + P(2,state2) );
+    else
+      state1 = choose( M(k,l) + R(0,state2),
+		       G1(k,l) + R(1,state2),
+		       G2(k,l) + R(2,state2) );
 
-    if (move==0)
+    if (state1==0)
       {k--;l--;}
-    if (move==1)
+    if (state1==1)
       l--;
-    if (move==2)
+    if (state1==2)
       k--;
 
-    path.push_back(move);
-    last = move;
+    path.push_back(state1);
+    state2 = state1;
+
+    assert(k>=0 and l>=0);
   }
 
   std::reverse(path.begin(),path.end());
@@ -97,6 +151,7 @@ inline double sum(const valarray<double>& v) {
 }
 
 
+// This can affect the ordering!  Make sure this is OK
 alignment construct(const alignment& old, const vector<int>& path, const valarray<bool>& group1, 
 		    const vector<int>& seq1,const vector<int>& seq2) {
 
@@ -105,9 +160,9 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
   vector<int> subA1;
   vector<int> subA2;
   for(int column=0;column<old.length();column++) {
-    if (!all_gaps(old,column,group1))
+    if (not all_gaps(old,column,group1))
       subA1.push_back(column);
-    if (!all_gaps(old,column,group2))
+    if (not all_gaps(old,column,group2))
       subA2.push_back(column);
   }
 
@@ -123,7 +178,7 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
     assert(c3>=c4);
     assert(c1 <= subA1.size());
     assert(c3 <= subA2.size());
-    if (c1 < subA1.size() && (c2 == seq1.size() || (c2<seq1.size() && subA1[c1] < seq1[c2]))) {
+    if (c1 < subA1.size() and (c2 == seq1.size() or (c2<seq1.size() and subA1[c1] < seq1[c2]))) {
       for(int i=0;i<A.size2();i++) {
 	if (group1[i])
 	  A(column,i) = old(subA1[c1],i);
@@ -132,7 +187,7 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
       }
       c1++;
     }
-    else if (c3 < subA2.size() && (c4 == seq2.size() || (c4<seq2.size() && subA2[c3] < seq2[c4]))) {
+    else if (c3 < subA2.size() and (c4 == seq2.size() or (c4<seq2.size() and subA2[c3] < seq2[c4]))) {
       for(int i=0;i<A.size2();i++) {
 	if (group1[i])
 	  A(column,i) = alphabet::gap;
@@ -214,11 +269,14 @@ vector<valarray<double> > distributions(const alignment& A,const Parameters& The
 
 alignment sample(const alignment& old,const Parameters& Theta,int node1,int node2) {
   const tree& T = Theta.T;
-  const double& lambda_O = Theta.IModel.lambda_O;
-  const double& lambda_E = Theta.IModel.lambda_E;
+  const Matrix& P = Theta.IModel.P;
+  const Matrix& R = Theta.IModel.R;
+  const vector<double>& pi = Theta.IModel.pi;
   const valarray<double>& frequency = Theta.frequencies();
 
   assert(node1 > node2);
+
+  int old_length1 = old.seqlength(node1);
 
   valarray<bool> group1 = T.partition(node2,node1);
 
@@ -257,19 +315,28 @@ alignment sample(const alignment& old,const Parameters& Theta,int node1,int node
       G2(i,j)  = log_0;
     }
   /***********    Initialize the Boundary    ************/
-  M(0,0) = 0;
-  G1(0,0) = log_0;
-  G2(0,0) = log_0;
+  M(0,0)  = pi[0];
+  G1(0,0) = pi[1];
+  G2(0,0) = pi[2];
 
   for(int i=1;i<M.size1();i++) {
     M(i,0) = log_0;
     G1(i,0) = log_0;
-    G2(i,0) = g2_sub[i-1] + logsum(lambda_E + G2(i-1,0),lambda_O + M(i-1,0));
+    G2(i,0) = g2_sub[i-1] + logsum(M (i-1,0) + P(0,2),
+				   G1(i-1,0) + P(1,2),
+				   G2(i-1,0) + P(2,2));
   }
 
   for(int i=1;i<M.size2();i++) {
     M(0,i) = log_0;
-    G1(0,i) = g1_sub[i-1] + logsum(lambda_E + G1(0,i-1),lambda_O + logsum(G2(0,i-1),M(0,i-1)));
+    if (i<seq1.size())
+      G1(0,i) = g1_sub[i-1] + logsum(M (0,i-1) + P(0,1),
+				     G1(0,i-1) + P(1,1),
+				     G2(0,i-1) + P(2,1));
+    else
+       G1(0,i) = g1_sub[i-1] + logsum(M (0,i-1) + R(0,1),
+ 				     G1(0,i-1) + R(1,1),
+				     G2(0,i-1) + R(2,1));
     G2(0,i) = log_0;
   }
 
@@ -278,26 +345,50 @@ alignment sample(const alignment& old,const Parameters& Theta,int node1,int node
   const int maxlength = std::max(M.size1(),M.size2());
   for(int n=0; n<maxlength; n++) {
     if (n<M.size2())
-      for(int i=1;i<n && i<M.size1();i++) {
+      for(int i=1;i<n and i<M.size1();i++) {
 
 	double sub = log(sum( dists1[i-1] * frequency * dists2[n-1] ));
-	M(i,n) = sub + logsum(M(i-1,n-1),logsum(G1(i-1,n-1),G2(i-1,n-1)));
 
-	G1(i,n) = g1_sub[n-1] + logsum(lambda_E + G1(i,n-1),lambda_O + logsum(G2(i,n-1),M(i,n-1)));
+	M(i,n) = sub + logsum(M(i-1,n-1)  + P(0,0),
+			      G1(i-1,n-1) + P(1,0),
+			      G2(i-1,n-1) + P(2,0));
 
-	G2(i,n) = g2_sub[i-1] + logsum(lambda_E + G2(i-1,n),lambda_O + M(i-1,n));
+	if (i<seq1.size())
+	  G1(i,n) = g1_sub[n-1] + logsum(M (i,n-1) + P(0,1),
+					 G1(i,n-1) + P(1,1),
+					 G2(i,n-1) + P(2,1));
+	else
+	  G1(i,n) = g1_sub[n-1] + logsum(M (i,n-1) + R(0,1),
+					 G1(i,n-1) + R(1,1),
+					 G2(i,n-1) + R(2,1));
+
+	G2(i,n) = g2_sub[i-1] + logsum(M (i-1,n) + P(0,2),
+				       G1(i-1,n) + P(1,2),
+				       G2(i-1,n) + P(1,2));
       }
 
     if (n<M.size1())
-      for(int i=1;i<=n && i<M.size2();i++) {
+      for(int i=1;i<=n and i<M.size2();i++) {
 
 	double sub = log(sum( dists1[n-1] * frequency * dists2[i-1] ));
-	M(n,i) = sub + logsum(M(n-1,i-1),logsum(G1(n-1,i-1),G2(n-1,i-1)));
 
-	G1(n,i) = g1_sub[i-1] + logsum(lambda_E + G1(n,i-1),lambda_O + logsum(G2(n,i-1),M(n,i-1)));
+	M(n,i)  = sub + logsum(M(n-1,i-1)  + P(0,0),
+			       G1(n-1,i-1) + P(1,0),
+			       G2(n-1,i-1) + P(2,0));
 
-	G2(n,i) = g2_sub[n-1] + logsum(lambda_E + G2(n-1,i),lambda_O + M(n-1,i));
-	
+	if (n<seq1.size()) 
+	  G1(n,i) = g1_sub[i-1] + logsum(M (n,i-1) + P(0,1),
+					 G1(n,i-1) + P(1,1),
+					 G2(n,i-1) + P(2,1));
+	else
+	  G1(n,i) = g1_sub[i-1] + logsum(M (n,i-1) + R(0,1),
+					 G1(n,i-1) + R(1,1),
+					 G2(n,i-1) + R(2,1));
+				       
+
+	G2(n,i) = g2_sub[n-1] + logsum(M (n-1,i) + P(0,2),
+				       G1(n-1,i) + P(1,2),
+				       G2(n-1,i) + P(2,2));
       }
   }
 
@@ -306,9 +397,31 @@ alignment sample(const alignment& old,const Parameters& Theta,int node1,int node
 
   vector<int> path = sample_path(M,G1,G2,Theta);
 
+
   alignment A = construct(old,path,group1,seq1,seq2);
 
   assert(valid(A));
+  // we are sampling while fixing the length of seqeuence1
+  assert(A.seqlength(node1) == old_length1);
+
+  /*--------------------------------------------------------------*/
+
+  vector<int> path1 = get_path(old,node1,node2);
+  vector<int> path2 = get_path(A,node1,node2);
+  path.push_back(3);
+  assert(path2 == path);
+  double p1 = path_P(path1,M,G1,G2,Theta);
+  double p2 = path_P(path2,M,G1,G2,Theta);
+
+  double l1 = probability3(old,Theta);
+  double l2 = probability3(A,Theta);
+
+  std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<"           L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<std::endl<<std::endl;
+  double diff = p2-p1-(l2-l1);
+  std::cerr<<"diff = "<<diff<<std::endl;
+  std::cerr<<"rdiff = "<<diff/(p2-p1)<<std::endl;
+
+  /*--------------------------------------------------------------*/
 
   return A;
 }

@@ -81,14 +81,15 @@ void sample(alignment& A,Parameters& Theta) {
   double r = myrandomf();
   if (r < 0.35) {
     //    int node1 = myrandom(Theta.T.leaves()-1,Theta.T.num_nodes()-3);
-    int node2 = myrandom(0,Theta.T.num_nodes()-3);
+    int node2 = myrandom(Theta.T.branches());
     int node1 = Theta.T.parent(node2);
     if (node2>node1) std::swap(node1,node2);
 
     A = sample(A,Theta,node1,node2);
+    std::cerr<<"logp = BLANK"<<std::endl;
   }
-  else if (r < 0.7) {
-    int node = myrandom(Theta.T.leaves(),Theta.T.num_nodes()-2);
+  else if (r < 1.70) {
+    int node = myrandom(Theta.T.leaves(),Theta.T.num_nodes()-1);
     A = sample(A,Theta,node);
   }
   //  else if (r < 0.75) {
@@ -98,7 +99,7 @@ void sample(alignment& A,Parameters& Theta) {
   //    
   //  }
   else {
-    int b = myrandom(0,Theta.T.branches()-1);
+    int b = myrandom(Theta.T.branches());
     change_branch_length(A,Theta,b);
   }
 }

@@ -2,6 +2,7 @@
 #include "sample.H"
 #include "likelihood.H"
 
+using std::valarray;
 static int total_samples = 0;
 
 
@@ -69,9 +70,29 @@ void print_stats(const alignment& A,const Parameters& Theta,
     probability_no_tree(A,Theta)<<"  "<<
     probability_simple_tree(A,Theta)<<"  "<<
     probability3(A,Theta)<<"  "<<
-    probability(A,Theta)<<"  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl;
+    probability(A,Theta)<<endl
+	   <<"old  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl
+	   <<"HMM  ["<<probability3(A,Theta)<<": "<<prior_HMM(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl;
   
   std::cerr<<A<<endl;
+}
+
+valarray<double> autocorrelation(valarray<double> v) {
+  double mean = v.sum()/v.size();
+  v -= mean;
+  valarray<double> w(v.size()/2);
+  for(int i=0;i<w.size();i++) {
+    double sum1=0;
+    double sum2=0;
+    double sum3=0;
+    for(int j=0;j<v.size()-i;j++) {
+      sum1 += v[j]*v[j+i];
+      sum2 += v[j]*v[j];
+      sum3 += v[j+i]*v[j+i];
+    }
+    w[i] = sum1/sqrt(sum2*sum3);
+  }
+  return w;
 }
 
 
@@ -83,9 +104,6 @@ void MCMC(alignment& A,Parameters& Theta,
   bool ML_printed = true;
   
   A.create_internal(T);
-  //FIXME - make sure there are no G1-G2 transitions in the representation
-  // eiter at internal, or external, nodes
-  assert(0);
   std::cerr<<A<<endl;
 
   SequenceTree Sum = T;
@@ -100,12 +118,18 @@ void MCMC(alignment& A,Parameters& Theta,
 
   print_stats(A,Theta,probability);
 
+  valarray<double> v(p,5000);
+
   for(int iterations=0; iterations < max; iterations++) {
     int id = aid(A);
     std::cerr<<"iterations: "<<iterations<<"    logp = "<<p<<"      id = "<<id<<endl;
 
+    v = v.shift(-1);
+    v[0] = p;
+
     /******************** Record Statistics *******************/
     if (iterations > start_after) {
+
 
       if (iterations%correlation_time == 0) 
       	print_alignments(A,Theta);
@@ -117,7 +141,7 @@ void MCMC(alignment& A,Parameters& Theta,
       if (iterations % 100 == 0) {
 	SequenceTree Average = Sum;
 	for(int i=0;i<T.num_nodes();i++)
-	  Average.branch(i).length /= total_samples;
+
 	std::cout<<"------begin tree---------\n";
 	std::cout<<Average<<endl;
 	std::cout<<"------end tree---------\n";
@@ -129,7 +153,7 @@ void MCMC(alignment& A,Parameters& Theta,
     alignment A2 = A;
     Parameters Theta2 = Theta;
 
-    sample(A,Theta);
+    sample(A2,Theta2);
 
     new_p = probability(A2,Theta2);
 
@@ -150,7 +174,12 @@ void MCMC(alignment& A,Parameters& Theta,
     }
 
     /***************** Print Diagnostic Output ********************/
-    if (iterations %250 == 0 or std::abs(p - new_p)>8) {
+    if (iterations %50 == 0 or std::abs(p - new_p)>8) {
+      valarray<double> w = autocorrelation(v);
+      for(int i=0;i<w.size();i++) {
+	std::cout<<i<<"   "<<w[i]<<std::endl;
+      }
+
       print_stats(A,Theta,probability);
       print_stats(A2,Theta2,probability);
 

@@ -15,11 +15,11 @@ mycolors <- heat.colors(ncolors)
 #mycolors <- cm.colors(ncolors)
 mycolors <- Rreverse(mycolors)
 mycolors <- c("yellow","orange","green3","blue","black")
-normal <- 250
+normal <- 4082
 levelnames <- c("<= 0.25", "0.25 - 0.50", "0.50 - 0.75", "0.75 - 0.95", ">= 0.95")
 #mycolors <- gray((ncolors-1):0 / ncolors)
 # minmax <- c( c(0.001,0.25), c(0.25,0.50), c(0.50,0.75), c(0.75,0.95), c(0.95,1) )
-mins <- c(0.01, 0.25, 0.50, 0.75, 0.95)
+mins <- c(0.05, 0.25, 0.50, 0.75, 0.95)
 maxs <- c(0.25, 0.50, 0.75, 0.95, 1.00)
 tnames <- c("H. Sapiens","Sulfaci1", "Halo Mari", "E. Coli")
 

@@ -182,9 +182,9 @@ IndelModel::IndelModel(double LO,double LE)
   }
 
   /* Initial Distribution */
-  pi[0] = 0;
-  pi[1] = log_0;
-  pi[2] = log_0;
+  pi[0] = log(1.0-delta-delta*(1.0-delta) );
+  pi[1] = log(delta);
+  pi[2] = log(delta *(1.0-delta) );
   pi[3] = log_0;
 
   construct_lengthp(1000);
@@ -205,7 +205,7 @@ void Parameters::recalc() {
 }
 
 
-Parameters::Parameters(SubstitutionModel& SM,double lambda_E,double lambda_O,const SequenceTree& t)
+Parameters::Parameters(SubstitutionModel& SM,double lambda_O,double lambda_E,const SequenceTree& t)
   :SModel(&SM),IModel(lambda_O,lambda_E),T(t)
 {
   branch_mean = 1.0;

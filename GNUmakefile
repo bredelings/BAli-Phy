@@ -17,11 +17,11 @@ all: sampler
 # try -fforce-addr
 
 #----------------- Definitions
-LANGO = prefetch-loop-arrays fast-math unroll-loops
+LANGO = # prefetch-loop-arrays fast-math unroll-loops
 DEBUG = pipe g # pg
 DEFS = #NDEBUG 
 WARN = all no-sign-compare
-OPT =  malign-double mfpmath=sse msse2 march=pentium4
+OPT =  malign-double mfpmath=sse msse2 march=pentium4 #O3
 LDFLAGS =  # -pg 
 
 #------------------- Main 
@@ -40,7 +40,7 @@ ${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%}
 OTHERFILES += 
 
 #------------------- End
-DEVEL = ..
+DEVEL = ../..
 includes += 
 src      += 
 include $(DEVEL)/GNUmakefile

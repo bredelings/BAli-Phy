@@ -1,4 +1,5 @@
 #include "likelihood.H"
+#include "logsum.H"
 
 double prior_no_tree(const alignment& A,const Parameters& Theta) {
   int total_gaps = A.length()*A.num_sequences();
@@ -51,26 +52,14 @@ double prior_internal(const alignment& A,const Parameters& Theta) {
 
 /** FIXME - numerically check that choice of root node doesn't matter **/
 double prior_branch_HMM(const alignment& A,const IndelModel& IModel,int n1,int n2) {
-  vector<int> state;
-
-  state.reserve(A.length());
-  for(int column=0;column<A.length();column++) {
-    if (A(column,n1) == alphabet::gap) {
-      if (A(column,n2) == alphabet::gap)
-	continue;
-      else
-	state.push_back(1);
-    }
-    else {
-      if (A(column,n2) == alphabet::gap)
-	state.push_back(2);
-      else
-	state.push_back(0);
-    }
-  }
+  vector<int> state = get_path(A,n1,n2);
 
   int length1 = A.seqlength(n1);
-  double P = IModel.pi[state[0]];
+
+  double P = log_0;
+  for(int i=0;i<4;i++)
+    P = logsum(P,IModel.pi[i] + IModel.P[i][state[0]]);
+
   int l1 = (state[0]==0 or state[0]==2)?1:0;
   for(int i=1;i<state.size();i++) {
     if (l1<length1)

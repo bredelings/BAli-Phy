@@ -1,10 +1,10 @@
 #ifndef ALIGNMENT_H
 #define ALIGNMENT_H
 
-#include "mytypes.H"
 #include "sequence.H"
 #include "tree.H"
 #include <iostream>
+#include "mytypes.H"
 
 class alignment {
   vector<sequence> sequences;
@@ -13,6 +13,7 @@ class alignment {
   void resize(int,int);
   void pad(int);
   void remap(const vector<string>&);
+  void gap_fixup(int,int,int,int,int);
 public:
   int index(const string&) const;
 
@@ -35,6 +36,8 @@ public:
 
   int& operator()(int l,int s) {return array(l,s); }
   const int& operator()(int l,int s) const {return array(l,s); }
+
+  int gap(int i,int j) const {return array(i,j)==alphabet::gap;}
 
   alignment& operator=(const alignment&);
 
@@ -60,5 +63,7 @@ inline std::istream& operator>>(std::istream& file,alignment& A) {
 }
 
 bool valid(const alignment& A);
+
+vector<int> get_path(const alignment&,int,int);
 
 #endif

@@ -74,6 +74,13 @@
 //      WILL change!  So this will change at least the "plot 'logp'"
 //      graphs!
 
+
+//29. make the back-sampling code in the branch-resampling algorithm comput the likelihood change, see if its correct.
+
+
+// How to check these samplers, and find cases where they are not working???
+// These seems to be something in the tail region of the 5S rna data that is triggering a bug
+
 int main(int argc,char* argv[]) {
 
   myrand_init();
@@ -93,7 +100,7 @@ int main(int argc,char* argv[]) {
     std::cerr<<"Usage: "<<argv[0]<<" <alignment file.fasta> <tree file> <lambda_O> <lambda_E>\n";
     exit(1);
   }
-x
+
   ifstream file(argv[1]);
   if (!file) {
     std::cerr<<"Error: can't open alignment file '"<<argv[1]<<"'"<<endl;
@@ -147,7 +154,7 @@ x
 	std::cerr<<endl;
       }
       Parameters Theta(smodel,lambda_O,lambda_E,T1);
-      MCMC(A,Theta,250000,probability2);
+      MCMC(A,Theta,250000,probability3);
     }
   }
   catch (std::exception& e) {

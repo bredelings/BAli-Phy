@@ -70,7 +70,9 @@ class tree {
   vector< std::valarray<bool> > ancestors;
 
   void compute_ancestors();
-  void renumber();
+
+  //renumber and return mapping of old->new node names
+  vector<int> renumber();
 
   vector<Branch> branches_;
 public:
@@ -94,6 +96,7 @@ public:
   void add_left(node&,const tree&);
   void add_right(node&,const tree&);
   void add_root();
+  void exchange(int,int);
   
   inline int parent(int) const;
 
