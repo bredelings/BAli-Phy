@@ -33,7 +33,7 @@ inline double prior(const Parameters& Theta) {
   double p = 0;
 
   p += prior(Theta.T,Theta.branch_mean);
-  p += Theta.SModel->prior();
+  p += Theta.SModel().prior();
 
   return p;
 }

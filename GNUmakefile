@@ -32,7 +32,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C node-sample.C branch-sample.C exponential.C \
           eigenvalue.C parameters.C likelihood.C mcmc.C topology-sample.C \
 	  choose.C sequencetree.C branch-lengths.C arguments.C \
-	  util.C randomtree.C alphabet.C # map.C
+	  util.C randomtree.C alphabet.C smodel.C # map.C
 LIBS = gsl gslcblas m
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 

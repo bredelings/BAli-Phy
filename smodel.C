@@ -1,5 +1,5 @@
 #include <fstream>
-#include "SModel.H"
+#include "smodel.H"
 #include "exponential.H"
 #include "rng.H"
 
@@ -54,8 +54,8 @@ void HKY::fiddle() {
   kappa(k);
 }
 
-double HKY::prior() {
-  return  gsl_ran_lognormal_pdf(kappa(),0,0.1);
+double HKY::prior() const {
+  return log(gsl_ran_lognormal_pdf(kappa(),0,0.1));
 }
 
 void HKY::recalc() {

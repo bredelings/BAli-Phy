@@ -76,8 +76,8 @@ void print_stats(std::ostream& o,const alignment& A,const Parameters& Theta,
 
   o<<"tree = "<<Theta.T<<endl<<endl;
 
-  for(int i=0;i<Theta.SModel->parameters().size();i++)
-    o<<"    p"<<i<<" = "<<Theta.SModel->parameters()[i];
+  for(int i=0;i<Theta.SModel().parameters().size();i++)
+    o<<"    p"<<i<<" = "<<Theta.SModel().parameters()[i];
   o<<endl<<endl;
 }
 
@@ -164,13 +164,13 @@ void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
   std::cout<<"rate matrix = \n";
   for(int i=0;i<Theta.get_alphabet().size();i++) {
     for(int j=0;j<Theta.get_alphabet().size();j++) 
-      std::cout<<Theta.SModel->rates()(i,j)<<" ";
+      std::cout<<Theta.SModel().rates()(i,j)<<" ";
     std::cout<<endl;
   }
   std::cout<<endl;
   std::cout<<"frequencies = ";
   for(int i=0;i<Theta.get_alphabet().size();i++) {
-    std::cout<<Theta.SModel->frequencies()[i]<<" ";
+    std::cout<<Theta.SModel().frequencies()[i]<<" ";
   }
   std::cout<<endl;
   std::cout<<endl;

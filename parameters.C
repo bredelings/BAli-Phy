@@ -72,18 +72,22 @@ void IndelModel::construct_lengthp(int n) {
 
 }
 
-IndelModel::IndelModel(double LO,double LE)
-  : pi(4),P(4,4),Q(4,4),R(4,4)
-  //,p_length(10000,0) 
-{
+IndelModel::IndelModel()
+  : pi(4),P(4,4),Q(4,4),R(4,4)  
+{ }
 
+
+IndelModel1::IndelModel1(int maxlength,double LO,double LE)
+{
   lambda_O = LO;
   lambda_E = LE;
 
-  delta   = exp(lambda_O);
   epsilon = exp(lambda_E);
+  delta   = exp(lambda_O)/(1.0-epsilon);
   tau     = 1.0e-3;
 
+  assert(delta > 0.0);
+  
   /* Chain w/o transitions to End state */
   P(0,0) = log(1.0-delta-delta*(1.0-delta) );
   P(0,1) = log(delta);
@@ -130,28 +134,90 @@ IndelModel::IndelModel(double LO,double LE)
   pi[2] = log(delta *(1.0-delta) );
   pi[3] = log_0;  // must be log_0
 
-  construct_lengthp(2000);
+  construct_lengthp(maxlength);
+}
+
+IndelModel2::IndelModel2(int maxlength,double LO,double LE,double b)
+{
+  lambda_O = LO;
+  lambda_E = LE;
+
+  epsilon = exp(lambda_E);
+  delta   = exp(lambda_O)/(1.0-epsilon);
+  beta    = exp(b);
+  tau     = 1.0e-3;
+
+  assert(delta > 0.0);
+  assert(beta*delta < 1.0);
+  
+  /* Chain w/o transitions to End state */
+  P(0,0) = log(1.0 - 2.0*delta);
+  P(0,1) = log(delta);
+  P(0,2) = log(delta);
+  P(0,3) = log_0;
+
+  P(1,0) = log(1.0 - epsilon) + log(1.0 - beta*delta);
+  P(1,1) = log(epsilon + (1.0-epsilon)*beta*delta/2.0);
+  P(1,2) = log(1.0 - epsilon) + log(beta*delta/2.0);
+  P(1,3) = log_0;
+
+  P(2,0) = log(1.0 - epsilon) + log(1.0 - beta*delta);
+  P(2,1) = log(1.0 - epsilon) + log(beta*delta/2.0);
+  P(2,2) = log(epsilon + (1.0-epsilon)*beta*delta/2.0);
+  P(2,3) = log_0;
+
+  P(3,0) = log_0;
+  P(3,1) = log_0;
+  P(3,2) = log_0;
+  P(3,3) = 0;
+
+  /* Chain with transitions to End state */
+  Q = P;
+  for(int i=0;i<3;i++) {
+    for(int j=0;j<3;j++) 
+      Q(i,j) += log(1.0 - tau);
+    Q(i,3) = log(tau);
+  }
+
+  /* Chain w/o transitions to M or G1 states */
+  R = Q;
+  for(int i=0;i<3;i++) {
+    R(i,0) = log_0;
+    R(i,2) = log_0;
+    double sum = logsum(R(i,1),R(i,3));
+    R(i,1) -= sum;
+    R(i,3) -= sum;
+  }
+
+  /* Initial Distribution */
+  /* This is for the character before the first character - can't be E */
+  pi[0] = log(1.0-delta-delta*(1.0-delta) );
+  pi[1] = log(delta);
+  pi[2] = log(delta *(1.0-delta) );
+  pi[3] = log_0;  // must be log_0
+
+  construct_lengthp(maxlength);
 }
 
 void Parameters::setlength(int b,double l) {
   assert(l >= 0);
   assert(b >= 0 and b < T.branches());
   T.branch(b).length() = l;
-  substitution_[b] = SModel->transition_p(T.branch(b).length());
+  substitution_[b] = SModel_->transition_p(T.branch(b).length());
 }
 
 
 void Parameters::recalc() {
   substitution_.clear();
   for(int b=0;b<T.branches();b++) 
-    substitution_.push_back(SModel->transition_p(T.branch(b).length()));
+    substitution_.push_back(SModel_->transition_p(T.branch(b).length()));
 }
 
 
 Parameters& Parameters::operator=(const Parameters& P) {
   substitution_ = P.substitution_;
-  delete SModel;
-  SModel = P.SModel->clone();
+  delete SModel_;
+  SModel_ = P.SModel_->clone();
   IModel = P.IModel;
   T = P.T;
   branch_mean = P.branch_mean;
@@ -160,13 +226,13 @@ Parameters& Parameters::operator=(const Parameters& P) {
 }
 
 Parameters::Parameters(const Parameters& P):
-  substitution_(P.substitution_),SModel(P.SModel->clone()),IModel(P.IModel),T(P.T),
+  substitution_(P.substitution_),SModel_(P.SModel_->clone()),IModel(P.IModel),T(P.T),
   branch_mean(P.branch_mean)
 { }
 
 
-Parameters::Parameters(SubstitutionModel& SM,double lambda_O,double lambda_E,const SequenceTree& t)
-  :SModel(SM.clone()),IModel(lambda_O,lambda_E),T(t)
+Parameters::Parameters(const SubstitutionModel& SM,const IndelModel& IM,const SequenceTree& t)
+  :SModel_(SM.clone()),IModel(IM),T(t)
 {
   branch_mean = 0.1;
   recalc();

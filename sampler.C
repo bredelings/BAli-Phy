@@ -28,7 +28,6 @@
 
 // 28. Make sampling routines return P(Alignment|Data,Tree, etc)
 //     Check to make sure that this is proportional to the likelihood...
-
 void do_setup(Arguments& args,alignment& A,SequenceTree& T)
 {
   /* ----- Alphabets to try ------ */
@@ -71,7 +70,6 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
   else 
     T.read(args["tree"]);
 }
-
 
 
 int main(int argc,char* argv[]) { 
@@ -151,8 +149,20 @@ int main(int argc,char* argv[]) {
     std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
     smodel->frequencies(empirical_frequencies(A));
     
-    /*------------ Start the Sampling ---------------*/
-    Parameters Theta(*smodel,lambda_O,lambda_E,T);
+    /*-------------Choose an indel model--------------*/
+    int maxlength = 2000;
+    if (maxlength < 2*A.length())
+      maxlength = 2*A.length();
+
+    IndelModel1 IM1(maxlength,lambda_O,lambda_E);
+    IndelModel2 IM2(maxlength,lambda_O,lambda_E);
+    IndelModel* imodel = &IM2;
+    if (args.set("Imodel") and args["Imodel"] == "ordered")
+      imodel= &IM1;
+
+    Parameters Theta(*smodel,*imodel,T);
+
+    /*-------------Start the Sampling----------------*/
     MCMC sampler;
     sampler.add(sample_alignments,1,"sample_alignments:alignment");
     sampler.add(sample_nodes,1,"sample_nodes:nodes");

@@ -5,11 +5,12 @@
 #include "mytypes.H"
 #include "tree.H"
 #include <valarray>
-#include "SModel.H"
+#include "smodel.H"
 
 /******************************* InDel Models ***********************************/
 
 class IndelModel {
+protected:
   std::vector<double> p_length;
   
   void construct_lengthp(int);
@@ -22,41 +23,60 @@ public:
   ublas::matrix<double> Q;
   ublas::matrix<double> R;
 
+  double lengthp(int i) const {return p_length[i];}
+
+  IndelModel();
+};
+
+class IndelModel1 : public IndelModel {
+public:
   double tau;     //probability of going -> E
   double delta;   //probability of starting a gap: M -> G1,G2
   double epsilon; //probability of extending a gap: G1->G1,  G2->G2
 
-  double lengthp(int i) const {return p_length[i];}
-
-  explicit IndelModel(double LO,double LE);
+  explicit IndelModel1(int maxlength,double LO,double LE);
 };
 
+class IndelModel2 : public IndelModel {
+public:
+  double tau;     //probability of going -> E
+  double delta;   //probability of starting a gap: M -> G1,G2
+  double epsilon; //probability of extending a gap: G1->G1,  G2->G2
+  double beta;    //unweighting factor for adjacent G1/G2 gaps
 
+  explicit IndelModel2(int maxlength,double LO,double LE,double b=0);
+};
 
 /******************************* parameter-containing class **************************/
 
 class Parameters {
   vector<Matrix> substitution_;
 
-public:
   //FIXME - this should be private - need an interface for changing branch lengths (?)
 
-  /*-------We own this----------*/
-  SubstitutionModel* SModel;
+  /*--------We own this----------*/
+  SubstitutionModel* SModel_;
 
-  const alphabet& get_alphabet() const {return SModel->Alphabet();}
+public:
+  /*---------Indel Model---------*/
+  IndelModel IModel;
 
-  const std::valarray<double>& frequencies() const {return SModel->frequencies();}
+  /*------------tree-------------*/
+  SequenceTree T;
 
+  const SubstitutionModel& SModel() const {return *SModel_;}
+
+  const alphabet& get_alphabet() const {return SModel_->Alphabet();}
+
+  const std::valarray<double>& frequencies() const {return SModel_->frequencies();}
+
+  void fiddle() {SModel_->fiddle();recalc();}
+
+  //FIXME - why this hack?
   const Matrix& substitution(int i) const {if (i==T.num_nodes()-2) i--;return substitution_[i];}
 
   void setlength(int,double);
   
-  /* Indel Model */
-  IndelModel IModel;
-
-  SequenceTree T;
-
   void recalc();
 
   // parameter for exponential prior on branch length
@@ -65,8 +85,8 @@ public:
   Parameters& operator=(const Parameters&);
 
   Parameters(const Parameters&);
-  Parameters(SubstitutionModel&,double,double,const SequenceTree&);
-  ~Parameters() {delete SModel;}
+  Parameters(const SubstitutionModel&,const IndelModel&,const SequenceTree&);
+  ~Parameters() {delete SModel_;}
 };
 
 #endif

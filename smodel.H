@@ -35,7 +35,7 @@ public:
   const std::valarray<double>& frequencies() const {return pi;}
   virtual void frequencies(const std::valarray<double>& pi_) {pi=pi_; recalc();}
   
-  virtual double prior() {return 1;}
+  virtual double prior() const {return 0.0;}
 
   // transition rates
   virtual const Matrix& rates() const =0;
@@ -106,7 +106,7 @@ public:
   double kappa() const {return parameters_[0];}
   void kappa(double k) {parameters_[0]=k;recalc();}
 
-  virtual double prior();
+  virtual double prior() const;
 
   HKY(const alphabet& a): EquilibriumModel(a,1)
   { 
