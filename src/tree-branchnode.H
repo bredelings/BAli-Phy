@@ -45,6 +45,8 @@ public:
   BranchNode* operator*() const {return here;}
 
   BN_iterator& operator++() {
+    assert(here);
+    assert(here->out);
     here = here->out->next;
     if (here == start) circuits_++;
     return *this;

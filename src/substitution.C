@@ -65,21 +65,24 @@ namespace substitution {
     int b2;
     int source;
 
-    peeling_info(const const_branchview& db,const Tree& T,vector<const_branchview>& before)
+    peeling_info(const const_branchview& db,const Tree& T)
       :b(db),
        b1(-1),
        b2(-1),
        source(db.source())
     {
-      before.clear();
-      append(db.branches_before(),before);
-      if (before.size() >= 1)
-	b1 = before[0];
+      const_in_edges_iterator i = db.branches_before();
+      if (i) {
+	b1 = *i;
+	i++;
+      }
 
-      if (before.size() >= 2)
-	b2 = before[1];
+      if (i) {
+	b2 = *i;
+	i++;
+      }
 
-      assert(before.size() < 3);
+      assert(not i);
     }
   };
 
@@ -153,7 +156,6 @@ namespace substitution {
     vector<peeling_info> peeling_operations;
     peeling_operations.reserve(T.n_branches());
 
-    vector<const_branchview> temp; temp.reserve(3);
     vector<const_branchview> branches; branches.reserve(T.n_branches());
     append(T[root].branches_in(),branches);
 
@@ -161,7 +163,7 @@ namespace substitution {
 	const const_branchview& db = branches[i];
 	if (not up_to_date[db]) {
 	  append(db.branches_before(),branches);
-	  peeling_operations.push_back(peeling_info(db,T,temp));
+	  peeling_operations.push_back(peeling_info(db,T));
 	}
     }
 
@@ -224,7 +226,6 @@ namespace substitution {
 
     //----------- determine the operations to perform -----------------//
     vector<peeling_info> branches = get_branches(T,root,up_to_date);
-    branches = get_branches(T,root,up_to_date);
 
     //-------- propagate info along branches ---------//
     peel(branches,distributions,residues,transition_P);
