@@ -5,13 +5,15 @@
 #include "alignment.H"
 #include "parameters.H"
 #include <vector>
+#include <valarray>
 #include "rng.H"
 
 // how to have different models, with different moves
 // and possibly moves between models?
 
 namespace MCMC {
-  enum result_t {success,failure,no_result};
+
+  typedef valarray<double> result_t;
 
   typedef result_t (*atomic_move)(alignment&,Parameters&);
   typedef result_t (*atomic_move_arg)(alignment&,Parameters&,int);
@@ -28,9 +30,9 @@ namespace MCMC {
   public:
     vector<string> attributes;
 
+    result_t total_results;
+
     double iterations;
-    int failures;
-    int successes;
 
     /// Make a copy of this object
     virtual Move* clone() const =0;

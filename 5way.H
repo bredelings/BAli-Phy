@@ -13,7 +13,10 @@ namespace states {
 };
 
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
-namespace A3 {
+namespace A5 {
+
+  vector<int> get_branches(const alignment& A, const tree& T,int b);
+  vector<int> get_nodes(const alignment& A, const tree& T,int b);
 
 // bits 3,2,1,0     = node present mask
 // bits 98,76,54    = sub-alignment state
@@ -38,30 +41,32 @@ namespace A3 {
 
   int findstate(int states);
 
-  /// Does state S emit in sequence 1?
-  int di(int S);
   /// Does state S emit in sequence 2?
-  int dj(int S);
+  int di(int S);
   /// Does state S emit in sequence 3?
+  int dj(int S);
+  /// Does state S emit in sequence 4?
   int dk(int S);
-  /// Does state S emit in sequence 0?
+  /// Does state S emit in sequence 5?
   int dl(int S);
-  /// Does state S emit in sequence 2 or 3?
-  int dc(int S);
+  /// Does state S emit in sequence 0?
+  int dm(int S);
+  /// Does state S emit in sequence 1?
+  int dn(int S);
 
   double getQ(int S1,int S2,const IndelModel& IModel);
   Matrix createQ(const IndelModel& IModel);
 
   alignment construct(const alignment& old, const vector<int>& path, 
-		      int n0,int n1,int n2,int n3,const tree& T,
-		      const vector<int>& seq1,const vector<int>& seq2, const vector<int>& seq3);
+		      const vector<int>& norder,const tree& T,
+		      const vector< vector<int> >& seqs);
 
-  vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3);
-  alignment project(const alignment& A1,int n0,int n1,int n2,int n3);
+  vector<int> getorder(const alignment& A,const vector<int>& norder);
+  alignment project(const alignment& A,const vector<int>& norder);
 };
 
 
-vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3);
+vector<int> get_path_5way(const alignment& A,const vector<int>& norder);
 
 
 #endif

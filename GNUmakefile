@@ -24,9 +24,9 @@ all: sampler
 LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0
 DEBUG = pipe g3 # pg
 EXACTFLAGS = --param max-inline-insns-single=500 --param max-inline-insns-auto=150
-DEFS =  NDEBUG # NDEBUG_DP
+DEFS =  # NDEBUG NDEBUG_DP
 WARN = all no-sign-compare overloaded-virtual
-OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 O3
+OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 # O3
 LDFLAGS = #-pg # -static 
 LI=${CXX}
 
@@ -48,17 +48,19 @@ ALLSOURCES = ${SOURCES}
 ${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%} # libgsl.a libgslcblas.a libm.a
 
 
-treecount: treecount.o tree.o sequencetree.o arguments.o util.o rng.o ${LIBS:%=-l%}
+bin/treecount: treecount.o tree.o sequencetree.o arguments.o util.o rng.o ${LIBS:%=-l%}
 
-treedist: treedist.o tree.o sequencetree.o arguments.o
+bin/treedist: treedist.o tree.o sequencetree.o arguments.o
 
-treetosrq: treetosrq.o tree.o sequencetree.o arguments.o
+bin/treetosrq: treetosrq.o tree.o sequencetree.o arguments.o
 
-srqtoplot: arguments.o
+bin/srqtoplot: arguments.o
 
-reroot: reroot.o tree.o sequencetree.o arguments.o
+bin/srqanalyze: srqanalyze.o arguments.o rng.o ${LIBS:%=-l%}
 
-make_random_tree: randomtree.o tree.o sequencetree.o arguments.o util.o\
+bin/reroot: reroot.o tree.o sequencetree.o arguments.o
+
+bin/make_random_tree: randomtree.o tree.o sequencetree.o arguments.o util.o\
 	 rng.o  ${LIBS:%=-l%}
 
 #-----------------Other Files
@@ -67,6 +69,7 @@ OTHERFILES +=
 #------------------- End
 DEVEL = ../..
 # includes += /usr/local/include/
+includes += .
 src      += 
 include $(DEVEL)/GNUmakefile
 # CC=gcc-3.4

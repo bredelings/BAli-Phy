@@ -6,20 +6,25 @@
 //FIXME - are we not guaranteed that leaf nodes will be the children of
 // their branch?
 
-MCMC::result_t do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
+bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
   if (P.accept_MH(A,P,A,P2)) {
     P=P2;
     std::cerr<<"accepted\n";
-    return MCMC::success;
+    return true;
   }
   else {
     std::cerr<<"rejected\n";
-    return MCMC::failure;
+    return false;
   }
 }
 
 MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool up) {
   const SequenceTree& T = P.T;
+
+  MCMC::result_t result(0.0,6);
+  result[0] = 1.0;
+  result[2] = 1.0;
+  result[4] = 1.0;
 
   /*--------------- Find the branch names ----------------*/
   int b2 = -1;
@@ -30,7 +35,7 @@ MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool 
     int parent = T.branch(b).parent();
     if ((int)T.branch_up(child) == (int)T.branch_up(parent)) {
       if (not T[parent].has_left())
-	return MCMC::failure;
+	return result; //failure
       b2 = T.branch_up(T[parent].left());
       b3 = T.branch_up(T[parent].right());
     }
@@ -42,7 +47,7 @@ MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool 
     }
   }
   else {
-    if (b < T.leaves()) return MCMC::failure;
+    if (b < T.leaves()) return result; //failure
     b2 = T.branch(b).child().left();
     b2 = T.branch_up(b2);
 
@@ -69,40 +74,57 @@ MCMC::result_t slide_branch_length(const alignment& A, Parameters& P,int b,bool 
   
   /*--------------- Do the M-H step if OK---------------*/
   
-  MCMC::result_t r = do_MH_move(A,P,P2);
-  if (r == MCMC::success) 
+  bool success = do_MH_move(A,P,P2);
+  if (success) {
     std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
-  else
+    result[1] = 1;
+    result[3] = std::abs(newlength - length);
+    result[5] = std::abs(log((newlength+0.001)/(length+0.001)));
+    result[5] += std::abs(log((T.branch(b2).length()+0.001)/(T.branch(b2).length()+epsilon+0.001)));
+    result[5] += std::abs(log((T.branch(b3).length()+0.001)/(T.branch(b3).length()+epsilon+0.001)));
+  }
+  else 
     std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
-  return r;
+  return result;
 }
 
 
 MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
-
-    Parameters P2 = P;
-    /********* Propose increment 'epsilon' ***********/
-    const double sigma = 0.3/2;
-    const double length = P2.T.branch(b).length();
-    double newlength = length + gaussian(0,sigma);
-    if (newlength<0) newlength = -newlength;
-
-    /******** Calculate propsal ratio ***************/
-    P2.setlength(b,newlength);
-
-    /********** Do the M-H step if OK**************/
-    MCMC::result_t r = do_MH_move(A,P,P2);
-    if (r == MCMC::success) 
-      std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
-    else
-      std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
-    return r;
+  MCMC::result_t result(0.0,6);
+  result[0] = 1.0;
+  result[2] = 1.0;
+  result[4] = 1.0;
+  
+  Parameters P2 = P;
+  /********* Propose increment 'epsilon' ***********/
+  const double sigma = 0.3/2;
+  const double length = P2.T.branch(b).length();
+  double newlength = length + gaussian(0,sigma);
+  if (newlength<0) newlength = -newlength;
+  
+  /******** Calculate propsal ratio ***************/
+  P2.setlength(b,newlength);
+  
+  /********** Do the M-H step if OK**************/
+  if (do_MH_move(A,P,P2)) {
+    std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
+    result[1] = 1;
+    result[3] = std::abs(length - newlength);
+    result[5] = std::abs(log((newlength+0.001)/(length+0.001)));
+  }
+  else
+    std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
+  return result;
 }
 
 MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
-  if (not P.SModel().full_tree)
-    return MCMC::no_result;
+  MCMC::result_t result(0.0,10);
 
+  if (not P.SModel().full_tree)
+    return result; //no_result
+
+  result[0] = 1.0;
+  
 
   /********* Propose increment 'epsilon' ***********/
   const double sigma = 0.4/2;
@@ -113,35 +135,49 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
 
   // If the length is positive, simply propose a length change
   if (newlength >= 0) {
+    result[2] = 1.0;
+    result[6] = 1.0;
+
     Parameters P2 = P;
     P2.setlength(b,newlength);
 
     /********** Do the M-H step if OK**************/
-    MCMC::result_t r = do_MH_move(A,P,P2);
-    if (r == MCMC::success) 
+
+    if (do_MH_move(A,P,P2)) {
       std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
-      else
-	std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
-      return r;
+      result[1] = 1;
+      result[3] = 1;
+      result[7] = std::abs(newlength - length);
     }
-    // If the length is NOT positive, then propose a T change as well
-    else {
-      vector<int> nodes = get_nodes(A,P.T,b);
+    else
+      std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
+  }
+  // If the length is NOT positive, then propose a T change as well
+  else {
+    result[4] = 1.0;
+    result[8] = 1.0;
 
-      /****** Generate the Different Topologies *******/
-      Parameters P2 = P;
-      Parameters P3 = P;
-
-      SequenceTree& T2 = P2.T;
-      SequenceTree& T3 = P3.T;
-      
-      T2.exchange(nodes[1],nodes[2]);
-      T3.exchange(nodes[1],nodes[3]);
-
-      P2.setlength(b,-newlength);
-      P3.setlength(b,-newlength);
-
-      return sample_topology(A,P,P2,P3,b);
+    vector<int> nodes = get_nodes(A,P.T,b);
+    
+    /****** Generate the Different Topologies *******/
+    Parameters P2 = P;
+    Parameters P3 = P;
+    
+    SequenceTree& T2 = P2.T;
+    SequenceTree& T3 = P3.T;
+    
+    T2.exchange(nodes[1],nodes[2]);
+    T3.exchange(nodes[1],nodes[3]);
+    
+    P2.setlength(b,-newlength);
+    P3.setlength(b,-newlength);
+    
+    if (sample_topology(A,P,P2,P3,b)) {
+      result[1] = 1;
+      result[5] = 1;
+      result[9] = std::abs(length - newlength);
     }
+  }
+  return result;
 }
 

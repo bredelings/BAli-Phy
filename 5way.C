@@ -1,12 +1,12 @@
-#include "3way.H"
+#include "5way.H"
 #include "bits.H"
 #include "logsum.H"
 
 using std::valarray;
 
-using namespace A3;
+using namespace A5;
 
-vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
+vector<int> get_path_5way(const alignment& A,int n0,int n1,int n2,int n3) {
 
   //----- Store whether or not characters are present -----//
   vector<int> present;
@@ -53,7 +53,53 @@ vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
   return path;
 }
 
-namespace A3 {
+namespace A5 {
+
+  /********* Which nodes adjacent to this brranch *********/
+  vector<int> get_branches(const alignment& A, const tree& T,int b) {
+    vector<int> branches(5);
+    
+    branches[0] = b;
+    int n0 = T.branch(b).child();
+    int n1 = T.branch(b).parent();
+    assert(n1 = T[n0].parent());
+    
+    // We assume an internal branch
+    branches[1] = T[n0].left().branch_up();
+    branches[2] = T[n0].right().branch_up();
+    // This is only correct as-is if this is the root branch
+    branches[3] = T[n1].left().branch_up();
+    branches[4] = T[n1].right().branch_up();
+
+    if (branches[3] == b)
+      branches[3] = T[n1].branch_up();
+    else if (branches[4] == b)
+      branches[4] = T[n1].branch_up();
+    
+    return branches;
+  }
+
+  /********* Which nodes adjacent to this brranch *********/
+  vector<int> get_nodes(const alignment& A, const tree& T,int b) {
+    vector<int> nodes(6);
+    
+    nodes[0] = T.branch(b).child();
+    nodes[1] = T.branch(b).parent();
+    assert(nodes[5] = T[nodes[4]].parent());
+    
+    // This must be an internal branch
+    nodes[2] = T[nodes[0]].left();
+    nodes[3] = T[nodes[0]].right();
+    nodes[4] = T[nodes[1]].left();
+    nodes[5] = T[nodes[1]].right();
+    
+    if (nodes[4] == nodes[0])
+      nodes[4] = T[nodes[1]].parent();
+    else if (nodes[5]==nodes[0])
+      nodes[5] = T[nodes[1]].parent();
+    
+    return nodes;
+  }
 
   vector<int> get_state_emit() {
     vector<int> state_emit(nstates+1);
@@ -196,7 +242,7 @@ inline int findstate(int states) {
   std::abort();
 }
 
-using namespace A3;
+using namespace A5;
 
 int di(int S) {
   S = getstates(S);
@@ -419,66 +465,5 @@ alignment construct(const alignment& old, const vector<int>& path,
 }
 
 
-
-// If we are just getting the order of the columns in the 3-way alignment
-// the this shouldn't affect anything else, should it??
-vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3) {
-
-  vector<int> columns;
-  vector<int> AP;                     // alignments present
-
-  //----- Record which sub-alignments present per column ------//
-  for(int column=0;column<A.length();column++) {
-    int bits=0;
-    if (not A.gap(column,n0))
-      bits |= (1<<0);
-    if (not A.gap(column,n1))
-      bits |= (1<<1);
-    if (not A.gap(column,n2))
-      bits |= (1<<2);
-    if (not A.gap(column,n3))
-      bits |= (1<<3);
-
-    int states = bits_to_states(bits);
-    int ap = states>>6;
-    AP.push_back(ap);
-    if (ap) {
-      columns.push_back(column);
-    }
-  }
-
-  //-------- Re-order unordered columns by AP order ---------//
-  for(int i=0;i<columns.size()-1;) {
-    int ap1 = AP[columns[i  ]];
-    int ap2 = AP[columns[i+1]];
-    if (not (ap1&ap2) and ap1 > ap2) {
-      std::swap(columns[i],columns[i+1]);
-      if (i>0) i--;
-    }
-    else
-      i++;
-  }
-
-  return columns;
-}
-
-alignment project(const alignment& A1,int n0,int n1,int n2,int n3) {
-  alignment A2;
-  A2.add_sequence(A1.seq(n0));
-  A2.add_sequence(A1.seq(n1));
-  A2.add_sequence(A1.seq(n2));
-  A2.add_sequence(A1.seq(n3));
-
-  vector<int> columns = getorder(A1,n0,n1,n2,n3);
-  A2.changelength(columns.size());
-  for(int i=0;i<A2.length();i++) {
-    A2(i,0) = A1(columns[i],n0);
-    A2(i,1) = A1(columns[i],n1);
-    A2(i,2) = A1(columns[i],n2);
-    A2(i,3) = A1(columns[i],n3);
-  }
-
-  return A2;
-}
 
 }

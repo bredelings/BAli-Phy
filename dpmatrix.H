@@ -68,6 +68,9 @@ public:
   // functions on paths
   vector<int> sample_path();
 
+  // compute the probability of all possible paths through the HMM
+  double Pr_sum_all_paths();
+
   DParray(int,const vector<int>&,const vector<double>&,const Matrix&);
 
   virtual ~DParray() {}
@@ -132,6 +135,9 @@ public:
   double emitM_(int i,int j);
   double emit__(int i,int j);
 
+
+  // compute the probability of all possible paths through the HMM
+  double Pr_sum_all_paths();
 
   DPmatrix::DPmatrix(const vector<int>&,
 		     const vector<double>&,

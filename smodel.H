@@ -15,15 +15,17 @@ protected:
   /// Model parameters
   vector<double> parameters_;
 
+public:
+
+  bool full_tree;
+protected:
   /// Construct a substitution model with 's' parameters
-  Model(int s): parameters_(s) 
+  Model(int s): parameters_(s),full_tree(true)
   { }
 
   /// Recalculate internal data based on current parameters
   virtual void recalc() =0;
 public:
-
-  bool full_tree;
 
   /// The alphabet we are modelling substitution on
   virtual const alphabet& Alphabet() const =0;

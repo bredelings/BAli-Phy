@@ -58,7 +58,7 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
   remove_empty_columns(A);
 
   if (A.num_sequences() == 0) 
-    throw myexception(string("Alignment file") + args["align"] + "didn't contain any sequences!");
+    throw myexception(string("Alignment file ") + args["align"] + "didn't contain any sequences!");
     
   if (args.set("randomize_alignment"))
     A = randomize(A);
@@ -188,11 +188,16 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 					   sample_alignments2_one,
 					   branches)
 			     );
-  if (P.T.leaves() >2) 
+  if (P.T.leaves() >2) {
     alignment_branch_moves.add(0.1,MoveArgSingle("sample_tri:alignment:nodes",
 						 sample_tri_one,
 						 branches)
 			       );
+    alignment_branch_moves.add(0.1,MoveArgSingle("sample_tri_branch:alignment:nodes:length",
+						 sample_tri_branch_one,
+						 branches)
+			       );
+  }
   alignment_moves.add(1, alignment_branch_moves);
 
   // aligment :: sample_nodes
@@ -348,6 +353,8 @@ int main(int argc,char* argv[]) {
     substitution::MultiRateModel *full_smodel = 0;
     if (args.set("gamma")) {
       int n=4;
+      if (args["gamma"] != "gamma")
+	n = convertTo<int>(args["gamma"]);
       full_smodel = new substitution::GammaRateModel(*base_smodel,n);
     }
     else 
@@ -372,6 +379,9 @@ int main(int argc,char* argv[]) {
       	T.branch(i).length() = 0;
       }
     }
+    else
+      full_smodel->full_tree = true;
+
 
     /*-------------Choose an indel model--------------*/
     int IMlength = 500;    //FIXME - perhaps we should choose \tau here
@@ -395,11 +405,15 @@ int main(int argc,char* argv[]) {
     if (args["gaps"]== "star") {
       imodel->full_tree = false;
     }
+    else
+      imodel->full_tree = true;
     
 
     /*-------------Create the Parameters object--------------*/
     Parameters P(*full_smodel,*imodel,T);
-    std::cout<<"Using substitution model: "<<P.SModel().name()<<endl<<endl;
+    std::cout<<"Using substitution model: "<<P.SModel().name()<<endl;
+    std::cout<<"Full tree for substitution: "<<P.SModel().full_tree<<endl<<endl;
+    std::cout<<"Full tree for gaps: "<<P.IModel().full_tree<<endl<<endl;
 
     if (args.set("pinning") and args["pinning"] == "enable") {
       P.features |= (1<<0);

@@ -219,6 +219,16 @@ vector<int> DParray::sample_path() {
   return path;
 }
 
+double DParray::Pr_sum_all_paths() {
+  const int I = size()-1;
+
+  double total = log_0;
+  for(int state1=0;state1<nstates();state1++)
+    total = logsum(total,(*this)[state1][I] + GQ(state1,endstate()));
+
+  return total;
+}
+
 DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M)
   :HMM(v1,v2,M),vector< vector<double> >(nstates(),vector<double>(l+1,log_0)),length(l+1)
 { 
@@ -491,6 +501,18 @@ vector<int> DPmatrix::sample_path() {
   std::reverse(path.begin(),path.end());
   return path;
 }
+
+double DPmatrix::Pr_sum_all_paths() {
+  const int I = size1()-1;
+  const int J = size2()-1;
+
+  double total = log_0;
+  for(int state1=0;state1<nstates();state1++)
+    total = logsum(total,(*this)[state1](I,J)+GQ(state1,endstate()));
+
+  return total;
+}
+
 
 DPmatrix::DPmatrix(const vector<int>& v1,
 		   const vector<double>& v2,

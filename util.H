@@ -27,6 +27,9 @@ std::string convertToString(T t)
 } 
 
 inline double wrap(double x,double max) {
+  if (max == 0)
+    return 0;
+
   // flip around to position x axis
   if (x < 0)
     x = -x;

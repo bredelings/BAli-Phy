@@ -16,19 +16,23 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& Theta,int b)
 alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 			       int node1,int node2);
 
-//Resample the alignment parent->child
+/// Resample the 3-star alignment and branch length, holding the n2/n3 order constant.
+bool tri_sample_alignment_branch(alignment&,Parameters&,
+				 int node1,int node2,int b,double length2);
+
+/// Resample the alignment parent->child
 alignment sample_alignment(const alignment& old,const Parameters&,int b);
 
-//Resample the alignment parent->child
+/// Resample the alignment parent->child
 alignment sample_alignment2(const alignment& old,const Parameters&,int b);
 
-//Resample gap/non-gap for internal nodes, where not already determined
+/// Resample gap/non-gap for internal nodes, where not already determined
 alignment sample_node(const alignment& old,const Parameters&,int node);
-//Resample gap/non-gap for internal nodes, where not already determined
+/// Resample gap/non-gap for internal nodes, where not already determined
 alignment sample_node2(const alignment& old,const Parameters&,int node);
 
-//Resample gap/non-gap for 2 internal nodes, and the topology, with specified branch lengths
-MCMC::result_t sample_topology(alignment& A,Parameters&,const Parameters&, const Parameters&, int);
+/// Resample gap/non-gap for 2 internal nodes, and the topology, with specified branch lengths
+bool sample_topology(alignment& A,Parameters&,const Parameters&, const Parameters&, int);
 
 /// Which nodes are adjacent to this branch?
 vector<int> get_nodes(const alignment& A, const tree& T,int b);
@@ -50,5 +54,6 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& Theta,int b)
 MCMC::result_t change_parameters(alignment& A,Parameters& Theta);
 
 MCMC::result_t sample_tri_one(alignment&, Parameters&,int);
+MCMC::result_t sample_tri_branch_one(alignment&,Parameters&,int);
 
 #endif

@@ -263,7 +263,7 @@ vector<int> get_path(const alignment& A,int b) {
 
 /********* Which nodes adjacent to this brranch *********/
 vector<int> get_nodes(const alignment& A, const tree& T,int b) {
-  vector<int> nodes(5);
+  vector<int> nodes(6);
 
   nodes[4] = T.branch(b).child();
   nodes[5] = T.branch(b).parent();
@@ -353,10 +353,8 @@ alignment construct(const alignment& old,const tree& T,const vector<int>& path,i
 }
 
 
-MCMC::result_t sample_topology_sgaps(alignment& A,Parameters& P1,const Parameters& P2, 
+bool sample_topology_sgaps(alignment& A,Parameters& P1,const Parameters& P2, 
 				     const Parameters& P3,int b) {
-  const IndelModel& IModel = P1.IModel();
-
   double Pr1 = P1.probability(A,P1);
   double Pr2 = P1.probability(A,P2);
   double Pr3 = P1.probability(A,P3);
@@ -364,21 +362,21 @@ MCMC::result_t sample_topology_sgaps(alignment& A,Parameters& P1,const Parameter
   /*********** Choose A Topology ************/
   int choice = choose(Pr1,Pr2,Pr3);
 
-  MCMC::result_t result = MCMC::failure;
+  bool success = false;
   if (choice == 1) {
     P1 = P2;
-    result = MCMC::success;
+    success = true;
   }
   else if (choice == 2) {
     P1 = P3;
-    result = MCMC::success;
+    success = true;
   }
-  return result;
+  return true;
 }
 
 
 /// Do a Gibbs sample between a set of three topologies/parameters
-MCMC::result_t sample_topology(alignment& A,Parameters& P1,const Parameters& P2, 
+bool sample_topology(alignment& A,Parameters& P1,const Parameters& P2, 
 			       const Parameters& P3,int b) {
   const IndelModel& IModel = P1.IModel();
 
@@ -472,13 +470,16 @@ MCMC::result_t sample_topology(alignment& A,Parameters& P1,const Parameters& P2,
   std::cerr<<" choice = "<<choice<<std::endl;
   if (choice != 0) {
     P1 = *chosen_P;
-    return MCMC::success;
+    return true;
   }
   else
-    return MCMC::failure;
+    return false;
 }
 
 MCMC::result_t sample_topology(alignment& A,Parameters& P1,int b) {
+  MCMC::result_t result(0.0,2);
+  result[0] = 1.0;
+
   vector<int> nodes = get_nodes(A,P1.T,b);
 
   /****** Generate the Different Topologies *******/
@@ -491,9 +492,15 @@ MCMC::result_t sample_topology(alignment& A,Parameters& P1,int b) {
   T2.exchange(nodes[1],nodes[2]);
   T3.exchange(nodes[1],nodes[3]);
   
+  bool success;
   if (P1.IModel().full_tree)
-    return sample_topology(A,P1,P2,P3,b);
+    success = sample_topology(A,P1,P2,P3,b);
   else
-    return sample_topology_sgaps(A,P1,P2,P3,b);
+    success = sample_topology_sgaps(A,P1,P2,P3,b);
+
+  if (success)
+    result[1] = 1;
+
+  return result;
 }
 

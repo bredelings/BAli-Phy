@@ -9,11 +9,13 @@
 #include "substitution.H"
 
 namespace MCMC {
-using std::valarray;
+  using std::valarray;
+  using std::cerr;
+  using std::cout;
 
 
 Move::Move(const string& v)
-  :enabled_(true),attributes(split(v,':')),iterations(0),failures(0),successes(0)
+  :enabled_(true),attributes(split(v,':')),iterations(0)
 { }
 
 void Move::enable(const string& s) {
@@ -40,26 +42,29 @@ void Move::disable(const string& s) {
 
 void Move::show_enabled(int depth) const {
   for(int i=0;i<depth;i++)
-    std::cout<<"  ";
-  std::cout<<"move "<<attributes[0]<<": ";
+    cout<<"  ";
+  cout<<"move "<<attributes[0]<<": ";
   if (enabled_)
-    std::cout<<"enabled.\n";
+    cout<<"enabled.\n";
   else 
-    std::cout<<"DISABLED.\n";
+    cout<<"DISABLED.\n";
 }
 
 
 void Move::print_move_stats(int depth) const {
   for(int i=0;i<depth;i++)
-    std::cerr<<"  ";
-  std::cerr<<"move "<<attributes[0]<<": ";
-  std::cerr<<"     cycles = "<<iterations;
-  int total = successes + failures;
-  if (total > 0) {
-    std::cerr<<"         success = "<<double(successes)/total;
-    std::cerr<<" ("<<successes<<"/"<<total<<")";
+    cerr<<"  ";
+  cerr<<"move "<<attributes[0]<<": ";
+  cerr<<"     cycles = "<<iterations;
+  cerr<<"     ";
+
+  assert(total_results.size() %2 == 0);
+
+  for(int i=0;i<total_results.size()/2;i++) {
+    cerr<<" E X"<<i<<" = "<<total_results[2*i+1]/total_results[2*i]
+	<<" [n"<<i<<"="<<total_results[2*i]<<"]";
   }
-  std::cerr<<endl;
+  cerr<<endl;
 }
 
 void MoveGroupBase::add(double l,const Move& m) {
@@ -143,15 +148,11 @@ result_t MoveGroup::iterate(alignment& A,Parameters& P,int i) {
   assert(i < order.size());
 
 #ifndef NDEBUG
-  std::cerr<<" move = "<<attributes[0]<<endl;
-  std::cerr<<"   submove = "<<moves[order[i]]->attributes[0]<<endl;
+  cerr<<" move = "<<attributes[0]<<endl;
+  cerr<<"   submove = "<<moves[order[i]]->attributes[0]<<endl;
 #endif
 
   result_t r = moves[order[i]]->iterate(A,P,suborder[i]);
-  if (r == success)
-    successes++;
-  if (r == failure)
-    failures++;
   return r;
 }
 
@@ -229,14 +230,17 @@ void MoveOne::getorder(double l) {
 
 result_t SingleMove::iterate(alignment& A,Parameters& P,int) 
 {
-  std::cerr<<" [single]move = "<<attributes[0]<<endl;
+  cerr<<" [single]move = "<<attributes[0]<<endl;
 
   iterations++;
   result_t r = (*m)(A,P);
-  if (r == success)
-    successes++;
-  if (r == failure)
-    failures++;
+
+  // get the right size for results
+  if (not total_results.size())
+    total_results.resize(r.size(),0.0);
+  assert(r.size() == total_results.size());
+
+  total_results += r;
   return r;
 }
 
@@ -356,14 +360,18 @@ void MoveEach::print_move_stats(int depth) const {
 
 result_t MoveArgSingle::operator()(alignment& A,Parameters& P,int arg) {
 
-  std::cerr<<" [single]move = "<<attributes[0]<<endl;
+  cerr<<" [single]move = "<<attributes[0]<<endl;
 
   iterations++;
   result_t r = (*m)(A,P,args[arg]);
-  if (r == success)
-    successes++;
-  if (r == failure)
-    failures++;
+
+  // get the right size for results
+  if (not total_results.size())
+    total_results.resize(r.size(),0.0);
+  assert(r.size() == total_results.size());
+
+  total_results += r;
+
   return r;
 }
     
@@ -428,25 +436,25 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
   for(int i=0;i<T.leaves();i++)
     assert(T.seq(i) == A.seq(i).name);
   
-  std::cout<<"rate matrix = \n";
+  cout<<"rate matrix = \n";
   for(int i=0;i<P.get_alphabet().size();i++) {
     for(int j=0;j<P.get_alphabet().size();j++) 
-      std::cout<<P.SModel().BaseModel().rates()(i,j)<<" ";
-    std::cout<<endl;
+      cout<<P.SModel().BaseModel().rates()(i,j)<<" ";
+    cout<<endl;
   }
-  std::cout<<endl;
-  std::cout<<"frequencies = ";
+  cout<<endl;
+  cout<<"frequencies = ";
   for(int i=0;i<P.get_alphabet().size();i++) {
-    std::cout<<P.SModel().BaseModel().frequencies()[i]<<" ";
+    cout<<P.SModel().BaseModel().frequencies()[i]<<" ";
   }
-  std::cout<<endl;
-  std::cout<<endl;
+  cout<<endl;
+  cout<<endl;
   
-  std::cout<<"Initial Alignment = \n";
-  print_stats(std::cout,A,P);
+  cout<<"Initial Alignment = \n";
+  print_stats(cout,A,P);
     
-  std::cout<<"Initial Tree = \n";
-  std::cout<<T<<endl<<endl;
+  cout<<"Initial Tree = \n";
+  cout<<T<<endl<<endl;
 
   const int correlation_time = 2*int(log(T.leaves()))+1;
   const int start_after = 100;// 600*correlation_time;
@@ -459,7 +467,7 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
   double MAP_score = Pr;
 
   for(int iterations=0; iterations < max; iterations++) {
-    std::cerr<<"iterations = "<<iterations<<
+    cerr<<"iterations = "<<iterations<<
       "    prior = "<<Pr_prior<<
       "    likelihood = "<<Pr_likelihood<<
       "    logp = "<<Pr<<endl;
@@ -467,9 +475,9 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
     /*------------------ record statistics ---------------------*/
     if (iterations > start_after) {
       if (iterations%correlation_time == 0) {
-	std::cout<<"iterations = "<<iterations<<endl;
-	print_stats(std::cout,A,P);
-	std::cout<<endl<<endl;
+	cout<<"iterations = "<<iterations<<endl;
+	print_stats(cout,A,P);
+	cout<<endl<<endl;
       }
     }
 
@@ -494,8 +502,8 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
     }
 
     if (not MAP_printed and iterations % 50 == 0) {
-      std::cout<<"iterations = "<<iterations<<"       ML = "<<MAP_score<<endl;
-      print_stats(std::cout,MAP_alignment,MAP_P);
+      cout<<"iterations = "<<iterations<<"       ML = "<<MAP_score<<endl;
+      print_stats(cout,MAP_alignment,MAP_P);
       MAP_printed = true;
     }
 
@@ -504,10 +512,10 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
     if (iterations%50 == 0 or std::abs(Pr - new_Pr)>12) {
       print_move_stats();
 #ifndef NDEBUG
-      print_stats(std::cerr,A,P);
-      print_stats(std::cerr,A2,P2);
+      print_stats(cerr,A,P);
+      print_stats(cerr,A2,P2);
 
-      A2.print_fasta(std::cerr);
+      A2.print_fasta(cerr);
 #endif
 
     }
@@ -520,7 +528,7 @@ void Sampler::go(alignment& A,Parameters& P,const int max) {
     Pr_likelihood = new_likelihood;
     Pr = new_Pr;
   }
-  std::cerr<<"total samples = "<<total_samples<<endl;
+  cerr<<"total samples = "<<total_samples<<endl;
 }
 
 

@@ -28,8 +28,9 @@ double Pr_smoothed(const vector<double>& v,double delta,double Pdata) {
   double log_delta = log(delta);
   double log_inv_delta = log(1-delta);
 
-  double top    = log(v.size()) + log_delta - log_inv_delta;
-  double bottom = log(v.size()) + log_delta - log_inv_delta - Pdata;
+  double n = v.size();
+  double top    = log(n) + log_delta - log_inv_delta;
+  double bottom = log(n) + log_delta - log_inv_delta - Pdata;
 
   for(int i=0;i<v.size();i++) {
     double weight = -logsum(log_delta+Pdata,log_inv_delta+v[i]);
