@@ -525,9 +525,9 @@ namespace substitution {
     YangCodonModel* clone() const {return new YangCodonModel(*this);}
 
     /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
-    double omega() const {return parameters_[1];}
+    double omega() const;
     /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-    void omega(double w) {parameters_[1]=w;recalc();}
+    void omega(double w);
 
     string name() const;
     std::string super_parameter_name(int i) const;

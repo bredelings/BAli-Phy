@@ -407,10 +407,22 @@ namespace substitution {
 
   CodonModel::~CodonModel() {}
 
+    /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
+  double YangCodonModel::omega() const {
+    return super_parameters_[1];
+  }
+
+  /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
+  void YangCodonModel::omega(double w) {
+    super_parameters_[1]=w;
+    read();
+    recalc();
+  }
+
   void YangCodonModel::super_fiddle() {
     double sigma = 0.15;
     if (not fixed(1))
-      parameters_[1] *= exp(gaussian(0,sigma));
+      super_parameters_[1] *= exp(gaussian(0,sigma));
 
     read();
     recalc();
@@ -493,7 +505,9 @@ namespace substitution {
   YangCodonModel::YangCodonModel(const Codons& C,const ReversibleMarkovNucleotideModel& M)
     :CodonModel(C),NestedModelOver<ReversibleMarkovNucleotideModel>(M,2)
   { 
-    parameters_[0] = 1.0;
+    super_parameters_[0] = 1.0;
+    super_parameters_[1] = 1.0;
+    read();
     omega(1.0);
   }
 
