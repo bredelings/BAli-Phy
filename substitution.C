@@ -194,14 +194,14 @@ double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SMode
   }
   */
 
-  assert(0.0 < p and p<= 1.0);
-  //std::cerr<<" Pr: p="<<p<<"      log(p)="<<log(p)<<std::endl;
-  return log(p);
+  //  std::cerr<<" Pr: p="<<p<<"      log(p)="<<log(p)<<std::endl;
+  assert(0.0 <= p and p <= 1.0);
+  return p;
 }
 
-double Pr(const alignment& A,const tree& T,const ReversibleModel& SModel,
-	  const vector<Matrix>& transition_P) {
-  double P = 0.0;
+double Pr(const alignment& A,const Parameters& P) {
+  double p = 0.0;
+  const MultiRateModel& MRModel = P.SModel();
   
   vector<int> residues(A.size2());
 
@@ -209,20 +209,28 @@ double Pr(const alignment& A,const tree& T,const ReversibleModel& SModel,
   for(int column=0;column<A.length();column++) {
     for(int i=0;i<residues.size();i++)
       residues[i] = A(column,i);
-    P += Pr(residues,T,SModel,transition_P);
-    //    std::cerr<<" substitution: P="<<P<<std::endl;
+    
+    double total=0;
+    for(int r=0;r<MRModel.nrates();r++)
+      total += MRModel.distribution()[r] * Pr(residues,
+					      P.T,
+					      MRModel.BaseModel(),
+					      P.transition_P(r)
+					      );
+
+    assert(0.0 < total and total <= 1.0);
+    p += log(total);
   }
 
-  return P;
+    //    std::cerr<<" substitution: P="<<P<<std::endl;
+  return p;
 }
 
-
- 
 double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SModel,
 	       const vector<Matrix>& transition_P) {
   const alphabet& a = SModel.Alphabet();
 
-  double sum=0;
+  double p=0;
   for(int lroot=0;lroot<a.size();lroot++) {
     double temp=SModel.frequencies()[lroot];
     for(int b=0;b<T.branches();b++) {
@@ -232,14 +240,15 @@ double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SM
       if (a.letter(lleaf))
 	temp *= Q(lleaf,lroot);
     }
-    sum += temp;
+    p += temp;
   }
-  return log(sum);
+  return p;
 }
 
-double Pr_star(const alignment& A,const tree& T,const ReversibleModel& SModel,
-	       const vector<Matrix>& transition_P) {
-  double Pr = 0.0;
+double Pr_star(const alignment& A,const Parameters& P) {
+
+  double p = 0.0;
+  const MultiRateModel& MRModel = P.SModel();
   
   vector<int> residues(A.size2());
 
@@ -247,16 +256,25 @@ double Pr_star(const alignment& A,const tree& T,const ReversibleModel& SModel,
   for(int column=0;column<A.length();column++) {
     for(int i=0;i<residues.size();i++)
       residues[i] = A(column,i);
-    Pr += Pr_star(residues,T,SModel,transition_P);
-    //    std::cerr<<" substitution: P="<<P<<std::endl;
+
+    double total=0;
+    for(int r=0;r<MRModel.nrates();r++)
+      total += MRModel.distribution()[r] * Pr_star(residues,
+						   P.T,
+						   MRModel.BaseModel(),
+						   P. transition_P(r)
+						   );
+
+    assert(0.0 < total and total <= 1.0);
+    p += log(total);
   }
 
-  return Pr;
+  return p;
 }
 
-double Pr_star_constant(const alignment& A,const tree& T1,const ReversibleModel& SModel,
-			const vector<Matrix>& transition_P) {
-  tree T2 = T1;
+double Pr_star_constant(const alignment& A,const Parameters& P) {
+  const tree& T1 = P.T;
+  Parameters P2 = P;
 
   //----------- Get Distance Matrix --------------//
   Matrix D(T1.leaves(),T1.leaves());
@@ -273,17 +291,17 @@ double Pr_star_constant(const alignment& A,const tree& T1,const ReversibleModel&
   double ave = sum/n;
 
   //-------- Set branch lengths to ave/2  ----------//
-  for(int i=0;i<T2.leaves();i++)
-    T2.branch(i).length() = ave/2.0;
+  for(int b=0;b<T1.leaves();b++)
+    P2.setlength(b,ave/2.0);
 
 
   //----------- Get log L w/ new tree  -------------//
-  return Pr_star(A,T2,SModel,transition_P);
+  return Pr_star(A,P2);
 }
 
-double Pr_star_estimate(const alignment& A,const tree& T1,const ReversibleModel& SModel,
-			const vector<Matrix>& transition_P) {
-  tree T2 = T1;
+double Pr_star_estimate(const alignment& A,const Parameters& P) {
+  const tree& T1 = P.T;
+  Parameters P2 = P;
 
   //----------- Get Distance Matrix --------------//
   Matrix D(T1.leaves(),T1.leaves());
@@ -293,70 +311,18 @@ double Pr_star_estimate(const alignment& A,const tree& T1,const ReversibleModel&
 
 
   //---- Set branch lengths to ave/2 per branch ----//
-  for(int i=0;i<T2.leaves();i++) {
+  for(int i=0;i<T1.leaves();i++) {
     double ave=0;
-    for(int j=0;j<T2.leaves();j++) {
+    for(int j=0;j<T1.leaves();j++) {
       if (i==j) continue;
       ave += log(D(i,j));
     }
-    ave /= (T2.leaves()-1);
-    T2.branch(i).length() = exp(ave)/2.0;
-  }
-  for(int i=T2.leaves();i<T2.branches();i++) {
-    T2.branch(i).length() = 0;
+    ave /= (T1.leaves()-1);
+    P2.setlength(i,exp(ave)/2.0);
   }
 
   //----------- Get log L w/ new tree  -------------//
-  return Pr_star(A,T2,SModel,transition_P);
+  return Pr_star(A,P2);
 }
-
-double Pr(const alignment& A, const Parameters& P) {
-  const MultiRateModel& SModel = P.SModel();
-  const tree& T = P.T;
-
-  double sum = 0;
-  for(int r=0;r<SModel.nrates();r++)
-    sum += Pr(A,T,SModel.BaseModel(),P.transition_P(r))*SModel.distribution()[r];
-
-  return sum;
-}
-
-double Pr_star(const alignment& A, const Parameters& P) {
-  const MultiRateModel& SModel = P.SModel();
-  const tree& T = P.T;
-
-  double sum = 0;
-  for(int r=0;r<SModel.nrates();r++)
-    sum += Pr_star(A,T,SModel.BaseModel(),P.transition_P(r))*SModel.distribution()[r];
-
-  return sum;
-}
-
-
-double Pr_star_constant(const alignment& A, const Parameters& P) {
-  const MultiRateModel& SModel = P.SModel();
-  const tree& T = P.T;
-
-  double sum = 0;
-  for(int r=0;r<SModel.nrates();r++)
-    sum += Pr_star_constant(A,T,SModel.BaseModel(),P.transition_P(r))*SModel.distribution()[r];
-
-  return sum;
-}
-
-
-double Pr_star_estimate(const alignment& A, const Parameters& P) {
-  const MultiRateModel& SModel = P.SModel();
-  const tree& T = P.T;
-
-  double sum = 0;
-  for(int r=0;r<SModel.nrates();r++)
-    sum += Pr_star_estimate(A,T,SModel.BaseModel(),P.transition_P(r))*SModel.distribution()[r];
-
-  return sum;
-}
-
-
-
 
 }

@@ -25,6 +25,21 @@ std::string convertToString(T t)
   return "conversion error";
 } 
 
+inline double wrap(double x,double max) {
+  // flip around to position x axis
+  if (x < 0)
+    x = -x;
+
+  // map to [0,2*max)
+  int n = (int)(x/(2.0*max));
+  x -= n*2.0*max;
+
+  if (x > max)
+    x = max*2 - x;
+
+  return x;
+}
+
 std::vector<std::string> split(const std::string&,char);
 
 std::string strip(const std::string&,char);

@@ -398,7 +398,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   vector<int> seq1;
   vector<int> seq2;
   vector<int> seq3;
-  vector<int> seq23;
+  vector<int> seq123;
   for(int i=0;i<columns.size();i++) {
     int column = columns[i];
     if (not old.gap(column,n1))
@@ -408,43 +408,45 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     if (not old.gap(column,n3))
       seq3.push_back(column);
 
-    if (not old.gap(column,n2) or not old.gap(column,n3))
-      seq23.push_back(column);
+    if (not old.gap(column,n1) or not old.gap(column,n2) or not old.gap(column,n3))
+      seq123.push_back(column);
   }
 
   // Map columns with n2 or n3 to single index 'c'
-  vector<int> jcol(seq23.size()+1);
-  vector<int> kcol(seq23.size()+1);
+  vector<int> icol(seq123.size()+1);
+  vector<int> jcol(seq123.size()+1);
+  vector<int> kcol(seq123.size()+1);
 
+  icol[0] = 0;
   jcol[0] = 0;
   kcol[0] = 0;
-  for(int c=1,j=0,k=0;c<seq23.size()+1;c++) {
-    if (not old.gap(seq23[c-1],n2))
+  for(int c=1,i=0,j=0,k=0;c<seq123.size()+1;c++) {
+    if (not old.gap(seq123[c-1],n2))
+      i++;    
+    if (not old.gap(seq123[c-1],n2))
       j++;    
-    if (not old.gap(seq23[c-1],n3))
+    if (not old.gap(seq123[c-1],n3))
       k++;
+    icol[c] = i;
     jcol[c] = j;
     kcol[c] = k;
   }
 
 
-  // Precompute distributions at n0
-  vector< vector< valarray<double> > > dists1 = distributions(old,Theta,seq1,n0,n1);
-  vector< vector< valarray<double> > > dists23 = distributions23(old,Theta,seq23,n0,n1);
-
+  // Don't need to deal with distributions - all paths we look at emit the same things
 
   /*-------------- Create alignment matrices ---------------*/
+  vector< vector<double> > DParray(seq123.size()+1,vector<double>(nstates,log_0));
   DPmatrixHMM Matrices(nstates,Theta.SModel().distribution(),dists1,dists23,frequency);
+
+  vector<int> state_emit[nstates+1];
 
   // Cache which states emit which sequences
   for(int S2=0;S2<nstates+1;S2++) {
-    Matrices.state_emit[S2] = 0;
+    state_emit[S2] = 0;
 
-    if (di(S2)) 
+    if (di(S2) or dj(s2) or dk(S2)) 
       Matrices.state_emit[S2] |= (1<<0);
-
-    if (dc(S2)) 
-      Matrices.state_emit[S2] |= (1<<1);
   }
 
   // Determine state order
@@ -453,14 +455,22 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     state_order[i] = i;
   std::swap(state_order[7],state_order[nstates-1]);        // silent states must be last
 
-  // Determine which states are allowed to match (,c2)
-  for(int c2=0;c2<Matrices.size2();c2++) {
+  // Determine which states are allowed to match (c2)
+  vector< vector<int> > allowed_states(DParray.size());
+
+  for(int c2=0;c2<DParray.size();c2++) {
+    int i2 = icol[c2];
     int j2 = jcol[c2];
     int k2 = kcol[c2];
-    for(int i=0;i<state_order.size();i++) {
-      int S2 = state_order[i];
+
+    for(int o=0;o<state_order.size();o++) {
+      int S2 = state_order[o];
 
       //---------- Get (,j1,k1) ----------
+      int i1 = i2;
+      if (di(S2))
+	i1--;
+
       int j1 = j2;
       if (dj(S2)) 
 	j1--;
@@ -470,8 +480,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 	k1--;
       
       //------ Get c1, check if valid ------
-      if (c2==0 or (j1 == j2 and k1 == k2) or (j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
-	Matrices.states(c2).push_back(S2);
+      if (c2==0 or (i1==i2 and j1 == j2 and k1 == k2) or (i1 == icol[c2-1] and j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
+	allowed_states(c2).push_back(S2);
       else
 	; // this state not allowed here
     }
@@ -501,9 +511,9 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
       if (not bitset(states,12)) continue;
     }
 
-    Matrices[S](0,0) = pi[s1] + pi[s2] + pi[s3];
+    DParray[0][S2] = pi[s1] + pi[s2] + pi[s3];
     count++;
-    sum = logsum(sum,Matrices[S](0,0));
+    sum = logsum(sum,DParray[0][S2]);
   }
 
   // check that the sum of Matrices[S](0,0) is 1, number of states examined is 27

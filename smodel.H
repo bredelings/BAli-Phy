@@ -19,7 +19,7 @@ protected:
 
   virtual void recalc() =0;
 public:
-  virtual const alphabet& Alphabet() const;
+  virtual const alphabet& Alphabet() const =0;
 
   virtual Model* clone() const =0;
 
@@ -33,7 +33,7 @@ public:
   // how to sample from the distribution of parameters?
   virtual void fiddle() = 0; 
 
-  Model() { }
+  Model();
 
   virtual ~Model() {}
 };
@@ -63,6 +63,8 @@ protected:
     Q(a.size(),a.size())
   {}
 public:
+  const alphabet& Alphabet() const {return a;}
+
   virtual MarkovModel* clone() const =0;
 
   // transition rates
@@ -239,6 +241,7 @@ public:
   NestedModel& operator=(const NestedModel& M) {
     Model::operator=(M);
 
+    assert(sub_model);
     delete sub_model;
     sub_model = M.sub_model->clone();
 
@@ -250,7 +253,8 @@ public:
   virtual void parameters(const vector<double>& p);
 
   // when copying, get our own copy of the submodel
-  NestedModel(const NestedModel& M) {operator=(M);}
+  NestedModel(const NestedModel& M):Model(M),sub_model(M.sub_model->clone()) 
+  {}
 
 
   /*------------ Construction and Destruction ---------------*/
@@ -292,19 +296,22 @@ public:
 };
 
 
-class MultiRateWithBase: public MultiRateModel {
+class MultiRateOnReversible: public MultiRateModel {
 
 protected:
-  MultiRateWithBase(const ReversibleModel& M,int dp,int nr)
+  MultiRateOnReversible(const ReversibleModel& M,int dp,int nr)
     :MultiRateModel(M,dp,nr)
   {}
 
 public:
-  const ReversibleModel& BaseModel() const {return *(ReversibleModel*)sub_model;}
-  ReversibleModel& BaseModel() {return *(ReversibleModel*)sub_model;}
+  const ReversibleModel& SubModel() const {return *(ReversibleModel*)sub_model;}
+  ReversibleModel& SubModel() {return *(ReversibleModel*)sub_model;}
+
+  const ReversibleModel& BaseModel() const {return SubModel();}
+  ReversibleModel& BaseModel() {return SubModel();}
 };
 
-class SingleRateModel: public MultiRateWithBase {
+class SingleRateModel: public MultiRateOnReversible {
 
 protected:
   double super_prior() const {return 0;}
@@ -313,7 +320,7 @@ protected:
 public:
   virtual SingleRateModel* clone() const {return new SingleRateModel(*this);}
 
-  SingleRateModel(const ReversibleModel& M):MultiRateWithBase(M,0,1) {
+  SingleRateModel(const ReversibleModel& M):MultiRateOnReversible(M,0,1) {
     rates_[0] = 1.0;
     distribution_[0] = 1.0;
   }
@@ -321,7 +328,7 @@ public:
   virtual ~SingleRateModel() {};
 };
 
-class GammaRateModel: public MultiRateWithBase {
+class GammaRateModel: public MultiRateOnReversible {
 protected:
   double super_prior() const;
   void super_fiddle();
@@ -334,16 +341,23 @@ public:
 };
 
 class INV_Model: public MultiRateModel {
-  MultiRateModel* sub_model;
 protected:
-  double super_prior() const {return 1.0;}
+  double super_prior() const {
+    double p = parameters()[parameters().size()-1];
+    return p/-0.1;
+  }
+
   void super_fiddle();
   void recalc();
 public:
   virtual INV_Model* clone() const {return new INV_Model(*this);}
 
-  const ReversibleModel& BaseModel() const {return sub_model->BaseModel();}
-  ReversibleModel& BaseModel() {return sub_model->BaseModel();}
+  // submodel is a multirate model
+  const MultiRateModel& SubModel() const {return *(MultiRateModel*)sub_model;};
+  MultiRateModel& SubModel() {return *(MultiRateModel*)sub_model;}
+
+  const ReversibleModel& BaseModel() const {return SubModel().BaseModel();}
+  ReversibleModel& BaseModel() {return SubModel().BaseModel();}
 
   INV_Model(const MultiRateModel& M);
 };

@@ -2,8 +2,14 @@
 #include "smodel.H"
 #include "exponential.H"
 #include "rng.H"
+#include "util.H"
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_sf.h>
+
 
 namespace substitution {
+
+Model::Model() {}
 
 // Q(i,j) = S(i,j)*pi[j]   for i!=j
 // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
@@ -145,29 +151,56 @@ void NestedModel::parameters(const vector<double>& p) {
   Model::parameters(p);
 }
 
+/*--------------- Invariant Sites Model----------------*/
 
-double GammaRateModel::super_prior() const {
-  return 1;
+double gamma_pdf(double x,double a,double b) {
+  return gsl_ran_gamma_pdf(x,a,b);
 }
 
-void GammaRateModel::super_fiddle() {
-  double& alpha = parameters_[parameters_.size()-1];
-
-  const double sigma = 0.1;
-  alpha += gaussian(0,sigma);
-  if (alpha < 0) alpha = -alpha;
-
-  recalc();
+double gamma_cdf(double x, double a,double b) {
+  return gsl_sf_gamma_inc_P(a,x/b);
 }
 
-double gamma_quantile(double x,double a, double b) {
-  int max = 20;
+double gamma_quantile(double p,double a, double b) {
+  const int max = 50;
+  int iterations=0;
+
+  double x = 1.0;
+  double dx = 1.0;
+  while(std::abs(dx) > 1.0e-9) {
+    double f = gamma_cdf(x,a,b)-p;
+    double dfdx = gamma_pdf(x,a,b);
+    dx = -f/dfdx;
+
+    if (x+dx < 0)
+      x = x/2.0;
+    else
+      x = x + dx;
+    iterations++;
+    assert(iterations<max);
+  }
   return x;
 }
 
 
+double GammaRateModel::super_prior() const {
+  double p = parameters_[parameters_.size()-1];
+  return -p/0.2;
+}
+
+void GammaRateModel::super_fiddle() {
+  double& p = parameters_[parameters_.size()-1];
+ 
+  const double sigma = 0.04;
+  p += gaussian(0,sigma);
+  if (p < 0) p = -p;
+
+  recalc();
+}
+
 void GammaRateModel::recalc() {
   double alpha = parameters_[parameters_.size()-1];
+  alpha = 1.0/(alpha*alpha);
 
   double mean=0;
   for(int i=0;i<nrates();i++) {
@@ -182,10 +215,11 @@ void GammaRateModel::recalc() {
 }
 
 GammaRateModel::GammaRateModel(const ReversibleModel& M,int n)
-  :MultiRateWithBase(M,1,n)
+  :MultiRateOnReversible(M,1,n)
 {
-  double& alpha = parameters_[parameters_.size()-1];
-  alpha = 1.0;
+  double& p = parameters_[parameters_.size()-1];
+  p = 0.1;
+
   for(int i=0;i<nrates();i++)
     distribution_[i] = 1.0/nrates();
 
@@ -193,22 +227,23 @@ GammaRateModel::GammaRateModel(const ReversibleModel& M,int n)
 }
 
 
-
+/*--------------- Invariant Sites Model----------------*/
 
 INV_Model::INV_Model(const MultiRateModel& M)
-  :MultiRateModel(M,1,M.rates().size()+1)
+  :MultiRateModel(M,1,M.nrates()+1)
 {
-  distribution_[ sub_model->distribution().size() ] = 0.0;
+  parameters_[ parameters_.size()-1 ] = 0.01;
+
+  recalc();
 }    
 
 
 void INV_Model::super_fiddle() {
   double &p = parameters_[parameters_.size()-1];
-  const double sigma = 0.1;
+  const double sigma = 0.04;
   p += gaussian(0,sigma);
-  if (p<0) p=-p;
-  while(p>1)
-    p--;
+
+  p = wrap(p,1.0);
 
   recalc();
 }
@@ -216,10 +251,13 @@ void INV_Model::super_fiddle() {
 void INV_Model::recalc() {
   double p = parameters()[parameters().size()-1];
 
+  rates_[nrates()-1] = 0;
   distribution_[nrates()-1] = p;
   
-  for(int i=0;i<sub_model->distribution().size();i++)
-    distribution_[i] = sub_model->distribution()[i]*(1.0-p);
+  for(int r=0;r<SubModel().nrates();r++) {
+    rates_[r] = SubModel().rates()[r];
+    distribution_[r] = SubModel().distribution()[r]*(1.0-p);
+  }
 }
 
 }

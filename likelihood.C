@@ -16,9 +16,9 @@ double prior(const SequenceTree& T,double branch_mean) {
   if (T.leaves()>3)
     p = -log_double_factorial(2*T.leaves()-5);
 
-  /* ---- PROD_i exp(-lambda * T[i]) ---- */
+  /* ---- PROD_i exp(T[i] / -lambda ) ---- */
   for(int i=0;i<T.branches();i++) 
-    p -= branch_mean*T.branch(i).length();
+    p += (-log(branch_mean) - T.branch(i).length()/branch_mean );
   return p;
 }
 

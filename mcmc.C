@@ -132,6 +132,9 @@ void MCMC::sample(alignment& A,Parameters& P) const {
     sum += moves[i].weight;
     if (r<sum) break;
   }
+#ifndef NDEBUG
+  std::cerr<<" move = "<<moves[i].attributes[0]<<endl;
+#endif
   assert(i < moves.size());
   (moves[i].m)(A,P);
 }

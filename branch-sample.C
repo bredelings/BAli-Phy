@@ -209,15 +209,22 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
 vector< vector<valarray<double> > > distributions(const alignment& A,const Parameters& Theta,
 					const vector<int>& seq,int b,bool up) {
   const alphabet& a = A.get_alphabet();
+  const substitution::MultiRateModel& MRModel = Theta.SModel();
 
-  vector< vector< valarray<double> > > dist(seq.size());
+  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
 
   for(int i=0;i<dist.size();i++) {
     vector<int> residues(A.size2());
     for(int j=0;j<residues.size();j++)
       residues[j] = A(seq[i],j);
-    dist[i].resize(a.size());
-    dist[i] = substitution::peel(residues,Theta,b,up);
+    for(int r=0;r<MRModel.nrates();r++) {
+      dist[i][r].resize(a.size());
+      dist[i][r] = substitution::peel(residues,
+				      Theta.T,
+				      MRModel.BaseModel(),
+				      Theta.transition_P(r),
+				      b,up);
+    }
 
     // double sum = dist[i].sum();
     // it IS possible to have no leaves if internal sequences is non-gap
@@ -235,7 +242,9 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   const Matrix& Q = Theta.IModel.Q;
 
   const vector<double>& pi = Theta.IModel.pi;
-  const valarray<double>& frequency = Theta.SModel().BaseModel().frequencies();
+
+  const substitution::MultiRateModel& MRModel = Theta.SModel();
+  const valarray<double>& frequency = MRModel.BaseModel().frequencies();
 
   int node1 = T.branch(b).parent();
   int node2 = T.branch(b).child();
@@ -258,12 +267,20 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   vector< vector< valarray<double> > > dists2 = distributions(old,Theta,seq2,b,false);
 
   valarray<double> g1_sub(seq2.size());
-  for(int i=0;i<seq2.size();i++)  
-    g1_sub[i] = log(sum( dists2[i] * frequency ));
+  for(int i=0;i<seq2.size();i++) {
+    double total=0;
+    for(int r=0;r<MRModel.nrates();r++)
+      total += MRModel.distribution()[r]*sum( dists2[i][r] * frequency );
+    g1_sub[i] = log(total);
+  }
 
   valarray<double> g2_sub(seq1.size());
-  for(int i=0;i<seq1.size();i++)
-    g2_sub[i] = log(sum( dists1[i] * frequency ));
+  for(int i=0;i<seq1.size();i++) {
+    double total=0;
+    for(int r=0;r<MRModel.nrates();r++)
+      total += MRModel.distribution()[r]*sum( dists1[i][r] * frequency );
+    g2_sub[i] = log(total);
+  }
 
 
   /********************* Create alignment matrices ***********************/
@@ -307,11 +324,15 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
     if (n<M.size2())
       for(int i=1;i<n and i<M.size1();i++) {
 
-	double sub = log(sum( dists1[i-1] * frequency * dists2[n-1] ));
+	double sub = 0;
+	for(int r=0;r<MRModel.nrates();r++)
+	  sub += MRModel.distribution()[r]* 
+	    sum( dists1[i-1][r] * frequency * dists2[n-1][r] );
+    
 
-	M(i,n) = sub + logsum(M(i-1,n-1)  + Q(0,0),
-			      G1(i-1,n-1) + Q(1,0),
-			      G2(i-1,n-1) + Q(2,0));
+	M(i,n) = log(sub) + logsum(M(i-1,n-1)  + Q(0,0),
+				   G1(i-1,n-1) + Q(1,0),
+				   G2(i-1,n-1) + Q(2,0));
 
 	G1(i,n) = g1_sub[n-1] + logsum(M (i,n-1) + Q(0,1),
 				       G1(i,n-1) + Q(1,1),
@@ -325,11 +346,14 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
     if (n<M.size1())
       for(int i=1;i<=n and i<M.size2();i++) {
 
-	double sub = log(sum( dists1[n-1] * frequency * dists2[i-1] ));
+	double sub = 0;
+	for(int r=0;r<MRModel.nrates();r++)
+	  sub += MRModel.distribution()[r]* 
+	    sum( dists1[n-1][r] * frequency * dists2[i-1][r] );
 
-	M(n,i)  = sub + logsum(M(n-1,i-1)  + Q(0,0),
-			       G1(n-1,i-1) + Q(1,0),
-			       G2(n-1,i-1) + Q(2,0));
+	M(n,i)  = log(sub) + logsum(M(n-1,i-1)  + Q(0,0),
+				    G1(n-1,i-1) + Q(1,0),
+				    G2(n-1,i-1) + Q(2,0));
 
 
 	G1(n,i) = g1_sub[i-1] + logsum(M (n,i-1) + Q(0,1),

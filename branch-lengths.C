@@ -2,27 +2,32 @@
 #include "likelihood.H"
 #include "sample.H"
 #include "mcmc.H"
-
-inline double wrap(double x,double max) {
-  // flip around to position x axis
-  if (x < 0)
-    x = -x;
-
-  // map to [0,2*max)
-  int n = (int)(x/(2.0*max));
-  x -= n*2.0*max;
-
-  if (x > max)
-    x = max*2 - x;
-
-  return x;
-}
+#include "util.H"
 
 //FIXME - are we not guaranteed that leaf nodes will be the children of
 // their branch?
 
-void slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up) {
-  const SequenceTree& T = Theta.T;
+bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
+  
+  double p1 = probability3(A,P);
+  double p2 = probability3(A,P2);
+  
+  std::cerr<<" MH ["<<p2-p1<<"] : ";
+
+  bool success = false;
+  if (myrandomf() < exp(p2-p1)) {
+    P=P2;
+    success = true;
+    std::cerr<<"accepted\n";
+  }
+  else
+    std::cerr<<"rejected\n";
+
+  return success;
+}
+
+void slide_branch_length(const alignment& A, Parameters& P,int b,bool up) {
+  const SequenceTree& T = P.T;
 
   /*--------------- Find the branch names ----------------*/
   int b2 = -1;
@@ -48,7 +53,7 @@ void slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up) {
     b2 = T.branch(b).child().left();
     b2 = T.branch_up(b2);
 
-    b3 = Theta.T.branch(b).child().right();
+    b3 = P.T.branch(b).child().right();
     b3 = T.branch_up(b3);
   }
 
@@ -63,97 +68,77 @@ void slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up) {
   newlength = wrap(newlength,max);
   double epsilon = newlength - length;
 
-  /*------------------Calculate Theta2-------------------*/
-  Parameters Theta2 = Theta;
-  Theta2.setlength(b,newlength);
-  Theta2.setlength(b2,T.branch(b2).length()-epsilon);
-  Theta2.setlength(b3,T.branch(b3).length()-epsilon);
+  /*------------------Calculate P2-------------------*/
+  Parameters P2 = P;
+  P2.setlength(b,newlength);
+  P2.setlength(b2,T.branch(b2).length()-epsilon);
+  P2.setlength(b3,T.branch(b3).length()-epsilon);
   
   /*--------------- Do the M-H step if OK---------------*/
-  double lL_1 = substitution::Pr(A,Theta) + prior(Theta);
-  double lL_2 = substitution::Pr(A,Theta2) + prior(Theta2);
   
-  bool success = false;
-  if (myrandomf() < exp(lL_2 - lL_1)) {
-    Theta=Theta2;
-    std::cerr<<Theta2.T.branch(b).length()<<" "<<Theta.T.branch(b).length()<<endl;
-    std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
-    success = true;
-  }
+  bool success = do_MH_move(A,P,P2);
+  if (success) 
+    std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
   else
-    std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
+    std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
   
   record_move("length-sample-slide",success);
 }
 
 
-void change_branch_length(const alignment& A, Parameters& Theta,int b) {
+void change_branch_length(const alignment& A, Parameters& P,int b) {
 
-    Parameters Theta2 = Theta;
+    Parameters P2 = P;
     /********* Propose increment 'epsilon' ***********/
     const double sigma = 0.3/2;
-    const double length = Theta2.T.branch(b).length();
+    const double length = P2.T.branch(b).length();
     double newlength = length + gaussian(0,sigma);
     if (newlength<0) newlength = -newlength;
 
     /******** Calculate propsal ratio ***************/
-    Theta2.setlength(b,newlength);
+    P2.setlength(b,newlength);
 
     /********** Do the M-H step if OK**************/
-    double lL_1 = substitution::Pr(A,Theta) + prior(Theta);
-    double lL_2 = substitution::Pr(A,Theta2) + prior(Theta);
-
-    // accept w/ probability (a2/a1)*(p21/p12)
-    bool success = false;
-    if (myrandomf() < exp(lL_2 - lL_1)) {
-      Theta=Theta2;
-      std::cerr<<Theta2.T.branch(b).length()<<" "<<Theta.T.branch(b).length()<<endl;
-      std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
-      success = true;
-    }
+    bool success = do_MH_move(A,P,P2);
+    if (success) 
+      std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
     else
-      std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
+      std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
+  
 
     record_move("length-sample",success);
 }
 
-void change_branch_length_and_T(alignment& A, Parameters& Theta,int b) {
+void change_branch_length_and_T(alignment& A, Parameters& P,int b) {
 
     /********* Propose increment 'epsilon' ***********/
     const double sigma = 0.4/2;
-    const double length = Theta.T.branch(b).length();
+    const double length = P.T.branch(b).length();
     double newlength = length + gaussian(0,sigma);
 
-    std::cerr<<" old length = "<<Theta.T.branch(b).length()<<"  new length = "<<newlength<<std::endl;\
+    std::cerr<<" old length = "<<P.T.branch(b).length()<<"  new length = "<<newlength<<std::endl;\
 
     // If the length is positive, simply propose a length change
     if (newlength >= 0) {
-      Parameters Theta2 = Theta;
-      Theta2.setlength(b,newlength);
+      Parameters P2 = P;
+      P2.setlength(b,newlength);
 
       /********** Do the M-H step if OK**************/
-      double lL_1 = substitution::Pr(A,Theta) + prior(Theta);
-      double lL_2 = substitution::Pr(A,Theta2) + prior(Theta);
-      
-      // accept w/ probability (a12/a21)*(p21/p12)
-      bool success = false;
-      if (myrandomf() < exp(lL_2 - lL_1)) {
-	Theta=Theta2;
-	std::cerr<<Theta2.T.branch(b).length()<<" "<<Theta.T.branch(b).length()<<endl;
-	std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
-	success=true;
-      }
-      else 
-	std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
+      bool success = do_MH_move(A,P,P2);
+      if (success) 
+	std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
+      else
+	std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
+
       record_move("length-sample-non-negative",success);
     }
     // If the length is NOT positive, then propose a T change as well
     else {
-      vector<int> nodes = get_nodes(A,Theta.T,b);
+      vector<int> nodes = get_nodes(A,P.T,b);
 
       /****** Generate the Different Topologies *******/
-      SequenceTree T2 = Theta.T;
-      SequenceTree T3 = Theta.T;
+      SequenceTree T2 = P.T;
+      SequenceTree T3 = P.T;
       
       T2.exchange(nodes[1],nodes[2]);
       T3.exchange(nodes[1],nodes[3]);
@@ -161,7 +146,7 @@ void change_branch_length_and_T(alignment& A, Parameters& Theta,int b) {
       T2.branch(b).length() = -newlength;
       T3.branch(b).length() = -newlength;
 
-      bool success = sample_topology(A,Theta,T2,T3,b);
+      bool success = sample_topology(A,P,T2,T3,b);
       record_move("t-sample-branch-based",success);
     }
 }

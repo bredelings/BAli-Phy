@@ -290,8 +290,7 @@ Parameters::Parameters(const Parameters& P):
 
 
 Parameters::Parameters(const substitution::MultiRateModel& SM,const IndelModel& IM,const SequenceTree& t)
-  :SModel_(SM.clone()),IModel(IM),
-   transition_P_(vector< vector <Matrix> >(SM.nrates(),
+  :transition_P_(vector< vector <Matrix> >(SM.nrates(),
 					  vector<Matrix>(t.branches(),
 							 Matrix(SM.Alphabet().size(),
 								SM.Alphabet().size()
@@ -299,6 +298,7 @@ Parameters::Parameters(const substitution::MultiRateModel& SM,const IndelModel& 
 							 ) 
 					  ) 
 		 ),
+   SModel_(SM.clone()),IModel(IM),
    T(t)
 {
   branch_mean = 0.1;

@@ -10,7 +10,55 @@ inline double sum(const valarray<double>& v) {
   return v.sum();
 }
 
-class DPmatrix : public vector<Matrix> {
+
+class DP {
+  // bitmasks of whether states emit features in each sequence
+  vector<double> start_P;
+
+  vector<int> state_emit;
+  bool silent(int S) {return not state_emit[S];}
+  virtual bool silent_network(int S)=0;
+
+  int nstates() const {return state_emit.size()-1;}
+  int endstate() const {return nstates();}
+
+  vector<int> generalize(const vector<int>& path);
+  double generalize_P(const vector<int>& path, const Matrix& Q);
+
+  double path_Q_path(const vector<int>& path, const Matrix& GQ);
+  virtual double path_Q_subst(const vector<int>& path, const Matrix& GQ)=0;
+
+  virtual double path_Q(const vector<int>& path, const Matrix& GQ) {
+    return path_Q_path(path,GQ) + this->path_Q_subst(path,GQ);
+  }
+
+  DP(const vector<double&> v1,const vector<double>& v2):start_P(v2),state_emit(v2) 
+  {
+    assert(start_P.size() == nstates());
+  }
+};
+
+
+class DParray : public DP, public vector< vector<double> > {
+  vector< vector<int> > allowed_states;
+public:
+  const vector<int>& states(int j) const {return allowed_states[j];}
+  vector<int>& states(int j) {return allowed_states[j];}
+
+  // compute FP for the whole array
+  void forward(const Matrix& GQ);
+
+  // compute FP for a cell
+  virtual void forward(int,const Matrix& GQ)=0;
+
+  // functions on paths
+  vector<int> sample_path(const Matrix& GQ);
+
+  //FIXME - still need to implement checking framework
+};
+
+
+class DPmatrix : public DP, public vector<Matrix> {
   int s1;
   int s2;
 
@@ -19,9 +67,6 @@ protected:
   valarray<double> s2_sub;
 
 public:
-  // bitmasks of whether states emit features in each sequence
-  vector<int> state_emit;
-
   // data for emission probabilities 
   const vector<double>& distribution;
   const vector< vector< valarray<double> > >& dists1;
@@ -32,12 +77,9 @@ public:
   // accessor functions
   int size1() const {return s1;}
   int size2() const {return s2;}
-  int nstates() const {return size();}
-  int endstate() const {return nstates();}
 
   bool di(int S) {bool e = false; if (state_emit[S]&(1<<0)) e=true;return e;}
   bool dj(int S) {bool e = false; if (state_emit[S]&(1<<1)) e=true;return e;}
-  bool silent(int S) {return not di(S) and not dj(S);}
   bool silent_network(int S);
 
   // compute FP for a square
@@ -52,9 +94,6 @@ public:
   // functions on paths
   vector<int> sample_path(const Matrix& GQ);
 
-  vector<int> generalize(const vector<int>& path);
-  double generalize_P(const vector<int>& path, const Matrix& Q);
-
   vector<double> path_Q(const vector<int>& path,const Matrix& GQ);
   double path_P(const vector<int>& path, const Matrix& GQ);
   double path_check(const vector<int>& path, const Matrix& GQ);
@@ -67,40 +106,11 @@ public:
   double emit__(int i,int j);
 
 
-  DPmatrix(int nstates,
-	   const vector< double >& d0,
-	   const vector< vector< valarray<double> > >& d1,
-	   const vector< vector< valarray<double> > >& d2, 
-	   const valarray<double>& f)
-    :vector<Matrix>(nstates,Matrix(d1.size()+1,d2.size()+1)), 
-     s1(d1.size()+1),s2(d2.size()+1), 
-     s1_sub(d1.size()),s2_sub(d2.size()),
-     state_emit(nstates+1),
-     distribution(d0),
-     dists1(d1),dists2(d2),frequency(f)
-  {
-
-    //----- zero-initialize matrices ------//
-    for(int i=0;i<s1;i++)
-      for(int j=0;j<s2;j++) 
-	for(int S=0;S<nstates;S++)
-	  (*this)[S](i,j)  = log_0;
-
-    //----- cache G1,G2 emission probabilities -----//
-    for(int i=0;i<dists1.size();i++) {
-      double total=0;
-      for(int r=0;r<nrates();r++)
-	total += distribution[r]*sum( dists1[i][r] * frequency );
-      s1_sub[i] = log(total);
-    }
-
-    for(int i=0;i<dists2.size();i++) {
-      double total=0;
-      for(int r=0;r<nrates();r++)
-	total += distribution[r]*sum( dists2[i][r] * frequency );
-      s2_sub[i] = log(total);
-    }
-  }
+  DPmatrix::DPmatrix(int nstates,
+		     const vector< double >&,
+		     const vector< vector< valarray<double> > >&,
+		     const vector< vector< valarray<double> > >&, 
+		     const valarray<double>&);
 
   virtual ~DPmatrix() {}
 };

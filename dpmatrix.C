@@ -5,6 +5,79 @@
 
 using std::abs;
 
+vector<int> DP::generalize(const vector<int>& path) {
+  vector<int> path_g = path;
+  for(int i=path_g.size()-1;i>0;i--) {
+    int S1 = path_g[i-1];
+    int S2 = path_g[i];
+    if (silent_network(S1) and silent_network(S2))
+      path_g.erase(path_g.begin()+i);
+  }
+  return path_g;
+}
+
+// FIXME - this doesn't deal with silent networks that have more than
+//         one silent state!
+double DP::generalize_P(const vector<int>& path, const Matrix& Q) {
+  double Pr = 0;
+  for(int i=1; i<path.size(); i++) {
+    int S1 = path[i-1];
+    int S2 = path[i];
+
+    if (silent_network(S1)) {
+      if (silent_network(S2))
+	Pr += Q(S1,S2);
+      else
+	Pr += log(1.0-exp(Q(S1,S1)));
+    }
+  }
+  return Pr;
+}
+
+
+double DP::path_Q_path(const vector<int>& path,const Matrix& GQ) {
+  double P_path=0;
+
+  int i=0,j=0;
+  for(int l=0;l<path.size();l++) {
+
+    int state2 = path[l];
+    if (di(state2))
+      i++;
+    if (dj(state2))
+      j++;
+
+    if (l == 0) {
+      double sum=log_0;
+      for(int S=0;S<nstates();S++)
+	if (S != 7)
+	  sum = logsum(sum,(*this)[S](0,0)+GQ(S,state2));
+      P_path += sum;
+    }
+    else {
+      P_path += GQ(path[l-1],state2);
+    }
+
+    double sub=0;
+    if (di(state2) and dj(state2))
+      sub = emitMM(i,j);
+    else if (di(state2))
+      sub = emitM_(i,j);
+    else if (dj(state2))
+      sub = emit_M(i,j);
+    else
+      sub = emit__(i,j);
+
+    P_sub += sub;
+  }
+  assert(i == size1()-1 and j == size2()-1);
+  vector<double> p;
+  p.push_back(P_path);
+  p.push_back(P_sub);
+  return p;
+}
+
+
 void DPmatrix::forward(int x1,int y1,int x2,int y2,const Matrix& GQ) {
   const int maxdelta = std::max(x2-x1,y2-y1);
 
@@ -71,35 +144,6 @@ bool DPmatrix::silent_network(int S) {
     return false;
   else
     return true;
-}
-
-vector<int> DPmatrix::generalize(const vector<int>& path) {
-  vector<int> path_g = path;
-  for(int i=path_g.size()-1;i>0;i--) {
-    int S1 = path_g[i-1];
-    int S2 = path_g[i];
-    if (silent_network(S1) and silent_network(S2))
-      path_g.erase(path_g.begin()+i);
-  }
-  return path_g;
-}
-
-// FIXME - this doesn't deal with silent networks that have more than
-//         one silent state!
-double DPmatrix::generalize_P(const vector<int>& path, const Matrix& Q) {
-  double Pr = 0;
-  for(int i=1; i<path.size(); i++) {
-    int S1 = path[i-1];
-    int S2 = path[i];
-
-    if (silent_network(S1)) {
-      if (silent_network(S2))
-	Pr += Q(S1,S2);
-      else
-	Pr += log(1.0-exp(Q(S1,S1)));
-    }
-  }
-  return Pr;
 }
 
 vector<double> DPmatrix::path_Q(const vector<int>& path,const Matrix& GQ) {
@@ -339,3 +383,39 @@ double DPmatrix::check(const Matrix& Q,const Matrix& GQ,const vector<int>& path1
 
   return diff;
 }
+
+DPmatrix::DPmatrix(int nstates,
+		   const vector< double >& d0,
+		   const vector< vector< valarray<double> > >& d1,
+		   const vector< vector< valarray<double> > >& d2, 
+		   const valarray<double>& f)
+  :vector<Matrix>(nstates,Matrix(d1.size()+1,d2.size()+1)), 
+   s1(d1.size()+1),s2(d2.size()+1), 
+   s1_sub(d1.size()),s2_sub(d2.size()),
+   state_emit(nstates+1),
+   distribution(d0),
+   dists1(d1),dists2(d2),frequency(f)
+{
+  
+  //----- zero-initialize matrices ------//
+  for(int i=0;i<s1;i++)
+    for(int j=0;j<s2;j++) 
+      for(int S=0;S<nstates;S++)
+	(*this)[S](i,j)  = log_0;
+  
+  //----- cache G1,G2 emission probabilities -----//
+  for(int i=0;i<dists1.size();i++) {
+    double total=0;
+    for(int r=0;r<nrates();r++)
+      total += distribution[r]*sum( dists1[i][r] * frequency );
+    s1_sub[i] = log(total);
+  }
+  
+  for(int i=0;i<dists2.size();i++) {
+    double total=0;
+    for(int r=0;r<nrates();r++)
+      total += distribution[r]*sum( dists2[i][r] * frequency );
+    s2_sub[i] = log(total);
+  }
+}
+

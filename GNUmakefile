@@ -13,15 +13,21 @@ all: sampler
 # try -ffast-math, -march=pentium4, -malign-double, -mfpmath=sse,387
 #     -msse2
 
+# -mmmx -m3dnow -msse
+# -mmmx -msse   -msse2
+# -fomit-frame-pointer -pipe -fexpensive-optimizations -fpic -frerun-cse-after-loop -frerun-loop-opt -foptimize-register-move
+# -freorder-blocks -fprefetch-loop-arrays
+
+#-mfpmath=sse,387 ?
 
 # try -fforce-addr
 
 #----------------- Definitions
 LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0
 DEBUG = pipe g3 # pg
-DEFS = NDEBUG 
+DEFS = # NDEBUG 
 WARN = all no-sign-compare overloaded-virtual
-OPT =  malign-double mfpmath=sse msse2 march=pentium4 O3
+OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 # O3
 LDFLAGS = # -pg # -static 
 LI=${CXX}
 

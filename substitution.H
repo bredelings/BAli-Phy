@@ -17,27 +17,19 @@ std::valarray<double> peel(const vector<int>&,const tree&,const ReversibleModel&
 			   const vector<Matrix>&,int,int,int);
 
 
-// Full likelihood of a column or alignment
+// Column likelihood - specific rate
 double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
 	  const vector<Matrix>& transition_P);
-double Pr(const alignment& A,const tree& T,const ReversibleModel& SModel,
-	  const vector<Matrix>& transition_P);
+// Full likelihood - all columns, all rates
+double Pr(const alignment& A, const Parameters& P);
 
 
-// Star likelihood of a column or alignment
-// FIXME - need to get the STAR branch-lengths, non BINARY branch-lengths
-//         - estimate by minimizing sum of squares from true distance?
+// Column likelihood - specific rate (star tree)
 double Pr_star(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
 	  const vector<Matrix>& transition_P);
-double Pr_star(const alignment& A,const tree& T,const ReversibleModel& SModel,
-	  const vector<Matrix>& transition_P);
-double Pr_star_constant(const alignment& A,const tree& T,const ReversibleModel& SModel,
-	  const vector<Matrix>& transition_P);
-double Pr_star_estimate(const alignment& A,const tree& T,const ReversibleModel& SModel,
-	  const vector<Matrix>& transition_P);
-
-double Pr(const alignment& A, const Parameters& P);
+// Full likelihood - all columns, all rates (star tree)
 double Pr_star(const alignment& A,const Parameters& P);
+
 double Pr_star_constant(const alignment& A,const Parameters& P);
 double Pr_star_estimate(const alignment& A,const Parameters& P);
 

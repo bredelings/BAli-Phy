@@ -25,8 +25,11 @@ Matrix exp(const SMatrix& S,const BMatrix& D,const double t) {
   E = prod(DN,prod(E,DP));
 
   for(int i=0;i<E.size1();i++)
-    for(int j=0;j<E.size2();j++)
-      assert(E(i,j) >= 0.0);
+    for(int j=0;j<E.size2();j++) {
+      assert(E(i,j) >= -1.0e-13);
+      if (E(i,j)<0)
+	E(i,j)=0;
+    }
 
   return E;
 }
@@ -46,7 +49,7 @@ Matrix exp(const SMatrix& M,const double t) {
 
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++)
-      assert(E(i,j) >= 0.0);
+      assert(E(i,j) >= -1.0e-13);
 
   return E;
 }

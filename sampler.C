@@ -288,7 +288,8 @@ int main(int argc,char* argv[]) {
     base_smodel->frequencies(empirical_frequencies(A));
     
     substitution::SingleRateModel Single(*base_smodel);
-    substitution::INV_Model       INV(Single);
+    substitution::GammaRateModel  Gamma(*base_smodel,4);
+    substitution::INV_Model       INV(Gamma);
     
     /*-------------Choose an indel model--------------*/
     int IMlength = 500;    //FIXME - perhaps we should choose \tau here

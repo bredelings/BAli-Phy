@@ -18,6 +18,8 @@ void record_move(const string& name,bool success);
 void record_move(int index,bool success);
 
 
+
+
 class MCMC {
 
   typedef void (*move)(alignment&,Parameters&);
