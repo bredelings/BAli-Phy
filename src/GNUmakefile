@@ -22,7 +22,6 @@ LDFLAGS :=
 
 ifeq (${DEBUG},y)
   DEBUG := g3
-  DEFS += _STLP_DEBUG
 else
   ifeq ($(origin DEFS), undefined)
      DEFS += NDEBUG_UBLAS NDEBUG_DP NDEBUG
@@ -66,6 +65,13 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  monitor.C
 
 LIBS = gsl gslcblas m
+ifeq (${STLPORT},y)
+	DEFS += _STLP_DEBUG
+	LIBS += stlportstlg
+	VPATH += /usr/local/STLport/lib/
+	includes += /usr/include/c++/stlport
+endif
+
 LINKLIBS = ${LIBS:%=-l%}
 
 ${PROGNAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
@@ -151,7 +157,6 @@ tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o $
 SHELL = /bin/sh
 MAKEFILES = GNUmakefile
 
-# includes += /home/bredelin/STLport/STLport/stlport
 includes += /usr/local/include
 includes += ../include/
 includes += .
