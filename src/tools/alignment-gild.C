@@ -327,7 +327,10 @@ int main(int argc,char* argv[]) {
     alignment A;
     SequenceTree T;
     vector<alignment> alignments;
+    vector<ublas::matrix<int> > Ms;
     do_setup(args,alignments,A,T);
+    for(int i=0;i<alignments.size();i++)
+      Ms.push_back(M(alignments[i]));
     const int n = T.n_leaves();
 
     //----------- Find root branch ---------//
@@ -372,7 +375,7 @@ int main(int argc,char* argv[]) {
       // Get labels - should I instead get *counts*?
       vector< vector<int> > labels(alignments.size());
       for(int i=0;i<alignments.size();i++)
-	labels[i] = get_splitgroup_columns(MA,c,alignments[i],column_indexes[i]);
+	labels[i] = get_splitgroup_columns(MA,c,Ms[i],column_indexes[i]);
 
       //Get initial estimate using fast least squares
       vector<double> branch_lengths(T.n_branches());

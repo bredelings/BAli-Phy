@@ -40,7 +40,7 @@ void check_alignment(const alignment& A,const Tree& T,const char* tag);
 
 vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
 				   int column,
-				   const alignment& A2,
+				   const ublas::matrix<int>& M2,
 				   const vector< vector<int> >& columns);
 
 long int asymmetric_pairs_distance(const alignment& A1,const alignment& A2);
