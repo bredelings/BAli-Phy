@@ -1,3 +1,4 @@
+#include <cmath>
 #include "dpmatrix.H"
 #include "logsum.H"
 #include "choose.H"
@@ -311,8 +312,11 @@ int bandwidth(const DPmatrix& M,const vector<int>& path) {
 }
 
 
-int bandwidth2(const DPmatrix& M,const vector<int>& path,int I,int J) {
+int bandwidth2(const DPmatrix& M,const vector<int>& path) {
   int max = 0;
+
+  const int I = M.size1()-1;
+  const int J = M.size2()-1;
 
   int i=0;
   int j=0;
@@ -326,7 +330,7 @@ int bandwidth2(const DPmatrix& M,const vector<int>& path,int I,int J) {
     double w1 = std::abs(  i - double(j)*I/J );
     double w2 = std::abs(  j - double(i)*J/I );
     double w = std::max(w1,w2);
-    if ((int)w > max)
+    if ((int)w > ceil(max))
       max = (int)w;
   }
   return max;
@@ -498,25 +502,49 @@ DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<
 { }
 
 
-void DPmatrix::forward(int x1,int y1,int x2,int y2) {
+void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
   assert(x1 < x2 or y1 < y2);
   assert(x2 < size1());
   assert(y2 < size2());
 
-  const int maxdelta = std::max(x2-x1,y2-y1);
+  // Since we are using M(0,0) instead of S(0,0), we need to run only the silent states at (0,0)
+  // We can only use non-silent states at (0,0) to simulate S
 
-  for(int delta=1; delta<=maxdelta; delta++) {
-    if (y1 + delta <= y2)
-      for(int i=0;i<delta and x1+i <= x2;i++) 
-	forward(x1+i,y1+delta);
-
-    if (x1 + delta <= x2)
-      for(int i=0;i<=delta and y1+i <= y2;i++)
-	forward(x1+delta,y1+i);
-  } 
+  for(int x=x1;x<=x2;x++)
+    for(int y=y1;y<=y2;y++)
+      forward_cell(x,y,x1,y1);
 }
 
-void DPmatrix::forward(const vector<int>& path,double bandwidth) {
+void DPmatrix::forward_square() {
+  const int I = size1()-1;
+  const int J = size2()-1;
+
+  forward_square(0,0,I,J);
+}
+
+void DPmatrix::forward_band(int bw) {
+  const int I = size1()-1;
+  const int J = size2()-1;
+
+  double b = std::max(double(bw),double(bw)*J/I)+0.00001;
+
+  for(int x=0;x<=I;x++) {
+    double y_bot = double(x)*J/I - b;
+    double y_top = double(x)*J/I + b;
+
+    int y1 = (int)ceil(y_bot);
+    y1 = std::max(0,y1);
+    int y2 = (int)floor(y_top);
+    y2 = std::min(J,y2);
+    
+    for(int y=y1;y<=y2;y++)
+      forward_cell(x,y,0,0);
+  }
+}
+
+
+// FIXME - must fix entire columns, row, not chosen based on the path
+void DPmatrix::forward_pinned(const vector<int>& path,double bandwidth) {
   vector<int> icol;
   vector<int> jcol;
 
@@ -549,13 +577,59 @@ void DPmatrix::forward(const vector<int>& path,double bandwidth) {
   pins.push_back(icol.size()-1);
 
   // Deal with silent states at (0,0)
-  forward(0,0);
+  forward_cell(0,0,0,0);
 
   // Process the squares generated
   for(int i=0;i<pins.size()-1;i++) {
-    forward(icol[pins[i]],jcol[pins[i]],
-	    icol[pins[i+1]],jcol[pins[i+1]]);
+    forward_square(icol[pins[i]],jcol[pins[i]],
+		   icol[pins[i+1]],jcol[pins[i+1]]);
   }
+}
+
+vector<int> DPmatrix::forward(int features,int bandwidth,const vector<int>& path_old_g) {
+  vector<int> path_new_g;
+
+  bool banding = features&(1<<1);
+  bool pinning = features&(1<<0);
+
+  //-------------------- Banding -------------------//
+  if (banding) {
+    const double f = 0.02;
+
+    int b1 = bandwidth2(*this,path_old_g);
+    //---------- withing the band -----------//
+    if (b1 <= bandwidth) {
+      if (myrandomf() < f)
+	forward_square();
+      else
+	forward_band(bandwidth);
+      path_new_g = sample_path();
+    }
+    //--------------- without --------------//
+    else {
+      forward_square();
+      path_new_g = sample_path();
+
+      int b2 = bandwidth2(*this,path_new_g);
+      if (b2 <= bandwidth)
+	if (myrandomf() < f)
+	  ;
+	else
+	  path_new_g = path_old_g;
+    }
+  }
+  //-------------------- Pinning -------------------//
+  else if (pinning) {
+    forward_pinned(path_old_g,bandwidth);
+    path_new_g = sample_path();
+  }
+  //------------------ Full Square ------------------//
+  else {
+    forward_square();
+    path_new_g = sample_path();
+  }
+
+  return path_new_g;
 }
 
 
@@ -733,34 +807,64 @@ DPmatrix::DPmatrix(int i1,
     (*this)[S](0,0) = start_P[S];
 }
 
-/*
-void DPmatrixNoEmit::forward(int x1,int y1,int x2,int y2) {
-  assert(x1 < x2 or y1 < y2);
-  assert(x2 < size1());
-  assert(y2 < size2());
+inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1) { 
 
-  const int maxdelta = std::max(x2-x1,y2-y1);
+  assert(i2<size1());
+  assert(j2<size2());
 
-  for(int delta=1; delta<=maxdelta; delta++) {
-    if (y1 + delta <= y2)
-      for(int i=0;i<delta and x1+i <= x2;i++) 
-	forward(x1+i,y1+delta);
+  for(int S2=0;S2<nstates();S2++) {
+    Matrix& FS2 = (*this)[S2];
 
-    if (x1 + delta <= x2)
-      for(int i=0;i<=delta and y1+i <= y2;i++)
-	forward(x1+delta,y1+i);
-  } 
+    //--- Get (i1,j1) from (i2,j2) and S2
+    int i1 = i2;
+    if (di(S2)) i1--;
+
+    int j1 = j2;
+    if (dj(S2)) j1--;
+
+    //--- Don't go off the boundary -----
+    if (i1<0 or j1<0)
+      continue;
+
+    //--- Compute Arrival Probability ----
+    FS2(i2,j2) = log_0;
+    for(int S1=0;S1<nstates();S1++) {
+      Matrix& FS1 = (*this)[S1];
+
+      FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
+    }
+  }
+} 
+
+inline double sum(const valarray<double>& v) {
+  return v.sum();
 }
-*/
 
-void DPmatrixNoEmit::forward(int x1,int y1,int x2,int y2) {
-  assert(x1 < x2 or y1 < y2);
-  assert(x2 < size1());
-  assert(y2 < size2());
+inline double DPmatrixEmit::emitMM(int i,int j) const {
+  double total=0;
+  for(int r=0;r<nrates();r++) {
+    //    total += distribution[r]*sum(dists1[i-1][r] * frequency * dists2[j-1][r]);   HANDCODED
+    double temp=0;
+    const valarray<double>& v1 = dists1[i-1][r];
+    const valarray<double>& v2 = dists2[j-1][r];
+    for(int l=0;l<v1.size();l++)
+      temp += v1[l]*frequency[l]*v2[l];
+    total += distribution[r]*temp;
+  }
 
-  for(int x=x1;x<=x2;x++)
-    for(int y=y1;y<=y2;y++)
-      forward(x,y);
+  return log(total);
+}
+
+inline double DPmatrixEmit::emitM_(int i,int j) const {
+  return s1_sub[i-1];
+}
+
+inline double DPmatrixEmit::emit_M(int i,int j) const {
+  return s2_sub[j-1];
+}
+
+inline double DPmatrixEmit::emit__(int i,int j) const {
+  return 0;
 }
 
 double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
@@ -821,155 +925,103 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 }
 
 
-/*
-inline void DPmatrixSimple::forward(int x1,int y1,int x2,int y2) {
-  assert(x1 < x2 or y1 < y2);
-  assert(x2 < size1());
-  assert(y2 < size2());
+inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
 
-  const int maxdelta = std::max(x2-x1,y2-y1);
+  assert(i2<size1());
+  assert(j2<size2());
 
-  for(int delta=1; delta<=maxdelta; delta++) {
-    if (y1 + delta <= y2)
-      for(int i=0;i<delta and x1+i <= x2;i++) 
-	forward(x1+i,y1+delta);
+  for(int S2=0;S2<nstates();S2++) {
+    Matrix& FS2 = (*this)[S2];
 
-    if (x1 + delta <= x2)
-      for(int i=0;i<=delta and y1+i <= y2;i++)
-	forward(x1+delta,y1+i);
-  }
-}
+    //--- Get (i1,j1) from (i2,j2) and S2
+    int i1 = i2;
+    if (di(S2)) i1--;
 
-*/
+    int j1 = j2;
+    if (dj(S2)) j1--;
 
-inline void DPmatrixSimple::forward(int x1,int y1,int x2,int y2) {
-  assert(x1 < x2 or y1 < y2);
-  assert(x2 < size1());
-  assert(y2 < size2());
+    //--- Don't go off the boundary -----
+    if (i1<0 or j1<0) 
+      continue;
 
-  for(int x=x1;x<=x2;x++)
-    for(int y=y1;y<=y2;y++)
-      forward(x,y);
-}
+    //--- Compute Arrival Probability ----
+    FS2(i2,j2) = log_0;
+    for(int S1=0;S1<nstates();S1++) {
+      if (not connected(S1,S2)) continue;
 
+      Matrix& FS1 = (*this)[S1];
 
-void DPmatrixSimple::forward(const vector<int>& path,double bandwidth) {
-  vector<int> icol;
-  vector<int> jcol;
+      if (FS1(i1,j1) < log_limit) continue;
 
-  int i=0;
-  int j=0;
-  icol.push_back(i);
-  jcol.push_back(j);
-  for(int c=0;c < path.size();c++) {
-
-    if (di(path[c]))
-      i++;
-    if (dj(path[c]))
-      j++;
-
-    if (not silent(path[c])) {
-      icol.push_back(i);
-      jcol.push_back(j);
+      FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
     }
+
+    //--- Include Emission Probability----
+    double sub;
+    if (i1 != i2 and j1 != j2)
+      sub = emitMM(i2,j2);
+    else if (i1 != i2)
+      sub = emitM_(i2,j2);
+    else if (j1 != j2)
+      sub = emit_M(i2,j2);
+    else          // silent state - nothing emitted
+      sub = emit__(i2,j2);
+
+
+    FS2(i2,j2) += sub;
   }
+} 
+inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
 
-  assert(icol[icol.size()-1] == size1()-1 );
-  assert(jcol[jcol.size()-1] == size2()-1 );
+  assert(i2<size1());
+  assert(j2<size2());
 
-  vector<int> pins;
-  int column=0;
-  while(column < icol.size()-1) {
-    pins.push_back(column);
-    column += geometric(1.0/bandwidth);
-  }
-  pins.push_back(icol.size()-1);
+  for(int i=0;i<states(j2).size();i++) {
+    int S2 = states(j2)[i];
+    Matrix& FS2 = (*this)[S2];
 
-  // Deal with silent states at (0,0)
-  forward(0,0);
+    //--- Get (i1,j1) from (i2,j2) and S2
+    int i1 = i2;
+    if (di(S2)) i1--;
 
-  // Process the squares generated
-  for(int i=0;i<pins.size()-1;i++) {
-    forward(icol[pins[i]],jcol[pins[i]],
-	    icol[pins[i+1]],jcol[pins[i+1]]);
-  }
-}
+    int j1 = j2;
+    if (dj(S2)) j1--;
 
-
-/*
-inline void DPmatrixHMM::forward(int x1,int y1,int x2,int y2) {
-  assert(x1 < x2 or y1 < y2);
-  assert(x2 < size1());
-  assert(y2 < size2());
-
-  const int maxdelta = std::max(x2-x1,y2-y1);
-
-  for(int delta=1; delta<=maxdelta; delta++) {
-    if (y1 + delta <= y2)
-      for(int i=0;i<delta and x1+i <= x2;i++) 
-	forward(x1+i,y1+delta);
-
-    if (x1 + delta <= x2)
-      for(int i=0;i<=delta and y1+i <= y2;i++)
-	forward(x1+delta,y1+i);
-  } 
-}
-*/
-
-inline void DPmatrixHMM::forward(int x1,int y1,int x2,int y2) {
-  assert(x1 < x2 or y1 < y2);
-  assert(x2 < size1());
-  assert(y2 < size2());
-
-  for(int x=x1;x<=x2;x++)
-    for(int y=y1;y<=y2;y++)
-      forward(x,y);
-}
+    //--- Don't go off the boundary -----
+    if (i1<0 or j1<0) 
+      continue;
 
 
-void DPmatrixHMM::forward(const vector<int>& path,double bandwidth) {
-  vector<int> icol;
-  vector<int> jcol;
+    //--- Compute Arrival Probability ----
+    FS2(i2,j2) = log_0;
+    for(int s=0;s<states(j1).size();s++) {
+      int S1 = states(j1)[s];
 
-  int i=0;
-  int j=0;
-  icol.push_back(i);
-  jcol.push_back(j);
-  for(int c=0;c < path.size();c++) {
+      if (not connected(S1,S2)) continue;
 
-    if (di(path[c]))
-      i++;
-    if (dj(path[c]))
-      j++;
+      Matrix& FS1 = (*this)[S1];
+      
+      if (FS1(i1,j1) < log_limit) continue;
 
-    if (not silent(path[c])) {
-      icol.push_back(i);
-      jcol.push_back(j);
+      FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
     }
-  }
 
-  assert(icol[icol.size()-1] == size1()-1 );
-  assert(jcol[jcol.size()-1] == size2()-1 );
+    //--- Include Emission Probability----
+    double sub;
+    if (i1 != i2 and j1 != j2)
+      sub = emitMM(i2,j2);
+    else if (i1 != i2)
+      sub = emitM_(i2,j2);
+    else if (j1 != j2)
+      sub = emit_M(i2,j2);
+    else          // silent state - nothing emitted
+      sub = emit__(i2,j2);
 
-  vector<int> pins;
-  int column=0;
-  while(column < icol.size()-1) {
-    pins.push_back(column);
-    column += geometric(1.0/bandwidth);
-  }
-  pins.push_back(icol.size()-1);
-
-  // Deal with silent states at (0,0)
-  forward(0,0);
-
-  // Process the squares generated
-  for(int i=0;i<pins.size()-1;i++) {
-    forward(icol[pins[i]],jcol[pins[i]],
-	    icol[pins[i+1]],jcol[pins[i+1]]);
+    FS2(i2,j2) += sub;
   }
 }
 
-int DPmatrixHMM::order_of_computation() const {
+int DPmatrixConstrained::order_of_computation() const {
   unsigned total=0;
   for(int c=0;c<allowed_states.size()-1;c++)
     total += allowed_states[c].size() * allowed_states[c+1].size();
@@ -978,7 +1030,7 @@ int DPmatrixHMM::order_of_computation() const {
 }
 
 
-void DPmatrixHMM::prune() {
+void DPmatrixConstrained::prune() {
 
   unsigned order1 = order_of_computation();
 

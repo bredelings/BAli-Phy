@@ -147,21 +147,9 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
 
   /*------------------ Compute the DP matrix ---------------------*/
 
-  if (P.features & (1<<0)) {
-    vector<int> path_old = get_path(old,node1,node2);
-    Matrices.forward(path_old,P.constants[0]);
-  }
-  else {
-    // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
-    // We can only use non-silent states at (0,0) to simulate S
-    Matrices.forward(0,0);
-  
-    Matrices.forward(0,0,seq1.size(),seq2.size());
-  }
+  vector<int> path_old = get_path(old,node1,node2);
+  vector<int> path = Matrices.forward(P.features,(int)P.constants[0],path_old);
 
-  /************** Sample a path from the matrix ********************/
-
-  vector<int> path = Matrices.sample_path();
   path.erase(path.begin()+path.size()-1);
 
   alignment A = construct(old,path,group1,seq1,seq2);
@@ -169,8 +157,8 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
 
   std::cerr<<"bandwidth = "<<bandwidth(Matrices,path)<<std::endl;
 
-  std::cerr<<"bandwidth2 = "<<bandwidth2(Matrices,path,seq1.size(),seq2.size())<<std::endl;
-  /*--------------------------------------------------------------*/
+  std::cerr<<"bandwidth2 = "<<bandwidth2(Matrices,path)<<std::endl;
+  //--------------------------------------------------------------//
 #ifndef NDEBUG_DP
   vector<int> path_old = get_path(old,node1,node2);
   vector<int> path_new = get_path(A,node1,node2);

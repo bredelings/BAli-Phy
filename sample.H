@@ -37,6 +37,7 @@ bool three_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,
 
 /// Resample between 2 NNI topologies around branch b
 bool two_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,int b);
+bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P2,int b,double rho);
 
 /*-------------- Top Level Sampling Routines -----------*/
 
@@ -49,6 +50,7 @@ MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& Theta,int);
 
 MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P,int b);
 MCMC::result_t two_way_topology_sample(alignment& A,Parameters& P,int b);
+MCMC::result_t two_way_topology_sample2(alignment& A,Parameters& P,int b);
 MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& P,int b);
 
 

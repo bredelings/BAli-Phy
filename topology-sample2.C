@@ -40,26 +40,17 @@ using std::valarray;
 using namespace A5;
 
 // Do we need the different sample_two_nodes_base routines to use the same
-// sub-alignment ordering?
+// sub-alignment ordering for different topologies?  No.
 //  o Sub-alignment order should affect only which paths are considered
 //  o We are essentially considering a set of paths for each topology
 //    (So have ALMOST marginalized over the paths: we don't consider some column orders though)
 //  o We then divide them up unto groups (topologies)
-//  o choose between the groups,
-//  o choose between the topologies
+//  o 1st choose between the groups ,
+//  o 2nd choose between the paths in the chosen group.
 // The fact that we don't consider some paths should not make this non-reversible
-// We are sampling between tagged paths, in a sense (topology is the tag).
-// The column ordering could be different for different topologies, this just might
-//  not mix quite as well as if we could sum out all column ordering.
-// However, since the ordering is random, there should be no consistent bias
-//  (we don't choose the ordering based on the current topology/path.
+// Each combination of order for each topology is a reversible move, because each path proposes the others.
 
 
-//NOTE: in order to compare the trees which we are summing over different branches,
-//      we would have to somehow incorporate the differences in the rest of the likelihood.
-//      But in the current code we are ignoring that.
-//         - FIXME: calculate the full likelihood, subtract the current alignment, and the add
-//           in the sum over all alignments.  (alignment = alignments in the HMM here... )
 
 
 //FIXME - cleanup in several ways.  Firstly, index alignments, as in NewA[0],NewA[1]..
@@ -67,6 +58,96 @@ using namespace A5;
 // Keep track of the old, and go BACK if it doesn't work?
 
 //FIXME - separate HMM out into its own file?
+
+bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P2,int b,double rho) {
+  alignment old = A;
+
+  alignment A1 = old;
+  alignment A2 = old;
+
+  /*---------------- Setup node names ------------------*/
+  assert(b >= P1.T.leafbranches());
+  const vector<int> nodes1 = A5::get_nodes_random(P1.T,b);
+  const vector<int> nodes2 = A5::get_nodes_random(P2.T,b);
+
+  // sample the path from each matrix, remember the gap probability of that topology
+  DParrayConstrained Matrices1 = sample_two_nodes_base(A1,P1,nodes1);
+  DParrayConstrained Matrices2 = sample_two_nodes_base(A2,P2,nodes2);
+
+  // Choose from one of the (Ai,Pi) pairs
+  double PS1 = P1.likelihood(A1,P1);
+  double PA1 = Matrices1.Pr_sum_all_paths();
+  double PP1 = prior(P1);
+
+  double PS2 = P1.likelihood(A2,P2);
+  double PA2 = Matrices2.Pr_sum_all_paths();
+  double PP2 = prior(P2);
+
+  vector<double> P(2);
+  P[0] = PS1 + PA1 + PP1;
+  P[1] = PS2 + PA2 + PP2;
+
+  int choice = 0;
+
+  // Get some pointers to the chosen one.
+  DParrayConstrained const* CM = &Matrices1;
+  alignment const* CA = &A1;
+  Parameters const* CP = &P1;
+  vector<int> nodes_old = nodes1;
+  vector<int> nodes_new = nodes1;
+
+  double a12 = P[1]-P[0]-log(rho);   // log(a12/a21)
+  if (myrandomf() < exp(a12)) {
+    choice = 1;
+    CM = &Matrices2;
+    CA = &A2;
+    CP = &P2;
+    nodes_new = nodes2;
+  }
+
+
+#ifndef NDEBUG_DP
+  /*--------------- Get the new and old paths ---------------*/
+  vector<int> path_old = get_path(old,nodes_old,A5::states_list);
+  vector<int> path_g_old = Matrices1.generalize(path_old);
+
+  vector<int> path_new = get_path(*CA,nodes_new,A5::states_list);
+  vector<int> path_g_new = CM->generalize(path_new);
+
+  /*--------------- Compute the sampling probabilities ---------------*/
+  double Pr1 = probability3(old,P1) + A5::log_correction(old,P1,nodes_old);
+  double Pr2 = probability3(*CA,*CP) + A5::log_correction(*CA,*CP,nodes_new);
+
+  double P12 = log(rho) + a12 + Matrices.path_P(path_g_old) + Matrices1.generalize_P(path_old) + log_acceptance_ratio(old,P1,nodes_old,*CA,*CP,nodes_new);
+  double P21 =                       CM->path_P(path_g_new) +       CM->generalize_P(path_new);
+
+  double diff = (Pr1 + P12) - (Pr2 + P21);
+  std::cerr<<"diff = "<<diff<<std::endl;
+  if (abs(diff) > 1.0e-9) {
+    std::cerr<<old<<endl;
+    std::cerr<<A<<endl;
+
+    std::cerr<<project(old,nodes_old)<<endl;
+    std::cerr<<project(A,nodes_new)<<endl;
+
+    std::abort();
+  }
+#endif
+
+  /*---------------- Adjust for length of n4 and n5 changing --------------------*/
+
+  // if we accept the move, the record the changes
+  bool success = false;
+  if (myrandomf() < exp(log_acceptance_ratio(old,P1,nodes_old,*CA,*CP,nodes_new))) {
+    A = *CA;
+    if (choice != 0) {
+      success = true;
+      P1 = *CP;
+    }
+  }
+
+  return success;
+}
 
 bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters& P2,int b) {
   alignment old = A;
@@ -117,7 +198,7 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
   double Pr1 = probability3(old,P1) + A5::log_correction(old,P1,nodes_old);
   double Pr2 = probability3(*CA,*CP) + A5::log_correction(*CA,*CP,nodes_new);
 
-  vector<int> states_list = construct_states();
+  vector<int> states_list = A5::states_list;
 
   /*--------------- Get the new and old paths ---------------*/
   assert(b >= P1.T.leafbranches());
@@ -153,13 +234,16 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
   /*---------------- Adjust for length of n4 and n5 changing --------------------*/
 
   // if we accept the move, the record the changes
+  bool success = false;
   if (myrandomf() < exp(log_acceptance_ratio(old,P1,nodes_old,*CA,*CP,nodes_new))) {
     A = *CA;
-    if (choice != 0)
+    if (choice != 0) {
+      success = true;
       P1 = *CP;
+    }
   }
 
-  return (choice != 0);
+  return success;
 }
 
 /// This has to be Gibbs, and use the same substitution::Model in each case...
@@ -219,7 +303,7 @@ bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Paramete
     CM = &Matrices3;
     CA = &A3;
     CP = &P3;
-    nodes_new = nodes2;
+    nodes_new = nodes3;
   }
 
 #ifndef NDEBUG_DP
@@ -262,14 +346,17 @@ bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Paramete
 
   /*---------------- Adjust for length of n4 and n5 changing --------------------*/
 
-  // if we accept the move, the record the changes
+  // if we accept the move, then record the changes
+  bool success = false;
   if (myrandomf() < exp(log_acceptance_ratio(old,P1,nodes_old,*CA,*CP,nodes_new))) {
     A = *CA;
-    if (choice != 0)
+    if (choice != 0) {
+      success = true;
       P1 = *CP;
+    }
   }
 
-  return (choice != 0);
+  return success;
 }
 
 ///Sample between 3 topologies, ignoring gap priors on each case
@@ -342,6 +429,7 @@ MCMC::result_t two_way_topology_sample2(alignment& A, Parameters& P,int b) {
   
   const tree& T = P.T;
 
+  //------------------- Get branch names -----------------------//
   vector<int> nodes = A5::get_nodes_random(P.T,b);
   
   //  int b0 = T.find_branch(nodes[0],nodes[4]);
@@ -350,19 +438,37 @@ MCMC::result_t two_way_topology_sample2(alignment& A, Parameters& P,int b) {
   //  int b3 = T.find_branch(nodes[3],nodes[5]);
   int b4 = T.find_branch(nodes[4],nodes[5]);
 
-
+  //----------------- Generate new topology -------------------//
   Parameters P2 = P;
 
+  P2.T.exchange(nodes[1],nodes[2]);
+
+  //--- Ignore lengths if they imply a degenerate topology ---//
+  if ((T.branch(b2).length() <= 0) or (T.branch(b1).length() + T.branch(b4).length() <= 0) or (T.branch(b4).length() <= 0)) {
+    bool success = two_way_topology_sample_fgaps(A,P,P2,b);
+    if (success)
+      result[1] = 1;
+    return result;
+  }
+
+  //------------------ Make old branch lengths ------------------//
+
+  // Move node0/branch0 into branch2
   P2.T.exchange(nodes[1],nodes[2]);
   // b0 unchanged
   P2.T.branch(b1).length() = T.branch(b1).length() + T.branch(b4).length();
   P2.T.branch(b2).length() = myrandomf() * T.branch(b2).length();
   // b3 unchanged
   P2.T.branch(b4).length() = T.branch(b2).length() - P2.T.branch(b2).length();
-  bool success = two_way_topology_sample(A,P,P2,b);
+
+  //-------------------------------------------------------//
+  std::cerr<<"got here..."<<T.branch(b2).length()<<"   "<<P2.T.branch(b1).length()<<"        "<<T.branch(b1).length() + T.branch(b4).length()<<"\n";
+  double rho = P2.T.branch(b1).length()/T.branch(b2).length();
+  std::cerr<<"rho = "<<rho<<"\n";
+  bool success = sample_two_NNI_two_nodes_MH(A,P,P2,b,rho);
+
   if (success)
     result[1] = 1;
-
   return result;
 }
 
@@ -396,8 +502,6 @@ MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P1,int b) {
   T3.exchange(nodes[1],nodes[3]);
   
   bool success = three_way_topology_sample(A,P1,P2,P3,b);
-
-
 
   if (success)
     result[1] = 1;
@@ -483,7 +587,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
     std::swap(nodes1[2],nodes1[3]);
   alignment a1 = A;
   Parameters P1 = P;
-  DPmatrixHMM Matrices1 = tri_sample_alignment_base(a1,P1,nodes1);
+  DPmatrixConstrained Matrices1 = tri_sample_alignment_base(a1,P1,nodes1);
 
 
   // do topology2
@@ -497,7 +601,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
   alignment a2 = A;
   Parameters P2 = P1;
   P2.T.exchange(nodes[1],nodes[2]);
-  DPmatrixHMM Matrices2 = tri_sample_alignment_base(a2,P2,nodes2);
+  DPmatrixConstrained Matrices2 = tri_sample_alignment_base(a2,P2,nodes2);
 
 
   // do topology3
@@ -511,7 +615,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
   alignment a3 = A;
   Parameters P3 = P1;
   P3.T.exchange(nodes[1],nodes[3]);
-  DPmatrixHMM Matrices3 = tri_sample_alignment_base(a3,P3,nodes3);
+  DPmatrixConstrained Matrices3 = tri_sample_alignment_base(a3,P3,nodes3);
 
 
   /*--------------- Calculate corrections to path probabilities --------------*/
@@ -535,7 +639,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
 
   int choice = choose(Pr);
 
-  DPmatrixHMM* CM = 0;
+  DPmatrixConstrained* CM = 0;
   double OSnew = OS1;
   double OPnew = OP1;
   vector<int> nodes_new = nodes1;

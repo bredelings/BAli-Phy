@@ -398,9 +398,7 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
   link(A,T);
 
   /* ----- Try to load alignments ------ */
-  int maxalignments = 1000;
-  if (args.set("maxalignments"))
-    maxalignments = convertTo<int>(args["maxalignments"]);
+  int maxalignments = args.loadvalue("maxalignments",1000);
 
   string tag = "align[sample";
   if (args.set("tag"))

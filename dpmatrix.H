@@ -39,7 +39,7 @@ public:
   /// Is state S a silent state?
   bool silent(int S) const {return not state_emit[S];}
 
-  /// Is state S part of a loop of silent states?
+  /// Is state S part of a loop of silent states?  FIXME: s/network/cycle/...
   bool silent_network(int S) const;
 
   /// What is the n-th state, in the correct order for DP?
@@ -84,6 +84,7 @@ public:
 };
 
 
+
 /// 1D Dynamic Programming Matrix
 class DParray : public HMM, public vector< vector<double> > {
   /// Length of the DP array
@@ -118,6 +119,7 @@ public:
 };
 
 
+
 /// 1D Dynamic Programming Matrix - with constraints on which states are allowed at each position
 class DParrayConstrained: public DParray {
   int order_of_computation() const;
@@ -143,6 +145,8 @@ public:
   virtual ~DParrayConstrained() {}
 };
 
+
+
 /// 2D Dynamic Programming Matrix
 class DPmatrix : public HMM, public vector<Matrix> {
   /// Size of first dimension: 0...L1 = 0...S1-1
@@ -161,13 +165,20 @@ public:
   bool dj(int S) const {bool e = false; if (state_emit[S]&(1<<1)) e=true;return e;}
 
   /// Compute the forward probabilities for a square
-  virtual void forward(int,int,int,int);
+  virtual void forward_cell(int,int,int,int)=0;
 
   /// Compute the forward probabilities for a square
-  virtual void forward(int,int)=0;
+  void forward_square(int,int,int,int);
+  void forward_square();
+
+  /// Compute the forward probabilities for a square
+  void forward_band(int);
 
   /// compute FP for entire matrix, with some points on path pinned
-  void forward(const vector<int>&,double);
+  void forward_pinned(const vector<int>&,double);
+
+  /// Compute the forward probabilities
+  vector<int> forward(int,int,const vector<int>&);
 
   /// Sample a path from the HMM
   vector<int> sample_path() const;
@@ -190,17 +201,14 @@ public:
 };
 
 int bandwidth(const DPmatrix&,const vector<int>&);
-int bandwidth2(const DPmatrix&,const vector<int>&,int,int);
+int bandwidth2(const DPmatrix&,const vector<int>&);
 
 
 /// 2D Dynamic Programming Matrix for chains which only emit or don't emit
 class DPmatrixNoEmit: public DPmatrix {
 public:
-  /// Compute the forward probabilities for a square
-  virtual void forward(int,int,int,int);
-
   /// Compute the forward probabilities for a cell
-  virtual void forward(int,int);
+  void forward_cell(int,int,int,int);
 
   double path_Q_subst(const vector<int>& path) const {return 0;}
 
@@ -215,34 +223,6 @@ public:
   virtual ~DPmatrixNoEmit() {}
 };
 
-inline void DPmatrixNoEmit::forward(int i2,int j2) { 
-
-  assert(i2<size1());
-  assert(j2<size2());
-
-  for(int S2=0;S2<nstates();S2++) {
-    Matrix& FS2 = (*this)[S2];
-
-    //--- Get (i1,j1) from (i2,j2) and S2
-    int i1 = i2;
-    if (di(S2)) i1--;
-
-    int j1 = j2;
-    if (dj(S2)) j1--;
-
-    //--- Don't go off the boundary -----
-    if (i1<0 or j1<0)
-      continue;
-
-    //--- Compute Arrival Probability ----
-    FS2(i2,j2) = log_0;
-    for(int S1=0;S1<nstates();S1++) {
-      Matrix& FS1 = (*this)[S1];
-
-      FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
-    }
-  }
-} 
 
 
 /// 2D Dynamic Programming Matrix for chains which emit different things
@@ -288,45 +268,12 @@ public:
   virtual ~DPmatrixEmit() {}
 };
 
-inline double sum(const valarray<double>& v) {
-  return v.sum();
-}
 
-inline double DPmatrixEmit::emitMM(int i,int j) const {
-  double total=0;
-  for(int r=0;r<nrates();r++) {
-    //    total += distribution[r]*sum(dists1[i-1][r] * frequency * dists2[j-1][r]);   HANDCODED
-    double temp=0;
-    const valarray<double>& v1 = dists1[i-1][r];
-    const valarray<double>& v2 = dists2[j-1][r];
-    for(int l=0;l<v1.size();l++)
-      temp += v1[l]*frequency[l]*v2[l];
-    total += distribution[r]*temp;
-  }
-
-  return log(total);
-}
-
-inline double DPmatrixEmit::emitM_(int i,int j) const {
-  return s1_sub[i-1];
-}
-
-inline double DPmatrixEmit::emit_M(int i,int j) const {
-  return s2_sub[j-1];
-}
-
-inline double DPmatrixEmit::emit__(int i,int j) const {
-  return 0;
-}
 
 /// 2D Dynamic Programming matrix with no constraints on states at each cell
 class DPmatrixSimple: public DPmatrixEmit {
 public:
-  inline void forward(int,int) __attribute__((always_inline));
-  void forward(int i1,int j1,int i2,int j2);
-
-  // compute FP for entire matrix, with some points on path pinned
-  void forward(const vector<int>&,double);
+  void forward_cell(int,int,int,int);
 
   DPmatrixSimple(const vector<int> & v1,
 		 const vector<double> & v2,
@@ -341,71 +288,21 @@ public:
   virtual ~DPmatrixSimple() {}
 };
 
-inline void DPmatrixSimple::forward(int i2,int j2) {
 
-  assert(i2<size1());
-  assert(j2<size2());
-
-  for(int S2=0;S2<nstates();S2++) {
-    Matrix& FS2 = (*this)[S2];
-
-    //--- Get (i1,j1) from (i2,j2) and S2
-    int i1 = i2;
-    if (di(S2)) i1--;
-
-    int j1 = j2;
-    if (dj(S2)) j1--;
-
-    //--- Don't go off the boundary -----
-    if (i1<0 or j1<0)
-      continue;
-
-    //--- Compute Arrival Probability ----
-    FS2(i2,j2) = log_0;
-    for(int S1=0;S1<nstates();S1++) {
-      if (not connected(S1,S2)) continue;
-
-      Matrix& FS1 = (*this)[S1];
-
-      if (FS1(i1,j1) < log_limit) continue;
-
-      FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
-    }
-
-    //--- Include Emission Probability----
-    double sub;
-    if (i1 != i2 and j1 != j2)
-      sub = emitMM(i2,j2);
-    else if (i1 != i2)
-      sub = emitM_(i2,j2);
-    else if (j1 != j2)
-      sub = emit_M(i2,j2);
-    else          // silent state - nothing emitted
-      sub = emit__(i2,j2);
-
-
-    FS2(i2,j2) += sub;
-  }
-} 
 
 /// Dynamic Programming matrix with constraints on the states
-class DPmatrixHMM: public DPmatrixEmit {
+class DPmatrixConstrained: public DPmatrixEmit {
   int order_of_computation() const;
   vector< vector<int> > allowed_states;
 public:
   const vector<int>& states(int j) const {return allowed_states[j];}
   vector<int>& states(int j) {return allowed_states[j];}
 
-  inline void forward(int,int) __attribute__((always_inline));
-
-  void forward(int i1,int j1,int i2,int j2);
-
-  // compute FP for entire matrix, with some points on path pinned
-  void forward(const vector<int>&,double);
+  void forward_cell(int,int,int,int);
 
   void prune();
 
-  DPmatrixHMM(const vector<int> & v1,
+  DPmatrixConstrained(const vector<int> & v1,
 	      const vector<double> & v2,
 	      const Matrix& M,
 	      const vector< double >& d0,
@@ -414,58 +311,7 @@ public:
     DPmatrixEmit(v1,v2,M,d0,d1,d2,f), allowed_states(d2.size()+1)
   { }
 
-  virtual ~DPmatrixHMM() {}
+  virtual ~DPmatrixConstrained() {}
 };
-
-inline void DPmatrixHMM::forward(int i2,int j2) {
-
-  assert(i2<size1());
-  assert(j2<size2());
-
-  for(int i=0;i<states(j2).size();i++) {
-    int S2 = states(j2)[i];
-    Matrix& FS2 = (*this)[S2];
-
-    //--- Get (i1,j1) from (i2,j2) and S2
-    int i1 = i2;
-    if (di(S2))
-      i1--;
-
-    int j1 = j2;
-    if (dj(S2))
-      j1--;
-
-    //--- Don't go off the boundary -----
-    if (i1<0 or j1<0)
-      continue;
-
-    //--- Compute Arrival Probability ----
-    FS2(i2,j2) = log_0;
-    for(int s=0;s<states(j1).size();s++) {
-      int S1 = states(j1)[s];
-
-      if (not connected(S1,S2)) continue;
-
-      Matrix& FS1 = (*this)[S1];
-      
-      if (FS1(i1,j1) < log_limit) continue;
-
-      FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
-    }
-
-    //--- Include Emission Probability----
-    double sub;
-    if (i1 != i2 and j1 != j2)
-      sub = emitMM(i2,j2);
-    else if (i1 != i2)
-      sub = emitM_(i2,j2);
-    else if (j1 != j2)
-      sub = emit_M(i2,j2);
-    else          // silent state - nothing emitted
-      sub = emit__(i2,j2);
-
-    FS2(i2,j2) += sub;
-  }
-}
 
 #endif

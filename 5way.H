@@ -60,6 +60,8 @@ namespace A5 {
   double log_acceptance_ratio(const alignment& A1,const Parameters& P1,const vector<int>&,
 			      const alignment& A2,const Parameters& P2,const vector<int>&);
 
+  extern vector<int> states_list;
+
 };
 
 

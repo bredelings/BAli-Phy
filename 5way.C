@@ -7,6 +7,8 @@ using std::valarray;
 
 namespace A5 {
 
+  vector<int> states_list = construct_states();
+
   /// Which 5 nodes are adjacent to this branch?
   vector<int> get_nodes(const tree& T,int b) {
     vector<int> nodes(6);

@@ -98,11 +98,8 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
 
   /*-------------- Create alignment matrices ---------------*/
 
-  // Construct the list of bits and states (hidden, or not) for each sub alignment
-  vector<int> states_list = construct_states();
-
   // Construct the 1D state-emit matrix from the 6D one
-  vector<int> state_emit_1D = states_list;
+  vector<int> state_emit_1D = A5::states_list;
   for(int S2=0;S2<state_emit_1D.size();S2++) {
     int state_emit = state_emit_1D[S2]&leafbitsmask;
     if (state_emit)
@@ -112,10 +109,10 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   }
   
   // Create the transition matrix first using just the current, fixed ordering
-  const Matrix Q = createQ(P.IModel(),states_list);
+  const Matrix Q = createQ(P.IModel(),A5::states_list);
 
   // Actually create the Matrices & Chain
-  DParrayConstrained Matrices(seqall.size(), state_emit_1D, get_start_P(pi,states_list), Q);
+  DParrayConstrained Matrices(seqall.size(), state_emit_1D, get_start_P(pi,A5::states_list), Q);
 
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices.size();c2++) {
@@ -125,7 +122,7 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
     int l2 = lcol[c2];
     for(int i=0;i<Matrices.nstates();i++) {
       int S2 = Matrices.order(i);
-      int state2 = states_list[S2];
+      int state2 = A5::states_list[S2];
 
       //---------- Get (,j1,k1) ----------
       int i1 = i2;
@@ -153,7 +150,7 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
 
   /*------------------ Compute the DP matrix ---------------------*/
 
-  Matrices.prune();
+  //  Matrices.prune(); no effect, really?
   Matrices.forward();
 
   //------------- Sample a path from the matrix -------------------//
@@ -161,15 +158,15 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   vector<int> path_g = Matrices.sample_path();
   vector<int> path = Matrices.ungeneralize(path_g);
 
-  A = construct(old,path,nodes,T,seqs,states_list);
+  A = construct(old,path,nodes,T,seqs,A5::states_list);
 
 #ifndef NDEBUG_DP
   vector<int> newnodes;
   for(int i=0;i<6;i++)
     newnodes.push_back(i);
 
-  vector<int> path_new = get_path(project(A,nodes),newnodes,states_list);
-  vector<int> path_new2 = get_path(A,nodes,states_list);
+  vector<int> path_new = get_path(project(A,nodes),newnodes,A5::states_list);
+  vector<int> path_new2 = get_path(A,nodes,A5::states_list);
   assert(path_new == path_new2); // <- current implementation probably guarantees this
                                  //    but its not a NECESSARY effect of the routine.
 
@@ -194,16 +191,13 @@ alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
 
 #ifndef NDEBUG_DP
 
-  // Construct the list of bits and states (hidden, or not) for each sub alignment
-  vector<int> states_list = construct_states();
-
   // get the paths through the 3way alignment, from the entire alignment
   vector<int> newnodes;
   for(int i=0;i<6;i++)
     newnodes.push_back(i);
 
-  vector<int> path_old = get_path(project(old,nodes),newnodes,states_list);
-  vector<int> path_new = get_path(project(A,nodes),newnodes,states_list);
+  vector<int> path_old = get_path(project(old,nodes),newnodes,A5::states_list);
+  vector<int> path_new = get_path(project(A,nodes),newnodes,A5::states_list);
 
   //-------------- Check relative path probabilities --------------//
   double s1 = P.likelihood(old,P);

@@ -198,9 +198,7 @@ int main(int argc,char* argv[]) {
       color = false;
 
     /*-------------------- Get width ------------------------*/
-    int width =67;
-    if (args.set("width"))
-      width = convertTo<int>(args["width"]);
+    int width =args.loadvalue("width",67);
 
     /*-------------------- Get start ------------------------*/
     int start=0;

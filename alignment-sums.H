@@ -24,6 +24,6 @@ vector< vector<valarray<double> > > distributions_tree(const alignment& A,const 
 DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
 
 /// Routine for summing/sampling possibilities for sequence at an internal node, and an adjacent alignment
-DPmatrixHMM tri_sample_alignment_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
+DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
 
 #endif

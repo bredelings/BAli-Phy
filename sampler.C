@@ -180,6 +180,11 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				    internal_branches)
 		    ,false
 		    );
+  topology_move.add(1,MoveArgSingle("two_way_NNI2:nodes:topology",
+				    two_way_topology_sample2,
+				    internal_branches)
+		    ,false
+		    );
 
   //FIXME - doesn't yet deal with gaps=star
   if (P.SModel().full_tree)
@@ -291,11 +296,9 @@ int main(int argc,char* argv[]) {
     do_setup(args,A,T);
     
     /*------------ Specify Gap Penalties ----------*/
-    double lambda_O = -8;
-    if (args.set("lambda_O")) lambda_O = convertTo<double>(args["lambda_O"]);
+    double lambda_O = args.loadvalue("lambda_O",-8);
 
-    double lambda_E = lambda_O/10.0;
-    if (args.set("lambda_E")) lambda_E = convertTo<double>(args["lambda_E"]);
+    double lambda_E = args.loadvalue("lambda_E",lambda_O/10.0);
     
     std::cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl<<endl;
     
@@ -342,22 +345,20 @@ int main(int argc,char* argv[]) {
     std::cout<<"Full tree for substitution: "<<P.SModel().full_tree<<endl<<endl;
     std::cout<<"Full tree for gaps: "<<P.IModel().full_tree<<endl<<endl;
 
-    if (args.set("pinning") and args["pinning"] == "enable") {
+    P.constants[0] = args.loadvalue("bandwidth",100.0);
+    if (args.set("pinning") and args["pinning"] == "enable")
       P.features |= (1<<0);
-      double bandwidth = 100;
-      if (args.set("bandwidth"))
-	bandwidth = convertTo<double>(args["bandwidth"]);
-      P.constants[0] = bandwidth;
-    }
+    if (args.set("banding") and args["banding"] == "enable")
+      P.features |= (1<<1);
+
 
     /*---------------Do something------------------*/
     if (args.set("showonly"))
       do_showonly(A,P);
+    // FIXME - use print_stats?
     else {
-      long int max_iterations = 1000000;
+      long int max_iterations = args.loadvalue("iterations",(long int)1000000);
 
-      if (args.set("iterations"))
-	max_iterations = convertTo<long int>(args["iterations"]);
       do_sampling(args,A,P,max_iterations);
     }
 

@@ -121,7 +121,7 @@ vector<int> getnodes(const tree& T,int node1,int node2) {
 
 // FIXME - actually resample the path multiple times - pick one on
 // opposite side of the middle 
-DPmatrixHMM tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
+DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const tree& T = P.T;
 
   assert(T.connected(nodes[0],nodes[1]));
@@ -198,7 +198,7 @@ DPmatrixHMM tri_sample_alignment_base(alignment& A,const Parameters& P,const vec
   const Matrix Q = createQ(P.IModel());
 
   // Actually create the Matrices & Chain
-  DPmatrixHMM Matrices(get_state_emit(),get_start_P(pi),Q,
+  DPmatrixConstrained Matrices(get_state_emit(),get_start_P(pi),Q,
 		       P.SModel().distribution(),dists1,dists23,frequency);
 
   // Determine state order - FIXME - make this part of dpmatrix.H (part of HMM)
@@ -234,22 +234,13 @@ DPmatrixHMM tri_sample_alignment_base(alignment& A,const Parameters& P,const vec
 
   /*------------------ Compute the DP matrix ---------------------*/
 
-  if (P.features & (1<<0)) {
-    vector<int> path_old = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
-    Matrices.forward(path_old,P.constants[0]);
-  }
-  else {
-    Matrices.prune();
-    // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
-    // We can only use non-silent states at (0,0) to simulate S
-    Matrices.forward(0,0);
+  Matrices.prune();
   
-    Matrices.forward(0,0,seq1.size(),seq23.size());
-  }
+  vector<int> path_old = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
+  vector<int> path_old_g = Matrices.generalize(path_old);
 
-  //------------- Sample a path from the matrix -------------------//
+  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
 
-  vector<int> path_g = Matrices.sample_path();
   vector<int> path = Matrices.ungeneralize(path_g);
 
   A = construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
@@ -275,7 +266,7 @@ DPmatrixHMM tri_sample_alignment_base(alignment& A,const Parameters& P,const vec
 
   std::cerr<<"[tri]bandwidth = "<<bandwidth(Matrices,path_g)<<std::endl;
 
-  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g,seq1.size(),seq23.size())<<std::endl;
+  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
 
   return Matrices;
 }
@@ -288,7 +279,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node
   alignment A = old;
   vector<int> nodes = getnodes(P.T,node1,node2);
 
-  DPmatrixHMM Matrices =  tri_sample_alignment_base(A,P,nodes);
+  DPmatrixConstrained Matrices =  tri_sample_alignment_base(A,P,nodes);
 
 #ifndef NDEBUG_DP
   /*---------- get the paths through the 3way alignment, from the entire alignment ----------*/
@@ -343,9 +334,9 @@ bool tri_sample_alignment_branch(alignment& old,Parameters& P1,
 
   vector<int> nodes = getnodes(P1.T,node1,node2);
 
-  DPmatrixHMM Matrices1 = tri_sample_alignment_base(A,P1,nodes);
+  DPmatrixConstrained Matrices1 = tri_sample_alignment_base(A,P1,nodes);
 
-  DPmatrixHMM Matrices2 = tri_sample_alignment_base(A2,P2,nodes);
+  DPmatrixConstrained Matrices2 = tri_sample_alignment_base(A2,P2,nodes);
 
 
   /*----------------------- Choose between P1 and P2 --------------------------*/
@@ -362,7 +353,7 @@ bool tri_sample_alignment_branch(alignment& old,Parameters& P1,
     choice = 1;
 
   Parameters*  ChosenP = &P1;
-  DPmatrixHMM* ChosenMatrices = &Matrices1;
+  DPmatrixConstrained* ChosenMatrices = &Matrices1;
   if (choice == 1) {
     A = A2;
     ChosenMatrices = &Matrices2;

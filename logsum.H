@@ -17,6 +17,17 @@ inline double logsum(double x, double y)
     return (x + log(1 + exp(temp)));
 }
 
+inline void loginc(double& x,double y) {
+  double temp = y-x;
+  if (temp < -308 or y < log_limit)
+    ;
+  else if (temp > 308 or x < log_limit)
+    x=y;
+  else
+    x += log(1 + exp(temp));
+}
+
+
 inline double logsum_nocheck(double x, double y) {
   if (std::abs(x-y) > 308)
     return ((x > y) ? x : y);
