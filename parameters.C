@@ -129,10 +129,15 @@ IndelModel1::IndelModel1(int maxlength,double LO,double LE)
 
   /* Initial Distribution */
   /* This is for the character before the first character - can't be E */
-  pi[0] = log(1.0-delta-delta*(1.0-delta) );
-  pi[1] = log(delta);
-  pi[2] = log(delta *(1.0-delta) );
+  pi[0] = 0;
+  pi[1] = log_0;
+  pi[2] = log_0;
   pi[3] = log_0;  // must be log_0
+
+  //  pi[0] = log(1.0-delta-delta*(1.0-delta) );
+  //  pi[1] = log(delta);
+  //  pi[2] = log(delta *(1.0-delta) );
+  //  pi[3] = log_0;  // must be log_0
 
   construct_lengthp(maxlength);
 }
@@ -191,10 +196,14 @@ IndelModel2::IndelModel2(int maxlength,double LO,double LE,double b)
 
   /* Initial Distribution */
   /* This is for the character before the first character - can't be E */
-  pi[0] = log(1.0-2.0*delta);
-  pi[1] = log(delta);
-  pi[2] = log(delta);
+  pi[0] = 0;
+  pi[1] = log_0;
+  pi[2] = log_0;
   pi[3] = log_0;  // must be log_0
+  //  pi[0] = log(1.0-2.0*delta);
+  //  pi[1] = log(delta);
+  //  pi[2] = log(delta);
+  //  pi[3] = log_0;  // must be log_0
 
   construct_lengthp(maxlength);
 }

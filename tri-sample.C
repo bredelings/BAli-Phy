@@ -90,8 +90,7 @@ static int bits_to_states(int bits) {
 }
 
 
-
-inline int getstate(int S) {
+inline int getstates(int S) {
   assert(0 <= S and S<nstates+1);
 
   if (S==nstates)
@@ -131,8 +130,19 @@ inline int getstate(int S) {
   return (states<<4)|bits;
 }
 
+inline int findstate(int states) {
+  unsigned int mask = ~((~0)<<10);
+  for(int S=0;S<=nstates;S++) {
+    if ((getstates(S)&mask) == (states&mask))
+      return S;
+  }
+  //couldn't find it?
+  assert(0);
+}
+
+
 inline int di(int S) {
-  S = getstate(S);
+  S = getstates(S);
   if (S&(1<<1))
     return 1;
   else
@@ -140,7 +150,7 @@ inline int di(int S) {
 }
 
 inline int dj(int S) {
-  S = getstate(S);
+  S = getstates(S);
   if (S&(1<<2))
     return 1;
   else
@@ -148,7 +158,7 @@ inline int dj(int S) {
 }
 
 inline int dk(int S) {
-  S = getstate(S);
+  S = getstates(S);
   if (S&(1<<3))
     return 1;
   else
@@ -156,7 +166,7 @@ inline int dk(int S) {
 }
 
 inline int dl(int S) {
-  S = getstate(S);
+  S = getstates(S);
   if (S&(1<<0))
     return 1;
   else
@@ -168,8 +178,8 @@ inline double getQ(int S1,int S2,const IndelModel& IModel) {
   assert(0 <= S1 and S1 < nstates+1);
   assert(0 <= S2 and S2 < nstates+1);
 
-  int states1 = getstate(S1);
-  int states2 = getstate(S2);
+  int states1 = getstates(S1);
+  int states2 = getstates(S2);
 
   // If states are unordered, then force numerical order
   //  - this means that sequence 3 comes first
@@ -354,47 +364,99 @@ inline void DPmatrixHMM::forward(int i2,int c2,const Matrix& GQ) {
   }
 }     
 
+alignment reorder(const alignment& A1,const vector<int>& order) {
+  alignment A2 = A1;
+  for(int column=0;column<A2.length();column++) 
+    for(int s=0;s<A2.size2();s++) 
+      A2(order[column],s) = A1(column,s);
 
-
-vector<int> get_path_3way(const alignment& A,int node1, int node2) {
-
-  //----- Store whether or not characters are present -----//
-  vector<valarray<bool> > present(A.length());
-  for(int c=0;c<A.length();c++) {
-    present[c].resize(A.size2());
-    for(int s=0;s<A.size2();s++)
-      present[c][s] = not A.gap(c,s);
-  }
-
-  int A10,A20,A30;
-  vector<int> state;
-  state.reserve(A.length()+1);
-  for(int column=0;column<A.length();column++) {
-    if (A.gap(column,node1)) {
-      if (A.gap(column,node2)) 
-	continue;
-      else
-	state.push_back(1);
-    }
-    else {
-      if (A.gap(column,node2))
-	state.push_back(2);
-      else
-	state.push_back(0);
-    }
-  }
-  
-  state.push_back(3);
-  return state;
+  return A2;
 }
 
+vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
+
+  //----- Store whether or not characters are present -----//
+  vector<int> present;
+  for(int column=0;column<A.length();column++) {
+    int bits=0;
+    if (not A.gap(column,n0))
+      bits |= (1<<0);
+    if (not A.gap(column,n1))
+      bits |= (1<<1);
+    if (not A.gap(column,n2))
+      bits |= (1<<2);
+    if (not A.gap(column,n3))
+      bits |= (1<<3);
+    present.push_back(bits);
+  }
+
+  int A10 = states::M;
+  int A20 = states::M;
+  int A30 = states::M;
+
+  vector<int> path;
+  path.reserve(A.length()+1);
+  for(int column=0;column<A.length();column++) {
+    int bits = present[column];
+
+    if (not bits) 
+      continue;
+
+    int states = bits_to_states(bits);
+    if (states & (1<<6))
+      A10 = (states>>0)&3;
+    if (states & (1<<7))
+      A20 = (states>>2)&3;
+    if (states & (1<<8))
+      A30 = (states>>4)&3;
+
+    states |= (A30<<4)|(A20<<2)|(A10<<0);
+    states = (states<<4)|bits;
+    int S = findstate(states);
+    path.push_back(S);
+  }
+  
+  path.push_back(nstates);
+  return path;
+}
 
 vector<int> generalize(const vector<int>& path) {
   return path;
 }
 
 double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& GQ) {
-  return 0;
+
+  const int I = Matrices.size1()-1;
+  const int C = Matrices.size2()-1;
+  int i = I;
+  int c = C;
+  double Pr=0;
+
+  int l = path.size()-1;
+  int state2 = path[l];
+  while (i>0 or c>0) {
+    assert(l>0);
+
+    vector<double> transition(nstates);
+    for(int state1=0;state1<nstates;state1++)
+      transition[state1] = Matrices[state1](i,c)+GQ(state1,state2);
+
+    int state1 = path[l-1];
+    double p = choose_P(state1,transition);
+
+    if (di(state1)) i--;
+    if (dj(state1) or dk(state1)) c--;
+
+    l--;
+    state2 = state1;
+    Pr += p;
+
+    assert(i>=0 and c>=0);
+  }
+  assert(l == 0);
+  assert(i == 0 and c == 0);
+
+  return Pr;
 }
 
 
@@ -665,7 +727,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
 
   /*---------------- Setup node names ------------------*/
-  assert(node1 >= Theta.T.leaves());
+  assert(node1 >= T.leaves());
 
   int n0 = node1;
   int n1 = T[n0].parent();
@@ -689,6 +751,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
   vector<int> orderi = getorder(old,n0,n1,n2,n3);
   vector<int> order = invert(orderi);
+
+  std::cerr<<"old (reordered) = "<<reorder(old,order)<<endl;
 
   // Find sub-alignments and sequences
   vector<int> seq1;
@@ -736,7 +800,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   DPmatrixHMM Matrices(nstates,dists1,dists23,frequency);
 
   for(int S2=0;S2<nstates+1;S2++)
-    Matrices.getstate[S2] = getstate(S2);
+    Matrices.getstate[S2] = getstates(S2);
 
   for(int c2=0;c2<Matrices.size2();c2++) {
     int j2 = jcol[c2];
@@ -753,7 +817,9 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 	k1--;
       
       //------ Get c1, check if valid ------
-      if (j1 == j2 and k1 == k2)
+      if (c2==0)
+	Matrices.states(c2).push_back(S2);
+      else if (j1 == j2 and k1 == k2)
 	Matrices.states(c2).push_back(S2);
       else if (j1 == jcol[c2-1] and k1 == kcol[c2-1])
 	Matrices.states(c2).push_back(S2);
@@ -764,25 +830,34 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
 
   //-------------------- Initialize the Start  ------------------------//
+  double sum=log_0;
+  int count = 0;
   for(int S=0;S<nstates;S++) {
-    int states = getstate(S);
+    int states = getstates(S);
     int s1 = (states>>4)&3;
     int s2 = (states>>6)&3;
     int s3 = (states>>8)&3;
 
+    if (s1 == states::E or s2 == states::E or s3 == states::E)
+      continue;
+
     // if we are using hidden states, only use one way
     if (s1 == states::G1) {
-      if (not bitset(S,10)) continue;
+      if (not bitset(states,10)) continue;
     }
     else if (s2 == states::G1) {
-      if (not bitset(S,11)) continue;
+      if (not bitset(states,11)) continue;
     }
     else if (s3 == states::G1) {
-      if (not bitset(S,12)) continue;
+      if (not bitset(states,12)) continue;
     }
 
     Matrices[S](0,0) = pi[s1] + pi[s2] + pi[s3];
+    count++;
+    sum = logsum(sum,Matrices[S](0,0));
   }
+  std::cerr<<"sum = "<<sum<<std::endl;
+  assert(count==27);
 
   //check that the sum of Matrices[S](0,0) is 1, number of states examined is 27
 
@@ -807,32 +882,34 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
   alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3,order);
 
-
-  double l1 = probability3(old,Theta);
-  double l2 = probability3(A,Theta);
-  assert(std::abs(l1-l2) < 1000);
-
-  // check that the old path doesn't have probability zero?
-
   //------------- Check relative path probabilities ---------------//
-  if (0) {
   path.push_back(nstates);
 
-  vector<int> path_old = get_path_3way(old,n0,n1,n2,n3);
+  vector<int> path_old = get_path_3way(reorder(old,order),n0,n1,n2,n3);
   vector<int> path_new = get_path_3way(A,n0,n1,n2,n3);
 
   vector<int> path_old_G = generalize(path_old);
   vector<int> path_new_G = generalize(path_new);
-  assert(path_old_G == path);
+  assert(path_new_G == path);
 
+  double l1 = probability3(old,Theta);
+  double l2 = probability3(A,Theta);
 
-  double p1 = path_P(path_old_G,Matrices,GQ);
+  double p1 = path_P(path_old_G,Matrices,GQ); 
   double p2 = path_P(path_new_G,Matrices,GQ);
+
+  // Adjust for length of n0 changing
+  int length_old = old.seqlength(n0);
+  int length_new = A.seqlength(n0);
+
+  p1 -= 2.0*Theta.IModel.lengthp(length_old);
+  p2 -= 2.0*Theta.IModel.lengthp(length_new);
 
   double diff = p2-p1-(l2-l1);
   double rdiff = diff/(l2-l1);
 
   if (path_old_G != path_new_G) {
+    std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
     std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
     std::cerr<<"L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<endl;
     std::cerr<<"diff = "<<diff<<std::endl;
@@ -845,7 +922,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   }
 
   assert(isnan(rdiff) or abs(diff) < 1.0e-8);
-  }
+
   /*--------------------------------------------------------------*/
   assert(valid(A));
   return A;

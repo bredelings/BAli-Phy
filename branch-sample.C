@@ -52,7 +52,7 @@ double path_P(const vector<int>& path,const Matrix& M,const Matrix& G1,const Mat
 
     assert(k>=0 and l>=0);
   }
-  assert(i==0);
+  assert(i == 0);
   assert(k == 0 and l == 0);
   return Pr;
 }

@@ -289,7 +289,7 @@ int main(int argc,char* argv[]) {
     smodel->frequencies(empirical_frequencies(A));
     
     /*-------------Choose an indel model--------------*/
-    int IMlength = 2000;    //FIXME - perhaps we should choose \tau here
+    int IMlength = 1000;    //FIXME - perhaps we should choose \tau here
     if (IMlength < A.length()*3)
       IMlength = A.length()*3;
     IndelModel1 IM1(IMlength,lambda_O,lambda_E);

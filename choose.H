@@ -11,4 +11,6 @@ int choose(const std::vector<double>&);
 
 
 double choose_P(int,double, double, double);
+
+double choose_P(int, const std::vector<double>&);
 #endif
