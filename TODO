@@ -1,10 +1,9 @@
 TODO 
+ - is log1p(x) as fast as log(1+x)?
  - fix bandwidth code...
  - make a 'src' directory...?
  - speed up branch length calculations - 
  - CHECK acceptance/rejection ratios - alter things.
- - update stuff so that we can use -Weffc++
  + profile DEBUG vs NDEBUG, make DEBUG faster
-   - define a macro to set ublas debugging on/off separate from NDEBUG
- - profile NDEBUG code to see where we are spending (compare different data sets)
+ - profile NDEBUG code to see where we are spending (for each data set)
 
