@@ -206,6 +206,17 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   sampler.go(A,P,subsample,max_iterations);
 }
 
+#ifdef DEBUG_MEMORY
+void * operator new(size_t sz) throw(std::bad_alloc) {
+  printf("new (_main.cpp) called, sz = %d\n",sz);
+  return malloc(sz); 
+}
+
+void operator delete(void * p) throw() {
+  printf("delete (_main.cpp) called, content = %d\n",(*(int*)p));
+  free(p); 
+}
+#endif
 
 int main(int argc,char* argv[]) { 
   try {
@@ -328,7 +339,8 @@ int main(int argc,char* argv[]) {
     }
   }
   catch (std::bad_alloc) {
-    std::cerr<<"Doh!  Some kind of memory probleM?";
+    std::cerr<<"Doh!  Some kind of memory problem?\n";
+    report_mem();
     exit(1);
   }
   catch (std::exception& e) {

@@ -1,5 +1,11 @@
 #include "monitor.H"
 
+#include <cstdlib>
+#include <sstream>
+extern "C" {
+#include <sys/resource.h>
+}
+
 #include <valarray>
 #include "substitution.H"
 #include "likelihood.H"
@@ -80,5 +86,23 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
 #ifndef NDEBUG
   check_alignment(A,P.T,"print_stats:end");
 #endif
+}
+
+void report_mem() {
+/*
+  struct rusage usage;
+  std::cerr<<getrusage(RUSAGE_SELF,&usage);
+  std::cerr<<"Maximum resident set size: "<<usage.ru_maxrss<<"\n";
+  std::cerr<<"Integral shared memory size: "<<usage.ru_ixrss<<"\n";
+  std::cerr<<"Integral unshared data size: "<<usage.ru_idrss<<"\n";
+  std::cerr<<"Integral unshared stack size: "<<usage.ru_isrss<<"\n";
+  std::cerr<<"Number of swaps: "<<usage.ru_nswap<<"\n";
+  std::cerr.flush();
+*/
+  int pid = getpid();
+  std::ostringstream cmd;
+  cmd<<"cat /proc/"<<pid<<"/status | grep Vm 1>&2";
+  system(cmd.str().c_str());
+  std::cerr.flush();
 }
 

@@ -13,4 +13,6 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
 
 void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel);
 void show_parameters(std::ostream& o,const Model& M);
+void report_mem();
+
 #endif
