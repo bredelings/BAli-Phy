@@ -32,143 +32,113 @@ namespace states {
   const int E  = 3;
 };
 
-// Is each alignment present?
-static int mask(int bits) {
-  int m=3; //state mask
-  int M=0;
+bool legal(int bits) {
   if (not bitset(bits,4)) {
-    if (not (bitset(bits,0)))
-      M |= (m<<0);
-    if (not (bitset(bits,1)))
-      M |= (m<<2);
-
-    // middle branch
-    if (not bitset(bits,5))
-      M |= (m<<8);
+    int temp = 0;
+    if (bitset(bits,0))
+      temp++;
+    if (bitset(bits,1))
+      temp++;
+    if (bitset(bits,2) or bitset(bits,3) or bitset(bits,5))
+      temp++;
+							     
+    if (temp>1)   // not legal for n5
+      return false;
   }
-
+   
   if (not bitset(bits,5)) {
-    if (not (bitset(bits,2)))
-      M |= (m<<4);
-    if (not (bitset(bits,3)))
-      M |= (m<<6);
+    int temp = 0;
+    if (bitset(bits,2))
+      temp++;
+    if (bitset(bits,3))
+      temp++;
+    if (bitset(bits,0) or bitset(bits,1) or bitset(bits,4))
+      temp++;
+							     
+    if (temp > 1) // not legal for n5
+      return false;
   }
-  return M;
+  return true;
 }
 
-// Takes a bitmask of character presence in sequence 0,1,2,3,4,5
-// Returns the state, with the validity of sub-alignments 1,2,3,4,5
-//    marked in bits 10,11,12,13,14
-static int bits_to_states(int bits) {
+static int bits_to_state(int bits,int b1,int b2) {
+  if (not bitset(bits,b1)) {
+    if (bitset(bits,b2))
+      return states::G1;
+    else
+      return 3;
+  }
+  else {
+    if (bitset(bits,b2))
+      return states::M;
+    else
+      return states::G2;
+  }
+}
+
+// Takes a bitmask of character-presence in sequences 0,1,2,3,4,5
+// Returns the state for each alignment, 
+//  with the validity of sub-alignments 0,1,2,3,4 marked in bits 10,11,12,13,14
+static int get_column_states(int bits) {
   int S=0;
-  if (not bitset(bits,4)) {
-    if (bitset(bits,0))
-      S |= (states::G1<<0);
-    else
-      S = setbit(S,10);
+  S |= bits_to_state(bits,4,0)<<0;
+  S |= bits_to_state(bits,4,1)<<2;
+  S |= bits_to_state(bits,5,2)<<4;
+  S |= bits_to_state(bits,5,3)<<6;
+  S |= bits_to_state(bits,4,5)<<8;
 
-    if (bitset(bits,1))
-      S |= (states::G1<<2);
-    else
-      S = setbit(S,11);
-
-    if (bitset(bits,5))
-      S |= (states::G1<<8);
-    else
-      S = setbit(S,14);
+  for(int i=0;i<5;i++) {
+    if (bits_present(S>>(2*i),3)) { // if alignment i is missing
+      S &= ~(3<<(2*i));      // clear its state
+      S = setbit(S,10+i);    // and mark it missing
+    }
   }
-  else {
-    if (bitset(bits,0))
-      S |= (states::M<<0);
-    else
-      S |= (states::G2<<0);
-      
-    if (bitset(bits,1))
-      S |= (states::M<<2);
-    else
-      S |= (states::G2<<2);
-
-    if (bitset(bits,5))
-      S |= (states::M<<8);
-    else
-      S |= (states::G2<<8);
-  }
-
-  if (not bitset(bits,5)) {
-    if (bitset(bits,2))
-      S |= (states::G1<<4);
-    else
-      S = setbit(S,12);
-
-    if (bitset(bits,3))
-      S |= (states::G1<<6);
-    else
-      S = setbit(S,13);
-  }
-  else {
-    if (bitset(bits,2))
-      S |= (states::M<<4);
-    else
-      S |= (states::G2<<4);
-      
-    if (bitset(bits,3))
-      S |= (states::M<<6);
-    else
-      S |= (states::G2<<6);
-  }
-
   return S;
 }
 
-
-// IDEA/FIXME - we could pass in states2 instead of bits2
-//  - mask(states2) would work fine (because of the extra markings)
-//  - We would probably write '11' into states only if that alignment
-//    can be recalculated - the overlap (in unhide) would go away.
-
-// compute states for alignments 
-//  - 0,1 if NOT n4, 
-//  - 2,3 if NOT n5 
-//  - 4   if NEITHER n4 or n5
-static int hidden(int states1,int bits2) {
-
-  // start with state from current column
-  int s2 = bits_to_states(bits2);
-
-  // add in state from previous column only if NO state in this column
-  s2 |= (states1 & mask(bits2));
-
-  // overwrite (with 11) state if 
-  //  - 0,1 if n4, 
-  //  - 2,3 if n5 
-  //  - 4   if EITHER n4 OR n5
-
-  if (bitset(bits2,4))
-    s2 |= present10;
-  if (bitset(bits2,5))
-    s2 |= present01;
-
-  return s2 & statesmask;
+// Takes the alignments for this column, and fill in the missing
+//  states using states calculated from the previous column
+int get_all_states(int all_states1,int column_states2) {
+  int S = column_states2;
+  for(int i=0;i<5;i++) {
+    if (bitset(column_states2,10+i)) // alignment i is missing
+      S |= (all_states1&(3<<(2*i)));
+  }
+  return S & statesmask;
 }
 
-// compute previous states for each alignment (hidden, or not)
-static int unhide(int s1,int bits1) {
-  bits1 = setbit(bits1,4,s1 & present10 == present10);
-  bits1 = setbit(bits1,5,s1 & present01 == present01);
 
+// can we always recover the info that was lost in masking stuff out?
+static int chain_to_alignments(int bits1,int s1) {
+  bits1 = setbit(bits1,4, bits_present(s1,present10));
+  bits1 = setbit(bits1,5, bits_present(s1,present01));
+
+  int column_states1 = get_column_states(bits1);
+
+  int saved_states1 = s1;
   if (bitset(bits1,4))   //zero out non-saved states
-    s1 &= ~present10;
+    saved_states1 &= ~present10;
   
   if (bitset(bits1,5))   //zero out non-saved states
-    s1 &= ~present01;
+    saved_states1 &= ~present01;
 
-  // Start with saved states
-  int states1 = s1;      
+  int all_states1 = get_all_states(saved_states1,column_states1);
 
-  // Add in states calculated
-  states1 |= (bits_to_states(bits1) & statesmask);
+  return all_states1;
+}
 
-  return states1;
+
+static int alignments_to_chain(int bits2,int all_states2) {
+  int s2 = all_states2;
+
+  if (bitset(bits2,4))   // save only state for 5-2,5-3
+    s2 |= present10;
+  if (bitset(bits2,5))   // save only state for 4-0,4-1
+    s2 |= present01;
+
+  assert(all_states2 == chain_to_alignments(bits2,s2));
+
+  return s2;
 }
 
 static double p_move(int states1, int states2,const IndelModel& Theta) {
@@ -193,47 +163,25 @@ double get_DP_array(vector< vector<double> >& P, const vector<int>& bits, const 
     for(int state=0;state<4;state++) {
       int bits2 = bits[character] | (state<<4);
 
-      {
-	int temp = 0;
-	if (bitset(bits2,0))
-	  temp++;
-	if (bitset(bits2,1))
-	  temp++;
-	if (bitset(bits2,2) or bitset(bits2,3) or bitset(bits2,5))
-	  temp++;
-							     
-	if (not bitset(bits2,4) and temp > 1) // not legal for n4
-	  continue;
-      }
-
-      {
-	int temp = 0;
-	if (bitset(bits2,2))
-	  temp++;
-	if (bitset(bits2,3))
-	  temp++;
-	if (bitset(bits2,0) or bitset(bits2,1) or bitset(bits2,4))
-	  temp++;
-							     
-	if (not bitset(bits2,5) and temp > 1) // not legal for n5
-	  continue;
-      }
+      if (not legal(bits2))
+	continue;
 
       for(int s1=0;s1<nstates;s1++) {
 	if (P[character-1][s1] == log_0)
 	  continue;
 
 	// Get previous states (hidden, or calculated)
-	int states1 = unhide(s1,bits[character-1]);
+	int all_states1 = chain_to_alignments(bits[character-1],s1);
 
 	// Get current states (only present ones)
-	int states2 = bits_to_states(bits2);
+	int column_states2 = get_column_states(bits2);
+
+	double p = p_move(all_states1,column_states2,IModel);
 
 	// Copy previous states into alignments where not present
-	int s2 = hidden(states1,bits2);
-	
-	double p = p_move(states1,states2,IModel);
-	
+	int all_states2 = get_all_states(all_states1,column_states2);
+	int s2 = alignments_to_chain(bits2,all_states2);
+
 	P[character][s2] = logsum(P[character][s2],p + P[character-1][s1]);
       }
     }
@@ -242,9 +190,9 @@ double get_DP_array(vector< vector<double> >& P, const vector<int>& bits, const 
     (states::E<<2) | (states::E);
   double Pr=log_0;
   for(int s1=0;s1<nstates;s1++) {
-    int states1 = unhide(s1,bits[bits.size()-1]);
+    int all_states1 = chain_to_alignments(bits[bits.size()-1],s1);
 
-    Pr = logsum(Pr,P[P.size()-1][s1] + p_move(states1,endstates,IModel));
+    Pr = logsum(Pr,P[P.size()-1][s1] + p_move(all_states1,endstates,IModel));
   }
   return Pr;
 }
@@ -258,9 +206,9 @@ vector<int> sample_path(const vector< vector<double> >& P,const vector<int>& bit
   int endstates = (states::E<<8) | (states::E<<6) | (states::E<<4) | 
     (states::E<<2) | (states::E);
   for(int s1=0;s1<nstates;s1++) {
-    int states1 = unhide(s1,bits[bits.size()-1]);
+    int all_states1 = chain_to_alignments(bits[bits.size()-1],s1);
     
-    choices[s1] = P[P.size()-1][s1] + p_move(states1,endstates,IModel);
+    choices[s1] = P[P.size()-1][s1] + p_move(all_states1,endstates,IModel);
   }
 
   int s2 = choose(choices);
@@ -272,18 +220,26 @@ vector<int> sample_path(const vector< vector<double> >& P,const vector<int>& bit
     if (not (character>0)) break;
 
     int bits2 = bits[character+1];
-    bits2 = setbit(bits2,4,s2 & present10 == present10);
-    bits2 = setbit(bits2,5,s2 & present01 == present01);
+    bits2 = setbit(bits2,4,bits_present(s2,present10));
+    bits2 = setbit(bits2,5,bits_present(s2,present01));
+
+    assert(legal(bits2));
 
     for(int s1=0;s1<nstates;s1++) {
-      int states1 = unhide(s1,bits[character]);
-      
-      int states2 = bits_to_states(bits2);
+      if (P[character][s1] == log_0) {
+	choices[s1] = log_0;
+	continue;
+      }
 
-      int s2_ = hidden(states1,bits2);
+      int all_states1 = chain_to_alignments(bits[character],s1);
+      
+      int column_states2 = get_column_states(bits2);
+
+      int all_states2 = get_all_states(all_states1,column_states2);
+      int s2_ = alignments_to_chain(bits2,all_states2);
 
       if (s2 == s2_) {
-	double p = p_move(states1,states2,IModel);
+	double p = p_move(all_states1,column_states2,IModel);
 	choices[s1] = P[character][s1] + p;
       }
       else
@@ -296,7 +252,18 @@ vector<int> sample_path(const vector< vector<double> >& P,const vector<int>& bit
   return path;
 }
 
-void sample_topology(alignment& old,Parameters& Theta,int n4) {
+vector<int> get_path(const alignment& A,int n0,int n1,int n2,int n3,int n4,int n5) {
+  vector<int> path;
+  path.reserve(A.length());
+
+  vector<int> bits;
+  for(int column=0;column<A.length();column++) {
+  }
+  return bits;
+}
+
+
+void sample_topology(alignment& A,Parameters& Theta,int n4) {
   const SequenceTree& T = Theta.T;
 
   /****** Get the node names ********/
@@ -320,13 +287,15 @@ void sample_topology(alignment& old,Parameters& Theta,int n4) {
 
 
   /****** Generate the Different Topologies *******/
-  alignment A = old;
+  const alignment old = A;
 
   SequenceTree T2 = T;
-  T2.exchange(n1,n2);
-
   SequenceTree T3 = T;
+
+  /* FIXME - problem with exchanging with parents of root
+  T2.exchange(n1,n2);
   T3.exchange(n1,n3);
+  */
 
   vector<int> bits;
   vector<int> columns;
@@ -335,7 +304,6 @@ void sample_topology(alignment& old,Parameters& Theta,int n4) {
   // Set up initial conditions
   P.push_back(vector<double>(nstates,log_0));
   bits.push_back(0);
-  columns.push_back(-1);
   
   for(int s1=0;s1<3;s1++)
     for(int s2=0;s2<3;s2++)
@@ -370,17 +338,18 @@ void sample_topology(alignment& old,Parameters& Theta,int n4) {
   double Pr = get_DP_array(P,bits,Theta.IModel);
 
   // do traceback
-  vector<int> path = sample_path(P,bits,Theta.IModel);
+  vector<int> path1 = get_path(old,n0,n1,n2,n3,n4,n5);
+  vector<int> path2 = sample_path(P,bits,Theta.IModel);
 
   // modify the matrix
-  for(int character=0;character<path.size();character++) {
-    int s = path[character];
-    if (s & present10 == present10) 
+  for(int character=0;character<path2.size();character++) {
+    int s = path2[character];
+    if (bits_present(s,present10))
       A(columns[character],n4) = alphabet::not_gap;
     else
       A(columns[character],n4) = alphabet::gap;
 
-    if (s & present01 == present01) 
+    if (bits_present(s,present01))
       A(columns[character],n5) = alphabet::not_gap;
     else
       A(columns[character],n5) = alphabet::gap;
@@ -389,7 +358,10 @@ void sample_topology(alignment& old,Parameters& Theta,int n4) {
   std::cerr<<old<<endl<<endl;
 
   std::cerr<<A<<endl<<endl;
+  double l1 = probability3(old,Theta);
+  double l2 = probability3(A,Theta);
 
+  std::cerr<<"L1 = "<<l1<<"    L2 = "<<l2<<std::endl;
   assert(valid(A));
 }
 

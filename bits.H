@@ -5,6 +5,10 @@ inline bool bitset(int m,int b) {
   return m&(1<<b);
 }
 
+inline bool bits_present(int i,int m) {
+  return ((i&m) == m);
+}
+
 inline int setbit(int m,int b) {
   return m|(1<<b);
 }

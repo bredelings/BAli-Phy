@@ -150,8 +150,10 @@ vector<int> tree::renumber() {
   compute_ancestors();
 
   vector<int> mapping(old_order.size());
-  for(int i=0;i<mapping.size();i++)
+  for(int i=0;i<mapping.size();i++) {
     mapping[i] = old_order[i]->name;
+    assert(mapping[i] >=0 and mapping[i] < lookup.size());
+  }
 
   return mapping;
 }
@@ -266,17 +268,16 @@ void tree::add_root() {
 //    - this is easy in exchange_cousins, but takes works after renumber
 
 void tree::exchange_cousins(int n1, int n2) {
+  // our caller guarantees this won't happen
   assert(n1 != n2);
   assert(not ancestor(n1,n2) and not ancestor(n2,n1));
+  assert(parent(n1) != parent(n2));
 
   node* node1 = lookup[n1];
   node* node2 = lookup[n2];
 
   node* p1 = node1->parent;
   node* p2 = node2->parent;
-
-  if (p1 == p2)
-    return;
 
   if (p1->left == node1)
     p1->left = node2;
@@ -295,13 +296,23 @@ void tree::exchange_cousins(int n1, int n2) {
   branches_[n2].node1 = node2->parent->name;
 }
 
+
+// if one of the subtrees contains the 
+// branch connect the children of the root then
+// we have to take special action in fixing up branch lengths
+
+// if parent(node1) == parent(node2), which can happen at the top
+// of the tree when p1 != p2, then 
+
 vector<int> tree::exchange(int node1, int node2) {
   vector<node*> old_order = lookup;
 
   if (ancestor(node1,node2))
     std::swap(node1,node2);
 
-  if (ancestor(node2,node1)) {  //
+  if (parent(node1) == parent(node2))
+    ;
+  else if (ancestor(node2,node1)) {  //
 
     vector<int> intermediate;
     node* here = lookup[node1]->parent;
@@ -332,6 +343,8 @@ vector<int> tree::exchange(int node1, int node2) {
 
   for(int i=0;i<mapping.size();i++) {
     // here we've got i -> mapping[i];
+    assert(mapping[i] < branches_.size());
+    assert(i < branches_.size());
     branches_[mapping[i]] = old_branches[i];
   }
 

@@ -182,10 +182,11 @@ IndelModel::IndelModel(double LO,double LE)
   }
 
   /* Initial Distribution */
+  /* This is for the character before the first character - can't be E */
   pi[0] = log(1.0-delta-delta*(1.0-delta) );
   pi[1] = log(delta);
   pi[2] = log(delta *(1.0-delta) );
-  pi[3] = log_0;
+  pi[3] = log_0;  // must be log_0
 
   construct_lengthp(1000);
 }
