@@ -123,18 +123,37 @@ bool bit_set(const valarray<bool>& v) {
 
 
 /// Check that any two present nodes are connected by a path of present nodes
-bool all_characters_connected(const SequenceTree& T,const valarray<bool> present) {
+bool all_characters_connected(const SequenceTree& T,valarray<bool> present,const vector<int>& _ignore) {
   assert(present.size() == T.n_nodes()-1);
 
-  for(int b=0;b<T.n_branches();b++) {
-    int n1 = T.branch(b).parent();
-    int n2 = T.branch(b).child();
-    valarray<bool> group1 = T.partition(n1,n2);
-    valarray<bool> group2 = not group1;
+  //--------- set the ignored nodes to 'not present' -----------//
+  valarray<bool> ignore(false,present.size());
+  for(int i=0;i<ignore.size();i++) {
+    int n = _ignore[i];
+    present[n] = false;
+    ignore[n] = true;
+  }
 
-    if (bit_set(present and group1) and bit_set(present and group2))
-      if (not (present[n1] and present[n2]))
-	return false;
+  //---------- for each internal node... -------------//
+  for(int n1=T.leaves(); n1<T.n_nodes()-1; n1++) {
+
+    if (present[n1] or ignore[n1]) continue;
+      
+    //------- if it is '-' and not ignored ... -------//
+    vector<int> neighbors = T.neighbors(n1);
+    assert(neighbors.size() == 3);
+
+    //---- check the three attatched subtrees ... ----//
+    int total=0;
+    for(int n2=0;n2<neighbors.size();n2++) {
+      valarray<bool> group = T.partition(n1,n2);
+      if (bit_set(present and group))
+	total++;
+    }
+
+    //----- nodes should be present in only one. -----//
+    if (total > 1)
+      return false;
   }
   return true;
 }
@@ -151,13 +170,13 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 }
 
 /// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const SequenceTree& T) {
+void check_internal_nodes_connected(const alignment& A,const SequenceTree& T,const vector<int>& ignore) {
   for(int column=0;column<A.length();column++) {
     valarray<bool> present(T.n_nodes()-1);
     for(int i=0;i<T.n_nodes()-1;i++) 
       present[i] = not A.gap(column,i);
     
-    if (not all_characters_connected(T,present))
+    if (not all_characters_connected(T,present,ignore))
       throw myexception()<<"Internal node states are inconsistent in column "<<column;
   }
 }
