@@ -53,7 +53,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     string filename = args["Empirical"];
     filename = args["datadir"] + "/" + filename + ".dat";
 
-    model_stack.push_back(Empirical(*aa,filename));
+    model_stack.push_back(Empirical(a,filename));
   }
   else if (match(string_stack,"YangCodonModel")) {
     string dna_filename = args["datadir"] + "/" + "genetic_code_dna.dat";

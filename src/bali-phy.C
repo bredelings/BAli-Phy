@@ -261,6 +261,8 @@ int main(int argc,char* argv[]) {
     SequenceTree T;
     load_A_and_T(args,A,T);
 
+    cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
+
     //--------- Set up the substitution model --------//
     OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
     
@@ -273,7 +275,6 @@ int main(int argc,char* argv[]) {
     
     //-------------Create the Parameters object--------------//
     Parameters P(*full_smodel,*imodel,T);
-    cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
     cout<<"Using substitution model: "<<P.SModel().name()<<endl;
     cout<<"Full tree for substitution: "<<P.SModel().full_tree<<endl<<endl;
     cout<<"Full tree for gaps: "<<P.IModel().full_tree<<endl<<endl;
