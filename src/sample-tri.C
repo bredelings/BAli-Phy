@@ -199,7 +199,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
     p[i].LC.set_length(a[i].length());
     int b = p[i].T.branch(nodes[i][0],nodes[i][1]);
     p[i].LC.invalidate_branch_alignment(p[i].T, b);
-    p[i].LC.invalidate_node(p[i].T,nodes[i][0]);
+    //    p[i].LC.invalidate_node(p[i].T,nodes[i][0]);
 #ifndef NDEBUG
     p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
 #endif
