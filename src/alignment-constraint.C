@@ -158,6 +158,9 @@ static int sum(const valarray<bool>& v) {
 
 void report_constraints(const valarray<bool>& s1, const valarray<bool>& s2) {
   assert(s1.size() == s2.size());
+
+  if (not s1.size()) return;
+
   for(int i=0;i<s1.size();i++) {
     if (s1[i] and not s2[i])
       throw myexception()<<"Constraint "<<i<<" went from satisfied -> unsatisfied!";

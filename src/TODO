@@ -25,13 +25,6 @@
 
 -1. fix crashing bug... hopefully.
 
-0. merge marc's code
-
-1. Call report_constraints(v1,v2) where v1 is all false, before starting
-   the iterations.  Then we will know how many of the constraints are
-   satisfied.
-2. Don't report any constraints if the number of constraints is zero.
-
 3. Report partitions that results from unplugging one branch at each node....
 
 *4. Write alignment-consensus
@@ -186,3 +179,7 @@ the prior, because we never want to use it  differently.
 [DONE] 	Integrating joint-A-T and the 'hack' to set indel prior parameters.
 
         
+[DONE] Report constraints satisfied by initial alignment/tree.
+
+[DONE] Don't report constraints satisfied if there aren't any.
+
