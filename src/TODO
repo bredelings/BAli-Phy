@@ -1,5 +1,7 @@
 -9. Indel model...
 
+-8. Debug multi_freq+gamma crash...
+
 -7. convert Pr_sum_all_paths( ) and other stuff to efloat_t?
     a) simplifies implementation of choose( )...
     b) allows us to get rid of choose_log( ) which gives a speedup for le_double_t.
@@ -20,13 +22,15 @@
   b) test Kallikrein - which one had a wandering taxon.  
   c) add switch '--bootstrap' to make bootstraps optional
 
+-1. Run with mudflap...
+
 1. test fix for crashing bug.
 
 *2. MCMCMC
     a) Make the temperatare affect only the likelihood...
     b) test speedups...
     c) begin to implement the separate random number generators.
-    d)
+    d) begin to implement the forking code / temperature identifier.
 
 3. Report partitions that results from unplugging one branch at each node....
 
@@ -34,16 +38,16 @@
 
 5. Add comments!
 
-4. consider ignoring letters if they are wildcards...
+6. consider ignoring letters if they are wildcards...
 
-12: Change YangCodonModel to YangM0? (short name)
+7: Change YangCodonModel to YangM0? (short name)
 
-12.5: Allow specifying another model than HKY (e.g. TNY) 
+8: Allow specifying another model than HKY (e.g. TNY) 
       underneath YangCodonModel.  
 	* This is difficult because the models have different alphabets
 	* Suppose we wanted HKY+YangM0+TNY+YangM0+Dual
 
-12.7: Change DualModel to MixtureModel[2] -> make a way of specifying the priors and weights.
+9: Change DualModel to MixtureModel[2] -> make a way of specifying the priors and weights.
       Is 'Uniform' a case of a 'Dirichlet'?  Yes -> (1/n,...1/n)*\infty.
 
     * make a dual-mode which is a sum of the unit mode and the multi_freq
