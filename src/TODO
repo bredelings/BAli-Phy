@@ -1,45 +1,20 @@
--10. WRite paper!
+1. WRite paper!
 
--9. Indel model...
+2. Indel model - fix so that prior probabilities exist!
 
--8. Standardized checks for indexing problems, in sample-node, f.e.
-    a) standard check for altered index patterns
-    b) (?) also check for change in likelihood - unset cached_value_up-to-date
-       somehow
+3. Fix indexing of sub-alignments! 
 
--7. convert Pr_sum_all_paths( ) and other stuff to efloat_t?
-    a) simplifies implementation of choose( )...
-    b) allows us to get rid of choose_log( ) which gives a speedup for le_double_t.
-
--6. Do we want to hard-code the concepts of transition kernels and priors
-    into models?  Each can have parameters...
-
--5. Find a way to allow substitution models to propose a lot of different
-    changes each time we try to propose new parameters.
-    a) ask the model for a number of fiddles to do, and then do
-    b) for(int i=0;i<n_fiddles;i++) {
-         smodel = smodel2
-         smodel2->fiddle(i)
-         accept/reject(smodel,smodel2)
-       }
-    c) some kind of interface for non-symmetric proposals?
-
--4. Make a more general substitution::Model class, so that we can e.g.
-    have tree with 2 sets of branch lengths...
-
--3. Start making some "nice" pictures to put up on the website.
+4. Start making some "nice" pictures to put up on the website.
     a) include pictures to give to Dr. Lake's lab
     b) include pictures to give to Dr. Sabatti
 
--2. tree-dist-compare w/ sub-partitions
-  a) test bacteria run under INV+gamma...
-  b) test Kallikrein - which one had a wandering taxon.  
-  c) add switch '--bootstrap' to make bootstraps optional
+*5. MCMCMC
+    a) Make the temperature affect only the likelihood...
+    b) test speedups...
+    c) begin to implement the forking code / temperature identifier.
+    d) begin to implement the separate random number generators.
 
--1. Run with mudflap...
-  a) alter GNUmakefile so that building w/ mudflap is easy.
-
-0. Don't spend so much time initializing:
+ 5.5. fp_scale speedups
 [HARD]
   a) 10% - DPmatrixEmit::DPmatrix: try to remove unneeded initialization or speed it up.
      - initialize as we go forward
@@ -58,38 +33,35 @@
   h) compare times w/ g++-4.0 times...  after improving the code a bit more.
   i) check w/ fp_scale::cutoff = 1.0e-1 ? or 1.0e-10?
                  
+6. Make a more general substitution::Model class, so that we can e.g.
+    have tree with 2 sets of branch lengths...
 
-1. test fix for crashing bug.
-   a) we could try to cache some of the results from ordering branches
-      under this branch.
-   b) we could just compute the full order w/ what we have now.
+*7. Write alignment-consensus
 
-*2. MCMCMC
-    a) Make the temperature affect only the likelihood...
-    b) test speedups...
-    c) begin to implement the forking code / temperature identifier.
-    d) begin to implement the separate random number generators.
+8. Add partitions from M[0.5] to M[l] if they are revealed by deleting subtrees.
+   a) also mark "badly-rooted" subtrees?  (edges are hidden because of badly-rooted-ness?)
 
-3. Report partitions that results from unplugging one branch at each node....
-
-*4. Write alignment-consensus
-
-5. Add comments!
-
-6. consider ignoring letters if they are wildcards...
-
-7: Change YangCodonModel to YangM0? (short name)
-   a) split smodel.H/C into several files?
-
-8: Allow specifying another model than HKY (e.g. TNY) 
+9: Allow specifying another model than HKY (e.g. TNY) 
       underneath YangCodonModel.  
 	* This is difficult because the models have different alphabets
 	* Suppose we wanted HKY+YangM0+TNY+YangM0+Dual
 
-------
-*13. How to make priors specified on command line?
+10. Find a way to allow substitution models to propose a lot of different
+    changes each time we try to propose new parameters.
+    a) ask the model for a number of fiddles to do, and then do
+    b) for(int i=0;i<n_fiddles;i++) {
+         smodel = smodel2
+         smodel2->fiddle(i)
+         accept/reject(smodel,smodel2)
+       }
+    c) some kind of interface for non-symmetric proposals?
 
-14. Debugging framework 
+------
+A. sub-partitions: 
+
+*B. How to make priors specified on command line?
+
+C. Debugging framework 
    a) platforms
      1) intel c++
      2) cygwin
@@ -99,30 +71,35 @@
      1) MrBayes
      2) bambe
      3) BEAST
+  d) mudflap -> alter GNUmakefile so that this is easy
 
-*15. Make alignment-draw be able to output EPS
+*D. Make alignment-draw be able to output EPS
 
-16. how does P(data|model) depend on number of frequency bins?
+E. how does P(data|model) depend on number of frequency bins?
 
-17. Allow alignment to contain only 2 sequences?
+F. Allow alignment to contain only 2 sequences?
 
-18. Find a better distance measure for alignment-median?
+G. Find a better distance measure for alignment-median?
 
-*19. implement: new framework for fixing things
+*H. implement: new framework for fixing things
 	a) disable=alignment  -> fixed=A fixed=alignment
 	b) disable=alignment_branch -> fixed=A- fixed=leaves-alignment
 	c) disable=tree             -> fixed=tau fixed=topology
 	d) disable=frequencies      -> fixed=pi  fixed=frequencies
 
-A. fix: gamma+frequency+INV
+------------------------------
 
-B. model: Make INV categories depend on letters, somehow...
 
-C. sample lengths/topologies MORE often when alignment sampling also?
 
-D. A new ggobi is available!  Try multidimensional scaling...
+I. fix: gamma+frequency+INV
 
-E. Start proposing INV::p on the log odds scale. It is OK to change
+II. model: Make INV categories depend on letters, somehow...
+
+III. sample lengths/topologies MORE often when alignment sampling also?
+
+IV. A new ggobi is available!  Try multidimensional scaling...
+
+V. Start proposing INV::p on the log odds scale. It is OK to change
 the prior, because we never want to use it  differently.
 
 
@@ -219,3 +196,8 @@ the prior, because we never want to use it  differently.
 
 [DONE] Fix gamma model so that we can put MultiModels underneath it w/o crashing!
 
+[DONE] Convert probabilities to efloat_t in substitution, model priors, etc.
+
+[DONE] Make standardized checks for indexing problems in sample-node / sample-two-nodes.
+
+[DONE] Rename YangCodonModel to YangM0
