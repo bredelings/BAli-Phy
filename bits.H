@@ -9,6 +9,10 @@ inline bool bits_present(int i,int m) {
   return ((i&m) == m);
 }
 
+inline int clearbit(int m,int b) {
+  return m&(~(1<<b));
+}
+
 inline int setbit(int m,int b) {
   return m|(1<<b);
 }

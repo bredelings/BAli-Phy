@@ -12,6 +12,10 @@ void change_branch_length(const alignment& A, Parameters& Theta,int b);
 
 void change_branch_length_and_T(alignment& A, Parameters& Theta,int b);
 
+// Resample the 3-star alignment, holding the 2/3 order constant.
+alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
+			       int node1,int node2);
+
 //Resample the alignment parent->child
 alignment sample_alignment(const alignment& old,const Parameters&,int b);
 
@@ -37,5 +41,5 @@ void change_branch_lengths(alignment& A, Parameters& Theta);
 void slide_branch_lengths(alignment& A, Parameters& Theta);
 void change_parameters(alignment& A,Parameters& Theta);
 
-
+void sample_tri(alignment& A, Parameters& Theta);
 

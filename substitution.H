@@ -4,6 +4,7 @@
 
 // Process half of a tree/column
 std::valarray<double> peel(const vector<int>&,const Parameters&,int,bool);
+std::valarray<double> peel(const vector<int>&,const Parameters&,int,int,int);
 
 
 // Process a whole tree/column

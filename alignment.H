@@ -82,3 +82,5 @@ vector<int> get_path(const alignment&,int,int);
 std::valarray<double> empirical_frequencies(const alignment& A);
 alignment randomize(const alignment&);
 #endif
+
+

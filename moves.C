@@ -25,6 +25,27 @@ void change_branch_lengths(alignment& A, Parameters& Theta) {
   }
 }
 
+
+void sample_tri(alignment& A, Parameters& Theta) {
+  const SequenceTree& T = Theta.T;
+
+  for(int i=0;i<T.leaves();i++) {
+    int b = myrandom(T.branches());
+
+    int node1 = T.branch(b).parent();
+    int node2 = T.branch(b).child();
+
+    if (myrandomf() < 0.5)
+      std::swap(node1,node2);
+
+    if (node1 < T.leaves())
+      std::swap(node1,node2);
+    
+    A = tri_sample_alignment(A,Theta,node1,node2);
+  }
+}
+
+
 void sample_alignments(alignment& A, Parameters& Theta) {
   for(int i=0;i<Theta.T.leaves();i++) {
     int b = myrandom(Theta.T.branches());

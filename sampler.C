@@ -161,8 +161,10 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   MCMC sampler;
   sampler.add(sample_alignments,1,"sample_alignments:alignment");
 
-  if (P.T.leaves() >2)
+  if (P.T.leaves() >2) {
     sampler.add(sample_nodes,1,"sample_nodes:nodes");
+    sampler.add(sample_tri,1,"sample_tri:alignment:nodes:tri");
+  }
 
   if (P.T.leaves() >3)
     sampler.add(sample_topologies,1,"sample_topologies:nodes:topology");

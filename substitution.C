@@ -36,17 +36,12 @@ inline valarray<double> peel(int letter,const Matrix& P,const valarray<double>& 
 // (dist.size()==0) does not mean "gap", but means no info so far.
 
 valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
-		      int b,bool up) {
+		      int node1, int node2, int root) {
   const alphabet& a = Theta.get_alphabet();
   const tree& T = Theta.T;
 
   /**************** Find our branch, and orientation *****************/
-  int root = T.branch(b).parent();      //this is an arbitrary choice
-
-  int node1 = T.branch(b).child();
-  int node2 = T.branch(b).parent();
-  if (not up) std::swap(node1,node2);
-
+  assert(root == node1 or root == node2);
   valarray<bool> group = T.partition(node1,node2);
 
   /******* Put the info from the letters into the distribution *******/
@@ -87,7 +82,7 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
   }
   std::reverse(branches2.begin(),branches2.end());
   branches1.insert(branches1.end(),branches2.begin(),branches2.end());
-  if (branches2.size()) assert(up);
+  //  if (branches2.size()) assert(node2 is parent of node1);
 
   /**************** Propogate info along branches ******************/
   valarray<double> dist(a.size());   // declare a temporary for use in the loop
@@ -146,6 +141,21 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
   */
 
   return distributions(root);
+}
+
+valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
+		      int b,bool up) {
+  const alphabet& a = Theta.get_alphabet();
+  const tree& T = Theta.T;
+
+  /**************** Find our branch, and orientation *****************/
+  int root = T.branch(b).parent();      //this is an arbitrary choice
+
+  int node1 = T.branch(b).child();
+  int node2 = T.branch(b).parent();
+  if (not up) std::swap(node1,node2);
+
+  return peel(residues,Theta,node1,node2,root);
 }
 
 double substitution(const vector<int>& residues,const Parameters& Theta,int b) {

@@ -40,7 +40,7 @@ int mask(int bits) {
 
 // Takes a bitmask of character presence in sequence 1,2,3,4
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
-int bits_to_states(int bits) {
+static int bits_to_states(int bits) {
   int S=0;
   if (not bitset(bits,3)) {
     if (bitset(bits,0))
