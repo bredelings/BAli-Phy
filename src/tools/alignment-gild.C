@@ -15,7 +15,7 @@
 #include "alignment-util.H"
 #include "distance-methods.H"
 
-// FIXME - also show which COLUMNS are more that 99% conserverd?
+// FIXME - also show which COLUMNS are more that 99% conserved?
 
 using std::cin;
 using std::cout;
@@ -49,7 +49,7 @@ Matrix counts_to_probability(const Tree& T,const vector< vector<int> >& v) {
   const double edge_prior = 0.5/(T.n_branches()/2);
   const double prior = 0.5;
 
-  // initialize the matrix, and add a pseudocount for a conjugate prior
+  // initialize the matrix, and add a pseudocount as a conjugate prior
   Matrix Pr_align_pair(N,N);
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
@@ -201,25 +201,6 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
   for(int b=0;b<v.size();b++)
     Pr += -v[b];
 
-  /*
-  // include some kind of pressure to make lengths reflect evolutionary
-  // distances
-  double sum1 = 0;
-  double sum2 = 0;
-  for(int b=0;b<T.n_branches();b++) {
-    sum1 += T.branch(b).length();
-    sum2 += v[b];
-  }
-
-  for(int b=0;b<T.n_branches();b++) {
-    double diff = 
-      log(v[b]/sum2 + 0.005/sum2) -
-      log(T.branch(b).length()/sum1 + 0.005/sum1);
-
-    Pr -= std::abs(diff)*25;
-  }
-  */
-
   return Pr;
 }
 
@@ -331,7 +312,6 @@ int main(int argc,char* argv[]) {
     do_setup(args,alignments,A,T);
     for(int i=0;i<alignments.size();i++)
       Ms.push_back(M(alignments[i]));
-    const int n = T.n_leaves();
 
     //----------- Find root branch ---------//
     int rootb=-1;
@@ -346,7 +326,7 @@ int main(int argc,char* argv[]) {
     //----------- Construct alignment indexes ----------//
     vector< vector< vector<int> > >  column_indexes;
     for(int i = 0;i<alignments.size();i++)
-      column_indexes.push_back( column_lookup(alignments[i],n) );
+      column_indexes.push_back( column_lookup(alignments[i],T.n_leaves()) );
 
     //------- Convert template to index form-------//
     ublas::matrix<int> MA = M(A);
@@ -354,7 +334,7 @@ int main(int argc,char* argv[]) {
     //--------- Compute full entire column probabilities -------- */
     vector<double> column_probabilities(A.length());
     for(int c=0;c<A.length();c++)
-      column_probabilities[c] = get_column_probability(get_column(MA,c,n),
+      column_probabilities[c] = get_column_probability(get_column(MA,c,T.n_leaves()),
 						       alignments,
 						       column_indexes
 						       );
@@ -369,8 +349,13 @@ int main(int argc,char* argv[]) {
     }
 
     //------- Analyze the columns -------//
+    Matrix P_total(T.n_leaves(),T.n_leaves());
+    for(int i=0;i<P_total.size1();i++)
+      for(int j=0;j<P_total.size2();j++)
+	P_total(i,j) = 0;
+
     for(int c=0;c<A.length();c++) {
-      vector<int> column = get_column(MA,c,n);
+      vector<int> column = get_column(MA,c,T.n_leaves());
 
       // Get labels - should I instead get *counts*?
       vector< vector<int> > labels(alignments.size());
@@ -379,9 +364,12 @@ int main(int argc,char* argv[]) {
 
       //Get initial estimate using fast least squares
       vector<double> branch_lengths(T.n_branches());
-      branch_lengths = FastLeastSquares(T,probability_to_distance(counts_to_probability(T,labels)));
+
+      Matrix Pc = probability_to_distance(counts_to_probability(T,labels));
+      branch_lengths = FastLeastSquares(T,Pc);
       for(int b=0;b<branch_lengths.size();b++)
 	if (branch_lengths[b] < 0) branch_lengths[b] = 0;
+      P_total += Pc;
 
       // Define an objective function for refining the initial estimates
       function * f = NULL;
@@ -419,6 +407,24 @@ int main(int argc,char* argv[]) {
       std::cout<<column_probabilities[c]<<endl;
     }
 
+    // average the COUNTS instead of the LENGTHS?
+    // should count unalignment events differently? - i.e. AA-- gives counts out of (1,1,0,0)?
+
+    P_total /= A.length();
+    vector<double> branch_lengths = FastLeastSquares(T,P_total);
+    for(int i=0;i<branch_lengths.size();i++)
+      if (branch_lengths[0] <0) branch_lengths[i] = 0;
+    
+    // Print uncertainty values for the letters
+    SequenceTree T2 = T;
+    for(int b=0;b<T2.n_branches();b++)
+      T2.branch(b).set_length(branch_lengths[b]);
+
+    // refine for a few iterations...
+    // FIXME - fix the refiners to take the alignment probability matrix...
+
+    std::cerr<<T2<<std::endl;
+    
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
