@@ -1,6 +1,7 @@
 #include <sstream>
 #include "alignment-constraint.H"
 #include "alignment-util.H"
+#include "util.H"
 
 using std::vector;
 using std::valarray;
