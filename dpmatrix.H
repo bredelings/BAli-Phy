@@ -41,7 +41,7 @@ public:
   bool silent_network(int S) const;
 
   /// What is the n-th state, in the correct order for DP?
-  int order(int n) const;
+  int order(int i) const {assert(i <= nstates()+1);  return order_[i];}
 
   /// Number of states, minus the end state
   int nstates() const {return state_emit.size()-1;}

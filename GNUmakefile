@@ -23,10 +23,10 @@ all: sampler
 #----------------- Definitions
 LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0
 DEBUG = pipe g3 pg
-EXACTFLAGS = --param max-inline-insns-single=500 --param max-inline-insns-auto=150
+EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
 DEFS = NDEBUG NDEBUG_DP 
 WARN = all no-sign-compare overloaded-virtual
-OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 O3
+OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 # O3
 LDFLAGS = -pg # -static 
 LI=${CXX}
 
@@ -69,7 +69,10 @@ bin/make_random_tree: tree.o sequencetree.o arguments.o util.o\
 	 rng.o  ${LIBS:%=-l%}
 
 bin/drawalignment: tree.o alignment.o sequencetree.o arguments.o \
-	rng.o alphabet.o sequence.o util.o ${LIBS:%=-l%}
+	rng.o alphabet.o sequence.o util.o  ${LIBS:%=-l%}
+
+bin/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
+	rng.o util.o ${LIBS:%=-l%}
 
 #-----------------Other Files
 OTHERFILES += 

@@ -12,11 +12,6 @@ bool HMM::silent_network(int S) const {
   return (silent_network_[S] != -1);
 }
 
-int HMM::order(int i) const {
-  assert(i <= nstates()+1);
-  return order_[i];
-}
-
 /// Replace a sequence of silent_network states with just
 /// the first state in the sequence, producing a path that
 /// would be emitted from the generalized HMM.

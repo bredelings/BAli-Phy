@@ -251,7 +251,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   // parameters
   MoveAll parameter_moves("parameters");
   parameter_moves.add(P.T.branches(),SingleMove(change_parameters,"s_parameters:parameters"));
-  parameter_moves.add(1,SingleMove(change_gap_parameters,"g_parameters:parameters"));
+  parameter_moves.add(1+P.T.branches()/3,SingleMove(change_gap_parameters,"g_parameters:parameters"));
   
 
   //FIXME - use the right prior and likelihood here!
@@ -311,6 +311,11 @@ int main(int argc,char* argv[]) {
     std::cerr.precision(10);
     std::cout.precision(10);
     
+    /*------- Which parameters are fixed -------*/
+    vector<string> fixed;
+    if (args.set("fixed"))
+      fixed = split(args["fixed"],':');
+
     /*------- Nucleotide Substitution Models -------*/
     alphabet dna("DNA nucleotides","AGTC","N");
     
@@ -409,6 +414,10 @@ int main(int argc,char* argv[]) {
     else {
       std::cout<<"imodel = symmetric\n";
       imodel = new IndelModel2(lambda_O,lambda_E);
+      for(int i=0;i<fixed.size();i++) {
+	if (fixed[i] == "beta")
+	  imodel->fixed[2] = true;
+      }
     }
     if (args["gaps"]== "star") {
       imodel->full_tree = false;
@@ -416,7 +425,6 @@ int main(int argc,char* argv[]) {
     else
       imodel->full_tree = true;
     
-
     /*-------------Create the Parameters object--------------*/
     Parameters P(*full_smodel,*imodel,T);
     std::cout<<"Using substitution model: "<<P.SModel().name()<<endl;

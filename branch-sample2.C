@@ -189,6 +189,14 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
   }
 
   std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<Matrices.Pr_sum_all_paths()<<endl;
+
+
+  // Calculate the probability of (L1,L2)
+  DPmatrixNoEmit Matrices2(seq1.size(),seq2.size(),state_emit,start_P,P.IModel().Q);
+  Matrices2.forward(0,0,seq1.size(),seq2.size());
+  double length2_p = Matrices2.Pr_sum_all_paths();
+  std::cerr<<"P(l1,l2|Lambda) = "<<length2_p<<std::endl;
+
 #endif
   /*--------------------------------------------------------------*/
   assert(valid(A));

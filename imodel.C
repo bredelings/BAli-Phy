@@ -72,7 +72,7 @@ void IndelModel::construct_lengthp() {
 }
 
 IndelModel::IndelModel(int s)
-  : P(4,4),parameters_(s),full_tree(true),pi(4),Q(4,4)
+  : P(4,4),parameters_(s),fixed(s,false),full_tree(true),pi(4),Q(4,4)
 { }
 
 
@@ -85,12 +85,17 @@ void IndelModel1::fiddle() {
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
 
+
   const double sigma = 0.15;
-
-  lambda_O = lambda_O + gaussian(0,sigma);
-  if (lambda_O>=0) lambda_O = -lambda_O;
-
-  lambda_E = lambda_O/10;
+  if (not fixed[0]) {
+    lambda_O += gaussian(0,sigma);
+    if (lambda_O>=0) lambda_O = -lambda_O;
+  }
+  
+  if (not fixed[1]) {
+    lambda_E += gaussian(0,sigma);
+    if (lambda_E>=0) lambda_E = -lambda_E;
+  }
 
   recalc();
 }
@@ -147,12 +152,24 @@ void IndelModel1::recalc() {
 }
 
 double IndelModel1::prior() const {
+  double P = 0;
+
+  // Calculate prior on lambda_O
   const double mean = -5.5;
 
   double delta = exp(parameters_[0]);
   double mu = -log(1.0-delta);
 
-  return gsl_ran_gaussian_pdf(log(mu)-mean,1.0);
+  P += log( gsl_ran_gaussian_pdf(log(mu)-mean,1.0) );
+
+  // Calculate prior on lambda_E - shouldn't depend on lambda_O
+  double epsilon = exp(parameters_[1]);
+  double E_length = 1.0/(1.0 - epsilon);
+  double E_length_mean = 4.5;
+
+  P += (-log(E_length_mean) - E_length/E_length_mean);
+
+  return P;
 }
 
 IndelModel1::IndelModel1(double lambda_O,double lambda_E)
@@ -167,15 +184,30 @@ IndelModel1::IndelModel1(double lambda_O,double lambda_E)
 void IndelModel2::fiddle() { 
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
+  double& beta     = parameters_[2];
 
-  const double sigma = 0.15;
-  lambda_O = lambda_O + gaussian(0,sigma);
-  if (lambda_O>=0)
-    lambda_O = -lambda_O;
-  construct_lengthp();
-  construct_length_plus_p();
+  const double sigma = 0.20;
+  const double sigma_beta = 0.10;
 
-  lambda_E = lambda_O/10;
+  if (not fixed[2] and myrandomf() < 0.3) {
+    double beta_2 = lambda_O + beta;
+    beta_2 += gaussian(0,sigma_beta);
+    if (beta_2 >= 0) beta_2 = -beta_2;
+
+    beta = beta_2 - lambda_O;
+  }
+  else {
+    if (not fixed[0]) {
+      lambda_O += gaussian(0,sigma);
+      if (lambda_O>=0) lambda_O = -lambda_O;
+    }
+    
+    if (not fixed[1]) {
+      lambda_E += gaussian(0,sigma);
+      if (lambda_E>=0) lambda_E = -lambda_E;
+    }
+  }
+
   recalc();
 }
 
@@ -234,12 +266,36 @@ void IndelModel2::recalc() {
 }
 
 double IndelModel2::prior() const {
+  double lambda_O = parameters_[0];
+  double lambda_E = parameters_[1];
+  double beta     = parameters_[2];
+
+
+  double P = 0;
+
+  // Calculate prior on lambda_O
   const double mean = -5.5;
 
-  double delta = exp(parameters_[0]);
+  double delta = exp(lambda_O);
   double mu = -log(1.0-delta);
 
-  return gsl_ran_gaussian_pdf(log(mu)-mean,1.0);
+  P += log( gsl_ran_gaussian_pdf(log(mu)-mean,1.0) );
+
+  // Calculate prior on lambda_E - shouldn't depend on lambda_O
+  double epsilon = exp(lambda_E);
+  double E_length = 1.0/(1.0 - epsilon);
+  double E_length_mean = 4.5;
+
+  P += (-log(E_length_mean) - E_length/E_length_mean);
+
+
+  // Calculate prior on beta - should be lognormal
+  {
+    double sigma = 0.3;
+    P += log( gsl_ran_gaussian_pdf(beta,sigma) );
+  }
+
+  return P;
 }
 
 IndelModel2::IndelModel2(double lambda_O,double lambda_E,double b)
@@ -256,9 +312,8 @@ void SingleIndelModel::fiddle() {
   double& lambda_O = parameters_[0];
 
   const double sigma = 0.15;
-  lambda_O = lambda_O + gaussian(0,sigma);
-  if (lambda_O>=0)
-    lambda_O = -lambda_O;
+  lambda_O += gaussian(0,sigma);
+  if (lambda_O >= 0) lambda_O = -lambda_O;
 
   recalc();
 }

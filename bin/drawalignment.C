@@ -146,6 +146,9 @@ int main(int argc,char* argv[]) {
     /*------ Link Alignment and Tree ----------*/
     if (A.num_sequences() < T.leaves())
       throw myexception("Tree has more sequences that alignment!");
+
+    if (A.num_sequences() > T.leaves())
+      throw myexception("Alignment has too many taxa for tree!");
     
     vector<int> mapping(T.leaves());
     for(int i=0;i<T.leaves();i++) {
@@ -186,7 +189,10 @@ int main(int argc,char* argv[]) {
 
     /*-------------------- Print Things Out ------------------------*/
     int pos=0;
-    const int width =67;
+    int width =67;
+    if (args.set("width"))
+      width = convertTo<int>(args["width"]);
+
     cout<<"\
 <HTML>\n\
   <head>\n\

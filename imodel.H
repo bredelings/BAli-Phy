@@ -26,6 +26,9 @@ protected:
 
   IndelModel(int s);
 public:
+  /// are the parameters fixed?
+  vector<bool> fixed;
+
   /// Are we using a binary tree (instead of a star tree) for the gap prior?
   bool full_tree;
 
