@@ -39,10 +39,10 @@ else
   endif
 
   ifneq ($(origin ARCH), undefined)
-    OPT += march=${ARCH}
+    OPT += march=${ARCH} mtune=${ARCH}
   endif	
 
-  OPT += O3
+  OPT += O3 # mfpmath=sse,387 msse2
 #  LANGO += tracer prefetch-loop-arrays 
 
   ifneq (${PROF},y)
@@ -166,7 +166,7 @@ tools/truckgraph3d: alignment.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 
 test: ${LINKLIBS}
 
-le-test/2 le-test/3: le-double.C
+le-test/2 le-test/3 le-test/2a: le-double.C
 
 test3: model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o \
 	probability.o rng.o ${LINKLIBS} -lmudflap

@@ -95,7 +95,7 @@ inline bool operator> (log_double_t x,log_double_t y) {
 }
 
 inline bool operator>(log_double_t x,double y) {
-  if (y==0.0)
+  if (y==0)
     return log(x) > log_limit;
   else
     return x > log_double_t(y);
