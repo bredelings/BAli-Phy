@@ -454,6 +454,7 @@ vector<const_branchview> branches_toward_node(const Tree& T,int n) {
 
 vector<const_branchview> branches_from_leaves(const Tree& T) {
   vector<const_branchview> branch_list;
+  branch_list.reserve(2*T.n_branches());
   valarray<bool> visited(false,2*T.n_branches());
 
   for(int i=0;i<T.n_leaves();i++) {

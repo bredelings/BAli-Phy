@@ -1,3 +1,15 @@
+-2. tree-dist-compare w/ sub-partitions
+  a) speed up get_Ml_partitions, get_Ml_sub_partitions
+  b) print number of taxa in mask when printing partitions
+  c) arrange 
+  d) test Kallikrein - which one had a wandering taxon.  
+  e) also test SIV?
+  f) switch --sub-partitions?  --bootstrap?
+
+-1. fix crashing bug... hopefully.
+
+0. merge marc's code
+
 1. Call report_constraints(v1,v2) where v1 is all false, before starting
    the iterations.  Then we will know how many of the constraints are
    satisfied.
