@@ -63,52 +63,6 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
 }
 
 
-/// Load an alignment from command line args "--align filename"
-alignment load_A(const variables_map& args,bool keep_internal) 
-{
-  // should our AA alphabet include the stop codon?
-  OwnedPointer<AminoAcids> AA = AminoAcids();
-  if (args.count("with-stop"))
-    *AA = AminoAcidsWithStop();
-  
-  // make a list of alphabets to try
-  vector<OwnedPointer<alphabet> > alphabets;
-  if (args.count("alphabet") and args["alphabet"].as<string>() == "Codons") {
-    {
-      string dna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_dna.dat";
-      alphabets.push_back(Codons(DNA(),*AA,dna_filename));
-    }
-
-    {
-      string rna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_rna.dat";
-      alphabets.push_back(Codons(RNA(),*AA,rna_filename));
-    }
-  }
-  else {
-    alphabets.push_back(DNA());
-    alphabets.push_back(RNA());
-    alphabets.push_back(*AA);
-  }
-  
-  // ----- Try to load alignment ------ //
-  if (not args.count("align")) 
-    throw myexception("Alignment file not specified! (--align <filename>)");
-  
-  alignment A;
-  A.load(alphabets,args["align"].as<string>());
-  
-  remove_empty_columns(A);
-  
-  if (A.num_sequences() == 0)
-    throw myexception()<<"Alignment file "<<args["align"].as<string>()<<" didn't contain any sequences!";
-
-  if (not keep_internal)
-    A = chop_internal(A);
-
-  return A;
-}
-
-
 /// Load a tree from command line args "--tree filename"
 SequenceTree load_T(const variables_map& args,const alignment& A) {
   if (not args.count("tree"))

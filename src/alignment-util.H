@@ -5,12 +5,16 @@
 #include <valarray>
 #include "alignment.H"
 #include "tree.H"
+#include <boost/program_options.hpp>
 
 // Remove sequences to A corresponding to internal nodes in T
 alignment chop_internal(alignment A);
 
 // Add sequences to A corresponding to internal nodes in T
 alignment add_internal(alignment A,const Tree& T);
+
+/// Load an alignment from command line args align=filename
+alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
 
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);

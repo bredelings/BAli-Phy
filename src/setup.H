@@ -18,9 +18,6 @@ std::valarray<double> empirical_frequencies(const boost::program_options::variab
 
 //----------------- Load trees and alignments ---------------------//
 
-/// Load an alignment from command line args align=filename
-alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
-
 
 /// Load a tree from command line args align=filename
 SequenceTree load_T(const boost::program_options::variables_map& args,

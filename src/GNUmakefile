@@ -131,6 +131,9 @@ tools/alignment-translate: alignment.o alphabet.o sequence.o sequence-format.o \
 tools/alignment-find: alignment.o alphabet.o sequence.o tools/alignmentutil.o \
 	rng.o ${LINKLIBS} util.o sequence-format.o
 
+tools/alignment-convert: alignment.o alignment-util.o sequence.o alphabet.o util.o \
+	sequence-format.o tree.o -lboost_program_options
+
 tools/treecount: tree.o sequencetree.o util.o rng.o tools/statistics.o ${LINKLIBS}
 
 tools/tree-dist-compare: tree.o sequencetree.o tools/tree-dist.o util.o \
@@ -150,9 +153,6 @@ tools/srq-analyze: rng.o tools/statistics.o ${LINKLIBS}
 
 tools/make_random_tree: tree.o sequencetree.o util.o\
 	 rng.o  ${LINKLIBS}
-
-tools/alignment-convert: alignment.o sequence.o alphabet.o \
-	util.o sequence-format.o
 
 tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \

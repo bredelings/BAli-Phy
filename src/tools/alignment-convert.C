@@ -1,51 +1,64 @@
 #include <string>
 #include "myexception.H"
 #include "alignment.H"
-#include "arguments.H"
 #include "sequence-format.H"
-#include "setup.H"
+#include "alignment-util.H"
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
+
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("align", value<string>(),"file with sequences and initial alignment")
+    ("tree",value<string>(),"file with initial tree")
+    ("with-stop","include stop codons in amino-acid alphabets")
+    ;
+
+  // positional options
+  positional_options_description p;
+  p.add("align", 1);
+  p.add("tree", 2);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    std::cout<<"Usage: alignment-convert <alignment-file> <tree-file> ... [OPTIONS]\n";
+    std::cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
 
 int main(int argc,char* argv[]) { 
   try {
-    Arguments args;
-    args.read(argc,argv);
-    args.print(std::cerr);
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
 
-    alignment A;
-    OwnedPointer<AminoAcids> AA = AminoAcids();
-    if (args.set("Use Stop"))
-      *AA = AminoAcidsWithStop();
-
-    vector<OwnedPointer<alphabet> > alphabets;
-    if (args.set("Use Codons")) {
-      string dna_filename = args["datadir"] + "/" + "genetic_code_dna.dat";
-      string rna_filename = args["datadir"] + "/" + "genetic_code_rna.dat";
-
-      Codons DNA_codons(DNA(),*AA,dna_filename);
-      Codons RNA_codons(RNA(),*AA,rna_filename);
-	
-      alphabets.push_back(DNA_codons);
-      alphabets.push_back(RNA_codons);
-    }
-    else {
-      alphabets.push_back(DNA());
-      alphabets.push_back(RNA());
-      alphabets.push_back(AminoAcids());
-    }
+    alignment A = load_A(args);
     
-    A.load(alphabets,sequence_format::read_guess,std::cin);
-    
-    remove_empty_columns(A);
-    
-    if (A.num_sequences() == 0)
-      throw myexception()<<"Alignment file (from stdin) didn't contain any sequences!";
+    if (not args.count("output"))
+      throw myexception()<<"Output format not specified";
 
-    if (args["output"] == "phylip")
+    if (args["output"].as<string>() == "phylip")
       A.print_phylip(std::cout);
-    else if (args["output"] == "fasta")
+    else if (args["output"].as<string>() == "fasta")
       A.print_fasta(std::cout);
     else
-      throw myexception()<<"Don't recognized requested format '"<<args["output"]<<"'";
+      throw myexception()<<"Don't recognized requested format '"<<args["output"].as<string>()<<"'";
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
