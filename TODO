@@ -4,6 +4,6 @@ TODO
  - make a 'src' directory...?
  - speed up branch length calculations - 
  - CHECK acceptance/rejection ratios - alter things.
- + profile DEBUG vs NDEBUG, make DEBUG faster
- - profile NDEBUG code to see where we are spending (for each data set)
-
+ - profile DEBUG vs NDEBUG, make DEBUG faster
+ - profile NDEBUG code to see where we are spending (in each data set!)
+ - truncate ends of EF-Tu/48a.fasta sequences?
