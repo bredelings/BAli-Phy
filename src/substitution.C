@@ -337,14 +337,10 @@ namespace substitution {
       return SModel.frequencies()[letter];
   }
 
-  double Pr(const alignment& A, const peeling_info& operations, const MultiModel& MModel, 
-	    const MatCache& MC,int column,Matrix& distributions) 
+  double Pr(const vector<int>& residues, const peeling_info& operations, const MultiModel& MModel, 
+	    const MatCache& MC,Matrix& distributions) 
   {
 
-    vector<int> residues(A.size2());
-    for(int i=0;i<residues.size();i++)
-      residues[i] = A(column,i);
-  
     double total=0;
     for(int m=0;m<MModel.nmodels();m++) {
       double p=0;
@@ -387,6 +383,10 @@ namespace substitution {
   }
 
   double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC,int column) {
+    vector<int> residues(A.size2());
+    for(int i=0;i<residues.size();i++)
+      residues[i] = A(column,i);
+  
     const alphabet& a = MModel.Alphabet();
     //------ Allocate space and mark all branches out of date -------//
     Matrix distributions(2*T.n_branches()+1,a.size());
@@ -397,7 +397,7 @@ namespace substitution {
     peeling_info operations = get_branches(T,root,up_to_date);
     
     //---------------- sum the column likelihoods -------------------//
-    return Pr(A,operations,MModel,MC,column,distributions);
+    return Pr(residues,operations,MModel,MC,distributions);
   }
 
   double Pr(const alignment& A, const Parameters& P,Conditional_Likelihoods& L) {
@@ -410,9 +410,14 @@ namespace substitution {
     peeling_info operations = get_branches(T,root,L.up_to_date);
     
     //---------------- sum the column likelihoods -------------------//
+    vector<int> residues(A.size2());
+  
     double p = 0.0;
-    for(int column=0;column<A.length();column++) 
-      p += Pr(A,operations,MModel,MC,column,L[column]);
+    for(int column=0;column<A.length();column++) {
+      for(int i=0;i<residues.size();i++)
+	residues[i] = A(column,i);
+      p += Pr(residues,operations,MModel,MC,L[column]);
+    }
 
     for(int i=0;i<operations.size();i++)
       L.up_to_date[operations[i].b] = true;
@@ -433,9 +438,14 @@ namespace substitution {
     peeling_info operations = get_branches(T,root,up_to_date);
     
     //---------------- sum the column likelihoods -------------------//
+    vector<int> residues(A.size2());
+
     double p = 0.0;
-    for(int column=0;column<A.length();column++) 
-      p += Pr(A,operations,MModel,MC,column,distributions);
+    for(int column=0;column<A.length();column++) {
+      for(int i=0;i<residues.size();i++)
+	residues[i] = A(column,i);
+      p += Pr(residues,operations,MModel,MC,distributions);
+    }
 
     //    std::cerr<<" substitution: P="<<P<<std::endl;
     return p;
@@ -453,137 +463,4 @@ namespace substitution {
   }
 
 
-  double Pr_star(const vector<int>& column,const Tree& T,const ReversibleModel& SModel,
-		 const vector<Matrix>& transition_P) {
-    const alphabet& a = SModel.Alphabet();
-
-    if (T.n_leaves() == 2)
-      return Pr(column,T,SModel,transition_P);
-
-    double p=0;
-    for(int lroot=0;lroot<a.size();lroot++) {
-      double temp=SModel.frequencies()[lroot];
-      for(int b=0;b<T.n_leaves();b++) {
-	const Matrix& Q = transition_P[b];
-
-	int lleaf = column[b];
-	if (a.letter(lleaf))
-	  temp *= Q(lroot,lleaf);
-      }
-      p += temp;
-    }
-
-    // we don't get too close to zero, normally
-    assert(0 <= p and p <= 1.00000000001);
-
-    return p;
-  }
-
-  double Pr_star(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC) {
-
-    double p = 0.0;
-  
-    vector<int> residues(A.size2());
-
-    // Do each node before its parent
-    for(int column=0;column<A.length();column++) {
-      for(int i=0;i<residues.size();i++)
-	residues[i] = A(column,i);
-
-      double total=0;
-      for(int m=0;m<MModel.nmodels();m++)
-	total += MModel.distribution()[m] * Pr_star(residues,
-						    T,
-						    MModel.get_model(m),
-						    MC.transition_P(m)
-						    );
-
-      // we don't get too close to zero, normally
-      assert(0 < total and total <= 1.00000000001);
-
-      p += log(total);
-    }
-
-    return p;
-  }
-
-  double Pr_star(const alignment& A,const Parameters& P) {
-    return Pr_star(A, P.T, P.SModel(), P);
-  }
-
-  double Pr_star_constant(const alignment& A,const Parameters& P) {
-    const Tree& T1 = P.T;
-    Parameters P2 = P;
-
-    //----------- Get Distance Matrix --------------//
-    Matrix D(T1.n_leaves(),T1.n_leaves());
-    for(int i=0;i<T1.n_leaves();i++) 
-      for(int j=0;j<T1.n_leaves();j++) 
-	D(i,j) = T1.distance(i,j);
-
-    //----------- Get Average Distance -------------//
-    double sum=0;
-    for(int i=0;i<T1.n_leaves();i++) 
-      for(int j=0;j<i;j++) 
-	sum += D(i,j);
-    const int n = (T1.n_leaves()*(T1.n_leaves()-1))/2;
-    double ave = sum/n;
-
-    //-------- Set branch lengths to ave/2  ----------//
-    for(int b=0;b<T1.n_leafbranches();b++)
-      P2.setlength(b,ave/2.0);
-
-
-    //----------- Get log L w/ new tree  -------------//
-    return Pr_star(A,P2);
-  }
-
-  double Pr_star_estimate(const alignment& A,const Parameters& P) {
-    const Tree& T1 = P.T;
-    Parameters P2 = P;
-    
-    //----------- Get Distance Matrix --------------//
-    Matrix D(T1.n_leaves(),T1.n_leaves());
-    for(int i=0;i<T1.n_leaves();i++) 
-      for(int j=0;j<T1.n_leaves();j++) 
-	D(i,j) = T1.distance(i,j);
-    
-    
-    //---- Set branch lengths to ave/2 per branch ----//
-    for(int i=0;i<T1.n_leaves();i++) {
-      double ave=0;
-      for(int j=0;j<T1.n_leaves();j++) {
-	if (i==j) continue;
-	ave += log(D(i,j));
-      }
-      ave /= (T1.n_leaves()-1);
-   
-      int b = i;
-      if (T1.n_leaves() == 2) b=0;
-
-      P2.setlength(b,exp(ave)/2.0);
-    }
-    
-    //----------- Get log L w/ new tree  -------------//
-    return Pr_star(A,P2);
-  }
-
-  double Pr_unaligned(const alignment& A,const Parameters& P) {
-    const alphabet& a = A.get_alphabet();
-
-    vector<double> count(a.size(),0);
-
-    for(int i=0;i<A.num_sequences();i++) {
-      for(int column=0;column<A.length();column++) {
-	int l = A(column,i);
-	if (a.letter(l))
-	  count[l]++;
-      }
-    }
-    
-    double total=0;
-    for(int l=0;l<count.size();l++)
-      total += log(P.SModel().frequencies()[l])*count[l];
-    return total;
-  }
 }
