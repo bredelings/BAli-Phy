@@ -20,8 +20,9 @@ double probability3(const alignment& A,const Parameters& P) {
 
 
 /// log density for y if y=ln x, and x ~ Exp(mu)
+/// f(x) = exp(-x/mu)/mu   g(y) = exp(-exp(y)/mu)/mu * exp(y)
 double exp_exponential_log_pdf(double y, double mu) {
-  return -log(mu) + (y-exp(y))/mu;
+  return -log(mu) + y - exp(y)/mu;
 }
 
 double exp_exponential_pdf(double y, double mu) {
