@@ -14,14 +14,15 @@ protected:
   std::vector<double> p_length;
   
   void construct_lengthp(int);
+  ublas::matrix<double> P;
+  ublas::matrix<double> R;
+
 public:
   double lambda_O;
   double lambda_E;
 
   vector<double> pi;
-  ublas::matrix<double> P;
   ublas::matrix<double> Q;
-  ublas::matrix<double> R;
 
   double lengthp(int i) const {return p_length[i];}
 

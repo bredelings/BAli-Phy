@@ -163,7 +163,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   if (P.T.leaves() >2) {
     sampler.add(sample_nodes,1,"sample_nodes:nodes");
-    sampler.add(sample_tri,0.25,"sample_tri:alignment:nodes:tri");
+    sampler.add(sample_tri,1,"sample_tri:alignment:nodes:tri");
   }
 
   if (P.T.leaves() >3)
@@ -289,7 +289,7 @@ int main(int argc,char* argv[]) {
     smodel->frequencies(empirical_frequencies(A));
     
     /*-------------Choose an indel model--------------*/
-    int IMlength = 1000;    //FIXME - perhaps we should choose \tau here
+    int IMlength = 500;    //FIXME - perhaps we should choose \tau here
     if (IMlength < A.length()*3)
       IMlength = A.length()*3;
     IndelModel1 IM1(IMlength,lambda_O,lambda_E);

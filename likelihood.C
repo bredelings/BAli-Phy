@@ -60,7 +60,7 @@ double prior_branch_HMM(const alignment& A,const IndelModel& IModel,int parent,i
 
   double P = log_0;
   for(int i=0;i<4;i++)
-    P = logsum(P,IModel.pi[i] + IModel.P(i,state[0]));
+    P = logsum(P,IModel.pi[i] + IModel.Q(i,state[0]));
 
   for(int i=1;i<state.size();i++) 
     P += IModel.Q(state[i-1],state[i]);
@@ -80,6 +80,22 @@ double prior_branch_HMM_Given(const alignment& A,const IndelModel& IModel,int pa
 double prior_HMM(const alignment& A,const Parameters& Theta) {
   const tree& T = Theta.T;
 
+  double P = 0;
+
+  for(int b=0;b<T.branches();b++) {
+    int parent = T.branch(b).parent();
+    int child  = T.branch(b).child();
+    double p = prior_branch_HMM(A,Theta.IModel,parent,child);
+    P += p;
+    std::cerr<<parent<<" -> "<<child<<":  "<<p<<endl;
+  }
+  
+  return P;
+}
+
+double prior_HMM_Given(const alignment& A,const Parameters& Theta) {
+  const tree& T = Theta.T;
+
   int highest_node = T.get_nth(T.num_nodes()-2);
   highest_node = T.branch_up(highest_node).parent();
   double P = Theta.IModel.lengthp(A.seqlength(highest_node));
@@ -92,3 +108,4 @@ double prior_HMM(const alignment& A,const Parameters& Theta) {
   
   return P;
 }
+

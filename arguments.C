@@ -47,6 +47,6 @@ void Arguments::add(const string& key, const string& value) {
 
 void Arguments::print(std::ostream& o) {
   for(typeof(begin()) i=begin();i!=end();i++)
-    o<<i->first<<" = "<<i->second<<std::endl;
+    o<<i->first<<"="<<i->second<<std::endl;
   o<<std::endl;
 }

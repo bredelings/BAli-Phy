@@ -206,11 +206,13 @@ inline double getQ(int S1,int S2,const IndelModel& IModel) {
   int states1 = getstates(S1);
   int states2 = getstates(S2);
 
+  int ap1 = states1>>10;
+  int ap2 = states2>>10;
+
   // If states are unordered, then force numerical order
   //  - this means that sequence 3 comes first
-  // Note that the end state IS ordered
-  if (not (states1 & states2 & bitsmask) and S1 != endstate and S2 != endstate)
-    if ((states1 & bitsmask) >= (states2 & bitsmask))
+  // Note that the end state IS ordered - but this be handled here.
+  if (not (ap1 & ap2) and (ap1>ap2))
       return log_0;
 
   double P=0;
@@ -385,7 +387,7 @@ inline void DPmatrixHMM::forward(int i2,int c2,const Matrix& GQ) {
       int S1 = states(c1)[j];
       Matrix& FS1 = (*this)[S1];
 
-      FS2(i2,c2) = logsum(FS2(i2,c2),FS1(i1,c1) + GQ(S1,S2));
+      FS2(i2,c2) = logsum(FS2(i2,c2), FS1(i1,c1) + GQ(S1,S2));
     }
 
     //--- Include Emission Probability----
@@ -500,7 +502,7 @@ double path_check(const vector<int>& path, const DPmatrix& Matrices, const Matri
     if (di(state1)) i++;
     if (dj(state1) or dk(state1)) c++;
 
-    if (i>I or c>C or state1 == endstate)
+    if (state1 == endstate)
       break;
 
     int state2 = path[l+1];
@@ -604,6 +606,13 @@ double path_P(const vector<int>& path, const DPmatrix& Matrices, const Matrix& G
   }
   assert(l == 0);
   assert(i == 0 and c == 0);
+
+  // include probability of choosing 'Start' vs ---+ !
+  assert(0);
+  what are the disadvantages of actually having a start state?
+  
+
+
   assert(Pr > log_0);
   std::cerr<<"P(path) = "<<Pr<<std::endl;
   return Pr;
@@ -813,30 +822,33 @@ vector<valarray<double> > distributions23(const alignment& A,const Parameters& T
 vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3) {
 
   vector<int> columns;
-  vector<int> bits;
-  //----- Record which features present per column ------//
-  for(int column=0;column<A.length();column++) {
-    int mask=0;
-    if (not A.gap(column,n0))
-      mask |= (1<<0);
-    if (not A.gap(column,n1))
-      mask |= (1<<1);
-    if (not A.gap(column,n2))
-      mask |= (1<<2);
-    if (not A.gap(column,n3))
-      mask |= (1<<3);
+  vector<int> AP;                     // alignments present
 
-    bits.push_back(mask);
-    if (mask) {
+  //----- Record which sub-alignments present per column ------//
+  for(int column=0;column<A.length();column++) {
+    int bits=0;
+    if (not A.gap(column,n0))
+      bits |= (1<<0);
+    if (not A.gap(column,n1))
+      bits |= (1<<1);
+    if (not A.gap(column,n2))
+      bits |= (1<<2);
+    if (not A.gap(column,n3))
+      bits |= (1<<3);
+
+    int states = bits_to_states(bits);
+    int ap = states>>6;
+    AP.push_back(ap);
+    if (ap) {
       columns.push_back(column);
     }
   }
 
-  //----- Re-order unordered columns by bits order ------//
+  //-------- Re-order unordered columns by AP order ---------//
   for(int i=0;i<columns.size()-1;) {
-    int bits1 = bits[columns[i  ]];
-    int bits2 = bits[columns[i+1]];
-    if (not (bits1&bits2) and bits[columns[i]] > bits[columns[i+1]]) {
+    int ap1 = AP[columns[i  ]];
+    int ap2 = AP[columns[i+1]];
+    if (not (ap1&ap2) and ap1 > ap2) {
       std::swap(columns[i],columns[i+1]);
       if (i>0) i--;
     }
@@ -1026,7 +1038,6 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
   // We can only use non-silent states at (0,0) to simulate S
   Matrices.forward(0,0,GQ);
-
   
   Matrices.forward(0,0,seq1.size(),seq23.size(),GQ);
 
@@ -1039,15 +1050,19 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
   //------------- Check relative path probabilities ---------------//
 
+  // get the paths through the 3way alignment, from the entire alignment
   vector<int> path_old = get_path_3way(project(old,n0,n1,n2,n3),0,1,2,3);
-  vector<int> path_new = get_path_3way(A,n0,n1,n2,n3);
+  vector<int> path_new = get_path_3way(project(A,n0,n1,n2,n3),0,1,2,3);
 
+  vector<int> path_old2 = get_path_3way(old,n0,n1,n2,n3);
+  vector<int> path_new2 = get_path_3way(A,n0,n1,n2,n3);
+  assert(path_old == path_old2);
+  assert(path_new == path_new2);
+
+  // get the generalized paths - no sequential silent states that can loop
   vector<int> path_old_G = generalize(path_old);
   vector<int> path_new_G = generalize(path_new);
   assert(path_new_G == path);
-
-  double l1 = probability3(old,Theta);
-  double l2 = probability3(A,Theta);
 
   double PrOld=0;
   for(int i=0;i<path_old.size()-1;i++) {
@@ -1055,9 +1070,35 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     assert(PrOld > log_0/100);
   }
 
+  // get the likelihoods of the new alignments
+  double s1 = substitution(old,Theta);
+  double s2 = substitution(A,Theta);
+
+  double l1 = prior_HMM(old,Theta) + s1;
+  double l2 = prior_HMM(A  ,Theta) + s2;
+
+  double a = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,1);
+  double a2 = prior_branch_HMM(old,Theta.IModel,n0,n1);
+  double b = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,2);
+  double b2 = prior_branch_HMM(old,Theta.IModel,n0,n2);
+  double c = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,3);
+  double c2 = prior_branch_HMM(old,Theta.IModel,n0,n3);
+
+  double lp1 = a + b + c;
+
+  assert(abs(a-a2)<1.0e-7);
+  assert(abs(b-b2)<1.0e-7);
+  assert(abs(c-c2)<1.0e-7);
+
+  double lp2 = prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,1) +
+    prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,2) +
+    prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,3);
+
+  // get the probabilities of sampling each of the paths
   double p1 = path_P(path_old_G,Matrices,GQ); 
   double p2 = path_P(path_new_G,Matrices,GQ); 
 
+  // get the probabilities of the path through the 3-way HMM
   vector<double> QP = path_Q(path_old_G,Matrices,GQ);
   double qp1 = QP[0];
   double qs1 = QP[1];
@@ -1077,31 +1118,20 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
 
 
-  p1 -= 2.0*Theta.IModel.lengthp(length_old);
-  p2 -= 2.0*Theta.IModel.lengthp(length_new);
+    //  p1 -= 2.0*Theta.IModel.lengthp(length_old);
+    //  p2 -= 2.0*Theta.IModel.lengthp(length_new);
 
   p1 += generalize_P(path_old,Q);
   p2 += generalize_P(path_new,Q);
 
-  q1 -= 2.0*Theta.IModel.lengthp(length_old);
-  q2 -= 2.0*Theta.IModel.lengthp(length_new);
+  //  q1 -= 2.0*Theta.IModel.lengthp(length_old);
+  //  q2 -= 2.0*Theta.IModel.lengthp(length_new);
 
   q1 += generalize_P(path_old,Q);
   q2 += generalize_P(path_new,Q);
 
   double diff = p2-p1-(l2-l1);
   double rdiff = diff/(l2-l1);
-
-  double s1 = substitution(old,Theta);
-  double s2 = substitution(A,Theta);
-
-  double lp1 = prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,1) +
-    prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,2) +
-    prior_branch_HMM(project(old,n0,n1,n2,n3),Theta.IModel,0,3);
-
-  double lp2 = prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,1) +
-    prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,2) +
-    prior_branch_HMM(project(A,n0,n1,n2,n3),Theta.IModel,0,3);
 
   if (path_old_G != path_new_G) {
     
@@ -1113,12 +1143,15 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     std::cerr<<"diff = "<<diff<<std::endl;
 
     std::cerr<<endl;
-    std::cerr<<"S1  = "<<s1<<"     S2  = "<<s2<<"     S2 - S2 = "<<s2-s1<<endl;
-    std::cerr<<"QS1 = "<<qs1<<"     QS2 = "<<qs2<<"     S2 - S2 = "<<qs2-qs1<<endl;
+    std::cerr<<"S1  = "<<s1<<"     S2  = "<<s2<<"     S2 - S1 = "<<s2-s1<<endl;
+    std::cerr<<"QS1 = "<<qs1<<"     QS2 = "<<qs2<<"   QS2 - QS1 = "<<qs2-qs1<<endl;
 
     std::cerr<<endl;
     std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<endl;
     std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<endl;
+
+    std::cerr<<prior_HMM(old,Theta) - lp1<<endl;
+    std::cerr<<prior_HMM(A  ,Theta) - lp2<<endl;
 
     if (diff != 0.0) {
       if (std::abs(rdiff) > 1.0e-8) {
