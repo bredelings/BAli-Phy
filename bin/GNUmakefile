@@ -75,13 +75,13 @@ MAP-unordered.fasta: out
 	alignment-find < MAP > $@
 
 median-unordered.fasta: samples-${SKIP}+${SIZE}
-	alignment-median --maxalignments 2000 --type splits < $< > $@ 2>median.err
+	alignment-median --max-alignments 2000 --type splits < $< > $@ 2>median.err
 
 %.fasta: MAP.tree %-unordered.fasta
 	alignment-reorder $*-unordered.fasta MAP.tree > $@ 2>/dev/null
 
 %-AU.prob: %-unordered.fasta samples-${SKIP}+${SIZE} MAP.tree
-	alignment-gild $*-unordered.fasta --tree MAP.tree --max-alignments 500 < samples-${SKIP}+${SIZE} > $@ 2>$*-AU.err
+	alignment-gild $*-unordered.fasta MAP.tree --max-alignments 500 < samples-${SKIP}+${SIZE} > $@ 2>$*-AU.err
 
 %-AU.html: %-AU.prob MAP.tree %.fasta
 	alignment-draw $*.fasta $*-AU.prob --width 120 > $@
