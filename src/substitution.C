@@ -21,7 +21,6 @@ using std::vector;
 // * 
 namespace substitution {
 
-
   struct peeling_info: public vector<int> {
     peeling_info(const Tree&T) { reserve(T.n_branches()); }
   };
@@ -311,8 +310,6 @@ namespace substitution {
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
 
-    P.LC.cached_value = total;
-    P.LC.cv_up_to_date() = true;
     return total;
   }
 
@@ -523,8 +520,8 @@ namespace substitution {
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
     const Tree& T = P.T;
 
-    //    if (cache.cv_up_to_date())
-    //      return cache.cached_value;
+    if (cache.cv_up_to_date())
+      return cache.cached_value;
 
     calculate_caches(A,P,cache);
 
@@ -538,6 +535,9 @@ namespace substitution {
 
     // get the probability
     double Pr = calc_root_probability(A,P,rb,index);
+
+    cache.cached_value = Pr;
+    cache.cv_up_to_date() = true;
 
     return Pr;
   }
