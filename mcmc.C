@@ -213,7 +213,7 @@ void MCMC::iterate(alignment& A,Parameters& P,const int max) {
     }
 
     if (not ML_printed and iterations % 100 == 0) {
-      std::cout<<"ML = "<<ML_score<<endl;
+      std::cout<<"iterations = "<<iterations<<"       ML = "<<ML_score<<endl;
       print_stats(std::cout,ML_alignment,ML_P,probability);
       ML_printed = true;
     }

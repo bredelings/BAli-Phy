@@ -9,7 +9,7 @@ void slide_branch_lengths(alignment& A, Parameters& Theta) {
 
     bool up = true;
     if (myrandom(2))
-      bool up = false;
+      up = false;
 
     slide_branch_length(A,Theta,b,up);
   }

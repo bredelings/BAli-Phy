@@ -18,6 +18,8 @@ inline double wrap(double x,double max) {
   return x;
 }
 
+//FIXME - are we not guaranteed that leaf nodes will be the children of
+// their branch?
 
 void slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up) {
   const SequenceTree& T = Theta.T;
@@ -29,6 +31,8 @@ void slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up) {
     int child = T.branch(b).child();
     int parent = T.branch(b).parent();
     if ((int)T.branch_up(child) == (int)T.branch_up(parent)) {
+      if (not T[parent].has_left())
+	return;
       b2 = T.branch_up(T[parent].left());
       b3 = T.branch_up(T[parent].right());
     }
@@ -49,14 +53,14 @@ void slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up) {
   }
 
   /*-------------- Find out how much to slide ---------------*/
-  double min = std::min(T.branch(b2).length(),T.branch(b3).length());
-
   const double sigma = 0.3/2;
-  
+  const double min = std::min(T.branch(b2).length(),T.branch(b3).length());
   double length = T.branch(b).length();
+  const double max = length + min;
+
   double newlength = length + gaussian(0,sigma);
 
-  newlength = wrap(newlength,min);
+  newlength = wrap(newlength,max);
   double epsilon = newlength - length;
 
   /*------------------Calculate Theta2-------------------*/
@@ -67,7 +71,7 @@ void slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up) {
   
   /*--------------- Do the M-H step if OK---------------*/
   double lL_1 = substitution(A,Theta) + prior(Theta);
-  double lL_2 = substitution(A,Theta2) + prior(Theta);
+  double lL_2 = substitution(A,Theta2) + prior(Theta2);
   
   bool success = false;
   if (myrandomf() < exp(lL_2 - lL_1)) {
