@@ -5,7 +5,7 @@ LI=${CXX}
 EXACTFLAGS = -pipe
 
 LANGO   = fast-math tracer prefetch-loop-arrays omit-frame-pointer
-DEBUG   = # g3 pg 
+DEBUG   = # g3 #pg 
 DEFS    = NDEBUG_UBLAS NDEBUG_DP NDEBUG
 WARN    = all no-sign-compare overloaded-virtual strict-aliasing
 OPT     = march=pentium4 O3

@@ -291,7 +291,6 @@ double UpweightedIndelModel::prior(double D) const {
   double P = delta_prior(D,delta);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double lambda_E = parameters_[1];
   double E_length = lambda_E - logdiff(0,lambda_E);
   double E_length_mean = 5.0;
 
