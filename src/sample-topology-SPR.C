@@ -69,7 +69,7 @@ SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
     }
   }
 
-  int b2 = branches[ choose_nonlog(lengths) ];
+  int b2 = branches[ choose(lengths) ];
 
   SequenceTree T2 = T1;
 

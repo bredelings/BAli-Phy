@@ -202,7 +202,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
   for(int i=0;i<Pr.size();i++)
     Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
 
-  int C = choose(Pr);
+  int C = choose_log(Pr);
 
 #ifndef NDEBUG_DP
   std::cerr<<"choice = "<<C<<endl;
@@ -248,9 +248,9 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
   for(int i=0;i<p.size();i++) {
     double P_choice = 0;
     if (i<Pr.size())
-      P_choice = choose_P(i,Pr);
+      P_choice = choose_P_log(i,Pr);
     else
-      P_choice = choose_P(0,Pr);
+      P_choice = choose_P_log(0,Pr);
 
     PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
     PR[i][0] += A3::log_correction(a[i],p[i],nodes[i]);

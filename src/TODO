@@ -1,9 +1,8 @@
 -9. Indel model...
 
--8. Apply for dissertation year fellowship
-
--7. Make the temperatare affect only the likelihood...
-    Then begin to implement the likelihood scaling first.
+-7. convert Pr_sum_all_paths( ) and other stuff to efloat_t?
+    a) simplifies implementation of choose( )...
+    b) allows us to get rid of choose_log( ) which gives a speedup for le_double_t.
 
 -6. Do we want to hard-code the concepts of transition kernels and priors
     into models?  Each can have parameters...
@@ -17,29 +16,23 @@
 -3. Start making some "nice" pictures to put up on the website.
 
 -2. tree-dist-compare w/ sub-partitions
-  a) speed up get_Ml_partitions
-  c) arrange 
-  d) test Kallikrein - which one had a wandering taxon.  
-  e) also test SIV?
-  f) switch --sub-partitions?  --bootstrap?
+  a) test bacteria run under INV+gamma...
+  b) test Kallikrein - which one had a wandering taxon.  
+  c) add switch '--bootstrap' to make bootstraps optional
 
--1. fix crashing bug... hopefully.
+1. test fix for crashing bug.
+
+*2. MCMCMC
+    a) Make the temperatare affect only the likelihood...
+    b) test speedups...
+    c) begin to implement the separate random number generators.
+    d)
 
 3. Report partitions that results from unplugging one branch at each node....
 
 *4. Write alignment-consensus
 
 5. Add comments!
-
-10. write code to load joint (A,T) distributions...
-
-*11: Write simple MPI code for MCMCMC....
-   a) FIX problem where 1/(1-Q(z,z)) is NEGATIVE.
-
-3. Speed up sample_path() for DParrayConstrained by only considering
-    allowed states for each column...
-    a) benchmark gaps=full_tree when alignment_branch is fixed... 
-    c) see how much speed gain we get for 48 taxa...
 
 4. consider ignoring letters if they are wildcards...
 

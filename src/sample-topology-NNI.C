@@ -124,8 +124,8 @@ bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P
   double Pr1 = probability3(old,P1) + A5::log_correction(old,P1,nodes_old);
   double Pr2 = probability3(*CA,*CP) + A5::log_correction(*CA,*CP,nodes_new);
 
-  double SP1 = choose_P(0,P) + Matrices1.path_P(path_g_old) + Matrices1.generalize_P(path_old);
-  double SP2 = choose_P(choice,P) + CM->path_P(path_g_new) + CM->generalize_P(path_new);
+  double SP1 = choose_P_log(0,P) + Matrices1.path_P(path_g_old) + Matrices1.generalize_P(path_old);
+  double SP2 = choose_P_log(choice,P) + CM->path_P(path_g_new) + CM->generalize_P(path_new);
 
   double diff1 = (Pr2 - Pr1) - (SP2 - SP1);
   std::cerr<<"diff1 = "<<diff1<<std::endl;

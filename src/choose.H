@@ -2,31 +2,70 @@
 #define CHOOSE_H
 
 #include <vector>
+#include "rng.H"
+#include "myexception.H"
 
 int choose2(double, double, double T=1.0);
 int choose3(double, double, double,double T=1.0);
 
-int choose(const std::vector<double>&, double T=1.0);
-// int choose(std::vector<double>::const_iterator,int);
+int choose_log(const std::vector<double>&, double T=1.0);
+double choose_P_log(int, const std::vector<double>&, double T=1.0);
 
+template <typename F>
+int choose(const std::vector<F>& P) {
+  std::vector<F> sum(P.size());
 
-double choose3_P(int,double, double, double, double T=1.0);
+  sum[0] = P[0];
+  for(int i=1;i<sum.size();i++)
+    sum[i] = sum[i-1] + P[i];
 
-double choose_P(int, const std::vector<double>&, double T=1.0);
+  F r = F(myrandomf()) * sum[sum.size()-1];
 
-int choose_nonlog(const std::vector<double>&);
+  for(int i=0;i<sum.size();i++) 
+    if (r < sum[i])
+      return i;
 
-#include "log-double.H"
-#include "le-double.H"
+  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen";
+}
 
-int choose(const std::vector<log_double_t>&,double T=1.0);
-log_double_t choose_P(int,const std::vector<log_double_t>&,double T=1.0);
+template <typename F>
+int choose(const std::vector<F>& P,double T) {
+  std::vector<F> sum(P.size());
 
-int choose(const std::vector<le_double_t>&);
-int choose(const std::vector<le_double_t>&,double T);
+  sum[0] = pow(P[0],1.0/T);
+  for(int i=1;i<sum.size();i++)
+    sum[i] = sum[i-1] + pow(P[i],1.0/T);
 
-le_double_t choose_P(int,const std::vector<le_double_t>&);
-le_double_t choose_P(int,const std::vector<le_double_t>&,double T);
+  F r = F(myrandomf()) * sum[sum.size()-1];
+
+  for(int i=0;i<sum.size();i++) 
+    if (r < sum[i])
+      return i;
+
+  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen";
+}
+
+template <typename F>
+F choose_P(int s,const std::vector<F>& P) {
+  assert(s >= 0 and s < P.size());
+
+  F sum = 0.0;
+  for(int i=0;i<P.size();i++)
+    sum  += P[i];
+
+  return P[s]/sum;
+}
+
+template <typename F>
+F choose_P(int s,const std::vector<F>& P,double T) {
+  assert(s >= 0 and s < P.size());
+
+  F sum = 0.0;
+  for(int i=0;i<P.size();i++)
+    sum  += pow(P[i],1.0/T);
+
+  return pow(P[s],1.0/T)/sum;
+}
 
 #endif
 
