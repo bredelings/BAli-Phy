@@ -78,7 +78,7 @@ class Likelihood_Cache {
   int token;
 
 public:
-  double old_value;
+  double cached_value;
 
   int root;
 

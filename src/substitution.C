@@ -310,6 +310,9 @@ namespace substitution {
       total += log(p_col);
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
+
+    P.LC.cached_value = total;
+
     return total;
   }
 
@@ -419,7 +422,7 @@ namespace substitution {
     return peeling_operations;
   }
 
-  void calculate_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
+  bool calculate_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
     const Tree& T = P.T;
     const MatCache& MC = P;
 
@@ -431,6 +434,7 @@ namespace substitution {
       peel_branch(ops[i],cache,A,T,MC,P.SModel());
 
     //    std::clog<<"Peeled on "<<ops.size()<<" branches.\n";
+    return (ops.size() > 0);
   }
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
@@ -440,8 +444,6 @@ namespace substitution {
   {
     const Tree& T = P.T;
     Likelihood_Cache& cache = P.LC;
-
-    //calculate_caches(A,P,cache);  - WHY was this duplicated?
 
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
@@ -520,7 +522,8 @@ namespace substitution {
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
     const Tree& T = P.T;
 
-    calculate_caches(A,P,cache);
+    if (not calculate_caches(A,P,cache))
+      return cache.cached_value;
 
     // compute root branches
     vector<int> rb;
@@ -532,9 +535,6 @@ namespace substitution {
 
     // get the probability
     double Pr = calc_root_probability(A,P,rb,index);
-
-    // cache the value
-    cache.old_value = Pr;
 
     return Pr;
   }

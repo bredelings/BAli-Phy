@@ -107,8 +107,9 @@ tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rn
 tools/alignment-chop-internal: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o setup.o imodel.o sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o model.o ${LINKLIBS}
 
-#smodel.o \
-#	rates.o exponential.o eigenvalue.o sequence-format.o randomtree.o 
+test3: model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o probability.o rng.o ${LINKLIBS} /usr/local/lib/libmudflap.so
+
+test4: /usr/local/lib/libmudflap.so #model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o probability.o rng.o ${LINKLIBS} 
 
 tools/alignment-draw: tree.o alignment.o sequencetree.o arguments.o \
 	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\

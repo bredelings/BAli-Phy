@@ -219,11 +219,14 @@ void Likelihood_Cache::set_length(int C) {
 
 Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) {
   B = LC.B;
-  old_value = LC.old_value;
+
+  cached_value = LC.cached_value;
+
   cache->release_token(token);
   cache = LC.cache;
   token = cache->claim_token(LC.length(),B);
   cache->copy_token(token,LC.token);
+
   root = LC.root;
 
   return *this;
@@ -233,7 +236,7 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
   :cache(LC.cache),
    B(LC.B),
    token(cache->claim_token(LC.length(),B)),
-   old_value(LC.old_value),
+   cached_value(LC.cached_value),
    root(LC.root)
 {
   cache->copy_token(token,LC.token);
@@ -243,7 +246,7 @@ Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModel
   :cache(new Multi_Likelihood_Cache(M)),
    B(T.n_branches()*2+1),
    token(cache->claim_token(C,B)),
-   old_value(0),
+   cached_value(0),
    root(T.n_nodes()-1)
 {
   cache->init_token(token);
