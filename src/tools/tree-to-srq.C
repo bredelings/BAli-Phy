@@ -13,14 +13,6 @@
 
 using namespace std;
 
-struct lstr {
-  bool operator()(const string& s1, const string& s2) const {
-   return strcmp(s1.c_str(), s2.c_str()) < 0;
-  }
-};
-
-#define foreach(a,b) for(typeof(b.begin()) a=(b).begin();a != (b).end();a++)
-
 double moment(const vector<double>& v,int n) {
   double total=0.0;
   for(int i=0;i<v.size();i++) {

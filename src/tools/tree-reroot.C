@@ -1,5 +1,7 @@
 #include <iostream>
 #include "tree.H"
+#include "sequencetree.H"
+#include "setup.H"
 #include "arguments.H"
 #include "myexception.H"
 

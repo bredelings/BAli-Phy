@@ -1,4 +1,13 @@
-all: bali-phy
+program: bali-phy
+
+TOOLS=
+
+tools: tools/model_P tools/statreport tools/alignment-blame \
+	tools/alignment-reorder tools/alignment-draw tools/findalign \
+	tools/tree-to-srq tools/tree-names-trunc tools/tree-reroot \
+	tools/srq-to-plot tools/srq-analyze tools/phy_to_fasta
+
+`all: bali-phy tools
 
 #----------------- Definitions
 EXACTFLAGS = -pipe # --param inline-unit-growth=300 --param max-inline-insns-auto=300
@@ -68,7 +77,8 @@ tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rn
 
 tools/alignment-draw: tree.o alignment.o sequencetree.o arguments.o \
 	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
-	randomtree.o alignment-random.o ${LINKLIBS} 
+	randomtree.o alignment-random.o imodel.o probability.o \
+	alignment-util.o ${LINKLIBS} 
 
 tools/alignment-translate: alignment.o alphabet.o sequence.o arguments.o sequence-format.o \
 	util.o	
