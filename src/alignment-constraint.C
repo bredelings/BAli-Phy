@@ -166,15 +166,25 @@ valarray<bool> constraint_satisfied(const ublas::matrix<int>& constraint,const a
   return satisfied;
 }
 
+static int sum(const valarray<bool>& v) {
+  int count = 0;
+  for(int i=0;i<v.size();i++)
+    if (v[i]) count++;
+  return count;
+}
 
 void report_constraints(const valarray<bool>& s1, const valarray<bool>& s2) {
   assert(s1.size() == s2.size());
   for(int i=0;i<s1.size();i++) {
     if (s1[i] and not s2[i])
       throw myexception()<<"Constraint "<<i<<" went from satisfied -> unsatisfied!";
-    if (s2[i] and not s2[i])
+    if (s2[i] and not s1[i])
       std::cerr<<"Constraint "<<i<<" satisfied."<<std::endl;
   }
-  if (s1.sum() != s1.size() and s2.sum() == s2.size())
+  if (sum(s1) != s1.size() and sum(s2) == s2.size())
     std::cerr<<"All constraints satisfied."<<std::endl;
+
+#ifndef NDEBUG
+  std::cerr<<sum(s1)<<"/"<<s2.size()<<" constraints satisfied.\n";
+#endif
 }
