@@ -4,6 +4,39 @@
 using std::vector;
 using std::valarray;
 
+alignment chop_internal(const alignment& A) 
+{
+  int N = (A.size2()+2)/2;
+
+  bool internal_nodes = true;
+  for(int i=N;i<A.size2();i++) {
+    if (A.seq(i).name.size() == 0 or A.seq(i).name[0] != 'A') {
+      internal_nodes = false; 
+      break;
+    }
+    for(int column=0;column<A.length();column++) {
+      if (alphabet::letter( A(column,i) )) {
+	internal_nodes = false; 
+	break;
+      }
+    }
+  }
+
+  if (not internal_nodes)
+    return A;
+
+  alignment A2;
+  for(int i=0;i<N;i++) {
+    sequence s(A.seq(i));
+    s.resize(A.length());
+    for(int column=0;column<A.length();column++)
+      s[column] = A(column,i);
+    A2.add_sequence(s);
+  }
+  return A2;
+}
+
+
 /// Construct a mapping of letters to columns for each leaf sequence
 vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
   if (nleaves == -1)
@@ -288,35 +321,38 @@ ublas::matrix<int> get_SM(const alignment& A,const Tree& T) {
   return SM;
 }
 
+long int asymmetric_pairs_distance(const alignment& A1,const alignment& A2) {
 
-int asymmetric_pairs_distance(const alignment& A1,const alignment& A2) 
-{
-  int total=0;
-  int match=0;
-
-  // convert to feature-number notation
   ublas::matrix<int> M1 = M(A1);
   ublas::matrix<int> M2 = M(A2);
 
   // lookup and cache the column each feature is in
-  vector< vector< int> > column_indices = column_lookup(A2);
+  vector< vector< int> > column_indices2 = column_lookup(A2);
 
-  for(int column=0;column<A1.length();column++) 
-    for(int i=0;i<A1.size2();i++)
-      for(int j=0;j<A1.size2();j++)
-	if (not A1.gap(column,i) or not A1.gap(column,j)) {
-	  total++;
-	  if (A_match(M1,column,i,j,M2,column_indices))
-	    match++;
+  return asymmetric_pairs_distance(M1,M2,column_indices2);
+}
+
+
+long int asymmetric_pairs_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+				    const vector< vector<int> >& column_indices2)
+{
+  int mismatch=0;
+
+  for(int column=0;column<M1.size1();column++) 
+    for(int i=0;i<M1.size2();i++)
+      for(int j=0;j<M1.size2();j++)
+	if (M1(column,i) != alphabet::gap or M1(column,j)!= alphabet::gap) {
+	  if (not A_match(M1,column,i,j,M2,column_indices2))
+	    mismatch++;
 	}
 
-  return match;
+  return mismatch;
 }
 
 vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
-			      int column,
-			      const alignment& A2,
-			      const vector< vector<int> >& columns) 
+				   int column,
+				   const ublas::matrix<int>& M2,
+				   const vector< vector<int> >& columns) 
 {
   vector<int> label(M1.size2());
   for(int i=0;i<label.size();i++) {
@@ -331,7 +367,7 @@ vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
   for(int i=0;i<label.size();i++) {
     if (label[i] != -1) continue;
     for(int j=0;j<label.size() and label[i] == -1;j++) {
-      if (A2.gap(label[j],i))
+      if (label[j] != -1 and M2(label[j],i) == alphabet::gap)
 	label[i] = label[j];
     }
   }
@@ -340,37 +376,62 @@ vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
   return label;
 }
 
-int asymmetric_splits_distance(const alignment& A1,const alignment& A2) 
+long int asymmetric_splits_distance(const alignment& A1,const alignment& A2) 
 {
-  assert(A1.size2() = A2.size2());
 
-  int match=0;
-
-  // convert to feature-number notation
   ublas::matrix<int> M1 = M(A1);
   ublas::matrix<int> M2 = M(A2);
 
   // lookup and cache the column each feature is in
-  vector< vector< int> > column_indices = column_lookup(A2);
+  vector< vector< int> > column_indices2 = column_lookup(A2);
 
-  for(int column=0;column<A1.length();column++) {
-    vector<int> columns = get_splitgroup_columns(M1,column,A2,column_indices);
+  return asymmetric_splits_distance(M1,M2,column_indices2);
+}
+
+long int asymmetric_splits_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+				    const vector< vector<int> >& column_indices2)
+{
+  int match=0;
+
+  for(int column=0;column<M1.size1();column++) {
+    vector<int> columns = get_splitgroup_columns(M1,column,M2,column_indices2);
 
     vector<int> uniq;uniq.reserve(columns.size());
     for(int i=0;i<columns.size();i++)
       if (not includes(uniq,columns[i]))
 	uniq.push_back(columns[i]);
 
-    match += uniq.size();
+    int splits = uniq.size();
+    splits--;
+    assert(splits >= 0);
+    match += splits;
   }
 
   return match;
 }
 
-int pairs_distance(const alignment& A1,const alignment& A2) {
-  return asymmetric_pairs_distance(A1,A2)+asymmetric_pairs_distance(A2,A1);
+long int pairs_distance(const alignment& A1,const alignment& A2) 
+{
+  return asymmetric_pairs_distance(A1,A2) + asymmetric_pairs_distance(A2,A1);
 }
 
-int splits_distance(const alignment& A1,const alignment& A2) {
+long int pairs_distance(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
+			const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2)
+{
+  return asymmetric_pairs_distance(M1,M2,column_indices2)
+    + asymmetric_pairs_distance(M2,M1,column_indices1);
+}
+
+
+long int splits_distance(const alignment& A1,const alignment& A2) 
+{
   return asymmetric_splits_distance(A1,A2)+asymmetric_splits_distance(A2,A1);
 }
+
+long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
+			const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2)
+{
+  return asymmetric_splits_distance(M1,M2,column_indices2)
+    + asymmetric_splits_distance(M2,M1,column_indices1);
+}
+

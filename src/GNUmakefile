@@ -96,6 +96,11 @@ tools/alignment-gild: alignment.o arguments.o alphabet.o sequence.o util.o rng.o
 	setup.o imodel.o probability.o sequence-format.o model.o tools/distance-methods.o \
 	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
 
+tools/alignment-median: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
+	tree.o sequencetree.o tools/alignmentutil.o util-random.o \
+	setup.o imodel.o probability.o sequence-format.o model.o  \
+	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
+
 tools/alignment-indices: tree.o alignment.o sequencetree.o arguments.o \
 	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
 	randomtree.o alignment-random.o imodel.o probability.o \
@@ -109,9 +114,10 @@ tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rn
 tools/alignment-chop-internal: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o setup.o imodel.o sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o model.o ${LINKLIBS}
 
-test3: model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o probability.o rng.o ${LINKLIBS} /usr/local/lib/libmudflap.so
+test3: model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o \
+	probability.o rng.o ${LINKLIBS} -lmudflap.so
 
-test4: /usr/local/lib/libmudflap.so #model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o probability.o rng.o ${LINKLIBS} 
+test4: -lmudflap #model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o probability.o rng.o ${LINKLIBS} 
 
 tools/alignment-draw: tree.o alignment.o sequencetree.o arguments.o \
 	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\

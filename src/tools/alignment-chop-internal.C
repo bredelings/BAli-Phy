@@ -3,6 +3,7 @@
 #include <string>
 #include "tree.H"
 #include "alignment.H"
+#include "alignment-util.H"
 #include "arguments.H"
 #include "util.H"
 #include "setup.H"
@@ -27,17 +28,8 @@ int main(int argc,char* argv[]) {
     load_A(args,A);
 
     /*------- Print out the alignment -------*/
-    int N = (A.size2()+2)/2;
 
-    alignment A2;
-    for(int i=0;i<N;i++) {
-      sequence s(A.seq(i));
-      s.resize(A.length());
-      for(int column=0;column<A.length();column++)
-	s[column] = A(column,i);
-      A2.add_sequence(s);
-    }
-
+    alignment A2 = chop_internal(A);
     A2.print_phylip(std::cout,true);
 
   }

@@ -6,6 +6,8 @@
 #include "alignment.H"
 #include "tree.H"
 
+alignment chop_internal(const alignment& A);
+
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
 
@@ -41,12 +43,23 @@ vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
 				   const alignment& A2,
 				   const vector< vector<int> >& columns);
 
-int asymmetric_pairs_distance(const alignment& A1,const alignment& A2);
+long int asymmetric_pairs_distance(const alignment& A1,const alignment& A2);
 
-int asymmetric_splits_distance(const alignment& A1,const alignment& A2);
+long int asymmetric_pairs_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+				   const vector< vector<int> >& column_indices2);
 
-int pairs_distance(const alignment& A1,const alignment& A2);
+long int asymmetric_splits_distance(const alignment& A1,const alignment& A2);
 
-int splits_distance(const alignment& A1,const alignment& A2);
+long int asymmetric_splits_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+				    const vector< vector<int> >& column_indices2);
 
+long int pairs_distance(const alignment& A1,const alignment& A2);
+
+long int pairs_distance(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
+			const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2);
+
+long int splits_distance(const alignment& A1,const alignment& A2);
+
+long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
+			 const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2);
 #endif
