@@ -83,6 +83,17 @@ public:
 };
 
 
+class IndelModel {
+  double lambda_O;
+  double lambea_E;
+
+  double tau;     //probability of going -> E
+  double delta;   //probability of starting a gap: M -> G1,G2
+  double epsilon; //probability of extending a gap: G1->G1,  G2->G2
+};
+
+
+
 /******************************* paramater-containing class **************************/
 
 class Parameters {
