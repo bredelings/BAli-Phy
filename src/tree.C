@@ -454,6 +454,7 @@ void Tree::compute_partitions() {
   vector<const_branchview> branch_list = branches_from_node(*this,nodes_[0]->node);
   vector<const_branchview> temp; temp.reserve(3);
 
+  cached_partitions.clear();
   cached_partitions = vector< valarray<bool> >(branches_.size(),valarray<bool>(false,n_nodes()));
 
   for(int i=0;i<branch_list.size();i++) {
