@@ -3,11 +3,16 @@
 #include <fstream>
 #include "tree.H"
 #include "alignment.H"
-#include "arguments.H"
+#include "alignment-util.H"
 #include "util.H"
-#include "setup.H"
 #include "colors.H"
 
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
+
+using std::string;
 using namespace colors;
 
 double identity(double x) {return x;}
@@ -310,26 +315,26 @@ string latex_rgb(const vector<int>& RGB) {
 }
 
 
-ublas::matrix<double> read_alignment_certainty(const alignment& A, const SequenceTree& T,
-				const char* filename) 
+ublas::matrix<double> read_alignment_certainty(const alignment& A, const string& filename) 
 {
-  ifstream colorfile(filename);
+  ifstream colorfile(filename.c_str());
 
   vector<int> mapping;
   {
     string line;
     getline(colorfile,line);
     vector<string> colornames = split(line,' ');
-    vector<string> leafnames = T.get_sequences();
-    leafnames.erase(leafnames.begin()+T.n_leaves());
-    mapping = compute_mapping(colornames,T.get_sequences());
+    vector<string> leafnames;
+    for(int i=0;i<A.n_sequences();i++)
+      leafnames.push_back(A.seq(i).name);
+    mapping = compute_mapping(colornames,leafnames);
   }
 
   // Add an entry for the ENTIRE COLUMN
   mapping.push_back(mapping.size());
 
   //------------------ Read in the colors ------------------------//
-  ublas::matrix<double> colors(A.length(),T.n_leaves()+1);
+  ublas::matrix<double> colors(A.length(),A.n_sequences()+1);
   for(int column=0;column<colors.size1();column++) 
     //TODO - use an istringstream to make things properly per-line
     for(int i=0;i<colors.size2();i++) {
@@ -364,7 +369,7 @@ bool match(vector<string>& sstack,const string& s) {
   return m;
 }
 
-OwnedPointer<ColorScheme> get_base_color_scheme(Arguments& args,
+OwnedPointer<ColorScheme> get_base_color_scheme(const variables_map& args,
 						const string& color_map_name,
 						const string& scale_name) 
 {
@@ -385,23 +390,31 @@ OwnedPointer<ColorScheme> get_base_color_scheme(Arguments& args,
   Scale scale;
   if (scale_name == "identity") {
     scale.f = identity;
-    scale.min = args.loadvalue("min",0.0);
-    scale.max = args.loadvalue("max",1.0);
+    scale.min = 0;
+    scale.max = 1;
+    if (args.count("min")) scale.min = args["min"].as<double>();
+    if (args.count("max")) scale.max = args["max"].as<double>();
   }
   else if (scale_name == "square") {
     scale.f = square;
-    scale.min = args.loadvalue("min",0.0);
-    scale.max = args.loadvalue("max",1.0);
+    scale.min = 0;
+    scale.max = 1;
+    if (args.count("min")) scale.min = args["min"].as<double>();
+    if (args.count("max")) scale.max = args["max"].as<double>();
   }
   else if (scale_name == "cube") {
     scale.f = cube;
-    scale.min = args.loadvalue("min",0.0);
-    scale.max = args.loadvalue("max",1.0);
+    scale.min = 0;
+    scale.max = 1;
+    if (args.count("min")) scale.min = args["min"].as<double>();
+    if (args.count("max")) scale.max = args["max"].as<double>();
   }
   else if (scale_name == "LOD") {
     scale.f = LOD10;
-    scale.min = args.loadvalue("min",-0.5);
-    scale.max = args.loadvalue("max",2.0);
+    scale.min = -0.5;
+    scale.max = 2.0;
+    if (args.count("min")) scale.min = args["min"].as<double>();
+    if (args.count("max")) scale.max = args["max"].as<double>();
   }
   else
     return OwnedPointer<ColorScheme>(NULL);
@@ -410,7 +423,7 @@ OwnedPointer<ColorScheme> get_base_color_scheme(Arguments& args,
 }
 
 
-OwnedPointer<ColorScheme> get_base_color_scheme(Arguments& args, vector<string>& string_stack) 
+OwnedPointer<ColorScheme> get_base_color_scheme(const variables_map& args, vector<string>& string_stack) 
 {
   OwnedPointer<ColorScheme> result;
 
@@ -434,11 +447,11 @@ OwnedPointer<ColorScheme> get_base_color_scheme(Arguments& args, vector<string>&
   return result;
 }
 
-OwnedPointer<ColorScheme> get_color_scheme(Arguments& args) 
+OwnedPointer<ColorScheme> get_color_scheme(const variables_map& args) 
 {
   vector<string> string_stack;
-  if (args["color-scheme"] != "")
-    string_stack = split(args["color-scheme"],'+');
+  if (not args.count("color-scheme"))
+    string_stack = split(args["color-scheme"].as<string>(),'+');
   std::reverse(string_stack.begin(),string_stack.end());
   
   OwnedPointer<ColorScheme> color_scheme = get_base_color_scheme(args,string_stack);
@@ -459,57 +472,105 @@ OwnedPointer<ColorScheme> get_color_scheme(Arguments& args)
   return color_scheme;
 }
 
-int main(int argc,char* argv[]) { 
-  Arguments args;
-  args.read(argc,argv);
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description general("General options");
+  general.add_options()
+    ("help", "produce help message")
+    ("align", value<string>(),"file with sequences and initial alignment")
+    ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+    ("data-dir", value<string>()->default_value("Data"),"data directory")
+    ("with-stop","include stop codons in amino-acid alphabets")
+    ;
+  
+  options_description output("Output");
+  output.add_options()
+    ("show-ruler","print a ruler to show column numbers") 
+    ("column-colors","color-code column ticks by column certainty") 
+    ("AU",value<string>(),"file with alignment uncertainties")
+    ("show-gaps",value<string>()->default_value("yes"),"show gaps") 
+    ("width",value<int>()->default_value(70),"the number of columns per line")
+    ("start",value<int>(),"the first column to plot")
+    ("end",value<int>(),"the last column to plot")
+    ("format",value<string>()->default_value("HTML"),"produce a plot in this format")
+    ("min",value<double>(),"minimum value of scale function")
+    ("max",value<double>(),"maximum value of scale function")
+    ("color-scheme",value<string>(),"include a length of how certainties map to colors")
+    ("scale",value<string>()->default_value("LOD"),"scale for the uncertainties")
+    ;
+
+  options_description all("All options");
+  all.add(general).add(output);
+
+  // positional options
+  positional_options_description p;
+  p.add("align", 1);
+  p.add("AU", 2);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  notify(args);
+
+  if (args.count("help")) {
+    cout<<"Usage: alignment-draw <alignment> [<AU file>] [OPTIONS]\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
+
+int main(int argc,char* argv[]) 
+{ 
 
   try {
     cerr.precision(10);
     cout.precision(10);
     
-    bool columncolors = args.set("columncolors");
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
 
-    bool show_column_numbers = args.set("positions");
+    bool columncolors = args.count("column-colors")==1;
 
-    /* ----- Try to load alignment ------ */
+    bool show_column_numbers = args.count("show-ruler")==1;
 
-    if (not args.set("align")) 
-      throw myexception("Alignment file not specified! (align=<filename>)");
+    //---------- Load alignment and tree -----------//
+    alignment A = load_A(args,false);
 
-    /* ----- Alphabets to try ------ */
-    alignment A;
-    SequenceTree T;
-    load_A_and_T(args,A,T);
+    //------ Find mapping from colorfile to alignment sequence order -------//
+    if (not args.count("AU"))
+      throw myexception()<<"AU probabilites file not specified!";
 
-    /*------- Find mapping from colorfile to alignment sequence order -------*/
-    if (not args.set("AU-file"))
-      throw myexception()<<"AU probabilites file not specified! (AU-file=<filename>)";
-
-    ublas::matrix<double> colors = read_alignment_certainty(A,T,args["AU-file"].c_str());
+    ublas::matrix<double> colors = read_alignment_certainty(A,args["AU"].as<string>());
 
     OwnedPointer<ColorScheme> color_scheme = get_color_scheme(args);
 
     bool showgaps = true;
-    if (args["showgaps"] == "no")
+    if (args.count("show-gaps") and args["show-gaps"].as<string>() == "no")
       showgaps = false;
 
-    /*-------------------- Get width ------------------------*/
-    int width =args.loadvalue("width",67);
+    //-------------------- Get width ------------------------//
+    int width = args["width"].as<int>();
 
     /*-------------------- Get start ------------------------*/
     int start=0;
-    if (args.set("start")) {
-      start = convertTo<int>(args["start"]);
+    if (args.count("start")) {
+      start = args["start"].as<int>();
       if (start < 0)
 	throw myexception()<<"Parameter 'start' must be positive.";
       if (not (start < A.length()))
 	throw myexception()<<"Parameter 'start' must be less than the length of the alignment ("<<A.length()<<").";
     }
     
-    /*-------------------- Get end ------------------------*/
+    //-------------------- Get end ------------------------//
     int end = A.length()-1;
-    if (args.set("end")) {
-      end = convertTo<int>(args["end"]);
+    if (args.count("end")) {
+      end =args["end"].as<int>();
       if (end < 0)
 	throw myexception()<<"Parameter 'end' must be positive.";
       if (not (end < A.length()))
@@ -518,7 +579,7 @@ int main(int argc,char* argv[]) {
 	throw myexception()<<"Parameter 'end' must be >= than parameter 'start'"<<A.length()<<").";
     }
 
-    if (args["format"] == "latex") {
+    if (args["format"].as<string>() == "latex") {
       std::cout<<"\\documentclass[10pt]{article}\n\
 \\usepackage{colortbl}\n\
 \\begin{document}\n\
@@ -534,7 +595,7 @@ int main(int argc,char* argv[]) {
 	  cout<<"c";
 	cout<<"}\n";
 	
-	for(int i=0;i<T.n_leaves();i++) {
+	for(int i=0;i<A.n_sequences();i++) {
 	  int s = i;
 
 	  for(int column=pos;column<pos+width and column < end; column++) {
@@ -584,7 +645,7 @@ SPAN {\n\
   <body>\n";
       
       //-------------------- Print a legend ------------------------//
-      if (args["legend"] != "no") {
+      if (args.count("legend") and args["legend"].as<string>() != "no") {
 	draw_legend(cout,*color_scheme,"");
 	draw_legend(cout,*color_scheme,"-");
       }
@@ -615,7 +676,7 @@ SPAN {\n\
 	  cout<<"<tr><td></td><td>";
 	  
 	  for(int column=pos;column<pos+width and column < end; column++) {
-	    double P=colors(column,T.n_leaves());
+	    double P=colors(column,A.n_sequences());
 	    string style = getstyle(P,"",*color_scheme);
 	    if (columncolors)
 	      cout<<"<span style=\""<<style<<"\">"<<positions[column]<<"</span>";
@@ -625,10 +686,10 @@ SPAN {\n\
 	  cout<<"</tr>\n";
 	}
 
-	for(int i=0;i<T.n_leaves();i++) {
+	for(int i=0;i<A.n_sequences();i++) {
 	  int s = i;
 	  cout<<"  <tr>\n";
-	  cout<<"    <td class=\"sequencename\">"<<T.seq(s)<<"</td>\n";
+	  cout<<"    <td class=\"sequencename\">"<<A.seq(s).name<<"</td>\n";
 	  cout<<"    <td>";
 	  for(int column=pos;column<pos+width and column < end; column++) {
 	    string c;
