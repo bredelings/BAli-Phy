@@ -6,7 +6,12 @@
 #include "statistics.H"
 #include "bootstrap.H"
 #include "logsum.H"
-#include "arguments.H"
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
+
 using namespace std;
 
 double Pr_harmonic(const valarray<double>& v) {
@@ -106,51 +111,98 @@ double Pr_smoothed(const valarray<double>& v) {
   return Pdata;
 }
 
-int main(int argc,char* argv[]) { 
-  Arguments args;
-  args.read(argc,argv);
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
 
-  std::cout.precision(3);
-  std::cout.setf(ios::fixed);
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("align", value<string>(),"file with sequences and initial alignment")
+    ("tree",value<string>(),"file with initial tree")
+    ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+    ("tag", value<string>()->default_value("sample"),"only read alignments preceded by 'align[<tag>'")
+    ("refine", value<string>(),"procedure for refining Least-Squares positivized branch lengths: SSE, Poisson, LeastSquares")
+    ;
 
-  /*---------- Initialize random seed -----------*/
-  unsigned long seed = 0;
-  if (args.set("seed")) {
-    seed = convertTo<unsigned long>(args["seed"]);
-    myrand_init(seed);
+  // positional options
+  positional_options_description p;
+  p.add("align", 1);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: model_P [OPTIONS]\n";
+    cout<<all<<"\n";
+    exit(0);
   }
-  else
-    seed = myrand_init();
-  std::cerr<<"random seed = "<<seed<<endl<<endl;
 
-  vector<double> data;
+  return args;
+}
 
-  double d;
-  while(cin>>d) {
-    data.push_back(d);
-  }
 
-  cerr<<"OK: read "<<data.size()<< " values."<<endl;
+
+
+int main(int argc,char* argv[]) 
+{ 
+
+  try{
+
+    std::cout.precision(3);
+    std::cout.setf(ios::fixed);
+
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
+
+    //---------- Initialize random seed -----------//
+    unsigned long seed = 0;
+    if (args.count("seed")) {
+      seed = args["seed"].as<unsigned long>();
+      myrand_init(seed);
+    }
+    else
+      seed = myrand_init();
+    cout<<"random seed = "<<seed<<endl<<endl;
+
+    vector<double> data;
+
+    double d;
+    while(cin>>d) {
+      data.push_back(d);
+    }
+
+    cerr<<"OK: read "<<data.size()<< " values."<<endl;
  
-  // Translate vector to valarray...
-  valarray<double> values(data.size());
-  for(int i=0;i<values.size();i++)
-    values[i] = data[i];
+    // Translate vector to valarray...
+    valarray<double> values(data.size());
+    for(int i=0;i<values.size();i++)
+      values[i] = data[i];
 
-  double PM = Pr_smoothed(values);
+    double PM = Pr_smoothed(values);
 
-  cout<<"P(M|data) = "<<PM<<"  ";
-  cout.flush();
+    cout<<"P(M|data) = "<<PM<<"  ";
+    cout.flush();
 
-  //---------- Get bootstrap sample --------------/
+    //---------- Get bootstrap sample --------------/
 
-  int blocksize = data.size()/100+2;
-  if (blocksize > values.size())
-    blocksize = values.size();
+    int blocksize = data.size()/100+2;
+    if (blocksize > values.size())
+      blocksize = values.size();
 
-  valarray<double> values2 = bootstrap_apply<double,double>(values,Pr_smoothed,100,blocksize);
+    valarray<double> values2 = bootstrap_apply<double,double>(values,Pr_smoothed,100,blocksize);
 
-  double stddev = sqrt( statistics::Var(values2) );
+    double stddev = sqrt( statistics::Var(values2) );
 
-  std::cout<<"  +- "<<stddev<<endl;
+    std::cout<<"  +- "<<stddev<<endl;
+  }
+  catch (std::exception& e) {
+    std::cerr<<"Exception: "<<e.what()<<endl;
+    exit(1);
+  }
+  return 0;
 }
