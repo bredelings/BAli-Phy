@@ -146,7 +146,7 @@ tools/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
 tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \
 	parameters.o exponential.o setup-smodel.o smodel.o imodel.o rng.o likelihood.o \
-	dpmatrix.o choose.o tools/optimize.o inverse.o setup.o rates.o matcache.o \
+	choose.o tools/optimize.o setup.o rates.o matcache.o \
 	sequence-format.o randomtree.o model.o ${LINKLIBS}
 
 test-smodel: alignment.o alphabet.o sequence.o arguments.o tree.o sequencetree.o util.o \
