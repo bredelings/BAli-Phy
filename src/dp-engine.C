@@ -116,8 +116,8 @@ double DParray::path_P(const vector<int>& g_path) const {
       transition[state1] = (*this)[state1][i]+GQ(state1,state2);
 
     int state1 = g_path[l-1];
-    double p = choose_P(state1,transition);
-    assert(p > log_limit);
+    efloat_t p = choose_P(state1,transition);
+    assert(log(p) > log_limit);
 
     if (di(state1)) i--;
 
@@ -186,7 +186,7 @@ double DParray::Pr_sum_all_paths() const {
 
 DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
   :DPengine(v1,v2,M,Temp),
-   vector< vector<double> >(nstates(),vector<double>(l+1,log_0)),length(l+1)
+   vector< vector<efloat_t> >(nstates(),vector<efloat_t>(l+1,0)),length(l+1)
 { 
   for(int s=0;s<start_P.size();s++)
     (*this)[s][0] = start_P[s];
@@ -197,7 +197,7 @@ inline void DParrayConstrained::forward(int i2) {
 
   for(int s2=0;s2<states(i2).size();s2++) {
     int S2 = states(i2)[s2];
-    vector<double>& FS2 = (*this)[S2];
+    vector<efloat_t>& FS2 = (*this)[S2];
 
     int i1 = i2;
     if (di(S2))
@@ -207,13 +207,13 @@ inline void DParrayConstrained::forward(int i2) {
     if (i1<0) continue;
 
     //--- Compute Arrival Probability ---
-    FS2[i2] = log_0;
+    FS2[i2] = 0;
     for(int s1=0;s1<states(i1).size();s1++) {
       int S1 = states(i1)[s1];
 
-      vector<double>& FS1 = (*this)[S1];
+      vector<efloat_t>& FS1 = (*this)[S1];
 
-      FS2[i2] = logsum(FS2[i2],FS1[i1] + GQ(S1,S2));
+      FS2[i2] += FS1[i1] * GQ(S1,S2);
     }
   }
 }
@@ -428,11 +428,11 @@ double DPmatrix::path_check(const vector<int>& path) const {
     vector<double> transition(nstates());
     for(int s=0;s<nstates();s++)
       transition[s] = (*this)[s](i,j)+GQ(s,state2);
-
-    double p = choose_P(state1,transition);
-    assert((*this)[state1](i,j) > log_limit);
-    assert(GQ(state1,state2) > log_limit);
-    assert(p > log_limit);
+    
+    efloat_t p = choose_P(state1,transition);
+    assert((*this)[state1](i,j) != 0.0);
+    assert(GQ(state1,state2) != 0.0);
+    assert(p != 0.0);
     
     l++;
     Pr += p;
@@ -557,7 +557,7 @@ DPmatrix::DPmatrix(int i1,
 		   const Matrix& M,
 		   double Temp)
   :DPengine(v1,v2,M,Temp),
-   vector<Matrix>(nstates(),Matrix(i1+1,i2+1)),
+   vector<eMatrix >(nstates(),eMatrix(i1+1,i2+1)),
    S1(i1+1),
    S2(i2+1)
 {
@@ -566,7 +566,7 @@ DPmatrix::DPmatrix(int i1,
   for(int S=0;S<nstates();S++)
     for(int i=0;i<size1();i++)
       for(int j=0;j<size2();j++) 
-	(*this)[S](i,j)  = log_0;
+	(*this)[S](i,j)  = 0;
 
   //----- set up start probabilities -----//
   for(int S=0;S<start_P.size();S++)
@@ -579,7 +579,7 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1) {
   assert(j2<size2());
 
   for(int S2=0;S2<nstates();S2++) {
-    Matrix& FS2 = (*this)[S2];
+    eMatrix& FS2 = (*this)[S2];
 
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
@@ -593,11 +593,11 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1) {
       continue;
 
     //--- Compute Arrival Probability ----
-    FS2(i2,j2) = log_0;
+    FS2(i2,j2) = 0;
     for(int S1=0;S1<nstates();S1++) {
-      Matrix& FS1 = (*this)[S1];
+      eMatrix& FS1 = (*this)[S1];
 
-      FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
+      FS2(i2,j2) += FS1(i1,j1) * GQ(S1,S2);
     }
   }
 } 
@@ -683,9 +683,12 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
    s12_sub(d1.size(),d2.size()),
    s1_sub(d1.size()),s2_sub(d2.size()),
    distribution(d0),
-   dists1(d1),dists2(d2),frequency(f)
+   dists1(d1),dists2(d2),frequency(f.size())
 {
   
+  for(int i=0;i<f.size();i++)
+    frequency[i] = f[i];
+
   //----- cache G1,G2 emission probabilities -----//
   for(int i=0;i<dists1.size();i++) {
     double total=0;
@@ -695,7 +698,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 	temp += frequency[l]*dists1[i](r,l);
       total += temp*distribution[r];
     }
-    s1_sub[i] = log(total)/T;
+    s1_sub[i] = pow(total,1.0/T);
   }
 
   for(int i=0;i<dists2.size();i++) {
@@ -706,7 +709,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 	temp += frequency[l]*dists2[i](r,l);
       total += temp*distribution[r];
     }
-    s2_sub[i] = log(total)/T;
+    s2_sub[i] = pow(total,1.0/T);
   }
 
   //----- pre-calculate scaling factors --------//
@@ -726,7 +729,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 	for(int l=0;l<M1.size2();l++)
 	  total += M1(r,l) * M2(r,l);
       }
-      s12_sub(i,j) = log(total)/T;
+      s12_sub(i,j) = pow(total,1.0/T);
     }
 
 }
@@ -738,7 +741,7 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
   assert(j2<size2());
 
   for(int S2=0;S2<nstates();S2++) {
-    Matrix& FS2 = (*this)[S2];
+    eMatrix& FS2 = (*this)[S2];
 
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
@@ -752,15 +755,16 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
       continue;
 
     //--- Compute Arrival Probability ----
-    FS2(i2,j2) = log_0;
-    for(int S1=0;S1<nstates();S1++) {
-      Matrix& FS1 = (*this)[S1];
+    FS2(i2,j2) = 0;
 
-      FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
+    for(int S1=0;S1<nstates();S1++) {
+      eMatrix& FS1 = (*this)[S1];
+
+      FS2(i2,j2) += FS1(i1,j1) * GQ(S1,S2);
     }
 
     //--- Include Emission Probability----
-    double sub;
+    efloat_t sub;
     if (i1 != i2 and j1 != j2)
       sub = emitMM(i2,j2);
     else if (i1 != i2)
@@ -771,7 +775,7 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
       sub = emit__(i2,j2);
 
 
-    FS2(i2,j2) += sub;
+    FS2(i2,j2) *= sub;
   }
 } 
 inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
@@ -781,7 +785,7 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
 
   for(int i=0;i<states(j2).size();i++) {
     int S2 = states(j2)[i];
-    Matrix& FS2 = (*this)[S2];
+    eMatrix& FS2 = (*this)[S2];
 
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
@@ -800,7 +804,7 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
     for(int s=0;s<states(j1).size();s++) {
       int S1 = states(j1)[s];
 
-      Matrix& FS1 = (*this)[S1];
+      eMatrix& FS1 = (*this)[S1];
       
       FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
     }

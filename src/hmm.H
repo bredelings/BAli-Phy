@@ -9,6 +9,9 @@ using std::valarray;
 // Can I make Q into a general function, backed by a matrix in some cases?
 
 /// A Hidden Markov Model - represented by the transition matrix and accessory functions
+
+typedef ublas::matrix<efloat_t> eMatrix;
+
 class HMM {
   /// Is each state part of the silent network?
   vector<int> silent_network_;
@@ -28,17 +31,17 @@ public:
   double T;
 
   /// The transition matrix for the HMM
-  Matrix Q;
+  eMatrix Q;
 
   /// The 'generalized' transition matrix - silent loops removed
-  Matrix GQ;
+  eMatrix GQ;
 
-  bool connected_Q(int S1,int S2) const {return Q(S1,S2) > log_limit;}
+  bool connected_Q(int S1,int S2) const {return Q(S1,S2) != 0.0;}
 
-  bool connected(int S1,int S2) const {return GQ(S1,S2) > log_limit;}
+  bool connected(int S1,int S2) const {return GQ(S1,S2) != 0.0;}
 
   /// Probabilities of starting in each state
-  vector<double> start_P;
+  vector<efloat_t> start_P;
 
   /// bitmasks of whether states emit features in each sequence
   vector<int> state_emit;

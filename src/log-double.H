@@ -1,0 +1,134 @@
+#ifndef LOG_DOUBLE_H
+#define LOG_DOUBLE_H
+
+#include <cassert>
+#include "logsum.H"
+
+class log_double_t {
+  double value;
+public:
+  double  log() const {return value;}
+  double& log()       {return value;}
+
+  log_double_t& operator +=(const log_double_t& y) {loginc(value,y.log()); return *this;}
+  log_double_t& operator -=(const log_double_t& y) {value = logdiff(log(),y.log()); return *this;}
+  log_double_t& operator *=(const log_double_t& y) {value += y.log(); return *this;}
+  log_double_t& operator /=(const log_double_t& y) {value -= y.log(); return *this;}
+
+  operator double() const {return exp(value);}
+
+  log_double_t& operator=(double y) {
+    assert(y >= 0);
+    if (y == 0)
+      value = log_0;
+    else if (y == 1)
+      value = 0;
+    else
+      value = ::log(y);
+    return *this;
+  }
+
+
+  log_double_t():value(log_0) {}
+
+  log_double_t(double x) {
+    operator=(x);
+  }
+};
+
+inline double log(log_double_t x) {
+  return x.log();
+}
+
+inline log_double_t operator+(log_double_t x,log_double_t y) {
+  log_double_t z = x;
+  z += y;
+  return z;
+}
+
+inline log_double_t operator-(log_double_t x,log_double_t y) {
+  log_double_t z = x;
+  z -= y;
+  return z;
+}
+
+inline log_double_t operator*(log_double_t x,log_double_t y) {
+  log_double_t z = x;
+  z *= y;
+  return z;
+}
+
+inline log_double_t operator/(log_double_t x,log_double_t y) {
+  log_double_t z=x;
+  z /= y;
+  return z;
+}
+
+inline bool operator< (log_double_t x,log_double_t y) {
+  return log(x)<log(y);
+}
+
+inline bool operator<=(log_double_t x,log_double_t y) {
+  return log(x)<=log(y);
+}
+
+inline bool operator> (log_double_t x,log_double_t y) {
+  return log(x)>log(y);
+}
+
+inline bool operator>(log_double_t x,double y) {
+  if (y==0.0)
+    return log(x) > log_0;
+  else
+    return x > log_double_t(y);
+}
+
+
+inline bool operator>=(log_double_t x,log_double_t y) {
+  return log(x)>=log(y);
+}
+
+inline bool operator==(log_double_t x,log_double_t y) {
+  return log(x)==log(y);
+}
+
+inline bool operator==(log_double_t x,double y) {
+  if (y==0.0)
+    return log(x) == log_0;
+  else if (y==1)
+    return log(x) == 0.0;
+  else
+    return double(x) == y;
+}
+
+/*
+inline bool operator==(log_double_t x,double y) {
+  if (y==0)
+    return (x==log_0);
+  else if (y==1)
+    return (x==0);
+  else
+    return (x==log(y));
+}
+*/
+
+inline bool operator!=(log_double_t x,log_double_t y) {
+  return log(x)!=log(y);
+}
+
+inline bool operator!=(log_double_t x,double y) {
+  if (y==0.0)
+    return log(x) != log_0;
+  else if (y==1)
+    return log(x) != 0.0;
+  else
+    return double(x) != y;
+}
+
+inline log_double_t pow(log_double_t x,double p) {
+  x.log() *= p;
+  return x;
+}
+
+
+#endif

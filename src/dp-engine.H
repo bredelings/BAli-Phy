@@ -3,6 +3,8 @@
 
 #include "hmm.H"
 
+typedef double efloat;
+
 class DPengine: public HMM {
 public:
 
@@ -32,7 +34,7 @@ public:
 
 
 /// 1D Dynamic Programming Matrix
-class DParray : public DPengine, public vector< vector<double> > {
+class DParray : public DPengine, public vector< vector<efloat_t> > {
   /// Length of the DP array
   int length;
 public:
@@ -94,7 +96,7 @@ public:
 
 
 /// 2D Dynamic Programming Matrix
-class DPmatrix : public DPengine, public vector<Matrix> {
+class DPmatrix : public DPengine, public vector<eMatrix > {
   /// Size of first dimension: 0...L1 = 0...S1-1
   int S1;
   /// Size of second dimension: 0...L2 = 0...S2-1
@@ -178,11 +180,11 @@ public:
 class DPmatrixEmit : public DPmatrix {
 protected:
 
-  Matrix s12_sub;
+  eMatrix s12_sub;
   /// Precomputed emission probabilies for +-
-  valarray<double> s1_sub;
+  std::vector<efloat_t> s1_sub;
   /// Precomputed emission probabilies for -+
-  valarray<double> s2_sub;
+  std::vector<efloat_t> s2_sub;
 
 public:
   /// Probabilities of the different rates
@@ -192,7 +194,7 @@ public:
   /// Emission probabilities for second sequence
   vector< Matrix > dists2;
   /// Frequencies at the root node - and equilibrium frequencies
-  valarray<double> frequency;
+  std::vector<double> frequency;
   /// The number of different rates
   int nrates() const {return dists1[0].size1();}
 

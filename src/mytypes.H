@@ -30,4 +30,8 @@ typedef ublas::unit_vector<double> unit_vector;
 typedef ublas::matrix_row<Matrix> matrix_row;
 typedef ublas::matrix_column<Matrix> matrix_column;
 
+#include "log-double.H"
+
+typedef log_double_t efloat_t;
+
 #endif
