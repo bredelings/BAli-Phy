@@ -88,15 +88,25 @@ namespace substitution {
     return temp;
   }
 
-  static vector<vector<int> > get_subtree_leaves(const vector<int>& b,const Tree& T) {
+  static vector<vector<int> > get_subtree_leaves(const vector<int>& b,const Tree& T) 
+  {
+    // mask for being in ANY of the sub-A's
+    valarray<bool> all(false,T.n_nodes());
+
     // get criteria for being in a sub-A
-    vector<vector<int> > leaves(b.size());
+    vector<vector<int> > leaves(b.size()+1);
     for(int i=0;i<b.size();i++) {
       leaves[i].reserve(T.n_leaves());
       valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
+      all = all or p;
       for(int j=0;j<T.n_leaves();j++)
 	if (p[j]) leaves[i].push_back(j);
     }
+
+    //get criteria for being in ANY of the sub-A's
+    leaves.back().reserve(T.n_leaves());
+    for(int j=0;j<T.n_leaves();j++)
+      if (all[j]) leaves.back().push_back(j);
 
     return leaves;
   }
@@ -112,38 +122,20 @@ namespace substitution {
     return alphabet::gap;
   }
 
-  static bool column_empty(const ublas::matrix<int>& M,int c) {
-    const int I = M.size2()-1;
-    for(int i=0;i<I;i++)
-      if (M(c,i) != alphabet::gap)
-	return false;
-    return true;
-  }
-
   static ublas::matrix<int> subA_index_simple(const alignment& A, 
 					      const vector<vector<int> >& leaves) 
   {
     // the alignment of sub alignments
-    ublas::matrix<int> subA(A.length(),leaves.size()+1);
+    ublas::matrix<int> subA(A.length(),leaves.size());
 
     // declare the index for the nodes
     vector<int> index(leaves.size(),-1);
 
-    // calculate the index of each column
-    const int I = leaves.size();
-    int l=0;
+    // calculate the index of each sub-A in each column
     for(int c=0;c<A.length();c++) {
       // get the child subA indices
-      for(int j=0;j<I;j++) 
+      for(int j=0;j<leaves.size();j++) 
 	subA(c,j) = inc(index[j],leaves[j],A,c);
-
-      // get the parent subA index - FIXME?: add an item to 'leaves' which contain all the leaves
-      // then I could use 'inc' on ALL of them...
-      // perhaps after I merge get_subtree_leaves into here...
-      if (column_empty(subA,c))
-	subA(c,I) = alphabet::gap;
-      else
-	subA(c,I) = l++; //post-increment vs pre: gives us the length when done
     }
 
     return subA;
@@ -233,7 +225,7 @@ namespace substitution {
     ublas::matrix<int> subA = subA_index_simple(A,leaves);
 
     // select and order the columns we want to keep
-    const int I = leaves.size();
+    const int I = leaves.size()-1;
     int l=0;
     for(int c=0;c<subA.size1();c++)
       if (any_present(A,c,nodes))
@@ -256,7 +248,7 @@ namespace substitution {
     ublas::matrix<int> subA = subA_index_simple(A,leaves);
 
     // select and order the columns we want to keep
-    const int I = leaves.size();
+    const int I = leaves.size()-1;
     for(int c=0;c<subA.size1();c++) 
       subA(c,I) = alphabet::gap;
 
@@ -286,7 +278,7 @@ namespace substitution {
     ublas::matrix<int> subA = subA_index_simple(A,leaves);
 
     // select and order the columns we want to keep
-    const int I = leaves.size();
+    const int I = leaves.size()-1;
     int l=0;
     for(int c=0;c<subA.size1();c++)
       if (any_present(A,c,nodes))
