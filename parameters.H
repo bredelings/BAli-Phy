@@ -46,9 +46,13 @@ public:
 
   /// The IndelModel
   const IndelModel& IModel() const {return *IModel_;}
+  /// The IndelModel
+  IndelModel& IModel() {return *IModel_;}
 
   /// Get the substitution::Model
   const substitution::MultiRateModel& SModel() const {return *SModel_;}
+  /// Get the substitution::Model
+  substitution::MultiRateModel& SModel() {return *SModel_;}
 
   /// Get the alphabet
   const alphabet& get_alphabet() const {return SModel_->Alphabet();}

@@ -34,8 +34,8 @@ bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 
 
 void Parameters::fiddle() {
-  SModel_->fiddle();recalc();
-  IModel_->fiddle();
+  SModel_->fiddle();
+  recalc();
   
   const double sigma = 0.05;
   branch_mean += gaussian(0,sigma);

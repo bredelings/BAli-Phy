@@ -61,6 +61,7 @@ MCMC::result_t slide_branch_lengths_one(alignment& A, Parameters& Theta,int);
 MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& Theta,int b);
 
 MCMC::result_t change_parameters(alignment& A,Parameters& Theta);
+MCMC::result_t change_gap_parameters(alignment& A,Parameters& Theta);
 
 MCMC::result_t sample_tri_one(alignment&, Parameters&,int);
 MCMC::result_t sample_tri_branch_one(alignment&,Parameters&,int);

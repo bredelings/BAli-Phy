@@ -207,7 +207,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   internal_nodes_move.add(1,MoveArgSingle("two_nodes:nodes",
 					  sample_two_nodes_move,
 					  internal_branches)
-			  );
+			  ,false);
 
   if (P.T.leaves() >2)
     alignment_moves.add(1,internal_nodes_move);
@@ -249,14 +249,17 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   tree_moves.add(1,length_moves);
 
   // parameters
-  SingleMove parameter_moves(change_parameters,"parameters");
+  MoveAll parameter_moves("parameters");
+  parameter_moves.add(P.T.branches(),SingleMove(change_parameters,"s_parameters:parameters"));
+  parameter_moves.add(1,SingleMove(change_gap_parameters,"g_parameters:parameters"));
+  
 
   //FIXME - use the right prior and likelihood here!
   // full sampler
   Sampler sampler("sampler");
   sampler.add(1,alignment_moves);
   sampler.add(1,tree_moves);
-  sampler.add(P.T.branches(),parameter_moves);
+  sampler.add(1,parameter_moves);
 
   vector<string> disable;
   vector<string> enable;

@@ -142,7 +142,7 @@ namespace A5 {
     std::abort();
   }
 
-  int bits_to_state(int bits,int b1,int b2) {
+  inline int bits_to_state(int bits,int b1,int b2) {
     if (not bitset(bits,b1)) {
       if (bitset(bits,b2))
 	return states::G1;
@@ -160,7 +160,7 @@ namespace A5 {
   // Takes a bitmask of character-presence in sequences 0,1,2,3,4,5
   // Returns the state for each alignment, 
   // with the validity of sub-alignments 0,1,2,3,4 marked in bits 10,11,12,13,14
-  int bits_to_substates(int bits) {
+  inline int bits_to_substates(int bits) {
     int S=0;
     S |= bits_to_state(bits,4,0)<<0;
     S |= bits_to_state(bits,4,1)<<2;

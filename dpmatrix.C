@@ -658,7 +658,21 @@ DPmatrix::DPmatrix(int i1,
 }
 
 void DPmatrixNoEmit::forward(int x1,int y1,int x2,int y2) {
-  return DPmatrix::forward(x1,y1,x2,y2);
+  assert(x1 < x2 or y1 < y2);
+  assert(x2 < size1());
+  assert(y2 < size2());
+
+  const int maxdelta = std::max(x2-x1,y2-y1);
+
+  for(int delta=1; delta<=maxdelta; delta++) {
+    if (y1 + delta <= y2)
+      for(int i=0;i<delta and x1+i <= x2;i++) 
+	forward(x1+i,y1+delta);
+
+    if (x1 + delta <= x2)
+      for(int i=0;i<=delta and y1+i <= y2;i++)
+	forward(x1+delta,y1+i);
+  } 
 }
 
 double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {

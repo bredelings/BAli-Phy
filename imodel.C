@@ -29,8 +29,8 @@ void IndelModel::construct_length_plus_p() {
 }
 
 void IndelModel::construct_lengthp() {
-  const int size1=100;
-  const int size2=200;
+  const int size1=50;
+  const int size2=100;
 
   // Store emission characteristics
   vector<int> state_emit(4,0);
@@ -44,25 +44,25 @@ void IndelModel::construct_lengthp() {
   start_P.erase(start_P.begin()+3);
 
   // Compute probabilities for pairs of lengths
-  DPmatrixNoEmit Matrices(size2,size2,state_emit,start_P,Q);
+  DPmatrixNoEmit Matrices(size1,size2,state_emit,start_P,Q);
   Matrices.forward(0,0);
-  Matrices.forward(0,0,size2,size2);
+  Matrices.forward(0,0,size1,size2);
 
   // Compute probabilities for a single length
   vector<double> l1;
-  vector<double> l2;
+  //  vector<double> l2;
   
-  for(int i=0;i<size1;i++) {
+  for(int i=0;i<Matrices.size1();i++) {
     double total1 = log_0;
-    double total2 = log_0;
-    for(int j=0;j<size2;j++) {
+    //    double total2 = log_0;
+    for(int j=0;j<Matrices.size2();j++) {
       for(int S=0;S<Matrices.nstates();S++) {
 	total1 = logsum(total1,Matrices[S](i,j)+Q(S,3));
-	total2 = logsum(total2,Matrices[S](j,i)+Q(S,3));
+	//	total2 = logsum(total2,Matrices[S](j,i)+Q(S,3));
       }
     }
     l1.push_back(total1);
-    l2.push_back(total2);
+    //    l2.push_back(total2);
   }
   p_length = l1;
 
