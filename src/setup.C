@@ -266,5 +266,13 @@ OwnedPointer<IndelModel> get_imodel(Arguments& args) {
   else
     imodel->full_tree = true;
 
+  vector<double> p = imodel->parameters();
+  for(int i=0;i<p.size();i++) {
+    if (args.set(imodel->parameter_name(i)))
+      p[i] = convertTo<double>(args[imodel->parameter_name(i)]);
+  }
+  imodel->parameters(p);
+    
+
   return imodel;
 }
