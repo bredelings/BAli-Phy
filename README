@@ -87,10 +87,10 @@ OTHER ARGUMENTS
 
    Specify the gap extension penalty.  This is ln(epsilon)
 
- - imodel={single_indels,upweighted,symmetric}
+ - imodel={single_indels,upweighted}
 
    Select the indel model.  We used "upweighted" in our paper.  The
-   "symmetric" model is downweighted.
+   "single_indels" model assumes all indels are of unit length.
 
  - internal=+
 
@@ -116,6 +116,7 @@ EXAMPLES:
 
 % bali-phy align=Data/EF-Tu/5d.fasta randomize_alignment >out 2>err
 
-% bali-phy align=Data/EF-Tu/5d.fasta gaps=star >out 2>err
+% bali-phy align=Data/EF-Tu/5d.fasta smodel=gamma+INV >out 2>err
 
-% bali-phy align=
+% bali-phy align=Data/5S-rRNA/5d.fasta disable=g_parameters gaps=star >out 2>err
+
