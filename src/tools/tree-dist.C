@@ -16,20 +16,20 @@ using std::cout;
 
 
 SequenceTree standardized(const string& t) {
-  SequenceTree T;
-  T.parse(t);
+  RootedSequenceTree RT;
+  RT.parse(t);
+  SequenceTree T = remove_root(RT);
   return standardized(T);
 }
   
 SequenceTree standardized(const string& t,const vector<string>& remove) {
-  SequenceTree T;
-  T.parse(t);
+  RootedSequenceTree RT;
+  RT.parse(t);
+  SequenceTree T = remove_root(RT);
   return standardized(T,remove);
 }
   
 SequenceTree standardized(SequenceTree T) {
-
-  T.unroot();
 
   map<string,int,lstr> sequences;
 
@@ -37,7 +37,7 @@ SequenceTree standardized(SequenceTree T) {
     sequences.insert(pair<string,int>(T.get_sequences()[i],i));
   }
 
-  vector<int> newnames(T.leaves());
+  vector<int> newnames(T.n_leaves());
 
   int i=0;
   foreach(s,sequences) {
@@ -61,12 +61,12 @@ SequenceTree standardized(SequenceTree T,const vector<string>& remove) {
   return standardized(T);
 }
 
-valarray<bool> branch_partition(const tree& T,int b) {
-  int parent = T.branch(b).parent();
-  int child = T.branch(b).child();
+valarray<bool> branch_partition(const Tree& T,int b) {
+  int parent = T.branch(b).target();
+  int child = T.branch(b).source();
 
   valarray<bool> temp = T.partition(parent,child);
-  valarray<bool> p(T.leaves());
+  valarray<bool> p(T.n_leaves());
   for(int i=0;i<p.size();i++)
     p[i] = temp[i];
 
@@ -115,7 +115,7 @@ bool Partition::implied_by(const valarray<bool>& bm) const {
 /// Does any branch in T imply the partition p?
 bool contains_partition(const SequenceTree& T,const Partition& p) {
   bool result = false;
-  for(int b=0;b<T.branches() and not result;b++) {
+  for(int b=0;b<T.n_branches() and not result;b++) {
     valarray<bool> bp = branch_partition(T,b);
 
     if (p.implied_by(bp))
@@ -155,7 +155,7 @@ valarray<bool> tree_sample::supports_partition(const Partition& P) const {
   for(int i=0;i<result.size();i++) {
 
     // Get a tree with the same topology
-    const SequenceTree& T = tree_mean[ which_topology[i] ];
+    const SequenceTree& T = topologies[ which_topology[i] ].T;
 
     
     result[i] = contains_partition(T,P);
@@ -164,14 +164,22 @@ valarray<bool> tree_sample::supports_partition(const Partition& P) const {
 }
 
 struct ordering {
-  vector<int> count;
+  const vector<tree_sample::topology_record>& v;
 
   // decreasing order of count
-  bool operator()(int i,int j) {return count[i] > count[j];}
+  bool operator()(int i,int j) {return v[i].count > v[j].count;}
   
-  ordering(const vector<int>& v):count(v) {}
+  ordering(const vector<tree_sample::topology_record>& v_):v(v_) {}
 };
 
+
+tree_sample::topology_record::topology_record(const SequenceTree& ST,
+					      const string& s)
+  :topology(s),T(ST),
+   mean(vector<double>(T.n_branches(),0)),
+   var(vector<double>(T.n_branches(),0)),
+   count(0)
+{ }
 
 
 tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int skip,int max) 
@@ -202,40 +210,37 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
       
     // it if hasn't been seen before, insert it
     if (here == index.end()) {
-      tree_mean.push_back(T);                      // add to tree list (E)
-      tree_var.push_back(T);                       // add to tree list (Var)
-      for(int b=0;b<T.branches();b++) {
-	tree_mean.back().branch(b).length() = 0;
-	tree_var.back().branch(b).length() = 0;
-      }
-      topologies.push_back(t);                     // add to topology list (Var)
-      count.push_back(0);                          // add to count list (Var)
+      topologies.push_back(topology_record(T,t));
+
       index[t] = topologies.size()-1;              // add to map of  (topology->index)
     }
       
     // determine which topology we map to
     int i = index[t];
     which_topology.push_back(i);
-    count[i]++;
+    topologies[i].count++;
 
     // update the 1st and 2nd branch length moments for that topology
-    for(int b=0;b<T.branches();b++) {
-      tree_mean[i].branch(b).length() += T.branch(b).length();
-      tree_var[i].branch(b).length() += pow(T.branch(b).length(),2);
+    for(int b=0;b<T.n_branches();b++) {
+      topologies[i].mean[b] +=     T.branch(b).length();
+      topologies[i].var[b]  += pow(T.branch(b).length(),2);
     }
   }
 
   //----------- Normalize the expectations --------------//
   for(int i=0;i<topologies.size();i++) {
-    for(int b=0;b<tree_mean[i].branches();b++) {
+    for(int b=0;b<topologies[i].T.n_branches();b++) {
       // compute E b
-      tree_mean[i].branch(b).length() /= count[i];
+      topologies[i].mean[b] /= topologies[i].count;
 
       // compute E b^2
-      tree_var[i].branch(b).length() /= count[i];
+      topologies[i].var[b] /= topologies[i].count;
 
       // compute Var b
-      tree_var[i].branch(b).length() -= pow(tree_mean[i].branch(b).length(),2);
+      topologies[i].var[b] -= pow(topologies[i].mean[b],2);
+
+      // set the branch lengths to the expected length
+      topologies[i].T.branch(b).set_length(topologies[i].mean[b]);
     }
   }
 
@@ -246,7 +251,7 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
   for(int i=0;i<order.size();i++)
     order[i] = i;
   
-  sort(order.begin(),order.end(),ordering(count));
+  sort(order.begin(),order.end(),ordering(topologies));
 }
 
 
@@ -304,12 +309,12 @@ double branch_distance(const SequenceTree& T1, const SequenceTree& T2) {
 
 double topology_distance(const SequenceTree& T1, const SequenceTree& T2) {
   SequenceTree T1A = T1;
-  for(int b=0;b<T1A.branches();b++)
-    T1A.branch(b).length() = 0.5;
+  for(int b=0;b<T1A.n_branches();b++)
+    T1A.branch(b).set_length(0.5);
 
   SequenceTree T2A = T2;
-  for(int b=0;b<T2A.branches();b++)
-    T2A.branch(b).length() = 0.5;
+  for(int b=0;b<T2A.n_branches();b++)
+    T2A.branch(b).set_length(0.5);
 
   return branch_distance(T1A,T2A);
 }

@@ -212,7 +212,7 @@ int main(int argc,char* argv[]) {
       
       tree_dists.push_back(tree_sample(file,remove,skip,max));
 
-      MAP_trees.push_back( tree_dists.back().tree_mean[tree_dists.back().order[0]] );
+      MAP_trees.push_back( tree_dists.back().topologies[tree_dists.back().order[0]].T );
 
       if (i > 0 and MAP_trees[i].get_sequences() != MAP_trees[i-1].get_sequences())
 	throw myexception()<<"Tree load from file '"<<files[i]<<"' has different taxa that previous trees.";
@@ -242,7 +242,7 @@ int main(int argc,char* argv[]) {
       cout<<"MAPtree_"<<i<<" = "<<MAP_trees[i]<<endl<<endl;
 
     //----------  Calculate mask of leaf taxa to ignore in partitions ----------//
-    valarray<bool> mask = valarray<bool>(true,MAP_trees[0].leaves());
+    valarray<bool> mask = valarray<bool>(true,MAP_trees[0].n_leaves());
 
     vector<string> ignore;
     if (args.set("ignore") and args["ignore"].size() > 0)
@@ -259,9 +259,9 @@ int main(int argc,char* argv[]) {
     vector< vector< int> > branch_to_partitions(tree_dists.size());
 
     for(int i=0;i<tree_dists.size();i++) {
-      branch_to_partitions[i].resize(MAP_trees[i].branches());
+      branch_to_partitions[i].resize(MAP_trees[i].n_branches());
 
-      for(int b=MAP_trees[i].leaves();b<MAP_trees[i].branches();b++) {
+      for(int b=MAP_trees[i].n_leaves();b<MAP_trees[i].n_branches();b++) {
 	valarray<bool> p1 = branch_partition(MAP_trees[i],b);
 
 	Partition p(MAP_trees[i].get_sequences(),p1,mask);
@@ -283,7 +283,7 @@ int main(int argc,char* argv[]) {
       for(int j=0;j<tree_dists.size();j++) {
 
 	if (i < tree_dists[j].topologies.size()) {
-	  string t = tree_dists[j].topologies[tree_dists[j].order[i]];
+	  string t = tree_dists[j].topologies[tree_dists[j].order[i]].topology;
 
 	  if (not includes(topologies,t))
 	    topologies.push_back(t);
@@ -332,7 +332,7 @@ int main(int argc,char* argv[]) {
       for(int j=0;j<tree_dists.size();j++) {
 	int index = tree_dists[j].get_index(topologies[i]);
 	if (index >= 0)
-	  cout<<"  "<<i<<"MAPtree"<<j<<" = "<<tree_dists[j].tree_mean[index]<<endl;
+	  cout<<"  "<<i<<"MAPtree"<<j<<" = "<<tree_dists[j].topologies[index].T<<endl;
 	else 
 	  cout<<"  Topology "<<i<<" not found in sample "<<j<<"."<<endl;
       }
@@ -364,10 +364,10 @@ int main(int argc,char* argv[]) {
 
 
     for(int i=0;i<tree_dists.size();i++) {
-      for(int b=0;b<MAP_trees[i].leaves();b++)
-	MAP_trees[i].branch(b).length() = 1.0;
-      for(int b=MAP_trees[i].leaves();b<MAP_trees[i].branches();b++)
-	MAP_trees[i].branch(b).length() = partition_support[ branch_to_partitions[i][b] ][i];
+      for(int b=0;b<MAP_trees[i].n_leaves();b++)
+	MAP_trees[i].branch(b).set_length(1.0);
+      for(int b=MAP_trees[i].n_leaves();b<MAP_trees[i].n_branches();b++)
+	MAP_trees[i].branch(b).set_length( partition_support[ branch_to_partitions[i][b] ][i] );
       cout<<"MAPsupport_"<<i<<" = "<<MAP_trees[i]<<endl<<endl;
     }
   }

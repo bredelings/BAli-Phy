@@ -32,7 +32,7 @@ SequenceTree standardized(const SequenceTree& T1) {
     sequences.insert(pair<string,int>(T.get_sequences()[i],i));
   }
 
-  vector<int> newnames(T.leaves());
+  vector<int> newnames(T.n_leaves());
 
   int i=0;
   foreach(s,sequences) {

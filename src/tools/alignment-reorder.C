@@ -34,7 +34,7 @@ vector<int> find_mapping(const vector<string>& v1,const vector<string>& v2) {
 }
 
 /// get an order list of leaves under T[n]
-vector<int> get_leaf_order(const tree& T,int n) {
+vector<int> get_leaf_order(const Tree& T,int n) {
   if (T[n].leaf()) {
     vector<int> mapping;
     mapping.push_back(n);
@@ -53,10 +53,10 @@ vector<int> get_leaf_order(const tree& T,int n) {
 }
 
 /// get an order list of the leaves of T
-vector<int> get_leaf_order(const tree& T) {
+vector<int> get_leaf_order(const Tree& T) {
   int root = T.num_nodes() - 1;
   vector<int> mapping = get_leaf_order(T,root);
-  assert(mapping.size() == T.leaves());
+  assert(mapping.size() == T.n_leaves());
   return mapping;
 }
 
@@ -81,7 +81,7 @@ int main(int argc,char* argv[]) {
     find_root(T,rootb,rootd);
     std::cerr<<"root branch = "<<rootb<<std::endl;
     std::cerr<<"x = "<<rootd<<std::endl;
-    for(int i=0;i<T.leaves();i++)
+    for(int i=0;i<T.n_leaves();i++)
       std::cerr<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
 
     T.reroot(rootb);   // we don't care about the lengths anymore
@@ -112,7 +112,7 @@ int main(int argc,char* argv[]) {
 
     /*------- Print out the alignment -------*/
     alignment A2;
-    for(int i=0;i<T.leaves();i++) {
+    for(int i=0;i<T.n_leaves();i++) {
       sequence s(A.seq(mapping[i]));
       s.resize(A.length());
       for(int column=0;column<A.length();column++)

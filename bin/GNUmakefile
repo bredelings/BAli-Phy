@@ -11,20 +11,14 @@ analysis: Report tc tree.plot MAP.tree MAP.phy MAP.fasta # AU.html
 	echo "Analyzed $$(wc -l trees.from.${SKIP}+${SIZE}) " >> analysis
 	echo "Finished on date $$(date)" >> analysis
 
-Report:  header Pmarg pSreport pIreport MAP.tree
+Report:  header pSreport pIreport MAP.tree
 	cat $^ > $@
 
-header: cout
-	{ \
-	echo "Run[=$$DIR]"; \
-	echo -n "Args: "; \
-	for arg in $$(head -n 20 $< | grep '^[^= ]*=[^= ]*') ; do \
-	  echo -n "$$arg    ";\
-	done ; \
-	echo ; \
+header: out Pmarg
+	{ ~/bin/genreport.pl; \
 	echo ; } > $@
 
-samples: cout
+samples: out
 	cut-range key=iterations skip=${SKIP} size=${SIZE} < $< > $@
 
 %.from.${SKIP}: %
@@ -77,7 +71,7 @@ pIreport: pInames pIall
 MAP.tree: tc
 	pickout MAPtree_0 < $< > $@
 
-MAP-unordered.phy: cout
+MAP-unordered.phy: out
 	findalign < MAP > $@
 
 %-chopped.phy: %.phy

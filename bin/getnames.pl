@@ -1,8 +1,7 @@
 #!/usr/bin/perl -w
 
-my $prefix = shift;
 my $line = <STDIN>;
 
-while($line =~ /($prefix.) = /g) {
+while($line =~ /([^ ]+) = /g) {
     print "$1\n";
 }

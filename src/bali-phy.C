@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include <valarray>
+#include <new>
 #include "myexception.H"
 #include "mytypes.H"
 #include "sequencetree.H"
@@ -325,6 +326,10 @@ int main(int argc,char* argv[]) {
       P.LC.set_length(A.length());
       do_sampling(args,A,P,max_iterations);
     }
+  }
+  catch (std::bad_alloc) {
+    std::cerr<<"Doh!  Some kind of memory probleM?";
+    exit(1);
   }
   catch (std::exception& e) {
     std::cerr<<"Error: "<<e.what()<<endl;

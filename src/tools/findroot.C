@@ -7,11 +7,11 @@ using std::vector;
 
 const double max_float = 3.40282347e+38F;
 
-double rootdistance(const tree& T,int leaf,int b,double x) {
+double rootdistance(const Tree& T,int leaf,int b,double x) {
   assert( 0 <= x and x <= 1);
 
-  int child = T.branch(b).child();
-  int parent = T.branch(b).parent();
+  int child = T.branch(b).source();
+  int parent = T.branch(b).target();
 
   double d=0;
   int from = -1;
@@ -32,14 +32,14 @@ double rootdistance(const tree& T,int leaf,int b,double x) {
 using namespace optimize;
 
 class rooterror: public function {
-  tree T;
+  Tree T;
   int b;
   double total;
 public:
   double operator()(const optimize::Vector& v) const;
-  rooterror(const tree& T1,int i1): T(T1),b(i1) 
+  rooterror(const Tree& T1,int i1): T(T1),b(i1) 
   {
-    for(int b=0;b<T.branches();b++)
+    for(int b=0;b<T.n_branches();b++)
       total += T.branch(b).length();
     assert(total > 0);
   }
@@ -51,7 +51,7 @@ double rooterror::operator()(const optimize::Vector& v) const {
   if (x < 0) return -max_float;
   if (x > 1) return -max_float;
 
-  vector<double> distances(T.leaves());
+  vector<double> distances(T.n_leaves());
   for(int i=0;i<distances.size();i++)
     distances[i] = rootdistance(T,i,b,x);
 
@@ -62,19 +62,19 @@ double rooterror::operator()(const optimize::Vector& v) const {
     m1 += E;
     m2 += E*E;
   }
-  m1 /= T.leaves();
-  m2 /= T.leaves();
+  m1 /= T.n_leaves();
+  m2 /= T.n_leaves();
   double Var = (m2 - m1*m1);
 
   assert(Var >= 0);
   return -Var;
 }
 
-void find_root(const tree& T,int& rootb,double& rootd) {
-  vector<double> E(T.branches());
-  vector<double> x(T.branches());
+void find_root(const Tree& T,int& rootb,double& rootd) {
+  vector<double> E(T.n_branches());
+  vector<double> x(T.n_branches());
 
-  for(int b=0;b<T.branches();b++) {
+  for(int b=0;b<T.n_branches();b++) {
     rooterror f(T,b);
     optimize::Vector start(0.5,1);
     optimize::Vector end = search_basis(start,f);

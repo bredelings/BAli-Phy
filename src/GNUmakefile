@@ -11,7 +11,9 @@ tools: ${TOOLS}
 all: bali-phy tools
 
 install: program tools
-	mv bali-phy ${TOOLS} ../bin
+	mkdir ../build
+	mkdir ../build/bin
+	mv ${TOOLS} ../bin
 
 #----------------- Definitions
 EXACTFLAGS = -pipe -pthread
