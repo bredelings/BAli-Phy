@@ -488,9 +488,7 @@ namespace A5 {
     for(int i=0;i<nodes.size();i++)
       std::cerr<<"n"<<i<<" = "<<nodes[i]<<"  ";
     std::cerr<<"\n";
-    letters_OK(old,"5way:old");
     assert(valid(A));
-    letters_OK(A,"5way:new");
 
     return A;
   }

@@ -100,9 +100,7 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
     assert(A.seqlength(i) == old.seqlength(i));
 
   //  std::cerr<<"new = "<<A<<endl;  
-  letters_OK(old,"2way:old");
   assert(valid(A));
-  letters_OK(A,"2way:new");
 
   return A;
 }

@@ -179,9 +179,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
 
   vector< DParrayConstrained > Matrices;
   for(int i=0;i<p.size();i++) {
-    letters_OK(a[i],"sample_node_multi: before");
     Matrices.push_back( sample_node_base(a[i],p[i],nodes[i]) );
-    letters_OK(a[i],"sample_node_multi: after");
     p[i].LC.invalidate_node(p[i].T,nodes[i][0]);
 #ifndef NDEBUG
     p[i].likelihood(a[i],p[i]);  // check the likelihood calculation

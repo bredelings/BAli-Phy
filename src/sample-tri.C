@@ -27,7 +27,6 @@ using namespace A3;
 // opposite side of the middle 
 DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const Tree& T = P.T;
-  check_letters_OK(A,"sample_tri_base:in");
 
   assert(P.IModel().full_tree);
 
@@ -150,9 +149,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   vector<int> path = Matrices.ungeneralize(path_g);
 
-  letters_OK(A,"sample_tri_base:before");
   A = construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
-  letters_OK(A,"sample_tri_base:after");
 
 #ifndef NDEBUG_DP
   //--------------- Check alignment construction ------------------//
@@ -177,7 +174,9 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   //  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
 
+#ifndef NDEBUG
   check_alignment(A,T,"sample_tri_base:out");
+#endif
   return Matrices;
 }
 
@@ -186,7 +185,6 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
 bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
 
-  check_letters_OK(A,"sample_tri_multi:in");
   assert(p.size() == nodes.size());
 
   Parameters P_save = p[0];
@@ -196,11 +194,8 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
   vector< DPmatrixConstrained > Matrices;
   for(int i=0;i<p.size();i++) {
-    letters_OK(a[i],"sample_tri_multi:before");
     DPmatrixConstrained temp = tri_sample_alignment_base(a[i],p[i],nodes[i]);
-    letters_OK(a[i],"sample_tri_multi:after1"); 
     Matrices.push_back( temp );
-    letters_OK(a[i],"sample_tri_multi:after2"); 
     p[i].LC.set_length(a[i].length());
     int b = p[i].T.branch(nodes[i][0],nodes[i][1]);
     p[i].LC.invalidate_branch_alignment(p[i].T, b);
@@ -311,7 +306,6 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
   //---------------- Adjust for length of n4 and n5 changing --------------------//
 
-  letters_OK(A,"sample_tri_multi:before_choice");
   // if we accept the move, then record the changes
   bool success = false;
   if (myrandomf() < exp(A3::log_acceptance_ratio(A,p[0],nodes[0],a[C],p[C],nodes[C]))) {
@@ -325,7 +319,6 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   else
     p[0] = P_save;
 
-  letters_OK(A,"sample_tri_multi:out");
   return success;
 }
 
@@ -334,7 +327,9 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
 
   /*------------(Gibbs) sample from proposal distribution ------------------*/
+#ifndef NDEBUG
   check_alignment(A,P.T,"tri_sample_alignment:in");
+#endif
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
@@ -342,7 +337,10 @@ void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
 
   sample_tri_multi(A,p,nodes,false,false);
   P = p[0];
+
+#ifndef NDEBUG
   check_alignment(A,P.T,"tri_sample_alignment:out");
+#endif
 }
 
 /// Resample branch alignment, internal nodes, and branch length

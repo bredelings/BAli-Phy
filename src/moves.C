@@ -23,7 +23,6 @@ MCMC::result_t change_branch_length_multi_move(alignment& A, Parameters& P,int b
 }
 
 MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
-  letters_OK(A,"sample_tri:in");
   assert(P.IModel().full_tree); 
 
   const SequenceTree& T = P.T;
@@ -39,7 +38,6 @@ MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
     
   tri_sample_alignment(A,P,node1,node2);
 
-  letters_OK(A,"sample_tri:out");
   return MCMC::result_t(); // no_result
 }
 
@@ -79,27 +77,22 @@ MCMC::result_t sample_tri_branch_one(alignment& A, Parameters& P,int b) {
 
 
 MCMC::result_t sample_alignments_one(alignment& A, Parameters& P,int b) {
-  letters_OK(A,"sample_A:in");
   assert(P.IModel().full_tree); 
 
   sample_alignment(A,P,b);
 
-  letters_OK(A,"sample_A:out");
   return MCMC::result_t(); // no_result
 }
 
 MCMC::result_t sample_node_move(alignment& A, Parameters& P,int node) {
-  letters_OK(A,"sample_node:in");
   assert(P.IModel().full_tree); 
 
   sample_node(A,P,node);
 
-  letters_OK(A,"sample_node:out");
   return MCMC::result_t(); // no_result
 }
 
 MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
-  letters_OK(A,"sample_two_nodes:in");
   assert(P.IModel().full_tree); 
 
   vector<int> nodes = A3::get_nodes_random(P.T,n0);
@@ -115,7 +108,6 @@ MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
 
   sample_two_nodes(A,P,b);
 
-  letters_OK(A,"sample_two_nodes:out");
   return MCMC::result_t(); // no_result
 }
 
@@ -227,8 +219,6 @@ vector<int> walk_tree_path(const Tree& T,int root) {
 }
 
 MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
-  letters_OK(A,"NNI_walk_tree:in");
-
   vector<int> branches = walk_tree_path(P.T,P.LC.root);
 
   MCMC::result_t result;
@@ -245,13 +235,11 @@ MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
     change_branch_length(A,P,b);
   }
 
-  letters_OK(A,"NNI_walk_tree:out");
   return result;
 }
 
 
 MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
-  letters_OK(A,"sample_alignments_walk_tree:in");
   vector<int> branches = walk_tree_path(P.T,P.LC.root);
 
   MCMC::result_t result;
@@ -267,7 +255,6 @@ MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
       sample_alignments_one(A,P,b);
   }
   
-  letters_OK(A,"sample_alignments_walk_tree:out");
   return result;
 }
 
@@ -326,7 +313,6 @@ MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
 
-  letters_OK(A,"frequencies:in");
 
   Parameters P2 = P;
   valarray<double> f = P2.SModel().frequencies();
@@ -338,8 +324,6 @@ MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
     P = P2;
     result[1] = 1;
   }
-
-  letters_OK(A,"frequencies:out");
 
   return result;
 }
