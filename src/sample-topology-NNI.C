@@ -184,44 +184,33 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
 }
 
 /// This has to be Gibbs, and use the same substitution::Model in each case...
-bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Parameters& P2, 
-		      const Parameters& P3,int b) {
-  
-  vector<Parameters> p(3,P1);
-  p[1] = P2;
-  p[2] = P3;
 
+bool three_way_topology_sample_fgaps(alignment& A,Parameters& P,vector<Parameters>& p,int b) 
+{
   vector< vector<int> > nodes(3);
   nodes[0] = A5::get_nodes_random(p[0].T,b);
   nodes[1] = A5::get_nodes_random(p[1].T,b);
   nodes[2] = A5::get_nodes_random(p[2].T,b);
 
   bool success = sample_two_nodes_multi(A,p,nodes,true,false);
-  P1 = p[0];
+  P = p[0];
 
   return success;
 }
 
 ///Sample between 3 topologies, ignoring gap priors on each case
-bool three_way_topology_sample_sgaps(alignment& A,Parameters& P1,const Parameters& P2, 
-			       const Parameters& P3,int b) {
-  double Pr1 = P1.probability(A,P1);
-  double Pr2 = P1.probability(A,P2);
-  double Pr3 = P1.probability(A,P3);
+bool three_way_topology_sample_sgaps(alignment& A,Parameters& P,vector<Parameters>& p,int b) 
+{
+  double Pr1 = p[0].probability(A,p[0]);
+  double Pr2 = p[0].probability(A,p[1]);
+  double Pr3 = p[0].probability(A,p[2]);
 
   /*********** Choose A Topology ************/
   int choice = choose3(Pr1,Pr2,Pr3);
 
-  bool success = false;
-  if (choice == 1) {
-    P1 = P2;
-    success = true;
-  }
-  else if (choice == 2) {
-    P1 = P3;
-    success = true;
-  }
-  return success;
+  P = p[choice];
+
+  return (choice != 0);
 }
 
 ///Sample between 2 topologies, ignoring gap priors on each case
@@ -291,44 +280,43 @@ MCMC::result_t two_way_topology_sample_MH(alignment& A, Parameters& P,int b) {
 }
 
 
-bool three_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,const Parameters& P3,int b) {
-  assert(P1.IModel().full_tree == P2.IModel().full_tree);
-  assert(P2.IModel().full_tree == P3.IModel().full_tree);
+bool three_way_topology_sample(alignment& A,Parameters& P,vector<Parameters>& p,int b) {
+  assert(   P.IModel().full_tree == p[0].IModel().full_tree);
+  assert(p[0].IModel().full_tree == p[1].IModel().full_tree);
+  assert(p[1].IModel().full_tree == p[2].IModel().full_tree);
 
-  if (P1.IModel().full_tree)
-    return three_way_topology_sample_fgaps(A,P1,P2,P3,b);
+  if (P.IModel().full_tree)
+    return three_way_topology_sample_fgaps(A,P,p,b);
   else
-    return three_way_topology_sample_sgaps(A,P1,P2,P3,b);
+    return three_way_topology_sample_sgaps(A,P,p,b);
 }
 
 
 //FIXME - go through code and create more exceptions, from asserts... 
-MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P1,int b) {
+MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P,int b) {
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
 
-  vector<int> nodes = A5::get_nodes(P1.T,b);
+  vector<int> nodes = A5::get_nodes(P.T,b);
 
   /****** Generate the Different Topologies *******/
-  select_root(P1.T, b, P1.LC);
+  select_root(P.T, b, P.LC);
   
+  vector<Parameters> p(3,P);
 
-  Parameters P2 = P1;
-  Parameters P3 = P1;
-
-  SequenceTree& T2 = P2.T;
-  SequenceTree& T3 = P3.T;
-  int b1 = P1.T.directed_branch(nodes[4],nodes[1]);
-  int b2 = P1.T.directed_branch(nodes[5],nodes[2]);
-  int b3 = P1.T.directed_branch(nodes[5],nodes[3]);
+  SequenceTree& T2 = p[1].T;
+  SequenceTree& T3 = p[2].T;
+  int b1 = P.T.directed_branch(nodes[4],nodes[1]);
+  int b2 = P.T.directed_branch(nodes[5],nodes[2]);
+  int b3 = P.T.directed_branch(nodes[5],nodes[3]);
 
   T2.exchange_subtrees(b1,b2);
-  P2.LC.invalidate_branch(P2.T, b);
+  p[1].LC.invalidate_branch(T2, b);
 
   T3.exchange_subtrees(b1,b3);
-  P3.LC.invalidate_branch(P3.T, b);
+  p[2].LC.invalidate_branch(T3, b);
   
-  bool success = three_way_topology_sample(A,P1,P2,P3,b);
+  bool success = three_way_topology_sample(A,P,p,b);
 
   if (success)
     result[1] = 1;
