@@ -5,6 +5,9 @@
 
 /******************************* InDel Models ***********************************/
 
+//separate pairwise and complete indel models? (e.g. where does full_tree go?)
+
+
 /// A generic insertion/deletion model
 class IndelModel {
 protected:

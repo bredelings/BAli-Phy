@@ -265,11 +265,15 @@ int main(int argc,char* argv[]) {
   <head>\n\
     <STYLE>\n\
 TD { \n\
-   font-size: 11pt; \n\
+   font-size: 9pt; \n\
    padding: 0;\n\
    padding-right: 1em;\n\
    }\n\
 \n\
+TD.sequencename {\n\
+   font-style: italic;\n\
+   font-family: helvitica;\n\
+}\n\
 TABLE {\n\
    border-spacing: 0\n\
    }\n\
@@ -277,7 +281,7 @@ TABLE {\n\
 SPAN {\n\
    font-family: courier new, courier-new, courier, monospace;\n\
    font-weight: bold;\n\
-   font-size: 11pt;\n\
+   font-size: 10pt;\n\
    line-height: 100%;\n\
    padding: 0;\n\
 }\n\

@@ -176,7 +176,7 @@ void report_sample(std::ostream& o,const valarray<bool>& sample_in,int pseudocou
   valarray<double> values = bootstrap_apply<bool,double>(sample,statistics::Pr,10000,blocksize);
 
   /*---------- Confidence Interval -------------*/
-  vector<double> CI =  statistics::confidence_interval(values,0.99);
+  vector<double> CI =  statistics::confidence_interval(values,0.95);
 
   /*------- Numbers of Constant blocks ---------*/
   unsigned nchanges1 = changes(sample,true);

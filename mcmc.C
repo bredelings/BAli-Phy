@@ -410,7 +410,7 @@ void print_stats(std::ostream& o,std::ostream& trees,const alignment& A,const Pa
   o<<standardize(A,P.T)<<endl<<endl;
   
   o<<"tree = "<<P.T<<endl<<endl;
-  trees<<"tree = "<<P.T<<endl<<endl;
+  trees<<P.T<<endl;
   
   o<<"mu = "<<P.branch_mean<<endl;
   
@@ -487,7 +487,8 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   cout<<"Initial Tree = \n";
   cout<<T<<endl<<endl;
 
-  ofstream tree_stream("trees.orig");
+  ofstream tree_stream("trees");
+  ofstream map_stream("MAP");
 
   /*---------------- Run the MCMC chain -------------------*/
 
@@ -528,7 +529,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
     if (not MAP_printed and iterations % 50 == 0) {
       cout<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<endl;
-      print_stats(cout,cout,MAP_alignment,MAP_P,"MAP");
+      print_stats(map_stream,map_stream,MAP_alignment,MAP_P,"MAP");
       MAP_printed = true;
     }
 
@@ -554,6 +555,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     Pr = new_Pr;
   }
   tree_stream.close();
+  map_stream.close();
   cerr<<"total samples = "<<total_samples<<endl;
 }
 

@@ -193,7 +193,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   //FIXME - doesn't yet deal with gaps=star
   if (P.SModel().full_tree)
-    topology_move.add(0.5,MoveArgSingle("three_way_NNI_and_A:alignment:nodes:topology",
+    topology_move.add(0.2,MoveArgSingle("three_way_NNI_and_A:alignment:nodes:topology",
 					three_way_topology_and_alignment_sample,
 					internal_branches)
 		      ,false

@@ -8,10 +8,11 @@
 #include "alphabet.H"
 #include "rates.H"
 
-/************ Abstract class Substitution Model **************/
 namespace substitution {
 
   using std::string;
+
+  //--------------------- Abstract base Model ----------------------///
 
   /// A generic substitution model
   class Model {
@@ -23,12 +24,11 @@ namespace substitution {
 
     bool full_tree;
   protected:
-    /// Construct a substitution model with 's' parameters
-    Model(int s): parameters_(s),full_tree(true)
-    { }
-
     /// Recalculate internal data based on current parameters
     virtual void recalc() =0;
+
+    /// Construct an empty model
+    Model(int s):parameters_(s) {}
   public:
 
     /// The alphabet we are modelling substitution on
@@ -62,19 +62,124 @@ namespace substitution {
     virtual ~Model() {}
   };
 
-  // FIXME - cache the eigensystem!
-  // Store S2 = pi^0.5 * S * pi^0.5
-  // Store EigenValues(S2) -> D,O
-  // exp(Qt) ->
-  //   1. get Dt = D*exp(t)
-  //   2. get O*Dt*O
-  //   3. return DN*(O*Dt*O)*DP
-  // Is this worth it?  Try it later...
 
-  /*------------------------- Markov Substitution Model ----------------------------*/
+  //----------------------- Nested Models ------------------------///
+
+  /// Abstract class for substitution models built on a submodel
+  class NestedModel: virtual public Model {
+
+  protected:
+    /// The sub-model this model is build upon
+    Model* sub_model;
+
+    /// The prior for the parameters of the upper model
+    virtual double super_prior() const =0;
+
+    /// Fiddle the parameters of the upper model
+    virtual void super_fiddle() =0;
+
+  public:
+    /// Make a copy of ourselves
+    NestedModel* clone() const =0;
+
+    /// Access the submodel
+    virtual const Model& SubModel() const=0
+    virtual Model& SubModel()=0
+
+    double prior() const {return super_prior() + sub_model->prior();}
+
+    void fiddle() {
+      sub_model->fiddle();
+      for(int i=0;i<SubModel().parameters().size();i++)
+	parameters_[i] = SubModel().parameters()[i];
+      super_fiddle();
+    }
+
+    /// We have the same alphabet as our submodel
+    const alphabet& Alphabet() const {return SubModel().Alphabet();}
+
+    void recalc();
+  };
+
+
+  /// This is a substitution model built over a submodel of a particular type
+  template <class SubModel_t>
+  class NestedModelOver: virtual public NestedModel {
+
+  protected:
+    /// The sub-model this model is build upon
+    SubModel_t* sub_model;
+
+    /// The prior for the parameters of the upper model
+    virtual double super_prior() const =0;
+
+    /// Fiddle the parameters of the upper model
+    virtual void super_fiddle() =0;
+
+  public:
+    /// Make a copy of ourselves
+    NestedModelOver<SubModel_t>* clone() const =0;
+
+    /// Reference the submodel
+    virtual const SubModel_t& SubModel() const {return *sub_model;};
+    virtual SubModel_t& SubModel() {return *sub_model;}
+
+    // when copying, get our own copy of the submodel
+    NestedModelOver<SubModel_t>& operator=(const NestedModelOver<SubModel_t>& M) {
+      Model::operator=(M);
+
+      assert(sub_model);
+      delete sub_model;
+      sub_model = M.sub_model->clone();
+
+      return (*this);
+    }
+
+    // when copying, get our own copy of the submodel
+    NestedModelOver(const NestedModelOver<SubModel_t>& M)
+      :sub_model(M.sub_model->clone()) 
+    {
+      Model::operator=(M);
+    }
+
+    /// Construct a Nested model based on model 'M', with 'dp' extra parameters
+    NestedModelOver(const SubModel_t& M,int dp)
+      :Model(M.parameters().size()+dp),sub_model(M.clone()) 
+    {
+      parameters_.resize(M.parameters().size()+dp);
+      for(int i=0;i<M.parameters().size();i++)
+	parameters_[i] = M.parameters()[i];
+
+      full_tree = M.full_tree;
+    }
+
+    virtual ~NestedModelOver() {delete sub_model;}
+  };
+
+  // This models a substitution process in which evolution is independant between
+  // non-overlapping intervals.  We should have that transition_p(t/2)^2 = transition_p(t)
+  // This model must also be reversible
+
+  class ReversibleModel: virtual public Model {
+
+  public:
+    /// Make a copy of this object
+    virtual ReversibleModel* clone() const =0;
+
+    /// The transition probability matrix over time t
+    virtual Matrix transition_p(double t) const =0;
+
+    /// The equilibrium frequencies
+    virtual const std::valarray<double>& frequencies() const;
+
+    ReversibleModel() {}
+  };
+
+
+  //------------------------- Markov Substitution Model ----------------------------//
 
   /// A substitution model which obeys the Markov property
-  class MarkovModel: public Model {
+  class MarkovModel: virtual public Model {
 
   protected:
     /// The alphabet for this model
@@ -83,12 +188,6 @@ namespace substitution {
     /// The computed rate matrix
     Matrix Q;
 
-    /// Construct a Markov model on alphabet 'a_', and 's' parameters
-    MarkovModel(const alphabet& a_,int s):
-      Model(s),
-      a(a_),
-      Q(a.size(),a.size())
-    {}
   public:
     const alphabet& Alphabet() const {return a;}
 
@@ -111,11 +210,21 @@ namespace substitution {
 
 
 
+  //------------------------- Reversible Substitution Model -----------------------//
 
-  /************************** Reversible Substitution Model ************************/
+  // FIXME - cache the eigensystem!
+  // Store S2 = pi^0.5 * S * pi^0.5
+  // Store EigenValues(S2) -> D,O
+
+  // exp(Qt) ->
+  //   1. get Dt = D*exp(t)
+  //   2. get O*Dt*O
+  //   3. return DN*(O*Dt*O)*DP
+  // Is this worth it?  Try it later...
+
 
   /// A Markov substitution model which is reversible
-  class ReversibleModel: public MarkovModel {
+  class ReversibleMarkovModel: public MarkovModel,public ReversibleModel {
 
   protected:
     /// The equilibrium frequencies
@@ -124,15 +233,10 @@ namespace substitution {
     /// The exchangeability matrix
     Matrix S;
 
-    /// Construct a reversible Markov model on alphabet 'a_', and 's' parameters
-    ReversibleModel(const alphabet& a_,int s):
-      MarkovModel(a_,s),
-      pi(1.0/a_.size(),a_.size()), 
-      S(a_.size(),a_.size())
-    { }
-
     virtual void recalc();
   public:
+    /// Make a copy of this object
+    virtual ReversibleMarkovModel* clone() const =0;
 
     /// The transition probability matrix - which we can now compute
     Matrix transition_p(double t) const;
@@ -146,12 +250,12 @@ namespace substitution {
     string name() const;
 
     /// Construct a reversible Markov model on alphabet 'a_'
-    ReversibleModel(const alphabet& a_):
+    ReversibleMarkovModel(const alphabet& a_):
       MarkovModel(a_), pi(1.0/a_.size(),a_.size()), 
       S(a_.size(),a_.size())
     { }
 
-    virtual ~ReversibleModel() {}
+    virtual ~ReversibleMarkovModel() {}
   };
 
 
@@ -163,7 +267,7 @@ namespace substitution {
 
   /// The HKY substitution model for DNA or RNA.
   /// The only parameter in this model is 'kappa' - the transition/transversion ratio.
-  class HKY: public ReversibleModel {
+  class HKY: public ReversibleMarkovModel {
     virtual void recalc();
 
     int A;
@@ -189,21 +293,21 @@ namespace substitution {
     string name() const;
 
     /// Construct an HKY model on alphabet 'a'
-    HKY(const alphabet& a): ReversibleModel(a,1)
+    HKY(const alphabet& a): Model(1),ReversibleMarkovModel(a)
     { 
       setup_alphabet();
       kappa(1);
     }
 
     /// Construct an HKY model on alphabet 'a', w/ kappa=k
-    HKY(const alphabet& a,double k): ReversibleModel(a,1)
+    HKY(const alphabet& a,double k): Model(1),ReversibleMarkovModel(a)
     {
       setup_alphabet();
       kappa(k);
     }
 
     /// Construct an HKY model on alphabet 'a', w/ kappa=k, and frequencies 'f'
-    HKY(const alphabet& a,double k,const std::valarray<double>& f): ReversibleModel(a,1)
+    HKY(const alphabet& a,double k,const std::valarray<double>& f): Model(1),ReversibleMarkovModel(a)
     {
       setup_alphabet();
       kappa(k);
@@ -219,7 +323,7 @@ namespace substitution {
 
   /// The EQU model for any alphabet - all letters are treated the same
   /// This model has no parameters
-  class EQU: public ReversibleModel {
+  class EQU: public ReversibleMarkovModel {
     virtual void recalc();
   public:
     virtual void fiddle() {}
@@ -229,12 +333,12 @@ namespace substitution {
     string name() const;
 
     /// Construct an HKY model on alphabet 'a'
-    EQU(const alphabet& a): ReversibleModel(a) 
+    EQU(const alphabet& a): ReversibleMarkovModel(a) 
     { recalc(); }
 
     /// Construct an HKY model on alphabet 'a', w/ frequencies 'f'
     EQU(const alphabet& a,const std::valarray<double>& f)
-      : ReversibleModel(a)
+      : ReversibleMarkovModel(a)
     {
       frequencies(f);
     }
@@ -245,7 +349,7 @@ namespace substitution {
   /******************* Empirical Substitution Model *********************/
 
   /// A generic model for any alphabet - the exchangeability matrix is loaded from a file
-  class Empirical: public ReversibleModel {
+  class Empirical: public ReversibleMarkovModel {
     /// Specificy this model based on the matrix that was loaded
     string modelname;
 
@@ -262,12 +366,12 @@ namespace substitution {
 
     /// Construct an HKY model on alphabet 'a' with matrix from 'filename'
     Empirical(const alphabet& a,const string& filename) 
-      : ReversibleModel(a)
+      : ReversibleMarkovModel(a)
     { load_file(filename); recalc();}
 
     /// Construct an HKY model on alphabet 'a' with matrix from 'filename', and frequencies 'f'
     Empirical(const alphabet& a,const string& filename,const std::valarray<double>& f)
-      : ReversibleModel(a)
+      : ReversibleMarkovModel(a)
     {
       load_file(filename);
       frequencies(f);
@@ -278,74 +382,8 @@ namespace substitution {
 
   /*----------------------- MultiRateModel ---------------------------*/
 
-  /// This is a generic substitution model which is built on a submodel
-  class NestedModel: public Model {
-
-  protected:
-    /// The sub-model this model is build upon
-    Model* sub_model;
-
-    /// The prior for the parameters of the upper model
-    virtual double super_prior() const =0;
-
-    /// Fiddle the parameters of the upper model
-    virtual void super_fiddle() =0;
-
-  public:
-    NestedModel* clone() const =0;
-
-    double prior() const {return super_prior() + sub_model->prior();}
-
-    void fiddle() {
-      sub_model->fiddle();
-      for(int i=0;i<sub_model->parameters().size();i++)
-	parameters_[i] = sub_model->parameters()[i];
-      super_fiddle();
-    }
-
-    /// Reference the submodel
-    virtual const Model& SubModel() const {return *sub_model;};
-    /// Reference the submodel
-    virtual Model& SubModel() {return *sub_model;}
-
-    // we have the same alphabet as submodel
-    const alphabet& Alphabet() const {return sub_model->Alphabet();}
-
-    // when copying, get our own copy of the submodel
-    NestedModel& operator=(const NestedModel& M) {
-      Model::operator=(M);
-
-      assert(sub_model);
-      delete sub_model;
-      sub_model = M.sub_model->clone();
-
-      return (*this);
-    }
-
-    void recalc();
-
-    // when copying, get our own copy of the submodel
-    NestedModel(const NestedModel& M):Model(M),sub_model(M.sub_model->clone()) 
-    {}
-
-
-    /*------------ Construction and Destruction ---------------*/
-    /// Construct a Nested model based on model 'M', with 'dp' extra parameters
-    NestedModel(const Model& M,int dp)
-      :Model(M.parameters().size()+dp),sub_model(M.clone()) 
-    {
-      for(int i=0;i<M.parameters().size();i++)
-	parameters_[i] = M.parameters()[i];
-
-      full_tree = M.full_tree;
-    }
-
-    virtual ~NestedModel() {delete sub_model;}
-  };
-
-  /// A substitution model based on running a Reversible model at different rates
-  class MultiRateModel: public NestedModel {
-
+  /// A substitution model based on running a ReversibleModel at different rates
+  class MultiRateModel: virtual public NestedModel {
   protected:
     /// The probability of each rate
     vector<double> distribution_;
@@ -373,36 +411,58 @@ namespace substitution {
     /// Get a transition probability matrix for time 't' and rate 'r'
     Matrix transition_p(double t,int r) const {return BaseModel().transition_p(t*rates_[r]);}
 
-    /// Construct a MultiRate model based on 'M', with 'dp' extra parameters, and 'nr' rates
-    MultiRateModel(const Model& M, int dp, int nr): 
-      NestedModel(M,dp),distribution_(nr),rates_(nr) 
+    MultiRateModel(int nr):distribution_(nr),rates_(nr) {}
+
+    ~MultiRateModel() {}
+  };
+
+
+  /// A substitution model based on running a Reversible model at different rates
+  template<class SubModel_t>
+  class MultiRateModelOver: public MultiRateModel, public NestedModelOver<SubModel_t> {
+
+  protected:
+    /// The probability of each rate
+    vector<double> distribution_;
+    /// The different rates
+    vector<double> rates_;
+
+  public:
+    virtual MultiRateModelOver<SubModel_t>* clone() const=0;
+
+    const ReversibleModel& BaseModel() const {return SubModel().BaseModel();}
+    ReversibleModel& BaseModel() {return SubModel().BaseModel();}
+
+    MultiRateModelOver(const SubModel_t& M, int dp, int nr)
+      :MultiRateModel(nr),
+       NestedModelOver<SubModel_t>(M,dp)
     {}
-
-    virtual ~MultiRateModel() {}
-
   };
 
 
   /// A MultiRate Model which is directly over a ReversibleModel
-  class MultiRateOnReversible: public MultiRateModel {
-
-  protected:
-    /// Construct a MultiRate model based on 'M', with 'dp' extra parameters, and 'nr' rates
-    MultiRateOnReversible(const ReversibleModel& M,int dp,int nr)
-      :MultiRateModel(M,dp,nr)
-    {}
+  template<>
+  class MultiRateModelOver<ReversibleModel>: public MultiRateModel, public NestedModelOver<ReversibleModel> {
 
   public:
-    const ReversibleModel& SubModel() const {return *(ReversibleModel*)sub_model;}
-    ReversibleModel& SubModel() {return *(ReversibleModel*)sub_model;}
+    virtual MultiRateModelOver<ReversibleModel>* clone() const =0;
+
+    const ReversibleModel& SubModel() const {return *sub_model;}
+    ReversibleModel& SubModel() {return *sub_model;}
 
     const ReversibleModel& BaseModel() const {return SubModel();}
     ReversibleModel& BaseModel() {return SubModel();}
+
+    MultiRateModelOver<ReversibleModel>(const ReversibleModel& M, int dp, int nr)
+      :MultiRateModel(nr),
+       NestedModelOver<ReversibleModel>(M,dp)
+    {}
+
   };
 
 
   /// A MultiRate Model with a single rate
-  class SingleRateModel: public MultiRateOnReversible {
+  class SingleRateModel: public MultiRateModelOver<ReversibleModel> {
 
   protected:
     double super_prior() const {return 0;}
@@ -413,7 +473,7 @@ namespace substitution {
 
     string name() const;
 
-    SingleRateModel(const ReversibleModel& M):MultiRateOnReversible(M,0,1) {
+    SingleRateModel(const ReversibleModel& M):MultiRateModelOver<ReversibleModel>(M,0,1) {
       rates_[0] = 1.0;
       distribution_[0] = 1.0;
     }
@@ -423,7 +483,7 @@ namespace substitution {
 
   /// A discrete-gamma Model
 
-  class DistributionRateModel: public MultiRateOnReversible {
+  class DistributionRateModel:  public MultiRateModelOver<ReversibleModel> {
   protected:
     double super_prior() const;
     void super_fiddle();
@@ -465,7 +525,7 @@ namespace substitution {
   /// The Invariant-sites model: a certain fraction of the sites don't change
   /// The only parameter is 'p', the fraction of sites which don't change
   /// To keep branch lenghts the same, inflate rates by 1/(1-p).
-  class INV_Model: public MultiRateModel {
+  class INV_Model: public MultiRateModelOver<MultiRateModel> {
     static double const inv_frac_mean = 0.1;
     static double const max_inv_rate = 0.01;
 
@@ -478,11 +538,11 @@ namespace substitution {
     virtual INV_Model* clone() const {return new INV_Model(*this);}
 
     // submodel is a multirate model
-    const MultiRateModel& SubModel() const {return *(MultiRateModel*)sub_model;};
-    MultiRateModel& SubModel() {return *(MultiRateModel*)sub_model;}
+    //    const MultiRateModel& SubModel() const {return *(MultiRateModel*)sub_model;};
+    //    MultiRateModel& SubModel() {return *(MultiRateModel*)sub_model;}
 
-    const ReversibleModel& BaseModel() const {return SubModel().BaseModel();}
-    ReversibleModel& BaseModel() {return SubModel().BaseModel();}
+    //    const ReversibleModel& BaseModel() const {return SubModel().BaseModel();}
+    //    ReversibleModel& BaseModel() {return SubModel().BaseModel();}
 
     string name() const;
 

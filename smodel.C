@@ -21,13 +21,13 @@ namespace substitution {
 
   string MarkovModel::name() const { return "MarkovModel";}
 
-  string ReversibleModel::name() const  {
+  string ReversibleMarkovModel::name() const  {
     return MarkovModel::name() + "::ReversibleModel";
   }
 
 
 
-  void ReversibleModel::recalc() {
+  void ReversibleMarkovModel::recalc() {
 
     // Set S(i,i) so that Q(i,i) = S(i,i)*pi[i]
     for(int i=0;i<S.size1();i++) {
@@ -66,7 +66,7 @@ namespace substitution {
 
   }
 
-  Matrix ReversibleModel::transition_p(double t) const {
+  Matrix ReversibleMarkovModel::transition_p(double t) const {
     BMatrix D(a.size(),a.size());
     for(int i=0;i<a.size();i++)
       D(i,i) = pi[i];
@@ -221,7 +221,7 @@ namespace substitution {
   }
 
   DistributionRateModel& DistributionRateModel::operator=(const DistributionRateModel& M) {
-    MultiRateOnReversible::operator=(M);
+    MultiRateModelOver<ReversibleModel>::operator=(M);
     if (D) delete D;
 
     D = M.distribution().clone();
@@ -231,13 +231,13 @@ namespace substitution {
 
 
   DistributionRateModel::DistributionRateModel(const DistributionRateModel& M)
-    :MultiRateOnReversible(M),
+    :MultiRateModelOver<ReversibleModel>(M),
      D(M.distribution().clone())
   { }
   
 
   DistributionRateModel::DistributionRateModel(const ReversibleModel& M,const RateDistribution& RD, int n)
-    :MultiRateOnReversible(M,RD.parameters().size(),n),
+    :MultiRateModelOver<ReversibleModel>(M,RD.parameters().size(),n),
      D(RD.clone())
   {
     // This never changes - since we use quantiles for the bins
@@ -274,7 +274,7 @@ namespace substitution {
   }
 
   INV_Model::INV_Model(const MultiRateModel& M)
-    :MultiRateModel(M,2,M.nrates()+1)
+    :MultiRateModelOver<MultiRateModel>(M,2,M.nrates()+1)
   {
     parameters_[ parameters_.size()-2 ] = 0.01;
     parameters_[ parameters_.size()-1 ] = 0.01;
