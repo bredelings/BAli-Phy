@@ -134,6 +134,10 @@ int main(int argc,char* argv[]) {
   
   try {
     A.load_fasta(nucleotides,file);
+    if (A.num_sequences() == 0) {
+      std::cerr<<"Alignment file \""<<argv[1]<<"\" didn't  contain any sequences!\n";
+      exit(1);
+    }
     std::cerr<<A<<endl;
     
     SequenceTree T1(file2);

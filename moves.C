@@ -88,7 +88,7 @@ void sample(alignment& A,Parameters& Theta) {
     A = sample(A,Theta,node1,node2);
     std::cerr<<"logp = BLANK"<<std::endl;
   }
-  else if (r < 1.70) {
+  else if (r < 0.70) {
     int node = myrandom(Theta.T.leaves(),Theta.T.num_nodes()-1);
     A = sample(A,Theta,node);
   }
@@ -98,6 +98,10 @@ void sample(alignment& A,Parameters& Theta) {
   //    move_node(A,Theta,node);
   //    
   //  }
+  else if (r<0.9) {
+    int b = myrandom(Theta.T.leaves(),Theta.T.branches());
+    sample_topology(A,Theta,b);
+  }
   else {
     int b = myrandom(Theta.T.branches());
     change_branch_length(A,Theta,b);

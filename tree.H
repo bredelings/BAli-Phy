@@ -75,6 +75,7 @@ class tree {
   vector<int> renumber();
 
   vector<Branch> branches_;
+  void  exchange_cousins(int,int);
 public:
   enum direction { left , right, up };
 
@@ -96,7 +97,7 @@ public:
   void add_left(node&,const tree&);
   void add_right(node&,const tree&);
   void add_root();
-  void exchange(int,int);
+  vector<int> exchange(int,int);
   
   inline int parent(int) const;
 

@@ -2,10 +2,10 @@
 #include <iostream>
 #include <cmath>
 #include "sample.H"
-#include "myrandom.H"
 #include "substitution.H"
 #include "logsum.H"
 #include "likelihood.H"
+#include "choose.H"
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with
@@ -16,18 +16,6 @@
 //     - see if the difference is the same as the difference between the path probabilities
 
 // 3. This won't work for the root node, though.
-
-double choose_P(int c,double x, double y, double z) {
-  double sum = logsum(z,logsum(x,y));
-  if (c==0)
-    return x-sum;
-  else if (c==1)
-    return y-sum;
-  else if (c==2)
-    return z-sum;
-  assert(0);
-}
-
 
 // g1 -> g2, never g2 -> g1
 double path_P(const vector<int>& path,const Matrix& M,const Matrix& G1,const Matrix& G2,const Parameters& Theta) {
@@ -86,22 +74,6 @@ bool all_gaps(const alignment& A,int column,const valarray<bool>& mask) {
     if (mask[i] and not A.gap(column,i))
       return false;
   return true;
-}
-
-
-int choose(double x, double y, double z) {
-  int choice=2;
-  double sum = logsum(z,logsum(x,y));
-  //  double x_ = exp(x-sum), y_ = exp(y-sum),z_ = exp(z-sum);
-  //  std::cerr<<x_<<"  "<<y_<<"  "<<z_;
-  double r = log_unif();
-  if (sum + r < x)
-    choice=0;
-  else if (sum + r < logsum(x,y))
-    choice=1;
-
-  //  std::cerr<<" "<<choice<<endl;
-  return choice;
 }
 
 

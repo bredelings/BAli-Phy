@@ -1,6 +1,7 @@
 #include "tree.H"
 #include "myexception.H"
 #include "exponential.H"
+#include <algorithm>
 
 void TreeView::destroy(node** n) {
   assert(n);
@@ -109,8 +110,10 @@ vector<int> tree::renumber() {
   }
   else { // Don't change the leaf names!
     lookup.clear();
-    for(int i=0;i<old_order.size() and leaf(*old_order[i]);i++)
+    for(int i=0;i<old_order.size() and leaf(*old_order[i]);i++) {
+      old_order[i]->name = i;
       lookup.push_back(old_order[i]);
+    }
   }
 
   n_leaves = lookup.size();
@@ -126,7 +129,8 @@ vector<int> tree::renumber() {
       if (parent->left and parent->right) {  // if there are 2 children
 	if (parent->left->name == -1) continue;  // both children 
 	if (parent->right->name == -1) continue; // must go on first
-	if (lookup[i]->name < parent->left->name or lookup[i]->name < parent->right->name)
+	if (lookup[i]->name < parent->left->name or 
+	    lookup[i]->name < parent->right->name)
 	  continue; // and only the second child puts the parent on
       }
       parent->name = lookup.size();
@@ -145,9 +149,8 @@ vector<int> tree::renumber() {
 
   compute_ancestors();
 
-  /* Compute mapping from old to new names */
   vector<int> mapping(old_order.size());
-  for(int i=0;i<old_order.size();i++)
+  for(int i=0;i<mapping.size();i++)
     mapping[i] = old_order[i]->name;
 
   return mapping;
@@ -247,8 +250,24 @@ void tree::add_root() {
   n_leaves = 1;
 }
 
-void tree::exchange(int n1, int n2) {
-  assert(not ancestor(n1,n2) and not ancestor(n2,n2));
+// ***** "exchange_cousins" and "exchange": *****
+// We exchange the subtrees specified by node1 and node2
+// o The subtrees are specified by only one node - the direction
+//    is away from the other node
+// o Assert that the subtrees are disjoint:
+//    they must have at least 1 node between them
+//
+//    - if the neither node is an ancestor of the other, then they have a 
+//      common ancestor between them, so that is OK.
+//    - otherwise, assert that they do.
+//    - if they have only one node between them, do nothing.
+// o Branches move along with the subtree - so we move branch lengths
+//    - p1->n1:l1, p1->n2:l2  becomes p1->n2:l2,p2->n1:l1
+//    - this is easy in exchange_cousins, but takes works after renumber
+
+void tree::exchange_cousins(int n1, int n2) {
+  assert(n1 != n2);
+  assert(not ancestor(n1,n2) and not ancestor(n2,n1));
 
   node* node1 = lookup[n1];
   node* node2 = lookup[n2];
@@ -256,7 +275,8 @@ void tree::exchange(int n1, int n2) {
   node* p1 = node1->parent;
   node* p2 = node2->parent;
 
-  if (p1 == p2) return;
+  if (p1 == p2)
+    return;
 
   if (p1->left == node1)
     p1->left = node2;
@@ -270,7 +290,41 @@ void tree::exchange(int n1, int n2) {
 
   node1->parent = p2;
   node2->parent = p1;
+  
+  branches_[n1].node1 = node1->parent->name;
+  branches_[n2].node1 = node2->parent->name;
+}
 
+vector<int> tree::exchange(int node1, int node2) {
+  vector<node*> old_order = lookup;
+
+  if (ancestor(node1,node2))
+    std::swap(node1,node2);
+
+  if (ancestor(node2,node1)) {  //
+
+    vector<int> intermediate;
+    node* here = lookup[node1]->parent;
+
+    assert(here != lookup[node2]);
+    do {
+      node* there = here->left;
+      if (ancestor(there->name,node1))
+	  there = here->right;
+
+      intermediate.push_back(there->name);
+      here = here->parent;
+    }
+    while(here != lookup[node2]);
+
+    for(int i=0;i<intermediate.size()/2;i++) {
+      int j = intermediate.size()-1-i;
+      exchange_cousins(intermediate[i],intermediate[j]);
+    }
+  }
+  else
+    exchange_cousins(node1,node2);
+  
   vector<int> mapping = renumber();
 
   /*** fixup branches ***/
@@ -280,7 +334,11 @@ void tree::exchange(int n1, int n2) {
     // here we've got i -> mapping[i];
     branches_[mapping[i]] = old_branches[i];
   }
+
+
+  return mapping;
 }
+
 
 tree& tree::operator=(const tree& t1) {
   n_leaves = t1.leaves();
@@ -317,8 +375,8 @@ tree::tree(const tree& t1, const tree& t2) {
 
   for(int i=0;i<num_nodes()-2;i++) {
     Branch b;
-    b.node1 = i;
-    b.node2 = parent(i);
+    b.node1 = parent(i);
+    b.node2 = i;
     b.length = 0.2;
     branches_.push_back(b);
   }

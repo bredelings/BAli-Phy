@@ -1,65 +1,14 @@
 #include <cmath>
 #include <valarray>
 #include <algorithm>
-#include "myrandom.H"
 #include "sample.H"
 #include <iostream>
 #include "likelihood.H"
 #include "logsum.H"
+#include "choose.H"
+#include "bits.H"
 
 using std::valarray;
-
-bool bitset(int m,int b) {
-  return m&(1<<b);
-}
-
-int setbit(int m,int b) {
-  return m|(1<<b);
-}
-
-int setbit(int m,int b,bool c) {
-  if (c) m = setbit(m,b);
-  return m;
-}
-
-int num_bits(int n) {
-  int sum=0;
-  for(int i=0;i<6;i++) 
-    if (bitset(n,i)) sum++;
-  return sum;
-}
-
-int choose(double x, double y) {
-  double sum = logsum(x,y);
-  double r = log_unif();
-  if (sum + r < x)
-    return 0;
-  else
-    return 1;
-  assert(0);
-}
-
-int choose(vector<double>::const_iterator here,int size) {
-  vector<double> sum(size);
-
-  sum[0] = *here;here++;
-  for(int i=1;i<sum.size();i++) {
-    sum[i] = logsum(*here,sum[i-1]);
-    here++;  
-  }
-
-  double r = log_unif() + sum[sum.size()-1];
-
-  for(int i=0;i<sum.size();i++) 
-    if (r < sum[i])
-      return i;
-  assert(0);
-}
-
-int choose(const vector<double>& P) {
-  return choose(P.begin(),P.size());
-}
-
 
 //need 6 bits (2+2+2) to remember saved stated for all 3 sub-alignments
 const int nstates=64;
@@ -205,9 +154,9 @@ alignment sample(const alignment& old,const Parameters& Theta,int node) {
 
   /************** Calculate DP array ********************/
   for(int character=1;character<P.size();character++) {
-    int bits2 = bits[character];
 
     for(int state=0;state<2;state++) {
+      int bits2 = bits[character];
       
       if (state)
 	bits2 = setbit(bits2,3);

@@ -12,6 +12,8 @@ alignment sample(const alignment& old,const Parameters&,int node1, int node2);
 //Resample gap/non-gap for internal nodes, where not already determined
 alignment sample(const alignment& old,const Parameters&,int node);
 
+void sample_topology(alignment& A,Parameters&,int);
+
 //interface to the previous samplers
 void sample(alignment& A,Parameters& T);
 
