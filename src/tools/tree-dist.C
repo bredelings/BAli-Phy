@@ -590,8 +590,11 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,doubl
     for(int i=0;i<sub_partitions.size();i++) {
       bool ok = true;
       for(int j=0;j<partitions.size() and ok;j++)
-	if (implies(partitions[j],sub_partitions[i]))
+	if (implies(partitions[j],sub_partitions[i])) {
 	  ok = statistics::odds(sub_support[i])/statistics::odds(support[j]) > r;
+	  if (ok)
+	    ok = (sub_support[i]-support[j])*sample.size() > 10;
+	}
 
       if (ok)
 	partitions.push_back(sub_partitions[i]);
