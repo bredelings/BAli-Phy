@@ -116,8 +116,10 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
   // determine which constraints are satisfied (not necessarily enforceable!)
   vector<int> satisfied = constraint_columns(constraint,A);
 
+  // determine which of the satisfied constraints are enforceable
   for(int i=0;i<satisfied.size();i++) {
     // ignore columns in which all constrained residues are in either group1 or group2
+    // we cannot enforce these constraints, and also cannot affect them
     if (not (constrained(group1,constraint,i) and constrained(group2,constraint,i)))
       satisfied[i] = -1;
   }
@@ -129,6 +131,9 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
     
     int x = find_index(seq1,satisfied[i]);
     int y = find_index(seq2,satisfied[i]);
+
+    assert(x >=0 and x < seq1.size());
+    assert(y >=0 and y < seq2.size());
 
     pins[0].push_back(x);
     pins[1].push_back(y);
