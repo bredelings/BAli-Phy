@@ -1,9 +1,11 @@
 #include "alignmentutil.H"
 #include "myexception.H"
 #include "sequence-format.H"
+#include <list>
 
 using std::vector;
 using std::string;
+using std::list;
 
 bool match_tag(const string& line,const string& tag) {
   if (line.size() < tag.size())
@@ -13,9 +15,9 @@ bool match_tag(const string& line,const string& tag) {
 }
 
 
-vector<alignment> load_alignments(std::istream& ifile, const string& tag,
+list<alignment> load_alignments(std::istream& ifile, const string& tag,
 				  const vector<OwnedPointer<alphabet> >& alphabets, int maxalignments) {
-  vector<alignment> alignments;
+  list<alignment> alignments;
   
   // we are using every 'skip-th' alignment
   int skip = 1;
@@ -63,9 +65,17 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
 
       std::cerr<<"Went from "<<alignments.size();
       // Remove every other alignment
-      for(int j = alignments.size()-1;j>=0;j-=2) {
-	alignments.erase(alignments.begin()+j);
+      for(typeof(alignments.begin()) loc =alignments.begin();loc!=alignments.end();) {
+	typeof(loc) j = loc++;
+
+	alignments.erase(j);
+
+	if (loc == alignments.end()) 
+	  break;
+	else
+	  loc++;
       }
+	
       std::cerr<<" to "<<alignments.size()<<" alignments.\n";
 
     }
@@ -81,10 +91,23 @@ vector<alignment> load_alignments(std::istream& ifile, const string& tag,
 
     // Remove this many alignments from the array
     std::cerr<<"Went from "<<alignments.size();
-    for(int i=extra-1;i>=0;i--) {
-      int j = int( double ( double(i)*(alignments.size()-1)/(extra-1) ) );
-      alignments.erase(alignments.begin()+j);
+
+    vector<int> kill(extra);
+    for(int i=0;i<kill.size();i++)
+      kill[i] = int( double(i+0.5)*alignments.size()/extra);
+    std::reverse(kill.begin(),kill.end());
+
+    int i=0;
+    for(typeof(alignments.begin()) loc = alignments.begin();loc!=alignments.end();i++) {
+      if (i == kill.back()) {
+	kill.pop_back();
+	typeof(loc) j = loc++;
+	alignments.erase(j);
+      }
+      else
+	loc++;
     }
+    assert(kill.empty());
     std::cerr<<" to "<<alignments.size()<<" alignments.\n";
   }
 

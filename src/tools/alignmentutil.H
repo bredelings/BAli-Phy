@@ -8,8 +8,8 @@
 #include <string>
 #include "clone.H"
 
-std::vector<alignment> load_alignments(std::istream& ifile, const std::string& tag,
-				  const std::vector<OwnedPointer<alphabet> >& alphabets, int maxalignments);
+std::list<alignment> load_alignments(std::istream& ifile, const std::string& tag,
+				     const std::vector<OwnedPointer<alphabet> >& alphabets, int maxalignments);
 
 alignment find_last_alignment(std::istream& ifile, const string& tag,
 			       const vector<OwnedPointer<alphabet> >& alphabets);
