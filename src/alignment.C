@@ -167,6 +167,9 @@ void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vect
 void alignment::load_sequences(const alphabet& a, sequence_format::loader_t loader,
 		    std::istream& file) {
 
+  if (not file)
+    throw myexception()<<"Reading sequences: bad file!";
+
   // read file
   vector<string> names;
   vector<string> sequences;
@@ -180,6 +183,9 @@ void alignment::load_sequences(const alphabet& a, sequence_format::loader_t load
 void alignment::load_sequences(const vector<OwnedPointer<alphabet> >& alphabets, sequence_format::loader_t loader,
 		    std::istream& file) {
 
+  if (not file)
+    throw myexception()<<"Reading sequences: bad file!";
+
   // read file
   vector<string> names;
   vector<string> sequences;
@@ -192,6 +198,9 @@ void alignment::load_sequences(const vector<OwnedPointer<alphabet> >& alphabets,
 
 void alignment::load(const alphabet& a,const std::string& filename) {
   std::ifstream file(filename.c_str());
+
+  if (not file)
+    throw myexception()<<"Couldn't open file '"<<filename<<"'";
 
   string extension = filename.substr(filename.size()-4);
   if (extension == ".phy")
@@ -214,6 +223,9 @@ string get_extension(const string& s) {
 
 void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const std::string& filename) {
   std::ifstream file(filename.c_str());
+
+  if (not file)
+    throw myexception()<<"Couldn't open file '"<<filename<<"'";
 
   string extension = get_extension(filename);
   if (extension == ".phy")

@@ -85,7 +85,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				   internal_nodes)
 		   );
   if (P.T.leaves() >= 4)
-    nodes_moves.add(1,MoveArgSingle("sample_two_nodes:nodes",
+    nodes_moves.add(1,MoveArgSingle("sample_two_nodes:alignment:nodes",
 				   sample_two_nodes_move,
 				   internal_nodes)
 		   );
@@ -98,21 +98,28 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   MoveEach NNI_move("NNI");
   MoveEach SPR_move("SPR");
 
-  NNI_move.add(1,MoveArgSingle("three_way_NNI:nodes:topology",
-				    three_way_topology_sample,
-				    internal_branches)
-	       );
-  NNI_move.add(1,MoveArgSingle("two_way_NNI:nodes:topology",
+  if (P.IModel().full_tree)
+    NNI_move.add(1,MoveArgSingle("three_way_NNI:alignment:nodes:topology",
+				 three_way_topology_sample,
+				 internal_branches)
+		 );
+  else
+    NNI_move.add(1,MoveArgSingle("three_way_NNI:topology",
+				 three_way_topology_sample,
+				 internal_branches)
+		 );
+
+  NNI_move.add(1,MoveArgSingle("two_way_NNI:alignment:nodes:topology",
 				    two_way_topology_sample,
 				    internal_branches)
 		    ,false
 		    );
-  NNI_move.add(1,MoveArgSingle("two_way_NNI_MH:nodes:topology",
+  NNI_move.add(1,MoveArgSingle("two_way_NNI_MH:alignment:nodes:topology",
 				    two_way_topology_sample_MH,
 				    internal_branches)
 		    ,false
 		    );
-  NNI_move.add(1,MoveArgSingle("two_way_NNI2:nodes:topology",
+  NNI_move.add(1,MoveArgSingle("two_way_NNI2:alignment:nodes:topology",
 				    two_way_topology_sample2,
 				    internal_branches)
 		    ,false
@@ -127,12 +134,12 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
 
   if (P.IModel().full_tree)
-    SPR_move.add(1,MoveArgSingle("SPR_and_A:topology:length:nodes:alignment:alignment_branch",
+    SPR_move.add(1,MoveArgSingle("SPR_and_A:topology:lengths:nodes:alignment:alignment_branch",
 				 sample_SPR,
 				 branches)
 		 );
   else
-    SPR_move.add(1,MoveArgSingle("SPR_and_A:topology:length",
+    SPR_move.add(1,MoveArgSingle("SPR_and_A:topology:lengths",
 				 sample_SPR,
 				 branches)
 		 );
@@ -146,18 +153,18 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   MoveEach length_moves("lengths");
   MoveEach length_moves1("lengths1");
 
-  length_moves1.add(1,MoveArgSingle("change_branch_length:length",
+  length_moves1.add(1,MoveArgSingle("change_branch_length:lengths",
 				   change_branch_length_move,
 				   branches)
 		   );
   if (P.SModel().full_tree)
-    length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T:length:nodes:topology",
+    length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T:lengths:nodes:topology",
 					change_branch_length_and_T,
 					internal_branches)
 		      );
   length_moves.add(1,length_moves1);
   if (P.SModel().full_tree)
-    length_moves.add(1,MoveArgSingle("slide_branch_length:length",
+    length_moves.add(1,MoveArgSingle("slide_branch_length:lengths",
 				     slide_branch_lengths_one,
 				     branches)
 		     );
@@ -200,7 +207,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
 int main(int argc,char* argv[]) { 
   try {
-    /*---------- Get input, from file if necessary -------*/
+    //---------- Get input, from file if necessary -------//
     Arguments args;
     args.read(argc,argv);
 
@@ -218,7 +225,7 @@ int main(int argc,char* argv[]) {
 
     args.print(cout);
     
-    /*---------- Initialize random seed -----------*/
+    //---------- Initialize random seed -----------//
     unsigned long seed = 0;
     if (args.set("seed")) {
       seed = convertTo<unsigned long>(args["seed"]);
@@ -231,59 +238,33 @@ int main(int argc,char* argv[]) {
     std::cerr.precision(10);
     cout.precision(10);
     
-    /*----------- Load alignment and tree ---------*/
+    //---------- Determine Data dir ---------------//
+    if (not args.set("datadir")) args["datadir"] = "Data";
+
+    //----------- Load alignment and tree ---------//
     args["random_tree_ok"] = "yes";
     alignment A;
     SequenceTree T;
     load_A_and_T(args,A,T);
 
-    /*------------ Specify Gap Penalties ----------*/
-    double lambda_O = args.loadvalue("lambda_O",-5);
-
-    double lambda_E = args.loadvalue("lambda_E",lambda_O/10.0);
-    
-    cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl<<endl;
-    
-    /*--------- Set up the substitution model --------*/
+    //--------- Set up the substitution model --------//
     substitution::MultiRateModel *full_smodel = get_smodel(args,A);
     
     if (not full_smodel->full_tree)
       for(int i=T.leaves();i<T.branches();i++)
 	T.branch(i).length() = 0;
 
-    /*-------------Choose an indel model--------------*/
-    IndelModel* imodel = 0;
-
-    if (args["imodel"] == "ordered") {
-      cout<<"imodel = ordered\n";
-      imodel = new IndelModel1(lambda_O,lambda_E);
-    }
-    else if (args["imodel"] == "single_indels") {
-      cout<<"imodel = single indels\n";
-      imodel = new SingleIndelModel(lambda_O);
-    }
-    else if (args["imodel"] == "upweighted") {
-      cout<<"imodel = adjacent gaps upweighted by 2\n";
-      imodel = new UpweightedIndelModel(lambda_O,lambda_E);
-    }
-    else {
-      cout<<"imodel = symmetric\n";
-      imodel = new IndelModel2(lambda_O,lambda_E);
-    }
-    if (args["gaps"]== "star") {
-      imodel->full_tree = false;
-    }
-    else
-      imodel->full_tree = true;
+    //-------------Choose an indel model--------------//
+    IndelModel* imodel = get_imodel(args);
     
     //-------------Create the Parameters object--------------//
-    cout<<"using smodel: "<<full_smodel->name()<<endl;
-
     Parameters P(*full_smodel,*imodel,T);
     cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
     cout<<"Using substitution model: "<<P.SModel().name()<<endl;
     cout<<"Full tree for substitution: "<<P.SModel().full_tree<<endl<<endl;
     cout<<"Full tree for gaps: "<<P.IModel().full_tree<<endl<<endl;
+
+    P.Temp = args.loadvalue("T",1.0);
 
     P.constants[0] = args.loadvalue("bandwidth",100.0);
     if (args.set("pinning") and args["pinning"] == "enable")
@@ -306,9 +287,6 @@ int main(int argc,char* argv[]) {
 	P.i_fixed[pI] = true;
       }
     }
-
-    P.Temp = args.loadvalue("T",1.0);
-
 
     //---------------Do something------------------//
     if (args.set("showonly"))

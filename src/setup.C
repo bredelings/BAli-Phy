@@ -7,6 +7,9 @@
 
 using std::vector;
 using std::valarray;
+using std::cout;
+using std::cerr;
+using std::endl;
 
 /// Reorder internal sequences of A to correspond to standardized node names for T
 alignment standardize(const alignment& A, const SequenceTree& T) {
@@ -57,11 +60,13 @@ valarray<double> empirical_frequencies(Arguments& args,const alignment& A) {
 /// Load an alignment from command line args align=filename
 void load_A(Arguments& args,alignment& A) {
   vector<OwnedPointer<alphabet> > alphabets;
-  if (args.set("Use Codons")) {
+  if (args["alphabet"] == "Codons") {
     {
-      ifstream genetic_code("Data/genetic_code_dna.dat");
-      if (not genetic_code)
-	throw myexception()<<"Couldn't open file 'Data/genetic_code_dna.dat'";
+      string dna_filename = args["datadir"] + "/" + "genetic_code_dna.dat";
+
+      ifstream genetic_code(dna_filename.c_str());
+      if (not genetic_code) 
+	throw myexception()<<"Couldn't open file '"<<dna_filename<<"'";
       Translation_Table T(Codons(DNA()),AminoAcids(),genetic_code);
       genetic_code.close();
 
@@ -69,9 +74,11 @@ void load_A(Arguments& args,alignment& A) {
     }
 
     {
-      ifstream genetic_code("Data/genetic_code_rna.dat");
+      string rna_filename = args["datadir"] + "/" + "genetic_code_rna.dat";
+
+      ifstream genetic_code(rna_filename.c_str());
       if (not genetic_code)
-	throw myexception()<<"Couldn't open file 'Data/genetic_code_rna.dat'";
+	throw myexception()<<"Couldn't open file '"<<rna_filename<<"'";
       Translation_Table T(Codons(RNA()),AminoAcids(),genetic_code);
       genetic_code.close();
 
@@ -93,7 +100,7 @@ void load_A(Arguments& args,alignment& A) {
   remove_empty_columns(A);
   
   if (A.num_sequences() == 0)
-    throw myexception()<<"Alignment file "<<args["align"]<<"didn't contain any sequences!";
+    throw myexception()<<"Alignment file "<<args["align"]<<" didn't contain any sequences!";
 }
 
 
@@ -248,3 +255,44 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
   }
 }
 
+//FIXME - need to give indel models a name!
+IndelModel* get_imodel(Arguments& args) {
+  //------------ Specify Gap Penalties ----------//
+  double lambda_O = args.loadvalue("lambda_O",-5);
+  
+  double lambda_E = args.loadvalue("lambda_E",lambda_O/10.0);
+  
+  cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl<<endl;
+
+  //-------------Choose an indel model--------------//
+  IndelModel* imodel = 0;
+
+  if (not args.set("imodel")) args["imodel"] = "upweighted";
+  
+  if (args["imodel"] == "ordered") {
+    cout<<"imodel = ordered\n";
+    imodel = new IndelModel1(lambda_O,lambda_E);
+  }
+  else if (args["imodel"] == "single_indels") {
+    cout<<"imodel = single indels\n";
+    imodel = new SingleIndelModel(lambda_O);
+  }
+  else if (args["imodel"] == "upweighted") {
+    cout<<"imodel = adjacent gaps upweighted by 2\n";
+    imodel = new UpweightedIndelModel(lambda_O,lambda_E);
+  }
+  else if (args["imodel"] == "symmetric") {
+    cout<<"imodel = symmetric\n";
+    imodel = new IndelModel2(lambda_O,lambda_E);
+  }
+  else
+    throw myexception()<<"Unrecognized indel model '"<<args["imodel"]<<"'";
+  
+  if (args["gaps"]== "star") {
+    imodel->full_tree = false;
+  }
+  else
+    imodel->full_tree = true;
+
+  return imodel;
+}

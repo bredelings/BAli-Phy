@@ -3,6 +3,7 @@
 
 #include <valarray>
 #include "smodel.H"
+#include "imodel.H"
 #include "arguments.H"
 #include "alignment.H"
 #include "sequencetree.H"
@@ -39,5 +40,8 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool internal_seq
 substitution::MultiRateModel* get_smodel(Arguments& args,const alphabet& a,const std::valarray<double>& default_frequencies);
 /// Return a substitution::Model specified by args
 substitution::MultiRateModel* get_smodel(Arguments& args,const alignment& A);
+
+//--------------------------- Indel stuff --------------------------//
+IndelModel* get_imodel(Arguments& args);
 
 #endif 

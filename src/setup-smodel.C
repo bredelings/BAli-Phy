@@ -16,47 +16,79 @@ bool match(vector<string>& sstack,const string& s) {
   return m;
 }
 
+
+//FIXME - use dynamic_cast to see if we are in certain subclasses...
 substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_frequencies) {
   vector<string> smodel;
   if (args["smodel"] != "")
     smodel = split(args["smodel"],'+');
   std::reverse(smodel.begin(),smodel.end());
 
-  /*------ Get the base markov model (Reversible Markov) ------*/
+  //------ Get the base markov model (Reversible Markov) ------//
   substitution::ReversibleMarkovModel* base_markov_smodel = 0;
 
   OwnedPointer<AminoAcids> aa = AminoAcids();
   if (args.set("Use Stop"))
     *aa = AminoAcidsWithStop();
 
-
+  string base_model;
   if (match(smodel,"EQU"))
+    base_model="EQU";
+  else if (match(smodel,"HKY"))
+    base_model="HKY";
+  else if (match(smodel,"Empirical"))
+    base_model="Empirical";
+  else if (match(smodel,"YangCodonModel"))
+    base_model="YangCodonModel";
+  else {
+    if (dynamic_cast<const Nucleotides*>(&a)) 
+      base_model = "HKY";
+    else if (dynamic_cast<const AminoAcids*>(&a)) {
+      base_model = "Empirical";
+      if (not args.set("Empirical"))
+	args["Empirical"] = "wag";
+    }
+    else if (dynamic_cast<const Codons*>(&a))
+      base_model = "YangCodonModel";
+    else 
+      throw myexception()<<"Can't guess the base CTMC model for alphabet '"<<a.name<<"'";
+  } 
+
+
+  if (base_model == "EQU")
     base_markov_smodel = new substitution::EQU(a);
-  else if (a == DNA())
-    base_markov_smodel = new substitution::HKY(DNA());
-  else if (a == RNA())
-    base_markov_smodel = new substitution::HKY(RNA());
-  else if (a == AminoAcids()) {
-    string filename = "wag";
-    if (args.set("Empirical"))
-      filename = args["Empirical"];
-    filename = string("Data/") + filename + ".dat";
+  else if (base_model == "HKY") {
+    const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
+    if (N)
+      base_markov_smodel = new substitution::HKY(*N);
+    else
+      throw myexception()<<"HKY:: Unrecognized alphabet '"<<a.name<<"'";
+  }
+  else if (base_model == "Empirical") {
+    string filename = args["Empirical"];
+    filename = args["datadir"] + "/" + filename + ".dat";
 
     base_markov_smodel = new substitution::Empirical(*aa,filename);
   }
-  else {
-    Translation_Table DNA_table(Codons(DNA()),*aa,"Data/genetic_code_dna.dat");
-    Translation_Table RNA_table(Codons(RNA()),*aa,"Data/genetic_code_rna.dat");
+  else if (base_model == "YangCodonModel") {
+    string dna_filename = args["datadir"] + "/" + "genetic_code_dna.dat";
+    string rna_filename = args["datadir"] + "/" + "genetic_code_rna.dat";
+
+    Translation_Table DNA_table(Codons(DNA()),*aa,dna_filename);
+    Translation_Table RNA_table(Codons(RNA()),*aa,rna_filename);
 
     if (a == DNA_table.getCodons())
       base_markov_smodel = new substitution::YangCodonModel(DNA_table);
     else if (a == RNA_table.getCodons())
       base_markov_smodel = new substitution::YangCodonModel(RNA_table);
     else
-      assert(0);
+      throw myexception()<<"Can't figure out how to make a codon model from alphabet '"<<a.name<<";";
+      
   }
+  else
+    throw myexception()<<"Confused: what kind of model is '"<<base_model<<"'?";;
 
-  /*------ Set frequencies for base markov model ------*/
+  //------ Set frequencies for base markov model ------//
   if (args.set("frequencies")) {
     vector<double> f = split<double>(args["frequencies"],',');
     assert(f.size() == a.size());
