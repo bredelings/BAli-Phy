@@ -19,9 +19,9 @@ void TreeView::destroy_tree(BranchNode* start) {
     delete nodes[i];
 }
 
-BranchNode* TreeView::copy_node(BranchNode* start) {
+BranchNode* TreeView::copy_node(const BranchNode* start) {
 
-  BranchNode* n1 = start;
+  const BranchNode* n1 = start;
 
   BranchNode* start2 = new BranchNode(n1->branch,n1->node,n1->length);
   BranchNode* n2 = start2;
@@ -47,37 +47,27 @@ BranchNode* TreeView::copy_node(BranchNode* start) {
 }
 
 
-BranchNode* TreeView::copy_tree(BranchNode* start) {
+BranchNode* TreeView::copy_tree(const BranchNode* start) {
 
-  BranchNode* here1 = start;
+  const BranchNode* here1 = start;
   BranchNode* start2 = copy_node(start);
   BranchNode* here2 = start2;
   
-  BranchNode* prev = NULL;
-
-  
-  for(;here1!=start or prev==NULL;) {
+  do {
     
     // If we jump out to another node, then create it if its not there
-    if (prev == here1->prev or here1->next == here1) {
-      prev  = here1;
-      here1 = here1->out;
-
-      if (not here2->out) {
-	here2->out = copy_node(here1);
-	here2->out->out = here2;
-      }
-      
-      here2 = here2->out;
+    if (!here2->out) {
+      here2->out = copy_node(here1->out);
+      here2->out->out = here2;
     }
 
-    // Otherwise just move around the current node together
-    else {
-      prev  = here1;
-      here1 = here1->next;
-      here2 = here2->next;
-    }
-  }
+    here1 = here1->out->next;
+    here2 = here2->out->next;
+    
+  } while(here1 != start);
+
+  assert(here1 == start);
+  assert(here2 == start2);
 
   return start2;
 }
@@ -357,13 +347,19 @@ int Tree::edges_distance(int i,int j) const {
   return d;
 }
 
+BranchNode* get_first_node() {
+  BranchNode* BN = new BranchNode(0,0,-1);
+  BN->prev = BN->next = BN;
+  BN->out = BN;
+
+  return BN;
+}
+
 void Tree::add_first_node() {
   if (nodes_.size())
     throw myexception()<<"Trying to add first node to tree which is not empty";
 
-  BranchNode* BN = new BranchNode(0,0,-1);
-  BN->prev = BN->next = BN;
-  BN->out = BN;
+  BranchNode* BN = get_first_node();
 
   nodes_.push_back(BN);
   branches_.push_back(BN);
@@ -710,6 +706,71 @@ void Tree::check_structure() const {
 #endif
 }
 
+void knit_node_together(vector<BranchNode*>& nodes) {
+  nodes[0]->prev = nodes.back();
+  nodes.back()->next = nodes[0];
+
+  for(int i=0;i<nodes.size()-1;i++) {
+    nodes[i]->next = nodes[i+1];
+    nodes[i+1]->prev = nodes[i];
+  }
+  
+}
+
+void Tree::induce_partition(const std::valarray<bool>& partition) {
+  assert(partition.size() == n_leaves());
+  
+  valarray<bool> partition1(false,n_nodes());
+  valarray<bool> partition2(false,n_nodes());
+  for(int i=0;i<partition.size();i++) {
+    partition1[i] = partition[i];
+    partition2[i] = not partition[i];
+  }
+
+  for(int i=0;i<n_nodes();i++) {
+    vector<BranchNode*> group1;
+    vector<BranchNode*> group2;
+
+    // divide the branches out into two groups
+    BranchNode * BN = nodes_[i];
+    do {
+      if (empty(partition1 and cached_partitions[BN->branch]))
+	group2.push_back(BN);
+      else if (empty(partition2 and cached_partitions[BN->branch]))
+	group1.push_back(BN);
+      else {
+	group1.clear();
+	group2.clear();
+	break;
+      }
+      
+      BN = BN->next;
+    } while (BN != nodes_[i]);
+
+    // this node can't separate the groups
+    if (not group1.size() and not group2.size()) continue;
+
+    // condition is already true!
+    if (group1.size() == 1 or group2.size() == 1) return;
+
+    // separate the two nodes
+    if (group1.size() > 1) group1.push_back(new BranchNode);
+    knit_node_together(group1);
+
+    if (group2.size() > 1) group2.push_back(new BranchNode);
+    knit_node_together(group2);
+
+    // connect the two nodes
+    group1.back()->out = group2.back();
+    group2.back()->out = group1.back();
+    
+    reanalyze(nodes_[0]);
+
+    return;
+  }
+  throw myexception()<<"induce_partition: partition conflicts with tree!";
+}
+
 Tree& Tree::operator=(const Tree& T) {
     assert(&T != this);
 
@@ -732,6 +793,11 @@ Tree& Tree::operator=(const Tree& T) {
 
     return *this;
   }
+
+Tree::Tree(const BranchNode* BN) 
+{
+  reanalyze(TreeView::copy_tree(BN));
+}
 
 Tree::Tree(const Tree& T) 
     :n_leaves_(T.n_leaves_),
@@ -886,6 +952,12 @@ RootedTree& RootedTree::operator=(const RootedTree& RT) {
   return *this;
 }
 
+RootedTree::RootedTree(const BranchNode* BN)
+  :root_(TreeView::copy_tree(BN)) 
+{
+  reanalyze(root_);
+}
+
 RootedTree::RootedTree(const Tree& T,int r)
   :Tree(T),root_(nodes_[r])
 { }
@@ -934,4 +1006,38 @@ vector<const_branchview> sorted_branches_after(const_branchview b) {
   return branches;
 }
 
+int n_elements(const valarray<bool>& v) {
+  int count = 0;
+  for(int i=0;i<v.size() ;i++)  
+    if (v[i]) count++;
+  return count;
+}
 
+
+bool empty(const valarray<bool>& v) {
+  for(int i=0;i<v.size() ;i++)  
+    if (v[i]) return false;
+  return true;
+}
+
+bool equal(const valarray<bool>& v1,const valarray<bool>& v2) {
+  assert(v1.size() == v2.size());
+  for(int i=0;i<v1.size();i++)
+    if (v1[i] != v2[i]) 
+      return false;
+  return true;
+}
+
+bool intersect(const valarray<bool>& v1,const valarray<bool>& v2) 
+{
+  assert(v1.size() == v2.size());
+  return not empty(v1&v2);
+}
+
+bool implies(const valarray<bool>& v1,const valarray<bool>& v2) {
+  assert(v1.size() == v2.size());
+  for(int i=0;i<v1.size();i++)
+    if (v2[i] and not v1[i])
+      return false;
+  return true;
+}

@@ -13,11 +13,11 @@ class TreeView {
 protected:
   BranchNode* root;
 
-  static void destroy_tree(BranchNode*);
-  static BranchNode* copy_node(BranchNode*);
-  static BranchNode* copy_tree(BranchNode*);
-
 public:
+  static void destroy_tree(BranchNode*);
+  static BranchNode* copy_node(const BranchNode*);
+  static BranchNode* copy_tree(const BranchNode*);
+
   /// Exchange the subtrees pointed to by b1 and b2
   static void exchange_subtrees(BranchNode* b1,BranchNode* b2);
 
@@ -37,6 +37,7 @@ public:
   ~TreeView() {}
 };
 
+BranchNode* get_first_node();
 BranchNode* add_node(BranchNode*);
 
 //------------------------------------ Tree -----------------------------//
@@ -156,11 +157,11 @@ public:
   int edges_distance(int i,int j) const;
 
   // n1 is an ancestor of n2, n2 is a descendant of n1
-  std::valarray<bool> partition(int b) const {
+  const std::valarray<bool>& partition(int b) const {
     return cached_partitions[b];
   }
 
-  std::valarray<bool> partition(int n1,int n2) const {
+  const std::valarray<bool>& partition(int n1,int n2) const {
     return partition(directed_branch(n1,n2));
   }
 
@@ -186,6 +187,9 @@ public:
   /// Prune subtree 'b1' and regraft into branch 'b2'
   void SPR(int b1,int b2);
 
+  void induce_partition(const std::valarray<bool>& partition);
+
+
   /// Add a node onto a branch 'b', splitting it into two sub-neighbors
   nodeview create_node_on_branch(int b);
 
@@ -207,6 +211,7 @@ public:
   Tree& operator=(const Tree& T); 
 
   Tree():n_leaves_(0) {}
+  explicit Tree(const BranchNode*);
   Tree(const Tree& T);
 
   virtual ~Tree();
@@ -247,6 +252,7 @@ public:
   RootedTree& operator=(const RootedTree&);
 
   RootedTree():root_(NULL) {}
+  explicit RootedTree(const BranchNode*);
   RootedTree(const Tree&,int r);
   RootedTree(const RootedTree&);
 
@@ -274,6 +280,17 @@ std::vector<const_branchview> branches_toward_node(const Tree& T,int n);
 std::vector<const_branchview> sorted_neighbors(const_nodeview n);
 std::vector<const_branchview> sorted_branches_after(const_branchview b);
 
+/// Does the bitmask have any bits set?
+bool empty(const std::valarray<bool>& v);
 
+/// Are two bitmasks equal to each other?
+bool equal(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
+
+/// Do the two bitmasks intersect?
+bool intersect(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
+
+bool implies(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
+
+int n_elements(const std::valarray<bool>& v);
 
 #endif

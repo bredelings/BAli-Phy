@@ -99,40 +99,6 @@ valarray<bool> branch_partition(const Tree& T,int b) {
   return p;
 }
 
-bool empty(const valarray<bool>& v) {
-  for(int i=0;i<v.size() ;i++)  
-    if (v[i]) return false;
-  return true;
-}
-
-int n_elements(const valarray<bool>& v) {
-  int count = 0;
-  for(int i=0;i<v.size() ;i++)  
-    if (v[i]) count++;
-  return count;
-}
-
-bool equal(const valarray<bool>& v1,const valarray<bool>& v2) {
-  assert(v1.size() == v2.size());
-  for(int i=0;i<v1.size();i++)
-    if (v1[i] != v2[i]) 
-      return false;
-  return true;
-}
-
-bool intersect(const valarray<bool>& v1,const valarray<bool>& v2) 
-{
-  assert(v1.size() == v2.size());
-  return not empty(v1&v2);
-}
-
-bool implies(const valarray<bool>& v1,const valarray<bool>& v2) {
-  assert(v1.size() == v2.size());
-  for(int i=0;i<v1.size();i++)
-    if (v2[i] and not v1[i])
-      return false;
-  return true;
-}
 
 std::ostream& operator<<(std::ostream& o, const Partition& P) 
 {
@@ -161,6 +127,18 @@ std::ostream& operator<<(std::ostream& o, const Partition& P)
       
 
   return o;
+}
+
+SequenceTree get_mf_tree(const vector<Partition>& partitions) {
+  SequenceTree T = star_tree(partitions[0].names);
+
+  for(int i=0;i<partitions.size();i++)
+    T.induce_partition(partitions[i].group1);
+
+  for(int i=0;i<T.n_branches();i++)
+    T.branch(i).set_length(1.0);
+
+  return T;
 }
 
 bool operator==(const Partition& p1, const Partition& p2) {
@@ -395,5 +373,88 @@ double topology_distance(const SequenceTree& T1, const SequenceTree& T2) {
     T2A.branch(b).set_length(0.5);
 
   return branch_distance(T1A,T2A);
+}
+
+struct compare_complete_partitions {
+  bool operator()(const vector<bool>& p1,const vector<bool>& p2) const {
+    if (p1.size() != p2.size())
+      std::cerr<<"p1.size() = "<<p1.size()<<" and p2.size() = "<<p2.size()<<"\n";
+    assert(p1.size() == p2.size());
+    assert(p1[0]);
+    assert(p2[0]);
+    
+    for(int i=0;i<p1.size();i++) {
+      if (p2[i] and not p1[i])
+	return true;
+    }
+    return false;
+  }
+};
+
+vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
+  if (l < 0.5) throw myexception() << "get_Ml_partitition: l must be >= 0.5";
+
+  // use a sorted list of <partition,count>, sorted by partition.
+  map<vector<bool>,int,compare_complete_partitions > counts;
+
+  // use a linked list of pointers to <partition,count> records.
+  list<map<vector<bool>,int,compare_complete_partitions >::iterator > majority;
+
+  for(int i=0;i<sample.size();i++) {
+    const SequenceTree& T = sample.topologies[ sample.which_topology[i] ].T;
+
+    int min_old = (i+1) /2;
+    if (min_old == 0) min_old = 1;
+    int min_new = (i+2) /2;
+
+    // for partition in the next tree
+    for(int b=T.n_leaves();b<T.n_branches();b++) {
+      std::valarray<bool> temp = branch_partition(T,b);
+
+      std::vector<bool> partition(temp.size(),false);
+      for(int j=0;j<temp.size();j++)
+	partition[j] = temp[j];
+      
+      if (not partition[0])
+	for(int j=0;j<partition.size();j++)
+	  partition[j] = not partition[j];
+      
+      assert(partition.size() == T.n_leaves());
+      int& C = counts[partition];
+      
+      // add the partition it wasn't good before, but is now
+      if (C<min_old and C+1 >= min_new)
+	majority.push_back(counts.find(partition));
+
+      // increment the count
+      C++;
+    }
+
+
+    // for partition in the majority tree
+    for(typeof(majority.begin()) p = majority.begin();p != majority.end();) {
+      if ((*p)->second < min_new) {
+	typeof(p) old = p;
+	p++;
+	majority.erase(old);
+      }
+      else
+	p++;
+    }
+  }
+
+  vector<string> names = sample.topologies[0].T.get_sequences();
+  vector<Partition> partitions;
+  partitions.reserve(majority.size());
+  for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
+    const vector<bool>& partition =(*p)->first;
+    valarray<bool> temp(partition.size());
+    for(int i=0;i<partition.size();i++)
+      temp[i] = partition[i];
+ 
+    partitions.push_back(Partition(names,temp) );
+  }
+
+  return partitions;
 }
 
