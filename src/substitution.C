@@ -522,8 +522,8 @@ namespace substitution {
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
     const Tree& T = P.T;
 
-    if (not calculate_caches(A,P,cache))
-      return cache.cached_value;
+    //    if (not calculate_caches(A,P,cache))
+    //      return cache.cached_value;
 
     // compute root branches
     vector<int> rb;
