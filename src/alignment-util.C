@@ -196,7 +196,6 @@ void check_internal_nodes_connected(const alignment& A,const Tree& T,const vecto
     if (not all_characters_connected(T,present,ignore)) {
       std::cerr<<"Internal node states are inconsistent in column "<<column<<std::endl;
       std::cerr<<A<<std::endl;
-      std::abort();
       throw myexception()<<"Internal node states are inconsistent in column "<<column;
     }
   }
