@@ -129,7 +129,7 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
   //  vector<int> path_old = A5::get_path(old,nodes_old,states_list);
   vector<int> path_g_old = Matrices1.generalize(path_old);
 
-  vector<int> path_new = get_path(project(*CA,*Cnodes),newnodes,states_list);
+  vector<int> path_new = get_path(project(*CA,nodes_new),newnodes,states_list);
   //  vector<int> path_new = A5::get_path(*CA,nodes_new,states_list);
   vector<int> path_g_new = CM->generalize(path_new);
 
@@ -239,7 +239,7 @@ bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Paramete
   //  vector<int> path_old = A5::get_path(old,nodes_old,states_list);
   vector<int> path_g_old = Matrices1.generalize(path_old);
 
-  vector<int> path_new = get_path(project(*CA,*Cnodes),newnodes,states_list);
+  vector<int> path_new = get_path(project(*CA,nodes_new),newnodes,states_list);
   //  vector<int> path_new = A5::get_path(*CA,nodes_new,states_list);
   vector<int> path_g_new = CM->generalize(path_new);
 
