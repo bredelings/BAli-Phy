@@ -4,9 +4,12 @@
 #include "choose.H"
 #include "rng.H"
 
-using std::abs;
+#include "pow2.H"
 
-DPengine::DPengine(const vector<int>& v1,const vector<efloat_t>& v2, const eMatrix&M, double Temp)
+using std::abs;
+using std::max;
+
+DPengine::DPengine(const vector<int>& v1,const vector<double>& v2, const Matrix&M, double Temp)
   :HMM(v1,v2,M,Temp) 
 { }
 
@@ -55,21 +58,23 @@ int bandwidth2(const DPmatrix& M,const vector<int>& path) {
 }
 
 
-efloat_t DParray::path_P(const vector<int>& g_path) const {
+efloat_t DParray::path_P(const vector<int>& g_path) const 
+{
   const int I = size()-1;
   int i=I;
   int l=g_path.size()-1;
   int state2 = g_path[l];
 
   efloat_t Pr=1.0;
-  while (l>0) {
-
-    vector<efloat_t> transition(nstates());
+  while (l>0) 
+  {
+    // we don't need to consider scaling here :)
+    vector<double> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
-      transition[state1] = (*this)[state1][i]*GQ(state1,state2);
+      transition[state1] = (*this)(i,state1)*GQ(state1,state2);
 
     int state1 = g_path[l-1];
-    efloat_t p = choose_P(state1,transition);
+    double p = choose_P(state1,transition);
     assert(p > 0.0);
 
     if (di(state1)) i--;
@@ -78,13 +83,14 @@ efloat_t DParray::path_P(const vector<int>& g_path) const {
     state2 = state1;
     Pr *= p;
   }
+
   // include probability of choosing 'Start' vs ---+ !
-  vector<efloat_t> transition(nstates());
+  vector<double> transition(nstates());
   for(int state1=0;state1<nstates();state1++)
-    transition[state1] = (*this)[state1][0] * GQ(state1,state2);
+    transition[state1] = (*this)(0,state1) * GQ(state1,state2);
 
   // Get the probability that the previous state was 'Start'
-  efloat_t p=0.0;
+  double p=0.0;
   for(int state1=0;state1<nstates();state1++)  
     if (not silent(state1))
       p += choose_P(state1,transition);
@@ -111,9 +117,9 @@ vector<int> DParray::sample_path() const {
 
   while(i >= 0) {
     path.push_back(state2);
-    vector<efloat_t> transition(nstates());
+    vector<double> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
-      transition[state1] = (*this)[state1][i]*GQ(state1,state2);
+      transition[state1] = (*this)(i,state1)*GQ(state1,state2);
 
     int state1 = choose(transition);
 
@@ -130,44 +136,72 @@ vector<int> DParray::sample_path() const {
 efloat_t DParray::Pr_sum_all_paths() const {
   const int I = size()-1;
 
-  efloat_t total = 0.0;
+  double total = 0.0;
   for(int state1=0;state1<nstates();state1++)
-    total += (*this)[state1][I] * GQ(state1,endstate());
+    total += (*this)(I,state1) * GQ(state1,endstate());
 
-  return total;
+  return powe<efloat_t>(2.0,scale(I)) * total;
 }
 
-DParray::DParray(int l,const vector<int>& v1,const vector<efloat_t>& v2,const eMatrix& M,double Temp)
+DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
   :DPengine(v1,v2,M,Temp),
-   vector< vector<efloat_t> >(nstates(),vector<efloat_t>(l+1,0)),length(l+1)
+   state_array(l+1,nstates()),
+   length(l+1)
 { 
   for(int s=0;s<start_P.size();s++)
-    (*this)[s][0] = start_P[s];
+    (*this)(0,s) = start_P[s];
+
+  scale(0) = 0;
 }
 
-inline void DParrayConstrained::forward(int i2) {
+inline void DParrayConstrained::forward(int i2) 
+{
   assert(i2<size());
 
-  for(int s2=0;s2<states(i2).size();s2++) {
+  // determine initial scale for this cell
+  if (i2==0)
+    scale(i2) = 0;
+  else
+    scale(i2) = scale(i2-1);
+
+  double maximum = 0;
+
+  for(int s2=0;s2<states(i2).size();s2++) 
+  {
     int S2 = states(i2)[s2];
-    vector<efloat_t>& FS2 = (*this)[S2];
 
     int i1 = i2;
     if (di(S2))
       i1--;
 
-    //--- Don't go off the boundary -----
+    //----- don't go off the boundary -----//
     if (i1<0) continue;
 
-    //--- Compute Arrival Probability ---
-    FS2[i2] = 0;
+    //---- compute arrival probability ----//
+    double temp = 0;
     for(int s1=0;s1<states(i1).size();s1++) {
       int S1 = states(i1)[s1];
 
-      vector<efloat_t>& FS1 = (*this)[S1];
-
-      FS2[i2] += FS1[i1] * GQ(S1,S2);
+      temp += (*this)(i1,S1) * GQ(S1,S2);
     }
+
+    // record maximum 
+    if (temp > maximum) maximum = temp;
+
+    // store the result
+    (*this)(i2,S2) = temp;
+  }
+
+  //------- if exponent is too low, rescale ------//
+  if (maximum > 0 and maximum < fp_scale::cutoff) {
+    int logs = -(int)log2(maximum);
+    double scale_ = pow2(logs);
+    for(int s2=0;s2<states(i2).size();s2++)  
+    {
+      int S2 = states(i2)[s2];
+      (*this)(i2,S2) *= scale_;
+    }
+    scale(i2) -= logs;
   }
 }
 
@@ -215,7 +249,7 @@ void DParrayConstrained::prune() {
   std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<endl;
 }
 
-DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<efloat_t>& v2,const eMatrix& M,double Temp)
+DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
   :DParray(l,v1,v2,M,Temp),allowed_states(l+1)
 { }
 
@@ -291,7 +325,8 @@ vector<int> DPmatrix::forward(const vector<vector<int> >& pins)
 }
 
 
-efloat_t DPmatrix::path_check(const vector<int>& path) const {
+efloat_t DPmatrix::path_check(const vector<int>& path) const 
+{
   efloat_t Pr=1.0;
   
   const int I = size1()-1;
@@ -318,11 +353,11 @@ efloat_t DPmatrix::path_check(const vector<int>& path) const {
 
     int state2 = path[l+1];
 
-    vector<efloat_t> transition(nstates());
+    vector<double> transition(nstates());
     for(int s=0;s<nstates();s++)
       transition[s] = (*this)(i,j,s)*GQ(s,state2);
     
-    efloat_t p = choose_P(state1,transition);
+    double p = choose_P(state1,transition);
     assert((*this)(i,j,state1) > 0.0);
     assert(GQ(state1,state2) > 0.0);
     assert(p > 0.0);
@@ -362,12 +397,12 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const {
   //   is at path[-1]
   while (l>0) {
 
-    vector<efloat_t> transition(nstates());
+    vector<double> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
 
     int state1 = path[l-1];
-    efloat_t p = choose_P(state1,transition);
+    double p = choose_P(state1,transition);
     assert(p > 0.0);
 
     if (di(state1)) i--;
@@ -381,12 +416,12 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const {
   assert(i == 0 and j == 0);
 
   // include probability of choosing 'Start' vs ---+ !
-  vector<efloat_t> transition(nstates());
+  vector<double> transition(nstates());
   for(int state1=0;state1<nstates();state1++)
     transition[state1] = (*this)(0,0,state1) * GQ(state1,state2);
 
   // Get the probability that the previous state was 'Start'
-  efloat_t p=0.0;
+  double p=0.0;
   for(int state1=0;state1<nstates();state1++)  
     if (not silent(state1))
       p += choose_P(state1,transition);
@@ -414,7 +449,7 @@ vector<int> DPmatrix::sample_path() const {
   // - check that we came from (0,0) though
   while (i>=0 and j>=0) {
     path.push_back(state2);
-    vector<efloat_t> transition(nstates());
+    vector<double> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
 
@@ -435,22 +470,22 @@ efloat_t DPmatrix::Pr_sum_all_paths() const {
   const int I = size1()-1;
   const int J = size2()-1;
 
-  efloat_t total = 0.0;
+  double total = 0.0;
   for(int state1=0;state1<nstates();state1++)
     total += (*this)(I,J,state1)*GQ(state1,endstate());
 
-  return total;
+  return powe<efloat_t>(2.0,scale(I,J)) * total;
 }
 
 
 DPmatrix::DPmatrix(int i1,
 		   int i2,
 		   const vector<int>& v1,
-		   const vector<efloat_t>& v2,
-		   const eMatrix& M,
+		   const vector<double>& v2,
+		   const Matrix& M,
 		   double Temp)
   :DPengine(v1,v2,M,Temp),
-   state_matrix<efloat_t>(i1+1,i2+1,nstates()),
+   state_matrix(i1+1,i2+1,nstates()),
    S1(i1+1),
    S2(i2+1)
 {
@@ -466,10 +501,20 @@ DPmatrix::DPmatrix(int i1,
     (*this)(0,0,S) = start_P[S];
 }
 
-inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1) { 
-
+inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1) 
+{ 
   assert(i2<size1());
   assert(j2<size2());
+
+  // determine initial scale for this cell
+  if (i2 > 0 and j2 > 0)
+    scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
+  else if (i2 > 0)
+    scale(i2,j2) = scale(i2-1,j2);
+  else if (j2 > 0)
+    scale(i2,j2) = scale(i2,j2-1);
+
+  double maximum = 0;
 
   for(int S2=0;S2<nstates();S2++) 
   {
@@ -480,14 +525,33 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1) {
     int j1 = j2;
     if (dj(S2)) j1--;
 
-    //--- Don't go off the boundary -----
+    //--- don't go off the boundary -----
     if (i1<0 or j1<0)
       continue;
 
-    //--- Compute Arrival Probability ----
-    (*this)(i2,j2,S2) = 0;
+    //--- compute arrival probability ----
+    double temp  = 0;
     for(int S1=0;S1<nstates();S1++)
-      (*this)(i2,j2,S2) += (*this)(i1,j1,S1) * GQ(S1,S2);
+      temp += (*this)(i1,j1,S1) * GQ(S1,S2);
+
+    // rescale result to scale of this cell
+    if (scale(i1,j1) != scale(i2,j2))
+      temp *= pow2(scale(i1,j1)-scale(i2,j2));
+
+    // record maximum
+    if (temp > maximum) maximum = temp;
+
+    // store the result
+    (*this)(i2,j2,S2) = temp;
+  }
+
+  //------- if exponent is too low, rescale ------//
+  if (maximum > 0 and maximum < fp_scale::cutoff) {
+    int logs = -(int)log2(maximum);
+    double scale_ = pow2(logs);
+    for(int S2=0;S2<nstates();S2++) 
+      (*this)(i2,j2,S2) *= scale_;
+    scale(i2,j2) -= logs;
   }
 } 
 
@@ -514,19 +578,19 @@ inline double DPmatrixEmit::emitMM(int i,int j) const {
 
 // switching dists1[] to matrices actually made things WORSE!
 
-inline efloat_t DPmatrixEmit::emitMM(int i,int j) const {
+inline double DPmatrixEmit::emitMM(int i,int j) const {
   return s12_sub(i-1,j-1);
 }
 
-inline efloat_t DPmatrixEmit::emitM_(int i,int j) const {
+inline double DPmatrixEmit::emitM_(int i,int j) const {
   return s1_sub[i-1];
 }
 
-inline efloat_t DPmatrixEmit::emit_M(int i,int j) const {
+inline double DPmatrixEmit::emit_M(int i,int j) const {
   return s2_sub[j-1];
 }
 
-inline efloat_t DPmatrixEmit::emit__(int i,int j) const {
+inline double DPmatrixEmit::emit__(int i,int j) const {
   return 1.0;
 }
 
@@ -541,7 +605,7 @@ efloat_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
     if (dj(state2))
       j++;
 
-    efloat_t sub=0.0;
+    double sub=0.0;
     if (di(state2) and dj(state2))
       sub = emitMM(i,j);
     else if (di(state2))
@@ -560,8 +624,8 @@ efloat_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
 
 
 DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
-			   const vector<efloat_t>& v2,
-			   const eMatrix& M,
+			   const vector<double>& v2,
+			   const Matrix& M,
 			   double Temp,
 			   const vector< double >& d0,
 			   const vector< Matrix >& d1,
@@ -584,7 +648,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
       total += temp*distribution[m];
     }
     s1_sub[i] = total;
-    s1_sub[i] = pow(s1_sub[i],1.0/T);
+    //    s1_sub[i] = pow(s1_sub[i],1.0/T);
   }
 
   for(int i=0;i<dists2.size();i++) {
@@ -596,7 +660,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
       total += temp*distribution[m];
     }
     s2_sub[i] = total;
-    s2_sub[i] = pow(s2_sub[i],1.0/T);
+    //    s2_sub[i] = pow(s2_sub[i],1.0/T);
   }
 
   //----- pre-calculate scaling factors --------//
@@ -617,7 +681,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 	  total += M1(m,l) * M2(m,l);
       }
       s12_sub(i,j) = total;
-      s12_sub(i,j) = pow(s12_sub(i,j),1.0/T);
+      //      s12_sub(i,j) = pow(s12_sub(i,j),1.0/T);
     }
 
 }
@@ -627,6 +691,16 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
 
   assert(i2<size1());
   assert(j2<size2());
+
+  // determine initial scale for this cell
+  if (i2 > 0 and j2 > 0)
+    scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
+  else if (i2 > 0)
+    scale(i2,j2) = scale(i2-1,j2);
+  else if (j2 > 0)
+    scale(i2,j2) = scale(i2,j2-1);
+
+  double maximum = 0;
 
   for(int S2=0;S2<nstates();S2++) 
   {
@@ -642,12 +716,12 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
       continue;
 
     //--- Compute Arrival Probability ----
-    (*this)(i2,j2,S2) = 0;
+    double temp  = 0;
     for(int S1=0;S1<nstates();S1++)
-      (*this)(i2,j2,S2) += (*this)(i1,j1,S1) * GQ(S1,S2);
+      temp += (*this)(i1,j1,S1) * GQ(S1,S2);
 
     //--- Include Emission Probability----
-    efloat_t sub;
+    double sub;
     if (i1 != i2 and j1 != j2)
       sub = emitMM(i2,j2);
     else if (i1 != i2)
@@ -657,14 +731,43 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
     else          // silent state - nothing emitted
       sub = emit__(i2,j2);
 
+    temp *= sub;
 
-    (*this)(i2,j2,S2) *= sub;
+    // rescale result to scale of this cell
+    if (scale(i1,j1) != scale(i2,j2))
+      temp *= pow2(scale(i1,j1)-scale(i2,j2));
+
+    // record maximum
+    if (temp > maximum) maximum = temp;
+
+    // store the result
+    (*this)(i2,j2,S2) = temp;
+  }
+
+  //------- if exponent is too low, rescale ------//
+  if (maximum > 0 and maximum < fp_scale::cutoff) {
+    int logs = -(int)log2(maximum);
+    double scale_ = pow2(logs);
+    for(int S2=0;S2<nstates();S2++) 
+      (*this)(i2,j2,S2) *= scale_;
+    scale(i2,j2) -= logs;
   }
 } 
+
 inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
 
   assert(i2<size1());
   assert(j2<size2());
+
+  // determine initial scale for this cell
+  if (i2 > 0 and j2 > 0)
+    scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
+  else if (i2 > 0)
+    scale(i2,j2) = scale(i2-1,j2);
+  else if (j2 > 0)
+    scale(i2,j2) = scale(i2,j2-1);
+
+  double maximum = 0;
 
   for(int i=0;i<states(j2).size();i++) 
   {
@@ -682,14 +785,14 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
       continue;
 
     //--- Compute Arrival Probability ----
-    (*this)(i2,j2,S2) = 0.0;
+    double temp = 0.0;
     for(int s=0;s<states(j1).size();s++) {
       int S1 = states(j1)[s];
-      (*this)(i2,j2,S2) +=  (*this)(i1,j1,S1) * GQ(S1,S2);
+      temp +=  (*this)(i1,j1,S1) * GQ(S1,S2);
     }
 
     //--- Include Emission Probability----
-    efloat_t sub;
+    double sub;
     if (i1 != i2 and j1 != j2)
       sub = emitMM(i2,j2);
     else if (i1 != i2)
@@ -699,7 +802,28 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
     else          // silent state - nothing emitted
       sub = emit__(i2,j2);
 
-    (*this)(i2,j2,S2) *= sub;
+    temp *= sub;
+
+    // rescale result to scale of this cell
+    if (scale(i1,j1) != scale(i2,j2))
+      temp *= pow2(scale(i1,j1)-scale(i2,j2));
+
+    // record maximum
+    if (temp > maximum) maximum = temp;
+
+    // store the result
+    (*this)(i2,j2,S2) = temp;
+  }
+
+  //------- if exponent is too low, rescale ------//
+  if (maximum > 0 and maximum < fp_scale::cutoff) {
+    int logs = -(int)log2(maximum);
+    double scale_ = pow2(logs);
+    for(int i=0;i<states(j2).size();i++) {
+      int S2 = states(j2)[i];
+      (*this)(i2,j2,S2) *= scale_;
+    }
+    scale(i2,j2) -= logs;
   }
 }
 

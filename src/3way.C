@@ -137,11 +137,11 @@ namespace A3 {
 
   using indel::PairHMM;
 
-  vector<efloat_t> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br) {
+  vector<double> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br) {
     int count = 0;
-    efloat_t sum = 0;
+    double sum = 0;
 
-    vector<efloat_t> start_P(nstates,0.0);
+    vector<double> start_P(nstates,0.0);
     for(int S=0;S<start_P.size();S++) {
       int states = getstates(S);
       int s1 = (states>>4)&3;
@@ -304,7 +304,7 @@ namespace A3 {
       return 0;
   }
 
-  inline efloat_t getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br)
+  inline double getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br)
   {
     assert(0 <= S1 and S1 < nstates+1);
     assert(0 <= S2 and S2 < nstates+1);
@@ -321,7 +321,7 @@ namespace A3 {
     if (not (ap1 & ap2) and (ap1>ap2))
       return 0.0;
 
-    efloat_t Pr=1;
+    double Pr=1;
     for(int i=0;i<3;i++) {
       int s1 = (states1>>(2*i+4))&3;
       int s2 = (states2>>(2*i+4))&3;
@@ -341,8 +341,9 @@ namespace A3 {
     return Pr;
   }
 
-  eMatrix createQ(const vector<indel::PairHMM>& P,const vector<int>& branches) {
-    eMatrix Q(nstates+1,nstates+1);
+  Matrix createQ(const vector<indel::PairHMM>& P,const vector<int>& branches) 
+  {
+    Matrix Q(nstates+1,nstates+1);
 
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
@@ -557,7 +558,7 @@ namespace A3 {
   efloat_t correction(const alignment& A,const Parameters& P,const vector<int>& nodes) {
     int length = A.seqlength(nodes[0]);
 
-    return pow(P.IModel().lengthp(length) ,2.0/P.Temp);
+    return pow(P.IModel().lengthp(length), 2.0/P.Temp);
   }
 
 
@@ -565,9 +566,7 @@ namespace A3 {
 			      const alignment& A2,const Parameters& P2,const vector<int>& nodes2) {
     assert(P1.Temp == P2.Temp);
 
-    efloat_t ratio = correction(A1,P1,nodes1) / correction(A2,P2,nodes2);
-
-    return ratio;
+    return correction(A1,P1,nodes1) / correction(A2,P2,nodes2);
   }
 
 }

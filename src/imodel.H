@@ -11,12 +11,12 @@
 //FIXME - add a 'name' method, and names for parameters.
 
 namespace indel {
-  class PairHMM: public eMatrix {
+  class PairHMM: public Matrix {
   public:
     int n_states() const {return size1()-1;}
-    efloat_t start(int i) const;
-    efloat_t start_pi(int i) const {return (*this)(n_states(),i);}
-    std::vector<efloat_t> start_pi() const;
+    double start(int i) const;
+    double start_pi(int i) const {return (*this)(n_states(),i);}
+    std::vector<double> start_pi() const;
    PairHMM();
   };
 }

@@ -39,7 +39,7 @@ public:
   bool connected(int S1,int S2) const {return GQ(S1,S2) != 0.0;}
 
   /// Probabilities of starting in each state
-  vector<efloat_t> start_P;
+  vector<double> start_P;
 
   /// bitmasks of whether states emit features in each sequence
   vector<int> state_emit;
@@ -75,7 +75,7 @@ public:
   efloat_t path_GQ_path(const vector<int>& g_path) const;
 
   /// Construct an HMM from the emission characteristics of the states, the start probabilities, and the transition matrix
-  HMM(const vector<int>&,const vector<efloat_t>&,const Matrix&,double);
+  HMM(const vector<int>&,const vector<double>&,const Matrix&,double);
 
   virtual ~HMM() {}
 };

@@ -4,7 +4,50 @@
 #include "hmm.H"
 
 
-template <class T>
+class state_array
+{
+  int s1;
+  int s2;
+  int s3;
+
+  //CHECK - does valarray make this faster?
+  vector<double> data;
+  vector<int> scale_;
+
+public:
+  int size1() const {return s1;}
+  int size2() const {return s2;}
+
+  double& operator()(int i,int j) {
+    assert(0 <= i and i < s1);
+    assert(0 <= j and j < s2);
+    return data[i*s2+j];
+  }
+
+  double operator()(int i,int j) const {
+    assert(0 <= i and i < s1);
+    assert(0 <= j and j < s2);
+    return data[i*s2+j];
+  }
+
+  int& scale(int i) {
+    assert(0 <= i and i < s1);
+    return scale_[i];
+  }
+
+  int scale(int i) const {
+    assert(0 <= i and i < s1);
+    return scale_[i];
+  }
+
+  state_array(int i1,int i2)
+    :s1(i1),s2(i2),
+     data(i1*i2),
+     scale_(i1)
+  {}
+};
+
+
 class state_matrix
 {
   int s1;
@@ -12,16 +55,44 @@ class state_matrix
   int s3;
 
   //CHECK - does valarray make this faster?
-  vector<T> data;
+  vector<double> data;
+  vector<int> scale_;
 public:
   int size1() const {return s1;}
   int size2() const {return s2;}
   int size3() const {return s3;}
 
-  T& operator()(int i,int j,int k) {return data[i*s2*s3+j*s3+k];}
-  const T& operator()(int i,int j,int k) const {return data[i*s2*s3+j*s3+k];}
+  double& operator()(int i,int j,int k) {
+    assert(0 <= i and i < s1);
+    assert(0 <= j and j < s2);
+    assert(0 <= k and k < s3);
+    return data[i*s2*s3+j*s3+k];
+  }
 
-  state_matrix(int i1,int i2,int i3):s1(i1),s2(i2),s3(i3),data(i1*i2*i3) {}
+  double operator()(int i,int j,int k) const {
+    assert(0 <= i and i < s1);
+    assert(0 <= j and j < s2);
+    assert(0 <= k and k < s3);
+    return data[i*s2*s3+j*s3+k];
+  }
+
+  int& scale(int i,int j) {
+    assert(0 <= i and i < s1);
+    assert(0 <= j and j < s2);
+    return scale_[i*s2 + j];
+  }
+
+  int scale(int i,int j) const {
+    assert(0 <= i and i < s1);
+    assert(0 <= j and j < s2);
+    return scale_[i*s2 + j];
+  }
+
+  state_matrix(int i1,int i2,int i3)
+    :s1(i1),s2(i2),s3(i3),
+     data(i1*i2*i3),
+     scale_(s1*s2)
+  {}
 };
 
 
@@ -46,13 +117,13 @@ public:
     return path_GQ_path(g_path) + this->path_Q_subst(g_path);
   }
 
-  DPengine(const vector<int>&,const vector<efloat_t>&,const eMatrix&,double Temp);
+  DPengine(const vector<int>&,const vector<double>&,const Matrix&,double Temp);
 };
 
 
 
 /// 1D Dynamic Programming Matrix
-class DParray : public DPengine, public vector< vector<efloat_t> > {
+class DParray : public DPengine, public state_array {
   /// Length of the DP array
   int length;
 public:
@@ -79,7 +150,7 @@ public:
   efloat_t Pr_sum_all_paths() const;
 
   /// Construct an 1D DP matrix from a length, and an HMM
-  DParray(int,const vector<int>&,const vector<efloat_t>&,const eMatrix&,double Temp);
+  DParray(int,const vector<int>&,const vector<double>&,const Matrix&,double Temp);
 
   virtual ~DParray() {}
 };
@@ -106,7 +177,7 @@ public:
   void prune();
 
   /// Construct an 1D DP matrix from a length, and an HMM
-  DParrayConstrained(int,const vector<int>&,const vector<efloat_t>&,const eMatrix&, double Temp);
+  DParrayConstrained(int,const vector<int>&,const vector<double>&,const Matrix&, double Temp);
 
   virtual ~DParrayConstrained() {}
 };
@@ -114,7 +185,7 @@ public:
 
 
 /// 2D Dynamic Programming Matrix
-class DPmatrix : public DPengine, public state_matrix<efloat_t> {
+class DPmatrix : public DPengine, public state_matrix {
   /// Size of first dimension: 0...L1 = 0...S1-1
   int S1;
   /// Size of second dimension: 0...L2 = 0...S2-1
@@ -161,8 +232,8 @@ public:
   DPmatrix::DPmatrix(int i1,
 		     int i2,
 		     const vector<int>& v1,
-		     const vector<efloat_t>& v2,
-		     const eMatrix& M,
+		     const vector<double>& v2,
+		     const Matrix& M,
 		     double Temp);
   virtual ~DPmatrix() {}
 };
@@ -182,8 +253,8 @@ public:
   DPmatrixNoEmit::DPmatrixNoEmit(int i1,
 				 int i2,
 				 const vector<int>& v1,
-				 const vector<efloat_t>& v2,
-				 const eMatrix& M,
+				 const vector<double>& v2,
+				 const Matrix& M,
 				 double Temp
 				 )
     :DPmatrix(i1,i2,v1,v2,M,Temp) 
@@ -198,11 +269,11 @@ public:
 class DPmatrixEmit : public DPmatrix {
 protected:
 
-  eMatrix s12_sub;
+  Matrix s12_sub;
   /// Precomputed emission probabilies for +-
-  std::vector<efloat_t> s1_sub;
+  std::vector<double> s1_sub;
   /// Precomputed emission probabilies for -+
-  std::vector<efloat_t> s2_sub;
+  std::vector<double> s2_sub;
 
 public:
   /// Probabilities of the different rates
@@ -219,18 +290,18 @@ public:
   efloat_t path_Q_subst(const vector<int>& path) const;
 
   /// Emission probabilities for ++
-  efloat_t emitMM(int i,int j) const;
+  double emitMM(int i,int j) const;
   /// Emission probabilities for -+
-  efloat_t emit_M(int i,int j) const;
+  double emit_M(int i,int j) const;
   /// Emission probabilities for +-
-  efloat_t emitM_(int i,int j) const;
+  double emitM_(int i,int j) const;
   /// Emission probabilities for --
-  efloat_t emit__(int i,int j) const;
+  double emit__(int i,int j) const;
 
   /// Construct a DP array from an HMM, emission probabilities, and substitution model
   DPmatrixEmit::DPmatrixEmit(const vector<int>&,
-			     const vector<efloat_t>&,
-			     const eMatrix&,
+			     const vector<double>&,
+			     const Matrix&,
 			     double Temp,
 			     const vector< double >&,
 			     const vector< Matrix >&,
@@ -248,8 +319,8 @@ public:
   void forward_cell(int,int,int,int);
 
   DPmatrixSimple(const vector<int> & v1,
-		 const vector<efloat_t> & v2,
-		 const eMatrix& M,
+		 const vector<double> & v2,
+		 const Matrix& M,
 		 double Temp,
 		 const vector< double >& d0,
 		 const vector< Matrix >& d1,
@@ -276,8 +347,8 @@ public:
   void prune();
 
   DPmatrixConstrained(const vector<int> & v1,
-		      const vector<efloat_t> & v2,
-		      const eMatrix& M,
+		      const vector<double> & v2,
+		      const Matrix& M,
 		      double Temp,
 		      const vector< double >& d0,
 		      const vector< Matrix >& d1,

@@ -256,13 +256,13 @@ namespace A5 {
 
 
   /// Get the vector of start probabilities
-  vector<efloat_t> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br,
+  vector<double> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br,
 			       const vector<int>& states)
   {
     int count = 0;
-    efloat_t sum = 0.0;
+    double sum = 0.0;
 
-    vector<efloat_t> start_P(states_list.size()-1,0.0);
+    vector<double> start_P(states_list.size()-1,0.0);
     int allmatch = (bits_to_substates(63)<<6)|63;
     allmatch = findstate(allmatch,states_list);
 
@@ -304,7 +304,7 @@ namespace A5 {
   }
 
   /// Compute the probability of moving from state #S1 to state #S2
-  efloat_t getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  double getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
   {
     int endstate = states.size()-1;
 
@@ -325,7 +325,7 @@ namespace A5 {
     if (not (ap1 & ap2) and (ap1>ap2))
       return 0.0;
 
-    efloat_t Pr=1.0;
+    double Pr=1.0;
     for(int i=0;i<5;i++) {
       int s1 = (states1>>(2*i))&3;
       int s2 = (states2>>(2*i))&3;
@@ -346,9 +346,9 @@ namespace A5 {
   }
 
   /// Create the full transition matrix
-  eMatrix createQ(const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  Matrix createQ(const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
   {
-    eMatrix Q(states.size(),states.size());
+    Matrix Q(states.size(),states.size());
 
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)

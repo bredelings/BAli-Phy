@@ -44,7 +44,7 @@ vector<int> HMM::ungeneralize(const vector<int>& g_path) const {
 
       // Choose the extra states... S1->S2->.....>S_end
       do {
-	vector<efloat_t> P(silent_network_states.size()+1);
+	vector<double> P(silent_network_states.size()+1);
 	for(int s2=0;s2<silent_network_states.size();s2++) {
 	  int S2 = silent_network_states[s2];
 	  P[s2] = Q(S1,S2) * GQ(S2,S_end);
@@ -73,7 +73,8 @@ vector<int> HMM::ungeneralize(const vector<int>& g_path) const {
   return path;
 }
 
-efloat_t HMM::generalize_P_one(vector<int>::const_iterator s1,int n) const {
+efloat_t HMM::generalize_P_one(vector<int>::const_iterator s1,int n) const 
+{
   efloat_t Pr = 1;
 
   int S_end = *(s1 + n);
@@ -82,7 +83,7 @@ efloat_t HMM::generalize_P_one(vector<int>::const_iterator s1,int n) const {
   for(int i=0;i<n;i++) {
     int S1 = *(s1 + i);
 
-    vector<efloat_t> P(silent_network_states.size()+1);
+    vector<double> P(silent_network_states.size()+1);
     for(int s2=0;s2<silent_network_states.size();s2++) {
       int S2 = silent_network_states[s2];
       P[s2] = Q(S1,S2) * GQ(S2,S_end);
@@ -147,14 +148,14 @@ efloat_t HMM::path_GQ_path(const vector<int>& g_path) const {
 
 // IF (and only if) T > 1, then GQ(i,j) can be > 0....
 
-eMatrix GQ_exit(const eMatrix& Q,const vector<int>& silent_network_states,const vector<int>& non_silent_network) {
+Matrix GQ_exit(const Matrix& Q,const vector<int>& silent_network_states,const vector<int>& non_silent_network) {
 
   const int n_S = silent_network_states.size();
   const int n_NS = non_silent_network.size();
 
 
   //--------------- Create and fill the matrix G -----------------//
-  eMatrix G(n_S,n_S+n_NS);
+  Matrix G(n_S,n_S+n_NS);
   for(int s1=0; s1<G.size1(); s1++) {
     int S1 = silent_network_states[s1];
     int j=0;
@@ -184,7 +185,7 @@ eMatrix GQ_exit(const eMatrix& Q,const vector<int>& silent_network_states,const 
 
 
   //--------------------- Resize the matrix ------------------------//
-  eMatrix G2(n_S,n_NS);
+  Matrix G2(n_S,n_NS);
   for(int i=0;i<G2.size1();i++)
     for(int j=0;j<G2.size2();j++)
       G2(i,j) = G(i,n_S + j);
@@ -257,7 +258,7 @@ void HMM::find_and_index_silent_network_states() {
 
 
 // Don't scale Q and GQ until the end???
-HMM::HMM(const vector<int>& v1,const vector<efloat_t>& v2,const Matrix& M,double Temp)
+HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
   :silent_network_(v1.size()),
    T(Temp),
    Q(M),GQ(M),
@@ -307,7 +308,7 @@ HMM::HMM(const vector<int>& v1,const vector<efloat_t>& v2,const Matrix& M,double
   
   //---------------- compute the probability of -------------------//
 
-  eMatrix G = GQ_exit(Q,silent_network_states,non_silent_network);
+  Matrix G = GQ_exit(Q,silent_network_states,non_silent_network);
 
 
   //---------------- Actually modify the elements of GQ ----------------//

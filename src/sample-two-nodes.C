@@ -115,8 +115,8 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   branches[2] = T.branch(nodes[2],nodes[5]);
   branches[3] = T.branch(nodes[3],nodes[5]);
   branches[4] = T.branch(nodes[4],nodes[5]);
-  const eMatrix Q = createQ(P.branch_HMMs,branches,A5::states_list);
-  vector<efloat_t> start_P = get_start_P(P.branch_HMMs,branches,A5::states_list);
+  const Matrix Q = createQ(P.branch_HMMs,branches,A5::states_list);
+  vector<double> start_P = get_start_P(P.branch_HMMs,branches,A5::states_list);
 
   // Actually create the Matrices & Chain
   DParrayConstrained Matrices(seqall.size(), 

@@ -13,17 +13,17 @@ using std::vector;
 using namespace A2;
 
 namespace indel {
-  PairHMM::PairHMM(): eMatrix(5,5) {}
+  PairHMM::PairHMM(): Matrix(5,5) {}
 
-  efloat_t PairHMM::start(int s) const {
-    efloat_t total = 0;
+  double PairHMM::start(int s) const {
+    double total = 0;
     for(int i=0;i<n_states();i++)
       total += (*this)(n_states(),i)*(*this)(i,s);
     return total;
   }
 
-  vector<efloat_t> PairHMM::start_pi() const {
-    vector<efloat_t> pi(n_states()-1);
+  vector<double> PairHMM::start_pi() const {
+    vector<double> pi(n_states()-1);
     for(int i=0;i<pi.size();i++)
       pi[i] = start_pi(i);
     return pi;
@@ -36,10 +36,10 @@ string i_parameter_name(int i,int n) {
   return string("pI") + convertToString(i);
 }
 
-void remove_one_state(eMatrix& Q,int S) {
+void remove_one_state(Matrix& Q,int S) {
   assert(Q.size1() == Q.size2());
 
-  efloat_t temp = 1.0 - Q(S,S);
+  double temp = 1.0 - Q(S,S);
 
   // compute transitions from i!=S -> j  [ depends on Q(S->j) ]
   for(int i=0;i<Q.size1();i++) {
