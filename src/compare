@@ -432,3 +432,20 @@ job1 gcse=2 web tracer: 3.12 3.15 3.17 3.16
 job2 gcse=2 web tracer: 22.64 22.62
 
 
+------------------------
+user+system:
+
+#1 = 912 + nothing:
+5.51
+
+#2 = 915 + C-ifying DPmatrixConstrained::forward_cell( ):
+5.21 (-5.4% over nothing))
+
+#3 = #2 + sse + vectorize:
+5.10 (-2.1%)
+
+#4 = #3 + C-ifying DParrayConstrained::forward_cell( ):
+5.07 (-1%)
+
+#5 = #4 + profile-based optimization
+4.95 = 4.34 + 0.61 (-2.3%)    [For substitution case: -3.2% over #1]
