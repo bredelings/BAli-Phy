@@ -140,7 +140,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				 branches)
 		 );
 
-  topology_move.add(1,NNI_move);
+  topology_move.add(1,NNI_move,false);
   topology_move.add(0.04,SPR_move);
   if (P.T.n_leaves() >3 and P.SModel().full_tree)
     tree_moves.add(1,topology_move);
@@ -164,7 +164,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 		      );
   length_moves.add(1,length_moves1);
 
-  tree_moves.add(1,length_moves);
+  tree_moves.add(1,length_moves,false);
   tree_moves.add(1,SingleMove(sample_NNI_and_branch_lengths,"NNI_and_lengths:topology:lengths"));
 
   //------------- parameters (parameters_moves) --------------//

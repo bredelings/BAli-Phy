@@ -222,9 +222,11 @@ MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
 
     std::cerr<<"\n\n Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
-    change_branch_length(A,P,b);
     if (P.T.branch(b).is_internal_branch())
       three_way_topology_sample(A,P,b);
+    change_branch_length(A,P,b);
+    change_branch_length(A,P,b);
+    change_branch_length(A,P,b);
   }
 
   return result;
