@@ -108,32 +108,6 @@ public:
   ~IndelModel1() {};
 };
 
-class IndelModel2 : public IndelModel {
-public:
-  void fiddle(const std::valarray<bool>&);
-
-  void recalc();
-
-  double prior(double) const;
-
-  IndelModel2* clone() const {return new IndelModel2(*this);}
-
-  ///probability of going -> E
-  double tau;     
-
-  ///probability of starting a gap: M -> G1,G2
-  double delta;   
-
-  ///probability of extending a gap: G1->G1,  G2->G2
-  double epsilon; 
-
-  ///unweighting factor for adjacent G1/G2 gaps
-  double beta;    
-
-  explicit IndelModel2(double LO,double LE,double b=0);
-};
-
-
 class UpweightedIndelModel : public IndelModel {
 public:
   void fiddle(const std::valarray<bool>&);

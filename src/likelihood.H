@@ -43,4 +43,10 @@ double probability3(const alignment& A,const Parameters& P);
 double log_num_branches(int n);
 double log_num_topologies(int n);
 double log_num_topologies_in_partition(int n1, int n2);
+
+double exp_exponential_log_pdf(double y,double mu);
+double exp_exponential_pdf(double y,double mu);
+
+double shift_laplace_pdf(double x, double mu, double sigma);
+
 #endif

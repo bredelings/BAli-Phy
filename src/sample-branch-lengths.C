@@ -18,9 +18,10 @@ bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
 }
 
 double branch_twiddle(double T,double mu,double sigma1=0.4,double sigma2=0.4) {
-  if (myrandomf() < 0.3)
+  if (myrandomf() < 1.3)
     T += gaussian(0,mu*sigma1);
   else 
+    // FIXME - we need to adjust the prior if we are going to do this!
     T *= exp( gaussian(0,sigma2) );
 
   return T;

@@ -16,6 +16,19 @@ double probability3(const alignment& A,const Parameters& P) {
 }
 
 
+/// log density for y if y=ln x, and x ~ Exp(mu)
+double exp_exponential_log_pdf(double y, double mu) {
+  return -log(mu) + (y-exp(y))/mu;
+}
+
+double exp_exponential_pdf(double y, double mu) {
+  return exp(exp_exponential_log_pdf(y,mu));
+}
+
+double shift_laplace_pdf(double x, double mu, double sigma) {
+  double a = sigma/sqrt(2);
+  return gsl_ran_laplace_pdf(x-mu,a);
+}
 
 double log_double_factorial(int n) {
   double x = 0;
@@ -38,6 +51,9 @@ double log_num_topologies_in_partition(int n1,int n2) {
   return total;
 }
 
+/// FIXME if X ~ Exp(mu), then g(y) = exp(y-exp(y)/mu)/mu
+///                         ln g(y) = log(mu) + (y-exp(y))/mu 
+
 
 /// Tree prior: branch lengths & topology
 double prior(const SequenceTree& T,double branch_mean) {
@@ -53,14 +69,14 @@ double prior(const SequenceTree& T,double branch_mean) {
   return p;
 }
 
-/// Tree prior + SModel prior + IModel prio
+/// Hyper-prior + Tree prior + SModel prior + IModel prior
 double prior(const Parameters& P) {
   double p = 0;
 
   const double branch_mean_mean = 0.4;
 
   // prior on the mu, the mean branch length
-  p += (-log(branch_mean_mean) - P.branch_mean/branch_mean_mean);
+  p += exp_exponential_pdf(log(P.branch_mean),branch_mean_mean);
 
   // prior on the topology and branch lengths
   p += prior(P.T, P.branch_mean);

@@ -6,17 +6,13 @@
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>
 #include "logsum.H"
+#include "likelihood.H"
 
 using std::valarray;
 using std::string;
 using std::vector;
 
 namespace substitution {
-
-  double shift_laplace_pdf(double x, double mu, double sigma) {
-    double a = sigma/sqrt(2);
-    return gsl_ran_laplace_pdf(std::abs(x-mu),a);
-  }
 
   Model::Model(int s)
     :parameters_(s),
@@ -173,18 +169,20 @@ namespace substitution {
   }
 
   void HKY::fiddle(const valarray<bool>& fixed) {
+    if (fixed[0]) return;
+
     double k = log(kappa());
 
     const double sigma = 0.15;
     k += gaussian(0,sigma);
 
-    if (not fixed[0])
-      kappa(exp(k));
+    kappa(exp(k));
   }
 
   /// return the LOG of the prior
   double HKY::prior() const {
-    return log(shift_laplace_pdf(kappa(), log(2), 0.5));
+    double k = log(kappa());
+    return log(shift_laplace_pdf(k, log(2), 0.5));
   }
 
   void HKY::recalc() {
@@ -243,8 +241,8 @@ namespace substitution {
   //------------------------ Codon Models -------------------//
   double YangCodonModel::prior() const {
     double P = 0;
-    P += log(shift_laplace_pdf(kappa(), log(2), 0.5));
-    P += log(shift_laplace_pdf(omega(), 0, 0.1));
+    P += log(shift_laplace_pdf(log(kappa()), log(2), 0.5));
+    P += log(shift_laplace_pdf(log(omega()), 0, 0.1));
     return P;
   }
 
