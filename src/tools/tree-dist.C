@@ -49,6 +49,7 @@ SequenceTree standardized(SequenceTree T) {
   //  cerr<<t<<endl;
   //  cerr<<T.write()<<endl;
   //  cerr<<T.write(false)<<endl;
+  std::abort(); // FIXME
   T.SequenceTree::standardize(newnames);
   //  cerr<<T.write(false)<<endl;
   return T;
@@ -203,8 +204,10 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
   //--------- Count how many of each topology -----------//
   foreach(mytree,trees) {
       
+    // This should make all the branch & node numbers the same if the topology is the same
     SequenceTree T = standardized(*mytree,remove);
-    string t = T.write(false);
+    // FIXME - this should be a standard string representation
+    string t = add_root(T,0).write(false);
       
     typeof(index.begin()) here = index.find(t);
       
