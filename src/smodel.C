@@ -569,19 +569,40 @@ namespace substitution {
       a(m,l) = al[m];
   }
 
+  valarray<double> get_varray(const vector<double>& v1,int start, int n) 
+  {
+    assert(start>=0);
+    assert(n>0);
+    assert(start + n <= v1.size());
+
+    valarray<double> v2(n);
+    for(int i=0;i<v2.size();i++)
+      v2[i] = v1[start+i];
+    return v2;
+  }
+
+  void set_varray(vector<double>& v1,int start,const valarray<double>& v2) 
+  {
+    assert(start>=0);
+    assert(v2.size() > 0);
+    assert(start + v2.size() <= v1.size());
+
+    //copy from valarray
+    for(int i=0;i<v2.size();i++)
+      v1[start + i] = v2[i];
+  }
+
+
+
   void dirichlet_fiddle(vector<double>& v,int start, int n,double sigma) 
   {
-    // copy to valarray
-    valarray<double> fract(n);
-    for(int i=0;i<fract.size();i++)
-      fract[i] = v[start+i];
+    valarray<double> fract = get_varray(v,start,n);
 
     // fiddle
     fract = ::dirichlet_fiddle(fract,sigma);
 
-    //copy from valarray
-    for(int i=0;i<fract.size();i++)
-      v[start + i] = fract[i];
+    set_varray(v,start,fract);
+
   }
 
   void dirichlet_fiddle(vector<double>& v,double sigma) 
@@ -1021,122 +1042,147 @@ namespace substitution {
     recalc();
   }
 
-  void DualModel::recalc() {
-    double r = super_parameters()[1];
+  int MixtureModel::n_base_models() const 
+  {
+    int total=0;
+    for(int i=0; i<n_submodels(); i++)
+      total += SubModels(i).n_base_models();
+    return total;
+  }
 
+
+  void MixtureModel::recalc() 
+  {
     //recalculate submodels;
     SuperModel::recalc();
 
-    //remove submodel rates
-    SubModels(0).set_rate(1);
-    SubModels(1).set_rate(r);
+    //recalculate pi
+    pi = 0;
+    int sm_total = n_submodels();
+    for(int sm=0;sm<sm_total;sm++)
+      pi += super_parameters_[sm]*SubModels(sm).frequencies();
   }
 
-  double DualModel::super_prior() const {
-    double P=0;
+  double MixtureModel::super_prior() const 
+  {
+    valarray<double> p = get_varray(super_parameters_,0,n_submodels());
+    valarray<double> n = get_varray(super_parameters_,n_submodels(),n_submodels());
 
-    double p = parameters_[parameters_.size()-2];
-    double r = parameters_[parameters_.size()-1];
+    n *= 10;
 
-    const double frac_mode = 0.5;
-    const double N = 20;
-    const double a  = 1.0 + N * frac_mode;
-    const double b  = 1.0 + N * (1.0 - frac_mode);
-
-    if (p <= 0.0 or p >= 1.0)
-      P += log_0;
-    else 
-      P += log(gsl_ran_beta_pdf(p,a,b));
-
-    double log_r = log(r);
-    P += log(shift_laplace_pdf(log_r,0,0.2));
-
-    return P;
+    return dirichlet_log_pdf(p,n);
   }
 
-  void DualModel::super_fiddle() {
-    if (not fixed(0)) {
+  void MixtureModel::super_fiddle() 
+  {
+    valarray<double> p = get_varray(super_parameters_,0,n_submodels());
 
-      double& p = parameters_[0];
+    const double sigma = 0.10;
+    ::dirichlet_fiddle(p,sigma);
 
-      // fiddle Invariant fraction
-      const double sigma = 0.04;
-      p += gaussian(0,sigma);
-
-      p = wrap(p,1.0);
-    }
-
-    if (not fixed(1)) {
-      double & r = parameters_[1];
-      r *= exp(gaussian(0,0.3));
-    }
+    set_varray(super_parameters_,0,p);
     
     recalc();
   }
 
-  const MultiModel::Base_Model_t& DualModel::base_model(int m) const {
-    if (m<SubModels(0).n_base_models())
-      return SubModels(0).base_model(m);
-    m -= SubModels(0).n_base_models();
+  const MultiModel::Base_Model_t& MixtureModel::base_model(int m) const 
+  {
+    assert(m >= 0);
 
-    if (m<SubModels(1).n_base_models())
-      return SubModels(1).base_model(m);
+    int sm_total = n_submodels();
+    for(int sm=0;sm<sm_total;sm++) {
+      if (m < SubModels(sm).n_base_models())
+	return SubModels(sm).base_model(m);
+      else
+	m -= SubModels(sm).n_base_models();
+    }
 
+    // we don't even have that many base models...
     std::abort();
   }
 
-  MultiModel::Base_Model_t& DualModel::base_model(int m) {
-    if (m<SubModels(0).n_base_models())
-      return SubModels(0).base_model(m);
-    m -= SubModels(0).n_base_models();
+  MultiModel::Base_Model_t& MixtureModel::base_model(int m) 
+  {
+    assert(m >= 0);
 
-    if (m<SubModels(1).n_base_models())
-      return SubModels(1).base_model(m);
+    int sm_total = n_submodels();
+    for(int sm=0; sm<sm_total; sm++) {
+      if (m < SubModels(sm).n_base_models())
+	return SubModels(sm).base_model(m);
+      else
+	m -= SubModels(sm).n_base_models();
+    }
 
+    // we don't even have that many base models...
     std::abort();
   }
 
-  vector<double> DualModel::distribution() const {
+  vector<double> MixtureModel::distribution() const 
+  {
+    int sm_total = n_submodels();
+
     vector<double> dist(n_base_models());
-    int m=0;
-    double f1 = super_parameters()[0];
-    double f2 = 1.0-f1;
-    for(int i=0;i<SubModels(0).n_base_models();i++)
-      dist[m++] = f1*SubModels(0).distribution()[i];
-    for(int i=0;i<SubModels(1).n_base_models();i++)
-      dist[m++] = f2*SubModels(1).distribution()[i];
 
+    for(int sm=0,m=0; sm<sm_total; sm++) {
+      double f = super_parameters()[sm];
+      for(int i=0;i<SubModels(sm).n_base_models();i++)
+	dist[m++] = f*SubModels(0).distribution()[i];
+    }
+    
     return dist;
   }
 
-  string DualModel::super_parameter_name(int i) const {
-    if (i==0)
-      return "Dual::p";
-    else if (i==1)
-      return "Dual::r";
-    else
-      return s_parameter_name(i,2);
+  string MixtureModel::super_parameter_name(int i) const 
+  {
+    if (i < n_submodels()) {
+      string name = "Mixture::p";
+      name += convertToString(i);
+      return name;
+    }
+    else if (i<2*n_submodels()) {
+      i -= n_submodels();
+      string name = "Mixture::prior";
+      name += convertToString(i);
+      return name;
+    }
+
+    return s_parameter_name(i,2*n_submodels());
   }
 
-  string DualModel::name() const {
-    return string("DualModel(") + SubModels(0).name() + "," + SubModels(1).name() + ")";
+  string MixtureModel::name() const {
+    string name = "MixtureModel(";
+    int n = n_submodels();
+    for(int i=0;i<n;i++) {
+      name += SubModels(i).name();
+      if (i != n-1)
+	name += ", ";
+    }
+    name += ")";
+
+    return name;
   }
 
-  void DualModel::frequencies(const std::valarray<double>& f) { 
-    SubModels(0).frequencies(f);
-    SubModels(1).frequencies(f);
+  void MixtureModel::frequencies(const std::valarray<double>& f) 
+  { 
+    for(int i=0;i<n_submodels();i++)
+      SubModels(i).frequencies(f);
+
     recalc();
   }
 
-  DualModel::DualModel(const std::vector<OwnedPointer<MultiModel> >& models)
-    :SuperDerivedModelOver<MultiModel,Model>(models,2)
+  MixtureModel::MixtureModel(const std::vector<OwnedPointer<MultiModel> >& models)
+    :SuperDerivedModelOver<MultiModel,MultiModel>(models,2*models.size())
   {
-    super_parameters_[0] = 0.5;
-    super_parameters_[1] = 1.0;
+    for(int i=0;i<models.size();i++)
+      super_parameters_[i] = 1.0/models.size();
+
+    for(int i=0;i<models.size();i++)
+      super_parameters_[i+models.size()] = 1.0/models.size();
+
+    pi.resize(Alphabet().size());
 
     read();
 
-    // this includes a recalc
-    frequencies(frequencies());
+    recalc();
   }
 }

@@ -27,7 +27,7 @@ bool match(vector<string>& sstack,const string& s,string& arg) {
     if (loc == -1) return false;
     string name = top.substr(0,loc);
     arg = top.substr(loc+1,top.size()-loc-2);
-    success =(name == s);
+    success = (name == s);
   }
 
   if (success)
@@ -218,33 +218,30 @@ bool process_stack_Multi(vector<string>& string_stack,
     else
       throw myexception()<<"We can only create INV models on top of MultiRateModels or Markov models";
   }
-  else if (match(string_stack,"Dual",arg)) {
-    if (model_stack.size() < 2)
-      throw myexception()<<"Dual: can't find 2 models to combine";
-
-    OwnedPointer<MultiModel> M2;
-    if (dynamic_cast<MultiModel*>(model_stack.back().get()) )
-      M2 = *dynamic_cast<MultiModel*>(model_stack.back().get());
-    else if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
-      M2 = UnitModel(*dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) );
+  else if (match(string_stack,"Mixture",arg)) {
+    int n=1;
+    if (arg.empty())
+      throw myexception()<<"Mixture model must specify number of submodels as Mixture[n]";
     else
-      throw myexception()<<"Dual: second model isn't reversible+additive or a multi-model";
-    model_stack.pop_back();
+      n = convertTo<int>(arg);
 
-    OwnedPointer<MultiModel> M1;
-    if (dynamic_cast<MultiModel*>(model_stack.back().get()) )
-      M1 = *dynamic_cast<MultiModel*>(model_stack.back().get());
-    else if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
-      M1 = UnitModel(*dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) );
-    else
-      throw myexception()<<"Dual: first model isn't reversible+additive or a multi-model";
-    model_stack.pop_back();
-
+    if (model_stack.size() < n)
+      throw myexception()<<"Dual: can't find "<<n<<" models to combine";
+    
     vector <OwnedPointer<MultiModel> > models;
-    models.push_back(M1);
-    models.push_back(M2);
+    for(int m=0;m<n;m++) {
+      OwnedPointer<MultiModel> M;
+      if (dynamic_cast<MultiModel*>(model_stack.back().get()) )
+	M = *dynamic_cast<MultiModel*>(model_stack.back().get());
+      else if (dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) )
+	M = UnitModel(*dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get()) );
+      else
+	throw myexception()<<"Mixture: model "<<m<<"isn't reversible+additive or a multi-model";
+      model_stack.pop_back();
+      models.push_back(M);
+    }
 
-    model_stack.push_back(DualModel(models));
+    model_stack.push_back(MixtureModel(models));
   }
   else if (match(string_stack,"YangM2",arg)) {
     if (not dynamic_cast<YangCodonModel*>(model_stack.back().get()))

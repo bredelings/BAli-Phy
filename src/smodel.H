@@ -826,24 +826,26 @@ namespace substitution {
   };
 
 
-  class DualModel: public MultiModel, public SuperDerivedModelOver<MultiModel,Model> 
+  class MixtureModel: public SuperDerivedModelOver<MultiModel,MultiModel> 
   {
     double super_prior() const;
     void super_fiddle();
     void recalc();
-    
+
+    std::valarray<double> pi;
+
   public:
-    virtual DualModel* clone() const {return new DualModel(*this);}
+    virtual MixtureModel* clone() const {return new MixtureModel(*this);}
 
     /// The number of models
-    int n_base_models() const {return SubModels(0).n_base_models() +
-				      SubModels(1).n_base_models();}
+    int n_base_models() const;
 
     const Base_Model_t& base_model(int m) const;
           Base_Model_t& base_model(int m);
 
     /// Get the equilibrium frequencies
-    const std::valarray<double>& frequencies() const {return base_model(0).frequencies();}
+    const std::valarray<double>& frequencies() const {return pi;}
+
     /// Set the equilibrium frequencies
     void frequencies(const std::valarray<double>& f);
 
@@ -857,7 +859,7 @@ namespace substitution {
       return SubModels(0).Alphabet();
     }
 
-    DualModel(const std::vector<OwnedPointer<MultiModel> >& models);
+    MixtureModel(const std::vector<OwnedPointer<MultiModel> >& models);
   };
 
 }
