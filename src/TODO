@@ -2,16 +2,7 @@
 
 2. Fix tools/analyze-distances: make an interface to get likelihoods by column...
 
-3. Speed up sample_path() for DParrayConstrained by only considering
-    allowed states for each column...
-    a) check how fast we are when gaps=full_tree but alignment_branch is 
-       fixed... 
-    c) see how much speed gain we get for 48 taxa...
-
-4. consider ignoring letters if they are wildcards...
-    a) first 
-
-5.  Add comments!
+5. Add comments!
 
 6. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
 7. Make align-constraint= work with sample_tri_multi (there is no regular sample_multi)
@@ -32,6 +23,14 @@
     b) allow names like colorscheme=plain+AA+whiten scale=LOD
                         colorscheme=plain-AA-whiten scale=LOD
        where minus means affect the fg instead of the background.
+
+3. Speed up sample_path() for DParrayConstrained by only considering
+    allowed states for each column...
+    a) benchmark gaps=full_tree when alignment_branch is fixed... 
+    c) see how much speed gain we get for 48 taxa...
+
+4. consider ignoring letters if they are wildcards...
+    a) first 
 
 12.5: Allow specifying another model than HKY (e.g. TNY) underneath YangCodonModel
 ------
