@@ -2,6 +2,8 @@
 
 2. Fix tools/analyze-distances: make an interface to get likelihoods by column...
 
+3. Write alignment-consensus
+
 5. Add comments!
 
 6. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
