@@ -259,36 +259,34 @@ void alignment::print(std::ostream& file) const{
   }
 }
 
-void alignment::prepare_write(vector<string>& names,vector<string>& letters,bool othernodes) const {
+vector<sequence> alignment::prepare_write() const {
   const alphabet& a = get_alphabet();
 
-  int N = num_sequences();
-  if (not othernodes)
-    N = N/2+1;
+  vector<sequence> seqs(n_sequences());
 
-  for(int i=0;i<N;i++) {
-    string letters_i;
-    for(int column=0;column<length();column++) 
-      letters_i += a.lookup((*this)(column,i));
+  for(int i=0;i<seqs.size();i++) {
+    seqs[i].name = sequences[i].name;
+    seqs[i].comment = sequences[i].comment;
 
-    names.push_back(sequences[i].name);
-    letters.push_back(letters_i);
+    seqs[i].resize(length());
+    for(int c=0;c<length();c++)
+      seqs[i] = A(c,i);
   }
+
+  return seqs;
 }
 
-void alignment::write_sequences(sequence_format::dumper_t method,std::ostream& file,bool othernodes) const {
-  vector<string> names;
-  vector<string> sequences;
-  prepare_write(names,sequences,othernodes);
-  (*method)(file,names,sequences);
+void alignment::write_sequences(sequence_format::dumper_t method,std::ostream& file) const {
+  vector<sequences> = prepare_write();
+  (*method)(file,sequences);
 }
 
 void alignment::print_fasta(std::ostream& file) const {
-  write_sequences(sequence_format::write_fasta,file,true);
+  write_sequences(sequence_format::write_fasta,file);
 }
 
-void alignment::print_phylip(std::ostream& file,bool othernodes) const {
-  write_sequences(sequence_format::write_phylip,file,othernodes);
+void alignment::print_phylip(std::ostream& file) const {
+  write_sequences(sequence_format::write_phylip,file);
 }
 
 vector<int> get_path(const alignment& A,int node1, int node2) {
@@ -330,7 +328,7 @@ std::ostream& operator<<(std::ostream& file,const alignment& A) {
 
 std::istream& operator>>(std::istream& file,alignment& A) {
 
-  char c = file.getc();
+  char c = file.get();
   file.putback(c);
   if (c=='>')
     A.load_sequences(A.get_alphabet(),sequence_format::read_fasta,file);

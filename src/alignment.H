@@ -51,14 +51,14 @@ public:
   void load(const alphabet&,const std::string& filename);
   void load(const vector<OwnedPointer<alphabet> >&,const std::string& filename);
 
-  void prepare_write(vector<string>&,vector<string>&,bool) const;
-  void write_sequences(sequence_format::dumper_t,std::ostream&,bool) const;
+  vector<sequence> prepare_write() const;
+  void write_sequences(sequence_format::dumper_t,std::ostream&) const;
 
   void print(std::ostream&) const;
   /// Print alignment in FASTA format
   void print_fasta(std::ostream&) const;
-  /// Print alignment in PHYLIP format, optionally printing internal nodes
-  void print_phylip(std::ostream&,bool=false) const;
+  /// Print alignment in PHYLIP format
+  void print_phylip(std::ostream&) const;
 
   void changelength(int l);
   void delete_column(int i);
@@ -75,6 +75,7 @@ public:
 
   /// Number of leaf sequences (I think)
   int num_sequences() const { return sequences.size() ;}
+  int n_sequences() const { return sequences.size() ;}
 
   //Length of alignment
   int length() const {return array.size1();}

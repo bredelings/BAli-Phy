@@ -265,29 +265,35 @@ namespace sequence_format {
   }
 
   /// Read an alignments letters and names from a file in phylip format
-  void write_phylip(std::ostream& file, std::vector<std::string>& names_in, std::vector<std::string>& sequences) {
-    vector<string> names = truncate_names(names_in);
+  void write_phylip(std::ostream& file, std::vector<sequence>& sequences) {
 
-    assert(names.size() == sequences.size());
-    assert(names.size() > 0);
+    vector<string> letters;
+    for(int i = 0;i < sequences.size() ;i++) {
+      string s;
+      for(int j=0;j<s.size();j++)
+	s += sequences[i].Alphabet().lookup(sequences[i][j]);
+      letters.push_back(s);
+    }
 
+    //    vector<string> names = truncate_names(names_in);
 
-    const int nsequences = names.size();
+    assert(sequences.size() > 0);
+
+    const int letters_length = 70;
+
     const int length = sequences[0].size();
 
     // Write header
-    file<<nsequences<<" "<<length<<"\n";
-
-    const int letters_length = 65;
+    file<<sequences.size()<<" "<<length<<"\n";
 
     for(int pos=0;pos<length;pos += letters_length) {
 
-      for(int seq = 0;seq < nsequences;seq++) {
+      for(int seq = 0;seq < sequences.size() ;seq++) {
 
 	// get the line header (e.g. sequence name or spaces)
 	string header = string(10,' ');
-	if ((pos == 0) and (seq < nsequences)) {
-	  string name = names[seq];
+	if (pos == 0) {
+	  string name = sequences[seq].name;
 	  if (name.size() > header.size())
 	    name = name.substr(0,header.size());
 	  
@@ -297,28 +303,38 @@ namespace sequence_format {
 	// write out the line
 	file<<header;
 	file<<" ";
-	file<<sequences[seq].substr(pos,letters_length);
+	file<<letters[seq].substr(pos,letters_length);
 	file<<"\n";
       }
       // write one blank line;
       file<<"\n";
     }
+    // write one blank line;
+    file<<"\n";
     file.flush();
   }
 
+  // FIXME - make the 'sequence' class store letter directly, instead of indices??
+
   /// Read an alignments letters and names from a file in fasta format
-  void write_fasta(std::ostream& file, std::vector<std::string>& names, std::vector<std::string>& sequences) {
-    assert(names.size() == sequences.size());
-    assert(names.size() > 0);
+  void write_fasta(std::ostream& file, std::vector<sequence>& sequences) {
+    assert(sequences.size() > 0);
 
     const int letters_length = 70;
 
     for(int i=0;i<sequences.size();i++) {
-      file<<">"<<names[i]<<"\n";
+      file<<">"<<sequences[i].name<<"   "<<sequences[i].comment<<"\n";
+
+      string letters;
+      for(int j=0;j<letters.size();j++)
+	letters += sequences[i].Alphabet().lookup(sequences[i][j]);
+
       for(int j=0;j<sequences[i].size();j+=letters_length)
-	file<<sequences[i].substr(j,letters_length);
+	file<<letters.substr(j,letters_length);
       file<<"\n";;
     }
+    // write one blank line;
+    file<<"\n";
     file.flush();
   }
 }
