@@ -151,7 +151,9 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (args.set("gamma") and args["gamma"] != "gamma")
       n = convertTo<int>(args["gamma"]);
 
-    if (RA)
+    if (MM)
+      model_stack.back() = GammaParameterModel(*MM,n);
+    else if (RA)
       model_stack.back() = GammaParameterModel(UnitModel(*RA),n);
     else if (model_stack.empty())
       throw myexception()<<"gamma_plus_uniform: couldn't find any model to use.";
