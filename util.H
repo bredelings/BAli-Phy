@@ -6,6 +6,7 @@
 #include <sstream>
 #include <cassert>
 #include <algorithm>
+#include "myexception.H"
 
 template <class T>
 T convertTo(const std::string& s) { 

@@ -33,7 +33,7 @@ all: sampler
 #----------------- Definitions
 LANGO = fast-math  tracer  prefetch-loop-arrays omit-frame-pointer
 DEBUG = pipe #pg #g3 #gdwarf-2 #pg 
-EXACTFLAGS =  --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
+EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
 DEFS =  NDEBUG_UBLAS NDEBUG_DP NDEBUG # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
 OPT =  march=pentium4 O3 # malign-double msse mmmx msse2 
