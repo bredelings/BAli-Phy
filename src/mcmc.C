@@ -13,6 +13,11 @@
 #include "substitution.H"
 #include "setup.H"           // for standardize
 
+void show_frequencies(std::ostream& o,const alphabet& a,const valarray<double>& f) {
+  for(int i=0;i<a.size();i++)
+    o<<"f"<<a.lookup(i)<<" = "<<f[i]<<endl;
+}
+
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
 		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment) {
   
@@ -54,6 +59,9 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
     o<<"    rate"<<i<<" = "<<P.SModel().rates()[i]*P.SModel().get_model(i).rate();
   o<<endl<<endl;
 
+  o<<"frequencies = "<<endl;
+  show_frequencies(o,P.get_alphabet(),P.SModel().frequencies());
+  o<<endl<<endl;
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
@@ -459,11 +467,6 @@ result_t MoveArgSingle::operator()(alignment& A,Parameters& P,int arg) {
 std::ostream& operator<<(std::ostream& o,const Matrix& M) {
   ublas::operator<<(o,M);
   return o;
-}
-
-void show_frequencies(std::ostream& o,const alphabet& a,const valarray<double>& f) {
-  for(int i=0;i<a.size();i++)
-    o<<"f"<<a.lookup(i)<<" = "<<f[i]<<endl;
 }
 
 void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
