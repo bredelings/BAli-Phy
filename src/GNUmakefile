@@ -69,7 +69,7 @@ tools/statreport: tools/statistics.o
 
 tools/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o tools/alignmentutil.o \
-	setup.o imodel.o probability.o sequence-format.o \
+	setup.o imodel.o probability.o sequence-format.o model.o \
 	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
 
 tools/alignment-indices: tree.o alignment.o sequencetree.o arguments.o \
@@ -80,10 +80,10 @@ tools/alignment-indices: tree.o alignment.o sequencetree.o arguments.o \
 tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o imodel.o \
 	sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o \
-	${LINKLIBS}
+	model.o ${LINKLIBS}
 
 tools/alignment-chop-internal: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
-	tree.o sequencetree.o setup.o imodel.o sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o ${LINKLIBS}
+	tree.o sequencetree.o setup.o imodel.o sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o model.o ${LINKLIBS}
 
 #smodel.o \
 #	rates.o exponential.o eigenvalue.o sequence-format.o randomtree.o 
@@ -91,7 +91,7 @@ tools/alignment-chop-internal: alignment.o arguments.o alphabet.o sequence.o uti
 tools/alignment-draw: tree.o alignment.o sequencetree.o arguments.o \
 	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
 	randomtree.o alignment-random.o imodel.o probability.o \
-	alignment-util.o ${LINKLIBS} 
+	alignment-util.o model.o ${LINKLIBS} 
 
 tools/alignment-translate: alignment.o alphabet.o sequence.o arguments.o sequence-format.o \
 	util.o	
@@ -128,7 +128,7 @@ tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \
 	parameters.o exponential.o setup-smodel.o smodel.o imodel.o rng.o likelihood.o \
 	dpmatrix.o choose.o tools/optimize.o inverse.o setup.o rates.o matcache.o \
-	sequence-format.o randomtree.o ${LINKLIBS}
+	sequence-format.o randomtree.o model.o ${LINKLIBS}
 
 tools/cut-range: arguments.o util.o
 

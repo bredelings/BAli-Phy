@@ -12,27 +12,20 @@ int main(int argc,char* argv[]) {
     args.print(std::cerr);
 
     alignment A;
+    OwnedPointer<AminoAcids> AA = AminoAcids();
+    if (args.set("Use Stop"))
+      *AA = AminoAcidsWithStop();
+
     vector<OwnedPointer<alphabet> > alphabets;
     if (args.set("Use Codons")) {
-      {
-	ifstream genetic_code("Data/genetic_code_dna.dat");
-	if (not genetic_code)
-	  throw myexception()<<"Couldn't open file 'Data/genetic_code_dna.dat'";
-	Translation_Table T(Codons(DNA()),AminoAcids(),genetic_code);
-	genetic_code.close();
+      string dna_filename = args["datadir"] + "/" + "genetic_code_dna.dat";
+      string rna_filename = args["datadir"] + "/" + "genetic_code_rna.dat";
+
+      Codons DNA_codons(DNA(),*AA,dna_filename);
+      Codons RNA_codons(RNA(),*AA,rna_filename);
 	
-	alphabets.push_back(T.getCodons());
-      }
-      
-      {
-	ifstream genetic_code("Data/genetic_code_rna.dat");
-	if (not genetic_code)
-	  throw myexception()<<"Couldn't open file 'Data/genetic_code_rna.dat'";
-	Translation_Table T(Codons(RNA()),AminoAcids(),genetic_code);
-	genetic_code.close();
-	
-	alphabets.push_back(T.getCodons());
-      }
+      alphabets.push_back(DNA_codons);
+      alphabets.push_back(RNA_codons);
     }
     else {
       alphabets.push_back(DNA());
