@@ -404,7 +404,7 @@ namespace substitution {
     };
 
 
-  //------------------------------ HKY Substitution Model ---------------------------**/
+  //------------------------------ HKY Substitution Model ----------------------------//
 
   /// The HKY substitution model for DNA or RNA
 

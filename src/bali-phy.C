@@ -250,7 +250,7 @@ int main(int argc,char* argv[]) {
 	temp.close();
       else {
 	std::cerr<<"Warning: couldn't open file '"<<filename<<"'"<<std::endl;
-	std::cerr<<"         Is '"<<args["datadir"]<<"' a valid Data/ directory?\n";
+	std::cerr<<"         Is '"<<args["datadir"]<<"' a valid Data/ directory?\n\n";
       }
     }
 
