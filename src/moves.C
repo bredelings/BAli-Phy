@@ -226,7 +226,7 @@ MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
 
-    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+    //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if (P.T.branch(b).is_internal_branch())
       three_way_topology_sample(A,P,b);

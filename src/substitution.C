@@ -430,7 +430,7 @@ namespace substitution {
     for(int i=0;i<ops.size();i++)
       peel_branch(ops[i],cache,A,T,MC,P.SModel());
 
-    std::clog<<"Peeled on "<<ops.size()<<" branches.\n";
+    //    std::clog<<"Peeled on "<<ops.size()<<" branches.\n";
   }
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
