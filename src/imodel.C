@@ -299,7 +299,7 @@ double NewIndelModel::prior() const {
   // Calculate prior on invariant fraction
   if (not fixed(2)) {
     double i = parameters_[2];
-    P += beta_log_pdf(i,0.01,20);
+    P += beta_log_pdf(i,0.01,200);
   }
 
   return P;
