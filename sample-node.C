@@ -17,6 +17,7 @@
 #include "rng.H"
 #include "3way.H"
 #include "alignment-sums.H"
+#include "alignment-util.H"
 
 // for prior_HMM_nogiven
 #include "likelihood.H"
@@ -176,6 +177,128 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
   return Matrices;
 }
 
+bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
+
+  assert(p.size() == nodes.size());
+  
+  //----------- Generate the different states and Matrices ---------//
+
+  vector<alignment> a(p.size(),A);
+
+  vector< DParrayConstrained > Matrices;
+  for(int i=0;i<p.size();i++)
+    Matrices.push_back( sample_node_base(a[i],p[i],nodes[i]) );
+
+  //-------- Calculate corrections to path probabilities ---------//
+
+  vector<double> OS(p.size(),0);
+  vector<double> OP(p.size(),0);
+  for(int i=0; i<p.size(); i++) {
+    if (do_OS)
+      OS[i] = p[i].likelihood(a[i],p[i]);
+    if (do_OP)
+      OP[i] = other_prior(a[i],p[i],nodes[i]);
+  }
+
+  //---------------- Calculate choice probabilities --------------//
+  vector<double> Pr(p.size());
+  for(int i=0;i<Pr.size();i++)
+    Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
+
+  int C = choose(Pr);
+
+#ifndef NDEBUG_DP
+  std::cerr<<"choice = "<<C<<endl;
+
+  // One mask for all p[i] assumes that only ignored nodes can be renamed
+  valarray<bool> ignore(false,p[0].T.n_nodes()-1);
+  ignore[ nodes[0][0] ] = true;
+
+  // Check that our constraints are met
+  for(int i=0;i<a.size();i++) {
+    if (not(A_constant(A,a[i],ignore))) {
+      std::cerr<<A<<endl;
+      std::cerr<<a[i]<<endl;
+      assert(A_constant(A,a[i],ignore));
+    }
+  }
+
+  // Add another entry for the incoming configuration
+  a.push_back( A );
+  p.push_back( p[0] );
+  nodes.push_back(nodes[0]);
+  Matrices.push_back( Matrices[0] );
+  OS.push_back( OS[0] );
+  OP.push_back( OP[0] );
+
+  vector< vector<int> > paths;
+
+  //------------------- Check offsets from path_Q -> P -----------------//
+  for(int i=0;i<p.size();i++) {
+    paths.push_back( get_path_3way(A3::project(a[i],nodes[i]),0,1,2,3) );
+    
+    OS[i] = p[i].likelihood(a[i],p[i]);
+    OP[i] = other_prior(a[i],p[i],nodes[i]);
+
+    double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
+
+    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
+  }
+
+  //--------- Compute path probabilities and sampling probabilities ---------//
+  vector< vector<double> > PR(p.size());
+
+  for(int i=0;i<p.size();i++) {
+    double P_choice = 0;
+    if (i<Pr.size())
+      P_choice = choose_P(i,Pr);
+    else
+      P_choice = choose_P(0,Pr);
+
+    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
+    PR[i][0] += A3::log_correction(a[i],p[i],nodes[i]);
+  }
+
+  //--------- Check that each choice is sampled w/ the correct Probability ---------//
+  for(int i=0;i<PR.size();i++) {
+    std::cerr<<"option = "<<i<<endl;
+
+    std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[i][0]<<"    Pr2  - Pr1  = "<<PR[i][0] - PR[0][0]<<endl;
+    std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[i][2]<<"    PrQ2 - PrQ1 = "<<PR[i][2] - PR[0][2]<<endl;
+    std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[i][1]<<"    PrS2 - PrS1 = "<<PR[i][1] - PR[0][1]<<endl;
+
+    double diff = (PR[i][1] - PR.back()[1]) - (PR[i][0] - PR.back()[0]);
+    std::cerr<<"diff = "<<diff<<endl;
+    if (std::abs(diff) > 1.0e-9) {
+      std::cerr<<a.back()<<endl;
+      std::cerr<<a[i]<<endl;
+      
+      std::cerr<<A3::project(a.back(),nodes.back());
+      std::cerr<<A3::project(a[i],nodes[i]);
+      
+      throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
+    }
+  }
+#endif
+
+  //---------------- Adjust for length of n4 and n5 changing --------------------//
+
+  // if we accept the move, then record the changes
+  bool success = false;
+  if (myrandomf() < exp(A3::log_acceptance_ratio(A,p[0],nodes[0],a[C],p[C],nodes[C]))) {
+    success = (C > 0);
+
+    A = a[C];
+
+    if (success)
+      p[0] = p[C];
+  }
+
+  return success;
+}
+
+
+
 
 
 alignment sample_node(const alignment& old,const Parameters& P,int node) {
@@ -183,49 +306,12 @@ alignment sample_node(const alignment& old,const Parameters& P,int node) {
 
   alignment A = old;
 
-  //---------------- Setup node names ------------------//
-  assert(node >= T.leaves());
+  vector<Parameters> p(1,P);
 
-  // choose a random order;
-  vector<int> nodes = A3::get_nodes_random(T,node);
+  vector< vector<int> > nodes(1);
+  nodes[0] = get_nodes_random(T,node);
 
-  DParrayConstrained Matrices = sample_node_base(A,P,nodes);
+  sample_node_multi(A,p,nodes,false,false);
 
-#ifndef NDEBUG_DP
-  //--------------- Check alignment construction ------------------//
-
-  // get the paths through the 3way alignment, from the entire alignment
-  vector<int> path_old = get_path_3way(project(old,nodes),0,1,2,3);
-  vector<int> path_new = get_path_3way(project(A,nodes),0,1,2,3);
-
-  //-------------- Check relative path probabilities --------------//
-  double s1 = P.likelihood(old,P);
-  double s2 = P.likelihood(A,P);
-
-  double lp1 = prior_HMM_nogiven(old,P)/P.Temp;
-  double lp2 = prior_HMM_nogiven(A  ,P)/P.Temp;
-
-  double diff = Matrices.check(path_old,path_new,lp1,s1,lp2,s2);
-
-  if (abs(diff) > 1.0e-9) {
-    std::cerr<<old<<endl;
-    std::cerr<<A<<endl;
-
-    std::cerr<<A3::project(old,nodes)<<endl;
-    std::cerr<<A3::project(A,nodes)<<endl;
-
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-  }
-#endif
-
-  /*---------------- Adjust for length of n0 changing --------------------*/
-  int length_old = old.seqlength(nodes[0]);
-  int length_new = A.seqlength(nodes[0]);
-
-  double log_ratio = 2.0*(P.IModel().lengthp(length_old)-P.IModel().lengthp(length_new));
-  if (myrandomf() < exp(log_ratio))
-    return A;
-  else
-    return old;
-
+  return A;
 }

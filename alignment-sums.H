@@ -38,6 +38,9 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
 DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
 
 
+/// Routine for simultaneosly sampling between several Parameter choices, and summing out a node
+bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
+
 /// Routine for simultaneosly sampling between several Parameter choices, and summing out some nodes
 bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
 
