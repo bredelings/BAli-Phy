@@ -15,7 +15,7 @@ efloat_t Parameters::basic_prior(const alignment& A,const Parameters& P) const {
     return prior3(A,P);
   else
     //FIXME
-    return 1;
+    return ::prior(P);
 }
 
 efloat_t Parameters::weight(const alignment& A,const Parameters& P) const {

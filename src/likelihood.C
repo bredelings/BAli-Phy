@@ -55,8 +55,8 @@ efloat_t prior(const Parameters& P) {
   p *= P.SModel().prior();
 
   // prior on the insertion/deletion model
-  efloat_t temp = P.IModel().prior(); // prior(branch_mean)?
-  p *= temp;
+  if (P.IModel().full_tree)
+    p *= P.IModel().prior();
 
   return p;
 }
