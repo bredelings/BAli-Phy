@@ -91,9 +91,12 @@ void IndelModel1::fiddle() {
   const double sigma = 0.35;
 
   if (not fixed[0]) {
-    double delta_LOD = lambda_O - logdiff(0,lambda_O);
-    delta_LOD += gaussian(0,sigma);
-    lambda_O = delta_LOD - logsum(0,delta_LOD);
+    double pdel =  lambda_O-logdiff(0,lambda_O);
+    double rate =  log(-logdiff(0,pdel));
+
+    rate        += gaussian(0,sigma);
+    pdel        =  logdiff(0,-exp(rate));
+    lambda_O    =  pdel - logsum(0,pdel);
   }
   
   if (not fixed[1]) {
@@ -160,9 +163,11 @@ double IndelModel1::prior() const {
   double P = 0;
 
   // Calculate prior on lambda_O
-  double delta_LOD = parameters_[0] - logdiff(0,parameters_[0]);
+  double lambda_O = parameters_[0];
+  double pdel =  lambda_O-logdiff(0,lambda_O);
+  double rate =  log(-logdiff(0,pdel));
 
-  P += log( shift_laplace_pdf(delta_LOD,-6, 0.5) );
+  P += log( shift_laplace_pdf(rate,-6, 0.5) );
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = parameters_[1];
@@ -330,9 +335,12 @@ void UpweightedIndelModel::fiddle() {
   const double sigma = 0.35;
 
   if (not fixed[0]) {
-    double delta_LOD = lambda_O - logdiff(0,lambda_O);
-    delta_LOD += gaussian(0,sigma);
-    lambda_O = delta_LOD - logsum(0,delta_LOD);
+    double pdel =  lambda_O-logdiff(0,lambda_O);
+    double rate =  log(-logdiff(0,pdel));
+
+    rate        += gaussian(0,sigma);
+    pdel        =  logdiff(0,-exp(rate));
+    lambda_O    =  pdel - logsum(0,pdel);
   }
   
   if (not fixed[1]) {
@@ -406,9 +414,11 @@ double UpweightedIndelModel::prior() const {
   double P = 0;
 
   // Calculate prior on lambda_O
-  double delta_LOD = parameters_[0] - logdiff(0,parameters_[0]);
+  double lambda_O = parameters_[0];
+  double pdel =  lambda_O-logdiff(0,lambda_O);
+  double rate =  log(-logdiff(0,pdel));
 
-  P += log( shift_laplace_pdf(delta_LOD, -6, 0.5) );
+  P += log( shift_laplace_pdf(rate,-6, 0.5) );
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = parameters_[1];
@@ -432,12 +442,15 @@ UpweightedIndelModel::UpweightedIndelModel(double lambda_O,double lambda_E)
 void SingleIndelModel::fiddle() { 
   double& lambda_O = parameters_[0];
 
-  if (not fixed[0]) {
-    const double sigma = 0.15;
+  const double sigma = 0.35;
 
-    double delta_LOD = lambda_O - logdiff(0,lambda_O);
-    delta_LOD += gaussian(0,sigma);
-    lambda_O = delta_LOD - logsum(0,delta_LOD);
+  if (not fixed[0]) {
+    double pdel =  lambda_O-logdiff(0,lambda_O);
+    double rate =  log(-logdiff(0,pdel));
+
+    rate        += gaussian(0,sigma);
+    pdel        =  logdiff(0,-exp(rate));
+    lambda_O    =  pdel - logsum(0,pdel);
   }
   
   recalc();
@@ -445,9 +458,11 @@ void SingleIndelModel::fiddle() {
 
 double SingleIndelModel::prior() const {
   // Calculate prior on lambda_O
-  double delta_LOD = parameters_[0] - logdiff(0,parameters_[0]);
+  double lambda_O = parameters_[0];
+  double pdel =  lambda_O-logdiff(0,lambda_O);
+  double rate =  log(-logdiff(0,pdel));
 
-  return log( shift_laplace_pdf(delta_LOD, -6, 0.5) );
+  return log( shift_laplace_pdf(rate,-6, 0.5) );
 }
 
 void SingleIndelModel::recalc() {
