@@ -75,7 +75,7 @@ MAP-unordered.fasta: out
 	alignment-find < MAP > $@
 
 median-unordered.fasta: samples-${SKIP}+${SIZE}
-	alignment-median maxalignments=2000 type=splits < $< > $@ 2>median.err
+	alignment-median --maxalignments 2000 --type splits < $< > $@ 2>median.err
 
 %.fasta: MAP.tree %-unordered.fasta
 	alignment-reorder $*-unordered.fasta MAP.tree > $@ 2>/dev/null
@@ -91,7 +91,7 @@ tree.srq: trees MAP.tree
 	tree-to-srq MAP.tree < trees > tree.srq
 
 tree.plot: tree.srq
-	srq-to-plot scale=no < $< > $@
+	srq-to-plot --no-scale < $< > $@
 
 Likelihood: Pr
 	pickout likelihood < Pr  > $@

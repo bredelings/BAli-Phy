@@ -119,25 +119,15 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help", "produce help message")
-    ("align", value<string>(),"file with sequences and initial alignment")
-    ("tree",value<string>(),"file with initial tree")
-    ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-    ("tag", value<string>()->default_value("sample"),"only read alignments preceded by 'align[<tag>'")
-    ("refine", value<string>(),"procedure for refining Least-Squares positivized branch lengths: SSE, Poisson, LeastSquares")
+    ("seed", value<unsigned long>(),"random seed")
     ;
 
-  // positional options
-  positional_options_description p;
-  p.add("align", 1);
-  
   variables_map args;     
-  store(command_line_parser(argc, argv).
-	options(all).positional(p).run(), args);
-  // store(parse_command_line(argc, argv, desc), args);
+  store(parse_command_line(argc, argv, all), args);
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: model_P [OPTIONS] < in-file\n";
+    cout<<"Usage: model_P < in-file\n";
     cout<<all<<"\n";
     exit(0);
   }

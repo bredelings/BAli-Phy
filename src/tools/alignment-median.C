@@ -6,16 +6,19 @@
 #include <numeric>
 #include "myexception.H"
 #include "alignment.H"
-#include "arguments.H"
 #include "mytypes.H"
 #include "logsum.H"
 #include "optimize.H"
 #include "findroot.H"
 #include "util.H"
-#include "setup.H"
 #include "alignment-util.H"
 #include "distance-methods.H"
 #include "rng.H"
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
 
 // FIXME - also show which COLUMNS are more that 99% conserved?
 
@@ -29,15 +32,13 @@
 
 using namespace std;
 
-
-void do_setup(Arguments& args,vector<alignment>& alignments) 
+void do_setup(const variables_map& args,vector<alignment>& alignments) 
 {
-  // ------------- Try to load alignments ------------ //
-  int maxalignments = args.loadvalue("maxalignments",1000);
+  //------------ Try to load alignments -----------//
+  int maxalignments = args["max-alignments"].as<int>();
 
-  string tag = "align[sample";
-  if (args.set("tag"))
-    tag = args["tag"];
+  string tag = "align[";
+  tag += args["tag"].as<string>();
 
   // --------------- Alphabets to try --------------- //
   vector<OwnedPointer<alphabet> > alphabets;
@@ -53,21 +54,49 @@ void do_setup(Arguments& args,vector<alignment>& alignments)
 }
 
 
-int main(int argc,char* argv[]) { 
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("seed", value<unsigned long>(),"random seed")
+    ("tag", value<string>()->default_value("sample"),"only read alignments preceded by 'align[<tag>'")
+    ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+    ("type", value<string>()->default_value("pairs"),"type of distance: pairs or splits")
+    ;
+
+  variables_map args;     
+  store(parse_command_line(argc, argv, all), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: alignment-median [OPTIONS] < in-file\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
+
+int main(int argc,char* argv[]) 
+{ 
   try {
-    Arguments args;
-    args.read(argc,argv);
-    args.print(std::cerr);
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
 
     //---------- Initialize random seed -----------//
     unsigned long seed = 0;
-    if (args.set("seed")) {
-      seed = convertTo<unsigned long>(args["seed"]);
+    if (args.count("seed")) {
+      seed = args["seed"].as<unsigned long>();
       myrand_init(seed);
     }
     else
       seed = myrand_init();
-    //    cout<<"random seed = "<<seed<<endl<<endl;
+    cout<<"random seed = "<<seed<<endl<<endl;
     
     //------------ Load alignment and tree ----------//
     vector<alignment> alignments;
@@ -97,7 +126,7 @@ int main(int argc,char* argv[]) {
 				const ublas::matrix<int>& ,const vector< vector<int> >&);
 
     distance = pairs_distance;
-    if (args.set("type") and args["type"] == "splits")
+    if (args.count("type") and args["type"].as<string>() == "splits")
       distance = splits_distance;
 
     //---------------- pick an order --------------- //

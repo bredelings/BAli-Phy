@@ -1,5 +1,3 @@
-1. Update tools directory to use boost::program_options.
-
 2. Fix tools/analyze-distances: make an interface to get likelihoods by column...
 
 *3. Write alignment-consensus
@@ -134,4 +132,6 @@ the prior, because we never want to use it  differently.
 	b) allow consensus to take a comma-separated list of values
 
 [DONE] add '--first' and '--last' arguments to alignment-find
+
+[DONE] Update tools to use boost::program_options.
 

@@ -4,9 +4,9 @@ TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/alignment-reorder tools/alignment-draw tools/alignment-find \
 	tools/tree-to-srq tools/tree-reroot tools/alignment-chop-internal \
 	tools/srq-to-plot tools/srq-analyze tools/alignment-convert \
-	tools/tree-dist-compare tools/cut-range tools/alignment-chop-internal \
-	tools/alignment-median tools/alignment-indices tools/tree-reroot \
-	tools/alignment-translate
+	tools/tree-dist-compare tools/cut-range tools/alignment-translate \
+	tools/alignment-median tools/alignment-indices \
+
 
 tools: ${TOOLS}
 
@@ -100,8 +100,7 @@ tools/alignment-gild: alignment.o alphabet.o sequence.o util.o rng.o \
 
 tools/alignment-median: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o util-random.o \
-	setup.o imodel.o probability.o sequence-format.o model.o  \
-	alignment-random.o alignment-util.o randomtree.o ${LINKLIBS}
+	sequence-format.o alignment-util.o ${LINKLIBS}
 
 tools/alignment-reorder: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o imodel.o \
@@ -121,7 +120,7 @@ tools/alignment-translate: alignment.o alignment-util.o alphabet.o sequence.o \
 	sequence-format.o util.o tree.o -lboost_program_options
 
 tools/alignment-find: alignment.o alphabet.o sequence.o alignment-util.o \
-	rng.o ${LINKLIBS} util.o sequence-format.o
+	rng.o util.o sequence-format.o tree.o ${LINKLIBS}
 
 tools/alignment-convert: alignment.o alignment-util.o sequence.o alphabet.o util.o \
 	sequence-format.o tree.o -lboost_program_options
