@@ -16,7 +16,7 @@ install: program tools
 #----------------- Definitions
 EXACTFLAGS = -pipe 
 
-LANGO := fast-math
+LANGO := fast-math abi-version=0
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
 LDFLAGS := 
 
