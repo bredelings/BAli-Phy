@@ -22,8 +22,6 @@ class Parameters: public MatCache
   /// The substitution::Model
   OwnedPointer<substitution::MultiModel> SModel_;
 
-  void recalc_imodel();
-  void recalc_smodel();
 public:
 
   /// cached branch HMMs
@@ -90,6 +88,8 @@ public:
   
   /// Recalculate all the cached transition matrices
   void recalc();
+  void recalc_imodel();
+  void recalc_smodel();
 
   /// parameter for exponential prior on branch length
   double branch_mean; 

@@ -318,7 +318,7 @@ MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
   valarray<double> f = P2.SModel().frequencies();
   f = dirichlet_fiddle(f,0.25/sqrt(f.size()));
   P2.SModel().frequencies(f);
-  P2.recalc();
+  P2.recalc_smodel();
 
   if (P.accept_MH(A,P,A,P2)) {
     P = P2;
