@@ -136,4 +136,5 @@ The extra time spent in dealing with multiple rates DOES come from the likelihoo
 New times for 1.8.14-B (after svn import, and SPR fix)
 
  - 3m48.77 [3.4.1]
- - 5min    [3.5.0 7/5/2004]
+ - 5min    [3.5.0 7/5/2004] (??? do I need "--disable-checking" ?)
+ - 3m45.76 [3.4.1]
