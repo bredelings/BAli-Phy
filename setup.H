@@ -20,4 +20,9 @@ void link(alignment& A,SequenceTree& T);
 
 void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool random_tree_ok=false);
 
+alignment standardize(const alignment& A, const SequenceTree& T);
+
+std::valarray<double> empirical_frequencies(Arguments& args,const alignment& A);
+
+
 #endif 

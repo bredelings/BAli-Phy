@@ -16,6 +16,9 @@
 #include "util.H"
 #include "setup.H"
 
+using std::cout;
+using std::cin;
+
 // 5. Read Marc's references on actually altering the tree
 
 // 8. Use ublas::matrix<double>(a.size()) instead of valarray<double> in substitution.C
@@ -35,14 +38,14 @@ void do_showonly(const alignment& A,const Parameters& P) {
   double PT = prior(P.T,P.branch_mean);
   double PP = P.SModel().prior();
 
-  std::cout<<"ln P(data,A,t,T,Theta) =  "<<PS + PA + PT + PP<<" = "
+  cout<<"ln P(data,A,t,T,Theta) =  "<<PS + PA + PT + PP<<" = "
 	   <<PS<<" + "
 	   <<PA<<" + "
 	   <<PT<<" + "
 	   <<PP<<endl<<endl;
 
-  std::cout<<A<<endl<<endl;
-  std::cout<<P.T<<endl<<endl;
+  cout<<A<<endl<<endl;
+  cout<<P.T<<endl<<endl;
 }
 
 
@@ -191,7 +194,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
     sampler.enable(enable[i]);
   
   sampler.show_enabled();
-  std::cout<<"\n";
+  cout<<"\n";
 
   sampler.go(A,P,subsample,max_iterations);
 }
@@ -205,7 +208,7 @@ int main(int argc,char* argv[]) {
 
     if (args.set("file")) {
       if (args["file"] == "-")
-	args.read(std::cin);
+	args.read(cin);
       else {
 	std::ifstream input(args["file"].c_str());
 	if (not input)
@@ -215,7 +218,7 @@ int main(int argc,char* argv[]) {
       }
     }
 
-    args.print(std::cout);
+    args.print(cout);
     
     /*---------- Initialize random seed -----------*/
     unsigned long seed = 0;
@@ -225,10 +228,10 @@ int main(int argc,char* argv[]) {
     }
     else
       seed = myrand_init();
-    std::cout<<"random seed = "<<seed<<endl<<endl;
+    cout<<"random seed = "<<seed<<endl<<endl;
     
     std::cerr.precision(10);
-    std::cout.precision(10);
+    cout.precision(10);
     
     /*------- Which parameters are fixed -------*/
     vector<string> fixed;
@@ -248,7 +251,7 @@ int main(int argc,char* argv[]) {
 
     double lambda_E = args.loadvalue("lambda_E",lambda_O/10.0);
     
-    std::cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl<<endl;
+    cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl<<endl;
     
     /*--------- Set up the substitution model --------*/
     substitution::MultiRateModel *full_smodel = get_smodel(args,A);
@@ -261,19 +264,19 @@ int main(int argc,char* argv[]) {
     IndelModel* imodel = 0;
 
     if (args["imodel"] == "ordered") {
-      std::cout<<"imodel = ordered\n";
+      cout<<"imodel = ordered\n";
       imodel = new IndelModel1(lambda_O,lambda_E);
     }
     else if (args["imodel"] == "single_indels") {
-      std::cout<<"imodel = single indels\n";
+      cout<<"imodel = single indels\n";
       imodel = new SingleIndelModel(lambda_O);
     }
     else if (args["imodel"] == "upweighted") {
-      std::cout<<"imodel = adjacent gaps upweighted by 2\n";
+      cout<<"imodel = adjacent gaps upweighted by 2\n";
       imodel = new UpweightedIndelModel(lambda_O,lambda_E);
     }
     else {
-      std::cout<<"imodel = symmetric\n";
+      cout<<"imodel = symmetric\n";
       imodel = new IndelModel2(lambda_O,lambda_E);
       for(int i=0;i<fixed.size();i++) {
 	if (fixed[i] == "beta")
@@ -287,13 +290,13 @@ int main(int argc,char* argv[]) {
       imodel->full_tree = true;
     
     /*-------------Create the Parameters object--------------*/
-    std::cout<<"using smodel: "<<full_smodel->name()<<endl;
+    cout<<"using smodel: "<<full_smodel->name()<<endl;
 
     Parameters P(*full_smodel,*imodel,T);
-    std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
-    std::cout<<"Using substitution model: "<<P.SModel().name()<<endl;
-    std::cout<<"Full tree for substitution: "<<P.SModel().full_tree<<endl<<endl;
-    std::cout<<"Full tree for gaps: "<<P.IModel().full_tree<<endl<<endl;
+    cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
+    cout<<"Using substitution model: "<<P.SModel().name()<<endl;
+    cout<<"Full tree for substitution: "<<P.SModel().full_tree<<endl<<endl;
+    cout<<"Full tree for gaps: "<<P.IModel().full_tree<<endl<<endl;
 
     P.constants[0] = args.loadvalue("bandwidth",100.0);
     if (args.set("pinning") and args["pinning"] == "enable")
@@ -304,7 +307,8 @@ int main(int argc,char* argv[]) {
 
     /*---------------Do something------------------*/
     if (args.set("showonly"))
-      do_showonly(A,P);
+      print_stats(cout,cout,cout,cout,A,P,"Initial");
+    //      do_showonly(A,P);
     // FIXME - use print_stats?
     else {
       long int max_iterations = args.loadvalue("iterations",(long int)1000000);

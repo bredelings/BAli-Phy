@@ -1,6 +1,8 @@
 #ifndef CLONE_H
 #define CLONE_H
 
+#include <cassert>
+
 class Cloneable {
 public:
   virtual Cloneable* clone() const =0;
@@ -16,12 +18,12 @@ private:
 public:
 
   // Get a copy of an object
-  explicit OwnedPointer(const T& t) throw() 
+  OwnedPointer(const T& t) throw() 
     : data(t.clone()) 
   {}
 
   // Take ownership of object t
-  explicit OwnedPointer(const T* t=0) throw() 
+  explicit OwnedPointer(const T* t) throw() 
     : data(t->clone()) 
   {}
 
@@ -73,6 +75,41 @@ public:
 
   T* get() const throw() {
     return data;
+  }
+};
+
+
+template <class T>
+class OwnedRef {
+private:
+  OwnedPointer<T> data;
+
+public:
+
+  // Get a copy of an object
+  OwnedRef(const T& t) throw() 
+    : data(t) 
+  {}
+
+  // Take ownership of object t
+  explicit OwnedRef(const T* t) throw() 
+    : data(t->clone()) 
+  {}
+
+  operator T& () throw() {
+    return *data;
+  }
+
+  operator const T& () const throw() {
+    return *data;
+  }
+
+  T* operator &() throw() {
+    return data.get();
+  }
+
+  const T* operator &() const throw() {
+    return data.get();
   }
 };
 

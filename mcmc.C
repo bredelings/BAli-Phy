@@ -11,6 +11,57 @@
 //for the different models used in print_stats()
 #include "likelihood.H"
 #include "substitution.H"
+#include "setup.H"           // for standardize
+
+void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
+		 const alignment& A,const Parameters& P,const string& tag) {
+  
+  o<<endl;
+  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
+  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
+  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
+  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
+  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
+  
+  double Pr_prior = P.prior(A,P);
+  double Pr_likelihood = P.likelihood(A,P);
+  double Pr = Pr_prior + Pr_likelihood;
+
+  o<<"    prior = "<<Pr_prior
+   <<"    likelihood = "<<Pr_likelihood
+   <<"    logp = "<<Pr<<endl;
+
+  o<<"align["<<tag<<"] = "<<endl;
+  o<<standardize(A,P.T)<<endl<<endl;
+  
+  trees<<P.T<<endl;
+  
+  pS<<  "    mu = "<<P.branch_mean<<"   ";
+  for(int i=0;i<P.SModel().parameters().size();i++)
+    pS<<"    pS"<<i<<" = "<<P.SModel().parameters()[i];
+  pS<<endl;
+  
+  for(int i=0;i<P.IModel().parameters().size();i++)
+    pI<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
+  pI<<endl;
+  
+  for(int i=0;i<P.SModel().nrates();i++)
+    o<<"    rate"<<i<<" = "<<P.SModel().rates()[i];
+  o<<endl<<endl;
+
+
+  // The leaf sequences should NOT change during alignment
+#ifndef NDEBUG
+  for(int i=0;i<P.T.leaves();i++) {
+    vector<int> s;
+    for(int column=0;column<A.length();column++)
+      if (not A.gap(column,i))
+	s.push_back(A(column,i));
+
+    assert(s == A.seq(i));
+  }
+#endif
+}
 
 namespace MCMC {
   using std::valarray;
@@ -384,65 +435,6 @@ result_t MoveArgSingle::operator()(alignment& A,Parameters& P,int arg) {
     
 
 
-alignment standardize(const alignment& A, const SequenceTree& T) {
-  alignment A2 = A;
-  SequenceTree T2 = T;
-  vector<int> mapping = T2.standardize();
-  vector<int> imapping = invert(mapping);
-
-  for(int i=0;i<A.num_sequences();i++) {
-    if (imapping[i] == i) continue;
-
-    A2.seq(i) = A.seq(imapping[i]);
-    for(int column=0;column<A2.length();column++)
-      A2(column,i) = A(column,imapping[i]);
-  }
-  return A2;
-}
-
-
-void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
-		 const alignment& A,const Parameters& P,const string& tag) {
-  
-  o<<endl;
-  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
-  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
-  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
-  
-  o<<"align["<<tag<<"] = "<<endl;
-  o<<standardize(A,P.T)<<endl<<endl;
-  
-  trees<<P.T<<endl;
-  
-  pS<<  "    mu = "<<P.branch_mean<<"   ";
-  for(int i=0;i<P.SModel().parameters().size();i++)
-    pS<<"    pS"<<i<<" = "<<P.SModel().parameters()[i];
-  pS<<endl;
-  
-  for(int i=0;i<P.IModel().parameters().size();i++)
-    pI<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
-  pI<<endl;
-  
-  for(int i=0;i<P.SModel().nrates();i++)
-    o<<"    rate"<<i<<" = "<<P.SModel().rates()[i];
-  o<<endl<<endl;
-
-
-  // The leaf sequences should NOT change during alignment
-#ifndef NDEBUG
-  for(int i=0;i<P.T.leaves();i++) {
-    vector<int> s;
-    for(int column=0;column<A.length();column++)
-      if (not A.gap(column,i))
-	s.push_back(A(column,i));
-
-    assert(s == A.seq(i));
-  }
-#endif
-}
-
 std::ostream& operator<<(std::ostream& o,const Matrix& M) {
   ublas::operator<<(o,M);
   return o;
@@ -481,9 +473,9 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   //    cout<<endl;
   //  }
   cout<<endl;
-  cout<<"frequencies = ";
+  cout<<"frequencies = "<<endl;
   for(int i=0;i<P.get_alphabet().size();i++) {
-    cout<<P.SModel().BaseModel().frequencies()[i]<<" ";
+    cout<<"f"<<P.get_alphabet().lookup(i)<<" = "<<P.SModel().BaseModel().frequencies()[i]<<endl;
   }
   cout<<endl;
   cout<<endl;

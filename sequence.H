@@ -3,10 +3,15 @@
 
 #include "mytypes.H"
 #include "alphabet.H"
+#include "clone.H"
 
 /***************** struct sequence ********************/
-struct sequence: public vector<int> {
-  alphabet a;
+class sequence: public vector<int> {
+  OwnedPointer<alphabet> a;
+public:
+
+  const alphabet& Alphabet() const {return *a;}
+
   string name;
   string comment;
 

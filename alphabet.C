@@ -1,5 +1,6 @@
 #include "alphabet.H"
 #include <cassert>
+#include <fstream>
 
 using namespace std;
 
@@ -67,6 +68,27 @@ bool operator==(const alphabet& a1,const alphabet& a2) {
   return a1.data == a2.data;
 }
 
+void alphabet::insert(const string& l) {
+  throw myexception()<<"Not implemented yet: adding letters to alphabets.";
+}
+
+void alphabet::remove(const string& l) {
+  int index = operator[](l);
+  data.erase(data.begin()+index);
+}
+
+valarray<double> alphabet::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {
+
+  valarray<double> f = counts;
+  for(int i=0;i<f.size();i++)
+    f[i] += pseudocount/f.size();
+
+  f /= f.sum();
+
+  return f;
+}
+
+
 alphabet::alphabet(const string& s,const string& letters)
   :gap_letter("-"),name(s) 
 {
@@ -122,6 +144,33 @@ Nucleotides::Nucleotides(const string& s, char c,const string& m)
   data[T()] = string(1U,c);
 }
 
+//FIXME - this is basically the equivalent of a prior alphabet()->prior(frequences) !
+
+valarray<double> Nucleotides::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {
+
+  //--------- Level 1 pseudocount (nucleotides) ---------------//
+  const double pseudocount_N = 0.4 * pseudocount;
+
+  valarray<double> prior_f(1.0/counts.size(),counts.size());
+
+  valarray<double> counts1 = counts + pseudocount_N*prior_f;
+  valarray<double> f = counts1 /= counts1.sum();
+
+  //--------- Level 2 pseudocount (GC vs AT) -----------------//
+
+  prior_f[G()] = prior_f[C()] = 0.5 * (f[G()] + f[C()]);
+  prior_f[A()] = prior_f[T()] = 0.5 * (f[A()] + f[T()]);
+
+  pseudocount -= pseudocount_N;
+  valarray<double> counts2 = counts1 + pseudocount*prior_f;
+
+  f = counts2/counts2.sum();
+
+  return f;
+}
+
+
+
 
 DNA::DNA()
   :Nucleotides("DNA nucleotides",'T',"NYR") 
@@ -138,8 +187,11 @@ AminoAcids::AminoAcids()
 
 
 int Codons::sub_nuc(int codon,int pos) const {
-  codon >>= pos;
-  codon &= 4;
+  assert( 0 <= pos and pos <= 3);
+
+  pos = 2 - pos;
+  codon >>= (2*pos);
+  codon &= 3;
   return codon;
 }
 
@@ -159,6 +211,47 @@ vector<string> getCodons(const Nucleotides& a) {
 }
 
 
+valarray<double> get_nucleotide_counts_from_codon_counts(const Codons& C,const valarray<double>& C_counts) {
+    const Nucleotides& N = C.getNucleotides();
+
+    valarray<double> N_counts(0.0,N.size());
+    // For each codon type
+    for(int i=0;i<C.size();i++) {
+      // For each position in the codon
+      for(int pos=0;pos<3;pos++)
+	// Cound the nucleotides that occur there
+	N_counts[ C.sub_nuc(i,pos) ] += C_counts[i];
+    }
+
+    return N_counts;
+}
+
+valarray<double> get_codon_frequencies_from_independant_nucleotide_frequencies(const Codons& C,const valarray<double>& fN ) {
+  std::cerr<<"Codon frequencies are:\n";
+    valarray<double> fC(C.size());
+    for(int i=0;i<fC.size();i++) {
+      fC[i] = 1.0;
+      for(int pos=0;pos<3;pos++)
+	fC[i] *= fN[ C.sub_nuc(i,pos) ];
+    }
+
+    fC /= fC.sum();
+    return fC;
+}
+
+valarray<double> Codons::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {
+
+  //--------- Level 1 pseudocount (nucleotides) ---------------//
+  valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*this,counts);
+  valarray<double> fN = getNucleotides().get_frequencies_from_counts(N_counts);
+  valarray<double> prior_f = get_codon_frequencies_from_independant_nucleotide_frequencies(*this,fN);
+
+  valarray<double> counts1 = counts + pseudocount*prior_f;
+
+  valarray<double> f = counts1 /= counts1.sum();
+
+  return f;
+}
 Codons::Codons(const Nucleotides& a)
   :alphabet(string("Codons of ")+a.name,getCodons(a)),N(a.clone())
 {
@@ -174,9 +267,21 @@ Codons::Codons(const string& s,const Nucleotides& a)
 }
 
 
-void Translation_Table::setup_table(const vector<string>& cc,const vector<string>& aa) {
+void Translation_Table::setup_table(vector<string> cc,vector<string> aa) {
   assert(cc.size() == aa.size());
   assert(cc.size() == C->size());
+
+  // Remove codons which don't map to any amino acid
+  for(int i=cc.size()-1;i>=0;i--) {
+    if ((*A)[ aa[i] ] == alphabet::gap) {
+      C->remove(cc[i]);
+      cc.erase(cc.begin()+i);
+      aa.erase(aa.begin()+i);
+      table.erase(table.begin());
+    }
+  }
+
+  // Compute the indices for the remaining ones
   for(int i=0;i<table.size();i++) {
     int cc_index = (*C)[ cc[i] ];
     int aa_index = (*A)[ aa[i] ];
@@ -184,18 +289,7 @@ void Translation_Table::setup_table(const vector<string>& cc,const vector<string
   }
 }
 
-Translation_Table::Translation_Table(const Codons& C1,const AminoAcids& A1,
-				     const vector<string>& cc,const vector<string>& aa) 
-  :C(C1),A(A1),table(C->size())
-{
-  setup_table(cc,aa);
-}
-
-
-Translation_Table::Translation_Table(const Codons& C1,const AminoAcids& A1,
-				     istream& file) 
-  :C(&C1),A(A1),table(C->size())
-{
+void Translation_Table::setup_table(istream& file) {
   vector<string> cc;
   vector<string> aa;
   for(int i=0;i<C->size();i++) {
@@ -208,4 +302,32 @@ Translation_Table::Translation_Table(const Codons& C1,const AminoAcids& A1,
   }
   
   setup_table(cc,aa);
+}
+				    
+
+Translation_Table::Translation_Table(const Codons& C1,const AminoAcids& A1,
+				     const vector<string>& cc,const vector<string>& aa) 
+  :C(C1),A(A1),table(C->size())
+{
+  setup_table(cc,aa);
+}
+
+
+Translation_Table::Translation_Table(const Codons& C1,const AminoAcids& A1,
+				     istream& file) 
+  :C(C1),A(A1),table(C->size())
+{
+  setup_table(file);
+}
+
+Translation_Table::Translation_Table(const Codons& C1,const AminoAcids& A1,
+		  const string& filename) 
+  :C(C1),A(A1),table(C->size())
+{
+
+  ifstream genetic_code(filename.c_str());
+  if (not genetic_code)
+    throw myexception()<<"Couldn't open file '"<<filename<<"'";
+  setup_table(genetic_code);
+  genetic_code.close();
 }

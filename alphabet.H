@@ -2,8 +2,10 @@
 #define ALPHABET_H
 
 #include <vector>
+#include <valarray>
 #include <iostream>
 #include <string>
+#include <cassert>
 #include "myexception.H"
 #include "clone.H"
 
@@ -29,7 +31,7 @@ protected:
 
 public:
 
-  virtual alphabet* clone() const {return new alphabet(*this);}
+  virtual alphabet* clone() const=0;// {return new alphabet(*this);}
 
   /// The name of the alphabet
   std::string name;
@@ -61,6 +63,11 @@ public:
 
   friend bool operator==(const alphabet&,const alphabet&);
 
+  virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=10.0) const;
+
+  void insert(const std::string& l);
+  void remove(const std::string& l);
+
   alphabet(const std::string&,const std::string&);
   alphabet(const std::string&,const std::string&,const std::string&);
 
@@ -86,8 +93,12 @@ public:
   int T() const {return 2;}
   int C() const {return 3;}
   
+  virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=10.0) const;
+
   Nucleotides(const std::string& s,char c);
   Nucleotides(const std::string& s,char c,const std::string& m);
+
+  ~Nucleotides() {};
 };
 
 
@@ -97,6 +108,7 @@ public:
   virtual DNA* clone() const {return new DNA(*this);}
 
   DNA();
+  ~DNA() {};
 };
 
 //--------------------------------- RNA -------------------------------//
@@ -105,6 +117,7 @@ public:
   virtual RNA* clone() const {return new RNA(*this);}
 
   RNA();
+  ~RNA() {};
 };
 
 //----------------------------- Amino Acids----------------------------//
@@ -113,6 +126,7 @@ public:
   virtual AminoAcids* clone() const {return new AminoAcids(*this);}
 
   AminoAcids();
+  ~AminoAcids() {};
 };
 
 
@@ -126,8 +140,12 @@ public:
 
   int sub_nuc(int codon,int pos) const;
 
+  std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=10.0) const;
+
   Codons(const Nucleotides& N);
   Codons(const std::string& s,const Nucleotides& N);
+
+  ~Codons() {};
 };
 
 
@@ -136,7 +154,8 @@ class Translation_Table {
   OwnedPointer<AminoAcids> A;
   std::vector<int> table;
 
-  void setup_table(const std::vector<std::string>&,const std::vector<std::string>&);
+  void setup_table(std::vector<std::string>,std::vector<std::string>);
+  void setup_table(std::istream&);
 public:
 
   bool stop_codon(int codon) const {
@@ -157,8 +176,16 @@ public:
 
   Translation_Table(const Codons& N1,const AminoAcids& A1,
 		    std::istream&);
+
+  Translation_Table(const Codons& N1,const AminoAcids& A1,
+		    const std::string&);
+
 };
 
 inline bool operator!=(const alphabet& a1,const alphabet& a2) {return not (a1==a2);}
+
+std::valarray<double> get_nucleotide_counts_from_codon_counts(const Codons& C,const std::valarray<double>& C_counts);
+
+std::valarray<double> get_codon_frequencies_from_independant_nucleotide_frequencies(const Codons& C,const std::valarray<double>& fN );
 
 #endif

@@ -7,6 +7,7 @@
 #include "tree.H"
 #include <iostream>
 #include "mytypes.H"
+#include "clone.H"
 
 /// A multiple alignment between a group of sequences
 class alignment {
@@ -34,14 +35,17 @@ public:
   /// Add sequences called names, using a as the alphabet
   void load(const alphabet& a,const vector<string>& names, const vector<string>& sequences);
   /// Add sequences called names, using the first alphabet in alphabets that works
-  void load(const vector<alphabet>& alphabets,const vector<string>& names, const vector<string>& sequences);
+  void load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<string>& names, const vector<string>& sequences);
 
   void load_sequences(const alphabet&,sequence_format::loader_t,std::istream&);
-  void load_sequences(const vector<alphabet>&,sequence_format::loader_t,std::istream&);
+  void load_sequences(const vector<OwnedPointer<alphabet> >&,sequence_format::loader_t,std::istream&);
 
   /// Load PHYLIP or FASTA file 'filename', depending on extentime
   void load(const alphabet&,const std::string& filename);
-  void load(const vector<alphabet>&,const std::string& filename);
+  void load(const vector<OwnedPointer<alphabet> >&,const std::string& filename);
+
+  void prepare_write(vector<string>&,vector<string>&,bool) const;
+  void write_sequences(sequence_format::dumper_t,std::ostream&,bool) const;
 
   void print(std::ostream&) const;
   /// Print alignment in FASTA format
@@ -74,7 +78,7 @@ public:
   ///Length of a particular sequence
   int seqlength(int) const;
 
-  const alphabet& get_alphabet() const {return sequences[0].a;}
+  const alphabet& get_alphabet() const {return sequences[0].Alphabet();}
 
   alignment() {}
   alignment(const alphabet& a,const std::string& filename) { load(a,filename); }
@@ -101,8 +105,6 @@ void remove_empty_columns(alignment&);
 
 vector<int> get_path(const alignment&,int,int);
 vector<int> get_path_3way(const alignment&,int,int,int,int);
-
-std::valarray<double> empirical_frequencies(const alignment& A);
 
 /// Generate a randomize alignment
 alignment randomize(const alignment&);

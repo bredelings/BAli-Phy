@@ -2,7 +2,7 @@
 #define SEQUENCE_FORMAT_H
 
 #include <vector>
-#include <istream>
+#include <iostream>
 #include <string>
 
 #include "sequence.H"
@@ -21,5 +21,12 @@ namespace sequence_format {
   /// Read an alignments letters and names from a file in fasta format
   void read_fasta(std::istream& file, std::vector<std::string>& names, std::vector<std::string>& sequences);
 
+  typedef void (dumper_t)(std::ostream&, std::vector<std::string>&, std::vector<std::string>&);
+
+  /// Read an alignments letters and names from a file in phylip format
+  void write_phylip(std::ostream& file, std::vector<std::string>& names, std::vector<std::string>& sequences);
+  
+  /// Read an alignments letters and names from a file in fasta format
+  void write_fasta(std::ostream& file, std::vector<std::string>& names, std::vector<std::string>& sequences);
 }
 #endif

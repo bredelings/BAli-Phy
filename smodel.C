@@ -7,9 +7,20 @@
 #include <gsl/gsl_sf.h>
 #include "logsum.H"
 
+using std::valarray;
+using std::string;
+using std::vector;
+
 namespace substitution {
 
-  Model::Model():full_tree(true)
+  Model::Model(int s)
+    :parameters_(s),
+     fixed(false,s),
+     full_tree(true)
+  {}
+
+  Model::Model()
+    :full_tree(true)
   { }
 
   Matrix Gamma_Branch_Model::transition_p(double t) const {
@@ -46,7 +57,7 @@ namespace substitution {
   string MarkovModel::name() const { return "MarkovModel";}
 
   string ReversibleMarkovModel::name() const  {
-    return MarkovModel::name() + "::ReversibleMarkovModel";
+    return "ReversibleMarkovModel";
   }
 
 
@@ -111,7 +122,7 @@ namespace substitution {
   }
 
   string HKY::name() const {
-    return ReversibleMarkovModel::name() + "::HKY[" + Alphabet().name + "]";
+    return "HKY[" + Alphabet().name + "]";
   }
 
   void HKY::fiddle() {
@@ -144,7 +155,7 @@ namespace substitution {
   }
 
   string EQU::name() const {
-    return ReversibleMarkovModel::name() + "::EQU[" + Alphabet().name + "]";
+    return "EQU[" + Alphabet().name + "]";
   }
 
   void EQU::recalc() {
@@ -156,7 +167,7 @@ namespace substitution {
   }
 
   string Empirical::name() const {
-    return ReversibleMarkovModel::name() + "::Empirical/" + modelname +"[" + Alphabet().name + "]";
+    return "Empirical/(" + modelname +")[" + Alphabet().name + "]";
   }
 
   void Empirical::recalc() {
@@ -184,8 +195,8 @@ namespace substitution {
   //------------------------ Codon Models -------------------//
   double YangCodonModel::prior() const {
     double P = 0;
-    P += log(gsl_ran_lognormal_pdf(kappa(),0,3));
-    P += log(gsl_ran_lognormal_pdf(omega(),0,3));
+    P += log(gsl_ran_lognormal_pdf(kappa(),0,1));
+    P += log(gsl_ran_lognormal_pdf(omega(),0,1));
     return P;
   }
 
@@ -193,27 +204,34 @@ namespace substitution {
     double k = log( kappa() );
     double w = log( omega() );
 
-    k += gaussian(0,0.2);
-    w += gaussian(0,0.2);
+    k += gaussian(0,0.1);
+    w += gaussian(0,0.1);
 
-    parameters_[0] = exp(k);
-    parameters_[1] = exp(w);
+    if (not fixed[0]) {
+      parameters_[0] = exp(k);
+      std::cerr<<"fiddling kappa\n";
+    }
+
+    if (not fixed[1]) {
+      parameters_[1] = exp(w);
+      std::cerr<<"fiddling omega\n";
+    }
 
     recalc();
   }
 
   string YangCodonModel::name() const {
-    return ReversibleMarkovModel::name() + "::Yang-94[" + Alphabet().name + "]";
+    return "Yang-94[" + Alphabet().name + "]";
   }
 
 
-  const std::valarray<double>& YangCodonModel::frequencies() const {
+  const valarray<double>& YangCodonModel::frequencies() const {
     return ReversibleMarkovModel::frequencies();
   }
 
-  void YangCodonModel::frequencies(const std::valarray<double>& pi_) {
-    throw myexception()<<"Giving non-zero frequency to stop codon "<<Alphabet().lookup(0)<<"!";
-    
+  void YangCodonModel::frequencies(const valarray<double>& pi_) {
+    assert(pi_.size() == frequencies().size());
+
     assert(pi_.size() == frequencies().size());
     for(int i=0;i<pi_.size();i++) {
       if (T.stop_codon(i)) {
@@ -222,14 +240,13 @@ namespace substitution {
 	  throw myexception()<<"Giving non-zero frequency to stop codon "<<Alphabet().lookup(i)<<"!";
       }
     }
+
     ReversibleMarkovModel::frequencies(pi_);
   }
 
   void YangCodonModel::recalc() {
     for(int i=0;i<Alphabet().size();i++) {
-      for(int j=0;j<Alphabet().size();j++) {
-
-	if (i==j) continue;
+      for(int j=0;j<i;j++) {
 
 	int nmuts=0;
 	int pos=-1;
@@ -238,20 +255,21 @@ namespace substitution {
 	    nmuts++;
 	    pos=p;
 	  }
-
+	assert(nmuts>0);
 
 	double rate=1.0;
 	if (nmuts > 1 or T.stop_codon(i) or T.stop_codon(j))
 	  rate=0;
-	else {
-	  if (Alphabet().getNucleotides().transition(Alphabet().sub_nuc(i,pos),Alphabet().sub_nuc(j,pos)))
-	    rate *= kappa();
 
-	  if (AminoAcid(i) != AminoAcid(j))
-	    rate *= omega();
-	}
+	int l1 = Alphabet().sub_nuc(i,pos);
+	int l2 = Alphabet().sub_nuc(j,pos);
+	if (Alphabet().getNucleotides().transition(l1,l2))
+	  rate *= kappa();
 	
-	S(i,j) = rate;
+	if (AminoAcid(i) != AminoAcid(j))
+	  rate *= omega();
+	
+	S(i,j) = S(j,i) = rate;
       }
     }
 
@@ -356,7 +374,7 @@ namespace substitution {
   /*--------------- Gamma Sites Model----------------*/
 
   string GammaRateModel::name() const {
-    return string("Gamma(") + convertToString(rates_.size()) + ")(" + sub_model->name() + ")";
+    return sub_model->name() + " + Gamma(" + convertToString(rates_.size()) + ")";
   }
 
   GammaRateModel::GammaRateModel(const ReversibleModel& M,int n)
@@ -367,7 +385,7 @@ namespace substitution {
   /*--------------- Invariant Sites Model----------------*/
 
   string INV_Model::name() const {
-    return string("INV(") + sub_model->name() + ")";
+    return sub_model->name() + " + INV";
   }
 
   INV_Model::INV_Model(const MultiRateModel& M)

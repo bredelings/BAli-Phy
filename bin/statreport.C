@@ -7,23 +7,22 @@
 
 #include "statistics.H"
 
-using std::vector;
-using std::valarray;
+using namespace std;
 
 int main(int argc,char* argv[]) { 
   assert(argc == 2);
-  std::string label = argv[1];
+  string label = argv[1];
 
-  std::cout.precision(3);
+  cout.precision(3);
 
   // Read in the values
   vector<double> values;
-  while(std::cin) {
+  while(cin) {
     double d;
-    std::cin >> d;
+    cin >> d;
     values.push_back(d);
   }
-  std::cerr<<"Read in "<<values.size()<<" values\n";
+  cerr<<"Read in "<<values.size()<<" values\n";
 
   // Translate vector to valarray...
   valarray<double> values2(values.size());
@@ -31,13 +30,13 @@ int main(int argc,char* argv[]) {
     values2[i] = values[i];
 
   // Print out reports on the statistics
-  std::cout<<" E "<<label<<" = "<<statistics::average(values2);
-  std::cout<<" [+- "<<sqrt(statistics::Var(values2))<<"]";
+  cout<<" E "<<label<<" = "<<statistics::average(values2);
+  cout<<" [+- "<<sqrt(statistics::Var(values2))<<"]";
 
 
   double P = 0.95;
 
   vector<double> interval = statistics::confidence_interval(values2,P);
 
-  std::cout<<"  ("<<interval[0]<<","<<interval[1]<<")"<<endl;
+  cout<<"  ("<<interval[0]<<","<<interval[1]<<")"<<endl;
 }

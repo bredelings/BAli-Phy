@@ -9,7 +9,14 @@ using std::valarray;
 substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_frequencies) {
   /*------ Get the base markov model (Reversible Markov) ------*/
   substitution::ReversibleMarkovModel* base_markov_smodel = 0;
-    
+  {   
+    ifstream genetic_code("Data/genetic_code_dna.dat");
+    if (not genetic_code)
+      throw myexception()<<"Couldn't open file 'Data/genetic_code_dna.dat'";
+    base_markov_smodel = new substitution::YangCodonModel(Translation_Table(Codons(DNA()),AminoAcids(),genetic_code));
+    genetic_code.close();
+  }
+
   if (args.set("smodel") and args["smodel"] == "EQU")
     base_markov_smodel = new substitution::EQU(a);
   else if (a == DNA())
@@ -24,22 +31,18 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
 
     base_markov_smodel = new substitution::Empirical(AminoAcids(),filename);
   }
-  else if (a == Codons(DNA())) {
-    ifstream genetic_code("Data/genetic_code_dna.dat");
-    if (not genetic_code)
-      throw myexception()<<"Couldn't open file 'Data/genetic_code_dna.dat'";
-    base_markov_smodel = new substitution::YangCodonModel(Translation_Table(Codons(DNA()),AminoAcids(),genetic_code));
-    genetic_code.close();
+  else {
+    Translation_Table DNA_table(Codons(DNA()),AminoAcids(),"Data/genetic_code_dna.dat");
+    Translation_Table RNA_table(Codons(RNA()),AminoAcids(),"Data/genetic_code_rna.dat");
+
+    if (a == DNA_table.getCodons())
+      base_markov_smodel = new substitution::YangCodonModel(DNA_table);
+    else if (a == RNA_table.getCodons())
+      base_markov_smodel = new substitution::YangCodonModel(RNA_table);
+    else
+      assert(0);
   }
-  else if (a == Codons(RNA())) {
-    ifstream genetic_code("Data/genetic_code_rna.dat");
-    if (not genetic_code)
-      throw myexception()<<"Couldn't open file 'Data/genetic_code_rna.dat'";
-    base_markov_smodel = new substitution::YangCodonModel(Translation_Table(Codons(RNA()),AminoAcids(),genetic_code));
-    genetic_code.close();
-  }
-  else
-    assert(0);
+
     
   /*------ Set frequencies for base markov model ------*/
   if (args.set("frequencies")) {
@@ -98,9 +101,12 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
   }
 
   /*------ Set the parameters for all levels of the model ------*/
-  if (args.set("parameters")) {
-    vector<double> p = split<double>(args["parameters"],',');
-    assert(p.size() == full_smodel->parameters().size());
+  if (args.set("s_parameters")) {
+    vector<double> p = split<double>(args["s_parameters"],',');
+    if (p.size() != full_smodel->parameters().size())
+      throw myexception()<<"Substitution model "<<full_smodel->name()<<
+	" takes "<<full_smodel->parameters().size()<<" parameters, but you have supplied "
+			 <<p.size();
     full_smodel->parameters(p);
   }
 
@@ -114,6 +120,6 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
 }
 
 substitution::MultiRateModel* get_smodel(Arguments& args, const alignment& A) {
-  return get_smodel(args,A.get_alphabet(),empirical_frequencies(A));
+  return get_smodel(args,A.get_alphabet(),empirical_frequencies(args,A));
 }
 

@@ -2,6 +2,7 @@
 #include "setup.H"
 #include "util.H"
 #include "rates.H"
+#include "alphabet.H"
 
 using std::vector;
 using std::valarray;
@@ -55,10 +56,27 @@ void link(alignment& A,SequenceTree& T) {
 
 
 void load_A(Arguments& args,alignment& A) {
-  vector<alphabet> alphabets;
+  vector<OwnedPointer<alphabet> > alphabets;
   if (args.set("Use Codons")) {
-    alphabets.push_back(Codons(DNA()));
-    alphabets.push_back(Codons(RNA()));
+    {
+      ifstream genetic_code("Data/genetic_code_dna.dat");
+      if (not genetic_code)
+	throw myexception()<<"Couldn't open file 'Data/genetic_code_dna.dat'";
+      Translation_Table T(Codons(DNA()),AminoAcids(),genetic_code);
+      genetic_code.close();
+
+      alphabets.push_back(T.getCodons());
+    }
+
+    {
+      ifstream genetic_code("Data/genetic_code_rna.dat");
+      if (not genetic_code)
+	throw myexception()<<"Couldn't open file 'Data/genetic_code_rna.dat'";
+      Translation_Table T(Codons(RNA()),AminoAcids(),genetic_code);
+      genetic_code.close();
+
+      alphabets.push_back(T.getCodons());
+    }
   }
   else {
     alphabets.push_back(DNA());
@@ -129,3 +147,49 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool random_tree_
   }
 
 }
+
+
+alignment standardize(const alignment& A, const SequenceTree& T) {
+  alignment A2 = A;
+  SequenceTree T2 = T;
+  vector<int> mapping = T2.standardize();
+  vector<int> imapping = invert(mapping);
+
+  for(int i=0;i<A.num_sequences();i++) {
+    if (imapping[i] == i) continue;
+
+    A2.seq(i) = A.seq(imapping[i]);
+    for(int column=0;column<A2.length();column++)
+      A2(column,i) = A(column,imapping[i]);
+  }
+  return A2;
+}
+
+
+valarray<double> empirical_frequencies(Arguments& args,const alignment& A) {
+  const alphabet& a = A.get_alphabet();
+
+  // Count the occurrence of the different letters
+  valarray<double> counts(0.0, a.size());
+  for(int i=0;i<A.length();i++) {
+    for(int j=0;j<A.size2();j++) {
+      if (alphabet::letter(A(i,j)))
+	counts[A(i,j)]++;
+    }
+  }
+
+  counts = counts/counts.sum() * A.length();
+
+  // Setup the default frequences for the pseudocounts (uniform)
+  double pseudocount = 5+4*a.size();
+
+  if (args.set("CFNF")) {
+    pseudocount = 100*counts.size();
+  }
+
+  valarray<double> frequencies = A.get_alphabet().get_frequencies_from_counts(counts,pseudocount);
+
+  return frequencies;
+}
+
+

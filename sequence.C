@@ -23,7 +23,7 @@ void sequence::parse(const string& line,const string& letters) {
   string letters2 = strip(letters," \t");
 
   /*--------- Load the actual letters ------------*/
-  vector<int>::operator=(a(letters2));
+  vector<int>::operator=((*a)(letters2));
 }
 
 void sequence::strip_gaps() {

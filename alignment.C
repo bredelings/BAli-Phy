@@ -104,7 +104,7 @@ void alignment::add_row(const vector<int>& v) {
 
 void alignment::add_sequence(const sequence& s) {
   if (sequences.size()>1)   // All the sequences should have the same alphabet
-    assert(s.a == get_alphabet());
+    assert(s.Alphabet() == get_alphabet());
 
   add_row(s);
 
@@ -127,12 +127,12 @@ void alignment::load(const alphabet& a,const vector<string>& names, const vector
   }
 }
 
-void alignment::load(const vector<alphabet>& alphabets,const vector<string>& names, const vector<string>& sequences) {
+void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<string>& names, const vector<string>& sequences) {
 
   bool success = false;
   for(int i=0;i<alphabets.size();i++) {
     try {
-      load(alphabets[i],names,sequences);
+      load(*alphabets[i],names,sequences);
       success=true;
       break;
     }
@@ -158,7 +158,7 @@ void alignment::load_sequences(const alphabet& a, sequence_format::loader_t load
 }
 
 
-void alignment::load_sequences(const vector<alphabet>& alphabets, sequence_format::loader_t loader,
+void alignment::load_sequences(const vector<OwnedPointer<alphabet> >& alphabets, sequence_format::loader_t loader,
 		    std::istream& file) {
 
   // read file
@@ -193,7 +193,7 @@ string get_extension(const string& s) {
     return s.substr(pos);
 }
 
-void alignment::load(const vector<alphabet>& alphabets,const std::string& filename) {
+void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const std::string& filename) {
   std::ifstream file(filename.c_str());
 
   string extension = get_extension(filename);
@@ -227,64 +227,36 @@ void alignment::print(std::ostream& file) const{
   }
 }
 
-void alignment::print_phylip(std::ostream& file,bool othernodes) const {
+void alignment::prepare_write(vector<string>& names,vector<string>& letters,bool othernodes) const {
   const alphabet& a = get_alphabet();
 
-  // Write header
-  file<<num_sequences()<<" "<<length()<<endl;
-
-  // Find length of longest name
-  int max_name_length=0;
-  for(int i=0;i<sequences.size();i++)
-    if (sequences[i].name.size() > max_name_length)
-      max_name_length = sequences[i].name.size();
-
-  const int header_length = std::max(10,max_name_length+2);
-  const int line_length = std::max(70,header_length+60);
-  int nsequences = num_sequences();
+  int N = num_sequences();
   if (not othernodes)
-    nsequences = nsequences/2+1;
+    N = N/2+1;
 
-  int pos=0;
-  while(pos<length()) {
-    int start = pos;
-    int end = pos + (line_length - header_length);
+  for(int i=0;i<N;i++) {
+    string letters_i;
+    for(int column=0;column<length();column++) 
+      letters_i += a.lookup((*this)(column,i));
 
-    for(int seq = 0;seq < nsequences;seq++) {
-
-      // get the line header (e.g. sequence name or spaces)
-      string header = string(header_length,' ');
-      if ((pos == 0) and seq<num_sequences()) {
-	string name = sequences[seq].name;
-	assert(name.size() <= header_length-2);
-
-	header = name + string(header_length-name.size(),' ');
-      }
-
-      // write out the line
-      file<<header;
-      for(int column=start;column<end and column<length();column++)
-	file<<a.lookup(array(column,seq));
-      file<<endl;
-    }
-    // write one blank line;
-    file<<endl;
-    pos = end;
+    names.push_back(sequences[i].name);
+    letters.push_back(letters_i);
   }
 }
 
+void alignment::write_sequences(sequence_format::dumper_t method,std::ostream& file,bool othernodes) const {
+  vector<string> names;
+  vector<string> sequences;
+  prepare_write(names,sequences,othernodes);
+  (*method)(file,names,sequences);
+}
+
 void alignment::print_fasta(std::ostream& file) const {
-  const alphabet& a = get_alphabet();
-  for(int i=0;i<sequences.size();i++) {
-    file<<">"<<sequences[i].name<<endl;
-    int column=0;
-    while(column < length()) {
-      int start = column;
-      for(;column < length() and column < start+50;column++)
-	file<<a.lookup(array(column,i));
-      file<<endl;
-    }
-  }
+  write_sequences(sequence_format::write_fasta,file,true);
+}
+
+void alignment::print_phylip(std::ostream& file,bool othernodes) const {
+  write_sequences(sequence_format::write_phylip,file,othernodes);
 }
 
 vector<int> get_path(const alignment& A,int node1, int node2) {
@@ -308,30 +280,6 @@ vector<int> get_path(const alignment& A,int node1, int node2) {
   
   state.push_back(3);
   return state;
-}
-
-std::valarray<double> empirical_frequencies(const alignment& A) {
-  std::valarray<double> f(0.0,A.get_alphabet().size());
-
-  double total=0;
-  for(int i=0;i<A.length();i++) {
-    for(int j=0;j<A.size2();j++) {
-      if (alphabet::letter(A(i,j))) {
-	total++;
-	f[A(i,j)]++;
-      }
-    }
-  }
-
-  // Use Pseudo-counts to stability the estimates
-  const double count = 10;
-  for(int i=0;i<f.size();i++)
-    f[i] += count/f.size();
-  total += count;
-
-
-  f /= total;
-  return f;
 }
 
 void remove_empty_columns(alignment& A) {

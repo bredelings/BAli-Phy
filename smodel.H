@@ -22,13 +22,15 @@ namespace substitution {
 
   public:
 
+    vector<bool> fixed;
+
     bool full_tree;
   protected:
     /// Recalculate internal data based on current parameters
     virtual void recalc() =0;
 
     /// Construct an empty model
-    Model(int s):parameters_(s) {}
+    Model(int s);
   public:
 
     /// The alphabet we are modelling substitution on
@@ -127,12 +129,18 @@ namespace substitution {
       :sub_model(M.clone()) 
     {
       parameters_.resize(M.parameters().size()+dp);
-      for(int i=0;i<M.parameters().size();i++)
+      fixed.resize(parameters_.size());
+
+      for(int i=0;i<M.parameters().size();i++) {
 	parameters_[i] = M.parameters()[i];
+	fixed[i] = M.fixed[i];
+      }
 
       full_tree = M.full_tree;
     }
   };
+  // move 'fixed' to an argument of fiddle(), store 'fixed' in Parameters
+
 
   // This models a substitution process in which evolution is independant between
   // non-overlapping intervals.  We should have that transition_p(t/2)^2 = transition_p(t)
@@ -403,7 +411,7 @@ namespace substitution {
       return T[i];
     }
 
-    virtual double prior() const;
+    double prior() const;
 
     /// Get the parameter 'kappa' (transition/transversion rate ratio)
     double kappa() const {return parameters_[0];}
@@ -416,10 +424,10 @@ namespace substitution {
     void omega(double w) {parameters_[1]=w;recalc();}
 
     /// Set the equilibrium frequencies
-    virtual void frequencies(const std::valarray<double>& pi_);
+    void frequencies(const std::valarray<double>& pi_);
     
     /// Get the equilibrium frequencies
-    virtual const std::valarray<double>& frequencies() const;
+    const std::valarray<double>& frequencies() const;
 
     YangCodonModel(const Translation_Table& T1);
 
@@ -509,7 +517,6 @@ namespace substitution {
   protected:
     double super_prior() const {return 0;}
     void super_fiddle() {}; 
-    void recalc() {};
   public:
     virtual SingleRateModel* clone() const {return new SingleRateModel(*this);}
 

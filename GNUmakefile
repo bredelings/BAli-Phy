@@ -108,7 +108,7 @@ bin/analyze_distances: alignment.o alphabet.o sequence.o arguments.o alphabet.o 
 bin/statreport: bin/statistics.o
 
 bin/findalign: alignment.o alphabet.o arguments.o sequence.o bin/alignmentutil.o \
-	rng.o ${GSLLIBS} util.o
+	rng.o ${GSLLIBS} util.o sequence-format.o
 
 bin/model_P: bin/statistics.o rng.o arguments.o ${LINKLIBS} 
 
