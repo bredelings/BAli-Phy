@@ -21,7 +21,8 @@ namespace sequence_format {
       name = label.substr(0,where);
       
       where = label.find_first_not_of(" \t",where+1);
-      comment =  label.substr(where);
+      if (where != -1)
+	comment =  label.substr(where);
     }
     
     return sequence(name,comment);
