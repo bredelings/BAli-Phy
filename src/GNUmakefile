@@ -1,7 +1,7 @@
 program: bali-phy
 
 TOOLS = tools/model_P tools/statreport tools/alignment-gild \
-	tools/alignment-reorder tools/alignment-draw tools/findalign \
+	tools/alignment-reorder tools/alignment-draw tools/alignment-find \
 	tools/tree-to-srq tools/tree-names-trunc tools/tree-reroot \
 	tools/srq-to-plot tools/srq-analyze tools/alignment-convert \
 	tools/tree-dist-compare tools/cut-range tools/alignment-chop-internal \
@@ -128,7 +128,7 @@ tools/alignment-draw: tree.o alignment.o sequencetree.o \
 tools/alignment-translate: alignment.o alphabet.o sequence.o sequence-format.o \
 	util.o	
 
-tools/findalign: alignment.o alphabet.o sequence.o tools/alignmentutil.o \
+tools/alignment-find: alignment.o alphabet.o sequence.o tools/alignmentutil.o \
 	rng.o ${LINKLIBS} util.o sequence-format.o
 
 tools/treecount: tree.o sequencetree.o util.o rng.o tools/statistics.o ${LINKLIBS}

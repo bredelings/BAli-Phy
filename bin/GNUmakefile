@@ -72,7 +72,7 @@ MAP.tree: tc
 	pickout MAPtree_0 < $< > $@
 
 MAP-unordered.fasta: out
-	findalign < MAP > $@
+	alignment-find < MAP > $@
 
 median-unordered.fasta: samples-${SKIP}+${SIZE}
 	alignment-median maxalignments=2000 type=splits < $< > $@ 2>median.err
