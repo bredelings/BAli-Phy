@@ -28,7 +28,8 @@ namespace A5 {
   vector<int> construct_states();
 
   /// Get the vector of start probabilities
-  vector<efloat_t> get_start_P(const indel::PairHMM&,const vector<int>& states);
+  vector<efloat_t> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br,
+			       const vector<int>& states);
 
   int bits_to_substates(int bits);
 
@@ -36,9 +37,10 @@ namespace A5 {
   int findstate(int state,const vector<int>& states);
 
   /// Compute the probability of moving from state #S1 to state #S2
-  efloat_t getQ(int S1,int S2,const indel::PairHMM&);
+  efloat_t getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br,
+		const vector<int>& states);
   /// Create the full transition matrix
-  eMatrix createQ(const indel::PairHMM&,const vector<int>&);
+  eMatrix createQ(const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states);
 
   /// Construct a new alignment, from alignment 'old' and 5way alignment 'path'
   alignment construct(const alignment& old, const vector<int>& path, 

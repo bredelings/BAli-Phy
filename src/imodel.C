@@ -317,7 +317,7 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {
   
   indel::PairHMM Q;
 
-  Q(S ,M ) = 0;
+  Q(S ,S ) = 0;
   Q(S ,M ) = 1 - 2*delta;
   Q(S ,G1) = delta;
   Q(S ,G2) = delta;
@@ -335,7 +335,7 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {
   Q(G1,G2) = 0;
   Q(G1,E ) = 0;
 
-  Q(G1,S ) = 1-e;
+  Q(G2,S ) = 1-e;
   Q(G2,M ) = 0;
   Q(G2,G1) = 0;
   Q(G2,G2) = e;
@@ -348,6 +348,13 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {
   Q(E ,E ) = 1;
 
   remove_one_state(Q,S);
+
+  // This is a bit of a hack...
+  Q(S ,S ) = 0;
+  Q(S ,M ) = 1;
+  Q(S ,G1) = 0;
+  Q(S ,G2) = 0;
+  Q(S ,E)  = 0;
 
   return Q;
 }

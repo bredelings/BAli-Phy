@@ -257,7 +257,9 @@ namespace A5 {
 
 
   /// Get the vector of start probabilities
-  vector<efloat_t> get_start_P(const indel::PairHMM& Q,const vector<int>& states_list) {
+  vector<efloat_t> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br,
+			       const vector<int>& states)
+  {
     int count = 0;
     efloat_t sum = 0.0;
 
@@ -287,8 +289,9 @@ namespace A5 {
       }
       assert(bits != -1);
       int state = findstate(bits|(substates<<6),states_list);
-      start_P[state] = Q.start_pi(s1) * Q.start_pi(s2) * Q.start_pi(s3) * 
-	Q.start_pi(s4) * Q.start_pi(s5);
+      start_P[state] = P[br[0]].start_pi(s1) * P[br[1]].start_pi(s2) * P[br[2]].start_pi(s3) 
+	* P[br[3]].start_pi(s4) * P[br[4]].start_pi(s5);
+
       count++;
       sum += start_P[S];
     }
@@ -302,7 +305,8 @@ namespace A5 {
   }
 
   /// Compute the probability of moving from state #S1 to state #S2
-  inline efloat_t getQ(int S1,int S2,const indel::PairHMM& Q,const vector<int>& states) {
+  efloat_t getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  {
     int endstate = states.size()-1;
 
     assert(0 <= S1 and S1 < states.size());
@@ -322,33 +326,34 @@ namespace A5 {
     if (not (ap1 & ap2) and (ap1>ap2))
       return 0.0;
 
-    efloat_t P=1.0;
+    efloat_t Pr=1.0;
     for(int i=0;i<5;i++) {
       int s1 = (states1>>(2*i))&3;
       int s2 = (states2>>(2*i))&3;
       if (bitset(ap2,i))            // this sub-alignment is present in this column
-	P *= Q(s1,s2);
+	Pr *= P[br[i]](s1,s2);
       else if (s1 != s2)            // require state info from s1 hidden in s2
 	return 0.0;
     }
 
     if (S1==endstate) {
       if (S2==endstate)
-	assert(P==1.0);
+	assert(Pr==1.0);
       else
-	assert(P==0.0);
+	assert(Pr==0.0);
     }
 
-    return P;
+    return Pr;
   }
 
   /// Create the full transition matrix
-  eMatrix createQ(const indel::PairHMM& P,const vector<int>& states) {
+  eMatrix createQ(const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  {
     eMatrix Q(states.size(),states.size());
 
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
-	Q(i,j) = getQ(i,j,P,states);
+	Q(i,j) = getQ(i,j,P,br,states);
 
     return Q;
   }

@@ -103,12 +103,16 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   /*-------------- Create alignment matrices ---------------*/
 
-  int b = T.find_branch(nodes[0],nodes[1]);
-  const eMatrix Q = createQ(P.branch_HMMs[b]);
+  vector<int> branches;
+  for(int i=1;i<nodes.size();i++)
+    branches.push_back(T.find_branch(nodes[0],nodes[i]) );
+
+  const eMatrix Q = createQ(P.branch_HMMs, branches);
+  vector<efloat_t> start_P = get_start_P(P.branch_HMMs,branches);
 
   // Actually create the Matrices & Chain
-  DPmatrixConstrained Matrices(get_state_emit(), get_start_P(P.branch_HMMs[b]), Q, P.Temp,
-		       P.SModel().distribution(), dists1, dists23, frequency);
+  DPmatrixConstrained Matrices(get_state_emit(), start_P, Q, P.Temp,
+			       P.SModel().distribution(), dists1, dists23, frequency);
 
   // Determine which states are allowed to match (,c2)
   for(int c2=0;c2<Matrices.size2();c2++) {

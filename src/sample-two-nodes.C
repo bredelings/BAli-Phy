@@ -107,13 +107,19 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   }
   
   // Create the transition matrix first using just the current, fixed ordering
-  int b = T.find_branch(nodes[0],nodes[4]);
-  const eMatrix Q = createQ(P.branch_HMMs[b],A5::states_list);
+  vector<int> branches(5);
+  branches[0] = T.find_branch(nodes[0],nodes[4]);
+  branches[1] = T.find_branch(nodes[1],nodes[4]);
+  branches[2] = T.find_branch(nodes[2],nodes[5]);
+  branches[3] = T.find_branch(nodes[3],nodes[5]);
+  branches[4] = T.find_branch(nodes[4],nodes[5]);
+  const eMatrix Q = createQ(P.branch_HMMs,branches,A5::states_list);
+  vector<efloat_t> start_P = get_start_P(P.branch_HMMs,branches,A5::states_list);
 
   // Actually create the Matrices & Chain
   DParrayConstrained Matrices(seqall.size(), 
 			      state_emit_1D, 
-			      get_start_P(P.branch_HMMs[b],A5::states_list), 
+			      start_P,
 			      Q, 
 			      P.Temp);
 
