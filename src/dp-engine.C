@@ -323,7 +323,7 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins) {
     forward_square(0,0,x[0],y[0]);
 
     // Propogate from first pin to other pins (if any)
-    for(int i=0;i<(int)x.size()-2;i++)
+    for(int i=0;i<(int)x.size()-1;i++)
       forward_square(x[i]+1,y[i]+1,x[i+1],y[i+1]);
 
     int p = x.size()-1;
