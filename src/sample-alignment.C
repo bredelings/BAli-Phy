@@ -49,7 +49,8 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
 typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parameters&,
 							      const vector<int>&,int,bool);
 
-void sample_alignment(alignment& A,Parameters& P,int b) {
+void sample_alignment(alignment& A,Parameters& P,int b) 
+{
   assert(P.IModel().full_tree);
 
   valarray<bool> s1 = constraint_satisfied(P.alignment_constraint,A);
@@ -101,7 +102,7 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
 
   path.erase(path.begin()+path.size()-1);
 
-  A = construct(old,path,group1,seq1,seq2);
+  A = construct(old,path,node1,node2,T,seq1,seq2);
 
   //--------------------------------------------------------------//
 #ifndef NDEBUG_DP

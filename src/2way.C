@@ -1,13 +1,15 @@
 #include "2way.H"
 #include "alignment-util.H"
+#include "substitution-index.H"
 
 using namespace std;
 
 namespace A2 {
 
-alignment construct(const alignment& old, const vector<int>& path, const valarray<bool>& group1, 
-		    const vector<int>& seq1,const vector<int>& seq2) {
+alignment construct(const alignment& old, const vector<int>& path, int n1,int n2,
+		    const Tree& T, const vector<int>& seq1,const vector<int>& seq2) {
 
+  valarray<bool> group1 = T.partition(n2,n1);
   valarray<bool> group2 = !group1;
 
   vector<int> subA1;
