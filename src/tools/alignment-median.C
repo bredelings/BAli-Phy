@@ -3,6 +3,7 @@
 #include <cmath>
 #include <vector>
 #include <list>
+#include <numeric>
 #include "myexception.H"
 #include "alignment.H"
 #include "arguments.H"
@@ -108,36 +109,57 @@ int main(int argc,char* argv[]) {
     vector<int> iorder = invert(order);
 
     //----------- accumulate distances ------------- //
-    vector< vector<int> > distances(Ms.size());
-    vector<int> total2(Ms.size(),0);
-    vector<int> total1;
+    vector< vector<double> > distances(Ms.size());
+    vector<double> total1;
+    vector<double> total2(Ms.size(),0);
 
     for(int i=0;i<Ms.size();i++) {
 
-      distances[i].resize(Ms.size());
+      int o = order[i];
+      distances[o].resize(Ms.size());
 
       total1.push_back(0);
-      for(int j=0;j<distances[i].size();j++) {
+      for(int j=0;j<Ms.size();j++) {
 	
-	distances[i][j] = distance(Ms[iorder[i]],column_indexes[iorder[i]],
-				   Ms[iorder[j]],column_indexes[iorder[j]]);
+	double D = distance(Ms[o],column_indexes[o],
+			    Ms[j],column_indexes[j]);
 
-	total1[i] += distances[i][j];
-	total2[j] += distances[i][j];
+	distances[o][j] = D;
+
+	total1[i] += distances[o][j];
+	total2[j] += distances[o][j];
       }
 
       int argmin1 = argmin(total1);
       int argmin2 = argmin(total2);
 
       std::cerr<<"alignment = "<<i<<"   length = "<<Ms[i].size1();
-      std::cerr<<"   E D = "<<total1[i]/Ms.size()<<"   E D1 = "<<total1[argmin1]/Ms.size()
+      std::cerr<<"   E D = "<<total1[i]/Ms.size()
+	       <<"   E D1 = "<<total1[argmin1]/Ms.size()
 	       <<"   E D2 ~ "<<total2[argmin2]/(i+1);
-      std::cerr<<"    D("<<argmin1<<","<<argmin2<<") = "<<distances[argmin1][argmin2]<<std::endl;
+      std::cerr<<"    D("<<order[argmin1]<<","<<argmin2<<") = "<<distances[order[argmin1]][argmin2]<<std::endl;
     }
     assert(total1.size() == total2.size());
     assert(argmin(total1) == argmin(total2));
 
-    std::cout<<alignments[iorder[argmin(total1)]]<<std::endl;;
+    std::cout<<alignments[iorder[argmin(total1)]]<<std::endl;
+
+    // print radius vs fraction
+    vector<int> order2(Ms.size());
+    for(int i=0;i<order2.size();i++)
+      order2[i] = i;
+
+    std::sort(order2.begin(),order2.end(),sequence_order<double>(total1));
+    std::reverse(order2.begin(),order2.end());
+
+    int total=0;
+    for(int i=1;i<order2.size();i++) {
+      for(int j=0;j<i;j++)
+	total += distances[order2[i]][order2[j]];
+
+      std::cerr<<"fraction = "<<double(i)/(order2.size()-1)<<"     AveD = "<<double(total)/(i*i+i)*2<<std::endl;
+    }
+    
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
