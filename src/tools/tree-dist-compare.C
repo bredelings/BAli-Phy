@@ -108,7 +108,7 @@ bool report_sample(std::ostream& o,const vector<valarray<bool> >& sample_in,int 
     CI[i] = statistics::confidence_interval(values[i],0.95);
     support[i] = conservative(CI[i]);
 
-    /*------- Numbers of Constant blocks ---------*/
+    //------- Numbers of Constant blocks ---------//
     nchanges[i] = changes(sample[i],true) + changes(sample[i],false);
 
     nchanges_ave[i] = (nchanges[i] + 1)/2;
@@ -387,7 +387,9 @@ int main(int argc,char* argv[]) {
     for(int i=0;i<tree_dists.size();i++) {
       vector<Partition> partitions = get_Ml_partitions(tree_dists[i],level);
       SequenceTree MF = get_mf_tree(partitions);
-      cout<<"Sample "<<i<<": "<<partitions.size()<<"/"<<MAP_trees[i].n_leaves()-3<<" internal bi-partitions supported.\n";
+      cout<<"\nSample "<<i<<": "<<partitions.size()<<"/"<<MAP_trees[i].n_leaves()-3<<" internal bi-partitions supported.\n";
+      valarray<bool> support = tree_dists[i].supports_partitions(partitions);
+      cout<<"PP = "<<statistics::Pr(support)<<"\n";;
       cout<<" consensus"<<i<<" = "<<MF<<std::endl;
     }
   }
