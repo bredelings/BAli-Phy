@@ -58,12 +58,14 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
     o<<standardize(A,P.T)<<"\n\n";
   }
   
-  trees<<P.T<<"\n";
+  trees<<P.T<<std::endl;
   
   pS<<  "    mu = "<<P.branch_mean<<"   ";
   show_parameters(pS,P.SModel());
+  pS.flush();
 
   show_parameters(pI,P.IModel());
+  pI.flush();
   
   for(int i=0;i<P.SModel().n_base_models();i++)
     o<<"    rate"<<i<<" = "<<P.SModel().base_model(i).rate();
@@ -72,6 +74,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   o<<"frequencies = "<<"\n";
   show_frequencies(o,P.SModel());
   o<<"\n\n";
+  o.flush();
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
