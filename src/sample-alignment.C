@@ -137,7 +137,9 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
   std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<Matrices.Pr_sum_all_paths()<<endl;
 
 #else
+  letters_OK(A,"sample_alignment:1");
   P.LC.set_length(A.length());
+  letters_OK(A,"sample_alignment:2");
   P.LC.invalidate_branch_alignment(T,b);
 #endif
 
