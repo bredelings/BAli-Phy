@@ -118,6 +118,21 @@ SequenceTree::SequenceTree(std::istream& file) {
   read(total);
 }
 
+void add_left(node*,node*);
+void add_right(node*,node*);
+
+node* connect(node* l,double lb,node* r,double rb) {
+  node* n = new node;
+  add_left(n,l);
+  add_right(n,r);
+
+  l->parent_branch->length = lb;
+  r->parent_branch->length = rb;
+
+  return n;
+}
+
+
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit
 void SequenceTree::read(const string& line) {
@@ -134,7 +149,7 @@ void SequenceTree::read(const string& line) {
 
   //how to turn pos into a string?
 
-  vector<SequenceTree> tree_stack;
+  vector<node*> tree_stack;
   vector<double> branch_stack;
 
   string name;
@@ -144,7 +159,11 @@ void SequenceTree::read(const string& line) {
     /******* Read the data from 'name' into the stacks *******/
     if (c== ':') {
       if (name.length() != 0) {
-	tree_stack.push_back(SequenceTree(name));
+	node* n = new node;
+	n->name = sequences.size();
+	sequences.push_back(name);
+	tree_stack.push_back(n);
+
 	name = "";
       }
     }
@@ -165,14 +184,14 @@ void SequenceTree::read(const string& line) {
       assert(tree_stack.size() >= 2);
       assert(tree_stack.size() == branch_stack.size());
 
-      SequenceTree T2 = tree_stack.back();tree_stack.pop_back();
       double b2 = branch_stack.back();branch_stack.pop_back();
-
-      SequenceTree T1 = tree_stack.back();tree_stack.pop_back();
       double b1 = branch_stack.back();branch_stack.pop_back();
 
-      SequenceTree Join = SequenceTree(T1,b1,T2,b2);
-      tree_stack.push_back(Join);
+      node* n2 = tree_stack.back();tree_stack.pop_back();
+      node* n1 = tree_stack.back();tree_stack.pop_back();
+
+      node* n3 = connect(n1,b1,n2,b2);
+      tree_stack.push_back(n3);
       //      std::cerr<<"    leaves: "<<T1.leaves()<<" + "<<T2.leaves()<<" = "<<Join.leaves()<<endl;
       depth--;
       if (depth < 0) 
@@ -188,6 +207,8 @@ void SequenceTree::read(const string& line) {
     if (depth <1) break;
   }
   assert(tree_stack.size() == 1);
-  (*this) = tree_stack[0];
+  root = tree_stack[0];
+
+  reanalyze();
 }
 

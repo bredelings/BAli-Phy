@@ -3,8 +3,19 @@
 
 #include "mytypes.H"
 #include <valarray>
+#include "myexception.H"
 
 /***************** struct alphabet ********************/
+struct bad_letter:public myexception {
+  char c;
+
+  bad_letter(char c)
+    :myexception(string("Letter '") + c + string("' not in alphabet."))
+  {}
+
+  virtual ~bad_letter() throw() {}
+};
+
 struct alphabet {
 
   vector<char> data;

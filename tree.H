@@ -141,12 +141,14 @@ public:
 
 class tree {
   int n_leaves;
-  node* root;
 
   vector<node*> names;
   vector<node*> order;
 
   vector<Branch*> branches_;
+
+protected:
+  node* root;
 
   void add_left(node*,const tree&);
   void add_right(node*,const tree&);
@@ -162,7 +164,6 @@ class tree {
   //re-calculate the order of the nodes
   void reorder();
 
-protected:
   void add_root(); 
 
 public:

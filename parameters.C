@@ -7,9 +7,9 @@
 void SubstitutionModel::recalc() {
 
   // Determine diagonal entries
-  for(int i=0;i<4;i++) {
+  for(int i=0;i<S.size1();i++) {
     double sum=0;
-    for(int j=0;j<4;j++) {
+    for(int j=0;j<S.size2();j++) {
       if (i==j) continue;
       sum += S(i,j);
     }
@@ -24,7 +24,7 @@ void SubstitutionModel::recalc() {
 
   // Rescale so expected that mutation rate is 1
   double scale=0;
-  for(int i=0;i<4;i++) 
+  for(int i=0;i<S.size1();i++) 
     scale += rates()(i,i)*pi[i];
 
   Q /= -scale;
@@ -32,7 +32,7 @@ void SubstitutionModel::recalc() {
   std::cerr<<"scale1 = "<<scale<<endl;
 
   scale=0;
-  for(int i=0;i<4;i++) 
+  for(int i=0;i<S.size1();i++) 
     scale += rates()(i,i)*pi[i];
 
   std::cerr<<"scale2 = "<<scale<<endl;

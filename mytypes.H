@@ -14,8 +14,11 @@ using std::ofstream;
 using std::endl;
 
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/bindings/atlas/clapack.hpp>
 
-using namespace boost::numeric;
+namespace ublas = boost::numeric::ublas;
+namespace atlas = boost::numeric::bindings::atlas;
+
 typedef ublas::matrix<double> Matrix;
 typedef ublas::vector<double> Vector;
 typedef ublas::zero_vector<double> zero_vector;

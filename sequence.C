@@ -10,7 +10,7 @@ int alphabet::operator[](char c) const {
       return i;
   }
   std::cerr<<int(c)<<endl;
-  throw myexception(string("Letter '") + c + string("' not in alphabet."));
+  throw bad_letter(c);
 }
 
 vector<int> alphabet::operator() (const string& s) const{

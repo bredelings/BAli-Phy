@@ -594,6 +594,8 @@ TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
   return present;
 }
 
+
+
 void tree::swap_children(int n) {
   node* p = names[n];
 

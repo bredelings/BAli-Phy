@@ -39,18 +39,7 @@
 
 // 16. *Better* output statistics?  Specify species to look at on command line?
 
-// 17. Output an ML phylogeny?
-
-// 18. Normalize rate matrix so that Sum(m) lambda(m,m)*pi(m) = -1
-
 // 20. How can we show conservation in the graph? (for 2 species?  more?)
-
-// 22. ALL internal-node-resampling is 1D!  We can resample adjacent
-//       internal nodes simultaneously w/ a 1D algorithm!
-//     IS there a good way to just integrate over all internal node state?
-//       The state space is probably at least 2^(#nodes) though.
-
-// 23. Finish writing the new branch-length MH sampler
 
 // 24. Measure the correlation time - see how sorting by center of mass of alignment
 //    look at the probability that an aligned node pair at time t is still aligned
@@ -74,9 +63,6 @@
 //      WILL change!  So this will change at least the "plot 'logp'"
 //      graphs!
 
-
-//29. make the back-sampling code in the branch-resampling algorithm
-//    compute the likelihood change, see if its correct.  
 
 // How to check these samplers, and find cases where they are not working???
 // These seems to be something in the tail region of the 5S rna data that is triggering a bug
@@ -143,9 +129,20 @@ int main(int argc,char* argv[]) {
   /*********** Start the sampling ***********/
   std::cerr.precision(10);
   std::cout.precision(10);
+
+  SubstitutionModel* smodel = &smodel1;
   
   try {
-    A.load_fasta(nucleotides,file);
+    try {
+      A.load_fasta(nucleotides,file);
+    }
+    catch (bad_letter& e) {
+      file.close();
+      file.open(argv[1]);
+      std::cerr<<"Exception: "<<e.what()<<endl;
+      A.load_fasta(amino_acids,file);
+      smodel = &smodel4;
+    }
     if (A.num_sequences() == 0) {
       std::cerr<<"Alignment file \""<<argv[1]<<"\" didn't  contain any sequences!\n";
       exit(1);
@@ -154,7 +151,14 @@ int main(int argc,char* argv[]) {
     SequenceTree T1(file2);
 
     {
-      Parameters Theta(smodel2,lambda_O,lambda_E,T1);
+      std::cout<<"rate matrix = \n";
+      for(int i=0;i<smodel->rates().size1();i++) {
+	for(int j=0;j<smodel->rates().size2();j++) 
+	  std::cout<<smodel->rates()(i,j)<<" ";
+	std::cout<<endl;
+      }
+      
+      Parameters Theta(*smodel,lambda_O,lambda_E,T1);
       MCMC(A,Theta,50000,probability3);
     }
   }
@@ -164,33 +168,3 @@ int main(int argc,char* argv[]) {
   return 0;
 }
 
-
-/************************** ToDo -> Done! *****************************/
-
-
-// 2. Check to make sure that the gap-resamping works - do we need to store TWO states?
-//     or can we just modify choices depending on previous state?
-
-// 4. make some output statistics so we can observe the probability distribution
-
-// 6. Make it possible to specify Alignment(Sequences) and Tree on command line
-
-// 9. Add branch lengths
-
-// 14. How to read in tree structures in a text file?
-
-// 15. Need to actually alter branch lengths w/ MCMC moves (use exp prior - estimate length parameter)
-
-// 19. Does operator= work for parameters, or not? !!
-//      operator= was working only the first time for trees - FIXED
-
-
-// 21. Look at paper on RNA phylogenetics?
-
-// 24. Write a script to output differences in alignment distributions
-
-// 26. Put priors on branch lengths and parameters and stuff into probability() functions
-
-// HIV1: -426.4
-// HIV2: -421.5
-// HIV3: -416.4 

@@ -5,6 +5,7 @@
 using namespace ublas;
 
 
+
 // how do we make the M constant? - const_cast?
 // return inline matrix_expression?
 
@@ -15,11 +16,39 @@ Matrix exp(const Matrix& M,const double t) {
   Matrix O = solution.Rotation();
   banded_matrix<double> D = solution.Diagonal();
 
+  for(int i=0;i<D.size1();i++)
+    std::cerr<<"eigenvalue "<<i<<" = "<<D(i,i)<<std::endl;
+  std::cerr<<std::endl;
+
   // Exponentiate Eigenvalues
   for(int i=0;i<solution.size();i++)
     D(i,i) = exp(t*D(i,i));
 
-  return  prod(O,prod(D,trans(O)));
+  // this is wrong - because O isn't scaled as an orthogonal matrix!
+  // need to take the inverse!  I think O is orthogonal only if 
+  // M is symmetric
+  Matrix LU = 0;
+  Matrix DOinverse = D;
+  atlas::lu_solve(O,D);
+  Matrix E = prod(O,DOinverse);
+
+  for(int i=0;i<D.size1();i++)
+    std::cerr<<"exp eigenvalue "<<i<<" = "<<D(i,i)<<std::endl;
+  std::cerr<<std::endl;
+
+  std::cerr<<"O = \n";
+  for(int i=0;i<O.size1();i++) {
+    for(int j=0;j<O.size2();j++)
+      std::cerr<<O(i,j)<<" ";
+    std::cerr<<endl;
+  }
+  
+
+  for(int i=0;i<E.size1();i++)
+    for(int j=0;j<E.size2();j++)
+      assert(E(i,j) >= 0.0);
+
+  return E;
 }
 
 #ifdef TEST_EXP

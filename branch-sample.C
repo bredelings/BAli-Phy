@@ -250,8 +250,6 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   int node1 = T.branch(b).parent();
   int node2 = T.branch(b).child();
 
-  int old_length1 = old.seqlength(node1);
-
   valarray<bool> group1 = T.partition(node2,node1);
 
   // Find sub-alignments and sequences

@@ -48,9 +48,17 @@ void alignment::add_sequence(const sequence& s) {
 }
 
 
-void alignment::add_sequence(const alphabet& a,const string& name,const string& letters) {
+void alignment::add_sequence(const alphabet& a,const string& line,const string& letters) {
   vector<int> v = a(letters);
   add_sequence(v);
+ 
+  string name;
+  int where = line.find_first_of(" \t");
+  if (where == -1)
+    name = line;
+  else
+    name = line.substr(0,where);
+
 
   sequence s(a,name.c_str());
   for(int i=0;i<v.size();i++) {
@@ -174,15 +182,15 @@ alignment& alignment::operator=(const alignment& A) {
 
 
 void alignment::load_fasta(const alphabet& a,std::istream& file) {
-  char temp[128];
 
   string current;
   string name;
 
-  while(file.getline(temp,128)) {
-    string line(temp);
+  string line;
+  while(getline(file,line)) {
+    if (!line.size()) continue;
 
-    if (temp[0] != '>') {
+    if (line[0] != '>') {
       current += line;
       continue;
     }

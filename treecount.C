@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <list>
@@ -44,6 +45,38 @@ double moment(const vector<double>& v,int n) {
   return total/v.size();
 }
 
+int contains_partition(const SequenceTree& T,const valarray<bool>& p) {
+  int match = -1;
+  for(int b=T.leaves();b<T.branches();b++) {
+    int parent2 = T.branch(b).parent();
+    int child2 = T.branch(b).child();
+
+    valarray<bool> p2 = T.partition(parent2,child2);
+
+    //	cerr<<b<<" ";
+    //	for(int i=0;i<p2.size();i++)
+    //	  cerr<<p2[i]<<" ";
+    //	cerr<<endl;
+
+
+    if (p[0] != p2[0])
+      p2 = !p2;
+
+    assert(p[0] == p2[0]);
+
+    bool m = true;
+    for(int i=0;i<T.leaves();i++)
+      if (p[i] != p2[i])
+	m = false;
+
+    if (m) {
+      match = b;
+      break;
+    }
+  }
+  return match;
+}
+
 
 SequenceTree standardized(const string& t) {
   SequenceTree T(t);
@@ -63,11 +96,11 @@ SequenceTree standardized(const string& t) {
     i++;
   }
 
-  //  std::cerr<<t<<std::endl;
-  //  std::cerr<<T.write()<<std::endl;
-  //  std::cerr<<T.write(false)<<std::endl;
+  //  cerr<<t<<endl;
+  //  cerr<<T.write()<<endl;
+  //  cerr<<T.write(false)<<endl;
   T.SequenceTree::standardize(newnames);
-  //  std::cerr<<T.write(false)<<std::endl;
+  //  cerr<<T.write(false)<<endl;
   return T;
 }
 
@@ -77,10 +110,19 @@ string topology(const string& t) {
   return T.write(false);
 }
 
+struct ordering {
+  vector<int> count;
+
+  bool operator()(int i,int j) {return count[i] < count[j];}
+  
+  ordering(const vector<int>& v):count(v) {}
+};
+
+const int maxtrees=10;
+
 int main() {
   list<string> trees;
 
-  //FIXME - need to write a class that does strings!
   hash_map<string,int,hash<string>,eqstr> index(1000);
   vector<string> topologies;
   vector<int> count;
@@ -91,9 +133,11 @@ int main() {
     trees.push_back(line);
   }
   
+  /*************** Count how many of each type ***************/
   foreach(mytree,trees) {
 
-    string t = topology(*mytree);
+    SequenceTree T = standardized(*mytree);
+    string t = T.write(false);
 
     typeof(index.begin()) here = index.find(t);
 
@@ -108,119 +152,129 @@ int main() {
     count[i]++;
   }
 
-  /*************** Count how many of each type ***************/
-  int total = 0;
-  int most = 0;
-  int withmost = 0;
-  for(int i=0;i<count.size();i++) {
-    if (count[i] > most) {
-      most = count[i];
-      withmost = i;
-    }
-    total += count[i];
-  }
+  cout<<"There were "<<trees.size()<<" trees scanned\n";
+  cout<<"   Different topologies:  "<<topologies.size()<<endl;
 
-  std::cout<<"There were "<<total<<" trees scanned\n";
-  std::cout<<"   Different topologies:  "<<topologies.size()<<std::endl;
+  /**************** How good are the best ones? ***************/
+  vector<int> order(topologies.size());
+  for(int i=0;i<order.size();i++)
+    order[i] = i;
+  
+  sort(order.begin(),order.end(),ordering(count));
 
-  std::cout<<"\nMost frequent topology had "<<most<<" counts."<<std::endl;
-  std::cout<<topologies[withmost]<<std::endl;
+  int numtrees = maxtrees;
+  if (topologies.size() < numtrees) numtrees = topologies.size();
 
-  //  for(int i=0;i<topologies.size();i++) {
-  //    std::cout<<i<<"   "<<count[i]<<"   ("<<double(count[i])/total<<")"<<std::endl;
-  //    std::cout<<"  "<<topologies[i]<<std::endl;
-  //  }
+  cout<<endl;
+  cout<<endl;
 
-  std::cout<<std::endl;
-  std::cout<<std::endl;
-
-  /*******  Check confidence of internal branches ******/
-  SequenceTree best;
+  /***************  Get examples of best trees ***************/
+  vector< SequenceTree > best_trees(numtrees);
   foreach(mytree,trees) {
-    if (topology(*mytree) == topologies[withmost]) {
-      best = standardized(*mytree);
+    SequenceTree T = standardized(*mytree);
+    string t = T.write(false);
+
+    bool done = true;
+    for(int i = 0;i<best_trees.size();i++) {
+      int j = order[order.size() - 1 - i];
+
+      if (best_trees[i].leaves() > 0)
+	continue;
+      if (t == topologies[j])
+	best_trees[i] = T;
+      else 
+	done = false;
+    }
+
+    if (done)
       break;
+  }
+
+  const SequenceTree& best = best_trees[0];
+  const int nleaves = best.leaves();
+  const int nbranches = best.branches();
+
+  /*******  Check branch length and confidence ******/
+
+  // data structure for branch length info
+  vector<  vector< double > > branch_m1(best_trees.size(),vector<double>(nbranches));
+  vector<  vector< double > > branch_m2(best_trees.size(),vector<double>(nbranches));
+
+  // data structure for branch count info
+  vector<int> branch_count(nbranches,0);
+
+  foreach(mytree,trees) {
+    SequenceTree thisone = standardized(*mytree);
+
+    // collect branch length info
+    string topo = thisone.write(false);
+    for(int i=0;i<best_trees.size();i++) {
+      int j = order[order.size()-1-i];
+      if (topo == topologies[j]) 
+	for(int b=0;b<thisone.branches();b++) {
+	  double d = thisone.branch(b).length();
+	  branch_m1[i][b] += d;
+	  branch_m2[i][b] += d*d;
+	}
+    }
+
+    // collect branch confidence info
+    for(int b=nleaves;b<nbranches;b++) {
+      int parent = best.branch(b).parent();
+      int child = best.branch(b).child();
+      valarray<bool> p1 = best.partition(parent,child);
+
+      int match = contains_partition(thisone,p1);
+
+      if (match != -1)
+	branch_count[b]++;
     }
   }
 
-  std::cout<<best.write(false)<<std::endl;
+  for(int i=0;i<best_trees.size();i++) {
+    int j = order [ order.size() - 1 - i];
+    int num = count[j];
+    for(int b=0;b<best_trees[i].branches();b++) 
+      branch_m1[i][b] /= double(num);
+  }
 
-  std::cout<<std::endl;
-  std::cout<<std::endl;
+  /****************  Summarize best trees ****************/
+  cout<<"Best Trees: \n";
+  for(int i=0;i<best_trees.size();i++) {
+    int t = order[order.size() - 1 - i];
+    cout<<topologies[t]<<endl;
+    cout<<double(count[t])/trees.size()<<"            ("<<count[t]<<")"<<endl;
+
+    for(int b=0;b< best_trees[i].branches();b++) {
+      double m1 = branch_m1[i][b];
+      double m2 = branch_m2[i][b];
+      double stddev = sqrt(m2 - m1*m1);
+      
+      best_trees[i].branch(b).length() = m1;
+      cout<<b<<"  "<<m1<<"    "<<stddev<<endl;
+    }
+    cout<<best_trees[i]<<endl;
+    cout<<endl<<endl;
+  }
+  cout<<endl<<endl;
+
+  /******** Print out support for each partition *********/
+  cout<<"Support for the different partitions: \n";
   for(int b=best.leaves();b<best.branches();b++) {
-
-    int count = 0;
     int parent = best.branch(b).parent();
     int child = best.branch(b).child();
-    std::valarray<bool> p1 = best.partition(parent,child);
+    valarray<bool> p1 = best.partition(parent,child);
 
     for(int i=0;i<best.leaves();i++)
       if (p1[i])
-	std::cout<<best.seq(i)<<" ";
-    std::cout<<"| ";
+	cout<<best.seq(i)<<" ";
+    cout<<"| ";
     for(int i=0;i<best.leaves();i++)
       if (not p1[i])
-	std::cout<<best.seq(i)<<" ";
-    std::cout<<std::endl;
-
-    foreach(mytree,trees) {
-      SequenceTree thisone = standardized(*mytree);
-      int match = -1;
-      for(int b2=thisone.leaves();b2<thisone.branches();b2++) {
-	int parent2 = thisone.branch(b2).parent();
-	int child2 = thisone.branch(b2).child();
-
-	std::valarray<bool> p2 = thisone.partition(parent2,child2);
-
-	//	std::cerr<<b2<<" ";
-	//	for(int i=0;i<p2.size();i++)
-	//	  std::cerr<<p2[i]<<" ";
-	//	std::cerr<<endl;
-
-
-	if (p1[0] != p2[0])
-	  p2 = !p2;
-
-	assert(p1[0] == p2[0]);
-
-	bool m = true;
-	for(int i=0;i<thisone.leaves();i++)
-	  if (p1[i] != p2[i])
-	    m = false;
-
-	if (m) {
-	  match = b2;
-	  break;
-	}
-      }
-      if (match != -1)
-	count++;
-      if (b == 14)
-	assert(match != -1);
-    }  
-    std::cout<<"  "<<count<<"     "<<double(count)/trees.size()<<std::endl;
+	cout<<best.seq(i)<<" ";
+    cout<<endl;
+    cout<<double(branch_count[b])/trees.size()<<
+      "    ("<<branch_count[b]<<")"<<endl<<endl;
   }
 
-  /************ Get Branch Length Distribution ************/
-  vector< vector<double> > branch_data(best.branches());
-
-  foreach(mytree,trees) {
-    if (topology(*mytree) != topologies[withmost]) continue;
-
-    SequenceTree thisone = standardized(*mytree);
-
-    for(int b=0;b<thisone.branches();b++)
-      branch_data[b].push_back(thisone.branch(b).length());
-  }
-
-  for(int b=0;b< best.branches();b++) {
-    double m1 = moment(branch_data[b],1);
-    double m2 = moment(branch_data[b],2);
-    double stddev = sqrt(m2 - m1*m1);
-
-    best.branch(b).length() = m1;
-    std::cout<<b<<"  "<<m1<<"    "<<stddev<<std::endl;
-  }
-
-  std::cout<<best<<endl;
 }
