@@ -797,6 +797,14 @@ double tree::distance(int i,int j) const {
   return distance2(i,ancestor)+distance2(j,ancestor);
 }
 
+int tree::find_branch(int node1,int node2) const {
+  for(int b=0;b<branches();b++) {
+    if (branch(b).child() == node1 and branch(b).parent() == node2) return b;
+    if (branch(b).child() == node2 and branch(b).parent() == node1) return b;
+  }
+  std::abort();
+}
+
 bool same(const valarray<bool>& vb1,const valarray<bool>& vb2) {
   assert(vb1.size() == vb2.size());
   for(int i=0;i<vb1.size();i++)

@@ -3,6 +3,7 @@
 
 #include "alphabet.H"
 #include "sequence.H"
+#include "sequence-format.H"
 #include "tree.H"
 #include <iostream>
 #include "mytypes.H"
@@ -15,7 +16,6 @@ class alignment {
   void clear();
   void resize(int,int);
   void pad(int);
-  void gap_fixup(int,int,int);
 
   void add_row(const vector<int>&);
 
@@ -36,20 +36,12 @@ public:
   /// Add sequences called names, using the first alphabet in alphabets that works
   void load(const vector<alphabet>& alphabets,const vector<string>& names, const vector<string>& sequences);
 
-  /// Add all sequences in FASTA file 'filename' to the alignment
-  void load_fasta(const alphabet&,const std::string& filename);
-  /// Add all sequences from FASTA stream 'file' to the alignment
-  void load_fasta(const alphabet&,std::istream& file);
-
-  /// Add sequences from PHYLIP file 'filename' to the alignment
-  void load_phylip(const alphabet&,const std::string& filename);
-  /// Add sequences from PHYLIP stream 'file' to the alignment
-  void load_phylip(const alphabet&,std::istream& file);
-  /// Add sequences from PHYLIP stream 'file' to the alignment
-  void load_phylip(const vector<alphabet>&,std::istream& file);
+  void load_sequences(const alphabet&,sequence_format::loader_t,std::istream&);
+  void load_sequences(const vector<alphabet>&,sequence_format::loader_t,std::istream&);
 
   /// Load PHYLIP or FASTA file 'filename', depending on extentime
   void load(const alphabet&,const std::string& filename);
+  void load(const vector<alphabet>&,const std::string& filename);
 
   void print(std::ostream&) const;
   /// Print alignment in FASTA format
@@ -95,7 +87,7 @@ inline std::ostream& operator<<(std::ostream& file,const alignment& A) {
 }
 
 inline std::istream& operator>>(std::istream& file,alignment& A) {
-  A.load_fasta(A.get_alphabet(),file);
+  A.load_sequences(A.get_alphabet(),sequence_format::read_fasta,file);
   return file;
 }
 

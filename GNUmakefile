@@ -31,12 +31,12 @@ all: sampler
 #-mfpmath=sse,387 ?
 
 #----------------- Definitions
-LANGO = fast-math  #tracer  prefetch-loop-arrays abi-version=0 omit-frame-pointer
+LANGO = fast-math  # tracer  prefetch-loop-arrays abi-version=0 omit-frame-pointer
 DEBUG = pipe g3 #gdwarf-2 #pg 
 EXACTFLAGS =  --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
-DEFS = NDEBUG # NDEBUG_DP # USE_UBLAS
+DEFS = # NDEBUG NDEBUG_DP # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
-OPT =  march=pentium4 O3 #O3 # malign-double msse mmmx msse2 
+OPT =  march=athlon-xp # O3 # malign-double msse mmmx msse2 
 LDFLAGS = #-pg # -static 
 LI=${CXX}
 
@@ -50,7 +50,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
 	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
 	  node-sample2.C imodel.C 5way.C topology-sample2.C inverse.C \
-	  setup.C rates.C matcache.C sample-two-nodes.C
+	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C
 
 LIBS = gsl gslcblas m 
 GSLLIBS = ${LIBS:%=-l%}
@@ -96,7 +96,7 @@ bin/drawalignment: tree.o alignment.o sequencetree.o arguments.o \
 	eigenvalue.o rates.o ${LINKLIBS}
 
 bin/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
-	rng.o util.o ${LIBS:%=-l%}
+	rng.o util.o sequence-format.o ${LIBS:%=-l%}
 
 bin/analyze_distances: alignment.o alphabet.o sequence.o arguments.o alphabet.o \
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \

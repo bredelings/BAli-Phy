@@ -30,30 +30,16 @@
 //     Check to make sure that this is proportional to the likelihood...
 void do_setup(Arguments& args,alignment& A,SequenceTree& T)
 {
-  /* ----- Alphabets to try ------ */
-  alphabet dna("DNA nucleotides","AGTC","NYR");
-  alphabet rna("RNA nucleotides","AGUC","NYR");
-  alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
+  vector<alphabet> alphabets;
+  alphabets.push_back(alphabet("DNA nucleotides","AGTC","NYR"));
+  alphabets.push_back(alphabet("RNA nucleotides","AGUC","NYR"));
+  alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
 
   /* ----- Try to load alignment ------ */
   if (not args.set("align")) 
     throw myexception("Alignment file not specified! (align=<filename>)");
 
-  try {
-    A.load(dna,args["align"]);
-  }
-  catch (bad_letter& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
-
-    try {
-      A.load(rna,args["align"]);
-    }
-    catch (bad_letter& e) {
-      std::cerr<<"Exception: "<<e.what()<<endl;
-      
-      A.load(amino_acids,args["align"]);
-    }
-  }
+  A.load(alphabets,args["align"]);
 
   remove_empty_columns(A);
 
@@ -190,10 +176,14 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				    internal_branches)
 		    );
   topology_move.add(1,MoveArgSingle("two_way_NNI:nodes:topology",
-				    three_way_topology_sample,
+				    two_way_topology_sample,
 				    internal_branches)
 		    );
-  topology_move.add(1,MoveArgSingle("three_way_t_and_A:alignment:nodes:topology",
+  topology_move.add(1,MoveArgSingle("two_way_NNI2:nodes:topology",
+				    two_way_topology_sample,
+				    internal_branches)
+		    );
+  topology_move.add(0.5,MoveArgSingle("three_way_t_and_A:alignment:nodes:topology",
 				    three_way_topology_and_alignment_sample,
 				    internal_branches)
 		    ,false

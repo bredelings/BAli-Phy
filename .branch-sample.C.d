@@ -1,1 +1,1 @@
-
+.branch-sample.C.d branch-sample.o: branch-sample.C sample.H mytypes.H alignment.H   alphabet.H myexception.H sequence.H sequence-format.H tree.H   parameters.H sequencetree.H smodel.H rates.H imodel.H matcache.H mcmc.H   rng.H logsum.H choose.H 2way.H substitution.H

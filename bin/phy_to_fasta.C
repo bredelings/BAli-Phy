@@ -2,6 +2,7 @@
 #include "myexception.H"
 #include "alignment.H"
 #include "arguments.H"
+#include "sequence-format.H"
 
 int main(int argc,char* argv[]) { 
   try {
@@ -18,7 +19,7 @@ int main(int argc,char* argv[]) {
     alphabets.push_back(alphabet("RNA nucleotides","AGUC","N"));
     alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
     
-    A.load_phylip(alphabets,std::cin);
+    A.load_sequences(alphabets,sequence_format::read_phylip,std::cin);
 
     A.print_fasta(std::cout);
   }
@@ -26,5 +27,6 @@ int main(int argc,char* argv[]) {
     std::cerr<<"Exception: "<<e.what()<<endl;
     exit(1);
   }
+
   return 0;
 }

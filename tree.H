@@ -193,6 +193,7 @@ public:
   int get_nth(int i) const {return order[i]->name;}
 
   bool connected(int node1,int node2) const;
+  int find_branch(int node1,int node2) const;
 
   int leaves() const {return n_leaves;}
   int branches() const {return branches_.size()-1;}

@@ -344,12 +344,26 @@ MCMC::result_t two_way_topology_sample(alignment& A, Parameters& P,int b) {
 MCMC::result_t two_way_topology_sample2(alignment& A, Parameters& P,int b) {
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
+  
+  const tree& T = P.T;
 
-  vector<int>nodes = A5::get_nodes_random(P.T,b);
+  vector<int> nodes = A5::get_nodes_random(P.T,b);
+  
+  //  int b0 = T.find_branch(nodes[0],nodes[4]);
+  int b1 = T.find_branch(nodes[1],nodes[4]);
+  int b2 = T.find_branch(nodes[2],nodes[5]);
+  //  int b3 = T.find_branch(nodes[3],nodes[5]);
+  int b4 = T.find_branch(nodes[4],nodes[5]);
+
 
   Parameters P2 = P;
+
   P2.T.exchange(nodes[1],nodes[2]);
-  
+  // b0 unchanged
+  P2.T.branch(b1).length() = T.branch(b1).length() + T.branch(b4).length();
+  P2.T.branch(b2).length() = myrandomf() * T.branch(b2).length();
+  // b3 unchanged
+  P2.T.branch(b4).length() = T.branch(b2).length() - P2.T.branch(b2).length();
   bool success = two_way_topology_sample(A,P,P2,b);
   if (success)
     result[1] = 1;
@@ -526,16 +540,16 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
 
   int choice = choose(Pr);
 
-  DPmatrixHMM* ChosenMatrices = 0;
+  DPmatrixHMM* CM = 0;
   double OSnew = OS1;
   double OPnew = OP1;
   vector<int> nodes_new = nodes1;
   if (choice == 0) {
-    ChosenMatrices = &Matrices1;
+    CM = &Matrices1;
     A = a1;
   }
   else if (choice == 1) {
-    ChosenMatrices = &Matrices2;
+    CM = &Matrices2;
     A = a2;
     P = P2;
     OSnew = OS2;
@@ -543,7 +557,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
     nodes_new = nodes2;
   }
   else if (choice == 2) {
-    ChosenMatrices = &Matrices3;
+    CM = &Matrices3;
     A = a3;
     P = P3;
     OSnew = OS3;
@@ -582,12 +596,12 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
   /*---------------- Check new topology versus old topology --------------------*/
 
   vector<int> path_new = get_path_3way(A3::project(A,nodes_new[0],nodes_new[1],nodes_new[2],nodes_new[3]),0,1,2,3);
-  vector<int> path_new_g = ChosenMatrices->generalize(path_new);
+  vector<int> path_new_g = CM->generalize(path_new);
 
-  double qs2 = ChosenMatrices->path_Q_subst(path_new) + OSnew;
+  double qs2 = CM->path_Q_subst(path_new) + OSnew;
   double ls2 = P.likelihood(A,P);
 
-  double qp2 = ChosenMatrices->path_Q_path(path_new_g) + ChosenMatrices->generalize_P(path_new) + OPnew;
+  double qp2 = CM->path_Q_path(path_new_g) + CM->generalize_P(path_new) + OPnew;
   double lp2 = prior_HMM(A,P) + 2.0*P.IModel().lengthp(length_new);
 
   double qt2 = qs2 + qp2 + prior(P);
@@ -612,13 +626,13 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
 
   std::cerr<<"PrS1 = "<<choose_P(0,Pr)<<" + "<<Matrices1.path_P(path_old_g)<<" + "<< Matrices1.generalize_P(path_old)<<endl;
 
-  double PrS2 = choose_P(choice,Pr) + ChosenMatrices->path_P(path_new_g) + ChosenMatrices->generalize_P(path_new);
+  double PrS2 = choose_P(choice,Pr) + CM->path_P(path_new_g) + CM->generalize_P(path_new);
 
-  std::cerr<<"PrS2 = "<<choose_P(choice,Pr)<<" + "<<ChosenMatrices->path_P(path_new_g)<<" + "<< ChosenMatrices->generalize_P(path_new)<<endl;
+  std::cerr<<"PrS2 = "<<choose_P(choice,Pr)<<" + "<<CM->path_P(path_new_g)<<" + "<< CM->generalize_P(path_new)<<endl;
 
   double PrQ1 = Matrices1.path_Q(path_old_g) + Matrices1.generalize_P(path_old)+ prior(oldP) + OS1 + OP1;
 
-  double PrQ2 = ChosenMatrices->path_Q(path_new_g) + ChosenMatrices->generalize_P(path_new) + prior(P) + OSnew + OPnew;
+  double PrQ2 = CM->path_Q(path_new_g) + CM->generalize_P(path_new) + prior(P) + OSnew + OPnew;
 
   std::cerr<<"choice = "<<choice<<endl;
   std::cerr<<" Pr1  = "<<PrOld<<"    Pr2  = "<<PrNew<<"    Pr2  - Pr1  = "<<PrNew - PrOld<<endl;

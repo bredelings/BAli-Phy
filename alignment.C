@@ -21,21 +21,10 @@ bool all_gaps(const alignment& A,int column) {
   return true;
 }
 
-
-int num_non_gaps(const alignment& A,int column) {
-  int count=0;
-  for(int i=0;i<A.size2();i++) 
-    if (not A.gap(column,i))
-      count++;
-  return count;
-}
-
 bool valid(const alignment& A) {
   for(int column=0;column<A.length();column++)
-    if (num_non_gaps(A,column)==0) {
-      assert(0);
+    if (all_gaps(A,column))
       return false;
-    }
   return true;
 }
 
@@ -139,7 +128,6 @@ void alignment::load(const alphabet& a,const vector<string>& names, const vector
 }
 
 void alignment::load(const vector<alphabet>& alphabets,const vector<string>& names, const vector<string>& sequences) {
-  string error;
 
   bool success = false;
   for(int i=0;i<alphabets.size();i++) {
@@ -149,64 +137,74 @@ void alignment::load(const vector<alphabet>& alphabets,const vector<string>& nam
       break;
     }
     catch (bad_letter& e) {
-      error += string(e.what()) + "\n";
+      if (i<alphabets.size()-1)
+	std::cerr<<"Exception: "<<e.what()<<endl;
+      else
+	throw e;
     }
   }
-
-  if (not success) {
-    error = string("All alphabets failed:\n") + error;
-    throw myexception(error);
-  }
 }
 
-void alignment::load_fasta(const alphabet& a,const std::string& filename) {
-  vector<sequence> sequences = ::load_fasta(a,filename);
-  for(int i=0;i<sequences.size();i++)
-    add_sequence(sequences[i]);
-}
+void alignment::load_sequences(const alphabet& a, sequence_format::loader_t loader,
+		    std::istream& file) {
 
-void alignment::load_fasta(const alphabet& a,std::istream& file) {
-  vector<sequence> sequences = ::load_fasta(a,file);
-  for(int i=0;i<sequences.size();i++)
-    add_sequence(sequences[i]);
-}
-
-void alignment::load_phylip(const alphabet& a,const std::string& filename) {
-  ifstream file(filename.c_str());
-  string line;
-  getline(file,line);
-
-  load_phylip(a,file);
-}
-
-void alignment::load_phylip(const alphabet& a,std::istream& file) {
-  vector<alphabet> alphabets;
-  alphabets.push_back(a);
-
-  load_phylip(alphabets,file);
-}
-
-void alignment::load_phylip(const vector<alphabet>& alphabets,std::istream& file) {
-
+  // read file
   vector<string> names;
   vector<string> sequences;
+  loader(file,names,sequences);
 
-  bool success = read_phylip(file,names,sequences);
-  assert(success);
+  // load sequences into alignment
+  load(a,names,sequences);
+}
 
+
+void alignment::load_sequences(const vector<alphabet>& alphabets, sequence_format::loader_t loader,
+		    std::istream& file) {
+
+  // read file
+  vector<string> names;
+  vector<string> sequences;
+  loader(file,names,sequences);
+
+  // load sequences into alignment
   load(alphabets,names,sequences);
 }
 
+
 void alignment::load(const alphabet& a,const std::string& filename) {
-  if (filename.substr(filename.size()-4) == ".phy")
-    load_phylip(a,filename);
+  std::ifstream file(filename.c_str());
+
+  string extension = filename.substr(filename.size()-4);
+  if (extension == ".phy")
+    load_sequences(a,sequence_format::read_phylip,file);
+  else if (extension == ".fasta")
+    load_sequences(a,sequence_format::read_fasta,file);
   else
-    load_fasta(a,filename);
+    throw myexception()<<"Alignment file \""<<filename<<"\" doesn't have a recognized extension.";
+
+  file.close();
 }
 
-void alignment::gap_fixup(int n1,int n2,int m) {
-  std::cerr<<"FIXME: in sequences "<<n1<<" and "<<n2<<" we have \
-  a g2 followed by a g1 @ "<<m<<std::endl;
+string get_extension(const string& s) {
+  int pos = s.rfind('.');
+  if (pos == -1)
+    return "";
+  else
+    return s.substr(pos);
+}
+
+void alignment::load(const vector<alphabet>& alphabets,const std::string& filename) {
+  std::ifstream file(filename.c_str());
+
+  string extension = get_extension(filename);
+  if (extension == ".phy")
+    load_sequences(alphabets,sequence_format::read_phylip,file);
+  else if (extension == ".fasta")
+    load_sequences(alphabets,sequence_format::read_fasta,file);
+  else
+    throw myexception()<<"Alignment file \""<<filename<<"\" doesn't have a recognized extension.";
+
+  file.close();
 }
 
 void alignment::print(std::ostream& file) const{
@@ -338,11 +336,9 @@ std::valarray<double> empirical_frequencies(const alignment& A) {
 
 void remove_empty_columns(alignment& A) {
   for(int column=A.length()-1;column>=0;column--) {
-    bool only_internal = (num_non_gaps(A,column) == 0);
-
-    if (only_internal) {
+    if (all_gaps(A,column)) {
       A.delete_column(column);
-      std::cerr<<"Deleted a column!"<<std::endl;
+      std::cerr<<"Deleted a column: all gaps"<<std::endl;
     }
   }
 }

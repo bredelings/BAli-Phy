@@ -16,15 +16,8 @@ struct sequence: public vector<int> {
   void strip_gaps();
 
   sequence(const alphabet& a1): a(a1) {}
-  sequence(const alphabet& a1,const string& filename): a(a1) {read(filename);}
+  //  sequence(const alphabet& a1,const string& filename): a(a1) {read(filename);}
   sequence(const alphabet& a1,const string& n,const string& c): a(a1),name(n),comment(c) {}
 };
-
-vector<sequence> load_fasta(const alphabet&,const std::string&);
-vector<sequence> load_fasta(const alphabet&,std::istream& file);
-
-/// Read an alignments letters and names from a file in phylip format
-bool read_phylip(std::istream& file, vector<string>& names, vector<string>& sequences);
-
 
 #endif
