@@ -146,6 +146,7 @@ void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vect
     try {
       a = alphabets[i];
       load(seqs);
+      break;
     }
     catch (bad_letter& e) {
       a = NULL;
