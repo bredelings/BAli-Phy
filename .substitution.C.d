@@ -1,1 +1,0 @@
-.substitution.C.d substitution.o: substitution.C substitution.H alignment.H alphabet.H   myexception.H clone.H sequence.H mytypes.H sequence-format.H tree.H   matcache.H smodel.H rates.H parameters.H sequencetree.H imodel.H rng.H
