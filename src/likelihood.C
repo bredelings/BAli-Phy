@@ -83,11 +83,11 @@ double prior(const Parameters& P) {
 double prior_branch(const alignment& A,const indel::PairHMM& Q,int parent,int child) {
   vector<int> state = get_path(A,parent,child);
 
-  double P = Q.start(state[0]);
+  efloat_t P = Q.start(state[0]);
   for(int i=1;i<state.size();i++) 
-    P += log(Q(state[i-1],state[i]));
+    P *= Q(state[i-1],state[i]);
   
-  return P;
+  return log(P);
 }
 
 double prior_HMM_nogiven(const alignment& A,const Parameters& P) {

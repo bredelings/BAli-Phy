@@ -28,7 +28,7 @@ public:
   /// Check of the relative probabilities of path1 and path2 agree with lp1+ls1 and lp2+ls2
   double check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) const;
 
-  DPengine(const vector<int>&,const vector<efloat_t>&,const Matrix&,double Temp);
+  DPengine(const vector<int>&,const vector<efloat_t>&,const eMatrix&,double Temp);
 };
 
 
@@ -61,7 +61,7 @@ public:
   double Pr_sum_all_paths() const;
 
   /// Construct an 1D DP matrix from a length, and an HMM
-  DParray(int,const vector<int>&,const vector<efloat_t>&,const Matrix&,double Temp);
+  DParray(int,const vector<int>&,const vector<efloat_t>&,const eMatrix&,double Temp);
 
   virtual ~DParray() {}
 };
@@ -88,7 +88,7 @@ public:
   void prune();
 
   /// Construct an 1D DP matrix from a length, and an HMM
-  DParrayConstrained(int,const vector<int>&,const vector<efloat_t>&,const Matrix&, double Temp);
+  DParrayConstrained(int,const vector<int>&,const vector<efloat_t>&,const eMatrix&, double Temp);
 
   virtual ~DParrayConstrained() {}
 };
@@ -144,7 +144,7 @@ public:
 		     int i2,
 		     const vector<int>& v1,
 		     const vector<efloat_t>& v2,
-		     const Matrix& M,
+		     const eMatrix& M,
 		     double Temp);
   virtual ~DPmatrix() {}
 };
@@ -165,7 +165,7 @@ public:
 				 int i2,
 				 const vector<int>& v1,
 				 const vector<efloat_t>& v2,
-				 const Matrix& M,
+				 const eMatrix& M,
 				 double Temp
 				 )
     :DPmatrix(i1,i2,v1,v2,M,Temp) 
@@ -201,18 +201,18 @@ public:
   double path_Q_subst(const vector<int>& path) const;
 
   /// Emission probabilities for ++
-  double emitMM(int i,int j) const;
+  efloat_t emitMM(int i,int j) const;
   /// Emission probabilities for -+
-  double emit_M(int i,int j) const;
+  efloat_t emit_M(int i,int j) const;
   /// Emission probabilities for +-
-  double emitM_(int i,int j) const;
+  efloat_t emitM_(int i,int j) const;
   /// Emission probabilities for --
-  double emit__(int i,int j) const;
+  efloat_t emit__(int i,int j) const;
 
   /// Construct a DP array from an HMM, emission probabilities, and substitution model
   DPmatrixEmit::DPmatrixEmit(const vector<int>&,
 			     const vector<efloat_t>&,
-			     const Matrix&,
+			     const eMatrix&,
 			     double Temp,
 			     const vector< double >&,
 			     const vector< Matrix >&,
@@ -231,7 +231,7 @@ public:
 
   DPmatrixSimple(const vector<int> & v1,
 		 const vector<efloat_t> & v2,
-		 const Matrix& M,
+		 const eMatrix& M,
 		 double Temp,
 		 const vector< double >& d0,
 		 const vector< Matrix >& d1,
@@ -259,7 +259,7 @@ public:
 
   DPmatrixConstrained(const vector<int> & v1,
 		      const vector<efloat_t> & v2,
-		      const Matrix& M,
+		      const eMatrix& M,
 		      double Temp,
 		      const vector< double >& d0,
 		      const vector< Matrix >& d1,

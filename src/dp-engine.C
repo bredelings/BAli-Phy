@@ -53,7 +53,7 @@ double DPengine::check(const vector<int>& path1,const vector<int>& path2,double 
   return diff;
 }
 
-DPengine::DPengine(const vector<int>& v1,const vector<efloat_t>& v2, const Matrix&M, double Temp)
+DPengine::DPengine(const vector<int>& v1,const vector<efloat_t>& v2, const eMatrix&M, double Temp)
   :HMM(v1,v2,M,Temp) 
 { }
 
@@ -108,38 +108,38 @@ double DParray::path_P(const vector<int>& g_path) const {
   int l=g_path.size()-1;
   int state2 = g_path[l];
 
-  double Pr=0;
+  efloat_t Pr=1.0;
   while (l>0) {
 
-    vector<double> transition(nstates());
+    vector<efloat_t> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
-      transition[state1] = (*this)[state1][i]+GQ(state1,state2);
+      transition[state1] = (*this)[state1][i]*GQ(state1,state2);
 
     int state1 = g_path[l-1];
     efloat_t p = choose_P(state1,transition);
-    assert(log(p) > log_limit);
+    assert(p > 0.0);
 
     if (di(state1)) i--;
 
     l--;
     state2 = state1;
-    Pr += p;
+    Pr *= p;
   }
   // include probability of choosing 'Start' vs ---+ !
-  vector<double> transition(nstates());
+  vector<efloat_t> transition(nstates());
   for(int state1=0;state1<nstates();state1++)
-    transition[state1] = (*this)[state1][0] + GQ(state1,state2);
+    transition[state1] = (*this)[state1][0] * GQ(state1,state2);
 
   // Get the probability that the previous state was 'Start'
-  double p=log_0;
+  efloat_t p=0.0;
   for(int state1=0;state1<nstates();state1++)  
     if (not silent(state1))
-      p = logsum(p, choose_P(state1,transition) );
+      p += choose_P(state1,transition);
 
-  Pr += p;
+  Pr *= p;
 
-  assert(Pr > log_0);
-  return Pr;
+  assert(Pr > 0.0);
+  return log(Pr);
 }
 
 void DParray::forward() {
@@ -158,9 +158,9 @@ vector<int> DParray::sample_path() const {
 
   while(i >= 0) {
     path.push_back(state2);
-    vector<double> transition(nstates());
+    vector<efloat_t> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
-      transition[state1] = (*this)[state1][i]+GQ(state1,state2);
+      transition[state1] = (*this)[state1][i]*GQ(state1,state2);
 
     int state1 = choose(transition);
 
@@ -177,14 +177,14 @@ vector<int> DParray::sample_path() const {
 double DParray::Pr_sum_all_paths() const {
   const int I = size()-1;
 
-  double total = log_0;
+  efloat_t total = 0.0;
   for(int state1=0;state1<nstates();state1++)
-    total = logsum(total,(*this)[state1][I] + GQ(state1,endstate()));
+    total += (*this)[state1][I] * GQ(state1,endstate());
 
-  return total;
+  return log(total);
 }
 
-DParray::DParray(int l,const vector<int>& v1,const vector<efloat_t>& v2,const Matrix& M,double Temp)
+DParray::DParray(int l,const vector<int>& v1,const vector<efloat_t>& v2,const eMatrix& M,double Temp)
   :DPengine(v1,v2,M,Temp),
    vector< vector<efloat_t> >(nstates(),vector<efloat_t>(l+1,0)),length(l+1)
 { 
@@ -262,7 +262,7 @@ void DParrayConstrained::prune() {
   std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<endl;
 }
 
-DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<efloat_t>& v2,const Matrix& M,double Temp)
+DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<efloat_t>& v2,const eMatrix& M,double Temp)
   :DParray(l,v1,v2,M,Temp),allowed_states(l+1)
 { }
 
@@ -399,7 +399,7 @@ vector<int> DPmatrix::forward(int features,int bandwidth,const vector<int>& path
 
 
 double DPmatrix::path_check(const vector<int>& path) const {
-  double Pr=0;
+  efloat_t Pr=1.0;
   
   const int I = size1()-1;
   const int J = size2()-1;
@@ -425,26 +425,26 @@ double DPmatrix::path_check(const vector<int>& path) const {
 
     int state2 = path[l+1];
 
-    vector<double> transition(nstates());
+    vector<efloat_t> transition(nstates());
     for(int s=0;s<nstates();s++)
-      transition[s] = (*this)[s](i,j)+GQ(s,state2);
+      transition[s] = (*this)[s](i,j)*GQ(s,state2);
     
     efloat_t p = choose_P(state1,transition);
-    assert((*this)[state1](i,j) != 0.0);
-    assert(GQ(state1,state2) != 0.0);
-    assert(p != 0.0);
+    assert((*this)[state1](i,j) > 0.0);
+    assert(GQ(state1,state2) > 0.0);
+    assert(p > 0.0);
     
     l++;
-    Pr += p;
+    Pr *= p;
 
     assert(i<=I and j<=J);
   }
 
   assert(l == path.size()-1);
   assert(i == I and j == J);
-  assert(Pr > log_limit);
+  assert(Pr > 0.0);
 
-  return Pr;
+  return log(Pr);
 }
 
 double DPmatrix::path_P(const vector<int>& path) const {
@@ -455,7 +455,7 @@ double DPmatrix::path_P(const vector<int>& path) const {
   const int J = size2()-1;
   int i = I;
   int j = J;
-  double Pr=0;
+  efloat_t Pr=1.0;
 
   int l = path.size()-1;
   int state2 = path[l];
@@ -469,40 +469,40 @@ double DPmatrix::path_P(const vector<int>& path) const {
   //   is at path[-1]
   while (l>0) {
 
-    vector<double> transition(nstates());
+    vector<efloat_t> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
-      transition[state1] = (*this)[state1](i,j)+GQ(state1,state2);
+      transition[state1] = (*this)[state1](i,j)*GQ(state1,state2);
 
     int state1 = path[l-1];
-    double p = choose_P(state1,transition);
-    assert(p > log_limit);
+    efloat_t p = choose_P(state1,transition);
+    assert(p > 0.0);
 
     if (di(state1)) i--;
     if (dj(state1)) j--;
 
     l--;
     state2 = state1;
-    Pr += p;
+    Pr *= p;
   }
   assert(l == 0);
   assert(i == 0 and j == 0);
 
   // include probability of choosing 'Start' vs ---+ !
-  vector<double> transition(nstates());
+  vector<efloat_t> transition(nstates());
   for(int state1=0;state1<nstates();state1++)
-    transition[state1] = (*this)[state1](0,0) + GQ(state1,state2);
+    transition[state1] = (*this)[state1](0,0) * GQ(state1,state2);
 
   // Get the probability that the previous state was 'Start'
-  double p=log_0;
+  efloat_t p=0.0;
   for(int state1=0;state1<nstates();state1++)  
     if (not silent(state1))
-      p = logsum(p, choose_P(state1,transition) );
+      p += choose_P(state1,transition);
 
-  Pr += p;
+  Pr *= p;
 
-  assert(Pr > log_0);
-  std::cerr<<"P(path) = "<<Pr<<std::endl;
-  return Pr;
+  assert(Pr > 0.0);
+  std::cerr<<"P(path) = "<<log(Pr)<<std::endl;
+  return log(Pr);
 }
 
 vector<int> DPmatrix::sample_path() const {
@@ -521,9 +521,9 @@ vector<int> DPmatrix::sample_path() const {
   // - check that we came from (0,0) though
   while (i>=0 and j>=0) {
     path.push_back(state2);
-    vector<double> transition(nstates());
+    vector<efloat_t> transition(nstates());
     for(int state1=0;state1<nstates();state1++)
-      transition[state1] = (*this)[state1](i,j)+GQ(state1,state2);
+      transition[state1] = (*this)[state1](i,j)*GQ(state1,state2);
 
     int state1 = choose(transition);
 
@@ -542,11 +542,11 @@ double DPmatrix::Pr_sum_all_paths() const {
   const int I = size1()-1;
   const int J = size2()-1;
 
-  double total = log_0;
+  efloat_t total = 0.0;
   for(int state1=0;state1<nstates();state1++)
-    total = logsum(total,(*this)[state1](I,J)+GQ(state1,endstate()));
+    total += (*this)[state1](I,J)*GQ(state1,endstate());
 
-  return total;
+  return log(total);
 }
 
 
@@ -554,7 +554,7 @@ DPmatrix::DPmatrix(int i1,
 		   int i2,
 		   const vector<int>& v1,
 		   const vector<efloat_t>& v2,
-		   const Matrix& M,
+		   const eMatrix& M,
 		   double Temp)
   :DPengine(v1,v2,M,Temp),
    vector<eMatrix >(nstates(),eMatrix(i1+1,i2+1)),
@@ -625,24 +625,24 @@ inline double DPmatrixEmit::emitMM(int i,int j) const {
 
 // switching dists1[] to matrices actually made things WORSE!
 
-inline double DPmatrixEmit::emitMM(int i,int j) const {
+inline efloat_t DPmatrixEmit::emitMM(int i,int j) const {
   return s12_sub(i-1,j-1);
 }
 
-inline double DPmatrixEmit::emitM_(int i,int j) const {
+inline efloat_t DPmatrixEmit::emitM_(int i,int j) const {
   return s1_sub[i-1];
 }
 
-inline double DPmatrixEmit::emit_M(int i,int j) const {
+inline efloat_t DPmatrixEmit::emit_M(int i,int j) const {
   return s2_sub[j-1];
 }
 
-inline double DPmatrixEmit::emit__(int i,int j) const {
-  return 0;
+inline efloat_t DPmatrixEmit::emit__(int i,int j) const {
+  return 1.0;
 }
 
 double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
-  double P_sub=0;
+  efloat_t P_sub=1.0;
   int i=0,j=0;
   for(int l=0;l<path.size();l++) {
 
@@ -652,7 +652,7 @@ double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
     if (dj(state2))
       j++;
 
-    double sub=0;
+    efloat_t sub=0.0;
     if (di(state2) and dj(state2))
       sub = emitMM(i,j);
     else if (di(state2))
@@ -663,17 +663,16 @@ double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
       sub = emit__(i,j);
 
 
-    P_sub += sub;
-    std::cerr<<l<<"    p = "<<sub<<"    total = "<<P_sub<<std::endl;
+    P_sub *= sub;
   }
   assert(i == size1()-1 and j == size2()-1);
-  return P_sub;
+  return log(P_sub);
 }
 
 
 DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 			   const vector<efloat_t>& v2,
-			   const Matrix& M,
+			   const eMatrix& M,
 			   double Temp,
 			   const vector< double >& d0,
 			   const vector< Matrix >& d1,
@@ -698,7 +697,8 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 	temp += frequency[l]*dists1[i](r,l);
       total += temp*distribution[r];
     }
-    s1_sub[i] = pow(total,1.0/T);
+    s1_sub[i] = total;
+    s1_sub[i] = pow(s1_sub[i],1.0/T);
   }
 
   for(int i=0;i<dists2.size();i++) {
@@ -709,7 +709,8 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 	temp += frequency[l]*dists2[i](r,l);
       total += temp*distribution[r];
     }
-    s2_sub[i] = pow(total,1.0/T);
+    s2_sub[i] = total;
+    s2_sub[i] = pow(s2_sub[i],1.0/T);
   }
 
   //----- pre-calculate scaling factors --------//
@@ -729,7 +730,8 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 	for(int l=0;l<M1.size2();l++)
 	  total += M1(r,l) * M2(r,l);
       }
-      s12_sub(i,j) = pow(total,1.0/T);
+      s12_sub(i,j) = total;
+      s12_sub(i,j) = pow(s12_sub(i,j),1.0/T);
     }
 
 }
@@ -800,17 +802,17 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
 
 
     //--- Compute Arrival Probability ----
-    FS2(i2,j2) = log_0;
+    FS2(i2,j2) = 0.0;
     for(int s=0;s<states(j1).size();s++) {
       int S1 = states(j1)[s];
 
       eMatrix& FS1 = (*this)[S1];
       
-      FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
+      FS2(i2,j2) +=  FS1(i1,j1) * GQ(S1,S2);
     }
 
     //--- Include Emission Probability----
-    double sub;
+    efloat_t sub;
     if (i1 != i2 and j1 != j2)
       sub = emitMM(i2,j2);
     else if (i1 != i2)
@@ -820,7 +822,7 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
     else          // silent state - nothing emitted
       sub = emit__(i2,j2);
 
-    FS2(i2,j2) += sub;
+    FS2(i2,j2) *= sub;
   }
 }
 

@@ -259,13 +259,13 @@ namespace A5 {
   /// Get the vector of start probabilities
   vector<efloat_t> get_start_P(const indel::PairHMM& Q,const vector<int>& states_list) {
     int count = 0;
-    efloat_t sum = log_0;
+    efloat_t sum = 0.0;
 
     vector<efloat_t> start_P(states_list.size()-1,0.0);
     int allmatch = (bits_to_substates(63)<<6)|63;
     allmatch = findstate(allmatch,states_list);
 
-    start_P[allmatch] = 0;
+    start_P[allmatch] = 1.0;
     return start_P;
 
     //FIXME - the general case is difficult - won't do it now
@@ -302,7 +302,7 @@ namespace A5 {
   }
 
   /// Compute the probability of moving from state #S1 to state #S2
-  inline double getQ(int S1,int S2,const indel::PairHMM& Q,const vector<int>& states) {
+  inline efloat_t getQ(int S1,int S2,const indel::PairHMM& Q,const vector<int>& states) {
     int endstate = states.size()-1;
 
     assert(0 <= S1 and S1 < states.size());
@@ -320,30 +320,30 @@ namespace A5 {
     //  - this means that sequence 3 comes first
     // Note that the end state IS ordered - but this be handled here.
     if (not (ap1 & ap2) and (ap1>ap2))
-      return log_0;
+      return 0.0;
 
-    double P=0;
+    efloat_t P=1.0;
     for(int i=0;i<5;i++) {
       int s1 = (states1>>(2*i))&3;
       int s2 = (states2>>(2*i))&3;
       if (bitset(ap2,i))            // this sub-alignment is present in this column
-	P += Q(s1,s2);
+	P *= Q(s1,s2);
       else if (s1 != s2)            // require state info from s1 hidden in s2
-	return log_0;
+	return 0.0;
     }
 
     if (S1==endstate) {
       if (S2==endstate)
-	assert(P==0);
+	assert(P==1.0);
       else
-	assert(P<log_0/100);
+	assert(P==0.0);
     }
 
     return P;
   }
 
   /// Create the full transition matrix
-  Matrix createQ(const indel::PairHMM& P,const vector<int>& states) {
+  eMatrix createQ(const indel::PairHMM& P,const vector<int>& states) {
     Matrix Q(states.size(),states.size());
 
     for(int i=0;i<Q.size1();i++)

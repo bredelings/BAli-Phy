@@ -142,9 +142,9 @@ void SimpleIndelModel::fiddle() {
 indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
   using namespace states;
 
-  efloat_t delta   = exp(parameters_[0]);
-  efloat_t e       = exp(parameters_[1]);
-  efloat_t t       = exp(parameters_[2]);
+  double delta   = exp(parameters_[0]);
+  double e       = exp(parameters_[1]);
+  double t       = exp(parameters_[2]);
 
   if (delta > 0.5)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
@@ -158,27 +158,27 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
   indel::PairHMM Q;
 
   Q(S,S ) = 0;
-  Q(S,M ) = 1.0 - 2.0*delta;
+  Q(S,M ) = 1 - 2*delta;
   Q(S,G1) = delta;
   Q(S,G2) = delta;
   Q(S,E ) = 0;
 
-  Q(M,S)   = 1.0-t;
+  Q(M,S)   = 1-t;
   Q(M,M)   = 0;
   Q(M,G1)  = 0;
   Q(M,G2)  = 0;
   Q(M,E)   = t;
 
-  Q(G1,S)  = (1.0-e) * (1.0-t);
+  Q(G1,S)  = (1-e) * (1-t);
   Q(G1,M)  = 0;
   Q(G1,G1) = e * (1.0-t);;
   Q(G1,G2) = 0;
   Q(G1,E)  = t;
 
-  Q(G2,S)  = (1.0-e) * (1.0-t);
+  Q(G2,S)  = (1-e) * (1-t);
   Q(G2,M)  = 0;
   Q(G2,G1) = 0;
-  Q(G2,G2) = e * (1.0-t);
+  Q(G2,G2) = e * (1-t);
   Q(G2,E)  = t;
 
   Q(E,S)   = 0;
@@ -206,10 +206,7 @@ void SimpleIndelModel::recalc() {
 
   remove_one_state(Q1,states::G2);
 
-  for(int i=0;i<Q1.size1();i++) 
-    for(int j=0;j<Q1.size2();j++) 
-      QE(i,j) = Q1(i,j);
-
+  QE = Q1;
 }
 
 double SimpleIndelModel::prior() const {
@@ -320,35 +317,35 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {
   
   indel::PairHMM Q;
 
-  Q(S ,M ) = log_0;
-  Q(S ,M ) = log(1 - 2*delta);
-  Q(S ,G1) = log(delta);
-  Q(S ,G2) = log(delta);
-  Q(S ,E)  = 0;
+  Q(S ,M ) = 0;
+  Q(S ,M ) = 1 - 2*delta;
+  Q(S ,G1) = delta;
+  Q(S ,G2) = delta;
+  Q(S ,E)  = 1;
 
-  Q(M ,S ) = log(1-e);
-  Q(M ,M ) = log(e);
-  Q(M ,G1) = log_0;
-  Q(M ,G2) = log_0;
-  Q(M ,E)  = log_0;
+  Q(M ,S ) = 1-e;
+  Q(M ,M ) = e;
+  Q(M ,G1) = 0;
+  Q(M ,G2) = 0;
+  Q(M ,E)  = 0;
 
-  Q(G1,S ) = log(1-e);
-  Q(G1,M ) = log_0;
-  Q(G1,G1) = log(e);
-  Q(G1,G2) = log_0;
-  Q(G1,E ) = log_0;
+  Q(G1,S ) = 1-e;
+  Q(G1,M ) = 0;
+  Q(G1,G1) = e;
+  Q(G1,G2) = 0;
+  Q(G1,E ) = 0;
 
-  Q(G1,S ) = log(1-e);
-  Q(G2,M ) = log_0;
-  Q(G2,G1) = log_0;
-  Q(G2,G2) = log(e);
-  Q(G2,E ) = log_0;
+  Q(G1,S ) = 1-e;
+  Q(G2,M ) = 0;
+  Q(G2,G1) = 0;
+  Q(G2,G2) = e;
+  Q(G2,E ) = 0;
 
-  Q(E, S ) = log_0;
-  Q(E ,M ) = log_0;
-  Q(E ,G1) = log_0;
-  Q(E ,G2) = log_0;
-  Q(E ,E ) = 0;
+  Q(E, S ) = 0;
+  Q(E ,M ) = 0;
+  Q(E ,G1) = 0;
+  Q(E ,G2) = 0;
+  Q(E ,E ) = 1;
 
   remove_one_state(Q,S);
 

@@ -75,7 +75,7 @@ public:
   double path_GQ_path(const vector<int>& g_path) const;
 
   /// Construct an HMM from the emission characteristics of the states, the start probabilities, and the transition matrix
-  HMM(const vector<int>&,const vector<efloat_t>&,const Matrix&,double);
+  HMM(const vector<int>&,const vector<efloat_t>&,const eMatrix&,double);
 
   virtual ~HMM() {}
 };

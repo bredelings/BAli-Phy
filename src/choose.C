@@ -110,7 +110,7 @@ int choose(const std::vector<log_double_t>& P,double T) {
   for(int i=1;i<sum.size();i++)
     sum[i] = sum[i-1] + pow(P[i],1.0/T);
 
-  log_double_t r = log_double_t(myrandomf()) / sum[sum.size()-1];
+  log_double_t r = log_double_t(myrandomf()) * sum[sum.size()-1];
 
   for(int i=0;i<sum.size();i++) 
     if (r < sum[i])

@@ -304,7 +304,7 @@ namespace A3 {
       return 0;
   }
 
-  inline double getQ(int S1,int S2,const indel::PairHMM& Q) {
+  inline efloat_t getQ(int S1,int S2,const indel::PairHMM& Q) {
     assert(0 <= S1 and S1 < nstates+1);
     assert(0 <= S2 and S2 < nstates+1);
 
@@ -318,42 +318,34 @@ namespace A3 {
     //  - this means that sequence 3 comes first
     // Note that the end state IS ordered - but this be handled here.
     if (not (ap1 & ap2) and (ap1>ap2))
-      return log_0;
+      return 0.0;
 
-    double P=0;
+    efloat_t P=1;
     for(int i=0;i<3;i++) {
       int s1 = (states1>>(2*i+4))&3;
       int s2 = (states2>>(2*i+4))&3;
       if (bitset(states2,10+i))     // this sub-alignment is present in this column
-	P += Q(s1,s2);
+	P *= Q(s1,s2);
       else if (s1 != s2)            // require state info from s1 hidden in s2
-	return log_0;
+	return 0.0;
     }
 
     if (S1==endstate) {
       if (S2==endstate)
-	assert(P==0);
+	assert(P==1.0);
       else
-	assert(P<log_0/100);
+	assert(P==0.0);
     }
 
     return P;
   }
 
-  Matrix createQ(const indel::PairHMM& P) {
-    Matrix Q(nstates+1,nstates+1);
+  eMatrix createQ(const indel::PairHMM& P) {
+    eMatrix Q(nstates+1,nstates+1);
 
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
 	Q(i,j) = getQ(i,j,P);
-
-
-    for(int i=0;i<Q.size1();i++) {
-      double sum = log_0;
-      for(int j=0;j<Q.size2();j++)
-	sum = logsum(sum,Q(i,j));
-      //    assert(sum == 0);
-    }
 
     return Q;
   }

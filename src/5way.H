@@ -36,9 +36,9 @@ namespace A5 {
   int findstate(int state,const vector<int>& states);
 
   /// Compute the probability of moving from state #S1 to state #S2
-  double getQ(int S1,int S2,const indel::PairHMM&);
+  efloat_t getQ(int S1,int S2,const indel::PairHMM&);
   /// Create the full transition matrix
-  Matrix createQ(const indel::PairHMM&,const vector<int>&);
+  eMatrix createQ(const indel::PairHMM&,const vector<int>&);
 
   /// Construct a new alignment, from alignment 'old' and 5way alignment 'path'
   alignment construct(const alignment& old, const vector<int>& path, 
