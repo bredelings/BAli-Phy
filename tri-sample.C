@@ -520,13 +520,13 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
 
   /*------------------ Compute the DP matrix ---------------------*/
 
-  // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
-  // We can only use non-silent states at (0,0) to simulate S
   if (P.features & (1<<0)) {
     vector<int> path_old = get_path_3way(project(old,n0,n1,n2,n3),0,1,2,3);
     Matrices.forward(path_old,P.constants[0]);
   }
   else {
+    // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
+    // We can only use non-silent states at (0,0) to simulate S
     Matrices.forward(0,0);
   
     Matrices.forward(0,0,seq1.size(),seq23.size());

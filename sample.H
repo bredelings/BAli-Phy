@@ -20,8 +20,14 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
 //Resample the alignment parent->child
 alignment sample_alignment(const alignment& old,const Parameters&,int b);
+
+//Resample the alignment parent->child
+alignment sample_alignment2(const alignment& old,const Parameters&,int b);
+
 //Resample the alignment parent->child
 MCMC::result_t sample_alignments_one(alignment& old,Parameters&,int b);
+//Resample the alignment parent->child
+MCMC::result_t sample_alignments2_one(alignment& old,Parameters&,int b);
 
 //Resample gap/non-gap for internal nodes, where not already determined
 alignment sample_node(const alignment& old,const Parameters&,int node);
@@ -38,6 +44,7 @@ vector<int> get_nodes(const alignment& A, const tree& T,int b);
 /*-------------- Top Level Sampling Routines -----------*/
 
 MCMC::result_t sample_alignments(alignment& A, Parameters& Theta);
+
 MCMC::result_t sample_nodes(alignment& A, Parameters& Theta);
 MCMC::result_t sample_nodes_one(alignment& A, Parameters& Theta,int);
 MCMC::result_t sample_topologies(alignment& A,Parameters& Theta);

@@ -63,6 +63,9 @@ public:
 };
 
 
+
+
+
 class DPmatrix : public HMM, public vector<Matrix> {
 protected:
   valarray<double> s1_sub;
@@ -90,7 +93,7 @@ public:
   virtual void forward(int,int)=0;
 
   // compute FP for entire matrix, with some points on path pinned
-  void forward(const vector<int>&,int);
+  void forward(const vector<int>&,double);
 
   // functions on paths
   vector<int> sample_path();
@@ -143,18 +146,90 @@ inline double DPmatrix::emit__(int i,int j) {
   return 0;
 }
 
+
+class DPmatrixSimple: public DPmatrix {
+public:
+  void forward(int i1,int j1,int i2,int j2);
+  void forward(int,int);
+
+  // compute FP for entire matrix, with some points on path pinned
+  void forward(const vector<int>&,double);
+
+  DPmatrixSimple(const vector<int> & v1,
+		 const vector<double> & v2,
+		 const Matrix& M,
+		 const vector< double >& d0,
+		 const vector< vector< valarray<double> > >& d1,
+		 const vector< vector< valarray<double> > >& d2, 
+		 const valarray<double>& f):
+    DPmatrix(v1,v2,M,d0,d1,d2,f)
+  { }
+
+  virtual ~DPmatrixSimple() {}
+};
+
+inline void DPmatrixSimple::forward(int i2,int j2) {
+
+  assert(i2<size1());
+  assert(j2<size2());
+
+  for(int S2=0;S2<nstates();S2++) {
+    Matrix& FS2 = (*this)[S2];
+
+    //--- Get (i1,j1) from (i2,j2) and S2
+    int i1 = i2;
+    if (di(S2))
+      i1--;
+
+    int j1 = j2;
+    if (dj(S2))
+      j1--;
+
+    //--- Don't go off the boundary -----
+    if (i1<0 or j1<0)
+      continue;
+
+    //--- Compute Arrival Probability ----
+    FS2(i2,j2) = log_0;
+    for(int S1=0;S1<nstates();S1++) {
+      Matrix& FS1 = (*this)[S1];
+
+      FS2(i2,j2) = logsum(FS2(i2,j2), FS1(i1,j1) + GQ(S1,S2));
+    }
+
+    //--- Include Emission Probability----
+    double sub;
+    if (i1 != i2 and j1 != j2)
+      sub = emitMM(i2,j2);
+    else if (i1 != i2)
+      sub = emitM_(i2,j2);
+    else if (j1 != j2)
+      sub = emit_M(i2,j2);
+    else          // silent state - nothing emitted
+      sub = emit__(i2,j2);
+
+
+    FS2(i2,j2) += sub;
+  }
+}     
+
+inline void DPmatrixSimple::forward(int i1,int j1,int i2,int j2) {
+  DPmatrix::forward(i1,j1,i2,j2);
+}
+
+
 class DPmatrixHMM: public DPmatrix {
   vector< vector<int> > allowed_states;
 public:
   const vector<int>& states(int j) const {return allowed_states[j];}
   vector<int>& states(int j) {return allowed_states[j];}
 
-  void forward(int i1,int j1,int i2,int j2);
-
   void forward(int,int);
 
+  void forward(int i1,int j1,int i2,int j2);
+
   // compute FP for entire matrix, with some points on path pinned
-  void forward(const vector<int>&,int);
+  void forward(const vector<int>&,double);
 
   DPmatrixHMM(const vector<int> & v1,
 	      const vector<double> & v2,

@@ -119,7 +119,7 @@ void DPmatrix::forward(int x1,int y1,int x2,int y2) {
   } 
 }
 
-void DPmatrix::forward(const vector<int>& path,int bandwidth) {
+void DPmatrix::forward(const vector<int>& path,double bandwidth) {
   vector<int> icol;
   vector<int> jcol;
 
@@ -422,7 +422,50 @@ DPmatrix::DPmatrix(const vector<int>& v1,
     (*this)[S](0,0) = start_P[S];
 }
 
-void DPmatrixHMM::forward(const vector<int>& path,int bandwidth) {
+void DPmatrixSimple::forward(const vector<int>& path,double bandwidth) {
+  vector<int> icol;
+  vector<int> jcol;
+
+  int i=0;
+  int j=0;
+  icol.push_back(i);
+  jcol.push_back(j);
+  for(int c=0;c < path.size();c++) {
+
+    if (di(path[c]))
+      i++;
+    if (dj(path[c]))
+      j++;
+
+    if (not silent(path[c])) {
+      icol.push_back(i);
+      jcol.push_back(j);
+    }
+  }
+
+  assert(icol[icol.size()-1] == size1()-1 );
+  assert(jcol[jcol.size()-1] == size2()-1 );
+
+  vector<int> pins;
+  int column=0;
+  while(column < icol.size()-1) {
+    pins.push_back(column);
+    column += geometric(1.0/bandwidth);
+  }
+  pins.push_back(icol.size()-1);
+
+  // Deal with silent states at (0,0)
+  forward(0,0);
+
+  // Process the squares generated
+  for(int i=0;i<pins.size()-1;i++) {
+    forward(icol[pins[i]],jcol[pins[i]],
+	    icol[pins[i+1]],jcol[pins[i+1]]);
+  }
+}
+
+
+void DPmatrixHMM::forward(const vector<int>& path,double bandwidth) {
   vector<int> icol;
   vector<int> jcol;
 

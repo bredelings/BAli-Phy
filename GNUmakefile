@@ -24,11 +24,11 @@ all: sampler
 
 #----------------- Definitions
 LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0 # inline-functions inline-limit=3000 keep-inline-functions
-DEBUG = pipe g3 # pg
+DEBUG = pipe g3 pg
 DEFS = NDEBUG 
 WARN = all no-sign-compare overloaded-virtual
-OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 O2 # O3
-LDFLAGS = # -pg # -static 
+OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 O3
+LDFLAGS = -pg # -static 
 LI=${CXX}
 
 #------------------- Main 
@@ -39,7 +39,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           eigenvalue.C parameters.C likelihood.C mcmc.C topology-sample.C \
 	  choose.C sequencetree.C branch-lengths.C arguments.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
-	  tri-sample.C dpmatrix.C 3way.C # map.C
+	  tri-sample.C dpmatrix.C 3way.C 2way.C branch-sample2.C # map.C
 LIBS = gsl gslcblas m
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 

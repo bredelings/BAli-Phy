@@ -34,6 +34,11 @@ inline valarray<double> peel(int letter,const Matrix& P,const valarray<double>& 
 }
 
 
+// 1. make an inner 'peel' that <distributions> as a parameter
+//   a. this contains the info from 'residues' and 'group'
+// 2. alter 'peel' to go over the whole tree
+//   a. to do half the tree, only send in half the info
+
 // (dist.size()==0) does not mean "gap", but means no info so far.
 
 // If we are going to return distributions(root), then we must make sure
@@ -198,8 +203,9 @@ double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SMode
     assert(0); //FIXME - try this check!
   }
 
-  //  std::cerr<<" Pr: p="<<p<<"      log(p)="<<log(p)<<std::endl;
-  assert(0.0 <= p and p <= 1.0);
+  // we don't get too close to zero, normally
+  assert(0 <= p and p <= 1.00000000001);
+
   return p;
 }
 
@@ -218,7 +224,10 @@ double Pr(const alignment& A,const Parameters& P,int column) {
 					    MRModel.BaseModel(),
 					    P.transition_P(r)
 					    );
-  assert(0 < total and total <= 1);
+
+  // we don't get too close to zero, normally
+  assert(0 < total and total <= 1.00000000001);
+
   return log(total);
 }
 
@@ -249,6 +258,10 @@ double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SM
     }
     p += temp;
   }
+
+  // we don't get too close to zero, normally
+  assert(0 <= p and p <= 1.00000000001);
+
   return p;
 }
 
@@ -272,7 +285,9 @@ double Pr_star(const alignment& A,const Parameters& P) {
 						   P. transition_P(r)
 						   );
 
-    assert(0.0 < total and total <= 1.0);
+    // we don't get too close to zero, normally
+    assert(0 < total and total <= 1.00000000001);
+
     p += log(total);
   }
 

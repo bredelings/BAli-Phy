@@ -74,6 +74,11 @@ MCMC::result_t sample_alignments_one(alignment& A, Parameters& P,int b) {
   return MCMC::no_result;
 }
 
+MCMC::result_t sample_alignments2_one(alignment& A, Parameters& P,int b) {
+  A = sample_alignment2(A,P,b);
+  return MCMC::no_result;
+}
+
 MCMC::result_t sample_alignments(alignment& A, Parameters& P) {
   for(int i=0;i<P.T.leaves();i++) {
     int b = myrandom(P.T.branches());

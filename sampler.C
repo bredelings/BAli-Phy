@@ -179,9 +179,14 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   // alignment :: alignment_branch
   MoveEach alignment_branch_moves("alignment_branch");
-  alignment_branch_moves.add(1.0,
+  alignment_branch_moves.add(0.5,
 			     MoveArgSingle("sample_alignments:alignment",
 					   sample_alignments_one,
+					   branches)
+			     );
+  alignment_branch_moves.add(0.5,
+			     MoveArgSingle("sample_alignments2:alignment",
+					   sample_alignments2_one,
 					   branches)
 			     );
   if (P.T.leaves() >2) 
@@ -303,7 +308,7 @@ int main(int argc,char* argv[]) {
     /*------- Amino Acid Substitution Models -------*/
     alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
     
-    substitution::EQU EQU_animo(amino_acids);
+    substitution::EQU EQU_amino(amino_acids);
     substitution::Empirical WAG(amino_acids,"Data/wag.dat");
     
     /*----------- Load alignment and tree ---------*/
@@ -336,21 +341,36 @@ int main(int argc,char* argv[]) {
     std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
     base_smodel->frequencies(empirical_frequencies(A));
     
-    substitution::SingleRateModel Single(*base_smodel);
-    substitution::GammaRateModel  Gamma(*base_smodel,4);
-    substitution::INV_Model       INV(Gamma);
+    substitution::MultiRateModel *full_smodel = 0;
+    if (args.set("Gamma")) {
+      int n=4;
+      full_smodel = new substitution::GammaRateModel(*base_smodel,n);
+    }
+    else 
+      full_smodel = new substitution::SingleRateModel(*base_smodel);
+
+    if (args.set("INV")) {
+      substitution::MultiRateModel *temp = full_smodel;
+      full_smodel = new substitution::INV_Model(*full_smodel);
+      delete temp;
+    }
+
     
     /*-------------Choose an indel model--------------*/
     int IMlength = 500;    //FIXME - perhaps we should choose \tau here
     if (IMlength < A.length()*3)
       IMlength = A.length()*3;
-    IndelModel1 IM1(IMlength,lambda_O,lambda_E);
-    IndelModel2 IM2(IMlength,lambda_O,lambda_E);
-    IndelModel* imodel = &IM2;
-    if (args.set("Imodel") and args["Imodel"] == "ordered")
-      imodel= &IM1;
 
-    Parameters P(INV,*imodel,T);
+    IndelModel* imodel = 0;
+    if (not args.set("Imodel") or args["Imodel"] == "normal")
+      imodel = new IndelModel2(IMlength,lambda_O,lambda_E);
+    else if (args["Imodel"] == "ordered")
+      imodel = new IndelModel1(IMlength,lambda_O,lambda_E);
+    else if (args["Imodel"] == "single_indels")
+      imodel = new SingleIndelModel(IMlength,lambda_O);
+      
+
+    Parameters P(*full_smodel,*imodel,T);
     std::cout<<"Using substitution model: "<<P.SModel().name()<<endl<<endl;
 
     if (args.set("pinning") and args["pinning"] == "enable") {
@@ -371,10 +391,15 @@ int main(int argc,char* argv[]) {
 	max_iterations = convertTo<long int>(args["iterations"]);
       do_sampling(args,A,P,max_iterations);
     }
+
+    // this isn't quite right in case of exceptions...
+    delete imodel;
+    delete full_smodel;
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
   }
+
   return 0;
 }
 
