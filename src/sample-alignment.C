@@ -119,8 +119,6 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
   check_match_P(A  ,P,other_subst(A  ,P,nodes),other_prior(A,  P,nodes),path_new,Matrices);
 
   double ls1 = P.likelihood(old,P);
-  P.LC.set_length(A.length());
-  P.LC.invalidate_branch_alignment(T,b);
   double ls2 = P.likelihood(A  ,P);
 
   double lp1 = P.prior(old,P);
@@ -138,9 +136,7 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
 
 #else
   letters_OK(A,"sample_alignment:1");
-  P.LC.set_length(A.length());
   letters_OK(A,"sample_alignment:2");
-  P.LC.invalidate_branch_alignment(T,b);
 #endif
 
   /*--------------------------------------------------------------*/

@@ -69,9 +69,6 @@ public:
   /// Alignment constraint
   ublas::matrix<int> alignment_constraint;
 
-  /// Cached Conditional Likelihoods
-  mutable Likelihood_Cache LC;
-
   /// The IndelModel
   const IndelModel& IModel() const {return *IModel_;}
   /// The IndelModel

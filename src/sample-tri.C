@@ -75,6 +75,8 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
       seq23.push_back(column);
   }
 
+  letters_OK(A,"sample_tri_base:1");
+
   // Map columns with n2 or n3 to single index 'c'
   vector<int> jcol(seq23.size()+1);
   vector<int> kcol(seq23.size()+1);
@@ -98,6 +100,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   vector< Matrix > dists1 = distributions(A,P,seq1,nodes[0],group1);
   vector< Matrix > dists23 = distributions(A,P,seq23,nodes[0],group2|group3);
 
+  letters_OK(A,"sample_tri_base:2");
 
   /*-------------- Create alignment matrices ---------------*/
 
@@ -112,6 +115,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   DPmatrixConstrained Matrices(get_state_emit(), start_P, Q, P.Temp,
 			       P.SModel().distribution(), dists1, dists23, frequency);
 
+  letters_OK(A,"sample_tri_base:3");
   // Determine which states are allowed to match (,c2)
   for(int c2=0;c2<Matrices.size2();c2++) {
     int j2 = jcol[c2];
@@ -136,6 +140,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
     }
   }
 
+  letters_OK(A,"sample_tri_base:4");
 
   /*------------------ Compute the DP matrix ---------------------*/
 
@@ -201,10 +206,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
     letters_OK(a[i],"sample_tri_multi:after1"); 
     Matrices.push_back( temp );
     letters_OK(a[i],"sample_tri_multi:after2"); 
-    p[i].LC.set_length(a[i].length());
     int b = p[i].T.branch(nodes[i][0],nodes[i][1]);
-    p[i].LC.invalidate_branch_alignment(p[i].T, b);
-    p[i].LC.invalidate_node(p[i].T,nodes[i][0]);
 #ifndef NDEBUG
     p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
 #endif
@@ -269,7 +271,6 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
     double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
 
-    p[i].LC.set_length(a[i].length());
     check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
   }
 
@@ -360,7 +361,6 @@ bool tri_sample_alignment_branch(alignment& A,Parameters& P,
 
   bool success = sample_tri_multi(A,p,nodes,false,false);
   P = p[0];
-  P.LC.set_length(A.length());
 
   return success;
 }

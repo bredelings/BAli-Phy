@@ -54,9 +54,6 @@ void Parameters::recalc_smodel() {
   // set the rate to one
   SModel_->set_rate(1);
 
-  //invalidate cached conditional likelihoods in case the model has changed
-  LC.invalidate_all();
-
   //invalidate the cached transition probabilities in case the model has changed
   MatCache::recalc(T,*SModel_);
 }
@@ -91,7 +88,6 @@ void Parameters::fiddle_imodel() {
 void Parameters::setlength(int b,double l) {
   MatCache::setlength(b,l,T,*SModel_); 
   branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
-  LC.invalidate_branch(T,b);
 }
 
 Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,const SequenceTree& t)
@@ -103,8 +99,7 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
    i_fixed(false,IModel_->parameters().size()),
    s_fixed(false,SModel_->parameters().size()),
    features(0),
-   T(t),
-   LC(T,SModel())
+   T(t)
 {
   branch_mean = 0.1;
   constants.push_back(-1);

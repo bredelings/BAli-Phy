@@ -210,8 +210,6 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
     letters_OK(a[i],"sample_two_node_multi: before");
     Matrices.push_back( sample_two_nodes_base(a[i],p[i],nodes[i]) );
     letters_OK(a[i],"sample_two_node_multi: after");
-    p[i].LC.invalidate_node(p[i].T,nodes[i][4]);
-    p[i].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
     p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
 #endif

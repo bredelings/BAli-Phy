@@ -322,8 +322,13 @@ int main(int argc,char* argv[]) {
     else {
       long int max_iterations = args.loadvalue("iterations",(long int)1000000);
 
-      P.LC.set_length(A.length());
-      do_sampling(args,A,P,max_iterations);
+      P.recalc();
+      while(true) {
+	for(int b=0;b<P.T.n_branches();b++) {
+	  print_stats(std::cout,std::cout,std::cout,std::cout,A,P,"debug");
+	  sample_tri_one(A,P,b);
+	}
+      }
     }
   }
   catch (std::exception& e) {

@@ -122,7 +122,6 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P1,int b) {
     std::swap(n1,n2);
 
   //----- Generate the Different Topologies ----//
-  P1.LC.root = n1;
   Parameters P2 = P1;
 
   SequenceTree& T2 = P2.T;
