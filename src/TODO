@@ -2,34 +2,23 @@
 
 2. fp_scale speedups
   a) find out how much time we are spending doing I/O...
-
   b) pre-convert Branch_HMM values to log_double_t? (speed up prior_branch() ?)
   c) make different forward_square( ) routines for DPmatrix{Simple,Constrained}
 
 [CHECK] - check for more!
-   I) does increasing inlining limits make a difference?
+   I) does increasing inlining limits make a difference?  (3.4: yes.  4.1: ?)
   II) check w/ fp_scale::cutoff = 1.0e-1 ? or 1.0e-10?
  III) try some profile-guided optimization
 
 [?]
   * sample_two_nodes_base( ): 
-    - takes 18%/20% of total time!
-    - spends 21%/18% of its time in A5::createQ( )
-    - spends ONLY 27%/50% of time in DParrayConstrained::forward()
-  * DPmatrixEmit( ):
-    - takes 21% of total time!
-    - takes 35% of sample_alignment( )
-    - takes 34% of tri_sample_alignment_base( )
-    - spends 80% of its time in DPmatrix( )
-  * DPmatrix::DPmatrix( ) - probably in zero-ing the matrix
-    - takes 17% of total time!
-    - spends time locally, not from children
+    - takes 12% of total time in 'forward'
+    - takes 4% of total time just setting up constraints.
+    - takes 2.5% of total time in A5::getQ
+    - takes 1% of total time in A5::createQ
   * DParray::sample_path( ) 
     - takes 8% / 3.4% of total time!
     - only sample legal states?
-  * A5::createQ( )
-    - takes 4% of total time
-    - HOW does it spend 40% of its time NOT in getQ( )?
   * substitution::Pr( ): 
     - takes 2.9% of time (OK)
     - spends 23% of its time in subA_index( )
