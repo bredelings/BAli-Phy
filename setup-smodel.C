@@ -13,27 +13,27 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
   alphabet rna("RNA nucleotides","AGUC","NYR");
   alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
 
-  /*------ Get the base model (Reversible Markov) ------*/
-  substitution::ReversibleMarkovModel* base_smodel = 0;
+  /*------ Get the base markov model (Reversible Markov) ------*/
+  substitution::ReversibleMarkovModel* base_markov_smodel = 0;
     
   if (args.set("smodel") and args["smodel"] == "EQU")
-    base_smodel = new substitution::EQU(a);
+    base_markov_smodel = new substitution::EQU(a);
   else if (a == dna)
-    base_smodel = new substitution::HKY(dna);
+    base_markov_smodel = new substitution::HKY(dna);
   else if (a == rna)
-    base_smodel = new substitution::HKY(rna);
+    base_markov_smodel = new substitution::HKY(rna);
   else if (a == amino_acids) {
     string filename = "wag";
     if (args.set("Empirical"))
       filename = args["Empirical"];
     filename = string("Data/") + filename + ".dat";
 
-    base_smodel = new substitution::Empirical(amino_acids,filename);
+    base_markov_smodel = new substitution::Empirical(amino_acids,filename);
   }
   else
     assert(0);
     
-  /*------ Set frequencies for base model ------*/
+  /*------ Set frequencies for base markov model ------*/
   if (args.set("frequencies")) {
     vector<double> f = split<double>(args["frequencies"],',');
     assert(f.size() == a.size());
@@ -41,10 +41,19 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
     valarray<double> f2(f.size());
     for(int i=0;i<f.size();i++)
       f2[i] = f[i];
-    base_smodel->frequencies(f2);
+    base_markov_smodel->frequencies(f2);
   }
   else 
-    base_smodel->frequencies(default_frequencies);
+    base_markov_smodel->frequencies(default_frequencies);
+
+  /*-------- Get the base IA model -----------*/
+  substitution::ReversibleModel* base_smodel=0;
+
+  if (args.set("gamma_branch"))
+    base_smodel = new substitution::Gamma_Branch_Model(*base_markov_smodel);
+  else
+    base_smodel = base_markov_smodel;
+
     
   /*------ Get the multi-rate model over the base model ------*/
   substitution::MultiRateModel *full_smodel = 0;

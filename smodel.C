@@ -12,6 +12,30 @@ namespace substitution {
   Model::Model():full_tree(true)
   { }
 
+  Matrix Gamma_Branch_Model::transition_p(double t) const {
+    double beta = parameters_[parameters_.size()-1];
+
+    return gamma_exp(SubModel().getS(),SubModel().getD(),t/beta,beta);
+  }
+
+  void Gamma_Branch_Model::super_fiddle() {
+    const double sigma = 0.05;
+    double beta = parameters_[parameters_.size()-1] + gaussian(0,sigma);
+    if (beta<0) beta = -beta;
+    if (beta >0) parameters_[parameters_.size()-1] = beta;
+  }
+
+  double Gamma_Branch_Model::super_prior() const {
+    const double mu = 0.1;
+    double beta = parameters_[parameters_.size()-1];
+    return -log(mu) - beta/mu;
+  }
+
+  string Gamma_Branch_Model::name() const {
+    return string("GammaBranch(") + sub_model->name() + ")";
+  }
+
+
   // Q(i,j) = S(i,j)*pi[j]   for i!=j
   // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
 
@@ -66,12 +90,16 @@ namespace substitution {
 
   }
 
-  Matrix ReversibleMarkovModel::transition_p(double t) const {
+  Matrix ReversibleMarkovModel::getD() const {
     BMatrix D(a.size(),a.size());
     for(int i=0;i<a.size();i++)
       D(i,i) = pi[i];
 
-    return exp(S,D,t);
+    return D;
+  }
+
+  Matrix ReversibleMarkovModel::transition_p(double t) const {
+    return exp(S,getD(),t);
   }
 
   string HKY::name() const {

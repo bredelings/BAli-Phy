@@ -323,6 +323,9 @@ int main(int argc,char* argv[]) {
       count[i]++;
     }
     
+    if (trees.size() == 0)
+      throw myexception()<<"No trees were read in!";
+
     cout<<"# There were "<<trees.size()<<" trees scanned\n";
     cout<<"#    Different topologies:  "<<topologies.size()<<endl;
     cout<<endl;

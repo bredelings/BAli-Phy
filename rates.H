@@ -56,6 +56,7 @@ namespace substitution {
 
     double cdf(double) const;
     double pdf(double,double) const;
+    double quantile(double,double tol=1.0e-6) const;
 
     double prior() const;
 

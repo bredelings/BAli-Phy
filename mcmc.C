@@ -1,3 +1,7 @@
+#include <boost/numeric/ublas/config.hpp>
+#include <boost/numeric/ublas/io.hpp>
+#include <iostream>
+
 #include "mcmc.H"
 #include "sample.H"
 #include "myexception.H"
@@ -439,6 +443,11 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
 #endif
 }
 
+std::ostream& operator<<(std::ostream& o,const Matrix& M) {
+  ublas::operator<<(o,M);
+  return o;
+}
+
 void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   const SequenceTree& T = P.T;
   Parameters MAP_P = P;
@@ -479,6 +488,14 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   cout<<endl;
   cout<<endl;
   
+  //  Matrix T1 = P.SModel().BaseModel().transition_p(0.1);
+  //  Matrix T1a = prod(T1,T1);
+  //  Matrix T2 = P.SModel().BaseModel().transition_p(0.2);
+  //  cout<<T1<<endl<<endl;
+  //  cout<<T1a<<endl<<endl;
+  //  cout<<T2<<endl<<endl;
+
+
   cout<<"Initial Alignment = \n";
   print_stats(cout,cout,cout,cout,A,P,"Initial");
     
@@ -489,11 +506,13 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   ofstream pS_stream("pS");
   ofstream pI_stream("pI");
   ofstream map_stream("MAP");
+  ofstream Pr_stream("Pr");
 
   /*---------------- Run the MCMC chain -------------------*/
 
   for(int iterations=0; iterations < max; iterations++) {
-    cerr<<"iterations = "<<iterations<<
+    cerr<<"iterations = "<<iterations<<endl;;
+    Pr_stream<<"iterations = "<<iterations<<
       "    prior = "<<Pr_prior<<
       "    likelihood = "<<Pr_likelihood<<
       "    logp = "<<Pr<<endl;
@@ -558,6 +577,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   map_stream.close();
   pS_stream.close();
   pI_stream.close();
+  Pr_stream.close();
   cerr<<"total samples = "<<total_samples<<endl;
 }
 

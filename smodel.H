@@ -142,7 +142,7 @@ namespace substitution {
 
     /// Construct a Nested model based on model 'M', with 'dp' extra parameters
     NestedModelOver(const SubModel_t& M,int dp)
-      :Model(M.parameters().size()+dp),sub_model(M.clone()) 
+      :sub_model(M.clone()) 
     {
       parameters_.resize(M.parameters().size()+dp);
       for(int i=0;i<M.parameters().size();i++)
@@ -171,6 +171,27 @@ namespace substitution {
     virtual const std::valarray<double>& frequencies() const=0;
 
     ReversibleModel() {}
+  };
+
+
+  class IndependantAdditiveModel: virtual public Model {
+
+  public:
+    virtual IndependantAdditiveModel* clone() const=0;
+
+    /// The transition probability matrix
+    virtual Matrix transition_p(double t) const =0;
+
+    IndependantAdditiveModel() {}
+  };
+
+  class Independant_Additive_Reversible_Model: public ReversibleModel, 
+					    public IndependantAdditiveModel
+  {
+  public:
+    virtual Independant_Additive_Reversible_Model* clone() const=0;
+
+    virtual Matrix transition_p(double) const=0;
   };
 
 
@@ -233,6 +254,10 @@ namespace substitution {
 
     virtual void recalc();
   public:
+    Matrix getD() const;
+
+    const Matrix& getS() const {return S;}
+
     /// Make a copy of this object
     virtual ReversibleMarkovModel* clone() const =0;
 
@@ -256,6 +281,26 @@ namespace substitution {
     virtual ~ReversibleMarkovModel() {}
   };
 
+
+
+  class Gamma_Branch_Model:public Independant_Additive_Reversible_Model,public NestedModelOver<ReversibleMarkovModel> 
+ {
+  public:
+    virtual Gamma_Branch_Model* clone() const {return new Gamma_Branch_Model(*this);}
+
+    void super_fiddle();
+    double super_prior() const;
+    string name() const;
+
+    /// Get the equilibrium frequencies
+    const std::valarray<double>& frequencies() const {return SubModel().frequencies();}
+
+    Matrix transition_p(double t) const;
+    Gamma_Branch_Model(const ReversibleMarkovModel& M)
+      :NestedModelOver<ReversibleMarkovModel>(M,1) {
+      parameters_[parameters_.size()-1]=0.1;
+    }
+  };
 
 
 

@@ -25,6 +25,7 @@ namespace substitution {
 
     double x = 1.0;
 
+    // We know the zero is in (min,max), if max>=min
     double min=0.0;
     double max=-1;
 
@@ -34,15 +35,19 @@ namespace substitution {
     double dx = 0.001;
     while(std::abs(dx) > tol) {
       double f = cdf(x)-p;
+
+      // take advantage of the monotonicity
       if (f < 0)
 	min = x;
       else if (f > 0)
 	max = x;
       else return x;
 
+      // propose do Newton-Raphson step
       double dfdx = pdf(x,std::abs(dx/100));
       dx = -f/dfdx;
 
+      // deal with trying to jump out of (min,max)
       double x2 = x;
       if (x2+dx < min)
 	x2 = (x2+min)/2.0;
@@ -53,10 +58,15 @@ namespace substitution {
       iterations++;
 
       double f2 = cdf(x2) - p;
-      if (std::abs(f2) > std::abs(f)) {
+      // move to x2 if its an improvement
+      if (std::abs(f2) <= std::abs(f)) 
+	x = x2;
+      // If x2 is NOT an improvement then...
+      else {
 	assert(min <= x2);
 	assert(max < 0 or x2 <= max);
 
+	// ...update (min,max), ...
 	if (f2 < 0)
 	  min = x2;
 	else if (f2 > 0)
@@ -66,22 +76,24 @@ namespace substitution {
 
 	assert(max >= 0);
 
-	double x2 = 0.5*(min + max);
-	f2 = cdf(x2) - p;
-	if (f2 < 0)
-	  min = x2;
-	else if (f2 > 0)
-	  max = x2;
-	else
-	  return x2;
+	if (max > 0) {
+	  // ...propose another location, ...
+	  x2 = 0.5*(min + max);
 
-	if (std::abs(f2) < std::abs(f))
-	  x = x2;
+	  f2 = cdf(x2) - p;
+	  if (f2 < 0)
+	    min = x2;
+	  else if (f2 > 0)
+	    max = x2;
+	  else
+	    return x2;
+	  
+	  // and try to move there.
+	  if (std::abs(f2) < std::abs(f))
+	    x = x2;
+	}
 
       }
-      else
-	x = x2;
-
 
       assert(min <= x);
       if (max >= 0) {
@@ -136,6 +148,12 @@ namespace substitution {
     return gsl_ran_gamma_pdf(x,a,b);
   }
 
+  double Gamma::quantile(double p,double tol) const {
+    double a = 1.0/(parameters_[0]*parameters_[0]);
+    double b = 1.0/a;
+    
+    return gsl_cdf_gamma_Pinv(p,a,b);
+  }
   Gamma::~Gamma() {}
 
 

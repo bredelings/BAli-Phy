@@ -1,6 +1,8 @@
 #ifndef LOGSUM_H
 #define LOGSUM_H
 
+#include <cmath>
+
 const double max_float = 3.40282347e+38F;
 
 const double log_0 = -max_float;
