@@ -207,7 +207,9 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
 
   vector< DParrayConstrained > Matrices;
   for(int i=0;i<p.size();i++) {
+    letters_OK(a[i],"sample_two_node_multi: before");
     Matrices.push_back( sample_two_nodes_base(a[i],p[i],nodes[i]) );
+    letters_OK(a[i],"sample_two_node_multi: after");
     p[i].LC.invalidate_node(p[i].T,nodes[i][4]);
     p[i].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
