@@ -94,7 +94,7 @@ public:
     if (t)
       data = t->clone();
     else
-      data == NULL;
+      data = NULL;
 
     return *this;
   }
