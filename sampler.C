@@ -317,17 +317,17 @@ int main(int argc,char* argv[]) {
       std::cout<<"imodel = single indels\n";
       imodel = new SingleIndelModel(lambda_O);
     }
-    else if (args["imodel"] == "upweighted") {
-      std::cout<<"imodel = adjacent gaps upweighted by 2\n";
-      imodel = new UpweightedIndelModel(lambda_O,lambda_E);
-    }
-    else {
+    else if (args["imodel"] == "symmetric") {
       std::cout<<"imodel = symmetric\n";
       imodel = new IndelModel2(lambda_O,lambda_E);
       for(int i=0;i<fixed.size();i++) {
 	if (fixed[i] == "beta")
 	  imodel->fixed[2] = true;
       }
+    }
+    else {
+      std::cout<<"imodel = adjacent gaps upweighted by 2\n";
+      imodel = new UpweightedIndelModel(lambda_O,lambda_E);
     }
     if (args["gaps"]== "star") {
       imodel->full_tree = false;
