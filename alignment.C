@@ -218,27 +218,12 @@ void alignment::print(std::ostream& file) const{
   }
 }
 
-string shorten_name(const string& s,int good_length = 9) {
-  string s2 = s;
-  int pos = s2.find('.');
-  if (s.size() > good_length and pos != -1 and pos > 1) {
-    int species_length = s.size()-pos;
-    int genuslength = good_length - species_length;
-    if (genuslength<2)
-      genuslength=2;
-    
-    s2 = s2.substr(0,genuslength) + s2.substr(pos);
-    
-  }
-  return s2;
-}
-
 void alignment::print_phylip(std::ostream& file,bool othernodes) const {
   const alphabet& a = get_alphabet();
   file<<num_sequences()<<" "<<length()<<endl;
 
   // Find length of longest name
-  int max_name_length=-1;
+  int max_name_length=0;
   for(int i=0;i<sequences.size();i++)
     if (sequences[i].name.size() > max_name_length)
       max_name_length = sequences[i].name.size();
@@ -258,9 +243,9 @@ void alignment::print_phylip(std::ostream& file,bool othernodes) const {
     for(int seq = 0;seq < nsequences;seq++) {
       string header = string(header_length,' ');
       if ((pos == 0 or always_print_names) and seq<num_sequences()) {
-	string name = shorten_name(sequences[seq].name,header_length-2);
-	if (name.size() > (header_length-2))
-	  name = name.substr(0,header_length-2);
+	string name = sequences[seq].name;
+	assert(name.size() <= header_length-2);
+
 	header = name + string(header_length-name.size(),' ');
       }
       file<<header;

@@ -8,6 +8,8 @@
 #include <cmath>
 
 #include "tree.H"
+#include "arguments.H"
+#include "util.H"
 
 namespace __gnu_cxx {
   template<> struct hash<string> {
@@ -77,6 +79,9 @@ int contains_partition(const SequenceTree& T,const valarray<bool>& p) {
   return match;
 }
 
+void do_analyze() {
+}
+
 
 SequenceTree standardized(const string& t) {
   SequenceTree T;
@@ -121,7 +126,10 @@ struct ordering {
 
 const int maxtrees=10;
 
-int main() {
+int main(int argc,char* argv[]) { 
+  Arguments args;
+    args.read(argc,argv);
+
   try {
     list<string> trees;
     
@@ -154,8 +162,8 @@ int main() {
       count[i]++;
     }
     
-    cout<<"There were "<<trees.size()<<" trees scanned\n";
-    cout<<"   Different topologies:  "<<topologies.size()<<endl;
+    cout<<"# There were "<<trees.size()<<" trees scanned\n";
+    cout<<"#    Different topologies:  "<<topologies.size()<<endl;
     
     /**************** How good are the best ones? ***************/
     vector<int> order(topologies.size());
@@ -167,6 +175,24 @@ int main() {
     int numtrees = maxtrees;
     if (topologies.size() < numtrees) numtrees = topologies.size();
     
+    /********** If called as analyze, show topo vs time ********/
+    vector<int> iorder = invert(order);
+    if (args.set("analyze")) {
+      foreach(mytree,trees) {
+	SequenceTree T = standardized(*mytree);
+	string t = T.write(false);
+      
+	typeof(index.begin()) here = index.find(t);
+	assert(here != index.end());
+
+	int i = index[t];
+	
+	std::cout<<iorder[i]<<"       "<<count[i]<<"      "<<t<<"      "<<*mytree<<endl;
+      }
+
+      exit(0);
+    }
+
     cout<<endl;
     cout<<endl;
     

@@ -3,6 +3,18 @@
 #include "rng.H"
 #include <algorithm>
 
+void slide_branch_lengths(alignment& A, Parameters& Theta) {
+  for(int i=0;i<Theta.T.leaves();i++) {
+    int b = myrandom(Theta.T.branches());
+
+    bool up = true;
+    if (myrandom(2))
+      bool up = false;
+
+    slide_branch_length(A,Theta,b,up);
+  }
+}
+
 void change_branch_lengths(alignment& A, Parameters& Theta) {
   for(int i=0;i<Theta.T.leaves();i++) {
     int b = myrandom(Theta.T.branches());

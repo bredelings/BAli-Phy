@@ -6,7 +6,10 @@
 #include "tree.H"
 #include "parameters.H"
 
+void slide_branch_length(const alignment& A, Parameters& Theta,int b,bool up);
+
 void change_branch_length(const alignment& A, Parameters& Theta,int b);
+
 void change_branch_length_and_T(alignment& A, Parameters& Theta,int b);
 
 //Resample the alignment parent->child
@@ -31,6 +34,7 @@ void sample_alignments(alignment& A, Parameters& Theta);
 void sample_nodes(alignment& A, Parameters& Theta);
 void sample_topologies(alignment& A,Parameters& Theta);
 void change_branch_lengths(alignment& A, Parameters& Theta);
+void slide_branch_lengths(alignment& A, Parameters& Theta);
 void change_parameters(alignment& A,Parameters& Theta);
 
 

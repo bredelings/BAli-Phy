@@ -167,7 +167,9 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   if (P.T.leaves() >3)
     sampler.add(sample_topologies,1,"sample_topologies:nodes:topology");
 
-  sampler.add(change_branch_lengths,1,"change_branch_lengths:nodes:lengths:topology");
+  sampler.add(change_branch_lengths,0.5,"change_branch_lengths:nodes:lengths:topology");
+
+  sampler.add(slide_branch_lengths,0.5,"slide_branch_lengths:lengths");
 
   sampler.add(change_parameters,1,"change_parameters:parameters");
 
@@ -200,6 +202,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   move_stats.push_back(move_stat("t-sample-branch-based"));
   move_stats.push_back(move_stat("length-sample"));
   move_stats.push_back(move_stat("length-sample-non-negative"));
+  move_stats.push_back(move_stat("length-sample-slide"));
 
 
   sampler.iterate(A,P,max_iterations);

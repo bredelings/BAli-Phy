@@ -61,7 +61,9 @@ alphabet::alphabet(const string& s,const string& letters,const string& m)
 {
   for(int i=0;i<letters.length();i++)
     data.push_back(letters[i]);
+
   for(int i=0;i<m.length();i++)
     missing.push_back(m[i]);
+  missing.push_back('*');
 }
 
