@@ -12,18 +12,12 @@ string SequenceTree::write(int n,bool lengths) const {
 
   if (n<leaves()) {
     output = seq(n);
-    
   }
   else {
-    const tree& T = *this;
-    int left = T[n].left();
-    int right = T[n].right();
-    double llength = T.branch_up(left).length();
-    double rlength = T.branch_up(right).length();
-
-    if (right >= branches())
-      rlength = 0;
-
+    int left = names[n]->left->name;
+    int right = names[n]->right->name;
+    double llength = names[left]->parent_branch->length;
+    double rlength = names[right]->parent_branch->length;
 
     output = string("(") + write(left,lengths);
 
@@ -95,7 +89,7 @@ vector<int> SequenceTree::standardize(const vector<int>& lnames,bool do_reroot) 
 void SequenceTree::read(const string& filename) {
   ifstream file(filename.c_str());
   if (not file) 
-    throw myexception(string("Couldn't open file '")+filename+"'");
+    throw myexception()<<"Couldn't open file '"<<filename<<"'";
   read(file);
   file.close();
 }

@@ -59,7 +59,7 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
   }
   else 
     T.read(args["tree"]);
-
+  T.unroot();
   /*------ Link Alignment and Tree ----------*/
   link(A,T);
 
@@ -72,19 +72,6 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
       }
     else if (args["internal"] == "search")
       assert(0); // FIXME - not programmed yet
-    else if (args["internal"] == "guess") 
-      for(int column=0;column< A.length();column++) {
-	vector<int> present_leaf(T.leaves());
-	for(int i=0;i<T.leaves();i++)
-	  present_leaf[i] = not A.gap(column,i);
-	TreeFunc<int> present = mark_tree(present_leaf,T);
-	for(int i=T.leaves();i<A.size2();i++) {
-	  if (present(i))
-	    A(column,i) = alphabet::not_gap;
-	  else
-	    A(column,i) = alphabet::gap;
-	}
-      }
   }
 
 }

@@ -145,7 +145,7 @@ public:
 };
 
 class tree {
-  int n_leaves;
+  int n_leaves_;
 
   std::vector<node*> order;
 
@@ -162,6 +162,8 @@ protected:
 
   void compute_ancestors();
 
+  void check_structure() const;
+
   //auxiliary
   void do_swap(node*,node*);
   //re-compute everything from the root, put tree in sane state
@@ -173,6 +175,11 @@ protected:
 
   double distance2(int,int) const;
 public:
+  void unroot() {
+    if (root->right)
+      root->right->parent_branch->length=0.0;
+  }
+
   void remove_subtree(int i);
 
   branchview branch(int i) {
@@ -192,13 +199,23 @@ public:
 
   int get_nth(int i) const {return order[i]->name;}
 
+  std::vector<int> neighbors(int node) const;
   bool connected(int node1,int node2) const;
   int find_branch(int node1,int node2) const;
 
-  int leaves() const {return n_leaves;}
+  int leaves() const {return n_leaves_;}
   int branches() const {return branches_.size()-1;}
-  int leafbranches() const {return (n_leaves==2)?1:n_leaves;}
+  int leafbranches() const {return (n_leaves_==2)?1:n_leaves_;}
   int num_nodes() const {return order.size();}
+
+  int n_nodes() const {return num_nodes();}
+  int n_leaves() const {return leaves();}
+  int n_leafbranches() const {return leafbranches();}
+  int n_branches() const {return branches();}
+
+  bool leaf_node(int n) const {return n < n_leaves();}
+  bool internal_node(int n) const {return not leaf_node(n);}
+
   branchview branch_up(int);
   const_branchview branch_up(int) const;
 
@@ -219,11 +236,12 @@ public:
 
   TreeView copy() const {return TreeView(root).copy();}
   void exchange(int,int);
+  void SPR(int,int,int);
   void reroot(int);
   
   tree& operator=(const tree&);
 
-  tree():root(0) {n_leaves=0;}
+  tree():root(0) {n_leaves_=0;}
   tree(const tree& t1):root(0) {operator=(t1);}
 
   tree(const tree& t1,const tree& t2);
@@ -259,29 +277,5 @@ inline bool tree::connected(int node1,int node2) const {
 
   return false;
 }
-
-
-
-/****************** class TreeFunc *******************/
-
-template<class RangeType>
-class TreeFunc {
-  const tree& t;
-
-  std::vector<RangeType> values;
-public:
-  RangeType& operator()(int i) {return values[i];} 
-  const RangeType& operator()(int i) const {return values[i];} 
-
-  RangeType& operator()(const node& n) {return values[n.name];} 
-  const RangeType& operator()(const node& n) const {return values[n.name];} 
-
-  TreeFunc(const tree& t1): t(t1),values(t1.num_nodes()) {}
-  TreeFunc(const tree& t1,RangeType value): t(t1),values(t1.num_nodes(),value) {}
-};
-
-TreeFunc<int> mark_tree(const std::vector<int>&,const tree&);
-
-double distance1(const tree& T1, const tree& T2);
 
 #endif

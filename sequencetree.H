@@ -18,7 +18,10 @@ protected:
 public:
   void remove_subtree(int i) {return tree::remove_subtree(i);}
 
+  std::string& seq(int i) {return sequences[i];}
   const std::string& seq(int i) const {return sequences[i];}
+
+  std::vector<std::string>& get_sequences() {return sequences;}
   const std::vector<std::string>& get_sequences() const {return sequences;}
 
   std::vector<int> standardize(bool=true);
