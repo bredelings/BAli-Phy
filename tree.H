@@ -305,6 +305,8 @@ inline std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
 
 bool same_topology(const SequenceTree&,const SequenceTree&);
 
+double distance1(const tree& T1, const tree& T2);
+
 SequenceTree RandomTree(const vector<string>&,double=1.0);
 
 #endif

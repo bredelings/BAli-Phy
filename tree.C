@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <sstream>
 
+using std::valarray;
+
 void TreeView::destroy_tree(node* n) {
   if (not n) return;
 
@@ -332,7 +334,7 @@ void tree::compute_ancestors() {
 
   ancestors.clear();
   ancestors.insert(ancestors.begin(),num_nodes(),
-		   std::valarray<bool>(false,num_nodes()));
+		   valarray<bool>(false,num_nodes()));
   for(int i=0;i<num_nodes();i++) {
     int n = get_nth(i);
     ancestors[n][n] = true;
@@ -352,11 +354,11 @@ void tree::compute_ancestors() {
 }
 
 //Unrooted Tree
-std::valarray<bool> tree::partition(int node1,int node2) const {
+valarray<bool> tree::partition(int node1,int node2) const {
   node* n1 = names[node1];
   node* n2 = names[node2];
 
-  std::valarray<bool> mask(num_nodes());;
+  valarray<bool> mask(num_nodes());;
 
   if ((n1==n2->parent) or
       (not n1->parent->parent and not n2->parent->parent))
@@ -713,4 +715,68 @@ double tree::distance(int i,int j) const {
   int ancestor = common_ancestor(i,j);
 
   return distance2(i,ancestor)+distance2(j,ancestor);
+}
+
+bool same(const valarray<bool>& vb1,const valarray<bool>& vb2) {
+  assert(vb1.size() == vb2.size());
+  for(int i=0;i<vb1.size();i++)
+    if (vb1[i] != vb2[i])
+      return false;
+  return true;
+}
+
+int find_partition(const valarray<bool>& p1, const vector<valarray<bool> >& pv) {
+  valarray<bool> np1 = not p1;
+  for(int i=0;i<pv.size();i++) {
+    if (same(pv[i],p1) or same(pv[i],np1))
+      return i;
+  }
+  return -1;
+}
+
+double distance1(const tree& T1, const tree& T2) {
+  assert(T1.branches() == T2.branches());
+
+  vector<double> d1(T1.branches());
+  vector< valarray<bool> > part1(T1.branches(),valarray<bool>(false,T1.num_nodes()));
+
+  vector<double> d2(T2.branches());
+  vector< valarray<bool> > part2(T2.branches(),valarray<bool>(false,T2.num_nodes()));
+
+  // get partitions and lengths for T1
+  for(int b=0;b<T1.branches();b++) {
+    d1[b] = T1.branch(b).length();
+    int parent = T1.branch(b).parent();
+    int child = T1.branch(b).child();
+    part1[b] = T1.partition(parent,child);
+  }
+
+  // get partitions and lengths for T2
+  for(int b=0;b<T2.branches();b++) {
+    d2[b] = T2.branch(b).length();
+    int parent = T2.branch(b).parent();
+    int child = T2.branch(b).child();
+    part2[b] = T2.partition(parent,child);
+  }
+
+  // Accumulate distances for T1 partitions
+  double total=0;
+  for(int i=0;i<part1.size();i++) {
+    int found = find_partition(part1[i],part2);
+    if (found == -1)
+      total += std::abs(d1[i]);
+    else {
+      total += std::abs(d1[i] - d2[found]);
+    }
+  }
+
+  // Accumulate distances for T2 partitions
+  for(int i=0;i<part1.size();i++) {
+    int found = find_partition(part1[i],part2);
+    if (found == -1)
+      total += std::abs(d1[i]);
+    else
+      ; // this is already counted in the previous loop
+  }
+  return total;
 }

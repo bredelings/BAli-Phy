@@ -128,7 +128,7 @@ const int maxtrees=10;
 
 int main(int argc,char* argv[]) { 
   Arguments args;
-    args.read(argc,argv);
+  args.read(argc,argv);
 
   try {
     list<string> trees;

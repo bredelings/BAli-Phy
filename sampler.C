@@ -333,7 +333,17 @@ int main(int argc,char* argv[]) {
       assert(0);
     
     std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
-    base_smodel->frequencies(empirical_frequencies(A));
+    if (args.set("frequencies")) {
+      vector<double> f = split<double>(args["frequencies"],',');
+      assert(f.size() == A.get_alphabet().size());
+
+      valarray<double> f2(f.size());
+      for(int i=0;i<f.size();i++)
+	f2[i] = f[i];
+      base_smodel->frequencies(f2);
+    }
+    else 
+      base_smodel->frequencies(empirical_frequencies(A));
     
     substitution::MultiRateModel *full_smodel = 0;
     if (args.set("gamma")) {
@@ -347,6 +357,12 @@ int main(int argc,char* argv[]) {
       substitution::MultiRateModel *temp = full_smodel;
       full_smodel = new substitution::INV_Model(*full_smodel);
       delete temp;
+    }
+
+    if (args.set("parameters")) {
+      vector<double> p = split<double>(args["parameters"],',');
+      assert(p.size() == full_smodel->parameters().size());
+      full_smodel->parameters(p);
     }
 
     if (args["letters"]== "star") {

@@ -26,7 +26,7 @@ DEBUG = pipe g3 # pg
 EXACTFLAGS = --param max-inline-insns-single=500 --param max-inline-insns-auto=150
 DEFS =  NDEBUG # NDEBUG_DP
 WARN = all no-sign-compare overloaded-virtual
-OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 # O # O3
+OPT =  malign-double mfpmath=sse msse mmmx msse2 march=pentium4 O3
 LDFLAGS = #-pg # -static 
 LI=${CXX}
 
@@ -48,12 +48,18 @@ ALLSOURCES = ${SOURCES}
 ${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%} # libgsl.a libgslcblas.a libm.a
 
 
-treecount: treecount.o tree.o sequencetree.o arguments.o util.o
+treecount: treecount.o tree.o sequencetree.o arguments.o util.o rng.o ${LIBS:%=-l%}
+
+treedist: treedist.o tree.o sequencetree.o arguments.o
+
+treetosrq: treetosrq.o tree.o sequencetree.o arguments.o
+
+srqtoplot: arguments.o
 
 reroot: reroot.o tree.o sequencetree.o arguments.o
 
 make_random_tree: randomtree.o tree.o sequencetree.o arguments.o util.o\
-	 rng.o -lgsl -lgslcblas -lm
+	 rng.o  ${LIBS:%=-l%}
 
 #-----------------Other Files
 OTHERFILES += 

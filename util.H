@@ -44,6 +44,16 @@ inline double wrap(double x,double max) {
 
 std::vector<std::string> split(const std::string&,char);
 
+template<class T>
+std::vector<T> split(const std::string& s,char c) {
+  std::vector<std::string> v = split(s,c);
+  std::vector<T> vT;
+  for(int i=0;i<v.size();i++)
+    vT.push_back(convertTo<T>(v[i]));
+
+  return vT;
+}
+
 std::string strip(const std::string&,char);
 
 std::vector<int> invert(const std::vector<int>&);
