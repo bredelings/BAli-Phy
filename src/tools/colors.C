@@ -140,5 +140,10 @@ namespace colors {
   RGB green  (0.1, 0.9, 0.1);
   RGB purple (0.9, 0.1, 0.9);
 
+  double grayscale(const RGB& c) {
+    return 0.3*c.R() + 0.59*c.G() + 0.11*c.B();
+  }
+
+
 }
 

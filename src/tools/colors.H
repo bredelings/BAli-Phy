@@ -57,6 +57,8 @@ namespace colors {
 
   RGB whiten(const RGB&,double p);
 
+  double grayscale(const RGB&);
+
   extern RGB black;
   extern RGB white;
   extern RGB grey;

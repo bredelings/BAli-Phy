@@ -15,13 +15,14 @@ using po::variables_map;
 using std::string;
 using namespace colors;
 
+// some scale functions
 double identity(double x) {return x;}
 double square(double x) {return x*x;}
 double cube(double x) {return x*x*x;}
 
 double LOD10(double x) {return log10(x) - log10(1.0-x);}
 
-/// A representation of a transformation of [0,1] onto [min,max]
+/// A representation of a transformation of [0,1] (certainty) onto [0,1] (colormap scale)
 struct Scale {
   double min;
   double max;
@@ -44,20 +45,19 @@ struct Scale {
   { }
 };
 
-// Make separate schemes for fg and bg color, so that we can separate them?
 
-// But then, how can we determine one color in reference to the other color?
-
-
-
+/// ColorMap base class - gives fg and bg colors for string 's' based on x in [0,1]
 class ColorMap {
 public:
   virtual ColorMap* clone() const=0;
 
   virtual RGB bg_color(double x,const string& s) const=0;
   virtual RGB fg_color(double x,const string& s) const=0;
+
+  virtual ~ColorMap() {}
 };
 
+/// ColorMap which gives black on white
 struct Plain_ColorMap: public ColorMap {
 public:
   Plain_ColorMap* clone() const {return new Plain_ColorMap(*this);}
@@ -67,11 +67,14 @@ public:
   RGB fg_color(double x,const string& s) const { return black; }
 };
 
+/// ColorMap which represents uncertainty in terms of gray-scale
 struct BW_ColorMap: public ColorMap {
 public:
   BW_ColorMap* clone() const {return new BW_ColorMap(*this);}
 
   RGB bg_color(double x,const string& s) const {
+    if (x < 0)
+      throw myexception()<<"You must specify an AU file to use this color scheme";
     return HSV(0,0,1.0-x);
   }
 
@@ -83,6 +86,7 @@ public:
   }
 };
 
+/// ColorMap which represents uncertainty in terms of Rainbow colors
 struct Rainbow_ColorMap: public ColorMap {
   double h_start;
   double h_end;
@@ -94,6 +98,8 @@ public:
   Rainbow_ColorMap* clone() const {return new Rainbow_ColorMap(*this);}
 
   RGB bg_color(double x,const string& s) const {
+    if (x < 0)
+      throw myexception()<<"You must specify an AU file to use this color scheme";
     if ((s == "-") or (s == "---")) {
       double v_uncertain = 1.0;
       double v_certain   = 0.6;
@@ -111,14 +117,10 @@ public:
   }
 
   RGB fg_color(double x,const string& s) const {
-    if (x < 0.5)
-      return black;
-    else
-      return white;
-      
+    return black;
   }
-
-  Rainbow_ColorMap() :h_start(0.75),h_end(0),s_start(0.3),s_end(0.95)
+ 
+ Rainbow_ColorMap() :h_start(0.75),h_end(0),s_start(0.3),s_end(0.95)
   { }
 
   Rainbow_ColorMap(double h1,double h2)
@@ -127,64 +129,6 @@ public:
 
   Rainbow_ColorMap(double h1,double h2,double s1,double s2)
     :h_start(h1),h_end(h2),s_start(s1),s_end(s2)
-  { }
-};
-
-class ColorScheme: public Cloneable {
-public:
-  virtual ColorScheme* clone() const =0;
-
-  virtual RGB bg_color(double x,const string& s) const =0;
-
-  virtual RGB fg_color(double x,const string& s) const =0;
-
-  virtual ~ColorScheme() {}
-};
-
-// FIXME: all the nested stuff should really be color MAPs
-// There should be only one scale, and it should be at the top level
-// That way, all the colormaps will know how they correspond.  
-//   For example, the fade colormap would be able to set the whitening to
-//   correspond to the transition from red to yellow...
-
-// FIXME: make a separate 'scale' argument.
-
-// Hmm... Marc's fg-contrast fits naturally into this scheme.
-
-// FIXME: add a grayscale function to colors.C.
-
-// FIXME: merge rgb and hsv into a single class? Then only R() or H() could
-//        be a reference, not both...
-
-
-// color-scheme=Rainbow
-// color-scheme=plain
-// color-scheme=bw
-// color-scheme=bw-ify  (get colors, turn it into a greyscale value)
-
-// color-scheme=plain+bg=AminoAcid+bg=fade
-// color-scheme=Rainbow+fg=AminoAcid
-// color-scheme=bw+switch+fg=AminoAcid
-
-// Hmm...  color-scheme=plain+AA+fade ?
-///                    =plain-AA      affect fg instead?
-
-class BaseColorScheme: public ColorScheme {
-  Scale scale;
-  OwnedPointer<ColorMap> color_map;
-public:
-  virtual BaseColorScheme* clone() const {return new BaseColorScheme(*this);}
-
-  RGB bg_color(double x,const string& s) const {
-    return color_map->bg_color(scale(x),s);
-  }
-
-  RGB fg_color(double x,const string& s) const {
-    return color_map->fg_color(scale(x),s);
-  }
-
-  BaseColorScheme(const ColorMap& CM,const Scale& S)
-    :scale(S),color_map(CM)
   { }
 };
 
@@ -206,35 +150,12 @@ RGB AA_color(char aa) {
 }
 
 
-class AA_fg_colors: public ColorScheme {
-  OwnedPointer<ColorScheme> sub_scheme;
+/// ColorMap which uses the bg color to display AA type
+class AA_colors: public ColorMap 
+{
 public:
 
-  AA_fg_colors* clone() const {return new AA_fg_colors(*this);}
-
-  RGB bg_color(double x,const string& s) const {
-    return sub_scheme->bg_color(x,s);
-  }
-
-  RGB fg_color(double x,const string& s) const {
-    if (s.length() > 1) std::abort();
-    char aa = ' ';
-    if (not s.empty())
-      aa = s[0];
-    
-    return AA_color(aa);
-  }
-
-  AA_fg_colors(const ColorScheme& scheme)
-    :sub_scheme(scheme) 
-  {}
-};
-
-class AA_bg_colors: public ColorScheme {
-  OwnedPointer<ColorScheme> sub_scheme;
-public:
-
-  AA_bg_colors* clone() const {return new AA_bg_colors(*this);}
+  AA_colors* clone() const {return new AA_colors(*this);}
 
   RGB bg_color(double x,const string& s) const {
     if (s.length() > 1) std::abort();
@@ -246,50 +167,117 @@ public:
   }
 
   RGB fg_color(double x,const string& s) const {
-    return sub_scheme->fg_color(x,s);
+    return black;
   }
-
-  AA_bg_colors(const ColorScheme& scheme)
-    :sub_scheme(scheme) 
-  {}
 };
 
-class switch_fg_bg: public ColorScheme {
-  OwnedPointer<ColorScheme> sub_scheme;
+/// ColorMap which makes the bg color fade almost to white if uncertain
+class whiten_colors: public ColorMap {
+  OwnedPointer<ColorMap> sub_map;
 public:
-  switch_fg_bg* clone() const {return new switch_fg_bg(*this);}
+  whiten_colors* clone() const {return new whiten_colors(*this);}
 
   RGB bg_color(double x,const string& s) const {
-    return sub_scheme->fg_color(x,s);
-  }
-
-  RGB fg_color(double x,const string& s) const {
-    return sub_scheme->bg_color(x,s);
-  }
-
-  switch_fg_bg(const ColorScheme& scheme)
-    :sub_scheme(scheme) 
-  {}
-};
-
-class bg_fade_uncertainty: public ColorScheme {
-  OwnedPointer<ColorScheme> sub_scheme;
-public:
-  bg_fade_uncertainty* clone() const {return new bg_fade_uncertainty(*this);}
-
-  RGB bg_color(double x,const string& s) const {
+    if (x < 0)
+      throw myexception()<<"You must specify an AU file to use this color scheme";
     if (x<0.35) x = 0.35;
-    return whiten(sub_scheme->bg_color(x,s),1.0-x*x*x);
+    return whiten(sub_map->bg_color(x,s),1.0-x*x);
   }
 
   RGB fg_color(double x,const string& s) const {
     if (x<0.25) x = 0.25;
-    return whiten(sub_scheme->fg_color(x,s),1.0-x);
+    return whiten(sub_map->fg_color(x,s),1.0-x);
   }
 
-  bg_fade_uncertainty(const ColorScheme& scheme)
-    :sub_scheme(scheme) 
+  whiten_colors(const ColorMap& colors)
+    :sub_map(colors) 
   {}
+};
+
+/// ColorMap which switches the foreground and background colors
+class switch_fg_bg: public ColorMap {
+  OwnedPointer<ColorMap> sub_map;
+public:
+  switch_fg_bg* clone() const {return new switch_fg_bg(*this);}
+
+  RGB bg_color(double x,const string& s) const {
+    return sub_map->fg_color(x,s);
+  }
+
+  RGB fg_color(double x,const string& s) const {
+    return sub_map->bg_color(x,s);
+  }
+
+  switch_fg_bg(const ColorMap& colors)
+    :sub_map(colors) 
+  {}
+};
+
+
+class contrast: public ColorMap {
+  OwnedPointer<ColorMap> sub_map;
+public:
+  contrast* clone() const {return new contrast(*this);}
+
+  RGB bg_color(double x,const string& s) const {
+    return sub_map->bg_color(x,s);
+  }
+
+  RGB fg_color(double x,const string& s) const {
+    double whiteness = grayscale(sub_map->bg_color(x,s));
+    if (whiteness < 0.5)
+      return white;
+    else
+      return black;
+  }
+
+  contrast(const ColorMap& colors)
+    :sub_map(colors) 
+  {}
+};
+
+
+
+
+// Hmm... Marc's fg-contrast fits naturally into this scheme.
+
+// Hmm... Marc's fg-contrast fits naturally into this scheme.
+
+// FIXME: add a grayscale function to colors.C.
+
+// FIXME: merge rgb and hsv into a single class? Then only R() or H() could
+//        be a reference, not both...
+
+
+// color-scheme=Rainbow
+// color-scheme=plain
+// color-scheme=bw
+// color-scheme=bw-ify  (get colors, turn it into a greyscale value)
+
+// color-scheme=plain+bg=AminoAcid+bg=fade
+// color-scheme=Rainbow+fg=AminoAcid
+// color-scheme=bw+switch+fg=AminoAcid
+
+// Hmm...  color-scheme=plain+AA+fade ?
+///                    =plain-AA      affect fg instead?
+
+class ColorScheme: public Cloneable {
+  Scale scale;
+  OwnedPointer<ColorMap> color_map;
+public:
+  virtual ColorScheme* clone() const {return new ColorScheme(*this);}
+
+  RGB bg_color(double x,const string& s) const {
+    return color_map->bg_color(scale(x),s);
+  }
+
+  RGB fg_color(double x,const string& s) const {
+    return color_map->fg_color(scale(x),s);
+  }
+
+  ColorScheme(const ColorMap& CM,const Scale& S)
+    :scale(S),color_map(CM)
+  { }
 };
 
 using std::cout;
@@ -369,25 +357,10 @@ bool match(vector<string>& sstack,const string& s) {
   return m;
 }
 
-OwnedPointer<ColorScheme> get_base_color_scheme(const variables_map& args,
-						const string& color_map_name,
-						const string& scale_name) 
-{
-  OwnedPointer<ColorMap> color_map;
-  if (color_map_name == "plain")
-    color_map = OwnedPointer<ColorMap>(new Plain_ColorMap);    
-  else if (color_map_name == "bw")
-    color_map = OwnedPointer<ColorMap>(new BW_ColorMap);    
-  else if (color_map_name == "RedBlue") 
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1,0.95,0.95));
-  else if (color_map_name == "BlueRed") 
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7,0.95,0.95));
-  else if (color_map_name == "Rainbow")
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap);
-  else
-    return OwnedPointer<ColorScheme>(NULL);
 
+Scale get_scale(const variables_map& args) {
   Scale scale;
+  string scale_name = args["scale"].as<string>();
   if (scale_name == "identity") {
     scale.f = identity;
     scale.min = 0;
@@ -417,59 +390,65 @@ OwnedPointer<ColorScheme> get_base_color_scheme(const variables_map& args,
     if (args.count("max")) scale.max = args["max"].as<double>();
   }
   else
-    return OwnedPointer<ColorScheme>(NULL);
+    throw myexception()<<"Unrecognized scale '"<<scale_name<<"'.";
+  return scale;
+}
 
-  return BaseColorScheme(*color_map,scale);
+OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack)
+{
+  OwnedPointer<ColorMap> color_map;
+  if (match(string_stack,"plain"))
+    color_map = OwnedPointer<ColorMap>(new Plain_ColorMap);    
+  else if (match(string_stack,"bw"))
+    color_map = OwnedPointer<ColorMap>(new BW_ColorMap);    
+  else if (match(string_stack,"RedBlue"))
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1,0.95,0.95));
+  else if (match(string_stack,"BlueRed"))
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7,0.95,0.95));
+  else if (match(string_stack,"Rainbow"))
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap);
+  else if (match(string_stack,"AA"))
+    color_map = OwnedPointer<ColorMap>(new AA_colors);
+  else
+    throw myexception()<<"Unrecognized base color scheme '"<<string_stack.back()<<"'";
+
+  return color_map;
 }
 
 
-OwnedPointer<ColorScheme> get_base_color_scheme(const variables_map& args, vector<string>& string_stack) 
+OwnedPointer<ColorMap> get_color_map(const variables_map& args) 
 {
-  OwnedPointer<ColorScheme> result;
+  // get the string stack
+  vector<string> string_stack;
+  if (args.count("color-scheme"))
+    string_stack = split(args["color-scheme"].as<string>(),'+');
+  std::reverse(string_stack.begin(),string_stack.end());
+  if (string_stack.empty())
+    throw myexception()<<"Color scheme not specified. (but how?)";
+  
+  OwnedPointer<ColorMap> color_map = get_base_color_map(string_stack);;
 
-  if (string_stack.size()) {
-    vector<string> model = split(string_stack.back(),'*');
-    if (model.size() == 2)
-      result = get_base_color_scheme(args,model[0],model[1]);
-    else if (model.size() == 1) {
-      result = get_base_color_scheme(args,model[0],"LOD");
-      if (not result) result = get_base_color_scheme(args,"Rainbow",model[0]);
-    }
-    else 
-      throw myexception()<<"Can't parse base color scheme '"<<string_stack.back()<<"'";
+  while(string_stack.size()) {
+    if (match(string_stack,"switch"))
+      color_map = switch_fg_bg(*color_map);
+    else if (match(string_stack,"contrast"))
+      color_map = contrast(*color_map);
+    else if (match(string_stack,"whiten"))
+      color_map = whiten_colors(*color_map);
+    else
+      throw myexception()<<"Unrecognized color scheme modifier '"<<string_stack.back()<<"'";
   }
-
-  if (result)
-    string_stack.pop_back();
-  else
-    result = get_base_color_scheme(args,"Rainbow","LOD");
-
-  return result;
+  return color_map;
 }
 
 OwnedPointer<ColorScheme> get_color_scheme(const variables_map& args) 
 {
-  vector<string> string_stack;
-  if (not args.count("color-scheme"))
-    string_stack = split(args["color-scheme"].as<string>(),'+');
-  std::reverse(string_stack.begin(),string_stack.end());
-  
-  OwnedPointer<ColorScheme> color_scheme = get_base_color_scheme(args,string_stack);
-  assert(color_scheme);
+  OwnedPointer<ColorMap> color_map = get_color_map(args);
+  assert(color_map);
 
-  while(string_stack.size()) {
-    if (match(string_stack,"switch"))
-      color_scheme = switch_fg_bg(*color_scheme);
-    else if (match(string_stack,"fg=AminoAcid"))
-      color_scheme = AA_fg_colors(*color_scheme);
-    else if (match(string_stack,"bg=AminoAcid"))
-      color_scheme = AA_bg_colors(*color_scheme);
-    else if (match(string_stack,"bg=fade"))
-      color_scheme = bg_fade_uncertainty(*color_scheme);
-    else
-      throw myexception()<<"Can't parse color scheme modifier '"<<string_stack.back()<<"'";
-  }
-  return color_scheme;
+  Scale scale = get_scale(args);
+
+  return ColorScheme(*color_map,scale);
 }
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
@@ -488,6 +467,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   
   options_description output("Output");
   output.add_options()
+    ("no-legend","don't print a legend") 
     ("show-ruler","print a ruler to show column numbers") 
     ("column-colors","color-code column ticks by column certainty") 
     ("AU",value<string>(),"file with alignment uncertainties")
@@ -498,7 +478,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("format",value<string>()->default_value("HTML"),"produce a plot in this format")
     ("min",value<double>(),"minimum value of scale function")
     ("max",value<double>(),"maximum value of scale function")
-    ("color-scheme",value<string>(),"include a length of how certainties map to colors")
+    ("color-scheme",value<string>()->default_value("plain"),"include a length of how certainties map to colors")
     ("scale",value<string>()->default_value("LOD"),"scale for the uncertainties")
     ;
 
@@ -539,20 +519,25 @@ int main(int argc,char* argv[])
 
     bool show_column_numbers = args.count("show-ruler")==1;
 
-    //---------- Load alignment and tree -----------//
-    alignment A = load_A(args,false);
-
-    //------ Find mapping from colorfile to alignment sequence order -------//
-    if (not args.count("AU"))
-      throw myexception()<<"AU probabilites file not specified!";
-
-    ublas::matrix<double> colors = read_alignment_certainty(A,args["AU"].as<string>());
-
-    OwnedPointer<ColorScheme> color_scheme = get_color_scheme(args);
-
     bool showgaps = true;
     if (args.count("show-gaps") and args["show-gaps"].as<string>() == "no")
       showgaps = false;
+
+    //---------- Load alignment and tree -----------//
+    alignment A = load_A(args,false);
+
+    //---- Find mapping from colorfile to alignment sequence order -----//
+    OwnedPointer<ColorScheme> color_scheme = get_color_scheme(args);
+
+    //---------- Read alignment uncertainty, if available --------------//
+    ublas::matrix<double> colors(A.length(),A.n_sequences()+1);
+    
+    if (args.count("AU"))
+      colors = read_alignment_certainty(A,args["AU"].as<string>());
+    else
+      for(int i=0;i<colors.size1();i++)
+	for(int j=0;j<colors.size2();j++)
+	  colors(i,j) = -1;
 
     //-------------------- Get width ------------------------//
     int width = args["width"].as<int>();
@@ -645,7 +630,7 @@ SPAN {\n\
   <body>\n";
       
       //-------------------- Print a legend ------------------------//
-      if (args.count("legend") and args["legend"].as<string>() != "no") {
+      if (not args.count("no-legend")) {
 	draw_legend(cout,*color_scheme,"");
 	draw_legend(cout,*color_scheme,"-");
       }
