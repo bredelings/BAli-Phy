@@ -1,5 +1,5 @@
 #include "substitution.H"
-
+#include "myrandom.H"
 #include <cmath>
 #include <valarray>
 using std::valarray;
@@ -125,18 +125,20 @@ double substitution(const vector<int>& residues,const Parameters& Theta,
 
   double p = rootD.sum();
 
+
   /*
-  left = 13;
+  left = myrandom(0,T.num_nodes()-2);
   right = T.parent(left);
-  leftD = peel(residues,T,right,left);
-  rightD = peel(residues,T,left,right);
-  rootD = leftD * a.frequency * rightD;
+  leftD = peel(residues,Theta,right,left);
+  rightD = peel(residues,Theta,left,right);
+  rootD = leftD * Theta.frequency * rightD;
   double p2 = rootD.sum();
 
   for(int i=0;i<residues.size();i++)
-    std::cerr<<a.lookup(residues[i])<<" ";
+    std::cerr<<Theta.get_alphabet().lookup(residues[i])<<" ";
   std::cerr<<p<<" "<<log(p)<<"     "<<p2<<"      "<<log(p2)<<endl;
   */
+
   assert(p<= 1.0);
   return log(p);
 }

@@ -4,7 +4,6 @@
 #include <algorithm>
 
 void change_branch_length(const alignment& A, Parameters& Theta,int b) {
-    // FIXME - this doesn't deal w/ prior on branch length
 
     Parameters Theta2 = Theta;
     /********* Propose increment 'epsilon' ***********/
@@ -21,15 +20,15 @@ void change_branch_length(const alignment& A, Parameters& Theta,int b) {
     double new_lower = newlength - sigma;
     double new_higher = newlength + sigma;
     if (new_lower < 0) new_lower = 0;
-    double density1 = 1.0/(higher - lower);
-    double density2 = 1.0/(new_higher - new_lower);
+    double density12 = 1.0/(higher - lower);
+    double density21 = 1.0/(new_higher - new_lower);
 
     /********** Do the M-H step if OK**************/
-    double lL_1 = probability2(A,Theta) - Theta.branch_mean*length;
-    double lL_2 = probability2(A,Theta2) - Theta2.branch_mean*newlength;
+    double lL_1 = probability2(A,Theta);
+    double lL_2 = probability2(A,Theta2);
 
-    // accept w/ probability (a2/a1)*(p1/p2)
-    if (myrandomf() < exp(lL_2 - lL_1)*density1/density2) {
+    // accept w/ probability (a2/a1)*(p21/p12)
+    if (myrandomf() < exp(lL_2 - lL_1)*density21/density12) {
       Theta=Theta2;
       std::cerr<<Theta2.T.branch(b).length<<" "<<Theta.T.branch(b).length<<endl;
       std::cerr<<"branch "<<b<<":  "<<length<<" -> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
@@ -81,15 +80,16 @@ void move_node(const alignment& A, Parameters& Theta,int node) {
 
 // FIXME - this doesn't really deal correctly with modifying parameters
 alignment sample(const alignment& old,Parameters& Theta) {
-  const tree& T = Theta.T;
+
   alignment A;
   double r = myrandomf();
-  if (r < 0.35) {
-    int node1 = myrandom(0,Theta.T.num_nodes()-3);
+  if (r < 1.35) {
+    int node1 = myrandom(Theta.T.leaves()-1,Theta.T.num_nodes()-3);
+    //    int node1 = myrandom(0,Theta.T.num_nodes()-3);
     int node2 = Theta.T.parent(node1);
     A = sample(old,Theta,node1,node2);
   }
-  else if (r < 0.7) {
+  else if (r < -0.7) {
     int node = myrandom(Theta.T.leaves(),Theta.T.num_nodes()-2);
     A = sample(old,Theta,node);
   }

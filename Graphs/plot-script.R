@@ -65,7 +65,7 @@ plotsegs <- function(xa0, ya0, xa1, ya1, weight, lab1, lab2) {
   }
 
   legend(120,80,legend=c(Rreverse(negcolors),poscolors),
-         lwd=seq(from=2,to=2,length=ncolors*2/3),
+         lwd=seq(from=2,to=2,length=(ncolors*2)),
          col=c(Rreverse(negcolors),poscolors),
          cex=tsize,bty="n",
          y.intersp=0.5)

@@ -17,11 +17,11 @@ all: sampler
 # try -fforce-addr
 
 #----------------- Definitions
-LANGO = #prefetch-loop-arrays fast-math unroll-loops
+LANGO = prefetch-loop-arrays fast-math unroll-loops
 DEBUG = pipe g # pg
-DEFS = # NDEBUG 
+DEFS = #NDEBUG 
 WARN = all no-sign-compare
-OPT =  # O3 malign-double mfpmath=sse msse2 march=pentium4
+OPT =  O3 malign-double mfpmath=sse msse2 march=pentium4
 LDFLAGS =  # -pg 
 
 #------------------- Main 

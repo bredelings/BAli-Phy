@@ -403,8 +403,8 @@ SequenceTree::SequenceTree(std::istream& file) {
 	name = "";
       }
       assert(tree_stack.size() >= 2);
-      SequenceTree T1 = tree_stack.back();tree_stack.pop_back();
       SequenceTree T2 = tree_stack.back();tree_stack.pop_back();
+      SequenceTree T1 = tree_stack.back();tree_stack.pop_back();
       SequenceTree Join = SequenceTree(T1,T2);
       tree_stack.push_back(Join);
       //      std::cerr<<"    leaves: "<<T1.leaves()<<" + "<<T2.leaves()<<" = "<<Join.leaves()<<endl;

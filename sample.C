@@ -73,6 +73,44 @@ int mask(int i) {
     return 3;
 }
 
+// A. If current node is '-', then we have class I edges (e.g. 1->4)
+// B. If current node is '+', then we have class II edges (e.g. 4->1)
+
+// Edges can only be hidden if a node is '-' (case A)
+// But only the second kind of edges can be hidden (case B)
+
+int hidden(int hidden1,int state2,int indel1,int indel2) {
+  assert(!(hidden1&(1<<30)));
+  int state1 = (hidden1 == 7);
+
+  int h=-1;
+  if (state2 == 0) {
+    if (state1 == 0)      // What edges hidden BY previous column?
+      h = hidden1;        //  (None of its edges can be hidden)
+    else if (state1 == 1)  // What edges exist IN previous column?
+      h = indel1;         //  (It can't hide edges)
+
+    //  Of those edges, this column can hide ones in mask(indel2)
+    h &= mask(indel2);
+  }
+  else if (state2==1) 
+    h = 7;
+
+  return h;
+}
+
+double p_gap(int hidden1,int state2,int indel1, int indel2,const Parameters& Theta) {
+  int gaps = num_gaps(indel2);
+  
+  int extended = num_shared(indel1, indel2);
+  if (hidden1 != 7) 
+    extended = num_shared(indel1|hidden1, indel2);
+
+  int opened = gaps - extended;
+  
+  return Theta.lambda_E*extended + Theta.lambda_O*opened;
+}
+
 
 alignment sample(const alignment& old,const Parameters& Theta,int node) {
   const tree& T = Theta.T;
@@ -89,9 +127,11 @@ alignment sample(const alignment& old,const Parameters& Theta,int node) {
   vector< vector<double> > P;
   vector< vector<int> > indels;
   for(int i=0;i<A.length()+1;i++) {
-    P.push_back(vector<double>(74,log_0));
+    P.push_back(vector<double>(8,log_0));
     indels.push_back(vector<int>(2,0));
   }
+  P[0][7] = 0; /// In fake 0th column, the character is present
+  indels[0][0] = 1<<30;
 
   // Determine which indels are present if the internal node at 'column'
   // is absent (indels[column][0]) or present (indels[column][1])
@@ -134,17 +174,8 @@ alignment sample(const alignment& old,const Parameters& Theta,int node) {
 
   }
 
-  P[0][63] = 0; /// 111-111
-  P[0][71] = 0; /// 111
-  P[0][73] = 0; /// 1
-  
-  // If current node is '-', then we have class I edges (e.g. 1->4)
-  // If current node is '+', then we have class II edges (e.g. 4->1)
 
-  // Edges can only be hidden if current node is '-' in the first case.
-  // But only the second kind of edges can be hidden.
-
-  // If we store 00+10->0 and 10+11->1 then we halve calls to logsum
+  /************** Calculate DP array ********************/
   for(int column=1;column<P.size();column++) {
     for(int state=0;state<2;state++) {
       int indel = indels[column][state];
@@ -152,64 +183,39 @@ alignment sample(const alignment& old,const Parameters& Theta,int node) {
       if (indel == (1<<30))           // P=0
 	continue;
 
-      for(int i=0;i<8;i++) {
-	if (P[column-1][64+i] == log_0)
+      for(int h1=0;h1<8;h1++) {
+	if (P[column-1][h1] == log_0)
 	  continue;
 
-	const int prev_state = (i==7);
-	
-	int prev_indel = indels[column-1][prev_state];
+	int prev_indel = indels[column-1][h1==7];
 
-	int target=-1;
-	if (state==0) {
-	  if (prev_state==0) // What edges hidden BY previous column?
-	                     // (None of its edges can be hidden)
-	    target = i;
-	  else if (prev_state==1)
-		             // What edges exist IN previous column?
-		             // (It can't hide edges)
-	    target = prev_indel;
-
-	  //  Of those edges, this column can hide ones in mask(indel)
-	  target &= mask(indel);
-	}
-	else if (state==1)
-	  target=7; // i ->111
+	int h2 = hidden(h1,state,prev_indel,indel);
 	
-	target = (i<<3)+target;
-
-	int gaps = num_gaps(indel);
+	double p = p_gap(h1,state,prev_indel,indel,Theta);
 	
-	int extended = num_shared(prev_indel|i,indel);
-	int opened = gaps - extended;
-	
-	double p = Theta.lambda_E*extended + Theta.lambda_O*opened;
-	
-	P[column][target] = logsum(P[column][target],p + P[column-1][64+i]);
+	P[column][h2] = logsum(P[column][h2],p + P[column-1][h1]);
       }
     }
-
-    for(int i=0;i<8;i++) {
-      for(int j=0;j<8;j++)
-	P[column][64+i] = logsum(P[column][64+i],P[column][(j<<3)+i]);
-    }
-
-    for(int i=0;i<7;i++)
-      P[column][72] = logsum(P[column][72],P[column][64+i]);
-
-    P[column][73] = P[column][71];
   }
 
+  /****************** Do traceback ********************/
   vector<double> choices(8);
-  int current = choose(P[P.size()-1].begin()+64,8);
+  int current = choose(P[P.size()-1]);
   for(int i=P.size()-1;i>0;i--) {
     if (current==7) 
       A(i-1,node) = alphabet::not_gap;
     else
       A(i-1,node) = alphabet::gap;
       
-    for(int j=0;j<8;j++)
-      choices[j] = P[i][(j<<3)+current];
+    for(int h1=0;h1<8;h1++) {
+      int prev_indel = indels[i-1][h1==7];
+      int curr_indel = indels[i][current==7];
+      if ((prev_indel&(1<<30)) or (curr_indel&(1<<30)) or
+	  hidden(h1,current==7,prev_indel,curr_indel) != current)
+	choices[h1] = log_0;
+      else
+	choices[h1] = P[i-1][h1] + p_gap(h1,current==7,prev_indel,curr_indel,Theta);
+    }
     int next = choose(choices);
     current = next;
   }

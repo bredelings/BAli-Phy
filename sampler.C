@@ -79,7 +79,7 @@ void MCMC2(alignment& A,Parameters& Theta,
   SequenceTree Sum = T;
 
   const int correlation_time = int(8.0*T.leaves()*log(T.leaves()));
-  const int start_after = 600.0*T.leaves()*log(T.leaves());
+  const int start_after = int( 600.0*T.leaves()*log(T.leaves()) );
   int total_samples = 0;
 
   double p=probability(A,Theta);
@@ -90,7 +90,7 @@ void MCMC2(alignment& A,Parameters& Theta,
     /******************** Record Statistics *******************/
     if (iterations > start_after) {
       if (iterations%correlation_time == 0) 
-	print_stats(A,Theta);
+      	print_stats(A,Theta);
       for(int i=0;i<T.num_nodes();i++)
 	Sum.branch(i).length += T.branch(i).length;
       total_samples++;
@@ -111,7 +111,7 @@ void MCMC2(alignment& A,Parameters& Theta,
     new_p = probability(NewA,Theta);
 
     /***************** Print Diagnostic Output ********************/
-    if (iterations %50 == 0 or fabs(p - new_p)>8) {
+    if (iterations %250 == 0 or fabs(p - new_p)>5) {
       std::cerr<<"previous = "<<
 	probability_no_tree(A,Theta)<<"  "<<
 	probability_simple_tree(A,Theta)<<"  "<<
@@ -134,11 +134,13 @@ void MCMC2(alignment& A,Parameters& Theta,
 }
 
 
-/**** TODO:  Output and plot the trees!  ****/
+/**** TODO:  A. Check distribution of logs - now use RNA data
+             B. Normalize/Parameterize rate matrix?
+             C. Write code to change tree topology
+	        (Need an interface so that node NAME doesn't change!)
+             D. Benchmark
+ ****/
 
-
-// 2. Check to make sure that the gap-resamping works - do we need to store TWO states?
-//     or can we just modify choices depending on previous state?
 
 // 3. write a routine to load the Phylip files -> check out CAR.phy
 
@@ -149,10 +151,11 @@ void MCMC2(alignment& A,Parameters& Theta,
 // 8. Use ublas::matrix<double>(a.size()) instead of valarray<double> in substitution.C
 
 // 10. We still have problems jumping logs I think??
+//     Why is the distribution of log scores so WIDE?
+//     At least, with the HIV stuff, there seems to be a clear maximum!
+//     Check various moves with this!  First cut out the branch-length code.
 
 // 13. Put letters in the rate matrix file
-
-// 15. Need to actually alter branch lengths w/ MCMC moves (use exp prior - estimate length parameter)
 
 // 16. *Better* output statistics?  Specify species to look at on command line?
 
@@ -162,7 +165,22 @@ void MCMC2(alignment& A,Parameters& Theta,
 
 // 20. How can we show conservation in the graph?
 
-// 21. Look at paper on RNA phylogenetics?
+// 22. ALL internal-node-resampling is 1D!  We can resample adjacent
+//       internal nodes simultaneously w/ a 1D algorithm!
+//     IS there a good way to just integrate over all internal node state?
+//       The state space is probably at least 2^(#nodes) though.
+
+// 23. Finish writing the new branch-length MH sampler
+
+// 24. Measure the correlation time - see how sorting by center of mass of alignment
+//     and moving from k->N-k decreases it...
+//
+//     Perhaps we could output more samples than we are now...
+
+
+// 25. Benchmark, and see how the speed depends on sequence length
+
+// 27. Make output less verbose?
 
 int main(int argc,char* argv[]) {
 
@@ -215,6 +233,8 @@ int main(int argc,char* argv[]) {
 
   /*********** Start the sampling ***********/
   
+  std::cerr.precision(10);
+  std::cout.precision(10);
   try {
     A.load_fasta(nucleotides,file);
     std::cerr<<A<<endl;
@@ -243,6 +263,9 @@ int main(int argc,char* argv[]) {
 /************************** ToDo -> Done! *****************************/
 
 
+// 2. Check to make sure that the gap-resamping works - do we need to store TWO states?
+//     or can we just modify choices depending on previous state?
+
 // 4. make some output statistics so we can observe the probability distribution
 
 // 6. Make it possible to specify Alignment(Sequences) and Tree on command line
@@ -251,6 +274,15 @@ int main(int argc,char* argv[]) {
 
 // 14. How to read in tree structures in a text file?
 
+// 15. Need to actually alter branch lengths w/ MCMC moves (use exp prior - estimate length parameter)
+
 // 19. Does operator= work for parameters, or not? !!
 //      operator= was working only the first time for trees - FIXED
+
+
+// 21. Look at paper on RNA phylogenetics?
+
+// 24. Write a script to output differences in alignment distributions
+
+// 26. Put priors on branch lengths and parameters and stuff into probability() functions
 
