@@ -14,7 +14,7 @@
 #include "likelihood.H"
 #include "arguments.H"
 #include "util.H"
-
+#include "setup.H"
 
 // 5. Read Marc's references on actually altering the tree
 
@@ -65,6 +65,7 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
 
   /*------ Try to load tree -------------*/
   if (not args.set("tree")) {
+    // FIXME - assumes that alignment doesn't specify internal nodes...
     vector<string> s;
     for(int i=0;i<A.num_sequences();i++)
       s.push_back(A.seq(i).name);
@@ -74,42 +75,7 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
     T.read(args["tree"]);
 
   /*------ Link Alignment and Tree ----------*/
-
-  if (A.num_sequences() < T.leaves())
-    throw myexception(string("Tree has ") + convertToString(T.leaves()) + "leaves but Alignment only has " + convertToString(A.num_sequences()) + "sequences.");
-
-  vector<int> mapping(T.leaves());
-  for(int i=0;i<T.leaves();i++) {
-    int target = -1;
-    for(int j=0;j<T.leaves();j++) {
-      if (T.seq(i) == A.seq(j).name) {
-	target = j;
-	break;
-      }
-    }
-    if (target == -1)
-      throw myexception(string("Couldn't find sequence \"")+T.seq(i)+"\" in alignment");
-    mapping[i] = target;
-  }
-
-  T.standardize(mapping);
-
-  /*------- Fill in internal nodes ---------*/
-  if (A.num_sequences() == T.num_nodes() - 1)
-    ;
-  else if (A.num_sequences() == T.leaves()) {
-    sequence s(A.get_alphabet());
-    s.resize(A.length());
-    for(int column=0;column<A.length();column++)
-      s[column] = alphabet::not_gap;
-    for(int i=T.leaves();i<T.num_nodes()-1;i++)
-      A.add_sequence(s);
-  }
-  else if (A.num_sequences() > T.num_nodes())
-    throw myexception(string("More sequences than tree nodes!"));
-  else
-    throw myexception(string("Not enough ancestral sequences!"));
-
+  link(A,T);
 
   /*-------- Analyze 'internal'-------*/
   if (args.set("internal")) {
@@ -283,6 +249,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
 int main(int argc,char* argv[]) { 
   try {
+    /*---------- Get input, from file if necessary -------*/
     Arguments args;
     args.read(argc,argv);
     args.print(std::cout);
@@ -299,6 +266,7 @@ int main(int argc,char* argv[]) {
       }
     }
     
+    /*---------- Initialize random seed -----------*/
     unsigned long seed = 0;
     if (args.set("seed")) {
       seed = convertTo<unsigned long>(args["seed"]);
@@ -316,15 +284,6 @@ int main(int argc,char* argv[]) {
     if (args.set("fixed"))
       fixed = split(args["fixed"],':');
 
-    /*------- Nucleotide Substitution Models -------*/
-    alphabet dna("DNA nucleotides","AGTC","N");
-    
-    /*------- Nucleotide Substitution Models -------*/
-    alphabet rna("RNA nucleotides","AGUC","N");
-    
-    /*------- Amino Acid Substitution Models -------*/
-    alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
-    
     /*----------- Load alignment and tree ---------*/
     alignment A;
     SequenceTree T;
@@ -341,64 +300,11 @@ int main(int argc,char* argv[]) {
     std::cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl<<endl;
     
     /*--------- Set up the substitution model --------*/
-    substitution::ReversibleModel* base_smodel = 0;
+    substitution::MultiRateModel *full_smodel = get_smodel(args,A);
     
-    if (args.set("smodel") and args["smodel"] == "EQU")
-      base_smodel = new substitution::EQU(A.get_alphabet());
-    else if (A.get_alphabet() == dna)
-      base_smodel = new substitution::HKY(dna);
-    else if (A.get_alphabet() == rna)
-      base_smodel = new substitution::HKY(rna);
-    else if (A.get_alphabet() == amino_acids)
-      base_smodel = new substitution::Empirical(amino_acids,"Data/wag.dat");
-    else
-      assert(0);
-    
-    std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
-    if (args.set("frequencies")) {
-      vector<double> f = split<double>(args["frequencies"],',');
-      assert(f.size() == A.get_alphabet().size());
-
-      valarray<double> f2(f.size());
-      for(int i=0;i<f.size();i++)
-	f2[i] = f[i];
-      base_smodel->frequencies(f2);
-    }
-    else 
-      base_smodel->frequencies(empirical_frequencies(A));
-    
-    substitution::MultiRateModel *full_smodel = 0;
-    if (args.set("gamma")) {
-      int n=4;
-      if (args["gamma"] != "gamma")
-	n = convertTo<int>(args["gamma"]);
-      full_smodel = new substitution::GammaRateModel(*base_smodel,n);
-    }
-    else 
-      full_smodel = new substitution::SingleRateModel(*base_smodel);
-
-    if (args.set("INV")) {
-      substitution::MultiRateModel *temp = full_smodel;
-      full_smodel = new substitution::INV_Model(*full_smodel);
-      delete temp;
-    }
-
-    if (args.set("parameters")) {
-      vector<double> p = split<double>(args["parameters"],',');
-      assert(p.size() == full_smodel->parameters().size());
-      full_smodel->parameters(p);
-    }
-
-    if (args["letters"]== "star") {
-      full_smodel->full_tree = false;
-
-      for(int i=T.leaves();i<T.branches();i++) {
-      	T.branch(i).length() = 0;
-      }
-    }
-    else
-      full_smodel->full_tree = true;
-
+    if (not full_smodel->full_tree)
+      for(int i=T.leaves();i<T.branches();i++)
+	T.branch(i).length() = 0;
 
     /*-------------Choose an indel model--------------*/
     IndelModel* imodel = 0;
@@ -427,6 +333,7 @@ int main(int argc,char* argv[]) {
     
     /*-------------Create the Parameters object--------------*/
     Parameters P(*full_smodel,*imodel,T);
+    std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
     std::cout<<"Using substitution model: "<<P.SModel().name()<<endl;
     std::cout<<"Full tree for substitution: "<<P.SModel().full_tree<<endl<<endl;
     std::cout<<"Full tree for gaps: "<<P.IModel().full_tree<<endl<<endl;
@@ -453,7 +360,6 @@ int main(int argc,char* argv[]) {
     // this isn't quite right in case of exceptions...
     delete imodel;
     delete full_smodel;
-    delete base_smodel;
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

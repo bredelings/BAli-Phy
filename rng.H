@@ -11,15 +11,6 @@ using std::valarray;
 unsigned long myrand_init();
 unsigned long myrand_init(unsigned long);
  
-// returns a value in [0,max-1]
-unsigned long myrandom(unsigned long max);
- 
-
-inline long myrandom(long min,long max) {
-  unsigned long diff = max - min;
-  return myrandom(diff)+min;
-}
-
 // returns a value in [0,1)
 double myrandomf();
 
@@ -102,7 +93,19 @@ namespace rng {
   };
 
   void init();
+
+  extern RNG* standard;
 };
+
+/// returns a value in [0,max-1]
+inline unsigned long myrandom(unsigned long max) {
+  return (unsigned long)rng::standard->uniform_int(max);
+} 
+
+inline long myrandom(long min,long max) {
+  unsigned long diff = max - min;
+  return myrandom(diff)+min;
+}
 
 namespace dng {
   

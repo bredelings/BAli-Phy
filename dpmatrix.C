@@ -123,6 +123,7 @@ double HMM::path_Q_path(const vector<int>& g_path) const {
   return Pr;
 }
 
+//FIXME - 
 
 HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
   :silent_network_(v1.size()),Q(M),GQ(M),
@@ -158,9 +159,8 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
 
       bool connected = false;
       for(int S2=0;S2<nstates()+1;S2++) {
-	if (Q(S1,S2) > log_0/100 and silent_network_[S2]) {
+	if (Q(S1,S2) > log_0/100 and silent_network_[S2] == 1)
 	  connected = true;
-	}
       }
       silent_network_[S1] = connected?1:-1;
       if (not connected) changed = true;
@@ -641,6 +641,7 @@ DPmatrix::DPmatrix(int i1,
    S1(i1+1),
    S2(i2+1)
 {
+
   //----- zero-initialize matrices ------//
   for(int i=0;i<size1();i++)
     for(int j=0;j<size2();j++) 

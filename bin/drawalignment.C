@@ -5,6 +5,7 @@
 #include "arguments.H"
 #include "rng.H"
 #include "util.H"
+#include "setup.H"
 
 using std::cout;
 using std::cerr;
@@ -49,7 +50,6 @@ vector<int> hsv(double h,double s,double v) {
 }
 
 vector<int> getcolor(double x) {
-  x = x*x;
   double start = 1.0;
   double end = 0;
     
@@ -144,48 +144,42 @@ int main(int argc,char* argv[]) {
     afile.close();
 
     /*------ Link Alignment and Tree ----------*/
-    if (A.num_sequences() < T.leaves())
-      throw myexception("Tree has more sequences that alignment!");
+    link(A,T);
 
-    if (A.num_sequences() > T.leaves())
-      throw myexception("Alignment has too many taxa for tree!");
-    
-    vector<int> mapping(T.leaves());
-    for(int i=0;i<T.leaves();i++) {
-      int target = -1;
-      for(int j=0;j<T.leaves();j++) {
-	if (T.seq(i) == A.seq(j).name) {
-	  target = j;
-	  break;
-	}
+    /*------- Find mapping which puts nearby things together -------*/
+    vector<int> mapping = optimize_mapping(A,T);
+
+    for(int i=0;i<mapping.size();i++)
+      cerr<<T.seq(mapping[i])<<" ";
+    cerr<<std::endl;
+
+    if (args.set("just_reorder")) {
+      alignment A2;
+      for(int i=0;i<T.leaves();i++) {
+	sequence s(A.seq(mapping[i]));
+	s.resize(A.length());
+	for(int column=0;column<A.length();column++)
+	  s[column] = A(column,mapping[i]);
+	A2.add_sequence(s);
       }
-      if (target == -1)
-	throw myexception(string("Couldn't find sequence \"")+T.seq(i)+"\" in alignment");
-      mapping[i] = target;
-    }
 
-    T.standardize(mapping);
+      A2.print_phylip(std::cout,true);
+      exit(1);
+    }
 
     /*------------------ Read in the colors-- ----------------------*/
     if (not args.set("colors"))
       throw myexception("color file not specified! (colors=<filename>)");
-    ublas::matrix<double> colors(A.length(),A.size2());
+    ublas::matrix<double> colors(A.length(),T.leaves());
     ifstream colorfile(args["colors"].c_str());
     for(int column=0;column<A.length();column++) 
-      for(int i=0;i<A.size2();i++) {
+      for(int i=0;i<T.leaves();i++) {
 	double d;
 	colorfile >> d;
 	colors(column,i) = d;
       }
 	
     colorfile.close();
-
-    /*------- Find mapping which puts nearby things together -------*/
-    mapping = optimize_mapping(A,T);
-
-    for(int i=0;i<mapping.size();i++)
-      cerr<<T.seq(mapping[i])<<" ";
-    cerr<<std::endl;
 
     /*-------------------- Print Things Out ------------------------*/
     int pos=0;
@@ -205,7 +199,7 @@ BODY {font-family: monospace;}\n\
     const alphabet& a = A.get_alphabet();
     while(pos<A.length()) {
       cout<<"<table>"<<endl;
-      for(int i=0;i<A.size2();i++) {
+      for(int i=0;i<T.leaves();i++) {
 	int s = mapping[i];
 	cout<<"  <tr>"<<endl;
 	cout<<"    <td>"<<T.seq(s)<<"</td>"<<endl;

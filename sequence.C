@@ -99,7 +99,11 @@ bool phylip_section(std::istream& file,int ntaxa, vector<string>& names,vector<s
 
     // Read the name from beginning of line
     int pos = line.find_first_not_of(" \t");
-    if (pos >9) // (note we're allowing empty line)
+    if (pos == -1)
+      throw myexception(string("[Reading PHYLIP alignment] Expected ") + convertToString(ntaxa) + " species, only found " + 
+			convertToString(i) + ".");
+
+    if (pos >9) // (note we're allowing empty names)
       names.push_back(string(""));
     else {
       int name_start = pos;

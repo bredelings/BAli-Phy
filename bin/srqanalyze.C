@@ -28,6 +28,16 @@ double Var_statistic(const valarray<double>& v) {
   return m2 - m1*m1;
 }
 
+vector<int> confidence_interval(const valarray<double>& sample,double P,int n=10000,int blocksize=100) {
+  valarray<double> values = bootstrap_apply<bool,double>(sample,Pr_statistic,n,i);
+
+  vector<double> values2(values.size());
+  for(int i=0;i<values.size();i++)
+    values2[i] = values[i];
+
+  
+}
+
 using namespace std;
 
 int main(int argc,char* argv[]) { 
@@ -47,6 +57,11 @@ int main(int argc,char* argv[]) {
     seed = myrand_init();
   std::cout<<"random seed = "<<seed<<endl<<endl;
 
+  int nreplicates =1000;
+  if (args.set("replicates")) {
+    nreplicates = convertTo<int>(args["replicates"]);
+  }
+
   // Read in data
   vector<bool> data;
   int i;
@@ -60,9 +75,10 @@ int main(int argc,char* argv[]) {
 
   double mean = Pr_statistic(sample);
   cout<<"mean = "<<mean<<endl;
-  std::valarray<double> values(sample.size());
+  std::valarray<double> values(nreplicates);
   for(int i=1;i<=500;i++) {
-    values = bootstrap_apply<bool,double>(sample,Pr_statistic,10000,i);
+    values = bootstrap_apply<bool,double>(sample,Pr_statistic,nreplicates,i);
+    cout<<"------------------\n";
     double var = Var_statistic(values);
     cout<<"blocksize = "<<i<<"   sigma = "<<sqrt(var)<<endl;
   }

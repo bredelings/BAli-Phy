@@ -8,6 +8,8 @@
 #include "logsum.H"
 #include "optimize.H"
 #include "findroot.H"
+#include "util.H"
+#include "setup.H"
 
 using std::cin;
 using std::cout;
@@ -278,12 +280,34 @@ double poisson_match_pairs::operator()(const vector<double>& v) const {
       //probability of remaining aligned
       double p = exp(-length);
       // number of times we remained aligned
-      int count = Pr_align_pair(l1,l2) + 0.5;
+      int count = (int)(Pr_align_pair(l1,l2) + 0.5);
 
       // binomial probability of being aligned count times out of n
       Pr += log_fact(n) - log_fact(count) - log_fact(n-count);
       Pr += count*log(p) + (n-count)*log(1-p);
     }
+
+
+  // include some kind of exponential branch length - branch_mean = 1
+  for(int b=0;b<v.size();b++)
+    Pr += -v[b];
+
+  // include some kind of pressure to make lengths reflect evolutionary
+  // distances
+  double sum1 = 0;
+  double sum2 = 0;
+  for(int b=0;b<T.branches();b++) {
+    sum1 += T.branch(b).length();
+    sum2 += v[b];
+  }
+
+  for(int b=0;b<T.branches();b++) {
+    double diff = 
+      log(v[b]/sum2 + 0.005/sum2) -
+      log(T.branch(b).length()/sum1 + 0.005/sum1);
+
+    Pr -= std::abs(diff)*25;
+  }
   return Pr;
 }
 
@@ -316,6 +340,9 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
   A.load_phylip(alphabets,ifile);
   ifile.close();
   
+
+  /*------ Link Alignment and Tree ----------*/
+  link(A,T);
 
   /* ----- Try to load alignments ------ */
   string tag = "align[sample";
@@ -375,6 +402,8 @@ alignment M(const alignment& A1) {
   return A2;
 }
 
+using boost::numeric::ublas;
+
 int main(int argc,char* argv[]) { 
   try {
     Arguments args;
@@ -386,7 +415,8 @@ int main(int argc,char* argv[]) {
     SequenceTree T;
     vector<alignment> alignments;
     do_setup(args,alignments,A,T);
-    const int n = A.size2()/2 + 1;
+
+    const int n = T.leaves();
 
     cerr<<"Read "<<alignments.size()<<" alignments\n";
 
@@ -416,7 +446,7 @@ int main(int argc,char* argv[]) {
       else
 	f = new poisson_match_pairs(labels,T);
       vector<double> start(T.branches(),0.1);
-      vector<double> end = search_basis(start,*f);
+      vector<double> end = search_basis(start,*f,1.0e-5,500);
       
       // Print uncertainty values for the letters
       tree T2 = T;
@@ -425,8 +455,8 @@ int main(int argc,char* argv[]) {
 
       for(int i=0;i<T2.leaves();i++) {
 	double length = rootdistance(T2,i,rootb,rootd);
-	double P = exp(-length);  // probability that the letter IS alignment to
-	std::cout<<P<<" ";        // the root node
+	double P = exp(-length);  // P(no events between leaf and root)
+	std::cout<<P<<" ";
       }
       std::cout<<endl;
 

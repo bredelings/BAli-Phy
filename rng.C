@@ -8,7 +8,7 @@
 
 /************* Interfaces to rng::standard *********************/
 namespace rng {
-  static RNG* standard;
+  RNG* standard;
 };
 
 unsigned long myrand_init() {
@@ -27,10 +27,6 @@ unsigned long myrand_init(unsigned long s) {
   
   assert(rng::standard);
   return s;
-}
-
-unsigned long myrandom(unsigned long max) {
-  return (unsigned long)rng::standard->uniform_int(max);
 }
 
 double myrandomf() {

@@ -307,7 +307,7 @@ double Pr_star_constant(const alignment& A,const Parameters& P) {
   for(int i=0;i<T1.leaves();i++) 
     for(int j=0;j<i;j++) 
       sum += D(i,j);
-  const int n = (T1.leaves()*(T1.leaves()-1))/2.0;
+  const int n = (T1.leaves()*(T1.leaves()-1))/2;
   double ave = sum/n;
 
   //-------- Set branch lengths to ave/2  ----------//

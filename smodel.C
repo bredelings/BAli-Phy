@@ -9,295 +9,313 @@
 
 namespace substitution {
 
-Model::Model():full_tree(true)
-{ }
+  Model::Model():full_tree(true)
+  { }
 
-// Q(i,j) = S(i,j)*pi[j]   for i!=j
-// Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
+  // Q(i,j) = S(i,j)*pi[j]   for i!=j
+  // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
 
-// We want to set S(i,i) so that Q(i,j) = S(i,j)*pi[j] for all i,j
-// Then Q = S*D, and we can easily compute the exponential
-// So, S(i,j) = Q(i,i)/pi[i]
+  // We want to set S(i,i) so that Q(i,j) = S(i,j)*pi[j] for all i,j
+  // Then Q = S*D, and we can easily compute the exponential
+  // So, S(i,j) = Q(i,i)/pi[i]
 
-string MarkovModel::name() const { return "MarkovModel";}
+  string MarkovModel::name() const { return "MarkovModel";}
 
-string ReversibleModel::name() const  {
-  return MarkovModel::name() + "::ReversibleModel";
-}
-
-
-
-void ReversibleModel::recalc() {
-
-  // Set S(i,i) so that Q(i,i) = S(i,i)*pi[i]
-  for(int i=0;i<S.size1();i++) {
-    double sum=0;
-    for(int j=0;j<S.size2();j++) {
-      if (i==j) continue;
-      sum += S(i,j)*pi[j];
-    }
-    S(i,i) = -sum/pi[i];
+  string ReversibleModel::name() const  {
+    return MarkovModel::name() + "::ReversibleModel";
   }
 
-  // Rescale so that expected mutation rate is 1
-  double scale=0;
-  for(int i=0;i<S.size1();i++) 
-    scale += pi[i]*S(i,i)*pi[i];
-
-  S /= -scale;
-
-  // Move from 'S' to 'S+F'
-  for(int i=0;i<S.size1();i++)
-    for(int j=0;j<S.size2();j++)
-      Q(i,j) = S(i,j)*pi[j];
 
 
-  // Rescale so expected that mutation rate is 1
-  scale = 0;
-  for(int i=0;i<S.size1();i++) 
-    scale += pi[i]*Q(i,i);
+  void ReversibleModel::recalc() {
+
+    // Set S(i,i) so that Q(i,i) = S(i,i)*pi[i]
+    for(int i=0;i<S.size1();i++) {
+      double sum=0;
+      for(int j=0;j<S.size2();j++) {
+	if (i==j) continue;
+	sum += S(i,j)*pi[j];
+      }
+      S(i,i) = -sum/pi[i];
+    }
+
+    // Rescale so that expected mutation rate is 1
+    double scale=0;
+    for(int i=0;i<S.size1();i++) 
+      scale += pi[i]*S(i,i)*pi[i];
+
+    S /= -scale;
+
+    // Move from 'S' to 'S+F'
+    for(int i=0;i<S.size1();i++)
+      for(int j=0;j<S.size2();j++)
+	Q(i,j) = S(i,j)*pi[j];
+
+
+    // Rescale so expected that mutation rate is 1
+    scale = 0;
+    for(int i=0;i<S.size1();i++) 
+      scale += pi[i]*Q(i,i);
 
 #ifndef NDEBUG
-  std::cerr<<"scale = "<<scale<<endl;
+    std::cerr<<"scale = "<<scale<<endl;
 #endif
-  // Maybe assert that 
-  //  A) the sum_j Q_ij = 0
-  //  B) sum_i pi_i Q_ij = pi_j
+    // Maybe assert that 
+    //  A) the sum_j Q_ij = 0
+    //  B) sum_i pi_i Q_ij = pi_j
 
-}
-
-Matrix ReversibleModel::transition_p(double t) const {
-  BMatrix D(a.size(),a.size());
-  for(int i=0;i<a.size();i++)
-    D(i,i) = pi[i];
-
-  return exp(S,D,t);
-}
-
-string HKY::name() const {
-  return ReversibleModel::name() + "::HKY[" + Alphabet().name + "]";
-}
-
-void HKY::fiddle() {
-  const double sigma = 0.05;
-  double k = kappa() + gaussian(0,sigma);
-  if (k<0) k = -k;
-  if (k==0) k = kappa();
-
-  kappa(k);
-}
-
-double HKY::prior() const {
-  return log(gsl_ran_lognormal_pdf(kappa(),0,0.1));
-}
-
-void HKY::recalc() {
-  assert(a.size()==4);
-
-  S(A,G) = kappa();
-  S(A,C) = 1;
-  S(A,T) = 1;
-
-  S(G,A) = kappa();
-  S(G,C) = 1;
-  S(G,T) = 1;
-
-  S(C,A) = 1;
-  S(C,G) = 1;
-  S(C,T) = kappa();
-
-  S(T,A) = 1;
-  S(T,G) = 1;
-  S(T,C) = kappa();
-
-  ReversibleModel::recalc();
-}
-
-void HKY::setup_alphabet() {
-  A = a['A'];
-  G = a['G'];
-  C = a['C'];
-  try {
-    T = a['T'];
   }
-  catch (bad_letter& e) {
-    T = a['U'];
+
+  Matrix ReversibleModel::transition_p(double t) const {
+    BMatrix D(a.size(),a.size());
+    for(int i=0;i<a.size();i++)
+      D(i,i) = pi[i];
+
+    return exp(S,D,t);
   }
-}
 
-string EQU::name() const {
-  return ReversibleModel::name() + "::EQU[" + Alphabet().name + "]";
-}
+  string HKY::name() const {
+    return ReversibleModel::name() + "::HKY[" + Alphabet().name + "]";
+  }
 
-void EQU::recalc() {
-  for(int i=0;i<a.size();i++)
-    for(int j=0;j<a.size();j++)
-      S(i,j) = 1;
+  void HKY::fiddle() {
+    const double sigma = 0.05;
+    double k = kappa() + gaussian(0,sigma);
+    if (k<0) k = -k;
+    if (k==0) k = kappa();
 
-  ReversibleModel::recalc();
-}
+    kappa(k);
+  }
 
-string Empirical::name() const {
-  return ReversibleModel::name() + "::Empirical/" + modelname +"[" + Alphabet().name + "]";
-}
+  double HKY::prior() const {
+    return log(gsl_ran_lognormal_pdf(kappa(),0,0.1));
+  }
 
-void Empirical::recalc() {
-  ReversibleModel::recalc();
-}
+  void HKY::recalc() {
+    assert(a.size()==4);
 
-void Empirical::load_file(const char* filename) {
-  modelname = filename;
+    S(A,G) = kappa();
+    S(A,C) = 1;
+    S(A,T) = 1;
 
-  std::ifstream ifile(filename);
+    S(G,A) = kappa();
+    S(G,C) = 1;
+    S(G,T) = 1;
 
-  if (not ifile)
-    throw myexception(string("Couldn't open file '")+filename+"'");
+    S(C,A) = 1;
+    S(C,G) = 1;
+    S(C,T) = kappa();
 
-  for(int i=0;i<a.size();i++)
-    for(int j=0;j<i;j++) {
-      ifile>>S(i,j);
-      S(j,i) = S(i,j);
+    S(T,A) = 1;
+    S(T,G) = 1;
+    S(T,C) = kappa();
+
+    ReversibleModel::recalc();
+  }
+
+  void HKY::setup_alphabet() {
+    A = a['A'];
+    G = a['G'];
+    C = a['C'];
+    try {
+      T = a['T'];
+    }
+    catch (bad_letter& e) {
+      T = a['U'];
+    }
+  }
+
+  string EQU::name() const {
+    return ReversibleModel::name() + "::EQU[" + Alphabet().name + "]";
+  }
+
+  void EQU::recalc() {
+    for(int i=0;i<a.size();i++)
+      for(int j=0;j<a.size();j++)
+	S(i,j) = 1;
+
+    ReversibleModel::recalc();
+  }
+
+  string Empirical::name() const {
+    return ReversibleModel::name() + "::Empirical/" + modelname +"[" + Alphabet().name + "]";
+  }
+
+  void Empirical::recalc() {
+    ReversibleModel::recalc();
+  }
+
+  void Empirical::load_file(const string& filename) {
+    modelname = filename;
+
+    std::ifstream ifile(filename.c_str());
+
+    if (not ifile)
+      throw myexception(string("Couldn't open file '")+filename+"'");
+
+    for(int i=0;i<a.size();i++)
+      for(int j=0;j<i;j++) {
+	ifile>>S(i,j);
+	S(j,i) = S(i,j);
+      }
+
+    for(int i=0;i<a.size();i++)
+      ifile>>pi[i];
+  }
+
+
+  void NestedModel::parameters(const vector<double>& p) {
+    vector<double> sub_p = sub_model->parameters();
+    for(int i=0;i<sub_p.size();i++)
+      sub_p[i] = p[i];
+
+    SubModel().parameters(sub_p);
+  
+    Model::parameters(p);
+  }
+
+  void MultiRateModel::recalc() {
+    double mean=0;
+    for(int i=0;i<nrates();i++)
+      mean += rates_[i];
+
+    mean /= nrates();
+
+    for(int i=0;i<nrates();i++)
+      rates_[i] /= mean;
+  }
+
+
+  string SingleRateModel::name() const {
+    return sub_model->name();
+  }
+
+
+  /*--------------- Gamma Sites Model----------------*/
+
+  string GammaRateModel::name() const {
+    return string("Gamma(") + convertToString(rates_.size()) + ")(" + sub_model->name() + ")";
+  }
+
+
+  double gamma_pdf(double x,double a,double b) {
+    return gsl_ran_gamma_pdf(x,a,b);
+  }
+
+  double gamma_cdf(double x, double a,double b) {
+    return gsl_sf_gamma_inc_P(a,x/b);
+  }
+
+  double gamma_quantile(double p,double a, double b) {
+    int iterations=0;
+
+    double x = 1.0;
+    double dx = 1.0;
+    while(std::abs(dx) > 1.0e-9) {
+      double f = gamma_cdf(x,a,b)-p;
+      double dfdx = gamma_pdf(x,a,b);
+      dx = -f/dfdx;
+
+      if (x+dx < 0)
+	x = x/2.0;
+      else
+	x = x + dx;
+      iterations++;
+      assert(iterations<max);
+    }
+    return x;
+  }
+
+
+  double GammaRateModel::super_prior() const {
+    double p = parameters_[parameters_.size()-1];
+    return -p/0.2;
+  }
+
+  void GammaRateModel::super_fiddle() {
+    double& p = parameters_[parameters_.size()-1];
+ 
+    const double sigma = 0.04;
+    double p2 = p + gaussian(0,sigma);
+    if (p2 < 0) p2 = -p2;
+
+    double alpha = 1.0/(p2*p2);
+    if (alpha < 10000)
+      p = p2;
+
+    recalc();
+  }
+
+  void GammaRateModel::recalc() {
+    double alpha = parameters_[parameters_.size()-1];
+    alpha = 1.0/(alpha*alpha);
+
+    for(int i=0;i<nrates();i++)
+      rates_[i] = gamma_quantile(double(2*i+1)/(2.0*nrates()),alpha,1.0/alpha);
+
+    MultiRateModel::recalc();
+  }
+
+  GammaRateModel::GammaRateModel(const ReversibleModel& M,int n)
+    :MultiRateOnReversible(M,1,n)
+  {
+    double& p = parameters_[parameters_.size()-1];
+    p = 0.1;
+
+    // This never changes - since we use quantiles for the bins
+    for(int i=0;i<nrates();i++)
+      distribution_[i] = 1.0/nrates();
+
+    recalc();
+  }
+
+
+  /*--------------- Invariant Sites Model----------------*/
+
+  string INV_Model::name() const {
+    return string("INV(") + sub_model->name() + ")";
+  }
+
+  INV_Model::INV_Model(const MultiRateModel& M)
+    :MultiRateModel(M,1,M.nrates()+2)
+  {
+    parameters_[ parameters_.size()-2 ] = 0.01;
+    parameters_[ parameters_.size()-1 ] = 0.01;
+
+    recalc();
+  }    
+
+
+  void INV_Model::super_fiddle() {
+    double &p = parameters_[parameters_.size()-2];
+    double &r = parameters_[parameters_.size()-1];
+
+    // fiddle Invariant fraction
+    const double sigma = 0.04;
+    p += gaussian(0,sigma);
+
+    p = wrap(p,1.0);
+
+    // fiddle Invariant raate
+    r += gaussian(0,0.001);
+    r = wrap(r,0.01);
+    
+    recalc();
+  }
+
+  void INV_Model::recalc() {
+    double p = parameters_[parameters_.size()-2];
+    double r = parameters_[parameters_.size()-1];
+
+    rates_[nrates()-1] = r;
+    distribution_[nrates()-1] = p;
+  
+    for(int r=0;r<SubModel().nrates();r++) {
+      rates_[r] = SubModel().rates()[r];
+      distribution_[r] = SubModel().distribution()[r]*(1.0-p);
     }
 
-  for(int i=0;i<a.size();i++)
-    ifile>>pi[i];
-}
-
-
-void NestedModel::parameters(const vector<double>& p) {
-  vector<double> sub_p = sub_model->parameters();
-  for(int i=0;i<sub_p.size();i++)
-    sub_p[i] = p[i];
-
-  SubModel().parameters(sub_p);
-  
-  Model::parameters(p);
-}
-
-/*--------------- Invariant Sites Model----------------*/
-
-string SingleRateModel::name() const {
-  return sub_model->name();
-}
-
-string GammaRateModel::name() const {
-  return string("Gamma(") + convertToString(rates_.size()) + ")(" + sub_model->name() + ")";
-}
-
-
-double gamma_pdf(double x,double a,double b) {
-  return gsl_ran_gamma_pdf(x,a,b);
-}
-
-double gamma_cdf(double x, double a,double b) {
-  return gsl_sf_gamma_inc_P(a,x/b);
-}
-
-double gamma_quantile(double p,double a, double b) {
-  const int max = 50;
-  int iterations=0;
-
-  double x = 1.0;
-  double dx = 1.0;
-  while(std::abs(dx) > 1.0e-9) {
-    double f = gamma_cdf(x,a,b)-p;
-    double dfdx = gamma_pdf(x,a,b);
-    dx = -f/dfdx;
-
-    if (x+dx < 0)
-      x = x/2.0;
-    else
-      x = x + dx;
-    iterations++;
-    assert(iterations<max);
+    MultiRateModel::recalc();
   }
-  return x;
-}
-
-
-double GammaRateModel::super_prior() const {
-  double p = parameters_[parameters_.size()-1];
-  return -p/0.2;
-}
-
-void GammaRateModel::super_fiddle() {
-  double& p = parameters_[parameters_.size()-1];
- 
-  const double sigma = 0.04;
-  double p2 = p + gaussian(0,sigma);
-  if (p2 < 0) p2 = -p2;
-
-  double alpha = 1.0/(p2*p2);
-  if (alpha < 10000)
-    p = p2;
-
-  recalc();
-}
-
-void GammaRateModel::recalc() {
-  double alpha = parameters_[parameters_.size()-1];
-  alpha = 1.0/(alpha*alpha);
-
-  double mean=0;
-  for(int i=0;i<nrates();i++) {
-    rates_[i] = gamma_quantile(double(2*i+1)/(2.0*nrates()),alpha,1.0/alpha);
-    mean += rates_[i];
-    
-  }
-  mean /= nrates();
-
-  for(int i=0;i<nrates();i++)
-    rates_[i] /= mean;
-}
-
-GammaRateModel::GammaRateModel(const ReversibleModel& M,int n)
-  :MultiRateOnReversible(M,1,n)
-{
-  double& p = parameters_[parameters_.size()-1];
-  p = 0.1;
-
-  for(int i=0;i<nrates();i++)
-    distribution_[i] = 1.0/nrates();
-
-  recalc();
-}
-
-
-/*--------------- Invariant Sites Model----------------*/
-
-string INV_Model::name() const {
-  return string("INV(") + sub_model->name() + ")";
-}
-
-INV_Model::INV_Model(const MultiRateModel& M)
-  :MultiRateModel(M,1,M.nrates()+1)
-{
-  parameters_[ parameters_.size()-1 ] = 0.01;
-
-  recalc();
-}    
-
-
-void INV_Model::super_fiddle() {
-  double &p = parameters_[parameters_.size()-1];
-  const double sigma = 0.04;
-  p += gaussian(0,sigma);
-
-  p = wrap(p,1.0);
-
-  recalc();
-}
-
-void INV_Model::recalc() {
-  double p = parameters()[parameters().size()-1];
-
-  rates_[nrates()-1] = 0;
-  distribution_[nrates()-1] = p;
-  
-  for(int r=0;r<SubModel().nrates();r++) {
-    rates_[r] = SubModel().rates()[r];
-    distribution_[r] = SubModel().distribution()[r]*(1.0-p);
-  }
-}
 
 }
