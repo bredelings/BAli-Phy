@@ -2,7 +2,7 @@ program: bali-phy
 
 TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/alignment-reorder tools/alignment-draw tools/alignment-find \
-	tools/tree-to-srq tools/tree-names-trunc tools/tree-reroot \
+	tools/tree-to-srq tools/tree-reroot \
 	tools/srq-to-plot tools/srq-analyze tools/alignment-convert \
 	tools/tree-dist-compare tools/cut-range tools/alignment-chop-internal \
 	tools/alignment-median tools/alignment-indices
@@ -141,8 +141,6 @@ tools/tree-dist-autocorrelation: tree.o sequencetree.o tools/tree-dist.o
 tools/tree-dist-cvars: tree.o sequencetree.o util.o tools/tree-dist.o
 
 tools/tree-to-srq: tree.o sequencetree.o arguments.o
-
-tools/tree-names-trunc: tree.o sequencetree.o util.o
 
 tools/tree-reroot: tree.o sequencetree.o arguments.o
 

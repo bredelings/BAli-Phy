@@ -44,6 +44,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 
+//FIXME - add an argument to select first or last (default)
+
 int main(int argc,char* argv[]) 
 { 
   try {
