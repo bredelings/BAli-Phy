@@ -1,8 +1,9 @@
 -9. Indel model...
 
--8. Apply for dissertation year fellowship - go to the meeting :)
+-8. Apply for dissertation year fellowship
 
--7. Finish integrating joint-A-T and then integrate the 'hack'?
+-7. Make the temperatare affect only the likelihood...
+    Then begin to implement the likelihood scaling first.
 
 -6. Do we want to hard-code the concepts of transition kernels and priors
     into models?  Each can have parameters...
@@ -13,8 +14,10 @@
 -4. Make a more general substitution::Model class, so that we can e.g.
     have tree with 2 sets of branch lengths...
 
+-3. Start making some "nice" pictures to put up on the website.
+
 -2. tree-dist-compare w/ sub-partitions
-  a) speed up get_Ml_partitions, get_Ml_sub_partitions
+  a) speed up get_Ml_partitions
   c) arrange 
   d) test Kallikrein - which one had a wandering taxon.  
   e) also test SIV?
@@ -166,7 +169,6 @@ the prior, because we never want to use it  differently.
 
 [DONE] alignment-draw: allow names like --color-scheme=AA+contrast+whiten --scale LOD
 
-
 [DONE] Allow name[arg] formath in smodel description -> Empirical[wag] + gamma[4]
 
 [DONE] Make alignment-draw simply use 'plain' if AU-file not specified.
@@ -180,5 +182,7 @@ the prior, because we never want to use it  differently.
       - fiddle frequencies (as normal)
       - fiddle each row (one letter, all models)
     * prior -> each row is dirichlet
+
+[DONE] 	Integrating joint-A-T and the 'hack' to set indel prior parameters.
 
         
