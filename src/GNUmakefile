@@ -70,6 +70,8 @@ endif
 ifeq (${STATIC},y)
   .LIBPATTERNS = lib%.a
   LDFLAGS += -static -pthread
+else
+  LDFLAGS += -rdynamic
 endif
 
 #------------------- Main 
@@ -84,7 +86,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
 	  alignment-sums.C alignment-util.C probability.C model.C le-double.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
-	  monitor.C substitution-index.C tree-util.C
+	  monitor.C substitution-index.C tree-util.C myexception.C
 
 LIBS = gsl gslcblas m boost_program_options
 ifeq (${STLPORT},y) 
@@ -190,6 +192,7 @@ test3: model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o \
 
 test4: -lmudflap #model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o probability.o rng.o ${LINKLIBS} 
 
+tools/hat: rng.o ${LINKLIBS}
 #------------------- End
 
 SHELL = /bin/sh

@@ -24,4 +24,6 @@ myexception& myexception::operator<<(const T& t) {
   return *this;
 }
 
+std::string show_stack_trace(int ignore=1);
+
 #endif

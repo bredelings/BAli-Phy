@@ -25,7 +25,7 @@ int choose(const std::vector<F>& P) {
     if (r < sum[i])
       return i;
 
-  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen";
+  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
 }
 
 template <typename F>
@@ -42,7 +42,7 @@ int choose(const std::vector<F>& P,double T) {
     if (r < sum[i])
       return i;
 
-  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen";
+  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
 }
 
 template <typename F>

@@ -53,7 +53,7 @@ int choose_log(vector<double>::const_iterator here,int size,double T) {
     if (r < sum[i])
       return i;
 
-  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen";
+  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
 }
 
 int choose_log(const vector<double>& P,double T) {
