@@ -220,9 +220,7 @@ namespace substitution {
 	     MModel.base_model(m),
 	     MC.transition_P(m)
 	     );
-      std::cerr<<"    p("<<m<<") = "<<p;
       p *= MModel.distribution()[m];
-      std::cerr<<"    f(m)*p("<<m<<") = "<<p<<std::endl;
 
       total += p;
     }
@@ -240,7 +238,6 @@ namespace substitution {
     for(int column=0;column<A.length();column++) {
       double P = Pr(A,T,MModel,SM,column);
       p += P;
-      std::cerr<<column<<"  ln P = "<<P<<"     ln total = "<<p<<std::endl;
     }
 
     //    std::cerr<<" substitution: P="<<P<<std::endl;
