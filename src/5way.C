@@ -484,10 +484,10 @@ namespace A5 {
 
     //  std::cerr<<"new = "<<A<<endl;  
     //  std::cerr<<"new(reordered) = "<<project(A,n0,n1,n2,n3)<<endl;
-    std::cerr<<"A5::construct - ";
-    for(int i=0;i<nodes.size();i++)
-      std::cerr<<"n"<<i<<" = "<<nodes[i]<<"  ";
-    std::cerr<<"\n";
+    //    std::cerr<<"A5::construct - ";
+    //    for(int i=0;i<nodes.size();i++)
+    //      std::cerr<<"n"<<i<<" = "<<nodes[i]<<"  ";
+    //    std::cerr<<"\n";
     assert(valid(A));
 
     return A;
