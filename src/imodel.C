@@ -91,8 +91,12 @@ void IndelModel1::fiddle(const std::valarray<bool>& fixed) {
   const double sigma = 0.35;
 
   if (not fixed[0]) {
-    lambda_O += gaussian(0,sigma);
-    lambda_O = std::abs(lambda_O);
+    double pdel =  lambda_O-logdiff(0,lambda_O);
+    double rate =  log(-logdiff(0,pdel));
+
+    rate        += gaussian(0,sigma);
+    pdel        =  logdiff(0,-exp(rate));
+    lambda_O    =  pdel - logsum(0,pdel);
   }
   
   if (not fixed[1]) {
@@ -158,27 +162,15 @@ void IndelModel1::recalc() {
 IndelModel::~IndelModel() {}
 
 
-double delta_prior(double D,double delta) {
-  double lambda = -log(1.0-delta)/D;
+double IndelModel1::prior(double D) const {
+  double P=0;
 
   // Calculate prior on lambda_O
-  const double mean_delta = exp(-6.5);
-  const double mean_D     = 0.4;
-  const double mean_lambda = -log(1.0-mean_delta)/mean_D;
+  double lambda_O = parameters_[0];
+  double pdel =  lambda_O-logdiff(0,lambda_O);
+  double rate =  log(-logdiff(0,pdel)) - log(D);
 
-  // mean_lambda = exp(-5.5)/0.25 (approximation based on log(1+x) = x + ...)
-
-  // This doesn't allow mu to be negative... just very small...
-  return log( gsl_ran_gaussian_pdf(log(lambda)-log(mean_lambda),0.5) );
-}
-
-// P(no insertion) = 1-delta = exp(-lambda*D)
-// lambda = insertion rate
-double IndelModel1::prior(double D) const {
-
-  double delta = exp(parameters_[0]);
-
-  double P = delta_prior(D,delta);
+  P += log( shift_laplace_pdf(rate,-5, 0.5) );
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = parameters_[1];
@@ -207,10 +199,12 @@ void UpweightedIndelModel::fiddle(const std::valarray<bool>& fixed) {
   const double sigma = 0.35;
 
   if (not fixed[0]) {
-    lambda_O += gaussian(0,sigma);
-    double max = log(0.5);
-    if (lambda_O > max)
-      lambda_O = max - (lambda_O-max);
+    double pdel =  lambda_O-logdiff(0,lambda_O);
+    double rate =  log(-logdiff(0,pdel));
+
+    rate        += gaussian(0,sigma);
+    pdel        =  logdiff(0,-exp(rate));
+    lambda_O    =  pdel - logsum(0,pdel);
   }
   
   if (not fixed[1]) {
@@ -281,14 +275,17 @@ void UpweightedIndelModel::recalc() {
 }
 
 double UpweightedIndelModel::prior(double D) const {
-  double lambda_O = parameters_[0];
-  double lambda_E = parameters_[1];
+  double P = 0;
 
   // Calculate prior on lambda_O
-  double delta = exp(lambda_O);
-  double P = delta_prior(D,delta);
+  double lambda_O = parameters_[0];
+  double pdel =  lambda_O-logdiff(0,lambda_O);
+  double rate =  log(-logdiff(0,pdel)) - log(D);
+
+  P += log( shift_laplace_pdf(rate,-5, 0.5) );
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
+  double lambda_E = parameters_[1];
   double E_length = lambda_E - logdiff(0,lambda_E);
   double E_length_mean = 5.0;
 
@@ -311,17 +308,25 @@ void SingleIndelModel::fiddle(const std::valarray<bool>& fixed) {
 
   const double sigma = 0.35;
 
-  lambda_O += gaussian(0,sigma);
-  double max = log(0.5);
-  if (lambda_O > max)
-    lambda_O = max - (lambda_O-max);
+  if (not fixed[0]) {
+    double pdel =  lambda_O-logdiff(0,lambda_O);
+    double rate =  log(-logdiff(0,pdel));
 
+    rate        += gaussian(0,sigma);
+    pdel        =  logdiff(0,-exp(rate));
+    lambda_O    =  pdel - logsum(0,pdel);
+  }
+  
   recalc();
 }
 
 double SingleIndelModel::prior(double D) const {
-  double delta = exp(parameters_[0]);
-  return delta_prior(D,delta);
+  // Calculate prior on lambda_O
+  double lambda_O = parameters_[0];
+  double pdel =  lambda_O-logdiff(0,lambda_O);
+  double rate =  log(-logdiff(0,pdel)) - log(D);
+
+  return log( shift_laplace_pdf(rate,-5, 0.5) );
 }
 
 void SingleIndelModel::recalc() {

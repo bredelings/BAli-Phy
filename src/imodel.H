@@ -105,8 +105,6 @@ public:
 
 
 
-
-
 /// An IndelModel which assumes indels consist of only one letter
 class SingleIndelModel : public IndelModel {
 
