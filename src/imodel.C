@@ -88,16 +88,14 @@ void IndelModel1::fiddle(const std::valarray<bool>& fixed) {
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
 
-  if (not fixed[0]) {
-    const double sigma = 0.30;
+  const double sigma = 0.35;
 
+  if (not fixed[0]) {
     lambda_O += gaussian(0,sigma);
     lambda_O = std::abs(lambda_O);
   }
   
   if (not fixed[1]) {
-    const double sigma = 0.20;
-
     double E_length = lambda_E - logdiff(0,lambda_E);
     E_length += gaussian(0,sigma);
     lambda_E = E_length - logsum(0,E_length);
@@ -206,16 +204,14 @@ void UpweightedIndelModel::fiddle(const std::valarray<bool>& fixed) {
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
 
-  if (not fixed[0]) {
-    const double sigma = 0.30;
+  const double sigma = 0.35;
 
+  if (not fixed[0]) {
     lambda_O += gaussian(0,sigma);
     lambda_O = std::abs(lambda_O);
   }
   
   if (not fixed[1]) {
-    const double sigma = 0.20;
-
     double E_length = lambda_E - logdiff(0,lambda_E);
     E_length += gaussian(0,sigma);
     lambda_E = E_length - logsum(0,E_length);
@@ -311,7 +307,8 @@ UpweightedIndelModel::UpweightedIndelModel(double lambda_O,double lambda_E)
 void SingleIndelModel::fiddle(const std::valarray<bool>& fixed) { 
   double& lambda_O = parameters_[0];
 
-  const double sigma = 0.15;
+  const double sigma = 0.35;
+
   lambda_O += gaussian(0,sigma);
   if (lambda_O >= 0) lambda_O = -lambda_O;
 
