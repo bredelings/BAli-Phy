@@ -19,7 +19,6 @@ bool match(vector<string>& sstack,const string& s,string& arg) {
   string top = sstack.back();
 
   if (top == s) {
-    sstack.pop_back();
     arg = "";
     success=true;
   }
