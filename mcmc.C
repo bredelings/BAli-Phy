@@ -68,7 +68,6 @@ void print_stats(const alignment& A,const Parameters& Theta,
 		 double probability(const alignment&,const Parameters&)) {
   std::cerr<<"previous = "<<
     probability_no_tree(A,Theta)<<"  "<<
-    probability_simple_tree(A,Theta)<<"  "<<
     probability3(A,Theta)<<"  "<<
     probability(A,Theta)<<endl
 	   <<"old  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl

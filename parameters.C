@@ -201,8 +201,8 @@ void Parameters::setlength(int b,double l) {
 
 void Parameters::recalc() {
   substitution_.clear();
-  for(int i=0;i<T.branches();i++) 
-    substitution_.push_back(SModel->transition_p(T.branch(i).length));
+  for(int b=0;b<T.branches();b++) 
+    substitution_.push_back(SModel->transition_p(T.branch(b).length));
 }
 
 

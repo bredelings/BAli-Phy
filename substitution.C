@@ -16,7 +16,7 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
   valarray<bool> group = T.partition(node1,node2);
   if (node1 != T.parent(node2)) group[node2] = false; // don't propagate from node2
 
-  // what nodes to we need to work in the second pass
+  // what nodes do we need to work in the second pass
   vector<int> work;
   work.reserve(T.num_nodes());
 
@@ -34,17 +34,20 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
     else if (!distributions(n).size() and n>=T.leaves())
       continue;
 
-    if (n<T.leaves()) {
+    int b = T.branch_up(n);
+    const Matrix& Q = Theta.substitution(b);
+
+    if (T[n].leaf()) {
       if (residues[n] == alphabet::gap)
 	continue;
       for(int i=0;i<a.size();i++)
-	dist[i] = Theta.substitution(n)(i,residues[n]);
+	dist[i] = Q(i,residues[n]);
     }
     else {
       dist = 0.0;
       for(int i=0;i<a.size();i++)
 	for(int j=0;j<a.size();j++)
-	  dist[i] += Theta.substitution(n)(i,j)*distributions(n)[j];
+	  dist[i] += Q(i,j)*distributions(n)[j];
     }
 
     int parent = T.parent(n);
@@ -64,14 +67,16 @@ valarray<double> peel(const vector<int>& residues,const Parameters& Theta,
     int n = work[i];
     if (!distributions(n).size()) continue;
 
-    int parent = T[n].left->name;
+    int parent = T[n].left();
     if (!T.ancestor(parent,node2))
-      parent = T[n].right->name;
+      parent = T[n].right();
 
+    int b = T.branch_up(parent);
+    const Matrix& Q = Theta.substitution(b);
     dist = 0.0;
     for(int i=0;i<a.size();i++)
       for(int j=0;j<a.size();j++)
-	dist[i] += Theta.substitution(parent)(i,j)*distributions(n)[j];
+	dist[i] += Q(i,j)*distributions(n)[j];
     
     if (!distributions(parent).size()) {
       distributions(parent).resize(a.size());
@@ -115,8 +120,8 @@ double substitution(const vector<int>& residues,const Parameters& Theta,
   assert(residues.size() == T.leaves());
 
   int root = T.num_nodes()-1;
-  int left = T[root].left->name;
-  int right = T[root].right->name;
+  int left = T[root].left();
+  int right = T[root].right();
       
   valarray<double> leftD = peel(residues,Theta,right,left);
   valarray<double> rightD = peel(residues,Theta,left,right);

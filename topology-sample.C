@@ -252,7 +252,7 @@ vector<int> sample_path(const vector< vector<double> >& P,const vector<int>& bit
   return path;
 }
 
-vector<int> get_path(const alignment& A,int n0,int n1,int n2,int n3,int n4,int n5) {
+vector<int> get_path(const alignment& A,int b) {
   vector<int> path;
   path.reserve(A.length());
 
@@ -262,48 +262,115 @@ vector<int> get_path(const alignment& A,int n0,int n1,int n2,int n3,int n4,int n
   return bits;
 }
 
+/********* Which nodes adjacent to this brranch *********/
+vector<int> get_nodes(const alignment& A, const tree& T,int b) {
+  vector<int> nodes(5);
 
-void sample_topology(alignment& A,Parameters& Theta,int n4) {
-  const SequenceTree& T = Theta.T;
+  nodes[4] = T.branch(b).node2;
+  nodes[5] = T.branch(b).node1;
+  assert(nodes[5] = T.parent(nodes[4]));
+  
+  // This must be an internal branch
+  nodes[0] = T[nodes[4]].left();
+  nodes[1] = T[nodes[4]].right();
+  nodes[2] = T[nodes[5]].left();
+  nodes[3] = T[nodes[5]].right();
+  
+  if (nodes[2] == nodes[4])
+    nodes[2] = T.parent(nodes[5]);
+  else if (nodes[3]==nodes[4])
+    nodes[3] = T.parent(nodes[5]);
+  
+  return nodes;
+}
 
-  /****** Get the node names ********/
-  assert(T[n4].left);
-  assert(T[n4].right);
+/****** Which nodes are present in which column? *******/
+vector<int> get_bits(const alignment& A, const tree& T,int b) {
 
-  int n5 = T.parent(n4);
-
-  assert(T[n5].left);
-  assert(T[n5].right);
-
-  int n0 = T[n4].left->name;
-  int n1 = T[n4].right->name;
-  int n2 = T[n5].left->name;
-  int n3 = T[n5].right->name;
-
-  if (n2 == n4)
-    n2 = T.parent(n5);
-  else if (n3==n4)
-    n3 = T.parent(n5);
-
-
-  /****** Generate the Different Topologies *******/
-  const alignment old = A;
-
-  SequenceTree T2 = T;
-  SequenceTree T3 = T;
-
-  /* FIXME - problem with exchanging with parents of root
-  T2.exchange(n1,n2);
-  T3.exchange(n1,n3);
-  */
+  vector<int> nodes = get_nodes(A,T,b);
 
   vector<int> bits;
-  vector<int> columns;
-  vector< vector<double> > P;
-
-  // Set up initial conditions
-  P.push_back(vector<double>(nstates,log_0));
   bits.push_back(0);
+
+  for(int column=0;column<A.length();column++) {
+    int state=0;
+    if (not A.gap(column,nodes[0]))
+      state |= 1<<0;
+    if (not A.gap(column,nodes[1]))
+      state |= 1<<1;
+    if (not A.gap(column,nodes[2]))
+      state |= 1<<2;
+    if (not A.gap(column,nodes[3]))
+      state |= 1<<3;
+
+    if (state) 
+      bits.push_back(state);
+  }
+  return bits;
+}
+
+alignment construct(const alignment& old,const tree& T,const vector<int>& path,int b) {
+  alignment A = old;
+  vector<int> nodes = get_nodes(A,T,b);
+
+  /**** Get columns where our alignments are present ****/
+  vector<int> columns;
+  for(int column=0;column<A.length();column++) {
+    bool present = false;
+    if (not A.gap(column,nodes[0]))
+      present = true;
+    if (not A.gap(column,nodes[1]))
+      present = true;
+    if (not A.gap(column,nodes[2]))
+      present = true;
+    if (not A.gap(column,nodes[3]))
+      present = true;
+
+    if (present) {
+      columns.push_back(column);
+    }
+  }
+
+  /***** Write the state info from $path into the matrix *****/
+  for(int character=0;character<path.size();character++) {
+    int s = path[character];
+    if (bits_present(s,present10))
+      A(columns[character],nodes[4]) = alphabet::not_gap;
+    else
+      A(columns[character],nodes[4]) = alphabet::gap;
+
+    if (bits_present(s,present01))
+      A(columns[character],nodes[5]) = alphabet::not_gap;
+    else
+      A(columns[character],nodes[5]) = alphabet::gap;
+  }
+  return A;
+}
+
+void sample_topology(alignment& A,Parameters& Theta1,int b) {
+  const alignment old = A;
+
+  vector<int> nodes = get_nodes(A,Theta1.T,b);
+  const IndelModel& IModel = Theta1.IModel;
+
+  /****** Generate the Different Topologies *******/
+  Parameters Theta2 = Theta1;
+  Parameters Theta3 = Theta1;
+
+  SequenceTree& T1 = Theta1.T;
+  SequenceTree& T2 = Theta2.T;
+  SequenceTree& T3 = Theta3.T;
+
+  T2.exchange(nodes[1],nodes[2]);Theta2.recalc();
+  T3.exchange(nodes[1],nodes[3]);Theta3.recalc();
+
+  vector <int> bits1 = get_bits(A,T1,b);
+  vector <int> bits2 = get_bits(A,T2,b);
+  vector <int> bits3 = get_bits(A,T3,b);
+
+  /*** Set up initial conditions (for character -1) ***/
+  vector< vector<double> > P1;
+  P1.push_back(vector<double>(nstates,log_0));
   
   for(int s1=0;s1<3;s1++)
     for(int s2=0;s2<3;s2++)
@@ -311,55 +378,53 @@ void sample_topology(alignment& A,Parameters& Theta,int n4) {
 	for(int s4 = 0;s4<3;s4++)
 	  for(int s5 = 0;s5<3;s5++) {
 	    int h = (s5<<8)|(s4<<6)|(s3<<4)|(s2<<2)|s1;
-	    P[0][h] = Theta.IModel.pi[s1] + Theta.IModel.pi[s2] + Theta.IModel.pi[s3]
-	      + Theta.IModel.pi[s4] + Theta.IModel.pi[s5];
+	    P1[0][h] = IModel.pi[s1] + IModel.pi[s2] + IModel.pi[s3]
+	      + IModel.pi[s4] + IModel.pi[s5];
       }
 
-  // Determine which characters are present in each neighboring sequence
-  for(int column=0;column<A.length();column++) {
-    int state=0;
-    if (not A.gap(column,n0))
-      state |= 1<<0;
-    if (not A.gap(column,n1))
-      state |= 1<<1;
-    if (not A.gap(column,n2))
-      state |= 1<<2;
-    if (not A.gap(column,n3))
-      state |= 1<<3;
+  for(int i=0;i<bits1.size()-1;i++) 
+    P1.push_back(vector<double>(nstates,log_0));
 
-    if (state) {
-      P.push_back(vector<double>(nstates,log_0));
-      bits.push_back(state);
-      columns.push_back(column);
-    }
+  vector< vector<double> > P2 = P1;
+  vector< vector<double> > P3 = P1;
+
+  /********* Calculate Forward Probabilities **********/
+  double PA1 = get_DP_array(P1,bits1,IModel);
+  double PA2 = get_DP_array(P2,bits2,IModel);
+  double PA3 = get_DP_array(P3,bits3,IModel);
+
+  std::cerr<<"PA1 = "<<PA1<<"       PA2 = "<<PA2<<"       PA3 = "<<PA3<<std::endl;
+
+  double PS1 = substitution(A,Theta1);
+  double PS2 = substitution(A,Theta2);
+  double PS3 = substitution(A,Theta3);
+
+  std::cerr<<"PS1 = "<<PS1<<"       PS2 = "<<PS2<<"       PS3 = "<<PS3<<std::endl;
+
+  int choice = choose(PA1+PS1, PA2+PS2, PA3+PS3);
+  vector<int>* bits_c = &bits1;
+  vector< vector<double> >* P_c = P1;
+  if (choice == 1) {
+    bits = &bits2;
+    P = &P2;
+    Theta1 = Theta2;
   }
-
-  // calculate the forward probabilities
-  double Pr = get_DP_array(P,bits,Theta.IModel);
-
-  // do traceback
-  vector<int> path1 = get_path(old,n0,n1,n2,n3,n4,n5);
-  vector<int> path2 = sample_path(P,bits,Theta.IModel);
-
-  // modify the matrix
-  for(int character=0;character<path2.size();character++) {
-    int s = path2[character];
-    if (bits_present(s,present10))
-      A(columns[character],n4) = alphabet::not_gap;
-    else
-      A(columns[character],n4) = alphabet::gap;
-
-    if (bits_present(s,present01))
-      A(columns[character],n5) = alphabet::not_gap;
-    else
-      A(columns[character],n5) = alphabet::gap;
+  else if (choice == 2) {
+    Theta1 = Theta3;
   }
+  
+  // do traceback - how to calculate probability of observing 
+  vector<int> path1 = get_path(old,b);
+  vector<int> path2 = sample_path(P1,bits1,IModel);
+
+
   /****************** Do traceback ********************/
-  std::cerr<<old<<endl<<endl;
+  A = construct(A,T1,path2,b);
 
+  std::cerr<<old<<endl<<endl;
   std::cerr<<A<<endl<<endl;
-  double l1 = probability3(old,Theta);
-  double l2 = probability3(A,Theta);
+  double l1 = probability3(old,Theta1);
+  double l2 = probability3(A,Theta1);
 
   std::cerr<<"L1 = "<<l1<<"    L2 = "<<l2<<std::endl;
   assert(valid(A));

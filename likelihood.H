@@ -5,7 +5,6 @@
 #include "parameters.H"
 #include "substitution.H"
 
-double prior(const alignment&,const Parameters&);
 double prior_no_tree(const alignment&,const Parameters&);
 double prior_internal(const alignment&,const Parameters&);
 double prior_HMM(const alignment&,const Parameters&);
@@ -17,7 +16,8 @@ inline double prior(const Parameters& Theta) {
   return p;
 }
 
-
+/*  Now defunct - I don't want to maintain possibilities.C and gaps.C
+double prior(const alignment&,const Parameters&);
 // ln(P(A,Data|T)) = ln(P(A|T)) + ln(P(Data|A,T))
 inline double probability_simple_tree(const alignment& A,const Parameters& Theta) {
   double p = 0;
@@ -27,6 +27,7 @@ inline double probability_simple_tree(const alignment& A,const Parameters& Theta
 
   return p;
 }
+*/
 
 // ln(P(A,Data|T)) = ln(P(A)) + ln(P(Data|A,T))
 inline double probability_no_tree(const alignment& A,const Parameters& Theta) {

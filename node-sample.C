@@ -102,15 +102,12 @@ double p_move(int states1, int states2,const IndelModel& Theta) {
 }
 
 
-alignment sample(const alignment& old,const Parameters& Theta,int node) {
+alignment sample_node(const alignment& old,const Parameters& Theta,int node) {
   const tree& T = Theta.T;
 
-  assert(T[node].left);
-  assert(T[node].right);
-
   int n1 = T.parent(node);
-  int n2 = T[node].left->name;
-  int n3 = T[node].right->name;
+  int n2 = T[node].left();
+  int n3 = T[node].right();
 
   alignment A = old;
 

@@ -239,13 +239,15 @@ vector<valarray<double> > distributions(const alignment& A,const Parameters& The
   return dist;
 }
 
-alignment sample(const alignment& old,const Parameters& Theta,int node1,int node2) {
+alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   const tree& T = Theta.T;
   const Matrix& P = Theta.IModel.P;
   const Matrix& R = Theta.IModel.R;
   const vector<double>& pi = Theta.IModel.pi;
   const valarray<double>& frequency = Theta.frequencies();
 
+  int node1 = T.branch(b).node1;
+  int node2 = T.branch(b).node2;
   assert(node1 > node2);
 
   int old_length1 = old.seqlength(node1);

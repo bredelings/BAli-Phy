@@ -18,7 +18,7 @@ TreeView TreeView::copy() const {
     return TreeView(top);
 
   top = new node;
-  top->name = root->name;
+  *top = *root;
   top->parent = 0;
 
   top->left = (node*)TreeView(root->left).copy();
@@ -56,23 +56,23 @@ TreeView tree::copy() const {
 }
 
 vector<node*> find_nodes(node* root) {
-  vector<node*> lookup;
+  vector<node*> order;
   
-  lookup.push_back(root);
+  order.push_back(root);
 
   int start=0;
   do {
-    int end = lookup.size();
+    int end = order.size();
     for(int i=start;i<end;i++) {
-      node* left = lookup[i]->left;
-      node* right = lookup[i]->right;
-      if (left) lookup.push_back(left);
-      if (right) lookup.push_back(right);
+      node* left = order[i]->left;
+      node* right = order[i]->right;
+      if (left) order.push_back(left);
+      if (right) order.push_back(right);
     }
     start = end;
-  }  while(start<lookup.size());
+  }  while(start<order.size());
 
-  return lookup;
+  return order;
 }
 
 
@@ -91,71 +91,57 @@ void find_leaves(node* n,vector<node*>& leaves) {
 
 /* If we aren't deleting or adding nodes, then we don't change the leaf names */
 
-vector<int> tree::renumber() {
-  vector<node*> old_order = lookup;
+void tree::reorder() {
+  int old_size = order.size();
 
-  lookup = find_nodes(root);
-  int size1 = lookup.size();
+  order = find_nodes(root);
+  int new_size = order.size();
 
   // Mark all nodes as non-visted
-  for(int i=0;i<lookup.size();i++)
-    lookup[i]->name = -1;
+  for(int i=0;i<order.size();i++)
+    order[i]->name = -1;
 
-  // Fill lookup with the leaves, and name them
-  if (old_order.size() != lookup.size()) { 
-    lookup.clear();
-    find_leaves(root,lookup);
-    for(int i=0;i<lookup.size();i++)
-      lookup[i]->name = i;
-  }
-  else { // Don't change the leaf names!
-    lookup.clear();
-    for(int i=0;i<old_order.size() and leaf(*old_order[i]);i++) {
-      old_order[i]->name = i;
-      lookup.push_back(old_order[i]);
-    }
-  }
+  // Fill order with the leaves, and name them
+  order.clear();
+  find_leaves(root,order);
+  for(int i=0;i<order.size();i++)
+    order[i]->order = i;
 
-  n_leaves = lookup.size();
+  n_leaves = order.size();
 
   /* Add nodes in order of distance from leaves */
   int start=0;
   do {
-    int end = lookup.size();
+    int end = order.size();
     for(int i=start;i<end;i++) {
-      node* parent = lookup[i]->parent;
+      node* parent = order[i]->parent;
       if (!parent) continue; // actually this would be a good exit condition
 
       if (parent->left and parent->right) {  // if there are 2 children
-	if (parent->left->name == -1) continue;  // both children 
-	if (parent->right->name == -1) continue; // must go on first
-	if (lookup[i]->name < parent->left->name or 
-	    lookup[i]->name < parent->right->name)
+	if (parent->left->order == -1) continue;  // both children 
+	if (parent->right->order == -1) continue; // must go on first
+	if (order[i]->order < parent->left->order or 
+	    order[i]->order < parent->right->order)
 	  continue; // and only the second child puts the parent on
       }
-      parent->name = lookup.size();
-      lookup.push_back(parent);
+      parent->order = order.size();
+      order.push_back(parent);
     }
     start = end;
-  } while (start < lookup.size());
+  } while (start < order.size());
 
-  assert(size1 == lookup.size());
-  for(int i=0;i<lookup.size();i++) {
-    if (leaf(*lookup[i]))
-      assert(lookup[i]->name < n_leaves);
-    else
-      assert(lookup[i]->name == i);
+  assert(new_size == order.size());
+  for(int i=0;i<order.size();i++)
+    assert(order[i]->order == i);
+
+  /***** re-assign names if the tree has change *****/
+  if (not names.size() or old_size != new_size) {
+    names = order;
+    for(int i=0;i<num_nodes();i++)
+      names[i]->name = i;
   }
 
   compute_ancestors();
-
-  vector<int> mapping(old_order.size());
-  for(int i=0;i<mapping.size();i++) {
-    mapping[i] = old_order[i]->name;
-    assert(mapping[i] >=0 and mapping[i] < lookup.size());
-  }
-
-  return mapping;
 }
 
 // With iterator, this would be:  *left  = (node* tv1);
@@ -178,51 +164,54 @@ void tree::add_right(node& parent,node& child) {
 void tree::add_left(node& parent,const tree& T) {
   TreeView tv = T.copy();
   add_left(parent,*(node*)tv);
-  renumber();
+  reorder();
 }
 
 // subtree(root,tree:right) = T
 void tree::add_right(node& parent,const tree& T) {
   TreeView tv = T.copy();
   add_right(parent,*(node*)tv);
-  renumber();
+  reorder();
 }
 
 void tree::compute_ancestors() {
-  const tree& T = *this;
 
   ancestors.clear();
+  ancestors.insert(ancestors.begin(),num_nodes(),
+		   std::valarray<bool>(false,num_nodes()));
   for(int i=0;i<num_nodes();i++) {
-    std::valarray<bool> mask(false,num_nodes());
-    mask[i] = true;
+    int n = get_nth(i);
+    ancestors[n][n] = true;
 
-    if (T[i].left) 
-      mask |= ancestors[ T[i].left->name ];
+    if (names[n]->left) {
+      int n_left = order[i]->left->name;
+      ancestors[n] |= ancestors[ n_left ];
+    }
     
-    if (T[i].right)
-      mask |= ancestors[ T[i].right->name ];
-    ancestors.push_back(mask);
+    if (names[n]->right) {
+      int n_right = order[i]->right->name;
+      ancestors[n] |= ancestors[ n_right ];
+    }
   }
 }
 
 vector<int> tree::path(int n1,int n2) const {
-  const tree& T = *this;
   vector<int> result;
 
   if (ancestor(n1,n2)) {
-    for(const node* here = &T[n2];here->name != n1;here = here->parent)
+    for(const node* here = names[n2];here->name != n1;here = here->parent)
       result.insert(result.begin(),here->name);
     result.insert(result.begin(),n1);
   }
   else if (ancestor(n2,n1)) {
-    for(const node* here = &T[n1];here->name != n2;here = here->parent)
+    for(const node* here = names[n1];here->name != n2;here = here->parent)
       result.insert(result.end(),here->name);
     result.insert(result.end(),n2);
   }
   else {
     int top = n1;
     while(!ancestor(top,n2))
-      top = T[top].parent->name;
+      top = names[top]->parent->name;
     result = path(n1,top);
     result.pop_back();
     vector<int> temp = path(top,n2);
@@ -231,13 +220,22 @@ vector<int> tree::path(int n1,int n2) const {
   return result;
 }
 
-std::valarray<bool> tree::partition(int n1,int n2) const {
-  const tree& T = *this;
+int tree::branch_up(int n1) const {
+  if (n1 == num_nodes()-2)
+    return branch_up(parent(n1));
+  for(int i=0;i<branches();i++) {
+    if (branch(i).node2 == n1)
+      return i;
+  }
+  assert(0);
+}
 
-  std::valarray<bool> mask(T.num_nodes());;
+
+std::valarray<bool> tree::partition(int n1,int n2) const {
+  std::valarray<bool> mask(num_nodes());;
 
   if (n1 > n2 or
-      (!T[n1].parent->parent and !T[n2].parent->parent))
+      (!names[n1]->parent->parent and !names[n2]->parent->parent))
     mask = ancestors[n2];
   else 
     mask = !ancestors[n1];
@@ -248,8 +246,10 @@ std::valarray<bool> tree::partition(int n1,int n2) const {
 void tree::add_root() {
   assert(!root);
   root = new node;
-  lookup.push_back(root);
+  order.push_back(root);
+  names.push_back(root);
   n_leaves = 1;
+  root->name = 0;
 }
 
 // ***** "exchange_cousins" and "exchange": *****
@@ -265,16 +265,25 @@ void tree::add_root() {
 //    - if they have only one node between them, do nothing.
 // o Branches move along with the subtree - so we move branch lengths
 //    - p1->n1:l1, p1->n2:l2  becomes p1->n2:l2,p2->n1:l1
-//    - this is easy in exchange_cousins, but takes works after renumber
+//    - this is easy in exchange_cousins, but takes works after reorder
 
 void tree::exchange_cousins(int n1, int n2) {
-  // our caller guarantees this won't happen
+  // Our [only] caller guarantees these won't happen
+
+  // The nodes are distinct
   assert(n1 != n2);
+
+  // Neither node is an ancestory of the other
   assert(not ancestor(n1,n2) and not ancestor(n2,n1));
+
+  // The nodes don't have the same parent
   assert(parent(n1) != parent(n2));
 
-  node* node1 = lookup[n1];
-  node* node2 = lookup[n2];
+  // Neither node is a child of the root
+  assert(names[n1]->parent->parent and names[n2]->parent->parent);
+
+  node* node1 = names[n1];
+  node* node2 = names[n2];
 
   node* p1 = node1->parent;
   node* p2 = node2->parent;
@@ -291,7 +300,7 @@ void tree::exchange_cousins(int n1, int n2) {
 
   node1->parent = p2;
   node2->parent = p1;
-  
+
   branches_[n1].node1 = node1->parent->name;
   branches_[n2].node1 = node2->parent->name;
 }
@@ -304,68 +313,82 @@ void tree::exchange_cousins(int n1, int n2) {
 // if parent(node1) == parent(node2), which can happen at the top
 // of the tree when p1 != p2, then 
 
-vector<int> tree::exchange(int node1, int node2) {
-  vector<node*> old_order = lookup;
-
+void tree::exchange(int node1, int node2) {
+  // make node2 > node1
   if (ancestor(node1,node2))
     std::swap(node1,node2);
 
   if (parent(node1) == parent(node2))
     ;
-  else if (ancestor(node2,node1)) {  //
+  else if (ancestor(node2,node1) or node2>num_nodes()-4) {  
 
     vector<int> intermediate;
-    node* here = lookup[node1]->parent;
+    int here = parent(node1);
 
-    assert(here != lookup[node2]);
+    /****** Find the intermediate nodes *******/
+    assert(here != node2);
     do {
-      node* there = here->left;
-      if (ancestor(there->name,node1))
-	  there = here->right;
+      int there = names[here]->left->name;
+      if (ancestor(there,node1))
+	  there = names[here]->right->name;
 
-      intermediate.push_back(there->name);
-      here = here->parent;
+      intermediate.push_back(there);
+      here = parent(here);
     }
-    while(here != lookup[node2]);
+    while(here != node2);
 
+    /******  Invert the order of the intermediate nodes ****/
     for(int i=0;i<intermediate.size()/2;i++) {
       int j = intermediate.size()-1-i;
+
+      // exchange their names 
+      int pi = names[i]->parent->name;
+      int pj = names[j]->parent->name;
+      std::swap(names[pi],names[pj]);
+      names[pi]->name = pi;
+      names[pj]->name = pj;
+
+      // exchange their subtrees
       exchange_cousins(intermediate[i],intermediate[j]);
+    }
+
+    assert(parent(intermediate[0]) == node2);
+    assert(parent(node1) == intermediate[intermediate.size()-1]);
+
+    for(int i=0;i<branches();i++) {
+      Branch& b = branch(i);
+      if (b.node1 == node2) 
+	b.node2 = intermediate[0];
+      else if (b.node2 == node1) 
+	b.node1 = intermediate[intermediate.size()-1];
+      if (b.node1 < b.node2)
+	std::swap(b.node1,b.node2);
     }
   }
   else
     exchange_cousins(node1,node2);
-  
-  vector<int> mapping = renumber();
-
-  /*** fixup branches ***/
-  vector<Branch> old_branches = branches_;
-
-  for(int i=0;i<mapping.size();i++) {
-    // here we've got i -> mapping[i];
-    assert(mapping[i] < branches_.size());
-    assert(i < branches_.size());
-    branches_[mapping[i]] = old_branches[i];
-  }
-
-
-  return mapping;
 }
 
 
 tree& tree::operator=(const tree& t1) {
+  TreeView(root).destroy();
+
   n_leaves = t1.leaves();
   root = t1.copy();
   vector<node*> nodes = find_nodes(root);
-
-  lookup = nodes;
-
-// should now preserve node names
+  order = nodes;
+  names = nodes;
+  
+  // Reconstruct the 'order' and 'names' hashes
   if (nodes.size() > 1)
     for(int i=0;i<nodes.size();i++) {
-      int j = nodes[i]->name;
-      assert(0 <= j and j < lookup.size());
-      lookup[j] = nodes[i];
+      int o = nodes[i]->order;
+      int n = nodes[i]->name;
+      assert(0 <= n and n < nodes.size());
+      assert(0 <= o and o < nodes.size());
+
+      names[n] = nodes[i];
+      order[o] = nodes[i];
     }
 
   compute_ancestors();
@@ -402,6 +425,8 @@ tree::tree(const tree& t1, double d1, const tree& t2, double d2) {
   add_left(*root,t1);
   add_right(*root,t2);
   
+  assert(0); // this doesn't really work yet;
+
   //  add_edge(t1_root,new_root,d1)
   //  add_edge(t2_root,new_root,d2)
 }
@@ -425,14 +450,14 @@ TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
     else {
       int here=i;
       while(!T.ancestor(here,top)) {
-	here = T[here].parent->name;
+	here = T[here].parent();
 	present(here) = 1;
       }
       int parent = here;
       
       here = top;
       while(here != parent) {
-	here = T[here].parent->name;
+	here = T[here].parent();
 	present(here) = 1;
       }
       
@@ -449,7 +474,7 @@ TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
     int here=i;
     int parent;
     while(!T.ancestor(here,top)) {
-      here = T[here].parent->name;
+      here = T[here].parent();
       if (present(here) != -1)
 	goto done;
       present(here) = 0;
@@ -458,7 +483,7 @@ TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
     
     here = top;
     while(here != parent) {
-      here = T[here].parent->name;
+      here = T[here].parent();
       present(here) = 0;
     }
   done: continue;
@@ -477,15 +502,17 @@ void SequenceTree::write(std::ostream& o,int n) const {
   }
   else {
     const tree& T = *this;
-    assert(T[n].left);
-    assert(T[n].right);
-    int left = T[n].left->name;
-    int right = T[n].right->name;
+    int left = T[n].left();
+    int right = T[n].right();
     o<<"(";
     write(o,left);
     o<<":"<<T.branch(left).length<<",";
     write(o,right);
-    o<<":"<<T.branch(right).length<<")";
+
+    if (right>= branches())
+      o<<":"<<0<<")";
+    else
+      o<<":"<<T.branch(right).length<<")";
   }
   o.flags(old_flags);
 }

@@ -41,10 +41,8 @@ void change_branch_length(const alignment& A, Parameters& Theta,int b) {
 void move_node(const alignment& A, Parameters& Theta,int node) {
   const tree& T = Theta.T;
   int b1 = node;
-  assert(T[node].left);
-  int b2 = T[node].left->name;
-  assert(T[node].right);
-  int b3 = T[node].right->name;
+  int b2 = T[node].left();
+  int b3 = T[node].right();
   
   double r = myrandomf()*3;
   if (r < 1) {
@@ -79,18 +77,16 @@ void move_node(const alignment& A, Parameters& Theta,int node) {
 void sample(alignment& A,Parameters& Theta) {
 
   double r = myrandomf();
-  if (r < 0.02) {
+  if (r < 0.5) {
     //    int node1 = myrandom(Theta.T.leaves()-1,Theta.T.num_nodes()-3);
-    int node2 = myrandom(Theta.T.branches());
-    int node1 = Theta.T.parent(node2);
-    if (node2>node1) std::swap(node1,node2);
+    int b = myrandom(Theta.T.branches());
 
-    A = sample(A,Theta,node1,node2);
+    A = sample_alignment(A,Theta,b);
     std::cerr<<"logp = BLANK"<<std::endl;
   }
-  else if (r < 1.70) {
+  else if (r < -0.70) {
     int node = myrandom(Theta.T.leaves(),Theta.T.num_nodes()-1);
-    A = sample(A,Theta,node);
+    A = sample_node(A,Theta,node);
   }
   //  else if (r < 0.75) {
   //    int node = myrandom(T.leaves(),T.num_nodes-1);

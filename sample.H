@@ -7,14 +7,15 @@
 #include "parameters.H"
 
 //Resample the alignment parent->child
-alignment sample(const alignment& old,const Parameters&,int node1, int node2);
+alignment sample_alignment(const alignment& old,const Parameters&,int b);
 
 //Resample gap/non-gap for internal nodes, where not already determined
-alignment sample(const alignment& old,const Parameters&,int node);
+alignment sample_node(const alignment& old,const Parameters&,int node);
 
+//Resample gap/non-gap for 2 internal nodes, and the topology
 void sample_topology(alignment& A,Parameters&,int);
 
-//interface to the previous samplers
+//interface to the above samplers
 void sample(alignment& A,Parameters& T);
 
 #endif

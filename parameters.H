@@ -112,15 +112,17 @@ public:
 class Parameters {
   vector<Matrix> substitution_;
 
-  void recalc();
 public:
   //FIXME - this should be private - need an interface for changing branch lengths (?)
 
   /* Stuff for Substitution Model */
   SubstitutionModel const* SModel;
   const alphabet& get_alphabet() const {return SModel->Alphabet();}
+
   const std::valarray<double>& frequencies() const {return SModel->frequencies();}
+
   const Matrix& substitution(int i) const {if (i==T.num_nodes()-2) i--;return substitution_[i];}
+
   void setlength(int,double);
   
   /* Indel Model */
@@ -128,6 +130,7 @@ public:
 
   SequenceTree T;
 
+  void recalc();
 
   // parameter for exponential prior on branch length
   double branch_mean; 

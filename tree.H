@@ -12,8 +12,35 @@ struct node {
   node* right;
 
   int name;
+  int order;
 
-  node():parent(0),left(0),right(0),name(-1) {}
+  node():parent(0),left(0),right(0),name(-1),order(-1) {}
+};
+
+class nodeview {
+  const node* n;
+public:
+  bool leaf() const {return not n->left and not n->right;}
+
+  bool has_left() const {return bool(n->left);}
+  bool has_right() const {return bool(n->right);}
+  
+  int name() const {return n->name;}
+  nodeview left() const {assert(has_left());return n->left;}
+  nodeview right() const {assert(has_right());return n->right;}
+  nodeview parent() const {
+    node* p = n->parent;
+    if (not p->parent) {
+      if (p->left != n)
+	p = p->left;
+      else
+	p = p->right;
+    }
+    return nodeview(p);
+  }
+
+  operator int() {return name();}
+  nodeview(const node* n_):n(n_) {}
 };
 
 vector<int> get_neighbors(const node& n);
@@ -42,13 +69,14 @@ struct Branch {
 // shouldn't we be able to have a 'copy(const tree&)' non-member function?
 
 // TV1 = TV2 means TV1.root = TV2.root
+
 class TreeView {
 protected:
   node* root;
 
   void destroy(node**);
 public:
-  void destroy() {destroy(&root);}
+  void destroy() {if (root) destroy(&root);}
 
   TreeView copy() const;
 
@@ -62,49 +90,65 @@ class tree {
   int n_leaves;
   node* root;
 
-  vector<node*> lookup;
+  vector<node*> names;
+  vector<node*> order;
+
+  // cache results of which branch is which way
+  vector<int> left_branches;
+  vector<int> right_branches;
+  vector<int> up_branches;
 
   void add_left(node&,node&);
   void add_right(node&,node&);
+  void add_left(node&,const tree&);
+  void add_right(node&,const tree&);
 
   vector< std::valarray<bool> > ancestors;
 
   void compute_ancestors();
 
-  //renumber and return mapping of old->new node names
-  vector<int> renumber();
+  //re-calculate the order of the nodes
+  void reorder();
 
   vector<Branch> branches_;
   void  exchange_cousins(int,int);
-public:
-  enum direction { left , right, up };
+protected:
+  void add_root(); 
 
-  Branch& branch(int i) {return branches_[i];}
-  const Branch& branch(int i) const {return branches_[i];}
+public:
+  Branch& branch(int i) {
+    assert(branches_[i].node1 == parent(branches_[i].node2));
+    return branches_[i];
+  }
   
-  const node& operator[](int i) const { return *lookup[i];}
-  node& operator[](int i) { return *lookup[i];}
+  const Branch& branch(int i) const {
+    assert(branches_[i].node1 == parent(branches_[i].node2));
+    return branches_[i];
+  }
+  
+  const nodeview operator[](int i) const { return nodeview(names[i]);}
+  //  node& operator[](int i) { return *names[i];}
+
+  int get_nth(int i) {return order[i]->name;}
 
   int leaves() const {return n_leaves;}
   int branches() const {return num_nodes()-2;}
-  int num_nodes() const {return lookup.size();}
+  int num_nodes() const {return order.size();}
   vector<int> path(int,int) const;
+  int branch_up(int) const;
 
   bool ancestor(int n1, int n2) const {return ancestors[n1][n2];}
   std::valarray<bool> partition(int n1,int n2) const;
 
   TreeView copy() const;
-  void add_left(node&,const tree&);
-  void add_right(node&,const tree&);
-  void add_root();
-  vector<int> exchange(int,int);
+  void exchange(int,int);
   
   inline int parent(int) const;
 
   tree& operator=(const tree&);
 
   tree():root(0) {n_leaves=0;}
-  tree(const tree& t1) {operator=(t1);}
+  tree(const tree& t1):root(0) {operator=(t1);}
 
   tree(const tree& t1,const tree& t2);
   tree(const tree& t1,double d1,const tree& t2,double d2);
@@ -112,18 +156,17 @@ public:
 };
 
 inline bool leaf(const node& n) {
-  return (!n.left && !n.right);
+  return (not n.left and not n.right);
 }
 
 inline int tree::parent(int n) const {
-  const tree& T = *this;
-  assert(T[n].parent);
-  int p = T[n].parent->name;
-  if (!T[p].parent) {
-    if (T[p].left->name != n)
-      p = T[p].left->name;
+  assert(names[n]->parent);
+  int p = names[n]->parent->name;
+  if (not names[p]->parent) {
+    if (names[p]->left->name != n)
+      p = names[p]->left->name;
     else
-      p = T[p].right->name;
+      p = names[p]->right->name;
   }
   return p;
 }
