@@ -142,49 +142,6 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
     }
   }
 
-  letters_OK(A,"sample_tri_base:4");
-
-  /*------------------ Compute the DP matrix ---------------------*/
-
-  //   Matrices.prune(); prune is broken!
-  
-  //  vector<int> path_old = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
-  //  vector<int> path_old_g = Matrices.generalize(path_old);
-
-  //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
-
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 or group3,seq1,seq23);
-  vector<int> path_g = Matrices.forward(pins);
-
-  vector<int> path = Matrices.ungeneralize(path_g);
-
-  letters_OK(A,"sample_tri_base:before");
-  A = construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
-  letters_OK(A,"sample_tri_base:after");
-
-#ifndef NDEBUG_DP
-  //--------------- Check alignment construction ------------------//
-  vector<int> path_new = get_path_3way(project(A,nodes),0,1,2,3);
-
-  vector<int> path_new2 = get_path_3way(A,nodes);
-  assert(path_new == path_new2); // <- current implementation probably guarantees this
-                                 //    but its not a NECESSARY effect of the routine.
-                                 //    due to ordering stuff required in the path but
-                                 //    not store in the alignment A.
-  vector<int> path_new_g = Matrices.generalize(path_new);
-  if (path_new_g != path_g) {
-    std::clog<<"A' (reordered) = "<<project(A,nodes)<<endl;
-    std::clog<<"A' = "<<A<<endl;
-    std::abort();
-  }
-
-  assert(valid(A));
-#endif
-
-  //  std::cerr<<"[tri]bandwidth = "<<bandwidth(Matrices,path_g)<<std::endl;
-
-  //  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
-
   letters_OK(A,"sample_tri_base:out");
 
   for(int i=0;i<20;i++) {
