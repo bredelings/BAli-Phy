@@ -83,29 +83,30 @@ namespace substitution {
   //  c) when we are fast, time which one is faster!
 
   /// Compute the letter likelihoods at the root
-  void calc_root_likelihoods(const column_t& residues,
+  void calc_root_likelihoods(int root_letter,
 			     int c, column_cache_t distributions,
-			     const peeling_info& ops) 
+			     const vector<int>& rb) 
   {
-    const int n_models = ops.M;
-    const int asize    = ops.A;
+    Matrix & RL = distributions.scratch(c);
+    const int n_models = RL.size1();
+    const int asize    = RL.size2();
 
     for(int m=0;m<n_models;m++) {
       for(int l=0;l<asize;l++) 
-	distributions.scratch(c)(m,l) = 1;
+	RL(m,l) = 1;
 
       //-------------- Propagate and collect information at 'root' -----------//
-      for(int i=0;i<ops.rb.size();i++) 
-	if (distributions.informative(c,ops.rb[i]))
+      for(int i=0;i<rb.size();i++) 
+	if (distributions.informative(c,rb[i]))
 	  for(int l=0;l<asize;l++) 
-	    distributions.scratch(c)(m,l) *= distributions(c,ops.rb[i])(m,l);
+	    RL(m,l) *= distributions(c,rb[i])(m,l);
 
       //-------------- Take into account letters at 'root' -------------//
       //FIXME - we could avoid calculations for other letters...
-      if (alphabet::letter(residues[ops.root]))
+      if (alphabet::letter(root_letter))
 	for(int l=0;l<asize;l++)
-	  if (l != residues[ops.root])
-	    distributions.scratch(c)(m,l) = 0;
+	  if (l != root_letter)
+	    RL(m,l) = 0;
     }
   }
 
@@ -234,8 +235,10 @@ namespace substitution {
     peeling_info ops = get_branches(T,LC);
     
     //-------- propagate info along branches ---------//
-    peel(ops,0,LC,residues,transition_P);
-    calc_root_likelihoods(residues,0,LC,ops);
+    //    peel(ops,0,LC,residues,transition_P);
+    for(int i=0;i<ops.size();i++)
+      peel_branch(ops,ops[i],0,LC,residues,transition_P);
+    calc_root_likelihoods(residues[ops.root],0,LC,ops.rb);
     //----------- return the result ------------------//
     return LC.scratch(0);
   }
@@ -276,6 +279,14 @@ namespace substitution {
     return total;
   }
 
+  double calc_root_probability(int root_letter, int c, column_cache_t distributions,
+			       const vector<int>& rb,const MultiModel& MModel) 
+  {
+    calc_root_likelihoods(root_letter,c,distributions,rb);
+    return Pr(distributions.scratch(c),MModel);
+  } 
+
+
   void calculate_caches(const alignment& A, const Parameters& P) {
     const Tree& T = P.T;
     const MatCache& MC = P;
@@ -284,11 +295,11 @@ namespace substitution {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches(T, P.LC);
 
-
     //-------------- Compute the branch likelihoods -----------------//
-    for(int column=0;column<A.length();column++) {
-      alignment::column_t residues = A.get_column(column);
-      peel(ops,column,cache,residues,MC);
+    //      peel(ops,column,cache,residues,MC);
+    for(int i=0;i<ops.size();i++)
+      for(int column=0;column<A.length();column++) {
+	peel_branch(ops,ops[i],column,cache,A.get_column(column),MC);
     }
     for(int i=0;i<ops.size();i++)
       P.LC.validate_branch(ops[i].b);
@@ -306,9 +317,10 @@ namespace substitution {
     for(int column=0;column<A.length();column++) {
       alignment::column_t residues = A.get_column(column);
 
-      calc_root_likelihoods(residues,column,cache,ops);
+      //      calc_root_likelihoods(residues[ops.root],column,cache,ops.rb);
 
-      double p = Pr(cache.scratch(column),MModel);
+      //      double p = Pr(cache.scratch(column),MModel);
+      double p = calc_root_probability(residues[ops.root],column,cache,ops.rb,MModel);
 
       // SOME model must be possible
       assert(0 < p and p <= 1.00000000001);
