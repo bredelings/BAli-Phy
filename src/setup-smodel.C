@@ -178,7 +178,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     else if (model_stack.empty())
       throw myexception()<<"multi_freq: couldn't find any model to use.";
     else if (RA)
-      model_stack.back() = MultiFrequencyModel(UnitModel(*RA),4);
+      model_stack.back() = MultiFrequencyModel(UnitModel(*RA),n);
     else
       throw myexception()<<"We can only create multi_freq models on top of MultiRateModels or Markov models";
   }
