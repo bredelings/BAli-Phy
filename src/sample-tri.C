@@ -10,6 +10,7 @@
 #include "3way.H"
 #include "alignment-sums.H"
 #include "alignment-util.H"
+#include "substitution-index.H"
 #include "alignment-constraint.H"
 #include "likelihood.H"    // for prior()
 #include "refcount.H"
@@ -154,6 +155,9 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
   vector<int> path = Matrices->ungeneralize(path_g);
 
   A = construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
+
+  int b = T.branch(nodes[0],nodes[1]);
+  invalidate_subA_index_branch(A,T,b);
 
 #ifndef NDEBUG_DP
   //--------------- Check alignment construction ------------------//

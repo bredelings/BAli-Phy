@@ -131,6 +131,9 @@ namespace substitution {
   void peel_branch(int b0,column_cache_t cache, const alignment& A, const Tree& T, 
 		   const MatCache& transition_P,const MultiModel& MModel)
   {
+    // create the index
+    update_subA_index(A,T,b0);
+
     // compute branches-in
     vector<int> b;
     for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
