@@ -258,31 +258,6 @@ void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,Sequenc
 
 }
 
-vector<int> getlabels(const alignment& A,
-		      const vector<int>& column,
-		      const vector< vector<int> >& columns) {
-  vector<int> label(column.size());
-  for(int i=0;i<label.size();i++) {
-    if (column[i] == -1)
-      label[i] = -1;
-    else
-      label[i] = columns[i][column[i]];
-  }
-
-  // If letter from the original column is in a column with a gap here
-  // then put this gap in the same column as the letter
-  for(int i=0;i<label.size();i++) {
-    if (label[i] != -1) continue;
-    for(int j=0;j<label.size();j++) {
-      if (label[j] == -1) continue;
-      if (A.gap(label[j],i))
-	label[i] = label[j];
-    }
-  }
-  
-
-  return label;
-}
 
 //using namespace boost::numeric::ublas;
 
@@ -397,7 +372,7 @@ int main(int argc,char* argv[]) {
       // Get labels - should I instead get *counts*?
       vector< vector<int> > labels(alignments.size());
       for(int i=0;i<alignments.size();i++)
-	labels[i] = getlabels(alignments[i],column,column_indexes[i]);
+	labels[i] = get_splitgroup_columns(MA,c,alignments[i],column_indexes[i]);
 
       //Get initial estimate using fast least squares
       vector<double> branch_lengths(T.n_branches());

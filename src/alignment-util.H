@@ -13,7 +13,8 @@ std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -
 ublas::matrix<int> M(const alignment& A1);
 
 /// Is the homology A1(column,s1)::A1(column,s2) preserved in A2 ?
-bool A_match(const alignment& A1, int column, int s1, int s2, const alignment& A2,
+bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2, 
+	     const ublas::matrix<int>& M2,
 	     const std::vector< std::vector< int> >& column_indices);
 
 /// Is the alignment of un-ignored sequences in A1 and A2 the same?
@@ -34,5 +35,18 @@ void check_letters_OK(const alignment& A,const char* tag);
 void letters_OK(const alignment& A,const char* tag);
 
 void check_alignment(const alignment& A,const Tree& T,const char* tag);
+
+vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
+				   int column,
+				   const alignment& A2,
+				   const vector< vector<int> >& columns);
+
+int asymmetric_pairs_distance(const alignment& A1,const alignment& A2);
+
+int asymmetric_splits_distance(const alignment& A1,const alignment& A2);
+
+int pairs_distance(const alignment& A1,const alignment& A2);
+
+int splits_distance(const alignment& A1,const alignment& A2);
 
 #endif

@@ -1,4 +1,5 @@
 #include "alignment-util.H"
+#include "util.H"
 
 using std::vector;
 using std::valarray;
@@ -285,4 +286,91 @@ ublas::matrix<int> get_SM(const alignment& A,const Tree& T) {
   }
 
   return SM;
+}
+
+
+int asymmetric_pairs_distance(const alignment& A1,const alignment& A2) 
+{
+  int total=0;
+  int match=0;
+
+  // convert to feature-number notation
+  ublas::matrix<int> M1 = M(A1);
+  ublas::matrix<int> M2 = M(A2);
+
+  // lookup and cache the column each feature is in
+  vector< vector< int> > column_indices = column_lookup(A2);
+
+  for(int column=0;column<A1.length();column++) 
+    for(int i=0;i<A1.size2();i++)
+      for(int j=0;j<A1.size2();j++)
+	if (not A1.gap(column,i) or not A1.gap(column,j)) {
+	  total++;
+	  if (A_match(M1,column,i,j,M2,column_indices))
+	    match++;
+	}
+
+  return match;
+}
+
+vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
+			      int column,
+			      const alignment& A2,
+			      const vector< vector<int> >& columns) 
+{
+  vector<int> label(M1.size2());
+  for(int i=0;i<label.size();i++) {
+    if (M1(column,i) == alphabet::gap)
+      label[i] = -1;
+    else
+      label[i] = columns[i][M1(column,i)];
+  }
+
+  // If letter from the original column is in a column with a gap here
+  // then put this gap in the same column as the letter
+  for(int i=0;i<label.size();i++) {
+    if (label[i] != -1) continue;
+    for(int j=0;j<label.size() and label[i] == -1;j++) {
+      if (A2.gap(label[j],i))
+	label[i] = label[j];
+    }
+  }
+  
+
+  return label;
+}
+
+int asymmetric_splits_distance(const alignment& A1,const alignment& A2) 
+{
+  assert(A1.size2() = A2.size2());
+
+  int match=0;
+
+  // convert to feature-number notation
+  ublas::matrix<int> M1 = M(A1);
+  ublas::matrix<int> M2 = M(A2);
+
+  // lookup and cache the column each feature is in
+  vector< vector< int> > column_indices = column_lookup(A2);
+
+  for(int column=0;column<A1.length();column++) {
+    vector<int> columns = get_splitgroup_columns(M1,column,A2,column_indices);
+
+    vector<int> uniq;uniq.reserve(columns.size());
+    for(int i=0;i<columns.size();i++)
+      if (not includes(uniq,columns[i]))
+	uniq.push_back(columns[i]);
+
+    match += uniq.size();
+  }
+
+  return match;
+}
+
+int pairs_distance(const alignment& A1,const alignment& A2) {
+  return asymmetric_pairs_distance(A1,A2)+asymmetric_pairs_distance(A2,A1);
+}
+
+int splits_distance(const alignment& A1,const alignment& A2) {
+  return asymmetric_splits_distance(A1,A2)+asymmetric_splits_distance(A2,A1);
 }
