@@ -13,18 +13,18 @@
 #include "setup.H"
 #include "likelihood.H"
 #include <boost/numeric/ublas/io.hpp>
-
+#include "distance-methods.H"
 using std::cout;
 using std::cerr;
 using std::endl;
 
 using namespace optimize;
 
-vector<double> get_post_rate_probs(const alignment& A,const substitution::MultiRateModel& SM,const SequenceTree& T) {
+vector<double> get_post_rate_probs(const alignment& A,const substitution::MultiModel& SM,const SequenceTree& T) {
 
   MatCache MC(T,SM);
 
-  const int nbins = SM.rates().size();
+  const int nbins = SM.n_base_models();
   valarray<double> f(nbins);
   
   for(int column =0;column<A.length();column++) {
@@ -38,7 +38,7 @@ vector<double> get_post_rate_probs(const alignment& A,const substitution::MultiR
     for(int r=0;r<nbins;r++)
       L[r] = SM.distribution()[r] * substitution::Pr(residues,
 						     T,
-						     SM.BaseModel(),
+						     SM.base_model(r),
 						     MC.transition_P(r)
 						     );
     // normalize rate likelihoods
@@ -60,10 +60,10 @@ class likelihood: public function {
 protected:
   alignment A;
   SequenceTree T;
-  substitution::MultiRateModel *smodel;
+  substitution::MultiModel *smodel;
 public:
   likelihood(const alignment& A1,
-		     const substitution::MultiRateModel& SM,
+		     const substitution::MultiModel& SM,
 		     const SequenceTree& T1)
     : A(A1),T(T1),smodel(SM.clone())
   { }
@@ -76,7 +76,7 @@ public:
   double operator()(const optimize::Vector&) const;
 
   branch_likelihood(const alignment& A1,
-		     const substitution::MultiRateModel& SM,
+		     const substitution::MultiModel& SM,
 		     const SequenceTree& T1)
     : likelihood(A1,SM,T1)
   { }
@@ -84,22 +84,22 @@ public:
 };
 
 double branch_likelihood::operator()(const optimize::Vector& v) const {
-  if (v.size() == T.branches())
+  if (v.size() == T.n_branches())
     ;
-  else if (v.size() == T.branches() + smodel->parameters().size()) {
+  else if (v.size() == T.n_branches() + smodel->parameters().size()) {
     vector<double> p(smodel->parameters().size());
     for(int i=0;i<p.size();i++)
-      p[i] = v[T.branches()+i];
+      p[i] = v[T.n_branches()+i];
     smodel->parameters(p);
   }
   else 
     std::abort();
 
   SequenceTree T2 = T;
-  for(int i=0;i<T.branches();i++) {
+  for(int i=0;i<T.n_branches();i++) {
     if (v[i] <= 0)
       return log_0;
-    T2.branch(i).length() = v[i];
+    T2.branch(i).set_length(v[i]);
   }
 
   MatCache MC(T2,*smodel);
@@ -107,22 +107,22 @@ double branch_likelihood::operator()(const optimize::Vector& v) const {
   return substitution::Pr(A,T2,*smodel,MC) + smodel->prior() + prior(T2,0.2);
 }
 
-double getSimilarity(double t,substitution::MultiRateModel& SM) {
+double getSimilarity(double t,substitution::MultiModel& SM) {
   double S = 0;
 
-  for(int r=0;r<SM.rates().size();r++) {
+  for(int r=0;r<SM.n_base_models();r++) {
     Matrix Q = SM.transition_p(t,r);
     double Sr = 0;
     for(int i=0;i<Q.size1();i++)
-      Sr += SM.BaseModel().frequencies()[i]*Q(i,i);
+      Sr += SM.base_model(r).frequencies()[i]*Q(i,i);
     S += Sr * SM.distribution()[r];
   }
   
   return S;
 }
 
-Matrix getSimilarity(const SequenceTree& T,substitution::MultiRateModel& SM) {
-  int n = T.leaves();
+Matrix getSimilarity(const SequenceTree& T,substitution::MultiModel& SM) {
+  int n = T.n_leaves();
   Matrix S(n,n);
 
   for(int i=0;i<n;i++)
@@ -182,26 +182,6 @@ Matrix getConserved(const alignment& A) {
       S(i,j) = getConserved(A,i,j);
 
   return S;
-}
-
-Matrix DistanceMatrix(const SequenceTree& T) {
-  const int n = T.leaves();
-  Matrix D(n,n);
-
-  for(int i=0;i<n;i++)
-    for(int j=0;j<i;j++)
-      D(i,j) = T.distance(i,j);
-
-  return D;
-}
-
-Matrix C(const Matrix& M) {
-  Matrix I = M;
-  for(int i=0;i<I.size1();i++)
-    for(int j=0;j<I.size2();j++)
-      I(i,j) = 1.0 - I(i,j);
-
-  return I;
 }
 
 vector<string> standardize_lengths(const vector<string>& labels,char padding=' ') {
@@ -283,7 +263,7 @@ int main(int argc,char* argv[]) {
     std::cout<<"distance = \n";
     print_lower(std::cout,T.get_sequences(),D)<<"\n";
 
-    substitution::MultiRateModel* full_smodel = get_smodel(args,A);
+    OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
     std::cout<<"Using substitution model: "<<full_smodel->name()<<endl;
 
     /* ----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- */
@@ -293,25 +273,25 @@ int main(int argc,char* argv[]) {
     double prior_rate=0;
     double post_rate=0;
     for(int i=0;i<prior_bin_f.size();i++) {
-      prior_rate += prior_bin_f[i]*full_smodel->rates()[i];
-      post_rate += post_bin_f[i]*full_smodel->rates()[i];
+      prior_rate += prior_bin_f[i]*full_smodel->base_model(i).rate();
+      post_rate += post_bin_f[i]*full_smodel->base_model(i).rate();
     }
 
-    for(int i=0;i<full_smodel->nrates();i++)
-      cout<<"    rate"<<i<<" = "<<full_smodel->rates()[i];
+    for(int i=0;i<full_smodel->n_base_models();i++)
+      cout<<"    rate"<<i<<" = "<<full_smodel->base_model(i).rate();
     cout<<endl<<endl;
 
     cout<<" Prior rate = "<<prior_rate<<endl;;
-    for(int i=0;i<full_smodel->nrates();i++)
+    for(int i=0;i<full_smodel->n_base_models();i++)
       cout<<"    prior_bin_f"<<i<<" = "<<prior_bin_f[i];
     cout<<endl<<endl;
 
     cout<<" Posterior rate = "<<post_rate<<endl;;
-    for(int i=0;i<full_smodel->nrates();i++)
+    for(int i=0;i<full_smodel->n_base_models();i++)
       cout<<"    post_bin_f"<<i<<" = "<<post_bin_f[i];
     cout<<endl<<endl;
 
-    for(int i=0;i<full_smodel->nrates();i++)
+    for(int i=0;i<full_smodel->n_base_models();i++)
       cout<<"    odds_ratio"<<i<<" = "<<post_bin_f[i]/prior_bin_f[i];
     cout<<endl<<endl;
 
@@ -322,19 +302,19 @@ int main(int argc,char* argv[]) {
     int delta=0;
     if (args["search"] == "model_parameters")
       delta = full_smodel->parameters().size();
-    optimize::Vector start(0.1,T2.branches()+delta);
-    for(int b=0;b<T.branches();b++)
+    optimize::Vector start(0.1,T2.n_branches()+delta);
+    for(int b=0;b<T.n_branches();b++)
       start[b] = T.branch(b).length();
-    for(int b=T.branches();b<start.size();b++)
-      start[b] = full_smodel->parameters()[b-T.branches()];
+    for(int b=T.n_branches();b<start.size();b++)
+      start[b] = full_smodel->parameters()[b-T.n_branches()];
     optimize::Vector end = search_gradient(start,score);
     //    optimize::Vector end = search_basis(start,score);
-    for(int b=0;b<T.branches();b++)
-      T2.branch(b).length() = end[b];
+    for(int b=0;b<T.n_branches();b++)
+      T2.branch(b).set_length(end[b]);
 
     std::cout<<"E T = "<<T2<<std::endl;
-    for(int b=T.branches();b<end.size();b++)
-      std::cout<<"   p"<<b-T.branches()<<" = "<<end[b];
+    for(int b=T.n_branches();b<end.size();b++)
+      std::cout<<"   p"<<b-T.n_branches()<<" = "<<end[b];
     std::cout<<std::endl;
 
     /* ------- Set up function to maximize -------- */
@@ -352,8 +332,6 @@ int main(int argc,char* argv[]) {
     print_lower(std::cout,T.get_sequences(),DistanceMatrix(T2))<<"\n\n";
     std::cout<<"%difference (from estimated tree) = \n";
     print_lower(std::cout,T.get_sequences(),C(S2))<<"\n\n";
-
-    delete full_smodel;
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
