@@ -638,10 +638,20 @@ void tree::swap_children(int n) {
 
 // recompute everything from new leaf names
 
-void tree::standardize(const vector<int>& lnames) {
+vector<int> tree::standardize() {
+  vector<int> lnames(leaves());
+  for(int i=0;i<lnames.size();i++)
+    lnames[i] = i;
+  return standardize(lnames);
+}
+
+  
+vector<int> tree::standardize(const vector<int>& lnames) {
 
   /********** Set the leaf names ***********/
   assert(lnames.size() == leaves());
+
+  vector<node*> old_names = names;
 
   /********** Change the topology **********/
   int newroot=-1;
@@ -651,7 +661,6 @@ void tree::standardize(const vector<int>& lnames) {
       newroot = i;
       break;
     }
-  assert(newroot != -1);
   reroot(newroot);
 
   /********** Input new leaf order *************/
@@ -666,4 +675,10 @@ void tree::standardize(const vector<int>& lnames) {
     if (names[i]->left->order > names[i]->right->order)
       swap_children(i);
   }
+
+  vector<int> mapping(old_names.size());
+  for(int i=0;i<mapping.size();i++)
+    mapping[i] = old_names[i]->name;
+
+  return mapping;
 }

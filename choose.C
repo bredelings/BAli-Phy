@@ -1,3 +1,4 @@
+#include <cassert>
 #include "choose.H"
 #include "rng.H"
 #include "logsum.H"

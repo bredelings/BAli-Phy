@@ -73,40 +73,6 @@ void alignment::delete_column(int column) {
   array.swap(array2);
 }
 
-// i -> mapping[i]
-void alignment::remap(const vector<int>& mapping) {
-  ublas::matrix<int> old_array = array;
-  for(int column=0;column<array.size1();column++) {
-    for(int i=0;i<sequences.size();i++)
-      array(column,mapping[i]) = old_array(column,i);
-  }
-
-  vector<sequence> old_order = sequences;
-  
-  for(int i=0;i<sequences.size();i++)
-    sequences[mapping[i]] = old_order[i];
-}
-
-void alignment::remap(const vector<string>& order) {
-  if (order.size() > sequences.size())
-    throw myexception("Too many sequences in tree");
-
-  vector<int> mapping(sequences.size());
-  for(int i=0;i<mapping.size();i++) {
-    int target = -1;
-    for(int j=0;j<order.size() and target == -1;j++) {
-      if (order[j] == sequences[i].name)
-	target = j;
-    }
-    if (target == -1)
-      throw myexception(string("Couldn't find sequence \"")+sequences[i].name+"\" in tree");
-    mapping[i] = target;
-  }
-
-  remap(mapping);
-}
-
-
 int alignment::seqlength(int i) const {
   int count =0;
   for(int column=0;column<length();column++) {
@@ -242,43 +208,6 @@ void alignment::gap_fixup(int n1,int n2,int m) {
   a g2 followed by a g1 @ "<<m<<std::endl;
 }
 
-//FIXME - make all internal nodes present - see how that does
-//FIXME - also try un-aligning everything - see if we can rediscover
-//        the right alignment
-//FIXME - make this not a member function
-void alignment::create_internal(const SequenceTree& T) {
-  remap(T.get_sequences());
-
-  resize(array.size1(),T.num_nodes()-1);
-
-  // Create Internal Nodes
-  for(int column=0;column< length();column++) {
-    vector<int> present_leaf(T.leaves());
-    for(int i=0;i<T.leaves();i++)
-      present_leaf[i] = not gap(column,i);
-    TreeFunc<int> present = mark_tree(present_leaf,T);
-    for(int i=T.leaves();i<array.size2();i++) {
-      if (present(i))
-	array(column,i) = alphabet::not_gap;
-      else
-	array(column,i) = alphabet::gap;
-    }
-  }
-
-  // Make sure there are no G2->G1 transitions
-  for(int b=0;b<T.branches();b++) {
-    int n1 = T.branch(b).parent();
-    int n2 = T.branch(b).child();
-
-    vector<int> state = get_path(*this,n1,n2);
-    for(int i=0;i<state.size()-1;i++) {
-      if (state[i] == 1 and state[i+1] == 2)
-	gap_fixup(n1,n2,i);
-    }
-  }
-
-}
-
 void alignment::print(std::ostream& file) const{
   const alphabet& a = get_alphabet();
   file<<length()<<endl;
@@ -297,16 +226,6 @@ void alignment::print(std::ostream& file) const{
     start = end;
     file<<endl<<endl;
   }
-#ifndef NDEBUG
-  for(int i=0;i<sequences.size();i++) {
-    vector<int> s;
-    for(int column=0;column<length();column++)
-      if (not gap(column,i))
-	s.push_back(array(column,i));
-
-    assert(s == sequences[i]);
-  }
-#endif
 }
 
 string shorten_name(const string& s,int good_length = 9) {
@@ -328,8 +247,17 @@ void alignment::print_phylip(std::ostream& file,bool othernodes) const {
   const alphabet& a = get_alphabet();
   file<<num_sequences()<<" "<<length()<<endl;
 
-  const int header_length = 15;
-  const int line_length = 70;
+  // Find length of longest name
+  int max_name_length=-1;
+  for(int i=0;i<sequences.size();i++)
+    if (sequences[i].name.size() > max_name_length)
+      max_name_length = sequences[i].name.size();
+
+  const int header_length = std::max(10,max_name_length+2);
+  const int line_length = std::max(70,header_length+60);
+  int nsequences = num_sequences();
+  if (not othernodes)
+    nsequences = nsequences/2+1;
 
   bool always_print_names = true;
 
@@ -337,9 +265,6 @@ void alignment::print_phylip(std::ostream& file,bool othernodes) const {
   while(pos<length()) {
     int start = pos;
     int end = pos + (line_length - header_length);
-    int nsequences = num_sequences();
-    if (othernodes)
-      nsequences = size2();
     for(int seq = 0;seq < nsequences;seq++) {
       string header = string(header_length,' ');
       if ((pos == 0 or always_print_names) and seq<num_sequences()) {
@@ -356,17 +281,6 @@ void alignment::print_phylip(std::ostream& file,bool othernodes) const {
     file<<endl<<endl;
     pos = end;
   }
-
-#ifndef NDEBUG
-  for(int i=0;i<sequences.size();i++) {
-    vector<int> s;
-    for(int column=0;column<length();column++)
-      if (not gap(column,i))
-	s.push_back(array(column,i));
-
-    assert(s == sequences[i]);
-  }
-#endif
 }
 
 void alignment::print_fasta(std::ostream& file) const {
@@ -381,17 +295,6 @@ void alignment::print_fasta(std::ostream& file) const {
       file<<endl;
     }
   }
-
-#ifndef NDEBUG
-  for(int i=0;i<sequences.size();i++) {
-    vector<int> s;
-    for(int column=0;column<length();column++)
-      if (not gap(column,i))
-	s.push_back(array(column,i));
-
-    assert(s == sequences[i]);
-  }
-#endif
 }
 
 vector<int> get_path(const alignment& A,int node1, int node2) {

@@ -109,15 +109,18 @@ int SequenceTree::index(const string& s) const {
   return -1;
 }
 
+vector<int> SequenceTree::standardize() {
+  return tree::standardize();
+}
 
-void SequenceTree::standardize(const vector<int>& lnames) {
+vector<int> SequenceTree::standardize(const vector<int>& lnames) {
   assert(lnames.size() == sequences.size());
 
   vector<string> old = sequences;
   for(int i=0;i<sequences.size();i++)
     sequences[lnames[i]] = old[i];
 
-  tree::standardize(lnames);
+  return tree::standardize(lnames);
 }
 
 

@@ -139,9 +139,12 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
   alignment A = old;
   A.changelength(newlength);
 
+  std::cerr<<"old = "<<old<<endl;
+
   int c1=0,c2=0,c3=0,c4=0,l=0;
   for(int column=0;column<A.length();column++) {
-    //    std::cout<<column<<" "<<c1<<" "<<c2<<" "<<c3<<" "<<c4<<endl;
+    std::cout<<column<<" "<<c1<<" "<<c2<<" "<<c3<<" "<<c4<<"  "<<lendl;
+
     assert(c1>=c2);
     assert(c3>=c4);
     assert(c1 <= subA1.size());
@@ -196,7 +199,7 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
       c1++;c2++;l++;
       assert(not all_gaps(A,column));
     }
-    //    std::cout<<column<<" "<<c1<<" "<<c2<<" "<<c3<<" "<<c4<<endl<<endl;
+    std::cout<<column<<" "<<c1<<" "<<c2<<" "<<c3<<" "<<c4<<endl<<endl;
     assert(not all_gaps(A,column));
   }
 
@@ -209,7 +212,6 @@ alignment construct(const alignment& old, const vector<int>& path, const valarra
   for(int i=0;i<A.size2();i++) 
     assert(A.seqlength(i) == old.seqlength(i));
 
-  //  std::cerr<<"old = "<<old<<endl;
   //  std::cerr<<"new = "<<A<<endl;  
   assert(valid(A));
 

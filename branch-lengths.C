@@ -20,14 +20,17 @@ void change_branch_length(const alignment& A, Parameters& Theta,int b) {
     double lL_2 = substitution(A,Theta2) + prior(Theta);
 
     // accept w/ probability (a2/a1)*(p21/p12)
+    bool success = false;
     if (myrandomf() < exp(lL_2 - lL_1)) {
       Theta=Theta2;
       std::cerr<<Theta2.T.branch(b).length()<<" "<<Theta.T.branch(b).length()<<endl;
       std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
-      
+      success = true;
     }
     else
       std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
+
+    record_move("length-sample",success);
 }
 
 void change_branch_length_and_T(alignment& A, Parameters& Theta,int b) {
@@ -49,14 +52,16 @@ void change_branch_length_and_T(alignment& A, Parameters& Theta,int b) {
       double lL_2 = substitution(A,Theta2) + prior(Theta);
       
       // accept w/ probability (a12/a21)*(p21/p12)
+      bool success = false;
       if (myrandomf() < exp(lL_2 - lL_1)) {
 	Theta=Theta2;
 	std::cerr<<Theta2.T.branch(b).length()<<" "<<Theta.T.branch(b).length()<<endl;
 	std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
 	
       }
-      else
+      else 
 	std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<"   ["<<lL_2-lL_1<<"]\n";
+      record_move("length-sample-non-negative",success);
     }
     // If the length is NOT positive, then propose a T change as well
     else {

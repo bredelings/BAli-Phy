@@ -17,11 +17,11 @@ all: sampler
 # try -fforce-addr
 
 #----------------- Definitions
-LANGO = fast-math unroll-loops prefetch-loop-arrays 
+LANGO = fast-math unroll-loops prefetch-loop-arrays abi-version=0
 DEBUG = pipe g  #pg
 DEFS = # NDEBUG 
 WARN = all no-sign-compare
-OPT =  malign-double mfpmath=sse msse2 march=pentium4 O3
+OPT =  malign-double mfpmath=sse msse2 march=pentium4
 LDFLAGS = # -pg # -static 
 LI=${CXX}
 
@@ -32,7 +32,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C node-sample.C branch-sample.C exponential.C \
           eigenvalue.C parameters.C likelihood.C mcmc.C topology-sample.C \
 	  choose.C sequencetree.C branch-lengths.C arguments.C \
-	  util.C randomtree.C alphabet.C smodel.C # map.C
+	  util.C randomtree.C alphabet.C smodel.C sampler.C # map.C
 LIBS = gsl gslcblas m
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 

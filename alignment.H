@@ -13,8 +13,6 @@ class alignment {
   
   void resize(int,int);
   void pad(int);
-  void remap(const vector<int>&);
-  void remap(const vector<string>&);
   void gap_fixup(int,int,int);
 
   void add_row(const vector<int>&);
@@ -22,6 +20,7 @@ public:
   int index(const string&) const;
 
   const sequence& seq(int i) const { return sequences[i];}
+  sequence& seq(int i) { return sequences[i];}
 
   // Load sequences into the alignment
   void add_sequence(const sequence&);
@@ -31,7 +30,6 @@ public:
   void load_phylip(const alphabet&,const std::string&);
   void load(const alphabet&,const std::string&);
 
-  void create_internal(const SequenceTree&);
   void print(std::ostream&) const;
   void print_fasta(std::ostream&) const;
   void print_phylip(std::ostream&,bool=false) const;
@@ -42,7 +40,7 @@ public:
   int& operator()(int l,int s) {return array(l,s); }
   const int& operator()(int l,int s) const {return array(l,s); }
 
-  int gap(int i,int j) const {return array(i,j)==alphabet::gap;}
+  bool gap(int i,int j) const {return array(i,j)==alphabet::gap;}
 
   alignment& operator=(const alignment&);
 
@@ -66,7 +64,7 @@ public:
 };
 
 inline std::ostream& operator<<(std::ostream& file,const alignment& A) {
-  A.print(file);
+  A.print_phylip(file,true);
   return file;
 }
 

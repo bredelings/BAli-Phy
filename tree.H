@@ -191,7 +191,8 @@ public:
 
   // These change don't change the tree itself, how it is stored/referenced
   void swap_children(int n);
-  void standardize(const vector<int>&);
+  vector<int> standardize();
+  vector<int> standardize(const vector<int>&);
 
   bool ancestor(int n1, int n2) const {return ancestors[n1][n2];}
   std::valarray<bool> partition(int n1,int n2) const;
@@ -267,7 +268,8 @@ public:
   const string& seq(int i) const {return sequences[i];}
   const vector<string>& get_sequences() const {return sequences;}
 
-  void standardize(const vector<int>&);
+  vector<int> standardize();
+  vector<int> standardize(const vector<int>&);
 
   int index(const string&) const;
 

@@ -75,6 +75,69 @@ void do_setup(Arguments& args,alignment& A,SequenceTree& T)
   }
   else 
     T.read(args["tree"]);
+
+  /*------ Link Alignment and Tree ----------*/
+
+  if (A.num_sequences() < T.leaves())
+    throw myexception(string("Tree has ") + convertToString(T.leaves()) + "leaves but Alignment only has " + convertToString(A.num_sequences()) + "sequences.");
+
+  vector<int> mapping(T.leaves());
+  for(int i=0;i<T.leaves();i++) {
+    int target = -1;
+    for(int j=0;j<T.leaves();j++) {
+      if (T.seq(i) == A.seq(j).name) {
+	target = j;
+	break;
+      }
+    }
+    if (target == -1)
+      throw myexception(string("Couldn't find sequence \"")+T.seq(i)+"\" in alignment");
+    mapping[i] = target;
+  }
+
+  T.standardize(mapping);
+
+  /*------- Fill in internal nodes ---------*/
+  if (A.num_sequences() == T.num_nodes() - 1)
+    ;
+  else if (A.num_sequences() == T.leaves()) {
+    sequence s(A.get_alphabet());
+    s.resize(A.length());
+    for(int column=0;column<A.length();column++)
+      s[column] = alphabet::not_gap;
+    for(int i=T.leaves();i<T.num_nodes()-1;i++)
+      A.add_sequence(s);
+  }
+  else if (A.num_sequences() > T.num_nodes())
+    throw myexception(string("More sequences than tree nodes!"));
+  else
+    throw myexception(string("Not enough ancestral sequences!"));
+
+
+  /*-------- Analyze 'internal'-------*/
+  if (args.set("internal")) {
+    if (args["internal"] == "+")
+      for(int column=0;column< A.length();column++) {
+	for(int i=T.leaves();i<A.size2();i++) 
+	  A(column,i) = alphabet::not_gap;
+      }
+    else if (args["internal"] == "search")
+      assert(0); // FIXME - not programmed yet
+    else if (args["internal"] == "guess") 
+      for(int column=0;column< A.length();column++) {
+	vector<int> present_leaf(T.leaves());
+	for(int i=0;i<T.leaves();i++)
+	  present_leaf[i] = not A.gap(column,i);
+	TreeFunc<int> present = mark_tree(present_leaf,T);
+	for(int i=T.leaves();i<A.size2();i++) {
+	  if (present(i))
+	    A(column,i) = alphabet::not_gap;
+	  else
+	    A(column,i) = alphabet::gap;
+	}
+      }
+  }
+
 }
 
 void do_showonly(const alignment& A,const Parameters& P) {
@@ -83,14 +146,14 @@ void do_showonly(const alignment& A,const Parameters& P) {
   double PT = prior(P.T,P.branch_mean);
   double PP = P.SModel().prior();
 
-  std::cerr<<"ln P(data,A,t,T,Theta) =  "<<PS + PA + PT + PP<<" = "
+  std::cout<<"ln P(data,A,t,T,Theta) =  "<<PS + PA + PT + PP<<" = "
 	   <<PS<<" + "
 	   <<PA<<" + "
 	   <<PT<<" + "
 	   <<PP<<endl<<endl;
 
-  std::cerr<<A<<endl<<endl;
-  std::cerr<<P.T<<endl<<endl;
+  std::cout<<A<<endl<<endl;
+  std::cout<<P.T<<endl<<endl;
 }
 
 
@@ -135,6 +198,8 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   /*-----------Load Stat Counters-------------*/
   move_stats.push_back(move_stat("t-sample-normal"));
   move_stats.push_back(move_stat("t-sample-branch-based"));
+  move_stats.push_back(move_stat("length-sample"));
+  move_stats.push_back(move_stat("length-sample-non-negative"));
 
 
   sampler.iterate(A,P,max_iterations);

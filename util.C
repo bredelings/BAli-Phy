@@ -27,3 +27,13 @@ string strip(const string& s,char c) {
 
   return s2;
 }
+
+
+vector<int> invert(const vector<int>& mapping) {
+  vector<int> imapping(mapping.size());
+
+  for(int i=0;i<imapping.size();i++)
+    imapping[mapping[i]] = i;
+
+  return imapping;
+}

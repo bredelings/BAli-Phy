@@ -29,4 +29,6 @@ std::vector<std::string> split(const std::string&,char);
 
 std::string strip(const std::string&,char);
 
+std::vector<int> invert(const std::vector<int>&);
+
 #endif

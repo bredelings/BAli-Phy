@@ -107,7 +107,7 @@ IndelModel1::IndelModel1(int maxlength,double LO,double LE)
   P(3,0) = log_0;
   P(3,1) = log_0;
   P(3,2) = log_0;
-  P(3,3) = log_0;
+  P(3,3) = 0;
 
   /* Chain with transitions to End state */
   Q = P;

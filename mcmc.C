@@ -27,77 +27,47 @@ void record_move(const string& s,bool success) {
   record_move(index,success);
 }
 
+alignment standardize(const alignment& A, const SequenceTree& T) {
+  alignment A2 = A;
+  SequenceTree T2 = T;
+  vector<int> mapping = T2.standardize();
+  vector<int> imapping = invert(mapping);
 
-// make a more condensed output format!
-// This method of printing alignments is too large
-void print_alignments(const alignment& A,const string& s1,const string& s2) {
-  int n1 = A.index(s1);
-  if (n1 != -1) return;
+  for(int i=0;i<A.num_sequences();i++) {
+    if (imapping[i] == i) continue;
 
-  int n2 = A.index(s2);
-  if (n2 != -1) return;
-
-  int pos1=0,new_pos1=0;
-  int pos2=0,new_pos2=0;
-  for(int column=0;column<A.length();column++) {
-    if (A(column,n1) == alphabet::gap and A(column,n2) == alphabet::gap) 
-      continue;
-
-    if (A(column,n1) != alphabet::gap) 
-      new_pos1++;
-    if (A(column,n2) != alphabet::gap) 
-      new_pos2++;
-
-    std::cout<<s1<<" "<<s2<<" :     "<<pos1<<" "<<pos2<<"   "<<new_pos1<<"   "<<new_pos2<<endl;
-	     
-    pos1 = new_pos1;
-    pos2 = new_pos2;
+    A2.seq(i) = A.seq(imapping[i]);
+    for(int column=0;column<A2.length();column++)
+      A2(column,i) = A(column,imapping[i]);
   }
+  return A2;
 }
 
-/* 
-  print_alignments(A,"CAR4081","consGenv");
-  print_alignments(A,"CAR4081","consAenv");
-  print_alignments(A,"CAR4081","consBenv");
-  print_alignments(A,"consGenv","consAenv");
-  print_alignments(A,"consGenv","consBenv");
-  print_alignments(A,"consAenv","consBenv");
-*/
 
-void print_alignments(const alignment& A,const Parameters& Theta) {
-  total_samples++;
-
-  print_alignments(A,"H_sapiens","Sulfaci1");
-  print_alignments(A,"H_sapiens","Halomari");
-  print_alignments(A,"H_sapiens","Esch_coli3");
-  print_alignments(A,"Sulfaci1","Halomari");
-  print_alignments(A,"Sulfaci1","Esch_coli3");
-  print_alignments(A,"Halomari","Esch_coli3");
-  
-}
-
-inline int aid(const alignment& A) {
-  int id=0;
-  for(int species=0;species < A.size2();species++) {
-    for(int column=0;column < A.length();column++) {
-      id = A(column,species)+ id*684822857;
-    }
-  }
-  return id;
-}
-
-void print_stats(std::ostream& o,const alignment& A,const Parameters& Theta,
+void print_stats(std::ostream& o,const alignment& A,const Parameters& P,
 		 double probability(const alignment&,const Parameters&)) {
-  o<<endl<<" old  ["<<probability2(A,Theta)<<": "<<prior_internal(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl
-   <<" HMM  ["<<probability3(A,Theta)<<": "<<prior_HMM(A,Theta)<<" + "<<substitution(A,Theta)<<"]"<<endl<<endl;
+  o<<endl<<" old  ["<<probability2(A,P)<<": "<<prior_internal(A,P)<<" + "<<substitution(A,P)<<"]"<<endl
+   <<" HMM  ["<<probability3(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution(A,P)<<"]"<<endl<<endl;
   
-  o<<A<<endl<<endl;
+  o<<standardize(A,P.T)<<endl<<endl;
 
-  o<<"tree = "<<Theta.T<<endl<<endl;
+  o<<"tree = "<<P.T<<endl<<endl;
 
-  for(int i=0;i<Theta.SModel().parameters().size();i++)
-    o<<"    p"<<i<<" = "<<Theta.SModel().parameters()[i];
+  for(int i=0;i<P.SModel().parameters().size();i++)
+    o<<"    p"<<i<<" = "<<P.SModel().parameters()[i];
   o<<endl<<endl;
+
+  // The leaf sequences should NOT change during alignment
+#ifndef NDEBUG
+  for(int i=0;i<P.T.leaves();i++) {
+    vector<int> s;
+    for(int column=0;column<A.length();column++)
+      if (not A.gap(column,i))
+	s.push_back(A(column,i));
+
+    assert(s == A.seq(i));
+  }
+#endif
 }
 
 valarray<double> autocorrelation(valarray<double> v) {
@@ -149,7 +119,7 @@ void MCMC::disable(const string& s) {
   recalc();
 }
 
-void MCMC::sample(alignment& A,Parameters& Theta) const {
+void MCMC::sample(alignment& A,Parameters& P) const {
   double r = myrandomf()*sum_enabled_weights;
 
   double sum = 0;
@@ -161,7 +131,7 @@ void MCMC::sample(alignment& A,Parameters& Theta) const {
     if (r<sum) break;
   }
   assert(i < moves.size());
-  (moves[i].m)(A,Theta);
+  (moves[i].m)(A,P);
 }
 
 void MCMC::add(move m,double weight,const string& keys) {
@@ -171,30 +141,33 @@ void MCMC::add(move m,double weight,const string& keys) {
   moves.push_back(mi);
 }
 
-void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
-  const SequenceTree& T = Theta.T;
+void MCMC::iterate(alignment& A,Parameters& P,const int max) {
+  const SequenceTree& T = P.T;
   SequenceTree ML_tree = T;
   alignment ML_alignment = A;
   bool ML_printed = true;
-  
-  A.create_internal(T);
 
+  // make sure that the Alignment and Tree are linked
+  assert(A.num_sequences() == T.num_nodes()-1);
+  for(int i=0;i<T.leaves();i++)
+    assert(T.seq(i) == A.seq(i).name);
+  
   std::cout<<"rate matrix = \n";
-  for(int i=0;i<Theta.get_alphabet().size();i++) {
-    for(int j=0;j<Theta.get_alphabet().size();j++) 
-      std::cout<<Theta.SModel().rates()(i,j)<<" ";
+  for(int i=0;i<P.get_alphabet().size();i++) {
+    for(int j=0;j<P.get_alphabet().size();j++) 
+      std::cout<<P.SModel().rates()(i,j)<<" ";
     std::cout<<endl;
   }
   std::cout<<endl;
   std::cout<<"frequencies = ";
-  for(int i=0;i<Theta.get_alphabet().size();i++) {
-    std::cout<<Theta.SModel().frequencies()[i]<<" ";
+  for(int i=0;i<P.get_alphabet().size();i++) {
+    std::cout<<P.SModel().frequencies()[i]<<" ";
   }
   std::cout<<endl;
   std::cout<<endl;
   
   std::cout<<"Initial Alignment = \n";
-  print_stats(std::cout,A,Theta,probability);
+  print_stats(std::cout,A,P,probability);
     
   std::cout<<"Initial Tree = \n";
   std::cout<<T<<endl<<endl;
@@ -203,7 +176,7 @@ void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
   const int start_after = 0;// 600*correlation_time;
   int total_samples = 0;
 
-  double p=probability(A,Theta);
+  double p=probability(A,P);
   double ML_score = p;
   double new_p=0;
 
@@ -216,18 +189,18 @@ void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
     if (iterations > start_after) {
       if (iterations%correlation_time == 0) {
 	std::cout<<"iterations = "<<iterations<<endl;
-	print_stats(std::cout,A,Theta,probability);
+	print_stats(std::cout,A,P,probability);
 	std::cout<<endl<<endl;
       }
     }
 
     /*--------------------- get new position -------------------*/
     alignment A2 = A;
-    Parameters Theta2 = Theta;
+    Parameters P2 = P;
 
-    sample(A2,Theta2);
+    sample(A2,P2);
 
-    new_p = probability(A2,Theta2);
+    new_p = probability(A2,P2);
 
     /*---------------------- estimate MAP ----------------------*/
     if (new_p > ML_score) {
@@ -249,8 +222,8 @@ void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
     /*----------------- print diagnostic output -----------------*/
 
     if (iterations %200 == 0 or std::abs(p - new_p)>12) {
-      print_stats(std::cerr,A,Theta,probability);
-      print_stats(std::cerr,A2,Theta2,probability);
+      print_stats(std::cerr,A,P,probability);
+      print_stats(std::cerr,A2,P2,probability);
 
       A2.print_fasta(std::cerr);
 
@@ -264,7 +237,7 @@ void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
 
     /*------------------ move to new position -------------------*/
     A = A2;
-    Theta = Theta2;
+    P = P2;
     p = new_p;
   }
   std::cerr<<"total samples = "<<total_samples<<endl;
