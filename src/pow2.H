@@ -1,0 +1,31 @@
+#ifndef POW2_H
+#define POW2_H
+
+#include <cmath>
+#include <cstdlib>
+
+namespace fp_scale {
+
+  const unsigned max = 50;
+  const unsigned shift = max;
+
+  extern double table[max*2+1];
+
+  inline double pow2(int i) {
+    if (std::abs(i) > max)
+      return pow(2.0,i);
+    else
+      return table[i+shift];
+  }
+
+  void initialize();
+
+  // 11 bits for exponent in double precision
+  // 10 bits for negative exponents: exponent range in [0,1024)
+  // 9 bits usable if we keep at half the exponent range: [0,512) 
+  const double cutoff = 1.0e-154;  // 2**-512 == 10**-154
+}
+
+using fp_scale::pow2;
+
+#endif
