@@ -3,6 +3,10 @@
 #include <cmath>
 #include <valarray>
 
+// recalculate a likelihood immediate afterwards, and see if we get the same answer...
+// perhaps move the collection root node one branch away?
+// then we have to do re-validation...
+
 using std::valarray;
 
 // This file assumes that 
@@ -15,75 +19,106 @@ using std::valarray;
 // * 
 namespace substitution {
 
-  // 1. make an inner 'peel' that <distributions> as a parameter
-  //   a. this contains the info from 'residues' and 'group'
-  // 2. alter 'peel' to go over the whole tree
-  //   a. to do half the tree, only send in half the info
 
-  // (dist.size()==0) does not mean "gap", but means no info so far.
+  // Structure for cached likelihoods:
+  // LikelihoodCache[column][rate](branch,letter)
+  //  Question: should have the matrix be per-rate, or per-branch? (?per-rate?)
+
+  typedef vector< Matrix > Column_Likelihood_Cache_t;
+  typedef vector< ColumnLikelihoodCache_t > Likelihood_Cache_t;
+
+  //  The Matrix will be twice the size, since it will have results for each branch in each direction
+
+  // directed branch b_ which goes from n1->n2 will have index 'b' if n2 > n1, otherwise 'b+B'
 
   // If we are going to return distributions(root), then we must make sure
   //  that there is no information there from the WRONG side of the tree
 
-
   // things to do:  (look at Sampler Todo.sxw)
-  // 1. Make the distributions(i) never change size - use a vector<int> or vector<bool>
-  //    to store whether or not things have information.
   // 2. Then separate out part of the routine as an inline function, to which 'distributions'
   //    is passed.   (change 'distributions' into a matrix?)
   // 3. Make the 'branches' array not depend on 'group'...
   //    In the common case (doing the full tree) this might be a speedup...
 
-  /// Actually propogate info along branches
 
-  inline void peel(const vector<int>& branches, valarray<bool>& used,
+
+
+  // Changes:
+  // 1. no longer using used[] array to keep track of .... ???
+  // 2. we pass in info about the direction of the branch -> b+B means reversed b.
+  // 3. when we compute the branch-end distribution, 
+  //    a) we don't multiply.
+  //    b) Instead we multiply to find the START, if necessary.
+  //    c) To get the root distribution, we merge THREE branch distributions or ONE
+  //    d) And if there is a letter at the root, the we condition on that, as well
+
+
+  struct peeling_info {
+    int b_;
+    int b1_;
+    int b2_;
+    int child;
+    peeling_info(int x, int y, int z, int w): b_(x),b1_(y), b2_(z_), child(w) {}
+  };
+
+
+  /// Peel along each branch in work-list @branches 
+  inline void peel(const vector<peeling_info>& branches,
 		   Matrix& distributions,
-		   const vector<int>& residues, const tree& T, 
-		   const vector<Matrix>& transition_P,int root) 
+		   const vector<int>& residues,
+		   const vector<Matrix>& transition_P)
   {
+    // The number of directed branches is twice the number of undirected branches
+    const int B     = distributions.size1()/2;
     const int asize = distributions.size2();
 
     for(int i=0;i<branches.size();i++) {
-      int b = branches[i];
-      int child = T.branch(b).child();
-      int parent = T.branch(b).parent();
-      
-      // Are we going up or down the branch?
-      if (T.ancestor(child,root))
-	std::swap(child,parent);
+      // Get info 
+      int b_     = branches[i].b_;      // directed branch from source -> target
+      int b1_    = branches[i].b1_;     // directed branch from n1     -> source, -1 if leaf(source)
+      int b2_    = branches[i].b2_;     // directed branch from n2     -> source, -1 if leaf(source)
+      int source = branches[i].child_;  // = T.directed_branch(b_).child();
 
-      // Skip if no info going out
-      if (not used[child]) continue;
+      // Propogate info along branch - doesn't depend on direction of b
+      const Matrix& Q = transition_P[b_%B];
 
-      // Propogate info along branch
-      const Matrix& Q = transition_P[b];
-      if (alphabet::letter(residues[child])) 
-	for(int i=0;i<asize;i++)
-	  distributions(parent,i) *= Q(i,residues[child])*distributions(child,residues[child]);
+      if (b1 < 0) {
+	// compute the distribution at the target (parent) node - single letter
+	if (alphabet::letter(residues[source]))
+	  for(int i=0;i<asize;i++)
+	    distributions(b_,i) = Q(i,residues[source]);
+	// compute the distribution at the target (parent) node - wildcard
+	else
+	  for(int i=0;i<asize;i++)
+	    distributions(b_,i) = 1.0;
+      }
       else {
+	// cache the source distribution, or not?
+	const int scratch = distributions.size1()-1;
+	for(int j=0;j<asize;j++)
+	  distributions(scratch,j) = distributions(b1_,j)*distributions(b2_,j);
+
+	// compute the distribution at the target (parent) node - multiple letters
 	for(int i=0;i<asize;i++) {
 	  double temp=0;
 	  for(int j=0;j<asize;j++)
-	    temp += Q(i,j)*distributions(child,j);
-	  distributions(parent,i) *= temp;
+	    temp += Q(i,j)*distributions(scratch,j);  // cache, or no cache?
+	  distributions(b_,i) = temp;
 	}
       }
 
-      // Update info at parent
-      used[parent] = true;
     }
   }
 
-  //  inline vector<int> get_branches(const tree& T, int root) __attribute((always_inline))
-
-  /// Compute an ordered list of branches to process
-  inline vector<int> get_branches(const tree& T, int root) {
+  /// Compute an ordered list of branches to processn
+  inline vector<peeling_info> get_branches(const tree& T, int root, const valarray<bool>& up_to_date,
+					   const valarray<bool>& group) {
 
     //FIXME - walk up the tree from peeling 'root' to the tree root, 
     // instead of computing branches2 and using 'reverse'
-    vector<int> branches1;
+    vector<peeling_info> branches1;
     branches1.reserve(T.num_nodes());
-    vector<int> branches2;
+    vector<peeling_info> branches2;
     branches2.reserve(T.num_nodes());
 
     for(int i=0;i<T.num_nodes()-1;i++) {
@@ -97,14 +132,23 @@ namespace substitution {
 	int parent = T[child].left();
 	if (not T.ancestor(parent,root))
 	  parent = T[child].right();
-	int b = T.branch_up(parent);
+	int b_  = T.directed_branch(child,parent);
+	int b1_,b2_;
+	T.get_branches_in(b_,b1_,b2_);
 
-	branches2.push_back(b);
+	if (not up_to_date[b_])
+	  branches2.push_back(peeling_info(b_,b1_,b2_,child));
       }
       // otherwise propagate up to a node that is >= the root
       else {
-	int b = T.branch_up(child);
-	branches1.push_back(b);
+	int parent = T[child].parent();
+	int b_ = T.directed_branch(child,parent);
+	int b_  = T.directed_branch(child,parent);
+	int b1_,b2_;
+	T.get_branches_in(b_,b1_,b2_);
+
+	if (not up_to_date[b_])
+	  branches1.push_back(peeling_info(b_,b1_,b2_,child));
       }
     }
     // if (branches2.size()) {}
@@ -112,6 +156,36 @@ namespace substitution {
     branches1.insert(branches1.end(),branches2.begin(),branches2.end());
   
     return branches1;
+  }
+
+  valarray<double> get_root_distribution(const vector<int>& residues, const Matrix& distributions,
+					 const tree& T,int root) {
+    const int asize = distributions.size2();
+
+    valarray<double> distribution(asize);
+    int b1_;
+    int b2_;
+    int b3_;
+
+    // get the branches;
+
+    for(int i=0;i<asize;i++)
+      distribution[i] = distributions(b1_,i);
+
+    if (b2_ >= 0)
+      for(int i=0;i<asize;i++)
+	distribution[i] *= distributions(b2_,i);
+
+    if (b3_ >= 0)
+      for(int i=0;i<asize;i++)
+	distribution[i] *= distributions(b3_,i);
+
+    if (alphabet::letter(residues[root]))
+      for(int i=0;i<asize;i++)
+	if (i!=root)
+	  distribution[i] == 0;
+
+    return distribution;
   }
 
 
@@ -129,11 +203,18 @@ namespace substitution {
 			const vector<Matrix>& transition_P,int root, const valarray<bool>& group) {
     const alphabet& a = SModel.Alphabet();
 
-    /******* Put the info from the letters into the distribution *******/
+    // Allocate Matrix and mark all branches out of date
+    Matrix distributions(2*T.n_branches()+1,a.size());
+    vector<bool> up_to_date(2*T.n_branches(),false);
+
+    // how to deal with letters outside the group?
+
+    // how to deal with gaps?
+
+    //------- Put the info from the letters into the distribution -------//
     bool any_letters = false;
 
     valarray<bool> used(false,T.num_nodes()-1);
-    Matrix distributions(T.num_nodes()-1,a.size());
 
     for(int i=0;i<T.num_nodes()-1;i++) {
       if (alphabet::letter(residues[i]) and group[i]) {
@@ -146,26 +227,17 @@ namespace substitution {
 	  distributions(i,j) = 0;
 	distributions(i,residues[i]) = 1;
       }
-      // If we always replaced unused nodes instead of multiplying, we could remove this
-      else {
-	for(int j=0;j<a.size();j++)
-	  distributions(i,j) = 1;
-      }
     }
 
-    vector<int> branches = get_branches(T,root);
+    vector<peeling_info> branches = get_branches(T,root,up_to_date,group);
 
-    peel(branches,used,distributions,residues,T,transition_P,root);
+    peel(branches,distributions,residues,transition_);
 
     //This can only happen if none of our nodes has info
     assert(used[root] or not any_letters);
 
-    /*----------- return the result ------------------*/
-    //FIXME - filling this valarray is costing us 2% of the CPU time!
-    valarray<double> result(a.size());
-    for(int i=0;i<a.size();i++)
-      result[i] = distributions(root,i);
-    return result;
+    //----------- return the result ------------------//
+    return get_root_distribution(residues,distributions,T,root);
   }
 
   double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
