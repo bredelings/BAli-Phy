@@ -334,15 +334,15 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   // positional options
   positional_options_description p;
-  p.add("align", -1);
+  p.add("align", 1);
   
   variables_map args;     
   store(command_line_parser(argc, argv).
 	    options(all).positional(p).run(), args);
-  // store(parse_command_line(argc, argv, desc), args);
   notify(args);    
 
   if (args.count("help")) {
+    cout<<"Usage: bali-phy <sequence-file> [OPTIONS]\n";
     cout<<all<<"\n";
     exit(0);
   }
