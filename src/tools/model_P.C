@@ -137,7 +137,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: model_P [OPTIONS]\n";
+    cout<<"Usage: model_P [OPTIONS] < in-file\n";
     cout<<all<<"\n";
     exit(0);
   }
