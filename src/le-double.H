@@ -118,7 +118,7 @@ public:
     m *= y.m;
     e += y.e;
     if (m < 0.5) {
-      if (m==0)     // we need this to correctly multiple by zero
+      if (m==0)     // we need this to correctly multiply by zero
 	e = INT_MIN;
       else {
 	m *= 2;
