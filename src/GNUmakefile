@@ -164,7 +164,7 @@ tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 test-smodel: alignment.o alphabet.o sequence.o arguments.o tree.o sequencetree.o util.o \
 	setup-smodel.o smodel.o randomtree.o model.o sequence-format.o rates.o \
 	probability.o rng.o setup-smodel.o exponential.o eigenvalue.o alignment-util.o \
-	setup.o	imodel.o ${LINKLIBS}
+	setup.o	imodel.o alignment-random.o ${LINKLIBS}
 
 tools/cut-range: arguments.o util.o
 
