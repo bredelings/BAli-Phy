@@ -5,11 +5,15 @@ LI=${CXX}
 EXACTFLAGS = -pipe
 
 LANGO   = fast-math tracer prefetch-loop-arrays omit-frame-pointer
-DEBUG   = # g3 #pg 
+DEBUG   = # g3
 DEFS    = NDEBUG_UBLAS NDEBUG_DP NDEBUG
 WARN    = all no-sign-compare overloaded-virtual strict-aliasing
-OPT     = march=pentium4 O3
-LDFLAGS = #-pg -static
+OPT     = march=${ARCH} O3
+LDFLAGS = 
+
+LDFLAGS += $(if ${STATIC},, -static)
+LDFLAGS += $(if ${PROF},, -pg)
+DEBUG   += $(if ${PROF},, pg)
 
 #------------------- Main 
 PROGNAME = bali-phy
@@ -25,8 +29,10 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 
 LIBS = gsl gslcblas m 
 LINKLIBS = ${LIBS:%=-l%}
+.LIBPATTERNS = $(if ${STATIC},lib%.a,lib%.so lib%.a)
 
 ${PROGNAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
+# 	@echo ${.LIBPATTERNS}
 
 tools/model_P: tools/statistics.o rng.o arguments.o ${LINKLIBS} 
 
@@ -51,10 +57,10 @@ tools/alignment-translate: alignment.o alphabet.o sequence.o arguments.o sequenc
 tools/findalign: alignment.o alphabet.o arguments.o sequence.o tools/alignmentutil.o \
 	rng.o ${LINKLIBS} util.o sequence-format.o
 
-tools/treecount: tree.o sequencetree.o arguments.o util.o rng.o tools/statistics.o ${LIBS:%=-l%}
+tools/treecount: tree.o sequencetree.o arguments.o util.o rng.o tools/statistics.o ${LINKLIBS}
 
 tools/tree-dist-compare: tree.o sequencetree.o tools/tree-dist.o arguments.o util.o \
-	 rng.o tools/statistics.o ${LIBS:%=-l%}
+	 rng.o tools/statistics.o ${LINKLIBS}
 
 tools/tree-dist-autocorrelation: tree.o sequencetree.o arguments.o tools/tree-dist.o
 
@@ -68,13 +74,13 @@ tools/tree-reroot: tree.o sequencetree.o arguments.o
 
 tools/srq-to-plot: arguments.o
 
-tools/srq-analyze: arguments.o rng.o tools/statistics.o ${LIBS:%=-l%}
+tools/srq-analyze: arguments.o rng.o tools/statistics.o ${LINKLIBS}
 
 tools/make_random_tree: tree.o sequencetree.o arguments.o util.o\
-	 rng.o  ${LIBS:%=-l%}
+	 rng.o  ${LINKLIBS}
 
 tools/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
-	rng.o util.o sequence-format.o ${LIBS:%=-l%}
+	rng.o util.o sequence-format.o ${LINKLIBS}
 
 tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \
@@ -82,12 +88,12 @@ tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	dpmatrix.o choose.o tools/optimize.o inverse.o setup.o rates.o matcache.o \
 	sequence-format.o randomtree.o ${LINKLIBS}
 
-tools/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
+tools/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 
 tools/truckgraph2: alignment.o arguments.o alphabet.o sequence.o util.o \
 		tools/alignmentutil.o rng.o ${LINKLIBS}
 
-tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
+tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 
 #------------------- End
 
