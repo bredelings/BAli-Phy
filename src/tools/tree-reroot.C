@@ -14,9 +14,8 @@ int main(int argc,char* argv[]) {
     if (not args.set("tree"))
       throw myexception("Tree file not specified! (tree=<filename>)");
     
-    RootedSequenceTree RT;
-    RT.read(args["tree"]);
-    SequenceTree T = remove_root( RT );
+    SequenceTree T;
+    T.read(args["tree"]);
     
     if (not args.set("root"))
       throw myexception("new root not specified! (root=<sequence name>)");
