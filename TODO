@@ -1,0 +1,8 @@
+ * write sample_node_multi, and convert sample_node and sample_topology_SPR_fgaps
+   to use it.
+ * fix bandwidth code...
+ * put boost code into include directory...
+ * make a 'src' directory...?
+ * figure out how to use CVS
+ * speed up branch length calculations - 
+ * CHECK acceptance/rejection ratios - alter things.

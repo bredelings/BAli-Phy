@@ -1,0 +1,76 @@
+Changes in 1.8.13:
+ * [BUGFIX] Our branch length proposal was biased upwards! Fixed.
+ * [CHANGE] Sanitize move attributes
+ * [CHANGE] Make 'gaps=star' automatically disable conflicting moves.
+ * [CHANGE] Print out weights
+ * [DEBUG]  In debug mode, check that our cached transition matrices
+            are correct.
+
+Changes in 1.8.12:
+ * [BUGFIX] Make tree operator=(*this) do nothing.
+ * Store partial emission probabilities in Matrix instead of vector<
+   valarray<double> >.
+ * Compute and cache emission probabilities e(i,j)
+ * Alter s2_sub to reduce the number of operations needed to compute
+   e(i,j)
+
+Changes in 1.8.11:
+ * Compute GQ probabilities using new State-Reduction (SR) algorithm
+ * Add new routine logdiff(x,y) = log(exp(x)-exp(y))
+ * Unify several routines to just call sample_two_nodes_multi()
+ * Unify several routines to just call sample_tri_multi()
+
+Changes in 1.8.9:
+ * Change the name 'sampler' to 'bali-phy'.
+ * [CHANGE] Further improve and unify loading of alignments w/ and w/o
+            internal nodes.
+ * [CHANGE] Update alignment-blame and make it run again
+ * [CHANGE] Check that target matches samples!
+ * Put debugging output from optimize.C under #ifndef NDEBUG
+ * [CHANGE] Don't complain about missing letters while trying to
+            determine the alphabet.
+ * [BUGFIX] Fix tree_sample::supports_topology when topology NEVER
+   occurs
+
+Changes in 1.8.8: 
+ * [FEATURE] Change randomize_alignment to be useable with large
+             number of taxa.
+ * [BUGFIX] Change topology branch score by factor of 2
+ * [CHANGE] Make alignments print only every 10 iterations to decrease
+            file size.
+ * [CHANGE] Improve and unify loading of alignments w/ and w/o
+            internal nodes
+ * [CHANGE] Check that internal node states are not letters, and are
+            consistent when loading alignments.
+ * [CHANGE] Change mode of kappa distribution to 2, and increase
+            variance.
+ * [CHANGE] Change kappa initial value to 2.
+ * [CHANGE] Improve tree-dist-compare
+ * move calculations of likelihoods on half-trees to alignment-sums.C
+ * remove move slide_branch_and_T
+ * break off part of class HMM into class DPengine
+ * break off part of hmm.H into dp-engine.H
+ * remove TreeFunc - it wasn't really used
+
+Changes in 1.8.7:
+ * [FEATURE] Throw an exception if we set a parameters twice on the
+             command line 
+ * [FEATURE] New tool tree-dist-compare.C, new file tree-dist.C
+ * [BUGFIX]  We accidentally changed SPR_and_A to SPR_and_nodes in
+             1.8.6. Change it back! 
+ * [BUGFIX] Correctly print the branch length for the highest numbered
+            branch.
+ * [BUGFIX] The "branch score" distance was broken
+
+Changes in 1.8.6
+ * [BUGFIX] remember to recalc() the branches that SPR changes!
+ * [CHANGE] Change branch_mean proposals to log scale
+ * [CHANGE] Change kappa,omega proposals to log scale in HKY and
+            YangCodonModel.
+
+
+Changes in 1.8.5:
+ * [BUGFIX] Con't crash when a MCMC MoveEach has no enabled moves
+            for an arg.  Instead, assert.
+ * [CHANGE] Run the tree moves twice every iteration....
+ * [CHANGE] Run SPR more often

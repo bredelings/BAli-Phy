@@ -35,7 +35,7 @@ LANGO = fast-math  tracer prefetch-loop-arrays omit-frame-pointer # profile-use
 DEBUG = pipe # g3 #gdwarf-2 #pg 
 EXACTFLAGS =  # --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
 DEFS =   NDEBUG NDEBUG_DP #__NO_MATH_INLINES # USE_UBLAS
-WARN = all no-sign-compare overloaded-virtual # effc++
+WARN = all no-sign-compare overloaded-virtual effc++
 OPT =  march=pentium4 O3 # malign-double
 LDFLAGS = # -fprofile-generate #-pg # -static
 LI=${CXX}

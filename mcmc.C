@@ -17,7 +17,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
 		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment) {
   
   o<<endl;
-  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
+  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]"<<endl;
   o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
   o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
   o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
@@ -532,8 +532,6 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   ofstream pI_stream("pI");
   ofstream map_stream("MAP");
   ofstream Pr_stream("Pr");
-
-  print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag);
 
   //---------------- Run the MCMC chain -------------------//
 
