@@ -433,7 +433,10 @@ namespace substitution {
     for(int i=0;i<ops.size();i++)
       peel_branch(ops[i],cache,A,T,MC,P.SModel());
 
-    //    std::clog<<"Peeled on "<<ops.size()<<" branches.\n";
+#ifndef NDEBUG
+    std::clog<<"Peeled on "<<ops.size()<<" branches.\n";
+#endif
+
     return (ops.size() > 0);
   }
 
