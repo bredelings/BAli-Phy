@@ -97,7 +97,7 @@ namespace substitution {
     }
     double pdf(double x,double) const {if (x < 0 or x > 2) return 0; else return 0.5;};
 
-    efloat_t prior() const { return log(0.5);}
+    efloat_t prior() const { return 0.5;}
 
     void fiddle() {}
 
