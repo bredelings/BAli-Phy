@@ -353,14 +353,15 @@ int main(int argc,char* argv[])
     vector<string> topologies;
     for(int j=0;j<tree_dists.size();j++) {
 
-      for(int i=0;topologies.size() < args["map-trees"].as<int>() ;i++) {
+      for(int i=0;i < args["map-trees"].as<int>() ;i++) 
+      {
+	if (i >= tree_dists[j].topologies.size()) continue;
 
-	if (i < tree_dists[j].topologies.size()) {
-	  string t = tree_dists[j].topologies[tree_dists[j].order[i]].topology;
+	string t = tree_dists[j].topologies[tree_dists[j].order[i]].topology;
 
-	  if (not includes(topologies,t))
-	    topologies.push_back(t);
-	}
+	if (not includes(topologies,t))
+	  topologies.push_back(t);
+
       }
     }
 
