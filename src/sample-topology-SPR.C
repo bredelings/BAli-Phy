@@ -23,12 +23,10 @@ bool sample_SPR_and_A(alignment& A,Parameters& P,vector<Parameters>& p,int n1, i
   bool success = sample_tri_multi(A,p,nodes,true,true);
   valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
 
-  // back out if the new tree topology make some constraints impossible
-  if ((s1 and not s2).sum())
-    A = A0;
-  else
-    P = p[0];
+  P = p[0];
 
+  // If the new topology conflicts with the constraints, then it should have P=0
+  // and therefore not be chosen.  So the following SHOULD be safe!
   report_constraints(s1,s2);
 
   return success;
