@@ -219,7 +219,7 @@ bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Paramete
     CM = &Matrices3;
     CA = &A3;
     CP = &P3;
-    nodes_new = nodes2;
+    nodes_new = nodes3;
   }
 
 #ifndef NDEBUG_DP

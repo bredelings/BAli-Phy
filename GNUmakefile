@@ -31,13 +31,13 @@ all: sampler
 #-mfpmath=sse,387 ?
 # sched2-use-traces move-all-moveables reduce-all-givs unroll-loops rename-registers peel-loops
 #----------------- Definitions
-LANGO = fast-math  tracer  prefetch-loop-arrays omit-frame-pointer unswitch-loops
+LANGO = fast-math  #tracer  prefetch-loop-arrays omit-frame-pointer unswitch-loops
 DEBUG = #pg #g3
 # EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
 EXACTFLAGS = -pipe --param inline-unit-growth=300  --param large-function-growth=300
 DEFS =  NDEBUG_UBLAS NDEBUG_DP NDEBUG # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
-OPT =  march=pentium4 O3 # malign-double msse mmmx msse2 
+OPT =  march=pentium4 #O3 # malign-double msse mmmx msse2 
 LDFLAGS = #-pg # -static 
 LI=${CXX}
 
