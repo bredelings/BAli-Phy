@@ -24,6 +24,7 @@ double probability3(const alignment& A,const Parameters& P) {
 /// f(x) = exp(-x/mu)/mu   g(y) = exp(-(exp(y)-delta)/mu)/mu * exp(y)
 double exp_exponential_log_pdf(double y, double mu, double delta) {
   double x = exp(y)-delta;
+  assert(x >= 0);
   return -log(mu) -x/mu + y;
 }
 
