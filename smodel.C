@@ -87,6 +87,7 @@ namespace substitution {
     kappa(k);
   }
 
+  /// return the LOG of the prior
   double HKY::prior() const {
     return log(gsl_ran_lognormal_pdf(kappa(),0,0.1));
   }

@@ -7,18 +7,49 @@
 #include "util.H"
 #include "arguments.H"
 #include "bootstrap.H"
+#include "statistics.H"
 
-FIXME - needs to include statistics.H, and change Pr_statistic ->statistics::Pr
+using namespace std;
 
-vector<int> confidence_interval(const valarray<double>& sample,double P,int n=10000,int blocksize=100) {
-  valarray<double> values = bootstrap_apply<bool,double>(sample,Pr_statistic,n,i);
+vector<double> confidence_interval(const valarray<bool>& sample,
+				   double (*statistic)(const valarray<bool>&),
+				   double P,
+				   int n=10000,
+				   int blocksize=100) 
+{
+  valarray<double> values = bootstrap_apply<bool,double>(sample,statistic,n,blocksize);
 
   vector<double> values2(values.size());
   for(int i=0;i<values.size();i++)
     values2[i] = values[i];
+  std::sort(values2.begin(),values2.end());
+
+  int skip = (int)(values.size()*(1.0-P)/2);
+
+  vector<double> interval(2);
+  interval[0] = values2[skip];
+  interval[1] = values2[values.size()-1-skip];
+
+  return interval;
 }
 
-using namespace std;
+double lower_confidence_bound(const valarray<bool>& sample,
+			      double (*statistic)(const valarray<bool>&),
+			      double P,
+			      int n=10000,
+			      int blocksize=100) 
+{
+  valarray<double> values = bootstrap_apply<bool,double>(sample,statistic,n,blocksize);
+
+  vector<double> values2(values.size());
+  for(int i=0;i<values.size();i++)
+    values2[i] = values[i];
+  std::sort(values2.begin(),values2.end());
+
+  int skip = (int)(values.size()*(1.0-P));
+
+  return values2[skip];
+}
 
 int main(int argc,char* argv[]) { 
   Arguments args;
@@ -30,36 +61,76 @@ int main(int argc,char* argv[]) {
   // initialize random number generator
   unsigned long seed = 0;
   if (args.set("seed")) {
-    seed = convertTo<unsigned long>(args["seed"]);
+    seed = args.loadvalue<unsigned long>("seed");
     myrand_init(seed);
   }
   else
     seed = myrand_init();
   std::cout<<"random seed = "<<seed<<endl<<endl;
 
-  int nreplicates =1000;
-  if (args.set("replicates")) {
-    nreplicates = convertTo<int>(args["replicates"]);
-  }
+  int nreplicates = args.loadvalue("replicates",10000);
+  std::cout<<"nreplicates = "<<nreplicates<<endl<<endl;
 
-  // Read in data
+  int blocksize = args.loadvalue("blocksize",100);
+  std::cout<<"blocksize = "<<blocksize<<endl<<endl;
+
+  int pseudocount = args.loadvalue("pseudocount",0);
+  std::cout<<"pseudocount = "<<pseudocount<<endl<<endl;
+  
+  /*----------------------- Read in data ---------------------------*/
   vector<bool> data;
   int i;
   while(cin>>i) {
     assert(i==0 or i==1);
     data.push_back(i);
   } 
+  for(int i=0;i<pseudocount;i++) {
+    data.push_back(true);
+    data.push_back(false);
+  }
+
   valarray<bool> sample(data.size());
   for(int i=0;i<sample.size();i++)
     sample[i] = data[i];
+    
 
-  double mean = Pr_statistic(sample);
+  /*----------------------- Basic Statistic ---------------------------*/
+  cout<<"Read "<<sample.size()<<" values.    Y = "<<statistics::count(sample)<<"       N = "<<sample.size() - statistics::count(sample)<<endl;
+
+  double mean = statistics::Pr(sample);
   cout<<"mean = "<<mean<<endl;
+  cout<<"var  = "<<mean*(1.0-mean)/sample.size()<<" (assumes independant samples && mean is right)"<<endl;
+  cout<<"log odds = "<<log10(mean/(1.0-mean))<<" = log("<<mean/(1.0-mean)<<")"<<endl;
+  cout<<endl;
+  cout<<endl;
+
+  /*------------------------- Really analyze the distribution ------------------------*/
+
+  double lowerb = lower_confidence_bound(sample,statistics::Pr,0.95,nreplicates,blocksize);
+  cout<<"95% confidence P > "<<lowerb<<endl;
+  cout<<"95% confidence log odds > "<<log10(lowerb/(1.0-lowerb))<<" = log("<<lowerb/(1.0-lowerb)<<")"<<endl;
+  cout<<endl;
+  cout<<endl;
+
+  double lowerb2 = lower_confidence_bound(sample,statistics::Pr,0.99,nreplicates,blocksize);
+  cout<<"99% confidence P > "<<lowerb2<<endl;
+  cout<<"99% confidence log odds > "<<log10(lowerb2/(1.0-lowerb2))<<" = log("<<lowerb2/(1.0-lowerb2)<<")"<<endl;
+  cout<<endl;
+  cout<<endl;
+  
+  vector<double> interval = confidence_interval(sample,statistics::Pr,0.99,nreplicates,blocksize);
+  cout<<"99% confidence interval = ("<<interval[0]<<","<<interval[1]<<")\n";
+  cout<<"                  width = "<<interval[1] - interval[0]<<" = 2.0*"<<(interval[1] - interval[0])/2.0<<endl;
+  cout<<endl;
+  cout<<endl;
+  
+  /*
   std::valarray<double> values(nreplicates);
   for(int i=1;i<=500;i++) {
-    values = bootstrap_apply<bool,double>(sample,Pr_statistic,nreplicates,i);
+    values = bootstrap_apply<bool,double>(sample,statistics::Pr,nreplicates,i);
     cout<<"------------------\n";
-    double var = Var_statistic(values);
+    double var = statistics::Var(values);
     cout<<"blocksize = "<<i<<"   sigma = "<<sqrt(var)<<endl;
   }
+  */
 }

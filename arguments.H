@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include "util.H"
 
 namespace arguments_local {
   struct lstr {
@@ -24,6 +25,20 @@ public:
   void add(const std::string&,const std::string&);
   
   void print(std::ostream&);
+
+  template<typename valuetype>  valuetype loadvalue(const std::string& s) {
+    if (not set(s))
+      std::abort();
+    else
+      return convertTo<valuetype>((*this)[s]);
+  }
+
+  template<typename valuetype>  valuetype loadvalue(const std::string& s,const valuetype& D) {
+    if (not set(s)) 
+      return D;
+    else
+      return convertTo<valuetype>((*this)[s]);
+  }
 };
 
 #endif

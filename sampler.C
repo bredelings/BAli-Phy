@@ -31,8 +31,8 @@
 void do_setup(Arguments& args,alignment& A,SequenceTree& T)
 {
   /* ----- Alphabets to try ------ */
-  alphabet dna("DNA nucleotides","AGTC","NY");
-  alphabet rna("RNA nucleotides","AGUC","NY");
+  alphabet dna("DNA nucleotides","AGTC","NYR");
+  alphabet rna("RNA nucleotides","AGUC","NYR");
   alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
 
   /* ----- Try to load alignment ------ */
@@ -205,13 +205,13 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
     length_moves1.add(100,MoveArgSingle("change_branch_length_and_T:length:nodes:topology",
 					change_branch_length_and_T,
 					internal_branches)
-		   ,false);
+		      );
   length_moves.add(1,length_moves1);
   if (P.SModel().full_tree)
     length_moves.add(1,MoveArgSingle("slide_branch_length:length",
 				     slide_branch_lengths_one,
 				     branches)
-		   );
+		     );
   tree_moves.add(1,length_moves);
 
   // parameters

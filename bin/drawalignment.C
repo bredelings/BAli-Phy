@@ -57,6 +57,12 @@ string getrgb(const vector<int>& RGB) {
   return style;
 }
 
+inline double f(double x) {
+  x = x + 0.5*(x*x - x);
+  x *= 0.95;
+  return x;
+}
+
 string getbgcolor(double x,double sscale,bool color) {
   if (color) {
     double start = 0.71;
@@ -71,7 +77,7 @@ string getbgcolor(double x,double sscale,bool color) {
     return getrgb(hsv(h,s*sscale,1));
   }
   else {
-    return getrgb(hsv(0,0,1.0 - x*x*sscale));
+    return getrgb(hsv(0,0,1.0 - f(x*sscale)));
   }
 }
 
@@ -79,7 +85,7 @@ string getfgcolor(double x,double sscale,bool color) {
   if (color)
     return getrgb(hsv(0,0,0));
   else {
-    if (1.0 - x*x*sscale < 0.3)
+    if (1.0 - f(x*sscale) < 0.5)
       return getrgb(hsv(0,0,1));
     else
       return getrgb(hsv(0,0,0));

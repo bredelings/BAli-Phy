@@ -304,10 +304,10 @@ double IndelModel2::prior() const {
   P += (-log(E_length_mean) - E_length/E_length_mean);
 
 
-  // Calculate prior on beta - should be lognormal
+  // Calculate LOG prior on beta - should be lognormal
   {
     double sigma = 0.3;
-    P += gsl_ran_gaussian_pdf(beta,sigma);
+    P += log(gsl_ran_gaussian_pdf(log(beta),sigma));
   }
 
   return P;

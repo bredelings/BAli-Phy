@@ -19,7 +19,15 @@ namespace statistics {
 
   double Var(const std::valarray<double>& v);
 
+  unsigned count(const std::valarray<bool>& v);
+
+  double fraction(const std::valarray<bool>& v);
+
   double Pr(const std::valarray<bool>& v);
+
+  double odds(const std::valarray<bool>& v);
+
+  double log_odds(const std::valarray<bool>& v);
 
 }
 #endif

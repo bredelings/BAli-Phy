@@ -1,1 +1,1 @@
-.arguments.C.d arguments.o: arguments.C arguments.H
+.arguments.C.d arguments.o: arguments.C arguments.H util.H

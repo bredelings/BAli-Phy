@@ -84,7 +84,7 @@ bin/tree-to-srq: tree.o sequencetree.o arguments.o
 
 bin/srqtoplot: arguments.o
 
-bin/srqanalyze: arguments.o rng.o ${LIBS:%=-l%}
+bin/srqanalyze: arguments.o rng.o bin/statistics.o ${LIBS:%=-l%}
 
 bin/reroot: tree.o sequencetree.o arguments.o
 

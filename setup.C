@@ -9,8 +9,8 @@ using std::valarray;
 substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_frequencies) {
 
   /*------ Define some alphabets for reference ------*/
-  alphabet dna("DNA nucleotides","AGTC","NY");
-  alphabet rna("RNA nucleotides","AGUC","NY");
+  alphabet dna("DNA nucleotides","AGTC","NYR");
+  alphabet rna("RNA nucleotides","AGUC","NYR");
   alphabet amino_acids("Amino Acids","ARNDCQEGHILKMFPSTWYV","X");
 
   /*------ Get the base model (Reversible Markov) ------*/

@@ -19,10 +19,13 @@ int main(int argc,char* argv[]) {
     plot.push_back(total);
   } 
 
-  double scale=1.0;
-  if (args.set("scale"))
-    scale = plot.size()-1;
+  double scalex=plot.size()-1;
+  double scaley=total;
+  if (args.set("scale") and args["scale"] == "no") {
+    scalex = 1;
+    scaley = 1;
+  }
 
   for(int i=0;i<plot.size();i++) 
-    cout<<i/scale<<"   "<<plot[i]/total<<endl;
+    cout<<i/scalex<<"   "<<plot[i]/scaley<<endl;
 }
