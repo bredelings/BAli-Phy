@@ -6,7 +6,7 @@
 #include "logsum.H"
 
 class le_double_t {
-  static const int BITS=53+1;
+  static const unsigned int BITS=53+1;
   static bool initialized;
   static double* table;
 
@@ -28,7 +28,7 @@ public:
 
   static void initialize() {
     table = new double[BITS+1];
-    for(int i=0;i<=BITS;i++)
+    for(int i=0;i<=(int)BITS;i++)
       table[i] = pow(2.0,-i);
     initialized=true;
   }
