@@ -121,11 +121,17 @@ std::ostream& operator<<(std::ostream& o, const Partition& P)
     
     for(int i=0;i<P.size();i++)
       if (P.group1[i]) o<<P.names[i]<<" ";
-    o<<endl;
   }
-      
+  std::valarray<bool> rmask = not(P.group1 or P.group2);
+  if (statistics::count(rmask)) {
+    o<<" [";
+    for(int i=0;i<P.size();i++) {
+      if (rmask[i]) o<<P.names[i]<<" ";
+    }
+    o<<"]";
+  }
 
-  return o;
+  return o<<endl;
 }
 
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
@@ -182,6 +188,14 @@ bool implies(const SequenceTree& T,const Partition& p) {
   return false;
 }
 
+bool implies(const SequenceTree& T,const std::vector<Partition>& partitions) 
+{
+  for(int p=0;p<partitions.size();p++)
+    if (not implies(T,partitions[p]))
+      return false;
+  return true;
+}
+
 int tree_sample::get_index(const string& t) const {
   typeof(index.begin()) here = index.find(t);
 
@@ -214,7 +228,6 @@ valarray<bool> tree_sample::supports_partition(const Partition& P) const {
 
     // Get a tree with the same topology
     const SequenceTree& T = topologies[ which_topology[i] ].T;
-
     
     result[i] = implies(T,P);
   }
@@ -230,11 +243,30 @@ valarray<bool> tree_sample::supports_partitions(const vector<Partition>& partiti
     // Get a tree with the same topology
     const SequenceTree& T = topologies[ which_topology[i] ].T;
     
-    result[i] = true;
-    for(int p=0;p<partitions.size() and result[i];p++)
-      result[i] = implies(T,partitions[p]);
+    result[i] = implies(T,partitions);
   }
   return result;
+}
+
+double tree_sample::PP(const Partition& P) const 
+{
+  int count=0;
+  for(int t=0;t<topologies.size();t++) 
+    if (implies(topologies[t].T,P))
+	count += topologies[t].count;
+   
+  return double(count)/size();
+}
+
+double tree_sample::PP(const vector<Partition>& partitions) const 
+{
+  int count=0;
+  for(int t=0;t<topologies.size();t++) {
+    if (implies(topologies[t].T,partitions))
+      count += topologies[t].count;
+  }
+   
+  return double(count)/size();
 }
 
 struct ordering {
@@ -536,7 +568,7 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,doubl
 
   vector<double> support(partitions.size());
   for(int i=0;i<partitions.size();i++)
-    support[i] = statistics::Pr(sample.supports_partition(partitions[i]) );
+    support[i] = sample.PP(partitions[i]);
 
   // break branches in the ***M_0.5*** tree? (more branches we could break - if we are only breaking 1)
 
@@ -550,7 +582,7 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,doubl
     vector<Partition> sub_partitions = get_Ml_partitions(sample,l,mask);
     vector<double> sub_support(sub_partitions.size());
     for(int i=0;i<sub_partitions.size();i++) {
-      sub_support[i] = statistics::Pr(sample.supports_partition(sub_partitions[i]) );
+      sub_support[i] = sample.PP(sub_partitions[i]);
       assert(sub_support[i] >= l);
     }
 

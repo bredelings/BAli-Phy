@@ -62,6 +62,9 @@ bool implies(const Partition& p1, const Partition& p2);
 /// Does any branch in @T imply the partition @p?
 bool implies(const SequenceTree& T,const Partition& p);
 
+/// Does any branch in @T imply the partition @p?
+bool implies(const SequenceTree& T,const std::vector<Partition>&);
+
 /// Output the partition P to stream o (requires 'names' to be set)
 std::ostream& operator<<(std::ostream& o, const Partition& P);
 
@@ -112,6 +115,9 @@ public:
   std::valarray<bool> supports_partition(const Partition& P) const;
 
   std::valarray<bool> supports_partitions(const std::vector<Partition>&) const;
+
+  double PP(const Partition& P) const;
+  double PP(const std::vector<Partition>&) const;
 
   tree_sample(std::istream&,const std::vector<std::string>& remove,int skip=0,int max=-1);
 };

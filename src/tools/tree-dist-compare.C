@@ -455,8 +455,7 @@ int main(int argc,char* argv[])
 	vector<Partition> partitions2 = get_Ml_sub_partitions(tree_dists[i],levels[l],2.0);
 	SequenceTree MF = get_mf_tree(MAP_trees[i].get_sequences(),partitions);
 	cout<<"\nSample "<<i<<": "<<partitions.size()<<"/"<<MAP_trees[i].n_leaves()-3<<" internal bi-partitions supported. ("<<partitions2.size()<<" sub-partitions supported)\n";
-	valarray<bool> support = tree_dists[i].supports_partitions(partitions);
-	cout<<"PP = "<<statistics::Pr(support)<<"\n";;
+	cout<<"PP = "<<tree_dists[i].PP(partitions)<<"\n";;
 	cout<<" consensus"<<i<<" = "<<MF.write(false)<<std::endl;
       }
       cout<<std::endl;
