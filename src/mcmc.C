@@ -469,7 +469,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 	     <<"    prior = "<<P.basic_prior(A,P)
 	     <<"    likelihood = "<<P.basic_likelihood(A,P)
 	     <<"    logp = "<<Pr
-	     <<"    weight = "<<Pr*(1.0 - 1.0/P.Temp)<<"\n\n";
+	     <<"    weight = "<<Pr*(1.0 - 1.0/P.Temp)<<std::endl;
 
     if (iterations%50 == 0) print_move_stats();
 
