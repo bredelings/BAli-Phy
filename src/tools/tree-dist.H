@@ -24,39 +24,54 @@ std::valarray<bool> branch_partition(const Tree& T,int b);
 
 /// Represents a division of a subset of leaf taxa into 2 groups
 struct Partition {
+  /// the names of all taxa 
   std::vector<std::string> names;
 
+  /// the taxa in the first group
   std::valarray<bool> group1;
+
+  /// the taxa in the second group
   std::valarray<bool> group2;
 
+  /// the total number of taxa
   int size() const {return group1.size();}
 
+  /// Create a partition of all taxa (g=0->g1,g=1->g2)
   Partition(const std::valarray<bool>& g);
-  Partition(const std::valarray<bool>& g,const std::valarray<bool>& mask); 
 
+  /// Create a partition of all taxa (g=0->g1,g=1->g2)
   Partition(const std::vector<std::string>& n,const std::valarray<bool>& g); 
  
+  /// Create a partition of taxa present in @mask (g=0->g1,g=1->g2) 
+  Partition(const std::valarray<bool>& g,const std::valarray<bool>& mask); 
+
+  /// Create a partition of taxa present in @mask (g=0->g1,g=1->g2) 
   Partition(const std::vector<std::string>& n,const std::valarray<bool>& g,const std::valarray<bool>& mask);
 };
 
+/// are both partitions the same?
 bool operator==(const Partition& p1, const Partition& p2);
 
+/// are both partitions consistent with each other?
 bool consistent(const Partition& p1, const Partition& p2);
 
+/// does partition @p1 imply partition @p2?
 bool implies(const Partition& p1, const Partition& p2);
 
-/// Does any branch in T imply the partition p?
+/// Does any branch in @T imply the partition @p?
 bool contains_partition(const SequenceTree& T,const Partition& p);
 
-/// Output the partition P to stream o
+/// Output the partition P to stream o (requires 'names' to be set)
 std::ostream& operator<<(std::ostream& o, const Partition& P);
 
 
-
+/// A class for loading tree distributions - somewhat biased towards tree-dist-compare
 class tree_sample {
   mutable std::map<std::string,int,lstr> index;
 
 public:
+
+  /// The information we store about each topology
   struct topology_record {
     // the topology string
     std::string topology;
