@@ -264,7 +264,7 @@ inline void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
 
   for(int x=x1;x<=x2;x++)
     for(int y=y1;y<=y2;y++)
-      forward_cell(x,y,x1,y1);
+      forward_cell(x,y);
 }
 
 void DPmatrix::forward_square() {
@@ -290,7 +290,7 @@ void DPmatrix::forward_band(int bw) {
     y2 = std::min(J,y2);
     
     for(int y=y1;y<=y2;y++)
-      forward_cell(x,y,0,0);
+      forward_cell(x,y);
   }
 }
 
@@ -504,7 +504,7 @@ DPmatrix::DPmatrix(int i1,
     (*this)(0,0,S) = start_P[S];
 }
 
-inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1) 
+inline void DPmatrixNoEmit::forward_cell(int i2,int j2) 
 { 
   assert(i2<size1());
   assert(j2<size2());
@@ -561,23 +561,6 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2,int x1,int y1)
 inline double sum(const valarray<double>& v) {
   return v.sum();
 }
-
-/*
-inline double DPmatrixEmit::emitMM(int i,int j) const {
-  double total=0;
-  for(int r=0;r<nrates();r++) {
-    //    total += distribution[r]*sum(dists1[i-1][r] * frequency * dists2[j-1][r]);   HANDCODED
-    double temp=0;
-    const valarray<double>& v1 = dists1[i-1][r];
-    const valarray<double>& v2 = dists2[j-1][r];
-    for(int l=0;l<v1.size();l++)
-      temp += v1[l]*frequency[l]*v2[l];
-    total += distribution[r]*temp;
-  }
-
-  return log(total)/T;
-}
-*/
 
 // switching dists1[] to matrices actually made things WORSE!
 
@@ -693,7 +676,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 }
 
 
-inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
+inline void DPmatrixSimple::forward_cell(int i2,int j2) {
 
   assert(i2<size1());
   assert(j2<size2());
@@ -762,7 +745,7 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2,int x1, int y1) {
   }
 } 
 
-inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
+inline void DPmatrixConstrained::forward_cell(int i2,int j2) {
 
   assert(i2<size1());
   assert(j2<size2());
@@ -837,6 +820,51 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,int x1,int y1) {
   }
 }
 
+
+vector<int> DPmatrixConstrained::sample_path() const 
+{
+  vector<int> path;
+
+  const int I = size1()-1;
+  const int J = size2()-1;
+
+
+  // we are at S1(i,j) coming from S2, and see to determine S1
+  int S2 = endstate();
+  int i = I;
+  int j = J;
+
+  vector<double> transition(nstates());
+
+  //We should really stop when we reach the Start state.
+  // - since the start state is simulated by a non-silent state
+  //   NS(0,0) we should go negative
+  // - check that we came from (0,0) though
+  while (i>=0 and j>=0) 
+  {
+    path.push_back(S2);
+
+    transition.resize(states(j).size());
+    for(int s1=0;s1<states(j).size();s1++) 
+    {
+      int S1 = states(j)[s1];
+      transition[s1] = (*this)(i,j,S1)*GQ(S1,S2);
+    }
+
+    int s1 = choose_scratch(transition);
+    int S1 = states(j)[s1];
+
+    if (di(S1)) i--;
+    if (dj(S1)) j--;
+
+    S2 = S1;
+  }
+  assert(i+di(S2)==0 and j+dj(S2)==0);
+
+  std::reverse(path.begin(),path.end());
+  return path;
+}
+
 int DPmatrixConstrained::order_of_computation() const {
   unsigned total=0;
   for(int c=0;c<allowed_states.size()-1;c++)
@@ -857,6 +885,8 @@ void DPmatrixConstrained::prune() {
 
     // and for each allowed state in that column
     for(int s2=allowed_states[c].size()-1;s2 >= 0;s2--) {
+
+      // FIXME! this assumes that dj(s2) is true.
 
       // check to see whether any states in the previous column are connected to it
       bool used = false;

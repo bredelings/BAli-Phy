@@ -203,7 +203,7 @@ public:
   bool dj(int S) const {bool e = false; if (state_emit[S]&(1<<1)) e=true;return e;}
 
   /// Compute the forward probabilities for a square
-  virtual void forward_cell(int,int,int,int)=0;
+  virtual void forward_cell(int,int)=0;
 
   /// Compute the forward probabilities for a square
   void forward_square(int,int,int,int);
@@ -247,7 +247,7 @@ int bandwidth2(const DPmatrix&,const vector<int>&);
 class DPmatrixNoEmit: public DPmatrix {
 public:
   /// Compute the forward probabilities for a cell
-  void forward_cell(int,int,int,int);
+  void forward_cell(int,int);
 
   efloat_t path_Q_subst(const vector<int>& path) const {return 1;}
 
@@ -319,7 +319,7 @@ public:
 /// 2D Dynamic Programming matrix with no constraints on states at each cell
 class DPmatrixSimple: public DPmatrixEmit {
 public:
-  void forward_cell(int,int,int,int);
+  void forward_cell(int,int);
 
   DPmatrixSimple(const vector<int> & v1,
 		 const vector<double> & v2,
@@ -342,10 +342,13 @@ class DPmatrixConstrained: public DPmatrixEmit {
   int order_of_computation() const;
   vector< vector<int> > allowed_states;
 public:
+  /// Sample a path from the HMM
+  vector<int> sample_path() const;
+
   const vector<int>& states(int j) const {return allowed_states[j];}
   vector<int>& states(int j) {return allowed_states[j];}
 
-  void forward_cell(int,int,int,int);
+  void forward_cell(int,int);
 
   void prune();
 
