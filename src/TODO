@@ -1,8 +1,11 @@
+0. Merge tools/alignmentutil into tools/alignment-util
+  a) add a 'first/last' argument to 
+
 1. Update tools directory to use boost::program_options.
 
 2. Fix tools/analyze-distances: make an interface to get likelihoods by column...
 
-3. Write alignment-consensus
+*3. Write alignment-consensus
 
 4. In smodel description, allow a * argument, or perhaps a [] format so -> 
    a) Empirical[WAG] + gamma[4] + 
@@ -11,8 +14,8 @@
 
 5. Add comments!
 
-6. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
-7. Make align-constraint= work with sample_tri_multi (there is no regular sample_multi)
+*6. Record when each constraint is first satisfied, as well as x/y constraints satisfied.
+*7. Make align-constraint= work with sample_tri_multi (there is no regular sample_multi)
 
 8. Get intel compiler
 
@@ -21,15 +24,17 @@
 
 10. write code to load joint (A,T) distributions...
 
-11: Write simple MPI code for MCMCMC....
-   a) FIX problem where 1/(1-Q(z,z)) is NEGATIVE.
-
 12. Clean up ColorMap-s in alignment-draw, and sanitize naming scheme.
     a) put all colormaps on the same scale by making colormaps nested
        and colorschemes not nested.
     b) allow names like colorscheme=plain+AA+whiten scale=LOD
                         colorscheme=plain-AA-whiten scale=LOD
        where minus means affect the fg instead of the background.
+    b.1) start out by making everything affect only the background. 
+	 We can just use switch for now, right?
+
+*11: Write simple MPI code for MCMCMC....
+   a) FIX problem where 1/(1-Q(z,z)) is NEGATIVE.
 
 3. Speed up sample_path() for DParrayConstrained by only considering
     allowed states for each column...
@@ -41,7 +46,7 @@
 
 12.5: Allow specifying another model than HKY (e.g. TNY) underneath YangCodonModel
 ------
-13. How to make priors specified on command line?
+*13. How to make priors specified on command line?
 
 14. Debugging framework 
    a) platforms
@@ -54,7 +59,7 @@
      2) bambe
      3) BEAST
 
-15. Make alignment-draw be able to output EPS
+*15. Make alignment-draw be able to output EPS
 
 16. how does P(data|model) depend on number of frequency bins?
 

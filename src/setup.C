@@ -13,6 +13,8 @@ using std::endl;
 
 using namespace boost::program_options;
 
+//FIXME - standardize them BOTH by leaf taxa names?
+
 /// Reorder internal sequences of A to correspond to standardized node names for T
 alignment standardize(const alignment& A, const SequenceTree& T) {
   alignment A2 = A;
