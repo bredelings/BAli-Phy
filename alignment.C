@@ -162,6 +162,7 @@ void alignment::load_phylip(const alphabet& a,const std::string& filename) {
   vector<string> names;
   vector<string> names2;
   phylip_section(file,ntaxa,names,sequences);
+  //FIXME - make it stop when its done.
   while(phylip_section(file,ntaxa,names2,letters)) {
     for(int i=0;i<ntaxa;i++)
       sequences[i] += letters[i];
