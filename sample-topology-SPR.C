@@ -4,13 +4,12 @@
 #include "sample.H"
 #include "rng.H"
 #include "choose.H"
-#include "dpmatrix.H"
 #include "likelihood.H"
 
 #include "3way.H"
 #include "alignment-sums.H"
 
-void check_match_P(const alignment& A,const Parameters& P, double OS, double OP, const vector<int>& path, const HMM& Matrices) {
+void check_match_P(const alignment& A,const Parameters& P, double OS, double OP, const vector<int>& path, const DPengine& Matrices) {
 
   /*------------------- Check offsets from path_Q -> P -----------------*/
   vector<int> path_g = Matrices.generalize(path);
@@ -30,14 +29,14 @@ void check_match_P(const alignment& A,const Parameters& P, double OS, double OP,
 
   if ( (std::abs(qs - ls) > 1.0e-9) or (std::abs(qp - lp) > 1.0e-9) or (std::abs(qt - lt) > 1.0e-9)) {
     std::cerr<<A<<endl;
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 
 }
 
 vector<double> sample_P(const alignment& A,const Parameters& P,
 			double OS, double OP, double P_choice,
-			const vector<int>& path, const HMM& Matrices) 
+			const vector<int>& path, const DPengine& Matrices) 
 {
   vector<double> PR(3);
 
@@ -147,7 +146,7 @@ bool topology_sample_SPR_fgaps(alignment& A,Parameters& P1,const Parameters& P2,
     std::cerr<<A3::project(a[0],nodes[0])<<endl;
     std::cerr<<A3::project(a[C],nodes[C])<<endl;
 
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 #endif
 
@@ -255,7 +254,7 @@ bool sample_SPR_and_A(alignment& A,Parameters& P1,const Parameters& P2,int n1,in
     std::cerr<<A3::project(a[0],nodes[0])<<endl;
     std::cerr<<A3::project(a[C],nodes[C])<<endl;
 
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 #endif
 

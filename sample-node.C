@@ -16,7 +16,7 @@
 #include "util.H"
 #include "rng.H"
 #include "3way.H"
-#include "dpmatrix.H"
+#include "alignment-sums.H"
 
 // for prior_HMM_nogiven
 #include "likelihood.H"
@@ -212,7 +212,7 @@ alignment sample_node(const alignment& old,const Parameters& P,int node) {
     std::cerr<<A3::project(old,nodes)<<endl;
     std::cerr<<A3::project(A,nodes)<<endl;
 
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 #endif
 

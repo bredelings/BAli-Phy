@@ -16,7 +16,7 @@ substitution::MultiRateModel* get_smodel(Arguments& args,const alignment& A);
 
 /// Hook up the leaf nodes of T to the leaf of A
 /// Also, make sure that A has the right number of internal sequences.
-void link(alignment& A,SequenceTree& T);
+void link(alignment& A,SequenceTree& T,bool=true);
 
 void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool random_tree_ok=false);
 

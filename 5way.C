@@ -141,7 +141,7 @@ namespace A5 {
     for(int i=0;i<states.size();i++)
       if (states[i] == state)
 	return i;
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": couldn't find state";
   }
 
   inline int bits_to_state(int bits,int b1,int b2) {

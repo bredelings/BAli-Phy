@@ -1,0 +1,1 @@
+.sample-alignment.C.d sample-alignment.o: sample-alignment.C sample.H mytypes.H alignment.H   alphabet.H myexception.H clone.H sequence.H sequence-format.H tree.H   parameters.H sequencetree.H smodel.H rates.H imodel.H matcache.H mcmc.H   rng.H 2way.H alignment-sums.H dp-engine.H hmm.H logsum.H substitution.H

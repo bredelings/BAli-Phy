@@ -1,8 +1,8 @@
 #include "alignment.H"
 #include "rng.H"
 
-alignment randomize(const alignment& A,int n=-1) {
-  if (n==-1)
+alignment randomize(const alignment& A,int n) {
+  if (n == -1)
     n = A.size2();
 
   int maxlength = -1;
@@ -12,11 +12,11 @@ alignment randomize(const alignment& A,int n=-1) {
   }
 
   alignment A2 = A;
-  int newlength = int( maxlength + 2 + 0.1*maxlength*(A2.size2()-1) );
+  int newlength = int( maxlength + 2 + 0.1*maxlength);
   A2.changelength(newlength);
 
   const int temp = alphabet::gap;
-  for(int i=0;i<A.num_sequences();i++) {
+  for(int i=0;i<n;i++) {
     vector<int> s = A.seq(i);
     while(s.size() < newlength) {
       int pos = myrandom(s.size()+1);

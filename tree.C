@@ -2,6 +2,7 @@
 #include "exponential.H"
 #include <algorithm>
 #include <sstream>
+#include "myexception.H"
 
 using std::vector;
 using std::valarray;
@@ -462,7 +463,7 @@ valarray<bool> tree::partition(int node1,int node2) const {
   else if (n2 == n1->parent)
     mask = !ancestors[node1];
   else // the two nodes are connected!
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": the two nodes are not connected";
     
   return mask;
 }
@@ -748,68 +749,6 @@ tree::tree(const tree& t1, double b1, const tree& t2, double b2) {
 }
 
 
-TreeFunc<int> mark_tree(const vector<int>& present_leaf,const tree& T) {
-  //Step 0: Set all nodes as not-considered
-  TreeFunc<int> present(T,-1);
-
-  //Step 1: Load leaf information
-  for(int i=0;i<present_leaf.size();i++) 
-    present(i) = present_leaf[i];
-
-  //Step 2: Connect the cluster of 'present' nodes
-  int top = -1;
-  for(int i=0;i<present_leaf.size();i++) {
-    if (present(i) != 1) continue;
-
-    if (top == -1)
-      top = i;
-    else {
-      int here=i;
-      while(not T.ancestor(here,top)) {
-	here = T[here].parent();
-	present(here) = 1;
-      }
-      int parent = here;
-      
-      here = top;
-      while(here != parent) {
-	here = T[here].parent();
-	present(here) = 1;
-      }
-      
-      if (parent>top) top=parent;
-    }
-  }
-  
-  assert(top != -1); //at least one node must be present
-
-  // Step 3: connect the 'missing' nodes to the cluster of 'present' nodes
-  for(int i=0;i<present_leaf.size();i++) {
-    if (present_leaf[i] != 0) continue;
-
-    int here=i;
-    int parent;
-    while(not T.ancestor(here,top)) {
-      here = T[here].parent();
-      if (present(here) != -1)
-	goto done;
-      present(here) = 0;
-    }
-    parent = here;
-    
-    here = top;
-    while(here != parent) {
-      here = T[here].parent();
-      present(here) = 0;
-    }
-  done: continue;
-  }
-
-  return present;
-}
-
-
-
 void tree::swap_children(int n) {
   node* p = names[n];
 
@@ -917,6 +856,6 @@ int tree::find_branch(int node1,int node2) const {
     if (branch(b).child() == node1 and branch(b).parent() == node2) return b;
     if (branch(b).child() == node2 and branch(b).parent() == node1) return b;
   }
-  std::abort();
+  throw myexception()<<__PRETTY_FUNCTION__<<": no branch connects those nodes";
 }
 

@@ -257,7 +257,7 @@ namespace A3 {
 	return S;
     }
     //couldn't find it?
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": couldn't find state";
   }
 
   using namespace A3;

@@ -114,7 +114,7 @@ namespace sequence_format {
 
 
     if (names.size() < ntaxa)
-      throw myexception()<<"[Error reading PHYLIP alignment] Read an empty line after"<<names.size()<<" out of "<<ntaxa<<" sequences in the first stanza.";
+      throw myexception()<<"[Error reading PHYLIP alignment] Read an empty line after "<<names.size()<<" out of "<<ntaxa<<" sequences in the first stanza.";
 
     for(int i=1;i<letters.size();i++) 
       if (letters[i].size() != letters[0].size())

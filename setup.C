@@ -7,34 +7,86 @@
 using std::vector;
 using std::valarray;
 
-void link(alignment& A,SequenceTree& T) {
+bool bit_set(const valarray<bool>& v) {
+  for(int i=0;i<v.size();i++)
+    if (v[i]) return true;
+  return false;
+}
 
-  /*------ Make sure A has enough leaf sequences ----------*/
+
+/// Check that any two present nodes are connected by a path of present nodes
+bool all_characters_connected(const SequenceTree& T,const valarray<bool> present) {
+  assert(present.size() == T.n_nodes()-1);
+
+  for(int b=0;b<T.n_branches();b++) {
+    int n1 = T.branch(b).parent();
+    int n2 = T.branch(b).child();
+    valarray<bool> group1 = T.partition(n1,n2);
+    valarray<bool> group2 = not group1;
+
+    if (bit_set(present and group1) and bit_set(present and group2))
+      if (not (present[n1] and present[n2]))
+	return false;
+  }
+  return true;
+}
+
+
+void check_alignment(const alignment& A,const SequenceTree& T) {
+  //----- Check that internal nodes don't have letters ------//
+  for(int i=T.leaves();i<T.n_nodes()-1;i++) 
+    for(int column=0;column<A.length();column++)
+      if (alphabet::letter(A(column,i)) )
+	throw myexception()<<"Found a letter in column "<<column
+			   <<" of internal sequence '"<<A.seq(i).name
+			   <<"': only - and * are allowed";
+  
+
+  //---- Check that internal node states are consistent ----//
+  for(int column=0;column<A.length();column++) {
+    valarray<bool> present(T.n_nodes()-1);
+    for(int i=0;i<T.n_nodes()-1;i++) 
+      present[i] = not A.gap(column,i);
+
+    if (not all_characters_connected(T,present))
+      throw myexception()<<"Internal node states are inconsistent in column "<<column;
+  }
+}
+
+
+void link(alignment& A,SequenceTree& T,bool internal_sequences) {
+
+  //------ Make sure A has enough leaf sequences ----------//
   if (A.num_sequences() < T.leaves())
     throw myexception()<<"Tree has "<<T.leaves()<<" leaves but Alignment only has "
 		       <<A.num_sequences()<<" sequences.";
 
-  /*----- If we just have leaf sequences, add internal sequences --------*/
-  if (A.num_sequences() == T.leaves()) {
-    sequence s(A.get_alphabet());
-    s.resize(A.length());
-    for(int column=0;column<A.length();column++)
-      s[column] = alphabet::not_gap;
-    for(int i=T.leaves();i<T.num_nodes()-1;i++) {
-      s.name = string("A") + convertToString(i);
-      A.add_sequence(s);
+  //----- If we just have leaf sequences, add internal sequences --------//
+  else if (A.num_sequences() == T.leaves()) {
+    if (internal_sequences) {
+      sequence s(A.get_alphabet());
+      s.resize(A.length());
+      for(int column=0;column<A.length();column++)
+	s[column] = alphabet::not_gap;
+      for(int i=T.leaves();i<T.num_nodes()-1;i++) {
+	s.name = string("A") + convertToString(i);
+	A.add_sequence(s);
+      }
     }
   }
 
-  /*----- Make sure we have the right number of ancestral sequences -----*/
-  if (A.num_sequences() > T.num_nodes() -1)
-    throw myexception(string("More sequences than tree nodes!"));
-  else if (A.num_sequences() < T.num_nodes() -1)
-    throw myexception(string("Not enough ancestral sequences!"));
-  else // A.num_sequenes()/2 + 1 == T.leaves()
-    ; // FIXME - check that these are all gaps or Felsenstein wildcards
+  //----- Make sure we have the right number of ancestral sequences -----//
+  else {
+    if (not internal_sequences)
+      throw myexception()<<"More sequences than leaf nodes!";
+
+    if (A.num_sequences() > T.num_nodes() -1)
+      throw myexception()<<"More sequences than tree nodes!";
+    else if (A.num_sequences() < T.num_nodes() -1)
+      throw myexception()<<"Not enough ancestral sequences!";
+  }
   
-  /*----- Remap leaf indices for T onto A's leaf sequence indices -----*/
+  //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   vector<int> mapping(T.leaves());
   for(int i=0;i<T.leaves();i++) {
     int target = -1;
@@ -49,10 +101,11 @@ void link(alignment& A,SequenceTree& T) {
     mapping[i] = target;
   }
 
-
   T.standardize(mapping);
 
 
+  //------ Check to see that internal nodes satisfy constraints ------//
+  check_alignment(A,T);
 }
 
 
@@ -122,36 +175,22 @@ void load_A_and_T(Arguments& args,alignment& A,SequenceTree& T,bool random_tree_
   load_A(args, A);
   load_T(args, A, T, random_tree_ok);
 
-  /*------ Link Alignment and Tree ----------*/
+  //------ Link Alignment and Tree ----------//
   link(A,T);
 
-  /*-------- Analyze 'internal'-------*/
-  if (args.set("internal")) {
-    if (args["internal"] == "+")
-      for(int column=0;column< A.length();column++) {
-	for(int i=T.leaves();i<A.size2();i++) 
-	  A(column,i) = alphabet::not_gap;
-      }
-    else if (args["internal"] == "search")
-      assert(0); // FIXME - not programmed yet
-    else if (args["internal"] == "guess") 
-      for(int column=0;column< A.length();column++) {
-	vector<int> present_leaf(T.leaves());
-	for(int i=0;i<T.leaves();i++)
-	  present_leaf[i] = not A.gap(column,i);
-	TreeFunc<int> present = mark_tree(present_leaf,T);
-	for(int i=T.leaves();i<A.size2();i++) {
-	  if (present(i))
-	    A(column,i) = alphabet::not_gap;
-	  else
-	    A(column,i) = alphabet::gap;
-	}
-      }
-  }
-
+  //-------- Randomize alignment? -------//
+  if (args.set("randomize_alignment"))
+    A = randomize(A,T.leaves());
+  
+  //---------- Analyze 'internal'---------//
+  if (args["internal"] == "+" or args.set("randomize_alignment"))
+    for(int column=0;column< A.length();column++) {
+      for(int i=T.leaves();i<A.size2();i++) 
+	A(column,i) = alphabet::not_gap;
+    }
 }
 
-
+/// Reorder internal sequence of A to correspond to standardized node names for T
 alignment standardize(const alignment& A, const SequenceTree& T) {
   alignment A2 = A;
   SequenceTree T2 = T;
@@ -169,6 +208,7 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
 }
 
 
+/// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
 valarray<double> empirical_frequencies(Arguments& args,const alignment& A) {
   const alphabet& a = A.get_alphabet();
 

@@ -2,6 +2,7 @@
 #include "choose.H"
 #include "rng.H"
 #include "logsum.H"
+#include "myexception.H"
 
 using std::vector;
 
@@ -15,7 +16,6 @@ int choose2(double x, double y,double T) {
     return 0;
   else
     return 1;
-  std::abort();
 }
 
 int choose3(double x, double y, double z, double T) {
@@ -53,7 +53,7 @@ int choose(vector<double>::const_iterator here,int size,double T) {
     if (r < sum[i])
       return i;
 
-  std::abort();
+  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen";
 }
 
 int choose(const vector<double>& P,double T) {
@@ -73,7 +73,7 @@ double choose3_P(int c,double x, double y, double z, double T) {
     return y-sum;
   else if (c==2)
     return z-sum;
-  std::abort();
+  throw myexception()<<__PRETTY_FUNCTION__<<": incorrect option specified...";
 }
 
 double choose_P(int s, const std::vector<double>& P, double T) {
@@ -100,5 +100,5 @@ int choose_nonlog(const vector<double>& P) {
       return i;
   }
 
-  std::abort();
+  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen";
 }

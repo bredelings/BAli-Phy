@@ -1,6 +1,6 @@
 #include "imodel.H"
 #include "logsum.H"
-#include "dpmatrix.H"
+#include "dp-engine.H"
 #include "rng.H"
 #include <gsl/gsl_randist.h>
 #include "myexception.H"

@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "dpmatrix.H"
+#include "dp-engine.H"
 #include "alignment.H"
 #include "parameters.H"
 

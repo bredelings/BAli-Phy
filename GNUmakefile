@@ -44,11 +44,10 @@ LI=${CXX}
 PROGNAME = sampler
 NAME = sampler
 SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
-          rng.C branch-sample.C exponential.C \
-          eigenvalue.C parameters.C likelihood.C mcmc.C \
+          rng.C exponential.C eigenvalue.C parameters.C likelihood.C mcmc.C \
 	  choose.C sequencetree.C sample-branch-lengths.C arguments.C \
 	  util.C randomtree.C alphabet.C smodel.C sampler.C \
-	  sample-tri.C dpmatrix.C 3way.C 2way.C branch-sample2.C \
+	  sample-tri.C hmm.C dp-engine.C 3way.C 2way.C sample-alignment.C \
 	  sample-node.C imodel.C 5way.C sample-topology-NNI.C inverse.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
@@ -63,41 +62,46 @@ ALLSOURCES = ${SOURCES}
 
 ${NAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
 
+tools/model_P: tools/statistics.o rng.o arguments.o ${LINKLIBS} 
+
+tools/statreport: tools/statistics.o
+
 tools/alignment-blame: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o tools/alignmentutil.o \
-	setup.o smodel.o rates.o exponential.o eigenvalue.o sequence-format.o ${GSLLIBS}
+	setup.o smodel.o rates.o exponential.o eigenvalue.o sequence-format.o randomtree.o ${GSLLIBS}
 
 tools/alignment-reorder: alignment.o arguments.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o smodel.o \
 	rates.o exponential.o eigenvalue.o sequence-format.o randomtree.o ${GSLLIBS}
 
-tools/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
+tools/alignment-draw: tree.o alignment.o sequencetree.o arguments.o \
+	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
+	randomtree.o ${LINKLIBS} 
 
-tools/truckgraph2: alignment.o arguments.o alphabet.o sequence.o util.o \
-		tools/alignmentutil.o rng.o ${GSLLIBS}
+tools/alignment-translate: alignment.o alphabet.o sequence.o arguments.o sequence-format.o \
+	util.o	
 
-tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
+tools/findalign: alignment.o alphabet.o arguments.o sequence.o tools/alignmentutil.o \
+	rng.o ${GSLLIBS} util.o sequence-format.o
 
 tools/treecount: tree.o sequencetree.o arguments.o util.o rng.o tools/statistics.o ${LIBS:%=-l%}
 
 tools/tree-dist-compare: tree.o sequencetree.o tools/tree-dist.o arguments.o util.o rng.o tools/statistics.o ${LIBS:%=-l%}
 
-tools/treedist: tree.o sequencetree.o arguments.o
+tools/tree-dist-autocorrelation: tree.o sequencetree.o sequencetree.o arguments.o tools/tree-dist.o
 
 tools/tree-to-srq: tree.o sequencetree.o arguments.o
 
+tools/tree-names-trunc: tree.o sequencetree.o arguments.o util.o
+
+tools/tree-reroot: tree.o sequencetree.o arguments.o
+
 tools/srq-to-plot: arguments.o
 
-tools/srqanalyze: arguments.o rng.o tools/statistics.o ${LIBS:%=-l%}
-
-tools/reroot: tree.o sequencetree.o arguments.o
+tools/srq-analyze: arguments.o rng.o tools/statistics.o ${LIBS:%=-l%}
 
 tools/make_random_tree: tree.o sequencetree.o arguments.o util.o\
 	 rng.o  ${LIBS:%=-l%}
-
-tools/drawalignment: tree.o alignment.o sequencetree.o arguments.o \
-	alphabet.o sequence.o sequence-format.o util.o setup.o rng.o\
-	randomtree.o ${LINKLIBS} 
 
 tools/phy_to_fasta: alignment.o sequence.o arguments.o alphabet.o \
 	rng.o util.o sequence-format.o ${LIBS:%=-l%}
@@ -108,18 +112,12 @@ tools/analyze_distances: alignment.o alphabet.o sequence.o arguments.o\
 	dpmatrix.o choose.o tools/optimize.o inverse.o setup.o rates.o matcache.o \
 	sequence-format.o randomtree.o ${LINKLIBS}
 
-tools/statreport: tools/statistics.o
+tools/truckgraph: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
 
-tools/findalign: alignment.o alphabet.o arguments.o sequence.o tools/alignmentutil.o \
-	rng.o ${GSLLIBS} util.o sequence-format.o
+tools/truckgraph2: alignment.o arguments.o alphabet.o sequence.o util.o \
+		tools/alignmentutil.o rng.o ${GSLLIBS}
 
-tools/model_P: tools/statistics.o rng.o arguments.o ${LINKLIBS} 
-
-tools/alignment-translate: alignment.o alphabet.o sequence.o arguments.o sequence-format.o \
-	util.o
-
-tools/tree-names-trunc: tree.o sequencetree.o arguments.o util.o
-
+tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
 
 #-----------------Other Files
 OTHERFILES += 

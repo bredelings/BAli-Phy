@@ -9,7 +9,6 @@
 #include "util.H"
 #include "rng.H"
 #include "5way.H"
-#include "dpmatrix.H"
 #include "alignment-sums.H"
 
 
@@ -151,7 +150,7 @@ bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P
     std::cerr<<project(old,nodes_old)<<endl;
     std::cerr<<project(A,nodes_new)<<endl;
 
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 #endif
 
@@ -248,7 +247,7 @@ bool two_way_topology_sample_fgaps(alignment& A,Parameters& P1,const Parameters&
     std::cerr<<project(old,nodes_old)<<endl;
     std::cerr<<project(A,nodes_new)<<endl;
 
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 #endif
 
@@ -361,7 +360,7 @@ bool three_way_topology_sample_fgaps(alignment& A,Parameters& P1, const Paramete
     std::cerr<<project(old,nodes_old)<<endl;
     std::cerr<<project(A,nodes_new)<<endl;
 
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 #endif
 
@@ -566,7 +565,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
 
   vector<int> nodes = A5::get_nodes_random(P.T,b);
 
-  /*--------- Generate the Different Topologies -------*/
+  //--------- Generate the Different Topologies -------//
 
   // do topology2
   vector<int> nodes1(4);
@@ -680,7 +679,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
 
   if ( (std::abs(qs1 - ls1) > 1.0e-9) or (std::abs(qp1 - lp1) > 1.0e-9) or (std::abs(qt1 - lt1) > 1.0e-9)) {
     std::cerr<<A3::project(oldA,nodes[0],nodes[1],nodes[2],nodes[3]);
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 
   /*---------------- Check new topology versus old topology --------------------*/
@@ -703,7 +702,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
 
   if ( (std::abs(qs2 - ls2) > 1.0e-9) or (std::abs(qp2 - lp2) > 1.0e-9) or (std::abs(qt2 - lt2) > 1.0e-9)) {
     std::cerr<<A3::project(A,nodes[0],nodes[1],nodes[2],nodes[3]);
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 
   
@@ -741,7 +740,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
     std::cerr<<A3::project(A,nodes_new[0],nodes_new[1],nodes_new[2],nodes_new[3])<<endl;
 
     std::cerr.flush();
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 
 

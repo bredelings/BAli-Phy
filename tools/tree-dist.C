@@ -1,4 +1,5 @@
 #include "tree-dist.H"
+#include "rng.H"
 
 using std::vector;
 using std::list;
@@ -119,6 +120,22 @@ int tree_sample::get_index(const string& t) const {
     return index[t];
 }
 
+valarray<bool> tree_sample::supports_topology(const string& t) const {
+  typeof(index.begin()) here = index.find(t);
+
+  if (here == index.end())
+    valarray<bool>(false,trees.size());
+
+  int t_i = index[t];
+
+  valarray<bool> result(trees.size());
+
+  for(int i=0;i<result.size();i++)
+    result[i] = (t_i == which_topology[i]);
+
+  return result;
+}
+
 valarray<bool> tree_sample::supports_partition(const Partition& P) const {
   valarray<bool> result(trees.size());
 
@@ -130,22 +147,6 @@ valarray<bool> tree_sample::supports_partition(const Partition& P) const {
     
     result[i] = contains_partition(T,P);
   }
-  return result;
-}
-
-valarray<bool> tree_sample::supports_topology(const string& t) const {
-  typeof(index.begin()) here = index.find(t);
-
-  if (here == index.end())
-    return valarray<bool>(false,trees.size());
-  
-  int t_i = index[t];
-
-  valarray<bool> result(trees.size());
-
-  for(int i=0;i<result.size();i++) 
-    result[i] = (t_i == which_topology[i]);
-
   return result;
 }
 

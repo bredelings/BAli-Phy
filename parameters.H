@@ -23,7 +23,7 @@ class Parameters: public MatCache {
 
 public:
 
-  /// Temperature, for heated chains
+  /// Temperature, for heated chains: when heated we aren't normalized...
   double Temp;
 
   /// Is each IndelModel parameter fixed or not?

@@ -260,13 +260,13 @@ int main(int argc,char* argv[]) {
     }
 
     //------  Topologies to analyze -----//
-    const int maxtrees = 4;
+    const int maxtopologies = 4;
 
     vector<string> topologies;
-    for(int i=0;i<maxtrees and i < tree_dist1.size();i++) {
+    for(int i=0;i<maxtopologies and i < tree_dist1.topologies.size();i++) {
       topologies.push_back(tree_dist1.topologies[tree_dist1.order[i]]);
     }
-    for(int i=0;i<maxtrees and i < tree_dist2.size();i++) {
+    for(int i=0;i<maxtopologies and i < tree_dist2.topologies.size();i++) {
       string t = tree_dist2.topologies[tree_dist2.order[i]];
 
       if (not includes(topologies,t))

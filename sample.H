@@ -23,9 +23,6 @@ bool tri_sample_alignment_branch(alignment&,Parameters&,
 /// Resample the alignment parent->child
 alignment sample_alignment(const alignment& old,const Parameters&,int b);
 
-/// Resample the alignment parent->child
-alignment sample_alignment2(const alignment& old,const Parameters&,int b);
-
 /// Resample gap/non-gap for internal nodes, where not already determined
 alignment sample_node(const alignment& old,const Parameters&,int node);
 

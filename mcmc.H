@@ -258,6 +258,6 @@ namespace MCMC {
 }
 
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
-		 const alignment& A,const Parameters& P,const std::string& tag);
+		 const alignment& A,const Parameters& P,const std::string& tag,bool=true);
 
 #endif

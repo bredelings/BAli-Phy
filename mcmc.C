@@ -14,7 +14,7 @@
 #include "setup.H"           // for standardize
 
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
-		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment=true) {
+		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment) {
   
   o<<endl;
   o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<endl;
@@ -32,8 +32,10 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
    <<"    logp = "<<Pr
    <<"    temp = "<<P.Temp<<endl;
 
-  o<<"align["<<tag<<"] = "<<endl;
-  o<<standardize(A,P.T)<<endl<<endl;
+  if (print_alignment) {
+    o<<"align["<<tag<<"] = "<<endl;
+    o<<standardize(A,P.T)<<endl<<endl;
+  }
   
   trees<<P.T<<endl;
   

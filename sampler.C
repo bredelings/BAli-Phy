@@ -60,14 +60,9 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   //--------------- alignment::alignment_branch -----------------//
   MoveEach alignment_branch_moves("alignment_branch");
-  alignment_branch_moves.add(0.5,
+  alignment_branch_moves.add(1.0,
 			     MoveArgSingle("sample_alignments:alignment",
 					   sample_alignments_one,
-					   branches)
-			     ,false);
-  alignment_branch_moves.add(0.5,
-			     MoveArgSingle("sample_alignments2:alignment",
-					   sample_alignments2_one,
 					   branches)
 			     );
   if (P.T.leaves() >2) {
@@ -242,9 +237,6 @@ int main(int argc,char* argv[]) {
     SequenceTree T;
     load_A_and_T(args,A,T,true);
 
-    if (args.set("randomize_alignment"))
-      A = randomize(A);
-    
     /*------------ Specify Gap Penalties ----------*/
     double lambda_O = args.loadvalue("lambda_O",-5);
 

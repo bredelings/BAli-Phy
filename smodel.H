@@ -346,7 +346,7 @@ namespace substitution {
     HKY(const Nucleotides& N)
       : Model(1),ReversibleMarkovModel(N),ModelWithAlphabet<Nucleotides>(N)
     { 
-      kappa(1);
+      kappa(2);
     }
 
     /// Construct an HKY model on alphabet 'a', w/ kappa=k

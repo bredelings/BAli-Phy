@@ -275,29 +275,4 @@ inline bool tree::connected(int node1,int node2) const {
 }
 
 
-
-/****************** class TreeFunc *******************/
-
-template<class RangeType>
-class TreeFunc {
-  const tree& t;
-
-  std::vector<RangeType> values;
-public:
-  RangeType& operator()(int i) {return values[i];} 
-  const RangeType& operator()(int i) const {return values[i];} 
-
-  RangeType& operator()(const node& n) {return values[n.name];} 
-  const RangeType& operator()(const node& n) const {return values[n.name];} 
-
-  TreeFunc(const tree& t1): t(t1),values(t1.num_nodes()) {}
-  TreeFunc(const tree& t1,RangeType value): t(t1),values(t1.num_nodes(),value) {}
-};
-
-TreeFunc<int> mark_tree(const std::vector<int>&,const tree&);
-
-double branch_distance(const tree& T1, const tree& T2);
-double topology_distance(const tree& T1, const tree& T2);
-
-
 #endif

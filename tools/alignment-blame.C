@@ -1,6 +1,7 @@
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <vector>
 #include "myexception.H"
 #include "alignment.H"
 #include "arguments.H"
@@ -375,35 +376,18 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
 
 
 void do_setup(Arguments& args,vector<alignment>& alignments,alignment& A,SequenceTree& T) {
-  /*------ Try to load tree -------------*/
-  if (not args.set("tree"))
-    throw myexception("Tree file not specified! (tree=<filename>)");
-  else 
-    T.read(args["tree"]);
-  
-  /* ----- Alphabets to try ------ */
-  vector<alphabet> alphabets;
-  alphabets.push_back(alphabet("DNA nucleotides","AGTC","N"));
-  alphabets.push_back(alphabet("RNA nucleotides","AGUC","N"));
-  alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
+  //----------- Load and link template A and T -----------------//
+  load_A_and_T(args,A,T);
 
-  /* ----- Try to load template alignment -----*/
-  if (not args.set("align")) 
-    throw myexception("Alignment file not specified! (align=<filename>)");
-
-  A.load(alphabets,args["align"]);
-
-
-  /*------ Link Alignment and Tree ----------*/
-  link(A,T);
-
-  /* ----- Try to load alignments ------ */
+  //------------ Try to load alignments -----------//
   int maxalignments = args.loadvalue("maxalignments",1000);
 
   string tag = "align[sample";
   if (args.set("tag"))
     tag = args["tag"];
 
+  vector< OwnedPointer<alphabet> > alphabets;
+  alphabets.push_back(A.get_alphabet());
   alignments = load_alignments(std::cin,tag,alphabets,maxalignments);
 }
 
@@ -450,7 +434,7 @@ alignment M(const alignment& A1) {
   return A2;
 }
 
-using boost::numeric::ublas;
+//using namespace boost::numeric::ublas;
 
 vector<int> get_column(const alignment& A,int c,int nleaves) {
   vector<int> column(nleaves);

@@ -2,8 +2,8 @@
 #include <iostream>
 #include <cmath>
 #include "sample.H"
-#include "dpmatrix.H"
 #include "2way.H"
+#include "alignment-sums.H"
 
 // for peel()
 #include "substitution.H"
@@ -16,52 +16,8 @@ using namespace A2;
 
 vector< vector<valarray<double> > > distributions_star(const alignment& A,const Parameters& P,
 						  const vector<int>& seq,int b,bool up) {
-  const alphabet& a = A.get_alphabet();
-  const substitution::MultiRateModel& MRModel = P.SModel();
 
-  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
-
-  /**************** Find our branch, and orientation *****************/
-  const SequenceTree& T = P.T;
-  int node1 = T.branch(b).child();
-  int node2 = T.branch(b).parent();
-  if (not up) std::swap(node1,node2);
-
-  valarray<bool> group = T.partition(node1,node2);
-
-  for(int i=0;i<dist.size();i++) {
-    vector<int> residues(A.size2());
-
-    for(int r=0;r<MRModel.nrates();r++) {
-      dist[i][r].resize(a.size(),1.0);
-
-      for(int n=0;n<T.leaves();n++) {
-	if (not group[n]) continue;
-
-	int letter = A(seq[i],n);
-	if (not a.letter(letter)) continue;
-
-	const Matrix& Q = P.transition_P(r,n);
-
-	// Pr(root=l) includes Pr(l->letter)
-	for(int l=0;l<a.size();l++)
-	  dist[i][r][l] *= Q(l,letter);
-
-      }
-    }
-  }
-
-  return dist;
-}
-
-vector< vector<valarray<double> > > distributions_tree(const alignment& A,const Parameters& P,
-						  const vector<int>& seq,int b,bool up) {
-  const alphabet& a = A.get_alphabet();
-  const substitution::MultiRateModel& MRModel = P.SModel();
-
-  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
-
-  /**************** Find our branch, and orientation *****************/
+  //--------------- Find our branch, and orientation ----------------//
   const SequenceTree& T = P.T;
   int root = T.branch(b).parent();      //this is an arbitrary choice
 
@@ -71,36 +27,28 @@ vector< vector<valarray<double> > > distributions_tree(const alignment& A,const 
 
   valarray<bool> group = T.partition(node1,node2);
 
-  // Actually compute the distributions
-  for(int i=0;i<dist.size();i++) {
-    vector<int> residues(A.size2());
-    for(int j=0;j<residues.size();j++)
-      residues[j] = A(seq[i],j);
-
-    for(int r=0;r<MRModel.nrates();r++) {
-      dist[i][r].resize(a.size());
-      dist[i][r] = substitution::peel(residues,
-				      P.T,
-				      MRModel.BaseModel(),
-				      P.transition_P(r),
-				      root,group);
-    }
-
-    // double sum = dist[i].sum();
-    // it IS possible to have no leaves if internal sequences is non-gap
-    //    if (sum < a.size()-1) {
-    //      assert(sum <= 1.00000001);
-    //      dist[i] /= sum;
-    //    }
-  }
-
-  return dist;
+  return ::distributions_tree(A,P,seq,root,group);
 }
 
-typedef vector< vector< valarray<double> > > (*distributions_t)(const alignment&, const Parameters&,
+vector< vector<valarray<double> > > distributions_tree(const alignment& A,const Parameters& P,
+						  const vector<int>& seq,int b,bool up) {
+  //--------------- Find our branch, and orientation ----------------//
+  const SequenceTree& T = P.T;
+  int root = T.branch(b).parent();      //this is an arbitrary choice
+
+  int node1 = T.branch(b).child();
+  int node2 = T.branch(b).parent();
+  if (not up) std::swap(node1,node2);
+
+  valarray<bool> group = T.partition(node1,node2);
+
+  return ::distributions_tree(A,P,seq,root,group);
+}
+
+typedef vector< vector< valarray<double> > > (*distributions_t_local)(const alignment&, const Parameters&,
 							      const vector<int>&,int,bool);
 
-alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
+alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   const tree& T = P.T;
 
   const vector<double>& pi = P.IModel().pi;
@@ -126,7 +74,7 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
   if (not seq1.size() or not seq2.size()) return old;
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
-  distributions_t distributions = distributions_tree;
+  distributions_t_local distributions = distributions_tree;
   if (not P.SModel().full_tree)
     distributions = distributions_star;
 
@@ -177,7 +125,7 @@ alignment sample_alignment2(const alignment& old,const Parameters& P,int b) {
     std::cerr<<old<<endl;
     std::cerr<<A<<endl;
 
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 
   std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<Matrices.Pr_sum_all_paths()<<endl;

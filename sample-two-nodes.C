@@ -9,7 +9,6 @@
 #include "util.H"
 #include "rng.H"
 #include "5way.H"
-#include "dpmatrix.H"
 #include "alignment-sums.H"
 
 // for prior_HMM_nogiven
@@ -214,7 +213,7 @@ alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
     std::cerr<<project(old,nodes)<<endl;
     std::cerr<<project(A,nodes)<<endl;
 
-    std::abort();
+    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
   }
 
 #endif
