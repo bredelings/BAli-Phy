@@ -15,6 +15,7 @@ while(<STDIN>) {
     chomp;
     $i++;
     my ($value,$id) = split(/ /);
+    if (!defined($id)) {$id = "";}
     my $key = "$value:$id";
     $ll{$key} = $value;
     next if ($i < $skip);
