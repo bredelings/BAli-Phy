@@ -4,6 +4,7 @@
 #include "substitution.H"
 #include "likelihood.H"
 #include "setup.H"
+#include "alignment-util.H"
 
 using std::valarray;
 
@@ -38,7 +39,7 @@ void show_parameters(std::ostream& o,const Model& M) {
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
 		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment) {
   
-  check_internal_nodes_connected(A,P.T,vector<int>());
+  check_alignment(A,P.T,"print_stats:in");
   o<<endl;
   o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]"<<endl;
   o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
@@ -46,6 +47,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
   o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
   
+  check_alignment(A,P.T,"print_stats:1");
   double Pr_prior = P.basic_prior(A,P);
   double Pr_likelihood = P.basic_likelihood(A,P);
   double Pr = Pr_prior + Pr_likelihood;
@@ -80,15 +82,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
-  for(int i=0;i<P.T.n_leaves();i++) {
-    vector<int> s;
-    for(int column=0;column<A.length();column++)
-      if (not A.gap(column,i))
-	s.push_back(A(column,i));
-
-    assert(s == A.seq(i));
-  }
+  check_alignment(A,P.T,"print_stats:out");
 #endif
-  check_internal_nodes_connected(A,P.T,vector<int>());
 }
 

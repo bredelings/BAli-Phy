@@ -19,9 +19,20 @@ bool A_match(const alignment& A1, int column, int s1, int s2, const alignment& A
 /// Is the alignment of un-ignored sequences in A1 and A2 the same?
 bool A_constant(alignment A1, alignment A2, const std::valarray<bool>& ignore);
 
+/// Check that internal nodes don't have letters 
+void check_internal_sequences_composition(const alignment& A,int n_leaves);
+
+/// Check that internal node states are consistent
+void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore=vector<int>());
+
 /// Are all un-ignored characters in column 'present' connected on T?
 bool all_characters_connected(const Tree& T,std::valarray<bool> present,const std::vector<int>& ignore);
 
-bool letters_OK(const alignment& A,const char*);
+void check_leaf_sequences(const alignment& A,int n_leaves,const char* tag);
+
+void check_letters_OK(const alignment& A,const char* tag);
+void letters_OK(const alignment& A,const char* tag);
+
+void check_alignment(const alignment& A,const Tree& T,const char* tag);
 
 #endif

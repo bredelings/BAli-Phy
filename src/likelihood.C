@@ -5,6 +5,7 @@
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>
 #include "probability.H"
+#include "alignment-util.H"
 
 double prior3(const alignment& A,const Parameters& P) {
   return prior_HMM(A,P) + prior(P);

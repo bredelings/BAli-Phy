@@ -16,6 +16,7 @@
 #include "util.H"
 #include "setup.H"
 #include "alignment-constraint.H"
+#include "alignment-util.H"
 #include "monitor.H"
 
 using std::cout;
@@ -278,15 +279,16 @@ int main(int argc,char* argv[]) {
     Parameters P(*full_smodel,*imodel,T);
 
     P.Temp = args.loadvalue("T",1.0);
+    int maxit = args.loadvalue("iterations",10000);
 
     P.recalc();
     int it=0;
-    while(true) {
+    while(it < maxit) {
       it++;
       for(int b=0;b<P.T.n_branches();b++) {
-	check_internal_nodes_connected(A,P.T,vector<int>());
+	check_alignment(A,P.T,"main:1");
 	print_stats(std::cout,std::cout,std::cout,std::cout,A,P,"debug");
-	check_internal_nodes_connected(A,P.T,vector<int>());
+	check_alignment(A,P.T,"main:2");
       }
     }
   }

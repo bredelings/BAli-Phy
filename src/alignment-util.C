@@ -137,22 +137,96 @@ bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<
 }
 
 
-bool letters_OK(const alignment& A,const char* key) {
+/// Check that internal nodes don't have letters 
+void check_internal_sequences_composition(const alignment& A,int n_leaves) {
+
+  for(int column=0;column<A.length();column++)
+    for(int i=n_leaves;i<A.size2();i++) 
+      if (alphabet::letter(A(column,i)) )
+	throw myexception()<<"Found a letter in column "<<column
+			   <<" of internal sequence '"<<A.seq(i).name
+			   <<"': only - and * are allowed";
+}
+
+/// Check that internal node states are consistent
+void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore) {
+  for(int column=0;column<A.length();column++) {
+    valarray<bool> present(T.n_nodes());
+    for(int i=0;i<T.n_nodes();i++) 
+      present[i] = not A.gap(column,i);
+    
+    if (not all_characters_connected(T,present,ignore)) {
+      std::cerr<<"Internal node states are inconsistent in column "<<column;
+      std::abort();
+      throw myexception()<<"Internal node states are inconsistent in column "<<column;
+    }
+  }
+}
+
+void letters_OK(const alignment& A,const char* tag) {
+  check_letters_OK(A,tag);
+}
+
+void check_letters_OK(const alignment& A,const char* tag) {
   const alphabet& a = A.get_alphabet();
 
   bool bad=false;
   for(int i=0;i<A.length();i++)
     for(int j=0;j<A.size2();j++)
-      if (A(i,j) < -2 or A(i,j) >= a.size()) {
+      if (A(i,j) >=0 and A(i,j) < a.size())
+	; // this is a letter
+      else if (A(i,j) == alphabet::gap)
+	; // this is a '-'
+      else if (A(i,j) == alphabet::not_gap)
+	; // this is a '*'
+      else {
 	bad = true;
 	std::cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<std::endl;
       }
   if (bad) {
-    std::cerr<<"key = "<<key<<"\n";
+    std::cerr<<"key = "<<tag<<"\n";
     std::cerr.flush();
     std::abort();
   }
-  return not bad;
+}
+
+void check_leaf_sequences(const alignment& A,int n_leaves,const char* tag) {
+
+  for(int i=0;i<n_leaves;i++) {
+    vector<int> s;
+    for(int column=0;column<A.length();column++)
+      if (not A.gap(column,i))
+	s.push_back(A(column,i));
+
+    if (not (s == A.seq(i))) {
+      const alphabet& a = A.get_alphabet();
+      std::cerr<<tag<<" - leaf sequence "<<i<<" corrupted!\n";
+
+      for(int j=0;j<s.size();j++)
+	std::cerr<<a.lookup(s[j]);
+      std::cerr<<std::endl;
+
+      for(int j=0;j<A.seq(i).size();j++)
+	std::cerr<<a.lookup(A.seq(i)[j]);
+      std::cerr<<std::endl;
+
+      std::abort();
+    }
+  }
+}
+
+void check_alignment(const alignment& A,const Tree& T,const char* tag) {
+  // First check that there are no illegal letters
+  check_letters_OK(A,tag);
+
+  // Next check that the internal sequences haven't changed
+  check_leaf_sequences(A,T.n_leaves(),tag);
+
+  // Next check that only * and - are found at internal nodes
+  check_internal_sequences_composition(A,T.n_leaves());
+
+  // Finally check that the internal node states are consistent
+  check_internal_nodes_connected(A,T);
 }
 
 vector<const_branchview> branches_toward_from_node(const Tree& T,int n) {
