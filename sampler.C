@@ -19,19 +19,6 @@
 using std::cout;
 using std::cin;
 
-// 5. Read Marc's references on actually altering the tree
-
-// 8. Use ublas::matrix<double>(a.size()) instead of valarray<double> in substitution.C
-
-// 13. Put letters in the rate matrix file
-
-// 16. *Better* output statistics?  Specify species to look at on command line?
-
-// 20. How can we show conservation in the graph? (for 2 species?  more?)
-
-// 28. Make sampling routines return P(Alignment|Data,Tree, etc)
-//     Check to make sure that this is proportional to the likelihood...
-
 void do_showonly(const alignment& A,const Parameters& P) {
   double PS = P.likelihood(A,P);
   double PA = prior_HMM(A,P);
@@ -68,10 +55,10 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   using namespace MCMC;
 
-  /*--------------- alignment -----------------*/
+  //--------------- alignment -----------------//
   MoveAll alignment_moves("alignment");
 
-  /*--------------- alignment::alignment_branch -----------------*/
+  //--------------- alignment::alignment_branch -----------------//
   MoveEach alignment_branch_moves("alignment_branch");
   alignment_branch_moves.add(0.5,
 			     MoveArgSingle("sample_alignments:alignment",
@@ -233,11 +220,6 @@ int main(int argc,char* argv[]) {
     std::cerr.precision(10);
     cout.precision(10);
     
-    /*------- Which parameters are fixed -------*/
-    vector<string> fixed;
-    if (args.set("fixed"))
-      fixed = split(args["fixed"],':');
-
     /*----------- Load alignment and tree ---------*/
     alignment A;
     SequenceTree T;
@@ -278,10 +260,6 @@ int main(int argc,char* argv[]) {
     else {
       cout<<"imodel = symmetric\n";
       imodel = new IndelModel2(lambda_O,lambda_E);
-      for(int i=0;i<fixed.size();i++) {
-	if (fixed[i] == "beta")
-	  imodel->fixed[2] = true;
-      }
     }
     if (args["gaps"]== "star") {
       imodel->full_tree = false;
@@ -289,7 +267,7 @@ int main(int argc,char* argv[]) {
     else
       imodel->full_tree = true;
     
-    /*-------------Create the Parameters object--------------*/
+    //-------------Create the Parameters object--------------//
     cout<<"using smodel: "<<full_smodel->name()<<endl;
 
     Parameters P(*full_smodel,*imodel,T);
@@ -304,8 +282,24 @@ int main(int argc,char* argv[]) {
     if (args.set("banding") and args["banding"] == "enable")
       P.features |= (1<<1);
 
+    //-------------- Specify fixed parameters ----------------//
+    vector<string> fixed;
+    if (args.set("fixed"))
+      fixed = split(args["fixed"],':');
 
-    /*---------------Do something------------------*/
+    for(int i=0;i<fixed.size();i++) {
+      if (fixed[i].size() > 2 and fixed[i].substr(0,2) == "pS") {
+	int pS = convertTo<int>(fixed[i].substr(2,fixed[i].size()-2));
+	P.s_fixed[pS] = true;
+      }
+      else if (fixed[i].size() > 2 and fixed[i].substr(0,2) == "pI") {
+	int pI = convertTo<int>(fixed[i].substr(2,fixed[i].size()-2));
+	P.i_fixed[pI] = true;
+      }
+    }
+
+
+    //---------------Do something------------------//
     if (args.set("showonly"))
       print_stats(cout,cout,cout,cout,A,P,"Initial");
     //      do_showonly(A,P);

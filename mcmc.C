@@ -440,6 +440,11 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
   return o;
 }
 
+void show_frequencies(std::ostream& o,const alphabet& a,const valarray<double>& f) {
+  for(int i=0;i<a.size();i++)
+    o<<"f"<<a.lookup(i)<<" = "<<f[i]<<endl;
+}
+
 void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   const SequenceTree& T = P.T;
   Parameters MAP_P = P;
@@ -474,11 +479,18 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   //  }
   cout<<endl;
   cout<<"frequencies = "<<endl;
-  for(int i=0;i<P.get_alphabet().size();i++) {
-    cout<<"f"<<P.get_alphabet().lookup(i)<<" = "<<P.SModel().BaseModel().frequencies()[i]<<endl;
+  show_frequencies(cout,P.get_alphabet(),P.SModel().BaseModel().frequencies());
+  cout<<endl<<endl;
+
+  if (const Codons* C = dynamic_cast<const Codons*>(&P.get_alphabet()) ) {
+    cout<<"nucleotide frequencies = "<<endl;
+    valarray<double> fC = P.SModel().BaseModel().frequencies();
+    valarray<double> fN = get_nucleotide_counts_from_codon_counts(*C,fC);
+    fN /= fN.sum();
+
+    show_frequencies(cout,C->getNucleotides(),fN);
+    cout<<endl<<endl;
   }
-  cout<<endl;
-  cout<<endl;
   
   //  Matrix T1 = P.SModel().BaseModel().transition_p(0.1);
   //  Matrix T1a = prod(T1,T1);

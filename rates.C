@@ -110,14 +110,13 @@ namespace substitution {
 
   /*--------------- UniformRateDistribution -----------------*/
 
-  Uniform::~Uniform() {}
 
   /*--------------- GammaRateDistribution -----------------*/
   
   double Gamma::prior() const {
-    const double mean_stddev = 0.2;
-    return log(mean_stddev) - parameters_[0]/mean_stddev;
-  }
+    const double mean_stddev = 0.01;
+    return log(mean_stddev) - parameters_[0]/mean_stddev; 
+ }
 
   void Gamma::fiddle() {
     vector<double> v = parameters_;
@@ -148,14 +147,68 @@ namespace substitution {
     return gsl_ran_gamma_pdf(x,a,b);
   }
 
-  double Gamma::quantile(double p,double tol) const {
+  double Gamma::quantile(double p,double) const {
     double a = 1.0/(parameters_[0]*parameters_[0]);
     double b = 1.0/a;
     
     return gsl_cdf_gamma_Pinv(p,a,b);
   }
-  Gamma::~Gamma() {}
 
+
+
+  /*-------------- LogNormal Distribution ----------------*/
+  // E X = exp(lmu + 0.5*lsigma^2)
+  // Var X = (exp(lsigma^2)-1) - exp(2*lmu + lsigma^2)
+
+  // EX==1 => lmu = -0.5 * lsigma^2
+  //          Var X = (exp(lsigma^2)-1  => log(Var X + 1) = lsigma^2
+
+  double LogNormal::prior() const {
+    const double mean_stddev = 0.01;
+    return log(mean_stddev) - parameters_[0]/mean_stddev;
+  }
+
+  void LogNormal::fiddle() {
+    vector<double> v = parameters_;
+    double& p = v[0];
+ 
+    const double sigma = 0.04;
+    double p2 = p + gaussian(0,sigma);
+    if (p2 < 0) p2 = -p2;
+
+    parameters(v);
+  }
+
+  double LogNormal::cdf(double x) const {
+    double Var = parameters_[0]*parameters_[0];
+    double lVar = log(Var+1.0);
+
+    double lsigma = sqrt(lVar);
+    double lmu = -0.5 * lVar;
+
+    return gsl_cdf_lognormal_P(x,lmu,lsigma);
+  }
+
+  double LogNormal::pdf(double x,double) const {
+    double Var = parameters_[0]*parameters_[0];
+    double lVar = log(Var+1.0);
+
+    double lsigma = sqrt(lVar);
+    double lmu = -0.5 * lVar;
+
+    return gsl_ran_lognormal_pdf(x,lmu,lsigma);
+  }
+
+  double LogNormal::quantile(double P,double) const {
+    double Var = parameters_[0]*parameters_[0];
+    double lVar = log(Var+1.0);
+
+    double lsigma = sqrt(lVar);
+    double lmu = -0.5 * lVar;
+
+
+    return gsl_cdf_lognormal_Pinv(P,lmu,lsigma);
+  }
 
   /*-------------- MultipleDistribution ----------------*/
 

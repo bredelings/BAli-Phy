@@ -73,7 +73,7 @@ void IndelModel::construct_lengthp() {
 }
 
 IndelModel::IndelModel(int s)
-  : P(4,4),parameters_(s),fixed(s,false),full_tree(true),pi(4),Q(4,4)
+  : P(4,4),parameters_(s),full_tree(true),pi(4),Q(4,4)
 { }
 
 
@@ -82,7 +82,7 @@ IndelModel::IndelModel()
 { }
 
 
-void IndelModel1::fiddle() { 
+void IndelModel1::fiddle(const std::valarray<bool>& fixed) { 
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
 
@@ -152,18 +152,30 @@ void IndelModel1::recalc() {
   IndelModel::recalc();
 }
 
-double IndelModel1::prior() const {
-  double P = 0;
+IndelModel::~IndelModel() {}
+
+
+double delta_prior(double D,double delta) {
+  double lambda = -log(1.0-delta)/D;
 
   // Calculate prior on lambda_O
-  const double mean = -5.5;
+  const double mean_delta = exp(-6.5);
+  const double mean_D     = 0.4;
+  const double mean_lambda = -log(1.0-mean_delta)/mean_D;
+
+  // mean_lambda = exp(-5.5)/0.25 (approximation based on log(1+x) = x + ...)
+
+  // This doesn't allow mu to be negative... just very small...
+  return log( gsl_ran_gaussian_pdf(log(lambda)-log(mean_lambda),1.2) );
+}
+
+// P(no insertion) = 1-delta = exp(-lambda*D)
+// lambda = insertion rate
+double IndelModel1::prior(double D) const {
 
   double delta = exp(parameters_[0]);
-  double mu = -log(1.0-delta);
 
-  // LO = -5.5 -> mu = -5.5 (approximation based on log(1+x) = x + ...)
-  // This doesn't allow mu to be negative... just very small...
-  P += log( gsl_ran_gaussian_pdf(log(mu)-mean,3.0) );
+  double P = delta_prior(D,delta);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double epsilon = exp(parameters_[1]);
@@ -184,7 +196,7 @@ IndelModel1::IndelModel1(double lambda_O,double lambda_E)
   recalc();
 }
 
-void IndelModel2::fiddle() { 
+void IndelModel2::fiddle(const std::valarray<bool>& fixed) { 
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
   double& beta     = parameters_[2];
@@ -280,21 +292,15 @@ void IndelModel2::recalc() {
   IndelModel::recalc();
 }
 
-double IndelModel2::prior() const {
+double IndelModel2::prior(double D) const {
   double lambda_O = parameters_[0];
   double lambda_E = parameters_[1];
   double log_beta = parameters_[2];
 
 
-  double P = 0;
-
   // Calculate prior on lambda_O
-  const double mean = -5.5;
-
   double delta = exp(lambda_O);
-  double mu = -log(1.0-delta);
-
-  P += log( gsl_ran_gaussian_pdf(log(mu)-mean,1.0) );
+  double P = delta_prior(D,delta);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double epsilon = exp(lambda_E);
@@ -323,7 +329,7 @@ IndelModel2::IndelModel2(double lambda_O,double lambda_E,double b)
   recalc();
 }
 
-void UpweightedIndelModel::fiddle() { 
+void UpweightedIndelModel::fiddle(const std::valarray<bool>& fixed) { 
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
 
@@ -400,20 +406,13 @@ void UpweightedIndelModel::recalc() {
   IndelModel::recalc();
 }
 
-double UpweightedIndelModel::prior() const {
+double UpweightedIndelModel::prior(double D) const {
   double lambda_O = parameters_[0];
   double lambda_E = parameters_[1];
 
-
-  double P = 0;
-
   // Calculate prior on lambda_O
-  const double mean = -5.5;
-
   double delta = exp(lambda_O);
-  double mu = -log(1.0-delta);
-
-  P += log( gsl_ran_gaussian_pdf(log(mu)-mean,1.0) );
+  double P = delta_prior(D,delta);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double epsilon = exp(lambda_E);
@@ -435,7 +434,7 @@ UpweightedIndelModel::UpweightedIndelModel(double lambda_O,double lambda_E)
   recalc();
 }
 
-void SingleIndelModel::fiddle() { 
+void SingleIndelModel::fiddle(const std::valarray<bool>& fixed) { 
   double& lambda_O = parameters_[0];
 
   const double sigma = 0.15;
@@ -445,13 +444,9 @@ void SingleIndelModel::fiddle() {
   recalc();
 }
 
-double SingleIndelModel::prior() const {
-  const double mean = -5.5;
-
+double SingleIndelModel::prior(double D) const {
   double delta = exp(parameters_[0]);
-  double mu = -log(1.0-delta);
-
-  return gsl_ran_gaussian_pdf(log(mu)-mean,1.0);
+  return delta_prior(D,delta);
 }
 
 void SingleIndelModel::recalc() {

@@ -68,7 +68,7 @@ double prior(const Parameters& P) {
   p += P.SModel().prior();
 
   // prior on the insertion/deletion model
-  p += P.IModel().prior();
+  p += P.IModel().prior(P.branch_mean);
 
   return p;
 }

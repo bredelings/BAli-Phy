@@ -1,1 +1,1 @@
-
+.likelihood.C.d likelihood.o: likelihood.C likelihood.H imodel.H mytypes.H alignment.H   alphabet.H myexception.H clone.H sequence.H sequence-format.H tree.H   parameters.H sequencetree.H smodel.H rates.H matcache.H logsum.H   substitution.H

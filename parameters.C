@@ -34,7 +34,7 @@ bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 
 
 void Parameters::fiddle() {
-  SModel_->fiddle();
+  SModel_->fiddle(s_fixed);
   recalc();
   
   const double sigma = 0.05;
@@ -50,6 +50,8 @@ Parameters::Parameters(const substitution::MultiRateModel& SM,const IndelModel& 
   :MatCache(t,SM),
    IModel_(IM.clone()),
    SModel_(SM.clone()),
+   i_fixed(false,IModel_->parameters().size()),
+   s_fixed(false,SModel_->parameters().size()),
    features(0),
    T(t)
 {

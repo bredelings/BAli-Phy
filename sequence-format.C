@@ -49,55 +49,78 @@ namespace sequence_format {
     return sequences;
   }
 
+  string strip_begin_end(const string& s) {
+    int start=0;
+    for(;start<s.size();start++) {
+      if (s[start] != ' ' and s[start] != '\t')
+	break;
+    }
+
+    int end = s.size()-1;
+    for(;end>=start;end--) {
+      if (s[end] != ' ' and s[end] != '\t')
+	break;
+    }
+    
+    return s.substr(start,end-start+1);
+  }
+
+  // after "<<i<<" out of "<<ntaxa<<" sequences in the first stanza.";
+  //
+  bool phylip_header_line(std::istream& file,string& name,string& letters,const string& location) {
+    if (not file) 
+      throw myexception()<<"[Error reading PHYLIP alignment] File ends early!";
+
+    string line;
+    getline(file,line);
+
+    if (not strip(line," \t").size())
+      return false;
+    
+    // Read the name from beginning of line
+    string header = line.substr(0,10);
+    name = strip_begin_end(header);
+
+    // Strip out space characters from the letters
+    letters = line.substr(10,line.size()-10);
+    letters = strip(letters," \t");
+
+    return true;
+  }
+
   /// Read the first phylip section, including names
-  bool phylip_section(std::istream& file,int ntaxa, vector<string>& names,vector<string>& letters) {
+  bool phylip_header_section(std::istream& file,int ntaxa, vector<string>& names,vector<string>& letters) {
+    bool interleaved=true;
+
     names.clear();
     letters.clear();
 
-    int indent = -1;
-    for(int i=0;i<ntaxa;i++) {
-      string line;
+    while(names.size() < ntaxa or not interleaved) {
+      string name;
+      string line_letters;
 
-      assert(file);
-      getline(file,line);
-    
-      if (not line.size())
-	throw myexception()<<"[Reading PHYLIP alignment] Read an empty line after "<<i<<" out of "<<ntaxa<<" sequences in this stanza.";
+      if (not phylip_header_line(file,name,line_letters,"")) 
+	break;
 
-      // Read the name from beginning of line
-      int pos = line.find_first_not_of(" \t");
-      if (pos == -1)
-	throw myexception()<<"[Reading PHYLIP alignment] Expected "<<ntaxa<<" sequences, only found "<<i<<".";
-
-      if (pos >9) // (note we're allowing empty names)
-	names.push_back(string(""));
-      else {
-	int name_start = pos;
-	pos = line.find_first_of(" \t",pos);
-	names.push_back(line.substr(name_start,pos-name_start));
-    
-	pos = std::max(pos+1,10);
+      if (name.size()) {
+	names.push_back(name);
+	letters.push_back("");
       }
+      else
+	interleaved = false;
 
-      // find how much to indent
-      pos = line.find_first_not_of(" \t",pos);
-      assert(pos != -1);
-      if (indent == -1)
-	indent = pos;
-      assert(indent == pos);
-      line = line.substr(indent);
-
-      // Strip out space characters from the letters
-      line = strip(line," \t");
-
-      // Add line to letters
-      letters.push_back(line);
+      letters.back() += line_letters;
     }
 
-    for(int i=1;i<letters.size();i++) 
-      assert(letters[i].size() == letters[0].size());
 
-    return file;
+    if (names.size() < ntaxa)
+      throw myexception()<<"[Error reading PHYLIP alignment] Read an empty line after"<<names.size()<<" out of "<<ntaxa<<" sequences in the first stanza.";
+
+    for(int i=1;i<letters.size();i++) 
+      if (letters[i].size() != letters[0].size())
+	throw myexception()<<"[Error reading PHYLIP alignment] Sequence '"<<names[i]<<"' has only "<<letters[i].size()<<" out of "<<letters[0].size()<<"letters in the first stanza";
+
+    return interleaved;
   }
 
   /// Read the second and following phylip sections - no names
@@ -116,6 +139,9 @@ namespace sequence_format {
       // Add line to letters
       letters.push_back(line);
     }
+
+    for(int i=1;i<letters.size();i++) 
+      assert(letters[i].size() == letters[0].size());
 
     return file.good();
   }
@@ -136,31 +162,33 @@ namespace sequence_format {
     int stanza=1;
 
     // Get the letters and names from first section
-    phylip_section(file,ntaxa,names,sequences);
+    bool interleaved = phylip_header_section(file,ntaxa,names,sequences);
 
-    // Get the letters from following sections
-    vector<string> letters;
-    while(length <= 0 or sequences[0].size() < length) {
-      string line;
-
-      // If there is not more data, then quit
-      if (not file.good()) break;
-
-      getline(file,line);
-
-      // If there is a line here, and we are still looking for data, it must be empty
-      if (line.size() != 0) 
-	throw myexception()<< "[Reading PHYLIP aligment] Expected an empty line after stanza "<<stanza<<", but read the following line:\n  \""<<line<<"\".";
-
-      // If there is not more data, then quit
-      if (not file.good()) break;
-
-      stanza++;
-      if (not phylip_section(file,ntaxa,letters))
-	break;
-
-      for(int i=0;i<ntaxa;i++)
-	sequences[i] += letters[i];
+    if (interleaved) {
+      // Get the letters from following sections
+      vector<string> letters;
+      while(length <= 0 or sequences[0].size() < length) {
+	string line;
+	
+	// If there is not more data, then quit
+	if (not file.good()) break;
+	
+	getline(file,line);
+	
+	// If there is a line here, and we are still looking for data, it must be empty
+	if (line.size() != 0) 
+	  throw myexception()<< "[Reading PHYLIP aligment] Expected an empty line after stanza "<<stanza<<", but read the following line:\n  \""<<line<<"\".";
+	
+	// If there is not more data, then quit
+	if (not file.good()) break;
+	
+	stanza++;
+	if (not phylip_section(file,ntaxa,letters))
+	  break;
+	
+	for(int i=0;i<ntaxa;i++)
+	  sequences[i] += letters[i];
+      }
     }
 
     // Check that the length matches the supplied length
@@ -230,7 +258,6 @@ namespace sequence_format {
     // Write header
     file<<nsequences<<" "<<length<<endl;
 
-    const int header_length = 10;
     const int letters_length = 65;
 
     for(int pos=0;pos<length;pos += letters_length) {
@@ -238,13 +265,13 @@ namespace sequence_format {
       for(int seq = 0;seq < nsequences;seq++) {
 
 	// get the line header (e.g. sequence name or spaces)
-	string header = string(header_length,' ');
+	string header = string(10,' ');
 	if ((pos == 0) and (seq < nsequences)) {
 	  string name = names[seq];
 	  if (name.size() > header.size())
 	    name = name.substr(0,header.size());
 	  
-	  header = name + string(header_length-name.size(),' ');
+	  header = name + string(header.size()-name.size(),' ');
 	}
 	
 	// write out the line

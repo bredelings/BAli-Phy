@@ -29,14 +29,11 @@ protected:
 
   IndelModel(int s);
 public:
-  /// are the parameters fixed?
-  vector<bool> fixed;
-
   /// Are we using a binary tree (instead of a star tree) for the gap prior?
   bool full_tree;
 
   /// Change the model parameters
-  virtual void fiddle()=0;
+  virtual void fiddle(const std::valarray<bool>&)=0;
 
   /// Update structures from the model parameters
   virtual void recalc() {
@@ -51,7 +48,7 @@ public:
   virtual void parameters(const vector<double>& p) {parameters_=p; recalc();}
 
   /// The prior on the current parameters
-  virtual double prior() const {return 0.0;}
+  virtual double prior(double) const {return 0.0;}
 
   virtual IndelModel* clone() const =0;
 
@@ -83,16 +80,17 @@ public:
 
   IndelModel();
 
-  virtual ~IndelModel() {}
+  virtual ~IndelModel();
 };
 
 class IndelModel1 : public IndelModel {
 public:
-  void fiddle();
+
+  void fiddle(const std::valarray<bool>&);
 
   void recalc();
 
-  double prior() const;
+  double prior(double) const;
 
   IndelModel1* clone() const {return new IndelModel1(*this);}
 
@@ -106,15 +104,17 @@ public:
   double epsilon; 
 
   explicit IndelModel1(double LO,double LE);
+
+  ~IndelModel1() {};
 };
 
 class IndelModel2 : public IndelModel {
 public:
-  void fiddle();
+  void fiddle(const std::valarray<bool>&);
 
   void recalc();
 
-  double prior() const;
+  double prior(double) const;
 
   IndelModel2* clone() const {return new IndelModel2(*this);}
 
@@ -136,11 +136,11 @@ public:
 
 class UpweightedIndelModel : public IndelModel {
 public:
-  void fiddle();
+  void fiddle(const std::valarray<bool>&);
 
   void recalc();
 
-  double prior() const;
+  double prior(double) const;
 
   UpweightedIndelModel* clone() const {return new UpweightedIndelModel(*this);}
 
@@ -164,11 +164,11 @@ public:
 class SingleIndelModel : public IndelModel {
 
 public:
-  void fiddle();
+  void fiddle(const std::valarray<bool>&);
 
   void recalc();
 
-  double prior() const;
+  double prior(double) const;
 
   SingleIndelModel* clone() const {return new SingleIndelModel(*this);}
 

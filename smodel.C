@@ -15,7 +15,6 @@ namespace substitution {
 
   Model::Model(int s)
     :parameters_(s),
-     fixed(false,s),
      full_tree(true)
   {}
 
@@ -23,28 +22,71 @@ namespace substitution {
     :full_tree(true)
   { }
 
+  //--------------------- Gamma_Branch_Model -----------------------------//
   Matrix Gamma_Branch_Model::transition_p(double t) const {
-    double beta = parameters_[parameters_.size()-1];
+    double beta = parameters_.back();
 
     return gamma_exp(SubModel().getS(),SubModel().getD(),t/beta,beta);
   }
 
-  void Gamma_Branch_Model::super_fiddle() {
+  void Gamma_Branch_Model::super_fiddle(const valarray<bool>& fixed) {
     const double sigma = 0.05;
-    double beta = parameters_[parameters_.size()-1] + gaussian(0,sigma);
-    if (beta<0) beta = -beta;
-    if (beta >0) parameters_[parameters_.size()-1] = beta;
+    if (not fixed[parameters_.size()-1]) {
+      double beta = parameters_.back() + gaussian(0,sigma);
+      if (beta<0) beta = -beta;
+      if (beta >0) parameters_.back() = beta;
+    }
   }
 
   double Gamma_Branch_Model::super_prior() const {
     const double mu = 0.1;
-    double beta = parameters_[parameters_.size()-1];
+    double beta = parameters_.back();
     return -log(mu) - beta/mu;
   }
 
   string Gamma_Branch_Model::name() const {
     return string("GammaBranch(") + sub_model->name() + ")";
   }
+
+  //-------------------- Gamma_Stretched_Branch_Model ----------------------//
+
+  // E T = t
+  // sigma/mu = parameter[0]
+  Matrix Gamma_Stretched_Branch_Model::transition_p(double t) const {
+    double signal_to_noise = parameters_.back();
+
+    double alpha = 1.0/pow(signal_to_noise,2);
+    double beta = t/alpha;
+
+    return gamma_exp(SubModel().getS(),SubModel().getD(),alpha,beta);
+  }
+
+  void Gamma_Stretched_Branch_Model::super_fiddle(const valarray<bool>& fixed) {
+    vector<double> v = parameters_;
+    double& p = v.back();
+
+    if (fixed[0]) return;
+
+    const double sigma = 0.04;
+    double p2 = p + gaussian(0,sigma);
+    if (p2 < 0) p2 = -p2;
+
+    double alpha = 1.0/(p2*p2);
+    if (alpha < 10000)
+      p = p2;
+
+    parameters(v);
+  }
+
+  double Gamma_Stretched_Branch_Model::super_prior() const {
+    const double mean_stddev = 0.01;
+    return log(mean_stddev) - parameters_.back()/mean_stddev; 
+  }
+
+  string Gamma_Stretched_Branch_Model::name() const {
+    return string("GammaStretchedBranch(") + sub_model->name() + ")";
+  }
+
 
 
   // Q(i,j) = S(i,j)*pi[j]   for i!=j
@@ -125,7 +167,9 @@ namespace substitution {
     return "HKY[" + Alphabet().name + "]";
   }
 
-  void HKY::fiddle() {
+  void HKY::fiddle(const valarray<bool>& fixed) {
+    if (fixed[0]) return;
+
     const double sigma = 0.05;
     double k = kappa() + gaussian(0,sigma);
     if (k<0) k = -k;
@@ -200,7 +244,7 @@ namespace substitution {
     return P;
   }
 
-  void YangCodonModel::fiddle() {
+  void YangCodonModel::fiddle(const valarray<bool>& fixed) {
     double k = log( kappa() );
     double w = log( omega() );
 
@@ -314,7 +358,7 @@ namespace substitution {
     return D->prior();
   }
 
-  void DistributionRateModel::super_fiddle() {
+  void DistributionRateModel::super_fiddle(const valarray<bool>& fixed) {
     D->fiddle();
     for(int i=0;i<D->parameters().size();i++)
       parameters_[sub_model->parameters().size() + i] = D->parameters()[i];
@@ -335,25 +379,9 @@ namespace substitution {
     MultiRateModel::recalc();
   }
 
-  DistributionRateModel& DistributionRateModel::operator=(const DistributionRateModel& M) {
-    MultiRateModelOver<ReversibleModel>::operator=(M);
-    if (D) delete D;
-
-    D = M.distribution().clone();
-
-    return (*this);
-  }
-
-
-  DistributionRateModel::DistributionRateModel(const DistributionRateModel& M)
-    :MultiRateModelOver<ReversibleModel>(M),
-     D(M.distribution().clone())
-  { }
-  
-
   DistributionRateModel::DistributionRateModel(const ReversibleModel& M,const RateDistribution& RD, int n)
     :MultiRateModelOver<ReversibleModel>(M,RD.parameters().size(),n),
-     D(RD.clone())
+     D(RD)
   {
     // This never changes - since we use quantiles for the bins
     for(int i=0;i<nrates();i++)
@@ -364,11 +392,6 @@ namespace substitution {
       parameters_[sub_model->parameters().size() + i] = D->parameters()[i];
 
     recalc();
-  }
-
-  DistributionRateModel::~DistributionRateModel() {
-    if (D)
-      delete D;
   }
 
   /*--------------- Gamma Sites Model----------------*/
@@ -382,17 +405,27 @@ namespace substitution {
   {}
 
 
-  /*--------------- Invariant Sites Model----------------*/
+  /*--------------- LogNormal Sites Model----------------*/
+
+  string LogNormalRateModel::name() const {
+    return sub_model->name() + " + LogNormal(" + convertToString(rates_.size()) + ")";
+  }
+
+  LogNormalRateModel::LogNormalRateModel(const ReversibleModel& M,int n)
+    :DistributionRateModel(M,LogNormal(),n)
+  {}
+
+
+  //--------------- Invariant Sites Model----------------//
 
   string INV_Model::name() const {
     return sub_model->name() + " + INV";
   }
 
   INV_Model::INV_Model(const MultiRateModel& M)
-    :MultiRateModelOver<MultiRateModel>(M,2,M.nrates()+1)
+    :MultiRateModelOver<MultiRateModel>(M,1,M.nrates()+1)
   {
-    parameters_[ parameters_.size()-2 ] = 0.01;
-    parameters_[ parameters_.size()-1 ] = 0.01;
+    parameters_.back() = 0.01;
 
     recalc();
   }    
@@ -412,8 +445,11 @@ namespace substitution {
       return log(gsl_ran_beta_pdf(p,a,b));
   }
 
-  void INV_Model::super_fiddle() {
-    double &p = parameters_[parameters_.size()-2];
+  void INV_Model::super_fiddle(const valarray<bool>& fixed) {
+    if (fixed[parameters_.size()-1] )
+      return;
+
+    double &p = parameters_.back();
 
     // fiddle Invariant fraction
     const double sigma = 0.04;
@@ -425,7 +461,7 @@ namespace substitution {
   }
 
   void INV_Model::recalc() {
-    double p = parameters_[parameters_.size()-2];
+    double p = parameters_.back();
 
     // Thus, r is the RELATIVE rate to the other model
     // Should we try to specify an absolute rate?

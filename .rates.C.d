@@ -1,1 +1,1 @@
-.rates.C.d rates.o: rates.C rates.H rng.H
+.rates.C.d rates.o: rates.C rates.H clone.H rng.H

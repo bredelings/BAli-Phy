@@ -20,8 +20,10 @@ void link(alignment& A,SequenceTree& T) {
     s.resize(A.length());
     for(int column=0;column<A.length();column++)
       s[column] = alphabet::not_gap;
-    for(int i=T.leaves();i<T.num_nodes()-1;i++)
+    for(int i=T.leaves();i<T.num_nodes()-1;i++) {
+      s.name = convertToString(i);
       A.add_sequence(s);
+    }
   }
 
   /*----- Make sure we have the right number of ancestral sequences -----*/

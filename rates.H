@@ -4,12 +4,13 @@
 #include <vector>
 #include <cassert>
 #include <cmath>
+#include "clone.H"
 
 namespace substitution {
 
   /// A generic distribution for rate variation
   /// We require that if X ~ d, the E(X) = 1
-  class RateDistribution {
+  class RateDistribution:public  Cloneable {
   protected:
     std::vector<double> parameters_;
 
@@ -67,8 +68,26 @@ namespace substitution {
     {
       parameters_[0] = 0.1;
     }
+  };
 
-    ~Gamma();
+
+  class LogNormal: public RateDistribution {
+  public:
+    LogNormal* clone() const {return new LogNormal(*this);}
+
+    double cdf(double) const;
+    double pdf(double,double) const;
+    double quantile(double,double tol=1.0e-6) const;
+
+    double prior() const;
+
+    void fiddle();
+
+    LogNormal()
+      :RateDistribution(1)
+    {
+      parameters_[0] = 0.1;
+    }
   };
 
 
@@ -93,10 +112,7 @@ namespace substitution {
     Uniform()
       :RateDistribution(0) 
     {}
-
-    ~Uniform();
   };
-
 
   /// A sum of distributions for rate variation
   class MultipleDistribution: public RateDistribution {

@@ -2,11 +2,26 @@
 #include "setup.H"
 #include "util.H"
 #include "rates.H"
+#include "myexception.H"
 
 using std::vector;
 using std::valarray;
 
+bool match(vector<string>& sstack,const string& s) {
+  bool m = false;
+  if (sstack.size() and sstack.back() == s) {
+    m = true;
+    sstack.pop_back();
+  }
+  return m;
+}
+
 substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,const valarray<double>& default_frequencies) {
+  vector<string> smodel;
+  if (args["smodel"] != "")
+    smodel = split(args["smodel"],'+');
+  std::reverse(smodel.begin(),smodel.end());
+
   /*------ Get the base markov model (Reversible Markov) ------*/
   substitution::ReversibleMarkovModel* base_markov_smodel = 0;
   {   
@@ -17,7 +32,7 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
     genetic_code.close();
   }
 
-  if (args.set("smodel") and args["smodel"] == "EQU")
+  if (match(smodel,"EQU"))
     base_markov_smodel = new substitution::EQU(a);
   else if (a == DNA())
     base_markov_smodel = new substitution::HKY(DNA());
@@ -43,7 +58,6 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
       assert(0);
   }
 
-    
   /*------ Set frequencies for base markov model ------*/
   if (args.set("frequencies")) {
     vector<double> f = split<double>(args["frequencies"],',');
@@ -60,31 +74,35 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
   /*-------- Get the base IA model -----------*/
   substitution::ReversibleModel* base_smodel=0;
 
-  if (args.set("gamma_branch"))
+  if (match(smodel,"gamma_branch"))
     base_smodel = new substitution::Gamma_Branch_Model(*base_markov_smodel);
+  else if (match(smodel,"gamma_stretched_branch"))
+    base_smodel = new substitution::Gamma_Stretched_Branch_Model(*base_markov_smodel);
+  else if (match(smodel,"no_branch_lengths"))
+    ;
   else
     base_smodel = base_markov_smodel;
 
-    
+  std::cerr<<"got here\n";
   /*------ Get the multi-rate model over the base model ------*/
   substitution::MultiRateModel *full_smodel = 0;
-  if (args.set("gamma_plus_uniform")) {
+  if (match(smodel,"gamma_plus_uniform")) {
     int n=4;
-    if (args["gamma_plus_uniform"] != "gamma_plus_uniform")
+    if (args.set("gamma_plus_uniform") and args["gamma_plus_uniform"] != "gamma_plus_uniform")
       n = convertTo<int>(args["gamma_plus_uniform"]);
     full_smodel = new substitution::DistributionRateModel(*base_smodel,
 							  substitution::Uniform() + substitution::Gamma(),
 							  n);
   }
-  else if (args.set("gamma")) {
+  else if (match(smodel,"gamma")) {
     int n=4;
-    if (args["gamma"] != "gamma")
+    if (args.set("gamma") and args["gamma"] != "gamma")
       n = convertTo<int>(args["gamma"]);
     full_smodel = new substitution::GammaRateModel(*base_smodel,n);
   }
-  else if (args.set("double_gamma")) {
+  else if (match(smodel,"double_gamma")) {
     int n=4;
-    if (args["double_gamma"] != "double_gamma")
+    if (args.set("double_gamma") and args["double_gamma"] != "double_gamma")
       n = convertTo<int>(args["double_gamma"]);
     full_smodel = new substitution::DistributionRateModel(*base_smodel,
 							  substitution::Gamma() + substitution::Gamma(),
@@ -94,7 +112,9 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
     full_smodel = new substitution::SingleRateModel(*base_smodel);
   delete base_smodel;
 
-  if (args.set("INV")) {
+  std::cerr<<"got here2\n";
+
+  if (match(smodel,"INV")) {
     substitution::MultiRateModel *temp = full_smodel;
     full_smodel = new substitution::INV_Model(*full_smodel);
     delete temp;
@@ -116,6 +136,11 @@ substitution::MultiRateModel* get_smodel(Arguments& args, const alphabet& a,cons
   else
     full_smodel->full_tree = true;
       
+
+  //---------------------- Stack should be empty now ----------------------//
+  if (smodel.size() != 0) {
+    throw myexception()<<"Error: Couldn't process substitution model level \""<<smodel.back()<<"\"";
+  }
   return full_smodel;
 }
 

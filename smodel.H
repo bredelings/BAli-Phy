@@ -8,6 +8,7 @@
 #include "alphabet.H"
 #include "rates.H"
 #include "clone.H"
+
 namespace substitution {
 
   using std::string;
@@ -21,8 +22,6 @@ namespace substitution {
     vector<double> parameters_;
 
   public:
-
-    vector<bool> fixed;
 
     bool full_tree;
   protected:
@@ -53,7 +52,7 @@ namespace substitution {
     virtual double prior() const {return 0.0;}
 
     /// Symmetrically propose another vector of parameters (calls recalc)
-    virtual void fiddle() = 0; 
+    virtual void fiddle(const std::valarray<bool>&) = 0; 
 
     /// The model's name
     virtual string name() const =0;
@@ -75,7 +74,7 @@ namespace substitution {
     virtual double super_prior() const =0;
 
     /// Fiddle the parameters of the upper model
-    virtual void super_fiddle() =0;
+    virtual void super_fiddle(const std::valarray<bool>&) =0;
 
   public:
     /// Make a copy of ourselves
@@ -88,11 +87,11 @@ namespace substitution {
 
     double prior() const {return super_prior() + SubModel().prior();}
 
-    void fiddle() {
-      SubModel().fiddle();
+    void fiddle(const std::valarray<bool>& fixed) {
+      SubModel().fiddle(fixed);
       for(int i=0;i<SubModel().parameters().size();i++)
 	parameters_[i] = SubModel().parameters()[i];
-      super_fiddle();
+      super_fiddle(fixed);
     }
 
     /// We have the same alphabet as our submodel
@@ -114,7 +113,7 @@ namespace substitution {
     virtual double super_prior() const =0;
 
     /// Fiddle the parameters of the upper model
-    virtual void super_fiddle() =0;
+    virtual void super_fiddle(const std::valarray<bool>&) =0;
 
   public:
     /// Make a copy of ourselves
@@ -129,17 +128,13 @@ namespace substitution {
       :sub_model(M.clone()) 
     {
       parameters_.resize(M.parameters().size()+dp);
-      fixed.resize(parameters_.size());
 
-      for(int i=0;i<M.parameters().size();i++) {
+      for(int i=0;i<M.parameters().size();i++)
 	parameters_[i] = M.parameters()[i];
-	fixed[i] = M.fixed[i];
-      }
 
       full_tree = M.full_tree;
     }
   };
-  // move 'fixed' to an argument of fiddle(), store 'fixed' in Parameters
 
 
   // This models a substitution process in which evolution is independant between
@@ -270,7 +265,7 @@ namespace substitution {
     public:
       virtual Gamma_Branch_Model* clone() const {return new Gamma_Branch_Model(*this);}
       
-      void super_fiddle();
+      void super_fiddle(const std::valarray<bool>&);
       double super_prior() const;
       string name() const;
       
@@ -279,6 +274,27 @@ namespace substitution {
       
       Matrix transition_p(double t) const;
       Gamma_Branch_Model(const ReversibleMarkovModel& M)
+	:NestedModelOver<ReversibleMarkovModel>(M,1) {
+	parameters_[parameters_.size()-1]=0.1;
+      }
+    };
+
+
+
+    class Gamma_Stretched_Branch_Model:public Independant_Additive_Reversible_Model,public NestedModelOver<ReversibleMarkovModel> 
+    {
+    public:
+      virtual Gamma_Stretched_Branch_Model* clone() const {return new Gamma_Stretched_Branch_Model(*this);}
+      
+      void super_fiddle(const std::valarray<bool>&);
+      double super_prior() const;
+      string name() const;
+      
+      /// Get the equilibrium frequencies
+      const std::valarray<double>& frequencies() const {return SubModel().frequencies();}
+      
+      Matrix transition_p(double t) const;
+      Gamma_Stretched_Branch_Model(const ReversibleMarkovModel& M)
 	:NestedModelOver<ReversibleMarkovModel>(M,1) {
 	parameters_[parameters_.size()-1]=0.1;
       }
@@ -315,7 +331,7 @@ namespace substitution {
 
     virtual HKY* clone() const {return new HKY(*this);}
 
-    virtual void fiddle(); 
+    virtual void fiddle(const std::valarray<bool>&); 
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
     double kappa() const {return parameters_[0];}
@@ -350,7 +366,7 @@ namespace substitution {
   class EQU: public ReversibleMarkovModel,public ModelWithAlphabet<alphabet> {
     virtual void recalc();
   public:
-    virtual void fiddle() {}
+    virtual void fiddle(const std::valarray<bool>&) {}
 
     virtual EQU* clone() const {return new EQU(*this);}
 
@@ -376,7 +392,7 @@ namespace substitution {
 
     virtual void recalc();
   public:
-    virtual void fiddle() {}
+    virtual void fiddle(const std::valarray<bool>&) {}
 
     virtual Empirical* clone() const {return new Empirical(*this);}
 
@@ -401,7 +417,7 @@ namespace substitution {
     Translation_Table T;
 
   public:
-    void fiddle();
+    void fiddle(const std::valarray<bool>&);
 
     YangCodonModel* clone() const {return new YangCodonModel(*this);}
 
@@ -516,7 +532,7 @@ namespace substitution {
 
   protected:
     double super_prior() const {return 0;}
-    void super_fiddle() {}; 
+    void super_fiddle(const std::valarray<bool>&) {}; 
   public:
     virtual SingleRateModel* clone() const {return new SingleRateModel(*this);}
 
@@ -535,10 +551,10 @@ namespace substitution {
   class DistributionRateModel:  public MultiRateModelOver<ReversibleModel> {
   protected:
     double super_prior() const;
-    void super_fiddle();
+    void super_fiddle(const std::valarray<bool>&);
     void recalc();
 
-    RateDistribution* D;
+    OwnedPointer<RateDistribution> D;
 
   public:
 
@@ -548,12 +564,7 @@ namespace substitution {
 
     string name() const;
     
-    DistributionRateModel& operator=(const DistributionRateModel&);
-
-    DistributionRateModel(const DistributionRateModel&);
-
     DistributionRateModel(const ReversibleModel& M, const RateDistribution& RD,int n);
-    ~DistributionRateModel();
   };
 
   /// A discrete-gamma Model
@@ -566,8 +577,21 @@ namespace substitution {
 
     /// Construct a discrete gamma model on top of 'M', with 'n' bins
     GammaRateModel(const ReversibleModel& M,int n);
-    virtual ~GammaRateModel() {}
   };
+
+  /// A discrete-lognormal Model
+  //  Only has one parameter: the shape parameter for the gamma
+  class LogNormalRateModel: public DistributionRateModel {
+  public:
+    virtual LogNormalRateModel* clone() const {return new LogNormalRateModel(*this);}
+
+    string name() const;
+
+    /// Construct a discrete gamma model on top of 'M', with 'n' bins
+    LogNormalRateModel(const ReversibleModel& M,int n);
+  };
+
+
 
   /// The Invariant-sites model: a certain fraction of the sites don't change
 
@@ -581,7 +605,7 @@ namespace substitution {
   protected:
     double super_prior() const;
 
-    void super_fiddle();
+    void super_fiddle(const std::valarray<bool>&);
     void recalc();
   public:
     virtual INV_Model* clone() const {return new INV_Model(*this);}

@@ -148,7 +148,7 @@ void remove_subtree(node* n,node* &root) {
   // don't remove the root!
   assert(n->parent);
 
-  // get parent and grandparent
+  // get parent and sibling
   node* parent = n->parent;
   node* sibling = n->parent->right;
   if (n == sibling) sibling = n->parent->left;
