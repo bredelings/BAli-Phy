@@ -5,7 +5,6 @@
 #include <list>
 #include "myexception.H"
 #include "alignment.H"
-#include "arguments.H"
 #include "mytypes.H"
 #include "logsum.H"
 #include "optimize.H"
@@ -15,6 +14,11 @@
 #include "alignmentutil.H"
 #include "alignment-util.H"
 #include "distance-methods.H"
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
 
 // FIXME - also show which COLUMNS are more that 99% conserved?
 
@@ -207,16 +211,15 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
 }
 
 
-void do_setup(Arguments& args,list<alignment>& alignments,alignment& A,SequenceTree& T) {
+void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A,SequenceTree& T) {
   //----------- Load and link template A and T -----------------//
   load_A_and_T(args,A,T,false);
 
   //------------ Try to load alignments -----------//
-  int maxalignments = args.loadvalue("maxalignments",1000);
+  int maxalignments = args["max-alignments"].as<int>();
 
-  string tag = "align[sample";
-  if (args.set("tag"))
-    tag = args["tag"];
+  string tag = "align[";
+  tag += args["tag"].as<string>();
 
   vector< OwnedPointer<alphabet> > alphabets;
   alphabets.push_back(A.get_alphabet());
@@ -299,13 +302,45 @@ double get_column_probability(const vector<int>& column,
   return double(0.5+count)/(1.0+alignments.size());
 }
 
-//FIXME - use rooted trees?  How?
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("align", value<string>(),"file with sequences and initial alignment")
+    ("tree",value<string>(),"file with initial tree")
+    ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+    ("tag", value<string>()->default_value("sample"),"only read alignments preceded by 'align[<tag>'")
+    ("refine", value<string>(),"procedure for refining Least-Squares positivized branch lengths: SSE, Poisson, LeastSquares")
+    ;
+
+  // positional options
+  positional_options_description p;
+  p.add("align", 1);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: alignment-gild <file1> <file2> ... [OPTIONS]\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
 
 int main(int argc,char* argv[]) { 
   try {
-    Arguments args;
-    args.read(argc,argv);
-    args.print(std::cerr);
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
 
     //----------- Load alignment and tree ---------//
     alignment A;
@@ -376,11 +411,11 @@ int main(int argc,char* argv[]) {
 
       // Define an objective function for refining the initial estimates
       function * f = NULL;
-      if (args["refine"] == "SSE")
+      if (args["refine"].as<string>() == "SSE")
 	f = new SSE_match_pairs(labels,T);
-      else if (args["refine"] == "Poisson")
+      else if (args["refine"].as<string>() == "Poisson")
 	f = new poisson_match_pairs(labels,T);
-      else if (args["refine"] == "LeastSquares")
+      else if (args["refine"].as<string>() == "LeastSquares")
 	f = new LeastSquares(labels,T);
 
       // refine initial estimate if requested
