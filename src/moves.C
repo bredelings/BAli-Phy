@@ -89,14 +89,17 @@ MCMC::result_t sample_alignments_one(alignment& A, Parameters& P,int b) {
 }
 
 MCMC::result_t sample_node_move(alignment& A, Parameters& P,int node) {
+  letters_OK(A,"sample_node:in");
   assert(P.IModel().full_tree); 
 
   sample_node(A,P,node);
 
+  letters_OK(A,"sample_node:out");
   return MCMC::result_t(); // no_result
 }
 
 MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
+  letters_OK(A,"sample_two_nodes:in");
   assert(P.IModel().full_tree); 
 
   vector<int> nodes = A3::get_nodes_random(P.T,n0);
@@ -112,6 +115,7 @@ MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
 
   sample_two_nodes(A,P,b);
 
+  letters_OK(A,"sample_two_nodes:out");
   return MCMC::result_t(); // no_result
 }
 

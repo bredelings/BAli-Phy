@@ -15,6 +15,8 @@ double exponential_pdf(double x, double mu);
 
 double shift_laplace_pdf(double x, double mu, double sigma);
 
+double beta_log_pdf(double p,double f, double N);
+
 inline double LOD(double x) {
   return log(x/(1.0-x));
 }

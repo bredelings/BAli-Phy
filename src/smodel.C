@@ -888,15 +888,7 @@ namespace substitution {
   double WithINV::super_prior() const {
     double p = super_parameters_[0];
 
-    const double frac_mode = 0.02;
-    const double N = 20;
-    const double a  = 1.0 + N * frac_mode;
-    const double b  = 1.0 + N * (1.0 - frac_mode);
-
-    if (p <= 0.0 or p >= 1.0)
-      return log_0;
-    else
-      return log( gsl_ran_beta_pdf(p,a,b) /* * p*(1.0-p) */ );
+    return beta_log_pdf(p, 0.02, 20);
   }
 
   void WithINV::super_fiddle() {

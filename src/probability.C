@@ -1,5 +1,6 @@
 #include "probability.H"
 #include <gsl/gsl_randist.h>
+#include "logsum.H"
 
 using std::valarray;
 
@@ -74,3 +75,12 @@ double shift_laplace_pdf(double x, double mu, double sigma) {
   return gsl_ran_laplace_pdf(x-mu,a);
 }
 
+double beta_log_pdf(double p,double f, double N) {
+    const double a  = 1.0 + N * f;
+    const double b  = 1.0 + N * (1.0 - f);
+
+    if (p <= 0.0 or p >= 1.0)
+      return log_0;
+    else
+      return log( gsl_ran_beta_pdf(p,a,b) );
+}
