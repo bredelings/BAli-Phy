@@ -174,7 +174,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
   parameter_moves.add(1+P.T.branches()/3,SingleMove(change_parameters,"s_parameters:parameters"));
-  parameter_moves.add(1+P.T.branches()/3,SingleMove(change_gap_parameters,"g_parameters:parameters"));
+  parameter_moves.add(1+P.T.branches()*2,SingleMove(change_gap_parameters,"g_parameters:parameters"));
   
 
   int subsample = args.loadvalue("subsample",1);
