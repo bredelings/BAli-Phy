@@ -27,18 +27,15 @@ namespace substitution {
 
   typedef Likelihood_Cache& column_cache_t;
 
-  /// move increment indexes for nodes 'source' in column 'c' of 'A'
+  /// increment and return the index if any nodes in 'mask' are present in column 'c'
   inline int inc(int& index,const vector<int>& mask, 
 		 const alignment& A,int c) 
   {
-    int ret = alphabet::gap;
     for(int i=0;i<mask.size();i++)
       if (not A.gap(c,mask[i])) {
-	index++;
-	ret = index;
-	break;
+	return ++index;
       }
-    return ret;
+    return alphabet::gap;
   }
 
   ublas::matrix<int> subA_index(const vector<int>& b,const alignment& A,const Tree& T) 
