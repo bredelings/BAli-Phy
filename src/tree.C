@@ -841,6 +841,7 @@ Tree& Tree::operator=(const Tree& T) {
     n_leaves_ = T.n_leaves_;
     cached_partitions.clear();
     cached_partitions = T.cached_partitions;
+    cached_partition_sets = T.cached_partition_sets;
     nodes_ = std::vector<BranchNode*>(T.nodes_.size(),(BranchNode*)NULL);
     branches_ = std::vector<BranchNode*>(T.branches_.size(),(BranchNode*)NULL);
 
@@ -859,6 +860,7 @@ Tree::Tree(const BranchNode* BN)
 Tree::Tree(const Tree& T) 
     :n_leaves_(T.n_leaves_),
      cached_partitions(T.cached_partitions),
+     cached_partition_sets(T.cached_partition_sets),
      nodes_(T.nodes_.size(),(BranchNode*)NULL),
      branches_(T.branches_.size(),(BranchNode*)NULL)
 {
