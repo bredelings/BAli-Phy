@@ -69,7 +69,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   pS<<endl;
   
   for(int i=0;i<P.IModel().parameters().size();i++)
-    pI<<"    pI"<<i<<" = "<<P.IModel().parameters()[i];
+    pI<<"    "<<P.IModel().parameter_name(i)<<" = "<<P.IModel().parameters()[i];
   pI<<endl;
   
   for(int i=0;i<P.SModel().n_base_models();i++)
