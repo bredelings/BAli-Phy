@@ -677,25 +677,22 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 			   const vector< double >& d0,
 			   const vector< Matrix >& d1,
 			   const vector< Matrix >& d2, 
-			   const valarray<double>& f)
+			   const Matrix& f)
   :DPmatrix(d1.size(),d2.size(),v1,v2,M,Temp),
    s12_sub(d1.size(),d2.size()),
    s1_sub(d1.size()),s2_sub(d2.size()),
    distribution(d0),
-   dists1(d1),dists2(d2),frequency(f.size())
+   dists1(d1),dists2(d2),frequency(f)
 {
   
-  for(int i=0;i<f.size();i++)
-    frequency[i] = f[i];
-
   //----- cache G1,G2 emission probabilities -----//
   for(int i=0;i<dists1.size();i++) {
     double total=0;
-    for(int r=0;r<nrates();r++) {
+    for(int m=0;m<nrates();m++) {
       double temp=0;
       for(int l=0;l<dists1[i].size2();l++)
-	temp += frequency[l]*dists1[i](r,l);
-      total += temp*distribution[r];
+	temp += frequency(m,l)*dists1[i](m,l);
+      total += temp*distribution[m];
     }
     s1_sub[i] = total;
     s1_sub[i] = pow(s1_sub[i],1.0/T);
@@ -703,11 +700,11 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 
   for(int i=0;i<dists2.size();i++) {
     double total=0;
-    for(int r=0;r<nrates();r++) {
+    for(int m=0;m<nrates();m++) {
       double temp=0;
       for(int l=0;l<dists2[i].size2();l++)
-	temp += frequency[l]*dists2[i](r,l);
-      total += temp*distribution[r];
+	temp += frequency(m,l)*dists2[i](m,l);
+      total += temp*distribution[m];
     }
     s2_sub[i] = total;
     s2_sub[i] = pow(s2_sub[i],1.0/T);
@@ -715,9 +712,9 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 
   //----- pre-calculate scaling factors --------//
   for(int i=0;i<dists2.size();i++) {
-    for(int r=0;r<nrates();r++)
-      for(int l=0;l<dists2[i][r].size();l++)
-	dists2[i](r,l) *= distribution[r] * frequency[l];
+    for(int m=0;m<nrates();m++)
+      for(int l=0;l<dists2[i][m].size();l++)
+	dists2[i](m,l) *= distribution[m] * frequency(m,l);
   }
 
   //----- cache M emission probabilities -----//
@@ -726,9 +723,9 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
       const Matrix& M1 = dists1[i];
       const Matrix& M2 = dists2[j];
       double total=0;
-      for(int r=0;r<M1.size1();r++) {
+      for(int m=0;m<M1.size1();m++) {
 	for(int l=0;l<M1.size2();l++)
-	  total += M1(r,l) * M2(r,l);
+	  total += M1(m,l) * M2(m,l);
       }
       s12_sub(i,j) = total;
       s12_sub(i,j) = pow(s12_sub(i,j),1.0/T);

@@ -37,7 +37,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   assert(T.connected(nodes[0],nodes[2]));
   assert(T.connected(nodes[0],nodes[3]));
 
-  const valarray<double>& frequency = P.SModel().frequencies();
+  const Matrix frequency = substitution::frequency_matrix(P.SModel());
 
   // std::cerr<<"A = "<<A<<endl;
 

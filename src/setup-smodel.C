@@ -173,6 +173,16 @@ bool process_stack_Multi(vector<string>& string_stack,
     else
       throw myexception()<<"gamma: couldn't find a reversible+additive model to use.";
   }
+  else if (match(string_stack,"multi_freq")) {
+    if (MM)
+      model_stack.back() = MultiFrequencyModel(*MM,4);
+    else if (model_stack.empty())
+      throw myexception()<<"multi_freq: couldn't find any model to use.";
+    else if (RA)
+      model_stack.back() = MultiFrequencyModel(UnitModel(*RA),4);
+    else
+      throw myexception()<<"We can only create multi_freq models on top of MultiRateModels or Markov models";
+  }
   else if (match(string_stack,"INV")) {
     if (MM)
       model_stack.back() = WithINV(*MM);

@@ -571,6 +571,8 @@ namespace substitution {
     /// Get a transition probability matrix for time 't' and model 'm'
     Matrix transition_p(double t,int m) const {return base_model(m).transition_p(t);}
   };
+
+  Matrix frequency_matrix(const MultiModel&);
  
   /// A MultiRate Model with a single rate
   class UnitModel: public MultiModel,
@@ -600,9 +602,54 @@ namespace substitution {
     ~UnitModel() {};
   };
 
-  //FIXME - special INV model? (RAI) 
-  //Constrast with WithINV model?
-  //Yes.
+  /// A substitution model based on running Reversible Models with the same equilibrium at different rates
+  class MultiFrequencyModel: public MultiModel, 
+			     public ReversibleWrapperOver<MultiModel> 
+  {
+  protected:
+    /// MultiModels w/ different values of the parameter set
+    vector<OwnedPointer<MultiModel> > sub_parameter_models;
+    /// Fraction of the sites with each parameter value
+    vector<double> fraction;
+
+    std::valarray<double> get_freq(int m) const;
+    void set_freq(int m,const std::valarray<double>& f);
+    
+    std::valarray<double> get_fraction() const;
+    void set_fraction(const std::valarray<double>& f);
+    
+
+    void recalc();
+    void super_fiddle();
+  public:
+    double super_prior() const;
+
+    MultiFrequencyModel* clone() const {return new MultiFrequencyModel(*this);}
+
+    /// The number of models
+    int n_base_models() const {return fraction.size() * SubModel().n_base_models();}
+
+    /// Access the base models
+    const Base_Model_t& base_model(int m) const;
+          Base_Model_t& base_model(int m)      ;
+
+    /// Get the probability of each base models
+    std::vector<double> distribution() const;
+
+    /// Get the equilibrium frequencies
+    const std::valarray<double>& frequencies() const;
+
+    /// Set the equilibrium frequencies
+    void frequencies(const std::valarray<double>&);
+  
+    string name() const;
+    string super_parameter_name(int i) const;
+
+    MultiFrequencyModel(const MultiModel& M,int n_bins);
+
+    ~MultiFrequencyModel() {}
+  };
+
 
   /// A substitution model based on running Reversible Models with the same equilibrium at different rates
   class MultiParameterModel: public MultiModel, 

@@ -194,7 +194,7 @@ public:
   /// Emission probabilities for second sequence
   vector< Matrix > dists2;
   /// Frequencies at the root node - and equilibrium frequencies
-  std::vector<double> frequency;
+  Matrix frequency;
   /// The number of different rates
   int nrates() const {return dists1[0].size1();}
 
@@ -217,7 +217,7 @@ public:
 			     const vector< double >&,
 			     const vector< Matrix >&,
 			     const vector< Matrix >&, 
-			     const valarray<double>&);
+			     const Matrix&);
   
   virtual ~DPmatrixEmit() {}
 };
@@ -236,7 +236,7 @@ public:
 		 const vector< double >& d0,
 		 const vector< Matrix >& d1,
 		 const vector< Matrix >& d2, 
-		 const valarray<double>& f):
+		 const Matrix& f):
     DPmatrixEmit(v1,v2,M,Temp,d0,d1,d2,f)
   { }
 
@@ -264,7 +264,7 @@ public:
 		      const vector< double >& d0,
 		      const vector< Matrix >& d1,
 		      const vector< Matrix >& d2, 
-		      const valarray<double>& f):
+		      const Matrix& f):
     DPmatrixEmit(v1,v2,M,Temp,d0,d1,d2,f), allowed_states(d2.size()+1)
   { }
 

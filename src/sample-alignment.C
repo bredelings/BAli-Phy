@@ -53,8 +53,7 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   const tree& T = P.T;
 
-  const substitution::MultiModel& MModel = P.SModel();
-  const valarray<double>& frequency = MModel.frequencies();
+  const Matrix frequency = substitution::frequency_matrix(P.SModel());
 
   int node1 = T.branch(b).parent();
   int node2 = T.branch(b).child();

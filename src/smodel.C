@@ -472,6 +472,15 @@ namespace substitution {
     return P;
   }
 
+
+  Matrix frequency_matrix(const MultiModel& M) {
+    Matrix f(M.n_base_models(),M.Alphabet().size());
+    for(int m=0;m<f.size1();m++)
+      for(int l=0;l<f.size2();l++)
+	f(m,l) = M.base_model(m).frequencies()[l];
+    return f;
+  }
+
   string UnitModel::name() const {
     return string("[") + SubModel().name() + "]";
   }
@@ -480,7 +489,156 @@ namespace substitution {
     return s_parameter_name(i,0);
   }
 
+  //------------- MultiFrequencyModel ---------------//
+  valarray<double> MultiFrequencyModel::get_fraction() const {
+    valarray<double> f(fraction.size());
+    for(int i=0;i<f.size();i++)
+      f[i] = super_parameters_[i];
+    return f;
+  }
 
+  void MultiFrequencyModel::set_fraction(const valarray<double>& f) {
+    assert(f.size() == fraction.size());
+    for(int i=0;i<f.size();i++)
+      super_parameters_[i] = f[i];
+  }
+
+  valarray<double> MultiFrequencyModel::get_freq(int m) const {
+    valarray<double> f(Alphabet().size());
+    int offset = fraction.size() + Alphabet().size()*m;
+    for(int i=0;i<f.size();i++)
+      f[i] = super_parameters_[offset+i];
+    return f;
+  }
+
+  void MultiFrequencyModel::set_freq(int m,const valarray<double>& f) {
+    int offset = fraction.size()+Alphabet().size()*m;
+    for(int i=0;i<f.size();i++)
+      super_parameters_[offset+i] = f[i];
+  }
+
+
+
+  void MultiFrequencyModel::super_fiddle() {
+    valarray<double> fract(fraction.size());
+    for(int i=0;i<fract.size();i++)
+      fract[i] = super_parameters_[i];
+    fract = dirichlet_fiddle(fract,0.10);
+    for(int i=0;i<fract.size();i++)
+      super_parameters_[i] = fract[i];
+
+    for(int m=0;m<fraction.size();m++) {
+      valarray<double> f = get_freq(m);
+      f = dirichlet_fiddle(f,0.10);
+      set_freq(m,f);
+    }
+    read();
+    recalc();
+  }
+
+  double MultiFrequencyModel::super_prior() const {
+    const double r = 10;
+    valarray<double> dist(fraction.size());
+    dist[0] = 1.0;
+    for(int i=1;i<dist.size();i++)
+      dist[i] = dist[i-1]/r;
+    dist /= dist.sum();
+    
+    double Pr = dirichlet_log_pdf(get_fraction(),dist,10*fraction.size());
+
+    valarray<double> q(1.0/Alphabet().size(),Alphabet().size());
+    for(int m=0;m<fraction.size();m++) {
+      valarray<double> f = get_freq(m);
+      Pr += dirichlet_log_pdf(f,q,10);
+    }
+    return Pr;
+  }
+
+  const MultiModel::Base_Model_t& MultiFrequencyModel::base_model(int m) const {
+    int i = m / SubModel().n_base_models();
+    int j = m % SubModel().n_base_models();
+
+    return sub_parameter_models[i]->base_model(j);
+  }
+
+  MultiModel::Base_Model_t& MultiFrequencyModel::base_model(int m) {
+    int i = m / SubModel().n_base_models();
+    int j = m % SubModel().n_base_models();
+
+    return sub_parameter_models[i]->base_model(j);
+  }
+  
+  vector<double> MultiFrequencyModel::distribution() const {
+    vector<double> dist(n_base_models());
+
+    for(int m=0;m<dist.size();m++) {
+      int i = m / SubModel().n_base_models();
+      int j = m % SubModel().n_base_models();
+
+      dist[m] = fraction[i]*sub_parameter_models[i]->distribution()[j];
+    }
+
+    return dist;
+  }
+
+  /// Get the equilibrium frequencies
+  const std::valarray<double>& MultiFrequencyModel::frequencies() const {
+    return SubModel().frequencies();
+  }
+
+  /// Set the equilibrium frequencies
+  void MultiFrequencyModel::frequencies(const std::valarray<double>& f) {
+    SubModel().frequencies(f);
+    recalc();
+  }
+  
+
+  void MultiFrequencyModel::recalc() {
+    for(int i=0;i<fraction.size();i++)
+      fraction[i] = super_parameters_[i];
+
+    // recalc sub-model
+    //NestedModel::recalc(); called from parent!
+
+    // recalc sub-models
+    vector<double> params = SubModel().parameters();
+    for(int b=0;b<fraction.size();b++) {
+      sub_parameter_models[b] = &SubModel();
+      
+      valarray<double> f(Alphabet().size());
+      int offset = fraction.size()+Alphabet().size()*b;
+      for(int i=0;i<f.size();i++)
+	f[i] = super_parameters_[offset+i];
+
+      sub_parameter_models[b]->frequencies(f);
+    }
+  }
+
+  string MultiFrequencyModel::name() const {
+    return SubModel().name() + " * multi_freq";
+  }
+  string MultiFrequencyModel::super_parameter_name(int i) const {
+    return s_parameter_name(i,super_parameters_.size());
+  }
+
+  MultiFrequencyModel::MultiFrequencyModel(const MultiModel& M,int n)
+    :ReversibleWrapperOver<MultiModel>(M,n*(1+M.Alphabet().size())),
+     sub_parameter_models(vector<OwnedPointer<MultiModel> >(n,M)),
+     fraction(n)
+  { 
+    int i=0;
+    for(;i<n;i++)
+      super_parameters_[i] = 1.0/n;
+
+    for(int j=0;j<n;j++)
+      for(int k=0;k<M.Alphabet().size();k++)
+	super_parameters_[i++] = 1.0/M.Alphabet().size();
+
+    read();
+    recalc();
+  }
+
+  //----------------------------//
   const MultiModel::Base_Model_t& MultiParameterModel::base_model(int m) const {
     int i = m / SubModel().n_base_models();
     int j = m % SubModel().n_base_models();
@@ -529,14 +687,14 @@ namespace substitution {
 
     // recalc sub-models
     vector<double> params = SubModel().parameters();
-    for(int m=0;m<n_base_models();m++) {
-      sub_parameter_models[m] = &SubModel();
+    for(int b=0;b<fraction.size();b++) {
+      sub_parameter_models[b] = &SubModel();
       //base_model(m).frequencies(SubModel().frequencies());
       if (p_change == -1)
-	base_model(m).set_rate(p_values[m]);
+	sub_parameter_models[b]->set_rate(p_values[b]);
       else {
-	params[p_change] = p_values[m];
-	base_model(m).parameters(params);
+	params[p_change] = p_values[b];
+	sub_parameter_models[b]->parameters(params);
       }
     }
   }
