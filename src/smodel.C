@@ -470,15 +470,14 @@ namespace substitution {
   }
 
   string YangCodonModel::name() const {
-    return SubModel().name() + " * Yang-94";
-    //    return "Yang-94";
+    return SubModel().name() + " * YangM0";
   }
 
   string YangCodonModel::super_parameter_name(int i) const {
     if (i==0)
-      return "RMM::f";
+      return "YangM0::f";
     if (i==1)
-      return "Yang::omega";
+      return "YangM0::omega";
     else
       return s_parameter_name(i,2);
   }
@@ -806,6 +805,8 @@ namespace substitution {
 	p_values[i] = M.rate();
       else
 	p_values[i] = M.parameters()[p_change];
+
+    SubModel().fixed(p_change,true);
   }
 
   /*--------------- Distribution-based Model----------------*/
@@ -991,7 +992,10 @@ namespace substitution {
     p[0] = super_parameters()[0];
     p[1] = super_parameters()[1];
     p[2] = super_parameters()[2];
-    valarray<double> q(1.0/3,3);
+    valarray<double> q(3);
+    q[0] = 0.01;
+    q[1] = 0.98;
+    q[2] = 0.01;
     double P = dirichlet_log_pdf(p,q,10);
 
     double omega = super_parameters()[3];
@@ -1027,7 +1031,7 @@ namespace substitution {
   }
 
   YangM2::YangM2(const YangCodonModel& M1) 
-    :MultiParameterModel(UnitModel(M1),4,0,3)
+    :MultiParameterModel(UnitModel(M1),4,1,3)
   {
     super_parameters_[0] = 1.0/3;
     super_parameters_[1] = 1.0/3;
