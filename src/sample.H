@@ -40,7 +40,9 @@ bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P
 
 //Resample the alignment parent->child
 MCMC::result_t sample_alignments_one(alignment& old,Parameters&,int b);
-MCMC::result_t sample_alignments2_one(alignment& old,Parameters&,int b);
+MCMC::result_t sample_tri_one(alignment&, Parameters&,int);
+MCMC::result_t sample_tri_branch_one(alignment&,Parameters&,int);
+MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P);
 
 MCMC::result_t sample_node_move(alignment& A, Parameters& Theta,int);
 MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& Theta,int);
@@ -58,9 +60,6 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& Theta,int b)
 
 MCMC::result_t change_parameters(alignment& A,Parameters& Theta);
 MCMC::result_t change_gap_parameters(alignment& A,Parameters& Theta);
-
-MCMC::result_t sample_tri_one(alignment&, Parameters&,int);
-MCMC::result_t sample_tri_branch_one(alignment&,Parameters&,int);
 
 MCMC::result_t sample_frequencies(alignment& A,Parameters& P);
 

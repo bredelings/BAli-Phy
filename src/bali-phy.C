@@ -38,8 +38,8 @@ void do_showonly(const alignment& A,const Parameters& P) {
 }
 
 
-void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterations) {
-
+void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterations) 
+{
   // args for branch-based stuff
   vector<int> branches(P.T.n_branches());
   for(int i=0;i<branches.size();i++)
@@ -57,11 +57,11 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   using namespace MCMC;
 
-  //--------------- alignment -----------------//
+  //----------------------- alignment -------------------------//
   MoveAll alignment_moves("alignment");
 
-  //--------------- alignment::alignment_branch -----------------//
-  MoveEach alignment_branch_moves("alignment_branch:alignment");
+  //--------------- alignment::alignment_branch ---------------//
+  MoveEach alignment_branch_moves("alignment_branch_master");
   alignment_branch_moves.add(1.0,
 			     MoveArgSingle("sample_alignments:alignment:alignment_branch",
 					   sample_alignments_one,
@@ -77,7 +77,8 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 						 branches)
 			       ,false);
   }
-  alignment_moves.add(1, alignment_branch_moves);
+  alignment_moves.add(1, alignment_branch_moves, false);
+  alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments:alignment:alignment_branch:nodes") );
 
   //---------- alignment::nodes_master (nodes_moves) ----------//
   MoveEach nodes_moves("nodes_master:nodes");
@@ -94,7 +95,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   alignment_moves.add(2, nodes_moves);
 
-  //------------------- tree (tree_moves)--------------------//
+  //-------------------- tree (tree_moves) --------------------//
   MoveAll tree_moves("tree");
   MoveAll topology_move("topology");
   MoveEach NNI_move("NNI");

@@ -222,7 +222,7 @@ MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
 
-    std::cerr<<"\n\n Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+    std::cerr<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if (P.T.branch(b).is_internal_branch())
       three_way_topology_sample(A,P,b);
@@ -231,6 +231,26 @@ MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
     change_branch_length(A,P,b);
   }
 
+  return result;
+}
+
+
+MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
+  vector<int> branches = walk_tree_path(P.T);
+
+  MCMC::result_t result;
+
+  for(int i=0;i<branches.size();i++) {
+    int b = branches[i];
+
+    std::cerr<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+
+    if ((myrandomf() < 0.15) and (P.T.n_leaves() >2))
+      sample_tri_one(A,P,b);
+    else
+      sample_alignments_one(A,P,b);
+  }
+  
   return result;
 }
 
