@@ -137,11 +137,11 @@ namespace A3 {
   }
 
 
-  vector<double> get_start_P(const indel::PairHMM& Q) {
+  vector<efloat_t> get_start_P(const indel::PairHMM& Q) {
     int count = 0;
-    double sum = log_0;
+    efloat_t sum = 0;
 
-    vector<double> start_P(nstates,log_0);
+    vector<efloat_t> start_P(nstates,0.0);
     for(int S=0;S<start_P.size();S++) {
       int states = getstates(S);
       int s1 = (states>>4)&3;
@@ -162,9 +162,9 @@ namespace A3 {
 	if (not bitset(states,12)) continue;
       }
       
-      start_P[S] = Q.start_pi(s1) + Q.start_pi(s2) + Q.start_pi(s3);
+      start_P[S] = Q.start_pi(s1) * Q.start_pi(s2) * Q.start_pi(s3);
       count++;
-      sum = logsum(sum,start_P[S]);
+      sum += start_P[S];
     }    
     // check that the sum of Matrices[S](0,0) is 1, number of states examined is 27
 #ifndef NDEBUG

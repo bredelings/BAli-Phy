@@ -34,7 +34,7 @@ inline double logsum(double x, double y)
   double temp = y-x;
   if (temp > NATS)
     return y;
-  else if (temp < -NATS)
+  else if (temp < -NATS or y==log_0)
     return x;
   else
     return (x + log1p(exp(temp)));
@@ -45,7 +45,7 @@ inline void loginc(double& x, double y)
   double temp = y-x;
   if (temp > NATS)
     x=y;
-  else if (temp < -NATS)
+  else if (temp < -NATS or y==log_0)
     ;
   else
     x += log1p(exp(temp));

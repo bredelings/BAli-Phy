@@ -40,32 +40,25 @@ inline double log(log_double_t x) {
   return x.log();
 }
 
+#define decl_double(rtype,op)  \
+inline rtype operator op (double x,log_double_t y) { \
+  return log_double_t(x) op y; \
+} \
+\
+inline rtype operator op (log_double_t x,double y) {\
+  return x op log_double_t(y);\
+}
+
 inline log_double_t operator+(log_double_t x,log_double_t y) {
   log_double_t z = x;
   z += y;
   return z;
 }
 
-inline log_double_t operator+(double x,log_double_t y) {
-  return log_double_t(x)+y;
-}
-
-inline log_double_t operator+(log_double_t x,double y) {
-  return x+log_double_t(y);
-}
-
 inline log_double_t operator-(log_double_t x,log_double_t y) {
   log_double_t z = x;
   z -= y;
   return z;
-}
-
-inline log_double_t operator-(double x,log_double_t y) {
-  return log_double_t(x)-y;
-}
-
-inline log_double_t operator-(log_double_t x,double y) {
-  return x-log_double_t(y);
 }
 
 inline log_double_t operator*(log_double_t x,log_double_t y) {
@@ -80,13 +73,22 @@ inline log_double_t operator/(log_double_t x,log_double_t y) {
   return z;
 }
 
+decl_double(log_double_t,+)
+decl_double(log_double_t,-)
+decl_double(log_double_t,*)
+decl_double(log_double_t,/)
+
 inline bool operator< (log_double_t x,log_double_t y) {
   return log(x)<log(y);
 }
 
+decl_double(bool,<)
+
 inline bool operator<=(log_double_t x,log_double_t y) {
   return log(x)<=log(y);
 }
+
+decl_double(bool,<=)
 
 inline bool operator> (log_double_t x,log_double_t y) {
   return log(x)>log(y);
@@ -99,10 +101,12 @@ inline bool operator>(log_double_t x,double y) {
     return x > log_double_t(y);
 }
 
-
 inline bool operator>=(log_double_t x,log_double_t y) {
   return log(x)>=log(y);
 }
+
+decl_double(bool,>=)
+
 
 inline bool operator==(log_double_t x,log_double_t y) {
   return log(x)==log(y);
@@ -140,6 +144,8 @@ inline bool operator!=(log_double_t x,double y) {
   else
     return double(x) != y;
 }
+
+#undef decl_double
 
 inline log_double_t pow(log_double_t x,double p) {
   x.log() *= p;

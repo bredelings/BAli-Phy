@@ -53,7 +53,7 @@ double DPengine::check(const vector<int>& path1,const vector<int>& path2,double 
   return diff;
 }
 
-DPengine::DPengine(const vector<int>& v1,const vector<double>& v2, const Matrix&M, double Temp)
+DPengine::DPengine(const vector<int>& v1,const vector<efloat_t>& v2, const Matrix&M, double Temp)
   :HMM(v1,v2,M,Temp) 
 { }
 
@@ -184,7 +184,7 @@ double DParray::Pr_sum_all_paths() const {
   return total;
 }
 
-DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
+DParray::DParray(int l,const vector<int>& v1,const vector<efloat_t>& v2,const Matrix& M,double Temp)
   :DPengine(v1,v2,M,Temp),
    vector< vector<efloat_t> >(nstates(),vector<efloat_t>(l+1,0)),length(l+1)
 { 
@@ -262,7 +262,7 @@ void DParrayConstrained::prune() {
   std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<endl;
 }
 
-DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
+DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<efloat_t>& v2,const Matrix& M,double Temp)
   :DParray(l,v1,v2,M,Temp),allowed_states(l+1)
 { }
 
@@ -553,7 +553,7 @@ double DPmatrix::Pr_sum_all_paths() const {
 DPmatrix::DPmatrix(int i1,
 		   int i2,
 		   const vector<int>& v1,
-		   const vector<double>& v2,
+		   const vector<efloat_t>& v2,
 		   const Matrix& M,
 		   double Temp)
   :DPengine(v1,v2,M,Temp),
@@ -672,7 +672,7 @@ double DPmatrixEmit::path_Q_subst(const vector<int>& path) const {
 
 
 DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
-			   const vector<double>& v2,
+			   const vector<efloat_t>& v2,
 			   const Matrix& M,
 			   double Temp,
 			   const vector< double >& d0,

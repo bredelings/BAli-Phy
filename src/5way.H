@@ -28,7 +28,7 @@ namespace A5 {
   vector<int> construct_states();
 
   /// Get the vector of start probabilities
-  vector<double> get_start_P(const indel::PairHMM&,const vector<int>& states);
+  vector<efloat_t> get_start_P(const indel::PairHMM&,const vector<int>& states);
 
   int bits_to_substates(int bits);
 

@@ -257,17 +257,13 @@ void HMM::find_and_index_silent_network_states() {
 
 
 // Don't scale Q and GQ until the end???
-HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
+HMM::HMM(const vector<int>& v1,const vector<efloat_t>& v2,const Matrix& M,double Temp)
   :silent_network_(v1.size()),
    T(Temp),
    Q(M.size1(),M.size2()),GQ(M.size1(),M.size2()),
-   start_P(v2.size()),state_emit(v1) 
+   start_P(v2),state_emit(v1) 
 {
   
-  for(int i=0;i<start_P.size();i++) {
-    start_P[i] = v2[i];
-  }
-
   for(int i=0;i<M.size1();i++)
     for(int j=0;j<M.size2();j++) {
       Q(i,j) = pow(M(i,j),1.0/T);

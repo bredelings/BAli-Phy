@@ -257,11 +257,11 @@ namespace A5 {
 
 
   /// Get the vector of start probabilities
-  vector<double> get_start_P(const indel::PairHMM& Q,const vector<int>& states_list) {
+  vector<efloat_t> get_start_P(const indel::PairHMM& Q,const vector<int>& states_list) {
     int count = 0;
-    double sum = log_0;
+    efloat_t sum = log_0;
 
-    vector<double> start_P(states_list.size()-1,log_0);
+    vector<efloat_t> start_P(states_list.size()-1,0.0);
     int allmatch = (bits_to_substates(63)<<6)|63;
     allmatch = findstate(allmatch,states_list);
 
@@ -287,10 +287,10 @@ namespace A5 {
       }
       assert(bits != -1);
       int state = findstate(bits|(substates<<6),states_list);
-      start_P[state] = Q.start_pi(s1) + Q.start_pi(s2) + Q.start_pi(s3) + 
-	Q.start_pi(s4) + Q.start_pi(s5);
+      start_P[state] = Q.start_pi(s1) * Q.start_pi(s2) * Q.start_pi(s3) * 
+	Q.start_pi(s4) * Q.start_pi(s5);
       count++;
-      sum = logsum(sum,start_P[S]);
+      sum += start_P[S];
     }
     // check that the sum of Matrices[S](0,0) is 1, number of states examined is 27
 #ifndef NDEBUG

@@ -85,7 +85,7 @@ double prior_branch(const alignment& A,const indel::PairHMM& Q,int parent,int ch
 
   double P = Q.start(state[0]);
   for(int i=1;i<state.size();i++) 
-    P += Q(state[i-1],state[i]);
+    P += log(Q(state[i-1],state[i]));
   
   return P;
 }

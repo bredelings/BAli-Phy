@@ -24,7 +24,7 @@ namespace indel {
 
   vector<efloat_t> PairHMM::start_pi() const {
     vector<efloat_t> pi(n_states()-1);
-    for(int i=0;i<n_states();i++)
+    for(int i=0;i<pi.size();i++)
       pi[i] = start_pi(i);
     return pi;
   }
@@ -64,13 +64,13 @@ double SimpleIndelModel::lengthp(int l) const {
   using namespace states;
 
   //--------------- Remove the 'G2' State ----------------------//
-  double MM = Q1(M,M);
-  double MG = Q1(M,G1);
-  double ME = Q1(M,E);
+  double MM = QE(M,M);
+  double MG = QE(M,G1);
+  double ME = QE(M,E);
 
-  double GM = Q1(G1,M);
-  double GG = Q1(G1,G1);
-  double GE = Q1(G1,E);
+  double GM = QE(G1,M);
+  double GG = QE(G1,G1);
+  double GE = QE(G1,E);
 
   //----- Calculate roots of q(s); we assume its quadratic -----//
   double C = 1;
@@ -202,17 +202,14 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
 void SimpleIndelModel::recalc() {
 
   /* Chain with transitions to End state */
-  Q1 = Q2 = get_branch_HMM(1);
+  Q1 = get_branch_HMM(1);
 
   remove_one_state(Q1,states::G2);
-  remove_one_state(Q2,states::G1);
 
-  for(int i=0;i<Q1.size1();i++) {
-    for(int j=0;j<Q1.size2();j++) {
-      Q1(i,j) = exp( Q1(i,j) );
-      Q2(i,j) = exp( Q2(i,j) );
-    }
-  }
+  for(int i=0;i<Q1.size1();i++) 
+    for(int j=0;j<Q1.size2();j++) 
+      QE(i,j) = Q1(i,j);
+
 }
 
 double SimpleIndelModel::prior() const {
@@ -250,7 +247,7 @@ string SimpleIndelModel::parameter_name(int i) const {
 }
 
 SimpleIndelModel::SimpleIndelModel()
-  :IndelModel(3)
+  :IndelModel(3),QE(Q1.size1(),Q1.size2())
 {
   parameters_[0] = -5;
   parameters_[1] = -0.5;

@@ -32,7 +32,7 @@ namespace A3 {
 
   vector<int> get_state_emit();
 
-  vector<double> get_start_P(const indel::PairHMM&);
+  vector<efloat_t> get_start_P(const indel::PairHMM&);
 
   int bits_to_states(int bits);
 

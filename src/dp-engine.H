@@ -28,7 +28,7 @@ public:
   /// Check of the relative probabilities of path1 and path2 agree with lp1+ls1 and lp2+ls2
   double check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) const;
 
-  DPengine(const vector<int>&,const vector<double>&,const Matrix&,double Temp);
+  DPengine(const vector<int>&,const vector<efloat_t>&,const Matrix&,double Temp);
 };
 
 
@@ -61,7 +61,7 @@ public:
   double Pr_sum_all_paths() const;
 
   /// Construct an 1D DP matrix from a length, and an HMM
-  DParray(int,const vector<int>&,const vector<double>&,const Matrix&,double Temp);
+  DParray(int,const vector<int>&,const vector<efloat_t>&,const Matrix&,double Temp);
 
   virtual ~DParray() {}
 };
@@ -88,7 +88,7 @@ public:
   void prune();
 
   /// Construct an 1D DP matrix from a length, and an HMM
-  DParrayConstrained(int,const vector<int>&,const vector<double>&,const Matrix&, double Temp);
+  DParrayConstrained(int,const vector<int>&,const vector<efloat_t>&,const Matrix&, double Temp);
 
   virtual ~DParrayConstrained() {}
 };
@@ -143,7 +143,7 @@ public:
   DPmatrix::DPmatrix(int i1,
 		     int i2,
 		     const vector<int>& v1,
-		     const vector<double>& v2,
+		     const vector<efloat_t>& v2,
 		     const Matrix& M,
 		     double Temp);
   virtual ~DPmatrix() {}
@@ -164,7 +164,7 @@ public:
   DPmatrixNoEmit::DPmatrixNoEmit(int i1,
 				 int i2,
 				 const vector<int>& v1,
-				 const vector<double>& v2,
+				 const vector<efloat_t>& v2,
 				 const Matrix& M,
 				 double Temp
 				 )
@@ -211,7 +211,7 @@ public:
 
   /// Construct a DP array from an HMM, emission probabilities, and substitution model
   DPmatrixEmit::DPmatrixEmit(const vector<int>&,
-			     const vector<double>&,
+			     const vector<efloat_t>&,
 			     const Matrix&,
 			     double Temp,
 			     const vector< double >&,
@@ -230,7 +230,7 @@ public:
   void forward_cell(int,int,int,int);
 
   DPmatrixSimple(const vector<int> & v1,
-		 const vector<double> & v2,
+		 const vector<efloat_t> & v2,
 		 const Matrix& M,
 		 double Temp,
 		 const vector< double >& d0,
@@ -258,7 +258,7 @@ public:
   void prune();
 
   DPmatrixConstrained(const vector<int> & v1,
-		      const vector<double> & v2,
+		      const vector<efloat_t> & v2,
 		      const Matrix& M,
 		      double Temp,
 		      const vector< double >& d0,

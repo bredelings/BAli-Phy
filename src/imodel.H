@@ -51,7 +51,7 @@ protected:
   indel::PairHMM Q1;
 
   /// The transition matrix with G1 state removed
-  indel::PairHMM Q2;
+  Matrix QE;
 
 public:
   void fiddle();
