@@ -82,6 +82,7 @@ public:
   /// Total number of sequences
   int size2() const {return array.size2();}
 
+  //FIXME!  I should cache the results of this
   ///Length of a particular sequence
   int seqlength(int) const;
 

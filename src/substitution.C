@@ -58,14 +58,12 @@ namespace substitution {
     int B;
     int M;
     int A;
-    int scratch;
 
     peeling_info(const Tree&T, const Likelihood_Cache& LC)
       :root(LC.root),
        B(LC.n_branches()),
        M(LC.n_models()),
-       A(LC.n_letters()),
-       scratch(LC.scratch())
+       A(LC.n_letters())
     {
       for(const_in_edges_iterator i = T[root].branches_in();i;i++)
 	rb.push_back(*i);
@@ -77,42 +75,39 @@ namespace substitution {
   };
 
   typedef alignment::column_t column_t;
-  typedef Column_Interface column_cache_t;
+  typedef Likelihood_Cache& column_cache_t;
 
   /// Compute the letter likelihoods at the root
   void calc_root_likelihoods(const column_t& residues,
-			     column_cache_t distributions,
+			     int c, column_cache_t distributions,
 			     const peeling_info& ops) 
   {
-    const int scratch  = ops.scratch;
     const int n_models = ops.M;
     const int asize    = ops.A;
 
     for(int m=0;m<n_models;m++) {
+      for(int l=0;l<asize;l++) 
+	distributions.scratch(c)(m,l) = 1;
 
       //-------------- Propagate and collect information at 'root' -----------//
-      for(int i=0;i<ops.rb.size();i++) {
-	if (i==0)
+      for(int i=0;i<ops.rb.size();i++) 
+	if (distributions.informative(c,ops.rb[i]))
 	  for(int l=0;l<asize;l++) 
-	    distributions[scratch](m,l) = distributions[ops.rb[i]](m,l);
-	else
-	  for(int l=0;l<asize;l++) 
-	    distributions[scratch](m,l) *= distributions[ops.rb[i]](m,l);
-      }
+	    distributions.scratch(c)(m,l) *= distributions(c,ops.rb[i])(m,l);
 
       //-------------- Take into account letters at 'root' -------------//
       //FIXME - we could avoid calculations for other letters...
       if (alphabet::letter(residues[ops.root]))
 	for(int l=0;l<asize;l++)
 	  if (l != residues[ops.root])
-	    distributions[scratch](m,l) = 0;
+	    distributions.scratch(c)(m,l) = 0;
     }
   }
 
 
   /// Peel along each branch in work-list @branches 
   void peel(const peeling_info& ops,
-	    column_cache_t cache,
+	    int c,column_cache_t cache,
 	    const column_t& residues,
 	    const MatCache& transition_P)
   {
@@ -121,30 +116,31 @@ namespace substitution {
     const int B        = ops.B;
     const int n_models = ops.M;
     const int asize    = ops.A;
-    const int scratch  = ops.scratch;
 
     for(int i=0;i<ops.size();i++) {
 
       // Get info 
       const int b      = ops[i].b;      // directed branch from source -> target
-      const int b1     = ops[i].b1;     // directed branch from n1     -> source, -1 if leaf(source)
-      const int b2     = ops[i].b2;     // directed branch from n2     -> source, -1 if leaf(source)
+      int b1     = ops[i].b1;     // directed branch from n1     -> source, -1 if leaf(source)
+      int b2     = ops[i].b2;     // directed branch from n2     -> source, -1 if leaf(source)
       const int source = ops[i].source; // = T.directed_branch(b).source();
 
+
+      if (not cache.informative(c,b)) continue;
 
       // compute the distribution at the target (parent) node - single letter
       if (b1 < 0 and alphabet::letter(residues[source])) 
 	for(int m=0;m<n_models;m++) {
 	  const Matrix& Q = transition_P[m][ops[i].b%B];
 	  for(int i=0;i<asize;i++)
-	    cache[b](m,i) = Q(i,residues[source]);
+	    cache(c,b)(m,i) = Q(i,residues[source]);
 	}
 
       // compute the distribution at the target (parent) node - wildcard
       else if (b1 < 0) {
 	for(int m=0;m<n_models;m++) {
 	  for(int i=0;i<asize;i++)
-	    cache[b](m,i) = 1.0;
+	    cache(c,b)(m,i) = 1.0;
 	}
       }
 
@@ -161,12 +157,18 @@ namespace substitution {
 	      for(int m2=0;m2<n_models;m2++)
 	        distributions[scratch](m2,l) = cache[b1](m1,l) * M(m1,m2);
 	*/
-	else
+	else {
 	  // compute the source distribution from 2 branch distributions
-	  for(int m=0;m<n_models;m++) {
-	    for(int j=0;j<asize;j++)
-	      cache[scratch](m,j) = cache[b1](m,j)*cache[b2](m,j);
-	  }
+	  assert( cache.informative(c,b1) or cache.informative(c,b2));
+	  if (not cache.informative(c,b1)) std::swap(b1,b2);
+
+	  cache.scratch(c) = cache(c,b1);
+	  if (cache.informative(c,b2))
+	    for(int m=0;m<n_models;m++) {
+	      for(int j=0;j<asize;j++)
+		cache.scratch(c)(m,j) *= cache(c,b2)(m,j);
+	    }
+	}
 
 	// propagate from the source distribution
 	for(int m=0;m<n_models;m++) {
@@ -175,8 +177,8 @@ namespace substitution {
 	  for(int i=0;i<asize;i++) {
 	    double temp=0;
 	    for(int j=0;j<asize;j++)
-	      temp += Q(i,j)*cache[scratch](m,j);
-	    cache[b](m,i) = temp;
+	      temp += Q(i,j)*cache.scratch(c)(m,j);
+	    cache(c,b)(m,i) = temp;
 	  }
 	}
 
@@ -186,7 +188,7 @@ namespace substitution {
     }
 
     //-------------- collect at 'root' ---------------//
-    calc_root_likelihoods(residues,cache,ops);
+    calc_root_likelihoods(residues,c,cache,ops);
   }
 
 
@@ -227,15 +229,10 @@ namespace substitution {
     peeling_info ops = get_branches(T,LC);
     
     //-------- propagate info along branches ---------//
-    peel(ops,LC[0],residues,transition_P);
+    peel(ops,0,LC,residues,transition_P);
 
     //----------- return the result ------------------//
-    Matrix M(MModel.nmodels(),MModel.Alphabet().size());
-    for(int m=0;m<M.size1();m++)
-      for(int l=0;l<M.size2();l++)
-	M(m,l) = LC[0][m](ops.scratch,l);
-
-    return M;
+    return LC.scratch(0);
   }
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
@@ -257,15 +254,13 @@ namespace substitution {
 
 
 
-  double Pr(const column_t& residues, const peeling_info& ops, const MultiModel& MModel,
+  double Pr(const column_t& residues, int column, const peeling_info& ops, const MultiModel& MModel,
 	    const MatCache& transition_P, column_cache_t cache)
   {
     const alphabet& a = MModel.Alphabet();
 
     //-------- propagate info along branches ---------//
-    peel(ops,cache,residues,transition_P);
-
-    const int scratch = ops.scratch;
+    peel(ops,column,cache,residues,transition_P);
 
     double total = 0;
     for(int m=0;m<MModel.nmodels();m++) {
@@ -273,7 +268,7 @@ namespace substitution {
 
       const valarray<double>& f = MModel.get_model(m).frequencies();
       for(int l=0;l<a.size();l++)
-	p += cache[scratch](m,l) * f[l];
+	p += cache.scratch(column)(m,l) * f[l];
 
       // A specific model (e.g. the INV model) could be impossible
       assert(0 <= p and p <= 1.00000000001);
@@ -295,7 +290,69 @@ namespace substitution {
     peeling_info ops = get_branches(T,LC);
     
     //---------------- sum the column likelihoods -------------------//
-    return Pr(A.get_column(column),ops,MModel,MC,LC[0]);
+    return Pr(A.get_column(column),column,ops,MModel,MC,LC);
+  }
+
+  vector<const_branchview> branches_toward_from_node(const Tree& T,int n) {
+    vector<const_branchview> branches;
+    branches.reserve(2*T.n_branches());
+
+    branches = branches_from_node(T,n);
+    std::reverse(branches.begin(),branches.end());
+    for(int i=0;i<T.n_branches();i++)
+      branches.push_back(branches[i]);
+
+    for(int i=0;i<T.n_branches();i++)
+      branches[i] = branches[branches.size()-1-i].reverse();
+
+    return branches; 
+  }
+
+  ublas::matrix<int> get_SM(const alignment& A,const Tree& T) {
+    ublas::matrix<int> SM(A.length(),2*T.n_branches());
+    
+    vector<const_branchview> branches = branches_toward_from_node(T,T.n_nodes()-1);
+
+    // Compute the sub-alignments
+    vector<const_branchview> temp;temp.reserve(2);
+    for(int i=0;i<branches.size();i++) {
+      int b = branches[i];
+
+
+      int l=0;
+      for(int c=0;c<SM.size1();c++) {
+	SM(c,b) = alphabet::gap;
+
+	// for leaf branches fill from the alignment
+	if (branches[i].source().is_leaf_node()) {
+	  if (not A.gap(c,b))
+	    SM(c,b) = l++;
+	}
+
+	// for internal branches fill from the previous branches
+	else {
+	  temp.clear();
+	  append(T.directed_branch(b).branches_before(),temp);
+	  assert(temp.size() == 2);
+
+	  if (SM(c,temp[0]) != -1 or SM(c,temp[1]) != -1)
+	    SM(c,b) = l++;
+	}
+
+      }
+    }
+
+    return SM;
+  }
+
+  ublas::matrix<int> get_fake_SM(int c,const ublas::matrix<int>& SM1) {
+    ublas::matrix<int> SM(1,SM1.size2());
+    for(int i=0;i<SM.size2();i++) {
+      SM(0,i) = SM1(c,i);
+      if (SM(0,i) != alphabet::gap)
+	SM(0,i) = 0;
+    }
+    return SM;
   }
 
   double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& L) {
@@ -310,31 +367,27 @@ namespace substitution {
       //std::cerr<<"Peeled on 0 branches. (cached result)\n";
       return L.old_value;
     }
+    ublas::matrix<int> SM = get_SM(A,T);
+    L.SM = &SM;
 
     //---------------- sum the column likelihoods -------------------//
     double total = 0.0;
     for(int column=0;column<A.length();column++) {
 
       alignment::column_t col = A.get_column(column);
-      double p = Pr(col,ops,MModel,MC,L[column]);
+      double p = Pr(col,column,ops,MModel,MC,L);
 
 #ifndef NDEBUG
-      for(int b=0;b<P.T.n_leaves();b++) {
-	if (not L.up_to_date(b)) continue;
-
-	if (alphabet::letter(col[b])) continue;
-
-	for(int i=0;i<MModel.Alphabet().size();i++)
-	  assert(L[column][b](0,i) == 1);
-      }
-	
+      // how can we check that a L(column,b) actually goes with column b?
 
       {
 	Likelihood_Cache LC(T,MModel,1);
 	LC.root = L.root;//myrandom(0,T.n_nodes());
+	ublas::matrix<int> fSM = get_fake_SM(column,SM);
+	LC.SM = &fSM;
 
 	peeling_info ops2 = get_branches(T,LC);
-	double p2 = Pr(A.get_column(column),ops2,MModel,MC,LC[0]);
+	double p2 = Pr(A.get_column(column),0,ops2,MModel,MC,LC);
 	
 	if (std::abs(p2-p) > 1.0e-9) {
 	  for(int i=0;i<T.n_leaves();i++)
@@ -351,6 +404,7 @@ namespace substitution {
     for(int i=0;i<ops.size();i++)
       L.validate_branch(ops[i].b);
     L.old_value = total;
+    L.SM = NULL;
 
     //std::cerr<<"Peeled on "<<ops.size()<<" branches.\n";
     //std::cerr<<" substitution: P="<<total<<std::endl;
