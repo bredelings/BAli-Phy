@@ -81,7 +81,7 @@ int main(int argc,char* argv[]) {
     SequenceTree UT;
     load_A_and_T(args,A,UT,false);
     
-    /*------- Re-root the tree appropriately  --------*/
+    //------- Re-root the tree appropriately  --------//
 
     int rootb=-1;
     double rootd = -1;
@@ -93,7 +93,7 @@ int main(int argc,char* argv[]) {
 
     RootedSequenceTree T = add_root(UT,rootb);  // we don't care about the lengths anymore
 
-    /*----- Standardize order by alphabetical order of names ----*/
+    //----- Standardize order by alphabetical order of names ----//
     vector<string> names = T.get_sequences();
     
     std::sort(names.begin(),names.end(),lstr());
@@ -103,7 +103,7 @@ int main(int argc,char* argv[]) {
     T.standardize(mapping1);
 
 
-    /*-------- Compute final mapping  -------*/
+    //-------- Compute final mapping  -------//
     vector<int> mapping2 = get_leaf_order(T);
 
     //    vector<int> mapping = compose(mapping1,mapping2);
@@ -116,15 +116,11 @@ int main(int argc,char* argv[]) {
 
     cerr<<"tree = "<<T.write()<<"\n";
 
-    /*------- Print out the alignment -------*/
-    alignment A2;
-    for(int i=0;i<T.n_leaves();i++) {
-      sequence s(A.seq(mapping[i]));
-      s.resize(A.length());
-      for(int column=0;column<A.length();column++)
-	s[column] = A(column,mapping[i]);
-      A2.add_sequence(s);
-    }
+    //------- Print out the alignment -------//
+    vector<sequence> sequences = A.get_sequences();
+    alignment A2(A.get_alphabet());
+    for(int i=0;i<T.n_leaves();i++)
+      A2.add_sequence(sequences[mapping[i]]);
 
     std::cout<<A2;
 
