@@ -16,16 +16,14 @@ using std::cout;
 
 
 SequenceTree standardized(const string& t) {
-  RootedSequenceTree RT;
-  RT.parse(t);
-  SequenceTree T = remove_root(RT);
+  SequenceTree T;
+  T.parse(t);
   return standardized(T);
 }
   
 SequenceTree standardized(const string& t,const vector<string>& remove) {
-  RootedSequenceTree RT;
-  RT.parse(t);
-  SequenceTree T = remove_root(RT);
+  SequenceTree T;
+  T.parse(t);
   return standardized(T,remove);
 }
   
@@ -74,26 +72,43 @@ valarray<bool> branch_partition(const Tree& T,int b) {
   return p;
 }
 
-bool equal(const valarray<bool>& v1,const valarray<bool>& v2) {
-  assert(v1.size() == v2.size());
-  bool match = true;
-  for(int i=0;i<v1.size() && match;i++)
-    if (v1[i] != v2[i])
-      match = false;
-  return match;
+bool empty(const valarray<bool>& v) {
+  for(int i=0;i<v.size() ;i++)  
+    if (v[i]) return false;
+  return true;
 }
 
-std::ostream& operator<<(std::ostream& o, const Partition& P) {
-  // 
+bool equal(const valarray<bool>& v1,const valarray<bool>& v2) {
+  assert(v1.size() == v2.size());
+  for(int i=0;i<v1.size();i++)
+    if (v1[i] != v2[i]) 
+      return false;
+  return true;
+}
+
+bool intersect(const std::valarray<bool>& v1,const std::valarray<bool>& v2) 
+{
+  assert(v1.size() == v2.size());
+  return not empty(v1&v2);
+}
+
+bool implies(const std::valarray<bool>& v1,const std::valarray<bool>& v2) {
+  assert(v1.size() == v2.size());
+  for(int i=0;i<v1.size();i++)
+    if (v2[i] and not v1[i])
+      return false;
+  return true;
+}
+
+std::ostream& operator<<(std::ostream& o, const Partition& P) 
+{
   for(int i=0;i<P.size();i++)
-    if (P.split[i] and P.mask[i])
-      o<<P.names[i]<<" ";
+    if (P.group1[i]) o<<P.names[i]<<" ";
 
   o<<"| ";
 
   for(int i=0;i<P.size();i++)
-    if (not P.split[i] and P.mask[i])
-      o<<P.names[i]<<" ";
+    if (P.group2[i]) o<<P.names[i]<<" ";
   o<<endl;
 
   return o;
@@ -101,17 +116,29 @@ std::ostream& operator<<(std::ostream& o, const Partition& P) {
 
 bool operator==(const Partition& p1, const Partition& p2) {
   return (p1.names == p2.names) and
-    equal(p1.split,p2.split) and
-    equal(p1.mask,p2.mask);
+    equal(p1.group1,p2.group1) and
+    equal(p1.group2,p2.group2);
 }
 
-/// Does the grouping of all nodes bm, imply *this?
-bool Partition::implied_by(const valarray<bool>& bm) const {
-  assert(bm.size() == split.size());
-  return (equal(split,bm&mask) or  equal(split,(not bm)&mask));
+bool consistent(const Partition& p1, const Partition& p2) {
+  if (not intersect(p1.group1,p2.group1)) return true;
+  if (not intersect(p1.group1,p2.group2)) return true;
+
+  if (not intersect(p1.group2,p2.group1)) return true;
+  if (not intersect(p1.group2,p2.group2)) return true;
+
+  return false;
 }
-// There should be a way to check 'consistent' (might imply),
-// not consistent (implies not *this)
+
+
+/// Does the grouping of all nodes bm, imply *this?
+bool implies(const Partition& p1, const Partition& p2) {
+  if (implies(p1.group1,p2.group1) and implies(p1.group2,p2.group2)) return true;
+
+  if (implies(p1.group2,p2.group1) and implies(p1.group1,p2.group2)) return true;
+
+  return false;
+}
 
 /// Does any branch in T imply the partition p?
 bool contains_partition(const SequenceTree& T,const Partition& p) {
@@ -119,10 +146,9 @@ bool contains_partition(const SequenceTree& T,const Partition& p) {
   for(int b=0;b<T.n_branches() and not result;b++) {
     valarray<bool> bp = branch_partition(T,b);
 
-    if (p.implied_by(bp))
-      result = true;
+    if (implies(bp,p)) return true;
   }
-  return result;
+  return false;
 }
 
 int tree_sample::get_index(const string& t) const {
