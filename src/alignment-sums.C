@@ -111,11 +111,11 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
       residues[j] = A(seq[i],j);
 
     for(int m=0;m<MModel.nmodels();m++) {
-      valarray<double> temp = substitution::peel(residues,
-						 P.T,
-						 MModel.get_model(m),
-						 P.transition_P(m),
-						 root,group);
+      valarray<double> temp = substitution::get_column_likelihoods(residues,
+								   P.T,
+								   MModel.get_model(m),
+								   P.transition_P(m),
+								   root,group);
       for(int l=0;l<a.size();l++)
 	dist[i](m,l) = temp[l];
     }

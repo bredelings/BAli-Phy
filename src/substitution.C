@@ -59,13 +59,13 @@ namespace substitution {
 
 
   /// A structure which holds all topology info to peel along directed branch 'db'
-  struct peeling_info {
+  struct peeling_branch_info {
     int b;
     int b1;
     int b2;
     int source;
 
-    peeling_info(const const_branchview& db,const Tree& T)
+    peeling_branch_info(const const_branchview& db,const Tree& T)
       :b(db),
        b1(-1),
        b2(-1),
@@ -86,9 +86,68 @@ namespace substitution {
     }
   };
 
+  struct peeling_info: public vector<peeling_branch_info> {
+    int rb1;
+    int rb2;
+    int rb3;
+
+    int root;
+    peeling_info(const Tree&T, int r):rb1(-1),rb2(-1),rb3(-1),root(r) {
+      const_in_edges_iterator i = T[root].branches_in();
+
+      assert(i); // We had better have at least one neighbor!
+
+      rb1 = *i;
+      i++;
+
+      if (i) {
+	rb2 = *i;
+	i++;
+      }
+
+      if (i) {
+	rb3 = *i;
+	i++;
+      }
+
+      assert(not i);
+
+      reserve(T.n_branches());
+    }
+  };
+
+
+  /// Compute the letter likelihoods at the root
+  void calc_root_likelihoods(const vector<int>& residues, Matrix& distributions,
+			     const peeling_info& pi) 
+  {
+    const int scratch = distributions.size1()-1;
+
+    const int asize = distributions.size2();
+
+    //-------------- Propagate and collect information at 'root' -----------//
+    for(int l=0;l<asize;l++)
+      distributions(scratch,l) = distributions(pi.rb1,l);
+
+    if (pi.rb2 != -1)
+      for(int l=0;l<asize;l++)
+	distributions(scratch,l) *= distributions(pi.rb2,l);
+
+    if (pi.rb3 != -1)
+      for(int l=0;l<asize;l++)
+	distributions(scratch,l) *= distributions(pi.rb3,l);
+
+    //-------------- Take into account letters at 'root' -------------//
+    //FIXME - we could avoid calculations for 
+    if (alphabet::letter(residues[pi.root]))
+      for(int l=0;l<asize;l++)
+	if (l != residues[pi.root])
+	  distributions(scratch,l) = 0;
+  }
+
 
   /// Peel along each branch in work-list @branches 
-  inline void peel(const vector<peeling_info>& branches,
+  inline void peel(const peeling_info& branches,
 		   Matrix& distributions,
 		   const vector<int>& residues,
 		   const vector<Matrix>& transition_P)
@@ -141,20 +200,17 @@ namespace substitution {
       }
 
     }
-  }
 
-  template<class T>
-  void add(vector<T>& v1,const vector<T>& v2) {
-    v1.insert(v1.end(),v2.begin(),v2.end());
+    //-------------- collect at 'root' ---------------//
+    calc_root_likelihoods(residues,distributions,branches);
   }
 
 
   /// Compute an ordered list of branches to process
-  inline vector<peeling_info> get_branches(const Tree& T, int root, const vector<bool>& up_to_date) 
+  inline peeling_info get_branches(const Tree& T, int root, const vector<bool>& up_to_date) 
   {
     //------- Get ordered list of not up_to_date branches ----------///
-    vector<peeling_info> peeling_operations;
-    peeling_operations.reserve(T.n_branches());
+    peeling_info peeling_operations(T,root);
 
     vector<const_branchview> branches; branches.reserve(T.n_branches());
     append(T[root].branches_in(),branches);
@@ -163,61 +219,22 @@ namespace substitution {
 	const const_branchview& db = branches[i];
 	if (not up_to_date[db]) {
 	  append(db.branches_before(),branches);
-	  peeling_operations.push_back(peeling_info(db,T));
+	  peeling_operations.push_back(peeling_branch_info(db,T));
 	}
     }
 
     std::reverse(peeling_operations.begin(),peeling_operations.end());
 
-    //    std::cerr<<"root = "<<root<<std::endl;
-    //    for(int i=0;i<peeling_operations.size();i++)
-    //      std::cerr<<peeling_operations[i].b<<"  ";
-    //    std::cerr<<std::endl<<std::endl;
-  
     return peeling_operations;
   }
 
-  /// Compute the letter likelihoods at the root
-  valarray<double> get_root_likelihoods(const vector<int>& residues, const Matrix& distributions,
-					const Tree& T,int root) {
-    const int asize = distributions.size2();
-
-    valarray<double> distribution(asize);
-
-    const_in_edges_iterator i = T[root].branches_in();
-    assert(i); // We had better have at least one neighbor!
-
-    //-------------- Propagate and collect information at 'root' -----------//
-    for(int l=0;l<asize;l++)
-      distribution[l] = distributions(*i,l);
-    i++;
-
-    for(;i;i++)
-      for(int l=0;l<asize;l++)
-	distribution[l] *= distributions(*i,l);
-
-    //-------------- Take into account letters at 'root' -------------//
-    if (alphabet::letter(residues[root]))
-      for(int l=0;l<asize;l++)
-	if (l != residues[root])
-	  distribution[l] = 0;
-
-    return distribution;
-  }
-
+  
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
-
-  /*!
-    \param residues The letters/gaps/non-gaps at each node
-    \param T The tree
-    \param SModel The substitution Model
-    \param transition_P The transition matrices for each branch
-    \param root The node at which we are assessing the probabilities
-    \param group The nodes from which to consider info
-  */
-  valarray<double> peel(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
-			const vector<Matrix>& transition_P,int root) {
+  valarray<double> 
+  get_column_likelihoods(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
+			 const vector<Matrix>& transition_P,int root) 
+  {
     const alphabet& a = SModel.Alphabet();
 
     //------ Allocate space and mark all branches out of date -------//
@@ -225,69 +242,83 @@ namespace substitution {
     vector<bool> up_to_date(2*T.n_branches(),false);
 
     //----------- determine the operations to perform -----------------//
-    vector<peeling_info> branches = get_branches(T,root,up_to_date);
-
+    peeling_info branches = get_branches(T,root,up_to_date);
+    
     //-------- propagate info along branches ---------//
     peel(branches,distributions,residues,transition_P);
 
     //----------- return the result ------------------//
-    return get_root_likelihoods(residues,distributions,T,root);
+    const int scratch = distributions.size1()-1;
+    valarray<double> likelihoods(distributions.size2());
+    for(int i=0;i<likelihoods.size();i++)
+      likelihoods[i] = distributions(scratch,i);
+    
+    return likelihoods;
   }
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
-
-  /*!
-    \param residues The letters/gaps/non-gaps at each node
-    \param T The tree
-    \param SModel The substitution Model
-    \param transition_P The transition matrices for each branch
-    \param root The node at which we are assessing the probabilities
-    \param group The nodes from which to consider info
-  */
-  valarray<double> peel(vector<int> residues,const Tree& T,const ReversibleModel& SModel,
-			const vector<Matrix>& transition_P,int root, const valarray<bool>& group) {
+  valarray<double> 
+  get_column_likelihoods(vector<int> residues,const Tree& T,const ReversibleModel& SModel,
+			 const vector<Matrix>& transition_P,int root, const valarray<bool>& group) 
+  {
     for(int i=0;i<residues.size();i++)
       if (not group[i]) residues[i] = alphabet::not_gap;
 
-    return peel(residues,T,SModel,transition_P,root);
+    return get_column_likelihoods(residues,T,SModel,transition_P,root);
   }
 
 
 
-  double Pr(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
-	    const vector<Matrix>& transition_P,int root) {
-    assert(residues.size() == T.n_nodes());
+  double Pr(const vector<int>& residues, const peeling_info& branches, const ReversibleModel& SModel,
+	    const vector<Matrix>& transition_P, Matrix& distributions)
+  {
+    const alphabet& a = SModel.Alphabet();
 
-    valarray<double> rootD = peel(residues,T,SModel,transition_P,root);
+    //-------- propagate info along branches ---------//
+    peel(branches,distributions,residues,transition_P);
 
-    rootD *= SModel.frequencies();
+    const int scratch = distributions.size1()-1;
 
-    return rootD.sum();
-  }
-
-  double Pr(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
-	    const vector<Matrix>& transition_P) {
-
-    int root = T.n_nodes()-1;
-    double p = Pr(residues,T,SModel,transition_P,root);
-
-#ifndef NDEBUG  
-    int node = myrandom(0,T.n_nodes());
-    double p2 = Pr(residues,T,SModel,transition_P,node);
-
-    if (std::abs(p2-p) > 1.0e-9) {
-      for(int i=0;i<T.n_leaves();i++)
-	std::cerr<<SModel.Alphabet().lookup(residues[i])<<" ";
-      std::cerr<<p<<" "<<log(p)<<"     "<<p2<<"      "<<log(p2)<<endl;
-      std::abort(); //FIXME - try this check!
-    }
-#endif
+    double p = 0;
+    for(int l=0;l<a.size();l++)
+      p += distributions(scratch,l)*SModel.frequencies()[l];
 
     // we don't get too close to zero, normally
     assert(0 <= p and p <= 1.00000000001);
 
     return p;
   }
+
+  double Pr(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
+	    const vector<Matrix>& transition_P,int root) {
+    assert(residues.size() == T.n_nodes());
+
+    const alphabet& a = SModel.Alphabet();
+    Matrix distributions(2*T.n_branches()+1,a.size());
+
+    //------ Allocate space and mark all branches out of date -------//
+    vector<bool> up_to_date(2*T.n_branches(),false);
+
+    //----------- determine the operations to perform -----------------//
+    peeling_info branches = get_branches(T,root,up_to_date);
+    
+    return Pr(residues,branches,SModel,transition_P,distributions);
+  }
+
+  double Pr(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
+	    const vector<Matrix>& transition_P) 
+  {
+    const alphabet& a = SModel.Alphabet();
+    Matrix distributions(2*T.n_branches()+1,a.size());
+    //------ Allocate space and mark all branches out of date -------//
+    vector<bool> up_to_date(2*T.n_branches(),false);
+
+    //----------- determine the operations to perform -----------------//
+    int root = T.n_nodes()-1;
+    peeling_info branches = get_branches(T,root,up_to_date);
+    return Pr(residues,branches,SModel,transition_P,distributions);
+  }
+
 
   double Pr_INV(const vector<int>& residues, const ReversibleModel& SModel) {
     int letter = alphabet::gap;
@@ -306,8 +337,10 @@ namespace substitution {
       return SModel.frequencies()[letter];
   }
 
-  double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC,int column) {
-    
+  double Pr(const alignment& A, const peeling_info& operations, const MultiModel& MModel, 
+	    const MatCache& MC,int column,Matrix& distributions) 
+  {
+
     vector<int> residues(A.size2());
     for(int i=0;i<residues.size();i++)
       residues[i] = A(column,i);
@@ -322,10 +355,30 @@ namespace substitution {
 					      );      
       else
 	p = MModel.distribution()[m] * Pr(residues,
-					  T,
+					  operations,
 					  MModel.get_model(m),
-					  MC.transition_P(m)
+					  MC.transition_P(m),
+					  distributions
 					  );
+
+
+
+#ifndef NDEBUG  
+      {
+	int node = myrandom(0,T.n_nodes());
+	vector<bool> up_to_date(2*T.n_branches(),false);
+	peeling_info branches2 = get_branches(T,root,up_to_date);
+	double p2 = Pr(residues,branches2,SModel,transition_P,distributions);
+	
+	if (std::abs(p2-p) > 1.0e-9) {
+	  for(int i=0;i<T.n_leaves();i++)
+	    std::cerr<<SModel.Alphabet().lookup(residues[i])<<" ";
+	  std::cerr<<p<<" "<<log(p)<<"     "<<p2<<"      "<<log(p2)<<endl;
+	  std::abort(); //FIXME - try this check!
+	}
+      }
+#endif
+
       total += p;
     }
 
@@ -335,12 +388,34 @@ namespace substitution {
     return log(total);
   }
 
-  double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& SM) {
-    double p = 0.0;
+  double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC,int column) {
+    const alphabet& a = MModel.Alphabet();
+    //------ Allocate space and mark all branches out of date -------//
+    Matrix distributions(2*T.n_branches()+1,a.size());
 
-    // Do each node before its parent
+    //---------- determine the operations to perform ----------------//
+    vector<bool> up_to_date(2*T.n_branches(),false);
+    int root = T.n_nodes()-1;
+    peeling_info operations = get_branches(T,root,up_to_date);
+    
+    //---------------- sum the column likelihoods -------------------//
+    return Pr(A,operations,MModel,MC,column,distributions);
+  }
+
+  double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC) {
+    const alphabet& a = MModel.Alphabet();
+    //------ Allocate space and mark all branches out of date -------//
+    Matrix distributions(2*T.n_branches()+1,a.size());
+
+    //---------- determine the operations to perform ----------------//
+    vector<bool> up_to_date(2*T.n_branches(),false);
+    int root = T.n_nodes()-1;
+    peeling_info operations = get_branches(T,root,up_to_date);
+    
+    //---------------- sum the column likelihoods -------------------//
+    double p = 0.0;
     for(int column=0;column<A.length();column++) 
-      p += Pr(A,T,MModel,SM,column);
+      p += Pr(A,operations,MModel,MC,column,distributions);
 
     //    std::cerr<<" substitution: P="<<P<<std::endl;
     return p;

@@ -138,3 +138,79 @@ New times for 1.8.14-B (after svn import, and SPR fix)
  - 3m48.77 [3.4.1]
  - 5min    [3.5.0 7/5/2004] (??? do I need "--disable-checking" ?)
  - 3m45.76 [3.4.1]
+
+
+----------------------------------------------
+1.8.23-tree-NDEBUG.1
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
+
+real    0m16.207s
+user    0m15.510s
+sys     0m0.600s
+
+real    0m16.133s
+user    0m15.530s
+sys     0m0.540s
+
+real    0m16.116s
+user    0m15.460s
+sys     0m0.610s
+
+----------------------------------------------
+1.8.23-tree-NDEBUG.2
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.2 seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
+
+real    0m14.895s
+user    0m14.290s
+sys     0m0.570s
+
+real    0m14.921s
+user    0m14.300s
+sys     0m0.540s
+
+real    0m14.893s
+user    0m14.210s
+sys     0m0.620s
+
+----------------------------------------------
+1.8.23-NDEBUG.3
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.3 seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
+
+real    0m12.421s
+user    0m11.860s
+sys     0m0.560s
+
+real    0m12.481s
+user    0m12.000s
+sys     0m0.440s
+
+real    0m12.644s
+user    0m11.880s
+sys     0m0.520s
+
+----------------------------------------------
+1.8.23-NDEBUG.4
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.3 seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
+
+real    0m8.728s
+user    0m8.050s
+sys     0m0.680s
+
+real    0m8.745s
+user    0m8.290s
+sys     0m0.430s
+
+real    0m8.723s
+user    0m8.160s
+sys     0m0.540s
+
+
+EF-Tu/5d: .1 -> .4
+12.6->8.7
+
+EF-Tu/12d: .1 -> .4
+17.5->13.4

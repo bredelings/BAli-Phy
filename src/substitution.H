@@ -11,16 +11,12 @@ class Parameters;
 namespace substitution {
 
   /// Find the probabilities of all the data give each letter at the root
-  std::valarray<double> peel(const vector<int>&,const Tree&,const ReversibleModel&, 
+  std::valarray<double> get_column_likelihoods(const vector<int>&,const Tree&,const ReversibleModel&, 
 			     const vector<Matrix>&,int);
 
   /// Find the probabilities of the data in 'group' given each letter at the root
-  std::valarray<double> peel(vector<int>,const Tree&,const ReversibleModel&, 
+  std::valarray<double> get_column_likelihoods(      vector<int> ,const Tree&,const ReversibleModel&, 
 			     const vector<Matrix>&,int,const std::valarray<bool>& group);
-
-  /// Column likelihood - for a specific rate
-  double Pr(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,
-	    const vector<Matrix>& transition_P);
 
   /// Full Likelihood of one column
   double Pr(const alignment& A, const Tree& T, const MultiModel& SModel, const MatCache& SM,int);
