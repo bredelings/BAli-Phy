@@ -177,6 +177,8 @@ tools/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o $
 
 test: ${LINKLIBS}
 
+le-test/2 le-test/3: le-double.C
+
 #------------------- End
 
 SHELL = /bin/sh

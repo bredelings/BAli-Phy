@@ -1,0 +1,7 @@
+#!/bin/sh
+
+for i in {1..4}; do
+    echo " "
+    /usr/bin/time ./$1 $i
+done
+
