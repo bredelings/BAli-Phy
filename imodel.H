@@ -58,6 +58,8 @@ public:
   /// The transition matrix
   ublas::matrix<double> Q;
 
+  double lengthp2(int i,int G=1) const;
+
   /// Probability that an alignment has a sequence with length 'i'
   double lengthp(int i) const {
     if (i<p_length.size()) 

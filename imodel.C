@@ -1,3 +1,4 @@
+#include <cmath>
 #include "imodel.H"
 #include "logsum.H"
 #include "dpmatrix.H"
@@ -28,6 +29,65 @@ void IndelModel::construct_length_plus_p() {
     f_G2[i] = logsum(f_M[i-1]+Q(0,2),f_G2[i-1]+Q(2,2));
     f_E[i] = logsum(f_M[i]+Q(0,3),f_G2[i]+Q(2,3));
   }
+}
+
+// 0->0 1->G 2->3
+int recode(int i,int G) {
+  assert(G==1 or G==2);
+  if (i==1)
+    i=G;
+  if (i==2)
+    i=3;
+  return i;
+}
+
+// f_M(s) = [ ME  + s(MGxGE - MExGG) ] / [ 1 - s(GG + MM) + s^2(MMxGG - MGxGM) ]
+
+double IndelModel::lengthp2(int l,int G) const {
+
+  //--------------- Remove the 'G2' State ----------------------//
+  Matrix Q2(2,3);
+
+  double OMQ22 = logdiff(0,Q(2,2));
+  for(int i=0;i<Q2.size1();i++) {
+    int i1 = recode(i,G);
+    for(int j=0;j<Q2.size2();j++) {
+      int j1 = recode(j,G);
+      Q2(i,j) = logsum(Q(i1,j1), Q(i1,2)+Q(2,j1)-OMQ22);
+      Q2(i,j) = exp( Q2(i,j) );
+    }
+  }
+
+  double MM = Q2(0,0);
+  double MG = Q2(0,1);
+  double ME = Q2(0,2);
+
+  double GM = Q2(1,0);
+  double GG = Q2(1,1);
+  double GE = Q2(1,2);
+
+  //----- Calculate roots of q(s); we assume its quadratic -----//
+  double C = 1;
+  double B = -(GG + MM);
+  double A = MM*GG - MG*GM;
+
+  double determinant = B*B-4.0*A*C;
+  double r1 = (-B - sqrt(determinant))/(2*A);
+  double r2 = (-B + sqrt(determinant))/(2*A);
+
+  //------------ Calculate the coefficients f_M[l] ------------//
+  double P;
+  if (l==0)
+    P = ME;
+  else {
+    // Calculate q[l] and q[l-i] (I've proved that all q[i]>=0)
+    double q_l   = 1.0/ (A*(r2-r1)) * (pow(r1,-l-1) - pow(r2,-l-1));
+    double q_lm1 = 1.0/ (A*(r2-r1)) * (pow(r1,-l)   - pow(r2,-l));
+
+    // Calculate f_M[l] from the q[i] (*IS* this always positive?)
+    P = ME*q_l + (MG*GE - ME*GG)*q_lm1;
+  }
+  return log(P);
 }
 
 void IndelModel::construct_lengthp() {
