@@ -147,6 +147,9 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 or group3,seq1,seq23);
   vector<int> path_g = Matrices.forward(pins);
 
+  if (Matrices.Pr_sum_all_paths() <= log_limit)
+    return Matrices;
+
   vector<int> path = Matrices.ungeneralize(path_g);
 
   A = construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
@@ -220,8 +223,11 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   vector<double> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
     Pr[i] = OS[i] + Matrices[i].Pr_sum_all_paths() + OP[i] + prior(p[i])/p[i].Temp;
+  assert(Pr[0] > log_limit);
 
   int C = choose(Pr);
+
+  assert(Pr[C] > log_limit);
 
 #ifndef NDEBUG_DP
   std::cerr<<"choice = "<<C<<endl;
@@ -234,6 +240,18 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   for(int i=0;i<ignore1.size();i++) {
     ignore1[i] = ignore1A[i];
     ignore2[i] = ignore2A[i];
+  }
+
+  // Don't check impossible combinations
+  for(int i=a.size()-1;i>=1;i--) {
+    if (Matrices[i].Pr_sum_all_paths() >log_limit) continue;
+
+    a.erase(a.begin()+i);
+    p.erase(p.begin()+i);
+    nodes.erase(nodes.begin()+i);
+    Matrices.erase(Matrices.begin()+i);
+    OS.erase(OS.begin()+i);
+    OP.erase(OP.begin()+i);
   }
 
   // Check that our constraints are met
