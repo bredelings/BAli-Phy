@@ -7,7 +7,8 @@
 
 # CLASS is optional, but VERSION is required.
 
-# We assume that binaries are in ~/bin/bali-phy/$VERSION
+# We assume that binaries are in ~/bin/bali-phy/$VERSION-NDEBUG
+# (or ~/bin/bali-phy/$VERSION-DEBUG)
 
 #---- Are we debugging? ----
 if [ "$DEBUG" ] ; then
