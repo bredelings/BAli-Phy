@@ -3,8 +3,6 @@
 #include "logsum.H"
 #include "util.H"
 #include "rng.H"
-#include "setup.H"
-#include "alignment-util.H"
 
 using std::valarray;
 

@@ -4,7 +4,6 @@
 #include "myexception.H"
 #include "util.H"
 #include "rng.H"
-#include "alignment-util.H"
 
 using std::string;
 

@@ -4,8 +4,8 @@
 #include "alphabet.H"
 #include "sequence.H"
 #include "sequence-format.H"
-#include "tree.H"
 #include <iostream>
+#include <vector>
 #include "mytypes.H"
 #include "clone.H"
 
