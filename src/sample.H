@@ -10,6 +10,7 @@
 
 // These have const A, cant be a "move"
 MCMC::result_t change_branch_length(const alignment& A, Parameters& Theta,int b);
+MCMC::result_t change_branch_length_cached(const alignment& A, Parameters& P,int b);
 
 
 /// Resample the 3-star alignment, holding the n2/n3 order constant.
@@ -52,6 +53,7 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
 MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b);
 
 MCMC::result_t change_branch_length_move(alignment& A, Parameters& Theta,int b);
+MCMC::result_t change_branch_length_cached_move(alignment& A, Parameters& Theta,int b);
 MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& Theta,int b);
 
 MCMC::result_t change_parameters(alignment& A,Parameters& Theta);

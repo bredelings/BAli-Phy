@@ -361,9 +361,7 @@ namespace substitution {
 					  distributions
 					  );
 
-
-
-#ifndef NDEBUG  
+#ifdef DEBUG_BROKEN
       {
 	int node = myrandom(0,T.n_nodes());
 	vector<bool> up_to_date(2*T.n_branches(),false);
@@ -400,6 +398,24 @@ namespace substitution {
     
     //---------------- sum the column likelihoods -------------------//
     return Pr(A,operations,MModel,MC,column,distributions);
+  }
+
+  double Pr(const alignment& A, const Parameters& P,Conditional_Likelihoods& L) {
+    const Tree& T = P.T;
+    const MultiModel& MModel = P.SModel();
+    const MatCache& MC = P;
+
+    //---------- determine the operations to perform ----------------//
+    int root = L.root;
+    peeling_info operations = get_branches(T,root,L.up_to_date);
+    
+    //---------------- sum the column likelihoods -------------------//
+    double p = 0.0;
+    for(int column=0;column<A.length();column++) 
+      p += Pr(A,operations,MModel,MC,column,L[column]);
+
+    //    std::cerr<<" substitution: P="<<P<<std::endl;
+    return p;
   }
 
   double Pr(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC) {

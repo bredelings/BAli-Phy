@@ -7,6 +7,7 @@ class MatCache;
 #include "matcache.H"
 class Parameters;
 #include "parameters.H"
+#include "substitution-cache.H"
 
 namespace substitution {
 
@@ -27,6 +28,8 @@ namespace substitution {
   /// Full likelihood - all columns, all rates
   double Pr(const alignment& A, const Parameters& P);
 
+
+  double Pr(const alignment& A, const Parameters& P,Conditional_Likelihoods& L);
 
   // Column likelihood - specific rate (star tree)
   double Pr_star(const vector<int>& residues,const Tree& T,const ReversibleModel& SModel,

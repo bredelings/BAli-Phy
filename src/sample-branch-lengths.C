@@ -3,7 +3,9 @@
 #include "mcmc.H"
 #include "util.H"
 #include "5way.H"
-
+#include "substitution-cache.H"
+#include "substitution.H"
+#include "likelihood.H"
 
 bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
   if (P.accept_MH(A,P,A,P2)) {
@@ -27,8 +29,6 @@ double log_branch_twiddle(double T, double sigma=0.3) {
   return T * exp( gaussian(0,sigma) );
 }
 
-// FIXME - do another move like 'slide-branch-length'!
-
 MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
   MCMC::result_t result(0.0,6);
   result[0] = 1.0;
@@ -47,6 +47,51 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
   
   /********** Do the M-H step if OK**************/
   if (do_MH_move(A,P,P2)) {
+    std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
+    result[1] = 1;
+    result[3] = std::abs(length - newlength);
+    result[5] = std::abs(log((newlength+0.001)/(length+0.001)));
+  }
+  else
+    std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
+  return result;
+}
+
+MCMC::result_t change_branch_length_cached(const alignment& A, Parameters& P,int b) {
+  MCMC::result_t result(0.0,6);
+  result[0] = 1.0;
+  result[2] = 1.0;
+  result[4] = 1.0;
+  
+  Parameters P2 = P;
+  /********* Propose increment 'epsilon' ***********/
+  const double length = P2.T.branch(b).length();
+
+  double newlength = branch_twiddle(length,P.branch_mean);
+  newlength = std::abs(newlength);
+  
+  /******** Calculate propsal ratio ***************/
+  P2.setlength(b,newlength);
+  
+  /********** Do the M-H step if OK**************/
+  int n1 = P.T.branch(b).source();
+  int n2 = P.T.branch(b).target();
+  int root = std::max(n1,n2);
+  Conditional_Likelihoods L(P.T,root,P.SModel().Alphabet().size());
+  L.set_length(A.length());
+  double l1 = substitution::Pr(A,P,L);
+  L.invalidate_branch(P.T,b);
+  L.invalidate_branch(P.T,P.T.directed_branch(b).reverse());
+  double l2 = substitution::Pr(A,P2,L);
+  
+
+  double p1 = l1 + prior3(A,P);
+  double p2 = l2 + prior3(A,P2);
+
+  bool success=(myrandomf() < exp(p2-p1));
+
+  if (success) {
+    P = P2;
     std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
     result[1] = 1;
     result[3] = std::abs(length - newlength);

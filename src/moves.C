@@ -12,6 +12,13 @@ MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
   return change_branch_length(A,P,b);
 }
 
+MCMC::result_t change_branch_length_cached_move(alignment& A, Parameters& P,int b) {
+  if (not P.SModel().full_tree and b>=P.T.n_leaves())
+    return MCMC::result_t(0.0,6); // no_result
+
+  return change_branch_length_cached(A,P,b);
+}
+
 MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
   assert(P.IModel().full_tree); 
 

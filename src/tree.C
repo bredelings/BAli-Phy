@@ -28,7 +28,7 @@ BranchNode* TreeView::copy_node(BranchNode* start) {
   BranchNode* n2 = start2;
 
   if (start->out == start)
-    start2->out == start2;
+    start2->out = start2;
 
   do {
 
@@ -394,21 +394,35 @@ nodeview Tree::add_node(int node) {
 }
 
 
-vector<const_branchview> nodes_away(const Tree& T,nodeview n) {
+void get_branches_after(vector<const_branchview>& branch_list) {
+  for(int i=0;i<branch_list.size();i++)
+    append(branch_list[i].branches_after(),branch_list);
+}
+
+vector<const_branchview> branches_after(const Tree& T,int b) {
+  vector<const_branchview> branch_list;
+  branch_list.reserve(T.n_branches());
+
+  branch_list.push_back(T.directed_branch(b));
+  get_branches_after(branch_list);
+
+  return branch_list;
+}
+
+vector<const_branchview> branches_from_node(const Tree& T,int n) {
 
   vector<const_branchview> branch_list;
   branch_list.reserve(T.n_branches());
 
   append(T[n].branches_out(),branch_list);
 
-  for(int i=0;i<branch_list.size();i++)
-    append(branch_list[i].branches_after(),branch_list);
+  get_branches_after(branch_list);
 
   std::reverse(branch_list.begin(),branch_list.end());
   return branch_list;
 }  
 
-vector<const_branchview> nodes_toward(const Tree& T,nodeview n) {
+vector<const_branchview> branches_toward_node(const Tree& T,int n) {
   vector<const_branchview> branch_list;
   branch_list.reserve(T.n_branches());
 
@@ -422,7 +436,7 @@ vector<const_branchview> nodes_toward(const Tree& T,nodeview n) {
 }  
 
 void Tree::compute_partitions() {
-  vector<const_branchview> branch_list = nodes_away(*this,nodes_[0]);
+  vector<const_branchview> branch_list = branches_from_node(*this,nodes_[0]->node);
   vector<const_branchview> temp; temp.reserve(3);
 
   cached_partitions = vector< valarray<bool> >(branches_.size(),valarray<bool>(false,n_nodes()));

@@ -153,6 +153,10 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				   change_branch_length_move,
 				   branches)
 		   );
+  length_moves1.add(1,MoveArgSingle("change_branch_length_cached:lengths",
+				   change_branch_length_cached_move,
+				   branches)
+		   );
   if (P.SModel().full_tree)
     length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T:lengths:nodes:topology",
 					change_branch_length_and_T,

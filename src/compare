@@ -141,7 +141,7 @@ New times for 1.8.14-B (after svn import, and SPR fix)
 
 
 ----------------------------------------------
-1.8.23-tree-NDEBUG.1
+1.8.23-tree-NDEBUG.1 @ dna
 
 time ~/bin/bali-phy/1.8.23-tree-NDEBUG seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
 
@@ -158,7 +158,7 @@ user    0m15.460s
 sys     0m0.610s
 
 ----------------------------------------------
-1.8.23-tree-NDEBUG.2
+1.8.23-tree-NDEBUG.2 @ dna
 
 time ~/bin/bali-phy/1.8.23-tree-NDEBUG.2 seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
 
@@ -175,7 +175,7 @@ user    0m14.210s
 sys     0m0.620s
 
 ----------------------------------------------
-1.8.23-NDEBUG.3
+1.8.23-NDEBUG.3 @ dna
 
 time ~/bin/bali-phy/1.8.23-tree-NDEBUG.3 seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
 
@@ -192,7 +192,7 @@ user    0m11.880s
 sys     0m0.520s
 
 ----------------------------------------------
-1.8.23-NDEBUG.4
+1.8.23-NDEBUG.4 @ dna
 
 time ~/bin/bali-phy/1.8.23-tree-NDEBUG.3 seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
 
@@ -209,8 +209,8 @@ user    0m8.160s
 sys     0m0.540s
 
 
-EF-Tu/5d: .1 -> .4
+EF-Tu/5d: .1 -> .4   @ dna
 12.6->8.7
 
-EF-Tu/12d: .1 -> .4
+EF-Tu/12d: .1 -> .4  @ dna
 17.5->13.4

@@ -55,7 +55,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  sample-node.C imodel.C 5way.C sample-topology-NNI.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
-	  alignment-sums.C alignment-util.C probability.C
+	  alignment-sums.C alignment-util.C probability.C substitution-cache.C
 
 LIBS = gsl gslcblas m 
 LINKLIBS = ${LIBS:%=-l%}
