@@ -25,7 +25,7 @@ void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
 	o<<"f"<<a.lookup(i)<<m+1<<" = "<<f[i]<<"     ";
 	total += MModel.distribution()[m] * f[i];
       }
-      o<<"f"<<a.lookup(i)<<" = "<<total<<std::endl;
+      o<<"f"<<a.lookup(i)<<" = "<<total<<"\n";
     }
   }
 }
@@ -33,18 +33,18 @@ void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
 void show_parameters(std::ostream& o,const Model& M) {
   for(int i=0;i<M.parameters().size();i++)
     o<<"    "<<M.parameter_name(i)<<" = "<<M.parameters()[i];
-  o<<endl;
+  o<<"\n";
 }
 
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
 		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment) {
   
-  o<<endl;
-  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]"<<endl;
-  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
-  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<endl;
-  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<endl;
+  o<<"\n";
+  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]"<<"\n";
+  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<"\n";
+  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<"\n";
+  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<"\n";
+  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<"\n";
   
   double Pr_prior = P.basic_prior(A,P);
   double Pr_likelihood = P.basic_likelihood(A,P);
@@ -55,11 +55,11 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
    <<"    logp = "<<Pr
    <<"    temp = "<<P.Temp
    <<"    weight = "<<Pr*(1.0-1.0/P.Temp)
-   <<endl;
+   <<"\n";
 
   if (print_alignment) {
-    o<<"align["<<tag<<"] = "<<endl;
-    o<<standardize(A,P.T)<<endl<<endl;
+    o<<"align["<<tag<<"] = "<<"\n";
+    o<<standardize(A,P.T)<<"\n\n";
   }
   
   trees<<P.T<<endl;
