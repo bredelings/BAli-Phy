@@ -7,24 +7,6 @@
 -4. Make a more general substitution::Model class, so that we can e.g.
     have tree with 2 sets of branch lengths...
 
--3. Better multi_freq model.  
-    * The frequency of the underlying model will be the frequency of the
-      whole model.
-    * f(m,i) = a(m,i) * f(i)
-    * sum_i a(m,i) = 1
-    * sum_m a(m,i) = distribution(m) / |alphabet|
-    * two moves
-      - i.  change a(m,i) for a single m.  
-	ii. Scale the other entries in each row so that row still sums to 1.
-
-      - i.   get distributions from a(m,i)
-        ii.  dirichlet_fiddle it.
-        iii. put it back
-    * prior = each row is dirichlet
-
-    * make a dual-mode which is a sum of the unit mode and the multi_freq
-      model
-        
 -2. tree-dist-compare w/ sub-partitions
   a) speed up get_Ml_partitions, get_Ml_sub_partitions
   b) only enable sub-partition checking with a switch..
@@ -70,6 +52,8 @@
 12.7: Change DualModel to MixtureModel[2] -> make a way of specifying the priors and weights.
       Is 'Uniform' a case of a 'Dirichlet'?  Yes -> (1/n,...1/n)*\infty.
 
+    * make a dual-mode which is a sum of the unit mode and the multi_freq
+      model
 ------
 *13. How to make priors specified on command line?
 
@@ -182,3 +166,14 @@ the prior, because we never want to use it  differently.
 
 [DONE] Make alignment-draw simply use 'plain' if AU-file not specified.
 
+[DONE] Better multi_freq model.  
+    * frequency will be the frequency of the sub-model.
+    * sum_l a(m,l) = 1
+    * distribution(m) = sum_; a(m,l)*f(l)
+    * f(m,l) = a(m,l) * f(l) / distribution(m)
+    * two moves:
+      - fiddle frequencies (as normal)
+      - fiddle each row (one letter, all models)
+    * prior -> each row is dirichlet
+
+        

@@ -1,5 +1,7 @@
 #include "probability.H"
 #include <gsl/gsl_randist.h>
+#include <gsl/gsl_sf.h>
+
 #include "logsum.H"
 
 using std::valarray;
@@ -25,6 +27,10 @@ double log_num_topologies_in_partition(int n1,int n2) {
   return total;
 }
 
+double log_gamma(double x) {
+  return gsl_sf_lngamma(x);
+}
+
 double dirichlet_log_pdf(const valarray<double>& p,const valarray<double>& n) {
   assert(p.size() == n.size());
 
@@ -37,9 +43,9 @@ double dirichlet_log_pdf(const valarray<double>& p,const valarray<double>& n) {
   }
 
   // This term is constant in p
-  //  Pr += log_gamma(n.sum()+n.size());
-  //  for(int i=0;i<p.size();i++)
-  //    Pr -= log_gamma(n[i]+1);
+  Pr += log_gamma(n.sum()+n.size());
+  for(int i=0;i<p.size();i++)
+    Pr -= log_gamma(n[i]+1);
 
   return Pr;
 }

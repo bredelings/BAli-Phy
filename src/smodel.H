@@ -621,18 +621,19 @@ namespace substitution {
   protected:
     /// MultiModels w/ different values of the parameter set
     vector<OwnedPointer<MultiModel> > sub_parameter_models;
+
     /// Fraction of the sites with each parameter value
     vector<double> fraction;
 
-    std::valarray<double> get_freq(int m) const;
-    void set_freq(int m,const std::valarray<double>& f);
+    std::valarray<double> get_a(int m) const;
+    void set_a(int m,const std::valarray<double>& f);
     
-    std::valarray<double> get_fraction() const;
-    void set_fraction(const std::valarray<double>& f);
-    
-
     void recalc();
     void super_fiddle();
+
+    inline double& a(int m,int l)       {return super_parameters_[m+l*fraction.size()];}
+    inline double  a(int m,int l) const {return super_parameters_[m+l*fraction.size()];}
+
   public:
     double super_prior() const;
 
