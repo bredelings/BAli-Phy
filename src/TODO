@@ -62,7 +62,14 @@
 
 12: Change YangCodonModel to YangM0? (short name)
 
-12.5: Allow specifying another model than HKY (e.g. TNY) underneath YangCodonModel
+12.5: Allow specifying another model than HKY (e.g. TNY) 
+      underneath YangCodonModel.  
+	* This is difficult because the models have different alphabets
+	* Suppose we wanted HKY+YangM0+TNY+YangM0+Dual
+
+12.7: Change DualModel to MixtureModel[2] -> make a way of specifying the priors and weights.
+      Is 'Uniform' a case of a 'Dirichlet'?  Yes -> (1/n,...1/n)*\infty.
+
 ------
 *13. How to make priors specified on command line?
 
