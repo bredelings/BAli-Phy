@@ -434,18 +434,58 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
 
 
   /*-------------- Create alignment matrices ---------------*/
-  DPmatrixHMM Matrices(nstates,Theta.SModel().distribution(),dists1,dists23,frequency);
 
   // Cache which states emit which sequences
-  for(int S2=0;S2<nstates+1;S2++) {
-    Matrices.state_emit[S2] = 0;
+  vector<int> state_emit(nstates+1);
+  for(int S2=0;S2<state_emit.size();S2++) {
+    state_emit[S2] = 0;
 
     if (di(S2)) 
-      Matrices.state_emit[S2] |= (1<<0);
+      state_emit[S2] |= (1<<0);
 
     if (dc(S2)) 
-      Matrices.state_emit[S2] |= (1<<1);
+      state_emit[S2] |= (1<<1);
   }
+
+  // Get the distribution which simulates the Start state
+  double sum=log_0;
+  int count = 0;
+  vector<double> start_P(nstates,log_0);
+  for(int S=0;S<start_P.size();S++) {
+    int states = getstates(S);
+    int s1 = (states>>4)&3;
+    int s2 = (states>>6)&3;
+    int s3 = (states>>8)&3;
+
+    if (s1 == states::E or s2 == states::E or s3 == states::E)
+      continue;
+
+    // if we are using hidden states, only use one way
+    if (s1 == states::G1) {
+      if (not bitset(states,10)) continue;
+    }
+    else if (s2 == states::G1) {
+      if (not bitset(states,11)) continue;
+    }
+    else if (s3 == states::G1) {
+      if (not bitset(states,12)) continue;
+    }
+
+    start_P[S] = pi[s1] + pi[s2] + pi[s3];
+    count++;
+    sum = logsum(sum,start_P[S]);
+  }
+
+  // check that the sum of Matrices[S](0,0) is 1, number of states examined is 27
+  std::cerr<<"sum = "<<sum<<std::endl;
+  assert(count==27);
+
+
+  const Matrix Q = createQ(Theta.IModel);
+
+  // Actually create the Matrices & Chain
+  DPmatrixHMM Matrices(state_emit,start_P,Q,
+		       Theta.SModel().distribution(),dists1,dists23,frequency);
 
   // Determine state order
   vector<int> state_order(nstates);
@@ -478,54 +518,17 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
   }
 
 
-  // Initialize the start probabilities at (0,0)
-  double sum=log_0;
-  int count = 0;
-  for(int S=0;S<nstates;S++) {
-    int states = getstates(S);
-    int s1 = (states>>4)&3;
-    int s2 = (states>>6)&3;
-    int s3 = (states>>8)&3;
-
-    if (s1 == states::E or s2 == states::E or s3 == states::E)
-      continue;
-
-    // if we are using hidden states, only use one way
-    if (s1 == states::G1) {
-      if (not bitset(states,10)) continue;
-    }
-    else if (s2 == states::G1) {
-      if (not bitset(states,11)) continue;
-    }
-    else if (s3 == states::G1) {
-      if (not bitset(states,12)) continue;
-    }
-
-    Matrices[S](0,0) = pi[s1] + pi[s2] + pi[s3];
-    count++;
-    sum = logsum(sum,Matrices[S](0,0));
-  }
-
-  // check that the sum of Matrices[S](0,0) is 1, number of states examined is 27
-  std::cerr<<"sum = "<<sum<<std::endl;
-  assert(count==27);
-
-
   /*------------------ Compute the DP matrix ---------------------*/
-
-  //FIXME - we should probably send the matrix 'Q' into DPmatrix, and construct GQ
-  const Matrix& GQ = createGQ(Theta.IModel);
-  const Matrix& Q = createQ(Theta.IModel);
 
   // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
   // We can only use non-silent states at (0,0) to simulate S
-  Matrices.forward(0,0,GQ);
+  Matrices.forward(0,0);
   
-  Matrices.forward(0,0,seq1.size(),seq23.size(),GQ);
+  Matrices.forward(0,0,seq1.size(),seq23.size());
 
   //------------- Sample a path from the matrix -------------------//
 
-  vector<int> path = Matrices.sample_path(GQ);
+  vector<int> path = Matrices.sample_path();
 
   // FIXME!! - need to insert extra ---+ states according to a geometric
   alignment A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
@@ -559,7 +562,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& Theta,
     prior_branch(project(A,n0,n1,n2,n3),Theta.IModel,0,2) +
     prior_branch(project(A,n0,n1,n2,n3),Theta.IModel,0,3);
 
-  double diff = Matrices.check(Q,GQ,path_old,path_new,lp1,s1,lp2,s2);
+  double diff = Matrices.check(path_old,path_new,lp1,s1,lp2,s2);
 
   if (abs(diff) > 1.0e-9) {
     std::cerr<<prior_HMM_nogiven(old,Theta) - lp1<<endl;

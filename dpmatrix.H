@@ -6,62 +6,63 @@
 
 using std::valarray;
 
-inline double sum(const valarray<double>& v) {
-  return v.sum();
-}
+class HMM {
+public:
+  Matrix Q;
+  Matrix GQ;
 
-
-class DP {
   // bitmasks of whether states emit features in each sequence
   vector<double> start_P;
 
   vector<int> state_emit;
+
   bool silent(int S) {return not state_emit[S];}
-  virtual bool silent_network(int S)=0;
+  bool silent_network(int S);
 
   int nstates() const {return state_emit.size()-1;}
   int endstate() const {return nstates();}
 
   vector<int> generalize(const vector<int>& path);
-  double generalize_P(const vector<int>& path, const Matrix& Q);
+  double generalize_P(const vector<int>& path);
 
-  double path_Q_path(const vector<int>& path, const Matrix& GQ);
-  virtual double path_Q_subst(const vector<int>& path, const Matrix& GQ)=0;
+  double path_Q_path(const vector<int>& path);
+  virtual double path_Q_subst(const vector<int>& path)=0;
 
-  virtual double path_Q(const vector<int>& path, const Matrix& GQ) {
-    return path_Q_path(path,GQ) + this->path_Q_subst(path,GQ);
+  virtual double path_Q(const vector<int>& path) {
+    return path_Q_path(path) + this->path_Q_subst(path);
   }
 
-  DP(const vector<double&> v1,const vector<double>& v2):start_P(v2),state_emit(v2) 
-  {
-    assert(start_P.size() == nstates());
-  }
+  HMM(const vector<int>&,const vector<double>&,const Matrix&);
+
+  virtual ~HMM() {}
 };
 
 
-class DParray : public DP, public vector< vector<double> > {
+class DParray : public HMM, public vector< vector<double> > {
   vector< vector<int> > allowed_states;
 public:
   const vector<int>& states(int j) const {return allowed_states[j];}
   vector<int>& states(int j) {return allowed_states[j];}
 
+  double path_Q_subst(const vector<int>& path) {return 0;}
+
   // compute FP for the whole array
-  void forward(const Matrix& GQ);
+  void forward();
 
   // compute FP for a cell
-  virtual void forward(int,const Matrix& GQ)=0;
+  virtual void forward(int)=0;
 
   // functions on paths
-  vector<int> sample_path(const Matrix& GQ);
+  vector<int> sample_path();
 
   //FIXME - still need to implement checking framework
+  DParray(int,const vector<int>&,const vector<double>&,const Matrix&);
+
+  virtual ~DParray() {}
 };
 
 
-class DPmatrix : public DP, public vector<Matrix> {
-  int s1;
-  int s2;
-
+class DPmatrix : public HMM, public vector<Matrix> {
 protected:
   valarray<double> s1_sub;
   valarray<double> s2_sub;
@@ -75,30 +76,30 @@ public:
   int nrates() const {return dists1[0].size();}
 
   // accessor functions
-  int size1() const {return s1;}
-  int size2() const {return s2;}
+  int size1() const {return dists1.size()+1;}
+  int size2() const {return dists2.size()+1;}
 
   bool di(int S) {bool e = false; if (state_emit[S]&(1<<0)) e=true;return e;}
   bool dj(int S) {bool e = false; if (state_emit[S]&(1<<1)) e=true;return e;}
-  bool silent_network(int S);
 
   // compute FP for a square
-  void forward(int,int,int,int,const Matrix& GQ);
+  void forward(int,int,int,int);
 
   // compute FP for a cell
-  virtual void forward(int,int,const Matrix& GQ)=0;
+  virtual void forward(int,int)=0;
 
   // compute FP for entire matrix, with some points on path pinned
-  void forward(const vector<int>&,int,const Matrix& GQ);
+  void forward(const vector<int>&,int);
 
   // functions on paths
-  vector<int> sample_path(const Matrix& GQ);
+  vector<int> sample_path();
 
-  vector<double> path_Q(const vector<int>& path,const Matrix& GQ);
-  double path_P(const vector<int>& path, const Matrix& GQ);
-  double path_check(const vector<int>& path, const Matrix& GQ);
+  double path_Q_subst(const vector<int>& path);
 
-  double check(const Matrix&,const Matrix&,const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2);
+  double path_P(const vector<int>& path);
+  double path_check(const vector<int>& path);
+
+  double check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2);
 
   double emitMM(int i,int j);
   double emit_M(int i,int j);
@@ -106,7 +107,9 @@ public:
   double emit__(int i,int j);
 
 
-  DPmatrix::DPmatrix(int nstates,
+  DPmatrix::DPmatrix(const vector<int>&,
+		     const vector<double>&,
+		     const Matrix&,
 		     const vector< double >&,
 		     const vector< vector< valarray<double> > >&,
 		     const vector< vector< valarray<double> > >&, 
@@ -114,6 +117,10 @@ public:
 
   virtual ~DPmatrix() {}
 };
+
+inline double sum(const valarray<double>& v) {
+  return v.sum();
+}
 
 inline double DPmatrix::emitMM(int i,int j) {
   double total=0;
@@ -141,21 +148,23 @@ public:
   const vector<int>& states(int j) const {return allowed_states[j];}
   vector<int>& states(int j) {return allowed_states[j];}
 
-  void forward(int i1,int j1,int i2,int j2,const Matrix& GQ);
+  void forward(int i1,int j1,int i2,int j2);
 
-  void forward(int,int,const Matrix& GQ);
+  void forward(int,int);
 
-  DPmatrixHMM(int nstates,
+  DPmatrixHMM(const vector<int> & v1,
+	      const vector<double> & v2,
+	      const Matrix& M,
 	      const vector< double >& d0,
 	      const vector< vector< valarray<double> > >& d1,const vector< vector< valarray<double> > >& d2, 
 	      const valarray<double>& f):
-    DPmatrix(nstates,d0,d1,d2,f), allowed_states(d2.size()+1)
+    DPmatrix(v1,v2,M,d0,d1,d2,f), allowed_states(d2.size()+1)
   { }
 
   virtual ~DPmatrixHMM() {}
 };
 
-inline void DPmatrixHMM::forward(int i2,int j2,const Matrix& GQ) {
+inline void DPmatrixHMM::forward(int i2,int j2) {
 
   assert(i2<size1());
   assert(j2<size2());
@@ -202,8 +211,8 @@ inline void DPmatrixHMM::forward(int i2,int j2,const Matrix& GQ) {
   }
 }     
 
-inline void DPmatrixHMM::forward(int i1,int j1,int i2,int j2,const Matrix& GQ) {
-  DPmatrix::forward(i1,j1,i2,j2,GQ);
+inline void DPmatrixHMM::forward(int i1,int j1,int i2,int j2) {
+  DPmatrix::forward(i1,j1,i2,j2);
 }
 
 #endif

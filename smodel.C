@@ -192,8 +192,12 @@ void GammaRateModel::super_fiddle() {
   double& p = parameters_[parameters_.size()-1];
  
   const double sigma = 0.04;
-  p += gaussian(0,sigma);
-  if (p < 0) p = -p;
+  double p2 = p + gaussian(0,sigma);
+  if (p2 < 0) p2 = -p2;
+
+  double alpha = 1.0/(p2*p2);
+  if (alpha < 10000)
+    p = p2;
 
   recalc();
 }

@@ -373,8 +373,7 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
 
   alignment A = construct(old,path,group1,seq1,seq2);
   /*--------------------------------------------------------------*/
-
-  /*
+#ifndef NDEBUG
   vector<int> path1 = get_path(old,node1,node2);
   vector<int> path2 = get_path(A,node1,node2);
   path.push_back(3);
@@ -386,8 +385,8 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   double l1 = probability3(old,Theta);
   double l2 = probability3(A,Theta);
 
-  double l1B = substitution(old,Theta) + prior_branch_HMM(old,Theta.IModel,node1,node2);
-  double l2B = substitution(A  ,Theta) + prior_branch_HMM(A  ,Theta.IModel,node1,node2);
+  double l1B = substitution::Pr(old,Theta) + prior_branch(old,Theta.IModel,node1,node2);
+  double l2B = substitution::Pr(A  ,Theta) + prior_branch(A  ,Theta.IModel,node1,node2);
   double diff = p2-p1-(l2-l1);
   double rdiff = diff/(l2-l1);
 
@@ -410,8 +409,7 @@ alignment sample_alignment(const alignment& old,const Parameters& Theta,int b) {
   }
 
   assert(isnan(rdiff) or abs(diff) < 1.0e-8);
-  */
-
+#endif
   /*--------------------------------------------------------------*/
   assert(valid(A));
   return A;

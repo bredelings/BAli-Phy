@@ -5,20 +5,31 @@
 
 using std::abs;
 
-vector<int> DP::generalize(const vector<int>& path) {
-  vector<int> path_g = path;
-  for(int i=path_g.size()-1;i>0;i--) {
-    int S1 = path_g[i-1];
-    int S2 = path_g[i];
+// Is this state silent and in a loop of silent states?
+bool HMM::silent_network(int S) {
+  if (S==endstate())
+    return false;
+
+  if (state_emit[S])
+    return false;
+  else
+    return true;
+}
+
+vector<int> HMM::generalize(const vector<int>& path) {
+  vector<int> g_path = path;
+  for(int i=g_path.size()-1;i>0;i--) {
+    int S1 = g_path[i-1];
+    int S2 = g_path[i];
     if (silent_network(S1) and silent_network(S2))
-      path_g.erase(path_g.begin()+i);
+      g_path.erase(g_path.begin()+i);
   }
-  return path_g;
+  return g_path;
 }
 
 // FIXME - this doesn't deal with silent networks that have more than
 //         one silent state!
-double DP::generalize_P(const vector<int>& path, const Matrix& Q) {
+double HMM::generalize_P(const vector<int>& path) {
   double Pr = 0;
   for(int i=1; i<path.size(); i++) {
     int S1 = path[i-1];
@@ -34,65 +45,58 @@ double DP::generalize_P(const vector<int>& path, const Matrix& Q) {
   return Pr;
 }
 
+double HMM::path_Q_path(const vector<int>& g_path) {
 
-double DP::path_Q_path(const vector<int>& path,const Matrix& GQ) {
-  double P_path=0;
+  double Pr = log_0;
+  for(int S=0;S<nstates();S++)
+    if (not silent(S))
+      Pr = logsum(Pr,start_P[S] + GQ(S,g_path[0]));
 
-  int i=0,j=0;
-  for(int l=0;l<path.size();l++) {
+  for(int l=1;l<g_path.size();l++)
+    Pr += GQ(g_path[l-1],g_path[l]);
 
-    int state2 = path[l];
-    if (di(state2))
-      i++;
-    if (dj(state2))
-      j++;
-
-    if (l == 0) {
-      double sum=log_0;
-      for(int S=0;S<nstates();S++)
-	if (S != 7)
-	  sum = logsum(sum,(*this)[S](0,0)+GQ(S,state2));
-      P_path += sum;
-    }
-    else {
-      P_path += GQ(path[l-1],state2);
-    }
-
-    double sub=0;
-    if (di(state2) and dj(state2))
-      sub = emitMM(i,j);
-    else if (di(state2))
-      sub = emitM_(i,j);
-    else if (dj(state2))
-      sub = emit_M(i,j);
-    else
-      sub = emit__(i,j);
-
-    P_sub += sub;
-  }
-  assert(i == size1()-1 and j == size2()-1);
-  vector<double> p;
-  p.push_back(P_path);
-  p.push_back(P_sub);
-  return p;
+  return Pr;
 }
 
 
-void DPmatrix::forward(int x1,int y1,int x2,int y2,const Matrix& GQ) {
+HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
+  :Q(M),GQ(M),start_P(v2),state_emit(v1) 
+{
+  assert(start_P.size() == nstates());
+
+  for(int S1=0;S1<GQ.size1();S1++) {
+    if (not silent_network(S1)) continue;
+    for(int S2=0;S2<GQ.size1();S2++) {
+      if (silent_network(S2)) {
+	GQ(S1,S2) = log_0;
+	assert(S1==S2); // this isn't the generalized version...
+      }
+      else {
+	GQ(S1,S2) += -log(1.0-exp(Q(S1,S1)));
+      }
+    }
+  }
+}
+
+DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M)
+  :HMM(v1,v2,M),vector< vector<double> >(l+1,vector<double>(nstates(),log_0)) 
+{ }
+
+void DPmatrix::forward(int x1,int y1,int x2,int y2) {
   const int maxdelta = std::max(x2-x1,y2-y1);
 
   for(int delta=1; delta<=maxdelta; delta++) {
     if (delta<size2())
       for(int i=0;i<delta and i<size1();i++) 
-	forward(x1+i,y1+delta,GQ);
+	forward(x1+i,y1+delta);
 
     if (delta<size1())
       for(int i=0;i<=delta and i<size2();i++)
-	forward(x1+delta,y1+i,GQ);
+	forward(x1+delta,y1+i);
   } 
 }
 
-void DPmatrix::forward(const vector<int>& path,int bandwidth,const Matrix& GQ) {
+void DPmatrix::forward(const vector<int>& path,int bandwidth) {
   vector<int> icol;
   vector<int> jcol;
 
@@ -125,29 +129,17 @@ void DPmatrix::forward(const vector<int>& path,int bandwidth,const Matrix& GQ) {
   pins.push_back(icol.size()-1);
 
   // Deal with silent states at (0,0)
-  forward(0,0,GQ);
+  forward(0,0);
 
   // Process the squares generated
   for(int i=0;i<pins.size()-1;i++) {
     forward(icol[pins[i]],jcol[pins[i]],
-	    icol[pins[i+1]],jcol[pins[i+1]],GQ);
+	    icol[pins[i+1]],jcol[pins[i+1]]);
   }
 }
 
 
-// Is this state silent and in a loop of silent states?
-bool DPmatrix::silent_network(int S) {
-  if (S==endstate())
-    return false;
-
-  if (state_emit[S])
-    return false;
-  else
-    return true;
-}
-
-vector<double> DPmatrix::path_Q(const vector<int>& path,const Matrix& GQ) {
-  double P_path=0;
+double DPmatrix::path_Q_subst(const vector<int>& path) {
   double P_sub=0;
   int i=0,j=0;
   for(int l=0;l<path.size();l++) {
@@ -157,17 +149,6 @@ vector<double> DPmatrix::path_Q(const vector<int>& path,const Matrix& GQ) {
       i++;
     if (dj(state2))
       j++;
-
-    if (l == 0) {
-      double sum=log_0;
-      for(int S=0;S<nstates();S++)
-	if (S != 7)
-	  sum = logsum(sum,(*this)[S](0,0)+GQ(S,state2));
-      P_path += sum;
-    }
-    else {
-      P_path += GQ(path[l-1],state2);
-    }
 
     double sub=0;
     if (di(state2) and dj(state2))
@@ -182,14 +163,11 @@ vector<double> DPmatrix::path_Q(const vector<int>& path,const Matrix& GQ) {
     P_sub += sub;
   }
   assert(i == size1()-1 and j == size2()-1);
-  vector<double> p;
-  p.push_back(P_path);
-  p.push_back(P_sub);
-  return p;
+  return P_sub;
 }
 
 
-double DPmatrix::path_check(const vector<int>& path, const Matrix& GQ) {
+double DPmatrix::path_check(const vector<int>& path) {
   double Pr=0;
   
   const int I = size1()-1;
@@ -238,8 +216,8 @@ double DPmatrix::path_check(const vector<int>& path, const Matrix& GQ) {
   return Pr;
 }
 
-double DPmatrix::path_P(const vector<int>& path, const Matrix& GQ) {
-  double P2 = path_check(path,GQ);
+double DPmatrix::path_P(const vector<int>& path) {
+  double P2 = path_check(path);
   std::cerr<<"P(path)2 = "<<P2<<std::endl;
 
   const int I = size1()-1;
@@ -295,7 +273,7 @@ double DPmatrix::path_P(const vector<int>& path, const Matrix& GQ) {
   return Pr;
 }
 
-vector<int> DPmatrix::sample_path(const Matrix& GQ) {
+vector<int> DPmatrix::sample_path() {
   vector<int> path;
 
   const int I = size1()-1;
@@ -328,7 +306,7 @@ vector<int> DPmatrix::sample_path(const Matrix& GQ) {
   return path;
 }
 
-double DPmatrix::check(const Matrix& Q,const Matrix& GQ,const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) {  
+double DPmatrix::check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) {  
 
   // Add up the full likelihoods
   double l1 = lp1 + ls1;
@@ -338,21 +316,19 @@ double DPmatrix::check(const Matrix& Q,const Matrix& GQ,const vector<int>& path1
   vector<int> path1_G = generalize(path1);
   vector<int> path2_G = generalize(path2);
 
-  double p1 = path_P(path1_G,GQ); 
-  double p2 = path_P(path2_G,GQ); 
+  double p1 = path_P(path1_G); 
+  double p2 = path_P(path2_G); 
 
-  p1 += generalize_P(path1,Q);
-  p2 += generalize_P(path2,Q);
+  p1 += generalize_P(path1);
+  p2 += generalize_P(path2);
 
   // get the probabilities of the path through the 3-way HMM
-  vector<double> QP = path_Q(path1_G,GQ);
-  double qp1 = QP[0] + generalize_P(path1,Q);
-  double qs1 = QP[1];
+  double qp1 = path_Q_path(path1_G) + generalize_P(path1);
+  double qs1 = path_Q_subst(path1_G);
   double q1 = qp1 + qs1;
 
-  QP = path_Q(path2_G,GQ);
-  double qp2 = QP[0] + generalize_P(path2,Q);
-  double qs2 = QP[1];
+  double qp2 = path_Q_path(path2_G) + generalize_P(path2);
+  double qs2 = path_Q_subst(path2_G);
   double q2 = qp2 + qs2;
 
   double diff = p2-p1-(l2-l1);
@@ -384,23 +360,24 @@ double DPmatrix::check(const Matrix& Q,const Matrix& GQ,const vector<int>& path1
   return diff;
 }
 
-DPmatrix::DPmatrix(int nstates,
+DPmatrix::DPmatrix(const vector<int>& v1,
+		   const vector<double>& v2,
+		   const Matrix& M,
 		   const vector< double >& d0,
 		   const vector< vector< valarray<double> > >& d1,
 		   const vector< vector< valarray<double> > >& d2, 
 		   const valarray<double>& f)
-  :vector<Matrix>(nstates,Matrix(d1.size()+1,d2.size()+1)), 
-   s1(d1.size()+1),s2(d2.size()+1), 
+  :HMM(v1,v2,M),
+   vector<Matrix>(nstates(),Matrix(d1.size()+1,d2.size()+1)), 
    s1_sub(d1.size()),s2_sub(d2.size()),
-   state_emit(nstates+1),
    distribution(d0),
    dists1(d1),dists2(d2),frequency(f)
 {
   
   //----- zero-initialize matrices ------//
-  for(int i=0;i<s1;i++)
-    for(int j=0;j<s2;j++) 
-      for(int S=0;S<nstates;S++)
+  for(int i=0;i<size1();i++)
+    for(int j=0;j<size2();j++) 
+      for(int S=0;S<nstates();S++)
 	(*this)[S](i,j)  = log_0;
   
   //----- cache G1,G2 emission probabilities -----//
@@ -417,5 +394,8 @@ DPmatrix::DPmatrix(int nstates,
       total += distribution[r]*sum( dists2[i][r] * frequency );
     s2_sub[i] = log(total);
   }
+
+  for(int S=0;S<start_P.size();S++)
+    (*this)[S](0,0) = start_P[S];
 }
 
