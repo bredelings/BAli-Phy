@@ -25,23 +25,14 @@ efloat_t other_subst(const alignment& A, const Parameters& P, const vector<int>&
 /// Sum of branch priors for branches not connected to no
 efloat_t other_prior(const alignment& A, const Parameters& P, const vector<int>& nodes);
 
-/// Routine for summing/sampling possibilities for sequences at an internal node
-DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
 
-/// Routine for summing/sampling possibilities for sequences at two adjacent internal nodes
-DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
-
-/// Routine for summing/sampling possibilities for sequence at an internal node, and an adjacent alignment
-DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
-
-
-/// Routine for simultaneosly sampling between several Parameter choices, and summing out a node
+/// Routine for simultaneously sampling between several Parameter choices, and summing out a node
 bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
 
-/// Routine for simultaneosly sampling between several Parameter choices, and summing out some nodes
+/// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
 
-/// Routine for simultaneosly sampling between several Parameter choices, and summing out some nodes
+/// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
 
 
