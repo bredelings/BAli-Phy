@@ -31,7 +31,7 @@ bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 
   double ratio = p2/p1;
 
-  if (myrandomf() < p2/p1) 
+  if (myrandomf() < ratio) 
     return true;
   else
     return false;
