@@ -880,21 +880,20 @@ namespace substitution {
     if (p <= 0.0 or p >= 1.0)
       return log_0;
     else
-      return log( gsl_ran_beta_pdf(p,a,b) * p*(1.0-p) );
+      return log( gsl_ran_beta_pdf(p,a,b) /* * p*(1.0-p) */ );
   }
 
   void WithINV::super_fiddle() {
-    if (fixed[0] )
-      return;
+    if (not fixed[0]) {
 
-    double &p = parameters_[0];
+      double &p = parameters_[0];
 
-    // fiddle Invariant fraction on the LOD scale
-    const double sigma = 0.25;
-    double LOD_p = LOD(p);
-    LOD_p += gaussian(0,sigma);
-    p = ILOD(LOD_p);
-    assert( 0 <= p and p <= 1.0);
+      // fiddle Invariant fraction
+      const double sigma = 0.03;
+      // p = ILOD(LOD(p) + gaussian(0,sigma));
+      p = wrap( p + gaussian(0,sigma),1.0);
+      assert( 0 <= p and p <= 1.0);
+    }
 
     recalc();
   }
