@@ -23,9 +23,12 @@ LANGO := fast-math
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
 LDFLAGS := 
 
+ifeq (${BOUNDS_CHECK},y)
+  DEFS += _GLIBCXX_DEBUG
+endif
+
 ifeq (${DEBUG},y)
   DEBUG := g3
-  DEFS += _GLIBCXX_DEBUG
 else
   ifeq ($(origin DEFS), undefined)
      DEFS += NDEBUG_UBLAS NDEBUG_DP NDEBUG
