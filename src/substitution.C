@@ -167,8 +167,10 @@ namespace substitution {
 	    DB(m,i) = 1.0;
       }
 
-      // cache the source distribution, or not?
+      // compute the distribution at the target (parent) node - 2 branch distributions
       else {
+
+	// compute the source distribution from 2 branch distributions
 	for(int m=0;m<n_models;m++) {
 	  
 	  /*
@@ -182,12 +184,16 @@ namespace substitution {
 	  else */
 
 	  Matrix& DS = distributions[scratch];
-	  const Matrix& Q = transition_P[m][ops[i].b];
 
 	  for(int j=0;j<asize;j++)
 	    DS(m,j) = distributions[b1](m,j)*distributions[b2](m,j);
 
+	}
 
+	// propagate from the source distribution
+	for(int m=0;m<n_models;m++) {
+	  Matrix& DS = distributions[scratch];
+	  const Matrix& Q = transition_P[m][ops[i].b];
 	  // compute the distribution at the target (parent) node - multiple letters
 	  for(int i=0;i<asize;i++) {
 	    double temp=0;
@@ -196,6 +202,8 @@ namespace substitution {
 	    DB(m,i) = temp;
 	  }
 	}
+
+
       }
 
     }
