@@ -34,7 +34,7 @@ namespace substitution {
 
   void Gamma_Branch_Model::super_fiddle() {
     const double sigma = 0.05;
-    if (not fixed[0]) {
+    if (not fixed(0)) {
       double beta = parameters_.back() + gaussian(0,sigma);
       if (beta<0) beta = -beta;
       if (beta >0) parameters_.back() = beta;
@@ -72,7 +72,7 @@ namespace substitution {
     vector<double> v = parameters_;
     double& p = v.back();
 
-    if (fixed[0]) return;
+    if (fixed(0)) return;
 
     const double sigma = 0.04;
     double p2 = p + gaussian(0,sigma);
@@ -239,7 +239,7 @@ namespace substitution {
   }
 
   void HKY::fiddle() {
-    if (fixed[0]) return;
+    if (fixed(0)) return;
 
     double k = log(kappa());
 
@@ -279,12 +279,12 @@ namespace substitution {
   void TNY::fiddle() {
     const double sigma = 0.15;
 
-    if (not fixed[0]) {
+    if (not fixed(0)) {
       double k = kappa1() * exp(gaussian(0,sigma));
       kappa1(k);
     }
 
-    if (not fixed[1]) {
+    if (not fixed(1)) {
       double k = kappa2() * exp(gaussian(0,sigma));
       kappa2(k);
     }
@@ -352,7 +352,7 @@ namespace substitution {
   }
 
   void Empirical::fiddle() {
-    if (not fixed[0]) {
+    if (not fixed(0)) {
 
       double& f = parameters_[0];
 
@@ -409,7 +409,7 @@ namespace substitution {
 
   void YangCodonModel::super_fiddle() {
     double sigma = 0.15;
-    if (not fixed[1])
+    if (not fixed(1))
       parameters_[1] *= exp(gaussian(0,sigma));
 
     read();
@@ -894,7 +894,7 @@ namespace substitution {
   }
 
   void WithINV::super_fiddle() {
-    if (not fixed[0]) {
+    if (not fixed(0)) {
 
       double &p = parameters_[0];
 
@@ -1037,7 +1037,7 @@ namespace substitution {
   }
 
   void DualModel::super_fiddle() {
-    if (not fixed[0]) {
+    if (not fixed(0)) {
 
       double& p = parameters_[0];
 
@@ -1048,7 +1048,7 @@ namespace substitution {
       p = wrap(p,1.0);
     }
 
-    if (not fixed[1]) {
+    if (not fixed(1)) {
       double & r = parameters_[1];
       r *= exp(gaussian(0,0.3));
     }

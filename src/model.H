@@ -7,6 +7,11 @@
 #include "clone.H"
 
 
+// FIXME - the way to have a model class with members as submodels is to
+//   1. hard-code the SubModels(m) function to return the models you want
+//   2. but then when you modify the class member models, you need to notify the parent..
+//   3. we COULD have an upwards-pointing chain as well...
+
 class Model: public Cloneable {
 protected:
   /// Model parameters
@@ -20,8 +25,9 @@ protected:
   /// Construct an empty model w/ s parameters
   Model(int s): parameters_(s) {};
 
+  std::vector<bool> fixed_;
+
 public:
-  std::vector<bool> fixed;
 
   /// Make a copy of this object
   virtual Model* clone() const =0;
@@ -31,6 +37,10 @@ public:
 
   /// a symmetrical proposal distribution (calls recalc)
   virtual void fiddle() =0;
+
+  bool fixed(int i) const {return fixed_[i];}
+
+  virtual void fixed(int i,bool f) {fixed_[i] = f;}
 
   /// Get a model parameter
   virtual double parameter(int p) const {
@@ -87,6 +97,10 @@ protected:
     recalc();
   }
   
+  bool fixed(int i) {return Model::fixed(i);}
+
+  virtual void fixed(int i,bool f) {Model::fixed(i,f); write();}
+
   /// Access the submodel
   virtual const Model& SubModels(int) const=0;
   virtual Model& SubModels(int)=0;

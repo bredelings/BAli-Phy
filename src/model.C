@@ -6,10 +6,10 @@ using std::string;
 void Model::set_n_parameters(int n) {
   parameters_.resize(n);
 
-  int s = fixed.size();
-  fixed.resize(n);
-  for(int i=s;i<fixed.size();i++)
-    fixed[i] = false;
+  int s = fixed_.size();
+  fixed_.resize(n);
+  for(int i=s;i<fixed_.size();i++)
+    fixed_[i] = false;
 }
 
 void SuperModel::read() {
@@ -22,8 +22,10 @@ void SuperModel::read() {
   for(int m=0;m<n_submodels();m++) {
     const std::vector<double>& sub_p = SubModels(m).parameters();
 
-    for(int i=0;i<sub_p.size();i++)
+    for(int i=0;i<sub_p.size();i++) {
       parameters_[i+total] = sub_p[i];
+      Model::fixed(i+total,SubModels(m).fixed(i));
+    }
 
     total += sub_p.size();
   }
@@ -41,10 +43,12 @@ void SuperModel::write() {
   for(int m=0;m<n_submodels();m++) {
     vector<double> sub_p = SubModels(m).parameters();
 
-    for(int i=0;i<sub_p.size();i++)
+    for(int i=0;i<sub_p.size();i++) {
       sub_p[i] = parameters_[i+total];
+      SubModels(m).fixed(i,fixed(i+total));
+    }
     SubModels(m).parameters(sub_p);
-    
+
     total += sub_p.size();
   }
 }

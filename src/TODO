@@ -60,8 +60,6 @@
 
 9. write code to load joint (A,T) distributions...
 
-11. Fix "showonly" - think of better name.
-
 11.5: Write simple MPI code for MCMCMC....
 
 12. Clean up ColorMap-s in alignment-draw, and sanitize naming scheme.
@@ -141,4 +139,6 @@ the prior, because we never want to use it  differently.
 
 [DONE]  Estimate best alignment by finding the alignment with the greatest
    sum of PP(i ~ j) for all aligned pairs (i,j);
+
+[DONE]  Fix "showonly" - think of better name.
 

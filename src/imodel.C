@@ -121,7 +121,7 @@ void SimpleIndelModel::fiddle() {
 
   const double sigma = 0.35;
 
-  if (not fixed[0]) {
+  if (not fixed(0)) {
     double pdel =  lambda_O-logdiff(0,lambda_O);
     double rate =  log(-logdiff(0,pdel));
 
@@ -130,7 +130,7 @@ void SimpleIndelModel::fiddle() {
     lambda_O    =  pdel - logsum(0,pdel);
   }
   
-  if (not fixed[1]) {
+  if (not fixed(1)) {
     double E_length = lambda_E - logdiff(0,lambda_E);
     E_length += gaussian(0,sigma);
     lambda_E = E_length - logsum(0,E_length);
@@ -263,19 +263,19 @@ void NewIndelModel::fiddle() {
 
   const double sigma = 0.35;
 
-  if (not fixed[0]) {
+  if (not fixed(0)) {
     rate        += gaussian(0,sigma);
     if (rate > 0) 
       rate = -rate;
   }
   
-  if (not fixed[1]) {
+  if (not fixed(1)) {
     double E_length = lambda_E - logdiff(0,lambda_E);
     E_length += gaussian(0,sigma);
     lambda_E = E_length - logsum(0,E_length);
   }
 
-  if (not fixed[2])
+  if (not fixed(2))
     i = wrap(i+gaussian(0,0.02),1.0);
   
   recalc();
@@ -297,7 +297,7 @@ double NewIndelModel::prior() const {
   P += exp_exponential_log_pdf(E_length,E_length_mean);
 
   // Calculate prior on invariant fraction
-  if (not fixed[2]) {
+  if (not fixed(2)) {
     double i = parameters_[2];
     P += beta_log_pdf(i,0.01,20);
   }

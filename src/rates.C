@@ -131,7 +131,7 @@ namespace substitution {
   }
 
   void Gamma::fiddle() {
-    if (fixed[0]) return;
+    if (fixed(0)) return;
 
     vector<double> v = parameters_;
     double g_sigma = v[0];

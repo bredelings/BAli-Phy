@@ -239,9 +239,9 @@ void set_parameters(Parameters& P, const variables_map& args) {
     cerr<<fix[i]<<endl;
     int p=-1;
     if (p=find_parameter(P.SModel(),fix[i]),p!=-1)
-      P.SModel().fixed[p] = true;
-    else if (p=find_parameter(P.SModel(),fix[i]),p!=-1)
-      P.SModel().fixed[p] = false;
+      P.SModel().fixed(p,true);
+    else if (p=find_parameter(P.IModel(),fix[i]),p!=-1)
+      P.IModel().fixed(p,true);
     else
       throw myexception()<<"Can't find parameter '"<<fix[i]<<"' to fix!";
   }
@@ -250,9 +250,9 @@ void set_parameters(Parameters& P, const variables_map& args) {
   for(int i=0;i<unfix.size();i++) {
     int p=-1;
     if (p=find_parameter(P.SModel(),unfix[i]),p!=-1)
-      P.SModel().fixed[p] = true;
-    else if (p=find_parameter(P.SModel(),unfix[i]),p!=-1)
-      P.SModel().fixed[p] = false;
+      P.SModel().fixed(p,false);
+    else if (p=find_parameter(P.IModel(),unfix[i]),p!=-1)
+      P.IModel().fixed(p,false);
     else
       throw myexception()<<"Can't find parameter '"<<unfix[i]<<"' to fix!";
   }
@@ -270,8 +270,8 @@ void set_parameters(Parameters& P, const variables_map& args) {
     int p=-1;
     if (p=find_parameter(P.SModel(),name),p!=-1)
       P.SModel().parameter(p,value);
-    else if (p=find_parameter(P.SModel(),name),p!=-1)
-      P.SModel().parameter(p,value);
+    else if (p=find_parameter(P.IModel(),name),p!=-1)
+      P.IModel().parameter(p,value);
     else
       throw myexception()<<"Can't find parameter '"<<name<<"' to fix!";
   }
