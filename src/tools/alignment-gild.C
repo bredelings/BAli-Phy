@@ -310,9 +310,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("align", value<string>(),"file with sequences and initial alignment")
+    ("tree",value<string>(),"file with initial tree")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("with-stop","include stop codons in amino-acid alphabets")
-    ("tree",value<string>(),"file with initial tree")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("tag", value<string>()->default_value("sample"),"only read alignments preceded by 'align[<tag>'")
     ("refine", value<string>(),"procedure for refining Least-Squares positivized branch lengths: SSE, Poisson, LeastSquares")
@@ -321,6 +321,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // positional options
   positional_options_description p;
   p.add("align", 1);
+  p.add("tree", 1);
   
   variables_map args;     
   store(command_line_parser(argc, argv).
@@ -329,7 +330,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-gild <file1> <file2> ... [OPTIONS]\n";
+    cout<<"Usage: alignment-gild <alignment-file> <tree-file> ... [OPTIONS]\n";
     cout<<all<<"\n";
     exit(0);
   }
@@ -412,12 +413,16 @@ int main(int argc,char* argv[]) {
 
       // Define an objective function for refining the initial estimates
       function * f = NULL;
-      if (args["refine"].as<string>() == "SSE")
+      if (not args.count("refine"))
+	;
+      else if (args["refine"].as<string>() == "SSE")
 	f = new SSE_match_pairs(labels,T);
       else if (args["refine"].as<string>() == "Poisson")
 	f = new poisson_match_pairs(labels,T);
       else if (args["refine"].as<string>() == "LeastSquares")
 	f = new LeastSquares(labels,T);
+      else
+	throw myexception()<<"Unknown refiner '"<<args["refine"].as<string>()<<"'";
 
       // refine initial estimate if requested
       if (f) {
