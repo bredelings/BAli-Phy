@@ -23,9 +23,6 @@ public:
     return path_GQ_path(g_path) + this->path_Q_subst(g_path);
   }
 
-  /// Check of the relative probabilities of path1 and path2 agree with lp1+ls1 and lp2+ls2
-  double check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) const;
-
   DPengine(const vector<int>&,const vector<efloat_t>&,const eMatrix&,double Temp);
 };
 

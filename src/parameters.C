@@ -3,24 +3,24 @@
 #include "substitution.H"
 #include "likelihood.H"
 
-double Parameters::basic_likelihood(const alignment& A,const Parameters& P) const {
+efloat_t Parameters::basic_likelihood(const alignment& A,const Parameters& P) const {
   if (SModel_->full_tree)
     return substitution::Pr(A,P);
   else
     return substitution::Pr_star(A,P);
 }
 
-double Parameters::basic_prior(const alignment& A,const Parameters& P) const {
+efloat_t Parameters::basic_prior(const alignment& A,const Parameters& P) const {
   if (IModel_->full_tree)
     return prior3(A,P);
   else
-    //FIXME!
-    return 0;
+    //FIXME
+    return 1;
 }
 
-double Parameters::weight(const alignment& A,const Parameters& P) const {
-  double Pr = basic_prior(A,P) + basic_likelihood(A,P);
-  return Pr * (1.0-1.0/P.Temp);
+efloat_t Parameters::weight(const alignment& A,const Parameters& P) const {
+  double Pr = basic_prior(A,P) * basic_likelihood(A,P);
+  return pow(Pr,(1.0-1.0/P.Temp));
 }
 
 bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
@@ -35,10 +35,10 @@ bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 }
 
 bool Parameters::accept_MH(const alignment& A,const Parameters& P1,const Parameters& P2) const {
-  double p1 = likelihood(A,P1) + ::prior(P1);
-  double p2 = likelihood(A,P2) + ::prior(P2);
+  efloat_t p1 = likelihood(A,P1) * ::prior(P1);
+  efloat_t p2 = likelihood(A,P2) * ::prior(P2);
 
-  if (myrandomf() < exp(p2-p1)) 
+  if (myrandomf() < exp(p2/p1)) 
     return true;
   else
     return false;

@@ -67,10 +67,10 @@ string SuperModel::parameter_name(int p) const {
   return super_parameter_name(p);
 }
 
-double SuperModel::prior() const {
-  double P = super_prior();
+efloat_t SuperModel::prior() const {
+  efloat_t  P = super_prior();
   for(int i=0;i<n_submodels();i++)
-    P += SubModels(i).prior();
+    P *= SubModels(i).prior();
   return P;
 }
 

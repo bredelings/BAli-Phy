@@ -147,7 +147,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 or group3,seq1,seq23);
   vector<int> path_g = Matrices.forward(pins);
 
-  if (log(Matrices.Pr_sum_all_paths()) <= log_limit)
+  if (Matrices.Pr_sum_all_paths() <= 0.0)
     return Matrices;
 
   vector<int> path = Matrices.ungeneralize(path_g);
@@ -210,8 +210,8 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
   //-------- Calculate corrections to path probabilities ---------//
 
-  vector<double> OS(p.size(),0);
-  vector<double> OP(p.size(),0);
+  vector<efloat_t> OS(p.size(),1);
+  vector<efloat_t> OP(p.size(),1);
   for(int i=0; i<p.size(); i++) {
     if (do_OS)
       OS[i] = other_subst(a[i],p[i],nodes[i]);
@@ -220,14 +220,14 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   }
 
   //---------------- Calculate choice probabilities --------------//
-  vector<double> Pr(p.size());
+  vector<efloat_t> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = OS[i] + log(Matrices[i].Pr_sum_all_paths()) + OP[i] + prior(p[i])/p[i].Temp;
-  assert(Pr[0] > log_limit);
+    Pr[i] = OS[i] * Matrices[i].Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
+  assert(Pr[0] > 0.0);
 
-  int C = choose_log(Pr);
+  int C = choose(Pr);
 
-  assert(Pr[C] > log_limit);
+  assert(Pr[C] > 0.0);
 
 #ifndef NDEBUG_DP
   std::cerr<<"choice = "<<C<<endl;
@@ -244,7 +244,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
   // Don't check impossible combinations
   for(int i=a.size()-1;i>=1;i--) {
-    if (log(Matrices[i].Pr_sum_all_paths()) >log_limit) continue;
+    if (Matrices[i].Pr_sum_all_paths() > 0.0) continue;
 
     a.erase(a.begin()+i);
     p.erase(p.begin()+i);
@@ -280,52 +280,34 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
     OS[i] = other_subst(a[i],p[i],nodes[i]);
     OP[i] = other_prior(a[i],p[i],nodes[i]);
 
-    double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
+    efloat_t OP_i = OP[i] / A3::correction(a[i],p[i],nodes[i]);
 
     check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
   }
 
   //--------- Compute path probabilities and sampling probabilities ---------//
-  vector< vector<double> > PR(p.size());
+  vector< vector<efloat_t> > PR(p.size());
 
   for(int i=0;i<p.size();i++) {
-    double P_choice = 0;
+    efloat_t P_choice = 1;
     if (i<Pr.size())
-      P_choice = choose_P_log(i,Pr);
+      P_choice = choose_P(i,Pr);
     else
-      P_choice = choose_P_log(0,Pr);
+      P_choice = choose_P(0,Pr);
 
     PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices[i]);
-    PR[i][0] += A3::log_correction(a[i],p[i],nodes[i]);
+    PR[i][0] *= A3::correction(a[i],p[i],nodes[i]);
   }
 
   //--------- Check that each choice is sampled w/ the correct Probability ---------//
-  for(int i=0;i<PR.size();i++) {
-    std::cerr<<"option = "<<i<<endl;
-
-    std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[i][0]<<"    Pr2  - Pr1  = "<<PR[i][0] - PR.back()[0]<<endl;
-    std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[i][2]<<"    PrQ2 - PrQ1 = "<<PR[i][2] - PR.back()[2]<<endl;
-    std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[i][1]<<"    PrS2 - PrS1 = "<<PR[i][1] - PR.back()[1]<<endl;
-
-    double diff = (PR[i][1] - PR.back()[1]) - (PR[i][0] - PR.back()[0]);
-    std::cerr<<"diff = "<<diff<<endl;
-    if (std::abs(diff) > 1.0e-9) {
-      std::cerr<<a.back()<<endl;
-      std::cerr<<a[i]<<endl;
-      
-      std::cerr<<A3::project(a.back(),nodes.back());
-      std::cerr<<A3::project(a[i],nodes[i]);
-      
-      throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
-    }
-  }
+  check_sampling_probabilities(PR,a);
 #endif
 
   //---------------- Adjust for length of n4 and n5 changing --------------------//
 
   // if we accept the move, then record the changes
   bool success = false;
-  if (myrandomf() < exp(A3::log_acceptance_ratio(A,p[0],nodes[0],a[C],p[C],nodes[C]))) {
+  if (myrandomf() < A3::acceptance_ratio(A,p[0],nodes[0],a[C],p[C],nodes[C])) {
     success = (C > 0);
 
     A = a[C];

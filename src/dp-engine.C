@@ -6,53 +6,6 @@
 
 using std::abs;
 
-double DPengine::check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) const {  
-
-  // Add up the full likelihoods
-  double l1 = lp1 + ls1;
-  double l2 = lp2 + ls2;
-  
-  // get the probabilities of sampling each of the paths
-  vector<int> path1_G = generalize(path1);
-  vector<int> path2_G = generalize(path2);
-
-  double p1 = log( path_P(path1_G) * generalize_P(path1) );
-  double p2 = log( path_P(path2_G) * generalize_P(path2) ); 
-
-  // get the probabilities of the path through the 3-way HMM
-  double qp1 = log( path_GQ_path(path1_G) * generalize_P(path1) );
-  double qs1 = log( path_Q_subst(path1_G) );
-  double q1 = qp1 + qs1;
-
-  double qp2 = log( path_GQ_path(path2_G) * generalize_P(path2) );
-  double qs2 = log( path_Q_subst(path2_G) );
-  double q2 = qp2 + qs2;
-
-  double diff = p2-p1-(l2-l1);
-
-  if (path1_G != path2_G) {
-
-    // Do the likelihood, path, and sampling probabilities match?
-    std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
-    std::cerr<<"Q1 = "<<q1<<"     Q2 = "<<q2<<"     Q2 - Q1 = "<<q2-q1<<endl;
-    std::cerr<<"L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<endl;
-    std::cerr<<"diff = "<<diff<<std::endl;
-    std::cerr<<endl;
-
-    // Do the likelihood and HMM substitition probabilities agree?
-    std::cerr<<"QS1 = "<<qs1<<"     QS2 = "<<qs2<<"   QS2 - QS1 = "<<qs2-qs1<<endl;
-    std::cerr<<"LS1 = "<<ls1<<"     LS2 = "<<ls2<<"   LS2 - LS1 = "<<ls2-ls1<<endl;
-    std::cerr<<endl;
-
-    // Do the likelihood and HMM path probabilities agree?
-    std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<"   QP2 - QP1 = "<<qp2-qp1<<endl;
-    std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<"   LP2 - LP1 = "<<lp2-lp1<<endl;
-    std::cerr<<endl;
-  }
-
-  return diff;
-}
-
 DPengine::DPengine(const vector<int>& v1,const vector<efloat_t>& v2, const eMatrix&M, double Temp)
   :HMM(v1,v2,M,Temp) 
 { }

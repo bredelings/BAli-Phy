@@ -20,22 +20,22 @@ namespace substitution {
 				const MultiModel& MModel);
 
   /// Full likelihood - all columns, all rates
-  double Pr(const alignment& A, const Parameters& P);
+  efloat_t Pr(const alignment& A, const Parameters& P);
 
-  double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes);
-
-  double Pr(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
+  efloat_t other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes);
+  
+  efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
 	    const MultiModel& MModel);
-  double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& LC);
+  efloat_t Pr(const alignment& A, const Parameters& P,Likelihood_Cache& LC);
 
   // Full likelihood - all columns, all rates (star tree)
-  double Pr_star(const alignment& A,const Parameters& P);
+  efloat_t Pr_star(const alignment& A,const Parameters& P);
   
-  double Pr_star_constant(const alignment& A,const Parameters& P);
-  double Pr_star_estimate(const alignment& A,const Parameters& P);
+  efloat_t Pr_star_constant(const alignment& A,const Parameters& P);
+  efloat_t Pr_star_estimate(const alignment& A,const Parameters& P);
 
   // Full likelihood - if everything is unaligned....
-  double Pr_unaligned(const alignment& A,const Parameters& P);
+  efloat_t Pr_unaligned(const alignment& A,const Parameters& P);
 
 }
 

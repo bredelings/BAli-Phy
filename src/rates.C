@@ -124,10 +124,10 @@ namespace substitution {
 
   /*--------------- GammaRateDistribution -----------------*/
   
-  double Gamma::prior() const {
+  efloat_t Gamma::prior() const {
     double g_sigma = parameters_[0];
     double log_g_sigma = log(g_sigma);
-    return log(shift_laplace_pdf(log_g_sigma,-4,0.5));
+    return shift_laplace_pdf(log_g_sigma,-4,0.5);
   }
 
   void Gamma::fiddle() {
@@ -186,9 +186,9 @@ namespace substitution {
   // EX==1 => lmu = -0.5 * lsigma^2
   //          Var X = (exp(lsigma^2)-1  => log(Var X + 1) = lsigma^2
 
-  double LogNormal::prior() const {
+  efloat_t LogNormal::prior() const {
     const double mean_stddev = 0.01;
-    return log(mean_stddev) - parameters_[0]/mean_stddev;
+    return expe(-parameters_[0]/mean_stddev)/mean_stddev;
   }
 
   void LogNormal::fiddle() {
@@ -259,7 +259,7 @@ namespace substitution {
       fraction(i) = f[i];
   }
 
-  double MultipleDistribution::super_prior() const {
+  efloat_t MultipleDistribution::super_prior() const {
     // Read, fiddle, and set f
     valarray<double> f(n_dists());
     for(int i=0;i<f.size();i++)
@@ -267,7 +267,7 @@ namespace substitution {
 
     valarray<double> q(1.0/f.size(),f.size());
 
-    return dirichlet_log_pdf(f,q,10);
+    return expe(dirichlet_log_pdf(f,q,10));
   }
 
   double MultipleDistribution::cdf(double x) const {

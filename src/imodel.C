@@ -60,7 +60,7 @@ void remove_one_state(eMatrix& Q,int S) {
 
 // f_M(s) = [ ME  + s(MGxGE - MExGG) ] / [ 1 - s(GG + MM) + s^2(MMxGG - MGxGM) ]
 
-double SimpleIndelModel::lengthp(int l) const {
+efloat_t SimpleIndelModel::lengthp(int l) const {
   using namespace states;
 
   //--------------- Remove the 'G2' State ----------------------//
@@ -96,7 +96,7 @@ double SimpleIndelModel::lengthp(int l) const {
     // Calculate f_M[l] from the q[i] (*IS* this always positive?)
     P = ME*q_l + (MG*GE - ME*GG)*q_lm1;
   }
-  return log(P);
+  return P;
 }
 
 IndelModel::IndelModel(int s)
@@ -209,7 +209,7 @@ void SimpleIndelModel::recalc() {
   QE = Q1;
 }
 
-double SimpleIndelModel::prior() const {
+efloat_t SimpleIndelModel::prior() const {
   double D = 0.5;
   double P = 0;
 
@@ -227,7 +227,7 @@ double SimpleIndelModel::prior() const {
 
   P += exp_exponential_log_pdf(E_length,E_length_mean);
 
-  return P;
+  return expe(P);
 }
 
 string SimpleIndelModel::name() const {return "simple indels [HMM]";}
@@ -281,7 +281,7 @@ void NewIndelModel::fiddle() {
   recalc();
 }
 
-double NewIndelModel::prior() const {
+efloat_t NewIndelModel::prior() const {
   double P = 0;
 
   // Calculate prior on lambda_O
@@ -302,7 +302,7 @@ double NewIndelModel::prior() const {
     P += beta_log_pdf(i,0.01,200);
   }
 
-  return P;
+  return expe(P);
 }
 
 indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {
@@ -389,7 +389,7 @@ string NewIndelModel::parameter_name(int i) const {
     return i_parameter_name(i,5);
 }
 
-double NewIndelModel::lengthp(int l) const {
+efloat_t NewIndelModel::lengthp(int l) const {
   return 1;
 }
 

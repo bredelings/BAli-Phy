@@ -36,19 +36,19 @@ public:
   int features;
 
   /// The likelihood function
-  double basic_likelihood(const alignment& A,const Parameters& P) const; 
-  double likelihood(const alignment& A,const Parameters& P) const {return basic_likelihood(A,P)/Temp;}
+  efloat_t basic_likelihood(const alignment& A,const Parameters& P) const; 
+  efloat_t likelihood(const alignment& A,const Parameters& P) const {return pow(basic_likelihood(A,P),1.0/Temp);}
 
   /// The prior
-  double basic_prior(const alignment& A,const Parameters& P) const;
-  double prior(const alignment& A,const Parameters& P) const {return basic_prior(A,P)/Temp;}
+  efloat_t basic_prior(const alignment& A,const Parameters& P) const;
+  efloat_t prior(const alignment& A,const Parameters& P) const {return pow(basic_prior(A,P),1.0/Temp);}
 
   /// Now we can link moves into probability model?
-  double probability(const alignment& A,const Parameters& P) const {
-    return prior(A,P) + likelihood(A,P);
+  efloat_t probability(const alignment& A,const Parameters& P) const {
+    return prior(A,P) * likelihood(A,P);
   }
 
-  double weight(const alignment& A, const Parameters& P) const;
+  efloat_t weight(const alignment& A, const Parameters& P) const;
 
   bool accept_MH(const alignment& A1,const Parameters& P1,
 		 const alignment& A2,const Parameters& P2) const;

@@ -3,13 +3,10 @@
 
 #include <vector>
 #include "rng.H"
+#include "mytypes.H"
 #include "myexception.H"
 
-int choose2(double, double, double T=1.0);
-int choose3(double, double, double,double T=1.0);
-
-int choose_log(const std::vector<double>&, double T=1.0);
-double choose_P_log(int, const std::vector<double>&, double T=1.0);
+int choose2(efloat_t, efloat_t);
 
 template <typename F>
 int choose(const std::vector<F>& P) {

@@ -30,7 +30,7 @@ namespace substitution {
 
 
   /// compute log(probability) from conditional likelihoods (S) and equilibrium frequencies as in MModel
-  double Pr(const Matrix& S,const MultiModel& MModel) {
+  efloat_t Pr(const Matrix& S,const MultiModel& MModel) {
     const alphabet& a = MModel.Alphabet();
 
     double total = 0;
@@ -49,10 +49,10 @@ namespace substitution {
     // SOME model must be possible
     assert(0 < total and total <= 1.00000000001);
 
-    return log(total);
+    return total;
   }
 
-  double calc_root_probability(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& cache,
+  efloat_t calc_root_probability(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& cache,
 			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     const int root = cache.root;
@@ -74,7 +74,7 @@ namespace substitution {
 	F(m,l) = f[l]*p;
     }
 
-    double total = 0;
+    efloat_t total = 1;
     for(int i=0;i<index.size1();i++) {
 
       double p_col=0;
@@ -115,14 +115,14 @@ namespace substitution {
       // SOME model must be possible
       assert(0 < p_col and p_col <= 1.00000000001);
 
-      total += log(p_col);
+      total *= p_col;
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
 
     return total;
   }
 
-  double calc_root_probability(const alignment& A, const Parameters& P,const vector<int>& rb,
+  efloat_t calc_root_probability(const alignment& A, const Parameters& P,const vector<int>& rb,
 			       const ublas::matrix<int>& index) 
   {
     return calc_root_probability(A,P,P.T,P.LC,P.SModel(),rb,index);
@@ -393,7 +393,7 @@ namespace substitution {
     return L;
   }
 
-  double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) 
+  efloat_t other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) 
   {
     const Tree& T = P.T;
     Likelihood_Cache& cache = P.LC;
@@ -410,27 +410,27 @@ namespace substitution {
 
     // get the relationships with the sub-alignments
     ublas::matrix<int> index1 = subA_index_none(rb,A,T,nodes);
-    double Pr1 = calc_root_probability(A,P,rb,index1);
+    efloat_t Pr1 = calc_root_probability(A,P,rb,index1);
 
 #ifndef NDEBUG
     ublas::matrix<int> index2 = subA_index_any(rb,A,T,nodes);
     ublas::matrix<int> index  = subA_index(rb,A,T);
 
-    double Pr2 = calc_root_probability(A,P,rb,index2);
-    double Pr  = calc_root_probability(A,P,rb,index);
+    efloat_t Pr2 = calc_root_probability(A,P,rb,index2);
+    efloat_t Pr  = calc_root_probability(A,P,rb,index);
 
-    assert(std::abs(Pr1 + Pr2 - Pr) < 1.0e-9);
+    assert(std::abs(log(Pr1 * Pr2) - log(Pr) ) < 1.0e-9);
 #endif
 
     return Pr1;
   }
 
-  double Pr(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& cache,
+  efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& cache,
 	    const MultiModel& MModel)
   {
     if (cache.cv_up_to_date()) {
 #ifndef NDEBUG
-      std::clog<<"Pr: Using cached value "<<cache.cached_value<<"\n";
+      std::clog<<"Pr: Using cached value "<<log(cache.cached_value)<<"\n";
 #endif
       return cache.cached_value;
     }
@@ -449,7 +449,7 @@ namespace substitution {
     ublas::matrix<int> index = subA_index(rb,A,T);
 
     // get the probability
-    double Pr = calc_root_probability(A,MC,T,cache,MModel,rb,index);
+    efloat_t Pr = calc_root_probability(A,MC,T,cache,MModel,rb,index);
 
     cache.cached_value = Pr;
     cache.cv_up_to_date() = true;
@@ -457,19 +457,19 @@ namespace substitution {
     return Pr;
   }
 
-  double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
+  efloat_t Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
     return Pr(A,P,P.T,cache,P.SModel());
   }
 
-  double Pr(const alignment& A,const Parameters& P) {
-    double result = Pr(A, P, P.LC);
+  efloat_t Pr(const alignment& A,const Parameters& P) {
+    efloat_t result = Pr(A, P, P.LC);
 
 #ifdef DEBUG_CACHING
     Parameters P2 = P;
     P2.LC.invalidate_all();
-    double result2 = Pr(A, P2, P2.LC);
-    if (std::abs(result - result2)  > 1.0e-9) {
-      std::cerr<<"Pr: diff = "<<result-result2<<std::endl;
+    efloat_t result2 = Pr(A, P2, P2.LC);
+    if (std::abs(log(result) - log(result2))  > 1.0e-9) {
+      std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
       std::abort();
     }
 #endif

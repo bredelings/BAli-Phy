@@ -20,10 +20,10 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const
 
 
 /// Sum of likelihoods for columns which don't contain any characters in sequences mentioned in 'nodes'
-double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes);
+efloat_t other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes);
 
 /// Sum of branch priors for branches not connected to no
-double other_prior(const alignment& A, const Parameters& P, const vector<int>& nodes);
+efloat_t other_prior(const alignment& A, const Parameters& P, const vector<int>& nodes);
 
 /// Routine for summing/sampling possibilities for sequences at an internal node
 DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const std::vector<int>& nodes);
@@ -48,10 +48,12 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
 //------------------- Checking Routines ------------------------//
 
-void check_match_P(const alignment& A,const Parameters& P, double OS, double OP, const vector<int>& path, const DPengine& Matrices);
+void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t OP, const vector<int>& path, const DPengine& Matrices);
 
 
-vector<double> sample_P(const alignment& A,const Parameters& P,double OS, double OP, double P_choice,
-			const vector<int>& path, const DPengine& Matrices);
+vector<efloat_t> sample_P(const alignment& A,const Parameters& P,efloat_t OS, efloat_t OP, efloat_t P_choice,
+			  const vector<int>& path, const DPengine& Matrices);
+
+void check_sampling_probabilities(const std::vector< std::vector<efloat_t> >& PR,const std::vector<alignment>& a);
 
 #endif

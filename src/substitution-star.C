@@ -41,9 +41,9 @@ namespace substitution {
     return p;
   }
 
-  double Pr_star(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC) {
-
-    double p = 0.0;
+  efloat_t Pr_star(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC) 
+  {
+    efloat_t p = 1;
   
     vector<int> residues(A.size2());
 
@@ -63,20 +63,22 @@ namespace substitution {
       // we don't get too close to zero, normally
       assert(0 < total and total <= 1.00000000001);
 
-      p += log(total);
+      p *= total;
     }
 
     return p;
   }
 
-  double Pr_star(const alignment& A,const Parameters& P) {
+  efloat_t Pr_star(const alignment& A,const Parameters& P) 
+  {
     if (P.T.n_leaves() == 2)
       return Pr(A,P);
 
     return Pr_star(A, P.T, P.SModel(), P);
   }
 
-  double Pr_star_constant(const alignment& A,const Parameters& P) {
+  efloat_t Pr_star_constant(const alignment& A,const Parameters& P) 
+  {
     const Tree& T1 = P.T;
     Parameters P2 = P;
 
@@ -103,7 +105,7 @@ namespace substitution {
     return Pr_star(A,P2);
   }
 
-  double Pr_star_estimate(const alignment& A,const Parameters& P) {
+  efloat_t Pr_star_estimate(const alignment& A,const Parameters& P) {
     const Tree& T1 = P.T;
     Parameters P2 = P;
     
@@ -133,7 +135,7 @@ namespace substitution {
     return Pr_star(A,P2);
   }
 
-  double Pr_unaligned(const alignment& A,const Parameters& P) {
+  efloat_t Pr_unaligned(const alignment& A,const Parameters& P) {
     const alphabet& a = A.get_alphabet();
 
     vector<double> count(a.size(),0);
@@ -146,9 +148,12 @@ namespace substitution {
       }
     }
     
-    double total=0;
-    for(int l=0;l<count.size();l++)
-      total += log(P.SModel().frequencies()[l])*count[l];
+    efloat_t total=1;
+    for(int l=0;l<count.size();l++) {
+      efloat_t p = P.SModel().frequencies()[l];
+      total *= pow(p,count[l]);
+    }
+
     return total;
   }
 }

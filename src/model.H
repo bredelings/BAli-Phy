@@ -5,7 +5,7 @@
 #include <string>
 
 #include "clone.H"
-
+#include "mytypes.H"
 
 // FIXME - the way to have a model class with members as submodels is to
 //   1. hard-code the SubModels(m) function to return the models you want,
@@ -34,7 +34,7 @@ public:
   virtual Model* clone() const =0;
 
   /// the prior for the model, on the same scale as 'fiddle()'
-  virtual double prior() const =0;
+  virtual efloat_t prior() const =0;
 
   /// a symmetrical proposal distribution (calls recalc)
   virtual void fiddle() =0;
@@ -83,7 +83,7 @@ protected:
   std::vector<double> super_parameters_;
 
   /// The prior for the parameters of the upper model
-  virtual double super_prior() const =0;
+  virtual efloat_t super_prior() const =0;
   
   /// Fiddle the parameters of the upper model (may need to call recalc)
   virtual void super_fiddle() {recalc();}
@@ -121,7 +121,7 @@ public:
   
   std::string parameter_name(int i) const;
   
-  double prior() const;
+  efloat_t prior() const;
   
   /// Symmetrically propose parameters (calls recalc through super_fiddle if necessary)
   void fiddle(); 

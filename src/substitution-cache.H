@@ -82,7 +82,7 @@ class Likelihood_Cache {
   int token;
 
 public:
-  double cached_value;
+  efloat_t cached_value;
 
   int  cv_up_to_date() const {return cache->cv_up_to_date(token);}
   int& cv_up_to_date()       {return cache->cv_up_to_date(token);}

@@ -406,7 +406,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   /*--------- Determine some values for this chain -----------*/
   if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
 
-  double MAP_score = log_0;
+  efloat_t MAP_score = 0;
 
   string tag = string("sample (")+convertToString(subsample)+")";
 
@@ -436,12 +436,12 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
       print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag,show_alignment);
     }
 
-    double Pr = P.basic_prior(A,P) + P.basic_likelihood(A,P);
+    efloat_t Pr = P.basic_prior(A,P) * P.basic_likelihood(A,P);
     Pr_stream<<"iterations = "<<iterations
 	     <<"    prior = "<<P.basic_prior(A,P)
 	     <<"    likelihood = "<<P.basic_likelihood(A,P)
 	     <<"    logp = "<<Pr
-	     <<"    weight = "<<Pr*(1.0 - 1.0/P.Temp)<<std::endl;
+	     <<"    weight = "<<pow(Pr,1.0 - 1.0/P.Temp)<<std::endl;
 
     if (iterations%50 == 0) print_move_stats();
 

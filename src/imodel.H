@@ -33,7 +33,7 @@ public:
   virtual IndelModel* clone() const =0;
 
   /// Probability that an alignment has a sequence with length 'i'
-  virtual double lengthp(int i) const=0;
+  virtual efloat_t lengthp(int i) const=0;
 
   /// Alignment distribution for a branch of time t
   virtual indel::PairHMM get_branch_HMM(double t) const=0;
@@ -55,11 +55,11 @@ protected:
 
 public:
   void fiddle();
-  double prior() const;
+  efloat_t prior() const;
 
   SimpleIndelModel* clone() const {return new SimpleIndelModel(*this);}
 
-  double lengthp(int i) const;
+  efloat_t lengthp(int i) const;
 
   indel::PairHMM get_branch_HMM(double t) const;
 
@@ -76,11 +76,11 @@ protected:
   void recalc();
 public:
   void fiddle();
-  double prior() const;
+  efloat_t prior() const;
 
   NewIndelModel* clone() const {return new NewIndelModel(*this);}
 
-  double lengthp(int i) const;
+  efloat_t lengthp(int i) const;
 
   indel::PairHMM get_branch_HMM(double t) const;
 

@@ -56,12 +56,12 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<"\n";
   o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<"\n";
   
-  double Pr_prior = P.basic_prior(A,P);
-  double Pr_likelihood = P.basic_likelihood(A,P);
-  double Pr = Pr_prior + Pr_likelihood;
+  efloat_t Pr_prior = P.basic_prior(A,P);
+  efloat_t Pr_likelihood = P.basic_likelihood(A,P);
+  efloat_t Pr = Pr_prior * Pr_likelihood;
 
   o<<"    prior = "<<Pr_prior<<"    likelihood = "<<Pr_likelihood<<"    logp = "<<Pr
-   <<"    temp = " <<P.Temp  <<"    weight = "    <<Pr*(1.0-1.0/P.Temp)<<"\n";
+   <<"    temp = " <<P.Temp  <<"    weight = "    <<pow(Pr,1.0-1.0/P.Temp)<<"\n";
 
   if (print_alignment) {
     o<<"align["<<tag<<"] = "<<"\n";

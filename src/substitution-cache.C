@@ -255,7 +255,7 @@ Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModel
   :cache(new Multi_Likelihood_Cache(M)),
    B(T.n_branches()*2+1),
    token(cache->claim_token(C,B)),
-   cached_value(log_0),
+   cached_value(0),
    root(T.n_nodes()-1)
 {
   cache->init_token(token);

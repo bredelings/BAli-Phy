@@ -3,16 +3,16 @@
 #include "substitution.H"
 #include "util.H"
 
-double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) {
-  double p = substitution::other_subst(A,P,nodes);
+efloat_t other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) {
+  efloat_t p = substitution::other_subst(A,P,nodes);
 
-  return p/P.Temp;
+  return pow(p,1.0/P.Temp);
 }
 
-double other_prior(const alignment& A, const Parameters& P,const vector<int>& nodes) {
+efloat_t other_prior(const alignment& A, const Parameters& P,const vector<int>& nodes) {
   const Tree& T = P.T;
 
-  double p = 0;
+  efloat_t p = 1;
 
   // Add in the branch alignments
   for(int b=0;b<T.n_branches();b++) {
@@ -22,7 +22,7 @@ double other_prior(const alignment& A, const Parameters& P,const vector<int>& no
     if (includes(nodes,target) and includes(nodes,source))
       continue;
 
-    p += prior_branch(A,P.branch_HMMs[b],target,source);
+    p *= prior_branch(A,P.branch_HMMs[b],target,source);
   }
 
 
@@ -41,10 +41,11 @@ double other_prior(const alignment& A, const Parameters& P,const vector<int>& no
 	continue;
     }
 
-    p -= 2.0*P.IModel().lengthp(A.seqlength(n));
+    p /= P.IModel().lengthp(A.seqlength(n));
+    p /= P.IModel().lengthp(A.seqlength(n));
   }
 
-  return p/P.Temp;
+  return pow(p,1.0/P.Temp);
 }
 
 
@@ -114,44 +115,48 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const
   return dist;
 }
 
-void check_match_P(const alignment& A,const Parameters& P, double OS, double OP, const vector<int>& path, const DPengine& Matrices) {
+void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t OP, const vector<int>& path, const DPengine& Matrices) {
 
   /*------------------- Check offsets from path_Q -> P -----------------*/
   vector<int> path_g = Matrices.generalize(path);
 
-  double qs = log( Matrices.path_Q_subst(path_g) ) + OS;
-  double ls = P.likelihood(A,P);
+  efloat_t qs = Matrices.path_Q_subst(path_g) * OS;
+  efloat_t ls = P.likelihood(A,P);
   
-  double qpGQ = log( Matrices.path_GQ_path(path_g) *  Matrices.generalize_P(path) );
-  double qpQ  = log( Matrices.path_Q_path(path) );
-  std::cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
-  assert(std::abs(qpGQ-qpQ) < 1.0e-9);
-  
-  double qp = log( Matrices.path_GQ_path(path_g) * Matrices.generalize_P(path) ) + OP;
-  double lp = prior_HMM(A,P)/P.Temp;
+  efloat_t qpGQ = Matrices.path_GQ_path(path_g) *  Matrices.generalize_P(path);
+  efloat_t qpQ  = Matrices.path_Q_path(path);
 
-  double qt = qs + qp + prior(P)/P.Temp;
-  double lt = P.probability(A,P);
+  std::cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
+  assert(std::abs(log(qpGQ)-log(qpQ)) < 1.0e-9);
+  
+  efloat_t qp = Matrices.path_GQ_path(path_g) * Matrices.generalize_P(path) *OP;
+  efloat_t lp = pow(prior_HMM(A,P),1.0/P.Temp);
+
+  efloat_t qt = qs * qp * pow(prior(P),1.0/P.Temp);
+  efloat_t lt = P.probability(A,P);
 
   std::cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;
-  std::cerr<<"lp = "<<lp<<"    qp = "<<qp<<" = "<<log(Matrices.path_GQ_path(path_g))<<" + "<<log(Matrices.generalize_P(path))<<" + "<<OP<<endl;
+  std::cerr<<"lp = "<<lp<<"    qp = "<<qp
+	   <<" = "<<Matrices.path_GQ_path(path_g)<<" + "<<Matrices.generalize_P(path)<<" + "<<OP<<endl;
   std::cerr<<"lt = "<<lt<<"    qt = "<<qt<<endl;
   std::cerr<<endl;
 
-  if ( (std::abs(qs - ls) > 1.0e-9) or (std::abs(qp - lp) > 1.0e-9) or (std::abs(qt - lt) > 1.0e-9)) {
+  if ( (std::abs(log(qs) - log(ls)) > 1.0e-9) or 
+       (std::abs(log(qp) - log(lp)) > 1.0e-9) or 
+       (std::abs(log(qt) - log(lt)) > 1.0e-9)) {
     std::cerr<<A<<endl;
-    std::cerr<<"Can't match up DP probabilities to real probabilities!\n";
+    std::cerr<<"Can't match up DP probabilities to real probabilities!\n"<<show_stack_trace();
     std::abort();
   }
 
 }
 
 // FIXME - we could change this to return vector<efloat_t>
-vector<double> sample_P(const alignment& A,const Parameters& P,
-			double OS, double OP, double P_choice,
+vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
+			efloat_t OS, efloat_t OP, efloat_t P_choice,
 			const vector<int>& path, const DPengine& Matrices) 
 {
-  vector<double> PR(3);
+  vector<efloat_t> PR(3);
 
   vector<int> path_g = Matrices.generalize(path);
 
@@ -159,12 +164,32 @@ vector<double> sample_P(const alignment& A,const Parameters& P,
   PR[0] = P.probability(A,P);
 
   // Probability of sampling 
-  PR[1] = P_choice + log( Matrices.path_P(path_g) * Matrices.generalize_P(path) );
+  PR[1] = P_choice * Matrices.path_P(path_g) * Matrices.generalize_P(path);
 
-  std::cerr<<"PrS = "<<P_choice<<" + "<<log(Matrices.path_P(path_g))<<" + "<<log(Matrices.generalize_P(path))<<endl;
+  std::cerr<<"PrS = "<<P_choice<<" + "<<Matrices.path_P(path_g)<<" + "<<Matrices.generalize_P(path)<<endl;
 
-  PR[2] = log( Matrices.path_Q(path_g) * Matrices.generalize_P(path)) + prior(P)/P.Temp + OS + OP;
+  PR[2] = Matrices.path_Q(path_g) * Matrices.generalize_P(path) * OS * OP * pow(prior(P),1.0/P.Temp);
 
   return PR;
 }
 
+
+void check_sampling_probabilities(const vector< vector<efloat_t> >& PR,const vector<alignment>& a) 
+{
+  for(int i=0;i<PR.size();i++) {
+    std::cerr<<"option = "<<i<<endl;
+
+    std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[i][0]<<"    Pr2  - Pr1  = "<<log(PR[i][0] / PR.back()[0])<<endl;
+    std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[i][2]<<"    PrQ2 - PrQ1 = "<<log(PR[i][2] / PR.back()[2])<<endl;
+    std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[i][1]<<"    PrS2 - PrS1 = "<<log(PR[i][1] / PR.back()[1])<<endl;
+    
+    double diff = log(PR[i][1] / PR.back()[1]) - log(PR[i][0] / PR.back()[0]);
+    std::cerr<<"diff = "<<diff<<endl;
+    if (std::abs(diff) > 1.0e-9) {
+      std::cerr<<a.back()<<endl;
+      std::cerr<<a[i]<<endl;
+      
+      throw myexception()<<": sampling probabilities were incorrect\n"<<show_stack_trace();
+    }
+  }
+}

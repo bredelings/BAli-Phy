@@ -7,16 +7,16 @@
 #include "probability.H"
 #include "alignment-util.H"
 
-double prior3(const alignment& A,const Parameters& P) {
-  return prior_HMM(A,P) + prior(P);
+efloat_t prior3(const alignment& A,const Parameters& P) {
+  return prior_HMM(A,P) * prior(P);
 }
 
-double likelihood3(const alignment& A,const Parameters& P) {
+efloat_t likelihood3(const alignment& A,const Parameters& P) {
   return substitution::Pr(A,P); // also deals w/ frequencies
 }
 
-double probability3(const alignment& A,const Parameters& P) {
-  return likelihood3(A,P) + prior3(A,P);
+efloat_t probability3(const alignment& A,const Parameters& P) {
+  return likelihood3(A,P) * prior3(A,P);
 }
 
 
@@ -25,7 +25,7 @@ double probability3(const alignment& A,const Parameters& P) {
 
 
 /// Tree prior: branch lengths & topology
-double prior(const SequenceTree& T,double branch_mean) {
+efloat_t prior(const SequenceTree& T,double branch_mean) {
   double p = 0;
 
   /* ----- 1/(number of topologies) -----*/
@@ -35,46 +35,48 @@ double prior(const SequenceTree& T,double branch_mean) {
   /* ---- PROD_i exp(- T[i] / mu )/ mu ---- */
   for(int i=0;i<T.n_branches();i++) 
     p += (-log(branch_mean) - T.branch(i).length()/branch_mean );
-  return p;
+
+  return expe(p);
 }
 
 /// Hyper-prior + Tree prior + SModel prior + IModel prior
-double prior(const Parameters& P) {
-  double p = 0;
+efloat_t prior(const Parameters& P) {
+  efloat_t p = 1;
 
   const double branch_mean_mean = 0.04;
 
   // prior on the mu, the mean branch length
-  p += exp_exponential_pdf(log(P.branch_mean),branch_mean_mean);
+  p *= expe(exp_exponential_pdf(log(P.branch_mean),branch_mean_mean));
 
   // prior on the topology and branch lengths
-  p += prior(P.T, P.branch_mean);
+  p *= prior(P.T, P.branch_mean);
 
   // prior on the substitution model
-  p += P.SModel().prior();
+  p *= P.SModel().prior();
 
   // prior on the insertion/deletion model
-  p += P.IModel().prior(); // prior(branch_mean)?
+  efloat_t temp = P.IModel().prior(); // prior(branch_mean)?
+  p *= temp;
 
   return p;
 }
 
 /// Probability of a pairwise alignment
-double prior_branch(const alignment& A,const indel::PairHMM& Q,int target,int source) {
+efloat_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,int source) {
   vector<int> state = get_path(A,target,source);
 
   efloat_t P = Q.start(state[0]);
   for(int i=1;i<state.size();i++) 
     P *= Q(state[i-1],state[i]);
   
-  return log(P);
+  return P;
 }
 
 /// Probability of a multiple alignment if branch alignments independant
-double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
+efloat_t prior_HMM_nogiven(const alignment& A,const Parameters& P) {
   const Tree& T = P.T;
 
-  double Pr = 0;
+  efloat_t Pr = 1;
 
 #ifndef NDEBUG
   check_internal_nodes_connected(A,P.T);
@@ -83,8 +85,8 @@ double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
   for(int b=0;b<T.n_branches();b++) {
     int target = T.branch(b).target();
     int source  = T.branch(b).source();
-    double p = prior_branch(A, P.branch_HMMs[b], target,source);
-    Pr += p;
+    efloat_t p = prior_branch(A, P.branch_HMMs[b], target,source);
+    Pr *= p;
   }
   
   return Pr;
@@ -92,68 +94,72 @@ double prior_HMM_nogiven(const alignment& A,const Parameters& P) {
 
 //NOTE  - this will have to change if we ever have sequences at internal nodes
 //        that have other than 3 neighbors
-double prior_HMM(const alignment& A,const Parameters& P) {
+efloat_t prior_HMM(const alignment& A,const Parameters& P) {
   const Tree& T = P.T;
 
 #ifndef NDEBUG
   check_internal_nodes_connected(A,P.T);
 #endif
 
-  double Pr = 0;
+  efloat_t Pr = 1;
   for(int b=0;b<T.n_branches();b++) {
     int target = T.branch(b).target();
     int source  = T.branch(b).source();
-    Pr += prior_branch(A, P.branch_HMMs[b], target, source);
+    Pr *= prior_branch(A, P.branch_HMMs[b], target, source);
   }
   
-  for(int i=T.n_leaves();i<T.n_nodes();i++)
-    Pr -= 2.0*P.IModel().lengthp( A.seqlength(i) );
+  for(int i=T.n_leaves();i<T.n_nodes();i++) {
+    Pr /= P.IModel().lengthp( A.seqlength(i) );
+    Pr /= P.IModel().lengthp( A.seqlength(i) );
+  }
+
   return Pr;
 }
 
-double prior_HMM_notree(const alignment& A,const Parameters& P) {
+efloat_t prior_HMM_notree(const alignment& A,const Parameters& P) {
   const Tree& T = P.T;
 
   int node = P.T.n_leafbranches();
-  double Pr = P.IModel().lengthp(A.seqlength(node));
+  efloat_t Pr = P.IModel().lengthp(A.seqlength(node));
 
   for(int b=0;b<T.n_leafbranches();b++)
-    Pr += prior_branch(A, P.branch_HMMs[b], node, b);
+    Pr *= prior_branch(A, P.branch_HMMs[b], node, b);
 
   if (T.n_leafbranches() > 1)
-    Pr -= P.IModel().lengthp( A.seqlength(node) )*T.n_leaves();
+    Pr /= pow(P.IModel().lengthp( A.seqlength(node) ),T.n_leaves());
+
   return Pr;
 }
 
-double Pr_tgaps_tletters(const alignment& A,const Parameters& P) {
-  double Pr=0;
-  Pr += prior_HMM(A,P);
-  Pr += substitution::Pr(A,P); // also deals w/ frequencies
-  Pr += prior(P);
+efloat_t Pr_tgaps_tletters(const alignment& A,const Parameters& P) {
+  efloat_t Pr=1;
+  Pr *= prior_HMM(A,P);
+  Pr *= substitution::Pr(A,P); // also deals w/ frequencies
+  Pr *= prior(P);
   return Pr;
 }
 
-double Pr_tgaps_sletters(const alignment& A,const Parameters& P) {
-  double Pr=0;
-  Pr += prior_HMM(A,P);
-  Pr += substitution::Pr_star_estimate(A,P); // also deals w/ frequencies
-  Pr += prior(P);
+efloat_t Pr_tgaps_sletters(const alignment& A,const Parameters& P) {
+  efloat_t Pr=1;
+  Pr *= prior_HMM(A,P);
+  Pr *= substitution::Pr_star_estimate(A,P); // also deals w/ frequencies
+  Pr *= prior(P);
   return Pr;
 }
 
-double Pr_sgaps_tletters(const alignment& A,const Parameters& P) {
-  double Pr=0;
-  Pr += prior_HMM(A,P);
-  Pr += substitution::Pr(A,P); // also deals w/ frequencies
-  Pr += prior(P);
+efloat_t Pr_sgaps_tletters(const alignment& A,const Parameters& P) {
+  efloat_t Pr=1;
+  Pr *= prior_HMM(A,P);
+  Pr *= substitution::Pr(A,P); // also deals w/ frequencies
+  Pr *= prior(P);
   return Pr;
 }
 
-double Pr_sgaps_sletters(const alignment& A,const Parameters& P) {
-  double Pr=0;
-  Pr += prior_HMM(A,P);
-  Pr += substitution::Pr_star_estimate(A,P); // also deals w/ frequencies
-  Pr += prior(P);
+efloat_t Pr_sgaps_sletters(const alignment& A,const Parameters& P) {
+  efloat_t Pr=1;
+  Pr *= prior_HMM(A,P);
+  Pr *= substitution::Pr_star_estimate(A,P); // also deals w/ frequencies
+  Pr *= prior(P);
   return Pr;
 }
 

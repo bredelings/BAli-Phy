@@ -101,47 +101,49 @@ void sample_alignment(alignment& A,Parameters& P,int b) {
 
   A = construct(old,path,group1,seq1,seq2);
 
-  //  std::cerr<<"bandwidth = "<<bandwidth(Matrices,path)<<std::endl;
-
-  //  std::cerr<<"bandwidth2 = "<<bandwidth2(Matrices,path)<<std::endl;
   //--------------------------------------------------------------//
 #ifndef NDEBUG_DP
-  //  vector<int> path_old = get_path(old,node1,node2);
-  vector<int> path_new = get_path(A,node1,node2);
-
-  path.push_back(3);
-  assert(path_new == path);
   vector<int> nodes;
   nodes.push_back(node1);
   nodes.push_back(node2);
-  check_match_P(old,P,other_subst(old,P,nodes),other_prior(old,P,nodes),path_old,Matrices);
-  double ls1 = P.likelihood(old,P);
 
-  P.LC.set_length(A.length());
-  P.LC.invalidate_branch_alignment(T,b);
+  vector<alignment> a;    a.push_back(A);   a.push_back(old);
+  vector<Parameters> p(2,P);  p[0].LC.set_length(A.length()); p[0].LC.invalidate_branch_alignment(T,b);
+  vector< efloat_t > OS(2, 0.0);
+  vector< efloat_t > OP(2, 0.0);
+  vector< vector<int> > paths;
 
-  check_match_P(A  ,P,other_subst(A  ,P,nodes),other_prior(A,  P,nodes),path_new,Matrices);
-  double ls2 = P.likelihood(A  ,P);
+  //------------------- Check offsets from path_Q -> P -----------------//
+  for(int i=0;i<p.size();i++) {
+    paths.push_back( get_path(a[i],node1,node2) );
+    
+    OS[i] = other_subst(a[i],p[i],nodes);
+    OP[i] = other_prior(a[i],p[i],nodes);
 
-  double lp1 = P.prior(old,P);
-  double lp2 = P.prior(A  ,P);
-
-  double diff = Matrices.check(path_old,path_new,lp1,ls1,lp2,ls2);
-  if (abs(diff) > 1.0e-9) {
-    std::cerr<<old<<endl;
-    std::cerr<<A<<endl;
-
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
+    check_match_P(a[i], p[i], OS[i], OP[i], paths[i], Matrices);
   }
 
-  std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<log(Matrices.Pr_sum_all_paths())<<endl;
+  //--------- Compute path probabilities and sampling probabilities ---------//
+  vector< vector<efloat_t> > PR(p.size());
 
-#else
-  P.LC.set_length(A.length());
-  P.LC.invalidate_branch_alignment(T,b);
+  efloat_t P_choice = 1;
+  for(int i=0;i<p.size();i++) 
+    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], Matrices);
+
+  //--------- Check that each choice is sampled w/ the correct Probability ---------//
+  check_sampling_probabilities(PR,a);
+
+  //--------- Check construction of A  ---------//
+  vector<int> path_new = get_path(A,node1,node2);
+  path.push_back(3);
+  assert(path_new == path);
+
 #endif
 
-  /*--------------------------------------------------------------*/
+  P.LC.set_length(A.length());
+  P.LC.invalidate_branch_alignment(T,b);
+
+  //--------------------------------------------------------------//
   assert(valid(A));
   valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
   report_constraints(s1,s2);

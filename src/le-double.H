@@ -5,6 +5,8 @@
 
 #include "logsum.H"
 
+template<class T> T expe(double);
+
 class le_double_t {
   static const unsigned int BITS=53+1;
   static bool initialized;
@@ -16,6 +18,7 @@ class le_double_t {
   /// the exponent
   int e;
 
+  friend le_double_t expe<le_double_t>(double x);
 
 public:
   static inline int cmp(const le_double_t& x,const le_double_t& y) {
@@ -253,6 +256,18 @@ inline le_double_t pow(const le_double_t& x,double p)
     y.e += (int)round;
 
   assert(y.balanced());
+
+  return y;
+}
+
+template<>
+inline le_double_t expe<le_double_t>(double x) {
+  le_double_t y;
+
+  x /= M_LN2;
+  
+  y.e = (int)ceil(x);
+  y.m = pow(2,x-y.e);
 
   return y;
 }

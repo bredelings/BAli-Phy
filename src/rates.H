@@ -47,7 +47,7 @@ namespace substitution {
     double pdf(double,double) const;
     double quantile(double,double tol=1.0e-6) const;
 
-    double prior() const;
+    efloat_t prior() const;
 
     void fiddle(); 
 
@@ -70,7 +70,7 @@ namespace substitution {
     double pdf(double,double) const;
     double quantile(double,double tol=1.0e-6) const;
 
-    double prior() const;
+    efloat_t prior() const;
 
     void fiddle(); 
 
@@ -97,7 +97,7 @@ namespace substitution {
     }
     double pdf(double x,double) const {if (x < 0 or x > 2) return 0; else return 0.5;};
 
-    double prior() const { return log(0.5);}
+    efloat_t prior() const { return log(0.5);}
 
     void fiddle() {}
 
@@ -118,7 +118,7 @@ namespace substitution {
     void super_fiddle(); 
   public:
 
-    double super_prior() const;
+    efloat_t super_prior() const;
 
     MultipleDistribution* clone() const {return new MultipleDistribution(*this);}
 

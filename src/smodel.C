@@ -41,10 +41,10 @@ namespace substitution {
     }
   }
 
-  double Gamma_Branch_Model::super_prior() const {
+  efloat_t Gamma_Branch_Model::super_prior() const {
     const double mu = 0.1;
     double beta = parameters_.back();
-    return -log(mu) - beta/mu;
+    return expe(-beta/mu)/mu;
   }
 
   string Gamma_Branch_Model::name() const {
@@ -85,9 +85,9 @@ namespace substitution {
     parameters(v);
   }
 
-  double Gamma_Stretched_Branch_Model::super_prior() const {
+  efloat_t Gamma_Stretched_Branch_Model::super_prior() const {
     const double mean_stddev = 0.01;
-    return log(mean_stddev) - parameters_.back()/mean_stddev; 
+    return expe(-parameters_.back()/mean_stddev) / mean_stddev; 
   }
 
   string Gamma_Stretched_Branch_Model::name() const {
@@ -176,9 +176,9 @@ namespace substitution {
     return exp(eigensystem,getD(),t,f);
   }
 
-  double ReversibleMarkovModel::prior() const {
+  efloat_t ReversibleMarkovModel::prior() const {
     valarray<double> q(1.0/frequencies().size(),frequencies().size());
-    return dirichlet_log_pdf(frequencies(),q,10);
+    return expe( dirichlet_log_pdf(frequencies(),q,10) );
   }
 
   //---------------------- INV_Model --------------------------//
@@ -250,10 +250,10 @@ namespace substitution {
   }
 
   /// return the LOG of the prior
-  double HKY::prior() const {
+  efloat_t HKY::prior() const {
     double k = log(kappa());
-    double P = log(shift_laplace_pdf(k, log(2), 0.25));
-    P += ReversibleMarkovModel::prior();
+    efloat_t P = shift_laplace_pdf(k, log(2), 0.25);
+    P *= ReversibleMarkovModel::prior();
     return P;
   }
 
@@ -293,16 +293,16 @@ namespace substitution {
   // This should be OK - the increments are linear combinations of gaussians...
 
   /// return the LOG of the prior
-  double TNY::prior() const {
+  efloat_t TNY::prior() const {
     double k1 = log(kappa1());
     double k2 = log(kappa2());
     
     double alpha = (k1+k2)/2;
     double beta  = (k1-k2)/2;
 
-    double P = ReversibleMarkovModel::prior();
-    P += log(shift_laplace_pdf(alpha, log(2), 0.25));
-    P += log(shift_laplace_pdf(beta, 0, 0.10));
+    efloat_t P = ReversibleMarkovModel::prior();
+    P *= shift_laplace_pdf(alpha, log(2), 0.25);
+    P *= shift_laplace_pdf(beta, 0, 0.10);
     return P;
   }
 
@@ -459,13 +459,13 @@ namespace substitution {
     ReversibleMarkovModel::recalc();
   }
 
-  double YangCodonModel::super_prior() const {
-    double P = ReversibleMarkovModel::prior();
-    P += log(shift_laplace_pdf(log(omega()), 0, 0.1));
+  efloat_t YangCodonModel::super_prior() const {
+    efloat_t P = ReversibleMarkovModel::prior();
+    P *= shift_laplace_pdf(log(omega()), 0, 0.1);
     return P;
   }
 
-  double YangCodonModel::prior() const {
+  efloat_t YangCodonModel::prior() const {
     return NestedModelOver<ReversibleMarkovNucleotideModel>::prior();
   }
 
@@ -621,7 +621,7 @@ namespace substitution {
     recalc();
   }
 
-  double MultiFrequencyModel::super_prior() const 
+  efloat_t MultiFrequencyModel::super_prior() const 
   {
     valarray<double> flat(10.0,fraction.size());
 
@@ -629,7 +629,7 @@ namespace substitution {
     for(int l=0;l<Alphabet().size();l++) 
       Pr += dirichlet_log_pdf(get_a(l),flat);
 
-    return Pr;
+    return expe(Pr);
   }
 
   const MultiModel::Base_Model_t& MultiFrequencyModel::base_model(int m) const {
@@ -810,7 +810,7 @@ namespace substitution {
 
   /*--------------- Distribution-based Model----------------*/
 
-  double DistributionParameterModel::super_prior() const {
+  efloat_t DistributionParameterModel::super_prior() const {
     return D->prior();
   }
 
@@ -914,10 +914,10 @@ namespace substitution {
   }
 
 
-  double WithINV::super_prior() const {
+  efloat_t WithINV::super_prior() const {
     double p = super_parameters_[0];
 
-    return beta_log_pdf(p, 0.02, 20);
+    return expe(beta_log_pdf(p, 0.02, 20));
   }
 
   void WithINV::super_fiddle() {
@@ -984,7 +984,7 @@ namespace substitution {
     p_values[2] = super_parameters()[3];
   }
 
-  double YangM2::super_prior() const {
+  efloat_t YangM2::super_prior() const {
     //What prior on the fractions?
     //What prior on the positive rates -> tend towards w=1?
     valarray<double> p(3);
@@ -999,7 +999,7 @@ namespace substitution {
 
     double omega = super_parameters()[3];
     P += exponential_log_pdf(log(omega),0.1);
-    return P;
+    return expe(P);
   }
 
   string YangM2::name() const {
@@ -1063,14 +1063,14 @@ namespace substitution {
       pi += super_parameters_[sm]*SubModels(sm).frequencies();
   }
 
-  double MixtureModel::super_prior() const 
+  efloat_t MixtureModel::super_prior() const 
   {
     valarray<double> p = get_varray(super_parameters_,0,n_submodels());
     valarray<double> n = get_varray(super_parameters_,n_submodels(),n_submodels());
 
     n *= 10;
 
-    return dirichlet_log_pdf(p,n);
+    return expe(dirichlet_log_pdf(p,n));
   }
 
   void MixtureModel::super_fiddle() 

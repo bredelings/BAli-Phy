@@ -41,4 +41,12 @@ typedef log_double_t efloat_t;
 
 typedef ublas::matrix<efloat_t> eMatrix;
 
+inline efloat_t expe(double x) {
+  return expe<efloat_t>(x);
+}
+
+inline std::ostream& operator<<(std::ostream& o,const efloat_t& e) {
+  return o<<log(e);
+}
+
 #endif

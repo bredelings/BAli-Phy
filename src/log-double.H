@@ -153,5 +153,12 @@ inline log_double_t pow(log_double_t x,double p) {
   return x;
 }
 
+template<class T> T expe(double);
+
+template<> inline log_double_t expe<log_double_t>(double x) {
+  log_double_t y;
+  y.log() = x;
+  return y;
+}
 
 #endif

@@ -242,7 +242,7 @@ namespace substitution {
     /// Set the equilibrium frequencies
     void frequencies(const std::valarray<double>& pi_) {pi=pi_; recalc();}
   
-    double prior() const;
+    efloat_t prior() const;
 
     /// Construct a reversible Markov model on alphabet 'a_'
     ReversibleMarkovModel(const alphabet& a):
@@ -320,7 +320,7 @@ namespace substitution {
 			   public ReversibleWrapperOver<ReversibleMarkovModel> 
   {
     void super_fiddle();
-    double super_prior() const;
+    efloat_t super_prior() const;
 
   public:
     virtual Gamma_Branch_Model* clone() const {return new Gamma_Branch_Model(*this);}
@@ -346,7 +346,7 @@ namespace substitution {
 				     public ReversibleWrapperOver<ReversibleMarkovModel> 
   {
     void super_fiddle();
-    double super_prior() const;
+    efloat_t super_prior() const;
     string super_parameter_name(int i) const;
   public:
     virtual Gamma_Stretched_Branch_Model* clone() const {return new Gamma_Stretched_Branch_Model(*this);}
@@ -453,7 +453,7 @@ namespace substitution {
     /// Set the parameter 'kappa' (transition/transversion ratio)
     void kappa(double k) {parameters_[1]=k;recalc();}
 
-    virtual double prior() const;
+    virtual efloat_t prior() const;
 
     string name() const;
     string parameter_name(int i) const;
@@ -484,7 +484,7 @@ namespace substitution {
     /// Set the parameter 'kappa' (transition/transversion ratio)
     void kappa2(double k) {parameters_[2]=k;recalc();}
 
-    virtual double prior() const;
+    virtual efloat_t prior() const;
 
     string name() const;
     string parameter_name(int i) const;
@@ -518,9 +518,9 @@ namespace substitution {
     void super_fiddle();
     void recalc();
   public:
-    double super_prior() const;
+    efloat_t super_prior() const;
 
-    double prior() const;
+    efloat_t prior() const;
 
     YangCodonModel* clone() const {return new YangCodonModel(*this);}
 
@@ -593,7 +593,7 @@ namespace substitution {
   public:
     UnitModel* clone() const {return new UnitModel(*this);}
 
-    double super_prior() const {return 0;}
+    efloat_t super_prior() const {return 1;}
 
     /// The number of models
     int n_base_models() const {return 1;}
@@ -635,7 +635,7 @@ namespace substitution {
     inline double  a(int m,int l) const {return super_parameters_[m+l*fraction.size()];}
 
   public:
-    double super_prior() const;
+    efloat_t super_prior() const;
 
     MultiFrequencyModel* clone() const {return new MultiFrequencyModel(*this);}
 
@@ -715,7 +715,7 @@ namespace substitution {
 
   public:
 
-    double super_prior() const;
+    efloat_t super_prior() const;
 
     DistributionParameterModel* clone() const {return new DistributionParameterModel(*this);}
 
@@ -768,7 +768,7 @@ namespace substitution {
 
     void recalc();
 
-    double super_prior() const;
+    efloat_t super_prior() const;
 
     /// The number of models
     int n_base_models() const {return 1 +  SubModel().n_base_models();}
@@ -796,7 +796,7 @@ namespace substitution {
     void recalc();
   public:
     
-    double super_prior() const;
+    efloat_t super_prior() const;
 
     YangM2* clone() const {return new YangM2(*this);}
 
@@ -815,7 +815,7 @@ namespace substitution {
     void recalc();
   public:
     
-    double super_prior() const;
+    efloat_t super_prior() const;
 
     YangM3* clone() const {return new YangM3(*this);}
 
@@ -828,7 +828,7 @@ namespace substitution {
 
   class MixtureModel: public SuperDerivedModelOver<MultiModel,MultiModel> 
   {
-    double super_prior() const;
+    efloat_t super_prior() const;
     void super_fiddle();
     void recalc();
 

@@ -109,11 +109,6 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 				    internal_branches)
 		    ,false
 		    );
-  NNI_move.add(1,MoveArgSingle("two_way_NNI_MH:alignment:nodes:topology",
-				    two_way_topology_sample_MH,
-				    internal_branches)
-		    ,false
-		    );
 
   //FIXME - doesn't yet deal with gaps=star
   if (P.IModel().full_tree)
