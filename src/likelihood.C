@@ -105,7 +105,7 @@ double prior_HMM(const alignment& A,const Parameters& P) {
     Pr += prior_branch(A, P.branch_HMMs[b], target, source);
   }
   
-  for(int i=T.n_leaves();i<T.n_nodes()-1;i++)
+  for(int i=T.n_leaves();i<T.n_nodes();i++)
     Pr -= 2.0*P.IModel().lengthp( A.seqlength(i) );
   return Pr;
 }
