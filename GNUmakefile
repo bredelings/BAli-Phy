@@ -31,14 +31,14 @@ all: sampler
 #-mfpmath=sse,387 ?
 # sched2-use-traces move-all-moveables reduce-all-givs unroll-loops rename-registers peel-loops
 #----------------- Definitions
-LANGO = fast-math  #tracer  prefetch-loop-arrays omit-frame-pointer unswitch-loops
+LANGO = fast-math  tracer  prefetch-loop-arrays omit-frame-pointer unswitch-loops
 DEBUG = #pg #g3
 # EXACTFLAGS = --param max-inline-insns-single=1000 --param max-inline-insns-auto=150
 EXACTFLAGS = -pipe --param inline-unit-growth=300  --param large-function-growth=300
 DEFS =  NDEBUG_UBLAS NDEBUG_DP NDEBUG # USE_UBLAS
 WARN = all no-sign-compare overloaded-virtual
-OPT =  march=pentium4 #O3 # malign-double msse mmmx msse2 
-LDFLAGS = #-pg # -static 
+OPT =  march=pentium4 O3 # malign-double msse mmmx msse2 
+LDFLAGS = -static #-pg #
 LI=${CXX}
 
 #------------------- Main 
@@ -53,10 +53,12 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  sample-node.C imodel.C 5way.C topology-sample2.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C
 
+.LIBPATTERNS = lib%.a
+
 LIBS = gsl gslcblas m 
 GSLLIBS = ${LIBS:%=-l%}
 SLIBS =  #lapack cblas atlas # gsl gslcblas m 
-LINKLIBS = ${LIBS:%=-l%} ${SLIBS:%=lib%.a} /usr/local/lib/liblapack.a /usr/local/lib/libcblas.a /usr/local/lib/libatlas.a
+LINKLIBS = ${LIBS:%=-l%}
 PROGNAMES = ${NAME} 
 ALLSOURCES = ${SOURCES} 
 
