@@ -2,6 +2,7 @@
 #define BOOTSTRAP_H 
 
 #include <valarray>
+#include <cmath>
 #include "rng.H"
 
 template <typename T>
@@ -23,7 +24,6 @@ std::valarray<T> bootstrap_sample(const valarray<T>& sample,int blocksize=1) {
 
 //template <typename T,typename U>
 //typedef U (*statistic_t)(const valarray<T>&);
-
 
 template <typename T,typename U>
 std::valarray<U> bootstrap_apply(const valarray<T>& sample,

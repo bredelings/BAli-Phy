@@ -70,7 +70,7 @@ bin/truckgraph2: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LI
 
 bin/truckgraph3d: alignment.o arguments.o alphabet.o sequence.o util.o rng.o ${LIBS:%=-l%}
 
-bin/treecount: tree.o sequencetree.o arguments.o util.o rng.o ${LIBS:%=-l%}
+bin/treecount: tree.o sequencetree.o arguments.o util.o rng.o bin/statistics.o ${LIBS:%=-l%}
 
 bin/treedist: tree.o sequencetree.o arguments.o
 

@@ -8,25 +8,7 @@
 #include "arguments.H"
 #include "bootstrap.H"
 
-double Pr_statistic(const valarray<bool>& v) {
-  int sum=0;
-  for(int i=0;i<v.size();i++)
-    if (v[i]) sum++;
-  return double(sum)/v.size();
-}
-
-double moment(const valarray<double>& v,int m) {
-  double total = 0;
-  for(int i=0;i<v.size();i++)
-    total += pow(v[i],m);
-  return total/v.size();
-}
-
-double Var_statistic(const valarray<double>& v) {
-  double m1 = moment(v,1);
-  double m2 = moment(v,2);
-  return m2 - m1*m1;
-}
+FIXME - needs to include statistics.H, and change Pr_statistic ->statistics::Pr
 
 vector<int> confidence_interval(const valarray<double>& sample,double P,int n=10000,int blocksize=100) {
   valarray<double> values = bootstrap_apply<bool,double>(sample,Pr_statistic,n,i);
@@ -34,8 +16,6 @@ vector<int> confidence_interval(const valarray<double>& sample,double P,int n=10
   vector<double> values2(values.size());
   for(int i=0;i<values.size();i++)
     values2[i] = values[i];
-
-  
 }
 
 using namespace std;
