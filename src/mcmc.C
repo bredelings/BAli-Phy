@@ -502,8 +502,6 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   //    cout<<endl;
   //  }
   cout<<endl;
-  cout<<"frequencies = "<<endl;
-  show_frequencies(cout,P.get_alphabet(),P.SModel().frequencies());
   cout<<endl<<endl;
 
   if (const Codons* C = dynamic_cast<const Codons*>(&P.get_alphabet()) ) {

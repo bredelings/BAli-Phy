@@ -173,9 +173,9 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
-  parameter_moves.add(1+P.T.branches()/3,SingleMove(change_parameters,"s_parameters:parameters"));
-  parameter_moves.add(1+P.T.branches()*2,SingleMove(change_gap_parameters,"g_parameters:parameters"));
-  parameter_moves.add(1+P.T.branches()/3,SingleMove(sample_frequencies,"frequencies:parameters"),false);
+  parameter_moves.add(4+P.T.branches()/8,SingleMove(change_parameters,"s_parameters:parameters"));
+  parameter_moves.add(8+P.T.branches()/4,SingleMove(change_gap_parameters,"g_parameters:parameters"));
+  parameter_moves.add(4+P.T.branches()/8,SingleMove(sample_frequencies,"frequencies:parameters"));
   
 
   int subsample = args.loadvalue("subsample",1);
@@ -261,7 +261,9 @@ int main(int argc,char* argv[]) {
     SequenceTree T;
     load_A_and_T(args,A,T);
 
-    cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
+    cout<<"data = "<<args["align"]<<endl<<endl;
+
+    cout<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
 
     //--------- Set up the substitution model --------//
     OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
@@ -275,9 +277,15 @@ int main(int argc,char* argv[]) {
     
     //-------------Create the Parameters object--------------//
     Parameters P(*full_smodel,*imodel,T);
-    cout<<"Using substitution model: "<<P.SModel().name()<<endl;
-    cout<<"Full tree for substitution: "<<P.SModel().full_tree<<endl<<endl;
-    cout<<"Full tree for gaps: "<<P.IModel().full_tree<<endl<<endl;
+    cout<<"subst model = "<<P.SModel().name();
+    if (not P.SModel().full_tree)
+      cout<<",*-tree";
+    cout<<endl<<endl;
+
+    cout<<"indel model = "<<P.IModel().name();
+    if (not P.IModel().full_tree)
+      cout<<",*-tree";
+    cout<<endl<<endl;
 
     P.Temp = args.loadvalue("T",1.0);
 

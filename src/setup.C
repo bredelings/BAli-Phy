@@ -254,25 +254,17 @@ OwnedPointer<IndelModel> get_imodel(Arguments& args) {
   
   double lambda_E = args.loadvalue("lambda_E",lambda_O/10.0);
   
-  cout<<"lambda_O = "<<lambda_O<<"  lambda_E = "<<lambda_E<<endl<<endl;
-
   //-------------Choose an indel model--------------//
   OwnedPointer<IndelModel> imodel;
 
   if (not args.set("imodel")) args["imodel"] = "upweighted";
   
-  if (args["imodel"] == "ordered") {
-    cout<<"imodel = ordered\n";
+  if (args["imodel"] == "ordered")
     imodel = IndelModel1(lambda_O,lambda_E);
-  }
-  else if (args["imodel"] == "single_indels") {
-    cout<<"imodel = single indels\n";
+  else if (args["imodel"] == "single_indels")
     imodel = SingleIndelModel(lambda_O);
-  }
-  else if (args["imodel"] == "upweighted") {
-    cout<<"imodel = adjacent gaps upweighted by 2\n";
+  else if (args["imodel"] == "upweighted")
     imodel = UpweightedIndelModel(lambda_O,lambda_E);
-  }
   else
     throw myexception()<<"Unrecognized indel model '"<<args["imodel"]<<"'";
   

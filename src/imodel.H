@@ -7,6 +7,8 @@
 
 //separate pairwise and complete indel models? (e.g. where does full_tree go?)
 
+//FIXME - add a 'name' method, and names for parameters.
+
 
 /// A generic insertion/deletion model
 class IndelModel {
@@ -57,6 +59,9 @@ public:
   /// Probability that an alignment has a sequence with length 'i' in paths without G1
   double length_plus_p(int i,int G=1) const;
 
+  /// The model's name
+  virtual std::string name() const =0;
+
   IndelModel();
 
   virtual ~IndelModel();
@@ -84,6 +89,10 @@ public:
 
   explicit IndelModel1(double LO,double LE);
 
+  /// The model's name
+  std::string name() const;
+
+
   ~IndelModel1() {};
 };
 
@@ -103,8 +112,11 @@ public:
   ///probability of starting a gap: M -> G1,G2
   double delta;   
 
-  ///probability of extending a gap: G1->G1,  G2->G2
+  ///probability of ending the sequence
   double epsilon; 
+
+  /// The model's name
+  std::string name() const;
 
   explicit UpweightedIndelModel(double LO,double LE);
 };
@@ -128,6 +140,9 @@ public:
 
   ///probability of starting a gap: M -> G1,G2
   double delta;
+
+  /// The model's name
+  std::string name() const;
 
   explicit SingleIndelModel(double LO);
 };

@@ -273,7 +273,7 @@ namespace substitution {
   }
 
   string Empirical::name() const {
-    return "Empirical/(" + modelname +")[" + Alphabet().name + "]";
+    return "Empirical(" + modelname +")[" + Alphabet().name + "]";
   }
 
   void Empirical::recalc() {

@@ -109,6 +109,9 @@ IndelModel::IndelModel()
 { }
 
 
+IndelModel::~IndelModel() {}
+
+
 void IndelModel1::fiddle(const std::valarray<bool>& fixed) { 
 
   double& lambda_O = parameters_[0];
@@ -185,9 +188,6 @@ void IndelModel1::recalc() {
   IndelModel::recalc();
 }
 
-IndelModel::~IndelModel() {}
-
-
 double IndelModel1::prior(double D) const {
   double P=0;
 
@@ -207,6 +207,8 @@ double IndelModel1::prior(double D) const {
 
   return P;
 }
+
+string IndelModel1::name() const {return "Ordered [HMM]";}
 
 IndelModel1::IndelModel1(double lambda_O,double lambda_E)
   :IndelModel(2)
@@ -320,6 +322,8 @@ double UpweightedIndelModel::prior(double D) const {
   return P;
 }
 
+string UpweightedIndelModel::name() const {return "multiple indels [HMM]";}
+
 UpweightedIndelModel::UpweightedIndelModel(double lambda_O,double lambda_E)
   :IndelModel(2)
 {
@@ -399,6 +403,8 @@ void SingleIndelModel::recalc() {
 
   IndelModel::recalc();
 }
+
+string SingleIndelModel::name() const {return "unit indels [HMM]";}
 
 SingleIndelModel::SingleIndelModel(double LO)
   :IndelModel(1)
