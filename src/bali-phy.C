@@ -313,17 +313,26 @@ int main(int argc,char* argv[]) {
     //-------------- Specify fixed parameters ----------------//
     vector<string> fixed;
     if (args.set("fixed"))
-      fixed = split(args["fixed"],':');
+      fixed = split(args["fixed"],',');
 
     for(int i=0;i<fixed.size();i++) {
-      if (fixed[i].size() > 2 and fixed[i].substr(0,2) == "pS") {
-	int pS = convertTo<int>(fixed[i].substr(2,fixed[i].size()-2));
-	P.s_fixed[pS] = true;
+      bool used=false;
+      for(int j=0;j<P.SModel().parameters().size();j++) {
+	if (fixed[i] == P.SModel().parameter_name(j)) {
+	  P.SModel().fixed[j] = true;
+	  used=true;
+	}
       }
-      else if (fixed[i].size() > 2 and fixed[i].substr(0,2) == "pI") {
-	int pI = convertTo<int>(fixed[i].substr(2,fixed[i].size()-2));
-	P.i_fixed[pI] = true;
+
+      for(int j=0;j<P.IModel().parameters().size();j++) {
+	if (fixed[i] == P.IModel().parameter_name(j)) {
+	  P.IModel().fixed[j] = true;
+	  used=true;
+	}
       }
+
+      if (not used)
+	throw myexception()<<"Can't find parameter '"<<fixed[i]<<"' to fix!";
     }
 
     //---------------Do something------------------//
