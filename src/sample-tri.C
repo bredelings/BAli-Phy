@@ -26,8 +26,8 @@ using namespace A3;
 // FIXME - actually resample the path multiple times - pick one on
 // opposite side of the middle 
 DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
-  letters_OK(A,"sample_tri_base:in");
   const Tree& T = P.T;
+  check_alignment(A,T,"sample_tri_base:in");
 
   assert(P.IModel().full_tree);
 
@@ -177,7 +177,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   //  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
 
-  letters_OK(A,"sample_tri_base:out");
+  check_alignment(A,T,"sample_tri_base:out");
   return Matrices;
 }
 

@@ -17,6 +17,7 @@ install: program tools
 EXACTFLAGS = -pipe -pthread
 
 LANGO := fast-math 
+
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
 LDFLAGS := 
 
