@@ -1,11 +1,3 @@
-// This is version 2 of the routine to sample the sequence at an internal node.
-// Unlike v1, v2 uses a DP routine to sample from the distribution of 3 linked HMMs.
-// However, a slight fixup is still required.  This is done as an MH rejection in this
-// routine.
-
-// FIXME - separate sampling from proposal distribution into sample_node_base!
-// MH fixup will be done in the caller
-
 #include <valarray>
 #include <iostream>
 #include <cmath>
@@ -18,9 +10,7 @@
 #include "3way.H"
 #include "alignment-sums.H"
 #include "alignment-util.H"
-
-// for prior_HMM_nogiven
-#include "likelihood.H"
+#include "likelihood.H"    // for prior()
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with
@@ -40,7 +30,7 @@ using std::valarray;
 using namespace A3;
 
 DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
-  const tree& T = P.T;
+  const Tree& T = P.T;
 
   assert(P.IModel().full_tree);
 
@@ -110,7 +100,7 @@ DParrayConstrained sample_node_base(alignment& A,const Parameters& P,const vecto
 
   vector<int> branches;
   for(int i=1;i<nodes.size();i++)
-    branches.push_back(T.find_branch(nodes[0],nodes[i]) );
+    branches.push_back(T.branch(nodes[0],nodes[i]) );
 
   const eMatrix Q = createQ(P.branch_HMMs,branches);
   vector<efloat_t> start_P = get_start_P(P.branch_HMMs,branches);
@@ -182,11 +172,19 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
   
   //----------- Generate the different states and Matrices ---------//
 
+  alignment old = A;
+  Parameters P_save = p[0];
+
   vector<alignment> a(p.size(),A);
 
   vector< DParrayConstrained > Matrices;
-  for(int i=0;i<p.size();i++)
+  for(int i=0;i<p.size();i++) {
     Matrices.push_back( sample_node_base(a[i],p[i],nodes[i]) );
+    p[i].LC.invalidate_node(p[i].T,nodes[i][0]);
+#ifndef NDEBUG
+    p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
+#endif
+  }
 
   //-------- Calculate corrections to path probabilities ---------//
 
@@ -210,7 +208,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore(false,p[0].T.n_nodes()-1);
+  valarray<bool> ignore(false,p[0].T.n_nodes());
   ignore[ nodes[0][0] ] = true;
 
   // Check that our constraints are met
@@ -223,8 +221,8 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
   }
 
   // Add another entry for the incoming configuration
-  a.push_back( A );
-  p.push_back( p[0] );
+  a.push_back( old );
+  p.push_back( P_save );
   nodes.push_back(nodes[0]);
   Matrices.push_back( Matrices[0] );
   OS.push_back( OS[0] );
@@ -275,7 +273,8 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
       std::cerr<<A3::project(a.back(),nodes.back());
       std::cerr<<A3::project(a[i],nodes[i]);
       
-      throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
+      std::cerr<<"sampling probabilities were incorrect";
+      std::abort();
     }
   }
 #endif
@@ -284,7 +283,7 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
 
   // if we accept the move, then record the changes
   bool success = false;
-  if (myrandomf() < exp(A3::log_acceptance_ratio(A,p[0],nodes[0],a[C],p[C],nodes[C]))) {
+  if (myrandomf() < exp(A3::log_acceptance_ratio(a[0],p[0],nodes[0],a[C],p[C],nodes[C]))) {
     success = (C > 0);
 
     A = a[C];
@@ -292,6 +291,8 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
     if (success)
       p[0] = p[C];
   }
+  else
+    p[0] = P_save;
 
   return success;
 }
@@ -300,10 +301,8 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
 
 
 
-alignment sample_node(const alignment& old,const Parameters& P,int node) {
-  const tree& T = P.T;
-
-  alignment A = old;
+void sample_node(alignment& A,Parameters& P,int node) {
+  const Tree& T = P.T;
 
   vector<Parameters> p(1,P);
 
@@ -311,6 +310,5 @@ alignment sample_node(const alignment& old,const Parameters& P,int node) {
   nodes[0] = get_nodes_random(T,node);
 
   sample_node_multi(A,p,nodes,false,false);
-
-  return A;
+  P = p[0];
 }

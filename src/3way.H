@@ -12,10 +12,10 @@ namespace A3 {
 
   namespace states = A2::states;
 
-  vector<int> get_nodes(const tree& T,int n0);
-  vector<int> get_nodes_random(const tree& T,int n0);
+  vector<int> get_nodes(const Tree& T,int n0);
+  vector<int> get_nodes_random(const Tree& T,int n0);
 
-  vector<int> get_nodes_branch_random(const tree& T,int n0,int n1);
+  vector<int> get_nodes_branch_random(const Tree& T,int n0,int n1);
 
 // bits 3,2,1,0     = node present mask
 // bits 98,76,54    = sub-alignment state
@@ -56,7 +56,7 @@ namespace A3 {
   eMatrix createQ(const vector<indel::PairHMM>& P,const vector<int>& br);
 
   alignment construct(const alignment& old, const vector<int>& path, 
-		      int n0,int n1,int n2,int n3,const tree& T,
+		      int n0,int n1,int n2,int n3,const Tree& T,
 		      const vector<int>& seq1,const vector<int>& seq2, const vector<int>& seq3);
 
   vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3);

@@ -57,9 +57,9 @@ SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
   vector<int> branches;
   vector<double> lengths;
 
-  for(int i=0;i<T1.branches();i++) {
-    if (not subtree_nodes[T1.branch(i).parent()] or 
-	not subtree_nodes[T1.branch(i).child()]) {
+  for(int i=0;i<T1.n_branches();i++) {
+    if (not subtree_nodes[T1.branch(i).target()] or 
+	not subtree_nodes[T1.branch(i).source()]) {
       branches.push_back(i);
       lengths.push_back(T1.branch(i).length());
     }
@@ -70,18 +70,20 @@ SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
   SequenceTree T2 = T1;
 
   //------ Generate the new topology ------//
-  if (T2.branch(b2).parent() == n1 or T2.branch(b2).child() == n1)
+  if (T2.branch(b2).target() == n1 or T2.branch(b2).source() == n1)
     ;
-  else
-    T2.SPR(n1,n2,b2);
+  else {
+    int b_temp = T2.directed_branch(n1,n2);
+    T2.SPR(b_temp,b2);
+  }
 
   //------ Find the two new branches ------//
   vector<int> connected;
-  for(int i=0;i<T2.branches();i++) {
+  for(int i=0;i<T2.n_branches();i++) {
     if (i == b1) 
       continue;
 
-    if (T2.branch(i).parent() == n1 or T2.branch(i).child() == n1)
+    if (T2.branch(i).target() == n1 or T2.branch(i).source() == n1)
       connected.push_back(i);
   }
   assert(connected.size() == 2);
@@ -89,38 +91,65 @@ SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
 
   //------- Place the split randomly -------//
   double total = T2.branch(connected[0]).length() + T2.branch(connected[1]).length();
-  T2.branch(connected[0]).length() = myrandomf() * total;
-  T2.branch(connected[1]).length() = total - T2.branch(connected[0]).length();
+  T2.branch(connected[0]).set_length( myrandomf() * total );
+  T2.branch(connected[1]).set_length( total - T2.branch(connected[0]).length() );
 
   return T2;
 }
 
+void remove_duplicates(vector<int>& v) {
+  for(int i=v.size()-1;i>=0;i--) {
+    bool dup=false;
+    for(int j=0;j<i and not dup;j++)
+      if (v[j] == v[i]) dup=true;
+    if (dup)
+      v.erase(v.begin()+i);
+  }
+}
 
 MCMC::result_t sample_SPR(alignment& A,Parameters& P1,int b) {
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
 
-  Parameters P2 = P1;
-
   SequenceTree& T1 = P1.T;
-  SequenceTree& T2 = P2.T;
 
   //----- Get nodes for directed branch ------//
-  int n1 = T1.branch(b).parent();
-  int n2 = T1.branch(b).child();
+  int n1 = T1.branch(b).target();
+  int n2 = T1.branch(b).source();
   if (myrandomf()< 0.5)
     std::swap(n1,n2);
-  if (T1[n1].leaf())
+  if (T1[n1].is_leaf_node())
     std::swap(n1,n2);
 
   //----- Generate the Different Topologies ----//
+  P1.LC.root = n1;
+  Parameters P2 = P1;
 
+  SequenceTree& T2 = P2.T;
+
+
+  // find the changed branches
+  vector<int> branches;
+  for(edges_after_iterator i=T2.directed_branch(n2,n1).branches_after();
+      i;i++)
+    branches.push_back((*i).undirected_name());
   //  std::cerr<<"before = "<<T1<<endl;
-
   T2 = do_SPR(T1,n1,n2,b);
-  P2.recalc();
-  
   //  std::cerr<<"after = "<<T2<<endl;
+  for(edges_after_iterator i=T2.directed_branch(n2,n1).branches_after();
+      i;i++)
+    branches.push_back((*i).undirected_name());
+
+
+  remove_duplicates(branches);
+    
+  // recompute/invalidate caches associated with changed branch lengths
+  assert(branches.size() <= 3);
+  for(int i=0;i<branches.size();i++) {
+    int b = branches[i];
+    P2.setlength(b,P2.T.branch(b).length());
+  }
+  
 
   bool success = topology_sample_SPR(A,P1,P2,n1,n2);
 

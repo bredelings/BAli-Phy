@@ -10,11 +10,12 @@
 #include "alignment.H"
 #include "matcache.H"
 #include "clone.H"
+#include "substitution-cache.H"
 
 /******************************* parameter-containing class **************************/
 /// A class to contain all the MCMC state except the alignment
-class Parameters: public MatCache {
-  /*-------- We own these ----------*/
+class Parameters: public MatCache
+{
   /// The IndelModel
   OwnedPointer<IndelModel> IModel_;
 
@@ -58,11 +59,16 @@ public:
   bool accept_MH(const alignment& A1,const Parameters& P1,
 		 const alignment& A2,const Parameters& P2) const;
 
+  bool accept_MH(const alignment& A,const Parameters& P1,const Parameters& P2) const;
+
   /// The Tree
   SequenceTree T;
 
   /// Alignment constraint
   ublas::matrix<int> alignment_constraint;
+
+  /// Cached Conditional Likelihoods
+  mutable Likelihood_Cache LC;
 
   /// The IndelModel
   const IndelModel& IModel() const {return *IModel_;}
@@ -81,7 +87,7 @@ public:
   void fiddle();
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
-  void setlength(int b,double l) {MatCache::setlength(b,l,T,*SModel_); }
+  void setlength(int b,double l); 
   
   /// Recalculate all the cached transition matrices
   void recalc();

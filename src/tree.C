@@ -1,5 +1,4 @@
 #include "tree.H"
-#include "exponential.H"
 #include <algorithm>
 #include <sstream>
 #include "myexception.H"
@@ -7,874 +6,847 @@
 using std::vector;
 using std::valarray;
 
-void TreeView::destroy_tree(node* n) {
-  if (not n) return;
+void TreeView::destroy_tree(BranchNode* start) {
+  assert(start);
 
-  if (n->parent_branch) {
-    delete n->parent_branch;
-    n->parent_branch = 0;
-  }
+  vector<BranchNode*> nodes;
+  nodes.reserve(20);
 
-  destroy_tree(n->left);
-  n->left = 0;
+  for(BN_iterator BN(start);BN;BN++) 
+    nodes.push_back(*BN);
 
-  destroy_tree(n->right);
-  n->right = 0;
-
-  delete n;
+  for(int i=0;i<nodes.size();i++)
+    delete nodes[i];
 }
 
-void TreeView::copy_tree(node* n) {
+BranchNode* TreeView::copy_node(BranchNode* start) {
 
-  if (n->parent) {
-    assert(n->parent_branch);
+  BranchNode* n1 = start;
 
-    n->parent_branch = new Branch( *(n->parent_branch) );
-    n->parent_branch->parent = n->parent;
-    n->parent_branch->child = n;
+  BranchNode* start2 = new BranchNode(n1->branch,n1->node,n1->length);
+  BranchNode* n2 = start2;
+
+  if (start->out == start)
+    start2->out = start2;
+
+  do {
+
+    n1 = n1->next;
+
+    if (n1 == start)
+      n2->next = start2;
+    else
+      n2->next = new BranchNode(n1->branch,n1->node,n1->length);
+
+    n2->next->prev = n2;
+
+    n2 = n2->next;
+  } while(n1 != start);
+
+  return n2;
+}
+
+
+BranchNode* TreeView::copy_tree(BranchNode* start) {
+
+  BranchNode* here1 = start;
+  BranchNode* start2 = copy_node(start);
+  BranchNode* here2 = start2;
+  
+  BranchNode* prev = NULL;
+
+  
+  for(;here1!=start or prev==NULL;) {
+    
+    // If we jump out to another node, then create it if its not there
+    if (prev == here1->prev or here1->next == here1) {
+      prev  = here1;
+      here1 = here1->out;
+
+      if (not here2->out) {
+	here2->out = copy_node(here1);
+	here2->out->out = here2;
+      }
+      
+      here2 = here2->out;
+    }
+
+    // Otherwise just move around the current node together
+    else {
+      prev  = here1;
+      here1 = here1->next;
+      here2 = here2->next;
+    }
   }
 
-  if (n->left) {
-    n->left = new node( *(n->left) );
-    n->left->parent = n;
-    copy_tree(n->left);
-  }
-
-  if (n->right) {
-    n->right = new node( *(n->right) );
-    n->right->parent = n;
-    copy_tree(n->right);
-  }
+  return start2;
 }
 
 TreeView TreeView::copy() const {
   if (not root)
     return TreeView(0);
 
-  node* top = new node(*root);
-
-  copy_tree(top);
-
-  return TreeView(top);
+  return copy_tree(root);
 }
 
-void TreeView::exchange_cousins(node* node1, node* node2) {
-  node* p1 = node1->parent;
-  node* p2 = node2->parent;
+void TreeView::exchange_subtrees(BranchNode* n1, BranchNode* n2) {
+  // I should assert that the subtrees are disjoint, somehow...
+
+  // Neither branches comes from a leaf node
+  assert(not is_leaf_node(n1));
+  assert(not is_leaf_node(n2));
 
   // The nodes are distinct
-  assert(node1 != node2);
+  assert(n1 != n2);
 
-  // The nodes don't have the same parent
-  assert(p1 != p2);
+  // Switch the nodes that we point to
+  std::swap(n1->prev,n2->prev);
+  std::swap(n1->next,n2->next);
 
-  // We assume that either node is an ancestor of the other
+  // Switch the nodes that point to us
+  n1->prev->next = n1;
+  n1->next->prev = n1;
 
-  if (p1->left == node1)
-    p1->left = node2;
-  else
-    p1->right = node2;
+  n2->prev->next = n2;
+  n2->next->prev = n2;
 
-  if (p2->left == node2)
-    p2->left = node1;
-  else
-    p2->right = node1;
-
-  node1->parent = p2;
-  node2->parent = p1;
-
-  node1->parent_branch->parent = node1->parent;
-  node2->parent_branch->parent = node2->parent;
+  // Switch the node name that we are part of
+  std::swap(n1->node,n2->node);
 }
 
-vector<node*> find_nodes(node* root) {
-  assert(root);
+void TreeView::merge_nodes(BranchNode* n1,BranchNode* n2) {
+  std::swap(n1->next,n2->next);
+  n1->next->prev = n1;
+  n2->next->prev = n2;
+}
 
-  vector<node*> order;
+// this preserves sub-branch directions
+// the node with the smaller name maintains the name of its attatched branch
 
-  order.push_back(root);
-  
-  int start=0;
+BranchNode* TreeView::create_node_on_branch(BranchNode* b1, int  new_branchname) {
+
+  BranchNode* b2 = b1->out;
+
+  // Create a ring of size 2 - duplicate branch names and lengths
+  BranchNode* n1 = new BranchNode(b2->branch,-1,b2->length);
+  BranchNode* n2 = new BranchNode(b1->branch,-1,b1->length);
+  n1->next = n1->prev = n2;
+  n2->next = n2->prev = n1;
+
+  // Link from ring to branch endpoints
+  n1->out = b1;
+  b1->out = n1;
+
+  n2->out = b2;
+  b2->out = n2;
+
+  int delta = std::abs(b2->branch - b1->branch);
+
+  // choose sub-branch to give the new name to
+  if (b1->node > b2->node)
+    std::swap(b1,b2);
+
+  // determine sub-branch direction;
+  if (b2->branch > b2->out->branch)
+    b2 = b2->out;
+
+  // set new branch name and set length to 0
+  b2->branch = new_branchname;
+  b2->out->branch = new_branchname + delta;
+  b2->length = b2->out->length = 0;
+
+  return n1;
+}
+
+/// Merge sub-branches, adding their lengths, and reporting which branch name didn't survive.
+int TreeView::remove_node_from_branch(BranchNode* n1) {
+  BranchNode* n2 = n1->next;
+  assert(n2->next == n1);
+
+  BranchNode* b1 = n1->out;
+  BranchNode* b2 = n2->out;
+
+  if (b1->node > b2->node) {
+    std::swap(n1,n2);
+    std::swap(b1,b2);
+  }
+
+  //---------- get delta - and check it ------------//
+  assert(std::abs(b1->branch - b1->out->branch) == std::abs(b2->branch - b2->out->branch));
+  int dead_branch_name = std::min(b2->branch,b2->out->branch);
+
+  //-- Connect branches, merge lengths, use new name --//
+  b1->out = b2;
+  b2->out = b1;
+
+  b2->branch = n1->branch;
+  b1->length += b2->length;
+  b2->length = b1->length;
+
+  //-------- Remove the node, and reconnect --------//
+  delete n1;
+  delete n2;
+
+  return dead_branch_name;
+}
+
+BranchNode* TreeView::unlink_subtree(BranchNode* b) {
+  BranchNode* prev = b->prev;
+
+  // disconnect from tree
+  b->prev->next = b->next;
+  b->next->prev = b->prev;
+
+  // re-link this node as a leaf node
+  b->prev = b->next = b;
+
+  if (prev == b)
+    return NULL;
+  else
+    return prev;
+}
+
+//------------------------ Begin definition of Tree::* routines ------------------------//
+
+void name_node(BranchNode* start,int i) {
+  BranchNode* n = start;
+
   do {
-    int end = order.size();
-    for(int i=start;i<end;i++) {
-      node* left = order[i]->left;
-      node* right = order[i]->right;
-      if (left) order.push_back(left);
-      if (right) order.push_back(right);
-    }
-    start = end;
-  }  while(start<order.size());
-  return order;
+    n->node = i;
+    n = n->next;
+  } while (n != start);
 }
 
-
-vector<node*> find_leaves(node* root) {
-  vector<node*> nodes = find_nodes(root);
-  vector<node*> leaves;
-
-  for(int i=0;i<nodes.size();i++)
-    if (leaf(*nodes[i]))
-      leaves.push_back(nodes[i]);
-
-  return leaves;
-}
-
-/**************** Begin 'tree' implementation ***************/
-// Until stated otherwise, the tree is considered rooted
-
-void add_left(node* parent,node* child) {
-  assert(not parent->left);
-
-  parent->left = child;
-  child->parent = parent;
-
-  child->parent_branch = new Branch;
-  child->parent_branch->child = child;
-  child->parent_branch->parent = parent;
-}
-
-void add_right(node* parent,node* child) {
-  assert(not parent->right);
-
-  parent->right = child;
-  child->parent = parent;
-
-  child->parent_branch = new Branch;
-  child->parent_branch->child = child;
-  child->parent_branch->parent = parent;
-}
-
-
-//NOTE - if we remove root->right->parent_branch, we must patch this up
-void remove_subtree(node* n,node* &root) {
-  // don't remove the root!
-  assert(n->parent);
-
-  // get parent and sibling
-  node* parent = n->parent;
-  node* sibling = n->parent->right;
-  if (n == sibling) sibling = n->parent->left;
-
-  // this node must have a sibling
-  assert(sibling);
-
-  // connect sibling to parent->parent (as its parent)
-  sibling->parent = parent->parent;
-  //FIXME - we have unneeded pointers here...
-  if (parent->parent)
-    sibling->parent_branch->parent = sibling->parent;
-  else {
-    delete sibling->parent_branch;
-    sibling->parent_branch=0;
-  }
-
-  // set grandparent pointer to point to sibling (as its child)
-  if (not parent->parent)
-    root = sibling;
-  else {
-    // connect parent->parent to sibling (as its child)
-    if (parent->parent->right == parent)
-      parent->parent->right = sibling;
-    else
-      parent->parent->left = sibling;
-
-    // Merge the two branch lengths
-    sibling->parent_branch->length += parent->parent_branch->length;
-    parent->parent_branch->length = 0.0;
-  }
-
-}
-
-// Do I need to export an interface which maps each node name
-// on the two old trees into a node name in the current tree?
-// I could put a field 'old_name' in the 'struct node' for this...
-
-void insert_subtree(node* n,node* new_sibling) {
-  
-  node* parent = n->parent;
-  node* g_parent = new_sibling->parent;
-
-  // Set up new parent node and branch
-  parent->left = n;
-  parent->right = new_sibling;
-  parent->parent = g_parent;
-  parent->parent_branch->parent = g_parent;
-
-  // attatch new_sibling to parent
-  new_sibling->parent = n->parent;
-  new_sibling->parent_branch->parent = n->parent;
-
-  // attatch g_parent to parent
-  if (g_parent->left == new_sibling)
-    g_parent->left = parent;
-  else
-    g_parent->right = parent;
-}
-
-
-
-// subtree(root,tree::left) = T
-void tree::add_left(node* parent,const tree& T) {
-  node* child = T.copy();
-  ::add_left(parent,child);
-
-  // re-name the leaves in the newly added subtree
-  vector<node*> leaves = find_leaves(child);
-  for(int i=0;i<leaves.size();i++)
-    leaves[i]->name += n_leaves_;
-
-  // compute order and internal names from leaf names
-  reanalyze();
-}
-
-// subtree(root,tree::right) = T
-void tree::add_right(node* parent,const tree& T) {
-  node* child = T.copy();
-  ::add_right(parent,child);
-
-  // re-name the leaves in the newly added subtree
-  vector<node*> leaves = find_leaves(child);
-  for(int i=0;i<leaves.size();i++)
-    leaves[i]->name += n_leaves_;
-
-  // compute order and internal names from leaf names
-  reanalyze();
-}
-
-/// Remove the subtree with root node n
-void tree::remove_subtree(node* n) {
-  // Take the subtree @ n out of the tree
-  ::remove_subtree(n,root);
-
-  // Then free up the removed subtree
-  TreeView(n).destroy();
-  delete n->parent->parent_branch;
-  delete n->parent;
-  
-  // Fix-up branch lengths so that branch right of root doesn't count
-  if (root->right) {
-    root->left->parent_branch->length += root->right->parent_branch->length;
-    root->right->parent_branch->length = 0;
-  }
-
-  // re-compute the leaf names - can't preserve...
-  // I could present some, decrease others by one, if helpful...
-  vector<node*> leaves = find_leaves(root);
-  for(int i=0;i<leaves.size();i++)
-    leaves[i]->name = i;
-
-  // Reconstruct everything
-  reanalyze();
-}
-
-
-void tree::add_root() {
-  assert(not root);
-  root = new node;
-  order.push_back(root);
-  names.push_back(root);
-  // No branches
-  n_leaves_ = 1;
-  root->name = 0;
-  root->order = 0;
-}
-
-void tree::reroot(int b) {
-  assert(root->right->parent_branch->length == 0.0);
-  assert(0 <= b and b< n_branches());
-
-  vector<Branch*> intermediate_branches;
-  node* n = branches_[b]->child;
-
-  while(n->parent) {
-    intermediate_branches.push_back(n->parent_branch);
-    n=n->parent;
-  }
-  intermediate_branches.pop_back();
-  
-  while(intermediate_branches.size()) {
-    Branch* b2 = intermediate_branches.back();
-    intermediate_branches.pop_back();
-    if (b2->parent == root->left) 
-      swap_children(root->name);
-    assert(b2->parent == root->right);
-
-    TreeView::exchange_cousins(root->left,b2->child);
-  }
-  assert(branches_[b]->parent == root);
-
-  reorder();
-  compute_ancestors();
-  check_structure();
-}
-
-// This routine (re)computes everything, starting with
-//   o the tree structure at @root
-//   o the names of the leaves
-
-void tree::reanalyze() {
-
-  // find the leaves, and count them
-  vector<node*> leaves = find_leaves(root);
-  n_leaves_ = leaves.size();
-
-  // compute the name hash for just the leaves
-  names = vector<node*>(n_leaves_);
-  for(int i=0;i<leaves.size();i++)
-    names[leaves[i]->name] = leaves[i];
-
-  // compute the order hash
-  order = find_nodes(root);
-  reorder();
-
-
-  // compute the names from the order
-  names = order;
-  for(int i=0;i<names.size();i++)
-    names[i]->name = i;
-
-  if (n_nodes()>1) {
-    // compute the branches_ hash
-    branches_ = vector<Branch*>(names.size()-1,0);
-    for(int i=0;i<branches_.size();i++) {
-      branches_[i] = names[i]->parent_branch;
-      branches_[i]-> name = i;
-    }
-
-    // force the highest number branch to the right of root
-    if (root->right and
-	branches_[branches_.size()-1]->child != root->right) {
-      int i = branches_.size()-1;
-      int j = root->right->parent_branch->name;
-      std::swap(branches_[i]->name,branches_[j]->name);
-      std::swap(branches_[i],branches_[j]);
-    }
-  }
-
-  /***** Check that our lookup tables are right *****/
-  assert(names.size() == order.size());
-  for(int i=0;i<names.size();i++) {
-    assert(names[i]->name == i);
-    assert(order[i]->order == i);
-    if (i<n_branches())
-      assert(branches_[i]->name == i);
-  }
-
-  /******* for leaves, branch names and node names should correspond *******/
-  if (this->n_leaves()>2)
-    for(int i=0;i<this->n_leaves();i++)
-      assert(branch_up(i) == i);
-
-
-  /****** Re-compute ancestor relation *******/
-  compute_ancestors();
-}
-
-// order shouldn't depend on left/right stuff
-
-/// Compute the order hash into the nodes, and mark nodes w/ their order
-
-/// This routine depends on sanity introduced by previous routine(s)
-///   o order contains all the nodes
-///   o names hash for leaves is right
-void tree::reorder() {
-
-  int old_size = order.size();
-  
-  // Mark all nodes as non-visted
-  for(int i=0;i<order.size();i++) 
-    order[i]->order = -1;
-
-  // Get the leaf order from the names
-  order.clear();
-  for(int i=0;i<n_leaves_;i++) {
-    order.push_back(names[i]);
-    order[i]->order = i;
-  }
-
-  /* Add nodes in order of distance from leaves */
-  int start=0;
-  do {
-    int end = order.size();
-    for(int i=start;i<end;i++) {
-      node* parent = order[i]->parent;
-
-      // the root doesn't have a parent
-      if (not parent) continue;
-
-      // skip if parent already added
-      if (parent->order != -1) continue;
-	
-      // skip if left child not ready
-      if (parent->left and parent->left->order == -1)
-	continue;
-
-      // skip if right child not ready
-      if (parent->right and parent->right->order == -1)
-	continue;
-
-      parent->order = order.size();
-      order.push_back(parent);
-    }
-    start = end;
-  } while (start < order.size());
-
-  assert(old_size == order.size());
-  for(int i=0;i<order.size();i++)
-    assert(order[i]->order == i);
-
-}
-
-// names need to be already set up for this
-void tree::compute_ancestors() {
-
-  ancestors.clear();
-  ancestors.insert(ancestors.begin(),n_nodes(),
-		   valarray<bool>(false,n_nodes()));
-  for(int i=0;i<n_nodes();i++) {
-    int n = get_nth(i);
-    ancestors[n][n] = true;
-
-    node* N = names[n];
-    assert(N->name == n);
-
-    if (N->parent) 
-      ancestors[N->parent->name] |= ancestors[n];
-  }
-
-  for(int i=0;i<n_nodes()-1;i++) {
-    int c = i;
-    int p = names[c]->parent->name;
-    assert(ancestor(p,c));
-  }
-}
-
-//Unrooted Tree
-valarray<bool> tree::partition(int node1,int node2) const {
-  node* n1 = names[node1];
-  node* n2 = names[node2];
-
-  valarray<bool> mask(n_nodes());;
-
-  if ((n1==n2->parent) or
-      (not n1->parent->parent and not n2->parent->parent))
-    mask = ancestors[node2];
-  else if (n2 == n1->parent)
-    mask = !ancestors[node1];
-  else // the two nodes are connected!
-    throw myexception()<<__PRETTY_FUNCTION__<<": the two nodes are not connected";
-    
-  return mask;
-}
-
-branchview tree::branch_up(int node1) {
-  node* n1 = names[node1];
-  if (not n1->parent->parent)
-    return n1->parent->left->parent_branch;
-  else
-    return n1->parent_branch;
-}
-
-const_branchview tree::branch_up(int node1) const {
-  node* n1 = names[node1];
-  if (not n1->parent->parent)
-    return n1->parent->left->parent_branch;
-  else
-    return n1->parent_branch;
-}
-
-
-std::vector<int> tree::neighbors(int i) const {
-  assert(0 <= i and i < num_nodes()-1);
-
-  std::vector<int> nodes;
-  nodes.reserve(3);
-  nodes.push_back( (*this)[i].parent() );
-
-  node* n = names[i];
-  if (n->left)
-    nodes.push_back(n->left->name);
-  if (n->right)
-    nodes.push_back(n->right->name);
-  
-  return nodes;
-}
-
-// ***** "exchange_cousins" and "exchange": *****
-// We exchange the subtrees specified by node1 and node2
-// o The subtrees are specified by only one node - the direction
-//    is away from the other node
-// o Assert that the subtrees are disjoint:
-//    they must have at least 1 node between them
-//
-//    - if the neither node is an ancestor of the other, then they have a 
-//      common ancestor between them, so that is OK.
-//    - otherwise, assert that they do.
-//    - if they have only one node between them, do nothing.
-// o Branches move along with the subtree - so we move branch lengths
-//    - p1->n1:l1, p1->n2:l2  becomes p1->n2:l2,p2->n1:l1
-//    - this is easy in exchange_cousins, but takes works after reorder
-
-
-// if one of the subtrees contains the 
-// branch connect the children of the root then
-// we have to take special action in fixing up branch lengths
-
-// if parent(node1) == parent(node2), which can happen at the top
-// of the tree when p1 != p2, then 
-
-void tree::do_swap(node* c1,node* c2) {
-  node* n1 = c1->parent;
-  node* n2 = c2->parent;
-
-  assert(n2->order > n1->order);
-
-  Branch* b1 = n1->parent_branch;
-  Branch* b2 = n2->left->parent_branch;
-  if (c2 == n2->left)
-    b2 = n2->right->parent_branch;
-
-  // swap the names for n1 and n2
-  std::swap(names[n1->name],names[n2->name]);
-  std::swap(n1->name,n2->name);
-
-  // swap the branch names and lengths for b1 and b2
-  std::swap(branches_[b1->name],branches_[b2->name]);
-  std::swap(b1->name,b2->name);
-  std::swap(b1->length,b2->length);
-
-  // swap the subtrees c1 and c2
-  TreeView::exchange_cousins(c1,c2);
-}
-
-
-void tree::check_structure() const {
-#ifndef NDEBUG
-  //----- Check that our lookup tables are right ------//
-  assert(names.size() == order.size());
-  for(int i=0;i<names.size();i++) {
-    assert(names[i]->name == i);
-    assert(order[i]->order == i);
-    if (i<n_branches())
-      assert(branches_[i]->name == i);
-  }
-
-  //------------ Check pointer structure --------------//
-  for(int i=0;i<names.size();i++) {
-    if (names[i]->left or names[i]->right)
-      assert(names[i]->left and names[i]->right);
-    if (names[i]->parent) {
-      assert(names[i]->parent == names[i]->parent_branch->parent);
-      assert(names[i] == names[i]->parent->left or names[i] == names[i]->parent->right);
-    }
-  }
-
-  //-----for leaves, branch names and node names should correspond -----//
-  if (this->n_leaves()>2)
-    for(int i=0;i<this->n_leaves();i++)
-      assert(branch_up(i) == i);
-
-  assert(root->right->parent_branch->length == 0.0);
-#endif
-}
-
-void tree::exchange(int node1,int node2) {
-  if (ancestor(node1,node2))
-    std::swap(node1,node2);
-
-  node* n1 = names[node1];
-  node* n2 = names[node2];
-
-  // Always want to deal with LEFT branch under root
-  if (n1 == root->right or n2 == root->right) 
-    swap_children(root->name);
-
-  if (n1->parent == n2->parent) 
-    std::abort();                     // this is like swap_children
-  else if (n1->parent == root and n2->parent->parent == root)
-    std::abort();                     // this is a topology change
-  else if (n2->parent == root and n1->parent->parent == root)
-    std::abort();                     // this is a topology change
-  else if (ancestor(node2,node1)) {
-
-    vector<node*> intermediate;
-    node* here = n1->parent;
-
-    /****** Find the intermediate children *******/
-    assert(here != n2);
-    do {
-      node* there = here->left;
-      if (ancestor(there->name,node1))
-	  there = here->right;
-      intermediate.push_back(there);
-      here = here->parent;
-    }
-    while(here != n2);
-
-    /******  Invert the order of the intermediate nodes ****/
-    for(int i=0;i<intermediate.size()/2;i++) {
-      int j = intermediate.size()-1-i;
-      node* nodei = intermediate[i];
-      node* nodej = intermediate[j];
-      do_swap(nodei,nodej);
-    }
-  }
-  else     
-    TreeView::exchange_cousins(n1,n2);
-
-  // doesn't mess with the names
-  reorder();
-
-  compute_ancestors();
-
-  check_structure();
-}
-
-//FIXME - we COULD require that if (n_leaves() > 2) then 
-// names[n]->parent_branch->name == n for ALL leaf nodes,
-// instead of doing the branch_up() hack.
-
-// We would just have to swap_children(root->name) if root->right
-// is a leaf...
-
-void tree::SPR(int n1, int n2, int b) {
-  assert(root->right->parent_branch->length == 0.0);
-
-  assert(n_leaves_ > 2);
-
-  // don't regraft to the sub-branches we are being pruned from
-  assert(branch(b).parent() != n1 and branch(b).child() != n1);
-
-  // reroot so that n1->n2 points down
-  if (not ancestor(n1,n2)) {
-    valarray<bool> subtree_nodes = partition(n1,n2);
-    int chosen_branch = -1;
-    for(int i=0;i<n_branches();i++)
-      if (not subtree_nodes[ branch(i).parent() ] or
-	  not subtree_nodes[ branch(i).child() ] ) {
-	chosen_branch = i;
-	break;
-      }
-	
-    assert(chosen_branch >= 0);
-    reroot(b);
-  }
-  assert(ancestor(n1,n2));
-    
-  // avoid messing with the root's right branch... (REMOVAL)
-  //    - no name fixups (not too hard)
-  //    - no length fixups (messy)
-  // This require root->right to be an INTERNAL node, so we see
-  //    that both swap_children()s can't fire in the same call of this funct'n
-  if (names[n1] == root->right)
-    swap_children(root->name);
-
-  // In removing branches, remove the non-leaf branch!
-  int b_U = names[n1]->parent_branch->name;
-
-  if (b_U < n_leaves()) {
-    int b_D = names[n1]->left->parent_branch->name;
-    if (branches_[b_D]->child->name == n2)
-      b_D = names[n1]->right->parent_branch->name;
-
-    std::swap(branches_[b_D],branches_[b_U]);
-    branches_[b_D]->name = b_D;
-    branches_[b_U]->name = b_U;
-  }
-
-  // cut out n2, fix up the length
-  ::remove_subtree(names[n2],root);
-
-  // ensure that names[n]->parent_branch->name == n for leaf nodes (INSERTION)
-  //   - now inserting the new branch as the upper branch is OK
-  if (n_leaves() > 2 and root->right->name < n_leaves()) 
-    swap_children(root->name);
-
-  // re-insert n1->n2
-  insert_subtree(names[n2],branches_[b]->child );
-
-  // recompute ordering, and ancestors
-  reorder();
-
-  compute_ancestors();
-
-  check_structure();
-}
-
-
-tree& tree::operator=(const tree& t1) {
-  if (&t1 == this)
-    return *this;
-
-  TreeView(root).destroy();
-
-  n_leaves_ = t1.n_leaves();
-  root = t1.copy();
-  vector<node*> nodes;
-  if (root)
-    nodes = find_nodes(root);
-  order = nodes;
-  names = nodes;
-  
-  // Reconstruct the 'order' and 'names' hashes
-  if (nodes.size() > 1) {
-    for(int i=0;i<nodes.size();i++) {
-      int o = nodes[i]->order;
-      int n = nodes[i]->name;
-      assert(0 <= n and n < nodes.size());
-      assert(0 <= o and o < nodes.size());
-
-      names[n] = nodes[i];
-      order[o] = nodes[i];
-    }
-
-    // index numbers shouldn't change across copies
-    branches_ = vector<Branch*>(names.size()-1,0);
-    for(int i=0;i<branches_.size();i++) {
-      int name = names[i]->parent_branch->name;
-      branches_[name] = names[i]->parent_branch;
-    }
-  }
-
-  compute_ancestors();
-
-  return *this;
-}
-
-
-tree::tree(const tree& t1, const tree& t2) {
-  root = new node;            // *here = new node;
-  root->parent = 0;
-  n_leaves_ = 0;
-
-  add_left(root,t1);
-  add_right(root,t2);
-
-  root->left->parent_branch->length = 0.2;
-  root->right->parent_branch->length = 0.2;
-}
-
-tree::tree(const tree& t1, double b1, const tree& t2, double b2) {
-  root = new node;            // *here = new node;
-  root->parent = 0;
-  n_leaves_ = 0;
-
-  add_left(root,t1);
-  add_right(root,t2);
-  
-  root->left->parent_branch->length = b1;
-  root->right->parent_branch->length = b2;
-}
-
-
-void tree::swap_children(int n) {
-  node* p = names[n];
-
-  // make sure that the left branch stays left
-  if (n == n_nodes()-1) {
-    std::swap(p->left->parent_branch->child,p->right->parent_branch->child);
-    std::swap(p->left->parent_branch,p->right->parent_branch);
-  }
-
-  std::swap(p->left,p->right);
-} 
-
-
-// recompute everything from new leaf names
-
-vector<int> tree::standardize(bool do_reroot) {
+vector<int> Tree::standardize() {
   vector<int> lnames(n_leaves());
   for(int i=0;i<lnames.size();i++)
     lnames[i] = i;
-  return standardize(lnames,do_reroot);
+  return standardize(lnames);
 }
 
-  
-vector<int> tree::standardize(const vector<int>& lnames,bool do_reroot) {
+vector<int> Tree::standardize(const vector<int>& lnames) {
 
-  /********** Set the leaf names ***********/
+  //----------- Set the leaf names ------------//
   assert(lnames.size() == n_leaves());
 
-  vector<node*> old_names = names;
+  vector<BranchNode*> old_nodes = nodes_;
 
-  /********** Change the topology **********/
-  int newroot=-1;
+  //---------- Input new leaf order -----------//
+  for(int i=0;i<n_leaves();i++)
+    nodes_[i]->node = lnames[i];
+
+  //---------- recompute everything -----------//
+
+  //FIXME - write some code to determine the order of prev/next
+
+
+  reanalyze(nodes_[0]);
   
-  for(int i=0;i<n_leaves();i++)
-    if (lnames[i] == 0) {
-      newroot = i;
-      break;
-    }
 
-  // newroot is actually a branch...
-  if (n_leaves() == 2)
-    newroot=0;
-  if (do_reroot)
-    reroot(newroot);
-
-  /********** Input new leaf order *************/
-  for(int i=0;i<n_leaves();i++)
-    names[i]->name = lnames[i];
-
-  /********* recompute everything ************/
-  reanalyze();
-
-  /******** Set the left/right order ********/
-  for(int i=n_leaves();i<n_nodes();i++) {
-    if (names[i]->left->order > names[i]->right->order)
-      swap_children(i);
-  }
-
-  vector<int> mapping(old_names.size());
+  //------------- compute mapping -------------//
+  vector<int> mapping(old_nodes.size());
   for(int i=0;i<mapping.size();i++)
-    mapping[i] = old_names[i]->name;
+    mapping[i] = old_nodes[i]->node;
 
   return mapping;
 }
 
-int tree::common_ancestor(int i,int j) const {
-  assert(0 <= i and i < n_nodes()); 
-  assert(0 <= j and j < n_nodes()); 
+/// Give leaf nodes their new names
+void shift_leaves(BranchNode* start,int first,int n) {
+  for(BN_iterator BN(start);BN;BN++) {
+    if (not is_leaf_node(*BN))
+      continue;
 
-  node* ni = names[i];
-  while (not ancestors[ni->name][j])
-    ni = ni->parent;
+    if ((*BN)->node >= n)
+      ((*BN)->node)--;
 
-  return ni->name;
+    (*BN)->node += first;
+  }
+}
+
+/// Remove the subtree with root node n
+nodeview Tree::prune_subtree(int br) {
+  BranchNode* b = branches_[br];
+  
+  // shift remaining leaf names down so that they remain contiguous
+  for(int i=0;i<n_leaves();i++) {
+
+    // skip leaf nodes to be deleted
+    if (cached_partitions[br][i]) continue;
+
+    // calculate new name 
+    int name = i;
+    for(int j=0;j<=i;j++)
+      if (cached_partitions[br][j]) name--;
+
+    // assign new name
+    name_node(nodes_[i],name);
+  }
+
+  // Remove and destroy subtree @ b
+  BranchNode* node_remainder = TreeView::unlink_subtree(b);
+  TreeView(b).destroy();
+  
+  /// Reconstruct everything from node names
+  reanalyze(node_remainder);
+
+  return node_remainder;
 }
 
 
-double tree::distance2(int i,int j) const {
-  assert(ancestors[j][i]);
+/* Guarantees for names: 
+     1. Surviving leaf names will be in same order in each tree.
+     2. All the leaf names in tree 1 will be before all the leaf names in tree 2.
+     3. The merged node will NOT be a leaf node in the new tree.
+   Requirements:
+     1. Both trees have at least 1 edge: 
+        This ensures that the nodes retain definition.
+	If either tree has only one node and no edges then that node simply goes away,
+         and guarantee #2 is lost.
+    
+*/
 
+void Tree::merge_tree(int node, const Tree& T, int tnode) {
+  //--- Make new tree structure, w/ correct leaf node names ---//
+  BranchNode* n  = nodes_[node];
+  BranchNode* tn = T.copy(tnode);
+
+  if (not n->out)
+    throw myexception()<<"Trying to merge a tree into a tree w/ only one node: not allowed.";
+  if (not tn->out)
+    throw myexception()<<"Trying to merge a tree w/ only one node: not allowed.";
+
+  int nl1 = n_leaves();   if (is_leaf_node(n )) nl1--;
+
+  shift_leaves( n, 0  ,  n->node);
+  shift_leaves(tn, nl1, tn->node);
+
+  TreeView::merge_nodes(n,tn);
+
+  //------------------------- Setup ---------------------------//
+  assert(not is_leaf_node(n));
+  assert(not is_leaf_node(tn));
+
+  reanalyze(nodes_[0]);
+
+  assert(n->node == tn->node);
+}
+
+double Tree::distance(int i,int j) const {
   double d=0;
-  node* ni = names[i];
-  node* nj = names[j];
-  while(ni != nj) {
-    d += ni->parent_branch->length;
-    ni = ni->parent;
-  }
 
+  BranchNode* b = nodes_[i];
+
+  while (b->node != j) {
+    if (subtree_contains(b->branch,j)) {
+      d += b->length;
+      b = b->out;
+    }
+    else 
+      b = b->next;
+  }
   return d;
 }
 
-void tree::remove_subtree(int i) {
-  assert(0 <= i and i < names.size());
-  remove_subtree(names[i]);
+void Tree::add_first_node() {
+  if (nodes_.size())
+    throw myexception()<<"Trying to add first node to tree which is not empty";
+
+  BranchNode* BN = new BranchNode(0,0,-1);
+  BN->prev = BN->next = BN;
+  BN->out = BN;
+
+  nodes_.push_back(BN);
+  branches_.push_back(BN);
+
+  n_leaves_ = 1;
 }
 
-double tree::distance(int i,int j) const {
-  int ancestor = common_ancestor(i,j);
+nodeview Tree::add_node(int node) {
+  assert(0 <= node and node < nodes_.size());
 
-  return distance2(i,ancestor)+distance2(j,ancestor);
-}
+  // Add a node to the ring at node 'node'.
+  BranchNode* n = nodes_[node];
 
-int tree::find_branch(int node1,int node2) const {
-  for(int b=0;b<n_branches();b++) {
-    if (branch(b).child() == node1 and branch(b).parent() == node2) return b;
-    if (branch(b).child() == node2 and branch(b).parent() == node1) return b;
+  // The spot to which to link the new node.
+  BranchNode* n_link = NULL;
+  if (n->out == n)
+    n_link = n;
+  else {
+    n_link = new BranchNode(-1,n->node,-1);
+    n_link->prev = n; 
+    n_link->next = n->next;
+
+    n_link->prev->next = n_link;
+    n_link->next->prev = n_link;
   }
-  throw myexception()<<__PRETTY_FUNCTION__<<": no branch connects those nodes";
+
+  // Add a new leaf node, and an edge to node 'node'
+  BranchNode* n_leaf = new BranchNode(-1,n_leaves_,-1);
+  n_leaf->prev = n_leaf->next = n_leaf;
+  n_leaf->out = n_link;
+  n_link->out = n_leaf;
+
+  reanalyze(n_leaf);
+
+  return n_leaf;
+}
+
+
+void get_branches_after(vector<const_branchview>& branch_list) {
+  for(int i=0;i<branch_list.size();i++)
+    append(branch_list[i].branches_after(),branch_list);
+}
+
+vector<const_branchview> branches_after(const Tree& T,int b) {
+  vector<const_branchview> branch_list;
+  branch_list.reserve(T.n_branches());
+
+  branch_list.push_back(T.directed_branch(b));
+  get_branches_after(branch_list);
+
+  return branch_list;
+}
+
+vector<const_branchview> branches_from_node(const Tree& T,int n) {
+
+  vector<const_branchview> branch_list;
+  branch_list.reserve(T.n_branches());
+
+  append(T[n].branches_out(),branch_list);
+
+  get_branches_after(branch_list);
+
+  std::reverse(branch_list.begin(),branch_list.end());
+  return branch_list;
+}  
+
+vector<const_branchview> branches_toward_node(const Tree& T,int n) {
+  vector<const_branchview> branch_list;
+  branch_list.reserve(T.n_branches());
+
+  append(T[n].branches_in(),branch_list);
+
+  for(int i=0;i<branch_list.size();i++)
+    append(branch_list[i].branches_before(), branch_list);
+
+  std::reverse(branch_list.begin(),branch_list.end());
+  return branch_list;
+}  
+
+void Tree::compute_partitions() {
+  vector<const_branchview> branch_list = branches_from_node(*this,nodes_[0]->node);
+  vector<const_branchview> temp; temp.reserve(3);
+
+  cached_partitions = vector< valarray<bool> >(branches_.size(),valarray<bool>(false,n_nodes()));
+
+  for(int i=0;i<branch_list.size();i++) {
+    const_branchview b = branch_list[i];
+
+    cached_partitions[b][b.target()] = true;
+
+    if (b.target().is_internal_node()) {
+      temp.clear();
+      append(b.branches_after(),temp);
+      for(int i=0;i<temp.size();i++)
+	cached_partitions[b] |= cached_partitions[temp[i]];
+    }
+
+    cached_partitions[b.reverse()] = not cached_partitions[b];
+  }
+}
+
+
+void Tree::exchange_subtrees(int br1,int br2) {
+  BranchNode* b1 = branches_[br1];
+  BranchNode* b2 = branches_[br2];
+
+  // FIXME - add more clash conditions
+  if (subtree_contains(br1,b2->out->node))
+    std::abort();
+
+  if (subtree_contains(br2,b1->out->node))
+    std::abort();
+
+
+  TreeView::exchange_subtrees(b1,b2);
+
+  // doesn't mess with the names
+  recompute(nodes_[0]);
+}
+
+nodeview Tree::create_node_on_branch(int br) {
+  BranchNode* b = branches_[br];
+
+  BranchNode* n = TreeView::create_node_on_branch(b,-1);
+
+  //FIXME - reanalyze destroys branch names, and so destroys length information...
+  //  lets put branch information in the tree structure!
+  //  std::abort();
+
+  reanalyze(nodes_[0]);
+
+  return n;
+}
+
+
+void Tree::remove_node_from_branch(int node) {
+  BranchNode* n = nodes_[node];
+
+  TreeView::remove_node_from_branch(n);
+
+  reanalyze(nodes_[0]);
+}
+
+
+/// SPR: move the subtree b1 into branch b2
+void Tree::SPR(int br1,int br2) {
+
+  BranchNode* b1 = branches_[br1];
+  BranchNode* b2 = branches_[br2];
+
+  assert(n_leaves() > 2);
+
+  // don't regraft to the sub-branches we are being pruned from
+  assert(b2 != b1->prev and b2 != b1->next);
+
+  //------------ Prune the subtree -----------------//
+  BranchNode* newbranch = TreeView::unlink_subtree(b1)->out;
+  int dead_branch = TreeView::remove_node_from_branch(newbranch->out);
+  
+  //----------- Regraft the subtree ---------------//
+  TreeView::create_node_on_branch(b2,dead_branch);
+  TreeView::merge_nodes(b1,b2->out);
+  name_node(b1,b1->node);
+
+  recompute(b1);
+}
+
+//NOTE: both of these routines assume that prev,next, and old pointers are correct
+
+/// This routine assumes only that leaf nodes have proper names and are indexed in nodes_
+void Tree::reanalyze(BranchNode* start) {
+
+  nodes_.clear();
+  branches_.clear();
+  n_leaves_ = 0;
+  int total_branch_nodes = 0;
+
+  //------- Initialize leaf nodes && clear other nodes --------//
+  for(BN_iterator BN(start);BN;BN++) {
+    
+    if (is_leaf_node(*BN)) {
+      n_leaves_++;
+      (*BN)->branch      = (*BN)->node;
+    }
+    else {
+      (*BN)->node = -1;
+      (*BN)->branch = -1;
+    }
+    
+    total_branch_nodes++;
+  }
+
+  branches_.resize(total_branch_nodes);
+
+  int total_nodes = n_leaves_;
+  int total_branches = n_leaves_;
+
+  //---------- Compute node and branch names -----------------//
+  for(BN_iterator BN(start);BN;BN++) {
+    // name the node 
+    if ((*BN)->node == -1) {
+      assert(not(is_leaf_node(*BN)));
+      name_node(*BN,total_nodes);
+      total_nodes++;
+    }
+
+    if ((*BN)->branch == -1) {
+      if ((*BN)->out->branch == -1) {
+	(*BN)->branch = total_branches++;
+	(*BN)->out->branch = (*BN)->branch + n_branches();
+      }
+      else
+	(*BN)->branch = (*BN)->out->branch + n_branches();
+    }
+  }
+  
+  nodes_.resize(total_nodes);
+  
+  // give names to nodes and branches
+  recompute(start);
+}
+
+/// Computes nodes_[] and branch_[] indices, and cached_partitions[]
+void Tree::recompute(BranchNode* start,bool recompute_partitions) {
+
+  n_leaves_ = 0;
+  for(BN_iterator BN(start);BN;BN++) {
+
+    // each leaf node has only one BranchNode, so this works
+    if (is_leaf_node(*BN)) n_leaves_++;
+
+    //construct the nodes_ index
+    nodes_[(*BN)->node] = *BN;
+
+    //construct the branches_ index
+    branches_[(*BN)->branch] = *BN;
+  }
+  
+  check_structure();
+
+  if (recompute_partitions)
+    compute_partitions();
+}
+
+void Tree::check_structure() const {
+#ifndef NDEBUG
+
+  //----- Check that our lookup tables are right ------//
+  for(int i=0;i<nodes_.size();i++) {
+    BranchNode* BN = nodes_[i];
+
+    //the cache lookup tables for node names must be correct
+    assert(BN->node == i);
+
+    //leaf nodes come before internal nodes
+    if (i<n_leaves())
+      assert(is_leaf_node(BN));
+    else
+      assert(is_internal_node(BN));
+
+    //each BranchNode in a node must have the same node name
+    for(BranchNode* n = BN->next;n != BN;n=n->next)
+      assert(n->node == BN->node);
+
+    //this node and its prev and next nodes must link to each other consistently
+    assert(BN->prev->next == BN);
+    assert(BN->next->prev == BN);
+  }
+
+  for(int i=0;i<branches_.size();i++) {
+
+    BranchNode* BN = branches_[i];
+
+    //the cached lookup tables must correct refer to the lower-named branch
+    assert(BN->branch == i);
+
+    if (not n_branches()) continue; 
+
+    //leaf branches must have the same branch name and node name
+    if (i < n_leafbranches())
+      assert(BN->node == i);
+
+    //reversed branch must have a different name
+    assert(std::abs(BN->branch - BN->out->branch) == n_branches());
+
+    //this branch and its reversal must link to each other consistently
+    assert(BN->out->out == BN);
+
+    assert(BN->length == BN->out->length);
+  }
+
+#endif
+}
+
+Tree& Tree::operator=(const Tree& T) {
+    assert(&T != this);
+
+    // bail if we are copying the same thing only ourselves
+    if (&T == this)
+      return *this;
+
+    // destroy old tree structure
+    if (nodes_.size()) TreeView(nodes_[0]).destroy();
+
+    n_leaves_ = T.n_leaves_;
+    cached_partitions.clear();
+    cached_partitions = T.cached_partitions;
+    nodes_ = std::vector<BranchNode*>(T.nodes_.size(),(BranchNode*)NULL);
+    branches_ = std::vector<BranchNode*>(T.branches_.size(),(BranchNode*)NULL);
+
+    // recalculate pointer indices
+    BranchNode* start = T.copy();
+    recompute(start,false);
+
+    return *this;
+  }
+
+Tree::Tree(const Tree& T) 
+    :n_leaves_(T.n_leaves_),
+     cached_partitions(T.cached_partitions),
+     nodes_(T.nodes_.size(),(BranchNode*)NULL),
+     branches_(T.branches_.size(),(BranchNode*)NULL)
+{
+    // recalculate pointer indices
+    BranchNode* start = T.copy();
+    recompute(start);
+
+    //operator=(T); 
+}
+
+Tree::~Tree() 
+{
+  for(int i=0;i<branches_.size();i++)
+    delete branches_[i];
+}
+
+void add_left_right(BranchNode*& top, BranchNode* left,BranchNode* right) {
+  BranchNode* n = new BranchNode;
+
+  n->prev = left;
+  n->prev->next = n;
+
+  n->next = right;
+  n->next->prev = n;
+
+  n->prev->prev = n->next;
+  n->next->next = n->prev;
+
+  top->out = n;
+  n->out = top;
+}
+
+
+// IDEA - always include root and root->out, but if we don't want a stem
+// just make the ring which WOULD contain root->out skip it.  We still have
+// pointers INTO the ring from root->out->{prev,next}.
+
+void swap_children(BranchNode* b) {
+  // this assumes BINARY trees, where every node has exactly two children
+  assert(b->next->next->next == b);
+
+  std::swap(b->prev,b->next);
+
+  b->prev->prev = b->next;
+  b->prev->next = b;
+
+  b->next->next = b->prev;
+  b->next->prev = b;
+} 
+
+vector<int> RootedTree::standardize(const vector<int>& lnames) {
+  vector<int> mapping = Tree::standardize(lnames);
+  
+  // FIXME - move the root node?  Perhaps only unrooted trees need that...
+
+  //------- Set the left/right order -------//
+  for(int i=n_leaves();i<n_nodes();i++) {
+    if (nodes_[i]->prev->node > nodes_[i]->next->node)
+      swap_children(nodes_[i]);
+  }
+
+  return mapping;
+}
+
+void RootedTree::recompute(BranchNode* start,bool recompute_partitions) {
+  Tree::recompute(start,recompute_partitions);
+
+  //  asdf;
+  //   std::abort();
+  // now make sure that nodes_[i] points to the TOP node in the ring
+}
+
+void RootedTree::check_structure() const {
+#ifndef NDEBUG
+  Tree::check_structure();
+  /*
+  bool found = false;
+  for(int i=0;i<branches_.size() and not found;i++)
+    if (root_ == branches_[i])
+      found = true;
+
+  if (not nodes_.size())
+    assert(root_ == (BranchNode*)NULL);
+  else if (not found) {
+    throw myexception()<<"RootedTree: root node is none of our nodes!";
+    assert(found);
+  }
+  */
+#endif
+}
+
+
+nodeview RootedTree::prune_subtree(int br) {
+  if (cached_partitions[br][root_->node])
+    throw myexception()<<"Can't deleted a subtree containing the root node!";
+
+  if (root_ == branches_[br]) 
+    root_ = root_->next;
+
+  return Tree::prune_subtree(br);
+}
+
+
+BranchNode* gen_root() {
+  BranchNode* root = new BranchNode;
+  root->prev = root->next = root;
+
+  root->out = new BranchNode;
+  root->out->prev = root->out->next = root->out;
+  root->out->out = root;
+  
+  return root;
+}
+
+void RootedTree::reroot(int n) {
+  assert(0 <= n and n < n_nodes());
+  root_ = nodes_[n];
+}
+
+int RootedTree::common_ancestor(int i,int j) const {
+  assert(0 <= i and i < n_nodes()); 
+  assert(0 <= j and j < n_nodes()); 
+
+  BranchNode* BN = root_;
+  
+  do {
+    BN = BN->out;
+    while(not subtree_contains(BN->branch,i))
+      BN = BN->next;
+
+    assert(subtree_contains(BN->branch,j));
+  } while(subtree_contains(BN->branch,j));
+
+  return BN->node;
+}
+
+void RootedTree::add_first_node() {
+  Tree::add_first_node();
+  root_ = nodes_[0];
+}
+
+RootedTree& RootedTree::operator=(const RootedTree& RT) {
+
+  Tree::operator=(RT);
+
+  root_ = nodes_[RT.root_->node];
+
+  return *this;
+}
+
+RootedTree::RootedTree(const Tree& T,int r)
+  :Tree(T),root_(nodes_[r])
+{ }
+
+RootedTree::RootedTree(const RootedTree& RT)
+  :Tree(RT),root_(nodes_[RT.root_->node])
+{ }
+
+RootedTree::RootedTree(const RootedTree& t1, const RootedTree& t2) 
+  :Tree(t1),root_(nodes_[t1.root_->node])
+{
+  merge_tree(root(), t2, t2.root());
+}
+
+RootedTree add_root(Tree T,int b) {
+  T.create_node_on_branch(b);
+  return RootedTree(T,T.n_nodes()-1);
+}
+
+Tree remove_root(const RootedTree& RT) {
+  Tree T = RT;
+  T.remove_node_from_branch(RT.root());
+  return T;
 }
 

@@ -4,46 +4,39 @@
 #include "util.H"
 
 double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) {
-  double p = 0.0;
-
-  for(int column=0;column < A.length();column++) {
-    bool present = false;
-    for(int i=0;i<nodes.size();i++) {
-      if (not A.gap(column,nodes[i]))
-	present = true;
-    }
-    if (present) continue;
-
-    p += substitution::Pr(A, P.T, P.SModel(), P, column);
-  }
+  double p = substitution::other_subst(A,P,nodes);
 
   return p/P.Temp;
 }
 
 double other_prior(const alignment& A, const Parameters& P,const vector<int>& nodes) {
-  const tree& T = P.T;
+  const Tree& T = P.T;
 
-  double p = 0.0;
+  double p = 0;
 
   // Add in the branch alignments
-  for(int b=0;b<T.branches();b++) {
-    int parent = T.branch(b).parent();
-    int child = T.branch(b).child();
+  for(int b=0;b<T.n_branches();b++) {
+    int target = T.branch(b).target();
+    int source = T.branch(b).source();
 
-    if (includes(nodes,parent) and includes(nodes,child))
+    if (includes(nodes,target) and includes(nodes,source))
       continue;
 
-    p += prior_branch(A,P.branch_HMMs[b],parent,child);
+    p += prior_branch(A,P.branch_HMMs[b],target,source);
   }
 
 
   // Add in the node length corrections
-  for(int n=0;n<T.num_nodes()-1;n++) {
-    if (T.leaf_node(n))
+  for(int n=0;n<T.n_nodes();n++) {
+    if (T[n].is_leaf_node())
       continue;
 
     if (includes(nodes,n)) {
-      vector<int> neighbors = T.neighbors(n);
+      vector<const_nodeview> neighbors_NV;
+      append(T[n].neighbors(),neighbors_NV);
+      vector<int> neighbors(neighbors_NV.size());
+      for(int i=0;i<neighbors.size();i++)
+	neighbors[i] = neighbors_NV[i];
       if (includes(nodes,neighbors))
 	continue;
     }
@@ -58,7 +51,8 @@ double other_prior(const alignment& A, const Parameters& P,const vector<int>& no
 
 /// Distributions function for a star tree
 vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
-				    const vector<int>& seq,int root,const valarray<bool>& group) {
+				    const vector<int>& seq,int root,const valarray<bool>& group)
+{
   const alphabet& a = A.get_alphabet();
   const substitution::MultiModel& MModel = P.SModel();
   const SequenceTree& T = P.T;
@@ -72,7 +66,7 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
       for(int l=0;l<a.size();l++)
 	dist[column](m,l) = 1.0;
 
-      for(int n=0;n<T.leaves();n++) {
+      for(int n=0;n<T.n_leaves();n++) {
 	if (not group[n]) continue;
 
 	int letter = A(seq[column],n);
@@ -94,30 +88,28 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 
 
 /// Distributions function for a full tree
-vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
-				    const vector<int>& seq,int root,const valarray<bool>& group) {
-  const alphabet& a = A.get_alphabet();
-  const substitution::MultiModel& MModel = P.SModel();
+vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const vector<int>& seq,int root,const valarray<bool>& group)
+{
+  const Tree& T = P.T;
 
-  vector< Matrix > dist(seq.size(), Matrix(MModel.n_base_models(),a.size()) );
+  vector<int> branches;
+  vector<const_nodeview> neighbors;
+  append(T[root].neighbors(),neighbors);
+  for(int i=0;i<neighbors.size();i++)
+    if (group[neighbors[i]])
+      branches.push_back(T.directed_branch(neighbors[i],root));
 
-  for(int i=0;i<dist.size();i++) {
-    vector<int> residues(A.size2());
-    for(int j=0;j<residues.size();j++)
-      residues[j] = A(seq[i],j);
-
-    for(int m=0;m<MModel.n_base_models();m++) {
-      valarray<double> temp = substitution::peel(residues,
-						 P.T,
-						 MModel.base_model(m),
-						 P.transition_P(m),
-						 root,group);
-      for(int l=0;l<a.size();l++)
-	dist[i](m,l) = temp[l];
-    }
-
-    // note: we could normalize frequencies to sum to 1
+  vector<int> required;
+  if (group[root])
+    required.push_back(root);
+  else {
+    for(int i=0;i<branches.size();i++)
+      required.push_back(T.directed_branch(branches[i]).source());
   }
+
+  vector< Matrix > dist = substitution::get_column_likelihoods(A,P,branches,required,seq);
+  // note: we could normalize frequencies to sum to 1
+  assert(dist.size() == seq.size());
 
   return dist;
 }
@@ -129,7 +121,7 @@ void check_match_P(const alignment& A,const Parameters& P, double OS, double OP,
 
   double qs = Matrices.path_Q_subst(path_g) + OS;
   double ls = P.likelihood(A,P);
-
+  
   double qpGQ = Matrices.path_GQ_path(path_g) + Matrices.generalize_P(path);
   double qpQ  = Matrices.path_Q_path(path);
   std::cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
@@ -148,7 +140,8 @@ void check_match_P(const alignment& A,const Parameters& P, double OS, double OP,
 
   if ( (std::abs(qs - ls) > 1.0e-9) or (std::abs(qp - lp) > 1.0e-9) or (std::abs(qt - lt) > 1.0e-9)) {
     std::cerr<<A<<endl;
-    throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
+    std::cerr<<"Can't match up DP probabilities to real probabilities!\n";
+    std::abort();
   }
 
 }

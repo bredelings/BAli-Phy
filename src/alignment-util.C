@@ -97,8 +97,8 @@ bool bit_set(const valarray<bool>& v) {
 
 
 /// Check that any two present nodes are connected by a path of present nodes
-bool all_characters_connected(const tree& T,valarray<bool> present,const vector<int>& _ignore) {
-  assert(present.size() == T.n_nodes()-1);
+bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<int>& _ignore) {
+  assert(present.size() == T.n_nodes());
 
   //--------- set the ignored nodes to 'not present' -----------//
   valarray<bool> ignore(false,present.size());
@@ -109,12 +109,13 @@ bool all_characters_connected(const tree& T,valarray<bool> present,const vector<
   }
 
   //---------- for each internal node... -------------//
-  for(int n1=T.leaves(); n1<T.n_nodes()-1; n1++) {
+  for(int n1=T.n_leaves(); n1<T.n_nodes(); n1++) {
 
     if (present[n1] or ignore[n1]) continue;
       
     //------- if it is '-' and not ignored ... -------//
-    vector<int> neighbors = T.neighbors(n1);
+    vector<const_nodeview> neighbors;
+    append(T[n1].neighbors(),neighbors);
     assert(neighbors.size() == 3);
 
     //---- check the three attatched subtrees ... ----//
@@ -132,6 +133,7 @@ bool all_characters_connected(const tree& T,valarray<bool> present,const vector<
   return true;
 }
 
+
 bool letters_OK(const alignment& A) {
   const alphabet& a = A.get_alphabet();
 
@@ -143,4 +145,57 @@ bool letters_OK(const alignment& A) {
 	std::cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<std::endl;
       }
   return not bad;
+}
+
+vector<const_branchview> branches_toward_from_node(const Tree& T,int n) {
+  vector<const_branchview> branches;
+  branches.reserve(2*T.n_branches());
+
+  branches = branches_from_node(T,n);
+  std::reverse(branches.begin(),branches.end());
+  for(int i=0;i<T.n_branches();i++)
+    branches.push_back(branches[i]);
+
+  for(int i=0;i<T.n_branches();i++)
+    branches[i] = branches[branches.size()-1-i].reverse();
+
+  return branches; 
+}
+
+
+ublas::matrix<int> get_SM(const alignment& A,const Tree& T) {
+  ublas::matrix<int> SM(A.length(),2*T.n_branches());
+    
+  vector<const_branchview> branches = branches_toward_from_node(T,T.n_nodes()-1);
+
+  // Compute the sub-alignments
+  vector<const_branchview> temp;temp.reserve(2);
+  for(int i=0;i<branches.size();i++) {
+    int b = branches[i];
+
+
+    int l=0;
+    for(int c=0;c<SM.size1();c++) {
+      SM(c,b) = alphabet::gap;
+
+      // for leaf branches fill from the alignment
+      if (branches[i].source().is_leaf_node()) {
+	if (not A.gap(c,b))
+	  SM(c,b) = l++;
+      }
+
+      // for internal branches fill from the previous branches
+      else {
+	temp.clear();
+	append(T.directed_branch(b).branches_before(),temp);
+	assert(temp.size() == 2);
+
+	if (SM(c,temp[0]) != -1 or SM(c,temp[1]) != -1)
+	  SM(c,b) = l++;
+      }
+
+    }
+  }
+
+  return SM;
 }

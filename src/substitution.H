@@ -7,32 +7,21 @@ class MatCache;
 #include "matcache.H"
 class Parameters;
 #include "parameters.H"
+#include "substitution-cache.H"
 
 namespace substitution {
 
-  /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
-  std::valarray<double> peel(const vector<int>&,const tree&,const ReversibleModel&, 
-			     const vector<Matrix>&,int,const std::valarray<bool>& group);
-
-  /// Column likelihood - for a specific rate
-  double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
-	    const vector<Matrix>& transition_P);
-
-  /// Full Likelihood of one column
-  double Pr(const alignment& A, const tree& T, const MultiModel& SModel, const MatCache& SM,int);
-
-  /// Full Likelihood - all columns, all rates
-  double Pr(const alignment& A, const tree& T, const MultiModel& SModel, const MatCache& MC);
+  /// Find the probabilities of all the data give each letter at the root
+  vector<Matrix>
+  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
+			 const vector<int>& req, const vector<int>& seq);
 
   /// Full likelihood - all columns, all rates
   double Pr(const alignment& A, const Parameters& P);
 
+  double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes);
 
-  // Column likelihood - specific rate (star tree)
-  double Pr_star(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
-		 const vector<Matrix>& transition_P);
-  // Full likelihood - all columns, all rates (star tree)
-  double Pr_star(const alignment& A, const tree& T, const MultiModel& MModel, const MatCache& MC);
+  double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& LC);
 
   // Full likelihood - all columns, all rates (star tree)
   double Pr_star(const alignment& A,const Parameters& P);

@@ -37,9 +37,4 @@ double likelihood3(const alignment& A,const Parameters& P);
 double probability3(const alignment& A,const Parameters& P);
 
 
-// -------- Topology counting functions ------ //
-double log_num_branches(int n);
-double log_num_topologies(int n);
-double log_num_topologies_in_partition(int n1, int n2);
-
 #endif

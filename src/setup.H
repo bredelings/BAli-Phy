@@ -27,7 +27,7 @@ void load_T(Arguments& args,const alignment& A,SequenceTree& T,bool random_tree_
 void check_internal_sequences_composition(const alignment& A,int n_leaves);
 
 /// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const tree& T,const vector<int>& ignore=vector<int>());
+void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore=vector<int>());
 
 /// Hook up the leaf nodes of T to the leaf of A
 /// Also, make sure that A has the right number of internal sequences.

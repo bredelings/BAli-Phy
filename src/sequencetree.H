@@ -7,16 +7,12 @@
 #include "tree.H"
 
 
-/***************** class SequenceTree ****************/
-class SequenceTree: public tree {
-  std::vector<std::string> sequences;
-  std::string write(int n,bool) const;
-
+//----------------- class SequenceTree ----------------//
+class SequenceSet {
 protected:
-  void remove_subtree(node*);
+  std::vector<std::string> sequences;
 
 public:
-  void remove_subtree(int i) {return tree::remove_subtree(i);}
 
   std::string& seq(int i) {return sequences[i];}
   const std::string& seq(int i) const {return sequences[i];}
@@ -24,10 +20,32 @@ public:
   std::vector<std::string>& get_sequences() {return sequences;}
   const std::vector<std::string>& get_sequences() const {return sequences;}
 
-  std::vector<int> standardize(bool=true);
-  std::vector<int> standardize(const std::vector<int>&,bool=true);
-
   int index(const std::string&) const;
+};
+
+class SequenceTree: public Tree, public SequenceSet {
+public:
+  /// remove a subtree - SequenceTree variance duplicated  in both {U,R}SequenceTree
+  nodeview prune_subtree(int b);
+
+  /// standardize - SequenceTree variance duplicated  in both {U,R}SequenceTree
+  std::vector<int> standardize();
+  std::vector<int> standardize(const std::vector<int>&);
+
+  SequenceTree() {}
+  explicit SequenceTree(const class RootedSequenceTree&);
+};
+
+class RootedSequenceTree: public RootedTree, public SequenceSet {
+  std::string write(const_branchview,bool) const;
+
+public:
+  /// remove a subtree - SequenceTree variance duplicated  in both {U,R}SequenceTree
+  nodeview prune_subtree(int b);
+
+  /// standardize - SequenceTree variance duplicated  in both {U,R}SequenceTree
+  std::vector<int> standardize();
+  std::vector<int> standardize(const std::vector<int>&);
 
   std::string write(bool=true) const;
 
@@ -35,29 +53,31 @@ public:
   void read(std::istream&);
   void parse(const std::string&);
 
-  SequenceTree() {}
-  SequenceTree(const std::string& s);
-  SequenceTree(const SequenceTree& T1, const SequenceTree& T2);
-  SequenceTree(const SequenceTree& T1, double b1,const SequenceTree& T2,double b2);
+  RootedSequenceTree() {}
+  explicit RootedSequenceTree(std::istream&);   //load a tree from a file
+  explicit RootedSequenceTree(const std::string& s);
+  RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2);
 
-  SequenceTree(std::istream&);   //load a tree from a file
-  virtual ~SequenceTree() {}
+  //conversions...
+  explicit  RootedSequenceTree(const SequenceTree&,int r);
+
+  ~RootedSequenceTree() {}
 };
 
-inline SequenceTree operator+(const SequenceTree& t1,const SequenceTree& t2) {
-  SequenceTree t3(t1,t2);
+RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTree& t2);
 
-  return t3;
-}
+RootedSequenceTree add_root(SequenceTree,int b);
+SequenceTree remove_root(const RootedSequenceTree&);
 
-inline std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
-  return o<<T.write();
-}
+std::ostream& operator <<(std::ostream& o,const SequenceTree& T);
+std::ostream& operator <<(std::ostream& o,const RootedSequenceTree& T);
 
 bool same_topology(const SequenceTree&,const SequenceTree&);
 
 SequenceTree RandomTree(const std::vector<std::string>&,double=1.0);
 
 void delete_node(SequenceTree& T,const std::string& name);
+
+SequenceTree remove_root_branch(RootedSequenceTree RT);
 
 #endif

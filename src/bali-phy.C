@@ -40,18 +40,18 @@ void do_showonly(const alignment& A,const Parameters& P) {
 void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterations) {
 
   // args for branch-based stuff
-  vector<int> branches(P.T.branches());
+  vector<int> branches(P.T.n_branches());
   for(int i=0;i<branches.size();i++)
     branches[i] = i;
 
   // args for branch-based stuff
   vector<int> internal_nodes;
-  for(int i=P.T.leaves();i<P.T.num_nodes()-1;i++)
+  for(int i=P.T.n_leaves();i<P.T.n_nodes();i++)
     internal_nodes.push_back(i);
 
   // args for branch-based stuff
   vector<int> internal_branches;
-  for(int i=P.T.leaves();i<P.T.branches();i++)
+  for(int i=P.T.n_leaves();i<P.T.n_branches();i++)
     internal_branches.push_back(i);
 
   using namespace MCMC;
@@ -66,7 +66,7 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 					   sample_alignments_one,
 					   branches)
 			     );
-  if (P.T.leaves() >2) {
+  if (P.T.n_leaves() >2) {
     alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri:alignment:alignment_branch:nodes",
 						 sample_tri_one,
 						 branches)
@@ -80,12 +80,12 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   //---------- alignment::nodes_master (nodes_moves) ----------//
   MoveEach nodes_moves("nodes_master:nodes");
-  if (P.T.leaves() >= 3)
+  if (P.T.n_leaves() >= 3)
     nodes_moves.add(10,MoveArgSingle("sample_node:alignment:nodes",
 				   sample_node_move,
 				   internal_nodes)
 		   );
-  if (P.T.leaves() >= 4)
+  if (P.T.n_leaves() >= 4)
     nodes_moves.add(1,MoveArgSingle("sample_two_nodes:alignment:nodes",
 				   sample_two_nodes_move,
 				   internal_nodes)
@@ -120,11 +120,6 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				    internal_branches)
 		    ,false
 		    );
-  NNI_move.add(1,MoveArgSingle("two_way_NNI2:alignment:nodes:topology",
-				    two_way_topology_sample2,
-				    internal_branches)
-		    ,false
-		    );
 
   //FIXME - doesn't yet deal with gaps=star
   if (P.IModel().full_tree)
@@ -146,9 +141,9 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				 branches)
 		 );
 
-  topology_move.add(1,NNI_move);
+  topology_move.add(1,NNI_move,false);
   topology_move.add(0.04,SPR_move);
-  if (P.T.leaves() >3 and P.SModel().full_tree)
+  if (P.T.n_leaves() >3 and P.SModel().full_tree)
     tree_moves.add(1,topology_move);
   
   //-------------- tree::lengths (length_moves) -------------//
@@ -159,24 +154,25 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 				   change_branch_length_move,
 				   branches)
 		   );
+  length_moves1.add(1,MoveArgSingle("change_branch_length_multi:lengths",
+				   change_branch_length_multi_move,
+				   branches)
+		   );
   if (P.SModel().full_tree)
     length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T:lengths:nodes:topology",
 					change_branch_length_and_T,
 					internal_branches)
 		      );
   length_moves.add(1,length_moves1);
-  if (P.SModel().full_tree)
-    length_moves.add(1,MoveArgSingle("slide_branch_length:lengths",
-				     slide_branch_lengths_one,
-				     branches)
-		     );
-  tree_moves.add(2,length_moves);
+
+  tree_moves.add(1,length_moves,false);
+  tree_moves.add(1,SingleMove(sample_NNI_and_branch_lengths,"NNI_and_lengths:topology:lengths"));
 
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
-  parameter_moves.add(4+P.T.branches()/8,SingleMove(change_parameters,"s_parameters:parameters"));
-  parameter_moves.add(8+P.T.branches()/4,SingleMove(change_gap_parameters,"g_parameters:parameters"));
-  parameter_moves.add(4+P.T.branches()/8,SingleMove(sample_frequencies,"frequencies:parameters"));
+  parameter_moves.add(4+P.T.n_branches()/8,SingleMove(change_parameters,"s_parameters:parameters"));
+  parameter_moves.add(8+P.T.n_branches()/4,SingleMove(change_gap_parameters,"g_parameters:parameters"));
+  parameter_moves.add(4+P.T.n_branches()/8,SingleMove(sample_frequencies,"frequencies:parameters"));
   
 
   int subsample = args.loadvalue("subsample",1);
@@ -253,7 +249,7 @@ int main(int argc,char* argv[]) {
 	temp.close();
       else {
 	std::cerr<<"Warning: couldn't open file '"<<filename<<"'"<<std::endl;
-	std::cerr<<"         Is '"<<args["datadir"]<<"' a valid Data/ directory?\n";
+	std::cerr<<"         Is '"<<args["datadir"]<<"' a valid Data/ directory?\n\n";
       }
     }
 
@@ -272,8 +268,8 @@ int main(int argc,char* argv[]) {
     OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
     
     if (not full_smodel->full_tree)
-      for(int i=T.leaves();i<T.branches();i++)
-	T.branch(i).length() = 0;
+      for(int i=T.n_leaves();i<T.n_branches();i++)
+	T.branch(i).set_length(0);
 
     //-------------Choose an indel model--------------//
     OwnedPointer<IndelModel> imodel = get_imodel(args);
@@ -324,6 +320,7 @@ int main(int argc,char* argv[]) {
     else {
       long int max_iterations = args.loadvalue("iterations",(long int)1000000);
 
+      P.LC.set_length(A.length());
       do_sampling(args,A,P,max_iterations);
     }
   }

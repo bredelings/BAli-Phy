@@ -40,7 +40,7 @@ using namespace A5;
 
 DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
 
-  const tree& T = P.T;
+  const Tree& T = P.T;
   alignment old = A;
 
   //  std::cerr<<"old = "<<old<<endl;
@@ -108,11 +108,11 @@ DParrayConstrained sample_two_nodes_base(alignment& A,const Parameters& P,const 
   
   // Create the transition matrix first using just the current, fixed ordering
   vector<int> branches(5);
-  branches[0] = T.find_branch(nodes[0],nodes[4]);
-  branches[1] = T.find_branch(nodes[1],nodes[4]);
-  branches[2] = T.find_branch(nodes[2],nodes[5]);
-  branches[3] = T.find_branch(nodes[3],nodes[5]);
-  branches[4] = T.find_branch(nodes[4],nodes[5]);
+  branches[0] = T.branch(nodes[0],nodes[4]);
+  branches[1] = T.branch(nodes[1],nodes[4]);
+  branches[2] = T.branch(nodes[2],nodes[5]);
+  branches[3] = T.branch(nodes[3],nodes[5]);
+  branches[4] = T.branch(nodes[4],nodes[5]);
   const eMatrix Q = createQ(P.branch_HMMs,branches,A5::states_list);
   vector<efloat_t> start_P = get_start_P(P.branch_HMMs,branches,A5::states_list);
 
@@ -201,18 +201,26 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
   
   //----------- Generate the different states and Matrices ---------//
 
+  Parameters P_save = p[0];
+
   vector<alignment> a(p.size(),A);
 
   vector< DParrayConstrained > Matrices;
-  for(int i=0;i<p.size();i++)
+  for(int i=0;i<p.size();i++) {
     Matrices.push_back( sample_two_nodes_base(a[i],p[i],nodes[i]) );
+    p[i].LC.invalidate_node(p[i].T,nodes[i][4]);
+    p[i].LC.invalidate_node(p[i].T,nodes[i][5]);
+#ifndef NDEBUG
+    p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
+#endif
+  }
 
   //-------- Calculate corrections to path probabilities ---------//
 
   vector<double> OS(p.size(),0);
   vector<double> OP(p.size(),0);
   for(int i=0; i<p.size(); i++) {
-    if (do_OS)
+    if (do_OS) 
       OS[i] = p[i].likelihood(a[i],p[i]);
     if (do_OP)
       OP[i] = other_prior(a[i],p[i],nodes[i]);
@@ -229,7 +237,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore(false,p[0].T.n_nodes()-1);
+  valarray<bool> ignore(false,p[0].T.n_nodes());
   ignore[ nodes[0][4] ] = true;
   ignore[ nodes[0][5] ] = true;
 
@@ -244,7 +252,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
 
   // Add another entry for the incoming configuration
   a.push_back( A );
-  p.push_back( p[0] );
+  p.push_back( P_save );
   nodes.push_back(nodes[0]);
   Matrices.push_back( Matrices[0] );
   OS.push_back( OS[0] );
@@ -298,8 +306,9 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
       
       std::cerr<<A5::project(a.back(),nodes.back());
       std::cerr<<A5::project(a[C],nodes[C]);
-      
-      throw myexception()<<__PRETTY_FUNCTION__<<": sampling probabilities were incorrect";
+
+      std::cerr<<"sampling probabilities were incorrect"<<std::endl;
+      std::abort();
     }
   }
 #endif
@@ -316,15 +325,14 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
     if (success)
       p[0] = p[C];
   }
+  else
+    p[0] = P_save;
 
   return success;
 }
 
 
-alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
-
-
-  alignment A = old;
+void sample_two_nodes(alignment& A, Parameters& P,int b) {
 
   vector<Parameters> p(1,P);
 
@@ -332,6 +340,5 @@ alignment sample_two_nodes(const alignment& old, const Parameters& P,int b) {
   nodes[0] = A5::get_nodes_random(P.T,b);
 
   sample_two_nodes_multi(A,p,nodes,false,false);
-
-  return A;
+  P = p[0];
 }

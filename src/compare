@@ -138,3 +138,245 @@ New times for 1.8.14-B (after svn import, and SPR fix)
  - 3m48.77 [3.4.1]
  - 5min    [3.5.0 7/5/2004] (??? do I need "--disable-checking" ?)
  - 3m45.76 [3.4.1]
+
+
+----------------------------------------------
+1.8.23-tree-NDEBUG.1 @ dna
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
+
+real    0m16.207s
+user    0m15.510s
+sys     0m0.600s
+
+real    0m16.133s
+user    0m15.530s
+sys     0m0.540s
+
+real    0m16.116s
+user    0m15.460s
+sys     0m0.610s
+
+----------------------------------------------
+1.8.23-tree-NDEBUG.2 @ dna
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.2 seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
+
+real    0m14.895s
+user    0m14.290s
+sys     0m0.570s
+
+real    0m14.921s
+user    0m14.300s
+sys     0m0.540s
+
+real    0m14.893s
+user    0m14.210s
+sys     0m0.620s
+
+----------------------------------------------
+1.8.23-NDEBUG.3 @ dna
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.3 seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
+
+real    0m12.421s
+user    0m11.860s
+sys     0m0.560s
+
+real    0m12.481s
+user    0m12.000s
+sys     0m0.440s
+
+real    0m12.644s
+user    0m11.880s
+sys     0m0.520s
+
+----------------------------------------------
+1.8.23-NDEBUG.4 @ dna
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.3 seed=0 align=Data/5S-rRNA/5d.fasta disable=topology:alignment:g_parameters iterations=500 >out 2>err
+
+real    0m8.728s
+user    0m8.050s
+sys     0m0.680s
+
+real    0m8.745s
+user    0m8.290s
+sys     0m0.430s
+
+real    0m8.723s
+user    0m8.160s
+sys     0m0.540s
+
+
+EF-Tu/5d: .1 -> .4   @ dna
+12.6->8.7
+
+EF-Tu/12d: .1 -> .4  @ dna
+17.5->13.4
+
+---------------------------
+1.8.23-tree-NDEBUG.5
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.5 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=alignment:topology:g_parameters:change_branch_length >out 2>err
+
+real    0m21.544s
+user    0m16.720s
+sys     0m4.220s
+
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.5 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=alignment:topology:g_parameters:change_branch_length_cached >out 2>err
+
+real    0m13.476s
+user    0m13.360s
+sys     0m0.100s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.5 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length_cached gaps=star >out 2>err
+
+real    0m17.026s
+user    0m16.810s
+sys     0m0.080s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.5 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length gaps=star >out 2>err
+
+real    0m12.983s
+user    0m12.940s
+sys     0m0.040s
+
+---------------------------
+1.8.23-tree-NDEBUG.6
+
+used RefMatrix (a reference-counted Matrix) and 
+performed badly - due to too much memory allocation (
+
+---------------------------
+1.8.23-tree-NDEBUG.7 - OK, we've definate lost some time on the non-cached case here.
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length_cached gaps=star >out 2>err
+
+real    0m17.681s
+user    0m17.560s
+sys     0m0.070s
+
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length gaps=star >out 2>err
+
+real    0m9.084s
+user    0m9.020s
+sys     0m0.060s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length:frequencies:s_parameters gaps=star >out 2>err
+
+real    0m8.564s
+user    0m8.530s
+sys     0m0.030s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=parameters:change_branch_length:SPR gaps=star >out 2>err
+
+real    0m8.039s
+user    0m7.930s
+sys     0m0.040s
+
+
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=20 disable=g_parameters:change_branch_length_cached gaps=star >out 2>err
+
+real    0m35.240s
+user    0m35.070s
+sys     0m0.140s
+
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.7 seed=0 align=Data/EF-Tu/12d.fasta iterations=20 disable=g_parameters:change_branch_length gaps=star >out 2>err
+
+real    0m18.307s
+user    0m18.200s
+sys     0m0.100s
+
+---------------------------
+1.8.23-tree-NDEBUG.8 - we forgot to set the root correctly before this!!!!!
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.8 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length_cache gaps=star >out 2>err
+
+real    0m12.267s
+user    0m12.160s
+sys     0m0.050s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.8 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length gaps=star >out 2>err
+
+real    0m7.210s
+user    0m7.130s
+sys     0m0.070s
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.8 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=parameters:change_branch_length:SPR gaps=star >out 2>err
+
+real    0m6.038s
+user    0m5.950s
+sys     0m0.080s
+
+
+BUG!!!  Add an assert for this case?
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.8 seed=0 align=Data/EF-Tu/24b.fasta iterations=10 disable=g_parameters gaps=star >out 2>err
+Segmentation fault
+
+real    0m0.346s
+user    0m0.330s
+sys     0m0.010s
+
+
+
+(GOOD!  Pr matches Pr-good :)
+
+---------------------------
+1.8.23-tree-NDEBUG.8 - we forgot to set the root correctly before this!!!!!
+
+time ~/bin/bali-phy/1.8.23-tree-NDEBUG.8 seed=0 align=Data/EF-Tu/12d.fasta iterations=10 disable=g_parameters:change_branch_length_cached gaps=star >out 2>err 
+real    0m21.690s
+user    0m21.550s
+sys     0m0.140s
+
+
+Big regression from 16.8! (3.5 seconds)
+
+---------------------------
+
+
+Also: write out the size of peeling:operations!
+
+Cache Eigenvalues in 
+
+
+
+
+---------------------------
+1.8.23-tree-NDEBUG.13 --- reduce copying in the exponential function!
+
+
+
+
+DISADVANTAGE to putting the operations close together?
+3.8 -> 4.1 (12)
+11.4->11.8 (24)
+35.8->43   (48)
+
+Routines to cut:  prior_branch()  12%
+Can I simply call prior() less often?
+
+542-likelihood-NDEBUG:  (we haven't even sped up calc-root likelihood yet!)
+
+0.14(5/5S)
+1.12(5)
+3.9 (12)
+10.2(24)  (10.24 -> 10.0 or 10.05 w/ disable=g_parameters)
+31.6(48)
+Actually, I made a small change, so the above will actually be r543
+
+
+549-likelihood-NDEBUG
+
+0.19 (5/5S-rRNA)
+0.89 (5)
+3.06 (12)
+8.25 (24)
+26.13 (48)
+
+There is still some non-linear scaling: based on (5), (48) should be about 8.54

@@ -82,7 +82,7 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
-  for(int i=0;i<P.T.leaves();i++) {
+  for(int i=0;i<P.T.n_leaves();i++) {
     vector<int> s;
     for(int column=0;column<A.length();column++)
       if (not A.gap(column,i))
@@ -316,6 +316,12 @@ void MoveOne::getorder(double l) {
   }
 }
 
+  int SingleMove::reset(double lambda) {
+    int l = (int)lambda;
+    lambda -= l;
+    return l + poisson(lambda);
+  }
+
 result_t SingleMove::iterate(alignment& A,Parameters& P,int) 
 {
   cerr<<" [single]move = "<<attributes[0]<<endl;
@@ -413,7 +419,6 @@ double MoveEach::sum(int arg) const {
     if (submove_has_arg(i,arg) and moves[i]->enabled())
       total += lambda[i];
 
-  assert(total > 0);
   return total;
 }
 
@@ -424,7 +429,11 @@ int MoveEach::choose(int arg) const {
 
   double sum = 0;
   int i = 0;
+  int enabled_submoves=0;
   for(;i < moves.size();i++) {
+
+    if (moves[i]->enabled())
+      enabled_submoves++;
 
     if (not submove_has_arg(i,arg) or not moves[i]->enabled())
       continue;
@@ -432,6 +441,9 @@ int MoveEach::choose(int arg) const {
     sum += lambda[i];
     if (r<sum) break;
   }
+
+  if (not enabled_submoves)
+    throw myexception()<<"move "<<attributes[0]<<" has no enabled submoves";
 
   // is sum(arg) > 0 ?
   if (i >= moves.size())
@@ -494,13 +506,13 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   bool MAP_printed = true;
 
   // make sure that the Alignment and Tree are linked
-  assert(A.num_sequences() == T.num_nodes()-1);
-  for(int i=0;i<T.leaves();i++)
+  assert(A.num_sequences() == T.n_nodes());
+  for(int i=0;i<T.n_leaves();i++)
     assert(T.seq(i) == A.seq(i).name);
   
   /*--------- Determine some values for this chain -----------*/
   if (subsample <= 0)
-    subsample = 2*int(log(T.leaves()))+1;
+    subsample = 2*int(log(T.n_leaves()))+1;
 
   int total_samples = 0;
 

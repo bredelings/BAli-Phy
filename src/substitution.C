@@ -2,8 +2,14 @@
 #include "rng.H"
 #include <cmath>
 #include <valarray>
+#include <vector>
+
+// recalculate a likelihood immediate afterwards, and see if we get the same answer...
+// perhaps move the collection root node one branch away?
+// then we have to do re-validation...
 
 using std::valarray;
+using std::vector;
 
 // This file assumes that 
 // * the matrix is reversible.  This means that we evaluate
@@ -15,378 +21,536 @@ using std::valarray;
 // * 
 namespace substitution {
 
-  // 1. make an inner 'peel' that <distributions> as a parameter
-  //   a. this contains the info from 'residues' and 'group'
-  // 2. alter 'peel' to go over the whole tree
-  //   a. to do half the tree, only send in half the info
 
-  // (dist.size()==0) does not mean "gap", but means no info so far.
+  struct peeling_info: public vector<int> {
+    peeling_info(const Tree&T) { reserve(T.n_branches()); }
+  };
 
-  // If we are going to return distributions(root), then we must make sure
-  //  that there is no information there from the WRONG side of the tree
+  typedef Likelihood_Cache& column_cache_t;
 
-
-  // things to do:  (look at Sampler Todo.sxw)
-  // 1. Make the distributions(i) never change size - use a vector<int> or vector<bool>
-  //    to store whether or not things have information.
-  // 2. Then separate out part of the routine as an inline function, to which 'distributions'
-  //    is passed.   (change 'distributions' into a matrix?)
-  // 3. Make the 'branches' array not depend on 'group'...
-  //    In the common case (doing the full tree) this might be a speedup...
-
-  /// Actually propogate info along branches
-
-  inline void peel(const vector<int>& branches, valarray<bool>& used,
-		   Matrix& distributions,
-		   const vector<int>& residues, const tree& T, 
-		   const vector<Matrix>& transition_P,int root) 
+  /// move increment indexes for nodes 'source' in column 'c' of 'A'
+  inline int inc(int& index,const vector<int>& mask, 
+		 const alignment& A,int c) 
   {
-    const int asize = distributions.size2();
+    int ret = alphabet::gap;
+    for(int i=0;i<mask.size();i++)
+      if (not A.gap(c,mask[i])) {
+	index++;
+	ret = index;
+	break;
+      }
+    return ret;
+  }
 
-    for(int i=0;i<branches.size();i++) {
-      int b = branches[i];
-      int child = T.branch(b).child();
-      int parent = T.branch(b).parent();
+  ublas::matrix<int> subA_index(const vector<int>& b,const alignment& A,const Tree& T) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA(A.length(),b.size());
+
+    // get criteria for being in a sub-A
+    vector<vector<int> > leaves;
+    for(int i=0;i<b.size();i++) {
+      leaves.push_back(vector<int>());
+      leaves.back().reserve(A.size2());
+      valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
+      for(int i=0;i<T.n_leaves();i++)
+	if (p[i]) leaves.back().push_back(i);
+    }
       
-      // Are we going up or down the branch?
-      if (T.ancestor(child,root))
-	std::swap(child,parent);
+    // declare the index for the nodes
+    vector<int> index(b.size(),-1);
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+      bool empty=true;
+      for(int j=0;j<b.size();j++) {
+	subA(l,j) = inc(index[j],leaves[j],A,c);
+	if (subA(l,j) != alphabet::gap) empty=false;
+      }
+      if (not empty) l++;
+    }
 
-      // Skip if no info going out
-      if (not used[child]) continue;
+    //resize the matrix, and send it back...
+    ublas::matrix<int> temp(l,b.size());
+    for(int i=0;i<temp.size1();i++)
+      for(int j=0;j<temp.size2();j++)
+	temp(i,j) = subA(i,j);
+    
+    return temp;
+  }
 
-      // Propogate info along branch
-      const Matrix& Q = transition_P[b];
-      if (alphabet::letter(residues[child])) 
-	for(int i=0;i<asize;i++)
-	  distributions(parent,i) *= Q(i,residues[child])*distributions(child,residues[child]);
-      else {
-	for(int i=0;i<asize;i++) {
-	  double temp=0;
-	  for(int j=0;j<asize;j++)
-	    temp += Q(i,j)*distributions(child,j);
-	  distributions(parent,i) *= temp;
+
+  ublas::matrix<int> subA_index_req(const vector<int>& b,const alignment& A,const Tree& T,
+				    const vector<int>& req) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA(A.length(),b.size());
+
+    // get criteria for being in a sub-A
+    vector<vector<int> > leaves;
+    for(int i=0;i<b.size();i++) {
+      leaves.push_back(vector<int>());
+      leaves.back().reserve(A.size2());
+      valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
+      for(int i=0;i<T.n_leaves();i++)
+	if (p[i]) leaves.back().push_back(i);
+    }
+      
+    // declare the index for the nodes
+    vector<int> index(b.size(),-1);
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+
+      // write the indices for sub-alignments into the current column
+      for(int j=0;j<b.size();j++)
+	subA(l,j) = inc(index[j],leaves[j],A,c);
+
+      // check to see if we have a REQUIRED node here.
+      bool empty=true;
+      for(int j=0;j<req.size();j++) {
+	if (not A.gap(c,req[j])) {
+	  empty = false;
+	  break;
+	}
+      }
+      if (not empty) l++;
+    }
+
+    //resize the matrix, and send it back...
+    ublas::matrix<int> temp(l,b.size());
+    for(int i=0;i<temp.size1();i++)
+      for(int j=0;j<temp.size2();j++)
+	temp(i,j) = subA(i,j);
+    
+    return temp;
+  }
+
+
+  ublas::matrix<int> subA_index_req(const vector<int>& b,const alignment& A,const Tree& T,
+				    const vector<int>& req, const vector<int>& seq) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA(A.length(),b.size());
+
+    // get criteria for being in a sub-A
+    vector<vector<int> > leaves;
+    for(int i=0;i<b.size();i++) {
+      leaves.push_back(vector<int>());
+      leaves.back().reserve(A.size2());
+      valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
+      for(int i=0;i<T.n_leaves();i++)
+	if (p[i]) leaves.back().push_back(i);
+    }
+      
+    // declare the index for the nodes
+    vector<int> index(b.size(),-1);
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+
+      // write the indices for sub-alignments into the current column
+      for(int j=0;j<b.size();j++)
+	subA(c,j) = inc(index[j],leaves[j],A,c);
+
+      // check to see if we have a REQUIRED node here.
+      bool empty=true;
+      for(int j=0;j<req.size();j++) {
+	if (not A.gap(c,req[j])) {
+	  empty = false;
+	  break;
 	}
       }
 
-      // Update info at parent
-      used[parent] = true;
+      if (not empty) l++;
     }
-  }
+    assert(l == seq.size());
 
-  //  inline vector<int> get_branches(const tree& T, int root) __attribute((always_inline))
-
-  /// Compute an ordered list of branches to process
-  inline vector<int> get_branches(const tree& T, int root) {
-
-    //FIXME - walk up the tree from peeling 'root' to the tree root, 
-    // instead of computing branches2 and using 'reverse'
-    vector<int> branches1;
-    branches1.reserve(T.num_nodes());
-    vector<int> branches2;
-    branches2.reserve(T.num_nodes());
-
-    for(int i=0;i<T.num_nodes()-1;i++) {
-      int child = T.get_nth(i);
-
-      // don't propogate from the root, or non-members
-      if (child == root) continue;
-
-      // if we are above the root, then propagate down to it
-      if (child != root and T.ancestor(child,root)) {
-	int parent = T[child].left();
-	if (not T.ancestor(parent,root))
-	  parent = T[child].right();
-	int b = T.branch_up(parent);
-
-	branches2.push_back(b);
+    //resize the matrix, and send it back...
+    ublas::matrix<int> temp(l,b.size());
+    for(int i=0;i<temp.size1();i++)
+      for(int j=0;j<temp.size2();j++) {
+	temp(i,j) = subA(seq[i],j);
       }
-      // otherwise propagate up to a node that is >= the root
-      else {
-	int b = T.branch_up(child);
-	branches1.push_back(b);
-      }
-    }
-    // if (branches2.size()) {}
-    std::reverse(branches2.begin(),branches2.end());
-    branches1.insert(branches1.end(),branches2.begin(),branches2.end());
-  
-    return branches1;
+    return temp;
   }
 
 
-  /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
+  ublas::matrix<int> subA_index_other(const vector<int>& b,const alignment& A,const Tree& T,
+				      const vector<int>& exclude) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA(A.length(),b.size());
 
-  /*!
-    \param residues The letters/gaps/non-gaps at each node
-    \param T The tree
-    \param SModel The substitution Model
-    \param transition_P The transition matrices for each branch
-    \param root The node at which we are assessing the probabilities
-    \param group The nodes from which to consider info
-  */
-  valarray<double> peel(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
-			const vector<Matrix>& transition_P,int root, const valarray<bool>& group) {
-    const alphabet& a = SModel.Alphabet();
+    // get criteria for being in a sub-A
+    vector<vector<int> > leaves;
+    for(int i=0;i<b.size();i++) {
+      leaves.push_back(vector<int>());
+      leaves.back().reserve(A.size2());
+      valarray<bool> p = T.partition(T.directed_branch(b[i]).reverse());
+      for(int i=0;i<T.n_leaves();i++)
+	if (p[i]) leaves.back().push_back(i);
+    }
+      
+    // declare the index for the nodes
+    vector<int> index(b.size(),-1);
+    int l=0;
+    for(int c=0;c<A.length();c++) {
 
-    /******* Put the info from the letters into the distribution *******/
-    bool any_letters = false;
+      // write the indices for sub-alignments into the current column
+      for(int j=0;j<b.size();j++)
+	subA(l,j) = inc(index[j],leaves[j],A,c);
 
-    valarray<bool> used(false,T.num_nodes()-1);
-    Matrix distributions(T.num_nodes()-1,a.size());
-
-    for(int i=0;i<T.num_nodes()-1;i++) {
-      if (alphabet::letter(residues[i]) and group[i]) {
-	//are there ANY letters at all?
-	any_letters = true;
-
-	used[i] = true;
-
-	for(int j=0;j<a.size();j++)
-	  distributions(i,j) = 0;
-	distributions(i,residues[i]) = 1;
+      // check to see if we have a REQUIRED node here.
+      bool do_exclude=false;
+      for(int j=0;j<exclude.size();j++) {
+	if (not A.gap(c,exclude[j])) {
+	  do_exclude = true;
+	  break;
+	}
       }
-      // If we always replaced unused nodes instead of multiplying, we could remove this
-      else {
-	for(int j=0;j<a.size();j++)
-	  distributions(i,j) = 1;
-      }
+      if (not do_exclude) l++;
     }
 
-    vector<int> branches = get_branches(T,root);
-
-    peel(branches,used,distributions,residues,T,transition_P,root);
-
-    //This can only happen if none of our nodes has info
-    assert(used[root] or not any_letters);
-
-    /*----------- return the result ------------------*/
-    //FIXME - filling this valarray is costing us 2% of the CPU time!
-    valarray<double> result(a.size());
-    for(int i=0;i<a.size();i++)
-      result[i] = distributions(root,i);
-    return result;
-  }
-
-  double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
-	    const vector<Matrix>& transition_P,int root) {
-    assert(residues.size() == T.num_nodes()-1);
-
-    valarray<double> rootD = peel(residues,T,SModel,transition_P,
-				  root,valarray<bool>(true,T.num_nodes())
-				  );
-
-    rootD *= SModel.frequencies();
-
-    return rootD.sum();
-  }
-
-  double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SModel,
-	    const vector<Matrix>& transition_P) {
-
-    int root = T.get_nth(T.num_nodes()-2);
-    double p = Pr(residues,T,SModel,transition_P,root);
-
-#ifndef NDEBUG  
-    int node = myrandom(0,T.num_nodes()-1);
-    double p2 = Pr(residues,T,SModel,transition_P,node);
-
-    if (std::abs(p2-p) > 1.0e-9) {
-      for(int i=0;i<T.leaves();i++)
-	std::cerr<<SModel.Alphabet().lookup(residues[i])<<" ";
-      std::cerr<<p<<" "<<log(p)<<"     "<<p2<<"      "<<log(p2)<<endl;
-      std::abort(); //FIXME - try this check!
-    }
-#endif
-
-    // we don't get too close to zero, normally
-    assert(0 <= p and p <= 1.00000000001);
-
-    return p;
-  }
-
-
-  double Pr(const alignment& A, const tree& T, const MultiModel& MModel, const MatCache& MC,int column) {
+    //resize the matrix, and send it back...
+    ublas::matrix<int> temp(l,b.size());
+    for(int i=0;i<temp.size1();i++)
+      for(int j=0;j<temp.size2();j++)
+	temp(i,j) = subA(i,j);
     
-    vector<int> residues(A.size2());
-    for(int i=0;i<residues.size();i++)
-      residues[i] = A(column,i);
-  
-    double total=0;
+    return temp;
+  }
+
+
+  /// compute log(probability) from conditional likelihoods (S) and equilibrium frequencies as in MModel
+  double Pr(const Matrix& S,const MultiModel& MModel) {
+    const alphabet& a = MModel.Alphabet();
+
+    double total = 0;
     for(int m=0;m<MModel.n_base_models();m++) {
-      double p=0;
-      p = Pr(residues,
-	     T,
-	     MModel.base_model(m),
-	     MC.transition_P(m)
-	     );
-      p *= MModel.distribution()[m];
+      double p = 0;
 
-      total += p;
+      const valarray<double>& f = MModel.base_model(m).frequencies();
+      for(int l=0;l<a.size();l++)
+	p += S(m,l) * f[l];
+
+      // A specific model (e.g. the INV model) could be impossible
+      assert(0 <= p and p <= 1.00000000001);
+      total += p * MModel.distribution()[m];
     }
 
-    // we don't get too close to zero, normally
+    // SOME model must be possible
     assert(0 < total and total <= 1.00000000001);
-    
+
     return log(total);
   }
 
-  double Pr(const alignment& A, const tree& T, const MultiModel& MModel, const MatCache& SM) {
-    double p = 0.0;
 
-    // Do each node before its parent
-    for(int column=0;column<A.length();column++) {
-      double P = Pr(A,T,MModel,SM,column);
-      p += P;
+  double calc_root_probability(const alignment& A, const Parameters& P,const vector<int>& rb,
+			       const ublas::matrix<int>& index) 
+  {
+    const Tree& T = P.T;
+    const MultiModel& MModel = P.SModel();
+    Likelihood_Cache& cache = P.LC;
+
+    const int root = cache.root;
+
+    // scratch matrix 
+    Matrix & S = cache.scratch(0);
+    const int n_models = S.size1();
+    const int asize    = S.size2();
+
+    // cache matrix of frequencies
+    Matrix F(n_models,asize);
+    for(int m=0;m<n_models;m++) {
+      double p = MModel.distribution()[m];
+      const valarray<double>& f = MModel.base_model(m).frequencies();
+      for(int l=0;l<asize;l++) 
+	F(m,l) = f[l]*p;
     }
 
-    //    std::cerr<<" substitution: P="<<P<<std::endl;
-    return p;
+    double total = 0;
+    for(int i=0;i<index.size1();i++) {
+
+      double p_col=0;
+      for(int m=0;m<n_models;m++) {
+	double p_model = 0;
+
+	//-------------- Set letter & model prior probabilities  ---------------//
+	for(int l=0;l<asize;l++) 
+	  S(m,l) = F(m,l);
+
+	//-------------- Propagate and collect information at 'root' -----------//
+	for(int j=0;j<rb.size();j++) {
+	  int i0 = index(i,j);
+	  if (i0 != alphabet::gap)
+	    for(int l=0;l<asize;l++) 
+	      S(m,l) *= cache(i0,rb[j])(m,l);
+	}
+
+	//--------- If there is a letter at the root, condition on it ---------//
+	if (root < T.n_leaves()) {
+	  int rl = A.seq(root)[i];
+	  if (alphabet::letter(rl))
+	    for(int l=0;l<asize;l++)
+	      if (l != rl) 
+		S(m,l) = 0;
+	}
+
+	//--------- If there is a letter at the root, condition on it ---------//
+	for(int l=0;l<asize;l++)
+	  p_model += S(m,l);
+
+	// A specific model (e.g. the INV model) could be impossible
+	assert(0 <= p_model and p_model <= 1.00000000001);
+
+	p_col += p_model;
+      }
+
+      // SOME model must be possible
+      assert(0 < p_col and p_col <= 1.00000000001);
+
+      total += log(p_col);
+      //      std::cerr<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<std::endl;
+    }
+    return total;
+  }
+
+  void peel_branch(int b0,column_cache_t cache, const alignment& A, const Tree& T, 
+		   const MatCache& transition_P,const MultiModel& MModel)
+  {
+    // compute branches-in
+    vector<int> b;
+    for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
+      b.push_back(*i);
+
+    // get the relationships with the sub-alignments
+    ublas::matrix<int> index = subA_index(b,A,T);
+
+    // The number of directed branches is twice the number of undirected branches
+    const int B        = T.n_branches();
+
+    // scratch matrix
+    Matrix& S = cache.scratch(0);
+    const int n_models = S.size1();
+    const int asize    = S.size2();
+
+    const int length = index.size1()?index.size1():A.seqlength(b0);
+
+    //    std::cerr<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
+    for(int i=0;i<length;i++) {
+
+      // compute the distribution at the parent node - single letter
+      if (not b.size()) {
+	int l2 = A.seq(b0)[i];
+	if (alphabet::letter(l2))
+	  for(int m=0;m<n_models;m++) {
+	    const Matrix& Q = transition_P[m][b0%B];
+	    for(int l1=0;l1<asize;l1++)
+	      cache(i,b0)(m,l1) = Q(l1,l2);
+	  }
+	else
+	  for(int m=0;m<n_models;m++) 
+	    for(int l=0;l<asize;l++)
+	      cache(i,b0)(m,l) = 1;
+      }
+      // compute the distribution at the target (parent) node - 2 branch distributions
+      else if (b.size() == 1 and false)
+	; // compute the source distribution from model-switching matrix
+      else if (b.size() == 2) 
+      {
+	// compute the source distribution from 2 branch distributions
+	int i0 = index(i,0);
+	int i1 = index(i,1);
+	if (i0 != alphabet::gap and i1 != alphabet::gap)
+	  for(int m=0;m<n_models;m++) 
+	    for(int j=0;j<asize;j++)
+	      S(m,j) = cache(i0,b[0])(m,j)* cache(i1,b[1])(m,j);
+	else if (i0 != alphabet::gap)
+	  S = cache(i0,b[0]);
+	else if (i1 != alphabet::gap)
+	  S = cache(i1,b[1]);
+	else
+	  std::abort();
+
+	// propagate from the source distribution
+	Matrix& R = cache(i,b0);            //name result matrix
+	for(int m=0;m<n_models;m++) {
+
+	  // FIXME!!! - switch order of MatCache to be MC[b][m]
+	  const Matrix& Q = transition_P[m][b0%B];
+
+	  // compute the distribution at the target (parent) node - multiple letters
+	  for(int l=0;l<asize;l++) {
+	    double temp=0;
+	    for(int j=0;j<asize;j++)
+	      temp += Q(l,j)*S(m,j);
+	    R(m,l) = temp;
+	  }
+	}
+#ifndef NDEBUG
+	Pr(R,MModel);
+#endif
+      }
+      else
+	std::abort();
+
+    }
+    cache.validate_branch(b0);
+  }
+
+
+  /// Compute an ordered list of branches to process
+  inline peeling_info get_branches(const Tree& T, const Likelihood_Cache& LC) 
+  {
+    //------- Get ordered list of not up_to_date branches ----------///
+    peeling_info peeling_operations(T);
+
+    vector<const_branchview> branches; branches.reserve(T.n_branches());
+    append(T[LC.root].branches_in(),branches);
+
+    for(int i=0;i<branches.size();i++) {
+	const const_branchview& db = branches[i];
+	if (not LC.up_to_date(db)) {
+	  append(db.branches_before(),branches);
+	  peeling_operations.push_back(db);
+	}
+    }
+
+    std::reverse(peeling_operations.begin(),peeling_operations.end());
+
+    return peeling_operations;
+  }
+
+  void calculate_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
+    const Tree& T = P.T;
+    const MatCache& MC = P;
+
+    //---------- determine the operations to perform ----------------//
+    peeling_info ops = get_branches(T, cache);
+    // std::cerr<<"Peeled on "<<ops.size()<<" branches.\n";
+
+    //-------------- Compute the branch likelihoods -----------------//
+    for(int i=0;i<ops.size();i++)
+      peel_branch(ops[i],cache,A,T,MC,P.SModel());
+  }
+
+  /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
+  vector<Matrix>
+  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
+			 const vector<int>& req,const vector<int>& seq)
+  {
+    const Tree& T = P.T;
+    Likelihood_Cache& cache = P.LC;
+
+    calculate_caches(A,P,cache);
+
+    //------ Check that all branches point to a 'root' node -----------//
+    assert(b.size());
+    int root = T.directed_branch(b[0]).target();
+    for(int i=1;i<b.size();i++)
+      assert(T.directed_branch(b[i]).target() == root);
+    cache.root = root;
+
+    ublas::matrix<int> index = subA_index_req(b,A,T,req,seq);
+
+    calculate_caches(A,P,cache);
+
+    vector<Matrix> L;
+    L.reserve(A.length());
+
+    Matrix& S = cache.scratch(0);
+    const int n_models = S.size1();
+    const int asize    = S.size2();
+
+    for(int i=0;i<index.size1();i++) {
+
+      for(int m=0;m<n_models;m++) {
+	for(int l=0;l<asize;l++) 
+	  S(m,l) = 1;
+
+	//-------------- Propagate and collect information at 'root' -----------//
+	for(int j=0;j<b.size();j++) {
+	  int i0 = index(i,j);
+	  if (i0 != alphabet::gap)
+	    for(int l=0;l<asize;l++) 
+	      S(m,l) *= cache(i0,b[j])(m,l);
+	}
+
+	if (root < T.n_leaves()) {
+	  int rl = A.seq(root)[i];
+	  if (alphabet::letter(rl))
+	    for(int l=0;l<asize;l++)
+	      if (l != rl) 
+		S(m,l) = 0;
+	}
+      }
+      L.push_back(S);
+    }
+    return L;
+  }
+
+  double other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) 
+  {
+    const Tree& T = P.T;
+    Likelihood_Cache& cache = P.LC;
+
+    calculate_caches(A,P,cache);
+
+    // compute root branches
+    vector<int> rb;
+    for(const_in_edges_iterator i = T[cache.root].branches_in();i;i++)
+      rb.push_back(*i);
+
+    // get the relationships with the sub-alignments
+    ublas::matrix<int> index1 = subA_index_other(rb,A,T,nodes);
+    double Pr1 = calc_root_probability(A,P,rb,index1);
+
+#ifndef NDEBUG
+    ublas::matrix<int> index2 = subA_index_req(rb,A,T,nodes);
+    ublas::matrix<int> index  = subA_index(rb,A,T);
+
+    double Pr2 = calc_root_probability(A,P,rb,index2);
+    double Pr  = calc_root_probability(A,P,rb,index);
+
+    assert(std::abs(Pr1 + Pr2 - Pr) < 1.0e-9);
+#endif
+
+    return Pr1;
+  }
+
+  double Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
+    const Tree& T = P.T;
+
+    calculate_caches(A,P,cache);
+
+    // compute root branches
+    vector<int> rb;
+    for(const_in_edges_iterator i = T[cache.root].branches_in();i;i++)
+      rb.push_back(*i);
+
+    // get the relationships with the sub-alignments
+    ublas::matrix<int> index = subA_index(rb,A,T);
+
+    // get the probability
+    double Pr = calc_root_probability(A,P,rb,index);
+
+    // cache the value
+    cache.old_value = Pr;
+
+    return Pr;
   }
 
   double Pr(const alignment& A,const Parameters& P) {
-    double result = Pr(A,P.T,P.SModel(),P);
+    double result = Pr(A, P, P.LC);
+
 #ifndef NDEBUG
     Parameters P2 = P;
-    P2.recalc();
-    double result2 = Pr(A,P.T,P.SModel(),P2);
-    assert(std::abs(result - result2) < 1.0e-9);
+    P2.LC.invalidate_all();
+    double result2 = Pr(A, P2, P2.LC);
+    if (std::abs(result - result2)  > 1.0e-9) {
+      std::cerr<<"Pr: diff = "<<result-result2<<std::endl;
+      std::abort();
+    }
 #endif
+
     return result;
-  }
-
-
-  double Pr_star(const vector<int>& column,const tree& T,const ReversibleModel& SModel,
-		 const vector<Matrix>& transition_P) {
-    const alphabet& a = SModel.Alphabet();
-
-    if (T.leaves() == 2)
-      return Pr(column,T,SModel,transition_P);
-
-    double p=0;
-    for(int lroot=0;lroot<a.size();lroot++) {
-      double temp=SModel.frequencies()[lroot];
-      for(int b=0;b<T.leaves();b++) {
-	const Matrix& Q = transition_P[b];
-
-	int lleaf = column[b];
-	if (a.letter(lleaf))
-	  temp *= Q(lroot,lleaf);
-      }
-      p += temp;
-    }
-
-    // we don't get too close to zero, normally
-    assert(0 <= p and p <= 1.00000000001);
-
-    return p;
-  }
-
-  double Pr_star(const alignment& A, const tree& T, const MultiModel& MModel, const MatCache& MC) {
-
-    double p = 0.0;
-  
-    vector<int> residues(A.size2());
-
-    // Do each node before its parent
-    for(int column=0;column<A.length();column++) {
-      for(int i=0;i<residues.size();i++)
-	residues[i] = A(column,i);
-
-      double total=0;
-      for(int m=0;m<MModel.n_base_models();m++)
-	total += MModel.distribution()[m] * Pr_star(residues,
-						    T,
-						    MModel.base_model(m),
-						    MC.transition_P(m)
-						    );
-
-      // we don't get too close to zero, normally
-      assert(0 < total and total <= 1.00000000001);
-
-      p += log(total);
-    }
-
-    return p;
-  }
-
-  double Pr_star(const alignment& A,const Parameters& P) {
-    return Pr_star(A, P.T, P.SModel(), P);
-  }
-
-  double Pr_star_constant(const alignment& A,const Parameters& P) {
-    const tree& T1 = P.T;
-    Parameters P2 = P;
-
-    //----------- Get Distance Matrix --------------//
-    Matrix D(T1.leaves(),T1.leaves());
-    for(int i=0;i<T1.leaves();i++) 
-      for(int j=0;j<T1.leaves();j++) 
-	D(i,j) = T1.distance(i,j);
-
-    //----------- Get Average Distance -------------//
-    double sum=0;
-    for(int i=0;i<T1.leaves();i++) 
-      for(int j=0;j<i;j++) 
-	sum += D(i,j);
-    const int n = (T1.leaves()*(T1.leaves()-1))/2;
-    double ave = sum/n;
-
-    //-------- Set branch lengths to ave/2  ----------//
-    for(int b=0;b<T1.leafbranches();b++)
-      P2.setlength(b,ave/2.0);
-
-
-    //----------- Get log L w/ new tree  -------------//
-    return Pr_star(A,P2);
-  }
-
-  double Pr_star_estimate(const alignment& A,const Parameters& P) {
-    const tree& T1 = P.T;
-    Parameters P2 = P;
-    
-    //----------- Get Distance Matrix --------------//
-    Matrix D(T1.leaves(),T1.leaves());
-    for(int i=0;i<T1.leaves();i++) 
-      for(int j=0;j<T1.leaves();j++) 
-	D(i,j) = T1.distance(i,j);
-    
-    
-    //---- Set branch lengths to ave/2 per branch ----//
-    for(int i=0;i<T1.leaves();i++) {
-      double ave=0;
-      for(int j=0;j<T1.leaves();j++) {
-	if (i==j) continue;
-	ave += log(D(i,j));
-      }
-      ave /= (T1.leaves()-1);
-   
-      int b = i;
-      if (T1.leaves() == 2) b=0;
-
-      P2.setlength(b,exp(ave)/2.0);
-    }
-    
-    //----------- Get log L w/ new tree  -------------//
-    return Pr_star(A,P2);
-  }
-
-  double Pr_unaligned(const alignment& A,const Parameters& P) {
-    const alphabet& a = A.get_alphabet();
-
-    vector<double> count(a.size(),0);
-
-    for(int i=0;i<A.num_sequences();i++) {
-      for(int column=0;column<A.length();column++) {
-	int l = A(column,i);
-	if (a.letter(l))
-	  count[l]++;
-      }
-    }
-    
-    double total=0;
-    for(int l=0;l<count.size();l++)
-      total += log(P.SModel().frequencies()[l])*count[l];
-    return total;
   }
 }

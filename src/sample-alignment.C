@@ -6,9 +6,6 @@
 #include "alignment-sums.H"
 #include "alignment-constraint.H"
 
-// for peel()
-#include "substitution.H"
-
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
 
@@ -20,10 +17,10 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 
   //--------------- Find our branch, and orientation ----------------//
   const SequenceTree& T = P.T;
-  int root = T.branch(b).parent();      //this is an arbitrary choice
+  int root = T.branch(b).target();      //this is an arbitrary choice
 
-  int node1 = T.branch(b).child();
-  int node2 = T.branch(b).parent();
+  int node1 = T.branch(b).source();
+  int node2 = T.branch(b).target();
   if (not up) std::swap(node1,node2);
 
   valarray<bool> group = T.partition(node1,node2);
@@ -35,10 +32,10 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
 						  const vector<int>& seq,int b,bool up) {
   //--------------- Find our branch, and orientation ----------------//
   const SequenceTree& T = P.T;
-  int root = T.branch(b).parent();      //this is an arbitrary choice
+  int root = T.branch(b).target();      //this is an arbitrary choice
 
-  int node1 = T.branch(b).child();
-  int node2 = T.branch(b).parent();
+  int node1 = T.branch(b).source();
+  int node2 = T.branch(b).target();
   if (not up) std::swap(node1,node2);
 
   valarray<bool> group = T.partition(node1,node2);
@@ -49,15 +46,16 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
 typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parameters&,
 							      const vector<int>&,int,bool);
 
-alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
+void sample_alignment(alignment& A,Parameters& P,int b) {
   assert(P.IModel().full_tree);
 
-  const tree& T = P.T;
+  const Tree& T = P.T;
+  alignment old = A;
 
   const Matrix frequency = substitution::frequency_matrix(P.SModel());
 
-  int node1 = T.branch(b).parent();
-  int node2 = T.branch(b).child();
+  int node1 = T.branch(b).target();
+  int node2 = T.branch(b).source();
 
   valarray<bool> group1 = T.partition(node2,node1);
 
@@ -71,7 +69,7 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
       seq2.push_back(column);
   }
 
-  if (not seq1.size() or not seq2.size()) return old;
+  if (not seq1.size() or not seq2.size()) return;
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
   distributions_t_local distributions = distributions_tree;
@@ -98,12 +96,11 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   path.erase(path.begin()+path.size()-1);
 
-  alignment A = construct(old,path,group1,seq1,seq2);
+  A = construct(old,path,group1,seq1,seq2);
 
+  //  std::cerr<<"bandwidth = "<<bandwidth(Matrices,path)<<std::endl;
 
-  std::cerr<<"bandwidth = "<<bandwidth(Matrices,path)<<std::endl;
-
-  std::cerr<<"bandwidth2 = "<<bandwidth2(Matrices,path)<<std::endl;
+  //  std::cerr<<"bandwidth2 = "<<bandwidth2(Matrices,path)<<std::endl;
   //--------------------------------------------------------------//
 #ifndef NDEBUG_DP
   //  vector<int> path_old = get_path(old,node1,node2);
@@ -118,6 +115,8 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
   check_match_P(A  ,P,other_subst(A  ,P,nodes),other_prior(A,  P,nodes),path_new,Matrices);
 
   double ls1 = P.likelihood(old,P);
+  P.LC.set_length(A.length());
+  P.LC.invalidate_branch_alignment(T,b);
   double ls2 = P.likelihood(A  ,P);
 
   double lp1 = P.prior(old,P);
@@ -133,11 +132,13 @@ alignment sample_alignment(const alignment& old,const Parameters& P,int b) {
 
   std::cerr<<"P(Y|A,tau,T,Theta) = "<<ls2<<"    P(Y|tau,T,Theta) = "<<Matrices.Pr_sum_all_paths()<<endl;
 
-
+#else
+  P.LC.set_length(A.length());
+  P.LC.invalidate_branch_alignment(T,b);
 #endif
+
   /*--------------------------------------------------------------*/
   assert(valid(A));
-  return A;
 }
 
 

@@ -9,17 +9,14 @@
 #include "parameters.H"
 
 /// Define type for a function which return the distributions for each column and rate give SOME leaves
-typedef vector< Matrix > (*distributions_t)(const alignment&, const Parameters&,
-							      const vector<int>&,int,const valarray<bool>&);
+typedef vector< Matrix > (*distributions_t)(const alignment&, const Parameters&,const vector<int>&,int,const valarray<bool>&);
 
 
 /// Distributions function for a star tree
-vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
-						       const vector<int>& seq,int root,const valarray<bool>& group);
+vector< Matrix > distributions_star(const alignment& A,const Parameters& P,const vector<int>& seq,int root,const valarray<bool>& group);
 
 /// Distributions function for a full tree
-vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
-						       const vector<int>& seq,int root,const valarray<bool>& group);
+vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const vector<int>& seq,int root,const valarray<bool>& group);
 
 
 /// Sum of likelihoods for columns which don't contain any characters in sequences mentioned in 'nodes'

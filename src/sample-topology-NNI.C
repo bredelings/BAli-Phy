@@ -13,7 +13,6 @@
 
 
 #include "3way.H"
-#include "substitution.H"
 #include "sample.H"
 
 
@@ -65,7 +64,7 @@ bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P
   alignment A2 = old;
 
   //-------------------- Setup node names ----------------------//
-  assert(b >= P1.T.leafbranches());
+  assert(b >= P1.T.n_leafbranches());
   const vector<int> nodes1 = A5::get_nodes_random(P1.T,b);
   const vector<int> nodes2 = A5::get_nodes_random(P2.T,b);
 
@@ -108,7 +107,7 @@ bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P
 
 #ifndef NDEBUG_DP
   //----------------- Get the new and old paths -----------------//
-  assert(b >= P1.T.leafbranches());
+  assert(b >= P1.T.n_leafbranches());
   vector<int> newnodes;
   for(int i=0;i<6;i++)
     newnodes.push_back(i);
@@ -257,8 +256,14 @@ MCMC::result_t two_way_topology_sample(alignment& A, Parameters& P,int b) {
 
   vector<int>nodes = A5::get_nodes_random(P.T,b);
 
+  select_root(P.T, b, P.LC);
+
   Parameters P2 = P;
-  P2.T.exchange(nodes[1],nodes[2]);
+  int b1 = P2.T.directed_branch(nodes[4],nodes[1]);
+  int b2 = P2.T.directed_branch(nodes[5],nodes[2]);
+  P2.T.exchange_subtrees(b1, b2);
+
+  P2.LC.invalidate_branch(P2.T, b);
   
   bool success = two_way_topology_sample(A,P,P2,b);
   if (success)
@@ -274,63 +279,14 @@ MCMC::result_t two_way_topology_sample_MH(alignment& A, Parameters& P,int b) {
   vector<int> nodes = A5::get_nodes_random(P.T,b);
 
   Parameters P2 = P;
-
-  P2.T.exchange(nodes[1],nodes[2]);
+  int b1 = P2.T.directed_branch(nodes[4],nodes[1]);
+  int b2 = P2.T.directed_branch(nodes[5],nodes[2]);
+  P2.T.exchange_subtrees(b1,b2);
 
   bool success = sample_two_NNI_two_nodes_MH(A,P,P2,b,1.0);
   if (success)
     result[1] = 1;
 
-  return result;
-}
-
-
-MCMC::result_t two_way_topology_sample2(alignment& A, Parameters& P,int b) {
-  MCMC::result_t result(0.0,2);
-  result[0] = 1.0;
-  
-  const tree& T1 = P.T;
-
-  //------------------- Get branch names -----------------------//
-  vector<int> nodes = A5::get_nodes_random(T1,b);
-  
-  //  int b0 = T1.find_branch(nodes[0],nodes[4]);
-  int b1 = T1.find_branch(nodes[1],nodes[4]);
-  int b2 = T1.find_branch(nodes[2],nodes[5]);
-  //  int b3 = T1.find_branch(nodes[3],nodes[5]);
-  int b4 = T1.find_branch(nodes[4],nodes[5]);
-
-  //----------------- Generate new topology -------------------//
-  Parameters P2 = P;
-  tree& T2 = P2.T;
-
-  // Move node0/branch0 into branch2
-  T2.exchange(nodes[1],nodes[2]);
-
-  //--- Ignore lengths if they imply a degenerate topology ---//
-  if ((T1.branch(b2).length() <= 0) or (T1.branch(b1).length() + T1.branch(b4).length() <= 0) or (T1.branch(b4).length() <= 0)) {
-    bool success = two_way_topology_sample_fgaps(A,P,P2,b);
-    if (success)
-      result[1] = 1;
-    return result;
-  }
-
-  //------------------ Make old branch lengths ------------------//
-
-  // b0 unchanged
-  P2.setlength(b1, T1.branch(b1).length() + T1.branch(b4).length() );
-  P2.setlength(b2, myrandomf() * T1.branch(b2).length() );
-  // b3 unchanged
-  P2.setlength(b4, T1.branch(b2).length() - T2.branch(b2).length() );
-
-  //-------------------------------------------------------//
-  std::cerr<<"got here..."<<T1.branch(b2).length()<<"   "<<T2.branch(b1).length()<<"        "<<T1.branch(b1).length() + T1.branch(b4).length()<<"\n";
-  double rho = T2.branch(b1).length()/T1.branch(b2).length();
-  std::cerr<<"rho = "<<rho<<"\n";
-  bool success = sample_two_NNI_two_nodes_MH(A,P,P2,b,rho);
-
-  if (success)
-    result[1] = 1;
   return result;
 }
 
@@ -354,14 +310,23 @@ MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P1,int b) {
   vector<int> nodes = A5::get_nodes(P1.T,b);
 
   /****** Generate the Different Topologies *******/
+  select_root(P1.T, b, P1.LC);
+  
+
   Parameters P2 = P1;
   Parameters P3 = P1;
 
   SequenceTree& T2 = P2.T;
   SequenceTree& T3 = P3.T;
+  int b1 = P1.T.directed_branch(nodes[4],nodes[1]);
+  int b2 = P1.T.directed_branch(nodes[5],nodes[2]);
+  int b3 = P1.T.directed_branch(nodes[5],nodes[3]);
 
-  T2.exchange(nodes[1],nodes[2]);
-  T3.exchange(nodes[1],nodes[3]);
+  T2.exchange_subtrees(b1,b2);
+  P2.LC.invalidate_branch(P2.T, b);
+
+  T3.exchange_subtrees(b1,b3);
+  P3.LC.invalidate_branch(P3.T, b);
   
   bool success = three_way_topology_sample(A,P1,P2,P3,b);
 
@@ -380,7 +345,7 @@ alignment swap(const alignment& old,int n1,int n2) {
 }
 
 MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& P,int b) {
-  assert(b >= P.T.leafbranches());
+  assert(b >= P.T.n_leafbranches());
 
   MCMC::result_t result(0.0,2);
   result[0] = 1.0;
@@ -392,8 +357,11 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
   // We ALWAYS resample the connection between two_way_nodes [0] and [4].
 
   vector<Parameters> p(3,P);
-  p[1].T.exchange(two_way_nodes[1],two_way_nodes[2]);
-  p[2].T.exchange(two_way_nodes[1],two_way_nodes[3]);
+  int b1 = p[0].T.directed_branch(two_way_nodes[4],two_way_nodes[1]);
+  int b2 = p[0].T.directed_branch(two_way_nodes[5],two_way_nodes[2]);
+  int b3 = p[0].T.directed_branch(two_way_nodes[5],two_way_nodes[3]);
+  p[1].T.exchange_subtrees(b1,b2);
+  p[2].T.exchange_subtrees(b1,b3);
 
   vector< vector< int> > nodes;
   for(int i=0;i<p.size();i++)

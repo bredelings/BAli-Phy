@@ -8,6 +8,7 @@
 #include "alphabet.H"
 #include "rates.H"
 #include "model.H"
+#include "eigenvalue.H"
 
 namespace substitution {
   using ::SuperDerivedModel;
@@ -210,6 +211,8 @@ namespace substitution {
     /// The exchangeability matrix
     Matrix S;
 
+    EigenValues eigensystem;
+
     virtual void recalc();
   public:
     double rate() const;
@@ -236,7 +239,8 @@ namespace substitution {
     /// Construct a reversible Markov model on alphabet 'a_'
     ReversibleMarkovModel(const alphabet& a):
       MarkovModel(a), pi(1.0/a.size(),a.size()), 
-      S(a.size(),a.size())
+      S(a.size(),a.size()),
+      eigensystem(a.size())
     { }
     
     ~ReversibleMarkovModel() {}

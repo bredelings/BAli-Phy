@@ -84,10 +84,25 @@ struct Scale {
       return 1;
     else
       return (v-min)/(max-min);
+=======
+vector<int> rgb_bgcolor(double x, double sscale,bool color) {
+  if (color) {
+    double start = 0.75;
+    double end = 0.0;
+    
+    double hstart = 0.3;
+    double hend   = 0.95;
+    
+    double color = start + x * x * x *(end-start);
+    double s = hstart + x * x * (hend - hstart);
+    
+    return hsv(color,s*sscale,0.9);
+>>>>>>> .merge-right.r554
   }
 
   Scale():f(NULL) {}
 
+<<<<<<< .working
   Scale(double d1,double d2,double (*g)(double))
     :min(d1),max(d2),f(g)
   { }
@@ -113,7 +128,14 @@ public:
   vector<int> fg_color(double x,const string& s) const {
     if (x < 0.5)
       return black;
+=======
+string getfgcolor(double x,double sscale,bool color) {
+  if (color)
+    if (x > 0.80)
+      return getrgb(hsv(0, 0, 0.99));
+>>>>>>> .merge-right.r554
     else
+<<<<<<< .working
       return white;
   }
 };
@@ -148,6 +170,12 @@ public:
   vector<int> fg_color(double x,const string& s) const {
     if (x < 0.5)
       return black;
+=======
+      return getrgb(hsv(0, 0, 0.2));
+  else {
+    if (1.0 - f(x*sscale) < 0.5)
+      return getrgb(hsv(0,0,1));
+>>>>>>> .merge-right.r554
     else
       return white;
       
@@ -225,7 +253,7 @@ int main(int argc,char* argv[]) {
 
     /*------- Find mapping from colorfile to alignment sequence order -------*/
     if (not args.set("colors"))
-      throw myexception("color file not specified! (colors=<filename>)");
+      throw myexception()<<"color file not specified! (colors=<filename>)";
 
     ifstream colorfile(args["colors"].c_str());
 

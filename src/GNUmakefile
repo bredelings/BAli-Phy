@@ -14,25 +14,30 @@ install: program tools
 	mv bali-phy ${TOOLS} ../bin
 
 #----------------- Definitions
-EXACTFLAGS = -pipe # --param inline-unit-growth=300 --param max-inline-insns-auto=300
+EXACTFLAGS = -pipe 
 
 LANGO := fast-math
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
-OPT := 
 LDFLAGS := 
 
 ifeq (${DEBUG},y)
   DEBUG := g3
 else
-  DEFS  := NDEBUG_UBLAS NDEBUG_DP NDEBUG
+  ifeq ($(origin DEFS), undefined)
+     DEFS  := NDEBUG_UBLAS NDEBUG_DP NDEBUG
+  endif
+
   ifneq ($(origin ARCH), undefined)
     OPT += march=${ARCH}
   endif	
+
   OPT += O3
 #  LANGO += tracer prefetch-loop-arrays 
+
   ifneq (${PROF},y)
     LANGO += omit-frame-pointer
   endif
+#  EXACTFLAGS += --param inline-unit-growth=300 --param max-inline-insns-auto=300
 endif
 
 ifeq (${PROF},y)
@@ -56,7 +61,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
 	  alignment-sums.C alignment-util.C probability.C model.C le-double.C \
-	  alignment-constraint.C
+	  alignment-constraint.C substitution-cache.C substitution-star.C
 
 LIBS = gsl gslcblas m 
 LINKLIBS = ${LIBS:%=-l%}

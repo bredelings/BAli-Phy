@@ -11,12 +11,8 @@
 #include "alignment-sums.H"
 #include "alignment-util.H"
 #include "alignment-constraint.H"
+#include "likelihood.H"    // for prior()
 
-// for peel
-#include "substitution.H"
-
-// for prior_HMM_nogiven
-#include "likelihood.H"
 
 //Assumptions:
 //  a) we assume that the internal node is the parent sequence in each of the sub-alignments
@@ -30,13 +26,13 @@ using namespace A3;
 // FIXME - actually resample the path multiple times - pick one on
 // opposite side of the middle 
 DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
-  const tree& T = P.T;
+  const Tree& T = P.T;
 
   assert(P.IModel().full_tree);
 
-  assert(T.connected(nodes[0],nodes[1]));
-  assert(T.connected(nodes[0],nodes[2]));
-  assert(T.connected(nodes[0],nodes[3]));
+  assert(T.is_connected(nodes[0],nodes[1]));
+  assert(T.is_connected(nodes[0],nodes[2]));
+  assert(T.is_connected(nodes[0],nodes[3]));
 
   const Matrix frequency = substitution::frequency_matrix(P.SModel());
 
@@ -106,7 +102,7 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 
   vector<int> branches;
   for(int i=1;i<nodes.size();i++)
-    branches.push_back(T.find_branch(nodes[0],nodes[i]) );
+    branches.push_back(T.branch(nodes[0],nodes[i]) );
 
   const eMatrix Q = createQ(P.branch_HMMs, branches);
   vector<efloat_t> start_P = get_start_P(P.branch_HMMs,branches);
@@ -174,9 +170,9 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
   assert(valid(A));
 #endif
 
-  std::cerr<<"[tri]bandwidth = "<<bandwidth(Matrices,path_g)<<std::endl;
+  //  std::cerr<<"[tri]bandwidth = "<<bandwidth(Matrices,path_g)<<std::endl;
 
-  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
+  //  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
 
   return Matrices;
 }
@@ -187,14 +183,23 @@ DPmatrixConstrained tri_sample_alignment_base(alignment& A,const Parameters& P,c
 bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
 
   assert(p.size() == nodes.size());
-  
+
+  Parameters P_save = p[0];
   //----------- Generate the different states and Matrices ---------//
 
   vector<alignment> a(p.size(),A);
 
   vector< DPmatrixConstrained > Matrices;
-  for(int i=0;i<p.size();i++)
+  for(int i=0;i<p.size();i++) {
     Matrices.push_back( tri_sample_alignment_base(a[i],p[i],nodes[i]) );
+    p[i].LC.set_length(a[i].length());
+    int b = p[i].T.branch(nodes[i][0],nodes[i][1]);
+    p[i].LC.invalidate_branch_alignment(p[i].T, b);
+    p[i].LC.invalidate_node(p[i].T,nodes[i][0]);
+#ifndef NDEBUG
+    p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
+#endif
+  }
 
   //-------- Calculate corrections to path probabilities ---------//
 
@@ -220,8 +225,8 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
   valarray<bool> ignore1A = not p[0].T.partition(nodes[0][0],nodes[0][1]);
   valarray<bool> ignore2A = not (p[0].T.partition(nodes[0][0],nodes[0][2]) or p[0].T.partition(nodes[0][0],nodes[0][3]) );
-  valarray<bool> ignore1(p[0].T.n_nodes()-1); 
-  valarray<bool> ignore2(p[0].T.n_nodes()-1); 
+  valarray<bool> ignore1(p[0].T.n_nodes()); 
+  valarray<bool> ignore2(p[0].T.n_nodes()); 
   for(int i=0;i<ignore1.size();i++) {
     ignore1[i] = ignore1A[i];
     ignore2[i] = ignore2A[i];
@@ -238,7 +243,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
   }
   // Add another entry for the incoming configuration
   a.push_back( A );
-  p.push_back( p[0] );
+  p.push_back( P_save );
   nodes.push_back(nodes[0]);
   Matrices.push_back( Matrices[0] );
   OS.push_back( OS[0] );
@@ -255,6 +260,7 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
     double OP_i = OP[i] - A3::log_correction(a[i],p[i],nodes[i]);
 
+    p[i].LC.set_length(a[i].length());
     check_match_P(a[i], p[i], OS[i], OP_i, paths[i], Matrices[i]);
   }
 
@@ -306,17 +312,17 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
     if (success)
       p[0] = p[C];
   }
+  else
+    p[0] = P_save;
 
   return success;
 }
 
 
 
-alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node1,int node2) {
+void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
 
   /*------------(Gibbs) sample from proposal distribution ------------------*/
-
-  alignment A = old;
 
   vector<Parameters> p(1,P);
 
@@ -324,8 +330,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,int node
   nodes[0] = get_nodes_branch_random(P.T,node1,node2);
 
   sample_tri_multi(A,p,nodes,false,false);
-
-  return A;
+  P = p[0];
 }
 
 /// Resample branch alignment, internal nodes, and branch length
@@ -344,6 +349,7 @@ bool tri_sample_alignment_branch(alignment& A,Parameters& P,
 
   bool success = sample_tri_multi(A,p,nodes,false,false);
   P = p[0];
+  P.LC.set_length(A.length());
 
   return success;
 }

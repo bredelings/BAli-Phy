@@ -19,6 +19,9 @@ public:
   /// For a given rate, Show all the matrices for each branch
   const std::vector< Matrix > & transition_P(int r) const { return transition_P_[r]; }
 
+  /// For a given rate, Show all the matrices for each branch
+  const std::vector< Matrix > & operator[](int r) const { return transition_P_[r]; }
+
   /// For a given rate, and branch, show the matrix
   const Matrix& transition_P(int r,int b) const 
   {
@@ -34,12 +37,12 @@ public:
   }
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
-  void setlength(int b,double l,tree&,const substitution::MultiModel&);
+  void setlength(int b,double l,Tree&,const substitution::MultiModel&);
   
   /// Recalculate all the cached transition matrices
-  void recalc(const tree&,const substitution::MultiModel&);
+  void recalc(const Tree&,const substitution::MultiModel&);
 
-  MatCache(const tree& T,const substitution::MultiModel& SM);
+  MatCache(const Tree& T,const substitution::MultiModel& SM);
 };
 
 #endif

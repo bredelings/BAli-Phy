@@ -11,30 +11,28 @@ namespace A5 {
   vector<int> states_list = construct_states();
 
   /// Which 5 nodes are adjacent to this branch?
-  vector<int> get_nodes(const tree& T,int b) {
-    assert(b >= T.leafbranches());
+  vector<int> get_nodes(const Tree& T,int b) {
+    assert(T.branch(b).is_internal_branch());
+
+    vector<const_branchview> branches;
+    append(T.branch(b).branches_before(),branches);
+    append(T.branch(b).branches_after(),branches);
 
     vector<int> nodes(6);
     
-    nodes[4] = T.branch(b).child();
-    nodes[5] = T.branch(b).parent();
-    assert(nodes[5] = T[nodes[4]].parent());
-    
     // This must be an internal branch
-    nodes[0] = T[nodes[4]].left();
-    nodes[1] = T[nodes[4]].right();
-    nodes[2] = T[nodes[5]].left();
-    nodes[3] = T[nodes[5]].right();
-    
-    if (nodes[2] == nodes[4])
-      nodes[2] = T[nodes[5]].parent();
-    else if (nodes[3]==nodes[4])
-      nodes[3] = T[nodes[5]].parent();
+    nodes[0] = branches[0].source();
+    nodes[1] = branches[1].source();
+    nodes[2] = branches[2].target();
+    nodes[3] = branches[3].target();
+
+    nodes[4] = T.branch(b).source();
+    nodes[5] = T.branch(b).target();
     
     return nodes;
   }
 
-  vector<int> get_nodes_random(const tree& T, int b) {
+  vector<int> get_nodes_random(const Tree& T, int b) {
     vector<int> nodes = get_nodes(T,b);
     if (myrandomf() < 0.5)
       std::swap(nodes[0],nodes[1]);
@@ -365,7 +363,7 @@ namespace A5 {
   //  - columns in seq1, seq2, and seq3 should remain in increasing order.
 
   alignment construct(const alignment& old, const vector<int>& path, 
-		      const vector<int>& nodes,const tree& T,const vector< vector<int> >& seq,const  vector<int>& states_list) {
+		      const vector<int>& nodes,const Tree& T,const vector< vector<int> >& seq,const  vector<int>& states_list) {
 
     // Construct the list of nodes present in the 4 sub-trees
     vector< valarray<bool> > group;
@@ -479,7 +477,7 @@ namespace A5 {
     }
     assert(l == path.size()-1);
 
-    for(int s=0;s<T.leaves();s++) 
+    for(int s=0;s<T.n_leaves();s++) 
       assert(A.seqlength(s) == old.seqlength(s));
 
     //  std::cerr<<"new = "<<A<<endl;  

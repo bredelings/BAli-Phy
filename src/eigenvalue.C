@@ -4,50 +4,50 @@ using namespace ublas;
 using namespace TNT;
 using namespace JAMA;
 
-banded_matrix<double> EigenValues::Diagonal() const {
-  banded_matrix<double> D(size_,size_);        // Diagonal matrix
+void EigenValues::get_diagonal(JAMA::Eigenvalue<double>& E) {
 
-  Array1D<double> D3;
-  solution->getRealEigenvalues(D3);
-  for(int i=0;i<size_;i++)
-    D(i,i) = D3[i];
+  Array1D<double> D2;
+  E.getRealEigenvalues(D2);
 
-  return D;
+  for(int i=0;i<D.size();i++)
+    D[i] = D2[i];
 }
 
-Matrix EigenValues::Rotation() const {
-  Matrix O(size_,size_);
+void EigenValues::get_rotation(JAMA::Eigenvalue<double>& E) {
+  Array2D<double> O2;
+  E.getV(O2);
 
-  Array2D<double> O3;
-  solution->getV(O3);
-
-  for(int i=0;i<size_;i++)
-    for(int j=0;j<size_;j++)
-      O(i,j) = O3[i][j];
-
-  return O;
+  for(int i=0;i<O.size1();i++)
+    for(int j=0;j<O.size2();j++)
+      O(i,j) = O2[i][j];
 }
 
-//FIXME - we are leaking memory here!
-// Implement a more sane way of copying the data from ublas to TNT
-//  - and don't do in inside the intializer!
+EigenValues::EigenValues(int n)
+  :O(n,n),D(n)
+{ }
+
 EigenValues::EigenValues(const Matrix& M)
-  :size_(M.size1()),solution(0) {
-  Array2D<double> A(size_,size_);
-  for(int i=0;i<size_;i++)
-    for(int j=0;j<size_;j++)
+  :O(M.size1(),M.size2()),D(M.size1())
+{
+  assert(M.size1() == M.size2());
+
+  // Make a TNT array from M
+  Array2D<double> A(M.size1(),M.size2());
+  for(int i=0;i<M.size1();i++)
+    for(int j=0;j<M.size2();j++)
       A[i][j] = M(i,j);
 
-  solution = new JAMA::Eigenvalue<double>(A);
-  assert(size() == M.size2());
-
+  // solve the eigenvalue problem
+  JAMA::Eigenvalue<double> solution(A);
 
 #ifndef NDEBUG        //Make sure no imag eigenvalues
   Array1D<double> D4;
-  solution->getImagEigenvalues(D4);
+  solution.getImagEigenvalues(D4);
   for(int i=0;i<size();i++)
     assert(D4[i] == 0);
 #endif
-}
 
+  get_diagonal(solution);
+  get_rotation(solution);
+}
 
