@@ -205,25 +205,50 @@ double Pr(const vector<int>& residues,const tree& T,const ReversibleModel& SMode
   return p;
 }
 
-double Pr(const alignment& A, const tree& T, const MultiRateModel& MRModel, const MatCache& MC,int column) {
+  double Pr_INV(const vector<int>& residues, const ReversibleModel& SModel) {
+    int letter = alphabet::gap;
 
-  vector<int> residues(A.size2());
-  for(int i=0;i<residues.size();i++)
-    residues[i] = A(column,i);
+    for(int i=0;i<residues.size();i++) {
+      if (alphabet::letter(residues[i]))
+	if (letter == alphabet::gap)
+	  letter=residues[i];
+	else if (letter != residues[i])
+	  return 0.0;
+	;
+    }
+    if (letter == alphabet::gap)
+      return 1.0;
+    else
+      return SModel.frequencies()[letter];
+  }
+
+  double Pr(const alignment& A, const tree& T, const MultiRateModel& MRModel, const MatCache& MC,int column) {
+    
+    vector<int> residues(A.size2());
+    for(int i=0;i<residues.size();i++)
+      residues[i] = A(column,i);
   
-  double total=0;
-  for(int r=0;r<MRModel.nrates();r++) 
-    total += MRModel.distribution()[r] * Pr(residues,
-					    T,
-					    MRModel.BaseModel(),
-					    MC.transition_P(r)
-					    );
+    double total=0;
+    for(int r=0;r<MRModel.nrates();r++) {
+      double p=0;
+      if (MRModel.rates()[r] == 0.0) 
+	p = MRModel.distribution()[r] * Pr_INV(residues,
+					       MRModel.BaseModel()
+					       );      
+      else
+	p = MRModel.distribution()[r] * Pr(residues,
+					   T,
+					   MRModel.BaseModel(),
+					   MC.transition_P(r)
+					   );
+      total += p;
+    }
 
-  // we don't get too close to zero, normally
-  assert(0 < total and total <= 1.00000000001);
-
-  return log(total);
-}
+    // we don't get too close to zero, normally
+    assert(0 < total and total <= 1.00000000001);
+    
+    return log(total);
+  }
 
 double Pr(const alignment& A, const tree& T, const MultiRateModel& MRModel, const MatCache& SM) {
   double p = 0.0;
