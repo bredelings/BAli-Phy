@@ -21,7 +21,7 @@ LANGO = fast-math unroll-loops prefetch-loop-arrays
 DEBUG = pipe g  #pg
 DEFS = # NDEBUG 
 WARN = all no-sign-compare
-OPT =  malign-double mfpmath=sse msse2 march=pentium4 # O1
+OPT =  malign-double mfpmath=sse msse2 march=pentium4 O3
 LDFLAGS = # -pg # -static 
 LI=${CXX}
 
@@ -41,6 +41,11 @@ ${NAME} : ${SOURCES:%.C=%.o} ${LIBS:%=-l%} # libgsl.a libgslcblas.a libm.a
 
 
 treecount: treecount.o tree.o sequencetree.o
+
+reroot: reroot.o tree.o sequencetree.o arguments.o
+
+make_random_tree: randomtree.o tree.o sequencetree.o arguments.o util.o\
+	 rng.o -lgsl -lgslcblas -lm
 
 #-----------------Other Files
 OTHERFILES += 

@@ -6,6 +6,18 @@
 #include "parameters.H"
 #include <vector>
 
+struct move_stat {
+  int times;
+  int successes;
+  string name;
+  move_stat(const string& s):times(0),successes(0),name(s) { }
+};
+
+extern vector<move_stat> move_stats;
+void record_move(const string& name,bool success);
+void record_move(int index,bool success);
+
+
 class MCMC {
 
   typedef void (*move)(alignment&,Parameters&);
@@ -16,8 +28,6 @@ class MCMC {
     bool enabled;
     vector<string> attributes;
 
-    int attempts;
-    int successful;
     move_info() {}
     move_info(move a1,double a2,bool a3):m(a1),weight(a2),enabled(a3) {}
   };

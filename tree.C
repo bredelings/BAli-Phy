@@ -184,6 +184,33 @@ void tree::add_root() {
   root->order = 0;
 }
 
+void tree::reroot(int b) {
+  assert(0 <= b and b< branches());
+
+  vector<Branch*> intermediate_branches;
+  node* n = branches_[b]->child;
+
+  while(n->parent) {
+    intermediate_branches.push_back(n->parent_branch);
+    n=n->parent;
+  }
+  intermediate_branches.pop_back();
+  
+  while(intermediate_branches.size()) {
+    Branch* b2 = intermediate_branches.back();
+    intermediate_branches.pop_back();
+    if (b2->parent == root->left) 
+      swap_children(root->name);
+    assert(b2->parent == root->right);
+
+    TreeView::exchange_cousins(root->left,b2->child);
+  }
+  assert(branches_[b]->parent == root);
+
+  reorder();
+  compute_ancestors();
+}
+
 // This routine (re)computes everything, starting with
 //   o the tree structure at @root
 //   o the names of the leaves
@@ -616,6 +643,18 @@ void tree::standardize(const vector<int>& lnames) {
   /********** Set the leaf names ***********/
   assert(lnames.size() == leaves());
 
+  /********** Change the topology **********/
+  int newroot=-1;
+  
+  for(int i=0;i<leaves();i++)
+    if (lnames[i] == 0) {
+      newroot = i;
+      break;
+    }
+  assert(newroot != -1);
+  reroot(newroot);
+
+  /********** Input new leaf order *************/
   for(int i=0;i<leaves();i++)
     names[i]->name = lnames[i];
 

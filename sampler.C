@@ -16,6 +16,9 @@
 #include "arguments.H"
 #include "util.H"
 
+
+vector<move_stat> move_stats;
+
 // 5. Read Marc's references on actually altering the tree
 
 // 8. Use ublas::matrix<double>(a.size()) instead of valarray<double> in substitution.C
@@ -120,6 +123,11 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P) {
   }
   std::cout<<"\n";
   
+  /*-----------Load Stat Counters-------------*/
+  move_stats.push_back(move_stat("t-sample-normal"));
+  move_stats.push_back(move_stat("t-sample-branch-based"));
+
+
   sampler.iterate(A,P,1000000);
 }
 

@@ -1,6 +1,7 @@
 #include "rng.H"
 #include "likelihood.H"
 #include "sample.H"
+#include "mcmc.H"
 
 void change_branch_length(const alignment& A, Parameters& Theta,int b) {
 
@@ -71,7 +72,8 @@ void change_branch_length_and_T(alignment& A, Parameters& Theta,int b) {
       T2.branch(b).length() = -newlength;
       T3.branch(b).length() = -newlength;
 
-      sample_topology(A,Theta,T2,T3,b);
+      bool success = sample_topology(A,Theta,T2,T3,b);
+      record_move("t-sample-branch-based",success);
     }
 }
 

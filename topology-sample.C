@@ -7,6 +7,7 @@
 #include "logsum.H"
 #include "choose.H"
 #include "bits.H"
+#include "mcmc.H"
 
 //CHECK - all those states that can't be reached - can s2_ == s2?
 //CHECK (how?) - do the differences for both +/- (5 alignments) and 
@@ -351,7 +352,7 @@ alignment construct(const alignment& old,const tree& T,const vector<int>& path,i
 }
 
 
-void sample_topology(alignment& A,Parameters& Theta1,
+bool sample_topology(alignment& A,Parameters& Theta1,
 		     const SequenceTree& T2,const SequenceTree& T3,int b) {
   const IndelModel& IModel = Theta1.IModel;
 
@@ -446,8 +447,12 @@ void sample_topology(alignment& A,Parameters& Theta1,
   std::cerr<<" L1 = "<<l1<<"    L2 = "<<l2<<std::endl;
 
   std::cerr<<" choice = "<<choice<<std::endl;
-  if (choice != 0) 
+  if (choice != 0) {
     Theta1 = *chosen_Theta;
+    return true;
+  }
+  else
+    return false;
 }
 
 void sample_topology(alignment& A,Parameters& Theta1,int b) {
@@ -460,6 +465,8 @@ void sample_topology(alignment& A,Parameters& Theta1,int b) {
   T2.exchange(nodes[1],nodes[2]);
   T3.exchange(nodes[1],nodes[3]);
 
-  sample_topology(A,Theta1,T2,T3,b);
+  bool success = sample_topology(A,Theta1,T2,T3,b);
+
+  record_move("t-sample-normal",success);
 }
 

@@ -9,6 +9,25 @@ using std::valarray;
 static int total_samples = 0;
 
 
+void record_move(int index,bool success) {
+  move_stats[index].times++;
+  if (success)
+    move_stats[index].successes++;
+    
+}
+
+void record_move(const string& s,bool success) {
+  int index=-1;
+  for(int i=0;i<move_stats.size();i++)
+    if (move_stats[i].name == s) {
+      index=i;
+      break;
+    }
+  assert(index != -1);
+  record_move(index,success);
+}
+
+
 // make a more condensed output format!
 // This method of printing alignments is too large
 void print_alignments(const alignment& A,const string& s1,const string& s2) {
@@ -152,7 +171,6 @@ void MCMC::add(move m,double weight,const string& keys) {
   moves.push_back(mi);
 }
 
-
 void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
   const SequenceTree& T = Theta.T;
   SequenceTree ML_tree = T;
@@ -235,6 +253,13 @@ void MCMC::iterate(alignment& A,Parameters& Theta,const int max) {
       print_stats(std::cerr,A2,Theta2,probability);
 
       A2.print_fasta(std::cerr);
+
+      for(int i=0;i<move_stats.size();i++) {
+	int times = move_stats[i].times;
+	int successes = move_stats[i].successes;
+
+	std::cerr<<move_stats[i].name<<": "<<double(successes)/times<<"    ("<<successes<<"/"<<times<<")\n";
+      }
     }
 
     /*------------------ move to new position -------------------*/

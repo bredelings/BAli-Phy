@@ -198,6 +198,7 @@ public:
 
   TreeView copy() const {return TreeView(root).copy();}
   void exchange(int,int);
+  void reroot(int);
   
   tree& operator=(const tree&);
 
@@ -241,12 +242,27 @@ public:
 TreeFunc<int> mark_tree(const vector<int>&,const tree&);
 
 
+// Perhaps this is more of a directed node class?
+// Or is this a branch class, and do we need a node class in addition?
+// basically, we need something to keep track of which node we are thinking
+// of as the root node!
+
+struct const_branch_iterator {
+  const_branchview b;
+  bool up;
+
+  const_branch_iterator left() const;
+  const_branch_iterator right() const;
+
+  const_branch_iterator(const_branchview a1,bool a2): b(a1),up(a2) { }
+};  
+
+
 /***************** class SequenceTree ****************/
 
 class SequenceTree: public tree {
   vector<string> sequences;
   string write(int n,bool) const;
-
 public:
   const string& seq(int i) const {return sequences[i];}
   const vector<string>& get_sequences() const {return sequences;}

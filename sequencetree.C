@@ -3,6 +3,63 @@
 #include "util.H"
 
 using namespace std;
+/*
+const_branch_iterator const_branch_iterator::left() const {
+  if (not up)
+    return const_branch_iterator(branch_up(b.child.left()),false)
+  else {
+    int parent = b.parent();
+    int child  = b.child();
+    int pparent = b.parent().parent();
+    if (pparent = child) {
+      int ppl = b.parent().parent().left();
+      return const_branch_iterator(branch_up(ppl),false);
+    }
+    else {
+      int otherchild = (*this)[parent].left();
+      if (otherchild == child)
+	otherchild = (*this)[parent].right();
+
+      return const_branch_iterator(branch_up(otherchild),false);
+    }
+  }
+}
+
+const_branch_iterator const_branch_iterator::right() const {
+  if (not up)
+    return const_branch_iterator(branch_up(b.child.right()),false);
+  else {
+    int parent = b.parent();
+    int child  = b.child();
+    int pparent = b.parent().parent();
+    if (pparent = child) {
+      int ppr = b.parent().parent().right();
+      return const_branch_iterator(branch_up(ppr),false);
+    }
+    else {
+      return const_branch_iterator(branch_up(parent),true);
+    }
+  }
+}
+
+string SequenceTree::write2(const_branch_iterator b) const {
+  if (b.b.child() < leaves())
+    return seq(b.b.child());
+
+  string output = string("(")+write2(b.left())+","+write2(b.right())+")";
+  return output;
+}
+
+string SequenceTree::write2(int b) const {
+  const_branchview = branch(b);
+  const_branch_interator left = const_branch_iterator(b,false);
+  const_branch_interator right = const_branch_iterator(b,true);
+  
+  string output = string("(")+write2(left)+","+write2(right)+")";
+  return output;
+}
+
+*/
 
 /************************** SequenceTree methods *****************************/
 string SequenceTree::write(int n,bool lengths) const {
