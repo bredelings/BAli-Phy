@@ -116,10 +116,23 @@ public:
   { }
 };
 
-class ColorScheme {
+class ColorScheme: public Cloneable {
+public:
+  virtual ColorScheme* clone() const =0;
+
+  virtual RGB bg_color(double x,const string& s) const =0;
+
+  virtual RGB fg_color(double x,const string& s) const =0;
+
+  virtual ~ColorScheme() {}
+};
+
+class BaseColorScheme: public ColorScheme {
   Scale scale;
   OwnedPointer<ColorMap> color_map;
 public:
+  virtual BaseColorScheme* clone() const {return new BaseColorScheme(*this);}
+
   RGB bg_color(double x,const string& s) const {
     return color_map->bg_color(scale(x),s);
   }
@@ -128,21 +141,103 @@ public:
     return color_map->fg_color(scale(x),s);
   }
 
-  ColorScheme(const Scale& S, const ColorMap& CM)
+  BaseColorScheme(const ColorMap& CM,const Scale& S)
     :scale(S),color_map(CM)
   { }
 };
 
+RGB AA_color(char aa) {
+  if (strchr("GPST",aa))
+    return orange;
+  else if (strchr("HKR",aa))
+    return red;
+  else if (strchr("FWY",aa))
+    return blue;
+  else if (strchr("ILMV",aa))
+    return green;
+  else if (strchr("ACDENQ",aa))
+    return white;
+  else if (strchr("-*+X ",aa))
+    return grey;
+  
+  throw myexception()<<"Letter '"<<aa<<" does not appear to be an amino acid";
+}
+
+
+class AA_fg_colors: public ColorScheme {
+  OwnedPointer<ColorScheme> sub_scheme;
+public:
+
+  AA_fg_colors* clone() const {return new AA_fg_colors(*this);}
+
+  RGB bg_color(double x,const string& s) const {
+    return sub_scheme->bg_color(x,s);
+  }
+
+  RGB fg_color(double x,const string& s) const {
+    if (s.length() > 1) std::abort();
+    char aa = ' ';
+    if (not s.empty())
+      aa = s[0];
+    
+    return AA_color(aa);
+  }
+
+  AA_fg_colors(const ColorScheme& scheme)
+    :sub_scheme(scheme) 
+  {}
+};
+
+class AA_bg_colors: public ColorScheme {
+  OwnedPointer<ColorScheme> sub_scheme;
+public:
+
+  AA_bg_colors* clone() const {return new AA_bg_colors(*this);}
+
+  RGB bg_color(double x,const string& s) const {
+    if (s.length() > 1) std::abort();
+    char aa = ' ';
+    if (not s.empty())
+      aa = s[0];
+    
+    return AA_color(aa);
+  }
+
+  RGB fg_color(double x,const string& s) const {
+    return sub_scheme->fg_color(x,s);
+  }
+
+  AA_bg_colors(const ColorScheme& scheme)
+    :sub_scheme(scheme) 
+  {}
+};
+
+class switch_fg_bg: public ColorScheme {
+  OwnedPointer<ColorScheme> sub_scheme;
+public:
+  switch_fg_bg* clone() const {return new switch_fg_bg(*this);}
+
+  RGB bg_color(double x,const string& s) const {
+    return sub_scheme->fg_color(x,s);
+  }
+
+  RGB fg_color(double x,const string& s) const {
+    return sub_scheme->bg_color(x,s);
+  }
+
+  switch_fg_bg(const ColorScheme& scheme)
+    :sub_scheme(scheme) 
+  {}
+};
 
 using std::cout;
 using std::cerr;
 using std::endl;
 
-
-
 string getstyle(double d,const string& s,const ColorScheme& color_scheme) {
-  string style = string("background: ") +color_scheme.bg_color(d,s).to_css() + ";" ;
-  style += "color: " + color_scheme.fg_color(d,s).to_css() + ";" ;
+  string style;
+  style += "background: " + color_scheme.bg_color(d,s).to_css() + ";" ;
+  style += "color: "      + color_scheme.fg_color(d,s).to_css() + ";" ;
   return style;
 }
 
@@ -202,51 +297,108 @@ void draw_legend(std::ostream& o,ColorScheme& color_scheme,const string& letter)
   o<<" certain";
 }
 
-ColorScheme get_color_scheme(Arguments& args) 
+/// Take something off the string stack, if its present
+bool match(vector<string>& sstack,const string& s) {
+  bool m = false;
+  if (sstack.size() and sstack.back() == s) {
+    m = true;
+    sstack.pop_back();
+  }
+  return m;
+}
+
+OwnedPointer<ColorScheme> get_base_color_scheme(Arguments& args,
+						const string& color_map_name,
+						const string& scale_name) 
 {
-    OwnedPointer<ColorMap> color_map;
+  OwnedPointer<ColorMap> color_map;
+  if (color_map_name == "bw")
+    color_map = OwnedPointer<ColorMap>(new BW_ColorMap);    
+  else if (color_map_name == "RedBlue") 
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1,0.95,0.95));
+  else if (color_map_name == "BlueRed") 
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7,0.95,0.95));
+  else if (color_map_name == "Rainbow")
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap);
+  else
+    return OwnedPointer<ColorScheme>(NULL);
 
-    if (args["color"] == "no" or args["color"] == "bw") {
-      color_map = OwnedPointer<ColorMap>(new BW_ColorMap);
-      std::cerr<<"BW colormap\n";
-    }
-    else if (args["color"] == "RedBlue") {
-      color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1,0.95,0.95));
-      std::cerr<<"Red Blue colormap\n";
-    }
-    else if (args["color"] == "BlueRed") {
-      color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7,0.95,0.95));
-      std::cerr<<"Blue Red colormap\n";
-    }
-    else {
-      color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap);
-      std::cerr<<"Rainbow colormap\n";
-    }
+  Scale scale;
+  if (scale_name == "identity") {
+    scale.f = identity;
+    scale.min = args.loadvalue("min",0.0);
+    scale.max = args.loadvalue("max",1.0);
+  }
+  else if (scale_name == "square") {
+    scale.f = square;
+    scale.min = args.loadvalue("min",0.0);
+    scale.max = args.loadvalue("max",1.0);
+  }
+  else if (scale_name == "cube") {
+    scale.f = cube;
+    scale.min = args.loadvalue("min",0.0);
+    scale.max = args.loadvalue("max",1.0);
+  }
+  else if (scale_name == "LOD") {
+    scale.f = LOD10;
+    scale.min = args.loadvalue("min",-0.5);
+    scale.max = args.loadvalue("max",2.0);
+  }
+  else
+    return OwnedPointer<ColorScheme>(NULL);
 
-    Scale scale;
-    if (args["scale"] == "identity") {
-      scale.f = identity;
-      scale.min = args.loadvalue("min",0.0);
-      scale.max = args.loadvalue("max",1.0);
-    }
-    else if (args["scale"] == "square") {
-      scale.f = square;
-      scale.min = args.loadvalue("min",0.0);
-      scale.max = args.loadvalue("max",1.0);
-    }
-    else if (args["scale"] == "cube") {
-      scale.f = cube;
-      scale.min = args.loadvalue("min",0.0);
-      scale.max = args.loadvalue("max",1.0);
-    }
-    else {
-      scale.f = LOD10;
-      scale.min = args.loadvalue("min",-0.5);
-      scale.max = args.loadvalue("max",2.0);
-    }
+  return BaseColorScheme(*color_map,scale);
+}
 
-    
-    return ColorScheme (scale,*color_map);
+
+OwnedPointer<ColorScheme> get_base_color_scheme(Arguments& args, vector<string>& string_stack) 
+{
+  OwnedPointer<ColorScheme> result;
+
+  if (string_stack.size()) {
+    vector<string> model = split(string_stack.back(),'*');
+    if (model.size() == 2)
+      result = get_base_color_scheme(args,model[0],model[1]);
+    else if (model.size() == 1) {
+      result = get_base_color_scheme(args,model[0],"LOD");
+      if (not result) result = get_base_color_scheme(args,"Rainbow",model[0]);
+    }
+    else 
+      throw myexception()<<"Can't parse base color scheme '"<<string_stack.back()<<"'";
+  }
+
+  if (result)
+    string_stack.pop_back();
+  else
+    result = get_base_color_scheme(args,"Rainbow","LOD");
+
+  return result;
+}
+
+OwnedPointer<ColorScheme> get_color_scheme(Arguments& args) 
+{
+  vector<string> string_stack;
+  if (args["color-scheme"] != "")
+    string_stack = split(args["color-scheme"],'+');
+  std::reverse(string_stack.begin(),string_stack.end());
+  
+  OwnedPointer<ColorScheme> color_scheme = get_base_color_scheme(args,string_stack);
+  assert(color_scheme);
+
+  while(string_stack.size()) {
+    if (match(string_stack,"switch")) {
+      color_scheme = switch_fg_bg(*color_scheme);
+    }
+    else if (match(string_stack,"fg=AminoAcid")) {
+      color_scheme = AA_fg_colors(*color_scheme);
+    }
+    else if (match(string_stack,"bg=AminoAcid")) {
+      color_scheme = AA_bg_colors(*color_scheme);
+    }
+    else
+      throw myexception()<<"Can't parse color scheme modifier '"<<string_stack.back()<<"'";
+  }
+  return color_scheme;
 }
 
 int main(int argc,char* argv[]) { 
@@ -272,12 +424,12 @@ int main(int argc,char* argv[]) {
     load_A_and_T(args,A,T);
 
     /*------- Find mapping from colorfile to alignment sequence order -------*/
-    if (not args.set("colors"))
-      throw myexception()<<"color file not specified! (colors=<filename>)";
+    if (not args.set("AU-file"))
+      throw myexception()<<"AU probabilites file not specified! (AU-file=<filename>)";
 
-    ublas::matrix<double> colors = read_alignment_certainty(A,T,args["colors"].c_str());
+    ublas::matrix<double> colors = read_alignment_certainty(A,T,args["AU-file"].c_str());
 
-    ColorScheme color_scheme = get_color_scheme(args);
+    OwnedPointer<ColorScheme> color_scheme = get_color_scheme(args);
 
     bool showgaps = true;
     if (args["showgaps"] == "no")
@@ -375,8 +527,8 @@ SPAN {\n\
       
       //-------------------- Print a legend ------------------------//
       if (args["legend"] != "no") {
-	draw_legend(cout,color_scheme,"");
-	draw_legend(cout,color_scheme,"-");
+	draw_legend(cout,*color_scheme,"");
+	draw_legend(cout,*color_scheme,"-");
       }
 
       cout<<"<br><br>";
@@ -406,7 +558,7 @@ SPAN {\n\
 	  
 	  for(int column=pos;column<pos+width and column < end; column++) {
 	    double P=colors(column,T.n_leaves());
-	    string style = getstyle(P,"",color_scheme);
+	    string style = getstyle(P,"",*color_scheme);
 	    if (columncolors)
 	      cout<<"<span style=\""<<style<<"\">"<<positions[column]<<"</span>";
 	    else
@@ -427,7 +579,7 @@ SPAN {\n\
 	      if (not showgaps)
 		c = "&nbsp;";
 	    }
-	    string style = getstyle(colors(column,s),c,color_scheme);
+	    string style = getstyle(colors(column,s),c,*color_scheme);
 	    cout<<"<span style=\""<<style<<"\">"<<c<<"</span>";
 	  }
 	  cout<<"    </td>";
