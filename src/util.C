@@ -104,7 +104,12 @@ std::vector<std::string> truncate_names(const std::vector<std::string>& names) {
       multiplicity[j]++;
       
       string number = convertToString(multiplicity[j]);
-      names2[i].replace( names2[i].size()-number.size(),number.size(),number);
+      if (names2.size() >= 10)
+	names2[i].replace( names2[i].size()-number.size(),number.size(),number);
+      else
+	//FIXME - this doesn't work, because if two name[i] objects are the same
+	// then the mapping isn't computed correctly: we always go back to the first one.
+	names2[i] = names2[i] + number;
       //      cerr<<"Rewriting "<<names[i]<<" => "<<names2[i]<<endl;
     }
 

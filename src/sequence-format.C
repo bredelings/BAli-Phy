@@ -99,15 +99,28 @@ namespace sequence_format {
       string name;
       string line_letters;
 
-      if (not phylip_header_line(file,name,line_letters,"")) 
-	break;
+      bool empty_line = not phylip_header_line(file,name,line_letters,"");
 
-      if (name.size()) {
+      // parse line, and return false it empty;
+      if (empty_line) break;
+
+      // If the first line has no name, bail out
+      if (not name.size() and names.size() == 0)
+	throw myexception()<<"[Error reading PHYLIP alignment] First taxon has no name.";
+
+      // If the second line has no name, assume non-interleaved
+      if (not name.size() and names.size() == 1)
+	interleaved = false;
+
+      // If interleaved, assume that this is a new empty name.
+      // If non-interleaved, lines w/o names go w/ the last name.
+      if (name.size() or interleaved) {
 	names.push_back(name);
 	letters.push_back("");
+
+	if (not name.size())
+	  std::cerr<<"[Warning reading PHYLIP alignment]: taxon "<<names.size()+1<<" has an empty name!\n";
       }
-      else
-	interleaved = false;
 
       letters.back() += line_letters;
     }
@@ -279,6 +292,7 @@ namespace sequence_format {
 	
 	// write out the line
 	file<<header;
+	file<<" ";
 	file<<sequences[seq].substr(pos,letters_length);
 	file<<endl;
       }
