@@ -14,6 +14,8 @@
 #include <cmath>
 #include <fstream>
 #include <sstream>
+#include <map>
+#include <list>
 
 #include "sequencetree.H"
 #include "arguments.H"
@@ -162,6 +164,7 @@ bool report_sample(std::ostream& o,const vector<valarray<bool> >& sample_in,int 
   return true;
 }
 
+
 int main(int argc,char* argv[]) { 
   Arguments args;
   args.read(argc,argv);
@@ -205,7 +208,7 @@ int main(int argc,char* argv[]) {
     vector<SequenceTree> MAP_trees;
 
     for(int i=0;i<files.size();i++) {
-
+      
       ifstream file(files[i].c_str());
       if (not file)
 	throw myexception()<<"Couldn't open file "<<files[i];
@@ -233,8 +236,8 @@ int main(int argc,char* argv[]) {
     cout<<endl;
     for(int i=0;i<tree_dists.size();i++)
       for(int j=0;j<i;j++) {
-	cout<<"Distance between MAP trees for "<<i<<" and "<<j<<" = "<<topology_distance(MAP_trees[i],MAP_trees[j])<<endl;
-	cout<<"Distance between MAP trees for "<<i<<" and "<<j<<" = "<<branch_distance(MAP_trees[i],MAP_trees[j])<<endl;
+	cout<<"Topology distance between MAP trees for "<<i<<" and "<<j<<" = "<<topology_distance(MAP_trees[i],MAP_trees[j])<<endl;
+	cout<<"Branch distance between MAP trees for "<<i<<" and "<<j<<" = "<<branch_distance(MAP_trees[i],MAP_trees[j])<<endl;
       }
     cout<<endl;
 
@@ -256,16 +259,24 @@ int main(int argc,char* argv[]) {
       
     //------  Compute partitions to analyze -----//
     vector< Partition > partitions;
+    vector< vector< Partition > > dist_partitions(tree_dists.size());
     vector< vector< int> > branch_to_partitions(tree_dists.size());
 
     for(int i=0;i<tree_dists.size();i++) {
-      branch_to_partitions[i].resize(MAP_trees[i].n_branches());
 
+      // add Ml partitions to 'partitions' if not yet there
+      dist_partitions[i] = get_Ml_partitions(tree_dists[i],0.5);
+      for(int j=0;j<dist_partitions[i].size();j++)
+	if (not includes(partitions,dist_partitions[i][j])) 
+	  partitions.push_back(dist_partitions[i][j]);
+
+      // add MAP tree partitions to 'partitions' if not yet there
+      branch_to_partitions[i].resize(MAP_trees[i].n_branches());
       for(int b=MAP_trees[i].n_leaves();b<MAP_trees[i].n_branches();b++) {
 	valarray<bool> p1 = branch_partition(MAP_trees[i],b);
-
+	
 	Partition p(MAP_trees[i].get_sequences(),p1,mask);
-
+	
 	if (not includes(partitions,p)) {
 	  branch_to_partitions[i][b] = partitions.size();
 	  partitions.push_back(p);
@@ -273,7 +284,6 @@ int main(int argc,char* argv[]) {
 	else
 	  branch_to_partitions[i][b] = find_index(partitions,p);
       }
-
     }
 
     //------  Topologies to analyze -----//
@@ -369,6 +379,11 @@ int main(int argc,char* argv[]) {
       for(int b=MAP_trees[i].n_leaves();b<MAP_trees[i].n_branches();b++)
 	MAP_trees[i].branch(b).set_length( partition_support[ branch_to_partitions[i][b] ][i] );
       cout<<"MAPsupport_"<<i<<" = "<<MAP_trees[i]<<endl<<endl;
+    }
+
+    for(int i=0;i<tree_dists.size();i++) {
+      SequenceTree MF = get_mf_tree(dist_partitions[i]);
+      std::cout<<"mf"<<i<<" = "<<MF<<std::endl;
     }
   }
   catch (std::exception& e) {
