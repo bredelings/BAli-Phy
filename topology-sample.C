@@ -419,16 +419,19 @@ MCMC::result_t sample_topology(alignment& A,Parameters& Theta1,
   vector<int>* chosen_bits = &bits1;
   vector< vector<double> >* chosen_P = &P1;
   Parameters* chosen_Theta = &Theta1;
+  double PS = PS1;
 
   if (choice == 1) {
     chosen_bits = &bits2;
     chosen_P = &P2;
     chosen_Theta = &Theta2;
+    PS = PS2;
   }
   else if (choice == 2) {
     chosen_bits = &bits3;
     chosen_P = &P3;
     chosen_Theta = &Theta3;
+    PS = PS3;
   }
   
   // do traceback - how to calculate probability of observing 
@@ -441,8 +444,8 @@ MCMC::result_t sample_topology(alignment& A,Parameters& Theta1,
 
   //  std::cerr<<old<<endl<<endl;
   //  std::cerr<<A<<endl<<endl;
-  double l1 = probability3(old,Theta1);
-  double l2 = probability3(A,*chosen_Theta);
+  double l1 = PS1 + prior3(old,Theta1);
+  double l2 = PS + prior3(A,*chosen_Theta);
 
   std::cerr<<" L1 = "<<l1<<"    L2 = "<<l2<<std::endl;
 

@@ -97,9 +97,174 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M)
   }
 }
 
+double HMM::check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) {  
+
+  // Add up the full likelihoods
+  double l1 = lp1 + ls1;
+  double l2 = lp2 + ls2;
+  
+  // get the probabilities of sampling each of the paths
+  vector<int> path1_G = generalize(path1);
+  vector<int> path2_G = generalize(path2);
+
+  double p1 = path_P(path1_G); 
+  double p2 = path_P(path2_G); 
+
+  p1 += generalize_P(path1);
+  p2 += generalize_P(path2);
+
+  // get the probabilities of the path through the 3-way HMM
+  double qp1 = path_Q_path(path1_G) + generalize_P(path1);
+  double qs1 = path_Q_subst(path1_G);
+  double q1 = qp1 + qs1;
+
+  double qp2 = path_Q_path(path2_G) + generalize_P(path2);
+  double qs2 = path_Q_subst(path2_G);
+  double q2 = qp2 + qs2;
+
+  double diff = p2-p1-(l2-l1);
+
+  if (path1_G != path2_G) {
+
+    // Do the likelihood, path, and sampling probabilities match?
+    std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
+    std::cerr<<"Q1 = "<<q1<<"     Q2 = "<<q2<<"     Q2 - Q1 = "<<q2-q1<<endl;
+    std::cerr<<"L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<endl;
+    std::cerr<<"diff = "<<diff<<std::endl;
+    std::cerr<<endl;
+
+    // Do the likelihood and HMM substitition probabilities agree?
+    std::cerr<<"LS1 = "<<ls1<<"     LS2 = "<<ls2<<"   LS2 - LS1 = "<<ls2-ls1<<endl;
+    std::cerr<<"QS1 = "<<qs1<<"     QS2 = "<<qs2<<"   QS2 - QS1 = "<<qs2-qs1<<endl;
+    std::cerr<<endl;
+
+    // Do the likelihood and HMM path probabilities agree?
+    std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<endl;
+    std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<endl;
+    std::cerr<<endl;
+
+    // Since we can compute these accurately, make sure they match
+    assert(abs(lp1-qp1) < 1.0e-9);
+    assert(abs(lp2-qp2) < 1.0e-9);
+  }
+
+  return diff;
+}
+
+double DParray::path_P(const vector<int>& path) {
+  const int I = size()-1;
+  int i=I;
+  int l=path.size()-1;
+  int state2 = path[l];
+
+  double Pr=0;
+  while (l>0) {
+
+    vector<double> transition(nstates());
+    for(int state1=0;state1<nstates();state1++)
+      transition[state1] = (*this)[state1][i]+GQ(state1,state2);
+
+    int state1 = path[l-1];
+    double p = choose_P(state1,transition);
+    assert(p > log_0/100);
+
+    if (di(state1)) i--;
+
+    l--;
+    state2 = state1;
+    Pr += p;
+  }
+  // include probability of choosing 'Start' vs ---+ !
+  vector<double> transition(nstates());
+  for(int state1=0;state1<nstates();state1++)
+    transition[state1] = (*this)[state1][0] + GQ(state1,state2);
+
+  double p=log_0;
+  for(int state1=0;state1<nstates();state1++)  
+    if (not silent(state1))
+      p = logsum(p, choose_P(state1,transition) );
+
+  Pr += p;
+
+  assert(Pr > log_0);
+  return Pr;
+}
+
+void DParray::forward() {
+  for(int i=0;i<size();i++)
+    forward(i);
+}
+
+
+vector<int> DParray::sample_path() {
+  vector<int> path;
+  
+  const int I = size()-1;
+  int i = I;
+
+  int state2 = endstate();
+
+  while(i >= 0) {
+    path.push_back(state2);
+    vector<double> transition(nstates());
+    for(int state1=0;state1<nstates();state1++)
+      transition[state1] = (*this)[state1][i]+GQ(state1,state2);
+
+    int state1 = choose(transition);
+
+    if (di(state1)) i--;
+
+    state2 = state1;
+  }
+  assert(i+di(state2)==0);
+
+  std::reverse(path.begin(),path.end());
+  return path;
+}
+
 DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M)
-  :HMM(v1,v2,M),vector< vector<double> >(l+1,vector<double>(nstates(),log_0)) 
+  :HMM(v1,v2,M),vector< vector<double> >(nstates(),vector<double>(l+1,log_0)),length(l+1)
+{ 
+  for(int s=0;s<start_P.size();s++)
+    (*this)[s][0] = start_P[s];
+}
+
+inline void DParrayConstrained::forward(int i2) {
+  assert(i2<size());
+
+  for(int s2=0;s2<states(i2).size();s2++) {
+    int S2 = states(i2)[s2];
+    vector<double>& FS2 = (*this)[S2];
+
+    int i1 = i2;
+    if (di(S2))
+      i1--;
+
+    //--- Don't go off the boundary -----
+    if (i1<0) continue;
+
+    //--- Compute Arrival Probability ---
+    FS2[i2] = log_0;
+    for(int s1=0;s1<states(i1).size();s1++) {
+      int S1 = states(i1)[s1];
+      vector<double>& FS1 = (*this)[S1];
+
+      FS2[i2] = logsum(FS2[i2],FS1[i1] + GQ(S1,S2));
+    }
+  }
+}
+
+void DParrayConstrained::forward() {
+  for(int i=0;i<size();i++)
+    forward(i);
+}
+
+
+
+DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M)
+  :DParray(l,v1,v2,M),allowed_states(l+1)
 { }
+
 
 void DPmatrix::forward(int x1,int y1,int x2,int y2) {
   assert(x1 < x2 or y1 < y2);
@@ -282,7 +447,7 @@ double DPmatrix::path_P(const vector<int>& path) {
   // include probability of choosing 'Start' vs ---+ !
   vector<double> transition(nstates());
   for(int state1=0;state1<nstates();state1++)
-    transition[state1] = (*this)[state1](0,0)+GQ(state1,state2);
+    transition[state1] = (*this)[state1](0,0) + GQ(state1,state2);
 
   double p=log_0;
   for(int state1=0;state1<nstates();state1++)  
@@ -329,60 +494,6 @@ vector<int> DPmatrix::sample_path() {
   return path;
 }
 
-double DPmatrix::check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2) {  
-
-  // Add up the full likelihoods
-  double l1 = lp1 + ls1;
-  double l2 = lp2 + ls2;
-  
-  // get the probabilities of sampling each of the paths
-  vector<int> path1_G = generalize(path1);
-  vector<int> path2_G = generalize(path2);
-
-  double p1 = path_P(path1_G); 
-  double p2 = path_P(path2_G); 
-
-  p1 += generalize_P(path1);
-  p2 += generalize_P(path2);
-
-  // get the probabilities of the path through the 3-way HMM
-  double qp1 = path_Q_path(path1_G) + generalize_P(path1);
-  double qs1 = path_Q_subst(path1_G);
-  double q1 = qp1 + qs1;
-
-  double qp2 = path_Q_path(path2_G) + generalize_P(path2);
-  double qs2 = path_Q_subst(path2_G);
-  double q2 = qp2 + qs2;
-
-  double diff = p2-p1-(l2-l1);
-
-  if (path1_G != path2_G) {
-
-    // Do the likelihood, path, and sampling probabilities match?
-    std::cerr<<"P1 = "<<p1<<"     P2 = "<<p2<<"     P2 - P1 = "<<p2-p1<<endl;
-    std::cerr<<"Q1 = "<<q1<<"     Q2 = "<<q2<<"     Q2 - Q1 = "<<q2-q1<<endl;
-    std::cerr<<"L1 = "<<l1<<"     L2 = "<<l2<<"     L2 - L1 = "<<l2-l1<<endl;
-    std::cerr<<"diff = "<<diff<<std::endl;
-    std::cerr<<endl;
-
-    // Do the likelihood and HMM substitition probabilities agree?
-    std::cerr<<"LS1 = "<<ls1<<"     LS2 = "<<ls2<<"   LS2 - LS1 = "<<ls2-ls1<<endl;
-    std::cerr<<"QS1 = "<<qs1<<"     QS2 = "<<qs2<<"   QS2 - QS1 = "<<qs2-qs1<<endl;
-    std::cerr<<endl;
-
-    // Do the likelihood and HMM path probabilities agree?
-    std::cerr<<"LP1 = "<<lp1<<"     LP2 = "<<lp2<<endl;
-    std::cerr<<"QP1 = "<<qp1<<"     QP2 = "<<qp2<<endl;
-    std::cerr<<endl;
-
-    // Since we can compute these accurately, make sure they match
-    assert(abs(lp1-qp1) < 1.0e-9);
-    assert(abs(lp2-qp2) < 1.0e-9);
-  }
-
-  return diff;
-}
-
 DPmatrix::DPmatrix(const vector<int>& v1,
 		   const vector<double>& v2,
 		   const Matrix& M,
@@ -421,6 +532,25 @@ DPmatrix::DPmatrix(const vector<int>& v1,
   for(int S=0;S<start_P.size();S++)
     (*this)[S](0,0) = start_P[S];
 }
+
+inline void DPmatrixSimple::forward(int x1,int y1,int x2,int y2) {
+  assert(x1 < x2 or y1 < y2);
+  assert(x2 < size1());
+  assert(y2 < size2());
+
+  const int maxdelta = std::max(x2-x1,y2-y1);
+
+  for(int delta=1; delta<=maxdelta; delta++) {
+    if (y1 + delta <= y2)
+      for(int i=0;i<delta and x1+i <= x2;i++) 
+	forward(x1+i,y1+delta);
+
+    if (x1 + delta <= x2)
+      for(int i=0;i<=delta and y1+i <= y2;i++)
+	forward(x1+delta,y1+i);
+  }
+}
+
 
 void DPmatrixSimple::forward(const vector<int>& path,double bandwidth) {
   vector<int> icol;

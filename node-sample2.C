@@ -30,96 +30,31 @@ using std::valarray;
 
 using namespace A3;
 
-vector< vector<valarray<double> > > distributions(const alignment& A,const Parameters& P,
-					const vector<int>& seq,int n0,int n1) {
-  const alphabet& a = A.get_alphabet();
-  const substitution::MultiRateModel& MRModel = P.SModel();
-
-  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
-
-  for(int i=0;i<dist.size();i++) {
-    vector<int> residues(A.size2());
-    for(int j=0;j<residues.size();j++)
-      residues[j] = A(seq[i],j);
-    for(int r=0;r<MRModel.nrates();r++) {
-      dist[i][r].resize(a.size());
-      dist[i][r] = substitution::peel(residues,
-				      P.T,
-				      MRModel.BaseModel(),
-				      P.transition_P(r),
-				      n0,n1,n0);
-    }
-
-    // note: we could normalize frequencies to sum to 1
-  }
-
-  return dist;
-}
-
-//FIXME - with a modified 'peel' routine, we could just pass in a 'group' valarray:
-//  - voila: only one routine!
-//  - then perhaps we could merge with the 'distributions' routine in branch-sample.C
-
-vector< vector<valarray<double> > > distributions23(const alignment& A,const Parameters& P,
-					  const vector<int>& seq,int n0,int n1) {
-  const alphabet& a = A.get_alphabet();
-  const substitution::MultiRateModel& MRModel = P.SModel();
-
-  vector< vector< valarray<double> > > dist(seq.size(),vector< valarray<double> >(MRModel.nrates()) );
-
-  for(int i=0;i<dist.size();i++) {
-    vector<int> residues(A.size2());
-    for(int j=0;j<residues.size();j++)
-      residues[j] = A(seq[i],j);
-    for(int r=0;r<MRModel.nrates();r++) {
-      dist[i][r].resize(a.size());
-      dist[i][r] = substitution::peel(residues,
-				      P.T,
-				      MRModel.BaseModel(),
-				      P.transition_P(r),
-				      n1,n0,n0);
-    }
-
-    // note: we could normalize frequencies to sum to 1
-  }
-
-  return dist;
-}
-
-alignment tri_sample_alignment(const alignment& old,const Parameters& P,
-			   int node1,int node2) {
+alignment sample_node2(const alignment& old,const Parameters& P,int node) {
   const tree& T = P.T;
 
   const vector<double>& pi = P.IModel.pi;
-  const valarray<double>& frequency = P.SModel().BaseModel().frequencies();
 
   //  std::cerr<<"old = "<<old<<endl;
 
-
   /*---------------- Setup node names ------------------*/
-  assert(node1 >= T.leaves());
+  assert(node >= T.leaves());
 
-  int n0 = node1;
-  int n1 = T[n0].parent();
-  int n2 = T[n0].left();
-  int n3 = T[n0].right();
+  int n0 = node;
+  int n1 = T[node].parent();
+  int n2 = T[node].left();
+  int n3 = T[node].right();
 
-  if (node2 == n1)
-    ;
-  else if (node2 == n2)
-    std::swap(n1,n2);
-  else if (node2 == n3)
-    std::swap(n1,n3);
-  else
-    assert(0);
-
+  // choose a random order;
+  vector<int> nodes(3);nodes[0] = n1;nodes[1] = n2; nodes[2] = n3;
+  nodes = randomize(nodes); n1 = nodes[0]; n2 = nodes[1]; n3 = nodes[2];
 
   /*------------- Compute sequence properties --------------*/
   valarray<bool> group1 = T.partition(n0,n1);
   valarray<bool> group2 = T.partition(n0,n2);
   valarray<bool> group3 = T.partition(n0,n3);
 
-  vector<int> columns = getorder(old,n0,n1,n2,n3);
+  vector<int> seq123 = getorder(old,n0,n1,n2,n3);
 
   //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
   //  std::cerr<<"old (reordered) = "<<project(old,n0,n1,n2,n3)<<endl;
@@ -128,39 +63,35 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
   vector<int> seq1;
   vector<int> seq2;
   vector<int> seq3;
-  vector<int> seq23;
-  for(int i=0;i<columns.size();i++) {
-    int column = columns[i];
+  for(int i=0;i<seq123.size();i++) {
+    int column = seq123[i];
     if (not old.gap(column,n1))
       seq1.push_back(column);
     if (not old.gap(column,n2))
       seq2.push_back(column);
     if (not old.gap(column,n3))
       seq3.push_back(column);
-
-    if (not old.gap(column,n2) or not old.gap(column,n3))
-      seq23.push_back(column);
   }
 
   // Map columns with n2 or n3 to single index 'c'
-  vector<int> jcol(seq23.size()+1);
-  vector<int> kcol(seq23.size()+1);
+  vector<int> icol(seq123.size()+1);
+  vector<int> jcol(seq123.size()+1);
+  vector<int> kcol(seq123.size()+1);
 
+  icol[0] = 0;
   jcol[0] = 0;
   kcol[0] = 0;
-  for(int c=1,j=0,k=0;c<seq23.size()+1;c++) {
-    if (not old.gap(seq23[c-1],n2))
+  for(int c=1,i=0,j=0,k=0;c<seq123.size()+1;c++) {
+    if (not old.gap(seq123[c-1],n1))
+      i++;    
+    if (not old.gap(seq123[c-1],n2))
       j++;    
-    if (not old.gap(seq23[c-1],n3))
+    if (not old.gap(seq123[c-1],n3))
       k++;
+    icol[c] = i;
     jcol[c] = j;
     kcol[c] = k;
   }
-
-
-  // Precompute distributions at n0
-  vector< vector< valarray<double> > > dists1 = distributions(old,P,seq1,n0,n1);
-  vector< vector< valarray<double> > > dists23 = distributions23(old,P,seq23,n0,n1);
 
 
   /*-------------- Create alignment matrices ---------------*/
@@ -170,11 +101,8 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
   for(int S2=0;S2<state_emit.size();S2++) {
     state_emit[S2] = 0;
 
-    if (di(S2)) 
+    if (di(S2) or dj(S2) or dk(S2)) 
       state_emit[S2] |= (1<<0);
-
-    if (dc(S2)) 
-      state_emit[S2] |= (1<<1);
   }
 
   // Get the distribution which simulates the Start state
@@ -206,7 +134,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
     sum = logsum(sum,start_P[S]);
   }
 
-  // check that the sum of Matrices[S](0,0) is 1, number of states examined is 27
+  // check that the sum of Matrices[S][0] is 1, number of states examined is 27
   std::cerr<<"sum = "<<sum<<std::endl;
   assert(count==27);
 
@@ -214,8 +142,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
   const Matrix Q = createQ(P.IModel);
 
   // Actually create the Matrices & Chain
-  DPmatrixHMM Matrices(state_emit,start_P,Q,
-		       P.SModel().distribution(),dists1,dists23,frequency);
+  DParrayConstrained Matrices(seq123.size(),state_emit,start_P,Q);
 
   // Determine state order
   vector<int> state_order(nstates);
@@ -223,24 +150,28 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
     state_order[i] = i;
   std::swap(state_order[7],state_order[nstates-1]);        // silent states must be last
 
-  // Determine which states are allowed to match (,c2)
-  for(int c2=0;c2<Matrices.size2();c2++) {
+  // Determine which states are allowed to match (c2)
+  for(int c2=0;c2<Matrices.size();c2++) {
+    int i2 = icol[c2];
     int j2 = jcol[c2];
     int k2 = kcol[c2];
     for(int i=0;i<state_order.size();i++) {
       int S2 = state_order[i];
 
       //---------- Get (,j1,k1) ----------
+      int i1 = i2;
+      if (di(S2)) i1--;
+
       int j1 = j2;
-      if (dj(S2)) 
-	j1--;
+      if (dj(S2)) j1--;
 
       int k1 = k2;
-      if (dk(S2)) 
-	k1--;
+      if (dk(S2)) k1--;
       
       //------ Get c1, check if valid ------
-      if (c2==0 or (j1 == j2 and k1 == k2) or (j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
+      if (c2==0 
+	  or (i1 == i2 and j1 == j2 and k1 == k2) 
+	  or (i1 == icol[c2-1] and j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
 	Matrices.states(c2).push_back(S2);
       else
 	; // this state not allowed here
@@ -250,17 +181,7 @@ alignment tri_sample_alignment(const alignment& old,const Parameters& P,
 
   /*------------------ Compute the DP matrix ---------------------*/
 
-  if (P.features & (1<<0)) {
-    vector<int> path_old = get_path_3way(project(old,n0,n1,n2,n3),0,1,2,3);
-    Matrices.forward(path_old,P.constants[0]);
-  }
-  else {
-    // Since we are using M(0,0) instead of S(0,0), we need this hack to get ---+(0,0)
-    // We can only use non-silent states at (0,0) to simulate S
-    Matrices.forward(0,0);
-  
-    Matrices.forward(0,0,seq1.size(),seq23.size());
-  }
+  Matrices.forward();
 
   //------------- Sample a path from the matrix -------------------//
 

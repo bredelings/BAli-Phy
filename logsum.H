@@ -4,13 +4,17 @@
 const double max_float = 3.40282347e+38F;
 
 const double log_0 = -max_float;
+const double log_limit = log_0/100;
 
-inline double logsum(double r, double q)
+inline double logsum(double x, double y)
 {
-  if (std::abs(r-q) > 308)
-    return ((r > q) ? r : q);
-  
-  return (r + log(1 + exp(q - r)));
+  double temp = y-x;
+  if (temp > 308 or x < log_limit)
+    return y;
+  else if (temp < -308 or y < log_limit)
+    return x;
+  else
+    return (x + log(1 + exp(temp)));
 }
 
 inline double logsum(double x, double y, double z) {

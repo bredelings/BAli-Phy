@@ -26,12 +26,16 @@ public:
   vector<int> ungeneralize(const vector<int>& path_g);
   double generalize_P(const vector<int>& path);
 
+  virtual double path_P(const vector<int>& path)=0;
+
   double path_Q_path(const vector<int>& path);
   virtual double path_Q_subst(const vector<int>& path)=0;
 
   virtual double path_Q(const vector<int>& path) {
     return path_Q_path(path) + this->path_Q_subst(path);
   }
+
+  double check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2);
 
   HMM(const vector<int>&,const vector<double>&,const Matrix&);
 
@@ -40,15 +44,18 @@ public:
 
 
 class DParray : public HMM, public vector< vector<double> > {
-  vector< vector<int> > allowed_states;
+  int length;
 public:
-  const vector<int>& states(int j) const {return allowed_states[j];}
-  vector<int>& states(int j) {return allowed_states[j];}
-
   double path_Q_subst(const vector<int>& path) {return 0;}
+
+  bool di(int S) {bool e = false; if (state_emit[S]&(1<<0)) e=true;return e;}
+
+  double path_P(const vector<int>& path);
 
   // compute FP for the whole array
   void forward();
+
+  unsigned size() const {return length;}
 
   // compute FP for a cell
   virtual void forward(int)=0;
@@ -56,15 +63,27 @@ public:
   // functions on paths
   vector<int> sample_path();
 
-  //FIXME - still need to implement checking framework
   DParray(int,const vector<int>&,const vector<double>&,const Matrix&);
 
   virtual ~DParray() {}
 };
 
 
+class DParrayConstrained: public DParray {
+  vector< vector<int> > allowed_states;
+public:
+  const vector<int>& states(int j) const {return allowed_states[j];}
+  vector<int>& states(int j) {return allowed_states[j];}
 
+  void forward();
 
+  // compute FP for a cell
+  void forward(int);
+
+  DParrayConstrained(int,const vector<int>&,const vector<double>&,const Matrix&);
+
+  virtual ~DParrayConstrained() {}
+};
 
 class DPmatrix : public HMM, public vector<Matrix> {
 protected:
@@ -87,7 +106,7 @@ public:
   bool dj(int S) {bool e = false; if (state_emit[S]&(1<<1)) e=true;return e;}
 
   // compute FP for a square
-  void forward(int,int,int,int);
+  virtual void forward(int,int,int,int);
 
   // compute FP for a cell
   virtual void forward(int,int)=0;
@@ -102,8 +121,6 @@ public:
 
   double path_P(const vector<int>& path);
   double path_check(const vector<int>& path);
-
-  double check(const vector<int>& path1,const vector<int>& path2,double lp1,double ls1,double lp2,double ls2);
 
   double emitMM(int i,int j);
   double emit_M(int i,int j);
@@ -149,8 +166,8 @@ inline double DPmatrix::emit__(int i,int j) {
 
 class DPmatrixSimple: public DPmatrix {
 public:
-  void forward(int i1,int j1,int i2,int j2);
   void forward(int,int);
+  void forward(int i1,int j1,int i2,int j2);
 
   // compute FP for entire matrix, with some points on path pinned
   void forward(const vector<int>&,double);
@@ -178,12 +195,10 @@ inline void DPmatrixSimple::forward(int i2,int j2) {
 
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
-    if (di(S2))
-      i1--;
+    if (di(S2)) i1--;
 
     int j1 = j2;
-    if (dj(S2))
-      j1--;
+    if (dj(S2)) j1--;
 
     //--- Don't go off the boundary -----
     if (i1<0 or j1<0)
@@ -212,11 +227,6 @@ inline void DPmatrixSimple::forward(int i2,int j2) {
     FS2(i2,j2) += sub;
   }
 }     
-
-inline void DPmatrixSimple::forward(int i1,int j1,int i2,int j2) {
-  DPmatrix::forward(i1,j1,i2,j2);
-}
-
 
 class DPmatrixHMM: public DPmatrix {
   vector< vector<int> > allowed_states;

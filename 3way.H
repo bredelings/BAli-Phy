@@ -3,6 +3,7 @@
 
 #include "mytypes.H"
 #include "alignment.H"
+#include "parameters.H"
 
 namespace states {
   const int M  = 0;
@@ -39,6 +40,18 @@ namespace A3 {
   int dk(int S);
   int dc(int S);
   int dl(int S);
+
+  double getQ(int S1,int S2,const IndelModel& IModel);
+  double getGQ(int S1,int S2,const IndelModel& IModel);
+  Matrix createQ(const IndelModel& IModel);
+  Matrix createGQ(const IndelModel& IModel);
+
+  alignment construct(const alignment& old, const vector<int>& path, 
+		      int n0,int n1,int n2,int n3,const tree& T,
+		      const vector<int>& seq1,const vector<int>& seq2, const vector<int>& seq3);
+
+  vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3);
+  alignment project(const alignment& A1,int n0,int n1,int n2,int n3);
 };
 
 //using namespace A3;

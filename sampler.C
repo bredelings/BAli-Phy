@@ -198,8 +198,10 @@ void do_sampling(Arguments& args,alignment& A,Parameters& P,long int max_iterati
 
   // aligment :: sample_nodes
   MoveEach internal_nodes_move("nodes");
-  MoveArgSingle temp("sample_nodes:alignment:nodes",sample_nodes_one,internal_nodes);
-  internal_nodes_move.add(1,temp);
+  MoveArgSingle nodes_move1("sample_nodes:alignment:nodes",sample_nodes_one,internal_nodes);
+  MoveArgSingle nodes_move2("sample_nodes2:alignment:nodes",sample_nodes2_one,internal_nodes);
+  internal_nodes_move.add(1,nodes_move1);
+  internal_nodes_move.add(1,nodes_move2);
 
   if (P.T.leaves() >2)
     alignment_moves.add(1,internal_nodes_move);
@@ -342,7 +344,7 @@ int main(int argc,char* argv[]) {
     base_smodel->frequencies(empirical_frequencies(A));
     
     substitution::MultiRateModel *full_smodel = 0;
-    if (args.set("Gamma")) {
+    if (args.set("gamma")) {
       int n=4;
       full_smodel = new substitution::GammaRateModel(*base_smodel,n);
     }

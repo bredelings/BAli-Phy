@@ -95,6 +95,12 @@ MCMC::result_t sample_nodes_one(alignment& A, Parameters& P,int node) {
   return MCMC::no_result;
 }
 
+MCMC::result_t sample_nodes2_one(alignment& A, Parameters& P,int node) {
+  A = sample_node2(A,P,node);
+
+  return MCMC::no_result;
+}
+
 MCMC::result_t sample_nodes(alignment& A, Parameters& P) {
   for(int i=0;i<P.T.num_nodes()-P.T.leaves();i++) {
     int node = myrandom(P.T.leaves(),P.T.num_nodes()-1);
@@ -117,8 +123,14 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
 
   P2.fiddle();
 
-  double lL_1 = probability3(A,P);
-  double lL_2 = probability3(A,P2);
+  double LS1 = likelihood3(A,P);
+  double LP1 = prior3(A,P);
+
+  double LS2 = likelihood3(A,P2);
+  double LP2 = prior3(A,P2);
+
+  double lL_1 = LS1 + LP1;
+  double lL_2 = LS2 + LP2;
 
   for(int i=0;i<P.SModel().parameters().size();i++)
     std::cerr<<"    p"<<i<<" = "<<P.SModel().parameters()[i];
@@ -128,9 +140,8 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
     std::cerr<<"    p"<<i<<" = "<<P2.SModel().parameters()[i];
   std::cerr<<endl<<endl;
 
-
-  std::cerr<<"L1 = "<<lL_1<<" = "<<substitution::Pr(A,P)<<" + "<<prior(P)<<endl;
-  std::cerr<<"L2 = "<<lL_2<<" = "<<substitution::Pr(A,P2)<<" + "<<prior(P2)<<endl;
+  std::cerr<<"L1 = "<<lL_1<<" = "<<LS1<<" + "<<LP1<<endl;
+  std::cerr<<"L2 = "<<lL_2<<" = "<<LS2<<" + "<<LP2<<endl;
 
   if (myrandomf() < exp(lL_2 - lL_1)) {
     P = P2;
