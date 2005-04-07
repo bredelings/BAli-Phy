@@ -469,43 +469,37 @@ vector<const_branchview> branches_toward_node(const Tree& T,int n) {
   return branch_list;
 }  
 
-vector<const_branchview> branches_from_leaves(const Tree& T) {
+vector<const_branchview> branches_from_leaves(const Tree& T) 
+{
   vector<const_branchview> branch_list;
   branch_list.reserve(2*T.n_branches());
-  valarray<bool> visited(false,2*T.n_branches());
+  vector<bool> visited(2*T.n_branches(),false);
 
   for(int i=0;i<T.n_leaves();i++) {
     branch_list.push_back(T.branch(i));
     visited[i] = true;
   }
-  
-  for(int i=0;i<branch_list.size();i++) {
-    // get branches point in to target node
-    vector<const_branchview> in;
-    append(branch_list[i].target().branches_in(),in);
 
-    // determine if 0,1,or more branches have not been visited
-    const_branchview first = NULL;
-    for(int j=0;j<in.size();j++) {
-      if (not visited[in[j]]) {
-	if (not first.valid())
-	  first = in[j];
-	else
-	  in.clear();
-      }
-    }
+  for(int i=0;i<branch_list.size();i++) 
+  {
+    // because we are on the list, we are 'visited'
+    assert(visited[branch_list[i]]);
 
-    // if 1 branch has not been visited, then just process that branch
-    if (first.valid()) {
-      in.clear();
-      in.push_back(first);
-    }
+    // check branches-after to see if any are ready
+    for(const_edges_after_iterator j = branch_list[i].branches_after();j;j++) 
+    {
+      // if we are already valid, then ignore
+      if (visited[*j]) continue;
 
-    // put out-going branches on the branch-list
-    for(int j=0;j<in.size();j++) {
-      if (not visited[in[j].reverse()]) {
-	visited[in[j].reverse()] = true;
-	branch_list.push_back(in[j].reverse());
+      // check if all branches-before are valid
+      bool ready = true;
+      for(const_edges_before_iterator k = (*j).branches_before();k;k++)
+	if (not visited[*k]) ready = false;
+
+      // if so, then 
+      if (ready) {
+	branch_list.push_back(*j);
+	visited[*j] = true;
       }
     }
   }
