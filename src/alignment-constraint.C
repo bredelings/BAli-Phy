@@ -135,8 +135,8 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
     assert(x >=0 and x < seq1.size());
     assert(y >=0 and y < seq2.size());
 
-    pins[0].push_back(x);
-    pins[1].push_back(y);
+    pins[0].push_back(x+1);
+    pins[1].push_back(y+1);
   }
 
   return pins;
