@@ -452,7 +452,7 @@ int rank(const Tree& T,int b) {
 }
 
 
-void update_subA_index_single(const alignment& A,int b,const Tree& T) {
+void update_subA_index_single(const alignment& A,const Tree& T,int b) {
   // notes for leaf sequences
   if (b < T.n_leaves()) {
     int l=0;
@@ -467,27 +467,28 @@ void update_subA_index_single(const alignment& A,int b,const Tree& T) {
   }
   else {
     // get 2 branches leading into this one
-    vector<const_branchview> branches;
-    append(T.directed_branch(b).branches_before(),branches);
-    for(int i=0;i<branches.size();i++) 
-      assert(subA_index_valid(A,branches[i]));
-
-    assert(branches.size() == 2);
+    vector<const_branchview> prev;
+    append(T.directed_branch(b).branches_before(),prev);
+    assert(prev.size() == 2);
 
     // sort branches by rank
-    if (rank(T,branches[0]) > rank(T,branches[1]))
-      std::swap(branches[0],branches[1]);
+    if (rank(T,prev[0]) > rank(T,prev[1]))
+      std::swap(prev[0],prev[1]);
 
-    // get mappings of previous subA indicies into alignment
+    // get mappings of previous subA indices into alignment
     vector<vector<int> > mappings;
-    for(int i=0;i<mappings.size();i++)
-      mappings.push_back(vector<int>(subA_length(A,branches[i]),-1));
+    for(int i=0;i<prev.size();i++) {
+      assert(subA_index_valid(A,prev[i]));
+      mappings.push_back(vector<int>(subA_length(A,prev[i]),-1));
+    }
 
     int l=0;
     for(int c=0;c<A.length();c++) {
       bool present = false;
       for(int i=0;i<mappings.size();i++) {
-	int index = A.note(1,c,branches[i]);
+	int index = A.note(1,c+1,prev[i]);
+	assert(index < (int)mappings[i].size());
+
 	if (index != -1) {
 	  mappings[i][index] = c;
 	  present = true;
@@ -495,10 +496,10 @@ void update_subA_index_single(const alignment& A,int b,const Tree& T) {
       }
       if (present) {
 	l++;
-	A.note(1,c,b) = -2;
+	A.note(1,c+1,b) = -2;
       }
       else
-	A.note(1,c,b) = -1;
+	A.note(1,c+1,b) = -1;
     }
 
     // create subA index for this branch
@@ -512,10 +513,10 @@ void update_subA_index_single(const alignment& A,int b,const Tree& T) {
 	assert(c != -1);
 
 	// subA for b should be present here
-	assert(A.note(1,c,b) != -1);
+	assert(A.note(1,c+1,b) != -1);
 
-	if (A.note(1,c,b) == -2)
-	  A.note(1,c,b) = l++;
+	if (A.note(1,c+1,b) == -2)
+	  A.note(1,c+1,b) = l++;
       }
     }
     assert(l == A.note(1,0,b));
@@ -524,6 +525,8 @@ void update_subA_index_single(const alignment& A,int b,const Tree& T) {
 
 void update_subA_index(const alignment& A,const Tree& T,int b) 
 {
+  subA_index_check_footprint(A,T);
+
   // get ordered list of branches to process before this one
   vector<const_branchview> branches; branches.reserve(T.n_branches());
   branches.push_back(T.directed_branch(b));
@@ -538,5 +541,58 @@ void update_subA_index(const alignment& A,const Tree& T,int b)
 
   // update the branches in order 
   for(int i=0;i<branches.size();i++)
-    update_subA_index_single(A,branches[i],T);
+    update_subA_index_single(A,T,branches[i]);
+
+  subA_index_check_footprint(A,T);
+}
+
+void recompute_subA_notes(const alignment& A,const Tree& T) 
+{
+  invalidate_subA_index_all(A);
+  vector<const_branchview> branches = branches_from_leaves(T);
+
+  for(int i=0;i<branches.size();i++) {
+    const const_branchview& b = branches[i];
+
+    update_subA_index_single(A,T,b);
+  }
+
+  subA_index_check_footprint(A,T);
+}
+
+void subA_index_check_regenerate(const alignment& A1,const Tree& T) 
+{
+
+  // compare against calculation from scratch
+  alignment A2 = A1;
+  recompute_subA_notes(A2,T);
+
+  for(int b=0;b<T.n_branches()*2;b++) {
+    if (subA_index_valid(A1,b)) {
+      assert(subA_length(A1,b) == subA_length(A2,b));
+      for(int c=0;c<A1.length();c++)
+	assert(A1.note(1,c+1,b) == A1.note(1,c+1,b));
+    }
+  }
+}
+
+void subA_index_check_footprint(const alignment& A,const Tree& T) 
+{
+  for(int b=0;b<T.n_branches()*2;b++) {
+    if (not subA_index_valid(A,b)) continue;
+
+    for(int c=0;c<A.length();c++) {
+
+      bool leaf_present = false;
+      vector<int> leaves = T.leaf_partition_set(T.directed_branch(b).reverse());
+      for(int i=0;i<leaves.size();i++)
+	if (not A.gap(c,leaves[i]))
+	  leaf_present=true;
+
+      if (leaf_present)
+	assert(A.note(1,c+1,b) != -1);
+      else
+	assert(A.note(1,c+1,b) == -1);
+    }
+  }
 }

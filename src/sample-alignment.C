@@ -7,7 +7,6 @@
 #include "alignment-constraint.H"
 #include "alignment-util.H"
 #include "dp-matrix.H"
-#include "substitution-index.H"
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
@@ -145,7 +144,6 @@ void sample_alignment(alignment& A,Parameters& P,int b)
 
   P.LC.set_length(A.length());
   P.LC.invalidate_branch_alignment(T,b);
-  invalidate_subA_index_branch(A,T,b);
 
   //--------------------------------------------------------------//
   assert(valid(A));
