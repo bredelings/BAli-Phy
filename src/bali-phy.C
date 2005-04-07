@@ -19,6 +19,7 @@
 #include "util.H"
 #include "setup.H"
 #include "alignment-constraint.H"
+#include "substitution-index.H"
 #include "monitor.H"
 #include "pow2.H"
 
@@ -430,6 +431,8 @@ int main(int argc,char* argv[]) {
     set_parameters(P,args);
 
     P.LC.set_length(A.length());
+    recompute_subA_notes(A,T);
+
     //---------------Do something------------------//
     if (args.count("show-only"))
       print_stats(cout,cout,cout,cout,A,P,"Initial");

@@ -3,6 +3,7 @@
 #include "logsum.H"
 #include "rng.H"
 #include "alignment-util.H"
+#include "substitution-index.H"
 
 using std::valarray;
 
@@ -489,6 +490,8 @@ namespace A5 {
     //      std::cerr<<"n"<<i<<" = "<<nodes[i]<<"  ";
     //    std::cerr<<"\n";
     assert(valid(A));
+
+    recompute_subA_notes(A,T);
 
     return A;
   }

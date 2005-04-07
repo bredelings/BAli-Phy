@@ -131,8 +131,7 @@ namespace substitution {
   void peel_branch(int b0,column_cache_t cache, const alignment& A, const Tree& T, 
 		   const MatCache& transition_P,const MultiModel& MModel)
   {
-    // create the index
-    update_subA_index(A,T,b0);
+    assert(subA_index_valid(A,b0));
 
     // compute branches-in
     vector<int> b;
@@ -440,6 +439,11 @@ namespace substitution {
   efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& cache,
 	    const MultiModel& MModel)
   {
+#ifndef NDEBUG
+    subA_index_check_footprint(A,T);
+    subA_index_check_regenerate(A,T);
+#endif
+
     if (cache.cv_up_to_date()) {
 #ifndef NDEBUG
       std::clog<<"Pr: Using cached value "<<log(cache.cached_value)<<"\n";

@@ -3,6 +3,7 @@
 #include "logsum.H"
 #include "util.H"
 #include "rng.H"
+#include "substitution-index.H"
 
 using std::valarray;
 
@@ -434,6 +435,8 @@ namespace A3 {
     //  std::cerr<<"new = "<<A<<endl;  
     //  std::cerr<<"new(reordered) = "<<project(A,n0,n1,n2,n3)<<endl;
     assert(valid(A));
+
+    recompute_subA_notes(A,T);
 
     return A;
   }
