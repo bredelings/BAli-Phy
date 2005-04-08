@@ -13,21 +13,24 @@ namespace substitution {
   ublas::matrix<int> leaf_index(int b,const alignment& A);
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> subA_index(const std::vector<int>& b,const alignment& A,const Tree& T);
+  ublas::matrix<int> subA_index(const std::vector<int>& b,const alignment& A);
+
+  /// align sub-alignments corresponding to branches pointing to node
+  ublas::matrix<int> subA_index(int node,const alignment& A,const Tree& T); 
+
+  /// align sub-alignments corresponding to branches in b
+  ublas::matrix<int> subA_index_select(const std::vector<int>& b,const alignment& A);
 
   /// align sub-alignments corresponding to branches in b, and select columns with a node in @nodes
-  ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A,const Tree& T,
-				    const std::vector<int>& nodes);
+  ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A,const std::vector<int>& nodes);
 
   /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
-  ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A,const Tree& T,
+  ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A,
 				    const std::vector<int>& nodes, const std::vector<int>& seq);
 
   /// align sub-alignments corresponding to branches in b, and reject columns with a node in @nodes
-  ublas::matrix<int> subA_index_none(const std::vector<int>& b,const alignment& A,const Tree& T,
+  ublas::matrix<int> subA_index_none(const std::vector<int>& b,const alignment& A,
 				     const std::vector<int>& nodes);
-
-  ublas::matrix<int> subA_index_columns(int root,const alignment& A,const Tree& T); 
 
   bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2);
 

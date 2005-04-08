@@ -139,7 +139,10 @@ namespace substitution {
       b.push_back(*i);
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index = (b.size())?subA_index(b,A,T):leaf_index(b0,A);
+    b.push_back(b0);
+    ublas::matrix<int> index = subA_index_select(b,A);
+    assert(index.size1() == subA_length(A,b0));
+    b.pop_back();
 
     // The number of directed branches is twice the number of undirected branches
     const int B        = T.n_branches();
@@ -149,10 +152,8 @@ namespace substitution {
     const int n_models = S.size1();
     const int asize    = S.size2();
 
-    const int length = index.size1();
-
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
-    for(int i=0;i<length;i++) {
+    for(int i=0;i<subA_length(A,b0);i++) {
 
       // compute the distribution at the parent node - single letter
       if (not b.size()) {
@@ -277,7 +278,7 @@ namespace substitution {
       rb.push_back(*i);
 
     // get the index
-    ublas::matrix<int> index = subA_index_columns(root,A,T);
+    ublas::matrix<int> index = subA_index(root,A,T);
 
     // scratch matrix 
     Matrix & S = cache.scratch(0);
@@ -353,7 +354,7 @@ namespace substitution {
       assert(T.directed_branch(b[i]).target() == root);
     cache.root = root;
 
-    ublas::matrix<int> index = subA_index_any(b,A,T,req,seq);
+    ublas::matrix<int> index = subA_index_any(b,A,req,seq);
 
     int n_br = calculate_caches(A,P,cache);
 #ifndef NDEBUG
@@ -420,12 +421,12 @@ namespace substitution {
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index1 = subA_index_none(rb,A,T,nodes);
+    ublas::matrix<int> index1 = subA_index_none(rb,A,nodes);
     efloat_t Pr1 = calc_root_probability(A,P,rb,index1);
 
 #ifndef NDEBUG
-    ublas::matrix<int> index2 = subA_index_any(rb,A,T,nodes);
-    ublas::matrix<int> index  = subA_index(rb,A,T);
+    ublas::matrix<int> index2 = subA_index_any(rb,A,nodes);
+    ublas::matrix<int> index  = subA_index(rb,A);
 
     efloat_t Pr2 = calc_root_probability(A,P,rb,index2);
     efloat_t Pr  = calc_root_probability(A,P,rb,index);
@@ -462,7 +463,7 @@ namespace substitution {
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index = subA_index(rb,A,T);
+    ublas::matrix<int> index = subA_index(rb,A);
 
     // get the probability
     efloat_t Pr = calc_root_probability(A,MC,T,cache,MModel,rb,index);
