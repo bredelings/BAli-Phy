@@ -347,6 +347,11 @@ namespace substitution {
     const Tree& T = P.T;
     Likelihood_Cache& cache = P.LC;
 
+#ifndef NDEBUG
+    subA_index_check_footprint(A,T);
+    subA_index_check_regenerate(A,T);
+#endif
+
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
     int root = T.directed_branch(b[0]).target();
