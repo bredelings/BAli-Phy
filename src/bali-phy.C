@@ -19,6 +19,7 @@
 #include "util.H"
 #include "setup.H"
 #include "alignment-constraint.H"
+#include "alignment-util.H"
 #include "substitution-index.H"
 #include "monitor.H"
 #include "pow2.H"
@@ -431,6 +432,9 @@ int main(int argc,char* argv[]) {
     set_parameters(P,args);
 
     P.LC.set_length(A.length());
+
+    add_leaf_seq_note(A,T.n_leaves());
+    add_subA_index_note(A,T.n_branches());
     recompute_subA_notes(A,T);
 
     //---------------Do something------------------//

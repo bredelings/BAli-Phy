@@ -180,10 +180,6 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
 
   //---- Check that internal sequence satisfy constraints ----//
   check_alignment(A,T,internal_sequences);
-
-
-  add_leaf_seq_note(A,T.n_leaves());
-  add_subA_index_note(A,T.n_branches());
 }
 
 OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
