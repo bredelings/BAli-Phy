@@ -1,8 +1,10 @@
-1. Fix indexing of sub-alignments! 
-  a) make A5::construct reconstruct subA indices (we can assume they are preserved)
-  b) make A3::construct reconstruct subA indices
-    i) when its constant - ?
-   ii) when its partially constant?
+
+0. Try ivopts / ivcanon / etc!  
+  i) Do these work?  
+ ii) If not, then why not?  Find out how to get dumps...
+iii) loop-optimize2: loop unswitching, loop invariant motion, loop peeling...
+
+1. Rename substitution-index.C -> alignment-index.C
 
 2. fp_scale speedups
   a) find out how much time we are spending doing I/O...
@@ -232,4 +234,12 @@ the prior, because we never want to use it  differently.
 
        Also:
        * shift s1_sub, s2_sub, s12_sub to matrix coordinates by adding padding to the beginning.
+
+[DONE] Fix sub-alignment indices
+  a) make A?::construct reconstruct subA indices
+     - indices are uniquely defined - reconstructing from scratch
+       should not change them.
+     - indices are dependant only on leaf-taxa alignment & tree
+  b) reconstruct subA indices when tree changes 
+     - sample-tri.C for sample-topology-SPR.C
 
