@@ -9,9 +9,6 @@
 
 namespace substitution {
 
-  /// get an Lx0 matrix containing the leaf letters
-  ublas::matrix<int> leaf_index(int b,const alignment& A);
-
   /// align sub-alignments corresponding to branches in b
   ublas::matrix<int> subA_index(const std::vector<int>& b,const alignment& A);
 
