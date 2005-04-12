@@ -449,3 +449,28 @@ user+system:
 
 #5 = #4 + profile-based optimization
 4.95 = 4.34 + 0.61 (-2.3%)    [For substitution case: -3.2% over #1]
+
+------------------------
+3.4 vs 4.0 (4/12/2004)  r959
+Intel(R) Pentium(R) III Mobile CPU      1000MHz
+
+3.4:
+Execution: 12d (fixed A)
+real    0m12.198s
+user    0m8.197s
+sys     0m0.141s
+
+Execution: 5d (unfixed A)
+real    0m15.480s
+user    0m11.179s
+sys     0m1.921s
+
+4.0:
+real    0m8.618s
+user    0m8.042s
+sys     0m0.098s
+
+Execution: 5d (unfixed A)
+real    0m12.717s
+user    0m10.233s
+sys     0m1.837s
