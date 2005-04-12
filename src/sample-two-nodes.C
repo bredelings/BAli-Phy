@@ -204,8 +204,8 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,vector< ve
   assert(p.size() == nodes.size());
   
   //----------- Generate the different states and Matrices ---------//
-#ifndef NDEBUG
   const alignment A0 = a[0];
+#ifndef NDEBUG
   const Parameters P0 = p[0];
 #endif
 

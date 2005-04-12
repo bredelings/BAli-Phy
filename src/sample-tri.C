@@ -190,8 +190,8 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
   assert(p.size() == nodes.size());
 
   //----------- Generate the different states and Matrices ---------//
-#ifndef NDEBUG
   const alignment A0 = a[0];
+#ifndef NDEBUG
   const Parameters P0 = p[0];
 #endif
 
@@ -307,7 +307,7 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
   //---------------- Adjust for length of n4 and n5 changing --------------------//
 
   // if we reject the move, then don't do anything
-  if (myrandomf() > acceptance_ratio(a[0],p[0],nodes[0],a[C],p[C],nodes[C]))
+  if (myrandomf() > acceptance_ratio(A0,p[0],nodes[0],a[C],p[C],nodes[C]))
     return -1;
 
   return C;
