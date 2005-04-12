@@ -176,6 +176,6 @@ void report_constraints(const valarray<bool>& s1, const valarray<bool>& s2) {
     std::cerr<<"All constraints satisfied."<<std::endl;
 
 #ifndef NDEBUG
-  std::cerr<<sum(s1)<<"/"<<s2.size()<<" constraints satisfied.\n";
+  std::cerr<<sum(s2)<<"/"<<s2.size()<<" constraints satisfied.\n";
 #endif
 }
