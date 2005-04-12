@@ -9,50 +9,36 @@
 #include "3way.H"
 #include "alignment-sums.H"
 #include "alignment-constraint.H"
+#include "substitution-index.H"
 
 ///Sample between 2 topologies, ignoring gap priors on each case
-bool sample_SPR_and_A(alignment& A,Parameters& P,vector<Parameters>& p,int n1, int n2) 
+int sample_SPR_and_A(vector<alignment>& a,vector<Parameters>& p,int n1, int n2) 
 {
   //----------- Generate the Different node lists ---------//
   vector< vector<int> > nodes(2);
   nodes[0] = A3::get_nodes_branch_random(p[0].T,n1,n2);
   nodes[1] = A3::get_nodes_branch_random(p[1].T,n1,n2);
 
-  alignment A0 = A;
-  valarray<bool> s1 = constraint_satisfied(P.alignment_constraint,A);
-  bool success = sample_tri_multi(A,p,nodes,true,true);
-  valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
-
-  P = p[0];
-
-  // If the new topology conflicts with the constraints, then it should have P=0
-  // and therefore not be chosen.  So the following SHOULD be safe!
-  report_constraints(s1,s2);
-
-  return success;
+  return sample_tri_multi(a,p,nodes,true,true);
 }
 
 ///Sample between 2 topologies, ignoring gap priors on each case
-bool topology_sample_SPR_sgaps(alignment& A,Parameters& P,vector<Parameters>& p) {
-  efloat_t Pr1 = p[0].probability(A,p[0]);
-  efloat_t Pr2 = p[0].probability(A,p[1]);
+int topology_sample_SPR_sgaps(vector<alignment>& a,vector<Parameters>& p) 
+{
+  efloat_t Pr1 = p[0].probability(a[0],p[0]);
+  efloat_t Pr2 = p[0].probability(a[1],p[1]);
 
-  /*********** Choose A Topology ************/
-  int choice = choose2(Pr1,Pr2);
-
-  P = p[choice];
-  return (choice != 0);
+  return choose2(Pr1,Pr2);
 }
 
-bool topology_sample_SPR(alignment& A,Parameters& P,vector<Parameters>& p,int n1, int n2) 
+int topology_sample_SPR(vector<alignment>& a,vector<Parameters>& p,int n1, int n2) 
 {
-  assert(   P.IModel().full_tree == p[0].IModel().full_tree);
   assert(p[0].IModel().full_tree == p[1].IModel().full_tree);
 
-  if (P.IModel().full_tree)
-    return sample_SPR_and_A(A,P,p,n1,n2);
+  if (p[0].IModel().full_tree)
+    return sample_SPR_and_A(a,p,n1,n2);
   else
-    return topology_sample_SPR_sgaps(A,P,p);
+    return topology_sample_SPR_sgaps(a,p);
 }
 
 SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
@@ -127,6 +113,7 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b) {
 
   //----- Generate the Different Topologies ----//
   P.LC.root = n1;
+  vector<alignment> a(2,A);
   vector<Parameters> p(2,P);
 
   SequenceTree& T2 = p[1].T;
@@ -152,13 +139,23 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b) {
     int b = branches[i];
     p[1].setlength(b,p[1].T.branch(b).length());
   }
+  recompute_subA_notes(a[1],p[1].T);
   
-  alignment A0 = A;
-  Parameters P0 = P;
+  int C = topology_sample_SPR(a,p,n1,n2);
 
-  bool success = topology_sample_SPR(A,P,p,n1,n2);
+  if (C != -1) 
+  {
+    valarray<bool> s1 = constraint_satisfied(P.alignment_constraint,A);
+    A = a[C];
+    P = p[C];
+    valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
 
-  if (success)
+    // If the new topology conflicts with the constraints, then it should have P=0
+    // and therefore not be chosen.  So the following SHOULD be safe!
+    report_constraints(s1,s2);
+  }
+
+  if (C>0)
     result[1] = 1;
 
   return result;

@@ -33,7 +33,7 @@ int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<
 int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
+int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
 
 
 

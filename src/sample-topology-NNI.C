@@ -197,20 +197,33 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
   //--------- Generate the Different Topologies -------//
   // We ALWAYS resample the connection between two_way_nodes [0] and [4].
 
+  vector<alignment>  a(3,A);
   vector<Parameters> p(3,P);
   int b1 = p[0].T.directed_branch(two_way_nodes[4],two_way_nodes[1]);
   int b2 = p[0].T.directed_branch(two_way_nodes[5],two_way_nodes[2]);
   int b3 = p[0].T.directed_branch(two_way_nodes[5],two_way_nodes[3]);
+
   p[1].T.exchange_subtrees(b1,b2);
+  p[1].LC.invalidate_branch(p[1].T, b);
+  recompute_subA_notes(a[1],p[1].T);
+  
   p[2].T.exchange_subtrees(b1,b3);
+  p[2].LC.invalidate_branch(p[2].T, b);
+  recompute_subA_notes(a[2],p[2].T);
 
   vector< vector< int> > nodes;
   for(int i=0;i<p.size();i++)
     nodes.push_back(A3::get_nodes_branch_random(p[i].T, two_way_nodes[4], two_way_nodes[0]) );
 
-  if (sample_tri_multi(A,p,nodes,true,true))
+  int C = sample_tri_multi(a,p,nodes,true,true);
+
+  if (C != -1) {
+    A = a[C];
+    P = p[C];
+  }
+
+  if (C > 0)
     result[1] = 1;
-  P = p[0];
 
   return result;
 }

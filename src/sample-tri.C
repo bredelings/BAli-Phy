@@ -137,7 +137,7 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
   }
 
 
-  /*------------------ Compute the DP matrix ---------------------*/
+  //------------------ Compute the DP matrix ---------------------//
 
   //   Matrices.prune(); prune is broken!
   
@@ -185,14 +185,15 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
 }
 
 
-bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
-
+int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) 
+{
   assert(p.size() == nodes.size());
 
-  Parameters P_save = p[0];
   //----------- Generate the different states and Matrices ---------//
-
-  vector<alignment> a(p.size(),A);
+#ifndef NDEBUG
+  const alignment A0 = a[0];
+  const Parameters P0 = p[0];
+#endif
 
   vector<RefPtr<DPmatrixConstrained> > Matrices;
   for(int i=0;i<p.size();i++) 
@@ -256,16 +257,16 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
   // Check that our constraints are met
   for(int i=0;i<a.size();i++) {
-    if (not(A_constant(A,a[i],ignore1))) {
-      std::cerr<<A<<endl;
+    if (not(A_constant(A0,a[i],ignore1))) {
+      std::cerr<<A0<<endl;
       std::cerr<<a[i]<<endl;
-      assert(A_constant(A,a[i],ignore1));
+      assert(A_constant(A0,a[i],ignore1));
     }
-    assert(A_constant(A,a[i],ignore2));
+    assert(A_constant(A0,a[i],ignore2));
   }
   // Add another entry for the incoming configuration
-  a.push_back( A );
-  p.push_back( P_save );
+  a.push_back( A0 );
+  p.push_back( P0 );
   nodes.push_back(nodes[0]);
   Matrices.push_back( Matrices[0] );
   OS.push_back( OS[0] );
@@ -305,20 +306,11 @@ bool sample_tri_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& 
 
   //---------------- Adjust for length of n4 and n5 changing --------------------//
 
-  // if we accept the move, then record the changes
-  bool success = false;
-  if (myrandomf() < A3::acceptance_ratio(A,p[0],nodes[0],a[C],p[C],nodes[C])) {
-    success = (C > 0);
+  // if we reject the move, then don't do anything
+  if (myrandomf() > acceptance_ratio(a[0],p[0],nodes[0],a[C],p[C],nodes[C]))
+    return -1;
 
-    A = a[C];
-
-    if (success)
-      p[0] = p[C];
-  }
-  else
-    p[0] = P_save;
-
-  return success;
+  return C;
 }
 
 
@@ -331,13 +323,18 @@ void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
 #ifndef NDEBUG
   check_alignment(A,P.T,"tri_sample_alignment:in");
 #endif
+  vector<alignment> a(1,A);
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
   nodes[0] = get_nodes_branch_random(P.T,node1,node2);
 
-  sample_tri_multi(A,p,nodes,false,false);
-  P = p[0];
+  int C = sample_tri_multi(a,p,nodes,false,false);
+
+  if (C != -1) {
+    A = a[C];
+    P = p[C];
+  }
 
 #ifndef NDEBUG
   check_alignment(A,P.T,"tri_sample_alignment:out");
@@ -356,14 +353,18 @@ bool tri_sample_alignment_branch(alignment& A,Parameters& P,
 				 int node1,int node2,int b,double length2)
 {
   //----------- Generate the Different Matrices ---------//
+  vector<alignment> a(1,A);
   vector<Parameters> p(2,P);
   p[1].setlength(b,length2);
 
   vector< vector<int> > nodes (2, get_nodes_branch_random(P.T,node1,node2) );
 
-  bool success = sample_tri_multi(A,p,nodes,false,false);
-  P = p[0];
-  P.LC.set_length(A.length());
+  int C = sample_tri_multi(a,p,nodes,false,false);
 
-  return success;
+  if (C != -1) {
+    A = a[C];
+    P = p[C];
+  }
+
+  return (C > 0);
 }
