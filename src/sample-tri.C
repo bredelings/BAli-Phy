@@ -243,18 +243,6 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
     ignore2[i] = ignore2A[i];
   }
 
-  // Don't check impossible combinations
-  for(int i=a.size()-1;i>=1;i--) {
-    if (Matrices[i]->Pr_sum_all_paths() > 0.0) continue;
-
-    a.erase(a.begin()+i);
-    p.erase(p.begin()+i);
-    nodes.erase(nodes.begin()+i);
-    Matrices.erase(Matrices.begin()+i);
-    OS.erase(OS.begin()+i);
-    OP.erase(OP.begin()+i);
-  }
-
   // Check that our constraints are met
   for(int i=0;i<a.size();i++) {
     if (not(A_constant(A0,a[i],ignore1))) {
@@ -264,6 +252,7 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
     }
     assert(A_constant(A0,a[i],ignore2));
   }
+
   // Add another entry for the incoming configuration
   a.push_back( A0 );
   p.push_back( P0 );
@@ -275,7 +264,10 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
   vector< vector<int> > paths;
 
   //------------------- Check offsets from path_Q -> P -----------------//
-  for(int i=0;i<p.size();i++) {
+  for(int i=0;i<p.size();i++) 
+  {
+    if (Matrices[i]->Pr_sum_all_paths() <= 0.0) continue;
+
     paths.push_back( get_path_3way(A3::project(a[i],nodes[i]),0,1,2,3) );
     
     OS[i] = other_subst(a[i],p[i],nodes[i]);
@@ -287,21 +279,26 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
   }
 
   //--------- Compute path probabilities and sampling probabilities ---------//
-  vector< vector<efloat_t> > PR(p.size());
+  vector< vector<efloat_t> > PR;
+  vector<alignment> aa;
 
-  for(int i=0;i<p.size();i++) {
+  for(int i=0;i<p.size();i++) 
+  {
+    if (Matrices[i]->Pr_sum_all_paths() <= 0.0) continue;
+
     efloat_t P_choice = 1;
     if (i<Pr.size())
       P_choice = choose_P(i,Pr);
     else
       P_choice = choose_P(0,Pr);
 
-    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], *Matrices[i]);
-    PR[i][0] *= A3::correction(a[i],p[i],nodes[i]);
+    aa.push_back(a[i]);
+    PR.push_back( sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], *Matrices[i]) );
+    PR.back()[0] *= A3::correction(a[i],p[i],nodes[i]);
   }
 
   //--------- Check that each choice is sampled w/ the correct Probability ---------//
-  check_sampling_probabilities(PR,a);
+  check_sampling_probabilities(PR,aa);
 #endif
 
   //---------------- Adjust for length of n4 and n5 changing --------------------//
