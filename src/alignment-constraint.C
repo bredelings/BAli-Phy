@@ -172,10 +172,11 @@ void report_constraints(const valarray<bool>& s1, const valarray<bool>& s2) {
     if (s2[i] and not s1[i])
       std::cerr<<"Constraint "<<i<<" satisfied."<<std::endl;
   }
-  if (sum(s1) != s1.size() and sum(s2) == s2.size())
-    std::cerr<<"All constraints satisfied."<<std::endl;
 
-#ifndef NDEBUG
-  std::cerr<<sum(s2)<<"/"<<s2.size()<<" constraints satisfied.\n";
-#endif
+  if (sum(s1) != sum(s2)) {
+    std::cerr<<sum(s2)<<"/"<<s2.size()<<" constraints satisfied.\n";
+
+    if (sum(s2) == s2.size())
+      std::cerr<<"All constraints satisfied."<<std::endl;
+  }
 }
