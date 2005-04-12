@@ -301,7 +301,7 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,vector< ve
 
   //---------------- Adjust for length of n4 and n5 changing --------------------//
 
-  // if we reject the move, then undo the changes
+  // if we reject the move, then don't do anything
   if (myrandomf() > A5::acceptance_ratio(A0,p[0],nodes[0],a[C],p[C],nodes[C])) 
     return -1;
 
@@ -309,8 +309,8 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,vector< ve
 }
 
 
-void sample_two_nodes(alignment& A, Parameters& P,int b) {
-
+void sample_two_nodes(alignment& A, Parameters& P,int b) 
+{
   vector<alignment> a(1,A);
   vector<Parameters> p(1,P);
 
@@ -320,7 +320,7 @@ void sample_two_nodes(alignment& A, Parameters& P,int b) {
   int C = sample_two_nodes_multi(a,p,nodes,false,false);
 
   if (C != -1) {
-    A = a[0];
-    P = p[0];
+    A = a[C];
+    P = p[C];
   }
 }
