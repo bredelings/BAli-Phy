@@ -285,7 +285,7 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,vector< ve
   vector< vector<efloat_t> > PR(p.size());
 
   for(int i=0;i<p.size();i++) {
-    double P_choice = 0;
+    efloat_t P_choice = 0;
     if (i<Pr.size())
       P_choice = choose_P(i,Pr);
     else
