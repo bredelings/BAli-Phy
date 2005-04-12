@@ -4,44 +4,36 @@
 using std::valarray;
 using std::vector;
 
-/* The algorithms in this file provide a method of computing column numbers
- * for sub-alignments so that column numbers don't change unless it is necessary.
- * Each sub-alignment corresponds to a directed branch b on the tree, and contains
- * the leaf sequences BEHIND b. If alignments on branches behind b do not change,
- * then the sub-alignment b does not change either.
+/* The algorithms in this file provide each column in a sub-alignment
+ * with a name that persists through alignment and tree changes that
+ * do not make the column non-identifiable.  The name is a column
+ * number, so that naming columns corresponds to ordering the columns
+ * in the sub-alignment.   We need persistent names in order to cache
+ * conditional likelihoods at columns in the sub-alignment,
+ * specifically in order to cache across internal-node resampling.
  *
- * As long as a sub-alignment does not change, it makes sense to preserve conditional
- * likelihoods at columns in the sub-alignment.  However, in order to do this, columns
- * names must be persistent.
+ * Our naming scheme for sub-alignment columns satisfies two
+ * important properties: 
+ * a) ordering depends only on pairwise alignments behind b and the
+ *    topology of the subtree behind b
+ * b) ordering depends only on the pairwise alignments PROJECTED TO
+ *    THE LEAF SEQUENCES and does not change when the alignment of
+ *    leaf sequences is unchanged. 
  *
- * The first step (in subA_index_simple) is to ignore columns which do not have any
- * leaf characters behind b.  Columns which contain internal nodes behind b, but not
- * leaf nodes, have no letters and do not contribute to the likelihood, and so can be
- * ignored. 
- *
- * The second step is to sort the columns of the sub-alignment.  Each sub-alignment
- * that corresponds to an internal branch has child sub-alignments containing mutually
- * exclusive leaf sequences; the parent sub-alignment contains the union of the leaf 
- * sequences of the child sub-alignments.  If two adjacent columns are present in the 
- * parent sub-alignment, but present in only one of the child sub-alignments then the
- * ordering of the two columns is undefined.  The order of these two columns in the full
- * alignment might be fixed by alignment to a sequences not behind b.
- *
- * To solve this problem we sort the the columns in each sub-alignment to provide a stable
- * order.  However, the ordering must depend only on the leaf sequences in the
- * sub-alignment, and so can conflict with ordering in the full alignment, or with 
- * the order of sub-alignments which include this sub-alignment.  Choosing an ordering that
- * depends only on the leaf sequences gives the useful property that re-sampling internal
- * nodes does not invalidate any of the names.  
- *
- * Thus, our naming scheme for sub-alignment columns satisfies two important properties:
- * a) ordering depends only on pairwise alignments behind b and the topology of the subtree
- *    behind b
- * b) ordering depends only on the pairwise alignments PROJECTED TO THE LEAF SEQUENCES
- *    and does not change when the alignment of leaf sequences is unchanged.
- *
- * Note that changing the topology behind b would necessitate invalidating the cached 
- * conditional likelihoods anyway, so we lose nothing by not preserving column numbers.
+ * a -> Each sub-alignment corresponds to a directed branch b on the
+ * tree, and contains the leaf sequences BEHIND b. If alignments on
+ * branches behind b do not change, then the sub-alignment b should
+ * not change either.  This isn't automatic because the columns of the
+ * sub-alignment may not be fully ordered.  Note that changing the
+ * topology behind b would necessitate invalidating the cached
+ * conditional likelihoods anyway, so we lose nothing by not
+ * preserving column numbers in that case.
+ * 
+ * b-> This gives the useful property that re-sampling internal nodes
+ * does not invalidate any of the names.  However, this implies that
+ * the ordering of columns in a sub-alignment can conflict with
+ * ordering in the full alignment, or with the order of sub-alignments
+ * which include this sub-alignment. 
  */
 
 
