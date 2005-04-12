@@ -197,16 +197,17 @@ RefPtr<DParrayConstrained> sample_two_nodes_base(alignment& A,const Parameters& 
   return Matrices;
 }
 
-///FIXME - make a generic routine (templates?)
-bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
+///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
+int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) 
+{
 
   assert(p.size() == nodes.size());
   
   //----------- Generate the different states and Matrices ---------//
-
-  Parameters P_save = p[0];
-
-  vector<alignment> a(p.size(),A);
+#ifndef NDEBUG
+  const alignment A0 = a[0];
+  const Parameters P0 = p[0];
+#endif
 
   vector< RefPtr<DParrayConstrained> > Matrices;
   for(int i=0;i<p.size();i++) {
@@ -214,7 +215,7 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
     //    p[i].LC.invalidate_node(p[i].T,nodes[i][4]);
     //    p[i].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
-    if (i==0) substitution::check_subA(A,a[0],p[0].T);
+    if (i==0) substitution::check_subA(A0,a[0],p[0].T);
     p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
 #endif
   }
@@ -247,16 +248,16 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
 
   // Check that our constraints are met
   for(int i=0;i<a.size();i++) {
-    if (not (A_constant(A,a[i],ignore))) {
-      std::cerr<<A<<endl;
+    if (not (A_constant(A0,a[i],ignore))) {
+      std::cerr<<A0<<endl;
       std::cerr<<a[i]<<endl;
-      assert(A_constant(A,a[i],ignore));
+      assert(A_constant(A0,a[i],ignore));
     }
   }
 
   // Add another entry for the incoming configuration
-  a.push_back( A );
-  p.push_back( P_save );
+  a.push_back( A0 );
+  p.push_back( P0 );
   nodes.push_back(nodes[0]);
   Matrices.push_back( Matrices[0] );
   OS.push_back( OS[0] );
@@ -300,30 +301,26 @@ bool sample_two_nodes_multi(alignment& A,vector<Parameters>& p,vector< vector<in
 
   //---------------- Adjust for length of n4 and n5 changing --------------------//
 
-  // if we accept the move, then record the changes
-  bool success = false;
-  if (myrandomf() < A5::acceptance_ratio(A,p[0],nodes[0],a[C],p[C],nodes[C])) {
-    success = (C > 0);
+  // if we reject the move, then undo the changes
+  if (myrandomf() > A5::acceptance_ratio(A0,p[0],nodes[0],a[C],p[C],nodes[C])) 
+    return -1;
 
-    A = a[C];
-
-    if (success)
-      p[0] = p[C];
-  }
-  else
-    p[0] = P_save;
-
-  return success;
+  return C;
 }
 
 
 void sample_two_nodes(alignment& A, Parameters& P,int b) {
 
+  vector<alignment> a(1,A);
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
   nodes[0] = A5::get_nodes_random(P.T,b);
 
-  sample_two_nodes_multi(A,p,nodes,false,false);
-  P = p[0];
+  int C = sample_two_nodes_multi(a,p,nodes,false,false);
+
+  if (C != -1) {
+    A = a[0];
+    P = p[0];
+  }
 }
