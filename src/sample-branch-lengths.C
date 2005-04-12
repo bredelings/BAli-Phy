@@ -4,6 +4,7 @@
 #include "util.H"
 #include "5way.H"
 #include "substitution-cache.H"
+#include "substitution-index.H"
 #include "substitution.H"
 #include "likelihood.H"
 
@@ -108,18 +109,28 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
 
     
     /****** Generate the Different Topologies *******/
-    Parameters P2 = P;
+    vector<alignment> a(2,A);
+    vector<Parameters> p(2,P);
     
-    SequenceTree& T2 = P2.T;
+    SequenceTree& T2 = p[1].T;
     
-    vector<int> nodes = A5::get_nodes_random(P.T,b);
+    vector<int> nodes = A5::get_nodes_random(T2,b);
     int b1 = T2.directed_branch(nodes[4],nodes[1]);
     int b2 = T2.directed_branch(nodes[5],nodes[2]);
     T2.exchange_subtrees(b1,b2);
+
+    recompute_subA_notes(a[1],T2);
+    p[1].setlength(b,-newlength);
     
-    P2.setlength(b,-newlength);
-    
-    if (two_way_topology_sample(A,P,P2,b)) {
+    int C = two_way_topology_sample(a,p,b);
+
+    if (C == -1)
+      return result;
+
+    A = a[C];
+    P = p[C];
+
+    if (C != 0) {
       result[1] = 1;
       result[5] = 1;
       result[9] = std::abs(length - newlength);

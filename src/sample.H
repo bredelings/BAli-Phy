@@ -33,7 +33,7 @@ void sample_two_nodes(alignment& A,Parameters& P,int b);
 bool three_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,const Parameters& P3,int b);
 
 /// Resample between 2 NNI topologies around branch b
-bool two_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,int b);
+int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,int b);
 bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P2,int b,double rho);
 
 /*-------------- Top Level Sampling Routines -----------*/
