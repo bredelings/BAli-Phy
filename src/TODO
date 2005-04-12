@@ -1,10 +1,11 @@
-
 0. Try ivopts / ivcanon / etc!  
   i) Do these work?  
  ii) If not, then why not?  Find out how to get dumps...
 iii) loop-optimize2: loop unswitching, loop invariant motion, loop peeling...
 
 1. Rename substitution-index.C -> alignment-index.C
+  a) remove intermediate call to subA_index( )?
+
 
 2. fp_scale speedups
   a) find out how much time we are spending doing I/O...
