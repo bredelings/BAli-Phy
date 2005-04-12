@@ -169,23 +169,22 @@ RefPtr<DParrayConstrained> sample_node_base(alignment& A,const Parameters& P,con
   return Matrices;
 }
 
-bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
+int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
 
   assert(p.size() == nodes.size());
   
   //----------- Generate the different states and Matrices ---------//
-
-  alignment old = A;
-  Parameters P_save = p[0];
-
-  vector<alignment> a(p.size(),A);
+#ifndef NDEBUG
+  const alignment A0 = a[0];
+  const Parameters P0 = p[0];
+#endif
 
   vector< RefPtr<DParrayConstrained> > Matrices;
   for(int i=0;i<p.size();i++) {
     Matrices.push_back( sample_node_base(a[i],p[i],nodes[i]) );
     //    p[i].LC.invalidate_node(p[i].T,nodes[i][0]);
 #ifndef NDEBUG
-    if (i==0) substitution::check_subA(A,a[0],p[0].T);
+    if (i==0) substitution::check_subA(A0,a[0],p[0].T);
     p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
 #endif
   }
@@ -217,16 +216,16 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
 
   // Check that our constraints are met
   for(int i=0;i<a.size();i++) {
-    if (not(A_constant(A,a[i],ignore))) {
-      std::cerr<<A<<endl;
+    if (not(A_constant(A0,a[i],ignore))) {
+      std::cerr<<A0<<endl;
       std::cerr<<a[i]<<endl;
-      assert(A_constant(A,a[i],ignore));
+      assert(A_constant(A0,a[i],ignore));
     }
   }
 
   // Add another entry for the incoming configuration
-  a.push_back( old );
-  p.push_back( P_save );
+  a.push_back( A0 );
+  p.push_back( P0 );
   nodes.push_back(nodes[0]);
   Matrices.push_back( Matrices[0] );
   OS.push_back( OS[0] );
@@ -266,34 +265,31 @@ bool sample_node_multi(alignment& A,vector<Parameters>& p,vector< vector<int> >&
 
   //---------------- Adjust for length of n4 and n5 changing --------------------//
 
-  // if we accept the move, then record the changes
-  bool success = false;
-  if (myrandomf() < acceptance_ratio(a[0],p[0],nodes[0],a[C],p[C],nodes[C])) {
-    success = (C > 0);
+  // if we reject the move, then don't do anything
+  if (myrandomf() > acceptance_ratio(a[0],p[0],nodes[0],a[C],p[C],nodes[C]))
+    return -1;
 
-    A = a[C];
-
-    if (success)
-      p[0] = p[C];
-  }
-  else
-    p[0] = P_save;
-
-  return success;
+  return C;
 }
 
 
 
 
 
-void sample_node(alignment& A,Parameters& P,int node) {
+void sample_node(alignment& A,Parameters& P,int node) 
+{
   const Tree& T = P.T;
 
+  vector<alignment> a(1,A);
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
   nodes[0] = get_nodes_random(T,node);
 
-  sample_node_multi(A,p,nodes,false,false);
-  P = p[0];
+  int C = sample_node_multi(a,p,nodes,false,false);
+
+  if (C != -1) {
+    A = a[C];
+    P = p[C];
+  }
 }
