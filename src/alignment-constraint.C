@@ -25,7 +25,32 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,
     string line;
     getline(constraint_file,line);
     vector<string> names = split(line,' ');
-    vector<int> mapping = compute_mapping(names,T.get_sequences());
+    vector<int> mapping;
+    try {
+      mapping = compute_mapping(names,T.get_sequences());
+    }
+    catch (myexception& e) 
+    {
+      myexception error;
+      error <<"Problem loading alignment constraints from file '" <<
+	args["align-constraint"].as<string>() <<"'\n";
+
+      // complain about the names;
+      if (names.size() != T.get_sequences().size())
+	error <<"Data set contains "<<T.get_sequences().size()<<" sequences but"
+	  "alignment constrain header has "<<names.size()<<" names.\n";
+
+      for(int i=0;i<names.size();i++) {
+	if (not includes(T.get_sequences(),names[i]))
+	  error<<names[i]<<" found in header but not data set.\n";
+      }
+
+      for(int i=0;i<T.get_sequences().size();i++) {
+	if (not includes(names,T.get_sequences()[i]))
+	  error<<names[i]<<" found in header but not data set.\n";
+      }
+      throw error;
+    }
 
     // Load constraints
     int line_no=1;
