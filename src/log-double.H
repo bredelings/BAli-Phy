@@ -101,6 +101,10 @@ inline bool operator>(log_double_t x,double y) {
     return x > log_double_t(y);
 }
 
+inline bool operator>(double  x,log_double_t y) {
+  return log_double_t(x) > y;
+}
+
 inline bool operator>=(log_double_t x,log_double_t y) {
   return log(x)>=log(y);
 }
