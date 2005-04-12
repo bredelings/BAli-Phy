@@ -115,9 +115,8 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins)
 
   if (pins[0].size() == 0) 
     forward_square();
-  else {
-    std::abort();
-
+  else 
+  {
     const vector<int>& x = pins[0];
     const vector<int>& y = pins[1];
 
