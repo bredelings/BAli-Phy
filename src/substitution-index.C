@@ -369,7 +369,7 @@ void update_subA_index(const alignment& A,const Tree& T,int b)
 {
 #ifndef NDEBUG  
   subA_index_check_footprint(A,T);
-#ifndef NDEBUG  
+#endif
 
   // get ordered list of branches to process before this one
   vector<const_branchview> branches; branches.reserve(T.n_branches());
@@ -389,7 +389,7 @@ void update_subA_index(const alignment& A,const Tree& T,int b)
 
 #ifndef NDEBUG  
   subA_index_check_footprint(A,T);
-#ifndef NDEBUG  
+#endif
 }
 
 void recompute_subA_notes(const alignment& A,const Tree& T) 
