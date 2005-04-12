@@ -367,7 +367,9 @@ void update_subA_index_single(const alignment& A,const Tree& T,int b) {
 
 void update_subA_index(const alignment& A,const Tree& T,int b) 
 {
+#ifndef NDEBUG  
   subA_index_check_footprint(A,T);
+#ifndef NDEBUG  
 
   // get ordered list of branches to process before this one
   vector<const_branchview> branches; branches.reserve(T.n_branches());
@@ -385,7 +387,9 @@ void update_subA_index(const alignment& A,const Tree& T,int b)
   for(int i=0;i<branches.size();i++)
     update_subA_index_single(A,T,branches[i]);
 
+#ifndef NDEBUG  
   subA_index_check_footprint(A,T);
+#ifndef NDEBUG  
 }
 
 void recompute_subA_notes(const alignment& A,const Tree& T) 
@@ -398,8 +402,6 @@ void recompute_subA_notes(const alignment& A,const Tree& T)
 
     update_subA_index_single(A,T,b);
   }
-
-  subA_index_check_footprint(A,T);
 }
 
 void subA_index_check_regenerate(const alignment& A1,const Tree& T) 
