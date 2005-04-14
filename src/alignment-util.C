@@ -449,13 +449,14 @@ long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> 
 }
 
 
-vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args) {
+vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args) 
+{
   OwnedPointer<AminoAcids> AA = AminoAcids();
   if (args.count("with-stop"))
     AA = AminoAcidsWithStop();
 
   vector<OwnedPointer<alphabet> > alphabets; 
-  if (args.count("alphabet") && args["alphabet"].as<string>() == "Codons") {
+  if (args.count("alphabet") and args["alphabet"].as<string>() == "Codons") {
     {
       string dna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_dna.dat";
       alphabets.push_back(Codons(DNA(),*AA,dna_filename));
@@ -465,6 +466,16 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args) {
       string rna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_rna.dat";
       alphabets.push_back(Codons(RNA(),*AA,rna_filename));
     }
+  }
+  else if (args.count("alphabet")) {
+    if (args["alphabet"].as<string>() == "DNA")
+      alphabets.push_back(DNA());
+    else if (args["alphabet"].as<string>() == "DNA")
+      alphabets.push_back(RNA());
+    else if (args["alphabet"].as<string>() == "Amino Acids")
+      alphabets.push_back(*AA);
+    else 
+      throw myexception()<<"Don't recognize alphabet '"<<args["alphabet"].as<string>()<<"'";
   }
   else {
     alphabets.push_back(DNA());
