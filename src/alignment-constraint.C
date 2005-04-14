@@ -9,6 +9,23 @@ using std::valarray;
 
 using boost::program_options::variables_map;
 
+string clean(const string& in) {
+  string out;
+  char c=' ';
+  for(int i=0;i<in.size();i++)
+    if (in[i] != ' ' or c != ' ') {
+      out += in[i];
+      c = in[i];
+    }
+
+  // strip (single) final ' '
+  if (out.size() > 0 and out[out.size()-1] == ' ')
+    out = out.substr(0,out.size()-1);
+  return out;
+}
+    
+
+
 ublas::matrix<int> load_alignment_constraint(const variables_map& args,
 					     const alignment& A,SequenceTree& T) 
 {
@@ -24,7 +41,7 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,
     // Map columns to species
     string line;
     getline(constraint_file,line);
-    vector<string> names = split(line,' ');
+    vector<string> names = split(clean(line),' ');
     vector<int> mapping;
     try {
       mapping = compute_mapping(names,T.get_sequences());
@@ -33,21 +50,21 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,
     {
       myexception error;
       error <<"Problem loading alignment constraints from file '" <<
-	args["align-constraint"].as<string>() <<"'\n";
+	args["align-constraint"].as<string>() <<"':\n";
 
       // complain about the names;
       if (names.size() != T.get_sequences().size())
-	error <<"Data set contains "<<T.get_sequences().size()<<" sequences but"
-	  "alignment constrain header has "<<names.size()<<" names.\n";
+	error <<"Data set contains "<<T.get_sequences().size()<<" sequences but "
+	  "alignment-constraint header has "<<names.size()<<" names.\n";
 
       for(int i=0;i<names.size();i++) {
 	if (not includes(T.get_sequences(),names[i]))
-	  error<<names[i]<<" found in header but not data set.\n";
+	  error<<"'"<<names[i]<<"' found in header but not data set.\n";
       }
 
       for(int i=0;i<T.get_sequences().size();i++) {
 	if (not includes(names,T.get_sequences()[i]))
-	  error<<names[i]<<" found in header but not data set.\n";
+	  error<<"'"<<T.get_sequences()[i]<<"' found in data set but not in header.\n";
       }
       throw error;
     }
@@ -67,7 +84,7 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,
       line = line.substr(0,loc);
 
       // lex contraint line
-      vector<string> entries = split(line,' ');
+      vector<string> entries = split(clean(line),' ');
       if (entries.size() != T.n_leaves())
 	throw myexception()<<"constraint: line "<<line_no<<
 	  " only has "<<entries.size()<<"/"<<T.n_leaves()<<" entries.";
