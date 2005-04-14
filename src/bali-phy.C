@@ -388,7 +388,10 @@ int main(int argc,char* argv[]) {
     //----------- Load alignment and tree ---------//
     alignment A;
     SequenceTree T;
-    load_A_and_random_T(args,A,T);
+    if (args.count("tree"))
+      load_A_and_T(args,A,T);
+    else
+      load_A_and_random_T(args,A,T);
 
     cout<<"data = "<<args["align"].as<string>()<<endl<<endl;
 
