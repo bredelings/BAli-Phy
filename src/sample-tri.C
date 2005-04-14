@@ -152,7 +152,8 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
     ; //std::cerr<<"Constraints cannot be expressed in terms of DP matrix paths!"<<std::endl;
   else {
     Matrices->forward_constrained(pins);
-    std::cerr<<"Constraints give this choice probability 0"<<std::endl;
+    if (Matrices->Pr_sum_all_paths() <= 0.0) 
+      std::cerr<<"Constraints give this choice probability 0"<<std::endl;
   }
 
   if (Matrices->Pr_sum_all_paths() <= 0.0) 
