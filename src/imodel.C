@@ -292,7 +292,7 @@ efloat_t NewIndelModel::prior() const {
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = parameters_[1];
   double E_length = lambda_E - logdiff(0,lambda_E);
-  double E_length_mean = 5.0;
+  double E_length_mean = parameters_[5];
 
   P += exp_exponential_log_pdf(E_length,E_length_mean);
 
@@ -385,8 +385,10 @@ string NewIndelModel::parameter_name(int i) const {
     return "NEW::prior_median";
   else if (i==4)
     return "NEW::prior_stddev";
+  else if (i==5)
+    return "NEW::prior_length";
   else
-    return i_parameter_name(i,5);
+    return i_parameter_name(i,6);
 }
 
 efloat_t NewIndelModel::lengthp(int l) const {
@@ -394,13 +396,14 @@ efloat_t NewIndelModel::lengthp(int l) const {
 }
 
 NewIndelModel::NewIndelModel()
-  :IndelModel(5)
+  :IndelModel(6)
 {
   parameters_[0] = -5;
   parameters_[1] = -0.5;
   parameters_[2] = 0.1;
   parameters_[3] = -5;
   parameters_[4] = 0.5;
+  parameters_[5] = 5.0;
 
   recalc();
 }
