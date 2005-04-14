@@ -157,6 +157,13 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
     int x = find_index(seq1,satisfied[i]);
     int y = find_index(seq2,satisfied[i]);
 
+    // if there is no residue in the local sequence in the right column then
+    // no alignment within our range will satisfy the constraint so we must bail out.
+    if (x == seq1.size() or y == seq2.size()) {
+      vector< vector<int> > impossible;
+      impossible.push_back(vector<int>(2,-1));
+      return impossible;
+    }
     assert(x >=0 and x < seq1.size());
     assert(y >=0 and y < seq2.size());
 

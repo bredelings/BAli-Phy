@@ -146,10 +146,19 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
 
   //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 or group3,seq1,seq23);
-  vector<int> path_g = Matrices->forward(pins);
 
-  if (Matrices->Pr_sum_all_paths() <= 0.0)
+  // if the constraints are currently met but cannot be met
+  if (pins.size() == 1 and pins[0][0] == -1)
+    ; //std::cerr<<"Constraints cannot be expressed in terms of DP matrix paths!"<<std::endl;
+  else {
+    Matrices->forward_constrained(pins);
+    std::cerr<<"Constraints give this choice probability 0"<<std::endl;
+  }
+
+  if (Matrices->Pr_sum_all_paths() <= 0.0) 
     return Matrices;
+
+  vector<int> path_g = Matrices->sample_path();
 
   vector<int> path = Matrices->ungeneralize(path_g);
 
@@ -261,14 +270,14 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
   OS.push_back( OS[0] );
   OP.push_back( OP[0] );
 
-  vector< vector<int> > paths;
+  vector< vector<int> > paths(p.size());
 
   //------------------- Check offsets from path_Q -> P -----------------//
   for(int i=0;i<p.size();i++) 
   {
     if (Matrices[i]->Pr_sum_all_paths() <= 0.0) continue;
 
-    paths.push_back( get_path_3way(A3::project(a[i],nodes[i]),0,1,2,3) );
+    paths[i] = get_path_3way(A3::project(a[i],nodes[i]),0,1,2,3);
     
     OS[i] = other_subst(a[i],p[i],nodes[i]);
     OP[i] = other_prior(a[i],p[i],nodes[i]);

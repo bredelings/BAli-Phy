@@ -251,12 +251,11 @@ DPmatrix::DPmatrix(int i1,
   :DPengine(v1,v2,M,Temp),
    state_matrix(i1,i2,nstates())
 {
+  const int I = size1()-1;
+  const int J = size2()-1;
 
-  //----- zero-initialize matrices ------//
-  //  for(int i=0;i<state_matrix::size1();i++)
-  //    for(int j=0;j<state_matrix::size2();j++) 
-  //      for(int S=0;S<nstates();S++)
-  //	(*this)(i,j,S)  = 0;
+  for(int state1=0;state1<nstates();state1++)
+    (*this)(I,J,state1) = 0;
 }
 
 inline void DPmatrixNoEmit::forward_cell(int i2,int j2) 
