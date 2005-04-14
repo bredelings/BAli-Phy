@@ -192,6 +192,9 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   sampler.show_enabled();
   cout<<"\n";
 
+  if (P.alignment_constraint.size2() > 0)
+    std::cerr<<"Using "<<P.alignment_constraint.size2()<<" constraints.\n";
+
   valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
   valarray<bool> s1(false,s2.size());
   report_constraints(s1,s2);
