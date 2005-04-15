@@ -443,6 +443,9 @@ int main(int argc,char* argv[]) {
     add_subA_index_note(A,T.n_branches());
     recompute_subA_notes(A,T);
 
+    // Why do we need to do this, again?
+    P.recalc();
+
     //---------------Do something------------------//
     if (args.count("show-only"))
       print_stats(cout,cout,cout,cout,A,P,"Initial");
