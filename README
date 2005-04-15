@@ -209,6 +209,9 @@ file as follows:
   1. Use the argument "align-constraint=[filename]"
   2. The filename refers to a file in which each line represents a constraint.
 
+The first line of the file is a header consisting of an ordered list
+of sequence names separated by spaces.  
+
 Each line consists of a list of sequence positions, with the first
 position corresponding to the first leaf sequence, the second position
 corresponding to the second leaf sequence, etc.  Thus, if there are
