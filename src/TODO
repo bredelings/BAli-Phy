@@ -1,3 +1,11 @@
+-2. Profile - why is 10% spent in vector<double>::vector(unsigned int) ?
+  a) try valarray instead?
+  b) replace numbers in TODO and compare with current numbers..
+  c) use oprofile...
+
+-1. Try with STLport, mudflap, valgrind, etc.
+  a) STLport could actually give us a speedup!
+
 0. Try ivopts / ivcanon / etc!  
   i) Do these work?  
  ii) If not, then why not?  Find out how to get dumps...
