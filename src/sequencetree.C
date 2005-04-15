@@ -51,6 +51,8 @@ void SequenceTree::read(const string& filename) {
   // FIXME - but what if I WANT the node there?
   if (RT.root().neighbors().size() == 2)
     (*this) = remove_root(RT);
+  else
+    (*this) = RT;
 }
 
 void SequenceTree::read(std::istream& file) {
@@ -60,6 +62,8 @@ void SequenceTree::read(std::istream& file) {
   // FIXME - but what if I WANT the node there?
   if (RT.root().neighbors().size() == 2)
     (*this) = remove_root(RT);
+  else
+    (*this) = RT;
 }
 
 string SequenceTree::write(bool print_lengths) const 
@@ -90,6 +94,8 @@ void SequenceTree::parse(const string& s) {
   // FIXME - but what if I WANT the node there?
   if (RT.root().neighbors().size() == 2)
     (*this) = remove_root(RT);
+  else
+    (*this) = RT;
 }
 
 SequenceTree::SequenceTree(const std::string& s) {

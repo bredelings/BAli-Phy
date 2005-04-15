@@ -68,7 +68,7 @@ public:
   explicit SequenceTree(const std::string& s);
 
   /// Create a SequenceTree from a RootedSequenceTree (doesn't delete the root node)
-  explicit SequenceTree(const class RootedSequenceTree&);
+  SequenceTree(const class RootedSequenceTree&);
 };
 
 /// A RootedTree with leaves labelled by sequences
@@ -113,7 +113,7 @@ public:
   RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2);
 
   /// Create a RootedSequenceTree from a SequenceTree, naming node @r as the root
-  explicit  RootedSequenceTree(const SequenceTree&,int r);
+  RootedSequenceTree(const SequenceTree&,int r);
 };
 
 RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTree& t2);
