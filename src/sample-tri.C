@@ -44,18 +44,21 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
   valarray<bool> group2 = T.partition(nodes[0],nodes[2]);
   valarray<bool> group3 = T.partition(nodes[0],nodes[3]);
 
+
   //  std::clog<<"n0 = "<<nodes[0]<<"   n1 = "<<nodes[1]<<"    n2 = "<<nodes[2]<<"    n3 = "<<nodes[3]<<std::endl;
   //  std::clog<<"A (reordered) = "<<project(A,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
-
-  //  THIS is not the same as getorder(project(...)) because, even if we select the same columns
-  // they may have different indices (remember that project(A) is shorter than A).
-  //  Since we use the columns from A, we need to use getorder(A)...
-  // However, the NUMBER of columns should be the same. 
-  // Hmm.. how to check that we get the same columns - need to deal w/ renaming issue...
   vector<int> columns = getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
 
+#ifndef NDEBUG
+
+  // getorder(project(A,...)...) is not the same as getorder(A,...) because columns that are
+  // in both project(A,...) and A have different columns numbers in each alignment, and
+  // project(A,...) is shorter.
+
+  // However, the NUMBER of columns should be the same. 
   vector<int> columns2 = getorder(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
   assert(columns.size() == columns2.size());
+#endif
 
   // Find sub-alignments and sequences
   vector<int> seq1;
