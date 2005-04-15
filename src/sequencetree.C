@@ -64,7 +64,7 @@ void SequenceTree::read(std::istream& file) {
 
 string SequenceTree::write(bool print_lengths) const 
 {
-  RootedSequenceTree RT = add_root(*this,0);
+  RootedSequenceTree RT(*this,directed_branch(0),target());
   return RT.write(print_lengths);
 }
 
