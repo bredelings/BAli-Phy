@@ -9,17 +9,13 @@ using std::string;
 
 void resize(ublas::matrix<int>& M1,int s1,int s2,int clear=0) 
 {
-  ublas::matrix<int> M2(s1,s2);
-  
-  for(int i=0;i<M2.size1();i++)
+  M1.resize(s1,s2);
+
+#ifndef NDEBUG
+  for(int i=0;i<M1.size1();i++)
     for(int j=0;j<M2.size2();j++)
-      M2(i,j) = clear;
-
-  for(int i=0;i<M1.size1() and i<M2.size1();i++)
-    for(int j=0;j< M1.size2() and j<M2.size2();j++)
-      M2(i,j) = M1(i,j);
-
-  M1.swap(M2);
+      M(i,j) = -10101;
+#endif
 }
 
 
