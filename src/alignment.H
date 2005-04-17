@@ -105,11 +105,9 @@ public:
 
   alignment() {}
 
-  alignment(const alphabet&);
+  explicit alignment(const alphabet&);
 
-  alignment(const alignment&);
-
-  alignment(const alphabet&,const std::string&);
+  explicit alignment(const alphabet&,const std::string&);
 };
 
 std::ostream& operator<<(std::ostream& file,const alignment& A);

@@ -272,11 +272,6 @@ alignment::alignment(const alphabet& a1)
   :a(a1)
 {}
 
-alignment::alignment(const alignment& A) 
-{
-  operator=(A);
-}
-
 alignment::alignment(const alphabet& a1,const string& filename) 
     :a(a1)
 { 
