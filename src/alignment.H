@@ -25,6 +25,8 @@ class alignment {
   
 public:
 
+  friend alignment blank_copy(const alignment&,int length);
+
   int n_notes() const {return notes.size();}
 
   int add_note(int l) const;

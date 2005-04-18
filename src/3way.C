@@ -349,8 +349,7 @@ namespace A3 {
     for(int i=0;i<seq.size();i++)
       newlength += (subA[i].size() - seq[i].size());
 
-    alignment A = old;
-    A.changelength(newlength);
+    alignment A = blank_copy(old,newlength);
     assert(A.length() == newlength);
 
     int l=0;

@@ -388,13 +388,8 @@ namespace A5 {
     for(int i=0;i<seq.size();i++)
       newlength += (subA[i].size() - seq[i].size());
 
-    alignment A = old;
-    A.changelength(newlength);
+    alignment A = blank_copy(old,newlength);
     assert(A.length() == newlength);
-    // POISON the new alignment matrix
-    for(int i=0;i<A.length();i++)
-      for(int j=0;j<A.size2();j++)
-	A(i,j) = -123123;
 
     int l=0;                            // position in path
     vector<int> cS(seq.size(),0);       // position in sequence

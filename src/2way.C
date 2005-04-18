@@ -23,8 +23,7 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
 
 
   const int newlength = path.size() + (subA1.size()-seq1.size()) + (subA2.size() - seq2.size());
-  alignment A = old;
-  A.changelength(newlength);
+  alignment A = blank_copy(old,newlength);
   assert(A.length() == newlength);
 
   //  std::clog<<"old = "<<old<<"\n";
