@@ -115,8 +115,7 @@ MCMC::result_t two_way_topology_sample(alignment& A, Parameters& P,int b)
   int b2 = p[1].T.directed_branch(nodes[5],nodes[2]);
 
   p[1].T.exchange_subtrees(b1, b2);
-  p[1].LC.invalidate_branch(p[1].T, b);
-  recompute_subA_notes(a[1],p[1].T);
+  invalidate_subA_index_branch(a[1], p[1].T, b);
   
   int C = two_way_topology_sample(a,p,b);
 
@@ -164,11 +163,11 @@ MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P,int b)
 
   p[1].T.exchange_subtrees(b1,b2);
   p[1].LC.invalidate_branch(p[1].T, b);
-  recompute_subA_notes(a[1],p[1].T);
+  invalidate_subA_index_branch(a[1], p[1].T, b);
 
   p[2].T.exchange_subtrees(b1,b3);
   p[2].LC.invalidate_branch(p[2].T, b);
-  recompute_subA_notes(a[2],p[2].T);
+  invalidate_subA_index_branch(a[2], p[2].T, b);
   
   //------ Resample alignments and select topology -----//
   int C = three_way_topology_sample(a,p,b);
@@ -205,11 +204,11 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
 
   p[1].T.exchange_subtrees(b1,b2);
   p[1].LC.invalidate_branch(p[1].T, b);
-  recompute_subA_notes(a[1],p[1].T);
+  invalidate_subA_index_branch(a[1], p[1].T, b);
   
   p[2].T.exchange_subtrees(b1,b3);
   p[2].LC.invalidate_branch(p[2].T, b);
-  recompute_subA_notes(a[2],p[2].T);
+  invalidate_subA_index_branch(a[2], p[2].T, b);
 
   vector< vector< int> > nodes;
   for(int i=0;i<p.size();i++)

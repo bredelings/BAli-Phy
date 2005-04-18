@@ -119,7 +119,8 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
     int b2 = T2.directed_branch(nodes[5],nodes[2]);
     T2.exchange_subtrees(b1,b2);
 
-    recompute_subA_notes(a[1],T2);
+    invalidate_subA_index_branch(a[1],T2,b);
+
     p[1].setlength(b,-newlength);
     
     int C = two_way_topology_sample(a,p,b);

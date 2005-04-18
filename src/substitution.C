@@ -131,8 +131,6 @@ namespace substitution {
   void peel_branch(int b0,column_cache_t cache, const alignment& A, const Tree& T, 
 		   const MatCache& transition_P,const MultiModel& MModel)
   {
-    assert(subA_index_valid(A,b0));
-
     // compute branches-in
     vector<int> b;
     for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
@@ -140,8 +138,9 @@ namespace substitution {
 
     // get the relationships with the sub-alignments
     b.push_back(b0);
-    ublas::matrix<int> index = subA_index_select(b,A);
+    ublas::matrix<int> index = subA_index_select(b,A,T);
     assert(index.size1() == subA_length(A,b0));
+    assert(subA_index_valid(A,b0));
     b.pop_back();
 
     // The number of directed branches is twice the number of undirected branches
@@ -359,7 +358,7 @@ namespace substitution {
       assert(T.directed_branch(b[i]).target() == root);
     cache.root = root;
 
-    ublas::matrix<int> index = subA_index_any(b,A,req,seq);
+    ublas::matrix<int> index = subA_index_any(b,A,T,req,seq);
 
     int n_br = calculate_caches(A,P,cache);
 #ifndef NDEBUG
@@ -426,12 +425,12 @@ namespace substitution {
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index1 = subA_index_none(rb,A,nodes);
+    ublas::matrix<int> index1 = subA_index_none(rb,A,T,nodes);
     efloat_t Pr1 = calc_root_probability(A,P,rb,index1);
 
 #ifndef NDEBUG
-    ublas::matrix<int> index2 = subA_index_any(rb,A,nodes);
-    ublas::matrix<int> index  = subA_index(rb,A);
+    ublas::matrix<int> index2 = subA_index_any(rb,A,T,nodes);
+    ublas::matrix<int> index  = subA_index(rb,A,T);
 
     efloat_t Pr2 = calc_root_probability(A,P,rb,index2);
     efloat_t Pr  = calc_root_probability(A,P,rb,index);
@@ -468,7 +467,7 @@ namespace substitution {
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index = subA_index(rb,A);
+    ublas::matrix<int> index = subA_index(rb,A,T);
 
     // get the probability
     efloat_t Pr = calc_root_probability(A,MC,T,cache,MModel,rb,index);

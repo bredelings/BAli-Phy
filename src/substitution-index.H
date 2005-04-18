@@ -10,23 +10,23 @@
 namespace substitution {
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> subA_index(const std::vector<int>& b,const alignment& A);
+  ublas::matrix<int> subA_index(const std::vector<int>& b,const alignment& A,const Tree& T);
 
   /// align sub-alignments corresponding to branches pointing to node
   ublas::matrix<int> subA_index(int node,const alignment& A,const Tree& T); 
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> subA_index_select(const std::vector<int>& b,const alignment& A);
+  ublas::matrix<int> subA_index_select(const std::vector<int>& b,const alignment& A,const Tree& T);
 
   /// align sub-alignments corresponding to branches in b, and select columns with a node in @nodes
-  ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A,const std::vector<int>& nodes);
+  ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A,const Tree& T,const std::vector<int>& nodes);
 
   /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
-  ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A,
+  ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A, const Tree& T,
 				    const std::vector<int>& nodes, const std::vector<int>& seq);
 
   /// align sub-alignments corresponding to branches in b, and reject columns with a node in @nodes
-  ublas::matrix<int> subA_index_none(const std::vector<int>& b,const alignment& A,
+  ublas::matrix<int> subA_index_none(const std::vector<int>& b,const alignment& A, const Tree& T,
 				     const std::vector<int>& nodes);
 
   bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2);
@@ -55,6 +55,9 @@ inline int subA_length(const alignment& A,int b) {
 }
 
 void invalidate_subA_index_all(const alignment& A);
+void invalidate_subA_index_branch(const alignment& A,const Tree& T,int b);
+void update_subA_index_branch(const alignment& A,const Tree& T,int b);
+
 void recompute_subA_notes(const alignment& A,const Tree& T);
 
 void subA_index_check_regenerate(const alignment& A1,const Tree& T);

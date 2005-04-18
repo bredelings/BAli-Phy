@@ -436,7 +436,7 @@ namespace A3 {
     //  std::cerr<<"new(reordered) = "<<project(A,n0,n1,n2,n3)<<endl;
     assert(valid(A));
 
-    recompute_subA_notes(A,T);
+    invalidate_subA_index_all(A);
 
     return A;
   }

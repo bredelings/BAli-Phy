@@ -46,7 +46,7 @@ namespace substitution {
     return false;
   }
 
-  ublas::matrix<int> subA_index(const vector<int>& branches, const alignment& A)
+  ublas::matrix<int> subA_index(const vector<int>& branches, const alignment& A,const Tree& T)
   {
     // the alignment of sub alignments
     ublas::matrix<int> subA(A.length(),branches.size());
@@ -56,9 +56,12 @@ namespace substitution {
       if (branches[j] == -1)
 	for(int c=0;c<A.length();c++)
 	  subA(c,j) = -1;
-      else
+      else {
+	if (not subA_index_valid(A,branches[j]))
+	  update_subA_index_branch(A,T,branches[j]);
 	for(int c=0;c<A.length();c++)
 	  subA(c,j) = A.note(1,c+1,branches[j]);
+      }
     }
 
     return subA;
@@ -71,7 +74,7 @@ namespace substitution {
     for(const_in_edges_iterator i = T[node].branches_in();i;i++)
       b.push_back(*i);
 
-    return subA_index(b,A);
+    return subA_index(b,A,T);
   }
 
   ublas::matrix<int> subA_select(const ublas::matrix<int>& subA1) {
@@ -95,23 +98,24 @@ namespace substitution {
     return subA2;
   }
 
-  ublas::matrix<int> subA_index_select(const vector<int>& b,const alignment& A) 
+  ublas::matrix<int> subA_index_select(const vector<int>& b,const alignment& A,const Tree& T) 
   {
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index(b,A);
+    ublas::matrix<int> subA = subA_index(b,A,T);
 
     // return processed indices
     return subA_select(subA);
   }
 
 
-  ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const vector<int>& nodes) 
+  ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
+				    const vector<int>& nodes) 
   {
     vector<int> b2 = b;
     b2.push_back(-1);
 
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index(b2,A);
+    ublas::matrix<int> subA = subA_index(b2,A,T);
 
     // select and order the columns we want to keep
     const int I = b.size();
@@ -127,14 +131,14 @@ namespace substitution {
   }
 
 
-  ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const vector<int>& nodes,
-				    const vector<int>& seq) 
+  ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
+				    const vector<int>& nodes, const vector<int>& seq) 
   {
     vector<int> b2 = b;
     b2.push_back(-1);
 
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index(b2,A);
+    ublas::matrix<int> subA = subA_index(b2,A,T);
 
     // select and order the columns we want to keep
     const int I = b.size();
@@ -157,13 +161,14 @@ namespace substitution {
   }
 
 
-  ublas::matrix<int> subA_index_none(const vector<int>& b,const alignment& A,const vector<int>& nodes) 
+  ublas::matrix<int> subA_index_none(const vector<int>& b,const alignment& A,const Tree& T,
+				     const vector<int>& nodes) 
   {
     vector<int> b2 = b;
     b2.push_back(-1);
 
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index(b2,A);
+    ublas::matrix<int> subA = subA_index(b2,A,T);
 
     // select and order the columns we want to keep
     const int I = b.size();
@@ -209,6 +214,9 @@ namespace substitution {
   {
     for(int b=T.n_leaves();b<2*T.n_branches();b++) 
     {
+      if (not subA_index_valid(A1,b)) continue;
+      if (not subA_index_valid(A2,b)) continue;
+
       // compute branches-in
       vector<int> branches;
       for(const_in_edges_iterator e = T.directed_branch(b).branches_before();e;e++)
@@ -218,8 +226,8 @@ namespace substitution {
       vector<int> b2 = branches;
       b2.push_back(b);
 	
-      ublas::matrix<int> I1 = substitution::subA_index_select(b2,A1);
-      ublas::matrix<int> I2 = substitution::subA_index_select(b2,A2);
+      ublas::matrix<int> I1 = substitution::subA_index_select(b2,A1,T);
+      ublas::matrix<int> I2 = substitution::subA_index_select(b2,A2,T);
 
       if (not subA_identical(I1,I2)) 
       {
@@ -243,8 +251,8 @@ namespace substitution {
 	std::cerr<<A2<<std::endl;
 
 	// recompute subAs so we can enter w/ debugger
-	I1 = substitution::subA_index_select(b2,A1);
-	I2 = substitution::subA_index_select(b2,A2);
+	I1 = substitution::subA_index_select(b2,A1,T);
+	I2 = substitution::subA_index_select(b2,A2,T);
 
 	std::abort();
       }
@@ -365,7 +373,7 @@ void update_subA_index_single(const alignment& A,const Tree& T,int b) {
   }
 }
 
-void update_subA_index(const alignment& A,const Tree& T,int b) 
+void update_subA_index_branch(const alignment& A,const Tree& T,int b) 
 {
 #ifndef NDEBUG  
   subA_index_check_footprint(A,T);
@@ -389,6 +397,7 @@ void update_subA_index(const alignment& A,const Tree& T,int b)
 
 #ifndef NDEBUG  
   subA_index_check_footprint(A,T);
+  subA_index_check_regenerate(A,T);
 #endif
 }
 

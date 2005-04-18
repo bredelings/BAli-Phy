@@ -138,8 +138,8 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b) {
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
     p[1].setlength(b,p[1].T.branch(b).length());
+    invalidate_subA_index_branch(a[1], p[1].T, branches[i]);
   }
-  recompute_subA_notes(a[1],p[1].T);
   
   int C = topology_sample_SPR(a,p,n1,n2);
 

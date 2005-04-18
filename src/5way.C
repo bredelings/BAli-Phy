@@ -491,7 +491,7 @@ namespace A5 {
     //    std::cerr<<"\n";
     assert(valid(A));
 
-    recompute_subA_notes(A,T);
+    invalidate_subA_index_all(A);
 
     return A;
   }
