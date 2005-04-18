@@ -13,8 +13,8 @@ void resize(ublas::matrix<int>& M1,int s1,int s2,int clear=0)
 
 #ifndef NDEBUG
   for(int i=0;i<M1.size1();i++)
-    for(int j=0;j<M2.size2();j++)
-      M(i,j) = -10101;
+    for(int j=0;j<M1.size2();j++)
+      M1(i,j) = -10101;
 #endif
 }
 
