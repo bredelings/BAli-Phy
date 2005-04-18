@@ -13,7 +13,7 @@ namespace fp_scale {
 
   inline double pow2(int i) {
     if (std::abs(i) > max)
-      return pow(2.0,i);
+      return exp2(i);
     else
       return table[i+shift];
   }
