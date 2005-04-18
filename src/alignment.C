@@ -7,17 +7,20 @@
 
 using std::string;
 
-void resize(ublas::matrix<int>& M1,int s1,int s2,int clear=0) 
+void resize(ublas::matrix<int>& M1,int s1,int s2,int clear=0)
 {
-  M1.resize(s1,s2);
+  ublas::matrix<int> M2(s1,s2);
 
-#ifndef NDEBUG
-  for(int i=0;i<M1.size1();i++)
-    for(int j=0;j<M1.size2();j++)
-      M1(i,j) = -10101;
-#endif
+  for(int i=0;i<M2.size1();i++)
+    for(int j=0;j<M2.size2();j++)
+      M2(i,j) = clear;
+
+  for(int i=0;i<M1.size1() and i<M2.size1();i++)
+    for(int j=0;j< M1.size2() and j<M2.size2();j++)
+      M2(i,j) = M1(i,j);
+
+  M1.swap(M2);
 }
-
 
 int alignment::add_note(int l) const {
   notes.push_back(ublas::matrix<int>(length()+1,l));
@@ -50,13 +53,6 @@ void alignment::clear() {
   array.resize(0,0);
 }
 
-void alignment::resize(int s1,int s2) {
-  ::resize(array,s1,s2,alphabet::gap);
-
-  for(int i=0;i<notes.size();i++)
-    ::resize(notes[i],s1+1,notes[i].size2(),-1);
-}
-
 int alignment::index(const string& s) const {
   for(int i=0;i<sequences.size();i++) 
     if (sequences[i].name == s) return i;
@@ -64,8 +60,12 @@ int alignment::index(const string& s) const {
   return -1;
 }
 
-void alignment::changelength(int l) {
-  resize(l,array.size2());
+void alignment::changelength(int l) 
+{
+  array.resize(l,array.size2());
+
+  for(int i=0;i<notes.size();i++)
+    notes[i].resize(l+1,notes[i].size2());
 }
 
 void alignment::delete_column(int column) {
@@ -109,7 +109,7 @@ alignment& alignment::operator=(const alignment& A) {
 void alignment::add_row(const vector<int>& v) {
   int new_length = std::max(length(),(int)v.size());
 
-  resize(new_length,size2()+1);
+  ::resize(array,new_length,size2()+1,-1);
 
   for(int position=0;position<v.size();position++)
     array(position,size2()-1) = v[position];

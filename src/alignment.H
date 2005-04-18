@@ -15,7 +15,6 @@ class alignment {
   ublas::matrix<int> array;
   
   void clear();
-  void resize(int,int);
   void pad(int);
 
   void add_row(const vector<int>&);
