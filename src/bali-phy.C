@@ -290,6 +290,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description general("General options");
   general.add_options()
     ("help", "produce help message")
+    ("version", "print version information")
     ("show-only","analyze the initial values and exit")
     ("seed", value<unsigned long>(),"random seed")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
@@ -339,6 +340,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
   store(command_line_parser(argc, argv).
 	    options(all).positional(p).run(), args);
   notify(args);    
+
+  if (args.count("version")) {
+    cout<<"VERSION: 1.9.6+\nBUILD: "<<__DATE__<<"\n";
+    exit(0);
+  }
 
   if (args.count("help")) {
     cout<<"Usage: bali-phy <sequence-file> [OPTIONS]\n";
