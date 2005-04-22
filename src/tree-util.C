@@ -11,7 +11,13 @@ SequenceTree load_T(const variables_map& args) {
     
   RootedSequenceTree RT;
   RT.read(args["tree"].as<string>());
-  SequenceTree T = remove_root( RT );
+
+  // FIXME - but what if I WANT the node there?
+  SequenceTree T;
+  if (RT.root().neighbors().size() == 2)
+    T = remove_root(RT);
+  else
+    T = RT;
   return T;
 }
 
