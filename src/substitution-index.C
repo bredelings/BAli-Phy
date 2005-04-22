@@ -260,6 +260,47 @@ namespace substitution {
   }
 } // end namespace substitition
 
+/// create a note with leaf sequences ...
+int add_leaf_seq_note(alignment& A,int n) 
+{
+  assert(n < A.n_sequences());
+
+  int index = A.add_note(n);
+
+  for(int i=0;i<n;i++) {
+    int l=0;
+    for(int c=0;c<A.length();c++)
+      if (not A.gap(c,i)) {
+	A.note(index,l+1,i) = A(c,i);
+	l++;
+      }
+    A.note(index,0,i) = l;
+    assert(l == A.seqlength(i));
+  }
+
+  return index;
+}
+
+/// create a note with leaf sequences ...
+int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M) 
+{
+  int n = M.size2();
+
+  assert(n < A.n_sequences());
+
+  int index = A.add_note(n);
+
+  for(int i=0;i<n;i++) {
+    const int l = M(0,i);
+    assert(l == A.seq(i).size());
+    for(int j=0;j<l;j++)
+      A.note(index,j+1,i) = M(j+1,i);
+    A.note(index,0,i) = l;
+  }
+
+  return index;
+}
+
 inline void invalidate_subA_index_one(const alignment& A,int b) {
   A.note(1,0,b) = -1;
 }
@@ -449,3 +490,31 @@ void subA_index_check_footprint(const alignment& A,const Tree& T)
     }
   }
 }
+
+
+alignment blank_copy(const alignment& A1,int length) 
+{
+  alignment A2;
+
+  // make an array w/ the same alphabet & sequences
+  A2.a = A1.a;
+  A2.sequences = A1.sequences;
+
+  // make a blank array
+  A2.array.resize(length, A1.array.size2());
+
+  // make blank notes
+  A2.notes.reserve(A1.notes.size());
+
+  if (A1.notes.size() >= 1)
+    add_leaf_seq_note(A2,A1.note(0));
+
+  if (A1.notes.size() >= 2) {
+    A2.add_note(A1.note(1).size2());
+    invalidate_subA_index_all(A2);
+  }
+
+  return A2;
+}
+
+

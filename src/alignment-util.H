@@ -89,9 +89,4 @@ bool match_tag(const string& line, const string& tag);
 
 vector<OwnedPointer<alphabet> > load_alphabets(const boost::program_options::variables_map& args);
 
-int add_leaf_seq_note(alignment& A,int n);
-int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M);
-
-alignment blank_copy(const alignment&,int length=0);
-
 #endif

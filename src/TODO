@@ -1,46 +1,16 @@
--2. Profile - why is 10% spent in vector<double>::vector(unsigned int) ?
-  a) try valarray instead?
-  b) replace numbers in TODO and compare with current numbers..
-  c) use oprofile...
+-3. Plot #topologies in confidence interval (0,p) vs p. (e.g. sort topologies)
+    Then plot this versus time...
 
--1. Try with STLport, mudflap, valgrind, etc.
+    Also compare this between runs...
+
+    Figure out burnin for bacteria data sets...
+
+1. Reduce memory usage:
+ a) don't store 1 DPmatrix at a time... - free memory afterwards unless debugging
+ b) use FastLSA algorithm to change memory usage to O(N+M)*k instead of O(N*M)
+
+2. Try with STLport, mudflap, valgrind, etc.
   a) STLport could actually give us a speedup!
-
-0. Try ivopts / ivcanon / etc!  
-  i) Do these work?  
- ii) If not, then why not?  Find out how to get dumps...
-iii) loop-optimize2: loop unswitching, loop invariant motion, loop peeling...
-
-1. Rename substitution-index.C -> alignment-index.C
-  a) remove intermediate call to subA_index( )?
-
-
-2. fp_scale speedups
-  a) find out how much time we are spending doing I/O...
-  b) pre-convert Branch_HMM values to log_double_t? (speed up prior_branch() ?)
-  c) make different forward_square( ) routines for DPmatrix{Simple,Constrained}
-
-[CHECK] - check for more!
-   I) does increasing inlining limits make a difference?  (3.4: yes.  4.1: ?)
-  II) check w/ fp_scale::cutoff = 1.0e-1 ? or 1.0e-10?
- III) try some profile-guided optimization
-
-[?]
-  * sample_two_nodes_base( ): 
-    - takes 12% of total time in 'forward'
-    - takes 4% of total time just setting up constraints.
-    - takes 2.5% of total time in A5::getQ
-    - takes 1% of total time in A5::createQ
-  * DParray::sample_path( ) 
-    - takes 8% / 3.4% of total time!
-    - only sample legal states?
-  * substitution::Pr( ): 
-    - takes 2.9% of time (OK)
-    - spends 23% of its time in subA_index( )
-  * print_stats( )
-    - takes ~ 0.7% of total time...
-  * subA_index( )
-    - we spend 25% of substitution time in subA_index
 
 3. Indel model - fix so that prior probabilities exist!
 

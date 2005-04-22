@@ -41,6 +41,8 @@ inline int leaf_seq_length(const alignment& A,int i) {
   return A.note(0,0,i);
 }
 
+int add_leaf_seq_note(alignment& A,int n);
+int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M);
 
 int add_subA_index_note(const alignment& A,int b);
 
@@ -62,4 +64,6 @@ void recompute_subA_notes(const alignment& A,const Tree& T);
 
 void subA_index_check_regenerate(const alignment& A1,const Tree& T);
 void subA_index_check_footprint(const alignment& A1,const Tree& T);
+
+alignment blank_copy(const alignment&,int length=0);
 #endif
