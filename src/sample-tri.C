@@ -61,10 +61,10 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
 #endif
 
   // Find sub-alignments and sequences
-  vector<int> seq1;
-  vector<int> seq2;
-  vector<int> seq3;
-  vector<int> seq23;
+  vector<int> seq1; seq1.reserve(A.length());
+  vector<int> seq2; seq2.reserve(A.length());
+  vector<int> seq3; seq3.reserve(A.length());
+  vector<int> seq23; seq23.reserve(A.length());
   for(int i=0;i<columns.size();i++) {
     int column = columns[i];
     if (not A.gap(column,nodes[1]))
@@ -104,9 +104,9 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
 
   //-------------- Create alignment matrices ---------------//
 
-  vector<int> branches;
-  for(int i=1;i<nodes.size();i++)
-    branches.push_back(T.branch(nodes[0],nodes[i]) );
+  vector<int> branches(3);
+  for(int i=0;i<3;i++)
+    branches[i] = T.branch(nodes[0],nodes[i+1]);
 
   const Matrix Q = createQ(P.branch_HMMs, branches);
   vector<double> start_P = get_start_P(P.branch_HMMs,branches);
@@ -119,6 +119,7 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
   for(int c2=0;c2<dists23.size()-1;c2++) {
     int j2 = jcol[c2];
     int k2 = kcol[c2];
+    Matrices->states(c2).reserve(Matrices->nstates());
     for(int i=0;i<Matrices->nstates();i++) {
       int S2 = Matrices->order(i);
 
@@ -193,6 +194,8 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
 
 #ifndef NDEBUG
   check_alignment(A,T,"sample_tri_base:out");
+#else
+  Matrices->clear();
 #endif
   return Matrices;
 }

@@ -4,14 +4,17 @@
 #include "hmm.H"
 
 
-class DPengine: public HMM {
-public:
+class DPengine: public HMM 
+{
+protected:
+  efloat_t Pr_total;
 
+public:
   /// Sample a path from the HMM
   virtual vector<int> sample_path() const =0;
 
   /// Calculates the (log) probability of all possible paths through theHMM
-  virtual efloat_t Pr_sum_all_paths() const =0;
+  virtual efloat_t Pr_sum_all_paths() const;
 
   /// Calculates the (log) probability that this path is sampled by the generalized HMM
   virtual efloat_t path_P(const vector<int>& g_path) const =0;

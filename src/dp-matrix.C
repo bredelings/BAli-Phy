@@ -5,6 +5,22 @@
 
 using std::max;
 
+void state_matrix::clear() {
+  if (data) {
+    delete data; 
+    data = NULL;
+  }
+
+  if (scale_) {
+    delete scale_; 
+    scale_ = NULL;
+  }
+}
+
+state_matrix::~state_matrix() {
+  clear();
+}
+
 inline void DPmatrix::clear_cell(int i2,int j2) 
 {
   scale(i2,j2) = INT_MIN;
@@ -105,6 +121,13 @@ void DPmatrix::forward_square() {
   const int J = size2()-1;
 
   forward_square_first(1,1,I,J);
+
+  // store total
+  double total = 0.0;
+  for(int state1=0;state1<nstates();state1++)
+    total += (*this)(I,J,state1)*GQ(state1,endstate());
+
+  Pr_total = powe<efloat_t>(2.0,scale(I,J)) * total;
 }
 
 // FIXME - fix up pins for new matrix coordinates
@@ -130,6 +153,13 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins)
     int p = x.size()-1;
     forward_square(x[p]+1,y[p]+1,I,J);
   }
+  
+  // store total
+  double total = 0.0;
+  for(int state1=0;state1<nstates();state1++)
+    total += (*this)(I,J,state1)*GQ(state1,endstate());
+
+  Pr_total = powe<efloat_t>(2.0,scale(I,J)) * total;
 }
 
 vector<int> DPmatrix::forward(const vector<vector<int> >& pins) 
@@ -229,18 +259,6 @@ vector<int> DPmatrix::sample_path() const
   std::reverse(path.begin(),path.end());
   return path;
 }
-
-efloat_t DPmatrix::Pr_sum_all_paths() const {
-  const int I = size1()-1;
-  const int J = size2()-1;
-
-  double total = 0.0;
-  for(int state1=0;state1<nstates();state1++)
-    total += (*this)(I,J,state1)*GQ(state1,endstate());
-
-  return powe<efloat_t>(2.0,scale(I,J)) * total;
-}
-
 
 DPmatrix::DPmatrix(int i1,
 		   int i2,
