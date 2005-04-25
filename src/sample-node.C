@@ -117,6 +117,7 @@ RefPtr<DParrayConstrained> sample_node_base(alignment& A,const Parameters& P,con
     int i2 = icol[c2];
     int j2 = jcol[c2];
     int k2 = kcol[c2];
+    Matrices->states(c2).reserve(Matrices->nstates());
     for(int i=0;i<Matrices->nstates();i++) {
       int S2 = Matrices->order(i);
 

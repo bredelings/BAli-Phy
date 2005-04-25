@@ -57,7 +57,10 @@ RefPtr<DParrayConstrained> sample_two_nodes_base(alignment& A,const Parameters& 
 
   // Find sub-alignments and sequences
   vector<vector<int> > seqs(4);
+  for(int i=0;i<seqs.size();i++)
+    seqs[i].reserve(A.length());
   vector<int> seqall;
+  seqall.reserve(A.length());
   for(int i=0;i<columns.size();i++) {
     int column = columns[i];
     for(int i=0;i<4;i++)
@@ -133,6 +136,7 @@ RefPtr<DParrayConstrained> sample_two_nodes_base(alignment& A,const Parameters& 
     int j2 = jcol[c2];
     int k2 = kcol[c2];
     int l2 = lcol[c2];
+    Matrices->states(c2).reserve(Matrices->nstates());
     for(int i=0;i<Matrices->nstates();i++) {
       int S2 = Matrices->order(i);
       int state2 = A5::states_list[S2];

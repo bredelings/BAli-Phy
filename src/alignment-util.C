@@ -64,15 +64,15 @@ vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
   if (nleaves == -1)
     nleaves = A.size2();
 
-  vector< vector<int> > result;
+  vector< vector<int> > result(nleaves);
 
   for(int i=0;i<nleaves;i++) {
-    vector<int> columns;
+    vector<int>& columns = result[i];
+    columns.reserve(A.length());
     for(int column=0;column<A.length();column++) {
       if (not A.gap(column,i))
 	columns.push_back(column);
     }
-    result.push_back(columns);
   }
 
   return result;

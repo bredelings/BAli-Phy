@@ -284,6 +284,8 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double T
 
   //----------------------  Compute the state order -----------------------//
   vector<int> temp;
+  temp.reserve(nstates());
+  order_.reserve(nstates()+1);
   for(int S1=0;S1<nstates()+1;S1++) {
     // FIXME - we don't deal with silent states that aren't part of the silent networks, except the end state
     assert(not silent(S1) or silent_network(S1) or S1 == endstate());
@@ -302,6 +304,7 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double T
 
   //index the non silent network states
   vector<int> non_silent_network;
+  non_silent_network.reserve(nstates()+1);
   for(int S=0;S<nstates()+1;S++)
     if (not silent_network(S))
       non_silent_network.push_back(S);

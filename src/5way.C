@@ -375,6 +375,8 @@ namespace A5 {
 
     // Construct the list of columns present in the 4 sub-alignments
     vector< vector<int> > subA(seq.size());
+    for(int i=0;i<subA.size();i++)
+      subA[i].reserve(old.length());
     for(int column=0;column<old.length();column++) {
       for(int i=0;i<seq.size();i++)
 	if (not all_gaps(old,column,group[i]))
