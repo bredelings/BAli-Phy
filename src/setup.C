@@ -46,16 +46,20 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
   // Count the occurrence of the different letters
   valarray<double> counts(0.0, a.size());
   for(int i=0;i<A.length();i++) {
+    valarray<double> column_counts(0.0, a.size());
     for(int j=0;j<A.size2();j++) {
       if (alphabet::letter(A(i,j)))
-	counts[A(i,j)]++;
+	column_counts[A(i,j)]++;
     }
+
+    double total = column_counts.sum();
+    if (total > 0)
+      column_counts /= total;
+    counts += column_counts;
   }
 
-  counts /= (counts.sum() * A.length());
-
   // Setup the default frequences for the pseudocounts (uniform)
-  double pseudocount = 5+4*a.size();
+  double pseudocount = 5*(a.size()+1);
 
   if (args.count("CFNF")) {
     pseudocount = 100*counts.size();
