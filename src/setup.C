@@ -53,7 +53,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
     }
 
     double total = column_counts.sum();
-    if (total > 0)
+    if (total > 1)
       column_counts /= total;
     counts += column_counts;
   }
