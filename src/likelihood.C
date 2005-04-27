@@ -20,21 +20,21 @@ efloat_t probability3(const alignment& A,const Parameters& P) {
 }
 
 
-/// FIXME if X ~ Exp(mu), then g(y) = exp(y-exp(y)/mu)/mu
-///                         ln g(y) = log(mu) + (y-exp(y))/mu 
-
+// NOTE if X ~ Exp(mu), then g(y) = exp(y-exp(y)/mu)/mu
+//                        ln g(y) = -log(mu) + (y-exp(y))/mu 
+// FIXME: Change MH acceptor to allow asymmetric proposals (for branch lengths)
 
 /// Tree prior: branch lengths & topology
 efloat_t prior(const SequenceTree& T,double branch_mean) {
   double p = 0;
 
-  /* ----- 1/(number of topologies) -----*/
+  // ----- 1/(number of topologies) -----//
   if (T.n_leaves()>3)
     p = -log_num_topologies(T.n_leaves());
 
-  /* ---- PROD_i exp(- T[i] / mu )/ mu ---- */
+  // ---- PROD_i exp(- T[i] / mu )/ mu ---- //
   for(int i=0;i<T.n_branches();i++) 
-    p += (-log(branch_mean) - T.branch(i).length()/branch_mean );
+    p += exponential_log_pdf(branch_mean, T.branch(i).length());
 
   return expe(p);
 }
