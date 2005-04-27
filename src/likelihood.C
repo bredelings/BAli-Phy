@@ -45,8 +45,8 @@ efloat_t prior(const Parameters& P) {
 
   const double branch_mean_mean = 0.04;
 
-  // prior on the mu, the mean branch length
-  p *= expe(exp_exponential_pdf(log(P.branch_mean),branch_mean_mean));
+  // prior on mu, the mean branch length
+  p *= expe(exp_exponential_log_pdf(log(P.branch_mean),branch_mean_mean));
 
   // prior on the topology and branch lengths
   p *= prior(P.T, P.branch_mean);
