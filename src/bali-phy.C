@@ -162,9 +162,10 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
-  parameter_moves.add(4+P.T.n_branches()/8,SingleMove(change_parameters,"s_parameters:parameters"));
-  parameter_moves.add(8+P.T.n_branches()/4,SingleMove(change_gap_parameters,"g_parameters:parameters"));
   parameter_moves.add(4+P.T.n_branches()/8,SingleMove(sample_frequencies,"frequencies:parameters"));
+  parameter_moves.add(4+P.T.n_branches()/8,SingleMove(change_parameters,"s_parameters:parameters"));
+  if (P.IModel().full_tree)
+    parameter_moves.add(8+P.T.n_branches()/4,SingleMove(change_gap_parameters,"g_parameters:parameters"));
   
 
   int subsample = args["subsample"].as<int>();
