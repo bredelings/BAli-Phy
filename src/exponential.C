@@ -26,6 +26,7 @@ Matrix exp(const SMatrix& S,const BMatrix& D,double t,double f) {
     DN[i] = 1.0/DP[i];
   }
 
+  //SMatrix S2 = prod(DP,prod<Matrix>(S,DP));
   SMatrix S2 = S;
   for(int i=0;i<S2.size1();i++)
     for(int j=0;j<=i;j++)
@@ -124,17 +125,24 @@ Matrix exp(const SMatrix& M,const double t) {
 Matrix gamma_exp(const SMatrix& S,const BMatrix& D,double alpha,double beta) {
   const int n = S.size1();
 
-  BMatrix DP(n,n);
-  BMatrix DN(n,n);
+  double DP[n];
+  double DN[n];
   for(int i=0;i<D.size1();i++) {
-    DP(i,i) = sqrt(D(i,i));
-    DN(i,i) = 1.0/DP(i,i);
+    DP[i] = sqrt(D(i,i));
+    DN[i] = 1.0/DP[i];
   }
   
-  SMatrix S2 = prod(DP,prod<Matrix>(S,DP));
+  SMatrix S2 = S;
+  for(int i=0;i<S2.size1();i++)
+    for(int j=0;j<=i;j++)
+      S2(i,j) *= DP[i]*DP[j];
 
   Matrix E = gamma_exp(S2,alpha,beta);
-  E = prod(DN,prod<Matrix>(E,DP));
+
+  //  E = prod(DN,prod<Matrix>(E,DP));
+  for(int i=0;i<E.size1();i++)
+    for(int j=0;j<E.size2();j++)
+      E(i,j) *= DN[i]*DP[j];
 
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++) {
