@@ -37,7 +37,7 @@ public:
   virtual efloat_t prior() const =0;
 
   /// a symmetrical proposal distribution (calls recalc)
-  virtual void fiddle() =0;
+  virtual double fiddle(int) =0;
 
   bool fixed(int i) const {return fixed_[i];}
 
@@ -86,7 +86,7 @@ protected:
   virtual efloat_t super_prior() const =0;
   
   /// Fiddle the parameters of the upper model (may need to call recalc)
-  virtual void super_fiddle() {recalc();}
+  virtual double super_fiddle(int) {recalc();return 1;}
   
   virtual std::string super_parameter_name(int i) const=0;
 
@@ -124,7 +124,7 @@ public:
   efloat_t prior() const;
   
   /// Symmetrically propose parameters (calls recalc through super_fiddle if necessary)
-  void fiddle(); 
+  double fiddle(int); 
 };
 
 /// This makes supermodels from derived classes of ::Model

@@ -130,8 +130,8 @@ namespace substitution {
     return shift_laplace_pdf(log_g_sigma,-4,0.5);
   }
 
-  void Gamma::fiddle() {
-    if (fixed(0)) return;
+  double Gamma::fiddle(int) {
+    if (fixed(0)) return 1;
 
     vector<double> v = parameters_;
     double g_sigma = v[0];
@@ -146,6 +146,7 @@ namespace substitution {
       v[0] = g_sigma;
 
     parameters(v);
+    return 1;
   }
 
   string Gamma::name() const {
@@ -191,7 +192,7 @@ namespace substitution {
     return expe(-parameters_[0]/mean_stddev)/mean_stddev;
   }
 
-  void LogNormal::fiddle() {
+  double LogNormal::fiddle(int) {
     vector<double> v = parameters_;
     double& p = v[0];
  
@@ -200,6 +201,7 @@ namespace substitution {
     if (p2 < 0) p2 = -p2;
 
     parameters(v);
+    return 1;
   }
 
   double LogNormal::cdf(double x) const {
@@ -243,7 +245,7 @@ namespace substitution {
 
   /*-------------- MultipleDistribution ----------------*/
 
-  void MultipleDistribution::super_fiddle() {
+  double MultipleDistribution::super_fiddle(int) {
     read();
 
     const double sigma = 0.05;
@@ -257,6 +259,7 @@ namespace substitution {
 
     for(int i=0;i<f.size();i++)
       fraction(i) = f[i];
+    return 1;
   }
 
   efloat_t MultipleDistribution::super_prior() const {

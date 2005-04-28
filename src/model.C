@@ -74,13 +74,16 @@ efloat_t SuperModel::prior() const {
   return P;
 }
 
-void SuperModel::fiddle() {
+double SuperModel::fiddle(int i) {
+  double rho=1;
   for(int m=0;m<n_submodels();m++)
-    SubModels(m).fiddle();
+    rho *= SubModels(m).fiddle(i);
 
   read();
 
-  super_fiddle();
+  rho *= super_fiddle(i);
+
+  return rho;
 }
 
 void SuperModel::recalc() {

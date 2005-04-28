@@ -114,7 +114,7 @@ IndelModel::IndelModel()
 IndelModel::~IndelModel() {}
 
 
-void SimpleIndelModel::fiddle() {
+double SimpleIndelModel::fiddle(int) {
 
   double& lambda_O = parameters_[0];
   double& lambda_E = parameters_[1];
@@ -137,6 +137,7 @@ void SimpleIndelModel::fiddle() {
   }
   
   recalc();
+  return 1;
 }
 
 indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
@@ -256,7 +257,7 @@ SimpleIndelModel::SimpleIndelModel()
 void NewIndelModel::recalc() {
 }
 
-void NewIndelModel::fiddle() {
+double NewIndelModel::fiddle(int) {
   double& rate = parameters_[0];
   double& lambda_E = parameters_[1];
   double& i = parameters_[2];
@@ -279,6 +280,7 @@ void NewIndelModel::fiddle() {
     i = wrap(i+gaussian(0,0.02),1.0);
   
   recalc();
+  return 1;
 }
 
 efloat_t NewIndelModel::prior() const {

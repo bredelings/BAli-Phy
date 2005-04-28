@@ -280,7 +280,7 @@ namespace substitution {
 
     void recalc() {}
 
-    void fiddle() {}
+    double fiddle(int) {return 1;}
 
     Matrix transition_p(double t) const;
 
@@ -319,7 +319,7 @@ namespace substitution {
   class Gamma_Branch_Model:public Independant_Additive_Reversible_Model,
 			   public ReversibleWrapperOver<ReversibleMarkovModel> 
   {
-    void super_fiddle();
+    double super_fiddle(int);
     efloat_t super_prior() const;
 
   public:
@@ -345,7 +345,7 @@ namespace substitution {
   class Gamma_Stretched_Branch_Model:public Independant_Additive_Reversible_Model,
 				     public ReversibleWrapperOver<ReversibleMarkovModel> 
   {
-    void super_fiddle();
+    double super_fiddle(int);
     efloat_t super_prior() const;
     string super_parameter_name(int i) const;
   public:
@@ -376,7 +376,7 @@ namespace substitution {
     virtual void recalc();
   public:
 
-    virtual void fiddle() {}
+    double fiddle(int) {return 1;}
 
     virtual EQU* clone() const {return new EQU(*this);}
 
@@ -403,7 +403,7 @@ namespace substitution {
 
     virtual void recalc();
   public:
-    virtual void fiddle();
+    double fiddle(int);
 
     virtual Empirical* clone() const {return new Empirical(*this);}
 
@@ -446,7 +446,7 @@ namespace substitution {
 
     virtual HKY* clone() const {return new HKY(*this);}
 
-    virtual void fiddle(); 
+    double fiddle(int); 
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
     double kappa() const {return parameters_[1];}
@@ -472,7 +472,7 @@ namespace substitution {
 
     virtual TNY* clone() const {return new TNY(*this);}
 
-    virtual void fiddle(); 
+    double fiddle(int); 
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
     double kappa1() const {return parameters_[1];}
@@ -515,7 +515,7 @@ namespace substitution {
   class YangM0: public CodonModel,
 			public NestedModelOver<ReversibleMarkovNucleotideModel>
   {
-    void super_fiddle();
+    double super_fiddle(int);
     void recalc();
   public:
     efloat_t super_prior() const;
@@ -629,7 +629,7 @@ namespace substitution {
     void set_a(int m,const std::valarray<double>& f);
     
     void recalc();
-    void super_fiddle();
+    double super_fiddle(int);
 
     inline double& a(int m,int l)       {return super_parameters_[m+l*fraction.size()];}
     inline double  a(int m,int l) const {return super_parameters_[m+l*fraction.size()];}
@@ -710,7 +710,7 @@ namespace substitution {
   protected:
     OwnedPointer<RateDistribution> D;
 
-    void super_fiddle();
+    double super_fiddle(int);
     void recalc();
 
   public:
@@ -761,7 +761,7 @@ namespace substitution {
 
   protected:
 
-    void super_fiddle();
+    double super_fiddle(int);
 
   public:
     virtual WithINV* clone() const {return new WithINV(*this);}
@@ -792,7 +792,7 @@ namespace substitution {
   };
 
   class YangM2: public MultiParameterModel {
-    void super_fiddle();
+    double super_fiddle(int);
     void recalc();
   public:
     
@@ -811,7 +811,7 @@ namespace substitution {
 
 
   class YangM3: public MultiParameterModel {
-    void super_fiddle();
+    double super_fiddle(int);
     void recalc();
   public:
     
@@ -829,7 +829,7 @@ namespace substitution {
   class MixtureModel: public SuperDerivedModelOver<MultiModel,MultiModel> 
   {
     efloat_t super_prior() const;
-    void super_fiddle();
+    double super_fiddle(int);
     void recalc();
 
     std::valarray<double> pi;

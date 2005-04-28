@@ -72,25 +72,29 @@ void Parameters::recalc() {
 }
 
 
-void Parameters::fiddle_smodel() {
+double Parameters::fiddle_smodel(int i) {
+  double rho = 1;
+
   if (SModel_->parameters().size()) {
     // Fiddle substitution parameters and recalculate rate matrices
-    SModel_->fiddle();
+    rho = SModel_->fiddle(i);
     SModel_->set_rate(1);
 
     // Recalculate the branch transition matrices
     recalc_smodel();
   }
 
-  double x = log(branch_mean);
   const double sigma = 0.10;
-  x += gaussian(0,sigma);
-  branch_mean = exp(x);
+  branch_mean *= exp(gaussian(0,sigma));
+
+  return rho;
 }
 
-void Parameters::fiddle_imodel() {
-  IModel_->fiddle();
+double Parameters::fiddle_imodel(int i) 
+{
+  double rho = IModel_->fiddle(i);
   recalc_imodel();
+  return rho;
 }
 
 void Parameters::setlength(int b,double l) {

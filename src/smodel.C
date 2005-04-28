@@ -32,13 +32,14 @@ namespace substitution {
     return "sigma/mu";
   }
 
-  void Gamma_Branch_Model::super_fiddle() {
+  double Gamma_Branch_Model::super_fiddle(int) {
     const double sigma = 0.05;
     if (not fixed(0)) {
       double beta = parameters_.back() + gaussian(0,sigma);
       if (beta<0) beta = -beta;
       if (beta >0) parameters_.back() = beta;
     }
+    return 1;
   }
 
   efloat_t Gamma_Branch_Model::super_prior() const {
@@ -68,11 +69,11 @@ namespace substitution {
     return gamma_exp(SubModel().getS(),SubModel().getD(),alpha,beta);
   }
 
-  void Gamma_Stretched_Branch_Model::super_fiddle() {
+  double Gamma_Stretched_Branch_Model::super_fiddle(int) {
     vector<double> v = parameters_;
     double& p = v.back();
 
-    if (fixed(0)) return;
+    if (fixed(0)) return 1;
 
     const double sigma = 0.04;
     double p2 = p + gaussian(0,sigma);
@@ -83,6 +84,7 @@ namespace substitution {
       p = p2;
 
     parameters(v);
+    return 1;
   }
 
   efloat_t Gamma_Stretched_Branch_Model::super_prior() const {
@@ -238,8 +240,8 @@ namespace substitution {
       return s_parameter_name(i,2);
   }
 
-  void HKY::fiddle() {
-    if (fixed(0)) return;
+  double HKY::fiddle(int) {
+    if (fixed(0)) return 1;
 
     double k = log(kappa());
 
@@ -247,6 +249,7 @@ namespace substitution {
     k += gaussian(0,sigma);
 
     kappa(exp(k));
+    return 1;
   }
 
   /// return the LOG of the prior
@@ -276,7 +279,7 @@ namespace substitution {
     return "TNY";
   }
 
-  void TNY::fiddle() {
+  double TNY::fiddle(int) {
     const double sigma = 0.15;
 
     if (not fixed(0)) {
@@ -288,6 +291,7 @@ namespace substitution {
       double k = kappa2() * exp(gaussian(0,sigma));
       kappa2(k);
     }
+    return 1;
   }
 
   // This should be OK - the increments are linear combinations of gaussians...
@@ -351,7 +355,7 @@ namespace substitution {
     ReversibleMarkovModel::recalc();
   }
 
-  void Empirical::fiddle() {
+  double Empirical::fiddle(int) {
     if (not fixed(0)) {
 
       double& f = parameters_[0];
@@ -364,6 +368,8 @@ namespace substitution {
     }
     
     // recalc() not needed because f() value not cached
+
+    return 1;
   }
 
   string Empirical::name() const {
@@ -419,13 +425,15 @@ namespace substitution {
     recalc();
   }
 
-  void YangM0::super_fiddle() {
+  double YangM0::super_fiddle(int) {
     double sigma = 0.15;
     if (not fixed(1))
       super_parameters_[1] *= exp(gaussian(0,sigma));
 
     read();
     recalc();
+
+    return 1;
   }
 
   void YangM0::recalc() {
@@ -610,7 +618,7 @@ namespace substitution {
     dirichlet_fiddle(v,0,v.size(),sigma);
   }
 
-  void MultiFrequencyModel::super_fiddle() 
+  double MultiFrequencyModel::super_fiddle(int) 
   {
     for(int l=0;l<Alphabet().size();l++) {
       valarray<double> a = get_a(l);
@@ -619,6 +627,8 @@ namespace substitution {
     }
     read();
     recalc();
+
+    return 1;
   }
 
   efloat_t MultiFrequencyModel::super_prior() const 
@@ -814,14 +824,16 @@ namespace substitution {
     return D->prior();
   }
 
-  void DistributionParameterModel::super_fiddle() {
-    D->fiddle();
+  double DistributionParameterModel::super_fiddle(int i) {
+    double rho = D->fiddle(i);
 
     super_parameters_ = D->parameters();
 
     read();
 
     recalc();
+
+    return rho;
   }
 
   // This is supposed to push things out from parameters_
@@ -920,7 +932,7 @@ namespace substitution {
     return expe(beta_log_pdf(p, 0.02, 20));
   }
 
-  void WithINV::super_fiddle() {
+  double WithINV::super_fiddle(int) {
     if (not fixed(0)) {
 
       double &p = parameters_[0];
@@ -933,6 +945,8 @@ namespace substitution {
     }
 
     recalc();
+
+    return 1;
   }
 
     /// Access the base models
@@ -968,7 +982,7 @@ namespace substitution {
     return dist;
   }
 
-  void YangM2::super_fiddle() {
+  double YangM2::super_fiddle(int) {
     // dirichlet fiddle the first 3 parameters, sigma = ?
     dirichlet_fiddle(super_parameters_, 0, 3, 0.1);
 
@@ -976,6 +990,8 @@ namespace substitution {
     super_parameters_[3] *= exp(shift_laplace(0,0.2));
     if (super_parameters_[3] < 1)
       super_parameters_[3] = 1.0/super_parameters_[3];
+
+    return 1;
   }
 
   void YangM2::recalc() {
@@ -1073,7 +1089,7 @@ namespace substitution {
     return expe(dirichlet_log_pdf(p,n));
   }
 
-  void MixtureModel::super_fiddle() 
+  double MixtureModel::super_fiddle(int) 
   {
     valarray<double> p = get_varray(super_parameters_,0,n_submodels());
 
@@ -1083,6 +1099,8 @@ namespace substitution {
     set_varray(super_parameters_,0,p);
     
     recalc();
+
+    return 1;
   }
 
   const MultiModel::Base_Model_t& MixtureModel::base_model(int m) const 

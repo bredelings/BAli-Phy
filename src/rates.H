@@ -49,7 +49,7 @@ namespace substitution {
 
     efloat_t prior() const;
 
-    void fiddle(); 
+    double fiddle(int); 
 
     std::string name() const;
     std::string parameter_name(int) const;
@@ -72,7 +72,7 @@ namespace substitution {
 
     efloat_t prior() const;
 
-    void fiddle(); 
+    double fiddle(int); 
 
     std::string name() const;
     std::string parameter_name(int) const;
@@ -99,7 +99,7 @@ namespace substitution {
 
     efloat_t prior() const { return 0.5;}
 
-    void fiddle() {}
+    double fiddle(int) {return 1;}
 
     double quantile(double p,double) const {return 2*p;}
 
@@ -115,7 +115,7 @@ namespace substitution {
   /// A sum of distributions for rate variation
   class MultipleDistribution: public SuperDerivedModelOver<RateDistribution,RateDistribution> 
   {
-    void super_fiddle(); 
+    double super_fiddle(int); 
   public:
 
     efloat_t super_prior() const;

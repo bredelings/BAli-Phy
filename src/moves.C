@@ -265,7 +265,7 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
 
   Parameters P2 = P;
 
-  P2.fiddle_smodel();
+  double rho = P2.fiddle_smodel(0);
   
 #ifndef NDEBUG  
   show_parameters(std::clog,P.SModel());
@@ -297,7 +297,7 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
   result[0] = 1.0;
 
   Parameters P2 = P;
-  P2.fiddle_imodel();
+  double rho = P2.fiddle_imodel(0);
 
   if (P.accept_MH(A,P,A,P2)) {
     P = P2;

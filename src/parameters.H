@@ -78,10 +78,10 @@ public:
   const alphabet& get_alphabet() const {return SModel_->Alphabet();}
 
   /// Symmetrically propose another state for the substitution model
-  void fiddle_smodel();
+  double fiddle_smodel(int);
 
   /// Symmetrically propose another state for the indel model
-  void fiddle_imodel();
+  double fiddle_imodel(int);
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 
