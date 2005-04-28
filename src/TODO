@@ -1,4 +1,15 @@
--3. Plot #topologies in confidence interval (0,p) vs p. (e.g. sort topologies)
+-1. Find a way to allow substitution models to propose a lot of different
+    changes each time we try to propose new parameters.
+    a) ask the model for a number of fiddles to do, and then do
+    b) for(int i=0;i<n_fiddles;i++) {
+         smodel = smodel2
+         smodel2->fiddle(i)
+         accept/reject(smodel,smodel2)
+       }
+    c) some kind of interface for non-symmetric proposals?
+
+------
+0. Plot #topologies in confidence interval (0,p) vs p. (e.g. sort topologies)
     Then plot this versus time...
 
     Also compare this between runs...
@@ -6,17 +17,17 @@
     Figure out burnin for bacteria data sets...
 
 1. Reduce memory usage:
- a) don't store 1 DPmatrix at a time... - free memory afterwards unless debugging
  b) use FastLSA algorithm to change memory usage to O(N+M)*k instead of O(N*M)
 
 2. Try with STLport, mudflap, valgrind, etc.
   a) STLport could actually give us a speedup!
 
 3. Indel model - fix so that prior probabilities exist!
+    a) for now, we condition on leaf sequence lengths.
 
 4. Start making some "nice" pictures to put up on the website.
-    a) include pictures to give to Dr. Lake's lab
-    b) include pictures to give to Dr. Sabatti
+    a) include pictures to give to Dr. Lake's lab.
+    b) include pictures to give to Dr. Sabatti.
 
 *5. MCMCMC
     a) Make the temperature affect only the likelihood...
@@ -25,7 +36,7 @@
     d) begin to implement the separate random number generators.
 
 6. Make a more general substitution::Model class, so that we can e.g.
-    have tree with 2 sets of branch lengths...
+    have trees with 2 sets of branch lengths...
 
 *7. Write alignment-consensus
 
@@ -36,16 +47,6 @@
       underneath YangCodonModel.  
 	* This is difficult because the models have different alphabets
 	* Suppose we wanted HKY+YangM0+TNY+YangM0+Dual
-
-10. Find a way to allow substitution models to propose a lot of different
-    changes each time we try to propose new parameters.
-    a) ask the model for a number of fiddles to do, and then do
-    b) for(int i=0;i<n_fiddles;i++) {
-         smodel = smodel2
-         smodel2->fiddle(i)
-         accept/reject(smodel,smodel2)
-       }
-    c) some kind of interface for non-symmetric proposals?
 
 ------
 A. sub-partitions: 
@@ -222,3 +223,4 @@ the prior, because we never want to use it  differently.
   b) reconstruct subA indices when tree changes 
      - sample-tri.C for sample-topology-SPR.C
 
+[DONE] Don't store more that 1 DPmatrix at a time - free memory afterwards unless debugging.
