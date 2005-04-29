@@ -362,7 +362,6 @@ int main(int argc,char* argv[]) {
   try {
 
     fp_scale::initialize();
-    le_double_t::initialize();
     cerr.precision(10);
     cout.precision(10);
     std::ios::sync_with_stdio(false);
