@@ -179,8 +179,9 @@ namespace substitution {
   }
 
   efloat_t ReversibleMarkovModel::prior() const {
-    valarray<double> q(1.0/frequencies().size(),frequencies().size());
-    return expe( dirichlet_log_pdf(frequencies(),q,10) );
+    // uniform - 1 observeration per letter
+    valarray<double> q(1.0,frequencies().size());
+    return expe( dirichlet_log_pdf(frequencies(),q) );
   }
 
   //---------------------- INV_Model --------------------------//
@@ -243,12 +244,9 @@ namespace substitution {
   double HKY::fiddle(int) {
     if (fixed(0)) return 1;
 
-    double k = log(kappa());
-
     const double sigma = 0.15;
-    k += gaussian(0,sigma);
+    kappa(kappa() * exp(gaussian(0,sigma)));
 
-    kappa(exp(k));
     return 1;
   }
 
@@ -633,6 +631,7 @@ namespace substitution {
 
   efloat_t MultiFrequencyModel::super_prior() const 
   {
+    // uniform - 10 counts per bin observeration per letter
     valarray<double> flat(10.0,fraction.size());
 
     double Pr = 0;
@@ -1007,6 +1006,8 @@ namespace substitution {
     p[0] = super_parameters()[0];
     p[1] = super_parameters()[1];
     p[2] = super_parameters()[2];
+
+    // 10 counts total - not uniform (so no "per bin" value)
     valarray<double> q(3);
     q[0] = 0.01;
     q[1] = 0.98;

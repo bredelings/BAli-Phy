@@ -268,9 +268,10 @@ namespace substitution {
     for(int i=0;i<f.size();i++)
       f[i] = fraction(i);
 
-    valarray<double> q(1.0/f.size(),f.size());
+    // uniform - 1 observeration per bin
+    valarray<double> q(1.0,f.size());
 
-    return expe(dirichlet_log_pdf(f,q,10));
+    return expe(dirichlet_log_pdf(f,q));
   }
 
   double MultipleDistribution::cdf(double x) const {
