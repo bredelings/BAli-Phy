@@ -86,7 +86,7 @@ efloat_t DParray::Pr_sum_all_paths() const {
   for(int state1=0;state1<nstates();state1++)
     total += (*this)(I,state1) * GQ(state1,endstate());
 
-  return powe<efloat_t>(2.0,scale(I)) * total;
+  return pow<efloat_t>(2.0,scale(I)) * total;
 }
 
 DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)

@@ -151,23 +151,22 @@ inline bool operator!=(log_double_t x,double y) {
 
 #undef decl_double
 
-
 inline log_double_t pow(log_double_t x,double p) {
   x.log() *= p;
   return x;
 }
 
-template<class T> T expe(double);
+template<class T> T exp(double);
 
-template<> inline log_double_t expe<log_double_t>(double x) {
+template<> inline log_double_t exp<log_double_t>(double x) {
   log_double_t y;
   y.log() = x;
   return y;
 }
 
-template<class T> T powe(double,double);
+template<class T> T pow(double,double);
 
-template<> inline log_double_t powe<log_double_t>(double x,double p) {
+template<> inline log_double_t pow<log_double_t>(double x,double p) {
   log_double_t y;
   y.log() = p * ::log(x);
   return y;

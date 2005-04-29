@@ -210,25 +210,26 @@ void SimpleIndelModel::recalc() {
   QE = Q1;
 }
 
-efloat_t SimpleIndelModel::prior() const {
+efloat_t SimpleIndelModel::prior() const 
+{
   double D = 0.5;
-  double P = 0;
+  efloat_t Pr = 1;
 
   // Calculate prior on lambda_O
   double lambda_O = parameters_[0];
   double pdel =  lambda_O-logdiff(0,lambda_O);
   double rate =  log(-logdiff(0,pdel)) - log(D);
 
-  P += log( shift_laplace_pdf(rate,-5, 0.5) );
+  Pr *= shift_laplace_pdf(rate,-5, 0.5);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = parameters_[1];
   double E_length = lambda_E - logdiff(0,lambda_E);
   double E_length_mean = 5.0;
 
-  P += exp_exponential_log_pdf(E_length,E_length_mean);
+  Pr *= exp_exponential_pdf(E_length,E_length_mean);
 
-  return expe(P);
+  return Pr;
 }
 
 string SimpleIndelModel::name() const {return "simple indels [HMM]";}
@@ -284,27 +285,27 @@ double NewIndelModel::fiddle(int) {
 }
 
 efloat_t NewIndelModel::prior() const {
-  double P = 0;
+  efloat_t Pr = 1;
 
   // Calculate prior on lambda_O
   double rate = parameters_[0];
 
-  P += log( shift_laplace_pdf(rate,parameters_[3], parameters_[4]) );
+  Pr *= shift_laplace_pdf(rate,parameters_[3], parameters_[4]);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = parameters_[1];
   double E_length = lambda_E - logdiff(0,lambda_E);
   double E_length_mean = parameters_[5];
 
-  P += exp_exponential_log_pdf(E_length,E_length_mean);
+  Pr *= exp_exponential_pdf(E_length,E_length_mean);
 
   // Calculate prior on invariant fraction
   if (not fixed(2)) {
     double i = parameters_[2];
-    P += beta_log_pdf(i,0.01,200);
+    Pr *= beta_pdf(i,0.01,200);
   }
 
-  return expe(P);
+  return Pr;
 }
 
 indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {

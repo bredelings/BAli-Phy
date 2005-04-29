@@ -189,7 +189,7 @@ namespace substitution {
 
   efloat_t LogNormal::prior() const {
     const double mean_stddev = 0.01;
-    return expe(-parameters_[0]/mean_stddev)/mean_stddev;
+    return exponential_pdf(parameters_[0], mean_stddev);
   }
 
   double LogNormal::fiddle(int) {
@@ -271,7 +271,7 @@ namespace substitution {
     // uniform - 1 observeration per bin
     valarray<double> q(1.0,f.size());
 
-    return expe(dirichlet_log_pdf(f,q));
+    return dirichlet_pdf(f,q);
   }
 
   double MultipleDistribution::cdf(double x) const {

@@ -20,21 +20,17 @@ efloat_t probability3(const alignment& A,const Parameters& P) {
 }
 
 
-// NOTE if X ~ Exp(mu), then g(y) = exp(y-exp(y)/mu)/mu
-//                        ln g(y) = -log(mu) + (y-exp(y))/mu 
-// FIXME: Change MH acceptor to allow asymmetric proposals (for branch lengths)
-
 /// Tree prior: branch lengths & topology
 efloat_t prior(const SequenceTree& T,double branch_mean) {
   efloat_t p = 1;
 
-  // ----- 1/(number of topologies) -----//
+  // --------- uniform prior on topologies --------//
   if (T.n_leaves()>3)
-    p *= expe( -log_num_topologies(T.n_leaves()) );
+    p /= num_topologies(T.n_leaves());
 
-  // ---- PROD_i exp(- T[i] / mu )/ mu ---- //
+  // ---- Exponential prior on branch lengths ---- //
   for(int i=0;i<T.n_branches();i++) 
-    p *= expe( exponential_log_pdf(T.branch(i).length(),branch_mean) );
+    p *= exponential_pdf(T.branch(i).length(), branch_mean);
 
   return p;
 }
@@ -46,7 +42,7 @@ efloat_t prior(const Parameters& P) {
   const double branch_mean_mean = 0.04;
 
   // prior on mu, the mean branch length
-  p *= expe(exponential_log_pdf(P.branch_mean, branch_mean_mean));
+  p *= exponential_pdf(P.branch_mean, branch_mean_mean);
 
   // prior on the topology and branch lengths
   p *= prior(P.T, P.branch_mean);
@@ -126,7 +122,7 @@ efloat_t prior_HMM_notree(const alignment& A,const Parameters& P) {
     Pr *= prior_branch(A, P.branch_HMMs[b], node, b);
 
   if (T.n_leafbranches() > 1)
-    Pr /= pow(P.IModel().lengthp( A.seqlength(node) ),T.n_leaves());
+    Pr /= pow<efloat_t>(P.IModel().lengthp( A.seqlength(node) ),T.n_leaves());
 
   return Pr;
 }

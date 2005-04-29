@@ -31,19 +31,10 @@ typedef ublas::matrix_row<Matrix> matrix_row;
 typedef ublas::matrix_column<Matrix> matrix_column;
 
 #include "log-double.H"
-#include "le-double.H"
 
-#ifdef LE_DOUBLE
-typedef le_double_t efloat_t;
-#else
 typedef log_double_t efloat_t;
-#endif
 
 typedef ublas::matrix<efloat_t> eMatrix;
-
-inline efloat_t expe(double x) {
-  return expe<efloat_t>(x);
-}
 
 inline std::ostream& operator<<(std::ostream& o,const efloat_t& e) {
   return o<<log(e);

@@ -127,7 +127,7 @@ void DPmatrix::forward_square() {
   for(int state1=0;state1<nstates();state1++)
     total += (*this)(I,J,state1)*GQ(state1,endstate());
 
-  Pr_total = powe<efloat_t>(2.0,scale(I,J)) * total;
+  Pr_total = pow<efloat_t>(2.0,scale(I,J)) * total;
 }
 
 // FIXME - fix up pins for new matrix coordinates
@@ -159,7 +159,7 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins)
   for(int state1=0;state1<nstates();state1++)
     total += (*this)(I,J,state1)*GQ(state1,endstate());
 
-  Pr_total = powe<efloat_t>(2.0,scale(I,J)) * total;
+  Pr_total = pow<efloat_t>(2.0,scale(I,J)) * total;
 }
 
 vector<int> DPmatrix::forward(const vector<vector<int> >& pins) 

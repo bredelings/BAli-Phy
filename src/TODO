@@ -1,10 +1,20 @@
+-2. Test various ways of improving mixing
+  a) more branch length proposals
+  b) branch length proposals in more passes? (how does this affect timing?)
+  c) propose scaling the entire tree
+  d) propose branch lengths on the log scale...
+  e) increase the number of SPR moves
+  f) look for papers - by largett's student - on tree mixing
+    i) swofford, largett, huelsenbeck - ?
+  g) 
+
 -1. Find a way to allow substitution models to propose a lot of different
     changes each time we try to propose new parameters.
     a) ask the model for a number of fiddles to do, and then do
     b) for(int i=0;i<n_fiddles;i++) {
-         smodel = smodel2
-         smodel2->fiddle(i)
-         accept/reject(smodel,smodel2)
+	 model2 = smodel
+         rho = model2->fiddle(i)
+         accept/reject(model,model2,rho)
        }
     c) some kind of interface for non-symmetric proposals?
 

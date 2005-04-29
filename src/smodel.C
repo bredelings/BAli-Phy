@@ -45,7 +45,7 @@ namespace substitution {
   efloat_t Gamma_Branch_Model::super_prior() const {
     const double mu = 0.1;
     double beta = parameters_.back();
-    return expe(-beta/mu)/mu;
+    return exponential_pdf(beta,mu);
   }
 
   string Gamma_Branch_Model::name() const {
@@ -89,7 +89,7 @@ namespace substitution {
 
   efloat_t Gamma_Stretched_Branch_Model::super_prior() const {
     const double mean_stddev = 0.01;
-    return expe(-parameters_.back()/mean_stddev) / mean_stddev; 
+    return exponential_pdf(parameters_.back(), mean_stddev);
   }
 
   string Gamma_Stretched_Branch_Model::name() const {
@@ -181,7 +181,7 @@ namespace substitution {
   efloat_t ReversibleMarkovModel::prior() const {
     // uniform - 1 observeration per letter
     valarray<double> q(1.0,frequencies().size());
-    return expe( dirichlet_log_pdf(frequencies(),q) );
+    return dirichlet_pdf(frequencies(),q);
   }
 
   //---------------------- INV_Model --------------------------//
@@ -631,14 +631,14 @@ namespace substitution {
 
   efloat_t MultiFrequencyModel::super_prior() const 
   {
-    // uniform - 10 counts per bin observeration per letter
+    // uniform - 10 counts per bin
     valarray<double> flat(10.0,fraction.size());
 
-    double Pr = 0;
+    efloat_t Pr = 1;
     for(int l=0;l<Alphabet().size();l++) 
-      Pr += dirichlet_log_pdf(get_a(l),flat);
+      Pr *= dirichlet_pdf(get_a(l),flat);
 
-    return expe(Pr);
+    return Pr;
   }
 
   const MultiModel::Base_Model_t& MultiFrequencyModel::base_model(int m) const {
@@ -928,7 +928,7 @@ namespace substitution {
   efloat_t WithINV::super_prior() const {
     double p = super_parameters_[0];
 
-    return expe(beta_log_pdf(p, 0.02, 20));
+    return beta_pdf(p, 0.02, 20);
   }
 
   double WithINV::super_fiddle(int) {
@@ -1012,11 +1012,11 @@ namespace substitution {
     q[0] = 0.01;
     q[1] = 0.98;
     q[2] = 0.01;
-    double P = dirichlet_log_pdf(p,q,10);
+    efloat_t P = dirichlet_pdf(p,q,10);
 
     double omega = super_parameters()[3];
-    P += exponential_log_pdf(log(omega),0.1);
-    return expe(P);
+    P *= exponential_pdf(log(omega),0.1);
+    return P;
   }
 
   string YangM2::name() const {
@@ -1087,7 +1087,7 @@ namespace substitution {
 
     n *= 10;
 
-    return expe(dirichlet_log_pdf(p,n));
+    return dirichlet_pdf(p,n);
   }
 
   double MixtureModel::super_fiddle(int) 
