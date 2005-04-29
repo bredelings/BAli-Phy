@@ -83,7 +83,7 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  sample-tri.C sample-node.C imodel.C 5way.C sample-topology-NNI.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
-	  alignment-sums.C alignment-util.C probability.C model.C le-double.C \
+	  alignment-sums.C alignment-util.C probability.C model.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C
 
