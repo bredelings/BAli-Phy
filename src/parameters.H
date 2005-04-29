@@ -51,9 +51,9 @@ public:
   efloat_t weight(const alignment& A, const Parameters& P) const;
 
   bool accept_MH(const alignment& A1,const Parameters& P1,
-		 const alignment& A2,const Parameters& P2) const;
+		 const alignment& A2,const Parameters& P2,double rho) const;
 
-  bool accept_MH(const alignment& A,const Parameters& P1,const Parameters& P2) const;
+  bool accept_MH(const alignment& A,const Parameters& P1,const Parameters& P2,double rho) const;
 
   /// The Tree
   SequenceTree T;

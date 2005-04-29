@@ -277,7 +277,7 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
   std::clog<<endl<<endl;
 #endif
 
-  if (P.accept_MH(A,P,A,P2)) {
+  if (P.accept_MH(A,P,A,P2,rho)) {
     P = P2;
     result[1] = 1;
 #ifndef NDEBUG
@@ -299,7 +299,7 @@ MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
   Parameters P2 = P;
   double rho = P2.fiddle_imodel(0);
 
-  if (P.accept_MH(A,P,A,P2)) {
+  if (P.accept_MH(A,P,A,P2,rho)) {
     P = P2;
     result[1] = 1;
   }
@@ -320,7 +320,7 @@ MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
   P2.SModel().frequencies(f);
   P2.recalc_smodel();
 
-  if (P.accept_MH(A,P,A,P2)) {
+  if (P.accept_MH(A,P,A,P2,1)) {
     P = P2;
     result[1] = 1;
   }

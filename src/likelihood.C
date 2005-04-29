@@ -26,17 +26,17 @@ efloat_t probability3(const alignment& A,const Parameters& P) {
 
 /// Tree prior: branch lengths & topology
 efloat_t prior(const SequenceTree& T,double branch_mean) {
-  double p = 0;
+  efloat_t p = 1;
 
   // ----- 1/(number of topologies) -----//
   if (T.n_leaves()>3)
-    p = -log_num_topologies(T.n_leaves());
+    p *= expe( -log_num_topologies(T.n_leaves()) );
 
   // ---- PROD_i exp(- T[i] / mu )/ mu ---- //
   for(int i=0;i<T.n_branches();i++) 
-    p += exponential_log_pdf(branch_mean, T.branch(i).length());
+    p *= expe( exponential_log_pdf(T.branch(i).length(),branch_mean) );
 
-  return expe(p);
+  return p;
 }
 
 /// Hyper-prior + Tree prior + SModel prior + IModel prior
@@ -46,7 +46,7 @@ efloat_t prior(const Parameters& P) {
   const double branch_mean_mean = 0.04;
 
   // prior on mu, the mean branch length
-  p *= expe(exp_exponential_log_pdf(log(P.branch_mean),branch_mean_mean));
+  p *= expe(exponential_log_pdf(P.branch_mean, branch_mean_mean));
 
   // prior on the topology and branch lengths
   p *= prior(P.T, P.branch_mean);

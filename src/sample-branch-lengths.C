@@ -8,8 +8,8 @@
 #include "substitution.H"
 #include "likelihood.H"
 
-bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2) {
-  if (P.accept_MH(A,P,P2)) {
+bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2,double rho) {
+  if (P.accept_MH(A,P,P2,rho)) {
     P=P2;
     //    std::cerr<<"accepted\n";
     return true;
@@ -50,7 +50,7 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
   Parameters P2 = P;
   P2.setlength(b,newlength);
 
-  if (do_MH_move(A,P,P2)) {
+  if (do_MH_move(A,P,P2,1)) {
     //    std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
     result[1] = 1;
     result[3] = std::abs(length - newlength);
@@ -93,7 +93,7 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
 
     /********** Do the M-H step if OK**************/
 
-    if (do_MH_move(A,P,P2)) {
+    if (do_MH_move(A,P,P2,1)) {
       //      std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
       result[1] = 1;
       result[3] = 1;

@@ -24,12 +24,13 @@ efloat_t Parameters::weight(const alignment& A,const Parameters& P) const {
 }
 
 bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
-		 const alignment& A2,const Parameters& P2) const 
+			   const alignment& A2,const Parameters& P2,
+			   double rho) const 
 {
   efloat_t p1 = probability(A1,P1);
   efloat_t p2 = probability(A2,P2);
 
-  double ratio = p2/p1;
+  double ratio = rho*double(p2/p1);
 
   if (myrandomf() < ratio) 
     return true;
@@ -37,11 +38,12 @@ bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
     return false;
 }
 
-bool Parameters::accept_MH(const alignment& A,const Parameters& P1,const Parameters& P2) const {
+bool Parameters::accept_MH(const alignment& A,const Parameters& P1,const Parameters& P2,
+			   double rho) const {
   efloat_t p1 = likelihood(A,P1) * ::prior(P1);
   efloat_t p2 = likelihood(A,P2) * ::prior(P2);
 
-  double ratio = p2/p1;
+  double ratio = rho*(p2/p1);
 
   if (myrandomf() < ratio) 
     return true;
@@ -85,7 +87,10 @@ double Parameters::fiddle_smodel(int i) {
   }
 
   const double sigma = 0.10;
-  branch_mean *= exp(gaussian(0,sigma));
+  double ratio = exp(gaussian(0,sigma)); 
+  branch_mean *= ratio;
+
+  rho *= ratio;
 
   return rho;
 }
