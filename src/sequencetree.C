@@ -325,10 +325,12 @@ RootedSequenceTree::RootedSequenceTree(const RootedSequenceTree& T1, const Roote
 
 //FIXME T.seq(i) -> T.leafname(i)
 //FIXME T.get_sequences -> T.leafnames()
-void delete_node(SequenceTree& T,const std::string& name) {
-  std::abort(); // this isn't quite right yet..
+void delete_node(SequenceTree& T,const std::string& name) 
+{
   int index = find_index(T.get_sequences(),name);
-  T.prune_subtree(index);
+  nodeview n = T.prune_subtree(T.branch(index).reverse());
+  if (n.neighbors().size() == 2)
+    T.remove_node_from_branch(n);
 }
 
 

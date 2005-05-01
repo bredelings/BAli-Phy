@@ -119,6 +119,11 @@ tools/alignment-reorder: alignment.o alphabet.o sequence.o util.o rng.o \
 	sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o \
 	model.o tree-util.o ${LINKLIBS}
 
+tools/alignment-thin: alignment.o alphabet.o sequence.o util.o rng.o \
+	tree.o sequencetree.o setup.o imodel.o sequence-format.o randomtree.o \
+	alignment-util.o probability.o alignment-random.o model.o tree-util.o \
+	${LINKLIBS}
+
 tools/alignment-chop-internal: alignment.o alphabet.o sequence.o util.o tree.o \
 	sequence-format.o alignment-util.o ${LINKLIBS}
 

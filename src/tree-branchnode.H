@@ -302,7 +302,7 @@ public:
 
   edges_after_iterator branches_after() const {return b;}
 
-  double length() const {assert(b->length >= 0);return b->length;}
+  double length() const {return b->length;}
 
   void set_length(double d) const {b->out->length = b->length = d;}
 
