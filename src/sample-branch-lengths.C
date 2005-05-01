@@ -9,7 +9,7 @@
 #include "likelihood.H"
 
 bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2,double rho) {
-  if (P.accept_MH(A,P,P2,rho)) {
+  if (P.accept_MH(A,P,A,P2,rho)) {
     P=P2;
     //    std::cerr<<"accepted\n";
     return true;
