@@ -618,11 +618,21 @@ namespace substitution {
 
   double MultiFrequencyModel::super_fiddle(int) 
   {
+    const double sigma=0.10;
+
+    // get factor by which to modify bin frequencies
+    valarray<double> C(fraction.size());
+    for(int m=0;m<fraction.size();m++)
+      C[m] = exp(gaussian(0,sigma));
+
     for(int l=0;l<Alphabet().size();l++) {
       valarray<double> a = get_a(l);
-      a = ::dirichlet_fiddle(a,0.10);
+      a *= C;
+      a /= a.sum();
+      a = ::dirichlet_fiddle(a,sigma);
       set_a(l,a);
     }
+
     read();
     recalc();
 
