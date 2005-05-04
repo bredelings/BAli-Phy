@@ -1,3 +1,10 @@
+-4. Implement choose_MH( ) and proposal ratios...
+  a) implement routine
+  b) implement checking when using this routine
+
+-3. Think more carefully about using walk_tree_path
+    when changing the topology...
+
 -2. Test various ways of improving mixing
   a) more branch length proposals
   b) branch length proposals in more passes? (how does this affect timing?)
@@ -11,12 +18,11 @@
 -1. Find a way to allow substitution models to propose a lot of different
     changes each time we try to propose new parameters.
     a) ask the model for a number of fiddles to do, and then do
-    b) for(int i=0;i<n_fiddles;i++) {
+       for(int i=0;i<n_fiddles;i++) {
 	 model2 = smodel
          rho = model2->fiddle(i)
          accept/reject(model,model2,rho)
        }
-    c) some kind of interface for non-symmetric proposals?
 
 ------
 0. Plot #topologies in confidence interval (0,p) vs p. (e.g. sort topologies)
@@ -57,6 +63,17 @@
       underneath YangCodonModel.  
 	* This is difficult because the models have different alphabets
 	* Suppose we wanted HKY+YangM0+TNY+YangM0+Dual
+
+10: If we are only changing bin frequencies in the smodel, we shouldn't have
+    to recalculate all the conditional likelihoods.  How to implement this?
+    Some kind of fiddle_safe() routine?
+
+11. Improve mixing for multi_freq model by sampling between columns.
+    a) well, firstly, why does convergence take SOO long?
+    b) if we could easily just change bin probabilities, then that would
+       make it easier to attack this problem by increasing the number
+       of MH steps we do.
+
 
 ------
 A. sub-partitions: 
@@ -234,3 +251,8 @@ the prior, because we never want to use it  differently.
      - sample-tri.C for sample-topology-SPR.C
 
 [DONE] Don't store more that 1 DPmatrix at a time - free memory afterwards unless debugging.
+
+[DONE] Add asymmetric MH proposal capability.
+
+[DONE] Convert all densities to use log_double_t for *_pdf().
+
