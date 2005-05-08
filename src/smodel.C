@@ -435,6 +435,8 @@ namespace substitution {
   }
 
   void YangM0::recalc() {
+    write();
+
     for(int i=0;i<Alphabet().size();i++) {
       for(int j=0;j<i;j++) {
 
@@ -1003,13 +1005,22 @@ namespace substitution {
     if (super_parameters_[3] < 1)
       super_parameters_[3] = 1.0/super_parameters_[3];
 
+    read();
+    recalc();
     return 1;
   }
 
-  void YangM2::recalc() {
+  void YangM2::recalc() 
+  {
+    // push values out from parameters to superparameters and sub-models
+    write();
+
+    p_change = 1;
     p_values[0] = 0;
     p_values[1] = 1;
     p_values[2] = super_parameters()[3];
+
+    MultiParameterModel::recalc();
   }
 
   efloat_t YangM2::super_prior() const {
@@ -1025,10 +1036,10 @@ namespace substitution {
     q[0] = 0.01;
     q[1] = 0.98;
     q[2] = 0.01;
-    efloat_t P = dirichlet_pdf(p,q,10);
+    efloat_t P = dirichlet_pdf(p,q,100);
 
     double omega = super_parameters()[3];
-    P *= exponential_pdf(log(omega),0.1);
+    P *= exponential_pdf(log(omega),0.05);
     return P;
   }
 
