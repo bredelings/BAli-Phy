@@ -67,11 +67,12 @@ public:
 
   std::string parameter_name(int) const;
 
-  explicit SimpleIndelModel();
+  SimpleIndelModel();
 };
 
 
 class NewIndelModel: public IndelModel {
+  bool time_dependant;
 protected:
   void recalc();
 public:
@@ -88,7 +89,7 @@ public:
 
   std::string parameter_name(int) const;
 
-  explicit NewIndelModel();
+  explicit NewIndelModel(bool);
 };
 
 

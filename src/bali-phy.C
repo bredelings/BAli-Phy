@@ -321,7 +321,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("unfix",value<vector<string> >()->multitoken(),"un-fix parameter")
     ("randomize-alignment","randomly realign the sequences before using")
     ("smodel",value<string>(),"substitution model")
-    ("imodel",value<string>()->default_value("new"),"indel model")
+    ("imodel",value<string>()->default_value("fragment-based+T"),"indel model")
     ;
 
   options_description smodel("Substitution model options");

@@ -308,8 +308,12 @@ efloat_t NewIndelModel::prior() const {
   return Pr;
 }
 
-indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {
+indel::PairHMM NewIndelModel::get_branch_HMM(double t) const 
+{
   using namespace states;
+
+  if (not time_dependant)
+    t = 1;
 
   double rate    = exp(parameters_[0]);
   double e = exp(parameters_[1]);
@@ -375,7 +379,14 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const {
   return Q;
 }
 
-string NewIndelModel::name() const {return "new indels [HMM]";}
+string NewIndelModel::name() const {
+  string s = "fragment-based indels ";
+  
+  if (time_dependant)
+    s += "+ T ";
+  s += "[HMM]";
+  return s;
+}
 
 string NewIndelModel::parameter_name(int i) const {
   if (i==0)
@@ -398,8 +409,8 @@ efloat_t NewIndelModel::lengthp(int l) const {
   return 1;
 }
 
-NewIndelModel::NewIndelModel()
-  :IndelModel(6)
+NewIndelModel::NewIndelModel(bool b)
+  :IndelModel(6),time_dependant(b)
 {
   parameters_[0] = -5;
   parameters_[1] = -0.5;

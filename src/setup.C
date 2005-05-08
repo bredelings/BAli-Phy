@@ -192,8 +192,10 @@ OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
 
   if (args["imodel"].as<string>() == "simple")
     imodel = SimpleIndelModel();
-  else if (args["imodel"].as<string>() == "new")
-    imodel = NewIndelModel();
+  else if (args["imodel"].as<string>() == "fragment-based")
+    imodel = NewIndelModel(false);
+  else if (args["imodel"].as<string>() == "fragment-based+T")
+    imodel = NewIndelModel(true);
   else
     throw myexception()<<"Unrecognized indel model '"<<args["imodel"].as<string>()<<"'";
   
