@@ -1015,7 +1015,6 @@ namespace substitution {
     // push values out from parameters to superparameters and sub-models
     write();
 
-    p_change = 1;
     p_values[0] = 0;
     p_values[1] = 1;
     p_values[2] = super_parameters()[3];
