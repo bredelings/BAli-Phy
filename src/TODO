@@ -1,6 +1,7 @@
 -5. Speeding up GQ_exit( )
   a) can we avoid copying G into G2 - can we construct it in place?
   b) if we put the check into #ifndef NDEBUG, does this gain us anything?
+  c) algorithm currently does more or less S*S*(S+NS) multiply-and-add's.
 
 -4. Implement choose_MH( ) and proposal ratios...
   a) implement routine
