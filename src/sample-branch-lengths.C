@@ -20,44 +20,48 @@ bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2,double rho
   }
 }
 
-double branch_twiddle(double T,double mu,double sigma=0.3) {
-  return T + gaussian(0,mu*sigma);
+double branch_twiddle(double& T,double mu,double sigma=0.3) {
+  T += gaussian(0,mu*sigma);
+  return 1;
 }
 
-
-// FIXME - must modify do_MH_move to use log-scale branch priors for this to work
-double log_branch_twiddle(double T, double sigma=0.3) {
-  return T * exp( gaussian(0,sigma) );
+double branch_twiddle_positive(double& T,double mu,double sigma=0.3) {
+  double ratio = branch_twiddle(T,mu,sigma);
+  T = std::abs(T);
+  return ratio;
 }
 
-MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) {
+double log_branch_twiddle(double& T, double sigma=0.3) {
+  double ratio = exp( gaussian(0,sigma) );
+  T *= ratio;
+  return ratio;
+}
+
+MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) 
+{
   MCMC::result_t result(0.0,6);
   result[0] = 1.0;
   result[2] = 1.0;
   result[4] = 1.0;
   
-  /********* Propose increment 'epsilon' ***********/
+  //------------ Propose new length -------------//
   const double length = P.T.branch(b).length();
-
-  double newlength = branch_twiddle(length,P.branch_mean);
-  newlength = std::abs(newlength);
+  double newlength = length;
+  double ratio = branch_twiddle_positive(newlength,P.branch_mean);
   
-  /******** Calculate propsal ratio ***************/
-  
-  /********** Do the M-H step if OK**************/
+  //---------- Construct proposed Tree ----------//
   select_root(P.T, b, P.LC);
 
   Parameters P2 = P;
   P2.setlength(b,newlength);
 
-  if (do_MH_move(A,P,P2,1)) {
-    //    std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
+  //--------- Do the M-H step if OK--------------//
+  if (do_MH_move(A,P,P2,ratio)) {
     result[1] = 1;
     result[3] = std::abs(length - newlength);
     result[5] = std::abs(log((newlength+0.001)/(length+0.001)));
   }
-  else
-    ;//    std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
+
   return result;
 }
 
@@ -69,46 +73,44 @@ MCMC::result_t change_branch_length_multi(const alignment& A, Parameters& P,int 
   return result;
 }
 
-MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
+MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) 
+{
   MCMC::result_t result(0.0,10);
 
   result[0] = 1.0;
-  
 
-  /********* Propose increment 'epsilon' ***********/
+  //------------- Propose new length --------------//
   const double length = P.T.branch(b).length();
-  double newlength = branch_twiddle(length,P.branch_mean);
+  double newlength = length;
+  double ratio = branch_twiddle(newlength,P.branch_mean);
 
-  std::cerr<<" old length = "<<P.T.branch(b).length()<<"  new length = "<<newlength<<std::endl;
-
-  select_root(P.T, b, P.LC);
-
-  // If the length is positive, simply propose a length change
-  if (newlength >= 0) {
+  //----- positive  =>  propose length change -----//
+  if (newlength >= 0) 
+  {
     result[2] = 1.0;
     result[6] = 1.0;
+
+    //---------- Construct proposed Tree ----------//
+    select_root(P.T, b, P.LC);
 
     Parameters P2 = P;
     P2.setlength(b,newlength);
 
-    /********** Do the M-H step if OK**************/
-
-    if (do_MH_move(A,P,P2,1)) {
-      //      std::cerr<<" branch "<<b<<":  "<<length<<" -> "<<newlength<<endl;
+    //--------- Do the M-H step if OK--------------//
+    if (do_MH_move(A,P,P2,ratio)) {
       result[1] = 1;
       result[3] = 1;
       result[7] = std::abs(newlength - length);
     }
-    else
-      ;//      std::cerr<<" branch "<<b<<":  "<<length<<" !-> "<<newlength<<endl;
   }
-  // If the length is NOT positive, then propose a T change as well
-  else {
+
+  //----- negative  => propose topology ---------//
+  else 
+  {
     result[4] = 1.0;
     result[8] = 1.0;
 
-    
-    /****** Generate the Different Topologies *******/
+    //----- Generate the Different Topologies ------//
     vector<alignment> a(2,A);
     vector<Parameters> p(2,P);
     
@@ -123,6 +125,7 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) {
 
     p[1].setlength(b,-newlength);
     
+    //------ Sample the Different Topologies ------//
     int C = two_way_topology_sample(a,p,b);
 
     if (C == -1)
