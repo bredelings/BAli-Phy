@@ -201,8 +201,11 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
 }
 
 
-int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) 
+int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,const vector< vector<int> >& nodes_,
+		     const vector<efloat_t>& rho_, bool do_OS,bool do_OP) 
 {
+  vector<vector<int> > nodes = nodes_;
+  vector<efloat_t> rho = rho_;
   assert(p.size() == nodes.size());
 
   //----------- Generate the different states and Matrices ---------//
@@ -239,7 +242,7 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
   //---------------- Calculate choice probabilities --------------//
   vector<efloat_t> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
+    Pr[i] = rho[i] * OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
   assert(Pr[0] > 0.0);
 
   int C = choose(Pr);
@@ -273,6 +276,7 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
   a.push_back( A0 );
   p.push_back( P0 );
   nodes.push_back(nodes[0]);
+  rho.push_back( rho[0] );
   Matrices.push_back( Matrices[0] );
   OS.push_back( OS[0] );
   OP.push_back( OP[0] );
@@ -309,7 +313,7 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
       P_choice = choose_P(0,Pr);
 
     aa.push_back(a[i]);
-    PR.push_back( sample_P(a[i], p[i], P_choice, paths[i], *Matrices[i]) );
+    PR.push_back( sample_P(a[i], p[i], P_choice, rho[i], paths[i], *Matrices[i]) );
     PR.back()[0] *= A3::correction(a[i],p[i],nodes[i]);
   }
 
@@ -342,7 +346,9 @@ void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
   vector< vector<int> > nodes(1);
   nodes[0] = get_nodes_branch_random(P.T,node1,node2);
 
-  int C = sample_tri_multi(a,p,nodes,false,false);
+  vector<efloat_t> rho(1,1);
+
+  int C = sample_tri_multi(a,p,nodes,rho,false,false);
 
   if (C != -1) {
     A = a[C];
@@ -363,7 +369,7 @@ void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2) {
 ///  We assume that the probability of the other branch alignments is unaffected...
 
 bool tri_sample_alignment_branch(alignment& A,Parameters& P,
-				 int node1,int node2,int b,double length2)
+				 int node1,int node2,int b,double rho_,double length2)
 {
   //----------- Generate the Different Matrices ---------//
   vector<alignment> a(1,A);
@@ -372,7 +378,11 @@ bool tri_sample_alignment_branch(alignment& A,Parameters& P,
 
   vector< vector<int> > nodes (2, get_nodes_branch_random(P.T,node1,node2) );
 
-  int C = sample_tri_multi(a,p,nodes,false,false);
+  vector<efloat_t> rho(2);
+  rho[0] = 1;
+  rho[1] = rho_;
+
+  int C = sample_tri_multi(a,p,nodes,rho,false,false);
 
   if (C != -1) {
     A = a[C];

@@ -157,8 +157,8 @@ void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t
 
 /// Computes true, sampling, and proposal probabilities
 vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
-			  efloat_t P_choice, const vector<int>& path, 
-			  const DPengine& Matrices) 
+			  efloat_t P_choice, efloat_t rho,
+			  const vector<int>& path, const DPengine& Matrices) 
 {
   vector<efloat_t> PR(3);
 
@@ -171,7 +171,7 @@ vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
   PR[1] = P_choice * Matrices.path_P(path_g) * Matrices.generalize_P(path);
 
   // Proposal probability
-  PR[2] = 1;
+  PR[2] = rho;
 
   std::cerr<<"PrS = "<<P_choice<<" + "<<Matrices.path_P(path_g)<<" + "<<Matrices.generalize_P(path)<<endl;
 

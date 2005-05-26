@@ -27,13 +27,16 @@ efloat_t other_prior(const alignment& A, const Parameters& P, const vector<int>&
 
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out a node
-int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
+int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,const vector< vector<int> >& nodes,
+		      const vector<efloat_t>& rho, bool do_OS,bool do_OP);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
+int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,const vector< vector<int> >& nodes,
+			   const vector<efloat_t>& rho, bool do_OS,bool do_OP);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP);
+int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,const vector< vector<int> >& nodes,
+		     const vector<efloat_t>& rho, bool do_OS,bool do_OP);
 
 
 
@@ -42,7 +45,7 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
 void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t OP, const vector<int>& path, const DPengine& Matrices);
 
 
-vector<efloat_t> sample_P(const alignment& A,const Parameters& P, efloat_t P_choice,
+vector<efloat_t> sample_P(const alignment& A,const Parameters& P, efloat_t P_choice, efloat_t rho,
 			  const vector<int>& path, const DPengine& Matrices);
 
 void check_sampling_probabilities(const std::vector< std::vector<efloat_t> >& PR,const std::vector<alignment>& a);

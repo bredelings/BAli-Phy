@@ -170,10 +170,13 @@ RefPtr<DParrayConstrained> sample_node_base(alignment& A,const Parameters& P,con
   return Matrices;
 }
 
-int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<int> >& nodes,bool do_OS,bool do_OP) {
+int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,const vector< vector<int> >& nodes_,
+		      const vector<efloat_t>& rho_, bool do_OS,bool do_OP) {
 
+  vector<vector<int> > nodes = nodes_;
+  vector<efloat_t> rho = rho_; 
   assert(p.size() == nodes.size());
-  
+ 
   //----------- Generate the different states and Matrices ---------//
   const alignment A0 = a[0];
 #ifndef NDEBUG_DP
@@ -204,7 +207,7 @@ int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<
   //---------------- Calculate choice probabilities --------------//
   vector<efloat_t> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
+    Pr[i] = rho[i] * OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
 
   int C = choose(Pr);
 
@@ -228,6 +231,7 @@ int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<
   a.push_back( A0 );
   p.push_back( P0 );
   nodes.push_back(nodes[0]);
+  rho.push_back( rho[0] );
   Matrices.push_back( Matrices[0] );
   OS.push_back( OS[0] );
   OP.push_back( OP[0] );
@@ -256,7 +260,7 @@ int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<
     else
       P_choice = choose_P(0,Pr);
 
-    PR[i] = sample_P(a[i], p[i], P_choice, paths[i], *Matrices[i]);
+    PR[i] = sample_P(a[i], p[i], P_choice, rho[i], paths[i], *Matrices[i]);
     PR[i][0] *= A3::correction(a[i],p[i],nodes[i]);
   }
 
@@ -287,7 +291,10 @@ void sample_node(alignment& A,Parameters& P,int node)
   vector< vector<int> > nodes(1);
   nodes[0] = get_nodes_random(T,node);
 
-  int C = sample_node_multi(a,p,nodes,false,false);
+
+  vector<efloat_t> rho(1,1);
+
+  int C = sample_node_multi(a,p,nodes,rho,false,false);
 
   if (C != -1) {
     A = a[C];

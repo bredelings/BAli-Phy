@@ -48,55 +48,55 @@ using namespace A5;
 // The fact that we don't consider some paths should not make this non-reversible
 // Each combination of order for each topology is a reversible move, because each path proposes the others.
 
-int two_way_topology_sample_fgaps(vector<alignment>& a,vector<Parameters>& p,int b) 
+int two_way_topology_sample_fgaps(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int b) 
 {
   vector< vector<int> > nodes(2);
   nodes[0] = A5::get_nodes_random(p[0].T,b);
   nodes[1] = A5::get_nodes_random(p[1].T,b);
 
-  return sample_two_nodes_multi(a,p,nodes,true,false);
+  return sample_two_nodes_multi(a,p,nodes,rho,true,false);
 }
 
 /// This has to be Gibbs, and use the same substitution::Model in each case...
 
-int three_way_topology_sample_fgaps(vector<alignment>& a,vector<Parameters>& p,int b) 
+int three_way_topology_sample_fgaps(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int b) 
 {
   vector< vector<int> > nodes(3);
   nodes[0] = A5::get_nodes_random(p[0].T,b);
   nodes[1] = A5::get_nodes_random(p[1].T,b);
   nodes[2] = A5::get_nodes_random(p[2].T,b);
 
-  return sample_two_nodes_multi(a,p,nodes,true,false);
+  return sample_two_nodes_multi(a,p,nodes,rho,true,false);
 }
 
 ///Sample between 3 topologies, ignoring gap priors on each case
-int three_way_topology_sample_sgaps(vector<alignment>& a,vector<Parameters>& p,int b) 
+int three_way_topology_sample_sgaps(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int b) 
 {
   vector<efloat_t> Pr(3);
   for(int i=0;i< Pr.size();i++)
-    Pr[i] = p[0].probability(a[i],p[i]);
+    Pr[i] = rho[i]*p[0].probability(a[i],p[i]);
 
   return choose(Pr);
 }
 
 ///Sample between 2 topologies, ignoring gap priors on each case
-int two_way_topology_sample_sgaps(vector<alignment>& a, vector<Parameters>& p,int b) 
+int two_way_topology_sample_sgaps(vector<alignment>& a, vector<Parameters>& p,const vector<efloat_t>& rho,int b) 
 {
-  efloat_t Pr1 = p[0].probability(a[0],p[0]);
-  efloat_t Pr2 = p[0].probability(a[1],p[1]);
+  efloat_t Pr1 = rho[0]*p[0].probability(a[0],p[0]);
+  efloat_t Pr2 = rho[1]*p[0].probability(a[1],p[1]);
 
   return choose2(Pr1,Pr2);
 }
 
 ///Sample between 2 topologies, ignoring gap priors on each case
-int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,int b) 
+int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho, int b) 
 {
   assert(p[0].IModel().full_tree == p[1].IModel().full_tree);
 
   if (p[0].IModel().full_tree)
-    return two_way_topology_sample_fgaps(a,p,b);
+    return two_way_topology_sample_fgaps(a,p,rho,b);
   else
-    return two_way_topology_sample_sgaps(a,p,b);
+    return two_way_topology_sample_sgaps(a,p,rho,b);
 }
 
 MCMC::result_t two_way_topology_sample(alignment& A, Parameters& P,int b) 
@@ -117,7 +117,9 @@ MCMC::result_t two_way_topology_sample(alignment& A, Parameters& P,int b)
   p[1].T.exchange_subtrees(b1, b2);
   invalidate_subA_index_branch(a[1], p[1].T, b);
   
-  int C = two_way_topology_sample(a,p,b);
+  const vector<efloat_t> rho(2,1);
+
+  int C = two_way_topology_sample(a,p,rho,b);
 
   if (C == -1)
     return result;
@@ -131,15 +133,15 @@ MCMC::result_t two_way_topology_sample(alignment& A, Parameters& P,int b)
   return result;
 }
 
-int three_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,int b) 
+int three_way_topology_sample(vector<alignment>& a,vector<Parameters>& p, const vector<efloat_t>& rho, int b) 
 {
   assert(p[0].IModel().full_tree == p[1].IModel().full_tree);
   assert(p[1].IModel().full_tree == p[2].IModel().full_tree);
 
   if (p[0].IModel().full_tree)
-    return three_way_topology_sample_fgaps(a,p,b);
+    return three_way_topology_sample_fgaps(a,p,rho,b);
   else
-    return three_way_topology_sample_sgaps(a,p,b);
+    return three_way_topology_sample_sgaps(a,p,rho,b);
 }
 
 
@@ -169,8 +171,10 @@ MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P,int b)
   p[2].LC.invalidate_branch(p[2].T, b);
   invalidate_subA_index_branch(a[2], p[2].T, b);
   
+  const vector<efloat_t> rho(3,1);
+
   //------ Resample alignments and select topology -----//
-  int C = three_way_topology_sample(a,p,b);
+  int C = three_way_topology_sample(a,p,rho,b);
 
   if (C == -1)
     return result;
@@ -214,7 +218,9 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
   for(int i=0;i<p.size();i++)
     nodes.push_back(A3::get_nodes_branch_random(p[i].T, two_way_nodes[4], two_way_nodes[0]) );
 
-  int C = sample_tri_multi(a,p,nodes,true,true);
+  const vector<efloat_t> rho(3,1);
+
+  int C = sample_tri_multi(a,p,nodes,rho,true,true);
 
   if (C != -1) {
     A = a[C];

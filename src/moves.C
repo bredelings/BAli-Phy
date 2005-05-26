@@ -67,7 +67,7 @@ MCMC::result_t sample_tri_branch_one(alignment& A, Parameters& P,int b) {
   double length2 = length1 + gaussian(0,sigma);
   if (length2 < 0) length2 = -length2;
 
-  if (tri_sample_alignment_branch(A,P,node1,node2,b,length2)) {
+  if (tri_sample_alignment_branch(A,P,node1,node2,b,1,length2)) {
     result[1] = 1;
     result[3] = std::abs(length2 - length1);
   }

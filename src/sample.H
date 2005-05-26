@@ -21,7 +21,7 @@ void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2);
 
 /// Resample the 3-star alignment and branch length, holding the n2/n3 order constant.
 bool tri_sample_alignment_branch(alignment&,Parameters&,
-				 int node1,int node2,int b,double length2);
+				 int node1,int node2,int b,double rho,double length2);
 
 /// Resample gap/non-gap for internal nodes, where not already determined
 void sample_node(alignment& A,Parameters&,int node);
@@ -33,8 +33,7 @@ void sample_two_nodes(alignment& A,Parameters& P,int b);
 bool three_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,const Parameters& P3,int b);
 
 /// Resample between 2 NNI topologies around branch b
-int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,int b);
-bool sample_two_NNI_two_nodes_MH(alignment& A,Parameters& P1,const Parameters& P2,int b,double rho);
+int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int b);
 
 /*-------------- Top Level Sampling Routines -----------*/
 

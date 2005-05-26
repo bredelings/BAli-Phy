@@ -125,8 +125,11 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b)
 
     p[1].setlength(b,-newlength);
     
+    vector<efloat_t> rho(2,1);
+    rho[1] = ratio;
+
     //------ Sample the Different Topologies ------//
-    int C = two_way_topology_sample(a,p,b);
+    int C = two_way_topology_sample(a,p,rho,b);
 
     if (C == -1)
       return result;

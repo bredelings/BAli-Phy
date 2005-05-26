@@ -12,33 +12,33 @@
 #include "substitution-index.H"
 
 ///Sample between 2 topologies, ignoring gap priors on each case
-int sample_SPR_and_A(vector<alignment>& a,vector<Parameters>& p,int n1, int n2) 
+int sample_SPR_and_A(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
 {
   //----------- Generate the Different node lists ---------//
   vector< vector<int> > nodes(2);
   nodes[0] = A3::get_nodes_branch_random(p[0].T,n1,n2);
   nodes[1] = A3::get_nodes_branch_random(p[1].T,n1,n2);
 
-  return sample_tri_multi(a,p,nodes,true,true);
+  return sample_tri_multi(a,p,nodes,rho,true,true);
 }
 
 ///Sample between 2 topologies, ignoring gap priors on each case
-int topology_sample_SPR_sgaps(vector<alignment>& a,vector<Parameters>& p) 
+int topology_sample_SPR_sgaps(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho) 
 {
-  efloat_t Pr1 = p[0].probability(a[0],p[0]);
-  efloat_t Pr2 = p[0].probability(a[1],p[1]);
+  efloat_t Pr1 = rho[0] * p[0].probability(a[0],p[0]);
+  efloat_t Pr2 = rho[1] * p[0].probability(a[1],p[1]);
 
   return choose2(Pr1,Pr2);
 }
 
-int topology_sample_SPR(vector<alignment>& a,vector<Parameters>& p,int n1, int n2) 
+int topology_sample_SPR(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
 {
   assert(p[0].IModel().full_tree == p[1].IModel().full_tree);
 
   if (p[0].IModel().full_tree)
-    return sample_SPR_and_A(a,p,n1,n2);
+    return sample_SPR_and_A(a,p,rho,n1,n2);
   else
-    return topology_sample_SPR_sgaps(a,p);
+    return topology_sample_SPR_sgaps(a,p,rho);
 }
 
 SequenceTree do_SPR(const SequenceTree& T1, int n1, int n2, int b1) {
@@ -141,7 +141,8 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b) {
     invalidate_subA_index_branch(a[1], p[1].T, branches[i]);
   }
   
-  int C = topology_sample_SPR(a,p,n1,n2);
+  vector<efloat_t> rho(2,1);
+  int C = topology_sample_SPR(a,p,rho,n1,n2);
 
   if (C != -1) 
   {
