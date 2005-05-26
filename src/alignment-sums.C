@@ -117,7 +117,9 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const
   return dist;
 }
 
-void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t OP, const vector<int>& path, const DPengine& Matrices) {
+///Checks integration and sampling from collapsed state
+void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t OP, const vector<int>& path, const DPengine& Matrices) 
+{
 
   /*------------------- Check offsets from path_Q -> P -----------------*/
   vector<int> path_g = Matrices.generalize(path);
@@ -153,12 +155,12 @@ void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t
 
 }
 
-// FIXME - we could change this to return vector<efloat_t>
+/// Computes true, sampling, and 
 vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
-			efloat_t OS, efloat_t OP, efloat_t P_choice,
-			const vector<int>& path, const DPengine& Matrices) 
+			  efloat_t P_choice, const vector<int>& path, 
+			  const DPengine& Matrices) 
 {
-  vector<efloat_t> PR(3);
+  vector<efloat_t> PR(2);
 
   vector<int> path_g = Matrices.generalize(path);
 
@@ -170,8 +172,6 @@ vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
 
   std::cerr<<"PrS = "<<P_choice<<" + "<<Matrices.path_P(path_g)<<" + "<<Matrices.generalize_P(path)<<endl;
 
-  PR[2] = Matrices.path_Q(path_g) * Matrices.generalize_P(path) * OS * OP * pow(prior(P),1.0/P.Temp);
-
   return PR;
 }
 
@@ -182,7 +182,6 @@ void check_sampling_probabilities(const vector< vector<efloat_t> >& PR,const vec
     std::cerr<<"option = "<<i<<endl;
 
     std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[i][0]<<"    Pr2  - Pr1  = "<<log(PR[i][0] / PR.back()[0])<<endl;
-    std::cerr<<" PrQ1 = "<<PR.back()[2]<<"    PrQ2 = "<<PR[i][2]<<"    PrQ2 - PrQ1 = "<<log(PR[i][2] / PR.back()[2])<<endl;
     std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[i][1]<<"    PrS2 - PrS1 = "<<log(PR[i][1] / PR.back()[1])<<endl;
     
     double diff = log(PR[i][1] / PR.back()[1]) - log(PR[i][0] / PR.back()[0]);

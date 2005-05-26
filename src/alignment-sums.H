@@ -42,7 +42,7 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
 void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t OP, const vector<int>& path, const DPengine& Matrices);
 
 
-vector<efloat_t> sample_P(const alignment& A,const Parameters& P,efloat_t OS, efloat_t OP, efloat_t P_choice,
+vector<efloat_t> sample_P(const alignment& A,const Parameters& P, efloat_t P_choice,
 			  const vector<int>& path, const DPengine& Matrices);
 
 void check_sampling_probabilities(const std::vector< std::vector<efloat_t> >& PR,const std::vector<alignment>& a);

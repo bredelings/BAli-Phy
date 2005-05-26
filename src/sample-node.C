@@ -256,7 +256,7 @@ int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<
     else
       P_choice = choose_P(0,Pr);
 
-    PR[i] = sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], *Matrices[i]);
+    PR[i] = sample_P(a[i], p[i], P_choice, paths[i], *Matrices[i]);
     PR[i][0] *= A3::correction(a[i],p[i],nodes[i]);
   }
 

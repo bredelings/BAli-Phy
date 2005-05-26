@@ -309,7 +309,7 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
       P_choice = choose_P(0,Pr);
 
     aa.push_back(a[i]);
-    PR.push_back( sample_P(a[i], p[i], OS[i], OP[i] , P_choice, paths[i], *Matrices[i]) );
+    PR.push_back( sample_P(a[i], p[i], P_choice, paths[i], *Matrices[i]) );
     PR.back()[0] *= A3::correction(a[i],p[i],nodes[i]);
   }
 
