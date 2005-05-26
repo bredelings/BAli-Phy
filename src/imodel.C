@@ -172,7 +172,7 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
 
   Q(G1,S)  = (1-e) * (1-t);
   Q(G1,M)  = 0;
-  Q(G1,G1) = e * (1.0-t);;
+  Q(G1,G1) = e * (1-t);;
   Q(G1,G2) = 0;
   Q(G1,E)  = t;
 
