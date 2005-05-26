@@ -120,15 +120,15 @@ efloat_t HMM::generalize_P(const vector<int>& path) const {
 //      else
 //	Pr += log(1.0-exp(Q(S1,S1)));
 
-efloat_t HMM::path_Q_path(const vector<int>& g_path) const {
+efloat_t HMM::path_Q_path(const vector<int>& path) const {
 
   efloat_t Pr = 0.0;
   for(int S=0;S<nstates();S++)
     if (not silent(S))
-      Pr += start_P[S] * Q(S,g_path[0]);
+      Pr += start_P[S] * Q(S,path[0]);
 
-  for(int l=1;l<g_path.size();l++)
-    Pr *= Q(g_path[l-1],g_path[l]);
+  for(int l=1;l<path.size();l++)
+    Pr *= Q(path[l-1],path[l]);
 
   return Pr;
 }
@@ -147,7 +147,6 @@ efloat_t HMM::path_GQ_path(const vector<int>& g_path) const {
 }
 
 // IF (and only if) T > 1, then GQ(i,j) can be > 0....
-
 Matrix GQ_exit(const Matrix& Q,const vector<int>& silent_network_states,const vector<int>& non_silent_network) {
 
   const int n_S = silent_network_states.size();
