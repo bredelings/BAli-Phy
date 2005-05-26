@@ -155,12 +155,12 @@ void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t
 
 }
 
-/// Computes true, sampling, and 
+/// Computes true, sampling, and proposal probabilities
 vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
 			  efloat_t P_choice, const vector<int>& path, 
 			  const DPengine& Matrices) 
 {
-  vector<efloat_t> PR(2);
+  vector<efloat_t> PR(3);
 
   vector<int> path_g = Matrices.generalize(path);
 
@@ -170,21 +170,35 @@ vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
   // Probability of sampling 
   PR[1] = P_choice * Matrices.path_P(path_g) * Matrices.generalize_P(path);
 
+  // Proposal probability
+  PR[2] = 1;
+
   std::cerr<<"PrS = "<<P_choice<<" + "<<Matrices.path_P(path_g)<<" + "<<Matrices.generalize_P(path)<<endl;
 
   return PR;
 }
 
-
+/// Check that pi[k]*rho[k]/S[k] is a constant
 void check_sampling_probabilities(const vector< vector<efloat_t> >& PR,const vector<alignment>& a) 
 {
-  for(int i=0;i<PR.size();i++) {
-    std::cerr<<"option = "<<i<<endl;
+  const vector<efloat_t>& P1 = PR.back();
+  efloat_t ratio1 = P1[0]*P1[2]/P1[1];
 
-    std::cerr<<" Pr1  = "<<PR.back()[0]<<"    Pr2  = "<<PR[i][0]<<"    Pr2  - Pr1  = "<<log(PR[i][0] / PR.back()[0])<<endl;
-    std::cerr<<" PrS1 = "<<PR.back()[1]<<"    PrS2 = "<<PR[i][1]<<"    PrS2 - PrS1 = "<<log(PR[i][1] / PR.back()[1])<<endl;
+
+  for(int i=0;i<PR.size();i++) 
+  {
+    const vector<efloat_t>& P2 = PR[i];
     
-    double diff = log(PR[i][1] / PR.back()[1]) - log(PR[i][0] / PR.back()[0]);
+    std::cerr<<"option = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
+
+    std::cerr<<" Pr1 * Rho1  = "<<P1[0]*P1[2]<<"    Pr2 * Rho2  = "<<P2[0]*P2[2]<<
+      "    Pr2 * Rho2  - Pr1 * Rho1  = "<<P2[0]*P2[2]/(P1[0]*P1[2])<<endl;
+
+    std::cerr<<" PrS1 = "<<P1[1]<<"    PrS2 = "<<P2[1]<<"    PrS2 - PrS1 = "<<P2[1] / PR.back()[1]<<endl;
+    
+    efloat_t ratio2 = P2[0]*P2[2]/P2[1];
+    double diff = log(ratio2/ratio1);
+
     std::cerr<<"diff = "<<diff<<endl;
     if (std::abs(diff) > 1.0e-9) {
       std::cerr<<a.back()<<endl;
