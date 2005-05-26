@@ -192,7 +192,7 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
 
   //  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
 
-#ifndef NDEBUG
+#ifndef NDEBUG_DP
   check_alignment(A,T,"sample_tri_base:out");
 #else
   Matrices->clear();
@@ -207,7 +207,7 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,vector< vector<i
 
   //----------- Generate the different states and Matrices ---------//
   const alignment A0 = a[0];
-#ifndef NDEBUG
+#ifndef NDEBUG_DP
   const Parameters P0 = p[0];
 #endif
 

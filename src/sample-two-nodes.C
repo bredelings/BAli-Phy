@@ -209,7 +209,7 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,vector< ve
   
   //----------- Generate the different states and Matrices ---------//
   const alignment A0 = a[0];
-#ifndef NDEBUG
+#ifndef NDEBUG_DP
   const Parameters P0 = p[0];
 #endif
 
