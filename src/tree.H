@@ -121,6 +121,12 @@ public:
     return branches_[b];
   };
 
+  /// Get the directed branch w/ name 'b'
+  branchview directed_branch(int b) {
+    assert(0 <= b and b < 2*n_branches());
+    return branches_[b];
+  };
+
   /// Get the directed branch from 'node1' -> 'node2'
   branchview directed_branch(int n1,int n2) const {
     return find_branch_pointer(n1,n2);
