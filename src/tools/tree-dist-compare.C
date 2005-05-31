@@ -180,6 +180,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("delete", value<string>(),"comma-separate list of taxa to remove from trees")
     ("ignore", value<string>(),"comma-separate list of taxa to ignore in partitions")
     ("skip",value<int>()->default_value(0),"number of trees to skip")
+    ("max",value<int>(),"maximum number of trees to read")
     ("files",value<vector<string> >()->multitoken(),"tree files to examine")
     ;
   
