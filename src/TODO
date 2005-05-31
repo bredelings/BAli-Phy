@@ -1,11 +1,22 @@
+-8. tree-dist-compare
+  a) implement block bootstrap with random block sizes!
+  b) add "--size" argument 
+
+-7. Benchmarking of mixing... 
+  a) try with alignment fixed
+  b) look at log autocorrelation and effective sample sizes for distances
+     between 2 nodes + sum all branches + sum all paths
+  c) compare mixing with few taxa, many taxa...
+
+-6. Check speedup for blocked DP matrix calculations
+  a) How would this work for DP array calculations (1-d) ?
+
 -5. Speeding up GQ_exit( )
   a) can we avoid copying G into G2 - can we construct it in place?
   b) if we put the check into #ifndef NDEBUG, does this gain us anything?
   c) algorithm currently does more or less S*S*(S+NS) multiply-and-add's.
 
--4. Implement choose_MH( ) and proposal ratios...
-  a) implement routine
-  b) implement checking when using this routine
+-4) Implement choose_MH( )
 
 -3. Think more carefully about using walk_tree_path
     when changing the topology...
@@ -43,6 +54,10 @@
 2. Try with STLport, mudflap, valgrind, etc.
   a) STLport could actually give us a speedup!
 
+2.5. Make a better framework for reporting acceptance rates.
+  a) pass an object to each move to record stats.
+  b) each move records stats under a name that it passes.
+
 3. Indel model - fix so that prior probabilities exist!
     a) for now, we condition on leaf sequence lengths.
 
@@ -50,7 +65,7 @@
     a) include pictures to give to Dr. Lake's lab.
     b) include pictures to give to Dr. Sabatti.
 
-*5. MCMCMC
+5. MCMCMC
     a) Make the temperature affect only the likelihood...
     b) test speedups...
     c) begin to implement the forking code / temperature identifier.
@@ -59,7 +74,7 @@
 6. Make a more general substitution::Model class, so that we can e.g.
     have trees with 2 sets of branch lengths...
 
-*7. Write alignment-consensus
+7. Write alignment-consensus
   a) if (l>2/3) then the INTERSECTION OF TWO Ml events cannot be contradicted
      by an Ml event.  
      How about level of l required for n Ml events to
@@ -266,4 +281,8 @@ the prior, because we never want to use it  differently.
 [DONE] Add asymmetric MH proposal capability.
 
 [DONE] Convert all densities to use log_double_t for *_pdf().
+
+[DONE] Implement asymmetric proposals for sample_*_multi( );
+
+  b) implement checking when using this routine
 
