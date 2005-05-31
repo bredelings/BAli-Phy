@@ -314,27 +314,32 @@ tree_sample::topology_record::topology_record(const SequenceTree& ST,
 
 tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int skip,int max) 
 {
-  //--------- Load the trees (as strings) from STDIN ------//
+
   int lines=0;
   string line;
   while(getline(file,line)) {
+    //--------- Load the trees (as strings) from STDIN ------//
     lines++;
     if (lines > skip)
       trees.push_back(line);
-  // quit if we've read in 'max' trees
+
+    // quit if we've read in 'max' trees
     if (max >= 0 and trees.size() == max) break;
-  }
 
-  if (trees.size() == 0)
-    throw myexception()<<"No trees were read in!";
-  
-  cout<<"# Loaded "<<trees.size()<<" trees"<<endl;
+    //--------- Count how many of each topology -----------//
 
-  //--------- Count how many of each topology -----------//
-  foreach(mytree,trees) {
-      
-    // This should make all the branch & node numbers the same if the topology is the same
-    SequenceTree T = standardized(*mytree,remove);
+    SequenceTree T;
+    try {
+      // This should make all the branch & node numbers the same if the topology is the same
+      T = standardized(line,remove);
+    }
+    catch (std::exception& e) {
+      std::cerr<<"Exception: "<<e.what()<<endl;
+      std::cerr<<" Quitting read of tree file"<<endl;
+      trees.pop_back();
+      break;
+    }
+
     // FIXME - this should be a standard string representation
     string t = add_root(T,0).write(false);
       
@@ -355,9 +360,14 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
     // update the 1st and 2nd branch length moments for that topology
     for(int b=0;b<T.n_branches();b++) {
       topologies[i].mean[b] +=     T.branch(b).length();
-      topologies[i].var[b]  += pow(T.branch(b).length(),2);
+      topologies[i].var[b]  +=     T.branch(b).length()*T.branch(b).length();
     }
   }
+
+  if (trees.size() == 0)
+    throw myexception()<<"No trees were read in!";
+  
+  cout<<"# Loaded "<<trees.size()<<" trees"<<endl;
 
   //----------- Normalize the expectations --------------//
   for(int i=0;i<topologies.size();i++) {
