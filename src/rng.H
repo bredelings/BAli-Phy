@@ -30,7 +30,7 @@ double exponential(double mu);
 unsigned poisson(double mu);
 
 // return a geometric random variate
-unsigned geometric(double mu);
+unsigned geometric(double p);
 
 namespace rng {
 
@@ -64,7 +64,7 @@ namespace rng {
 
     double exponential(double mu) {return gsl_ran_exponential(generator,mu);}
 
-    int geometric (double mu) {return gsl_ran_geometric(generator,mu);}
+    int geometric (double p) {return gsl_ran_geometric(generator,p);}
 
     unsigned poisson(double mu) {return gsl_ran_poisson(generator,mu);}
 
