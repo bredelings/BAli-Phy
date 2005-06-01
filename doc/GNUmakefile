@@ -6,6 +6,8 @@ STYLEBASE=/usr/share/xml/docbook/stylesheet/nwalsh
 %.html: %.xml
 	xsltproc --stringparam html.stylesheet docbook.css --catalogs ${STYLEBASE}/xhtml/docbook.xsl $^ > $@
 
+%.pdf: %.xml
+	xmlto pdf $^
 
 #xmlto html %.xml
 
