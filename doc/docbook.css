@@ -1,0 +1,12 @@
+.filename {
+	font-family: courier, monospace;
+}
+
+.command, .prompt {
+	font-weight: bold;
+}
+
+.note {
+	border-width: 1px;
+	border-color: green;
+}

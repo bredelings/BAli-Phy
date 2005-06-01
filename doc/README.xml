@@ -9,7 +9,6 @@
       <surname>Redelings</surname>
     </author>
   </articleinfo>
-		
 
   <sect1>
     <title>Running the Program</title>
@@ -51,17 +50,17 @@
       <cmdsynopsis>
 	<command>bali-phy</command>
 	<arg choice='req'><replaceable>sequence-file</replaceable></arg>
-	<arg choice='plain'>
-          <group>OPTIONS</group>
-        </arg>
+	<arg>OPTIONS</arg>
       </cmdsynopsis>
 
-      <para>The alignment/sequence-file is the only REQUIRED argument,
-      and can take both FASTA (*.fasta) and PHYLIP (*.phy) files. The
-      file must contain one of these two suffixes or it won't know how
-      to read the file. In addition your FASTA file should not any
-      blank lines.</para>  
+      <para>The sequence-file can be either a FASTA (*.fasta) file or
+      a PHYLIP (*.phy) file and is the only required argument.  The
+      file must contain end in one of these two suffixes or
+      <application>bali-phy</application> won't know how to read the
+      file. In addition your FASTA files should not any blank
+      lines.</para>   
 
+      <para>The optional arguments are described below.</para>
 	
     </sect2>
 
@@ -188,60 +187,59 @@
   <sect1>
     <title>The Output</title>
 
-    <para>When run in a clean directory, <application>bali-phy</application> produces the
+    <sect2>
+      <title>Output Files</title>
+      <para>When run in a clean directory, <application>bali-phy</application> produces the
     following output files:</para> 
-
-    <variablelist>
-      <varlistentry>
-	<term>Pr</term>
-	<listitem>
-	  <para>prior, likelihood, probability</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term>pI</term>
-	<listitem>
-	  <para>indel model parameters</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term>pS</term>
-	<listitem>
-	  <para>substitution model parameters</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term>trees</term>
-	<listitem>
-	  <para>tree samples</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term>MAP</term>
-	<listitem>
-	  <para>successive estimates of the MAP point</para>
-	</listitem>
-      </varlistentry>
-
-    </variablelist>
-
-    <para>In addition, I will assume that the standard output and
+      
+      <variablelist>
+	<varlistentry>
+	  <term>Pr</term>
+	  <listitem>
+	    <para>prior, likelihood, probability</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>pI</term>
+	  <listitem>
+	    <para>indel model parameters</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>pS</term>
+	  <listitem>
+	    <para>substitution model parameters</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>trees</term>
+	  <listitem>
+	    <para>tree samples</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>MAP</term>
+	  <listitem>
+	    <para>successive estimates of the MAP point</para>
+	  </listitem>
+	</varlistentry>
+	
+      </variablelist>
+      
+      <para>In addition, I will assume that the standard output and
     standard error are sent to files named &ldquo;out&rdquo; and
     &ldquo;err&rdquo;. If not, rename them in order for the following
     procedure to work.</para>
 
-  </sect1>
-
-  <sect1>
-    <title>Analyzing the Output</title>
+    </sect2>
 
     <sect2>
-      <title>Procedure</title>
-
+      <title>Processing the Output</title>
+      
       <para>Copy (or link, using ln -s) the file bin/GNUmakefile into
    the current directory. Then run the command</para>
 
@@ -312,12 +310,16 @@
     </sect2>
 
   </sect1>
+
+
   <sect1>
     <title>Auxilliary Tools</title>
 
     <sect2>
       <title>tree-dist-compare</title>
+      <para>Usage:</para>
     </sect2>
 
   </sect1>
+
 </article>
