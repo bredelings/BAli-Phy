@@ -1,237 +1,233 @@
-*RUNNING THE PROGRAM*
+Document's Title: BAli-Phy User's Guide
 
-In order to run the program, note that in many cases it is
-necessary to specify the location of the data directory.  The data
-directory will be "./Data" it not explicitly set. (See "data-dir").
+BAli-Phy User's Guide
 
-The simplest way to run bali-phy is simply to specify some input
-sequences:  
+    Benjamin Redelings
 
-% ./bali-phy <sequence-file> >out 2>err
+    --------------------------------------------------------------
 
-The RECOMMENDED way to run the program is to copy it to ~/bin/bali-phy/<version>-NDEBUG
-and run (in a bourne-shell)
+    Table of Contents
 
-% VERSION=<version> CLASS=<class> sampler.sh <sequence-file>
+    Running the Program
+    Command Line Arguments
+         Usage
+         General options
+         MCMC options
+         Parameter options
+         Substitution model options
+         Alignment Constraints
 
-This will create a unique directory <class>-<num> for each invocation of the program,
-and run it inside this directory.
+    Examples
+    The Output
+         Output Files
+         Processing the Output
+         Results
 
+    Auxilliary Tools
+         tree-dist-compare
 
 
-*COMMAND LINE ARGUMENTS*
+  *Running the Program*
 
-The "align" argument is the only REQUIRED argument, and can take both
-FASTA (*.fasta) and PHYLIP (*.phy) files.  The file must contain one
-of these two suffixes or it won't know how to read the file.  In addition
-your FASTA file should not any blank lines.
+    In order to run the program, note that in many cases it is necessary to
+    specify the location of the data directory. The data directory will be
+    ./Data it not explicitly set. (See option "data-dir").
 
-Usage: bali-phy <sequence-file> [OPTIONS]
-All options:
+    The simplest way to run bali-phy is simply to specify some inputsequences:
 
-General options:
-  --help                     : produce help message
-  --show-only                : analyze the initial values and exit
-  --seed arg                 : random seed
-  --data-dir arg (=Data)     : data directory
-  --align-constraint arg     : file with alignment constraints
-  --with-stop                : include stop codons in amino-acid alphabets
-  --internal arg             : if set to '+', then make all internal node entries wildcards
-  --gaps arg (=full_tree)    : if set to 'star', then don't use indel information
-  --letters arg (=full_tree) : if set to 'star', then use a star tree for substitution
+    % ./bali-phy <sequence-file> >out 2>err
 
-MCMC options:
-  --iterations arg (=100000) : the number of iterations to run
-  --subsample arg (=1)       : factor by which to subsample
-  --T arg (=1)               : MCMCMC temperature
-  --enable arg               : comma-separated list of kernels to enable
-  --disable arg              : comma-separated list of kernels to disable
+    The recommended way to run the program is to copy it to
+    ~/bin/bali-phy/<version>-NDEBUG and run (in a bourne-shell)
 
-Parameter options:
-  --align arg            : file with sequences and initial alignment
-  --tree arg             : file with initial tree
-  --set arg              : set parameter=<value>
-  --fix arg              : fix parameter[=<value>]
-  --unfix arg            : un-fix parameter
-  --randomize-alignment  : randomly realign the sequences before using
-  --smodel arg           : substitution model
-  --imodel arg (=new)    : indel model
+    % VERSION=<version> CLASS=<class> sampler.sh <sequence-file>
 
-Substitution model options:
-  --frequencies arg      : comma-separated vector of frequencies to use as initial condition
-  --alphabet arg         : set to 'Codons' to prefer codon alphabets
-  --CFNF                 : make codon frequencies from nucleotide frequencies
+    The wrapper script sampler.sh will run bali-phy for you. It will also
+    create a unique directory for each invocation of the program, and put
+    output files in this directory.
 
-DETAILS:
+  *Command Line Arguments*
 
- --gaps star         
+    Usage
 
-   Revert to the standard model, w/o gaps.  This turns off MCMC
-   transition kernels which assume a gap model.
+    The syntax for the program is:
 
- --smodel <substitution model>
+    bali-phy {sequence-file} [OPTIONS]
 
-   The model is follows this pattern: 
-	<base model>+modifier+modifier
-   For example, an allowable model name is
-	Empirical+gamma+INV
-   Each term may be left out, but the terms must be separated by '+'
-   signs, and must appear in the specified order.
+    The sequence-file can be either a FASTA (*.fasta) file or a PHYLIP
+    (*.phy) file and is the only required argument. The file must contain end
+    in one of these two suffixes or bali-phy won't know how to read the file.
+    In addition your FASTA files should not any blank lines.
 
-   Some terms take an argument in this fashion
-	name[argument]
-   For example, you can specify the JTT model as "Empirical[jtt]" and you
-   can specify 6 bins for the discrete gamma by writing "gamma[6]"
+    The optional arguments are described below.
 
-   The base model is a reversible continuous time Markov chain (CTMC)
-   model.  Base models that we have implemented include HKY, EQU,
-   YangCodonModel, and empirically estimated reversible models
-   such as the WAG model.  See the 'Empirical' parameter to specify
-   the transition matrix. 
-   
- --alphabet Codons
+    General options
 
-   This puts codon alphabets on the list of alphabets to try.
+      --help                     : produce help message
+      --version                  : print version information
+      --show-only                : analyze the initial values and exit
+      --seed arg                 : random seed
+      --data-dir arg (=Data)     : data directory
+      --align-constraint arg     : file with alignment constraints
+      --with-stop                : include stop codons in amino-acid alphabets
+      --internal arg             : if set to '+', then make all internal node
+    entries wildcards
+      --gaps arg (=full_tree)    : if set to 'star', then don't use indel
+    information
+      --letters arg (=full_tree) : if set to 'star', then use a star tree for
+    substitution
 
- --frequencies <frequencies>
+    MCMC options
 
-   Frequencies are specified as a comma-separated list of values.
-   Note that frequencies that are very near 0 can cause a crash
-   in exponentiating the rate matrix.
+      --iterations arg (=100000) : the number of iterations to run
+      --subsample arg (=1)       : factor by which to subsample
+      --T arg (=1)               : MCMCMC temperature
+      --enable arg               : comma-separated list of kernels to enable
+      --disable arg              : comma-separated list of kernels to disable
 
- --data-dir <dir>
+    Parameter options
 
-   This is set to "./Data/" by default, and specifies where to look
-   for translation tables (for the codon model) and empirical
-   transition matrices.
+      --align arg                      : file with sequences and initial
+    alignment
+      --tree arg                       : file with initial tree
+      --set arg                        : set parameter=<value>
+      --fix arg                        : fix parameter[=<value>]
+      --unfix arg                      : un-fix parameter
+      --randomize-alignment            : randomly realign the sequences
+    before using
+      --smodel arg                     : substitution model
+      --imodel arg (=fragment-based+T) : indel model
 
- --letters star
+    Substitution model options
 
-   Uses a star tree for the peeling algorithm.
+      --frequencies arg      : comma-separated vector of frequencies to use
+    as initial condition
+      --alphabet arg         : set to 'Codons' to prefer codon alphabets
+      --CFNF                 : make codon frequencies from nucleotide
+    frequencies
 
- --randomize-alignment
+    Alignment Constraints
 
-   Randomizes the alignment before starting the chain.
+    To pin columns of the alignment, specify alignment constraints in a file
+    as follows:
 
- --seed <random seed>
+       1. Use the argument "align-constraint=[filename]"
+       2. The filename refers to a file in which each line represents a
+          constraint.
 
-   Specify a seed to the random number generator, so that runs can be
-   repeated. 
+    The first line of the file is a header consisting of an ordered list of
+    sequence names separated by spaces. Each line consists of a list of
+    sequence positions, with the first position corresponding to the first
+    leaf sequence, the second position corresponding to the second leaf
+    sequence, etc. Thus, if there are <n> leaf taxa, then each line
+    corresponds to a space-separated list of <n> integers.
 
- --imodel {simple,new}
+    For example,
 
-   Select the indel model.  We used "simple" model in our paper.  The
-   "new" model assumes all indels are of unit length.  We can simulate
-   a model where all indels are of unit length by forcing epsilon to be
-   very small.
+    1 2 2
 
- --internal +
+    means that position 1 of leaf sequence 1 is aligned to position 2 of leaf
+    sequences 2 and 3 Note that the first position in a sequence is position
+    0.
 
-   Set each internal sequence to * (a Felsenstein wildcard) in every
-   column. 
+    Optionally, one may use a '-' instead of an integer, which denotes a lack
+    of constraint for that sequence. This can be useful as follows:
 
- --disable <list of transition kernels>
- --enable <list of transition kernels>
+    2 2 - - 
+    - - 2 2
 
-   Disables or enables a list of transition kernels.  To find out
-   kernel names, look at STDOUT at the beginning of a run.  Moves also
-   have attributes by which they can be mentioned.  Try attributes
-   such as alignment, alignment_branch, nodes, lengths.  For example,
-   enable sampling of gap parameters, include "enable=g_parameters"
-   
- --with-stop
+    the above constraint forces alignment between position 2 of sequences 1
+    and 2, and between position 2 of sequence 3 and 4.
 
-   When considering amino acid alphabets, include a "stop" letter.
-   This also affects codon models, by not removing stop codons from
-   the alphabet.
+  *Examples*
 
-EXAMPLES:
+    Here are some example invocations of bali-phy:
 
-% bali-phy align=Data/EF-Tu/5d.fasta randomize_alignment >out 2>err
+    This example uses the EF-Tu 5-taxon data set provided with the software.
+    The alignment is randomized before the chain begins.
 
-% bali-phy align=Data/EF-Tu/5d.fasta smodel=gamma+INV >out 2>err
+    % bali-phy Data/EF-Tu/5d.fasta --randomize_alignment >out 2>err
 
-% bali-phy align=Data/5S-rRNA/5d.fasta disable=g_parameters gaps=star >out 2>err
+    This example modifies the previous example by changing the substitution
+    model to allow gamma-distributed rate variation and invariant sites. The
+    amount of rate variation and the fraction of invariant sites are estimated
 
+    % bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment >out 2>err
 
+    This example uses the 5S rRNA 5-taxon data set provided with the
+    software. The alignment is fixed and the traditional likelihood model is
+    used, making indels non-informative. In addition, the transition kernel
+    which samples indel model parameters is disabled
 
+    % bali-phy Data/5S-rRNA/5d.fasta ---disable g_parameters --gaps star >out 2>err
 
+  *The Output*
 
+    Output Files
 
+    When run in a clean directory, bali-phy produces the following output
+    files:
 
-THE OUTPUT
+    Pr
+         prior, likelihood, probability
+    pI
+         indel model parameters
+    pS
+         substitution model parameters
+    trees
+         tree samples
+    MAP
+         successive estimates of the MAP point
 
-When run in a clean directory, bali-phy produces the following output files:
- - Pr    (prior, likelihood, probability)
- - pI    (indel model parameters)
- - pS    (substitution model parameters)
- - trees (tree samples)
- - MAP   (successive estimates of the MAP point)
+    In addition, I will assume that the standard output and standard error
+    are sent to files named “out” and “err”. If not, rename them in
+    order for the following procedure to work.
 
-In addition the standard output and standard error are assumed to be names cout
-and cerr.  If not, rename them in order for the following procedure to work.
+    Processing the Output
 
-ANALYZING THE OUTPUT: Procedure
+    Copy (or link, using ln -s) the file bin/GNUmakefile into the current
+    directory. Then run the command
 
-Copy (or link, using ln -s) the file bali-phy-<VERSION>/bin/GNUmakefile into the current directory.  Then run the command 
+    % SKIP=<burnin iteerations> make
 
-% SKIP=<burnin iteerations> make
+    OR
 
-          OR
-% SKIP=<burnin iteerations> SIZE=<number of iterations> make
+    % SKIP=<burnin iteerations> SIZE=<number of iterations> make
 
-This procedure depends on having builts the tools in the 'tools' directory, and
-having the resulting tools in your path.
+    This procedure depends on having builts the tools in the 'tools'
+    directory, and having the resulting tools in your path.
 
-ANALYZING THE OUTPUT: Results
+    Results
 
-This should produce the following files:
+    The procedure mentioned above should produce the following files:
 
- - Report    (A summary of results)
- - analysis  (A summary of the data analyzed)
- - tc        (Detailed description of posterior support for trees
-              and partitions)
- - MAP.fasta (An estimate of the MAP alignment, w/ taxa sorted by similarity)
- - MAP.phy   (An estimate of the MAP alignment, w/ taxa sorted by similarity)
- - MAP.tree  (An estimate of the MAP tree, in Newick format)
- - tree.srq  (A bit vector of the time-series of the support of the MAP.tree)
- - tree.plot (A summed version of tree.srq.  Type "plot 'tree.plot'" in gnuplot)
+    Report
+         A summary of results
+    analysis
+         A summary of the data analyzed
+    tc
+         Detailed description of posterior support for trees and partitions
+    MAP.fasta
+         An estimate of the MAP alignment, w/ taxa sorted by similarity
+    MAP.phy
+         An estimate of the MAP alignment, w/ taxa sorted by similarity
+    MAP.tree
+         An estimate of the MAP tree, in Newick format
+    tree.srq
+         A bit vector of the time-series of the support of the MAP.tree
+    tree.plot
+         A summed version of tree.srq. Type "plot 'tree.plot'" in gnuplot
 
-In addition, if you type 'SKIP=<burnin> make blame.html', the following files
-will be produced:
+    In addition, if you type SKIP=<burnin> make blame.html, the following
+    files will be produced:
 
- - blame.html (An AU plot)
- - blame.prob (the probabilities for each letter in the AU plot)
+    blame.html
+         An AU plot
+    blame.prob
+         the probabilities for each letter in the AU plot
 
+  *Auxilliary Tools*
 
-To pin columns of the alignment, specify alignment constraints in a
-file as follows:
-  1. Use the argument "align-constraint=[filename]"
-  2. The filename refers to a file in which each line represents a constraint.
+    tree-dist-compare
 
-The first line of the file is a header consisting of an ordered list
-of sequence names separated by spaces.  
-
-Each line consists of a list of sequence positions, with the first
-position corresponding to the first leaf sequence, the second position
-corresponding to the second leaf sequence, etc.  Thus, if there are
-<n> leaf taxa, then each line corresponds to a space-separated list of
-<n> integers.
-
-For example,
-
-1 2 2
-
-means that position 1 of leaf sequence 1 is aligned to position 2 of
-leaf sequences 2 and 3. 
-
-Note that the first position in a sequence is position 0.
-
-Optionally, one may use a '-' instead of an integer, which denotes a
-lack of constraint for that sequence.  This can be useful as follows:
-
-1 1 - -
-- - 1 1
-
-the above constraint forces alignment between sequences 1&2 and
-between sequences 3&4.
+    Usage:
