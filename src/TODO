@@ -1,6 +1,7 @@
 -8. tree-dist-compare
   a) implement block bootstrap with random block sizes!
   b) add "--size" argument 
+  c) profile it!
 
 -7. Benchmarking of mixing... 
   a) try with alignment fixed
