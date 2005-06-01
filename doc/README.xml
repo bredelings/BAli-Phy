@@ -1,0 +1,323 @@
+<?xml version="1.0"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+     "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<article lang="en">
+  <articleinfo>
+    <title><application>BAli-Phy</application> User's Guide</title>
+    <author>
+      <firstname>Benjamin</firstname>
+      <surname>Redelings</surname>
+    </author>
+  </articleinfo>
+		
+
+  <sect1>
+    <title>Running the Program</title>
+
+    <para>In order to run the program, note that in many cases it is
+    necessary to specify the location of the data directory. The data
+    directory will be <filename>./Data</filename> it not explicitly
+    set. (See option &quot;data-dir&quot;).</para>  
+
+    <para>The simplest way to run <application>bali-phy</application> is simply to specify some
+    inputsequences:</para>  
+
+    <screen>
+<prompt>%</prompt> <userinput>./bali-phy &lt;sequence-file&gt; &gt;out 2&gt;err</userinput>
+</screen>
+
+    <para>The <emphasis>recommended</emphasis> way to run the program
+    is to copy it to <filename>&tilde;/bin/bali-phy/&lt;version&gt;-NDEBUG</filename> and
+    run (in a bourne-shell)</para>
+
+<screen>
+<prompt>%</prompt> <userinput>VERSION=&lt;version&gt; CLASS=&lt;class&gt; sampler.sh &lt;sequence-file&gt;</userinput>
+</screen>
+
+    <para>The wrapper script <application>sampler.sh</application>
+    will run <application>bali-phy</application> for you.  It will also create a
+    unique directory for each invocation of the program, and put
+    output files in this directory.</para> 
+  </sect1>
+  
+  <sect1>
+    <title>Command Line Arguments</title>
+
+    <sect2>
+      <title>Usage</title>
+
+      <para>The syntax for the program is:</para>
+
+      <cmdsynopsis>
+	<command>bali-phy</command>
+	<arg choice='req'><replaceable>sequence-file</replaceable></arg>
+	<arg choice='plain'>
+          <group>OPTIONS</group>
+        </arg>
+      </cmdsynopsis>
+
+      <para>The alignment/sequence-file is the only REQUIRED argument,
+      and can take both FASTA (*.fasta) and PHYLIP (*.phy) files. The
+      file must contain one of these two suffixes or it won't know how
+      to read the file. In addition your FASTA file should not any
+      blank lines.</para>  
+
+	
+    </sect2>
+
+    <sect2>
+      <title>General options</title>
+    <literallayout>  --help                     : produce help message
+  --version                  : print version information
+  --show-only                : analyze the initial values and exit
+  --seed arg                 : random seed
+  --data-dir arg (=Data)     : data directory
+  --align-constraint arg     : file with alignment constraints
+  --with-stop                : include stop codons in amino-acid alphabets
+  --internal arg             : if set to '+', then make all internal node entries wildcards
+  --gaps arg (=full_tree)    : if set to 'star', then don't use indel information
+  --letters arg (=full_tree) : if set to 'star', then use a star tree for substitution
+</literallayout>
+    </sect2>
+
+    <sect2>
+      <title>MCMC options</title>
+    <literallayout>  --iterations arg (=100000) : the number of iterations to run
+  --subsample arg (=1)       : factor by which to subsample
+  --T arg (=1)               : MCMCMC temperature
+  --enable arg               : comma-separated list of kernels to enable
+  --disable arg              : comma-separated list of kernels to disable
+</literallayout>
+    </sect2>
+
+
+    <sect2>
+      <title>Parameter options</title>
+    <literallayout>  --align arg                      : file with sequences and initial alignment
+  --tree arg                       : file with initial tree
+  --set arg                        : set parameter=&lt;value&gt;
+  --fix arg                        : fix parameter[=&lt;value&gt;]
+  --unfix arg                      : un-fix parameter
+  --randomize-alignment            : randomly realign the sequences before using
+  --smodel arg                     : substitution model
+  --imodel arg (=fragment-based+T) : indel model
+</literallayout>
+    </sect2>
+
+    <sect2>
+      <title>Substitution model options</title>
+    <literallayout>  --frequencies arg      : comma-separated vector of frequencies to use as initial condition
+  --alphabet arg         : set to 'Codons' to prefer codon alphabets
+  --CFNF                 : make codon frequencies from nucleotide frequencies
+</literallayout>
+    </sect2>
+    <sect2>
+      <title>Alignment Constraints</title>
+      <para>To pin columns of the alignment, specify alignment
+      constraints in a file as follows: </para>
+
+      <orderedlist inheritnum="ignore" continuation="restarts">
+	<listitem><para>Use the argument
+	&quot;align-constraint=&lsqb;filename&rsqb;&quot;</para></listitem> 
+
+	<listitem><para>The filename refers to a file in which each
+	line represents a constraint.</para></listitem> 
+
+      </orderedlist>
+
+      <para>The first line of the file is a header consisting of an
+   ordered list of sequence names separated by spaces. Each line
+   consists of a list of sequence positions, with the first position
+   corresponding to the first leaf sequence, the second position
+   corresponding to the second leaf sequence, etc. Thus, if there are
+   &lt;n&gt; leaf taxa, then each line corresponds to a
+   space-separated list of &lt;n&gt; integers.</para>
+
+      <para>For example,</para>
+
+      <programlisting format="linespecific">1 2 2</programlisting>
+
+      <para>means that position 1 of leaf sequence 1 is aligned to
+      position 2 of leaf sequences 2 and 3 Note that the first
+      position in a sequence is position 0.</para> 
+
+      <para>Optionally, one may use a '-' instead of an integer, which
+      denotes a lack of constraint for that sequence. This can be
+      useful as follows:</para> 
+
+<programlisting format="linespecific">2 2 - - 
+- - 2 2
+</programlisting>
+
+      <para>the above constraint forces alignment between position 2
+   of sequences 1 and 2, and between position 2 of sequence 3 and
+   4.</para>
+    </sect2>
+  </sect1>
+  <sect1>
+    <title>Examples</title>
+    <para>Here are some example invocations of <application>bali-phy</application>:</para>
+
+    <para>This example uses the EF-Tu 5-taxon data set provided with
+    the software.  The alignment is randomized before the chain begins.</para>
+<screen>
+<prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --randomize_alignment &gt;out 2&gt;err</userinput>
+</screen>
+
+    <para>This example modifies the previous example by changing the
+    substitution model to allow gamma-distributed rate variation and
+    invariant sites.  The amount of rate variation and the fraction of
+    invariant sites are estimated</para>
+
+<screen>
+<prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment &gt;out 2&gt;err</userinput>
+</screen>
+
+    <para>This example uses the 5S rRNA 5-taxon data set provided with
+    the software.  The alignment is fixed and the traditional
+    likelihood model is used, making indels non-informative.  In
+    addition, the transition kernel which samples indel model
+    parameters is disabled</para> 
+
+<screen>
+<prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta ---disable g_parameters --gaps star &gt;out 2&gt;err</userinput>
+</screen>
+
+  </sect1>
+
+  <sect1>
+    <title>The Output</title>
+
+    <para>When run in a clean directory, <application>bali-phy</application> produces the
+    following output files:</para> 
+
+    <variablelist>
+      <varlistentry>
+	<term>Pr</term>
+	<listitem>
+	  <para>prior, likelihood, probability</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>pI</term>
+	<listitem>
+	  <para>indel model parameters</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>pS</term>
+	<listitem>
+	  <para>substitution model parameters</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>trees</term>
+	<listitem>
+	  <para>tree samples</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>MAP</term>
+	<listitem>
+	  <para>successive estimates of the MAP point</para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>In addition, I will assume that the standard output and
+    standard error are sent to files named &ldquo;out&rdquo; and
+    &ldquo;err&rdquo;. If not, rename them in order for the following
+    procedure to work.</para>
+
+  </sect1>
+
+  <sect1>
+    <title>Analyzing the Output</title>
+
+    <sect2>
+      <title>Procedure</title>
+
+      <para>Copy (or link, using ln -s) the file bin/GNUmakefile into
+   the current directory. Then run the command</para>
+
+<screen>
+<prompt>%</prompt> <userinput>SKIP=&lt;burnin iteerations&gt; make</userinput>
+</screen>
+
+      <para>OR</para>
+
+<screen>
+<prompt>%</prompt> <userinput>SKIP=&lt;burnin iteerations&gt; SIZE=&lt;number of iterations&gt; make</userinput>
+</screen>
+
+      <para>This procedure depends on having builts the tools in the
+   'tools' directory, and having the resulting tools in your
+   path.</para>
+
+    </sect2>
+
+    <sect2>
+
+      <title>Results</title>
+
+      <para>The procedure mentioned above should produce the following
+      files:</para> 
+
+      <variablelist>
+
+	<varlistentry><term>Report</term><listitem><para>A summary of results
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>analysis</term><listitem><para>A summary of the data analyzed
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>tc</term><listitem><para>Detailed description of posterior support for trees and partitions
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>MAP.fasta</term><listitem><para>An estimate of the MAP alignment, w/ taxa sorted by similarity
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>MAP.phy</term><listitem><para>An estimate of the MAP alignment, w/ taxa sorted by similarity
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>MAP.tree</term><listitem><para>An estimate of the MAP tree, in Newick format
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>tree.srq</term><listitem><para>A bit vector of the time-series of the support of the MAP.tree
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>tree.plot</term><listitem><para>A summed version of tree.srq. Type &quot;plot 'tree.plot'&quot; in gnuplot
+    </para></listitem></varlistentry>
+
+      </variablelist>
+
+      <para>In addition, if you type <userinput>SKIP=&lt;burnin&gt; make
+   blame.html</userinput>, the following files will be produced:</para>
+
+      <variablelist>
+
+	<varlistentry><term>blame.html</term><listitem><para>An AU plot
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>blame.prob</term><listitem><para>the probabilities for each letter in the AU plot
+    </para></listitem></varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+  </sect1>
+  <sect1>
+    <title>Auxilliary Tools</title>
+
+    <sect2>
+      <title>tree-dist-compare</title>
+    </sect2>
+
+  </sect1>
+</article>
