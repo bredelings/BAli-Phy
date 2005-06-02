@@ -11,6 +11,8 @@
 #include "alignment-constraint.H"
 #include "substitution-index.H"
 
+using MCMC::MoveStats;
+
 ///Sample between 2 topologies, ignoring gap priors on each case
 int sample_SPR_and_A(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
 {
@@ -105,10 +107,8 @@ void remove_duplicates(vector<int>& v) {
   }
 }
 
-MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b) {
-  MCMC::result_t result(0.0,2);
-  result[0] = 1.0;
-
+void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b) 
+{
   SequenceTree& T1 = P.T;
 
   //----- Get nodes for directed branch ------//
@@ -139,7 +139,6 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b) {
       i;i++)
     branches.push_back((*i).undirected_name());
 
-
   remove_duplicates(branches);
     
   // recompute/invalidate caches associated with changed branch lengths
@@ -166,8 +165,22 @@ MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b) {
     report_constraints(s1,s2);
   }
 
-  if (C>0)
-    result[1] = 1;
+  //------ Check if topology changed ------//
+  vector<const_branchview> connected1;
+  append(p[0].T.directed_branch(n2,n1).branches_after(),connected1);
 
-  return result;
+  vector<const_branchview> connected2;
+  append(p[1].T.directed_branch(n2,n1).branches_after(),connected2);
+ 
+  bool same_topology = (
+			(connected1[0] == connected2[0] and connected1[1] == connected2[1]) or
+			(connected1[0] == connected2[1] or connected1[1] == connected2[0])
+			);
+
+  MCMC::Result result(2);
+
+  if (C>0) result.totals[0] = 1;
+  if (C>0 and not same_topology) result.totals[1] = 1;
+
+  Stats.inc("SPR", result);
 }

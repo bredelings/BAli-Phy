@@ -1,3 +1,5 @@
+-9. Make a parameter for the size of branch length updates!
+
 -8. tree-dist-compare
   a) implement block bootstrap with random block sizes!
   b) add "--size" argument 

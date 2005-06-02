@@ -19,6 +19,9 @@
 // for prior_HMM_nogiven
 #include "likelihood.H"
 
+
+using MCMC::MoveStats;
+
 // We are sampling from a 5-way alignment (along 5 branches)
 
 // Its a 4-way dynamic programming, though - so the only thing
@@ -99,11 +102,8 @@ int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vec
     return two_way_topology_sample_sgaps(a,p,rho,b);
 }
 
-MCMC::result_t two_way_topology_sample(alignment& A, Parameters& P,int b) 
+void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) 
 {
-  MCMC::result_t result(0.0,2);
-  result[0] = 1.0;
-
   vector<int> nodes = A5::get_nodes_random(P.T,b);
 
   select_root(P.T, b, P.LC);
@@ -121,16 +121,12 @@ MCMC::result_t two_way_topology_sample(alignment& A, Parameters& P,int b)
 
   int C = two_way_topology_sample(a,p,rho,b);
 
-  if (C == -1)
-    return result;
+  if (C != -1) {
+    A = a[C];
+    P = p[C];
+  }
 
-  A = a[C];
-  P = p[C];
-
-  if (C != 0)
-    result[1] = 1;
-
-  return result;
+  Stats.inc("2-way NNI", C>0);
 }
 
 int three_way_topology_sample(vector<alignment>& a,vector<Parameters>& p, const vector<efloat_t>& rho, int b) 
@@ -146,11 +142,8 @@ int three_way_topology_sample(vector<alignment>& a,vector<Parameters>& p, const 
 
 
 //FIXME - go through code and create more exceptions, from asserts... 
-MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P,int b) 
+void three_way_topology_sample(alignment& A,Parameters& P, MoveStats& Stats, int b) 
 {
-  MCMC::result_t result(0.0,2);
-  result[0] = 1.0;
-
   vector<int> nodes = A5::get_nodes(P.T,b);
 
   //------ Generate Topologies and alter caches ------///
@@ -176,24 +169,17 @@ MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P,int b)
   //------ Resample alignments and select topology -----//
   int C = three_way_topology_sample(a,p,rho,b);
 
-  if (C == -1)
-    return result;
+  if (C != -1) {
+    A = a[C];
+    P = p[C];
+  }    
 
-  A = a[C];
-  P = p[C];
-
-  if (C != 0)
-    result[1] = 1;
-
-  return result;
+  Stats.inc("3-way NNI",C>0);
 }
 
-MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& P,int b) {
+void three_way_topology_and_alignment_sample(alignment& A,Parameters& P, MoveStats& Stats, int b) 
+{
   assert(b >= P.T.n_leafbranches());
-
-  MCMC::result_t result(0.0,2);
-  result[0] = 1.0;
-
 
   vector<int> two_way_nodes = A5::get_nodes_random(P.T,b);
 
@@ -227,8 +213,5 @@ MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& 
     P = p[C];
   }
 
-  if (C > 0)
-    result[1] = 1;
-
-  return result;
+  Stats.inc("3-way NNI + A",C>0);
 }

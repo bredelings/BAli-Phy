@@ -9,9 +9,8 @@
 
 
 // These have const A, cant be a "move"
-MCMC::result_t change_branch_length(const alignment& A, Parameters& Theta,int b);
-MCMC::result_t change_branch_length_multi(const alignment& A, Parameters& P,int b);
-
+void change_branch_length(const alignment&, Parameters&, MCMC::MoveStats&, int);
+void change_branch_length_multi(const alignment&, Parameters&, MCMC::MoveStats&, int);
 
 /// Resample the alignment parent->child
 void sample_alignment(alignment& A,Parameters&,int b);
@@ -37,31 +36,28 @@ int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vec
 
 /*-------------- Top Level Sampling Routines -----------*/
 
-//Resample the alignment parent->child
-MCMC::result_t sample_alignments_one(alignment& old,Parameters&,int b);
-MCMC::result_t sample_tri_one(alignment&, Parameters&,int);
-MCMC::result_t sample_tri_branch_one(alignment&,Parameters&,int);
-MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P);
+void walk_tree_sample_alignments(alignment&, Parameters&, MCMC::MoveStats&);
+void sample_alignments_one(alignment&, Parameters&, MCMC::MoveStats&, int);
+void sample_tri_one(alignment&, Parameters&, MCMC::MoveStats&, int);
+void sample_tri_branch_one(alignment&, Parameters&, MCMC::MoveStats&, int);
 
-MCMC::result_t sample_node_move(alignment& A, Parameters& Theta,int);
-MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& Theta,int);
+void sample_node_move(alignment&, Parameters&, MCMC::MoveStats&, int);
+void sample_two_nodes_move(alignment&, Parameters&, MCMC::MoveStats&, int);
 
-MCMC::result_t three_way_topology_sample(alignment& A,Parameters& P,int b);
-MCMC::result_t two_way_topology_sample(alignment& A,Parameters& P,int b);
-MCMC::result_t two_way_topology_sample_MH(alignment& A,Parameters& P,int b);
-MCMC::result_t three_way_topology_and_alignment_sample(alignment& A,Parameters& P,int b);
+void three_way_topology_sample(alignment&, Parameters&, MCMC::MoveStats&, int);
+void two_way_topology_sample(alignment&, Parameters&, MCMC::MoveStats&, int);
+void two_way_topology_sample_MH(alignment&, Parameters&, MCMC::MoveStats&, int);
+void three_way_topology_and_alignment_sample(alignment&, Parameters&, MCMC::MoveStats&, int);
 
-MCMC::result_t sample_SPR(alignment& A,Parameters& P,int b);
+void sample_SPR(alignment&, Parameters&, MCMC::MoveStats&, int);
+void change_branch_length_move(alignment&, Parameters&, MCMC::MoveStats&, int);
+void change_branch_length_multi_move(alignment&, Parameters&, MCMC::MoveStats&, int);
+void change_branch_length_and_T(alignment&, Parameters&, MCMC::MoveStats&, int);
 
-MCMC::result_t change_branch_length_move(alignment& A, Parameters& Theta,int b);
-MCMC::result_t change_branch_length_multi_move(alignment& A, Parameters& Theta,int b);
-MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& Theta,int b);
 
-MCMC::result_t change_parameters(alignment& A,Parameters& Theta);
-MCMC::result_t change_gap_parameters(alignment& A,Parameters& Theta);
-
-MCMC::result_t sample_frequencies(alignment& A,Parameters& P);
-
-MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P);
+void change_parameters(alignment&, Parameters&, MCMC::MoveStats&);
+void change_gap_parameters(alignment&, Parameters&, MCMC::MoveStats&);
+void sample_frequencies(alignment&, Parameters&, MCMC::MoveStats&);
+void sample_NNI_and_branch_lengths(alignment&, Parameters&, MCMC::MoveStats&);
 
 #endif

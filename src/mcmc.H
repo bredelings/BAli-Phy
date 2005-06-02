@@ -1,36 +1,54 @@
 #ifndef MCMC_H
 #define MCMC_H
 
+#include <iostream>
+#include <vector>
+#include <valarray>
+#include <string>
+#include <map>
 #include "mytypes.H"
 #include "alignment.H"
 #include "parameters.H"
-#include <vector>
-#include <valarray>
 #include "rng.H"
-
+#include "util.H"
 // how to have different models, with different moves
 // and possibly moves between models?
 
 namespace MCMC {
 
-  typedef valarray<double> result_t;
+  //---------------------- Move Stats ---------------------//
+  struct Result {
+    std::valarray<int> counts;
+    std::valarray<double> totals;
 
-  typedef result_t (*atomic_move)(alignment&,Parameters&);
-  typedef result_t (*atomic_move_arg)(alignment&,Parameters&,int);
+    int size() const {return counts.size();}
 
-  /// The basic 'Move' class
-  class Move {
+    void inc(const Result&);
 
+    Result() {}
+    Result(bool);
+    Result(int,int=1);
+  };
+
+  class MoveStats: public std::map<std::string,Result,lstr>
+  {
+  public:
+    void inc(const string&, const Result&);
+  };
+
+  std::ostream& operator<<(const std::ostream& o, const MoveStats& Stats);
+
+  //---------------------- Simple Move  ---------------------//
+  typedef void (*atomic_move)(alignment&,Parameters&,MoveStats&);
+  typedef void (*atomic_move_arg)(alignment&,Parameters&,MoveStats&,int);
+
+  //---------------- Move's w/ sub-moves --------------------//
+  class Move: public Cloneable 
+  {
     bool enabled_;
 
-    // How do we link moves into probability model?
-    // double(&probability)(const alignment&,const Parameters&);
-    // Could we make a generic MH move here? 
-    
   public:
     vector<string> attributes;
-
-    result_t total_results;
 
     double iterations;
 
@@ -56,16 +74,13 @@ namespace MCMC {
     virtual int reset(double l) =0;
 
     /// Do a complete iteration (a top-level routine)
-    virtual void iterate(alignment&,Parameters&) =0;
+    virtual void iterate(alignment&,Parameters&,MoveStats&) =0;
 
     /// Do the i-th iteration for this round (not a top-level routine)
-    virtual result_t iterate(alignment&,Parameters&,int i) =0;
+    virtual void iterate(alignment&,Parameters&,MoveStats&,int i) =0;
 
     /// Show enabled-ness for this move and submoves
     virtual void show_enabled(int depth=0) const;
-
-    /// Show acceptance rates for this move and submoves
-    virtual void print_move_stats(int depth=0) const;
 
     /// construct a new move called 's'
     Move(const string& s);
@@ -116,11 +131,10 @@ namespace MCMC {
     void disable(const string&);
 
     int reset(double);
-    void iterate(alignment&,Parameters&);
-    result_t iterate(alignment&,Parameters&,int);
+    void iterate(alignment&,Parameters&,MoveStats&);
+    void iterate(alignment&,Parameters&,MoveStats&,int);
 
     void show_enabled(int depth=0) const;
-    void print_move_stats(int depth=0) const;
 
     MoveGroup(const string& s):Move(s) {}
 
@@ -156,9 +170,9 @@ namespace MCMC {
 
     int reset(double lambda);
 
-    void iterate(alignment& A,Parameters& P) { iterate(A,P,0); }
+    void iterate(alignment& A,Parameters& P,MoveStats& Stats) { iterate(A,P,Stats,0); }
 
-    result_t iterate(alignment& A,Parameters& P,int);
+    void iterate(alignment& A,Parameters& P,MoveStats&,int);
 
     SingleMove(atomic_move m1,const string& v)
       :Move(v),m(m1) {}
@@ -176,11 +190,11 @@ namespace MCMC {
     vector<int> args;
 
     int reset(double);
-    void iterate(alignment&,Parameters&);
-    result_t iterate(alignment&,Parameters&,int);
+    void iterate(alignment&,Parameters&,MoveStats&);
+    void iterate(alignment&,Parameters&,MoveStats&,int);
 
     /// Operate on the 'a'-th arg
-    virtual result_t operator()(alignment&,Parameters&,int a)=0;
+    virtual void operator()(alignment&,Parameters&,MoveStats&,int a)=0;
 
     MoveArg(const string& s):Move(s) { }
 
@@ -213,10 +227,9 @@ namespace MCMC {
     void enable(const string&);
     void disable(const string&);
 
-    result_t operator()(alignment&,Parameters&,int);
+    void operator()(alignment&,Parameters&,MoveStats&,int);
     
     void show_enabled(int depth=0) const;
-    void print_move_stats(int depth=0) const;
 
     MoveEach(const string& s):MoveArg(s) {}
 
@@ -229,7 +242,7 @@ namespace MCMC {
   public:
     MoveArgSingle* clone() const {return new MoveArgSingle(*this);}
 
-    result_t operator()(alignment&,Parameters&,int);
+    void operator()(alignment&,Parameters&,MoveStats&,int);
 
     MoveArgSingle(const string& s,atomic_move_arg m1,const vector<int>& a)
       :MoveArg(s),m(m1) 
@@ -241,7 +254,7 @@ namespace MCMC {
 
 
   /// A Sampler: based on a collection of moves to run every iteration
-  class Sampler: public MoveAll {
+  class Sampler: public MoveAll, public MoveStats {
 
   public:
     /// Run the sampler for 'max' iterations

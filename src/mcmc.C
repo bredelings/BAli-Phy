@@ -20,32 +20,87 @@ namespace MCMC {
   using std::cerr;
   using std::cout;
   using std::clog;
+  using std::string;
 
-Move::Move(const string& v)
-  :enabled_(true),attributes(split(v,':')),iterations(0)
-{ }
+  valarray<double> result(int l,int n) {
+    valarray<double> v(0.0,2*l);
+    for(int i=0;i<l;i++)
+      v[2*i] = n;
+    return v;
+  }
 
-void Move::enable(const string& s) {
-  if (s == "all")
-    enable();
-  else 
-    for(int j=0;j<attributes.size();j++)
-      if (attributes[j] == s) {
-	enable();
-	break;
+
+  void Result::inc(const Result& R) {
+    if (not counts.size()) {
+      counts.resize(R.size(),0);
+      totals.resize(R.size(),0);
+    }
+
+    counts += R.counts;
+    totals += R.totals;
+  }
+
+  Result::Result(int l,int n)
+    :counts(n,l),totals(0.0,l) 
+  { }
+
+  Result::Result(bool b)
+    :counts(1,1),totals(0.0,1) 
+  { 
+    if (b) 
+      totals[0] = 1;
+  }
+
+
+  void MoveStats::inc(const string& name,const Result& R) {
+    (*this)[name].inc(R);
+  }
+
+  std::ostream& operator<<(std::ostream& o, const MoveStats& Stats) 
+  {
+    foreach(entry,Stats) 
+    {
+      const Result& R = entry->second;
+
+      // print move name
+      o<<entry->first<<":  ";
+
+      // print move stats
+      for(int i=0;i<R.size();i++) {
+	o<<" E X"<<i<<" = "<<R.totals[i]/R.counts[i];
+	o<<" [n"<<i<<"="<<R.counts[i]<<"]";
       }
-}
+      o<<endl;
+    }
 
-void Move::disable(const string& s) {
-  if (s == "all")
-    disable();
-  else 
-    for(int j=0;j<attributes.size();j++)
-      if (attributes[j] == s) {
-	disable();
-	break;
-      }
-}
+    return o;
+  }
+
+  Move::Move(const string& v)
+    :enabled_(true),attributes(split(v,':')),iterations(0)
+  { }
+
+  void Move::enable(const string& s) {
+    if (s == "all")
+      enable();
+    else 
+      for(int j=0;j<attributes.size();j++)
+	if (attributes[j] == s) {
+	  enable();
+	  break;
+	}
+  }
+  
+  void Move::disable(const string& s) {
+    if (s == "all")
+      disable();
+    else 
+      for(int j=0;j<attributes.size();j++)
+	if (attributes[j] == s) {
+	  disable();
+	  break;
+	}
+  }
 
 void Move::show_enabled(int depth) const {
   for(int i=0;i<depth;i++)
@@ -57,22 +112,6 @@ void Move::show_enabled(int depth) const {
     cout<<"DISABLED.\n";
 }
 
-
-void Move::print_move_stats(int depth) const {
-  for(int i=0;i<depth;i++)
-    clog<<"  ";
-  clog<<"move "<<attributes[0]<<": ";
-  clog<<"     cycles = "<<iterations;
-  clog<<"     ";
-
-  assert(total_results.size() %2 == 0);
-
-  for(int i=0;i<total_results.size()/2;i++) {
-    clog<<" E X"<<i<<" = "<<total_results[2*i+1]/total_results[2*i]
-	<<" [n"<<i<<"="<<total_results[2*i]<<"]";
-  }
-  clog<<endl;
-}
 
 void MoveGroupBase::add(double l,const Move& m,bool enabled) {
   moves.push_back(m);
@@ -107,22 +146,14 @@ void MoveGroup::disable(const string& s) {
     moves[i]->disable(s);
 }
 
-void MoveGroup::print_move_stats(int depth) const {
-  Move::print_move_stats(depth);
-
-  // Operate on children
-  for(int i=0;i<moves.size();i++)
-    moves[i]->print_move_stats(depth+1);
-}
-
-void MoveGroup::iterate(alignment& A,Parameters& P) {
+void MoveGroup::iterate(alignment& A,Parameters& P,MoveStats& Stats) {
   reset(1.0);
   for(int i=0;i<order.size();i++)
-    iterate(A,P,i);
+    iterate(A,P,Stats,i);
 }
 
 
-result_t MoveGroup::iterate(alignment& A,Parameters& P,int i) {
+void MoveGroup::iterate(alignment& A,Parameters& P,MoveStats& Stats,int i) {
   assert(i < order.size());
 
 #ifndef NDEBUG
@@ -130,8 +161,7 @@ result_t MoveGroup::iterate(alignment& A,Parameters& P,int i) {
   clog<<"   submove = "<<moves[order[i]]->attributes[0]<<endl;
 #endif
 
-  result_t r = moves[order[i]]->iterate(A,P,suborder[i]);
-  return r;
+  moves[order[i]]->iterate(A,P,Stats,suborder[i]);
 }
 
 int MoveGroup::reset(double l) {
@@ -214,22 +244,14 @@ void MoveOne::getorder(double l) {
     return l + poisson(lambda);
   }
 
-result_t SingleMove::iterate(alignment& A,Parameters& P,int) 
+void SingleMove::iterate(alignment& A,Parameters& P,MoveStats& Stats,int) 
 {
 #ifndef NDEBUG
   clog<<" [single]move = "<<attributes[0]<<endl;
 #endif
 
   iterations++;
-  result_t r = (*m)(A,P);
-
-  // get the right size for results
-  if (not total_results.size())
-    total_results.resize(r.size(),0.0);
-  assert(r.size() == total_results.size());
-
-  total_results += r;
-  return r;
+  (*m)(A,P,Stats);
 }
 
 int MoveArg::reset(double l) {
@@ -257,13 +279,13 @@ int MoveArg::reset(double l) {
   return order.size();
 }
 
-void MoveArg::iterate(alignment& A,Parameters& P) {
+void MoveArg::iterate(alignment& A,Parameters& P,MoveStats& Stats) {
   for(int i=0;i<order.size();i++)
-    iterate(A,P,i);
+    iterate(A,P,Stats,i);
 }
 
-result_t MoveArg::iterate(alignment& A,Parameters& P,int i) {
-  return (*this)(A,P,order[i]);
+void MoveArg::iterate(alignment& A,Parameters& P,MoveStats& Stats,int i) {
+  (*this)(A,P,Stats,order[i]);
 }
 
 
@@ -346,14 +368,14 @@ int MoveEach::choose(int arg) const {
   return i;
 }
 
-result_t MoveEach::operator()(alignment& A,Parameters& P,int arg) {
+void MoveEach::operator()(alignment& A,Parameters& P,MoveStats& Stats,int arg) {
   iterations += 1.0/args.size();
   int m = choose(arg);
   MoveArg* temp = dynamic_cast<MoveArg*>(&*moves[m]);
   if (not temp)
     std::abort();
   else
-    return (*temp)(A,P,subarg[m][arg]);
+    (*temp)(A,P,Stats,subarg[m][arg]);
 }
 
 
@@ -364,31 +386,14 @@ void MoveEach::show_enabled(int depth) const {
     moves[i]->show_enabled(depth+1);
 }
 
-void MoveEach::print_move_stats(int depth) const {
-  Move::print_move_stats(depth);
-
-  // Operate on children
-  for(int i=0;i<moves.size();i++)
-    moves[i]->print_move_stats(depth+1);
-}
-
-result_t MoveArgSingle::operator()(alignment& A,Parameters& P,int arg) 
+void MoveArgSingle::operator()(alignment& A,Parameters& P,MoveStats& Stats,int arg) 
 {
 #ifndef NDEBUG
   clog<<" [single]move = "<<attributes[0]<<endl;
 #endif
 
   iterations++;
-  result_t r = (*m)(A,P,args[arg]);
-
-  // get the right size for results
-  if (not total_results.size())
-    total_results.resize(r.size(),0.0);
-  assert(r.size() == total_results.size());
-
-  total_results += r;
-
-  return r;
+  (*m)(A,P,Stats,args[arg]);
 }
     
 
@@ -447,7 +452,10 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 	     <<"    logp = "<<Pr
 	     <<"    weight = "<<pow(Pr,1.0 - 1.0/P.Temp)<<std::endl;
 
-    if (iterations%50 == 0) print_move_stats();
+    if (iterations%20 == 0) {
+      std::cerr<<endl;
+      std::cerr<<*(MoveStats*)this<<endl;
+    }
 
     //---------------------- estimate MAP ----------------------//
     if (Pr > MAP_score) {
@@ -457,7 +465,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     }
 
     //------------------- move to new position -----------------//
-    iterate(A,P);
+    iterate(A,P,*this);
 
   }
 

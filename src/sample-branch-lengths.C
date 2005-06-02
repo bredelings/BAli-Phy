@@ -8,6 +8,8 @@
 #include "substitution.H"
 #include "likelihood.H"
 
+using MCMC::MoveStats;
+
 bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2,double rho) {
   if (P.accept_MH(A,P,A,P2,rho)) {
     P=P2;
@@ -20,34 +22,33 @@ bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2,double rho
   }
 }
 
-double branch_twiddle(double& T,double mu,double sigma=0.3) {
-  T += gaussian(0,mu*sigma);
+double branch_twiddle(double& T,double sigma) {
+  T += gaussian(0,sigma);
   return 1;
 }
 
-double branch_twiddle_positive(double& T,double mu,double sigma=0.3) {
-  double ratio = branch_twiddle(T,mu,sigma);
+double branch_twiddle_positive(double& T,double sigma) {
+  double ratio = branch_twiddle(T,sigma);
   T = std::abs(T);
   return ratio;
 }
 
-double log_branch_twiddle(double& T, double sigma=0.3) {
+double log_branch_twiddle(double& T, double sigma) {
   double ratio = exp( gaussian(0,sigma) );
   T *= ratio;
   return ratio;
 }
 
-MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b) 
+MCMC::Result change_branch_length_(const alignment& A, Parameters& P,int b,
+				       double sigma,double (*twiddle)(double&,double)) 
 {
-  MCMC::result_t result(0.0,6);
-  result[0] = 1.0;
-  result[2] = 1.0;
-  result[4] = 1.0;
+  MCMC::Result result(2);
   
   //------------ Propose new length -------------//
   const double length = P.T.branch(b).length();
   double newlength = length;
-  double ratio = branch_twiddle_positive(newlength,P.branch_mean);
+
+  double ratio = twiddle(newlength,sigma);
   
   //---------- Construct proposed Tree ----------//
   select_root(P.T, b, P.LC);
@@ -57,38 +58,57 @@ MCMC::result_t change_branch_length(const alignment& A, Parameters& P,int b)
 
   //--------- Do the M-H step if OK--------------//
   if (do_MH_move(A,P,P2,ratio)) {
-    result[1] = 1;
-    result[3] = std::abs(length - newlength);
-    result[5] = std::abs(log((newlength+0.001)/(length+0.001)));
+    result.totals[0] = 1;
+    result.totals[1] = std::abs(length - newlength);
   }
 
   return result;
 }
 
-MCMC::result_t change_branch_length_multi(const alignment& A, Parameters& P,int b) {
-  const int n=3;
-  MCMC::result_t result = change_branch_length(A,P,b);
-  for(int i=1;i<n;i++)
-    result += change_branch_length(A,P,b);
-  return result;
+void change_branch_length_flat(const alignment& A, Parameters& P,MoveStats& Stats,int b,double sigma)
+{
+  MCMC::Result result = change_branch_length_(A, P, b, sigma*P.branch_mean, branch_twiddle_positive);
+
+  Stats.inc("branch-length",result);
 }
 
-MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b) 
+void change_branch_length_log_scale(const alignment& A, Parameters& P,MoveStats& Stats,int b,double sigma)
 {
-  MCMC::result_t result(0.0,10);
+  MCMC::Result result = change_branch_length_(A, P, b, sigma, log_branch_twiddle);
 
-  result[0] = 1.0;
+  Stats.inc("branch-length (log)",result);
+}
+
+void change_branch_length(const alignment& A, Parameters& P,MoveStats& Stats,int b) {
+  if (myrandomf() < 0.5)
+    change_branch_length_flat(A, P, Stats, b, 1.0);
+  else
+    change_branch_length_log_scale(A, P, Stats, b, 1.0);
+}
+
+void change_branch_length_multi(const alignment& A, Parameters& P,MoveStats& Stats,int b) {
+  const int n=3;
+
+  for(int i=1;i<n;i++)
+    change_branch_length(A,P,Stats,b);
+}
+
+void change_branch_length_and_T(alignment& A, Parameters& P,MoveStats& Stats,int b) 
+{
+  MCMC::Result result(5,0);
+
+  result.counts[0] = 1;
 
   //------------- Propose new length --------------//
   const double length = P.T.branch(b).length();
   double newlength = length;
-  double ratio = branch_twiddle(newlength,P.branch_mean);
+  double ratio = branch_twiddle(newlength,P.branch_mean*0.6);
 
   //----- positive  =>  propose length change -----//
   if (newlength >= 0) 
   {
-    result[2] = 1.0;
-    result[6] = 1.0;
+    result.counts[1] = 1;
+    result.counts[3] = 1;
 
     //---------- Construct proposed Tree ----------//
     select_root(P.T, b, P.LC);
@@ -98,17 +118,17 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b)
 
     //--------- Do the M-H step if OK--------------//
     if (do_MH_move(A,P,P2,ratio)) {
-      result[1] = 1;
-      result[3] = 1;
-      result[7] = std::abs(newlength - length);
+      result.totals[0] = 1;
+      result.totals[1] = 1;
+      result.totals[3] = std::abs(newlength - length);
     }
   }
 
   //----- negative  => propose topology ---------//
   else 
   {
-    result[4] = 1.0;
-    result[8] = 1.0;
+    result.counts[2] = 1;
+    result.counts[4] = 1;
 
     //----- Generate the Different Topologies ------//
     vector<alignment> a(2,A);
@@ -131,18 +151,18 @@ MCMC::result_t change_branch_length_and_T(alignment& A, Parameters& P,int b)
     //------ Sample the Different Topologies ------//
     int C = two_way_topology_sample(a,p,rho,b);
 
-    if (C == -1)
-      return result;
+    if (C != -1) {
+      A = a[C];
+      P = p[C];
+    }
 
-    A = a[C];
-    P = p[C];
-
-    if (C != 0) {
-      result[1] = 1;
-      result[5] = 1;
-      result[9] = std::abs(length - newlength);
+    if (C > 0) {
+      result.totals[0] = 1;
+      result.totals[2] = 1;
+      result.totals[4] = std::abs(length - newlength);
     }
   }
-  return result;
+
+  Stats.inc("change_branch_length_and_T",result);
 }
 

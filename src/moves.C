@@ -8,21 +8,23 @@
 #include "monitor.H"
 #include "alignment-util.H"
 
-MCMC::result_t change_branch_length_move(alignment& A, Parameters& P,int b) {
-  if (not P.SModel().full_tree and b>=P.T.n_leaves())
-    return MCMC::result_t(0.0,6); // no_result
+using MCMC::MoveStats;
 
-  return change_branch_length(A,P,b);
+void change_branch_length_move(alignment& A, Parameters& P, MoveStats& Stats,int b) {
+  if (not P.SModel().full_tree and b>=P.T.n_leaves())
+    return;
+
+  change_branch_length(A,P,Stats,b);
 }
 
-MCMC::result_t change_branch_length_multi_move(alignment& A, Parameters& P,int b) {
+void change_branch_length_multi_move(alignment& A, Parameters& P, MoveStats& Stats,int b) {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
-    return MCMC::result_t(0.0,6); // no_result
+    return;
 
-  return change_branch_length_multi(A,P,b);
+  change_branch_length_multi(A,P,Stats,b);
 }
 
-MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
+void sample_tri_one(alignment& A, Parameters& P, MoveStats& Stats,int b) {
   assert(P.IModel().full_tree); 
 
   const SequenceTree& T = P.T;
@@ -37,17 +39,14 @@ MCMC::result_t sample_tri_one(alignment& A, Parameters& P,int b) {
     std::swap(node1,node2);
     
   tri_sample_alignment(A,P,node1,node2);
-
-  return MCMC::result_t(); // no_result
 }
 
-MCMC::result_t sample_tri_branch_one(alignment& A, Parameters& P,int b) {
+void sample_tri_branch_one(alignment& A, Parameters& P, MoveStats& Stats,int b) 
+{
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
-    return MCMC::result_t(0.0,4); // no_result
+    return;
 
-  MCMC::result_t result(0.0,4);
-  result[0] = 1.0;
-  result[2] = 1.0;
+  MCMC::Result result(2);
 
   assert(P.IModel().full_tree); 
 
@@ -68,31 +67,27 @@ MCMC::result_t sample_tri_branch_one(alignment& A, Parameters& P,int b) {
   if (length2 < 0) length2 = -length2;
 
   if (tri_sample_alignment_branch(A,P,node1,node2,b,1,length2)) {
-    result[1] = 1;
-    result[3] = std::abs(length2 - length1);
+    result.totals[0] = 1;
+    result.totals[1] = std::abs(length2 - length1);
   }
 
-  return result;
+  Stats.inc("sample_tri_branch",result);
 }
 
 
-MCMC::result_t sample_alignments_one(alignment& A, Parameters& P,int b) {
+void sample_alignments_one(alignment& A, Parameters& P, MoveStats& Stats,int b) {
   assert(P.IModel().full_tree); 
 
   sample_alignment(A,P,b);
-
-  return MCMC::result_t(); // no_result
 }
 
-MCMC::result_t sample_node_move(alignment& A, Parameters& P,int node) {
+void sample_node_move(alignment& A, Parameters& P, MoveStats& Stats,int node) {
   assert(P.IModel().full_tree); 
 
   sample_node(A,P,node);
-
-  return MCMC::result_t(); // no_result
 }
 
-MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
+void sample_two_nodes_move(alignment& A, Parameters& P, MoveStats& Stats,int n0) {
   assert(P.IModel().full_tree); 
 
   vector<int> nodes = A3::get_nodes_random(P.T,n0);
@@ -107,8 +102,6 @@ MCMC::result_t sample_two_nodes_move(alignment& A, Parameters& P,int n0) {
   int b = P.T.branch(n0,n1);
 
   sample_two_nodes(A,P,b);
-
-  return MCMC::result_t(); // no_result
 }
 
 vector<int> get_cost(const Tree& T) {
@@ -218,10 +211,8 @@ vector<int> walk_tree_path(const Tree& T,int root) {
   return branches2;
 }
 
-MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
+void sample_NNI_and_branch_lengths(alignment& A, Parameters& P, MoveStats& Stats) {
   vector<int> branches = walk_tree_path(P.T,P.LC.root);
-
-  MCMC::result_t result;
 
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
@@ -229,20 +220,16 @@ MCMC::result_t sample_NNI_and_branch_lengths(alignment& A,Parameters& P) {
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if (P.T.branch(b).is_internal_branch())
-      three_way_topology_sample(A,P,b);
-    change_branch_length(A,P,b);
-    change_branch_length(A,P,b);
-    change_branch_length(A,P,b);
+      three_way_topology_sample(A,P,Stats,b);
+    change_branch_length(A,P,Stats,b);
+    change_branch_length(A,P,Stats,b);
+    change_branch_length(A,P,Stats,b);
   }
-
-  return result;
 }
 
 
-MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
+void walk_tree_sample_alignments(alignment& A, Parameters& P, MoveStats& Stats) {
   vector<int> branches = walk_tree_path(P.T,P.LC.root);
-
-  MCMC::result_t result;
 
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
@@ -250,19 +237,15 @@ MCMC::result_t walk_tree_sample_alignments(alignment& A,Parameters& P) {
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if ((myrandomf() < 0.15) and (P.T.n_leaves() >2))
-      sample_tri_one(A,P,b);
+      sample_tri_one(A,P,Stats,b);
     else
-      sample_alignments_one(A,P,b);
+      sample_alignments_one(A,P,Stats,b);
   }
-  
-  return result;
 }
 
 
-MCMC::result_t change_parameters(alignment& A,Parameters& P) {
-  MCMC::result_t result(0.0,2);
-  result[0] = 1.0;
-
+void change_parameters(alignment& A,Parameters& P, MoveStats& Stats) 
+{
   Parameters P2 = P;
 
   double rho = P2.fiddle_smodel(0);
@@ -277,9 +260,10 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
   std::clog<<endl<<endl;
 #endif
 
-  if (P.accept_MH(A,P,A,P2,rho)) {
+  bool success = P.accept_MH(A,P,A,P2,rho);
+
+  if (success) {
     P = P2;
-    result[1] = 1;
 #ifndef NDEBUG
     std::clog<<"success\n";
 #endif
@@ -289,41 +273,37 @@ MCMC::result_t change_parameters(alignment& A,Parameters& P) {
     std::clog<<"failure\n";
 #endif
   }
-  return result;
+
+  Stats.inc("s_parameters",success);
 }
 
-MCMC::result_t change_gap_parameters(alignment& A,Parameters& P) {
-  MCMC::result_t result(0.0,2);
-  result[0] = 1.0;
-
+void change_gap_parameters(alignment& A,Parameters& P, MoveStats& Stats) 
+{
   Parameters P2 = P;
   double rho = P2.fiddle_imodel(0);
 
-  if (P.accept_MH(A,P,A,P2,rho)) {
-    P = P2;
-    result[1] = 1;
-  }
+  bool success = P.accept_MH(A,P,A,P2,rho);
 
-  return result;
+  if (success)
+    P = P2;
+
+  Stats.inc("g_parameters",success);
 }
 
 
 
-MCMC::result_t sample_frequencies(alignment& A,Parameters& P) {
-  MCMC::result_t result(0.0,2);
-  result[0] = 1.0;
-
-
+void sample_frequencies(alignment& A,Parameters& P, MoveStats& Stats) 
+{
   Parameters P2 = P;
   valarray<double> f = P2.SModel().frequencies();
   f = dirichlet_fiddle(f,0.25/sqrt(f.size()));
   P2.SModel().frequencies(f);
   P2.recalc_smodel();
 
-  if (P.accept_MH(A,P,A,P2,1)) {
-    P = P2;
-    result[1] = 1;
-  }
 
-  return result;
+  bool success = P.accept_MH(A,P,A,P2,1);
+  if (success)
+    P = P2;
+
+  Stats.inc("frequencies",success);
 }
