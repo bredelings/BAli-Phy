@@ -180,7 +180,12 @@ void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b)
   MCMC::Result result(2);
 
   if (C>0) result.totals[0] = 1;
-  if (C>0 and not same_topology) result.totals[1] = 1;
+
+  if (not same_topology) {
+    if (C>0) result.totals[1] = 1;
+  }
+  else
+    result.counts[1] = 0;
 
   Stats.inc("SPR", result);
 }
