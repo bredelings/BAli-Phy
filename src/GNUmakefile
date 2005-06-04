@@ -114,6 +114,10 @@ tools/alignment-median: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o util-random.o \
 	sequence-format.o alignment-util.o ${LINKLIBS}
 
+tools/alignment-consensus: alignment.o alphabet.o sequence.o util.o rng.o \
+	tree.o sequencetree.o util-random.o \
+	sequence-format.o alignment-util.o ${LINKLIBS}
+
 tools/alignment-reorder: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o imodel.o \
 	sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o \

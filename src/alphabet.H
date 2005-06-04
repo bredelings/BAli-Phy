@@ -45,6 +45,9 @@ public:
   /// Index of an unknown letter ('*')
   static const int not_gap = -2;
 
+  /// Index of an unknown letter ('?')
+  static const int unknown = -3;
+
   /// Do we contain the letter 'c'
   bool contains(char c) const;
   bool contains(const std::string&) const;
