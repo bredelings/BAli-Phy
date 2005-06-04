@@ -93,7 +93,7 @@ bool operator()(const Edge& E1, const Edge& E2) {
 }
 };
 
-class Edges: public std::set<Edge,edge_comp>
+class Edges: public std::multiset<Edge,edge_comp>
 {
 public:
 };
@@ -190,8 +190,16 @@ int main(int argc,char* argv[])
       }
     }
 
-    
+    //--------- Build alignment from list ---------//
+    double cutoff = args["cutoff"].as<double>();
+    if (cutoff < 0.5) cutoff = 0.5;
 
+    foreach(e,E) {
+      if (e->p < cutoff) break;
+
+      std::cout<<"s1 = "<<e->s1<<" x1 = "<<e->x1<<"       s2 = "<<e->s2<<" x2 = "<<e->x2<<"     p = "<<e->p<<"\n";
+    }
+    
     
   }
   catch (std::exception& e) {
