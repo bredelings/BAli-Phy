@@ -140,6 +140,156 @@ void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
     }
 }
 
+class matrix: public ublas::matrix<int> 
+{
+  vector<vector<int> > column_index;
+
+public:
+
+  int  index(int i,int j) const {return (*this)(i,j);}
+  int& index(int i,int j)       {return (*this)(i,j);}
+
+  int  column(int i,int j) const {return column_index[i][j];}
+  int& column(int i,int j)       {return column_index[i][j];}
+
+  int length(int i) const {return column_index[i].size();}
+
+  bool columns_conflict(int c1, int c2) const;
+  void merge_columns(int c1,int c2);
+  void merge_simple(const Edges& E,double p);
+
+  matrix(int C,const vector<int>& L)
+    :ublas::matrix<int>(C,L.size()),
+     column_index(L.size())
+  {
+    for(int i=0;i<L.size();i++)
+      column_index.push_back(vector<int>(L[i]));
+  }
+};
+
+matrix unaligned_matrix(const vector<int>& L) 
+{
+  int C = 0;
+  for(int i=0;i<L.size();i++)
+    C += L[i];
+
+  matrix M(C,L);
+  
+  for(int i=0;i<M.size1();i++)
+    for(int j=0;j<M.size2();j++)
+      M(i,j) = -3;
+  
+  for(int i=0,c=0;i<M.size2();i++) {
+    for(int j=0;j<M.length(i);j++,c++) {
+      M.column(i,j) = c;
+      M(c,i) = j;
+    }
+  }
+  assert(c == C);
+
+  return M;
+}
+
+bool matrix::columns_conflict(int c1, int c2) const
+{
+  for(int i=0;i<size2();i++) {
+    if (index(c1,i) >= 0 and index(c2,i) >= 0)
+      return true;
+  }
+
+  return false;
+}
+
+void matrix::merge_columns(int c1, int c2) {
+  for(int i=0;i<size2();i++) {
+
+    // i/c2 is unknown, or also a gap
+    if (index(c2,i) <= index(c1,i)) continue;
+
+    index(c1,i) = index(c2,i);
+    index(c2,i) = -3;
+    column(i,index(c1,i)) = c1;
+  }  
+}
+
+
+bool skips(const ublas::matrix<int>& M,int c,const vector<int>& index) {
+  for(int i=0;i<M.size2();i++) {
+    if (M(c,i) < 0) continue;
+
+    assert(M(c,i) > index[i]);
+
+    if (M(c,i) > index[i]+1)
+      return true;
+  }
+
+  return false;
+}
+
+void matrix::merge_simple(const Edges& E,double cutoff)
+{
+    //-------- Merge some columns --------//
+    foreach(e,E) 
+    {
+      if (e->p < cutoff) break;
+
+      int c1 = column(e->s1,e->x1);
+      int c2 = column(e->s2,e->x2);
+
+      if (c1 == c2) continue;
+
+      if (not columns_conflict(c1,c2))
+	merge_columns(c1,c2);
+    }
+}
+    
+
+ublas::matrix<int> get_ordered_matrix(const matrix& M)
+{
+  //-------- sort columns of M ----------//
+  vector<int> index(M.size2(),-1);
+  vector<int> columns;
+  while(true) {
+    
+    int c1=-1;
+    for(int i=0;i<columns.size();i++) {
+      // skip this sequence if its already done
+      if (index[i]+1 >= M.length(i)) continue;
+      
+      // what is the column where the next index in this sequence appears.
+      c1 = M.column(i,index[i]+1);
+      
+      if (not skips(M,c1,index))
+	break;
+    }
+    
+    // if all the sequences are done, then bail.
+    if (c1 == -1)
+      break;
+    
+    columns.push_back(c1);
+    
+    // record these letters as processed.
+    for(int i=0;i<M.size2();i++)
+      if (M(c1,i) >= 0) {
+	index[i]++;
+	assert(M(c1,i) == index[i]);
+      }
+    
+  }
+
+  ublas::matrix<int> M2(columns.size(),M.size2());
+
+  for(int i=0;i<M2.size1();i++) {
+    for(int j=0;j<M2.size2();j++)
+      M2(i,j) = M(columns[i],j);
+  }
+
+  return M2;
+}
+
+
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -170,25 +320,22 @@ int main(int argc,char* argv[])
     int N = alignments[0].size2();
     assert(alignments[1].size2() == N);
     assert(alignments[1].seqlength(N-1) == alignments[0].seqlength(N-1));
+    vector<int> L(N);
+    for(int i=0;i<L.size();i++)
+      L[i] = alignments[0].seqlength(i);
 
+    
     //--------- Construct alignment indexes ---------//
     for(int i=0;i<alignments.size();i++)
       Ms.push_back(M(alignments[i]));
 
-    vector< vector< vector<int> > >  column_indexes;
-    for(int i = 0;i<alignments.size();i++)
-      column_indexes.push_back( column_lookup(alignments[i]) );
 
     //--------- Get list of supported pairs ---------//
     Edges E;
 
-    for(int s1=0;s1<N;s1++) {
-      int L1 = alignments[0].seqlength(s1);
-      for(int s2=0;s2<s1;s2++) {
-	int L2 = alignments[0].seqlength(s2);
-	add_edges(E,Ms,s1,s2,L1,L2);
-      }
-    }
+    for(int s1=0;s1<N;s1++)
+      for(int s2=0;s2<s1;s2++)
+	add_edges(E,Ms,s1,s2,L[s1],L[s2]);
 
     //--------- Build alignment from list ---------//
     double cutoff = args["cutoff"].as<double>();
@@ -200,7 +347,13 @@ int main(int argc,char* argv[])
       std::cout<<"s1 = "<<e->s1<<" x1 = "<<e->x1<<"       s2 = "<<e->s2<<" x2 = "<<e->x2<<"     p = "<<e->p<<"\n";
     }
     
-    
+    //-------- Build a beginning alignment --------//
+    matrix M = unaligned_matrix(L);
+
+    M.merge_simple(E,cutoff);
+
+    ublas::matrix<int> M2 = get_ordered_matrix(M);
+
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
