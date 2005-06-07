@@ -13,11 +13,6 @@
   <sect1>
     <title>Running the Program</title>
 
-    <para>In order to run the program, note that in many cases it is
-    necessary to specify the location of the data directory. The data
-    directory will be <filename>./Data</filename> if not explicitly
-    set. (See option &quot;data-dir&quot;).</para>  
-
     <para>The simplest way to run <application>bali-phy</application> is
     simply to specify some input sequences:</para>  
 
@@ -26,17 +21,27 @@
 </screen>
 
     <para>The <emphasis>recommended</emphasis> way to run the program
-    is to copy it to <filename>&tilde;/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename> and
+    is to copy it to <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename> and
     run (in a bourne-shell)</para>
 
     <screen>
  <prompt>%</prompt> <userinput>VERSION=<replaceable>version</replaceable> CLASS=<replaceable>class</replaceable> sampler.sh <replaceable>sequence-file</replaceable></userinput>
 </screen>
 
-    <para>The wrapper script <application>sampler.sh</application>
-    will run <application>bali-phy</application> for you.  It will also create a
+    <para>The wrapper script <command>sampler.sh</command>
+    will run <command>bali-phy</command> for you.  It will also create a
     unique directory for each invocation of the program, and put
-    output files in this directory.</para> 
+    output files in this directory. The directories will be named
+    <replaceable>class</replaceable>-1, <replaceable>class</replaceable>-2,
+    etc.</para> 
+
+    <note>
+      <para>In many cases it is necessary to specify the location of the data
+      directory in order to run the program. The data directory default to
+      <filename>./Data</filename> if not explicitly set. (See option
+      <userinput>--data-dir</userinput>).</para> 
+    </note>
+
   </sect1>
   
   <sect1>
@@ -216,8 +221,12 @@
 
     <sect2>
       <title>Output Files</title>
-      <para>When run in a clean directory, <application>bali-phy</application> produces the
-    following output files:</para> 
+      <para>When run in a clean directory,
+      <application>bali-phy</application> produces the following output
+      files.  Beside the file <filename>MAP</filename> that contains
+      alignments, each line in these files should correspond to one
+      iteration.</para>
+
       
       <variablelist>
 	<varlistentry>
@@ -288,8 +297,7 @@
       <title>Results</title>
 
       <para>The procedure mentioned above should produce the following
-      files:</para> 
-
+      files:</para>
       <variablelist>
 
 	<varlistentry><term>Report</term><listitem><para>A summary of results

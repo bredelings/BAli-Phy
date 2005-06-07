@@ -7,6 +7,25 @@
 }
 
 .note {
-	border-width: 1px;
+	border: solid;
+	border-width: 2px;
 	border-color: green;
+	padding-left: 15px;
+	padding-right: 15px;
 }
+
+pre.programlisting {
+	background-color: #F4F4F4;
+	padding: 6px;
+}
+
+.application {font-family: Courier New; font-variant: small-caps;}
+
+.variablelist {
+	background-color: #D8E4F4;
+	padding: 6px;
+}
+
+.term { font-weight: bold;
+	padding-right: 2em;}
+

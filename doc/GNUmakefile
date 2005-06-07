@@ -3,14 +3,17 @@ all: README.html
 
 STYLEBASE=/usr/share/xml/docbook/stylesheet/nwalsh
 
-%.html: %.xml
-	xsltproc --stringparam variablelist.as.table 1 --stringparam html.stylesheet docbook.css --catalogs ${STYLEBASE}/xhtml/docbook.xsl $^ > $@
+%.html: %.xml docbook.xsl
+	xsltproc --xinclude docbook.xsl $*.xml > $@
 
 %.pdf: %.xml
-	xmlto pdf $^
+	fop $*.xml $*.pdf
 
 %.txt: %.xml
-	xmlto text $^
+	xmlto txt $^
+
+%.fo: %.xml
+	xmlto fo $^
 
 #xmlto html %.xml
 
