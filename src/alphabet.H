@@ -45,7 +45,7 @@ public:
   /// Index of an unknown letter ('*')
   static const int not_gap = -2;
 
-  /// Index of an unknown letter ('?')
+  /// Index of unknown: no information ('?')
   static const int unknown = -3;
 
   /// Do we contain the letter 'c'

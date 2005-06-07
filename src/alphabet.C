@@ -48,6 +48,10 @@ int alphabet::operator[](const string& l) const {
       return alphabet::not_gap;
   }
 
+  // Check for unknown
+  if (l == "?")
+    return alphabet::unknown;
+
   // We don't have this letter!
   throw bad_letter(l,name);
 }
@@ -73,6 +77,8 @@ string alphabet::lookup(int i) const {
     return gap_letter;
   else if (i == not_gap)
     return missing.back();
+  else if (i == unknown)
+    return "?";
 
   assert(0 <=i && i < data.size());
   return data[i];
