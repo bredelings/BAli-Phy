@@ -15,11 +15,11 @@
 
     <para>In order to run the program, note that in many cases it is
     necessary to specify the location of the data directory. The data
-    directory will be <filename>./Data</filename> it not explicitly
+    directory will be <filename>./Data</filename> if not explicitly
     set. (See option &quot;data-dir&quot;).</para>  
 
-    <para>The simplest way to run <application>bali-phy</application> is simply to specify some
-    inputsequences:</para>  
+    <para>The simplest way to run <application>bali-phy</application> is
+    simply to specify some input sequences:</para>  
 
     <screen>
  <prompt>%</prompt> <userinput>./bali-phy <replaceable>sequence-file</replaceable> &gt;out 2&gt;err</userinput>
@@ -125,14 +125,14 @@
       </orderedlist>
 
       <para>The first line of the file is a header consisting of an
-   ordered list of sequence names separated by spaces. Each subsequence line
+   ordered list of sequence names separated by spaces. Each subsequent line
    consists of a space-separated list of sequence positions, with the first position
    corresponding to the first leaf sequence, the second position
    corresponding to the second leaf sequence, etc. Thus, if there are
    &lt;n&gt; leaf taxa, then each line corresponds to a
    space-separated list of &lt;n&gt; integers.</para>
 
-      <para>For example,</para>
+      <para>For example, the line</para>
 
       <programlisting format="linespecific">1 2 2</programlisting>
 
@@ -148,49 +148,71 @@
 - - 2 2
 </programlisting>
 
-      <para>The above constraint forces alignment between position 2
+      <para>The above constraints force alignment between position 2
    of sequences 1 and 2, and between position 2 of sequence 3 and
    4.</para>
     </sect2>
   </sect1>
+
   <sect1>
     <title>Examples</title>
-    <para>Here are some example invocations of <application>bali-phy</application>:</para>
+    <para>Here are some examples which demonstrate how to run <application>bali-phy</application>:</para>
 
     <example>
+      <title>No frills</title>
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
       the software.  The alignment is randomized before the chain begins.</para>
-      <screen>
- <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --randomize_alignment &gt;out 2&gt;err</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --randomize_alignment &gt;out 2&gt;err</userinput></screen>
     </example>
 
     <example>
-    <para>We now modify the previous example by changing the
-    substitution model to allow gamma-distributed rate variation and
-    invariant sites.  The amount of rate variation and the fraction of
-    invariant sites are estimated</para>
-
-    <screen>
- <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment &gt;out 2&gt;err</userinput>
-</screen>
-    </example>
+      <title>Multiple-Rate Substitution Model</title>
+      <para>We now modify the previous example by changing the
+      substitution model to allow gamma-distributed rate variation and
+      invariant sites.  The amount of rate variation and the fraction of
+      invariant sites are estimated</para>
+      
+      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment &gt;out 2&gt;err</userinput></screen></example>
 
     <example>
+      <title>Fixed alignment</title>
       <para>Here we use the 5S rRNA 5-taxon data set provided with
       the software.  The alignment is fixed and the traditional
       likelihood model is used, making indels non-informative.  In
-      addition, the transition kernel which samples indel model
-      parameters is disabled.</para> 
+      addition, the transition kernel which samples nucleotide frequencies
+      is disabled, fixing the nucleotide frequencies to empirical values
+      estimated from the input sequences.
+      </para> 
 
-<screen>
- <prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta ---disable g_parameters --gaps star &gt;out 2&gt;err</userinput>
-</screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta ---disable frequencies --gaps star &gt;out 2&gt;err</userinput></screen>
 
     </example>
   </sect1>
 
   <sect1>
-    <title>The Output</title>
+    <title>Output</title>
+
+    <sect2>
+      <title>Output Streams</title>
+
+      <para><application>bali-phy</application> writes out the sampled
+      alignments and other information to the standard output stream, which
+      displays on the terminal by default.  Error messages are written to
+      the standard error stream, which also displays on the terminal by
+      default. In addition some other useful information is written to the
+      standard error stream, such as the acceptance fraction for the
+      various transition kernels.
+      </para>
+
+      <para>You should redirect the standard output to a file called
+      <filename>out</filename> and redirect the standard error to a file
+      called <filename>err</filename> so that the information on these
+      streams is available for later analysis.  In addition, some scripts
+      assume that the names <filename>out</filename> and
+      <filename>err</filename> are used.  The way to redirect these streams
+      to the files is to specify <userinput>&gt;out 2&gt;err</userinput>
+      on the command line.</para>
+    </sect2>
 
     <sect2>
       <title>Output Files</title>
@@ -235,11 +257,6 @@
 	
       </variablelist>
       
-      <para>In addition, I will assume that the standard output and
-    standard error are sent to files named &ldquo;out&rdquo; and
-    &ldquo;err&rdquo;. If not, rename them in order for the following
-    procedure to work.</para>
-
     </sect2>
 
     <sect2>
@@ -253,11 +270,11 @@
 
       or
 
-      <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> SIZE=<replaceable>#iterations</replaceable> make</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> SIZE=<replaceable>iterations</replaceable> make</userinput></screen>
 
       Here, <replaceable>burn-in</replaceable> represents the
       number of iterations to skip as burn-in, and
-      <replaceable>#iterations</replaceable> represents the maximum
+      <replaceable>iterations</replaceable> represents the maximum
       number of iterations to use in the analysis. In order for this
       to work, you must have having built the tools in the
       <filename>tools/</filename> directory and have placed them in
@@ -287,16 +304,13 @@
 	<varlistentry><term>MAP.fasta</term><listitem><para>An estimate of the MAP alignment, w/ taxa sorted by similarity
     </para></listitem></varlistentry>
 
-	<varlistentry><term>MAP.phy</term><listitem><para>An estimate of the MAP alignment, w/ taxa sorted by similarity
-    </para></listitem></varlistentry>
-
 	<varlistentry><term>MAP.tree</term><listitem><para>An estimate of the MAP tree, in Newick format
     </para></listitem></varlistentry>
 
-	<varlistentry><term>tree.srq</term><listitem><para>A bit vector of the time-series of the support of the MAP.tree
+	<varlistentry><term>tree.srq</term><listitem><para>A bit-vector of the time-series of the support of the MAP.tree
     </para></listitem></varlistentry>
 
-	<varlistentry><term>tree.plot</term><listitem><para>A summed version of tree.srq. Type &quot;plot 'tree.plot'&quot; in gnuplot
+	<varlistentry><term>tree.plot</term><listitem><para>A summed version of tree.srq. Type <userinput>plot 'tree.plot'</userinput> in <application>gnuplot</application>.
     </para></listitem></varlistentry>
 
       </variablelist>
@@ -309,7 +323,7 @@
 	<varlistentry><term>blame.html</term><listitem><para>An AU plot
     </para></listitem></varlistentry>
 
-	<varlistentry><term>blame.prob</term><listitem><para>the probabilities for each letter in the AU plot
+	<varlistentry><term>blame.prob</term><listitem><para>The probabilities for each letter in the AU plot
     </para></listitem></varlistentry>
 
       </variablelist>
