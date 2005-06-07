@@ -245,20 +245,17 @@
     <sect2>
       <title>Processing the Output</title>
       
-      <para>Copy (or link, using ln -s) the file <filename>bin/GNUmakefile</filename> into
-   the current directory. Then run the command:</para>
+      <para>Copy (or link, using <command>ln -s</command>) the file
+      <filename>bin/GNUmakefile</filename> into the current
+      directory. Then run the command:
 
-<screen>
- <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> make</userinput>
-</screen>
+      <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> make</userinput></screen>
 
-      <para>OR</para>
+      or
 
-<screen>
- <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> SIZE=<replaceable>#iterations</replaceable> make</userinput>
-</screen>
+      <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> SIZE=<replaceable>#iterations</replaceable> make</userinput></screen>
 
-      <para>Here, <replaceable>burn-in</replaceable> represents the
+      Here, <replaceable>burn-in</replaceable> represents the
       number of iterations to skip as burn-in, and
       <replaceable>#iterations</replaceable> represents the maximum
       number of iterations to use in the analysis. In order for this
@@ -304,7 +301,7 @@
 
       </variablelist>
 
-      <para>In addition, if you type <userinput>SKIP=&lt;burnin&gt; make
+      <para>In addition, if you type <userinput>SKIP=<replaceable>burn-in</replaceable> make
    blame.html</userinput>, the following files will be produced:</para>
 
       <variablelist>
