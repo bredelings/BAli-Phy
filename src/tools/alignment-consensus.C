@@ -149,8 +149,8 @@ public:
   int  index(int i,int j) const {return (*this)(i,j);}
   int& index(int i,int j)       {return (*this)(i,j);}
 
-  int  column(int i,int j) const {return column_index[i][j];}
-  int& column(int i,int j)       {return column_index[i][j];}
+  int  column(int i,int j) const {assert(j>=0); return column_index[i][j];}
+  int& column(int i,int j)       {assert(j>=0); return column_index[i][j];}
 
   int length(int i) const {return column_index[i].size();}
 
@@ -159,8 +159,7 @@ public:
   void merge_simple(const Edges& E,double p);
 
   matrix(int C,const vector<int>& L)
-    :ublas::matrix<int>(C,L.size()),
-     column_index(L.size())
+    :ublas::matrix<int>(C,L.size())
   {
     for(int i=0;i<L.size();i++)
       column_index.push_back(vector<int>(L[i]));
@@ -179,7 +178,8 @@ matrix unaligned_matrix(const vector<int>& L)
     for(int j=0;j<M.size2();j++)
       M(i,j) = -3;
   
-  for(int i=0,c=0;i<M.size2();i++) {
+  int c=0;
+  for(int i=0;i<M.size2();i++) {
     for(int j=0;j<M.length(i);j++,c++) {
       M.column(i,j) = c;
       M(c,i) = j;
@@ -193,22 +193,49 @@ matrix unaligned_matrix(const vector<int>& L)
 bool matrix::columns_conflict(int c1, int c2) const
 {
   for(int i=0;i<size2();i++) {
-    if (index(c1,i) >= 0 and index(c2,i) >= 0)
-      return true;
+
+    // if either value is 'unknown', then we can't conflict
+    if (index(c1,i) == -3 or index(c2,i) == -3)
+      continue;
+
+    // two gaps can be merged
+    if (index(c1,i) == -1 and index(c2,i) == -1)
+      continue;
+
+    // two letters, or a letter and a gap
+    return true;
   }
 
   return false;
 }
 
-void matrix::merge_columns(int c1, int c2) {
-  for(int i=0;i<size2();i++) {
+void matrix::merge_columns(int c1, int c2) 
+{
+  if (c1 > c2) std::swap(c1,c2);
 
-    // i/c2 is unknown, or also a gap
-    if (index(c2,i) <= index(c1,i)) continue;
+  for(int i=0;i<size2();i++) 
+  {
+    // don't need to move an 'unknown'
+    if (index(c2,i) == -3)
+      continue;
 
-    index(c1,i) = index(c2,i);
-    index(c2,i) = -3;
-    column(i,index(c1,i)) = c1;
+    // need to move a 'gap', and can merge with another 'gap'
+    if (index(c2,i) == -1) {
+      assert(index(c1,i) == -3 or index(c1,i) == -1);
+      index(c2,i) = -3;
+      index(c1,i) = -1;
+    }
+
+    // need to move a letter, and cannot merge w/ anything.
+    else {
+      assert(index(c2,i) >= 0);
+
+      assert(index(c1,i) == -3);
+
+      index(c1,i) = index(c2,i);
+
+      column(i,index(c1,i)) = c1;
+    }
   }  
 }
 
@@ -233,13 +260,30 @@ void matrix::merge_simple(const Edges& E,double cutoff)
     {
       if (e->p < cutoff) break;
 
-      int c1 = column(e->s1,e->x1);
-      int c2 = column(e->s2,e->x2);
+      if (e->x2 == -1) {
+	int c1 = column(e->s1,e->x1);
 
-      if (c1 == c2) continue;
+	if (index(c1,e->s2) == -3)
+	  index(c1,e->s2) = -1;
+      }
+      else if (e->x1 == -1) {
+	int c1 = column(e->s2,e->x2);
 
-      if (not columns_conflict(c1,c2))
-	merge_columns(c1,c2);
+	if (index(c1,e->s1) == -3)
+	  index(c1,e->s1) = -1;
+
+      }
+      else {
+	assert(e->x1 >= 0 and e-> x2>=0);
+
+	int c1 = column(e->s1,e->x1);
+	int c2 = column(e->s2,e->x2);
+
+	if (c1 == c2) continue;
+
+	if (not columns_conflict(c1,c2))
+	  merge_columns(c1,c2);
+      }
     }
 }
     
@@ -252,7 +296,7 @@ ublas::matrix<int> get_ordered_matrix(const matrix& M)
   while(true) {
     
     int c1=-1;
-    for(int i=0;i<columns.size();i++) {
+    for(int i=0;i<index.size();i++) {
       // skip this sequence if its already done
       if (index[i]+1 >= M.length(i)) continue;
       
@@ -288,6 +332,36 @@ ublas::matrix<int> get_ordered_matrix(const matrix& M)
   return M2;
 }
 
+alignment get_alignment(const ublas::matrix<int>& M, alignment& A1) 
+{
+  alignment A2 = A1;
+  A2.changelength(M.size1());
+
+  // get letters information
+  vector<vector<int> > sequences;
+  for(int i=0;i<A1.n_sequences();i++) {
+    vector<int> sequence;
+    for(int c=0;c<A1.length();c++) {
+      if (not A1.gap(c,i))
+	sequence.push_back(A1(c,i));
+    }
+    sequences.push_back(sequence);
+  }
+
+  for(int i=0;i<A2.n_sequences();i++) {
+    for(int c=0;c<A2.length();c++) {
+      int index = M(c,i);
+
+      if (index >= 0)
+	index = sequences[i][index];
+
+      A2(c,i) = index;
+    }
+  }
+
+  return A2;
+}
+
 
 
 int main(int argc,char* argv[]) 
@@ -318,8 +392,10 @@ int main(int argc,char* argv[])
       throw myexception()<<"Didn't read any alignments!";      
 
     int N = alignments[0].size2();
-    assert(alignments[1].size2() == N);
-    assert(alignments[1].seqlength(N-1) == alignments[0].seqlength(N-1));
+    if (alignments.size() > 1) {
+      assert(alignments[1].size2() == N);
+      assert(alignments[1].seqlength(N-1) == alignments[0].seqlength(N-1));
+    }
     vector<int> L(N);
     for(int i=0;i<L.size();i++)
       L[i] = alignments[0].seqlength(i);
@@ -344,7 +420,7 @@ int main(int argc,char* argv[])
     foreach(e,E) {
       if (e->p < cutoff) break;
 
-      std::cout<<"s1 = "<<e->s1<<" x1 = "<<e->x1<<"       s2 = "<<e->s2<<" x2 = "<<e->x2<<"     p = "<<e->p<<"\n";
+      std::cerr<<"s1 = "<<e->s1<<" x1 = "<<e->x1<<"       s2 = "<<e->s2<<" x2 = "<<e->x2<<"     p = "<<e->p<<"\n";
     }
     
     //-------- Build a beginning alignment --------//
@@ -353,6 +429,10 @@ int main(int argc,char* argv[])
     M.merge_simple(E,cutoff);
 
     ublas::matrix<int> M2 = get_ordered_matrix(M);
+
+    alignment consensus = get_alignment(M2,alignments[0]);
+
+    std::cout<<consensus<<std::endl;
 
   }
   catch (std::exception& e) {
