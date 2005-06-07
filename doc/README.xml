@@ -22,15 +22,15 @@
     inputsequences:</para>  
 
     <screen>
-<prompt>%</prompt> <userinput>./bali-phy &lt;sequence-file&gt; &gt;out 2&gt;err</userinput>
+ <prompt>%</prompt> <userinput>./bali-phy <replaceable>sequence-file</replaceable> &gt;out 2&gt;err</userinput>
 </screen>
 
     <para>The <emphasis>recommended</emphasis> way to run the program
-    is to copy it to <filename>&tilde;/bin/bali-phy/&lt;version&gt;-NDEBUG</filename> and
+    is to copy it to <filename>&tilde;/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename> and
     run (in a bourne-shell)</para>
 
-<screen>
-<prompt>%</prompt> <userinput>VERSION=&lt;version&gt; CLASS=&lt;class&gt; sampler.sh &lt;sequence-file&gt;</userinput>
+    <screen>
+ <prompt>%</prompt> <userinput>VERSION=<replaceable>version</replaceable> CLASS=<replaceable>class</replaceable> sampler.sh <replaceable>sequence-file</replaceable></userinput>
 </screen>
 
     <para>The wrapper script <application>sampler.sh</application>
@@ -53,12 +53,12 @@
 	<arg>OPTIONS</arg>
       </cmdsynopsis>
 
-      <para>The sequence-file can be either a FASTA (*.fasta) file or
-      a PHYLIP (*.phy) file and is the only required argument.  The
-      file must contain end in one of these two suffixes or
-      <application>bali-phy</application> won't know how to read the
-      file. In addition your FASTA files should not any blank
-      lines.</para>   
+      <para>The sequence file is the only required argument.  It can
+      be either a FASTA (*.fasta) file or a PHYLIP (*.phy) file.  The
+      file must end in one of these two suffixes or
+      <application>bali-phy</application> won't know how to read
+      it. In addition your FASTA files should not contain any blank
+      lines.</para> 
 
       <para>The optional arguments are described below.</para>
 	
@@ -117,7 +117,7 @@
 
       <orderedlist inheritnum="ignore" continuation="restarts">
 	<listitem><para>Use the argument
-	&quot;align-constraint=&lsqb;filename&rsqb;&quot;</para></listitem> 
+	<userinput>--align-constraint <replaceable>filename</replaceable></userinput></para></listitem> 
 
 	<listitem><para>The filename refers to a file in which each
 	line represents a constraint.</para></listitem> 
@@ -125,8 +125,8 @@
       </orderedlist>
 
       <para>The first line of the file is a header consisting of an
-   ordered list of sequence names separated by spaces. Each line
-   consists of a list of sequence positions, with the first position
+   ordered list of sequence names separated by spaces. Each subsequence line
+   consists of a space-separated list of sequence positions, with the first position
    corresponding to the first leaf sequence, the second position
    corresponding to the second leaf sequence, etc. Thus, if there are
    &lt;n&gt; leaf taxa, then each line corresponds to a
@@ -137,7 +137,7 @@
       <programlisting format="linespecific">1 2 2</programlisting>
 
       <para>means that position 1 of leaf sequence 1 is aligned to
-      position 2 of leaf sequences 2 and 3 Note that the first
+      position 2 of leaf sequences 2 and 3. Note that the first
       position in a sequence is position 0.</para> 
 
       <para>Optionally, one may use a '-' instead of an integer, which
@@ -148,7 +148,7 @@
 - - 2 2
 </programlisting>
 
-      <para>the above constraint forces alignment between position 2
+      <para>The above constraint forces alignment between position 2
    of sequences 1 and 2, and between position 2 of sequence 3 and
    4.</para>
     </sect2>
@@ -157,31 +157,36 @@
     <title>Examples</title>
     <para>Here are some example invocations of <application>bali-phy</application>:</para>
 
-    <para>This example uses the EF-Tu 5-taxon data set provided with
-    the software.  The alignment is randomized before the chain begins.</para>
-<screen>
-<prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --randomize_alignment &gt;out 2&gt;err</userinput>
-</screen>
+    <example>
+      <para>Here we analyze the EF-Tu 5-taxon data set provided with
+      the software.  The alignment is randomized before the chain begins.</para>
+      <screen>
+ <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --randomize_alignment &gt;out 2&gt;err</userinput></screen>
+    </example>
 
-    <para>This example modifies the previous example by changing the
+    <example>
+    <para>We now modify the previous example by changing the
     substitution model to allow gamma-distributed rate variation and
     invariant sites.  The amount of rate variation and the fraction of
     invariant sites are estimated</para>
 
+    <screen>
+ <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment &gt;out 2&gt;err</userinput>
+</screen>
+    </example>
+
+    <example>
+      <para>Here we use the 5S rRNA 5-taxon data set provided with
+      the software.  The alignment is fixed and the traditional
+      likelihood model is used, making indels non-informative.  In
+      addition, the transition kernel which samples indel model
+      parameters is disabled.</para> 
+
 <screen>
-<prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment &gt;out 2&gt;err</userinput>
+ <prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta ---disable g_parameters --gaps star &gt;out 2&gt;err</userinput>
 </screen>
 
-    <para>This example uses the 5S rRNA 5-taxon data set provided with
-    the software.  The alignment is fixed and the traditional
-    likelihood model is used, making indels non-informative.  In
-    addition, the transition kernel which samples indel model
-    parameters is disabled</para> 
-
-<screen>
-<prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta ---disable g_parameters --gaps star &gt;out 2&gt;err</userinput>
-</screen>
-
+    </example>
   </sect1>
 
   <sect1>
@@ -240,22 +245,27 @@
     <sect2>
       <title>Processing the Output</title>
       
-      <para>Copy (or link, using ln -s) the file bin/GNUmakefile into
-   the current directory. Then run the command</para>
+      <para>Copy (or link, using ln -s) the file <filename>bin/GNUmakefile</filename> into
+   the current directory. Then run the command:</para>
 
 <screen>
-<prompt>%</prompt> <userinput>SKIP=&lt;burnin iteerations&gt; make</userinput>
+ <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> make</userinput>
 </screen>
 
       <para>OR</para>
 
 <screen>
-<prompt>%</prompt> <userinput>SKIP=&lt;burnin iteerations&gt; SIZE=&lt;number of iterations&gt; make</userinput>
+ <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> SIZE=<replaceable>#iterations</replaceable> make</userinput>
 </screen>
 
-      <para>This procedure depends on having builts the tools in the
-   'tools' directory, and having the resulting tools in your
-   path.</para>
+      <para>Here, <replaceable>burn-in</replaceable> represents the
+      number of iterations to skip as burn-in, and
+      <replaceable>#iterations</replaceable> represents the maximum
+      number of iterations to use in the analysis. In order for this
+      to work, you must have having built the tools in the
+      <filename>tools/</filename> directory and have placed them in
+      your path.</para>
+
 
     </sect2>
 
