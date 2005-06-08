@@ -318,16 +318,14 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
   int lines=0;
   string line;
   while(getline(file,line)) {
-    //--------- Load the trees (as strings) from STDIN ------//
-    lines++;
-    if (lines > skip)
-      trees.push_back(line);
+
+    // don't start if we haven't skipped enough trees
+    if (lines++ < skip) break;
 
     // quit if we've read in 'max' trees
     if (max >= 0 and trees.size() == max) break;
 
     //--------- Count how many of each topology -----------//
-
     SequenceTree T;
     try {
       // This should make all the branch & node numbers the same if the topology is the same
@@ -336,31 +334,29 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
     catch (std::exception& e) {
       std::cerr<<"Exception: "<<e.what()<<endl;
       std::cerr<<" Quitting read of tree file"<<endl;
-      trees.pop_back();
       break;
     }
 
-    // FIXME - this should be a standard string representation
+    // This should be a standard string representation
     string t = add_root(T,0).write(false);
       
-    typeof(index.begin()) here = index.find(t);
-      
-    // it if hasn't been seen before, insert it
-    if (here == index.end()) {
+    // If it hasn't been seen before, insert it
+    if (index.find(t) == index.end()) {
       topologies.push_back(topology_record(T,t));
 
       index[t] = topologies.size()-1;              // add to map of  (topology->index)
     }
       
-    // determine which topology we map to
+    //----------- Add tree to distribution -------------//
+    trees.push_back(line);
     int i = index[t];
     which_topology.push_back(i);
     topologies[i].count++;
 
     // update the 1st and 2nd branch length moments for that topology
     for(int b=0;b<T.n_branches();b++) {
-      topologies[i].mean[b] +=     T.branch(b).length();
-      topologies[i].var[b]  +=     T.branch(b).length()*T.branch(b).length();
+      topologies[i].mean[b] +=   T.branch(b).length();
+      topologies[i].var[b]  +=   T.branch(b).length()*T.branch(b).length();
     }
   }
 
