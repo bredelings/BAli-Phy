@@ -58,6 +58,8 @@ namespace MCMC {
 
   std::ostream& operator<<(std::ostream& o, const MoveStats& Stats) 
   {
+    int prec = o.precision(4);
+
     foreach(entry,Stats) 
     {
       const Result& R = entry->second;
@@ -72,7 +74,7 @@ namespace MCMC {
       }
       o<<endl;
     }
-
+    o.precision(prec);
     return o;
   }
 
