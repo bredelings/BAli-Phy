@@ -103,17 +103,6 @@ void standardize(SequenceTree& T,const vector<string>& remove) {
   standardize(T);
 }
 
-valarray<bool> branch_partition(const Tree& T,int b) 
-{
-  valarray<bool> temp = T.partition(b);
-  valarray<bool> p(T.n_leaves());
-  for(int i=0;i<p.size();i++)
-    p[i] = temp[i];
-
-  return p;
-}
-
-
 std::ostream& operator<<(std::ostream& o, const Partition& P) 
 {
   assert(empty(P.group1 and P.group2));
