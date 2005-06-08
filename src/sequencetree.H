@@ -135,4 +135,7 @@ void delete_node(SequenceTree& T,const std::string& name);
 
 SequenceTree star_tree(const std::vector<std::string>&);
 
+double branch_distance(const SequenceTree& T1, const SequenceTree& T2);
+double topology_distance(const SequenceTree& T1, const SequenceTree& T2);
+
 #endif

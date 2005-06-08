@@ -1111,3 +1111,16 @@ bool implies(const valarray<bool>& v1,const valarray<bool>& v2) {
       return false;
   return true;
 }
+
+valarray<bool> branch_partition(const Tree& T,int b) 
+{
+  valarray<bool> temp = T.partition(b);
+  valarray<bool> p(T.n_leaves());
+  for(int i=0;i<p.size();i++)
+    p[i] = temp[i];
+
+  return p;
+}
+
+
+
