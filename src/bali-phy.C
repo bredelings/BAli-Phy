@@ -239,6 +239,16 @@ void set_parameters(Parameters& P, const variables_map& args) {
     }
   }
 
+  // separate out 'set' operations from 'unfixed'
+  for(int i=0;i<unfix.size();i++) {
+    vector<string> parse = split(unfix[i],'=');
+    
+    if (parse.size() > 1) {
+      doset.push_back(unfix[i]);
+      unfix[i] = parse[0];
+    }
+  }
+
   // fix parameters
   for(int i=0;i<fix.size();i++) {
     cerr<<fix[i]<<endl;
@@ -259,7 +269,7 @@ void set_parameters(Parameters& P, const variables_map& args) {
     else if (p=find_parameter(P.IModel(),unfix[i]),p!=-1)
       P.IModel().fixed(p,false);
     else
-      throw myexception()<<"Can't find parameter '"<<unfix[i]<<"' to fix!";
+      throw myexception()<<"Can't find parameter '"<<unfix[i]<<"' to unfix!";
   }
 
   // set parameters
@@ -272,13 +282,13 @@ void set_parameters(Parameters& P, const variables_map& args) {
     string name = parse[0];
     double value = convertTo<double>(parse[1]);
 
+    P.keys[name] = value;
+
     int p=-1;
     if (p=find_parameter(P.SModel(),name),p!=-1)
       P.SModel().parameter(p,value);
     else if (p=find_parameter(P.IModel(),name),p!=-1)
       P.IModel().parameter(p,value);
-    else
-      throw myexception()<<"Can't find parameter '"<<name<<"' to fix!";
   }
 
 }

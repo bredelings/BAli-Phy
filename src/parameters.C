@@ -2,6 +2,7 @@
 #include "rng.H"
 #include "substitution.H"
 #include "likelihood.H"
+#include "util.H"
 
 efloat_t Parameters::basic_likelihood(const alignment& A,const Parameters& P) const {
   if (SModel_->full_tree)
@@ -86,7 +87,7 @@ double Parameters::fiddle_smodel(int i) {
     recalc_smodel();
   }
 
-  const double sigma = 0.10;
+  double sigma = loadvalue(keys,"mu_sigma",0.20);
   double ratio = exp(gaussian(0,sigma)); 
   branch_mean *= ratio;
 

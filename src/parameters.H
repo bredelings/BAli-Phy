@@ -1,16 +1,19 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
+#include <string>
+#include <valarray>
+#include <map>
 #include "alphabet.H"
 #include "mytypes.H"
 #include "sequencetree.H"
-#include <valarray>
 #include "smodel.H"
 #include "imodel.H"
 #include "alignment.H"
 #include "matcache.H"
 #include "clone.H"
 #include "substitution-cache.H"
+#include "util.H"
 
 /******************************* parameter-containing class **************************/
 /// A class to contain all the MCMC state except the alignment
@@ -23,6 +26,8 @@ class Parameters: public MatCache
   OwnedPointer<substitution::MultiModel> SModel_;
 
 public:
+
+  std::map<std::string,double,lstr> keys;
 
   /// cached branch HMMs
   vector<indel::PairHMM> branch_HMMs;

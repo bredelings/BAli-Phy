@@ -7,6 +7,7 @@
 #include <cassert>
 #include <algorithm>
 #include "myexception.H"
+#include <map>
 
 #define foreach(a,b) for(typeof((b).begin()) a=(b).begin();a != (b).end();a++)
 
@@ -161,5 +162,13 @@ struct sequence_order {
     return v[i]<v[j];
   }
 };
+
+template <typename U, typename T>
+const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name, const U& value) {
+  if (m.find(name) != m.end() )
+    return m[name];
+  else
+    return value;
+}
 
 #endif
