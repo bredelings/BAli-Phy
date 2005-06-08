@@ -43,20 +43,31 @@ int topology_sample_SPR(vector<alignment>& a,vector<Parameters>& p,const vector<
     return topology_sample_SPR_sgaps(a,p,rho);
 }
 
-double do_SPR(SequenceTree& T1, int n1, int n2, int b1) 
+double do_SPR(SequenceTree& T1, int b1_) 
 {
+  const_branchview b1 = T1.directed_branch(b1_);
+
   //----- Select the branch to move to ------//
-  valarray<bool> subtree_nodes = T1.partition(n1,n2);
+  valarray<bool> subtree_nodes = T1.partition(b1.reverse());
+  subtree_nodes[b1.target()] = true;
+
   vector<int> branches;
   vector<double> lengths;
 
   for(int i=0;i<T1.n_branches();i++) 
   {
-    double L = 1.0;
-    if (subtree_nodes[T1.directed_branch(i).target()] and subtree_nodes[T1.directed_branch(i).source()])
+    const_branchview bi = T1.branch(i);
+
+    // skip branch if its contained in the subtree
+    if (subtree_nodes[bi.target()] and 
+	subtree_nodes[bi.source()])
       continue;
 
-    if (subtree_nodes[T1.directed_branch(i).target()] or subtree_nodes[T1.directed_branch(i).source()])
+    double L = 1.0;
+
+    // down-weight branch if it is one of the subtree's 2 neighbors
+    if (subtree_nodes[bi.target()] or 
+	subtree_nodes[bi.source()])
       L = 0.5;
 
     branches.push_back(i);
@@ -68,19 +79,17 @@ double do_SPR(SequenceTree& T1, int n1, int n2, int b1)
   SequenceTree T2 = T1;
 
   //------ Generate the new topology ------//
-  if (T2.directed_branch(b2).target() == n1 or T2.directed_branch(b2).source() == n1)
+  if (T2.directed_branch(b2).target() == b1.target() or T2.directed_branch(b2).source() == b1.target()) 
     ;
-  else {
-    int b_temp = T2.directed_branch(n1,n2);
-    T2.SPR(b_temp,b2);
-  }
+  else
+    T2.SPR(b1.reverse(),b2);
 
   //------ Find the two new branches ------//
   vector<const_branchview> connected1;
-  append(T1.directed_branch(n2,n1).branches_after(),connected1);
+  append(T1.directed_branch(b1.source(),b1.target()).branches_after(),connected1);
 
   vector<const_branchview> connected2;
-  append(T2.directed_branch(n2,n1).branches_after(),connected2);
+  append(T2.directed_branch(b1.source(),b1.target()).branches_after(),connected2);
 
   assert(connected1.size() == 2);
   assert(connected2.size() == 2);
@@ -109,22 +118,24 @@ void remove_duplicates(vector<int>& v) {
 
 void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b) 
 {
-  SequenceTree& T1 = P.T;
-
   //----- Get nodes for directed branch ------//
-  int n1 = T1.branch(b).target();
-  int n2 = T1.branch(b).source();
+
+  const_branchview bv = P.T.directed_branch(b).reverse();
   if (myrandomf()< 0.5)
-    std::swap(n1,n2);
-  if (T1[n1].is_leaf_node())
-    std::swap(n1,n2);
-  b = T1.directed_branch(n2,n1);
+    bv = bv.reverse();
+  if (bv.target().is_leaf_node())
+    bv = bv.reverse();
+  
+  b = bv;
+  int n1 = bv.target();
+  int n2 = bv.source();
 
   //----- Generate the Different Topologies ----//
   P.LC.root = n1;
   vector<alignment> a(2,A);
   vector<Parameters> p(2,P);
 
+  SequenceTree& T1 = p[0].T;
   SequenceTree& T2 = p[1].T;
 
   // find the changed branches
@@ -133,7 +144,7 @@ void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b)
       i;i++)
     branches.push_back((*i).undirected_name());
   //  std::cerr<<"before = "<<T1<<endl;
-  double ratio = do_SPR(T2,n1,n2,b);
+  double ratio = do_SPR(T2,b);
   //  std::cerr<<"after = "<<T2<<endl;
   for(edges_after_iterator i=T2.directed_branch(n2,n1).branches_after();
       i;i++)
@@ -144,8 +155,8 @@ void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b)
   // recompute/invalidate caches associated with changed branch lengths
   assert(branches.size() <= 3);
   for(int i=0;i<branches.size();i++) {
-    int b = branches[i];
-    p[1].setlength(b,p[1].T.directed_branch(b).length());
+    int bi = branches[i];
+    p[1].setlength(bi,p[1].T.directed_branch(bi).length());
     invalidate_subA_index_branch(a[1], p[1].T, branches[i]);
   }
   
@@ -174,18 +185,37 @@ void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b)
  
   bool same_topology = (
 			(connected1[0] == connected2[0] and connected1[1] == connected2[1]) or
-			(connected1[0] == connected2[1] or connected1[1] == connected2[0])
+			(connected1[0] == connected2[1] and connected1[1] == connected2[0])
 			);
 
-  MCMC::Result result(2);
+  const int bins = 3;
+  MCMC::Result result(2+bins,0);
 
+  result.counts[0] = 1;
   if (C>0) result.totals[0] = 1;
 
-  if (not same_topology) {
-    if (C>0) result.totals[1] = 1;
-  }
+  int dist = (int)topology_distance(T1,T2);
+  std::cerr<<"NNI distance = "<<topology_distance(T1,T2)<<std::endl;
+
+  std::cerr<<"connected1 = "<<connected1[0]<<"  "<<connected1[1]<<std::endl;
+  std::cerr<<"connected2 = "<<connected2[0]<<"  "<<connected2[1]<<std::endl;
+
+  std::cerr<<"T1 = "<<T1<<std::endl;
+  std::cerr<<"T2 = "<<T2<<std::endl;
+
+  if (same_topology) 
+    assert(dist == 0);
   else
-    result.counts[1] = 0;
+    assert(dist > 0);
+
+  // count dist in [0,bins)
+  if (dist > bins) dist = bins;
+  for(int i=0;i<=bins;i++) {
+    if (dist == i) {
+      result.counts[1+i] = 1;
+      if (C>0) result.totals[1+i] = 1;
+    }
+  }
 
   Stats.inc("SPR", result);
 }

@@ -598,6 +598,9 @@ void Tree::SPR(int br1,int br2) {
   // don't regraft to the sub-branches we are being pruned from
   assert(b2 != b1->prev and b2 != b1->next);
 
+  assert(cached_partitions[b1->out->branch][b2->node]);
+  assert(cached_partitions[b1->out->branch][b2->out->node]);
+
   //------------ Prune the subtree -----------------//
   BranchNode* newbranch = TreeView::unlink_subtree(b1)->out;
   int dead_branch = TreeView::remove_node_from_branch(newbranch->out);
