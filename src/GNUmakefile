@@ -6,7 +6,7 @@ TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/srq-to-plot tools/srq-analyze tools/alignment-convert \
 	tools/tree-dist-compare tools/cut-range tools/alignment-translate \
 	tools/alignment-median tools/alignment-indices tools/pickout \
-	tools/joint-A-T
+	tools/joint-A-T tools/alignment-consensus
 
 
 tools: ${TOOLS}
