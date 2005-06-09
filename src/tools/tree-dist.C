@@ -309,7 +309,7 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
   while(getline(file,line)) {
 
     // don't start if we haven't skipped enough trees
-    if (lines++ < skip) break;
+    if (lines++ < skip) continue;
 
     // quit if we've read in 'max' trees
     if (max >= 0 and trees.size() == max) break;
