@@ -40,7 +40,7 @@ double log_branch_twiddle(double& T, double sigma) {
 }
 
 MCMC::Result change_branch_length_(const alignment& A, Parameters& P,int b,
-				       double sigma,double (*twiddle)(double&,double)) 
+				   double sigma,double (*twiddle)(double&,double)) 
 {
   MCMC::Result result(2);
   
@@ -171,5 +171,84 @@ void change_branch_length_and_T(alignment& A, Parameters& P,MoveStats& Stats,int
   }
 
   Stats.inc("change_branch_length_and_T",result);
+}
+
+double slide_node_no_expand_branch(vector<double>& lengths,double) 
+{
+  double L = lengths[0] + lengths[1];
+
+  lengths[0] = L * uniform();
+  lengths[1] = L - lengths[0];
+
+  return 1;
+}
+
+
+double slide_node_expand_branch(vector<double>& lengths,double sigma) 
+{
+  double ratio = exp( gaussian(0,sigma) );
+
+  double L = (lengths[0] + lengths[1]) * ratio;
+
+  lengths[0] = L * uniform();
+  lengths[1] = L - lengths[0];
+
+  return ratio;
+}
+
+
+bool slide_node(const alignment& A, Parameters& P,MoveStats& Stats,
+		const vector<const_branchview>& b,
+		double (*slide)(vector<double>&,double)
+		) 
+{
+  // check that we've got three branches
+  assert(b.size() == 3);
+
+  // check that the last two are after the first one
+  assert(b[0].target() == b[1].source() and
+	 b[0].target() == b[2].source());
+
+  P.LC.root = b[0].target();
+
+  //---------------- Propose new lengths ---------------//
+  vector<double> lengths(2);
+  lengths[0] = b[1].length();
+  lengths[1] = b[2].length();
+
+  double sigma = loadvalue(P.keys,"slide_node_sigma",0.3);
+  double ratio = slide(lengths,sigma);
+
+  //---------------- Propose new lengths ---------------//
+  Parameters P2 = P;
+
+  P2.setlength(b[1].undirected_name(), lengths[0]);
+  P2.setlength(b[2].undirected_name(), lengths[1]);
+    
+  bool success = do_MH_move(A,P,P2,ratio);
+
+  return success;
+}
+
+void slide_node(const alignment& A, Parameters& P,MoveStats& Stats,int b0)
+{
+  vector<const_branchview> b;
+  b.push_back( P.T.directed_branch(b0) );
+
+  // choose branches to alter
+  if (uniform() < 0.5)
+    b[0] = b[0].reverse();
+  if (b[0].target().is_leaf_node())
+    b[0] = b[0].reverse();
+  append(b[0].branches_after(),b);
+
+  if (uniform() < 0.5) {
+    bool success = slide_node(A, P, Stats, b, slide_node_no_expand_branch);
+    Stats.inc("slide_node",success);
+  }
+  else {
+    bool success = slide_node(A, P, Stats, b, slide_node_expand_branch);
+    Stats.inc("slide_node_expand_branch",success);
+  }
 }
 

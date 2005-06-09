@@ -11,8 +11,11 @@ using std::valarray;
 unsigned long myrand_init();
 unsigned long myrand_init(unsigned long);
  
-// returns a value in [0,1)
+// synonym for 'uniform'
 double myrandomf();
+
+// returns a value in [0,1)
+double uniform();
 
 // return the log of a variable that is uniform on [0,1)
 double log_unif();

@@ -29,8 +29,12 @@ unsigned long myrand_init(unsigned long s) {
   return s;
 }
 
-double myrandomf() {
+double uniform() {
   return rng::standard->uniform();
+}
+
+double myrandomf() {
+  return uniform();
 }
 
 double log_unif() {

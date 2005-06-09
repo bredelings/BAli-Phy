@@ -9,6 +9,7 @@
 
 
 // These have const A, cant be a "move"
+void slide_node(const alignment& A, Parameters& P, MCMC::MoveStats& Stats, int);
 void change_branch_length(const alignment&, Parameters&, MCMC::MoveStats&, int);
 void change_branch_length_multi(const alignment&, Parameters&, MCMC::MoveStats&, int);
 
@@ -50,6 +51,7 @@ void two_way_topology_sample_MH(alignment&, Parameters&, MCMC::MoveStats&, int);
 void three_way_topology_and_alignment_sample(alignment&, Parameters&, MCMC::MoveStats&, int);
 
 void sample_SPR(alignment&, Parameters&, MCMC::MoveStats&, int);
+void slide_node_move(alignment&, Parameters&, MCMC::MoveStats&, int);
 void change_branch_length_move(alignment&, Parameters&, MCMC::MoveStats&, int);
 void change_branch_length_multi_move(alignment&, Parameters&, MCMC::MoveStats&, int);
 void change_branch_length_and_T(alignment&, Parameters&, MCMC::MoveStats&, int);

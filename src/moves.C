@@ -10,6 +10,13 @@
 
 using MCMC::MoveStats;
 
+void slide_node_move(alignment& A, Parameters& P, MoveStats& Stats,int b) {
+  if (not P.SModel().full_tree)
+    return;
+
+  slide_node(A,P,Stats,b);
+}
+
 void change_branch_length_move(alignment& A, Parameters& P, MoveStats& Stats,int b) {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
     return;
@@ -221,7 +228,9 @@ void sample_NNI_and_branch_lengths(alignment& A, Parameters& P, MoveStats& Stats
 
     if (P.T.branch(b).is_internal_branch())
       three_way_topology_sample(A,P,Stats,b);
+
     change_branch_length(A,P,Stats,b);
+    slide_node(A,P,Stats,b);
     change_branch_length(A,P,Stats,b);
     change_branch_length(A,P,Stats,b);
   }
