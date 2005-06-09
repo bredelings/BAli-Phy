@@ -529,10 +529,8 @@ void Tree::compute_partitions() {
 
     cached_partitions[b][b.target()] = true;
 
-    if (b.target().is_internal_node()) {
-      for(const_edges_after_iterator b2 = b.branches_after();b2;b2++)
-	cached_partitions[b] |= cached_partitions[*b2];
-    }
+    for(const_edges_after_iterator b2 = b.branches_after();b2;b2++)
+      cached_partitions[b] |= cached_partitions[*b2];
 
     cached_partitions[b.reverse()] = not cached_partitions[b];
   }
