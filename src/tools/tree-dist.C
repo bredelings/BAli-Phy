@@ -222,11 +222,11 @@ valarray<bool> tree_sample::supports_topology(const string& t) const {
   typeof(index.begin()) here = index.find(t);
 
   if (here == index.end())
-    return valarray<bool>(false,trees.size());
+    return valarray<bool>(false,size());
 
   int t_i = index[t];
 
-  valarray<bool> result(trees.size());
+  valarray<bool> result(size());
 
   for(int i=0;i<result.size();i++)
     result[i] = (t_i == which_topology[i]);
@@ -235,7 +235,7 @@ valarray<bool> tree_sample::supports_topology(const string& t) const {
 }
 
 valarray<bool> tree_sample::supports_partition(const Partition& P) const {
-  valarray<bool> result(trees.size());
+  valarray<bool> result(size());
 
   for(int i=0;i<result.size();i++) {
 
@@ -249,7 +249,7 @@ valarray<bool> tree_sample::supports_partition(const Partition& P) const {
 
 valarray<bool> tree_sample::supports_partitions(const vector<Partition>& partitions) const 
 {
-  valarray<bool> result(trees.size());
+  valarray<bool> result(size());
 
   for(int i=0;i<result.size();i++) {
 
@@ -312,7 +312,7 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
     if (lines++ < skip) continue;
 
     // quit if we've read in 'max' trees
-    if (max >= 0 and trees.size() == max) break;
+    if (max >= 0 and size() == max) break;
 
     //--------- Count how many of each topology -----------//
     SequenceTree T;
@@ -327,7 +327,7 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
     }
 
     // This should be a standard string representation
-    string t = add_root(T,0).write(false);
+    string t = RootedSequenceTree(T,T.directed_branch(0).target()).write(false);
       
     // If it hasn't been seen before, insert it
     if (index.find(t) == index.end()) {
@@ -349,10 +349,11 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
     }
   }
 
-  if (trees.size() == 0)
+  if (size() == 0)
     throw myexception()<<"No trees were read in!";
   
-  cout<<"# Loaded "<<trees.size()<<" trees"<<endl;
+  assert(trees.size() == size());
+  cout<<"# Loaded "<<size()<<" trees"<<endl;
 
   //----------- Normalize the expectations --------------//
   for(int i=0;i<topologies.size();i++) {
@@ -502,7 +503,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
   }
 
   vector<Partition> partitions;
-  partitions.reserve(majority.size());
+  partitions.reserve( 2*names.size() );
   for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
     const valarray<bool>& partition =(*p)->first;
  

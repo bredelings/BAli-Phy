@@ -109,7 +109,8 @@ public:
 
   int get_index(const std::string& t) const;
 
-  int size() const {return trees.size();}
+  // this should equal trees.size(), but should be MUCH faster!
+  int size() const {return which_topology.size();}
 
   std::valarray<bool> supports_topology(const std::string& t) const;
 
