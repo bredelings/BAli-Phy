@@ -195,13 +195,6 @@ void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b)
   if (C>0) result.totals[0] = 1;
 
   int dist = (int)topology_distance(T1,T2);
-  std::cerr<<"NNI distance = "<<topology_distance(T1,T2)<<std::endl;
-
-  std::cerr<<"connected1 = "<<connected1[0]<<"  "<<connected1[1]<<std::endl;
-  std::cerr<<"connected2 = "<<connected2[0]<<"  "<<connected2[1]<<std::endl;
-
-  std::cerr<<"T1 = "<<T1<<std::endl;
-  std::cerr<<"T2 = "<<T2<<std::endl;
 
   if (same_topology) 
     assert(dist == 0);
