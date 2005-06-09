@@ -17,11 +17,48 @@ int choose_scratch(const std::vector<F>& P, std::vector<F>& sum)
   for(int i=1;i<sum.size();i++)
     sum[i] = sum[i-1] + P[i];
 
-  F r = F(myrandomf()) * sum[sum.size()-1];
+  F r = F(uniform()) * sum[sum.size()-1];
 
   for(int i=0;i<sum.size();i++) 
     if (r < sum[i])
       return i;
+
+  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
+}
+
+template <typename F>
+int choose_MH_scratch(int i,const std::vector<F>& P, std::vector<F>& sum) 
+{
+  assert(P.size() == sum.size());
+  assert(i < P.size());
+
+  if (P.size() == 1)
+    return 0;
+
+  // compute min of all elements
+  // compute sum of all elements EXCEPT P[i]
+  sum[0] = P[0];
+  if (i==0) sum[0] = 0;
+
+  double min = P[0];
+  for(int k=1;k<sum.size();k++) 
+  {
+    sum[k] = sum[k-1];
+    if (k != i) sum[k] += P[k];
+
+    if (P[k] < min) min = P[k];
+  }
+  double total = sum[sum.size()-1] + P[i];
+
+  // choose the element 
+  F r = F(uniform()) * (total - min);
+
+  for(int k=0;k<sum.size();k++) 
+    if (r < sum[k])
+      return k;
+
+  if (r < total - min)
+    return i;
 
   throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
 }
@@ -33,11 +70,25 @@ inline int choose_scratch(std::vector<F>& P)
 }
 
 template <typename F>
+inline int choose_MH_scratch(std::vector<F>& P) 
+{
+  return choose_MH_scratch(P,P);
+}
+
+template <typename F>
 inline int choose(const std::vector<F>& P) 
 {
   std::vector<F> sum(P.size());
 
   return choose_scratch(P,sum);
+}
+
+template <typename F>
+inline int choose_MH(const std::vector<F>& P) 
+{
+  std::vector<F> sum(P.size());
+
+  return choose_MH_scratch(P,sum);
 }
 
 template <typename F>
@@ -49,6 +100,32 @@ F choose_P(int s,const std::vector<F>& P) {
     sum  += P[i];
 
   return P[s]/sum;
+}
+
+template <typename F>
+F choose_MH_P(int i,int j,const std::vector<F>& P) {
+  assert(i >= 0 and i < P.size());
+  assert(j >= 0 and j < P.size());
+
+  if (P.size() == 1) {
+    if (j==0) 
+      return 1.0;
+    else
+      return 0.0;
+  }
+
+  double min = P[0];
+  F sum = P[0];
+  for(int k=1;k<P.size();k++) {
+    sum  += P[k];
+
+    if (P[k] < min) min = P[k];
+  }
+
+  if (i==j)
+    return (P[j] - min)/(sum - min);
+  else
+    return P[j]/(sum - min);
 }
 
 #endif
