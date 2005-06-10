@@ -449,12 +449,14 @@ namespace substitution {
     subA_index_check_regenerate(A,T);
 #endif
 
+#ifndef DEBUG_CACHING
     if (cache.cv_up_to_date()) {
 #ifndef NDEBUG
       std::clog<<"Pr: Using cached value "<<log(cache.cached_value)<<"\n";
 #endif
       return cache.cached_value;
     }
+#endif
 
     int n_br = calculate_caches(A,MC,T,cache,MModel);
 #ifndef NDEBUG
@@ -488,6 +490,7 @@ namespace substitution {
 #ifdef DEBUG_CACHING
     Parameters P2 = P;
     P2.LC.invalidate_all();
+    invalidate_subA_index_all(A);
     efloat_t result2 = Pr(A, P2, P2.LC);
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
