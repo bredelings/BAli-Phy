@@ -102,6 +102,14 @@ int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vec
     return two_way_topology_sample_sgaps(a,p,rho,b);
 }
 
+
+void two_way_NNI_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) {
+  if (myrandomf() < 0.5)
+    two_way_topology_sample(A,P,Stats,b);
+  else
+    two_way_NNI_and_branches_sample(A,P,Stats,b);
+}
+
 void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) 
 {
   vector<int> nodes = A5::get_nodes_random(P.T,b);
@@ -115,6 +123,7 @@ void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int 
   int b2 = p[1].T.directed_branch(nodes[5],nodes[2]);
 
   p[1].T.exchange_subtrees(b1, b2);
+  p[1].LC.invalidate_branch(p[1].T, b);
   invalidate_subA_index_branch(a[1], p[1].T, b);
   
   const vector<efloat_t> rho(2,1);
@@ -126,7 +135,7 @@ void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int 
     P = p[C];
   }
 
-  Stats.inc("2-way NNI", C>0);
+  Stats.inc("NNI (2-way)", C>0);
 }
 
 vector<int> NNI_branches(const Tree& T, int b) 
@@ -156,13 +165,12 @@ void two_way_NNI_and_branches_sample(alignment& A, Parameters& P, MoveStats& Sta
   vector<Parameters> p(2,P);
 
   //---------------- Do the NNI operation -------------------//
-  Tree& T2 = p[1].T;
+  int b1 = p[1].T.directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T.directed_branch(nodes[5],nodes[2]);
 
-  int b1 = T2.directed_branch(nodes[4],nodes[1]);
-  int b2 = T2.directed_branch(nodes[5],nodes[2]);
-
-  T2.exchange_subtrees(b1, b2);
-  invalidate_subA_index_branch(a[1], T2, b);
+  p[1].T.exchange_subtrees(b1, b2);
+  p[1].LC.invalidate_branch(p[1].T, b);
+  invalidate_subA_index_branch(a[1], p[1].T, b);
   
   //------------- Propose new branch lengths ----------------//
   double ratio = 1.0;
@@ -172,7 +180,7 @@ void two_way_NNI_and_branches_sample(alignment& A, Parameters& P, MoveStats& Sta
 
     double factor = exp(gaussian(0,0.05));
 
-    double L = T2.branch( branches[i] ).length() * factor;
+    double L = p[1].T.branch( branches[i] ).length() * factor;
 
     p[1].setlength(branches[i], L);
 
@@ -191,7 +199,7 @@ void two_way_NNI_and_branches_sample(alignment& A, Parameters& P, MoveStats& Sta
     P = p[C];
   }
 
-  Stats.inc("2-way NNI+branches", C>0);
+  Stats.inc("NNI (2-way) + branches", C>0);
 }
 
 int three_way_topology_sample(vector<alignment>& a,vector<Parameters>& p, const vector<efloat_t>& rho, int b) 
@@ -239,7 +247,7 @@ void three_way_topology_sample(alignment& A,Parameters& P, MoveStats& Stats, int
     P = p[C];
   }    
 
-  Stats.inc("3-way NNI",C>0);
+  Stats.inc("NNI (3-way)",C>0);
 }
 
 void three_way_topology_and_alignment_sample(alignment& A,Parameters& P, MoveStats& Stats, int b) 
@@ -278,5 +286,5 @@ void three_way_topology_and_alignment_sample(alignment& A,Parameters& P, MoveSta
     P = p[C];
   }
 
-  Stats.inc("3-way NNI + A",C>0);
+  Stats.inc("NNI (3-way) + A",C>0);
 }

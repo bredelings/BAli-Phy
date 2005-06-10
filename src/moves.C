@@ -227,7 +227,10 @@ void sample_NNI_and_branch_lengths(alignment& A, Parameters& P, MoveStats& Stats
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if (P.T.branch(b).is_internal_branch())
-      three_way_topology_sample(A,P,Stats,b);
+      if (myrandomf() < 0.5)
+	three_way_topology_sample(A,P,Stats,b);
+      else
+	two_way_NNI_sample(A,P,Stats,b);
 
     change_branch_length(A,P,Stats,b);
     slide_node(A,P,Stats,b);

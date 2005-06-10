@@ -35,6 +35,7 @@ bool three_way_topology_sample(alignment& A,Parameters& P1,const Parameters& P2,
 /// Resample between 2 NNI topologies around branch b
 int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int b);
 
+
 /*-------------- Top Level Sampling Routines -----------*/
 
 void walk_tree_sample_alignments(alignment&, Parameters&, MCMC::MoveStats&);
@@ -47,7 +48,8 @@ void sample_two_nodes_move(alignment&, Parameters&, MCMC::MoveStats&, int);
 
 void three_way_topology_sample(alignment&, Parameters&, MCMC::MoveStats&, int);
 void two_way_topology_sample(alignment&, Parameters&, MCMC::MoveStats&, int);
-void two_way_topology_sample_MH(alignment&, Parameters&, MCMC::MoveStats&, int);
+void two_way_NNI_sample(alignment&, Parameters&, MCMC::MoveStats&, int);
+void two_way_NNI_and_branches_sample(alignment&, Parameters&, MCMC::MoveStats&, int);
 void three_way_topology_and_alignment_sample(alignment&, Parameters&, MCMC::MoveStats&, int);
 
 void sample_SPR(alignment&, Parameters&, MCMC::MoveStats&, int);
