@@ -557,12 +557,6 @@ int main(int argc,char* argv[])
     double cutoff = args["cutoff"].as<double>();
     if (cutoff < 0.5) cutoff = 0.5;
 
-    foreach(e,E) {
-      if (e->p < cutoff) break;
-
-      std::cerr<<"s1 = "<<e->s1<<" x1 = "<<e->x1<<"       s2 = "<<e->s2<<" x2 = "<<e->x2<<"     p = "<<e->p<<"\n";
-    }
-    
     //-------- Build a beginning alignment --------//
     matrix M = unaligned_matrix(L);
 
