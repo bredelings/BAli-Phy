@@ -59,6 +59,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tag", value<string>()->default_value("sample"),"only read alignments preceded by 'align[<tag>'")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("cutoff",value<double>()->default_value(0.75),"ignore events below this probability")
+    ("strict","require all implied pairs pass the cutoff")
     ;
 
   variables_map args;     
@@ -95,8 +96,76 @@ bool operator()(const Edge& E1, const Edge& E2) {
 
 class Edges: public std::multiset<Edge,edge_comp>
 {
+  vector<vector<vector<std::multiset<Edge,edge_comp>::iterator> > > lookup;
 public:
+  void build_index();
+
+  double PP(int s1,int x1,int s2,int x2) const;
+  int index_in_sequence(int s1,int x1,int s2) const;
+
+  Edges(const vector<int>& L);
 };
+
+
+Edges::Edges(const vector<int>& L)
+  :lookup(L.size())
+{
+  for(int i=0;i<L.size();i++)
+    lookup[i].resize(L.size());
+
+  for(int i=0;i<L.size();i++)
+    for(int j=0;j<L.size();j++) {
+      lookup[i][j].clear();
+      lookup[i][j].resize(L[i],end());
+    }
+}
+
+void Edges::build_index() {
+  foreach(e,*this) {
+    if (e->x1 >= 0)
+      lookup[e->s1][e->s2][e->x1] = e;
+
+    if (e->x2 >= 0)
+      lookup[e->s2][e->s1][e->x2] = e;
+  }
+}
+
+double Edges::PP(int s1, int x1, int s2, int x2) const 
+{
+  assert(x1 >= 0);
+
+  if (lookup[s1][s2][x1] == end())
+    return 0;
+
+  const Edge& e = *lookup[s1][s2][x1];
+  if (e.s1 != s1) {
+    std::swap(s1,s2);
+    std::swap(x1,x2);
+    assert(e.s1 == s1);
+  }
+
+  if (e.x2 == x2)
+    return e.p;
+  else
+    return 0;
+}
+
+int Edges::index_in_sequence(int s1,int x1,int s2) const 
+{
+  assert(x1 >= 0);
+
+  if (lookup[s1][s2][x1] == end())
+    return -3;
+
+  const Edge& e = *lookup[s1][s2][x1];
+  if (e.s1 == s1) {
+    return e.x2;
+  }
+  else {
+    assert(e.s1 == s2);
+    return e.x1;
+  }
+}
 
 
 void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
@@ -106,7 +175,6 @@ void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
   for(int i=0;i<count.size1();i++)
     for(int j=0;j<count.size2();j++)
       count(i,j) = 0;
-
 
   // get counts of each against each
   for(int i=0;i<Ms.size();i++) {
@@ -155,8 +223,13 @@ public:
   int length(int i) const {return column_index[i].size();}
 
   bool columns_conflict(int c1, int c2) const;
+
+  bool consistent(int c1, int s,int x, const Edges& E,double cutoff) const;
+  bool consistent(int c1, int c2,const Edges& E, double cutoff) const;
+
   void merge_columns(int c1,int c2);
   void merge_simple(const Edges& E,double p);
+  void merge_strict(const Edges& E,double p);
 
   matrix(int C,const vector<int>& L)
     :ublas::matrix<int>(C,L.size())
@@ -207,6 +280,30 @@ bool matrix::columns_conflict(int c1, int c2) const
   }
 
   return false;
+}
+
+bool matrix::consistent(int c, int s2,int x2, const Edges& E,double cutoff) const 
+{
+  bool ok = true;
+  for(int s1=0;s1<size2() and true;s1++) {
+    int x1 = index(c,s1);
+    if (x1 < 0) continue;
+
+    if (E.PP(s1,x1,s2,x2) < cutoff)
+      ok = false;
+  }
+  return ok;
+}
+
+bool matrix::consistent(int c1, int c2,const Edges& E, double cutoff) const 
+{
+  for(int s2=0;s2<size2() and true;s2++) {
+    int x2 = index(c2,s2);
+    if (x2 == -3) continue;
+
+    if (not consistent(c1,s2,x2,E,cutoff)) return false;
+  }
+  return true;
 }
 
 void matrix::merge_columns(int c1, int c2) 
@@ -282,6 +379,47 @@ void matrix::merge_simple(const Edges& E,double cutoff)
 	if (c1 == c2) continue;
 
 	if (not columns_conflict(c1,c2))
+	  merge_columns(c1,c2);
+      }
+    }
+}
+
+void matrix::merge_strict(const Edges& E,double cutoff)
+{
+    //-------- Merge some columns --------//
+    foreach(e,E) 
+    {
+      if (e->p < cutoff) break;
+
+      if (e->x2 == -1) {
+	int c1 = column(e->s1,e->x1);
+
+	if (not consistent(c1,e->s2,-1,E,cutoff))
+	  continue;
+
+	if (index(c1,e->s2) == -3)
+	  index(c1,e->s2) = -1;
+      }
+      else if (e->x1 == -1) {
+	int c1 = column(e->s2,e->x2);
+
+	if (not consistent(c1,e->s1,-1,E,cutoff))
+	  continue;
+
+	if (index(c1,e->s1) == -3)
+	  index(c1,e->s1) = -1;
+
+      }
+      else {
+	assert(e->x1 >= 0 and e-> x2>=0);
+
+	int c1 = column(e->s1,e->x1);
+	int c2 = column(e->s2,e->x2);
+
+	if (c1 == c2) continue;
+
+	if (not columns_conflict(c1,c2) and 
+	    consistent(c1,c2,E,cutoff))
 	  merge_columns(c1,c2);
       }
     }
@@ -407,12 +545,14 @@ int main(int argc,char* argv[])
 
 
     //--------- Get list of supported pairs ---------//
-    Edges E;
+    Edges E(L);
 
     for(int s1=0;s1<N;s1++)
       for(int s2=0;s2<s1;s2++)
 	add_edges(E,Ms,s1,s2,L[s1],L[s2]);
 
+
+    E.build_index();
     //--------- Build alignment from list ---------//
     double cutoff = args["cutoff"].as<double>();
     if (cutoff < 0.5) cutoff = 0.5;
@@ -426,7 +566,10 @@ int main(int argc,char* argv[])
     //-------- Build a beginning alignment --------//
     matrix M = unaligned_matrix(L);
 
-    M.merge_simple(E,cutoff);
+    if (args.count("strict"))
+      M.merge_strict(E,cutoff);
+    else
+      M.merge_simple(E,cutoff);
 
     ublas::matrix<int> M2 = get_ordered_matrix(M);
 
