@@ -21,9 +21,10 @@
 </screen>
 
     <para>The <emphasis>recommended</emphasis> way to run the program
-    is to copy it to <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename> and
-    run (in a bourne-shell)</para>
-
+    is to copy the <filename>bali-phy</filename> executable to
+    <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename>
+    and run (in a bourne-shell)</para>  
+    
     <screen>
  <prompt>%</prompt> <userinput>VERSION=<replaceable>version</replaceable> CLASS=<replaceable>class</replaceable> sampler.sh <replaceable>sequence-file</replaceable></userinput>
 </screen>
