@@ -474,3 +474,25 @@ Execution: 5d (unfixed A)
 real    0m12.717s
 user    0m10.233s
 sys     0m1.837s
+
+---------------------------
+
+gcc 4.1-cvs
+
+[bali-phy] Data/EF-Tu/12d.fasta --iterations 10 --seed 0 --gaps star >out 2>err
+
+
+v1035
+real    0m2.745s
+user    0m2.730s
+sys     0m0.010s
+
+v1059+changes  [w/ g++-cvs] = 3.96 * <1035>
+real    0m10.799s
+user    0m10.790s
+sys     0m0.000s
+
+v1061 [w/ g++-4.0]
+real    0m6.758s
+user    0m3.370s
+sys     0m0.020s
