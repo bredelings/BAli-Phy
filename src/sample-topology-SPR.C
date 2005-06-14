@@ -194,7 +194,7 @@ void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b)
   result.counts[0] = 1;
   if (C>0) result.totals[0] = 1;
 
-  int dist = (int)topology_distance(p[0].T,P.T);
+  int dist = (int)topology_distance(p[0].T,p[1].T);
 
   if (same_topology) 
     assert(dist == 0);
