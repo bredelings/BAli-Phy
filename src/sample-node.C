@@ -209,7 +209,7 @@ int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,const vector< v
   for(int i=0;i<Pr.size();i++)
     Pr[i] = rho[i] * OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
 
-  int C = choose(Pr);
+  int C = choose_MH(0,Pr);
 
 #ifndef NDEBUG_DP
   std::cerr<<"choice = "<<C<<endl;
@@ -256,7 +256,7 @@ int sample_node_multi(vector<alignment>& a,vector<Parameters>& p,const vector< v
   for(int i=0;i<p.size();i++) {
     efloat_t proposal_ratio = 1;
     if (i<Pr.size())
-      proposal_ratio = choose_P(i,Pr)/choose_P(0,Pr);
+      proposal_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
     else
       proposal_ratio = 1;
 

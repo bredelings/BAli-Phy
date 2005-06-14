@@ -37,18 +37,16 @@ int choose_MH_scratch(int i,const std::vector<F>& P, std::vector<F>& sum)
 
   // compute min of all elements
   // compute sum of all elements EXCEPT P[i]
-  sum[0] = P[0];
-  if (i==0) sum[0] = 0;
-
-  double min = P[0];
-  for(int k=1;k<sum.size();k++) 
+  F total = 0;
+  F min = P[0];
+  for(int k=0;k<sum.size();k++) 
   {
-    sum[k] = sum[k-1];
-    if (k != i) sum[k] += P[k];
+    if (k != i) total += P[k];
+    sum[k] = total;
 
     if (P[k] < min) min = P[k];
   }
-  double total = sum[sum.size()-1] + P[i];
+  total += P[i];
 
   // choose the element 
   F r = F(uniform()) * (total - min);
@@ -70,9 +68,9 @@ inline int choose_scratch(std::vector<F>& P)
 }
 
 template <typename F>
-inline int choose_MH_scratch(std::vector<F>& P) 
+inline int choose_MH_scratch(int i,std::vector<F>& P) 
 {
-  return choose_MH_scratch(P,P);
+  return choose_MH_scratch(i,P,P);
 }
 
 template <typename F>
@@ -84,11 +82,11 @@ inline int choose(const std::vector<F>& P)
 }
 
 template <typename F>
-inline int choose_MH(const std::vector<F>& P) 
+inline int choose_MH(int i,const std::vector<F>& P) 
 {
   std::vector<F> sum(P.size());
 
-  return choose_MH_scratch(P,sum);
+  return choose_MH_scratch(i,P,sum);
 }
 
 template <typename F>
@@ -114,7 +112,7 @@ F choose_MH_P(int i,int j,const std::vector<F>& P) {
       return 0.0;
   }
 
-  double min = P[0];
+  F min = P[0];
   F sum = P[0];
   for(int k=1;k<P.size();k++) {
     sum  += P[k];
@@ -122,8 +120,12 @@ F choose_MH_P(int i,int j,const std::vector<F>& P) {
     if (P[k] < min) min = P[k];
   }
 
-  if (i==j)
-    return (P[j] - min)/(sum - min);
+  if (i==j) {
+    if (P[j] > min)
+      return (P[j] - min)/(sum - min);
+    else
+      return 0.0;
+  }
   else
     return P[j]/(sum - min);
 }
