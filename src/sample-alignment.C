@@ -128,9 +128,8 @@ void sample_alignment(alignment& A,Parameters& P,int b)
   //--------- Compute path probabilities and sampling probabilities ---------//
   vector< vector<efloat_t> > PR(p.size());
 
-  efloat_t P_choice = 1;
   for(int i=0;i<p.size();i++) 
-    PR[i] = sample_P(a[i], p[i], P_choice, 1, paths[i], Matrices);
+    PR[i] = sample_P(a[i], p[i], 1, 1, paths[i], Matrices);
 
   //--------- Check that each choice is sampled w/ the correct Probability ---------//
   check_sampling_probabilities(PR,a);

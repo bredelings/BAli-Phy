@@ -157,28 +157,32 @@ void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t
 
 /// Computes true, sampling, and proposal probabilities
 vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
-			  efloat_t P_choice, efloat_t rho,
+			  efloat_t ratio, efloat_t rho,
 			  const vector<int>& path, const DPengine& Matrices) 
 {
-  vector<efloat_t> PR(3);
+  vector<efloat_t> PR(4);
 
   vector<int> path_g = Matrices.generalize(path);
 
   // Probability
   PR[0] = P.probability(A,P);
 
-  // Probability of sampling 
-  PR[1] = P_choice * Matrices.path_P(path_g) * Matrices.generalize_P(path);
+  // Probability of sampling A | i
+  PR[1] = Matrices.path_P(path_g) * Matrices.generalize_P(path);
 
   // Proposal probability
   PR[2] = rho;
 
-  std::cerr<<"PrS = "<<P_choice<<" + "<<Matrices.path_P(path_g)<<" + "<<Matrices.generalize_P(path)<<endl;
+  // Ratio of P_0i/P_i0
+  PR[3] = ratio;
+
+  //  std::cerr<<"PrS = "<<P_choice<<" + "<<Matrices.path_P(path_g)<<" + "<<Matrices.generalize_P(path)<<endl;
 
   return PR;
 }
 
-/// Check that pi[k]*rho[k]/S[k] is a constant
+/// Check that [ pi(A,i) * rho[i] / P(A|i) ] * P(i,0)/P(0,i) = [ pi(A`,0) * rho[0] / P(A`|0) ]
+
 void check_sampling_probabilities(const vector< vector<efloat_t> >& PR,const vector<alignment>& a) 
 {
   const vector<efloat_t>& P1 = PR.back();
@@ -191,12 +195,12 @@ void check_sampling_probabilities(const vector< vector<efloat_t> >& PR,const vec
     
     std::cerr<<"option = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
 
-    std::cerr<<" Pr1 * Rho1  = "<<P1[0]*P1[2]<<"    Pr2 * Rho2  = "<<P2[0]*P2[2]<<
-      "    Pr2 * Rho2  - Pr1 * Rho1  = "<<P2[0]*P2[2]/(P1[0]*P1[2])<<endl;
+    //    std::cerr<<" Pr1 * Rho1  = "<<P1[0]*P1[2]<<"    Pr2 * Rho2  = "<<P2[0]*P2[2]<<
+    //      "    Pr2 * Rho2  - Pr1 * Rho1  = "<<P2[0]*P2[2]/(P1[0]*P1[2])<<endl;
 
-    std::cerr<<" PrS1 = "<<P1[1]<<"    PrS2 = "<<P2[1]<<"    PrS2 - PrS1 = "<<P2[1] / PR.back()[1]<<endl;
+    //    std::cerr<<" PrS1 = "<<P1[1]<<"    PrS2 = "<<P2[1]<<"    PrS2 - PrS1 = "<<P2[1] / PR.back()[1]<<endl;
     
-    efloat_t ratio2 = P2[0]*P2[2]/P2[1];
+    efloat_t ratio2 = (P2[0]*P2[2]/P2[1]) / P2[3];
     double diff = log(ratio2/ratio1);
 
     std::cerr<<"diff = "<<diff<<endl;

@@ -306,14 +306,14 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,const vector< ve
   {
     if (Matrices[i]->Pr_sum_all_paths() <= 0.0) continue;
 
-    efloat_t P_choice = 1;
+    efloat_t proposal_ratio = 1;
     if (i<Pr.size())
-      P_choice = choose_P(i,Pr);
+      proposal_ratio = choose_P(i,Pr)/choose_P(0,Pr);
     else
-      P_choice = choose_P(0,Pr);
-
+      proposal_ratio = 1;
+    
     aa.push_back(a[i]);
-    PR.push_back( sample_P(a[i], p[i], P_choice, rho[i], paths[i], *Matrices[i]) );
+    PR.push_back( sample_P(a[i], p[i], proposal_ratio, rho[i], paths[i], *Matrices[i]) );
     PR.back()[0] *= A3::correction(a[i],p[i],nodes[i]);
   }
 

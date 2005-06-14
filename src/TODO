@@ -11,9 +11,6 @@
      between 2 nodes + sum all branches + sum all paths
   c) compare mixing with few taxa, many taxa...
 
--6. Check speedup for blocked DP matrix calculations
-  a) How would this work for DP array calculations (1-d) ?
-
 -5. Speeding up GQ_exit( )
   a) can we avoid copying G into G2 - can we construct it in place?
   b) if we put the check into #ifndef NDEBUG, does this gain us anything?
@@ -289,3 +286,23 @@ the prior, because we never want to use it  differently.
 
   b) implement checking when using this routine
 
+
+
+*IDEAS*
+
+ - make a SplitsTree-like graph out of a tree sample,
+   where the edges mean bi-partitions, and don't use distance
+   information but topology information instead. 
+   (contact girl from INCOB?)
+
+ - for HIV data, we want samples from DIFFERENT PATIENTS, not
+   from the same patient, because recombination is limitted to
+   within-patient samples.
+
+   if we can avoid co-infection, then we are good!
+
+   (a) check Shankarrapa samples from the HIV database...
+   (b) ? ask Marc about asking people if we can use their data
+       or asking questions about their data.
+
+ - find some papers for the journal club?

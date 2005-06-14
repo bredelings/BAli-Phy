@@ -293,13 +293,13 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,const vect
   vector< vector<efloat_t> > PR(p.size());
 
   for(int i=0;i<p.size();i++) {
-    efloat_t P_choice = 0;
+    efloat_t proposal_ratio = 1;
     if (i<Pr.size())
-      P_choice = choose_P(i,Pr);
+      proposal_ratio = choose_P(i,Pr)/choose_P(0,Pr);
     else
-      P_choice = choose_P(0,Pr);
+      proposal_ratio = 1;
 
-    PR[i] = sample_P(a[i], p[i], P_choice, rho[i], paths[i], *Matrices[i]);
+    PR[i] = sample_P(a[i], p[i], proposal_ratio, rho[i], paths[i], *Matrices[i]);
     PR[i][0] *= A5::correction(a[i],p[i],nodes[i]);
   }
 
