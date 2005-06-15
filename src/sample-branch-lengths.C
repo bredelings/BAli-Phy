@@ -81,14 +81,14 @@ void change_branch_length_log_scale(const alignment& A, Parameters& P,MoveStats&
 
 void change_branch_length(const alignment& A, Parameters& P,MoveStats& Stats,int b) {
 
-  double r = loadvalue(P.keys,"log_branch_fraction",0.5);
+  double r = loadvalue(P.keys,"log_branch_fraction",0.75);
 
   if (myrandomf() < r) {
-    double sigma = loadvalue(P.keys,"log_branch_sigma",1.0);
+    double sigma = loadvalue(P.keys,"log_branch_sigma",0.3);
     change_branch_length_log_scale(A, P, Stats, b, sigma);
   }
   else {
-    double sigma = loadvalue(P.keys,"branch_sigma",1.0);
+    double sigma = loadvalue(P.keys,"branch_sigma",0.3);
     change_branch_length_flat(A, P, Stats, b, sigma);
   }
 }
