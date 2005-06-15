@@ -103,13 +103,6 @@ int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vec
 }
 
 
-void two_way_NNI_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) {
-  if (myrandomf() < 0.5)
-    two_way_topology_sample(A,P,Stats,b);
-  else
-    two_way_NNI_and_branches_sample(A,P,Stats,b);
-}
-
 void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) 
 {
   vector<int> nodes = A5::get_nodes_random(P.T,b);
@@ -136,6 +129,43 @@ void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int 
   }
 
   Stats.inc("NNI (2-way)", C>0);
+}
+
+void two_way_NNI_SPR_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) 
+{
+  vector<int> nodes = A5::get_nodes_random(P.T,b);
+
+  select_root(P.T, b, P.LC);
+
+  vector<alignment> a(2,A);
+  vector<Parameters> p(2,P);
+
+  int b1 = p[1].T.directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T.directed_branch(nodes[5],nodes[2]);
+
+  p[1].T.exchange_subtrees(b1, b2);
+  p[1].LC.invalidate_branch(p[1].T, b);
+  invalidate_subA_index_branch(a[1], p[1].T, b);
+  
+  double LA = p[0].T.branch(nodes[4],nodes[0]).length();
+  double LB = p[0].T.branch(nodes[4],nodes[5]).length();
+  double LC = p[0].T.branch(nodes[5],nodes[3]).length();
+
+  p[1].setlength(p[1].T.branch(nodes[0],nodes[4]),LA + LB);
+  p[1].setlength(p[1].T.branch(nodes[4],nodes[5]),LC*uniform());
+  p[1].setlength(p[1].T.branch(nodes[5],nodes[3]),LC - p[1].T.branch(nodes[4],nodes[5]).length());
+
+  vector<efloat_t> rho(2,1);
+  rho[1] = LC/(LA+LB);
+
+  int C = two_way_topology_sample(a,p,rho,b);
+
+  if (C != -1) {
+    A = a[C];
+    P = p[C];
+  }
+
+  Stats.inc("NNI (2-way/SPR)", C>0);
 }
 
 vector<int> NNI_branches(const Tree& T, int b) 
@@ -200,6 +230,16 @@ void two_way_NNI_and_branches_sample(alignment& A, Parameters& P, MoveStats& Sta
   }
 
   Stats.inc("NNI (2-way) + branches", C>0);
+}
+
+void two_way_NNI_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) {
+  double U = uniform();
+  if (U < 0.33333333)
+    two_way_topology_sample(A,P,Stats,b);
+  else if (U < 0.66666666)
+    two_way_NNI_SPR_sample(A,P,Stats,b);
+  else
+    two_way_NNI_and_branches_sample(A,P,Stats,b);
 }
 
 int three_way_topology_sample(vector<alignment>& a,vector<Parameters>& p, const vector<efloat_t>& rho, int b) 

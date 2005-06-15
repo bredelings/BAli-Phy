@@ -1124,4 +1124,11 @@ valarray<bool> branch_partition(const Tree& T,int b)
 }
 
 
+double length(const Tree& T) {
+  double total = 0;
+  for(int i=0;i<T.n_branches();i++)
+    total += T.branch(i).length();
+  return total;
+}
+
 
