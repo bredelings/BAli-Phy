@@ -193,7 +193,7 @@ double slide_node_expand_branch(vector<double>& lengths,double sigma)
   lengths[0] = L * uniform();
   lengths[1] = L - lengths[0];
 
-  return ratio;
+  return ratio*ratio;
 }
 
 
