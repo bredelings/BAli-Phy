@@ -1,3 +1,5 @@
+-10. Make tree a virtual public base class for SequenceTree and RootedTree?
+
 -9. Make a parameter for the size of branch length updates!
 
 -8. tree-dist-compare

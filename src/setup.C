@@ -135,8 +135,87 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
   check_alignment(A,T,internal_sequences);
 }
 
+/// Remap T leaf indices to match A: check the result
+void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) {
+
+  //------ IF sequences < leaf nodes THEN complain ---------//
+  if (A.n_sequences() < T.n_leaves())
+    throw myexception()<<"Tree has "<<T.n_leaves()<<" leaves but Alignment only has "
+		       <<A.n_sequences()<<" sequences.";
+
+  //----- IF sequences = leaf nodes THEN maybe add internal sequences.
+  else if (A.n_sequences() == T.n_leaves()) {
+    if (internal_sequences)
+      A = add_internal(A,T);
+  }
+  //----- IF sequences > leaf nodes THEN maybe complain -------//
+  else {
+    if (not internal_sequences)
+      throw myexception()<<"More sequences than leaf nodes!";
+
+    if (A.num_sequences() > T.n_nodes())
+      throw myexception()<<"More sequences than tree nodes!";
+    else if (A.num_sequences() < T.n_nodes())
+      throw myexception()<<"Less sequences than tree nodes!";
+  }
+  
+  //---------- double-check that we have the right number of sequences ---------//
+  if (internal_sequences)
+    assert(A.size2() == T.n_nodes());
+  else
+    assert(A.size2() == T.n_leaves());
+
+
+  //----- Remap leaf indices for T onto A's leaf sequence indices -----//
+  vector<int> mapping(T.n_leaves());
+  for(int i=0;i<T.n_leaves();i++) {
+    int target = -1;
+    for(int j=0;j<T.n_leaves();j++) {
+      if (T.seq(i) == A.seq(j).name) {
+	target = j;
+	break;
+      }
+    }
+    if (target == -1)
+      throw myexception()<<"Couldn't find sequence \""<<T.seq(i)<<"\" in alignment";
+    mapping[i] = target;
+  }
+
+  T.standardize(mapping);
+
+
+  //---- Check to see that internal nodes satisfy constraints ----//
+  check_alignment(A,T,internal_sequences);
+}
+
 // FIXME - should I make this more generic, so that it doesn't rely on a file?
 void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
+{
+  A = load_A(args,internal_sequences);
+
+  T = load_T(args);
+
+  //------------- Link Alignment and Tree -----------------//
+  link(A,T,internal_sequences);
+
+  //---------------- Randomize alignment? -----------------//
+  if (args.count("randomize-alignment"))
+    A = randomize(A,T.n_leaves());
+  
+  //------------------ Analyze 'internal'------------------//
+  if ((args.count("internal") and args["internal"].as<string>() == "+")
+      or args.count("randomize-alignment"))
+    for(int column=0;column< A.length();column++) {
+      for(int i=T.n_leaves();i<A.size2();i++) 
+	A(column,i) = alphabet::not_gap;
+    }
+
+  //---- Check that internal sequence satisfy constraints ----//
+  check_alignment(A,T,internal_sequences);
+}
+
+// FIXME - should I make this more generic, so that it doesn't rely on a file?
+void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,bool internal_sequences)
 {
   A = load_A(args,internal_sequences);
 

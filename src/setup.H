@@ -25,8 +25,13 @@ SequenceTree get_random_T(const alignment& A);
 /// Also, make sure that A has the right number of internal sequences.
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
+void link(alignment& A,RootedSequenceTree& T,bool internal_sequences=true);
+
 void load_A_and_T(const boost::program_options::variables_map& args,
 		  alignment& A,SequenceTree& T,bool internal_sequences=true);
+
+void load_A_and_T(const boost::program_options::variables_map& args,
+		  alignment& A,RootedSequenceTree& T,bool internal_sequences=true);
 
 void load_A_and_random_T(const boost::program_options::variables_map& args,
 			 alignment& A,SequenceTree& T,bool internal_sequences=true);
