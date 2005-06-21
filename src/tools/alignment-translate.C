@@ -4,7 +4,6 @@
 #include "alignment.H"
 #include "alignment-util.H"
 #include "util.H"
-
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -29,23 +28,19 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
-    ("align", value<string>(),"file with sequences and initial alignment")
     ("alphabet",value<string>()->default_value("Codons"),"set to 'Codons' to prefer codon alphabets")
     ("with-stop","include stop codons in amino-acid alphabets")
+    ("frame",value<int>()->default_value(0),"frame 0, 1, or 2")
     ;
 
-  // positional options
-  positional_options_description p;
-  p.add("align", 1);
-  
   variables_map args;     
-  store(command_line_parser(argc, argv).
-	    options(all).positional(p).run(), args);
-  // store(parse_command_line(argc, argv, desc), args);
+  store(parse_command_line(argc, argv, all), args);
+  notify(args);    
+
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-translate <alignment-file> [OPTIONS]\n";
+    cout<<"Usage: alignment-translate [OPTIONS] < sequence-file [OPTIONS]\n";
     cout<<all<<"\n";
     exit(0);
   }
@@ -61,14 +56,35 @@ int main(int argc,char* argv[])
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    //------- Try to load alignment --------//
-    alignment A1 = load_A(args);
+    //------- Try to load sequences --------//
+    vector<sequence> sequences = sequence_format::read_guess(std::cin);
+
+    if (sequences.size() == 0)
+      throw myexception()<<"Alignment file read from STDIN  didn't contain any sequences!";
+
+    //------- Convert sequences to specified reading frame --------//
+    int frame = args["frame"].as<int>();
+
+    if (frame < 0 or frame > 2)
+      throw myexception()<<"You may only specify frame 0, 1, or 2: "<<frame<<" is right out.";
+    
+    for(int i=0;i<sequences.size();i++) {
+      if (sequences.size() > frame)
+	sequences[i].erase(sequences[i].begin(),sequences[i].begin()+frame);
+      unsigned newsize = sequences[i].size();
+      newsize -= newsize%3;
+      sequences[i].resize(newsize);
+    }
+
+    //----------- Convert sequences to codons ------------//
+    alignment A1;
+    A1.load(load_alphabets(args), sequences);
 
     OwnedPointer<Codons> C = *dynamic_cast<const Codons*>(&A1.get_alphabet());
     OwnedPointer<AminoAcids> AA = C->getAminoAcids();
     
-    //------- Re-root the tree appropriately  --------//
-    alignment A2;
+    //------- Convert sequence codons to amino acids  --------//
+    alignment A2(*AA);
     for(int i=0;i<A1.size2();i++) {
       sequence S;
       S.name = A1.seq(i).name;
