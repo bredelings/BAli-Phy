@@ -67,7 +67,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-consensus [OPTIONS] < in-file\n";
+    cout<<"Usage: alignment-consensus [OPTIONS] < sequence-file\n";
     cout<<all<<"\n";
     exit(0);
   }
