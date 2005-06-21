@@ -29,7 +29,7 @@ namespace substitution {
 	const Matrix& Q = transition_P[b];
 
 	int lleaf = column[b];
-	if (a.letter(lleaf))
+	if (alphabet::letter(lleaf))
 	  temp *= Q(lroot,lleaf);
       }
       p += temp;
@@ -142,10 +142,11 @@ namespace substitution {
       f[l] = P.SModel().frequencies()[l];
 
     efloat_t total = 1;
-    for(int i=0;i<A.num_sequences();i++) {
+    for(int i=0;i<A.n_sequences();i++) {
       for(int column=0;column<A.length();column++) {
 	int l = A(column,i);
-	total *= f[l];
+	if (alphabet::letter(l))
+	  total *= f[l];
       }
     }
 
@@ -159,12 +160,13 @@ namespace substitution {
       f[l] = P.SModel().frequencies()[l];
 
     efloat_t min = 1;
-    for(int i=0;i<A.num_sequences();i++) 
+    for(int i=0;i<A.n_sequences();i++) 
     {
       efloat_t total = 1;
       for(int column=0;column<A.length();column++) {
 	int l = A(column,i);
-	total *= f[l];
+	if (alphabet::letter(l))
+	  total *= f[l];
       }
 
       if (total < min)
