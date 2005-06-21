@@ -39,6 +39,9 @@ public:
   /// Letters which mean "I don't know what this letter is"
   std::vector<std::string> missing;
 
+  /// The number of real letters per letter of the alphabet
+  int width() const {return data[0].size();}
+
   /// Index of a gap ('-')
   static const int gap = -1;
 

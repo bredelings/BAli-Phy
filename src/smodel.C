@@ -111,7 +111,7 @@ namespace substitution {
     for(int i=0;i<S.size1();i++) 
       scale -= pi[i]*Q(i,i);
 
-    return scale;
+    return scale/Alphabet().width();
   }
 
   void ReversibleMarkovModel::set_rate(double r)  {
