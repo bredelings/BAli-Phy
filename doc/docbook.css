@@ -22,7 +22,12 @@ pre.programlisting {
 .application {font-family: Courier New; font-variant: small-caps;}
 
 .variablelist {
-	background-color: #D8E4F4;
+	background-color: #F4F4F4;
+	padding: 6px;
+}
+
+.toc {
+	background-color: #F4F4F4;
 	padding: 6px;
 }
 
