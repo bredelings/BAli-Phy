@@ -135,25 +135,42 @@ namespace substitution {
     return Pr_star(A,P2);
   }
 
-  efloat_t Pr_unaligned(const alignment& A,const Parameters& P) {
-    const alphabet& a = A.get_alphabet();
+  efloat_t Pr_unaligned(const alignment& A,const Parameters& P) 
+  {
+    vector<efloat_t> f(P.SModel().frequencies().size());
+    for(int l=0;l<f.size();l++)
+      f[l] = P.SModel().frequencies()[l];
 
-    vector<double> count(a.size(),0);
-
+    efloat_t total = 1;
     for(int i=0;i<A.num_sequences();i++) {
       for(int column=0;column<A.length();column++) {
 	int l = A(column,i);
-	if (a.letter(l))
-	  count[l]++;
+	total *= f[l];
       }
-    }
-    
-    efloat_t total=1;
-    for(int l=0;l<count.size();l++) {
-      efloat_t p = P.SModel().frequencies()[l];
-      total *= pow(p,count[l]);
     }
 
     return total;
+  }
+
+  efloat_t Pr_single_sequence(const alignment& A,const Parameters& P) 
+  {
+    vector<efloat_t> f(P.SModel().frequencies().size());
+    for(int l=0;l<f.size();l++)
+      f[l] = P.SModel().frequencies()[l];
+
+    efloat_t min = 1;
+    for(int i=0;i<A.num_sequences();i++) 
+    {
+      efloat_t total = 1;
+      for(int column=0;column<A.length();column++) {
+	int l = A(column,i);
+	total *= f[l];
+      }
+
+      if (total < min)
+	min = total;
+    }
+    
+    return min;
   }
 }

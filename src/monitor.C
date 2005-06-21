@@ -50,7 +50,8 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
 		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment) {
   
   o<<"\n";
-  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]"<<"\n";
+  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]     ";
+  o<<" single sequence ["<<substitution::Pr_single_sequence(A,P)<<"]"<<"\n";
   o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<"\n";
   o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<"\n";
   o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<"\n";

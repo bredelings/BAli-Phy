@@ -37,6 +37,8 @@ namespace substitution {
   // Full likelihood - if everything is unaligned....
   efloat_t Pr_unaligned(const alignment& A,const Parameters& P);
 
+  // Full likelihood of the single sequence with the lowest likelihood
+  efloat_t Pr_single_sequence(const alignment& A,const Parameters& P);
 }
 
 #endif
