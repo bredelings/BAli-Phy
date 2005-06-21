@@ -189,7 +189,7 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) {
 }
 
 // FIXME - should I make this more generic, so that it doesn't rely on a file?
-void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
+void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,bool internal_sequences)
 {
   A = load_A(args,internal_sequences);
 
@@ -214,30 +214,11 @@ void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool in
   check_alignment(A,T,internal_sequences);
 }
 
-// FIXME - should I make this more generic, so that it doesn't rely on a file?
-void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,bool internal_sequences)
+void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
 {
-  A = load_A(args,internal_sequences);
-
-  T = load_T(args);
-
-  //------------- Link Alignment and Tree -----------------//
-  link(A,T,internal_sequences);
-
-  //---------------- Randomize alignment? -----------------//
-  if (args.count("randomize-alignment"))
-    A = randomize(A,T.n_leaves());
-  
-  //------------------ Analyze 'internal'------------------//
-  if ((args.count("internal") and args["internal"].as<string>() == "+")
-      or args.count("randomize-alignment"))
-    for(int column=0;column< A.length();column++) {
-      for(int i=T.n_leaves();i<A.size2();i++) 
-	A(column,i) = alphabet::not_gap;
-    }
-
-  //---- Check that internal sequence satisfy constraints ----//
-  check_alignment(A,T,internal_sequences);
+  RootedSequenceTree RT;
+  load_A_and_T(args,A,RT,internal_sequences);
+  T = RT;
 }
 
 void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
