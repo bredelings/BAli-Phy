@@ -13,12 +13,12 @@
      between 2 nodes + sum all branches + sum all paths
   c) compare mixing with few taxa, many taxa...
 
+-6. remove use of alignments.size() from load_alignments( ) in alignment-util.C
+
 -5. Speeding up GQ_exit( )
   a) can we avoid copying G into G2 - can we construct it in place?
   b) if we put the check into #ifndef NDEBUG, does this gain us anything?
   c) algorithm currently does more or less S*S*(S+NS) multiply-and-add's.
-
--4) Implement choose_MH( )
 
 -3. Think more carefully about using walk_tree_path
     when changing the topology...
@@ -75,14 +75,6 @@
 
 6. Make a more general substitution::Model class, so that we can e.g.
     have trees with 2 sets of branch lengths...
-
-7. Write alignment-consensus
-  a) if (l>2/3) then the INTERSECTION OF TWO Ml events cannot be contradicted
-     by an Ml event.  
-     How about level of l required for n Ml events to
-      a) intersect?
-      b) have their intersection not be contradicted by another Ml event?
-
 
 8. Add partitions from M[0.5] to M[l] if they are revealed by deleting subtrees.
    a) also mark "badly-rooted" subtrees?  (edges are hidden because of badly-rooted-ness?)
@@ -160,7 +152,7 @@ the prior, because we never want to use it  differently.
 
 [DONE]  make a separate DEBUG_CACHING
 
-[DONE]  make change_parameters() debugging code call a function which output
+[DONE]  make change_parameters() debugging code call a function which outputs
         substitution parameters.
 
 [DONE]  allow comments in the alignment constraint file, and make
@@ -288,6 +280,9 @@ the prior, because we never want to use it  differently.
 
   b) implement checking when using this routine
 
+[DONE] Implement choose_MH( )
+
+[DONE] Write alignment-consensus
 
 
 *IDEAS*
