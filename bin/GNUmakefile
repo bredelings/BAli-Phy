@@ -31,7 +31,7 @@ samples-${SKIP}+${SIZE}: out
 	cp $< $@ 
 
 tc : trees.from.${SKIP}+${SIZE}
-	tree-dist-compare $< > $@
+	tree-dist-compare $< --consensus 0.5 --consensus 0.75 --consensus 0.9 --consensus 0.99 > $@
 
 # If there are no Substitution parameters, don't bail out
 
