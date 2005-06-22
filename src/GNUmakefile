@@ -143,6 +143,11 @@ tools/joint-A-T: alignment.o alphabet.o sequence.o util.o rng.o \
 	alignment-random.o alignment-util.o randomtree.o tools/tree-dist.o \
 	tools/statistics.o ${LINKLIBS}
 
+tools/alignment-info: alignment.o alphabet.o sequence.o util.o rng.o \
+	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o imodel.o \
+	sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o \
+	model.o tree-util.o ${LINKLIBS}
+
 tools/alignment-translate: alignment.o alignment-util.o alphabet.o sequence.o \
 	sequence-format.o util.o tree.o -lboost_program_options
 
