@@ -1,3 +1,4 @@
+#include <iostream>
 #include <fstream>
 #include "sequencetree.H"
 #include "myexception.H"
@@ -205,71 +206,63 @@ void RootedSequenceTree::read(istream& file) {
 
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit
-void RootedSequenceTree::parse(const string& line) {
-
-  if (line[0] != '(') {
-    (*this) = RootedSequenceTree(line);
-    return;
-  }
-
+void RootedSequenceTree::parse(const string& line) 
+{
   vector< vector<BranchNode*> > tree_stack(1);
   sequences.clear();
 
+  const string delimiters = "(),:;";
+  const string whitespace = "\t\n ";
+
+  string prev;
   string word;
-  for(int i=0;i<line.size();i++) {
-    char c = line[i];
+  for(int i=0;get_word(word,i,line,delimiters,whitespace);prev=word) 
+  {
+    //std::cerr<<"word = '"<<word<<"'    depth = "<<tree_stack.size()<<"   stack size = "<<tree_stack.back().size()<<std::endl;
 
-    if (c == ';') break;
-
-    //------- Read the data from 'word' into the stacks ------//
-    if (c == ':') {
-      if (word.length() != 0) {
-	BranchNode* BN = new BranchNode(-1,sequences.size(),-1);
-	BN->out = BN->next = BN->prev = BN;
-	BN = ::add_node(BN);
-	tree_stack.back().push_back(BN);
-
-	sequences.push_back(word);
-	word = "";
-      }
-    }
-    else if (c== ',' or c==')') {
-      BranchNode* BN = tree_stack.back().back();
-      BN->length = convertTo<double>(word);
-      BN->out->length = BN->length;
-      word = "";
-    }
-
+    if (word == ";") break;
 
     //------ Process the data given the current state ------//
-    if (c == '(') {
+    if (word == "(") {
       tree_stack.push_back(vector<BranchNode*>());
-      if (word.length()!=0) 
+      if (not (prev == "(" or prev == "," or prev == ""))
 	throw myexception()<<"In tree file, found '(' in the middle of word \""<<word<<"\"";
     }
-    else if (c== ')') {
+    else if (word == ")") {
       // We need at least 2 levels of trees
       if (tree_stack.size() < 2)
 	throw myexception()<<"In tree file, too many end parenthesis.";
 
-      // merge the trees in the top level, and put them in the next level down
+      // merge the trees in the top level
       BranchNode* BN = tree_stack.back()[0];
       for(int i=1;i<tree_stack.back().size();i++)
 	TreeView::merge_nodes(BN,tree_stack.back()[i]);
-      tree_stack[tree_stack.size()-2].push_back(::add_node(BN));
 
       // destroy the top level
       tree_stack.pop_back();
 
-      //      std::cerr<<"    leaves: "<<T1.n_leaves()<<" + "<<T2.n_leaves()<<" = "<<Join.n_leaves()<<endl;
+      // insert merged trees into the next level down
+      BN = ::add_node(BN);
+      BN->out->length = BN->length = 1;
+      tree_stack.back().push_back(BN);
     }
-    else if (c== ' ' or c=='\n' or c == 9) 
-      ;
-    else if (c != ':' and c != ',')
-      word += c;
-    //    std::cerr<<"char = "<<c<<"    depth = "<<depth<<"   stack size = "<<tree_stack.size()<<"    word = "<<word<<endl;
+    else if (prev == "(" or prev == "," or prev == "") {
+      BranchNode* BN = new BranchNode(-1,sequences.size(),-1);
+      BN->out = BN->next = BN->prev = BN;
 
+      BN = ::add_node(BN);
+      BN->out->length = BN->length = 1;
+      tree_stack.back().push_back(BN);
+
+      sequences.push_back(word);
+    }
+    else if (prev == ":") {
+      BranchNode* BN = tree_stack.back().back();
+      BN->out->length = BN->length = convertTo<double>(word);
+    }
   }
+
+
   if (tree_stack.size() != 1)
     throw myexception()<<"Attempted to read w/o enough left parenthesis";
   if (tree_stack.back().size() != 1)

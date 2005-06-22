@@ -171,4 +171,7 @@ const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name, const U
     return value;
 }
 
+bool get_word(std::string& word, int& i,const std::string& s,
+	      const std::string& delimiters,const std::string& whitespace);
+
 #endif

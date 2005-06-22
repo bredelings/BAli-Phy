@@ -115,3 +115,35 @@ std::vector<std::string> truncate_names(const std::vector<std::string>& names) {
 
   return apply_mapping(names2,invert(mapping));
 }
+
+bool contains_char(const string& s,char c) {
+  for(int i=0;i<s.size();i++)
+    if (s[i] == c)
+      return true;
+  return false;
+}
+
+bool get_word(string& word, int& i, const string& s,
+	      const string& delimiters,const string& whitespace) 
+{
+  while(contains_char(whitespace,s[i])) {
+    i++;
+    if (i >= s.size()) 
+      return false;
+  }
+
+  int start = i;
+  if (contains_char(delimiters,s[i])) {
+    word = s.substr(i,1);
+    i++;
+    return i < s.size();
+  }
+
+  do { i++; }
+  while(not contains_char(delimiters,s[i]) and not contains_char(whitespace,s[i])
+	and i < s.size());
+
+  word = s.substr(start,i-start);
+
+  return i < s.size();
+}
