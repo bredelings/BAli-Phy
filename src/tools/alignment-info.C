@@ -103,12 +103,17 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 
-bool is_informative(const valarray<int>& count,int level) 
-{
+int n_letters(const valarray<int>& count,int level) {
   int n = 0;
   for(int l=0;l<count.size();l++)
     if (count[l] > level) n++;
+  return n;
 
+}
+
+bool is_informative(const valarray<int>& count,int level) 
+{
+  int n = n_letters(count,level);
   if (level == 0) assert(n > 0);
   return n>1;
 }
@@ -183,9 +188,18 @@ int main(int argc,char* argv[])
 	  letters[i] = A(c,i);
 	int length = n_mutations(a,letters,T);
 	tree_length += length;
-	std::cout<<length;
-	if (informative[c]) std::cout<<"  [informative]";
-	std::cout<<"\n";
+	if (informative[c]) {
+
+	  count = 0;
+	  for(int i=0;i<A.n_sequences();i++) {
+	    int l = A(c,i);
+	    if (alphabet::letter(l))
+	      count[l]++;
+	  }
+
+	  std::cout<<"#"<<c<<"    "<<length<<"   -    "<<n_letters(count,0)-1<<"     =     "<<
+	    length-(n_letters(count,0)-1)<<"\n";
+	}
       }
       std::cout<<"tree length = "<<tree_length<<"\n";
     }
@@ -195,5 +209,5 @@ int main(int argc,char* argv[])
     exit(1);
   }
   return 0;
-
 }
+
