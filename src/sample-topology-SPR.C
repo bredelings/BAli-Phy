@@ -14,7 +14,7 @@
 using MCMC::MoveStats;
 
 ///Sample between 2 topologies, ignoring gap priors on each case
-int sample_SPR_and_A(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
+int topology_sample_SPR_and_A(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
 {
   //----------- Generate the Different node lists ---------//
   vector< vector<int> > nodes(2);
@@ -38,12 +38,49 @@ int topology_sample_SPR(vector<alignment>& a,vector<Parameters>& p,const vector<
   assert(p[0].IModel().full_tree == p[1].IModel().full_tree);
 
   if (p[0].IModel().full_tree)
-    return sample_SPR_and_A(a,p,rho,n1,n2);
+    return topology_sample_SPR_and_A(a,p,rho,n1,n2);
   else
     return topology_sample_SPR_sgaps(a,p,rho);
 }
 
-double do_SPR(SequenceTree& T1, int b1_) 
+/// Do a SPR move on T1, moving the subtree behind b1_ to branch b2
+double do_SPR(SequenceTree& T1, int b1_,int b2) 
+{
+  const_branchview b1 = T1.directed_branch(b1_);
+
+  SequenceTree T2 = T1;
+
+  //------ Generate the new topology ------//
+  if (T2.directed_branch(b2).target() == b1.target() or 
+      T2.directed_branch(b2).source() == b1.target()) 
+    ;
+  else
+    T2.SPR(b1.reverse(),b2);
+
+  //------ Find the two new branches ------//
+  vector<const_branchview> connected1;
+  append(T1.directed_branch(b1.source(),b1.target()).branches_after(),connected1);
+
+  vector<const_branchview> connected2;
+  append(T2.directed_branch(b1.source(),b1.target()).branches_after(),connected2);
+
+  assert(connected1.size() == 2);
+  assert(connected2.size() == 2);
+
+  //------- Place the split randomly -------//
+  double L1 = connected1[0].length() + connected1[1].length();
+  double L2 = connected2[0].length() + connected2[1].length();
+
+  T2.directed_branch(connected2[0]).set_length( myrandomf() * L2 );
+  T2.directed_branch(connected2[1]).set_length( L2 - T2.directed_branch(connected2[0]).length() );
+
+  T1 = T2;
+
+  return L2/L1;
+}
+
+
+int choose_SPR_target(SequenceTree& T1, int b1_) 
 {
   const_branchview b1 = T1.directed_branch(b1_);
 
@@ -76,34 +113,7 @@ double do_SPR(SequenceTree& T1, int b1_)
 
   int b2 = branches[ choose(lengths) ];
 
-  SequenceTree T2 = T1;
-
-  //------ Generate the new topology ------//
-  if (T2.directed_branch(b2).target() == b1.target() or T2.directed_branch(b2).source() == b1.target()) 
-    ;
-  else
-    T2.SPR(b1.reverse(),b2);
-
-  //------ Find the two new branches ------//
-  vector<const_branchview> connected1;
-  append(T1.directed_branch(b1.source(),b1.target()).branches_after(),connected1);
-
-  vector<const_branchview> connected2;
-  append(T2.directed_branch(b1.source(),b1.target()).branches_after(),connected2);
-
-  assert(connected1.size() == 2);
-  assert(connected2.size() == 2);
-
-  //------- Place the split randomly -------//
-  double L1 = connected1[0].length() + connected1[1].length();
-  double L2 = connected2[0].length() + connected2[1].length();
-
-  T2.directed_branch(connected2[0]).set_length( myrandomf() * L2 );
-  T2.directed_branch(connected2[1]).set_length( L2 - T2.directed_branch(connected2[0]).length() );
-
-  T1 = T2;
-
-  return L2/L1;
+  return b2;
 }
 
 void remove_duplicates(vector<int>& v) {
@@ -116,43 +126,32 @@ void remove_duplicates(vector<int>& v) {
   }
 }
 
-void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b) 
+MCMC::Result sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b1,int b2) 
 {
-  //----- Get nodes for directed branch ------//
-
-  const_branchview bv = P.T.directed_branch(b).reverse();
-  if (myrandomf()< 0.5)
-    bv = bv.reverse();
-  if (bv.target().is_leaf_node())
-    bv = bv.reverse();
-  
-  b = bv;
-  int n1 = bv.target();
-  int n2 = bv.source();
+  int n1 = P.T.directed_branch(b1).target();
+  int n2 = P.T.directed_branch(b1).source();
 
   //----- Generate the Different Topologies ----//
   P.LC.root = n1;
   vector<alignment> a(2,A);
   vector<Parameters> p(2,P);
 
-  SequenceTree& T1 = p[0].T;
-  SequenceTree& T2 = p[1].T;
-
-  // find the changed branches
+  //---------------- find the changed branches ------------------//
   vector<int> branches;
-  for(edges_after_iterator i=T2.directed_branch(n2,n1).branches_after();
-      i;i++)
+  for(edges_after_iterator i=p[1].T.directed_branch(n2,n1).branches_after();i;i++)
     branches.push_back((*i).undirected_name());
-  //  std::cerr<<"before = "<<T1<<endl;
-  double ratio = do_SPR(T2,b);
-  //  std::cerr<<"after = "<<T2<<endl;
-  for(edges_after_iterator i=T2.directed_branch(n2,n1).branches_after();
-      i;i++)
+  //  std::cerr<<"before = "<<p[1].T<<endl;
+
+  double ratio = do_SPR(p[1].T,b1,b2);
+
+  //  std::cerr<<"after = "<<p[1].T<<endl;
+  for(edges_after_iterator i=p[1].T.directed_branch(n2,n1).branches_after();i;i++)
     branches.push_back((*i).undirected_name());
 
   remove_duplicates(branches);
     
-  // recompute/invalidate caches associated with changed branch lengths
+
+  //----------- invalidate caches for changed branches -----------//
   assert(branches.size() <= 3);
   for(int i=0;i<branches.size();i++) {
     int bi = branches[i];
@@ -160,6 +159,8 @@ void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b)
     invalidate_subA_index_branch(a[1], p[1].T, branches[i]);
   }
   
+
+  //----------- sample alignments and choose topology -----------//
   vector<efloat_t> rho(2,1);
   rho[1] = ratio;
   int C = topology_sample_SPR(a,p,rho,n1,n2);
@@ -176,7 +177,8 @@ void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b)
     report_constraints(s1,s2);
   }
 
-  //------ Check if topology changed ------//
+
+  //---------------- Check if topology changed ----------------//
   vector<const_branchview> connected1;
   append(p[0].T.directed_branch(n2,n1).branches_after(),connected1);
 
@@ -209,6 +211,27 @@ void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b)
       if (C>0) result.totals[1+i] = 1;
     }
   }
+
+
+  return result;
+}
+
+
+void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b1) 
+{
+  //----- Get nodes for directed branch ------//
+
+  const_branchview bv = P.T.directed_branch(b1).reverse();
+  if (myrandomf()< 0.5)
+    bv = bv.reverse();
+  if (bv.target().is_leaf_node())
+    bv = bv.reverse();
+  
+  b1 = bv;
+
+  int b2 = choose_SPR_target(P.T,b1);
+
+  MCMC::Result result = sample_SPR(A,P,Stats,b1,b2);
 
   Stats.inc("SPR", result);
 }
