@@ -68,9 +68,8 @@ std::vector<T> apply_mapping(const std::vector<T>& v1,const std::vector<int>& ma
   return v2;
 }
 
-
-
-inline double wrap(double x,double max) {
+template <typename T>
+inline T wrap(T x,T max) {
   if (max == 0)
     return 0;
 
@@ -79,14 +78,19 @@ inline double wrap(double x,double max) {
     x = -x;
 
   // map to [0,2*max)
-  int n = (int)(x/(2.0*max));
-  x -= n*2.0*max;
+  int n = (int)(x/(2*max));
+  x -= n*2*max;
 
   if (x > max)
     x = max*2 - x;
 
   assert(x >= 0 and x <= max);
   return x;
+}
+
+template <typename T>
+inline T wrap(T x, T min, T max) {
+  return wrap(x-min,max-min)+min;
 }
 
 template <typename T>

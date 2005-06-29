@@ -130,6 +130,8 @@ MCMC::Result sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b1,int 
 {
   int n1 = P.T.directed_branch(b1).target();
   int n2 = P.T.directed_branch(b1).source();
+  assert(P.T.partition(b1)[P.T.branch(b2).target()]);
+  assert(P.T.partition(b1)[P.T.branch(b2).source()]);
 
   //----- Generate the Different Topologies ----//
   P.LC.root = n1;
@@ -158,7 +160,6 @@ MCMC::Result sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b1,int 
     p[1].setlength(bi,p[1].T.directed_branch(bi).length());
     invalidate_subA_index_branch(a[1], p[1].T, branches[i]);
   }
-  
 
   //----------- sample alignments and choose topology -----------//
   vector<efloat_t> rho(2,1);
@@ -190,7 +191,7 @@ MCMC::Result sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b1,int 
 			(connected1[0] == connected2[1] and connected1[1] == connected2[0])
 			);
 
-  const int bins = 3;
+  const int bins = 4;
   MCMC::Result result(2+bins,0);
 
   result.counts[0] = 1;
@@ -217,21 +218,142 @@ MCMC::Result sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b1,int 
 }
 
 
-void sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b1) 
+int choose_subtree_branch_uniform(const Tree& T) {
+  int b1 = -1;
+  do {
+    b1 = myrandom(T.n_branches()*2);
+  }
+  while (T.directed_branch(b1).target().is_leaf_node());
+  return b1;
+}
+
+
+void sample_SPR_flat(alignment& A,Parameters& P,MoveStats& Stats) 
 {
-  //----- Get nodes for directed branch ------//
+  int n = poisson(P.T.n_branches()*0.1);
 
-  const_branchview bv = P.T.directed_branch(b1).reverse();
-  if (myrandomf()< 0.5)
-    bv = bv.reverse();
-  if (bv.target().is_leaf_node())
-    bv = bv.reverse();
-  
-  b1 = bv;
+  for(int i=0;i<n;i++) {
+    int b1 = choose_subtree_branch_uniform(P.T);
 
-  int b2 = choose_SPR_target(P.T,b1);
+    int b2 = choose_SPR_target(P.T,b1);
 
-  MCMC::Result result = sample_SPR(A,P,Stats,b1,b2);
+    MCMC::Result result = sample_SPR(A,P,Stats,b1,b2);
 
-  Stats.inc("SPR", result);
+    Stats.inc("SPR (flat)", result);
+  }
+}
+
+
+vector<int> path_to(const Tree& T,int n1, int n2) 
+{
+  assert(0 <= n1 and n1 < T.n_leaves());
+  assert(0 <= n2 and n2 < T.n_leaves());
+  assert(n1 != n2);
+
+  vector<int> path; 
+  path.push_back(n1);
+  path.push_back(T.branch(n1).target());
+
+  while(path.back() != n2) 
+  {
+    const_branchview b = T.directed_branch(path[path.size()-2], path[path.size()-1]);
+
+    for(const_edges_after_iterator i=b.branches_after();i;i++) 
+    {
+      if (T.partition(*i)[n2]) {
+	path.push_back((*i).target());
+	break;
+      }
+    }
+  }
+
+  return path;
+}
+
+int jump() {
+  double delta = 0;
+
+  double U = uniform();
+  if (U < 0.05)
+    delta = 0;
+  else if (U < 0.15)
+    delta = 1;
+  else {
+    double a = 1;
+    double b = 4;
+    if (uniform() < 0.5) {
+      a = 0.5;
+      b = 4;
+    }
+    
+    delta = 2+gamma(a,b);// mean = 2.5, shape = 2
+  }
+  if (uniform() < 0.5) delta = -delta;
+
+  // round to the nearest integer
+  return (int)floor(delta+0.5);
+}
+
+
+
+void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2) 
+{
+  //------------------- Choose nodes --------------------//
+  int n1 = myrandom(T.n_leaves());
+  int n2 = -1;
+  do { n2 = myrandom(T.n_leaves());} while (n2 == n1);
+
+  vector<int> path = path_to(T,n1,n2);
+  assert(path.size() >= 3);
+
+  //-------------- Choose subtree on path ----------------//
+  int N = path.size() - 2;
+  int A = 1+myrandom(N);
+
+  b1 = -1;
+  for(const_neighbors_iterator i=T[path[A]].neighbors();i;i++) {
+    if (*i == path[A-1]) continue;
+    if (*i == path[A+1]) continue;
+
+    b1 = T.directed_branch(*i,path[A]);
+    break;
+  }
+  assert(b1 != -1);
+
+  //-------------- Choose branch on path ----------------//
+
+  // The allowed branches are [Nl,Nr]
+  int Nl = -(A-1) , Nr = N-A;
+
+  // Jump and then reflect so that we stay in the interval
+  int delta = wrap(jump(), Nl, Nr);
+  assert(Nl <= delta and delta <= Nr);
+
+  // walk 'delta' way from A
+  int C2 = delta + A;
+
+  assert(1 <= C2 and C2 <= path.size()-2);
+
+  int C3 = C2;
+  if (C2 < 0) C3--;
+  else C3++;
+
+  assert(0 <= C3 and C3 <= path.size()-1);
+
+  b2 = T.branch(path[C2],path[C3]);
+}
+
+void sample_SPR_nodes(alignment& A,Parameters& P,MoveStats& Stats) 
+{
+  int n = poisson(P.T.n_branches()*0.1);
+
+  for(int i=0;i<n;i++) {
+
+    int b1=-1, b2=-1;
+    choose_subtree_branch_nodes(P.T,b1,b2);
+
+    MCMC::Result result = sample_SPR(A,P,Stats,b1,b2);
+
+    Stats.inc("SPR (path)", result);
+  }
 }

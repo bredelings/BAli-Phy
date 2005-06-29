@@ -94,7 +94,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   MoveAll tree_moves("tree");
   MoveAll topology_move("topology");
   MoveEach NNI_move("NNI");
-  MoveEach SPR_move("SPR");
+  MoveOne SPR_move("SPR");
 
   if (P.IModel().full_tree)
     NNI_move.add(1,MoveArgSingle("three_way_NNI:alignment:nodes:topology",
@@ -122,19 +122,17 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 		 );
 
 
-  if (P.IModel().full_tree)
-    SPR_move.add(1,MoveArgSingle("SPR_and_A:topology:lengths:nodes:alignment:alignment_branch",
-				 sample_SPR,
-				 branches)
-		 );
-  else
-    SPR_move.add(1,MoveArgSingle("SPR_and_A:topology:lengths",
-				 sample_SPR,
-				 branches)
-		 );
+  if (P.IModel().full_tree) {
+    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat:topology:lengths:nodes:alignment:alignment_branch"));
+    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes:topology:lengths:nodes:alignment:alignment_branch"));
+  }
+  else {
+    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat:topology:lengths"));
+    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes:topology:lengths"));
+  }
 
   topology_move.add(1,NNI_move,false);
-  topology_move.add(0.04,SPR_move);
+  topology_move.add(1,SPR_move);
   if (P.T.n_leaves() >3 and P.SModel().full_tree)
     tree_moves.add(1,topology_move);
   
