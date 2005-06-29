@@ -29,6 +29,9 @@ double shift_laplace(double mu,double sigma);
 // return an exponentially distributed variable
 double exponential(double mu);
 
+// return an gamma-distributed variable
+double gamma(double a, double b);
+
 // return a poisson random variate
 unsigned poisson(double mu);
 
@@ -66,6 +69,8 @@ namespace rng {
     double gaussian(double mu,double sigma) {return gsl_ran_gaussian(generator,sigma/sqrt(2))+mu;}
 
     double exponential(double mu) {return gsl_ran_exponential(generator,mu);}
+
+    double gamma(double a,double b) {return gsl_ran_gamma(generator,a,b);}
 
     int geometric (double p) {return gsl_ran_geometric(generator,p);}
 

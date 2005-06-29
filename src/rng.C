@@ -53,6 +53,10 @@ double exponential(double mu) {
   return rng::standard->exponential(mu);
 }
 
+double gamma(double a, double b) {
+  return rng::standard->gamma(a,b);
+}
+
 unsigned poisson(double mu) {
   return rng::standard->poisson(mu);
 }
