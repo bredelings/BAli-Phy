@@ -335,7 +335,7 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
   assert(1 <= C2 and C2 <= path.size()-2);
 
   int C3 = C2;
-  if (C2 < 0) C3--;
+  if (delta < 0) C3--;
   else C3++;
 
   assert(0 <= C3 and C3 <= path.size()-1);
