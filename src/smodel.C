@@ -338,7 +338,10 @@ namespace substitution {
   }
 
   string EQU::parameter_name(int i) const {
-    return s_parameter_name(i,1);
+    if (i == 0)
+      return "RMM::f";
+    else
+      return s_parameter_name(i,1);
   }
 
   string EQU::name() const {
