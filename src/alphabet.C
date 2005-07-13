@@ -102,7 +102,7 @@ valarray<double> alphabet::get_frequencies_from_counts(const valarray<double>& c
 
   valarray<double> f = counts;
   for(int i=0;i<f.size();i++)
-    f[i] += pseudocount/f.size();
+    f[i] += pseudocount;
 
   f /= f.sum();
 
@@ -174,7 +174,7 @@ valarray<double> Nucleotides::get_frequencies_from_counts(const valarray<double>
 
   valarray<double> prior_f(1.0/counts.size(),counts.size());
 
-  valarray<double> counts1 = counts + pseudocount_N*prior_f;
+  valarray<double> counts1 = counts + pseudocount_N*counts.size()*prior_f;
   valarray<double> f = counts1 /= counts1.sum();
 
   //--------- Level 2 pseudocount (GC vs AT) -----------------//
@@ -183,7 +183,7 @@ valarray<double> Nucleotides::get_frequencies_from_counts(const valarray<double>
   prior_f[A()] = prior_f[T()] = 0.5 * (f[A()] + f[T()]);
 
   pseudocount -= pseudocount_N;
-  valarray<double> counts2 = counts1 + pseudocount*prior_f;
+  valarray<double> counts2 = counts1 + pseudocount*counts.size()*prior_f;
 
   f = counts2/counts2.sum();
 
@@ -276,7 +276,7 @@ valarray<double> Triplets::get_frequencies_from_counts(const valarray<double>& c
   valarray<double> fN = getNucleotides().get_frequencies_from_counts(N_counts);
   valarray<double> prior_f = get_codon_frequencies_from_independant_nucleotide_frequencies(*this,fN);
 
-  valarray<double> counts1 = counts + pseudocount*prior_f;
+  valarray<double> counts1 = counts + pseudocount*counts.size()*prior_f;
 
   valarray<double> f = counts1 /= counts1.sum();
 

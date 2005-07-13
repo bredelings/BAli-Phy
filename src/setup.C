@@ -38,9 +38,8 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
   return A2;
 }
 
-
-/// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
-valarray<double> empirical_frequencies(const variables_map& args,const alignment& A) {
+valarray<double> smart_letter_counts(const alignment& A) 
+{
   const alphabet& a = A.get_alphabet();
 
   // Count the occurrence of the different letters
@@ -51,21 +50,55 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
       if (alphabet::letter(A(i,j)))
 	column_counts[A(i,j)]++;
     }
-
     double total = column_counts.sum();
     if (total > 1)
       column_counts /= total;
     counts += column_counts;
   }
 
-  // Setup the default frequences for the pseudocounts (uniform)
-  double pseudocount = 5*(a.size()+1);
+  return counts;
+}
 
-  if (args.count("CFNF")) {
-    pseudocount = 100*counts.size();
+
+/// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
+valarray<double> empirical_frequencies(const variables_map& args,const alignment& A) {
+  const alphabet& a = A.get_alphabet();
+
+  // Count the occurrence of the different letters
+  valarray<double> counts = smart_letter_counts(A);
+
+
+  valarray<double> frequencies(1.0/a.size(),a.size());
+
+  // empirical frequencies
+  if (not args.count("frequencies"))
+    frequencies = A.get_alphabet().get_frequencies_from_counts(counts,5);
+
+  // uniform frequencies
+  else if (args["frequencies"].as<string>() == "uniform")
+    ;
+
+  // triplet frequencies <- nucleotide frequencies
+  else if (args["frequencies"].as<string>() == "nucleotides") {
+    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+
+    if (not T) throw myexception()<<"You can only specify nucleotide frequencies on Triplet or Codon alphabets.";
+    valarray<double> fN = get_nucleotide_counts_from_codon_counts(*T,counts);
+    frequencies = get_codon_frequencies_from_independant_nucleotide_frequencies(*T,fN);
   }
 
-  valarray<double> frequencies = A.get_alphabet().get_frequencies_from_counts(counts,pseudocount);
+  // specified frequencies
+  else {
+    vector<double> f = split<double>(args["frequencies"].as<string>(),',');
+
+    valarray<double> frequencies(f.size());
+    for(int i=0;i<f.size();i++)
+      frequencies[i] = f[i];
+
+    if (frequencies.size() != a.size())
+      throw myexception()<<"You specified "<<f.size()<<" frequencies, but there are "<<a.size()<<" letters of the alphabet!";
+
+  }
 
   return frequencies;
 }

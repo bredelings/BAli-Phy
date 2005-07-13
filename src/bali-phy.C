@@ -325,17 +325,16 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree",value<string>(),"file with initial tree")
     ("set",value<vector<string> >()->multitoken(),"set parameter=<value>")
     ("fix",value<vector<string> >()->multitoken(),"fix parameter[=<value>]")
-    ("unfix",value<vector<string> >()->multitoken(),"un-fix parameter")
-    ("randomize-alignment","randomly realign the sequences before using")
+    ("unfix",value<vector<string> >()->multitoken(),"un-fix parameter[=<value>]")
+    ("randomize-alignment","randomly realign the sequences before use.")
     ("smodel",value<string>(),"substitution model")
-    ("imodel",value<string>()->default_value("fragment-based+T"),"indel model")
+    ("imodel",value<string>()->default_value("fragment-based+T"),"indel model: simple, fragment-based, or fragment-based+T")
     ;
 
   options_description smodel("Substitution model options");
   smodel.add_options()
-    ("frequencies",value<string>(),"comma-separated vector of frequencies to use as initial condition") 
+    ("frequencies",value<string>(),"initial frequencies: 'uniform','nucleotides', or a comma-separated vector.") 
     ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons")
-    ("CFNF","make codon frequencies from nucleotide frequencies")
     ;
   options_description all("All options");
   all.add(general).add(mcmc).add(parameters).add(smodel);

@@ -260,7 +260,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
 //FIXME - use dynamic_cast to see if we are in certain subclasses...
 OwnedPointer<MultiModel>
-get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& default_frequencies) {
+get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& frequencies) {
 
   vector<string> string_stack;
   if (args.count("smodel") and args["smodel"].as<string>() != "")
@@ -305,7 +305,7 @@ get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& 
   else 
     throw myexception()<<"Model cannot be converted to a MultiModel";
 
-  /* ---------- How does the tree fit in? ------------*/
+  // ---------- How does the tree fit in? ------------//
   if (args["letters"].as<string>() == "star") 
     full_smodel->full_tree = false;
   else
@@ -313,22 +313,8 @@ get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& 
       
 
   //------ Set frequencies for base markov model ------//
-  if (args.count("frequencies")) {
-    vector<double> f(a.size(),1.0/a.size());
-    if (args["frequences"].as<string>() != "uniform")
-      f = split<double>(args["frequencies"].as<string>(),',');
-
-    if (f.size() != a.size())
-      throw myexception()<<"You specified "<<f.size()<<" frequencies, but there are "<<a.size()<<" letters of the alphabet!";
-
-    valarray<double> f2(f.size());
-    for(int i=0;i<f.size();i++)
-      f2[i] = f[i];
-    full_smodel->frequencies(f2);
-  }
-  else 
-    full_smodel->frequencies(default_frequencies);
-
+  full_smodel->frequencies(frequencies);
+  
   return full_smodel;
 }
 
