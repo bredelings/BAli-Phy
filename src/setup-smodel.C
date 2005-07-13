@@ -314,7 +314,10 @@ get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& 
 
   //------ Set frequencies for base markov model ------//
   if (args.count("frequencies")) {
-    vector<double> f = split<double>(args["frequencies"].as<string>(),',');
+    vector<double> f(a.size(),1.0/a.size());
+    if (args["frequences"].as<string>() != "uniform")
+      f = split<double>(args["frequencies"].as<string>(),',');
+
     if (f.size() != a.size())
       throw myexception()<<"You specified "<<f.size()<<" frequencies, but there are "<<a.size()<<" letters of the alphabet!";
 

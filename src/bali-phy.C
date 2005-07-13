@@ -249,7 +249,6 @@ void set_parameters(Parameters& P, const variables_map& args) {
 
   // fix parameters
   for(int i=0;i<fix.size();i++) {
-    cerr<<fix[i]<<endl;
     int p=-1;
     if (p=find_parameter(P.SModel(),fix[i]),p!=-1)
       P.SModel().fixed(p,true);
@@ -335,7 +334,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description smodel("Substitution model options");
   smodel.add_options()
     ("frequencies",value<string>(),"comma-separated vector of frequencies to use as initial condition") 
-    ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+    ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons")
     ("CFNF","make codon frequencies from nucleotide frequencies")
     ;
   options_description all("All options");

@@ -457,7 +457,13 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
     AA = AminoAcidsWithStop();
 
   vector<OwnedPointer<alphabet> > alphabets; 
-  if (args.count("alphabet") and args["alphabet"].as<string>() == "Codons") {
+
+  if (not args.count("alphabet")) {
+    alphabets.push_back(DNA());
+    alphabets.push_back(RNA());
+    alphabets.push_back(*AA);
+  }
+  else if (args["alphabet"].as<string>() == "Codons") {
     {
       string dna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_dna.dat";
       alphabets.push_back(Codons(DNA(),*AA,dna_filename));
@@ -468,21 +474,18 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
       alphabets.push_back(Codons(RNA(),*AA,rna_filename));
     }
   }
-  else if (args.count("alphabet")) {
-    if (args["alphabet"].as<string>() == "DNA")
-      alphabets.push_back(DNA());
-    else if (args["alphabet"].as<string>() == "DNA")
-      alphabets.push_back(RNA());
-    else if (args["alphabet"].as<string>() == "Amino Acids")
-      alphabets.push_back(*AA);
-    else 
-      throw myexception()<<"Don't recognize alphabet '"<<args["alphabet"].as<string>()<<"'";
+  else if (args["alphabet"].as<string>() == "Triplets") {
+    alphabets.push_back(Triplets(DNA()));
+    alphabets.push_back(Triplets(RNA()));
   }
-  else {
+  else if (args["alphabet"].as<string>() == "DNA")
     alphabets.push_back(DNA());
+  else if (args["alphabet"].as<string>() == "RNA")
     alphabets.push_back(RNA());
+  else if (args["alphabet"].as<string>() == "Amino Acids")
     alphabets.push_back(*AA);
-  }
+  else 
+    throw myexception()<<"I don't recognize alphabet '"<<args["alphabet"].as<string>()<<"'";
 
   return alphabets;
 }

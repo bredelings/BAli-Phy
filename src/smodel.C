@@ -17,7 +17,7 @@ namespace substitution {
 
   string s_parameter_name(int i,int n) {
     if (i>=n)
-      throw myexception()<<"substitution model: refered to parameter "<<i<<" but there are only "<<n<<" parameters.";
+      throw myexception()<<"substitution model: referred to parameter "<<i<<" but there are only "<<n<<" parameters.";
     return string("pS") + convertToString(i);
   }
 
@@ -242,7 +242,7 @@ namespace substitution {
   }
 
   double HKY::fiddle(int) {
-    if (fixed(0)) return 1;
+    if (fixed(1)) return 1;
 
     const double sigma = 0.15;
     kappa(kappa() * exp(gaussian(0,sigma)));
@@ -280,12 +280,12 @@ namespace substitution {
   double TNY::fiddle(int) {
     const double sigma = 0.15;
 
-    if (not fixed(0)) {
+    if (not fixed(1)) {
       double k = kappa1() * exp(gaussian(0,sigma));
       kappa1(k);
     }
 
-    if (not fixed(1)) {
+    if (not fixed(2)) {
       double k = kappa2() * exp(gaussian(0,sigma));
       kappa2(k);
     }
@@ -338,7 +338,7 @@ namespace substitution {
   }
 
   string EQU::parameter_name(int i) const {
-    return s_parameter_name(i,0);
+    return s_parameter_name(i,1);
   }
 
   string EQU::name() const {
@@ -438,8 +438,8 @@ namespace substitution {
     write();
 
     for(int i=0;i<Alphabet().size();i++) {
-      for(int j=0;j<i;j++) {
 
+      for(int j=0;j<i;j++) {
 	int nmuts=0;
 	int pos=-1;
 	for(int p=0;p<3;p++)
@@ -450,17 +450,21 @@ namespace substitution {
 	assert(nmuts>0);
 	assert(pos >= 0 and pos < 3);
 
-	double rate=1.0;
-	if (nmuts > 1) rate=0;
+	double rate=0.0;
 
-	int l1 = Alphabet().sub_nuc(i,pos);
-	int l2 = Alphabet().sub_nuc(j,pos);
-	assert(l1 != l2);
+	if (nmuts == 1) {
 
-	if (AminoAcid(i) != AminoAcid(j))
-	  rate *= omega();
-	
-	S(i,j) = S(j,i) = rate * SubModel().getS()(l1,l2);
+	  int l1 = Alphabet().sub_nuc(i,pos);
+	  int l2 = Alphabet().sub_nuc(j,pos);
+	  assert(l1 != l2);
+
+	  rate = SubModel().getS()(l1,l2);
+
+	  if (AminoAcid(i) != AminoAcid(j))
+	    rate *= omega();	
+	}
+
+	S(i,j) = S(j,i) = rate;
       }
     }
 

@@ -249,7 +249,7 @@ namespace substitution {
       MarkovModel(a), pi(1.0/a.size(),a.size()), 
       S(a.size(),a.size()),
       eigensystem(a.size())
-    { }
+    { set_n_parameters(1) ; parameters_[0] = 1;}
     
     ~ReversibleMarkovModel() {}
   };
@@ -412,7 +412,7 @@ namespace substitution {
 
     /// Construct an HKY model on alphabet 'a' with matrix from 'filename'
     Empirical(const alphabet& a,const string& filename) 
-      : ReversibleMarkovModel(a,0),ModelWithAlphabet<alphabet>(a)
+      : ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a)
     { 
       load_file(filename); 
       recalc();
