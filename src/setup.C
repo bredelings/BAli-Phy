@@ -83,7 +83,8 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
     const Triplets* T = dynamic_cast<const Triplets*>(&a);
 
     if (not T) throw myexception()<<"You can only specify nucleotide frequencies on Triplet or Codon alphabets.";
-    valarray<double> fN = get_nucleotide_counts_from_codon_counts(*T,counts);
+    valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*T,counts);
+    valarray<double> fN = T->getNucleotides().get_frequencies_from_counts(N_counts);
     frequencies = get_codon_frequencies_from_independant_nucleotide_frequencies(*T,fN);
   }
 

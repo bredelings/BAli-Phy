@@ -213,17 +213,27 @@ AminoAcidsWithStop::AminoAcidsWithStop()
 }
 
 
-//FIXME - I should probably build the association between codons and amino acids 
-//        into the Codon alphabet, and allow a NULL pointer or something if you
-//        don't want that information...
+void Triplets::setup_sub_nuc_table() {
+  sub_nuc_table.clear();
+  sub_nuc_table.resize(size());
+
+  assert(N->width() == 1);
+
+  for(int i=0;i<sub_nuc_table.size();i++) {
+    const string& codon = data[i];
+
+    sub_nuc_table[i].resize(codon.length());
+
+    for(int j=0; j<codon.length(); j++) {
+      sub_nuc_table[i][j] = (*N)[ codon.substr(j,1) ];
+    }
+  }
+}
 
 int Triplets::sub_nuc(int codon,int pos) const {
   assert( 0 <= pos and pos <= 3);
 
-  pos = 2 - pos;
-  codon >>= (2*pos);
-  codon &= 3;
-  return codon;
+  return sub_nuc_table[codon][pos];
 }
 
 vector<string> getTriplets(const Nucleotides& a) {
@@ -288,6 +298,8 @@ Triplets::Triplets(const Nucleotides& a)
 {
   missing.back() = "***";
   gap_letter = "---";
+
+  setup_sub_nuc_table();
 }
 
 Triplets::Triplets(const string& s,const Nucleotides& a)
@@ -295,28 +307,38 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
 {
   missing.back() = "***";
   gap_letter = "---";
+
+  setup_sub_nuc_table();
 }
 
 // FIXME - should I make a separate class that removes stop codons?
-void Codons::setup_table(vector<string> cc,vector<string> aa) {
+void Codons::setup_table(vector<string> cc,vector<string> aa) 
+{
+  // check that we actually have a one-to-one and onto mapping
   assert(cc.size() == aa.size());
-  assert(cc.size() == table.size());
+  translation_table.clear();
 
   // Remove codons which don't map to any SPECIFIED amino acid
-  for(int i=cc.size()-1; i>=0; i--) {
-    if (not A->contains(aa[i])) {
+  for(int i=cc.size()-1; i>=0; i--) 
+  {
+    // check that cc[i] is in the alphabet
+    if (not contains(cc[i]))
+      throw myexception()<<"Codon table has entry: "<<cc[i]<<" -> "<<aa[i]
+			 <<", but alphabet does not contain "<<cc[i]<<".";
+
+    // remove cc[i] if we don't recognize its amino acid
+    if (not A->contains(aa[i]))
       remove(cc[i]);
-      cc.erase(cc.begin()+i);
-      aa.erase(aa.begin()+i);
-      table.erase(table.begin()); //?? - is there a more elegant way to do this?
-    }
   }
 
+  translation_table.resize( size() );
   // Compute the indices for the remaining ones
-  for(int i=0;i<table.size();i++) {
+  for(int i=0;i<translation_table.size();i++) {
+    if (not contains(cc[i])) continue;
+
     int cc_index = (*this)[ cc[i] ];
     int aa_index =    (*A)[ aa[i] ];
-    table[cc_index] = aa_index;
+    translation_table[cc_index] = aa_index;
   }
 }
 
@@ -335,29 +357,7 @@ void Codons::setup_table(istream& file) {
   setup_table(cc,aa);
 }
 				    
-
-Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
-	       const vector<string> cc,const vector<string> aa) 
-  :Triplets(N1),A(A1),table(size())
-{
-  setup_table(cc,aa);
-  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
-}
-
-
-Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
-	       istream& file) 
-  :Triplets(N1),A(A1),table(size())
-{
-  setup_table(file);
-  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
-}
-
-Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
-	       const string& filename) 
-  :Triplets(N1),A(A1),table(size())
-{
-
+void Codons::setup_table(const string& filename) {
   ifstream genetic_code(filename.c_str());
   if (not genetic_code)
     throw myexception()<<"Couldn't open file '"<<filename<<"'";
@@ -365,6 +365,35 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
   setup_table(genetic_code);
 
   genetic_code.close();
+}
+
+Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
+	       const vector<string> cc,const vector<string> aa) 
+  :Triplets(N1),A(A1)
+{
+  setup_table(cc,aa);
+  setup_sub_nuc_table();
+
+  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
+}
+
+
+Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
+	       istream& file) 
+  :Triplets(N1),A(A1)
+{
+  setup_table(file);
+  setup_sub_nuc_table();
+
+  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
+}
+
+Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
+	       const string& filename) 
+  :Triplets(N1),A(A1)
+{
+  setup_table(filename);
+  setup_sub_nuc_table();
 
   name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
 }

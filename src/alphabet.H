@@ -148,6 +148,10 @@ public:
 class Triplets: public alphabet {
 protected:
   OwnedPointer<Nucleotides> N;
+
+  std::vector<std::vector<int> > sub_nuc_table;
+
+  void setup_sub_nuc_table();
 public:
   virtual Triplets* clone() const {return new Triplets(*this);}
 
@@ -165,24 +169,25 @@ public:
 class Codons: public Triplets {
 protected:
   OwnedPointer<AminoAcids> A;
-  std::vector<int> table;
+  std::vector<int> translation_table;
 
   void setup_table(std::vector<std::string>,std::vector<std::string>);
   void setup_table(std::istream&);
+  void setup_table(const std::string&);
 public:
   virtual Codons* clone() const {return new Codons(*this);}
 
   bool stop_codon(int codon) const {
-    assert(0 <= codon && codon <table.size() );
-    int aa = table[codon];
+    assert(0 <= codon && codon <translation_table.size() );
+    int aa = translation_table[codon];
     return A->lookup(aa) == "!";
   }
 
   int translate(int codon) const {
     if (codon == alphabet::gap or codon==alphabet::not_gap)
       return codon;
-    assert(codon >= 0 and codon < table.size() );
-    return table[codon];
+    assert(codon >= 0 and codon < translation_table.size() );
+    return translation_table[codon];
   }
 
   const AminoAcids& getAminoAcids() const {return *A;}
