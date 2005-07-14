@@ -507,7 +507,7 @@ alignment load_A(const variables_map& args,bool keep_internal)
   
   remove_empty_columns(A);
   
-  if (A.num_sequences() == 0)
+  if (A.n_sequences() == 0)
     throw myexception()<<"Alignment file "<<args["align"].as<string>()<<" didn't contain any sequences!";
 
   if (not keep_internal)
@@ -566,7 +566,7 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
     remove_empty_columns(A);
 
     // complain if there are no sequences in the alignment
-    if (A.num_sequences() == 0) 
+    if (A.n_sequences() == 0) 
       throw myexception(string("Alignment didn't contain any sequences!"));
     
     // STORE the alignment if we're not going to skip it
@@ -658,7 +658,7 @@ alignment find_first_alignment(std::istream& ifile, const string& tag,
 
   }
 
-  if (A.num_sequences() == 0) 
+  if (A.n_sequences() == 0) 
     throw myexception(string("Couldn't find any alignments w/ tag ") + tag);
 
   return A;
@@ -692,7 +692,7 @@ alignment find_last_alignment(std::istream& ifile, const string& tag,
     }
   }
 
-  if (A.num_sequences() == 0) 
+  if (A.n_sequences() == 0) 
     throw myexception(string("Couldn't find any alignments w/ tag ") + tag);
 
   return A;

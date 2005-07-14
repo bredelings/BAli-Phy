@@ -30,7 +30,7 @@ void do_setup(Arguments& args,vector<alignment>& alignments) {
 }
 
 bool after(int c1, int c2, const alignment& A,const vector<int>& nodes) {
-  assert(nodes.size() == A.num_sequences());
+  assert(nodes.size() == A.n_sequences());
 
   for(int i=0;i<nodes.size();i++) {
     bool p1 = not A.gap(c1,nodes[i]);
@@ -44,7 +44,7 @@ bool after(int c1, int c2, const alignment& A,const vector<int>& nodes) {
 }
 
 bool intersect(int c1, int c2, const alignment& A) {
-  for(int i=0;i<A.num_sequences();i++) {
+  for(int i=0;i<A.n_sequences();i++) {
     if (not A.gap(c1,i) and not A.gap(c2,i))
       return true;
   }
@@ -57,7 +57,7 @@ vector<int> getorder(const alignment& A,int n1,int n2) {
   vector<int> nodes;
   nodes.push_back(n1);
   nodes.push_back(n2);
-  for(int i=0;i<A.num_sequences();i++)
+  for(int i=0;i<A.n_sequences();i++)
     if (i != n1 and i != n2)
       nodes.push_back(i);
 

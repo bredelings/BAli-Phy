@@ -28,7 +28,7 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
   // FIXME - remove imapping and do this forwards instead of backwards?
   vector<int> imapping = invert(mapping);
 
-  for(int i=0;i<A.num_sequences();i++) {
+  for(int i=0;i<A.n_sequences();i++) {
     if (imapping[i] == i) continue;
 
     A2.seq(i) = A.seq(imapping[i]);
@@ -108,7 +108,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
 SequenceTree get_random_T(const alignment& A) {
   // FIXME - this assumes that alignment doesn't specify internal nodes...
   vector<string> s;
-  for(int i=0;i<A.num_sequences();i++)
+  for(int i=0;i<A.n_sequences();i++)
     s.push_back(A.seq(i).name);
   SequenceTree T = RandomTree(s,0.05);
   return T;
@@ -133,9 +133,9 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
     if (not internal_sequences)
       throw myexception()<<"More sequences than leaf nodes!";
 
-    if (A.num_sequences() > T.n_nodes())
+    if (A.n_sequences() > T.n_nodes())
       throw myexception()<<"More sequences than tree nodes!";
-    else if (A.num_sequences() < T.n_nodes())
+    else if (A.n_sequences() < T.n_nodes())
       throw myexception()<<"Less sequences than tree nodes!";
   }
   
@@ -186,9 +186,9 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) {
     if (not internal_sequences)
       throw myexception()<<"More sequences than leaf nodes!";
 
-    if (A.num_sequences() > T.n_nodes())
+    if (A.n_sequences() > T.n_nodes())
       throw myexception()<<"More sequences than tree nodes!";
-    else if (A.num_sequences() < T.n_nodes())
+    else if (A.n_sequences() < T.n_nodes())
       throw myexception()<<"Less sequences than tree nodes!";
   }
   

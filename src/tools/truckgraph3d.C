@@ -42,7 +42,7 @@ void do_setup(Arguments& args,vector<alignment>& alignments) {
       A.load_phylip(alphabets,cin);
 
       remove_empty_columns(A);
-      if (A.num_sequences() == 0) 
+      if (A.n_sequences() == 0) 
 	throw myexception(string("Alignment didn't contain any sequences!"));
       alignments.push_back(A);
     }
@@ -51,7 +51,7 @@ void do_setup(Arguments& args,vector<alignment>& alignments) {
 
 /// Give order in nodes, is value in column c1 > c2? (binary encoded value, first is highest)
 bool after(int c1, int c2, const alignment& A,const vector<int>& nodes) {
-  assert(nodes.size() == A.num_sequences());
+  assert(nodes.size() == A.n_sequences());
 
   for(int i=0;i<nodes.size();i++) {
     bool p1 = not A.gap(c1,nodes[i]);
@@ -66,7 +66,7 @@ bool after(int c1, int c2, const alignment& A,const vector<int>& nodes) {
 
 /// Are there sequences in A with characters in both columns c1 and c2?
 bool intersect(int c1, int c2, const alignment& A) {
-  for(int i=0;i<A.num_sequences();i++) {
+  for(int i=0;i<A.n_sequences();i++) {
     if (not A.gap(c1,i) and not A.gap(c2,i))
       return true;
   }
@@ -80,7 +80,7 @@ vector<int> getorder(const alignment& A,int n1,int n2,int n3) {
   nodes.push_back(n1);
   nodes.push_back(n2);
   nodes.push_back(n3);
-  for(int i=0;i<A.num_sequences();i++)
+  for(int i=0;i<A.n_sequences();i++)
     if (i != n1 and i != n2 and i != n3)
       nodes.push_back(i);
 

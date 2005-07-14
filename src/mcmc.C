@@ -410,7 +410,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   const SequenceTree& T = P.T;
 
   // make sure that the Alignment and Tree are linked
-  assert(A.num_sequences() == T.n_nodes());
+  assert(A.n_sequences() == T.n_nodes());
   for(int i=0;i<T.n_leaves();i++)
     assert(T.seq(i) == A.seq(i).name);
   

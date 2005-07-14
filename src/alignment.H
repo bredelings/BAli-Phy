@@ -61,7 +61,7 @@ public:
   void load(sequence_format::loader_t,std::istream&);
   void load(const vector<OwnedPointer<alphabet> >&,sequence_format::loader_t,std::istream&);
 
-  /// Load PHYLIP or FASTA file 'filename', depending on extentime
+  /// Load PHYLIP or FASTA file 'filename', depending on extention
   void load(const std::string& filename);
   void load(const vector<OwnedPointer<alphabet> >&,const std::string& filename);
 
@@ -88,11 +88,10 @@ public:
 
   alignment& operator=(const alignment&);
 
-  /// Number of leaf sequences (I think)
-  int num_sequences() const { return sequences.size() ;}
+  /// Number of sequences
   int n_sequences() const { return sequences.size() ;}
 
-  //Length of alignment
+  /// Number of columns
   int length() const {return array.size1();}
 
   /// Total number of sequences
@@ -115,18 +114,22 @@ std::ostream& operator<<(std::ostream& file,const alignment& A);
 
 std::istream& operator>>(std::istream& file,alignment& A);
 
+/// Does the alignment contain any empty columns?
 bool valid(const alignment&);
 
+/// Does the column contain only gaps for taxa in mask?
 bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask);
+
+/// Does the column contain only gaps?
 bool all_gaps(const alignment& A,int column);
 
-
+/// remove columns that contain only gaps
 void remove_empty_columns(alignment&);
 
 vector<int> get_path(const alignment&,int,int);
 vector<int> get_path_3way(const alignment&,int,int,int,int);
 
-/// Generate a randomize alignment
+/// Generate a randomized alignment
 alignment randomize(const alignment&,int n=-1);
 #endif
 

@@ -97,7 +97,7 @@ void run_analysis(const variables_map& args) {
     remove_empty_columns(A);
 
     // complain if there are no sequences in the alignment
-    if (A.num_sequences() == 0) 
+    if (A.n_sequences() == 0) 
       throw myexception()<<"Alignment didn't contain any sequences!";
     
     // STORE the alignment if we're not going to skip it
