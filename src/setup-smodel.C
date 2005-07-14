@@ -36,14 +36,18 @@ bool match(vector<string>& sstack,const string& s,string& arg) {
 }
 
 /// If no markov model is specified, try to add one.
-void guess_markov_model(vector<string>& string_stack,const alphabet& a) {
-  if (dynamic_cast<const Nucleotides*>(&a)) 
+void guess_markov_model(vector<string>& string_stack,const alphabet& a) 
+{
+  if (dynamic_cast<const Nucleotides*>(&a))
     string_stack.push_back("HKY");
   else if (dynamic_cast<const AminoAcids*>(&a))
     string_stack.push_back("Empirical");
   else if (dynamic_cast<const Codons*>(&a))
     string_stack.push_back("YangM0");
 }
+
+OwnedPointer<substitution::Model> 
+get_smodel(const variables_map& args,const string& smodel,const alphabet& a);
 
 bool process_stack_Markov(vector<string>& string_stack,
 			  vector<OwnedPointer<substitution::Model> >& model_stack,
@@ -53,10 +57,6 @@ bool process_stack_Markov(vector<string>& string_stack,
   string arg;
 
   //------ Get the base markov model (Reversible Markov) ------//
-  OwnedPointer<AminoAcids> AA = AminoAcids();
-  if (args.count("with-stop"))
-    *AA = AminoAcidsWithStop();
-
   if (match(string_stack,"EQU",arg))
     model_stack.push_back(EQU(a));
   else if (match(string_stack,"HKY",arg)) {
@@ -80,19 +80,23 @@ bool process_stack_Markov(vector<string>& string_stack,
 
     model_stack.push_back(Empirical(a,filename));
   }
-  else if (match(string_stack,"YangM0",arg)) {
-    string dna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_dna.dat";
-    string rna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_rna.dat";
-
-    Codons DNA_codons(DNA(),*AA,dna_filename);
-    Codons RNA_codons(RNA(),*AA,rna_filename);
-
-    if (a == DNA_codons)
-      model_stack.push_back(YangM0(DNA_codons,HKY(DNA())));
-    else if (a == RNA_codons)
-      model_stack.push_back(YangM0(RNA_codons,HKY(RNA())));
-    else
+  else if (match(string_stack,"YangM0",arg)) 
+  {
+    const Codons* C = dynamic_cast<const Codons*>(&a);
+    if (not C)
       throw myexception()<<"Can't figure out how to make a codon model from non-codon alphabet '"<<a.name<<"'";
+
+    OwnedPointer<ReversibleMarkovNucleotideModel> N_submodel = HKY(C->getNucleotides());
+
+    if (not arg.empty()) {
+      OwnedPointer<substitution::Model> submodel = get_smodel(args,arg,C->getNucleotides());
+      ReversibleMarkovNucleotideModel* temp = dynamic_cast<ReversibleMarkovNucleotideModel*>( submodel.get());
+      if (not temp)
+	throw myexception()<<"Submodel '"<<arg<<"' for YangM0 is not a reversible Markov nucleotide model.";
+      N_submodel = temp->clone();
+    }
+
+    model_stack.push_back( YangM0(*C, *N_submodel) );
   }
   else
     return false;
@@ -257,23 +261,23 @@ bool process_stack_Multi(vector<string>& string_stack,
   return true;
 }
 
-
-//FIXME - use dynamic_cast to see if we are in certain subclasses...
-OwnedPointer<MultiModel>
-get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& frequencies) {
-
+OwnedPointer<substitution::Model> 
+get_smodel(const variables_map& args,const string& smodel,const alphabet& a) 
+{
+  // Initialize the string stack from the model name
   vector<string> string_stack;
-  if (args.count("smodel") and args["smodel"].as<string>() != "")
-    string_stack = split(args["smodel"].as<string>(),'+');
+  if (smodel != "") 
+    string_stack = split(smodel,'+');
   std::reverse(string_stack.begin(),string_stack.end());
 
+  // Initialize the model stack 
   vector<OwnedPointer<substitution::Model> > model_stack;
-
   if (not process_stack_Markov(string_stack,model_stack,a,args)) {
     guess_markov_model(string_stack,a);
     if (not process_stack_Markov(string_stack,model_stack,a,args))
       throw myexception()<<"Can't guess the base CTMC model for alphabet '"<<a.name<<"'";
   }
+
 
   //-------- Run the model specification -----------//
   while(string_stack.size()) {
@@ -294,8 +298,22 @@ get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& 
     throw myexception()<<"Substitution model "<<model_stack.back()->name()<<" was specified but not used!\n";
   }
 
-  ReversibleAdditiveModel* RA = dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
-  MultiModel* MM = dynamic_cast<MultiModel*>(model_stack.back().get());
+  return model_stack.back();
+}
+
+
+OwnedPointer<MultiModel>
+get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& frequencies) 
+{
+  //------------------ Get smodel ----------------------//
+  string smodel_name = "";
+  if (args.count("smodel")) smodel_name = args["smodel"].as<string>();
+
+  OwnedPointer<substitution::Model> smodel = get_smodel(args,smodel_name,a);
+
+  // --------- Convert smodel to MultiModel ------------//
+  ReversibleAdditiveModel* RA = dynamic_cast<ReversibleAdditiveModel*>(smodel.get());
+  MultiModel* MM = dynamic_cast<MultiModel*>(smodel.get());
   OwnedPointer<MultiModel> full_smodel;
 
   if (MM)
@@ -305,14 +323,14 @@ get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& 
   else 
     throw myexception()<<"Model cannot be converted to a MultiModel";
 
-  // ---------- How does the tree fit in? ------------//
+  //------------ How does the tree fit in? -------------//
   if (args["letters"].as<string>() == "star") 
     full_smodel->full_tree = false;
   else
     full_smodel->full_tree = true;
       
 
-  //------ Set frequencies for base markov model ------//
+  //------ Set frequencies for base markov model -------//
   full_smodel->frequencies(frequencies);
   
   return full_smodel;
