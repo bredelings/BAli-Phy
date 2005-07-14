@@ -14,6 +14,12 @@ extern "C" {
 
 using std::valarray;
 
+void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<double>& f) {
+    for(int i=0;i<a.size();i++)
+      o<<"f"<<a.lookup(i)<<" = "<<f[i]<<"\n";
+}
+
+
 void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
   const alphabet& a = MModel.Alphabet();
 

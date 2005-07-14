@@ -73,7 +73,7 @@ public:
 
   friend bool operator==(const alphabet&,const alphabet&);
 
-  virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=10.0) const;
+  virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
 
   void insert(const std::string& l);
   void remove(const std::string& l);
@@ -103,8 +103,6 @@ public:
   int T() const {return 2;}
   int C() const {return 3;}
   
-  virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=10.0) const;
-
   Nucleotides(const std::string& s,char c);
   Nucleotides(const std::string& s,char c,const std::string& m);
 
@@ -159,7 +157,7 @@ public:
 
   int sub_nuc(int codon,int pos) const;
 
-  std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=10.0) const;
+  std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
 
   Triplets(const Nucleotides& N);
   Triplets(const std::string& s,const Nucleotides& N);

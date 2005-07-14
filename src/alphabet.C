@@ -165,34 +165,6 @@ Nucleotides::Nucleotides(const string& s, char c,const string& m)
   data[T()] = string(1U,c);
 }
 
-//FIXME - this is basically the equivalent of a prior alphabet()->prior(frequences) !
-
-valarray<double> Nucleotides::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {
-
-  //--------- Level 1 pseudocount (nucleotides) ---------------//
-  const double pseudocount_N = 0.4 * pseudocount;
-
-  valarray<double> prior_f(1.0/counts.size(),counts.size());
-
-  valarray<double> counts1 = counts + pseudocount_N*counts.size()*prior_f;
-  valarray<double> f = counts1 /= counts1.sum();
-
-  //--------- Level 2 pseudocount (GC vs AT) -----------------//
-
-  prior_f[G()] = prior_f[C()] = 0.5 * (f[G()] + f[C()]);
-  prior_f[A()] = prior_f[T()] = 0.5 * (f[A()] + f[T()]);
-
-  pseudocount -= pseudocount_N;
-  valarray<double> counts2 = counts1 + pseudocount*counts.size()*prior_f;
-
-  f = counts2/counts2.sum();
-
-  return f;
-}
-
-
-
-
 DNA::DNA()
   :Nucleotides("DNA nucleotides",'T',"NYR") 
 {}

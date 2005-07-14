@@ -36,6 +36,10 @@ void load_A_and_T(const boost::program_options::variables_map& args,
 void load_A_and_random_T(const boost::program_options::variables_map& args,
 			 alignment& A,SequenceTree& T,bool internal_sequences=true);
 
+// construct a list of how many times each letter occurs in A
+std::valarray<double> letter_counts(const alignment& A);
+
+
 //------------------------ Substitution stuff ----------------------//
 
 /// Return a substitution::Model specified by args

@@ -423,14 +423,22 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
   cout<<"\n\n\n";
 
-  if (const Codons* C = dynamic_cast<const Codons*>(&P.get_alphabet()) ) {
-    cout<<"nucleotide frequencies = "<<endl;
-    valarray<double> fC = P.SModel().frequencies();
-    valarray<double> fN = get_nucleotide_counts_from_codon_counts(*C,fC);
+  if (const Triplets* T = dynamic_cast<const Triplets*>(&P.get_alphabet()) ) {
+    
+    cout<<"observed nucleotide frequencies = "<<endl;
+    valarray<double> counts = letter_counts(A);
+    valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*T,counts);
+
+    show_frequencies(cout,T->getNucleotides(),N_counts/N_counts.sum());
+    cout<<endl<<endl;
+
+    cout<<"current nucleotide frequencies = "<<endl;
+    valarray<double> fT = P.SModel().frequencies();
+    valarray<double> fN = get_nucleotide_counts_from_codon_counts(*T,fT);
     fN /= fN.sum();
 
-    //    show_frequencies(cout,C->getNucleotides(),fN);
-    //    cout<<endl<<endl;
+    show_frequencies(cout,T->getNucleotides(),fN);
+    cout<<endl<<endl;
   }
   
   ofstream tree_stream("trees"), pS_stream("pS"), pI_stream("pI"), map_stream("MAP"), Pr_stream("Pr");
