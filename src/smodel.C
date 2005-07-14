@@ -273,11 +273,11 @@ namespace substitution {
     ReversibleMarkovModel::recalc();
   }
 
-  string TNY::name() const {
-    return "TNY";
+  string TN::name() const {
+    return "TN";
   }
 
-  double TNY::fiddle(int) {
+  double TN::fiddle(int) {
     const double sigma = 0.15;
 
     if (not fixed(1)) {
@@ -295,7 +295,7 @@ namespace substitution {
   // This should be OK - the increments are linear combinations of gaussians...
 
   /// return the LOG of the prior
-  efloat_t TNY::prior() const {
+  efloat_t TN::prior() const {
     double k1 = log(kappa1());
     double k2 = log(kappa2());
     
@@ -308,7 +308,7 @@ namespace substitution {
     return P;
   }
 
-  void TNY::recalc() {
+  void TN::recalc() {
     assert(Alphabet().size()==4);
 
     for(int i=0;i<Alphabet().size();i++)
@@ -325,14 +325,14 @@ namespace substitution {
     ReversibleMarkovModel::recalc();
   }
 
-  string TNY::parameter_name(int i) const {
+  string TN::parameter_name(int i) const {
     assert(i==0 or i==1);
     if (i==0)
       return "RMM::f";
     if (i==1)
-      return "TNY::kappa(pur)";
+      return "TN::kappa(pur)";
     else if (i==2)
-      return "TNY::kappa(pyr)";
+      return "TN::kappa(pyr)";
     else
       return s_parameter_name(i,2);
   }

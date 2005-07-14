@@ -466,11 +466,11 @@ namespace substitution {
     }
   };
 
-  class TNY: public ReversibleMarkovNucleotideModel {
+  class TN: public ReversibleMarkovNucleotideModel {
     virtual void recalc();
   public:
 
-    virtual TNY* clone() const {return new TNY(*this);}
+    virtual TN* clone() const {return new TN(*this);}
 
     double fiddle(int); 
 
@@ -490,7 +490,7 @@ namespace substitution {
     string parameter_name(int i) const;
 
     /// Construct an HKY model on alphabet 'a'
-    TNY(const Nucleotides& N)
+    TN(const Nucleotides& N)
       : ReversibleMarkovNucleotideModel(N,2)
     { 
       kappa1(2);
