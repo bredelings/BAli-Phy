@@ -42,8 +42,10 @@ BranchNode* add_node(BranchNode*);
 
 //------------------------------------ Tree -----------------------------//
 
-class Tree {
+class Tree 
+{
 protected:
+  /// The number of leaf nodes
   int n_leaves_;
 
   std::vector< std::valarray<bool> > cached_partitions;
@@ -52,17 +54,22 @@ protected:
   friend class branchview;
   friend class const_branchview;
 
+  /// an index to one BranchNode for each node
   std::vector<BranchNode*> nodes_;
 
+  /// an index to one BranchNode for each node
   std::vector<BranchNode*> branches_;
 
+  /// re-compute cached_partitions and cached_partition_sets
   void compute_partitions();
 
-  /// re-compute everything given leaf names
+  /// re-compute all names and caches given leaf node names
   virtual void reanalyze(BranchNode*);
 
+  /// re-compute all caches
   virtual void recompute(BranchNode*,bool=true);
 
+  /// check caches, linked lists, and naming conventions
   virtual void check_structure() const;
 
   /// Get the Branch* to the branch connecting node1 and node2
@@ -85,12 +92,14 @@ protected:
 
 public:
 
+  /// Create a copy of the tree, and return a pointer to node n in the copy
   TreeView copy(int n) const {
     assert(0 <= n and n < nodes_.size());
 
     return TreeView(nodes_[n]).copy();
   }
 
+  /// Create a copy of the tree, and return a pointer
   TreeView copy() const {
     if (nodes_.size()) 
       return copy(0);
@@ -98,9 +107,16 @@ public:
       return 0;
   }
 
+  /// the number of nodes
   int n_nodes() const {return nodes_.size();}
+
+  /// the number of leaf nodes
   int n_leaves() const {return n_leaves_;}
+
+  /// the number of branches
   int n_branches() const {return branches_.size()/2;}
+
+  /// the number of leaf branches
   int n_leafbranches() const {return (n_branches()==1)?1:n_leaves();}
 
   /// Get the branch with name 'b'
@@ -153,35 +169,41 @@ public:
         nodeview operator[](int i)       {return nodes_[i];}
   const_nodeview operator[](int i) const {return nodes_[i];}
 
+  /// are node1 and node2 connected by a branch?
   bool is_connected(int node1,int node2) const {
     return find_branch_pointer(node1,node2) != NULL;
   }
 
-  // walk path from i->j instead...
-  /// The distance between nodes i and j
+  /// The weighted distance between nodes i and j
   double distance(int i,int j) const;
+
+  /// The unweighted distance between nodes i and j
   int edges_distance(int i,int j) const;
 
-  // n1 is an ancestor of n2, n2 is a descendant of n1
+  /// A bitmask of nodes in front of directed branch b
   const std::valarray<bool>& partition(int b) const {
     return cached_partitions[b];
   }
 
+  /// A bitmask of nodes in front of directed branch n1 -> n2
   const std::valarray<bool>& partition(int n1,int n2) const {
     return partition(directed_branch(n1,n2));
   }
 
-  // n1 is an ancestor of n2, n2 is a descendant of n1
+  /// An list of nodes in front of directed branch b
   const std::vector<int>& leaf_partition_set(int b) const {
     return cached_partition_sets[b];
   }
 
+  /// An list of nodes in front of directed branch n1 -> n2
   const std::vector<int>& leaf_partition_set(int n1,int n2) const {
     return leaf_partition_set(directed_branch(n1,n2));
   }
 
-  // FIXME - not really implemented yet
+  /// construct standard names for leaves and branches
   virtual std::vector<int> standardize();
+
+  /// permute leaf nodes and then construct standard names for leaves and branches
   virtual std::vector<int> standardize(const std::vector<int>&);
 
   /// is 'n' contained in the subtree delineated by 'b' 
@@ -193,6 +215,7 @@ public:
   /// Prune subtree 'b1' and regraft into branch 'b2'
   void SPR(int b1,int b2);
 
+  /// Find and split a multifurcating node to create this partition
   void induce_partition(const std::valarray<bool>& partition);
 
 
@@ -247,7 +270,7 @@ public:
   /// The common ancestor of nodes i and j
   int common_ancestor(int i,int j) const;
 
-  /// n1 is an ancestor of n2, n2 is a descendant of n1
+  /// is n2 a descendant of n1?
   bool ancestor(int n1, int n2) const;
 
   /// remove a subtree
@@ -267,9 +290,10 @@ public:
   ~RootedTree() {}
 };
 
-
+/// Create a copy of T with a new root node on branch b
 RootedTree add_root(Tree T,int b);
 
+/// Remove the root node and return an unrooted tree
 Tree remove_root(const RootedTree& RT);
 
 inline RootedTree operator+(const RootedTree& t1,const RootedTree& t2) {
@@ -280,13 +304,26 @@ inline RootedTree operator+(const RootedTree& t1,const RootedTree& t2) {
 
 void get_branches_before(std::vector<const_branchview>& branch_list);
 void get_branches_after(std::vector<const_branchview>& branch_list);
+
+/// list of all branches before b, with children before parents
 std::vector<const_branchview> branches_before(const Tree& T,int b);
+
+/// list of all branches after b, with children after parents
 std::vector<const_branchview> branches_after(const Tree& T,int b);
+
+/// list of all branches after n, with n as root and children after parents
 std::vector<const_branchview> branches_from_node(const Tree& T,int n);
+
+/// list of all branches before n, with n as root and children before parents
 std::vector<const_branchview> branches_toward_node(const Tree& T,int n);
+
+/// list of all branches, with children after parents
 std::vector<const_branchview> branches_from_leaves(const Tree& T);
 
+/// list of all outgoing branches, sorted by branch name
 std::vector<const_branchview> sorted_neighbors(const_nodeview n);
+
+/// list of all outgoing branches, sorted by branch name
 std::vector<const_branchview> sorted_branches_after(const_branchview b);
 
 /// Does the bitmask have any bits set?
@@ -298,15 +335,19 @@ bool equal(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
 /// Do the two bitmasks intersect?
 bool intersect(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
 
+/// Does partition v1 imply partition v2?
 bool implies(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
 
+/// How many of v's bits are true?
 int n_elements(const std::valarray<bool>& v);
 
+/// Construct a random tree with n leaf nodes
 Tree RandomTree(int n,double=1.0);
 
 /// Return a bitmask of LEAF taxa (instead of all taxa) generated by branch b
 std::valarray<bool> branch_partition(const Tree& T,int b);
 
+/// Sum of the lengths of all branches
 double length(const Tree& T);
 
 #endif
