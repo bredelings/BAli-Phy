@@ -93,8 +93,7 @@ void sample_alignment(alignment& A,Parameters& P,int b)
   DPmatrixSimple Matrices(state_emit, P.branch_HMMs[b].start_pi(),P.branch_HMMs[b], P.Temp,
 			  P.SModel().distribution(), dists1, dists2, frequency);
 
-  /*------------------ Compute the DP matrix ---------------------*/
-
+  //------------------ Compute the DP matrix ---------------------//
   vector<int> path_old = get_path(old,node1,node2);
   vector<vector<int> > pins = get_pins(P.alignment_constraint,old,group1,not group1,seq1,seq2);
   vector<int> path = Matrices.forward(pins);
@@ -105,6 +104,7 @@ void sample_alignment(alignment& A,Parameters& P,int b)
 
   //--------------------------------------------------------------//
 #ifndef NDEBUG_DP
+  std::cerr<<"\n\n----------------------------------------------\n";
   vector<int> nodes;
   nodes.push_back(node1);
   nodes.push_back(node2);
@@ -131,6 +131,11 @@ void sample_alignment(alignment& A,Parameters& P,int b)
   for(int i=0;i<p.size();i++) 
     PR[i] = sample_P(a[i], p[i], 1, 1, paths[i], Matrices);
 
+  if (paths[0].size() > paths[1].size())
+    std::cerr<<"path got longer by "<<paths[0].size() - paths[1].size()<<"!\n";
+  if (paths[0].size() < paths[1].size())
+    std::cerr<<"path got shorter by "<<paths[1].size() - paths[0].size()<<"!\n";
+
   //--------- Check that each choice is sampled w/ the correct Probability ---------//
   check_sampling_probabilities(PR,a);
 
@@ -138,6 +143,30 @@ void sample_alignment(alignment& A,Parameters& P,int b)
   vector<int> path_new = get_path(A,node1,node2);
   path.push_back(3);
   assert(path_new == path);
+
+  double diff = log(PR[0][0]) - log(PR[1][0]);
+  std::cerr<<"before = "<<PR[1][0]<<"       after = "<<PR[0][0]<<
+    " diff = "<<diff<<std::endl;
+
+  if (diff < -10) {
+    efloat_t L1 = p[1].likelihood(a[1],p[1]);
+    efloat_t L2 = p[0].likelihood(a[0],p[0]);
+
+    efloat_t prior1 = p[1].prior(a[1],p[1]);
+    efloat_t prior2 = p[0].prior(a[0],p[0]);
+
+    std::cerr<<"Yelp!\n";
+
+    std::cerr<<std::endl;
+    std::cerr<<"DELTA Likelihood = "<<L2/L1<<std::endl;
+    std::cerr<<"DELTA prior = "<<prior2/prior1<<std::endl;
+    std::cerr<<std::endl;
+    
+    std::cerr<<"Sampling probability of good path is: "<<PR[1][1]<<std::endl;
+
+    std::cerr<<"delta = "<<log(P.branch_HMMs[b](0,1))<<"\n";
+    std::cerr<<"delta2 = "<<log(P.branch_HMMs[b](1,2))<<"\n";
+  }
 
 #endif
 

@@ -193,7 +193,7 @@ void check_sampling_probabilities(const vector< vector<efloat_t> >& PR,const vec
   {
     const vector<efloat_t>& P2 = PR[i];
     
-    std::cerr<<"option = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
+    std::cerr<<"\noption = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
 
     //    std::cerr<<" Pr1 * Rho1  = "<<P1[0]*P1[2]<<"    Pr2 * Rho2  = "<<P2[0]*P2[2]<<
     //      "    Pr2 * Rho2  - Pr1 * Rho1  = "<<P2[0]*P2[2]/(P1[0]*P1[2])<<endl;
