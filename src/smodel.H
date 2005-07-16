@@ -383,7 +383,7 @@ namespace substitution {
     string name() const;
     string parameter_name(int i) const;
 
-    /// Construct an HKY model on alphabet 'a'
+    /// Construct an EQU model on alphabet 'a'
     EQU(const alphabet& a)
       :ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a)
     { recalc(); }
@@ -410,7 +410,7 @@ namespace substitution {
     string name() const;
     string parameter_name(int i) const;
 
-    /// Construct an HKY model on alphabet 'a' with matrix from 'filename'
+    /// Construct an Empirical model on alphabet 'a' with matrix from 'filename'
     Empirical(const alphabet& a,const string& filename) 
       : ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a)
     { 

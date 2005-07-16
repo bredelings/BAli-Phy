@@ -234,7 +234,7 @@ namespace substitution {
 
   string HKY::parameter_name(int i) const {
     if (i==0)
-      return "RMM::f";
+      return "HKY::f";
     else if (i==1)
       return "HKY::kappa";
     else
