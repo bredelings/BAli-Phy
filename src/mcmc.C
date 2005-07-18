@@ -201,19 +201,27 @@ void MoveAll::getorder(double l) {
 }
 
 
-int MoveOne::choose() const {
+int MoveOne::choose() const 
+{
   double r = myrandomf()*sum();
 
   double sum = 0;
   int i = 0;
+  int enabled_submoves=0;
   for(;i < moves.size();i++) {
 
     if (not moves[i]->enabled())
       continue;
+    else
+      enabled_submoves++;
 
     sum += lambda[i];
     if (r<sum) break;
   }
+
+  if (not enabled_submoves)
+    throw myexception()<<"move "<<attributes[0]<<" has no enabled submoves";
+
   return i;
 }
 
