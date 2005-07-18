@@ -51,12 +51,14 @@ public:
   /// Index of unknown: no information ('?')
   static const int unknown = -3;
 
-  /// Do we contain the letter 'c'
+  /// Do we contain the letter 'c'?
   bool contains(char c) const;
+  /// Do we contain the letter 'c'?
   bool contains(const std::string&) const;
 
   /// Get the index for letter 'c'
   int operator[](char l) const;
+  /// Get the index for letter 'c'
   int operator[](const std::string&) const;
 
   /// Translate a sequence of letters into indexes
@@ -75,7 +77,10 @@ public:
 
   virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
 
+  /// Add a letter to the alphabet
   void insert(const std::string& l);
+
+  /// Remove a letter from the alphabet
   void remove(const std::string& l);
 
   alphabet(const std::string&,const std::string&);
@@ -87,20 +92,31 @@ public:
   virtual ~alphabet() {};
 };
 
+/// An alphabet of nucleotides
 class Nucleotides: public alphabet {
 public:
   virtual Nucleotides* clone() const=0;
 
+  /// Is the letter a purine?
   bool purine(int i) const {return i==0 or i==1;}
+
+  /// Is the letter a pyrimadine?
   bool pyrimidine(int i) const {return i==2 or i==3;}
 
+  /// Is i -> j a transition?
   bool transition(int i, int j) const {return (purine(i) and purine(j))
 				   or (pyrimidine(i) and pyrimidine(j)) ;}
+
+  /// Is i -> j a transversion?
   bool transversion(int i,int j) const {return not transition(i,j);}
 
+  /// Get the index of A
   int A() const {return 0;}
+  /// Get the index of G
   int G() const {return 1;}
+  /// Get the index of T (or U)
   int T() const {return 2;}
+  /// Get the index of C
   int C() const {return 3;}
   
   Nucleotides(const std::string& s,char c);
@@ -110,7 +126,7 @@ public:
 };
 
 
-//--------------------------------- DNA -------------------------------//
+/// The DNA alphabet
 class DNA: public Nucleotides {
 public:
   virtual DNA* clone() const {return new DNA(*this);}
@@ -119,7 +135,7 @@ public:
   ~DNA() {};
 };
 
-//--------------------------------- RNA -------------------------------//
+/// The RNA alphabet
 class RNA: public Nucleotides {
 public:
   virtual RNA* clone() const {return new RNA(*this);}
@@ -128,7 +144,7 @@ public:
   ~RNA() {};
 };
 
-//----------------------------- Amino Acids----------------------------//
+/// An Amino Acid alphabet
 class AminoAcids: public alphabet {
 public:
   virtual AminoAcids* clone() const {return new AminoAcids(*this);}
@@ -136,13 +152,14 @@ public:
   AminoAcids();
 };
 
+/// An Amino Acid alphabet that includes a "stop" amino acid
 class AminoAcidsWithStop: public AminoAcids {
 public:
   AminoAcidsWithStop();
 };
 
 
-//------------------------------- Codons ------------------------------//
+/// An alphabet of triplets of nucleotides
 class Triplets: public alphabet {
 protected:
   OwnedPointer<Nucleotides> N;
@@ -153,8 +170,10 @@ protected:
 public:
   virtual Triplets* clone() const {return new Triplets(*this);}
 
+  /// The alphabet of nucleotides that we construct triplets from
   const Nucleotides& getNucleotides() const {return *N;}
 
+  /// The alphabet of nucleotides that we construct triplets from
   int sub_nuc(int codon,int pos) const;
 
   std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
@@ -164,6 +183,7 @@ public:
 };
 
 
+/// A Triplets alphabet with a mapping to an AminoAcids alphabet
 class Codons: public Triplets {
 protected:
   OwnedPointer<AminoAcids> A;
@@ -175,12 +195,14 @@ protected:
 public:
   virtual Codons* clone() const {return new Codons(*this);}
 
+  /// Is letter codon a stop codon?
   bool stop_codon(int codon) const {
     assert(0 <= codon && codon <translation_table.size() );
     int aa = translation_table[codon];
     return A->lookup(aa) == "!";
   }
 
+  /// What amino acid does codon map to?
   int translate(int codon) const {
     if (codon == alphabet::gap or codon==alphabet::not_gap)
       return codon;
@@ -188,12 +210,16 @@ public:
     return translation_table[codon];
   }
 
+  /// What AminoAcids alphabet are we using?
   const AminoAcids& getAminoAcids() const {return *A;}
 
+  /// Construct a Codons alphabet from Nucleotides, AminoAcids, and a correspondance table.
   Codons(const Nucleotides& N1,const AminoAcids& A1,std::vector<std::string>,std::vector<std::string>);
 
+  /// Construct a Codons alphabet from Nucleotides, AminoAcids, and a file handle.
   Codons(const Nucleotides& N1,const AminoAcids& A1,std::istream&);
 
+  /// Construct a Codons alphabet from Nucleotides, AminoAcids, and a filename.
   Codons(const Nucleotides& N1,const AminoAcids& A1,const std::string&);
 };
 
