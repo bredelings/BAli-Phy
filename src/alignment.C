@@ -112,7 +112,7 @@ void alignment::add_row(const vector<int>& v) {
   ::resize(array,new_length,n_sequences()+1,-1);
 
   for(int position=0;position<v.size();position++)
-    array(position,n_sequences()-1) = v[position];
+    array(position,array.size2()-1) = v[position];
 }
 
 
