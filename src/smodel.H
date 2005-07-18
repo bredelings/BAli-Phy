@@ -215,12 +215,7 @@ namespace substitution {
     virtual void recalc();
 
     /// Construct a reversible Markov model on alphabet 'a_'
-    ReversibleMarkovModel(const alphabet& a,int dp):
-      MarkovModel(a), pi(1.0/a.size(),a.size()), 
-      S(a.size(),a.size()),
-      eigensystem(a.size())
-    { set_n_parameters(dp+1);parameters_[0] = 1;}
-    
+    ReversibleMarkovModel(const alphabet& a,int dp);
 
   public:
     double rate() const;
@@ -244,12 +239,8 @@ namespace substitution {
   
     efloat_t prior() const;
 
-    /// Construct a reversible Markov model on alphabet 'a_'
-    ReversibleMarkovModel(const alphabet& a):
-      MarkovModel(a), pi(1.0/a.size(),a.size()), 
-      S(a.size(),a.size()),
-      eigensystem(a.size())
-    { set_n_parameters(1) ; parameters_[0] = 1;}
+    /// Construct a reversible Markov model on alphabet 'a'
+    ReversibleMarkovModel(const alphabet& a);
     
     ~ReversibleMarkovModel() {}
   };
@@ -376,7 +367,7 @@ namespace substitution {
     virtual void recalc();
   public:
 
-    double fiddle(int) {return 1;}
+    double fiddle(int);
 
     virtual EQU* clone() const {return new EQU(*this);}
 

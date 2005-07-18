@@ -184,6 +184,28 @@ namespace substitution {
     return dirichlet_pdf(frequencies(),q);
   }
 
+    /// Construct a reversible Markov model on alphabet 'a_'
+  ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a,int dp)
+    :MarkovModel(a), pi(1.0/a.size(),a.size()), 
+     S(a.size(),a.size()),
+     eigensystem(a.size())
+  { 
+    set_n_parameters(dp+1);
+    parameters_[0] = 1;
+    fixed_[0] = true;
+  }
+    
+
+  ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)
+    :MarkovModel(a), pi(1.0/a.size(),a.size()), 
+     S(a.size(),a.size()),
+     eigensystem(a.size())
+  { 
+    set_n_parameters(1) ; 
+    parameters_[0] = 1;
+    fixed_[0] = true;
+  }
+
   //---------------------- INV_Model --------------------------//
 
   void INV_Model::set_rate(double r)  {
@@ -242,18 +264,27 @@ namespace substitution {
   }
 
   double HKY::fiddle(int) {
-    if (fixed(1)) return 1;
+    if (not fixed(0)) {
 
-    const double sigma = 0.15;
-    kappa(kappa() * exp(gaussian(0,sigma)));
+      double& f = parameters_[0];
+
+      // fiddle f
+      const double sigma = 0.05;
+      f += gaussian(0,sigma);
+
+      f = wrap(f,1.0);
+    }
+
+    if (not fixed(1))
+      kappa( kappa() * exp(gaussian(0,0.15)) );
 
     return 1;
   }
 
   /// return the LOG of the prior
-  efloat_t HKY::prior() const {
-    double k = log(kappa());
-    efloat_t P = shift_laplace_pdf(k, log(2), 0.25);
+  efloat_t HKY::prior() const 
+  {
+    efloat_t P = shift_laplace_pdf(log(kappa()), log(2), 0.25);
     P *= ReversibleMarkovModel::prior();
     return P;
   }
@@ -277,7 +308,19 @@ namespace substitution {
     return "TN";
   }
 
-  double TN::fiddle(int) {
+  double TN::fiddle(int) 
+  {
+    if (not fixed(0)) {         
+
+      double& f = parameters_[0];
+
+      // fiddle f
+      const double sigma = 0.05;
+      f += gaussian(0,sigma);
+
+      f = wrap(f,1.0);
+    }
+
     const double sigma = 0.15;
 
     if (not fixed(1)) {
@@ -348,6 +391,20 @@ namespace substitution {
     return "EQU";
   }
 
+  double EQU::fiddle(int) 
+  {
+    if (not fixed(0)) {
+
+      double& f = parameters_[0];
+
+      const double sigma = 0.05;
+      f += gaussian(0,sigma);
+
+      f = wrap(f,1.0);
+    }
+    return 1;
+  }
+
   void EQU::recalc() {
     for(int i=0;i<Alphabet().size();i++)
       for(int j=0;j<Alphabet().size();j++)
@@ -356,13 +413,14 @@ namespace substitution {
     ReversibleMarkovModel::recalc();
   }
 
-  double Empirical::fiddle(int) {
+  double Empirical::fiddle(int) 
+  {
     if (not fixed(0)) {
 
       double& f = parameters_[0];
 
-      // fiddle RMM::f
-      const double sigma = 0.04;
+      // fiddle f
+      const double sigma = 0.05;
       f += gaussian(0,sigma);
 
       f = wrap(f,1.0);
@@ -426,7 +484,18 @@ namespace substitution {
     recalc();
   }
 
-  double YangM0::super_fiddle(int) {
+  double YangM0::super_fiddle(int) 
+  {
+    if (not fixed(0)) {
+      
+      double& f = super_parameters_[0];
+
+      const double sigma = 0.05;
+      f += gaussian(0,sigma);
+      
+      f = wrap(f,1.0);
+    }
+
     double sigma = 0.15;
     if (not fixed(1))
       super_parameters_[1] *= exp(gaussian(0,sigma));
