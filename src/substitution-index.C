@@ -292,7 +292,7 @@ int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M)
 
   for(int i=0;i<n;i++) {
     const int l = M(0,i);
-    assert(l == A.seq(i).size());
+    assert(l == A.seq(i).size()/A.get_alphabet().width());
     for(int j=0;j<l;j++)
       A.note(index,j+1,i) = M(j+1,i);
     A.note(index,0,i) = l;

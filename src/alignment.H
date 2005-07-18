@@ -88,14 +88,11 @@ public:
 
   alignment& operator=(const alignment&);
 
-  /// Number of sequences
-  int n_sequences() const { return sequences.size() ;}
-
   /// Number of columns
   int length() const {return array.size1();}
 
   /// Total number of sequences
-  int size2() const {return array.size2();}
+  int n_sequences() const {assert(array.size2() == sequences.size()); return array.size2();}
 
   //FIXME!  I should cache the results of this
   ///Length of a particular sequence

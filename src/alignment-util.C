@@ -11,10 +11,10 @@ using boost::program_options::variables_map;
 
 alignment chop_internal(alignment A) 
 {
-  int N = (A.size2()+2)/2;
+  int N = (A.n_sequences()+2)/2;
 
   bool internal_nodes = true;
-  for(int i=N;i<A.size2();i++) {
+  for(int i=N;i<A.n_sequences();i++) {
     if (A.seq(i).name.size() == 0 or A.seq(i).name[0] != 'A') {
       internal_nodes = false; 
       break;
@@ -62,7 +62,7 @@ alignment add_internal(alignment A,const Tree& T)
 /// Construct a mapping of letters to columns for each leaf sequence
 vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
   if (nleaves == -1)
-    nleaves = A.size2();
+    nleaves = A.n_sequences();
 
   vector< vector<int> > result(nleaves);
 
@@ -80,7 +80,7 @@ vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
 
 /// Replace each letter with its position in its sequence
 ublas::matrix<int> M(const alignment& A1) {
-  ublas::matrix<int> A2(A1.length(),A1.size2());
+  ublas::matrix<int> A2(A1.length(),A1.n_sequences());
   for(int i=0;i<A2.size2();i++) {
     int pos=0;
     for(int column=0;column<A2.size1();column++) {
@@ -116,8 +116,8 @@ bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2,
 
 
 bool A_constant(alignment A1, alignment A2, const valarray<bool>& ignore) {
-  assert(A1.size2() == A2.size2());
-  assert(ignore.size() == A1.size2());
+  assert(A1.n_sequences() == A2.n_sequences());
+  assert(ignore.size() == A1.n_sequences());
 
   // convert to feature-number notation
   ublas::matrix<int> M1 = M(A1);
@@ -136,9 +136,9 @@ bool A_constant(alignment A1, alignment A2, const valarray<bool>& ignore) {
 
   //----- Check that each homology in A1 is in A2 -----//
   for(int column=0; column<A1.length(); column++)
-    for(int s1=0; s1 < A1.size2(); s1++) {
+    for(int s1=0; s1 < A1.n_sequences(); s1++) {
       if (ignore[s1]) continue;
-      for(int s2=s1+1; s2 < A1.size2(); s2++) {
+      for(int s2=s1+1; s2 < A1.n_sequences(); s2++) {
 	if (ignore[s2]) continue;
 	if (not A_match(M1,column,s1,s2,M2,column_indices))
 	  return false;
@@ -197,7 +197,7 @@ bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<
 void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 
   for(int column=0;column<A.length();column++)
-    for(int i=n_leaves;i<A.size2();i++) 
+    for(int i=n_leaves;i<A.n_sequences();i++) 
       if (A(column,i) == alphabet::gap)
 	;
       else if (A(column,i) == alphabet::not_gap)
@@ -232,7 +232,7 @@ void check_letters_OK(const alignment& A) {
 
   bool bad=false;
   for(int i=0;i<A.length();i++)
-    for(int j=0;j<A.size2();j++)
+    for(int j=0;j<A.n_sequences();j++)
       if (A(i,j) >=0 and A(i,j) < a.size())
 	; // this is a letter
       else if (A(i,j) == alphabet::gap)

@@ -63,7 +63,7 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
   vector< Matrix > dist(seq.size(), Matrix(MModel.n_base_models(),a.size()) );
 
   for(int column=0;column<dist.size();column++) {
-    vector<int> residues(A.size2());
+    vector<int> residues(A.n_sequences());
 
     for(int m=0;m<MModel.n_base_models();m++) {
       for(int l=0;l<a.size();l++)

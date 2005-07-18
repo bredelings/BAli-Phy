@@ -45,7 +45,7 @@ valarray<double> letter_counts(const alignment& A)
   // Count the occurrence of the different letters
   valarray<double> counts(0.0, a.size());
   for(int i=0;i<A.length();i++) {
-    for(int j=0;j<A.size2();j++) {
+    for(int j=0;j<A.n_sequences();j++) {
       if (alphabet::letter(A(i,j)))
 	counts[A(i,j)]++;
     }
@@ -67,7 +67,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
 
   // empirical frequencies
   if (not args.count("frequencies"))
-    frequencies = A.get_alphabet().get_frequencies_from_counts(counts,A.size2()/2);
+    frequencies = A.get_alphabet().get_frequencies_from_counts(counts,A.n_sequences()/2);
 
   // uniform frequencies
   else if (args["frequencies"].as<string>() == "uniform")
@@ -79,7 +79,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
 
     if (not T) throw myexception()<<"You can only specify nucleotide frequencies on Triplet or Codon alphabets.";
     valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*T,counts);
-    valarray<double> fN = T->getNucleotides().get_frequencies_from_counts(N_counts,A.size2()/2);
+    valarray<double> fN = T->getNucleotides().get_frequencies_from_counts(N_counts,A.n_sequences()/2);
 
     frequencies = get_codon_frequencies_from_independant_nucleotide_frequencies(*T,fN);
   }
@@ -138,9 +138,9 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
   
   //---------- double-check that we have the right number of sequences ---------//
   if (internal_sequences)
-    assert(A.size2() == T.n_nodes());
+    assert(A.n_sequences() == T.n_nodes());
   else
-    assert(A.size2() == T.n_leaves());
+    assert(A.n_sequences() == T.n_leaves());
 
 
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
@@ -191,9 +191,9 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) {
   
   //---------- double-check that we have the right number of sequences ---------//
   if (internal_sequences)
-    assert(A.size2() == T.n_nodes());
+    assert(A.n_sequences() == T.n_nodes());
   else
-    assert(A.size2() == T.n_leaves());
+    assert(A.n_sequences() == T.n_leaves());
 
 
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
@@ -236,7 +236,7 @@ void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,b
   if ((args.count("internal") and args["internal"].as<string>() == "+")
       or args.count("randomize-alignment"))
     for(int column=0;column< A.length();column++) {
-      for(int i=T.n_leaves();i<A.size2();i++) 
+      for(int i=T.n_leaves();i<A.n_sequences();i++) 
 	A(column,i) = alphabet::not_gap;
     }
 
@@ -268,7 +268,7 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
   if ((args.count("internal") and args["internal"].as<string>() == "+")
       or args.count("randomize-alignment"))
     for(int column=0;column< A.length();column++) {
-      for(int i=T.n_leaves();i<A.size2();i++) 
+      for(int i=T.n_leaves();i<A.n_sequences();i++) 
 	A(column,i) = alphabet::not_gap;
     }
 

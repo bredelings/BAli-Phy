@@ -38,7 +38,7 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
     assert(c3 <= subA2.size());
 
     if (c1 < subA1.size() and (c2 == seq1.size() or (c2<seq1.size() and subA1[c1] < seq1[c2]))) {
-      for(int i=0;i<A.size2();i++) {
+      for(int i=0;i<A.n_sequences();i++) {
 	if (group1[i])
 	  A(column,i) = old(subA1[c1],i);
 	else
@@ -48,7 +48,7 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
       assert(not all_gaps(A,column));
     }
     else if (c3 < subA2.size() and (c4 == seq2.size() or (c4<seq2.size() and subA2[c3] < seq2[c4]))) {
-      for(int i=0;i<A.size2();i++) {
+      for(int i=0;i<A.n_sequences();i++) {
 	if (group1[i])
 	  A(column,i) = alphabet::gap;
 	else
@@ -58,7 +58,7 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
       assert(not all_gaps(A,column));
     }
     else if (path[l]==0) {
-      for(int i=0;i<A.size2();i++) {
+      for(int i=0;i<A.n_sequences();i++) {
 	if (group1[i])
 	  A(column,i) = old(seq1[c2],i);
 	else
@@ -68,7 +68,7 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
       assert(not all_gaps(A,column));
     }
     else if (path[l]==1) {
-      for(int i=0;i<A.size2();i++) {
+      for(int i=0;i<A.n_sequences();i++) {
 	if (group1[i])
 	  A(column,i) = alphabet::gap;
 	else
@@ -78,7 +78,7 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
       assert(not all_gaps(A,column));
     }
     else {
-      for(int i=0;i<A.size2();i++) {
+      for(int i=0;i<A.n_sequences();i++) {
 	if (group1[i])
 	  A(column,i) = old(seq1[c2],i);
 	else
@@ -97,7 +97,7 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
   assert(c4 == seq2.size());
   assert(l == path.size());
 
-  for(int i=0;i<A.size2();i++) 
+  for(int i=0;i<A.n_sequences();i++) 
     assert(A.seqlength(i) == old.seqlength(i));
 
   //  std::cerr<<"new = "<<A<<endl;  

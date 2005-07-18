@@ -28,14 +28,14 @@ int alignment::add_note(int l) const {
 }
 
 bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask) {
-  for(int i=0;i<A.size2();i++)
+  for(int i=0;i<A.n_sequences();i++)
     if (mask[i] and not A.gap(column,i))
       return false;
   return true;
 }
 
 bool all_gaps(const alignment& A,int column) {
-  for(int i=0;i<A.size2();i++)
+  for(int i=0;i<A.n_sequences();i++)
     if (not A.gap(column,i))
       return false;
   return true;
@@ -69,7 +69,7 @@ void alignment::changelength(int l)
 }
 
 void alignment::delete_column(int column) {
-  for(int i=0;i<size2();i++) 
+  for(int i=0;i<n_sequences();i++) 
     assert(array(column,i) == alphabet::gap);
 
   ublas::matrix<int> array2(array.size1()-1,array.size2());
@@ -109,15 +109,15 @@ alignment& alignment::operator=(const alignment& A) {
 void alignment::add_row(const vector<int>& v) {
   int new_length = std::max(length(),(int)v.size());
 
-  ::resize(array,new_length,size2()+1,-1);
+  ::resize(array,new_length,n_sequences()+1,-1);
 
   for(int position=0;position<v.size();position++)
-    array(position,size2()-1) = v[position];
+    array(position,n_sequences()-1) = v[position];
 }
 
 
 void alignment::del_sequence(int ds) {
-  assert(0 <= ds and ds < size2());
+  assert(0 <= ds and ds < n_sequences());
 
   //----------- Fix the sequence list -------------//
   sequences.erase(sequences.begin()+ds);

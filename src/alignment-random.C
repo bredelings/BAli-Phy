@@ -3,7 +3,7 @@
 
 alignment randomize(const alignment& A,int n) {
   if (n == -1)
-    n = A.size2();
+    n = A.n_sequences();
 
   int maxlength = -1;
   for(int s=0;s<n;s++) {

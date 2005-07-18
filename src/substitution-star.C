@@ -45,7 +45,7 @@ namespace substitution {
   {
     efloat_t p = 1;
   
-    vector<int> residues(A.size2());
+    vector<int> residues(A.n_sequences());
 
     // Do each node before its parent
     for(int column=0;column<A.length();column++) {

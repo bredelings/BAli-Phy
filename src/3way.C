@@ -371,7 +371,7 @@ namespace A3 {
 	if (cA[i] < subA[i].size() and 
 	    (cS[i] == seq[i].size() or 
 	     (cS[i] < seq[i].size() and subA[i][cA[i]] != seq[i][cS[i]]))) {
-	  for(int s=0;s<A.size2();s++){
+	  for(int s=0;s<A.n_sequences();s++){
 	    if (group[i][s])
 	      A(column,s) = old(subA[i][cA[i]],s);
 	    else
@@ -386,10 +386,10 @@ namespace A3 {
       
       //----------------- Insert a column corresponding to path[l] -------------------//
       int bits = getstates(path[l]) & bitsmask;
-      for(int s=0;s<A.size2();s++) 
+      for(int s=0;s<A.n_sequences();s++) 
 	A(column,s) = alphabet::gap;
       
-      for(int s=0;s<A.size2();s++) {
+      for(int s=0;s<A.n_sequences();s++) {
 	if (s == n0) {
 	  if (dl(path[l]))
 	    A(column,s) = alphabet::not_gap;
