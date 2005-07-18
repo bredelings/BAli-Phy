@@ -202,7 +202,7 @@ namespace substitution {
 
   string INV_Model::parameter_name(int i) const {
     if (i==0)
-      return "RMM::f";
+      return "INV::f";
     else
       return s_parameter_name(i,1);
   }
@@ -328,7 +328,7 @@ namespace substitution {
   string TN::parameter_name(int i) const {
     assert(i==0 or i==1);
     if (i==0)
-      return "RMM::f";
+      return "TN::f";
     if (i==1)
       return "TN::kappa(pur)";
     else if (i==2)
@@ -339,7 +339,7 @@ namespace substitution {
 
   string EQU::parameter_name(int i) const {
     if (i == 0)
-      return "RMM::f";
+      return "EQU::f";
     else
       return s_parameter_name(i,1);
   }
@@ -379,7 +379,7 @@ namespace substitution {
 
   string Empirical::parameter_name(int i) const {
     if (i==0)
-      return "RMM::f";
+      return "Empirical::f";
     else
       return s_parameter_name(i,1);
   }
@@ -496,25 +496,6 @@ namespace substitution {
     else
       return s_parameter_name(i,2);
   }
-
-  //  const valarray<double>& YangM0::frequencies() const {
-  //    return ReversibleMarkovModel::frequencies();
-  //  }
-
-  //  void YangM0::frequencies(const valarray<double>& pi_) {
-  //    assert(pi_.size() == frequencies().size());
-
-    /*
-    for(int i=0;i<pi_.size();i++) {
-      if (T.stop_codon(i)) {
-	std::cerr<<"Stop codon!\n";
-	if (pi_[i] >0)
-	  throw myexception()<<"Giving non-zero frequency to stop codon "<<Alphabet().lookup(i)<<"!";
-      }
-      }*/
-
-  //    ReversibleMarkovModel::frequencies(pi_);
-  //  }
 
   YangM0::YangM0(const Codons& C,const ReversibleMarkovNucleotideModel& M)
     :CodonModel(C),NestedModelOver<ReversibleMarkovNucleotideModel>(M,2)
