@@ -1,19 +1,10 @@
 -10. Make tree a virtual public base class for SequenceTree and RootedTree?
 
--9. Make a parameter for the size of branch length updates!
-
--8. tree-dist-compare
-  a) implement block bootstrap with random block sizes!
-  b) add "--size" argument 
-  c) profile it!
-
 -7. Benchmarking of mixing... 
   a) try with alignment fixed
   b) look at log autocorrelation and effective sample sizes for distances
      between 2 nodes + sum all branches + sum all paths
   c) compare mixing with few taxa, many taxa...
-
--6. remove use of alignments.size() from load_alignments( ) in alignment-util.C
 
 -5. Speeding up GQ_exit( )
   a) can we avoid copying G into G2 - can we construct it in place?
@@ -284,6 +275,7 @@ the prior, because we never want to use it  differently.
 
 [DONE] Write alignment-consensus
 
+[DONE] Start fiddling the 'f' parameter, but making it fixed by default.
 
 *IDEAS*
 
@@ -303,3 +295,4 @@ the prior, because we never want to use it  differently.
        or asking questions about their data.
 
  - find some papers for the journal club?
+
