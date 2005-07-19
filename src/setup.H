@@ -21,22 +21,25 @@ std::valarray<double> empirical_frequencies(const boost::program_options::variab
 
 SequenceTree get_random_T(const alignment& A);
 
-/// Hook up the leaf nodes of T to the leaf of A
-/// Also, make sure that A has the right number of internal sequences.
+/// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
+/// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,RootedSequenceTree& T,bool internal_sequences=true);
 
+/// Load and link() an alignment A and SequenceTree T
 void load_A_and_T(const boost::program_options::variables_map& args,
 		  alignment& A,SequenceTree& T,bool internal_sequences=true);
 
+/// Load and link() an alignment A and SequenceTree T
 void load_A_and_T(const boost::program_options::variables_map& args,
 		  alignment& A,RootedSequenceTree& T,bool internal_sequences=true);
 
+/// Load an alignment A, generate a random SequenceTree T, and then link them.
 void load_A_and_random_T(const boost::program_options::variables_map& args,
 			 alignment& A,SequenceTree& T,bool internal_sequences=true);
 
-// construct a list of how many times each letter occurs in A
+/// Construct a list of how many times each letter occurs in A
 std::valarray<double> letter_counts(const alignment& A);
 
 

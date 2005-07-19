@@ -76,46 +76,6 @@ vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2) {
   return mapping;
 }
 
-std::vector<std::string> truncate_names(const std::vector<std::string>& names) {
-  std::vector<std::string> names2 = names;
-
-  std::sort(names2.begin(),names2.end(),lstr());
-
-  vector<int> mapping = compute_mapping(names,names2);
-
-  //--------------- Do the truncation --------------//
-  for(int i=0;i<names2.size();i++)
-      if (names2[i].size() > 10)
-	names2[i] = names2[i].substr(0,10);
-
-  //----------- Check for collisions --------------//
-  vector<int> multiplicity(names2.size(),0);
-
-  for(int i=0;i<names2.size();i++)
-    for(int j=0;j<i;j++) {
-
-      if (names2[i] != names2[j]) continue;
-
-      //      cerr<<names2[i]<<" and "<<names2[j]<<" both map to "<<names2[i]<<endl;
-
-      if (not multiplicity[j])
-	multiplicity[j]++;	    
-
-      multiplicity[j]++;
-      
-      string number = convertToString(multiplicity[j]);
-      if (names2.size() >= 10)
-	names2[i].replace( names2[i].size()-number.size(),number.size(),number);
-      else
-	//FIXME - this doesn't work, because if two name[i] objects are the same
-	// then the mapping isn't computed correctly: we always go back to the first one.
-	names2[i] = names2[i] + number;
-      //      cerr<<"Rewriting "<<names[i]<<" => "<<names2[i]<<endl;
-    }
-
-  return apply_mapping(names2,invert(mapping));
-}
-
 bool contains_char(const string& s,char c) {
   for(int i=0;i<s.size();i++)
     if (s[i] == c)

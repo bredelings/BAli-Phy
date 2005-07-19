@@ -4,10 +4,15 @@
 #include <cassert>
 #include "logsum.H"
 
+/// A class for handling positive real number in terms of their natural log.
 class log_double_t {
+  /// Natural log of the number.
   double value;
 public:
+
+  /// Access the log of the number.
   double  log() const {return value;}
+  /// Access the log of the number.
   double& log()       {return value;}
 
   log_double_t& operator +=(const log_double_t& y) {loginc(value,y.log()); return *this;}

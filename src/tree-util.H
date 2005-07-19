@@ -3,7 +3,7 @@
 #include "sequencetree.H"
 #include <boost/program_options.hpp>
 
-/// Load a tree from command line args align=filename
+/// Load a tree from command line args --tree filename
 RootedSequenceTree load_T(const boost::program_options::variables_map& args);
 
 

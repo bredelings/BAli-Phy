@@ -68,6 +68,7 @@ std::vector<T> apply_mapping(const std::vector<T>& v1,const std::vector<int>& ma
   return v2;
 }
 
+///Reflect x at boundaries 0 and max to get a number in [0,max]
 template <typename T>
 inline T wrap(T x,T max) {
   if (max == 0)
@@ -88,21 +89,25 @@ inline T wrap(T x,T max) {
   return x;
 }
 
+/// Reflect x at boundaries min and max to get a number in [min,max]
 template <typename T>
 inline T wrap(T x, T min, T max) {
   return wrap(x-min,max-min)+min;
 }
 
+/// Get index of t in v
 template <typename T>
 int find_index(const std::vector<T>& v,const T& t) {
   return std::find(v.begin(),v.end(),t) - v.begin();
 }
 
+/// Does v include t?
 template <typename T>
 bool includes(const std::vector<T>& v, const T& t) {
   return (std::find(v.begin(),v.end(),t) != v.end());
 }
 
+/// Does v1 include every member of v2?
 template <typename T>
 bool includes(const std::vector<T>& v1, const std::vector<T>& v2) {
   for(int i=0;i<v2.size();i++)
@@ -111,10 +116,13 @@ bool includes(const std::vector<T>& v1, const std::vector<T>& v2) {
   return true;
 }
 
-std::string join(const std::vector<std::string>&,char);
+/// Concatenate members of v, separating by char c
+std::string join(const std::vector<std::string>& v,char c);
 
-std::vector<std::string> split(const std::string&,char);
+/// Split the line into pieces at c
+std::vector<std::string> split(const std::string& line,char c);
 
+/// Split the line into pieces at c and convert to T
 template<class T>
 std::vector<T> split(const std::string& s,char c) {
   std::vector<std::string> v = split(s,c);
@@ -125,17 +133,21 @@ std::vector<T> split(const std::string& s,char c) {
   return vT;
 }
 
-std::string strip(const std::string&,char);
-std::string strip(const std::string&,const std::string&);
+/// Remove all occurrences of char c from line
+std::string strip(const std::string& line,char c);
+/// Remove all occurrences of each char in chars from line
+std::string strip(const std::string& line,const std::string& chars);
 
+/// invert the mapping
 std::vector<int> invert(const std::vector<int>&);
 
+/// compose the two mappings
 std::vector<int> compose(const std::vector<int>&,const std::vector<int>&);
 
+/// Return a random permutation of the list
 std::vector<int> randomize(const std::vector<int>&);
 
-std::vector<std::string> truncate_names(const std::vector<std::string>&);
-
+/// Return the arg-min of v
 template<class T>
 int argmin(const std::vector<T>& v) {
   int argmin = 0;
@@ -146,6 +158,7 @@ int argmin(const std::vector<T>& v) {
   return argmin;
 }
 
+/// Return the arg-max of v
 template<class T>
 int argmax(const std::vector<T>& v) {
   int argmax = 0;
@@ -156,6 +169,7 @@ int argmax(const std::vector<T>& v) {
   return argmax;
 }
 
+/// Order i~j by v[i]~v[j]
 template <typename T>
 struct sequence_order {
   const std::vector<T>& v;
@@ -167,6 +181,7 @@ struct sequence_order {
   }
 };
 
+/// If m contains name, convert m[name] to T and return.  Otherwise return value.
 template <typename U, typename T>
 const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name, const U& value) {
   if (m.find(name) != m.end() )
@@ -175,6 +190,7 @@ const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name, const U
     return value;
 }
 
+/// get the next word starting at position i, return true if not done.
 bool get_word(std::string& word, int& i,const std::string& s,
 	      const std::string& delimiters,const std::string& whitespace);
 
