@@ -57,9 +57,9 @@ int main(int argc,char* argv[])
     ublas::matrix<int> MA = M(A);
 
     //------- Write the sequence names ------//
-    for(int i=0;i<A.size2();i++) {
+    for(int i=0;i<A.n_sequences();i++) {
       cout<<A.seq(i).name;
-      if (i==A.size2()-1)
+      if (i==A.n_sequences()-1)
 	cout<<std::endl;
       else
 	cout<<" ";

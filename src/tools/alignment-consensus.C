@@ -529,9 +529,9 @@ int main(int argc,char* argv[])
     if (not alignments.size()) 
       throw myexception()<<"Didn't read any alignments!";      
 
-    int N = alignments[0].size2();
+    int N = alignments[0].n_sequences();
     if (alignments.size() > 1) {
-      assert(alignments[1].size2() == N);
+      assert(alignments[1].n_sequences() == N);
       assert(alignments[1].seqlength(N-1) == alignments[0].seqlength(N-1));
     }
     vector<int> L(N);

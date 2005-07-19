@@ -85,7 +85,7 @@ int main(int argc,char* argv[])
     
     //------- Convert sequence codons to amino acids  --------//
     alignment A2(*AA);
-    for(int i=0;i<A1.size2();i++) {
+    for(int i=0;i<A1.n_sequences();i++) {
       sequence S;
       S.name = A1.seq(i).name;
       for(int column=0;column<A1.length();column++) {

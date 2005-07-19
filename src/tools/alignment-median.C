@@ -109,8 +109,8 @@ int main(int argc,char* argv[])
       alignments[i] = chop_internal(alignments[i]);
 
     if (alignments.size() > 1) {
-      int n = alignments[0].size2();
-      assert(alignments[1].size2() == n);
+      int n = alignments[0].n_sequences();
+      assert(alignments[1].n_sequences() == n);
       assert(alignments[1].seqlength(n-1) == alignments[0].seqlength(n-1));
     }
 

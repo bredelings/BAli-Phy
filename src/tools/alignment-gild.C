@@ -227,12 +227,12 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
 
   //-------- Check compatability of estimate & samples-------//
-  assert(A.size2() == T.n_leaves());
+  assert(A.n_sequences() == T.n_leaves());
   
-  if (alignments.front().size2() != T.n_nodes())
+  if (alignments.front().n_sequences() != T.n_nodes())
     throw myexception()<<"Number of sequences in alignment estimate is NOT equal to number of tree nodes!";
   
-  for(int i=0;i<A.size2();i++) {
+  for(int i=0;i<A.n_sequences();i++) {
     if (A.seq(i).name != alignments.front().seq(i).name)
       throw myexception()<<"Alignment estimate has different sequences or sequence order than alignment samples";
     
