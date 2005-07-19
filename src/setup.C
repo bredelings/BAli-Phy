@@ -63,7 +63,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
   // Count the occurrence of the different letters
   valarray<double> counts = letter_counts(A);
 
-  valarray<double> frequencies(1.0/a.size(),a.size());
+  valarray<double> frequencies(a.size());
 
   // empirical frequencies
   if (not args.count("frequencies"))
@@ -71,7 +71,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
 
   // uniform frequencies
   else if (args["frequencies"].as<string>() == "uniform")
-    ;
+    frequencies = 1.0/a.size();
 
   // triplet frequencies <- nucleotide frequencies
   else if (args["frequencies"].as<string>() == "nucleotides") {
@@ -88,13 +88,12 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
   else {
     vector<double> f = split<double>(args["frequencies"].as<string>(),',');
 
-    valarray<double> frequencies(f.size());
+    if (f.size() != a.size())
+      throw myexception()<<"You specified "<<f.size()<<" frequencies, but there are "
+			 <<a.size()<<" letters of the alphabet!";
+
     for(int i=0;i<f.size();i++)
       frequencies[i] = f[i];
-
-    if (frequencies.size() != a.size())
-      throw myexception()<<"You specified "<<f.size()<<" frequencies, but there are "<<a.size()<<" letters of the alphabet!";
-
   }
 
   return frequencies;
