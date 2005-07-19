@@ -535,10 +535,12 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
   
   // we are using every 'skip-th' alignment
   int skip = 1;
+  int total = 0;
 
   alignment A;
   string line;
-  for(int nth=0;getline(ifile,line);) {
+  int nth=0;
+  for(;getline(ifile,line);) {
     
     // Continue with the next line IF no alignment begins here
     if (not match_tag(line,tag)) continue;
@@ -551,7 +553,7 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
 
     // READ the next alignment
     try {
-      if (not alignments.size())
+      if (alignments.empty())
 	A.load(alphabets,sequence_format::read_guess,ifile);
       else 
 	ifile>>A;
@@ -571,18 +573,20 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
     
     // STORE the alignment if we're not going to skip it
     alignments.push_back(A);
+    total++;
 
     // If there are too many alignments
-    if (alignments.size() > 2*maxalignments) {
+    if (total > 2*maxalignments) {
       // start skipping twice as many alignments
       skip *= 2;
 
-      std::cerr<<"Went from "<<alignments.size();
+      std::cerr<<"Went from "<<total;
       // Remove every other alignment
       for(typeof(alignments.begin()) loc =alignments.begin();loc!=alignments.end();) {
 	typeof(loc) j = loc++;
 
 	alignments.erase(j);
+	total--;
 
 	if (loc == alignments.end()) 
 	  break;
@@ -590,25 +594,25 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
 	  loc++;
       }
 	
-      std::cerr<<" to "<<alignments.size()<<" alignments.\n";
+      std::cerr<<" to "<<total<<" alignments.\n";
 
     }
-
   }
 
+
   // If we have too many alignments
-  if (alignments.size() > maxalignments) {
-    assert(alignments.size() < maxalignments*2);
+  if (total > maxalignments) {
+    assert(total <= maxalignments*2);
 
     // We have this many extra alignments
-    const int extra = alignments.size() - maxalignments;
+    const int extra = total - maxalignments;
 
     // Remove this many alignments from the array
-    std::cerr<<"Went from "<<alignments.size();
+    std::cerr<<"Went from "<<total;
 
     vector<int> kill(extra);
     for(int i=0;i<kill.size();i++)
-      kill[i] = int( double(i+0.5)*alignments.size()/extra);
+      kill[i] = int( double(i+0.5)*total/extra);
     std::reverse(kill.begin(),kill.end());
 
     int i=0;
@@ -617,6 +621,7 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
 	kill.pop_back();
 	typeof(loc) j = loc++;
 	alignments.erase(j);
+	total--;
       }
       else
 	loc++;
@@ -624,6 +629,7 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
     assert(kill.empty());
     std::cerr<<" to "<<alignments.size()<<" alignments.\n";
   }
+  std::cerr<<"Scanned "<<nth<<" alignments total.\n";
 
   return alignments;
 }
