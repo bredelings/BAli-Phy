@@ -77,50 +77,160 @@
 
     <sect2>
       <title>General options</title>
-    <literallayout>  --help                     : produce help message
-  --version                  : print version information
-  --show-only                : analyze the initial values and exit
-  --seed arg                 : random seed
-  --data-dir arg (=Data)     : data directory
-  --align-constraint arg     : file with alignment constraints
-  --with-stop                : include stop codons in amino-acid alphabets
-  --internal arg             : if set to '+', then make all internal node entries wildcards
-  --gaps arg (=full_tree)    : if set to 'star', then don't use indel information
-  --letters arg (=full_tree) : if set to 'star', then use a star tree for substitution
-</literallayout>
+      
+      <variablelist>
+
+	<varlistentry>
+	  <term><option>--help</option></term>
+	  <listitem><para>produce help messasge</para></listitem>
+	</varlistentry>
+
+
+	<varlistentry>
+	  <term><option>--version</option></term>
+	  <listitem><para>print version information</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--show-only</option></term>
+	  <listitem><para>analyze the initial values and exit</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--data-dir <replaceable>directory</replaceable></option></term>
+	  <listitem><para>data directory</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--align-constraint <replaceable>constraint-file</replaceable></option></term>
+	  <listitem><para>specify file with alignment constraints</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--with-stop</option></term>
+	  <listitem><para>include stop codons in amino-acid alphabets</para></listitem>
+	</varlistentry>
+
+
+	<varlistentry>
+	  <term><option>--internal <replaceable>arg</replaceable></option></term>
+	  <listitem><para>include stop codons in amino-acid alphabets</para></listitem>
+	</varlistentry>
+
+
+	<varlistentry>
+	  <term><option>--with-stop</option></term>
+	  <listitem><para>if set to '+', then make all internal node entries wildcards</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--gaps <replaceable>arg</replaceable></option></term>
+	  <listitem><para>if set to 'star', then don't use indel information</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--letters <replaceable>arg</replaceable></option></term>
+	  <listitem><para>if set to 'star', then use a star tree for substitution</para></listitem>
+	</varlistentry>
+
+
+      </variablelist>
     </sect2>
 
     <sect2>
       <title>MCMC options</title>
-    <literallayout>  --iterations arg (=100000) : the number of iterations to run
-  --subsample arg (=1)       : factor by which to subsample
-  --T arg (=1)               : MCMCMC temperature
-  --enable arg               : comma-separated list of kernels to enable
-  --disable arg              : comma-separated list of kernels to disable
-</literallayout>
+
+      <variablelist>
+	<varlistentry>
+	  <term><option>--iterations <replaceable>number=10000</replaceable></option></term>
+	  <listitem><para>the number of iterations to run</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--subsample <replaceable>factor=1</replaceable></option></term>
+	  <listitem><para>factor by which to subsample</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--T <replaceable>temperature=1</replaceable></option></term>
+	  <listitem><para>MCMCMCMC temperature</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--enable <replaceable>move</replaceable></option></term>
+	  <listitem><para>comma-separated list of kernels to enable</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--disable <replaceable>move</replaceable></option></term>
+	  <listitem><para>comma-separated list of kernels to disnable</para></listitem>
+	</varlistentry>
+
+      </variablelist>
     </sect2>
 
 
     <sect2>
       <title>Parameter options</title>
-    <literallayout>  --align arg                      : file with sequences and initial alignment
-  --tree arg                       : file with initial tree
-  --set arg                        : set parameter=&lt;value&gt;
-  --fix arg                        : fix parameter[=&lt;value&gt;]
-  --unfix arg                      : un-fix parameter
-  --randomize-alignment            : randomly realign the sequences before using
-  --smodel arg                     : substitution model
-  --imodel arg (=fragment-based+T) : indel model
-</literallayout>
+      <variablelist>
+	<varlistentry>
+	  <term><option>--tree <replaceable>treefile</replaceable></option></term>
+	  <listitem><para>file with initial tree</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--set <replaceable>parameter=value</replaceable></option></term>
+	  <listitem><para>specify initial parameter value.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--fix <replaceable>parameter[=value]</replaceable></option></term>
+	  <listitem><para>specify initial parameter value, and optionally mark parameter fixed.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--unfix <replaceable>parameter[=value]</replaceable></option></term>
+	  <listitem><para>specify initial parameter value, and optionally mark parameter fixed.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--randomize-alignment</option></term>
+	  <listitem><para>randomly re-align sequences before use.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--smodel <replaceable>substitution-model</replaceable></option></term>
+	  <listitem><para>specify the substitution model</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--imodel <replaceable>indel-model</replaceable></option></term>
+	  <listitem><para>specify the indel model</para></listitem>
+	</varlistentry>
+
+      </variablelist>
+
     </sect2>
 
     <sect2>
       <title>Substitution model options</title>
-    <literallayout>  --frequencies arg      : comma-separated vector of frequencies to use as initial condition
-  --alphabet arg         : set to 'Codons' to prefer codon alphabets
-  --CFNF                 : make codon frequencies from nucleotide frequencies
-</literallayout>
+
+      <variablelist>
+	<varlistentry>
+	  <term><option>--frequencies <replaceable>frequencies</replaceable></option></term>
+	  <listitem><para>initial frequencies: 'uniform','nucleotides', or a comma-separated list of frequencies.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--alphabet <replaceable>alphabet</replaceable></option></term>
+	  <listitem><para>specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons.</para></listitem>
+	</varlistentry>
+
+      </variablelist>
+
     </sect2>
+
+
     <sect2>
       <title>Alignment Constraints</title>
       <para>To pin columns of the alignment, specify alignment
@@ -346,6 +456,112 @@
 
   </sect1>
 
+
+  <sect1>
+    <title>Models</title>
+
+    <sect2>
+      <title>Substitution Models</title>
+      <para>All of <application>BAli-Phy</application>'s substitution
+      models are mixtures of continuous-time Markov chains (CTMC).
+      These mixtures can consist of the same CTMC model run at a
+      mixture of rates (e.g. a gamma rate model) or parameters (e.g. a
+      Yang M2 model), or even mixture of different models.
+      </para>
+
+      <sect3>
+	<title>Default Substitution Models</title>
+	<para>If the substitution model is not specified, then the
+	default model for the alphabet is used.  For DNA or RNA, the
+	default model is HKY.  For Codons, the default model is
+	YangM0.  For AminoAcids, the default model is Empirical[WAG].
+	</para>
+      </sect3>
+
+      <sect3>
+	<title>Specifying a Substitution Model</title>
+
+	<para>Substitution models are specified using a stack, as
+	follows:
+<userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
+        where each model uses the previous models as input.  Arguments
+	are optional.
+	</para>
+
+      <para>The basic CTMC models are EQU, HKY, TN, Empirical, and YangM0.</para>
+
+      <para>Model modifiers are gamma, INV, and YangM2.</para>
+      </sect3>
+
+
+      <sect3>
+	<title>Examples</title>
+      <para>Example: --smodel EQU  --alphabet Triplets.</para>
+      <para>Example: --smodel Empirical[WAG]+gamma+INV.</para>
+      <para>Example: --smodel YangM0+YangM2 --alphabet Codons..</para>
+      <para>Example: --smodel YangM0+YangM2 --alphabet Codons.</para>
+
+
+      </sect3>
+
+      <sect3>
+	<title>Extended Model Descriptions</title>
+
+	<para>All basic CTMC models are reversible, and can be characterized by Q[i][j] = S[i][j]*pi[j]^f/pi[i]^(1-f), where pi[ ] are the equilibrium frequencies for the Markov chain.</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term>EQU</term>
+	  <listitem>
+	    <para>S[i][j] = 1 for every i and j. Preconditions: the alphabet must be DNA or RNA.  Parameters: none.</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+      <variablelist>
+	<varlistentry>
+	  <term>HKY</term>
+	  <listitem>
+	    <para>The Hasegawa, Kishina, Yano 1985 model. Preconditions: the alphabet must be DNA or RNA.  Parameters: kappa, the transition/transversion ratio.</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+      <variablelist>
+	<varlistentry>
+	  <term>TN</term>
+	  <listitem>
+	    <para>The Tamura, Nei 1993 model. Preconditions: the alphabet must be DNA or RNA.  Parameters: kappa1, the transition/transversion ratio for purines. kappa2, the transition/transition ratio for pyrimadines.</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+      <variablelist>
+	<varlistentry>
+	  <term>YangM0</term>
+	  <listitem>
+	    <para>The ?? model. Preconditions: the alphabet must be
+	    Codons.  Parameters: kappa, the transition/transversion
+	    ratio. omega, the non-synonymous/synonymous substitution
+	    ratio.</para>
+
+	    <para>One can also specify
+	    YangM0[<replaceable>submodel</replaceable>].  In this
+	    case, YangM0[HKY] gives the standard Yang M0 model,
+	    whereas YangM0[TN] give two transition/transversion rates.</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+      </sect3>
+    </sect2>
+
+    <sect2>
+      <title>Indel Models</title>
+      <para>The current models are simple,fragments, and fragments+T</para>
+    </sect2>
+
+  </sect1>
 
   <sect1>
     <title>Auxilliary Tools</title>
