@@ -15,6 +15,92 @@
   </articleinfo>
 
   <sect1>
+    <title>Installation</title>
+
+    <sect2>
+      <title>Requirements</title>
+
+      <para><application>BAli-Phy</application> should run on any
+      hardware with any modern operating system, including Linux,
+      Windows, and Mac OS X. Requirements for compiling BAli-Phy are
+      simply the following software packages: 
+
+      <itemizedlist>
+
+	  <listitem> A modern C++ compiler (<ulink url="http://gcc.gnu.org">GCC</ulink> version 3.4 and 4.0 are known to work)</listitem>
+	  <listitem> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>)</listitem>
+	  <listitem> The BOOST C++ Library (<ulink url="http://www.boost.org">BOOST</ulink>) </listitem>
+	</itemizedlist>
+
+We have run this software on AMD Athlon XP and Pentium 4 processors, and we would recommend using processors that are at least 1.5 GHz and have at least 512Mb-1Gb of RAM.</para>
+
+    </sect2>
+
+    <sect2>
+      <title>Compilation</title>
+
+      <para>The makefiles provided require GNU
+            <command>make</command>.  They also             assume
+            that the compiler is called <command>g++-4.0</command>.
+            To change this, or to change other compilation options,
+            edit the makefile <filename>src/GNUmakefile</filename>.</para> 
+
+      <sect3>
+	<title>Linux and UNIX</title>
+	<para>In order to compile the program on UNIX, simply enter the
+        <filename>src/</filename> directory and type <userinput>make
+	install</userinput> at the shell prompt. This will compile
+	<command>bali-phy</command> and its associated tools, and them
+	to the directory <filename>../build/bin</filename>. </para>
+
+
+	<para>To generate a faster executuable you can add
+        <userinput>ARCH=pentium4</userinput> or
+        <userinput>ARCH=athlon-xp</userinput> to the beginning of the
+        command line as follows:
+<screen><prompt>%</prompt> <userinput>ARCH=pentium4 make install</userinput>
+</screen>
+  	 You can also add <userinput>STATIC=y</userinput> in order
+  	 to build static executable.</para> 
+	</sect3>
+
+        <sect3>
+	  <title>Windows</title>
+	  <para>On Windows you should probably first install <ulink
+	  url="http://www.cygwin.com">cygwin</ulink>.  Cygwin is a
+	  UNIX emulation environment for Windows, and includes GCC and
+	  GNU make.</para> 
+	</sect3>
+
+        <sect3>
+	  <title>MacOS X</title>
+	  <para>On MacOS X many of the tools that you need may already
+	  be install, since it is UNIX based.  However, any other
+	  necessary tools can probably be installed using <ulink
+	  url="http://fink.sourceforge.net">fink</ulink>. </para>
+	</sect3>
+
+    </sect2>
+
+    <sect2>
+      <title>Installing the executables</title>
+      <para>In order to use <command>bali-phy</command> and the tools
+      that you have just compiled, you must copy them into a directory
+      in your path.  We recommend copying all tools in
+      <filename>build/bin/</filename> into the directory
+      <filename>~/bin/</filename> and adding this directory to your
+      path. In addition, it is recommended that 
+      you make a <filename>~/bin/bali-phy/</filename> directory, and
+      copy the bali-phy executable to the
+      <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename>.
+      This will allow the ./bin/sampler.sh script to find your
+      executable for use with the SGE (Sun Grid Engine) environment. 
+      </para>
+    </sect2>
+
+  </sect1>
+
+  <sect1>
     <title>Running the Program</title>
 
     <para>The simplest way to run <application>bali-phy</application> is
@@ -437,14 +523,14 @@
       </variablelist>
 
       <para>In addition, if you type <userinput>SKIP=<replaceable>burn-in</replaceable> make
-   blame.html</userinput>, the following files will be produced:</para>
+   MAP-AU.html</userinput>, the following files will be produced:</para>
 
       <variablelist>
 
-	<varlistentry><term>blame.html</term><listitem><para>An AU plot
+	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot
     </para></listitem></varlistentry>
 
-	<varlistentry><term>blame.prob</term><listitem><para>The probabilities for each letter in the AU plot
+	<varlistentry><term>MAP-AU.prob</term><listitem><para>The probabilities for each letter in the AU plot
     </para></listitem></varlistentry>
 
       </variablelist>
@@ -463,7 +549,7 @@
       models are mixtures of continuous-time Markov chains (CTMC).
       These mixtures can consist of the same CTMC model run at a
       mixture of rates (e.g. a gamma rate model) or parameters (e.g. a
-      Yang M2 model), or even mixture of different models.
+      Yang M2 model), or even a mixture of different models.
       </para>
 
       <sect3>
@@ -493,10 +579,12 @@
 
       <sect3>
 	<title>Examples</title>
-      <para>Example: --smodel EQU  --alphabet Triplets.</para>
-      <para>Example: --smodel Empirical[WAG]+gamma+INV.</para>
-      <para>Example: --smodel YangM0+YangM2 --alphabet Codons..</para>
-      <para>Example: --smodel YangM0+YangM2 --alphabet Codons.</para>
+	<para>Example: --smodel EQU  --alphabet Triplets</para>
+	<para>Example: --smodel HKY</para>
+	<para>Example: --smodel Empirical[WAG]+gamma+INV</para>
+	<para>Example: --smodel YangM0 --alphabet Codons</para>
+	<para>Example: --smodel YangM2 --alphabet Codons</para>
+	<para>Example: --smodel YangM0[TN]+YangM2 --alphabet Codons</para>
 
 
       </sect3>
@@ -504,7 +592,8 @@
       <sect3>
 	<title>Extended Model Descriptions</title>
 
-	<para>All basic CTMC models are reversible, and can be characterized by Q[i][j] = S[i][j]*pi[j]^f/pi[i]^(1-f), where pi[ ] are the equilibrium frequencies for the Markov chain.</para>
+	<para>All basic CTMC models are reversible, and can be
+	characterized by rates Q[i][j] = S[i][j]*pi[j]^f/pi[i]^(1-f), where pi[ ] are the equilibrium frequencies for the Markov chain.</para>
 
       <variablelist>
 	<varlistentry>
