@@ -1,9 +1,9 @@
-all: README.html
+all: README.xhtml
 
 
 STYLEBASE=/usr/share/xml/docbook/stylesheet/nwalsh
 
-%.html: %.xml docbook.xsl
+%.xhtml: %.xml docbook.xsl
 	xsltproc --xinclude docbook.xsl $*.xml > $@
 
 %.pdf: %.xml

@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-     "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<?xml-stylesheet type="text/xsl" href="docbook.xsl"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook MathML Module V1.0//EN"
+  "http://www.docbook.org/xml/mathml/1.0/dbmathml.dtd">
+
+<!-- DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+     "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [] -->
 <article lang="en">
   <articleinfo>
     <title><application>BAli-Phy</application> User's Guide</title>
@@ -82,7 +86,7 @@
 
 	<varlistentry>
 	  <term><option>--help</option></term>
-	  <listitem><para>produce help messasge</para></listitem>
+	  <listitem><para>produce help message</para></listitem>
 	</varlistentry>
 
 
@@ -111,15 +115,8 @@
 	  <listitem><para>include stop codons in amino-acid alphabets</para></listitem>
 	</varlistentry>
 
-
 	<varlistentry>
 	  <term><option>--internal <replaceable>arg</replaceable></option></term>
-	  <listitem><para>include stop codons in amino-acid alphabets</para></listitem>
-	</varlistentry>
-
-
-	<varlistentry>
-	  <term><option>--with-stop</option></term>
 	  <listitem><para>if set to '+', then make all internal node entries wildcards</para></listitem>
 	</varlistentry>
 
@@ -142,7 +139,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><option>--iterations <replaceable>number=10000</replaceable></option></term>
+	  <term><option>--iterations <replaceable>number=100000</replaceable></option></term>
 	  <listitem><para>the number of iterations to run</para></listitem>
 	</varlistentry>
 
@@ -153,17 +150,17 @@
 
 	<varlistentry>
 	  <term><option>--T <replaceable>temperature=1</replaceable></option></term>
-	  <listitem><para>MCMCMCMC temperature</para></listitem>
+	  <listitem><para>MCMCMCMC temperature.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--enable <replaceable>move</replaceable></option></term>
-	  <listitem><para>comma-separated list of kernels to enable</para></listitem>
+	  <listitem><para>comma-separated list of kernels to enable.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--disable <replaceable>move</replaceable></option></term>
-	  <listitem><para>comma-separated list of kernels to disnable</para></listitem>
+	  <listitem><para>comma-separated list of kernels to disable.</para></listitem>
 	</varlistentry>
 
       </variablelist>
@@ -173,6 +170,11 @@
     <sect2>
       <title>Parameter options</title>
       <variablelist>
+	<varlistentry>
+	  <term><option>--randomize-alignment</option></term>
+	  <listitem><para>randomly re-align sequences before use.</para></listitem>
+	</varlistentry>
+
 	<varlistentry>
 	  <term><option>--tree <replaceable>treefile</replaceable></option></term>
 	  <listitem><para>file with initial tree</para></listitem>
@@ -185,17 +187,30 @@
 
 	<varlistentry>
 	  <term><option>--fix <replaceable>parameter[=value]</replaceable></option></term>
-	  <listitem><para>specify initial parameter value, and optionally mark parameter fixed.</para></listitem>
+	  <listitem><para>mark parameter fixed, and optionally specify value.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--unfix <replaceable>parameter[=value]</replaceable></option></term>
-	  <listitem><para>specify initial parameter value, and optionally mark parameter fixed.</para></listitem>
+	  <listitem><para>mark parameter unfixed, and optionally specify value.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--randomize-alignment</option></term>
-	  <listitem><para>randomly re-align sequences before use.</para></listitem>
+	  <term><option>--frequencies <replaceable>frequencies</replaceable></option></term>
+	  <listitem><para>initial frequencies: 'uniform','nucleotides', or a comma-separated list of frequencies.</para></listitem>
+	</varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+    <sect2>
+      <title>Model options</title>
+
+      <variablelist>
+	<varlistentry>
+	  <term><option>--alphabet <replaceable>alphabet</replaceable></option></term>
+	  <listitem><para>specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -206,24 +221,6 @@
 	<varlistentry>
 	  <term><option>--imodel <replaceable>indel-model</replaceable></option></term>
 	  <listitem><para>specify the indel model</para></listitem>
-	</varlistentry>
-
-      </variablelist>
-
-    </sect2>
-
-    <sect2>
-      <title>Substitution model options</title>
-
-      <variablelist>
-	<varlistentry>
-	  <term><option>--frequencies <replaceable>frequencies</replaceable></option></term>
-	  <listitem><para>initial frequencies: 'uniform','nucleotides', or a comma-separated list of frequencies.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--alphabet <replaceable>alphabet</replaceable></option></term>
-	  <listitem><para>specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons.</para></listitem>
 	</varlistentry>
 
       </variablelist>
