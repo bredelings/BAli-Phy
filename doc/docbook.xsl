@@ -15,6 +15,7 @@
 
 <xsl:param name="html.stylesheet">docbook.css</xsl:param>
 <xsl:param name="variablelist.as.table" select="1"/>
+<xsl:param name="section.autolabel" select="1"/>
 <!-- xsl:param name="admon.graphics" select="1"/ -->
 
 
