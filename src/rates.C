@@ -12,8 +12,8 @@ namespace substitution {
   using std::vector;
   using std::valarray;
   using std::string;
-  /*--------------- RateDistribution -----------------*/
 
+  //--------------- RateDistribution -----------------//
   double RateDistribution::pdf(double x,double dx) const {
     double x1 = x-0.5*dx;
     double x2 = x+0.5*dx;
@@ -35,7 +35,7 @@ namespace substitution {
     int iterations=0;
 
     double dx = 0.001;
-    while(std::abs(dx) > tol) {
+    while(std::abs(dx) > tol and iterations < max_iterations) {
       double f = cdf(x)-p;
 
       // take advantage of the monotonicity
@@ -122,7 +122,7 @@ namespace substitution {
 
   Uniform::~Uniform() {}
 
-  /*--------------- GammaRateDistribution -----------------*/
+  //--------------- GammaRateDistribution -----------------//
   
   efloat_t Gamma::prior() const {
     double g_sigma = parameters_[0];
@@ -154,7 +154,7 @@ namespace substitution {
   }
 
   string Gamma::parameter_name(int i) const {
-    return "gamma:sigma\\mu";
+    return "gamma::sigma\\mu";
   }
 
   double Gamma::cdf(double x) const {
@@ -178,6 +178,71 @@ namespace substitution {
     return gsl_cdf_gamma_Pinv(p,a,b);
   }
 
+
+
+  //--------------- GammaRateDistribution -----------------//
+
+  efloat_t Beta::prior() const {
+    double mu = parameters_[0];
+    double s  = parameters_[1];
+
+    efloat_t P = 1;
+    P *= beta_pdf(mu,0.99,20);
+    P *= shift_laplace_pdf(s,-4,0.5);
+    return P;
+  }
+
+  double Beta::fiddle(int) {
+    double& mu = parameters_[0];
+    double& s  = parameters_[1];
+
+    if (not fixed(0)) {
+      mu += gaussian(0, 0.05);
+      mu = wrap(mu, 0.0, 1.0);
+    }
+
+    if (not fixed(1)) {
+      s += gaussian(0,0.25);
+      if (s < 0) s = -s;
+    }
+
+    recalc();
+
+    return 1;
+  }
+
+  string Beta::name() const {
+    return "beta";
+  }
+
+  string Beta::parameter_name(int i) const {
+    if (i == 0)
+      return "beta::mu";
+    else if (i==1)
+      return "beta::sigma\\mu";
+    else
+      throw myexception()<<"Beta: we only have two parameters.";
+  }
+
+  double Beta::cdf(double x) const {
+    double mu = parameters_[0];
+    double  s = parameters_[1];
+
+    double a = (1 - mu - mu*s*s)/(s*s);
+    double b = a * (1-mu)/mu;
+
+    return gsl_cdf_beta_P(x,a,b);
+  }
+
+  double Beta::pdf(double x,double) const {
+    double mu = parameters_[0];
+    double  s = parameters_[1];
+
+    double a = (1 - mu - mu*s*s)/(s*s);
+    double b = a * (1-mu)/mu;
+
+    return gsl_ran_beta_pdf(x,a,b);
+  }
 
 
   /*-------------- LogNormal Distribution ----------------*/
@@ -240,7 +305,7 @@ namespace substitution {
   }
 
   string LogNormal::parameter_name(int i) const {
-    return "log-normal:sigma/mu";
+    return "log-normal::sigma\\mu";
   }
 
   /*-------------- MultipleDistribution ----------------*/

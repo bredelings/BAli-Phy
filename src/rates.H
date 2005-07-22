@@ -61,6 +61,30 @@ namespace substitution {
   };
 
 
+  /// A Beta distribution for rate variation
+  class Beta: public RateDistribution {
+    void recalc() {}
+  public:
+    Beta* clone() const {return new Beta(*this);}
+
+    double cdf(double) const;
+    double pdf(double,double) const;
+
+    efloat_t prior() const;
+
+    double fiddle(int); 
+
+    std::string name() const;
+    std::string parameter_name(int) const;
+
+    Beta():RateDistribution(2) 
+    {
+      parameters_[0] = 0.5;
+      parameters_[1] = 0.1;
+    }
+  };
+
+
   class LogNormal: public RateDistribution {
     void recalc() {}
   public:
