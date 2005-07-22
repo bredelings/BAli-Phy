@@ -6,6 +6,8 @@
 
 #include "rng.H"
 
+using std::valarray;
+
 /************* Interfaces to rng::standard *********************/
 namespace rng {
   RNG* standard;
@@ -151,16 +153,37 @@ tuple Multinomial::operator()(const valarray<double>& p,unsigned long n1) {
 }
 
 
-valarray<double> dirichlet_fiddle(const valarray<double>& p1,double sigma) {
-
-  double total=0;
+valarray<double> dirichlet_fiddle(const valarray<double>& p1,double sigma) 
+{
   valarray<double> p2=p1;
-  for(int i=0;i<p2.size();i++) {
+  for(int i=0;i<p2.size();i++)
     p2[i] *= exp(gaussian(0,sigma));
-    total += p2[i];
-  }
 
-  p2 /= total;
+  p2 /= p2.sum();
+
+  return p2;
+}
+
+valarray<double> dirichlet_fiddle(const valarray<double>& p1,const valarray<bool>& mask,
+				  double sigma) 
+{
+  valarray<double> p2=p1;
+  p2 /= p2.sum();
+
+  double total1=0;
+  double total2=0;
+  for(int i=0;i<p2.size();i++)
+    if (mask[i]) {
+      total1 += p2[i];
+      p2[i] *= exp(gaussian(0,sigma));
+      total2 += p2[i];
+    }
+
+  double factor = total1/total2;
+
+  for(int i=0;i<p2.size();i++)
+    if (mask[i]) 
+      p2[i] *= factor;
 
   return p2;
 }

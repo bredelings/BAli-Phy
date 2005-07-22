@@ -10,6 +10,8 @@
 
 using MCMC::MoveStats;
 
+using std::valarray;
+
 void slide_node_move(alignment& A, Parameters& P, MoveStats& Stats,int b) {
   if (not P.SModel().full_tree)
     return;

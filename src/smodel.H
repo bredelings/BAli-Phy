@@ -794,9 +794,6 @@ namespace substitution {
     string name() const;
     string super_parameter_name(int i) const;
 
-    /// Get the probability of each base models
-    std::vector<double> distribution() const;
-
     YangM2(const YangM0& M1);
   };
 
@@ -810,10 +807,27 @@ namespace substitution {
 
     YangM3* clone() const {return new YangM3(*this);}
 
+    /// Get the parameter 'omega[i]' (non-synonymous/synonymous rate ratio)
+    double omega(int i) const;
+    /// Set the parameter 'omega[i]' (non-synonymous/synonymous rate ratio)
+    void omega(int i,double w);
+
+
     string name() const;
     string super_parameter_name(int i) const;
 
-    YangM3(const YangM0& M1);
+    YangM3(const YangM0& M1,int n);
+  };
+
+
+  class YangM7: public DistributionParameterModel {
+  public:
+    
+    YangM7* clone() const {return new YangM7(*this);}
+
+    //    string name() const;
+
+    YangM7(const YangM0& M1,int n);
   };
 
 

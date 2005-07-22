@@ -6,8 +6,6 @@
 #include <valarray>
 #include <cassert>
 
-using std::valarray;
-
 unsigned long myrand_init();
 unsigned long myrand_init(unsigned long);
  
@@ -41,7 +39,7 @@ unsigned geometric(double p);
 namespace rng {
 
   typedef int amount_t;
-  typedef valarray<amount_t> tuple;
+  typedef std::valarray<amount_t> tuple;
 
   class RNG {
 
@@ -96,7 +94,7 @@ namespace rng {
   class Multinomial {
     Binomial Bin;
   public:
-    tuple operator()(const valarray<double>& p,unsigned long n);
+    tuple operator()(const std::valarray<double>& p,unsigned long n);
   };
 
   class Exponential: public RNG {
@@ -125,7 +123,7 @@ inline long myrandom(long min,long max) {
 namespace dng {
   
   typedef double amount_t;
-  typedef valarray<amount_t> tuple;
+  typedef std::valarray<amount_t> tuple;
   
   class Binomial {
   public:
@@ -141,13 +139,18 @@ namespace dng {
   
   class Multinomial {
   public:
-    tuple operator()(const valarray<double>& p,double n) { return p*n;}
+    tuple operator()(const std::valarray<double>& p,double n) { return p*n;}
   };
 
 
   void init();
 };
 
-valarray<double> dirichlet_fiddle(const valarray<double>& p1,double sigma);
+std::valarray<double> 
+dirichlet_fiddle(const std::valarray<double>& p1,double sigma);
+
+std::valarray<double> 
+dirichlet_fiddle(const std::valarray<double>& p1,const std::valarray<bool>& mask,
+		 double sigma);
 
 #endif

@@ -5,8 +5,8 @@
 #include "log-double.H"
 
 log_double_t dirichlet_pdf(const std::valarray<double>& p,const std::valarray<double>& n);
-log_double_t dirichlet_pdf(const std::valarray<double>& p,const std::valarray<double>& q
-			   ,double N);
+log_double_t dirichlet_pdf(const std::valarray<double>& p,double N,const std::valarray<double>& q);
+log_double_t dirichlet_pdf(const std::valarray<double>& p,double N);
 
 log_double_t exp_exponential_pdf(double y,double mu,double delta=0.0);
 

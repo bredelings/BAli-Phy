@@ -256,6 +256,32 @@ bool process_stack_Multi(vector<string>& string_stack,
     model_stack.pop_back();
     model_stack.push_back(YangM2(*YM));
   }
+  else if (match(string_stack,"YangM3",arg)) {
+    int n=3;
+    if (not arg.empty())
+      n = convertTo<int>(arg);
+
+    if (not dynamic_cast<YangM0*>(model_stack.back().get()))
+      throw myexception()<<"Trying to construct a Yang M7 model from a '"<<model_stack.back().get()->name()
+			 <<"' model, which is not a YangM0 model.";
+
+    OwnedPointer<YangM0> YM = *dynamic_cast<YangM0*>(model_stack.back().get());
+    model_stack.pop_back();
+    model_stack.push_back(YangM3(*YM,n));
+  }
+  else if (match(string_stack,"YangM7",arg)) {
+    int n=4;
+    if (not arg.empty())
+      n = convertTo<int>(arg);
+
+    if (not dynamic_cast<YangM0*>(model_stack.back().get()))
+      throw myexception()<<"Trying to construct a Yang M7 model from a '"<<model_stack.back().get()->name()
+			 <<"' model, which is not a YangM0 model.";
+
+    OwnedPointer<YangM0> YM = *dynamic_cast<YangM0*>(model_stack.back().get());
+    model_stack.pop_back();
+    model_stack.push_back(YangM7(*YM,n));
+  }
   else
     return false;
   return true;

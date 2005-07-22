@@ -53,8 +53,12 @@ log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n) 
   return Pr;
 }
 
-log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& q,
-			 double N) {
+log_double_t dirichlet_pdf(const valarray<double>& p,double N) {
+  return dirichlet_pdf(p,valarray<double>(N,p.size()));
+}
+
+log_double_t dirichlet_pdf(const valarray<double>& p,double N,const valarray<double>& q)
+{
   return dirichlet_pdf(p,q*N);
 }
 

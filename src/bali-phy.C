@@ -33,6 +33,8 @@ using std::cerr;
 using std::clog;
 using std::endl;
 
+using std::valarray;
+
 void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int max_iterations) 
 {
   // args for branch-based stuff

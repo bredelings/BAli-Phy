@@ -202,7 +202,7 @@ namespace substitution {
     }
 
     if (not fixed(1)) {
-      s += gaussian(0,0.25);
+      s += gaussian(0,0.1);
       if (s < 0) s = -s;
     }
 

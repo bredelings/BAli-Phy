@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include "smodel.H"
 #include "exponential.H"
@@ -486,6 +487,8 @@ namespace substitution {
 
   double YangM0::super_fiddle(int) 
   {
+    double ratio = 1;
+
     if (not fixed(0)) {
       
       double& f = super_parameters_[0];
@@ -496,14 +499,15 @@ namespace substitution {
       f = wrap(f,1.0);
     }
 
-    double sigma = 0.15;
-    if (not fixed(1))
-      super_parameters_[1] *= exp(gaussian(0,sigma));
+    if (not fixed(1)) {
+      ratio = exp(gaussian(0,0.15));
+      super_parameters_[1] *= ratio;
+    }
 
     read();
     recalc();
 
-    return 1;
+    return ratio;
   }
 
   void YangM0::recalc() {
@@ -554,7 +558,7 @@ namespace substitution {
   }
 
   string YangM0::name() const {
-    return SubModel().name() + " * YangM0";
+    return string("YangM0[") + SubModel().name() + "]";
   }
 
   string YangM0::super_parameter_name(int i) const {
@@ -634,19 +638,21 @@ namespace substitution {
       a(m,l) = al[m];
   }
 
-  valarray<double> get_varray(const vector<double>& v1,int start, int n) 
+  template <typename T>
+  valarray<T> get_varray(const vector<T>& v1,int start, int n) 
   {
     assert(start>=0);
     assert(n>0);
     assert(start + n <= v1.size());
 
-    valarray<double> v2(n);
+    valarray<T> v2(n);
     for(int i=0;i<v2.size();i++)
       v2[i] = v1[start+i];
     return v2;
   }
 
-  void set_varray(vector<double>& v1,int start,const valarray<double>& v2) 
+  template <typename T>
+  void set_varray(vector<T>& v1,int start,const valarray<T>& v2) 
   {
     assert(start>=0);
     assert(v2.size() > 0);
@@ -658,6 +664,17 @@ namespace substitution {
   }
 
 
+  void dirichlet_fiddle(vector<double>& v,vector<bool>& fixed, int start, int n,double sigma) 
+  {
+    valarray<double> fract = get_varray(v,start,n);
+    valarray<bool> mask = not get_varray(fixed,start,n);
+
+    // fiddle
+    fract = ::dirichlet_fiddle(fract,mask,sigma);
+
+    set_varray(v,start,fract);
+
+  }
 
   void dirichlet_fiddle(vector<double>& v,int start, int n,double sigma) 
   {
@@ -673,6 +690,20 @@ namespace substitution {
   void dirichlet_fiddle(vector<double>& v,double sigma) 
   {
     dirichlet_fiddle(v,0,v.size(),sigma);
+  }
+
+  efloat_t dirichlet_pdf(const vector<double>& p1,int start, int n, const valarray<double>& q)
+  {
+    valarray<double> p2 = get_varray(p1,start,n);
+
+    return ::dirichlet_pdf(p2,q);
+  }
+
+  efloat_t dirichlet_pdf(const vector<double>& p1,int start, int n, double N)
+  {
+    valarray<double> p2 = get_varray(p1,start,n);
+
+    return ::dirichlet_pdf(p2,N);
   }
 
   double MultiFrequencyModel::super_fiddle(int) 
@@ -704,11 +735,9 @@ namespace substitution {
   efloat_t MultiFrequencyModel::super_prior() const 
   {
     // uniform - 10 counts per bin
-    valarray<double> flat(10.0,fraction.size());
-
     efloat_t Pr = 1;
     for(int l=0;l<Alphabet().size();l++) 
-      Pr *= dirichlet_pdf(get_a(l),flat);
+      Pr *= ::dirichlet_pdf(get_a(l),10);
 
     return Pr;
   }
@@ -1055,22 +1084,28 @@ namespace substitution {
 
   double YangM2::super_fiddle(int) {
     // dirichlet fiddle the first 3 parameters, sigma = ?
-    dirichlet_fiddle(super_parameters_, 0, 3, 0.1);
+    dirichlet_fiddle(super_parameters_, fixed_, 0, 3, 0.1);
 
     // log-laplace fiddle the 4th parameter, wrapped so that it is always >= 1
-    super_parameters_[3] *= exp(shift_laplace(0,0.2));
+    double ratio = exp(shift_laplace(0,0.2));
+    super_parameters_[3] *= ratio;
     if (super_parameters_[3] < 1)
       super_parameters_[3] = 1.0/super_parameters_[3];
 
     read();
     recalc();
-    return 1;
+
+    return ratio;
   }
 
   void YangM2::recalc() 
   {
     // push values out from parameters to superparameters and sub-models
     write();
+
+    fraction[0] = super_parameters()[0];
+    fraction[1] = super_parameters()[1];
+    fraction[2] = super_parameters()[2];
 
     p_values[0] = 0;
     p_values[1] = 1;
@@ -1079,21 +1114,16 @@ namespace substitution {
     MultiParameterModel::recalc();
   }
 
-  efloat_t YangM2::super_prior() const {
-    //What prior on the fractions?
-    //What prior on the positive rates -> tend towards w=1?
-    valarray<double> p(3);
-    p[0] = super_parameters()[0];
-    p[1] = super_parameters()[1];
-    p[2] = super_parameters()[2];
-
-    // 10 counts total - not uniform (so no "per bin" value)
+  efloat_t YangM2::super_prior() const 
+  {
+    // prior on frequencies
     valarray<double> q(3);
     q[0] = 0.01;
     q[1] = 0.98;
     q[2] = 0.01;
-    efloat_t P = dirichlet_pdf(p,q,100);
+    efloat_t P = dirichlet_pdf(super_parameters_, 0, 3, 100.0*q);
 
+    // prior on omega
     double omega = super_parameters()[3];
     P *= exponential_pdf(log(omega),0.05);
     return P;
@@ -1116,16 +1146,6 @@ namespace substitution {
       return s_parameter_name(i,4);
   }
 
-  /// Get the probability of each base models
-  std::vector<double> YangM2::distribution() const {
-    vector<double> dist(3);
-    dist[0] = super_parameters()[0];
-    dist[1] = super_parameters()[1];
-    dist[2] = super_parameters()[2];
-
-    return dist;
-  }
-
   YangM2::YangM2(const YangM0& M1) 
     :MultiParameterModel(UnitModel(M1),4,1,3)
   {
@@ -1138,6 +1158,154 @@ namespace substitution {
 
     recalc();
   }
+
+  int any_set(const vector<bool>& mask,int i1,int i2) 
+  {
+    int inc = (i2 > i1)?1:-1;
+      
+    for(int i=i1;i!=i2;i+=inc) {
+      if (mask[i])
+	return i;
+    }
+    return -1;
+  }
+
+  //YangM3
+
+  double YangM3::omega(int i) const {
+    return super_parameters_[fraction.size() + i];
+  }
+
+  /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
+  void YangM3::omega(int i,double w) {
+    super_parameters_[fraction.size()+i]=w;
+    read();
+    recalc();
+  }
+
+  double reflect_left(double x, double min) {
+    if (x < min)
+      x = min + (min-x);
+    return x;
+  }
+
+  double reflect_right(double x, double max) {
+    if (x > max)
+      x = max - (x-max);
+    return x;
+  }
+
+  double YangM3::super_fiddle(int) 
+  {
+    // dirichlet fiddle the frequency parameters
+    dirichlet_fiddle(super_parameters_, fixed_, 0, fraction.size(), 0.1);
+
+    // log-laplace fiddle the omega parameters
+    double ratio=1;
+    for(int i=0;i<fraction.size();i++)
+      if (not fixed(i+fraction.size())) {
+	double scale = shift_laplace(0,0.1);
+	ratio *= exp(scale);
+	double w = log(omega(i)) + scale;
+
+	double max = 0;
+	double min = 0;
+
+	int wmin = any_set(fixed_, fraction.size() + i - 1, fraction.size()-1);
+	if (wmin != -1) {
+	  wmin -= fraction.size();
+	  min = log(omega(wmin));
+	}
+	    
+	int wmax = any_set(fixed_, fraction.size() + i + 1, 2*fraction.size());
+	if (wmax != -1) {
+	  wmax -= fraction.size();
+	  max = log(omega(wmax));
+	}
+
+	if (wmin != -1 and wmax != -1)
+	  w = wrap(w,min,max);
+	else if (wmin != -1) 
+	  w = reflect_left(w,min);
+	else if (wmax != -1) 
+	  w = reflect_right(w,max);
+
+	super_parameters_[i+fraction.size()] = exp(w);
+      }
+
+    // we really should SORT the parameters now...
+    std::sort(super_parameters_.begin()+fraction.size(),
+	      super_parameters_.begin()+2*fraction.size());
+    read();
+    recalc();
+    return ratio;
+  }
+
+  void YangM3::recalc() 
+  {
+    // push values out from parameters to superparameters and sub-models
+    write();
+
+    for(int i=0;i<fraction.size();i++)
+      fraction[i] = super_parameters()[i];
+
+    for(int i=0;i<fraction.size();i++)
+      p_values[i] = super_parameters()[fraction.size()+i];
+
+    MultiParameterModel::recalc();
+  }
+
+  efloat_t YangM3::super_prior() const 
+  {
+    efloat_t P = 1;
+
+    // prior on frequencies
+    P *= dirichlet_pdf(super_parameters_, 0, fraction.size(), 4);
+
+    // prior on rates
+    for(int i=0;i<fraction.size();i++) {
+      double omega = super_parameters()[i+fraction.size()];
+      P *= shift_laplace_pdf(log(omega), 0, 0.1);
+    }
+    return P;
+  }
+
+  string YangM3::name() const {
+    return SubModel().name() + " + YangM3[" + convertToString(fraction.size()) + "]";
+  }
+
+  string YangM3::super_parameter_name(int i) const {
+    if (i<fraction.size())
+      return "YangM3::f" + convertToString(i);
+
+    else if (i<2*fraction.size())
+      return "YangM3::omega" + convertToString(i-fraction.size());
+
+    else
+      return s_parameter_name(i,2*fraction.size());
+  }
+
+  YangM3::YangM3(const YangM0& M1,int n) 
+    :MultiParameterModel(UnitModel(M1),2*n,1,n)
+  {
+    // p
+    for(int i=0;i<n;i++)
+      super_parameters_[i] = 1.0/n;
+
+    // omega
+    for(int i=0;i<n;i++)
+      super_parameters_[i+n] = 1.0;
+
+    read();
+
+    recalc();
+  }
+
+
+
+  YangM7::YangM7(const YangM0& M1,int n) 
+    :DistributionParameterModel(UnitModel(M1),Beta(),1,n)
+  { }
 
   int MixtureModel::n_base_models() const 
   {
@@ -1163,22 +1331,17 @@ namespace substitution {
   efloat_t MixtureModel::super_prior() const 
   {
     valarray<double> p = get_varray(super_parameters_,0,n_submodels());
-    valarray<double> n = get_varray(super_parameters_,n_submodels(),n_submodels());
+    valarray<double> q = get_varray(super_parameters_,n_submodels(),n_submodels());
 
-    n *= 10;
-
-    return dirichlet_pdf(p,n);
+    return dirichlet_pdf(super_parameters_, 0, n_submodels(), 10.0*q);
   }
 
   double MixtureModel::super_fiddle(int) 
   {
-    valarray<double> p = get_varray(super_parameters_,0,n_submodels());
+    // prior on sub-model frequencies
+    dirichlet_fiddle(super_parameters_, fixed_, 0, n_submodels(), 0.1);
 
-    const double sigma = 0.10;
-    ::dirichlet_fiddle(p,sigma);
-
-    set_varray(super_parameters_,0,p);
-    
+    read();
     recalc();
 
     return 1;
