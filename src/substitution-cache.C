@@ -89,7 +89,7 @@ void Multi_Likelihood_Cache::set_length(int t,int l) {
     for(int i=0;i<size();i++)
       for(int j=0;j<delta;j++)
 	(*this)[i].push_back(Matrix(M,A));
-    std::clog<<"MLC is now has "<<C<<" columns and "<<size()<<" branches.\n";
+    std::clog<<"MLC now has "<<C<<" columns and "<<size()<<" branches.\n";
   }
   for(int i=0;i<size();i++) {
     assert((*this)[i].size() == C);
