@@ -6,7 +6,7 @@
 #include "rng.H"
 
 template <typename T>
-std::valarray<T> bootstrap_sample(const valarray<T>& sample,int blocksize=1) {
+std::valarray<T> bootstrap_sample(const std::valarray<T>& sample,int blocksize=1) {
   assert(blocksize > 0);
   assert(blocksize <= sample.size());
 
@@ -26,8 +26,8 @@ std::valarray<T> bootstrap_sample(const valarray<T>& sample,int blocksize=1) {
 //typedef U (*statistic_t)(const valarray<T>&);
 
 template <typename T,typename U>
-std::valarray<U> bootstrap_apply(const valarray<T>& sample,
-				 U (*statistic)(const valarray<T>&),
+std::valarray<U> bootstrap_apply(const std::valarray<T>& sample,
+				 U (*statistic)(const std::valarray<T>&),
 				 int nresamples,int blocksize=1) 
 {
   std::valarray<T> temp(sample.size());
