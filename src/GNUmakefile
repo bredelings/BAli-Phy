@@ -196,15 +196,6 @@ tools/truckgraph2: alignment.o alphabet.o sequence.o util.o \
 
 tools/truckgraph3d: alignment.o alphabet.o sequence.o util.o rng.o ${LINKLIBS}
 
-test: ${LINKLIBS}
-
-le-test/2 le-test/3 le-test/4 le-test/2a: le-double.C
-
-test3: model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o \
-	probability.o rng.o ${LINKLIBS} -lmudflap
-
-test4: -lmudflap #model.o smodel.o rates.o exponential.o eigenvalue.o alphabet.o probability.o rng.o ${LINKLIBS} 
-
 tools/hat: rng.o ${LINKLIBS}
 #------------------- End
 
@@ -212,6 +203,7 @@ SHELL = /bin/sh
 MAKEFILES = GNUmakefile
 
 includes += /usr/local/include
+includes += /sw/include
 includes += ../include/
 includes += .
 
