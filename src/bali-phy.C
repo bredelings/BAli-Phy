@@ -324,22 +324,22 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description parameters("Parameter options");
   parameters.add_options()
     ("align", value<string>(),"file with sequences and initial alignment")
+    ("randomize-alignment","randomly realign the sequences before use.")
     ("tree",value<string>(),"file with initial tree")
     ("set",value<vector<string> >()->multitoken(),"set parameter=<value>")
     ("fix",value<vector<string> >()->multitoken(),"fix parameter[=<value>]")
     ("unfix",value<vector<string> >()->multitoken(),"un-fix parameter[=<value>]")
-    ("randomize-alignment","randomly realign the sequences before use.")
+    ("frequencies",value<string>(),"initial frequencies: 'uniform','nucleotides', or a comma-separated vector.") 
+    ;
+
+  options_description model("Model options");
+  model.add_options()
+    ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons")
     ("smodel",value<string>(),"substitution model")
     ("imodel",value<string>()->default_value("fragment-based+T"),"indel model: simple, fragment-based, or fragment-based+T")
     ;
-
-  options_description smodel("Substitution model options");
-  smodel.add_options()
-    ("frequencies",value<string>(),"initial frequencies: 'uniform','nucleotides', or a comma-separated vector.") 
-    ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons")
-    ;
   options_description all("All options");
-  all.add(general).add(mcmc).add(parameters).add(smodel);
+  all.add(general).add(mcmc).add(parameters).add(model);
 
   // positional options
   positional_options_description p;
@@ -351,7 +351,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("version")) {
-    cout<<"VERSION: 1.9.6+\nBUILD: "<<__DATE__<<"\n";
+    cout<<"VERSION: 1.9.7\nBUILD: "<<__DATE__<<"\n";
     exit(0);
   }
 
