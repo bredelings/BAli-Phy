@@ -26,7 +26,6 @@
       simply the following software packages: 
 
       <itemizedlist>
-
 	  <listitem> A modern C++ compiler (<ulink url="http://gcc.gnu.org">GCC</ulink> version 3.4 and 4.0 are known to work)</listitem>
 	  <listitem> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>)</listitem>
 	  <listitem> The BOOST C++ Library (<ulink url="http://www.boost.org">BOOST</ulink>) </listitem>
@@ -107,8 +106,7 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
     to invoke the <command>bali-phy</command> executable directly:
 
 
-    <screen>
- <prompt>%</prompt> <userinput>./bali-phy <replaceable>sequence-file</replaceable> &gt;out 2&gt;err</userinput>
+<screen><prompt>%</prompt> <userinput>./bali-phy <replaceable>sequence-file</replaceable> &gt;out 2&gt;err</userinput>
 </screen>
     Here <replaceable>sequence-file</replaceable> is a FASTA or PHYLIP
     file containing the sequences you wish to analyze.
@@ -119,8 +117,7 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
     <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename>
     and run (in a bourne-shell)
     
-    <screen>
- <prompt>%</prompt> <userinput>VERSION=<replaceable>version</replaceable> CLASS=<replaceable>class</replaceable> sampler.sh <replaceable>sequence-file</replaceable></userinput>
+<screen><prompt>%</prompt> <userinput>VERSION=<replaceable>version</replaceable> CLASS=<replaceable>class</replaceable> sampler.sh <replaceable>sequence-file</replaceable></userinput>
 </screen>
     </para>  
 
@@ -593,42 +590,56 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
 	<title>Extended Model Descriptions</title>
 
 	<para>All basic CTMC models are reversible, and can be
-	characterized by rates Q[i][j] = S[i][j]*pi[j]^f/pi[i]^(1-f), where pi[ ] are the equilibrium frequencies for the Markov chain.</para>
+	characterized by rates \[Q_{ij} =
+	S_{ij}\times\frac{\pi_j^f}{\pi_i^{1-f}},\] where $S$ is a symmetric
+	matrix and $\pi$ denotes the equilibrium frequencies for the
+	Markov chain.  The transition matrix for a time $t$ is then
+	given by \[P(t)_{ij}=e^{Q_{ij} \times t},\] using a matrix exponential.</para>  
 
       <variablelist>
 	<varlistentry>
 	  <term>EQU</term>
 	  <listitem>
-	    <para>S[i][j] = 1 for every i and j. Preconditions: the alphabet must be DNA or RNA.  Parameters: none.</para>
+	    <para>$S_{ij} = 1$ for every $i$ and $j$.</para>
+	    <para>Alphabet: any.</para>
+	    <para>Parameters: none.</para>
 	  </listitem>
 	</varlistentry>
-      </variablelist>
 
-      <variablelist>
 	<varlistentry>
 	  <term>HKY</term>
 	  <listitem>
-	    <para>The Hasegawa, Kishina, Yano 1985 model. Preconditions: the alphabet must be DNA or RNA.  Parameters: kappa, the transition/transversion ratio.</para>
+	    <para>The Hasegawa, Kishina, Yano (1985) model.</para>
+	    <para>Alphabet: DNA or RNA.</para>
+	    <para>Parameters: $\kappa$, the transition/transversion ratio.</para>
 	  </listitem>
 	</varlistentry>
-      </variablelist>
 
-      <variablelist>
 	<varlistentry>
 	  <term>TN</term>
 	  <listitem>
-	    <para>The Tamura, Nei 1993 model. Preconditions: the alphabet must be DNA or RNA.  Parameters: kappa1, the transition/transversion ratio for purines. kappa2, the transition/transition ratio for pyrimadines.</para>
+	    <para>The Tamura, Nei (1993) model.</para>
+	    <para>Alphabet: DNA or RNA.</para>
+	    <para>Parameters: $\kappa_1$, the transition/transversion ratio for purines. $\kappa_2$, the transition/transition ratio for pyrimadines.</para>
 	  </listitem>
 	</varlistentry>
-      </variablelist>
 
-      <variablelist>
+	<varlistentry>
+	  <term>Empirical[WAG]</term>
+	  <listitem>
+	    <para>The Whelan and Goldman (2001) model.</para>
+	    <para>Alphabet: Amino Acids</para>
+	    <para>Parameters: none.</para>
+	  </listitem>
+	</varlistentry>
+
 	<varlistentry>
 	  <term>YangM0</term>
 	  <listitem>
-	    <para>The ?? model. Preconditions: the alphabet must be
-	    Codons.  Parameters: kappa, the transition/transversion
-	    ratio. omega, the non-synonymous/synonymous substitution
+	    <para>The ?? model.</para>
+	    <para>Alphabet: Codons.</para>
+	    <para>Parameters: $\kappa$, the transition/transversion
+	    ratio. $\omega$, the non-synonymous/synonymous substitution
 	    ratio.</para>
 
 	    <para>One can also specify
@@ -644,7 +655,7 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
 
     <sect2>
       <title>Indel Models</title>
-      <para>The current models are simple,fragments, and fragments+T</para>
+      <para>The current models are simple, fragments, and fragments+T</para>
     </sect2>
 
   </sect1>

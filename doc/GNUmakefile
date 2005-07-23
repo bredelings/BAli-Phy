@@ -1,7 +1,8 @@
 all: README.xhtml
 
 
-STYLEBASE=/usr/share/xml/docbook/stylesheet/nwalsh
+%.xml: %.itex.xml
+	itex2MML < $^ > $@
 
 %.xhtml: %.xml docbook.xsl
 	xsltproc --xinclude docbook.xsl $*.xml > $@

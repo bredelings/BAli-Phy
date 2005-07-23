@@ -26,11 +26,24 @@ pre.programlisting {
 	padding: 6px;
 }
 
+tr { margin: 3em;padding: 3.3em;}
+
+.variablelist td { vertical-align:top; padding-top: 0.3em;padding-bottom:0.3em;}
+
 .toc {
 	background-color: #F4F4F4;
 	padding: 6px;
 }
 
 .term { font-weight: bold;
-	padding-right: 2em;}
+	padding-right: 2em;
+        }
 
+.equation { margin: 0.2em; padding: 0.2em; }
+
+math { font-size: 130%; }
+.equation {  text-align:center; }
+
+.vector { font-weight: bold }
+
+td > p { margin: 0; padding:0;}
