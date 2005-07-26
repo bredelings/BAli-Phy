@@ -277,7 +277,7 @@ namespace optimize {
       std::cerr<<"  retry = "<<i<<"      value = "<<value2<<std::endl;
 #endif
 
-      if (value2 > cvalue and not isnan(value2)) {
+      if (value2 > cvalue and not std::isnan(value2)) {
 #ifndef NDEBUG
 	std::cerr<<"move: "<<value2<<" > "<<cvalue<<"\n";
 #endif

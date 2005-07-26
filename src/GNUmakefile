@@ -1,3 +1,9 @@
+# Mac: search for libraries in the fink path
+.LIBPATTERNS = lib%.dylib lib%.so lib%.a
+vpath %.dylib /sw/lib
+vpath %.so /sw/lib
+vpath %.a /sw/lib
+
 program: bali-phy
 
 TOOLS = tools/model_P tools/statreport tools/alignment-gild \
