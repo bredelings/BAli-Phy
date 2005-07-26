@@ -1,5 +1,8 @@
 all: README.xhtml
 
+clean:
+	-@rm -f README.xhtml README.xml README.fo *~
+
 
 %.xml: %.itex.xml
 	itex2MML < $^ > $@
