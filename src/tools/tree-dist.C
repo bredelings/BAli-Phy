@@ -115,7 +115,6 @@ std::ostream& operator<<(std::ostream& o, const Partition& P)
     
     for(int i=0;i<P.size();i++)
       if (P.group2[i]) o<<P.names[i]<<" ";
-    o<<endl;
   }
   else {
     for(int i=0;i<P.size();i++)
@@ -128,14 +127,13 @@ std::ostream& operator<<(std::ostream& o, const Partition& P)
   }
   std::valarray<bool> rmask = not(P.group1 or P.group2);
   if (statistics::count(rmask)) {
-    o<<" [";
+    o<<" [ ";
     for(int i=0;i<P.size();i++) {
       if (rmask[i]) o<<P.names[i]<<" ";
     }
     o<<"]";
   }
-
-  return o<<endl;
+  return o;
 }
 
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
@@ -416,7 +414,8 @@ vector<Partition> strict_consensus_partitions(const tree_sample& sample,const va
       partitions.push_back(Partition(names,partition,mask));
   }
 
-  for(int i=1;i<sample.topologies.size();i++) 
+  // Check to see if they are in all subsequent trees
+  for(int i=1;i<sample.topologies.size() and partitions.size();i++) 
   {
     const SequenceTree& T = sample.topologies[i].T;
     
@@ -426,8 +425,6 @@ vector<Partition> strict_consensus_partitions(const tree_sample& sample,const va
       else
 	j++;
     }
-
-    if (not partitions.size()) break;
   }
   return partitions;
 }
@@ -436,6 +433,12 @@ vector<Partition> strict_consensus_partitions(const tree_sample& sample) {
   valarray<bool> mask(true,sample.topologies[0].T.n_leaves());
   return strict_consensus_partitions(sample,mask);
 }
+
+struct p_count {
+  int count;
+  int last_tree;
+  p_count(): count(0),last_tree(-1) {}
+};
 
 vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const valarray<bool>&  mask) 
 {
@@ -446,18 +449,18 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
   assert(first < mask.size());
 
   if (l < 0.5)
-    throw myexception()<<"Consensus level for majority tree must be > 0.5";
+    throw myexception()<<"Consensus level for majority tree must be >= 0.5";
   if (l > 1.0)
-    throw myexception()<<"Consensus level for majority tree must be < 1.0";
+    throw myexception()<<"Consensus level for majority tree must be <= 1.0";
 
   if (l == 1.0)
     return strict_consensus_partitions(sample,mask);
 
   // use a sorted list of <partition,count>, sorted by partition.
-  map<valarray<bool>,int,compare_complete_partitions > counts;
+  map<valarray<bool>,p_count,compare_complete_partitions > counts;
 
   // use a linked list of pointers to <partition,count> records.
-  list<map<valarray<bool>,int,compare_complete_partitions >::iterator > majority;
+  list<map<valarray<bool>,p_count,compare_complete_partitions >::iterator > majority;
 
   vector<string> names = sample.topologies[0].T.get_sequences();
 
@@ -467,7 +470,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
     int min_old = 1+(int)(l*i);
     int min_new = 1+(int(l*(i+1)));
 
-    // for partition in the next tree
+    // for each partition in the next tree
     for(int b=T.n_leaves();b<T.n_branches();b++) {
       std::valarray<bool> partition = branch_partition(T,b);
 
@@ -479,20 +482,23 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
       assert(partition.size() == T.n_leaves());
 
       // FIXME - we are doing the lookup twice
-      int& C = counts[partition];
+      p_count& pc = counts[partition];
+      int& C2 = pc.count;
+      int C1 = C2;
+      if (pc.last_tree != i) {
+	pc.last_tree=i;
+	C2++;
+      }
       
       // add the partition if it wasn't good before, but is now
-      if (C<min_old and C+1 >= min_new)
+      if (C1<min_old and C2 >= min_new)
 	majority.push_back(counts.find(partition));
-
-      // increment the count
-      C++;
     }
 
 
     // for partition in the majority tree
     for(typeof(majority.begin()) p = majority.begin();p != majority.end();) {
-      if ((*p)->second < min_new) {
+      if ((*p)->second.count < min_new) {
 	typeof(p) old = p;
 	p++;
 	majority.erase(old);
