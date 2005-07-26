@@ -20,18 +20,66 @@
     <sect2>
       <title>Requirements</title>
 
-      <para><application>BAli-Phy</application> should run on any
-      hardware with any modern operating system, including Linux,
-      Windows, and Mac OS X. Requirements for compiling BAli-Phy are
-      simply the following software packages: 
+      <sect3>
+	<title>Hardware Requirements</title>
+	<para><application>BAli-Phy</application> should be able to
+	run on any hardware with a modern operating system, including
+	Linux, 	Windows, and Mac OS X.</para>
 
-      <itemizedlist>
-	  <listitem> A modern C++ compiler (<ulink url="http://gcc.gnu.org">GCC</ulink> version 3.4 and 4.0 are known to work)</listitem>
-	  <listitem> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>)</listitem>
-	  <listitem> The BOOST C++ Library (<ulink url="http://www.boost.org">BOOST</ulink>) </listitem>
+	<para>We recommend at least 512Mb of RAM and a 1.5GHz
+	processor.  We typically run
+	<application>BAli-Phy</application> on Pentium 4 processors
+	with 1Gb of RAM and a 3 GHz processor.</para> 
+
+
+      </sect3>
+
+      <sect3>
+	<title>Operating System Requirements</title>
+
+	<sect4>
+	  <title>Linux</title>
+
+	  <para>A standard Linux system should be able to install and
+	  run <application>BAli-Phy</application> without any modification.</para>
+	</sect4>
+
+	<sect4>
+	  <title>Windows</title>
+
+	  <para>On Windows you must first install <ulink
+	  url="http://www.cygwin.com">cygwin</ulink>.  Cygwin is a
+	  Linux environment for Windows, and includes GCC, GNU make,
+	  and other software.</para> 
+	</sect4>
+
+	<sect4>
+	  <title>Mac OS X</title>
+
+	  <para>You must have Mac OS version 10.1 or higher.</para>
+
+	  <para>On Mac OS X you must first install <ulink
+	  url="http://fink.sourceforge.net">fink</ulink>.  Fink
+	  provides a Linux environment for Mac OS X, and includes GCC,
+	  GNU make, and other software.</para>
+	</sect4>
+
+      </sect3>
+
+      <sect3>
+	<title>Software requirements</title>
+
+	<para>Requirements for compiling BAli-Phy are the following software packages: 
+
+	<itemizedlist>
+	  <listitem><para> A modern C++ compiler (<ulink url="http://gcc.gnu.org">GCC</ulink> version 3.4 and 4.0 are known to work)</para></listitem>
+	  <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>)</para></listitem>
+	  <listitem><para> The BOOST C++ Library (<ulink
+	  url="http://www.boost.org">BOOST</ulink>) version 1.32 or higher.</para></listitem>
 	</itemizedlist>
+	</para>
+      </sect3>
 
-We have run this software on AMD Athlon XP and Pentium 4 processors, and we would recommend using processors that are at least 1.5 GHz and have at least 512Mb-1Gb of RAM.</para>
 
     </sect2>
 
@@ -44,41 +92,21 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
             To change this, or to change other compilation options,
             edit the makefile <filename>src/GNUmakefile</filename>.</para> 
 
-      <sect3>
-	<title>Linux and UNIX</title>
-	<para>In order to compile the program on UNIX, simply enter the
-        <filename>src/</filename> directory and type <userinput>make
-	install</userinput> at the shell prompt. This will compile
-	<command>bali-phy</command> and its associated tools, and them
-	to the directory <filename>../build/bin</filename>. </para>
+	    <para>In order to compile the program on UNIX, simply enter the
+	    <filename>src/</filename> directory and type <userinput>make
+	    install</userinput> at the shell prompt. This will compile
+	    <command>bali-phy</command> and its associated tools, and them
+	    to the directory <filename>../build/bin</filename>. </para>
 
 
-	<para>To generate a faster executuable you can add
-        <userinput>ARCH=pentium4</userinput> or
-        <userinput>ARCH=athlon-xp</userinput> to the beginning of the
-        command line as follows:
-<screen><prompt>%</prompt> <userinput>ARCH=pentium4 make install</userinput>
-</screen>
-  	 You can also add <userinput>STATIC=y</userinput> in order
-  	 to build static executable.</para> 
-	</sect3>
-
-        <sect3>
-	  <title>Windows</title>
-	  <para>On Windows you should probably first install <ulink
-	  url="http://www.cygwin.com">cygwin</ulink>.  Cygwin is a
-	  UNIX emulation environment for Windows, and includes GCC and
-	  GNU make.</para> 
-	</sect3>
-
-        <sect3>
-	  <title>MacOS X</title>
-	  <para>On MacOS X many of the tools that you need may already
-	  be install, since it is UNIX based.  However, any other
-	  necessary tools can probably be installed using <ulink
-	  url="http://fink.sourceforge.net">fink</ulink>. </para>
-	</sect3>
-
+	    <para>On Intel computers, to generate a faster executable you can add
+	    <userinput>ARCH=pentium4</userinput> or
+	    <userinput>ARCH=athlon-xp</userinput> to the beginning of the
+	    command line as follows:
+	    <screen><prompt>%</prompt> <userinput>ARCH=pentium4 make install</userinput>
+	    </screen>
+	    You can also add <userinput>STATIC=y</userinput> in order
+	    to build a static executable.</para> 
     </sect2>
 
     <sect2>
@@ -88,7 +116,9 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
       in your path.  We recommend copying all tools in
       <filename>build/bin/</filename> into the directory
       <filename>~/bin/</filename> and adding this directory to your
-      path. In addition, it is recommended that 
+      path. </para>
+
+      <para>In addition, it is recommended that 
       you make a <filename>~/bin/bali-phy/</filename> directory, and
       copy the bali-phy executable to the
       <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename>.
@@ -102,7 +132,7 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
   <sect1>
     <title>Running the Program</title>
 
-    <para>The simplest way to run <application>bali-phy</application> is
+    <para>The simplest way to run <application>BAli-PHy</application> is
     to invoke the <command>bali-phy</command> executable directly:
 
 
@@ -154,7 +184,7 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
       <para>The sequence file is the only required argument.  It can
       be either a FASTA (*.fasta) file or a PHYLIP (*.phy) file.  The
       file must end in one of these two suffixes or
-      <application>bali-phy</application> won't know how to read
+      <application>BAli-PHy</application> won't know how to read
       it. In addition your FASTA files should not contain any blank
       lines.</para> 
 
@@ -311,53 +341,11 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
     </sect2>
 
 
-    <sect2>
-      <title>Alignment Constraints</title>
-      <para>To pin columns of the alignment, specify alignment
-      constraints in a file as follows: </para>
-
-      <orderedlist inheritnum="ignore" continuation="restarts">
-	<listitem><para>Use the argument
-	<userinput>--align-constraint <replaceable>filename</replaceable></userinput></para></listitem> 
-
-	<listitem><para>The filename refers to a file in which each
-	line represents a constraint.</para></listitem> 
-
-      </orderedlist>
-
-      <para>The first line of the file is a header consisting of an
-   ordered list of sequence names separated by spaces. Each subsequent line
-   consists of a space-separated list of sequence positions, with the first position
-   corresponding to the first leaf sequence, the second position
-   corresponding to the second leaf sequence, etc. Thus, if there are
-   &lt;n&gt; leaf taxa, then each line corresponds to a
-   space-separated list of &lt;n&gt; integers.</para>
-
-      <para>For example, the line</para>
-
-      <programlisting format="linespecific">1 2 2</programlisting>
-
-      <para>means that position 1 of leaf sequence 1 is aligned to
-      position 2 of leaf sequences 2 and 3. Note that the first
-      position in a sequence is position 0.</para> 
-
-      <para>Optionally, one may use a '-' instead of an integer, which
-      denotes a lack of constraint for that sequence. This can be
-      useful as follows:</para> 
-
-<programlisting format="linespecific">2 2 - - 
-- - 2 2
-</programlisting>
-
-      <para>The above constraints force alignment between position 2
-   of sequences 1 and 2, and between position 2 of sequence 3 and
-   4.</para>
-    </sect2>
   </sect1>
 
   <sect1>
     <title>Examples</title>
-    <para>Here are some examples which demonstrate how to run <application>bali-phy</application>:</para>
+    <para>Here are some examples which demonstrate how to run <application>BAli-PHy</application>:</para>
 
     <example>
       <title>No frills</title>
@@ -391,12 +379,78 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
   </sect1>
 
   <sect1>
+    <title>Input</title>
+
+    <sect2>
+      <title>Sequence Formats</title>
+      <para><application>BAli-PHy</application> can read in sequences
+      and alignments in both FASTA and PHYLIP formats.  However, in
+      FASTA format, the file must not contain blank lines between the
+      sequences, because <application>BAli-PHy</application> will stop
+      reading in sequences when it seens a blank line.
+      </para>
+    </sect2>
+
+    <sect2>
+      <title>Is my data set too large?</title>
+
+      <para>Large data sets run more slowly than small data
+      sets. We recommend a conservative starting point with few taxa
+      and short sequence lengths.  You can then increase the size of
+      your data set until a balance between speed and size is
+      reached.</para> 
+
+      <para>The number of samples that you need depends on whether you
+      are primarily interested in obtaining a point estimate or in
+      obtaining detailed measures of confidence and uncertainty.  For
+      detailed measures of confidence and uncertainty you should
+      obtain a minimum of 10,000 samples after the Markov chain
+      converges.  For an estimate, you don't need very many samples
+      after convergence.  (But you may need many samples to be sure
+      that you've converged!)
+      </para>
+
+      <sect3>
+	<title>Too many taxa?</title>
+
+	<para><application>BAli-PHy</application> is quite CPU
+	intensive, and so we recommend using 12 or fewer tax in order
+	to limit the time required to accumulate enough MCMC samples.
+	We note that many phylogenetic hypotheses can be reduced to
+	hypotheses concering only four taxa.  We recommend removing as
+	many taxa as possible from your data set.  You can then add
+	taxa back into the data set one you have determine how much
+	this will increase the duration of the run.</para>
+
+      </sect3>
+
+      <sect3>
+	<title>Sequences too long?</title>
+
+	<para>Aligning sequences takes $O(L^2)$ time and RAM, where 
+	$L$ represents the sequence length.  Thus, doubling the length
+	of the input sequences increases RAM requirements and run
+	time by a factor of 4.  Therefore sequence lengths beyond
+	750 letters may prove impractical due to limitted RAM or the
+	speed of the calculation.   For protein sequences,
+	we recommend coding the sequences in terms of amino acids or
+	codons, rather than nucleotides.</para>
+
+	<para>However, you might try to see how long you can make your
+	sequences before the attempt becomes impractical.</para>
+      </sect3>
+
+    </sect2>
+
+  </sect1>
+
+  <sect1>
     <title>Output</title>
 
     <sect2>
       <title>Output Streams</title>
 
-      <para><application>bali-phy</application> writes out the sampled
+      <para><application>BAli-PHy</application> writes out the sampled
       alignments and other information to the standard output stream, which
       displays on the terminal by default.  Error messages are written to
       the standard error stream, which also displays on the terminal by
@@ -418,7 +472,7 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
     <sect2>
       <title>Output Files</title>
       <para>When run in a clean directory,
-      <application>bali-phy</application> produces the following output
+      <application>BAli-PHy</application> produces the following output
       files.  Beside the file <filename>MAP</filename> that contains
       alignments, each line in these files should correspond to one
       iteration.</para>
@@ -542,7 +596,7 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
 
     <sect2>
       <title>Substitution Models</title>
-      <para>All of <application>BAli-Phy</application>'s substitution
+      <para>All of <application>BAli-PHy</application>'s substitution
       models are mixtures of continuous-time Markov chains (CTMC).
       These mixtures can consist of the same CTMC model run at a
       mixture of rates (e.g. a gamma rate model) or parameters (e.g. a
@@ -570,7 +624,7 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
 
       <para>The basic CTMC models are EQU, HKY, TN, Empirical, and YangM0.</para>
 
-      <para>Model modifiers are gamma, INV, and YangM2.</para>
+      <para>Model modifiers are gamma, INV, YangM2, YangM3, and YangM7.</para>
       </sect3>
 
 
@@ -636,18 +690,63 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
 	<varlistentry>
 	  <term>YangM0</term>
 	  <listitem>
-	    <para>The ?? model.</para>
+	    <para>The Nielsen and Yang (1998) model.</para>
 	    <para>Alphabet: Codons.</para>
-	    <para>Parameters: $\kappa$, the transition/transversion
+	    <para>Parameters(2): $\kappa$, the transition/transversion
 	    ratio. $\omega$, the non-synonymous/synonymous substitution
 	    ratio.</para>
 
 	    <para>One can also specify
 	    YangM0[<replaceable>submodel</replaceable>].  In this
 	    case, YangM0[HKY] gives the standard Yang M0 model,
-	    whereas YangM0[TN] give two transition/transversion rates.</para>
+	    whereas YangM0[TN] gives two transition/transversion rates.</para>
 	  </listitem>
 	</varlistentry>
+
+	<varlistentry>
+	  <term>YangM2</term>
+	  <listitem>
+	    <para>The ?? model.</para>
+	    <para>Alphabet: Codons.</para>
+
+	    <para>Parameters(5): $\kappa$, the transition/transversion
+	    ratio. $p_1, p_2, p_3$, the frequency of three
+	    sub-models.  The models have $\omega$ set to $0$, $1$, and
+	    $\omega_2$, the non-synonymous/synonymous substitution
+	    ratio.</para>
+
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>YangM3[$n$]</term>
+	  <listitem>
+	    <para>The ?? model.</para>
+	    <para>Alphabet: Codons.</para>
+
+	    <para>Parameters($2n$): $\kappa$, the transition/transversion
+	    ratio. $p_1, \ldots , p_n$, the frequency of
+	    $n$. $\omega_1, \ldots , \omega_n$, the
+	    non-synonymous/synonymous substitution ratio for the $n$
+	    submodels. </para>
+
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>YangM7[$n$]</term>
+	  <listitem>
+	    <para>The ?? model.</para>
+	    <para>Alphabet: Codons.</para>
+
+	    <para>Parameters(2): $\mu$, the mean of the Beta
+	    distribution.  $\sigma/\mu$, the noise to signal ratio for
+	    the Beta distribution.  $n$ is the number of bin for
+	    discretizing the Beta distribution.</para>
+
+	  </listitem>
+	</varlistentry>
+
       </variablelist>
 
       </sect3>
@@ -658,6 +757,48 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
       <para>The current models are simple, fragments, and fragments+T</para>
     </sect2>
 
+    <sect2>
+      <title>Alignment Constraints</title>
+      <para>To pin columns of the alignment, specify alignment
+      constraints in a file as follows: </para>
+
+      <orderedlist inheritnum="ignore" continuation="restarts">
+	<listitem><para>Use the argument
+	<userinput>--align-constraint <replaceable>filename</replaceable></userinput></para></listitem> 
+
+	<listitem><para>The filename refers to a file in which each
+	line represents a constraint.</para></listitem> 
+
+      </orderedlist>
+
+      <para>The first line of the file is a header consisting of an
+   ordered list of sequence names separated by spaces. Each subsequent line
+   consists of a space-separated list of sequence positions, with the first position
+   corresponding to the first leaf sequence, the second position
+   corresponding to the second leaf sequence, etc. Thus, if there are
+   &lt;n&gt; leaf taxa, then each line corresponds to a
+   space-separated list of &lt;n&gt; integers.</para>
+
+      <para>For example, the line</para>
+
+      <programlisting format="linespecific">1 2 2</programlisting>
+
+      <para>means that position 1 of leaf sequence 1 is aligned to
+      position 2 of leaf sequences 2 and 3. Note that the first
+      position in a sequence is position 0.</para> 
+
+      <para>Optionally, one may use a '-' instead of an integer, which
+      denotes a lack of constraint for that sequence. This can be
+      useful as follows:</para> 
+
+<programlisting format="linespecific">2 2 - - 
+- - 2 2
+</programlisting>
+
+      <para>The above constraints force alignment between position 2
+   of sequences 1 and 2, and between position 2 of sequence 3 and
+   4.</para>
+    </sect2>
   </sect1>
 
   <sect1>
@@ -665,7 +806,13 @@ We have run this software on AMD Athlon XP and Pentium 4 processors, and we woul
 
     <sect2>
       <title>tree-dist-compare</title>
-      <para>Usage:</para>
+      <para>Usage: tree-dist-compare <replaceable>file1</replaceable>
+      <replaceable>file2</replaceable> ... [OPTIONS] </para>
+      <para>This program analyzes one or more files each containing a
+      list of trees.  It reports the MAP topology, the majority
+      consensus topology, and which bi-partitions are supported by the
+      data. 
+      </para> 
     </sect2>
 
   </sect1>
