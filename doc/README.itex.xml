@@ -21,7 +21,7 @@
       <title>Requirements</title>
 
       <sect3>
-	<title>Hardware Requirements</title>
+	<title>Hardware requirements</title>
 	<para><application>BAli-Phy</application> should be able to
 	run on any hardware with a modern operating system, including
 	Linux, 	Windows, and Mac OS X.</para>
@@ -35,7 +35,7 @@
       </sect3>
 
       <sect3>
-	<title>Operating System Requirements</title>
+	<title>Operating system requirements</title>
 
 	<sect4>
 	  <title>Linux</title>
@@ -51,6 +51,9 @@
 	  url="http://www.cygwin.com">cygwin</ulink>.  Cygwin is a
 	  Linux environment for Windows, and includes GCC, GNU make,
 	  and other software.</para> 
+
+	  <para>You can access the Cygwin command line (not the normal
+	  windows command line) through the Start menu.</para>
 	</sect4>
 
 	<sect4>
@@ -62,6 +65,9 @@
 	  url="http://fink.sourceforge.net">fink</ulink>.  Fink
 	  provides a Linux environment for Mac OS X, and includes GCC,
 	  GNU make, and other software.</para>
+
+	  <para>You can access the command line on OS X by running the
+	  Terminal application.</para>
 	</sect4>
 
       </sect3>
@@ -130,7 +136,7 @@
   </sect1>
 
   <sect1>
-    <title>Running the Program</title>
+    <title>Running the program</title>
 
     <para>The simplest way to run <application>BAli-PHy</application> is
     to invoke the <command>bali-phy</command> executable directly:
@@ -168,7 +174,7 @@
   </sect1>
   
   <sect1>
-    <title>Command Line Arguments</title>
+    <title>Command-line options</title>
 
     <sect2>
       <title>Usage</title>
@@ -382,7 +388,7 @@
     <title>Input</title>
 
     <sect2>
-      <title>Sequence Formats</title>
+      <title>Sequence formats</title>
       <para><application>BAli-PHy</application> can read in sequences
       and alignments in both FASTA and PHYLIP formats.  However, in
       FASTA format, the file must not contain blank lines between the
@@ -448,7 +454,7 @@
     <title>Output</title>
 
     <sect2>
-      <title>Output Streams</title>
+      <title>Output streams</title>
 
       <para><application>BAli-PHy</application> writes out the sampled
       alignments and other information to the standard output stream, which
@@ -470,7 +476,7 @@
     </sect2>
 
     <sect2>
-      <title>Output Files</title>
+      <title>Output files</title>
       <para>When run in a clean directory,
       <application>BAli-PHy</application> produces the following output
       files.  Beside the file <filename>MAP</filename> that contains
@@ -519,7 +525,7 @@
     </sect2>
 
     <sect2>
-      <title>Processing the Output</title>
+      <title>Analyzing the output</title>
       
       <para>Copy (or link, using <command>ln -s</command>) the file
       <filename>bin/GNUmakefile</filename> into the current
@@ -546,8 +552,7 @@
 
       <title>Results</title>
 
-      <para>The procedure mentioned above should produce the following
-      files:</para>
+      <para>Running the above command to analyze the output should produce the following files:</para>
       <variablelist>
 
 	<varlistentry><term>Report</term><listitem><para>A summary of results
@@ -595,7 +600,7 @@
     <title>Models</title>
 
     <sect2>
-      <title>Substitution Models</title>
+      <title>Substitution models</title>
       <para>All of <application>BAli-PHy</application>'s substitution
       models are mixtures of continuous-time Markov chains (CTMC).
       These mixtures can consist of the same CTMC model run at a
@@ -604,7 +609,7 @@
       </para>
 
       <sect3>
-	<title>Default Substitution Models</title>
+	<title>Default substitution models</title>
 	<para>If the substitution model is not specified, then the
 	default model for the alphabet is used.  For DNA or RNA, the
 	default model is HKY.  For Codons, the default model is
@@ -613,7 +618,7 @@
       </sect3>
 
       <sect3>
-	<title>Specifying a Substitution Model</title>
+	<title>Specifying a substitution model</title>
 
 	<para>Substitution models are specified using a stack, as
 	follows:
@@ -641,7 +646,7 @@
       </sect3>
 
       <sect3>
-	<title>Extended Model Descriptions</title>
+	<title>Extended model descriptions</title>
 
 	<para>All basic CTMC models are reversible, and can be
 	characterized by rates \[Q_{ij} =
@@ -753,12 +758,12 @@
     </sect2>
 
     <sect2>
-      <title>Indel Models</title>
+      <title>Indel models</title>
       <para>The current models are simple, fragments, and fragments+T</para>
     </sect2>
 
     <sect2>
-      <title>Alignment Constraints</title>
+      <title>Alignment constraints</title>
       <para>To pin columns of the alignment, specify alignment
       constraints in a file as follows: </para>
 
@@ -802,7 +807,7 @@
   </sect1>
 
   <sect1>
-    <title>Auxilliary Tools</title>
+    <title>Auxilliary tools</title>
 
     <sect2>
       <title>tree-dist-compare</title>
