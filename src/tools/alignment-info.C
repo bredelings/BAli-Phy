@@ -79,7 +79,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "produce help message")
     ("align", value<string>(),"file with sequences and initial alignment")
     ("tree",value<string>(),"file with initial tree")
-    ("reroot","estimate the root of the tree")
+    ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons")
+    ("with-stop","include stop codons in amino-acid alphabets")
+    ("data-dir", value<string>()->default_value("Data"),"data directory")
     ;
 
   // positional options
@@ -94,7 +96,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-reorder <alignment-file> <tree-file>\n";
+    cout<<"Usage: alignment-info <alignment-file> <tree-file>\n";
     cout<<all<<"\n";
     exit(0);
   }
