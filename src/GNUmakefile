@@ -213,8 +213,6 @@ includes += /sw/include
 includes += ../include/
 includes += .
 
-CC=gcc-4.0
-CXX=g++-4.0
 CPP = $(CC) -E  	# This might vary from machine to machine
 CPPFLAGS += $(patsubst %,-I%,$(subst :, ,$(includes)))
 CXXFLAGS += ${LANGO:%=-f%} ${WARN:%=-W%} ${DEBUG:%=-%} ${OPT:%=-%} ${DEFS:%=-D%} ${EXACTFLAGS}

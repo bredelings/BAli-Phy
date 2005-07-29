@@ -38,11 +38,6 @@ public:
   /// The order of the sequence named s
   int index(const string& s) const;
 
-  typedef ublas::matrix_row<const ublas::matrix<int> > column_t;
-  column_t get_column(int c) const {
-    return column_t(array,c);
-  }
-
   /// The i-th sequence
   const sequence& seq(int i) const { return sequences[i];}
   /// The i-th sequence

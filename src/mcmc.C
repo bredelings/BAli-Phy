@@ -1,4 +1,3 @@
-#include <boost/numeric/ublas/config.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <iostream>
 

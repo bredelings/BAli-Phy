@@ -430,7 +430,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
   //----- pre-calculate scaling factors --------//
   for(int i=0;i<dists2.size();i++) {
     for(int m=0;m<nrates();m++)
-      for(int l=0;l<dists2[i][m].size();l++)
+      for(int l=0;l<dists2[i].size2();l++)
 	dists2[i](m,l) *= distribution[m] * frequency(m,l);
   }
 }
