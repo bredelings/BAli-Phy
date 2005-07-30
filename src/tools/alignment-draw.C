@@ -551,7 +551,7 @@ int main(int argc,char* argv[])
       const alphabet& a = A.get_alphabet();
     
       int pos=start;
-      while(pos<end) {
+      while(pos<=end) {
 	cout<<"\\begin{tabular}{";
 	for(int i=0;i<width;i++)
 	  cout<<"c";
@@ -560,7 +560,7 @@ int main(int argc,char* argv[])
 	for(int i=0;i<A.n_sequences();i++) {
 	  int s = i;
 
-	  for(int column=pos;column<pos+width and column < end; column++) {
+	  for(int column=pos;column<pos+width and column <= end; column++) {
 	    string c = a.lookup(A(column,s));
 	    string latexcolor = "";//latex_get_bgcolor(colors(column,s),sscale,color);
 	    if (column != pos)
@@ -630,14 +630,14 @@ SPAN {\n\
       const alphabet& a = A.get_alphabet();
     
       int pos=start;
-      while(pos<end) {
+      while(pos<=end) {
 	cout<<"<table>\n";
 
 	// Print columns positions
 	if (show_column_numbers) {
 	  cout<<"<tr><td></td><td>";
 	  
-	  for(int column=pos;column<pos+width and column < end; column++) {
+	  for(int column=pos;column<pos+width and column <= end; column++) {
 	    double P=colors(column,A.n_sequences());
 	    string style = getstyle(P,"",*color_scheme);
 	    if (columncolors)
@@ -653,7 +653,7 @@ SPAN {\n\
 	  cout<<"  <tr>\n";
 	  cout<<"    <td class=\"sequencename\">"<<A.seq(s).name<<"</td>\n";
 	  cout<<"    <td>";
-	  for(int column=pos;column<pos+width and column < end; column++) {
+	  for(int column=pos;column<pos+width and column <= end; column++) {
 	    string c;
 	    c+= a.lookup(A(column,s));
 	    if (A.gap(column,s)) {
