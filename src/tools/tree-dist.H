@@ -129,10 +129,11 @@ SequenceTree standardized(const std::string& t,const std::vector<std::string>& r
 SequenceTree standardized(SequenceTree T);
 SequenceTree standardized(SequenceTree T,const std::vector<std::string>& remove);
 
-std::vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,double r);
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);
-std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, 
-					 const std::valarray<double>&);
+std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, const std::valarray<double>&);
+
+std::vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l);
+std::vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,double r);
 
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
 			 const std::vector<Partition>& partitions);

@@ -117,8 +117,6 @@ bool report_sample(std::ostream& o,const vector<valarray<bool> >& sample_in,int 
 
     nchanges_ave[i] = (nchanges[i] + 1)/2;
 
-    //  double nchanges_perfect[i] = (N[i]-1)*P[i]*(1.0-P[i])*2.0;
-  
     //----------------- Variances ---------------//
     Var_perfect[i] = P[i]*(1.0-P[i])/N[i];
     Var_bootstrap[i] = statistics::Var(values[i]);
@@ -128,7 +126,7 @@ bool report_sample(std::ostream& o,const vector<valarray<bool> >& sample_in,int 
     Ne[i] = P[i]*(1.0-P[i])/Var_bootstrap[i];
   }
 
-  bool different=(dx <= 0) or sample.size()==1;
+  bool different = (dx <= 0) or sample.size()==1;
   if (not different) {
     for(int i=0;i<sample.size();i++)
       for(int j=0;j<i;j++)
@@ -327,7 +325,7 @@ int main(int argc,char* argv[])
 
       // add Ml partitions to 'partitions' if not yet there
       if (args.count("sub-partitions"))
-	dist_partitions[i] = get_Ml_sub_partitions(tree_dists[i],0.5,2.0);
+	dist_partitions[i] = get_Ml_sub_partitions(tree_dists[i],0.5);
       else
 	dist_partitions[i] = get_Ml_partitions(tree_dists[i],0.5);
       for(int j=0;j<dist_partitions[i].size();j++)
@@ -367,9 +365,7 @@ int main(int argc,char* argv[])
     }
 
     //------ Create support bitvectors for the hypotheses (topology,partitions) ----//
-
     vector< vector< valarray<bool> > > topology_series(topologies.size());
-
 
     for(int i=0;i<topologies.size();i++)
       for(int j=0;j<tree_dists.size();j++)

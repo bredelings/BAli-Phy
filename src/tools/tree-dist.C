@@ -464,11 +464,16 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
 
   vector<string> names = sample.topologies[0].T.get_sequences();
 
-  for(int i=0;i<sample.size();i++) {
-    const SequenceTree& T = sample.topologies[ sample.which_topology[i] ].T;
+  int count = 0;
 
-    int min_old = 1+(int)(l*i);
-    int min_new = 1+(int(l*(i+1)));
+  for(int i=0;i<sample.topologies.size();i++) {
+    const SequenceTree& T = sample.topologies[i].T;
+
+    int delta = sample.topologies[i].count;
+
+    int min_old = 1+(int)(l*count);
+    count += delta;
+    int min_new = 1+(int)(l*count);
 
     // for each partition in the next tree
     for(int b=T.n_leaves();b<T.n_branches();b++) {
@@ -487,7 +492,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
       int C1 = C2;
       if (pc.last_tree != i) {
 	pc.last_tree=i;
-	C2++;
+	C2 += delta;
       }
       
       // add the partition if it wasn't good before, but is now
@@ -526,6 +531,36 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
   valarray<bool> mask(true,sample.topologies[0].T.n_leaves());
   return get_Ml_partitions(sample,l,mask);
 }
+
+vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l) 
+{
+  vector<Partition> partitions = get_Ml_partitions(sample,l);
+
+  SequenceTree MF = get_mf_tree(sample.topologies[0].T.get_sequences(),partitions);
+
+  vector<const_branchview> branches = branches_from_leaves(MF);  
+
+  for(int b=0;b<branches.size();b++) 
+  {
+    // get sub-partitions for branch b
+    valarray<bool> mask = branch_partition(MF,branches[b]);
+    vector<Partition> sub_partitions = get_Ml_partitions(sample,l,mask);
+  
+    // only add if we aren't already implied
+    for(int i=0;i<sub_partitions.size();i++) {
+      bool ok = true;
+      for(int j=0;j<partitions.size() and ok;j++)
+	if (implies(partitions[j],sub_partitions[i]))
+	  ok = false;
+
+      if (ok)
+	partitions.push_back(sub_partitions[i]);
+    }
+  }
+
+  return partitions;
+}
+
 
 vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,double r) {
   vector<Partition> partitions = get_Ml_partitions(sample,l);
