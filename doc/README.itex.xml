@@ -103,12 +103,15 @@
 
             <para>The makefile provided requires GNU
             <command>make</command>.  When compiling, the default C 
-            and C++ compilers are assumed.  If you have multiple
-            compilers installed on your system (for example,
+            and C++ compilers are used.  These are usually
+            <command>gcc</command> and <command>g++</command>.  If you
+            have multiple compilers installed on your system (for example,
             <command>gcc-3.3</command> and
-            <command>gcc-4.0</command>), you should set the
-            environment variables CC and CXX to the correct compiler
-            when compiling <application>BAli-Phy</application>: 
+            <command>gcc-4.0</command>) and the default command
+            <command>g++</command> invokes the wrong one, then you
+            should set the environment variables CC and CXX to the
+            correct compiler when compiling 
+            <application>BAli-Phy</application>:  
 	    <screen><prompt>%</prompt> <userinput>CC=gcc-4.0 CXX=g++-4.0 ARCH=pentium4 make install</userinput></screen>
             To change this, or to change other compilation options,
             edit the makefile <filename>src/GNUmakefile</filename>.</para> 
