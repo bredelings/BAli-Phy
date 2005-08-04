@@ -95,18 +95,23 @@
     <sect2>
       <title>Compilation</title>
 
-      <para>The makefiles provided require GNU
-            <command>make</command>.  They also             assume
-            that the compiler is called <command>g++-4.0</command>.
-            To change this, or to change other compilation options,
-            edit the makefile <filename>src/GNUmakefile</filename>.</para> 
-
-	    <para>In order to compile the program on UNIX, simply enter the
+            <para>In order to compile the program on UNIX, simply enter the
 	    <filename>src/</filename> directory and type <userinput>make
 	    install</userinput> at the shell prompt. This will compile
 	    <command>bali-phy</command> and its associated tools, and them
 	    to the directory <filename>../build/bin</filename>. </para>
 
+            <para>The makefile provided requires GNU
+            <command>make</command>.  When compiling, the default C 
+            and C++ compilers are assumed.  If you have multiple
+            compilers installed on your system (for example,
+            <command>gcc-3.3</command> and
+            <command>gcc-4.0</command>), you should set the
+            environment variables CC and CXX to the correct compiler
+            when compiling <application>BAli-Phy</application>: 
+	    <screen><prompt>%</prompt> <userinput>CC=gcc-4.0 CXX=g++-4.0 ARCH=pentium4 make install</userinput></screen>
+            To change this, or to change other compilation options,
+            edit the makefile <filename>src/GNUmakefile</filename>.</para> 
 
 	    <para>On Intel computers, to generate a faster executable you can add
 	    <userinput>ARCH=pentium4</userinput> or
