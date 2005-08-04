@@ -59,12 +59,15 @@
 	<sect4>
 	  <title>Mac OS X</title>
 
-	  <para>You must have Mac OS version 10.1 or higher.</para>
+	  <para>You should probably have Mac OS version 10.4 (Tiger)
+         or higher.  You might be able to compiler on version 10.1 or
+         later if you install a recent version of gcc instead of using
+         the gcc shipped by Apple.</para>
 
 	  <para>On Mac OS X you must first install <ulink
 	  url="http://fink.sourceforge.net">fink</ulink>.  Fink
-	  provides a Linux environment for Mac OS X, and includes GCC,
-	  GNU make, and other software.</para>
+	  provides Linux software for Mac OS X, and includes GCC,
+	  GNU make, and other packages.</para>
 
 	  <para>You can access the command line on OS X by running the
 	  Terminal application.</para>
