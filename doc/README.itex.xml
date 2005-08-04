@@ -112,7 +112,7 @@
             should set the environment variables CC and CXX to the
             correct compiler when compiling 
             <application>BAli-Phy</application>:  
-	    <screen><prompt>%</prompt> <userinput>CC=gcc-4.0 CXX=g++-4.0 ARCH=pentium4 make install</userinput></screen>
+	    <screen><prompt>%</prompt> <userinput>CC=gcc-4.0 CXX=g++-4.0 make install</userinput></screen>
             To change this, or to change other compilation options,
             edit the makefile <filename>src/GNUmakefile</filename>.</para> 
 
@@ -431,10 +431,10 @@
 	<title>Too many taxa?</title>
 
 	<para><application>BAli-PHy</application> is quite CPU
-	intensive, and so we recommend using 12 or fewer tax in order
+	intensive, and so we recommend using 12 or fewer taxa in order
 	to limit the time required to accumulate enough MCMC samples.
 	We note that many phylogenetic hypotheses can be reduced to
-	hypotheses concering only four taxa.  We recommend removing as
+	hypotheses concerning only four taxa.  We recommend removing as
 	many taxa as possible from your data set.  You can then add
 	taxa back into the data set one you have determine how much
 	this will increase the duration of the run.</para>
@@ -448,7 +448,7 @@
 	$L$ represents the sequence length.  Thus, doubling the length
 	of the input sequences increases RAM requirements and run
 	time by a factor of 4.  Therefore sequence lengths beyond
-	750 letters may prove impractical due to limitted RAM or the
+	750 letters may prove impractical due to limited RAM or the
 	speed of the calculation.   For protein sequences,
 	we recommend coding the sequences in terms of amino acids or
 	codons, rather than nucleotides.</para>
@@ -713,7 +713,7 @@
 	    ratio.</para>
 
 	    <para>One can also specify
-	    YangM0[<replaceable>submodel</replaceable>].  In this
+	    YangM0[<replaceable>sub-model</replaceable>].  In this
 	    case, YangM0[HKY] gives the standard Yang M0 model,
 	    whereas YangM0[TN] gives two transition/transversion rates.</para>
 	  </listitem>
@@ -744,7 +744,7 @@
 	    ratio. $p_1, \ldots , p_n$, the frequency of
 	    $n$. $\omega_1, \ldots , \omega_n$, the
 	    non-synonymous/synonymous substitution ratio for the $n$
-	    submodels. </para>
+	    sub-models. </para>
 
 	  </listitem>
 	</varlistentry>
@@ -818,7 +818,7 @@
   </sect1>
 
   <sect1>
-    <title>Auxilliary tools</title>
+    <title>Auxiliary tools</title>
 
     <sect2>
       <title>tree-dist-compare</title>
