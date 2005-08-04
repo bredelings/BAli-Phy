@@ -98,7 +98,7 @@
             <para>In order to compile the program on UNIX, simply enter the
 	    <filename>src/</filename> directory and type <userinput>make
 	    install</userinput> at the shell prompt. This will compile
-	    <command>bali-phy</command> and its associated tools, and them
+	    <command>bali-phy</command> and its associated tools, and copy them
 	    to the directory <filename>../build/bin</filename>. </para>
 
             <para>The makefile provided requires GNU
