@@ -31,6 +31,10 @@ unsigned long myrand_init(unsigned long s) {
   return s;
 }
 
+unsigned long uniform_unsigned_long() {
+  return rng::standard->get();
+}
+
 double uniform() {
   return rng::standard->uniform();
 }

@@ -9,6 +9,9 @@
 unsigned long myrand_init();
 unsigned long myrand_init(unsigned long);
  
+// returns a value in [0,1)
+unsigned long uniform_unsigned_long();
+
 // synonym for 'uniform'
 double myrandomf();
 

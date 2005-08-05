@@ -383,8 +383,6 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
 
 struct compare_complete_partitions {
   bool operator()(const valarray<bool>& p1,const valarray<bool>& p2) const {
-    if (p1.size() != p2.size())
-      std::cerr<<"p1.size() = "<<p1.size()<<" and p2.size() = "<<p2.size()<<"\n";
     assert(p1.size() == p2.size());
     //    assert(p1[0]);
     //    assert(p2[0]);
@@ -440,6 +438,50 @@ struct p_count {
   p_count(): count(0),last_tree(-1) {}
 };
 
+#if (defined(__GNUC__) && (__GNUC__ > 4) )
+
+#include <tr1/unordered_map>
+
+namespace std { namespace tr1 {
+
+  template<> struct hash<std::valarray<bool> > 
+  {
+    vector<int> constants;
+
+    size_t operator()(const std::valarray<bool>& v) const 
+    {
+      size_t total=0;
+      assert(constants.size() == v.size());
+      
+      for(int i=0;i<v.size();i++)
+	if (v[i]) total += constants[i];
+      return total;
+    }
+    
+    hash(int n) 
+      :constants(n)
+    {
+      for(int i=0;i<constants.size();i++)
+	constants[i] = uniform_unsigned_long();
+    }
+  };
+
+} } 
+
+namespace std {
+
+  template<>
+  struct equal_to<valarray<bool> > {
+    bool operator()(const std::valarray<bool>& v1,const std::valarray<bool>& v2) const {
+      assert(v1.size() == v2.size());
+      return ::equal(v1,v2);
+    }
+  };
+}
+
+
+// improve: we spend a lot of time creating and destroying the hash table
+
 vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const valarray<bool>&  mask) 
 {
   // find the first bit
@@ -448,6 +490,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
     first++;
   assert(first < mask.size());
 
+  // make sure l is in range and handle l==1
   if (l < 0.5)
     throw myexception()<<"Consensus level for majority tree must be >= 0.5";
   if (l > 1.0)
@@ -457,10 +500,13 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
     return strict_consensus_partitions(sample,mask);
 
   // use a sorted list of <partition,count>, sorted by partition.
-  map<valarray<bool>,p_count,compare_complete_partitions > counts;
+  typedef std::tr1::unordered_map<valarray<bool>,p_count> container_t;
+  int container_size = 16 * sample.size()*sample.topologies[0].T.n_branches();
+  int n_leaves = sample.topologies[0].T.n_leaves();
+  container_t counts(container_size,std::tr1::hash<valarray<bool> >(n_leaves));
 
   // use a linked list of pointers to <partition,count> records.
-  list<map<valarray<bool>,p_count,compare_complete_partitions >::iterator > majority;
+  list< pair<const valarray<bool>, p_count>* > majority;
 
   vector<string> names = sample.topologies[0].T.get_sequences();
 
@@ -476,9 +522,11 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
     int min_new = 1+(int)(l*count);
 
     // for each partition in the next tree
-    for(int b=T.n_leaves();b<T.n_branches();b++) {
-      std::valarray<bool> partition = branch_partition(T,b);
-
+    std::valarray<bool> partition(T.n_leaves()); 
+    for(int b=T.n_leaves();b<T.n_branches();b++) 
+    {
+      // Compute the standard bitmask for the partition
+      partition = T.partition(b);
       if (not partition[first])
 	partition = (not partition) and mask;
       else
@@ -486,8 +534,17 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
       
       assert(partition.size() == T.n_leaves());
 
-      // FIXME - we are doing the lookup twice
-      p_count& pc = counts[partition];
+      // Look up record for this partition
+      container_t::iterator i_record = counts.find(partition);
+      if (i_record == counts.end()) {
+	counts.insert(container_t::value_type(partition,p_count()));
+	i_record = counts.find(partition);
+	assert(i_record != counts.end());
+      }
+      container_t::value_type* p_record = &(*i_record);
+
+      // Update counts
+      p_count& pc = p_record->second;
       int& C2 = pc.count;
       int C1 = C2;
       if (pc.last_tree != i) {
@@ -497,7 +554,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
       
       // add the partition if it wasn't good before, but is now
       if (C1<min_old and C2 >= min_new)
-	majority.push_back(counts.find(partition));
+	majority.push_back(p_record);
     }
 
 
@@ -526,6 +583,105 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
 
   return partitions;
 }
+
+#else
+vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const valarray<bool>&  mask) 
+{
+  // find the first bit
+  int first=0;
+  while(first<mask.size() and not mask[first])
+    first++;
+  assert(first < mask.size());
+
+  if (l < 0.5)
+    throw myexception()<<"Consensus level for majority tree must be >= 0.5";
+  if (l > 1.0)
+    throw myexception()<<"Consensus level for majority tree must be <= 1.0";
+
+  if (l == 1.0)
+    return strict_consensus_partitions(sample,mask);
+
+  // use a sorted list of <partition,count>, sorted by partition.
+  typedef map<valarray<bool>,p_count,compare_complete_partitions > container_t;
+  container_t counts;
+
+  // use a linked list of pointers to <partition,count> records.
+  list<container_t::iterator> majority;
+
+  vector<string> names = sample.topologies[0].T.get_sequences();
+
+  int count = 0;
+
+  for(int i=0;i<sample.topologies.size();i++) {
+    const SequenceTree& T = sample.topologies[i].T;
+
+    int delta = sample.topologies[i].count;
+
+    int min_old = 1+(int)(l*count);
+    count += delta;
+    int min_new = 1+(int)(l*count);
+
+    // for each partition in the next tree
+    std::valarray<bool> partition(T.n_leaves()); 
+    for(int b=T.n_leaves();b<T.n_branches();b++) 
+    {
+      partition = T.partition(b);
+      if (not partition[first])
+	partition = (not partition) and mask;
+      else
+	partition = partition and mask;
+
+      assert(partition.size() == T.n_leaves());
+
+      // Look up record for this partition
+      container_t::iterator record = counts.find(partition);
+      if (record == counts.end()) {
+	counts.insert(container_t::value_type(partition,p_count()));
+	record = counts.find(partition);
+	assert(record != counts.end());
+      }
+
+      // FIXME - we are doing the lookup twice
+      p_count& pc = record->second;
+      int& C2 = pc.count;
+      int C1 = C2;
+      if (pc.last_tree != i) {
+	pc.last_tree=i;
+	C2 += delta;
+      }
+      
+      // add the partition if it wasn't good before, but is now
+      if (C1<min_old and C2 >= min_new)
+	majority.push_back(record);
+    }
+
+
+    // for partition in the majority tree
+    for(typeof(majority.begin()) p = majority.begin();p != majority.end();) {
+      if ((*p)->second.count < min_new) {
+	typeof(p) old = p;
+	p++;
+	majority.erase(old);
+      }
+      else
+	p++;
+    }
+  }
+
+  vector<Partition> partitions;
+  partitions.reserve( 2*names.size() );
+  for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
+    const valarray<bool>& partition =(*p)->first;
+ 
+    if (statistics::count(partition) < 2) continue;
+    if (statistics::count((not partition) and mask) < 2) continue;
+
+    partitions.push_back(Partition(names,partition,mask) );
+  }
+
+  return partitions;
+}
+#endif
 
 vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
   valarray<bool> mask(true,sample.topologies[0].T.n_leaves());
