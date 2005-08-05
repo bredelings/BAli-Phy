@@ -1,10 +1,38 @@
 -10. Make tree a virtual public base class for SequenceTree and RootedTree?
 
+-9.  tree-dist.C: 
+	0. Separate the vector<string> of taxa names from the topology.
+	   (Standardize, and then just use indexes 0, 1,...N-1)
+	1. Store a list of full partitions observed in the data set as
+	   vector< valarray<bool>* >.
+	2. For each topology, store full partitions as a vector<int>.
+	3. Each int would be an index into the partition list,
+	   and we could store a vector<double> of the same length for
+	   the mean.  
+
+	4. Also, for each partition, store a list of topology indices
+           that imply it.
+
+	How much memory would we save?
+
+	How would we: 
+	1. Construct Tree or SequenceTree structures, when necessary?
+
+	Can we:
+	1. Speed up 'implies(Tree,Partition)' if we have topology
+	   information, such as 'which branches are my neighbors'?
+	
+-8. Sanitize use of MAP_tree in tree-dist-compare when the count is 1.   
+
 -7. Benchmarking of mixing... 
   a) try with alignment fixed
   b) look at log autocorrelation and effective sample sizes for distances
      between 2 nodes + sum all branches + sum all paths
   c) compare mixing with few taxa, many taxa...
+
+-6. Make a ??? letter for Codon alphabets.
+    (This isn't urgent because we can read codon alignments as singlet
+    alignments)
 
 -5. Speeding up GQ_exit( )
   a) can we avoid copying G into G2 - can we construct it in place?
