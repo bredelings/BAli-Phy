@@ -47,6 +47,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("skip",value<int>()->default_value(0),"number of trees to skip")
     ("max",value<int>(),"maximum number of trees to read")
     ("mode", value<string>()->default_value("SRQ"),"SRQ or sum")
+    ("invert","consider the inverse of each event instead")
     ("no-scale-x","don't scale X")
     ("no-scale-y","don't scale Y")
     ;
@@ -98,6 +99,8 @@ int main(int argc,char* argv[])
     vector<vector<int> > plots(partitions.size());
     for(int i=0;i<partitions.size();i++) {
       valarray<bool> support = tree_dist.supports_partition(partitions[i]);
+
+      if (args.count("invert")) support = not support;
 
       if (args["mode"].as<string>() == "SRQ")
 	plots[i] = statistics::regeneration_times(support);
