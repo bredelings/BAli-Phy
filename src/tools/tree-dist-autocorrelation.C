@@ -14,17 +14,6 @@
 
 using namespace std;
 
-double moment(const vector<double>& v,int n) {
-  double total=0.0;
-  for(int i=0;i<v.size();i++) {
-    double temp = 1.0;
-    for(int j=0;j<n;j++)
-      temp *= v[i];
-    total += temp;
-  }
-  return total/v.size();
-}
-
 SequenceTree standardized(const string& t) {
   SequenceTree T;
   T.parse(t);
