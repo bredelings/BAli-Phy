@@ -6,7 +6,7 @@ SHELL=/bin/sh
 
 .PRECIOUS: %.prob %.from.${SKIP}+${SIZE}
 
-analysis: Report tc tree.plot MAP.tree MAP.phy MAP.fasta # MAP-AU.html median-AU.html
+analysis: Report tc SRQ.plot sum.plot c50.tree MAP.tree MAP.phy MAP.fasta # MAP-AU.html median-AU.html
 	echo "Started analyzing from iteration ${SKIP}" > analysis
 	echo "Analyzed $$(wc -l trees.from.${SKIP}+${SIZE}) " >> analysis
 	echo "Finished on date $$(date)" >> analysis
@@ -86,12 +86,14 @@ median-unordered.fasta: samples-${SKIP}+${SIZE}
 %-AU.html: %-AU.prob MAP.tree %.fasta
 	alignment-draw $*.fasta $*-AU.prob --width 120 > $@
 
-#FIXME - are these SRQ plots, or not?
-tree.srq: trees MAP.tree 
-	tree-to-srq MAP.tree < trees > tree.srq
+c50.tree: tc
+	pickout consensus0 < tc > c50.tree
 
-tree.plot: tree.srq
-	srq-to-plot --no-scale < $< > $@
+SRQ.plot: trees.from.${SKIP}+${SIZE} c50.tree
+	tree-to-srq c50.tree < trees.from.${SKIP}+${SIZE} > SRQ.plot
+
+sum.plot: trees.from.${SKIP}+${SIZE} c50.tree
+	tree-to-srq c50.tree < trees.from.${SKIP}+${SIZE} --mode sum --no-scale-x > sum.plot
 
 Likelihood: Pr
 	pickout likelihood < Pr  > $@

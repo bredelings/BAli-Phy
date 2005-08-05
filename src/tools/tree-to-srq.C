@@ -11,9 +11,9 @@
 #include "sequencetree.H"
 #include "tree-dist.H"
 #include "tree-util.H"
+#include "statistics.H"
 
 using namespace std;
-
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -23,17 +23,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using std::string;
-
-double moment(const vector<double>& v,int n) {
-  double total=0.0;
-  for(int i=0;i<v.size();i++) {
-    double temp = 1.0;
-    for(int j=0;j<n;j++)
-      temp *= v[i];
-    total += temp;
-  }
-  return total/v.size();
-}
 
 string topology(const string& t) {
   SequenceTree T = standardized(t);
@@ -54,13 +43,17 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help", "produce help message")
-    ("tree", value<string>(),"tree to re-root")
+    ("tree", value<string>(),"tree of partitions to consider")
+    ("skip",value<int>()->default_value(0),"number of trees to skip")
+    ("max",value<int>(),"maximum number of trees to read")
+    ("mode", value<string>()->default_value("SRQ"),"SRQ or sum")
+    ("no-scale-x","don't scale X")
+    ("no-scale-y","don't scale Y")
     ;
 
   // positional options
   positional_options_description p;
   p.add("tree", 1);
-  p.add("outgroup", 2);
   
   variables_map args;     
   store(command_line_parser(argc, argv).
@@ -82,18 +75,51 @@ int main(int argc,char* argv[])
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    // Load the target tree
-    SequenceTree target = load_T(args);
+    // Load the partitions that we are considering
+    SequenceTree T = load_T(args);
+    standardize(T);
+    vector<Partition> partitions;
+    for(int b=T.n_leafbranches();b<T.n_branches();b++) {
+      std::valarray<bool> p1 = branch_partition(T,b);
+      partitions.push_back(Partition(T.get_sequences(),p1));
+    }
 
-    string target_string = topology(target);
+    // Read in the trees
+    int skip = args["skip"].as<int>();
 
-    string line;
-    while(getline(cin,line)) {
-      SequenceTree T = standardized(line);
-      if (T.write(false) == target_string)
-	cout<<"1\n";
-      else
-	cout<<"0\n";
+    int max = -1;
+    if (args.count("max"))
+      max = args["max"].as<int>();
+
+    tree_sample tree_dist(std::cin,vector<string>(),skip,max);
+
+
+    // Compute info for plots
+    vector<vector<int> > plots(partitions.size());
+    for(int i=0;i<partitions.size();i++) {
+      valarray<bool> support = tree_dist.supports_partition(partitions[i]);
+
+      if (args["mode"].as<string>() == "SRQ")
+	plots[i] = statistics::regeneration_times(support);
+      else 
+	plots[i] = statistics::total_times(support);
+    }
+
+    // write out plots
+    for(int i=0;i<plots.size();i++) {
+      double scale_x = plots[i].size()-1;
+      double scale_y = plots[i].back();
+      if (scale_y == 0) scale_y = 1;
+      
+      if (args.count("no-scale-x"))
+	scale_x = 1;
+
+      if (args.count("no-scale-y"))
+	scale_y = 1;
+
+      for(int j=0;j<plots[i].size();j++) 
+	cout<<j/scale_x<<"   "<<plots[i][j]/scale_y<<endl;
+      cout<<endl;
     }
   }
   catch (std::exception& e) {
@@ -101,5 +127,4 @@ int main(int argc,char* argv[])
     exit(1);
   }
   return 0;
-
 }

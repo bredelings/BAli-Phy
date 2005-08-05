@@ -26,13 +26,6 @@ namespace statistics {
     return log(odds(v));
   }
 
-  double Var(const valarray<double>& v) {
-    double m1 = moment(v,1);
-    double m2 = moment(v,2);
-    return m2 - m1*m1;
-  }
-
-
   vector<double> confidence_interval(const valarray<double>& values,double P) {
     assert(values.size() > 4);
 
@@ -90,6 +83,32 @@ namespace statistics {
     return sample2;
   }
 
+  std::vector<int> total_times(const std::valarray<bool>& v) 
+  {
+    vector<int> total(v.size()+1);
+
+    total[0] = 0;
+    for(int i=0;i<v.size();i++) {
+      total[i+1] = total[i];
+      if (v[i]) total[i+1]++;
+    }
+      
+    return total;
+  }
+
+  std::vector<int> regeneration_times(const std::valarray<bool>& v) 
+  {
+    vector<int> times;
+
+    times.push_back(0);
+    for(int i=1;i<v.size();i++) {
+      if (v[i] and not v[i-1])
+	times.push_back(i);
+    }
+    times.push_back(v.size());
+      
+    return times;
+  }
 
 }
 
