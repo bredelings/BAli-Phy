@@ -75,7 +75,7 @@ SequenceTree standardized(const string& t,const vector<string>& remove) {
   
 void standardize(SequenceTree& T) {
 
-  map<string,int,lstr> sequences;
+  map<string,int> sequences;
 
   for(int i=0;i<T.get_sequences().size();i++) {
     sequences.insert(pair<string,int>(T.get_sequences()[i],i));
