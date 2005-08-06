@@ -159,6 +159,44 @@ public:
   }
 };
 
+RGB DNA_color(char aa) {
+  if (strchr("A",aa))
+    return red; 
+  else if (strchr("TU",aa))
+    return green;
+  else if (strchr("G",aa))
+    return orange;
+  else if (strchr("C",aa))
+    return blue;
+  else if (strchr("-*+NYR ",aa))
+    return grey;
+  
+  throw myexception()<<"Letter '"<<aa<<" does not appear to be an nucleic acid";
+}
+
+
+/// ColorMap which uses the bg color to display AA type
+class DNA_colors: public ColorMap 
+{
+public:
+
+  DNA_colors* clone() const {return new DNA_colors(*this);}
+
+  RGB bg_color(double x,const string& s) const {
+    if (s.length() > 1) std::abort();
+    char aa = ' ';
+    if (not s.empty())
+      aa = s[0];
+    
+    return DNA_color(aa);
+  }
+
+  RGB fg_color(double x,const string& s) const {
+    return black;
+  }
+};
+
+
 /// ColorMap which makes the bg color fade almost to white if uncertain
 class whiten_colors: public ColorMap {
   OwnedPointer<ColorMap> sub_map;
@@ -361,9 +399,9 @@ OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack)
 {
   OwnedPointer<ColorMap> color_map;
   if (match(string_stack,"plain"))
-    color_map = OwnedPointer<ColorMap>(new Plain_ColorMap);    
+    color_map = OwnedPointer<ColorMap>(new Plain_ColorMap);
   else if (match(string_stack,"bw"))
-    color_map = OwnedPointer<ColorMap>(new BW_ColorMap);    
+    color_map = OwnedPointer<ColorMap>(new BW_ColorMap);
   else if (match(string_stack,"RedBlue"))
     color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1));
   else if (match(string_stack,"BlueRed"))
@@ -372,6 +410,10 @@ OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack)
     color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap);
   else if (match(string_stack,"AA"))
     color_map = OwnedPointer<ColorMap>(new AA_colors);
+  else if (match(string_stack,"DNA"))
+    color_map = OwnedPointer<ColorMap>(new DNA_colors);
+  else if (match(string_stack,"RNA"))
+    color_map = OwnedPointer<ColorMap>(new DNA_colors);
   else
     throw myexception()<<"Unrecognized base color scheme '"<<string_stack.back()<<"'";
 
@@ -467,7 +509,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<"Usage: alignment-draw <alignment> [<AU file>] [OPTIONS]\n";
     cout<<all<<"\n";
     cout<<"Base Color Schemes:\n";
-    cout<<"    plain, bw, Rainbow, RedBlue, BlueRed, AA\n";
+    cout<<"    plain, bw, Rainbow, RedBlue, BlueRed, AA, DNA\n";
     cout<<"\n";
     cout<<"Modifiers:\n";
     cout<<"    switch, contrast, fade\n";
@@ -516,20 +558,20 @@ int main(int argc,char* argv[])
 	for(int j=0;j<colors.size2();j++)
 	  colors(i,j) = 0;
 
-    //-------------------- Get width ------------------------//
+    //-------------------- Get width -----------------------//
     int width = args["width"].as<int>();
 
-    /*-------------------- Get start ------------------------*/
+    //-------------------- Get start -----------------------//
     int start=0;
     if (args.count("start")) {
-      start = args["start"].as<int>();
+      start = args["start"].as<int>()q;
       if (start < 0)
 	throw myexception()<<"Parameter 'start' must be positive.";
       if (not (start < A.length()))
 	throw myexception()<<"Parameter 'start' must be less than the length of the alignment ("<<A.length()<<").";
     }
     
-    //-------------------- Get end ------------------------//
+    //--------------------- Get end ------------------------//
     int end = A.length()-1;
     if (args.count("end")) {
       end =args["end"].as<int>();
