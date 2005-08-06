@@ -72,29 +72,18 @@ SequenceTree standardized(const string& t,const vector<string>& remove) {
   standardize(T,remove);
   return T;
 }
-  
+
+
+//FIXME - return mapping of leaf nodes?  Of all nodes?
 void standardize(SequenceTree& T) {
 
-  map<string,int> sequences;
+  vector<string> names = T.get_sequences();
+    
+  std::sort(names.begin(),names.end());
 
-  for(int i=0;i<T.get_sequences().size();i++) {
-    sequences.insert(pair<string,int>(T.get_sequences()[i],i));
-  }
+  vector<int> mapping = compute_mapping(T.get_sequences(),names);
 
-  vector<int> newnames(T.n_leaves());
-
-  int i=0;
-  foreach(s,sequences) {
-    pair<string,int> p = *s;
-    newnames[p.second] = i;
-    i++;
-  }
-
-  //  cerr<<t<<endl;
-  //  cerr<<T.write()<<endl;
-  //  cerr<<T.write(false)<<endl;
-  T.SequenceTree::standardize(newnames);
-  //  cerr<<T.write(false)<<endl;
+  T.standardize(mapping);
 }
 
 void standardize(SequenceTree& T,const vector<string>& remove) {
