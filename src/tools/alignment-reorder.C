@@ -152,7 +152,7 @@ int main(int argc,char* argv[])
     //----- Standardize order by alphabetical order of names ----//
     vector<string> names = T.get_sequences();
     
-    std::sort(names.begin(),names.end(),lstr());
+    std::sort(names.begin(),names.end());
 
     vector<int> mapping1 = compute_mapping(T.get_sequences(),names);
 

@@ -72,7 +72,7 @@ std::ostream& operator<<(std::ostream& o, const Partition& P);
 
 /// A class for loading tree distributions - somewhat biased towards tree-dist-compare
 class tree_sample {
-  mutable std::map<std::string,int,lstr> index;
+  mutable std::map<std::string,int> index;
 
 public:
 

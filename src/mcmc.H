@@ -30,7 +30,7 @@ namespace MCMC {
     Result(int,int=1);
   };
 
-  class MoveStats: public std::map<std::string,Result,lstr>
+  class MoveStats: public std::map<std::string,Result>
   {
   public:
     void inc(const string&, const Result&);

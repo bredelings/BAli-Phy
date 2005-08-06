@@ -27,7 +27,7 @@ class Parameters: public MatCache
 
 public:
 
-  std::map<std::string,double,lstr> keys;
+  std::map<std::string,double> keys;
 
   /// cached branch HMMs
   vector<indel::PairHMM> branch_HMMs;
