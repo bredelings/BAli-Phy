@@ -1131,4 +1131,25 @@ double length(const Tree& T) {
   return total;
 }
 
+#include <iostream>
 
+int subtree_height(const Tree& T,int b) {
+  vector<int> leaves = T.leaf_partition_set(b);
+
+  int node = T.directed_branch(b).target();
+
+  int depth = 0;
+  for(int i=0;i<leaves.size();i++) 
+    depth = std::max(depth, T.edges_distance(node,leaves[i]) );
+
+  return depth;
+}
+
+int node_depth(const Tree& T,int node) 
+{
+  int depth = 0;
+  for(int i=0;i<T.n_leaves();i++) 
+    depth = std::min(depth, T.edges_distance(node,i) );
+
+  return depth;
+}

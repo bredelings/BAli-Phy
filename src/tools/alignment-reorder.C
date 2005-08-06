@@ -16,40 +16,49 @@ using po::variables_map;
 using std::cout;
 using std::cerr;
 using std::endl;
+using std::valarray;
 
 using std::string;
 
-/// Find a mapping from v1 to v2
-vector<int> find_mapping(const vector<string>& v1,const vector<string>& v2) {
-  assert(v1.size() == v2.size());
-  vector<int> mapping(v1.size(),-1);
-  for(int i=0;i<v1.size();i++) {
-
-    // found v1[i] in v2
-    int found = -1;
-    for(int j=0;j<v2.size() and found == -1;j++) {
-      if (v1[i] == v2[j])
-	found = j;
-    }
-
-    mapping[i] = found;
-    assert(found != -1);
+int first_bit(const valarray<bool>& v) 
+{
+  for(int i=0;i<v.size();i++) {
+    if (v[i]) return i;
   }
-  return mapping;
+  return v.size();
 }
+
+struct branch_order {
+  const Tree& T;
+
+  bool operator()(int b1,int b2) const {
+    if (subtree_height(T,b1) < subtree_height(T,b2))
+      return true;
+    if (subtree_height(T,b1) > subtree_height(T,b2))
+      return false;
+    return first_bit(T.partition(b1)) < first_bit(T.partition(b2));
+  }
+
+  branch_order(const Tree& T_): T(T_) {}
+};
+
 
 /// get an ordered list of leaves under T[n]
 vector<int> get_leaf_order(const Tree& T,int b) 
 {
   vector<int> mapping;
+
   if (T.directed_branch(b).target().is_leaf_node()) {
     mapping.push_back( T.directed_branch(b).target() );
     return mapping;
   }
 
+  // get sorted list of branches
   vector<const_branchview> branches;
   append(T.directed_branch(b).branches_after(),branches);
+  std::sort(branches.begin(),branches.end(),branch_order(T));
 
+  // accumulate results
   for(int i=0;i<branches.size();i++) {
     vector<int> sub_mapping = get_leaf_order(T,branches[i]);
     mapping.insert(mapping.end(),sub_mapping.begin(),sub_mapping.end());
@@ -61,10 +70,14 @@ vector<int> get_leaf_order(const Tree& T,int b)
 /// get an order list of the leaves of T
 vector<int> get_leaf_order(const RootedTree& RT) 
 {
+  vector<int> mapping;
+
+  // get sorted list of branches
   vector<const_branchview> branches;
   append(RT.root().branches_out(),branches);
+  std::sort(branches.begin(),branches.end(),branch_order(RT));
 
-  vector<int> mapping;
+  // accumulate results
   for(int i=0;i<branches.size();i++) {
     vector<int> sub_mapping = get_leaf_order(RT,branches[i]);
     mapping.insert(mapping.end(),sub_mapping.begin(),sub_mapping.end());
@@ -124,7 +137,6 @@ int main(int argc,char* argv[])
     load_A_and_T(args,A,T,false);
     
     //------- Re-root the tree appropriately  --------//
-
     if (not args.count("use-root")) {
       int rootb=-1;
       double rootd = -1;
@@ -142,16 +154,15 @@ int main(int argc,char* argv[])
     
     std::sort(names.begin(),names.end(),lstr());
 
-    vector<int> mapping1 = find_mapping(T.get_sequences(),names);
+    vector<int> mapping1 = compute_mapping(T.get_sequences(),names);
 
     T.standardize(mapping1);
 
 
-    //-------- Compute final mapping  -------//
+    //-------- Compute the mapping  -------//
     vector<int> mapping2 = get_leaf_order(T);
 
-    //    vector<int> mapping = compose(mapping1,mapping2);
-    //    vector<int> mapping = mapping2;
+    // re-phrase the mapping in terms of the order of sequence in A
     vector<int> mapping = compose(mapping2,invert(mapping1));
 
     for(int i=0;i<mapping2.size();i++)

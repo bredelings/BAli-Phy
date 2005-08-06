@@ -350,4 +350,7 @@ std::valarray<bool> branch_partition(const Tree& T,int b);
 /// Sum of the lengths of all branches
 double length(const Tree& T);
 
+int subtree_height(const Tree& T,int b);
+
+int node_depth(const Tree& T,int node);
 #endif
