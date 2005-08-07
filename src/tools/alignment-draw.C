@@ -564,7 +564,7 @@ int main(int argc,char* argv[])
     //-------------------- Get start -----------------------//
     int start=0;
     if (args.count("start")) {
-      start = args["start"].as<int>()q;
+      start = args["start"].as<int>();
       if (start < 0)
 	throw myexception()<<"Parameter 'start' must be positive.";
       if (not (start < A.length()))
@@ -652,9 +652,8 @@ SPAN {\n\
       if (not args.count("no-legend")) {
 	draw_legend(cout,*color_scheme,"");
 	draw_legend(cout,*color_scheme,"-");
+	cout<<"<br><br>";
       }
-
-      cout<<"<br><br>";
 
       //----------- Compute the position headings -------------------//
       string positions(A.length(),'.');
