@@ -677,13 +677,36 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
   return get_Ml_partitions(sample,l,mask);
 }
 
+// Remove partitions we imply.  Add only if not implied.
+void add_largest_partitions(vector<Partition>& partitions,const vector<Partition>& delta) 
+{
+  for(int i=0;i<delta.size();i++) 
+  {
+    bool ok = true;
+    for(int j=0;j<partitions.size() and ok;j++) 
+      if (implies(partitions[j],delta[i]))
+	ok = false;
+
+    if (not ok) continue;
+
+    for(int j=partitions.size()-1;j>=0;j--)
+      if (implies(delta[i],partitions[j]))
+	partitions.erase(partitions.begin()+j);
+
+    partitions.push_back(delta[i]);
+  }
+}
+
+
 vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l) 
 {
-  vector<Partition> partitions = get_Ml_partitions(sample,l);
-
-  SequenceTree MF = get_mf_tree(sample.topologies[0].T.get_sequences(),partitions);
-
+  // get list of branches to consider cutting
+  vector<Partition> partitions_c50 = get_Ml_partitions(sample,0.5);
+  SequenceTree MF = get_mf_tree(sample.topologies[0].T.get_sequences(),partitions_c50);
   vector<const_branchview> branches = branches_from_leaves(MF);  
+
+  // start collecting partitions at M[l]
+  vector<Partition> partitions = get_Ml_partitions(sample,l);
 
   for(int b=0;b<branches.size();b++) 
   {
@@ -691,16 +714,8 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l)
     valarray<bool> mask = branch_partition(MF,branches[b]);
     vector<Partition> sub_partitions = get_Ml_partitions(sample,l,mask);
   
-    // only add if we aren't already implied
-    for(int i=0;i<sub_partitions.size();i++) {
-      bool ok = true;
-      for(int j=0;j<partitions.size() and ok;j++)
-	if (implies(partitions[j],sub_partitions[i]))
-	  ok = false;
-
-      if (ok)
-	partitions.push_back(sub_partitions[i]);
-    }
+    // only add if we aren't already implied.  Replace partitions we imply
+    add_largest_partitions(partitions,sub_partitions);
   }
 
   return partitions;
@@ -720,7 +735,8 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,doubl
 
   vector<const_branchview> branches = branches_from_leaves(MF);  
 
-  for(int b=0;b<branches.size();b++) {
+  for(int b=0;b<branches.size();b++) 
+  {
     // get sub-partitions and support
     valarray<bool> mask = branch_partition(MF,branches[b]);
     vector<Partition> sub_partitions = get_Ml_partitions(sample,l,mask);
