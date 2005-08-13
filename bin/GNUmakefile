@@ -68,6 +68,9 @@ pIreport: pInames pIall
 	done; \
 	echo "   " >> $@ ; 
 
+%.tree : %.topology trees.from.${SKIP}+${SIZE}
+	tree-mean-lengths $< < trees.from.${SKIP}+${SIZE} > $@
+
 MAP.tree: tc
 	pickout MAPtree_0 < $< > $@
 
@@ -77,17 +80,17 @@ MAP-unordered.fasta: out
 median-unordered.fasta: samples-${SKIP}+${SIZE}
 	alignment-median --max-alignments 2000 --type splits < $< > $@ 2>median.err
 
-%.fasta: MAP.tree %-unordered.fasta
-	alignment-reorder $*-unordered.fasta MAP.tree > $@ 2>/dev/null
+%.fasta: c50.tree %-unordered.fasta
+	alignment-reorder $*-unordered.fasta c50.tree > $@ 2>/dev/null
 
 %-AU.prob: %-unordered.fasta samples-${SKIP}+${SIZE} MAP.tree
 	alignment-gild $*-unordered.fasta MAP.tree --max-alignments 500 < samples-${SKIP}+${SIZE} > $@ 2>$*-AU.err
 
-%-AU.html: %-AU.prob MAP.tree %.fasta
+%-AU.html: %-AU.prob %.fasta
 	alignment-draw $*.fasta $*-AU.prob --width 120 > $@
 
-c50.tree: tc
-	pickout consensus0 < tc > c50.tree
+c50.topology: tc
+	pickout consensus0 < tc > c50.topology
 
 SRQ.plot: trees.from.${SKIP}+${SIZE} c50.tree
 	tree-to-srq c50.tree < trees.from.${SKIP}+${SIZE} > SRQ.plot

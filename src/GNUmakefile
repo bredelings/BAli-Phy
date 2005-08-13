@@ -13,7 +13,7 @@ TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/tree-dist-compare tools/cut-range tools/alignment-translate \
 	tools/alignment-median tools/alignment-indices tools/pickout \
 	tools/joint-A-T tools/alignment-consensus tools/alignment-info \
-	tools/subsample
+	tools/subsample tools/tree-mean-lengths
 
 
 tools: ${TOOLS}
@@ -173,6 +173,9 @@ tools/tree-dist-cvars: tree.o sequencetree.o util.o tools/tree-dist.o
 
 tools/tree-to-srq: util.o tree.o sequencetree.o tools/tree-dist.o tools/statistics.o \
 	tree-util.o -lboost_program_options 
+
+tools/tree-mean-lengths: util.o tree.o sequencetree.o tools/tree-dist.o tools/statistics.o \
+	tree-util.o -lboost_program_options
 
 tools/tree-reroot: tree.o sequencetree.o tree-util.o -lboost_program_options util.o
 

@@ -124,11 +124,6 @@ public:
   tree_sample(std::istream&,const std::vector<std::string>& remove,int skip=0,int max=-1);
 };
 
-SequenceTree standardized(const std::string& t);
-SequenceTree standardized(const std::string& t,const std::vector<std::string>& remove);
-SequenceTree standardized(SequenceTree T);
-SequenceTree standardized(SequenceTree T,const std::vector<std::string>& remove);
-
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, const std::valarray<double>&);
 
