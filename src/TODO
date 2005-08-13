@@ -1,3 +1,18 @@
+-12. Make a hash function for sub-partitions that is 
+     (hash(left mask) * hash(right mask)), where the hash() function
+     is a hash function for bitmasks and involves addition, not
+     multiplication. 
+
+-11. Make a program to compare two alignment distributions.
+     a) Flag homology pairs that have abs(log(p1,p2)) > thresh-hold. 
+     b) Output the pairs of residues that act up.
+       b.1) Have a method to convert the pairs to a color scheme.
+       b.2) Invent a color scheme that is something like 'grey' (1) +
+            red (0). 
+     c) Allow the user to specify either a sequence of alignment
+        samples or an alignment w/ '?' characters, and a level of
+        certainty at which to consider each pair in that alignment.
+ 
 -10. Make tree a virtual public base class for SequenceTree and RootedTree?
 
 -9.  tree-dist.C: 
@@ -87,6 +102,10 @@
     b) include pictures to give to Dr. Sabatti.
 
 5. MCMCMC
+   ??) Find a way to correctly run heated chains, avoiding:
+       0) ?
+       i) improper pairwise alignment distribution
+      ii) really expensive DP calculations...
     a) Make the temperature affect only the likelihood...
     b) test speedups...
     c) begin to implement the forking code / temperature identifier.
@@ -97,11 +116,6 @@
 
 8. Add partitions from M[0.5] to M[l] if they are revealed by deleting subtrees.
    a) also mark "badly-rooted" subtrees?  (edges are hidden because of badly-rooted-ness?)
-
-9: Allow specifying another model than HKY (e.g. TNY) 
-      underneath YangCodonModel.  
-	* This is difficult because the models have different alphabets
-	* Suppose we wanted HKY+YangM0+TNY+YangM0+Dual
 
 10: If we are only changing bin frequencies in the smodel, we shouldn't have
     to recalculate all the conditional likelihoods.  How to implement this?
@@ -304,6 +318,12 @@ the prior, because we never want to use it  differently.
 [DONE] Write alignment-consensus
 
 [DONE] Start fiddling the 'f' parameter, but making it fixed by default.
+
+[DONE] Allow specifying a non-HKY model underneath the Yang M0 model.
+
+[DONE] (a) Estimate branch lengths for multifurcating trees
+       (b) Pass the c50 tree w/ lengths to alignment-reorder
+
 
 *IDEAS*
 
