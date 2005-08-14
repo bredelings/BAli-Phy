@@ -677,9 +677,26 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
   return get_Ml_partitions(sample,l,mask);
 }
 
-// Remove partitions we imply.  Add only if not implied.
-void add_largest_partitions(vector<Partition>& partitions,const vector<Partition>& delta) 
+// Remove partitions we imply.  Add only if not implied. Return true if we expanded the coverage.
+vector<Partition> unimplied_partitions(const vector<Partition>& partitions,const vector<Partition>& delta) 
 {
+  vector<Partition> unimplied;
+
+  for(int i=0;i<delta.size();i++) {
+    bool ok = true;
+    for(int j=0;j<partitions.size() and ok;j++)
+      if (implies(partitions[j],delta[i]))
+	ok = false;
+    if (ok)
+      unimplied.push_back(delta[i]);
+  }
+  return unimplied;
+}
+
+// Remove partitions we imply.  Add only if not implied. Return true if we expanded the coverage.
+bool add_largest_partitions(vector<Partition>& partitions,const vector<Partition>& delta) 
+{
+  bool changed=false;
   for(int i=0;i<delta.size();i++) 
   {
     bool ok = true;
@@ -689,79 +706,103 @@ void add_largest_partitions(vector<Partition>& partitions,const vector<Partition
 
     if (not ok) continue;
 
+    changed = true;
+
     for(int j=partitions.size()-1;j>=0;j--)
       if (implies(delta[i],partitions[j]))
 	partitions.erase(partitions.begin()+j);
 
     partitions.push_back(delta[i]);
   }
+  return changed;
+}
+
+void add_unique(list<valarray<bool> >& masks,const valarray<bool>& mask) 
+{
+  // don't add the mask unless contains internal partitions (it could be all 0)
+  if (n_elements(mask) < 4) return;
+
+  // don't add the mask if we already have that mask
+  foreach(m,masks)
+    if (equal(*m,mask)) return;
+
+  // otherwise, add the mask
+  masks.push_front(mask);
 }
 
 
-vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l) 
+//consider only pulling out combinations of branches pointing to the same node
+
+vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,int depth) 
 {
   // get list of branches to consider cutting
-  vector<Partition> partitions_c50 = get_Ml_partitions(sample,0.5);
+  vector<Partition> partitions_c50 = get_Ml_partitions(sample, 0.5);
   SequenceTree MF = get_mf_tree(sample.topologies[0].T.get_sequences(),partitions_c50);
   vector<const_branchview> branches = branches_from_leaves(MF);  
 
   // start collecting partitions at M[l]
   vector<Partition> partitions = get_Ml_partitions(sample,l);
 
-  for(int b=0;b<branches.size();b++) 
+  // construct unit masks
+  list< valarray<bool> > unit_masks;
+  for(int b=0;b<branches.size();b++)
+    add_unique(unit_masks, branch_partition(MF,branches[b]) );
+
+  // construct beginning masks
+  list<valarray<bool> > masks = unit_masks;
+
+  // any good mask should be combined w/ other good masks
+  list<valarray<bool> > good_masks;
+  for(int iterations=0;not masks.empty();iterations++)
   {
-    // get sub-partitions for branch b
-    valarray<bool> mask = branch_partition(MF,branches[b]);
-    vector<Partition> sub_partitions = get_Ml_partitions(sample,l,mask);
-  
-    // only add if we aren't already implied.  Replace partitions we imply
-    add_largest_partitions(partitions,sub_partitions);
+    std::cerr<<"Analyzing "<<masks.size()<<" masks."<<std::endl;;
+    list<valarray<bool> > new_good_masks;
+
+    // get sub-partitions for each mask
+    vector<Partition> all_sub_partitions;
+    foreach(m,masks) 
+    {
+      // get sub-partitions of *m 
+      vector<Partition> sub_partitions = get_Ml_partitions(sample,l,*m);
+    
+      // remove sub-partitions that are implied by partitions
+      sub_partitions = unimplied_partitions(partitions, sub_partitions);
+
+      // if this isn't empty, then record this mask
+      if (not sub_partitions.empty())
+	new_good_masks.push_front(*m);
+
+      // store the new sub-partitions we found
+      add_largest_partitions(all_sub_partitions,sub_partitions);
+    }
+
+    // store all sub-partitions we found this round
+    add_largest_partitions(partitions,all_sub_partitions);
+
+    masks.clear();
+
+    // fixme - do a convolution here - e.g. 2->1+1 3->1+2 4 ->1+3,2+2
+    // otherwise we do 1  - 1,2 - 1,2,3,4 - 1,2,3,4,5,6,7,8
+    good_masks.insert(good_masks.end(),new_good_masks.begin(),new_good_masks.end());
+    foreach(i,new_good_masks)
+      foreach(j,good_masks)
+        add_unique(masks,*i and *j);
+
+    // what will we operate on next time? 
+    // - perhaps change to look at pairs of branches connected to a node
+    // - perhaps depth 3 could be pairs of branches of distance 1
+    // - should I use the M[0.5] tree here, or the M[l] tree?
+    if (iterations < depth-1) {
+      list<valarray<bool> > temp;
+      foreach(i,new_good_masks)
+	foreach(j,unit_masks)
+	  add_unique(temp,*i and *j);
+      masks = temp;
+    }
   }
+
+
 
   return partitions;
 }
-
-
-vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,double r) {
-  vector<Partition> partitions = get_Ml_partitions(sample,l);
-
-  vector<double> support(partitions.size());
-  for(int i=0;i<partitions.size();i++)
-    support[i] = sample.PP(partitions[i]);
-
-  // break branches in the ***M_0.5*** tree? (more branches we could break - if we are only breaking 1)
-
-  SequenceTree MF = get_mf_tree(sample.topologies[0].T.get_sequences(),partitions);
-
-  vector<const_branchview> branches = branches_from_leaves(MF);  
-
-  for(int b=0;b<branches.size();b++) 
-  {
-    // get sub-partitions and support
-    valarray<bool> mask = branch_partition(MF,branches[b]);
-    vector<Partition> sub_partitions = get_Ml_partitions(sample,l,mask);
-    vector<double> sub_support(sub_partitions.size());
-    for(int i=0;i<sub_partitions.size();i++) {
-      sub_support[i] = sample.PP(sub_partitions[i]);
-      assert(sub_support[i] >= l);
-    }
-
-    // check if we are already implied
-    for(int i=0;i<sub_partitions.size();i++) {
-      bool ok = true;
-      for(int j=0;j<partitions.size() and ok;j++)
-	if (implies(partitions[j],sub_partitions[i])) {
-	  ok = statistics::odds(sub_support[i])/statistics::odds(support[j]) > r;
-	  if (ok)
-	    ok = (sub_support[i]-support[j])*sample.size() > 10;
-	}
-
-      if (ok)
-	partitions.push_back(sub_partitions[i]);
-    }
-  }
-
-  return partitions;
-}
-
 

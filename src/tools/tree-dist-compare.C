@@ -225,11 +225,11 @@ vector<Partition> get_full_partitions(const vector<Partition>& partitions) {
 
 
 vector< vector<Partition> >
-get_sub_partitions(const tree_sample& tree_dist,const vector<double>& levels) 
+get_sub_partitions(const tree_sample& tree_dist,const vector<double>& levels,int depth=1) 
 {
   vector< vector<Partition> > partition_sets(levels.size());
   for(int i=0;i<partition_sets.size();i++)
-    partition_sets[i] = get_Ml_sub_partitions(tree_dist,levels[i]);
+    partition_sets[i] = get_Ml_sub_partitions(tree_dist,levels[i],depth);
 
   return partition_sets;
 }
@@ -245,11 +245,11 @@ get_full_partitions(const tree_sample& tree_dist,const vector<double>& levels)
 }
 
 vector< vector<vector<Partition> > >
-get_sub_partitions(const vector<tree_sample>& tree_dists,const vector<double>& levels) 
+get_sub_partitions(const vector<tree_sample>& tree_dists,const vector<double>& levels,int depth=1) 
 {
   vector< vector< vector<Partition> > > partitions(tree_dists.size());
   for(int i=0;i<partitions.size();i++)
-    partitions[i] = get_sub_partitions(tree_dists[i],levels);
+    partitions[i] = get_sub_partitions(tree_dists[i],levels,depth);
 
   return partitions;
 }
@@ -292,6 +292,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file")
     ("consensus",value<string>(),"comma-separated consensus levels in [0.5, 1.0] for majority tree")
     ("sub-partitions","look for partitions of taxa subsets")
+    ("depth",value<int>()->default_value(1),"depth at which to look for partitions of taxa subsets")
     ;
     
   
@@ -423,7 +424,9 @@ int main(int argc,char* argv[])
 
     if (args.count("sub-partitions"))
     {
-      sub_partitions = get_sub_partitions(tree_dists,consensus_levels);
+      int depth = args["depth"].as<int>();
+
+      sub_partitions = get_sub_partitions(tree_dists,consensus_levels,depth);
 
       full_partitions = sub_partitions;
       for(int i=0;i<full_partitions.size();i++)
@@ -552,7 +555,7 @@ int main(int argc,char* argv[])
 	cout<<" sample = "<<i;
  	cout<<"   level = "<<consensus_levels[l];
 	cout<<"   full = "<<full.size()<<"/"<<MAP_trees[i].n_leaves()-3;
-	if (sub_partitions.size())
+	if (args.count("sub-partitions"))
 	  cout<<"   sub = "<<sub_partitions[i][l].size();
 	cout<<"   PP = "<<tree_dists[i].PP(full)<<"\n";;
 	cout<<"\n";
