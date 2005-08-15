@@ -2,6 +2,6 @@
 
 my $line = <STDIN>;
 
-while($line =~ /([^ ]+) = /g) {
+while($line =~ /([^* ]+) = /g) {
     print "$1\n";
 }
