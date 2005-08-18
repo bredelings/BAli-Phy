@@ -1,4 +1,6 @@
->SHELL=/bin/sh
+SHELL=/bin/sh
+
+CONSENSUS=50 66 80 90 95 99
 
 .DELETE_ON_ERROR: 
 
@@ -14,8 +16,9 @@ Work:
 Results:
 	mkdir -p Results/
 
-Results/analysis: Results/Report Work/tc Results/SRQ.plot Results/sum.plot Results/c50.tree \
-                  Results/MAP.tree Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
+Results/analysis: Results/Report Work/tc Results/SRQ.plot Results/sum.plot \
+                  ${CONSENSUS:%=Results/c%.tree}  Results/MAP.tree \
+                  Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
 	echo "Started analyzing from iteration ${SKIP}" > analysis
 	echo "Analyzed $$(wc -l trees.from.${SKIP}+${SIZE}) " >> analysis
 	echo "Finished on date $$(date)" >> Results/analysis
@@ -84,7 +87,7 @@ Results/%.tree : Results/%.topology Work/trees.from.${SKIP}+${SIZE}
 	tree-mean-lengths $< < Work/trees.from.${SKIP}+${SIZE} > $@
 
 Results/MAP.topology: Work/tc Results
-	pickout MAPtree-0 < $< > $@
+	pickout MAP-0 < $< > $@
 
 Work/MAP-unordered.fasta: out Work
 	alignment-find < MAP > $@
@@ -101,8 +104,9 @@ Results/%-AU.prob: Work/%-unordered.fasta Work/samples-${SKIP}+${SIZE} Results/M
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
 	alignment-draw Results/$*.fasta Results/$*-AU.prob --width 120 > $@
 
-Results/c50.topology: Work/tc Results
-	pickout consensus-0 < $< | head -n 1 > $@ 
+Results/c%.topology: Work/tc Results
+	pickout $*-consensus-0 < $< > $@ 
+	test -s $@
 
 Results/SRQ.plot: trees Results/c50.topology
 	tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < trees > $@

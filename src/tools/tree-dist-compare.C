@@ -457,7 +457,7 @@ int main(int argc,char* argv[])
     cout<<endl;
 
     for(int i=0;i<tree_dists.size();i++) 
-      cout<<"MAPtree-"<<i<<" = "<<tree_dists[i].topologies[tree_dists[i].order[0]].topology<<endl<<endl;
+      cout<<"MAP-"<<i<<" = "<<tree_dists[i].topologies[tree_dists[i].order[0]].topology<<endl<<endl;
 
     //----------  Calculate mask of leaf taxa to ignore in partitions ----------//
     valarray<bool> mask = valarray<bool>(true,MAP_trees[0].n_leaves());
@@ -615,9 +615,13 @@ int main(int argc,char* argv[])
 	vector<Partition> full_hull = Ml_min_Hull(full_partitions[i][0],sub);
 	SequenceTree consensus_hull = get_mf_tree(tree_dists[i].names(),full_hull);
 
+	double L = consensus_levels[l]*100;
+
+	cout.unsetf(ios::fixed | ios::showpoint);
+	
 	cout<<"\n";
 	cout<<" sample = "<<i;
- 	cout<<"   level = "<<consensus_levels[l];
+ 	cout<<"   level = "<<L;
 	cout<<"   full = "<<full.size()<<"/"<<MAP_trees[i].n_leaves()-3;
 	if (args.count("sub-partitions")) {
 	  cout<<"   sub = "<<sub.size();
@@ -626,10 +630,10 @@ int main(int argc,char* argv[])
 	cout<<"   PP = "<<tree_dists[i].PP(full)<<"\n";;
 	cout<<"\n";
 	  
-	cout<<" consensus-"<<i<<" = "<<consensus.write(false)<<std::endl<<std::endl;
+	cout<<" "<<L<<"-consensus-"<<i<<" = "<<consensus.write(false)<<std::endl<<std::endl;
 
 	if (args.count("sub-partitions")) {
-	  cout<<" consensus+-"<<i<<" = "<<consensus_hull.write(false)<<std::endl<<std::endl;
+	  cout<<" "<<L<<"-consensus+-"<<i<<" = "<<consensus_hull.write(false)<<std::endl<<std::endl;
 	}
       }
       cout<<std::endl;
