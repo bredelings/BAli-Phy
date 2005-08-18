@@ -1,3 +1,10 @@
+-13. Separate tree-dist-compare into two programs
+     a) one program estimates MAP and M[l] topologies for a single tree sample
+     b) another program bootstraps support for partitions, possibly from
+        multiple tree samples.
+     c) in the bootstrap program, store are list of functions to evaluate on each
+        bootstrap sample.  That way, we only need to generate the samples once.
+
 -12. Make a hash function for sub-partitions that is 
      (hash(left mask) * hash(right mask)), where the hash() function
      is a hash function for bitmasks and involves addition, not
