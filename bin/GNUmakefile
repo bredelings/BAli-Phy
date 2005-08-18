@@ -43,7 +43,7 @@ Work/%.from.${SKIP}+: Work/%.from.${SKIP}
 	cp $< $@ 
 
 Work/tc : trees Work
-	tree-dist-compare --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.75,0.9,0.99 > $@
+	tree-dist-compare --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99 --sub-partitions > $@
 
 # If there are no Substitution parameters, don't bail out
 
