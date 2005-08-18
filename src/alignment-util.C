@@ -251,10 +251,12 @@ void check_leaf_sequences(const alignment& A,int n_leaves) {
 
   vector<sequence> sequences = A.get_sequences();
 
+  const alphabet& a = A.get_alphabet();
+
   for(int i=0;i<n_leaves;i++) {
 
     sequences[i].strip_gaps();
-    if (not (sequences[i] == A.seq(i))) {
+    if (not (a(sequences[i]) == a(A.seq(i)))) {
       std::cerr<<"leaf sequence "<<i<<" corrupted!\n";
 
       std::cerr<<sequences[i]<<std::endl;
