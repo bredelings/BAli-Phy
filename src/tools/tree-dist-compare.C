@@ -397,7 +397,7 @@ int main(int argc,char* argv[])
     cout<<endl;
 
     for(int i=0;i<tree_dists.size();i++) 
-      cout<<"MAPtree_"<<i<<" = "<<MAP_trees[i]<<endl<<endl;
+      cout<<"MAPtree-"<<i<<" = "<<tree_dists[i].topologies[tree_dists[i].order[0]].topology<<endl<<endl;
 
     //----------  Calculate mask of leaf taxa to ignore in partitions ----------//
     valarray<bool> mask = valarray<bool>(true,MAP_trees[0].n_leaves());

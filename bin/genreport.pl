@@ -24,7 +24,7 @@ sub get_pwd {
 
 
 sub get_marginal {
-    my $marginal = `cat Pmarg`;
+    my $marginal = `cat Work/Pmarg`;
     $marginal =~ s/P\(M\|data\) = //;
     return $marginal;
 }
