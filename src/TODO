@@ -1,3 +1,23 @@
+-15. Sub-class DPengine w/ transition matrix implemented as
+  i) Matrix  (as now)
+ ii) const Matrix&  - avoid some malloc,copy,dealloc
+iii) computed Matrix - 
+     a) return 0 quickly if zero
+     b) compute non-zeros (
+We can avoid TWO malloc/copy/dealloc.
+(But we would still have to compute GQ...) ?
+
+-14. Keep partitions of c50 that imply sub-partitions.
+     We have the weird effect that we may have more sub-partitions at
+     higher levels because there are fewer full partitions to imply
+     them.  And two full partitions can imply a sub-partition, so
+     throwing away a full partition can get you a new sub-partition
+     which is implied by TWO full branches....
+
+     If two full partitions imply us, grab the one with smallest
+     min(count(A),count(B))
+  
+
 -13. Separate tree-dist-compare into two programs
      a) one program estimates MAP and M[l] topologies for a single tree sample
      b) another program bootstraps support for partitions, possibly from
