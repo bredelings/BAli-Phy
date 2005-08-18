@@ -107,6 +107,8 @@ public:
   // the list of topologies, and associated info
   std::vector<topology_record> topologies;
 
+  std::vector<std::string> names() const {return topologies[0].T.get_sequences();}
+
   int get_index(const std::string& t) const;
 
   // this should equal trees.size(), but should be MUCH faster!

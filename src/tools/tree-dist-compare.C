@@ -319,6 +319,66 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+// We could also try to choose the partitions so that we choose the smallest number
+// of branches...
+
+// Currently, we just try to pick branches which are "least informative"
+
+vector<Partition> Ml_min_Hull(const vector<Partition>& full,const vector<Partition>& sub)
+{
+  valarray<bool> keep(false,full.size());
+
+  // If any full partitions imply sub[i], pick one.
+  for(int i=0;i<sub.size();i++) {
+    int which = -1;
+    int best_count = sub[i].size();
+    
+    for(int j=0;j<full.size();j++) {
+
+      if (not implies(full[j],sub[i])) continue;
+
+      int count = std::min(n_elements(full[j].group1),n_elements(full[j].group2));
+
+      if (count < best_count) {
+	which = j;
+	best_count = count;
+      }
+    }
+
+    if (which != -1)
+      keep[which] = true;
+  }
+
+  // collect the full partitions that have been chosen
+  vector<Partition> full2;
+  for(int i=0;i<full.size();i++)
+    if (keep[i])
+      full2.push_back(full[i]);
+
+  return full2;
+}
+
+// Is there a way to choose branches that would imply sub-partitions that are
+// not in sub because other full branches imply them?  
+
+// That might be best...
+
+vector<Partition> Ml_max_Hull(const vector<Partition>& full,const vector<Partition>& sub)
+{
+  vector<Partition> full2;
+
+  for(int i=0;i<full.size();i++) 
+  {
+    bool ok = false;
+    for(int j=0;j<sub.size() and not ok;j++)
+      if (implies(full[i],sub[j])) 
+	ok = true;
+   
+    if (ok) full2.push_back(full[i]);
+  }
+
+  return full2;
+}
 
 int main(int argc,char* argv[]) 
 { 
@@ -548,19 +608,29 @@ int main(int argc,char* argv[])
       for(int i=0;i<tree_dists.size();i++) 
       {
 	const vector<Partition>& full = full_partitions[i][l];
+	const vector<Partition>& sub  = sub_partitions[i][l];
 
-	SequenceTree MF = get_mf_tree(MAP_trees[i].get_sequences(),full);
+	SequenceTree consensus = get_mf_tree(tree_dists[i].names(),full);
+
+	vector<Partition> full_hull = Ml_min_Hull(full_partitions[i][0],sub);
+	SequenceTree consensus_hull = get_mf_tree(tree_dists[i].names(),full_hull);
 
 	cout<<"\n";
 	cout<<" sample = "<<i;
  	cout<<"   level = "<<consensus_levels[l];
 	cout<<"   full = "<<full.size()<<"/"<<MAP_trees[i].n_leaves()-3;
-	if (args.count("sub-partitions"))
-	  cout<<"   sub = "<<sub_partitions[i][l].size();
+	if (args.count("sub-partitions")) {
+	  cout<<"   sub = "<<sub.size();
+	  cout<<"   full-sub = "<<consensus_hull.n_branches() - consensus_hull.n_leafbranches();
+	}
 	cout<<"   PP = "<<tree_dists[i].PP(full)<<"\n";;
 	cout<<"\n";
 	  
-	cout<<" consensus-"<<i<<" = "<<MF.write(false)<<std::endl;
+	cout<<" consensus-"<<i<<" = "<<consensus.write(false)<<std::endl<<std::endl;
+
+	if (args.count("sub-partitions")) {
+	  cout<<" consensus+-"<<i<<" = "<<consensus_hull.write(false)<<std::endl<<std::endl;
+	}
       }
       cout<<std::endl;
     }

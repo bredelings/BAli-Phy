@@ -597,11 +597,12 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
   // use a linked list of pointers to <partition,count> records.
   list<container_t::iterator> majority;
 
-  vector<string> names = sample.topologies[0].T.get_sequences();
+  vector<string> names = sample.names();
 
   int count = 0;
 
-  for(int i=0;i<sample.topologies.size();i++) {
+  for(int i=0;i<sample.topologies.size();i++) 
+  {
     const SequenceTree& T = sample.topologies[i].T;
 
     int delta = sample.topologies[i].count;
@@ -755,7 +756,7 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,int d
   list<valarray<bool> > good_masks;
   for(int iterations=0;not masks.empty();iterations++)
   {
-    std::cerr<<"Analyzing "<<masks.size()<<" masks."<<std::endl;;
+    //std::cerr<<"Analyzing "<<masks.size()<<" masks."<<std::endl;;
     list<valarray<bool> > new_good_masks;
 
     // get sub-partitions for each mask
