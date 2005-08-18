@@ -63,7 +63,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: tree-to-srq <tree-file> < in-file\n";
-    //    cout<<all<<"\n";
+    cout<<all<<"\n";
     exit(0);
   }
 
