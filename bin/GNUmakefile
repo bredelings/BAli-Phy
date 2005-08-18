@@ -2,16 +2,16 @@ SHELL=/bin/sh
 
 CONSENSUS=50 66 80 90 95 99
 
+all: Results/analysis
+
 .DELETE_ON_ERROR: 
 
 .INTERMEDIATE: pSnames pSreport pInames pIreport
 
-.PRECIOUS: %.prob %.from.${SKIP}+${SIZE}
-
-all: Results/analysis
+.PRECIOUS: %.prob %.from.${SKIP}+${SIZE} %.topology
 
 Work:
-	mkdir -p Work
+	mkdir -p Work/
 
 Results:
 	mkdir -p Results/
@@ -19,8 +19,8 @@ Results:
 Results/analysis: Results/Report Work/tc Results/SRQ.plot Results/sum.plot \
                   ${CONSENSUS:%=Results/c%.tree}  Results/MAP.tree \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
-	echo "Started analyzing from iteration ${SKIP}" > analysis
-	echo "Analyzed $$(wc -l trees.from.${SKIP}+${SIZE}) " >> analysis
+	echo "Started analyzing from iteration ${SKIP}" > Results/analysis
+	echo "Analyzed $$(wc -l trees.from.${SKIP}+${SIZE}) " >> Results/analysis
 	echo "Finished on date $$(date)" >> Results/analysis
 
 Results/Report:  Work/header Work/pSreport Work/pIreport Results/MAP.topology
@@ -36,8 +36,8 @@ Work/samples-${SKIP}+${SIZE}: out
 Work/%.from.${SKIP}: Work/%
 	tail -n +${SKIP} $< > $@
 
-Work/%.from.${SKIP}: % Work
-	tail -n +${SKIP} $< > $@
+Work/%: % Work
+	cp $* Work/$*
 
 Work/%.from.${SKIP}+${SIZE}: Work/%.from.${SKIP}
 	head -n ${SIZE} $< > $@ 
@@ -45,7 +45,7 @@ Work/%.from.${SKIP}+${SIZE}: Work/%.from.${SKIP}
 Work/%.from.${SKIP}+: Work/%.from.${SKIP}
 	cp $< $@ 
 
-Work/tc : trees Work
+Work/tc : Work/trees
 	tree-dist-compare --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99 --sub-partitions > $@
 
 # If there are no Substitution parameters, don't bail out
@@ -108,11 +108,11 @@ Results/c%.topology: Work/tc Results
 	pickout $*-consensus-0 < $< > $@ 
 	test -s $@
 
-Results/SRQ.plot: trees Results/c50.topology
-	tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < trees > $@
+Results/SRQ.plot: Work/trees Results/c50.topology
+	tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
 
-Results/sum.plot: trees Results/c50.topology
-	tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < trees --mode sum --no-scale-x > $@
+Results/sum.plot: Work/trees Results/c50.topology
+	tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
 
 Work/Likelihood: Pr Work
 	pickout likelihood < Pr  > $@
