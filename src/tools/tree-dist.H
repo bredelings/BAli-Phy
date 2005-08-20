@@ -58,6 +58,9 @@ bool consistent(const Partition& p1, const Partition& p2);
 /// does partition @p1 imply partition @p2?
 bool implies(const Partition& p1, const Partition& p2);
 
+/// does any partition in @partitions imply partition @p?
+bool implies(const vector<valarray<bool> >& partitions,const Partition& p) {
+
 /// Does any branch in @T imply the partition @p?
 bool implies(const SequenceTree& T,const Partition& p);
 
@@ -71,33 +74,28 @@ std::ostream& operator<<(std::ostream& o, const Partition& P);
 
 
 /// A class for loading tree distributions - somewhat biased towards tree-dist-compare
-class tree_sample {
+class tree_sample 
+{
   mutable std::map<std::string,int> index;
+
+  std::vector<std::string> leaf_names;
 
 public:
 
   /// The information we store about each topology
-  struct topology_record {
+  struct topology_record 
+  {
     // the topology string
     std::string topology;
 
     // a tree structure for this topology
-    SequenceTree T;
-
-    // branch length means
-    std::vector<double> mean;
-
-    // branch length variances
-    std::vector<double> var;
+    std::vector<std::valarray<bool> > partitions;
 
     // how many times did we see this topology
     int count;
 
     topology_record(const SequenceTree&,const std::string&);
   };
-
-  // the trees in the sample
-  std::list<std::string> trees;
 
   // mapping from index in the sample to topology record
   std::vector<int> which_topology;
@@ -107,7 +105,9 @@ public:
   // the list of topologies, and associated info
   std::vector<topology_record> topologies;
 
-  std::vector<std::string> names() const {return topologies[0].T.get_sequences();}
+  std::vector<std::string> names() const {return leaf_names;}
+
+  SequenceTree T(int i) const;
 
   int get_index(const std::string& t) const;
 
@@ -134,4 +134,6 @@ std::vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
 			 const std::vector<Partition>& partitions);
 
+SequenceTree get_mf_tree(const std::vector<std::string>& names,
+			 const std::vector<std::valarray<bool> >& partitions);
 #endif

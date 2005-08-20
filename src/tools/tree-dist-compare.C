@@ -431,7 +431,7 @@ int main(int argc,char* argv[])
       
       tree_dists.push_back(tree_sample(file,remove,skip,max));
 
-      MAP_trees.push_back( tree_dists.back().topologies[tree_dists.back().order[0]].T );
+      MAP_trees.push_back( tree_dists.back().T(tree_dists.back().order[0]) );
 
       if (i > 0 and MAP_trees[i].get_sequences() != MAP_trees[i-1].get_sequences())
 	throw myexception()<<"Tree load from file '"<<files[i]<<"' has different taxa that previous trees.";

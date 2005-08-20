@@ -139,6 +139,20 @@ SequenceTree get_mf_tree(const std::vector<std::string>& names,
   return T;
 }
 
+SequenceTree get_mf_tree(const std::vector<std::string>& names,
+			 const std::vector<std::valarray<bool> >& partitions) 
+{
+  SequenceTree T = star_tree(names);
+
+  for(int i=0;i<partitions.size();i++)
+    T.induce_partition(partitions[i]);
+
+  for(int i=0;i<T.n_branches();i++)
+    T.branch(i).set_length(1.0);
+
+  return T;
+}
+
 bool operator==(const Partition& p1, const Partition& p2) {
   return 
     (p1.names == p2.names) and 
@@ -168,6 +182,7 @@ bool implies(const Partition& p1, const Partition& p2) {
   return false;
 }
 
+
 /// Does any branch in T imply the partition p?
 bool implies(const SequenceTree& T,const Partition& p) {
   bool result = false;
@@ -179,10 +194,26 @@ bool implies(const SequenceTree& T,const Partition& p) {
   return false;
 }
 
+/// Does any branch in T imply the partition p?
+bool implies(const vector<valarray<bool> >& partitions,const Partition& p) {
+  bool result = false;
+  for(int i=0;i<partitions.size() and not result;i++)
+    if (implies(partitions[i],p)) return true;
+  return false;
+}
+
 bool implies(const SequenceTree& T,const std::vector<Partition>& partitions) 
 {
   for(int p=0;p<partitions.size();p++)
     if (not implies(T,partitions[p]))
+      return false;
+  return true;
+}
+
+bool implies(const vector<valarray<bool> >& partitions1,const std::vector<Partition>& partitions2) 
+{
+  for(int i=0;i<partitions2.size();i++)
+    if (not implies(partitions1,partitions2[i]))
       return false;
   return true;
 }
@@ -196,7 +227,12 @@ int which_partition(const SequenceTree& T, const Partition& p) {
   throw myexception(string("Partition not found in tree!"));
 }
 
-int tree_sample::get_index(const string& t) const {
+SequenceTree tree_sample::T(int i) const {
+  return get_mf_tree(leaf_names,topologies[i].partitions);
+}
+
+int tree_sample::get_index(const string& t) const 
+{
   typeof(index.begin()) here = index.find(t);
 
   if (here == index.end())
@@ -205,7 +241,8 @@ int tree_sample::get_index(const string& t) const {
     return index[t];
 }
 
-valarray<bool> tree_sample::supports_topology(const string& t) const {
+valarray<bool> tree_sample::supports_topology(const string& t) const 
+{
   typeof(index.begin()) here = index.find(t);
 
   if (here == index.end())
@@ -221,13 +258,14 @@ valarray<bool> tree_sample::supports_topology(const string& t) const {
   return result;
 }
 
-valarray<bool> tree_sample::supports_partition(const Partition& P) const {
+valarray<bool> tree_sample::supports_partition(const Partition& P) const 
+{
   valarray<bool> result(size());
 
-  for(int i=0;i<result.size();i++) {
-
+  for(int i=0;i<result.size();i++) 
+  {
     // Get a tree with the same topology
-    const SequenceTree& T = topologies[ which_topology[i] ].T;
+    const vector<valarray<bool> > & T = topologies[ which_topology[i] ].partitions;
     
     result[i] = implies(T,P);
   }
@@ -238,10 +276,10 @@ valarray<bool> tree_sample::supports_partitions(const vector<Partition>& partiti
 {
   valarray<bool> result(size());
 
-  for(int i=0;i<result.size();i++) {
-
+  for(int i=0;i<result.size();i++) 
+  {
     // Get a tree with the same topology
-    const SequenceTree& T = topologies[ which_topology[i] ].T;
+    const vector<valarray<bool> >& T = topologies[ which_topology[i] ].partitions;
     
     result[i] = implies(T,partitions);
   }
@@ -252,7 +290,7 @@ double tree_sample::PP(const Partition& P) const
 {
   int count=0;
   for(int t=0;t<topologies.size();t++) 
-    if (implies(topologies[t].T,P))
+    if (implies(topologies[t].partitions,P))
 	count += topologies[t].count;
    
   return double(count)/size();
@@ -262,7 +300,7 @@ double tree_sample::PP(const vector<Partition>& partitions) const
 {
   int count=0;
   for(int t=0;t<topologies.size();t++) {
-    if (implies(topologies[t].T,partitions))
+    if (implies(topologies[t].partitions,partitions))
       count += topologies[t].count;
   }
    
@@ -279,22 +317,23 @@ struct ordering {
 };
 
 
-tree_sample::topology_record::topology_record(const SequenceTree& ST,
+tree_sample::topology_record::topology_record(const SequenceTree& T,
 					      const string& s)
-  :topology(s),T(ST),
-   mean(vector<double>(T.n_branches(),0)),
-   var(vector<double>(T.n_branches(),0)),
+  :topology(s),
+   partitions(T.n_branches(),valarray<bool>(T.n_leaves())),
    count(0)
-{ }
+{ 
+  for(int i=0;i<T.n_branches();i++)
+    partitions[i] = T.partition(i);
+}
 
 
 tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int skip,int max) 
 {
-
   int lines=0;
   string line;
-  while(getline(file,line)) {
-
+  while(getline(file,line)) 
+  {
     // don't start if we haven't skipped enough trees
     if (lines++ < skip) continue;
 
@@ -313,6 +352,8 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
       break;
     }
 
+    if (not leaf_names.size()) leaf_names = T.get_sequences();
+
     // This should be a standard string representation
     string t = RootedSequenceTree(T,T.directed_branch(0).target()).write(false);
       
@@ -324,41 +365,15 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
     }
       
     //----------- Add tree to distribution -------------//
-    trees.push_back(line);
     int i = index[t];
     which_topology.push_back(i);
     topologies[i].count++;
-
-    // update the 1st and 2nd branch length moments for that topology
-    for(int b=0;b<T.n_branches();b++) {
-      topologies[i].mean[b] +=   T.branch(b).length();
-      topologies[i].var[b]  +=   T.branch(b).length()*T.branch(b).length();
-    }
   }
 
   if (size() == 0)
     throw myexception()<<"No trees were read in!";
   
-  assert(trees.size() == size());
   cout<<"# Loaded "<<size()<<" trees"<<endl;
-
-  //----------- Normalize the expectations --------------//
-  for(int i=0;i<topologies.size();i++) {
-    for(int b=0;b<topologies[i].T.n_branches();b++) {
-      // compute E b
-      topologies[i].mean[b] /= topologies[i].count;
-
-      // compute E b^2
-      topologies[i].var[b] /= topologies[i].count;
-
-      // compute Var b
-      topologies[i].var[b] -= pow(topologies[i].mean[b],2);
-
-      // set the branch lengths to the expected length
-      topologies[i].T.branch(b).set_length(topologies[i].mean[b]);
-    }
-  }
-
   cout<<"#   There were "<<topologies.size()<<" topologies."<<endl;
     
   //---------------  Sort topologies by count  ---------------//
@@ -390,21 +405,18 @@ vector<Partition> strict_consensus_partitions(const tree_sample& sample,const va
 {
   vector<Partition> partitions;
 
-  const SequenceTree& T = sample.topologies[0].T;
+  const vector<valarray<bool> >& T = sample.topologies[0].partitions;
 
-  vector<string> names = T.get_sequences();
+  vector<string> names = sample.names();
 
   // Get the partitions in the first tree
-  for(int b=T.n_leaves();b<T.n_branches();b++) {
-      std::valarray<bool> partition = branch_partition(T,b);
-
-      partitions.push_back(Partition(names,partition,mask));
-  }
+  for(int i=names.size();i<T.size();i++) 
+    partitions.push_back(Partition(names,T[i],mask));
 
   // Check to see if they are in all subsequent trees
   for(int i=1;i<sample.topologies.size() and partitions.size();i++) 
   {
-    const SequenceTree& T = sample.topologies[i].T;
+    const vector<valarray<bool> >& T = sample.topologies[i].partitions;
     
     for(int j=0;j<partitions.size();) {
       if (not implies(T,partitions[j]))
@@ -417,7 +429,7 @@ vector<Partition> strict_consensus_partitions(const tree_sample& sample,const va
 }
 
 vector<Partition> strict_consensus_partitions(const tree_sample& sample) {
-  valarray<bool> mask(true,sample.topologies[0].T.n_leaves());
+  valarray<bool> mask(true,sample.names().size());
   return strict_consensus_partitions(sample,mask);
 }
 
@@ -603,7 +615,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
 
   for(int i=0;i<sample.topologies.size();i++) 
   {
-    const SequenceTree& T = sample.topologies[i].T;
+    const vector<valarray<bool> >& T = sample.topologies[i].partitions;
 
     int delta = sample.topologies[i].count;
 
@@ -612,10 +624,10 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
     int min_new = 1+(int)(l*count);
 
     // for each partition in the next tree
-    std::valarray<bool> partition(T.n_leaves()); 
-    for(int b=T.n_leaves();b<T.n_branches();b++) 
+    std::valarray<bool> partition(names.size());
+    for(int b=names.size();b<T.size();b++) 
     {
-      partition = T.partition(b);
+      partition = T[b];
       if (not partition[first])
 	partition = (not partition) and mask;
       else
@@ -674,7 +686,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
 #endif
 
 vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
-  valarray<bool> mask(true,sample.topologies[0].T.n_leaves());
+  valarray<bool> mask(true,sample.names().size());
   return get_Ml_partitions(sample,l,mask);
 }
 
@@ -738,7 +750,7 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,int d
 {
   // get list of branches to consider cutting
   vector<Partition> partitions_c50 = get_Ml_partitions(sample, 0.5);
-  SequenceTree MF = get_mf_tree(sample.topologies[0].T.get_sequences(),partitions_c50);
+  SequenceTree MF = get_mf_tree(sample.names(),partitions_c50);
   vector<const_branchview> branches = branches_from_leaves(MF);  
 
   // start collecting partitions at M[l]
