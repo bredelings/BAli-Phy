@@ -59,7 +59,7 @@ bool consistent(const Partition& p1, const Partition& p2);
 bool implies(const Partition& p1, const Partition& p2);
 
 /// does any partition in @partitions imply partition @p?
-bool implies(const vector<valarray<bool> >& partitions,const Partition& p) {
+bool implies(const std::vector<std::valarray<bool> >& partitions, const Partition& p);
 
 /// Does any branch in @T imply the partition @p?
 bool implies(const SequenceTree& T,const Partition& p);
