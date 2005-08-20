@@ -7,16 +7,7 @@ iii) computed Matrix -
 We can avoid TWO malloc/copy/dealloc.
 (But we would still have to compute GQ...) ?
 
--14. Keep partitions of c50 that imply sub-partitions.
-     We have the weird effect that we may have more sub-partitions at
-     higher levels because there are fewer full partitions to imply
-     them.  And two full partitions can imply a sub-partition, so
-     throwing away a full partition can get you a new sub-partition
-     which is implied by TWO full branches....
-
-     If two full partitions imply us, grab the one with smallest
-     min(count(A),count(B))
-  
+-14. ADD partitions to M[0.5] that imply l=0.5 sub-partitions.
 
 -13. Separate tree-dist-compare into two programs
      a) one program estimates MAP and M[l] topologies for a single tree sample
@@ -43,26 +34,24 @@ We can avoid TWO malloc/copy/dealloc.
 -10. Make tree a virtual public base class for SequenceTree and RootedTree?
 
 -9.  tree-dist.C: 
-	0. Separate the vector<string> of taxa names from the topology.
-	   (Standardize, and then just use indexes 0, 1,...N-1)
-	1. Store a list of full partitions observed in the data set as
-	   vector< valarray<bool>* >.
-	2. For each topology, store full partitions as a vector<int>.
-	3. Each int would be an index into the partition list,
-	   and we could store a vector<double> of the same length for
-	   the mean.  
 
-	4. Also, for each partition, store a list of topology indices
-           that imply it.
+	1. Store a list of full partitions observed in the data set as
+	   vector< valarray<bool> >.
+
+	2. For each topology, store full partitions a vector<int> of
+           subscripts into partition list.
+
+	3. For each partition, store list of topologies that imply it.
 
 	How much memory would we save?
 
-	How would we: 
-	1. Construct Tree or SequenceTree structures, when necessary?
-
-	Can we:
-	1. Speed up 'implies(Tree,Partition)' if we have topology
+	Can we speed up 'implies(Tree,Partition)' if we have topology
 	   information, such as 'which branches are my neighbors'?
+
+	It SEEMS thatin a 1.5M file w/ 1000 trees / 251 topologies / 48 taxa:
+	  - We went from 29Mb -> 6Mb.  
+          - It was costing about 22 Mb for the 251 topology trees.
+	    It SHOULD cost about 251*96*(48/6) = 140k.
 	
 -8. Sanitize use of MAP_tree in tree-dist-compare when the count is 1.   
 
@@ -351,6 +340,14 @@ the prior, because we never want to use it  differently.
 [DONE] (a) Estimate branch lengths for multifurcating trees
        (b) Pass the c50 tree w/ lengths to alignment-reorder
 
+[DONE] Given a c50 tree, keep partitions that imply sub-partitions.
+       If two partitions imply a sub-partitions, only keep the one
+         with the smallest min(count(group1),count(group2))
+
+[DONE] tree_sample cleanup part I.
+       * Store leaf-sized bitmasks per branch.
+       * Store leaf names once per tree_sample, not per-tree.
+       * Reduces 29Mb -> 6Mb (factor of 5 decrease)
 
 *IDEAS*
 
@@ -370,4 +367,5 @@ the prior, because we never want to use it  differently.
        or asking questions about their data.
 
  - find some papers for the journal club?
+
 
