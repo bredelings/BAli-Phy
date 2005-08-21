@@ -633,8 +633,6 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
       else
 	partition = partition and mask;
 
-      assert(partition.size() == T.n_leaves());
-
       // Look up record for this partition
       container_t::iterator record = counts.find(partition);
       if (record == counts.end()) {
