@@ -38,7 +38,9 @@ double getsum(const valarray<double>& v) {
   return v.sum();
 }
 
-unsigned changes(const valarray<bool>& sample,bool value) {
+
+unsigned changes(const valarray<bool>& sample,bool value) 
+{
   unsigned count=0;
   for(int i=0;i<sample.size()-1;i++) {
     if (sample[i] == value and sample[i+1] != value)
@@ -60,7 +62,8 @@ double conservative(const vector<double>& CI) {
 }
   
 
-bool separated_by(const vector<double>& CI1,const vector<double>& CI2,double dx) {
+bool separated_by(const vector<double>& CI1,const vector<double>& CI2,double dx) 
+{
   assert(CI1.size() == 2);
   assert(CI2.size() == 2);
 
@@ -276,6 +279,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("ignore", value<string>(),"comma-separated list of taxa to ignore in partitions")
     ("skip",value<int>()->default_value(0),"number of trees to skip")
     ("max",value<int>(),"maximum number of trees to read")
+    ("sub-sample",value<int>(),"factor by which to sub-sample")
     ("files",value<vector<string> >()->multitoken(),"tree files to examine")
     ;
   
@@ -295,7 +299,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("depth",value<int>()->default_value(1),"depth at which to look for partitions of taxa subsets")
     ;
     
-  
 
   options_description all("All options");
   all.add(input).add(bootstrap).add(reporting);
@@ -414,6 +417,10 @@ int main(int argc,char* argv[])
     int max = -1;
     if (args.count("max"))
       max = args["max"].as<int>();
+
+    int subsample=1;
+    if (args.count("subsample"))
+      subsample = args["subsample"].as<int>();
 
     //-------------- Read in tree distributions --------------//
     if (not args.count("files"))

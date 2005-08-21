@@ -328,7 +328,7 @@ tree_sample::topology_record::topology_record(const SequenceTree& T,
 }
 
 
-tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int skip,int max) 
+tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int skip,int max,int subsample) 
 {
   int lines=0;
   string line;
@@ -336,6 +336,9 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
   {
     // don't start if we haven't skipped enough trees
     if (lines++ < skip) continue;
+
+    // skip trees unless they are a multiple of 'subsample'
+    if ((lines-skip) % subsample != 0) continue;
 
     // quit if we've read in 'max' trees
     if (max >= 0 and size() == max) break;

@@ -123,7 +123,7 @@ public:
   double PP(const Partition& P) const;
   double PP(const std::vector<Partition>&) const;
 
-  tree_sample(std::istream&,const std::vector<std::string>& remove,int skip=0,int max=-1);
+  tree_sample(std::istream&,const std::vector<std::string>& remove,int skip=0,int max=-1,int subsample=1);
 };
 
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);
