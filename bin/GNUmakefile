@@ -6,128 +6,148 @@ all: Results/analysis
 
 .DELETE_ON_ERROR: 
 
-.INTERMEDIATE: pSnames pSreport pInames pIreport
+.INTERMEDIATE: 
+# pSnames pSreport pInames pIreport
 
-.PRECIOUS: %.prob %.from.${SKIP}+${SIZE} %.topology
+.PRECIOUS: % Work/% Results/%
+# % %.prob %.from.${SKIP}+${SIZE} %
 
-Work:
-	mkdir -p Work/
-
-Results:
-	mkdir -p Results/
+Work/setup:
+	@echo -e "Setting up directories... \c"
+	@mkdir -p Work/
+	@mkdir -p Results/
+	@touch Work/setup
+	@echo "done."
 
 Results/analysis: Results/Report Work/tc Results/SRQ.plot Results/sum.plot \
-                  ${CONSENSUS:%=Results/c%.tree}  Results/MAP.tree \
+                  ${CONSENSUS:%=Results/c%.tree}  Results/MAP.tree Work/trees.from.${SKIP}+${SIZE} \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
-	echo "Started analyzing from iteration ${SKIP}" > Results/analysis
-	echo "Analyzed $$(wc -l trees.from.${SKIP}+${SIZE}) " >> Results/analysis
-	echo "Finished on date $$(date)" >> Results/analysis
+	@echo "Started analyzing from iteration ${SKIP}" > Results/analysis
+	@echo "Analyzed $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) " >> Results/analysis
+	@echo "Finished on date $$(date)" >> Results/analysis
+	@echo 
+	@cat Results/analysis
+	@echo 
 
 Results/Report:  Work/header Work/pSreport Work/pIreport Results/MAP.topology
-	cat $^ > $@
+	@cat $^ > $@
 
 Work/header: out Work/Pmarg
-	{ ~/bin/genreport.pl; \
-	echo ; } > $@
+	@{ ~/bin/genreport.pl; echo ; } > $@
 
-Work/samples-${SKIP}+${SIZE}: out
-	cut-range --skip ${SKIP} ${SIZE:%=--size %} < $< > $@
+Work/samples-${SKIP}+${SIZE}: Work/out
+	@cut-range --skip ${SKIP} ${SIZE:%=--size %} < $< > $@
 
-Work/%.from.${SKIP}: Work/%
-	tail -n +${SKIP} $< > $@
+%.from.${SKIP}: %
+	@tail -n +${SKIP} $< > $@
 
-Work/%: % Work
-	cp $* Work/$*
+Work/%: % Work/setup
+	@cp $* Work/$*
 
 Work/%.from.${SKIP}+${SIZE}: Work/%.from.${SKIP}
 	head -n ${SIZE} $< > $@ 
 
 Work/%.from.${SKIP}+: Work/%.from.${SKIP}
-	cp $< $@ 
+	@cp $< $@ 
 
 Work/tc : Work/trees
-	tree-dist-compare --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99 --sub-partitions > $@
+	@echo -e "Summarizing topology distribution... \c";
+	@tree-dist-compare --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99 --sub-partitions > $@
+	@echo "done."
 
 # If there are no Substitution parameters, don't bail out
 
-Work/pSnames : pS Work
-	getnames.pl < $< > $@
+Work/pSnames : pS Work/setup
+	@getnames.pl < $< > $@
 
 Work/pSall : Work/pSnames Work/pS.from.${SKIP}+${SIZE}
-	for i in $$(cat $<); do \
+	@for i in $$(cat $<); do \
 	  pickout "$$i" < Work/pS.from.${SKIP}+${SIZE} > Work/"$$i"; \
 	done
 
 Work/pSreport: Work/pSnames Work/pSall
-	rm -f $@; \
+	@echo -e "Analyzing substitution parameters... \c"
+	@rm -f $@; \
 	for i in $$(cat $<); do \
-	  statreport "$$i" < Work/"$$i" >> $@ ; \
+	  statreport "$$i" < Work/"$$i" >> $@ 2>/dev/null; \
 	  echo "   " >> $@ ; \
 	done; \
 	echo "   " >> $@ ;
+	@echo "done."
 
 # If there are no Indel parameters, don't bail out
-Work/pInames : pI Work
-	getnames.pl < $< > $@
+Work/pInames : pI Work/setup
+	@getnames.pl < $< > $@
 
 Work/pIall : Work/pInames Work/pI.from.${SKIP}+${SIZE}
-	for i in $$(cat $<); do \
+	@for i in $$(cat $<); do \
 	  pickout "$$i" < Work/pI.from.${SKIP}+${SIZE} > Work/"$$i"; \
 	done
 
 Work/pIreport: Work/pInames Work/pIall
-	rm -f $@; \
+	@echo -e "Analyzing indel parameters... \c"
+	@rm -f $@; \
 	for i in $$(cat $<); do \
-	  statreport "$$i" < Work/"$$i" >> $@ ; \
+	  statreport "$$i" < Work/"$$i" >> $@ 2>/dev/null; \
 	  echo "   " >> $@ ; \
 	done; \
 	echo "   " >> $@ ; 
+	@echo "done."
 
 Results/%.tree : Results/%.topology Work/trees.from.${SKIP}+${SIZE}
-	tree-mean-lengths $< < Work/trees.from.${SKIP}+${SIZE} > $@
+	@echo "Calculating branch lengths for $* tree."
+	@tree-mean-lengths $< < Work/trees.from.${SKIP}+${SIZE} > $@ 2>/dev/null
 
-Results/MAP.topology: Work/tc Results
-	pickout MAP-0 < $< > $@
+Results/MAP.topology: Work/tc Work/setup
+	@pickout MAP-0 < $< > $@
 
-Work/MAP-unordered.fasta: out Work
-	alignment-find < MAP > $@
+Work/MAP-unordered.fasta: out Work/setup
+	@echo -e "Locating MAP alignment... \c"
+	@alignment-find < MAP > $@
+	@echo "done."
 
 Work/median-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 	alignment-median --max-alignments 2000 --type splits < $< > $@ 2>median.err
 
 Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
-	alignment-reorder Work/$*-unordered.fasta Results/c50.tree > $@ 2>/dev/null
+	@alignment-reorder Work/$*-unordered.fasta Results/c50.tree > $@ 2>/dev/null
 
 Results/%-AU.prob: Work/%-unordered.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree
 	alignment-gild Work/$*-unordered.fasta Results/MAP.tree --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
 
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
-	alignment-draw Results/$*.fasta Results/$*-AU.prob --width 120 > $@
+	alignment-draw Results/$*.fasta Results/$*-AU.prob --width 100 > $@
 
-Results/c%.topology: Work/tc Results
-	pickout $*-consensus-0 < $< > $@ 
-	test -s $@
+Results/c%.topology: Work/tc Work/setup
+	@pickout $*-consensus-0 < $< > $@ 
+	@test -s $@
 
 Results/SRQ.plot: Work/trees Results/c50.topology
-	tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
+	@echo -e "Generating SRQ plot for c50 partitions... \c"
+	@tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
+	@echo "done."
 
 Results/sum.plot: Work/trees Results/c50.topology
-	tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
+	@echo -e "Generating sum plot for c50 partitions... \c"
+	@tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
+	@echo "done."
 
-Work/Likelihood: Pr Work
-	pickout likelihood < Pr  > $@
+Work/Likelihood: Pr Work/setup
+	@pickout likelihood < Pr  > $@
 
-Work/prior: Pr Work
-	pickout prior < Pr  > $@
+Work/prior: Pr Work/setup
+	@pickout prior < Pr  > $@
 
 Work/Pmarg: Work/Likelihood.from.${SKIP}+${SIZE}
-	model_P < $< > $@
+	@echo -e "Calculating marginal likelihood... \c"
+	@model_P < $< > $@ 2>/dev/null
+	@echo "done."
 
 clean:
-	rm pS* pI* Report header samples tc trees MAP.tree analysis
+	rm -rf Work/ Results/
 
 %.fasta: %.phy
-	alignment-convert --output fasta < $< > $@
+	@alignment-convert --output fasta < $< > $@
 
 %.phy: %.fasta
-	alignment-convert --output phylip < $< > $@
+	@alignment-convert --output phylip < $< > $@
