@@ -1,16 +1,21 @@
 SHELL=/bin/sh
 
-CONSENSUS=50 66 80 90 95 99
+TREES=c50 c66 c80 c90 c95 c99 MAP
 
 all: Results/analysis
 
-.DELETE_ON_ERROR: 
+#.DELETE_ON_ERROR: 
 
-.INTERMEDIATE: 
-# pSnames pSreport pInames pIreport
+#.INTERMEDIATE: pSnames pSreport pInames pIreport
 
-.PRECIOUS: % Work/% Results/%
-# % %.prob %.from.${SKIP}+${SIZE} %
+.PRECIOUS .SECONDARY: Results/c%.topology
+.PRECIOUS .SECONDARY: Results/%
+.PRECIOUS .SECONDARY: Work/%
+.PRECIOUS .SECONDARY: Work/%.from.${SKIP}
+.PRECIOUS .SECONDARY: Work/%.from.${SKIP}+${SIZE}
+.PRECIOUS .SECONDARY: % 
+
+.PRECIOUS .SECONDARY: Results/%-AU.prob
 
 Work/setup:
 	@echo -e "Setting up directories... \c"
@@ -20,11 +25,11 @@ Work/setup:
 	@echo "done."
 
 Results/analysis: Results/Report Work/tc Results/SRQ.plot Results/sum.plot \
-                  ${CONSENSUS:%=Results/c%.tree}  Results/MAP.tree Work/trees.from.${SKIP}+${SIZE} \
+                  ${TREES:%=Results/%.tree} ${TREES:%=Results/%.topology} \
+                  Work/trees.from.${SKIP}+${SIZE} \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
-	@echo "Started analyzing from iteration ${SKIP}" > Results/analysis
-	@echo "Analyzed $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) " >> Results/analysis
-	@echo "Finished on date $$(date)" >> Results/analysis
+	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration ${SKIP}." > Results/analysis
+	@echo "Finished:  $$(date)" >> Results/analysis
 	@echo 
 	@cat Results/analysis
 	@echo 
@@ -45,7 +50,7 @@ Work/%: % Work/setup
 	@cp $* Work/$*
 
 Work/%.from.${SKIP}+${SIZE}: Work/%.from.${SKIP}
-	head -n ${SIZE} $< > $@ 
+	@head -n ${SIZE} $< > $@ 
 
 Work/%.from.${SKIP}+: Work/%.from.${SKIP}
 	@cp $< $@ 
@@ -94,9 +99,9 @@ Work/pIreport: Work/pInames Work/pIall
 	echo "   " >> $@ ; 
 	@echo "done."
 
-Results/%.tree : Results/%.topology Work/trees.from.${SKIP}+${SIZE}
+Results/%.tree : Results/%.topology Work/trees
 	@echo "Calculating branch lengths for $* tree."
-	@tree-mean-lengths $< < Work/trees.from.${SKIP}+${SIZE} > $@ 2>/dev/null
+	@tree-mean-lengths $< --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@ 2>/dev/null
 
 Results/MAP.topology: Work/tc Work/setup
 	@pickout MAP-0 < $< > $@
