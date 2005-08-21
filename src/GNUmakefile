@@ -30,7 +30,7 @@ install: program tools
 #----------------- Definitions
 EXACTFLAGS = -pipe
 
-LANGO := fast-math 
+LANGO := fast-math visibility=default
 
 WARN  := all no-sign-compare overloaded-virtual strict-aliasing
 
