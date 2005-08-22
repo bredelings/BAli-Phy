@@ -138,4 +138,6 @@ SequenceTree star_tree(const std::vector<std::string>&);
 double branch_distance(const SequenceTree& T1, const SequenceTree& T2);
 double topology_distance(const SequenceTree& T1, const SequenceTree& T2);
 
+std::string write(const RootedTree& T, const std::vector<std::string>& names, bool print_lengths=true); 
+
 #endif

@@ -142,19 +142,19 @@ nodeview RootedSequenceTree::prune_subtree(int branch) {
   return node_remainder;
 }
 
-
-string RootedSequenceTree::write(const_branchview b,bool print_lengths) const {
+string write(const vector<string>& names, const_branchview b, bool print_lengths)
+{
   string output;
 
   // If this is a leaf node, then print the name
   if (b.target().is_leaf_node())
-    output += sequences[b.target()];
+    output += names[b.target()];
   // If this is an internal node, then print the subtrees
   else {
     vector<const_branchview> branches = sorted_branches_after(b);
     output = "(";
     for(int i=0;i<branches.size();i++) {
-      output += write(branches[i],print_lengths);
+      output += write(names,branches[i],print_lengths);
 
       if (i+1<branches.size())
 	output += ",";
@@ -169,13 +169,13 @@ string RootedSequenceTree::write(const_branchview b,bool print_lengths) const {
   return output;
 }
 
-string RootedSequenceTree::write(bool print_lengths) const 
+string write(const RootedTree& T, const vector<string>& names, bool print_lengths) 
 {
-  vector<const_branchview> branches = sorted_neighbors(root());
+  vector<const_branchview> branches = sorted_neighbors(T.root());
 
   string output = "(";
   for(int i=0;i<branches.size();i++) {
-    output += write(branches[i],print_lengths);
+    output += write(names,branches[i],print_lengths);
     if (i+1 < branches.size())
       output += ',';
   }
@@ -183,7 +183,14 @@ string RootedSequenceTree::write(bool print_lengths) const
   return output;
 }
 
+string RootedSequenceTree::write(const_branchview b,bool print_lengths) const {
+  return ::write(get_sequences(), b, print_lengths);
+}
 
+string RootedSequenceTree::write(bool print_lengths) const 
+{
+  return ::write(*this, get_sequences(), print_lengths);
+}
 
 void RootedSequenceTree::read(const string& filename) {
   ifstream file(filename.c_str());
