@@ -57,7 +57,7 @@ else
     popd >/dev/null
     echo "Using highest version $VERSION."
 fi
-exit
+
 #------ start the sampler with the specified args ----
 qsub=$(which qsub)
 if [ "$qsub" ] ; then
