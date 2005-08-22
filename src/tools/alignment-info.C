@@ -21,6 +21,37 @@ using std::endl;
 
 using std::string;
 
+template<typename T>
+void add(vector<T>& v1,const vector<T>& v2) 
+{
+  for(int i=0;i<v1.size();i++)
+    v1[i] += v2[i];
+}
+
+
+vector<int> find_triplet(const sequence& s,const string& triplet) 
+{
+  sequence s2 = s;
+  s2.strip_gaps();
+
+  vector<int> found(3,0);
+
+  int pos=-1;
+  while(pos=s.find(triplet,pos+1),pos != -1)
+    found[pos%3]++;
+
+  return found;
+}
+
+vector<int> find_triplet(const vector<sequence>& sequences,const string& triplet) 
+{
+  vector<int> found(3,0);
+  for(int i=0;i<sequences.size();i++)
+    add(found, find_triplet(sequences[i],triplet) );
+  return found;
+}
+
+
 int min(const vector<int>& v) {
   int m = v[0];
   for(int i=1;i<v.size();i++)
@@ -96,7 +127,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-info <alignment-file> <tree-file>\n";
+    cout<<"Usage: alignment-info <alignment-file> [<tree-file>] [OPTIONS]\n";
     cout<<all<<"\n";
     exit(0);
   }
@@ -177,6 +208,7 @@ int main(int argc,char* argv[])
 
     cout.precision(3);
 
+    std::cout<<"Alphabet: "<<a.name<<"\n\n";
     std::cout<<"Alignment: "<<A.length()<<" columns of "<<A.n_sequences()<<" sequences\n";
     std::cout<<"  "<<n_different<<" ("<<double(n_different)/A.length()*100<<"%) sites are not constant.\n";
     std::cout<<"  "<<n_informative<<" ("<<double(n_informative)/A.length()*100<<"%) are informative.\n";
@@ -199,12 +231,38 @@ int main(int argc,char* argv[])
 	      count[l]++;
 	  }
 
-	  std::cout<<"#"<<c<<"    "<<length<<"   -    "<<n_letters(count,0)-1<<"     =     "<<
-	    length-(n_letters(count,0)-1)<<"\n";
+	  //	  std::cout<<"#"<<c<<"    "<<length<<"   -    "<<n_letters(count,0)-1<<"     =     "<<
+	  //   length-(n_letters(count,0)-1)<<"\n";
 	}
       }
-      std::cout<<"tree length = "<<tree_length<<"\n";
+      std::cout<<"  tree length = "<<tree_length<<"\n";
     }
+
+    if (dynamic_cast<const Nucleotides*>(&a)) 
+    {
+      vector<sequence> sequences = A.get_sequences();
+
+      vector<int> found(3,0);
+      add(found, find_triplet( sequences , "TAA" ) );
+      add(found, find_triplet( sequences , "TGA" ) );
+      add(found, find_triplet( sequences , "TAG" ) );
+
+      std::cout<<"\nStop Codons:\n";
+      for(int i=0;i<3;i++) 
+	std::cout<<"   Frame "<<i<<": "<<found[i]<<"\n";
+    }
+
+    valarray<double> counts = letter_counts(A);
+    valarray<double> frequencies = A.get_alphabet().get_frequencies_from_counts(counts,A.n_sequences()/2);
+
+    std::cout<<"\nFreqencies:\n  ";
+    for(int i=0;i<a.size();i++)
+      std::cout<<a.lookup(i)<<"="<<frequencies[i]*100<<"%  ";
+    std::cout<<"\n";
+
+    int wildcards = letter_count(A,alphabet::not_gap);
+    int total = wildcards + (int)counts.sum();
+    std::cout<<"  Wildcards: "<<wildcards<<" ["<<double(wildcards)/total*100<<"%]\n";
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

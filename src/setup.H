@@ -39,8 +39,11 @@ void load_A_and_T(const boost::program_options::variables_map& args,
 void load_A_and_random_T(const boost::program_options::variables_map& args,
 			 alignment& A,SequenceTree& T,bool internal_sequences=true);
 
-/// Construct a list of how many times each letter occurs in A
+/// Count how many times each letter occurs in A
 std::valarray<double> letter_counts(const alignment& A);
+
+/// Count how many times letter 'l' occurss in A (including *,-,?)
+int letter_count(const alignment& A,int l);
 
 
 //------------------------ Substitution stuff ----------------------//

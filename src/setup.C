@@ -38,6 +38,19 @@ alignment standardize(const alignment& A, const SequenceTree& T) {
   return A2;
 }
 
+int letter_count(const alignment& A,int l) 
+{
+  // Count the occurrence of the different letters
+  int count=0;
+  for(int i=0;i<A.length();i++)
+    for(int j=0;j<A.n_sequences();j++)
+      if (A(i,j) == l)
+	count++;
+
+  return count;
+}
+
+
 valarray<double> letter_counts(const alignment& A) 
 {
   const alphabet& a = A.get_alphabet();
