@@ -164,27 +164,13 @@ int main(int argc,char* argv[])
 
     //----------- Load alignment and tree ---------//
     alignment A;
-    RootedSequenceTree T;
+    SequenceTree T;
     if (args.count("tree"))
       load_A_and_T(args,A,T,false);
     else
       A = load_A(args,false);
     const alphabet& a = A.get_alphabet();
     
-    //------- Re-root the tree appropriately  --------//
-
-    if (args.count("reroot")) {
-      int rootb=-1;
-      double rootd = -1;
-      find_root(T,rootb,rootd);
-      std::cerr<<"root branch = "<<rootb<<std::endl;
-      std::cerr<<"x = "<<rootd<<std::endl;
-      for(int i=0;i<T.n_leaves();i++)
-	std::cerr<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
-      
-      T = add_root((SequenceTree)T,rootb);  // we don't care about the lengths anymore
-    }
-
     //----- Count informative/non-constant sites ----//
     valarray<bool> informative(A.length());
     valarray<bool> different(A.length());
@@ -208,8 +194,13 @@ int main(int argc,char* argv[])
 
     cout.precision(3);
 
+    vector<int> lengths;
+    for(int i=0;i<A.n_sequences();i++)
+      lengths.push_back(A.seqlength(i));
+
     std::cout<<"Alphabet: "<<a.name<<"\n\n";
     std::cout<<"Alignment: "<<A.length()<<" columns of "<<A.n_sequences()<<" sequences\n";
+    std::cout<<"  "<<max(lengths)<<"/"<<min(lengths)<<" max/min sequence lengths.\n";
     std::cout<<"  "<<n_different<<" ("<<double(n_different)/A.length()*100<<"%) sites are not constant.\n";
     std::cout<<"  "<<n_informative<<" ("<<double(n_informative)/A.length()*100<<"%) are informative.\n";
 

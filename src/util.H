@@ -140,6 +140,16 @@ std::vector<int> compose(const std::vector<int>&,const std::vector<int>&);
 /// Return a random permutation of the list
 std::vector<int> randomize(const std::vector<int>&);
 
+/// Return the min of v
+template<class T>
+T min(const std::vector<T>& v) {
+  T t = v[0];
+  for(int i=1;i<v.size();i++)
+    t = std::min(t,v[i]);
+
+  return t;
+}
+
 /// Return the arg-min of v
 template<class T>
 int argmin(const std::vector<T>& v) {
@@ -149,6 +159,16 @@ int argmin(const std::vector<T>& v) {
       argmin = i;
 
   return argmin;
+}
+
+/// Return the min of v
+template<class T>
+T max(const std::vector<T>& v) {
+  T t = v[0];
+  for(int i=1;i<v.size();i++)
+    t = std::max(t,v[i]);
+
+  return t;
 }
 
 /// Return the arg-max of v
