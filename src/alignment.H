@@ -80,6 +80,8 @@ public:
 
   /// Does sequence i have a gap at position j ?
   bool gap(int i,int j) const {return array(i,j)==alphabet::gap;}
+  bool unknown(int i,int j) const {return array(i,j)==alphabet::unknown;}
+  bool character(int i,int j) const {return not gap(i,j) and not unknown(i,j);}
 
   alignment& operator=(const alignment&);
 

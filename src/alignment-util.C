@@ -84,12 +84,12 @@ ublas::matrix<int> M(const alignment& A1) {
   for(int i=0;i<A2.size2();i++) {
     int pos=0;
     for(int column=0;column<A2.size1();column++) {
-      if (not A1.gap(column,i)) {
+      if (A1.character(column,i)) {
 	A2(column,i) = pos;
 	pos++;
       }
       else
-	A2(column,i) = alphabet::gap;
+	A2(column,i) = A1(column,i);
     }
 
     assert(pos == A1.seqlength(i));
