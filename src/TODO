@@ -368,4 +368,14 @@ the prior, because we never want to use it  differently.
 
  - find some papers for the journal club?
 
+ - introduce alphabet models - such as codon model frequencies depending
+   on [A],[T],[G],and [C].  We allow them to deviate, but put evidence on
+   them NOT deviating.
 
+ - consider doing variable amino-acid frequencies in a CODON model!
+
+ - consider modelling functional divergence - Karin's branch problem?
+
+ - for alignment - how do we balance "extra high rate of change on this branch"
+   (e.g. different aa on each side ) with "unalign the two sides of this
+   branch"?
