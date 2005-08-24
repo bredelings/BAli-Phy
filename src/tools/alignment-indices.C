@@ -71,7 +71,7 @@ int main(int argc,char* argv[])
     for(int c=0;c<MA.size1();c++) {
       // write the indices
       for(int i=0;i<MA.size2();i++) {
-	if (MA(c,i) == -1)
+	if (MA(c,i) == alphabet::gap or MA(c,i) == alphabet::unknown)
 	  cout<<"-";
 	else
 	  cout<<MA(c,i);
