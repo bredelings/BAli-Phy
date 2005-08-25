@@ -376,6 +376,7 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
   if (size() == 0)
     throw myexception()<<"No trees were read in!";
   
+  cout<<"# Examined "<<lines<<" trees."<<endl;
   cout<<"# Loaded "<<size()<<" trees"<<endl;
   cout<<"#   There were "<<topologies.size()<<" topologies."<<endl;
     
