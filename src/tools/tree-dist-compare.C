@@ -419,8 +419,8 @@ int main(int argc,char* argv[])
       max = args["max"].as<int>();
 
     int subsample=1;
-    if (args.count("subsample"))
-      subsample = args["subsample"].as<int>();
+    if (args.count("sub-sample"))
+      subsample = args["sub-sample"].as<int>();
 
     //-------------- Read in tree distributions --------------//
     if (not args.count("files"))
@@ -436,7 +436,7 @@ int main(int argc,char* argv[])
       if (not file)
 	throw myexception()<<"Couldn't open file "<<files[i];
       
-      tree_dists.push_back(tree_sample(file,remove,skip,max));
+      tree_dists.push_back(tree_sample(file,remove,skip,max,subsample));
 
       MAP_trees.push_back( tree_dists.back().T(tree_dists.back().order[0]) );
 
