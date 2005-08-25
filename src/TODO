@@ -399,3 +399,9 @@ the prior, because we never want to use it  differently.
  - for alignment - how do we balance "extra high rate of change on this branch"
    (e.g. different aa on each side ) with "unalign the two sides of this
    branch"?
+
+ - if we can take a <X>% confidence region in tree space, then any strict
+   consensus measure of that region would be an level-<X> consensus tree.
+
+ - we could search for the <X>% of the samples that would give the most
+   resolved tree.
