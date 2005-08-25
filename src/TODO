@@ -1,3 +1,19 @@
+-18. Compare estimates w/ MrBayes on the globin example.
+
+-17. a. Implement letter classes.
+     b. Print N or X instead of *
+     c. Allow reading Codon alphabet w/ individual letter wildcards.
+        (But return them all as alphabet::not_gap)
+     d. Handle letter classes in parsimony analysis.
+        (split out into parsimony.C).
+     e. Allow codon classes in other places.
+     f. Check!
+
+-16. Compute M[l] trees for l>0.99 by simply computing PP(partition*mask).
+     We should also be able to compute ALL POSSIBLE CONSENSUS trees in one
+      go, by computing the PPs of all sub-partitions, and just throwing out
+      sub-partitions that are implied by other sub-partitions.
+
 -15. Sub-class DPengine w/ transition matrix implemented as
   i) Matrix  (as now)
  ii) const Matrix&  - avoid some malloc,copy,dealloc
@@ -48,7 +64,7 @@ We can avoid TWO malloc/copy/dealloc.
 	Can we speed up 'implies(Tree,Partition)' if we have topology
 	   information, such as 'which branches are my neighbors'?
 
-	It SEEMS thatin a 1.5M file w/ 1000 trees / 251 topologies / 48 taxa:
+	It SEEMS that in a 1.5M file w/ 1000 trees / 251 topologies / 48 taxa:
 	  - We went from 29Mb -> 6Mb.  
           - It was costing about 22 Mb for the 251 topology trees.
 	    It SHOULD cost about 251*96*(48/6) = 140k.
@@ -60,6 +76,8 @@ We can avoid TWO malloc/copy/dealloc.
   b) look at log autocorrelation and effective sample sizes for distances
      between 2 nodes + sum all branches + sum all paths
   c) compare mixing with few taxa, many taxa...
+  d) handle alignment predicates in the SRQ plot.
+     can we output residues which are mixing badly?
 
 -6. Make a ??? letter for Codon alphabets.
     (This isn't urgent because we can read codon alignments as singlet
