@@ -137,6 +137,11 @@ Results/sum.plot: Work/trees Results/c50.topology
 	@tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
 	@echo "done."
 
+Results/sumi.plot: Work/trees Results/c50.topology
+	@echo -e "Generating inverse sum plot for c50 partitions... \c"
+	@tree-to-srq Results/c50.topology  --invert --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
+	@echo "done."
+
 Work/Likelihood: Pr Work/setup
 	@pickout likelihood < Pr  > $@
 
