@@ -11,10 +11,26 @@
      e. Allow codon classes in other places.
      f. Check!
 
--16. Compute M[l] trees for l>0.99 by simply computing PP(partition*mask).
-     We should also be able to compute ALL POSSIBLE CONSENSUS trees in one
-      go, by computing the PPs of all sub-partitions, and just throwing out
-      sub-partitions that are implied by other sub-partitions.
+-16. Computing PP(branch & mask) is O(B*T), so doing it for every
+     branch in M[0.5] is O(B^2 * T).  This compares unfavorably with 
+     just trying to find the M[l] sub-partitions, which is only O(B*T*[1+log(P)]).
+
+     Actually, we should find all the sub-partitions JUST by finding the M[0.5]
+     sub-partitions.  The PROBLEM is that we throw partitions which are implied by
+     other M[l] sub-partitions away.
+
+     So, we compute M[0.5], then M[0.5 & mask] for each mask.
+     We will automatically calculate PP for each sub-partitions, so we should use it.
+     Then, we don't need to calculate M[l] for l>0.5.
+
+     In case of searching for badly-rooted branches, perhaps we should
+     perhaps consider:
+
+     max over sub-partitions (A|B) of P( [A|B]-X )/max( P([A+X|B]) , P([A|X+B]) )
+
+     We could actually plot the number of supported branches for EVERY
+     l.  Then we could graph stuff, and the wouldn't depend so much on
+     the EXACT cutoff.
 
 -15. Sub-class DPengine w/ transition matrix implemented as
   i) Matrix  (as now)
