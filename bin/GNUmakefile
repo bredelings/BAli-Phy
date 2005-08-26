@@ -1,6 +1,6 @@
 SHELL=/bin/sh
 
-TREES=c50 c66 c80 c90 c95 c99 MAP
+TREES=c50 c66 c80 c90 c95 c99 c100 MAP
 
 all: Results/analysis
 
@@ -57,7 +57,7 @@ Work/%.from.${SKIP}+: Work/%.from.${SKIP}
 
 Work/tc : Work/trees
 	@echo -e "Summarizing topology distribution... \c";
-	@tree-dist-compare --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99 --sub-partitions > $@
+	@tree-dist-compare --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99,1.0 --sub-partitions > $@
 	@echo "done."
 
 # If there are no Substitution parameters, don't bail out
