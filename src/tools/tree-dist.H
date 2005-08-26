@@ -32,7 +32,10 @@ struct Partition {
   std::valarray<bool> group2;
 
   /// the total number of taxa
-  int size() const {return group1.size();}
+  unsigned size() const {return group1.size();}
+
+  /// Create a partition from p, but masked by @mask
+  Partition(const Partition& p,const std::valarray<bool>& mask);
 
   /// Create a partition of all taxa (g=0->g1,g=1->g2)
   Partition(const std::valarray<bool>& g);
@@ -55,28 +58,45 @@ bool operator==(const Partition& p1, const Partition& p2);
 /// are both partitions consistent with each other?
 bool consistent(const Partition& p1, const Partition& p2);
 
-/// does partition @p1 imply partition @p2?
+/// does partition @p1 imply the partition @p2?
 bool implies(const Partition& p1, const Partition& p2);
-
-/// does any partition in @partitions imply partition @p?
-bool implies(const std::vector<std::valarray<bool> >& partitions, const Partition& p);
 
 /// Does any branch in @T imply the partition @p?
 bool implies(const SequenceTree& T,const Partition& p);
 
-/// Does any branch in @T imply the partition @p?
-bool implies(const SequenceTree& T,const std::vector<Partition>&);
+/// Does any branch in T imply the partition p?
+template <typename T>
+bool implies(const std::vector<T>& partitions,const Partition& p) 
+{
+  bool result = false;
+  for(int i=0;i<partitions.size() and not result;i++)
+    if (implies(partitions[i],p)) return true;
+  return false;
+}
 
+/// Does tree T imply all the partitions in @partitions?
+template <typename T1,typename T2>
+bool implies(const T1& T,const std::vector<T2>& partitions) 
+{
+  for(int i=0;i<partitions.size();i++)
+    if (not implies(T,partitions[i]))
+      return false;
+  return true;
+}
+
+/// Which branch in @T implies partition @p?
 int which_partition(const SequenceTree& T, const Partition& p);
 
 /// Output the partition P to stream o (requires 'names' to be set)
 std::ostream& operator<<(std::ostream& o, const Partition& P);
 
+bool informative(const Partition& p);
+
 
 /// A class for loading tree distributions - somewhat biased towards tree-dist-compare
 class tree_sample 
 {
-  mutable std::map<std::string,int> index;
+  mutable std::map<std::string,unsigned> index;
 
   std::vector<std::string> leaf_names;
 
@@ -92,15 +112,15 @@ public:
     std::vector<std::valarray<bool> > partitions;
 
     // how many times did we see this topology
-    int count;
+    unsigned count;
 
     topology_record(const SequenceTree&,const std::string&);
   };
 
   // mapping from index in the sample to topology record
-  std::vector<int> which_topology;
+  std::vector<unsigned> which_topology;
 
-  std::vector<int> order;
+  std::vector<unsigned> order;
 
   // the list of topologies, and associated info
   std::vector<topology_record> topologies;
@@ -109,16 +129,17 @@ public:
 
   SequenceTree T(int i) const;
 
-  int get_index(const std::string& t) const;
-
   // this should equal trees.size(), but should be MUCH faster!
-  int size() const {return which_topology.size();}
+  unsigned size() const {return which_topology.size();}
 
   std::valarray<bool> supports_topology(const std::string& t) const;
 
   std::valarray<bool> supports_partition(const Partition& P) const;
 
   std::valarray<bool> supports_partitions(const std::vector<Partition>&) const;
+
+  unsigned count(const Partition& P) const;
+  unsigned count(const std::vector<Partition>&) const;
 
   double PP(const Partition& P) const;
   double PP(const std::vector<Partition>&) const;

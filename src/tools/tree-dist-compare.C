@@ -441,11 +441,11 @@ int main(int argc,char* argv[])
       MAP_trees.push_back( tree_dists.back().T(tree_dists.back().order[0]) );
 
       if (i > 0 and MAP_trees[i].get_sequences() != MAP_trees[i-1].get_sequences())
-	throw myexception()<<"Tree load from file '"<<files[i]<<"' has different taxa that previous trees.";
+	throw myexception()<<"Tree loaded from file '"<<files[i]<<"' has different taxa than previous trees.";
     }
     
     //----------  Determine block size ----------//
-    int blocksize = tree_dists[0].size()/100+1;
+    unsigned blocksize = tree_dists[0].size()/100+1;
     for(int i=1;i<tree_dists.size();i++)
       blocksize = std::min(blocksize,tree_dists[i].size()/100+1);
 
@@ -457,10 +457,8 @@ int main(int argc,char* argv[])
     //--------------- Distance between MAP trees ----------//
     cout<<endl;
     for(int i=0;i<tree_dists.size();i++)
-      for(int j=0;j<i;j++) {
+      for(int j=0;j<i;j++)
 	cout<<"Topology distance between MAP trees for "<<i<<" and "<<j<<" = "<<topology_distance(MAP_trees[i],MAP_trees[j])<<endl;
-	cout<<"Branch distance between MAP trees for "<<i<<" and "<<j<<" = "<<branch_distance(MAP_trees[i],MAP_trees[j])<<endl;
-      }
     cout<<endl;
 
     for(int i=0;i<tree_dists.size();i++) 

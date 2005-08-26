@@ -30,6 +30,14 @@ Partition partition_from_names(const vector<string>& allnames, const vector<stri
 }
 
 
+Partition::Partition(const Partition& p,const valarray<bool>& mask)
+  :names(p.names),
+   group1(p.group1 and mask),
+   group2(p.group2 and mask)
+{
+  assert(mask.size() = p.group1.size());
+}
+
 Partition::Partition(const valarray<bool>& g) 
   :group1(g),group2(not g)
 { 
@@ -57,6 +65,10 @@ Partition::Partition(const vector<string>& n,const valarray<bool>& g,const valar
   assert(g.size() == mask.size());
   assert(empty(group1 and not group1));
   assert(empty(group1 and group2));
+}
+
+bool informative(const Partition& p) {
+  return n_elements(p.group1) > 1 and n_elements(p.group2) > 1;
 }
 
 SequenceTree standardized(const string& t) {
@@ -182,7 +194,6 @@ bool implies(const Partition& p1, const Partition& p2) {
   return false;
 }
 
-
 /// Does any branch in T imply the partition p?
 bool implies(const SequenceTree& T,const Partition& p) {
   bool result = false;
@@ -194,28 +205,43 @@ bool implies(const SequenceTree& T,const Partition& p) {
   return false;
 }
 
-/// Does any branch in T imply the partition p?
-bool implies(const vector<valarray<bool> >& partitions,const Partition& p) {
-  bool result = false;
-  for(int i=0;i<partitions.size() and not result;i++)
-    if (implies(partitions[i],p)) return true;
-  return false;
+// Remove partitions we imply.  Add only if not implied. Return true if we expanded the coverage.
+vector<Partition> unimplied_partitions(const vector<Partition>& partitions,const vector<Partition>& delta) 
+{
+  vector<Partition> unimplied;
+
+  for(int i=0;i<delta.size();i++)
+    if (not implies(partitions,delta[i]))
+      unimplied.push_back(delta[i]);
+
+  return unimplied;
 }
 
-bool implies(const SequenceTree& T,const std::vector<Partition>& partitions) 
+// Remove partitions we imply.  Add only if not implied. Return true if we expanded the coverage.
+bool merge_partition(vector<Partition>& partitions,const Partition& delta) 
 {
-  for(int p=0;p<partitions.size();p++)
-    if (not implies(T,partitions[p]))
-      return false;
+  if (implies(partitions,delta)) 
+    return false;
+
+  for(int i=partitions.size()-1;i>=0;i--)
+    if (implies(delta,partitions[i]))
+      partitions.erase(partitions.begin()+i);
+
+  partitions.push_back(delta);
+
   return true;
 }
 
-bool implies(const vector<valarray<bool> >& partitions1,const std::vector<Partition>& partitions2) 
+// Remove partitions we imply.  Add only if not implied. Return true if we expanded the coverage.
+bool merge_partitions(vector<Partition>& partitions,const vector<Partition>& delta) 
 {
-  for(int i=0;i<partitions2.size();i++)
-    if (not implies(partitions1,partitions2[i]))
-      return false;
-  return true;
+  bool changed=false;
+
+  for(int i=0;i<delta.size();i++) 
+    if (merge_partition(partitions,delta[i]))
+      changed = true;
+
+  return changed;
 }
 
 int which_partition(const SequenceTree& T, const Partition& p) {
@@ -229,16 +255,6 @@ int which_partition(const SequenceTree& T, const Partition& p) {
 
 SequenceTree tree_sample::T(int i) const {
   return get_mf_tree(leaf_names,topologies[i].partitions);
-}
-
-int tree_sample::get_index(const string& t) const 
-{
-  typeof(index.begin()) here = index.find(t);
-
-  if (here == index.end())
-    return -1;
-  else
-    return index[t];
 }
 
 valarray<bool> tree_sample::supports_topology(const string& t) const 
@@ -286,25 +302,35 @@ valarray<bool> tree_sample::supports_partitions(const vector<Partition>& partiti
   return result;
 }
 
-double tree_sample::PP(const Partition& P) const 
+unsigned tree_sample::count(const Partition& P) const 
 {
-  int count=0;
+  unsigned count=0;
   for(int t=0;t<topologies.size();t++) 
     if (implies(topologies[t].partitions,P))
 	count += topologies[t].count;
    
-  return double(count)/size();
+  return count;
 }
 
-double tree_sample::PP(const vector<Partition>& partitions) const 
+unsigned tree_sample::count(const vector<Partition>& partitions) const 
 {
-  int count=0;
+  unsigned count=0;
   for(int t=0;t<topologies.size();t++) {
     if (implies(topologies[t].partitions,partitions))
       count += topologies[t].count;
   }
    
-  return double(count)/size();
+  return count;
+}
+
+double tree_sample::PP(const Partition& P) const 
+{
+  return double(count(P))/size();
+}
+
+double tree_sample::PP(const vector<Partition>& partitions) const 
+{
+  return double(count(partitions))/size();
 }
 
 struct ordering {
@@ -376,9 +402,7 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
   if (size() == 0)
     throw myexception()<<"No trees were read in!";
   
-  cout<<"# Examined "<<lines<<" trees."<<endl;
-  cout<<"# Loaded "<<size()<<" trees"<<endl;
-  cout<<"#   There were "<<topologies.size()<<" topologies."<<endl;
+  cout<<" n_trees = "<<size()<<"   n_topologies = "<<topologies.size()<<" topologies."<<endl;
     
   //---------------  Sort topologies by count  ---------------//
   order.resize(topologies.size());
@@ -580,10 +604,10 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
   for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
     const valarray<bool>& partition =(*p)->first;
  
-    if (statistics::count(partition) < 2) continue;
-    if (statistics::count((not partition) and mask) < 2) continue;
+    Partition pi(names,partition,mask);
 
-    partitions.push_back(Partition(names,partition,mask) );
+    if (informative(pi))
+      partitions.push_back(pi);
   }
 
   return partitions;
@@ -677,10 +701,10 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
   for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
     const valarray<bool>& partition =(*p)->first;
  
-    if (statistics::count(partition) < 2) continue;
-    if (statistics::count((not partition) and mask) < 2) continue;
+    Partition pi(names,partition,mask);
 
-    partitions.push_back(Partition(names,partition,mask) );
+    if (informative(pi))
+      partitions.push_back(pi);
   }
 
   return partitions;
@@ -690,46 +714,6 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
 vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
   valarray<bool> mask(true,sample.names().size());
   return get_Ml_partitions(sample,l,mask);
-}
-
-// Remove partitions we imply.  Add only if not implied. Return true if we expanded the coverage.
-vector<Partition> unimplied_partitions(const vector<Partition>& partitions,const vector<Partition>& delta) 
-{
-  vector<Partition> unimplied;
-
-  for(int i=0;i<delta.size();i++) {
-    bool ok = true;
-    for(int j=0;j<partitions.size() and ok;j++)
-      if (implies(partitions[j],delta[i]))
-	ok = false;
-    if (ok)
-      unimplied.push_back(delta[i]);
-  }
-  return unimplied;
-}
-
-// Remove partitions we imply.  Add only if not implied. Return true if we expanded the coverage.
-bool add_largest_partitions(vector<Partition>& partitions,const vector<Partition>& delta) 
-{
-  bool changed=false;
-  for(int i=0;i<delta.size();i++) 
-  {
-    bool ok = true;
-    for(int j=0;j<partitions.size() and ok;j++) 
-      if (implies(partitions[j],delta[i]))
-	ok = false;
-
-    if (not ok) continue;
-
-    changed = true;
-
-    for(int j=partitions.size()-1;j>=0;j--)
-      if (implies(delta[i],partitions[j]))
-	partitions.erase(partitions.begin()+j);
-
-    partitions.push_back(delta[i]);
-  }
-  return changed;
 }
 
 void add_unique(list<valarray<bool> >& masks,const valarray<bool>& mask) 
@@ -788,11 +772,11 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,int d
 	new_good_masks.push_front(*m);
 
       // store the new sub-partitions we found
-      add_largest_partitions(all_sub_partitions,sub_partitions);
+      merge_partitions(all_sub_partitions,sub_partitions);
     }
 
     // store all sub-partitions we found this round
-    add_largest_partitions(partitions,all_sub_partitions);
+    merge_partitions(partitions,all_sub_partitions);
 
     masks.clear();
 
@@ -820,4 +804,3 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,int d
 
   return partitions;
 }
-
