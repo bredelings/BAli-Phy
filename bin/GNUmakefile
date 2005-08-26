@@ -25,8 +25,8 @@ Work/setup:
 	@echo "done."
 
 Results/analysis: Results/Report Work/tc Results/SRQ.plot Results/sum.plot \
-                  ${TREES:%=Results/%.tree} ${TREES:%=Results/%.topology} \
-                  Work/trees.from.${SKIP}+${SIZE} \
+		  ${TREES:%=Results/%.tree} ${TREES:%=Results/%.topology} \
+                  Results/sumi.plot Work/trees.from.${SKIP}+${SIZE} \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
 	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration ${SKIP}." > Results/analysis
 	@echo "Finished:  $$(date)" >> Results/analysis
