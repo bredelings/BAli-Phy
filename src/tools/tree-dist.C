@@ -429,38 +429,6 @@ struct compare_complete_partitions {
   }
 };
 
-vector<Partition> strict_consensus_partitions(const tree_sample& sample,const valarray<bool>& mask) 
-{
-  vector<Partition> partitions;
-
-  const vector<valarray<bool> >& T = sample.topologies[0].partitions;
-
-  vector<string> names = sample.names();
-
-  // Get the partitions in the first tree
-  for(int i=names.size();i<T.size();i++) 
-    partitions.push_back(Partition(names,T[i],mask));
-
-  // Check to see if they are in all subsequent trees
-  for(int i=1;i<sample.topologies.size() and partitions.size();i++) 
-  {
-    const vector<valarray<bool> >& T = sample.topologies[i].partitions;
-    
-    for(int j=0;j<partitions.size();) {
-      if (not implies(T,partitions[j]))
-	partitions.erase(partitions.begin()+j);
-      else
-	j++;
-    }
-  }
-  return partitions;
-}
-
-vector<Partition> strict_consensus_partitions(const tree_sample& sample) {
-  valarray<bool> mask(true,sample.names().size());
-  return strict_consensus_partitions(sample,mask);
-}
-
 struct p_count {
   int count;
   int last_tree;
@@ -525,9 +493,6 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
   if (l > 1.0)
     throw myexception()<<"Consensus level for majority tree must be <= 1.0";
 
-  if (l == 1.0)
-    return strict_consensus_partitions(sample,mask);
-
   // use a sorted list of <partition,count>, sorted by partition.
   typedef std::tr1::unordered_map<valarray<bool>,p_count> container_t;
   int container_size = 16 * sample.size()*sample.topologies[0].T.n_branches();
@@ -547,8 +512,11 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
     int delta = sample.topologies[i].count;
 
     int min_old = 1+(int)(l*count);
+    min_old = std::min(min_old,count);
+
     count += delta;
     int min_new = 1+(int)(l*count);
+    min_new = std::min(min_new,count);
 
     // for each partition in the next tree
     std::valarray<bool> partition(T.n_leaves()); 
@@ -627,9 +595,6 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
   if (l > 1.0)
     throw myexception()<<"Consensus level for majority tree must be <= 1.0";
 
-  if (l == 1.0)
-    return strict_consensus_partitions(sample,mask);
-
   // use a sorted list of <partition,count>, sorted by partition.
   typedef map<valarray<bool>,p_count,compare_complete_partitions > container_t;
   container_t counts;
@@ -639,7 +604,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
 
   vector<string> names = sample.names();
 
-  int count = 0;
+  unsigned count = 0;
 
   for(int i=0;i<sample.topologies.size();i++) 
   {
@@ -647,9 +612,10 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
 
     int delta = sample.topologies[i].count;
 
-    int min_old = 1+(int)(l*count);
+    unsigned min_old = std::min(1+(unsigned)(l*count),count);
+
     count += delta;
-    int min_new = 1+(int)(l*count);
+    unsigned min_new = std::min(1+(unsigned)(l*count),count);
 
     // for each partition in the next tree
     std::valarray<bool> partition(names.size());
