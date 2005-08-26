@@ -610,7 +610,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
   {
     const vector<valarray<bool> >& T = sample.topologies[i].partitions;
 
-    int delta = sample.topologies[i].count;
+    unsigned delta = sample.topologies[i].count;
 
     unsigned min_old = std::min(1+(unsigned)(l*count),count);
 
@@ -645,7 +645,7 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
       }
       
       // add the partition if it wasn't good before, but is now
-      if (C1<min_old and C2 >= min_new)
+      if ((C1==0 or C1<min_old) and C2 >= min_new)
 	majority.push_back(record);
     }
 
