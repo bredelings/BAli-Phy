@@ -435,154 +435,8 @@ struct p_count {
   p_count(): count(0),last_tree(-1) {}
 };
 
-#if (defined(__GNUC__) && (__GNUC__ > 4) )
-
-#include <tr1/unordered_map>
-
-namespace std { namespace tr1 {
-
-  template<> struct hash<std::valarray<bool> > 
-  {
-    vector<int> constants;
-
-    size_t operator()(const std::valarray<bool>& v) const 
-    {
-      size_t total=0;
-      assert(constants.size() == v.size());
-      
-      for(int i=0;i<v.size();i++)
-	if (v[i]) total += constants[i];
-      return total;
-    }
-    
-    hash(int n) 
-      :constants(n)
-    {
-      for(int i=0;i<constants.size();i++)
-	constants[i] = uniform_unsigned_long();
-    }
-  };
-
-} } 
-
-namespace std {
-
-  template<>
-  struct equal_to<valarray<bool> > {
-    bool operator()(const std::valarray<bool>& v1,const std::valarray<bool>& v2) const {
-      assert(v1.size() == v2.size());
-      return ::equal(v1,v2);
-    }
-  };
-}
-
-
-// improve: we spend a lot of time creating and destroying the hash table
-
-vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const valarray<bool>&  mask) 
-{
-  // find the first bit
-  int first=0;
-  while(first<mask.size() and not mask[first])
-    first++;
-  assert(first < mask.size());
-
-  // make sure l is in range and handle l==1
-  if (l < 0.5)
-    throw myexception()<<"Consensus level for majority tree must be >= 0.5";
-  if (l > 1.0)
-    throw myexception()<<"Consensus level for majority tree must be <= 1.0";
-
-  // use a sorted list of <partition,count>, sorted by partition.
-  typedef std::tr1::unordered_map<valarray<bool>,p_count> container_t;
-  int container_size = 16 * sample.size()*sample.topologies[0].T.n_branches();
-  int n_leaves = sample.topologies[0].T.n_leaves();
-  container_t counts(container_size,std::tr1::hash<valarray<bool> >(n_leaves));
-
-  // use a linked list of pointers to <partition,count> records.
-  list< pair<const valarray<bool>, p_count>* > majority;
-
-  vector<string> names = sample.topologies[0].T.get_sequences();
-
-  int count = 0;
-
-  for(int i=0;i<sample.topologies.size();i++) {
-    const SequenceTree& T = sample.topologies[i].T;
-
-    int delta = sample.topologies[i].count;
-
-    int min_old = 1+(int)(l*count);
-    min_old = std::min(min_old,count);
-
-    count += delta;
-    int min_new = 1+(int)(l*count);
-    min_new = std::min(min_new,count);
-
-    // for each partition in the next tree
-    std::valarray<bool> partition(T.n_leaves()); 
-    for(int b=T.n_leaves();b<T.n_branches();b++) 
-    {
-      // Compute the standard bitmask for the partition
-      partition = T.partition(b);
-      if (not partition[first])
-	partition = (not partition) and mask;
-      else
-	partition = partition and mask;
-      
-      assert(partition.size() == T.n_leaves());
-
-      // Look up record for this partition
-      container_t::iterator i_record = counts.find(partition);
-      if (i_record == counts.end()) {
-	counts.insert(container_t::value_type(partition,p_count()));
-	i_record = counts.find(partition);
-	assert(i_record != counts.end());
-      }
-      container_t::value_type* p_record = &(*i_record);
-
-      // Update counts
-      p_count& pc = p_record->second;
-      int& C2 = pc.count;
-      int C1 = C2;
-      if (pc.last_tree != i) {
-	pc.last_tree=i;
-	C2 += delta;
-      }
-      
-      // add the partition if it wasn't good before, but is now
-      if (C1<min_old and C2 >= min_new)
-	majority.push_back(p_record);
-    }
-
-
-    // for partition in the majority tree
-    for(typeof(majority.begin()) p = majority.begin();p != majority.end();) {
-      if ((*p)->second.count < min_new) {
-	typeof(p) old = p;
-	p++;
-	majority.erase(old);
-      }
-      else
-	p++;
-    }
-  }
-
-  vector<Partition> partitions;
-  partitions.reserve( 2*names.size() );
-  for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
-    const valarray<bool>& partition =(*p)->first;
- 
-    Partition pi(names,partition,mask);
-
-    if (informative(pi))
-      partitions.push_back(pi);
-  }
-
-  return partitions;
-}
-
-#else
-vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const valarray<bool>&  mask) 
+vector<pair<Partition,unsigned> > 
+get_Ml_partitions_and_counts(const tree_sample& sample,double l,const valarray<bool>&  mask) 
 {
   // find the first bit
   int first=0;
@@ -662,24 +516,44 @@ vector<Partition> get_Ml_partitions(const tree_sample& sample,double l,const val
     }
   }
 
-  vector<Partition> partitions;
+  vector<pair<Partition,unsigned> > partitions;
   partitions.reserve( 2*names.size() );
   for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
     const valarray<bool>& partition =(*p)->first;
  
     Partition pi(names,partition,mask);
+    unsigned p_count = (*p)->second.count;
 
     if (informative(pi))
-      partitions.push_back(pi);
+      partitions.push_back(pair<Partition,unsigned>(pi,p_count));
   }
 
   return partitions;
 }
-#endif
 
-vector<Partition> get_Ml_partitions(const tree_sample& sample,double l) {
+
+vector<pair<Partition,unsigned> > 
+get_Ml_partitions_and_counts(const tree_sample& sample,double l) 
+{
   valarray<bool> mask(true,sample.names().size());
-  return get_Ml_partitions(sample,l,mask);
+  return get_Ml_partitions_and_counts(sample,l,mask);
+}
+
+vector<Partition> 
+remove_counts(const vector<pair<Partition,unsigned> >& partitions_and_counts) 
+{
+  vector<Partition> partitions;
+  for(int i=0;i<partitions.size();i++)
+    partitions.push_back(partitions_and_counts[i].first);
+
+  return partitions;
+}
+
+
+vector<Partition>
+get_Ml_partitions(const tree_sample& sample,double l) 
+{
+  return remove_counts(get_Ml_partitions_and_counts(sample,l));
 }
 
 void add_unique(list<valarray<bool> >& masks,const valarray<bool>& mask) 
@@ -696,30 +570,35 @@ void add_unique(list<valarray<bool> >& masks,const valarray<bool>& mask)
 }
 
 
+// also construct list "who is implied by whom"
+
 //consider only pulling out combinations of branches pointing to the same node
 
-vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,int depth) 
+vector<pair<Partition,unsigned> > 
+get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,int depth) 
 {
   // get list of branches to consider cutting
   vector<Partition> partitions_c50 = get_Ml_partitions(sample, 0.5);
-  SequenceTree MF = get_mf_tree(sample.names(),partitions_c50);
-  vector<const_branchview> branches = branches_from_leaves(MF);  
-
-  // start collecting partitions at M[l]
-  vector<Partition> partitions = get_Ml_partitions(sample,l);
+  SequenceTree c50 = get_mf_tree(sample.names(),partitions_c50);
+  vector<const_branchview> branches = branches_from_leaves(c50);  
 
   // construct unit masks
   list< valarray<bool> > unit_masks;
   for(int b=0;b<branches.size();b++)
-    add_unique(unit_masks, branch_partition(MF,branches[b]) );
+    add_unique(unit_masks, branch_partition(c50,branches[b]) );
 
   // construct beginning masks
   list<valarray<bool> > masks = unit_masks;
+
+  // start collecting partitions at M[l]
+  vector<pair<Partition,unsigned> > partitions = get_Ml_partitions_and_counts(sample,l);
 
   // any good mask should be combined w/ other good masks
   list<valarray<bool> > good_masks;
   for(int iterations=0;not masks.empty();iterations++)
   {
+    vector<pair<Partition,unsigned> > full_partitions = partitions;
+
     //std::cerr<<"Analyzing "<<masks.size()<<" masks."<<std::endl;;
     list<valarray<bool> > new_good_masks;
 
@@ -728,21 +607,18 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,int d
     foreach(m,masks) 
     {
       // get sub-partitions of *m 
-      vector<Partition> sub_partitions = get_Ml_partitions(sample,l,*m);
+      vector<pair<Partition,unsigned> > sub_partitions = get_Ml_partitions_and_counts(sample,l,*m);
     
-      // remove sub-partitions that are implied by partitions
-      sub_partitions = unimplied_partitions(partitions, sub_partitions);
+      // match up sub-partitions and full partitions
+      //      sub_partitions = unimplied_partitions(full_partitions, sub_partitions);
 
-      // if this isn't empty, then record this mask
-      if (not sub_partitions.empty())
+      // check if any of our branches make this branch badly rooted
+      if (false)
 	new_good_masks.push_front(*m);
 
       // store the new sub-partitions we found
-      merge_partitions(all_sub_partitions,sub_partitions);
+      partitions.insert(partitions.end(),sub_partitions.begin(),sub_partitions.end());
     }
-
-    // store all sub-partitions we found this round
-    merge_partitions(partitions,all_sub_partitions);
 
     masks.clear();
 
@@ -769,4 +645,11 @@ vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,int d
 
 
   return partitions;
+}
+
+
+vector<Partition> 
+get_Ml_sub_partitions(const tree_sample& sample,double l,int depth) 
+{
+  return remove_counts(get_Ml_sub_partitions_and_counts(sample,l,depth));
 }

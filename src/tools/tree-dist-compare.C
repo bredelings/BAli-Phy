@@ -361,6 +361,21 @@ vector<Partition> Ml_min_Hull(const vector<Partition>& full,const vector<Partiti
   return full2;
 }
 
+vector<Partition> 
+get_Ml_partitions(const vector<pair<Partition,unsigned> >& sp, double l, unsigned total)
+{
+  unsigned min_count = std::min(1+(unsigned)(total*l),total);
+
+  vector<Partition> partitions;
+  for(int i=0;i<sp.size();i++) {
+    if (sp[i].second >= min_count)
+      merge_partition(partitions,sp[i].first);
+  }
+
+  return partitions;
+}
+
+
 // Is there a way to choose branches that would imply sub-partitions that are
 // not in sub because other full branches imply them?  
 
@@ -491,7 +506,12 @@ int main(int argc,char* argv[])
     {
       int depth = args["depth"].as<int>();
 
-      sub_partitions = get_sub_partitions(tree_dists,consensus_levels,depth);
+      for(int i=0;i<tree_dists.size();i++) {
+	vector<pair<Partition,unsigned> > sp = get_Ml_sub_partitions_and_counts(tree_dists[i],0.5,depth);
+	sub_partitions.push_back(vector<vector<Partition> >());
+	for(int j=0;j<consensus_levels.size();j++)
+	  sub_partitions.back().push_back(get_Ml_partitions(sp,consensus_levels[j],tree_dists[i].size()));
+      }
 
       full_partitions = sub_partitions;
       for(int i=0;i<full_partitions.size();i++)

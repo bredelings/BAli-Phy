@@ -2,6 +2,7 @@
 #define TREE_DIST_H
 
 #include <vector>
+#include <utility>
 #include <list>
 #include <valarray>
 
@@ -150,11 +151,20 @@ public:
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, const std::valarray<double>&);
 
+std::vector<std::pair<Partition,unsigned> > 
+get_Ml_partitions_and_counts(const tree_sample& sample,double l, const std::valarray<double>&);
+
 std::vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,int search=1);
+
+std::vector<std::pair<Partition,unsigned> >
+get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,int search=1);
 
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
 			 const std::vector<Partition>& partitions);
 
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
 			 const std::vector<std::valarray<bool> >& partitions);
+
+bool merge_partition(std::vector<Partition>& partitions,const Partition& delta);
+
 #endif

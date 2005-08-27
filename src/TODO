@@ -1,3 +1,9 @@
+-20. Find out how much of a time penalty we are getting from
+     calculating leaf_partition_sets....
+
+     Find out how much slowdown we get in alignment-gild if we don't
+     compute them...
+
 -19. output name of tree file we analyzed!
 
 -18. Compare estimates w/ MrBayes on the globin example.
