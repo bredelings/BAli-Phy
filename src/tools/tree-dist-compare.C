@@ -297,6 +297,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("consensus",value<string>(),"comma-separated consensus levels in [0.5, 1.0] for majority tree")
     ("sub-partitions","look for partitions of taxa subsets")
     ("depth",value<int>()->default_value(1),"depth at which to look for partitions of taxa subsets")
+    ("rooting",value<double>()->default_value(0.9),"depth at which to look for partitions of taxa subsets")
+
     ;
     
 
@@ -499,29 +501,37 @@ int main(int argc,char* argv[])
     vector<double> consensus_levels = get_consensus_levels(c_levels);
 
     //------ Compute Ml partitions or sub-partitions --------//
-    vector< vector< vector< Partition > > > sub_partitions;
-    vector< vector< vector< Partition > > > full_partitions;
+    vector< vector< pair<Partition,unsigned> > > all_partitions;
 
     if (args.count("sub-partitions"))
     {
       int depth = args["depth"].as<int>();
 
-      for(int i=0;i<tree_dists.size();i++) {
-	vector<pair<Partition,unsigned> > sp = get_Ml_sub_partitions_and_counts(tree_dists[i],0.5,depth);
-	sub_partitions.push_back(vector<vector<Partition> >());
-	for(int j=0;j<consensus_levels.size();j++)
-	  sub_partitions.back().push_back(get_Ml_partitions(sp,consensus_levels[j],tree_dists[i].size()));
-      }
+      double min_rooting = args["rooting"].as<double>();
 
-      full_partitions = sub_partitions;
-      for(int i=0;i<full_partitions.size();i++)
-	for(int j=0;j<full_partitions[i].size();j++)
-	  full_partitions[i][j] = get_full_partitions( full_partitions[i][j] );
+      for(int i=0;i<tree_dists.size();i++)
+	all_partitions.push_back( 
+           get_Ml_sub_partitions_and_counts(tree_dists[i],0.5,min_rooting,depth) 
+        );
     }
     else {
-      full_partitions = get_full_partitions(tree_dists,consensus_levels);
-      sub_partitions = full_partitions;
+      for(int i=0;i<tree_dists.size();i++)
+	all_partitions.push_back( get_Ml_partitions_and_counts(tree_dists[i],0.5) );
     }
+
+    // find partitions at each consensus level
+    vector< vector< vector< Partition > > > sub_partitions;
+    for(int i=0;i<tree_dists.size();i++) {
+	sub_partitions.push_back(vector<vector<Partition> >());
+	for(int j=0;j<consensus_levels.size();j++)
+	  sub_partitions.back().push_back(get_Ml_partitions(all_partitions[i],consensus_levels[j],tree_dists[i].size()));
+      }
+
+    // extract full partitions
+    vector< vector< vector< Partition > > > full_partitions = sub_partitions;
+    for(int i=0;i<full_partitions.size();i++)
+      for(int j=0;j<full_partitions[i].size();j++)
+	full_partitions[i][j] = get_full_partitions( full_partitions[i][j] );
 
 
     vector<vector< Partition> > dist_partitions(sub_partitions.size());

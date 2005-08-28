@@ -35,7 +35,8 @@ Partition::Partition(const Partition& p,const valarray<bool>& mask)
    group1(p.group1 and mask),
    group2(p.group2 and mask)
 {
-  assert(mask.size() = p.group1.size());
+  assert(mask.size() == p.group1.size());
+  assert(empty(group1 and group2));
 }
 
 Partition::Partition(const valarray<bool>& g) 
@@ -376,8 +377,8 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
       T = standardized(line,remove);
     }
     catch (std::exception& e) {
-      std::cerr<<"Exception: "<<e.what()<<endl;
-      std::cerr<<" Quitting read of tree file"<<endl;
+      cerr<<"Exception: "<<e.what()<<endl;
+      cerr<<" Quitting read of tree file"<<endl;
       break;
     }
 
@@ -543,7 +544,7 @@ vector<Partition>
 remove_counts(const vector<pair<Partition,unsigned> >& partitions_and_counts) 
 {
   vector<Partition> partitions;
-  for(int i=0;i<partitions.size();i++)
+  for(int i=0;i<partitions_and_counts.size();i++)
     partitions.push_back(partitions_and_counts[i].first);
 
   return partitions;
@@ -556,7 +557,8 @@ get_Ml_partitions(const tree_sample& sample,double l)
   return remove_counts(get_Ml_partitions_and_counts(sample,l));
 }
 
-void add_unique(list<valarray<bool> >& masks,const valarray<bool>& mask) 
+void add_unique(list<valarray<bool> >& masks,const list<valarray<bool> >& old_masks,
+		const valarray<bool>& mask) 
 {
   // don't add the mask unless contains internal partitions (it could be all 0)
   if (n_elements(mask) < 4) return;
@@ -565,8 +567,35 @@ void add_unique(list<valarray<bool> >& masks,const valarray<bool>& mask)
   foreach(m,masks)
     if (equal(*m,mask)) return;
 
+  foreach(m,old_masks)
+    if (equal(*m,mask)) return;
+
   // otherwise, add the mask
   masks.push_front(mask);
+}
+
+
+void add_unique(list<valarray<bool> >& masks,const valarray<bool>& mask) 
+{
+  return add_unique(masks,list<valarray<bool> >(),mask);
+}
+
+
+/// find out which partitions imply the sub-partitions, prefering the most likely.
+vector<int> match(const vector<pair<Partition,unsigned> >& full_partitions,
+		  const vector<pair<Partition,unsigned> >& sub_partitions)
+{
+  vector<int> m(sub_partitions.size(),-1);
+
+  for(int i=0;i<sub_partitions.size();i++) 
+    for(int j=0;j<full_partitions.size();j++) 
+      if (implies(full_partitions[j].first,sub_partitions[i].first))
+        if (m[i] == -1)
+	  m[i] = j;
+	else if (full_partitions[j].second > full_partitions[m[i]].second)
+	  m[i] = j;
+
+  return m;
 }
 
 
@@ -575,7 +604,7 @@ void add_unique(list<valarray<bool> >& masks,const valarray<bool>& mask)
 //consider only pulling out combinations of branches pointing to the same node
 
 vector<pair<Partition,unsigned> > 
-get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,int depth) 
+get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double min_rooting,int depth) 
 {
   // get list of branches to consider cutting
   vector<Partition> partitions_c50 = get_Ml_partitions(sample, 0.5);
@@ -589,6 +618,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,int depth)
 
   // construct beginning masks
   list<valarray<bool> > masks = unit_masks;
+  list<valarray<bool> > old_masks = unit_masks;
 
   // start collecting partitions at M[l]
   vector<pair<Partition,unsigned> > partitions = get_Ml_partitions_and_counts(sample,l);
@@ -599,8 +629,9 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,int depth)
   {
     vector<pair<Partition,unsigned> > full_partitions = partitions;
 
-    //std::cerr<<"Analyzing "<<masks.size()<<" masks."<<std::endl;;
+    //cerr<<"\nAnalyzing "<<masks.size()<<" masks."<<endl;;
     list<valarray<bool> > new_good_masks;
+    list<valarray<bool> > new_unit_masks;
 
     // get sub-partitions for each mask
     vector<Partition> all_sub_partitions;
@@ -610,46 +641,65 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,int depth)
       vector<pair<Partition,unsigned> > sub_partitions = get_Ml_partitions_and_counts(sample,l,*m);
     
       // match up sub-partitions and full partitions
-      //      sub_partitions = unimplied_partitions(full_partitions, sub_partitions);
+      vector<int> parents = match(full_partitions,sub_partitions);
+
+      // check for unimplied partitions, or badly-rooted partitions.
+      double rooting=1.0;
+      for(int i=0;i<parents.size();i++) {
+	double r = 1;
+	if (parents[i] == -1) {
+	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group1);
+	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group2);
+	  r = 0;
+	}
+	else {
+	  r = full_partitions[parents[i]].second/double(sub_partitions[i].second);
+	  assert(r <= 1.0);
+	}
+	rooting = std::min(rooting,r);
+      }
 
       // check if any of our branches make this branch badly rooted
-      if (false)
+      if (rooting < min_rooting)
 	new_good_masks.push_front(*m);
 
       // store the new sub-partitions we found
       partitions.insert(partitions.end(),sub_partitions.begin(),sub_partitions.end());
     }
 
+    old_masks.insert(old_masks.end(),masks.begin(),masks.end());
     masks.clear();
+    masks = new_unit_masks;
+
+    // FIXME!! We need to find a way to consider only masks which are
+    // 'close' togther - defined in terms of the number and support 
+    // of branches that are in the middle.
 
     // fixme - do a convolution here - e.g. 2->1+1 3->1+2 4 ->1+3,2+2
     // otherwise we do 1  - 1,2 - 1,2,3,4 - 1,2,3,4,5,6,7,8
     good_masks.insert(good_masks.end(),new_good_masks.begin(),new_good_masks.end());
     foreach(i,new_good_masks)
       foreach(j,good_masks)
-        add_unique(masks,*i and *j);
+        if (not equal(*i,*j))
+          add_unique(masks,old_masks,*i and *j);
 
     // what will we operate on next time? 
     // - perhaps change to look at pairs of branches connected to a node
     // - perhaps depth 3 could be pairs of branches of distance 1
     // - should I use the M[0.5] tree here, or the M[l] tree?
     if (iterations < depth-1) {
-      list<valarray<bool> > temp;
       foreach(i,new_good_masks)
 	foreach(j,unit_masks)
-	  add_unique(temp,*i and *j);
-      masks = temp;
+	  add_unique(masks,old_masks,*i and *j);
     }
   }
-
-
 
   return partitions;
 }
 
 
 vector<Partition> 
-get_Ml_sub_partitions(const tree_sample& sample,double l,int depth) 
+get_Ml_sub_partitions(const tree_sample& sample,double l,double min_rooting,int depth) 
 {
-  return remove_counts(get_Ml_sub_partitions_and_counts(sample,l,depth));
+  return remove_counts(get_Ml_sub_partitions_and_counts(sample,l,min_rooting,depth));
 }
