@@ -1,10 +1,13 @@
--20. Find out how much of a time penalty we are getting from
-     calculating leaf_partition_sets....
+-21. How can c100 have more sub-partitions that c99.5?
+
+-20. We spend 1/2 the time reading in trees calculating leaf_partition sets.
+
+     Can we compute sets and regular bit-vectors lazily?
 
      Find out how much slowdown we get in alignment-gild if we don't
-     compute them...
+     compute partition sets...
 
--19. output name of tree file we analyzed!
+-19. Output name of tree file we analyzed!
 
 -18. Compare estimates w/ MrBayes on the globin example.
 
@@ -17,26 +20,11 @@
      e. Allow codon classes in other places.
      f. Check!
 
--16. Computing PP(branch & mask) is O(B*T), so doing it for every
-     branch in M[0.5] is O(B^2 * T).  This compares unfavorably with 
-     just trying to find the M[l] sub-partitions, which is only O(B*T*[1+log(P)]).
+-16. Plot the number of supported branches for EVERY level.  
+     Then we could graph stuff, the graph wouldn't depend
+       so much on the EXACT cutoff.
 
-     Actually, we should find all the sub-partitions JUST by finding the M[0.5]
-     sub-partitions.  The PROBLEM is that we throw partitions which are implied by
-     other M[l] sub-partitions away.
-
-     So, we compute M[0.5], then M[0.5 & mask] for each mask.
-     We will automatically calculate PP for each sub-partitions, so we should use it.
-     Then, we don't need to calculate M[l] for l>0.5.
-
-     In case of searching for badly-rooted branches, perhaps we should
-     perhaps consider:
-
-     max over sub-partitions (A|B) of P( [A|B]-X )/max( P([A+X|B]) , P([A|X+B]) )
-
-     We could actually plot the number of supported branches for EVERY
-     l.  Then we could graph stuff, and the wouldn't depend so much on
-     the EXACT cutoff.
+     Also, find the minimal branch set that implies the sub-partitions.
 
 -15. Sub-class DPengine w/ transition matrix implemented as
   i) Matrix  (as now)
@@ -94,6 +82,7 @@ We can avoid TWO malloc/copy/dealloc.
 	    It SHOULD cost about 251*96*(48/6) = 140k.
 	
 -8. Sanitize use of MAP_tree in tree-dist-compare when the count is 1.   
+    Report a median when there are a number of trees w/ the same count?
 
 -7. Benchmarking of mixing... 
   a) try with alignment fixed
@@ -390,6 +379,14 @@ the prior, because we never want to use it  differently.
        * Store leaf-sized bitmasks per branch.
        * Store leaf names once per tree_sample, not per-tree.
        * Reduces 29Mb -> 6Mb (factor of 5 decrease)
+
+[DONE] Call get_Ml_sub_partitions_and_counts only ONCE.
+       * pull out combinations of badly rooted branches.
+       * pull out (A,B):-X as (-A-X) and (-B-X)
+       * cache computed PP for all sub-partitions,
+       * find M[l] branches at each level l in the cache
+
+
 
 *IDEAS*
 
