@@ -459,6 +459,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
     if (iterations%subsample == 0) {
       bool show_alignment = (iterations%(10*subsample) == 0);
+      if (not (P.IModel().full_tree)) show_alignment = false;
       print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag,show_alignment);
     }
 
