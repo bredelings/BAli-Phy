@@ -24,7 +24,7 @@ Work/setup:
 	@touch Work/setup
 	@echo "done."
 
-Results/analysis: Results/Report Work/tc Results/SRQ.plot Results/sum.plot \
+Results/analysis: Results/Report Results/tc Results/SRQ.plot Results/sum.plot \
 		  ${TREES:%=Results/%.tree} ${TREES:%=Results/%.topology} \
                   Results/sumi.plot Work/trees.from.${SKIP}+${SIZE} \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
@@ -55,7 +55,7 @@ Work/%.from.${SKIP}+${SIZE}: Work/%.from.${SKIP}
 Work/%.from.${SKIP}+: Work/%.from.${SKIP}
 	@cp $< $@ 
 
-Work/tc : Work/trees
+Results/tc : Work/trees
 	@echo -e "Summarizing topology distribution... \c";
 	@tree-dist-compare --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99,1.0 --sub-partitions > $@
 	@echo "done."
@@ -103,7 +103,7 @@ Results/%.tree : Results/%.topology Work/trees
 	@echo "Calculating branch lengths for $* tree."
 	@tree-mean-lengths $< --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@ 2>/dev/null
 
-Results/MAP.topology: Work/tc Work/setup
+Results/MAP.topology: Results/tc Work/setup
 	@pickout MAP-0 < $< > $@
 
 Work/MAP-unordered.fasta: out Work/setup
@@ -123,7 +123,7 @@ Results/%-AU.prob: Work/%-unordered.fasta Work/samples-${SKIP}+${SIZE} Results/M
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
 	alignment-draw Results/$*.fasta Results/$*-AU.prob --width 100 > $@
 
-Results/c%.topology: Work/tc Work/setup
+Results/c%.topology: Results/tc Work/setup
 	@pickout $*-consensus-0 < $< > $@ 
 	@test -s $@
 
