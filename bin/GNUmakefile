@@ -24,9 +24,9 @@ Work/setup:
 	@touch Work/setup
 	@echo "done."
 
-Results/analysis: Results/Report Results/tc Results/SRQ.plot Results/sum.plot \
+Results/analysis: Results/Report Results/tc Results/SRQ.plot Results/sum.plot Results/sumi.plot\
 		  ${TREES:%=Results/%.tree} ${TREES:%=Results/%.topology} \
-                  Results/sumi.plot Work/trees.from.${SKIP}+${SIZE} \
+                  Results/clevels.plot Work/trees.from.${SKIP}+${SIZE} \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
 	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration ${SKIP}." > Results/analysis
 	@echo "Finished:  $$(date)" >> Results/analysis
@@ -59,6 +59,12 @@ Results/tc : Work/trees
 	@echo -e "Summarizing topology distribution... \c";
 	@tree-dist-compare --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99,1.0 --sub-partitions > $@
 	@echo "done."
+
+Results/clevels.plot : Results/tc
+	@echo -e "Generating consensus levels plot ... \c"
+	@pickout.pl LOD,full < $< > $@
+	@echo "done."
+
 
 # If there are no Substitution parameters, don't bail out
 

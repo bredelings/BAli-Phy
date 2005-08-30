@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <set>
 #include <map>
 #include <cmath>
 #include <fstream>
@@ -29,6 +30,10 @@ namespace po = boost::program_options;
 using po::variables_map;
 
 using namespace std;
+
+using std::cout;
+using std::cerr;
+using std::endl;
 
 // What if everything in 'split' is true?
 // What if everything in 'split' is true, but 1 taxa?
@@ -364,10 +369,8 @@ vector<Partition> Ml_min_Hull(const vector<Partition>& full,const vector<Partiti
 }
 
 vector<Partition> 
-get_Ml_partitions(const vector<pair<Partition,unsigned> >& sp, double l, unsigned total)
+get_Ml_partitions(const vector<pair<Partition,unsigned> >& sp, unsigned min_count)
 {
-  unsigned min_count = std::min(1+(unsigned)(total*l),total);
-
   vector<Partition> partitions;
   for(int i=0;i<sp.size();i++) {
     if (sp[i].second >= min_count)
@@ -377,6 +380,26 @@ get_Ml_partitions(const vector<pair<Partition,unsigned> >& sp, double l, unsigne
   return partitions;
 }
 
+
+vector<Partition> 
+get_Ml_partitions(const vector<pair<Partition,unsigned> >& sp, double l, unsigned total)
+{
+  unsigned min_count = std::min(1+(unsigned)(total*l),total);
+
+  return get_Ml_partitions(sp,min_count);
+}
+
+using std::set;
+vector<unsigned> get_Ml_levels(const vector<pair<Partition,unsigned> >& sp)
+{
+  set<unsigned> levels;
+  for(int i=0;i<sp.size();i++)
+    levels.insert(sp[i].second);
+
+  vector<unsigned> levels2(levels.size());
+  copy(levels.begin(),levels.end(),levels2.begin());
+  return levels2;
+}
 
 // Is there a way to choose branches that would imply sub-partitions that are
 // not in sub because other full branches imply them?  
@@ -399,6 +422,43 @@ vector<Partition> Ml_max_Hull(const vector<Partition>& full,const vector<Partiti
 
   return full2;
 }
+
+
+void show_level(const tree_sample& tree_dist,
+		unsigned level,
+		const vector<Partition>& skeleton,
+		const vector<pair<Partition,unsigned> >& all_partitions,
+		bool show_sub)
+{
+  const unsigned total = tree_dist.size();
+
+  cout.unsetf(ios::fixed | ios::showpoint);
+	
+  vector<Partition> sub = get_Ml_partitions(all_partitions,level);
+
+  vector<Partition> full = get_full_partitions(sub);
+
+  SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
+
+  double fraction = double(level)/total;
+  double fraction2 = fraction;
+  if (level == total) fraction2 = double(level)/(0.5+level);
+
+  double LOD = log10(statistics::odds(fraction2));
+
+  cout<<"   level = "<<fraction*100
+      <<"   LOD = "<<LOD
+      <<"   full = "<<full.size();
+  
+  if (show_sub) {
+    vector<Partition> full_hull = Ml_min_Hull(skeleton,sub);
+    SequenceTree consensus_hull = get_mf_tree(tree_dist.names(),full_hull);
+    
+    cout<<"   sub = "<<sub.size();
+    cout<<"   sub-branches = "<<consensus_hull.n_branches() - consensus_hull.n_leafbranches();
+  }
+}
+
 
 int main(int argc,char* argv[]) 
 { 
@@ -660,7 +720,7 @@ int main(int argc,char* argv[])
 	cout<<"   full = "<<full.size()<<"/"<<MAP_trees[i].n_leaves()-3;
 	if (args.count("sub-partitions")) {
 	  cout<<"   sub = "<<sub.size();
-	  cout<<"   full-sub = "<<consensus_hull.n_branches() - consensus_hull.n_leafbranches();
+	  cout<<"   sub-branches = "<<consensus_hull.n_branches() - consensus_hull.n_leafbranches();
 	}
 	cout<<"   PP = "<<tree_dists[i].PP(full)<<"\n";;
 	cout<<"\n";
@@ -673,6 +733,23 @@ int main(int argc,char* argv[])
       }
       cout<<std::endl;
     }
+
+    //----------- display M[l] consensus levels ----------//
+    std::cout.precision(4);
+    cout<<"\n\nConsensus levels:\n";
+    for(int i=0;i<tree_dists.size();i++) {
+      vector<unsigned> levels = get_Ml_levels(all_partitions[i]);
+
+      bool show_sub = args.count("sub-partitions");
+
+      for(int j=0;j<levels.size();j++) {
+	cout<<"\n";
+	if (tree_dists.size() > 1)  cout<<" sample = "<<i;
+	show_level(tree_dists[i],levels[j],full_partitions[i][0],all_partitions[i],show_sub);
+	cout<<endl;
+      }
+    }
+
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
