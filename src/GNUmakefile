@@ -74,9 +74,13 @@ ifeq (${PROF},y)
   DEBUG   += pg
 endif
 
+ifeq (${STATIC},prefer)
+  .LIBPATTERNS = lib%.a lib%.dylib lib%.so
+endif
+
 ifeq (${STATIC},y)
   .LIBPATTERNS = lib%.a
-  LDFLAGS += -static  -pthread
+  LDFLAGS += -static -pthread
 else
   LDFLAGS += -rdynamic
 endif
