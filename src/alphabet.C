@@ -49,7 +49,7 @@ int alphabet::operator[](const string& l) const {
   }
 
   // Check for unknown
-  if (l == "?")
+  if (l == unknown_letter)
     return alphabet::unknown;
 
   // We don't have this letter!
@@ -76,9 +76,9 @@ string alphabet::lookup(int i) const {
   if (i == gap)
     return gap_letter;
   else if (i == not_gap)
-    return missing.back();
+    return missing.front();
   else if (i == unknown)
-    return "?";
+    return unknown_letter;
 
   assert(0 <=i && i < data.size());
   return data[i];
@@ -111,7 +111,7 @@ valarray<double> alphabet::get_frequencies_from_counts(const valarray<double>& c
 
 
 alphabet::alphabet(const string& s,const string& letters)
-  :gap_letter("-"),name(s) 
+  :name(s),gap_letter("-"),unknown_letter("?")
 {
   for(int i=0;i<letters.length();i++)
     data.push_back(string(1U,s[i]));
@@ -120,7 +120,7 @@ alphabet::alphabet(const string& s,const string& letters)
 }
 
 alphabet::alphabet(const string& s,const string& letters,const string& m)
-  :gap_letter("-"),name(s) 
+  :name(s),gap_letter("-"),unknown_letter("?")
 {
   for(int i=0;i<letters.length();i++)
     data.push_back(string(1U,letters[i]));
@@ -132,7 +132,7 @@ alphabet::alphabet(const string& s,const string& letters,const string& m)
 }
 
 alphabet::alphabet(const string& s,const vector<string>& letters)
-  :gap_letter("-"),name(s) 
+  :name(s),gap_letter("-"),unknown_letter("?")
 {
   for(int i=0;i<letters.size();i++)
     data.push_back(letters[i]);
@@ -141,7 +141,7 @@ alphabet::alphabet(const string& s,const vector<string>& letters)
 }
 
 alphabet::alphabet(const string& s,const vector<string>& letters,const vector<string>& m) 
-  :gap_letter("-"),name(s) 
+  :name(s),gap_letter("-"),unknown_letter("?")
 {
   for(int i=0;i<letters.size();i++)
     data.push_back(letters[i]);
@@ -268,8 +268,16 @@ valarray<double> Triplets::get_frequencies_from_counts(const valarray<double>& c
 Triplets::Triplets(const Nucleotides& a)
   :alphabet(string("Triplets of ")+a.name,getTriplets(a)),N(a)
 {
-  missing.back() = "***";
-  gap_letter = "---";
+  // compute our 'missing' letters
+  missing.resize(N->missing.size());
+  for(int i=0;i<missing.size();i++)
+    missing[i] = N->missing[i]+N->missing[i]+N->missing[i];
+
+  // compute our 'gap' letter
+  gap_letter = N->gap_letter + N->gap_letter + N->gap_letter;
+
+  // compute our 'unknown' letter
+  unknown_letter = N->unknown_letter + N->unknown_letter + N->unknown_letter;
 
   setup_sub_nuc_table();
 }
@@ -277,8 +285,16 @@ Triplets::Triplets(const Nucleotides& a)
 Triplets::Triplets(const string& s,const Nucleotides& a)
   :alphabet(s,getTriplets(a)),N(a)
 {
-  missing.back() = "***";
-  gap_letter = "---";
+  // compute our 'missing' letters
+  missing.resize(N->missing.size());
+  for(int i=0;i<missing.size();i++)
+    missing[i] = N->missing[i]+N->missing[i]+N->missing[i];
+
+  // compute our 'gap' letters
+  gap_letter = N->gap_letter + N->gap_letter + N->gap_letter;
+
+  // compute our 'unknown' letter
+  unknown_letter = N->unknown_letter + N->unknown_letter + N->unknown_letter;
 
   setup_sub_nuc_table();
 }
