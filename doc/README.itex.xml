@@ -35,6 +35,20 @@
       </sect3>
 
       <sect3>
+	<title>Software requirements</title>
+
+	<para>Requirements for compiling BAli-Phy are the following software packages: 
+
+	<itemizedlist>
+	  <listitem><para> A modern C++ compiler (<ulink url="http://gcc.gnu.org">GCC</ulink> version 3.4 and 4.0 are known to work)</para></listitem>
+	  <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>)</para></listitem>
+	  <listitem><para> The BOOST C++ Library (<ulink
+	  url="http://www.boost.org">BOOST</ulink>) version 1.32 or higher.</para></listitem>
+	</itemizedlist>
+	</para>
+      </sect3>
+
+      <sect3>
 	<title>Operating system requirements</title>
 
 	<sect4>
@@ -59,34 +73,36 @@
 	<sect4>
 	  <title>Mac OS X</title>
 
-	  <para>You should probably have Mac OS version 10.4 (Tiger)
-         or higher.  You might be able to compiler on version 10.1 or
-         later if you install a recent version of gcc instead of using
-         the gcc shipped by Apple.</para>
+          <para>Although Mac OS X ships with <application>GCC</application>, 
+          only OS X version 10.4 (Tiger) contains a version that is
+          recent enough to successfully compile
+          <application>bali-phy</application>.
+          In addition, the version of <application>GCC</application>
+          that ships with Tiger contains a bug that makes it
+          miscompile <application>bali-phy</application>.  To avoid
+          this, you can install XCode 2.1, which contains an updated
+          version of <application>GCC</application>.
+          </para>
 
-	  <para>On Mac OS X you must first install <ulink
-	  url="http://fink.sourceforge.net">fink</ulink>.  Fink
-	  provides Linux software for Mac OS X, and includes GCC,
-	  GNU make, and other packages.</para>
+          <para>If you have an earlier version of Mac OS X, or you
+          cannot install XCode 2.1 because you lack administrator
+          priveleges, you can compile and install GCC using the
+          sources available from the GCC website.  This GCC does not
+          contain Apple's local modifications, but will work to
+          compile <application>bali-phy</application>.</para>
+
+	  <para>You may use <ulink url="http://fink.sourceforge.net">fink</ulink> to install 
+	  the GSL library and include files.  Fink provides Linux
+	  software for Mac OS X, and includes GCC, GNU make, and other
+	  packages.  However, the BOOST libraries that come with fink
+	  will not work, because they are compiled with GCC 3.3.  You
+	  must therefore compile the BOOST libraries yourself, using
+	  GCC 3.4 or higher.</para>
 
 	  <para>You can access the command line on OS X by running the
 	  Terminal application.</para>
 	</sect4>
 
-      </sect3>
-
-      <sect3>
-	<title>Software requirements</title>
-
-	<para>Requirements for compiling BAli-Phy are the following software packages: 
-
-	<itemizedlist>
-	  <listitem><para> A modern C++ compiler (<ulink url="http://gcc.gnu.org">GCC</ulink> version 3.4 and 4.0 are known to work)</para></listitem>
-	  <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>)</para></listitem>
-	  <listitem><para> The BOOST C++ Library (<ulink
-	  url="http://www.boost.org">BOOST</ulink>) version 1.32 or higher.</para></listitem>
-	</itemizedlist>
-	</para>
       </sect3>
 
 
@@ -139,7 +155,7 @@
       you make a <filename>~/bin/bali-phy/</filename> directory, and
       copy the bali-phy executable to the
       <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename>.
-      This will allow the ./bin/sampler.sh script to find your
+      This will allow the ./bin/bali-phy.sh script to find your
       executable for use with the SGE (Sun Grid Engine) environment. 
       </para>
     </sect2>
@@ -164,11 +180,11 @@
     <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename>
     and run (in a bourne-shell)
     
-<screen><prompt>%</prompt> <userinput>VERSION=<replaceable>version</replaceable> CLASS=<replaceable>class</replaceable> sampler.sh <replaceable>sequence-file</replaceable></userinput>
+<screen><prompt>%</prompt> <userinput>VERSION=<replaceable>version</replaceable> CLASS=<replaceable>class</replaceable> bali-phy.sh <replaceable>sequence-file</replaceable></userinput>
 </screen>
     </para>  
 
-    <para>The wrapper script <command>sampler.sh</command>
+    <para>The wrapper script <command>bali-phy.sh</command>
     will run <command>bali-phy</command> for you.  It will also create a
     unique directory for each invocation of the program, and put
     output files in this directory. The directories will be named
