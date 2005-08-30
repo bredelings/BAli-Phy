@@ -1,8 +1,9 @@
 # Mac: search for libraries in the fink path
 .LIBPATTERNS = lib%.dylib lib%.so lib%.a
-vpath %.dylib /sw/lib
-vpath %.so /sw/lib
-vpath %.a /sw/lib
+
+vpath %.dylib ${BASE:%=%/lib}
+vpath %.so ${BASE:%=%/lib}
+vpath %.a ${BASE:%=%/lib}
 
 program: bali-phy
 
@@ -214,7 +215,7 @@ SHELL = /bin/sh
 MAKEFILES = GNUmakefile
 
 includes += /usr/local/include
-includes += /sw/include
+includes += ${BASE:%=%/include}
 includes += ../include/
 includes += .
 
