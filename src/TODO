@@ -1,5 +1,3 @@
--21. How can c100 have more sub-partitions that c99.5?
-
 -20. We spend 1/2 the time reading in trees calculating leaf_partition sets.
 
      Can we compute sets and regular bit-vectors lazily?
