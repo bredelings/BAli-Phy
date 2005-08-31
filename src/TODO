@@ -18,11 +18,7 @@
      e. Allow codon classes in other places.
      f. Check!
 
--16. Plot the number of supported branches for EVERY level.  
-     Then we could graph stuff, the graph wouldn't depend
-       so much on the EXACT cutoff.
-
-     Also, find the minimal branch set that implies the sub-partitions.
+-16. Find the minimal branch set that implies the sub-partitions.
 
 -15. Sub-class DPengine w/ transition matrix implemented as
   i) Matrix  (as now)
@@ -39,7 +35,7 @@ We can avoid TWO malloc/copy/dealloc.
      a) one program estimates MAP and M[l] topologies for a single tree sample
      b) another program bootstraps support for partitions, possibly from
         multiple tree samples.
-     c) in the bootstrap program, store are list of functions to evaluate on each
+     c) in the bootstrap program, store a list of functions to evaluate on each
         bootstrap sample.  That way, we only need to generate the samples once.
 
 -12. Make a hash function for sub-partitions that is 
@@ -98,6 +94,8 @@ We can avoid TWO malloc/copy/dealloc.
   a) can we avoid copying G into G2 - can we construct it in place?
   b) if we put the check into #ifndef NDEBUG, does this gain us anything?
   c) algorithm currently does more or less S*S*(S+NS) multiply-and-add's.
+
+-4. Actually do the MCMCMC T thingy - how much slowdown does this give?
 
 -3. Think more carefully about using walk_tree_path
     when changing the topology...
@@ -384,6 +382,9 @@ the prior, because we never want to use it  differently.
        * cache computed PP for all sub-partitions,
        * find M[l] branches at each level l in the cache
 
+[DONE] Plot the number of supported branches for EVERY level.  
+       Then we could branches vs level, which is less sensitive
+        than looking at presence or absences at a SINGLE level.
 
 
 *IDEAS*
