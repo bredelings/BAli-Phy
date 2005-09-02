@@ -218,7 +218,6 @@ tools/hat: rng.o ${LINKLIBS}
 SHELL = /bin/sh
 MAKEFILES = GNUmakefile
 
-includes += /usr/local/include
 includes += ${BASE:%=%/include}
 includes += ../include/
 includes += .
