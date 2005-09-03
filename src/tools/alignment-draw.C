@@ -516,7 +516,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<"\n";
     cout<<"Examples:\n";
     cout<<"    Rainbow+contrast+fade\n";
-    cout<<"    AA+constrast+fade+fade+fade+fade\n";
+    cout<<"    AA+contrast+fade+fade+fade+fade\n";
     exit(0);
   }
 
