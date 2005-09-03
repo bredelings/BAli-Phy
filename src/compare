@@ -498,9 +498,16 @@ user    0m3.370s
 sys     0m0.020s
 
 ---------------------------
+[dna]
+
+normal = 4.0.1 (Debian 4.0.1-2)
+cvs    = 4.1.0 20050830 (experimental)
 
 EF-Tu/12d.fasta --gaps star --iterations 10 --seed 0 >out 2>err
+
 1215-NDEBUG			0m4.520s
+1215-sse2-vect-NDEBUG		0m4.650s
+
 1215-cvs-NDEBUG			0m3.420s
 1215-cvs-noweb-NDEBUG		0m3.380s
 1215-cvs-nounroll-NDEBUG	0m4.410s
@@ -511,10 +518,16 @@ EF-Tu/12d.fasta --gaps star --iterations 10 --seed 0 >out 2>err
 1215-cvs-l2-move-NDEBUG		0m3.790s
 1215-cvs-l2-all-NDEBUG		0m3.780s
 1215-cvs-l2+iv-NDEBUG		0m3.780s
+1215-cvs-sse2-NDEBUG		0m3.460s
+1215-cvs-sse2-vect-NDEBUG	0m3.520s
 
 EF-Tu/48b.fasta --gaps star --iterations 5 --seed 0 >out 2>err
+
 1113-NDEBUG			0m17.210s  [BOOST 1.32]
+
 1215-NDEBUG			0m21.360s
+1215-sse2-vect-NDEBUG		0m21.870s
+
 1215-cvs-NDEBUG 		0m17.660s
 1215-cvs-noweb-NDEBUG		0m17.610s
 1215-cvs-nounroll-NDEBUG	0m21.760s
@@ -525,9 +538,14 @@ EF-Tu/48b.fasta --gaps star --iterations 5 --seed 0 >out 2>err
 1215-cvs-l2-move-NDEBUG		0m18.620s
 1215-cvs-l2-all-NDEBUG		0m18.670s
 1215-cvs-l2+iv-NDEBUG		0m18.660s
+1215-cvs-sse2-NDEBUG		0m17.730s
+1215-cvs-sse2-vect-NDEBUG	0m18.140s
 
 EF-Tu/12d.fasta  --iterations 5 --seed 0 >out 2>err
+
 1215-NDEBUG			0m39.100s
+1215-sse2-vect-NDEBUG		0m43.340s
+
 1215-cvs-NDEBUG			0m41.430s
 1215-cvs-noweb-NDEBUG		0m41.700s
 1215-cvs-nounroll-NDEBUG	0m52.130s
@@ -538,5 +556,7 @@ EF-Tu/12d.fasta  --iterations 5 --seed 0 >out 2>err
 1215-cvs-l2-move-NDEBUG		0m43.260s
 1215-cvs-l2-all-NDEBUG		0m43.340s
 1215-cvs-l2+iv-NDEBUG		0m43.010s
+1215-cvs-sse2-NDEBUG		0m44.860s
+1215-cvs-sse2-vect-NDEBUG	0m44.160s
 -----------------------
 
