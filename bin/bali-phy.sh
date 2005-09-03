@@ -18,9 +18,7 @@ else
 fi
 
 #---- find out which run class we are in ----
-if [ "$CLASS" ]; then
-    true;
-else
+if [ ! "$CLASS" ]; then
     CLASS=normal
 fi
 
@@ -37,8 +35,12 @@ mkdir $DIR
 cd $DIR
 
 #------ Link in the data directory ------
-if [ ! -e Data ] ; then
-    ln -sf ~/Devel/Sampler/Data
+if [ ! "$BALI_PHY_DATA" ] ; then
+    echo -e "Warning: BALI_PHY_DATA is not set:\n  * specify --data-dir <dir> on command line."
+elif [ ! -e "$BALI_PHY_DATA" ] ; then
+    echo "Warning: Data directory BALI_PHY_DATA='${BALI_PHY_DATA}' does not exist."
+else
+    ln -sf ${BALI_PHY_DATA} Data;
 fi
 
 #--------- Determine the Version --------#
