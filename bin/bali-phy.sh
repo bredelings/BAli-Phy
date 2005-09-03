@@ -60,8 +60,9 @@ fi
 
 #------ start the sampler with the specified args ----
 qsub=$(which qsub)
-if [ "$qsub" ] ; then
+if [ -x "$qsub" ] ; then
     qsub -o out -e err ~/bin/run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@"
 else
     (nohup ~/bin/run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@" >out 2>err &)
 fi
+
