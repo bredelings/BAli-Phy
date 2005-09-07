@@ -390,11 +390,15 @@ get_Ml_partitions(const vector<pair<Partition,unsigned> >& sp, double l, unsigne
 }
 
 using std::set;
-vector<unsigned> get_Ml_levels(const vector<pair<Partition,unsigned> >& sp)
+vector<unsigned> get_Ml_levels(const vector<pair<Partition,unsigned> >& sp,unsigned size)
 {
   set<unsigned> levels;
-  for(int i=0;i<sp.size();i++)
+  levels.insert(size/2+1);
+
+  for(int i=0;i<sp.size();i++) {
     levels.insert(sp[i].second);
+    levels.insert(std::min(sp[i].second+1,size));
+  }
 
   vector<unsigned> levels2(levels.size());
   copy(levels.begin(),levels.end(),levels2.begin());
@@ -738,7 +742,7 @@ int main(int argc,char* argv[])
     std::cout.precision(4);
     cout<<"\n\nConsensus levels:\n";
     for(int i=0;i<tree_dists.size();i++) {
-      vector<unsigned> levels = get_Ml_levels(all_partitions[i]);
+      vector<unsigned> levels = get_Ml_levels(all_partitions[i],tree_dists[i].size());
 
       bool show_sub = args.count("sub-partitions");
 
