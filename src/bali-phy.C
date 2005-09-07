@@ -326,9 +326,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("align", value<string>(),"file with sequences and initial alignment")
     ("randomize-alignment","randomly realign the sequences before use.")
     ("tree",value<string>(),"file with initial tree")
-    ("set",value<vector<string> >()->multitoken(),"set parameter=<value>")
-    ("fix",value<vector<string> >()->multitoken(),"fix parameter[=<value>]")
-    ("unfix",value<vector<string> >()->multitoken(),"un-fix parameter[=<value>]")
+    ("set",value<vector<string> >()->composing(),"set parameter=<value>")
+    ("fix",value<vector<string> >()->composing(),"fix parameter[=<value>]")
+    ("unfix",value<vector<string> >()->composing(),"un-fix parameter[=<value>]")
     ("frequencies",value<string>(),"initial frequencies: 'uniform','nucleotides', or a comma-separated vector.") 
     ;
 
