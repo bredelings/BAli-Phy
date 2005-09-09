@@ -119,7 +119,7 @@ void run_analysis(const variables_map& args) {
 
     check_alignment(SA,T,"Alignment and topology are inconsistent!");
 
-    Partition part = partition_from_names(T.get_sequences(),pnames);
+    Partition part = full_partition_from_names(T.get_sequences(),pnames);
 
     bool exists = implies(T,part);
     //std::cerr << part << "\n";    

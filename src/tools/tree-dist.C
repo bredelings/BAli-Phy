@@ -15,18 +15,37 @@ using std::endl;
 using std::cerr;
 using std::cout;
 
-Partition partition_from_names(const vector<string>& allnames, const vector<string>& inames) 
+valarray<bool> group_from_names(const vector<string>& names,const vector<string>& subset)
 {
-  valarray<bool> pbits(false,allnames.size());
+  assert(subset.size() <= names.size());
 
-  for(int i=0; i<inames.size(); i++) {
-    if (includes(allnames,inames[i]))
-      pbits[find_index(allnames,inames[i])] = true;
+  valarray<bool> group(false,names.size());
+
+  for(int i=0; i<subset.size(); i++) {
+    if (includes(names,subset[i]))
+      group[find_index(names,subset[i])] = true;
     else
-      throw myexception()<<"Can't find taxon '"<<inames[i]<<"' in taxa set.";
+      throw myexception()<<"Can't find taxon '"<<subset[i]<<"' in taxa set.";
   }
 
-  return Partition(allnames,pbits);
+  return group;
+}
+
+Partition full_partition_from_names(const vector<string>& names, const vector<string>& names1) 
+{
+  valarray<bool> group1 = group_from_names(names,names1);
+
+  return Partition(names,group1);
+}
+
+
+Partition partition_from_names(const vector<string>& names, const vector<string>& names1,
+			       const vector<string>& names2)
+{
+  valarray<bool> group1 = group_from_names(names,names1);
+  valarray<bool> group2 = group_from_names(names,names2);
+
+  return Partition(names,group1,group1 or group2);
 }
 
 
@@ -68,6 +87,46 @@ Partition::Partition(const vector<string>& n,const valarray<bool>& g,const valar
   assert(empty(group1 and group2));
 }
 
+Partition::Partition(const string& line) 
+{
+  vector<string> all_names = split(line,' ');
+
+  names.clear();
+  vector< vector<string> > names_(3);
+
+  int group = 0;
+  for(int i=0; i< all_names.size(); i++) 
+  {
+    if (all_names[i] == "|") {
+      assert(group == 0);
+      group++; 
+    }
+    else if (all_names[i] == "[") {
+      assert(group == 1);
+      group++;
+    }
+    else if (all_names[i] == "]") {
+      assert(group == 2);
+      group++;
+    }
+    else {
+      names_[group].push_back(all_names[i]);
+      names.push_back(all_names[i]);
+    }
+  }
+
+  std::sort(names.begin(),names.end());
+  group1.resize(names.size());
+  group2.resize(names.size());
+  
+  group1 = group_from_names(names,names_[0]);
+  group2 = group_from_names(names,names_[1]);
+  assert(empty(group1 and group2));
+}
+
+
+
+
 bool informative(const Partition& p) {
   return n_elements(p.group1) > 1 and n_elements(p.group2) > 1;
 }
@@ -79,14 +138,6 @@ SequenceTree standardized(const string& t) {
   return T;
 }
   
-SequenceTree standardized(const string& t,const vector<string>& remove) {
-  SequenceTree T;
-  T.parse(t);
-  standardize(T,remove);
-  return T;
-}
-
-
 //FIXME - return mapping of leaf nodes?  Of all nodes?
 void standardize(SequenceTree& T) {
 
@@ -97,12 +148,6 @@ void standardize(SequenceTree& T) {
   vector<int> mapping = compute_mapping(T.get_sequences(),names);
 
   T.standardize(mapping);
-}
-
-void standardize(SequenceTree& T,const vector<string>& remove) {
-  for(int i=0;i<remove.size();i++)
-    delete_node(T,remove[i]);
-  standardize(T);
 }
 
 std::ostream& operator<<(std::ostream& o, const Partition& P) 
@@ -355,7 +400,7 @@ tree_sample::topology_record::topology_record(const SequenceTree& T,
 }
 
 
-tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int skip,int max,int subsample) 
+tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample) 
 {
   int lines=0;
   string line;
@@ -374,7 +419,7 @@ tree_sample::tree_sample(std::istream& file,const vector<string>& remove,int ski
     SequenceTree T;
     try {
       // This should make all the branch & node numbers the same if the topology is the same
-      T = standardized(line,remove);
+      T = standardized(line);
     }
     catch (std::exception& e) {
       cerr<<"Exception: "<<e.what()<<endl;

@@ -16,10 +16,8 @@
 #include "util.H"
 
 SequenceTree standardized(const std::string& t);
-SequenceTree standardized(const std::string& t,const std::vector<std::string>& remove);
 
 void standardize(SequenceTree& T);
-void standardize(SequenceTree& T,const std::vector<std::string>& remove);
 
 /// Represents a division of a subset of leaf taxa into 2 groups
 struct Partition {
@@ -51,9 +49,13 @@ struct Partition {
 
   /// Create a partition of taxa present in @mask (g=0->g1,g=1->g2) 
   Partition(const std::vector<std::string>& n,const std::valarray<bool>& g,const std::valarray<bool>& mask);
+  /// Create a partition from its description
+  Partition(const std::string& line);
 };
 
-Partition partition_from_names(const std::vector<std::string>&,const std::vector<std::string>&);
+Partition full_partition_from_names(const std::vector<std::string>&,const std::vector<std::string>&);
+
+Partition partition_from_names(const std::vector<std::string>&,const std::vector<std::string>&,const std::vector<std::string>&);
 
 /// are both partitions the same?
 bool operator==(const Partition& p1, const Partition& p2);
@@ -90,7 +92,7 @@ bool implies(const T1& T,const std::vector<T2>& partitions)
 /// Which branch in @T implies partition @p?
 int which_partition(const SequenceTree& T, const Partition& p);
 
-/// Output the partition P to stream o (requires 'names' to be set)
+/// Write the partition P to stream o (requires 'names' to be set)
 std::ostream& operator<<(std::ostream& o, const Partition& P);
 
 bool informative(const Partition& p);
@@ -147,7 +149,7 @@ public:
   double PP(const Partition& P) const;
   double PP(const std::vector<Partition>&) const;
 
-  tree_sample(std::istream&,const std::vector<std::string>& remove,int skip=0,int max=-1,int subsample=1);
+  tree_sample(std::istream&,int skip=0,int max=-1,int subsample=1);
 };
 
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);

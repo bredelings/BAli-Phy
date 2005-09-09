@@ -92,7 +92,7 @@ int main(int argc,char* argv[])
     if (args.count("max"))
       max = args["max"].as<int>();
 
-    tree_sample tree_dist(std::cin,vector<string>(),skip,max);
+    tree_sample tree_dist(std::cin,skip,max);
 
 
     // Compute info for plots

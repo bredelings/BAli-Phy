@@ -1,9 +1,13 @@
 #ifndef BOOTSTRAP_H
 #define BOOTSTRAP_H 
 
+#include <vector>
 #include <valarray>
 #include <cmath>
 #include "rng.H"
+
+std::vector<int> bootstrap_sample_indices(unsigned size,unsigned blocksize=1);
+
 
 template <typename T>
 std::valarray<T> bootstrap_sample(const std::valarray<T>& sample,int blocksize=1) {
