@@ -30,6 +30,9 @@ struct Partition {
   /// the taxa in the second group
   std::valarray<bool> group2;
 
+  /// Is this a full partition?
+  bool full() const; 
+
   /// the total number of taxa
   unsigned size() const {return group1.size();}
 

@@ -48,6 +48,12 @@ Partition partition_from_names(const vector<string>& names, const vector<string>
   return Partition(names,group1,group1 or group2);
 }
 
+bool Partition::full() const {
+  for(int i=0;i<names.size();i++)
+    if (not group1[i] and not group2[i])
+      return false;
+  return true;
+}
 
 Partition::Partition(const Partition& p,const valarray<bool>& mask)
   :names(p.names),
@@ -109,7 +115,7 @@ Partition::Partition(const string& line)
       assert(group == 2);
       group++;
     }
-    else {
+    else if (all_names[i].size()) {
       names_[group].push_back(all_names[i]);
       names.push_back(all_names[i]);
     }
