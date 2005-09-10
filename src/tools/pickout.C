@@ -14,12 +14,22 @@ string getvalue(const string& line,int pos1) {
   return line.substr(pos1,pos2-pos1);
 }
 
+string get_largevalue(const string& line,int pos1) {
+  return line.substr(pos1);
+}
+
 
 int main(int argc,char* argv[]) { 
   vector<string> patterns;
   
   for(int i=1;i<argc;i++)
     patterns.push_back(argv[i]);
+
+  bool large_value = false;
+  if (patterns.size() and patterns[0] == "--large") {
+    large_value = true;
+    patterns.erase(patterns.begin());
+  }
 
   for(int i=0;i<patterns.size();i++)
     patterns[i] += " = ";
@@ -41,9 +51,12 @@ int main(int argc,char* argv[]) {
     if (not linematches) continue;
 
     for(int i=0;i<patterns.size();i++) {
-      cout<<getvalue(line,matches[i] + patterns[i].size());
-      if (i != patterns.size()-1)
-	cout<<" ";
+      if (i != patterns.size()-1) 
+	cout<<getvalue(line,matches[i] + patterns[i].size())<<" ";
+      else if (large_value)
+	cout<<get_largevalue(line,matches[i] + patterns[i].size());
+      else
+	cout<<getvalue(line,matches[i] + patterns[i].size());	
     }
     cout<<"\n";
   }

@@ -1,6 +1,8 @@
 SHELL=/bin/sh
 
-TREES=c50 c66 c80 c90 c95 c99 c100 MAP
+TOPOLOGIES=c50 c66 c80 c90 c95 c99 c100 MAP
+
+TREES=c50 MAP
 
 all: Results/analysis
 
@@ -20,12 +22,13 @@ all: Results/analysis
 Work/setup:
 	@echo -e "Setting up directories... \c"
 	@mkdir -p Work/
+	@mkdir -p Mixing/
 	@mkdir -p Results/
 	@touch Work/setup
 	@echo "done."
 
-Results/analysis: Results/Report Results/tc Results/SRQ.plot Results/sum.plot Results/sumi.plot\
-		  ${TREES:%=Results/%.tree} ${TREES:%=Results/%.topology} \
+Results/analysis: Results/Report Results/tc Mixing/SRQ.plot Mixing/sum.plot Mixing/sumi.plot Mixing/partitions.bs \
+		  ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree}\
                   Results/clevels.plot Work/trees.from.${SKIP}+${SIZE} \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
 	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration ${SKIP}." > Results/analysis
@@ -57,8 +60,17 @@ Work/%.from.${SKIP}+: Work/%.from.${SKIP}
 
 Results/tc : Work/trees
 	@echo -e "Summarizing topology distribution... \c";
-	@tree-dist-compare --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99,1.0 --sub-partitions > $@
+	@trees-consensus --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99,1.0 --sub-partitions > $@
 	@echo "done."
+
+Work/partitions: Results/tc
+	@pickout --large pi < $< > $@
+
+Work/partitions.pred: Work/partitions
+	@sed "s/$$/\n/" < $< > $@
+
+Mixing/partitions.bs: Work/partitions.pred Work/trees
+	@trees-bootstrap --skip ${SKIP} ${SIZE:%=--max %} Work/trees --pred Work/partitions.pred > $@
 
 Results/clevels.plot : Results/tc
 	@echo -e "Generating consensus levels plot ... \c"
@@ -130,20 +142,20 @@ Results/%-AU.html: Results/%-AU.prob Results/%.fasta
 	alignment-draw Results/$*.fasta Results/$*-AU.prob --width 100 > $@
 
 Results/c%.topology: Results/tc Work/setup
-	@pickout $*-consensus-0 < $< > $@ 
+	@pickout $*-consensus < $< > $@ 
 	@test -s $@
 
-Results/SRQ.plot: Work/trees Results/c50.topology
+Mixing/SRQ.plot: Work/trees Results/c50.topology
 	@echo -e "Generating SRQ plot for c50 partitions... \c"
 	@tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
 	@echo "done."
 
-Results/sum.plot: Work/trees Results/c50.topology
+Mixing/sum.plot: Work/trees Results/c50.topology
 	@echo -e "Generating sum plot for c50 partitions... \c"
 	@tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
 	@echo "done."
 
-Results/sumi.plot: Work/trees Results/c50.topology
+Mixing/sumi.plot: Work/trees Results/c50.topology
 	@echo -e "Generating inverse sum plot for c50 partitions... \c"
 	@tree-to-srq Results/c50.topology  --invert --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
 	@echo "done."

@@ -1,3 +1,9 @@
+-23. tree-to-srq: take partitions as input, not just trees.
+
+-22. Make trees-bootstrap.C read and print trees instead of just collections
+      collections of full xpartitions.
+     a. also also bin/GNUmakefile to connect trees-consensus and trees-bootstrap
+
 -21. Make a 'Mixing' directory in addition to 'Results' and 'Work'
 
 -20. We spend 1/2 the time reading in trees calculating leaf_partition sets.
