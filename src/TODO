@@ -1,3 +1,5 @@
+-21. Make a 'Mixing' directory in addition to 'Results' and 'Work'
+
 -20. We spend 1/2 the time reading in trees calculating leaf_partition sets.
 
      Can we compute sets and regular bit-vectors lazily?
