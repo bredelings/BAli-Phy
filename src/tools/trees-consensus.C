@@ -63,13 +63,13 @@ vector<double> get_consensus_levels(const string& s) {
 
   // remove levels below 0.5
   while(not levels.empty() and levels[0] < 0.5) {
-    std::cerr<<"Ignorning bad consensus level '"<<levels[0]<<"'"<<std::endl;
+    std::cerr<<"Ignoring bad consensus level '"<<levels[0]<<"'"<<std::endl;
     levels.erase(levels.begin());
   }
 
   // remove levels above 1.0
   while(not levels.empty() and levels.back() > 1.0) {
-    std::cerr<<"Ignorning bad consensus level '"<<levels.back()<<"'"<<std::endl;
+    std::cerr<<"Ignoring bad consensus level '"<<levels.back()<<"'"<<std::endl;
     levels.pop_back();
   }
   
