@@ -80,12 +80,81 @@ vector<double> get_consensus_levels(const string& s) {
   return levels;
 }
 
+double odds(unsigned n, unsigned N, unsigned pseudocount)
+{
+  return double(n+pseudocount)/(N-n+pseudocount);
+}
+
 /// Add partitions in 'delta' if none of them are IDENTICAL to any partition in 'partitions'
 void add_unique_partitions(vector<Partition>& partitions,const vector<Partition>& delta) {
   for(int j=0;j<delta.size();j++)
     if (not includes(partitions,delta[j]))
       partitions.push_back(delta[j]);
 }
+
+double odds_ratio(const pair<Partition,unsigned>& p1,const pair<Partition,unsigned>& p2, 
+		  unsigned N,unsigned pseudocount=0)
+{
+  int n1 = p1.second;
+  int n2 = p2.second;
+
+  if (not implies(p1.first,p2.first))
+    n1 = 0;
+
+  double o1 = odds(n1,N,pseudocount);
+  double o2 = odds(n2,N,pseudocount);
+
+  return o2/o1;
+}
+
+double odds_ratio(const vector<pair<Partition,unsigned> >& partitions, int exclude,
+		  const pair<Partition,unsigned>& p, unsigned N, unsigned pseudocount=0)
+{
+  double ratio = N;
+  for(int i=0;i<partitions.size();i++)
+    if (i != exclude)
+      ratio = std::min(ratio,odds_ratio(partitions[i],p,N,pseudocount));
+
+  return ratio;
+}
+
+bool merge(vector<pair<Partition,unsigned> >& partitions,
+	   const pair<Partition,unsigned>& delta,
+	   unsigned N,
+	   double l)
+{
+  for(int i=0;i<partitions.size();i++)
+    if (odds_ratio(partitions[i],delta,N,5) <= l)
+      return false;
+
+  for(int i=partitions.size()-1;i>=0;i--)
+    if (odds_ratio(delta,partitions[i],N,5) <= l)
+      partitions.erase(partitions.begin()+i);
+
+  partitions.push_back(delta);
+
+  return true;
+}
+
+vector<pair<Partition,unsigned> > 
+thin(const vector<pair<Partition,unsigned> >& partitions, unsigned N, double l)
+{
+  vector<pair<Partition,unsigned> > thinned;
+  for(int i=0;i<partitions.size();i++)
+    merge(thinned,partitions[i],N,l);
+
+  return thinned;
+}
+
+vector<Partition> strip(const vector<pair<Partition,unsigned> >& partitions) 
+{
+  vector<Partition> stripped;
+  for(int i=0;i<partitions.size();i++)
+    stripped.push_back(partitions[i].first);
+
+  return stripped;
+}
+
 
 /// Merge the lists in 'partition_sets' while removing duplicates
 vector<Partition> merge(const vector<vector<Partition> >& partition_sets) 
@@ -130,81 +199,6 @@ get_full_partitions(const tree_sample& tree_dist,const vector<double>& levels)
     partition_sets[i] = get_Ml_partitions(tree_dist,levels[i]);
 
   return partition_sets;
-}
-
-vector< vector<vector<Partition> > >
-get_sub_partitions(const vector<tree_sample>& tree_dists,const vector<double>& levels,int depth=1) 
-{
-  vector< vector< vector<Partition> > > partitions(tree_dists.size());
-  for(int i=0;i<partitions.size();i++)
-    partitions[i] = get_sub_partitions(tree_dists[i],levels,depth);
-
-  return partitions;
-}
-
-vector< vector<vector<Partition> > >
-get_full_partitions(const vector<tree_sample>& tree_dists,const vector<double>& levels) 
-{
-  vector< vector< vector<Partition> > > partitions(tree_dists.size());
-  for(int i=0;i<partitions.size();i++)
-    partitions[i] = get_full_partitions(tree_dists[i],levels);
-
-  return partitions;
-}
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-  using namespace po;
-
-  // named options
-  options_description input("Input options");
-  input.add_options()
-    ("help", "produce help message")
-    ("ignore", value<string>(),"comma-separated list of taxa to ignore in partitions")
-    ("skip",value<int>()->default_value(0),"number of trees to skip")
-    ("max",value<int>(),"maximum number of trees to read")
-    ("sub-sample",value<int>(),"factor by which to sub-sample")
-    ("files",value<vector<string> >()->multitoken(),"tree files to examine")
-    ;
-  
-  options_description bootstrap("Block bootstrap options");
-  bootstrap.add_options()
-    ("pseudocount",value<int>()->default_value(0),"extra 0/1 to add to bootstrap samples")
-    ("blocksize",value<int>(),"block size to use in block boostrap")
-    ("seed", value<unsigned long>(),"random seed")
-    ;
-    
-  options_description reporting("Reporting options");
-  reporting.add_options()
-    ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file")
-    ("consensus",value<string>(),"comma-separated consensus levels in [0.5, 1.0] for majority tree")
-    ("sub-partitions","look for partitions of taxa subsets")
-    ("depth",value<int>()->default_value(1),"depth at which to look for partitions of taxa subsets")
-    ("rooting",value<double>()->default_value(0.9),"depth at which to look for partitions of taxa subsets")
-
-    ;
-    
-
-  options_description all("All options");
-  all.add(input).add(bootstrap).add(reporting);
-
-  // positional options
-  positional_options_description p;
-  p.add("files", -1);
-  
-  variables_map args;     
-  store(command_line_parser(argc, argv).
-	    options(all).positional(p).run(), args);
-  // store(parse_command_line(argc, argv, desc), args);
-  notify(args);    
-
-  if (args.count("help")) {
-    cout<<"Usage: tree-dist-compare <file1> <file2> ... [OPTIONS]\n";
-    cout<<all<<"\n";
-    exit(0);
-  }
-
-  return args;
 }
 
 // We could also try to choose the partitions so that we choose the smallest number
@@ -268,10 +262,10 @@ get_Ml_partitions(const vector<pair<Partition,unsigned> >& sp, double l, unsigne
 }
 
 using std::set;
-vector<unsigned> get_Ml_levels(const vector<pair<Partition,unsigned> >& sp,unsigned size)
+vector<unsigned> get_Ml_levels(const vector<pair<Partition,unsigned> >& sp,unsigned size,double min_support)
 {
   set<unsigned> levels;
-  levels.insert(size/2+1);
+  levels.insert((unsigned)(size*min_support+1));
 
   for(int i=0;i<sp.size();i++) {
     levels.insert(sp[i].second);
@@ -312,7 +306,7 @@ void show_level(const tree_sample& tree_dist,
 		const vector<pair<Partition,unsigned> >& all_partitions,
 		bool show_sub)
 {
-  const unsigned total = tree_dist.size();
+  const unsigned N = tree_dist.size();
 
   cout.unsetf(ios::fixed | ios::showpoint);
 	
@@ -320,27 +314,88 @@ void show_level(const tree_sample& tree_dist,
 
   vector<Partition> full = get_full_partitions(sub);
 
-  SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
+  //  SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
 
-  double fraction = double(level)/total;
-  double fraction2 = fraction;
-  if (level == total) fraction2 = double(level)/(0.5+level);
+  double fraction = double(level)/N;
 
-  double LOD = log10(statistics::odds(fraction2));
+  double LOD = log10(odds(level,N,1));
 
   cout<<"   level = "<<fraction*100
       <<"   LOD = "<<LOD
       <<"   full = "<<full.size();
   
   if (show_sub) {
+    cout<<"   sub = "<<sub.size();
+
     vector<Partition> full_hull = Ml_min_Hull(skeleton,sub);
     SequenceTree consensus_hull = get_mf_tree(tree_dist.names(),full_hull);
-    
-    cout<<"   sub = "<<sub.size();
+      
     cout<<"   sub-branches = "<<consensus_hull.n_branches() - consensus_hull.n_leafbranches();
   }
 }
 
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description invisible("Invisible options");
+  invisible.add_options()
+    ("file",value<string>(),"tree sample to examine")
+    ;
+
+  options_description input("Input options");
+  input.add_options()
+    ("help", "produce help message")
+    ("skip",value<int>()->default_value(0),"number of trees to skip")
+    ("max",value<int>(),"maximum number of trees to read")
+    ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
+    ;
+  
+  options_description reporting("Reporting options");
+  reporting.add_options()
+    ("ignore", value<string>(),"comma-separated list of taxa to ignore in partitions")
+    ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file")
+    ("min-support",value<double>()->default_value(0.5),"Only examine partitions w/ PP more than this\n")
+    ("consensus",value<string>(),"Report consensus trees at these comma-separated levels in [0.5, 1.0]")
+    ("sub-partitions","look for partitions of taxa subsets")
+    ("depth",value<int>()->default_value(1),"depth at which to look for partitions of taxa subsets")
+    ("rooting",value<double>()->default_value(0.9),"depth at which to look for partitions of taxa subsets")
+    ("odds-ratio",value<double>()->default_value(1.5),"Report sub-partitions if removing taxa improves the odds by at least this ratio.")
+    ;
+    
+  options_description visible("All options");
+  visible.add(input).add(reporting);
+
+  options_description all("All options");
+  all.add(visible).add(invisible);
+
+  // positional options
+  positional_options_description p;
+  p.add("file", -1);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: tree-dist-compare <file> ... [OPTIONS]\n";
+    cout<<visible<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
+
+struct count_more {
+  bool operator()(const pair<Partition,unsigned>& p1,const pair<Partition,unsigned>& p2) const {
+    return p1.second > p2.second;
+  }
+};
+    
 
 int main(int argc,char* argv[]) 
 { 
@@ -353,91 +408,40 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     //--------------------- Initialize ---------------------//
-    unsigned long seed = 0;
-    if (args.count("seed")) {
-      seed = args["seed"].as<unsigned long>();
-      myrand_init(seed);
-    }
-    else
-      seed = myrand_init();
-    cout<<"random seed = "<<seed<<endl<<endl;
-    
-    int pseudocount = args["pseudocount"].as<int>();
-    std::cout<<"pseudocount = "<<pseudocount<<endl<<endl;
-
     int skip = args["skip"].as<int>();
+
+    int subsample=args["sub-sample"].as<int>();
 
     int max = -1;
     if (args.count("max"))
       max = args["max"].as<int>();
 
-    int subsample=1;
-    if (args.count("sub-sample"))
-      subsample = args["sub-sample"].as<int>();
+    double min_support = args["min-support"].as<double>();
 
-    //-------------- Read in tree distributions --------------//
-    if (not args.count("files"))
-      throw myexception()<<"Tree files not specified!";
-
-    vector<string> files = args["files"].as< vector<string> >();
-    vector<tree_sample> tree_dists;
-    vector<SequenceTree> MAP_trees;
-
-    for(int i=0;i<files.size();i++) {
-      
-      ifstream file(files[i].c_str());
-      if (not file)
-	throw myexception()<<"Couldn't open file "<<files[i];
-      
-      tree_dists.push_back(tree_sample(file,skip,max,subsample));
-
-      MAP_trees.push_back( tree_dists.back().T(tree_dists.back().order[0]) );
-
-      if (i > 0 and MAP_trees[i].get_sequences() != MAP_trees[i-1].get_sequences())
-	throw myexception()<<"Tree loaded from file '"<<files[i]<<"' has different taxa than previous trees.";
-    }
-    
-    //----------  Determine block size ----------//
-    unsigned blocksize = tree_dists[0].size()/100+1;
-    for(int i=1;i<tree_dists.size();i++)
-      blocksize = std::min(blocksize,tree_dists[i].size()/100+1);
-
-    if (args.count("blocksize"))
-      blocksize = args["blocksize"].as<int>();
-    
-    std::cout<<"blocksize = "<<blocksize<<endl<<endl;
-
-    //--------------- Distance between MAP trees ----------//
-    cout<<endl;
-    for(int i=0;i<tree_dists.size();i++)
-      for(int j=0;j<i;j++)
-	cout<<"Topology distance between MAP trees for "<<i<<" and "<<j<<" = "<<topology_distance(MAP_trees[i],MAP_trees[j])<<endl;
-    cout<<endl;
-
-    for(int i=0;i<tree_dists.size();i++) 
-      cout<<"MAP-"<<i<<" = "<<tree_dists[i].topologies[tree_dists[i].order[0]].topology<<endl<<endl;
-
-    //----------  Calculate mask of leaf taxa to ignore in partitions ----------//
-    valarray<bool> mask = valarray<bool>(true,MAP_trees[0].n_leaves());
-
+    // leaf taxa to ignore
     vector<string> ignore;
     if (args.count("ignore") and args["ignore"].as<string>().size() > 0)
       ignore = split(args["ignore"].as<string>(),',');
 
-    for(int i=0;i<ignore.size();i++) {
-      int j = find_index(MAP_trees[0].get_sequences(),ignore[i]);
-      assert(j != MAP_trees[0].get_sequences().size());
-      mask[j] = false;
-    }
-
-    //---------- compute consensus levels ----------------//
-    string c_levels = "";
-    if (args.count("consensus"))
-      c_levels = args["consensus"].as<string>();
+    // consensus levels 
+    string c_levels = args.count("consensus") ? args["consensus"].as<string>() : "";
     vector<double> consensus_levels = get_consensus_levels(c_levels);
 
+    double report_ratio = args["odds-ratio"].as<double>();
+
+    //-------------- Read in tree distributions --------------//
+    string filename = args["file"].as<string>();
+    ifstream file(filename.c_str());
+    if (not file)
+      throw myexception()<<"Couldn't open file "<<filename;
+      
+    tree_sample tree_dist(file,skip,max,subsample);
+    const unsigned N = tree_dist.size();
+
+    valarray<bool> ignore_mask = group_from_names(tree_dist.names(),ignore);
+
     //------ Compute Ml partitions or sub-partitions --------//
-    vector< vector< pair<Partition,unsigned> > > all_partitions;
+    vector< pair<Partition,unsigned> > all_partitions;
 
     if (args.count("sub-partitions"))
     {
@@ -445,156 +449,108 @@ int main(int argc,char* argv[])
 
       double min_rooting = args["rooting"].as<double>();
 
-      for(int i=0;i<tree_dists.size();i++)
-	all_partitions.push_back( 
-           get_Ml_sub_partitions_and_counts(tree_dists[i],0.5,min_rooting,depth) 
-        );
+      all_partitions = get_Ml_sub_partitions_and_counts(tree_dist,min_support,not ignore_mask,min_rooting,depth);
     }
-    else {
-      for(int i=0;i<tree_dists.size();i++)
-	all_partitions.push_back( get_Ml_partitions_and_counts(tree_dists[i],0.5) );
-    }
+    else
+      all_partitions = get_Ml_partitions_and_counts(tree_dist,min_support,not ignore_mask);
 
-    // find partitions at each consensus level
-    vector< vector< vector< Partition > > > sub_partitions;
-    for(int i=0;i<tree_dists.size();i++) {
-	sub_partitions.push_back(vector<vector<Partition> >());
-	for(int j=0;j<consensus_levels.size();j++)
-	  sub_partitions.back().push_back(get_Ml_partitions(all_partitions[i],consensus_levels[j],tree_dists[i].size()));
-      }
-
-    // extract full partitions
-    vector< vector< vector< Partition > > > full_partitions = sub_partitions;
-    for(int i=0;i<full_partitions.size();i++)
-      for(int j=0;j<full_partitions[i].size();j++)
-	full_partitions[i][j] = get_full_partitions( full_partitions[i][j] );
-
-
-    vector<vector< Partition> > dist_partitions(sub_partitions.size());
-    for(int i=0;i<dist_partitions.size();i++)
-      dist_partitions[i] = merge(sub_partitions[i]);
-
-    vector< Partition > partitions = merge(dist_partitions);
-
-    //----- Add partitions from branches of MAP trees -------//
-    vector< vector< int> > branch_to_partitions(tree_dists.size());
-    for(int i=0;i<tree_dists.size();i++) {
-      // add MAP tree partitions to 'partitions' if not yet there
-      branch_to_partitions[i].resize(MAP_trees[i].n_branches());
-      for(int b=MAP_trees[i].n_leaves();b<MAP_trees[i].n_branches();b++) {
-	valarray<bool> p1 = branch_partition(MAP_trees[i],b);
-	
-	Partition p(MAP_trees[i].get_sequences(),p1,mask);
-	
-	if (not includes(partitions,p)) {
-	  branch_to_partitions[i][b] = partitions.size();
-	  partitions.push_back(p);
-	}
-	else
-	  branch_to_partitions[i][b] = find_index(partitions,p);
-      }
-    }
 
     //------  Topologies to analyze -----//
     vector<string> topologies;
-    for(int j=0;j<tree_dists.size();j++) {
 
-      for(int i=0;i < args["map-trees"].as<int>() ;i++) 
-      {
-	if (i >= tree_dists[j].topologies.size()) continue;
+    cout<<"\nTopology support: \n\n";
+    for(int i=0;i < args["map-trees"].as<int>() ;i++) 
+    {
+      if (i >= tree_dist.topologies.size()) continue;
 
-	string t = tree_dists[j].topologies[tree_dists[j].order[i]].topology;
+      string t = tree_dist.topologies[tree_dist.order[i]].topology;
 
-	if (not includes(topologies,t))
-	  topologies.push_back(t);
+      unsigned n = tree_dist.topologies[tree_dist.order[i]].count;
+      double PP = double(n)/N;
+      double o = odds(n,N,1);
 
-      }
+      cout<<"MAP-"<<i<<" = "<<t<<endl;
+      cout<<"   PP = "<<PP<<"       10s = "<<log10(o)<<endl;
+      cout<<"\n\n";
     }
 
-    //------ Create support bitvectors for the hypotheses (topology,partitions) ----//
-    vector< vector< valarray<bool> > > topology_series(topologies.size());
-
-    for(int i=0;i<topologies.size();i++)
-      for(int j=0;j<tree_dists.size();j++)
-	topology_series[i].push_back( tree_dists[j].supports_topology( topologies[i] ) );
-
-
-    vector< vector< valarray<bool> > >partition_series(partitions.size());
-
-    for(int i=0;i<partitions.size();i++) 
-      for(int j=0;j<tree_dists.size();j++)
-	partition_series[i].push_back( tree_dists[j].supports_partition( partitions[i] ) );
-
-    //---------------  Summarize best trees ---------------//
-    cout<<"Best Topologies: \n";
-    for(int i=0;i<topologies.size();i++) {
-      cout<<"------------------------------------------------------------------"<<endl;
-      cout<<topologies[i]<<endl;
-      cout<<endl;
-    }
-    cout<<endl<<endl;
 
     //------- Print out support for each partition --------//
-    vector< vector<double> > partition_support(partition_series.size());
-    cout<<"Support for the different partitions: \n\n";
-    for(int i=0;i<partitions.size();i++) {
-      cout<<partitions[i]<<endl;
-      cout<<endl;
+    cout<<"Partition support: \n\n";
+
+    vector<pair<Partition,unsigned> > good_partitions = thin(all_partitions, tree_dist.size(), report_ratio);
+
+    sort(good_partitions.begin(),good_partitions.end(), count_more());
+
+    for(int i=0;i<good_partitions.size();i++) 
+    {
+      unsigned n = good_partitions[i].second;
+
+      double PP = double(n)/N;
+      double o = odds(n,N,1);
+
+      cout<<"   PP = "<<PP<<"       10s = "<<log10(o);
+
+      if (not good_partitions[i].first.full()) {
+	double ratio = odds_ratio(good_partitions,i,good_partitions[i],N,1);
+	cout<<"       ratio = "<<log10(ratio);
+      }
+      cout<<"       pi = "<<good_partitions[i].first<<endl;
+
+      cout<<endl<<endl;
     }
 
 
     //----------- display M[l] consensus trees ----------//
-    cout<<"\n\nConsensus trees:\n";
+    cout<<"\nConsensus trees:\n";
+
+    vector<Partition> c50_partitions = get_Ml_partitions(all_partitions, 0.5, N);
+    c50_partitions = get_full_partitions( c50_partitions );
+
     for(int l=0;l<consensus_levels.size();l++) {
 	
-      for(int i=0;i<tree_dists.size();i++) 
-      {
-	const vector<Partition>& full = full_partitions[i][l];
-	const vector<Partition>& sub  = sub_partitions[i][l];
+      const vector<Partition> sub  = get_Ml_partitions(all_partitions,consensus_levels[l],N);
+      const vector<Partition>& full = get_full_partitions( sub );
 
-	SequenceTree consensus = get_mf_tree(tree_dists[i].names(),full);
-
-	vector<Partition> full_hull = Ml_min_Hull(full_partitions[i][0],sub);
-	SequenceTree consensus_hull = get_mf_tree(tree_dists[i].names(),full_hull);
-
-	double L = consensus_levels[l]*100;
-
-	cout.unsetf(ios::fixed | ios::showpoint);
-	
-	cout<<"\n";
-	cout<<" sample = "<<i;
- 	cout<<"   level = "<<L;
-	cout<<"   full = "<<full.size()<<"/"<<MAP_trees[i].n_leaves()-3;
-	if (args.count("sub-partitions")) {
-	  cout<<"   sub = "<<sub.size();
-	  cout<<"   sub-branches = "<<consensus_hull.n_branches() - consensus_hull.n_leafbranches();
-	}
-	cout<<"   PP = "<<tree_dists[i].PP(full)<<"\n";;
-	cout<<"\n";
-	  
-	cout<<" "<<L<<"-consensus-"<<i<<" = "<<consensus.write(false)<<std::endl<<std::endl;
-
-	if (args.count("sub-partitions")) {
-	  cout<<" "<<L<<"-consensus+-"<<i<<" = "<<consensus_hull.write(false)<<std::endl<<std::endl;
-	}
+      SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
+      
+      vector<Partition> full_hull = Ml_min_Hull(c50_partitions,sub);
+      SequenceTree consensus_hull = get_mf_tree(tree_dist.names(),full_hull);
+      
+      double L = consensus_levels[l]*100;
+      
+      cout.unsetf(ios::fixed | ios::showpoint);
+      
+      cout<<"\n";
+      cout<<"   level = "<<L;
+      cout<<"   full = "<<full.size()<<"/"<<tree_dist.names().size()-3;
+      if (args.count("sub-partitions")) {
+	cout<<"   sub = "<<sub.size();
+	cout<<"   sub-branches = "<<consensus_hull.n_branches() - consensus_hull.n_leafbranches();
       }
-      cout<<std::endl;
+      cout<<"   PP = "<<tree_dist.PP(full)<<"\n";;
+      cout<<"\n";
+      
+      cout<<" "<<L<<"-consensus = "<<consensus.write(false)<<std::endl<<std::endl;
+      
+      if (args.count("sub-partitions")) {
+	cout<<" "<<L<<"-consensus+ = "<<consensus_hull.write(false)<<std::endl<<std::endl;
+      }
     }
+    cout<<std::endl;
 
     //----------- display M[l] consensus levels ----------//
     std::cout.precision(4);
     cout<<"\n\nConsensus levels:\n";
-    for(int i=0;i<tree_dists.size();i++) {
-      vector<unsigned> levels = get_Ml_levels(all_partitions[i],tree_dists[i].size());
 
-      bool show_sub = args.count("sub-partitions");
+    vector<unsigned> levels = get_Ml_levels(all_partitions,tree_dist.size(),min_support);
 
-      for(int j=0;j<levels.size();j++) {
-	cout<<"\n";
-	if (tree_dists.size() > 1)  cout<<" sample = "<<i;
-	show_level(tree_dists[i],levels[j],full_partitions[i][0],all_partitions[i],show_sub);
-	cout<<endl;
-      }
+    bool show_sub = args.count("sub-partitions");
+
+    for(int j=0;j<levels.size();j++) {
+      cout<<"\n";
+      show_level(tree_dist,levels[j],c50_partitions,all_partitions,show_sub);
+      cout<<endl;
     }
 
   }

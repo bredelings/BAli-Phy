@@ -56,6 +56,8 @@ struct Partition {
   Partition(const std::string& line);
 };
 
+std::valarray<bool> group_from_names(const std::vector<std::string>& names,const std::vector<std::string>& subset);
+
 Partition full_partition_from_names(const std::vector<std::string>&,const std::vector<std::string>&);
 
 Partition partition_from_names(const std::vector<std::string>&,const std::vector<std::string>&,const std::vector<std::string>&);
@@ -156,10 +158,10 @@ public:
 };
 
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);
-std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, const std::valarray<double>&);
+std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, const std::valarray<bool>&);
 
 std::vector<std::pair<Partition,unsigned> > 
-get_Ml_partitions_and_counts(const tree_sample& sample,double l, const std::valarray<double>&);
+get_Ml_partitions_and_counts(const tree_sample& sample,double l, const std::valarray<bool>&);
 
 std::vector<std::pair<Partition,unsigned> > 
 get_Ml_partitions_and_counts(const tree_sample& sample,double l);
@@ -168,6 +170,10 @@ std::vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,
 
 std::vector<std::pair<Partition,unsigned> >
 get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double,int search=1);
+
+std::vector<std::pair<Partition,unsigned> >
+get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const std::valarray<bool>&,
+				 double,int search=1);
 
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
 			 const std::vector<Partition>& partitions);

@@ -496,10 +496,10 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const valarray<b
     first++;
   assert(first < mask.size());
 
-  if (l < 0.5)
-    throw myexception()<<"Consensus level for majority tree must be >= 0.5";
+  if (l <= 0.0)
+    throw myexception()<<"Consensus level must be > 0.0";
   if (l > 1.0)
-    throw myexception()<<"Consensus level for majority tree must be <= 1.0";
+    throw myexception()<<"Consensus level must be <= 1.0";
 
   // use a sorted list of <partition,count>, sorted by partition.
   typedef map<valarray<bool>,p_count,compare_complete_partitions > container_t;
@@ -655,7 +655,8 @@ vector<int> match(const vector<pair<Partition,unsigned> >& full_partitions,
 //consider only pulling out combinations of branches pointing to the same node
 
 vector<pair<Partition,unsigned> > 
-get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double min_rooting,int depth) 
+get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarray<bool>& mask,
+				 double min_rooting,int depth) 
 {
   // get list of branches to consider cutting
   vector<Partition> partitions_c50 = get_Ml_partitions(sample, 0.5);
@@ -665,14 +666,14 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double min_r
   // construct unit masks
   list< valarray<bool> > unit_masks;
   for(int b=0;b<branches.size();b++)
-    add_unique(unit_masks, branch_partition(c50,branches[b]) );
+    add_unique(unit_masks, mask and branch_partition(c50,branches[b]) );
 
   // construct beginning masks
   list<valarray<bool> > masks = unit_masks;
   list<valarray<bool> > old_masks = unit_masks;
 
   // start collecting partitions at M[l]
-  vector<pair<Partition,unsigned> > partitions = get_Ml_partitions_and_counts(sample,l);
+  vector<pair<Partition,unsigned> > partitions = get_Ml_partitions_and_counts(sample,l,mask);
 
   // any good mask should be combined w/ other good masks
   list<valarray<bool> > good_masks;
@@ -724,7 +725,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double min_r
 
     // FIXME!! We need to find a way to consider only masks which are
     // 'close' togther - defined in terms of the number and support 
-    // of branches that are in the middle.
+    // of branches that are in the between them.
 
     // fixme - do a convolution here - e.g. 2->1+1 3->1+2 4 ->1+3,2+2
     // otherwise we do 1  - 1,2 - 1,2,3,4 - 1,2,3,4,5,6,7,8
@@ -748,6 +749,13 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double min_r
   return partitions;
 }
 
+vector<pair<Partition,unsigned> > 
+get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double min_rooting,int depth) 
+{
+  valarray<bool> mask(true,sample.names().size());
+  return get_Ml_sub_partitions_and_counts(sample,l,mask,min_rooting,depth);
+  
+}
 
 vector<Partition> 
 get_Ml_sub_partitions(const tree_sample& sample,double l,double min_rooting,int depth) 
