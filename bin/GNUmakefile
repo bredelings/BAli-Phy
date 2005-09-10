@@ -29,7 +29,7 @@ Work/setup:
 
 Results/analysis: Results/Report Results/tc Mixing/SRQ.plot Mixing/sum.plot Mixing/sumi.plot Mixing/partitions.bs \
 		  ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree}\
-                  Results/clevels.plot Work/trees.from.${SKIP}+${SIZE} \
+                  Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
 	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration ${SKIP}." > Results/analysis
 	@echo "Finished:  $$(date)" >> Results/analysis
@@ -72,9 +72,14 @@ Work/partitions.pred: Work/partitions
 Mixing/partitions.bs: Work/partitions.pred Work/trees
 	@trees-bootstrap --skip ${SKIP} ${SIZE:%=--max %} Work/trees --pred Work/partitions.pred > $@
 
-Results/clevels.plot : Results/tc
+Results/c-levels.plot : Results/tc
 	@echo -e "Generating consensus levels plot ... \c"
 	@pickout.pl LOD,full < $< > $@
+	@echo "done."
+
+Results/c-sub-levels.plot : Results/tc
+	@echo -e "Generating consensus sub-levels plot ... \c"
+	@pickout.pl LOD,branches < $< > $@
 	@echo "done."
 
 
