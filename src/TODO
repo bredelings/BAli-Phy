@@ -1,3 +1,5 @@
+-24. c-sub-partitions should not increase!  (or should it?)
+
 -23. tree-to-srq: take partitions as input, not just trees.
 
 -22. Make trees-bootstrap.C read and print trees instead of just collections
