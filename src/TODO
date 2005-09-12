@@ -2,16 +2,10 @@
 
 -22. Make trees-bootstrap.C read and print trees instead of just collections
       collections of full xpartitions.
-     a. also also bin/GNUmakefile to connect trees-consensus and trees-bootstrap
-
--21. Make a 'Mixing' directory in addition to 'Results' and 'Work'
 
 -20. We spend 1/2 the time reading in trees calculating leaf_partition sets.
 
      Can we compute sets and regular bit-vectors lazily?
-
-     Find out how much slowdown we get in alignment-gild if we don't
-     compute partition sets...
 
 -19. Output name of tree file we analyzed!
 
@@ -25,8 +19,6 @@
         (split out into parsimony.C).
      e. Allow codon classes in other places.
      f. Check!
-
--16. Find the minimal branch set that implies the sub-partitions.
 
 -15. Sub-class DPengine w/ transition matrix implemented as
   i) Matrix  (as now)
@@ -396,6 +388,10 @@ the prior, because we never want to use it  differently.
 
 [DONE] Do a better job at finding the minimal number of c50 branches
         that imply a partition.
+
+[DONE] Make a 'Mixing' directory in addition to 'Results' and 'Work'.
+
+
 
 *IDEAS*
 
