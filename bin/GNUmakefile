@@ -152,17 +152,17 @@ Results/c%.topology: Results/tc Work/setup
 
 Mixing/SRQ.plot: Work/trees Work/partitions.pred
 	@echo -e "Generating SRQ plot for c50 partitions... \c"
-	@tree-to-srq Work/partitions.pred --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
+	@trees-to-SRQ Work/partitions.pred --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
 	@echo "done."
 
 Mixing/sum.plot: Work/trees Work/partitions.pred
 	@echo -e "Generating sum plot for c50 partitions... \c"
-	@tree-to-srq Work/partitions.pred  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
+	@trees-to-SRQ Work/partitions.pred  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
 	@echo "done."
 
 Mixing/sumi.plot: Work/trees Work/partitions.pred
 	@echo -e "Generating inverse sum plot for c50 partitions... \c"
-	@tree-to-srq Work/partitions.pred  --invert --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
+	@trees-to-SRQ Work/partitions.pred  --invert --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
 	@echo "done."
 
 Work/Likelihood: Pr Work/setup
