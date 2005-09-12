@@ -58,6 +58,10 @@ struct Partition {
 
 std::valarray<bool> group_from_names(const std::vector<std::string>& names,const std::vector<std::string>& subset);
 
+Partition partition_from_branch(const SequenceTree& T,int b);
+
+vector<Partition> partitions_from_tree(const SequenceTree& T);
+
 Partition full_partition_from_names(const std::vector<std::string>&,const std::vector<std::string>&);
 
 Partition partition_from_names(const std::vector<std::string>&,const std::vector<std::string>&,const std::vector<std::string>&);

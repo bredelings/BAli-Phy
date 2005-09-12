@@ -199,8 +199,15 @@ void load_partitions(const string& filename, vector<vector<Partition> >& partiti
   while(file) {
     vector<Partition> P;
 
-    while(getline(file,line) and line.size())
-      P.push_back(Partition(line));
+    while(getline(file,line) and line.size()) {
+      if (line[0] == '(') {
+	SequenceTree T = standardized(line);
+	vector<Partition> TP = partitions_from_tree(T);
+	P.insert(P.end(),TP.begin(),TP.end());
+      }
+      else
+	P.push_back(Partition(line));
+    }
 
     if (not p_contains(partitions,P))
       partitions.push_back(P);

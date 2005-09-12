@@ -31,6 +31,14 @@ valarray<bool> group_from_names(const vector<string>& names,const vector<string>
   return group;
 }
 
+Partition partition_from_branch(const SequenceTree& T,int b) {
+  valarray<bool> group(T.n_leaves());
+  group = T.partition(b);
+
+  return Partition(T.get_sequences(),group);
+}
+
+
 Partition full_partition_from_names(const vector<string>& names, const vector<string>& names1) 
 {
   valarray<bool> group1 = group_from_names(names,names1);
@@ -47,6 +55,17 @@ Partition partition_from_names(const vector<string>& names, const vector<string>
 
   return Partition(names,group1,group1 or group2);
 }
+
+vector<Partition> partitions_from_tree(const SequenceTree& T) 
+{
+  vector<Partition> partitions;
+
+  for(int b=T.n_leafbranches();b<T.n_branches();b++)
+    partitions.push_back(full_partition_from_branch(T,b));
+
+  return partitions;
+}
+
 
 bool Partition::full() const {
   for(int i=0;i<names.size();i++)
