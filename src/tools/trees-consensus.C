@@ -252,7 +252,7 @@ vector<Partition> Ml_min_Hull(const vector<Partition>& full,const vector<Partiti
   valarray<bool> keep(false,full.size());
   valarray<bool> covered(false,sub.size());
 
-  while (n_elements(covered) != covered.size()) 
+  while (n_elements(covered) < covered.size()) 
   {
     // how many UNCOVERED subs does each UNKEPT full branch imply?
     vector<int> covers(full.size(),0);
@@ -268,6 +268,10 @@ vector<Partition> Ml_min_Hull(const vector<Partition>& full,const vector<Partiti
 
     // choose full branch to keep
     int best = argmax(covers);    // all KEPT branches cover 0 uncovered branches.
+
+    if (covers[best] == 0) 
+      break;
+
     keep[best] = true;
 
     // mark its covered sub-branches as covered
