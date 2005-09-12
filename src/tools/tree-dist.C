@@ -329,7 +329,7 @@ SequenceTree tree_sample::T(int i) const {
   return get_mf_tree(leaf_names,topologies[i].partitions);
 }
 
-valarray<bool> tree_sample::supports_topology(const string& t) const 
+valarray<bool> tree_sample::support(const string& t) const 
 {
   typeof(index.begin()) here = index.find(t);
 
@@ -346,7 +346,7 @@ valarray<bool> tree_sample::supports_topology(const string& t) const
   return result;
 }
 
-valarray<bool> tree_sample::supports_partition(const Partition& P) const 
+valarray<bool> tree_sample::support(const Partition& P) const 
 {
   valarray<bool> result(size());
 
@@ -360,7 +360,7 @@ valarray<bool> tree_sample::supports_partition(const Partition& P) const
   return result;
 }
 
-valarray<bool> tree_sample::supports_partitions(const vector<Partition>& partitions) const 
+valarray<bool> tree_sample::support(const vector<Partition>& partitions) const 
 {
   valarray<bool> result(size());
 
@@ -474,7 +474,7 @@ tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample)
   if (size() == 0)
     throw myexception()<<"No trees were read in!";
   
-  cout<<" n_trees = "<<size()<<"   n_topologies = "<<topologies.size()<<" topologies."<<endl;
+  cout<<"# n_trees = "<<size()<<"   n_topologies = "<<topologies.size()<<" topologies."<<endl;
     
   //---------------  Sort topologies by count  ---------------//
   order.resize(topologies.size());

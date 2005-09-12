@@ -146,11 +146,11 @@ public:
   // this should equal trees.size(), but should be MUCH faster!
   unsigned size() const {return which_topology.size();}
 
-  std::valarray<bool> supports_topology(const std::string& t) const;
+  std::valarray<bool> support(const std::string& t) const;
 
-  std::valarray<bool> supports_partition(const Partition& P) const;
+  std::valarray<bool> support(const Partition& P) const;
 
-  std::valarray<bool> supports_partitions(const std::vector<Partition>&) const;
+  std::valarray<bool> support(const std::vector<Partition>&) const;
 
   unsigned count(const Partition& P) const;
   unsigned count(const std::vector<Partition>&) const;
