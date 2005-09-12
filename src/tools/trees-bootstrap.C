@@ -170,50 +170,6 @@ bool report_sample(std::ostream& o,
   return true;
 }
 
-
-bool p_equal(const vector<Partition>& P1,const vector<Partition>& P2) 
-{
-  if (P1.size() != P2.size()) return false;
-
-  for(int i=0;i<P1.size();i++)
-    if (not includes(P2,P1[i]))
-      return false;
-
-  return true;
-}
-
-bool p_contains(const vector<vector<Partition> >& partitions, const vector<Partition>& P)
-{
-  for(int i=0;i<partitions.size();i++)
-    if (p_equal(P,partitions[i]))
-      return true;
-
-  return false;
-}
-
-void load_partitions(const string& filename, vector<vector<Partition> >& partitions) 
-{
-  ifstream file(filename.c_str());
-
-  string line;
-  while(file) {
-    vector<Partition> P;
-
-    while(getline(file,line) and line.size()) {
-      if (line[0] == '(') {
-	SequenceTree T = standardized(line);
-	vector<Partition> TP = partitions_from_tree(T);
-	P.insert(P.end(),TP.begin(),TP.end());
-      }
-      else
-	P.push_back(Partition(line));
-    }
-
-    if (not p_contains(partitions,P))
-      partitions.push_back(P);
-  }
-}
-
 unsigned count(const vector<int>& indices, const valarray<bool>& results) {
   unsigned total = 0;
   for(int i=0;i<indices.size();i++)

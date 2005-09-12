@@ -1,4 +1,5 @@
 #include <map>
+#include <fstream>
 #include "tree-dist.H"
 #include "rng.H"
 #include "statistics.H"
@@ -61,7 +62,7 @@ vector<Partition> partitions_from_tree(const SequenceTree& T)
   vector<Partition> partitions;
 
   for(int b=T.n_leafbranches();b<T.n_branches();b++)
-    partitions.push_back(full_partition_from_branch(T,b));
+    partitions.push_back(partition_from_branch(T,b));
 
   return partitions;
 }
@@ -781,3 +782,49 @@ get_Ml_sub_partitions(const tree_sample& sample,double l,double min_rooting,int 
 {
   return remove_counts(get_Ml_sub_partitions_and_counts(sample,l,min_rooting,depth));
 }
+
+
+bool p_equal(const vector<Partition>& P1,const vector<Partition>& P2) 
+{
+  if (P1.size() != P2.size()) return false;
+
+  for(int i=0;i<P1.size();i++)
+    if (not includes(P2,P1[i]))
+      return false;
+
+  return true;
+}
+
+bool p_contains(const vector<vector<Partition> >& partitions, const vector<Partition>& P)
+{
+  for(int i=0;i<partitions.size();i++)
+    if (p_equal(P,partitions[i]))
+      return true;
+
+  return false;
+}
+
+void load_partitions(const string& filename, vector<vector<Partition> >& partitions) 
+{
+  std::ifstream file(filename.c_str());
+
+  string line;
+  while(file) {
+    vector<Partition> P;
+
+    while(getline(file,line) and line.size()) {
+      if (line[0] == '(') {
+	SequenceTree T = standardized(line);
+	vector<Partition> TP = partitions_from_tree(T);
+	P.insert(P.end(),TP.begin(),TP.end());
+      }
+      else
+	P.push_back(Partition(line));
+    }
+
+    if (not p_contains(partitions,P))
+      partitions.push_back(P);
+  }
+}
+
+

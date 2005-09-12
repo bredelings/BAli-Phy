@@ -60,7 +60,7 @@ std::valarray<bool> group_from_names(const std::vector<std::string>& names,const
 
 Partition partition_from_branch(const SequenceTree& T,int b);
 
-vector<Partition> partitions_from_tree(const SequenceTree& T);
+std::vector<Partition> partitions_from_tree(const SequenceTree& T);
 
 Partition full_partition_from_names(const std::vector<std::string>&,const std::vector<std::string>&);
 
@@ -186,5 +186,8 @@ SequenceTree get_mf_tree(const std::vector<std::string>& names,
 			 const std::vector<std::valarray<bool> >& partitions);
 
 bool merge_partition(std::vector<Partition>& partitions,const Partition& delta);
+
+/// load a collection of partition sets from a file
+void load_partitions(const std::string& filename, std::vector<std::vector<Partition> >&);
 
 #endif
