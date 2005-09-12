@@ -2,19 +2,27 @@
 
 using std::vector;
 
-vector<int> bootstrap_sample_indices(unsigned size,unsigned blocksize) 
+void bootstrap_sample_indices(vector<int>& sample,unsigned blocksize) 
 {
-  assert(blocksize <= size);
+  unsigned size = sample.size();
 
-  vector<int> resample(size);
+  if (blocksize > size) 
+    blocksize = size;
 
   int i=0;
   while(i<size) {
     int j = myrandom(size+1-blocksize);
     for(int k=0;k<blocksize and i < size;k++)
-      resample[i++] = j++;
+      sample[i++] = j++;
   }
+}
 
-  return resample;
+vector<int> bootstrap_sample_indices(unsigned size,unsigned blocksize) 
+{
+  vector<int> sample(size);
+
+  bootstrap_sample_indices(sample,blocksize);
+
+  return sample;
 }
 

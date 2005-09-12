@@ -8,6 +8,8 @@
 
 std::vector<int> bootstrap_sample_indices(unsigned size,unsigned blocksize=1);
 
+void bootstrap_sample_indices(std::vector<int>& sample,unsigned blocksize=1);
+
 
 template <typename T>
 std::valarray<T> bootstrap_sample(const std::valarray<T>& sample,int blocksize=1) {
