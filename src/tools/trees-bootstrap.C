@@ -195,7 +195,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("max",value<int>(),"maximum number of trees to read")
     ("sub-sample",value<int>(),"factor by which to sub-sample")
     ("files",value<vector<string> >(),"tree files to examine")
-    ("predicates",value<vector<string> >()->composing(),"tree files to examine")
+    ("predicates",value<vector<string> >()->composing(),"predicates to examine")
     ;
   
   options_description bootstrap("Block bootstrap options");
