@@ -1,6 +1,10 @@
--23. tree-to-srq: take partitions as input, not just trees.
+-23. Print blocksize, seed, and pseudo count on the same line in [ ]
 
--22. Make trees-bootstrap.C read and print trees instead of just collections
+-22. Don't show SRQ or sum plots for partitions w/ less than <N=10> regenerations,
+     if the actual number of regenerations falls in a 95% confidence interval given
+     the PP.
+
+-21. Make trees-bootstrap.C read and print trees instead of just collections
       collections of full xpartitions.
 
 -20. We spend 1/2 the time reading in trees calculating leaf_partition sets.
@@ -391,7 +395,7 @@ the prior, because we never want to use it  differently.
 
 [DONE] Make a 'Mixing' directory in addition to 'Results' and 'Work'.
 
-
+[DONE] tree-to-srq: take partitions as input, not just trees.
 
 *IDEAS*
 
