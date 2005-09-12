@@ -201,45 +201,6 @@ get_full_partitions(const tree_sample& tree_dist,const vector<double>& levels)
   return partition_sets;
 }
 
-// We could also try to choose the partitions so that we choose the smallest number
-// of branches...
-
-// Currently, we just try to pick branches which are "least informative"
-
-vector<Partition> Ml_min_Hull(const vector<Partition>& full,const vector<Partition>& sub)
-{
-  valarray<bool> keep(false,full.size());
-
-  // If any full partitions imply sub[i], pick one.
-  for(int i=0;i<sub.size();i++) {
-    int which = -1;
-    int best_count = sub[i].size();
-    
-    for(int j=0;j<full.size();j++) {
-
-      if (not implies(full[j],sub[i])) continue;
-
-      int count = std::min(n_elements(full[j].group1),n_elements(full[j].group2));
-
-      if (count < best_count) {
-	which = j;
-	best_count = count;
-      }
-    }
-
-    if (which != -1)
-      keep[which] = true;
-  }
-
-  // collect the full partitions that have been chosen
-  vector<Partition> full2;
-  for(int i=0;i<full.size();i++)
-    if (keep[i])
-      full2.push_back(full[i]);
-
-  return full2;
-}
-
 vector<Partition> 
 get_Ml_partitions(const vector<pair<Partition,unsigned> >& sp, unsigned min_count)
 {
@@ -277,6 +238,53 @@ vector<unsigned> get_Ml_levels(const vector<pair<Partition,unsigned> >& sp,unsig
   return levels2;
 }
 
+
+// FIXME - we use all full parition in 'sub'
+//   - only do exhaustive search on partial partitions?
+//   - divide into connected components?
+
+// This is a greedy search.
+// It would be nice to also pick which branches are "least informative".
+
+vector<Partition> Ml_min_Hull(const vector<Partition>& full,const vector<Partition>& sub)
+{
+  // compute full partitions to keep
+  valarray<bool> keep(false,full.size());
+  valarray<bool> covered(false,sub.size());
+
+  while (n_elements(covered) != covered.size()) 
+  {
+    // how many UNCOVERED subs does each UNKEPT full branch imply?
+    vector<int> covers(full.size(),0);
+
+    for(int i=0;i<sub.size();i++) {
+      if (covered[i]) continue;
+      for(int j=0;j<full.size();j++)
+	if (implies(full[j],sub[i])) {
+	  assert(not keep[j]);
+	  covers[j]++;
+	}
+    }
+
+    // choose full branch to keep
+    int best = argmax(covers);    // all KEPT branches cover 0 uncovered branches.
+    keep[best] = true;
+
+    // mark its covered sub-branches as covered
+    for(int i=0;i<sub.size();i++)
+      if (not covered[i] and implies(full[best],sub[i]))
+	covered[i] = true;
+  }
+
+  // collect the full partitions that have been chosen
+  vector<Partition> hull;
+  for(int i=0;i<full.size();i++)
+    if (keep[i])
+      hull.push_back(full[i]);
+
+  return hull;
+}
+
 // Is there a way to choose branches that would imply sub-partitions that are
 // not in sub because other full branches imply them?  
 
@@ -284,7 +292,7 @@ vector<unsigned> get_Ml_levels(const vector<pair<Partition,unsigned> >& sp,unsig
 
 vector<Partition> Ml_max_Hull(const vector<Partition>& full,const vector<Partition>& sub)
 {
-  vector<Partition> full2;
+  vector<Partition> hull;
 
   for(int i=0;i<full.size();i++) 
   {
@@ -293,10 +301,10 @@ vector<Partition> Ml_max_Hull(const vector<Partition>& full,const vector<Partiti
       if (implies(full[i],sub[j])) 
 	ok = true;
    
-    if (ok) full2.push_back(full[i]);
+    if (ok) hull.push_back(full[i]);
   }
 
-  return full2;
+  return hull;
 }
 
 
