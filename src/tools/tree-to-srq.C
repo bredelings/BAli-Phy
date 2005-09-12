@@ -43,7 +43,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help", "produce help message")
-    ("tree", value<string>(),"tree of partitions to consider")
+    ("predicates",value<string>(),"predicates to examine")
     ("skip",value<int>()->default_value(0),"number of trees to skip")
     ("max",value<int>(),"maximum number of trees to read")
     ("mode", value<string>()->default_value("SRQ"),"SRQ or sum")
@@ -51,10 +51,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("no-scale-x","don't scale X")
     ("no-scale-y","don't scale Y")
     ;
+  // MIN REVERSALS!
+
 
   // positional options
   positional_options_description p;
-  p.add("tree", 1);
+  p.add("predicates", 1);
   
   variables_map args;     
   store(command_line_parser(argc, argv).
@@ -62,7 +64,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: tree-to-srq <tree-file> < in-file\n";
+    cout<<"Usage: tree-to-srq <predicates-file> < in-file\n";
     cout<<all<<"\n";
     exit(0);
   }
@@ -77,13 +79,8 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     // Load the partitions that we are considering
-    SequenceTree T = load_T(args);
-    standardize(T);
-    vector<Partition> partitions;
-    for(int b=T.n_leafbranches();b<T.n_branches();b++) {
-      std::valarray<bool> p1 = branch_partition(T,b);
-      partitions.push_back(Partition(T.get_sequences(),p1));
-    }
+    vector<vector<Partition> > partitions;
+    load_partitions(args["predicates"].as<string>(), partitions);
 
     // Read in the trees
     int skip = args["skip"].as<int>();
@@ -98,7 +95,7 @@ int main(int argc,char* argv[])
     // Compute info for plots
     vector<vector<int> > plots(partitions.size());
     for(int i=0;i<partitions.size();i++) {
-      valarray<bool> support = tree_dist.supports_partition(partitions[i]);
+      valarray<bool> support = tree_dist.support(partitions[i]);
 
       if (args.count("invert")) support = not support;
 

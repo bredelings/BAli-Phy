@@ -150,19 +150,19 @@ Results/c%.topology: Results/tc Work/setup
 	@pickout $*-consensus < $< > $@ 
 	@test -s $@
 
-Mixing/SRQ.plot: Work/trees Results/c50.topology
+Mixing/SRQ.plot: Work/trees Work/partitions.pred
 	@echo -e "Generating SRQ plot for c50 partitions... \c"
-	@tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
+	@tree-to-srq Work/partitions.pred --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
 	@echo "done."
 
-Mixing/sum.plot: Work/trees Results/c50.topology
+Mixing/sum.plot: Work/trees Work/partitions.pred
 	@echo -e "Generating sum plot for c50 partitions... \c"
-	@tree-to-srq Results/c50.topology  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
+	@tree-to-srq Work/partitions.pred  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
 	@echo "done."
 
-Mixing/sumi.plot: Work/trees Results/c50.topology
+Mixing/sumi.plot: Work/trees Work/partitions.pred
 	@echo -e "Generating inverse sum plot for c50 partitions... \c"
-	@tree-to-srq Results/c50.topology  --invert --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
+	@tree-to-srq Work/partitions.pred  --invert --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
 	@echo "done."
 
 Work/Likelihood: Pr Work/setup
