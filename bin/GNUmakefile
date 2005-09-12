@@ -177,7 +177,7 @@ Work/Pmarg: Work/Likelihood.from.${SKIP}+${SIZE}
 	@echo "done."
 
 clean:
-	rm -rf Work/ Results/
+	rm -rf Work/ Results/ Mixing/
 
 %.fasta: %.phy
 	@alignment-convert --output fasta < $< > $@
