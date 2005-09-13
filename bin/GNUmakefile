@@ -74,12 +74,12 @@ Mixing/partitions.bs: Work/partitions.pred Work/trees
 
 Results/c-levels.plot : Results/tc
 	@echo -e "Generating consensus levels plot ... \c"
-	@pickout.pl LOD,full < $< > $@
+	@pickout LOD full < $< > $@
 	@echo "done."
 
 Results/c-sub-levels.plot : Results/tc
 	@echo -e "Generating consensus sub-levels plot ... \c"
-	@pickout.pl LOD,branches < $< > $@
+	@pickout LOD branches < $< > $@
 	@echo "done."
 
 
