@@ -31,7 +31,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("align", value<string>(),"file with sequences and initial alignment")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
-    ("with-stop","include stop codons in amino-acid alphabets")
     ;
 
   // positional options

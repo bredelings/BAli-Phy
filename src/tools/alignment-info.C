@@ -81,7 +81,7 @@ int n_mutations(const alphabet& a, const vector<int>& letters, const Tree& T)
       assert(0 <= s and s < letters.size());
       if (alphabet::letter(letters[s])) {
 	for(int l=0;l<A;l++)
-	  n_muts[t][l] += 1;
+	  n_muts[t][l]++;
 	n_muts[t][letters[s]]--;
       }
     }
@@ -111,7 +111,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("align", value<string>(),"file with sequences and initial alignment")
     ("tree",value<string>(),"file with initial tree")
     ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons")
-    ("with-stop","include stop codons in amino-acid alphabets")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ;
 

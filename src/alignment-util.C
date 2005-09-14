@@ -454,40 +454,44 @@ long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> 
 
 vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args) 
 {
-  OwnedPointer<AminoAcids> AA = AminoAcids();
-  if (args.count("with-stop"))
-    AA = AminoAcidsWithStop();
-
   vector<OwnedPointer<alphabet> > alphabets; 
+
+  const string name = args["alphabet"].as<string>();
 
   if (not args.count("alphabet")) {
     alphabets.push_back(DNA());
     alphabets.push_back(RNA());
-    alphabets.push_back(*AA);
+    alphabets.push_back(AminoAcids());
+    alphabets.push_back(AminoAcidsWithStop());
   }
-  else if (args["alphabet"].as<string>() == "Codons") {
-    {
-      string dna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_dna.dat";
-      alphabets.push_back(Codons(DNA(),*AA,dna_filename));
-    }
+  else if (name == "Codons" or name == "Codons + stop") {
+
+    OwnedPointer<AminoAcids> AA;
+    if (name == "Codons")
+      AA = AminoAcids();
+    else
+      AA = AminoAcidsWithStop();
     
-    {
-      string rna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_rna.dat";
-      alphabets.push_back(Codons(RNA(),*AA,rna_filename));
-    }
+    string dna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_dna.dat";
+    alphabets.push_back(Codons(DNA(),*AA,dna_filename));
+
+    string rna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_rna.dat";
+    alphabets.push_back(Codons(RNA(),*AA,rna_filename));
   }
-  else if (args["alphabet"].as<string>() == "Triplets") {
+  else if (name == "Triplets") {
     alphabets.push_back(Triplets(DNA()));
     alphabets.push_back(Triplets(RNA()));
   }
-  else if (args["alphabet"].as<string>() == "DNA")
+  else if (name == "DNA")
     alphabets.push_back(DNA());
-  else if (args["alphabet"].as<string>() == "RNA")
+  else if (name == "RNA")
     alphabets.push_back(RNA());
-  else if (args["alphabet"].as<string>() == "Amino Acids")
-    alphabets.push_back(*AA);
+  else if (name == "Amino Acids")
+    alphabets.push_back(AminoAcids());
+  else if (name == "Amino Acids + stop")
+    alphabets.push_back(AminoAcidsWithStop());
   else 
-    throw myexception()<<"I don't recognize alphabet '"<<args["alphabet"].as<string>()<<"'";
+    throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
 
   return alphabets;
 }

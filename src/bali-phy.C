@@ -305,7 +305,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("seed", value<unsigned long>(),"random seed")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("align-constraint",value<string>(),"file with alignment constraints")
-    ("with-stop","include stop codons in amino-acid alphabets")
     ("internal",value<string>(),"if set to '+', then make all internal node entries wildcards")
     ("gaps",value<string>()->default_value("full_tree"),"if set to 'star', then don't use indel information")
     ("letters",value<string>()->default_value("full_tree"),"if set to 'star', then use a star tree for substitution")
@@ -334,7 +333,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description model("Model options");
   model.add_options()
-    ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons")
+    ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino Acids, Amino Acids +stop, Triplets, Codons, or Codons + stop")
     ("smodel",value<string>(),"substitution model")
     ("imodel",value<string>()->default_value("fragment-based+T"),"indel model: simple, fragment-based, or fragment-based+T")
     ;
