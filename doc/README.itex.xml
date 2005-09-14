@@ -837,14 +837,55 @@
     <title>Auxiliary tools</title>
 
     <sect2>
-      <title>tree-dist-compare</title>
+      <title>trees-consensus</title>
       <para>Usage: tree-dist-compare <replaceable>file1</replaceable>
-      <replaceable>file2</replaceable> ... [OPTIONS] </para>
-      <para>This program analyzes one or more files each containing a
-      list of trees.  It reports the MAP topology, the majority
-      consensus topology, and which bi-partitions are supported by the
-      data. 
+      [<replaceable>file2</replaceable> ... ] [OPTIONS] </para>
+      <para>This program analyzes the tree sample contained in
+      <replaceable>file1</replaceable>.  It reports the MAP topology, the
+      supported taxa partitions (including partial partitions), and the
+      majority consensus topology.
       </para> 
+    </sect2>
+
+    <sect2>
+      <title>trees-bootstrap</title>
+      <para>Usage: trees-bootstrap <replaceable>file1</replaceable>
+      [<replaceable>file2</replaceable> ... ] --predicates
+      <replaceable>predicate-file</replaceable> [OPTIONS] </para>
+      <para>This program analyzes the tree samples contained in
+      <replaceable>file1</replaceable>, <replaceable>file2</replaceable>,
+      etc.  It gives the support of each tree sample for each predicate in
+      <replaceable>predicate-file</replaceable>, and reports a confidence
+      interval based on the block bootstrap.
+      </para> 
+
+      <para>Each predicate is the intersection of a set of partitions, and
+      is specified as a list of partitions or (multifurcating) trees, one
+      per line.  Predicates are separated by blank lines.
+      </para>
+    </sect2>
+
+    <sect2>
+      <title>trees-to-SRQ</title>
+
+      <para>Usage: trees-to-SRQ <replaceable>predicate-file</replaceable> [OPTIONS] <replaceable>trees-file</replaceable> </para>
+
+      <para>This program analyzes the tree samples contained in
+      <replaceable>trees-file</replaceable>.  It uses them to produce an
+      SRQ plot for each predicate in
+      <replaceable>predicate-file</replaceable>.  Plots are produced in
+      <application>gnuplot</application> format, with one point per line
+      and with plots separated by a blank line.</para>
+
+      <para>If <userinput>--mode sum </userinput> is specified, then a "sum"
+      plot is produced instead of an SRQ plot.  In this plot, the slope of
+      the curve corresponds to the posterior probability of the event.  If the
+      <userinput>--invert</userinput> option is used then the slope of the
+      curve correspond to the probability of the inverse event.  This is
+      recommended if the probability of the event is near 1.0, because the
+      sum plot does not distinguish variation in probabilities near 1.0 well.
+      </para>
+
     </sect2>
 
   </sect1>
