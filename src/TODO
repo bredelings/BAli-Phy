@@ -1,4 +1,17 @@
 -25. Consider calculating PP of all the trees in alignment-consensus...
+    a) don't keep on RE-calculating everything.
+       i) calculate support bitvector for 100%
+      ii) then calculate support bitvector for each new partition that is added,
+          and bitwise AND it in.
+
+    a) Consider sorting the partitions to improve speed.
+
+       But - would this work with SUB-partitions?
+
+    b) Perhaps first try to shrink the SIZE of trees, so that we can
+       store trees, to improve speed.
+
+       Would THIS work with sub-partitions? (YES) [check when awake!]
 
 -24. Allow alignment-gild to annotate an alignment-consensus
 
