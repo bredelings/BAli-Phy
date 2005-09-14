@@ -1,11 +1,15 @@
+-25. Consider calculating PP of all the trees in alignment-consensus...
+
+-24. Allow alignment-gild to annotate an alignment-consensus
+
 -23. Print blocksize, seed, and pseudo count on the same line in [ ]
 
 -22. Don't show SRQ or sum plots for partitions w/ less than <N=10> regenerations,
      if the actual number of regenerations falls in a 95% confidence interval given
      the PP.
+     a) Develop an idea of how to do a statistical test based on SRQ plots...
 
--21. Make trees-bootstrap.C read and print trees instead of just collections
-      collections of full xpartitions.
+-21. Make trees-bootstrap.C print trees instead of collections of full partitions.
 
 -20. We spend 1/2 the time reading in trees calculating leaf_partition sets.
 
@@ -14,8 +18,10 @@
 -19. Output name of tree file we analyzed!
 
 -18. Compare estimates w/ MrBayes on the globin example.
+     Compare estimates w/ MrBayes on the EF-Tu 48b example.
 
 -17. a. Implement letter classes.
+	a.1)  Should a wildcard be a special class, or not??
      b. Print N or X instead of *
      c. Allow reading Codon alphabet w/ individual letter wildcards.
         (But return them all as alphabet::not_gap)
