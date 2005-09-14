@@ -46,6 +46,18 @@
 	  url="http://www.boost.org">BOOST</ulink>) version 1.32 or higher.</para></listitem>
 	</itemizedlist>
 	</para>
+
+	<para>In addition, the following software packages are recommended,
+	although not required:
+	<itemizedlist>
+	  <listitem><para>The plotting program gnuplot. (<ulink
+	  url="http://www.gnuplot.info/">gnuplot</ulink>)</para></listitem>
+	  <listitem><para>GNU make version 3.80 or higher.  (<ulink
+	  url="http://www.gnu.org/software/make">GNU make</ulink>).This is used to
+	  analyze the output of <application>BAli-Phy</application> 
+	  </para></listitem>
+	</itemizedlist>
+	</para>
       </sect3>
 
       <sect3>
@@ -93,10 +105,9 @@
 
 	  <para>You may use <ulink url="http://fink.sourceforge.net">fink</ulink> to install 
 	  the GSL library and include files.  Fink provides Linux
-	  software for Mac OS X, and includes GCC, GNU make, and other
-	  packages.  However, the BOOST libraries that come with fink
-	  will not work, because they are compiled with GCC 3.3.  You
-	  must therefore compile the BOOST libraries yourself, using
+	  software for Mac OS X.  However, the BOOST libraries that come
+	  with fink will not work, because they are compiled with GCC 3.3.
+	  You must therefore compile the BOOST libraries yourself, using
 	  GCC 3.4 or higher.</para>
 
 	  <para>You can access the command line on OS X by running the
@@ -165,6 +176,8 @@
   <sect1>
     <title>Running the program</title>
 
+    <sect2>
+    <title>The simple way</title>
     <para>The simplest way to run <application>BAli-PHy</application> is
     to invoke the <command>bali-phy</command> executable directly:
 
@@ -175,29 +188,43 @@
     file containing the sequences you wish to analyze.
     </para>
 
-    <para>The <emphasis>recommended</emphasis> way to run the program
-    is to copy the <filename>bali-phy</filename> executable to
-    <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename>
-    and run (in a bourne-shell)
-    
-<screen><prompt>%</prompt> <userinput>VERSION=<replaceable>version</replaceable> CLASS=<replaceable>class</replaceable> bali-phy.sh <replaceable>sequence-file</replaceable></userinput>
-</screen>
-    </para>  
-
-    <para>The wrapper script <command>bali-phy.sh</command>
-    will run <command>bali-phy</command> for you.  It will also create a
-    unique directory for each invocation of the program, and put
-    output files in this directory. The directories will be named
-    <replaceable>class</replaceable>-1, <replaceable>class</replaceable>-2,
-    etc.</para> 
-
     <note>
       <para>In many cases it is necessary to specify the location of the data
       directory in order to run the program. The data directory defaults to
       <filename>./Data</filename> if not explicitly set. (See option
       <userinput>--data-dir</userinput>).</para> 
     </note>
+    </sect2>
 
+    <sect2>
+      <title>The recommended way</title>
+    <para>The <emphasis>recommended</emphasis> way to run the program
+    is to copy the <filename>bali-phy</filename> executable to
+    <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename>
+    and run (in a bourne-shell)
+    
+<screen><prompt>%</prompt> <userinput>export BALI_PHY_DATA=<replaceable>data-dir</replaceable></userinput>
+<prompt>%</prompt> <userinput>VERSION=<replaceable>version</replaceable> CLASS=<replaceable>class</replaceable> bali-phy.sh <replaceable>sequence-file</replaceable> [OPTIONS]</userinput>
+</screen>
+    </para>  
+
+    <para>The wrapper script <command>bali-phy.sh</command>
+    will setup and run <command>bali-phy</command> for you.  This involves:
+    <orderedlist>
+      <listitem><para>Creating a unique directory in which to run each
+      invocation of <application>BAli-Phy</application>. (The directories
+      will be named <replaceable>class</replaceable>-1,
+      <replaceable>class</replaceable>-2, etc.)</para></listitem>
+      <listitem><para>Linking the <application>BAli-Phy</application> data directory
+    into the run directory for you.</para></listitem>
+      <listitem><para>Executing <application>BAli-Phy</application> inside
+      the run directory, using the SGE scheduling engine if present.</para></listitem>
+    </orderedlist>
+    This setup is important because it ensures that multiple invocations of
+    <application>BAli-Phy</application> will produce output files in
+    different directories, and will not over-write each other.
+    </para>
+    </sect2>
   </sect1>
   
   <sect1>
@@ -252,7 +279,7 @@
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--align-constraint <replaceable>constraint-file</replaceable></option></term>
+	  <term><option>--align-constraint <replaceable>file</replaceable></option></term>
 	  <listitem><para>specify file with alignment constraints</para></listitem>
 	</varlistentry>
 
@@ -296,7 +323,7 @@
 
 	<varlistentry>
 	  <term><option>--T <replaceable>temperature=1</replaceable></option></term>
-	  <listitem><para>MCMCMCMC temperature.</para></listitem>
+	  <listitem><para>MCMCMC temperature.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -355,17 +382,17 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><option>--alphabet <replaceable>alphabet</replaceable></option></term>
+	  <term><option>--alphabet <replaceable>name</replaceable></option></term>
 	  <listitem><para>specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--smodel <replaceable>substitution-model</replaceable></option></term>
+	  <term><option>--smodel <replaceable>name</replaceable></option></term>
 	  <listitem><para>specify the substitution model</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--imodel <replaceable>indel-model</replaceable></option></term>
+	  <term><option>--imodel <replaceable>name</replaceable></option></term>
 	  <listitem><para>specify the indel model</para></listitem>
 	</varlistentry>
 
