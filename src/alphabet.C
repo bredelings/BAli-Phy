@@ -180,7 +180,7 @@ AminoAcids::AminoAcids()
 
 AminoAcidsWithStop::AminoAcidsWithStop() 
 {
-  name = "Amino Acids + Stop";
+  name = "Amino Acids + stop";
   data.push_back("!");
 }
 
