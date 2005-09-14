@@ -262,48 +262,43 @@
 
 	<varlistentry>
 	  <term><option>--help</option></term>
-	  <listitem><para>produce help message</para></listitem>
+	  <listitem><para>Show help message.</para></listitem>
 	</varlistentry>
 
 
 	<varlistentry>
 	  <term><option>--version</option></term>
-	  <listitem><para>print version information</para></listitem>
+	  <listitem><para>Show version information.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--show-only</option></term>
-	  <listitem><para>analyze the initial values and exit</para></listitem>
+	  <listitem><para>Analyze initial values and exit.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--data-dir <replaceable>directory</replaceable></option></term>
-	  <listitem><para>data directory</para></listitem>
+	  <listitem><para>Specify the data directory.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--align-constraint <replaceable>file</replaceable></option></term>
-	  <listitem><para>specify file with alignment constraints</para></listitem>
+	  <listitem><para>Specify a file with alignment constraints</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--with-stop</option></term>
-	  <listitem><para>include stop codons in amino-acid alphabets</para></listitem>
+	  <term><option>--internal +</option></term>
+	  <listitem><para>Set all internal node entries wildcards initially.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--internal <replaceable>arg</replaceable></option></term>
-	  <listitem><para>if set to '+', then make all internal node entries wildcards</para></listitem>
+	  <term><option>--gaps star</option></term>
+	  <listitem><para>Don't use indel info, and fix the alignment.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--gaps <replaceable>arg</replaceable></option></term>
-	  <listitem><para>if set to 'star', then don't use indel information</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--letters <replaceable>arg</replaceable></option></term>
-	  <listitem><para>if set to 'star', then use a star tree for substitution</para></listitem>
+	  <term><option>--letters star</option></term>
+	  <listitem><para>Use a star tree for the substitution model.</para></listitem>
 	</varlistentry>
 
 
@@ -316,28 +311,31 @@
       <variablelist>
 	<varlistentry>
 	  <term><option>--iterations <replaceable>number=100000</replaceable></option></term>
-	  <listitem><para>the number of iterations to run</para></listitem>
+	  <listitem><para>Specify the number of iterations to run.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--subsample <replaceable>factor=1</replaceable></option></term>
-	  <listitem><para>factor by which to subsample</para></listitem>
+	  <listitem><para>Specify a factor by which to subsample.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--T <replaceable>temperature=1</replaceable></option></term>
-	  <listitem><para>MCMCMC temperature.</para></listitem>
+	  <listitem><para>Specify a temperature for MCMCMC.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--enable <replaceable>move</replaceable></option></term>
-	  <listitem><para>comma-separated list of kernels to enable.</para></listitem>
+	  <listitem>
+	    <para>Enable a comma-separated list of transition kernels.</para>
+	  </listitem>
 	</varlistentry>
 
-	<varlistentry>
+	  <varlistentry>
 	  <term><option>--disable <replaceable>move</replaceable></option></term>
-	  <listitem><para>comma-separated list of kernels to disable.</para></listitem>
-	</varlistentry>
+	  <listitem>
+	    <para>Disable a comma-separated list of transition kernels.</para>
+	  </listitem></varlistentry>
 
       </variablelist>
     </sect2>
@@ -348,32 +346,32 @@
       <variablelist>
 	<varlistentry>
 	  <term><option>--randomize-alignment</option></term>
-	  <listitem><para>randomly re-align sequences before use.</para></listitem>
+	  <listitem><para>Randomly re-align sequences before use.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--tree <replaceable>treefile</replaceable></option></term>
-	  <listitem><para>file with initial tree</para></listitem>
+	  <term><option>--tree <replaceable>file</replaceable></option></term>
+	  <listitem><para>Specify file with initial tree.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--set <replaceable>parameter=value</replaceable></option></term>
-	  <listitem><para>specify initial parameter value.</para></listitem>
+	  <listitem><para>Specify initial value of <replaceable>parameter</replaceable>.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--fix <replaceable>parameter[=value]</replaceable></option></term>
-	  <listitem><para>mark parameter fixed, and optionally specify value.</para></listitem>
+	  <listitem><para>Mark <replaceable>parameter</replaceable> fixed, and optionally specify a value.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--unfix <replaceable>parameter[=value]</replaceable></option></term>
-	  <listitem><para>mark parameter unfixed, and optionally specify value.</para></listitem>
+	  <listitem><para>Mark <replaceable>parameter</replaceable> not fixed, and optionally specify an initial value.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--frequencies <replaceable>frequencies</replaceable></option></term>
-	  <listitem><para>initial frequencies: 'uniform','nucleotides', or a comma-separated list of frequencies.</para></listitem>
+	  <listitem><para>Specify initial frequencies: 'uniform','nucleotides', or a comma-separated list of frequencies.</para></listitem>
 	</varlistentry>
 
       </variablelist>
@@ -386,17 +384,17 @@
       <variablelist>
 	<varlistentry>
 	  <term><option>--alphabet <replaceable>name</replaceable></option></term>
-	  <listitem><para>specify the alphabet: DNA, RNA, Amino Acids, Triplets, or Codons.</para></listitem>
+	  <listitem><para>Specify the alphabet: DNA, RNA, Amino Acids, Amino Acids + stop, Triplets, Codons, or Codons + stop.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--smodel <replaceable>name</replaceable></option></term>
-	  <listitem><para>specify the substitution model</para></listitem>
+	  <listitem><para>Specify the substitution model.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
 	  <term><option>--imodel <replaceable>name</replaceable></option></term>
-	  <listitem><para>specify the indel model</para></listitem>
+	  <listitem><para>Specify the indel model.</para></listitem>
 	</varlistentry>
 
       </variablelist>
