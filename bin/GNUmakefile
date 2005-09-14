@@ -70,7 +70,9 @@ Work/partitions.pred: Work/partitions
 	@sed "s/$$/\n/" < $< > $@
 
 Mixing/partitions.bs: Work/partitions.pred Work/trees
+	@echo -e "Computing confidence intervals for partition support... \c";
 	@trees-bootstrap --skip ${SKIP} ${SIZE:%=--max %} Work/trees --pred Work/partitions.pred > $@
+	@echo "done."
 
 Results/c-levels.plot : Results/tc
 	@echo -e "Generating consensus levels plot ... \c"
