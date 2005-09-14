@@ -1,28 +1,7 @@
--25. Consider calculating PP of all the trees in alignment-consensus...
-    a) don't keep on RE-calculating everything.
-       i) calculate support bitvector for 100%
-      ii) then calculate support bitvector for each new partition that is added,
-          and bitwise AND it in.
-
-    a) Consider sorting the partitions to improve speed.
-
-       But - would this work with SUB-partitions?
-
-    b) Perhaps first try to shrink the SIZE of trees, so that we can
-       store trees, to improve speed.
-
-       Would THIS work with sub-partitions? (YES) [check when awake!]
-
--24. Allow alignment-gild to annotate an alignment-consensus
+-26. Remove '--with-stop', and add new alpabet names "Amino Acids + stop"
+and "Codons + stop"  
 
 -23. Print blocksize, seed, and pseudo count on the same line in [ ]
-
--22. Don't show SRQ or sum plots for partitions w/ less than <N=10> regenerations,
-     if the actual number of regenerations falls in a 95% confidence interval given
-     the PP.
-     a) Develop an idea of how to do a statistical test based on SRQ plots...
-
--21. Make trees-bootstrap.C print trees instead of collections of full partitions.
 
 -20. We spend 1/2 the time reading in trees calculating leaf_partition sets.
 
@@ -42,6 +21,30 @@
         (split out into parsimony.C).
      e. Allow codon classes in other places.
      f. Check!
+
+-25. Consider calculating PP of all the trees in alignment-consensus...
+    a) don't keep on RE-calculating everything.
+       i) calculate support bitvector for 100%
+      ii) then calculate support bitvector for each new partition that is added,
+          and bitwise AND it in.
+
+    a) Consider sorting the partitions to improve speed.
+
+       But - would this work with SUB-partitions?
+
+    b) Perhaps first try to shrink the SIZE of trees, so that we can
+       store trees, to improve speed.
+
+       Would THIS work with sub-partitions? (YES) [check when awake!]
+
+-24. Allow alignment-gild to annotate an alignment-consensus
+
+-22. Don't show SRQ or sum plots for partitions w/ less than <N=10> regenerations,
+     if the actual number of regenerations falls in a 95% confidence interval given
+     the PP.
+     a) Develop an idea of how to do a statistical test based on SRQ plots...
+
+-21. Make trees-bootstrap.C print trees instead of collections of full partitions.
 
 -15. Sub-class DPengine w/ transition matrix implemented as
   i) Matrix  (as now)
@@ -108,10 +111,6 @@ We can avoid TWO malloc/copy/dealloc.
   c) compare mixing with few taxa, many taxa...
   d) handle alignment predicates in the SRQ plot.
      can we output residues which are mixing badly?
-
--6. Make a ??? letter for Codon alphabets.
-    (This isn't urgent because we can read codon alignments as singlet
-    alignments)
 
 -5. Speeding up GQ_exit( )
   a) can we avoid copying G into G2 - can we construct it in place?
@@ -416,6 +415,9 @@ the prior, because we never want to use it  differently.
 
 [DONE] tree-to-srq: take partitions as input, not just trees.
 
+[DONE] Make a ??? letter for Codon alphabets.
+
+
 *IDEAS*
 
  - make a SplitsTree-like graph out of a tree sample,
@@ -452,3 +454,11 @@ the prior, because we never want to use it  differently.
 
  - we could search for the <X>% of the samples that would give the most
    resolved tree.
+
+ - consider a version of pair-HMM with 2x as many states: we would have a 
+   "slow" and "fast" version of M,G1,G2 in which indels have different
+rates.
+
+-  more complex model: have 'slow' and 'fast' be properties of the
+   individual letters in the state.
+  
