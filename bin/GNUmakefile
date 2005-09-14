@@ -27,7 +27,7 @@ Work/setup:
 	@touch Work/setup
 	@echo "done."
 
-Results/analysis: Results/Report Results/tc Mixing/SRQ.plot Mixing/sum.plot Mixing/sumi.plot Mixing/partitions.bs \
+Results/analysis: Results/Report Results/consensus Mixing/SRQ.plot Mixing/sum.plot Mixing/sumi.plot Mixing/partitions.bs \
 		  ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree}\
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
@@ -58,12 +58,12 @@ Work/%.from.${SKIP}+${SIZE}: Work/%.from.${SKIP}
 Work/%.from.${SKIP}+: Work/%.from.${SKIP}
 	@cp $< $@ 
 
-Results/tc : Work/trees
+Results/consensus : Work/trees
 	@echo -e "Summarizing topology distribution... \c";
 	@trees-consensus --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99,1.0 --sub-partitions > $@
 	@echo "done."
 
-Work/partitions: Results/tc
+Work/partitions: Results/consensus
 	@pickout --large pi < $< > $@
 
 Work/partitions.pred: Work/partitions
@@ -74,12 +74,12 @@ Mixing/partitions.bs: Work/partitions.pred Work/trees
 	@trees-bootstrap --skip ${SKIP} ${SIZE:%=--max %} Work/trees --pred Work/partitions.pred > $@
 	@echo "done."
 
-Results/c-levels.plot : Results/tc
+Results/c-levels.plot : Results/consensus
 	@echo -e "Generating consensus levels plot ... \c"
 	@pickout LOD full < $< > $@
 	@echo "done."
 
-Results/c-sub-levels.plot : Results/tc
+Results/c-sub-levels.plot : Results/consensus
 	@echo -e "Generating consensus sub-levels plot ... \c"
 	@pickout LOD branches < $< > $@
 	@echo "done."
@@ -128,7 +128,7 @@ Results/%.tree : Results/%.topology Work/trees
 	@echo "Calculating branch lengths for $* tree."
 	@tree-mean-lengths $< --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@ 2>/dev/null
 
-Results/MAP.topology: Results/tc Work/setup
+Results/MAP.topology: Results/consensus Work/setup
 	@pickout MAP-0 < $< > $@
 
 Work/MAP-unordered.fasta: out Work/setup
@@ -148,7 +148,7 @@ Results/%-AU.prob: Work/%-unordered.fasta Work/samples-${SKIP}+${SIZE} Results/M
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
 	alignment-draw Results/$*.fasta Results/$*-AU.prob --width 100 > $@
 
-Results/c%.topology: Results/tc Work/setup
+Results/c%.topology: Results/consensus Work/setup
 	@pickout $*-consensus < $< > $@ 
 	@test -s $@
 

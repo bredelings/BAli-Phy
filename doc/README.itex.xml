@@ -50,12 +50,15 @@
 	<para>In addition, the following software packages are recommended,
 	although not required:
 	<itemizedlist>
-	  <listitem><para>The plotting program gnuplot. (<ulink
-	  url="http://www.gnuplot.info/">gnuplot</ulink>)</para></listitem>
+	  <listitem><para>The plotting program
+	  <application>gnuplot</application>. (<ulink
+	  url="http://www.gnuplot.info/">gnuplot</ulink>)</para></listitem> 
 	  <listitem><para>GNU make version 3.80 or higher.  (<ulink
 	  url="http://www.gnu.org/software/make">GNU make</ulink>).This is used to
 	  analyze the output of <application>BAli-Phy</application> 
 	  </para></listitem>
+	  <listitem><para>Mozilla or Mozilla/Firefox to view the math in
+	  the XHTML documention. (<ulink url="http://www.mozilla.org/products/firefox/">Firefox</ulink>)</para></listitem>
 	</itemizedlist>
 	</para>
       </sect3>
@@ -505,152 +508,6 @@
   </sect1>
 
   <sect1>
-    <title>Output</title>
-
-    <sect2>
-      <title>Output streams</title>
-
-      <para><application>BAli-PHy</application> writes out the sampled
-      alignments and other information to the standard output stream, which
-      displays on the terminal by default.  Error messages are written to
-      the standard error stream, which also displays on the terminal by
-      default. In addition some other useful information is written to the
-      standard error stream, such as the acceptance fraction for the
-      various transition kernels.
-      </para>
-
-      <para>You should redirect the standard output to a file called
-      <filename>out</filename> and redirect the standard error to a file
-      called <filename>err</filename> so that the information on these
-      streams is available for later analysis.  In addition, some scripts
-      assume that the names <filename>out</filename> and
-      <filename>err</filename> are used.  The way to redirect these streams
-      to the files is to specify <userinput>&gt;out 2&gt;err</userinput>
-      on the command line.</para>
-    </sect2>
-
-    <sect2>
-      <title>Output files</title>
-      <para>When run in a clean directory,
-      <application>BAli-PHy</application> produces the following output
-      files.  Beside the file <filename>MAP</filename> that contains
-      alignments, each line in these files should correspond to one
-      iteration.</para>
-
-      
-      <variablelist>
-	<varlistentry>
-	  <term>Pr</term>
-	  <listitem>
-	    <para>prior, likelihood, probability</para>
-	  </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	  <term>pI</term>
-	  <listitem>
-	    <para>indel model parameters</para>
-	  </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	  <term>pS</term>
-	  <listitem>
-	    <para>substitution model parameters</para>
-	  </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	  <term>trees</term>
-	  <listitem>
-	    <para>tree samples</para>
-	  </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	  <term>MAP</term>
-	  <listitem>
-	    <para>successive estimates of the MAP point</para>
-	  </listitem>
-	</varlistentry>
-	
-      </variablelist>
-      
-    </sect2>
-
-    <sect2>
-      <title>Analyzing the output</title>
-      
-      <para>Copy (or link, using <command>ln -s</command>) the file
-      <filename>bin/GNUmakefile</filename> into the current
-      directory. Then run the command:
-
-      <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> make</userinput></screen>
-
-      or
-
-      <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> SIZE=<replaceable>iterations</replaceable> make</userinput></screen>
-
-      Here, <replaceable>burn-in</replaceable> represents the
-      number of iterations to skip as burn-in, and
-      <replaceable>iterations</replaceable> represents the maximum
-      number of iterations to use in the analysis. In order for this
-      to work, you must have having built the tools in the
-      <filename>tools/</filename> directory and have placed them in
-      your path.</para>
-
-
-    </sect2>
-
-    <sect2>
-
-      <title>Results</title>
-
-      <para>Running the above command to analyze the output should produce the following files:</para>
-      <variablelist>
-
-	<varlistentry><term>Report</term><listitem><para>A summary of results
-    </para></listitem></varlistentry>
-
-	<varlistentry><term>analysis</term><listitem><para>A summary of the data analyzed
-    </para></listitem></varlistentry>
-
-	<varlistentry><term>tc</term><listitem><para>Detailed description of posterior support for trees and partitions
-    </para></listitem></varlistentry>
-
-	<varlistentry><term>MAP.fasta</term><listitem><para>An estimate of the MAP alignment, w/ taxa sorted by similarity
-    </para></listitem></varlistentry>
-
-	<varlistentry><term>MAP.tree</term><listitem><para>An estimate of the MAP tree, in Newick format
-    </para></listitem></varlistentry>
-
-	<varlistentry><term>tree.srq</term><listitem><para>A bit-vector of the time-series of the support of the MAP.tree
-    </para></listitem></varlistentry>
-
-	<varlistentry><term>tree.plot</term><listitem><para>A summed version of tree.srq. Type <userinput>plot 'tree.plot'</userinput> in <application>gnuplot</application>.
-    </para></listitem></varlistentry>
-
-      </variablelist>
-
-      <para>In addition, if you type <userinput>SKIP=<replaceable>burn-in</replaceable> make
-   MAP-AU.html</userinput>, the following files will be produced:</para>
-
-      <variablelist>
-
-	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot
-    </para></listitem></varlistentry>
-
-	<varlistentry><term>MAP-AU.prob</term><listitem><para>The probabilities for each letter in the AU plot
-    </para></listitem></varlistentry>
-
-      </variablelist>
-
-    </sect2>
-
-  </sect1>
-
-
-  <sect1>
     <title>Models</title>
 
     <sect2>
@@ -813,7 +670,8 @@
 
     <sect2>
       <title>Indel models</title>
-      <para>The current models are simple, fragments, and fragments+T</para>
+      <para>The current models are simple, fragments, and fragments+T.  The
+      default is fragments+T.</para>
     </sect2>
 
     <sect2>
@@ -859,6 +717,222 @@
    4.</para>
     </sect2>
   </sect1>
+
+  <sect1>
+    <title>Output</title>
+
+    <sect2>
+      <title>Output streams</title>
+
+      <para><application>BAli-PHy</application> writes out the sampled
+      alignments and other information to the standard output stream, which
+      displays on the terminal by default.  Error messages are written to
+      the standard error stream, which also displays on the terminal by
+      default. In addition some other useful information is written to the
+      standard error stream, such as the acceptance fraction for the
+      various transition kernels.
+      </para>
+
+      <para>You should redirect the standard output to a file called
+      <filename>out</filename> and redirect the standard error to a file
+      called <filename>err</filename> so that the information on these
+      streams is available for later analysis.  In addition, some scripts
+      assume that the names <filename>out</filename> and
+      <filename>err</filename> are used.  The way to redirect these streams
+      to the files is to specify <userinput>&gt;out 2&gt;err</userinput>
+      on the command line.</para>
+    </sect2>
+
+    <sect2>
+      <title>Output files</title>
+      <para>When run in a clean directory,
+      <application>BAli-PHy</application> produces the following output
+      files.  Beside the file <filename>MAP</filename> that contains
+      alignments, each line in these files should correspond to one
+      iteration.</para>
+
+      
+      <variablelist>
+	<varlistentry>
+	  <term>Pr</term>
+	  <listitem>
+	    <para>prior, likelihood, probability</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>pI</term>
+	  <listitem>
+	    <para>indel model parameters</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>pS</term>
+	  <listitem>
+	    <para>substitution model parameters</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>trees</term>
+	  <listitem>
+	    <para>tree samples</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>MAP</term>
+	  <listitem>
+	    <para>successive estimates of the MAP point</para>
+	  </listitem>
+	</varlistentry>
+	
+      </variablelist>
+      
+    </sect2>
+  </sect1>
+
+    <sect1>
+      <title>Analyzing the output</title>
+      
+      <sect2>
+	<title>Running the analysis</title>
+      <para>Copy (or link, using <command>ln -s</command>) the file
+      <filename>bin/GNUmakefile</filename> into the current
+      directory. Then run the command:
+
+      <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> make</userinput></screen>
+
+      or
+
+      <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> SIZE=<replaceable>iterations</replaceable> make</userinput></screen>
+
+      Here, <replaceable>burn-in</replaceable> represents the
+      number of iterations to skip as burn-in, and
+      <replaceable>iterations</replaceable> represents the maximum
+      number of iterations to use in the analysis. In order for this
+      to work, you must have having built the tools in the
+      <filename>tools/</filename> directory and have placed them in
+      your path.</para>
+
+      <para>Running the analysis will produce the three directories:
+      <filename>Results/</filename>, <filename>Mixing</filename>, and
+      <filename>Work/</filename>.  The <filename>Results/</filename>
+      directory contains tree and alignment estimates and confidence
+      levels.   The <filename>Mixing/</filename> directory contains various
+      measures of whether the chain ran long enough given its Mixing.
+      The <filename>Work/</filename> directory contains various
+      intermediate files that you probably do not need.</para>
+
+
+      </sect2>
+
+      <sect2>
+
+	<title>Results</title>
+
+	<para>Running the above command will produce the following files in
+	the <filename>Results/</filename> directory:</para>
+
+      <variablelist>
+
+	<varlistentry><term>analysis</term><listitem>
+	<para>A description of the analysis:  burn-in, length, time completed.
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>Report</term><listitem>
+	<para>A summary of results: posterior means and credible intervals,
+	etc..</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>consensus</term><listitem>
+	<para>Summary of MAP and consensus topologies, as well as supported
+	partitions. </para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>c-levels.plot</term><listitem>
+	<para>The number of partitions supported at each LOD level.</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>c<replaceable>level</replaceable>.topology</term><listitem>
+	<para>The consensus topology at level
+	<replaceable>level</replaceable>, in Newick format.</para> 
+	</listitem></varlistentry>
+
+	<varlistentry><term>c50.tree</term><listitem>
+	<para>The majority consensus topology + branch lengths (Newick format)</para> 
+	</listitem></varlistentry>
+
+	<varlistentry><term>MAP.topology</term><listitem>
+	<para>An estimate of the MAP tree (Newick format)</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>MAP.tree</term><listitem>
+	<para>An estimate of the MAP topology + branch lengths (Newick format)</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>MAP.fasta</term><listitem>
+	<para>An estimate of the MAP alignment, w/ taxa sorted by similarity.
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>MAP.phy</term><listitem>
+	<para>An estimate of the MAP alignment, w/ taxa sorted by similarity.
+	</para></listitem></varlistentry>
+
+      </variablelist>
+
+      <para>In addition, if you type <userinput>SKIP=<replaceable>burn-in</replaceable> make
+   Results/MAP-AU.html</userinput>, the following files will be produced:</para>
+
+      <variablelist>
+
+	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>MAP-AU.prob</term><listitem><para>The probabilities for each letter in the AU plot
+    </para></listitem></varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+    <sect2>
+      <title>Mixing</title>
+
+      <para>In addition, the following files will be produced in the
+      <filename>Mixing/</filename> directory:</para> 
+
+      <para></para>
+      <variablelist>
+
+	<varlistentry><term>partitions.bs</term><listitem>
+	<para>Confidence intervals on the support for partitions, generated
+	using a block bootstrap.</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>SRQ.plot</term><listitem><para>A collection of
+	SRQ plots for the supported partitions.
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>sum.plot</term><listitem><para>A collection of
+	sum plots for the supported partitions.
+    </para></listitem></varlistentry>
+
+	<varlistentry><term>sumi.plot</term><listitem><para>A collection of
+	inverse sum plots for the supported partitions.
+    </para></listitem></varlistentry>
+
+      </variablelist>
+
+      <para>Plots can be viewed by typing <userinput>plot
+      '<replaceable>file</replaceable>' with lines</userinput> in
+      <application>gnuplot</application>.</para>
+    </sect2>
+
+
+  </sect1>
+
 
   <sect1>
     <title>Auxiliary tools</title>
