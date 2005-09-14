@@ -225,7 +225,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: tree-dist-compare <file1> <file2> ... <[OPTIONS]\n";
+    cout<<"Usage: trees-bootstrap <file1> <file2> ... --predicates <predicate file> [OPTIONS]\n";
     cout<<all<<"\n";
     exit(0);
   }
