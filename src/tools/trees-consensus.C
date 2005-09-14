@@ -335,6 +335,8 @@ void show_level(const tree_sample& tree_dist,
   cout<<"   level = "<<fraction*100
       <<"   LOD = "<<LOD
       <<"   full = "<<full.size();
+
+  cout<<"   PP = "<<100*tree_dist.PP(full);
   
   if (show_sub) {
     cout<<"   sub = "<<sub.size();
@@ -343,6 +345,8 @@ void show_level(const tree_sample& tree_dist,
     SequenceTree consensus_hull = get_mf_tree(tree_dist.names(),full_hull);
       
     cout<<"   sub-branches = "<<consensus_hull.n_branches() - consensus_hull.n_leafbranches();
+    cout<<"   PP+ = "<<100*tree_dist.PP(sub);
+
   }
 }
 
@@ -393,7 +397,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: tree-dist-compare <file> ... [OPTIONS]\n";
+    cout<<"Usage: trees-consensus <file> [OPTIONS]\n";
     cout<<visible<<"\n";
     exit(0);
   }
