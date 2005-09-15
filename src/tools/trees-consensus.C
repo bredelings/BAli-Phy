@@ -336,7 +336,7 @@ void show_level(const tree_sample& tree_dist,
       <<"   LOD = "<<LOD
       <<"   full = "<<full.size();
 
-  cout<<"   PP = "<<100*tree_dist.PP(full);
+  //  cout<<"   PP = "<<100*tree_dist.PP(full);
   
   if (show_sub) {
     cout<<"   sub = "<<sub.size();
@@ -345,7 +345,7 @@ void show_level(const tree_sample& tree_dist,
     SequenceTree consensus_hull = get_mf_tree(tree_dist.names(),full_hull);
       
     cout<<"   sub-branches = "<<consensus_hull.n_branches() - consensus_hull.n_leafbranches();
-    cout<<"   PP+ = "<<100*tree_dist.PP(sub);
+    //    cout<<"   PP+ = "<<100*tree_dist.PP(sub);
 
   }
 }
