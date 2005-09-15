@@ -29,7 +29,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "produce help message")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("alphabet",value<string>()->default_value("Codons"),"set to 'Codons' to prefer codon alphabets")
-    ("with-stop","include stop codons in amino-acid alphabets")
     ("frame",value<int>()->default_value(0),"frame 0, 1, or 2")
     ;
 
