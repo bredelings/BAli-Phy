@@ -456,15 +456,18 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
 {
   vector<OwnedPointer<alphabet> > alphabets; 
 
-  const string name = args["alphabet"].as<string>();
-
   if (not args.count("alphabet")) {
     alphabets.push_back(DNA());
     alphabets.push_back(RNA());
     alphabets.push_back(AminoAcids());
     alphabets.push_back(AminoAcidsWithStop());
+
+    return alphabets;
   }
-  else if (name == "Codons" or name == "Codons + stop") {
+
+  const string name = args["alphabet"].as<string>();
+
+  if (name == "Codons" or name == "Codons + stop") {
 
     OwnedPointer<AminoAcids> AA;
     if (name == "Codons")
