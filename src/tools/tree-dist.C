@@ -822,7 +822,7 @@ void load_partitions(const string& filename, vector<vector<Partition> >& partiti
 	P.push_back(Partition(line));
     }
 
-    if (not p_contains(partitions,P))
+    if (P.size() and not p_contains(partitions,P))
       partitions.push_back(P);
   }
 }

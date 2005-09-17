@@ -195,7 +195,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("max",value<int>(),"maximum number of trees to read")
     ("sub-sample",value<int>(),"factor by which to sub-sample")
     ("files",value<vector<string> >(),"tree files to examine")
-    ("predicates",value<vector<string> >()->composing(),"predicates to examine")
+    ("predicates",value<string>(),"predicates to examine")
     ;
   
   options_description bootstrap("Block bootstrap options");
@@ -210,7 +210,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("separation",value<double>()->default_value(0),"Only report trees/partitions if they differ by this many LODs")
     ;
     
-
   options_description all("All options");
   all.add(input).add(bootstrap).add(reporting);
 
@@ -224,8 +223,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // store(parse_command_line(argc, argv, desc), args);
   notify(args);    
 
+  if (not args.count("predicates"))
+    throw myexception()<<"No predicates supplied.";
+
   if (args.count("help")) {
-    cout<<"Usage: trees-bootstrap <file1> <file2> ... --predicates <predicate file> [OPTIONS]\n";
+    cout<<"Usage: trees-bootstrap <file1> [<file2> ... ] --predicates <predicate file> [OPTIONS]\n";
     cout<<all<<"\n";
     exit(0);
   }
@@ -237,8 +239,8 @@ int main(int argc,char* argv[])
 { 
   try {
 
-    std::cout.precision(3);
-    std::cout.setf(ios::fixed);
+    cout.precision(3);
+    cout.setf(ios::fixed);
 
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
@@ -251,10 +253,8 @@ int main(int argc,char* argv[])
     }
     else
       seed = myrand_init();
-    cout<<"random seed = "<<seed<<endl<<endl;
     
     int pseudocount = args["pseudocount"].as<int>();
-    std::cout<<"pseudocount = "<<pseudocount<<endl<<endl;
 
     double compare_dx = args["separation"].as<double>();
     
@@ -293,15 +293,12 @@ int main(int argc,char* argv[])
 
     if (args.count("blocksize"))
       blocksize = args["blocksize"].as<int>();
-    
-    std::cout<<"blocksize = "<<blocksize<<endl<<endl;
+
+    cout<<"# [ seed = "<<seed<<"    pseudocount = "<<pseudocount<<"    blocksize = "<<blocksize<<" ]"<<endl<<endl;
 
     //----------- Load Partitions ---------------//
-    vector<string> predicate_files = args["predicates"].as< vector<string> >();
-    
     vector<vector<Partition> > partitions;
-    for(int i=0;i<predicate_files.size();i++) 
-      load_partitions(predicate_files[i],partitions);
+    load_partitions(args["predicates"].as<string>(), partitions);
 
     //------- evaluate/cache predicate for each topology -------//
     vector< vector<valarray<bool> > > results(partitions.size());
@@ -363,7 +360,7 @@ int main(int argc,char* argv[])
 
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"Exception: "<<e.what()<<endl;
     exit(1);
   }
   return 0;
