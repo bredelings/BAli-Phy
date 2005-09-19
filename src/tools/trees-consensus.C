@@ -92,44 +92,69 @@ void add_unique_partitions(vector<Partition>& partitions,const vector<Partition>
       partitions.push_back(delta[j]);
 }
 
-double odds_ratio(const pair<Partition,unsigned>& p1,const pair<Partition,unsigned>& p2, 
-		  unsigned N,unsigned pseudocount=0)
+double odds_ratio(unsigned n1,unsigned n2,unsigned N,unsigned pseudocount) 
 {
-  int n1 = p1.second;
-  int n2 = p2.second;
-
-  if (not implies(p1.first,p2.first))
-    n1 = 0;
-
   double o1 = odds(n1,N,pseudocount);
   double o2 = odds(n2,N,pseudocount);
 
   return o2/o1;
 }
 
-double odds_ratio(const vector<pair<Partition,unsigned> >& partitions, int exclude,
-		  const pair<Partition,unsigned>& p, unsigned N, unsigned pseudocount=0)
+double odds_ratio(const vector<pair<Partition,unsigned> >& partitions, const pair<Partition,unsigned>& delta,
+		  unsigned N, unsigned pseudocount=0)
 {
-  double ratio = N;
+  unsigned n1 = 0;
   for(int i=0;i<partitions.size();i++)
-    if (i != exclude)
-      ratio = std::min(ratio,odds_ratio(partitions[i],p,N,pseudocount));
+    if (implies(partitions[i].first, delta.first))
+      n1 = std::max(n1, partitions[i].second);
 
-  return ratio;
+  unsigned n2 = delta.second;
+
+  return odds_ratio(n1,n2,N,pseudocount);
+}
+
+double odds_ratio(vector<pair<Partition,unsigned> > partitions, int i,
+		  unsigned N, unsigned pseudocount=0)
+{
+  pair<Partition,unsigned> delta = partitions[i];
+  partitions.erase(partitions.begin()+i);
+  return odds_ratio(partitions,delta,N,pseudocount);
+}
+
+
+
+bool covers(const pair<Partition,unsigned>& p1,const pair<Partition,unsigned>& p2, 
+	    double l,unsigned N,unsigned pseudocount)
+{
+  if (not implies(p1.first, p2.first))
+    return false;
+
+  int n1 = p1.second;
+  int n2 = p2.second;
+
+  return (odds_ratio(n1,n2,N,pseudocount) < l);
+}
+
+bool covers(const vector<pair<Partition,unsigned> >& partitions, int exclude,
+	    const pair<Partition,unsigned>& delta,double l, unsigned N, unsigned pseudocount=0)
+{
+  for(int i=0;i<partitions.size();i++)
+    if (i != exclude and covers(partitions[i],delta,l,N,pseudocount))
+      return true;
+  return false;
 }
 
 bool merge(vector<pair<Partition,unsigned> >& partitions,
 	   const pair<Partition,unsigned>& delta,
+	   double l,
 	   unsigned N,
-	   double l)
+	   unsigned pseudocount=0)
 {
-  for(int i=0;i<partitions.size();i++)
-    if (odds_ratio(partitions[i],delta,N,5) <= l)
-      return false;
-
-  for(int i=partitions.size()-1;i>=0;i--)
-    if (odds_ratio(delta,partitions[i],N,5) <= l)
+  for(int i=partitions.size()-1;i>=0;i--) 
+    if (covers(delta,partitions[i],l,N,pseudocount))
       partitions.erase(partitions.begin()+i);
+    else if (covers(partitions[i],delta,l,N,pseudocount))
+      return false;
 
   partitions.push_back(delta);
 
@@ -141,7 +166,7 @@ thin(const vector<pair<Partition,unsigned> >& partitions, unsigned N, double l)
 {
   vector<pair<Partition,unsigned> > thinned;
   for(int i=0;i<partitions.size();i++)
-    merge(thinned,partitions[i],N,l);
+    merge(thinned,partitions[i],l,N,5);
 
   return thinned;
 }
@@ -508,7 +533,7 @@ int main(int argc,char* argv[])
       cout<<"   PP = "<<PP<<"       10s = "<<log10(o);
 
       if (not good_partitions[i].first.full()) {
-	double ratio = odds_ratio(good_partitions,i,good_partitions[i],N,1);
+	double ratio = odds_ratio(good_partitions,i,N,1);
 	cout<<"       ratio = "<<log10(ratio);
       }
       cout<<"       pi = "<<good_partitions[i].first<<endl;

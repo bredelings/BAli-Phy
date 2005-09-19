@@ -15,9 +15,12 @@
 #include "sequencetree.H"
 #include "util.H"
 
-SequenceTree standardized(const std::string& t);
+RootedSequenceTree standardized(const std::string& t);
+
+void standardize(RootedSequenceTree& T);
 
 void standardize(SequenceTree& T);
+
 
 /// Represents a division of a subset of leaf taxa into 2 groups
 struct Partition {

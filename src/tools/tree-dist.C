@@ -157,8 +157,8 @@ bool informative(const Partition& p) {
   return n_elements(p.group1) > 1 and n_elements(p.group2) > 1;
 }
 
-SequenceTree standardized(const string& t) {
-  SequenceTree T;
+RootedSequenceTree standardized(const string& t) {
+  RootedSequenceTree T;
   T.parse(t);
   standardize(T);
   return T;
@@ -174,6 +174,19 @@ void standardize(SequenceTree& T) {
   vector<int> mapping = compute_mapping(T.get_sequences(),names);
 
   T.standardize(mapping);
+}
+
+void standardize(RootedSequenceTree& T) {
+
+  vector<string> names = T.get_sequences();
+    
+  std::sort(names.begin(),names.end());
+
+  vector<int> mapping = compute_mapping(T.get_sequences(),names);
+
+  T.standardize(mapping);
+
+  T.reroot(T.directed_branch(0).target());
 }
 
 std::ostream& operator<<(std::ostream& o, const Partition& P) 
@@ -214,8 +227,14 @@ SequenceTree get_mf_tree(const std::vector<std::string>& names,
 {
   SequenceTree T = star_tree(names);
 
-  for(int i=0;i<partitions.size();i++)
-    T.induce_partition(partitions[i].group1);
+  int i=0;
+  try {
+    for(;i<partitions.size();i++)
+      T.induce_partition(partitions[i].group1);
+  }
+  catch(...) {
+    throw myexception()<<"Partition ("<<partitions[i]<<") conflicts with tree "<<T;
+  }
 
   for(int i=0;i<T.n_branches();i++)
     T.branch(i).set_length(1.0);
@@ -442,7 +461,7 @@ tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample)
     if (max >= 0 and size() == max) break;
 
     //--------- Count how many of each topology -----------//
-    SequenceTree T;
+    RootedSequenceTree T;
     try {
       // This should make all the branch & node numbers the same if the topology is the same
       T = standardized(line);
@@ -456,7 +475,7 @@ tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample)
     if (not leaf_names.size()) leaf_names = T.get_sequences();
 
     // This should be a standard string representation
-    string t = RootedSequenceTree(T,T.directed_branch(0).target()).write(false);
+    string t = T.write(false);
       
     // If it hasn't been seen before, insert it
     if (index.find(t) == index.end()) {
