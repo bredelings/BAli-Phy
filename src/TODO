@@ -1,17 +1,31 @@
--23. Print blocksize, seed, and pseudo count on the same line in [ ]
+-31. Read Schmidler papers + others from postdoc e-mail.
+
+-30. Read Seo paper + others
+
+-29. Type in ideas from conference.
+
+-28. Determine criteria for 1.9.8
+
+-27. Cleanup warnings...
+
+-26. Make a tool to trim the ends of alignments, when the sequences
+     start varying a lot, so that we can run enolase.
 
 -20. We spend 1/2 the time reading in trees calculating leaf_partition sets.
 
      Can we compute sets and regular bit-vectors lazily?
 
--19. Output name of tree file we analyzed!
+-19. trees-bootstrap: 
+     a) output name of tree file we analyzed!
+     b) increase the number of samples in the boostrap from 10,000 -> 100,000?
 
 -18. Compare estimates w/ MrBayes on the globin example.
      Compare estimates w/ MrBayes on the EF-Tu 48b example.
+     a) compare mixing, topologies, branch lengths, speed, etc.
 
 -17. a. Implement letter classes.
 	a.1)  Should a wildcard be a special class, or not??
-     b. Print N or X instead of *
+     b. Remove '*' altogether - use a 'stop' character?
      c. Allow reading Codon alphabet w/ individual letter wildcards.
         (But return them all as alphabet::not_gap)
      d. Handle letter classes in parsimony analysis.
@@ -20,20 +34,30 @@
      f. Check!
 
 -25. Consider calculating PP of all the trees in alignment-consensus...
-    a) don't keep on RE-calculating everything.
-       i) calculate support bitvector for 100%
-      ii) then calculate support bitvector for each new partition that is added,
+     a) don't keep on RE-calculating everything.
+        i) calculate support bitvector for 100%
+       ii) then calculate support bitvector for each new partition that is added,
           and bitwise AND it in.
 
-    a) Consider sorting the partitions to improve speed.
+     a) Consider sorting the partitions to improve speed.
 
-       But - would this work with SUB-partitions?
+        But - would this work with SUB-partitions?
 
-    b) Perhaps first try to shrink the SIZE of trees, so that we can
-       store trees, to improve speed.
+     b) Perhaps first try to shrink the SIZE of trees, so that we can
+        store trees, to improve speed.
 
-       Would THIS work with sub-partitions? (YES) [check when awake!]
+        Would THIS work with sub-partitions? (YES) [check when awake!]
 
+-11. Make a program to compare two alignment distributions.
+     a) Flag homology pairs that have abs(log(p1,p2)) > thresh-hold. 
+     b) Output the pairs of residues that act up.
+       b.1) Have a method to convert the pairs to a color scheme.
+       b.2) Invent a color scheme that is something like 'grey' (1) +
+            red (0). 
+     c) Allow the user to specify either a sequence of alignment
+        samples or an alignment w/ '?' characters, and a level of
+        certainty at which to consider each pair in that alignment.
+ 
 -24. Allow alignment-gild to annotate an alignment-consensus
 
 -22. Don't show SRQ or sum plots for partitions w/ less than <N=10> regenerations,
@@ -54,28 +78,11 @@ We can avoid TWO malloc/copy/dealloc.
 
 -14. ADD partitions to M[0.5] that imply l=0.5 sub-partitions.
 
--13. Separate tree-dist-compare into two programs
-     a) one program estimates MAP and M[l] topologies for a single tree sample
-     b) another program bootstraps support for partitions, possibly from
-        multiple tree samples.
-     c) in the bootstrap program, store a list of functions to evaluate on each
-        bootstrap sample.  That way, we only need to generate the samples once.
-
 -12. Make a hash function for sub-partitions that is 
      (hash(left mask) * hash(right mask)), where the hash() function
      is a hash function for bitmasks and involves addition, not
      multiplication. 
 
--11. Make a program to compare two alignment distributions.
-     a) Flag homology pairs that have abs(log(p1,p2)) > thresh-hold. 
-     b) Output the pairs of residues that act up.
-       b.1) Have a method to convert the pairs to a color scheme.
-       b.2) Invent a color scheme that is something like 'grey' (1) +
-            red (0). 
-     c) Allow the user to specify either a sequence of alignment
-        samples or an alignment w/ '?' characters, and a level of
-        certainty at which to consider each pair in that alignment.
- 
 -10. Make tree a virtual public base class for SequenceTree and RootedTree?
 
 -9.  tree-dist.C: 
@@ -375,9 +382,9 @@ the prior, because we never want to use it  differently.
 
   b) implement checking when using this routine
 
-[DONE] Implement choose_MH( )
+[DONE] Implement choose_MH( ).
 
-[DONE] Write alignment-consensus
+[DONE] Write alignment-consensus.
 
 [DONE] Start fiddling the 'f' parameter, but making it fixed by default.
 
@@ -414,11 +421,21 @@ the prior, because we never want to use it  differently.
 
 [DONE] Make a ??? letter for Codon alphabets.
 
-
 [DONE] Remove '--with-stop', and add new alpabet names "Amino Acids + stop"
        and "Codons + stop"  
 
+[DONE] Print blocksize, seed, and pseudo count on the same line in [ ].
 
+[DONE] Separate tree-dist-compare into two programs: 
+        a) trees-consensus estimates MAP and M[l] topologies for a
+           single tree sample 
+        b) trees-bootstrap bootstraps support for partitions, possibly
+           from multiple tree samples.
+          i) speed up the trees-bootstrap by using the same samples
+             for each predicate, so that we need only generate the
+             random numbers once.
+
+[DONE] Print N or X instead of *
 
 *IDEAS*
 
