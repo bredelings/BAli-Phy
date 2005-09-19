@@ -10,7 +10,9 @@ Matrix probability_to_distance(const Matrix &C) {
   return D;
 }
 
-vector<double> FastMTM(const Tree& T,const Matrix& D) {
+vector<double> FastMTM(const Tree& T,const Matrix& D,
+		       const vector<vector<int> >& leaf_sets) 
+{
   const int N = T.n_leaves();
 
   vector<double> d(T.n_branches(),-1);
@@ -36,8 +38,8 @@ vector<double> FastMTM(const Tree& T,const Matrix& D) {
     append(branches[b].branches_after(),children);
     
     assert(children.size() == 2);
-    xset = T.leaf_partition_set(children[0]);
-    yset = T.leaf_partition_set(children[1]);
+    xset = leaf_sets[children[0]];
+    yset = leaf_sets[children[1]];
 
     double temp = 0;
     for(int i=0;i<children.size();i++)
@@ -54,12 +56,14 @@ vector<double> FastMTM(const Tree& T,const Matrix& D) {
   return d;
 }
 
-vector<double> SlowMTM(const Tree& T,const Matrix& D) {
+vector<double> SlowMTM(const Tree& T,const Matrix& D,
+		       const vector<vector<int> >& leaf_sets) 
+{
   vector<double> d(T.n_branches(),0);
 
   for(int b=0;b<T.n_branches();b++) {
-    vector<int> xset = T.leaf_partition_set(T.directed_branch(b));
-    vector<int> yset = T.leaf_partition_set(T.directed_branch(b).reverse());
+    vector<int> xset = leaf_sets[T.directed_branch(b)];
+    vector<int> yset = leaf_sets[T.directed_branch(b).reverse()];
 
     for(int i=0;i<xset.size();i++)
       for(int j=0;j<yset.size();j++)
@@ -68,9 +72,10 @@ vector<double> SlowMTM(const Tree& T,const Matrix& D) {
   return d;
 }
 
-vector<double> FastLeastSquares(const Tree& T, const Matrix & D) 
+vector<double> FastLeastSquares(const Tree& T, const Matrix & D,
+				const vector<vector<int> >& leaf_sets) 
 {
-  vector<double> delta = FastMTM(T,D);
+  vector<double> delta = FastMTM(T,D,leaf_sets);
 
   vector<double> b(T.n_branches());
 
@@ -84,8 +89,8 @@ vector<double> FastLeastSquares(const Tree& T, const Matrix & D)
 
     int j = branches[0].undirected_name();
     int k = branches[1].undirected_name();
-    double Nj = T.leaf_partition_set(branches[0]).size();
-    double Nk = T.leaf_partition_set(branches[1]).size();
+    double Nj = leaf_sets[branches[0]].size();
+    double Nk = leaf_sets[branches[1]].size();
     
     b[i] = (1+Nj+Nk)*delta[i]-(1+Nj-Nk)*delta[j] - (1-Nj+Nk)*delta[k];
     b[i] /= (4*Nj*Nk);
@@ -105,10 +110,10 @@ vector<double> FastLeastSquares(const Tree& T, const Matrix & D)
     int l = branches[2].undirected_name();
     int m = branches[3].undirected_name();
 
-    double Nj = T.leaf_partition_set(branches[0]).size();
-    double Nk = T.leaf_partition_set(branches[1]).size();
-    double Nl = T.leaf_partition_set(branches[2]).size();
-    double Nm = T.leaf_partition_set(branches[3]).size();
+    double Nj = leaf_sets[branches[0]].size();
+    double Nk = leaf_sets[branches[1]].size();
+    double Nl = leaf_sets[branches[2]].size();
+    double Nm = leaf_sets[branches[3]].size();
 
     double N  = T.n_leaves();
     assert(Nj + Nk + Nl + Nm <= N);

@@ -240,10 +240,10 @@ namespace substitution {
 	for(int k=0;k<branches.size();k++) {
 	  std::cerr<<"leaf set #"<<k+1<<" = ";
 	  int lb = T.directed_branch(branches[k]).reverse();
-	    vector<int> leaves = T.leaf_partition_set(lb);
-	    for(int l=0;l<leaves.size();l++)
-	      std::cerr<<leaves[l]<<" ";
-	    std::cerr<<std::endl;
+	  for(int l=0;l<T.n_leaves();l++)
+	    if (T.partition(lb)[l])
+	      std::cerr<<l<<" ";
+	  std::cerr<<std::endl;
 	}
 	
 	// print alignments
@@ -339,7 +339,12 @@ int add_subA_index_note(const alignment& A,int b)
 
 /// return index of lowest-numbered node behind b
 int rank(const Tree& T,int b) {
-  return T.leaf_partition_set(T.directed_branch(b).reverse())[0];
+  const valarray<bool>& mask = T.partition(T.directed_branch(b).reverse());
+  for(int i=0;i<mask.size();i++)
+    if (mask[i])
+      return i;
+
+  std::abort();
 }
 
 
@@ -478,9 +483,9 @@ void subA_index_check_footprint(const alignment& A,const Tree& T)
     for(int c=0;c<A.length();c++) {
 
       bool leaf_present = false;
-      vector<int> leaves = T.leaf_partition_set(T.directed_branch(b).reverse());
-      for(int i=0;i<leaves.size();i++)
-	if (not A.gap(c,leaves[i]))
+      const valarray<bool>& leaves = T.partition(T.directed_branch(b).reverse());
+      for(int i=0;i<T.n_leaves();i++)
+	if (leaves[i] and not A.gap(c,i))
 	  leaf_present=true;
 
       if (leaf_present)

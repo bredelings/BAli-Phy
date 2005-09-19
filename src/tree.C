@@ -258,6 +258,8 @@ void shift_leaves(BranchNode* start,int first,int n) {
 nodeview Tree::prune_subtree(int br) {
   BranchNode* b = branches_[br];
   
+  prepare_partitions();
+
   // shift remaining leaf names down so that they remain contiguous
   for(int i=0;i<n_leaves();i++) {
 
@@ -508,38 +510,35 @@ vector<const_branchview> branches_from_leaves(const Tree& T)
   return branch_list;
 }
 
-void Tree::compute_partitions() {
+void Tree::compute_partitions() const {
   vector<const_branchview> branch_list = branches_from_node(*this,nodes_[0]->node);
 
   // set up cached partition masks
-  cached_partitions.clear();
-  cached_partitions = vector< valarray<bool> >(2*n_branches(),valarray<bool>(false,n_nodes()));
-
-  // set up cached partition sets
-  if (cached_partition_sets.size() != 2*n_branches())
-    cached_partition_sets = vector< vector<int> >(2*n_branches());
-  for(int i=0;i<cached_partition_sets.size();i++) {
-    cached_partition_sets[i].clear();
-    cached_partition_sets[i].reserve(n_leaves());
-  }
+  cached_partitions.resize(2*n_branches());
+  for(int i=0;i<cached_partitions.size();i++)
+    if (cached_partitions[i].size() != n_nodes())
+      cached_partitions[i].resize(n_nodes());
 
   // compute partition masks
   for(int i=0;i<branch_list.size();i++) {
     const_branchview b = branch_list[i];
 
+    if (b.target().is_leaf_node())
+      cached_partitions[b] = false;
+    else {
+      const_edges_after_iterator j = b.branches_after();
+
+      cached_partitions[b] = cached_partitions[*j];j++;
+      for(;j;j++)
+	cached_partitions[b] |= cached_partitions[*j];
+    }
+
     cached_partitions[b][b.target()] = true;
 
-    for(const_edges_after_iterator b2 = b.branches_after();b2;b2++)
-      cached_partitions[b] |= cached_partitions[*b2];
-
-    cached_partitions[b.reverse()] = not cached_partitions[b];
+    cached_partitions[b.reverse()] = not cached_partitions[b]; 
   }
 
-  // compute LEAF partition sets
-  for(int b=0;b<2*n_branches();b++)
-    for(int i=0;i<n_leaves();i++) 
-      if (cached_partitions[b][i]) 
-	cached_partition_sets[b].push_back(i);
+  caches_valid = true;
 }
 
 
@@ -595,7 +594,9 @@ void Tree::SPR(int br1,int br2) {
 
   // don't regraft to the sub-branches we are being pruned from
   assert(b2 != b1->prev and b2 != b1->next);
-
+#ifndef NDEBUG
+  prepare_partitions();
+#endif  
   assert(cached_partitions[b1->out->branch][b2->node]);
   assert(cached_partitions[b1->out->branch][b2->out->node]);
 
@@ -704,8 +705,8 @@ void Tree::reanalyze(BranchNode* start) {
 }
 
 /// Computes nodes_[] and branch_[] indices, and cached_partitions[]
-void Tree::recompute(BranchNode* start,bool recompute_partitions) {
-
+void Tree::recompute(BranchNode* start,bool recompute_partitions) 
+{
   n_leaves_ = 0;
   for(BN_iterator BN(start);BN;BN++) {
 
@@ -722,7 +723,7 @@ void Tree::recompute(BranchNode* start,bool recompute_partitions) {
   check_structure();
 
   if (recompute_partitions)
-    compute_partitions();
+    caches_valid = false;
 }
 
 void Tree::check_structure() const {
@@ -789,6 +790,8 @@ void knit_node_together(vector<BranchNode*>& nodes) {
 void Tree::induce_partition(const std::valarray<bool>& partition) {
   assert(partition.size() == n_leaves());
   
+  prepare_partitions();
+
   valarray<bool> partition1(false,n_nodes());
   valarray<bool> partition2(false,n_nodes());
   for(int i=0;i<partition.size();i++) {
@@ -796,7 +799,7 @@ void Tree::induce_partition(const std::valarray<bool>& partition) {
     partition2[i] = not partition[i];
   }
 
-  for(int i=0;i<n_nodes();i++) {
+  for(int i=n_leaves();i<n_nodes();i++) {
     vector<BranchNode*> group1;
     vector<BranchNode*> group2;
 
@@ -851,9 +854,10 @@ Tree& Tree::operator=(const Tree& T) {
     if (nodes_.size()) TreeView(nodes_[0]).destroy();
 
     n_leaves_ = T.n_leaves_;
+    caches_valid = T.caches_valid;
     cached_partitions.clear();
-    cached_partitions = T.cached_partitions;
-    cached_partition_sets = T.cached_partition_sets;
+    if (caches_valid)
+      cached_partitions = T.cached_partitions;
     nodes_ = std::vector<BranchNode*>(T.nodes_.size(),(BranchNode*)NULL);
     branches_ = std::vector<BranchNode*>(T.branches_.size(),(BranchNode*)NULL);
 
@@ -865,22 +869,21 @@ Tree& Tree::operator=(const Tree& T) {
   }
 
 Tree::Tree(const BranchNode* BN) 
+  :caches_valid(false)
 {
   reanalyze(TreeView::copy_tree(BN));
 }
 
 Tree::Tree(const Tree& T) 
-    :n_leaves_(T.n_leaves_),
+    :caches_valid(T.caches_valid),
      cached_partitions(T.cached_partitions),
-     cached_partition_sets(T.cached_partition_sets),
+     n_leaves_(T.n_leaves_),
      nodes_(T.nodes_.size(),(BranchNode*)NULL),
      branches_(T.branches_.size(),(BranchNode*)NULL)
 {
     // recalculate pointer indices
     BranchNode* start = T.copy();
     recompute(start,false);
-
-    //operator=(T); 
 }
 
 Tree::~Tree() 
@@ -966,7 +969,7 @@ void RootedTree::check_structure() const {
 
 
 nodeview RootedTree::prune_subtree(int br) {
-  if (cached_partitions[br][root_->node])
+  if (partition(br)[root_->node])
     throw myexception()<<"Can't delete a subtree containing the root node!";
 
   if (root_ == branches_[br]) 
@@ -1133,14 +1136,14 @@ double length(const Tree& T) {
 
 #include <iostream>
 
-int subtree_height(const Tree& T,int b) {
-  vector<int> leaves = T.leaf_partition_set(b);
-
+int subtree_height(const Tree& T,int b) 
+{
   int node = T.directed_branch(b).target();
 
   int depth = 0;
-  for(int i=0;i<leaves.size();i++) 
-    depth = std::max(depth, T.edges_distance(node,leaves[i]) );
+  for(int i=0;i<T.n_leaves();i++) 
+    if (T.partition(b)[i])
+      depth = std::max(depth, T.edges_distance(node,i) );
 
   return depth;
 }
@@ -1152,4 +1155,18 @@ int node_depth(const Tree& T,int node)
     depth = std::min(depth, T.edges_distance(node,i) );
 
   return depth;
+}
+
+
+vector< vector<int> > partition_sets(const Tree& T)
+{
+  // set up cached partition sets
+  vector< vector<int> > sets(2*T.n_branches());
+
+  for(int b=0;b<2*T.n_branches();b++)
+    for(int i=0;i<T.n_leaves();i++) 
+      if (T.partition(b)[i]) 
+	sets[b].push_back(i);
+
+  return sets;
 }

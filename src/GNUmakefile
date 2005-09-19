@@ -33,7 +33,7 @@ EXACTFLAGS = -pipe
 
 LANGO := fast-math visibility=default
 
-WARN  := all no-sign-compare overloaded-virtual strict-aliasing
+WARN  := all extra no-sign-compare overloaded-virtual strict-aliasing
 
 ifeq (${BOUNDS_CHECK},y)
   DEFS += _GLIBCXX_DEBUG

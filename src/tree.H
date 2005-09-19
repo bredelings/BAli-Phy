@@ -44,12 +44,13 @@ BranchNode* add_node(BranchNode*);
 
 class Tree 
 {
+  mutable bool caches_valid;
+
+  mutable std::vector< std::valarray<bool> > cached_partitions;
+
 protected:
   /// The number of leaf nodes
   int n_leaves_;
-
-  std::vector< std::valarray<bool> > cached_partitions;
-  std::vector< std::vector<int> > cached_partition_sets;
 
   friend class branchview;
   friend class const_branchview;
@@ -60,8 +61,14 @@ protected:
   /// an index to one BranchNode for each node
   std::vector<BranchNode*> branches_;
 
-  /// re-compute cached_partitions and cached_partition_sets
-  void compute_partitions();
+  /// re-compute cached_partitions
+  void compute_partitions() const;
+
+  /// re-compute partitions if necessary
+  void prepare_partitions() const {
+    if (not caches_valid)
+      compute_partitions();
+  }
 
   /// re-compute all names and caches given leaf node names
   virtual void reanalyze(BranchNode*);
@@ -182,22 +189,13 @@ public:
 
   /// A bitmask of nodes in front of directed branch b
   const std::valarray<bool>& partition(int b) const {
+    prepare_partitions();
     return cached_partitions[b];
   }
 
   /// A bitmask of nodes in front of directed branch n1 -> n2
   const std::valarray<bool>& partition(int n1,int n2) const {
     return partition(directed_branch(n1,n2));
-  }
-
-  /// An list of nodes in front of directed branch b
-  const std::vector<int>& leaf_partition_set(int b) const {
-    return cached_partition_sets[b];
-  }
-
-  /// An list of nodes in front of directed branch n1 -> n2
-  const std::vector<int>& leaf_partition_set(int n1,int n2) const {
-    return leaf_partition_set(directed_branch(n1,n2));
   }
 
   /// construct standard names for leaves and branches
@@ -353,4 +351,6 @@ double length(const Tree& T);
 int subtree_height(const Tree& T,int b);
 
 int node_depth(const Tree& T,int node);
+
+std::vector<std::vector<int> > partition_sets(const Tree& T);
 #endif

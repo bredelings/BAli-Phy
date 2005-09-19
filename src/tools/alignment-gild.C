@@ -393,6 +393,8 @@ int main(int argc,char* argv[]) {
       for(int j=0;j<P_total.size2();j++)
 	P_total(i,j) = 0;
 
+    vector<vector<int> > leaf_sets = partition_sets(T);
+
     for(int c=0;c<A.length();c++) {
       vector<int> column = get_column(MA,c,T.n_leaves());
 
@@ -405,7 +407,7 @@ int main(int argc,char* argv[]) {
       vector<double> branch_lengths(T.n_branches());
 
       Matrix Pc = probability_to_distance(counts_to_probability(T,labels));
-      branch_lengths = FastLeastSquares(T,Pc);
+      branch_lengths = FastLeastSquares(T,Pc,leaf_sets);
       for(int b=0;b<branch_lengths.size();b++)
 	if (branch_lengths[b] < 0) branch_lengths[b] = 0;
       P_total += Pc;
@@ -454,7 +456,7 @@ int main(int argc,char* argv[]) {
     // should count unalignment events differently? - i.e. AA-- gives counts out of (1,1,0,0)?
 
     P_total /= A.length();
-    vector<double> branch_lengths = FastLeastSquares(T,P_total);
+    vector<double> branch_lengths = FastLeastSquares(T,P_total,leaf_sets);
     for(int i=0;i<branch_lengths.size();i++)
       if (branch_lengths[0] <0) branch_lengths[i] = 0;
     
