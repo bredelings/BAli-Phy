@@ -151,6 +151,40 @@ bool is_informative(const valarray<int>& count,int level)
 }
 
 
+double fraction_identical(const alignment& A,int s1,int s2,bool gaps_count) 
+{
+  unsigned total=0;
+  unsigned same =0;
+  for(int i=0;i<A.length();i++) {
+    if (A.gap(i,s1) and A.gap(i,s2)) 
+      continue;
+
+    if (not gaps_count and (A.gap(i,s1) or A.gap(i,s2)))
+      continue;
+
+    total++;
+
+    if (A(i,s1) == A(i,s2))
+      same++;
+  }
+
+  double f = 1;
+  if (total > 0)
+    f = double(same)/total;
+
+  return f;
+}
+
+double min_identity(const alignment& A,bool gaps_count)
+{
+  double identity = 1.0;
+  for(int i=0;i<A.n_sequences();i++)
+    for(int j=0;j<i;j++)
+      identity = std::min(identity,fraction_identical(A,i,j,gaps_count));
+
+  return identity;
+}
+
 
 int main(int argc,char* argv[]) 
 { 
@@ -197,11 +231,13 @@ int main(int argc,char* argv[])
     for(int i=0;i<A.n_sequences();i++)
       lengths.push_back(A.seqlength(i));
 
-    std::cout<<"Alphabet: "<<a.name<<"\n\n";
-    std::cout<<"Alignment: "<<A.length()<<" columns of "<<A.n_sequences()<<" sequences\n";
-    std::cout<<"  "<<max(lengths)<<"/"<<min(lengths)<<" max/min sequence lengths.\n";
-    std::cout<<"  "<<n_different<<" ("<<double(n_different)/A.length()*100<<"%) sites are not constant.\n";
-    std::cout<<"  "<<n_informative<<" ("<<double(n_informative)/A.length()*100<<"%) are informative.\n";
+    cout<<"Alphabet: "<<a.name<<"\n\n";
+    cout<<"Alignment: "<<A.length()<<" columns of "<<A.n_sequences()<<" sequences\n";
+    cout<<"  "<<max(lengths)<<"/"<<min(lengths)<<" max/min sequence lengths.\n";
+    cout<<"  "<<n_different<<" ("<<double(n_different)/A.length()*100<<"%) sites are not constant.\n";
+    cout<<"  "<<n_informative<<" ("<<double(n_informative)/A.length()*100<<"%) are informative.\n";
+
+    cout<<"  "<<min_identity(A,true)*100<<"%/"<<min_identity(A,false)*100<<"% minimum sequence identity with/without indels.\n";
 
     //------------ Get Tree Lengths ------------//
     int tree_length = 0;
@@ -221,11 +257,11 @@ int main(int argc,char* argv[])
 	      count[l]++;
 	  }
 
-	  //	  std::cout<<"#"<<c<<"    "<<length<<"   -    "<<n_letters(count,0)-1<<"     =     "<<
+	  //	  cout<<"#"<<c<<"    "<<length<<"   -    "<<n_letters(count,0)-1<<"     =     "<<
 	  //   length-(n_letters(count,0)-1)<<"\n";
 	}
       }
-      std::cout<<"  tree length = "<<tree_length<<"\n";
+      cout<<"  tree length = "<<tree_length<<"\n";
     }
 
     if (dynamic_cast<const Nucleotides*>(&a)) 
@@ -237,25 +273,25 @@ int main(int argc,char* argv[])
       add(found, find_triplet( sequences , "TGA" ) );
       add(found, find_triplet( sequences , "TAG" ) );
 
-      std::cout<<"\nStop Codons:\n";
+      cout<<"\nStop Codons:\n";
       for(int i=0;i<3;i++) 
-	std::cout<<"   Frame "<<i<<": "<<found[i]<<"\n";
+	cout<<"   Frame "<<i<<": "<<found[i]<<"\n";
     }
 
     valarray<double> counts = letter_counts(A);
     valarray<double> frequencies = A.get_alphabet().get_frequencies_from_counts(counts,A.n_sequences()/2);
 
-    std::cout<<"\nFreqencies:\n  ";
+    cout<<"\nFreqencies:\n  ";
     for(int i=0;i<a.size();i++)
-      std::cout<<a.lookup(i)<<"="<<frequencies[i]*100<<"%  ";
-    std::cout<<"\n";
+      cout<<a.lookup(i)<<"="<<frequencies[i]*100<<"%  ";
+    cout<<"\n";
 
     int wildcards = letter_count(A,alphabet::not_gap);
     int total = wildcards + (int)counts.sum();
-    std::cout<<"  Wildcards: "<<wildcards<<" ["<<double(wildcards)/total*100<<"%]\n";
+    cout<<"  Wildcards: "<<wildcards<<" ["<<double(wildcards)/total*100<<"%]\n";
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"Exception: "<<e.what()<<endl;
     exit(1);
   }
   return 0;
