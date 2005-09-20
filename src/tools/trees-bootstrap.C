@@ -280,6 +280,7 @@ int main(int argc,char* argv[])
       if (not file)
 	throw myexception()<<"Couldn't open file "<<files[i];
       
+      cout<<"# Loading trees from '"<<files[i]<<"'...\n";
       tree_dists.push_back(tree_sample(file,skip,max,subsample));
 
       if (i > 0 and tree_dists.back().names() != tree_dists[0].names())
