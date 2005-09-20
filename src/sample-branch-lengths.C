@@ -197,7 +197,7 @@ double slide_node_expand_branch(vector<double>& lengths,double sigma)
 }
 
 
-bool slide_node(const alignment& A, Parameters& P,MoveStats& Stats,
+bool slide_node(const alignment& A, Parameters& P,
 		const vector<const_branchview>& b,
 		double (*slide)(vector<double>&,double)
 		) 
@@ -243,11 +243,11 @@ void slide_node(const alignment& A, Parameters& P,MoveStats& Stats,int b0)
   append(b[0].branches_after(),b);
 
   if (uniform() < 0.5) {
-    bool success = slide_node(A, P, Stats, b, slide_node_no_expand_branch);
+    bool success = slide_node(A, P, b, slide_node_no_expand_branch);
     Stats.inc("slide_node",success);
   }
   else {
-    bool success = slide_node(A, P, Stats, b, slide_node_expand_branch);
+    bool success = slide_node(A, P, b, slide_node_expand_branch);
     Stats.inc("slide_node_expand_branch",success);
   }
 }

@@ -53,7 +53,7 @@ class DParray : public DPengine, public state_array {
   /// Length of the DP array
   int length;
 public:
-  efloat_t path_Q_subst(const vector<int>& path) const {return 1;}
+  efloat_t path_Q_subst(const vector<int>&) const {return 1;}
 
   /// Does state S emit?
   bool di(int S) const {bool e = false; if (state_emit[S]&(1<<0)) e=true;return e;}

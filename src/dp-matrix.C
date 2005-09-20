@@ -330,15 +330,15 @@ inline double DPmatrixEmit::emitMM(int i,int j) const {
   return s12_sub(i,j);
 }
 
-inline double DPmatrixEmit::emitM_(int i,int j) const {
+inline double DPmatrixEmit::emitM_(int i,int) const {
   return s1_sub[i];
 }
 
-inline double DPmatrixEmit::emit_M(int i,int j) const {
+inline double DPmatrixEmit::emit_M(int,int j) const {
   return s2_sub[j];
 }
 
-inline double DPmatrixEmit::emit__(int i,int j) const {
+inline double DPmatrixEmit::emit__(int,int) const {
   return 1.0;
 }
 

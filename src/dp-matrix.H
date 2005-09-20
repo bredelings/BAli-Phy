@@ -121,7 +121,7 @@ public:
   /// Compute the forward probabilities for a cell
   void forward_cell(int,int);
 
-  efloat_t path_Q_subst(const vector<int>& path) const {return 1;}
+  efloat_t path_Q_subst(const vector<int>&) const {return 1;}
 
   DPmatrixNoEmit::DPmatrixNoEmit(int i1,
 				 int i2,

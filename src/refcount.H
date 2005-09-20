@@ -21,13 +21,13 @@ public:
   void mark_unshareable() {shareable=false;}
 
   // when copying, copy the super object but keep our references
-  RefObject& operator=(const RefObject& RO) {return *this;}
+  RefObject& operator=(const RefObject&) {return *this;}
 
   // start out with no references
   RefObject():count(0),shareable(true) {}
 
   // start out with no references
-  RefObject(const RefObject& RO):count(0),shareable(true) {}
+  RefObject(const RefObject&):count(0),shareable(true) {}
   
   virtual ~RefObject()=0;
 };

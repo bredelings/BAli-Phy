@@ -90,6 +90,7 @@ bool operator==(const alphabet& a1,const alphabet& a2) {
 }
 
 void alphabet::insert(const string& l) {
+  data.push_back(l);
   throw myexception()<<"Not implemented yet: adding letters to alphabets.";
 }
 

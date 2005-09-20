@@ -120,7 +120,6 @@ unsigned Binomial::operator()(double p,unsigned long n1) {
   
   assert(p>=0.0);
   assert(p<=1.0+1e-10);
-  assert(n>=0);
 
   return gsl_ran_binomial(generator,p,n);
 }

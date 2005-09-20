@@ -27,6 +27,12 @@ protected:
   /// The letters of the alphabet
   std::vector<std::string> data;
 
+  /// Add a letter to the alphabet
+  void insert(const std::string& l);
+
+  /// Remove a letter from the alphabet
+  void remove(const std::string& l);
+
 public:
 
   virtual alphabet* clone() const=0;// {return new alphabet(*this);}
@@ -78,12 +84,6 @@ public:
   friend bool operator==(const alphabet&,const alphabet&);
 
   virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
-
-  /// Add a letter to the alphabet
-  void insert(const std::string& l);
-
-  /// Remove a letter from the alphabet
-  void remove(const std::string& l);
 
   alphabet(const std::string&,const std::string&);
   alphabet(const std::string&,const std::string&,const std::string&);

@@ -3,7 +3,7 @@
 #include "mytypes.H"
 #include "eigenvalue.H"
 
-Matrix exp(const EigenValues& eigensystem,const BMatrix& D,double t,double f=1.0);
+Matrix exp(const EigenValues& eigensystem,const BMatrix& D,double t);
 Matrix exp(const SMatrix& S,const BMatrix& D,double t=1.0,double f=1.0);
 Matrix exp(const SMatrix& M,const double t=1.0);
 

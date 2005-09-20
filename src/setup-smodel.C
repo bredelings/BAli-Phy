@@ -106,9 +106,7 @@ bool process_stack_Markov(vector<string>& string_stack,
 
 
 bool process_stack_IA(vector<string>& string_stack,  
-		      vector<OwnedPointer<substitution::Model> >& model_stack,
-		      const alphabet& a,
-		      const variables_map& args) 
+		      vector<OwnedPointer<substitution::Model> >& model_stack)
 {
   ReversibleMarkovModel* markov = dynamic_cast<ReversibleMarkovModel*>(model_stack.back().get());
   string arg;
@@ -138,9 +136,7 @@ bool process_stack_IA(vector<string>& string_stack,
 
 
 bool process_stack_Multi(vector<string>& string_stack,  
-			 vector<OwnedPointer<substitution::Model> >& model_stack,
-			 const alphabet& a,
-			 const variables_map& args) 
+			 vector<OwnedPointer<substitution::Model> >& model_stack)
 {
 
   ReversibleAdditiveModel* RA = dynamic_cast<ReversibleAdditiveModel*>(model_stack.back().get());
@@ -311,9 +307,9 @@ get_smodel(const variables_map& args,const string& smodel,const alphabet& a)
 
     process_stack_Markov(string_stack,model_stack,a,args);
 
-    process_stack_IA(string_stack,model_stack,a,args);
+    process_stack_IA(string_stack,model_stack);
 
-    process_stack_Multi(string_stack,model_stack,a,args);
+    process_stack_Multi(string_stack,model_stack);
 
     if (string_stack.size() == length)
       throw myexception()<<"Error: Couldn't process substitution model level \""<<string_stack.back()<<"\"";

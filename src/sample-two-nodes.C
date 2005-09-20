@@ -121,7 +121,7 @@ RefPtr<DParrayConstrained> sample_two_nodes_base(alignment& A,const Parameters& 
   branches[3] = T.branch(nodes[3],nodes[5]);
   branches[4] = T.branch(nodes[4],nodes[5]);
   const Matrix Q = createQ(P.branch_HMMs,branches,A5::states_list);
-  vector<double> start_P = get_start_P(P.branch_HMMs,branches,A5::states_list);
+  vector<double> start_P = get_start_P(P.branch_HMMs,branches);
 
   // Actually create the Matrices & Chain
   RefPtr<DParrayConstrained> Matrices = new DParrayConstrained(seqall.size(), 

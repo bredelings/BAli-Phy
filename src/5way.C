@@ -257,8 +257,7 @@ namespace A5 {
 
 
   /// Get the vector of start probabilities
-  vector<double> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br,
-			       const vector<int>& states)
+  vector<double> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br)
   {
     int count = 0;
     double sum = 0.0;

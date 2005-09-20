@@ -62,9 +62,9 @@ struct Plain_ColorMap: public ColorMap {
 public:
   Plain_ColorMap* clone() const {return new Plain_ColorMap(*this);}
 
-  RGB bg_color(double x,const string& s) const { return white; }
+  RGB bg_color(double,const string&) const { return white; }
 
-  RGB fg_color(double x,const string& s) const { return black; }
+  RGB fg_color(double,const string&) const { return black; }
 };
 
 /// ColorMap which represents uncertainty in terms of gray-scale
@@ -72,11 +72,11 @@ struct BW_ColorMap: public ColorMap {
 public:
   BW_ColorMap* clone() const {return new BW_ColorMap(*this);}
 
-  RGB bg_color(double x,const string& s) const {
+  RGB bg_color(double x,const string&) const {
     return HSV(0,0,1.0-x);
   }
 
-  RGB fg_color(double x,const string& s) const {
+  RGB fg_color(double x,const string&) const {
     if (x < 0.5)
       return black;
     else
@@ -108,7 +108,7 @@ public:
     }
   }
 
-  RGB fg_color(double x,const string& s) const {
+  RGB fg_color(double,const string&) const {
     return black;
   }
  
@@ -145,7 +145,7 @@ public:
 
   AA_colors* clone() const {return new AA_colors(*this);}
 
-  RGB bg_color(double x,const string& s) const {
+  RGB bg_color(double,const string& s) const {
     if (s.length() > 1) std::abort();
     char aa = ' ';
     if (not s.empty())
@@ -154,7 +154,7 @@ public:
     return AA_color(aa);
   }
 
-  RGB fg_color(double x,const string& s) const {
+  RGB fg_color(double,const string&) const {
     return black;
   }
 };
@@ -182,7 +182,7 @@ public:
 
   DNA_colors* clone() const {return new DNA_colors(*this);}
 
-  RGB bg_color(double x,const string& s) const {
+  RGB bg_color(double,const string& s) const {
     if (s.length() > 1) std::abort();
     char aa = ' ';
     if (not s.empty())
@@ -191,7 +191,7 @@ public:
     return DNA_color(aa);
   }
 
-  RGB fg_color(double x,const string& s) const {
+  RGB fg_color(double,const string&) const {
     return black;
   }
 };

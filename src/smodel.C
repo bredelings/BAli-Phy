@@ -30,7 +30,10 @@ namespace substitution {
   }
 
   string Gamma_Branch_Model::super_parameter_name(int i) const {
-    return "sigma/mu";
+    if (i==0)
+      return "sigma/mu";
+    else
+      return s_parameter_name(i,1);
   }
 
   double Gamma_Branch_Model::super_fiddle(int) {
@@ -56,7 +59,10 @@ namespace substitution {
   //-------------------- Gamma_Stretched_Branch_Model ----------------------//
 
   string Gamma_Stretched_Branch_Model::super_parameter_name(int i) const {
-    return "sigma/mu";
+    if (i==0)
+      return "sigma/mu";
+    else
+      return s_parameter_name(i,1);
   }
 
   // E T = t
@@ -174,9 +180,8 @@ namespace substitution {
   }
 
   Matrix ReversibleMarkovModel::transition_p(double t) const {
-    //return exp(SMatrix(S),getD(),t);
-    double f = parameters_[0];
-    return exp(eigensystem,getD(),t,f);
+    // we don't need to use f here - it is built into the eigensystem
+    return exp(eigensystem,getD(),t);
   }
 
   efloat_t ReversibleMarkovModel::prior() const {
@@ -214,7 +219,7 @@ namespace substitution {
   }
 
 
-  Matrix INV_Model::transition_p(double t) const 
+  Matrix INV_Model::transition_p(double) const 
   {
     return P;
   }

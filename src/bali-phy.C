@@ -435,7 +435,7 @@ int main(int argc,char* argv[]) {
       cout<<", *-tree";
     cout<<endl<<endl;
 
-    P.alignment_constraint = load_alignment_constraint(args,A,T);
+    P.alignment_constraint = load_alignment_constraint(args,T);
 
     P.Temp = args["T"].as<double>();
 

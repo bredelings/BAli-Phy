@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <cassert>
+#include "myexception.H"
 
 using namespace std;
 
@@ -20,45 +21,52 @@ string get_largevalue(const string& line,int pos1) {
 
 
 int main(int argc,char* argv[]) { 
-  vector<string> patterns;
-  
-  for(int i=1;i<argc;i++)
-    patterns.push_back(argv[i]);
+  try{
+    vector<string> patterns;
+    
+    for(int i=1;i<argc;i++)
+      patterns.push_back(argv[i]);
 
-  bool large_value = false;
-  if (patterns.size() and patterns[0] == "--large") {
-    large_value = true;
-    patterns.erase(patterns.begin());
-  }
+    bool large_value = false;
+    if (patterns.size() and patterns[0] == "--large") {
+      large_value = true;
+      patterns.erase(patterns.begin());
+    }
 
-  for(int i=0;i<patterns.size();i++)
-    patterns[i] += " = ";
+    for(int i=0;i<patterns.size();i++)
+      patterns[i] += " = ";
 
-  assert(patterns.size() >= 0);
+    if (not patterns.size())
+      throw myexception()<<"No patterns specified.";
 
-  string line;
-  vector<int> matches(patterns.size());  
-  while(getline(cin,line)) {
-    bool linematches=true;
-    for(int i=0;i<patterns.size();i++) {
-      matches[i] = line.find(patterns[i]);
-      //      cout<<"   "<<patterns[i]<<": "<<matches[i]<<endl;
-      if (matches[i] == -1) {
-	linematches=false;
-	break;
+    string line;
+    vector<int> matches(patterns.size());  
+    while(getline(cin,line)) {
+      bool linematches=true;
+      for(int i=0;i<patterns.size();i++) {
+	matches[i] = line.find(patterns[i]);
+	//      cout<<"   "<<patterns[i]<<": "<<matches[i]<<endl;
+	if (matches[i] == -1) {
+	  linematches=false;
+	  break;
+	}
       }
+      if (not linematches) continue;
+      
+      for(int i=0;i<patterns.size();i++) {
+	if (i != patterns.size()-1) 
+	  cout<<getvalue(line,matches[i] + patterns[i].size())<<" ";
+	else if (large_value)
+	  cout<<get_largevalue(line,matches[i] + patterns[i].size());
+	else
+	  cout<<getvalue(line,matches[i] + patterns[i].size());	
+      }
+      cout<<"\n";
     }
-    if (not linematches) continue;
-
-    for(int i=0;i<patterns.size();i++) {
-      if (i != patterns.size()-1) 
-	cout<<getvalue(line,matches[i] + patterns[i].size())<<" ";
-      else if (large_value)
-	cout<<get_largevalue(line,matches[i] + patterns[i].size());
-      else
-	cout<<getvalue(line,matches[i] + patterns[i].size());	
-    }
-    cout<<"\n";
+  }
+  catch (std::exception& e) {
+    cerr<<"Error: "<<e.what()<<endl;
+    exit(1);
   }
 
 }

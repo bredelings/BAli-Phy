@@ -52,7 +52,7 @@ namespace substitution {
     return total;
   }
 
-  efloat_t calc_root_probability(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& cache,
+  efloat_t calc_root_probability(const alignment& A,const Tree& T,Likelihood_Cache& cache,
 			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     const int root = cache.root;
@@ -125,7 +125,7 @@ namespace substitution {
   efloat_t calc_root_probability(const alignment& A, const Parameters& P,const vector<int>& rb,
 			       const ublas::matrix<int>& index) 
   {
-    return calc_root_probability(A,P,P.T,P.LC,P.SModel(),rb,index);
+    return calc_root_probability(A,P.T,P.LC,P.SModel(),rb,index);
   }
 
   void peel_branch(int b0,column_cache_t cache, const alignment& A, const Tree& T, 
@@ -472,7 +472,7 @@ namespace substitution {
     ublas::matrix<int> index = subA_index(rb,A,T);
 
     // get the probability
-    efloat_t Pr = calc_root_probability(A,MC,T,cache,MModel,rb,index);
+    efloat_t Pr = calc_root_probability(A,T,cache,MModel,rb,index);
 
     cache.cached_value = Pr;
     cache.cv_up_to_date() = true;

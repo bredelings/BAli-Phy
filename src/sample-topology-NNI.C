@@ -73,7 +73,7 @@ int three_way_topology_sample_fgaps(vector<alignment>& a,vector<Parameters>& p,c
 }
 
 ///Sample between 3 topologies, ignoring gap priors on each case
-int three_way_topology_sample_sgaps(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int b) 
+int three_way_topology_sample_sgaps(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho) 
 {
   vector<efloat_t> Pr(3);
   for(int i=0;i< Pr.size();i++)
@@ -83,7 +83,7 @@ int three_way_topology_sample_sgaps(vector<alignment>& a,vector<Parameters>& p,c
 }
 
 ///Sample between 2 topologies, ignoring gap priors on each case
-int two_way_topology_sample_sgaps(vector<alignment>& a, vector<Parameters>& p,const vector<efloat_t>& rho,int b) 
+int two_way_topology_sample_sgaps(vector<alignment>& a, vector<Parameters>& p,const vector<efloat_t>& rho) 
 {
   efloat_t Pr1 = rho[0]*p[0].probability(a[0],p[0]);
   efloat_t Pr2 = rho[1]*p[0].probability(a[1],p[1]);
@@ -99,7 +99,7 @@ int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vec
   if (p[0].IModel().full_tree)
     return two_way_topology_sample_fgaps(a,p,rho,b);
   else
-    return two_way_topology_sample_sgaps(a,p,rho,b);
+    return two_way_topology_sample_sgaps(a,p,rho);
 }
 
 
@@ -250,7 +250,7 @@ int three_way_topology_sample(vector<alignment>& a,vector<Parameters>& p, const 
   if (p[0].IModel().full_tree)
     return three_way_topology_sample_fgaps(a,p,rho,b);
   else
-    return three_way_topology_sample_sgaps(a,p,rho,b);
+    return three_way_topology_sample_sgaps(a,p,rho);
 }
 
 

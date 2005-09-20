@@ -590,8 +590,8 @@ namespace substitution {
     int n_base_models() const {return 1;}
 
     /// Access the base model
-    const Base_Model_t& base_model(int m) const {return SubModel();}
-          Base_Model_t& base_model(int m)       {return SubModel();}
+    const Base_Model_t& base_model(int) const {return SubModel();}
+          Base_Model_t& base_model(int)       {return SubModel();}
 
     std::vector<double> distribution() const {return vector<double>(1,1);}
 

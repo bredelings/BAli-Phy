@@ -26,8 +26,7 @@ string clean(const string& in) {
     
 
 
-ublas::matrix<int> load_alignment_constraint(const variables_map& args,
-					     const alignment& A,SequenceTree& T) 
+ublas::matrix<int> load_alignment_constraint(const variables_map& args,SequenceTree& T) 
 {
   ublas::matrix<int> constraint(0,T.n_leaves());
 

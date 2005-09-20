@@ -33,7 +33,7 @@ void change_branch_length_multi_move(alignment& A, Parameters& P, MoveStats& Sta
   change_branch_length_multi(A,P,Stats,b);
 }
 
-void sample_tri_one(alignment& A, Parameters& P, MoveStats& Stats,int b) {
+void sample_tri_one(alignment& A, Parameters& P, MoveStats&,int b) {
   assert(P.IModel().full_tree); 
 
   const SequenceTree& T = P.T;
@@ -84,19 +84,19 @@ void sample_tri_branch_one(alignment& A, Parameters& P, MoveStats& Stats,int b)
 }
 
 
-void sample_alignments_one(alignment& A, Parameters& P, MoveStats& Stats,int b) {
+void sample_alignments_one(alignment& A, Parameters& P, MoveStats&,int b) {
   assert(P.IModel().full_tree); 
 
   sample_alignment(A,P,b);
 }
 
-void sample_node_move(alignment& A, Parameters& P, MoveStats& Stats,int node) {
+void sample_node_move(alignment& A, Parameters& P, MoveStats&,int node) {
   assert(P.IModel().full_tree); 
 
   sample_node(A,P,node);
 }
 
-void sample_two_nodes_move(alignment& A, Parameters& P, MoveStats& Stats,int n0) {
+void sample_two_nodes_move(alignment& A, Parameters& P, MoveStats&,int n0) {
   assert(P.IModel().full_tree); 
 
   vector<int> nodes = A3::get_nodes_random(P.T,n0);

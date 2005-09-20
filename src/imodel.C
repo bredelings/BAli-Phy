@@ -405,7 +405,7 @@ string NewIndelModel::parameter_name(int i) const {
     return i_parameter_name(i,6);
 }
 
-efloat_t NewIndelModel::lengthp(int l) const {
+efloat_t NewIndelModel::lengthp(int) const {
   return 1;
 }
 

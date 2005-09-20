@@ -82,7 +82,7 @@ void Multi_Likelihood_Cache::set_length(int t,int l) {
 
   // Increase overall length if necessary
   if (l>C) {
-    int l2 = 4+(1.1*l);
+    int l2 = 4+(int)(1.1*l);
     int delta = l2-C;
     C = l2;
 

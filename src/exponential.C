@@ -82,7 +82,7 @@ Matrix exp(const EigenValues& solution,double t) {
   return E;
 }
 
-Matrix exp(const EigenValues& eigensystem,const BMatrix& D,const double t,double f) {
+Matrix exp(const EigenValues& eigensystem,const BMatrix& D,const double t) {
   const int n = D.size1();
 
   // Compute D^-a * E * D^a

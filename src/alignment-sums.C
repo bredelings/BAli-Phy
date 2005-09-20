@@ -52,7 +52,7 @@ efloat_t other_prior(const alignment& A, const Parameters& P,const vector<int>& 
 
 /// Distributions function for a star tree
 vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
-				    const vector<int>& seq,int root,const valarray<bool>& group)
+				    const vector<int>& seq,int,const valarray<bool>& group)
 {
   const alphabet& a = A.get_alphabet();
   const substitution::MultiModel& MModel = P.SModel();

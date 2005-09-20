@@ -126,7 +126,7 @@ void remove_duplicates(vector<int>& v) {
   }
 }
 
-MCMC::Result sample_SPR(alignment& A,Parameters& P,MoveStats& Stats, int b1,int b2) 
+MCMC::Result sample_SPR(alignment& A,Parameters& P,int b1,int b2) 
 {
   int n1 = P.T.directed_branch(b1).target();
   int n2 = P.T.directed_branch(b1).source();
@@ -237,7 +237,7 @@ void sample_SPR_flat(alignment& A,Parameters& P,MoveStats& Stats)
 
     int b2 = choose_SPR_target(P.T,b1);
 
-    MCMC::Result result = sample_SPR(A,P,Stats,b1,b2);
+    MCMC::Result result = sample_SPR(A,P,b1,b2);
 
     Stats.inc("SPR (flat)", result);
   }
@@ -352,7 +352,7 @@ void sample_SPR_nodes(alignment& A,Parameters& P,MoveStats& Stats)
     int b1=-1, b2=-1;
     choose_subtree_branch_nodes(P.T,b1,b2);
 
-    MCMC::Result result = sample_SPR(A,P,Stats,b1,b2);
+    MCMC::Result result = sample_SPR(A,P,b1,b2);
 
     Stats.inc("SPR (path)", result);
   }
