@@ -156,7 +156,7 @@ tools/joint-A-T: alignment.o alphabet.o sequence.o util.o rng.o \
 	tools/statistics.o ${LINKLIBS}
 
 tools/alignment-info: alignment.o alphabet.o sequence.o util.o rng.o \
-	tree.o sequencetree.o tools/optimize.o tools/findroot.o setup.o imodel.o \
+	tree.o sequencetree.o setup.o imodel.o \
 	sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o \
 	model.o tree-util.o ${LINKLIBS}
 
