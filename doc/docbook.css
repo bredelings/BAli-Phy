@@ -21,14 +21,20 @@ pre.programlisting {
 
 .application {font-family: Courier New; font-variant: small-caps;}
 
+tr { margin: 0.2em; padding: 0.2em; }
+ 
 .variablelist {
 	background-color: #F4F4F4;
 	padding: 6px;
 }
 
-tr { margin: 0.2em;padding: 0.2em;}
+.variablelist tr { margin: 0.2em;padding: 0.2em;}
 
 .variablelist td { vertical-align:top; padding-top: 0.3em;padding-bottom:0.3em;}
+
+table td { vertical-align:top; padding: 0.5em;}
+
+td { background-color: #F4F4F4;  }
 
 .toc {
 	background-color: #F4F4F4;

@@ -564,104 +564,198 @@
 	Markov chain.  The transition matrix for a time $t$ is then
 	given by \[P(t)_{ij}=e^{Q_{ij} \times t},\] using a matrix exponential.</para>  
 
-      <variablelist>
-	<varlistentry>
-	  <term>EQU</term>
-	  <listitem>
-	    <para>$S_{ij} = 1$ for every $i$ and $j$.</para>
-	    <para>Alphabet: any.</para>
-	    <para>Parameters: none.</para>
-	  </listitem>
-	</varlistentry>
+	<table frame="none" rowsep="1">
+	  <title>Substitution Models</title>
+	  <tgroup cols='4'>
+	    <colspec colnum="1" colname="col1" colwidth="1*"/>
+	    <colspec colnum="2" colname="col2" colwidth="1*"/>
+	    <colspec colnum="3" colname="col3" colwidth="1*"/>
+	    <colspec colnum="4" colname="col4" colwidth="1*"/>
+	  <thead><row>
+	    <entry>Model</entry>
+	    <entry>Alphabet</entry>
+	    <entry>Parameters</entry>
+	    <entry>Description</entry>
+	  </row></thead>
 
-	<varlistentry>
-	  <term>HKY</term>
-	  <listitem>
-	    <para>The Hasegawa, Kishina, Yano (1985) model.</para>
-	    <para>Alphabet: DNA or RNA.</para>
-	    <para>Parameters: $\kappa$, the transition/transversion ratio.</para>
-	  </listitem>
-	</varlistentry>
+	  <tbody>
+	    <row>
+	      <entry><userinput>EQU</userinput></entry>
+	      <entry>any</entry>
+	      <entry>none</entry>
+	      <entry>$S_{ij} = 1$ for every $i$ and $j$.</entry>
+	    </row>
 
-	<varlistentry>
-	  <term>TN</term>
-	  <listitem>
-	    <para>The Tamura, Nei (1993) model.</para>
-	    <para>Alphabet: DNA or RNA.</para>
-	    <para>Parameters: $\kappa_1$, the transition/transversion ratio for purines. $\kappa_2$, the transition/transition ratio for pyrimadines.</para>
-	  </listitem>
-	</varlistentry>
+	    <row>
+	      <entry>
+		<para><userinput>HKY</userinput></para>
+		<para>Hasegawa, Kishina, Yano (1985)</para>
+	      </entry>
+	      <entry>DNA or RNA</entry>
+	      <entry>$\kappa$: the ts/tv ratio.</entry>
+	      <entry>
+		<para>$S_{ij} = 1$ for transversions.</para>
+		<para>$S_{ij} = \kappa$ for transitions.</para>
+	      </entry>
+	    </row>
 
-	<varlistentry>
-	  <term>Empirical[WAG]</term>
-	  <listitem>
-	    <para>The Whelan and Goldman (2001) model.</para>
-	    <para>Alphabet: Amino Acids</para>
-	    <para>Parameters: none.</para>
-	  </listitem>
-	</varlistentry>
+	    <row>
+	      <entry><para><userinput>TN</userinput></para><para>Tamura, Nei (1993)</para></entry>
+	      <entry>DNA or RNA</entry>
+	      <entry>
+		<para>$\kappa_1$: the purine ts/tv ratio.</para>
+		<para>$\kappa_2$: the pyrimidine ts/tv ratio.</para>
+	      </entry>
+	      <entry>
+		<para>$S_{ij} = 1$ for transversions.</para>
+		<para>$S_{ij} = \kappa_1$ for purine transitions.</para>
+		<para>$S_{ij} = \kappa_2$ for pyrimidine transitions.</para>
+	      </entry>
+	    </row>
 
-	<varlistentry>
-	  <term>YangM0</term>
-	  <listitem>
-	    <para>The Nielsen and Yang (1998) model.</para>
-	    <para>Alphabet: Codons.</para>
-	    <para>Parameters(2): $\kappa$, the transition/transversion
-	    ratio. $\omega$, the non-synonymous/synonymous substitution
-	    ratio.</para>
+	    <row>
+	      <entry>
+		<para><userinput>Empirical[WAG]</userinput></para>
+		<para>Whelan and Goldman (2001)</para>
+	      </entry>
+	      <entry>Amino Acids</entry>
+	      <entry>
+		<para>none.</para>
+	      </entry>
+	      <entry></entry>
+	    </row>
 
-	    <para>One can also specify
-	    YangM0[<replaceable>sub-model</replaceable>].  In this
-	    case, YangM0[HKY] gives the standard Yang M0 model,
-	    whereas YangM0[TN] gives two transition/transversion rates.</para>
-	  </listitem>
-	</varlistentry>
+	    <row>
+	      <entry>
+		<para><userinput>YangM0</userinput></para>
+		<para>Nielsen and Yang (1998)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>$\kappa$: the ts/tv ratio.</para>
+		<para>$\omega$: the dn/ds ratio.</para>
+	      </entry>
+	      <entry>
+		<para>$S_{\alpha\beta} = 0$ for changes of more than one nucleotide.</para>
+		<para>$S_{\alpha\beta} = 1$ for synonymous transversions.</para>
+		<para>$S_{\alpha\beta} = \omega$ for non-synonymous transversions.</para>
 
-	<varlistentry>
-	  <term>YangM2</term>
-	  <listitem>
-	    <para>The ?? model.</para>
-	    <para>Alphabet: Codons.</para>
+		<para>$S_{\alpha\beta} = \kappa$ for synonymous transitions.</para>
+		<para>$S_{\alpha\beta} = \omega\kappa$ for non-synonymous transitions.</para>
+	      </entry> 
+	    </row>
 
-	    <para>Parameters(5): $\kappa$, the transition/transversion
-	    ratio. $p_1, p_2, p_3$, the frequency of three
-	    sub-models.  The models have $\omega$ set to $0$, $1$, and
-	    $\omega_2$, the non-synonymous/synonymous substitution
-	    ratio.</para>
+	    <row>
+	      <entry>
+		<para><userinput>YangM0[<replaceable>nuc-model</replaceable>]</userinput></para>
+		<para>Nielsen and Yang (1998)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para><replaceable>nuc-model</replaceable> parameters.</para>
+		<para>$\omega$: the dn/ds ratio</para>
+	      </entry>
+	      <entry>
+		<para>Setting <replaceable>nuc-model</replaceable>=HKY
+		gives the standard M0 model.  Setting
+		<replaceable>nuc-model</replaceable>=TN gives a codon
+		model with two transition rates.</para>
+		<para>If the nuc-model has transition matrix
+		$S^\prime_{ij}$ on nucleotides, then:</para>
 
-	  </listitem>
-	</varlistentry>
+		<para>$S_{\alpha\beta} = 0$ for changes of more than one nucleotide.</para>
+		<para>$S_{\alpha\beta} = S^\prime_{ij}$ for synonymous changes.</para>
+		<para>$S_{\alpha\beta} = \omega S^\prime_{ij}$ for non-synonymous changes.</para>
+	      </entry> 
+	    </row>
 
-	<varlistentry>
-	  <term>YangM3[$n$]</term>
-	  <listitem>
-	    <para>The ?? model.</para>
-	    <para>Alphabet: Codons.</para>
+	    <row>
+	      <entry>
+		<para><userinput>YangM2</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + YangM2</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>$\kappa$: the ts/tv ratio</para>
+		<para>$p_1, p_2, p_3$: bin frequencies.</para>
+		<para>$\omega_3$: value of $\omega$ in bin 2.</para>
+	      </entry>
+	      <entry>
+	      <para>$\Omega=\omega_i$ with probability $p_i$.</para>
+	      <para>$\omega_1 = 0$, $\omega_2 = 1$.</para>
+	      <para>The default for <replaceable>sub-model</replaceable> is YangM0.</para>
+	      </entry>
+	    </row>
 
-	    <para>Parameters($2n$): $\kappa$, the transition/transversion
-	    ratio. $p_1, \ldots , p_n$, the frequency of
-	    $n$. $\omega_1, \ldots , \omega_n$, the
-	    non-synonymous/synonymous substitution ratio for the $n$
-	    sub-models. </para>
+	    <row>
+	      <entry>
+		<para><userinput>YangM3[$n$]</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + YangM3[$n$]</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>$\kappa$: the ts/tv ratio</para>
+		<para>$p_1, \ldots, p_n$: bin frequencies.</para>
+		<para>$\omega_1, \ldots, \omega_n$: values of $\omega$.</para>
+	      </entry>
+	      <entry>
+	      <para>$\Omega=\omega_i$ with probability $p_i$.</para>
+	      </entry>
+	    </row>
 
-	  </listitem>
-	</varlistentry>
+	    <row>
+	      <entry>
+		<para><userinput>YangM7[$n$]</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + YangM7[$n$]</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>$\mu$: mean of the Beta distribution.</para>
+		<para>$\sigma/\mu$: noise to signal ratio for Beta.</para>
+	      </entry>
+	      <entry>
+	      <para>$\Omega \sim Beta(\mu,\sigma)$.</para>
+	      <para>A discrete approximation to the Beta with $n$
+     	            bins is used.</para>
+	      </entry>
+	    </row>
 
-	<varlistentry>
-	  <term>YangM7[$n$]</term>
-	  <listitem>
-	    <para>The ?? model.</para>
-	    <para>Alphabet: Codons.</para>
+	    <row>
+	      <entry>
+		<para><userinput><replaceable>sub-model</replaceable> + gamma[$n$]</userinput></para>
+		<para>Yang (1994)</para>
+	      </entry>
+	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
+	      <entry>
+		<para>$\sigma/\mu$: noise to signal ratio for $\Gamma$.</para>
+	      </entry>
+	      <entry>
+	      <para>rate $\sim \Gamma(\mu=1,\sigma)$.</para>
+	      <para>A discrete approximation to the $\Gamma$ with $n$
+     	            bins is used.</para>
+	      </entry>
+	    </row>
 
-	    <para>Parameters(2): $\mu$, the mean of the Beta
-	    distribution.  $\sigma/\mu$, the noise to signal ratio for
-	    the Beta distribution.  $n$ is the number of bin for
-	    discretizing the Beta distribution.</para>
+	    <row>
+	      <entry>
+		<para><userinput><replaceable>sub-model</replaceable> + INV</userinput></para>
+	      </entry>
+	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
+	      <entry>
+		<para>$p$: invariant fraction.</para>
+	      </entry>
+	      <entry>
+	      <para>A fraction $p$ of sites do not allow substitutions.</para>
+	      </entry>
+	    </row>
 
-	  </listitem>
-	</varlistentry>
+	  </tbody>
 
-      </variablelist>
+	  </tgroup>
+	</table>
 
       </sect3>
     </sect2>
