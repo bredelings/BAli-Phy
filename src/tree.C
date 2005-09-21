@@ -926,20 +926,6 @@ void swap_children(BranchNode* b) {
   b->next->prev = b;
 } 
 
-vector<int> RootedTree::standardize(const vector<int>& lnames) {
-  vector<int> mapping = Tree::standardize(lnames);
-  
-  // FIXME - move the root node?  Perhaps only unrooted trees need that...
-
-  //------- Set the left/right order -------//
-  for(int i=n_leaves();i<n_nodes();i++) {
-    if (nodes_[i]->prev->node > nodes_[i]->next->node)
-      swap_children(nodes_[i]);
-  }
-
-  return mapping;
-}
-
 void RootedTree::recompute(BranchNode* start,bool recompute_partitions) {
   Tree::recompute(start,recompute_partitions);
 

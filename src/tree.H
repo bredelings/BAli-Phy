@@ -248,7 +248,7 @@ public:
 
 // In rooted_tree, we will assume that nodes_[i] gives the TOP node in a ring
 
-class RootedTree: public Tree {
+class RootedTree: virtual public Tree {
 protected:
   BranchNode* root_;
 
@@ -261,9 +261,6 @@ public:
 
   /// More the root from the current node to node 'n'
   void reroot(int n);
-
-  std::vector<int> standardize() {return Tree::standardize();}
-  std::vector<int> standardize(const std::vector<int>&);
 
   /// The common ancestor of nodes i and j
   int common_ancestor(int i,int j) const;

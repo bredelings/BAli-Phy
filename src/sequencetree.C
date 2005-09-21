@@ -46,25 +46,21 @@ nodeview SequenceTree::prune_subtree(int branch) {
 }
 
 void SequenceTree::read(const string& filename) {
-  RootedSequenceTree RT;
-  RT.read(filename);
-  
-  // FIXME - but what if I WANT the node there?
-  if (RT.root().neighbors().size() == 2)
-    (*this) = remove_root(RT);
-  else
-    (*this) = RT;
+  ifstream file(filename.c_str());
+  if (not file) 
+    throw myexception()<<"Couldn't open file '"<<filename<<"'";
+  read(file);
+  file.close();
 }
 
 void SequenceTree::read(std::istream& file) {
-  RootedSequenceTree RT;
-  RT.read(file);
-  
-  // FIXME - but what if I WANT the node there?
-  if (RT.root().neighbors().size() == 2)
-    (*this) = remove_root(RT);
-  else
-    (*this) = RT;
+  assert(file);
+
+  string total;
+  string line;
+  while(getline(file,line))
+    total += line;
+  parse(total);
 }
 
 string SequenceTree::write(bool print_lengths) const 
@@ -103,6 +99,10 @@ SequenceTree::SequenceTree(const std::string& s) {
   add_first_node();
   sequences.push_back(s);
 }
+
+SequenceTree::SequenceTree(const Tree& T,const vector<string>& names)
+  :Tree(T),SequenceSet(names)
+{ }
 
 SequenceTree::SequenceTree(const RootedSequenceTree& RT) 
   :Tree(RT),SequenceSet(RT)
@@ -192,25 +192,6 @@ string RootedSequenceTree::write(bool print_lengths) const
   return ::write(*this, get_sequences(), print_lengths);
 }
 
-void RootedSequenceTree::read(const string& filename) {
-  ifstream file(filename.c_str());
-  if (not file) 
-    throw myexception()<<"Couldn't open file '"<<filename<<"'";
-  read(file);
-  file.close();
-}
-
-
-void RootedSequenceTree::read(istream& file) {
-  assert(file);
-
-  string total;
-  string line;
-  while(getline(file,line))
-    total += line;
-  parse(total);
-}
-
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit
 void RootedSequenceTree::parse(const string& line) 
@@ -282,23 +263,21 @@ void RootedSequenceTree::parse(const string& line)
   reanalyze(root_);
 }
 
-vector<int> RootedSequenceTree::standardize() {
-  return RootedTree::standardize();
+RootedSequenceTree& RootedSequenceTree::operator=(const RootedSequenceTree& T)
+{
+  RootedTree::operator=(T);
+  SequenceSet::operator=(T);
+
+  return *this;
 }
 
 
-vector<int> RootedSequenceTree::standardize(const vector<int>& lnames) {
-  assert(lnames.size() == sequences.size());
-
-  vector<string> old = sequences;
-  for(int i=0;i<sequences.size();i++)
-    sequences[lnames[i]] = old[i];
-
-  return RootedTree::standardize(lnames);
-}
+RootedSequenceTree::RootedSequenceTree(const RootedTree& T,const vector<string>& names)
+  :Tree(T),RootedTree(T),SequenceTree(T,names)
+{ }
 
 RootedSequenceTree::RootedSequenceTree(const SequenceTree& T,int r) 
-  :RootedTree(T,r),SequenceSet(T)
+  :Tree(T),RootedTree(T,r),SequenceTree(T)
 { }
 
 
@@ -312,9 +291,9 @@ RootedSequenceTree::RootedSequenceTree(istream& file) {
   read(file);
 }
 
-RootedSequenceTree::RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2):
-  RootedTree(T1,T2) {
-  
+RootedSequenceTree::RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2)
+  :RootedTree(T1,T2) 
+{
   // We will create new names which will be the same as
   //  T1.order + T2.order
   for(int i=0;i<T1.get_sequences().size();i++) 
@@ -332,8 +311,6 @@ void delete_node(SequenceTree& T,const std::string& name)
   if (n.neighbors().size() == 2)
     T.remove_node_from_branch(n);
 }
-
-
 
 RootedSequenceTree add_root(SequenceTree T,int b) {
   int r = T.create_node_on_branch(b);
@@ -367,35 +344,9 @@ std::istream& operator >>(std::istream& i,SequenceTree& T)
   throw myexception()<<"Failed to read tree: file ended.";
 }
 
-std::istream& operator >>(std::istream& i,RootedSequenceTree& RT) 
-{
-  string line;
-  while(getline(i,line)) {
-    if (not line.empty()) {
-      RT.parse(line);
-      return i;
-    }
-  }
-  throw myexception()<<"Failed to read tree: file ended.";
-}
-
-
 std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
   return o<<T.write();
 }
-
-std::ostream& operator <<(std::ostream& o,const RootedSequenceTree& RT) {
-  return o<<RT.write();
-}
-
-
-SequenceTree::SequenceTree(const Tree& T,const vector<string>& vs)
-  :Tree(T),SequenceSet(vs)
-{ }
-
-RootedSequenceTree::RootedSequenceTree(const RootedTree& T,const vector<string>& vs)
-  :RootedTree(T),SequenceSet(vs)
-{ }
 
 SequenceTree star_tree(const vector<string>& names) 
 {

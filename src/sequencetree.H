@@ -30,30 +30,31 @@ public:
   SequenceSet(const std::vector<std::string>& vs):sequences(vs) {}
 };
 
+
 /// A Tree with leaves labelled by sequences
-class SequenceTree: public Tree, public SequenceSet {
+class SequenceTree: virtual public Tree, public SequenceSet {
 
 public:
   /// remove a subtree - SequenceTree variants duplicated  in both {U,R}SequenceTree
   nodeview prune_subtree(int b);
 
   /// generate standard internal node and internal branch names given current leaf names
-  std::vector<int> standardize();
+  virtual std::vector<int> standardize();
 
   /// generate standard internal node and internal branch names given specified leaf names
-  std::vector<int> standardize(const std::vector<int>& mapping);
+  virtual std::vector<int> standardize(const std::vector<int>& mapping);
 
   /// compute a string representing the tree, w/ or w/o branch lengths
-  std::string write(bool print_lengths=true) const;
+  virtual std::string write(bool print_lengths=true) const;
 
   /// load this tree from the string @s
-  void parse(const std::string& s);
+  virtual void parse(const std::string& s);
 
   /// load this tree from the file @file
-  void read(std::istream& file);
+  virtual void read(std::istream& file);
 
   /// load this tree from the file "@filename"
-  void read(const std::string& filename);
+  virtual void read(const std::string& filename);
 
   /// make an empty sequenctree
   SequenceTree() {}
@@ -71,19 +72,14 @@ public:
   SequenceTree(const class RootedSequenceTree&);
 };
 
+
 /// A RootedTree with leaves labelled by sequences
-class RootedSequenceTree: public RootedTree, public SequenceSet {
+class RootedSequenceTree: public RootedTree, public SequenceTree {
   std::string write(const_branchview,bool) const;
 
 public:
   /// remove a subtree - SequenceTree variants duplicated  in both {U,R}SequenceTree
   nodeview prune_subtree(int b);
-
-  /// generate standard internal node and internal branch names given current leaf names
-  std::vector<int> standardize();
-
-  /// generate standard internal node and internal branch names given specified leaf names
-  std::vector<int> standardize(const std::vector<int>&);
 
   /// compute a string representing the tree, w/ or w/o branch lengths
   std::string write(bool=true) const;
@@ -91,11 +87,7 @@ public:
   /// load this tree from the string @s
   void parse(const std::string& s);
 
-  /// load this tree from the file @file
-  void read(std::istream& file);
-
-  /// load this tree from the file "@filename"
-  void read(const std::string& filename);
+  RootedSequenceTree& operator=(const RootedSequenceTree&);
 
   /// create from  @file
   RootedSequenceTree() {}
@@ -122,10 +114,8 @@ RootedSequenceTree add_root(SequenceTree,int b);
 SequenceTree remove_root(const RootedSequenceTree&);
 
 std::istream& operator >>(std::istream& i,SequenceTree& T);
-std::istream& operator >>(std::istream& i,RootedSequenceTree& T);
 
 std::ostream& operator <<(std::ostream& o,const SequenceTree& T);
-std::ostream& operator <<(std::ostream& o,const RootedSequenceTree& T);
 
 bool same_topology(const SequenceTree&,const SequenceTree&);
 

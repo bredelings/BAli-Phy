@@ -6,18 +6,15 @@
 
 -28. Determine criteria for 1.9.8
 
--27. Cleanup warnings...
-
 -26. Make a tool to trim the ends of alignments, when the sequences
      start varying a lot, so that we can run enolase.
 
--20. We spend 1/2 the time reading in trees calculating leaf_partition sets.
-
-     Can we compute sets and regular bit-vectors lazily?
-
 -19. trees-bootstrap: 
-     a) output name of tree file we analyzed!
-     b) increase the number of samples in the boostrap from 10,000 -> 100,000?
+     a) make the number of samples in the bootstrap a parameter
+     b) switch the output of bootstraps from valarray<double> to valarray<unsigned>
+        use odds.
+        - PP   -> (n+p)/[(n+p)+(N-n)+p]    write as fraction(n,N,p) ?
+        - odds -> odds(n,N,p)
 
 -18. Compare estimates w/ MrBayes on the globin example.
      Compare estimates w/ MrBayes on the EF-Tu 48b example.
@@ -436,6 +433,12 @@ the prior, because we never want to use it  differently.
              random numbers once.
 
 [DONE] Print N or X instead of *
+
+[DONE] Stop computing leaf partition sets.
+       Only compute+cache partition masks when we need them.
+
+[DONE] Cleanup "unused parameter" and other warnings.
+
 
 *IDEAS*
 
