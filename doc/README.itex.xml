@@ -109,7 +109,7 @@
 	  <para>You may use <ulink url="http://fink.sourceforge.net">fink</ulink> to install 
 	  the GSL library and include files.  Fink provides Linux
 	  software for Mac OS X.  However, the BOOST libraries that come
-	  with fink will not work, because they are compiled with GCC 3.3.
+	  with fink <emphasis>will not work</emphasis>, because they are compiled with GCC 3.3.
 	  You must therefore compile the BOOST libraries yourself, using
 	  GCC 3.4 or higher.</para>
 
@@ -448,7 +448,7 @@
       and alignments in both FASTA and PHYLIP formats.  However, in
       FASTA format, the file must not contain blank lines between the
       sequences, because <application>BAli-PHy</application> will stop
-      reading in sequences when it seens a blank line.
+      reading in sequences when it sees a blank line.
       </para>
     </sect2>
 
