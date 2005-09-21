@@ -43,14 +43,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // store(parse_command_line(argc, argv, desc), args);
   notify(args);    
 
-  if (not args.count("cutoff") and not args.count("keep"))
-    throw myexception()<<"neither keep or cutoff specified";
-
   if (args.count("help")) {
     cout<<"Usage: alignment-thin <alignment-file> <tree-file>\n";
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (not args.count("cutoff") and not args.count("keep"))
+    throw myexception()<<"neither keep nor cutoff specified";
 
   return args;
 }
