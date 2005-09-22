@@ -6,6 +6,9 @@
 
 -28. Determine criteria for 1.9.8
 
+-27. Fix trees-consensus to be able to handle tree dist from prior?
+     a) and check mixing!
+
 -26. Make a tool to trim the ends of alignments, when the sequences
      start varying a lot, so that we can run enolase.
 
