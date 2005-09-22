@@ -8,6 +8,7 @@
 
 -27. Fix trees-consensus to be able to handle tree dist from prior?
      a) and check mixing!
+     b) report number of branches observed.
 
 -26. Make a tool to trim the ends of alignments, when the sequences
      start varying a lot, so that we can run enolase.
