@@ -35,14 +35,14 @@ mkdir $DIR
 cd $DIR
 
 #------ Link in the data directory ------
-if [ ! "$BALI_PHY_DATA" ] ; then
+if [ "${BALI_PHY_DATA-unset}" = unset ] ; then
     echo "Warning: BALI_PHY_DATA is not set:"
     echo "  * set it to the location of the BAli-Phy data directory."
     echo "  * otherwise, set it to '' and specify --data-dir <dir>."
     exit 1
 fi
 
-if [ "$BALI_PHY_DATA" ] ; then
+if [ ! "$BALI_PHY_DATA" ] ; then
     echo "Warning: BALI_PHY_DATA is set to '':"
     echo "  * make sure you specified --data-dir <dir>."
 elif [ ! -e "$BALI_PHY_DATA" ] ; then
