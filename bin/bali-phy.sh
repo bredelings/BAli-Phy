@@ -36,17 +36,23 @@ cd $DIR
 
 #------ Link in the data directory ------
 if [ "${BALI_PHY_DATA-unset}" = unset ] ; then
-    echo "Warning: BALI_PHY_DATA is not set:"
+    echo "Error: BALI_PHY_DATA is not set:"
     echo "  * set it to the location of the BAli-Phy data directory."
     echo "  * otherwise, set it to '' and specify --data-dir <dir>."
     exit 1
-fi
 
-if [ ! "$BALI_PHY_DATA" ] ; then
+elif [ ! "$BALI_PHY_DATA" ] ; then
     echo "Warning: BALI_PHY_DATA is set to '':"
     echo "  * make sure you specified --data-dir <dir>."
+
 elif [ ! -e "$BALI_PHY_DATA" ] ; then
-    echo "Warning: Data directory BALI_PHY_DATA='${BALI_PHY_DATA}' does not exist."
+    echo "Error: Data directory BALI_PHY_DATA='${BALI_PHY_DATA}' does not exist."
+    exit 1
+
+elif [ ! -d "$BALI_PHY_DATA" ] ; then
+    echo "Error: File BALI_PHY_DATA='${BALI_PHY_DATA}' is not a directory."
+    exit 1
+
 else
     ln -sf ${BALI_PHY_DATA} Data;
 fi
