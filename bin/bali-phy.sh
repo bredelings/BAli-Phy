@@ -24,7 +24,7 @@ fi
 
 #----- Determine the direction to run in -----
 count=1
-while [ -e $"$CLASS-$count" ] ; do
+while [ -e "$CLASS-$count" ] ; do
     (( count++ ))
 done
 
