@@ -75,7 +75,7 @@ int main(int argc,char* argv[]) {
 
     string line;
 
-    bool in_interval=is_min;
+    bool in_interval = not is_min;
     while(getline(std::cin,line)) {
 
       // look for the pattern
