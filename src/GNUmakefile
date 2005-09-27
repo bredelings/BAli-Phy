@@ -163,6 +163,9 @@ tools/alignment-info: alignment.o alphabet.o sequence.o util.o rng.o \
 tools/alignment-translate: alignment.o alignment-util.o alphabet.o sequence.o \
 	sequence-format.o util.o tree.o -lboost_program_options
 
+tools/alignment-cut: alignment.o alignment-util.o alphabet.o sequence.o \
+	sequence-format.o util.o tree.o -lboost_program_options
+
 tools/alignment-find: alignment.o alphabet.o sequence.o alignment-util.o \
 	rng.o util.o sequence-format.o tree.o ${LINKLIBS}
 
