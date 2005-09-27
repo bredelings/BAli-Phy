@@ -1,3 +1,6 @@
+-32. alignment-cat A.fasta B.fasta C.fasta > D.fasta
+     alignment-cut 1-3 5-10 < A.fasta > B.fasta
+
 -31. Read Schmidler papers + others from postdoc e-mail.
 
 -30. Read Seo paper + others
