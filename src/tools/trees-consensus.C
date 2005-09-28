@@ -291,6 +291,10 @@ vector<Partition> Ml_min_Hull(const vector<Partition>& full,const vector<Partiti
 	}
     }
 
+    // only do the argmax if there are args to max over!
+    if (not covers.size())
+      break;
+
     // choose full branch to keep
     int best = argmax(covers);    // all KEPT branches cover 0 uncovered branches.
 
