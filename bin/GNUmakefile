@@ -60,7 +60,7 @@ Work/%.from.${SKIP}+: Work/%.from.${SKIP}
 
 Results/consensus : Work/trees
 	@echo -e "Summarizing topology distribution... \c";
-	@trees-consensus --skip ${SKIP} ${SIZE:%=--max %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99,1.0 --sub-partitions > $@
+	@trees-consensus --skip ${SKIP} ${SIZE:%=--max %}  ${MIN:%=--min-support %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99,1.0 --sub-partitions > $@
 	@echo "done."
 
 Work/partitions: Results/consensus
