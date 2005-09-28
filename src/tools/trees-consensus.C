@@ -124,7 +124,7 @@ double odds_ratio(vector<pair<Partition,unsigned> > partitions, int i,
 
 
 bool covers(const pair<Partition,unsigned>& p1,const pair<Partition,unsigned>& p2, 
-	    double l,unsigned N,unsigned pseudocount)
+	    double ratio,unsigned N,unsigned pseudocount)
 {
   if (not implies(p1.first, p2.first))
     return false;
@@ -132,28 +132,28 @@ bool covers(const pair<Partition,unsigned>& p1,const pair<Partition,unsigned>& p
   int n1 = p1.second;
   int n2 = p2.second;
 
-  return (odds_ratio(n1,n2,N,pseudocount) < l);
+  return (odds_ratio(n1,n2,N,pseudocount) < ratio);
 }
 
 bool covers(const vector<pair<Partition,unsigned> >& partitions, int exclude,
-	    const pair<Partition,unsigned>& delta,double l, unsigned N, unsigned pseudocount=0)
+	    const pair<Partition,unsigned>& delta,double ratio, unsigned N, unsigned pseudocount=0)
 {
   for(int i=0;i<partitions.size();i++)
-    if (i != exclude and covers(partitions[i],delta,l,N,pseudocount))
+    if (i != exclude and covers(partitions[i],delta,ratio,N,pseudocount))
       return true;
   return false;
 }
 
 bool merge(vector<pair<Partition,unsigned> >& partitions,
 	   const pair<Partition,unsigned>& delta,
-	   double l,
+	   double ratio,
 	   unsigned N,
 	   unsigned pseudocount=0)
 {
   for(int i=partitions.size()-1;i>=0;i--) 
-    if (covers(delta,partitions[i],l,N,pseudocount))
+    if (covers(delta,partitions[i],ratio,N,pseudocount))
       partitions.erase(partitions.begin()+i);
-    else if (covers(partitions[i],delta,l,N,pseudocount))
+    else if (covers(partitions[i],delta,ratio,N,pseudocount))
       return false;
 
   partitions.push_back(delta);
@@ -162,11 +162,11 @@ bool merge(vector<pair<Partition,unsigned> >& partitions,
 }
 
 vector<pair<Partition,unsigned> > 
-thin(const vector<pair<Partition,unsigned> >& partitions, unsigned N, double l)
+thin(const vector<pair<Partition,unsigned> >& partitions, unsigned N, double ratio)
 {
   vector<pair<Partition,unsigned> > thinned;
   for(int i=0;i<partitions.size();i++)
-    merge(thinned,partitions[i],l,N,5);
+    merge(thinned,partitions[i],ratio,N,5);
 
   return thinned;
 }
