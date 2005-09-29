@@ -50,6 +50,11 @@ namespace statistics {
 
   double fraction(const std::valarray<bool>& v);
 
+  inline double fraction(unsigned n, unsigned N, unsigned pseudocount)
+  {
+    return double(n+pseudocount)/(N+2*pseudocount);
+  }
+
   double Pr(const std::valarray<bool>& v);
 
   double odds(const std::valarray<bool>& v);
@@ -58,9 +63,14 @@ namespace statistics {
     return P/(1.0-P);
   }
 
+  inline double odds(unsigned n, unsigned N, unsigned pseudocount)
+  {
+    return double(n+pseudocount)/(N-n+pseudocount);
+  }
+
   double log_odds(const std::valarray<bool>& v);
 
-  std::vector<double> confidence_interval(const std::valarray<double>& values, double P);
+  std::pair<double,double> confidence_interval(const std::valarray<double>& values, double P);
   double lower_confidence_bound(const std::valarray<double>& values, double P);
   double upper_confidence_bound(const std::valarray<double>& values, double P);
 

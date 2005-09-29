@@ -4,12 +4,13 @@
 
 using std::valarray;
 using std::vector;
+using std::pair;
 
 //FIXME - add 'hat'?
 namespace statistics {
 
   double fraction(const valarray<bool>& v) {
-    return double(count(v))/v.size();
+    return fraction(count(v),v.size(),0);
   }
   
   double Pr(const valarray<bool>& v) {
@@ -26,19 +27,20 @@ namespace statistics {
     return log(odds(v));
   }
 
-  vector<double> confidence_interval(const valarray<double>& values,double P) {
+  pair<double,double> confidence_interval(const valarray<double>& values,double P) 
+  {
     assert(values.size() > 4);
 
     vector<double> values2(values.size());
     for(int i=0;i<values.size();i++)
       values2[i] = values[i];
-    std::sort(values2.begin(),values2.end());
+    sort(values2.begin(),values2.end());
     
-    int skip = 1+(int)(values.size()*(1.0-P)/2);
+    unsigned skip = 1+(unsigned)(values2.size()*(1.0-P)/2);
     
-    vector<double> interval(2);
-    interval[0] = values2[skip];
-    interval[1] = values2[values.size()-1-skip];
+    pair<double,double> interval;
+    interval.first = values2[skip];
+    interval.second = values2[values2.size()-1-skip];
     
     return interval;
   }

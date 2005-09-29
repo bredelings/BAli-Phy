@@ -35,6 +35,8 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+using statistics::odds;
+
 // What if everything in 'split' is true?
 // What if everything in 'split' is true, but 1 taxa?
 //  These are true by definition...
@@ -78,11 +80,6 @@ vector<double> get_consensus_levels(const string& s) {
     levels.insert(levels.begin(),0.5);
 
   return levels;
-}
-
-double odds(unsigned n, unsigned N, unsigned pseudocount)
-{
-  return double(n+pseudocount)/(N-n+pseudocount);
 }
 
 /// Add partitions in 'delta' if none of them are IDENTICAL to any partition in 'partitions'

@@ -16,13 +16,6 @@
      a) how should we interpret this number, though?
      b) how should we GET the number?
 
--19. trees-bootstrap: 
-     a) make the number of samples in the bootstrap a parameter
-     b) switch the output of bootstraps from valarray<double> to valarray<unsigned>
-        use odds.
-        - PP   -> (n+p)/[(n+p)+(N-n)+p]    write as fraction(n,N,p) ?
-        - odds -> odds(n,N,p)
-
 -18. Compare estimates w/ MrBayes on the globin example.
      Compare estimates w/ MrBayes on the EF-Tu 48b example.
      a) compare mixing, topologies, branch lengths, speed, etc.
@@ -440,6 +433,11 @@ the prior, because we never want to use it  differently.
        Only compute+cache partition masks when we need them.
 
 [DONE] Cleanup "unused parameter" and other warnings.
+
+[DONE] trees-bootstrap:
+       
+     a) make the number of samples in the bootstrap a parameter
+     b) use pseudocounts if specified.
 
 
 *IDEAS*

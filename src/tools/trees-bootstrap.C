@@ -35,6 +35,10 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+using std::pair;
+
+using namespace statistics;
+
 // What if everything in 'split' is true?
 // What if everything in 'split' is true, but 1 taxa?
 //  These are true by definition...
@@ -55,27 +59,12 @@ unsigned changes(const valarray<bool>& sample,bool value)
 }
 
 
-double conservative(const vector<double>& CI) {
-  if (0.5 <= CI[0])
-    return CI[0];
-  else if (CI[0] <= 0.5 and 0.5 <= CI[1])
-    return 0.5;
-  else if (CI[1] <= 0.5)
-    return CI[1];
-  else
-    std::abort();
-}
-  
-
-bool separated_by(const vector<double>& CI1,const vector<double>& CI2,double dx) 
+bool separated_by(const pair<double,double>& I1,const pair<double,double>& I2,double dx) 
 {
-  assert(CI1.size() == 2);
-  assert(CI2.size() == 2);
-
-  if ((log10(CI1[1]) + dx < log10(CI2[0])) and (log10(CI1[1] + dx < 0 or dx < log10(CI2[0]))) )
+  if ((I1.second + dx < I2.first)) // and (I1.second + dx < 0 or dx < I2.first) )
     return true;
 
-  if ((log10(CI2[1]) + dx < log10(CI1[0])) and (log10(CI2[1] + dx < 0 or dx < log10(CI1[0]))) )
+  if ((I2.second + dx < I1.first)) // and (I2.second + dx < 0 or dx < I1.first) )
     return true;
 
   return false;
@@ -94,15 +83,19 @@ bool report_sample(std::ostream& o,
   vector<int> N(n_dists);
   vector<int> n(n_dists);
   vector<double> P(n_dists);
+  vector<double> O(n_dists);
   for(int i=0;i<n_dists;i++) {
     N[i] = samples[i].size();
     n[i] = statistics::count(samples[i]);
-    P[i] = double(n[i])/N[i];
+    P[i] = fraction(n[i],N[i],pseudocount);
+    O[i] = odds(n[i],N[i],pseudocount);
   }
 
   vector< valarray<double> > values;
 
-  vector< vector<double> > CI(n_dists);
+  vector< pair<double,double> > CI(n_dists);
+  vector< pair<double,double> > log_CI(n_dists);
+
   vector< unsigned > nchanges ( n_dists);
   vector< unsigned > nchanges_ave (n_dists);
 
@@ -115,6 +108,8 @@ bool report_sample(std::ostream& o,
 
     //---------- Confidence Interval -------------//
     CI[i] = statistics::confidence_interval(distributions[i],0.95);
+    log_CI[i].first = log10(odds(CI[i].first));
+    log_CI[i].second = log10(odds(CI[i].second));
 
     //------- Numbers of Constant blocks ---------//
     nchanges[i] = changes(samples[i],true) + changes(samples[i],false);
@@ -123,6 +118,7 @@ bool report_sample(std::ostream& o,
 
     //----------------- Variances ---------------//
     Var_perfect[i] = P[i]*(1.0-P[i])/N[i];
+
     Var_bootstrap[i] = statistics::Var(distributions[i]);
 
     stddev_bootstrap[i] = sqrt( Var_bootstrap[i] );
@@ -134,16 +130,16 @@ bool report_sample(std::ostream& o,
   if (not different) {
     for(int i=0;i<n_dists;i++)
       for(int j=0;j<i;j++)
-	if (separated_by(CI[i],CI[j],dx))
+	if (separated_by(log_CI[i],log_CI[j],dx))
 	  different = true;
   }
   if (not different)
     return false;
 
-
   for(int i=0;i<n_dists;i++) {
+
     //------------- Write things out -------------//
-    o<<"   P"<<i<<" = "<<P[i]<<"  in  ("<<CI[i][0]<<","<<CI[i][1]<<")        (1="<<n[i]<<"  0="<<N[i]-n[i]<<")  ["<<nchanges_ave[i];
+    o<<"   P"<<i<<" = "<<P[i]<<"  in  ("<<CI[i].first<<","<<CI[i].second<<")        (1="<<n[i]<<"  0="<<N[i]-n[i]<<")  ["<<nchanges_ave[i];
     if (nchanges[i] <= 4) {
       o<<" !!!";
     }
@@ -160,8 +156,9 @@ bool report_sample(std::ostream& o,
   }    
   o<<endl;
     
-  for(int i=0;i<n_dists;i++) {
-    o<<"   10s = "<<log10(statistics::odds(P[i]))<<"  in  ("<<log10(statistics::odds(CI[i][0]))<<","<<log10(statistics::odds(CI[i][1]))<<")";
+  for(int i=0;i<n_dists;i++) 
+  {
+    o<<"   10s = "<<log10(O[i])<<"  in  ("<<log_CI[i].first<<","<<log_CI[i].second<<")";
     if (nchanges_ave[i] > 6)
       o<<"    [Var]x = "<<Var_bootstrap[i]/Var_perfect[i]<<"          Ne = "<<Ne[i];
     o<<endl;
@@ -170,15 +167,28 @@ bool report_sample(std::ostream& o,
   return true;
 }
 
-unsigned count(const vector<int>& indices, const valarray<bool>& results) {
+unsigned count(const vector<int>& indices, const valarray<bool>& results,unsigned pseudocount) {
   unsigned total = 0;
-  for(int i=0;i<indices.size();i++)
-    if (results[indices[i]]) total++;
+  for(int i=0;i<indices.size();i++) 
+  {
+    int k=indices[i];
+    if (k<pseudocount)
+      continue; // false
+    else
+      k -= pseudocount;
+
+    if (k >= results.size()) {
+      total++;
+      continue; //true
+    }
+
+    if (results[k]) total++;
+  }
   return total;
 }
 
-double fraction(const vector<int>& indices, const valarray<bool>& results) {
-  return double(count(indices,results))/indices.size();
+double fraction(const vector<int>& indices, const valarray<bool>& results,unsigned pseudocount) {
+  return double(count(indices,results,pseudocount))/indices.size();
 }
 
 
@@ -191,17 +201,18 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description input("Input options");
   input.add_options()
     ("help", "produce help message")
-    ("skip",value<int>()->default_value(0),"number of trees to skip")
-    ("max",value<int>(),"maximum number of trees to read")
-    ("sub-sample",value<int>(),"factor by which to sub-sample")
+    ("skip",value<unsigned>()->default_value(0),"number of trees to skip")
+    ("max",value<unsigned>(),"maximum number of trees to read")
+    ("sub-sample",value<unsigned>(),"factor by which to sub-sample")
     ("files",value<vector<string> >(),"tree files to examine")
     ("predicates",value<string>(),"predicates to examine")
     ;
   
   options_description bootstrap("Block bootstrap options");
   bootstrap.add_options()
-    ("pseudocount",value<int>()->default_value(0),"extra 0/1 to add to bootstrap samples")
-    ("blocksize",value<int>(),"block size to use in block boostrap")
+    ("samples",value<unsigned>()->default_value(10000U),"number of bootstrap samples")
+    ("pseudocount",value<unsigned>()->default_value(0U),"extra 0/1 to add to bootstrap samples")
+    ("blocksize",value<unsigned>(),"block size to use in block boostrap")
     ("seed", value<unsigned long>(),"random seed")
     ;
     
@@ -254,19 +265,19 @@ int main(int argc,char* argv[])
     else
       seed = myrand_init();
     
-    int pseudocount = args["pseudocount"].as<int>();
+    int pseudocount = args["pseudocount"].as<unsigned>();
 
     double compare_dx = args["separation"].as<double>();
     
-    int skip = args["skip"].as<int>();
+    int skip = args["skip"].as<unsigned>();
 
     int max = -1;
     if (args.count("max"))
-      max = args["max"].as<int>();
+      max = args["max"].as<unsigned>();
 
     int subsample=1;
     if (args.count("sub-sample"))
-      subsample = args["sub-sample"].as<int>();
+      subsample = args["sub-sample"].as<unsigned>();
 
     //-------------- Read in tree distributions --------------//
     if (not args.count("files"))
@@ -293,7 +304,7 @@ int main(int argc,char* argv[])
       blocksize = std::min(blocksize,tree_dists[i].size()/100+1);
 
     if (args.count("blocksize"))
-      blocksize = args["blocksize"].as<int>();
+      blocksize = args["blocksize"].as<unsigned>();
 
     cout<<"# [ seed = "<<seed<<"    pseudocount = "<<pseudocount<<"    blocksize = "<<blocksize<<" ]"<<endl<<endl;
 
@@ -324,8 +335,8 @@ int main(int argc,char* argv[])
     vector< vector< valarray<double> > > distributions(partitions.size(),
 						       vector<valarray<double> >(tree_dists.size()));
 
-    const int n_samples = 10000;
-    vector<int> resample(n_samples);
+    const unsigned n_samples = args["samples"].as<unsigned>();
+    vector<int> resample;
       
     for(int d=0;d<tree_dists.size();d++) {
  
@@ -333,10 +344,10 @@ int main(int argc,char* argv[])
 	distributions[p][d].resize(n_samples);
 	
       for(int s=0; s<n_samples; s++) {
-	resample = bootstrap_sample_indices(tree_dists[d].size(), blocksize);
+	resample = bootstrap_sample_indices(tree_dists[d].size() + 2*pseudocount, blocksize);
 	
 	for(int p=0; p<partitions.size(); p++)
-	  distributions[p][d][s] = fraction(resample,results[p][d]);
+	  distributions[p][d][s] = fraction(resample,results[p][d],pseudocount);
       }
     }
 
