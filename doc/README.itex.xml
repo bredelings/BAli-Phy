@@ -17,143 +17,148 @@
   <sect1>
     <title>Installation</title>
 
-    <sect2>
-      <title>Requirements</title>
+      <sect2>
+	<title>Hardware Requirements</title>
 
-      <sect3>
-	<title>Hardware requirements</title>
 	<para><application>BAli-Phy</application> should be able to
 	run on any hardware with a modern operating system, including
-	Linux, 	Windows, and Mac OS X.</para>
+	Linux or UNIX, Windows, and Mac OS X.</para>
 
 	<para>We recommend at least 512Mb of RAM and a 1.5GHz
 	processor.  We typically run
 	<application>BAli-Phy</application> on Pentium 4 processors
 	with 1Gb of RAM and a 3 GHz processor.</para> 
+      </sect2>
 
+      <sect2>
+	<title>Operating System requirements</title>
 
-      </sect3>
+	<sect3>
+	  <title>Linux and UNIX</title>
 
-      <sect3>
-	<title>Software requirements</title>
+	  <para>A Linux or UNIX system should be able to install and
+	  run <application>BAli-Phy</application> without any modification.</para>
+	</sect3>
 
-	<para>Requirements for compiling BAli-Phy are the following software packages: 
+	<sect3>
+	  <title>Windows</title>
+
+	  <para>On Windows you must first install <ulink
+	  url="http://www.cygwin.com">cygwin</ulink>.  Cygwin is a
+	  Linux environment for Windows, and includes GCC, GNU make,
+	  and other software.  You can access the Cygwin command line (not
+	  the normal windows command line) through the Start menu.</para>
+	</sect3>
+
+	<sect3>
+	  <title>Mac OS X</title>
+
+	  <para>A Mac OS X system is based on UNIX, and should be able to
+	  compile and run <application>BAli-Phy</application>.  The version
+	  of OS X must be 10.1 or higher.  If you want to use the
+	  development tools from Apple, the system must be 10.4 or higher,
+	  and you must upgrade to XCode 2.1 (see Software Requirements).
+	  </para>
+	</sect3>
+
+      </sect2>
+
+      <sect2>
+	<title>Software Requirements</title>
+
+	<sect3>
+	  <title>Compilation Requirements</title>
+
+	<para>The following software packages are required for compiling BAli-Phy:
 
 	<itemizedlist>
 	  <listitem><para> A modern C++ compiler (<ulink url="http://gcc.gnu.org">GCC</ulink> version 3.4 and 4.0 are known to work)</para></listitem>
+	  <listitem><para>GNU make version 3.80 or higher  (<ulink
+	  url="http://www.gnu.org/software/make">GNU make</ulink>).
+	  </para></listitem>
 	  <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>)</para></listitem>
 	  <listitem><para> The BOOST C++ Library (<ulink
 	  url="http://www.boost.org">BOOST</ulink>) version 1.32 or higher.</para></listitem>
 	</itemizedlist>
 	</para>
 
+	<note>
+	<title>Mac OS X issues:</title>
+
+	<para>If you want to use the development tools shipped by Apple
+	(e.g. GCC) then you need OS X version 10.4 (Tiger) or higher, and
+	you need to install XCode 2.1.  Otherwise you can compile GCC
+	yourself from the FSF sources.</para>
+
+	<para><ulink url="http://fink.sourceforge.net">Fink</ulink>
+	provides Linux software for Mac OS X.  You may use it to install
+	the GSL library and include files, but the BOOST libraries that
+	come with fink <emphasis>will not work</emphasis>, because they are
+	compiled with GCC 3.3. You must therefore compile the BOOST
+	libraries yourself, using GCC 3.4 or higher.</para>
+	</note>
+	</sect3>
+
+	<sect3>
+	  <title>Analysis and Documentation Requirements</title>
 	<para>In addition, the following software packages are recommended,
 	although not required:
 	<itemizedlist>
 	  <listitem><para>The plotting program
-	  <application>gnuplot</application>. (<ulink
+	  <application>gnuplot</application> (<ulink
 	  url="http://www.gnuplot.info/">gnuplot</ulink>)</para></listitem> 
-	  <listitem><para>GNU make version 3.80 or higher.  (<ulink
-	  url="http://www.gnu.org/software/make">GNU make</ulink>).This is used to
-	  analyze the output of <application>BAli-Phy</application> 
+	  <listitem><para>GNU make version 3.80 or higher  (<ulink
+	  url="http://www.gnu.org/software/make">GNU make</ulink>).
 	  </para></listitem>
 	  <listitem><para>Mozilla or Mozilla/Firefox to view the math in
 	  the XHTML documention. (<ulink url="http://www.mozilla.org/products/firefox/">Firefox</ulink>)</para></listitem>
 	</itemizedlist>
 	</para>
-      </sect3>
-
-      <sect3>
-	<title>Operating system requirements</title>
-
-	<sect4>
-	  <title>Linux</title>
-
-	  <para>A standard Linux system should be able to install and
-	  run <application>BAli-Phy</application> without any modification.</para>
-	</sect4>
-
-	<sect4>
-	  <title>Windows</title>
-
-	  <para>On Windows you must first install <ulink
-	  url="http://www.cygwin.com">cygwin</ulink>.  Cygwin is a
-	  Linux environment for Windows, and includes GCC, GNU make,
-	  and other software.</para> 
-
-	  <para>You can access the Cygwin command line (not the normal
-	  windows command line) through the Start menu.</para>
-	</sect4>
-
-	<sect4>
-	  <title>Mac OS X</title>
-
-          <para>Although Mac OS X ships with <application>GCC</application>, 
-          only OS X version 10.4 (Tiger) contains a version that is
-          recent enough to successfully compile
-          <application>bali-phy</application>.
-          In addition, the version of <application>GCC</application>
-          that ships with Tiger contains a bug that makes it
-          miscompile <application>bali-phy</application>.  To avoid
-          this, you can install XCode 2.1, which contains an updated
-          version of <application>GCC</application>.
-          </para>
-
-          <para>If you have an earlier version of Mac OS X, or you
-          cannot install XCode 2.1 because you lack administrator
-          priveleges, you can compile and install GCC using the
-          sources available from the GCC website.  This GCC does not
-          contain Apple's local modifications, but will work to
-          compile <application>bali-phy</application>.</para>
-
-	  <para>You may use <ulink url="http://fink.sourceforge.net">fink</ulink> to install 
-	  the GSL library and include files.  Fink provides Linux
-	  software for Mac OS X.  However, the BOOST libraries that come
-	  with fink <emphasis>will not work</emphasis>, because they are compiled with GCC 3.3.
-	  You must therefore compile the BOOST libraries yourself, using
-	  GCC 3.4 or higher.</para>
-
-	  <para>You can access the command line on OS X by running the
-	  Terminal application.</para>
-	</sect4>
-
-      </sect3>
-
+	</sect3>
 
     </sect2>
 
     <sect2>
-      <title>Compilation</title>
+      <title>Compiling <application>BAli-Phy</application></title>
 
             <para>In order to compile the program on UNIX, simply enter the
 	    <filename>src/</filename> directory and type <userinput>make
-	    install</userinput> at the shell prompt. This will compile
+	    install</userinput> at the shell prompt. (This requires GNU
+            <command>make</command>.)  This will compile
 	    <command>bali-phy</command> and its associated tools, and copy them
 	    to the directory <filename>../build/bin</filename>. </para>
 
-            <para>The makefile provided requires GNU
-            <command>make</command>.  When compiling, the default C 
-            and C++ compilers are used.  These are usually
-            <command>gcc</command> and <command>g++</command>.  If you
-            have multiple compilers installed on your system (for example,
-            <command>gcc-3.3</command> and
-            <command>gcc-4.0</command>) and the default command
-            <command>g++</command> invokes the wrong one, then you
-            should set the environment variables CC and CXX to the
-            correct compiler when compiling 
-            <application>BAli-Phy</application>:  
-	    <screen><prompt>%</prompt> <userinput>CC=gcc-4.0 CXX=g++-4.0 make install</userinput></screen>
+	    <sect3>
+	      <title>Selecting a non-default C++ compiler</title>
+
+	      <para>The default C++ compiler is <command>g++</command>.  On
+	      some systems, <command>g++</command> invokes GCC version 3.3,
+	      and the correct compiler is called something else, such as
+	      <command>g++-4.0</command>.  To use
+	      <command>g++-4.0</command> as the C++ compiler when compiling
+	      <application>BAli-Phy</application>, you can set the CXX
+	      environment variable as follows:
+	    <screen><prompt>%</prompt> <userinput>CXX=g++-4.0 make install</userinput></screen>
             To change this, or to change other compilation options,
             edit the makefile <filename>src/GNUmakefile</filename>.</para> 
+	    </sect3>
 
-	    <para>On Intel computers, to generate a faster executable you can add
-	    <userinput>ARCH=pentium4</userinput> or
+	    <sect3>
+	      <title>Optimizing for a specific architecture</title>
+	    <para>On ix86 computers, you can add either
+	    <userinput>ARCH=pentium3</userinput>,
+	    <userinput>ARCH=pentium4</userinput>, or
 	    <userinput>ARCH=athlon-xp</userinput> to the beginning of the
-	    command line as follows:
-	    <screen><prompt>%</prompt> <userinput>ARCH=pentium4 make install</userinput>
-	    </screen>
-	    You can also add <userinput>STATIC=y</userinput> in order
-	    to build a static executable.</para> 
+	    command line. This allows the compiler to generate faster code 
+	    that only works on the specified architecture.
+	    </para>
+	    </sect3>
+	    <sect3>
+	      <title>Statically linked executables</title>
+	      <para>
+	      You can also add <userinput>STATIC=y</userinput> in order
+	      to build a static executable.</para> 
+	    </sect3>
     </sect2>
 
     <sect2>
