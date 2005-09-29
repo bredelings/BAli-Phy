@@ -1,6 +1,9 @@
 -32. alignment-cat A.fasta B.fasta C.fasta > D.fasta
      alignment-cut 1-3 5-10 < A.fasta > B.fasta
 
+     This would allow us to trim the ends of alignments, when the sequences
+     start varying a lot, so that we can run enolase. 
+
 -31. Read Schmidler papers + others from postdoc e-mail.
 
 -30. Read Seo paper + others
@@ -9,12 +12,9 @@
 
 -28. Determine criteria for 1.9.8
 
--27. Fix trees-consensus to be able to handle tree dist from prior?
-     a) and check mixing!
-     b) report number of branches observed.
-
--26. Make a tool to trim the ends of alignments, when the sequences
-     start varying a lot, so that we can run enolase.
+-27. trees-consensus: report number of branches observed 
+     a) how should we interpret this number, though?
+     b) how should we GET the number?
 
 -19. trees-bootstrap: 
      a) make the number of samples in the bootstrap a parameter
@@ -91,24 +91,18 @@ We can avoid TWO malloc/copy/dealloc.
 
 -9.  tree-dist.C: 
 
-	1. Store a list of full partitions observed in the data set as
-	   vector< valarray<bool> >.
-
-	2. For each topology, store full partitions a vector<int> of
+	1. For each topology, store full partitions as vector<int> of
            subscripts into partition list.
 
-	3. For each partition, store list of topologies that imply it.
+	2. For each partition, store list of topologies that imply it.
 
 	How much memory would we save?
 
 	Can we speed up 'implies(Tree,Partition)' if we have topology
 	   information, such as 'which branches are my neighbors'?
 
-	It SEEMS that in a 1.5M file w/ 1000 trees / 251 topologies / 48 taxa:
-	  - We went from 29Mb -> 6Mb.  
-          - It was costing about 22 Mb for the 251 topology trees.
-	    It SHOULD cost about 251*96*(48/6) = 140k.
-	
+	Can we quickly determine support for SUB-partitions?
+
 -8. Sanitize use of MAP_tree in tree-dist-compare when the count is 1.   
     Report a median when there are a number of trees w/ the same count?
 
@@ -124,6 +118,7 @@ We can avoid TWO malloc/copy/dealloc.
   a) can we avoid copying G into G2 - can we construct it in place?
   b) if we put the check into #ifndef NDEBUG, does this gain us anything?
   c) algorithm currently does more or less S*S*(S+NS) multiply-and-add's.
+  d) it also takes time to compute the silent state topology.  Can we cache this?
 
 -4. Actually do the MCMCMC T thingy - how much slowdown does this give?
 
