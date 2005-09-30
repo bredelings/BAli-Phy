@@ -102,12 +102,12 @@ public:
   efloat_t path_P(const vector<int>& path) const;
 
   /// Construct a 2D DP matrix from the dimensions, and an HMM
-  DPmatrix::DPmatrix(int i1,
-		     int i2,
-		     const vector<int>& v1,
-		     const vector<double>& v2,
-		     const Matrix& M,
-		     double Temp);
+  DPmatrix(int i1,
+	   int i2,
+	   const vector<int>& v1,
+	   const vector<double>& v2,
+	   const Matrix& M,
+	   double Temp);
   virtual ~DPmatrix() {}
 };
 
@@ -123,13 +123,13 @@ public:
 
   efloat_t path_Q_subst(const vector<int>&) const {return 1;}
 
-  DPmatrixNoEmit::DPmatrixNoEmit(int i1,
-				 int i2,
-				 const vector<int>& v1,
-				 const vector<double>& v2,
-				 const Matrix& M,
-				 double Temp
-				 )
+  DPmatrixNoEmit(int i1,
+		 int i2,
+		 const vector<int>& v1,
+		 const vector<double>& v2,
+		 const Matrix& M,
+		 double Temp
+		 )
     :DPmatrix(i1,i2,v1,v2,M,Temp) 
   {}
 
@@ -174,14 +174,14 @@ public:
   double emit__(int i,int j) const;
 
   /// Construct a DP array from an HMM, emission probabilities, and substitution model
-  DPmatrixEmit::DPmatrixEmit(const vector<int>&,
-			     const vector<double>&,
-			     const Matrix&,
-			     double Temp,
-			     const vector< double >&,
-			     const vector< Matrix >&,
-			     const vector< Matrix >&, 
-			     const Matrix&);
+  DPmatrixEmit(const vector<int>&,
+	       const vector<double>&,
+	       const Matrix&,
+	       double Temp,
+	       const vector< double >&,
+	       const vector< Matrix >&,
+	       const vector< Matrix >&, 
+	       const Matrix&);
   
   virtual ~DPmatrixEmit() {}
 };

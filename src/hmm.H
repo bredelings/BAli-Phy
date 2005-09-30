@@ -20,7 +20,7 @@ class HMM {
   /// An ordered list of states, for DP
   vector<int> order_;
 
-  efloat_t HMM::generalize_P_one(vector<int>::const_iterator,int) const;
+  efloat_t generalize_P_one(vector<int>::const_iterator,int) const;
 
   void find_and_index_silent_network_states();
 
