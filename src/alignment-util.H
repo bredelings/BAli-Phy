@@ -39,7 +39,7 @@ bool A_constant(alignment A1, alignment A2, const std::valarray<bool>& ignore);
 void check_internal_sequences_composition(const alignment& A,int n_leaves);
 
 /// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore=vector<int>());
+void check_internal_nodes_connected(const alignment& A,const Tree& T,const std::vector<int>& ignore=vector<int>());
 
 /// Are all un-ignored characters in column 'present' connected on T?
 bool all_characters_connected(const Tree& T,std::valarray<bool> present,const std::vector<int>& ignore);
@@ -54,36 +54,39 @@ void check_alignment(const alignment& A,const Tree& T,bool internal_sequences);
 vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
 				   int column,
 				   const ublas::matrix<int>& M2,
-				   const vector< vector<int> >& columns);
+				   const std::vector<std::vector<int> >& columns);
 
 long int asymmetric_pairs_distance(const alignment& A1,const alignment& A2);
 
 long int asymmetric_pairs_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
-				   const vector< vector<int> >& column_indices2);
+				   const std::vector<std::vector<int> >& column_indices2);
 
 long int asymmetric_splits_distance(const alignment& A1,const alignment& A2);
 
 long int asymmetric_splits_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
-				    const vector< vector<int> >& column_indices2);
+				    const std::vector<std::vector<int> >& column_indices2);
+
+double homologies_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+			   const std::vector<std::vector<int> >& column_indices2);
 
 long int pairs_distance(const alignment& A1,const alignment& A2);
 
-long int pairs_distance(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
-			const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2);
+long int pairs_distance(const ublas::matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
+			const ublas::matrix<int>& M2,const std::vector<std::vector<int> >& column_indices2);
 
 long int splits_distance(const alignment& A1,const alignment& A2);
 
-long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
-			 const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2);
+long int splits_distance(const ublas::matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
+			 const ublas::matrix<int>& M2,const std::vector<std::vector<int> >& column_indices2);
 
 std::list<alignment> load_alignments(std::istream& ifile, const std::string& tag,
 				     const std::vector<OwnedPointer<alphabet> >& alphabets, int maxalignments);
 
 alignment find_last_alignment(std::istream& ifile, const string& tag,
-			       const vector<OwnedPointer<alphabet> >& alphabets);
+			       const std::vector<OwnedPointer<alphabet> >& alphabets);
 
 alignment find_first_alignment(std::istream& ifile, const string& tag,
-			       const vector<OwnedPointer<alphabet> >& alphabets);
+			       const std::vector<OwnedPointer<alphabet> >& alphabets);
 
 bool match_tag(const string& line, const string& tag);
 

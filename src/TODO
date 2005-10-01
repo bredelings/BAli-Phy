@@ -46,7 +46,7 @@
         Would THIS work with sub-partitions? (YES) [check when awake!]
 
 -11. Make a program to compare two alignment distributions.
-     a) Flag homology pairs that have abs(log(p1,p2)) > thresh-hold. 
+     a) Flag homology pairs that have abs(log(p1/p2)) > thresh-hold. 
      b) Output the pairs of residues that act up.
        b.1) Have a method to convert the pairs to a color scheme.
        b.2) Invent a color scheme that is something like 'grey' (1) +
@@ -79,8 +79,6 @@ We can avoid TWO malloc/copy/dealloc.
      (hash(left mask) * hash(right mask)), where the hash() function
      is a hash function for bitmasks and involves addition, not
      multiplication. 
-
--10. Make tree a virtual public base class for SequenceTree and RootedTree?
 
 -9.  tree-dist.C: 
 
@@ -439,6 +437,8 @@ the prior, because we never want to use it  differently.
      a) make the number of samples in the bootstrap a parameter
      b) use pseudocounts if specified.
 
+[DONE] Make tree a virtual public base class for SequenceTree and RootedTree?
+
 
 *IDEAS*
 
@@ -487,3 +487,5 @@ rates.
 
 -  Homoplasy and variation in column frequencies.  
    a) have a 'two-letter' model for HIV sequence DNA.
+
+-  graph distances as a function of the posterior LOD score of the events.

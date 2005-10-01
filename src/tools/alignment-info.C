@@ -58,7 +58,7 @@ int min(const vector<int>& v) {
     if (v[i]<m)
       m = v[i];
   return m;
-};
+}
 
 int n_mutations(const alphabet& a, const vector<int>& letters, const Tree& T) 
 {

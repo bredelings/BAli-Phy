@@ -365,6 +365,47 @@ long int asymmetric_pairs_distance(const ublas::matrix<int>& M1,const ublas::mat
   return mismatch;
 }
 
+long int homologies_total(const ublas::matrix<int>& M1) 
+{
+  long int total=0;
+
+  for(int column=0;column<M1.size1();column++) 
+    for(int i=0;i<M1.size2();i++)
+      if (M1(column,i) != alphabet::gap and M1(column,i) != alphabet::unknown)
+	total++;
+
+  return total;
+}
+
+long int homologies_preserved(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+				    const vector< vector<int> >& column_indices2)
+{
+  long int match=0;
+  long int mismatch=0;
+
+  for(int column=0;column<M1.size1();column++) 
+    for(int i=0;i<M1.size2();i++)
+      if (M1(column,i) != alphabet::gap and M1(column,i) != alphabet::unknown)
+	for(int j=0;j<M1.size2();j++)
+	  if (j != i)
+	    if (A_match(M1,column,i,j,M2,column_indices2))
+	      match++;
+	    else
+	      mismatch++;
+	
+  assert(homologies_total(M1) == homologies_total(M2));
+  assert(homologies_total(M1) == match + mismatch);
+
+  return match;
+}
+
+double homologies_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+			   const vector< vector<int> >& column_indices2)
+{
+  unsigned total = homologies_total(M1);
+  unsigned match = homologies_preserved(M1,M2,column_indices2);
+  return double(total-match)/total;
+}
 vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
 				   int column,
 				   const ublas::matrix<int>& M2,

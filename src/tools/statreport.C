@@ -36,7 +36,7 @@ int main(int argc,char* argv[]) {
 
   double P = 0.95;
 
-  vector<double> interval = statistics::confidence_interval(values2,P);
+  std::pair<double,double> interval = statistics::confidence_interval(values2,P);
 
-  cout<<"  ("<<interval[0]<<","<<interval[1]<<")"<<endl;
+  cout<<"  ("<<interval.first<<","<<interval.second<<")"<<endl;
 }

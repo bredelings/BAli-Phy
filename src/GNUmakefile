@@ -10,7 +10,7 @@ program: bali-phy
 TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/alignment-reorder tools/alignment-draw tools/alignment-find \
 	tools/trees-to-SRQ tools/tree-reroot tools/alignment-chop-internal \
-	tools/srq-analyze tools/alignment-convert tools/alignment-thin \
+	tools/alignment-convert tools/alignment-thin \
 	tools/trees-consensus tools/cut-range tools/alignment-translate \
 	tools/alignment-median tools/alignment-indices tools/pickout \
 	tools/joint-A-T tools/alignment-consensus tools/alignment-info \
