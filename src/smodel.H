@@ -745,8 +745,8 @@ namespace substitution {
   /// The only parameter is 'p', the fraction of sites which don't change
   /// To keep branch lengths the same, inflate rates by 1/(1-p).
   class WithINV: public MultiModel, public ReversibleWrapperOver<MultiModel> {
-    static double const inv_frac_mean = 0.1;
-    static double const max_inv_rate = 0.01;
+    static const double inv_frac_mean;
+    static const double max_inv_rate;
 
     OwnedPointer<INV_Model> INV;
 

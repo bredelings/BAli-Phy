@@ -111,7 +111,7 @@ namespace rng {
   void init();
 
   extern RNG* standard;
-};
+}
 
 /// returns a value in [0,max-1]
 inline unsigned long myrandom(unsigned long max) {
@@ -147,7 +147,7 @@ namespace dng {
 
 
   void init();
-};
+}
 
 std::valarray<double> 
 dirichlet_fiddle(const std::valarray<double>& p1,double sigma);

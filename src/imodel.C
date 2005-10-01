@@ -28,7 +28,7 @@ namespace indel {
       pi[i] = start_pi(i);
     return pi;
   }
-};
+}
 
 string i_parameter_name(int i,int n) {
   if (i>=n)

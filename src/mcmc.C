@@ -494,4 +494,4 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
 
 
-};
+}

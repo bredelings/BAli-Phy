@@ -106,7 +106,7 @@ namespace A3 {
 
   efloat_t acceptance_ratio(const alignment& A1,const Parameters& P1,const vector<int>&,
 			      const alignment& A2,const Parameters& P2,const vector<int>&);
-};
+}
 
 
 vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3);

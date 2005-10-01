@@ -11,7 +11,7 @@ using std::valarray;
 /************* Interfaces to rng::standard *********************/
 namespace rng {
   RNG* standard;
-};
+}
 
 unsigned long myrand_init() {
   assert(not rng::standard);

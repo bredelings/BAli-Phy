@@ -5,21 +5,21 @@
 
 using namespace ublas;
 
-
-
 // exp(Q) = D^-a * exp(E) * D^a
 // E = exp(D^a * Q * D^-a) = exp(D^1/2 * S * D^1/2)
 
 // how do we make the M constant? - const_cast?
 // return inline matrix_expression?
 
-Matrix exp(const SMatrix& S,const BMatrix& D,double t,double f) {
+Matrix exp(const SMatrix& S,const BMatrix& D,double t,double f) 
+{
   const int n = S.size1();
 
   // compute S2 = D^1/2 * S * D^1/2
-  double DB[n];
-  double DP[n];
-  double DN[n];
+  std::vector<double> DB(n);
+  std::vector<double> DP(n);
+  std::vector<double> DN(n);
+
   for(int i=0;i<D.size1();i++) {
     DB[i] = pow(D(i,i),f - 0.5);
     DP[i] = sqrt(D(i,i));
@@ -86,8 +86,8 @@ Matrix exp(const EigenValues& eigensystem,const BMatrix& D,const double t) {
   const int n = D.size1();
 
   // Compute D^-a * E * D^a
-  double DP[n];
-  double DN[n];
+  std::vector<double> DP(n);
+  std::vector<double> DN(n);
   for(int i=0;i<D.size1();i++) {
     DP[i] = sqrt(D(i,i));
     DN[i] = 1.0/DP[i];
@@ -125,8 +125,8 @@ Matrix exp(const SMatrix& M,const double t) {
 Matrix gamma_exp(const SMatrix& S,const BMatrix& D,double alpha,double beta) {
   const int n = S.size1();
 
-  double DP[n];
-  double DN[n];
+  std::vector<double> DP(n);
+  std::vector<double> DN(n);
   for(int i=0;i<D.size1();i++) {
     DP[i] = sqrt(D(i,i));
     DN[i] = 1.0/DP[i];

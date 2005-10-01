@@ -63,7 +63,7 @@ namespace A5 {
 
   extern vector<int> states_list;
 
-};
+}
 
 
 

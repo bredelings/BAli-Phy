@@ -159,7 +159,7 @@ namespace substitution {
     //---------- OK, calculate and cache eigensystem ----------//
     int n = pi.size();
 
-    double DB[n];
+    vector<double> DB(n);
     for(int i=0;i<n;i++)
       DB[i] = pow(pi[i],f - 0.5);
     
@@ -997,6 +997,9 @@ namespace substitution {
 
 
   //--------------- Invariant Sites Model----------------//
+
+  const double WithINV::inv_frac_mean = 0.1;
+  const double WithINV::max_inv_rate = 0.01;
 
   /// Get the equilibrium frequencies
   const std::valarray<double>& WithINV::frequencies() const {

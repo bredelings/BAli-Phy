@@ -14,7 +14,7 @@ namespace states {
   const int G2 = 2;
   const int E  = 3;
   const int S  = 4;
-};
+}
 
   alignment construct(const alignment& old, const std::vector<int>& path, int n1,int n2, 
 		      const Tree& T, const std::vector<int>& seq1,const std::vector<int>& seq2);

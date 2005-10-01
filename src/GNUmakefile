@@ -29,7 +29,7 @@ install: program tools
 	cp bali-phy ../build/bin
 
 #----------------- Definitions
-EXACTFLAGS = -pipe
+EXACTFLAGS = -pipe -pedantic
 
 LANGO := fast-math visibility=default
 
