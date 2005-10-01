@@ -560,3 +560,27 @@ EF-Tu/12d.fasta  --iterations 5 --seed 0 >out 2>err
 1215-cvs-sse2-vect-NDEBUG	0m44.160s
 -----------------------
 
+EF-Tu/12d.fasta --gaps star --iterations 10 --seed 0 >out 2>err
+
+1215	4.0.1			4.52s
+1288	4.0.2			4.48s
+1215	4.1	Aug 30		3.42s
+1288	4.1	Sep 20		3.36s
+1288	4.1	Sep 30		3.10s
+
+
+EF-Tu/48b.fasta --gaps star --iterations 5 --seed 0 >out 2>err
+
+1215	4.01			21.35s
+1288 	4.02			20.61s
+1215    4.1	Aug 30 		17.66s
+1288	4.1	Sep 20		16.62s
+1288	4.1	Sep 30		16.50s
+
+EF-Tu/12d.fasta  --iterations 5 --seed 0 >out 2>err
+
+1215	4.0.1			39.10s
+1288	4.0.2			39.10s + 4.8s
+1215	4.1 	Aug 30		41.40s
+1288	4.1	Sep 20		41.64s + 4.9s
+1288	4.1	Sep30		41.54s + 5.0s
