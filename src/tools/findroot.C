@@ -39,6 +39,7 @@ public:
   double operator()(const optimize::Vector& v) const;
   rooterror(const Tree& T1,int i1): T(T1),b(i1) 
   {
+    total = 0;
     for(int b=0;b<T.n_branches();b++)
       total += T.branch(b).length();
     assert(total > 0);
