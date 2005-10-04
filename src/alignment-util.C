@@ -239,6 +239,8 @@ void check_letters_OK(const alignment& A) {
 	; // this is a '-'
       else if (A(i,j) == alphabet::not_gap)
 	; // this is a '*'
+      else if (A(i,j) == alphabet::unknown)
+	; // this is a '?'
       else {
 	bad = true;
 	std::cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<std::endl;
