@@ -9,15 +9,12 @@ progname=$1
 shift
 
 # determine the job file name -----
-JOB_FILE=job_info
-if [ -e "$JOB_FILE" ] ; then
-    count=1
-    while [ -e job_info.$count ] ; do
-	(( count++ ))
-    done
+count=1
+while [ -e job_info.$count ] ; do
+    (( count++ ))
+done
 
-    JOB_FILE=job_info.$count
-fi
+JOB_FILE=job_info.$count
 
 # echo information to job_info file
 echo job id: $JOB_ID
