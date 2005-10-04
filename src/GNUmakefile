@@ -57,16 +57,16 @@ else
     LANGO += omit-frame-pointer
   endif
 
-#  EXACTFLAGS += --param max-inline-insns-single=300
-#  EXACTFLAGS += --param max-inline-insns-auto=175
-#  EXACTFLAGS += --param max-inline-insns-recursive=300
-#  EXACTFLAGS += --param max-inline-insns-recursive-auto=300
+# EXACTFLAGS += --param max-inline-insns-single=450 #(450)
+# EXACTFLAGS += --param max-inline-insns-auto=90 #(90)
 
-#  EXACTFLAGS += --param large-function-insns=5700
-#  EXACTFLAGS += --param large-function-growth=100
-#  EXACTFLAGS += --param inline-unit-growth=300
+# EXACTFLAGS += --param large-function-insns=2700 #(2700)
+# EXACTFLAGS += --param large-function-growth=100 # (100)
+# EXACTFLAGS += --param inline-unit-growth=50 #(50)
 
-  EXACTFLAGS += --param max-gcse-passes=2
+# EXACTFLAGS += --param inline-call-cost=16 #(16)
+
+ EXACTFLAGS += --param max-gcse-passes=2
 endif
 
 ifeq (${PROF},y)
