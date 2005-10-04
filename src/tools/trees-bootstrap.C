@@ -234,14 +234,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // store(parse_command_line(argc, argv, desc), args);
   notify(args);    
 
-  if (not args.count("predicates"))
-    throw myexception()<<"No predicates supplied.";
-
   if (args.count("help")) {
     cout<<"Usage: trees-bootstrap <file1> [<file2> ... ] --predicates <predicate file> [OPTIONS]\n";
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (not args.count("predicates"))
+    throw myexception()<<"No predicates supplied.";
 
   return args;
 }
