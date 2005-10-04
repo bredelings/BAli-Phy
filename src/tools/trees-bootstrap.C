@@ -1,10 +1,6 @@
 // FIXME -  Try to put the variance and stuff on one line:
 //   0.656 (56/100)   +- 0.007 -> 0.070
 
-// Find some way to put the correlation into the model
-// So tha the correlation doesn't keep on going up w/
-// Distance, but goes up quickly
-
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -58,22 +54,52 @@ unsigned changes(const valarray<bool>& sample,bool value)
   return count;
 }
 
-
-bool separated_by(const pair<double,double>& I1,const pair<double,double>& I2,double dx) 
+double greater_than(const valarray<double>& d1,const valarray<double>d2,double dx)
 {
-  if ((I1.second + dx < I2.first)) // and (I1.second + dx < 0 or dx < I2.first) )
-    return true;
+  assert(dx >= 0.0);
 
-  if ((I2.second + dx < I1.first)) // and (I2.second + dx < 0 or dx < I1.first) )
-    return true;
+  // Make distribution D1
+  vector<double> D1(d1.size());
+  for(int i=0;i<D1.size();i++)
+    D1[i] = d1[i];
 
-  return false;
+  std::sort(D1.begin(),D1.end());
+
+  // Make distribution D2
+  vector<double> D2(d2.size());
+  for(int i=0;i<D2.size();i++)
+    D2[i] = d2[i];
+
+  std::sort(D2.begin(),D2.end());
+
+   // Compute distribution F2
+  vector<double> F2(D1.size());
+
+  for(int i=0,j=0;i<D1.size();i++) {
+    while((D2[j] + dx < D1[i]) and j < D2.size()) j++;
+
+    F2[i] = double(j)/D2.size();
+  }
+  
+  // Compute confidence
+  double confidence = 0;
+  for(int i=0;i<F2.size();i++)
+    confidence += F2[i]/F2.size();
+
+  return confidence;
 }
+
+double separated_by(const valarray<double>& d1,const valarray<double>d2,double dx)
+{
+  return std::max(greater_than(d1,d2,dx),greater_than(d2,d1,dx));
+}
+
+
 
 bool report_sample(std::ostream& o,
 		   const vector<valarray<bool> >& samples, 
 		   const vector<valarray<double> >& distributions,
-		   int pseudocount, double dx=-1) {
+		   int pseudocount, double confidence, double dx=-1) {
   o.precision(3);
   o.setf(ios::fixed);
 
@@ -104,12 +130,18 @@ bool report_sample(std::ostream& o,
   vector<double> stddev_bootstrap(n_dists);
   vector<double> Ne(n_dists);
 
+  vector<valarray<double> > LOD_distributions = distributions;
+
   for(int i=0;i<n_dists;i++) {
 
     //---------- Confidence Interval -------------//
-    CI[i] = statistics::confidence_interval(distributions[i],0.95);
+    CI[i] = statistics::confidence_interval(distributions[i],confidence);
     log_CI[i].first = log10(odds(CI[i].first));
     log_CI[i].second = log10(odds(CI[i].second));
+
+    //--------- LOD distributions ---------------//
+    for(int j=0;j<LOD_distributions[i].size();j++)
+      LOD_distributions[i][j] = log10(odds(LOD_distributions[i][j]));
 
     //------- Numbers of Constant blocks ---------//
     nchanges[i] = changes(samples[i],true) + changes(samples[i],false);
@@ -129,9 +161,10 @@ bool report_sample(std::ostream& o,
   bool different = (dx <= 0) or n_dists==1;
   if (not different) {
     for(int i=0;i<n_dists;i++)
-      for(int j=0;j<i;j++)
-	if (separated_by(log_CI[i],log_CI[j],dx))
+      for(int j=0;j<i;j++) {
+	if (separated_by(LOD_distributions[i],LOD_distributions[j],dx) >= confidence)
 	  different = true;
+      }
   }
   if (not different)
     return false;
@@ -219,6 +252,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description reporting("Reporting options");
   reporting.add_options()
     ("separation",value<double>()->default_value(0),"Only report trees/partitions if they differ by this many LODs")
+    ("confidence",value<double>()->default_value(0.95),"Width of confidence intervals")
     ;
     
   options_description all("All options");
@@ -278,6 +312,8 @@ int main(int argc,char* argv[])
     int subsample=1;
     if (args.count("sub-sample"))
       subsample = args["sub-sample"].as<unsigned>();
+
+    double confidence = args["confidence"].as<double>();
 
     //-------------- Read in tree distributions --------------//
     if (not args.count("files"))
@@ -357,7 +393,7 @@ int main(int argc,char* argv[])
     for(int p=0;p<partitions.size();p++) {
       std::ostringstream report;
 
-      bool show = report_sample(report, results[p], distributions[p], pseudocount, compare_dx);
+      bool show = report_sample(report, results[p], distributions[p], pseudocount, confidence, compare_dx);
 
       //-------- Determine and print the partition -----------//
       if (not show) continue;
