@@ -31,9 +31,10 @@ install: program tools
 #----------------- Definitions
 EXACTFLAGS = -pipe -pedantic
 
-LANGO := fast-math visibility=default
+LANGO := fast-math visibility=default # unsafe-loop-optimizations
 
-WARN  := all extra no-sign-compare overloaded-virtual strict-aliasing
+WARN  := all extra no-sign-compare overloaded-virtual strict-aliasing \
+	 unsafe-loop-optimizations
 
 ifeq (${BOUNDS_CHECK},y)
   DEFS += _GLIBCXX_DEBUG
