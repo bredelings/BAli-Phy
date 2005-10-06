@@ -142,6 +142,9 @@ Work/median-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
 	@alignment-reorder Work/$*-unordered.fasta Results/c50.tree > $@ 2>/dev/null
 
+Work/consensus-unordered.fasta: Work/samples-${SKIP}+${SIZE}
+	alignment-consensus < Work/samples-${SKIP}+${SIZE} > $@
+
 Results/%-AU.prob: Work/%-unordered.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree
 	alignment-gild Work/$*-unordered.fasta Results/MAP.tree --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
 
