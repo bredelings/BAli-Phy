@@ -125,7 +125,8 @@ inline void DParrayConstrained::forward(int i2)
 
     //---- compute arrival probability ----//
     double temp = 0;
-    for(int s1=0;s1<states(i1).size();s1++) {
+    const unsigned NS1 = states(i1).size();
+    for(int s1=0;s1<NS1;s1++) {
       int S1 = states(i1)[s1];
 
       temp += (*this)(i1,S1) * GQ(S1,S2);

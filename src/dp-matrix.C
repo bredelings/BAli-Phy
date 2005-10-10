@@ -529,7 +529,8 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
 
     //--- Compute Arrival Probability ----
     double temp = 0.0;
-    for(int s=0;s<states(j1).size();s++) {
+    const unsigned NS1 = states(j1).size();
+    for(int s=0;s<NS1;s++) {
       int S1 = states(j1)[s];
       temp +=  (*this)(i1,j1,S1) * GQ(S1,S2);
     }
