@@ -31,10 +31,10 @@ install: program tools
 #----------------- Definitions
 EXACTFLAGS = -pipe -pedantic
 
-LANGO := fast-math visibility=default # unsafe-loop-optimizations
+LANGO := fast-math visibility=default # unsafe-loop-optimizations # tree-vectorize
 
 WARN  := all extra no-sign-compare overloaded-virtual strict-aliasing \
-	 unsafe-loop-optimizations
+	 # unsafe-loop-optimizations
 
 ifeq (${BOUNDS_CHECK},y)
   DEFS += _GLIBCXX_DEBUG
@@ -51,7 +51,7 @@ else
     OPT += march=${ARCH} mtune=${ARCH}
   endif	
 
-  OPT += O3 # mfpmath=sse,387 msse2
+  OPT += O3 # mfpmath=sse # mfpmath=sse,387 msse2
   LANGO += unroll-loops web
 
   ifneq (${PROF},y)
