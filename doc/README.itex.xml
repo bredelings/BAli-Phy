@@ -56,8 +56,10 @@
 	  <para>A Mac OS X system is based on UNIX, and should be able to
 	  compile and run <application>BAli-Phy</application>.  The version
 	  of OS X must be 10.1 or higher.  If you want to use the
-	  development tools from Apple, the system must be 10.4 or higher,
-	  and you must upgrade to XCode 2.1 (see Software Requirements).
+	  development tools from Apple to compile
+	  <application>BAli-Phy</application>, the system must be 10.4 or
+	  higher, and you must upgrade to XCode 2.1 (see Software
+	  Requirements). 
 	  </para>
 	</sect3>
 
@@ -844,7 +846,7 @@
       <title>Output files</title>
       <para>When run in a clean directory,
       <application>BAli-PHy</application> produces the following output
-      files.  Beside the file <filename>MAP</filename> that contains
+      files.  Except for the file <filename>MAP</filename> which contains
       alignments, each line in these files should correspond to one
       iteration.</para>
 
@@ -954,7 +956,7 @@
 
 	<varlistentry><term>c<replaceable>level</replaceable>.topology</term><listitem>
 	<para>The consensus topology at level
-	<replaceable>level</replaceable>, in Newick format.</para> 
+	<replaceable>level</replaceable> (Newick format)</para> 
 	</listitem></varlistentry>
 
 	<varlistentry><term>c50.tree</term><listitem>
