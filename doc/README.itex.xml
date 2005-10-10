@@ -175,7 +175,7 @@
       <para>In addition, it is recommended that 
       you make a <filename>~/bin/bali-phy/</filename> directory, and
       copy the bali-phy executable to the
-      <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename>.
+      <filename>~/bin/bali-phy/<replaceable>version</replaceable></filename>.
       This will allow the ./bin/bali-phy.sh script to find your
       executable for use with the SGE (Sun Grid Engine) environment. 
       </para>
@@ -210,7 +210,7 @@
       <title>The recommended way</title>
     <para>The <emphasis>recommended</emphasis> way to run the program
     is to copy the <filename>bali-phy</filename> executable to
-    <filename>~/bin/bali-phy/<replaceable>version</replaceable>-NDEBUG</filename>
+    <filename>~/bin/bali-phy/<replaceable>version</replaceable></filename>
     and run (in a bourne-shell)
     
 <screen><prompt>%</prompt> <userinput>export BALI_PHY_DATA=<replaceable>data-dir</replaceable></userinput>

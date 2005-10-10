@@ -13,8 +13,6 @@
 #---- Are we debugging? ----
 if [ "$DEBUG" ] ; then
     DEBUG="-DEBUG";
-else
-    DEBUG="-NDEBUG";
 fi
 
 #---- find out which run class we are in ----
@@ -63,8 +61,8 @@ if [ "$VERSION" ] ; then
 else
     V=1
     pushd ~/bin/bali-phy > /dev/null
-    for file in *-NDEBUG ; do
-	V2=${file%-NDEBUG}
+    for file in *${DEBUG} ; do
+	V2=${file%-${DEBUG}}
 	if (( V2 > V )) 2>/dev/null ; then
 	    V=$V2;
 	fi
@@ -75,7 +73,7 @@ else
 fi
 
 #------ start the sampler with the specified args ----
-qsub=$(which qsub)
+qsub=$(which qsub 2>/dev/null)
 if [ -x "$qsub" ] ; then
     qsub -o out -e err ~/bin/run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@"
 else
