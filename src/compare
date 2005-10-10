@@ -567,7 +567,9 @@ EF-Tu/12d.fasta --gaps star --iterations 10 --seed 0 >out 2>err
 1215	4.1	Aug 30		3.42s
 1288	4.1	Sep 20		3.36s
 1288	4.1	Sep 30		3.10s
-
+1302	4.1	Oct 7		3.25s
+1302	4.1	Oct 7+sse	3.33s
+1302	4.1	Oct 7+sse+vect	3.38s
 
 EF-Tu/48b.fasta --gaps star --iterations 5 --seed 0 >out 2>err
 
@@ -576,6 +578,9 @@ EF-Tu/48b.fasta --gaps star --iterations 5 --seed 0 >out 2>err
 1215    4.1	Aug 30 		17.66s
 1288	4.1	Sep 20		16.62s
 1288	4.1	Sep 30		16.50s
+1302	4.1	Oct 7		16.50s
+1302	4.1	Oct 7+sse	16.37s
+1302	4.1	Oct 7+sse+vect	16.42s
 
 EF-Tu/12d.fasta  --iterations 5 --seed 0 >out 2>err
 
@@ -583,4 +588,36 @@ EF-Tu/12d.fasta  --iterations 5 --seed 0 >out 2>err
 1288	4.0.2			39.10s + 4.8s
 1215	4.1 	Aug 30		41.40s
 1288	4.1	Sep 20		41.64s + 4.9s
-1288	4.1	Sep30		41.54s + 5.0s
+1288	4.1	Sep 30		41.54s + 5.0s
+1302	4.1	Oct 7		41.60s + 5.2s
+1302	4.1	Oct 7+sse	43.82s + 5.4s
+1302	4.1	Oct 7+sse+vect	43.90s + 5.2s
+
+inline-unit-growth=100 -> 41.43 / 2735926
+inline-unit-growth=200 -> 41.48 / 2828408
+inline-unit-growth=200 max-inline-insns-auto=150 -> 41.00 / 2951960
+inline-unit-growth=200 max-inline-insns-auto=200 -> 41.00 / 2941630
+inline-unit-growth=300 max-inline-insns-auto=200 -> 41.00 / 2941630
+
+----------------
+1293 = Sep30 cvs	41.23s
+
+1299 	39.10s	4.0
+1293	41.20s	4.1
+1293a	38.43s	4.1 + 4.0[ dp-matrix.o ]
+1293b	38.01s	4.1 + 4.0[ dp-matrix.o, dp-array.o ]
+1303    36.53s  4.1 + [ states(j1).size() -> const unsigned NS1 ]
+
+----------------
+1303
+
+3.4.4+	size=2662621	compile=294.12user 6.10system 5:04.16elapsed
+  - crashes in libboost_program_options
+4.0.2	size=2370947	compile=213.04user 5.31system 3:39.73elapsed
+  - 4.46
+  - 20.39
+  - 37.13 + 5.2
+4.1.0	size=2394280	compile=250.86user 5.71system 4:18.36elapsed [Oct 7 CVS]
+  - 3.27
+  - 16.31
+  - 36.37 + 5.17
