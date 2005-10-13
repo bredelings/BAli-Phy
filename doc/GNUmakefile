@@ -1,4 +1,4 @@
-all: README.xhtml
+all: README.xhtml README.pdf 
 
 clean:
 	-@rm -f README.xhtml README.xml README.fo README.pdf *~
@@ -7,8 +7,8 @@ clean:
 %.xml: %.itex.xml
 	itex2MML < $^ > $@
 
-%.xhtml: %.xml docbook.xsl
-	xsltproc --xinclude docbook.xsl $*.xml > $@
+%.xhtml: %.xml docbook-xhtml.xsl
+	xsltproc --xinclude docbook-xhtml.xsl $*.xml > $@
 
 %.fo: %.xml
 	xsltproc --xinclude docbook-fo.xsl $*.xml > $@
@@ -17,6 +17,6 @@ clean:
 	fop $*.fo $*.pdf
 
 %.txt: %.xml
-	xmlto txt $^
+	fop $*.fo -txt $*.txt
 
 #xalan -XSLT /usr/share/xml/docbook/stylesheet/nwalsh/xhtml/docbook.xsl -IN %.xml
