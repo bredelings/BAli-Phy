@@ -13,10 +13,11 @@
 </xsl:template>
 <!-- end of MathML support. -->
 
-<!-- xsl:param name="html.stylesheet">docbook.css</xsl:param -->
-<!-- xsl:param name="variablelist.as.table" select="1"/ -->
-<!-- xsl:param name="section.autolabel" select="1"/ -->
+<xsl:param name="variablelist.as.table" select="1"/>
+<xsl:param name="section.autolabel" select="1"/>
 <!-- xsl:param name="admon.graphics" select="1"/ -->
 
+<xsl:param name="toc.indent.width" select="5"/>
+<xsl:param name="body.start.indent" select="0"/>
 
 </xsl:stylesheet>

@@ -10,7 +10,7 @@ clean:
 %.xhtml: %.xml docbook-xhtml.xsl
 	xsltproc --xinclude docbook-xhtml.xsl $*.xml > $@
 
-%.fo: %.xml
+%.fo: %.xml docbook-fo.xsl
 	xsltproc --xinclude docbook-fo.xsl $*.xml > $@
 
 %.pdf: %.fo
