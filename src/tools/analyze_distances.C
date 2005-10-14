@@ -5,6 +5,7 @@
 #include "smodel.H"
 #include "substitution.H"
 #include "substitution-cache.H"
+#include "substitution-index.H"
 #include "matcache.H"
 #include "rng.H"
 #include "logsum.H"
@@ -95,7 +96,7 @@ double branch_likelihood::operator()(const optimize::Vector& v) const {
 
   MatCache MC(T2,*smodel);
 
-  return substitution::Pr(A,MC,T2,LC,*smodel) + smodel->prior() + prior(T2,0.2);
+  return log(substitution::Pr(A,MC,T2,LC,*smodel) * smodel->prior() * prior(T2,0.2));
 }
 
 double getSimilarity(double t,substitution::MultiModel& SM) {
@@ -138,7 +139,7 @@ double getSimilarity(const alignment& A,int s1,int s2) {
 }
 
 Matrix getSimilarity(const alignment& A) {
-  const int n = A.size2()/2+1;
+  const int n = A.n_sequences()/2+1;
   Matrix S(n,n);
 
   for(int i=0;i<n;i++)
@@ -165,7 +166,7 @@ double getConserved(const alignment& A,int s1,int s2) {
 }
 
 Matrix getConserved(const alignment& A) {
-  const int n = A.size2()/2+1;
+  const int n = A.n_sequences()/2+1;
   Matrix S(n,n);
 
   for(int i=0;i<n;i++)
@@ -228,10 +229,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree",value<string>(),"file with initial tree")
     ("letters",value<string>()->default_value("full_tree"),"if set to 'star', then use a star tree for substitution")
     ("smodel",value<string>(),"substitution model")
-    ("set",value<vector<string> >()->multitoken(),"set parameter=<value>")
-    ("fix",value<vector<string> >()->multitoken(),"fix parameter[=<value>]")
-    ("unfix",value<vector<string> >()->multitoken(),"un-fix parameter")
+    ("set",value<vector<string> >()->composing(),"set parameter=<value>")
+    ("fix",value<vector<string> >()->composing(),"fix parameter[=<value>]")
+    ("unfix",value<vector<string> >()->composing(),"un-fix parameter")
     ("frequencies",value<string>(),"comma-separated vector of frequencies to use as initial condition") 
+    ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("search",value<string>(),"search model_parameters?")
     ;
@@ -301,8 +303,13 @@ int main(int argc,char* argv[])
     std::cout<<"Using substitution model: "<<full_smodel->name()<<endl;
 
     // ----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
-    Likelihood_Cache LC(T,*full_smodel,A.length());
     MatCache MC(T,*full_smodel);
+
+    Likelihood_Cache LC(T,*full_smodel,A.length());
+
+    add_leaf_seq_note(A,T.n_leaves());
+    add_subA_index_note(A,T.n_branches());
+
     Matrix rate_probs = get_rate_probabilities(A,MC,T,LC,*full_smodel);
 
     vector<double> prior_bin_f = full_smodel->distribution();
@@ -340,11 +347,15 @@ int main(int argc,char* argv[])
     int delta=0;
     if (args.count("search") and args["search"].as<string>() == "model_parameters")
       delta = full_smodel->parameters().size();
-    optimize::Vector start(0.1,T2.n_branches()+delta);
+
+    // Initialize starting point
+    optimize::Vector start(0.1, T2.n_branches()+delta);
     for(int b=0;b<T.n_branches();b++)
       start[b] = T.branch(b).length();
     for(int b=T.n_branches();b<start.size();b++)
       start[b] = full_smodel->parameters()[b-T.n_branches()];
+
+
     optimize::Vector end = search_gradient(start,score);
     //    optimize::Vector end = search_basis(start,score);
     for(int b=0;b<T.n_branches();b++)
