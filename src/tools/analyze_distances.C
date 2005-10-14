@@ -87,6 +87,8 @@ double branch_likelihood::operator()(const optimize::Vector& v) const {
   else 
     std::abort();
 
+  LC.invalidate_all();
+
   SequenceTree T2 = T;
   for(int i=0;i<T.n_branches();i++) {
     if (v[i] <= 0)
@@ -98,6 +100,47 @@ double branch_likelihood::operator()(const optimize::Vector& v) const {
 
   return log(substitution::Pr(A,MC,T2,LC,*smodel) * smodel->prior() * prior(T2,0.2));
 }
+
+
+class log_branch_likelihood: public likelihood {
+
+public:
+  double operator()(const optimize::Vector&) const;
+
+  branch_likelihood(const alignment& A1,
+		     const substitution::MultiModel& SM,
+		     const SequenceTree& T1)
+    : likelihood(A1,SM,T1)
+  { }
+
+};
+
+double log_branch_likelihood::operator()(const optimize::Vector& v) const {
+  if (v.size() == T.n_branches())
+    ;
+  else if (v.size() == T.n_branches() + smodel->parameters().size()) {
+    vector<double> p(smodel->parameters().size());
+    for(int i=0;i<p.size();i++)
+      p[i] = v[T.n_branches()+i];
+    smodel->parameters(p);
+  }
+  else 
+    std::abort();
+
+  LC.invalidate_all();
+
+  SequenceTree T2 = T;
+  for(int i=0;i<T.n_branches();i++) {
+    if (v[i] <= 0)
+      return log_0;
+    T2.branch(i).set_length(exp(v[i]));
+  }
+
+  MatCache MC(T2,*smodel);
+
+  return log(substitution::Pr(A,MC,T2,LC,*smodel) * smodel->prior() * prior(T2,0.2));
+}
+
 
 double getSimilarity(double t,substitution::MultiModel& SM) {
   double S = 0;
@@ -258,10 +301,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+using namespace std;
 
 int main(int argc,char* argv[]) 
 { 
   try {
+
     cerr.precision(10);
     cout.precision(10);
 
@@ -341,9 +386,10 @@ int main(int argc,char* argv[])
     cout<<endl<<endl;
 
 
-    /* ------- Estimate branch lengths -------------*/
+    // ------- Estimate branch lengths -------------//
     SequenceTree T2 = T;
     branch_likelihood score(A,*full_smodel,T2);
+    branch_likelihood score2(A,*full_smodel,T2);
     int delta=0;
     if (args.count("search") and args["search"].as<string>() == "model_parameters")
       delta = full_smodel->parameters().size();

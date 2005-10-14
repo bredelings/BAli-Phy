@@ -3,6 +3,8 @@
 #include <valarray>
 #include "optimize.H"
 
+using namespace std;
+
 namespace optimize {
 
   Vector search_basis(const Vector& start,const function& f, double delta,int maxiterations) {
@@ -14,8 +16,8 @@ namespace optimize {
     Vector last2(0.0,start.size());
 
     // vector of sizes for each direction
-    std::valarray<bool> moved(false,2*dimension);
-    std::vector<double> basis(2*dimension,1);
+    valarray<bool> moved(false,2*dimension);
+    vector<double> basis(2*dimension,1);
     for(int i=dimension;i<basis.size();i++)
       basis[i] = -1;
 
@@ -42,22 +44,22 @@ namespace optimize {
 #ifndef NDEBUG
 	// Show some current status
 	if (ii == basis.size()) {
-	  std::cerr<<"iteration = "<<iterations<<
+	  cerr<<"iteration = "<<iterations<<
 	    "   ii = "<<ii<<
 	    "   v = ";
 	  for(int j=0;j<nextv.size();j++)
-	    std::cerr<<last1[j] + last2[j]<<" ";
-	  std::cerr<<
+	    cerr<<last1[j] + last2[j]<<" ";
+	  cerr<<
 	    "\n   old = "<<value<<
-	    "   new = "<<next_value<<std::endl;
+	    "   new = "<<next_value<<endl;
 	  
 	}
 	else {
-	  std::cerr<<"iteration = "<<iterations<<
+	  cerr<<"iteration = "<<iterations<<
 	    "   ii = "<<ii<<
 	    "   size = "<<basis[ii]<<
 	    "   old = "<<value<<
-	    "   new = "<<next_value<<std::endl;
+	    "   new = "<<next_value<<endl;
 	}
 #endif
 
@@ -85,18 +87,18 @@ namespace optimize {
 	// Do the move, if we're better
 	if (next_value > value) {
 #ifndef NDEBUG
-	  std::cerr<<"Moved from  old = "<<value<<
-	    " to new = "<<next_value<<std::endl;
+	  cerr<<"Moved from  old = "<<value<<
+	    " to new = "<<next_value<<endl;
 
 	  // Display the current position
 	  for(int j=0;j<v.size();j++)
-	    std::cerr<<v[j]<<"  ";
-	  std::cerr<<std::endl;
+	    cerr<<v[j]<<"  ";
+	  cerr<<endl;
 
 	  // Display the next position
 	  for(int j=0;j<nextv.size();j++)
-	    std::cerr<<nextv[j]<<"  ";
-	  std::cerr<<std::endl;
+	    cerr<<nextv[j]<<"  ";
+	  cerr<<endl;
 #endif
 
 	  v = nextv;
@@ -110,14 +112,14 @@ namespace optimize {
       // Are we done yet?
       done = true;
       for(int i=0;i<basis.size();i++)
-	if (std::abs(basis[i]) > delta) done = false;
+	if (abs(basis[i]) > delta) done = false;
 #ifndef NDEBUG
       if (done)
-	std::cerr<<"BASIS: final = "<<value<<"       iterations = "<<iterations<<"\n";
+	cerr<<"BASIS: final = "<<value<<"       iterations = "<<iterations<<"\n";
 #endif
     }
     if (not done)
-      std::cerr<<"Convergence failed!\n";
+      cerr<<"Convergence failed!\n";
 
     return v;
   }
@@ -148,7 +150,7 @@ namespace optimize {
 
 
 #ifndef NDEBUG
-    std::cerr<<" min = "<<min<<"   max = "<<max<<"\n";
+    //    cerr<<" min = "<<min<<"   max = "<<max<<"\n";
 #endif
     // Use a centered derivative, if possible
     double t1 = -0.5*dt;
@@ -161,14 +163,14 @@ namespace optimize {
       t2 = max * 0.99;
     double deltat = t2 - t1;
     
-    std::cerr<<"  t1 = "<<t1<<"    t2 = "<<t2<<"\n";
+    //    cerr<<"  t1 = "<<t1<<"    t2 = "<<t2<<"\n";
 
     // Calculate the derivative at [x + v*(
     double f1 = f(x + t1 * v);
     double f2 = f(x + t2 * v);
 
 #ifndef NDEBUG
-    std::cerr<<" f1 = "<<f1<<"    f2 = "<<f2<<"\n";
+    //    cerr<<" f1 = "<<f1<<"    f2 = "<<f2<<"\n";
 #endif
 
     return (f2-f1)/deltat;
@@ -215,7 +217,7 @@ namespace optimize {
       double f1 = f(x);
 
       Vector nx = x;
-      double dxi = std::abs(dx[i]);
+      double dxi = abs(dx[i]);
       nx[i] += dxi;
       double f2 = f(nx);
       g[i] = (f2-f1)/dxi;
@@ -274,19 +276,25 @@ namespace optimize {
       }
 
 #ifndef NDEBUG
-      std::cerr<<"  retry = "<<i<<"      value = "<<value2<<std::endl;
+      cerr<<"  retry #"<<i<<"  value: "<<cvalue<<" -> "<<value2;
 #endif
 
-      if (value2 > cvalue and not std::isnan(value2)) {
+      if (value2 > cvalue and not isnan(value2)) {
 #ifndef NDEBUG
-	std::cerr<<"move: "<<value2<<" > "<<cvalue<<"\n";
+	cerr<<" [ACCEPTED]\n";
 #endif
 	x = x2;
 	cvalue = value2;
-	moved=true;
+	moved = true;
       }
-      else if (moved)
-	break;
+      else {
+#ifndef NDEBUG
+	cerr<<" [REJECTED]\n";
+#endif
+
+	// Bail on the first bad proposal after a good proposal
+	if (moved) break;
+      }
 	
       
       scale *= 0.6;
@@ -298,9 +306,18 @@ namespace optimize {
   double infnorm(const Vector& x) {
     double d=0;
     for(int i=0;i<x.size();i++)
-      if (std::abs(x[i]) > d)
-	d = std::abs(x[i]);
+      if (abs(x[i]) > d)
+	d = abs(x[i]);
     return d;
+  }
+
+  ostream& operator<<(ostream& o,const Vector& x) {
+    for(int i=0;i<x.size();i++) {
+      o<<x[i];
+      if (i != x.size()-1)
+	o<<" ";
+    }
+    return o;
   }
 
 
@@ -319,125 +336,103 @@ namespace optimize {
     double df = 1.0;
 
     bool done = false;
-    for(int iteration=0;iteration<maxiterations and not done;iteration++) {
-      std::cerr<<"iteration = "<<iteration<<"   f = "<<value<<std::endl;
+    for(int iteration=0;iteration<maxiterations and not done;iteration++) 
+    {
+      cerr<<"\niteration = "<<iteration<<"   f = "<<value<<endl;
 
-      std::cerr<<"x = ";
-      for(int i=0;i<x.size();i++)
-	std::cerr<<x[i]<<" ";
-      std::cerr<<"\n\n";
+      cerr<<" df = "<<df<<" [target]\n";
 
-      std::cerr<<"dx = ";
-      for(int i=0;i<dx.size();i++)
-	std::cerr<<dx[i]<<" ";
-      std::cerr<<"\n\n";
+      cerr<<" x = "<<x<<"\n";;
 
-      /*----------------- Calculate the gradient ----------------------*/
+      cerr<<" dx = "<<dx<<"\n";;
+
+      //----------------- Calculate the gradient ----------------------//
       Vector del_f = Proj(gradient(f,x,dx),x);
       double lambda = df/dot(del_f,del_f);
       Vector dx2 = del_f*lambda;
       
-      std::cerr<<"del_f = ";
-      for(int i=0;i<del_f.size();i++)
-	std::cerr<<del_f[i]<<" ";
-      std::cerr<<"\n\n";
+      cerr<<" del_f = "<<del_f<<"\n";
 
-      std::cerr<<"dx2 = ";
-      for(int i=0;i<dx2.size();i++)
-	std::cerr<<dx2[i]<<" ";
-      std::cerr<<"\n\n";
+      cerr<<" dx2 = "<<dx2<<"\n";
 
-      /*--------------- Estimate Distance using Newton-Raphson -------------*/
+      //------------ Estimate Distance using Newton-Raphson -----------//
+
+      cerr<<"\nNewton/Raphson...\n";
 
       // we have a path x+t*dx2
-      double D1 = derivative(f,x,dx2,0.125);
-      double D2 = derivative2(f,x,dx2,0.25);
+      double D1 = derivative (f,x,dx2,0.125);
+      double D2 = derivative2(f,x,dx2,0.125);
+      cerr<<" D1 = "<<D1<<"     D2 = "<<D2<<"\n";
 
       double t = -D1/D2;
 
-      Vector dxNR = t*dx2; // Newton-Raphson estimate
+      Vector NR_dx = t*dx2; // Newton-Raphson estimate
 
-      std::cerr<<"df = "<<df<<"\n";
-      std::cerr<<"D1 = "<<D1<<"     D2 = "<<D2<<"  !\n";
+      cerr<<" NR df = "<<dot(del_f,NR_dx)<<" [predicted]\n";
+      cerr<<" NR df = "<<dot(del_f,dx2)*t<<" [predicted]\n";
+      cerr<<" NR df = "<<D1*t<<" [predicted]\n";
+      cerr<<" NR df = "<<-D1*D1/(2.0*D2)<<" [predicted]\n";
 
-      D1 = derivative(f,x,dx2,0.125);
-      D2 = derivative2(f,x,dx2,0.125);
-      std::cerr<<"D1 = "<<D1<<"     D2 = "<<D2<<"  !\n";
-
-      D1 = derivative(f,x,dx2,0.25);
-      D2 = derivative2(f,x,dx2,0.25);
-      std::cerr<<"D1 = "<<D1<<"     D2 = "<<D2<<"  !\n";
-
-      std::cerr<<"NR predicted df = "<<dot(del_f,dxNR)<<"\n";
-
-      std::cerr<<"dxNR = ";
-      for(int i=0;i<dxNR.size();i++)
-	std::cerr<<dxNR[i]<<" ";
-      std::cerr<<"\n\n";
+      cerr<<" NR dx = "<<NR_dx<<" [proposed]\n\n";
+      cerr<<" NR x = "<<x + NR_dx<<" [proposed]\n\n";
 
 
-      /*------------------------- Do line search ----------------------*/
-
+      //------------------------- Do line search ----------------------//
       bool moved = false;
       const Vector x1 = x;
+      cerr<<"\nNewton/Raphson...\n";
       if (t > 0) {
-	moved = line_search(x,f,dxNR,5);
+	moved = line_search(x,f,NR_dx,5);
 	if (moved)
-	  std::cerr<<"NR succeeded...\n";
+	  cerr<<" NR succeeded: x = "<<x<<"\n";
 	else
-	  std::cerr<<"NR failed...\n";
-      }
-
-      std::cerr<<"x = ";
-      for(int i=0;i<x.size();i++)
-	std::cerr<<x[i]<<" ";
-      std::cerr<<"\n\n";
-
-       
-      if (line_search(x,f,dx2,15)) {
-	  std::cerr<<"REGULAR succeeded...\n";
-	  moved = true;
+	  cerr<<" NR failed.\n";
       }
       else
-	std::cerr<<"REGULAR failed...\n";
+	cerr<<" ignored: not convex.\n";
 
-      std::cerr<<"x = ";
-      for(int i=0;i<x.size();i++)
-	std::cerr<<x[i]<<" ";
-      std::cerr<<"\n\n";
+      if (not moved) {
+	cerr<<"\nREGULAR...\n";
+	if (line_search(x,f,dx2,15)) {
+	  cerr<<" REGULAR succeeded: x = "<<x<<"\n";
+	  moved = true;
+	}
+	else
+	  cerr<<" REGULAR failed.\n";
+      }
 
-
-      /*------------ Update State based on moved/not moved --------------*/
+      //------------ Update State based on moved/not moved --------------//
       if (moved) {
 	double value2 = f(x);
 	df = value2-value;
 	value = value2;
 	Vector deltax = (x - x1)/10;
 	for(int i=0;i<deltax.size();i++)
-	  if (deltax[i] > 1.0e-9*(1.0+std::abs(x[i])))
+	  if (deltax[i] > 1.0e-9*(1.0+abs(x[i])))
 	    dx[i] = deltax[i];
       }
       else {
 	Vector deltax = dx/2.0;
 	for(int i=0;i<deltax.size();i++)
-	  if (deltax[i] > 1.0e-9*(1.0+std::abs(x[i])))
+	  if (deltax[i] > 1.0e-9*(1.0+abs(x[i])))
 	    dx[i] = deltax[i];
 	df *= 0.5;
       }
 
-      /*------------------------- Are we done yet ----------------------*/
-      if (infnorm(dxNR) < delta*(1.0+infnorm(x)) 
-	  and infnorm(del_f) < delta*std::abs(1.0+value)) {
+      //------------------------- Are we done yet ----------------------//
+      if (infnorm(NR_dx) < delta*(1.0+infnorm(x)) 
+	  and infnorm(del_f) < delta*abs(1.0+value)) {
 	done = true;
-	std::cerr<<"not done:  ||dx||/(1+||x||) = "<<infnorm(dxNR)/(1+infnorm(x))<<"         ";
-	std::cerr<<"||del fx||/(1+||f||) = "<<infnorm(del_f)/(1+std::abs(1.0+value))<<"\n";
-	std::cerr<<"GRADIENT: final = "<<value<<"       iterations = "<<iteration<<"\n";
+	cerr<<"not done:  ||dx||/(1+||x||) = "<<infnorm(NR_dx)/(1+infnorm(x))<<"         ";
+	cerr<<"||del fx||/(1+||f||) = "<<infnorm(del_f)/(1+abs(1.0+value))<<"\n";
+	cerr<<"GRADIENT: final = "<<value<<"       iterations = "<<iteration<<"\n";
       }
       else {
-	std::cerr<<"not done:  ||dx||/(1+||x||) = "<<infnorm(dxNR)/(1+infnorm(x))<<"         ";
-	std::cerr<<"||del fx||/(1+||f||) = "<<infnorm(del_f)/(1+std::abs(1.0+value))<<"\n";
+	cerr<<"not done:  ||dx||/(1+||x||) = "<<infnorm(NR_dx)/(1+infnorm(x))<<"         ";
+	cerr<<"||del fx||/(1+||f||) = "<<infnorm(del_f)/(1+abs(1.0+value))<<"\n";
       }
     }
     return x;
   }
+
 }
