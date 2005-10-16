@@ -242,10 +242,10 @@ std::ostream& print_lower(std::ostream& o,vector<string> labels, const Matrix& M
 
   assert(M.size1() == M.size2());
   for(int i=0;i<M.size1();i++) {
-    std::cout<<labels[i]<<"  ";
+    o<<labels[i]<<"  ";
     for(int j=0;j<i;j++)
-      std::cout<<M(i,j)<<"  ";
-    std::cout<<"\n";
+      o<<M(i,j)<<"  ";
+    o<<"\n";
   }
   return o;
 }
@@ -255,10 +255,10 @@ std::ostream& print_entire(std::ostream& o,vector<string> labels, const Matrix& 
 
   assert(M.size1() == M.size2());
   for(int i=0;i<M.size1();i++) {
-    std::cout<<labels[i]<<"  ";
+    o<<labels[i]<<"  ";
     for(int j=0;j<M.size2();j++)
-      std::cout<<M(i,j)<<"  ";
-    std::cout<<"\n";
+      o<<M(i,j)<<"  ";
+    o<<"\n";
   }
   return o;
 }
@@ -330,25 +330,25 @@ int main(int argc,char* argv[])
     SequenceTree T;
     load_A_and_T(args,A,T);
 
-    std::cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
+    cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
 
     /*------------- Show Similarity/Distances between sequences ---------*/
-    std::cout.precision(3);
+    cout.precision(3);
 
-    std::cout<<"conserved = \n";
-    print_entire(std::cout,T.get_sequences(),getConserved(A))<<"\n";
+    cout<<"conserved = \n";
+    print_entire(cout,T.get_sequences(),getConserved(A))<<"\n";
 
     Matrix S = getSimilarity(A);
 
-    std::cout<<"%similarity = \n";
-    print_lower(std::cout,T.get_sequences(),S)<<"\n";
+    cout<<"%similarity = \n";
+    print_lower(cout,T.get_sequences(),S)<<"\n";
 
     Matrix D = C(S);
-    std::cout<<"%difference = \n";
-    print_lower(std::cout,T.get_sequences(),D)<<"\n";
+    cout<<"%difference = \n";
+    print_lower(cout,T.get_sequences(),D)<<"\n";
 
     OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
-    std::cout<<"Using substitution model: "<<full_smodel->name()<<endl;
+    cout<<"Using substitution model: "<<full_smodel->name()<<endl;
     full_smodel->set_rate(1);
 
     // ----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
@@ -412,29 +412,29 @@ int main(int argc,char* argv[])
     for(int b=0;b<T.n_branches();b++)
       T2.branch(b).set_length(exp(end[b]));
 
-    std::cout<<"E T = "<<T2<<std::endl;
+    cout<<"E T = "<<T2<<endl;
     for(int b=T.n_branches();b<end.size();b++)
-      std::cout<<"   p"<<b-T.n_branches()<<" = "<<end[b];
-    std::cout<<std::endl;
+      cout<<"   "<<full_smodel->parameter_name(b-T.n_branches())<<" = "<<end[b];
+    cout<<endl<<endl;
 
     /* ------- Set up function to maximize -------- */
 
     Matrix S1 = getSimilarity(T,*full_smodel);
 
-    std::cout<<"tree distances (input) = \n";
-    print_lower(std::cout,T.get_sequences(),DistanceMatrix(T))<<"\n";
-    std::cout<<"%difference (from input tree) = \n";
-    print_lower(std::cout,T.get_sequences(),C(S1))<<"\n\n";
+    cout<<"tree distances (input) = \n";
+    print_lower(cout,T.get_sequences(),DistanceMatrix(T))<<"\n";
+    cout<<"%difference (from input tree) = \n";
+    print_lower(cout,T.get_sequences(),C(S1))<<"\n\n";
 
     Matrix S2 = getSimilarity(T2,*full_smodel);
 
-    std::cout<<"tree distances (estimated) = \n";
-    print_lower(std::cout,T.get_sequences(),DistanceMatrix(T2))<<"\n\n";
-    std::cout<<"%difference (from estimated tree) = \n";
-    print_lower(std::cout,T.get_sequences(),C(S2))<<"\n\n";
+    cout<<"tree distances (estimated) = \n";
+    print_lower(cout,T.get_sequences(),DistanceMatrix(T2))<<"\n\n";
+    cout<<"%difference (from estimated tree) = \n";
+    print_lower(cout,T.get_sequences(),C(S2))<<"\n\n";
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"Exception: "<<e.what()<<endl;
     exit(1);
   }
   return 0;
