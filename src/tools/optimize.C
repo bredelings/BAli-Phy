@@ -141,30 +141,16 @@ namespace optimize {
 
   /// Calculate the first derivate of f in the direction dx
   double derivative(const function& f,const Vector& x,
-		    const Vector& v,const double dt) {
-
+		    const Vector& v,const double dt) 
+  {
     assert(x.size() == v.size());
 
-    double min,max;
-    getlimits(x,v,min,max);
-
-
-#ifndef NDEBUG
-    //    cerr<<" min = "<<min<<"   max = "<<max<<"\n";
-#endif
     // Use a centered derivative, if possible
     double t1 = -0.5*dt;
     double t2 = 0.5*dt;
-    
-    // But adjust it to fit
-    if (min > t1) 
-      t1 = min * 0.99;
-    if (max < t2)
-      t2 = max * 0.99;
+
     double deltat = t2 - t1;
     
-    //    cerr<<"  t1 = "<<t1<<"    t2 = "<<t2<<"\n";
-
     // Calculate the derivative at [x + v*(
     double f1 = f(x + t1 * v);
     double f2 = f(x + t2 * v);
@@ -182,20 +168,11 @@ namespace optimize {
 
     assert(x.size() == v.size());
 
-    double min,max;
-    getlimits(x,v,min,max);
-
     // Use a centered derivative, if possible
     double t1 = -dt;
     double t3 = dt;
     
-    // But adjust it to fit
-    if (min > t1) 
-      t1 = min * 0.99;
-    if (max < t3)
-      t3 = max * 0.99;
-
-    double deltat = t3 - t1;
+    double deltat = (t3 - t1)/2;
     double t2 = (t1+t3)/2;
 
     // Calculate the 2-derivative at nx + dt*dx_pos
@@ -213,14 +190,20 @@ namespace optimize {
 
     assert(x.size() == dx.size());
 
-    for(int i=0;i<x.size();i++) {
-      double f1 = f(x);
+    Vector x1(x.size());
+    Vector x2(x.size());
 
-      Vector nx = x;
+    for(int i=0;i<x.size();i++) 
+    {
       double dxi = abs(dx[i]);
-      nx[i] += dxi;
-      double f2 = f(nx);
-      g[i] = (f2-f1)/dxi;
+
+      x1 = x;
+      x2 = x;
+
+      x1[i] -= dxi*0.5;
+      x2[i] += dxi*0.5;
+
+      g[i] = (f(x2) - f(x1))/dxi;
     }
 
     return g;
@@ -228,6 +211,8 @@ namespace optimize {
 
 
   Vector Proj(const Vector& x) {
+    return x;
+
     Vector x2 = x;
     for(int i=0;i<x2.size();i++)
       if (x2[i] < 0) x2[i] = 0;
@@ -236,6 +221,8 @@ namespace optimize {
   }
 
   Vector Proj(const Vector& v, const Vector& x) {
+    return v;
+
     assert(v.size() == x.size());
     Vector v2 = v;
     for(int i=0;i<x.size();i++)
@@ -312,23 +299,26 @@ namespace optimize {
   }
 
   ostream& operator<<(ostream& o,const Vector& x) {
+    int p = o.precision();
+    o.precision(4);
     for(int i=0;i<x.size();i++) {
       o<<x[i];
       if (i != x.size()-1)
 	o<<" ";
     }
+    o.precision(p);
     return o;
   }
 
 
   // How are we going to deal w/ boundaries?
 
-  // Also - we're running into precision limitsf on D2 - we need to use a larger delta...
+  // Also - we're running into precision limits on D2 - we need to use a larger delta...
 
   // We can get away with a smaller one for D1
 
   Vector search_gradient(const Vector& start,const function& f, 
-				 double delta,int maxiterations) 
+			 double delta,int maxiterations) 
   {
     Vector x = start;
     Vector dx(1.0e-5,start.size());
@@ -342,9 +332,9 @@ namespace optimize {
 
       cerr<<" df = "<<df<<" [target]\n";
 
-      cerr<<" x = "<<x<<"\n";;
+      cerr<<" x = "<<x<<"\n";
 
-      cerr<<" dx = "<<dx<<"\n";;
+      cerr<<" dx = "<<dx<<"\n";
 
       //----------------- Calculate the gradient ----------------------//
       Vector del_f = Proj(gradient(f,x,dx),x);
@@ -360,18 +350,16 @@ namespace optimize {
       cerr<<"\nNewton/Raphson...\n";
 
       // we have a path x+t*dx2
-      double D1 = derivative (f,x,dx2,0.125);
-      double D2 = derivative2(f,x,dx2,0.125);
+      double D1 = derivative (f,x,dx2,0.01);
+      double D2 = derivative2(f,x,dx2,0.05);
       cerr<<" D1 = "<<D1<<"     D2 = "<<D2<<"\n";
 
       double t = -D1/D2;
 
       Vector NR_dx = t*dx2; // Newton-Raphson estimate
 
-      cerr<<" NR df = "<<dot(del_f,NR_dx)<<" [predicted]\n";
-      cerr<<" NR df = "<<dot(del_f,dx2)*t<<" [predicted]\n";
-      cerr<<" NR df = "<<D1*t<<" [predicted]\n";
-      cerr<<" NR df = "<<-D1*D1/(2.0*D2)<<" [predicted]\n";
+      cerr<<" NR df = "<<D1*t<<" [linear prediction]\n";
+      cerr<<" NR df = "<<-D1*D1/(2.0*D2)<<" [quadratic prediction]\n";
 
       cerr<<" NR dx = "<<NR_dx<<" [proposed]\n\n";
       cerr<<" NR x = "<<x + NR_dx<<" [proposed]\n\n";
