@@ -205,6 +205,8 @@ tools/analyze_distances: alignment.o alphabet.o sequence.o tools/distance-method
 	substitution-cache.o substitution-index.o substitution-star.o tree-util.o \
 	alignment-random.o parameters.o myexception.o 
 
+tools/test: tools/optimize.o
+
 test-smodel: alignment.o alphabet.o sequence.o tree.o sequencetree.o util.o \
 	setup-smodel.o smodel.o randomtree.o model.o sequence-format.o rates.o \
 	probability.o rng.o setup-smodel.o exponential.o eigenvalue.o alignment-util.o \
