@@ -48,7 +48,8 @@ vector<double> get_post_rate_probs(const Matrix& P)
   return f;
 }
 
-class likelihood: public function {
+class likelihood: public function 
+{
 protected:
   alignment A;
   SequenceTree T;
@@ -75,7 +76,8 @@ public:
 
 };
 
-double branch_likelihood::operator()(const optimize::Vector& v) const {
+double branch_likelihood::operator()(const optimize::Vector& v) const 
+{
   if (v.size() == T.n_branches())
     ;
   else if (v.size() == T.n_branches() + smodel->parameters().size()) {
@@ -86,6 +88,8 @@ double branch_likelihood::operator()(const optimize::Vector& v) const {
   }
   else 
     std::abort();
+
+  smodel->set_rate(1);
 
   LC.invalidate_all();
 
@@ -107,7 +111,7 @@ class log_branch_likelihood: public likelihood {
 public:
   double operator()(const optimize::Vector&) const;
 
-  branch_likelihood(const alignment& A1,
+  log_branch_likelihood(const alignment& A1,
 		     const substitution::MultiModel& SM,
 		     const SequenceTree& T1)
     : likelihood(A1,SM,T1)
@@ -127,14 +131,13 @@ double log_branch_likelihood::operator()(const optimize::Vector& v) const {
   else 
     std::abort();
 
+  smodel->set_rate(1);
+
   LC.invalidate_all();
 
   SequenceTree T2 = T;
-  for(int i=0;i<T.n_branches();i++) {
-    if (v[i] <= 0)
-      return log_0;
+  for(int i=0;i<T.n_branches();i++)
     T2.branch(i).set_length(exp(v[i]));
-  }
 
   MatCache MC(T2,*smodel);
 
@@ -337,15 +340,16 @@ int main(int argc,char* argv[])
 
     Matrix S = getSimilarity(A);
 
-    std::cout<<"similarity = \n";
+    std::cout<<"%similarity = \n";
     print_lower(std::cout,T.get_sequences(),S)<<"\n";
 
     Matrix D = C(S);
-    std::cout<<"distance = \n";
+    std::cout<<"%difference = \n";
     print_lower(std::cout,T.get_sequences(),D)<<"\n";
 
     OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
     std::cout<<"Using substitution model: "<<full_smodel->name()<<endl;
+    full_smodel->set_rate(1);
 
     // ----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
     MatCache MC(T,*full_smodel);
@@ -389,7 +393,7 @@ int main(int argc,char* argv[])
     // ------- Estimate branch lengths -------------//
     SequenceTree T2 = T;
     branch_likelihood score(A,*full_smodel,T2);
-    branch_likelihood score2(A,*full_smodel,T2);
+    log_branch_likelihood score2(A,*full_smodel,T2);
     int delta=0;
     if (args.count("search") and args["search"].as<string>() == "model_parameters")
       delta = full_smodel->parameters().size();
@@ -397,15 +401,16 @@ int main(int argc,char* argv[])
     // Initialize starting point
     optimize::Vector start(0.1, T2.n_branches()+delta);
     for(int b=0;b<T.n_branches();b++)
-      start[b] = T.branch(b).length();
+      start[b] = log(T.branch(b).length());
     for(int b=T.n_branches();b<start.size();b++)
       start[b] = full_smodel->parameters()[b-T.n_branches()];
 
 
-    optimize::Vector end = search_gradient(start,score);
+    optimize::Vector end = search_gradient(start,score2,1e-3);
+    //    optimize::Vector end = search_gradient(start,score);
     //    optimize::Vector end = search_basis(start,score);
     for(int b=0;b<T.n_branches();b++)
-      T2.branch(b).set_length(end[b]);
+      T2.branch(b).set_length(exp(end[b]));
 
     std::cout<<"E T = "<<T2<<std::endl;
     for(int b=T.n_branches();b<end.size();b++)
