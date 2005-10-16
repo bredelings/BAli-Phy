@@ -489,3 +489,16 @@ rates.
    a) have a 'two-letter' model for HIV sequence DNA.
 
 -  graph distances as a function of the posterior LOD score of the events.
+
+-  IDEA #1: simulate P(Y|T,tau) as \prod P(Y[i][j]|T,tau)^n[i][j]
+            where n[i][j] = 1/2**(D(i,j)-1) 
+            wjere D(i,j) is the number of edges between nodes i and j.
+
+-  IDEA #2: Determine points C[i] as centers for n bins of a distribution.
+            + bin boundaries will be at sqrt(C[i]*C{i+1]).
+            + define f(x) = C[i] if x is in the i-th bin.
+            + then we 
+              - constrain E X = 1 under f(x).
+              - minimize E |log(X) - log(f(X))|
+
+	    + this will give us bins optimally spaced on the log scale.
