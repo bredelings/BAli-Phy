@@ -485,20 +485,29 @@ the prior, because we never want to use it  differently.
    "slow" and "fast" version of M,G1,G2 in which indels have different
 rates.
 
--  more complex model: have 'slow' and 'fast' be properties of the
-   individual letters in the state.
-  
+ -  more complex model: have 'slow' and 'fast' be properties of the
+   individual letters in the state.  (gamma-distributed indel rates.)
+   + this makes a "spatial" model, if it is done right.
 
--  Homoplasy and variation in column frequencies.  
+ -  Homoplasy and variation in column frequencies.  
    a) have a 'two-letter' model for HIV sequence DNA.
 
--  graph distances as a function of the posterior LOD score of the events.
+ - "Autocorrelation" as a function of distance
 
--  IDEA #1: simulate P(Y|T,tau) as \prod P(Y[i][j]|T,tau)^n[i][j]
+   o graph distances as a function of the posterior LOD score of the events.
+
+   o graph probability of the transition from 1->0 (or 1->0->1) vs time AND PP.
+
+ - use proxy for Likelihood to propose new states.
+   o look at the number of SPR changes required to reach "nearby" trees,
+     and to move between "islands".=======
+ -  graph distances as a function of the posterior LOD score of the events.
+
+ -  IDEA #1: simulate P(Y|T,tau) as \prod P(Y[i][j]|T,tau)^n[i][j]
             where n[i][j] = 1/2**(D(i,j)-1) 
             wjere D(i,j) is the number of edges between nodes i and j.
 
--  IDEA #2: Determine points C[i] as centers for n bins of a distribution.
+ -  IDEA #2: Determine points C[i] as centers for n bins of a distribution.
             + bin boundaries will be at sqrt(C[i]*C{i+1]).
             + define f(x) = C[i] if x is in the i-th bin.
             + then we 
@@ -506,3 +515,16 @@ rates.
               - minimize E |log(X) - log(f(X))|
 
 	    + this will give us bins optimally spaced on the log scale.
+
+ - If we look at posterior rate distributions, then we will want to know
+   how the rates are distributed spatially.  (This might explain why the
+   shape of the rate distribution varies between proteins.)
+
+   How much of the rate distribution can be explained by e.g. exposure
+   to solvent?
+
+   If we add alpha/beta/loop notation to each of the internal node residues,
+   then this might help us get more realistic rates, as well as indel
+   hot and cold spots.
+
+ - How do indel hot and cold spots map to interior/exterior of 3D structure?
