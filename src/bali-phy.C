@@ -214,7 +214,7 @@ void operator delete(void * p) throw() {
 }
 #endif
 
-void set_parameters(Model& M, const variables_map& args) 
+void set_parameters(Parameters& P, const variables_map& args) 
 {
   //-------------- Specify fixed parameters ----------------//
   vector<string> doset;
