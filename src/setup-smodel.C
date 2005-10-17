@@ -355,6 +355,8 @@ get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& 
   //------ Set frequencies for base markov model -------//
   full_smodel->frequencies(frequencies);
   
+  set_parameters(*full_smodel,args);
+
   return full_smodel;
 }
 

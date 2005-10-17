@@ -214,62 +214,12 @@ void operator delete(void * p) throw() {
 }
 #endif
 
-void set_parameters(Parameters& P, const variables_map& args) {
-
-    //-------------- Specify fixed parameters ----------------//
-  vector<string>   fix;
-  if (args.count("fix"))
-    fix = args["fix"].as<vector<string> >();
-
-  vector<string> unfix;
-  if (args.count("unfix"))
-    unfix = args["unfix"].as<vector<string> >();
-
+void set_parameters(Model& M, const variables_map& args) 
+{
+  //-------------- Specify fixed parameters ----------------//
   vector<string> doset;
   if (args.count("set"))
     doset = args["set"].as<vector<string> >();
-
-  // separate out 'set' operations from 'fixed'
-  for(int i=0;i<fix.size();i++) {
-    vector<string> parse = split(fix[i],'=');
-    
-    if (parse.size() > 1) {
-      doset.push_back(fix[i]);
-      fix[i] = parse[0];
-    }
-  }
-
-  // separate out 'set' operations from 'unfixed'
-  for(int i=0;i<unfix.size();i++) {
-    vector<string> parse = split(unfix[i],'=');
-    
-    if (parse.size() > 1) {
-      doset.push_back(unfix[i]);
-      unfix[i] = parse[0];
-    }
-  }
-
-  // fix parameters
-  for(int i=0;i<fix.size();i++) {
-    int p=-1;
-    if (p=find_parameter(P.SModel(),fix[i]),p!=-1)
-      P.SModel().fixed(p,true);
-    else if (p=find_parameter(P.IModel(),fix[i]),p!=-1)
-      P.IModel().fixed(p,true);
-    else
-      throw myexception()<<"Can't find parameter '"<<fix[i]<<"' to fix!";
-  }
-
-  // unfix parameters
-  for(int i=0;i<unfix.size();i++) {
-    int p=-1;
-    if (p=find_parameter(P.SModel(),unfix[i]),p!=-1)
-      P.SModel().fixed(p,false);
-    else if (p=find_parameter(P.IModel(),unfix[i]),p!=-1)
-      P.IModel().fixed(p,false);
-    else
-      throw myexception()<<"Can't find parameter '"<<unfix[i]<<"' to unfix!";
-  }
 
   // set parameters
   for(int i=0;i<doset.size();i++) {
@@ -282,12 +232,6 @@ void set_parameters(Parameters& P, const variables_map& args) {
     double value = convertTo<double>(parse[1]);
 
     P.keys[name] = value;
-
-    int p=-1;
-    if (p=find_parameter(P.SModel(),name),p!=-1)
-      P.SModel().parameter(p,value);
-    else if (p=find_parameter(P.IModel(),name),p!=-1)
-      P.IModel().parameter(p,value);
   }
 
 }
