@@ -15,6 +15,7 @@
 #include "likelihood.H"
 #include <boost/numeric/ublas/io.hpp>
 #include "distance-methods.H"
+#include "monitor.H"
 
 #include <boost/program_options.hpp>
 
@@ -55,11 +56,17 @@ protected:
   SequenceTree T;
   OwnedPointer<substitution::MultiModel> smodel;
   mutable Likelihood_Cache LC;
+  vector<int> parameters;
 public:
   likelihood(const alignment& A1,
-		     const substitution::MultiModel& SM,
-		     const SequenceTree& T1)
-    : A(A1),T(T1),smodel(SM),LC(T,*smodel,A.length())
+	     const substitution::MultiModel& SM,
+	     const SequenceTree& T1,
+	     const vector<int>& v)
+    : A(A1),
+      T(T1),
+      smodel(SM),
+      LC(T,*smodel,A.length()),
+      parameters(v)
   { }
 };
 
@@ -69,37 +76,36 @@ public:
   double operator()(const optimize::Vector&) const;
 
   branch_likelihood(const alignment& A1,
-		     const substitution::MultiModel& SM,
-		     const SequenceTree& T1)
-    : likelihood(A1,SM,T1)
+		    const substitution::MultiModel& SM,
+		    const SequenceTree& T1,
+		    const vector<int>& v)
+    : likelihood(A1,SM,T1,v)
   { }
 
 };
 
 double branch_likelihood::operator()(const optimize::Vector& v) const 
 {
-  if (v.size() == T.n_branches())
-    ;
-  else if (v.size() == T.n_branches() + smodel->parameters().size()) {
-    vector<double> p(smodel->parameters().size());
-    for(int i=0;i<p.size();i++)
-      p[i] = v[T.n_branches()+i];
-    smodel->parameters(p);
-  }
-  else 
-    std::abort();
+  assert(v.size() == T.n_branches() + parameters.size());
 
-  smodel->set_rate(1);
-
-  LC.invalidate_all();
-
+  //--------------- Set branch lengths ----------------//
   SequenceTree T2 = T;
   for(int i=0;i<T.n_branches();i++) {
-    if (v[i] <= 0)
-      return log_0;
+    if (v[i] <= 0) return log_0;
     T2.branch(i).set_length(v[i]);
   }
 
+  //---------------- Set parameters -------------------//
+  vector<double> p = smodel->parameters();
+  for(int i=0;i<parameters.size();i++) 
+    p[parameters[i]] = v[T.n_branches()+i];
+
+  smodel->parameters(p);
+  smodel->set_rate(1);
+
+
+  //----- Setup cached CL's + Transition matrices -----//
+  LC.invalidate_all();
   MatCache MC(T2,*smodel);
 
   return log(substitution::Pr(A,MC,T2,LC,*smodel) * smodel->prior() * prior(T2,0.2));
@@ -112,33 +118,33 @@ public:
   double operator()(const optimize::Vector&) const;
 
   log_branch_likelihood(const alignment& A1,
-		     const substitution::MultiModel& SM,
-		     const SequenceTree& T1)
-    : likelihood(A1,SM,T1)
+			const substitution::MultiModel& SM,
+			const SequenceTree& T1,
+			const vector<int>& v)
+    : likelihood(A1,SM,T1,v)
   { }
-
 };
 
-double log_branch_likelihood::operator()(const optimize::Vector& v) const {
-  if (v.size() == T.n_branches())
-    ;
-  else if (v.size() == T.n_branches() + smodel->parameters().size()) {
-    vector<double> p(smodel->parameters().size());
-    for(int i=0;i<p.size();i++)
-      p[i] = v[T.n_branches()+i];
-    smodel->parameters(p);
-  }
-  else 
-    std::abort();
+double log_branch_likelihood::operator()(const optimize::Vector& v) const 
+{
+  assert(v.size() == T.n_branches() + parameters.size());
 
-  smodel->set_rate(1);
-
-  LC.invalidate_all();
-
+  //--------------- Set branch lengths ----------------//
   SequenceTree T2 = T;
   for(int i=0;i<T.n_branches();i++)
     T2.branch(i).set_length(exp(v[i]));
 
+  //---------------- Set parameters -------------------//
+  vector<double> p = smodel->parameters();
+  for(int i=0;i<parameters.size();i++) 
+    p[parameters[i]] = v[T.n_branches()+i];
+
+  smodel->parameters(p);
+  smodel->set_rate(1);
+
+
+  //----- Setup cached CL's + Transition matrices -----//
+  LC.invalidate_all();
   MatCache MC(T2,*smodel);
 
   return log(substitution::Pr(A,MC,T2,LC,*smodel) * smodel->prior() * prior(T2,0.2));
@@ -263,6 +269,35 @@ std::ostream& print_entire(std::ostream& o,vector<string> labels, const Matrix& 
   return o;
 }
 
+void estimate_tree(const alignment& A,
+		   SequenceTree& T,
+		   substitution::MultiModel& smodel,
+		   const vector<int>& parameters)
+{
+  //------- Estimate branch lengths -------------//
+  log_branch_likelihood score2(A,smodel,T,parameters);
+  
+  // Initialize starting point
+  optimize::Vector start(0.1, T.n_branches() + parameters.size());
+  for(int b=0;b<T.n_branches();b++)
+    start[b] = log(T.branch(b).length());
+  for(int i=0;i<parameters.size();i++)
+    start[i+T.n_branches()] = smodel.parameters()[parameters[i]];
+
+  //    optimize::Vector end = search_gradient(start,score);
+  //    optimize::Vector end = search_basis(start,score);
+  optimize::Vector end = search_gradient(start,score2,1e-3);
+
+  for(int b=0;b<T.n_branches();b++)
+    T.branch(b).set_length(exp(end[b]));
+
+  vector<double> p = smodel.parameters();
+  for(int i=0;i<parameters.size();i++)
+    p[parameters[i]] = end[i+T.n_branches()];
+  smodel.parameters(p);
+  smodel.set_rate(1);
+}
+
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
   using namespace po;
@@ -332,7 +367,7 @@ int main(int argc,char* argv[])
 
     cout<<"Using alphabet: "<<A.get_alphabet().name<<endl<<endl;
 
-    /*------------- Show Similarity/Distances between sequences ---------*/
+    //------------- Show Similarity/Distances between sequences ---------//
     cout.precision(3);
 
     cout<<"conserved = \n";
@@ -391,30 +426,18 @@ int main(int argc,char* argv[])
 
 
     // ------- Estimate branch lengths -------------//
+    vector<int> parameters;
+    if (args.count("search") and args["search"].as<string>() == "smodel") 
+      for(int i=0;i<full_smodel->parameters().size();i++)
+	if (not full_smodel->fixed(i))
+	  parameters.push_back(i);
+
     SequenceTree T2 = T;
-    branch_likelihood score(A,*full_smodel,T2);
-    log_branch_likelihood score2(A,*full_smodel,T2);
-    int delta=0;
-    if (args.count("search") and args["search"].as<string>() == "model_parameters")
-      delta = full_smodel->parameters().size();
+    estimate_tree(A,T2,*full_smodel,parameters);
 
-    // Initialize starting point
-    optimize::Vector start(0.1, T2.n_branches()+delta);
-    for(int b=0;b<T.n_branches();b++)
-      start[b] = log(T.branch(b).length());
-    for(int b=T.n_branches();b<start.size();b++)
-      start[b] = full_smodel->parameters()[b-T.n_branches()];
-
-
-    optimize::Vector end = search_gradient(start,score2,1e-3);
-    //    optimize::Vector end = search_gradient(start,score);
-    //    optimize::Vector end = search_basis(start,score);
-    for(int b=0;b<T.n_branches();b++)
-      T2.branch(b).set_length(exp(end[b]));
 
     cout<<"E T = "<<T2<<endl;
-    for(int b=T.n_branches();b<end.size();b++)
-      cout<<"   "<<full_smodel->parameter_name(b-T.n_branches())<<" = "<<end[b];
+    show_parameters(cout,*full_smodel);
     cout<<endl<<endl;
 
     /* ------- Set up function to maximize -------- */

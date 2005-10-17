@@ -203,7 +203,7 @@ tools/analyze_distances: alignment.o alphabet.o sequence.o tools/distance-method
 	choose.o tools/optimize.o setup.o rates.o matcache.o alignment-util.o \
 	sequence-format.o randomtree.o model.o ${LINKLIBS} probability.o \
 	substitution-cache.o substitution-index.o substitution-star.o tree-util.o \
-	alignment-random.o parameters.o myexception.o 
+	alignment-random.o parameters.o myexception.o monitor.o
 
 tools/test: tools/optimize.o
 
