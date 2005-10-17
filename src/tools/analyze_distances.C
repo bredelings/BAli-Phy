@@ -273,6 +273,8 @@ std::ostream& print_entire(std::ostream& o,vector<string> labels, const Matrix& 
 void analyze_rates(const alignment& A,const SequenceTree& T,
 		   const substitution::MultiModel& smodel)
 {
+  if (smodel.n_base_models() == 1) return;
+
   MatCache MC(T,smodel);
 
   Likelihood_Cache LC(T,smodel,A.length());
@@ -422,8 +424,14 @@ int main(int argc,char* argv[])
     OwnedPointer<substitution::MultiModel> smodel_in = get_smodel(args,A);
     cout<<"Using substitution model: "<<smodel_in->name()<<endl;
     smodel_in->set_rate(1);
+    show_parameters(cout,*smodel_in);
+    cout<<endl;
 
-    // ----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
+    cout<<"input T = "<<T<<endl;
+    cout<<endl;
+
+
+    //----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
     add_leaf_seq_note(A,T.n_leaves());
     add_subA_index_note(A,T.n_branches());
 
@@ -431,21 +439,23 @@ int main(int argc,char* argv[])
 
     //------- Estimate branch lengths -------------//
     OwnedPointer<substitution::MultiModel> smodel_est = smodel_in;
-
-    vector<int> parameters;
-    if (args.count("search") and args["search"].as<string>() == "smodel") 
-      for(int i=0;i<smodel_est->parameters().size();i++)
-	if (not smodel_est->fixed(i))
-	  parameters.push_back(i);
-
     SequenceTree T2 = T;
 
-    estimate_tree(A,T2,*smodel_est,parameters);
+    if (args.count("search")) {
 
+      vector<int> parameters;
+      if (args["search"].as<string>() == "smodel")
+	for(int i=0;i<smodel_est->parameters().size();i++)
+	  if (not smodel_est->fixed(i))
+	    parameters.push_back(i);
+      
+      estimate_tree(A,T2,*smodel_est,parameters);
+    
 
-    cout<<"E T = "<<T2<<endl;
-    show_parameters(cout,*smodel_est);
-    cout<<endl<<endl;
+      cout<<"E T = "<<T2<<endl;
+      show_parameters(cout,*smodel_est);
+      cout<<endl<<endl;
+    }
 
     //----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
     analyze_rates(A,T2,*smodel_est);
@@ -457,15 +467,19 @@ int main(int argc,char* argv[])
     Matrix D = C(S);
     cout<<"%difference (actual) = \n";
     print_lower(cout,T.get_sequences(),D)<<"\n";
-    cout<<"%difference (from input tree) = \n";
+    cout<<"%difference (input) = \n";
     print_lower(cout,T.get_sequences(),C(S1))<<"\n";
-    cout<<"%difference (from estimated tree) = \n";
-    print_lower(cout,T.get_sequences(),C(S2))<<"\n\n";
+    if (args.count("search")){
+      cout<<"%difference (estimated) = \n";
+      print_lower(cout,T.get_sequences(),C(S2))<<"\n\n";
+    }
 
     cout<<"tree distances (input) = \n";
     print_lower(cout,T.get_sequences(),DistanceMatrix(T))<<"\n";
-    cout<<"tree distances (estimated) = \n";
-    print_lower(cout,T.get_sequences(),DistanceMatrix(T2))<<"\n\n";
+    if (args.count("search")){
+      cout<<"tree distances (estimated) = \n";
+      print_lower(cout,T.get_sequences(),DistanceMatrix(T2))<<"\n\n";
+    }
 
   }
   catch (std::exception& e) {
