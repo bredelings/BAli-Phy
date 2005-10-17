@@ -434,7 +434,7 @@ int main(int argc,char* argv[])
 
     vector<int> parameters;
     if (args.count("search") and args["search"].as<string>() == "smodel") 
-      for(int i=0;i<smodel_in->parameters().size();i++)
+      for(int i=0;i<smodel_est->parameters().size();i++)
 	if (not smodel_est->fixed(i))
 	  parameters.push_back(i);
 
@@ -448,7 +448,7 @@ int main(int argc,char* argv[])
     cout<<endl<<endl;
 
     //----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
-    analyze_rates(A,T2,*smodel_in);
+    analyze_rates(A,T2,*smodel_est);
 
     //------- Set up function to maximize --------//
     Matrix S1 = getSimilarity(T,*smodel_in);
