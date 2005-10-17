@@ -151,15 +151,16 @@ double log_branch_likelihood::operator()(const optimize::Vector& v) const
 }
 
 
-double getSimilarity(double t,substitution::MultiModel& SM) {
+double getSimilarity(double t,substitution::MultiModel& SM) 
+{
   double S = 0;
 
-  for(int r=0;r<SM.n_base_models();r++) {
-    Matrix Q = SM.transition_p(t,r);
-    double Sr = 0;
+  for(int m=0;m<SM.n_base_models();m++) {
+    Matrix Q = SM.transition_p(t,m);
+    double Sm = 0;
     for(int i=0;i<Q.size1();i++)
-      Sr += SM.base_model(r).frequencies()[i]*Q(i,i);
-    S += Sr * SM.distribution()[r];
+      Sm += SM.base_model(m).frequencies()[i]*Q(i,i);
+    S += Sm * SM.distribution()[m];
   }
   
   return S;
@@ -268,6 +269,46 @@ std::ostream& print_entire(std::ostream& o,vector<string> labels, const Matrix& 
   }
   return o;
 }
+
+void analyze_rates(const alignment& A,const SequenceTree& T,
+		   const substitution::MultiModel& smodel)
+{
+  MatCache MC(T,smodel);
+
+  Likelihood_Cache LC(T,smodel,A.length());
+
+  Matrix rate_probs = get_rate_probabilities(A,MC,T,LC,smodel);
+
+  vector<double> prior_bin_f = smodel.distribution();
+  
+  vector<double> post_bin_f = get_post_rate_probs(rate_probs);
+    
+  double prior_rate=0;
+  double post_rate=0;
+  for(int i=0;i<prior_bin_f.size();i++) {
+    prior_rate += prior_bin_f[i]*smodel.base_model(i).rate();
+    post_rate += post_bin_f[i]*smodel.base_model(i).rate();
+  }
+
+  for(int i=0;i<smodel.n_base_models();i++)
+    cout<<"    rate"<<i<<" = "<<smodel.base_model(i).rate();
+  cout<<endl<<endl;
+  
+  cout<<" Prior rate = "<<prior_rate<<endl;;
+  for(int i=0;i<smodel.n_base_models();i++)
+    cout<<"    prior_bin_f"<<i<<" = "<<prior_bin_f[i];
+  cout<<endl<<endl;
+  
+  cout<<" Posterior rate = "<<post_rate<<endl;;
+  for(int i=0;i<smodel.n_base_models();i++)
+    cout<<"    post_bin_f"<<i<<" = "<<post_bin_f[i];
+  cout<<endl<<endl;
+  
+  for(int i=0;i<smodel.n_base_models();i++)
+    cout<<"    odds_ratio"<<i<<" = "<<post_bin_f[i]/prior_bin_f[i];
+  cout<<endl<<endl;
+}
+
 
 void estimate_tree(const alignment& A,
 		   SequenceTree& T,
@@ -387,43 +428,10 @@ int main(int argc,char* argv[])
     full_smodel->set_rate(1);
 
     // ----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
-    MatCache MC(T,*full_smodel);
-
-    Likelihood_Cache LC(T,*full_smodel,A.length());
-
     add_leaf_seq_note(A,T.n_leaves());
     add_subA_index_note(A,T.n_branches());
 
-    Matrix rate_probs = get_rate_probabilities(A,MC,T,LC,*full_smodel);
-
-    vector<double> prior_bin_f = full_smodel->distribution();
-    vector<double> post_bin_f = get_post_rate_probs(rate_probs);
-    
-    double prior_rate=0;
-    double post_rate=0;
-    for(int i=0;i<prior_bin_f.size();i++) {
-      prior_rate += prior_bin_f[i]*full_smodel->base_model(i).rate();
-      post_rate += post_bin_f[i]*full_smodel->base_model(i).rate();
-    }
-
-    for(int i=0;i<full_smodel->n_base_models();i++)
-      cout<<"    rate"<<i<<" = "<<full_smodel->base_model(i).rate();
-    cout<<endl<<endl;
-
-    cout<<" Prior rate = "<<prior_rate<<endl;;
-    for(int i=0;i<full_smodel->n_base_models();i++)
-      cout<<"    prior_bin_f"<<i<<" = "<<prior_bin_f[i];
-    cout<<endl<<endl;
-
-    cout<<" Posterior rate = "<<post_rate<<endl;;
-    for(int i=0;i<full_smodel->n_base_models();i++)
-      cout<<"    post_bin_f"<<i<<" = "<<post_bin_f[i];
-    cout<<endl<<endl;
-
-    for(int i=0;i<full_smodel->n_base_models();i++)
-      cout<<"    odds_ratio"<<i<<" = "<<post_bin_f[i]/prior_bin_f[i];
-    cout<<endl<<endl;
-
+    analyze_rates(A,T,*full_smodel);
 
     // ------- Estimate branch lengths -------------//
     vector<int> parameters;
@@ -440,7 +448,10 @@ int main(int argc,char* argv[])
     show_parameters(cout,*full_smodel);
     cout<<endl<<endl;
 
-    /* ------- Set up function to maximize -------- */
+    //----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
+    analyze_rates(A,T2,*full_smodel);
+
+    //------- Set up function to maximize --------//
 
     Matrix S1 = getSimilarity(T,*full_smodel);
 
