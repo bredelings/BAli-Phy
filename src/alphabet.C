@@ -1,6 +1,7 @@
 #include "alphabet.H"
 #include <cassert>
 #include <fstream>
+#include "util.H"
 
 using namespace std;
 
@@ -307,7 +308,7 @@ void Codons::setup_table(vector<string> cc,vector<string> aa)
   assert(cc.size() == aa.size());
   translation_table.clear();
 
-  // Remove codons which don't map to any SPECIFIED amino acid
+  // Remove codons/letters in (*this) that map to amino acids not in *A.
   for(int i=cc.size()-1; i>=0; i--) 
   {
     // check that cc[i] is in the alphabet
@@ -322,12 +323,13 @@ void Codons::setup_table(vector<string> cc,vector<string> aa)
 
   translation_table.resize( size() );
   // Compute the indices for the remaining ones
-  for(int i=0;i<translation_table.size();i++) {
-    if (not contains(cc[i])) continue;
+  for(int i=0;i<translation_table.size();i++) 
+  {
+    if (not includes(cc,lookup(i)))
+	throw myexception()<<"Codon table has no entry for codon '"<<lookup(i)<<"'!";
 
-    int cc_index = (*this)[ cc[i] ];
-    int aa_index =    (*A)[ aa[i] ];
-    translation_table[cc_index] = aa_index;
+    int entry = find_index(cc,lookup(i));
+    translation_table[i] = (*A)[ aa[entry] ];
   }
 }
 
