@@ -87,6 +87,7 @@ int main(int argc,char* argv[])
     for(int i=0;i<A1.n_sequences();i++) {
       sequence S;
       S.name = A1.seq(i).name;
+      S.comment = A1.seq(i).comment;
       for(int column=0;column<A1.length();column++) {
 	int cc = A1(column,i);
 	int aa = C->translate(cc);
