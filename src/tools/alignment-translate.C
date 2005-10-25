@@ -28,7 +28,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
-    ("alphabet",value<string>()->default_value("Codons"),"set to 'Codons' to prefer codon alphabets")
+    ("alphabet",value<string>()->default_value("Codons"),"set to 'Codons + stop' to allow stop codons")
     ("frame",value<int>()->default_value(0),"frame 0, 1, or 2")
     ;
 
