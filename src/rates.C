@@ -196,9 +196,10 @@ namespace substitution {
     double& mu = parameters_[0];
     double& s  = parameters_[1];
 
+    double ratio = 1;
     if (not fixed(0)) {
-      mu += gaussian(0, 0.05);
-      mu = wrap(mu, 0.0, 1.0);
+      ratio = exp(gaussian(0, 0.20));
+      mu *= ratio;
     }
 
     if (not fixed(1)) {
@@ -208,7 +209,7 @@ namespace substitution {
 
     recalc();
 
-    return 1;
+    return ratio;
   }
 
   string Beta::name() const {

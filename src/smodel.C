@@ -505,7 +505,7 @@ namespace substitution {
     }
 
     if (not fixed(1)) {
-      ratio = exp(gaussian(0,0.15));
+      ratio = exp(gaussian(0,0.20));
       super_parameters_[1] *= ratio;
     }
 
