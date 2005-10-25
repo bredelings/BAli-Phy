@@ -328,8 +328,6 @@ void set_parameters(Model& M, const variables_map& args)
     int p=-1;
     if (p=find_parameter(M,fix[i]),p!=-1)
       M.fixed(p,true);
-    else
-      throw myexception()<<"Can't find parameter '"<<fix[i]<<"' to fix!";
   }
 
   // unfix parameters
@@ -337,8 +335,6 @@ void set_parameters(Model& M, const variables_map& args)
     int p=-1;
     if (p=find_parameter(M,unfix[i]),p!=-1)
       M.fixed(p,false);
-    else
-      throw myexception()<<"Can't find parameter '"<<unfix[i]<<"' to unfix!";
   }
 
   // set parameters
