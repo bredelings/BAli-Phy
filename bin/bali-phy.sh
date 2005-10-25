@@ -28,11 +28,7 @@ done
 
 DIR="$CLASS-$count"
 
-#---- Make the directory and move into it ----
-mkdir $DIR
-cd $DIR
-
-#------ Link in the data directory ------
+#------ Attempt to determine the data directory ------
 if [ "${BALI_PHY_DATA-unset}" = unset ] ; then
     echo "Error: BALI_PHY_DATA is not set:"
     echo "  * set it to the location of the BAli-Phy data directory."
@@ -50,12 +46,16 @@ elif [ ! -e "$BALI_PHY_DATA" ] ; then
 elif [ ! -d "$BALI_PHY_DATA" ] ; then
     echo "Error: File BALI_PHY_DATA='${BALI_PHY_DATA}' is not a directory."
     exit 1
-
-else
-    ln -sf ${BALI_PHY_DATA} Data;
 fi
 
-#--------- Determine the Version --------#
+#----- Make the directory, move into it -----#
+mkdir $DIR
+cd $DIR
+
+#-------- Link in the data directory --------#
+ln -sf ${BALI_PHY_DATA} Data;
+
+#----------- Determine the Version ----------#
 if [ "$VERSION" ] ; then
     echo "Using specified version $VERSION."
 else
