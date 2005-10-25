@@ -1,3 +1,6 @@
+-34. Put Data/ directory under version control.  Then synch it across
+     computers.
+
 -33. a) Look at posterior rate distribution using OUTPUT tree/model,
         as well as INPUT tree w/ analyze-distances
      b) all specifying parameters on the command line.
