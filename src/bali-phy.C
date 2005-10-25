@@ -294,7 +294,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("version")) {
-    cout<<"VERSION: 1.9.7\nBUILD: "<<__DATE__<<"\n";
+    cout<<"VERSION: 1.9.8\nBUILD: "<<__DATE__<<"\n";
     exit(0);
   }
 
