@@ -191,7 +191,7 @@ protected:
   OwnedPointer<AminoAcids> A;
   std::vector<int> translation_table;
 
-  void setup_table(std::vector<std::string>,std::vector<std::string>);
+  void setup_table(const std::vector<std::string>&,const std::vector<std::string>&);
   void setup_table(std::istream&);
   void setup_table(const std::string&);
 public:

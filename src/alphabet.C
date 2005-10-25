@@ -302,7 +302,7 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
 }
 
 // FIXME - should I make a separate class that removes stop codons?
-void Codons::setup_table(vector<string> cc,vector<string> aa) 
+void Codons::setup_table(const vector<string>& cc,const vector<string>& aa) 
 {
   // check that we actually have a one-to-one and onto mapping
   assert(cc.size() == aa.size());
