@@ -73,7 +73,7 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 	if (not group[n]) continue;
 
 	int letter = A(seq[column],n);
-	if (not a.is_letter_class(letter)) continue;
+	if (not a.is_letter(letter)) continue;
 
 	const Matrix& Q = P.transition_P(m,n);
 

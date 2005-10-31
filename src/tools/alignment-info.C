@@ -79,7 +79,7 @@ int n_mutations(const alphabet& a, const vector<int>& letters, const Tree& T)
     int t = branches[i].target();
     if (branches[i].source().is_leaf_node()) {
       assert(0 <= s and s < letters.size());
-      if (alphabet::letter(letters[s])) {
+      if (a.is_letter(letters[s])) {
 	for(int l=0;l<A;l++)
 	  n_muts[t][l]++;
 	n_muts[t][letters[s]]--;
@@ -213,7 +213,7 @@ int main(int argc,char* argv[])
       count = 0;
       for(int i=0;i<A.n_sequences();i++) {
 	int l = A(c,i);
-	if (alphabet::letter(l))
+	if (a.is_letter(l))
 	  count[l]++;
       }
 
@@ -253,7 +253,7 @@ int main(int argc,char* argv[])
 	  count = 0;
 	  for(int i=0;i<A.n_sequences();i++) {
 	    int l = A(c,i);
-	    if (alphabet::letter(l))
+	    if (a.is_letter(l))
 	      count[l]++;
 	  }
 

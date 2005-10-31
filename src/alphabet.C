@@ -67,7 +67,7 @@ int alphabet::operator[](const string& l) const
   // Check the letter_classes
   for(int i=size();i<n_letter_classes();i++) {
     if (letter_class(i) == l)
-      return alphabet::not_gap;
+      return i;
   }
 
   // Check for a gap
@@ -322,9 +322,7 @@ bool matches(const string& c1,const string& c2,const Nucleotides& N)
     string l2 = c2.substr(n,1);
 
     int i1 = N.find_letter(l1);
-    int i2 = alphabet::not_gap;
-    if (l2 != N.wildcard)
-      i2 = N.find_letter_class(l2);
+    int i2 = N[l2];
 
     if (not N.matches(i1,i2))
       return false;

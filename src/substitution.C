@@ -55,6 +55,8 @@ namespace substitution {
   efloat_t calc_root_probability(const alignment& A,const Tree& T,Likelihood_Cache& cache,
 			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
+    const alphabet& a = A.get_alphabet();
+
     const int root = cache.root;
 
     if (T[root].is_leaf_node())
@@ -96,7 +98,7 @@ namespace substitution {
 	//--------- If there is a letter at the root, condition on it ---------//
 	if (root < T.n_leaves()) {
 	  int rl = A.seq(root)[i];
-	  if (alphabet::letter(rl))
+	  if (a.is_letter(rl))
 	    for(int l=0;l<asize;l++)
 	      if (l != rl) 
 		S(m,l) = 0;
@@ -131,6 +133,8 @@ namespace substitution {
   void peel_branch(int b0,column_cache_t cache, const alignment& A, const Tree& T, 
 		   const MatCache& transition_P,const MultiModel& MModel)
   {
+    const alphabet& a = A.get_alphabet();
+
     // compute branches-in
     vector<int> b;
     for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
@@ -157,7 +161,7 @@ namespace substitution {
       // compute the distribution at the parent node - single letter
       if (not b.size()) {
 	int l2 = A.note(0,i+1,b0);
-	if (alphabet::letter(l2))
+	if (a.is_letter(l2))
 	  for(int m=0;m<n_models;m++) {
 	    const Matrix& Q = transition_P[m][b0%B];
 	    for(int l1=0;l1<asize;l1++)
@@ -258,6 +262,8 @@ namespace substitution {
   Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,column_cache_t cache,
 				const MultiModel& MModel)
   {
+    const alphabet& a = A.get_alphabet();
+
     const int root = cache.root;
     
     // make sure that we are up-to-date
@@ -312,7 +318,7 @@ namespace substitution {
 	//--------- If there is a letter at the root, condition on it ---------//
 	if (root < T.n_leaves()) {
 	  int rl = A.seq(root)[i];
-	  if (alphabet::letter(rl))
+	  if (a.is_letter(rl))
 	    for(int l=0;l<asize;l++)
 	      if (l != rl) 
 		S(m,l) = 0;
@@ -343,6 +349,8 @@ namespace substitution {
   get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
 			 const vector<int>& req,const vector<int>& seq,int delta)
   {
+    const alphabet& a = A.get_alphabet();
+
     const Tree& T = P.T;
     Likelihood_Cache& cache = P.LC;
 
@@ -398,7 +406,7 @@ namespace substitution {
 
 	if (root < T.n_leaves()) {
 	  int rl = A.seq(root)[i];
-	  if (alphabet::letter(rl))
+	  if (a.is_letter(rl))
 	    for(int l=0;l<asize;l++)
 	      if (l != rl) 
 		S(m,l) = 0;
