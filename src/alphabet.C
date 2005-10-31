@@ -110,7 +110,6 @@ string alphabet::lookup(int i) const {
   else if (i == unknown)
     return unknown_letter;
 
-  assert(0 <=i && i < n_letter_classes());
   return letter_class(i);
 }
 
@@ -231,40 +230,28 @@ alphabet::alphabet(const string& s,const vector<string>& letters,const string& m
 }
 
 Nucleotides::Nucleotides(const string& s, char c)
-  :alphabet(s)
+  :alphabet(s,"","N")
 {
-  insert("A");
-  insert("G");
-  insert(string(1U,c));
-  insert("C");
-}
+  string t; t += c;
 
-Nucleotides::Nucleotides(const string& s, char c,const string& m)
-  :alphabet(s,"",m)
-{
   insert("A");
   insert("G");
-  insert(string(1U,c));
+  insert(t);
   insert("C");
+
+  insert_class("Y",t+"C");
+  insert_class("R","AG");
+  insert_class("W",t+"A");
+  insert_class("S","GC");
 }
 
 DNA::DNA()
-  :Nucleotides("DNA nucleotides",'T',"N") 
-{
-  insert_class("Y","TC");
-  insert_class("R","AG");
-  insert_class("W","AT");
-  insert_class("S","GC");
-}
+  :Nucleotides("DNA nucleotides",'T') 
+{ }
 
 RNA::RNA()
-  :Nucleotides("RNA nucleotides",'U',"N") 
-{
-  insert_class("Y","UC");
-  insert_class("R","AG");
-  insert_class("W","AU");
-  insert_class("S","GC");
-}
+  :Nucleotides("RNA nucleotides",'U') 
+{ }
 
 
 AminoAcids::AminoAcids() 
@@ -362,8 +349,6 @@ void Triplets::setup_letter_classes()
   // construct letter class masks
   vector<bool> empty_mask(size(),false);
   vector<bool> mask(size());
-
-  //  w[0] = "TRA";
 
   for(int i=0;i<w.size();i++) {
     if (contains(w[i])) continue;
@@ -531,7 +516,6 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
 {
   setup_table(file);
   setup_sub_nuc_table();
-  setup_letter_classes();
 
   name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
 }
@@ -542,7 +526,6 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
 {
   setup_table(filename);
   setup_sub_nuc_table();
-  setup_letter_classes();
 
   name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
 }

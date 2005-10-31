@@ -198,7 +198,6 @@ public:
   int C() const {return 3;}
   
   Nucleotides(const std::string& s,char c);
-  Nucleotides(const std::string& s,char c,const std::string& m);
 
   ~Nucleotides() {};
 };
