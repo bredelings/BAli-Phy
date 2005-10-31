@@ -24,14 +24,44 @@ struct bad_letter:public myexception {
 class alphabet: public Cloneable {
 
 protected:
+
+  struct letter_class {
+    std::string name;
+    std::vector<bool> letter_mask;
+
+    letter_class() {}
+
+    letter_class(const std::string& s,const std::vector<bool>& v)
+      :name(s),letter_mask(v)
+    {}
+  };
+
+  //FIXME - should we just have one array with letters & classes?
+  //Should we restrict users to FIRST adding letters and THEN adding classes?
+
   /// The letters of the alphabet
   std::vector<std::string> data;
+
+  /// Letter classes
+  std::vector<letter_class> letter_classes;
 
   /// Add a letter to the alphabet
   void insert(const std::string& l);
 
   /// Remove a letter from the alphabet
   void remove(const std::string& l);
+
+  /// Add a letter class to the alphabet
+  void insert_class(const std::string& l,const std::string& letters);
+
+  /// Add a letter class to the alphabet
+  void insert_class(const std::string& l,const std::vector<std::string>& letters);
+
+  /// Add a letter class to the alphabet
+  void insert_class(const std::string& l,const std::vector<bool>& letters);
+
+  /// Add a letter class to the alphabet
+  void remove_class(const std::string& l);
 
 public:
 
@@ -59,10 +89,21 @@ public:
   /// Index of unknown: no information ('?')
   static const int unknown = -3;
 
+  int n_letters() const {return data.size();}
+  const std::string& letter(int i) const {return data[i];}
+
+  int n_letter_classes() const {return letter_classes.size();}
+  const std::string& letter_class_name(int i) const {return letter_classes[i].name;}
+
   /// Do we contain the letter 'c'?
   bool contains(char c) const;
   /// Do we contain the letter 'c'?
   bool contains(const std::string&) const;
+
+  /// Get the index for letter 'c'
+  int find_letter(char l) const;
+  /// Get the index for letter 'c'
+  int find_letter(const std::string& l) const;
 
   /// Get the index for letter 'c'
   int operator[](char l) const;
@@ -79,7 +120,13 @@ public:
   int size() const { return data.size(); }
 
   /// Is index 'l' a letter?
-  static bool letter(int l) {return (l>=0);}
+  bool is_letter(int l) {return l>=0 and l<n_letters();}
+
+  /// Is index 'l' a letter?
+  static bool is_letter_class(int l) {return l>=0;}
+
+  /// Is index 'l' a letter?
+  static bool is_feature(int l) {return l==not_gap or is_letter_class(l);}
 
   friend bool operator==(const alphabet&,const alphabet&);
 
@@ -169,6 +216,7 @@ protected:
   std::vector<std::vector<int> > sub_nuc_table;
 
   void setup_sub_nuc_table();
+  void setup_letter_classes();
 public:
   virtual Triplets* clone() const {return new Triplets(*this);}
 

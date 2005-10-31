@@ -20,7 +20,7 @@ alignment chop_internal(alignment A)
       break;
     }
     for(int column=0;column<A.length();column++) {
-      if (alphabet::letter( A(column,i) )) {
+      if (alphabet::is_letter_class( A(column,i) )) {
 	internal_nodes = false; 
 	break;
       }

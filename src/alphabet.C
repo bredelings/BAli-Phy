@@ -8,6 +8,7 @@ using namespace std;
 bad_letter::bad_letter(const string& l)
   :myexception(string("Letter '") + l + string("' not in alphabet.")),letter(l)
 {}
+
 bad_letter::bad_letter(const string& l,const string& name)
   :myexception(string("Letter '") + l + string("' not in alphabet '") + name + "'."),letter(l)
 {}
@@ -26,6 +27,20 @@ bool alphabet::contains(const std::string& l) const {
   return false;
 }
 
+int alphabet::find_letter(char l) const {
+  string s(1U,l);  
+  return find_letter(s);
+}
+
+int alphabet::find_letter(const string& l) const {
+  // Check the letters
+  for(int i=0;i<size();i++) {
+    if (data[i]==l)
+      return i;
+  }
+  throw myexception()<<"Alphabet '"<<name<<"' doesn't contain letter '"<<l<<"'";
+}
+
 
 int alphabet::operator[](char l) const {
   string s(1U,l);  
@@ -37,6 +52,12 @@ int alphabet::operator[](const string& l) const {
   for(int i=0;i<size();i++) {
     if (data[i]==l)
       return i;
+  }
+
+  // Check the letter_classes
+  for(int i=0;i<letter_classes.size();i++) {
+    if (letter_classes[i].name == l)
+      return alphabet::not_gap;
   }
 
   // Check for a gap
@@ -96,8 +117,49 @@ void alphabet::insert(const string& l) {
 }
 
 void alphabet::remove(const string& l) {
-  int index = operator[](l);
+  int index = find_letter(l);
   data.erase(data.begin()+index);
+}
+
+void alphabet::insert_class(const string& l,const vector<bool>& letters) {
+  if (includes(data,l))
+    throw myexception()<<"Can't use letter name '"<<l<<"' as letter class name.";
+
+  letter_classes.push_back(letter_class(l,letters));
+}
+
+/// Add a letter class to the alphabet
+void alphabet::insert_class(const std::string& l,const vector<string>& letters) 
+{
+  vector<bool> letters2(size(),false);
+  for(int i=0;i<letters.size();i++) {
+    int index = find_letter(letters[i]);
+
+    letters2[index] = true;
+  }
+
+  insert_class(l,letters2);
+}
+
+/// Add a letter class to the alphabet
+void alphabet::insert_class(const std::string& l,const string& letters) 
+{
+  vector<string> letters2;
+  for(int i=0;i<letters.size();i++)
+    letters2.push_back(letters.substr(i,1));
+
+  insert_class(l,letters2);
+}
+
+  /// Add a letter class to the alphabet
+void alphabet::remove_class(const std::string& l)
+{
+  // Check the letters
+  for(int i=0;i<letter_classes.size();i++) 
+    if (letter_classes[i].name == l) {
+      letter_classes.erase(letter_classes.begin()+i);
+      return;
+    }
 }
 
 valarray<double> alphabet::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {
@@ -168,12 +230,22 @@ Nucleotides::Nucleotides(const string& s, char c,const string& m)
 }
 
 DNA::DNA()
-  :Nucleotides("DNA nucleotides",'T',"NYR") 
-{}
+  :Nucleotides("DNA nucleotides",'T',"N") 
+{
+  insert_class("Y","TC");
+  insert_class("R","AG");
+  insert_class("W","AT");
+  insert_class("S","GC");
+}
 
 RNA::RNA()
-  :Nucleotides("RNA nucleotides",'U',"NYR") 
-{}
+  :Nucleotides("RNA nucleotides",'U',"N") 
+{
+  insert_class("Y","UC");
+  insert_class("R","AG");
+  insert_class("W","AU");
+  insert_class("S","GC");
+}
 
 
 AminoAcids::AminoAcids() 
@@ -210,21 +282,61 @@ int Triplets::sub_nuc(int codon,int pos) const {
   return sub_nuc_table[codon][pos];
 }
 
-vector<string> getTriplets(const Nucleotides& a) {
-  vector<string> v;
-  for(int i=0;i<a.size();i++) {
-    string s1 = a.lookup(i);
-    for(int j=0;j<a.size();j++) {
-      string s2 = s1 + a.lookup(j);
-      for(int k=0;k<a.size();k++) {
-	string s3 = s2 + a.lookup(k);
-	v.push_back(s3);
+vector<string> getTriplets(const vector<string>& v) 
+{
+  vector<string> w;
+  for(int i=0;i<v.size();i++) {
+    string s1 = v[i];
+    for(int j=0;j<v.size();j++) {
+      string s2 = s1 + v[j];
+      for(int k=0;k<v.size();k++) {
+	string s3 = s2 + v[k];
+	w.push_back(s3);
       }
     }
   }
-  return v;
+  return w;
 }
 
+vector<string> getTriplets(const Nucleotides& a) {
+  vector<string> v;
+  for(int i=0;i<a.size();i++)
+    v.push_back(a.lookup(i));
+  return getTriplets(v);
+}
+
+
+// alphabet: already set
+// unknown_letters: already set
+void Triplets::setup_letter_classes() 
+{
+  // get nucleotide letters
+  vector<string> v;
+
+  for(int i=0;i<N->size();i++)
+    v.push_back(N->letter(i));
+
+  for(int i=0;i<N->n_letter_classes();i++)
+    v.push_back(N->letter_class_name(i));
+
+  v.push_back(N->missing[0]);
+
+  // construct letter classes names
+  vector<string> w = getTriplets(v);
+  
+  // construct letter class masks
+  vector<bool> empty_mask(size(),false);
+  vector<bool> mask(size());
+
+  for(int i=0;i<w.size();i++) {
+    mask = empty_mask;
+
+    bool found = false;
+    for(int j=0;j<mask.size();j++) {
+      
+    }
+  }
+}
 
 valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,const valarray<double>& C_counts) {
     const Nucleotides& N = C.getNucleotides();
@@ -282,6 +394,8 @@ Triplets::Triplets(const Nucleotides& a)
   unknown_letter = N->unknown_letter + N->unknown_letter + N->unknown_letter;
 
   setup_sub_nuc_table();
+
+  setup_letter_classes();
 }
 
 Triplets::Triplets(const string& s,const Nucleotides& a)
@@ -299,6 +413,8 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
   unknown_letter = N->unknown_letter + N->unknown_letter + N->unknown_letter;
 
   setup_sub_nuc_table();
+
+  setup_letter_classes();
 }
 
 // FIXME - should I make a separate class that removes stop codons?
@@ -375,6 +491,7 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
 {
   setup_table(file);
   setup_sub_nuc_table();
+  setup_letter_classes();
 
   name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
 }
@@ -385,6 +502,7 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
 {
   setup_table(filename);
   setup_sub_nuc_table();
+  setup_letter_classes();
 
   name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
 }
