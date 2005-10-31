@@ -175,6 +175,7 @@ double fraction_identical(const alignment& A,int s1,int s2,bool gaps_count)
   return f;
 }
 
+
 double min_identity(const alignment& A,bool gaps_count)
 {
   double identity = 1.0;
@@ -185,6 +186,21 @@ double min_identity(const alignment& A,bool gaps_count)
   return identity;
 }
 
+unsigned letter_classes(const alignment& A) 
+{
+  const alphabet& a = A.get_alphabet();
+
+  // Count the occurrence of the different letters
+  unsigned count=0;
+  for(int i=0;i<A.length();i++) {
+    for(int j=0;j<A.n_sequences();j++) {
+      if (alphabet::is_letter_class(A(i,j)) and not a.is_letter(A(i,j)))
+	count++;
+    }
+  }
+
+  return count;
+}
 
 int main(int argc,char* argv[]) 
 { 
@@ -286,8 +302,10 @@ int main(int argc,char* argv[])
       cout<<a.lookup(i)<<"="<<frequencies[i]*100<<"%  ";
     cout<<"\n";
 
+    int classes = letter_classes(A);
     int wildcards = letter_count(A,alphabet::not_gap);
-    int total = wildcards + (int)counts.sum();
+    int total = classes + wildcards + (int)counts.sum();
+    cout<<"  Classes:  "<<classes<<" ["<<double(classes)/total*100<<"%]\n";
     cout<<"  Wildcards: "<<wildcards<<" ["<<double(wildcards)/total*100<<"%]\n";
   }
   catch (std::exception& e) {
