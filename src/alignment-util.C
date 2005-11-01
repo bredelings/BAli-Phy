@@ -20,7 +20,7 @@ alignment chop_internal(alignment A)
       break;
     }
     for(int column=0;column<A.length();column++) {
-      if (alphabet::letter( A(column,i) )) {
+      if (alphabet::is_letter_class( A(column,i) )) {
 	internal_nodes = false; 
 	break;
       }
@@ -235,6 +235,8 @@ void check_letters_OK(const alignment& A) {
     for(int j=0;j<A.n_sequences();j++)
       if (A(i,j) >=0 and A(i,j) < a.size())
 	; // this is a letter
+      else if (A(i,j) >= a.n_letters() and A(i,j) < a.n_letter_classes())
+	; // this is a letter class
       else if (A(i,j) == alphabet::gap)
 	; // this is a '-'
       else if (A(i,j) == alphabet::not_gap)

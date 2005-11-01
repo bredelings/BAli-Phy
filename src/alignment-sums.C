@@ -73,14 +73,15 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 	if (not group[n]) continue;
 
 	int letter = A(seq[column],n);
-	if (not a.letter(letter)) continue;
-
 	const Matrix& Q = P.transition_P(m,n);
 
 	// Pr(root=l) includes Pr(l->letter)
-	for(int l=0;l<a.size();l++)
-	  dist[column](m,l) *= Q(l,letter);
-
+	if (a.is_letter(letter))
+	  for(int l=0;l<a.size();l++)
+	    dist[column](m,l) *= Q(l,letter);
+	else if (a.is_letter_class(letter))
+	  for(int l=0;l<a.size();l++)
+	    dist[column](m,l) *= substitution::sum(Q,l,letter,a);
       }
     }
   }

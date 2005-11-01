@@ -73,27 +73,24 @@ int n_mutations(const alphabet& a, const vector<int>& letters, const Tree& T)
 
   vector<int> temp(A);
 
+  // set the leaf lengths
+  for(int s=0;s<T.n_leaves();s++)
+    if (a.is_letter_class(letters[s]))
+      for(int l=0;l<A;l++)
+	n_muts[s][l] = not a.matches(l,letters[s]);
+
   for(int i=0;i<branches.size();i++) 
   {
     int s = branches[i].source();
     int t = branches[i].target();
-    if (branches[i].source().is_leaf_node()) {
-      assert(0 <= s and s < letters.size());
-      if (alphabet::letter(letters[s])) {
-	for(int l=0;l<A;l++)
-	  n_muts[t][l]++;
-	n_muts[t][letters[s]]--;
-      }
-    }
-    else {
-      for(int l=0;l<A;l++)
-	temp[l] = n_muts[s][l]+1;
 
-      for(int l=0;l<A;l++) {
-	temp[l]--;
-	n_muts[t][l] += min(temp);
-	temp[l]++;
-      }
+    for(int l=0;l<A;l++)
+      temp[l] = n_muts[s][l]+1;
+
+    for(int l=0;l<A;l++) {
+      temp[l]--;
+      n_muts[t][l] += min(temp);
+      temp[l]++;
     }
   }
 
@@ -175,6 +172,7 @@ double fraction_identical(const alignment& A,int s1,int s2,bool gaps_count)
   return f;
 }
 
+
 double min_identity(const alignment& A,bool gaps_count)
 {
   double identity = 1.0;
@@ -185,6 +183,21 @@ double min_identity(const alignment& A,bool gaps_count)
   return identity;
 }
 
+unsigned letter_classes(const alignment& A) 
+{
+  const alphabet& a = A.get_alphabet();
+
+  // Count the occurrence of the different letters
+  unsigned count=0;
+  for(int i=0;i<A.length();i++) {
+    for(int j=0;j<A.n_sequences();j++) {
+      if (alphabet::is_letter_class(A(i,j)) and not a.is_letter(A(i,j)))
+	count++;
+    }
+  }
+
+  return count;
+}
 
 int main(int argc,char* argv[]) 
 { 
@@ -213,7 +226,7 @@ int main(int argc,char* argv[])
       count = 0;
       for(int i=0;i<A.n_sequences();i++) {
 	int l = A(c,i);
-	if (alphabet::letter(l))
+	if (a.is_letter(l))
 	  count[l]++;
       }
 
@@ -253,7 +266,7 @@ int main(int argc,char* argv[])
 	  count = 0;
 	  for(int i=0;i<A.n_sequences();i++) {
 	    int l = A(c,i);
-	    if (alphabet::letter(l))
+	    if (a.is_letter(l))
 	      count[l]++;
 	  }
 
@@ -286,8 +299,10 @@ int main(int argc,char* argv[])
       cout<<a.lookup(i)<<"="<<frequencies[i]*100<<"%  ";
     cout<<"\n";
 
+    int classes = letter_classes(A);
     int wildcards = letter_count(A,alphabet::not_gap);
-    int total = wildcards + (int)counts.sum();
+    int total = classes + wildcards + (int)counts.sum();
+    cout<<"  Classes:  "<<classes<<" ["<<double(classes)/total*100<<"%]\n";
     cout<<"  Wildcards: "<<wildcards<<" ["<<double(wildcards)/total*100<<"%]\n";
   }
   catch (std::exception& e) {

@@ -11,6 +11,34 @@ class Parameters;
 
 namespace substitution {
 
+  inline double sum(const std::vector<double>& f,int l1,const alphabet& a)
+  {
+    double total=0;
+    for(int l=0;l<a.size();l++)
+      if (a.matches(l,l1))
+	total += f[l];
+    return total;
+  }
+
+  inline double sum(const std::valarray<double>& f,int l1,const alphabet& a)
+  {
+    double total=0;
+    for(int l=0;l<a.size();l++)
+      if (a.matches(l,l1))
+	total += f[l];
+    return total;
+  }
+
+  inline double sum(const Matrix Q,int l1, int l2, const alphabet& a)
+  {
+    double total=0;
+    for(int l=0;l<a.size();l++)
+      if (a.matches(l,l2))
+	total += Q(l1,l);
+    return total;
+  }
+
+
   /// Find the probabilities of all the data give each letter at the root
   vector<Matrix>
   get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,

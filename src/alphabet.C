@@ -8,6 +8,7 @@ using namespace std;
 bad_letter::bad_letter(const string& l)
   :myexception(string("Letter '") + l + string("' not in alphabet.")),letter(l)
 {}
+
 bad_letter::bad_letter(const string& l,const string& name)
   :myexception(string("Letter '") + l + string("' not in alphabet '") + name + "'."),letter(l)
 {}
@@ -18,24 +19,54 @@ bool alphabet::contains(char l) const {
 }
 
 bool alphabet::contains(const std::string& l) const {
-  // Check the letters
-  for(int i=0;i<size();i++) {
-    if (data[i]==l)
-      return true;
-  }
-  return false;
+  return includes(letters_,l);
 }
 
+int alphabet::find_letter(char l) const {
+  string s(1U,l);  
+  return find_letter(s);
+}
+
+int alphabet::find_letter(const string& l) const {
+  // Check the letters
+  for(int i=0;i<size();i++) {
+    if (letter(i)==l)
+      return i;
+  }
+  throw myexception()<<"Alphabet '"<<name<<"' doesn't contain letter '"<<l<<"'";
+}
+
+
+int alphabet::find_letter_class(char l) const {
+  string s(1U,l);  
+  return find_letter_class(s);
+}
+
+int alphabet::find_letter_class(const string& l) const {
+  // Check the letters
+  for(int i=0;i<n_letter_classes();i++) {
+    if (letter_class(i)==l)
+      return i;
+  }
+  throw myexception()<<"Alphabet '"<<name<<"' doesn't contain letter class '"<<l<<"'";
+}
 
 int alphabet::operator[](char l) const {
   string s(1U,l);  
   return (*this)[s];
 }
 
-int alphabet::operator[](const string& l) const {
+int alphabet::operator[](const string& l) const 
+{
   // Check the letters
   for(int i=0;i<size();i++) {
-    if (data[i]==l)
+    if (letter(i)==l)
+      return i;
+  }
+
+  // Check the letter_classes
+  for(int i=size();i<n_letter_classes();i++) {
+    if (letter_class(i) == l)
       return i;
   }
 
@@ -43,11 +74,9 @@ int alphabet::operator[](const string& l) const {
   if (l == gap_letter) 
     return alphabet::gap;
 
-  // Check the symbols for any_letter
-  for(int i=0;i<missing.size();i++) {
-    if (missing[i] == l)
-      return alphabet::not_gap;
-  }
+  // Check for a wildcard
+  if (l == wildcard) 
+    return alphabet::not_gap;
 
   // Check for unknown
   if (l == unknown_letter)
@@ -58,7 +87,7 @@ int alphabet::operator[](const string& l) const {
 }
 
 vector<int> alphabet::operator() (const string& s) const{
-  const int lsize = data[0].size();
+  const int lsize = width();
 
   if (s.size()%lsize != 0)
     throw myexception()<<"Number of letters should be a multiple of "<<lsize<<"!";
@@ -77,27 +106,83 @@ string alphabet::lookup(int i) const {
   if (i == gap)
     return gap_letter;
   else if (i == not_gap)
-    return missing.front();
+    return wildcard;
   else if (i == unknown)
     return unknown_letter;
 
-  assert(0 <=i && i < data.size());
-  return data[i];
+  return letter_class(i);
 }
 
 
 bool operator==(const alphabet& a1,const alphabet& a2) {
-  return a1.data == a2.data;
+  return a1.letters_ == a2.letters_;
 }
 
-void alphabet::insert(const string& l) {
-  data.push_back(l);
-  throw myexception()<<"Not implemented yet: adding letters to alphabets.";
+void alphabet::insert(const string& l) 
+{
+  if (n_letter_classes() > n_letters()) 
+    throw myexception()<<"Error: adding letters to alphabet after letter classes.";
+
+  letters_.push_back(l);
+  setup_letter_classes();
 }
 
 void alphabet::remove(const string& l) {
-  int index = operator[](l);
-  data.erase(data.begin()+index);
+  int index = find_letter(l);
+  letters_.erase(letters_.begin()+index);
+  setup_letter_classes();
+}
+
+void alphabet::setup_letter_classes() {
+  letter_classes_ = letters_;
+  
+  letter_masks_ = vector< vector<bool> >(n_letters(), vector<bool>(n_letters(),false) );
+  for(int i=0;i<n_letters();i++)
+    letter_masks_[i][i] = true;
+}
+
+
+void alphabet::insert_class(const string& l,const vector<bool>& mask) {
+  if (includes(letters_,l))
+    throw myexception()<<"Can't use letter name '"<<l<<"' as letter class name.";
+
+  letter_classes_.push_back(l);
+  letter_masks_.push_back(mask);
+}
+
+/// Add a letter class to the alphabet
+void alphabet::insert_class(const std::string& l,const vector<string>& letters) 
+{
+  vector<bool> mask(size(),false);
+  for(int i=0;i<letters.size();i++) {
+    int index = find_letter(letters[i]);
+
+    mask[index] = true;
+  }
+
+  insert_class(l,mask);
+}
+
+/// Add a letter class to the alphabet
+void alphabet::insert_class(const std::string& l,const string& letters) 
+{
+  vector<string> letters2;
+  for(int i=0;i<letters.size();i++)
+    letters2.push_back(letters.substr(i,1));
+
+  insert_class(l,letters2);
+}
+
+/// Add a letter class to the alphabet
+void alphabet::remove_class(const std::string& l)
+{
+  // Check the letters
+  for(int i=size();i<n_letter_classes();i++) 
+    if (letter_class(i) == l) {
+      letter_classes_.erase(letter_classes_.begin()+i);
+      return;
+    }
+  throw myexception()<<"Can't find letter class '"<<l<<"'";
 }
 
 valarray<double> alphabet::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {
@@ -111,69 +196,62 @@ valarray<double> alphabet::get_frequencies_from_counts(const valarray<double>& c
   return f;
 }
 
+alphabet::alphabet(const string& s)
+  :name(s),gap_letter("-"),wildcard("+"),unknown_letter("?")
+{
+}
 
 alphabet::alphabet(const string& s,const string& letters)
-  :name(s),gap_letter("-"),unknown_letter("?")
+  :name(s),gap_letter("-"),wildcard("+"),unknown_letter("?")
 {
   for(int i=0;i<letters.length();i++)
-    data.push_back(string(1U,s[i]));
-
-  missing.push_back("*");
+    insert(string(1U,s[i]));
 }
 
 alphabet::alphabet(const string& s,const string& letters,const string& m)
-  :name(s),gap_letter("-"),unknown_letter("?")
+  :name(s),gap_letter("-"),wildcard(m),unknown_letter("?")
 {
   for(int i=0;i<letters.length();i++)
-    data.push_back(string(1U,letters[i]));
-
-  for(int i=0;i<m.length();i++) 
-    missing.push_back(string(1U,m[i]));
-
-  missing.push_back("*");
+    insert(string(1U,letters[i]));
 }
 
 alphabet::alphabet(const string& s,const vector<string>& letters)
-  :name(s),gap_letter("-"),unknown_letter("?")
+  :name(s),gap_letter("-"),wildcard("+"),unknown_letter("?")
 {
   for(int i=0;i<letters.size();i++)
-    data.push_back(letters[i]);
-
-  missing.push_back("*");
+    insert(letters[i]);
 }
 
-alphabet::alphabet(const string& s,const vector<string>& letters,const vector<string>& m) 
-  :name(s),gap_letter("-"),unknown_letter("?")
+alphabet::alphabet(const string& s,const vector<string>& letters,const string& m) 
+  :name(s),gap_letter("-"),wildcard(m),unknown_letter("?")
 {
   for(int i=0;i<letters.size();i++)
-    data.push_back(letters[i]);
-
-  for(int i=0;i<m.size();i++) 
-    missing.push_back(m[i]);
-
-  missing.push_back("*");
-
+    insert(letters[i]);
 }
 
 Nucleotides::Nucleotides(const string& s, char c)
-  :alphabet(s,"AGTC")
+  :alphabet(s,"","N")
 {
-  data[T()] = string(1U,c);
-}
+  string t; t += c;
 
-Nucleotides::Nucleotides(const string& s, char c,const string& m)
-  :alphabet(s,"AGTC",m)
-{
-  data[T()] = string(1U,c);
+  insert("A");
+  insert("G");
+  insert(t);
+  insert("C");
+
+  insert_class("Y",t+"C");
+  insert_class("R","AG");
+  insert_class("W",t+"A");
+  insert_class("S","GC");
 }
 
 DNA::DNA()
-  :Nucleotides("DNA nucleotides",'T',"NYR") 
-{}
+  :Nucleotides("DNA nucleotides",'T') 
+{ }
 
 RNA::RNA()
-  :Nucleotides("RNA nucleotides",'U',"NYR") 
-{}
+  :Nucleotides("RNA nucleotides",'U') 
+{ }
 
 
 AminoAcids::AminoAcids() 
@@ -183,7 +261,7 @@ AminoAcids::AminoAcids()
 AminoAcidsWithStop::AminoAcidsWithStop() 
 {
   name = "Amino Acids + stop";
-  data.push_back("!");
+  insert("!");
 }
 
 
@@ -194,7 +272,7 @@ void Triplets::setup_sub_nuc_table() {
   assert(N->width() == 1);
 
   for(int i=0;i<sub_nuc_table.size();i++) {
-    const string& codon = data[i];
+    const string& codon = letter(i);
 
     sub_nuc_table[i].resize(codon.length());
 
@@ -210,21 +288,83 @@ int Triplets::sub_nuc(int codon,int pos) const {
   return sub_nuc_table[codon][pos];
 }
 
-vector<string> getTriplets(const Nucleotides& a) {
-  vector<string> v;
-  for(int i=0;i<a.size();i++) {
-    string s1 = a.lookup(i);
-    for(int j=0;j<a.size();j++) {
-      string s2 = s1 + a.lookup(j);
-      for(int k=0;k<a.size();k++) {
-	string s3 = s2 + a.lookup(k);
-	v.push_back(s3);
+vector<string> getTriplets(const vector<string>& v) 
+{
+  vector<string> w;
+  for(int i=0;i<v.size();i++) {
+    string s1 = v[i];
+    for(int j=0;j<v.size();j++) {
+      string s2 = s1 + v[j];
+      for(int k=0;k<v.size();k++) {
+	string s3 = s2 + v[k];
+	w.push_back(s3);
       }
     }
   }
-  return v;
+  return w;
 }
 
+vector<string> getTriplets(const Nucleotides& a) {
+  vector<string> v;
+  for(int i=0;i<a.size();i++)
+    v.push_back(a.lookup(i));
+  return getTriplets(v);
+}
+
+
+bool matches(const string& c1,const string& c2,const Nucleotides& N)
+{
+  assert(c1.size() == 3);
+  assert(c1.size() == c2.size());
+
+  for(int n=0;n<3;n++) {
+    string l1 = c1.substr(n,1);
+    string l2 = c2.substr(n,1);
+
+    int i1 = N.find_letter(l1);
+    int i2 = N[l2];
+
+    if (not N.matches(i1,i2))
+      return false;
+  }
+  return true;
+}
+
+// alphabet: already set
+// unknown_letters: already set
+void Triplets::setup_letter_classes() 
+{
+  // clear masks and classes to just the letters
+  alphabet::setup_letter_classes();
+
+  // get nucleotide letters
+  vector<string> v = N->letter_classes();
+  v.push_back(N->wildcard);
+
+  // construct letter classes names
+  vector<string> w = getTriplets(v);
+  
+  // construct letter class masks
+  vector<bool> empty_mask(size(),false);
+  vector<bool> mask(size());
+
+  for(int i=0;i<w.size();i++) {
+    if (contains(w[i])) continue;
+    if (w[i] == wildcard) continue;
+
+    mask = empty_mask;
+
+    bool found = false;
+    for(int j=0;j<mask.size();j++) {
+      if (::matches(letter(j),w[i],*N)) {
+	mask[j] = true;
+	found = true;
+      }
+    }
+    if (found)
+      insert_class(w[i],mask);
+  }
+}
 
 valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,const valarray<double>& C_counts) {
     const Nucleotides& N = C.getNucleotides();
@@ -270,10 +410,8 @@ valarray<double> Triplets::get_frequencies_from_counts(const valarray<double>& c
 Triplets::Triplets(const Nucleotides& a)
   :alphabet(string("Triplets of ")+a.name,getTriplets(a)),N(a)
 {
-  // compute our 'missing' letters
-  missing.resize(N->missing.size());
-  for(int i=0;i<missing.size();i++)
-    missing[i] = N->missing[i]+N->missing[i]+N->missing[i];
+  // compute our 'wildcard' letter
+  wildcard = N->wildcard+N->wildcard+N->wildcard;
 
   // compute our 'gap' letter
   gap_letter = N->gap_letter + N->gap_letter + N->gap_letter;
@@ -282,15 +420,15 @@ Triplets::Triplets(const Nucleotides& a)
   unknown_letter = N->unknown_letter + N->unknown_letter + N->unknown_letter;
 
   setup_sub_nuc_table();
+
+  setup_letter_classes();
 }
 
 Triplets::Triplets(const string& s,const Nucleotides& a)
   :alphabet(s,getTriplets(a)),N(a)
 {
-  // compute our 'missing' letters
-  missing.resize(N->missing.size());
-  for(int i=0;i<missing.size();i++)
-    missing[i] = N->missing[i]+N->missing[i]+N->missing[i];
+  // compute our 'wildcard' letter
+  wildcard = N->wildcard+N->wildcard+N->wildcard;
 
   // compute our 'gap' letters
   gap_letter = N->gap_letter + N->gap_letter + N->gap_letter;
@@ -299,9 +437,10 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
   unknown_letter = N->unknown_letter + N->unknown_letter + N->unknown_letter;
 
   setup_sub_nuc_table();
+
+  setup_letter_classes();
 }
 
-// FIXME - should I make a separate class that removes stop codons?
 void Codons::setup_table(const vector<string>& cc,const vector<string>& aa) 
 {
   // check that we actually have a one-to-one and onto mapping

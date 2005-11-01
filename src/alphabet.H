@@ -21,17 +21,39 @@ struct bad_letter:public myexception {
 /***************** struct alphabet ********************/
 
 /// Converts between a list of letters, and their integer indices
-class alphabet: public Cloneable {
+class alphabet: public Cloneable 
+{
+  /// The letters of the alphabet
+  std::vector<std::string> letters_;
+
+  /// The letters of the alphabet + letter classes
+  std::vector<std::string> letter_classes_;
+
+  /// The masks for the letter_classes
+  std::vector<std::vector<bool> > letter_masks_;
 
 protected:
-  /// The letters of the alphabet
-  std::vector<std::string> data;
 
   /// Add a letter to the alphabet
   void insert(const std::string& l);
 
   /// Remove a letter from the alphabet
   void remove(const std::string& l);
+  
+  /// Add letters to letter classes and set masks
+  virtual void setup_letter_classes();
+
+  /// Add a letter class to the alphabet
+  void insert_class(const std::string& l,const std::string&);
+
+  /// Add a letter class to the alphabet
+  void insert_class(const std::string& l,const std::vector<std::string>&);
+
+  /// Add a letter class to the alphabet
+  void insert_class(const std::string& l,const std::vector<bool>&);
+
+  /// Add a letter class to the alphabet
+  void remove_class(const std::string& l);
 
 public:
 
@@ -40,15 +62,15 @@ public:
   /// The name of the alphabet
   std::string name;
 
-  /// Letters which mean "I don't know what this letter is"
-  std::vector<std::string> missing;
-
   std::string gap_letter;
+
+  /// Stands for any letter: no information
+  std::string wildcard;
 
   std::string unknown_letter;
 
   /// The number of real letters per letter of the alphabet
-  int width() const {return data[0].size();}
+  int width() const {return letters_[0].size();}
 
   /// Index of a gap ('-')
   static const int gap = -1;
@@ -59,10 +81,56 @@ public:
   /// Index of unknown: no information ('?')
   static const int unknown = -3;
 
+
+  /// The number of letters in the alphabet
+  int n_letters() const {return letters_.size();}
+  /// The letters of the alphabet
+  const std::vector<std::string>& letters() const {return letters_;}
+  /// The i-th letter of the alphabet
+  const std::string& letter(int i) const {
+    assert(i>=0 and i < letters_.size()); 
+    return letters_[i];
+  }
+
+
+  /// The number of letter classes in the alphabet
+  int n_letter_classes() const {return letter_classes_.size();}
+  /// The letter classes of the alphabet
+  const std::vector<std::string>& letter_classes() const {return letter_classes_;}
+  /// The i-th letter class of the alphabet
+  const std::string& letter_class(int i) const {
+    assert(i>=0 and i < letter_classes_.size()); 
+    return letter_classes_[i];
+  }
+  /// The i-th letter mask
+  const std::vector<bool>& letter_mask(int i) const {
+    assert(i>=0 and i < letter_masks_.size()); 
+    assert(letter_masks_.size() == letter_classes_.size());
+    return letter_masks_[i];
+  }
+  bool matches(int i1,int i2) const {
+    if (i2 == not_gap)
+      return true;
+    assert(0 <= i2 and i2 < letter_masks_.size());
+    assert(0 <= i1 and i1 < letter_masks_[i2].size());
+    return letter_masks_[i2][i1];
+  }
+
+
   /// Do we contain the letter 'c'?
   bool contains(char c) const;
   /// Do we contain the letter 'c'?
   bool contains(const std::string&) const;
+
+  /// Get the index for letter 'c'
+  int find_letter(char l) const;
+  /// Get the index for letter 'c'
+  int find_letter(const std::string& l) const;
+
+  /// Get the index for letter 'c'
+  int find_letter_class(char l) const;
+  /// Get the index for letter 'c'
+  int find_letter_class(const std::string& l) const;
 
   /// Get the index for letter 'c'
   int operator[](char l) const;
@@ -76,20 +144,28 @@ public:
   std::string lookup(int i) const;
 
   /// How many letters in the alphabet?
-  int size() const { return data.size(); }
+  int size() const { return n_letters(); }
 
   /// Is index 'l' a letter?
-  static bool letter(int l) {return (l>=0);}
+  bool is_letter(int l) const {return l>=0 and l<n_letters();}
+
+  /// Is index 'l' a letter or class?
+  static bool is_letter_class(int l) {return l>=0;}
+
+  /// Is index 'l' a letter, class, or wildcard?
+  static bool is_feature(int l) {return l==not_gap or is_letter_class(l);}
 
   friend bool operator==(const alphabet&,const alphabet&);
 
   virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
 
+  alphabet(const std::string&);
+
   alphabet(const std::string&,const std::string&);
   alphabet(const std::string&,const std::string&,const std::string&);
 
   alphabet(const std::string&, const std::vector<std::string>&);
-  alphabet(const std::string&, const std::vector<std::string>&,const std::vector<std::string>&);
+  alphabet(const std::string&, const std::vector<std::string>&,const std::string&);
 
   virtual ~alphabet() {};
 };
@@ -122,7 +198,6 @@ public:
   int C() const {return 3;}
   
   Nucleotides(const std::string& s,char c);
-  Nucleotides(const std::string& s,char c,const std::string& m);
 
   ~Nucleotides() {};
 };
@@ -169,6 +244,7 @@ protected:
   std::vector<std::vector<int> > sub_nuc_table;
 
   void setup_sub_nuc_table();
+  void setup_letter_classes();
 public:
   virtual Triplets* clone() const {return new Triplets(*this);}
 
