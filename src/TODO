@@ -1,54 +1,29 @@
--33. Put Data/ directory under version control.  Then synch it across
-     computers.
+-20. alignment-cat A.fasta B.fasta C.fasta > D.fasta
+     The sequence should have the same names, but could be
+      different alphabets.  (Hopefully we will not handle alphabets)
 
--32. alignment-cat A.fasta B.fasta C.fasta > D.fasta
-     alignment-cut 1-3 5-10 < A.fasta > B.fasta
+-19. Read Schmidler papers + others from postdoc e-mail.
 
-     This would allow us to trim the ends of alignments, when the sequences
-     start varying a lot, so that we can run enolase. 
+-18. Read Seo paper + others
 
--31. Read Schmidler papers + others from postdoc e-mail.
+-17. trees-consensus: report number of branches.
 
--30. Read Seo paper + others
-
--29. Type in ideas from conference.
-
--28. Determine criteria for 1.9.8
-
--27. trees-consensus: report number of branches observed 
-     a) how should we interpret this number, though?
-     b) how should we GET the number?
-
--18. Compare estimates w/ MrBayes on the globin example.
-     Compare estimates w/ MrBayes on the EF-Tu 48b example.
+-16. Compare estimates w/ MrBayes
      a) compare mixing, topologies, branch lengths, speed, etc.
+     b) globin / EF-Tu 48b / P1-123 / P1-1234
 
--17. a. Implement letter classes.
-	a.1)  Should a wildcard be a special class, or not??
-     b. Remove '*' altogether - use a 'stop' character?
-     c. Allow reading Codon alphabet w/ individual letter wildcards.
-        (But return them all as alphabet::not_gap)
-     d. Handle letter classes in parsimony analysis.
-        (split out into parsimony.C).
-     e. Allow codon classes in other places.
-     f. Check!
+-15. Check letter classes analysis - does it affect substitution-index.C?
+     If not, then checking the first iteration should be enough.
 
--25. Consider calculating PP of all the trees in alignment-consensus...
-     a) don't keep on RE-calculating everything.
-        i) calculate support bitvector for 100%
-       ii) then calculate support bitvector for each new partition that is added,
-          and bitwise AND it in.
+-14. Consider calculating PP of all the trees in alignment-consensus...
+     a) This is really slow, so don't keep on RE-calculating everything.
+        Just mask in new partitions.
 
-     a) Consider sorting the partitions to improve speed.
+     b) We should be able to use tree structure to narrow search for 
+        sub-partitions, since any partitions is ordered with respect
+        to a full partition.
 
-        But - would this work with SUB-partitions?
-
-     b) Perhaps first try to shrink the SIZE of trees, so that we can
-        store trees, to improve speed.
-
-        Would THIS work with sub-partitions? (YES) [check when awake!]
-
--11. Make a program to compare two alignment distributions.
+-13. Make a program to compare two alignment distributions.
      a) Flag homology pairs that have abs(log(p1/p2)) > thresh-hold. 
      b) Output the pairs of residues that act up.
        b.1) Have a method to convert the pairs to a color scheme.
@@ -58,49 +33,28 @@
         samples or an alignment w/ '?' characters, and a level of
         certainty at which to consider each pair in that alignment.
  
--24. Allow alignment-gild to annotate an alignment-consensus
+-12. Allow alignment-gild to annotate an alignment-consensus
 
--22. Don't show SRQ or sum plots for partitions w/ less than <N=10> regenerations,
-     if the actual number of regenerations falls in a 95% confidence interval given
-     the PP.
-     a) Develop an idea of how to do a statistical test based on SRQ plots...
+-11. Don't show SRQ or sum plots for partitions w/ less than <N=10> regenerations,
+     a) But, perhaps the real issue is generating a confidence band for SRQ plots
+     b) Develop an idea of how to do a statistical test based on SRQ plots...
+        [ Find the worst sub-section - the flattest line that is longest ]
+        [ This will give us the worst mixing rate that we can reject ]
 
--21. Make trees-bootstrap.C print trees instead of collections of full partitions.
+-10. Make trees-bootstrap.C print trees instead of collections of full partitions.
 
--15. Sub-class DPengine w/ transition matrix implemented as
-  i) Matrix  (as now)
- ii) const Matrix&  - avoid some malloc,copy,dealloc
-iii) computed Matrix - 
-     a) return 0 quickly if zero
-     b) compute non-zeros (
-We can avoid TWO malloc/copy/dealloc.
-(But we would still have to compute GQ...) ?
+-9. sub-class DPengine w/ transition matrix implemented as
+     A.  i) Matrix  ii) const Matrix& iii) computed Matrix
+     B.  But how to compute GQ... ?
 
--14. ADD partitions to M[0.5] that imply l=0.5 sub-partitions.
+-8.  tree-dist.C: store topology as list of locations in partition list?
+   a) Would this save memory?  What if only sub-partitions were constant?
+   b) Would this save CPU time?  Examine each partition once instead of n times.      [But this wouldn't help for sub-partitions, would it?]
 
--12. Make a hash function for sub-partitions that is 
-     (hash(left mask) * hash(right mask)), where the hash() function
-     is a hash function for bitmasks and involves addition, not
-     multiplication. 
-
--9.  tree-dist.C: 
-
-	1. For each topology, store full partitions as vector<int> of
-           subscripts into partition list.
-
-	2. For each partition, store list of topologies that imply it.
-
-	How much memory would we save?
-
-	Can we speed up 'implies(Tree,Partition)' if we have topology
-	   information, such as 'which branches are my neighbors'?
-
-	Can we quickly determine support for SUB-partitions?
-
--8. Sanitize use of MAP_tree in tree-dist-compare when the count is 1.   
+-7. Sanitize use of MAP_tree in tree-dist-compare when the count is 1.   
     Report a median when there are a number of trees w/ the same count?
 
--7. Benchmarking of mixing... 
+-6. Benchmarking of mixing... 
   a) try with alignment fixed
   b) look at log autocorrelation and effective sample sizes for distances
      between 2 nodes + sum all branches + sum all paths
@@ -127,7 +81,6 @@ We can avoid TWO malloc/copy/dealloc.
   e) increase the number of SPR moves
   f) look for papers - by largett's student - on tree mixing
     i) swofford, largett, huelsenbeck - ?
-  g) 
 
 -1. Find a way to allow substitution models to propose a lot of different
     changes each time we try to propose new parameters.
@@ -137,6 +90,9 @@ We can avoid TWO malloc/copy/dealloc.
          rho = model2->fiddle(i)
          accept/reject(model,model2,rho)
        }
+
+-i.  We need a way of separating priors and proposals from models...
+     Hmmmm.
 
 ------
 0. Plot #topologies in confidence interval (0,p) vs p. (e.g. sort topologies)
@@ -188,6 +144,13 @@ We can avoid TWO malloc/copy/dealloc.
     b) if we could easily just change bin probabilities, then that would
        make it easier to attack this problem by increasing the number
        of MH steps we do.
+
+12. Make a hash function for sub-partitions that is 
+     (hash(left mask) * hash(right mask)), where the hash() function
+     is a hash function for bitmasks and involves addition, not
+     multiplication. 
+
+13. Add partitions to M[0.5] that imply l=0.5 sub-partitions.
 
 
 ------
@@ -442,6 +405,14 @@ the prior, because we never want to use it  differently.
 
 [DONE] Make tree a virtual public base class for SequenceTree and RootedTree?
 
+[DONE] Implement letter classes.
+       a) Allow reading Codon alphabet w/ individual letter wildcards.
+       b) Handle letter classes in parsimony analysis.
+       c) Allow letter classes in other places.
+
+[DONE] Put Data/ under version control.
+
+[DONE] alignment-cut
 
 *IDEAS*
 
