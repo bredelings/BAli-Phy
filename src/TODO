@@ -498,3 +498,8 @@ rates.
    hot and cold spots.
 
  - How do indel hot and cold spots map to interior/exterior of 3D structure?
+
+ - Can we label each residue with the probability that it will accept deletion?
+   Can we label proposed indels with a relative probability of occurrence?
+   (Invariant residues/blocks are easier, because they are never inserted.)
+   Can we handle a model with both unequal proposals and acceptance rates?
