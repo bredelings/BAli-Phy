@@ -73,27 +73,23 @@ int n_mutations(const alphabet& a, const vector<int>& letters, const Tree& T)
 
   vector<int> temp(A);
 
+  // set the leaf lengths
+  for(int s=0;s<T.n_leaves();s++)
+    for(int l=0;l<A;l++)
+      n_muts[s][l] = not a.matches(l,letters[s]);
+
   for(int i=0;i<branches.size();i++) 
   {
     int s = branches[i].source();
     int t = branches[i].target();
-    if (branches[i].source().is_leaf_node()) {
-      assert(0 <= s and s < letters.size());
-      if (a.is_letter(letters[s])) {
-	for(int l=0;l<A;l++)
-	  n_muts[t][l]++;
-	n_muts[t][letters[s]]--;
-      }
-    }
-    else {
-      for(int l=0;l<A;l++)
-	temp[l] = n_muts[s][l]+1;
 
-      for(int l=0;l<A;l++) {
-	temp[l]--;
-	n_muts[t][l] += min(temp);
-	temp[l]++;
-      }
+    for(int l=0;l<A;l++)
+      temp[l] = n_muts[s][l]+1;
+
+    for(int l=0;l<A;l++) {
+      temp[l]--;
+      n_muts[t][l] += min(temp);
+      temp[l]++;
     }
   }
 
