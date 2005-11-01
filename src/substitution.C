@@ -98,9 +98,9 @@ namespace substitution {
 	//--------- If there is a letter at the root, condition on it ---------//
 	if (root < T.n_leaves()) {
 	  int rl = A.seq(root)[i];
-	  if (a.is_letter(rl))
+	  if (a.is_letter_class(rl))
 	    for(int l=0;l<asize;l++)
-	      if (l != rl) 
+	      if (not a.matches(l,rl))
 		S(m,l) = 0;
 	}
 
@@ -167,6 +167,13 @@ namespace substitution {
 	    for(int l1=0;l1<asize;l1++)
 	      cache(i,b0)(m,l1) = Q(l1,l2);
 	  }
+	else if (a.is_letter_class(l2)) {
+	  for(int m=0;m<n_models;m++) {
+	    const Matrix& Q = transition_P[m][b0%B];
+	    for(int l1=0;l1<asize;l1++)
+	      cache(i,b0)(m,l1) = sum(Q,l1,l2,a);
+	  }	  
+	}
 	else
 	  for(int m=0;m<n_models;m++) 
 	    for(int l=0;l<asize;l++)
@@ -318,9 +325,9 @@ namespace substitution {
 	//--------- If there is a letter at the root, condition on it ---------//
 	if (root < T.n_leaves()) {
 	  int rl = A.seq(root)[i];
-	  if (a.is_letter(rl))
+	  if (a.is_letter_class(rl))
 	    for(int l=0;l<asize;l++)
-	      if (l != rl) 
+	      if (not a.matches(l,rl))
 		S(m,l) = 0;
 	}
 
@@ -406,9 +413,9 @@ namespace substitution {
 
 	if (root < T.n_leaves()) {
 	  int rl = A.seq(root)[i];
-	  if (a.is_letter(rl))
+	  if (a.is_letter_class(rl))
 	    for(int l=0;l<asize;l++)
-	      if (l != rl) 
+	      if (not a.matches(l,rl))
 		S(m,l) = 0;
 	}
       }

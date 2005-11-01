@@ -31,6 +31,8 @@ namespace substitution {
 	int lleaf = column[b];
 	if (a.is_letter(lleaf))
 	  temp *= Q(lroot,lleaf);
+	else if (a.is_letter_class(lleaf))
+	  temp *= sum(Q,lroot,lleaf,a);
       }
       p += temp;
     }
@@ -143,12 +145,15 @@ namespace substitution {
     for(int l=0;l<f.size();l++)
       f[l] = P.SModel().frequencies()[l];
 
+
     efloat_t total = 1;
     for(int i=0;i<A.n_sequences();i++) {
       for(int column=0;column<A.length();column++) {
 	int l = A(column,i);
 	if (a.is_letter(l))
 	  total *= f[l];
+	else if (a.is_letter_class(l))
+	  total *= sum(P.SModel().frequencies(),l,a);
       }
     }
 
@@ -171,6 +176,8 @@ namespace substitution {
 	int l = A(column,i);
 	if (a.is_letter(l))
 	  total *= f[l];
+	else if (a.is_letter_class(l))
+	  total *= sum(P.SModel().frequencies(),l,a);
       }
 
       if (total < min)
