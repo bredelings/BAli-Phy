@@ -47,7 +47,7 @@ Work/samples-${SKIP}+${SIZE}: Work/out
 	@cut-range --skip ${SKIP} ${SIZE:%=--size %} < $< > $@
 
 %.from.${SKIP}: %
-	tail -n +$$(( ${SKIP}+2 )) $< > $@
+	@tail -n +$$(( ${SKIP}+2 )) $< > $@
 
 Work/%: % Work/setup
 	@cp $* Work/$*
