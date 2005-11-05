@@ -503,3 +503,14 @@ rates.
    Can we label proposed indels with a relative probability of occurrence?
    (Invariant residues/blocks are easier, because they are never inserted.)
    Can we handle a model with both unequal proposals and acceptance rates?
+
+ - If the invariant sites vary over time, we might achieve some fairly interesting
+   decoupling of change from linear time.  If sites become invariant during some
+   period of time, then they might change fairly little over a rather long time.
+   If some sites become variable, then they might change a lot over a fairly short
+   time.  If sites change their invariancy in blocks... then we could have an 
+   interesting interaction of changes in selection and fitness effects over the
+   tree.
+
+ - Can we estimate selection pressure over the tree?  
+   We could integrate out the parts we don't know.
