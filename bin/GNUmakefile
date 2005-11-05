@@ -31,7 +31,7 @@ Results/analysis: Results/Report Results/consensus Mixing/SRQ.plot Mixing/sum.pl
 		  ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree}\
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
-	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration ${SKIP}." > Results/analysis
+	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration $$(( ${SKIP} + 1))." > Results/analysis
 	@echo "Finished:  $$(date)" >> Results/analysis
 	@echo 
 	@cat Results/analysis
