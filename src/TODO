@@ -2,6 +2,8 @@
      The sequence should have the same names, but could be
       different alphabets.  (Hopefully we will not handle alphabets)
 
+     Make alignment-cut read from stdin if no input args.
+
 -19. Read Schmidler papers + others from postdoc e-mail.
 
 -18. Read Seo paper + others
@@ -486,6 +488,9 @@ rates.
 
 	    + this will give us bins optimally spaced on the log scale.
 
+    (Note: If the transform function is the quantile function, instead of the
+     log function, then we regain the current standard behavior! :)
+
  - If we look at posterior rate distributions, then we will want to know
    how the rates are distributed spatially.  (This might explain why the
    shape of the rate distribution varies between proteins.)
@@ -514,3 +519,14 @@ rates.
 
  - Can we estimate selection pressure over the tree?  
    We could integrate out the parts we don't know.
+
+ - Can we separate the alphabet/frequency model from the exchangeability
+   model for substitution models?
+
+   * This way, YangM0 doesn't have an HKY::f parameter.
+   * This way, the *::f parameter is handled much more naturally.
+   * This way, we can handle frequency parameters as parameters.
+   * This way, we don't have a fixed *::f parameter, unless we need it.
+   * This way, we can have more interesting codon frequency models.
+
+ - 
