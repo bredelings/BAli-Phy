@@ -529,4 +529,16 @@ rates.
    * This way, we don't have a fixed *::f parameter, unless we need it.
    * This way, we can have more interesting codon frequency models.
 
- - 
+ - If we have both coding and non-coding DNA from an organism (hopefully
+   from a number of genes, and, I suppose, non-coding regions), then we
+   could actually fit a model that determined the frequency of codons from
+   the competing pressure of nucleotide and amino acide forces.
+
+   Actually, we might need three different components:
+
+   a) nucleotide mutation pressure
+   b) nucleotide content selection pressure
+   c) amino acid selection pressure
+
+   Might only amino acid content change between genes?  In that case, we might
+   be able to estiamte all the factors using only coding regions!
