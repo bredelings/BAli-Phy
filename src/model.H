@@ -23,9 +23,6 @@ protected:
 
   void set_n_parameters(int);
 
-  /// Construct an empty model w/ s parameters
-  Model(int s): parameters_(s) {};
-
   std::vector<bool> fixed_;
 
 public:
@@ -112,7 +109,7 @@ protected:
   /// Load parameters from sub-models
   void read();
 
-  /// Write parameters down into submodels
+  /// Store parameters down into submodels
   void write();
 
 public:
@@ -229,6 +226,25 @@ public:
   { }
 };
 
+/// This is a substitution model built over a submodel of a particular type
+template <class SubModel_t, class DerivedModel_t>
+class NestedDerivedModelOver: virtual public NestedModel, 
+		       public SuperDerivedModelOver<SubModel_t,DerivedModel_t> {
+  
+protected:
+  /// Access the submodel
+  const SubModel_t& SubModel() const {return SubModels(0);}
+  SubModel_t& SubModel() {return SubModels(0);}
+  
+public:
+  /// Make a copy of ourselves
+  NestedDerivedModelOver<SubModel_t,DerivedModel_t>* clone() const =0;
+  
+  /// Construct a Nested model based on model 'M', with 'dp' extra parameters
+  NestedDerivedModelOver(const SubModel_t& M,int dp)
+    :SuperDerivedModelOver<SubModel_t,DerivedModel_t>(std::vector< OwnedPointer<SubModel_t> >(1,M),dp)
+  { }
+};
 
 int find_parameter(const Model& M,const std::string& name);
 

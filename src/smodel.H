@@ -1,3 +1,10 @@
+/* FIXME:
+   1. How do multifrequency models fit into this framework?
+      -> Since we can't call 'model->frequencies(f)'
+   2. How does WithInv fit into this framework (how does alphabet sharing happen?)
+   3. 
+*/
+
 #ifndef SMODEL_H
 #define SMODEL_H
 
@@ -23,23 +30,35 @@ namespace substitution {
   };
 
 
-  //--------------------- Abstract base Model ----------------------///
+  //--------------------- class AlphabetModel ----------------------//
+  class AlphabetModel: virtual public ::Model
+  {
+  public:
+    virtual const alphabet& Alphabet() const =0;
+
+    unsigned size() const {return Alphabet().size();}
+  };
+
+  template <class alphabet_t>
+  class ModelWithAlphabet: virtual public AlphabetModel
+  {
+    OwnedPointer<alphabet_t> A;
+  public:
+    const alphabet_t& Alphabet() const {return *A;}
+
+    ModelWithAlphabet(const alphabet_t& a)
+      :A(a)
+    {}
+  };
+  
+
 
   /// A generic substitution model
-  class Model: virtual public ::Model {
-  protected:
-
-    /// Construct an empty model
-    Model(int s):full_tree(true) {
-      set_n_parameters(s);
-    }
-
+  class Model: virtual public AlphabetModel
+  {
   public:
     
     bool full_tree;
-
-    /// The alphabet we are modelling substitution on
-    virtual const alphabet& Alphabet() const =0;
 
     /// Make a copy of this object
     virtual Model* clone() const =0;
@@ -108,9 +127,6 @@ namespace substitution {
     /// Get the equilibrium frequencies
     virtual const std::valarray<double>& frequencies() const=0;
 
-    /// Set the equilibrium frequencies
-    virtual void frequencies(const std::valarray<double>&) =0;
-
     ReversibleModel() {}
   };
 
@@ -163,11 +179,11 @@ namespace substitution {
   //------------------------- Markov Substitution Model ----------------------------//
 
   /// A substitution model which obeys the Markov property
-  class MarkovModel: virtual public IndependantAdditiveModel {
-
+  class MarkovModel: virtual public IndependantAdditiveModel 
+  {
   protected:
 
-    /// The computed rate matrix
+    /// Rate matrix
     Matrix Q;
 
   public:
@@ -175,7 +191,7 @@ namespace substitution {
     virtual MarkovModel* clone() const =0;
 
     /// The transition rate matrix
-    virtual const Matrix& transition_rates() const {return Q;}
+    virtual const Matrix& transition_rates() const {return Q;};
 
     /// The transition probability matrix
     virtual Matrix transition_p(double t) const =0;
@@ -186,6 +202,243 @@ namespace substitution {
     {}
   };
 
+
+  //------------------------ Exchangeability Model ----------------------//
+  class ExchangeModel: virtual public AlphabetModel
+  {
+  protected:
+    SMatrix S;
+
+  public:
+    void recalc() {}
+
+    double fiddle(int) {return 1;}
+
+    efloat_t prior() const {return 1;}
+
+    operator       SMatrix& ()       {return S;}
+    operator const SMatrix& () const {return S;}
+
+    double operator()(int i,int j)       {return S(i,j);}
+    double operator()(int i,int j) const {return S(i,j);}
+
+    ExchangeModel* clone() const =0;
+    
+    ExchangeModel(const alphabet& a);
+
+    virtual ~ExchangeModel() {};
+  };
+
+  
+  class INV_Model: public ExchangeModel,public ModelWithAlphabet<alphabet> 
+  {
+    Matrix P;
+  public:
+    INV_Model* clone() const {return new INV_Model(*this);}
+
+    string name() const;
+    string parameter_name(int i) const;
+      
+    INV_Model(const alphabet& a);
+  };
+
+  //--------------------- EQU Substitution Model ------------------------/
+
+  /// The EQU model for any alphabet - all letters are treated the same
+  /// This model has no parameters
+  class EQU: public ExchangeModel,public ModelWithAlphabet<alphabet> 
+  {
+  public:
+
+    virtual EQU* clone() const {return new EQU(*this);}
+
+    string name() const;
+    string parameter_name(int i) const;
+
+    EQU(const alphabet& a);
+
+    virtual ~EQU() {}
+  };
+
+  //------------------ Empirical Substitution Model ---------------------//
+
+  /// A generic model for any alphabet - the exchangeability matrix is loaded from a file
+  class Empirical: public ExchangeModel,public ModelWithAlphabet<alphabet> 
+  {
+    /// Specificy this model based on the matrix that was loaded
+    string modelname;
+
+    /// Load the exhangeability matrix from file 'filename'
+    void load_file(const string& filename);
+
+  public:
+
+    virtual Empirical* clone() const {return new Empirical(*this);}
+
+    string name() const;
+    string parameter_name(int i) const;
+
+    Empirical(const alphabet& a,const string& filename); 
+
+    ~Empirical() {}
+  };
+
+  class NucleotideExchangeModel: public ExchangeModel,
+				 public ModelWithAlphabet<Nucleotides>
+  {
+  public:
+    NucleotideExchangeModel* clone() const=0;
+
+    NucleotideExchangeModel(const Nucleotides& N)
+      :ExchangeModel(N),
+       ModelWithAlphabet<Nucleotides>(N)
+    {}
+  };
+
+  /// The HKY substitution model for DNA or RNA: 'kappa' = transition/transversion ratio.
+  class HKY: public NucleotideExchangeModel
+  {
+    virtual void recalc();
+  public:
+
+    virtual HKY* clone() const {return new HKY(*this);}
+
+    double fiddle(int); 
+
+    /// Get the parameter 'kappa' (transition/transversion ratio)
+    double kappa() const {return parameters_[0];}
+    /// Set the parameter 'kappa' (transition/transversion ratio)
+    void kappa(double k) {parameters_[0]=k;recalc();}
+
+    virtual efloat_t prior() const;
+
+    string name() const;
+    string parameter_name(int i) const;
+
+    /// Construct an HKY model on alphabet 'a'
+    HKY(const Nucleotides& N)
+      : NucleotideExchangeModel(N)
+    { 
+      kappa(2);
+    }
+  };
+
+  class TN: public NucleotideExchangeModel {
+    virtual void recalc();
+  public:
+
+    virtual TN* clone() const {return new TN(*this);}
+
+    double fiddle(int); 
+
+    /// Get the parameter 'kappa' (transition/transversion ratio)
+    double kappa1() const {return parameters_[0];}
+    /// Get the parameter 'kappa' (transition/transversion ratio)
+    double kappa2() const {return parameters_[1];}
+
+    /// Set the parameter 'kappa' (transition/transversion ratio)
+    void kappa1(double k) {parameters_[0]=k;recalc();}
+    /// Set the parameter 'kappa' (transition/transversion ratio)
+    void kappa2(double k) {parameters_[1]=k;recalc();}
+
+    virtual efloat_t prior() const;
+
+    string name() const;
+    string parameter_name(int i) const;
+
+    /// Construct an HKY model on alphabet 'a'
+    TN(const Nucleotides& N)
+      : NucleotideExchangeModel(N)
+    { 
+      kappa1(2);
+      kappa2(2);
+    }
+
+  };
+
+  class CodonExchangeModel: public ExchangeModel, 
+			    public ModelWithAlphabet<Codons> 
+  {
+  public:
+    CodonExchangeModel* clone() const=0;
+
+    int AminoAcid(int l) const {return Alphabet().translate(l);}
+
+    CodonExchangeModel(const Codons& C);
+
+    ~CodonExchangeModel() {}
+  };
+
+
+  class YangM0: public CodonExchangeModel,
+		public ::NestedModelOver<NucleotideExchangeModel>
+  {
+    double super_fiddle(int);
+    void recalc();
+  public:
+    efloat_t super_prior() const;
+
+    efloat_t prior() const;
+
+    double fiddle(int) {return ::NestedModelOver<NucleotideExchangeModel>::fiddle(0);}
+
+    YangM0* clone() const {return new YangM0(*this);}
+
+    /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
+    double omega() const;
+    /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
+    void omega(double w);
+
+    string name() const;
+    std::string super_parameter_name(int i) const;
+
+    YangM0(const Codons& C,const NucleotideExchangeModel& M);
+
+    ~YangM0();
+  };
+
+  //------------------------ Reversible frequency model --------------------//
+  class ReversibleFrequencyModel: virtual public AlphabetModel
+  {
+  protected:
+    SMatrix R;
+  public:
+    ReversibleFrequencyModel* clone() const =0;
+
+    /// Get the equilibrium frequencies
+    virtual const std::valarray<double>& frequencies() const=0;
+
+    ReversibleFrequencyModel(const alphabet& a);
+
+    virtual ~ReversibleFrequencyModel() {}
+  };
+
+
+  class SimpleFrequencyModel: public ReversibleFrequencyModel,
+			      public ModelWithAlphabet<alphabet>
+  {
+  protected:
+    std::valarray<double> f;
+
+    void recalc();
+
+  public:
+    double replace(int i,int j) const;
+
+    const std::valarray<double>& frequencies() const {return f;}
+
+    SimpleFrequencyModel* clone() const {return new SimpleFrequencyModel(*this);}
+
+    efloat_t prior() const;
+
+    double fiddle(int);
+
+    std::string name() const;
+
+    std::string parameter_name(int i) const;
+
+    explicit SimpleFrequencyModel(const alphabet& a);
+  };
 
 
   //------------------------- Reversible Substitution Model -----------------------//
@@ -203,19 +456,9 @@ namespace substitution {
   class ReversibleMarkovModel: public MarkovModel,
 			       public Independant_Additive_Reversible_Model 
   {
-  protected:
-    /// The equilibrium frequencies
-    std::valarray<double> pi;
-
-    /// The exchangeability matrix
-    Matrix S;
-
     EigenValues eigensystem;
 
-    virtual void recalc();
-
-    /// Construct a reversible Markov model on alphabet 'a_'
-    ReversibleMarkovModel(const alphabet& a,int dp);
+    void recalc();
 
   public:
     double rate() const;
@@ -223,63 +466,73 @@ namespace substitution {
     
     Matrix getD() const;
     
-    const Matrix& getS() const {return S;}
-    
     /// Make a copy of this object
     virtual ReversibleMarkovModel* clone() const =0;
 
     /// The transition probability matrix - which we can now compute
     Matrix transition_p(double t) const;
 
-    /// Get the equilibrium frequencies
-    const std::valarray<double>& frequencies() const {return pi;}
-
-    /// Set the equilibrium frequencies
-    void frequencies(const std::valarray<double>& pi_) {pi=pi_; recalc();}
-  
-    efloat_t prior() const;
-
-    /// Construct a reversible Markov model on alphabet 'a'
     ReversibleMarkovModel(const alphabet& a);
     
     ~ReversibleMarkovModel() {}
   };
 
-    //--------------------------- Implement the underlying alphabet -------------------------//
-
-
-    template <class alphabet_t>
-    class ModelWithAlphabet: virtual public Model {
-      //    protected:
-      OwnedPointer<alphabet_t> A;
-    public:
-      const alphabet_t& Alphabet() const {return *A;}
-      
-      ModelWithAlphabet(const alphabet_t& a)
-	:A(a)
-      {}
-    };
-
-
-  class INV_Model: public ReversibleMarkovModel,public ModelWithAlphabet<alphabet> 
+  template <class Exchange_t,class Frequency_t,class alphabet_t>
+  class ReversibleMarkovModelOver: public MarkovModel,
+				   public Independant_Additive_Reversible_Model 
   {
-    Matrix P;
+  protected:
+    /// The exchange model
+    OwnedPointer<Exchange_t> S;
+
+    /// The frequency model
+    OwnedPointer<Frequency_t> R;
+
+    void recalc();
+
+    /// Construct a reversible Markov model on alphabet 'a_'
+    ReversibleMarkovModelOver(const alphabet& a,int dp);
+
   public:
-    INV_Model* clone() const {return new INV_Model(*this);}
-
+    double rate() const;
     void set_rate(double);
+    
+    Matrix getD() const;
+    
+    const SMatrix& getS() const {return *S;}
+    
+    /// Make a copy of this object
+    virtual ReversibleMarkovModelOver<Exchange_t,Frequency_t,alphabet_t>* clone() const =0;
 
-    void recalc() {}
-
-    double fiddle(int) {return 1;}
-
+    /// The transition probability matrix - which we can now compute
     Matrix transition_p(double t) const;
 
-    string name() const;
-    string parameter_name(int i) const;
-      
-    INV_Model(const alphabet& a);
+    /// Get the equilibrium frequencies
+    const std::valarray<double>& frequencies() const {return R->frequencies();}
+
+    efloat_t prior() const;
+
+    /// Construct a reversible Markov model on alphabet 'a'
+    ReversibleMarkovModelOver(const alphabet& a);
+    
+    ~ReversibleMarkovModelOver() {}
   };
+
+  template <class Exchange_t,class Frequency_t,class alphabet_t>
+  void ReversibleMarkovModelOver<Exchange_t,Frequency_t,alphabet_t>::recalc()
+  {
+    for(int i=0;i<S->size1();i++) {
+      double sum=0;
+      for(int j=0;j<S->ize2();j++) {
+	if (i==j) continue;
+	Q(i,j) = (*S)(i,j)*(*R)(i,j);
+	sum += Q(i,j);
+      }
+      Q(i,i) = -sum;
+    }
+  }
+
+  //--------------------------- Implement the underlying alphabet -------------------------//
 
 
   template <class T>
@@ -293,239 +546,12 @@ namespace substitution {
     const std::valarray<double>& frequencies() const {
       return NestedModelOver<T>::SubModel().frequencies();
     }
-    /// Set the equilibrium frequencies
-    void frequencies(const std::valarray<double>& f) {
-      return NestedModelOver<T>::SubModel().frequencies(f);
-    }
 
     const alphabet& Alphabet() const { 
       return NestedModelOver<T>::SubModel().Alphabet(); 
     }
 
     ReversibleWrapperOver(const T& t,int dp):NestedModelOver<T>(t,dp) {}
-  };
-
-
-  // This model is not really additive: E N ~ t but Var N ~ t^2 so that sigma/mu is constant
-  class Gamma_Branch_Model:public Independant_Additive_Reversible_Model,
-			   public ReversibleWrapperOver<ReversibleMarkovModel> 
-  {
-    double super_fiddle(int);
-    efloat_t super_prior() const;
-
-  public:
-    virtual Gamma_Branch_Model* clone() const {return new Gamma_Branch_Model(*this);}
-    
-    double rate() const {return SubModel().rate();}
-    void set_rate(double r) {SubModel().set_rate(r);}
-    
-    string name() const;
-    string super_parameter_name(int i) const;
-      
-    Matrix transition_p(double t) const;
-
-    Gamma_Branch_Model(const ReversibleMarkovModel& M)
-      :ReversibleWrapperOver<ReversibleMarkovModel>(M,1) {
-      parameters_[parameters_.size()-1]=0.1;
-    }
-  };
-
-
-
-  // This model is truly additive: E N ~ t and Var N ~ t, where N is number of changes.
-  class Gamma_Stretched_Branch_Model:public Independant_Additive_Reversible_Model,
-				     public ReversibleWrapperOver<ReversibleMarkovModel> 
-  {
-    double super_fiddle(int);
-    efloat_t super_prior() const;
-    string super_parameter_name(int i) const;
-  public:
-    virtual Gamma_Stretched_Branch_Model* clone() const {return new Gamma_Stretched_Branch_Model(*this);}
-    
-    double rate() const {return SubModel().rate();}
-    void set_rate(double r) {SubModel().set_rate(r);}
-    
-    string name() const;
-    
-    Matrix transition_p(double t) const;
-
-    Gamma_Stretched_Branch_Model(const ReversibleMarkovModel& M)
-      :ReversibleWrapperOver<ReversibleMarkovModel>(M,1) {
-      parameters_[parameters_.size()-1]=0.1;
-    }
-  };
-
-
-
-  //--------------------- EQU Substitution Model ------------------------/
-
-  /// The EQU model for any alphabet - all letters are treated the same
-
-  /// The EQU model for any alphabet - all letters are treated the same
-  /// This model has no parameters
-  class EQU: public ReversibleMarkovModel,public ModelWithAlphabet<alphabet> {
-    virtual void recalc();
-  public:
-
-    double fiddle(int);
-
-    virtual EQU* clone() const {return new EQU(*this);}
-
-    string name() const;
-    string parameter_name(int i) const;
-
-    /// Construct an EQU model on alphabet 'a'
-    EQU(const alphabet& a)
-      :ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a)
-    { recalc(); }
-
-    virtual ~EQU() {}
-  };
-
-  //------------------ Empirical Substitution Model ---------------------//
-
-  /// A generic model for any alphabet - the exchangeability matrix is loaded from a file
-  class Empirical: public ReversibleMarkovModel,public ModelWithAlphabet<alphabet> {
-    /// Specificy this model based on the matrix that was loaded
-    string modelname;
-
-    /// Load the exhangeability matrix from file 'filename'
-    void load_file(const string& filename);
-
-    virtual void recalc();
-  public:
-    double fiddle(int);
-
-    virtual Empirical* clone() const {return new Empirical(*this);}
-
-    string name() const;
-    string parameter_name(int i) const;
-
-    /// Construct an Empirical model on alphabet 'a' with matrix from 'filename'
-    Empirical(const alphabet& a,const string& filename) 
-      : ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a)
-    { 
-      load_file(filename); 
-      recalc();
-    }
-
-    virtual ~Empirical() {}
-  };
-
-  //------------------------------ HKY Substitution Model ----------------------------//
-
-  class ReversibleMarkovNucleotideModel
-    :public ReversibleMarkovModel,public ModelWithAlphabet<Nucleotides> {
-  public:
-    ReversibleMarkovNucleotideModel* clone() const=0;
-    
-    ReversibleMarkovNucleotideModel(const Nucleotides& N,int dp=0)
-      :ReversibleMarkovModel(N,dp),
-       ModelWithAlphabet<Nucleotides>(N)
-    { }
-  };
-
-  /// The HKY substitution model for DNA or RNA
-
-  /// The HKY substitution model for DNA or RNA.
-  /// The only parameter in this model is 'kappa' - the transition/transversion ratio.
-  class HKY: public ReversibleMarkovNucleotideModel
-  {
-
-    virtual void recalc();
-  public:
-
-    virtual HKY* clone() const {return new HKY(*this);}
-
-    double fiddle(int); 
-
-    /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa() const {return parameters_[1];}
-    /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa(double k) {parameters_[1]=k;recalc();}
-
-    virtual efloat_t prior() const;
-
-    string name() const;
-    string parameter_name(int i) const;
-
-    /// Construct an HKY model on alphabet 'a'
-    HKY(const Nucleotides& N)
-      : ReversibleMarkovNucleotideModel(N,1)
-    { 
-      kappa(2);
-    }
-  };
-
-  class TN: public ReversibleMarkovNucleotideModel {
-    virtual void recalc();
-  public:
-
-    virtual TN* clone() const {return new TN(*this);}
-
-    double fiddle(int); 
-
-    /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa1() const {return parameters_[1];}
-    /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa2() const {return parameters_[2];}
-
-    /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa1(double k) {parameters_[1]=k;recalc();}
-    /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa2(double k) {parameters_[2]=k;recalc();}
-
-    virtual efloat_t prior() const;
-
-    string name() const;
-    string parameter_name(int i) const;
-
-    /// Construct an HKY model on alphabet 'a'
-    TN(const Nucleotides& N)
-      : ReversibleMarkovNucleotideModel(N,2)
-    { 
-      kappa1(2);
-      kappa2(2);
-    }
-
-  };
-
-  //------------------------ Yang Codon Model -------------------------//
-  class CodonModel: public ReversibleMarkovModel, public ModelWithAlphabet<Codons> 
-  {
-  public:
-    CodonModel* clone() const=0;
-
-    int AminoAcid(int l) const {return Alphabet().translate(l);}
-
-    CodonModel(const Codons& C);
-
-    ~CodonModel();
-  };
-
-  class YangM0: public CodonModel,
-			public NestedModelOver<ReversibleMarkovNucleotideModel>
-  {
-    double super_fiddle(int);
-    void recalc();
-  public:
-    efloat_t super_prior() const;
-
-    efloat_t prior() const;
-
-    YangM0* clone() const {return new YangM0(*this);}
-
-    /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
-    double omega() const;
-    /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-    void omega(double w);
-
-    string name() const;
-    std::string super_parameter_name(int i) const;
-
-    YangM0(const Codons& C,const ReversibleMarkovNucleotideModel& M);
-
-    ~YangM0();
   };
 
 
@@ -605,6 +631,7 @@ namespace substitution {
     ~UnitModel() {};
   };
 
+  /*
   /// A substitution model based on running Reversible Models with the same equilibrium at different rates
   class MultiFrequencyModel: public MultiModel, 
 			     public ReversibleWrapperOver<MultiModel> 
@@ -643,9 +670,6 @@ namespace substitution {
     /// Get the equilibrium frequencies
     const std::valarray<double>& frequencies() const;
 
-    /// Set the equilibrium frequencies
-    void frequencies(const std::valarray<double>&);
-  
     string name() const;
     string super_parameter_name(int i) const;
 
@@ -654,7 +678,7 @@ namespace substitution {
     ~MultiFrequencyModel() {}
   };
 
-
+  */
   /// A substitution model based on running Reversible Models with the same equilibrium at different rates
   class MultiParameterModel: public MultiModel, 
 			     public ReversibleWrapperOver<MultiModel> 
@@ -687,9 +711,6 @@ namespace substitution {
     /// Get the equilibrium frequencies
     const std::valarray<double>& frequencies() const;
 
-    /// Set the equilibrium frequencies
-    void frequencies(const std::valarray<double>&);
-  
     MultiParameterModel(const MultiModel& M,int dp,int p,int n_bins);
 
     ~MultiParameterModel() {}
@@ -773,9 +794,6 @@ namespace substitution {
     /// Get the equilibrium frequencies
     const std::valarray<double>& frequencies() const;
 
-    /// Set the equilibrium frequencies
-    void frequencies(const std::valarray<double>&);
-  
     string name() const;
     string super_parameter_name(int i) const;
 
@@ -850,9 +868,6 @@ namespace substitution {
 
     /// Get the equilibrium frequencies
     const std::valarray<double>& frequencies() const {return pi;}
-
-    /// Set the equilibrium frequencies
-    void frequencies(const std::valarray<double>& f);
 
     std::vector<double> distribution() const;
 

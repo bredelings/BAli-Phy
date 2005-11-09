@@ -22,627 +22,6 @@ namespace substitution {
     return string("pS") + convertToString(i);
   }
 
-  //--------------------- Gamma_Branch_Model -----------------------------//
-  Matrix Gamma_Branch_Model::transition_p(double t) const {
-    double beta = parameters_.back();
-
-    return gamma_exp(SubModel().getS(),SubModel().getD(),t/beta,beta);
-  }
-
-  string Gamma_Branch_Model::super_parameter_name(int i) const {
-    if (i==0)
-      return "sigma/mu";
-    else
-      return s_parameter_name(i,1);
-  }
-
-  double Gamma_Branch_Model::super_fiddle(int) {
-    const double sigma = 0.05;
-    if (not fixed(0)) {
-      double beta = parameters_.back() + gaussian(0,sigma);
-      if (beta<0) beta = -beta;
-      if (beta >0) parameters_.back() = beta;
-    }
-    return 1;
-  }
-
-  efloat_t Gamma_Branch_Model::super_prior() const {
-    const double mu = 0.1;
-    double beta = parameters_.back();
-    return exponential_pdf(beta,mu);
-  }
-
-  string Gamma_Branch_Model::name() const {
-    return string("GammaBranch(") + SubModel().name() + ")";
-  }
-
-  //-------------------- Gamma_Stretched_Branch_Model ----------------------//
-
-  string Gamma_Stretched_Branch_Model::super_parameter_name(int i) const {
-    if (i==0)
-      return "sigma/mu";
-    else
-      return s_parameter_name(i,1);
-  }
-
-  // E T = t
-  // sigma/mu = parameter[0]
-  Matrix Gamma_Stretched_Branch_Model::transition_p(double t) const {
-    double signal_to_noise = parameters_.back();
-
-    double alpha = 1.0/pow(signal_to_noise,2);
-    double beta = t/alpha;
-
-    return gamma_exp(SubModel().getS(),SubModel().getD(),alpha,beta);
-  }
-
-  double Gamma_Stretched_Branch_Model::super_fiddle(int) {
-    vector<double> v = parameters_;
-    double& p = v.back();
-
-    if (fixed(0)) return 1;
-
-    const double sigma = 0.04;
-    double p2 = p + gaussian(0,sigma);
-    if (p2 < 0) p2 = -p2;
-
-    double alpha = 1.0/(p2*p2);
-    if (alpha < 10000)
-      p = p2;
-
-    parameters(v);
-    return 1;
-  }
-
-  efloat_t Gamma_Stretched_Branch_Model::super_prior() const {
-    const double mean_stddev = 0.01;
-    return exponential_pdf(parameters_.back(), mean_stddev);
-  }
-
-  string Gamma_Stretched_Branch_Model::name() const {
-    return string("GammaStretchedBranch(") + SubModel().name() + ")";
-  }
-
-
-
-  // Q(i,j) = S(i,j)*pi[j]   for i!=j
-  // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
-
-  // We want to set S(i,i) so that Q(i,j) = S(i,j)*pi[j] for all i,j
-  // Then Q = S*D, and we can easily compute the exponential
-  // So, S(i,j) = Q(i,i)/pi[i]
-
-  double ReversibleMarkovModel::rate() const {
-    // Rescale so that expected mutation rate is 1
-    double scale=0;
-    for(int i=0;i<S.size1();i++) 
-      scale -= pi[i]*Q(i,i);
-
-    return scale/Alphabet().width();
-  }
-
-  void ReversibleMarkovModel::set_rate(double r)  {
-    double scale = r/rate();
-    Q *= scale;
-    S *= scale;
-    for(int i=0;i<eigensystem.Diagonal().size();i++)
-      eigensystem.Diagonal()[i] *= scale ;
-  }
-
-  void ReversibleMarkovModel::recalc() {
-    double f = parameters_[0];
-
-    vector<double> pf(pi.size());
-    for(int i=0;i<pf.size();i++)
-      pf[i] = pow(pi[i],f);
-
-    // Set S(i,i) so that Q(i,i) = S(i,i)*pi[i]
-    for(int i=0;i<S.size1();i++) {
-      double sum=0;
-      for(int j=0;j<S.size2();j++) {
-	if (i==j) continue;
-	Q(i,j) = S(i,j)*pf[i]*pf[j]/pi[i];
-	sum += Q(i,j);
-      }
-      Q(i,i) = -sum;
-      S(i,i) = Q(i,i)*pi[i]/(pf[i]*pf[i]);
-    }
-
-#ifndef NDEBUG
-    std::cerr<<"scale = "<<rate()<<endl;
-#endif
-
-    // Maybe assert that 
-    //  A) the sum_j Q_ij = 0
-    //  B) sum_i pi_i Q_ij = pi_j
-
-    //---------- OK, calculate and cache eigensystem ----------//
-    int n = pi.size();
-
-    vector<double> DB(n);
-    for(int i=0;i<n;i++)
-      DB[i] = pow(pi[i],f - 0.5);
-    
-    SMatrix S2 = S;
-    for(int i=0;i<S2.size1();i++)
-      for(int j=0;j<=i;j++)
-	S2(i,j) *= DB[i]*DB[j];
-
-    eigensystem = EigenValues(S2);
-  }
-
-  Matrix ReversibleMarkovModel::getD() const {
-    BMatrix D(pi.size(),pi.size());
-    for(int i=0;i<pi.size();i++)
-      D(i,i) = pi[i];
-
-    return D;
-  }
-
-  Matrix ReversibleMarkovModel::transition_p(double t) const {
-    // we don't need to use f here - it is built into the eigensystem
-    return exp(eigensystem,getD(),t);
-  }
-
-  efloat_t ReversibleMarkovModel::prior() const {
-    // uniform - 1 observeration per letter
-    valarray<double> q(1.0,frequencies().size());
-    return dirichlet_pdf(frequencies(),q);
-  }
-
-    /// Construct a reversible Markov model on alphabet 'a_'
-  ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a,int dp)
-    :MarkovModel(a), pi(1.0/a.size(),a.size()), 
-     S(a.size(),a.size()),
-     eigensystem(a.size())
-  { 
-    set_n_parameters(dp+1);
-    parameters_[0] = 1;
-    fixed_[0] = true;
-  }
-    
-
-  ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)
-    :MarkovModel(a), pi(1.0/a.size(),a.size()), 
-     S(a.size(),a.size()),
-     eigensystem(a.size())
-  { 
-    set_n_parameters(1) ; 
-    parameters_[0] = 1;
-    fixed_[0] = true;
-  }
-
-  //---------------------- INV_Model --------------------------//
-
-  void INV_Model::set_rate(double r)  {
-    assert(std::abs(r) == 0);
-  }
-
-
-  Matrix INV_Model::transition_p(double) const 
-  {
-    return P;
-  }
-
-  string INV_Model::name() const {
-    return "INV";
-  }
-
-  string INV_Model::parameter_name(int i) const {
-    if (i==0)
-      return "INV::f";
-    else
-      return s_parameter_name(i,1);
-  }
-
-  INV_Model::INV_Model(const alphabet& a)
-    :ReversibleMarkovModel(a,0),ModelWithAlphabet<alphabet>(a),
-     P(S.size1(),S.size2())
-  {
-    // Calculate S matrix
-    for(int i=0;i<S.size1();i++)
-      for(int j=0;j<S.size2();j++)
-	if (i==j)
-	  S(i,j) = 1;
-	else
-	  S(i,j) = 0;
-
-    P = S;
-
-    // Calculate Q matrix once-for-all
-    ReversibleMarkovModel::recalc();
-  }
-      
-
-  //------------------------- HKY -----------------------------//
-
-  string HKY::name() const {
-    return "HKY";
-  }
-
-  string HKY::parameter_name(int i) const {
-    if (i==0)
-      return "HKY::f";
-    else if (i==1)
-      return "HKY::kappa";
-    else
-      return s_parameter_name(i,2);
-  }
-
-  double HKY::fiddle(int) {
-    if (not fixed(0)) {
-
-      double& f = parameters_[0];
-
-      // fiddle f
-      const double sigma = 0.05;
-      f += gaussian(0,sigma);
-
-      f = wrap(f,1.0);
-    }
-
-    if (not fixed(1))
-      kappa( kappa() * exp(gaussian(0,0.15)) );
-
-    return 1;
-  }
-
-  /// return the LOG of the prior
-  efloat_t HKY::prior() const 
-  {
-    efloat_t P = shift_laplace_pdf(log(kappa()), log(2), 0.25);
-    P *= ReversibleMarkovModel::prior();
-    return P;
-  }
-
-  void HKY::recalc() {
-    assert(Alphabet().size()==4);
-
-    for(int i=0;i<Alphabet().size();i++)
-      for(int j=0;j<Alphabet().size();j++) {
-	if (i==j) continue;
-	if (Alphabet().transversion(i,j))
-	  S(i,j) = 1;
-	else
-	  S(i,j) = kappa();
-      }
-
-    ReversibleMarkovModel::recalc();
-  }
-
-  string TN::name() const {
-    return "TN";
-  }
-
-  double TN::fiddle(int) 
-  {
-    if (not fixed(0)) {         
-
-      double& f = parameters_[0];
-
-      // fiddle f
-      const double sigma = 0.05;
-      f += gaussian(0,sigma);
-
-      f = wrap(f,1.0);
-    }
-
-    const double sigma = 0.15;
-
-    if (not fixed(1)) {
-      double k = kappa1() * exp(gaussian(0,sigma));
-      kappa1(k);
-    }
-
-    if (not fixed(2)) {
-      double k = kappa2() * exp(gaussian(0,sigma));
-      kappa2(k);
-    }
-    return 1;
-  }
-
-  // This should be OK - the increments are linear combinations of gaussians...
-
-  /// return the LOG of the prior
-  efloat_t TN::prior() const {
-    double k1 = log(kappa1());
-    double k2 = log(kappa2());
-    
-    double alpha = (k1+k2)/2;
-    double beta  = (k1-k2)/2;
-
-    efloat_t P = ReversibleMarkovModel::prior();
-    P *= shift_laplace_pdf(alpha, log(2), 0.25);
-    P *= shift_laplace_pdf(beta, 0, 0.10);
-    return P;
-  }
-
-  void TN::recalc() {
-    assert(Alphabet().size()==4);
-
-    for(int i=0;i<Alphabet().size();i++)
-      for(int j=0;j<Alphabet().size();j++) {
-	if (i==j) continue;
-	if (Alphabet().transversion(i,j))
-	  S(i,j) = 1;
-	else if (Alphabet().purine(i))
-	  S(i,j) = kappa1();
-	else
-	  S(i,j) = kappa2();
-      }
-
-    ReversibleMarkovModel::recalc();
-  }
-
-  string TN::parameter_name(int i) const {
-    assert(i==0 or i==1);
-    if (i==0)
-      return "TN::f";
-    if (i==1)
-      return "TN::kappa(pur)";
-    else if (i==2)
-      return "TN::kappa(pyr)";
-    else
-      return s_parameter_name(i,2);
-  }
-
-  string EQU::parameter_name(int i) const {
-    if (i == 0)
-      return "EQU::f";
-    else
-      return s_parameter_name(i,1);
-  }
-
-  string EQU::name() const {
-    return "EQU";
-  }
-
-  double EQU::fiddle(int) 
-  {
-    if (not fixed(0)) {
-
-      double& f = parameters_[0];
-
-      const double sigma = 0.05;
-      f += gaussian(0,sigma);
-
-      f = wrap(f,1.0);
-    }
-    return 1;
-  }
-
-  void EQU::recalc() {
-    for(int i=0;i<Alphabet().size();i++)
-      for(int j=0;j<Alphabet().size();j++)
-	S(i,j) = 1;
-
-    ReversibleMarkovModel::recalc();
-  }
-
-  double Empirical::fiddle(int) 
-  {
-    if (not fixed(0)) {
-
-      double& f = parameters_[0];
-
-      // fiddle f
-      const double sigma = 0.05;
-      f += gaussian(0,sigma);
-
-      f = wrap(f,1.0);
-    }
-    
-    // recalc() not needed because f() value not cached
-
-    return 1;
-  }
-
-  string Empirical::name() const {
-    return "Empirical(" + modelname +")";
-  }
-
-  string Empirical::parameter_name(int i) const {
-    if (i==0)
-      return "Empirical::f";
-    else
-      return s_parameter_name(i,1);
-  }
-
-  void Empirical::recalc() {
-    ReversibleMarkovModel::recalc();
-  }
-
-  void Empirical::load_file(const string& filename) {
-    modelname = filename;
-
-    std::ifstream ifile(filename.c_str());
-
-    if (not ifile)
-      throw myexception(string("Couldn't open file '")+filename+"'");
-
-    for(int i=0;i<Alphabet().size();i++)
-      for(int j=0;j<i;j++) {
-	ifile>>S(i,j);
-	S(j,i) = S(i,j);
-      }
-
-    for(int i=0;i<Alphabet().size();i++)
-      ifile>>pi[i];
-  }
-
-  //------------------------ Codon Models -------------------//
-
-  CodonModel::CodonModel(const Codons& C)
-    :ReversibleMarkovModel(C),ModelWithAlphabet<Codons>(C)
-  { }
-
-  CodonModel::~CodonModel() {}
-
-    /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  double YangM0::omega() const {
-    return super_parameters_[1];
-  }
-
-  /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  void YangM0::omega(double w) {
-    super_parameters_[1]=w;
-    read();
-    recalc();
-  }
-
-  double YangM0::super_fiddle(int) 
-  {
-    double ratio = 1;
-
-    if (not fixed(0)) {
-      
-      double& f = super_parameters_[0];
-
-      const double sigma = 0.05;
-      f += gaussian(0,sigma);
-      
-      f = wrap(f,1.0);
-    }
-
-    if (not fixed(1)) {
-      ratio = exp(gaussian(0,0.20));
-      super_parameters_[1] *= ratio;
-    }
-
-    read();
-    recalc();
-
-    return ratio;
-  }
-
-  void YangM0::recalc() {
-    write();
-
-    for(int i=0;i<Alphabet().size();i++) {
-
-      for(int j=0;j<i;j++) {
-	int nmuts=0;
-	int pos=-1;
-	for(int p=0;p<3;p++)
-	  if (Alphabet().sub_nuc(i,p) != Alphabet().sub_nuc(j,p)) {
-	    nmuts++;
-	    pos=p;
-	  }
-	assert(nmuts>0);
-	assert(pos >= 0 and pos < 3);
-
-	double rate=0.0;
-
-	if (nmuts == 1) {
-
-	  int l1 = Alphabet().sub_nuc(i,pos);
-	  int l2 = Alphabet().sub_nuc(j,pos);
-	  assert(l1 != l2);
-
-	  rate = SubModel().getS()(l1,l2);
-
-	  if (AminoAcid(i) != AminoAcid(j))
-	    rate *= omega();	
-	}
-
-	S(i,j) = S(j,i) = rate;
-      }
-    }
-
-    ReversibleMarkovModel::recalc();
-  }
-
-  efloat_t YangM0::super_prior() const {
-    efloat_t P = ReversibleMarkovModel::prior();
-    P *= shift_laplace_pdf(log(omega()), 0, 0.1);
-    return P;
-  }
-
-  efloat_t YangM0::prior() const {
-    return NestedModelOver<ReversibleMarkovNucleotideModel>::prior();
-  }
-
-  string YangM0::name() const {
-    return string("YangM0[") + SubModel().name() + "]";
-  }
-
-  string YangM0::super_parameter_name(int i) const {
-    if (i==0)
-      return "YangM0::f";
-    if (i==1)
-      return "YangM0::omega";
-    else
-      return s_parameter_name(i,2);
-  }
-
-  YangM0::YangM0(const Codons& C,const ReversibleMarkovNucleotideModel& M)
-    :CodonModel(C),NestedModelOver<ReversibleMarkovNucleotideModel>(M,2)
-  { 
-    super_parameters_[0] = 1.0;
-    super_parameters_[1] = 1.0;
-    read();
-    omega(1.0);
-  }
-
-  YangM0::~YangM0() {}
-
-  /*--------------- MultiRate Models ----------------*/
-
-  double MultiModel::rate() const {
-    double r=0;
-    for(int m=0;m<n_base_models();m++)
-      r += distribution()[m]*base_model(m).rate();
-    return r;
-  }
-
-  void MultiModel::set_rate(double r)  {
-    double scale = r/rate();
-    for(int m=0;m<n_base_models();m++) {
-      base_model(m).set_rate(base_model(m).rate()*scale);
-    }
-  }
-
-  // This is per-branch, per-column - doesn't pool info about each branches across columns
-  Matrix MultiModel::transition_p(double t) const {
-    Matrix P = distribution()[0] * transition_p(t,0);
-    for(int m=1;m<n_base_models();m++)
-      P += distribution()[m] * transition_p(t,m);
-    return P;
-  }
-
-  Matrix frequency_matrix(const MultiModel& M) {
-    Matrix f(M.n_base_models(),M.Alphabet().size());
-    for(int m=0;m<f.size1();m++)
-      for(int l=0;l<f.size2();l++)
-	f(m,l) = M.base_model(m).frequencies()[l];
-    return f;
-  }
-
-  string UnitModel::name() const {
-    return string("[") + SubModel().name() + "]";
-  }
-
-  string UnitModel::super_parameter_name(int i) const {
-    return s_parameter_name(i,0);
-  }
-
-  //------------- MultiFrequencyModel ---------------//
-  valarray<double> MultiFrequencyModel::get_a(int l) const 
-  {
-    valarray<double> al(fraction.size());
-
-    for(int m=0;m<al.size();m++)
-      al[m] = a(m,l);
-
-    return al;
-  }
-
-  void MultiFrequencyModel::set_a(int l,const valarray<double>& al) 
-  {
-    for(int m=0;m<al.size();m++)
-      a(m,l) = al[m];
-  }
-
   template <typename T>
   valarray<T> get_varray(const vector<T>& v1,int start, int n) 
   {
@@ -709,6 +88,472 @@ namespace substitution {
     valarray<double> p2 = get_varray(p1,start,n);
 
     return ::dirichlet_pdf(p2,N);
+  }
+
+  ExchangeModel::ExchangeModel(const alphabet& a)
+    :S(a.size(),a.size())
+  {}
+
+
+  ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
+    :R(a.size(),a.size())
+  { }
+
+  void SimpleFrequencyModel::recalc() {
+    f = get_varray(parameters_,0,size());
+  }
+
+  double SimpleFrequencyModel::replace(int i,int j) const {
+    assert(0 <= i and i < size());
+    assert(0 <= j and j < size());
+
+    return f[j];
+  }
+
+  efloat_t SimpleFrequencyModel::prior() const 
+  {
+    // uniform - 1 observeration per letter
+
+    return ::dirichlet_pdf(frequencies(), valarray<double>(1.0, Alphabet().size()) );
+  }
+
+  double SimpleFrequencyModel::fiddle(int) {
+    dirichlet_fiddle(parameters_, 0, size(), 0.25/sqrt(size()));
+    return 1;
+  }
+
+  string SimpleFrequencyModel::name() const {
+    return string("Simple frequency model over ") + Alphabet().name;
+  }
+  
+  string SimpleFrequencyModel::parameter_name(int i) const {
+    return string("f") + Alphabet().letter(i);
+  }
+  
+  SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a)
+    :ReversibleFrequencyModel(a),
+     ModelWithAlphabet<alphabet>(a),
+     f(1.0/size(),size())
+  {
+    set_n_parameters(a.size());
+  }
+
+
+
+  // Q(i,j) = S(i,j)*pi[j]   for i!=j
+  // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
+
+  // We want to set S(i,i) so that Q(i,j) = S(i,j)*pi[j] for all i,j
+  // Then Q = S*D, and we can easily compute the exponential
+  // So, S(i,j) = Q(i,i)/pi[i]
+
+  double ReversibleMarkovModel::rate() const {
+    // Rescale so that expected mutation rate is 1
+    double scale=0;
+    for(int i=0;i<Q.size1();i++) 
+      scale -= frequencies()[i]*Q(i,i);
+
+    return scale/Alphabet().width();
+  }
+
+  void ReversibleMarkovModel::set_rate(double r)  {
+    double scale = r/rate();
+    Q *= scale;
+    for(int i=0;i<eigensystem.Diagonal().size();i++)
+      eigensystem.Diagonal()[i] *= scale ;
+  }
+
+  /*
+   * 1. pi[i]*Q(i,j) = pi[j]*Q(j,i)         - Because Q is reversible
+   * 2. Q(i,j)/pi[j] = Q(j,i)/pi[i] = S1(i,j)
+   * 3. pi[i]^1/2 * Q(j,i) / pi[j]^1/2 = S2(i,j)
+   * 4. exp(Q) = pi^-1.2 * exp(pi^1/2 * Q * pi^-1/2) * pi^1/2
+   *           = pi^-1.2 * exp(S2) * pi^1/2
+   */
+
+  void ReversibleMarkovModel::recalc() 
+  {
+#ifndef NDEBUG
+    std::cerr<<"scale = "<<rate()<<endl;
+#endif
+
+    const unsigned n = size();
+
+    //--------- Compute pi[i]**0.5 and pi[i]**-0.5 ----------//
+    vector<double> sqrt_pi(n);
+    vector<double> inverse_sqrt_pi(n);
+    for(int i=0;i<n;i++) {
+      sqrt_pi[i] = sqrt(frequencies()[i]);
+      inverse_sqrt_pi[i] = 1.0/sqrt_pi[i];
+    }
+
+    //--------------- Calculate eigensystem -----------------//
+    SMatrix S(n,n);
+    for(int i=0;i<n;i++)
+      for(int j=0;j<=i;j++)
+	S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
+
+    //---------------- Compute eigensystem ------------------//
+    eigensystem = EigenValues(S);
+  }
+
+  Matrix ReversibleMarkovModel::getD() const {
+    BMatrix D(size(),size());
+    for(int i=0;i<size();i++)
+      D(i,i) = frequencies()[i];
+
+    return D;
+  }
+
+  Matrix ReversibleMarkovModel::transition_p(double t) const {
+    return exp(eigensystem,getD(),t);
+  }
+
+  ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)
+    :MarkovModel(a), 
+     eigensystem(a.size())
+  { }
+
+
+  //---------------------- INV_Model --------------------------//
+
+  string INV_Model::name() const {
+    return "INV";
+  }
+
+  string INV_Model::parameter_name(int i) const {
+    if (i==0)
+      return "INV::f";
+    else
+      return s_parameter_name(i,1);
+  }
+
+  INV_Model::INV_Model(const alphabet& a)
+    :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+  {
+    // Calculate S matrix
+    for(int i=0;i<S.size1();i++)
+      for(int j=0;j<S.size2();j++)
+	S(i,j) = 0;
+  }
+      
+  //----------------------- EQU -------------------------//
+
+  string EQU::parameter_name(int i) const {
+    return s_parameter_name(i,0);
+  }
+
+  string EQU::name() const {
+    return "EQU";
+  }
+
+  EQU::EQU(const alphabet& a) 
+    :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+  {
+    for(int i=0;i<size();i++)
+      for(int j=0;j<size();j++)
+	S(i,j) = 1;
+  }
+
+  //----------------------- Empirical -------------------------//
+
+  /// Construct an Empirical model on alphabet 'a' with matrix from 'filename'
+  Empirical::Empirical(const alphabet& a,const string& filename) 
+    :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+  { 
+    load_file(filename); 
+    recalc();
+  }
+
+  //------------------------- HKY -----------------------------//
+  string HKY::name() const {
+    return "HKY";
+  }
+
+  string HKY::parameter_name(int i) const {
+    if (i==0)
+      return "HKY::kappa";
+    else
+      return s_parameter_name(i,1);
+  }
+
+  double HKY::fiddle(int) {
+    if (not fixed(0))
+      kappa( kappa() * exp(gaussian(0,0.15)) );
+
+    return 1;
+  }
+
+  efloat_t HKY::prior() const 
+  {
+    return shift_laplace_pdf(log(kappa()), log(2), 0.25);
+  }
+
+  void HKY::recalc() {
+    assert(Alphabet().size()==4);
+
+    for(int i=0;i<Alphabet().size();i++)
+      for(int j=0;j<Alphabet().size();j++) {
+	if (i==j) continue;
+	if (Alphabet().transversion(i,j))
+	  S(i,j) = 1;
+	else
+	  S(i,j) = kappa();
+      }
+  }
+
+  //------------------------- TN -----------------------------//
+  string TN::name() const {
+    return "TN";
+  }
+
+  double TN::fiddle(int) 
+  {
+    const double sigma = 0.15;
+
+    if (not fixed(0)) {
+      double k = kappa1() * exp(gaussian(0,sigma));
+      kappa1(k);
+    }
+
+    if (not fixed(1)) {
+      double k = kappa2() * exp(gaussian(0,sigma));
+      kappa2(k);
+    }
+    return 1;
+  }
+
+  // This should be OK - the increments are linear combinations of gaussians...
+
+  /// return the LOG of the prior
+  efloat_t TN::prior() const {
+    double k1 = log(kappa1());
+    double k2 = log(kappa2());
+    
+    double alpha = (k1+k2)/2;
+    double beta  = (k1-k2)/2;
+
+    efloat_t P = 1;
+    P *= shift_laplace_pdf(alpha, log(2), 0.25);
+    P *= shift_laplace_pdf(beta, 0, 0.10);
+    return P;
+  }
+
+  void TN::recalc() {
+    assert(Alphabet().size()==4);
+
+    for(int i=0;i<Alphabet().size();i++)
+      for(int j=0;j<Alphabet().size();j++) {
+	if (i==j) continue;
+	if (Alphabet().transversion(i,j))
+	  S(i,j) = 1;
+	else if (Alphabet().purine(i))
+	  S(i,j) = kappa1();
+	else
+	  S(i,j) = kappa2();
+      }
+  }
+
+  string TN::parameter_name(int i) const 
+  {
+    if (i==0)
+      return "TN::kappa(pur)";
+    else if (i==1)
+      return "TN::kappa(pyr)";
+    else
+      return s_parameter_name(i,2);
+  }
+
+  string Empirical::name() const {
+    return "Empirical(" + modelname +")";
+  }
+
+  string Empirical::parameter_name(int i) const {
+    return s_parameter_name(i,0);
+  }
+
+  void Empirical::load_file(const string& filename) {
+    modelname = filename;
+
+    std::ifstream ifile(filename.c_str());
+
+    if (not ifile)
+      throw myexception(string("Couldn't open file '")+filename+"'");
+
+    for(int i=0;i<Alphabet().size();i++)
+      for(int j=0;j<i;j++) {
+	ifile>>S(i,j);
+	S(j,i) = S(i,j);
+      }
+
+    // the file has frequencies as well... where would we put them?
+  }
+
+  //------------------------ Codon Models -------------------//
+
+  CodonExchangeModel::CodonExchangeModel(const Codons& C)
+    :ExchangeModel(C),ModelWithAlphabet<Codons>(C)
+  { }
+
+  /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
+  double YangM0::omega() const {
+    return super_parameters_[1];
+  }
+
+  /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
+  void YangM0::omega(double w) {
+    super_parameters_[1]=w;
+    read();
+    recalc();
+  }
+
+  double YangM0::super_fiddle(int) 
+  {
+    double ratio = 1;
+
+    if (not fixed(0)) {
+      
+      double& f = super_parameters_[0];
+
+      const double sigma = 0.05;
+      f += gaussian(0,sigma);
+      
+      f = wrap(f,1.0);
+    }
+
+    if (not fixed(1)) {
+      ratio = exp(gaussian(0,0.20));
+      super_parameters_[1] *= ratio;
+    }
+
+    read();
+    recalc();
+
+    return ratio;
+  }
+
+  void YangM0::recalc() {
+    write();
+
+    for(int i=0;i<Alphabet().size();i++) {
+
+      for(int j=0;j<i;j++) {
+	int nmuts=0;
+	int pos=-1;
+	for(int p=0;p<3;p++)
+	  if (Alphabet().sub_nuc(i,p) != Alphabet().sub_nuc(j,p)) {
+	    nmuts++;
+	    pos=p;
+	  }
+	assert(nmuts>0);
+	assert(pos >= 0 and pos < 3);
+
+	double rate=0.0;
+
+	if (nmuts == 1) {
+
+	  int l1 = Alphabet().sub_nuc(i,pos);
+	  int l2 = Alphabet().sub_nuc(j,pos);
+	  assert(l1 != l2);
+
+	  rate = SubModel()(l1,l2);
+
+	  if (AminoAcid(i) != AminoAcid(j))
+	    rate *= omega();	
+	}
+
+	S(i,j) = S(j,i) = rate;
+      }
+    }
+  }
+
+  efloat_t YangM0::super_prior() const {
+    return shift_laplace_pdf(log(omega()), 0, 0.1);
+  }
+
+  efloat_t YangM0::prior() const {
+    return ::NestedModelOver<NucleotideExchangeModel>::prior();
+  }
+
+  string YangM0::name() const {
+    return string("YangM0[") + SubModel().name() + "]";
+  }
+
+  string YangM0::super_parameter_name(int i) const {
+    if (i==0)
+      return "YangM0::omega";
+    else
+      return s_parameter_name(i,1);
+  }
+
+  YangM0::YangM0(const Codons& C,const NucleotideExchangeModel& N)
+    :CodonExchangeModel(C),::NestedModelOver<NucleotideExchangeModel>(N,2)
+  { 
+    super_parameters_[0] = 1.0;
+    super_parameters_[1] = 1.0;
+    read();
+    omega(1.0);
+  }
+
+  YangM0::~YangM0() {}
+
+  //--------------- MultiRate Models ----------------//
+
+  double MultiModel::rate() const {
+    double r=0;
+    for(int m=0;m<n_base_models();m++)
+      r += distribution()[m]*base_model(m).rate();
+    return r;
+  }
+
+  void MultiModel::set_rate(double r)  {
+    double scale = r/rate();
+    for(int m=0;m<n_base_models();m++) {
+      base_model(m).set_rate(base_model(m).rate()*scale);
+    }
+  }
+
+  // This is per-branch, per-column - doesn't pool info about each branches across columns
+  Matrix MultiModel::transition_p(double t) const {
+    Matrix P = distribution()[0] * transition_p(t,0);
+    for(int m=1;m<n_base_models();m++)
+      P += distribution()[m] * transition_p(t,m);
+    return P;
+  }
+
+  Matrix frequency_matrix(const MultiModel& M) {
+    Matrix f(M.n_base_models(),M.Alphabet().size());
+    for(int m=0;m<f.size1();m++)
+      for(int l=0;l<f.size2();l++)
+	f(m,l) = M.base_model(m).frequencies()[l];
+    return f;
+  }
+
+  string UnitModel::name() const {
+    return string("[") + SubModel().name() + "]";
+  }
+
+  string UnitModel::super_parameter_name(int i) const {
+    return s_parameter_name(i,0);
+  }
+
+  /*
+
+  //------------- MultiFrequencyModel ---------------//
+  valarray<double> MultiFrequencyModel::get_a(int l) const 
+  {
+    valarray<double> al(fraction.size());
+
+    for(int m=0;m<al.size();m++)
+      al[m] = a(m,l);
+
+    return al;
+  }
+
+  void MultiFrequencyModel::set_a(int l,const valarray<double>& al) 
+  {
+    for(int m=0;m<al.size();m++)
+      a(m,l) = al[m];
   }
 
   double MultiFrequencyModel::super_fiddle(int) 
@@ -779,13 +624,6 @@ namespace substitution {
     return SubModel().frequencies();
   }
 
-  /// Set the equilibrium frequencies
-  void MultiFrequencyModel::frequencies(const std::valarray<double>& f) {
-    SubModel().frequencies(f);
-    recalc();
-  }
-  
-
   void MultiFrequencyModel::recalc() 
   {
     valarray<double> f = frequencies();
@@ -844,6 +682,7 @@ namespace substitution {
     read();
     recalc();
   }
+  */
 
   //----------------------------//
   const MultiModel::Base_Model_t& MultiParameterModel::base_model(int m) const {
@@ -877,13 +716,6 @@ namespace substitution {
   const std::valarray<double>& MultiParameterModel::frequencies() const {
     return SubModel().frequencies();
   }
-
-  /// Set the equilibrium frequencies
-  void MultiParameterModel::frequencies(const std::valarray<double>& f) {
-    SubModel().frequencies(f);
-    recalc();
-  }
-  
 
   // Um, summed-over parameter lives on as its MEAN
 
@@ -1010,13 +842,6 @@ namespace substitution {
     INV->frequencies(SubModel().frequencies());
     write();
   }
-
-  /// Set the equilibrium frequencies
-  void WithINV::frequencies(const std::valarray<double>& f) {
-    SubModel().frequencies(f);
-    INV->frequencies(SubModel().frequencies());
-  }
-  
 
   string WithINV::name() const {
     return SubModel().name() + " + INV";
@@ -1430,14 +1255,6 @@ namespace substitution {
     name += ")";
 
     return name;
-  }
-
-  void MixtureModel::frequencies(const std::valarray<double>& f) 
-  { 
-    for(int i=0;i<n_submodels();i++)
-      SubModels(i).frequencies(f);
-
-    recalc();
   }
 
   MixtureModel::MixtureModel(const std::vector<OwnedPointer<MultiModel> >& models)

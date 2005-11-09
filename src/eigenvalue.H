@@ -5,7 +5,6 @@
 #include "tnt/tnt_array2d.h"
 #include "tnt/jama_eig.h"
 #include <boost/numeric/ublas/banded.hpp>
-// #include <boost/numeric/ublas/config.hpp>
 #include "clone.H"
 
 class EigenValues: public Cloneable {
