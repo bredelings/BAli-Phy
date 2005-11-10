@@ -1,8 +1,14 @@
 /* FIXME:
-   1. How do multifrequency models fit into this framework?
-      -> Since we can't call 'model->frequencies(f)'
-   2. How does WithInv fit into this framework (how does alphabet sharing happen?)
-   3. 
+   1. MultiRate models can still take multifrequency models as inputs.
+   2. WithINV models can still take multifrequency models as inputs
+    - add a ReversibleMarkovSuperModel<alphabet>(a,INV,simplefrequencymodel)
+   3. MultiFrequencyModels can NOT take multifrequency models as inputs.
+    - instead, they take ExchangeModels as inputs.
+   4. YangM<n> models 
+    - could take YangM0 models + an alphabet as input.
+      (This way, we wouldn't get any alphabet parameters from the input model)
+    - MultiParameter and DistributionParameter models currently can only take
+      substitution::Model's as input.  Can we fix this?
 */
 
 #ifndef SMODEL_H
@@ -23,6 +29,7 @@ namespace substitution {
   using ::SuperDerivedModelOver;
 
   using std::string;
+  using std::valarray;
 
   class FullModel {
   public:
@@ -125,7 +132,7 @@ namespace substitution {
     virtual Matrix transition_p(double t) const =0;
 
     /// Get the equilibrium frequencies
-    virtual const std::valarray<double>& frequencies() const=0;
+    virtual const valarray<double>& frequencies() const=0;
 
     ReversibleModel() {}
   };
@@ -216,10 +223,6 @@ namespace substitution {
 
     efloat_t prior() const {return 1;}
 
-    operator       SMatrix& ()       {return S;}
-    operator const SMatrix& () const {return S;}
-
-    double operator()(int i,int j)       {return S(i,j);}
     double operator()(int i,int j) const {return S(i,j);}
 
     ExchangeModel* clone() const =0;
@@ -390,7 +393,7 @@ namespace substitution {
     void omega(double w);
 
     string name() const;
-    std::string super_parameter_name(int i) const;
+    string super_parameter_name(int i) const;
 
     YangM0(const Codons& C,const NucleotideExchangeModel& M);
 
@@ -406,7 +409,9 @@ namespace substitution {
     ReversibleFrequencyModel* clone() const =0;
 
     /// Get the equilibrium frequencies
-    virtual const std::valarray<double>& frequencies() const=0;
+    virtual const valarray<double>& frequencies() const=0;
+
+    double operator()(int i,int j) const {return R(i,j);}
 
     ReversibleFrequencyModel(const alphabet& a);
 
@@ -418,14 +423,16 @@ namespace substitution {
 			      public ModelWithAlphabet<alphabet>
   {
   protected:
-    std::valarray<double> f;
+    valarray<double> pi;
 
     void recalc();
 
   public:
-    double replace(int i,int j) const;
+    const valarray<double>& frequencies() const {return pi;}
 
-    const std::valarray<double>& frequencies() const {return f;}
+    void frequencies(const valarray<double>&);
+    
+    double f() const {return parameters_[0];}
 
     SimpleFrequencyModel* clone() const {return new SimpleFrequencyModel(*this);}
 
@@ -433,9 +440,9 @@ namespace substitution {
 
     double fiddle(int);
 
-    std::string name() const;
+    string name() const;
 
-    std::string parameter_name(int i) const;
+    string parameter_name(int i) const;
 
     explicit SimpleFrequencyModel(const alphabet& a);
   };
@@ -458,6 +465,7 @@ namespace substitution {
   {
     EigenValues eigensystem;
 
+  protected:
     void recalc();
 
   public:
@@ -476,61 +484,117 @@ namespace substitution {
     
     ~ReversibleMarkovModel() {}
   };
-
-  template <class Exchange_t,class Frequency_t,class alphabet_t>
-  class ReversibleMarkovModelOver: public MarkovModel,
-				   public Independant_Additive_Reversible_Model 
+  
+  template <class alphabet_t>
+  class ReversibleMarkovSuperModel: public ReversibleMarkovModel,
+				    virtual public SuperModel,
+				    public ModelWithAlphabet<alphabet_t>
   {
   protected:
     /// The exchange model
-    OwnedPointer<Exchange_t> S;
+    OwnedPointer<ExchangeModel> S;
 
     /// The frequency model
-    OwnedPointer<Frequency_t> R;
+    OwnedPointer<ReversibleFrequencyModel> R;
 
     void recalc();
 
-    /// Construct a reversible Markov model on alphabet 'a_'
-    ReversibleMarkovModelOver(const alphabet& a,int dp);
+    const ::Model& SubModels(int i) const {
+      if (i==0)
+	return *S;
+      else if (i==1)
+	return *R;
+      else
+	std::abort();
+    }
 
+    ::Model& SubModels(int i) {
+      if (i==0)
+	return *S;
+      else if (i==1)
+	return *R;
+      else
+	std::abort();
+    }
+
+    int n_submodels() const {return 2;}
+
+    efloat_t super_prior() const {return 1;}
   public:
-    double rate() const;
-    void set_rate(double);
-    
-    Matrix getD() const;
-    
-    const SMatrix& getS() const {return *S;}
-    
+
     /// Make a copy of this object
-    virtual ReversibleMarkovModelOver<Exchange_t,Frequency_t,alphabet_t>* clone() const =0;
+    virtual ReversibleMarkovSuperModel<alphabet_t>* clone() const
+    {return new ReversibleMarkovSuperModel<alphabet_t>(*this);}
 
-    /// The transition probability matrix - which we can now compute
-    Matrix transition_p(double t) const;
+    /// Get the equilibrium
+    const valarray<double>& frequencies() const {return R->frequencies();}
 
-    /// Get the equilibrium frequencies
-    const std::valarray<double>& frequencies() const {return R->frequencies();}
+    efloat_t prior() const {return S->prior() * R->prior();}
 
-    efloat_t prior() const;
+    string name() const;
+
+    string super_parameter_name(int i) const;
 
     /// Construct a reversible Markov model on alphabet 'a'
-    ReversibleMarkovModelOver(const alphabet& a);
+    ReversibleMarkovSuperModel(const alphabet& a,const ExchangeModel& S1,
+			       const ReversibleFrequencyModel& R1)
+      :ReversibleMarkovModel(a),
+       ModelWithAlphabet<alphabet>(a),
+       S(S1),
+       R(R1)
+    {}
     
-    ~ReversibleMarkovModelOver() {}
+    ~ReversibleMarkovSuperModel() {}
   };
 
-  template <class Exchange_t,class Frequency_t,class alphabet_t>
-  void ReversibleMarkovModelOver<Exchange_t,Frequency_t,alphabet_t>::recalc()
+  template <class alphabet_t>
+  void ReversibleMarkovSuperModel<alphabet_t>::recalc()
   {
-    for(int i=0;i<S->size1();i++) {
+    // write any changes down to sub-models
+    SuperModel::recalc();
+
+    // recompute rate matrix
+    for(int i=0;i<size();i++) {
       double sum=0;
-      for(int j=0;j<S->ize2();j++) {
+      for(int j=0;j<size();j++) {
 	if (i==j) continue;
-	Q(i,j) = (*S)(i,j)*(*R)(i,j);
+	Q(i,j) = (*S)(i,j) * (*R)(i,j);
 	sum += Q(i,j);
       }
       Q(i,i) = -sum;
     }
+
+    // recompute eigensystem
+    ReversibleMarkovModel::recalc();
   }
+
+  class SimpleReversibleMarkovModel: public ReversibleMarkovSuperModel<alphabet> 
+  {
+  protected:
+    OwnedPointer<SimpleFrequencyModel> R2;
+
+  public:
+    /// Make a copy of this object
+    virtual SimpleReversibleMarkovModel* clone() const {return new SimpleReversibleMarkovModel(*this);}
+
+    void recalc() {
+      R = R2;
+      ReversibleMarkovSuperModel<alphabet>::recalc();
+    }
+
+    const valarray<double>& frequencies() const {return R2->frequencies();}
+    
+    void frequencies(const valarray<double>& pi)
+    {
+      R2->frequencies(pi);
+      recalc();
+    }
+
+    SimpleReversibleMarkovModel(const ExchangeModel& E)
+      :ReversibleMarkovSuperModel<alphabet>(E.Alphabet(),E,SimpleFrequencyModel(E.Alphabet())),
+       R2(SimpleFrequencyModel(E.Alphabet()))
+    {}
+  };
 
   //--------------------------- Implement the underlying alphabet -------------------------//
 
@@ -543,7 +607,7 @@ namespace substitution {
     virtual ReversibleWrapperOver* clone() const=0;
 
     /// Get the equilibrium frequencies
-    const std::valarray<double>& frequencies() const {
+    const valarray<double>& frequencies() const {
       return NestedModelOver<T>::SubModel().frequencies();
     }
 
@@ -643,8 +707,8 @@ namespace substitution {
     /// Fraction of the sites with each parameter value
     vector<double> fraction;
 
-    std::valarray<double> get_a(int m) const;
-    void set_a(int m,const std::valarray<double>& f);
+    valarray<double> get_a(int m) const;
+    void set_a(int m,const valarray<double>& f);
     
     void recalc();
     double super_fiddle(int);
@@ -668,7 +732,7 @@ namespace substitution {
     std::vector<double> distribution() const;
 
     /// Get the equilibrium frequencies
-    const std::valarray<double>& frequencies() const;
+    const valarray<double>& frequencies() const;
 
     string name() const;
     string super_parameter_name(int i) const;
@@ -709,7 +773,7 @@ namespace substitution {
     std::vector<double> distribution() const;
 
     /// Get the equilibrium frequencies
-    const std::valarray<double>& frequencies() const;
+    const valarray<double>& frequencies() const;
 
     MultiParameterModel(const MultiModel& M,int dp,int p,int n_bins);
 
@@ -765,11 +829,12 @@ namespace substitution {
   /// The Invariant-sites model: a certain fraction of the sites don't change
   /// The only parameter is 'p', the fraction of sites which don't change
   /// To keep branch lengths the same, inflate rates by 1/(1-p).
-  class WithINV: public MultiModel, public ReversibleWrapperOver<MultiModel> {
+  class WithINV: public MultiModel, public ReversibleWrapperOver<MultiModel> 
+  {
     static const double inv_frac_mean;
     static const double max_inv_rate;
 
-    OwnedPointer<INV_Model> INV;
+    OwnedPointer<SimpleReversibleMarkovModel> INV;
 
   protected:
 
@@ -792,7 +857,7 @@ namespace substitution {
     std::vector<double> distribution() const;
 
     /// Get the equilibrium frequencies
-    const std::valarray<double>& frequencies() const;
+    const valarray<double>& frequencies() const;
 
     string name() const;
     string super_parameter_name(int i) const;
@@ -800,9 +865,12 @@ namespace substitution {
     WithINV(const MultiModel& M);
   };
 
-  class YangM2: public MultiParameterModel {
+  class YangM2: public MultiParameterModel,
+		virtual public SuperModel
+  {
     double super_fiddle(int);
     void recalc();
+
   public:
     
     efloat_t super_prior() const;
@@ -812,7 +880,7 @@ namespace substitution {
     string name() const;
     string super_parameter_name(int i) const;
 
-    YangM2(const YangM0& M1);
+    YangM2(const YangM0& M1,const ReversibleFrequencyModel& R);
   };
 
 
@@ -855,7 +923,7 @@ namespace substitution {
     double super_fiddle(int);
     void recalc();
 
-    std::valarray<double> pi;
+    valarray<double> pi;
 
   public:
     virtual MixtureModel* clone() const {return new MixtureModel(*this);}
@@ -867,7 +935,7 @@ namespace substitution {
           Base_Model_t& base_model(int m);
 
     /// Get the equilibrium frequencies
-    const std::valarray<double>& frequencies() const {return pi;}
+    const valarray<double>& frequencies() const {return pi;}
 
     std::vector<double> distribution() const;
 

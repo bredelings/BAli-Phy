@@ -94,31 +94,63 @@ namespace substitution {
     :S(a.size(),a.size())
   {}
 
+  //----------------------- Frequency Models ------------------------//
 
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
     :R(a.size(),a.size())
   { }
 
-  void SimpleFrequencyModel::recalc() {
-    f = get_varray(parameters_,0,size());
+  void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
+  {
+    // set the frequency parameters
+    for(int i=0;i<size();i++)
+      parameters_[i+1] = pi2[i];
+
+    // recompute everything
+    recalc();
   }
 
-  double SimpleFrequencyModel::replace(int i,int j) const {
-    assert(0 <= i and i < size());
-    assert(0 <= j and j < size());
+  void SimpleFrequencyModel::recalc() 
+  {
+    // compute frequencies
+    pi = get_varray(parameters_,0,size());
+    
+    // compute transition rates
+    valarray<double> pi_f(size());
+    for(int i=0;i<size();i++)
+      pi_f[i] = pow(pi[i],f());
 
-    return f[j];
+    for(int i=0;i<size();i++)
+      for(int j=0;j<i;j++)
+	R(i,j) = pi_f[i]/pi[i] * pi_f[j];
+
+    // diagonal entries should have no effect
+    for(int i=0;i<size();i++)
+      R(i,i) = 0;
   }
 
   efloat_t SimpleFrequencyModel::prior() const 
   {
-    // uniform - 1 observeration per letter
+    // uniform prior on f
+    efloat_t Pr = 1;
 
+    // uniform - 1 observeration per letter
     return ::dirichlet_pdf(frequencies(), valarray<double>(1.0, Alphabet().size()) );
   }
 
-  double SimpleFrequencyModel::fiddle(int) {
-    dirichlet_fiddle(parameters_, 0, size(), 0.25/sqrt(size()));
+  double SimpleFrequencyModel::fiddle(int) 
+  {
+    // propose new 'f' value
+    if (not fixed(0)) {
+      parameters_[0] += gaussian(0,0.25);
+      parameters_[0] = wrap(parameters_[0],1.0);
+    }
+
+    // propose new frequencies
+    dirichlet_fiddle(parameters_, fixed_, 1, size(), 0.25/sqrt(size()));
+
+    recalc();
+
     return 1;
   }
 
@@ -133,9 +165,20 @@ namespace substitution {
   SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a)
     :ReversibleFrequencyModel(a),
      ModelWithAlphabet<alphabet>(a),
-     f(1.0/size(),size())
+     pi(1.0/size(),size())
   {
     set_n_parameters(a.size());
+
+    // Start with *f = 1
+    parameters_[0] = 1.0;
+    fixed_[0] = true;
+
+    // Start with frequencies = (1/n, ... , 1/n)
+    for(int i=0;i<size();i++)
+      parameters_[i] = 1.0/size();
+
+    // initialize everything
+    recalc();
   }
 
 
@@ -979,7 +1022,7 @@ namespace substitution {
       return s_parameter_name(i,4);
   }
 
-  YangM2::YangM2(const YangM0& M1) 
+  YangM2::YangM2(const YangM0& M1,const ReversibleFrequencyModel& R) 
     :MultiParameterModel(UnitModel(M1),4,1,3)
   {
     super_parameters_[0] = 1.0/3;
