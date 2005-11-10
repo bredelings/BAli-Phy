@@ -237,7 +237,9 @@ CXXFLAGS += ${LANGO:%=-f%} ${WARN:%=-W%} ${DEBUG:%=-%} ${OPT:%=-%} ${DEFS:%=-D%}
 LI=${CXX}
 
 
-GNUmakefile : ${SOURCES:%=.%.d} 
+.PHONY: depend
+
+depend : ${SOURCES:%=.%.d} 
 
 % : %.o
 	${LI} ${LDFLAGS} $^ -o $@ ${LOADLIBS}
