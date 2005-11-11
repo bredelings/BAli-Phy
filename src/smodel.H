@@ -298,7 +298,7 @@ namespace substitution {
     {}
   };
 
-  /// The HKY substitution model for DNA or RNA: 'kappa' = transition/transversion ratio.
+  /// The Hasegawa, Kishina, Yano (1985)
   class HKY: public NucleotideExchangeModel
   {
     virtual void recalc();
@@ -319,13 +319,10 @@ namespace substitution {
     string parameter_name(int i) const;
 
     /// Construct an HKY model on alphabet 'a'
-    HKY(const Nucleotides& N)
-      : NucleotideExchangeModel(N)
-    { 
-      kappa(2);
-    }
+    HKY(const Nucleotides& N);
   };
 
+  /// The Tamura-Nei (1993) model
   class TN: public NucleotideExchangeModel {
     virtual void recalc();
   public:
@@ -350,14 +347,28 @@ namespace substitution {
     string parameter_name(int i) const;
 
     /// Construct an HKY model on alphabet 'a'
-    TN(const Nucleotides& N)
-      : NucleotideExchangeModel(N)
-    { 
-      kappa1(2);
-      kappa2(2);
-    }
-
+    TN(const Nucleotides& N);
   };
+
+  /// The General Time Reversible model
+  class GTR: public NucleotideExchangeModel {
+    virtual void recalc();
+  public:
+    
+    virtual GTR* clone() const {return new GTR(*this);}
+
+    double fiddle(int);
+
+    virtual efloat_t prior() const;
+
+    string name() const;
+    string parameter_name(int i) const;
+
+    /// Construct a GTR model on alphabet 'a'
+    GTR(const Nucleotides& N);
+  };
+    
+
 
   class CodonExchangeModel: public ExchangeModel, 
 			    public ModelWithAlphabet<Codons> 
@@ -405,11 +416,13 @@ namespace substitution {
   {
   protected:
     SMatrix R;
+
+    valarray<double> pi;
   public:
     ReversibleFrequencyModel* clone() const =0;
 
     /// Get the equilibrium frequencies
-    virtual const valarray<double>& frequencies() const=0;
+    const valarray<double>& frequencies() const {return pi;}
 
     double operator()(int i,int j) const {return R(i,j);}
 
@@ -423,11 +436,10 @@ namespace substitution {
 			      public ModelWithAlphabet<alphabet>
   {
   protected:
-    valarray<double> pi;
-
     void recalc();
 
   public:
+    
     const valarray<double>& frequencies() const {return pi;}
 
     void frequencies(const valarray<double>&);
@@ -445,6 +457,27 @@ namespace substitution {
     string parameter_name(int i) const;
 
     explicit SimpleFrequencyModel(const alphabet& a);
+  };
+
+  class TripletFrequencyModel: public ReversibleFrequencyModel,
+			       public ::NestedModelOver<SimpleFrequencyModel>,
+			       public ModelWithAlphabet<Triplets>
+  {
+  protected:
+    void recalc();
+
+    string super_parameter_name(int i) const;
+
+  public:
+    TripletFrequencyModel* clone() const {return new TripletFrequencyModel(*this);}
+
+    efloat_t super_prior() const;
+
+    double super_fiddle(int);
+
+    string name() const;
+
+    explicit TripletFrequencyModel(const Triplets& T);
   };
 
 
@@ -536,10 +569,10 @@ namespace substitution {
     string super_parameter_name(int i) const;
 
     /// Construct a reversible Markov model on alphabet 'a'
-    ReversibleMarkovSuperModel(const alphabet& a,const ExchangeModel& S1,
+    ReversibleMarkovSuperModel(const alphabet_t& a,const ExchangeModel& S1,
 			       const ReversibleFrequencyModel& R1)
       :ReversibleMarkovModel(a),
-       ModelWithAlphabet<alphabet>(a),
+       ModelWithAlphabet<alphabet_t>(a),
        S(S1),
        R(R1)
     {}
@@ -902,7 +935,7 @@ namespace substitution {
     string name() const;
     string super_parameter_name(int i) const;
 
-    YangM3(const YangM0& M1,int n);
+    YangM3(const YangM0& M1,const ReversibleFrequencyModel& R, int n);
   };
 
 
@@ -913,7 +946,7 @@ namespace substitution {
 
     //    string name() const;
 
-    YangM7(const YangM0& M1,int n);
+    YangM7(const YangM0& M1,const ReversibleFrequencyModel& R, int n);
   };
 
 

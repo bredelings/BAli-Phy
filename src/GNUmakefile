@@ -246,7 +246,9 @@ depend : ${SOURCES:%=.%.d}
 
 .%.d : %
 	@echo ${shell \
-	  ${CPP} -MM ${CPPFLAGS} $< | sed 's/\(^.*\):/$@ \1:/g'} > $@
+	  ${CPP} -MM ${CPPFLAGS} $< } > $@
+#	  ${CPP} -MM ${CPPFLAGS} $< | sed 's/\(^.*\):/$@ \1:/g'} > $@
+
 clean:
 	-@rm -f *.o *~ *# *.tar *.gz ${PROGNAME} Makefile core ${TOOLS} tools/*.o
 

@@ -36,6 +36,12 @@ namespace substitution {
   }
 
   template <typename T>
+  inline valarray<T> get_varray(const vector<T>& v1) 
+  {
+    return get_varray(v1,0,v1.size());
+  }
+
+  template <typename T>
   void set_varray(vector<T>& v1,int start,const valarray<T>& v2) 
   {
     assert(start>=0);
@@ -45,6 +51,12 @@ namespace substitution {
     //copy from valarray
     for(int i=0;i<v2.size();i++)
       v1[start + i] = v2[i];
+  }
+
+  template <typename T>
+  inline valarray<T> set_varray(const vector<T>& v1,const valarray<T>& v2) 
+  {
+    return set_varray(v1,v2);
   }
 
 
@@ -57,7 +69,6 @@ namespace substitution {
     fract = ::dirichlet_fiddle(fract,mask,sigma);
 
     set_varray(v,start,fract);
-
   }
 
   void dirichlet_fiddle(vector<double>& v,int start, int n,double sigma) 
@@ -68,7 +79,6 @@ namespace substitution {
     fract = ::dirichlet_fiddle(fract,sigma);
 
     set_varray(v,start,fract);
-
   }
 
   void dirichlet_fiddle(vector<double>& v,double sigma) 
@@ -97,7 +107,8 @@ namespace substitution {
   //----------------------- Frequency Models ------------------------//
 
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
-    :R(a.size(),a.size())
+    :R(a.size(),a.size()),
+     pi(1.0/size(),size())
   { }
 
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
@@ -135,7 +146,7 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    return ::dirichlet_pdf(frequencies(), valarray<double>(1.0, Alphabet().size()) );
+    return dirichlet_pdf(parameters_, 1, size(), 1.0);
   }
 
   double SimpleFrequencyModel::fiddle(int) 
@@ -159,15 +170,19 @@ namespace substitution {
   }
   
   string SimpleFrequencyModel::parameter_name(int i) const {
-    return string("f") + Alphabet().letter(i);
+    if (i == 0)
+      return "f";
+    else if (i-1<size())
+      return string("f") + Alphabet().letter(i-1);
+    else
+      return s_parameter_name(i,size()+1);
   }
   
   SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a)
     :ReversibleFrequencyModel(a),
-     ModelWithAlphabet<alphabet>(a),
-     pi(1.0/size(),size())
+     ModelWithAlphabet<alphabet>(a)
   {
-    set_n_parameters(a.size());
+    set_n_parameters(a.size() + 1);
 
     // Start with *f = 1
     parameters_[0] = 1.0;
@@ -175,14 +190,92 @@ namespace substitution {
 
     // Start with frequencies = (1/n, ... , 1/n)
     for(int i=0;i<size();i++)
-      parameters_[i] = 1.0/size();
+      parameters_[i+1] = 1.0/size();
 
     // initialize everything
     recalc();
   }
 
 
+  //------------------- Triplet Frequency Model -----------------//
 
+  void TripletFrequencyModel::recalc() 
+  {
+    valarray<double> nu = get_varray(super_parameters_, 1, size());
+
+    //------------- compute frequencies ------------------//
+    valarray<double> sub_pi = SubModel().frequencies();
+
+    pi = nu;
+
+    for(int i=0;i<size();i++)
+      for(int j=0;j<3;j++)
+	pi[i] *= sub_pi[Alphabet().sub_nuc(i,j)];
+
+    pi /= pi.sum();
+
+
+    //------------ compute transition rates -------------//
+    double g = super_parameters_[0];
+
+    valarray<double> nu_g(size());
+    for(int i=0;i<size();i++)
+      nu_g[i] = pow(nu[i],g);
+
+
+    for(int i=0;i<size();i++)
+      for(int j=0;j<i;j++)
+	R(i,j) = SubModel()(i,j) * nu_g[i]/nu[i]*nu_g[j];
+
+    // diagonal entries should have no effect
+    for(int i=0;i<size();i++)
+      R(i,i) = 0;
+  }
+
+  efloat_t TripletFrequencyModel::super_prior() const 
+  {
+    return dirichlet_pdf(super_parameters_,1,size(),10.0);
+  }
+
+  double TripletFrequencyModel::super_fiddle(int)
+  {
+    if (not fixed(0)) {
+      super_parameters_[0] += gaussian(0,0.25);
+      super_parameters_[0] = wrap(parameters_[0],1.0);
+    }
+
+    // propose new frequencies
+    dirichlet_fiddle(super_parameters_, fixed_, 1, size(), 0.25/sqrt(size()));
+
+    recalc();
+
+    return 1;  
+  }
+
+  string TripletFrequencyModel::name() const 
+  {
+    return "Triplet frequencies";
+  }
+
+  string TripletFrequencyModel::super_parameter_name(int i) const 
+  {
+    if (i == 0)
+      return "g";
+    else if (i-1<size())
+      return string("f") + Alphabet().letter(i-1);
+    else
+      return s_parameter_name(i,size()+1);
+  }
+
+  TripletFrequencyModel::TripletFrequencyModel(const Triplets& T)
+    : ReversibleFrequencyModel(T),
+      ::NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),T.size()+1),
+      ModelWithAlphabet<Triplets>(T)
+  {
+
+  }
+
+  //----------------------- ReversibleMarkovModel --------------------------//
   // Q(i,j) = S(i,j)*pi[j]   for i!=j
   // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
 
@@ -300,6 +393,31 @@ namespace substitution {
 
   //----------------------- Empirical -------------------------//
 
+  string Empirical::name() const {
+    return "Empirical(" + modelname +")";
+  }
+
+  string Empirical::parameter_name(int i) const {
+    return s_parameter_name(i,0);
+  }
+
+  void Empirical::load_file(const string& filename) {
+    modelname = filename;
+
+    std::ifstream ifile(filename.c_str());
+
+    if (not ifile)
+      throw myexception(string("Couldn't open file '")+filename+"'");
+
+    for(int i=0;i<Alphabet().size();i++)
+      for(int j=0;j<i;j++) {
+	ifile>>S(i,j);
+	S(j,i) = S(i,j);
+      }
+
+    // the file has frequencies as well... where would we put them?
+  }
+
   /// Construct an Empirical model on alphabet 'a' with matrix from 'filename'
   Empirical::Empirical(const alphabet& a,const string& filename) 
     :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
@@ -343,6 +461,14 @@ namespace substitution {
 	else
 	  S(i,j) = kappa();
       }
+  }
+
+  /// Construct an HKY model on alphabet 'a'
+  HKY::HKY(const Nucleotides& N)
+    : NucleotideExchangeModel(N)
+  { 
+    set_n_parameters(1);
+    kappa(2);
   }
 
   //------------------------- TN -----------------------------//
@@ -407,30 +533,111 @@ namespace substitution {
       return s_parameter_name(i,2);
   }
 
-  string Empirical::name() const {
-    return "Empirical(" + modelname +")";
+    /// Construct an HKY model on alphabet 'a'
+  TN::TN(const Nucleotides& N)
+    : NucleotideExchangeModel(N)
+  { 
+    set_n_parameters(2);
+    kappa1(2);
+    kappa2(2);
   }
 
-  string Empirical::parameter_name(int i) const {
-    return s_parameter_name(i,0);
+  string GTR::name() const {
+    return "GTR";
   }
 
-  void Empirical::load_file(const string& filename) {
-    modelname = filename;
+  double GTR::fiddle(int) 
+  {
+    //------------- read --------------//
+    valarray<double> rates = get_varray(parameters_);
+    rates /= rates.sum();
 
-    std::ifstream ifile(filename.c_str());
+    valarray<bool> mask = not get_varray(fixed_);
 
-    if (not ifile)
-      throw myexception(string("Couldn't open file '")+filename+"'");
+    //------------- fiddle -------------//
+    rates = ::dirichlet_fiddle(rates,mask, 0.15);
+    rates *= 6;
 
-    for(int i=0;i<Alphabet().size();i++)
-      for(int j=0;j<i;j++) {
-	ifile>>S(i,j);
-	S(j,i) = S(i,j);
-      }
+    //------------- write --------------//
+    set_varray(parameters_,rates);
 
-    // the file has frequencies as well... where would we put them?
+    return 1;
   }
+
+  // This should be OK - the increments are linear combinations of gaussians...
+
+  /// return the LOG of the prior
+  efloat_t GTR::prior() const 
+  {
+    valarray<double> rates = get_varray(parameters_);
+    rates /= rates.sum();
+
+    valarray<double> q(6);
+
+    q[0] = 2; // AG - transition
+
+    q[1] = 1; // AT - transversion
+
+    q[2] = 1; // AC - transversion
+
+    q[3] = 1; // GT - transversion
+
+    q[4] = 2; // GC - transversion
+
+    q[5] = 1; // TC - transition
+
+    q *= 4;
+
+    return ::dirichlet_pdf(rates, q);
+  }
+
+  void GTR::recalc() {
+    assert(Alphabet().size()==4);
+
+    S(0,1) = parameters_[0]; // AG
+    S(0,2) = parameters_[1]; // AT
+    S(0,3) = parameters_[2]; // AC
+
+    S(1,2) = parameters_[3]; // GT
+    S(2,1) = parameters_[4]; // GC
+
+    S(2,3) = parameters_[5]; // TC
+  }
+
+  string GTR::parameter_name(int i) const 
+  {
+    if (i==0)
+      return "GTR::AG";
+    else if (i==1)
+      return "GTR::AT";
+    else if (i==2)
+      return "GTR::AC";
+
+    else if (i==3)
+      return "GTR::GT";
+    else if (i==4)
+      return "GTR::GC";
+
+    else if (i==5)
+      return "GTR::TC";
+
+    else
+      return s_parameter_name(i,6);
+  }
+
+  GTR::GTR(const Nucleotides& N)
+      : NucleotideExchangeModel(N)
+    { 
+      set_n_parameters(6);
+
+      for(int i=0;i<parameters_.size();i++)
+	parameters_[i] = 1;
+
+      recalc();
+    }
+
+
+
 
   //------------------------ Codon Models -------------------//
 
@@ -532,9 +739,8 @@ namespace substitution {
   YangM0::YangM0(const Codons& C,const NucleotideExchangeModel& N)
     :CodonExchangeModel(C),::NestedModelOver<NucleotideExchangeModel>(N,2)
   { 
-    super_parameters_[0] = 1.0;
-    super_parameters_[1] = 1.0;
-    read();
+    set_n_parameters(1);
+
     omega(1.0);
   }
 
@@ -1009,7 +1215,8 @@ namespace substitution {
     return SubModel().name() + " + YangM2";
   }
 
-  string YangM2::super_parameter_name(int i) const {
+  string YangM2::super_parameter_name(int i) const 
+  {
     if (i==0)
       return "YangM2::f[AA INV]";
     else if (i==1)
@@ -1023,7 +1230,11 @@ namespace substitution {
   }
 
   YangM2::YangM2(const YangM0& M1,const ReversibleFrequencyModel& R) 
-    :MultiParameterModel(UnitModel(M1),4,1,3)
+    :MultiParameterModel(
+			 UnitModel(
+				   ReversibleMarkovSuperModel<Codons>(M1.Alphabet(),M1,R)
+				   ),
+			 4,0,3)
   {
     super_parameters_[0] = 1.0/3;
     super_parameters_[1] = 1.0/3;
@@ -1161,8 +1372,11 @@ namespace substitution {
       return s_parameter_name(i,2*fraction.size());
   }
 
-  YangM3::YangM3(const YangM0& M1,int n) 
-    :MultiParameterModel(UnitModel(M1),2*n,1,n)
+  YangM3::YangM3(const YangM0& M1,const ReversibleFrequencyModel& R, int n) 
+    :MultiParameterModel(UnitModel(
+				   ReversibleMarkovSuperModel<Codons>(M1.Alphabet(),M1,R)
+				   )
+			 ,2*n,0,n)
   {
     // p
     for(int i=0;i<n;i++)
@@ -1179,8 +1393,11 @@ namespace substitution {
 
 
 
-  YangM7::YangM7(const YangM0& M1,int n) 
-    :DistributionParameterModel(UnitModel(M1),Beta(),1,n)
+  YangM7::YangM7(const YangM0& M1,const ReversibleFrequencyModel& R, int n) 
+    :DistributionParameterModel(UnitModel(
+					  ReversibleMarkovSuperModel<Codons>(M1.Alphabet(),M1,R)
+					  )
+				,Beta(),0,n)
   { }
 
   int MixtureModel::n_base_models() const 
