@@ -81,6 +81,11 @@ namespace substitution {
     set_varray(v,start,fract);
   }
 
+  void dirichlet_fiddle(vector<double>& v,vector<bool>& fixed, double sigma) 
+  {
+    dirichlet_fiddle(v, fixed, 0, v.size(), sigma);
+  }
+
   void dirichlet_fiddle(vector<double>& v,double sigma) 
   {
     dirichlet_fiddle(v,0,v.size(),sigma);
@@ -93,12 +98,24 @@ namespace substitution {
     return ::dirichlet_pdf(p2,q);
   }
 
+  efloat_t dirichlet_pdf(const vector<double>& p1,const valarray<double>& q)
+  {
+    return dirichlet_pdf(p1,0,p1.size(),q);
+  }
+
   efloat_t dirichlet_pdf(const vector<double>& p1,int start, int n, double N)
   {
     valarray<double> p2 = get_varray(p1,start,n);
 
     return ::dirichlet_pdf(p2,N);
   }
+
+  efloat_t dirichlet_pdf(const vector<double>& p1,double N)
+  {
+    return dirichlet_pdf(p1,0,p1.size(),N);
+  }
+
+
 
   ExchangeModel::ExchangeModel(const alphabet& a)
     :S(a.size(),a.size())
@@ -108,7 +125,7 @@ namespace substitution {
 
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
     :R(a.size(),a.size()),
-     pi(1.0/size(),size())
+     pi(1.0/a.size(),a.size())
   { }
 
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
@@ -124,7 +141,7 @@ namespace substitution {
   void SimpleFrequencyModel::recalc() 
   {
     // compute frequencies
-    pi = get_varray(parameters_,0,size());
+    pi = get_varray(parameters_,1,size());
     
     // compute transition rates
     valarray<double> pi_f(size());
@@ -224,8 +241,14 @@ namespace substitution {
 
 
     for(int i=0;i<size();i++)
-      for(int j=0;j<i;j++)
-	R(i,j) = SubModel()(i,j) * nu_g[i]/nu[i]*nu_g[j];
+      for(int j=0;j<i;j++) {
+	R(i,j) = nu_g[i]/nu[i]*nu_g[j];
+	for(int k=0;k<3;k++) {
+	  int n1 = Alphabet().sub_nuc(i,k);
+	  int n2 = Alphabet().sub_nuc(j,k);
+	  R(i,j) *= SubModel()(n1,n2);
+	}
+      }
 
     // diagonal entries should have no effect
     for(int i=0;i<size();i++)
@@ -262,7 +285,7 @@ namespace substitution {
     if (i == 0)
       return "g";
     else if (i-1<size())
-      return string("f") + Alphabet().letter(i-1);
+      return string("v") + Alphabet().letter(i-1);
     else
       return s_parameter_name(i,size()+1);
   }
@@ -272,7 +295,122 @@ namespace substitution {
       ::NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),T.size()+1),
       ModelWithAlphabet<Triplets>(T)
   {
+    read();
 
+    super_parameters_[0] = 1; // g
+
+    for(int i=0;i<size();i++)
+      super_parameters_[i] = 1.0/size();
+
+    recalc();
+  }
+
+  //------------------- Codon Frequency Model -----------------//
+
+  void CodonFrequencyModel::recalc() 
+  {
+    double c = parameters_[0];
+
+    //------------- compute frequencies ------------------//
+    valarray<double> aa_pi = get_varray(super_parameters_, 2, aa_size());
+
+    // get codon frequencies of sub-alphabet
+    valarray<double> sub_pi = SubModel().frequencies();
+
+    // get aa frequencies of sub-alphabet
+    valarray<double> sub_aa_pi(0.0,aa_size());
+    for(int i=0;i<size();i++)
+      sub_aa_pi[Alphabet().translate(i)] += sub_pi[i];
+
+    // get factors by which to multiply sub-alphabet frequencies
+    valarray<double> factor(size());
+    for(int i=0;i<size();i++) 
+    {
+      int j = Alphabet().translate(i);
+      factor[i] = pow(aa_pi[j]/sub_aa_pi[j],c);
+    }
+
+    // compute aa-aware codon frequencies
+    for(int i=0;i<size();i++) 
+      pi[i] = sub_pi[i] * factor[i];
+
+    // scale so as to sum to 1
+    pi /= pi.sum();
+
+
+    //------------ compute transition rates -------------//
+    double h = super_parameters_[1];
+
+    valarray<double> factor_h(size());
+    for(int i=0;i<size();i++)
+      factor_h[i] = pow(factor[i],h);
+
+
+    for(int i=0;i<size();i++)
+      for(int j=0;j<i;j++)
+	R(i,j) = SubModel()(i,j) * factor_h[i]/factor[i]*factor_h[j];
+
+    // diagonal entries should have no effect
+    for(int i=0;i<size();i++)
+      R(i,i) = 0;
+  }
+
+  efloat_t CodonFrequencyModel::super_prior() const 
+  {
+    return dirichlet_pdf(super_parameters_,2,aa_size(),10.0);
+  }
+
+  double CodonFrequencyModel::super_fiddle(int)
+  {
+    if (not fixed(0)) {
+      super_parameters_[0] += gaussian(0,0.25);
+      super_parameters_[0] = wrap(parameters_[0],1.0);
+    }
+
+    if (not fixed(1)) {
+      super_parameters_[1] += gaussian(0,0.25);
+      super_parameters_[1] = wrap(parameters_[1],1.0);
+    }
+
+    // propose new frequencies
+    dirichlet_fiddle(super_parameters_, fixed_, 2, aa_size(), 0.25/sqrt(aa_size()));
+
+    recalc();
+
+    return 1;  
+  }
+
+  string CodonFrequencyModel::name() const 
+  {
+    return "Codon frequencies";
+  }
+
+  string CodonFrequencyModel::super_parameter_name(int i) const 
+  {
+    if (i == 0)
+      return "c";
+    else if (i == 1)
+      return "h";
+    else if (i-2<Alphabet().getAminoAcids().size())
+      return string("b_") + Alphabet().getAminoAcids().letter(i-2);
+    else
+      return s_parameter_name(i,Alphabet().getAminoAcids().size()+2);
+  }
+
+  CodonFrequencyModel::CodonFrequencyModel(const Codons& C)
+    : ReversibleFrequencyModel(C),
+      ::NestedModelOver<TripletFrequencyModel>(TripletFrequencyModel(C), C.getAminoAcids().size() + 2),
+      ModelWithAlphabet<Codons>(C)
+  {
+    read();
+
+    super_parameters_[0] = 0.5; // c
+    super_parameters_[1] = 0.5; // h
+
+    for(int i=0;i<C.getAminoAcids().size();i++)
+      super_parameters_[i-2] = 1.0/C.getAminoAcids().size();
+
+    recalc();
   }
 
   //----------------------- ReversibleMarkovModel --------------------------//
@@ -350,6 +488,12 @@ namespace substitution {
      eigensystem(a.size())
   { }
 
+  SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ExchangeModel& E)
+      :ReversibleMarkovSuperModel<alphabet>(E.Alphabet(),E,SimpleFrequencyModel(E.Alphabet())),
+       R2(SimpleFrequencyModel(E.Alphabet()))
+    {
+      recalc();
+    }
 
   //---------------------- INV_Model --------------------------//
 
@@ -548,18 +692,7 @@ namespace substitution {
 
   double GTR::fiddle(int) 
   {
-    //------------- read --------------//
-    valarray<double> rates = get_varray(parameters_);
-    rates /= rates.sum();
-
-    valarray<bool> mask = not get_varray(fixed_);
-
-    //------------- fiddle -------------//
-    rates = ::dirichlet_fiddle(rates,mask, 0.15);
-    rates *= 6;
-
-    //------------- write --------------//
-    set_varray(parameters_,rates);
+    dirichlet_fiddle(parameters_,fixed_, 0.15);
 
     return 1;
   }
@@ -569,9 +702,6 @@ namespace substitution {
   /// return the LOG of the prior
   efloat_t GTR::prior() const 
   {
-    valarray<double> rates = get_varray(parameters_);
-    rates /= rates.sum();
-
     valarray<double> q(6);
 
     q[0] = 2; // AG - transition
@@ -588,7 +718,7 @@ namespace substitution {
 
     q *= 4;
 
-    return ::dirichlet_pdf(rates, q);
+    return dirichlet_pdf(parameters_, q);
   }
 
   void GTR::recalc() {
@@ -631,7 +761,7 @@ namespace substitution {
       set_n_parameters(6);
 
       for(int i=0;i<parameters_.size();i++)
-	parameters_[i] = 1;
+	parameters_[i] = 1.0/6;
 
       recalc();
     }
@@ -647,12 +777,12 @@ namespace substitution {
 
   /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
   double YangM0::omega() const {
-    return super_parameters_[1];
+    return super_parameters_[0];
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
   void YangM0::omega(double w) {
-    super_parameters_[1]=w;
+    super_parameters_[0]=w;
     read();
     recalc();
   }
@@ -662,18 +792,8 @@ namespace substitution {
     double ratio = 1;
 
     if (not fixed(0)) {
-      
-      double& f = super_parameters_[0];
-
-      const double sigma = 0.05;
-      f += gaussian(0,sigma);
-      
-      f = wrap(f,1.0);
-    }
-
-    if (not fixed(1)) {
       ratio = exp(gaussian(0,0.20));
-      super_parameters_[1] *= ratio;
+      super_parameters_[0] *= ratio;
     }
 
     read();
@@ -737,10 +857,8 @@ namespace substitution {
   }
 
   YangM0::YangM0(const Codons& C,const NucleotideExchangeModel& N)
-    :CodonExchangeModel(C),::NestedModelOver<NucleotideExchangeModel>(N,2)
+    :CodonExchangeModel(C),::NestedModelOver<NucleotideExchangeModel>(N,1)
   { 
-    set_n_parameters(1);
-
     omega(1.0);
   }
 
@@ -786,7 +904,6 @@ namespace substitution {
     return s_parameter_name(i,0);
   }
 
-  /*
 
   //------------- MultiFrequencyModel ---------------//
   valarray<double> MultiFrequencyModel::get_a(int l) const 
@@ -841,31 +958,16 @@ namespace substitution {
     return Pr;
   }
 
-  const MultiModel::Base_Model_t& MultiFrequencyModel::base_model(int m) const {
-    int i = m / SubModel().n_base_models();
-    int j = m % SubModel().n_base_models();
-
-    return sub_parameter_models[i]->base_model(j);
+  const MultiModel::Base_Model_t& MultiFrequencyModel::base_model(int i) const {
+    return *sub_parameter_models[i];
   }
 
-  MultiModel::Base_Model_t& MultiFrequencyModel::base_model(int m) {
-    int i = m / SubModel().n_base_models();
-    int j = m % SubModel().n_base_models();
-
-    return sub_parameter_models[i]->base_model(j);
+  MultiModel::Base_Model_t& MultiFrequencyModel::base_model(int i) {
+    return *sub_parameter_models[i];
   }
   
   vector<double> MultiFrequencyModel::distribution() const {
-    vector<double> dist(n_base_models());
-
-    for(int m=0;m<dist.size();m++) {
-      int i = m / SubModel().n_base_models();
-      int j = m % SubModel().n_base_models();
-
-      dist[m] = fraction[i]*sub_parameter_models[i]->distribution()[j];
-    }
-
-    return dist;
+    return fraction;
   }
 
   /// Get the equilibrium frequencies
@@ -919,11 +1021,15 @@ namespace substitution {
     return s_parameter_name(i,super_parameters_.size());
   }
 
-  MultiFrequencyModel::MultiFrequencyModel(const MultiModel& M,int n)
-    :ReversibleWrapperOver<MultiModel>(M,n*M.Alphabet().size()+1),
-     sub_parameter_models(vector<OwnedPointer<MultiModel> >(n,M)),
+  MultiFrequencyModel::MultiFrequencyModel(const ExchangeModel& E,int n)
+    :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E),n*E.Alphabet().size()+1),
+     //     sub_parameter_models(vector<OwnedPointer<SimpleReversibleMarkovModel> >(n,SimpleReversibleMarkovModel(E))),
      fraction(n)
   { 
+    sub_parameter_models.resize(n);
+    for(int i=0;i<n;i++)
+      sub_parameter_models[i] = SubModel();
+
     for(int l=0;l<Alphabet().size();l++)
       for(int m=0;m<n;m++)
 	a(m,l) = 1.0/n;
@@ -931,9 +1037,8 @@ namespace substitution {
     read();
     recalc();
   }
-  */
 
-  //----------------------------//
+  //---------------------------- class MultiModel --------------------------//
   const MultiModel::Base_Model_t& MultiParameterModel::base_model(int m) const {
     int i = m / SubModel().n_base_models();
     int j = m % SubModel().n_base_models();

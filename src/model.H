@@ -13,6 +13,8 @@
 //   2. but then when you modify the class member models, you need to notify the parent..
 //   3. we COULD have an upwards-pointing chain as well...
 
+std::string parameter_name(const string& prefix,int i,int n);
+
 class Model: public Cloneable {
 protected:
   /// Model parameters
@@ -38,7 +40,18 @@ public:
 
   bool fixed(int i) const {return fixed_[i];}
 
-  virtual void fixed(int i,bool f) {fixed_[i] = f;}
+  const std::vector<bool>& fixed() const {return fixed_;}
+
+  virtual void fixed(int i,bool f) 
+  {
+    fixed_[i] = f;
+  }
+
+  virtual void fixed(const std::vector<bool>& f)
+  {
+    assert(fixed_.size() == f.size());
+    fixed_ = f;
+  }
 
   /// Get a model parameter
   virtual double parameter(int p) const {
@@ -98,6 +111,8 @@ protected:
   bool fixed(int i) {return Model::fixed(i);}
 
   virtual void fixed(int i,bool f) {Model::fixed(i,f); write();}
+
+  virtual void fixed(const std::vector<bool>& f) {Model::fixed(f); write();}
 
   /// Access the submodel
   virtual const Model& SubModels(int) const=0;

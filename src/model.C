@@ -1,7 +1,16 @@
 #include "model.H"
+#include "myexception.H"
+#include "util.H"
 
 using std::vector;
 using std::string;
+
+string parameter_name(const string& prefix, int i,int n) 
+{
+  if (i>=n)
+    throw myexception()<<"substitution model: referred to parameter "<<i<<" but there are only "<<n<<" parameters.";
+  return prefix + convertToString(i);
+}
 
 void Model::set_n_parameters(int n) {
   parameters_.resize(n);
@@ -24,7 +33,7 @@ void SuperModel::read() {
 
     for(int i=0;i<sub_p.size();i++) {
       parameters_[i+total] = sub_p[i];
-      Model::fixed(i+total,SubModels(m).fixed(i));
+      fixed_[i+total] = SubModels(m).fixed(i);
     }
 
     total += sub_p.size();
@@ -42,12 +51,14 @@ void SuperModel::write() {
   int total=super_parameters_.size();
   for(int m=0;m<n_submodels();m++) {
     vector<double> sub_p = SubModels(m).parameters();
+    vector<bool> sub_f = SubModels(m).fixed();
 
     for(int i=0;i<sub_p.size();i++) {
       sub_p[i] = parameters_[i+total];
-      SubModels(m).fixed(i,fixed(i+total));
+      sub_f[i] = fixed_[i+total];
     }
     SubModels(m).parameters(sub_p);
+    SubModels(m).fixed(sub_f);
 
     total += sub_p.size();
   }

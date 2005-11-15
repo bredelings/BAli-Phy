@@ -480,6 +480,30 @@ namespace substitution {
     explicit TripletFrequencyModel(const Triplets& T);
   };
 
+  class CodonFrequencyModel: public ReversibleFrequencyModel,
+			       public ::NestedModelOver<TripletFrequencyModel>,
+			       public ModelWithAlphabet<Codons>
+  {
+  protected:
+    void recalc();
+
+    string super_parameter_name(int i) const;
+
+    int aa_size() const {return Alphabet().getAminoAcids().size();}
+
+  public:
+    CodonFrequencyModel* clone() const {return new CodonFrequencyModel(*this);}
+
+    efloat_t super_prior() const;
+
+    double super_fiddle(int);
+
+    string name() const;
+
+    explicit CodonFrequencyModel(const Codons& C);
+  };
+
+
 
   //------------------------- Reversible Substitution Model -----------------------//
 
@@ -564,9 +588,11 @@ namespace substitution {
 
     efloat_t prior() const {return S->prior() * R->prior();}
 
-    string name() const;
+    string name() const {
+      return S->name() + " / " + R->name();
+    }
 
-    string super_parameter_name(int i) const;
+    string super_parameter_name(int i) const { return ::parameter_name("",i,0);}
 
     /// Construct a reversible Markov model on alphabet 'a'
     ReversibleMarkovSuperModel(const alphabet_t& a,const ExchangeModel& S1,
@@ -575,7 +601,11 @@ namespace substitution {
        ModelWithAlphabet<alphabet_t>(a),
        S(S1),
        R(R1)
-    {}
+    {
+      set_n_parameters(S->parameters().size() + R->parameters().size());
+      read();
+      recalc();
+    }
     
     ~ReversibleMarkovSuperModel() {}
   };
@@ -623,10 +653,7 @@ namespace substitution {
       recalc();
     }
 
-    SimpleReversibleMarkovModel(const ExchangeModel& E)
-      :ReversibleMarkovSuperModel<alphabet>(E.Alphabet(),E,SimpleFrequencyModel(E.Alphabet())),
-       R2(SimpleFrequencyModel(E.Alphabet()))
-    {}
+    SimpleReversibleMarkovModel(const ExchangeModel& E);
   };
 
   //--------------------------- Implement the underlying alphabet -------------------------//
@@ -728,14 +755,14 @@ namespace substitution {
     ~UnitModel() {};
   };
 
-  /*
+
   /// A substitution model based on running Reversible Models with the same equilibrium at different rates
   class MultiFrequencyModel: public MultiModel, 
-			     public ReversibleWrapperOver<MultiModel> 
+			     public ReversibleWrapperOver<SimpleReversibleMarkovModel> 
   {
   protected:
     /// MultiModels w/ different values of the parameter set
-    vector<OwnedPointer<MultiModel> > sub_parameter_models;
+    vector<OwnedPointer<SimpleReversibleMarkovModel> > sub_parameter_models;
 
     /// Fraction of the sites with each parameter value
     vector<double> fraction;
@@ -755,7 +782,7 @@ namespace substitution {
     MultiFrequencyModel* clone() const {return new MultiFrequencyModel(*this);}
 
     /// The number of models
-    int n_base_models() const {return fraction.size() * SubModel().n_base_models();}
+    int n_base_models() const {return fraction.size();}
 
     /// Access the base models
     const Base_Model_t& base_model(int m) const;
@@ -770,12 +797,12 @@ namespace substitution {
     string name() const;
     string super_parameter_name(int i) const;
 
-    MultiFrequencyModel(const MultiModel& M,int n_bins);
+    MultiFrequencyModel(const ExchangeModel& M,int n_bins);
 
     ~MultiFrequencyModel() {}
   };
 
-  */
+
   /// A substitution model based on running Reversible Models with the same equilibrium at different rates
   class MultiParameterModel: public MultiModel, 
 			     public ReversibleWrapperOver<MultiModel> 
