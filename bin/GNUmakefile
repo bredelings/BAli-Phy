@@ -27,7 +27,7 @@ Work/setup:
 	@touch Work/setup
 	@echo "done."
 
-Results/analysis: Results/Report Results/consensus Mixing/SRQ.plot Mixing/sum.plot Mixing/sumi.plot Mixing/partitions.bs \
+Results/analysis: Results/Report Results/consensus Mixing/SRQ.plot Mixing/partitions.bs \
 		  ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree}\
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
                   Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
