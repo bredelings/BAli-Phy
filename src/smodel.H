@@ -415,7 +415,7 @@ namespace substitution {
   class ReversibleFrequencyModel: virtual public AlphabetModel
   {
   protected:
-    SMatrix R;
+    Matrix R;
 
     valarray<double> pi;
   public:
@@ -542,10 +542,9 @@ namespace substitution {
     ~ReversibleMarkovModel() {}
   };
   
-  template <class alphabet_t>
   class ReversibleMarkovSuperModel: public ReversibleMarkovModel,
 				    virtual public SuperModel,
-				    public ModelWithAlphabet<alphabet_t>
+				    public ModelWithAlphabet<alphabet>
   {
   protected:
     /// The exchange model
@@ -580,78 +579,33 @@ namespace substitution {
   public:
 
     /// Make a copy of this object
-    virtual ReversibleMarkovSuperModel<alphabet_t>* clone() const
-    {return new ReversibleMarkovSuperModel<alphabet_t>(*this);}
+    virtual ReversibleMarkovSuperModel* clone() const {return new ReversibleMarkovSuperModel(*this);}
 
     /// Get the equilibrium
     const valarray<double>& frequencies() const {return R->frequencies();}
 
     efloat_t prior() const {return S->prior() * R->prior();}
 
-    string name() const {
-      return S->name() + " / " + R->name();
-    }
+    string name() const;
 
-    string super_parameter_name(int i) const { return ::parameter_name("",i,0);}
+    string super_parameter_name(int i) const;
 
     /// Construct a reversible Markov model on alphabet 'a'
-    ReversibleMarkovSuperModel(const alphabet_t& a,const ExchangeModel& S1,
-			       const ReversibleFrequencyModel& R1)
-      :ReversibleMarkovModel(a),
-       ModelWithAlphabet<alphabet_t>(a),
-       S(S1),
-       R(R1)
-    {
-      set_n_parameters(S->parameters().size() + R->parameters().size());
-      read();
-      recalc();
-    }
+    ReversibleMarkovSuperModel(const ExchangeModel& S1, const ReversibleFrequencyModel& R1);
     
     ~ReversibleMarkovSuperModel() {}
   };
 
-  template <class alphabet_t>
-  void ReversibleMarkovSuperModel<alphabet_t>::recalc()
+
+  class SimpleReversibleMarkovModel: public ReversibleMarkovSuperModel
   {
-    // write any changes down to sub-models
-    SuperModel::recalc();
-
-    // recompute rate matrix
-    for(int i=0;i<size();i++) {
-      double sum=0;
-      for(int j=0;j<size();j++) {
-	if (i==j) continue;
-	Q(i,j) = (*S)(i,j) * (*R)(i,j);
-	sum += Q(i,j);
-      }
-      Q(i,i) = -sum;
-    }
-
-    // recompute eigensystem
-    ReversibleMarkovModel::recalc();
-  }
-
-  class SimpleReversibleMarkovModel: public ReversibleMarkovSuperModel<alphabet> 
-  {
-  protected:
-    OwnedPointer<SimpleFrequencyModel> R2;
-
   public:
     /// Make a copy of this object
     virtual SimpleReversibleMarkovModel* clone() const {return new SimpleReversibleMarkovModel(*this);}
 
-    void recalc() {
-      R = R2;
-      ReversibleMarkovSuperModel<alphabet>::recalc();
-    }
-
-    const valarray<double>& frequencies() const {return R2->frequencies();}
+    const valarray<double>& frequencies() const {return R->frequencies();}
     
-    void frequencies(const valarray<double>& pi)
-    {
-      R2->frequencies(pi);
-      recalc();
-    }
+    void frequencies(const valarray<double>& pi);
 
     SimpleReversibleMarkovModel(const ExchangeModel& E);
   };

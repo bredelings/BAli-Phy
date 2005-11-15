@@ -149,7 +149,7 @@ namespace substitution {
       pi_f[i] = pow(pi[i],f());
 
     for(int i=0;i<size();i++)
-      for(int j=0;j<i;j++)
+      for(int j=0;j<size();j++)
 	R(i,j) = pi_f[i]/pi[i] * pi_f[j];
 
     // diagonal entries should have no effect
@@ -218,6 +218,8 @@ namespace substitution {
 
   void TripletFrequencyModel::recalc() 
   {
+    write();
+
     valarray<double> nu = get_varray(super_parameters_, 1, size());
 
     //------------- compute frequencies ------------------//
@@ -240,13 +242,16 @@ namespace substitution {
       nu_g[i] = pow(nu[i],g);
 
 
+    // FIXME - can we really handle two mutations?
+    // Should the restriction on 1 mutation be HERE?
     for(int i=0;i<size();i++)
-      for(int j=0;j<i;j++) {
+      for(int j=0;j<size();j++) {
 	R(i,j) = nu_g[i]/nu[i]*nu_g[j];
 	for(int k=0;k<3;k++) {
 	  int n1 = Alphabet().sub_nuc(i,k);
 	  int n2 = Alphabet().sub_nuc(j,k);
-	  R(i,j) *= SubModel()(n1,n2);
+	  if (n1 != n2)
+	    R(i,j) *= SubModel()(n1,n2);
 	}
       }
 
@@ -257,19 +262,20 @@ namespace substitution {
 
   efloat_t TripletFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(super_parameters_,1,size(),10.0);
+    return dirichlet_pdf(super_parameters_,1,size(),2.0);
   }
 
   double TripletFrequencyModel::super_fiddle(int)
   {
     if (not fixed(0)) {
       super_parameters_[0] += gaussian(0,0.25);
-      super_parameters_[0] = wrap(parameters_[0],1.0);
+      super_parameters_[0] = wrap(super_parameters_[0],1.0);
     }
 
     // propose new frequencies
     dirichlet_fiddle(super_parameters_, fixed_, 1, size(), 0.25/sqrt(size()));
 
+    read();
     recalc();
 
     return 1;  
@@ -295,12 +301,12 @@ namespace substitution {
       ::NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),T.size()+1),
       ModelWithAlphabet<Triplets>(T)
   {
-    read();
-
     super_parameters_[0] = 1; // g
 
     for(int i=0;i<size();i++)
-      super_parameters_[i] = 1.0/size();
+      super_parameters_[i+1] = 1.0/size();
+
+    read();
 
     recalc();
   }
@@ -309,6 +315,8 @@ namespace substitution {
 
   void CodonFrequencyModel::recalc() 
   {
+    write();
+
     double c = parameters_[0];
 
     //------------- compute frequencies ------------------//
@@ -347,7 +355,7 @@ namespace substitution {
 
 
     for(int i=0;i<size();i++)
-      for(int j=0;j<i;j++)
+      for(int j=0;j<size();j++)
 	R(i,j) = SubModel()(i,j) * factor_h[i]/factor[i]*factor_h[j];
 
     // diagonal entries should have no effect
@@ -375,6 +383,7 @@ namespace substitution {
     // propose new frequencies
     dirichlet_fiddle(super_parameters_, fixed_, 2, aa_size(), 0.25/sqrt(aa_size()));
 
+    read();
     recalc();
 
     return 1;  
@@ -402,13 +411,13 @@ namespace substitution {
       ::NestedModelOver<TripletFrequencyModel>(TripletFrequencyModel(C), C.getAminoAcids().size() + 2),
       ModelWithAlphabet<Codons>(C)
   {
-    read();
-
     super_parameters_[0] = 0.5; // c
     super_parameters_[1] = 0.5; // h
 
     for(int i=0;i<C.getAminoAcids().size();i++)
-      super_parameters_[i-2] = 1.0/C.getAminoAcids().size();
+      super_parameters_[i+2] = 1.0/C.getAminoAcids().size();
+
+    read();
 
     recalc();
   }
@@ -488,12 +497,58 @@ namespace substitution {
      eigensystem(a.size())
   { }
 
-  SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ExchangeModel& E)
-      :ReversibleMarkovSuperModel<alphabet>(E.Alphabet(),E,SimpleFrequencyModel(E.Alphabet())),
-       R2(SimpleFrequencyModel(E.Alphabet()))
-    {
-      recalc();
+  void ReversibleMarkovSuperModel::recalc()
+  {
+    // write any changes down to sub-models
+    SuperModel::recalc();
+
+    // recompute rate matrix
+    for(int i=0;i<size();i++) {
+      double sum=0;
+      for(int j=0;j<size();j++) {
+	if (i==j) continue;
+	Q(i,j) = (*S)(i,j) * (*R)(i,j);
+	sum += Q(i,j);
+      }
+      Q(i,i) = -sum;
     }
+
+    // recompute eigensystem
+    ReversibleMarkovModel::recalc();
+  }
+  string ReversibleMarkovSuperModel::name() const {
+    return S->name() + " / " + R->name();
+  }
+
+  string ReversibleMarkovSuperModel::super_parameter_name(int i) const {
+    return ::parameter_name("",i,0);
+  }
+
+  /// Construct a reversible Markov model on alphabet 'a'
+  ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
+    :ReversibleMarkovModel(S1.Alphabet()),
+     ModelWithAlphabet<alphabet>(S1.Alphabet()),
+     S(S1),
+     R(R1)
+  {
+    set_n_parameters(S->parameters().size() + R->parameters().size());
+    read();
+    recalc();
+  }
+    
+
+
+  void SimpleReversibleMarkovModel::frequencies(const valarray<double>& pi) 
+  {
+    SimpleFrequencyModel* R2 = dynamic_cast<SimpleFrequencyModel*>(R.get());
+    R2->frequencies(pi);
+    read();
+    recalc();
+  }
+
+  SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ExchangeModel& E)
+      :ReversibleMarkovSuperModel(E,SimpleFrequencyModel(E.Alphabet()))
+  { }
 
   //---------------------- INV_Model --------------------------//
 
@@ -1335,10 +1390,7 @@ namespace substitution {
   }
 
   YangM2::YangM2(const YangM0& M1,const ReversibleFrequencyModel& R) 
-    :MultiParameterModel(
-			 UnitModel(
-				   ReversibleMarkovSuperModel<Codons>(M1.Alphabet(),M1,R)
-				   ),
+    :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
 			 4,0,3)
   {
     super_parameters_[0] = 1.0/3;
@@ -1478,10 +1530,8 @@ namespace substitution {
   }
 
   YangM3::YangM3(const YangM0& M1,const ReversibleFrequencyModel& R, int n) 
-    :MultiParameterModel(UnitModel(
-				   ReversibleMarkovSuperModel<Codons>(M1.Alphabet(),M1,R)
-				   )
-			 ,2*n,0,n)
+    :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
+			 2*n,0,n)
   {
     // p
     for(int i=0;i<n;i++)
@@ -1499,10 +1549,8 @@ namespace substitution {
 
 
   YangM7::YangM7(const YangM0& M1,const ReversibleFrequencyModel& R, int n) 
-    :DistributionParameterModel(UnitModel(
-					  ReversibleMarkovSuperModel<Codons>(M1.Alphabet(),M1,R)
-					  )
-				,Beta(),0,n)
+    :DistributionParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
+				Beta(),0,n)
   { }
 
   int MixtureModel::n_base_models() const 

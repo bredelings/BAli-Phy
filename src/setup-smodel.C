@@ -111,7 +111,6 @@ bool process_stack_Markov(vector<string>& string_stack,
   return true;
 }
 
-
 OwnedPointer<ExchangeModel> get_EM(::Model* M, const string& name)
 {
   ExchangeModel* EM = NULL;
@@ -130,6 +129,46 @@ OwnedPointer<ExchangeModel> get_EM(vector<OwnedPointer< ::Model> >& model_stack,
 
   return get_EM(model_stack.back().get(),name);
 }
+
+
+bool process_stack_Frequencies(vector<string>& string_stack,
+			       vector<OwnedPointer< ::Model> >& model_stack,
+			       const alphabet& a)
+{
+  string arg;
+  
+  if (match(string_stack,"SimpleFrequencies",arg)) {
+    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"SimpleFrequencies");
+
+    model_stack.back() = *new ReversibleMarkovSuperModel(*EM,SimpleFrequencyModel(a));
+  }
+  else if (match(string_stack,"TripletFrequencies",arg)) 
+  {
+    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    if (not T)
+      throw myexception()<<"TripletFrequencies:: Unrecognized alphabet '"<<a.name<<"'";
+
+    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"TripletFrequencies");
+
+    TripletFrequencyModel TFM(*T);
+
+    model_stack.back() = *new ReversibleMarkovSuperModel(*EM,TFM);
+  }
+  else if (match(string_stack,"CodonFrequencies",arg)) 
+  {
+    const Codons* C = dynamic_cast<const Codons*>(&a);
+    if (not C)
+      throw myexception()<<"CodonFrequencies:: Unrecognized alphabet '"<<a.name<<"'";
+
+    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"CodonFrequencies");
+
+    model_stack.back() = *new ReversibleMarkovSuperModel(*EM,CodonFrequencyModel(*C));
+  }
+  else
+    return false;
+  return true;
+}
+
 
 OwnedPointer<ReversibleAdditiveModel> get_RA(::Model* M, const string& name)
 {
@@ -305,6 +344,8 @@ get_smodel(const variables_map& args,const string& smodel,const alphabet& a)
     int length = string_stack.size();
 
     process_stack_Markov(string_stack,model_stack,a,args);
+
+    process_stack_Frequencies(string_stack,model_stack,a);
 
     process_stack_Multi(string_stack,model_stack);
 
