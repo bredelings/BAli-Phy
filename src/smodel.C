@@ -170,7 +170,7 @@ namespace substitution {
   {
     // propose new 'f' value
     if (not fixed(0)) {
-      parameters_[0] += gaussian(0,0.25);
+      parameters_[0] += gaussian(0, 0.1);
       parameters_[0] = wrap(parameters_[0],1.0);
     }
 
@@ -268,7 +268,7 @@ namespace substitution {
   double TripletFrequencyModel::super_fiddle(int)
   {
     if (not fixed(0)) {
-      super_parameters_[0] += gaussian(0,0.25);
+      super_parameters_[0] += gaussian(0, 0.1);
       super_parameters_[0] = wrap(super_parameters_[0],1.0);
     }
 
@@ -365,19 +365,19 @@ namespace substitution {
 
   efloat_t CodonFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(super_parameters_,2,aa_size(),10.0);
+    return dirichlet_pdf(super_parameters_, 2, aa_size(), 1.0);
   }
 
   double CodonFrequencyModel::super_fiddle(int)
   {
     if (not fixed(0)) {
-      super_parameters_[0] += gaussian(0,0.25);
-      super_parameters_[0] = wrap(parameters_[0],1.0);
+      super_parameters_[0] += gaussian(0, 0.1);
+      super_parameters_[0] = wrap(super_parameters_[0],1.0);
     }
 
     if (not fixed(1)) {
-      super_parameters_[1] += gaussian(0,0.25);
-      super_parameters_[1] = wrap(parameters_[1],1.0);
+      super_parameters_[1] += gaussian(0, 0.1);
+      super_parameters_[1] = wrap(super_parameters_[1],1.0);
     }
 
     // propose new frequencies
@@ -441,6 +441,11 @@ namespace substitution {
 
   void ReversibleMarkovModel::set_rate(double r)  {
     double scale = r/rate();
+    if (rate() == 0)
+      if (r == 0)
+	scale = 1;
+      else
+	throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
     Q *= scale;
     for(int i=0;i<eigensystem.Diagonal().size();i++)
       eigensystem.Diagonal()[i] *= scale ;
