@@ -35,7 +35,7 @@ sub get_job {
 
 sub get_jobs {
     my $dir = shift;
-    my @files = split(/\s+/,`find $dir -name job_info.?`);
+    my @files = split(/\s+/,`find $dir -name job_info.\\?`);
     my @jobs=();
     foreach my $file (@files) {
 	my $job = get_job($file);
