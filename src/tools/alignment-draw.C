@@ -338,7 +338,7 @@ ublas::matrix<double> read_alignment_certainty(const alignment& A, const string&
 }
 
 void draw_legend(std::ostream& o,ColorScheme& color_scheme,const string& letter) {
-  o<<"<P>uncertain ";
+  o<<"uncertain ";
   const int nsquares = 40;
   for(int i = 0;i < nsquares;i++) {
     double p = (0.5+i)/nsquares;
@@ -618,40 +618,59 @@ int main(int argc,char* argv[])
     else {
 
       cout<<"\
-<HTML>\n\
-  <head>\n\
-    <STYLE>\n\
-TD { \n\
-   font-size: 9pt; \n\
-   padding: 0;\n\
-   padding-right: 1em;\n\
-   }\n\
+<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\
+   \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n\
+<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n\
+ <head>\n\
+  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />\n\
+  <title>Alignment Uncertainty: "<<args["align"].as<string>()<<"</title>\n\
+  <style type=\"text/css\">\n\
 \n\
-TD.sequencename {\n\
+TABLE {\n\
+   border: none;\n\
+   border-collapse: collapse;\n\
+   border-spacing: 0;\n\
+   margin-top: 0.4em;\n\
+}\n\
+\n\
+.sequences TD { \n\
+   padding: 0;\n\
+   margin: 0;\n\
+\n\
+   font-size: 10pt; \n\
+   font-family: courier new, courier-new, courier, monospace;\n\
+   font-weight: bold;\n\
+}\n\
+\n\
+.sequences TD.sequencename {\n\
+   padding-right: 1em;\n\
+\n\
+   font-weight: normal;\n\
    font-style: italic;\n\
    font-family: helvitica;\n\
 }\n\
-TABLE {\n\
-   border-spacing: 0;\n\
-   margin-top: 0.4em;\n\
-   }\n\
 \n\
-SPAN {\n\
-   font-family: courier new, courier-new, courier, monospace;\n\
-   font-weight: bold;\n\
-   font-size: 10pt;\n\
-   line-height: 100%;\n\
-   padding: 0;\n\
+.legend {\n\
+  width: 100%;\n\
+  text-align: center;\n\
 }\n\
     </STYLE>\n\
   </head>\n\
-  <body>\n";
-      
+  <body>\n\n";
+
       //-------------------- Print a legend ------------------------//
       if (not args.count("no-legend")) {
+	cout<<"<table class=\"legend\"><tr>";
+
+	cout<<"<td>";
 	draw_legend(cout,*color_scheme,"");
+	cout<<"</td>";
+
+	cout<<"<td>";
 	draw_legend(cout,*color_scheme,"-");
-	cout<<"<br><br>";
+	cout<<"</td>";
+
+	cout<<"</td></tr></table>";
       }
 
       //----------- Compute the position headings -------------------//
@@ -671,7 +690,7 @@ SPAN {\n\
     
       int pos=start;
       while(pos<=end) {
-	cout<<"<table>\n";
+	cout<<"\n\n<table class=\"sequences\">\n";
 
 	// Print columns positions
 	if (show_column_numbers) {
@@ -681,9 +700,9 @@ SPAN {\n\
 	    double P=colors(column,A.n_sequences());
 	    string style = getstyle(P,"",*color_scheme);
 	    if (columncolors)
-	      cout<<"<span style=\""<<style<<"\">"<<positions[column]<<"</span>";
+	      cout<<"<td style=\""<<style<<"\">"<<positions[column]<<"</td>";
 	    else
-	      cout<<"<span>"<<positions[column]<<"</span>";
+	      cout<<"<td>"<<positions[column]<<"</td>";
 	  }
 	  cout<<"</tr>\n";
 	}
@@ -692,7 +711,6 @@ SPAN {\n\
 	  int s = i;
 	  cout<<"  <tr>\n";
 	  cout<<"    <td class=\"sequencename\">"<<A.seq(s).name<<"</td>\n";
-	  cout<<"    <td>";
 	  for(int column=pos;column<pos+width and column <= end; column++) {
 	    string c;
 	    c+= a.lookup(A(column,s));
@@ -701,12 +719,11 @@ SPAN {\n\
 		c = "&nbsp;";
 	    }
 	    string style = getstyle(colors(column,s),c,*color_scheme);
-	    cout<<"<span style=\""<<style<<"\">"<<c<<"</span>";
+	    cout<<"<td style=\""<<style<<"\">"<<c<<"</td>";
 	  }
-	  cout<<"    </td>";
 	  cout<<"  </tr>\n";
 	}
-	cout<<"<tr><td></td><td><span>&nbsp;</span></td><tr>\n";
+	cout<<"<tr><td></td><td>&nbsp;</td><tr>\n";
 	cout<<"</table>"<<endl;
 	pos += width;
       }
