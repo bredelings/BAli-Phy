@@ -237,14 +237,18 @@ CXXFLAGS += ${LANGO:%=-f%} ${WARN:%=-W%} ${DEBUG:%=-%} ${OPT:%=-%} ${DEFS:%=-D%}
 LI=${CXX}
 
 
-GNUmakefile : ${SOURCES:%=.%.d} 
+.PHONY: depend
+
+depend : ${SOURCES:%=.%.d} 
 
 % : %.o
 	${LI} ${LDFLAGS} $^ -o $@ ${LOADLIBS}
 
 .%.d : %
 	@echo ${shell \
-	  ${CPP} -MM ${CPPFLAGS} $< | sed 's/\(^.*\):/$@ \1:/g'} > $@
+	  ${CPP} -MM ${CPPFLAGS} $< } > $@
+#	  ${CPP} -MM ${CPPFLAGS} $< | sed 's/\(^.*\):/$@ \1:/g'} > $@
+
 clean:
 	-@rm -f *.o *~ *# *.tar *.gz ${PROGNAME} Makefile core ${TOOLS} tools/*.o
 

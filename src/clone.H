@@ -58,7 +58,7 @@ public:
 
   // Get a copy of an object
   OwnedPointer& operator=(const OwnedPointer& O) throw() {
-    if (data != O.data and data != NULL)
+    if (data != O.get() and data != NULL)
       delete data;
 
     if (O)
@@ -72,7 +72,7 @@ public:
   // Get a copy of an object which is a SUB-CLASS of T
   template <typename T2>
   OwnedPointer& operator=(const OwnedPointer<T2>& O) throw() {
-    if (data != O.data and data != NULL)
+    if (data != O.get() and data != NULL)
       delete data;
 
     if (O)

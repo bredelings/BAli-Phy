@@ -305,19 +305,3 @@ void change_gap_parameters(alignment& A,Parameters& P, MoveStats& Stats)
 }
 
 
-
-void sample_frequencies(alignment& A,Parameters& P, MoveStats& Stats) 
-{
-  Parameters P2 = P;
-  valarray<double> f = P2.SModel().frequencies();
-  f = dirichlet_fiddle(f,0.25/sqrt(f.size()));
-  P2.SModel().frequencies(f);
-  P2.recalc_smodel();
-
-
-  bool success = P.accept_MH(A,P,A,P2,1);
-  if (success)
-    P = P2;
-
-  Stats.inc("frequencies",success);
-}

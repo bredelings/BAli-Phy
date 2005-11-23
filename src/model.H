@@ -13,6 +13,8 @@
 //   2. but then when you modify the class member models, you need to notify the parent..
 //   3. we COULD have an upwards-pointing chain as well...
 
+std::string parameter_name(const string& prefix,int i,int n);
+
 class Model: public Cloneable {
 protected:
   /// Model parameters
@@ -22,9 +24,6 @@ protected:
   virtual void recalc() =0;
 
   void set_n_parameters(int);
-
-  /// Construct an empty model w/ s parameters
-  Model(int s): parameters_(s) {};
 
   std::vector<bool> fixed_;
 
@@ -41,7 +40,18 @@ public:
 
   bool fixed(int i) const {return fixed_[i];}
 
-  virtual void fixed(int i,bool f) {fixed_[i] = f;}
+  const std::vector<bool>& fixed() const {return fixed_;}
+
+  virtual void fixed(int i,bool f) 
+  {
+    fixed_[i] = f;
+  }
+
+  virtual void fixed(const std::vector<bool>& f)
+  {
+    assert(fixed_.size() == f.size());
+    fixed_ = f;
+  }
 
   /// Get a model parameter
   virtual double parameter(int p) const {
@@ -102,6 +112,8 @@ protected:
 
   virtual void fixed(int i,bool f) {Model::fixed(i,f); write();}
 
+  virtual void fixed(const std::vector<bool>& f) {Model::fixed(f); write();}
+
   /// Access the submodel
   virtual const Model& SubModels(int) const=0;
   virtual Model& SubModels(int)=0;
@@ -112,7 +124,7 @@ protected:
   /// Load parameters from sub-models
   void read();
 
-  /// Write parameters down into submodels
+  /// Store parameters down into submodels
   void write();
 
 public:
@@ -229,6 +241,25 @@ public:
   { }
 };
 
+/// This is a substitution model built over a submodel of a particular type
+template <class SubModel_t, class DerivedModel_t>
+class NestedDerivedModelOver: virtual public NestedModel, 
+		       public SuperDerivedModelOver<SubModel_t,DerivedModel_t> {
+  
+protected:
+  /// Access the submodel
+  const SubModel_t& SubModel() const {return SubModels(0);}
+  SubModel_t& SubModel() {return SubModels(0);}
+  
+public:
+  /// Make a copy of ourselves
+  NestedDerivedModelOver<SubModel_t,DerivedModel_t>* clone() const =0;
+  
+  /// Construct a Nested model based on model 'M', with 'dp' extra parameters
+  NestedDerivedModelOver(const SubModel_t& M,int dp)
+    :SuperDerivedModelOver<SubModel_t,DerivedModel_t>(std::vector< OwnedPointer<SubModel_t> >(1,M),dp)
+  { }
+};
 
 int find_parameter(const Model& M,const std::string& name);
 
