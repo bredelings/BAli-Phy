@@ -654,7 +654,7 @@ TABLE {\n\
   width: 100%;\n\
   text-align: center;\n\
 }\n\
-    </STYLE>\n\
+    </style>\n\
   </head>\n\
   <body>\n\n";
 
@@ -670,7 +670,7 @@ TABLE {\n\
 	draw_legend(cout,*color_scheme,"-");
 	cout<<"</td>";
 
-	cout<<"</td></tr></table>";
+	cout<<"</tr></table>";
       }
 
       //----------- Compute the position headings -------------------//
@@ -723,10 +723,11 @@ TABLE {\n\
 	  }
 	  cout<<"  </tr>\n";
 	}
-	cout<<"<tr><td></td><td>&nbsp;</td><tr>\n";
+	cout<<"<tr><td></td><td>&nbsp;</td></tr>\n";
 	cout<<"</table>"<<endl;
 	pos += width;
       }
+      cout<<"</body>\n</html>\n";
     }
   }
   catch (std::exception& e) {
