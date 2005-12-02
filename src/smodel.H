@@ -1,14 +1,47 @@
-/* FIXME:
-   1. MultiRate models can still take multifrequency models as inputs.
-   2. WithINV models can still take multifrequency models as inputs
-    - add a ReversibleMarkovSuperModel<alphabet>(a,INV,simplefrequencymodel)
-   3. MultiFrequencyModels can NOT take multifrequency models as inputs.
-    - instead, they take ExchangeModels as inputs.
-   4. YangM<n> models 
-    - could take YangM0 models + an alphabet as input.
-      (This way, we wouldn't get any alphabet parameters from the input model)
-    - MultiParameter and DistributionParameter models currently can only take
-      substitution::Model's as input.  Can we fix this?
+/* TODO
+   0. Can we have a triplet model that isn't derived from YangM0*Neutral?
+
+   1. I think that WithINV models automatically have separate frequencies for
+      the invariant sites and the other sites.
+    a) Interesting, but we also need the standard INV model
+
+   2. If we want to do YangM0 + YangM7 + AAINV, then 
+      a) how do we make the AAINV model share the same alphabet model?
+      b) could we make it share the same TripletFrequencies but
+         use a different CodonFrequencies, and so have different AA 
+         frequencies?
+      c) can we use '+' to represent mixtures, instead of stacking?
+         YangM0~[w=0 + w~Beta( ) + w=1]
+         WAG~[rate=0 + rate~Gamma( )]  vs WAG~[INV + gamma] + WAG~[gamma+INV]
+      d) It looks like we need to have a special class to specify a PRIOR on the mixture
+         probabilities, though.
+      e) How about YangM0~[w=0] instead of Conserved?
+ 
+   3. Compare the marginal probability of CodonFrequencyModels on bglobin
+      (fixed A) at different settings:
+      a) f = 0.5 / nuX = 1/n (g=1) / c=0 (b_X=1/n, h=0) -> HKY (should match)
+      b) fX=1/n (f=1) / no constraint / c=0 (b_X=1/n, h=0) -> YangM0 (should match)
+      c) fX=1/n (f=1) / nX = 1/n (g=1) / c=1 -> AA flat model
+      d) fX=1/n (f=1) / no constraint /  c=1 -> AA flat model w/ codon bias
+      e) no constraint / no constraint / c=1 -> AA flat model w/ codon bias + nuc. freqs.
+      f) no constraint / no constraint / no constraint
+
+   4. What if we want to do {YangM0 + YangM7 + AAINV + Neutral} ?
+      We should perhaps consider mixtures of exchange models.
+      Would this handle gamma?
+
+   5. We could handle exchange models and frequencies separately:
+      {WAG ~ [gamma+INV]}*{multifreq}
+
+   6. Could we do multi-codonfrequency models? (e.g. decide to share the nuc. freq.
+      model, but have different aa freqs)
+
+   7. Is there a more natural separation of this file?
+      NOTE: lots of this use {get,set}_varray( ), etc.
+      Maybe just separate the headers.
+
+   8. In the future, specifying priors and proposals could hopefully be separated
+      from models [or, at least, model structure]
 */
 
 #ifndef SMODEL_H
