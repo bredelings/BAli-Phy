@@ -1166,7 +1166,8 @@ namespace substitution {
       else
 	p_values[m] = M.parameters()[p_change];
 
-    SubModel().fixed(p_change,true);
+    if (p_change != -1)
+      SubModel().fixed(p_change,true);
   }
 
   /*--------------- Distribution-based Model----------------*/
