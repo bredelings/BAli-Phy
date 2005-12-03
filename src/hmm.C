@@ -183,50 +183,43 @@ void GQ_exit(Matrix& G,const vector<int>& silent,const vector<int>& non_silent)
 
 void HMM::find_and_index_silent_network_states() {
 
-  //------------ List silent nodes connected to silent nodes --------//
-  for(int S1=0;S1<nstates()+1;S1++) {
-    if (state_emit[S1])
-      silent_network_[S1] = -1;
-    else {
-      bool connected=false;
-      for(int S2=0;S2<nstates()+1;S2++) {
-	if (connected_Q(S1,S2) and not state_emit[S2]) {
-	  connected=true;
-	  break;
-	}
-      }
-      silent_network_[S1] = connected?1:-1;
-    }
-  }
-  silent_network_[endstate()] = -1;
+  vector<int>& S = silent_network_states;
+  vector<int>& s = silent_network_;
+
+  //--------------------- Find silent states ------------------------//
+  S.clear();
+  for(int i=0;i<nstates();i++)
+    if (silent(i))
+      S.push_back(i);
 
   //------------- Remove silent nodes if there are no cycles --------//
-  bool changed=true;
-  while(changed) {
+  bool changed;
+
+  do {
     changed=false;
-    for(int S1=0;S1<nstates()+1;S1++) {
-      if (silent_network_[S1] == -1) continue;
+    for(int i = S.size()-1;i>=0;i--)
+    {
+      int a = S[i];
 
       bool connected = false;
-      for(int S2=0;S2<nstates()+1;S2++) {
-	if (connected_Q(S1,S2) and silent_network_[S2] == 1)
-	  connected = true;
+      for(int j=0;j<S.size() and not connected;j++) {
+	int b = S[j];
+	if (connected_Q(a,b)) connected = true;
       }
-      silent_network_[S1] = connected?1:-1;
-      if (not connected) changed = true;
+
+      if (not connected) {
+	changed = true;
+	S.erase(S.begin()+i);
+      }
     }
-  }
+  } while (changed);
 
   //------------ Compute index of silent network states -------------//
-  for(int S1=0;S1<nstates();S1++) {
-    if (silent_network(S1)) {
-      silent_network_states.push_back(S1);
-      silent_network_[S1] = silent_network_states.size()-1;  
-    }
-  }
+  for(int i=0;i<s.size();i++)
+    s[i] = -1;
+  for(int i=0;i<S.size();i++)
+    s[S[i]] = i;
 }
-
-
 
 
 // Don't scale Q and GQ until the end???
@@ -253,14 +246,15 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double T
   //--------------- Find and index nodes in silent networks ---------------//
   find_and_index_silent_network_states();
 
-
   //----------------------  Compute the state order -----------------------//
+  // FIXME - I think that perhaps the endstate must be last?  If so, why?
   vector<int> temp;
   temp.reserve(nstates());
   order_.reserve(nstates()+1);
   for(int S1=0;S1<nstates()+1;S1++) {
-    // FIXME - we don't deal with silent states that aren't part of the silent networks, except the end state
-    assert(not silent(S1) or silent_network(S1) or S1 == endstate());
+    // FIXME - handle silent states that aren't in a network, and aren't the end state.
+    if (silent(S1))
+      assert(silent_network(S1) or S1 == endstate());
 
     if (silent(S1))
       temp.push_back(S1);
@@ -285,6 +279,7 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double T
 
   GQ_exit(GQ, silent_network_states, non_silent_network);
 
+#ifndef NDEBUG
   //---------------------------- Check GQ --------------------------//
   for(int i=0;i<silent_network_states.size();i++) {
     int S1 = silent_network_states[i];
@@ -299,5 +294,6 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double T
       }
     }
   }
+#endif
 
 }
