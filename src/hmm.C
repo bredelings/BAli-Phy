@@ -147,65 +147,38 @@ efloat_t HMM::path_GQ_path(const vector<int>& g_path) const {
 }
 
 // IF (and only if) T > 1, then GQ(i,j) can be > 0....
-Matrix GQ_exit(const Matrix& Q,const vector<int>& silent_network_states,const vector<int>& non_silent_network) {
-
-  const int n_S = silent_network_states.size();
-  const int n_NS = non_silent_network.size();
-
-
-  //--------------- Create and fill the matrix G -----------------//
-  Matrix G(n_S,n_S+n_NS);
-  for(int s1=0; s1<G.size1(); s1++) {
-    int S1 = silent_network_states[s1];
-    int j=0;
-    for(;j < n_S; j++) {
-      int S2 = silent_network_states[j];
-      G(s1,j) = Q(S1,S2);
-    }
-    for(;j<G.size2();j++) {
-      int NS = non_silent_network[j-n_S];
-      G(s1,j) = Q(S1,NS);
-    }
-  }
-
+void GQ_exit(Matrix& G,const vector<int>& silent,const vector<int>& non_silent) 
+{
+  vector<int> all = silent;
+  all.insert(all.end(), non_silent.begin(), non_silent.end());
 
   //------------ Compute first hitting probabilities -------------//
+  for(int i=0; i < silent.size(); i++) {
+    int a = silent[i];
 
-  // eliminate 'z' from destination states
-  for(int z=0; z < G.size1(); z++) {
-    // for each destination state
-    for(int j=z+1; j < G.size2(); j++) {
-      G(z,j) /= (1.0 - G(z,z));   // calculate G_(k+1)[z,j]
-      for(int i=0;i<G.size1();i++) 
-	if (i != z)
-	  G(i,j) += G(i,z) * G(z,j); // calculate G_(k+1)[i,j]
+    double factor = 1.0/(1.0-G(a,a));
+
+    // consider b->x [ for x not yet eliminated ]
+    for(int j=i+1; j < all.size(); j++) {
+      int x = all[j];
+
+      // eliminate a->a
+      G(a,x) *= factor;   // calculate G_(k+1)[z,j]
+
+      // eliminate b->a->x
+      for(int k=0; k < silent.size(); k++) {
+	int b = silent[k];
+	if (b != a)
+	  G(b,x) += G(b,a) * G(a,x); // calculate G_(k+1)[i,j]
+      }
     }
   }
 
-
-  //--------------------- Resize the matrix ------------------------//
-  Matrix G2(n_S,n_NS);
-  for(int i=0;i<G2.size1();i++)
-    for(int j=0;j<G2.size2();j++)
-      G2(i,j) = G(i,n_S + j);
-  
-
-  //---------------------------- Check G ---------------------------//
-  for(int s1=0; s1<G2.size1(); s1++)
-    for(int ns=0; ns<G2.size2(); ns++) {
-      int S1 = silent_network_states[s1];
-      int NS = non_silent_network[ns];
-      if (Q(S1,NS) > 0.0)
-	assert(G2(s1,ns) >= Q(S1,NS));
-      for(int s2 =0; s2<n_S; s2++) {
-	int S2 = silent_network_states[s2];
-	if (Q(S1,S2) > 0.0 and Q(S2,NS) > 0.0)
-	  assert(G2(s1,ns) >= Q(S1,S2)*Q(S2,NS));
-      }
-    }
-  
-  return G2;
+  for(int i=0;i<silent.size();i++)
+    for(int j=0;j<silent.size();j++)
+      G(silent[i],silent[j]) = 0;
 }
+
 
 
 void HMM::find_and_index_silent_network_states() {
@@ -310,41 +283,19 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double T
   
   //---------------- compute the probability of -------------------//
 
-  Matrix G = GQ_exit(Q,silent_network_states,non_silent_network);
-
-
-  //---------------- Actually modify the elements of GQ ----------------//
-  for(int s1=0; s1<silent_network_states.size(); s1++) {
-    int S1 = silent_network_states[s1];
-    
-    // silent network -> not silent network
-    for(int ns=0; ns<non_silent_network.size(); ns++) {
-      int NS = non_silent_network[ns];
-      GQ(S1,NS) = G(s1,ns);
-    }
-    
-    // silent network -> silent network (not allowed)
-    for(int s2=0; s2<silent_network_states.size(); s2++) {
-      int S2 = silent_network_states[s2];
-      GQ(S1,S2) = 0.0;
-    }
-  }
+  GQ_exit(GQ, silent_network_states, non_silent_network);
 
   //---------------------------- Check GQ --------------------------//
   for(int i=0;i<silent_network_states.size();i++) {
     int S1 = silent_network_states[i];
     for(int ns=0;ns<non_silent_network.size();ns++) {
       int NS = non_silent_network[ns];
-	
-      if (connected_Q(S1,NS))
-	assert(GQ(S1,NS) >= Q(S1,NS));
-      
+
+      assert(GQ(S1,NS) >= Q(S1,NS));
+
       for(int s2 =0;s2<silent_network_states.size();s2++) {
 	int S2 = silent_network_states[s2];
-	if (connected_Q(S1,S2) and connected_Q(S2,NS)) 
-	  assert(GQ(S1,NS) >= Q(S1,S2)*GQ(S2,NS));
-	if (connected_Q(S1,S2) and connected(S2,NS))
-	  assert(GQ(S1,NS) >= Q(S1,S2)*GQ(S2,NS));
+	assert(GQ(S1,NS) +1.0e-10 >= Q(S1,NS) + Q(S1,S2)*GQ(S2,NS));
       }
     }
   }
