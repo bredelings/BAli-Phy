@@ -1,9 +1,9 @@
 /* TODO
    0. Can we have a triplet model that isn't derived from YangM0*Neutral?
 
-   1. I think that WithINV models automatically have separate frequencies for
-      the invariant sites and the other sites.
-    a) Interesting, but we also need the standard INV model
+   1. The WithINV models currently have INV frequencies = variant frequencies.
+    a) If we had *2* submodels, then INV and the other models could have
+       DIFFERENT frequencies.
 
    2. If we want to do YangM0 + YangM7 + AAINV, then 
       a) how do we make the AAINV model share the same alphabet model?
