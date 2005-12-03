@@ -152,9 +152,9 @@ T min(const std::vector<T>& v) {
 
 /// Return the arg-min of v
 template<class T>
-int argmin(const std::vector<T>& v) {
-  int argmin = 0;
-  for(int i=1;i<v.size();i++)
+unsigned argmin(const std::vector<T>& v) {
+  unsigned argmin = 0;
+  for(unsigned i=1;i<v.size();i++)
     if (v[i] < v[argmin])
       argmin = i;
 
@@ -173,9 +173,9 @@ T max(const std::vector<T>& v) {
 
 /// Return the arg-max of v
 template<class T>
-int argmax(const std::vector<T>& v) {
-  int argmax = 0;
-  for(int i=1;i<v.size();i++)
+unsigned argmax(const std::vector<T>& v) {
+  unsigned argmax = 0;
+  for(unsigned i=1;i<v.size();i++)
     if (v[i] > v[argmax])
       argmax = i;
 
