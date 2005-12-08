@@ -128,6 +128,24 @@ namespace substitution {
      pi(1.0/a.size(),a.size())
   { }
 
+  string UniformFrequencyModel::name() const 
+  {
+    return "uniform frequencies";
+  }
+
+
+  string UniformFrequencyModel::parameter_name(int i) const 
+  {
+    return ::parameter_name("",i,0);
+  }
+
+  UniformFrequencyModel::UniformFrequencyModel(const alphabet& a)
+    :ReversibleFrequencyModel(a),
+     ModelWithAlphabet<alphabet>(a)
+  {
+    //frequencies initialized to uniform in ReversibleFrequencyModel
+  }
+
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
   {
     // set the frequency parameters
