@@ -81,7 +81,7 @@ endif
 
 ifeq (${STATIC},y)
   .LIBPATTERNS = lib%.a
-  LDFLAGS += -static -pthread
+  LDFLAGS += -static # -pthread
 else
   LDFLAGS += -rdynamic
 endif
