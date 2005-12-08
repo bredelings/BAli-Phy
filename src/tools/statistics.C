@@ -27,46 +27,51 @@ namespace statistics {
     return log(odds(v));
   }
 
-  pair<double,double> confidence_interval(const valarray<double>& values,double P) 
+  double quantile(const valarray<double>& values, double Q)
   {
+    assert(0 <= Q and Q <= 1.0);
     assert(values.size() > 4);
 
+    // sort values
     vector<double> values2(values.size());
     for(int i=0;i<values.size();i++)
       values2[i] = values[i];
     sort(values2.begin(),values2.end());
-    
-    unsigned skip = 1+(unsigned)(values2.size()*(1.0-P)/2);
-    
+
+    // sort compute indices
+    double index = Q*values2.size() - 0.5;
+    int index1 = (int)index;
+    int index2 = index1+1;
+    double p1 = index2-index;
+    double p2 = 1.0-p1;
+
+    // compute quantile
+    if (index <= 0.0)
+      return values2[0];
+    else if (index >= values2.size()-1)
+      return values2.back();
+    else {
+      assert(index1 >= 0 and index1 < values2.size());
+      assert(index2 >= 0 and index2 < values2.size());
+
+      return p1*values2[index1] + p2*values2[index2];
+    }
+  }
+
+  double median(const valarray<double>& values)
+  {
+    return quantile(values,0.5);
+  }
+
+  pair<double,double> confidence_interval(const valarray<double>& values,double P) 
+  {
+    double alpha = (1.0-P)/2.0;
+
     pair<double,double> interval;
-    interval.first = values2[skip];
-    interval.second = values2[values2.size()-1-skip];
+    interval.first = quantile(values,alpha);
+    interval.second = quantile(values,1.0-alpha);
     
     return interval;
-  }
-
-  double lower_confidence_bound(const valarray<double>& values,double P) {
-    assert(values.size() > 4);
-
-    vector<double> values2(values.size());
-    for(int i=0;i<values.size();i++)
-      values2[i] = values[i];
-    std::sort(values2.begin(),values2.end());
-    
-    int skip = 1+(int)(values.size()*(1.0-P));
-    return values2[skip];
-  }
-  
-  double upper_confidence_bound(const valarray<double>& values,double P) {
-    assert(values.size() > 4);
-
-    vector<double> values2(values.size());
-    for(int i=0;i<values.size();i++)
-      values2[i] = values[i];
-    std::sort(values2.begin(),values2.end());
-    
-    int skip = 1+(int)(values.size()*(1.0-P));
-    return values2[values2.size()-1-skip];
   }
 
   valarray<bool> add_pseudocount(const valarray<bool>& sample1,int pseudocount) {
