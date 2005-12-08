@@ -402,6 +402,42 @@ namespace substitution {
   };
     
 
+  class TripletExchangeModel: public ExchangeModel, 
+			      public ModelWithAlphabet<Triplets> 
+  {
+  public:
+    TripletExchangeModel* clone() const=0;
+
+    TripletExchangeModel(const Triplets& T);
+
+    ~TripletExchangeModel() {}
+  };
+
+  class SingletToTripletExchangeModel: public TripletExchangeModel,
+				       public ::NestedModelOver<NucleotideExchangeModel>
+  {
+    double super_fiddle(int) {return 1.0;}
+
+    void recalc();
+  public:
+    efloat_t super_prior() const {return 1.0;}
+
+    efloat_t prior() const { return ::NestedModelOver<NucleotideExchangeModel>::prior(); }
+
+    double fiddle(int) {return ::NestedModelOver<NucleotideExchangeModel>::fiddle(0);}
+
+    SingletToTripletExchangeModel* clone() const {return new SingletToTripletExchangeModel(*this);}
+
+    string name() const;
+
+    string super_parameter_name(int i) const;
+
+    SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& M);
+
+    ~SingletToTripletExchangeModel() {}
+  };
+
+
 
   class CodonExchangeModel: public ExchangeModel, 
 			    public ModelWithAlphabet<Codons> 

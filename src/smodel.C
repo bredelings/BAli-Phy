@@ -844,8 +844,58 @@ namespace substitution {
       recalc();
     }
 
+  //------------------------ Triplet Models -------------------//
 
+  TripletExchangeModel::TripletExchangeModel(const Triplets& T)
+    :ExchangeModel(T),ModelWithAlphabet<Triplets>(T)
+  { }
 
+  void SingletToTripletExchangeModel::recalc() 
+  {
+    write();
+
+    for(int i=0;i<Alphabet().size();i++)
+      for(int j=0;j<i;j++) 
+      {
+	int nmuts=0;
+	int pos=-1;
+	for(int p=0;p<3;p++)
+	  if (Alphabet().sub_nuc(i,p) != Alphabet().sub_nuc(j,p)) {
+	    nmuts++;
+	    pos=p;
+	  }
+	assert(nmuts>0);
+	assert(pos >= 0 and pos < 3);
+	
+	S(i,j) = 0;
+
+	if (nmuts == 1) {
+
+	  int l1 = Alphabet().sub_nuc(i,pos);
+	  int l2 = Alphabet().sub_nuc(j,pos);
+	  assert(l1 != l2);
+
+	  S(i,j) = SubModel()(l1,l2);
+	}
+      }
+  }
+
+  string SingletToTripletExchangeModel::name() const {
+    string n = SubModel().name();
+    n += "x3";
+    return n;
+  }
+  
+  string SingletToTripletExchangeModel::super_parameter_name(int i) const {
+    return ::parameter_name("",i,0);
+  }
+
+  SingletToTripletExchangeModel::SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& N)
+    :TripletExchangeModel(T),::NestedModelOver<NucleotideExchangeModel>(N,0)
+  { 
+    read();
+    recalc();
+  }
 
   //------------------------ Codon Models -------------------//
 
