@@ -5,6 +5,10 @@
 
 using std::vector;
 using std::valarray;
+using std::cout;
+using std::cerr;
+using std::istream;
+
 
 using boost::program_options::variables_map;
 
@@ -216,8 +220,8 @@ void check_internal_nodes_connected(const alignment& A,const Tree& T,const vecto
       present[i] = not A.gap(column,i);
     
     if (not all_characters_connected(T,present,ignore)) {
-      std::cerr<<"Internal node states are inconsistent in column "<<column<<std::endl;
-      std::cerr<<A<<std::endl;
+      cerr<<"Internal node states are inconsistent in column "<<column<<endl;
+      cerr<<A<<endl;
       throw myexception()<<"Internal node states are inconsistent in column "<<column;
     }
   }
@@ -245,7 +249,7 @@ void check_letters_OK(const alignment& A) {
 	; // this is a '?'
       else {
 	bad = true;
-	std::cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<std::endl;
+	cerr<<"A("<<i<<","<<j<<") = "<<A(i,j)<<endl;
       }
   if (bad)
     std::abort();
@@ -261,11 +265,11 @@ void check_leaf_sequences(const alignment& A,int n_leaves) {
 
     sequences[i].strip_gaps();
     if (not (a(sequences[i]) == a(A.seq(i)))) {
-      std::cerr<<"leaf sequence "<<i<<" corrupted!\n";
+      cerr<<"leaf sequence "<<i<<" corrupted!\n";
 
-      std::cerr<<sequences[i]<<std::endl;
+      cerr<<sequences[i]<<endl;
 
-      std::cerr<<A.seq(i)<<std::endl;
+      cerr<<A.seq(i)<<endl;
 
       std::abort();
     }
@@ -583,8 +587,8 @@ bool match_tag(const string& line,const string& tag) {
 }
 
 
-list<alignment> load_alignments(std::istream& ifile, const string& tag,
-				  const vector<OwnedPointer<alphabet> >& alphabets, int maxalignments) {
+list<alignment> load_alignments(istream& ifile, const string& tag,
+				const vector<OwnedPointer<alphabet> >& alphabets, int maxalignments) {
   list<alignment> alignments;
   
   // we are using every 'skip-th' alignment
@@ -613,8 +617,8 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
 	ifile>>A;
     }
     catch (std::exception& e) {
-      std::cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
-      std::cerr<<"  Exception: "<<e.what()<<endl;
+      cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
+      cerr<<"  Exception: "<<e.what()<<endl;
       break;
     }
 
@@ -634,7 +638,7 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
       // start skipping twice as many alignments
       skip *= 2;
 
-      std::cerr<<"Went from "<<total;
+      cerr<<"Went from "<<total;
       // Remove every other alignment
       for(typeof(alignments.begin()) loc =alignments.begin();loc!=alignments.end();) {
 	typeof(loc) j = loc++;
@@ -648,7 +652,7 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
 	  loc++;
       }
 	
-      std::cerr<<" to "<<total<<" alignments.\n";
+      cerr<<" to "<<total<<" alignments.\n";
 
     }
   }
@@ -662,7 +666,7 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
     const int extra = total - maxalignments;
 
     // Remove this many alignments from the array
-    std::cerr<<"Went from "<<total;
+    cerr<<"Went from "<<total;
 
     vector<int> kill(extra);
     for(int i=0;i<kill.size();i++)
@@ -681,9 +685,63 @@ list<alignment> load_alignments(std::istream& ifile, const string& tag,
 	loc++;
     }
     assert(kill.empty());
-    std::cerr<<" to "<<alignments.size()<<" alignments.\n";
+    cerr<<" to "<<alignments.size()<<" alignments.\n";
   }
-  std::cerr<<"Scanned "<<nth<<" alignments total.\n";
+  cerr<<"Scanned "<<nth<<" alignments total.\n";
+
+  return alignments;
+}
+
+bool is_next_char(istream& file,char match) {
+  if (not file) return false;
+
+  char c = file.get();
+  if (file) {
+    file.putback(c);
+    return (c==match);
+  }
+  else
+    return false;
+}
+
+vector<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphabet> >& alphabets) {
+  vector<alignment> alignments;
+  
+  alignment A;
+  while(ifile) {
+
+    // CHECK if an alignment begins here
+    if (not is_next_char(ifile,'>')) {
+      string line;
+      getline(ifile,line);
+      continue;
+    }
+    
+    // READ the next alignment
+    try {
+      if (alignments.empty())
+	A.load(alphabets,sequence_format::read_guess,ifile);
+      else 
+	ifile>>A;
+    }
+    catch (std::exception& e) {
+      std::cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
+      std::cerr<<"  Exception: "<<e.what()<<endl;
+      break;
+    }
+
+    // STRIP out empty columns
+    remove_empty_columns(A);
+
+    // COMPLAIN if there are no sequences in the alignment
+    if (A.n_sequences() == 0) 
+      throw myexception(string("Alignment didn't contain any sequences!"));
+    
+    // STORE the alignment if we're not going to skip it
+    alignments.push_back(A);
+  }
+
+  std::cerr<<"Scanned "<<alignments.size()<<" alignments total.\n";
 
   return alignments;
 }

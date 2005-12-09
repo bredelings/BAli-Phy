@@ -82,6 +82,8 @@ long int splits_distance(const ublas::matrix<int>& M1,const std::vector<std::vec
 std::list<alignment> load_alignments(std::istream& ifile, const std::string& tag,
 				     const std::vector<OwnedPointer<alphabet> >& alphabets, int maxalignments);
 
+std::vector<alignment> load_alignments(std::istream&, const std::vector<OwnedPointer<alphabet> >&);
+
 alignment find_last_alignment(std::istream& ifile, const string& tag,
 			       const std::vector<OwnedPointer<alphabet> >& alphabets);
 

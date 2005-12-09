@@ -156,8 +156,13 @@ tools/joint-A-T: alignment.o alphabet.o sequence.o util.o rng.o \
 	alignment-random.o alignment-util.o randomtree.o tools/tree-dist.o \
 	tools/statistics.o ${LINKLIBS}
 
+tools/joint-parsimony: alignment.o alphabet.o sequence.o util.o rng.o tree.o \
+	sequencetree.o tree-util.o setup.o imodel.o probability.o sequence-format.o \
+	model.o alignment-random.o alignment-util.o randomtree.o \
+	tools/parsimony.o ${LINKLIBS} 
+
 tools/alignment-info: alignment.o alphabet.o sequence.o util.o rng.o \
-	tree.o sequencetree.o setup.o imodel.o \
+	tree.o sequencetree.o setup.o imodel.o tools/parsimony.o \
 	sequence-format.o randomtree.o alignment-util.o probability.o alignment-random.o \
 	model.o tree-util.o ${LINKLIBS}
 

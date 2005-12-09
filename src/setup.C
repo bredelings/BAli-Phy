@@ -139,10 +139,15 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
   }
   //----- IF sequences > leaf nodes THEN maybe complain -------//
   else {
-    if (not internal_sequences)
-      throw myexception()<<"More sequences than leaf nodes!";
-
-    if (A.n_sequences() > T.n_nodes())
+    if (not internal_sequences) {
+      alignment A2 = chop_internal(A);
+      if (A2.n_sequences() == T.n_leaves()) {
+	A = A2;
+      }
+      else
+	throw myexception()<<"More sequences than leaf nodes!";
+    } 
+    else if (A.n_sequences() > T.n_nodes())
       throw myexception()<<"More sequences than tree nodes!";
     else if (A.n_sequences() < T.n_nodes())
       throw myexception()<<"Less sequences than tree nodes!";
