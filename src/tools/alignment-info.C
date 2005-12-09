@@ -7,7 +7,7 @@
 #include "util.H"
 #include "setup.H"
 #include "findroot.H"
-
+#include "parsimony.H"
 #include <boost/program_options.hpp>
 
 using std::valarray;
@@ -51,51 +51,6 @@ vector<int> find_triplet(const vector<sequence>& sequences,const string& triplet
   return found;
 }
 
-
-int min(const vector<int>& v) {
-  int m = v[0];
-  for(int i=1;i<v.size();i++)
-    if (v[i]<m)
-      m = v[i];
-  return m;
-}
-
-int n_mutations(const alphabet& a, const vector<int>& letters, const Tree& T) 
-{
-  const int A = a.size();
-
-  assert(letters.size() == T.n_leaves());
-
-  vector< vector<int> > n_muts(T.n_nodes(),vector<int>(A,0));
-
-  int root = T.directed_branch(0).target();
-  vector<const_branchview> branches = branches_toward_node(T,root);
-
-  vector<int> temp(A);
-
-  // set the leaf lengths
-  for(int s=0;s<T.n_leaves();s++)
-    if (a.is_letter_class(letters[s]))
-      for(int l=0;l<A;l++)
-	n_muts[s][l] = not a.matches(l,letters[s]);
-
-  for(int i=0;i<branches.size();i++) 
-  {
-    int s = branches[i].source();
-    int t = branches[i].target();
-
-    for(int l=0;l<A;l++)
-      temp[l] = n_muts[s][l]+1;
-
-    for(int l=0;l<A;l++) {
-      temp[l]--;
-      n_muts[t][l] += min(temp);
-      temp[l]++;
-    }
-  }
-
-  return min(n_muts[root]);
-}
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
@@ -253,29 +208,8 @@ int main(int argc,char* argv[])
     cout<<"  "<<min_identity(A,true)*100<<"%/"<<min_identity(A,false)*100<<"% minimum sequence identity with/without indels.\n";
 
     //------------ Get Tree Lengths ------------//
-    int tree_length = 0;
-    if (args.count("tree")) {
-      vector<int> letters(A.n_sequences());
-      for(int c=0;c<A.length();c++) {
-	for(int i=0;i<A.n_sequences();i++)
-	  letters[i] = A(c,i);
-	int length = n_mutations(a,letters,T);
-	tree_length += length;
-	if (informative[c]) {
-
-	  count = 0;
-	  for(int i=0;i<A.n_sequences();i++) {
-	    int l = A(c,i);
-	    if (a.is_letter(l))
-	      count[l]++;
-	  }
-
-	  //	  cout<<"#"<<c<<"    "<<length<<"   -    "<<n_letters(count,0)-1<<"     =     "<<
-	  //   length-(n_letters(count,0)-1)<<"\n";
-	}
-      }
-      cout<<"  tree length = "<<tree_length<<"\n";
-    }
+    if (args.count("tree")) 
+      cout<<"  tree length = "<<n_mutations(A,T)<<"\n";
 
     if (dynamic_cast<const Nucleotides*>(&a)) 
     {
