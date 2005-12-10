@@ -21,7 +21,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help", "produce help message")
-    ("tag", value<string>(),"only read alignments preceded by 'align[<tag>'")
     ("first", "get the first alignment in the file")
     ("last", "get the last alignment in the file (default)")
     ;
@@ -54,11 +53,6 @@ int main(int argc,char* argv[])
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    // --------------- Determine the tag --------------- //
-    string tag = "align[";
-    if (args.count("tag"))
-      tag += args["tag"].as<string>();
-
     // --------------- Alphabets to try ---------------- //
     vector<OwnedPointer<alphabet> > alphabets;
     alphabets.push_back(DNA());
@@ -71,9 +65,9 @@ int main(int argc,char* argv[])
       throw myexception()<<"You must choose either --first or --last, not both";
 
     if (args.count("first"))
-      A = find_first_alignment(std::cin, tag, alphabets);
+      A = find_first_alignment(std::cin, alphabets);
     else
-      A = find_last_alignment(std::cin, tag, alphabets);
+      A = find_last_alignment(std::cin, alphabets);
 
     //------------------ Print it out -------------------//
     std::cout<<A;

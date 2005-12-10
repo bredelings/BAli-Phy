@@ -13,8 +13,9 @@ TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/alignment-convert tools/alignment-thin \
 	tools/trees-consensus tools/cut-range tools/alignment-translate \
 	tools/alignment-median tools/alignment-indices tools/pickout \
-	tools/joint-A-T tools/alignment-consensus tools/alignment-info \
-	tools/subsample tools/tree-mean-lengths tools/trees-bootstrap
+	tools/joint-indels tools/alignment-consensus tools/alignment-info \
+	tools/subsample tools/tree-mean-lengths tools/trees-bootstrap \
+	tools/joint-parsimony
 
 
 tools: ${TOOLS}
@@ -150,16 +151,16 @@ tools/alignment-indices: alignment.o alphabet.o sequence.o util.o tree.o \
 tools/alignment-draw: alignment.o alphabet.o sequence.o sequence-format.o util.o \
 	alignment-util.o tools/colors.o tree.o  ${LINKLIBS} 
 
-tools/joint-A-T: alignment.o alphabet.o sequence.o util.o rng.o \
-	tree.o sequencetree.o tools/optimize.o tools/findroot.o tree-util.o \
-	setup.o imodel.o probability.o sequence-format.o model.o tools/distance-methods.o \
+tools/joint-indels: alignment.o alphabet.o sequence.o util.o rng.o \
+	tree.o sequencetree.o tree-util.o \
+	setup.o imodel.o probability.o sequence-format.o model.o \
 	alignment-random.o alignment-util.o randomtree.o tools/tree-dist.o \
-	tools/statistics.o ${LINKLIBS}
+	tools/statistics.o tools/joint-A-T.o ${LINKLIBS}
 
 tools/joint-parsimony: alignment.o alphabet.o sequence.o util.o rng.o tree.o \
 	sequencetree.o tree-util.o setup.o imodel.o probability.o sequence-format.o \
 	model.o alignment-random.o alignment-util.o randomtree.o \
-	tools/parsimony.o ${LINKLIBS} 
+	tools/parsimony.o tools/joint-A-T.o ${LINKLIBS} 
 
 tools/alignment-info: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o setup.o imodel.o tools/parsimony.o \

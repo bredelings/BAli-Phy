@@ -22,11 +22,7 @@ void do_setup(Arguments& args,vector<alignment>& alignments) {
   if (args.set("max-alignments"))
     maxalignments = convertTo<int>(args["max-alignments"]);
 
-  string tag = "align[sample";
-  if (args.set("tag"))
-    tag = args["tag"];
-
-  alignments = load_alignments(std::cin,tag,alphabets,maxalignments);
+  alignments = load_alignments(std::cin,alphabets,maxalignments);
 }
 
 bool after(int c1, int c2, const alignment& A,const vector<int>& nodes) {

@@ -579,16 +579,19 @@ using std::vector;
 using std::string;
 using std::list;
 
-bool match_tag(const string& line,const string& tag) {
-  if (line.size() < tag.size())
-    return false;
+bool is_next_char(istream& file,char match) {
+  if (not file) return false;
 
-  return (line.substr(0,tag.size()) == tag);
+  char c = file.get();
+  if (file) {
+    file.putback(c);
+    return (c==match);
+  }
+  else
+    return false;
 }
 
-
-list<alignment> load_alignments(istream& ifile, const string& tag,
-				const vector<OwnedPointer<alphabet> >& alphabets, int maxalignments) {
+list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphabet> >& alphabets, int maxalignments) {
   list<alignment> alignments;
   
   // we are using every 'skip-th' alignment
@@ -598,10 +601,14 @@ list<alignment> load_alignments(istream& ifile, const string& tag,
   alignment A;
   string line;
   int nth=0;
-  for(;getline(ifile,line);) {
+  while(ifile) {
     
-    // Continue with the next line IF no alignment begins here
-    if (not match_tag(line,tag)) continue;
+    // CHECK if an alignment begins here
+    if (not is_next_char(ifile,'>')) {
+      string line;
+      getline(ifile,line);
+      continue;
+    }
 
     // Increment the counter SINCE we saw an alignment
     nth++;
@@ -692,18 +699,6 @@ list<alignment> load_alignments(istream& ifile, const string& tag,
   return alignments;
 }
 
-bool is_next_char(istream& file,char match) {
-  if (not file) return false;
-
-  char c = file.get();
-  if (file) {
-    file.putback(c);
-    return (c==match);
-  }
-  else
-    return false;
-}
-
 vector<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphabet> >& alphabets) {
   vector<alignment> alignments;
   
@@ -741,23 +736,26 @@ vector<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alph
     alignments.push_back(A);
   }
 
-  std::cerr<<"Scanned "<<alignments.size()<<" alignments total.\n";
+  std::cerr<<"Loaded "<<alignments.size()<<" alignments.\n";
 
   return alignments;
 }
 
-alignment find_first_alignment(std::istream& ifile, const string& tag,
-			       const vector<OwnedPointer<alphabet> >& alphabets) 
+alignment find_first_alignment(std::istream& ifile, const vector<OwnedPointer<alphabet> >& alphabets) 
 {
   alignment A;
 
   // for each line (nth is the line counter)
   string line;
-  while(getline(ifile,line)) {
+  while(ifile) {
     
-    // read the next alignments only if we match the tag
-    if (not match_tag(line,tag)) continue;
-
+    // CHECK if an alignment begins here
+    if (not is_next_char(ifile,'>')) {
+      string line;
+      getline(ifile,line);
+      continue;
+    }
+    
     try {
       // read alignment into A
       alignment A2;
@@ -777,23 +775,26 @@ alignment find_first_alignment(std::istream& ifile, const string& tag,
   }
 
   if (A.n_sequences() == 0) 
-    throw myexception(string("Couldn't find any alignments w/ tag ") + tag);
+    throw myexception()<<"No alignments found.";
 
   return A;
 }
 
-alignment find_last_alignment(std::istream& ifile, const string& tag,
-			      const vector<OwnedPointer<alphabet> >& alphabets) 
+alignment find_last_alignment(std::istream& ifile, const vector<OwnedPointer<alphabet> >& alphabets) 
 {
   alignment A;
 
   // for each line (nth is the line counter)
   string line;
-  while(getline(ifile,line)) {
+  while(ifile) {
     
-    // read the next alignments only if we match the tag
-    if (not match_tag(line,tag)) continue;
-
+    // CHECK if an alignment begins here
+    if (not is_next_char(ifile,'>')) {
+      string line;
+      getline(ifile,line);
+      continue;
+    }
+    
     try {
       // read alignment into A
       alignment A2;
@@ -811,7 +812,7 @@ alignment find_last_alignment(std::istream& ifile, const string& tag,
   }
 
   if (A.n_sequences() == 0) 
-    throw myexception(string("Couldn't find any alignments w/ tag ") + tag);
+    throw myexception()<<"No alignments found.";
 
   return A;
 }

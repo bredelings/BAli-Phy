@@ -79,18 +79,13 @@ long int splits_distance(const alignment& A1,const alignment& A2);
 long int splits_distance(const ublas::matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
 			 const ublas::matrix<int>& M2,const std::vector<std::vector<int> >& column_indices2);
 
-std::list<alignment> load_alignments(std::istream& ifile, const std::string& tag,
-				     const std::vector<OwnedPointer<alphabet> >& alphabets, int maxalignments);
+std::list<alignment> load_alignments(std::istream& ifile, const std::vector<OwnedPointer<alphabet> >& alphabets, int maxalignments);
 
 std::vector<alignment> load_alignments(std::istream&, const std::vector<OwnedPointer<alphabet> >&);
 
-alignment find_last_alignment(std::istream& ifile, const string& tag,
-			       const std::vector<OwnedPointer<alphabet> >& alphabets);
+alignment find_last_alignment(std::istream& ifile, const std::vector<OwnedPointer<alphabet> >& alphabets);
 
-alignment find_first_alignment(std::istream& ifile, const string& tag,
-			       const std::vector<OwnedPointer<alphabet> >& alphabets);
-
-bool match_tag(const string& line, const string& tag);
+alignment find_first_alignment(std::istream& ifile, const std::vector<OwnedPointer<alphabet> >& alphabets);
 
 vector<OwnedPointer<alphabet> > load_alphabets(const boost::program_options::variables_map& args);
 

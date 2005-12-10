@@ -217,13 +217,10 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
   //------------ Try to load alignments -----------//
   int maxalignments = args["max-alignments"].as<int>();
 
-  string tag = "align[";
-  tag += args["tag"].as<string>();
-
   vector< OwnedPointer<alphabet> > alphabets;
   alphabets.push_back(A.get_alphabet());
   std::cerr<<"Loading alignments...";
-  alignments = load_alignments(std::cin,tag,alphabets,maxalignments);
+  alignments = load_alignments(std::cin,alphabets,maxalignments);
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
 
   //-------- Check compatability of estimate & samples-------//
@@ -313,7 +310,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree",value<string>(),"file with initial tree")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-    ("tag", value<string>()->default_value("sample"),"only read alignments preceded by 'align[<tag>'")
     ("refine", value<string>(),"procedure for refining Least-Squares positivized branch lengths: SSE, Poisson, LeastSquares")
     ;
 

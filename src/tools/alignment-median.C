@@ -37,9 +37,6 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
   //------------ Try to load alignments -----------//
   int maxalignments = args["max-alignments"].as<int>();
 
-  string tag = "align[";
-  tag += args["tag"].as<string>();
-
   // --------------- Alphabets to try --------------- //
   vector<OwnedPointer<alphabet> > alphabets;
   alphabets.push_back(DNA());
@@ -48,7 +45,7 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
 
   // --------------------- try ---------------------- //
   std::cerr<<"Loading alignments...";
-  list<alignment> As = load_alignments(std::cin,tag,alphabets,maxalignments);
+  list<alignment> As = load_alignments(std::cin,alphabets,maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (not alignments.size())
@@ -65,7 +62,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("seed", value<unsigned long>(),"random seed")
-    ("tag", value<string>()->default_value("sample"),"only read alignments preceded by 'align[<tag>'")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("type", value<string>()->default_value("pairs"),"type of distance: pairs or splits")
     ;
