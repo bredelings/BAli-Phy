@@ -16,6 +16,9 @@
 
 -15. Check letter classes analysis - does it affect substitution-index.C?
      If not, then checking the first iteration should be enough.
+     a) how does changing the bin probabilities affect the likelihood?
+     b) how does changing the bin locations affect the likelihood?
+     c) 
 
 -14. Consider calculating PP of all the trees in alignment-consensus...
      a) This is really slow, so don't keep on RE-calculating everything.
