@@ -44,10 +44,12 @@ void guess_markov_model(vector<string>& string_stack,const alphabet& a)
     string_stack.push_back("Empirical");
   else if (dynamic_cast<const Codons*>(&a))
     string_stack.push_back("YangM0");
+  else if (dynamic_cast<const Triplets*>(&a))
+    string_stack.push_back("HKYx3");
 }
 
 OwnedPointer< ::Model> 
-get_smodel(const variables_map& args,const string& smodel,const alphabet& a);
+get_smodel(const variables_map& args,const string& smodel,const alphabet& a,const valarray<double>&);
 
 bool process_stack_Markov(vector<string>& string_stack,
 			  vector<OwnedPointer< ::Model> >& model_stack,
@@ -64,21 +66,51 @@ bool process_stack_Markov(vector<string>& string_stack,
     if (N)
       model_stack.push_back(HKY(*N));
     else
-      throw myexception()<<"HKY:: Unrecognized alphabet '"<<a.name<<"'";
+      throw myexception()<<"HKY:: '"<<a.name<<"' is not a nucleotide alphabet.";
   }
   else if (match(string_stack,"TN",arg)) {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
     if (N)
       model_stack.push_back(TN(*N));
     else
-      throw myexception()<<"TN:: Unrecognized alphabet '"<<a.name<<"'";
+      throw myexception()<<"TN::  '"<<a.name<<"' is not a nucleotide alphabet.";
   }
   else if (match(string_stack,"GTR",arg)) {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
     if (N)
       model_stack.push_back(GTR(*N));
     else
-      throw myexception()<<"GTR:: Unrecognized alphabet '"<<a.name<<"'";
+      throw myexception()<<"GTR:: '"<<a.name<<"' is not a nucleotide alphabet.";
+  }
+  /* THINKO
+  else if (match(string_stack,"EQUx3",arg)) {
+    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    if (T) 
+      model_stack.push_back(SingletToTripletExchangeModel(*T,EQU(T->getNucleotides())));
+    else
+      throw myexception()<<"EQUx3:: '"<<a.name<<"' is not a triplet alphabet.";
+  }
+  */      
+  else if (match(string_stack,"HKYx3",arg)) {
+    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    if (T) 
+      model_stack.push_back(SingletToTripletExchangeModel(*T,HKY(T->getNucleotides())));
+    else
+      throw myexception()<<"HKYx3:: '"<<a.name<<"' is not a triplet alphabet.";
+  }
+  else if (match(string_stack,"TNx3",arg)) {
+    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    if (T) 
+      model_stack.push_back(SingletToTripletExchangeModel(*T,TN(T->getNucleotides())));
+    else
+      throw myexception()<<"TNx3:: '"<<a.name<<"' is not a triplet alphabet.";
+  }
+  else if (match(string_stack,"GTRx3",arg)) {
+    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    if (T) 
+      model_stack.push_back(SingletToTripletExchangeModel(*T,GTR(T->getNucleotides())));
+    else
+      throw myexception()<<"GTRx3:: '"<<a.name<<"' is not a triplet alphabet.";
   }
   else if (match(string_stack,"Empirical",arg)) {
     string filename = arg;
@@ -96,7 +128,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     OwnedPointer<NucleotideExchangeModel> N_submodel = HKY(C->getNucleotides());
 
     if (not arg.empty()) {
-      OwnedPointer< ::Model> submodel = get_smodel(args,arg,C->getNucleotides());
+      OwnedPointer< ::Model> submodel = get_smodel(args,arg,C->getNucleotides(),valarray<double>());
       NucleotideExchangeModel* temp = dynamic_cast<NucleotideExchangeModel*>( submodel.get());
       if (not temp)
 	throw myexception()<<"Submodel '"<<arg<<"' for YangM0 is not a nucleotide replacement model.";
@@ -113,12 +145,12 @@ bool process_stack_Markov(vector<string>& string_stack,
 
 OwnedPointer<ExchangeModel> get_EM(::Model* M, const string& name)
 {
-  ExchangeModel* EM = NULL;
+  ExchangeModel* EM = dynamic_cast<ExchangeModel*>(M);
 
-  if ((EM=dynamic_cast<ExchangeModel*>(M)))
-    return *EM;
-  else
-    throw myexception()<<name<<":couldn't find a reversible+additive model to use.";
+  if (not EM) 
+    throw myexception()<<name<<":couldn't find an exchange-model to use.";
+
+  return *EM;
 }
 
 
@@ -133,36 +165,47 @@ OwnedPointer<ExchangeModel> get_EM(vector<OwnedPointer< ::Model> >& model_stack,
 
 bool process_stack_Frequencies(vector<string>& string_stack,
 			       vector<OwnedPointer< ::Model> >& model_stack,
-			       const alphabet& a)
+			       const alphabet& a,
+			       const valarray<double>& frequencies)
 {
   string arg;
   
-  if (match(string_stack,"SimpleFrequencies",arg)) {
-    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"SimpleFrequencies");
+  if (match(string_stack,"pi=constant",arg)) {
+    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=constant");
 
-    model_stack.back() = *new ReversibleMarkovSuperModel(*EM,SimpleFrequencyModel(a));
+    SimpleFrequencyModel F(a,frequencies);
+
+    for(int i=0;i<F.parameters().size();i++)
+      F.fixed(i,true);
+
+    model_stack.back() = ReversibleMarkovSuperModel(*EM,F);
   }
-  else if (match(string_stack,"TripletFrequencies",arg)) 
+  else if (match(string_stack,"pi",arg)) {
+    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi");
+
+    SimpleFrequencyModel F(a,frequencies);
+
+    model_stack.back() = ReversibleMarkovSuperModel(*EM,F);
+  }
+  else if (match(string_stack,"pi=triplets",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&a);
     if (not T)
-      throw myexception()<<"TripletFrequencies:: Unrecognized alphabet '"<<a.name<<"'";
+      throw myexception()<<"pi=triplets:: '"<<a.name<<"' is not a triplet alphabet.";
 
-    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"TripletFrequencies");
+    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=triplets");
 
-    TripletFrequencyModel TFM(*T);
-
-    model_stack.back() = *new ReversibleMarkovSuperModel(*EM,TFM);
+    model_stack.back() = ReversibleMarkovSuperModel(*EM,TripletFrequencyModel(*T));
   }
-  else if (match(string_stack,"CodonFrequencies",arg)) 
+  else if (match(string_stack,"pi=codons",arg)) 
   {
     const Codons* C = dynamic_cast<const Codons*>(&a);
     if (not C)
-      throw myexception()<<"CodonFrequencies:: Unrecognized alphabet '"<<a.name<<"'";
+      throw myexception()<<"pi=codons:: '"<<a.name<<"' is not a codon alphabet.";
 
-    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"CodonFrequencies");
+    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=codons");
 
-    model_stack.back() = *new ReversibleMarkovSuperModel(*EM,CodonFrequencyModel(*C));
+    model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonFrequencyModel(*C));
   }
   else
     return false;
@@ -170,66 +213,67 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 }
 
 
-OwnedPointer<ReversibleAdditiveModel> get_RA(::Model* M, const string& name)
+OwnedPointer<ReversibleAdditiveModel> get_RA(::Model* M, const string& name,
+					     const valarray<double>& frequencies)
 {
-  ReversibleAdditiveModel* RA = NULL;
-  ExchangeModel* EM = NULL;
-
-  if ((RA=dynamic_cast<ReversibleAdditiveModel*>(M)))
+  if (ReversibleAdditiveModel* RA  = dynamic_cast<ReversibleAdditiveModel*>(M))
     return *RA;
-  else if ((EM=dynamic_cast<ExchangeModel*>(M)))
-    return SimpleReversibleMarkovModel(*EM);
-  else
+
+  try {
+    return SimpleReversibleMarkovModel(*get_EM(M,name),frequencies); 
+  }
+  catch (std::exception& e) { 
     throw myexception()<<name<<":couldn't find a reversible+additive model to use.";
+  }
 }
 
-OwnedPointer<ReversibleAdditiveModel> get_RA(vector<OwnedPointer< ::Model> >& model_stack, const string& name)
+OwnedPointer<ReversibleAdditiveModel> get_RA(vector<OwnedPointer< ::Model> >& model_stack, 
+					     const string& name,
+					     const valarray<double>& frequencies)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": couldn't find any model to use.";
 
-  return get_RA(model_stack.back().get(), name);
+  return get_RA(model_stack.back().get(), name, frequencies);
 }
 
 
-OwnedPointer<MultiModel> get_MM(::Model *M, const string& name)
+OwnedPointer<MultiModel> get_MM(::Model *M, const string& name, const valarray<double>& frequencies)
 {
-  MultiModel* MM = NULL;
-  ReversibleAdditiveModel* RA = NULL;
-  ExchangeModel* EM = NULL;
-
-  if ((MM=dynamic_cast<MultiModel*>(M)))
+  if (MultiModel* MM = dynamic_cast<MultiModel*>(M))
     return *MM;
-  else if ((RA=dynamic_cast<ReversibleAdditiveModel*>(M)))
-    return UnitModel(*RA);
-  else if ((EM=dynamic_cast<ExchangeModel*>(M)))
-    return UnitModel(SimpleReversibleMarkovModel(*EM));
-  else
-    throw myexception()<<name<<":couldn't find a reversible+additive model to use.";
+
+  try { 
+    return UnitModel(*get_RA(M,name,frequencies)) ; 
+  }
+  catch (std::exception& e) { 
+    throw myexception()<<name<<":couldn't find a multimodel model to use.";
+  }
 }
 
-OwnedPointer<MultiModel> get_MM(vector<OwnedPointer< ::Model> >& model_stack, const string& name)
+OwnedPointer<MultiModel> get_MM(vector<OwnedPointer< ::Model> >& model_stack, const string& name,
+				const valarray<double>& frequencies)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": couldn't find any model to use.";
 
-  return get_MM(model_stack.back().get(), name);
+  return get_MM(model_stack.back().get(), name, frequencies);
 }
 
 bool process_stack_Multi(vector<string>& string_stack,  
-			 vector<OwnedPointer< ::Model> >& model_stack)
+			 vector<OwnedPointer< ::Model> >& model_stack,
+			 const valarray<double>& frequencies)
 {
-
   string arg;
   if (match(string_stack,"single",arg)) 
-      model_stack.back() = UnitModel(*get_RA(model_stack,"single"));
+      model_stack.back() = UnitModel(*get_RA(model_stack,"single",frequencies));
 
   else if (match(string_stack,"gamma_plus_uniform",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = DistributionParameterModel(UnitModel(*get_RA(model_stack,"gamma_plus_uniform")),
+    model_stack.back() = DistributionParameterModel(UnitModel(*get_RA(model_stack,"gamma_plus_uniform",frequencies)),
 						    Uniform() + Gamma(),
 						    -1,//rate!
 						    n);
@@ -239,14 +283,14 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = GammaParameterModel(*get_MM(model_stack,"gamma"),n);
+    model_stack.back() = GammaParameterModel(*get_MM(model_stack,"gamma",frequencies),n);
   }
   else if (match(string_stack,"double_gamma",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = DistributionParameterModel(UnitModel(*get_RA(model_stack,"double_gamma")),
+    model_stack.back() = DistributionParameterModel(UnitModel(*get_RA(model_stack,"double_gamma",frequencies)),
 						    Gamma() + Gamma(),
 						    -1,//rate!
 						    n);
@@ -259,7 +303,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     model_stack.back() = MultiFrequencyModel(*get_EM(model_stack,"multi_freq"),n);
   }
   else if (match(string_stack,"INV",arg))
-    model_stack.back() = WithINV(*get_MM(model_stack,"INV"));
+    model_stack.back() = WithINV(*get_MM(model_stack,"INV",frequencies));
 
   else if (match(string_stack,"Mixture",arg)) {
     int n=1;
@@ -273,7 +317,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     
     vector <OwnedPointer<MultiModel> > models;
     for(int m=0;m<n;m++) {
-      OwnedPointer<MultiModel> M = get_MM(model_stack,"Mixture");
+      OwnedPointer<MultiModel> M = get_MM(model_stack,"Mixture",frequencies);
       model_stack.pop_back();
       models.push_back(M);
     }
@@ -322,7 +366,8 @@ bool process_stack_Multi(vector<string>& string_stack,
 }
 
 OwnedPointer< ::Model> 
-get_smodel(const variables_map& args,const string& smodel,const alphabet& a) 
+get_smodel(const variables_map& args,const string& smodel,const alphabet& a,
+	   const valarray<double>& frequencies) 
 {
   // Initialize the string stack from the model name
   vector<string> string_stack;
@@ -345,9 +390,9 @@ get_smodel(const variables_map& args,const string& smodel,const alphabet& a)
 
     process_stack_Markov(string_stack,model_stack,a,args);
 
-    process_stack_Frequencies(string_stack,model_stack,a);
+    process_stack_Frequencies(string_stack,model_stack,a,frequencies);
 
-    process_stack_Multi(string_stack,model_stack);
+    process_stack_Multi(string_stack,model_stack,frequencies);
 
     if (string_stack.size() == length)
       throw myexception()<<"Error: Couldn't process substitution model level \""<<string_stack.back()<<"\"";
@@ -369,10 +414,10 @@ get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& 
   string smodel_name = "";
   if (args.count("smodel")) smodel_name = args["smodel"].as<string>();
 
-  OwnedPointer< ::Model> smodel = get_smodel(args,smodel_name,a);
+  OwnedPointer< ::Model> smodel = get_smodel(args,smodel_name,a,frequencies);
 
   // --------- Convert smodel to MultiModel ------------//
-  OwnedPointer<MultiModel> full_smodel = get_MM(smodel.get(),"Final");
+  OwnedPointer<MultiModel> full_smodel = get_MM(smodel.get(),"Final",frequencies);
 
   //------------ How does the tree fit in? -------------//
   if (args["letters"].as<string>() == "star") 
