@@ -128,24 +128,6 @@ namespace substitution {
      pi(1.0/a.size(),a.size())
   { }
 
-  string UniformFrequencyModel::name() const 
-  {
-    return "uniform frequencies";
-  }
-
-
-  string UniformFrequencyModel::parameter_name(int i) const 
-  {
-    return ::parameter_name("",i,0);
-  }
-
-  UniformFrequencyModel::UniformFrequencyModel(const alphabet& a)
-    :ReversibleFrequencyModel(a),
-     ModelWithAlphabet<alphabet>(a)
-  {
-    //frequencies initialized to uniform in ReversibleFrequencyModel
-  }
-
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
   {
     // set the frequency parameters
@@ -160,6 +142,7 @@ namespace substitution {
   {
     // compute frequencies
     pi = get_varray(parameters_,1,size());
+    pi /= pi.sum();
     
     // compute transition rates
     valarray<double> pi_f(size());
@@ -201,7 +184,7 @@ namespace substitution {
   }
 
   string SimpleFrequencyModel::name() const {
-    return string("Simple frequency model over ") + Alphabet().name;
+    return "pi";
   }
   
   string SimpleFrequencyModel::parameter_name(int i) const {
@@ -226,6 +209,26 @@ namespace substitution {
     // Start with frequencies = (1/n, ... , 1/n)
     for(int i=0;i<size();i++)
       parameters_[i+1] = 1.0/size();
+
+    // initialize everything
+    recalc();
+  }
+
+  SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a,const valarray<double>& pi)
+    :ReversibleFrequencyModel(a),
+     ModelWithAlphabet<alphabet>(a)
+  {
+    set_n_parameters(a.size() + 1);
+
+    // Start with *f = 1
+    parameters_[0] = 1.0;
+    fixed_[0] = true;
+
+    // Start with frequencies = (1/n, ... , 1/n)
+    valarray<double> f = pi;
+    f /= f.sum();
+    for(int i=0;i<size();i++)
+      parameters_[i+1] = f[i];
 
     // initialize everything
     recalc();
@@ -280,7 +283,7 @@ namespace substitution {
 
   efloat_t TripletFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(super_parameters_,1,size(),2.0);
+    return dirichlet_pdf(super_parameters_,1,size(),1.0);
   }
 
   double TripletFrequencyModel::super_fiddle(int)
@@ -301,7 +304,7 @@ namespace substitution {
 
   string TripletFrequencyModel::name() const 
   {
-    return "Triplet frequencies";
+    return "pi=triplets";
   }
 
   string TripletFrequencyModel::super_parameter_name(int i) const 
@@ -409,7 +412,7 @@ namespace substitution {
 
   string CodonFrequencyModel::name() const 
   {
-    return "Codon frequencies";
+    return "pi=codons";
   }
 
   string CodonFrequencyModel::super_parameter_name(int i) const 
@@ -540,7 +543,7 @@ namespace substitution {
     ReversibleMarkovModel::recalc();
   }
   string ReversibleMarkovSuperModel::name() const {
-    return S->name() + " / " + R->name();
+    return S->name() + " * " + R->name();
   }
 
   string ReversibleMarkovSuperModel::super_parameter_name(int i) const {
@@ -571,6 +574,11 @@ namespace substitution {
 
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ExchangeModel& E)
       :ReversibleMarkovSuperModel(E,SimpleFrequencyModel(E.Alphabet()))
+  { }
+
+  SimpleReversibleMarkovModel::
+  SimpleReversibleMarkovModel(const ExchangeModel& E,const valarray<double>& pi)
+      :ReversibleMarkovSuperModel(E,SimpleFrequencyModel(E.Alphabet(),pi))
   { }
 
   //---------------------- INV_Model --------------------------//
@@ -1332,7 +1340,7 @@ namespace substitution {
 
   WithINV::WithINV(const MultiModel& M)
     :ReversibleWrapperOver<MultiModel>(M,1),
-     INV(INV_Model(M.Alphabet()))
+     INV(SimpleReversibleMarkovModel(INV_Model(M.Alphabet())))
   {
     super_parameters_[0] = 0.01;
 

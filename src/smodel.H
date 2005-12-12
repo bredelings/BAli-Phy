@@ -502,22 +502,6 @@ namespace substitution {
 
 
 
-  class UniformFrequencyModel: public ReversibleFrequencyModel,
-			      public ModelWithAlphabet<alphabet>
-  {
-    void recalc() {};
-  public:
-    efloat_t prior() const {return 1.0;}
- 
-    double fiddle(int) {return 1.0;}
-
-    std::string name() const;
-
-    std::string parameter_name(int) const;
-
-    UniformFrequencyModel(const alphabet& a);
-  };
-
   class SimpleFrequencyModel: public ReversibleFrequencyModel,
 			      public ModelWithAlphabet<alphabet>
   {
@@ -543,6 +527,8 @@ namespace substitution {
     string parameter_name(int i) const;
 
     explicit SimpleFrequencyModel(const alphabet& a);
+
+    explicit SimpleFrequencyModel(const alphabet& a,const valarray<double>&);
   };
 
   class TripletFrequencyModel: public ReversibleFrequencyModel,
@@ -693,7 +679,8 @@ namespace substitution {
     
     void frequencies(const valarray<double>& pi);
 
-    SimpleReversibleMarkovModel(const ExchangeModel& E);
+    explicit SimpleReversibleMarkovModel(const ExchangeModel& E);
+    explicit SimpleReversibleMarkovModel(const ExchangeModel& E,const valarray<double>&);
   };
 
   //--------------------------- Implement the underlying alphabet -------------------------//
