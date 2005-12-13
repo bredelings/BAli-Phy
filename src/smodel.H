@@ -532,8 +532,38 @@ namespace substitution {
   };
 
   class TripletFrequencyModel: public ReversibleFrequencyModel,
-			       public ::NestedModelOver<SimpleFrequencyModel>,
 			       public ModelWithAlphabet<Triplets>
+  {
+  public:
+    TripletFrequencyModel* clone() const =0;
+
+    explicit TripletFrequencyModel(const Triplets& T);
+  };
+
+  class IndependentNucleotideFrequencyModel: public TripletFrequencyModel,
+					 public ::NestedModelOver<SimpleFrequencyModel>
+  {
+    OwnedPointer<SimpleFrequencyModel> triplets;
+
+    void recalc();
+
+    string super_parameter_name(int i) const;
+
+  public:
+    IndependentNucleotideFrequencyModel* clone() const {return new IndependentNucleotideFrequencyModel(*this);}
+
+    efloat_t super_prior() const {return 1.0;}
+
+    double super_fiddle(int) {return 1.0;}
+
+    string name() const;
+
+    IndependentNucleotideFrequencyModel(const Triplets& T);
+  };
+
+
+  class TripletsFrequencyModel: public TripletFrequencyModel,
+				public ::NestedModelOver<SimpleFrequencyModel>
   {
   protected:
     void recalc();
@@ -541,7 +571,7 @@ namespace substitution {
     string super_parameter_name(int i) const;
 
   public:
-    TripletFrequencyModel* clone() const {return new TripletFrequencyModel(*this);}
+    TripletsFrequencyModel* clone() const {return new TripletsFrequencyModel(*this);}
 
     efloat_t super_prior() const;
 
@@ -549,11 +579,11 @@ namespace substitution {
 
     string name() const;
 
-    explicit TripletFrequencyModel(const Triplets& T);
+    explicit TripletsFrequencyModel(const Triplets& T);
   };
 
   class CodonFrequencyModel: public ReversibleFrequencyModel,
-			       public ::NestedModelOver<TripletFrequencyModel>,
+			       public ::NestedModelOver<TripletsFrequencyModel>,
 			       public ModelWithAlphabet<Codons>
   {
   protected:

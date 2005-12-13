@@ -236,21 +236,79 @@ namespace substitution {
 
 
   //------------------- Triplet Frequency Model -----------------//
+  TripletFrequencyModel::TripletFrequencyModel(const Triplets& T)
+    :ReversibleFrequencyModel(T),
+     ModelWithAlphabet<Triplets>(T)
+  { }
+    
+  valarray<double> triplet_from_singlet_frequencies(const Triplets& T,const SimpleFrequencyModel& N)
+  {
+    if (not dynamic_cast<const Nucleotides*>(&N.Alphabet()))
+      throw myexception()<<"Singlet frequencies are not nucleotide frequencies.";
 
-  void TripletFrequencyModel::recalc() 
+    valarray<double> sub_pi = N.frequencies();
+
+    valarray<double> pi(1.0,T.size());
+
+    for(int i=0;i<T.size();i++) 
+      for(int j=0;j<3;j++)
+	pi[i] *= sub_pi[T.sub_nuc(i,j)];
+
+    pi /= pi.sum();
+    
+    return pi;
+  }
+
+  void IndependentNucleotideFrequencyModel::recalc()
+  {
+    write();
+
+    //------------------ compute triplet frequencies ------------------//
+    pi = triplet_from_singlet_frequencies(Alphabet(),SubModel());
+
+    vector<double> sub_parameters = SubModel().parameters();
+
+    vector<double> triplet_parameters(size()+1);
+    triplet_parameters[0] = sub_parameters[0];
+    set_varray(triplet_parameters,1,pi);
+
+    triplets->parameters(triplet_parameters);
+
+    for(int i=0;i<size();i++)
+      for(int j=0;j<size();j++)
+	R(i,j) = (*triplets)(i,j);
+  }
+
+  string IndependentNucleotideFrequencyModel::super_parameter_name(int i) const
+  {
+    return ::parameter_name("",i,0);
+  }
+
+  string IndependentNucleotideFrequencyModel::name() const
+  {
+    return "pi=nucleotides";
+  }
+
+  
+  IndependentNucleotideFrequencyModel::IndependentNucleotideFrequencyModel(const Triplets& T) 
+    : TripletFrequencyModel(T),
+      ::NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),0),
+      triplets(SimpleFrequencyModel(T))
+  {
+    
+  }
+
+
+  void TripletsFrequencyModel::recalc() 
   {
     write();
 
     valarray<double> nu = get_varray(super_parameters_, 1, size());
 
     //------------- compute frequencies ------------------//
-    valarray<double> sub_pi = SubModel().frequencies();
+    pi = triplet_from_singlet_frequencies(Alphabet(),SubModel());
 
-    pi = nu;
-
-    for(int i=0;i<size();i++)
-      for(int j=0;j<3;j++)
-	pi[i] *= sub_pi[Alphabet().sub_nuc(i,j)];
+    pi *= nu;
 
     pi /= pi.sum();
 
@@ -281,12 +339,12 @@ namespace substitution {
       R(i,i) = 0;
   }
 
-  efloat_t TripletFrequencyModel::super_prior() const 
+  efloat_t TripletsFrequencyModel::super_prior() const 
   {
     return dirichlet_pdf(super_parameters_,1,size(),1.0);
   }
 
-  double TripletFrequencyModel::super_fiddle(int)
+  double TripletsFrequencyModel::super_fiddle(int)
   {
     if (not fixed(0)) {
       super_parameters_[0] += gaussian(0, 0.1);
@@ -302,12 +360,12 @@ namespace substitution {
     return 1;  
   }
 
-  string TripletFrequencyModel::name() const 
+  string TripletsFrequencyModel::name() const 
   {
     return "pi=triplets";
   }
 
-  string TripletFrequencyModel::super_parameter_name(int i) const 
+  string TripletsFrequencyModel::super_parameter_name(int i) const 
   {
     if (i == 0)
       return "g";
@@ -317,10 +375,10 @@ namespace substitution {
       return s_parameter_name(i,size()+1);
   }
 
-  TripletFrequencyModel::TripletFrequencyModel(const Triplets& T)
-    : ReversibleFrequencyModel(T),
-      ::NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),T.size()+1),
-      ModelWithAlphabet<Triplets>(T)
+  TripletsFrequencyModel::TripletsFrequencyModel(const Triplets& T)
+    : TripletFrequencyModel(T),
+      ::NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),T.size()+1)
+
   {
     super_parameters_[0] = 1; // g
 
@@ -429,7 +487,7 @@ namespace substitution {
 
   CodonFrequencyModel::CodonFrequencyModel(const Codons& C)
     : ReversibleFrequencyModel(C),
-      ::NestedModelOver<TripletFrequencyModel>(TripletFrequencyModel(C), C.getAminoAcids().size() + 2),
+      ::NestedModelOver<TripletsFrequencyModel>(TripletsFrequencyModel(C), C.getAminoAcids().size() + 2),
       ModelWithAlphabet<Codons>(C)
   {
     super_parameters_[0] = 0.5; // c
