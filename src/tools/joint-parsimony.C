@@ -19,6 +19,9 @@
 #include "parsimony.H"
 #include "joint-A-T.H"
 
+#include "2way.H"
+using namespace A2;
+
 using std::cin;
 using std::cout;
 using std::cerr;
@@ -71,6 +74,34 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+// If we could read back in the indel-model state we could
+// estimate the number of indels in an indel block.
+unsigned n_indels(const alignment& A,const Tree& T, int b)
+{
+  vector<int> pairwiseA = get_path(A, T.branch(b).target(), T.branch(b).source());
+
+  unsigned indels = 0;
+  int last_state = states::M;
+  for(unsigned i=0; i<pairwiseA.size(); i++) 
+  {
+    int current_state = pairwiseA[i];
+    
+    if (last_state != current_state)
+      if ((current_state == states::G1) or (current_state == states::G2))
+	indels++;
+  }
+  return indels;
+}
+
+unsigned n_indels(const alignment& A,const Tree& T)
+{
+  unsigned indels = 0;
+  for(unsigned b=0;b<T.n_branches();b++)
+    indels += n_indels(A,T,b);
+
+  return indels;
+}
+
 
 int main(int argc,char* argv[]) { 
   try {
@@ -78,8 +109,14 @@ int main(int argc,char* argv[]) {
 
     joint_A_T J = get_joint_A_T(args,false);
 
-    for(int i=0;i<J.size();i++)
-      cout<<n_mutations(J.A[i],J.T[i])<<endl;
+    for(int i=0;i<J.size();i++) {
+      const alignment& A = J.A[i];
+      const SequenceTree& T = J.T[i];
+
+      cout<<"length = "<<n_mutations(A,T)<<"   ";
+      
+      cout<<" n_indels = "<<n_indels(A,T)<<endl;
+    }
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
