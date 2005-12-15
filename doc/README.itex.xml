@@ -528,8 +528,9 @@
 	<title>Default substitution models</title>
 	<para>If the substitution model is not specified, then the
 	default model for the alphabet is used.  For DNA or RNA, the
-	default model is HKY.  For Codons, the default model is
-	YangM0.  For AminoAcids, the default model is Empirical[WAG].
+	default model is HKY.  For Triplets, the default is HKYx3. For
+        Codons, the default model is YangM0.  For AminoAcids, the
+	default model is Empirical[WAG]. 
 	</para>
       </sect3>
 
@@ -543,7 +544,7 @@
 	are optional.
 	</para>
 
-      <para>The basic CTMC models are EQU, HKY, TN, Empirical, and YangM0.</para>
+      <para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and YangM0.</para>
 
       <para>Model modifiers are gamma, INV, YangM2, YangM3, and YangM7.</para>
       </sect3>
@@ -617,6 +618,18 @@
 		<para>$S_{ij} = 1$ for transversions.</para>
 		<para>$S_{ij} = \kappa_1$ for purine transitions.</para>
 		<para>$S_{ij} = \kappa_2$ for pyrimidine transitions.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><para><userinput>GTR</userinput></para><para>General Time-Reversible</para><para>Tavare (1986)</para></entry>
+	      <entry>DNA or RNA</entry>
+	      <entry>
+		<para>$S_{i \ne j}$</para>
+	      </entry>
+	      <entry>
+		<para>$\sum_{i \ne j}S_{ij}=1$.</para><para>(5 degrees of freedom).</para>
+
 	      </entry>
 	    </row>
 
