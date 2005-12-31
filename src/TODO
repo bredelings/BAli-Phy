@@ -1,3 +1,6 @@
+-21. Complain if a tree has two leaves with the same name?
+     (We crash on 'standardize' currently.)
+
 -20. alignment-cat A.fasta B.fasta C.fasta > D.fasta
      The sequence should have the same names, but could be
       different alphabets.  (Hopefully we will not handle alphabets)
