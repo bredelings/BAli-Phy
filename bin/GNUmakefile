@@ -27,10 +27,10 @@ Work/setup:
 	@touch Work/setup
 	@echo "done."
 
-Results/analysis: Results/Report Results/consensus Mixing/SRQ.plot Mixing/partitions.bs \
-		  ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree}\
+Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
-                  Results/MAP.phy Results/MAP.fasta # MAP-AU.html median-AU.html
+		  Results/Report Results/MAP.fasta Results/MAP.phy \
+		  Mixing/partitions.SRQ Mixing/c50.SRQ Mixing/partitions.bs # MAP-AU.html median-AU.html
 	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration $$(( ${SKIP} + 1))." > Results/analysis
 	@echo "Finished:  $$(date)" >> Results/analysis
 	@echo 
@@ -155,9 +155,14 @@ Results/c%.topology: Results/consensus Work/setup
 	@pickout $*-consensus < $< > $@ 
 	@test -s $@
 
-Mixing/SRQ.plot: Work/trees Work/partitions.pred
+Mixing/partitions.SRQ: Work/trees Work/partitions.pred
 	@echo -e "Generating SRQ plot for c50 partitions... \c"
 	@trees-to-SRQ Work/partitions.pred --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
+	@echo "done."
+
+Mixing/%.SRQ: Work/trees Results/%.topology
+	@echo -e "Generating SRQ plot for c50 partitions... \c"
+	@trees-to-SRQ Results/$*.topology --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
 	@echo "done."
 
 Mixing/sum.plot: Work/trees Work/partitions.pred
