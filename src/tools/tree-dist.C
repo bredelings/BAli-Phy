@@ -720,7 +720,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
   {
     vector<pair<Partition,unsigned> > full_partitions = partitions;
 
-    //cerr<<"\nAnalyzing "<<masks.size()<<" masks."<<endl;;
+    //cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   masks: "<<masks.size()<<endl;    
     list<valarray<bool> > new_good_masks;
     list<valarray<bool> > new_unit_masks;
 
@@ -780,7 +780,15 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
     // - should I use the M[0.5] tree here, or the M[l] tree?
     if (iterations < depth-1) {
       foreach(i,new_good_masks)
+      	foreach(j,unit_masks)
+      	  add_unique(masks,old_masks,*i and *j);
+
+      foreach(i,old_masks)
 	foreach(j,unit_masks)
+	  add_unique(masks,old_masks,*i and *j);
+
+      foreach(i,old_masks)
+	foreach(j,good_masks)
 	  add_unique(masks,old_masks,*i and *j);
     }
   }
