@@ -76,6 +76,61 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 // If we could read back in the indel-model state we could
 // estimate the number of indels in an indel block.
+vector<unsigned> n_indels_with_phase(const alignment& A,const Tree& T, int b)
+{
+  vector<unsigned> indels(4,0);
+
+  vector<int> pairwiseA = get_path(A, T.branch(b).target(), T.branch(b).source());
+
+  int last_state = states::M;
+
+  for(unsigned i=0,i1=0,i2=0; i<pairwiseA.size(); i++) 
+  {
+    int current_state = pairwiseA[i];
+    
+    if (last_state != current_state)
+      if ((current_state == states::G1) or (current_state == states::G2)) 
+      {
+	int phase1 = i1%3;
+	int phase2 = i2%3;
+	if (phase1 == phase2)
+	  indels[phase1]++;
+	else
+	  indels[3]++;
+      }
+
+    last_state = current_state;
+
+    if (current_state == states::M or current_state == states::G2)
+      i1++;
+
+    if (current_state == states::M or current_state == states::G1)
+      i2++;
+  }
+
+  return indels;
+}
+
+template <typename T,typename U>
+void add(vector<T>& v1,const vector<U>& v2)
+{
+  for(unsigned i=0;i<v1.size();i++)
+    v1[i] += v2[i];
+}
+
+
+vector<unsigned> n_indels_with_phase(const alignment& A,const Tree& T)
+{
+  vector<unsigned> indels(4,0);
+  for(unsigned b=0;b<T.n_branches();b++)
+    add(indels,n_indels_with_phase(A,T,b));
+
+  return indels;
+}
+
+
+// If we could read back in the indel-model state we could
+// estimate the number of indels in an indel block.
 unsigned n_indels(const alignment& A,const Tree& T, int b)
 {
   vector<int> pairwiseA = get_path(A, T.branch(b).target(), T.branch(b).source());
@@ -89,6 +144,8 @@ unsigned n_indels(const alignment& A,const Tree& T, int b)
     if (last_state != current_state)
       if ((current_state == states::G1) or (current_state == states::G2))
 	indels++;
+
+    last_state = current_state;
   }
   return indels;
 }
@@ -107,7 +164,7 @@ int main(int argc,char* argv[]) {
   try {
     variables_map args = parse_cmd_line(argc,argv);
 
-    joint_A_T J = get_joint_A_T(args,false);
+    joint_A_T J = get_joint_A_T(args,true);
 
     for(int i=0;i<J.size();i++) {
       const alignment& A = J.A[i];
@@ -115,7 +172,14 @@ int main(int argc,char* argv[]) {
 
       cout<<"length = "<<n_mutations(A,T)<<"   ";
       
-      cout<<" n_indels = "<<n_indels(A,T)<<endl;
+      cout<<" n_indels = "<<n_indels(A,T)<<"   ";
+
+      vector<unsigned> indels = n_indels_with_phase(A,T);
+
+      for(int i=0;i<3;i++)
+	cout<<" phase"<<i<<" = "<<indels[i];
+      cout<<" no-phase = "<<indels[3];
+      cout<<endl;
     }
   }
   catch (std::exception& e) {

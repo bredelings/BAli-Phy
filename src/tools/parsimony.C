@@ -44,11 +44,11 @@ unsigned n_mutations(const alignment& A, const SequenceTree& T)
 {
   const alphabet& a = A.get_alphabet();
 
-  vector<int> letters(A.n_sequences());
+  vector<int> letters(T.n_leaves());
 
   unsigned tree_length = 0;
   for(int c=0;c<A.length();c++) {
-    for(int i=0;i<A.n_sequences();i++)
+    for(int i=0;i<T.n_leaves();i++)
       letters[i] = A(c,i);
     unsigned length = n_mutations(a,letters,T);
     tree_length += length;
