@@ -429,6 +429,8 @@ the prior, because we never want to use it  differently.
    information but topology information instead. 
    (contact girl from INCOB?)
 
+ - We need better ways to compute compute marginal likelihoods.
+
  - for HIV data, we want samples from DIFFERENT PATIENTS, not
    from the same patient, because recombination is limitted to
    within-patient samples.
