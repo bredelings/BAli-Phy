@@ -57,6 +57,8 @@ struct Partition {
   Partition(const std::vector<std::string>& n,const std::valarray<bool>& g,const std::valarray<bool>& mask);
   /// Create a partition from its description
   Partition(const std::string& line);
+  /// Create a partition from its description with names already ordered
+  Partition(const std::vector<std::string>& n,const std::string& line);
 };
 
 std::valarray<bool> group_from_names(const std::vector<std::string>& names,const std::vector<std::string>& subset);

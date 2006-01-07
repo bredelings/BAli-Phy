@@ -113,12 +113,11 @@ Partition::Partition(const vector<string>& n,const valarray<bool>& g,const valar
   assert(empty(group1 and group2));
 }
 
-Partition::Partition(const string& line) 
+vector< vector<string> > parse_partition(const string& line)
 {
   vector<string> all_names = split(line,' ');
 
-  names.clear();
-  vector< vector<string> > names_(3);
+  vector< vector<string> > names(3);
 
   int group = 0;
   for(int i=0; i< all_names.size(); i++) 
@@ -135,23 +134,42 @@ Partition::Partition(const string& line)
       assert(group == 2);
       group++;
     }
-    else if (all_names[i].size()) {
-      names_[group].push_back(all_names[i]);
-      names.push_back(all_names[i]);
-    }
+    else if (all_names[i].size())
+      names[group].push_back(all_names[i]);
   }
+
+  return names;
+}
+
+
+Partition::Partition(const string& line) 
+{
+  vector<string> all_names = split(line,' ');
+
+  names.clear();
+  vector< vector<string> > name_groups = parse_partition(line);
+  for(int i=0;i<name_groups.size();i++)
+    names.insert(names.end(), name_groups[i].begin(), name_groups[i].end());
 
   std::sort(names.begin(),names.end());
   group1.resize(names.size());
   group2.resize(names.size());
   
-  group1 = group_from_names(names,names_[0]);
-  group2 = group_from_names(names,names_[1]);
+  group1 = group_from_names(names,name_groups[0]);
+  group2 = group_from_names(names,name_groups[1]);
   assert(empty(group1 and group2));
 }
 
+Partition::Partition(const vector<string>& n,const string& line) 
+  :names(n),group1(false,n.size()),group2(false,n.size())
+{
+  vector< vector<string> > name_groups = parse_partition(line);
 
+  group1 = group_from_names(names,name_groups[0]);
+  group2 = group_from_names(names,name_groups[1]);
 
+  assert(empty(group1 and group2));
+}
 
 bool informative(const Partition& p) {
   return n_elements(p.group1) > 1 and n_elements(p.group2) > 1;

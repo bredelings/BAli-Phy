@@ -386,23 +386,25 @@ int main(int argc,char* argv[]) {
     if (args.count("partition-weights")) {
       string filename = args["partition-weights"].as<string>();
 
-      SequenceTree W;
-      W.read(filename);
-      vector<int> mapping = compute_mapping(W.get_sequences(),T.get_sequences());
-      W.standardize(mapping);
+      const double n = 0.6;
 
-      for(int b=W.n_leafbranches();b<W.n_branches();b++) {
-	double o = W.branch(b).length();
-	const double n = 0.75;
+      ifstream partitions(filename.c_str());
+      string line;
+      while(getline(partitions,line)) {
+	Partition p(T.get_sequences(),line);
+	getline(partitions,line);
+	double o = convertTo<double>(line);
+
+	cerr<<p<<"      P = "<<o<<endl;
 	if (o > n) {
 	  double w = n/(1-n)*(1-o)/o;
 	  efloat_t w2 = w;
-	  P.partitions.push_back(partition_from_branch(W,b));
+
+	  P.partitions.push_back(p);
 	  P.partition_weights.push_back(w2);
 
 	  cerr<<P.partitions.back()<<"      weight = "<<w<<endl;
 	}
-
       }
     }
 
