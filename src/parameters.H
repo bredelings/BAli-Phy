@@ -14,6 +14,7 @@
 #include "clone.H"
 #include "substitution-cache.H"
 #include "util.H"
+#include "tools/tree-dist.H"
 
 /******************************* parameter-containing class **************************/
 /// A class to contain all the MCMC state except the alignment
@@ -34,6 +35,10 @@ public:
 
   /// Temperature, for heated chains: when heated we aren't normalized...
   double Temp;
+
+  /// Partitions to weight
+  vector<Partition> partitions;
+  vector<efloat_t> partition_weights;
 
   /// Is pinning enabled or not?
   vector<double> constants;

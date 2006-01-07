@@ -468,7 +468,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 	     <<"    prior = "<<P.basic_prior(A,P)
 	     <<"    likelihood = "<<P.basic_likelihood(A,P)
 	     <<"    logp = "<<Pr
-	     <<"    weight = "<<pow(Pr,1.0 - 1.0/P.Temp)<<std::endl;
+	     <<"    weight = "<<pow(topology_weight(P,P.T),-1.0)*pow(Pr,1.0 - 1.0/P.Temp)<<std::endl;
 
     if (iterations%20 == 0) {
       std::cerr<<endl;

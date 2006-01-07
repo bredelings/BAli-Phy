@@ -10,9 +10,12 @@ efloat_t other_subst(const alignment& A, const Parameters& P, const vector<int>&
 }
 
 efloat_t other_prior(const alignment& A, const Parameters& P,const vector<int>& nodes) {
-  const Tree& T = P.T;
+  const SequenceTree& T = P.T;
 
   efloat_t p = 1;
+
+
+  p *= topology_weight(P,T);
 
   // Add in the branch alignments
   for(int b=0;b<T.n_branches();b++) {

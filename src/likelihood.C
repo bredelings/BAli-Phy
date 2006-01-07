@@ -19,14 +19,33 @@ efloat_t probability3(const alignment& A,const Parameters& P) {
   return likelihood3(A,P) * prior3(A,P);
 }
 
+efloat_t topology_weight(const Parameters& P, const SequenceTree& T) 
+{
+  efloat_t p = 1;
+  
+  for(int i=0;i<P.partitions.size();i++) {
+    if (implies(T,P.partitions[i])) {
+      std::cerr<<"found!  "<<P.partitions[i]<<std::endl;
+      p *= P.partition_weights[i];
+    }
+    else
+      std::cerr<<"not found!  "<<P.partitions[i]<<std::endl;
+  }
+  std::cerr<<"total_weight = "<<p<<std::endl;
+
+  return p;
+}
+
 
 /// Tree prior: branch lengths & topology
-efloat_t prior(const SequenceTree& T,double branch_mean) {
+efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean) {
   efloat_t p = 1;
 
   // --------- uniform prior on topologies --------//
   if (T.n_leaves()>3)
     p /= num_topologies(T.n_leaves());
+
+  p *= topology_weight(P,T);
 
   // ---- Exponential prior on branch lengths ---- //
   for(int i=0;i<T.n_branches();i++) 
@@ -45,7 +64,7 @@ efloat_t prior(const Parameters& P) {
   p *= exponential_pdf(P.branch_mean, branch_mean_mean);
 
   // prior on the topology and branch lengths
-  p *= prior(P.T, P.branch_mean);
+  p *= prior(P, P.T, P.branch_mean);
 
   // prior on the substitution model
   p *= P.SModel().prior();

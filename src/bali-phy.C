@@ -260,6 +260,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("T",value<double>()->default_value(1.0),"MCMCMC temperature")
     ("enable",value<string>(),"comma-separated list of kernels to enable")
     ("disable",value<string>(),"comma-separated list of kernels to disable")
+    ("partition-weights",value<string>(),"file containing tree with partition weights")
     ;
     
 
@@ -381,6 +382,29 @@ int main(int argc,char* argv[]) {
     P.alignment_constraint = load_alignment_constraint(args,T);
 
     P.Temp = args["T"].as<double>();
+
+    if (args.count("partition-weights")) {
+      string filename = args["partition-weights"].as<string>();
+
+      SequenceTree W;
+      W.read(filename);
+      vector<int> mapping = compute_mapping(W.get_sequences(),T.get_sequences());
+      W.standardize(mapping);
+
+      for(int b=W.n_leafbranches();b<W.n_branches();b++) {
+	double o = W.branch(b).length();
+	const double n = 0.75;
+	if (o > n) {
+	  double w = n/(1-n)*(1-o)/o;
+	  efloat_t w2 = w;
+	  P.partitions.push_back(partition_from_branch(W,b));
+	  P.partition_weights.push_back(w2);
+
+	  cerr<<P.partitions.back()<<"      weight = "<<w<<endl;
+	}
+
+      }
+    }
 
     /*
     P.constants[0] = args.loadvalue("bandwidth",100.0);
