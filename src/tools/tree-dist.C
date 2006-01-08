@@ -738,7 +738,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
   {
     vector<pair<Partition,unsigned> > full_partitions = partitions;
 
-    cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   masks: "<<masks.size()<<endl;    
+    //cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   masks: "<<masks.size()<<endl;    
     list<valarray<bool> > new_good_masks;
     list<valarray<bool> > new_unit_masks;
 
