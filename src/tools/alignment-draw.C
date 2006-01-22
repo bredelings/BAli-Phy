@@ -694,7 +694,7 @@ TABLE {\n\
 
 	// Print columns positions
 	if (show_column_numbers) {
-	  cout<<"<tr><td></td><td>";
+	  cout<<"<tr><td></td>";
 	  
 	  for(int column=pos;column<pos+width and column <= end; column++) {
 	    double P=colors(column,A.n_sequences());
