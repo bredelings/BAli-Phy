@@ -328,7 +328,7 @@ bool equal(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
 bool intersect(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
 
 /// Does bitmask v1 imply bitmask v2?
-bool implies(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
+bool is_subset(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
 
 /// How many of v's bits are true?
 int n_elements(const std::valarray<bool>& v);

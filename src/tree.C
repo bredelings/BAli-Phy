@@ -1109,10 +1109,10 @@ bool intersect(const valarray<bool>& v1,const valarray<bool>& v2)
   return not empty(v1&v2);
 }
 
-bool implies(const valarray<bool>& v1,const valarray<bool>& v2) {
+bool is_subset(const valarray<bool>& v1,const valarray<bool>& v2) {
   assert(v1.size() == v2.size());
   for(int i=0;i<v1.size();i++)
-    if (v2[i] and not v1[i])
+    if (v1[i] and not v2[i])
       return false;
   return true;
 }

@@ -295,10 +295,11 @@ bool consistent(const Partition& p1, const Partition& p2) {
 
 
 /// Does the grouping of all nodes bm, imply *this?
-bool implies(const Partition& p1, const Partition& p2) {
-  if (implies(p1.group1,p2.group1) and implies(p1.group2,p2.group2)) return true;
+bool implies(const Partition& p1, const Partition& p2) 
+{
+  if (is_subset(p1.group1,p2.group1) and is_subset(p1.group2,p2.group2)) return true;
 
-  if (implies(p1.group2,p2.group1) and implies(p1.group1,p2.group2)) return true;
+  if (is_subset(p1.group2,p2.group1) and is_subset(p1.group1,p2.group2)) return true;
 
   return false;
 }
@@ -383,7 +384,7 @@ valarray<bool> tree_sample::support(const string& t) const
   return result;
 }
 
-valarray<bool> tree_sample::support(const Partition& P) const 
+valarray<bool> tree_sample::support(const Partition& p) const 
 {
   valarray<bool> result(size());
 
@@ -392,7 +393,7 @@ valarray<bool> tree_sample::support(const Partition& P) const
     // Get a tree with the same topology
     const vector<valarray<bool> > & T = topologies[ which_topology[i] ].partitions;
     
-    result[i] = implies(T,P);
+    result[i] = implies(T,p);
   }
   return result;
 }
