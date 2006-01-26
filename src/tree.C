@@ -1194,3 +1194,13 @@ bool has_sub_branches(const Tree& T)
   return false;
 }
 
+bool has_polytomy(const Tree& T)
+{
+  for(int i=0;i<T.n_nodes();i++)
+  {
+    if (T[i].degree() > 3)
+      return true;
+  }
+  return false;
+}
+
