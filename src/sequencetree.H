@@ -111,7 +111,6 @@ public:
 RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTree& t2);
 
 RootedSequenceTree add_root(SequenceTree,int b);
-SequenceTree remove_root(const RootedSequenceTree&);
 
 std::istream& operator >>(std::istream& i,SequenceTree& T);
 

@@ -288,9 +288,6 @@ public:
 /// Create a copy of T with a new root node on branch b
 RootedTree add_root(Tree T,int b);
 
-/// Remove the root node and return an unrooted tree
-Tree remove_root(const RootedTree& RT);
-
 inline RootedTree operator+(const RootedTree& t1,const RootedTree& t2) {
   RootedTree t3(t1,t2);
 
@@ -354,5 +351,7 @@ std::vector<std::vector<int> > partition_sets(const Tree& T);
 bool is_Cayley(const Tree& T);
 
 bool has_sub_branches(const Tree& T);
+
+void remove_sub_branches(Tree& T);
 
 #endif

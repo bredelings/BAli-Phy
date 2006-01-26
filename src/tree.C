@@ -575,12 +575,33 @@ nodeview Tree::create_node_on_branch(int br) {
 }
 
 
-void Tree::remove_node_from_branch(int node) {
+void remove_sub_branches(Tree& T)
+{
+  while(true) 
+  {
+    // find first node of degree 2
+    int n=0;
+    while(n<T.n_nodes() and T[n].degree() != 2)
+      n++;
+
+    // if no nodes of degree 2, we are done
+    if (n == T.n_nodes())
+      return;
+
+    // remove the first node of degree 2
+    T.remove_node_from_branch(n);
+  };
+}
+
+void Tree::remove_node_from_branch(int node) 
+{
   BranchNode* n = nodes_[node];
 
-  TreeView::remove_node_from_branch(n);
+  if (nodeview(n).degree() == 2) {
+    TreeView::remove_node_from_branch(n);
 
-  reanalyze(nodes_[0]);
+    reanalyze(nodes_[0]);
+  }
 }
 
 
@@ -1037,12 +1058,6 @@ RootedTree add_root(Tree T,int b) {
   return RootedTree(T,T.n_nodes()-1);
 }
 
-Tree remove_root(const RootedTree& RT) {
-  Tree T = RT;
-  T.remove_node_from_branch(RT.root());
-  return T;
-}
-
 bool branch_order(const const_branchview& b1,const const_branchview& b2) {
     return b1.target().name() < b2.target().name();
 }
@@ -1176,4 +1191,6 @@ bool has_sub_branches(const Tree& T)
     if (T[i].degree() == 2)
       return true;
   }
+  return false;
 }
+

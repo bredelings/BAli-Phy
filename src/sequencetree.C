@@ -304,8 +304,7 @@ void delete_node(SequenceTree& T,const std::string& name)
 {
   int index = find_index(T.get_sequences(),name);
   nodeview n = T.prune_subtree(T.branch(index).reverse());
-  if (n.degree() == 2)
-    T.remove_node_from_branch(n);
+  T.remove_node_from_branch(n);
 }
 
 RootedSequenceTree add_root(SequenceTree T,int b) {
@@ -313,12 +312,6 @@ RootedSequenceTree add_root(SequenceTree T,int b) {
   return RootedSequenceTree(T,r);
 }
   
-SequenceTree remove_root(const RootedSequenceTree& RT) {
-  SequenceTree T(RT);
-  T.remove_node_from_branch(RT.root());
-  return T;
-}
-						      
 RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTree& t2) 
 {
   RootedSequenceTree t3(t1,t2);
