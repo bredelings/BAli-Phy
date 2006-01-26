@@ -18,7 +18,7 @@ vector<int> permutation(int n) {
 
 Tree remove_root_branch(RootedTree RT) {
   nodeview r1 = RT.root();
-  assert(r1.neighbors().size() == 1);
+  assert(r1.degree() == 1);
   nodeview r2 = *(RT.root().neighbors());
   RT.reroot(0);
 
