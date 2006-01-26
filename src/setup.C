@@ -125,7 +125,10 @@ SequenceTree get_random_T(const alignment& A) {
 
 
 /// Remap T leaf indices to match A: check the result
-void link(alignment& A,SequenceTree& T,bool internal_sequences) {
+void link(alignment& A,SequenceTree& T,bool internal_sequences) 
+{
+  if (internal_sequences and not is_Cayley(T))
+    throw myexception()<<"Cannot link a non-Cayley tree to an alignment with internal sequences.";
 
   //------ IF sequences < leaf nodes THEN complain ---------//
   if (A.n_sequences() < T.n_leaves())
@@ -183,7 +186,10 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences) {
 }
 
 /// Remap T leaf indices to match A: check the result
-void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) {
+void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) 
+{
+  if (internal_sequences and not is_Cayley(T))
+    throw myexception()<<"Cannot link a non-Cayley tree to an alignment with internal sequences.";
 
   //------ IF sequences < leaf nodes THEN complain ---------//
   if (A.n_sequences() < T.n_leaves())
@@ -234,6 +240,13 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) {
   //---- Check to see that internal nodes satisfy constraints ----//
   check_alignment(A,T,internal_sequences);
 }
+
+// FIXME - we might still want to link things if
+// (a) they have nodes of degree 2
+// (b) they have nodes of degree >3
+// (c) however, this linking would be limitted to leaf nodes...
+// So, we should do some kind of check that when we have internal sequences, we have
+// a Cayley tree.
 
 // FIXME - should I make this more generic, so that it doesn't rely on a file?
 void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,bool internal_sequences)
