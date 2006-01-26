@@ -193,6 +193,8 @@ public:
   in_edges_iterator  branches_in() const {return n;}
   out_edges_iterator branches_out() const {return n;}
   
+  unsigned degree() const {return neighbors().size();}
+
   operator int() const {return name();}
 
   bool valid() const {return n;}
@@ -213,6 +215,8 @@ public:
   const_in_edges_iterator  branches_in()  const {return n;}
   const_out_edges_iterator branches_out() const {return n;}
   
+  unsigned degree() const {return neighbors().size();}
+
   operator int() const {return name();}
  
   bool valid() const {return n;}

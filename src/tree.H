@@ -330,7 +330,7 @@ bool equal(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
 /// Do the two bitmasks intersect?
 bool intersect(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
 
-/// Does partition v1 imply partition v2?
+/// Does bitmask v1 imply bitmask v2?
 bool implies(const std::valarray<bool>& v1,const std::valarray<bool>& v2);
 
 /// How many of v's bits are true?
@@ -350,4 +350,9 @@ int subtree_height(const Tree& T,int b);
 int node_depth(const Tree& T,int node);
 
 std::vector<std::vector<int> > partition_sets(const Tree& T);
+
+bool is_Cayley(const Tree& T);
+
+bool has_sub_branches(const Tree& T);
+
 #endif

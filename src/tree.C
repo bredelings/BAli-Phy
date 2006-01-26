@@ -1156,3 +1156,24 @@ vector< vector<int> > partition_sets(const Tree& T)
 
   return sets;
 }
+
+
+bool is_Cayley(const Tree& T)
+{
+  for(int i=0;i<T.n_nodes();i++)
+  {
+    int d = T[i].degree();
+    if (d != 1 and d != 3)
+      return false;
+  }
+  return true;
+}
+
+bool has_sub_branches(const Tree& T)
+{
+  for(int i=0;i<T.n_nodes();i++)
+  {
+    if (T[i].degree() == 2)
+      return true;
+  }
+}

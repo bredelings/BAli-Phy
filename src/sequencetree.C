@@ -88,11 +88,7 @@ void SequenceTree::parse(const string& s) {
   RootedSequenceTree RT;
   RT.parse(s);
 
-  // FIXME - but what if I WANT the node there?
-  if (RT.root().neighbors().size() == 2)
-    (*this) = remove_root(RT);
-  else
-    (*this) = RT;
+  (*this) = RT;
 }
 
 SequenceTree::SequenceTree(const std::string& s) {
@@ -308,7 +304,7 @@ void delete_node(SequenceTree& T,const std::string& name)
 {
   int index = find_index(T.get_sequences(),name);
   nodeview n = T.prune_subtree(T.branch(index).reverse());
-  if (n.neighbors().size() == 2)
+  if (n.degree() == 2)
     T.remove_node_from_branch(n);
 }
 
