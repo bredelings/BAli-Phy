@@ -7,22 +7,22 @@ using std::vector;
 
 const double max_float = 3.40282347e+38F;
 
-double rootdistance(const Tree& T,int leaf,int b,double x) {
+double rootdistance(const Tree& T,int leaf,int b,double x) 
+{
   assert( 0 <= x and x <= 1);
 
-  int child = T.branch(b).source();
-  int parent = T.branch(b).target();
+  const_branchview bv = T.directed_branch(b);
 
   double d=0;
   int from = -1;
-  // The leaf is on the parent's side of the branch
-  if (T.partition(child,parent)[leaf]) {
-    d = T.branch(b).length()*(1-x);
-    from = parent;
+
+  if (T.partition(b)[leaf]) {
+    d = bv.length()*(1-x);
+    from = bv.target();
   }
   else {
-    d = T.branch(b).length()*x;
-    from = child;
+    d = bv.length()*x;
+    from = bv.source();
   }
   d += T.distance(from,leaf);
   return d;
@@ -90,4 +90,27 @@ void find_root(const Tree& T,int& rootb,double& rootd) {
 
   rootb = best;
   rootd = x[best];
+}
+
+RootedSequenceTree find_rooted_tree(const SequenceTree& T)
+{
+  int b=-1;
+  double x=-1;
+
+  find_root(T,b,x);
+
+  RootedSequenceTree RT = add_root(T,b);
+
+  vector<branchview> branches;
+  append(RT.root().branches_out(),branches);
+
+  assert(branches.size() == 2);
+
+  if (equal(branch_partition(RT,branches[0]),branch_partition(T,b)))
+    x = 1.0 - x;
+
+  branches[0].set_length(x*T.branch(b).length());
+  branches[1].set_length((1.0-x)*T.branch(b).length());
+
+  return RT;
 }

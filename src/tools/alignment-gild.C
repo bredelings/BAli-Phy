@@ -210,7 +210,7 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
 }
 
 
-void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A,SequenceTree& T) {
+void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A,RootedSequenceTree& T) {
   //----------- Load and link template A and T -----------------//
   load_A_and_T(args,A,T,false);
 
@@ -226,8 +226,8 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
   //-------- Check compatability of estimate & samples-------//
   assert(A.n_sequences() == T.n_leaves());
   
-  if (alignments.front().n_sequences() != T.n_nodes())
-    throw myexception()<<"Number of sequences in alignment estimate is NOT equal to number of tree nodes!";
+  //  if (alignments.front().n_sequences() != T.n_nodes())
+  //    throw myexception()<<"Number of sequences in alignment estimate is NOT equal to number of tree nodes!";
   
   for(int i=0;i<A.n_sequences();i++) {
     if (A.seq(i).name != alignments.front().seq(i).name)
@@ -308,6 +308,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "produce help message")
     ("align", value<string>(),"file with sequences and initial alignment")
     ("tree",value<string>(),"file with initial tree")
+    ("find-root","estimate the root position from branch lengths")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("refine", value<string>(),"procedure for refining Least-Squares positivized branch lengths: SSE, Poisson, LeastSquares")
@@ -333,30 +334,71 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+int which_directed_branch_equals(const Tree& T, const valarray<bool>& p)
+{
+  assert(p.size() == T.n_leaves());
+
+  for(int b=0;b<2*T.n_branches();b++)
+    if (equal(branch_partition(T,b),p))
+      return b;
+
+  return -1;
+}
+
+struct root_position
+{
+  int b;
+  double x;
+  root_position() {}
+  root_position(int i,double d):b(i),x(d) {}
+};
+
+
+root_position find_root_branch_and_position(const SequenceTree& T,const RootedSequenceTree& RT)
+{
+  root_position rootp;
+
+  vector<const_branchview> branches;
+  append(RT.root().branches_out(),branches);
+
+  if (branches.size() < 2)
+    throw myexception()<<"Can't use a leaf node as root, sorry.";
+
+  rootp.b = which_directed_branch_equals(T, branch_partition(RT,branches[0]));
+  rootp.x = 0;
+
+  assert(rootp.b != -1);
+
+  if (branches.size() == 2)
+    rootp.x = branches[1].length()/(branches[0].length() + branches[1].length());
+  return rootp;
+}
+
 
 int main(int argc,char* argv[]) { 
   try {
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
-
+    
     //----------- Load alignment and tree ---------//
     alignment A;
-    SequenceTree T;
+    RootedSequenceTree RT;
     list<alignment> alignments;
     vector<ublas::matrix<int> > Ms;
-    do_setup(args,alignments,A,T);
+    do_setup(args,alignments,A,RT);
     foreach(i,alignments)
       Ms.push_back(M(*i));
 
+    SequenceTree T = RT;
+    remove_sub_branches(T);
+    if (not is_Cayley(T))
+      throw myexception()<<"Multifurcating trees are not handled yet.";
+
     //----------- Find root branch ---------//
-    int rootb=-1;
-    double rootd = -1;
-    find_root(T,rootb,rootd);
-    std::cerr<<"root branch = "<<rootb<<std::endl;
-    std::cerr<<"x = "<<rootd<<std::endl;
-    std::cerr<<"distances from root:"<<std::endl;
-    for(int i=0;i<T.n_leaves();i++)
-      std::cerr<<" "<<T.seq(i)<<":  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
+    if (args.count("find-root"))
+      RT = find_rooted_tree(T);
+
+    root_position rootp = find_root_branch_and_position(T,RT);
 
     //----------- Construct alignment indexes ----------//
     vector< vector< vector<int> > >  column_indexes;
@@ -440,7 +482,7 @@ int main(int argc,char* argv[]) {
 	T2.branch(b).set_length(branch_lengths[b]);
 
       for(int i=0;i<T2.n_leaves();i++) {
-	double length = rootdistance(T2,i,rootb,rootd);
+	double length = rootdistance(T2,i,rootp.b,rootp.x);
 	assert(length >= 0.0);
 	double P = exp(-length);  // P(no events between leaf and root)
 	std::cout<<P<<" ";
