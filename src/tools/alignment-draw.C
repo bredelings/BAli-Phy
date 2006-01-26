@@ -633,12 +633,16 @@ TABLE {\n\
    margin-top: 0.4em;\n\
 }\n\
 \n\
+BODY {\n\
+  font-size: 12pt;\n\
+  font-family: helvetica;\n\
+}\n\
+\n\
 .sequences TD { \n\
    padding: 0;\n\
    margin: 0;\n\
 \n\
    font-size: 10pt; \n\
-   font-family: courier new, courier-new, courier, monospace;\n\
    font-weight: bold;\n\
 }\n\
 \n\
@@ -647,12 +651,11 @@ TABLE {\n\
 \n\
    font-weight: normal;\n\
    font-style: italic;\n\
-   font-family: helvitica;\n\
 }\n\
 \n\
 .legend {\n\
-  width: 100%;\n\
-  text-align: center;\n\
+//  width: 100%;\n\
+//  text-align: center;\n\
 }\n\
     </style>\n\
   </head>\n\
@@ -660,17 +663,17 @@ TABLE {\n\
 
       //-------------------- Print a legend ------------------------//
       if (not args.count("no-legend")) {
-	cout<<"<table class=\"legend\"><tr>";
+	cout<<"\n<table class=\"legend\"><tr>\n";
 
 	cout<<"<td>";
 	draw_legend(cout,*color_scheme,"");
-	cout<<"</td>";
+	cout<<"</td>\n";
 
 	cout<<"<td>";
 	draw_legend(cout,*color_scheme,"-");
-	cout<<"</td>";
+	cout<<"</td>\n";
 
-	cout<<"</tr></table>";
+	cout<<"</tr></table>\n";
       }
 
       //----------- Compute the position headings -------------------//
