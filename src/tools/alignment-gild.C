@@ -43,7 +43,8 @@ inline double log_fact(int n) {
 // Compute the probability that residues (i,j) are aligned
 //   - v[i][j] represents the column of the feature j in alignment i.
 //   - so if v[i][j] == v[i][k] then j and k are paired in alignment i.
-Matrix counts_to_probability(const Tree& T,const vector< vector<int> >& v) {
+Matrix counts_to_probability(const Tree& T,const vector< vector<int> >& v) 
+{
   assert(v.size() > 0);
   assert(v[0].size() > 0);
 
@@ -75,6 +76,10 @@ Matrix counts_to_probability(const Tree& T,const vector< vector<int> >& v) {
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
       Pr_align_pair(i,j) /= (v.size() + pseudocount*(prior + edge_prior*T.edges_distance(i,j)));
+
+  // we didn't handle the diagonal entries at all...
+  for(int i=0;i<N;i++)
+    Pr_align_pair(i,i) = 1.0;
 
   // Check symmetry
   for(int i=0;i<N;i++)
