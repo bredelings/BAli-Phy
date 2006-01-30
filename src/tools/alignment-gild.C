@@ -50,32 +50,37 @@ Matrix counts_to_probability(const Tree& T,const vector< vector<int> >& v)
 
   int N = v[0].size();
 
-
-  const double pseudocount = 1;
+  // initialize the pseudocount matrix
   const double edge_prior = 0.5/(T.n_branches()/2);
   const double prior = 0.5;
 
-  // initialize the matrix, and add a pseudocount as a conjugate prior
-  Matrix Pr_align_pair(N,N);
-  for(int i=0;i<N;i++)
-    for(int j=0;j<N;j++)
-      Pr_align_pair(i,j)=pseudocount*(prior + edge_prior*T.edges_distance(i,j));
+  Matrix pseudocount = EdgesDistanceMatrix(T);
+  for(int i=0;i<pseudocount.size1();i++)
+    for(int j=0;j<pseudocount.size2();j++)
+      pseudocount(i,j) = prior + pseudocount(i,j)*edge_prior;
+
+  for(int i=0;i<pseudocount.size1();i++)
+    for(int j=0;j<pseudocount.size2();j++)
+      assert(pseudocount(i,j) > 0);
+
+  // initialize the matrix - add a pseudocount to avoid P=0 or P=1
+  Matrix Pr_align_pair = 0.1*0.5*pseudocount;
 
   // For each label, count all present pairs
-  for(int i=0;i<v.size();i++) {
-    const vector<int>& label = v[i];
-    for(int l1=0;l1<label.size();l1++) 
-      for(int l2=0;l2<l1;l2++) 
-	if (label[l1] == label[l2]) {
-	  Pr_align_pair(l1,l2)++;
-	  Pr_align_pair(l2,l1)++;
+  for(int l=0;l<v.size();l++) {
+    const vector<int>& label = v[l];
+    for(int i=0;i<label.size();i++) 
+      for(int j=0;j<i;j++) 
+	if (label[i] == label[j]) {
+	  Pr_align_pair(i,j)++;
+	  Pr_align_pair(j,i)++;
 	}
   }
 
   // Divide by count to yield an average
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
-      Pr_align_pair(i,j) /= (v.size() + pseudocount*(prior + edge_prior*T.edges_distance(i,j)));
+      Pr_align_pair(i,j) /= (v.size() + 0.1*pseudocount(i,j));
 
   // we didn't handle the diagonal entries at all...
   for(int i=0;i<N;i++)
@@ -85,6 +90,13 @@ Matrix counts_to_probability(const Tree& T,const vector< vector<int> >& v)
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
       assert(std::abs(Pr_align_pair(i,j) -Pr_align_pair(j,i)) < 1.0e-9);
+
+  for(int i=0;i<pseudocount.size1();i++)
+    for(int j=0;j<pseudocount.size2();j++)
+      if (i==j)
+	assert(Pr_align_pair(i,j) == 1.0);
+      else
+	assert(0.0 < Pr_align_pair(i,j) and Pr_align_pair(i,j) < 1.0);
 
   return Pr_align_pair;
 }
@@ -150,39 +162,90 @@ double LeastSquares::operator()(const optimize::Vector& v) const {
   assert(v.size() == T.n_branches());
 
   Tree temp = T;
-  for(int b=0;b<T.n_branches();b++) {
-    if (v[b] < 0) return log_0;
+  for(int b=0;b<T.n_branches();b++)
     temp.branch(b).set_length(v[b]);
-  }
+
+  Matrix TD = DistanceMatrix(temp);
 
   double SSE=0;
-  for(int l1=0;l1<T.n_leaves();l1++) 
-    for(int l2=0;l2<l1;l2++) {
-      double D1 = D(l1,l2);
-      double D2 = temp.distance(l1,l2);
-      double E2 = (D1-D2)*(D1-D2);
-      SSE += E2;
+  for(int i=0;i<T.n_leaves();i++) 
+    for(int j=0;j<i;j++) {
+      double E = D(i,j) - TD(i,j);
+      SSE += E*E;
     }
+
   return -SSE;
 }
 
 
-class poisson_match_pairs: public function {
-  int n;
+class WeightedLeastSquares: public function 
+{
   Tree T;
   Matrix Pr_align_pair;
+  Matrix D;
+  Matrix S2;
+
+public:
+  const Tree& t() const {return T;}
+  double operator()(const optimize::Vector& v) const;
+
+  WeightedLeastSquares(const vector< vector<int> >& v1,const Tree& T1)
+    :T(T1),
+     Pr_align_pair(T.n_leaves(),T.n_leaves()),
+     D(T.n_leaves(),T.n_leaves()),
+     S2(T.n_leaves(),T.n_leaves())
+  { 
+    Pr_align_pair = counts_to_probability(T,v1);
+    D = probability_to_distance(Pr_align_pair);
+    S2 = probability_to_distance_variance(Pr_align_pair);
+  }
+};
+
+double WeightedLeastSquares::operator()(const optimize::Vector& v) const 
+{
+  // We get one length for each branch, and they should all be positive
+  assert(v.size() == T.n_branches());
+
+  Tree temp = T;
+  for(int b=0;b<T.n_branches();b++)
+    temp.branch(b).set_length(v[b]);
+
+  Matrix TD = DistanceMatrix(temp);
+
+  double SSE=0;
+  for(int i=0;i<T.n_leaves();i++) 
+    for(int j=0;j<i;j++) {
+      double E = D(i,j) - TD(i,j);
+      SSE += E*E/S2(i,j);  // /D(i,j)/D(i,j);
+    }
+
+  //  for(int b=0;b<T.n_branches();b++)
+  //    if (v[b] < 0) SSE += (-v[b]+v[b]*v[b])*1000000;
+
+
+  return -SSE;
+}
+
+
+class poisson_match_pairs: public function 
+{
+  unsigned n;
+  Tree T;
+  Matrix Pr_align_pair;
+
 public:
   const Tree& t() const {return T;}
   double operator()(const optimize::Vector& v) const;
 
   poisson_match_pairs(const vector< vector<int> >& v1,const Tree& T1)
-    :T(T1),Pr_align_pair(T.n_leaves(),T.n_leaves())
+    :n(1),T(T1),Pr_align_pair(T.n_leaves(),T.n_leaves())
   { 
     Pr_align_pair = counts_to_probability(T,v1);
   }
 };
 
-double poisson_match_pairs::operator()(const optimize::Vector& v) const {
+double poisson_match_pairs::operator()(const optimize::Vector& v) const 
+{
   // We get one length for each branch, and they should all be positive
   assert(v.size() == T.n_branches());
 
@@ -192,18 +255,23 @@ double poisson_match_pairs::operator()(const optimize::Vector& v) const {
     temp.branch(b).set_length(v[b]);
   }
 
-  double Pr=0;
-  for(int l1=0;l1<T.n_leaves();l1++) 
-    for(int l2=0;l2<l1;l2++) {
-      double length = temp.distance(l1,l2);
-      //probability of remaining aligned
-      double p = exp(-length);
-      // number of times we remained aligned
-      int count = (int)(Pr_align_pair(l1,l2) + 0.5);
+  Matrix D = DistanceMatrix(T);
 
-      // binomial probability of being aligned count times out of n
-      Pr += log_fact(n) - log_fact(count) - log_fact(n-count);
-      Pr += count*log(p) + (n-count)*log(1-p);
+  double Pr=0;
+  for(int i=0;i<T.n_leaves();i++) 
+    for(int j=0;j<i;j++) 
+      {
+	double mu = D(i,j);
+
+	//probability of remaining aligned
+	double p = exp(-mu);
+
+	// number of times we remained aligned
+	double count = n*Pr_align_pair(i,j);
+
+	// binomial probability of being aligned count times out of n
+	// Pr += log_fact(n) - log_fact(count) - log_fact(n-count);
+	Pr += count*log(p) + (n-count)*log(1-p);
     }
 
 
@@ -438,7 +506,10 @@ int main(int argc,char* argv[]) {
 
     vector<vector<int> > leaf_sets = partition_sets(T);
 
-    for(int c=0;c<A.length();c++) {
+    for(int c=0;c<A.length();c++) 
+    {
+      cerr<<"column = "<<c<<endl;
+
       vector<int> column = get_column(MA,c,T.n_leaves());
 
       // Get labels - should I instead get *counts*?
@@ -447,13 +518,18 @@ int main(int argc,char* argv[]) {
 	labels[i] = get_splitgroup_columns(MA,c,Ms[i],column_indexes[i]);
 
       //Get initial estimate using fast least squares
-      vector<double> branch_lengths(T.n_branches());
+      vector<double> LS_branch_lengths(T.n_branches());
 
-      Matrix Pc = probability_to_distance(counts_to_probability(T,labels));
-      branch_lengths = FastLeastSquares(T,Pc,leaf_sets);
-      for(int b=0;b<branch_lengths.size();b++)
-	if (branch_lengths[b] < 0) branch_lengths[b] = 0;
+      Matrix Q = counts_to_probability(T,labels);
+      Matrix Pc = probability_to_distance(Q);
+      LS_branch_lengths = FastLeastSquares(T,Pc,leaf_sets);
       P_total += Pc;
+
+      // Print uncertainty values for the letters
+      SequenceTree T2 = T;
+      for(int b=0;b<T2.n_branches();b++)
+	T2.branch(b).set_length(std::max(0.0, LS_branch_lengths[b]));
+      cerr<<"unrefined tree = "<<T2<<endl;
 
       // Define an objective function for refining the initial estimates
       function * f = NULL;
@@ -465,26 +541,53 @@ int main(int argc,char* argv[]) {
 	f = new poisson_match_pairs(labels,T);
       else if (args["refine"].as<string>() == "LeastSquares")
 	f = new LeastSquares(labels,T);
+      else if (args["refine"].as<string>() == "WeightedLeastSquares")
+	f = new WeightedLeastSquares(labels,T);
       else
 	throw myexception()<<"Unknown refiner '"<<args["refine"].as<string>()<<"'";
 
       // refine initial estimate if requested
-      if (f) {
-	optimize::Vector x(T.n_branches());
-	for(int i=0;i<branch_lengths.size();i++)
-	  x[i] = branch_lengths[i];
+      vector<double> r_branch_lengths = LS_branch_lengths;
 
-	x = search_gradient(x,*f,1.0e-5,3);
+      if (f) 
+      {
+	optimize::Vector x(T.n_branches());
+	for(int i=0;i<LS_branch_lengths.size();i++)
+	  x[i] = std::max(0.00001, LS_branch_lengths[i]);
+
+	x = search_gradient(x, *f, 1.0e-6, 500);
 	delete f;
 
-	for(int i=0;i<branch_lengths.size();i++)
-	  branch_lengths[i] = x[i];
+	for(int i=0;i<r_branch_lengths.size();i++)
+	  r_branch_lengths[i] = x[i];
       }
       
       // Print uncertainty values for the letters
-      Tree T2 = T;
       for(int b=0;b<T2.n_branches();b++)
-	T2.branch(b).set_length(branch_lengths[b]);
+	T2.branch(b).set_length(std::max(0.0, r_branch_lengths[b]));
+
+      /*
+      cerr<<"refined tree = "<<T2<<endl;
+      cerr<<endl;
+      for(int i=0;i<T.n_branches();i++)
+	cerr<<" b = "<<i<<"       u = "<<LS_branch_lengths[i]<<"   r = "<<r_branch_lengths[i]<<endl;
+      cerr<<endl;
+      */
+
+      Matrix mu_fit = DistanceMatrix(T2);
+
+      /*
+      for(int i=0;i<T.n_leaves();i++)
+	for(int j=0;j<i;j++) {
+	  double odds = log(Q(i,j)/(1-Q(i,j)));
+
+	  double q_fit = exp(-mu_fit(i,j));
+	  double odds_fit = log(q_fit/(1-q_fit));
+
+	  if (std::abs(odds - odds_fit) > 0.01)
+	    cerr<<T.seq(i)<<" - "<<T.seq(j)<<": q = "<<Q(i,j)<<"   q_fit = "<<q_fit<<"       delta odds = "<<odds-odds_fit<<endl;
+	}
+      */	  
 
       for(int i=0;i<T2.n_leaves();i++) {
 	double length = rootdistance(T2,i,rootp.b,rootp.x);
@@ -492,6 +595,7 @@ int main(int argc,char* argv[]) {
 	double P = exp(-length);  // P(no events between leaf and root)
 	std::cout<<P<<" ";
       }
+      cerr<<endl<<endl;
       std::cout<<column_probabilities[c]<<endl;
     }
 
@@ -506,7 +610,7 @@ int main(int argc,char* argv[]) {
     // Print uncertainty values for the letters
     SequenceTree T2 = T;
     for(int b=0;b<T2.n_branches();b++)
-      T2.branch(b).set_length(branch_lengths[b]);
+      T2.branch(b).set_length(std::max(0.0,branch_lengths[b]));
 
     // refine for a few iterations...
     // FIXME - fix the refiners to take the alignment probability matrix...
