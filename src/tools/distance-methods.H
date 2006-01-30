@@ -8,7 +8,11 @@ Matrix C(const Matrix& M);
 
 Matrix DistanceMatrix(const Tree& T);
 
+Matrix EdgesDistanceMatrix(const Tree& T);
+
 Matrix probability_to_distance(const Matrix &C);
+
+Matrix probability_to_distance_variance(const Matrix &C);
 
 vector<double> FastMTM(const Tree& T,const Matrix& D,
 		       const vector<vector<int> >& leaf_set);

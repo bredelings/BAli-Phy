@@ -1,5 +1,10 @@
 #include "distance-methods.H"
 
+#include <list>
+#include "util.H"
+
+using std::list;
+
 Matrix probability_to_distance(const Matrix &C) {
   Matrix D(C.size1(),C.size2());
   for(int i=0;i<C.size1();i++)
@@ -10,6 +15,23 @@ Matrix probability_to_distance(const Matrix &C) {
   return D;
 }
 
+Matrix probability_to_distance_variance(const Matrix &Q) 
+{
+  unsigned N = 1;
+
+  Matrix S2(Q.size1(),Q.size2());
+
+  for(int i=0;i<Q.size1();i++)
+    for(int j=0;j<Q.size2();j++) {
+
+      assert(0 <= Q(i,j) and Q(i,j) <= 1.0);
+
+      S2(i,j) = (1-Q(i,j))/(Q(i,j)*N);
+    }
+  return S2;
+}
+
+/// Compute the sum of all path lengths delta[b] passing through each branch b.
 vector<double> FastMTM(const Tree& T,const Matrix& D,
 		       const vector<vector<int> >& leaf_sets) 
 {
@@ -28,27 +50,28 @@ vector<double> FastMTM(const Tree& T,const Matrix& D,
   
   vector<const_branchview> branches = branches_from_node(T,T.n_leaves());
   
-  vector<int> xset; xset.reserve(T.n_leaves());
-  vector<int> yset; yset.reserve(T.n_leaves());
-  
-  for(int b=0;b<branches.size();b++) {
+  for(int b=0;b<branches.size();b++) 
+  {
     if (branches[b].is_leaf_branch()) continue;
 
     vector<const_branchview> children;
     append(branches[b].branches_after(),children);
     
-    assert(children.size() == 2);
-    xset = leaf_sets[children[0]];
-    yset = leaf_sets[children[1]];
-
     double temp = 0;
     for(int i=0;i<children.size();i++)
       temp += d[ children[i].undirected_name() ];
 
     double sum = 0;
-    for(int x=0;x<xset.size();x++)
-      for(int y=0;y<yset.size();y++)
-	sum += D(xset[x],yset[y]);
+    for(int i=0;i<children.size();i++)
+      for(int j=0;j<i;j++) {
+      
+	const vector<int>& xset = leaf_sets[children[i]];
+	const vector<int>& yset = leaf_sets[children[j]];
+
+	for(int x=0;x<xset.size();x++)
+	  for(int y=0;y<yset.size();y++)
+	    sum += D(xset[x],yset[y]);
+      }
 
     d[branches[b].undirected_name()] = temp - 2.0*sum;
   }
@@ -128,14 +151,171 @@ vector<double> FastLeastSquares(const Tree& T, const Matrix & D,
   return b;
 }
 
-Matrix DistanceMatrix(const Tree& T) {
+
+Matrix EdgesDistanceMatrix(const Tree& T) 
+{
+  const int N = T.n_nodes();
   const int n = T.n_leaves();
+ 
+  vector<const_branchview> branches;
+  branches.push_back(T.branch(0));
+  branches.push_back(T.branch(0).reverse());
+
+  list<int> points;
+
+  Matrix D1(N,N);
+  {
+    int node = T.branch(0).target();
+    D1(0,node) = D1(node,0) = 1;
+  }
+    
+  while(not branches.empty()) 
+  {
+    int dead_point = branches.back().target();
+
+    vector<const_branchview> new_branches;
+    append(branches.back().branches_after(), new_branches);
+    branches.pop_back();
+    
+    if (new_branches.empty()) {
+      points.push_back(dead_point);
+      continue;
+    }
+
+    for(int i=0;i<new_branches.size();i++) 
+    {
+      int p1 = new_branches[i].target();
+
+      // Add distances from i -> leaves
+      foreach(p2,points) {
+	D1(p1,*p2) = D1(*p2,p1) = D1(*p2,dead_point) + 1;
+      }
+
+      // Add distances from i -> active points 
+      for(int j=0;j<branches.size();j++)
+      {
+	int p2 = branches[j].target();
+	D1(p1,p2) = D1(p2,p1) = D1(p2,dead_point) + 1;
+      }
+
+      // Add distances from i -> new points
+      for(int j=0;j<i;j++) 
+      {
+	int p2 = new_branches[j].target();
+	D1(p1,p2) = D1(p2,p1) = 2;
+      }
+    }
+
+    branches.insert(branches.end(), new_branches.begin(), new_branches.end());
+  }
+
+  assert(points.size() == T.n_leaves());
+  foreach(p,points)
+    assert(T[*p].is_leaf_node());
+
+
+  // Create the final matrix from the larger matrix
   Matrix D(n,n);
+  for(int i=0;i<n;i++)
+    D(i,i) = 0;
 
   for(int i=0;i<n;i++)
     for(int j=0;j<i;j++)
-      D(i,j) = D(j,i) = T.distance(i,j);
+      D(i,j) = D(j,i) = D1(i,j);
 
+  /*
+  for(int i=0;i<n;i++)
+    for(int j=0;j<n;j++) {
+      if (not (std::abs(D(i,j) - T.edges_distance(i,j)) < 1.0e-8))
+	std::cerr<<"D("<<i<<","<<j<<") = "<<D(i,j)<<"    T(i,j) = "<<T.edges_distance(i,j)<<endl;
+      assert( std::abs(D(i,j) - T.edges_distance(i,j)) < 1.0e-8);
+    }
+  */
+
+  return D;
+}
+
+Matrix DistanceMatrix(const Tree& T) 
+{
+  const int N = T.n_nodes();
+  const int n = T.n_leaves();
+ 
+  vector<const_branchview> branches;
+  branches.push_back(T.branch(0));
+  branches.push_back(T.branch(0).reverse());
+
+  list<int> points;
+
+  Matrix D1(N,N);
+  {
+    int node = T.branch(0).target();
+    D1(0,node) = D1(node,0) = branches[0].length();
+  }
+    
+  while(not branches.empty()) 
+  {
+    int dead_point = branches.back().target();
+
+    vector<const_branchview> new_branches;
+    append(branches.back().branches_after(), new_branches);
+    branches.pop_back();
+    
+    if (new_branches.empty()) {
+      points.push_back(dead_point);
+      continue;
+    }
+
+    for(int i=0;i<new_branches.size();i++) 
+    {
+      int p1 = new_branches[i].target();
+
+      double L = new_branches[i].length();
+
+      // Add distances from i -> leaves
+      foreach(p2,points) {
+	D1(p1,*p2) = D1(*p2,p1) = D1(*p2,dead_point) + L;
+      }
+
+      // Add distances from i -> active points 
+      for(int j=0;j<branches.size();j++)
+      {
+	int p2 = branches[j].target();
+	D1(p1,p2) = D1(p2,p1) = D1(p2,dead_point) + L;
+      }
+
+      // Add distances from i -> new points
+      for(int j=0;j<i;j++) 
+      {
+	int p2 = new_branches[j].target();
+	D1(p1,p2) = D1(p2,p1) = L + new_branches[j].length();
+      }
+    }
+
+    branches.insert(branches.end(), new_branches.begin(), new_branches.end());
+  }
+
+  assert(points.size() == T.n_leaves());
+  foreach(p,points)
+    assert(T[*p].is_leaf_node());
+
+
+  // Create the final matrix from the larger matrix
+  Matrix D(n,n);
+  for(int i=0;i<n;i++)
+    D(i,i) = 0;
+
+  for(int i=0;i<n;i++)
+    for(int j=0;j<i;j++)
+      D(i,j) = D(j,i) = D1(i,j);
+
+  /*
+  for(int i=0;i<n;i++)
+    for(int j=0;j<n;j++) {
+      if (not (std::abs(D(i,j) - T.distance(i,j)) < 1.0e-8))
+	std::cerr<<"D("<<i<<","<<j<<") = "<<D(i,j)<<"    T(i,j) = "<<T.distance(i,j)<<endl;
+      assert( std::abs(D(i,j) - T.distance(i,j)) < 1.0e-8);
+    }
+  */
   return D;
 }
 
