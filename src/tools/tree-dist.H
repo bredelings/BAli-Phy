@@ -39,6 +39,10 @@ struct Partition {
   /// the total number of taxa
   unsigned size() const {return group1.size();}
 
+  Partition& flip();
+  
+  Partition reverse() const;
+
   std::valarray<bool> mask() const {return group1 or group2;}
 
   /// Create a partition from p, but masked by @mask
@@ -110,6 +114,7 @@ int which_partition(const SequenceTree& T, const Partition& p);
 std::ostream& operator<<(std::ostream& o, const Partition& P);
 
 bool informative(const Partition& p);
+bool valid(const Partition& p);
 
 
 /// A class for loading tree distributions - somewhat biased towards tree-dist-compare
@@ -194,5 +199,9 @@ bool merge_partition(std::vector<Partition>& partitions,const Partition& delta);
 
 /// load a collection of partition sets from a file
 void load_partitions(const std::string& filename, std::vector<std::vector<Partition> >&);
+
+std::vector<Partition> get_moveable_tree(std::vector<Partition> partitions);
+
+void write_partitions(std::ostream& o,const std::vector<Partition>& partitions);
 
 #endif

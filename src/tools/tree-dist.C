@@ -3,6 +3,7 @@
 #include "tree-dist.H"
 #include "rng.H"
 #include "statistics.H"
+#include "mytypes.H"
 
 using std::vector;
 using std::list;
@@ -73,6 +74,17 @@ bool Partition::full() const {
     if (not group1[i] and not group2[i])
       return false;
   return true;
+}
+
+Partition& Partition::flip() {
+  std::swap(group1,group2);
+  return *this;
+}
+
+Partition Partition::reverse() const {
+  Partition p2 = *this;
+  p2.flip();
+  return p2;
 }
 
 Partition::Partition(const Partition& p,const valarray<bool>& mask)
@@ -175,9 +187,21 @@ bool informative(const Partition& p) {
   return n_elements(p.group1) > 1 and n_elements(p.group2) > 1;
 }
 
-RootedSequenceTree standardized(const string& t) {
+bool valid(const Partition& p) {
+  return n_elements(p.group1) > 0 and n_elements(p.group2) > 0;
+}
+
+RootedSequenceTree standardized(const string& t) 
+{
   RootedSequenceTree T;
   T.parse(t);
+
+  if (T.root().degree() == 2)
+    T.remove_node_from_branch(T.root());
+
+  if (not is_Cayley(T))
+    throw myexception()<<"Tree must be a Cayley Tree.";
+
   standardize(T);
   return T;
 }
@@ -297,9 +321,9 @@ bool consistent(const Partition& p1, const Partition& p2) {
 /// Does the grouping of all nodes bm, imply *this?
 bool implies(const Partition& p1, const Partition& p2) 
 {
-  if (is_subset(p1.group1,p2.group1) and is_subset(p1.group2,p2.group2)) return true;
+  if (is_subset(p2.group1,p1.group1) and is_subset(p2.group2,p1.group2)) return true;
 
-  if (is_subset(p1.group2,p2.group1) and is_subset(p1.group1,p2.group2)) return true;
+  if (is_subset(p2.group2,p1.group1) and is_subset(p2.group1,p1.group2)) return true;
 
   return false;
 }
@@ -583,7 +607,7 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const valarray<b
 
     // for each partition in the next tree
     std::valarray<bool> partition(names.size());
-    for(int b=names.size();b<T.size();b++) 
+    for(int b=0;b<T.size();b++) 
     {
       partition = T[b];
       if (not partition[first])
@@ -634,7 +658,7 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const valarray<b
     Partition pi(names,partition,mask);
     unsigned p_count = (*p)->second.count;
 
-    if (informative(pi))
+    if (valid(pi))
       partitions.push_back(pair<Partition,unsigned>(pi,p_count));
   }
 
@@ -876,4 +900,156 @@ void load_partitions(const string& filename, vector<vector<Partition> >& partiti
   }
 }
 
+void write_partitions(std::ostream& o,const vector<Partition>& partitions)
+{
+  vector<Partition> full;
+  vector<Partition> sub;
+  for(int i=0;i<partitions.size();i++)
+    if (partitions[i].full())
+      full.push_back(partitions[i]);
+    else
+      sub.push_back(partitions[i]);
 
+  SequenceTree consensus = get_mf_tree(partitions[0].names,full);
+  o<<consensus.write(false)<<endl;
+
+  for(int i=0;i<sub.size();i++)
+    o<<sub[i]<<endl;
+}
+
+bool is_strict_subset(const valarray<bool>& v1,const valarray<bool>& v2) {
+  return is_subset(v1,v2) and not equal(v1,v2);
+}
+
+bool wanders_over(const Partition& p1,const Partition& p2)
+{
+  return is_subset(p2.group1,p1.group2) and is_subset(p2.group2,p1.group2);
+}
+
+bool less_than(const Partition& p1,const Partition& p2)
+{
+  return 
+    is_strict_subset(p1.group1,p2.group1) and 
+    is_strict_subset(p2.group2,p1.group2);
+}
+
+bool sub_conflict(Partition p1,Partition p2)
+{
+  if (not intersect(p1.mask(),p2.mask()))
+    return false;
+
+  if (less_than(p1,p2) or less_than(p1,p2.reverse()) or
+      less_than(p1.reverse(),p2) or less_than(p1.reverse(),p2.reverse()))
+    return false;
+
+  if (wanders_over(p1,p2) or wanders_over(p1.reverse(),p2) or
+      wanders_over(p2,p1) or wanders_over(p2.reverse(),p1))
+    return false;
+
+  return true;
+}
+
+bool is_leaf_partition(const Partition& p)
+{
+  return p.full() and (n_elements(p.group1) == 1 or n_elements(p.group2) == 1);
+}
+
+int get_n_conflicts(const ublas::matrix<int>& conflicts,
+		    int n,
+		    const vector<bool>& mask)
+{
+  assert(mask.size() == conflicts.size1());
+  assert(mask.size() == conflicts.size2());
+
+  int total = 0;
+  for(int i=0;i<mask.size();i++)
+    if (mask[i] and conflicts(n,i))
+      total++;
+
+  return total;
+}
+
+vector<bool> solve_conflicts(const ublas::matrix<int>& conflicts,
+			     const ublas::matrix<int>& dominates,
+			     vector<bool> invincible)
+{
+  const int N = invincible.size();
+  vector<bool> survives(N,true);
+
+  int n=0;
+  for(int i=0;i<N;i++)
+    if (invincible[i])
+      n++;
+
+  do {
+    vector<int> n_conflicts(N,0);
+
+    for(int i=0;i<N;i++)
+      if (survives[i] and not invincible[i]) {
+	n_conflicts[i]  = get_n_conflicts(conflicts,i,survives);
+	n_conflicts[i] -= get_n_conflicts(dominates,i,survives);
+	assert(n_conflicts[i] >= 0_);
+      }
+
+    int die = argmax(n_conflicts);
+
+    if (not n_conflicts[die]) break;
+
+    survives[die] = false;
+
+  } while(true);
+
+  return survives;
+}
+
+vector<Partition> get_moveable_tree(vector<Partition> partitions)
+{
+  // remove partitions that are implied by other partitions
+  for(int i=partitions.size()-1;i>=0;i--) 
+  {
+    bool found = false;
+    for(int j=i-1;j>=0 and not found;j--)
+      if (implies(partitions[j],partitions[i]))
+	found = true;
+
+    if (found)
+      partitions.erase(partitions.begin() + i);
+  }
+
+  const int N = partitions.size();
+
+  // create and zero conflict matrix
+  ublas::matrix<int> conflict(N,N);
+  ublas::matrix<int> dominates(N,N);
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++) {
+      conflict(i,j) = 0;
+      dominates(i,j) = 0;
+    }
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++) 
+      if (i!=j) {
+	if (sub_conflict(partitions[i],partitions[j]))
+	  conflict(i,j) = 1;
+	if (conflict(i,j) and is_strict_subset(partitions[j].mask(),partitions[i].mask()))
+	  dominates(i,j) = 1;
+      }
+  
+  // we can't remove leaf partitions
+  vector<bool> invincible(N,true);
+  for(int i=0;i<N;i++)
+    invincible[i] = is_leaf_partition(partitions[i]);
+
+
+  vector<bool> solution = solve_conflicts(conflict,dominates,invincible);
+
+
+  vector<Partition> moveable;
+  for(int i=0;i<solution.size();i++)
+    if (solution[i])
+      moveable.push_back(partitions[i]);
+
+  return moveable;
+}
