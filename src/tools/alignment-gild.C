@@ -40,6 +40,48 @@ inline double log_fact(int n) {
   return total;
 }
 
+Matrix probability_to_distance(const Matrix &Q) {
+  Matrix D(Q.size1(),Q.size2());
+  for(int i=0;i<Q.size1();i++)
+    for(int j=0;j<Q.size2();j++) {
+      assert(0 <= Q(i,j) and Q(i,j) <= 1.0);
+      D(i,j) = -log(Q(i,j));
+    }
+  return D;
+}
+
+Matrix probability_to_distance_variance(const Matrix &Q) 
+{
+  unsigned N = 1;
+
+  Matrix S2(Q.size1(),Q.size2());
+
+  for(int i=0;i<Q.size1();i++)
+    for(int j=0;j<Q.size2();j++) {
+
+      assert(0 <= Q(i,j) and Q(i,j) <= 1.0);
+
+      S2(i,j) = (1.0-Q(i,j))/(Q(i,j)*N);
+    }
+  return S2;
+}
+
+Matrix probability_to_distance_weights(const Matrix &Q) 
+{
+  unsigned N = 1;
+
+  Matrix W(Q.size1(),Q.size2());
+
+  for(int i=0;i<Q.size1();i++)
+    for(int j=0;j<Q.size2();j++) {
+
+      assert(0 <= Q(i,j) and Q(i,j) <= 1.0);
+
+      W(i,j) = Q(i,j)*N/(1.0-Q(i,j));
+    }
+  return W;
+}
+
 // Compute the probability that residues (i,j) are aligned
 //   - v[i][j] represents the column of the feature j in alignment i.
 //   - so if v[i][j] == v[i][k] then j and k are paired in alignment i.
@@ -138,7 +180,7 @@ double SSE_match_pairs::operator()(const optimize::Vector& v) const {
 }
 
 
-class LeastSquares: public function {
+class Sum_of_Squared_Errors: public function {
   Tree T;
   Matrix Pr_align_pair;
   Matrix D;
@@ -146,7 +188,7 @@ public:
   const Tree& t() const {return T;}
   double operator()(const optimize::Vector& v) const;
 
-  LeastSquares(const vector< vector<int> >& v1,const Tree& T1)
+  Sum_of_Squared_Errors(const vector< vector<int> >& v1,const Tree& T1)
     :T(T1),
      Pr_align_pair(T.n_leaves(),T.n_leaves()),
      D(T.n_leaves(),T.n_leaves())
@@ -157,7 +199,7 @@ public:
   }
 };
 
-double LeastSquares::operator()(const optimize::Vector& v) const {
+double Sum_of_Squared_Errors::operator()(const optimize::Vector& v) const {
   // We get one length for each branch, and they should all be positive
   assert(v.size() == T.n_branches());
 
@@ -178,7 +220,7 @@ double LeastSquares::operator()(const optimize::Vector& v) const {
 }
 
 
-class WeightedLeastSquares: public function 
+class WeightedSum_of_Squared_Errors: public function 
 {
   Tree T;
   Matrix Pr_align_pair;
@@ -189,7 +231,7 @@ public:
   const Tree& t() const {return T;}
   double operator()(const optimize::Vector& v) const;
 
-  WeightedLeastSquares(const vector< vector<int> >& v1,const Tree& T1)
+  WeightedSum_of_Squared_Errors(const vector< vector<int> >& v1,const Tree& T1)
     :T(T1),
      Pr_align_pair(T.n_leaves(),T.n_leaves()),
      D(T.n_leaves(),T.n_leaves()),
@@ -201,7 +243,7 @@ public:
   }
 };
 
-double WeightedLeastSquares::operator()(const optimize::Vector& v) const 
+double WeightedSum_of_Squared_Errors::operator()(const optimize::Vector& v) const 
 {
   // We get one length for each branch, and they should all be positive
   assert(v.size() == T.n_branches());
@@ -518,18 +560,21 @@ int main(int argc,char* argv[]) {
 	labels[i] = get_splitgroup_columns(MA,c,Ms[i],column_indexes[i]);
 
       //Get initial estimate using fast least squares
-      vector<double> LS_branch_lengths(T.n_branches());
-
       Matrix Q = counts_to_probability(T,labels);
-      Matrix Pc = probability_to_distance(Q);
-      LS_branch_lengths = FastLeastSquares(T,Pc,leaf_sets);
-      P_total += Pc;
+      Matrix D = probability_to_distance(Q);
+      Matrix W = probability_to_distance_weights(Q);
+
+      P_total += D;
+
+      vector<double> LS_branch_lengths = FastLeastSquares(T,D,leaf_sets);
+
+      if (args["refine"].as<string>() == "WeightedLeastSquares")
+	LS_branch_lengths = LeastSquares(T,D,W,leaf_sets);
 
       // Print uncertainty values for the letters
       SequenceTree T2 = T;
       for(int b=0;b<T2.n_branches();b++)
 	T2.branch(b).set_length(std::max(0.0, LS_branch_lengths[b]));
-      cerr<<"unrefined tree = "<<T2<<endl;
 
       // Define an objective function for refining the initial estimates
       function * f = NULL;
@@ -540,9 +585,9 @@ int main(int argc,char* argv[]) {
       else if (args["refine"].as<string>() == "Poisson")
 	f = new poisson_match_pairs(labels,T);
       else if (args["refine"].as<string>() == "LeastSquares")
-	f = new LeastSquares(labels,T);
+	f = new Sum_of_Squared_Errors(labels,T);
       else if (args["refine"].as<string>() == "WeightedLeastSquares")
-	f = new WeightedLeastSquares(labels,T);
+	f = new WeightedSum_of_Squared_Errors(labels,T);
       else
 	throw myexception()<<"Unknown refiner '"<<args["refine"].as<string>()<<"'";
 
@@ -560,34 +605,11 @@ int main(int argc,char* argv[]) {
 
 	for(int i=0;i<r_branch_lengths.size();i++)
 	  r_branch_lengths[i] = x[i];
-      }
       
-      // Print uncertainty values for the letters
-      for(int b=0;b<T2.n_branches();b++)
-	T2.branch(b).set_length(std::max(0.0, r_branch_lengths[b]));
-
-      /*
-      cerr<<"refined tree = "<<T2<<endl;
-      cerr<<endl;
-      for(int i=0;i<T.n_branches();i++)
-	cerr<<" b = "<<i<<"       u = "<<LS_branch_lengths[i]<<"   r = "<<r_branch_lengths[i]<<endl;
-      cerr<<endl;
-      */
-
-      Matrix mu_fit = DistanceMatrix(T2);
-
-      /*
-      for(int i=0;i<T.n_leaves();i++)
-	for(int j=0;j<i;j++) {
-	  double odds = log(Q(i,j)/(1-Q(i,j)));
-
-	  double q_fit = exp(-mu_fit(i,j));
-	  double odds_fit = log(q_fit/(1-q_fit));
-
-	  if (std::abs(odds - odds_fit) > 0.01)
-	    cerr<<T.seq(i)<<" - "<<T.seq(j)<<": q = "<<Q(i,j)<<"   q_fit = "<<q_fit<<"       delta odds = "<<odds-odds_fit<<endl;
-	}
-      */	  
+	// Print uncertainty values for the letters
+	for(int b=0;b<T2.n_branches();b++)
+	  T2.branch(b).set_length(std::max(0.0, r_branch_lengths[b]));
+      }
 
       for(int i=0;i<T2.n_leaves();i++) {
 	double length = rootdistance(T2,i,rootp.b,rootp.x);

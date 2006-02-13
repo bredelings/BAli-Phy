@@ -103,6 +103,14 @@ SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  tools/tree-dist.C
 
 LIBS = gsl gslcblas m boost_program_options
+
+ifeq (${WITH_ATLAS},y)
+  ATLAS_LIBS=/usr/lib/atlas/sse/liblapack.a /usr/lib/atlas/sse/libblas.a 
+  DEFS += WITH_ATLAS
+else
+  ATLAS_LIBS=
+endif
+
 ifeq (${STLPORT},y) 
   DEFS += _STLP_DEBUG
   LIBS += stlportstlg
@@ -123,7 +131,8 @@ tools/statreport: tools/statistics.o  -lboost_program_options
 tools/alignment-gild: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o \
 	setup.o imodel.o probability.o sequence-format.o model.o tools/distance-methods.o \
-	alignment-random.o alignment-util.o randomtree.o tree-util.o ${LINKLIBS}
+	alignment-random.o alignment-util.o randomtree.o tree-util.o \
+	tools/inverse.o ${LINKLIBS} ${ATLAS_LIBS}
 
 tools/alignment-median: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o util-random.o \

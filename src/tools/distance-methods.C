@@ -1,35 +1,12 @@
 #include "distance-methods.H"
 
 #include <list>
+#include <valarray>
 #include "util.H"
+#include "inverse.H"
 
 using std::list;
-
-Matrix probability_to_distance(const Matrix &C) {
-  Matrix D(C.size1(),C.size2());
-  for(int i=0;i<C.size1();i++)
-    for(int j=0;j<C.size2();j++) {
-      assert(0 <= C(i,j) and C(i,j) <= 1.0);
-      D(i,j) = -log(C(i,j));
-    }
-  return D;
-}
-
-Matrix probability_to_distance_variance(const Matrix &Q) 
-{
-  unsigned N = 1;
-
-  Matrix S2(Q.size1(),Q.size2());
-
-  for(int i=0;i<Q.size1();i++)
-    for(int j=0;j<Q.size2();j++) {
-
-      assert(0 <= Q(i,j) and Q(i,j) <= 1.0);
-
-      S2(i,j) = (1-Q(i,j))/(Q(i,j)*N);
-    }
-  return S2;
-}
+using std::valarray;
 
 /// Compute the sum of all path lengths delta[b] passing through each branch b.
 vector<double> FastMTM(const Tree& T,const Matrix& D,
@@ -95,9 +72,90 @@ vector<double> SlowMTM(const Tree& T,const Matrix& D,
   return d;
 }
 
+// Solve (A^t * W * A) b = (A^t * W * d) , where W is "diagonal" (on paths)
+
+// M1 = sum_ij (A[k,ij] * A[l,ij] * W[ij])  (symmetric)
+
+// M2 = sum_ij (A[k,ij] * W[ij] * D[ij])
+
+// M1[k,l] * b[l] = M2[k]
+
+bool A(const Tree& T,int k,int i,int j)
+{
+  const valarray<bool>& partition = T.partition(k);
+  return partition[i] != partition[j];
+}
+
+typedef ublas::matrix<double,ublas::column_major> MatrixC;
+
+vector<double> LeastSquares(const Tree& T, const Matrix & D, const Matrix& W,
+			    const vector<vector<int> >& leaf_sets) 
+{
+  const int N = T.n_leaves();
+  const int B = T.n_branches();
+
+  assert(D.size1() == N);
+  assert(D.size2() == N);
+  assert(W.size1() == N);
+  assert(W.size2() == N);
+  Matrix WD = D;
+  for(int i=0;i<WD.size1();i++)
+    for(int j=0;j<WD.size2();j++)
+      WD(i,j) *= W(i,j);
+
+  vector<double> M2v = FastMTM(T,WD,leaf_sets);
+  MatrixC M2(B,1);
+  for(int i=0;i<B;i++)
+    M2(i,0) = M2v[i];
+
+  MatrixC M1(B,B);
+  for(int l=0;l<B;l++) 
+  {
+
+    //AWL(i,j) = A[l,ij] * W[ij];
+    Matrix ALW = W;
+    for(int i=0;i<N;i++)
+      for(int j=0;j<N;j++)
+	if (not A(T,l,i,j))
+	  ALW(i,j) = 0;
+
+    vector<double> column = FastMTM(T,ALW,leaf_sets);
+
+    for(int k=0;k<B;k++)
+      M1(k,l) = column[k];
+  }
+
+  MatrixC x = solve(M1,M2);
+
+  assert(x.size1() == B);
+  assert(x.size2() == 1);
+
+  vector<double> b(B);
+  for(int i=0;i<b.size();i++)
+    b[i] = x(i,0);
+
+  return b;
+}
+
+vector<double> LeastSquares(const Tree& T, const Matrix & D,
+			    const vector<vector<int> >& leaf_sets) 
+{
+  const int N = T.n_leaves();
+
+  Matrix I(N,N);
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      I(i,j) = 1.0;
+
+  return LeastSquares(T,D,I,leaf_sets);
+}
+
+
 vector<double> FastLeastSquares(const Tree& T, const Matrix & D,
 				const vector<vector<int> >& leaf_sets) 
 {
+  assert(is_Cayley(T));
+
   vector<double> delta = FastMTM(T,D,leaf_sets);
 
   vector<double> b(T.n_branches());
