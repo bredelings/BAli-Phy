@@ -614,7 +614,12 @@ list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphab
     nth++;
 
     // Skip this alignment IF it isn't the right multiple
-    if (nth%skip != 0) continue;
+    if (nth%skip != 0) {
+      string line;
+      do {
+	getline(ifile,line);
+      } while (line.size());
+    }
 
     // READ the next alignment
     try {
