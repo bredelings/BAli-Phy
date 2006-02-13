@@ -207,4 +207,44 @@ const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name, const U
 bool get_word(std::string& word, int& i,const std::string& s,
 	      const std::string& delimiters,const std::string& whitespace);
 
+template<typename T>
+std::vector<T> select(const std::vector<T>& v1,bool pred(const T&))
+{
+  std::vector<T> v2;
+  for(int i=0;i<v1.size();i++)
+    if (pred(v1[i]))
+      v2.push_back(v1[i]);
+  return v2;
+}
+
+template<typename T>
+std::vector<T> select(const std::vector<T>& v1,bool (T::*pred)() const)
+{
+  std::vector<T> v2;
+  for(int i=0;i<v1.size();i++)
+    if ((v1[i].*pred)())
+      v2.push_back(v1[i]);
+  return v2;
+}
+
+template<typename T>
+unsigned count(const std::vector<T>& v1,bool pred(const T&))
+{
+  unsigned total=0;
+  for(int i=0;i<v1.size();i++)
+    if (pred(v1[i]))
+      total++;
+  return total;
+}
+
+template<typename T>
+unsigned count(const std::vector<T>& v1,bool (T::*pred)() const)
+{
+  unsigned total=0;
+  for(int i=0;i<v1.size();i++)
+    if ((v1[i].*pred)())
+      total++;
+  return total;
+}
+
 #endif
