@@ -1,6 +1,9 @@
 #include "inverse.H"
 #include "myexception.H"
 #include <iostream>
+#include "mytypes.H"
+
+#ifdef WITH_ATLAS
 #include <boost/numeric/bindings/atlas/cblas1.hpp>
 #include <boost/numeric/bindings/atlas/clapack.hpp>
 #include <boost/numeric/bindings/traits/ublas_matrix.hpp>
@@ -8,8 +11,10 @@
 
 namespace ublas = boost::numeric::ublas;
 namespace atlas = boost::numeric::bindings::atlas;
+#endif
 
 typedef ublas::matrix<double,ublas::column_major> MatrixC;
+
 
 MatrixC solve(const MatrixC& A,const MatrixC& B) {
   MatrixC A1 = A;
