@@ -161,7 +161,7 @@ Mixing/partitions.SRQ: Work/trees Work/partitions.pred
 	@echo "done."
 
 Mixing/%.SRQ: Work/trees Results/%.topology
-	@echo -e "Generating SRQ plot for c50 partitions... \c"
+	@echo -e "Generating SRQ plot for c50 topology... \c"
 	@trees-to-SRQ Results/$*.topology --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
 	@echo "done."
 
