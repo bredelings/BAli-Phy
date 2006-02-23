@@ -563,6 +563,130 @@
       </sect3>
 
       <sect3>
+	<title>CTMC Models</title>
+
+	<para>All CTMC models can be characterized by transition rates
+	$Q_{ij}$ from state $i$ to state $j$.  After a given time $t$
+	the probability for transition from state $i$ to state $j$ is
+	given by \[P(t)_{ij}=e^{Q_{ij} \times t}\] using a matrix exponential.</para>
+
+	<para>The CTMC models used in
+	<application>BAli-PHy</application> are all reversible.
+	Traditionally, the rate matrix for these reversible models has
+	been decomposed into a symmetric matrix $S$ and equilibrium
+	frequencies $\pi$ as follows: 
+	\[Q_{ij} = S_{ij}\times\pi_j\]
+	The matrix $S$ is call the exchangability matrix, and
+	represents how exchangeable letters $i$ and $j$ are
+	independant of their frequencies.
+	</para>
+      </sect3>
+
+      <sect3>
+	<title>CTMC Frequency models</title>
+	<para>The above decomposition can be generalized slightly to
+	yield the following decomposition, where $f$ ranges from $0$ to $1$.
+	\[Q_{ij} = S_{ij}\times\frac{\pi_j^f}{\pi_i^{1-f}},\]
+	Here the parameter $f$ specifies the relative importance of
+	unequal conservation ($f=0$) and unequal replacement ($f=1$) in
+	maintaining the equilibrium frequencies $\pi$.  
+	</para>
+	<para>
+	In fact, this can be generalized even further to \[ Q_{ij} =
+	S_{ij}\times R(\pi)_{ij} \] where \[ \pi_i \times R_{ij} =
+	\pi_j \times R_{ji}. \]
+	</para>
+	<para>These models can therefore be expressed as a combination
+	of an "exchange model" (for $S$) and a "frequency model" (for
+	$R$).
+	</para>
+      </sect3>
+
+      <sect3>
+	<title>Exchange Models</title>
+	<para>
+	</para>
+      </sect3>
+      
+
+      <sect3>
+	<title>Frequency Models</title>
+	<para>
+	</para>
+	<table frame="none" rowsep="1">
+	  <title>Frequency Models</title>
+	  <tgroup cols='4'>
+	    <colspec colnum="1" colname="col1" colwidth="1*"/>
+	    <colspec colnum="2" colname="col2" colwidth="1*"/>
+	    <colspec colnum="3" colname="col3" colwidth="1*"/>
+	    <colspec colnum="4" colname="col4" colwidth="1*"/>
+	  <thead><row>
+	    <entry>Model</entry>
+	    <entry>Alphabet</entry>
+	    <entry>Parameters</entry>
+	    <entry>Description</entry>
+	  </row></thead>
+
+	  <tbody>
+	    <row>
+	      <entry>
+		<para><userinput>pi</userinput></para>
+		<para>Simple frequency model</para>
+	      </entry>
+	      <entry>any</entry>
+	      <entry>
+		<para>$f$ (1)</para>
+		<para>$\pi$ ($|\alpha|$) </para>
+	      </entry>
+	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
+	    </row>
+	    <row>
+	      <entry>
+		<para><userinput>pi=nucleotides</userinput></para>
+		<para>Independant nucleotide frequency model</para>
+	      </entry>
+	      <entry>Triplets</entry>
+	      <entry>
+		<para>$f$ (1)</para>
+		<para>$\pi_N$ (4) </para>
+	      </entry>
+	      <entry>
+		<para>$\pi_\alpha = \pi_i \pi_j \pi_k$</para>
+		<para>$R_{\alpha\beta} = \frac{\pi_\beta^f}{\pi_\alpha^{1-f}}$.</para>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry><userinput>pi=triplets</userinput></entry>
+	      <entry>Triplets</entry>
+	      <entry>
+		<para>$f$ (1)</para>
+		<para>$g$ (1)</para>
+		<para>$\pi$ (4) </para>
+		<para>$\nu$ ($|\alpha|$) </para>
+	      </entry>
+	      <entry>$R_{\alpha\beta} = \frac{{(\pi_i \pi_j
+	      \pi_l)}^f}{{(\pi_i \pi_j \pi_k)}^{1-f}} \times \frac{\nu_\beta}{\nu_\alpha}$.</entry>
+	    </row>
+	    <row>
+	      <entry><userinput>pi=amino acids?</userinput></entry>
+	      <entry>Codons</entry>
+	      <entry>$f$</entry>
+	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
+	    </row>
+	    <row>
+	      <entry><userinput>pi=codons</userinput></entry>
+	      <entry>Codons</entry>
+	      <entry>$f$</entry>
+	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
+	    </row>
+	  </tbody>
+	  </tgroup>
+	</table>
+      </sect3>
+      
+
+
+      <sect3>
 	<title>Extended model descriptions</title>
 
 	<para>All basic CTMC models are reversible, and can be
