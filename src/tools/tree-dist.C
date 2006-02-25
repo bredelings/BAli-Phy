@@ -988,7 +988,7 @@ vector<bool> solve_conflicts(const ublas::matrix<int>& conflicts,
       if (survives[i] and not invincible[i]) {
 	n_conflicts[i]  = get_n_conflicts(conflicts,i,survives);
 	n_conflicts[i] -= get_n_conflicts(dominates,i,survives);
-	assert(n_conflicts[i] >= 0_);
+	assert(n_conflicts[i] >= 0);
       }
 
     int die = argmax(n_conflicts);
