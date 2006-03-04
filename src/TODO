@@ -1,6 +1,23 @@
--23. Autoconf-ify.  ("Just run configure")
+-24. Build issues
+  + Fix Windows binaries
+  + Build MacOS binaries
 
--22. FastLSA with Constraints
+-23. Improve ease of installation:
+  + Autoconf-ify.  ("Just run configure")
+    - allow installation of binary in bin/bali-phy/$version
+  + Inline GSL and BOOST sources so that it is easier to build.
+    - write a reasonable autoconf system to build libboost-program-options
+    - include OUR version of the BOOST sources
+    - GSL is hopefully already autoconf-ified. It can be a subdir.
+
+-22. FastLSA with Constraints:
+  + We have a series of tiles that are linked at their corners.
+    - In each tile, we go forward given the (0,0) corner
+    - We sample backwards given the (last) state at the (I,J) corner.
+    - We need to SHARE the emission probabilities between tiles.
+  + Investigate "system time" overhead!  Where is this coming from?
+    - we could use oprofile.
+    - we could compile a kernel with debugging information.
 
 -21. Complain if a tree has two leaves with the same name?
      (We crash on 'standardize' currently.)
