@@ -1,3 +1,5 @@
+-25. Actually write files ("out") and ("err") instead of using cin and cerr.
+
 -24. Build issues
   + Fix Windows binaries
   + Build MacOS binaries
