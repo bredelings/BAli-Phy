@@ -1,1 +1,43 @@
 See doc/README.xhtml
+
+To compile and install
+
+Ultra Quick Version:
+
+% tar -zxf bali-phy-<version>.tgz
+% cd bali-phy-<version>
+% ./configure
+% make
+% make install
+
+Quick Version:
+
+1. Extract the sources:
+
+% tar -zxf bali-phy-<version>.tgz
+
+2. Make a build directory
+
+% mkdir bali-phy-build
+% cd bali-phy-build
+
+3. Run the configure script in the bali-phy directory:
+
+% ../bali-phy-<version>/configure
+
+By default, the software will be installed in /usr/local
+
+If you wish to install it somewhere else, say $HOME/local
+then run:
+
+% ../bali-phy-<version>/configure --prefix=$HOME/local
+
+4. Build the software
+
+% make
+
+5. Install the software
+
+% make install
+
+This will install the software in the directory <prefix>/bin/.
