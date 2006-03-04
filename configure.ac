@@ -35,6 +35,15 @@ AC_ARG_VAR(BOOST_SUFFIX,
            [String suffix that identifies Boost libraries (empty by default)])
 AC_SUBST(BOOST_SUFFIX)
 
+AC_ARG_VAR(CHIP,
+           [What CPU type should we specialize for to make a faster program?)])
+if test "$CHIP" = "" ; then
+   echo ""
+else
+   CHIP="-march=$CHIP -mtune=$CHIP"
+fi
+AC_SUBST(CHIP)
+
 AC_CHECK_LIB(boost_program_options, main)
 # AC_CHECK_LIB(gsl, gsl_cdf_beta_P)
 AC_CHECK_LIB(gslcblas, main)

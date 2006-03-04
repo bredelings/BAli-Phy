@@ -1,6 +1,6 @@
 #bin_SCRIPTS = checkjobs sge_kill getnames.pl bali-phy.sh GNUmakefile  genreport.pl pickout.pl run.sh
 
-CXXFLAGS = 
+CXXFLAGS = ${CHIP}
 
 if GCC
 
@@ -62,6 +62,8 @@ BOOST_LIBS = -lboost_program_options${BOOST_SUFFIX}
 
 LIBS = -lgsl -lgslcblas -lm ${BOOST_LIBS}
 
+LDADD = ${LIBS}
+
 #-----------------------------------------------------------------
 
 TOOLS = model_P statreport alignment-gild \
@@ -91,19 +93,17 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/tree-dist.C
 
-bali_phy_LDADD = ${LIBS}
-
 #-----------------------------------------------------------------
 
 model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C
 
-model_P_LDADD = -lm -l${BOOST_LIBS} 
+model_P_LDADD = -lm ${BOOST_LIBS} 
 
 #-------------------------- statreport --------------------------
 
 statreport_SOURCES = tools/statreport.C tools/statistics.C
 
-statreport_LDADD = -l${BOOST_LIBS}
+statreport_LDADD = ${BOOST_LIBS}
 
 #---------------------------------------------------------------
 
@@ -121,8 +121,6 @@ alignment_median_SOURCES = tools/alignment-median.C alignment.C alphabet.C seque
 	tree.C sequencetree.C util-random.C \
 	sequence-format.C alignment-util.C 
 
-alignment_median_LDADD = ${LIBS}
-
 #---------------------------------------------------------------
 
 alignment_consensus_SOURCES = tools/alignment-consensus.C alignment.C alphabet.C sequence.C util.C rng.C \
@@ -138,15 +136,11 @@ alignment_reorder_SOURCES = tools/alignment-reorder.C alignment.C alphabet.C seq
 	sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C \
 	model.C tree-util.C 
 
-alignment_reorder_LDADD = ${LIBS}
-
 #---------------------------------------------------------------
 
 alignment_thin_SOURCES = tools/alignment-thin.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C setup.C imodel.C sequence-format.C randomtree.C \
 	alignment-util.C probability.C alignment-random.C model.C tree-util.C
-
-alignment_thin_LDADD = ${LIBS}
 
 #---------------------------------------------------------------
 
@@ -157,27 +151,15 @@ alignment_chop_internal_LDADD = ${LIBS}
 
 #---------------------------------------------------------------
 
-alignment_indices_SOURCES = tools/alignment-indices.C alignment.C alphabet.C sequence.C util.C tree.C \
-	sequence-format.C alignment-util.C 
-
-alignment_indices_LDADD = ${LIBS}
+alignment_indices_SOURCES = tools/alignment-indices.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C 
 
 #---------------------------------------------------------------
 
-alignment_draw_SOURCES = tools/alignment-draw.C alignment.C alphabet.C sequence.C sequence-format.C util.C \
-	alignment-util.C tools/colors.C tree.C   
-
-alignment_draw_LDADD = ${LIBS}
+alignment_draw_SOURCES = tools/alignment-draw.C alignment.C alphabet.C sequence.C sequence-format.C util.C alignment-util.C tools/colors.C tree.C   
 
 #---------------------------------------------------------------
 
-joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C util.C rng.C \
-	tree.C sequencetree.C tree-util.C \
-	setup.C imodel.C probability.C sequence-format.C model.C \
-	alignment-random.C alignment-util.C randomtree.C tools/tree-dist.C \
-	tools/statistics.C tools/joint-A-T.C 
-
-joint_indels_LDADD = ${LIBS}
+joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C model.C alignment-random.C alignment-util.C randomtree.C tools/tree-dist.C tools/statistics.C tools/joint-A-T.C 
 
 #---------------------------------------------------------------
 
@@ -186,62 +168,41 @@ joint_parsimony_SOURCES = tools/joint-parsimony.C alignment.C alphabet.C sequenc
 	model.C alignment-random.C alignment-util.C randomtree.C \
 	tools/parsimony.C tools/joint-A-T.C  
 
-joint_parsimony_LDADD = ${LIBS}
+#---------------------------------------------------------------
+
+alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C 
 
 #---------------------------------------------------------------
 
-alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.C util.C rng.C \
-	tree.C sequencetree.C setup.C imodel.C tools/parsimony.C \
-	sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C \
-	model.C tree-util.C 
-
-alignment_info_LDADD = ${LIBS}
-
-#---------------------------------------------------------------
-
-alignment_translate_SOURCES = tools/alignment-translate.C alignment.C alignment-util.C alphabet.C sequence.C \
-	sequence-format.C util.C tree.C 
+alignment_translate_SOURCES = tools/alignment-translate.C alignment.C alignment-util.C alphabet.C sequence.C sequence-format.C util.C tree.C 
 
 alignment_translate_LDADD = ${BOOST_LIBS}
 
 #---------------------------------------------------------------
 
-alignment_find_SOURCES = tools/alignment-find.C alignment.C alphabet.C sequence.C alignment-util.C \
-	rng.C util.C sequence-format.C tree.C 
-
-alignment_find_LDADD = ${LIBS}
+alignment_find_SOURCES = tools/alignment-find.C alignment.C alphabet.C sequence.C alignment-util.C rng.C util.C sequence-format.C tree.C 
 
 #---------------------------------------------------------------
 
-alignment_convert_SOURCES = tools/alignment-convert.C alignment.C alignment-util.C sequence.C alphabet.C util.C \
-	sequence-format.C tree.C 
-
-alignment_convert_LDADD = ${BOOST_LIBS}
-
+alignment_convert_SOURCES = tools/alignment-convert.C alignment.C alignment-util.C sequence.C alphabet.C util.C sequence-format.C tree.C 
 
 #---------------------------------------------------------------
 
-trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C \
-	 tools/statistics.C 
-
-trees_consensus_LDADD = ${LIBS}
+trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C 
 
 #---------------------------------------------------------------
 
-trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tree-dist.C util.C \
-	 rng.C tools/statistics.C tools/bootstrap.C 
-
-trees_bootstrap_LDADD = ${LIBS}
+trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tree-dist.C util.C rng.C tools/statistics.C tools/bootstrap.C 
 
 #---------------------------------------------------------------
-tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C \
-	tools/statistics.C tree-util.C 
+tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
 
 tree_mean_lengths_LDADD = ${BOOST_LIBS}
 
 #---------------------------------------------------------------
 
 trees_to_SRQ_SOURCES = tools/trees-to-SRQ.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C
+
 trees_to_SRQ_LDADD = ${BOOST_LIBS} 
 
 #---------------------------------------------------------------
@@ -255,6 +216,7 @@ tree_reroot_LDADD = ${BOOST_LIBS}
 pickout_SOURCES = tools/pickout.C
 
 #---------------------------------------------------------------
+
 subsample_SOURCES = tools/subsample.C
 
 #---------------------------------------------------------------
