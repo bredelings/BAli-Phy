@@ -11,6 +11,8 @@
     - write a reasonable autoconf system to build libboost-program-options
     - include OUR version of the BOOST sources
     - GSL is hopefully already autoconf-ified. It can be a subdir.
+    - this will allow us to use the debug version of the GCC libstdc++,
+      and also to use stlport again!
 
 -22. FastLSA with Constraints:
   + We have a series of tiles that are linked at their corners.
