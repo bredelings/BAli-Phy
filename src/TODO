@@ -1,8 +1,29 @@
+-29. Combine saturation with (site-dependent) rate-change across the tree ?
+
+-28. Check effect of non-equivalent equilbrium frequencies.
+
+-27. More data sets - more proteins!  
+     Read some more tree-of-life papers.
+	Which protein was it that supposedly did not saturate?  Can we plot saturation?  
+	Can we determine the equilibrium distribution (effective entropy) ... by thinking about T ... ?
+
+-8.  tree-dist.C: store topology as list of locations in partition list?
+   a) Would this save memory?  What if only sub-partitions were constant?
+   b) Would this save CPU time?  Examine each partition once instead of n times.      [But this wouldn't help for sub-partitions, would it?]
+
+-6. Benchmarking of mixing... 
+  a) try with alignment fixed
+  b) look at log autocorrelation and effective sample sizes for distances
+     between 2 nodes + sum all branches + sum all paths
+  c) compare mixing with few taxa, many taxa...
+  d) handle alignment predicates in the SRQ plot.
+     can we output residues which are mixing badly?
+
+-26. Use just one genetic_code.dat (the RNA version.)
+
 -25. Actually write files ("out") and ("err") instead of using cin and cerr.
 
--24. Build issues
-  + Fix Windows binaries
-  + Build MacOS binaries
+-24. Implement the Local move?
 
 -23. Improve ease of installation:
   + Autoconf-ify.  ("Just run configure")
@@ -13,6 +34,7 @@
     - GSL is hopefully already autoconf-ified. It can be a subdir.
     - this will allow us to use the debug version of the GCC libstdc++,
       and also to use stlport again!
+  + Just use a Makefile.in - no automake?
 
 -22. FastLSA with Constraints:
   + We have a series of tiles that are linked at their corners.
@@ -22,6 +44,8 @@
   + Investigate "system time" overhead!  Where is this coming from?
     - we could use oprofile.
     - we could compile a kernel with debugging information.
+  + Find out where the 'system time' is coming from! :)
+  + Profile to see if we have any stupid 
 
 -21. Complain if a tree has two leaves with the same name?
      (We crash on 'standardize' currently.)
@@ -66,26 +90,15 @@
      A.  i) Matrix  ii) const Matrix& iii) computed Matrix
      B.  But how to compute GQ... ?
 
--8.  tree-dist.C: store topology as list of locations in partition list?
-   a) Would this save memory?  What if only sub-partitions were constant?
-   b) Would this save CPU time?  Examine each partition once instead of n times.      [But this wouldn't help for sub-partitions, would it?]
-
 -7. Sanitize use of MAP_tree in tree-dist-compare when the count is 1.   
     Report a median when there are a number of trees w/ the same count?
-
--6. Benchmarking of mixing... 
-  a) try with alignment fixed
-  b) look at log autocorrelation and effective sample sizes for distances
-     between 2 nodes + sum all branches + sum all paths
-  c) compare mixing with few taxa, many taxa...
-  d) handle alignment predicates in the SRQ plot.
-     can we output residues which are mixing badly?
 
 -5. Speeding up GQ_exit( )
   a) can we avoid copying G into G2 - can we construct it in place?
   b) if we put the check into #ifndef NDEBUG, does this gain us anything?
   c) algorithm currently does more or less S*S*(S+NS) multiply-and-add's.
   d) it also takes time to compute the silent state topology.  Can we cache this?
+  e) Use ATLAS?
 
 -4. Actually do the MCMCMC T thingy - how much slowdown does this give?
 
@@ -561,3 +574,10 @@ rates.
 
    Might only amino acid content change between genes?  In that case, we might
    be able to estiamte all the factors using only coding regions!
+
+- Build Windows binaries (cywin now has gcc 3.4)
+
+- Build MacOS binaries: 
+  + 10.3.9 and 10.4.x + 
+  + 10.3.x < 10.3.8
+
