@@ -1,3 +1,8 @@
+-33. Question: does entropy of frequencies affect branch lengths?
+
+-32. Move scripts to 'share'?
+     Including the analysis script...
+
 -31. Determine best compilation options for EMT64.
 
 -30. Installation:
@@ -13,6 +18,8 @@
      Read some more tree-of-life papers.
 	Which protein was it that supposedly did not saturate?  Can we plot saturation?  
 	Can we determine the equilibrium distribution (effective entropy) ... by thinking about T ... ?
+     + expand the 5SrRNA data set.
+     + run it!
 
 -8.  tree-dist.C: store topology as list of locations in partition list?
    a) Would this save memory?  What if only sub-partitions were constant?
