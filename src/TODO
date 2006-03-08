@@ -1,3 +1,10 @@
+-31. Determine best compilation options for EMT64.
+
+-30. Installation:
+    + install in bin/bali-phy/<version>
+    + add version name to manual.
+    + add a 'tarball' target?  (use svn revision # unless a version number is given?)
+
 -29. Combine saturation with (site-dependent) rate-change across the tree ?
 
 -28. Check effect of non-equivalent equilbrium frequencies.
