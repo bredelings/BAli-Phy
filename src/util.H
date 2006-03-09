@@ -112,6 +112,15 @@ bool includes(const std::vector<T>& v1, const std::vector<T>& v2) {
 /// Concatenate members of v, separating by char c
 std::string join(const std::vector<std::string>& v,char c);
 
+template<class T>
+std::string join(const std::vector<T>& vT, char c)
+{
+  std::vector<std::string> v;
+  for(int i=0;i<vT.size();i++)
+    v.push_back(convertToString(vT[i]));
+  return join(v,c);
+}
+
 /// Split the line into pieces at c
 std::vector<std::string> split(const std::string& line,char c);
 
