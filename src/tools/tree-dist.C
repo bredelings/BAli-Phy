@@ -199,8 +199,8 @@ RootedSequenceTree standardized(const string& t)
   if (T.root().degree() == 2)
     T.remove_node_from_branch(T.root());
 
-  if (not is_Cayley(T))
-    throw myexception()<<"Tree must be a Cayley Tree.";
+  if (has_sub_branches(T))
+    throw myexception()<<"Tree has node of degree 2";
 
   standardize(T);
   return T;
