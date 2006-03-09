@@ -472,7 +472,9 @@ void Codons::setup_table(const vector<string>& cc,const vector<string>& aa)
   }
 }
 
-void Codons::setup_table(istream& file) {
+void Codons::setup_table(istream& file) 
+{
+  //------ Load the file ------//
   vector<string> cc;
   vector<string> aa;
   for(int i=0;i<size();i++) {
@@ -484,6 +486,17 @@ void Codons::setup_table(istream& file) {
     aa.push_back(temp);
   }
   
+  //---- Convert U to U/T ----//
+  string TT = N->lookup(2);
+  assert(TT.size() == 1);
+  char T = TT[0];
+
+  for(int i=0;i<cc.size();i++)
+    for(int j=0;j<cc[i].size();j++)
+      if (cc[i][j] == 'U')
+	cc[i][j] = T;
+
+  //---- Setup the table ----//
   setup_table(cc,aa);
 }
 				    

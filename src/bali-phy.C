@@ -278,6 +278,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description model("Model options");
   model.add_options()
     ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino Acids, Amino Acids + stop, Triplets, Codons, or Codons + stop")
+    ("genetic-code",value<string>()->default_value("standard-code.txt"),"specify alternate genetic code file in data directory")
     ("smodel",value<string>(),"substitution model")
     ("imodel",value<string>()->default_value("fragment-based+T"),"indel model: simple, fragment-based, or fragment-based+T")
     ;

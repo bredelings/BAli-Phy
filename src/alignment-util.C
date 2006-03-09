@@ -524,11 +524,14 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
     else
       AA = AminoAcidsWithStop();
     
-    string dna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_dna.dat";
-    alphabets.push_back(Codons(DNA(),*AA,dna_filename));
+    string genetic_code_filename = "standard-code.txt";
+    if (args.count("genetic-code"))
+      genetic_code_filename = args["genetic-code"].as<string>();
 
-    string rna_filename = args["data-dir"].as<string>() + "/" + "genetic_code_rna.dat";
-    alphabets.push_back(Codons(RNA(),*AA,rna_filename));
+    genetic_code_filename = args["data-dir"].as<string>() + "/" + genetic_code_filename;
+
+    alphabets.push_back(Codons(DNA(),*AA,genetic_code_filename));
+    alphabets.push_back(Codons(RNA(),*AA,genetic_code_filename));
   }
   else if (name == "Triplets") {
     alphabets.push_back(Triplets(DNA()));
