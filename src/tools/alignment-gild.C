@@ -568,7 +568,7 @@ int main(int argc,char* argv[]) {
 
       vector<double> LS_branch_lengths = FastLeastSquares(T,D,leaf_sets);
 
-      if (args["refine"].as<string>() == "WeightedLeastSquares")
+      if (args.count("refine") and args["refine"].as<string>() == "WeightedLeastSquares")
 	LS_branch_lengths = LeastSquares(T,D,W,leaf_sets);
 
       // Print uncertainty values for the letters
