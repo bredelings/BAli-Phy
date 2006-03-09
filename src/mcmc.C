@@ -449,6 +449,8 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   }
   
   ofstream tree_stream("trees"), pS_stream("pS"), pI_stream("pI"), map_stream("MAP"), Pr_stream("Pr");
+  pS_stream<<"mu\t"<<P.SModel().header()<<endl;
+  pI_stream<<P.IModel().header()<<endl;
 
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max; iterations++) {
@@ -460,7 +462,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     if (iterations%subsample == 0) {
       bool show_alignment = (iterations%(10*subsample) == 0);
       if (not (P.IModel().full_tree)) show_alignment = false;
-      print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,tag,show_alignment);
+      print_stats(cout,tree_stream,pS_stream,pI_stream,A,P,show_alignment);
     }
 
     efloat_t Pr = P.basic_prior(A,P) * P.basic_likelihood(A,P);
@@ -479,7 +481,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     if (Pr > MAP_score) {
       MAP_score = Pr;
       map_stream<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
-      print_stats(map_stream,map_stream,map_stream,map_stream,A,P,"MAP");
+      print_stats(map_stream,map_stream,map_stream,map_stream,A,P);
     }
 
     //------------------- move to new position -----------------//

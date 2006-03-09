@@ -80,6 +80,10 @@ public:
   /// Names of the parameters
   virtual std::string parameter_name(int i) const =0;
 
+  std::string header() const;
+
+  std::string state() const;
+
   /// Construct an empty model
   Model() {}
 

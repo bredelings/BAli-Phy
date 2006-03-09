@@ -53,7 +53,7 @@ void show_parameters(std::ostream& o,const Model& M) {
 }
 
 void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
-		 const alignment& A,const Parameters& P,const string& tag,bool print_alignment) {
+		 const alignment& A,const Parameters& P,bool print_alignment) {
   
   o<<"\n";
   o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]     ";
@@ -70,19 +70,14 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   o<<"    prior = "<<Pr_prior<<"    likelihood = "<<Pr_likelihood<<"    logp = "<<Pr
    <<"    temp = " <<P.Temp  <<"    weight = "    <<pow(topology_weight(P,P.T),-1.0)*pow(Pr,1.0-1.0/P.Temp)<<"\n";
 
-  if (print_alignment) {
-    o<<"align["<<tag<<"] = "<<"\n";
+  if (print_alignment)
     o<<standardize(A,P.T)<<"\n\n";
-  }
   
   trees<<P.T<<std::endl;
   
-  pS<<  "    mu = "<<P.branch_mean<<"   ";
-  show_parameters(pS,P.SModel());
-  pS.flush();
-
-  show_parameters(pI,P.IModel());
-  pI.flush();
+  pS<<P.branch_mean<<"\t";
+  pS<<P.SModel().state()<<endl;
+  pI<<P.IModel().state()<<endl;
   
   for(int i=0;i<P.SModel().n_base_models();i++)
     o<<"    rate"<<i<<" = "<<P.SModel().base_model(i).rate();

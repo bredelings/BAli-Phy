@@ -21,6 +21,21 @@ void Model::set_n_parameters(int n) {
     fixed_[i] = false;
 }
 
+string Model::header() const
+{
+  vector<string> names;
+  const int n = parameters().size();
+  for(int i=0;i<n;i++)
+    names.push_back(parameter_name(i));
+  return join(names,'\t');
+}
+
+string Model::state() const
+{
+  return join<double>(parameters(),'\t');
+}
+
+
 void SuperModel::read() {
   // load super_parameters
   for(int i=0;i<super_parameters_.size();i++)
