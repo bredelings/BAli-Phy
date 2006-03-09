@@ -1,18 +1,17 @@
--33. Question: does entropy of frequencies affect branch lengths?
+-36. Tracer!
+  + improve log files.
+  + only one output file?
 
--32. Move scripts to 'share'?
-     Including the analysis script...
+-35. Model RNA as a sequence with variable equilibrium distributions...
+     There are only 2^4 = 16 rate classes if everything is 0/1.
+     Entropy???     
+
+-33. Site-dependend equilibrium frequencies:
+  + Question: does entropy of frequencies affect branch lengths?
+  + Combine saturation with (site-dependent) rate-change across the tree ?
+  + Check effect of non-equivalent equilbrium frequencies.
 
 -31. Determine best compilation options for EMT64.
-
--30. Installation:
-    + install in bin/bali-phy/<version>
-    + add version name to manual.
-    + add a 'tarball' target?  (use svn revision # unless a version number is given?)
-
--29. Combine saturation with (site-dependent) rate-change across the tree ?
-
--28. Check effect of non-equivalent equilbrium frequencies.
 
 -27. More data sets - more proteins!  
      Read some more tree-of-life papers.
@@ -22,8 +21,11 @@
      + run it!
 
 -8.  tree-dist.C: store topology as list of locations in partition list?
-   a) Would this save memory?  What if only sub-partitions were constant?
-   b) Would this save CPU time?  Examine each partition once instead of n times.      [But this wouldn't help for sub-partitions, would it?]
+   a) Would this save memory?
+      Some, if some of full partitions have a high frequency.
+
+   b) Would this save CPU time?  Examine each partition once instead of n times.
+      [But this wouldn't help for sub-partitions, would it?]
 
 -6. Benchmarking of mixing... 
   a) try with alignment fixed
@@ -33,11 +35,7 @@
   d) handle alignment predicates in the SRQ plot.
      can we output residues which are mixing badly?
 
--26. Use just one genetic_code.dat (the RNA version.)
-
 -25. Actually write files ("out") and ("err") instead of using cin and cerr.
-
--24. Implement the Local move?
 
 -23. Improve ease of installation:
   + Autoconf-ify.  ("Just run configure")
@@ -49,6 +47,17 @@
     - this will allow us to use the debug version of the GCC libstdc++,
       and also to use stlport again!
   + Just use a Makefile.in - no automake?
+  + install in bin/bali-phy/<version>
+  + add version name to manual.
+  + add a 'tarball' target?  (use svn revision # unless a version number is given?)
+  + Move scripts to 'share'?
+    - Including the analysis script...
+  + Library: make the bali-phy objects into a library (*.a).
+     Only the objects that are USED will be added to the tools.
+     This will allow us to separate the build rules for the tools
+     and the main sampler.
+
+
 
 -22. FastLSA with Constraints:
   + We have a series of tiles that are linked at their corners.
@@ -594,4 +603,6 @@ rates.
 - Build MacOS binaries: 
   + 10.3.9 and 10.4.x + 
   + 10.3.x < 10.3.8
+
+- Use just one genetic_code.dat (the RNA version.)
 
