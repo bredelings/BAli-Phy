@@ -430,7 +430,7 @@ int main(int argc,char* argv[]) {
 
     //---------------Do something------------------//
     if (args.count("show-only"))
-      print_stats(cout,cout,cout,cout,A,P,"Initial");
+      print_stats(cout,cout,A,P);
     else {
       long int max_iterations = args["iterations"].as<long int>();
 

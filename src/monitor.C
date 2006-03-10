@@ -52,9 +52,10 @@ void show_parameters(std::ostream& o,const Model& M) {
   o<<"\n";
 }
 
-void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostream& pI,
-		 const alignment& A,const Parameters& P,bool print_alignment) {
-  
+void print_stats(std::ostream& o,std::ostream& trees,
+		 const alignment& A,const Parameters& P,
+		 bool print_alignment) 
+{
   o<<"\n";
   o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]     ";
   o<<" single sequence ["<<substitution::Pr_single_sequence(A,P)<<"]"<<"\n";
@@ -75,10 +76,12 @@ void print_stats(std::ostream& o,std::ostream& trees,std::ostream& pS,std::ostre
   
   trees<<P.T<<std::endl;
   
-  pS<<P.branch_mean<<"\t";
-  pS<<P.SModel().state()<<endl;
-  pI<<P.IModel().state()<<endl;
-  
+  o<<  "    mu = "<<P.branch_mean<<"   ";
+  show_parameters(o,P.SModel());
+
+  show_parameters(o,P.IModel());
+  o.flush();
+
   for(int i=0;i<P.SModel().n_base_models();i++)
     o<<"    rate"<<i<<" = "<<P.SModel().base_model(i).rate();
   o<<"\n\n";
