@@ -52,7 +52,7 @@ DBG = debug
 CXXFLAGS += -g
 else
 DBG =
-CXXFLAGS += -DNDEBUG
+CXXFLAGS += -DNDEBUG -DNDEBUG_DP
 endif
 noinst_PROGRAMS = $(DBG)
 
