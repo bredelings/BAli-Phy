@@ -41,7 +41,7 @@ Results/Report:  Work/header Work/pSreport Work/pIreport Results/MAP.topology
 	@cat $^ > $@
 
 Work/header: out Work/Pmarg
-	@{ ~/bin/genreport.pl; echo ; } > $@
+	@{ genreport.pl; echo ; } > $@
 
 Work/samples-${SKIP}+${SIZE}: Work/out
 	@cut-range --skip ${SKIP} ${SIZE:%=--size %} < $< > $@
@@ -81,7 +81,7 @@ Results/c-levels.plot : Results/consensus
 
 Results/c-sub-levels.plot : Results/consensus
 	@echo -e "Generating consensus sub-levels plot ... \c"
-	@pickout LOD branches < $< > $@
+	@pickout LOD sub\#1 < $< > $@
 	@echo "done."
 
 
