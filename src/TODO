@@ -1,6 +1,6 @@
 -36. Tracer!
-  + improve log files.
-  + only one output file?
+  + merge pS and pI?
+  + add branch lengths?
 
 -35. Model RNA as a sequence with variable equilibrium distributions...
      There are only 2^4 = 16 rate classes if everything is 0/1.
@@ -12,6 +12,13 @@
   + Check effect of non-equivalent equilbrium frequencies.
 
 -31. Determine best compilation options for EMT64.
+  + Compare 3.4 / 4.0 / 4.1 / 4.2
+  + Do some profiling
+
+-30. Simultaneous with -31
+  + Find out the system time for a test case with DP full-matrix.
+  + Where is the system time coming from? (Use oprofile?)
+  + Does the same thing happen on PPC?
 
 -27. More data sets - more proteins!  
      Read some more tree-of-life papers.
@@ -606,3 +613,4 @@ rates.
 
 - Use just one genetic_code.dat (the RNA version.)
 
+- change pI and pS log files to a form that can be read by tracer.
