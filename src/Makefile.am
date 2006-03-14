@@ -60,7 +60,7 @@ BOOST_LIBS = -lboost_program_options${BOOST_SUFFIX}
 
 LIBS = -lgsl -lgslcblas -lm ${BOOST_LIBS}
 
-LDADD = ${LIBS}
+# LDADD = ${LIBS}
 
 #-----------------------------------------------------------------
 
@@ -95,13 +95,13 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 
 model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C
 
-model_P_LDADD = -lm ${BOOST_LIBS} 
+#model_P_LDADD = -lm ${BOOST_LIBS} 
 
 #-------------------------- statreport --------------------------
 
 statreport_SOURCES = tools/statreport.C tools/statistics.C util.C
 
-statreport_LDADD = ${BOOST_LIBS}
+# statreport_LDADD = ${BOOST_LIBS}
 
 #---------------------------------------------------------------
 
@@ -111,7 +111,7 @@ alignment_gild_SOURCES = tools/alignment-gild.C alignment.C alphabet.C \
 	model.C tools/distance-methods.C alignment-random.C alignment-util.C \
 	randomtree.C tree-util.C tools/inverse.C
 
-alignment_gild_LDADD = ${LIBS} ${ATLAS_LIBS}
+alignment_gild_LDADD = ${ATLAS_LIBS}
 
 #---------------------------------------------------------------
 
@@ -124,8 +124,6 @@ alignment_median_SOURCES = tools/alignment-median.C alignment.C alphabet.C seque
 alignment_consensus_SOURCES = tools/alignment-consensus.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C util-random.C \
 	sequence-format.C alignment-util.C 
-
-alignment_consensus_LDADD = ${LIBS}
 
 #---------------------------------------------------------------
 
@@ -144,8 +142,6 @@ alignment_thin_SOURCES = tools/alignment-thin.C alignment.C alphabet.C sequence.
 
 alignment_chop_internal_SOURCES = tools/alignment-chop-internal.C alignment.C alphabet.C sequence.C util.C tree.C \
 	sequence-format.C alignment-util.C 
-
-alignment_chop_internal_LDADD = ${LIBS}
 
 #---------------------------------------------------------------
 
@@ -174,8 +170,6 @@ alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.
 
 alignment_translate_SOURCES = tools/alignment-translate.C alignment.C alignment-util.C alphabet.C sequence.C sequence-format.C util.C tree.C 
 
-alignment_translate_LDADD = ${BOOST_LIBS}
-
 #---------------------------------------------------------------
 
 alignment_find_SOURCES = tools/alignment-find.C alignment.C alphabet.C sequence.C alignment-util.C rng.C util.C sequence-format.C tree.C 
@@ -195,19 +189,13 @@ trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tr
 #---------------------------------------------------------------
 tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
 
-tree_mean_lengths_LDADD = ${BOOST_LIBS}
-
 #---------------------------------------------------------------
 
 trees_to_SRQ_SOURCES = tools/trees-to-SRQ.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C
 
-trees_to_SRQ_LDADD = ${BOOST_LIBS} 
-
 #---------------------------------------------------------------
 
 tree_reroot_SOURCES = tools/tree-reroot.C tree.C sequencetree.C tree-util.C util.C
-
-tree_reroot_LDADD = ${BOOST_LIBS} 
 
 #---------------------------------------------------------------
 
@@ -220,8 +208,6 @@ subsample_SOURCES = tools/subsample.C
 #---------------------------------------------------------------
 
 cut_range_SOURCES = tools/cut-range.C util.C
-
-cut_range_LD_ADD = ${BOOST_LIBS}
 
 #---------------------------------------------------------------
 
