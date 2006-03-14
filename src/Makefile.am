@@ -60,8 +60,6 @@ BOOST_LIBS = -lboost_program_options${BOOST_SUFFIX}
 
 LIBS = -lgsl -lgslcblas -lm ${BOOST_LIBS}
 
-# LDADD = ${LIBS}
-
 #-----------------------------------------------------------------
 
 TOOLS = model_P statreport alignment-gild \
