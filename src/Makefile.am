@@ -1,5 +1,3 @@
-#bin_SCRIPTS = checkjobs sge_kill getnames.pl bali-phy.sh GNUmakefile  genreport.pl pickout.pl run.sh
-
 CXXFLAGS = ${CHIP}
 
 if GCC
