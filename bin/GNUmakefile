@@ -37,8 +37,12 @@ Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%
 	@cat Results/analysis
 	@echo 
 
-Results/Report:  Work/header Work/pSreport Work/pIreport Results/MAP.topology
-	@cat $^ > $@
+Results/Report:  Work/header pS pI Results/MAP.topology
+	@{ cat Work/header ; \
+	statreport 2: --skip ${SKIP} ${SIZE:%=--max %} < pS 2>/dev/null ; \
+	statreport 2: --skip ${SKIP} ${SIZE:%=--max %} < pI 2>/dev/null ; \
+	cat Results/MAP.topology ; \
+	} > $@
 
 Work/header: out Work/Pmarg
 	@{ genreport.pl; echo ; } > $@
@@ -82,46 +86,6 @@ Results/c-levels.plot : Results/consensus
 Results/c-sub-levels.plot : Results/consensus
 	@echo -e "Generating consensus sub-levels plot ... \c"
 	@pickout LOD sub\#1 < $< > $@
-	@echo "done."
-
-
-# If there are no Substitution parameters, don't bail out
-
-Work/pSnames : pS Work/setup
-	@getnames.pl < $< > $@
-
-Work/pSall : Work/pSnames Work/pS.from.${SKIP}+${SIZE}
-	@for i in $$(cat $<); do \
-	  pickout "$$i" < Work/pS.from.${SKIP}+${SIZE} > Work/"$$i"; \
-	done
-
-Work/pSreport: Work/pSnames Work/pSall
-	@echo -e "Analyzing substitution parameters... \c"
-	@rm -f $@; \
-	for i in $$(cat $<); do \
-	  statreport "$$i" < Work/"$$i" >> $@ 2>/dev/null; \
-	  echo "   " >> $@ ; \
-	done; \
-	echo "   " >> $@ ;
-	@echo "done."
-
-# If there are no Indel parameters, don't bail out
-Work/pInames : pI Work/setup
-	@getnames.pl < $< > $@
-
-Work/pIall : Work/pInames Work/pI.from.${SKIP}+${SIZE}
-	@for i in $$(cat $<); do \
-	  pickout "$$i" < Work/pI.from.${SKIP}+${SIZE} > Work/"$$i"; \
-	done
-
-Work/pIreport: Work/pInames Work/pIall
-	@echo -e "Analyzing indel parameters... \c"
-	@rm -f $@; \
-	for i in $$(cat $<); do \
-	  statreport "$$i" < Work/"$$i" >> $@ 2>/dev/null; \
-	  echo "   " >> $@ ; \
-	done; \
-	echo "   " >> $@ ; 
 	@echo "done."
 
 Results/%.tree : Results/%.topology Work/trees

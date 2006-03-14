@@ -28,6 +28,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description visible("All options");
   visible.add_options()
     ("help", "Produce help message")
+    ("skip",value<int>()->default_value(0),"number of trees to skip")
+    ("max",value<int>(),"maximum number of trees to read")
     ("mean", "Show mean and standard deviation")
     ("median", "Show median and confidence level")
     ("confidence",value<double>()->default_value(0.95),"Confidence level")
@@ -149,30 +151,42 @@ int main(int argc,char* argv[])
     if (args.count("mask"))
       mask = get_mask(args["mask"].as<string>(),mask);
 
-    //------------ Read Values ---------------//
-    vector< vector<double> > values(headers.size());
+    //------------ Read Data ---------------//
+    vector< vector<double> > data(headers.size());
     
+    int skip = args["skip"].as<int>();
+
+    int max = -1;
+    if (args.count("max"))
+      max = args["max"].as<int>();
+
     int line_number=0;
     while(getline(cin,line)) 
     {
       line_number++;
+
+      if (line_number <= skip) continue;
+
       vector<double> v = split<double>(line,'\t');
 
       if (v.size() != headers.size())
 	throw myexception()<<"Found "<<v.size()<<"/"<<headers.size()<<" values on line "<<line_number<<".";
 
       for(int i=0;i<v.size();i++)
-	values[i].push_back(v[i]);
+	data[i].push_back(v[i]);
+
+      if (max != -1 and data[0].size() >= max)
+	break;
     }
 
-    if (line_number == 0)
+    if (data[0].size() == 0)
       throw myexception()<<"No data line read in!";
 
-    cerr<<"Read in "<<line_number<<" values\n";
+    cerr<<"Read in "<<data[0].size()<<" lines.\n";
 
     for(int i=0;i<headers.size();i++) 
       if (mask[i]) {
-	show_stats(args,headers[i],values[i]);
+	show_stats(args,headers[i],data[i]);
 	cout<<endl;
       }
   }
