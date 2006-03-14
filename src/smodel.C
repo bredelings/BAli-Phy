@@ -564,16 +564,13 @@ namespace substitution {
     eigensystem = EigenValues(S);
   }
 
-  Matrix ReversibleMarkovModel::getD() const {
-    BMatrix D(size(),size());
-    for(int i=0;i<size();i++)
-      D(i,i) = frequencies()[i];
-
-    return D;
-  }
-
-  Matrix ReversibleMarkovModel::transition_p(double t) const {
-    return exp(eigensystem,getD(),t);
+  Matrix ReversibleMarkovModel::transition_p(double t) const 
+  {
+    vector<double> pi(size());
+    const valarray<double> f = frequencies();
+    for(int i=0;i<pi.size();i++)
+      pi[i] = f[i];
+    return exp(eigensystem,pi,t);
   }
 
   ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)

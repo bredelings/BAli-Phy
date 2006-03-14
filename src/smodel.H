@@ -631,8 +631,6 @@ namespace substitution {
     double rate() const;
     void set_rate(double);
     
-    Matrix getD() const;
-    
     /// Make a copy of this object
     virtual ReversibleMarkovModel* clone() const =0;
 
