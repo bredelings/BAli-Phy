@@ -30,7 +30,10 @@ namespace statistics {
   double quantile(const valarray<double>& values, double Q)
   {
     assert(0 <= Q and Q <= 1.0);
-    assert(values.size() > 4);
+    assert(values.size() > 0);
+
+    if (values.size() == 1)
+      return values[0];
 
     // sort values
     vector<double> values2(values.size());
@@ -46,14 +49,13 @@ namespace statistics {
     double p2 = 1.0-p1;
 
     // compute quantile
-    if (index <= 0.0)
+    if (index1 < 0)                      // index <= 0
       return values2[0];
-    else if (index >= values2.size()-1)
+    else if (index2 >= values2.size())   // index >= values2.size() - 1
       return values2.back();
     else {
       assert(index1 >= 0 and index1 < values2.size());
       assert(index2 >= 0 and index2 < values2.size());
-
       return p1*values2[index1] + p2*values2[index2];
     }
   }

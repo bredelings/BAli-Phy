@@ -101,7 +101,7 @@ model_P_LDADD = -lm ${BOOST_LIBS}
 
 #-------------------------- statreport --------------------------
 
-statreport_SOURCES = tools/statreport.C tools/statistics.C
+statreport_SOURCES = tools/statreport.C tools/statistics.C util.C
 
 statreport_LDADD = ${BOOST_LIBS}
 

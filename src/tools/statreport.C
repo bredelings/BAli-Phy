@@ -5,6 +5,7 @@
 #include <valarray>
 #include <cmath>
 
+#include "util.H"
 #include "statistics.H"
 
 #include <boost/program_options.hpp>
@@ -18,12 +19,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 { 
   using namespace po;
 
-  // named options
-  options_description invisible("Invisible options");
-  invisible.add_options()
-    ("name", value<string>(),"variable name")
-    ;
-
   options_description visible("All options");
   visible.add_options()
     ("help", "Produce help message")
@@ -34,69 +29,91 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ;
 
   options_description all("All options");
-  all.add(visible).add(invisible);
+  all.add(visible);
 
-  // positional options
-  positional_options_description p;
-  p.add("name", 1);
-  
   variables_map args;     
   store(command_line_parser(argc, argv).
-	    options(all).positional(p).run(), args);
+	    options(all).run(), args);
   notify(args);    
 
-  bool error = false;
-
-  if (not args.count("name"))
-    error = true;
-
-  if (args.count("help") or error) {
-    cerr<<"Usage: statreport <variable name> [OPTIONS] < values-file \n";
+  if (args.count("help")) {
+    cerr<<"Usage: statreport [OPTIONS] < data-file \n";
     cerr<<visible<<"\n";
-    if (error)
-      exit(1);
-    else
-      exit(0);
+    exit(0);
   }
 
   return args;
 }
 
+void show_stats(variables_map& args, const string& name,const vector<double>& values)
+{
+  // Translate vector to valarray...
+  valarray<double> values2(values.size());
+  for(int i=0;i<values2.size();i++)
+    values2[i] = values[i];
+    
+  // Print out mean and standard deviation
+  if (args.count("mean")) {
+    cout<<" E "<<name<<" = "<<statistics::average(values2);
+    cout<<"  [+- "<<sqrt(statistics::Var(values2))<<"]"<<endl;
+  }
 
-int main(int argc,char* argv[]) { 
+  // Print out median and confidence interval
+  if (args.count("median") or not args.count("mean")) {
+    double P = args["confidence"].as<double>();
+    
+    pair<double,double> interval = statistics::confidence_interval(values2,P);
+    cout<<"   "<<name<<" ~ "<<statistics::median(values2);
+    if ((1.0-P)*values2.size() >= 10.0)
+      cout<<"  ("<<interval.first<<","<<interval.second<<")"<<endl;
+    else
+      cout<<"  (NA,NA)"<<endl;
+  }
+}
+
+int main(int argc,char* argv[]) 
+{ 
   try {
-    //---------- Parse command line  -------//
+    //----------- Parse command line  -----------//
     variables_map args = parse_cmd_line(argc,argv);
 
     cout.precision(args["precision"].as<unsigned>());
 
-    string label = args["name"].as<string>();
+    //------------ Parse column names ----------//
+    string line;
+    getline(std::cin,line);
 
-    // Read in the values
-    vector<double> values;
-    double d;
-    while(cin>>d)
-      values.push_back(d);
-    cerr<<"Read in "<<values.size()<<" values\n";
+    vector<string> headers = split(line,'\t');
 
-    // Translate vector to valarray...
-    valarray<double> values2(values.size());
-    for(int i=0;i<values2.size();i++)
-      values2[i] = values[i];
+    if (headers.size() == 0)
+      throw myexception()<<"No column names provided!";
+
+    for(int i=0;i<headers.size();i++)
+      if (headers[i].size() == 0)
+	throw myexception()<<"The "<<i<<"th column name is blank!";
+
+
+    //------------ Read Values ---------------//
+    vector< vector<double> > values(headers.size());
     
-    // Print out mean and standard deviation
-    if (args.count("mean")) {
-      cout<<" E "<<label<<" = "<<statistics::average(values2);
-      cout<<"  [+- "<<sqrt(statistics::Var(values2))<<"]"<<endl;
+    int line_number=0;
+    while(getline(cin,line)) 
+    {
+      line_number++;
+      vector<double> v = split<double>(line,'\t');
+
+      if (v.size() != headers.size())
+	throw myexception()<<"Found "<<v.size()<<"/"<<headers.size()<<" values on line "<<line_number<<".";
+
+      for(int i=0;i<v.size();i++)
+	values[i].push_back(v[i]);
     }
 
-    // Print out median and confidence interval
-    if (args.count("median") or not args.count("mean")) {
-      double P = args["confidence"].as<double>();
+    cerr<<"Read in "<<line_number<<" values\n";
 
-      pair<double,double> interval = statistics::confidence_interval(values2,P);
-      cout<<"   "<<label<<" = "<<statistics::median(values2);
-      cout<<"  ("<<interval.first<<","<<interval.second<<")"<<endl;
+    for(int i=0;i<headers.size();i++) {
+      show_stats(args,headers[i],values[i]);
+      cout<<endl;
     }
   }
   catch (std::exception& e) {
