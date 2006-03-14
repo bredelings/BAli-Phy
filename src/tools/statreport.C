@@ -19,6 +19,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
 { 
   using namespace po;
 
+  // named options
+  options_description invisible("Invisible options");
+  invisible.add_options()
+    ("mask", value<string>(),"which fields to print")
+    ;
+
   options_description visible("All options");
   visible.add_options()
     ("help", "Produce help message")
@@ -29,11 +35,15 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ;
 
   options_description all("All options");
-  all.add(visible);
+  all.add(invisible).add(visible);
+
+  // positional options
+  positional_options_description p;
+  p.add("mask", 1);
 
   variables_map args;     
   store(command_line_parser(argc, argv).
-	    options(all).run(), args);
+	    options(all).positional(p).run(), args);
   notify(args);    
 
   if (args.count("help")) {
@@ -87,6 +97,30 @@ void show_stats(variables_map& args, const string& name,const vector<double>& va
   }
 }
 
+vector<bool> get_mask(const string& s,vector<bool> mask)
+{
+  vector<string> bounds = split(s,':');
+  if (bounds.size() != 2)
+    throw myexception()<<"Can't understand the column range '"<<s<<"'.";
+
+  unsigned start = 1;
+  unsigned end = mask.size();
+  if (bounds[0].size())
+    start = convertTo<unsigned>(bounds[0]);
+  if (bounds[1].size())
+    start = convertTo<unsigned>(bounds[1]);
+  start = max(1U,start);
+  end = min((unsigned)(mask.size()),end);
+
+  for(int i=0;i<mask.size();i++)
+    if (start <=i+1 and i+1 <= end)
+      ;
+    else
+      mask[i]=false;
+
+  return mask;
+}
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -109,6 +143,12 @@ int main(int argc,char* argv[])
 	throw myexception()<<"The "<<i<<"th column name is blank!";
 
 
+    //------------ Parse column mask ----------//
+    vector<bool> mask(headers.size(),true);
+    
+    if (args.count("mask"))
+      mask = get_mask(args["mask"].as<string>(),mask);
+
     //------------ Read Values ---------------//
     vector< vector<double> > values(headers.size());
     
@@ -125,12 +165,16 @@ int main(int argc,char* argv[])
 	values[i].push_back(v[i]);
     }
 
+    if (line_number == 0)
+      throw myexception()<<"No data line read in!";
+
     cerr<<"Read in "<<line_number<<" values\n";
 
-    for(int i=0;i<headers.size();i++) {
-      show_stats(args,headers[i],values[i]);
-      cout<<endl;
-    }
+    for(int i=0;i<headers.size();i++) 
+      if (mask[i]) {
+	show_stats(args,headers[i],values[i]);
+	cout<<endl;
+      }
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
