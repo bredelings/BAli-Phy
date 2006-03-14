@@ -45,8 +45,22 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+bool constant(const vector<double>& values)
+{
+  for(int i=1;i<values.size();i++)
+    if (values[i] != values[0])
+      return false;
+  return true;
+}
+
+
 void show_stats(variables_map& args, const string& name,const vector<double>& values)
 {
+  if (constant(values)) {
+    cout<<"   "<<name<<" = "<<values[0]<<endl;
+    return;
+  }
+
   // Translate vector to valarray...
   valarray<double> values2(values.size());
   for(int i=0;i<values2.size();i++)
@@ -57,6 +71,8 @@ void show_stats(variables_map& args, const string& name,const vector<double>& va
     cout<<" E "<<name<<" = "<<statistics::average(values2);
     cout<<"  [+- "<<sqrt(statistics::Var(values2))<<"]"<<endl;
   }
+
+
 
   // Print out median and confidence interval
   if (args.count("median") or not args.count("mean")) {
