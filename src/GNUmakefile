@@ -126,7 +126,7 @@ ${PROGNAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
 
 tools/model_P: tools/statistics.o rng.o ${LINKLIBS} 
 
-tools/statreport: tools/statistics.o  -lboost_program_options
+tools/statreport: tools/statistics.o  util.o -lboost_program_options
 
 tools/alignment-gild: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o \
