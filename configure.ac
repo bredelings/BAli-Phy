@@ -87,12 +87,29 @@ AC_ARG_ENABLE([debug],
              [debug=$enableval],
              [debug=no])
 
+AC_ARG_ENABLE([profile],
+              AS_HELP_STRING([--enable-debug], [Compile in debug mode]),
+             [profile=$enableval],
+             [profile=no])
 
 AC_ARG_ENABLE([static],
               AS_HELP_STRING([--enable-static], [Link statically]),
              [static=$enableval],
              [static=no])
 
+if test "$profile" = yes ; then
+   cxxflags+=' -pg'
+   ldflags+=' -pg'
+fi
+
+if test "$debug" = yes ; then
+   cxxflags+=' -g' 
+elif ! test "$profile" = yes; then
+   cxxflags+=' -fomit-frame-pointer'
+fi
+
+AC_SUBST(cxxflags)
+AC_SUBST(ldflags)
 
 AM_CONDITIONAL(GCC, test "$GXX" = yes)
 AM_CONDITIONAL(DEBUG, test "$debug" = yes)

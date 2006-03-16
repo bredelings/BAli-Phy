@@ -1,4 +1,6 @@
-CXXFLAGS = ${CHIP}
+CXXFLAGS = ${CHIP} @cxxflags@
+
+LDFLAGS = @ldflags@
 
 if GCC
 
@@ -39,7 +41,7 @@ endif
 endif
 
 if !DEBUG
-CXXFLAGS += -O3 -funroll-loops -fweb -fomit-frame-pointer
+CXXFLAGS += -O3 -funroll-loops -fweb
 # we can't choose between nocona & k8 only based on HOST_X86_64
 endif
 
