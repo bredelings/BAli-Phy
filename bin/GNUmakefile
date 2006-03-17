@@ -80,12 +80,12 @@ Mixing/partitions.bs: Work/partitions.pred Work/trees
 
 Results/c-levels.plot : Results/consensus
 	@echo -e "Generating consensus levels plot ... \c"
-	@pickout LOD full < $< > $@
+	@pickout --no-header LOD full < $< > $@
 	@echo "done."
 
 Results/c-sub-levels.plot : Results/consensus
 	@echo -e "Generating consensus sub-levels plot ... \c"
-	@pickout LOD sub\#1 < $< > $@
+	@pickout --no-header LOD sub\#1 < $< > $@
 	@echo "done."
 
 Results/%.tree : Results/%.topology Work/trees
@@ -93,7 +93,7 @@ Results/%.tree : Results/%.topology Work/trees
 	@tree-mean-lengths $< --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@ 2>/dev/null
 
 Results/MAP.topology: Results/consensus Work/setup
-	@pickout MAP-0 < $< > $@
+	@pickout --no-header MAP-0 < $< > $@
 
 Work/MAP-unordered.fasta: out Work/setup
 	@echo -e "Locating MAP alignment... \c"
@@ -116,7 +116,7 @@ Results/%-AU.html: Results/%-AU.prob Results/%.fasta
 	alignment-draw Results/$*.fasta Results/$*-AU.prob --width 100 > $@
 
 Results/c%.topology: Results/consensus Work/setup
-	@pickout $*-consensus < $< > $@ 
+	@pickout --no-header $*-consensus < $< > $@ 
 	@test -s $@
 
 Mixing/partitions.SRQ: Work/trees Work/partitions.pred
@@ -140,10 +140,10 @@ Mixing/sumi.plot: Work/trees Work/partitions.pred
 	@echo "done."
 
 Work/Likelihood: Pr Work/setup
-	@pickout likelihood < Pr  > $@
+	@pickout --no-header likelihood < Pr  > $@
 
 Work/prior: Pr Work/setup
-	@pickout prior < Pr  > $@
+	@pickout --no-header prior < Pr  > $@
 
 Work/Pmarg: Work/Likelihood.from.${SKIP}+${SIZE}
 	@echo -e "Calculating marginal likelihood... \c"

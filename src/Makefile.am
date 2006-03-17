@@ -95,13 +95,9 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 
 model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C
 
-#model_P_LDADD = -lm ${BOOST_LIBS} 
-
 #-------------------------- statreport --------------------------
 
 statreport_SOURCES = tools/statreport.C tools/statistics.C util.C
-
-# statreport_LDADD = ${BOOST_LIBS}
 
 #---------------------------------------------------------------
 
@@ -199,7 +195,7 @@ tree_reroot_SOURCES = tools/tree-reroot.C tree.C sequencetree.C tree-util.C util
 
 #---------------------------------------------------------------
 
-pickout_SOURCES = tools/pickout.C
+pickout_SOURCES = tools/pickout.C util.C
 
 #---------------------------------------------------------------
 
