@@ -448,9 +448,11 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     cout<<endl<<endl;
   }
   
-  ofstream tree_stream("trees"), pS_stream("pS"), pI_stream("pI"), map_stream("MAP"), Pr_stream("Pr");
-  pS_stream<<"iter\tmu\t"<<P.SModel().header()<<endl;
-  pI_stream<<"iter\t"<<P.IModel().header()<<endl;
+  ofstream tree_stream("trees"), pS_stream("pS"), map_stream("MAP"), Pr_stream("Pr");
+  pS_stream<<"iter\t";
+  pS_stream<<"prior\tlikelihood\tlogp\t";
+  pS_stream<<"mu\t"<<P.SModel().header()<<"\t";
+  pS_stream<<P.IModel().header()<<endl;
 
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max; iterations++) {
@@ -459,17 +461,19 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     cout<<"iterations = "<<iterations<<"\n";
     clog<<"iterations = "<<iterations<<"\n";
 
+    efloat_t Pr = P.basic_prior(A,P) * P.basic_likelihood(A,P);
+
     if (iterations%subsample == 0) {
       bool show_alignment = (iterations%(10*subsample) == 0);
       if (not (P.IModel().full_tree)) show_alignment = false;
       print_stats(cout,tree_stream,A,P,show_alignment);
 
-      pS_stream<<iterations<<"\t"<<P.branch_mean<<"\t";
-      pS_stream<<P.SModel().state()<<endl;
-      pI_stream<<iterations<<"\t"<<P.IModel().state()<<endl;
+      pS_stream<<iterations<<"\t";
+      pS_stream<<P.basic_prior(A,P)<<"\t"<<P.basic_likelihood(A,P)<<"\t"<<Pr<<"\t";
+      pS_stream<<P.branch_mean<<"\t"<<P.SModel().state()<<"\t";
+      pS_stream<<P.IModel().state()<<endl;
     }
 
-    efloat_t Pr = P.basic_prior(A,P) * P.basic_likelihood(A,P);
     Pr_stream<<"iterations = "<<iterations
 	     <<"    prior = "<<P.basic_prior(A,P)
 	     <<"    likelihood = "<<P.basic_likelihood(A,P)
@@ -494,7 +498,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   }
 
   // Close all the streams, and write a notification that we finished all the iterations.
-  tree_stream.close();  map_stream.close();   pS_stream.close();   pI_stream.close();   Pr_stream.close();
+  tree_stream.close();  map_stream.close();   pS_stream.close();   Pr_stream.close();
   cout<<"total samples = "<<max<<endl;
 }
 

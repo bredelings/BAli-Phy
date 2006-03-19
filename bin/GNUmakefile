@@ -8,8 +8,6 @@ all: Results/analysis
 
 #.DELETE_ON_ERROR: 
 
-#.INTERMEDIATE: pSnames pSreport pInames pIreport
-
 .PRECIOUS .SECONDARY: Results/c%.topology
 .PRECIOUS .SECONDARY: Results/%
 .PRECIOUS .SECONDARY: Work/%
@@ -37,10 +35,9 @@ Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%
 	@cat Results/analysis
 	@echo 
 
-Results/Report:  Work/header pS pI Results/MAP.topology
+Results/Report:  Work/header pS Results/MAP.topology
 	@{ cat Work/header ; \
 	statreport 2: --skip ${SKIP} ${SIZE:%=--max %} < pS 2>/dev/null ; \
-	statreport 2: --skip ${SKIP} ${SIZE:%=--max %} < pI 2>/dev/null ; \
 	cat Results/MAP.topology ; \
 	} > $@
 
