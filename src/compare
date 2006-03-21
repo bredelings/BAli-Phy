@@ -621,3 +621,156 @@ inline-unit-growth=300 max-inline-insns-auto=200 -> 41.00 / 2941630
   - 3.27
   - 16.31
   - 36.37 + 5.17
+
+----------------
+1562
+
+EMT64 2.8GHz 
+
+Data/EF-Tu/12d.fasta --iterations 3 --seed 0 >out 2>err
+
+1562-4.0:	22.22r ~ 18.90u + 3.21s
+		22.28r ~ 19.00u + 3.18s
+		22.00r ~ 18.82u + 3.17s
+		22.16r ~ 18.99u + 3.16s
+
+1562-4.1:	21.21r ~ 17.99u + 3.22s
+		21.11r ~ 17.88u + 3.20s
+		20.95r ~ 17.84u + 3.11s
+		21.25r ~ 18.04u + 3.20s
+
+1562-4.2:	20.89r ~ 17.66u + 3.22s
+		20.94r ~ 17.75u + 3.19s
+		20.98r ~ 17.74u + 3.24s
+		20.75r ~ 17.58u + 3.17s
+
+
+1562-4.0	3.84r ~ 3.81u + 0.02s
+		3.84r ~ 3.81u + 0.02s
+		3.91r ~ 3.83u + 0.03s
+		3.89r ~ 3.86u + 0.02s
+
+1562-4.1	2.85r ~ 2.82u + 0.03s
+		2.84r ~ 2.81u + 0.02s
+		2.82r ~ 2.79u + 0.03s
+		2.79r ~ 2.76u + 0.02s
+
+1562-4.2	3.02r ~ 2.98u + 0.02s
+		2.98r ~ 2.96u + 0.02s
+		3.00r ~ 2.96u + 0.02s
+		3.03r ~ 2.95u + 0.03s
+
+
+The 4.2 snapshot was taken on 3/13/06 and 3/14/06. (Results didn't
+differ between snapshots.)
+
+After the oprofile module is enabled:
+
+1562-4.2	2.97r ~ 2.95u + 0.02s
+		20.58r ~ 17.55u + 3s
+
+Oprofile module + libc6-debug:
+
+1562-4.2	20.7r ~ 17.57 + 3s
+
+
+real    0m20.695s
+user    0m17.573s
+sys     0m3.052s
+
+---------------
+
+On PIV - 
+
+1564		22.53r ~ 18.56u + 3.59s
+		3.35r ~ 3.30u + 0.02s
+
+---------------
+
+How does the system time depend on things like the sequence lengths?
+ - perhaps it is all coming from the DP matrix allocation for 3way sampling
+ - prehaps it is comming from the Q matrix allocations for 5way sampling.
+
+1566 1.fasta --iterations 4 --seed 0
+
+	23.0r ~ 20.59u + 3.11s		13%
+
+1566 1.fasta --iterations 8 --seed 0
+
+	52.0r ~ 44.67u + 7.36s		14%
+
+1566 2.fasta --iterations 4 --seed 0
+
+	15.9r ~ 13.39u + 2.51s
+
+1566 3.fasta --iterations 4 --seed 0
+
+	12.2r ~ 10.40u + 1.79s		14%
+
+1566 4.fasta --iterations 4 --seed 0
+
+	8.18r ~ 6.83u + 1.35s
+
+1566 5.fasta --iterations 4 --seed 0
+
+	6.39r ~ 5.17u + 1.21s
+
+1566 6.fasta --iterations 4 --seed 0
+
+	4.40r ~ 3.62u + 0.78s		17%
+
+1566 6.fasta --iterations 8 --seed 0
+
+	8.60r ~ 6.92u + 1.69s    	20% 
+
+1566 7.fasta --iterations 8 --seed 0
+
+	6.07r ~ 4.45u + 1.62s
+
+
+
+
+
+
+
+
+
+1566 Data/Ribosome/5S/5d.fasta --iterations 8 --seed 0
+
+	2.50r ~ 1.95u + 0.54s	21%
+
+1566 Data/Ribosome/5S/5d.fasta --iterations 8 --seed 0 --disable tree
+
+	0.80r ~ 0.69u + 0.11s	13%
+
+1566 Data/Ribosome/5S/5d.fasta --iterations 100 --seed 0 --disable tree,sample_tri
+
+	9.67r ~ 8.58u + 1.10s  	11%
+
+1566 Data/Ribosome/5S/5d.fasta --iterations 1000 --seed 0 --disable tree,walk_tree_sample_alignments
+
+	18.89r ~ 16.46u + 2.42s 12%
+
+
+
+1566 1.fasta --iterations 8 --seed 0 --disable parameters,walk_tree_sample_alignments,NNI_and_lengths --enable NNI,alignment_branch_master,lengths
+
+	56.4r ~ 47.7u + 8.53s
+
+1566 1.fasta --iterations 8 --seed 0 --disable tree,parameters,walk_tree_sample_alignments,NNI_and_lengths --enable NNI,alignment_branch_master,lengths
+
+	17.5r ~ 15.1u + 2.39s
+
+1566 1.fasta --iterations 8 --seed 0 --disable nodes_master,tree,parameters,walk_tree_sample_alignments,NNI_and_lengths --enable NNI,alignment_branch_master,lengths
+
+	15.6r ~ 13.7u + 1.90s
+
+[sample_alignments]
+1566 1.fasta --iterations 8 --seed 0 --disable sample_tri,nodes_master,tree,parameters,walk_tree_sample_alignments,NNI_and_lengths --enable NNI,alignment_branch_master,lengths
+	10.45r ~ 9.6u + 0.89s
+
+[tri_sample]
+1.fasta --iterations 8 --seed 0 --disable sample_alignments,nodes_master,tree,parameters,walk_tree_sample_alignments,NNI_and_lengths --enable NNI,alignment_branch_master,lengths
+
+	52.4r ~ 43.1u + 9.4s
+
