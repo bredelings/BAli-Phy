@@ -13,6 +13,12 @@ int main(int argc,char* argv[]) {
   int subsample = convertTo<int>(argv[1]);
 
   string line;
+
+  // print header
+  getline(cin,line);
+  cout<<line<<endl;
+
+  // print selected lines
   int lines=0;
   while(getline(cin,line)) {
     if (lines%subsample == 0)
