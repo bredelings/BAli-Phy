@@ -485,10 +485,10 @@
 	intensive, and so we recommend using 12 or fewer taxa in order
 	to limit the time required to accumulate enough MCMC samples.
 	We note that many phylogenetic hypotheses can be reduced to
-	hypotheses concerning only four taxa.  We recommend removing as
-	many taxa as possible from your data set.  You can then add
-	taxa back into the data set one you have determine how much
-	this will increase the duration of the run.</para>
+	hypotheses concerning only four taxa.  We recommend initially
+	removing as many taxa as possible from your data set.  You can
+	then add taxa back into the data set after you have determined
+	how much this will increase the duration of the run.</para>
 
       </sect3>
 
