@@ -1,4 +1,4 @@
--37. Unplug the fist 4(N-3) internal branches!
+-37. Unplug the first 4(N-3) internal branches!
   + requires switching to computing the entire set of branches / counts.
 
 -36. Tracer!
