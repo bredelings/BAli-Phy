@@ -75,8 +75,8 @@ fi
 #------ start the sampler with the specified args ----
 qsub=$(which qsub 2>/dev/null)
 if [ -x "$qsub" ] ; then
-    qsub -o out -e err sge-run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@"
+    qsub -e err sge-run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@"
 else
-    (nohup sge-run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@" >out 2>err &)
+    (nohup sge-run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@" 2>err &)
 fi
 

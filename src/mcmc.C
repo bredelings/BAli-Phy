@@ -17,9 +17,10 @@
 namespace MCMC {
   using std::valarray;
   using std::cerr;
-  using std::cout;
   using std::clog;
   using std::string;
+  using std::ostream;
+
 
   valarray<double> result(int l,int n) {
     valarray<double> v(0.0,2*l);
@@ -103,14 +104,14 @@ namespace MCMC {
 	}
   }
 
-void Move::show_enabled(int depth) const {
+void Move::show_enabled(ostream& o,int depth) const {
   for(int i=0;i<depth;i++)
-    cout<<"  ";
-  cout<<"move "<<attributes[0]<<": ";
+    o<<"  ";
+  o<<"move "<<attributes[0]<<": ";
   if (enabled_)
-    cout<<"enabled.\n";
+    o<<"enabled.\n";
   else 
-    cout<<"DISABLED.\n";
+    o<<"DISABLED.\n";
 }
 
 
@@ -181,11 +182,11 @@ int MoveGroup::reset(double l) {
   return order.size();
 }
 
-void MoveGroup::show_enabled(int depth) const {
-  Move::show_enabled(depth);
+void MoveGroup::show_enabled(ostream& o,int depth) const {
+  Move::show_enabled(o,depth);
   
   for(int i=0;i<nmoves();i++)
-    moves[i]->show_enabled(depth+1);
+    moves[i]->show_enabled(o,depth+1);
 }
 
 void MoveAll::getorder(double l) {
@@ -388,11 +389,11 @@ void MoveEach::operator()(alignment& A,Parameters& P,MoveStats& Stats,int arg) {
 }
 
 
-void MoveEach::show_enabled(int depth) const {
-  Move::show_enabled(depth);
+void MoveEach::show_enabled(ostream& o,int depth) const {
+  Move::show_enabled(o,depth);
   
   for(int i=0;i<nmoves();i++)
-    moves[i]->show_enabled(depth+1);
+    moves[i]->show_enabled(o,depth+1);
 }
 
 void MoveArgSingle::operator()(alignment& A,Parameters& P,MoveStats& Stats,int arg) 
@@ -412,7 +413,9 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
   return o;
 }
 
-void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
+void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
+		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map)
+{
   P.recalc();
   const SequenceTree& T = P.T;
 
@@ -421,64 +424,59 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
   for(int i=0;i<T.n_leaves();i++)
     assert(T.seq(i) == A.seq(i).name);
   
-  /*--------- Determine some values for this chain -----------*/
+  //--------- Determine some values for this chain -----------//
   if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
 
   efloat_t MAP_score = 0;
 
   string tag = string("sample (")+convertToString(subsample)+")";
 
-  cout<<"\n\n\n";
+  s_out<<"\n\n\n";
 
-  if (const Triplets* T = dynamic_cast<const Triplets*>(&P.get_alphabet()) ) {
-    
-    cout<<"observed nucleotide frequencies = "<<endl;
+  if (const Triplets* T = dynamic_cast<const Triplets*>(&P.get_alphabet()) ) 
+  {
+    s_out<<"observed nucleotide frequencies = "<<endl;
     valarray<double> counts = letter_counts(A);
     valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*T,counts);
 
-    show_frequencies(cout,T->getNucleotides(),N_counts/N_counts.sum());
-    cout<<endl<<endl;
+    show_frequencies(s_out,T->getNucleotides(),N_counts/N_counts.sum());
+    s_out<<endl<<endl;
 
-    cout<<"current nucleotide frequencies = "<<endl;
+    s_out<<"current nucleotide frequencies = "<<endl;
     valarray<double> fT = P.SModel().frequencies();
     valarray<double> fN = get_nucleotide_counts_from_codon_counts(*T,fT);
     fN /= fN.sum();
 
-    show_frequencies(cout,T->getNucleotides(),fN);
-    cout<<endl<<endl;
+    show_frequencies(s_out,T->getNucleotides(),fN);
+    s_out<<endl<<endl;
   }
   
-  ofstream tree_stream("trees"), pS_stream("pS"), map_stream("MAP"), Pr_stream("Pr");
-  pS_stream<<"iter\t";
-  pS_stream<<"prior\tlikelihood\tlogp\t";
-  pS_stream<<"mu\t"<<P.SModel().header()<<"\t";
-  pS_stream<<P.IModel().header()<<endl;
+  s_parameters<<"iter\t";
+  s_parameters<<"prior\tlikelihood\tlogp\tweight\t";
+  s_parameters<<"mu\t"<<P.SModel().header()<<"\t";
+  s_parameters<<P.IModel().header()<<endl;
 
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max; iterations++) {
 
     //------------------ record statistics ---------------------//
-    cout<<"iterations = "<<iterations<<"\n";
+    s_out<<"iterations = "<<iterations<<"\n";
     clog<<"iterations = "<<iterations<<"\n";
 
-    efloat_t Pr = P.basic_prior(A,P) * P.basic_likelihood(A,P);
+    efloat_t prior = P.basic_prior(A,P);
+    efloat_t likelihood = P.basic_likelihood(A,P);
+    efloat_t Pr = prior * likelihood;
 
     if (iterations%subsample == 0) {
       bool show_alignment = (iterations%(10*subsample) == 0);
       if (not (P.IModel().full_tree)) show_alignment = false;
-      print_stats(cout,tree_stream,A,P,show_alignment);
+      print_stats(s_out,s_trees,A,P,show_alignment);
 
-      pS_stream<<iterations<<"\t";
-      pS_stream<<P.basic_prior(A,P)<<"\t"<<P.basic_likelihood(A,P)<<"\t"<<Pr<<"\t";
-      pS_stream<<P.branch_mean<<"\t"<<P.SModel().state()<<"\t";
-      pS_stream<<P.IModel().state()<<endl;
+      s_parameters<<iterations<<"\t";
+      s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t"<<pow(topology_weight(P,P.T),-1.0)*pow(Pr,1.0 - 1.0/P.Temp)<<"\t";
+      s_parameters<<P.branch_mean<<"\t"<<P.SModel().state()<<"\t";
+      s_parameters<<P.IModel().state()<<endl;
     }
-
-    Pr_stream<<"iterations = "<<iterations
-	     <<"    prior = "<<P.basic_prior(A,P)
-	     <<"    likelihood = "<<P.basic_likelihood(A,P)
-	     <<"    logp = "<<Pr
-	     <<"    weight = "<<pow(topology_weight(P,P.T),-1.0)*pow(Pr,1.0 - 1.0/P.Temp)<<std::endl;
 
     if (iterations%20 == 0) {
       std::cerr<<endl;
@@ -488,8 +486,8 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
     //---------------------- estimate MAP ----------------------//
     if (Pr > MAP_score) {
       MAP_score = Pr;
-      map_stream<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
-      print_stats(map_stream,map_stream,A,P);
+      s_map<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
+      print_stats(s_map,s_map,A,P);
     }
 
     //------------------- move to new position -----------------//
@@ -497,9 +495,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max) {
 
   }
 
-  // Close all the streams, and write a notification that we finished all the iterations.
-  tree_stream.close();  map_stream.close();   pS_stream.close();   Pr_stream.close();
-  cout<<"total samples = "<<max<<endl;
+  s_out<<"total samples = "<<max<<endl;
 }
 
 

@@ -90,8 +90,13 @@ inline T wrap(T x, T min, T max) {
 
 /// Get index of t in v
 template <typename T>
-int find_index(const std::vector<T>& v,const T& t) {
-  return std::find(v.begin(),v.end(),t) - v.begin();
+int find_index(const std::vector<T>& v,const T& t) 
+{
+  typeof(v.begin()) loc = std::find(v.begin(),v.end(),t);
+  if (loc == v.end())
+    return -1;
+  else
+    return loc - v.begin();
 }
 
 /// Does v include t?

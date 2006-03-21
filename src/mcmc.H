@@ -80,7 +80,7 @@ namespace MCMC {
     virtual void iterate(alignment&,Parameters&,MoveStats&,int i) =0;
 
     /// Show enabled-ness for this move and submoves
-    virtual void show_enabled(int depth=0) const;
+    virtual void show_enabled(std::ostream&,int depth=0) const;
 
     /// construct a new move called 's'
     Move(const string& s);
@@ -134,7 +134,7 @@ namespace MCMC {
     void iterate(alignment&,Parameters&,MoveStats&);
     void iterate(alignment&,Parameters&,MoveStats&,int);
 
-    void show_enabled(int depth=0) const;
+    void show_enabled(std::ostream&,int depth=0) const;
 
     MoveGroup(const string& s):Move(s) {}
 
@@ -229,7 +229,7 @@ namespace MCMC {
 
     void operator()(alignment&,Parameters&,MoveStats&,int);
     
-    void show_enabled(int depth=0) const;
+    void show_enabled(std::ostream&,int depth=0) const;
 
     MoveEach(const string& s):MoveArg(s) {}
 
@@ -258,7 +258,8 @@ namespace MCMC {
 
   public:
     /// Run the sampler for 'max' iterations
-    void go(alignment& A, Parameters& P, int subsample, int max);
+    void go(alignment& A, Parameters& P, int subsample, int max, 
+	    std::ostream&,std::ostream&,std::ostream&,std::ostream&);
 
     Sampler(const string& name)
       :MoveAll(name) {};

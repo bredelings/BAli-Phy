@@ -15,7 +15,7 @@ TOOLS = tools/model_P tools/statreport tools/alignment-gild \
 	tools/alignment-median tools/alignment-indices tools/pickout \
 	tools/joint-indels tools/alignment-consensus tools/alignment-info \
 	tools/subsample tools/tree-mean-lengths tools/trees-bootstrap \
-	tools/joint-parsimony
+	tools/joint-parsimony tools/stats-select tools/stats-merge
 
 
 tools: ${TOOLS}
@@ -32,7 +32,7 @@ install: program tools
 #----------------- Definitions
 EXACTFLAGS = -pipe -pedantic
 
-LANGO := fast-math visibility=default # unsafe-loop-optimizations # tree-vectorize
+LANGO := fast-math # visibility=default unsafe-loop-optimizations # tree-vectorize
 
 WARN  := all extra no-sign-compare overloaded-virtual strict-aliasing \
 	 # unsafe-loop-optimizations
@@ -126,7 +126,11 @@ ${PROGNAME} : ${SOURCES:%.C=%.o} ${LINKLIBS}
 
 tools/model_P: tools/statistics.o rng.o ${LINKLIBS} 
 
-tools/statreport: tools/statistics.o  util.o -lboost_program_options
+tools/statreport: tools/statistics.o  util.o tools/stats-table.o -lboost_program_options
+
+tools/stats-merge: util.o -lboost_program_options
+
+tools/stats-select: util.o tools/stats-table.o -lboost_program_options
 
 tools/alignment-gild: alignment.o alphabet.o sequence.o util.o rng.o \
 	tree.o sequencetree.o tools/optimize.o tools/findroot.o \

@@ -72,7 +72,7 @@ TOOLS = model_P statreport alignment-gild \
 	alignment-median alignment-indices pickout \
 	joint-indels alignment-consensus alignment-info \
 	subsample tree-mean-lengths trees-bootstrap \
-	joint-parsimony
+	joint-parsimony stats-merge stats-select
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -97,7 +97,15 @@ model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C
 
 #-------------------------- statreport --------------------------
 
-statreport_SOURCES = tools/statreport.C tools/statistics.C util.C
+statreport_SOURCES = tools/statreport.C tools/statistics.C util.C tools/stats-table.C
+
+#-------------------------- statreport --------------------------
+
+stats_merge_SOURCES = tools/stats-merge.C util.C
+
+#-------------------------- statreport --------------------------
+
+stats_select_SOURCES = tools/stats-select.C util.C tools/stats-table.C
 
 #---------------------------------------------------------------
 

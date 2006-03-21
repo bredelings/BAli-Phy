@@ -7,6 +7,7 @@
 
 #include "util.H"
 #include "statistics.H"
+#include "stats-table.H"
 
 #include <boost/program_options.hpp>
 
@@ -135,15 +136,7 @@ int main(int argc,char* argv[])
     string line;
     getline(std::cin,line);
 
-    vector<string> headers = split(line,'\t');
-
-    if (headers.size() == 0)
-      throw myexception()<<"No column names provided!";
-
-    for(int i=0;i<headers.size();i++)
-      if (headers[i].size() == 0)
-	throw myexception()<<"The "<<i<<"th column name is blank!";
-
+    vector<string> headers = parse_header(line);
 
     //------------ Parse column mask ----------//
     vector<bool> mask(headers.size(),true);

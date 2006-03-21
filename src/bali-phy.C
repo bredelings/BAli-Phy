@@ -27,15 +27,16 @@
 namespace po = boost::program_options;
 using po::variables_map;
 
-using std::cin;
 using std::cout;
 using std::cerr;
 using std::clog;
 using std::endl;
+using std::ostream;
 
 using std::valarray;
 
-void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int max_iterations) 
+void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int max_iterations,
+		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map)
 {
   // args for branch-based stuff
   vector<int> branches(P.T.n_branches());
@@ -166,7 +167,6 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   if (P.IModel().full_tree)
     parameter_moves.add(8+P.T.n_branches()/4,SingleMove(change_gap_parameters,"g_parameters:parameters"));
   
-
   int subsample = args["subsample"].as<int>();
 
   // full sampler
@@ -189,8 +189,8 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   for(int i=0;i<enable.size();i++)
     sampler.enable(enable[i]);
   
-  sampler.show_enabled();
-  cout<<"\n";
+  sampler.show_enabled(s_out);
+  s_out<<"\n";
 
   if (P.alignment_constraint.size1() > 0)
     std::cerr<<"Using "<<P.alignment_constraint.size1()<<" constraints.\n";
@@ -198,7 +198,8 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
   valarray<bool> s1(false,s2.size());
   report_constraints(s1,s2);
-  sampler.go(A,P,subsample,max_iterations);
+
+  sampler.go(A,P,subsample,max_iterations,s_out,s_trees,s_parameters,s_map);
 }
 
 #ifdef DEBUG_MEMORY
@@ -308,19 +309,56 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+string get_base_name(string filename)
+{
+  int loc = -1;
+  for(int i=0;i<filename.size();i++)
+    if (filename[i] == '/' or filename[i] == '\\')
+      loc = i;
+  filename = filename.substr((unsigned)(loc+1));
+  if (filename.size())
+    filename += ".";
+  //  return filename;
+  return "";
+}
+
 
 int main(int argc,char* argv[]) { 
 
   try {
 
     fp_scale::initialize();
-    cerr.precision(10);
-    cout.precision(10);
     std::ios::sync_with_stdio(false);
 
-    //---------- Parse command line  -------//
+    //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
      
+
+    //---------- Open output files -----------//
+    ostream* s_out = NULL;
+    ostream* s_trees = NULL;
+    ostream* s_parameters = NULL;
+    ostream* s_map = NULL;
+
+    if (args.count("show-only")){
+      s_out = &cout;
+    }
+    else {
+      string basename = get_base_name(args["align"].as<string>());
+      string n_out = basename + "out";
+      string n_trees = basename + "trees";
+      string n_parameters = basename + "p";
+      string n_map = basename + "MAP";
+      
+      s_out = new ofstream(n_out.c_str());
+      s_trees = new ofstream(n_trees.c_str());
+      s_parameters = new ofstream(n_parameters.c_str());
+      s_map = new ofstream(n_map.c_str());
+    }
+    s_out->precision(10);
+    cerr.precision(10);
+
+
     //---------- Initialize random seed -----------//
     unsigned long seed = 0;
     if (args.count("seed")) {
@@ -329,7 +367,7 @@ int main(int argc,char* argv[]) {
     }
     else
       seed = myrand_init();
-    cout<<"random seed = "<<seed<<endl<<endl;
+    (*s_out)<<"random seed = "<<seed<<endl<<endl;
     
     //---------- Determine Data dir ---------------//
     {
@@ -351,9 +389,9 @@ int main(int argc,char* argv[]) {
     else
       load_A_and_random_T(args,A,T);
 
-    cout<<"data = "<<args["align"].as<string>()<<endl<<endl;
+    (*s_out)<<"data = "<<args["align"].as<string>()<<endl<<endl;
 
-    cout<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
+    (*s_out)<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
 
     if (A.n_sequences() < 3)
       throw myexception()<<"At least 3 sequences must be provided - you provided only "<<A.n_sequences()<<".";
@@ -370,15 +408,15 @@ int main(int argc,char* argv[]) {
     
     //-------------Create the Parameters object--------------//
     Parameters P(*full_smodel,*imodel,T);
-    cout<<"subst model = "<<P.SModel().name();
+    (*s_out)<<"subst model = "<<P.SModel().name();
     if (not P.SModel().full_tree)
-      cout<<", *-tree";
-    cout<<endl<<endl;
+      (*s_out)<<", *-tree";
+    (*s_out)<<endl<<endl;
 
-    cout<<"indel model = "<<P.IModel().name();
+    (*s_out)<<"indel model = "<<P.IModel().name();
     if (not P.IModel().full_tree)
-      cout<<", *-tree";
-    cout<<endl<<endl;
+      (*s_out)<<", *-tree";
+    (*s_out)<<endl<<endl;
 
     P.alignment_constraint = load_alignment_constraint(args,T);
 
@@ -434,7 +472,10 @@ int main(int argc,char* argv[]) {
     else {
       long int max_iterations = args["iterations"].as<long int>();
 
-      do_sampling(args,A,P,max_iterations);
+      do_sampling(args,A,P,max_iterations,*s_out,*s_trees,*s_parameters,*s_map);
+
+      // Close all the streams, and write a notification that we finished all the iterations.
+      // s_out->close(); s_trees->close(); s_parameters->close(); s_map->close();
     }
   }
   catch (std::bad_alloc) {

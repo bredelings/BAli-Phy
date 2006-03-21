@@ -35,9 +35,9 @@ Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%
 	@cat Results/analysis
 	@echo 
 
-Results/Report:  Work/header pS Results/MAP.topology
+Results/Report:  Work/header p Results/MAP.topology
 	@{ cat Work/header ; \
-	statreport 2: --skip ${SKIP} ${SIZE:%=--max %} < pS 2>/dev/null ; \
+	statreport 2: --skip ${SKIP} ${SIZE:%=--max %} < p 2>/dev/null ; \
 	cat Results/MAP.topology ; \
 	} > $@
 
@@ -136,11 +136,8 @@ Mixing/sumi.plot: Work/trees Work/partitions.pred
 	@trees-to-SRQ Work/partitions.pred  --invert --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
 	@echo "done."
 
-Work/Likelihood: Pr Work/setup
-	@pickout --no-header likelihood < Pr  > $@
-
-Work/prior: Pr Work/setup
-	@pickout --no-header prior < Pr  > $@
+Work/Likelihood: p Work/setup
+	@stats-select --no-header likelihood < p > $@
 
 Work/Pmarg: Work/Likelihood.from.${SKIP}+${SIZE}
 	@echo -e "Calculating marginal likelihood... \c"
