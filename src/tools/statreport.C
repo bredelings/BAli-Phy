@@ -85,8 +85,6 @@ void show_stats(variables_map& args, const string& name,const vector<double>& va
     cout<<"  [+- "<<sqrt(statistics::Var(values2))<<"]"<<endl;
   }
 
-
-
   // Print out median and confidence interval
   if (args.count("median") or not args.count("mean")) {
     double P = args["confidence"].as<double>();
@@ -98,6 +96,10 @@ void show_stats(variables_map& args, const string& name,const vector<double>& va
     else
       cout<<"  (NA,NA)"<<endl;
   }
+
+  cout<<"   t1 = "<<statistics::autocorrelation_time_zero(values2,2+values2.size()/100);
+  cout<<"   t2 = "<<statistics::autocorrelation_time_sum(values2,2+values2.size()/100);
+  cout<<endl;
 }
 
 vector<bool> get_mask(const string& s,vector<bool> mask)

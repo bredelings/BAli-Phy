@@ -92,7 +92,7 @@ namespace statistics {
     return sample2;
   }
 
-  std::vector<int> total_times(const std::valarray<bool>& v) 
+  vector<int> total_times(const valarray<bool>& v) 
   {
     vector<int> total(v.size()+1);
 
@@ -105,7 +105,7 @@ namespace statistics {
     return total;
   }
 
-  std::vector<int> regeneration_times(const std::valarray<bool>& v) 
+  vector<int> regeneration_times(const valarray<bool>& v) 
   {
     vector<int> times;
 
@@ -119,5 +119,59 @@ namespace statistics {
     return times;
   }
 
+  vector<double> autocovariance(valarray<double> x,unsigned N)
+  {
+    // specify sample size if unspecified
+    if (N==0) N = x.size()/4;
+    if (N==0) N = 1;
+
+    // shift data for zero mean
+    double xm = average(x);
+    for(int i=0;i<x.size();i++)
+      x[i] -= xm;
+	  
+    // allocate covariances
+    vector<double> rho(N);
+
+    // compute each autocorrelation rho[k]
+    for(int k=0;k<N;k++) {
+
+      for(int i=0;i<N;i++)
+	rho[k] += x[i]*x[i+k];
+      rho[k] /= (N-k);
+
+      if (rho[k] <= 0.0) {
+	rho.resize(k);
+	break;
+      }
+    }
+
+    return rho;
+  }
+
+  vector<double> autocorrelation(const valarray<double>& x,unsigned N)
+  {
+    vector<double> rho = autocovariance(x,N);
+    const double V = rho[0];
+    for(int i=0;i<rho.size();i++)
+      rho[i] /= V;
+    return rho;
+  }
+
+  double autocorrelation_time_zero(const valarray<double>& x,unsigned max)
+  {
+    return autocorrelation(x,max).size();
+  }
+
+  double autocorrelation_time_sum(const valarray<double>& x,unsigned max)
+  {
+    vector<double> r = autocorrelation(x,max);
+
+    double sum = 0;
+    for(int i=0;i<r.size();i++)
+      sum += r[i];
+
+    return sum;
+  }
 }
 

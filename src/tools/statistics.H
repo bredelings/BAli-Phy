@@ -79,5 +79,12 @@ namespace statistics {
 
   std::vector<int> total_times(const std::valarray<bool>& v);
   std::vector<int> regeneration_times(const std::valarray<bool>& v);
+
+  std::vector<double> autocovariance(const std::valarray<double> x,unsigned max=0);
+
+  std::vector<double> autocorrelation(std::valarray<double>& x,unsigned max=0);
+
+  double autocorrelation_time_zero(const std::valarray<double>& x,unsigned max=0);
+  double autocorrelation_time_sum(const std::valarray<double>& x,unsigned max=0);
 }
 #endif
