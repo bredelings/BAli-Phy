@@ -222,6 +222,15 @@ bool get_word(std::string& word, int& i,const std::string& s,
 	      const std::string& delimiters,const std::string& whitespace);
 
 template<typename T>
+T sum(const std::vector<T>& v)
+{
+  T total = 0;
+  for(int i=0;i<v.size();i++)
+    total += v[i];
+  return total;
+}
+
+template<typename T>
 std::vector<T> select(const std::vector<T>& v1,bool pred(const T&))
 {
   std::vector<T> v2;

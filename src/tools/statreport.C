@@ -33,8 +33,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("max",value<int>(),"maximum number of trees to read")
     ("mean", "Show mean and standard deviation")
     ("median", "Show median and confidence level")
+    ("autocorrelation", "Show autocorrelation time and effective sample size.")
     ("confidence",value<double>()->default_value(0.95),"Confidence level")
-    ("precision", value<unsigned>()->default_value(3),"Number of significant figures")
+    ("precision", value<unsigned>()->default_value(4),"Number of significant figures")
     ;
 
   options_description all("All options");
@@ -69,6 +70,8 @@ bool constant(const vector<double>& values)
 
 void show_stats(variables_map& args, const string& name,const vector<double>& values)
 {
+  using namespace statistics;
+
   if (constant(values)) {
     cout<<"   "<<name<<" = "<<values[0]<<endl;
     return;
@@ -81,24 +84,31 @@ void show_stats(variables_map& args, const string& name,const vector<double>& va
     
   // Print out mean and standard deviation
   if (args.count("mean")) {
-    cout<<" E "<<name<<" = "<<statistics::average(values2);
-    cout<<"  [+- "<<sqrt(statistics::Var(values2))<<"]"<<endl;
+    cout<<" E "<<name<<" = "<<average(values2);
+    cout<<"  [+- "<<sqrt(Var(values2))<<"]"<<endl;
   }
 
   // Print out median and confidence interval
   if (args.count("median") or not args.count("mean")) {
     double P = args["confidence"].as<double>();
     
-    pair<double,double> interval = statistics::confidence_interval(values2,P);
-    cout<<"   "<<name<<" ~ "<<statistics::median(values2);
+    pair<double,double> interval = confidence_interval(values2,P);
+    cout<<"   "<<name<<" ~ "<<median(values2);
     if ((1.0-P)*values2.size() >= 10.0)
       cout<<"  ("<<interval.first<<","<<interval.second<<")"<<endl;
     else
       cout<<"  (NA,NA)"<<endl;
   }
 
-  cout<<"   t1 = "<<statistics::autocorrelation_time_zero(values2,2+values2.size()/100);
-  cout<<"   t2 = "<<statistics::autocorrelation_time_sum(values2,2+values2.size()/100);
+  vector<double> r = autocorrelation(values2,2+values2.size()/4);
+
+  unsigned tau1 = r.size();
+  double tau2 = sum(r);
+  string spacer;spacer.append(name.size()-1,' ');
+
+  cout<<"   "<<spacer<<"t @ "<<tau2;
+  cout<<"   Ne = "<<values2.size()/tau2<<endl;
+
   cout<<endl;
 }
 

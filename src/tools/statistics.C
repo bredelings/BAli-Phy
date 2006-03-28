@@ -119,26 +119,37 @@ namespace statistics {
     return times;
   }
 
-  vector<double> autocovariance(valarray<double> x,unsigned N)
+  vector<double> autocovariance(const valarray<double>& x,unsigned max)
   {
-    // specify sample size if unspecified
-    if (N==0) N = x.size()/4;
-    if (N==0) N = 1;
+    const int N = x.size();
 
-    // shift data for zero mean
-    double xm = average(x);
-    for(int i=0;i<x.size();i++)
-      x[i] -= xm;
-	  
+    // specify sample size if unspecified
+    if (max==0) 
+      max = 1+N/4;
+
+    if (max >= N) 
+      max = N-1;
+
+    // compute sums for means of X and shift[X,k]
+    vector<double> total(N+1);
+    total[0] = 0;
+    for(int i=0;i<N;i++)
+      total[i+1] = total[i] + x[i];
+
     // allocate covariances
-    vector<double> rho(N);
+    vector<double> rho(max);
 
     // compute each autocorrelation rho[k]
-    for(int k=0;k<N;k++) {
+    for(int k=0;k<max;k++) {
 
-      for(int i=0;i<N;i++)
-	rho[k] += x[i]*x[i+k];
-      rho[k] /= (N-k);
+      double xm1 = total[N-k]/(N-k);
+      double xm2 = (total[N] - total[k])/(N-k);
+
+      double total = 0;
+      for(int i=0;i<N-k;i++)
+	total += (x[i]-xm1)*(x[i+k]-xm2);
+
+      rho[k] = total/(N-k);
 
       if (rho[k] <= 0.0) {
 	rho.resize(k);
@@ -158,20 +169,5 @@ namespace statistics {
     return rho;
   }
 
-  double autocorrelation_time_zero(const valarray<double>& x,unsigned max)
-  {
-    return autocorrelation(x,max).size();
-  }
-
-  double autocorrelation_time_sum(const valarray<double>& x,unsigned max)
-  {
-    vector<double> r = autocorrelation(x,max);
-
-    double sum = 0;
-    for(int i=0;i<r.size();i++)
-      sum += r[i];
-
-    return sum;
-  }
 }
 
