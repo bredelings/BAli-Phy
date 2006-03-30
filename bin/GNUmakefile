@@ -1,4 +1,4 @@
-#!make
+#!/usr/bin/make
 SHELL=/bin/sh
 
 TOPOLOGIES=c50 c66 c80 c90 c95 c99 c100 MAP
