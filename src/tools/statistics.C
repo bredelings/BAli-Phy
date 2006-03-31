@@ -169,5 +169,18 @@ namespace statistics {
     return rho;
   }
 
+  double autocorrelation_time(const valarray<double>& x,unsigned max)
+  {
+    vector<double> cv = autocovariance(x,max);
+
+    double V = cv[0];
+
+    double sum = 0;
+    for(int i=1;i<cv.size();i++)
+      sum += cv[i];
+
+    return (1.0 + 2.0*sum/V);
+  }
+
 }
 

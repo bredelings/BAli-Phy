@@ -83,5 +83,7 @@ namespace statistics {
   std::vector<double> autocovariance(const std::valarray<double>& x,unsigned max);
 
   std::vector<double> autocorrelation(const std::valarray<double>& x,unsigned max);
+
+  double autocorrelation_time(std::valarray<double>& x, unsigned max);
 }
 #endif
