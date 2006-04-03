@@ -97,6 +97,7 @@ double separated_by(const valarray<double>& d1,const valarray<double>d2,double d
 
 
 bool report_sample(std::ostream& o,
+		   unsigned blocksize,
 		   const vector<valarray<bool> >& samples, 
 		   const vector<valarray<double> >& distributions,
 		   int pseudocount, double confidence, double dx=-1) {
@@ -130,6 +131,8 @@ bool report_sample(std::ostream& o,
   vector<double> stddev_bootstrap(n_dists);
   vector<double> Ne(n_dists);
 
+  vector<double> tau(n_dists);
+
   vector<valarray<double> > LOD_distributions = distributions;
 
   for(int i=0;i<n_dists;i++) {
@@ -156,6 +159,16 @@ bool report_sample(std::ostream& o,
     stddev_bootstrap[i] = sqrt( Var_bootstrap[i] );
 
     Ne[i] = P[i]*(1.0-P[i])/Var_bootstrap[i];
+
+    //---------- Autocorrelation times ----------//
+    valarray<double> scratch(N[i]);
+    for(int j=0;j<scratch.size();j++)
+      if (samples[i][j])
+	scratch[j]=1.0;
+      else
+	scratch[j]=0.0;
+
+    tau[i] = autocorrelation_time(scratch,blocksize);
   }
 
   bool different = (dx <= 0) or n_dists==1;
@@ -192,8 +205,10 @@ bool report_sample(std::ostream& o,
   for(int i=0;i<n_dists;i++) 
   {
     o<<"   10s = "<<log10(O[i])<<"  in  ("<<log_CI[i].first<<","<<log_CI[i].second<<")";
-    if (nchanges_ave[i] > 6)
-      o<<"    [Var]x = "<<Var_bootstrap[i]/Var_perfect[i]<<"          Ne = "<<Ne[i];
+    if (nchanges_ave[i] > 6) {
+      //      o<<"    [Var]x = "<<Var_bootstrap[i]/Var_perfect[i]<<"          Ne = "<<Ne[i]<<endl;
+      o<<"    [Var]x = "<<tau[i]<<"          Ne = "<<N[i]/tau[i];
+    }
     o<<endl;
   }
 
@@ -393,7 +408,7 @@ int main(int argc,char* argv[])
     for(int p=0;p<partitions.size();p++) {
       std::ostringstream report;
 
-      bool show = report_sample(report, results[p], distributions[p], pseudocount, confidence, compare_dx);
+      bool show = report_sample(report, blocksize, results[p], distributions[p], pseudocount, confidence, compare_dx);
 
       //-------- Determine and print the partition -----------//
       if (not show) continue;
