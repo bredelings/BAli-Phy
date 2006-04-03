@@ -295,6 +295,26 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+tree_sample load_tree_file(const variables_map& args, const string& filename)
+{
+  int skip = args["skip"].as<unsigned>();
+
+  int max = -1;
+  if (args.count("max"))
+    max = args["max"].as<unsigned>();
+
+  int subsample=1;
+  if (args.count("sub-sample"))
+    subsample = args["sub-sample"].as<unsigned>();
+
+  ifstream file(filename.c_str());
+  if (not file)
+    throw myexception()<<"Couldn't open file "<<filename;
+  
+  cout<<"# Loading trees from '"<<filename<<"'...\n";
+  return tree_sample(file,skip,max,subsample);
+}
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -318,16 +338,6 @@ int main(int argc,char* argv[])
 
     double compare_dx = args["separation"].as<double>();
     
-    int skip = args["skip"].as<unsigned>();
-
-    int max = -1;
-    if (args.count("max"))
-      max = args["max"].as<unsigned>();
-
-    int subsample=1;
-    if (args.count("sub-sample"))
-      subsample = args["sub-sample"].as<unsigned>();
-
     double confidence = args["confidence"].as<double>();
 
     //-------------- Read in tree distributions --------------//
@@ -338,12 +348,7 @@ int main(int argc,char* argv[])
     vector<tree_sample> tree_dists;
     for(int i=0;i<files.size();i++) 
     {
-      ifstream file(files[i].c_str());
-      if (not file)
-	throw myexception()<<"Couldn't open file "<<files[i];
-      
-      cout<<"# Loading trees from '"<<files[i]<<"'...\n";
-      tree_dists.push_back(tree_sample(file,skip,max,subsample));
+      tree_dists.push_back(load_tree_file(args,files[i]));
 
       if (i > 0 and tree_dists.back().names() != tree_dists[0].names())
 	throw myexception()<<"Tree loaded from file '"<<files[i]<<"' has different taxa than previous trees.";
@@ -375,10 +380,7 @@ int main(int argc,char* argv[])
 
 	results[p][d].resize(size);
 
-	for(int i=0;i<size;i++) {
-	  int t = tree_dists[d].which_topology[i];
-	  results[p][d][i] = implies(tree_dists[d].topologies[t].partitions, partitions[p]);
-	}
+	results[p][d] = tree_dists[d].support(partitions[p]);
       }
     }
 
