@@ -66,7 +66,7 @@ Results/consensus : Work/trees Work/trees.from.${SKIP}+${SIZE}
 	@echo "done."
 
 Work/partitions: Results/consensus
-	@pickout --large pi < $< > $@
+	@pickout --no-header --large pi < $< > $@
 
 Work/partitions.pred: Work/partitions
 	@sed "s/$$/\n/" < $< > $@
