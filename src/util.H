@@ -20,6 +20,15 @@ T convertTo(const std::string& s) {
 }
 
 template <class T>
+std::vector<T> convertTo(const std::vector<std::string>& s) { 
+  std::vector<T> v;
+  for(int i=0;i<s.size();i++)
+    v.push_back(convertTo<T>(s[i]));
+
+  return v;
+}
+
+template <class T>
 std::string convertToString(T t)
 {
   std::ostringstream o;
