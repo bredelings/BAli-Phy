@@ -88,7 +88,7 @@ AC_ARG_ENABLE([debug],
              [debug=no])
 
 AC_ARG_ENABLE([profile],
-              AS_HELP_STRING([--enable-debug], [Compile in debug mode]),
+              AS_HELP_STRING([--enable-profile], [Compile with profiling information]),
              [profile=$enableval],
              [profile=no])
 
