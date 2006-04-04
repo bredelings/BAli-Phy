@@ -422,8 +422,9 @@ int main(int argc,char* argv[]) {
 
     if (args.count("beta")) {
       string beta_s = args["beta"].as<string>();
-      vector<double> beta_v = split<double>(beta_s,',');
-      P.beta = beta_v;
+      vector<double> beta = split<double>(beta_s,',');
+      for(int i=0;i<beta.size() and i<P.beta.size();i++)
+	P.beta[i] = beta[0];
     }
 
     if (args.count("partition-weights")) {
