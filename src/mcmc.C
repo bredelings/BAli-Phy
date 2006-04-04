@@ -452,7 +452,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   }
   
   s_parameters<<"iter\t";
-  s_parameters<<"prior\tlikelihood\tlogp\t";
+  s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
   s_parameters<<"mu\t"<<P.SModel().header()<<"\t";
   s_parameters<<P.IModel().header()<<endl;
 
@@ -473,7 +473,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
       print_stats(s_out,s_trees,A,P,show_alignment);
 
       s_parameters<<iterations<<"\t";
-      s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t";
+      s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
       s_parameters<<P.branch_mean<<"\t"<<P.SModel().state()<<"\t";
       s_parameters<<P.IModel().state()<<endl;
     }
