@@ -425,7 +425,7 @@ int main(int argc,char* argv[]) {
       string beta_s = args["beta"].as<string>();
       vector<double> beta = split<double>(beta_s,',');
       for(int i=0;i<beta.size() and i<P.beta.size();i++)
-	P.beta[i] = beta[0];
+	P.beta[i] = beta[i];
 
       P.beta_series.push_back(P.beta[0]);
     }
