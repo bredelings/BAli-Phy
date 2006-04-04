@@ -415,7 +415,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 	temp += frequency(m,l)*dists1[i](m,l);
       total += temp*distribution[m];
     }
-    s1_sub[i] = total;
+    s1_sub[i] = pow(total,B);
     //    s1_sub[i] = pow(s1_sub[i],1.0/T);
   }
 
@@ -427,7 +427,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 	temp += frequency(m,l)*dists2[i](m,l);
       total += temp*distribution[m];
     }
-    s2_sub[i] = total;
+    s2_sub[i] = pow(total,B);
     //    s2_sub[i] = pow(s2_sub[i],1.0/T);
   }
 
