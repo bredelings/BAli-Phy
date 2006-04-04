@@ -1,9 +1,16 @@
+-39. Usability for tracer:
+  + adjust burnin fraction?
+  + adjust smoothing function of density?
+  + command line arguments
+  + 
+
+-38. Fix subsample.
+  + add --skip
+  + add --by
+  + add --max ?  The total number of samples to keep.
+
 -37. Unplug the first 4(N-3) internal branches!
   + requires switching to computing the entire set of branches / counts.
-
--36. Tracer!
-  + merge pS and pI?
-  + add branch lengths?
 
 -35. Model RNA as a sequence with variable equilibrium distributions...
      There are only 2^4 = 16 rate classes if everything is 0/1.
@@ -608,12 +615,15 @@ rates.
    Might only amino acid content change between genes?  In that case, we might
    be able to estiamte all the factors using only coding regions!
 
-- Build Windows binaries (cywin now has gcc 3.4)
+ - Build Windows binaries (cywin now has gcc 3.4)
 
-- Build MacOS binaries: 
-  + 10.3.9 and 10.4.x + 
-  + 10.3.x < 10.3.8
+ - Build MacOS binaries: 
+   + 10.3.9 and 10.4.x + 
+   + 10.3.x < 10.3.8
 
-- Use just one genetic_code.dat (the RNA version.)
+ - Use just one genetic_code.dat (the RNA version.)
 
-- change pI and pS log files to a form that can be read by tracer.
+ - Merge all continuous parameters into one file 'p' that can be
+   read by tracer.
+
+ - Write to a file 'out' instead of cout.
