@@ -107,7 +107,7 @@ public:
 	   const vector<int>& v1,
 	   const vector<double>& v2,
 	   const Matrix& M,
-	   double Temp);
+	   double Beta);
   virtual ~DPmatrix() {}
 };
 
@@ -128,9 +128,9 @@ public:
 		 const vector<int>& v1,
 		 const vector<double>& v2,
 		 const Matrix& M,
-		 double Temp
+		 double Beta
 		 )
-    :DPmatrix(i1,i2,v1,v2,M,Temp) 
+    :DPmatrix(i1,i2,v1,v2,M,Beta) 
   {}
 
   virtual ~DPmatrixNoEmit() {}
@@ -177,7 +177,7 @@ public:
   DPmatrixEmit(const vector<int>&,
 	       const vector<double>&,
 	       const Matrix&,
-	       double Temp,
+	       double Beta,
 	       const vector< double >&,
 	       const vector< Matrix >&,
 	       const vector< Matrix >&, 
@@ -196,12 +196,12 @@ public:
   DPmatrixSimple(const vector<int> & v1,
 		 const vector<double> & v2,
 		 const Matrix& M,
-		 double Temp,
+		 double Beta,
 		 const vector< double >& d0,
 		 const vector< Matrix >& d1,
 		 const vector< Matrix >& d2, 
 		 const Matrix& f):
-    DPmatrixEmit(v1,v2,M,Temp,d0,d1,d2,f)
+    DPmatrixEmit(v1,v2,M,Beta,d0,d1,d2,f)
   { }
 
   virtual ~DPmatrixSimple() {}
@@ -228,12 +228,12 @@ public:
   DPmatrixConstrained(const vector<int> & v1,
 		      const vector<double> & v2,
 		      const Matrix& M,
-		      double Temp,
+		      double Beta,
 		      const vector< double >& d0,
 		      const vector< Matrix >& d1,
 		      const vector< Matrix >& d2, 
 		      const Matrix& f):
-    DPmatrixEmit(v1,v2,M,Temp,d0,d1,d2,f), allowed_states(d2.size())
+    DPmatrixEmit(v1,v2,M,Beta,d0,d1,d2,f), allowed_states(d2.size())
   { }
 
   virtual ~DPmatrixConstrained() {}

@@ -19,11 +19,6 @@ efloat_t Parameters::basic_prior(const alignment& A,const Parameters& P) const {
     return ::prior(P);
 }
 
-efloat_t Parameters::weight(const alignment& A,const Parameters& P) const {
-  efloat_t Pr = basic_prior(A,P) * basic_likelihood(A,P);
-  return pow(Pr,(1.0-1.0/P.Temp));
-}
-
 bool Parameters::accept_MH(const alignment& A1,const Parameters& P1,
 			   const alignment& A2,const Parameters& P2,
 			   double rho) const 
@@ -114,7 +109,7 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
    IModel_(IM),
    SModel_(SM),
    branch_HMMs(t.n_branches()),
-   Temp(1.0),
+   beta(2, 1.0),
    features(0),
    T(t),
    LC(T,SModel())

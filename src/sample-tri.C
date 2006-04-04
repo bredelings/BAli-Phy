@@ -112,7 +112,7 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
   vector<double> start_P = get_start_P(P.branch_HMMs,branches);
 
   // Actually create the Matrices & Chain
-  RefPtr<DPmatrixConstrained> Matrices = new DPmatrixConstrained(get_state_emit(), start_P, Q, P.Temp,
+  RefPtr<DPmatrixConstrained> Matrices = new DPmatrixConstrained(get_state_emit(), start_P, Q, P.beta[0],
 								 P.SModel().distribution(), dists1, dists23, frequency);
 
   // Determine which states are allowed to match (,c2)
@@ -242,7 +242,7 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,const vector< ve
   //---------------- Calculate choice probabilities --------------//
   vector<efloat_t> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = rho[i] * OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
+    Pr[i] = rho[i] * OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]), p[i].beta[1]);
   assert(Pr[0] > 0.0);
 
   int C = choose_MH(0,Pr);

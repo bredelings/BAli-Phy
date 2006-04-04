@@ -128,7 +128,7 @@ RefPtr<DParrayConstrained> sample_two_nodes_base(alignment& A,const Parameters& 
 							       state_emit_1D, 
 							       start_P,
 							       Q, 
-							       P.Temp);
+							       P.beta[0]);
 
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices->size();c2++) {
@@ -241,7 +241,7 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,const vect
   //---------------- Calculate choice probabilities --------------//
   vector<efloat_t> Pr(p.size());
   for(int i=0;i<Pr.size();i++)
-    Pr[i] = rho[i] * OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]),1.0/p[i].Temp);
+    Pr[i] = rho[i] * OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]), p[i].beta[1]);
 
   int C = choose_MH(0,Pr);
 

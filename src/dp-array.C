@@ -89,8 +89,8 @@ efloat_t DParray::Pr_sum_all_paths() const {
   return pow<efloat_t>(2.0,scale(I)) * total;
 }
 
-DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
-  :DPengine(v1,v2,M,Temp),
+DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Beta)
+  :DPengine(v1,v2,M,Beta),
    state_array(l+1,nstates()),
    length(l+1)
 { 
@@ -196,8 +196,8 @@ void DParrayConstrained::prune() {
   std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<endl;
 }
 
-DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Temp)
-  :DParray(l,v1,v2,M,Temp),allowed_states(l+1)
+DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Beta)
+  :DParray(l,v1,v2,M,Beta),allowed_states(l+1)
 { }
 
 

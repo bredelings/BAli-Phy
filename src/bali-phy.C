@@ -258,7 +258,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   mcmc.add_options()
     ("iterations",value<long int>()->default_value(100000),"the number of iterations to run")
     ("subsample",value<int>()->default_value(1),"factor by which to subsample")
-    ("T",value<double>()->default_value(1.0),"MCMCMC temperature")
+    ("beta",value<string>(),"MCMCMC temperature")
     ("enable",value<string>(),"comma-separated list of kernels to enable")
     ("disable",value<string>(),"comma-separated list of kernels to disable")
     ("partition-weights",value<string>(),"file containing tree with partition weights")
@@ -420,7 +420,11 @@ int main(int argc,char* argv[]) {
 
     P.alignment_constraint = load_alignment_constraint(args,T);
 
-    P.Temp = args["T"].as<double>();
+    if (args.count("beta")) {
+      string beta_s = args["beta"].as<string>();
+      vector<double> beta_v = split<double>(beta_s,',');
+      P.beta = beta_v;
+    }
 
     if (args.count("partition-weights")) {
       string filename = args["partition-weights"].as<string>();

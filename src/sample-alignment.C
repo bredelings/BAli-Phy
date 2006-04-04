@@ -90,7 +90,7 @@ void sample_alignment(alignment& A,Parameters& P,int b)
   state_emit[2] |= (1<<0);
   state_emit[3] |= 0;
 
-  DPmatrixSimple Matrices(state_emit, P.branch_HMMs[b].start_pi(),P.branch_HMMs[b], P.Temp,
+  DPmatrixSimple Matrices(state_emit, P.branch_HMMs[b].start_pi(),P.branch_HMMs[b], P.beta[0],
 			  P.SModel().distribution(), dists1, dists2, frequency);
 
   //------------------ Compute the DP matrix ---------------------//

@@ -6,7 +6,7 @@
 efloat_t other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) {
   efloat_t p = substitution::other_subst(A,P,nodes);
 
-  return pow(p,1.0/P.Temp);
+  return pow(p, P.beta[0]);
 }
 
 efloat_t other_prior(const alignment& A, const Parameters& P,const vector<int>& nodes) {
@@ -48,7 +48,7 @@ efloat_t other_prior(const alignment& A, const Parameters& P,const vector<int>& 
     p /= P.IModel().lengthp(A.seqlength(n));
   }
 
-  return pow(p,1.0/P.Temp);
+  return pow(p, P.beta[1]);
 }
 
 
@@ -138,9 +138,9 @@ void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t
   assert(std::abs(log(qpGQ)-log(qpQ)) < 1.0e-9);
   
   efloat_t qp = Matrices.path_GQ_path(path_g) * Matrices.generalize_P(path) *OP;
-  efloat_t lp = pow(prior_HMM(A,P),1.0/P.Temp);
+  efloat_t lp = pow(prior_HMM(A,P),P.beta[1]);
 
-  efloat_t qt = qs * qp * pow(prior(P),1.0/P.Temp);
+  efloat_t qt = qs * qp * pow(prior(P),P.beta[1]);
   efloat_t lt = P.probability(A,P);
 
   std::cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;

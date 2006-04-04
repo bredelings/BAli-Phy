@@ -512,13 +512,13 @@ namespace A5 {
     int l1 = A.seqlength(nodes[4]);
     int l2 = A.seqlength(nodes[5]);
 
-    return pow( P.IModel().lengthp(l1) * P.IModel().lengthp(l2) ,2.0/P.Temp);
+    return pow( P.IModel().lengthp(l1) * P.IModel().lengthp(l2) ,2.0*P.beta[1]);
   }
 
 
   efloat_t acceptance_ratio(const alignment& A1,const Parameters& P1,const vector<int>& nodes1,
 			      const alignment& A2,const Parameters& P2,const vector<int>& nodes2) {
-    assert(P1.Temp == P2.Temp);
+    assert(P1.beta[1] == P2.beta[1]);
 
     double ratio = correction(A1,P1,nodes1) / correction(A2,P2,nodes2);
 

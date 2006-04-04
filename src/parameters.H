@@ -16,7 +16,8 @@
 #include "util.H"
 #include "tools/tree-dist.H"
 
-/******************************* parameter-containing class **************************/
+//------------------------------- parameter-containing class --------------------------//
+
 /// A class to contain all the MCMC state except the alignment
 class Parameters: public MatCache
 {
@@ -28,13 +29,14 @@ class Parameters: public MatCache
 
 public:
 
+  /// An object for key-value pairs.
   std::map<std::string,double> keys;
 
   /// cached branch HMMs
   vector<indel::PairHMM> branch_HMMs;
 
-  /// Temperature, for heated chains: when heated we aren't normalized...
-  double Temp;
+  /// 1/Temperature parameters, for heated chains: when heated we aren't normalized...
+  vector<double> beta;
 
   /// Partitions to weight
   vector<Partition> partitions;
@@ -47,18 +49,16 @@ public:
 
   /// The likelihood function
   efloat_t basic_likelihood(const alignment& A,const Parameters& P) const; 
-  efloat_t likelihood(const alignment& A,const Parameters& P) const {return pow(basic_likelihood(A,P),1.0/Temp);}
+  efloat_t likelihood(const alignment& A,const Parameters& P) const {return pow(basic_likelihood(A,P),beta[0]);}
 
   /// The prior
   efloat_t basic_prior(const alignment& A,const Parameters& P) const;
-  efloat_t prior(const alignment& A,const Parameters& P) const {return pow(basic_prior(A,P),1.0/Temp);}
+  efloat_t prior(const alignment& A,const Parameters& P) const {return pow(basic_prior(A,P),beta[1]);}
 
   /// Now we can link moves into probability model?
   efloat_t probability(const alignment& A,const Parameters& P) const {
     return prior(A,P) * likelihood(A,P);
   }
-
-  efloat_t weight(const alignment& A, const Parameters& P) const;
 
   bool accept_MH(const alignment& A1,const Parameters& P1,
 		 const alignment& A2,const Parameters& P2,double rho) const;

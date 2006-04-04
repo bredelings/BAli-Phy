@@ -8,8 +8,8 @@ efloat_t DPengine::Pr_sum_all_paths() const {
   return Pr_total;
 }
 
-DPengine::DPengine(const vector<int>& v1,const vector<double>& v2, const Matrix&M, double Temp)
-  :HMM(v1,v2,M,Temp),
+DPengine::DPengine(const vector<int>& v1,const vector<double>& v2, const Matrix&M, double Beta)
+  :HMM(v1,v2,M,Beta),
    Pr_total(0)
 { }
 

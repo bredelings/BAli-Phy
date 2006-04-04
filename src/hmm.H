@@ -25,8 +25,8 @@ class HMM {
   void find_and_index_silent_network_states();
 
 public:
-  /// The 'temperature' - e.g. scale log(P) => log(P)/T
-  double T;
+  /// The 'temperature' parameter - e.g. scale log(P) => log(P)/T
+  double B;
 
   /// The transition matrix for the HMM
   Matrix Q;

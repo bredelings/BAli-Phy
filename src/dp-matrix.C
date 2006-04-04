@@ -265,8 +265,8 @@ DPmatrix::DPmatrix(int i1,
 		   const vector<int>& v1,
 		   const vector<double>& v2,
 		   const Matrix& M,
-		   double Temp)
-  :DPengine(v1,v2,M,Temp),
+		   double Beta)
+  :DPengine(v1,v2,M,Beta),
    state_matrix(i1,i2,nstates())
 {
   const int I = size1()-1;
@@ -383,6 +383,10 @@ void DPmatrixEmit::prepare_cell(int i,int j)
     for(int l=0;l<M1.size2();l++)
       total += M1(m,l) * M2(m,l);
   }
+
+  if (B != 1.0)
+    total = pow(total,B);
+
   s12_sub(i,j) = total;
   //      s12_sub(i,j) = pow(s12_sub(i,j),1.0/T);
 }
@@ -390,12 +394,12 @@ void DPmatrixEmit::prepare_cell(int i,int j)
 DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 			   const vector<double>& v2,
 			   const Matrix& M,
-			   double Temp,
+			   double Beta,
 			   const vector< double >& d0,
 			   const vector< Matrix >& d1,
 			   const vector< Matrix >& d2, 
 			   const Matrix& f)
-  :DPmatrix(d1.size(),d2.size(),v1,v2,M,Temp),
+  :DPmatrix(d1.size(),d2.size(),v1,v2,M,Beta),
    s12_sub(d1.size(),d2.size()),
    s1_sub(d1.size()),s2_sub(d2.size()),
    distribution(d0),

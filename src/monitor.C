@@ -69,7 +69,7 @@ void print_stats(std::ostream& o,std::ostream& trees,
   efloat_t Pr = Pr_prior * Pr_likelihood;
 
   o<<"    prior = "<<Pr_prior<<"    likelihood = "<<Pr_likelihood<<"    logp = "<<Pr
-   <<"    temp = " <<P.Temp  <<"    weight = "    <<pow(topology_weight(P,P.T),-1.0)*pow(Pr,1.0-1.0/P.Temp)<<"\n";
+   <<"    beta = " <<P.beta[0]  <<"\n";
 
   if (print_alignment)
     o<<standardize(A,P.T)<<"\n\n";
