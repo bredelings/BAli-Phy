@@ -38,6 +38,8 @@ public:
   /// 1/Temperature parameters, for heated chains: when heated we aren't normalized...
   vector<double> beta;
 
+  vector<double> beta_series;
+
   /// Partitions to weight
   vector<Partition> partitions;
   vector<efloat_t> partition_weights;

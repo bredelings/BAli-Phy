@@ -459,6 +459,9 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max; iterations++) {
 
+    if (iterations < P.beta_series.size())
+      P.beta[0] = P.beta_series[iterations];
+
     //------------------ record statistics ---------------------//
     s_out<<"iterations = "<<iterations<<"\n";
     clog<<"iterations = "<<iterations<<"\n";

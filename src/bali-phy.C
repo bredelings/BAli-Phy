@@ -259,6 +259,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("iterations",value<long int>()->default_value(100000),"the number of iterations to run")
     ("subsample",value<int>()->default_value(1),"factor by which to subsample")
     ("beta",value<string>(),"MCMCMC temperature")
+    ("dbeta",value<string>(),"MCMCMC temperature changes")
     ("enable",value<string>(),"comma-separated list of kernels to enable")
     ("disable",value<string>(),"comma-separated list of kernels to disable")
     ("partition-weights",value<string>(),"file containing tree with partition weights")
@@ -425,6 +426,24 @@ int main(int argc,char* argv[]) {
       vector<double> beta = split<double>(beta_s,',');
       for(int i=0;i<beta.size() and i<P.beta.size();i++)
 	P.beta[i] = beta[0];
+
+      P.beta_series.push_back(P.beta[0]);
+    }
+
+    if (args.count("dbeta")) {
+      vector<string> deltas = split(args["dbeta"].as<string>(),',');
+      for(int i=0;i<deltas.size();i++) {
+	vector<double> D = split<double>(deltas[i],'*');
+	if (D.size() != 2)
+	  throw myexception()<<"Couldn't parse beta increment '"<<deltas[i]<<"'";
+	int D1 = (int)D[0];
+	double D2 = D[1];
+	for(int i=0;i<D1;i++) {
+	  double next = P.beta_series.back() + D2;
+	  next = std::max(0.0,std::min(1.0,next));
+	  P.beta_series.push_back(next);
+	}
+      }
     }
 
     if (args.count("partition-weights")) {
