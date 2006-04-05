@@ -35,7 +35,7 @@ public:
   /// the prior for the model, on the same scale as 'fiddle()'
   virtual efloat_t prior() const =0;
 
-  /// a symmetrical proposal distribution (calls recalc)
+  /// a proposal distribution (calls recalc)
   virtual double fiddle(int) =0;
 
   bool fixed(int i) const {return fixed_[i];}
@@ -139,7 +139,7 @@ public:
   
   efloat_t prior() const;
   
-  /// Symmetrically propose parameters (calls recalc through super_fiddle if necessary)
+  /// propose parameters (calls recalc through super_fiddle if necessary)
   double fiddle(int); 
 };
 
