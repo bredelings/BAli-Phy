@@ -86,7 +86,7 @@ namespace MCMC {
     if (s == "all")
       enable();
     else 
-      for(int j=0;j<attributes.size();j++)
+      for(int j=0;j<1 and j<attributes.size();j++)
 	if (attributes[j] == s) {
 	  enable();
 	  break;
