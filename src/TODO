@@ -12,6 +12,8 @@
 -37. Unplug the first 4(N-3) internal branches!
   + requires switching to computing the entire set of branches / counts.
 
+-36. Complain instead of overwriting files.
+
 -35. Model RNA as a sequence with variable equilibrium distributions...
      There are only 2^4 = 16 rate classes if everything is 0/1.
      Entropy???     
