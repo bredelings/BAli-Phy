@@ -93,7 +93,8 @@ void change_branch_length(const alignment& A, Parameters& P,MoveStats& Stats,int
   }
 }
 
-void change_branch_length_multi(const alignment& A, Parameters& P,MoveStats& Stats,int b) {
+void change_branch_length_multi(const alignment& A, Parameters& P,MoveStats& Stats,int b) 
+{
   const int n=3;
 
   for(int i=1;i<n;i++)
@@ -250,5 +251,34 @@ void slide_node(const alignment& A, Parameters& P,MoveStats& Stats,int b0)
     bool success = slide_node(A, P, b, slide_node_expand_branch);
     Stats.inc("slide_node_expand_branch",success);
   }
+}
+
+void scale_branch_lengths_and_mean(alignment& A, Parameters& P,MoveStats& Stats) 
+{
+  MCMC::Result result(2);
+
+  //------------ Propose scaling ratio ------------//
+  const double sigma = loadvalue(P.keys,"log_branch_mean_sigma",0.6);
+  double scale = exp( gaussian(0,sigma) );
+
+  //------- Propose branch lengths and mean -------//
+  Parameters P2 = P;
+  const SequenceTree& T = P2.T;
+
+  for(int b=0;b<T.n_branches();b++) {
+    const double length = P.T.branch(b).length();
+    P2.setlength(b, length * scale);
+  }
+  P2.branch_mean *= scale;
+
+  double ratio =  pow(scale, 1 + T.n_branches() );
+
+  //----------- Do the M-H step if OK--------------//
+  if (do_MH_move(A,P,P2, ratio)) {
+    result.totals[0] = 1;
+    result.totals[1] = std::abs(log(scale));
+  }
+
+  Stats.inc("branch-mean",result);
 }
 

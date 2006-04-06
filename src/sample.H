@@ -55,6 +55,7 @@ void three_way_topology_and_alignment_sample(alignment&, Parameters&, MCMC::Move
 void sample_SPR_flat(alignment&, Parameters&, MCMC::MoveStats&);
 void sample_SPR_nodes(alignment&, Parameters&, MCMC::MoveStats&);
 void slide_node_move(alignment&, Parameters&, MCMC::MoveStats&, int);
+void scale_branch_lengths_and_mean(alignment&, Parameters&, MCMC::MoveStats&);
 void change_branch_length_move(alignment&, Parameters&, MCMC::MoveStats&, int);
 void change_branch_length_multi_move(alignment&, Parameters&, MCMC::MoveStats&, int);
 void change_branch_length_and_T(alignment&, Parameters&, MCMC::MoveStats&, int);

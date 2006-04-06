@@ -140,7 +140,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
     tree_moves.add(1,topology_move);
   
   //-------------- tree::lengths (length_moves) -------------//
-  MoveEach length_moves("lengths");
+  MoveAll length_moves("lengths");
   MoveEach length_moves1("lengths1");
 
   length_moves1.add(1,MoveArgSingle("change_branch_length:lengths",
@@ -157,6 +157,9 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 					internal_branches)
 		      );
   length_moves.add(1,length_moves1);
+  length_moves.add(1,SingleMove(scale_branch_lengths_and_mean,
+				"scale_branches_and_mean:lengths:mean")
+		   );
 
   tree_moves.add(1,length_moves,false);
   tree_moves.add(1,SingleMove(sample_NNI_and_branch_lengths,"NNI_and_lengths:topology:lengths"));
@@ -300,6 +303,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<"VERSION: 1.9.8\nBUILD: "<<__DATE__<<"\n";
     exit(0);
   }
+
+  if (not args.count("align"))
+    throw myexception()<<"No sequence file given.";
 
   if (args.count("help")) {
     cout<<"Usage: bali-phy <sequence-file> [OPTIONS]\n";
