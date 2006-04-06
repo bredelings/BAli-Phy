@@ -16,3 +16,17 @@ vector<string> parse_header(const string& line)
 
   return headers;
 }
+
+
+vector<string> read_header(std::istream& file)
+{
+  string line;
+  while (file) 
+  {
+    getline(file,line);
+    if (line.size() and line[0] != '#')
+      break;
+  }
+
+  return parse_header(line);
+}

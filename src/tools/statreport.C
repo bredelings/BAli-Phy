@@ -143,10 +143,7 @@ int main(int argc,char* argv[])
     cout.precision(args["precision"].as<unsigned>());
 
     //------------ Parse column names ----------//
-    string line;
-    getline(std::cin,line);
-
-    vector<string> headers = parse_header(line);
+    vector<string> headers = read_header(std::cin);
 
     //------------ Parse column mask ----------//
     vector<bool> mask(headers.size(),true);
@@ -164,6 +161,7 @@ int main(int argc,char* argv[])
       max = args["max"].as<int>();
 
     int line_number=0;
+    string line;
     while(getline(cin,line)) 
     {
       line_number++;

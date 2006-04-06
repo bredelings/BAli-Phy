@@ -35,6 +35,18 @@ string topology(const SequenceTree& T) {
   return T2.write(false);
 }
 
+vector<int> convert_bitvector(const valarray<bool>& b)
+{
+  vector<int> v(b.size());
+  for(int i=0;i<b.size();i++)
+    if (b[i])
+      v[i] = 1;
+    else
+      v[i] = 0;
+  return v;
+}
+
+
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
   using namespace po;
@@ -46,7 +58,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("predicates",value<string>(),"predicates to examine")
     ("skip",value<int>()->default_value(0),"number of trees to skip")
     ("max",value<int>(),"maximum number of trees to read")
-    ("mode", value<string>()->default_value("SRQ"),"SRQ or sum")
+    ("mode", value<string>()->default_value("SRQ"),"SRQ, sum, or values")
     ("invert","consider the inverse of each event instead")
     ("no-scale-x","don't scale X")
     ("no-scale-y","don't scale Y")
@@ -92,34 +104,60 @@ int main(int argc,char* argv[])
     tree_sample tree_dist(std::cin,skip,max);
 
 
+    const int L = tree_dist.size();
+
     // Compute info for plots
     vector<vector<int> > plots(partitions.size());
-    for(int i=0;i<partitions.size();i++) {
+    for(int i=0;i<partitions.size();i++) 
+    {
       valarray<bool> support = tree_dist.support(partitions[i]);
 
       if (args.count("invert")) support = not support;
 
       if (args["mode"].as<string>() == "SRQ")
 	plots[i] = statistics::regeneration_times(support);
-      else 
+      else if (args["mode"].as<string>() == "sum")
 	plots[i] = statistics::total_times(support);
+      else
+	plots[i] = convert_bitvector(support);
     }
 
-    // write out plots
-    for(int i=0;i<plots.size();i++) {
-      double scale_x = plots[i].size()-1;
-      double scale_y = plots[i].back();
-      if (scale_y == 0) scale_y = 1;
-      
-      if (args.count("no-scale-x"))
-	scale_x = 1;
 
-      if (args.count("no-scale-y"))
-	scale_y = 1;
+    if (args["mode"].as<string>() == "values") 
+    {
+      vector<string> names(plots.size());
+      for(int i=0;i<names.size();i++)
+	names[i] = string("P") + convertToString(i+1);
+      cout<<join(names,'\t')<<endl;
 
-      for(int j=0;j<plots[i].size();j++) 
-	cout<<j/scale_x<<"   "<<plots[i][j]/scale_y<<endl;
-      cout<<endl;
+      for(int i=0;i<L;i++)
+	for(int j=0;j<plots.size();j++) {
+	  cout<<plots[j][i];
+	  if (j == plots.size() - 1)
+	    cout<<"\n";
+	  else
+	    cout<<"\t";
+	}
+    }
+    else 
+    {
+      // write out plots
+
+      for(int i=0;i<plots.size();i++) {
+	double scale_x = plots[i].size()-1;
+	double scale_y = plots[i].back();
+	if (scale_y == 0) scale_y = 1;
+	
+	if (args.count("no-scale-x"))
+	  scale_x = 1;
+	
+	if (args.count("no-scale-y"))
+	  scale_y = 1;
+	
+	for(int j=0;j<plots[i].size();j++) 
+	  cout<<j/scale_x<<"   "<<plots[i][j]/scale_y<<endl;
+	cout<<endl;
+      }
     }
   }
   catch (std::exception& e) {
