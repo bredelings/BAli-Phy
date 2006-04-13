@@ -863,9 +863,9 @@ namespace substitution {
 
     q[3] = 1; // GT - transversion
 
-    q[4] = 2; // GC - transversion
+    q[4] = 1; // GC - transversion
 
-    q[5] = 1; // TC - transition
+    q[5] = 2; // TC - transition
 
     q *= 4;
 
