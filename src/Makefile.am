@@ -89,7 +89,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-sums.C alignment-util.C probability.C model.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
-	  tools/tree-dist.C
+	  tools/tree-dist.C proposals.C
 
 #-----------------------------------------------------------------
 

@@ -4,6 +4,7 @@
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
 #include "probability.H"
+#include "proposals.H"
 #include "rng.H"
 #include "util.H"
 
@@ -314,18 +315,18 @@ namespace substitution {
   double MultipleDistribution::super_fiddle(int) {
     read();
 
-    const double sigma = 0.05;
+    const double N = 10;
 
     // Read, fiddle, and set f
     valarray<double> f(n_dists());
     for(int i=0;i<f.size();i++)
       f[i] = fraction(i);
 
-    dirichlet_fiddle(f,sigma);
+    double ratio = dirichlet_fiddle(f,N);
 
     for(int i=0;i<f.size();i++)
       fraction(i) = f[i];
-    return 1;
+    return ratio;
   }
 
   efloat_t MultipleDistribution::super_prior() const {

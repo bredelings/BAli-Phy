@@ -1,6 +1,7 @@
 #include "probability.H"
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>
+#include <iostream>
 
 #include "logsum.H"
 
@@ -30,25 +31,34 @@ log_double_t num_topologies_in_partition(int n1,int n2)
 }
 
 double log_gamma(double x) {
+  assert(x>0.0);
   return gsl_sf_lngamma(x);
 }
 
-log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n) {
+log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n) 
+{
   assert(p.size() == n.size());
 
   log_double_t Pr = 1;
   for(int i=0;i<p.size();i++) 
-  {
-    Pr *= pow<log_double_t>(p[i],n[i]);
-
-    // This is because we our proposal is symmetric on the scale of log(p[i]).
-    Pr *= exp<log_double_t>(p[i]);
-  }
+    Pr *= pow<log_double_t>(p[i],n[i]-1.0);
 
   // This term is constant in p
-  Pr.log() += log_gamma(n.sum()+n.size());
+  Pr.log() += log_gamma(n.sum());
   for(int i=0;i<p.size();i++)
-    Pr.log() -= log_gamma(n[i]+1);
+    Pr.log() -= log_gamma(n[i]);
+
+  return Pr;
+}
+
+// exp(p[i]) is Dirichlet
+log_double_t exp_dirichlet_pdf(const valarray<double>& p,const valarray<double>& n) 
+{
+  log_double_t Pr = dirichlet_pdf(p,n);
+
+  // This is because we our proposal is symmetric on the scale of log(p[i]).
+  for(int i=0;i<p.size();i++) 
+    Pr *= exp<log_double_t>(p[i]);
 
   return Pr;
 }

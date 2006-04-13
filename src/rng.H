@@ -39,6 +39,9 @@ unsigned poisson(double mu);
 // return a geometric random variate
 unsigned geometric(double p);
 
+// return a dirichlet random vector
+std::valarray<double> dirichlet(const std::valarray<double>& n);
+
 namespace rng {
 
   typedef int amount_t;
@@ -76,6 +79,8 @@ namespace rng {
     int geometric (double p) {return gsl_ran_geometric(generator,p);}
 
     unsigned poisson(double mu) {return gsl_ran_poisson(generator,mu);}
+
+    std::valarray<double> dirichlet(const std::valarray<double>& n);
 
     RNG();
     ~RNG();
@@ -148,12 +153,5 @@ namespace dng {
 
   void init();
 }
-
-std::valarray<double> 
-dirichlet_fiddle(const std::valarray<double>& p1,double sigma);
-
-std::valarray<double> 
-dirichlet_fiddle(const std::valarray<double>& p1,const std::valarray<bool>& mask,
-		 double sigma);
 
 #endif

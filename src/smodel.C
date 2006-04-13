@@ -9,6 +9,7 @@
 #include "logsum.H"
 #include "likelihood.H"
 #include "probability.H"
+#include "proposals.H"
 
 using std::vector;
 using std::valarray;
@@ -60,35 +61,39 @@ namespace substitution {
   }
 
 
-  void dirichlet_fiddle(vector<double>& v,vector<bool>& fixed, int start, int n,double sigma) 
+  log_double_t dirichlet_fiddle(vector<double>& v,vector<bool>& fixed, int start, int n,double N) 
   {
     valarray<double> fract = get_varray(v,start,n);
     valarray<bool> mask = not get_varray(fixed,start,n);
 
     // fiddle
-    fract = ::dirichlet_fiddle(fract,mask,sigma);
+    log_double_t ratio = ::dirichlet_fiddle(fract,N,mask);
 
     set_varray(v,start,fract);
+
+    return ratio;
   }
 
-  void dirichlet_fiddle(vector<double>& v,int start, int n,double sigma) 
+  log_double_t dirichlet_fiddle(vector<double>& v,int start, int n,double N) 
   {
     valarray<double> fract = get_varray(v,start,n);
 
     // fiddle
-    fract = ::dirichlet_fiddle(fract,sigma);
+    log_double_t ratio = ::dirichlet_fiddle(fract,N);
 
     set_varray(v,start,fract);
+
+    return ratio;
   }
 
-  void dirichlet_fiddle(vector<double>& v,vector<bool>& fixed, double sigma) 
+  log_double_t dirichlet_fiddle(vector<double>& v,vector<bool>& fixed, double N) 
   {
-    dirichlet_fiddle(v, fixed, 0, v.size(), sigma);
+    return dirichlet_fiddle(v, fixed, 0, v.size(), N);
   }
 
-  void dirichlet_fiddle(vector<double>& v,double sigma) 
+  log_double_t dirichlet_fiddle(vector<double>& v,double N) 
   {
-    dirichlet_fiddle(v,0,v.size(),sigma);
+    return dirichlet_fiddle(v,0,v.size(),N);
   }
 
   efloat_t dirichlet_pdf(const vector<double>& p1,int start, int n, const valarray<double>& q)
@@ -176,11 +181,13 @@ namespace substitution {
     }
 
     // propose new frequencies
-    dirichlet_fiddle(parameters_, fixed_, 1, size(), 0.25/sqrt(size()));
+    const double N = 10;
+
+    double ratio = dirichlet_fiddle(parameters_, fixed_, 1, size(), N);
 
     recalc();
 
-    return 1;
+    return ratio;
   }
 
   string SimpleFrequencyModel::name() const {
@@ -346,18 +353,20 @@ namespace substitution {
 
   double TripletsFrequencyModel::super_fiddle(int)
   {
+    const double N = 10;
+
     if (not fixed(0)) {
       super_parameters_[0] += gaussian(0, 0.1);
       super_parameters_[0] = wrap(super_parameters_[0],1.0);
     }
 
     // propose new frequencies
-    dirichlet_fiddle(super_parameters_, fixed_, 1, size(), 0.25/sqrt(size()));
+    double ratio = dirichlet_fiddle(super_parameters_, fixed_, 1, size(), N);
 
     read();
     recalc();
 
-    return 1;  
+    return ratio;
   }
 
   string TripletsFrequencyModel::name() const 
@@ -449,6 +458,8 @@ namespace substitution {
 
   double CodonFrequencyModel::super_fiddle(int)
   {
+    const double N = 10;
+
     if (not fixed(0)) {
       super_parameters_[0] += gaussian(0, 0.1);
       super_parameters_[0] = wrap(super_parameters_[0],1.0);
@@ -460,12 +471,12 @@ namespace substitution {
     }
 
     // propose new frequencies
-    dirichlet_fiddle(super_parameters_, fixed_, 2, aa_size(), 0.25/sqrt(aa_size()));
+    double ratio = dirichlet_fiddle(super_parameters_, fixed_, 2, aa_size(), N);
 
     read();
     recalc();
 
-    return 1;  
+    return ratio;  
   }
 
   string CodonFrequencyModel::name() const 
@@ -833,9 +844,8 @@ namespace substitution {
 
   double GTR::fiddle(int) 
   {
-    dirichlet_fiddle(parameters_,fixed_, 0.15);
-
-    return 1;
+    const double N = 10;
+    return dirichlet_fiddle(parameters_,fixed_, N);
   }
 
   // This should be OK - the increments are linear combinations of gaussians...
@@ -1115,28 +1125,33 @@ namespace substitution {
 
   double MultiFrequencyModel::super_fiddle(int) 
   {
-    const double sigma=0.50/fraction.size();
+    // FIXME - ??? Does this still work after modifying dirichlet_fiddle?
+    const double N = 10;
 
     // get factor by which to modify bin frequencies
     valarray<double> C(fraction.size());
     for(int m=0;m<fraction.size();m++)
-      C[m] = exp(gaussian(0,sigma));
+      C[m] = exp(gaussian(0,0.1));
 
     int n1 =(int)( myrandomf()*Alphabet().size());
     int n2 =(int)( myrandomf()*Alphabet().size());
-    for(int l=0;l<Alphabet().size();l++) {
+
+    double ratio = 1;
+
+    for(int l=0;l<Alphabet().size();l++) 
+    {
       valarray<double> a = get_a(l);
       a *= C;
       a /= a.sum();
       if (l==n1 or l==n2)
-	a = ::dirichlet_fiddle(a,sigma/2);
+	ratio *= ::dirichlet_fiddle(a,N);
       set_a(l,a);
     }
 
     read();
     recalc();
 
-    return 1;
+    return ratio;
   }
 
   efloat_t MultiFrequencyModel::super_prior() const 
@@ -1461,13 +1476,18 @@ namespace substitution {
     return dist;
   }
 
-  double YangM2::super_fiddle(int) {
+  double YangM2::super_fiddle(int) 
+  {
+    const double N = 10;
     // dirichlet fiddle the first 3 parameters, sigma = ?
-    dirichlet_fiddle(super_parameters_, fixed_, 0, 3, 0.1);
+    double ratio = 1.0;
+
+    ratio *= dirichlet_fiddle(super_parameters_, fixed_, 0, 3, N);
 
     // log-laplace fiddle the 4th parameter, wrapped so that it is always >= 1
-    double ratio = exp(shift_laplace(0,0.2));
-    super_parameters_[3] *= ratio;
+    double scale = exp(shift_laplace(0,0.2));
+    ratio *= scale;
+    super_parameters_[3] *= scale;
     if (super_parameters_[3] < 1)
       super_parameters_[3] = 1.0/super_parameters_[3];
 
@@ -1578,11 +1598,14 @@ namespace substitution {
 
   double YangM3::super_fiddle(int) 
   {
+    const double N = 10;
+
+    double ratio=1;
+
     // dirichlet fiddle the frequency parameters
-    dirichlet_fiddle(super_parameters_, fixed_, 0, fraction.size(), 0.1);
+    ratio *= dirichlet_fiddle(super_parameters_, fixed_, 0, fraction.size(), N);
 
     // log-laplace fiddle the omega parameters
-    double ratio=1;
     for(int i=0;i<fraction.size();i++)
       if (not fixed(i+fraction.size())) {
 	double scale = shift_laplace(0,0.1);
@@ -1721,13 +1744,15 @@ namespace substitution {
 
   double MixtureModel::super_fiddle(int) 
   {
+    const double N = 10;
+
     // prior on sub-model frequencies
-    dirichlet_fiddle(super_parameters_, fixed_, 0, n_submodels(), 0.1);
+    double ratio = dirichlet_fiddle(super_parameters_, fixed_, 0, n_submodels(), N);
 
     read();
     recalc();
 
-    return 1;
+    return ratio;
   }
 
   const MultiModel::Base_Model_t& MixtureModel::base_model(int m) const 

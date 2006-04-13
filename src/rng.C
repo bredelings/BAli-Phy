@@ -71,6 +71,10 @@ unsigned geometric(double mu) {
   return rng::standard->geometric(mu);
 }
 
+valarray<double> dirichlet(const valarray<double>& n) {
+  return rng::standard->dirichlet(n);
+}
+
 /*************** Functions for rng,dng and RNG **************/
 void dng::init() { }
 
@@ -155,38 +159,21 @@ tuple Multinomial::operator()(const valarray<double>& p,unsigned long n1) {
   return m;
 }
 
+using std::clog;
 
-valarray<double> dirichlet_fiddle(const valarray<double>& p1,double sigma) 
+valarray<double> RNG::dirichlet(const valarray<double>& n)
 {
-  valarray<double> p2=p1;
-  for(int i=0;i<p2.size();i++)
-    p2[i] *= exp(gaussian(0,sigma));
+  valarray<double> D(n.size());
 
-  p2 /= p2.sum();
+  clog<<"\n";
+  for(int i=0;i<D.size();i++) {
+    clog<<"i = "<<i<<" n[i] = "<<n[i]<<"\n";
+    D[i] = gamma(n[i],1);
+  }
+  clog<<"\n";
 
-  return p2;
+  D /= D.sum();
+
+  return D;
 }
 
-valarray<double> dirichlet_fiddle(const valarray<double>& p1,const valarray<bool>& mask,
-				  double sigma) 
-{
-  valarray<double> p2=p1;
-  p2 /= p2.sum();
-
-  double total1=0;
-  double total2=0;
-  for(int i=0;i<p2.size();i++)
-    if (mask[i]) {
-      total1 += p2[i];
-      p2[i] *= exp(gaussian(0,sigma));
-      total2 += p2[i];
-    }
-
-  double factor = total1/total2;
-
-  for(int i=0;i<p2.size();i++)
-    if (mask[i]) 
-      p2[i] *= factor;
-
-  return p2;
-}
