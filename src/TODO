@@ -1,3 +1,17 @@
+-------------------------------------------------------
+Named parameters, priors, and proposals branch!
+
+-42. Allow priors to attach to the Parameters structure by name!
+  + 
+
+-41. Allow proposals to attach to the Parameters structure by name!
+  + Can proposals be sub-models?
+  + This should allow us to independently assess acceptance ratio's by parameters,
+    instead of by move type.
+-------------------------------------------------------
+
+-40. Remove bitvector functions from tree.H!
+
 -39. Usability for tracer:
   + adjust burnin fraction?
   + adjust smoothing function of density?
@@ -9,14 +23,24 @@
   + add --by
   + add --max ?  The total number of samples to keep.
 
--37. Unplug the first 4(N-3) internal branches!
-  + requires switching to computing the entire set of branches / counts.
+-37. Improve trees-consensus
+  + Compute the entire set of branches / counts for full partitions.
+  + Compute the greedy tree using.
+  + Report the first 4(N-3) internal branches.
+    - Also report the  branches in the greedy tree?
+  + [FIX] Currently the number of sub-branches is capped at |c50|
+  + [FIX] 'ratio' for sub-partitions when parent partitions are below the min.
 
 -36. Complain instead of overwriting files.
 
 -35. Model RNA as a sequence with variable equilibrium distributions...
      There are only 2^4 = 16 rate classes if everything is 0/1.
      Entropy???     
+
+-34. Output leaf branch lengths?  Total tree length?
+  + if mu has gamma prior, then does that simply alter prior on branches?
+  + how do we make mu and branch length priors conjugate?
+  + can we still scale the branch lengths if we do that?
 
 -33. Site-dependend equilibrium frequencies:
   + Question: does entropy of frequencies affect branch lengths?
