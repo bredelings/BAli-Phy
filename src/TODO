@@ -8,6 +8,10 @@ Named parameters, priors, and proposals branch!
   + Can proposals be sub-models?
   + This should allow us to independently assess acceptance ratio's by parameters,
     instead of by move type.
+  + We can also propose parameters independently.
+    - This will allow us to propose larger increments for each parameter.
+      o Increase the increment for kappa!
+    - Specify the NUMBER of times we do each increment per iteration.
 -------------------------------------------------------
 
 -40. Remove bitvector functions from tree.H!
