@@ -156,12 +156,12 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 					change_branch_length_and_T,
 					internal_branches)
 		      );
-  length_moves.add(1,length_moves1);
+  length_moves.add(1,length_moves1,false);
   length_moves.add(1,SingleMove(scale_branch_lengths_and_mean,
 				"scale_branches_and_mean:lengths:mean")
 		   );
 
-  tree_moves.add(1,length_moves,false);
+  tree_moves.add(1,length_moves);
   tree_moves.add(1,SingleMove(sample_NNI_and_branch_lengths,"NNI_and_lengths:topology:lengths"));
 
   //------------- parameters (parameters_moves) --------------//
