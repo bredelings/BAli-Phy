@@ -165,12 +165,8 @@ valarray<double> RNG::dirichlet(const valarray<double>& n)
 {
   valarray<double> D(n.size());
 
-  clog<<"\n";
-  for(int i=0;i<D.size();i++) {
-    clog<<"i = "<<i<<" n[i] = "<<n[i]<<"\n";
+  for(int i=0;i<D.size();i++)
     D[i] = gamma(n[i],1);
-  }
-  clog<<"\n";
 
   D /= D.sum();
 
