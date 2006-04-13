@@ -11,4 +11,6 @@ double dirichlet_fiddle_old(std::valarray<double>& p,double sigma);
 
 double dirichlet_fiddle_old(std::valarray<double>& p,double sigma,const std::valarray<bool>& mask);
 
+double scale_gaussian(double& x,double sigma);
+
 #endif

@@ -7,6 +7,7 @@
 #include "substitution-index.H"
 #include "substitution.H"
 #include "likelihood.H"
+#include "proposals.H"
 
 using MCMC::MoveStats;
 
@@ -30,12 +31,6 @@ double branch_twiddle(double& T,double sigma) {
 double branch_twiddle_positive(double& T,double sigma) {
   double ratio = branch_twiddle(T,sigma);
   T = std::abs(T);
-  return ratio;
-}
-
-double log_branch_twiddle(double& T, double sigma) {
-  double ratio = exp( gaussian(0,sigma) );
-  T *= ratio;
   return ratio;
 }
 
@@ -74,7 +69,7 @@ void change_branch_length_flat(const alignment& A, Parameters& P,MoveStats& Stat
 
 void change_branch_length_log_scale(const alignment& A, Parameters& P,MoveStats& Stats,int b,double sigma)
 {
-  MCMC::Result result = change_branch_length_(A, P, b, sigma, log_branch_twiddle);
+  MCMC::Result result = change_branch_length_(A, P, b, sigma, scale_gaussian );
 
   Stats.inc("branch-length (log)",result);
 }

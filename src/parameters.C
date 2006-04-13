@@ -3,6 +3,7 @@
 #include "substitution.H"
 #include "likelihood.H"
 #include "util.H"
+#include "proposals.H"
 
 efloat_t Parameters::basic_likelihood(const alignment& A,const Parameters& P) const {
   if (SModel_->full_tree)
@@ -71,11 +72,11 @@ void Parameters::recalc() {
 
 
 double Parameters::fiddle_smodel(int i) {
-  double rho = 1;
+  double ratio = 1;
 
   if (SModel_->parameters().size()) {
     // Fiddle substitution parameters and recalculate rate matrices
-    rho = SModel_->fiddle(i);
+    ratio = SModel_->fiddle(i);
     SModel_->set_rate(1);
 
     // Recalculate the branch transition matrices
@@ -83,12 +84,10 @@ double Parameters::fiddle_smodel(int i) {
   }
 
   double sigma = loadvalue(keys,"mu_sigma",0.20);
-  double ratio = exp(gaussian(0,sigma)); 
-  branch_mean *= ratio;
 
-  rho *= ratio;
+  ratio *= scale_gaussian(branch_mean, sigma);
 
-  return rho;
+  return ratio;
 }
 
 double Parameters::fiddle_imodel(int i) 

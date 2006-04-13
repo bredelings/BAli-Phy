@@ -992,10 +992,8 @@ namespace substitution {
   {
     double ratio = 1;
 
-    if (not fixed(0)) {
-      ratio = exp(gaussian(0,0.20));
-      super_parameters_[0] *= ratio;
-    }
+    if (not fixed(0))
+      ratio = scale_gaussian(super_parameters_[0], 0.2);
 
     read();
     recalc();

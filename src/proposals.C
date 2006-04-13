@@ -93,3 +93,10 @@ double dirichlet_fiddle_old(valarray<double>& p2,double sigma,const valarray<boo
 
   return 1.0;
 }
+
+double scale_gaussian(double& x, double sigma)
+{
+  double scale = exp( gaussian(0,sigma) );
+  x *= scale;
+  return scale;
+}
