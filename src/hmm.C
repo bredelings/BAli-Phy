@@ -230,9 +230,6 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double B
    start_P(v2),state_emit(v1) 
 {
 
-  // ----------- !! Heated chains don't work w/ pair-HMMs !! ---------------//
-  // --------- !!  So, only heat the emission probabilities !! -------------//
-
   //--------------- Find and index nodes in silent networks ---------------//
   find_and_index_silent_network_states();
 
@@ -266,7 +263,6 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double B
       non_silent_network.push_back(S);
   
   //---------------- compute the probability of -------------------//
-
   GQ_exit(GQ, silent_network_states, non_silent_network);
 
 #ifndef NDEBUG
