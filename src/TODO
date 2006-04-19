@@ -1,8 +1,14 @@
 -------------------------------------------------------
 Named parameters, priors, and proposals branch!
 
+-44. Allow 'mu' to be fixed.
+
+-43. Allow move to call other moves.
+  + For example, NNI_and_lengths( ) should be able to call various length
+    moves, and get their results recorded in their own counters...  
+
 -42. Allow priors to attach to the Parameters structure by name!
-  + 
+  + This should allow priors to 
 
 -41. Allow proposals to attach to the Parameters structure by name!
   + Can proposals be sub-models?
@@ -46,7 +52,7 @@ Named parameters, priors, and proposals branch!
   + how do we make mu and branch length priors conjugate?
   + can we still scale the branch lengths if we do that?
 
--33. Site-dependend equilibrium frequencies:
+-33. Site-dependent equilibrium frequencies:
   + Question: does entropy of frequencies affect branch lengths?
   + Combine saturation with (site-dependent) rate-change across the tree ?
   + Check effect of non-equivalent equilbrium frequencies.
@@ -67,14 +73,14 @@ Named parameters, priors, and proposals branch!
      + expand the 5SrRNA data set.
      + run it!
 
--8.  tree-dist.C: store topology as list of locations in partition list?
+-26.  tree-dist.C: store topology as list of locations in partition list?
    a) Would this save memory?
       Some, if some of full partitions have a high frequency.
 
    b) Would this save CPU time?  Examine each partition once instead of n times.
       [But this wouldn't help for sub-partitions, would it?]
 
--6. Benchmarking of mixing... 
+-24. Benchmarking of mixing... 
   a) try with alignment fixed
   b) look at log autocorrelation and effective sample sizes for distances
      between 2 nodes + sum all branches + sum all paths
@@ -104,8 +110,6 @@ Named parameters, priors, and proposals branch!
      This will allow us to separate the build rules for the tools
      and the main sampler.
 
-
-
 -22. FastLSA with Constraints:
   + We have a series of tiles that are linked at their corners.
     - In each tile, we go forward given the (0,0) corner
@@ -125,10 +129,6 @@ Named parameters, priors, and proposals branch!
       different alphabets.  (Hopefully we will not handle alphabets)
 
      Make alignment-cut read from stdin if no input args.
-
--19. Read Schmidler papers + others from postdoc e-mail.
-
--18. Read Seo paper + others
 
 -17. trees-consensus: report number of branches.
 
@@ -175,27 +175,6 @@ Named parameters, priors, and proposals branch!
 -3. Think more carefully about using walk_tree_path
     when changing the topology...
 
--2. Test various ways of improving mixing
-  a) more branch length proposals
-  b) branch length proposals in more passes? (how does this affect timing?)
-  c) propose scaling the entire tree
-  d) propose branch lengths on the log scale...
-  e) increase the number of SPR moves
-  f) look for papers - by largett's student - on tree mixing
-    i) swofford, largett, huelsenbeck - ?
-
--1. Find a way to allow substitution models to propose a lot of different
-    changes each time we try to propose new parameters.
-    a) ask the model for a number of fiddles to do, and then do
-       for(int i=0;i<n_fiddles;i++) {
-	 model2 = smodel
-         rho = model2->fiddle(i)
-         accept/reject(model,model2,rho)
-       }
-
--i.  We need a way of separating priors and proposals from models...
-     Hmmmm.
-
 ------
 0. Plot #topologies in confidence interval (0,p) vs p. (e.g. sort topologies)
     Then plot this versus time...
@@ -204,13 +183,10 @@ Named parameters, priors, and proposals branch!
 
     Figure out burnin for bacteria data sets...
 
-1. Reduce memory usage:
- b) use FastLSA algorithm to change memory usage to O(N+M)*k instead of O(N*M)
-
-2. Try with STLport, mudflap, valgrind, etc.
+1. Try with STLport, mudflap, valgrind, etc.
   a) STLport could actually give us a speedup!
 
-2.5. Make a better framework for reporting acceptance rates.
+2. Make a better framework for reporting acceptance rates.
   a) pass an object to each move to record stats.
   b) each move records stats under a name that it passes.
 
@@ -657,3 +633,7 @@ rates.
    read by tracer.
 
  - Write to a file 'out' instead of cout.
+
+ - Improve mixing for branch length mean 'mu'
+
+ - Fix sampling of frequency parameters by using dirichlet proposal.
