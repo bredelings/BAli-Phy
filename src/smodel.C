@@ -181,7 +181,7 @@ namespace substitution {
     }
 
     // propose new frequencies
-    const double N = 10;
+    const double N = 4000;
 
     double ratio = dirichlet_fiddle(parameters_, fixed_, 1, size(), N);
 
