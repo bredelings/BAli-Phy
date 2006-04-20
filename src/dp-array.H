@@ -86,7 +86,7 @@ public:
   efloat_t Pr_sum_all_paths() const;
 
   /// Change length
-  void set_length(int l);
+  virtual void set_length(int l);
 
   /// Construct an 1D DP matrix from a length, and an HMM
   DParray(int,const vector<int>&,const vector<double>&,const Matrix&,double Beta);
@@ -114,6 +114,9 @@ public:
   void forward(int);
 
   void prune();
+
+  /// Change length
+  void set_length(int l);
 
   /// Construct an 1D DP matrix from a length, and an HMM
   DParrayConstrained(int,const vector<int>&,const vector<double>&,const Matrix&, double Beta);

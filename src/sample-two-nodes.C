@@ -42,8 +42,9 @@ using namespace A5;
 // We can choose between them with the total_sum (I mean, sum_all_paths).
 // Then, we can just debug one routine, basically.
 
-RefPtr<DParrayConstrained> sample_two_nodes_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
-
+void sample_two_nodes_base(alignment& A,const Parameters& P,const vector<int>& nodes,
+			   DParrayConstrained*& Matrices) 
+{
   const Tree& T = P.T;
   alignment old = A;
 
@@ -120,15 +121,30 @@ RefPtr<DParrayConstrained> sample_two_nodes_base(alignment& A,const Parameters& 
   branches[2] = T.branch(nodes[2],nodes[5]);
   branches[3] = T.branch(nodes[3],nodes[5]);
   branches[4] = T.branch(nodes[4],nodes[5]);
-  const Matrix Q = createQ(P.branch_HMMs,branches,A5::states_list);
   vector<double> start_P = get_start_P(P.branch_HMMs,branches);
 
   // Actually create the Matrices & Chain
-  RefPtr<DParrayConstrained> Matrices = new DParrayConstrained(seqall.size(), 
-							       state_emit_1D, 
-							       start_P,
-							       Q, 
-							       P.beta[0]);
+  if (not Matrices) 
+  {
+    const Matrix Q = createQ(P.branch_HMMs,branches,A5::states_list);
+
+    Matrices = new DParrayConstrained(seqall.size(), state_emit_1D, 
+				      start_P, Q, 
+				      P.beta[0]);
+  }
+  else 
+  {
+    A5::updateQ(Matrices->Q,P.branch_HMMs,branches,A5::states_list); // 7%
+    // A5::fillQ(Matrices->Q,P.branch_HMMs,branches,A5::states_list); // 16%
+    Matrices->update_GQ();         // 12%
+    Matrices->start_P = start_P;
+    Matrices->set_length(seqall.size());
+  }
+  for(int i=0;i<Matrices->size();i++)
+    for(int j=0;j<Matrices->nstates();j++)
+      (*Matrices)(i,j) = 0;
+  for(int s=0;s<start_P.size();s++)
+    (*Matrices)(0,s) = start_P[s];
 
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices->size();c2++) {
@@ -136,6 +152,7 @@ RefPtr<DParrayConstrained> sample_two_nodes_base(alignment& A,const Parameters& 
     int j2 = jcol[c2];
     int k2 = kcol[c2];
     int l2 = lcol[c2];
+    Matrices->states(c2).clear();
     Matrices->states(c2).reserve(Matrices->nstates());
     for(int i=0;i<Matrices->nstates();i++) {
       int S2 = Matrices->order(i);
@@ -197,9 +214,9 @@ RefPtr<DParrayConstrained> sample_two_nodes_base(alignment& A,const Parameters& 
   assert(path_new   == path);
   assert(valid(A));
 #endif
-
-  return Matrices;
 }
+
+static vector<DParrayConstrained*> cached_dparrays;
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
 int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,const vector< vector<int> >& nodes_,
@@ -216,9 +233,13 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,const vect
   const Parameters P0 = p[0];
 #endif
 
-  vector< RefPtr<DParrayConstrained> > Matrices;
+  if (cached_dparrays.size() < p.size())
+    cached_dparrays.resize(p.size());
+
+  vector<DParrayConstrained*> Matrices;
   for(int i=0;i<p.size();i++) {
-    Matrices.push_back( sample_two_nodes_base(a[i],p[i],nodes[i]) );
+    sample_two_nodes_base(a[i],p[i],nodes[i],cached_dparrays[i]);
+    Matrices.push_back(cached_dparrays[i]);
     //    p[i].LC.invalidate_node(p[i].T,nodes[i][4]);
     //    p[i].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG

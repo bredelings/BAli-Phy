@@ -95,6 +95,12 @@ void DParray::set_length(int l)
 {
   length = l+1;
   state_array::resize(length, nstates());
+
+  // clear the beginning of the array
+  for(int s=0;s<start_P.size();s++)
+    (*this)(0,s) = start_P[s];
+
+  Pr_total = 0;
 }
 
 DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Beta)
@@ -104,8 +110,6 @@ DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matr
 
   for(int s=0;s<start_P.size();s++)
     (*this)(0,s) = start_P[s];
-
-  scale(0) = 0;
 }
 
 inline void DParrayConstrained::forward(int i2) 
@@ -204,8 +208,16 @@ void DParrayConstrained::prune() {
   std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<endl;
 }
 
+void DParrayConstrained::set_length(int l)
+{
+  DParray::set_length(l);
+  allowed_states.resize(size());
+}
+
 DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Beta)
-  :DParray(l,v1,v2,M,Beta),allowed_states(l+1)
-{ }
+  :DParray(l,v1,v2,M,Beta)
+{ 
+  allowed_states.resize(size());
+}
 
 

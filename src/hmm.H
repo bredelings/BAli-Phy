@@ -14,8 +14,11 @@ class HMM {
   /// Is each state part of the silent network?
   vector<int> silent_network_;
 
-  /// Order list of states that are part of silent networks
+  /// Ordered list of states that are part of silent networks
   vector<int> silent_network_states;
+
+  /// Ordered list of states that are not part of silent networks
+  vector<int> non_silent_network;
 
   /// An ordered list of states, for DP
   vector<int> order_;
@@ -33,6 +36,8 @@ public:
 
   /// The 'generalized' transition matrix - silent loops removed
   Matrix GQ;
+
+  void update_GQ();
 
   bool connected_Q(int S1,int S2) const {return Q(S1,S2) != 0.0;}
 

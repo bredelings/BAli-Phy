@@ -222,11 +222,17 @@ void HMM::find_and_index_silent_network_states() {
 }
 
 
+void HMM::update_GQ()
+{
+  GQ = Q;
+  GQ_exit(GQ, silent_network_states, non_silent_network);
+}
+
 // Don't scale Q and GQ until the end???
 HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Beta)
   :silent_network_(v1.size()),
    B(Beta),
-   Q(M),GQ(M),
+   Q(M),GQ(M.size1(),M.size2()),
    start_P(v2),state_emit(v1) 
 {
 
@@ -256,14 +262,13 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double B
   //------------ Compute the Generalized Transition Matrix, if we've got silent_network states
 
   //index the non silent network states
-  vector<int> non_silent_network;
   non_silent_network.reserve(nstates()+1);
   for(int S=0;S<nstates()+1;S++)
     if (not silent_network(S))
       non_silent_network.push_back(S);
   
   //---------------- compute the probability of -------------------//
-  GQ_exit(GQ, silent_network_states, non_silent_network);
+  update_GQ();
 
 #ifndef NDEBUG
   //---------------------------- Check GQ --------------------------//
