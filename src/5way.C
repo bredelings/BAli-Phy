@@ -346,13 +346,32 @@ namespace A5 {
   }
 
   /// Create the full transition matrix
-  Matrix createQ(const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  void updateQ(Matrix& Q,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
   {
-    Matrix Q(states.size(),states.size());
+    Q.resize(states.size(),states.size());
+
+    for(int i=0;i<Q.size1();i++)
+      for(int j=0;j<Q.size2();j++)
+	if (Q(i,j) > 0.0)
+	  Q(i,j) = getQ(i,j,P,br,states);
+  }
+
+  /// Create the full transition matrix
+  void fillQ(Matrix& Q,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  {
+    Q.resize(states.size(),states.size());
 
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
 	Q(i,j) = getQ(i,j,P,br,states);
+  }
+
+  /// Create the full transition matrix
+  Matrix createQ(const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  {
+    Matrix Q(states.size(),states.size());
+
+    fillQ(Q,P,br,states);
 
     return Q;
   }

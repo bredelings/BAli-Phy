@@ -38,6 +38,11 @@ namespace A5 {
   /// Compute the probability of moving from state #S1 to state #S2
   double getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br,
 		const vector<int>& states);
+
+  /// Update the full transition matrix
+  void updateQ(Matrix& Q,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states);
+  /// Full the full transition matrix
+  void fillQ(Matrix& Q,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states);
   /// Create the full transition matrix
   Matrix createQ(const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states);
 
