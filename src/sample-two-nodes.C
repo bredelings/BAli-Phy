@@ -140,11 +140,6 @@ void sample_two_nodes_base(alignment& A,const Parameters& P,const vector<int>& n
     Matrices->start_P = start_P;
     Matrices->set_length(seqall.size());
   }
-  for(int i=0;i<Matrices->size();i++)
-    for(int j=0;j<Matrices->nstates();j++)
-      (*Matrices)(i,j) = 0;
-  for(int s=0;s<start_P.size();s++)
-    (*Matrices)(0,s) = start_P[s];
 
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices->size();c2++) {

@@ -112,6 +112,37 @@ DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matr
     (*this)(0,s) = start_P[s];
 }
 
+vector<int> DParrayConstrained::sample_path() const {
+  vector<int> path;
+  
+  const int I = size()-1;
+  int i = I;
+
+  int state2 = endstate();
+
+  vector<double> transition(nstates());
+
+  while(i >= 0) {
+    path.push_back(state2);
+    transition.resize(states(i).size());
+    for(int s1=0;s1<transition.size();s1++) {
+      int state1 = states(i)[s1];
+      transition[s1] = (*this)(i,state1)*GQ(state1,state2);
+    }
+
+    int s1 = choose_scratch(transition);
+    int state1 = states(i)[s1];
+
+    if (di(state1)) i--;
+
+    state2 = state1;
+  }
+  assert(i+di(state2)==0);
+
+  std::reverse(path.begin(),path.end());
+  return path;
+}
+
 inline void DParrayConstrained::forward(int i2) 
 {
   assert(i2<size());

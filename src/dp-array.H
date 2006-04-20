@@ -80,7 +80,7 @@ public:
   virtual void forward(int)=0;
 
   /// Sample a path from the HMM
-  vector<int> sample_path() const;
+  virtual vector<int> sample_path() const;
 
   /// Compute the probability of all possible paths through theHMM
   efloat_t Pr_sum_all_paths() const;
@@ -112,6 +112,9 @@ public:
 
   /// Compute the forward probabilities for one cell
   void forward(int);
+
+  /// Sample a path from the HMM
+  vector<int> sample_path() const;
 
   void prune();
 
