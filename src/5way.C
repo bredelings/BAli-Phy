@@ -348,8 +348,6 @@ namespace A5 {
   /// Create the full transition matrix
   void updateQ(Matrix& Q,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
   {
-    Q.resize(states.size(),states.size());
-
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
 	if (Q(i,j) > 0.0)
@@ -359,8 +357,6 @@ namespace A5 {
   /// Create the full transition matrix
   void fillQ(Matrix& Q,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
   {
-    Q.resize(states.size(),states.size());
-
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
 	Q(i,j) = getQ(i,j,P,br,states);
