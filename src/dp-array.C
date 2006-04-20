@@ -89,11 +89,19 @@ efloat_t DParray::Pr_sum_all_paths() const {
   return pow<efloat_t>(2.0,scale(I)) * total;
 }
 
+/// Here we set the SEQUENCE length 'l'.  This gives rise to a
+/// DP array of length 'l+1'.
+void DParray::set_length(int l)
+{
+  length = l+1;
+  state_array::resize(length, nstates());
+}
+
 DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Beta)
-  :DPengine(v1,v2,M,Beta),
-   state_array(l+1,nstates()),
-   length(l+1)
+  :DPengine(v1,v2,M,Beta)
 { 
+  set_length(l);
+
   for(int s=0;s<start_P.size();s++)
     (*this)(0,s) = start_P[s];
 

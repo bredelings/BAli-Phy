@@ -9,7 +9,6 @@ class state_array: public RefObject
 {
   int s1;
   int s2;
-  int s3;
 
   vector<double> data;
   vector<int> scale_;
@@ -40,11 +39,22 @@ public:
     return scale_[i];
   }
 
+  void resize(int i1,int i2)
+  {
+    s1 = i1; s2 = i2;
+    data.resize(s1*s2);
+    scale_.resize(s1);
+  }
+
+  state_array()
+    :s1(0),
+     s2(0)
+  { }
+
   state_array(int i1,int i2)
-    :s1(i1),s2(i2),
-     data(i1*i2),
-     scale_(i1)
-  {}
+    :s1(0),
+     s2(0)
+  { resize(i1,i2); }
 };
 
 
@@ -74,6 +84,9 @@ public:
 
   /// Compute the probability of all possible paths through theHMM
   efloat_t Pr_sum_all_paths() const;
+
+  /// Change length
+  void set_length(int l);
 
   /// Construct an 1D DP matrix from a length, and an HMM
   DParray(int,const vector<int>&,const vector<double>&,const Matrix&,double Beta);
