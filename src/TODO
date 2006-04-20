@@ -32,6 +32,7 @@ Named parameters, priors, and proposals branch!
   + add --skip
   + add --by
   + add --max ?  The total number of samples to keep.
+  + should I interpret the 1st column as iterations???
 
 -37. Improve trees-consensus
   + Compute the entire set of branches / counts for full partitions.
