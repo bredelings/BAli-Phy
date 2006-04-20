@@ -33,10 +33,10 @@ public:
   virtual Model* clone() const =0;
 
   /// the prior for the model, on the same scale as 'fiddle()'
-  virtual efloat_t prior() const =0;
+  virtual efloat_t prior() const {return 1.0;}
 
   /// a proposal distribution (calls recalc)
-  virtual double fiddle(int) =0;
+  virtual double fiddle(int) {return 1.0;}
 
   bool fixed(int i) const {return fixed_[i];}
 
@@ -92,12 +92,13 @@ public:
 
 
 /// Abstract class for substitution models built on submodels
-class SuperModel: virtual public Model {
+class SuperModel: virtual public Model 
+{
 protected:
   std::vector<double> super_parameters_;
 
   /// The prior for the parameters of the upper model
-  virtual efloat_t super_prior() const =0;
+  virtual efloat_t super_prior() const {return 1.0;}
   
   /// Fiddle the parameters of the upper model (may need to call recalc)
   virtual double super_fiddle(int) {recalc();return 1;}
@@ -106,22 +107,11 @@ protected:
 
   virtual const std::vector<double>& super_parameters() const {return super_parameters_;}
 
-  virtual void super_parameters(const std::vector<double>&p) {
+  virtual void super_parameters(const std::vector<double>& p) {
     assert(p.size() == super_parameters_.size());
     super_parameters_ = p;
     recalc();
   }
-  
-  bool fixed(int i) {return Model::fixed(i);}
-
-  virtual void fixed(int i,bool f) {Model::fixed(i,f); write();}
-
-  virtual void fixed(const std::vector<bool>& f) {Model::fixed(f); write();}
-
-  /// Access the submodel
-  virtual const Model& SubModels(int) const=0;
-  virtual Model& SubModels(int)=0;
-  virtual int n_submodels() const=0;
   
   void recalc();
 
@@ -138,6 +128,17 @@ public:
   std::string parameter_name(int i) const;
   
   efloat_t prior() const;
+  
+  bool fixed(int i) {return Model::fixed(i);}
+
+  virtual void fixed(int i,bool f) {Model::fixed(i,f); write();}
+
+  virtual void fixed(const std::vector<bool>& f) {Model::fixed(f); write();}
+
+  /// Access the submodel
+  virtual const Model& SubModels(int) const=0;
+  virtual Model& SubModels(int)=0;
+  virtual int n_submodels() const=0;
   
   /// propose parameters (calls recalc through super_fiddle if necessary)
   double fiddle(int); 

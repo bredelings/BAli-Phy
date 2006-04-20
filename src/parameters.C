@@ -71,7 +71,8 @@ void Parameters::recalc() {
 }
 
 
-double Parameters::fiddle_smodel(int i) {
+double Parameters::fiddle_smodel(int i) 
+{
   double ratio = 1;
 
   if (SModel_->parameters().size()) {
@@ -85,7 +86,11 @@ double Parameters::fiddle_smodel(int i) {
 
   double sigma = loadvalue(keys,"mu_sigma",0.20);
 
-  ratio *= scale_gaussian(branch_mean, sigma);
+  if (not fixed(0)) {
+    double mu = branch_mean();
+    ratio *= scale_gaussian(mu, sigma);
+    branch_mean(mu);
+  }
 
   return ratio;
 }
@@ -97,10 +102,57 @@ double Parameters::fiddle_imodel(int i)
   return rho;
 }
 
+
+Model& Parameters::SubModels(int i)
+{
+  if (i==0)
+    return SModel();
+  else if (i==1)
+    return IModel();
+  else
+    std::abort();
+}
+
+const Model& Parameters::SubModels(int i) const
+{
+  if (i==0)
+    return SModel();
+  else if (i==1)
+    return IModel();
+  else
+    std::abort();
+}
+
+int Parameters::n_submodels() const
+{
+  if (IModel_) 
+    return 2;
+  else
+    return 1;
+}
+
+string Parameters::super_parameter_name(int i) const
+{
+  if (i == 0)
+    return "mu";
+  else
+    return ::parameter_name("f",i,1);
+}
+
 void Parameters::setlength(int b,double l) {
   MatCache::setlength(b,l,T,*SModel_); 
   branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
   LC.invalidate_branch(T,b);
+}
+
+double Parameters::branch_mean() const 
+{
+  return parameters_[0];
+}
+
+void Parameters::branch_mean(double mu)
+{
+  parameters_[0] = super_parameters_[0] = mu;
 }
 
 Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,const SequenceTree& t)
@@ -113,6 +165,17 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
    T(t),
    LC(T,SModel())
 {
-  branch_mean = 0.1;
-  constants.push_back(-1);
+   constants.push_back(-1);
+
+  // set up super_parameters_ and parameters
+  super_parameters_.resize(1);
+  super_parameters_[0] = 0.1;
+
+  int total=0;
+  for(int m=0;m<n_submodels();m++)
+    total += SubModels(m).parameters().size();
+  
+  set_n_parameters(total + 1);
+    
+  read();
 }

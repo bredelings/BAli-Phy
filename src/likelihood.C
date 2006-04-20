@@ -61,10 +61,10 @@ efloat_t prior(const Parameters& P) {
   const double branch_mean_mean = 0.04;
 
   // prior on mu, the mean branch length
-  p *= exponential_pdf(P.branch_mean, branch_mean_mean);
+  p *= exponential_pdf(P.branch_mean(), branch_mean_mean);
 
   // prior on the topology and branch lengths
-  p *= prior(P, P.T, P.branch_mean);
+  p *= prior(P, P.T, P.branch_mean());
 
   // prior on the substitution model
   p *= P.SModel().prior();

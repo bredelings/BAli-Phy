@@ -217,28 +217,6 @@ void operator delete(void * p) throw() {
 }
 #endif
 
-void set_parameters(Parameters& P, const variables_map& args) 
-{
-  //-------------- Specify fixed parameters ----------------//
-  vector<string> doset;
-  if (args.count("set"))
-    doset = args["set"].as<vector<string> >();
-
-  // set parameters
-  for(int i=0;i<doset.size();i++) {
-    //parse
-    vector<string> parse = split(doset[i],'=');
-    if (parse.size() != 2)
-      throw myexception()<<"Ill-formed initial condition '"<<doset[i]<<"'.";
-
-    string name = parse[0];
-    double value = convertTo<double>(parse[1]);
-
-    P.keys[name] = value;
-  }
-
-}
-
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
   using namespace po;
@@ -304,16 +282,90 @@ variables_map parse_cmd_line(int argc,char* argv[])
     exit(0);
   }
 
-  if (not args.count("align"))
-    throw myexception()<<"No sequence file given.";
-
   if (args.count("help")) {
     cout<<"Usage: bali-phy <sequence-file> [OPTIONS]\n";
     cout<<all<<"\n";
     exit(0);
   }
 
+  if (not args.count("align"))
+    throw myexception()<<"No sequence file given.";
+
   return args;
+}
+
+//FIXME - how to record that the user said '--fix A' ?
+
+void set_parameters(Parameters& P, const variables_map& args) 
+{
+  //-------------- Specify fixed parameters ----------------//
+  vector<string>   fix;
+  if (args.count("fix"))
+    fix = args["fix"].as<vector<string> >();
+
+  vector<string> unfix;
+  if (args.count("unfix"))
+    unfix = args["unfix"].as<vector<string> >();
+
+  vector<string> doset;
+  if (args.count("set"))
+    doset = args["set"].as<vector<string> >();
+
+  // separate out 'set' operations from 'fixed'
+  for(int i=0;i<fix.size();i++) {
+    vector<string> parse = split(fix[i],'=');
+    
+    if (parse.size() > 1) {
+      doset.push_back(fix[i]);
+      fix[i] = parse[0];
+    }
+  }
+
+  // separate out 'set' operations from 'unfixed'
+  for(int i=0;i<unfix.size();i++) {
+    vector<string> parse = split(unfix[i],'=');
+    
+    if (parse.size() > 1) {
+      doset.push_back(unfix[i]);
+      unfix[i] = parse[0];
+    }
+  }
+
+  // fix parameters
+  for(int i=0;i<fix.size();i++) {
+    int p=-1;
+    if (p=find_parameter(P,fix[i]),p!=-1)
+      P.fixed(p,true);
+    else
+      throw myexception()<<"Can't find parameter '"<<fix[i]<<"' to unfix.";
+  }
+
+  // unfix parameters
+  for(int i=0;i<unfix.size();i++) {
+    int p=-1;
+    if (p=find_parameter(P,unfix[i]),p!=-1)
+      P.fixed(p,false);
+    else
+      throw myexception()<<"Can't find parameter '"<<unfix[i]<<"' to unfix.";
+  }
+
+  // set parameters
+  for(int i=0;i<doset.size();i++) {
+    //parse
+    vector<string> parse = split(doset[i],'=');
+    if (parse.size() != 2)
+      throw myexception()<<"Ill-formed initial condition '"<<doset[i]<<"'.";
+
+    string name = parse[0];
+    double value = convertTo<double>(parse[1]);
+
+    int p=-1;
+    if (p=find_parameter(P,name),p!=-1)
+      P.parameter(p,value);
+    else
+      P.keys[name] = value;
+  }
+
 }
 
 string get_base_name(string filename)

@@ -19,7 +19,7 @@
 //------------------------------- parameter-containing class --------------------------//
 
 /// A class to contain all the MCMC state except the alignment
-class Parameters: public MatCache
+class Parameters: public MatCache, public SuperModel
 {
   /// The IndelModel
   OwnedPointer<IndelModel> IModel_;
@@ -103,8 +103,18 @@ public:
   void recalc_imodel();
   void recalc_smodel();
 
+  Parameters* clone() const {return new Parameters(*this);}
+
+  string name() const {return "Full Model";}
+  string super_parameter_name(int) const;
+
+  const Model& SubModels(int) const;
+  Model& SubModels(int);
+  int n_submodels() const;
+
   /// parameter for exponential prior on branch length
-  double branch_mean; 
+  double branch_mean() const; 
+  void branch_mean(double);
 
   Parameters(const substitution::MultiModel&,const IndelModel&,const SequenceTree&);
 };

@@ -45,8 +45,6 @@ std::valarray<double> letter_counts(const alignment& A);
 /// Count how many times letter 'l' occurss in A (including *,-,?)
 int letter_count(const alignment& A,int l);
 
-void set_parameters(Model& M, const boost::program_options::variables_map& args);
-
 //------------------------ Substitution stuff ----------------------//
 
 /// Return a substitution::Model specified by args

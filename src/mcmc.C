@@ -453,8 +453,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   
   s_parameters<<"iter\t";
   s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
-  s_parameters<<"mu\t"<<P.SModel().header()<<"\t";
-  s_parameters<<P.IModel().header()<<endl;
+  s_parameters<<P.header()<<endl;
 
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max; iterations++) {
@@ -477,8 +476,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
 
       s_parameters<<iterations<<"\t";
       s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
-      s_parameters<<P.branch_mean<<"\t"<<P.SModel().state()<<"\t";
-      s_parameters<<P.IModel().state()<<endl;
+      s_parameters<<P.state()<<endl;
     }
 
     if (iterations%20 == 0) {

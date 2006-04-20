@@ -76,10 +76,7 @@ void print_stats(std::ostream& o,std::ostream& trees,
   
   trees<<P.T<<std::endl;
   
-  o<<  "    mu = "<<P.branch_mean<<"   ";
-  show_parameters(o,P.SModel());
-
-  show_parameters(o,P.IModel());
+  show_parameters(o,P);
   o.flush();
 
   for(int i=0;i<P.SModel().n_base_models();i++)

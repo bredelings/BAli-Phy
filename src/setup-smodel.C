@@ -435,10 +435,6 @@ get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& 
   else
     full_smodel->full_tree = true;
       
-
-  //------ Set frequencies for base markov model -------//
-  set_parameters(*full_smodel,args);
-
   return full_smodel;
 }
 

@@ -62,7 +62,7 @@ MCMC::Result change_branch_length_(const alignment& A, Parameters& P,int b,
 
 void change_branch_length_flat(const alignment& A, Parameters& P,MoveStats& Stats,int b,double sigma)
 {
-  MCMC::Result result = change_branch_length_(A, P, b, sigma*P.branch_mean, branch_twiddle_positive);
+  MCMC::Result result = change_branch_length_(A, P, b, sigma*P.branch_mean(), branch_twiddle_positive);
 
   Stats.inc("branch-length",result);
 }
@@ -105,7 +105,7 @@ void change_branch_length_and_T(alignment& A, Parameters& P,MoveStats& Stats,int
   //------------- Propose new length --------------//
   const double length = P.T.branch(b).length();
   double newlength = length;
-  double ratio = branch_twiddle(newlength,P.branch_mean*0.6);
+  double ratio = branch_twiddle(newlength,P.branch_mean()*0.6);
 
   //----- positive  =>  propose length change -----//
   if (newlength >= 0) 
@@ -250,6 +250,9 @@ void slide_node(const alignment& A, Parameters& P,MoveStats& Stats,int b0)
 
 void scale_branch_lengths_and_mean(alignment& A, Parameters& P,MoveStats& Stats) 
 {
+  if (P.fixed(0))
+    return;
+
   MCMC::Result result(2);
 
   //------------ Propose scaling ratio ------------//
@@ -264,7 +267,8 @@ void scale_branch_lengths_and_mean(alignment& A, Parameters& P,MoveStats& Stats)
     const double length = P.T.branch(b).length();
     P2.setlength(b, length * scale);
   }
-  P2.branch_mean *= scale;
+
+  P2.branch_mean(P2.branch_mean() * scale);
 
   double ratio =  pow(scale, 1 + T.n_branches() );
 

@@ -306,72 +306,6 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
   check_alignment(A,T,internal_sequences);
 }
 
-void set_parameters(Model& M, const variables_map& args) 
-{
-  //-------------- Specify fixed parameters ----------------//
-  vector<string>   fix;
-  if (args.count("fix"))
-    fix = args["fix"].as<vector<string> >();
-
-  vector<string> unfix;
-  if (args.count("unfix"))
-    unfix = args["unfix"].as<vector<string> >();
-
-  vector<string> doset;
-  if (args.count("set"))
-    doset = args["set"].as<vector<string> >();
-
-  // separate out 'set' operations from 'fixed'
-  for(int i=0;i<fix.size();i++) {
-    vector<string> parse = split(fix[i],'=');
-    
-    if (parse.size() > 1) {
-      doset.push_back(fix[i]);
-      fix[i] = parse[0];
-    }
-  }
-
-  // separate out 'set' operations from 'unfixed'
-  for(int i=0;i<unfix.size();i++) {
-    vector<string> parse = split(unfix[i],'=');
-    
-    if (parse.size() > 1) {
-      doset.push_back(unfix[i]);
-      unfix[i] = parse[0];
-    }
-  }
-
-  // fix parameters
-  for(int i=0;i<fix.size();i++) {
-    int p=-1;
-    if (p=find_parameter(M,fix[i]),p!=-1)
-      M.fixed(p,true);
-  }
-
-  // unfix parameters
-  for(int i=0;i<unfix.size();i++) {
-    int p=-1;
-    if (p=find_parameter(M,unfix[i]),p!=-1)
-      M.fixed(p,false);
-  }
-
-  // set parameters
-  for(int i=0;i<doset.size();i++) {
-    //parse
-    vector<string> parse = split(doset[i],'=');
-    if (parse.size() != 2)
-      throw myexception()<<"Ill-formed initial condition '"<<doset[i]<<"'.";
-
-    string name = parse[0];
-    double value = convertTo<double>(parse[1]);
-
-    int p=-1;
-    if (p=find_parameter(M,name),p!=-1)
-      M.parameter(p,value);
-  }
-
-}
-
 OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
   //-------------Choose an indel model--------------//
   OwnedPointer<IndelModel> imodel;
@@ -389,8 +323,6 @@ OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
     imodel->full_tree = false;
   else
     imodel->full_tree = true;
-
-  set_parameters(*imodel,args);
 
   return imodel;
 }
