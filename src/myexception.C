@@ -1,6 +1,26 @@
 #include "myexception.H"
 #include <vector>
+#include <iostream>
 using namespace std;
+
+myexception::myexception() throw()
+{
+#ifndef NDEBUG
+  std::abort();
+#endif
+}
+
+myexception::myexception(const string& s) throw()
+  :why(s)
+{
+#ifndef NDEBUG
+  std::cerr<<why<<endl;
+  std::abort();
+#endif
+}
+
+
+
 
 #ifdef __linux__
 #include <execinfo.h>
