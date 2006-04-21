@@ -23,7 +23,8 @@ int choose_scratch(const std::vector<F>& P, std::vector<F>& sum)
     if (r < sum[i])
       return i;
 
-  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
+  std::cerr<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
+  std::abort();
 }
 
 template <typename F>
@@ -58,7 +59,8 @@ int choose_MH_scratch(int i,const std::vector<F>& P, std::vector<F>& sum)
   if (r < total - min)
     return i;
 
-  throw myexception()<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
+  std::cerr<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
+  std::abort();
 }
 
 template <typename F>
