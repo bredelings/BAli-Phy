@@ -52,11 +52,13 @@ void Parameters::recalc_imodel() {
   // recalculate the cached branch HMMs
   for(int b=0;b<branch_HMMs.size();b++)
     branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
+  read();
 }
 
 void Parameters::recalc_smodel() {
   // set the rate to one
   SModel_->set_rate(1);
+  read();
 
   //invalidate cached conditional likelihoods in case the model has changed
   LC.invalidate_all();
