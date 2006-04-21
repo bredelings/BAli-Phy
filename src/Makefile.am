@@ -48,13 +48,10 @@ endif
 endif
 
 if DEBUG
-DBG = debug
 CXXFLAGS += -g
 else
-DBG =
 CXXFLAGS += -DNDEBUG -DNDEBUG_DP
 endif
-noinst_PROGRAMS = $(DBG)
 
 CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
 
