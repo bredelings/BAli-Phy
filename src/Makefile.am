@@ -97,15 +97,15 @@ model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C
 
 #-------------------------- statreport --------------------------
 
-statreport_SOURCES = tools/statreport.C tools/statistics.C util.C tools/stats-table.C myexception.C
+statreport_SOURCES = tools/statreport.C tools/statistics.C util.C tools/stats-table.C
 
 #-------------------------- statreport --------------------------
 
-stats_merge_SOURCES = tools/stats-merge.C util.C myexception.C
+stats_merge_SOURCES = tools/stats-merge.C util.C
 
 #-------------------------- statreport --------------------------
 
-stats_select_SOURCES = tools/stats-select.C util.C tools/stats-table.C myexception.C
+stats_select_SOURCES = tools/stats-select.C util.C tools/stats-table.C
 
 #---------------------------------------------------------------
 
@@ -113,7 +113,7 @@ alignment_gild_SOURCES = tools/alignment-gild.C alignment.C alphabet.C \
 	sequence.C util.C rng.C tree.C sequencetree.C tools/optimize.C \
 	tools/findroot.C setup.C imodel.C probability.C sequence-format.C \
 	model.C tools/distance-methods.C alignment-random.C alignment-util.C \
-	randomtree.C tree-util.C tools/inverse.C myexception.C
+	randomtree.C tree-util.C tools/inverse.C
 
 alignment_gild_LDADD = ${ATLAS_LIBS}
 
@@ -121,89 +121,89 @@ alignment_gild_LDADD = ${ATLAS_LIBS}
 
 alignment_median_SOURCES = tools/alignment-median.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C util-random.C \
-	sequence-format.C alignment-util.C myexception.C
+	sequence-format.C alignment-util.C 
 
 #---------------------------------------------------------------
 
 alignment_consensus_SOURCES = tools/alignment-consensus.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C util-random.C \
-	sequence-format.C alignment-util.C myexception.C
+	sequence-format.C alignment-util.C 
 
 #---------------------------------------------------------------
 
 alignment_reorder_SOURCES = tools/alignment-reorder.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C tools/optimize.C tools/findroot.C setup.C imodel.C \
 	sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C \
-	model.C tree-util.C myexception.C
+	model.C tree-util.C 
 
 #---------------------------------------------------------------
 
 alignment_thin_SOURCES = tools/alignment-thin.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C setup.C imodel.C sequence-format.C randomtree.C \
-	alignment-util.C probability.C alignment-random.C model.C tree-util.C myexception.C
+	alignment-util.C probability.C alignment-random.C model.C tree-util.C
 
 #---------------------------------------------------------------
 
 alignment_chop_internal_SOURCES = tools/alignment-chop-internal.C alignment.C alphabet.C sequence.C util.C tree.C \
-	sequence-format.C alignment-util.C myexception.C
+	sequence-format.C alignment-util.C 
 
 #---------------------------------------------------------------
 
-alignment_indices_SOURCES = tools/alignment-indices.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C myexception.C
+alignment_indices_SOURCES = tools/alignment-indices.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C 
 
 #---------------------------------------------------------------
 
-alignment_draw_SOURCES = tools/alignment-draw.C alignment.C alphabet.C sequence.C sequence-format.C util.C alignment-util.C tools/colors.C tree.C myexception.C
+alignment_draw_SOURCES = tools/alignment-draw.C alignment.C alphabet.C sequence.C sequence-format.C util.C alignment-util.C tools/colors.C tree.C   
 
 #---------------------------------------------------------------
 
-joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C model.C alignment-random.C alignment-util.C randomtree.C tools/tree-dist.C tools/statistics.C tools/joint-A-T.C myexception.C
+joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C model.C alignment-random.C alignment-util.C randomtree.C tools/tree-dist.C tools/statistics.C tools/joint-A-T.C 
 
 #---------------------------------------------------------------
 
 joint_parsimony_SOURCES = tools/joint-parsimony.C alignment.C alphabet.C sequence.C util.C rng.C tree.C \
 	sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C \
 	model.C alignment-random.C alignment-util.C randomtree.C \
-	tools/parsimony.C tools/joint-A-T.C myexception.C
+	tools/parsimony.C tools/joint-A-T.C  
 
 #---------------------------------------------------------------
 
-alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C myexception.C
+alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C 
 
 #---------------------------------------------------------------
 
-alignment_translate_SOURCES = tools/alignment-translate.C alignment.C alignment-util.C alphabet.C sequence.C sequence-format.C util.C tree.C myexception.C
+alignment_translate_SOURCES = tools/alignment-translate.C alignment.C alignment-util.C alphabet.C sequence.C sequence-format.C util.C tree.C 
 
 #---------------------------------------------------------------
 
-alignment_find_SOURCES = tools/alignment-find.C alignment.C alphabet.C sequence.C alignment-util.C rng.C util.C sequence-format.C tree.C myexception.C
+alignment_find_SOURCES = tools/alignment-find.C alignment.C alphabet.C sequence.C alignment-util.C rng.C util.C sequence-format.C tree.C 
 
 #---------------------------------------------------------------
 
-alignment_convert_SOURCES = tools/alignment-convert.C alignment.C alignment-util.C sequence.C alphabet.C util.C sequence-format.C tree.C myexception.C
+alignment_convert_SOURCES = tools/alignment-convert.C alignment.C alignment-util.C sequence.C alphabet.C util.C sequence-format.C tree.C 
 
 #---------------------------------------------------------------
 
-trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C myexception.C
+trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C 
 
 #---------------------------------------------------------------
 
-trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tree-dist.C util.C rng.C tools/statistics.C tools/bootstrap.C myexception.C
+trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tree-dist.C util.C rng.C tools/statistics.C tools/bootstrap.C 
 
 #---------------------------------------------------------------
-tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C myexception.C
-
-#---------------------------------------------------------------
-
-trees_to_SRQ_SOURCES = tools/trees-to-SRQ.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C myexception.C myexception.C
+tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
 
 #---------------------------------------------------------------
 
-tree_reroot_SOURCES = tools/tree-reroot.C tree.C sequencetree.C tree-util.C util.C myexception.C
+trees_to_SRQ_SOURCES = tools/trees-to-SRQ.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C
 
 #---------------------------------------------------------------
 
-pickout_SOURCES = tools/pickout.C util.C myexception.C
+tree_reroot_SOURCES = tools/tree-reroot.C tree.C sequencetree.C tree-util.C util.C
+
+#---------------------------------------------------------------
+
+pickout_SOURCES = tools/pickout.C util.C
 
 #---------------------------------------------------------------
 
@@ -211,7 +211,7 @@ subsample_SOURCES = tools/subsample.C
 
 #---------------------------------------------------------------
 
-cut_range_SOURCES = tools/cut-range.C util.C myexception.C
+cut_range_SOURCES = tools/cut-range.C util.C
 
 #---------------------------------------------------------------
 

@@ -13,8 +13,8 @@ public:
 
   void prepend(const std::string& s) {why = s + why;}
 
-  myexception() throw();
-  myexception(const std::string& s) throw();
+  myexception() throw() {}
+  myexception(const std::string& s) throw() : why(s) {}
   virtual ~myexception() throw() {}
 };
 
