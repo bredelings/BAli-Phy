@@ -225,6 +225,9 @@ void HMM::find_and_index_silent_network_states() {
 void HMM::update_GQ()
 {
   GQ = Q;
+
+  if (not silent_network_states.size()) return;
+
   GQ_exit(GQ, silent_network_states, non_silent_network);
 }
 
@@ -255,9 +258,6 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double B
       order_.push_back(S1);
   }
   order_.insert(order_.end(),temp.begin(),temp.end());
-
-
-  if (not silent_network_states.size()) return;
 
   //------------ Compute the Generalized Transition Matrix, if we've got silent_network states
 
