@@ -135,6 +135,8 @@ public:
 
   virtual void fixed(const std::vector<bool>& f) {Model::fixed(f); write();}
 
+  std::vector<bool> fixed() const {return Model::fixed();}
+
   /// Access the submodel
   virtual const Model& SubModels(int) const=0;
   virtual Model& SubModels(int)=0;
