@@ -13,4 +13,9 @@ double dirichlet_fiddle_old(std::valarray<double>& p,double sigma,const std::val
 
 double scale_gaussian(double& x,double sigma);
 
+#include "alignment.H"
+#include "parameters.H"
+
+double frequency_proposal(alignment& A, Parameters& P);
+
 #endif

@@ -13,6 +13,7 @@
 #include "setup.H"           // for standardize
 
 #include "monitor.H"
+#include "proposals.H"
 
 namespace MCMC {
   using std::valarray;
@@ -225,7 +226,8 @@ int MoveOne::choose() const
   return i;
 }
 
-void MoveOne::getorder(double l) {
+void MoveOne::getorder(double l) 
+{
   // get total count
   int total = (int)l;
   double frac = l-total;
@@ -248,11 +250,11 @@ void MoveOne::getorder(double l) {
   }
 }
 
-  int SingleMove::reset(double lambda) {
-    int l = (int)lambda;
-    lambda -= l;
-    return l + poisson(lambda);
-  }
+int SingleMove::reset(double lambda) {
+  int l = (int)lambda;
+  lambda -= l;
+  return l + poisson(lambda);
+}
 
 void SingleMove::iterate(alignment& A,Parameters& P,MoveStats& Stats,int) 
 {
@@ -264,7 +266,46 @@ void SingleMove::iterate(alignment& A,Parameters& P,MoveStats& Stats,int)
   (*m)(A,P,Stats);
 }
 
-int MoveArg::reset(double l) {
+int MH_Move::reset(double lambda) {
+  int l = (int)lambda;
+  lambda -= l;
+  return l + poisson(lambda);
+}
+
+void MH_Move::iterate(alignment& A,Parameters& P,MoveStats& Stats,int) 
+{
+#ifndef NDEBUG
+  clog<<" [MH] move = "<<attributes[0]<<endl;
+#endif
+
+  iterations++;
+
+  Parameters P2 = P;
+
+  double ratio = (*proposal)(A,P2);
+
+  Result result(1);
+
+#ifndef NDEBUG
+  show_parameters(std::clog,P.SModel());
+  std::clog<<P.probability(A,P)<<" = "<<P.likelihood(A,P)<<" + "<<P.prior(A,P);
+  std::clog<<endl<<endl;
+
+  show_parameters(std::clog,P2.SModel());
+  std::clog<<P.probability(A,P2)<<" = "<<P.likelihood(A,P2)<<" + "<<P.prior(A,P2);
+  std::clog<<endl<<endl;
+#endif
+
+  if (P.accept_MH(A,P,A,P2,ratio)) {
+    P = P2;
+    result.totals[0] = 1;
+  }
+
+  Stats.inc(attributes[0],result);
+}
+
+int MoveArg::reset(double l) 
+{
   vector<int> numbers(args.size());
   for(int i=0;i<numbers.size();i++)
     numbers[i] = i;

@@ -178,6 +178,42 @@ namespace MCMC {
       :Move(v),m(m1) {}
   };
 
+
+  class Proposal: public Cloneable {
+  public:
+    Proposal* clone() const =0;
+    virtual double operator()(alignment& A, Parameters& P) const=0;
+  };
+
+  typedef double (*generic_proposal)(alignment& A, Parameters& P);
+
+  class Generic_Proposal: public Proposal
+  {
+    generic_proposal proposal;
+
+  public:
+    Generic_Proposal* clone() const {return new Generic_Proposal(*this);}
+    double operator()(alignment& A, Parameters& P) const {return proposal(A,P);}
+    Generic_Proposal(generic_proposal gp):proposal(gp) {}
+  };
+
+  /// A Move which runs a specific moves each round
+  class MH_Move: public Move {
+    OwnedPointer<Proposal> proposal;
+  public:
+    MH_Move* clone() const {return new MH_Move(*this);}
+
+    int reset(double lambda);
+
+    void iterate(alignment& A,Parameters& P,MoveStats& Stats) { iterate(A,P,Stats,0); }
+
+    void iterate(alignment& A,Parameters& P,MoveStats&,int);
+
+    MH_Move(const Proposal& P,const string& v)
+      :Move(v),proposal(P) {}
+  };
+
+
   /// A move which takes an integer argument from a supplied list
   class MoveArg: public Move {
     /// The ordered list of args to operate on this round

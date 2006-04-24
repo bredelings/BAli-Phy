@@ -100,3 +100,52 @@ double scale_gaussian(double& x, double sigma)
   x *= scale;
   return scale;
 }
+
+template <typename T>
+valarray<T> read(const vector<T>& v,const vector<int>& indices)
+{
+  valarray<T> values(indices.size());
+  for(int i=0;i<indices.size();i++)
+    values[i] = v[indices[i]];
+  return values;
+}
+
+
+template <typename T>
+valarray<T> write(vector<T>& v,const vector<int>& indices,const valarray<T>& values)
+{
+  assert(indices.size() == values.size());
+  for(int i=0;i<indices.size();i++)
+    v[indices[i]] = values[i];
+  return values;
+}
+
+double frequency_proposal(alignment& A, Parameters& P)
+{
+  const SequenceTree& T = P.T;
+  const alphabet& a = P.SModel().Alphabet();
+
+  double N_guess = A.length() * a.size() * (2.0 - exp(-T.n_branches() * P.branch_mean()));
+  double N = loadvalue(P.keys,"pi_dirichlet_N",N_guess);
+
+  vector<int> indices;
+  for(int i=0;i<P.parameters().size();i++) 
+  {
+    string name = P.parameter_name(i);
+    if (name.size() > 2 and name.substr(0,2) == "pi")
+      indices.push_back(i);
+  }
+
+  vector<double> parameters = P.parameters();
+  valarray<double> values = read(parameters,indices);
+  valarray<bool> fixed = read(P.fixed(),indices);
+
+  valarray<double> values1 = values;
+  double ratio  = dirichlet_fiddle(values,N,not fixed);
+
+  write(parameters,indices,values);
+  P.parameters(parameters);
+
+  return ratio;
+}
+

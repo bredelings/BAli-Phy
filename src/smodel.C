@@ -180,14 +180,9 @@ namespace substitution {
       parameters_[0] = wrap(parameters_[0],1.0);
     }
 
-    // propose new frequencies
-    const double N = 4000;
-
-    double ratio = dirichlet_fiddle(parameters_, fixed_, 1, size(), N);
-
     recalc();
 
-    return ratio;
+    return 1.0;
   }
 
   string SimpleFrequencyModel::name() const {
@@ -198,7 +193,7 @@ namespace substitution {
     if (i == 0)
       return "f";
     else if (i-1<size())
-      return string("f") + Alphabet().letter(i-1);
+      return string("pi") + Alphabet().letter(i-1);
     else
       return s_parameter_name(i,size()+1);
   }
