@@ -495,7 +495,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   s_parameters<<"iter\t";
   s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
-  s_parameters<<"\t|A|\t|T|"<<<<endl;
+  s_parameters<<"\t|A|\t|T|"<<endl;
 
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max; iterations++) {
