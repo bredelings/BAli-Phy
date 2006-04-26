@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <valarray>
 #include <new>
 
@@ -381,10 +382,57 @@ string get_base_name(string filename)
     if (filename[i] == '/' or filename[i] == '\\')
       loc = i;
   filename = filename.substr((unsigned)(loc+1));
-  if (filename.size())
-    filename += ".";
   //  return filename;
   return "";
+}
+
+#include "unistd.h" // unlink( )
+
+void delete_files(vector<string>& filenames,vector<ofstream*>& files)
+{
+  for(int i=0;i<files.size();i++) {
+    files[i]->close();
+    unlink(filenames[i].c_str());
+  }
+  files.clear();
+  filenames.clear();
+}
+
+bool exists(const string& filename)
+{
+  ifstream file(filename.c_str());
+  bool e = file.is_open();
+  if (e) file.close();
+  return e;
+}
+
+vector<ofstream*> open_files(const string& basename, vector<string>& names)
+{
+  vector<ofstream*> files;
+  vector<string> filenames;
+
+  bool success=false;
+  for(int i=0;not success;i++) 
+  {
+    success = true;
+    for(int j=0;j<names.size();j++) 
+    {
+      string filename = basename + convertToString(i+1)+"."+names[j];
+
+      if (exists(filename)) {
+	delete_files(filenames,files);
+	success = false;
+	break;
+      }
+      else {
+	files.push_back(new ofstream(filename.c_str()));
+	filenames.push_back(filename);
+      }
+    }
+  }
+  names = filenames;
+
+  return files;
 }
 
 
@@ -400,6 +448,7 @@ int main(int argc,char* argv[]) {
      
 
     //---------- Open output files -----------//
+    vector<string> filenames;
     ostream* s_out = NULL;
     ostream* s_trees = NULL;
     ostream* s_parameters = NULL;
@@ -409,16 +458,21 @@ int main(int argc,char* argv[]) {
       s_out = &cout;
     }
     else {
-      string basename = get_base_name(args["align"].as<string>());
-      string n_out = basename + "out";
-      string n_trees = basename + "trees";
-      string n_parameters = basename + "p";
-      string n_map = basename + "MAP";
+
+      string basename = get_base_name(args["align"].as<string>()) + ".";
+      basename = "";
+
+      filenames.push_back("out");
+      filenames.push_back("t");
+      filenames.push_back("p");
+      filenames.push_back("MAP");
+
+      vector<ofstream*> files = open_files(basename,filenames);
       
-      s_out = new ofstream(n_out.c_str());
-      s_trees = new ofstream(n_trees.c_str());
-      s_parameters = new ofstream(n_parameters.c_str());
-      s_map = new ofstream(n_map.c_str());
+      s_out = files[0];
+      s_trees = files[1];
+      s_parameters = files[2];
+      s_map = files[3];
     }
     s_out->precision(10);
     cerr.precision(10);
