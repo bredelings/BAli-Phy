@@ -421,3 +421,157 @@ NewIndelModel::NewIndelModel(bool b)
 
   recalc();
 }
+
+
+void TKF1::recalc() {
+}
+
+double TKF1::fiddle(int) 
+{
+  double& rate = parameters_[0];
+  double& lambda_E = parameters_[1];
+  double& i = parameters_[2];
+
+  const double sigma = 0.35;
+
+  if (not fixed(0)) {
+    rate        += gaussian(0,sigma);
+    if (rate > 0) 
+      rate = -rate;
+  }
+  
+  if (not fixed(1)) {
+    double E_length = lambda_E - logdiff(0,lambda_E);
+    E_length += gaussian(0,sigma);
+    lambda_E = E_length - logsum(0,E_length);
+  }
+
+  if (not fixed(2))
+    i = wrap(i+gaussian(0,0.02),1.0);
+  
+  recalc();
+  return 1;
+}
+
+efloat_t TKF1::prior() const {
+  efloat_t Pr = 1;
+
+  // Calculate prior on lambda_O
+  double rate = parameters_[0];
+
+  Pr *= shift_laplace_pdf(rate,parameters_[3], parameters_[4]);
+
+  // Calculate prior on lambda_E - shouldn't depend on lambda_O
+  double lambda_E = parameters_[1];
+  double E_length = lambda_E - logdiff(0,lambda_E);
+  double E_length_mean = parameters_[5];
+
+  Pr *= exp_exponential_pdf(E_length,E_length_mean);
+
+  // Calculate prior on invariant fraction
+  if (not fixed(2)) {
+    double i = parameters_[2];
+    Pr *= beta_pdf(i,0.01,200);
+  }
+
+  return Pr;
+}
+
+indel::PairHMM TKF1::get_branch_HMM(double t) const 
+{
+  using namespace states;
+
+  if (not time_dependant)
+    t = 1;
+
+  double lambda = exp(parameters_[0]);
+  double mean_length = parameters_[1];
+  double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
+  double mu = lambda/sigma;                       // s = lambda/mu
+
+  assert(lambda < mu);
+
+  indel::PairHMM Q;
+
+  double U = exp(-mu*t);
+  double B = (1.0 - exp((lambda-mu)*t))/(mu - lambda*exp((lambda-mu)*t));
+
+  Q(S ,S ) = 0;
+  Q(S ,M ) = (1.0-lambda*B) * (lambda/mu) * U;
+  Q(S ,G1) = lambda * B;
+  Q(S ,G2) = (1.0-lambda*B) * (lambda/mu) * (1.0-U);
+  Q(S ,E)  = (1.0-lambda*B) * (1.0-lambda/mu);
+
+  Q(M ,S ) = 0;
+  Q(M ,M ) = Q(S, M);
+  Q(M ,G1) = Q(S, G1);
+  Q(M ,G2) = Q(S, G2);
+  Q(M ,E)  = Q(S, E);
+
+  Q(G1,S ) = 0;
+  Q(G1,M ) = lambda * B * U/(1.0-U);
+  Q(G1,G1) = lambda * B;
+  Q(G1,G2) = (1.0 - U - mu*B)/(1.0-U);
+  Q(G1,E ) = (mu-lambda)*B/(1.0-U);
+
+  Q(G2,S ) = 0;
+  Q(G2,M ) = Q(S, M);
+  Q(G2,G1) = Q(S, G1);
+  Q(G2,G2) = Q(S, G2);
+  Q(G2,E ) = Q(S, E);
+
+  Q(E, S ) = 0;
+  Q(E ,M ) = 0;
+  Q(E ,G1) = 0;
+  Q(E ,G2) = 0;
+  Q(E ,E ) = 1;
+
+  remove_one_state(Q,S);
+
+  // This is REALLY the start_pi !  I should make start_pi separate.
+  // In this case, its actually correct :)
+  Q(S ,S ) = 0;
+  Q(S ,M ) = 1;
+  Q(S ,G1) = 0;
+  Q(S ,G2) = 0;
+  Q(S ,E)  = 0;
+
+  return Q;
+}
+
+string TKF1::name() const 
+{
+  return "TKF1";
+}
+
+string TKF1::parameter_name(int i) const 
+{
+  if (i==0)
+    return "lambda";
+  else if (i==1)
+    return "mean_length";
+  else
+    return i_parameter_name(i,2);
+}
+
+efloat_t TKF1::lengthp(int l) const 
+{
+  double mean_length = parameters_[1];
+
+  double sigma = mean_length/(1.0 + mean_length);
+
+  return (1.0-sigma)*pow<efloat_t>(sigma,l);
+}
+
+TKF1::TKF1(bool b)
+  :IndelModel(6),time_dependant(b)
+{
+  parameters_[0] = -5;
+  parameters_[1] = -0.5;
+  parameters_[2] = 0.1;
+  parameters_[3] = -5;
+  parameters_[4] = 0.5;
+  parameters_[5] = 5.0;
+
+  recalc();
+}

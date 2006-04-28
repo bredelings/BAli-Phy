@@ -93,4 +93,26 @@ public:
 };
 
 
+class TKF1: public IndelModel 
+{
+  bool time_dependant;
+protected:
+  void recalc();
+public:
+
+  double fiddle(int);
+  efloat_t prior() const;
+  
+  TKF1* clone() const {return new TKF1(*this);}
+
+  efloat_t lengthp(int i) const;
+  indel::PairHMM get_branch_HMM(double t) const;
+
+  std::string name() const;
+
+  std::string parameter_name(int) const;
+
+  explicit TKF1(bool);
+};
+
 #endif
