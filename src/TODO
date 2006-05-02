@@ -1,9 +1,15 @@
--50. What is the proper way to handle gaps in an AU plot?
+1. Proposals and Priors
+2. Read from config file
+3. Write some tests.
+4. Report number of gaps along tree.
+5. Allow gilding an alignment-consensus
+6. Write program to chart percentage identity versus position.
 
--49. Quick ways to score gaps: tell Jeff.
-   + Push gaps as high as possible in each column.
-   + No nested gaps
-   + Linear gaps
+--------------------------------------------------------
+-51. Separate P(S,x) from start_pi(x)
+
+-50. What is the proper way to handle gaps in an AU plot?
+     - can they be handled in a tree-like fashion, or not?
 
 -48. Implement new indel model where we sum over all root locations...
    + how much more time do we spend calculating the prior?
@@ -20,6 +26,10 @@
             - how to make semi-additive distances?
 
 -45. Speed up likelihood calculations where there are lots of gaps??
+  + If there is only one character then (at least for equilibrium processes)
+    the cost should be constant.
+  + If there is more than one character, then the  cost should be proportional to
+    the number of branches that connect the non-gap characters.
 
 -------------------------------------------------------
 Named parameters, priors, and proposals branch!
@@ -48,6 +58,7 @@ Named parameters, priors, and proposals branch!
     - This will allow us to propose larger increments for each parameter.
       o Increase the increment for kappa!
     - Specify the NUMBER of times we do each increment per iteration.
+
 -------------------------------------------------------
 
 -40. Remove bitvector functions from tree.H!
@@ -55,46 +66,33 @@ Named parameters, priors, and proposals branch!
 -39. Usability for tracer:
   + adjust burnin fraction?
   + adjust smoothing function of density?
-  + command line arguments
-
--38. Fix subsample.
-  + add --skip
-  + add --by
-  + add --max ?  The total number of samples to keep.
-  + should I interpret the 1st column as iterations???
+  + command line arguments 
+    - can it alread take filenames?
+    - a '--help' argument?
+  + why does tracer disagree on autocorrelation?
 
 -37. Improve trees-consensus
   + Compute the entire set of branches / counts for full partitions.
-  + Compute the greedy tree using.
+  + Compute the greedy tree using these counts.
   + Report the first 4(N-3) internal branches.
     - Also report the  branches in the greedy tree?
   + [FIX] Currently the number of sub-branches is capped at |c50|
   + [FIX] 'ratio' for sub-partitions when parent partitions are below the min.
-
--36. Complain instead of overwriting files.
-
--35. Model RNA as a sequence with variable equilibrium distributions...
-     There are only 2^4 = 16 rate classes if everything is 0/1.
-     Entropy???     
+  + store topology as list of locations in partition list?
+   a) Would this save memory?
+      Some, if some of full partitions have a high frequency.
+   b) Would this save CPU time?  Examine each partition once instead of n times.
+      [But this wouldn't help for sub-partitions, would it?]
+   c) We could report the number of full partitiosn that we observe.
 
 -34. Output leaf branch lengths?  Total tree length?
   + if mu has gamma prior, then does that simply alter prior on branches?
   + how do we make mu and branch length priors conjugate?
   + can we still scale the branch lengths if we do that?
 
--33. Site-dependent equilibrium frequencies:
-  + Question: does entropy of frequencies affect branch lengths?
-  + Combine saturation with (site-dependent) rate-change across the tree ?
-  + Check effect of non-equivalent equilbrium frequencies.
-
--31. Determine best compilation options for EMT64.
-  + Compare 3.4 / 4.0 / 4.1 / 4.2
-  + Do some profiling
-
--30. Simultaneous with -31
+-30. Find out where the system time is coming from...
   + Find out the system time for a test case with DP full-matrix.
   + Where is the system time coming from? (Use oprofile?)
-  + Does the same thing happen on PPC?
 
 -27. More data sets - more proteins!  
      Read some more tree-of-life papers.
@@ -103,13 +101,6 @@ Named parameters, priors, and proposals branch!
      + expand the 5SrRNA data set.
      + run it!
 
--26.  tree-dist.C: store topology as list of locations in partition list?
-   a) Would this save memory?
-      Some, if some of full partitions have a high frequency.
-
-   b) Would this save CPU time?  Examine each partition once instead of n times.
-      [But this wouldn't help for sub-partitions, would it?]
-
 -24. Benchmarking of mixing... 
   a) try with alignment fixed
   b) look at log autocorrelation and effective sample sizes for distances
@@ -117,8 +108,6 @@ Named parameters, priors, and proposals branch!
   c) compare mixing with few taxa, many taxa...
   d) handle alignment predicates in the SRQ plot.
      can we output residues which are mixing badly?
-
--25. Actually write files ("out") and ("err") instead of using cin and cerr.
 
 -23. Improve ease of installation:
   + Autoconf-ify.  ("Just run configure")
@@ -130,7 +119,7 @@ Named parameters, priors, and proposals branch!
     - this will allow us to use the debug version of the GCC libstdc++,
       and also to use stlport again!
   + Just use a Makefile.in - no automake?
-  + install in bin/bali-phy/<version>
+  + Just install as bin/bali-phy - phase out the helper script for ordinary users.
   + add version name to manual.
   + add a 'tarball' target?  (use svn revision # unless a version number is given?)
   + Move scripts to 'share'?
@@ -145,22 +134,19 @@ Named parameters, priors, and proposals branch!
     - In each tile, we go forward given the (0,0) corner
     - We sample backwards given the (last) state at the (I,J) corner.
     - We need to SHARE the emission probabilities between tiles.
-  + Investigate "system time" overhead!  Where is this coming from?
-    - we could use oprofile.
-    - we could compile a kernel with debugging information.
-  + Find out where the 'system time' is coming from! :)
-  + Profile to see if we have any stupid 
 
 -21. Complain if a tree has two leaves with the same name?
      (We crash on 'standardize' currently.)
 
--20. alignment-cat A.fasta B.fasta C.fasta > D.fasta
-     The sequence should have the same names, but could be
-      different alphabets.  (Hopefully we will not handle alphabets)
-
-     Make alignment-cut read from stdin if no input args.
-
--17. trees-consensus: report number of branches.
+-20. MCMCMC
+   ??) Find a way to correctly run heated chains, avoiding:
+       0) ?
+       i) improper pairwise alignment distribution
+      ii) really expensive DP calculations...
+    a) Make the temperature affect only the likelihood...
+    b) test speedups...
+    c) begin to implement the forking code / temperature identifier.
+    d) begin to implement the separate random number generators.
 
 -16. Compare estimates w/ MrBayes
      a) compare mixing, topologies, branch lengths, speed, etc.
@@ -178,29 +164,10 @@ Named parameters, priors, and proposals branch!
  
 -12. Allow alignment-gild to annotate an alignment-consensus
 
--11. Don't show SRQ or sum plots for partitions w/ less than <N=10> regenerations,
-     a) But, perhaps the real issue is generating a confidence band for SRQ plots
-     b) Develop an idea of how to do a statistical test based on SRQ plots...
-        [ Find the worst sub-section - the flattest line that is longest ]
-        [ This will give us the worst mixing rate that we can reject ]
-
 -10. Make trees-bootstrap.C print trees instead of collections of full partitions.
 
--9. sub-class DPengine w/ transition matrix implemented as
-     A.  i) Matrix  ii) const Matrix& iii) computed Matrix
-     B.  But how to compute GQ... ?
-
--7. Sanitize use of MAP_tree in tree-dist-compare when the count is 1.   
-    Report a median when there are a number of trees w/ the same count?
-
--5. Speeding up GQ_exit( )
-  a) can we avoid copying G into G2 - can we construct it in place?
-  b) if we put the check into #ifndef NDEBUG, does this gain us anything?
-  c) algorithm currently does more or less S*S*(S+NS) multiply-and-add's.
-  d) it also takes time to compute the silent state topology.  Can we cache this?
-  e) Use ATLAS?
-
--4. Actually do the MCMCMC T thingy - how much slowdown does this give?
+-7. Sanitize use of the MAP tree when the count is 1. Report a median?
+     + but the estimated probability of the median could be 0.
 
 -3. Think more carefully about using walk_tree_path
     when changing the topology...
@@ -226,16 +193,6 @@ Named parameters, priors, and proposals branch!
 4. Start making some "nice" pictures to put up on the website.
     a) include pictures to give to Dr. Lake's lab.
     b) include pictures to give to Dr. Sabatti.
-
-5. MCMCMC
-   ??) Find a way to correctly run heated chains, avoiding:
-       0) ?
-       i) improper pairwise alignment distribution
-      ii) really expensive DP calculations...
-    a) Make the temperature affect only the likelihood...
-    b) test speedups...
-    c) begin to implement the forking code / temperature identifier.
-    d) begin to implement the separate random number generators.
 
 6. Make a more general substitution::Model class, so that we can e.g.
     have trees with 2 sets of branch lengths...
@@ -522,6 +479,30 @@ the prior, because we never want to use it  differently.
 
 [DONE] alignment-cut
 
+[DONE] Build Windows binaries (cywin now has gcc 3.4)
+
+[DONE] Build MacOS binaries: 
+   + 10.3.9 and 10.4.x + 
+   + 10.3.x < 10.3.8
+
+[DONE] Use just one genetic_code.dat (the RNA version.)
+
+[DONE] Merge all continuous parameters into one file 'p' that can be
+   read by tracer.
+
+[DONE] Write to a file 'out' instead of cout.
+
+[DONE] Improve mixing for branch length mean 'mu'
+
+[DONE] Fix sampling of frequency parameters by using dirichlet proposal.
+
+[DONE] Allow 'mu' to be fixed.
+
+[DONE] Complain instead of overwriting files.
+
+
+
+
 *IDEAS*
 
  - make a SplitsTree-like graph out of a tree sample,
@@ -651,22 +632,22 @@ rates.
    Might only amino acid content change between genes?  In that case, we might
    be able to estiamte all the factors using only coding regions!
 
- - Build Windows binaries (cywin now has gcc 3.4)
+-  Model RNA as a sequence with variable equilibrium distributions...
+   There are only 2^4 = 16 rate classes if everything is 0/1.
+   Entropy???     
 
- - Build MacOS binaries: 
-   + 10.3.9 and 10.4.x + 
-   + 10.3.x < 10.3.8
+-  Site-dependent equilibrium frequencies:
+  + Question: does entropy of frequencies affect branch lengths?
+  + Combine saturation with (site-dependent) rate-change across the tree ?
+  + Check effect of non-equivalent equilbrium frequencies.
 
- - Use just one genetic_code.dat (the RNA version.)
+- Quick ways to score gaps: tell Jeff.
+   + Push gaps as high as possible in each column.
+   + No nested gaps
+   + Linear gaps
 
- - Merge all continuous parameters into one file 'p' that can be
-   read by tracer.
-
- - Write to a file 'out' instead of cout.
-
- - Improve mixing for branch length mean 'mu'
-
- - Fix sampling of frequency parameters by using dirichlet proposal.
-
- - Allow 'mu' to be fixed.
-
+- Don't show SRQ or sum plots for partitions w/ less than <N=10> regenerations,
+     a) But, perhaps the real issue is generating a confidence band for SRQ plots
+     b) Develop an idea of how to do a statistical test based on SRQ plots...
+        [ Find the worst sub-section - the flattest line that is longest ]
+        [ This will give us the worst mixing rate that we can reject ]
