@@ -11,6 +11,7 @@
 #include "parameters.H"
 #include "rng.H"
 #include "util.H"
+#include "proposals.H"
 // how to have different models, with different moves
 // and possibly moves between models?
 
@@ -178,24 +179,6 @@ namespace MCMC {
       :Move(v),m(m1) {}
   };
 
-
-  class Proposal: public Cloneable {
-  public:
-    Proposal* clone() const =0;
-    virtual double operator()(alignment& A, Parameters& P) const=0;
-  };
-
-  typedef double (*generic_proposal)(alignment& A, Parameters& P);
-
-  class Generic_Proposal: public Proposal
-  {
-    generic_proposal proposal;
-
-  public:
-    Generic_Proposal* clone() const {return new Generic_Proposal(*this);}
-    double operator()(alignment& A, Parameters& P) const {return proposal(A,P);}
-    Generic_Proposal(generic_proposal gp):proposal(gp) {}
-  };
 
   /// A Move which runs a specific moves each round
   class MH_Move: public Move {

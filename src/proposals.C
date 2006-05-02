@@ -101,6 +101,17 @@ double scale_gaussian(double& x, double sigma)
   return scale;
 }
 
+double scale_gaussian2(valarray<double>& x, const vector<double>& p)
+{
+  if (x.size() != 1) 
+    throw myexception()<<"scale_gaussian: expected one dimension, got "<<x.size()<<".";
+  if (p.size() != 1) 
+    throw myexception()<<"scale_gaussian: expected one parameter, got "<<p.size()<<".";
+
+  return scale_gaussian(x[0],p[0]);
+}
+
+
 template <typename T>
 valarray<T> read(const vector<T>& v,const vector<int>& indices)
 {
@@ -147,5 +158,43 @@ double frequency_proposal(alignment& A, Parameters& P)
   P.parameters(parameters);
 
   return ratio;
+}
+
+double Proposal2::operator()(alignment& A, Parameters& P) const
+{
+  vector<double> parameters = P.parameters();
+  vector<bool> fixed = P.fixed();
+
+  // Quit if this move alters a 'fixed' parameter
+  for(int i=0;i<indices.size();i++)
+    if (fixed[indices[i]])
+      return 1.0;
+
+  // Load parameter values from names
+  vector<double> p(pnames.size());
+  for(int i=0;i<p.size();i++)
+    p[i] = loadvalue(P.keys, pnames[i]);
+
+  
+  // compute proposed parameter values
+  valarray<double> x = read(parameters,indices);
+  double ratio = (*proposal)(x,p);
+  write(parameters,indices,x);
+
+  // set the proposed values
+  P.parameters(parameters);
+
+  return ratio;
+}
+
+Proposal2::Proposal2(proposal_fn p,const std::string& s, const std::vector<string>& v,
+	  const Parameters& P)
+  :proposal(p),
+   pnames(v)
+{
+  int n = P.parameters().size();
+  for(int i=0;i<n;i++)
+    if (P.parameter_name(i) == s)
+      indices.push_back(i);
 }
 

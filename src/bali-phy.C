@@ -174,6 +174,10 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   parameter_moves.add(4+P.T.n_branches()/4.0,
 		      MH_Move(Generic_Proposal(frequency_proposal),
 			      "frequencies:s_parameters:parameters"));
+
+  parameter_moves.add(4+P.T.n_branches()/4.0,
+		      MH_Move(Proposal2(scale_gaussian2,"mu",vector<string>(1,"log_branch_mean_sigma"),P),
+			      "sample_mu_2:s_parameters:parameters"));
   if (P.IModel().full_tree)
     parameter_moves.add(8+P.T.n_branches()/4,SingleMove(change_gap_parameters,"g_parameters:parameters"));
   

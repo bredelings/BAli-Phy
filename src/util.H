@@ -226,6 +226,15 @@ const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name, const U
     return value;
 }
 
+/// If m contains name, convert m[name] to T and return.  Otherwise return value.
+template <typename U, typename T>
+const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name) {
+  if (m.find(name) != m.end() )
+    return m[name];
+  else
+    throw myexception()<<"Parameter '"<<name<<"' not set.";
+}
+
 /// get the next word starting at position i, return true if not done.
 bool get_word(std::string& word, int& i,const std::string& s,
 	      const std::string& delimiters,const std::string& whitespace);
