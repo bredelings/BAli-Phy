@@ -287,11 +287,11 @@ void MH_Move::iterate(alignment& A,Parameters& P,MoveStats& Stats,int)
   Result result(1);
 
 #ifndef NDEBUG
-  show_parameters(std::clog,P.SModel());
+  show_parameters(std::clog,P);
   std::clog<<P.probability(A,P)<<" = "<<P.likelihood(A,P)<<" + "<<P.prior(A,P);
   std::clog<<endl<<endl;
 
-  show_parameters(std::clog,P2.SModel());
+  show_parameters(std::clog,P2);
   std::clog<<P.probability(A,P2)<<" = "<<P.likelihood(A,P2)<<" + "<<P.prior(A,P2);
   std::clog<<endl<<endl;
 #endif
