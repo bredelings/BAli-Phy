@@ -1,14 +1,44 @@
+-50. What is the proper way to handle gaps in an AU plot?
+
+-49. Quick ways to score gaps: tell Jeff.
+   + Push gaps as high as possible in each column.
+   + No nested gaps
+   + Linear gaps
+
+-48. Implement new indel model where we sum over all root locations...
+   + how much more time do we spend calculating the prior?
+
+-47. *Gamma* branch length distribution?
+
+-46. Code an initial test for the same-frequencies assumption?
+	- likelihood ratio test: sequences S have frequencies p
+                                 sequence S[i] has frequencies q 
+	- can we reject p=q?  How much is the actual difference?
+        - or, find groups using neighbor-joining? 
+          + (twice as many branches..)
+	  + N^2 cost of computing the pairwise distances...
+            - how to make semi-additive distances?
+
+-45. Speed up likelihood calculations where there are lots of gaps??
+
 -------------------------------------------------------
 Named parameters, priors, and proposals branch!
 
--44. Allow 'mu' to be fixed.
+-44. How do we say that "kappa" and "mu" both use 'scale_gaussian'
+     but have their own parameters for scale_gaussian::sigma?
+  + A: allow ONLY named parameters, and keep them in 'keys' :)
+    - typedef double (*proposal_fn)(vector<double>& x,const vector<double>& parameters);
+    - Proposal_Function(proposal_fn p,const vector<string>& parameter_names);
+    - Set the parameter_name keys to *default values* somewhere.
+    - If a parameter_name is a parameter in P, then use that value instead of the 'keys' value.
+    - We can use the 'keys' value for priors also...
 
 -43. Allow move to call other moves.
   + For example, NNI_and_lengths( ) should be able to call various length
     moves, and get their results recorded in their own counters...  
 
 -42. Allow priors to attach to the Parameters structure by name!
-  + This should allow priors to 
+  + similar to proposals?
 
 -41. Allow proposals to attach to the Parameters structure by name!
   + Can proposals be sub-models?
@@ -26,7 +56,6 @@ Named parameters, priors, and proposals branch!
   + adjust burnin fraction?
   + adjust smoothing function of density?
   + command line arguments
-  + 
 
 -38. Fix subsample.
   + add --skip
@@ -638,3 +667,6 @@ rates.
  - Improve mixing for branch length mean 'mu'
 
  - Fix sampling of frequency parameters by using dirichlet proposal.
+
+ - Allow 'mu' to be fixed.
+
