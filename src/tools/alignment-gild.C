@@ -21,6 +21,17 @@ using po::variables_map;
 
 // FIXME - also show which COLUMNS are more that 99% conserved?
 
+// With characters, you take i~j~k and split the column, then if i and j
+// are in different columns, then cannot both be aligned to k.  But, if
+// you have i~j~-, then i and j can be in different columns and both aligned
+// to - in the third sequence.  Likewise with '?'.
+
+// If we compute the certainty of +~- only based on the + nodes, then + will
+// always be 100% aligned, which doesn't seem fair.  Also, if we suddenly switch
+// to '?', then the remaining characters will become "better aligned".
+
+// If we could represent sub-groups, then we wouldn't need a root.
+
 using std::cin;
 using std::cout;
 using std::cerr;
@@ -85,7 +96,7 @@ Matrix probability_to_distance_weights(const Matrix &Q)
 // Compute the probability that residues (i,j) are aligned
 //   - v[i][j] represents the column of the feature j in alignment i.
 //   - so if v[i][j] == v[i][k] then j and k are paired in alignment i.
-Matrix counts_to_probability(const Tree& T,const vector< vector<int> >& v) 
+Matrix counts_to_probability(const Tree& T,const vector<int>& column, const vector< vector<int> >& v) 
 {
   assert(v.size() > 0);
   assert(v[0].size() > 0);
@@ -131,7 +142,7 @@ Matrix counts_to_probability(const Tree& T,const vector< vector<int> >& v)
   // Check symmetry
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
-      assert(std::abs(Pr_align_pair(i,j) -Pr_align_pair(j,i)) < 1.0e-9);
+      assert(std::abs(Pr_align_pair(i,j) - Pr_align_pair(j,i)) < 1.0e-9);
 
   for(int i=0;i<pseudocount.size1();i++)
     for(int j=0;j<pseudocount.size2();j++)
@@ -143,189 +154,8 @@ Matrix counts_to_probability(const Tree& T,const vector< vector<int> >& v)
   return Pr_align_pair;
 }
 
-class SSE_match_pairs: public function {
-  Tree T;
-  Matrix Pr_align_pair;
-public:
-  const Tree& t() const {return T;}
-  double operator()(const optimize::Vector& v) const;
-
-  SSE_match_pairs(const vector< vector<int> >& v1,const Tree& T1)
-    :T(T1),Pr_align_pair(T.n_leaves(),T.n_leaves())
-  { 
-    Pr_align_pair = counts_to_probability(T,v1);
-  }
-};
-
-double SSE_match_pairs::operator()(const optimize::Vector& v) const {
-  // We get one length for each branch, and they should all be positive
-  assert(v.size() == T.n_branches());
-
-  Tree temp = T;
-  for(int b=0;b<T.n_branches();b++) {
-    if (v[b] <= 0) return log_0;
-    temp.branch(b).set_length(v[b]);
-  }
-
-  double SSE=0;
-  for(int l1=0;l1<T.n_leaves();l1++) 
-    for(int l2=0;l2<l1;l2++) {
-      double length = temp.distance(l1,l2);
-      double P2 = 1.0 - exp(-length);
-      double P1 = 1.0 - Pr_align_pair(l1,l2);
-      double E = log(P2 + 0.0001) - log(P1 + 0.0001);
-      SSE += E*E;
-    }
-  return -SSE;
-}
-
-
-class Sum_of_Squared_Errors: public function {
-  Tree T;
-  Matrix Pr_align_pair;
-  Matrix D;
-public:
-  const Tree& t() const {return T;}
-  double operator()(const optimize::Vector& v) const;
-
-  Sum_of_Squared_Errors(const vector< vector<int> >& v1,const Tree& T1)
-    :T(T1),
-     Pr_align_pair(T.n_leaves(),T.n_leaves()),
-     D(T.n_leaves(),T.n_leaves())
-    
-  { 
-    Pr_align_pair = counts_to_probability(T,v1);
-    D = probability_to_distance(Pr_align_pair);
-  }
-};
-
-double Sum_of_Squared_Errors::operator()(const optimize::Vector& v) const {
-  // We get one length for each branch, and they should all be positive
-  assert(v.size() == T.n_branches());
-
-  Tree temp = T;
-  for(int b=0;b<T.n_branches();b++)
-    temp.branch(b).set_length(v[b]);
-
-  Matrix TD = DistanceMatrix(temp);
-
-  double SSE=0;
-  for(int i=0;i<T.n_leaves();i++) 
-    for(int j=0;j<i;j++) {
-      double E = D(i,j) - TD(i,j);
-      SSE += E*E;
-    }
-
-  return -SSE;
-}
-
-
-class WeightedSum_of_Squared_Errors: public function 
+void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A,RootedSequenceTree& T) 
 {
-  Tree T;
-  Matrix Pr_align_pair;
-  Matrix D;
-  Matrix S2;
-
-public:
-  const Tree& t() const {return T;}
-  double operator()(const optimize::Vector& v) const;
-
-  WeightedSum_of_Squared_Errors(const vector< vector<int> >& v1,const Tree& T1)
-    :T(T1),
-     Pr_align_pair(T.n_leaves(),T.n_leaves()),
-     D(T.n_leaves(),T.n_leaves()),
-     S2(T.n_leaves(),T.n_leaves())
-  { 
-    Pr_align_pair = counts_to_probability(T,v1);
-    D = probability_to_distance(Pr_align_pair);
-    S2 = probability_to_distance_variance(Pr_align_pair);
-  }
-};
-
-double WeightedSum_of_Squared_Errors::operator()(const optimize::Vector& v) const 
-{
-  // We get one length for each branch, and they should all be positive
-  assert(v.size() == T.n_branches());
-
-  Tree temp = T;
-  for(int b=0;b<T.n_branches();b++)
-    temp.branch(b).set_length(v[b]);
-
-  Matrix TD = DistanceMatrix(temp);
-
-  double SSE=0;
-  for(int i=0;i<T.n_leaves();i++) 
-    for(int j=0;j<i;j++) {
-      double E = D(i,j) - TD(i,j);
-      SSE += E*E/S2(i,j);  // /D(i,j)/D(i,j);
-    }
-
-  //  for(int b=0;b<T.n_branches();b++)
-  //    if (v[b] < 0) SSE += (-v[b]+v[b]*v[b])*1000000;
-
-
-  return -SSE;
-}
-
-
-class poisson_match_pairs: public function 
-{
-  unsigned n;
-  Tree T;
-  Matrix Pr_align_pair;
-
-public:
-  const Tree& t() const {return T;}
-  double operator()(const optimize::Vector& v) const;
-
-  poisson_match_pairs(const vector< vector<int> >& v1,const Tree& T1)
-    :n(1),T(T1),Pr_align_pair(T.n_leaves(),T.n_leaves())
-  { 
-    Pr_align_pair = counts_to_probability(T,v1);
-  }
-};
-
-double poisson_match_pairs::operator()(const optimize::Vector& v) const 
-{
-  // We get one length for each branch, and they should all be positive
-  assert(v.size() == T.n_branches());
-
-  Tree temp = T;
-  for(int b=0;b<T.n_branches();b++) {
-    if (v[b] < 0) return log_0;
-    temp.branch(b).set_length(v[b]);
-  }
-
-  Matrix D = DistanceMatrix(T);
-
-  double Pr=0;
-  for(int i=0;i<T.n_leaves();i++) 
-    for(int j=0;j<i;j++) 
-      {
-	double mu = D(i,j);
-
-	//probability of remaining aligned
-	double p = exp(-mu);
-
-	// number of times we remained aligned
-	double count = n*Pr_align_pair(i,j);
-
-	// binomial probability of being aligned count times out of n
-	// Pr += log_fact(n) - log_fact(count) - log_fact(n-count);
-	Pr += count*log(p) + (n-count)*log(1-p);
-    }
-
-
-  // include some kind of exponential branch length - branch_mean = 1
-  for(int b=0;b<v.size();b++)
-    Pr += -v[b];
-
-  return Pr;
-}
-
-
-void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A,RootedSequenceTree& T) {
   //----------- Load and link template A and T -----------------//
   load_A_and_T(args,A,T,false);
 
@@ -380,8 +210,11 @@ double get_column_probability(const vector<int>& column,
     int c=-1;
     for(int j=0;j<column.size() and found;j++) {
 
-      // if there is a gap in this column, ignore it
-      if (column[j] == -1) continue;
+      // if there is a gap in this row, ignore it
+      if (column[j] == alphabet::gap) continue;
+
+      // if there is a gap in this row, ignore it
+      if (column[j] == alphabet::unknown) continue;
 
       // find the column that for the column[j]-th feature of species j
       int cj = column_indexes[i][j][column[j]];
@@ -399,7 +232,7 @@ double get_column_probability(const vector<int>& column,
     for(int j=0;j<column.size() and found;j++) {
 
       // if there is a NOT gap in this column, ignore it
-      if (column[j] != -1 ) continue;
+      if (column[j] != alphabet::gap) continue;
 
       // if the template doesn't have a gap, then this doesn't match
       if (not A->gap(c,j))
@@ -550,8 +383,6 @@ int main(int argc,char* argv[]) {
 
     for(int c=0;c<A.length();c++) 
     {
-      cerr<<"column = "<<c<<endl;
-
       vector<int> column = get_column(MA,c,T.n_leaves());
 
       // Get labels - should I instead get *counts*?
@@ -560,11 +391,16 @@ int main(int argc,char* argv[]) {
 	labels[i] = get_splitgroup_columns(MA,c,Ms[i],column_indexes[i]);
 
       //Get initial estimate using fast least squares
-      Matrix Q = counts_to_probability(T,labels);
+      Matrix Q = counts_to_probability(T,column,labels);
       Matrix D = probability_to_distance(Q);
       Matrix W = probability_to_distance_weights(Q);
 
       P_total += D;
+
+      // [FIXME] Remove leaves corresponding to '?' (and possibly '-'),
+      //         and get a distance matrix on the remainder.
+
+      // [FIXME] Build an NJ tree, instead?
 
       vector<double> LS_branch_lengths = FastLeastSquares(T,D,leaf_sets);
 
@@ -576,48 +412,12 @@ int main(int argc,char* argv[]) {
       for(int b=0;b<T2.n_branches();b++)
 	T2.branch(b).set_length(std::max(0.0, LS_branch_lengths[b]));
 
-      // Define an objective function for refining the initial estimates
-      function * f = NULL;
-      if (not args.count("refine"))
-	;
-      else if (args["refine"].as<string>() == "SSE")
-	f = new SSE_match_pairs(labels,T);
-      else if (args["refine"].as<string>() == "Poisson")
-	f = new poisson_match_pairs(labels,T);
-      else if (args["refine"].as<string>() == "LeastSquares")
-	f = new Sum_of_Squared_Errors(labels,T);
-      else if (args["refine"].as<string>() == "WeightedLeastSquares")
-	f = new WeightedSum_of_Squared_Errors(labels,T);
-      else
-	throw myexception()<<"Unknown refiner '"<<args["refine"].as<string>()<<"'";
-
-      // refine initial estimate if requested
-      vector<double> r_branch_lengths = LS_branch_lengths;
-
-      if (f) 
-      {
-	optimize::Vector x(T.n_branches());
-	for(int i=0;i<LS_branch_lengths.size();i++)
-	  x[i] = std::max(0.00001, LS_branch_lengths[i]);
-
-	x = search_gradient(x, *f, 1.0e-6, 500);
-	delete f;
-
-	for(int i=0;i<r_branch_lengths.size();i++)
-	  r_branch_lengths[i] = x[i];
-      
-	// Print uncertainty values for the letters
-	for(int b=0;b<T2.n_branches();b++)
-	  T2.branch(b).set_length(std::max(0.0, r_branch_lengths[b]));
-      }
-
       for(int i=0;i<T2.n_leaves();i++) {
 	double length = rootdistance(T2,i,rootp.b,rootp.x);
 	assert(length >= 0.0);
 	double P = exp(-length);  // P(no events between leaf and root)
 	std::cout<<P<<" ";
       }
-      cerr<<endl<<endl;
       std::cout<<column_probabilities[c]<<endl;
     }
 

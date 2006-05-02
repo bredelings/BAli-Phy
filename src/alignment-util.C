@@ -421,20 +421,23 @@ vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
 {
   vector<int> label(M1.size2());
   for(int i=0;i<label.size();i++) {
-    if (M1(column,i) == alphabet::gap)
-      label[i] = -1;
+    if (M1(column,i) == alphabet::gap or M1(column,i) == alphabet::unknown)
+      label[i] = M1(column,i);
     else
       label[i] = columns[i][M1(column,i)];
   }
 
   // If letter from the original column is in a column with a gap here
   // then put this gap in the same column as the letter
-  for(int i=0;i<label.size();i++) {
-    if (label[i] != -1) continue;
-    for(int j=0;j<label.size() and label[i] == -1;j++) {
-      if (label[j] != -1 and M2(label[j],i) == alphabet::gap)
+  for(int i=0;i<label.size();i++) 
+  {
+    if (label[i] != alphabet::gap) continue;
+
+    for(int j=0;j<label.size();j++) 
+      if (label[j] != alphabet::gap and M2(label[j],i) == alphabet::gap) {
 	label[i] = label[j];
-    }
+	break;
+      }
   }
   
 
