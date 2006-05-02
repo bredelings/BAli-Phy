@@ -2,28 +2,78 @@
 #include <string>
 #include "util.H"
 
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
+
 using namespace std;
 
-int main(int argc,char* argv[]) { 
-  if (argc != 2) {
-    std::cerr<<"Usage: "<<argv[0]<<" <factor>\n";
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("factor",value<unsigned>()->default_value(1),"Factor by which to subsample.")
+    ("skip",value<unsigned>()->default_value(0),"Throw out some lines at the beginning.")
+    ("max",value<unsigned>(),"Maximum number of samples to keep")
+    ("header","This file has a header - don't throw it out.")
+    ;
+
+  variables_map args;     
+  store(parse_command_line(argc, argv, all), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: subsample [OPTIONS] < in-file\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  return args;
+}
+
+int main(int argc,char* argv[]) 
+{ 
+  try {
+
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
+
+    string line;
+
+    if (args.count("header")) {
+      // print header
+      getline(cin,line);
+      cout<<line<<endl;
+    }
+
+    int skip = args["skip"].as<unsigned>();
+    int subsample = args["factor"].as<unsigned>();
+    int max = -1;
+    if (args.count("max"))
+      max = args["max"].as<unsigned>();
+
+    // print selected lines
+    int lines=0;
+    while(getline(cin,line)) 
+    {
+      if (skip > 0)
+	skip--;
+      else if (max > 0 and lines >= max)
+	break;
+      else {
+	if (lines%subsample == 0)
+	  cout<<line<<endl;
+	lines++;
+      }
+    }
+  }
+  catch (exception& e) {
+    cerr<<"Exception: "<<e.what()<<std::endl;
     exit(1);
   }
-
-  int subsample = convertTo<int>(argv[1]);
-
-  string line;
-
-  // print header
-  getline(cin,line);
-  cout<<line<<endl;
-
-  // print selected lines
-  int lines=0;
-  while(getline(cin,line)) {
-    if (lines%subsample == 0)
-      cout<<line<<endl;
-    lines++;
-  }
-  return 0;
 }
