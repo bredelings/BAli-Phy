@@ -3,9 +3,12 @@
 3. Write some tests.
 4. Report number of gaps along tree.
 5. Allow gilding an alignment-consensus
-6. Write program to chart percentage identity versus position.
+6. Output move stats in tracer-readable format.
+7. Write program to chart percentage identity versus position.
+8. Test sampling of epsilon.
 
 --------------------------------------------------------
+
 -51. Separate P(S,x) from start_pi(x)
 
 -50. What is the proper way to handle gaps in an AU plot?
@@ -65,6 +68,9 @@ Named parameters, priors, and proposals branch!
 
 -39. Usability for tracer:
   + adjust burnin fraction?
+    - if the file has missing data at the begining, use as burnin,
+      don't count as having value '0'.
+    - oh, you CAN change the burnin fraction! (make this clearer?)
   + adjust smoothing function of density?
   + command line arguments 
     - can it alread take filenames?
