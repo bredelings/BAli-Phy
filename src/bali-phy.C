@@ -48,7 +48,7 @@ bool has_parameter(const Model& M, const string& name)
 void add_MH_move(Parameters& P,proposal_fn p, const string& name, const string& pname,double sigma, MCMC::MoveAll& M)
 {
   // proposal for "mu"
-  if (has_parameter(P,name)) {
+  if (has_parameter(P,name) and not P.fixed(find_parameter(P,name))) {
     set_if_undef(P.keys, pname, sigma);
     Proposal2 move_mu(p, name, vector<string>(1,pname), P);
     M.add(1, MCMC::MH_Move(move_mu,string("sample_")+name));
