@@ -37,6 +37,24 @@ using std::ostream;
 
 using std::valarray;
 
+bool has_parameter(const Model& M, const string& name)
+{
+  for(int i=0;i<M.parameters().size();i++)
+    if (M.parameter_name(i) == name)
+      return true;
+  return false;
+}
+
+void add_MH_move(Parameters& P,proposal_fn p, const string& name, const string& pname,double sigma, MCMC::MoveAll& M)
+{
+  // proposal for "mu"
+  if (has_parameter(P,name)) {
+    set_if_undef(P.keys, pname, sigma);
+    Proposal2 move_mu(p, name, vector<string>(1,pname), P);
+    M.add(1, MCMC::MH_Move(move_mu,string("sample_")+name));
+  }
+}
+
 void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int max_iterations,
 		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map)
 {
@@ -63,32 +81,32 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   //--------------- alignment::alignment_branch ---------------//
   MoveEach alignment_branch_moves("alignment_branch_master");
   alignment_branch_moves.add(1.0,
-			     MoveArgSingle("sample_alignments:alignment:alignment_branch",
+			     MoveArgSingle("sample_alignments","alignment:alignment_branch",
 					   sample_alignments_one,
 					   branches)
 			     );
   if (P.T.n_leaves() >2) {
-    alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri:alignment:alignment_branch:nodes",
+    alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri","alignment:alignment_branch:nodes",
 						 sample_tri_one,
 						 branches)
 			       );
-    alignment_branch_moves.add(0.1,MoveArgSingle("sample_tri_branch:alignment:nodes:length",
+    alignment_branch_moves.add(0.1,MoveArgSingle("sample_tri_branch","alignment:nodes:length",
 						 sample_tri_branch_one,
 						 branches)
 			       ,false);
   }
   alignment_moves.add(1, alignment_branch_moves, false);
-  alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments:alignment:alignment_branch:nodes") );
+  alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments","alignment:alignment_branch:nodes") );
 
   //---------- alignment::nodes_master (nodes_moves) ----------//
   MoveEach nodes_moves("nodes_master:nodes");
   if (P.T.n_leaves() >= 3)
-    nodes_moves.add(10,MoveArgSingle("sample_node:alignment:nodes",
+    nodes_moves.add(10,MoveArgSingle("sample_node","alignment:nodes",
 				   sample_node_move,
 				   internal_nodes)
 		   );
   if (P.T.n_leaves() >= 4)
-    nodes_moves.add(1,MoveArgSingle("sample_two_nodes:alignment:nodes",
+    nodes_moves.add(1,MoveArgSingle("sample_two_nodes","alignment:nodes",
 				   sample_two_nodes_move,
 				   internal_nodes)
 		   );
@@ -102,17 +120,17 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   MoveOne SPR_move("SPR");
 
   if (P.IModel().full_tree)
-    NNI_move.add(1,MoveArgSingle("three_way_NNI:alignment:nodes:topology",
+    NNI_move.add(1,MoveArgSingle("three_way_NNI","alignment:nodes:topology",
 				 three_way_topology_sample,
 				 internal_branches)
 		 );
   else
-    NNI_move.add(1,MoveArgSingle("three_way_NNI:topology",
+    NNI_move.add(1,MoveArgSingle("three_way_NNI","topology",
 				 three_way_topology_sample,
 				 internal_branches)
 		 );
 
-  NNI_move.add(1,MoveArgSingle("two_way_NNI:alignment:nodes:topology",
+  NNI_move.add(1,MoveArgSingle("two_way_NNI","alignment:nodes:topology",
 				    two_way_topology_sample,
 				    internal_branches)
 		    ,false
@@ -120,7 +138,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 
   //FIXME - doesn't yet deal with gaps=star
   if (P.IModel().full_tree)
-    NNI_move.add(0.025,MoveArgSingle("three_way_NNI_and_A:alignment:alignment_branch:nodes:topology",
+    NNI_move.add(0.025,MoveArgSingle("three_way_NNI_and_A","alignment:alignment_branch:nodes:topology",
 				   three_way_topology_and_alignment_sample,
 				     internal_branches)
 		 ,false
@@ -128,12 +146,12 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 
 
   if (P.IModel().full_tree) {
-    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat:topology:lengths:nodes:alignment:alignment_branch"));
-    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes:topology:lengths:nodes:alignment:alignment_branch"));
+    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat","topology:lengths:nodes:alignment:alignment_branch"));
+    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths:nodes:alignment:alignment_branch"));
   }
   else {
-    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat:topology:lengths"));
-    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes:topology:lengths"));
+    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat","topology:lengths"));
+    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths"));
   }
 
   topology_move.add(1,NNI_move,false);
@@ -145,41 +163,45 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   MoveAll length_moves("lengths");
   MoveEach length_moves1("lengths1");
 
-  length_moves1.add(1,MoveArgSingle("change_branch_length:lengths",
+  length_moves1.add(1,MoveArgSingle("change_branch_length","lengths",
 				   change_branch_length_move,
 				   branches)
 		   );
-  length_moves1.add(1,MoveArgSingle("change_branch_length_multi:lengths",
+  length_moves1.add(1,MoveArgSingle("change_branch_length_multi","lengths",
 				   change_branch_length_multi_move,
 				   branches)
 		   );
   if (P.SModel().full_tree)
-    length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T:lengths:nodes:topology",
+    length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T","lengths:nodes:topology",
 					change_branch_length_and_T,
 					internal_branches)
 		      );
   length_moves.add(1,length_moves1,false);
   length_moves.add(1,SingleMove(scale_branch_lengths_and_mean,
-				"scale_branches_and_mean:lengths:mean")
+				"scale_branches_and_mean","lengths:mean")
 		   );
 
   tree_moves.add(1,length_moves);
-  tree_moves.add(1,SingleMove(sample_NNI_and_branch_lengths,"NNI_and_lengths:topology:lengths"));
+  tree_moves.add(1,SingleMove(sample_NNI_and_branch_lengths,"NNI_and_lengths","topology:lengths"));
 
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
-  parameter_moves.add(4+P.T.n_branches()/4.0,
-		      SingleMove(change_parameters,
-				 "s_parameters:parameters"));
-  parameter_moves.add(4+P.T.n_branches()/4.0,
-		      MH_Move(Generic_Proposal(frequency_proposal),
-			      "frequencies:s_parameters:parameters"));
 
-  parameter_moves.add(4+P.T.n_branches()/4.0,
-		      MH_Move(Proposal2(scale_gaussian2,"mu",vector<string>(1,"log_branch_mean_sigma"),P),
-			      "sample_mu_2:s_parameters:parameters"));
+  parameter_moves.add(1, SingleMove(change_parameters,"s_parameters","parameters"));
+  parameter_moves.add(1, MH_Move(Generic_Proposal(frequency_proposal),
+			      "frequencies","s_parameters:parameters"));
+
+  add_MH_move(P, scale_gaussian2,     "mu",             "mu_scale_sigma",     0.6,  parameter_moves);
+  add_MH_move(P, scale_gaussian2,     "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, scale_gaussian2,     "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, scale_gaussian2,     "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, scale_gaussian2,     "YangM0::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, shift_gaussian_wrap, "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
+  add_MH_move(P, shift_gaussian_wrap, "f",              "f_shift_sigma",      0.1,  parameter_moves);
+
+
   if (P.IModel().full_tree)
-    parameter_moves.add(8+P.T.n_branches()/4,SingleMove(change_gap_parameters,"g_parameters:parameters"));
+    parameter_moves.add(2,SingleMove(change_gap_parameters,"g_parameters","parameters"));
   
   int subsample = args["subsample"].as<int>();
 
@@ -188,7 +210,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   if (P.IModel().full_tree)
     sampler.add(1,alignment_moves);
   sampler.add(2,tree_moves);
-  sampler.add(1,parameter_moves);
+  sampler.add(4 + P.T.n_branches()/4.0,parameter_moves);
 
   vector<string> disable;
   vector<string> enable;

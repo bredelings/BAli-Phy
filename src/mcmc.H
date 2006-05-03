@@ -49,6 +49,8 @@ namespace MCMC {
     bool enabled_;
 
   public:
+    string name;
+
     vector<string> attributes;
 
     double iterations;
@@ -85,6 +87,7 @@ namespace MCMC {
 
     /// construct a new move called 's'
     Move(const string& s);
+    Move(const string& s, const string& v);
 
     virtual ~Move() {}
   };
@@ -138,6 +141,7 @@ namespace MCMC {
     void show_enabled(std::ostream&,int depth=0) const;
 
     MoveGroup(const string& s):Move(s) {}
+    MoveGroup(const string& s, const string& v):Move(s,v) {}
 
     virtual ~MoveGroup() {}
   };
@@ -149,6 +153,7 @@ namespace MCMC {
     MoveAll* clone() const {return new MoveAll(*this);}
 
     MoveAll(const string& s):MoveGroup(s) {}
+    MoveAll(const string& s, const string& v):MoveGroup(s,v) {}
     virtual ~MoveAll() {}
   };
 
@@ -160,6 +165,7 @@ namespace MCMC {
     MoveOne* clone() const {return new MoveOne(*this);}
 
     MoveOne(const string& s):MoveGroup(s) {}
+    MoveOne(const string& s, const string& v):MoveGroup(s,v) {}
     virtual ~MoveOne() {}
   };
 
@@ -175,8 +181,10 @@ namespace MCMC {
 
     void iterate(alignment& A,Parameters& P,MoveStats&,int);
 
-    SingleMove(atomic_move m1,const string& v)
-      :Move(v),m(m1) {}
+    SingleMove(atomic_move m1,const string& s)
+      :Move(s),m(m1) {}
+    SingleMove(atomic_move m1,const string& s, const string& v)
+      :Move(s,v),m(m1) {}
   };
 
 
@@ -192,8 +200,10 @@ namespace MCMC {
 
     void iterate(alignment& A,Parameters& P,MoveStats&,int);
 
-    MH_Move(const Proposal& P,const string& v)
-      :Move(v),proposal(P) {}
+    MH_Move(const Proposal& P,const string& s)
+      :Move(s),proposal(P) {}
+    MH_Move(const Proposal& P,const string& s, const string& v)
+      :Move(s,v),proposal(P) {}
   };
 
 
@@ -216,6 +226,7 @@ namespace MCMC {
     virtual void operator()(alignment&,Parameters&,MoveStats&,int a)=0;
 
     MoveArg(const string& s):Move(s) { }
+    MoveArg(const string& s, const string& v):Move(s,v) { }
 
     virtual ~MoveArg() {}
   };
@@ -251,6 +262,7 @@ namespace MCMC {
     void show_enabled(std::ostream&,int depth=0) const;
 
     MoveEach(const string& s):MoveArg(s) {}
+    MoveEach(const string& s,const string& v):MoveArg(s,v) {}
 
     virtual ~MoveEach() {}
   };
@@ -267,6 +279,10 @@ namespace MCMC {
       :MoveArg(s),m(m1) 
     {args=a;}
 
+    MoveArgSingle(const string& s,const string& v,atomic_move_arg m1,const vector<int>& a)
+      :MoveArg(s,v),m(m1) 
+    {args=a;}
+
     ~MoveArgSingle() {}
   };
 
@@ -280,8 +296,8 @@ namespace MCMC {
     void go(alignment& A, Parameters& P, int subsample, int max, 
 	    std::ostream&,std::ostream&,std::ostream&,std::ostream&);
 
-    Sampler(const string& name)
-      :MoveAll(name) {};
+    Sampler(const string& s)
+      :MoveAll(s) {};
   };
 
 }

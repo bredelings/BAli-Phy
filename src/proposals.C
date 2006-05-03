@@ -112,6 +112,22 @@ double scale_gaussian2(valarray<double>& x, const vector<double>& p)
 }
 
 
+double shift_gaussian_wrap(valarray<double>& x, const vector<double>& p)
+{
+  if (x.size() != 1) 
+    throw myexception()<<"shift_gaussian_wrap: expected one dimension, got "<<x.size()<<".";
+  if (p.size() != 1) 
+    throw myexception()<<"shift_gaussian_wrap: expected one parameter, got "<<p.size()<<".";
+
+  double& f = x[0];
+  const double& sigma = p[0];
+
+  f = wrap( f + gaussian(0,sigma),1.0);
+
+  return 1.0;
+}
+
+
 template <typename T>
 valarray<T> read(const vector<T>& v,const vector<int>& indices)
 {
@@ -160,7 +176,7 @@ double frequency_proposal(alignment& A, Parameters& P)
   return ratio;
 }
 
-double Proposal2::operator()(alignment& A, Parameters& P) const
+double Proposal2::operator()(alignment&, Parameters& P) const
 {
   vector<double> parameters = P.parameters();
   vector<bool> fixed = P.fixed();
@@ -196,5 +212,7 @@ Proposal2::Proposal2(proposal_fn p,const std::string& s, const std::vector<strin
   for(int i=0;i<n;i++)
     if (P.parameter_name(i) == s)
       indices.push_back(i);
+  if (indices.empty())
+    throw myexception()<<"Model has no parameter called '"<<s<<"' - can't create proposal for it.";
 }
 

@@ -54,4 +54,5 @@ double frequency_proposal(alignment& A, Parameters& P);
 
 double scale_gaussian2(std::valarray<double>& x,const std::vector<double>& p);
 
+double shift_gaussian_wrap(std::valarray<double>& x,const std::vector<double>& p);
 #endif

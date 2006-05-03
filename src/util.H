@@ -219,6 +219,17 @@ struct sequence_order {
 
 /// If m contains name, convert m[name] to T and return.  Otherwise return value.
 template <typename U, typename T>
+bool set_if_undef(std::map<std::string,U,T>& m,const std::string& name, const U& value) {
+  if (m.find(name) != m.end() )
+    return false;
+  else {
+    m[name] = value;
+    return true;
+  }
+}
+
+/// If m contains name, convert m[name] to T and return.  Otherwise return value.
+template <typename U, typename T>
 const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name, const U& value) {
   if (m.find(name) != m.end() )
     return m[name];
@@ -234,6 +245,15 @@ const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name) {
   else
     throw myexception()<<"Parameter '"<<name<<"' not set.";
 }
+
+
+/// If m contains name, convert m[name] to T and return.  Otherwise return value.
+template <typename U, typename T>
+bool defined(std::map<std::string,U,T>& m,const std::string& name) 
+{
+  return (m.find(name) != m.end());
+}
+
 
 /// get the next word starting at position i, return true if not done.
 bool get_word(std::string& word, int& i,const std::string& s,

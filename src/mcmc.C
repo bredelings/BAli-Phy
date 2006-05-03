@@ -79,19 +79,17 @@ namespace MCMC {
     return o;
   }
 
-  Move::Move(const string& v)
-    :enabled_(true),attributes(split(v,':')),iterations(0)
+  Move::Move(const string& n)
+    :enabled_(true),name(n),iterations(0)
+  { }
+
+  Move::Move(const string& n,const string& v)
+    :enabled_(true),name(n),attributes(split(v,':')),iterations(0)
   { }
 
   void Move::enable(const string& s) {
-    if (s == "all")
+    if (s == "all" or s == name)
       enable();
-    else 
-      for(int j=0;j<1 and j<attributes.size();j++)
-	if (attributes[j] == s) {
-	  enable();
-	  break;
-	}
   }
   
   void Move::disable(const string& s) {
@@ -108,7 +106,7 @@ namespace MCMC {
 void Move::show_enabled(ostream& o,int depth) const {
   for(int i=0;i<depth;i++)
     o<<"  ";
-  o<<"move "<<attributes[0]<<": ";
+  o<<"move "<<name<<": ";
   if (enabled_)
     o<<"enabled.\n";
   else 
@@ -160,8 +158,8 @@ void MoveGroup::iterate(alignment& A,Parameters& P,MoveStats& Stats,int i) {
   assert(i < order.size());
 
 #ifndef NDEBUG
-  clog<<" move = "<<attributes[0]<<endl;
-  clog<<"   submove = "<<moves[order[i]]->attributes[0]<<endl;
+  clog<<" move = "<<name<<endl;
+  clog<<"   submove = "<<moves[order[i]]->name<<endl;
 #endif
 
   moves[order[i]]->iterate(A,P,Stats,suborder[i]);
@@ -221,7 +219,7 @@ int MoveOne::choose() const
   }
 
   if (not enabled_submoves)
-    throw myexception()<<"move "<<attributes[0]<<" has no enabled submoves";
+    throw myexception()<<"move "<<name<<" has no enabled submoves";
 
   return i;
 }
@@ -259,7 +257,7 @@ int SingleMove::reset(double lambda) {
 void SingleMove::iterate(alignment& A,Parameters& P,MoveStats& Stats,int) 
 {
 #ifndef NDEBUG
-  clog<<" [single]move = "<<attributes[0]<<endl;
+  clog<<" [single]move = "<<name<<endl;
 #endif
 
   iterations++;
@@ -275,7 +273,7 @@ int MH_Move::reset(double lambda) {
 void MH_Move::iterate(alignment& A,Parameters& P,MoveStats& Stats,int) 
 {
 #ifndef NDEBUG
-  clog<<" [MH] move = "<<attributes[0]<<endl;
+  clog<<" [MH] move = "<<name<<endl;
 #endif
 
   iterations++;
@@ -301,7 +299,7 @@ void MH_Move::iterate(alignment& A,Parameters& P,MoveStats& Stats,int)
     result.totals[0] = 1;
   }
 
-  Stats.inc(attributes[0],result);
+  Stats.inc(name,result);
 }
 
 int MoveArg::reset(double l) 
@@ -410,7 +408,7 @@ int MoveEach::choose(int arg) const {
   }
 
   if (not enabled_submoves)
-    throw myexception()<<"move "<<attributes[0]<<" has no enabled submoves";
+    throw myexception()<<"move "<<name<<" has no enabled submoves";
 
   // is sum(arg) > 0 ?
   if (i >= moves.size())
@@ -440,7 +438,7 @@ void MoveEach::show_enabled(ostream& o,int depth) const {
 void MoveArgSingle::operator()(alignment& A,Parameters& P,MoveStats& Stats,int arg) 
 {
 #ifndef NDEBUG
-  clog<<" [single]move = "<<attributes[0]<<endl;
+  clog<<" [single]move = "<<name<<endl;
 #endif
 
   iterations++;
