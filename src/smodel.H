@@ -331,15 +331,13 @@ namespace substitution {
     {}
   };
 
-  /// The Hasegawa, Kishina, Yano (1985)
+  /// The Hasegawa, Kishino, Yano (1985)
   class HKY: public NucleotideExchangeModel
   {
     virtual void recalc();
   public:
 
     virtual HKY* clone() const {return new HKY(*this);}
-
-    double fiddle(int); 
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
     double kappa() const {return parameters_[0];}
@@ -361,8 +359,6 @@ namespace substitution {
   public:
 
     virtual TN* clone() const {return new TN(*this);}
-
-    double fiddle(int); 
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
     double kappa1() const {return parameters_[0];}
@@ -456,7 +452,6 @@ namespace substitution {
   class YangM0: public CodonExchangeModel,
 		public ::NestedModelOver<NucleotideExchangeModel>
   {
-    double super_fiddle(int);
     void recalc();
   public:
     efloat_t super_prior() const;
@@ -519,8 +514,6 @@ namespace substitution {
     SimpleFrequencyModel* clone() const {return new SimpleFrequencyModel(*this);}
 
     efloat_t prior() const;
-
-    double fiddle(int);
 
     string name() const;
 
@@ -950,10 +943,6 @@ namespace substitution {
     static const double max_inv_rate;
 
     OwnedPointer<SimpleReversibleMarkovModel> INV;
-
-  protected:
-
-    double super_fiddle(int);
 
   public:
     virtual WithINV* clone() const {return new WithINV(*this);}

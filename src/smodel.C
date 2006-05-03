@@ -172,19 +172,6 @@ namespace substitution {
     return dirichlet_pdf(parameters_, 1, size(), 1.0);
   }
 
-  double SimpleFrequencyModel::fiddle(int) 
-  {
-    // propose new 'f' value
-    if (not fixed(0)) {
-      parameters_[0] += gaussian(0, 0.1);
-      parameters_[0] = wrap(parameters_[0],1.0);
-    }
-
-    recalc();
-
-    return 1.0;
-  }
-
   string SimpleFrequencyModel::name() const {
     return "pi";
   }
@@ -729,13 +716,6 @@ namespace substitution {
       return s_parameter_name(i,1);
   }
 
-  double HKY::fiddle(int) {
-    if (not fixed(0))
-      kappa( kappa() * exp(gaussian(0,0.15)) );
-
-    return 1;
-  }
-
   efloat_t HKY::prior() const 
   {
     return shift_laplace_pdf(log(kappa()), log(2), 0.25);
@@ -765,22 +745,6 @@ namespace substitution {
   //------------------------- TN -----------------------------//
   string TN::name() const {
     return "TN";
-  }
-
-  double TN::fiddle(int) 
-  {
-    const double sigma = 0.15;
-
-    if (not fixed(0)) {
-      double k = kappa1() * exp(gaussian(0,sigma));
-      kappa1(k);
-    }
-
-    if (not fixed(1)) {
-      double k = kappa2() * exp(gaussian(0,sigma));
-      kappa2(k);
-    }
-    return 1;
   }
 
   // This should be OK - the increments are linear combinations of gaussians...
@@ -981,19 +945,6 @@ namespace substitution {
     super_parameters_[0]=w;
     read();
     recalc();
-  }
-
-  double YangM0::super_fiddle(int) 
-  {
-    double ratio = 1;
-
-    if (not fixed(0))
-      ratio = scale_gaussian(super_parameters_[0], 0.2);
-
-    read();
-    recalc();
-
-    return ratio;
   }
 
   void YangM0::recalc() {
@@ -1417,23 +1368,6 @@ namespace substitution {
     double p = super_parameters_[0];
 
     return beta_pdf(p, 0.02, 20);
-  }
-
-  double WithINV::super_fiddle(int) {
-    if (not fixed(0)) {
-
-      double &p = parameters_[0];
-
-      // fiddle Invariant fraction
-      const double sigma = 0.03;
-      // p = ILOD(LOD(p) + gaussian(0,sigma));
-      p = wrap( p + gaussian(0,sigma),1.0);
-      assert( 0 <= p and p <= 1.0);
-    }
-
-    recalc();
-
-    return 1;
   }
 
     /// Access the base models
