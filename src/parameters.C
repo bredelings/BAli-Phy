@@ -87,14 +87,6 @@ double Parameters::fiddle_smodel(int i)
     recalc_smodel();
   }
 
-  double sigma = loadvalue(keys,"mu_sigma",0.20);
-
-  if (not fixed(0)) {
-    double mu = branch_mean();
-    ratio *= scale_gaussian(mu, sigma);
-    branch_mean(mu);
-  }
-
   return ratio;
 }
 
