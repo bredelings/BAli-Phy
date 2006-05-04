@@ -259,6 +259,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   general.add_options()
     ("help", "produce help message")
     ("version", "print version information")
+    ("config", value<string>(),"config file to read")
     ("show-only","analyze the initial values and exit")
     ("seed", value<unsigned long>(),"random seed")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
@@ -306,9 +307,21 @@ variables_map parse_cmd_line(int argc,char* argv[])
   p.add("align", 1);
   
   variables_map args;     
-  store(command_line_parser(argc, argv).
-	    options(all).positional(p).run(), args);
+  store(command_line_parser(argc, argv).options(all).positional(p).run(), args);
   notify(args);    
+
+  if (args.count("config")) 
+  {
+    string filename = args["config"].as<string>();
+    ifstream file(filename.c_str());
+    if (not file)
+      throw myexception()<<"Con't load config file '"<<filename<<"'";
+
+    store(parse_config_file(file, all), args);
+    file.close();
+    notify(args);
+  }
+
 
   if (args.count("version")) {
     cout<<"VERSION: 1.9.8\nBUILD: "<<__DATE__<<"\n";
