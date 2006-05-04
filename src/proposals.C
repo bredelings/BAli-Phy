@@ -152,8 +152,7 @@ double frequency_proposal(alignment& A, Parameters& P)
   const SequenceTree& T = P.T;
   const alphabet& a = P.SModel().Alphabet();
 
-  double N_guess = A.length() * a.size() * (2.0 - exp(-T.n_branches() * P.branch_mean()));
-  double N = loadvalue(P.keys,"pi_dirichlet_N",N_guess);
+  double N = A.length() * a.size() * loadvalue(P.keys,"pi_dirichlet_N",1.0);
 
   vector<int> indices;
   for(int i=0;i<P.parameters().size();i++) 
