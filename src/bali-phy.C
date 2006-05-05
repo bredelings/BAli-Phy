@@ -227,9 +227,9 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   add_MH_move(P, log_scaled(shift_gaussian),    "beta::mu",       "mu_scale_sigma",     0.2,  parameter_moves);
   add_MH_move(P, log_scaled(more_than(-5.7,shift_gaussian)),
 	                                        "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, parameter_moves);
-  add_MH_move(P, log_scaled(more_than(-5.7,shift_gaussian)),
+  add_MH_move(P, log_scaled(more_than(-4.0,shift_gaussian)),
 	                                        "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, parameter_moves);
-  add_MH_move(P, log_scaled(more_than(-5.7,shift_gaussian)),
+  add_MH_move(P, log_scaled(shift_gaussian),
 	                                        "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, parameter_moves);
 
   if (P.has_IModel()) {
@@ -494,8 +494,7 @@ string get_base_name(string filename)
     if (filename[i] == '/' or filename[i] == '\\')
       loc = i;
   filename = filename.substr((unsigned)(loc+1));
-  //  return filename;
-  return "";
+  return filename;
 }
 
 #include "unistd.h" // unlink( )
@@ -572,7 +571,6 @@ int main(int argc,char* argv[]) {
     else {
 
       string basename = get_base_name(args["align"].as<string>()) + ".";
-      basename = "";
 
       filenames.push_back("out");
       filenames.push_back("trees");
