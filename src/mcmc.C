@@ -93,7 +93,7 @@ namespace MCMC {
   }
   
   void Move::disable(const string& s) {
-    if (s == "all")
+    if (s == "all" or s == name)
       disable();
     else 
       for(int j=0;j<attributes.size();j++)
