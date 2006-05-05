@@ -1,12 +1,26 @@
 1. Proposals and Priors
-2. Read from config file
-3. Write some tests.
+  a. make external proposals for multi-dimensional proposals.
+  b. sanitize setting parameters(): Allow setting only some.
+                                    Only recalculate models that changed. (should give speedup)
+  c. make proposal OBJECTS: so we can do (e.g.) 
+
+     - less_than(x,shift_gaussian),
+     - more_than(x,shift_gaussian),
+     - within(0,1,shift_gaussian)
+
+     This will allow us to do the 'gamma' proposal much more easily.
+     One of the objects will take a function, so we can ALSO use bare functions.
+     Perhaps I should have everything be a class - would that make it easier to force
+      the dimensions of x and p?
+  d. How to allow generic proposals to report interesting statistics back?
+  
+3. Write some tests (using the config files.)
 4. Report number of gaps along tree.
-5. Allow gilding an alignment-consensus
+5. Allow gilding an alignment-consensus.
 6. Output move stats in tracer-readable format.
 7. Write program to chart percentage identity versus position.
 8. Test sampling of epsilon.
-
+9. Implement new models, to see if we get good estimates of epsilon.
 --------------------------------------------------------
 
 -51. Separate P(S,x) from start_pi(x)
@@ -506,7 +520,7 @@ the prior, because we never want to use it  differently.
 
 [DONE] Complain instead of overwriting files.
 
-
+[DONE] Read arguments from a config file.
 
 
 *IDEAS*
