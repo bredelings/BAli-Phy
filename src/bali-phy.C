@@ -199,13 +199,12 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   add_MH_move(P, shift_gaussian_wrap, "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
   add_MH_move(P, shift_gaussian_wrap, "f",              "f_shift_sigma",      0.1,  parameter_moves);
 
-  add_MH_move(P, shift_delta,         "delta",       "shift_delta_sigma",     0.35, parameter_moves);
-  add_MH_move(P, shift_gaussian_neg,  "lambda",      "shift_lambda_sigma",    0.35, parameter_moves);
-  add_MH_move(P, shift_epsilon,       "epsilon",     "shift_epsilon_sigma",   0.15, parameter_moves);
-  add_MH_move(P, shift_gaussian_wrap, "invariant",   "shift_invariant_sigma", 0.15, parameter_moves);
-
-  if (P.IModel().full_tree)
-    parameter_moves.add(2,SingleMove(change_gap_parameters,"g_parameters","parameters"));
+  if (P.IModel().full_tree) {
+    add_MH_move(P, shift_delta,         "delta",       "shift_delta_sigma",     0.35, parameter_moves);
+    add_MH_move(P, shift_gaussian_neg,  "lambda",      "shift_lambda_sigma",    0.35, parameter_moves);
+    add_MH_move(P, shift_epsilon,       "epsilon",     "shift_epsilon_sigma",   0.15, parameter_moves);
+    add_MH_move(P, shift_gaussian_wrap, "invariant",   "shift_invariant_sigma", 0.15, parameter_moves);
+  }
   
   int subsample = args["subsample"].as<int>();
 
