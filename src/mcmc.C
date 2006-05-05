@@ -537,6 +537,8 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
 
   }
 
+  std::cerr<<endl;
+  std::cerr<<*(MoveStats*)this<<endl;
   s_out<<"total samples = "<<max<<endl;
 }
 
