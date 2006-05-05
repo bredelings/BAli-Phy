@@ -2,7 +2,7 @@
 #include "dp-array.H"
 #include "pow2.H"
 #include "choose.H"
-
+#include "util.H"
 
 efloat_t DParray::path_P(const vector<int>& g_path) const 
 {
@@ -110,6 +110,52 @@ DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matr
 
   for(int s=0;s<start_P.size();s++)
     (*this)(0,s) = start_P[s];
+}
+
+efloat_t DParrayConstrained::path_P(const vector<int>& g_path) const 
+{
+  const int I = size()-1;
+  int i=I;
+  int l=g_path.size()-1;
+  int state2 = g_path[l];
+
+  vector<double> transition(nstates());
+
+  efloat_t Pr=1.0;
+  while (l>0) 
+  {
+    transition.resize(states(i).size());
+    for(int s1=0;s1<transition.size();s1++) {
+      int state1 = states(i)[s1];
+      transition[s1] = (*this)(i,state1)*GQ(state1,state2);
+    }
+
+    int state1 = g_path[l-1];
+    state1 = find_index(states(i),state1);
+    double p = choose_P(state1,transition);
+    assert(p > 0.0);
+
+    if (di(state1)) i--;
+
+    l--;
+    state2 = state1;
+    Pr *= p;
+  }
+
+  // include probability of choosing 'Start' vs ---+ !
+  for(int state1=0;state1<nstates();state1++)
+    transition[state1] = (*this)(0,state1) * GQ(state1,state2);
+
+  // Get the probability that the previous state was 'Start'
+  double p=0.0;
+  for(int state1=0;state1<nstates();state1++)  
+    if (not silent(state1))
+      p += choose_P(state1,transition);
+
+  Pr *= p;
+
+  assert(Pr > 0.0);
+  return Pr;
 }
 
 vector<int> DParrayConstrained::sample_path() const {

@@ -71,7 +71,7 @@ public:
   /// Return the size of the array
   unsigned size() const {return length;}
 
-  efloat_t path_P(const vector<int>& path) const;
+  virtual efloat_t path_P(const vector<int>& path) const;
 
   /// compute FP for the whole array
   void forward();
@@ -112,6 +112,8 @@ public:
 
   /// Compute the forward probabilities for one cell
   void forward(int);
+
+  efloat_t path_P(const vector<int>& path) const;
 
   /// Sample a path from the HMM
   vector<int> sample_path() const;
