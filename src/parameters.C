@@ -87,22 +87,6 @@ void Parameters::recalc() {
 }
 
 
-double Parameters::fiddle_smodel(int i) 
-{
-  double ratio = 1;
-
-  if (SModel_->parameters().size()) {
-    // Fiddle substitution parameters and recalculate rate matrices
-    ratio = SModel_->fiddle(i);
-    SModel_->set_rate(1);
-
-    // Recalculate the branch transition matrices
-    recalc_smodel();
-  }
-
-  return ratio;
-}
-
 Model& Parameters::SubModels(int i)
 {
   if (i>=n_submodels())

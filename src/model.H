@@ -35,9 +35,6 @@ public:
   /// the prior for the model, on the same scale as 'fiddle()'
   virtual efloat_t prior() const {return 1.0;}
 
-  /// a proposal distribution (calls recalc)
-  virtual double fiddle(int) {return 1.0;}
-
   bool fixed(int i) const {return fixed_[i];}
 
   const std::vector<bool>& fixed() const {return fixed_;}
@@ -100,9 +97,6 @@ protected:
   /// The prior for the parameters of the upper model
   virtual efloat_t super_prior() const {return 1.0;}
   
-  /// Fiddle the parameters of the upper model (may need to call recalc)
-  virtual double super_fiddle(int) {recalc();return 1;}
-  
   virtual std::string super_parameter_name(int i) const=0;
 
   virtual const std::vector<double>& super_parameters() const {return super_parameters_;}
@@ -129,7 +123,7 @@ public:
   
   efloat_t prior() const;
   
-  bool fixed(int i) {return Model::fixed(i);}
+  bool fixed(int i) const {return Model::fixed(i);}
 
   virtual void fixed(int i,bool f) {Model::fixed(i,f); write();}
 
@@ -141,9 +135,6 @@ public:
   virtual const Model& SubModels(int) const=0;
   virtual Model& SubModels(int)=0;
   virtual int n_submodels() const=0;
-  
-  /// propose parameters (calls recalc through super_fiddle if necessary)
-  double fiddle(int); 
 };
 
 /// This makes supermodels from derived classes of ::Model

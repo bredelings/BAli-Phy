@@ -252,10 +252,6 @@ namespace substitution {
   public:
     void recalc() {}
 
-    double fiddle(int) {return 1;}
-
-    efloat_t prior() const {return 1;}
-
     double operator()(int i,int j) const {return S(i,j);}
 
     ExchangeModel* clone() const =0;
@@ -386,8 +382,6 @@ namespace substitution {
     
     virtual GTR* clone() const {return new GTR(*this);}
 
-    double fiddle(int);
-
     virtual efloat_t prior() const;
 
     string name() const;
@@ -412,14 +406,10 @@ namespace substitution {
   class SingletToTripletExchangeModel: public TripletExchangeModel,
 				       public ::NestedModelOver<NucleotideExchangeModel>
   {
-    double super_fiddle(int) {return 1.0;}
-
     void recalc();
   public:
 
     efloat_t prior() const { return ::NestedModelOver<NucleotideExchangeModel>::prior(); }
-
-    double fiddle(int) {return ::NestedModelOver<NucleotideExchangeModel>::fiddle(0);}
 
     SingletToTripletExchangeModel* clone() const {return new SingletToTripletExchangeModel(*this);}
 
@@ -456,8 +446,6 @@ namespace substitution {
     efloat_t super_prior() const;
 
     efloat_t prior() const;
-
-    double fiddle(int) {return ::NestedModelOver<NucleotideExchangeModel>::fiddle(0);}
 
     YangM0* clone() const {return new YangM0(*this);}
 
@@ -544,8 +532,6 @@ namespace substitution {
   public:
     IndependentNucleotideFrequencyModel* clone() const {return new IndependentNucleotideFrequencyModel(*this);}
 
-    double super_fiddle(int) {return 1.0;}
-
     string name() const;
 
     IndependentNucleotideFrequencyModel(const Triplets& T);
@@ -564,8 +550,6 @@ namespace substitution {
     TripletsFrequencyModel* clone() const {return new TripletsFrequencyModel(*this);}
 
     efloat_t super_prior() const;
-
-    double super_fiddle(int);
 
     string name() const;
 
@@ -587,8 +571,6 @@ namespace substitution {
     CodonFrequencyModel* clone() const {return new CodonFrequencyModel(*this);}
 
     efloat_t super_prior() const;
-
-    double super_fiddle(int);
 
     string name() const;
 
@@ -816,7 +798,6 @@ namespace substitution {
     void set_a(int m,const valarray<double>& f);
     
     void recalc();
-    double super_fiddle(int);
 
     inline double& a(int m,int l)       {return super_parameters_[m+l*fraction.size()];}
     inline double  a(int m,int l) const {return super_parameters_[m+l*fraction.size()];}
@@ -891,7 +872,6 @@ namespace substitution {
   protected:
     OwnedPointer<RateDistribution> D;
 
-    double super_fiddle(int);
     void recalc();
 
   public:
@@ -969,7 +949,6 @@ namespace substitution {
   class YangM2: public MultiParameterModel,
 		virtual public SuperModel
   {
-    double super_fiddle(int);
     void recalc();
 
   public:
@@ -985,8 +964,8 @@ namespace substitution {
   };
 
 
-  class YangM3: public MultiParameterModel {
-    double super_fiddle(int);
+  class YangM3: public MultiParameterModel 
+  {
     void recalc();
   public:
     
@@ -1021,7 +1000,6 @@ namespace substitution {
   class MixtureModel: public SuperDerivedModelOver<MultiModel,MultiModel> 
   {
     efloat_t super_prior() const;
-    double super_fiddle(int);
     void recalc();
 
     valarray<double> pi;

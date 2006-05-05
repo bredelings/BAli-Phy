@@ -45,10 +45,35 @@ bool has_parameter(const Model& M, const string& name)
   return false;
 }
 
+vector<string> get_parameters(const Model& M,const string& prefix)
+{
+  vector<string> names;
+  for(int i=0;i<M.parameters().size();i++)
+  {
+    string s = M.parameter_name(i);
+    if (s.size() > prefix.size() and s.substr(0,prefix.size()) == prefix)
+      names.push_back(s);
+  }
+  return names;
+}
+
 void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, MCMC::MoveAll& M)
 {
-  // proposal for "mu"
-  if (has_parameter(P,name) and not P.fixed(find_parameter(P,name))) {
+  if (name.size() and name[name.size()-1] == '*')
+  {
+    vector<string> names = get_parameters(P,name.substr(0,name.size()-1));
+    vector<string> names2;
+    for(int i=0;i<names.size();i++)
+      if (not P.fixed(find_parameter(P,names[i])))
+	names2.push_back(names[i]);
+
+    if (names2.empty()) return;
+    set_if_undef(P.keys, pname, sigma);
+    Proposal2 move_mu(p, names2, vector<string>(1,pname), P);
+
+    M.add(1, MCMC::MH_Move(move_mu,string("sample_")+name));
+  }
+  else if (has_parameter(P,name) and not P.fixed(find_parameter(P,name))) {
     set_if_undef(P.keys, pname, sigma);
     Proposal2 move_mu(p, name, vector<string>(1,pname), P);
     M.add(1, MCMC::MH_Move(move_mu,string("sample_")+name));
@@ -187,17 +212,18 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
 
-  parameter_moves.add(1, SingleMove(change_parameters,"s_parameters","parameters"));
-  parameter_moves.add(1, MH_Move(Generic_Proposal(frequency_proposal),
-			      "frequencies","s_parameters:parameters"));
-
   add_MH_move(P, log_scaled(shift_gaussian),    "mu",             "mu_scale_sigma",     0.6,  parameter_moves);
   add_MH_move(P, log_scaled(shift_gaussian),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(shift_gaussian),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(shift_gaussian),    "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(shift_gaussian),    "YangM0::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, log_scaled(more_than(0,shift_gaussian)),
+	                                        "YangM2::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, between(0,1,shift_gaussian),   "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
+  add_MH_move(P, between(0,1,shift_gaussian),   "c",              "c_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_gaussian),   "f",              "f_shift_sigma",      0.1,  parameter_moves);
+  add_MH_move(P, between(0,1,shift_gaussian),   "g",              "g_shift_sigma",      0.1,  parameter_moves);
+  add_MH_move(P, between(0,1,shift_gaussian),   "h",              "h_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, log_scaled(shift_gaussian),    "beta::mu",       "mu_scale_sigma",     0.2,  parameter_moves);
   add_MH_move(P, log_scaled(more_than(-5.7,shift_gaussian)),
 	                                        "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, parameter_moves);
@@ -213,6 +239,43 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
     add_MH_move(P, between(0,1,shift_gaussian), "invariant",   "invariant_shift_sigma", 0.15, parameter_moves);
   }
   
+  set_if_undef(P.keys,"pi_dirichlet_N",1.0);
+  P.keys["pi_dirichlet_N"] *= A.length();
+  add_MH_move(P, dirichlet_proposal,    "pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+
+  set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
+  P.keys["GTR_dirichlet_N"] *= 100;
+  add_MH_move(P, dirichlet_proposal,    "GTR::*", "GTR_dirichlet_N",     1,  parameter_moves);
+
+  set_if_undef(P.keys,"v_dirichlet_N",1.0);
+  P.keys["v_dirichlet_N"] *= A.length();
+  add_MH_move(P, dirichlet_proposal,    "v*", "v_dirichlet_N",     1,  parameter_moves);
+
+  set_if_undef(P.keys,"YangM2::f_dirichlet_N",1.0);
+  P.keys["YangM2::f_dirichlet_N"] *= 10;
+  add_MH_move(P, dirichlet_proposal,    "YangM2::f*", "YangM2::f_dirichlet_N",     1,  parameter_moves);
+
+  set_if_undef(P.keys,"YangM3::f_dirichlet_N",1.0);
+  P.keys["YangM3::f_dirichlet_N"] *= 10;
+  add_MH_move(P, dirichlet_proposal,    "YangM3::f*", "YangM3::f_dirichlet_N",     1,  parameter_moves);
+
+  set_if_undef(P.keys,"multi:p_dirichlet_N",1.0);
+  P.keys["multi:p_dirichlet_N"] *= 10;
+  add_MH_move(P, dirichlet_proposal,    "multi:p*", "multi:p_dirichlet_N",     1,  parameter_moves);
+
+  for(int i=0;;i++) {
+    string name = "YangM3::omega" + convertToString(i);
+    if (not has_parameter(P,name))
+      break;
+
+    Proposal2 m(log_scaled(shift_gaussian), name, vector<string>(1,"omega_scale_sigma"), P);
+    parameter_moves.add(1, MCMC::MH_Move(m,"sample_YangM3::omega"));
+  }
+
+  set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
+  P.keys["Mixture::p_dirichlet_N"] *= 10*10;
+  add_MH_move(P, dirichlet_proposal,    "Mixture::p*", "Mixture::p_dirichlet_N",     1,  parameter_moves);
+
   int subsample = args["subsample"].as<int>();
 
   // full sampler

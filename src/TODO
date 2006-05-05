@@ -1,10 +1,6 @@
 1. Proposals and Priors
-  a. make external proposals for multi-dimensional proposals.
-  b. sanitize setting parameters(): Allow setting only some.
+  a. sanitize setting parameters(): Allow setting only some.
                                     Only recalculate models that changed. (should give speedup)
-
-  d. How to allow generic proposals to report interesting statistics back?
-  
 3. Write some tests (using the config files.)
 4. Report number of gaps along tree.
 5. Allow gilding an alignment-consensus.
@@ -517,6 +513,9 @@ the prior, because we never want to use it  differently.
        Don't have an indel sub-model in this case.
 
 [DONE] Create proposal objects like 'between(0,1,shift_gaussian)'
+
+[DONE] Remove Model::fiddle() [ and also super_fiddle() ] and implement
+       external proposals.
 
 *IDEAS*
 

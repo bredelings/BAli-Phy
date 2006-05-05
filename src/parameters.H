@@ -90,9 +90,6 @@ public:
   /// Get the alphabet
   const alphabet& get_alphabet() const {return SModel_->Alphabet();}
 
-  /// Symmetrically propose another state for the substitution model
-  double fiddle_smodel(int);
-
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 
   

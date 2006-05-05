@@ -256,38 +256,3 @@ void walk_tree_sample_alignments(alignment& A, Parameters& P, MoveStats& Stats) 
       sample_alignments_one(A,P,Stats,b);
   }
 }
-
-
-void change_parameters(alignment& A,Parameters& P, MoveStats& Stats) 
-{
-  Parameters P2 = P;
-
-  double rho = P2.fiddle_smodel(0);
-  
-#ifndef NDEBUG  
-  show_parameters(std::clog,P.SModel());
-  std::clog<<P.probability(A,P)<<" = "<<P.likelihood(A,P)<<" + "<<P.prior(A,P);
-  std::clog<<endl<<endl;
-
-  show_parameters(std::clog,P2.SModel());
-  std::clog<<P.probability(A,P2)<<" = "<<P.likelihood(A,P2)<<" + "<<P.prior(A,P2);
-  std::clog<<endl<<endl;
-#endif
-
-  bool success = P.accept_MH(A,P,A,P2,rho);
-
-  if (success) {
-    P = P2;
-#ifndef NDEBUG
-    std::clog<<"success\n";
-#endif
-  }
-  else {
-#ifndef NDEBUG
-    std::clog<<"failure\n";
-#endif
-  }
-
-  Stats.inc("s_parameters",success);
-}
-

@@ -113,10 +113,12 @@ public:
   double operator()(alignment& A, Parameters& P) const;
   Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
 	    const Parameters& P);
+  Proposal2(const Proposal_Fn& p,const std::vector<std::string>& s, const std::vector<string>& v,
+	    const Parameters& P);
 };
 
 
-double frequency_proposal(alignment& A, Parameters& P);
+double dirichlet_proposal(std::valarray<double>& x,const std::vector<double>& p);
 
 double scale_gaussian2(std::valarray<double>& x,const std::vector<double>& p);
 

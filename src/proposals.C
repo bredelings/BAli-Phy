@@ -185,32 +185,99 @@ valarray<T> write(vector<T>& v,const vector<int>& indices,const valarray<T>& val
   return values;
 }
 
-double frequency_proposal(alignment& A, Parameters& P)
+double dirichlet_proposal(std::valarray<double>& x,const std::vector<double>& p)
 {
-  const alphabet& a = P.SModel().Alphabet();
+  if (p.size() != 1) 
+    throw myexception()<<"dirichlet_proposal: expected one parameter, got "<<p.size()<<".";
 
-  double N = A.length() * a.size() * loadvalue(P.keys,"pi_dirichlet_N",1.0);
+  double N = p[0];
 
-  vector<int> indices;
-  for(int i=0;i<P.parameters().size();i++) 
-  {
-    string name = P.parameter_name(i);
-    if (name.size() > 2 and name.substr(0,2) == "pi")
-      indices.push_back(i);
-  }
+  if (N <= 0)
+    throw myexception()<<"dirichlet_proposal: parameter N <= 0!";
 
-  vector<double> parameters = P.parameters();
-  valarray<double> values = read(parameters,indices);
-  valarray<bool> fixed = read(P.fixed(),indices);
+  double sum = x.sum();
 
-  valarray<double> values1 = values;
-  double ratio  = dirichlet_fiddle(values,N,not fixed);
-
-  write(parameters,indices,values);
-  P.parameters(parameters);
+  x /= sum;
+  double ratio = dirichlet_fiddle(x,N*x.size());
+  x *= sum;
 
   return ratio;
 }
+
+/*
+double sorted_proposal(std::valarray<double>& x,const std::vector<double>& p)
+{
+    // log-laplace fiddle the omega parameters
+    for(int i=0;i<;i++)
+      if (not fixed(i+fraction.size())) {
+	double scale = shift_laplace(0,0.1);
+	ratio *= exp(scale);
+	double w = log(omega(i)) + scale;
+
+	double max = 0;
+	double min = 0;
+
+	int wmin = any_set(fixed_, fraction.size() + i - 1, fraction.size()-1);
+	if (wmin != -1) {
+	  wmin -= fraction.size();
+	  min = log(omega(wmin));
+	}
+	    
+	int wmax = any_set(fixed_, fraction.size() + i + 1, 2*fraction.size());
+	if (wmax != -1) {
+	  wmax -= fraction.size();
+	  max = log(omega(wmax));
+	}
+
+	if (wmin != -1 and wmax != -1)
+	  w = wrap(w,min,max);
+	else if (wmin != -1) 
+	  w = reflect_left(w,min);
+	else if (wmax != -1) 
+	  w = reflect_right(w,max);
+
+	super_parameters_[i+fraction.size()] = exp(w);
+      }
+
+    // we really should SORT the parameters now...
+    std::sort(super_parameters_.begin()+fraction.size(),
+	      super_parameters_.begin()+2*fraction.size());
+}
+*/
+
+/*
+  double MultiFrequencyModel::super_fiddle(int) 
+  {
+    // FIXME - ??? Does this still work after modifying dirichlet_fiddle?
+    const double N = 10;
+
+    // get factor by which to modify bin frequencies
+    valarray<double> C(fraction.size());
+    for(int m=0;m<fraction.size();m++)
+      C[m] = exp(gaussian(0,0.1));
+
+    int n1 =(int)( myrandomf()*Alphabet().size());
+    int n2 =(int)( myrandomf()*Alphabet().size());
+
+    double ratio = 1;
+
+    for(int l=0;l<Alphabet().size();l++) 
+    {
+      valarray<double> a = get_a(l);
+      a *= C;
+      a /= a.sum();
+      if (l==n1 or l==n2)
+	ratio *= ::dirichlet_fiddle(a,N);
+      set_a(l,a);
+    }
+
+    read();
+    recalc();
+
+    return ratio;
+  }
+
+*/
 
 double less_than::operator()(std::valarray<double>& x,const std::vector<double>& p) const
 {
@@ -337,5 +404,23 @@ Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vecto
   int index = find_parameter(P,s);
   if (index == -1)
     throw myexception()<<"Model has no parameter called '"<<s<<"' - can't create proposal for it.";
-  indices.push_back(i);
+  indices.push_back(index);
 }
+
+
+Proposal2::Proposal2(const Proposal_Fn& p,const vector<std::string>& s, const std::vector<string>& v,
+	  const Parameters& P)
+  :proposal(p),
+   pnames(v)
+{
+  for(int i=0;i<s.size();i++) {
+    int index = find_parameter(P,s[i]);
+    if (index == -1)
+      throw myexception()<<"Model has no parameter called '"<<s[i]<<"' - can't create proposal for it.";
+    if (not P.fixed(index))
+      indices.push_back(index);
+  }
+  if (not indices.size())
+    throw myexception()<<"Parameters are all fixed - bad proposal!";
+}
+

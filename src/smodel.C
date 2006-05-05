@@ -61,41 +61,6 @@ namespace substitution {
   }
 
 
-  log_double_t dirichlet_fiddle(vector<double>& v,vector<bool>& fixed, int start, int n,double N) 
-  {
-    valarray<double> fract = get_varray(v,start,n);
-    valarray<bool> mask = not get_varray(fixed,start,n);
-
-    // fiddle
-    log_double_t ratio = ::dirichlet_fiddle(fract,N,mask);
-
-    set_varray(v,start,fract);
-
-    return ratio;
-  }
-
-  log_double_t dirichlet_fiddle(vector<double>& v,int start, int n,double N) 
-  {
-    valarray<double> fract = get_varray(v,start,n);
-
-    // fiddle
-    log_double_t ratio = ::dirichlet_fiddle(fract,N);
-
-    set_varray(v,start,fract);
-
-    return ratio;
-  }
-
-  log_double_t dirichlet_fiddle(vector<double>& v,vector<bool>& fixed, double N) 
-  {
-    return dirichlet_fiddle(v, fixed, 0, v.size(), N);
-  }
-
-  log_double_t dirichlet_fiddle(vector<double>& v,double N) 
-  {
-    return dirichlet_fiddle(v,0,v.size(),N);
-  }
-
   efloat_t dirichlet_pdf(const vector<double>& p1,int start, int n, const valarray<double>& q)
   {
     valarray<double> p2 = get_varray(p1,start,n);
@@ -333,24 +298,6 @@ namespace substitution {
     return dirichlet_pdf(super_parameters_,1,size(),1.0);
   }
 
-  double TripletsFrequencyModel::super_fiddle(int)
-  {
-    const double N = 10;
-
-    if (not fixed(0)) {
-      super_parameters_[0] += gaussian(0, 0.1);
-      super_parameters_[0] = wrap(super_parameters_[0],1.0);
-    }
-
-    // propose new frequencies
-    double ratio = dirichlet_fiddle(super_parameters_, fixed_, 1, size(), N);
-
-    read();
-    recalc();
-
-    return ratio;
-  }
-
   string TripletsFrequencyModel::name() const 
   {
     return "pi=triplets";
@@ -436,29 +383,6 @@ namespace substitution {
   efloat_t CodonFrequencyModel::super_prior() const 
   {
     return dirichlet_pdf(super_parameters_, 2, aa_size(), 1.0);
-  }
-
-  double CodonFrequencyModel::super_fiddle(int)
-  {
-    const double N = 10;
-
-    if (not fixed(0)) {
-      super_parameters_[0] += gaussian(0, 0.1);
-      super_parameters_[0] = wrap(super_parameters_[0],1.0);
-    }
-
-    if (not fixed(1)) {
-      super_parameters_[1] += gaussian(0, 0.1);
-      super_parameters_[1] = wrap(super_parameters_[1],1.0);
-    }
-
-    // propose new frequencies
-    double ratio = dirichlet_fiddle(super_parameters_, fixed_, 2, aa_size(), N);
-
-    read();
-    recalc();
-
-    return ratio;  
   }
 
   string CodonFrequencyModel::name() const 
@@ -631,11 +555,13 @@ namespace substitution {
 
   //---------------------- INV_Model --------------------------//
 
-  string INV_Model::name() const {
+  string INV_Model::name() const 
+  {
     return "INV";
   }
 
-  string INV_Model::parameter_name(int i) const {
+  string INV_Model::parameter_name(int i) const 
+  {
     if (i==0)
       return "INV::f";
     else
@@ -799,12 +725,6 @@ namespace substitution {
 
   string GTR::name() const {
     return "GTR";
-  }
-
-  double GTR::fiddle(int) 
-  {
-    const double N = 10;
-    return dirichlet_fiddle(parameters_,fixed_, N);
   }
 
   // This should be OK - the increments are linear combinations of gaussians...
@@ -1067,37 +987,6 @@ namespace substitution {
       a(m,l) = al[m];
   }
 
-  double MultiFrequencyModel::super_fiddle(int) 
-  {
-    // FIXME - ??? Does this still work after modifying dirichlet_fiddle?
-    const double N = 10;
-
-    // get factor by which to modify bin frequencies
-    valarray<double> C(fraction.size());
-    for(int m=0;m<fraction.size();m++)
-      C[m] = exp(gaussian(0,0.1));
-
-    int n1 =(int)( myrandomf()*Alphabet().size());
-    int n2 =(int)( myrandomf()*Alphabet().size());
-
-    double ratio = 1;
-
-    for(int l=0;l<Alphabet().size();l++) 
-    {
-      valarray<double> a = get_a(l);
-      a *= C;
-      a /= a.sum();
-      if (l==n1 or l==n2)
-	ratio *= ::dirichlet_fiddle(a,N);
-      set_a(l,a);
-    }
-
-    read();
-    recalc();
-
-    return ratio;
-  }
-
   efloat_t MultiFrequencyModel::super_prior() const 
   {
     // uniform - 10 counts per bin
@@ -1266,18 +1155,6 @@ namespace substitution {
     return D->prior();
   }
 
-  double DistributionParameterModel::super_fiddle(int i) {
-    double rho = D->fiddle(i);
-
-    super_parameters_ = D->parameters();
-
-    read();
-
-    recalc();
-
-    return rho;
-  }
-
   // This is supposed to push things out from parameters_
   void DistributionParameterModel::recalc() {
     write();
@@ -1403,27 +1280,6 @@ namespace substitution {
     return dist;
   }
 
-  double YangM2::super_fiddle(int) 
-  {
-    const double N = 10;
-    // dirichlet fiddle the first 3 parameters, sigma = ?
-    double ratio = 1.0;
-
-    ratio *= dirichlet_fiddle(super_parameters_, fixed_, 0, 3, N);
-
-    // log-laplace fiddle the 4th parameter, wrapped so that it is always >= 1
-    double scale = exp(shift_laplace(0,0.2));
-    ratio *= scale;
-    super_parameters_[3] *= scale;
-    if (super_parameters_[3] < 1)
-      super_parameters_[3] = 1.0/super_parameters_[3];
-
-    read();
-    recalc();
-
-    return ratio;
-  }
-
   void YangM2::recalc() 
   {
     // push values out from parameters to superparameters and sub-models
@@ -1523,55 +1379,6 @@ namespace substitution {
     return x;
   }
 
-  double YangM3::super_fiddle(int) 
-  {
-    const double N = 10;
-
-    double ratio=1;
-
-    // dirichlet fiddle the frequency parameters
-    ratio *= dirichlet_fiddle(super_parameters_, fixed_, 0, fraction.size(), N);
-
-    // log-laplace fiddle the omega parameters
-    for(int i=0;i<fraction.size();i++)
-      if (not fixed(i+fraction.size())) {
-	double scale = shift_laplace(0,0.1);
-	ratio *= exp(scale);
-	double w = log(omega(i)) + scale;
-
-	double max = 0;
-	double min = 0;
-
-	int wmin = any_set(fixed_, fraction.size() + i - 1, fraction.size()-1);
-	if (wmin != -1) {
-	  wmin -= fraction.size();
-	  min = log(omega(wmin));
-	}
-	    
-	int wmax = any_set(fixed_, fraction.size() + i + 1, 2*fraction.size());
-	if (wmax != -1) {
-	  wmax -= fraction.size();
-	  max = log(omega(wmax));
-	}
-
-	if (wmin != -1 and wmax != -1)
-	  w = wrap(w,min,max);
-	else if (wmin != -1) 
-	  w = reflect_left(w,min);
-	else if (wmax != -1) 
-	  w = reflect_right(w,max);
-
-	super_parameters_[i+fraction.size()] = exp(w);
-      }
-
-    // we really should SORT the parameters now...
-    std::sort(super_parameters_.begin()+fraction.size(),
-	      super_parameters_.begin()+2*fraction.size());
-    read();
-    recalc();
-    return ratio;
-  }
-
   void YangM3::recalc() 
   {
     // push values out from parameters to superparameters and sub-models
@@ -1605,7 +1412,8 @@ namespace substitution {
     return SubModel().name() + " + YangM3[" + convertToString(fraction.size()) + "]";
   }
 
-  string YangM3::super_parameter_name(int i) const {
+  string YangM3::super_parameter_name(int i) const 
+  {
     if (i<fraction.size())
       return "YangM3::f" + convertToString(i);
 
@@ -1667,19 +1475,6 @@ namespace substitution {
     valarray<double> q = get_varray(super_parameters_,n_submodels(),n_submodels());
 
     return dirichlet_pdf(super_parameters_, 0, n_submodels(), 10.0*q);
-  }
-
-  double MixtureModel::super_fiddle(int) 
-  {
-    const double N = 10;
-
-    // prior on sub-model frequencies
-    double ratio = dirichlet_fiddle(super_parameters_, fixed_, 0, n_submodels(), N);
-
-    read();
-    recalc();
-
-    return ratio;
   }
 
   const MultiModel::Base_Model_t& MixtureModel::base_model(int m) const 

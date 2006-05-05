@@ -131,7 +131,6 @@ namespace substitution {
   /// A sum of distributions for rate variation
   class MultipleDistribution: public SuperDerivedModelOver<RateDistribution,RateDistribution> 
   {
-    double super_fiddle(int); 
   public:
 
     efloat_t super_prior() const;

@@ -261,25 +261,8 @@ namespace substitution {
 
   /*-------------- MultipleDistribution ----------------*/
 
-  double MultipleDistribution::super_fiddle(int) {
-    read();
-
-    const double N = 10;
-
-    // Read, fiddle, and set f
-    valarray<double> f(n_dists());
-    for(int i=0;i<f.size();i++)
-      f[i] = fraction(i);
-
-    double ratio = dirichlet_fiddle(f,N);
-
-    for(int i=0;i<f.size();i++)
-      fraction(i) = f[i];
-    return ratio;
-  }
-
-  efloat_t MultipleDistribution::super_prior() const {
-    // Read, fiddle, and set f
+  efloat_t MultipleDistribution::super_prior() const 
+  {
     valarray<double> f(n_dists());
     for(int i=0;i<f.size();i++)
       f[i] = fraction(i);
