@@ -493,7 +493,9 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   s_parameters<<"iter\t";
   s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
-  s_parameters<<"\t|A|\t|T|"<<endl;
+  if (P.has_IModel())
+    s_parameters<<"\t|A|";
+  s_parameters<<"\t|T|"<<endl;
 
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max; iterations++) {
@@ -511,13 +513,15 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
 
     if (iterations%subsample == 0) {
       bool show_alignment = (iterations%(10*subsample) == 0);
-      if (not (P.IModel().full_tree)) show_alignment = false;
+      if (not P.has_IModel()) show_alignment = false;
       print_stats(s_out,s_trees,A,P,show_alignment);
 
       s_parameters<<iterations<<"\t";
       s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
       s_parameters<<P.state();
-      s_parameters<<"\t"<<A.length()<<"\t"<<length(P.T)<<endl;
+      if (P.has_IModel())
+	s_parameters<<"\t"<<A.length();
+      s_parameters<<"\t"<<length(P.T)<<endl;
     }
 
     if (iterations%20 == 0) {

@@ -319,10 +319,7 @@ OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
   else
     throw myexception()<<"Unrecognized indel model '"<<args["imodel"].as<string>()<<"'";
   
-  if (args.count("gaps") and args["gaps"].as<string>() == "star")
-    imodel->full_tree = false;
-  else
-    imodel->full_tree = true;
+  imodel->full_tree = true;
 
   return imodel;
 }

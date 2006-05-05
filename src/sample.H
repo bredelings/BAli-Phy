@@ -62,7 +62,6 @@ void change_branch_length_and_T(alignment&, Parameters&, MCMC::MoveStats&, int);
 
 
 void change_parameters(alignment&, Parameters&, MCMC::MoveStats&);
-void change_gap_parameters(alignment&, Parameters&, MCMC::MoveStats&);
 void sample_NNI_and_branch_lengths(alignment&, Parameters&, MCMC::MoveStats&);
 
 #endif

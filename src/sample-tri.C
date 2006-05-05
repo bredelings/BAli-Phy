@@ -29,7 +29,7 @@ using namespace A3;
 RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const Tree& T = P.T;
 
-  assert(P.IModel().full_tree);
+  assert(P.has_IModel());
 
   assert(T.is_connected(nodes[0],nodes[1]));
   assert(T.is_connected(nodes[0],nodes[2]));

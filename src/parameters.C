@@ -13,7 +13,7 @@ efloat_t Parameters::basic_likelihood(const alignment& A,const Parameters& P) co
 }
 
 efloat_t Parameters::basic_prior(const alignment& A,const Parameters& P) const {
-  if (IModel_->full_tree)
+  if (IModel_)
     return prior3(A,P);
   else
     //FIXME
@@ -48,10 +48,23 @@ bool Parameters::accept_MH(const alignment& A,const Parameters& P1,const Paramet
     return false;
 }
 
+const IndelModel& Parameters::IModel() const
+{
+  if (has_IModel()) return *IModel_;
+  std::abort();
+}
+
+IndelModel& Parameters::IModel()
+{
+  if (has_IModel()) return *IModel_;
+  std::abort();
+}
+
 void Parameters::recalc_imodel() {
   // recalculate the cached branch HMMs
-  for(int b=0;b<branch_HMMs.size();b++)
-    branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
+  if (IModel_)
+    for(int b=0;b<branch_HMMs.size();b++)
+      branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
   read();
 }
 
@@ -90,16 +103,11 @@ double Parameters::fiddle_smodel(int i)
   return ratio;
 }
 
-double Parameters::fiddle_imodel(int i) 
-{
-  double rho = IModel_->fiddle(i);
-  recalc_imodel();
-  return rho;
-}
-
-
 Model& Parameters::SubModels(int i)
 {
+  if (i>=n_submodels())
+    throw myexception()<<"Parameters: There is no sub-model #"<<i<<"!";
+
   if (i==0)
     return SModel();
   else if (i==1)
@@ -110,6 +118,9 @@ Model& Parameters::SubModels(int i)
 
 const Model& Parameters::SubModels(int i) const
 {
+  if (i>=n_submodels())
+    throw myexception()<<"Parameters: There is no sub-model #"<<i<<"!";
+
   if (i==0)
     return SModel();
   else if (i==1)
@@ -136,7 +147,8 @@ string Parameters::super_parameter_name(int i) const
 
 void Parameters::setlength(int b,double l) {
   MatCache::setlength(b,l,T,*SModel_); 
-  branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
+  if (IModel_)
+    branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
   LC.invalidate_branch(T,b);
 }
 
@@ -155,6 +167,29 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
    IModel_(IM),
    SModel_(SM),
    branch_HMMs(t.n_branches()),
+   beta(2, 1.0),
+   features(0),
+   T(t),
+   LC(T,SModel())
+{
+   constants.push_back(-1);
+
+  // set up super_parameters_ and parameters
+  super_parameters_.resize(1);
+  super_parameters_[0] = 0.1;
+
+  int total=0;
+  for(int m=0;m<n_submodels();m++)
+    total += SubModels(m).parameters().size();
+  
+  set_n_parameters(total + 1);
+    
+  read();
+}
+
+Parameters::Parameters(const substitution::MultiModel& SM,const SequenceTree& t)
+  :MatCache(t,SM),
+   SModel_(SM),
    beta(2, 1.0),
    features(0),
    T(t),

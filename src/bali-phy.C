@@ -119,7 +119,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   MoveEach NNI_move("NNI");
   MoveOne SPR_move("SPR");
 
-  if (P.IModel().full_tree)
+  if (P.has_IModel())
     NNI_move.add(1,MoveArgSingle("three_way_NNI","alignment:nodes:topology",
 				 three_way_topology_sample,
 				 internal_branches)
@@ -137,7 +137,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 		    );
 
   //FIXME - doesn't yet deal with gaps=star
-  if (P.IModel().full_tree)
+  if (P.has_IModel())
     NNI_move.add(0.025,MoveArgSingle("three_way_NNI_and_A","alignment:alignment_branch:nodes:topology",
 				   three_way_topology_and_alignment_sample,
 				     internal_branches)
@@ -145,7 +145,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 		 );
 
 
-  if (P.IModel().full_tree) {
+  if (P.has_IModel()) {
     SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat","topology:lengths:nodes:alignment:alignment_branch"));
     SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths:nodes:alignment:alignment_branch"));
   }
@@ -199,7 +199,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   add_MH_move(P, shift_gaussian_wrap, "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
   add_MH_move(P, shift_gaussian_wrap, "f",              "f_shift_sigma",      0.1,  parameter_moves);
 
-  if (P.IModel().full_tree) {
+  if (P.has_IModel()) {
     add_MH_move(P, shift_delta,         "delta",       "shift_delta_sigma",     0.35, parameter_moves);
     add_MH_move(P, shift_gaussian_neg,  "lambda",      "shift_lambda_sigma",    0.35, parameter_moves);
     add_MH_move(P, shift_epsilon,       "epsilon",     "shift_epsilon_sigma",   0.15, parameter_moves);
@@ -210,7 +210,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 
   // full sampler
   Sampler sampler("sampler");
-  if (P.IModel().full_tree)
+  if (P.has_IModel())
     sampler.add(1,alignment_moves);
   sampler.add(2,tree_moves);
   sampler.add(4 + P.T.n_branches()/4.0,parameter_moves);
@@ -268,7 +268,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("align-constraint",value<string>(),"file with alignment constraints")
     ("internal",value<string>(),"if set to '+', then make all internal node entries wildcards")
-    ("gaps",value<string>()->default_value("full_tree"),"if set to 'star', then don't use indel information")
+    ("traditional","Fix alignment and don't model indels")
     ("letters",value<string>()->default_value("full_tree"),"if set to 'star', then use a star tree for substitution")
     ;
   
@@ -565,18 +565,26 @@ int main(int argc,char* argv[]) {
 	T.branch(i).set_length(0);
 
     //-------------Choose an indel model--------------//
-    OwnedPointer<IndelModel> imodel = get_imodel(args);
+    OwnedPointer<IndelModel> imodel;
+
+    if (not args.count("traditional"))
+      imodel = get_imodel(args);
     
     //-------------Create the Parameters object--------------//
-    Parameters P(*full_smodel,*imodel,T);
+    Parameters P(*full_smodel,T);
+    if (imodel)
+      P = Parameters(*full_smodel,*imodel,T);
+
     (*s_out)<<"subst model = "<<P.SModel().name();
     if (not P.SModel().full_tree)
       (*s_out)<<", *-tree";
     (*s_out)<<endl<<endl;
 
-    (*s_out)<<"indel model = "<<P.IModel().name();
-    if (not P.IModel().full_tree)
-      (*s_out)<<", *-tree";
+    (*s_out)<<"indel model = ";
+    if (imodel)
+      (*s_out)<<P.IModel().name();
+    else
+      (*s_out)<<"none";
     (*s_out)<<endl<<endl;
 
     P.alignment_constraint = load_alignment_constraint(args,T);

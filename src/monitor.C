@@ -59,10 +59,8 @@ void print_stats(std::ostream& o,std::ostream& trees,
   o<<"\n";
   o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]     ";
   o<<" single sequence ["<<substitution::Pr_single_sequence(A,P)<<"]"<<"\n";
-  o<<" sgsl  ["<<Pr_sgaps_sletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<"\n";
-  o<<" sg    ["<<Pr_sgaps_tletters(A,P)<<": "<<prior_HMM_notree(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<"\n";
-  o<<" sl    ["<<Pr_tgaps_sletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr_star_estimate(A,P)<<"]"<<"\n";
-  o<<" Full  ["<<Pr_tgaps_tletters(A,P)<<": "<<prior_HMM(A,P)<<" + "<<substitution::Pr(A,P)<<"]"<<"\n";
+  o<<" sl    ["<<substitution::Pr_star_estimate(A,P)<<"]"<<"\n";
+  o<<" Full  ["<<substitution::Pr(A,P)<<"]"<<"\n";
   
   efloat_t Pr_prior = P.basic_prior(A,P);
   efloat_t Pr_likelihood = P.basic_likelihood(A,P);

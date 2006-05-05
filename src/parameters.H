@@ -76,10 +76,11 @@ public:
   /// Cached Conditional Likelihoods
   mutable Likelihood_Cache LC;
 
+  bool has_IModel() const {return IModel_;}
   /// The IndelModel
-  const IndelModel& IModel() const {return *IModel_;}
+  const IndelModel& IModel() const;
   /// The IndelModel
-  IndelModel& IModel() {return *IModel_;}
+  IndelModel& IModel();
 
   /// Get the substitution::Model
   const substitution::MultiModel& SModel() const {return *SModel_;}
@@ -91,9 +92,6 @@ public:
 
   /// Symmetrically propose another state for the substitution model
   double fiddle_smodel(int);
-
-  /// Symmetrically propose another state for the indel model
-  double fiddle_imodel(int);
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 
@@ -116,6 +114,7 @@ public:
   double branch_mean() const; 
   void branch_mean(double);
 
+  Parameters(const substitution::MultiModel&,const SequenceTree&);
   Parameters(const substitution::MultiModel&,const IndelModel&,const SequenceTree&);
 };
 

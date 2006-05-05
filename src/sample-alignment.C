@@ -50,7 +50,7 @@ typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parame
 
 void sample_alignment(alignment& A,Parameters& P,int b) 
 {
-  assert(P.IModel().full_tree);
+  assert(P.has_IModel());
 
   valarray<bool> s1 = constraint_satisfied(P.alignment_constraint,A);
 

@@ -35,7 +35,7 @@ using namespace A3;
 RefPtr<DParrayConstrained> sample_node_base(alignment& A,const Parameters& P,const vector<int>& nodes) {
   const Tree& T = P.T;
 
-  assert(P.IModel().full_tree);
+  assert(P.has_IModel());
 
   alignment old = A;
 

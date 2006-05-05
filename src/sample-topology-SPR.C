@@ -35,9 +35,9 @@ int topology_sample_SPR_sgaps(vector<alignment>& a,vector<Parameters>& p,const v
 
 int topology_sample_SPR(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
 {
-  assert(p[0].IModel().full_tree == p[1].IModel().full_tree);
+  assert(p[0].has_IModel() == p[1].has_IModel());
 
-  if (p[0].IModel().full_tree)
+  if (p[0].has_IModel())
     return topology_sample_SPR_and_A(a,p,rho,n1,n2);
   else
     return topology_sample_SPR_sgaps(a,p,rho);

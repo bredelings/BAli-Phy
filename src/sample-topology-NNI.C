@@ -94,9 +94,9 @@ int two_way_topology_sample_sgaps(vector<alignment>& a, vector<Parameters>& p,co
 ///Sample between 2 topologies, ignoring gap priors on each case
 int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vector<efloat_t>& rho, int b) 
 {
-  assert(p[0].IModel().full_tree == p[1].IModel().full_tree);
+  assert(p[0].has_IModel() == p[1].has_IModel());
 
-  if (p[0].IModel().full_tree)
+  if (p[0].has_IModel())
     return two_way_topology_sample_fgaps(a,p,rho,b);
   else
     return two_way_topology_sample_sgaps(a,p,rho);
@@ -244,10 +244,10 @@ void two_way_NNI_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) {
 
 int three_way_topology_sample(vector<alignment>& a,vector<Parameters>& p, const vector<efloat_t>& rho, int b) 
 {
-  assert(p[0].IModel().full_tree == p[1].IModel().full_tree);
-  assert(p[1].IModel().full_tree == p[2].IModel().full_tree);
+  assert(p[0].has_IModel() == p[1].has_IModel());
+  assert(p[1].has_IModel() == p[2].has_IModel());
 
-  if (p[0].IModel().full_tree)
+  if (p[0].has_IModel())
     return three_way_topology_sample_fgaps(a,p,rho,b);
   else
     return three_way_topology_sample_sgaps(a,p,rho);

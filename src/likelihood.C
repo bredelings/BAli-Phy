@@ -70,7 +70,7 @@ efloat_t prior(const Parameters& P) {
   p *= P.SModel().prior();
 
   // prior on the insertion/deletion model
-  if (P.IModel().full_tree)
+  if (P.has_IModel())
     p *= P.IModel().prior();
 
   return p;
