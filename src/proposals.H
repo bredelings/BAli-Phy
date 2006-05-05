@@ -36,16 +36,82 @@ public:
 
 typedef double (*proposal_fn)(std::valarray<double>& x,const std::vector<double>& p);
 
-class Proposal2: public Proposal
+class Proposal_Fn
 {
   proposal_fn proposal;
+public:
+  virtual Proposal_Fn* clone() const {return new Proposal_Fn(*this);}
+
+  virtual double operator()(std::valarray<double>& x,const std::vector<double>& p) const 
+  {
+    return proposal(x,p);
+  }
+
+  Proposal_Fn():proposal(NULL) {}
+  Proposal_Fn(const proposal_fn& p):proposal(p) {}
+
+  virtual ~Proposal_Fn() {}
+};
+
+class less_than: public Proposal_Fn
+{
+  double max;
+  OwnedPointer<Proposal_Fn> proposal;
+public:
+  less_than* clone() const {return new less_than(*this);}
+  double operator()(std::valarray<double>& x,const std::vector<double>& p) const;
+  less_than(double m,const Proposal_Fn& P);
+};
+
+class more_than: public Proposal_Fn
+{
+  double min;
+  OwnedPointer<Proposal_Fn> proposal;
+public:
+  more_than* clone() const {return new more_than(*this);}
+  double operator()(std::valarray<double>& x,const std::vector<double>& p) const;
+  more_than(double m,const Proposal_Fn& P);
+};
+
+class between: public Proposal_Fn
+{
+  double min;
+  double max;
+  OwnedPointer<Proposal_Fn> proposal;
+public:
+  between* clone() const {return new between(*this);}
+  double operator()(std::valarray<double>& x,const std::vector<double>& p) const;
+  between(double m1,double m2,const Proposal_Fn& P);
+};
+
+class log_scaled: public Proposal_Fn
+{
+  OwnedPointer<Proposal_Fn> proposal;
+public:
+  log_scaled* clone() const {return new log_scaled(*this);}
+  double operator()(std::valarray<double>& x,const std::vector<double>& p) const;
+  log_scaled(const Proposal_Fn& P);
+};
+
+class LOD_scaled: public Proposal_Fn
+{
+  OwnedPointer<Proposal_Fn> proposal;
+public:
+  LOD_scaled* clone() const {return new LOD_scaled(*this);}
+  double operator()(std::valarray<double>& x,const std::vector<double>& p) const;
+  LOD_scaled(const Proposal_Fn& P);
+};
+
+class Proposal2: public Proposal
+{
+  OwnedPointer<Proposal_Fn> proposal;
   std::vector<int> indices;
   std::vector<std::string> pnames;
 
 public:
   Proposal2* clone() const {return new Proposal2(*this);}
   double operator()(alignment& A, Parameters& P) const;
-  Proposal2(proposal_fn p,const std::string& s, const std::vector<string>& v,
+  Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
 	    const Parameters& P);
 };
 
@@ -54,13 +120,11 @@ double frequency_proposal(alignment& A, Parameters& P);
 
 double scale_gaussian2(std::valarray<double>& x,const std::vector<double>& p);
 
-double shift_gaussian_wrap(std::valarray<double>& x,const std::vector<double>& p);
-
-double shift_gaussian_pos(std::valarray<double>& x,const std::vector<double>& p);
-
-double shift_gaussian_neg(std::valarray<double>& x,const std::vector<double>& p);
+double shift_gaussian(std::valarray<double>& x,const std::vector<double>& p);
 
 double shift_delta(std::valarray<double>& x, const std::vector<double>& p);
 
 double shift_epsilon(std::valarray<double>& x, const std::vector<double>& p);
+
+
 #endif

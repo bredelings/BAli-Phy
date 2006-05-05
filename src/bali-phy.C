@@ -45,7 +45,7 @@ bool has_parameter(const Model& M, const string& name)
   return false;
 }
 
-void add_MH_move(Parameters& P,proposal_fn p, const string& name, const string& pname,double sigma, MCMC::MoveAll& M)
+void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, MCMC::MoveAll& M)
 {
   // proposal for "mu"
   if (has_parameter(P,name) and not P.fixed(find_parameter(P,name))) {
@@ -191,19 +191,26 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   parameter_moves.add(1, MH_Move(Generic_Proposal(frequency_proposal),
 			      "frequencies","s_parameters:parameters"));
 
-  add_MH_move(P, scale_gaussian2,     "mu",             "mu_scale_sigma",     0.6,  parameter_moves);
-  add_MH_move(P, scale_gaussian2,     "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, scale_gaussian2,     "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, scale_gaussian2,     "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, scale_gaussian2,     "YangM0::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, shift_gaussian_wrap, "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
-  add_MH_move(P, shift_gaussian_wrap, "f",              "f_shift_sigma",      0.1,  parameter_moves);
+  add_MH_move(P, log_scaled(shift_gaussian),    "mu",             "mu_scale_sigma",     0.6,  parameter_moves);
+  add_MH_move(P, log_scaled(shift_gaussian),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, log_scaled(shift_gaussian),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, log_scaled(shift_gaussian),    "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, log_scaled(shift_gaussian),    "YangM0::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, between(0,1,shift_gaussian),   "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
+  add_MH_move(P, between(0,1,shift_gaussian),   "f",              "f_shift_sigma",      0.1,  parameter_moves);
+  add_MH_move(P, log_scaled(shift_gaussian),    "beta::mu",       "mu_scale_sigma",     0.2,  parameter_moves);
+  add_MH_move(P, log_scaled(more_than(-5.7,shift_gaussian)),
+	                                        "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, parameter_moves);
+  add_MH_move(P, log_scaled(more_than(-5.7,shift_gaussian)),
+	                                        "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, parameter_moves);
+  add_MH_move(P, log_scaled(more_than(-5.7,shift_gaussian)),
+	                                        "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, parameter_moves);
 
   if (P.has_IModel()) {
-    add_MH_move(P, shift_delta,         "delta",       "shift_delta_sigma",     0.35, parameter_moves);
-    add_MH_move(P, shift_gaussian_neg,  "lambda",      "shift_lambda_sigma",    0.35, parameter_moves);
-    add_MH_move(P, shift_epsilon,       "epsilon",     "shift_epsilon_sigma",   0.15, parameter_moves);
-    add_MH_move(P, shift_gaussian_wrap, "invariant",   "shift_invariant_sigma", 0.15, parameter_moves);
+    add_MH_move(P, shift_delta,                 "delta",       "delta_shift_sigma",     0.35, parameter_moves);
+    add_MH_move(P, less_than(0,shift_gaussian), "lambda",      "lambda_shift_sigma",    0.35, parameter_moves);
+    add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.15, parameter_moves);
+    add_MH_move(P, between(0,1,shift_gaussian), "invariant",   "invariant_shift_sigma", 0.15, parameter_moves);
   }
   
   int subsample = args["subsample"].as<int>();

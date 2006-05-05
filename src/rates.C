@@ -131,31 +131,12 @@ namespace substitution {
     return shift_laplace_pdf(log_g_sigma,-4,0.5);
   }
 
-  double Gamma::fiddle(int) {
-    if (fixed(0)) return 1;
-
-    vector<double> v = parameters_;
-    double g_sigma = v[0];
-    double log_g_sigma = log(g_sigma);
-
-    const double sigma = 0.25;
-    log_g_sigma += gaussian(0,sigma);
-
-    g_sigma = exp(log_g_sigma);
-    double alpha = 1.0/(g_sigma*g_sigma);
-    if (alpha < 100000)
-      v[0] = g_sigma;
-
-    parameters(v);
-    return 1;
-  }
-
   string Gamma::name() const {
     return "gamma";
   }
 
   string Gamma::parameter_name(int i) const {
-    return "gamma::sigma\\mu";
+    return "gamma::sigma/mu";
   }
 
   double Gamma::cdf(double x) const {
@@ -193,26 +174,6 @@ namespace substitution {
     return P;
   }
 
-  double Beta::fiddle(int) {
-    double& mu = parameters_[0];
-    double& s  = parameters_[1];
-
-    double ratio = 1;
-    if (not fixed(0)) {
-      ratio = exp(gaussian(0, 0.20));
-      mu *= ratio;
-    }
-
-    if (not fixed(1)) {
-      s += gaussian(0,0.1);
-      if (s < 0) s = -s;
-    }
-
-    recalc();
-
-    return ratio;
-  }
-
   string Beta::name() const {
     return "beta";
   }
@@ -221,7 +182,7 @@ namespace substitution {
     if (i == 0)
       return "beta::mu";
     else if (i==1)
-      return "beta::sigma\\mu";
+      return "beta::sigma/mu";
     else
       throw myexception()<<"Beta: we only have two parameters.";
   }
@@ -257,18 +218,6 @@ namespace substitution {
   efloat_t LogNormal::prior() const {
     const double mean_stddev = 0.01;
     return exponential_pdf(parameters_[0], mean_stddev);
-  }
-
-  double LogNormal::fiddle(int) {
-    vector<double> v = parameters_;
-    double& p = v[0];
- 
-    const double sigma = 0.04;
-    double p2 = p + gaussian(0,sigma);
-    if (p2 < 0) p2 = -p2;
-
-    parameters(v);
-    return 1;
   }
 
   double LogNormal::cdf(double x) const {
@@ -307,7 +256,7 @@ namespace substitution {
   }
 
   string LogNormal::parameter_name(int i) const {
-    return "log-normal::sigma\\mu";
+    return "log-normal::sigma/mu";
   }
 
   /*-------------- MultipleDistribution ----------------*/

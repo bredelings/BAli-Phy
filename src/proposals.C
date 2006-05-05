@@ -2,6 +2,7 @@
 #include "tree.H"
 #include "probability.H"
 #include "rng.H"
+#include "util.H"
 
 using std::valarray;
 
@@ -112,49 +113,17 @@ double scale_gaussian2(valarray<double>& x, const vector<double>& p)
 }
 
 
-double shift_gaussian_pos(valarray<double>& x, const vector<double>& p)
+double shift_gaussian(valarray<double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
-    throw myexception()<<"shift_gaussian_pos: expected one dimension, got "<<x.size()<<".";
+    throw myexception()<<"shift_gaussian: expected one dimension, got "<<x.size()<<".";
   if (p.size() != 1) 
-    throw myexception()<<"shift_gaussian_pos: expected one parameter, got "<<p.size()<<".";
+    throw myexception()<<"shift_gaussian: expected one parameter, got "<<p.size()<<".";
 
   double& f = x[0];
   double  sigma = p[0];
 
   f += gaussian(0,sigma);
-  if (f < 0) f = -f;
-
-  return 1.0;
-}
-
-double shift_gaussian_neg(valarray<double>& x, const vector<double>& p)
-{
-  if (x.size() != 1) 
-    throw myexception()<<"shift_gaussian_pos: expected one dimension, got "<<x.size()<<".";
-  if (p.size() != 1) 
-    throw myexception()<<"shift_gaussian_pos: expected one parameter, got "<<p.size()<<".";
-
-  double& f = x[0];
-  double  sigma = p[0];
-
-  f += gaussian(0,sigma);
-  if (f > 0) f = -f;
-
-  return 1.0;
-}
-
-double shift_gaussian_wrap(valarray<double>& x, const vector<double>& p)
-{
-  if (x.size() != 1) 
-    throw myexception()<<"shift_gaussian_wrap: expected one dimension, got "<<x.size()<<".";
-  if (p.size() != 1) 
-    throw myexception()<<"shift_gaussian_wrap: expected one parameter, got "<<p.size()<<".";
-
-  double& f = x[0];
-  double  sigma = p[0];
-
-  f = wrap( f + gaussian(0,sigma),1.0);
 
   return 1.0;
 }
@@ -218,7 +187,6 @@ valarray<T> write(vector<T>& v,const vector<int>& indices,const valarray<T>& val
 
 double frequency_proposal(alignment& A, Parameters& P)
 {
-  const SequenceTree& T = P.T;
   const alphabet& a = P.SModel().Alphabet();
 
   double N = A.length() * a.size() * loadvalue(P.keys,"pi_dirichlet_N",1.0);
@@ -243,6 +211,96 @@ double frequency_proposal(alignment& A, Parameters& P)
 
   return ratio;
 }
+
+double less_than::operator()(std::valarray<double>& x,const std::vector<double>& p) const
+{
+  double ratio = (*proposal)(x,p);
+  for(int i=0;i<x.size();i++) 
+    x[i] = reflect_less_than(x[i],max);
+  return ratio;
+}
+
+less_than::less_than(double m, const Proposal_Fn& P)
+  :max(m),
+   proposal(P)
+{ }
+
+double more_than::operator()(std::valarray<double>& x,const std::vector<double>& p) const
+{
+  double ratio = (*proposal)(x,p);
+  for(int i=0;i<x.size();i++) 
+    x[i] = reflect_more_than(x[i],min);
+  return ratio;
+}
+
+more_than::more_than(double m, const Proposal_Fn& P)
+  :min(m),
+   proposal(P)
+{ }
+
+double between::operator()(std::valarray<double>& x,const std::vector<double>& p) const
+{
+  double ratio = (*proposal)(x,p);
+  for(int i=0;i<x.size();i++)
+    x[i] = wrap(x[i],min,max);
+  return ratio;
+}
+
+between::between(double m1, double m2, const Proposal_Fn& P)
+  :min(m1), max(m2),
+   proposal(P)
+{ }
+
+
+double log_scaled::operator()(std::valarray<double>& x,const std::vector<double>& p) const
+{
+  if (x.size() != 1) 
+    throw myexception()<<"log_scaled: expected one dimension, got "<<x.size()<<".";
+  if (x[0] < 0.0) 
+    throw myexception()<<"log_scaled: x[0] is negative!";
+  if (x[0] == 0.0) 
+    throw myexception()<<"log_scaled: x[0] is zero!";
+
+  double x1 = x[0];
+
+  x[0] = log(x[0]);
+  double r = (*proposal)(x,p);
+  x[0] = exp(x[0]);
+
+  double x2 = x[0];
+
+  return r * x2/x1;
+}
+
+log_scaled::log_scaled(const Proposal_Fn& P)
+  :proposal(P)
+{ }
+
+
+double LOD_scaled::operator()(std::valarray<double>& x,const std::vector<double>& p) const
+{
+  if (x.size() != 1) 
+    throw myexception()<<"LOD_scaled: expected one dimension, got "<<x.size()<<".";
+  if (x[0] < 0.0) 
+    throw myexception()<<"LOD_scaled: x[0] is negative!";
+  if (x[0] == 0.0) 
+    throw myexception()<<"LOD_scaled: x[0] is zero!";
+
+  double x1 = x[0];
+
+  x[0] = log(x[0]/(1-x[0]));
+  double r = (*proposal)(x,p);
+  x[0] = exp(x[0])/(1+exp(x[0]));
+
+  double x2 = x[0];
+
+  return r * x2*(1.0-x2)/(x1*(1.0-x1));
+}
+
+LOD_scaled::LOD_scaled(const Proposal_Fn& P)
+  :proposal(P)
+{ }
+
 
 double Proposal2::operator()(alignment&, Parameters& P) const
 {
@@ -271,16 +329,13 @@ double Proposal2::operator()(alignment&, Parameters& P) const
   return ratio;
 }
 
-Proposal2::Proposal2(proposal_fn p,const std::string& s, const std::vector<string>& v,
+Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
 	  const Parameters& P)
   :proposal(p),
    pnames(v)
 {
-  int n = P.parameters().size();
-  for(int i=0;i<n;i++)
-    if (P.parameter_name(i) == s)
-      indices.push_back(i);
-  if (indices.empty())
+  int index = find_parameter(P,s);
+  if (index == -1)
     throw myexception()<<"Model has no parameter called '"<<s<<"' - can't create proposal for it.";
+  indices.push_back(i);
 }
-

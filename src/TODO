@@ -2,16 +2,7 @@
   a. make external proposals for multi-dimensional proposals.
   b. sanitize setting parameters(): Allow setting only some.
                                     Only recalculate models that changed. (should give speedup)
-  c. make proposal OBJECTS: so we can do (e.g.) 
 
-     - less_than(x,shift_gaussian),
-     - more_than(x,shift_gaussian),
-     - within(0,1,shift_gaussian)
-
-     This will allow us to do the 'gamma' proposal much more easily.
-     One of the objects will take a function, so we can ALSO use bare functions.
-     Perhaps I should have everything be a class - would that make it easier to force
-      the dimensions of x and p?
   d. How to allow generic proposals to report interesting statistics back?
   
 3. Write some tests (using the config files.)
@@ -524,6 +515,8 @@ the prior, because we never want to use it  differently.
 
 [DONE] Change confusing "--gaps=star" to "--traditional".
        Don't have an indel sub-model in this case.
+
+[DONE] Create proposal objects like 'between(0,1,shift_gaussian)'
 
 *IDEAS*
 

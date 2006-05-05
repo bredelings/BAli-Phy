@@ -49,8 +49,6 @@ namespace substitution {
 
     efloat_t prior() const;
 
-    double fiddle(int); 
-
     std::string name() const;
     std::string parameter_name(int) const;
 
@@ -71,8 +69,6 @@ namespace substitution {
     double pdf(double,double) const;
 
     efloat_t prior() const;
-
-    double fiddle(int); 
 
     std::string name() const;
     std::string parameter_name(int) const;
@@ -95,8 +91,6 @@ namespace substitution {
     double quantile(double,double tol=1.0e-6) const;
 
     efloat_t prior() const;
-
-    double fiddle(int); 
 
     std::string name() const;
     std::string parameter_name(int) const;
@@ -122,8 +116,6 @@ namespace substitution {
     double pdf(double x,double) const {if (x < 0 or x > 2) return 0; else return 0.5;};
 
     efloat_t prior() const { return 0.5;}
-
-    double fiddle(int) {return 1;}
 
     double quantile(double p,double) const {return 2*p;}
 
