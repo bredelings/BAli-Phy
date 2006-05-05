@@ -112,6 +112,38 @@ double scale_gaussian2(valarray<double>& x, const vector<double>& p)
 }
 
 
+double shift_gaussian_pos(valarray<double>& x, const vector<double>& p)
+{
+  if (x.size() != 1) 
+    throw myexception()<<"shift_gaussian_pos: expected one dimension, got "<<x.size()<<".";
+  if (p.size() != 1) 
+    throw myexception()<<"shift_gaussian_pos: expected one parameter, got "<<p.size()<<".";
+
+  double& f = x[0];
+  double  sigma = p[0];
+
+  f += gaussian(0,sigma);
+  if (f < 0) f = -f;
+
+  return 1.0;
+}
+
+double shift_gaussian_neg(valarray<double>& x, const vector<double>& p)
+{
+  if (x.size() != 1) 
+    throw myexception()<<"shift_gaussian_pos: expected one dimension, got "<<x.size()<<".";
+  if (p.size() != 1) 
+    throw myexception()<<"shift_gaussian_pos: expected one parameter, got "<<p.size()<<".";
+
+  double& f = x[0];
+  double  sigma = p[0];
+
+  f += gaussian(0,sigma);
+  if (f > 0) f = -f;
+
+  return 1.0;
+}
+
 double shift_gaussian_wrap(valarray<double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
@@ -120,11 +152,48 @@ double shift_gaussian_wrap(valarray<double>& x, const vector<double>& p)
     throw myexception()<<"shift_gaussian_wrap: expected one parameter, got "<<p.size()<<".";
 
   double& f = x[0];
-  const double& sigma = p[0];
+  double  sigma = p[0];
 
   f = wrap( f + gaussian(0,sigma),1.0);
 
   return 1.0;
+}
+
+double shift_delta(valarray<double>& x, const vector<double>& p)
+{
+  if (x.size() != 1) 
+    throw myexception()<<"shift_delta: expected one dimension, got "<<x.size()<<".";
+  if (p.size() != 1) 
+    throw myexception()<<"shift_delta: expected one parameter, got "<<p.size()<<".";
+
+  double& lambda_O = x[0];
+  double  sigma = p[0];
+
+  double pdel =  lambda_O-logdiff(0,lambda_O);
+  double rate =  log(-logdiff(0,pdel));
+
+  rate        += gaussian(0,sigma);
+  pdel        =  logdiff(0,-exp(rate));
+  lambda_O    =  pdel - logsum(0,pdel);
+
+  return 1;
+}
+
+double shift_epsilon(valarray<double>& x, const vector<double>& p)
+{
+  if (x.size() != 1) 
+    throw myexception()<<"shift_epsilon: expected one dimension, got "<<x.size()<<".";
+  if (p.size() != 1) 
+    throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
+
+  double& lambda_E = x[0];
+  double  sigma = p[0];
+
+  double E_length = lambda_E - logdiff(0,lambda_E);
+  E_length += gaussian(0,sigma);
+  lambda_E = E_length - logsum(0,E_length);
+
+  return 1;
 }
 
 

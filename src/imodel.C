@@ -114,32 +114,6 @@ IndelModel::IndelModel()
 IndelModel::~IndelModel() {}
 
 
-double SimpleIndelModel::fiddle(int) {
-
-  double& lambda_O = parameters_[0];
-  double& lambda_E = parameters_[1];
-
-  const double sigma = 0.35;
-
-  if (not fixed(0)) {
-    double pdel =  lambda_O-logdiff(0,lambda_O);
-    double rate =  log(-logdiff(0,pdel));
-
-    rate        += gaussian(0,sigma);
-    pdel        =  logdiff(0,-exp(rate));
-    lambda_O    =  pdel - logsum(0,pdel);
-  }
-  
-  if (not fixed(1)) {
-    double E_length = lambda_E - logdiff(0,lambda_E);
-    E_length += gaussian(0,sigma);
-    lambda_E = E_length - logsum(0,E_length);
-  }
-  
-  recalc();
-  return 1;
-}
-
 indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
   using namespace states;
 
@@ -236,11 +210,11 @@ string SimpleIndelModel::name() const {return "simple indels [HMM]";}
 
 string SimpleIndelModel::parameter_name(int i) const {
   if (i==0)
-    return "SIMPLE::delta";
+    return "delta";
   else if (i==1)
-    return "SIMPLE::epsilon";
+    return "epsilon";
   else if (i==2)
-    return "SIMPLE::tau";
+    return "tau";
   else
     return i_parameter_name(i,3);
 }
@@ -258,33 +232,8 @@ SimpleIndelModel::SimpleIndelModel()
 void NewIndelModel::recalc() {
 }
 
-double NewIndelModel::fiddle(int) {
-  double& rate = parameters_[0];
-  double& lambda_E = parameters_[1];
-  double& i = parameters_[2];
-
-  const double sigma = 0.35;
-
-  if (not fixed(0)) {
-    rate        += gaussian(0,sigma);
-    if (rate > 0) 
-      rate = -rate;
-  }
-  
-  if (not fixed(1)) {
-    double E_length = lambda_E - logdiff(0,lambda_E);
-    E_length += gaussian(0,sigma);
-    lambda_E = E_length - logsum(0,E_length);
-  }
-
-  if (not fixed(2))
-    i = wrap(i+gaussian(0,0.02),1.0);
-  
-  recalc();
-  return 1;
-}
-
-efloat_t NewIndelModel::prior() const {
+efloat_t NewIndelModel::prior() const 
+{
   efloat_t Pr = 1;
 
   // Calculate prior on lambda_O
@@ -302,7 +251,7 @@ efloat_t NewIndelModel::prior() const {
   // Calculate prior on invariant fraction
   if (not fixed(2)) {
     double i = parameters_[2];
-    Pr *= beta_pdf(i,0.01,200);
+    Pr *= beta_pdf(i,0.02,50);
   }
 
   return Pr;
@@ -390,17 +339,17 @@ string NewIndelModel::name() const {
 
 string NewIndelModel::parameter_name(int i) const {
   if (i==0)
-    return "NEW::lambda";
+    return "lambda";
   else if (i==1)
-    return "NEW::epsilon";
+    return "epsilon";
   else if (i==2)
-    return "NEW::invariant";
+    return "invariant";
   else if (i==3)
-    return "NEW::prior_median";
+    return "lambda::prior_median";
   else if (i==4)
-    return "NEW::prior_stddev";
+    return "lambda::prior_stddev";
   else if (i==5)
-    return "NEW::prior_length";
+    return "epsilon::prior_length";
   else
     return i_parameter_name(i,6);
 }
@@ -422,38 +371,11 @@ NewIndelModel::NewIndelModel(bool b)
   recalc();
 }
 
-
 void TKF1::recalc() {
 }
 
-double TKF1::fiddle(int) 
+efloat_t TKF1::prior() const 
 {
-  double& rate = parameters_[0];
-  double& lambda_E = parameters_[1];
-  double& i = parameters_[2];
-
-  const double sigma = 0.35;
-
-  if (not fixed(0)) {
-    rate        += gaussian(0,sigma);
-    if (rate > 0) 
-      rate = -rate;
-  }
-  
-  if (not fixed(1)) {
-    double E_length = lambda_E - logdiff(0,lambda_E);
-    E_length += gaussian(0,sigma);
-    lambda_E = E_length - logsum(0,E_length);
-  }
-
-  if (not fixed(2))
-    i = wrap(i+gaussian(0,0.02),1.0);
-  
-  recalc();
-  return 1;
-}
-
-efloat_t TKF1::prior() const {
   efloat_t Pr = 1;
 
   // Calculate prior on lambda_O
@@ -471,7 +393,7 @@ efloat_t TKF1::prior() const {
   // Calculate prior on invariant fraction
   if (not fixed(2)) {
     double i = parameters_[2];
-    Pr *= beta_pdf(i,0.01,200);
+    Pr *= beta_pdf(i,0.02,50);
   }
 
   return Pr;

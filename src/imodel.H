@@ -54,7 +54,6 @@ protected:
   Matrix QE;
 
 public:
-  double fiddle(int);
   efloat_t prior() const;
 
   SimpleIndelModel* clone() const {return new SimpleIndelModel(*this);}
@@ -76,7 +75,6 @@ class NewIndelModel: public IndelModel {
 protected:
   void recalc();
 public:
-  double fiddle(int);
   efloat_t prior() const;
 
   NewIndelModel* clone() const {return new NewIndelModel(*this);}
@@ -100,7 +98,6 @@ protected:
   void recalc();
 public:
 
-  double fiddle(int);
   efloat_t prior() const;
   
   TKF1* clone() const {return new TKF1(*this);}

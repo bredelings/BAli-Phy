@@ -55,4 +55,12 @@ double frequency_proposal(alignment& A, Parameters& P);
 double scale_gaussian2(std::valarray<double>& x,const std::vector<double>& p);
 
 double shift_gaussian_wrap(std::valarray<double>& x,const std::vector<double>& p);
+
+double shift_gaussian_pos(std::valarray<double>& x,const std::vector<double>& p);
+
+double shift_gaussian_neg(std::valarray<double>& x,const std::vector<double>& p);
+
+double shift_delta(std::valarray<double>& x, const std::vector<double>& p);
+
+double shift_epsilon(std::valarray<double>& x, const std::vector<double>& p);
 #endif
