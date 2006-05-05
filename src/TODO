@@ -522,6 +522,8 @@ the prior, because we never want to use it  differently.
 
 [DONE] Read arguments from a config file.
 
+[DONE] Change confusing "--gaps=star" to "--traditional".
+       Don't have an indel sub-model in this case.
 
 *IDEAS*
 

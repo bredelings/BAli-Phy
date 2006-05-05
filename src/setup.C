@@ -319,8 +319,6 @@ OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
   else
     throw myexception()<<"Unrecognized indel model '"<<args["imodel"].as<string>()<<"'";
   
-  imodel->full_tree = true;
-
   return imodel;
 }
 

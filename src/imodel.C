@@ -100,14 +100,12 @@ efloat_t SimpleIndelModel::lengthp(int l) const {
 }
 
 IndelModel::IndelModel(int s)
-  : full_tree(true)
 { 
   set_n_parameters(s);
 }
 
 
 IndelModel::IndelModel()
-  : full_tree(true)
 { }
 
 

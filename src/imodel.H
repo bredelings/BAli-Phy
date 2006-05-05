@@ -27,8 +27,6 @@ protected:
   IndelModel(int s);
 
 public:
-  /// Are we using a binary tree (instead of a star tree) for the gap prior?
-  bool full_tree;
 
   virtual IndelModel* clone() const =0;
 
