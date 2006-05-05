@@ -416,7 +416,6 @@ namespace substitution {
 
     void recalc();
   public:
-    efloat_t super_prior() const {return 1.0;}
 
     efloat_t prior() const { return ::NestedModelOver<NucleotideExchangeModel>::prior(); }
 
@@ -544,8 +543,6 @@ namespace substitution {
 
   public:
     IndependentNucleotideFrequencyModel* clone() const {return new IndependentNucleotideFrequencyModel(*this);}
-
-    efloat_t super_prior() const {return 1.0;}
 
     double super_fiddle(int) {return 1.0;}
 
