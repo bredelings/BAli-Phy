@@ -76,45 +76,50 @@ efloat_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,int 
 }
 
 /// Probability of a multiple alignment if branch alignments independant
-efloat_t prior_HMM_nogiven(const alignment& A,const Parameters& P) {
-  const Tree& T = P.T;
-
-  efloat_t Pr = 1;
-
-#ifndef NDEBUG
-  check_internal_nodes_connected(A,T);
-#endif
-  
-  for(int b=0;b<T.n_branches();b++) {
-    int target = T.branch(b).target();
-    int source  = T.branch(b).source();
-    efloat_t p = prior_branch(A, P.branch_HMMs[b], target,source);
-    Pr *= p;
-  }
-  
-  return Pr;
-}
-
-//NOTE  - this will have to change if we ever have sequences at internal nodes
-//        that have other than 3 neighbors
-efloat_t prior_HMM(const alignment& A,const Parameters& P) {
+efloat_t prior_HMM_nogiven(const alignment& A,const Parameters& P) 
+{
   const Tree& T = P.T;
 
 #ifndef NDEBUG
+  assert(P.has_IModel());
   check_internal_nodes_connected(A,T);
 #endif
-
+  
   efloat_t Pr = 1;
+
   for(int b=0;b<T.n_branches();b++) {
     int target = T.branch(b).target();
     int source  = T.branch(b).source();
     Pr *= prior_branch(A, P.branch_HMMs[b], target, source);
   }
   
+  return Pr;
+}
+
+
+efloat_t prior_HMM_rootless_scale(const alignment& A, const Parameters& P)
+{
+  const Tree& T = P.T;
+
+#ifndef NDEBUG
+  assert(P.has_IModel());
+  check_internal_nodes_connected(A,T);
+#endif
+  
+  efloat_t Pr = 1;
+
   for(int i=T.n_leaves();i<T.n_nodes();i++) {
-    Pr /= P.IModel().lengthp( A.seqlength(i) );
-    Pr /= P.IModel().lengthp( A.seqlength(i) );
+    int l = A.seqlength(i);
+    Pr /= P.IModel().lengthp(l);
+    Pr /= P.IModel().lengthp(l);
   }
 
   return Pr;
+}
+
+//NOTE  - this will have to change if we ever have sequences at internal nodes
+//        that have other than 3 neighbors
+efloat_t prior_HMM(const alignment& A,const Parameters& P) 
+{
+  return prior_HMM_nogiven(A,P) * prior_HMM_rootless_scale(A,P);
 }
