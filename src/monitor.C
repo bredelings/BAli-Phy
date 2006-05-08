@@ -56,13 +56,7 @@ void print_stats(std::ostream& o,std::ostream& trees,
 		 const alignment& A,const Parameters& P,
 		 bool print_alignment) 
 {
-  o<<"\n";
-  o<<" no A  ["<<substitution::Pr_unaligned(A,P)<<"]     ";
-  o<<" single sequence ["<<substitution::Pr_single_sequence(A,P)<<"]"<<"\n";
-  o<<" sl    ["<<substitution::Pr_star_estimate(A,P)<<"]"<<"\n";
-  o<<" Full  ["<<substitution::Pr(A,P)<<"]"<<"\n";
-  
-  efloat_t Pr_prior = P.basic_prior(A,P);
+   efloat_t Pr_prior = P.basic_prior(A,P);
   efloat_t Pr_likelihood = P.basic_likelihood(A,P);
   efloat_t Pr = Pr_prior * Pr_likelihood;
 
