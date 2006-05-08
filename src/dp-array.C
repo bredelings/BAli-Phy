@@ -4,6 +4,7 @@
 #include "choose.H"
 #include "util.H"
 
+// We can ignore scale(i) here, because it factors out.
 efloat_t DParray::path_P(const vector<int>& g_path) const 
 {
   const int I = size()-1;
@@ -96,12 +97,6 @@ void DParray::set_length(int l)
   length = l+1;
   state_array::resize(length, nstates());
 
-#ifndef NDEBUG
-  for(int i=1;i<size();i++)
-    for(int j=0;j<nstates();j++)
-      (*this)(i,j) = 1;
-#endif
-
   // clear the beginning of the array
   for(int s=0;s<start_P.size();s++)
     (*this)(0,s) = start_P[s];
@@ -118,6 +113,7 @@ DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matr
     (*this)(0,s) = start_P[s];
 }
 
+// We can ignore scale(i) here, because it factors out.
 efloat_t DParrayConstrained::path_P(const vector<int>& g_path) const 
 {
   const int I = size()-1;
@@ -150,6 +146,9 @@ efloat_t DParrayConstrained::path_P(const vector<int>& g_path) const
     assert(Pr > 0.0);
   }
 
+  // In column 0, all states are allowed:
+  // - silent states can't contradict anything
+  // - non-silent states reprent the start state.
   transition.resize(states(0).size());
 
   // include probability of choosing 'Start' vs ---+ !
