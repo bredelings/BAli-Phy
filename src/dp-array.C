@@ -96,6 +96,12 @@ void DParray::set_length(int l)
   length = l+1;
   state_array::resize(length, nstates());
 
+#ifndef NDEBUG
+  for(int i=1;i<size();i++)
+    for(int j=0;j<nstates();j++)
+      (*this)(i,j) = 1;
+#endif
+
   // clear the beginning of the array
   for(int s=0;s<start_P.size();s++)
     (*this)(0,s) = start_P[s];
@@ -131,8 +137,9 @@ efloat_t DParrayConstrained::path_P(const vector<int>& g_path) const
     }
 
     int state1 = g_path[l-1];
-    state1 = find_index(states(i),state1);
-    double p = choose_P(state1,transition);
+    int s1 = find_index(states(i),state1);
+    assert(s1 != -1);
+    double p = choose_P(s1,transition);
     assert(p > 0.0);
 
     if (di(state1)) i--;
@@ -140,7 +147,10 @@ efloat_t DParrayConstrained::path_P(const vector<int>& g_path) const
     l--;
     state2 = state1;
     Pr *= p;
+    assert(Pr > 0.0);
   }
+
+  transition.resize(states(0).size());
 
   // include probability of choosing 'Start' vs ---+ !
   for(int state1=0;state1<nstates();state1++)
@@ -283,6 +293,19 @@ void DParrayConstrained::prune() {
 
   unsigned order2 = order_of_computation();
   std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<endl;
+}
+
+efloat_t DParrayConstrained::Pr_sum_all_paths() const 
+{
+  const int I = size()-1;
+
+  double total = 0.0;
+  for(int s1=0;s1<states(I).size();s1++) {
+    int state1 = states(I)[s1];
+    total += (*this)(I,state1) * GQ(state1,endstate());
+  }
+
+  return pow<efloat_t>(2.0,scale(I)) * total;
 }
 
 void DParrayConstrained::set_length(int l)

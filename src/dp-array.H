@@ -120,6 +120,9 @@ public:
 
   void prune();
 
+  /// Compute the probability of all possible paths through theHMM
+  efloat_t Pr_sum_all_paths() const;
+
   /// Change length
   void set_length(int l);
 
