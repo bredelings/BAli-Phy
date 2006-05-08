@@ -25,6 +25,14 @@ namespace A3 {
 //  - these alignment can only have 3 states each (M,G1,G2, not E) and so
 //    total 3*3 = 9 states.  
 
+  const unsigned int leafbitsmask = (1<<3)-1;
+  const unsigned int bitsmask = (1<<4)-1;
+
+  extern vector<int> states_list;
+
+  /// construct the list of states
+  vector<int> construct_states();
+
   /// The number of states, minus the end state (state state also ignored)
   const int nstates = 1+3+3+1+3*9;
   /// The name of the E (end) state
@@ -43,7 +51,7 @@ namespace A3 {
   /// Does state S emit in sequence 1?
   inline
   bool di(int S) {
-    S = getstates(S);
+    S = states_list[S];
     if (S&(1<<1))
       return 1;
     else
@@ -53,7 +61,7 @@ namespace A3 {
   /// Does state S emit in sequence 2?
   inline
   bool dj(int S) {
-    S = getstates(S);
+    S = states_list[S];
     if (S&(1<<2))
       return 1;
     else
@@ -63,7 +71,7 @@ namespace A3 {
   /// Does state S emit in sequence 3?
   inline
   bool dk(int S) {
-    S = getstates(S);
+    S = states_list[S];
     if (S&(1<<3))
       return 1;
     else
@@ -73,7 +81,7 @@ namespace A3 {
   /// Does state S emit in sequence 0?
   inline
   bool dl(int S) {
-    S = getstates(S);
+    S = states_list[S];
     if (S&(1<<0))
       return 1;
     else
@@ -106,6 +114,7 @@ namespace A3 {
 
   efloat_t acceptance_ratio(const alignment& A1,const Parameters& P1,const vector<int>&,
 			      const alignment& A2,const Parameters& P2,const vector<int>&);
+
 }
 
 

@@ -67,6 +67,8 @@ vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
 
 namespace A3 {
 
+  vector<int> states_list = construct_states();
+
   vector<int> get_nodes(const Tree& T,int n0) {
     assert(T[n0].is_internal_node());
     
@@ -134,6 +136,15 @@ namespace A3 {
     return state_emit;
   }
 
+  vector<int> construct_states() {
+    vector<int> states;
+
+    for(int i=0;i<=nstates;i++)
+      states.push_back(getstates(i));
+
+    return states;
+  }
+
   using indel::PairHMM;
 
   vector<double> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br) {
@@ -142,7 +153,7 @@ namespace A3 {
 
     vector<double> start_P(nstates,0.0);
     for(int S=0;S<start_P.size();S++) {
-      int states = getstates(S);
+      int states = states_list[S];
       int s1 = (states>>4)&3;
       int s2 = (states>>6)&3;
       int s3 = (states>>8)&3;
@@ -255,7 +266,7 @@ namespace A3 {
   inline int findstate(int states) {
     unsigned int mask = ~((~0)<<10);
     for(int S=0;S<=nstates;S++) {
-      if ((getstates(S)&mask) == (states&mask))
+      if ((states_list[S]&mask) == (states&mask))
 	return S;
     }
     //couldn't find it?
@@ -271,8 +282,8 @@ namespace A3 {
     assert(0 <= S1 and S1 < nstates+1);
     assert(0 <= S2 and S2 < nstates+1);
 
-    int states1 = getstates(S1);
-    int states2 = getstates(S2);
+    int states1 = states_list[S1];
+    int states2 = states_list[S2];
 
     int ap1 = states1>>10;
     int ap2 = states2>>10;
@@ -318,7 +329,6 @@ namespace A3 {
   // Does this routine depend on order of unordered columns?
   //  - No: columns in subA1 but not in seq1 are ordered only in respect to columns in subA1
   //  - columns in seq1, seq2, and seq3 should remain in increasing order.
-  const unsigned bitsmask = 15;
 
   alignment construct(const alignment& old, const vector<int>& path, 
 		      int n0,int n1,int n2,int n3,const Tree& T,
@@ -385,7 +395,7 @@ namespace A3 {
       if (done) continue;
       
       //----------------- Insert a column corresponding to path[l] -------------------//
-      int bits = getstates(path[l]) & bitsmask;
+      int bits = states_list[path[l]] & bitsmask;
       for(int s=0;s<A.n_sequences();s++) 
 	A(column,s) = alphabet::gap;
       
