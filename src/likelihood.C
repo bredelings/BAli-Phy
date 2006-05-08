@@ -94,7 +94,7 @@ efloat_t prior_HMM_nogiven(const alignment& A,const Parameters& P) {
   efloat_t Pr = 1;
 
 #ifndef NDEBUG
-  check_internal_nodes_connected(A,P.T);
+  check_internal_nodes_connected(A,T);
 #endif
   
   for(int b=0;b<T.n_branches();b++) {
@@ -113,7 +113,7 @@ efloat_t prior_HMM(const alignment& A,const Parameters& P) {
   const Tree& T = P.T;
 
 #ifndef NDEBUG
-  check_internal_nodes_connected(A,P.T);
+  check_internal_nodes_connected(A,T);
 #endif
 
   efloat_t Pr = 1;
@@ -130,52 +130,3 @@ efloat_t prior_HMM(const alignment& A,const Parameters& P) {
 
   return Pr;
 }
-
-efloat_t prior_HMM_notree(const alignment& A,const Parameters& P) {
-  const Tree& T = P.T;
-
-  int node = P.T.n_leafbranches();
-  efloat_t Pr = P.IModel().lengthp(A.seqlength(node));
-
-  for(int b=0;b<T.n_leafbranches();b++)
-    Pr *= prior_branch(A, P.branch_HMMs[b], node, b);
-
-  if (T.n_leafbranches() > 1)
-    Pr /= pow<efloat_t>(P.IModel().lengthp( A.seqlength(node) ),T.n_leaves());
-
-  return Pr;
-}
-
-efloat_t Pr_tgaps_tletters(const alignment& A,const Parameters& P) {
-  efloat_t Pr=1;
-  Pr *= prior_HMM(A,P);
-  Pr *= substitution::Pr(A,P); // also deals w/ frequencies
-  Pr *= prior(P);
-  return Pr;
-}
-
-efloat_t Pr_tgaps_sletters(const alignment& A,const Parameters& P) {
-  efloat_t Pr=1;
-  Pr *= prior_HMM(A,P);
-  Pr *= substitution::Pr_star_estimate(A,P); // also deals w/ frequencies
-  Pr *= prior(P);
-  return Pr;
-}
-
-efloat_t Pr_sgaps_tletters(const alignment& A,const Parameters& P) {
-  efloat_t Pr=1;
-  Pr *= prior_HMM(A,P);
-  Pr *= substitution::Pr(A,P); // also deals w/ frequencies
-  Pr *= prior(P);
-  return Pr;
-}
-
-efloat_t Pr_sgaps_sletters(const alignment& A,const Parameters& P) {
-  efloat_t Pr=1;
-  Pr *= prior_HMM(A,P);
-  Pr *= substitution::Pr_star_estimate(A,P); // also deals w/ frequencies
-  Pr *= prior(P);
-  return Pr;
-}
-
-
