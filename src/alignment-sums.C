@@ -212,7 +212,7 @@ void check_sampling_probabilities(const vector< vector<efloat_t> >& PR,const vec
       std::cerr<<a.back()<<endl;
       std::cerr<<a[i]<<endl;
       
-      throw myexception()<<": sampling probabilities were incorrect\n"<<show_stack_trace();
+      throw myexception()<<"Sampling probabilities were incorrect\n"<<show_stack_trace();
     }
   }
 }
