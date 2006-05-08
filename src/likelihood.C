@@ -7,18 +7,6 @@
 #include "probability.H"
 #include "alignment-util.H"
 
-efloat_t prior3(const alignment& A,const Parameters& P) {
-  return prior_HMM(A,P) * prior(P);
-}
-
-efloat_t likelihood3(const alignment& A,const Parameters& P) {
-  return substitution::Pr(A,P); // also deals w/ frequencies
-}
-
-efloat_t probability3(const alignment& A,const Parameters& P) {
-  return likelihood3(A,P) * prior3(A,P);
-}
-
 efloat_t topology_weight(const Parameters& P, const SequenceTree& T) 
 {
   efloat_t p = 1;

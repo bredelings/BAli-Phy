@@ -1,10 +1,13 @@
 1. Proposals and Priors
   a. sanitize setting parameters(): Allow setting only some.
                                     Only recalculate models that changed. (should give speedup)
+  b. super_parameters_: remove.
+  c. use a parameter_names_ vector.
 3. Write some tests (using the config files.)
 4. Report number of gaps along tree.
 5. Allow gilding an alignment-consensus.
 6. Output move stats in tracer-readable format.
+  a. or, at least, allow burn-in?
 7. Write program to chart percentage identity versus position.
 8. Test sampling of epsilon.
 9. Implement new models, to see if we get good estimates of epsilon.

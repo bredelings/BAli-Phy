@@ -12,11 +12,11 @@ efloat_t Parameters::basic_likelihood(const alignment& A,const Parameters& P) co
     return substitution::Pr_star(A,P);
 }
 
-efloat_t Parameters::basic_prior(const alignment& A,const Parameters& P) const {
+efloat_t Parameters::basic_prior(const alignment& A,const Parameters& P) const 
+{
   if (IModel_)
-    return prior3(A,P);
+    return prior_HMM(A,P) * ::prior(P);
   else
-    //FIXME
     return ::prior(P);
 }
 
