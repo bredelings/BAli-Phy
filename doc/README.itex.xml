@@ -58,7 +58,7 @@
 	  of OS X must be 10.1 or higher.  If you want to use the
 	  development tools from Apple to compile
 	  <application>BAli-Phy</application>, the system must be 10.4 or
-	  higher, and you must upgrade to XCode 2.1 (see Software
+	  higher, and you must upgrade to XCode 2.2 (see Software
 	  Requirements). 
 	  </para>
 	</sect3>
@@ -89,8 +89,9 @@
 
 	<para>If you want to use the development tools shipped by Apple
 	(e.g. GCC) then you need OS X version 10.4 (Tiger) or higher, and
-	you need to install XCode 2.1.  Otherwise you can compile GCC
-	yourself from the FSF sources.</para>
+	you need to install XCode 2.2.  (You can use a GCC compile
+	from the non-apple FSF sources, but installing XCode is much simpler.)
+	</para>
 
 	<para><ulink url="http://fink.sourceforge.net">Fink</ulink>
 	provides Linux software for Mac OS X.  You may use it to install
