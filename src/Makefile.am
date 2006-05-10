@@ -86,7 +86,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-sums.C alignment-util.C probability.C model.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
-	  tools/tree-dist.C proposals.C
+	  tools/tree-dist.C proposals.C n_indels.C
 
 #-----------------------------------------------------------------
 
@@ -161,7 +161,7 @@ joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C ut
 joint_parsimony_SOURCES = tools/joint-parsimony.C alignment.C alphabet.C sequence.C util.C rng.C tree.C \
 	sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C \
 	model.C alignment-random.C alignment-util.C randomtree.C \
-	tools/parsimony.C tools/joint-A-T.C  
+	tools/parsimony.C tools/joint-A-T.C n_indels.C
 
 #---------------------------------------------------------------
 

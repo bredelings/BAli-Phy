@@ -14,6 +14,7 @@
 
 #include "monitor.H"
 #include "proposals.H"
+#include "n_indels.H"
 
 namespace MCMC {
   using std::valarray;
@@ -493,8 +494,9 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   s_parameters<<"iter\t";
   s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
-  if (P.has_IModel())
-    s_parameters<<"\t|A|";
+  if (P.has_IModel()) {
+    s_parameters<<"\t|A|\t#indels\t|indels|";
+  }
   s_parameters<<"\t|T|"<<endl;
 
   //---------------- Run the MCMC chain -------------------//
@@ -519,8 +521,11 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
       s_parameters<<iterations<<"\t";
       s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
       s_parameters<<P.state();
-      if (P.has_IModel())
+      if (P.has_IModel()) {
 	s_parameters<<"\t"<<A.length();
+	s_parameters<<"\t"<<n_indels(A,P.T);
+	s_parameters<<"\t"<<total_length_indels(A,P.T);
+      }
       s_parameters<<"\t"<<length(P.T)<<endl;
     }
 

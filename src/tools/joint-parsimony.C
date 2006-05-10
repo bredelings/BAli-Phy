@@ -18,6 +18,7 @@
 #include "tree-util.H"
 #include "parsimony.H"
 #include "joint-A-T.H"
+#include "n_indels.H"
 
 #include "2way.H"
 using namespace A2;
@@ -127,38 +128,6 @@ vector<unsigned> n_indels_with_phase(const alignment& A,const Tree& T)
 
   return indels;
 }
-
-
-// If we could read back in the indel-model state we could
-// estimate the number of indels in an indel block.
-unsigned n_indels(const alignment& A,const Tree& T, int b)
-{
-  vector<int> pairwiseA = get_path(A, T.branch(b).target(), T.branch(b).source());
-
-  unsigned indels = 0;
-  int last_state = states::M;
-  for(unsigned i=0; i<pairwiseA.size(); i++) 
-  {
-    int current_state = pairwiseA[i];
-    
-    if (last_state != current_state)
-      if ((current_state == states::G1) or (current_state == states::G2))
-	indels++;
-
-    last_state = current_state;
-  }
-  return indels;
-}
-
-unsigned n_indels(const alignment& A,const Tree& T)
-{
-  unsigned indels = 0;
-  for(unsigned b=0;b<T.n_branches();b++)
-    indels += n_indels(A,T,b);
-
-  return indels;
-}
-
 
 int main(int argc,char* argv[]) { 
   try {
