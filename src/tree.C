@@ -1088,6 +1088,13 @@ int n_elements(const valarray<bool>& v) {
   return count;
 }
 
+int n_elements(const vector<bool>& v) {
+  int count = 0;
+  for(int i=0;i<v.size() ;i++)  
+    if (v[i]) count++;
+  return count;
+}
+
 
 bool empty(const valarray<bool>& v) {
   for(int i=0;i<v.size() ;i++)  
