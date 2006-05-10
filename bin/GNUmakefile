@@ -31,10 +31,10 @@ Work/setup:
 	@echo "done."
 
 Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
-                  Results/c-levels.plot Results/c-sub-levels.plot Work/t.from.${SKIP}+${SIZE} \
+                  Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
 		  Results/Report Results/MAP.fasta Results/MAP.phy \
 		  Mixing/partitions.SRQ Mixing/c50.SRQ Mixing/partitions.bs # MAP-AU.html median-AU.html
-	@echo "Analyzed:  $$(wc -l < Work/t.from.${SKIP}+${SIZE}) trees from iteration $$(( ${SKIP} + 1))." > Results/analysis
+	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration $$(( ${SKIP} + 1))." > Results/analysis
 	@echo "Finished:  $$(date)" >> Results/analysis
 	@echo 
 	@cat Results/analysis
@@ -64,7 +64,7 @@ Work/%.from.${SKIP}+${SIZE}: Work/%.from.${SKIP}
 Work/%.from.${SKIP}+: Work/%.from.${SKIP}
 	@cp $< $@ 
 
-Results/consensus : Work/t Work/t.from.${SKIP}+${SIZE}
+Results/consensus : Work/trees Work/trees.from.${SKIP}+${SIZE}
 	@echo -e "Summarizing topology distribution... \c";
 	@trees-consensus --skip ${SKIP} ${SIZE:%=--max %}  ${MIN:%=--min-support %} $< --consensus 0.5,0.66,0.8,0.9,0.95,0.99,1.0 --sub-partitions > $@
 	@echo "done."
@@ -75,9 +75,9 @@ Work/partitions: Results/consensus
 Work/partitions.pred: Work/partitions
 	@sed "s/$$/\n/" < $< > $@
 
-Mixing/partitions.bs: Work/partitions.pred Work/t
+Mixing/partitions.bs: Work/partitions.pred Work/trees
 	@echo -e "Computing confidence intervals for partition support... \c";
-	@trees-bootstrap --skip ${SKIP} ${SIZE:%=--max %} Work/t --pred Work/partitions.pred > $@
+	@trees-bootstrap --skip ${SKIP} ${SIZE:%=--max %} Work/trees --pred Work/partitions.pred > $@
 	@echo "done."
 
 Results/c-levels.plot : Results/consensus
@@ -90,9 +90,9 @@ Results/c-sub-levels.plot : Results/consensus
 	@pickout --no-header LOD sub\#1 < $< > $@
 	@echo "done."
 
-Results/%.tree : Results/%.topology Work/t
+Results/%.tree : Results/%.topology Work/trees
 	@echo "Calculating branch lengths for $* tree."
-	@tree-mean-lengths $< --skip ${SKIP} ${SIZE:%=--max %} < Work/t > $@ 2>/dev/null
+	@tree-mean-lengths $< --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@ 2>/dev/null
 
 Results/MAP.topology: Results/consensus Work/setup
 	@pickout --no-header MAP-0 < $< > $@
@@ -121,24 +121,24 @@ Results/c%.topology: Results/consensus Work/setup
 	@pickout --no-header $*-consensus < $< > $@ 
 	@test -s $@
 
-Mixing/partitions.SRQ: Work/t Work/partitions.pred
+Mixing/partitions.SRQ: Work/trees Work/partitions.pred
 	@echo -e "Generating SRQ plot for c50 partitions... \c"
-	@trees-to-SRQ Work/partitions.pred --skip ${SKIP} ${SIZE:%=--max %} < Work/t > $@
+	@trees-to-SRQ Work/partitions.pred --skip ${SKIP} ${SIZE:%=--max %} < Work/trees> $@
 	@echo "done."
 
-Mixing/%.SRQ: Work/t Results/%.topology
+Mixing/%.SRQ: Work/trees Results/%.topology
 	@echo -e "Generating SRQ plot for $* tree... \c"
-	@trees-to-SRQ Results/$*.topology --skip ${SKIP} ${SIZE:%=--max %} < Work/t > $@
+	@trees-to-SRQ Results/$*.topology --skip ${SKIP} ${SIZE:%=--max %} < Work/trees> $@
 	@echo "done."
 
-Mixing/sum.plot: Work/t Work/partitions.pred
+Mixing/sum.plot: Work/trees Work/partitions.pred
 	@echo -e "Generating sum plot for c50 partitions... \c"
-	@trees-to-SRQ Work/partitions.pred  --skip ${SKIP} ${SIZE:%=--max %} < Work/t --mode sum --no-scale-x > $@
+	@trees-to-SRQ Work/partitions.pred  --skip ${SKIP} ${SIZE:%=--max %} < Work/trees--mode sum --no-scale-x > $@
 	@echo "done."
 
-Mixing/sumi.plot: Work/t Work/partitions.pred
+Mixing/sumi.plot: Work/trees Work/partitions.pred
 	@echo -e "Generating inverse sum plot for c50 partitions... \c"
-	@trees-to-SRQ Work/partitions.pred  --invert --skip ${SKIP} ${SIZE:%=--max %} < Work/t --mode sum --no-scale-x > $@
+	@trees-to-SRQ Work/partitions.pred  --invert --skip ${SKIP} ${SIZE:%=--max %} < Work/trees --mode sum --no-scale-x > $@
 	@echo "done."
 
 Work/Likelihood: Work/p Work/setup

@@ -7,6 +7,7 @@
 #include <new>
 
 #include <boost/program_options.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include "myexception.H"
 #include "mytypes.H"
@@ -25,6 +26,8 @@
 #include "monitor.H"
 #include "pow2.H"
 #include "proposals.H"
+
+namespace fs = boost::filesystem;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -335,9 +338,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("config", value<string>(),"config file to read")
     ("show-only","analyze the initial values and exit")
     ("seed", value<unsigned long>(),"random seed")
-    ("data-dir", value<string>()->default_value("Data"),"data directory")
+    ("data-dir", value<string>()->default_value("Data"),"location of the Data/ directory")
+    ("name", value<string>(),"name for the analysis, instead of the alignment filename.")
     ("align-constraint",value<string>(),"file with alignment constraints")
-    ("internal",value<string>(),"if set to '+', then make all internal node entries wildcards")
     ("traditional","Fix alignment and don't model indels")
     ("letters",value<string>()->default_value("full_tree"),"if set to 'star', then use a star tree for substitution")
     ;
@@ -353,11 +356,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("partition-weights",value<string>(),"file containing tree with partition weights")
     ;
     
-
   options_description parameters("Parameter options");
   parameters.add_options()
     ("align", value<string>(),"file with sequences and initial alignment")
     ("randomize-alignment","randomly realign the sequences before use.")
+    ("internal",value<string>(),"if set to '+', then make all internal node entries wildcards")
     ("tree",value<string>(),"file with initial tree")
     ("set",value<vector<string> >()->composing(),"set parameter=<value>")
     ("fix",value<vector<string> >()->composing(),"fix parameter[=<value>]")
@@ -484,40 +487,19 @@ void set_parameters(Parameters& P, const variables_map& args)
     else
       P.keys[name] = value;
   }
-
 }
-
-string get_base_name(string filename)
-{
-  int loc = -1;
-  for(int i=0;i<filename.size();i++)
-    if (filename[i] == '/' or filename[i] == '\\')
-      loc = i;
-  filename = filename.substr((unsigned)(loc+1));
-  return filename;
-}
-
-#include "unistd.h" // unlink( )
 
 void delete_files(vector<string>& filenames,vector<ofstream*>& files)
 {
   for(int i=0;i<files.size();i++) {
     files[i]->close();
-    unlink(filenames[i].c_str());
+    fs::remove(filenames[i]);
   }
   files.clear();
   filenames.clear();
 }
 
-bool exists(const string& filename)
-{
-  ifstream file(filename.c_str());
-  bool e = file.is_open();
-  if (e) file.close();
-  return e;
-}
-
-vector<ofstream*> open_files(const string& basename, vector<string>& names)
+vector<ofstream*> open_files(const string& name, vector<string>& names)
 {
   vector<ofstream*> files;
   vector<string> filenames;
@@ -528,9 +510,9 @@ vector<ofstream*> open_files(const string& basename, vector<string>& names)
     success = true;
     for(int j=0;j<names.size();j++) 
     {
-      string filename = basename + convertToString(i+1)+"."+names[j];
+      string filename = name + convertToString(i+1)+"."+names[j];
 
-      if (exists(filename)) {
+      if (fs::exists(filename)) {
 	delete_files(filenames,files);
 	success = false;
 	break;
@@ -546,9 +528,21 @@ vector<ofstream*> open_files(const string& basename, vector<string>& names)
   return files;
 }
 
+string open_dir(const string& dirbase)
+{
+  for(int i=1;;i++) {
+    string dirname = dirbase + "-" + convertToString(i);
 
-int main(int argc,char* argv[]) { 
+    if (not fs::exists(dirname)) {
+      fs::create_directory(dirname);
+      return dirname;
+    }
+  }
+}
 
+
+int main(int argc,char* argv[]) 
+{ 
   try {
 
     fp_scale::initialize();
@@ -570,14 +564,19 @@ int main(int argc,char* argv[]) {
     }
     else {
 
-      string basename = get_base_name(args["align"].as<string>()) + ".";
+      string name = fs::path( args["align"].as<string>() ).leaf();
+      if (args.count("name"))
+	name = args["name"].as<string>();
+
+      string dirname = open_dir(name);
+      cerr<<"Created directory '"<<dirname<<"' for output files."<<endl;
 
       filenames.push_back("out");
       filenames.push_back("trees");
       filenames.push_back("p");
       filenames.push_back("MAP");
 
-      vector<ofstream*> files = open_files(basename,filenames);
+      vector<ofstream*> files = open_files(dirname+"/",filenames);
       
       s_out = files[0];
       s_trees = files[1];
@@ -623,7 +622,7 @@ int main(int argc,char* argv[]) {
     (*s_out)<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
 
     if (A.n_sequences() < 3)
-      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<A.n_sequences()<<".";
+      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<A.n_sequences()<<".\n(Perhaps you have BLANK LINES in your FASTA file?)";
 
     //--------- Set up the substitution model --------//
     OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);

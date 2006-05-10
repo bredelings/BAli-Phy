@@ -1,10 +1,11 @@
+2. DISTRUBITION of %-identity?
+
 1. Proposals and Priors
   a. sanitize setting parameters(): Allow setting only some.
                                     Only recalculate models that changed. (should give speedup)
   b. super_parameters_: remove.
   c. use a parameter_names_ vector.
 3. Write some tests (using the config files.)
-4. Report number of gaps along tree.
 5. Allow gilding an alignment-consensus.
 6. Output move stats in tracer-readable format.
   a. or, at least, allow burn-in?
@@ -41,30 +42,16 @@
 -------------------------------------------------------
 Named parameters, priors, and proposals branch!
 
--44. How do we say that "kappa" and "mu" both use 'scale_gaussian'
-     but have their own parameters for scale_gaussian::sigma?
-  + A: allow ONLY named parameters, and keep them in 'keys' :)
-    - typedef double (*proposal_fn)(vector<double>& x,const vector<double>& parameters);
-    - Proposal_Function(proposal_fn p,const vector<string>& parameter_names);
-    - Set the parameter_name keys to *default values* somewhere.
-    - If a parameter_name is a parameter in P, then use that value instead of the 'keys' value.
-    - We can use the 'keys' value for priors also...
+-42. Allow external priors - attach to parameters by name.
+  + How can we reference other parameters of the model? (e.g. "mu")
+  + Can we ADD parameters to the model just to use as hyperparameters?
 
--43. Allow move to call other moves.
-  + For example, NNI_and_lengths( ) should be able to call various length
-    moves, and get their results recorded in their own counters...  
-
--42. Allow priors to attach to the Parameters structure by name!
-  + similar to proposals?
-
--41. Allow proposals to attach to the Parameters structure by name!
-  + Can proposals be sub-models?
-  + This should allow us to independently assess acceptance ratio's by parameters,
-    instead of by move type.
-  + We can also propose parameters independently.
-    - This will allow us to propose larger increments for each parameter.
-      o Increase the increment for kappa!
-    - Specify the NUMBER of times we do each increment per iteration.
+-41. Improve proposals: 
+  + Specify the NUMBER of times we do each increment per iteration.
+  + How can we reference other parameters of the model? (e.g. "mu")
+  + How do we pass back information about move success from each move?
+  + Can we have the move parameters converge to something?
+    - Should this be in the PROPOSAL, or something governing the proposal?
 
 -------------------------------------------------------
 
@@ -520,12 +507,11 @@ the prior, because we never want to use it  differently.
 [DONE] Remove Model::fiddle() [ and also super_fiddle() ] and implement
        external proposals.
 
-*IDEAS*
+[DONE] Output number and length of gaps to Tracer file.
 
- - make a SplitsTree-like graph out of a tree sample,
-   where the edges mean bi-partitions, and don't use distance
-   information but topology information instead. 
-   (contact girl from INCOB?)
+[DONE] Have bali-phy open a directory to store files in.
+
+*IDEAS*
 
  - We need better ways to compute compute marginal likelihoods.
 

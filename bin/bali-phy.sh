@@ -15,21 +15,10 @@ if [ "$DEBUG" ] ; then
     DEBUG="-DEBUG";
 fi
 
-#---- find out which run class we are in ----
-if [ ! "$CLASS" ]; then
-    CLASS=normal
-fi
-
-#----- Determine the direction to run in -----
-count=1
-while [ -e "$CLASS-$count" ] ; do
-    (( count++ ))
-done
-
-DIR="$CLASS-$count"
-
 #------ Attempt to determine the data directory ------
-if [ "${BALI_PHY_DATA-unset}" = unset ] ; then
+if [ -e "Data/" ] ; then
+    true;
+elif [ "${BALI_PHY_DATA-unset}" = unset ] ; then
     echo "Error: BALI_PHY_DATA is not set:"
     echo "  * set it to the location of the BAli-Phy data directory."
     echo "  * otherwise, set it to '' and specify --data-dir <dir>."
@@ -46,14 +35,9 @@ elif [ ! -e "$BALI_PHY_DATA" ] ; then
 elif [ ! -d "$BALI_PHY_DATA" ] ; then
     echo "Error: File BALI_PHY_DATA='${BALI_PHY_DATA}' is not a directory."
     exit 1
+else
+    ln -sf ${BALI_PHY_DATA} Data;
 fi
-
-#----- Make the directory, move into it -----#
-mkdir $DIR
-cd $DIR
-
-#-------- Link in the data directory --------#
-ln -sf ${BALI_PHY_DATA} Data;
 
 #----------- Determine the Version ----------#
 if [ "$VERSION" ] ; then
