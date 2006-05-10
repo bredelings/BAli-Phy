@@ -84,8 +84,7 @@ AC_TYPE_SIZE_T
 
 AC_ARG_ENABLE([debug],
               AS_HELP_STRING([--enable-debug], [Compile in debug mode]),
-             [debug=$enableval],
-             [debug=no])
+             [debug=$enableval])
 
 AC_ARG_ENABLE([profile],
               AS_HELP_STRING([--enable-profile], [Compile with profiling information]),
