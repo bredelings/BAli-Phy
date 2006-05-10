@@ -286,6 +286,13 @@ T sum(const std::vector<T>& v)
   return total;
 }
 
+template<typename T,typename U>
+void scale(std::vector<T>& v, const U& S)
+{
+  for(int i=0;i<v.size();i++)
+    v[i] *= S;
+}
+
 template<typename T>
 std::vector<T> select(const std::vector<T>& v1,bool pred(const T&))
 {
