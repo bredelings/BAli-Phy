@@ -1,15 +1,15 @@
 #ifndef PROPOSALS_H
 #define PROPOSALS_H
 
-#include <valarray>
+#include <vector>
 
-double dirichlet_fiddle(std::valarray<double>& p,double N);
+double dirichlet_fiddle(std::vector<double>& p,double N);
 
-double dirichlet_fiddle(std::valarray<double>& p,double N,const std::valarray<bool>& mask);
+double dirichlet_fiddle(std::vector<double>& p,double N,const std::vector<bool>& mask);
 
-double dirichlet_fiddle_old(std::valarray<double>& p,double sigma);
+double dirichlet_fiddle_old(std::vector<double>& p,double sigma);
 
-double dirichlet_fiddle_old(std::valarray<double>& p,double sigma,const std::valarray<bool>& mask);
+double dirichlet_fiddle_old(std::vector<double>& p,double sigma,const std::vector<bool>& mask);
 
 double scale_gaussian(double& x,double sigma);
 
@@ -34,7 +34,7 @@ public:
   Generic_Proposal(generic_proposal gp):proposal(gp) {}
 };
 
-typedef double (*proposal_fn)(std::valarray<double>& x,const std::vector<double>& p);
+typedef double (*proposal_fn)(std::vector<double>& x,const std::vector<double>& p);
 
 class Proposal_Fn
 {
@@ -42,7 +42,7 @@ class Proposal_Fn
 public:
   virtual Proposal_Fn* clone() const {return new Proposal_Fn(*this);}
 
-  virtual double operator()(std::valarray<double>& x,const std::vector<double>& p) const 
+  virtual double operator()(std::vector<double>& x,const std::vector<double>& p) const 
   {
     return proposal(x,p);
   }
@@ -59,7 +59,7 @@ class less_than: public Proposal_Fn
   OwnedPointer<Proposal_Fn> proposal;
 public:
   less_than* clone() const {return new less_than(*this);}
-  double operator()(std::valarray<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
   less_than(double m,const Proposal_Fn& P);
 };
 
@@ -69,7 +69,7 @@ class more_than: public Proposal_Fn
   OwnedPointer<Proposal_Fn> proposal;
 public:
   more_than* clone() const {return new more_than(*this);}
-  double operator()(std::valarray<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
   more_than(double m,const Proposal_Fn& P);
 };
 
@@ -80,7 +80,7 @@ class between: public Proposal_Fn
   OwnedPointer<Proposal_Fn> proposal;
 public:
   between* clone() const {return new between(*this);}
-  double operator()(std::valarray<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
   between(double m1,double m2,const Proposal_Fn& P);
 };
 
@@ -89,7 +89,7 @@ class log_scaled: public Proposal_Fn
   OwnedPointer<Proposal_Fn> proposal;
 public:
   log_scaled* clone() const {return new log_scaled(*this);}
-  double operator()(std::valarray<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
   log_scaled(const Proposal_Fn& P);
 };
 
@@ -98,7 +98,7 @@ class LOD_scaled: public Proposal_Fn
   OwnedPointer<Proposal_Fn> proposal;
 public:
   LOD_scaled* clone() const {return new LOD_scaled(*this);}
-  double operator()(std::valarray<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
   LOD_scaled(const Proposal_Fn& P);
 };
 
@@ -118,15 +118,15 @@ public:
 };
 
 
-double dirichlet_proposal(std::valarray<double>& x,const std::vector<double>& p);
+double dirichlet_proposal(std::vector<double>& x,const std::vector<double>& p);
 
-double scale_gaussian2(std::valarray<double>& x,const std::vector<double>& p);
+double scale_gaussian2(std::vector<double>& x,const std::vector<double>& p);
 
-double shift_gaussian(std::valarray<double>& x,const std::vector<double>& p);
+double shift_gaussian(std::vector<double>& x,const std::vector<double>& p);
 
-double shift_delta(std::valarray<double>& x, const std::vector<double>& p);
+double shift_delta(std::vector<double>& x, const std::vector<double>& p);
 
-double shift_epsilon(std::valarray<double>& x, const std::vector<double>& p);
+double shift_epsilon(std::vector<double>& x, const std::vector<double>& p);
 
 
 #endif

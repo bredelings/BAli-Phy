@@ -6,6 +6,23 @@
 
 using std::valarray;
 
+valarray<double> convert(const vector<double>& v1)
+{
+  valarray<double> v2(v1.size());
+  for(int i=0;i<v1.size();i++)
+    v2[i] = v1[i];
+  return v2;
+}
+
+vector<double> convert(const valarray<double>& v1)
+{
+  vector<double> v2(v1.size());
+  for(int i=0;i<v1.size();i++)
+    v2[i] = v1[i];
+  return v2;
+}
+
+
 valarray<double> sensible(valarray<double> n)
 {
   for(int i=0;i<n.size();i++)
@@ -20,9 +37,17 @@ double dirichlet_fiddle(valarray<double>& p2,double N)
   return dirichlet_pdf(p1,sensible(p2*N))/dirichlet_pdf(p2,sensible(p1*N));
 }
 
-valarray<double> read(const valarray<double>& p, const valarray<bool>& mask)
+double dirichlet_fiddle(vector<double>& p,double N)
 {
-  valarray<double> sub(n_elements(mask));
+  valarray<double> x = convert(p);
+  double ratio = dirichlet_fiddle(x,N);
+  p = convert(x);
+  return ratio;
+}
+
+vector<double> read(const vector<double>& p, const vector<bool>& mask)
+{
+  vector<double> sub(n_elements(mask));
 
   for(int i=0,j=0;i<p.size();i++)
     if (mask[i])
@@ -31,7 +56,7 @@ valarray<double> read(const valarray<double>& p, const valarray<bool>& mask)
   return sub;
 }
 
-void write(const valarray<double>& sub, valarray<double>& p, const valarray<bool>& mask)
+void write(const vector<double>& sub, vector<double>& p, const vector<bool>& mask)
 {
   for(int i=0,j=0;i<p.size();i++)
     if (mask[i])
@@ -39,60 +64,25 @@ void write(const valarray<double>& sub, valarray<double>& p, const valarray<bool
 }
 
 
-double dirichlet_fiddle(valarray<double>& p,double N, const valarray<bool>& mask)
+double dirichlet_fiddle(vector<double>& p,double N, const vector<bool>& mask)
 {
   assert(p.size() == mask.size());
 
-  valarray<double> sub = read(p,mask);
+  vector<double> sub = read(p,mask);
 
   double ratio = 1;
 
   if (sub.size()) {
-    double sum = sub.sum();
+    double s = sum(sub);
 
-    sum /= sum;
+    scale(sub, 1.0/s);
     ratio = dirichlet_fiddle(sub,N);
-    sub *= sum;
+    scale(sub, s);
 
     write(sub,p,mask);
   }
 
   return ratio;
-}
-
-
-double dirichlet_fiddle_old(valarray<double>& p2,double sigma)
-{
-  valarray<double> p1=p2;
-  for(int i=0;i<p2.size();i++)
-    p2[i] *= exp(gaussian(0,sigma));
-
-  p2 /= p2.sum();
-
-  return 1.0;
-}
-
-double dirichlet_fiddle_old(valarray<double>& p2,double sigma,const valarray<bool>& mask) 
-{
-  valarray<double> p1=p2;
-  p2 /= p2.sum();
-
-  double total1=0;
-  double total2=0;
-  for(int i=0;i<p2.size();i++)
-    if (mask[i]) {
-      total1 += p2[i];
-      p2[i] *= exp(gaussian(0,sigma));
-      total2 += p2[i];
-    }
-
-  double factor = total1/total2;
-
-  for(int i=0;i<p2.size();i++)
-    if (mask[i]) 
-      p2[i] *= factor;
-
-  return 1.0;
 }
 
 double scale_gaussian(double& x, double sigma)
@@ -102,7 +92,7 @@ double scale_gaussian(double& x, double sigma)
   return scale;
 }
 
-double scale_gaussian2(valarray<double>& x, const vector<double>& p)
+double scale_gaussian2(vector<double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"scale_gaussian: expected one dimension, got "<<x.size()<<".";
@@ -113,7 +103,7 @@ double scale_gaussian2(valarray<double>& x, const vector<double>& p)
 }
 
 
-double shift_gaussian(valarray<double>& x, const vector<double>& p)
+double shift_gaussian(vector<double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_gaussian: expected one dimension, got "<<x.size()<<".";
@@ -128,7 +118,7 @@ double shift_gaussian(valarray<double>& x, const vector<double>& p)
   return 1.0;
 }
 
-double shift_delta(valarray<double>& x, const vector<double>& p)
+double shift_delta(vector<double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_delta: expected one dimension, got "<<x.size()<<".";
@@ -148,7 +138,7 @@ double shift_delta(valarray<double>& x, const vector<double>& p)
   return 1;
 }
 
-double shift_epsilon(valarray<double>& x, const vector<double>& p)
+double shift_epsilon(vector<double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_epsilon: expected one dimension, got "<<x.size()<<".";
@@ -167,9 +157,9 @@ double shift_epsilon(valarray<double>& x, const vector<double>& p)
 
 
 template <typename T>
-valarray<T> read(const vector<T>& v,const vector<int>& indices)
+vector<T> read(const vector<T>& v,const vector<int>& indices)
 {
-  valarray<T> values(indices.size());
+  vector<T> values(indices.size());
   for(int i=0;i<indices.size();i++)
     values[i] = v[indices[i]];
   return values;
@@ -177,7 +167,7 @@ valarray<T> read(const vector<T>& v,const vector<int>& indices)
 
 
 template <typename T>
-valarray<T> write(vector<T>& v,const vector<int>& indices,const valarray<T>& values)
+vector<T> write(vector<T>& v,const vector<int>& indices,const vector<T>& values)
 {
   assert(indices.size() == values.size());
   for(int i=0;i<indices.size();i++)
@@ -185,7 +175,7 @@ valarray<T> write(vector<T>& v,const vector<int>& indices,const valarray<T>& val
   return values;
 }
 
-double dirichlet_proposal(std::valarray<double>& x,const std::vector<double>& p)
+double dirichlet_proposal(std::vector<double>& x,const std::vector<double>& p)
 {
   if (p.size() != 1) 
     throw myexception()<<"dirichlet_proposal: expected one parameter, got "<<p.size()<<".";
@@ -195,11 +185,11 @@ double dirichlet_proposal(std::valarray<double>& x,const std::vector<double>& p)
   if (N <= 0)
     throw myexception()<<"dirichlet_proposal: parameter N <= 0!";
 
-  double sum = x.sum();
+  double s = sum(x);
 
-  x /= sum;
+  scale(x, 1.0/s);
   double ratio = dirichlet_fiddle(x,N*x.size());
-  x *= sum;
+  scale(x, s);
 
   return ratio;
 }
@@ -279,7 +269,7 @@ double sorted_proposal(std::valarray<double>& x,const std::vector<double>& p)
 
 */
 
-double less_than::operator()(std::valarray<double>& x,const std::vector<double>& p) const
+double less_than::operator()(std::vector<double>& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++) 
@@ -292,7 +282,7 @@ less_than::less_than(double m, const Proposal_Fn& P)
    proposal(P)
 { }
 
-double more_than::operator()(std::valarray<double>& x,const std::vector<double>& p) const
+double more_than::operator()(std::vector<double>& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++) 
@@ -305,7 +295,7 @@ more_than::more_than(double m, const Proposal_Fn& P)
    proposal(P)
 { }
 
-double between::operator()(std::valarray<double>& x,const std::vector<double>& p) const
+double between::operator()(std::vector<double>& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++)
@@ -319,7 +309,7 @@ between::between(double m1, double m2, const Proposal_Fn& P)
 { }
 
 
-double log_scaled::operator()(std::valarray<double>& x,const std::vector<double>& p) const
+double log_scaled::operator()(std::vector<double>& x,const std::vector<double>& p) const
 {
   if (x.size() != 1) 
     throw myexception()<<"log_scaled: expected one dimension, got "<<x.size()<<".";
@@ -344,7 +334,7 @@ log_scaled::log_scaled(const Proposal_Fn& P)
 { }
 
 
-double LOD_scaled::operator()(std::valarray<double>& x,const std::vector<double>& p) const
+double LOD_scaled::operator()(std::vector<double>& x,const std::vector<double>& p) const
 {
   if (x.size() != 1) 
     throw myexception()<<"LOD_scaled: expected one dimension, got "<<x.size()<<".";
@@ -386,12 +376,11 @@ double Proposal2::operator()(alignment&, Parameters& P) const
 
   
   // compute proposed parameter values
-  valarray<double> x = read(parameters,indices);
+  vector<double> x = read(parameters,indices);
   double ratio = (*proposal)(x,p);
-  write(parameters,indices,x);
 
   // set the proposed values
-  P.parameters(parameters);
+  P.parameters(indices,x);
 
   return ratio;
 }
