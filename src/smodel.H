@@ -647,7 +647,6 @@ namespace substitution {
 
     int n_submodels() const {return 2;}
 
-    efloat_t super_prior() const {return 1;}
   public:
 
     /// Make a copy of this object
@@ -760,8 +759,6 @@ namespace substitution {
   {
   public:
     UnitModel* clone() const {return new UnitModel(*this);}
-
-    efloat_t super_prior() const {return 1;}
 
     /// The number of models
     int n_base_models() const {return 1;}

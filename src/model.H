@@ -71,6 +71,9 @@ public:
     recalc();
   }
 
+  /// Set SOME of the model parameters
+  virtual void parameters(const std::vector<int>& indices,const std::vector<double>& p);
+
   /// The model's name
   virtual std::string name() const =0;
 

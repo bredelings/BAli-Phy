@@ -21,6 +21,16 @@ void Model::set_n_parameters(int n) {
     fixed_[i] = false;
 }
 
+void Model::parameters(const vector<int>& indices,const vector<double>& p)
+{
+  assert(indices.size() == p.size());
+  assert(indices.size() <= parameters_.size());
+  for(int i=0;i<indices.size();i++)
+    parameters_[indices[i]] = p[i];
+  recalc();
+}
+
+
 string Model::header() const
 {
   vector<string> names;
