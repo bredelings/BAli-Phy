@@ -21,7 +21,7 @@ protected:
   std::vector<double> parameters_;
   
   /// Recalculate internal data based on current parameters
-  virtual void recalc() =0;
+  virtual void recalc() {}
 
   void set_n_parameters(int);
 
@@ -54,25 +54,15 @@ public:
   virtual double parameter(int p) const {
     return parameters_[p];
   }
-
   /// Get the model parameters
   virtual const std::vector<double>& parameters() const {return parameters_;}
 
-  /// Set a model parameter
-  virtual void parameter(int p,double value) {
-    parameters_[p] = value;
-    recalc();
-  }
-
-  /// Set the model parameters
-  virtual void parameters(const std::vector<double>& p) {
-    assert(parameters_.size() == p.size()) ; 
-    parameters_=p; 
-    recalc();
-  }
-
+  /// Set A model parameter
+  virtual void parameter(int p,double value);
   /// Set SOME of the model parameters
   virtual void parameters(const std::vector<int>& indices,const std::vector<double>& p);
+  /// Set ALL model parameters
+  virtual void parameters(const std::vector<double>& p);
 
   /// The model's name
   virtual std::string name() const =0;
@@ -110,8 +100,6 @@ protected:
     recalc();
   }
   
-  void recalc();
-
   /// Load parameters from sub-models
   void read();
 
@@ -133,6 +121,22 @@ public:
   virtual void fixed(const std::vector<bool>& f) {Model::fixed(f); write();}
 
   std::vector<bool> fixed() const {return Model::fixed();}
+
+  /// Get a model parameter
+  double parameter(int p) const {
+    return Model::parameter(p);
+  }
+  /// Get the model parameters
+  const std::vector<double>& parameters() const {
+    return Model::parameters();
+  }
+
+  /// Set A model parameter
+  void parameter(int p,double value);
+  /// Set SOME of the model parameters
+  void parameters(const std::vector<int>& indices,const std::vector<double>& p);
+  /// Set ALL model parameters
+  void parameters(const std::vector<double>& p);
 
   /// Access the submodel
   virtual const Model& SubModels(int) const=0;

@@ -250,8 +250,7 @@ namespace substitution {
     SMatrix S;
 
   public:
-    void recalc() {}
-
+    
     double operator()(int i,int j) const {return S(i,j);}
 
     ExchangeModel* clone() const =0;

@@ -215,8 +215,6 @@ namespace substitution {
 
   void IndependentNucleotideFrequencyModel::recalc()
   {
-    write();
-
     //------------------ compute triplet frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModel());
 
@@ -255,8 +253,6 @@ namespace substitution {
 
   void TripletsFrequencyModel::recalc() 
   {
-    write();
-
     valarray<double> nu = get_varray(super_parameters_, 1, size());
 
     //------------- compute frequencies ------------------//
@@ -324,7 +320,7 @@ namespace substitution {
       super_parameters_[i+1] = 1.0/size();
 
     read();
-
+    write();
     recalc();
   }
 
@@ -332,8 +328,6 @@ namespace substitution {
 
   void CodonFrequencyModel::recalc() 
   {
-    write();
-
     double c = parameters_[0];
 
     //------------- compute frequencies ------------------//
@@ -414,7 +408,7 @@ namespace substitution {
       super_parameters_[i+2] = 1.0/C.getAminoAcids().size();
 
     read();
-
+    write();
     recalc();
   }
 
@@ -497,9 +491,6 @@ namespace substitution {
 
   void ReversibleMarkovSuperModel::recalc()
   {
-    // write any changes down to sub-models
-    SuperModel::recalc();
-
     // recompute rate matrix
     for(int i=0;i<size();i++) {
       double sum=0;
@@ -531,6 +522,7 @@ namespace substitution {
   {
     set_n_parameters(S->parameters().size() + R->parameters().size());
     read();
+    write();
     recalc();
   }
     
@@ -541,6 +533,7 @@ namespace substitution {
     SimpleFrequencyModel* R2 = dynamic_cast<SimpleFrequencyModel*>(R.get());
     R2->frequencies(pi);
     read();
+    write();
     recalc();
   }
 
@@ -804,8 +797,6 @@ namespace substitution {
 
   void SingletToTripletExchangeModel::recalc() 
   {
-    write();
-
     for(int i=0;i<Alphabet().size();i++)
       for(int j=0;j<i;j++) 
       {
@@ -846,6 +837,7 @@ namespace substitution {
     :TripletExchangeModel(T),::NestedModelOver<NucleotideExchangeModel>(N,0)
   { 
     read();
+    write();
     recalc();
   }
 
@@ -864,12 +856,12 @@ namespace substitution {
   void YangM0::omega(double w) {
     super_parameters_[0]=w;
     read();
+    write();
     recalc();
   }
 
-  void YangM0::recalc() {
-    write();
-
+  void YangM0::recalc() 
+  {
     for(int i=0;i<Alphabet().size();i++) {
 
       for(int j=0;j<i;j++) {
@@ -1074,6 +1066,7 @@ namespace substitution {
 	a(m,l) = 1.0/n;
 
     read();
+    write();
     recalc();
   }
 
@@ -1156,9 +1149,8 @@ namespace substitution {
   }
 
   // This is supposed to push things out from parameters_
-  void DistributionParameterModel::recalc() {
-    write();
-
+  void DistributionParameterModel::recalc() 
+  {
     D->parameters(super_parameters_);
 
     for(int i=0;i<p_values.size();i++)
@@ -1192,7 +1184,7 @@ namespace substitution {
     super_parameters_ = D->parameters();
 
     read();
-
+    write();
     recalc();
   }
 
@@ -1222,7 +1214,6 @@ namespace substitution {
 
   void WithINV::recalc() {
     INV->frequencies(SubModel().frequencies());
-    write();
   }
 
   string WithINV::name() const {
@@ -1236,7 +1227,7 @@ namespace substitution {
     super_parameters_[0] = 0.01;
 
     read();
-
+    write();
     recalc();
   }
 
@@ -1282,9 +1273,6 @@ namespace substitution {
 
   void YangM2::recalc() 
   {
-    // push values out from parameters to superparameters and sub-models
-    write();
-
     fraction[0] = super_parameters()[0];
     fraction[1] = super_parameters()[1];
     fraction[2] = super_parameters()[2];
@@ -1339,7 +1327,7 @@ namespace substitution {
     super_parameters_[3] = 1.0;
 
     read();
-
+    write();
     recalc();
   }
 
@@ -1364,6 +1352,7 @@ namespace substitution {
   void YangM3::omega(int i,double w) {
     super_parameters_[fraction.size()+i]=w;
     read();
+    write();
     recalc();
   }
 
@@ -1381,9 +1370,6 @@ namespace substitution {
 
   void YangM3::recalc() 
   {
-    // push values out from parameters to superparameters and sub-models
-    write();
-
     for(int i=0;i<fraction.size();i++)
       fraction[i] = super_parameters()[i];
 
@@ -1437,7 +1423,7 @@ namespace substitution {
       super_parameters_[i+n] = 1.0;
 
     read();
-
+    write();
     recalc();
   }
 
@@ -1459,9 +1445,6 @@ namespace substitution {
 
   void MixtureModel::recalc() 
   {
-    //recalculate submodels;
-    SuperModel::recalc();
-
     //recalculate pi
     pi = 0;
     int sm_total = n_submodels();
@@ -1566,7 +1549,7 @@ namespace substitution {
     pi.resize(Alphabet().size());
 
     read();
-
+    write();
     recalc();
   }
 }

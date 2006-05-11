@@ -21,6 +21,17 @@ void Model::set_n_parameters(int n) {
     fixed_[i] = false;
 }
 
+void Model::parameter(int p,double value) {
+  parameters_[p] = value;
+  recalc();
+}
+
+void Model::parameters(const std::vector<double>& p) {
+  assert(parameters_.size() == p.size()) ; 
+  parameters_=p; 
+  recalc();
+}
+
 void Model::parameters(const vector<int>& indices,const vector<double>& p)
 {
   assert(indices.size() == p.size());
@@ -110,9 +121,29 @@ efloat_t SuperModel::prior() const {
   return P;
 }
 
-void SuperModel::recalc() {
+void SuperModel::parameter(int p,double value) {
+  parameters_[p] = value;
   write();
+  recalc();
 }
+
+void SuperModel::parameters(const std::vector<double>& p) {
+  assert(parameters_.size() == p.size()) ; 
+  parameters_=p; 
+  write();
+  recalc();
+}
+
+void SuperModel::parameters(const vector<int>& indices,const vector<double>& p)
+{
+  assert(indices.size() == p.size());
+  assert(indices.size() <= parameters_.size());
+  for(int i=0;i<indices.size();i++)
+    parameters_[indices[i]] = p[i];
+  write();
+  recalc();
+}
+
 
 int find_parameter(const Model& M,const string& name) {
   for(int i=0;i<M.parameters().size();i++) 

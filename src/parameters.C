@@ -81,7 +81,6 @@ void Parameters::recalc_smodel() {
 }
 
 void Parameters::recalc() {
-  write();
   recalc_smodel();
   recalc_imodel();
 }
