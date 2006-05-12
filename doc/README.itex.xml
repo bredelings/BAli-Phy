@@ -93,8 +93,9 @@
 
 	<para>If you want to use the development tools shipped by Apple
 	(e.g. GCC) then you need OS X version 10.4 (Tiger) or higher, and
-	you need to install XCode 2.2.  (You can use a GCC compile
-	from the non-apple FSF sources, but installing XCode is much simpler.)
+	you need to install XCode 2.2.  (You can use a GCC compiler
+	built from the non-apple FSF sources, but installing XCode is
+	much simpler.) 
 	</para>
 
 	<para><ulink url="http://fink.sourceforge.net">Fink</ulink>
