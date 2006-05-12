@@ -1033,34 +1033,24 @@
     <title>Output</title>
 
     <sect2>
-      <title>Output streams</title>
-
-      <para><application>BAli-PHy</application> writes out the sampled
-      alignments and other information to the standard output stream, which
-      displays on the terminal by default.  Error messages are written to
-      the standard error stream, which also displays on the terminal by
-      default. In addition some other useful information is written to the
-      standard error stream, such as the acceptance fraction for the
-      various transition kernels.
-      </para>
-
-      <para>You should redirect the standard output to a file called
-      <filename>out</filename> and redirect the standard error to a file
-      called <filename>err</filename> so that the information on these
-      streams is available for later analysis.  In addition, some scripts
-      assume that the names <filename>out</filename> and
-      <filename>err</filename> are used.  The way to redirect these streams
-      to the files is to specify <userinput>2&gt;err</userinput>
-      on the command line.</para>
+      <title>Output directory</title>
+      <para><application>BAli-Phy</application> creates a new directory
+      to store its output files in each time it is run.  By default, the
+      directory name is the name of the sequence file, with a number
+      added on the end. <application>BAli-Phy</application> first checks
+      if there is already a directory called <replaceable>file</replaceable>-1/,
+      and then moves on to <replaceable>file</replaceable>-2/,
+      etc. until it finds an unused directory name.</para>
+      
+      <para>You can specify a different name to use instead of the
+      sequence-file name by using the <userinput>--name</userinput> option.</para>
     </sect2>
 
     <sect2>
       <title>Output files</title>
-      <para>When run in a clean directory,
-      <application>BAli-PHy</application> produces the following output
-      files.  For the last two files, each line in these files should
-      correspond to one iteration.</para>
-
+      <para><application>BAli-PHy</application> produces the following output
+      files inside the directory that it creates..  For the last two
+      files, each line in these files corresponds to one iteration.</para>
       
       <variablelist>
 	<varlistentry>
