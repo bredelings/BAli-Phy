@@ -644,6 +644,9 @@ int main(int argc,char* argv[])
 
     if (not args.count("traditional"))
       imodel = get_imodel(args);
+    else
+      if (args.count("imodel"))
+	throw myexception()<<"You can't specify an indel model along with 'traditional' - it is contradictory.";
     
     //-------------Create the Parameters object--------------//
     Parameters P(*full_smodel,T);
