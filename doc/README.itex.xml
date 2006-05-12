@@ -1144,13 +1144,10 @@
 	SRQ plots for the supported partitions.
     </para></listitem></varlistentry>
 
-	<varlistentry><term>sum.plot</term><listitem><para>A collection of
-	sum plots for the supported partitions.
+	<varlistentry><term>c50.plot</term><listitem><para>An
+	SRQ plot for the majority consensus tree.
     </para></listitem></varlistentry>
 
-	<varlistentry><term>sumi.plot</term><listitem><para>A collection of
-	inverse sum plots for the supported partitions.
-    </para></listitem></varlistentry>
 
       </variablelist>
 
