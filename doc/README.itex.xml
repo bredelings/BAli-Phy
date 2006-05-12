@@ -984,44 +984,36 @@
       <title>Output files</title>
       <para>When run in a clean directory,
       <application>BAli-PHy</application> produces the following output
-      files.  Except for the file <filename>MAP</filename> which contains
-      alignments, each line in these files should correspond to one
-      iteration.</para>
+      files.  For the last two files, each line in these files should
+      correspond to one iteration.</para>
 
       
       <variablelist>
 	<varlistentry>
-	  <term>Pr</term>
+	  <term>1.out</term>
 	  <listitem>
-	    <para>prior, likelihood, probability</para>
+	    <para>Iteration numbers, alignments, and probabilities.</para>
 	  </listitem>
 	</varlistentry>
 	
 	<varlistentry>
-	  <term>pI</term>
-	  <listitem>
-	    <para>indel model parameters</para>
-	  </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	  <term>pS</term>
-	  <listitem>
-	    <para>substitution model parameters</para>
-	  </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	  <term>trees</term>
-	  <listitem>
-	    <para>tree samples</para>
-	  </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	  <term>MAP</term>
+	  <term>1.MAP</term>
 	  <listitem>
 	    <para>successive estimates of the MAP point</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>1.p</term>
+	  <listitem>
+	    <para>Scalar parameters: indel and substitution parameters, etc.</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>1.trees</term>
+	  <listitem>
+	    <para>tree samples</para>
 	  </listitem>
 	</varlistentry>
 	
