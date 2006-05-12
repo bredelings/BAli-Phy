@@ -193,7 +193,7 @@
     to invoke the <command>bali-phy</command> executable directly:
 
 
-<screen><prompt>%</prompt> <userinput>./bali-phy <replaceable>sequence-file</replaceable> &gt;out 2&gt;err</userinput>
+<screen><prompt>%</prompt> <userinput>./bali-phy <replaceable>sequence-file</replaceable> 2&gt;err</userinput>
 </screen>
     Here <replaceable>sequence-file</replaceable> is a FASTA or PHYLIP
     file containing the sequences you wish to analyze.
@@ -420,7 +420,7 @@
       <title>No frills</title>
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
       the software.  The alignment is randomized before the chain begins.</para>
-      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --randomize_alignment &gt;out 2&gt;err</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --randomize_alignment 2&gt;err</userinput></screen>
     </example>
 
     <example>
@@ -430,7 +430,7 @@
       invariant sites.  The amount of rate variation and the fraction of
       invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment &gt;out 2&gt;err</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment 2&gt;err</userinput></screen></example>
 
     <example>
       <title>Fixed alignment</title>
@@ -442,7 +442,7 @@
       estimated from the input sequences.
       </para> 
 
-      <screen> <prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta ---disable frequencies --gaps star &gt;out 2&gt;err</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta ---disable frequencies --gaps star 2&gt;err</userinput></screen>
 
     </example>
   </sect1>
@@ -976,7 +976,7 @@
       streams is available for later analysis.  In addition, some scripts
       assume that the names <filename>out</filename> and
       <filename>err</filename> are used.  The way to redirect these streams
-      to the files is to specify <userinput>&gt;out 2&gt;err</userinput>
+      to the files is to specify <userinput>2&gt;err</userinput>
       on the command line.</para>
     </sect2>
 
