@@ -222,7 +222,7 @@
     <para>The simplest way to run <application>BAli-Phy</application> is
     to invoke the <command>bali-phy</command> executable directly:
 
-<screen><prompt>%</prompt> <userinput>./bali-phy <replaceable>sequence-file</replaceable> --data-dir <replaceable>somewhere</replaceable>/bali-phy-1.9.8/Data 2&gt;err</userinput>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --data-dir <replaceable>somewhere</replaceable>/bali-phy-1.9.8/Data 2&gt;err</userinput>
 </screen>
 
     Here <replaceable>sequence-file</replaceable> is a FASTA or PHYLIP
@@ -256,7 +256,7 @@
 
     Then, in the future you can just type:
 
-    <screen><prompt>%</prompt> <userinput>./bali-phy <replaceable>sequence-file</replaceable> 2&gt;err</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> 2&gt;err</userinput></screen>
 
     </para>
 
