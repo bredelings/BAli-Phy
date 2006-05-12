@@ -165,41 +165,48 @@
 	<command>bali-phy</command> to ~/local/ in your home directory.</para>
       </sect2>
 
-	    <sect2>
-	      <title>Selecting a non-default C++ compiler</title>
-
-	      <para>The default C++ compiler is <command>g++</command>.  On
-	      some systems, <command>g++</command> invokes GCC version 3.3,
-	      and the correct compiler is called something else, such as
-	      <command>g++-4.0</command>.  To use
-	      <command>g++-4.0</command> as the C++ compiler when compiling
-	      <application>BAli-Phy</application>, you can set the CXX
-	      environment variable as follows:
+      <sect2>
+	<title>Selecting a non-default C++ compiler</title>
+	
+	<para>The default C++ compiler is <command>g++</command>.  On
+	some systems, <command>g++</command> invokes GCC version 3.3,
+	and the correct compiler is called something else, such as
+	<command>g++-4.0</command>.  To use
+	<command>g++-4.0</command> as the C++ compiler when compiling
+	<application>BAli-Phy</application>, you can set the CXX
+	environment variable as follows:
 	    <screen><prompt>%</prompt> <userinput>CXX=g++-4.0 make install</userinput></screen>
-            To change this, or to change other compilation options,
-            edit the makefile <filename>src/GNUmakefile</filename>.</para> 
-	    </sect2>
+	    To change this, or to change other compilation options,
+	edit the makefile <filename>src/GNUmakefile</filename>.</para> 
+      </sect2>
 
-	    <sect2>
-	      <title>Optimizing for a specific architecture</title>
-	    <para>On ix86 computers, you can add either
-	    <userinput>ARCH=pentium3</userinput>,
-	    <userinput>ARCH=pentium4</userinput>, or
-	    <userinput>ARCH=athlon-xp</userinput> to the beginning of the
-	    command line. This allows the compiler to generate faster code 
-	    that only works on the specified architecture.
-	    </para>
-	    </sect2>
-	    <sect2>
-	      <title>Statically linked executables</title>
-	      <para>Call <command>configure</command> with the flag
-	      <userinput>--enable-static</userinput> to build static
-	      executables.  They will run ofter run on other computers 
-	      with the same CPU but slightly different versions of the
-	      operating system.
-	      </para> 
-	    </sect2>
+      <sect2>
+	<title>Optimizing for a specific architecture</title>
+	<para>On ix86 computers, you can add either
+	<userinput>ARCH=pentium3</userinput>,
+	<userinput>ARCH=pentium4</userinput>, or
+	<userinput>ARCH=athlon-xp</userinput> to the beginning of the
+	command line. This allows the compiler to generate faster code 
+	that only works on the specified architecture.
+	</para>
+      </sect2>
 
+      <sect2>
+	<title>Statically linked executables</title>
+	<para>Call <command>configure</command> with the flag
+	<userinput>--enable-static</userinput> to build static
+	executables.  They will run ofter run on other computers 
+	with the same CPU but slightly different versions of the
+	operating system.
+	</para> 
+      </sect2>
+	    
+
+      <sect2>
+	<title>Examples</title>
+	<para>A
+	</para>
+      </sect2>
   </sect1>
 
   <sect1>
@@ -239,7 +246,7 @@
     the directory every time, you may make a symbolic link (a
     "shortcut"), or just make your own local copy of the data directory.</para>
 
-    <para>To use a symbolic like, try the following:
+    <para>To use a symbolic link, try the following:
 
     <screen><prompt>%</prompt> <userinput>ln -s <replaceable>somewhere</replaceable>/bali-phy-1.9.8/Data ./Data</userinput></screen>
 
