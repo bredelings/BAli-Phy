@@ -300,8 +300,8 @@
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--gaps star</option></term>
-	  <listitem><para>Don't use indel info, and fix the alignment.</para></listitem>
+	  <term><option>--traditional</option></term>
+	  <listitem><para>Fix the alignment and don't model indels.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -442,7 +442,7 @@
       estimated from the input sequences.
       </para> 
 
-      <screen> <prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta ---disable frequencies --gaps star 2&gt;err</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta ---disable frequencies --traditional 2&gt;err</userinput></screen>
 
     </example>
   </sect1>
