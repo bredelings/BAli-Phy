@@ -74,7 +74,8 @@
 	<para>The following software packages are required for compiling BAli-Phy:
 
 	<itemizedlist>
-	  <listitem><para> A modern C++ compiler (<ulink url="http://gcc.gnu.org">GCC</ulink> version 3.4 and 4.0 are known to work)</para></listitem>
+	  <listitem><para> A modern C++ compiler (<ulink
+	  url="http://gcc.gnu.org">GCC</ulink> version 3.4, 4.0, and 4.1 are known to work)</para></listitem>
 	  <listitem><para>GNU make version 3.80 or higher  (<ulink
 	  url="http://www.gnu.org/software/make">GNU make</ulink>).
 	  </para></listitem>
@@ -122,14 +123,40 @@
     </sect2>
 
     <sect2>
-      <title>Compiling <application>BAli-Phy</application></title>
+      <title>Compiling and installing <application>BAli-Phy</application></title>
 
-            <para>In order to compile the program on UNIX, simply enter the
-	    <filename>src/</filename> directory and type <userinput>make
-	    install</userinput> at the shell prompt. (This requires GNU
-            <command>make</command>.)  This will compile
-	    <command>bali-phy</command> and its associated tools, and copy them
-	    to the directory <filename>../build/bin</filename>. </para>
+      <para>In order to compile the program on UNIX, first
+      extract the source code archive, using a graphical archive
+      manager, or the command-line tool <command>tar</command>:
+      
+      <screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-1.9.8.tgz</userinput></screen>
+      Then create a build directory, enter it, and run the
+      configure command:
+
+      <screen><prompt>%</prompt> <userinput>mkdir build</userinput>
+<prompt>%</prompt> <userinput>cd build</userinput>
+<prompt>%</prompt> <userinput>../bali-phy-1.9.8/configure</userinput></screen>
+ 
+      If this command succeeds, then you can simply type
+
+      <screen><prompt>%</prompt> <userinput>make install</userinput></screen>
+
+      to build and install <command>bali-phy</command> and its
+      associated tools.  (This requires GNU <command>make</command>.)
+      To customize the compilation and installation process, read the
+      following sections on supplying arguments to the
+      <command>configure</command> script.
+      </para>
+
+      <sect3>
+	<title>Installing to a location besides	<filename>/usr/local/</filename></title>
+	<para>The configure script chooses to install
+	<command>bali-phy</command> in the directory
+	<filename>/usr/local/</filename> by default.  However, if you
+	do have superuser access, you may not be able to install in
+	this directory.  An alternative is to install
+	<command>bali-phy</command> to ~/local/ in your home directory.</para>
+      </sect3>
 
 	    <sect3>
 	      <title>Selecting a non-default C++ compiler</title>
@@ -162,24 +189,6 @@
 	      You can also add <userinput>STATIC=y</userinput> in order
 	      to build a static executable.</para> 
 	    </sect3>
-    </sect2>
-
-    <sect2>
-      <title>Installing the executables</title>
-      <para>In order to use <command>bali-phy</command> and the tools
-      that you have just compiled, you must copy them into a directory
-      in your path.  We recommend copying all tools in
-      <filename>build/bin/</filename> into the directory
-      <filename>~/bin/</filename> and adding this directory to your
-      path. </para>
-
-      <para>In addition, it is recommended that 
-      you make a <filename>~/bin/bali-phy/</filename> directory, and
-      copy the bali-phy executable to the
-      <filename>~/bin/bali-phy/<replaceable>version</replaceable></filename>.
-      This will allow the ./bin/bali-phy.sh script to find your
-      executable for use with the SGE (Sun Grid Engine) environment. 
-      </para>
     </sect2>
 
   </sect1>
@@ -290,13 +299,14 @@
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--align-constraint <replaceable>file</replaceable></option></term>
-	  <listitem><para>Specify a file with alignment constraints</para></listitem>
+	  <term><option>--seed <replaceable>seed</replaceable></option></term>
+	  <listitem><para>Use the specified seed to initialize the
+	  random number generator.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--internal +</option></term>
-	  <listitem><para>Set all internal node entries wildcards initially.</para></listitem>
+	  <term><option>--align-constraint <replaceable>file</replaceable></option></term>
+	  <listitem><para>Specify a file with alignment constraints</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -355,6 +365,11 @@
 	<varlistentry>
 	  <term><option>--randomize-alignment</option></term>
 	  <listitem><para>Randomly re-align sequences before use.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--internal +</option></term>
+	  <listitem><para>Set all internal node entries wildcards initially.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -553,10 +568,12 @@
 
       <sect3>
 	<title>Examples</title>
-	<para>Example: --smodel EQU  --alphabet Triplets</para>
+	<para>Example: --smodel EQU --alphabet Triplets</para>
 	<para>Example: --smodel HKY</para>
+	<para>Example: --smodel TN+pi=constant</para>
 	<para>Example: --smodel Empirical[WAG]+gamma+INV</para>
 	<para>Example: --smodel YangM0 --alphabet Codons</para>
+	<para>Example: --smodel YangM0+pi=nucleotides --alphabet Codons</para>
 	<para>Example: --smodel YangM2 --alphabet Codons</para>
 	<para>Example: --smodel YangM0[TN]+YangM2 --alphabet Codons</para>
 
