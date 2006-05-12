@@ -129,7 +129,7 @@ namespace substitution {
   };
 
   /// A sum of distributions for rate variation
-  class MultipleDistribution: public SuperDerivedModelOver<RateDistribution,RateDistribution> 
+  class MultipleDistribution: public RateDistribution, public SuperModelOver<RateDistribution> 
   {
   public:
 
@@ -146,13 +146,13 @@ namespace substitution {
     /// Fraction of sub-distribution i
     double fraction(int i) const {
       assert(0 <= i and i < n_dists());
-      return super_parameters_[i];
+      return parameter(i);
     }
 
     /// Fraction of sub-distribution i
     double& fraction(int i) {
       assert(0 <= i and i < n_dists());
-      return super_parameters_[i];
+      return parameters_[i];
     }
 
     std::string name() const;

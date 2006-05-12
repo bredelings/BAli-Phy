@@ -137,12 +137,12 @@ void Parameters::setlength(int b,double l) {
 
 double Parameters::branch_mean() const 
 {
-  return parameters_[0];
+  return parameter(0);
 }
 
 void Parameters::branch_mean(double mu)
 {
-  parameters_[0] = super_parameters_[0] = mu;
+  parameter(0,mu);
 }
 
 Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,const SequenceTree& t)
@@ -155,19 +155,16 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
    T(t),
    LC(T,SModel())
 {
-   constants.push_back(-1);
+  constants.push_back(-1);
 
   // set up super_parameters_ and parameters
-  super_parameters_.resize(1);
-  super_parameters_[0] = 0.1;
-
   int total=0;
   for(int m=0;m<n_submodels();m++)
     total += SubModels(m).parameters().size();
   
-  set_n_parameters(total + 1);
-    
+  set_n_parameters(total,1);
   read();
+  parameters_[0] = 0.1;
 }
 
 Parameters::Parameters(const substitution::MultiModel& SM,const SequenceTree& t)
@@ -178,17 +175,14 @@ Parameters::Parameters(const substitution::MultiModel& SM,const SequenceTree& t)
    T(t),
    LC(T,SModel())
 {
-   constants.push_back(-1);
+  constants.push_back(-1);
 
   // set up super_parameters_ and parameters
-  super_parameters_.resize(1);
-  super_parameters_[0] = 0.1;
-
   int total=0;
   for(int m=0;m<n_submodels();m++)
     total += SubModels(m).parameters().size();
   
-  set_n_parameters(total + 1);
-    
+  set_n_parameters(total,1);
   read();
+  parameters_[0] = 0.1;
 }

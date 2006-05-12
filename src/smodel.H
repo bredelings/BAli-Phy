@@ -57,18 +57,9 @@
 #include "eigenvalue.H"
 
 namespace substitution {
-  using ::SuperDerivedModel;
-  using ::SuperModelOver;
-  using ::SuperDerivedModelOver;
 
   using std::string;
   using std::valarray;
-
-  class FullModel {
-  public:
-    bool full_tree;
-  };
-
 
   //--------------------- class AlphabetModel ----------------------//
   class AlphabetModel: virtual public ::Model
@@ -111,45 +102,6 @@ namespace substitution {
 
 
   //----------------------- Nested Models ------------------------///
-  // FIXME - I need to expand this to store multiple submodels
-
-
-  // Still need to deal with full_tree
-  // full_tree = SubModels(0).full_tree;
-
-  /// Abstract class for substitution models built on a single submodel
-  class NestedModel: virtual public SuperDerivedModel<Model> {
-
-  protected:
-    /// Access the submodel
-    virtual const Model& SubModel() const=0;
-    virtual Model& SubModel()=0;
-
-  public:
-    /// Make a copy of ourselves
-    NestedModel* clone() const =0;
-  };
-
-
-  /// This is a substitution model built over a submodel of a particular type
-  template <class SubModel_t>
-  class NestedModelOver: virtual public NestedModel, public SuperDerivedModelOver<SubModel_t,Model> {
-
-  protected:
-    /// Access the submodel
-    const SubModel_t& SubModel() const {return SubModels(0);}
-    SubModel_t& SubModel() {return SubModels(0);}
-
-  public:
-    /// Make a copy of ourselves
-    NestedModelOver<SubModel_t>* clone() const =0;
-
-    /// Construct a Nested model based on model 'M', with 'dp' extra parameters
-    NestedModelOver(const SubModel_t& M,int dp)
-      : SuperDerivedModelOver<SubModel_t,Model>(vector< OwnedPointer<SubModel_t> >(1,M),dp)
-    { }
-  };
-
 
   // This models a substitution process in which evolution is independant between
   // non-overlapping intervals.  We should have that transition_p(t/2)^2 = transition_p(t)
@@ -356,14 +308,14 @@ namespace substitution {
     virtual TN* clone() const {return new TN(*this);}
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa1() const {return parameters_[0];}
+    double kappa1() const {return parameter(0);}
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa2() const {return parameters_[1];}
+    double kappa2() const {return parameter(1);}
 
     /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa1(double k) {parameters_[0]=k;recalc();}
+    void kappa1(double k) {parameter(0,k);}
     /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa2(double k) {parameters_[1]=k;recalc();}
+    void kappa2(double k) {parameter(1,k);}
 
     virtual efloat_t prior() const;
 
@@ -403,12 +355,12 @@ namespace substitution {
   };
 
   class SingletToTripletExchangeModel: public TripletExchangeModel,
-				       public ::NestedModelOver<NucleotideExchangeModel>
+				       public NestedModelOver<NucleotideExchangeModel>
   {
     void recalc();
   public:
 
-    efloat_t prior() const { return ::NestedModelOver<NucleotideExchangeModel>::prior(); }
+    efloat_t prior() const { return NestedModelOver<NucleotideExchangeModel>::prior(); }
 
     SingletToTripletExchangeModel* clone() const {return new SingletToTripletExchangeModel(*this);}
 
@@ -438,7 +390,7 @@ namespace substitution {
 
 
   class YangM0: public CodonExchangeModel,
-		public ::NestedModelOver<NucleotideExchangeModel>
+		public NestedModelOver<NucleotideExchangeModel>
   {
     void recalc();
   public:
@@ -520,7 +472,7 @@ namespace substitution {
   };
 
   class IndependentNucleotideFrequencyModel: public TripletFrequencyModel,
-					 public ::NestedModelOver<SimpleFrequencyModel>
+					 public NestedModelOver<SimpleFrequencyModel>
   {
     OwnedPointer<SimpleFrequencyModel> triplets;
 
@@ -538,7 +490,7 @@ namespace substitution {
 
 
   class TripletsFrequencyModel: public TripletFrequencyModel,
-				public ::NestedModelOver<SimpleFrequencyModel>
+				public NestedModelOver<SimpleFrequencyModel>
   {
   protected:
     void recalc();
@@ -556,7 +508,7 @@ namespace substitution {
   };
 
   class CodonFrequencyModel: public ReversibleFrequencyModel,
-			       public ::NestedModelOver<TripletsFrequencyModel>,
+			       public NestedModelOver<TripletsFrequencyModel>,
 			       public ModelWithAlphabet<Codons>
   {
   protected:
@@ -686,21 +638,27 @@ namespace substitution {
 
   template <class T>
   class ReversibleWrapperOver: virtual public ReversibleModel,
-			       public NestedModelOver<T>
+			       public SuperModelOver< ::Model>
   {
   public:
+    T& SubModel() {return SubModelAs<T>(0); }
+
+    const T& SubModel() const { return SubModelAs<T>(0); }
+
     virtual ReversibleWrapperOver* clone() const=0;
 
     /// Get the equilibrium frequencies
     const valarray<double>& frequencies() const {
-      return NestedModelOver<T>::SubModel().frequencies();
+      return SubModel().frequencies();
     }
 
     const alphabet& Alphabet() const { 
-      return NestedModelOver<T>::SubModel().Alphabet(); 
+      return SubModel().Alphabet(); 
     }
 
-    ReversibleWrapperOver(const T& t,int dp):NestedModelOver<T>(t,dp) {}
+    ReversibleWrapperOver(const T& t,int dp)
+      : SuperModelOver< ::Model>(vector<OwnedPointer< ::Model> >(1,t),dp) 
+    {}
   };
 
 
@@ -795,8 +753,8 @@ namespace substitution {
     
     void recalc();
 
-    inline double& a(int m,int l)       {return super_parameters_[m+l*fraction.size()];}
-    inline double  a(int m,int l) const {return super_parameters_[m+l*fraction.size()];}
+    inline double& a(int m,int l)       {return parameters_[m+l*fraction.size()];}
+    inline double  a(int m,int l) const {return parameters_[m+l*fraction.size()];}
 
   public:
     efloat_t super_prior() const;
@@ -866,18 +824,16 @@ namespace substitution {
   class DistributionParameterModel: public MultiParameterModel
   {
   protected:
-    OwnedPointer<RateDistribution> D;
+          RateDistribution& D();
+    const RateDistribution& D() const;
 
     void recalc();
 
   public:
 
-    efloat_t super_prior() const;
-
     DistributionParameterModel* clone() const {return new DistributionParameterModel(*this);}
 
     string name() const;
-    string super_parameter_name(int i) const;
 
     DistributionParameterModel(const MultiModel& M, const RateDistribution& RD,int p,int n);
   };
@@ -993,7 +949,7 @@ namespace substitution {
   };
 
 
-  class MixtureModel: public SuperDerivedModelOver<MultiModel,MultiModel> 
+  class MixtureModel: public MultiModel, public SuperModelOver<MultiModel> 
   {
     efloat_t super_prior() const;
     void recalc();

@@ -57,13 +57,21 @@ string Model::state() const
 }
 
 
-void SuperModel::read() {
-  // load super_parameters
-  for(int i=0;i<super_parameters_.size();i++)
-    parameters_[i] = super_parameters_[i];
+void SuperModel::set_n_parameters(int n) {
+  n_super_parameters = 0;
+  Model::set_n_parameters(n);
+}
 
+void SuperModel::set_n_parameters(int n,int s) {
+  n_super_parameters = s;
+  Model::set_n_parameters(n+s);
+}
+
+void SuperModel::read() 
+{
   // load parameters from each sub-model
-  int total=super_parameters_.size();
+  int total=n_super_parameters;
+
   for(int m=0;m<n_submodels();m++) {
     const std::vector<double>& sub_p = SubModels(m).parameters();
 
@@ -77,14 +85,11 @@ void SuperModel::read() {
   assert(total == parameters_.size());
 }
 
-void SuperModel::write() {
-
-  // write super_parameters
-  for(int i=0;i<super_parameters_.size();i++)
-    super_parameters_[i] = parameters_[i];
-
+void SuperModel::write() 
+{
   // write parameters into each sub-model
-  int total=super_parameters_.size();
+  int total=n_super_parameters;
+
   for(int m=0;m<n_submodels();m++) {
     vector<double> sub_p = SubModels(m).parameters();
     vector<bool> sub_f = SubModels(m).fixed();
@@ -100,11 +105,12 @@ void SuperModel::write() {
   }
 }
 
-string SuperModel::parameter_name(int p) const {
+string SuperModel::parameter_name(int p) const 
+{
   assert(0 <= p and p < parameters_.size());
-  if (p<super_parameters_.size())
+  if (p<n_super_parameters)
     return super_parameter_name(p);
-  p -= super_parameters_.size();
+  p -= n_super_parameters;
 
   for(int i=0;i<n_submodels();i++) {
     if (p<SubModels(i).parameters().size())
@@ -143,7 +149,6 @@ void SuperModel::parameters(const vector<int>& indices,const vector<double>& p)
   write();
   recalc();
 }
-
 
 int find_parameter(const Model& M,const string& name) {
   for(int i=0;i<M.parameters().size();i++) 

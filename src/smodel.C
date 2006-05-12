@@ -244,7 +244,7 @@ namespace substitution {
   
   IndependentNucleotideFrequencyModel::IndependentNucleotideFrequencyModel(const Triplets& T) 
     : TripletFrequencyModel(T),
-      ::NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),0),
+      NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),0),
       triplets(SimpleFrequencyModel(T))
   {
     
@@ -253,7 +253,7 @@ namespace substitution {
 
   void TripletsFrequencyModel::recalc() 
   {
-    valarray<double> nu = get_varray(super_parameters_, 1, size());
+    valarray<double> nu = get_varray(parameters_, 1, size());
 
     //------------- compute frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModel());
@@ -264,7 +264,7 @@ namespace substitution {
 
 
     //------------ compute transition rates -------------//
-    double g = super_parameters_[0];
+    double g = parameters_[0];
 
     valarray<double> nu_g(size());
     for(int i=0;i<size();i++)
@@ -291,7 +291,7 @@ namespace substitution {
 
   efloat_t TripletsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(super_parameters_,1,size(),1.0);
+    return dirichlet_pdf(parameters_,1,size(),1.0);
   }
 
   string TripletsFrequencyModel::name() const 
@@ -311,16 +311,15 @@ namespace substitution {
 
   TripletsFrequencyModel::TripletsFrequencyModel(const Triplets& T)
     : TripletFrequencyModel(T),
-      ::NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),T.size()+1)
+      NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),T.size()+1)
 
   {
-    super_parameters_[0] = 1; // g
+    parameters_[0] = 1; // g
 
     for(int i=0;i<size();i++)
-      super_parameters_[i+1] = 1.0/size();
+      parameters_[i+1] = 1.0/size();
 
     read();
-    write();
     recalc();
   }
 
@@ -331,7 +330,7 @@ namespace substitution {
     double c = parameters_[0];
 
     //------------- compute frequencies ------------------//
-    valarray<double> aa_pi = get_varray(super_parameters_, 2, aa_size());
+    valarray<double> aa_pi = get_varray(parameters_, 2, aa_size());
 
     // get codon frequencies of sub-alphabet
     valarray<double> sub_pi = SubModel().frequencies();
@@ -358,7 +357,7 @@ namespace substitution {
 
 
     //------------ compute transition rates -------------//
-    double h = super_parameters_[1];
+    double h = parameters_[1];
 
     valarray<double> factor_h(size());
     for(int i=0;i<size();i++)
@@ -376,7 +375,7 @@ namespace substitution {
 
   efloat_t CodonFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(super_parameters_, 2, aa_size(), 1.0);
+    return dirichlet_pdf(parameters_, 2, aa_size(), 1.0);
   }
 
   string CodonFrequencyModel::name() const 
@@ -398,17 +397,16 @@ namespace substitution {
 
   CodonFrequencyModel::CodonFrequencyModel(const Codons& C)
     : ReversibleFrequencyModel(C),
-      ::NestedModelOver<TripletsFrequencyModel>(TripletsFrequencyModel(C), C.getAminoAcids().size() + 2),
+      NestedModelOver<TripletsFrequencyModel>(TripletsFrequencyModel(C), C.getAminoAcids().size() + 2),
       ModelWithAlphabet<Codons>(C)
   {
-    super_parameters_[0] = 0.5; // c
-    super_parameters_[1] = 0.5; // h
+    parameters_[0] = 0.5; // c
+    parameters_[1] = 0.5; // h
 
     for(int i=0;i<C.getAminoAcids().size();i++)
-      super_parameters_[i+2] = 1.0/C.getAminoAcids().size();
+      parameters_[i+2] = 1.0/C.getAminoAcids().size();
 
     read();
-    write();
     recalc();
   }
 
@@ -520,9 +518,10 @@ namespace substitution {
      S(S1),
      R(R1)
   {
+    n_super_parameters = 0;
+
     set_n_parameters(S->parameters().size() + R->parameters().size());
     read();
-    write();
     recalc();
   }
     
@@ -834,10 +833,10 @@ namespace substitution {
   }
 
   SingletToTripletExchangeModel::SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& N)
-    :TripletExchangeModel(T),::NestedModelOver<NucleotideExchangeModel>(N,0)
+    :TripletExchangeModel(T),NestedModelOver<NucleotideExchangeModel>(N,0)
   { 
+    n_super_parameters = 0;
     read();
-    write();
     recalc();
   }
 
@@ -849,15 +848,12 @@ namespace substitution {
 
   /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
   double YangM0::omega() const {
-    return super_parameters_[0];
+    return parameter(0);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
   void YangM0::omega(double w) {
-    super_parameters_[0]=w;
-    read();
-    write();
-    recalc();
+    parameter(0,w);
   }
 
   void YangM0::recalc() 
@@ -899,7 +895,7 @@ namespace substitution {
   }
 
   efloat_t YangM0::prior() const {
-    return ::NestedModelOver<NucleotideExchangeModel>::prior();
+    return NestedModelOver<NucleotideExchangeModel>::prior();
   }
 
   string YangM0::name() const {
@@ -914,7 +910,7 @@ namespace substitution {
   }
 
   YangM0::YangM0(const Codons& C,const NucleotideExchangeModel& N)
-    :CodonExchangeModel(C),::NestedModelOver<NucleotideExchangeModel>(N,1)
+    :CodonExchangeModel(C),NestedModelOver<NucleotideExchangeModel>(N,1)
   { 
     omega(1.0);
   }
@@ -1049,7 +1045,7 @@ namespace substitution {
       
     }
 
-    return s_parameter_name(i,super_parameters_.size());
+    return s_parameter_name(i,n_super_parameters);
   }
 
   MultiFrequencyModel::MultiFrequencyModel(const ExchangeModel& E,int n)
@@ -1065,8 +1061,8 @@ namespace substitution {
       for(int m=0;m<n;m++)
 	a(m,l) = 1.0/n;
 
+    n_super_parameters = 0;
     read();
-    write();
     recalc();
   }
 
@@ -1142,21 +1138,25 @@ namespace substitution {
       SubModel().fixed(p_change,true);
   }
 
-  /*--------------- Distribution-based Model----------------*/
+  //--------------- Distribution-based Model----------------//
 
-  efloat_t DistributionParameterModel::super_prior() const {
-    return D->prior();
+  RateDistribution& DistributionParameterModel::D()
+  {
+    return SubModelAs<RateDistribution>(1);
   }
 
-  // This is supposed to push things out from parameters_
+  const RateDistribution& DistributionParameterModel::D() const
+  {
+    return SubModelAs<RateDistribution>(1);
+  }
+
   void DistributionParameterModel::recalc() 
   {
-    D->parameters(super_parameters_);
-
+    // We only need to do this something BESIDES model parameters changes
     for(int i=0;i<p_values.size();i++)
-      p_values[i] = D->quantile( double(2*i+1)/(2.0*p_values.size()) );
+      p_values[i] = D().quantile( double(2*i+1)/(2.0*p_values.size()) );
     
-
+    // We only need to do this something BESIDES the proportions changes.
     MultiParameterModel::recalc();
   }
 
@@ -1165,26 +1165,22 @@ namespace substitution {
     if (p_change > -1)
       p_name = SubModel().parameter_name(p_change);
 
-    string dist_name = p_name + "~" + D->name() + "(" + convertToString(p_values.size()) + ")";
+    string dist_name = p_name + "~" + D().name() + "(" + convertToString(p_values.size()) + ")";
     return SubModel().name() + " + " + dist_name;
   }
 
-  string DistributionParameterModel::super_parameter_name(int i) const {
-    return D->parameter_name(i);
-  }
-
   DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const RateDistribution& RD, int p, int n)
-    :MultiParameterModel(M,RD.parameters().size(),p,n),
-     D(RD)
+    :MultiParameterModel(M,0,p,n)
   {
+    sub_models.push_back(RD);
+
+    set_n_parameters(M.parameters().size() + RD.parameters().size(),0);
+
     // This never changes - since we use quantiles for the bins
     for(int i=0;i<p_values.size();i++)
       fraction[i] = 1.0/p_values.size();
 
-    super_parameters_ = D->parameters();
-
     read();
-    write();
     recalc();
   }
 
@@ -1209,7 +1205,7 @@ namespace substitution {
 
   /// Get the equilibrium frequencies
   const std::valarray<double>& WithINV::frequencies() const {
-    return NestedModelOver<MultiModel>::SubModel().frequencies();
+    return SubModel().frequencies();
   }
 
   void WithINV::recalc() {
@@ -1224,7 +1220,7 @@ namespace substitution {
     :ReversibleWrapperOver<MultiModel>(M,1),
      INV(SimpleReversibleMarkovModel(INV_Model(M.Alphabet())))
   {
-    super_parameters_[0] = 0.01;
+    parameters_[0] = 0.01;
 
     read();
     write();
@@ -1233,7 +1229,7 @@ namespace substitution {
 
 
   efloat_t WithINV::super_prior() const {
-    double p = super_parameters_[0];
+    double p = parameter(0);
 
     return beta_pdf(p, 0.02, 20);
   }
@@ -1261,7 +1257,7 @@ namespace substitution {
   }
 
   vector<double> WithINV::distribution() const {
-    double p = super_parameters()[0];
+    double p = parameter(0);
 
     vector<double> dist = SubModel().distribution();
     for(int i=0;i<dist.size();i++)
@@ -1273,13 +1269,13 @@ namespace substitution {
 
   void YangM2::recalc() 
   {
-    fraction[0] = super_parameters()[0];
-    fraction[1] = super_parameters()[1];
-    fraction[2] = super_parameters()[2];
+    fraction[0] = parameter(0);
+    fraction[1] = parameter(1);
+    fraction[2] = parameter(2);
 
     p_values[0] = 0;
     p_values[1] = 1;
-    p_values[2] = super_parameters()[3];
+    p_values[2] = parameter(3);
 
     MultiParameterModel::recalc();
   }
@@ -1291,10 +1287,10 @@ namespace substitution {
     q[0] = 0.01;
     q[1] = 0.98;
     q[2] = 0.01;
-    efloat_t P = dirichlet_pdf(super_parameters_, 0, 3, 100.0*q);
+    efloat_t P = dirichlet_pdf(parameters_, 0, 3, 100.0*q);
 
     // prior on omega
-    double omega = super_parameters()[3];
+    double omega = parameter(3);
     P *= exponential_pdf(log(omega),0.05);
     return P;
   }
@@ -1321,13 +1317,12 @@ namespace substitution {
     :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
 			 4,0,3)
   {
-    super_parameters_[0] = 1.0/3;
-    super_parameters_[1] = 1.0/3;
-    super_parameters_[2] = 1.0 - super_parameters_[0] - super_parameters_[1];
-    super_parameters_[3] = 1.0;
+    parameters_[0] = 1.0/3;
+    parameters_[1] = 1.0/3;
+    parameters_[2] = 1.0 - parameters_[0] - parameters_[1];
+    parameters_[3] = 1.0;
 
     read();
-    write();
     recalc();
   }
 
@@ -1345,15 +1340,12 @@ namespace substitution {
   //YangM3
 
   double YangM3::omega(int i) const {
-    return super_parameters_[fraction.size() + i];
+    return parameter(fraction.size() + i);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
   void YangM3::omega(int i,double w) {
-    super_parameters_[fraction.size()+i]=w;
-    read();
-    write();
-    recalc();
+    parameter(fraction.size()+i,w);
   }
 
   double reflect_left(double x, double min) {
@@ -1371,10 +1363,10 @@ namespace substitution {
   void YangM3::recalc() 
   {
     for(int i=0;i<fraction.size();i++)
-      fraction[i] = super_parameters()[i];
+      fraction[i] = parameter(i);
 
     for(int i=0;i<fraction.size();i++)
-      p_values[i] = super_parameters()[fraction.size()+i];
+      p_values[i] = parameter(fraction.size()+i);
 
     MultiParameterModel::recalc();
   }
@@ -1384,13 +1376,12 @@ namespace substitution {
     efloat_t P = 1;
 
     // prior on frequencies
-    P *= dirichlet_pdf(super_parameters_, 0, fraction.size(), 4);
+    P *= dirichlet_pdf(parameters_, 0, fraction.size(), 4);
 
     // prior on rates
-    for(int i=0;i<fraction.size();i++) {
-      double omega = super_parameters()[i+fraction.size()];
-      P *= shift_laplace_pdf(log(omega), 0, 0.1);
-    }
+    for(int i=0;i<fraction.size();i++)
+      P *= shift_laplace_pdf(log(omega(i)), 0, 0.1);
+
     return P;
   }
 
@@ -1416,11 +1407,11 @@ namespace substitution {
   {
     // p
     for(int i=0;i<n;i++)
-      super_parameters_[i] = 1.0/n;
+      parameters_[i] = 1.0/n;
 
     // omega
     for(int i=0;i<n;i++)
-      super_parameters_[i+n] = 1.0;
+      parameters_[i+n] = 1.0;
 
     read();
     write();
@@ -1449,15 +1440,15 @@ namespace substitution {
     pi = 0;
     int sm_total = n_submodels();
     for(int sm=0;sm<sm_total;sm++)
-      pi += super_parameters_[sm]*SubModels(sm).frequencies();
+      pi += parameter(sm)*SubModels(sm).frequencies();
   }
 
   efloat_t MixtureModel::super_prior() const 
   {
-    valarray<double> p = get_varray(super_parameters_,0,n_submodels());
-    valarray<double> q = get_varray(super_parameters_,n_submodels(),n_submodels());
+    valarray<double> p = get_varray(parameters_,0,n_submodels());
+    valarray<double> q = get_varray(parameters_,n_submodels(),n_submodels());
 
-    return dirichlet_pdf(super_parameters_, 0, n_submodels(), 10.0*q);
+    return dirichlet_pdf(parameters_, 0, n_submodels(), 10.0*q);
   }
 
   const MultiModel::Base_Model_t& MixtureModel::base_model(int m) const 
@@ -1499,7 +1490,7 @@ namespace substitution {
     vector<double> dist(n_base_models());
 
     for(int sm=0,m=0; sm<sm_total; sm++) {
-      double f = super_parameters()[sm];
+      double f = parameter(sm);
       for(int i=0;i<SubModels(sm).n_base_models();i++)
 	dist[m++] = f*SubModels(0).distribution()[i];
     }
@@ -1538,18 +1529,17 @@ namespace substitution {
   }
 
   MixtureModel::MixtureModel(const std::vector<OwnedPointer<MultiModel> >& models)
-    :SuperDerivedModelOver<MultiModel,MultiModel>(models,2*models.size())
+    :SuperModelOver<MultiModel>(models,2*models.size())
   {
     for(int i=0;i<models.size();i++)
-      super_parameters_[i] = 1.0/models.size();
+      parameters_[i] = 1.0/models.size();
 
     for(int i=0;i<models.size();i++)
-      super_parameters_[i+models.size()] = 1.0/models.size();
+      parameters_[i+models.size()] = 1.0/models.size();
 
     pi.resize(Alphabet().size());
 
     read();
-    write();
     recalc();
   }
 }

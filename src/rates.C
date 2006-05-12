@@ -290,7 +290,7 @@ namespace substitution {
   }
 
   MultipleDistribution::MultipleDistribution(const std::vector<OwnedPointer<RateDistribution> >& models) 
-    :SuperDerivedModelOver<RateDistribution,RateDistribution>(models,models.size())
+    :SuperModelOver<RateDistribution>(models,models.size())
   {
     // Set the rates and fractions
     for(int i=0;i<n_dists();i++)
