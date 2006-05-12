@@ -17,9 +17,8 @@
   <sect1>
     <title>Pre-requisites</title>
 
-    <para>Many of these requirements are only for building the
-    software.  If you only want to install the pre-compiled binaries,
-    you may be able to skip most of this section.</para>
+    <para>Many of the requirements are only for building the
+    software. </para>
 
       <sect2>
 	<title>Hardware Requirements</title>
