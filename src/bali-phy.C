@@ -582,6 +582,14 @@ int main(int argc,char* argv[])
       s_trees = files[1];
       s_parameters = files[2];
       s_map = files[3];
+
+      *s_out<<"command: ";
+      for(int i=0;i<argc;i++) {
+	*s_out<<argv[i];
+	if (i != argc-1) *s_out<<" ";
+      }
+      *s_out<<endl;
+      *s_out<<endl;
     }
     s_out->precision(10);
     cerr.precision(10);
