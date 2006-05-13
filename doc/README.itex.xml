@@ -17,9 +17,6 @@
   <sect1>
     <title>Pre-requisites</title>
 
-    <para>Many of the requirements are only for building the
-    software. </para>
-
       <sect2>
 	<title>Hardware Requirements</title>
 
@@ -222,14 +219,14 @@
     <para>The simplest way to run <application>BAli-Phy</application> is
     to invoke the <command>bali-phy</command> executable directly:
 
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --data-dir <replaceable>somewhere</replaceable>/bali-phy-1.9.8/Data 2&gt;err</userinput>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --data-dir <replaceable>somewhere</replaceable>/bali-phy-1.9.8/Data</userinput>
 </screen>
 
     Here <replaceable>sequence-file</replaceable> is a FASTA or PHYLIP
     file containing the sequences you wish to analyze.  It should end
     in <userinput>.fasta</userinput> or <userinput>.phy</userinput> to
     indicate which format it is using.  Here
-    <replaceable>somewhere</replaceable> stands for the place you
+    <replaceable>somewhere</replaceable> stands for the directory where you
     extracted the bali-phy archive.</para>
 
     <note>
@@ -256,7 +253,7 @@
 
     Then, in the future you can just type:
 
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> 2&gt;err</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable></userinput></screen>
 
     </para>
 
@@ -270,16 +267,18 @@
 
     <orderedlist>
       <listitem><para>On some systems, the simulation will always
-      quits after 20 minutes when run from the command line.  It may
+      quit after 20 minutes when run from the command line.  It may
       give an error message saying "CPU time limit exceeded".  This is
-      helpful for normal programs, but annoying for simulations.
+      helpful for interactive programs, but annoying for simulations.
       Using the BASH shell you use the following to find out the CPU
       time limit (in seconds):
       <screen><prompt>%</prompt> <userinput>ulimit -t</userinput></screen>
       To change this, you may type:
       <screen><prompt>%</prompt> <userinput>ulimit -t unlimited</userinput></screen>
-      Then check the CPU time limit again.  If you cannot change the
-      limit, then contact your system administrator.
+      Then check the CPU time limit again.  If it says "unlimited"
+      then you can run <application>BAli-Phy</application> without a
+      CPU time limit.  If not, then you cannot change the limit
+      yourself: ask your system administrator to change the limit for you.
       </para></listitem>
 
       <listitem><para>The simulation may terminate when you log out,
@@ -486,13 +485,17 @@
 
   <sect1>
     <title>Examples</title>
-    <para>Here are some examples which demonstrate how to run <application>BAli-PHy</application>:</para>
+    <para>Here are some examples which demonstrate how to run
+    <application>BAli-PHy</application>.  These examples all assume
+    that you are running <command>bali-phy</command> from a directory
+    that contains a copy of the <filename>Data/</filename> directory
+    that is distributed with <application>BAli-PHy</application>.</para>
 
     <example>
       <title>No frills</title>
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
-      the software.  The alignment is randomized before the chain begins.</para>
-      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --randomize_alignment 2&gt;err</userinput></screen>
+      the software.</para>
+      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta</userinput></screen>
     </example>
 
     <example>
@@ -502,7 +505,7 @@
       invariant sites.  The amount of rate variation and the fraction of
       invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment 2&gt;err</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment</userinput></screen></example>
 
     <example>
       <title>Fixed alignment</title>
@@ -514,7 +517,7 @@
       estimated from the input sequences.
       </para> 
 
-      <screen> <prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta --smodel pi=constant --traditional 2&gt;err</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta --smodel pi=constant --traditional</userinput></screen>
 
     </example>
   </sect1>
