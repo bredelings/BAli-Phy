@@ -341,7 +341,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("data-dir", value<string>()->default_value("Data"),"location of the Data/ directory")
     ("name", value<string>(),"name for the analysis, instead of the alignment filename.")
     ("align-constraint",value<string>(),"file with alignment constraints")
-    ("traditional","Fix alignment and don't model indels")
+    ("traditional","Fix the alignment and don't model indels")
     ("letters",value<string>()->default_value("full_tree"),"if set to 'star', then use a star tree for substitution")
     ;
   
@@ -555,6 +555,7 @@ int main(int argc,char* argv[])
     //---------- Open output files -----------//
     vector<string> filenames;
     ostream* s_out = NULL;
+    ostream* s_err = NULL;
     ostream* s_trees = NULL;
     ostream* s_parameters = NULL;
     ostream* s_map = NULL;
@@ -572,6 +573,7 @@ int main(int argc,char* argv[])
       cerr<<"Created directory '"<<dirname<<"' for output files."<<endl;
 
       filenames.push_back("out");
+      filenames.push_back("err");
       filenames.push_back("trees");
       filenames.push_back("p");
       filenames.push_back("MAP");
@@ -579,9 +581,16 @@ int main(int argc,char* argv[])
       vector<ofstream*> files = open_files(dirname+"/",filenames);
       
       s_out = files[0];
-      s_trees = files[1];
-      s_parameters = files[2];
-      s_map = files[3];
+      s_err = files[1];
+      s_trees = files[2];
+      s_parameters = files[3];
+      s_map = files[4];
+
+      cerr.rdbuf(s_err->rdbuf());
+      clog.rdbuf(s_err->rdbuf());
+      cerr.flush();
+      clog.flush();
+      cerr<<"checking..."<<endl;
 
       *s_out<<"command: ";
       for(int i=0;i<argc;i++) {
@@ -644,9 +653,6 @@ int main(int argc,char* argv[])
 
     if (not args.count("traditional"))
       imodel = get_imodel(args);
-    else
-      if (args.count("imodel"))
-	throw myexception()<<"You can't specify an indel model along with 'traditional' - it is contradictory.";
     
     //-------------Create the Parameters object--------------//
     Parameters P(*full_smodel,T);
