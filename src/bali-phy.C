@@ -590,7 +590,6 @@ int main(int argc,char* argv[])
       clog.rdbuf(s_err->rdbuf());
       cerr.flush();
       clog.flush();
-      cerr<<"checking..."<<endl;
 
       *s_out<<"command: ";
       for(int i=0;i<argc;i++) {
