@@ -3,10 +3,7 @@
 1. Proposals and Priors
   a. sanitize setting parameters(): Allow setting only some.
                                     Only recalculate models that changed. (should give speedup)
-  b. super_parameters_: remove.
   c. use a parameter_names_ vector.
-3. Write some tests (using the config files.)
-5. Allow gilding an alignment-consensus.
 6. Output move stats in tracer-readable format.
   a. or, at least, allow burn-in?
 7. Write program to chart percentage identity versus position.
@@ -116,7 +113,6 @@ Named parameters, priors, and proposals branch!
     - this will allow us to use the debug version of the GCC libstdc++,
       and also to use stlport again!
   + Just use a Makefile.in - no automake?
-  + Just install as bin/bali-phy - phase out the helper script for ordinary users.
   + add version name to manual.
   + add a 'tarball' target?  (use svn revision # unless a version number is given?)
   + Move scripts to 'share'?
@@ -140,7 +136,7 @@ Named parameters, priors, and proposals branch!
        0) ?
        i) improper pairwise alignment distribution
       ii) really expensive DP calculations...
-    a) Make the temperature affect only the likelihood...
+    a) Make the temperature affect only the likelihood... [done]
     b) test speedups...
     c) begin to implement the forking code / temperature identifier.
     d) begin to implement the separate random number generators.
@@ -510,6 +506,8 @@ the prior, because we never want to use it  differently.
 [DONE] Output number and length of gaps to Tracer file.
 
 [DONE] Have bali-phy open a directory to store files in.
+
+[DONE] Remove 'super_parameters_'
 
 *IDEAS*
 
