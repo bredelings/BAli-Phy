@@ -500,8 +500,7 @@ namespace substitution {
       Q(i,i) = -sum;
     }
 
-    // recompute eigensystem
-    recalc_eigensystem(); //ReversibleMarkovModel::recalc_all();
+    recalc_eigensystem();
   }
 
   string ReversibleMarkovSuperModel::name() const {
@@ -533,8 +532,6 @@ namespace substitution {
     SimpleFrequencyModel* R2 = dynamic_cast<SimpleFrequencyModel*>(R.get());
     R2->frequencies(pi);
     read();
-    write();
-    recalc_all();
   }
 
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ExchangeModel& E)
@@ -620,7 +617,6 @@ namespace substitution {
     :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   { 
     load_file(filename); 
-    recalc_all();
   }
 
   //------------------------- HKY -----------------------------//
@@ -1221,7 +1217,6 @@ namespace substitution {
     parameters_[0] = 0.01;
 
     read();
-    write();
     recalc_all();
   }
 
@@ -1275,7 +1270,7 @@ namespace substitution {
     p_values[1] = 1;
     p_values[2] = parameter(3);
 
-    recalc_submodel_instances(); // MultiParameterModel::recalc_all();
+    recalc_submodel_instances();
   }
 
   efloat_t YangM2::super_prior() const 
@@ -1366,7 +1361,7 @@ namespace substitution {
     for(int i=0;i<fraction.size();i++)
       p_values[i] = parameter(fraction.size()+i);
 
-    recalc_submodel_instances(); // MultiParameterModel::recalc_all();
+    recalc_submodel_instances();
   }
 
   efloat_t YangM3::super_prior() const 
@@ -1412,7 +1407,6 @@ namespace substitution {
       parameters_[i+n] = 1.0;
 
     read();
-    write();
     recalc_all();
   }
 
