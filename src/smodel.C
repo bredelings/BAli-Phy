@@ -105,10 +105,10 @@ namespace substitution {
       parameters_[i+1] = pi2[i];
 
     // recompute everything
-    recalc();
+    recalc_all();
   }
 
-  void SimpleFrequencyModel::recalc() 
+  void SimpleFrequencyModel::recalc(const vector<int>&)
   {
     // compute frequencies
     pi = get_varray(parameters_,1,size());
@@ -165,7 +165,7 @@ namespace substitution {
       parameters_[i+1] = 1.0/size();
 
     // initialize everything
-    recalc();
+    recalc_all();
   }
 
   SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a,const valarray<double>& pi)
@@ -185,7 +185,7 @@ namespace substitution {
       parameters_[i+1] = f[i];
 
     // initialize everything
-    recalc();
+    recalc_all();
   }
 
 
@@ -213,7 +213,7 @@ namespace substitution {
     return pi;
   }
 
-  void IndependentNucleotideFrequencyModel::recalc()
+  void IndependentNucleotideFrequencyModel::recalc(const vector<int>&)
   {
     //------------------ compute triplet frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModel());
@@ -251,7 +251,7 @@ namespace substitution {
   }
 
 
-  void TripletsFrequencyModel::recalc() 
+  void TripletsFrequencyModel::recalc(const vector<int>&)
   {
     valarray<double> nu = get_varray(parameters_, 1, size());
 
@@ -320,12 +320,12 @@ namespace substitution {
       parameters_[i+1] = 1.0/size();
 
     read();
-    recalc();
+    recalc_all();
   }
 
   //------------------- Codon Frequency Model -----------------//
 
-  void CodonFrequencyModel::recalc() 
+  void CodonFrequencyModel::recalc(const vector<int>&)
   {
     double c = parameters_[0];
 
@@ -407,7 +407,7 @@ namespace substitution {
       parameters_[i+2] = 1.0/C.getAminoAcids().size();
 
     read();
-    recalc();
+    recalc_all();
   }
 
   //----------------------- ReversibleMarkovModel --------------------------//
@@ -447,7 +447,7 @@ namespace substitution {
    *           = pi^-1.2 * exp(S2) * pi^1/2
    */
 
-  void ReversibleMarkovModel::recalc() 
+  void ReversibleMarkovModel::recalc_eigensystem()
   {
 #ifndef NDEBUG
     std::cerr<<"scale = "<<rate()<<endl;
@@ -487,7 +487,7 @@ namespace substitution {
      eigensystem(a.size())
   { }
 
-  void ReversibleMarkovSuperModel::recalc()
+  void ReversibleMarkovSuperModel::recalc(const vector<int>&)
   {
     // recompute rate matrix
     for(int i=0;i<size();i++) {
@@ -501,8 +501,9 @@ namespace substitution {
     }
 
     // recompute eigensystem
-    ReversibleMarkovModel::recalc();
+    recalc_eigensystem(); //ReversibleMarkovModel::recalc_all();
   }
+
   string ReversibleMarkovSuperModel::name() const {
     return S->name() + " * " + R->name();
   }
@@ -522,7 +523,7 @@ namespace substitution {
 
     set_n_parameters(S->parameters().size() + R->parameters().size());
     read();
-    recalc();
+    recalc_all();
   }
     
 
@@ -533,7 +534,7 @@ namespace substitution {
     R2->frequencies(pi);
     read();
     write();
-    recalc();
+    recalc_all();
   }
 
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ExchangeModel& E)
@@ -619,7 +620,7 @@ namespace substitution {
     :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   { 
     load_file(filename); 
-    recalc();
+    recalc_all();
   }
 
   //------------------------- HKY -----------------------------//
@@ -639,7 +640,7 @@ namespace substitution {
     return shift_laplace_pdf(log(kappa()), log(2), 0.25);
   }
 
-  void HKY::recalc() {
+  void HKY::recalc(const vector<int>&) {
     assert(Alphabet().size()==4);
 
     for(int i=0;i<Alphabet().size();i++)
@@ -681,7 +682,7 @@ namespace substitution {
     return P;
   }
 
-  void TN::recalc() {
+  void TN::recalc(const vector<int>&) { 
     assert(Alphabet().size()==4);
 
     for(int i=0;i<Alphabet().size();i++)
@@ -743,7 +744,7 @@ namespace substitution {
     return dirichlet_pdf(parameters_, q);
   }
 
-  void GTR::recalc() {
+  void GTR::recalc(const vector<int>&) {
     assert(Alphabet().size()==4);
 
     S(0,1) = parameters_[0]; // AG
@@ -785,7 +786,7 @@ namespace substitution {
       for(int i=0;i<parameters_.size();i++)
 	parameters_[i] = 1.0/6;
 
-      recalc();
+      recalc_all();
     }
 
   //------------------------ Triplet Models -------------------//
@@ -794,7 +795,7 @@ namespace substitution {
     :ExchangeModel(T),ModelWithAlphabet<Triplets>(T)
   { }
 
-  void SingletToTripletExchangeModel::recalc() 
+  void SingletToTripletExchangeModel::recalc(const vector<int>&)
   {
     for(int i=0;i<Alphabet().size();i++)
       for(int j=0;j<i;j++) 
@@ -837,7 +838,7 @@ namespace substitution {
   { 
     n_super_parameters = 0;
     read();
-    recalc();
+    recalc_all();
   }
 
   //------------------------ Codon Models -------------------//
@@ -856,7 +857,7 @@ namespace substitution {
     parameter(0,w);
   }
 
-  void YangM0::recalc() 
+  void YangM0::recalc(const vector<int>&)
   {
     for(int i=0;i<Alphabet().size();i++) {
 
@@ -1002,7 +1003,7 @@ namespace substitution {
     return SubModel().frequencies();
   }
 
-  void MultiFrequencyModel::recalc() 
+  void MultiFrequencyModel::recalc(const vector<int>&) 
   {
     valarray<double> f = frequencies();
 
@@ -1063,7 +1064,7 @@ namespace substitution {
 
     n_super_parameters = 0;
     read();
-    recalc();
+    recalc_all();
   }
 
   //---------------------------- class MultiModel --------------------------//
@@ -1101,11 +1102,8 @@ namespace substitution {
 
   // Um, summed-over parameter lives on as its MEAN
 
-  void MultiParameterModel::recalc() {
-
-    // recalc sub-model
-    //NestedModel::recalc(); called from parent!
-
+  void MultiParameterModel::recalc_submodel_instances()
+  {
     // recalc sub-models
     vector<double> params = SubModel().parameters();
     for(int b=0;b<fraction.size();b++) {
@@ -1150,14 +1148,14 @@ namespace substitution {
     return SubModelAs<RateDistribution>(1);
   }
 
-  void DistributionParameterModel::recalc() 
+  void DistributionParameterModel::recalc(const vector<int>&) 
   {
-    // We only need to do this something BESIDES model parameters changes
+    // We only need to do this when something BESIDES model parameters changes
     for(int i=0;i<p_values.size();i++)
       p_values[i] = D().quantile( double(2*i+1)/(2.0*p_values.size()) );
     
-    // We only need to do this something BESIDES the proportions changes.
-    MultiParameterModel::recalc();
+    // We only need to do this when something BESIDES the proportions changes.
+    recalc_submodel_instances();
   }
 
   string DistributionParameterModel::name() const {
@@ -1181,7 +1179,7 @@ namespace substitution {
       fraction[i] = 1.0/p_values.size();
 
     read();
-    recalc();
+    recalc_all();
   }
 
   /*--------------- Gamma Sites Model----------------*/
@@ -1208,7 +1206,7 @@ namespace substitution {
     return SubModel().frequencies();
   }
 
-  void WithINV::recalc() {
+  void WithINV::recalc(const vector<int>&) {
     INV->frequencies(SubModel().frequencies());
   }
 
@@ -1224,7 +1222,7 @@ namespace substitution {
 
     read();
     write();
-    recalc();
+    recalc_all();
   }
 
 
@@ -1267,7 +1265,7 @@ namespace substitution {
     return dist;
   }
 
-  void YangM2::recalc() 
+  void YangM2::recalc(const vector<int>&) 
   {
     fraction[0] = parameter(0);
     fraction[1] = parameter(1);
@@ -1277,7 +1275,7 @@ namespace substitution {
     p_values[1] = 1;
     p_values[2] = parameter(3);
 
-    MultiParameterModel::recalc();
+    recalc_submodel_instances(); // MultiParameterModel::recalc_all();
   }
 
   efloat_t YangM2::super_prior() const 
@@ -1323,7 +1321,7 @@ namespace substitution {
     parameters_[3] = 1.0;
 
     read();
-    recalc();
+    recalc_all();
   }
 
   int any_set(const vector<bool>& mask,int i1,int i2) 
@@ -1360,7 +1358,7 @@ namespace substitution {
     return x;
   }
 
-  void YangM3::recalc() 
+  void YangM3::recalc(const vector<int>&) 
   {
     for(int i=0;i<fraction.size();i++)
       fraction[i] = parameter(i);
@@ -1368,7 +1366,7 @@ namespace substitution {
     for(int i=0;i<fraction.size();i++)
       p_values[i] = parameter(fraction.size()+i);
 
-    MultiParameterModel::recalc();
+    recalc_submodel_instances(); // MultiParameterModel::recalc_all();
   }
 
   efloat_t YangM3::super_prior() const 
@@ -1415,7 +1413,7 @@ namespace substitution {
 
     read();
     write();
-    recalc();
+    recalc_all();
   }
 
 
@@ -1434,7 +1432,7 @@ namespace substitution {
   }
 
 
-  void MixtureModel::recalc() 
+  void MixtureModel::recalc(const vector<int>&) 
   {
     //recalculate pi
     pi = 0;
@@ -1540,6 +1538,6 @@ namespace substitution {
     pi.resize(Alphabet().size());
 
     read();
-    recalc();
+    recalc_all();
   }
 }

@@ -5,6 +5,9 @@
 #include "util.H"
 #include "proposals.H"
 
+using std::cerr;
+using std::endl;
+
 efloat_t Parameters::basic_likelihood(const alignment& A,const Parameters& P) const {
   if (SModel_->full_tree)
     return substitution::Pr(A,P);
@@ -65,10 +68,10 @@ void Parameters::recalc_imodel() {
   if (IModel_)
     for(int b=0;b<branch_HMMs.size();b++)
       branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
-  read();
 }
 
-void Parameters::recalc_smodel() {
+void Parameters::recalc_smodel() 
+{
   // set the rate to one
   SModel_->set_rate(1);
   read();
@@ -80,11 +83,29 @@ void Parameters::recalc_smodel() {
   MatCache::recalc(T,*SModel_);
 }
 
-void Parameters::recalc() {
-  recalc_smodel();
-  recalc_imodel();
-}
+void Parameters::recalc(const vector<int>& indices)
+{
+  bool s_changed = false;
+  bool i_changed = false;
 
+  int s_first = n_super_parameters;
+  int i_first = n_super_parameters + SModel().parameters().size();
+
+  for(int i=0;i<indices.size();i++)
+    if (indices[i] >= s_first)
+      if (indices[i] < i_first)
+	s_changed=true;
+      else
+	i_changed=true;
+
+  assert(not i_changed or has_IModel());
+
+  if (s_changed)
+    recalc_smodel();
+
+  if (i_changed)
+    recalc_imodel();
+}
 
 Model& Parameters::SubModels(int i)
 {

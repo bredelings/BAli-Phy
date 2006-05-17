@@ -739,7 +739,7 @@ int main(int argc,char* argv[])
     add_subA_index_note(A,T.n_branches());
 
     // Why do we need to do this, again?
-    P.recalc();
+    P.recalc_all();
 
     //---------------Do something------------------//
     if (args.count("show-only"))

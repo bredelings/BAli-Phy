@@ -38,8 +38,8 @@ namespace substitution {
   
 
   /// A Gamma distribution for rate variation
-  class Gamma: public RateDistribution {
-    void recalc() {}
+  class Gamma: public RateDistribution 
+  {
   public:
     Gamma* clone() const {return new Gamma(*this);}
 
@@ -60,8 +60,8 @@ namespace substitution {
 
 
   /// A Beta distribution for rate variation
-  class Beta: public RateDistribution {
-    void recalc() {}
+  class Beta: public RateDistribution 
+  {
   public:
     Beta* clone() const {return new Beta(*this);}
 
@@ -81,8 +81,8 @@ namespace substitution {
   };
 
 
-  class LogNormal: public RateDistribution {
-    void recalc() {}
+  class LogNormal: public RateDistribution 
+  {
   public:
     LogNormal* clone() const {return new LogNormal(*this);}
 
@@ -103,8 +103,8 @@ namespace substitution {
 
 
   /// A Uniform distribution for rate variation
-  class Uniform: public RateDistribution {
-    void recalc() {}
+  class Uniform: public RateDistribution 
+  {
   public:
     Uniform* clone() const {return new Uniform(*this);}
 

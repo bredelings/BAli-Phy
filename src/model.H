@@ -21,14 +21,18 @@ protected:
   /// Model parameters
   std::vector<double> parameters_;
   
+  /// Recalculate internal data based on changing one parameter
+  void recalc_one(int);
   /// Recalculate internal data based on current parameters
-  virtual void recalc() {}
+  virtual void recalc(const vector<int>&) {}
 
   virtual void set_n_parameters(int);
 
   std::vector<bool> fixed_;
 
 public:
+  /// Recalculate all internal data based on current parameters
+  virtual void recalc_all();
 
   /// Make a copy of this object
   virtual Model* clone() const =0;
@@ -42,15 +46,19 @@ public:
   const std::vector<bool>& fixed() const {return fixed_;}
   virtual void fixed(const std::vector<bool>& f) { assert(fixed_.size() == f.size()); fixed_ = f; }
 
-  /// Get a model parameter
+  /// Get A model parameter
   virtual double parameter(int p) const {return parameters_[p];}
-  /// Get the model parameters
+  /// Get SOME model parameters
+  virtual std::vector<double> parameters(const std::vector<int>&) const;
+  /// Get ALL model parameters
   virtual const std::vector<double>& parameters() const {return parameters_;}
 
   /// Set A model parameter
   virtual void parameter(int p,double value);
   /// Set SOME of the model parameters
   virtual void parameters(const std::vector<int>& indices,const std::vector<double>& p);
+  /// Set SOME of the model parameters
+  virtual void parameters(const std::vector<int>& indices,std::vector<double>::const_iterator& p);
   /// Set ALL model parameters
   virtual void parameters(const std::vector<double>& p);
 
@@ -85,8 +93,12 @@ protected:
   /// Load parameters from sub-models
   void read();
 
-  /// Store parameters down into submodels
+  /// Store ALL parameters down into submodels
   void write();
+  /// Store ONE parameter down into submodels
+  void write(int i,double p);
+  /// Store SOME parameters down into submodels
+  void write(const std::vector<int>&,vector<double>::const_iterator&);
 
   virtual void set_n_parameters(int);
   virtual void set_n_parameters(int,int);
@@ -104,15 +116,19 @@ public:
   virtual void fixed(const std::vector<bool>& f) {Model::fixed(f); write();}
   std::vector<bool> fixed() const {return Model::fixed();}
 
-  /// Get a model parameter
+  /// Get A model parameter
   double parameter(int p) const {return Model::parameter(p); }
-  /// Get the model parameters
+  /// Get SOME model parameters
+  virtual std::vector<double> parameters(const std::vector<int>& indices) const {return Model::parameters(indices);}
+  /// Get ALL model parameters
   const std::vector<double>& parameters() const {return Model::parameters();}
 
   /// Set A model parameter
   void parameter(int p,double value);
   /// Set SOME of the model parameters
   void parameters(const std::vector<int>& indices,const std::vector<double>& p);
+  /// Set SOME of the model parameters
+  void parameters(const std::vector<int>& indices,std::vector<double>::const_iterator& p);
   /// Set ALL model parameters
   void parameters(const std::vector<double>& p);
 

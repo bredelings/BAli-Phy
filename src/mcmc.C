@@ -456,7 +456,7 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
 void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
 		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map)
 {
-  P.recalc();
+  P.recalc_all();
   const SequenceTree& T = P.T;
 
   // make sure that the Alignment and Tree are linked

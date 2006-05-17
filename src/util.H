@@ -333,4 +333,23 @@ unsigned count(const std::vector<T>& v1,bool (T::*pred)() const)
   return total;
 }
 
+template <typename T>
+std::vector<T> read(const std::vector<T>& v,const std::vector<int>& indices)
+{
+  std::vector<T> values(indices.size());
+  for(int i=0;i<indices.size();i++)
+    values[i] = v[indices[i]];
+  return values;
+}
+
+
+template <typename T>
+std::vector<T> write(std::vector<T>& v,const std::vector<int>& indices,const std::vector<T>& values)
+{
+  assert(indices.size() == values.size());
+  for(int i=0;i<indices.size();i++)
+    v[indices[i]] = values[i];
+  return values;
+}
+
 #endif

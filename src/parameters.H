@@ -27,6 +27,7 @@ class Parameters: public MatCache, public SuperModel
   /// The substitution::Model
   OwnedPointer<substitution::MultiModel> SModel_;
 
+  void recalc(const vector<int>&);
 public:
 
   /// An object for key-value pairs.
@@ -94,7 +95,6 @@ public:
   void setlength(int b,double l); 
   
   /// Recalculate all the cached transition matrices
-  void recalc();
   void recalc_imodel();
   void recalc_smodel();
 

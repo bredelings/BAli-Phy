@@ -281,15 +281,15 @@ namespace substitution {
   /// The Hasegawa, Kishino, Yano (1985)
   class HKY: public NucleotideExchangeModel
   {
-    virtual void recalc();
+    virtual void recalc(const vector<int>&);
   public:
 
     virtual HKY* clone() const {return new HKY(*this);}
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa() const {return parameters_[0];}
+    double kappa() const {return parameter(0);}
     /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa(double k) {parameters_[0]=k;recalc();}
+    void kappa(double k) {parameter(0,k);}
 
     virtual efloat_t prior() const;
 
@@ -301,8 +301,9 @@ namespace substitution {
   };
 
   /// The Tamura-Nei (1993) model
-  class TN: public NucleotideExchangeModel {
-    virtual void recalc();
+  class TN: public NucleotideExchangeModel 
+  {
+    virtual void recalc(const vector<int>&);
   public:
 
     virtual TN* clone() const {return new TN(*this);}
@@ -327,8 +328,9 @@ namespace substitution {
   };
 
   /// The General Time Reversible model
-  class GTR: public NucleotideExchangeModel {
-    virtual void recalc();
+  class GTR: public NucleotideExchangeModel 
+  {
+    virtual void recalc(const vector<int>&);
   public:
     
     virtual GTR* clone() const {return new GTR(*this);}
@@ -357,7 +359,7 @@ namespace substitution {
   class SingletToTripletExchangeModel: public TripletExchangeModel,
 				       public NestedModelOver<NucleotideExchangeModel>
   {
-    void recalc();
+    void recalc(const vector<int>&);
   public:
 
     efloat_t prior() const { return NestedModelOver<NucleotideExchangeModel>::prior(); }
@@ -392,7 +394,7 @@ namespace substitution {
   class YangM0: public CodonExchangeModel,
 		public NestedModelOver<NucleotideExchangeModel>
   {
-    void recalc();
+    void recalc(const vector<int>&);
   public:
     efloat_t super_prior() const;
 
@@ -439,7 +441,7 @@ namespace substitution {
 			      public ModelWithAlphabet<alphabet>
   {
   protected:
-    void recalc();
+    void recalc(const vector<int>&);
 
   public:
     
@@ -476,7 +478,7 @@ namespace substitution {
   {
     OwnedPointer<SimpleFrequencyModel> triplets;
 
-    void recalc();
+    void recalc(const vector<int>&);
 
     string super_parameter_name(int i) const;
 
@@ -493,7 +495,7 @@ namespace substitution {
 				public NestedModelOver<SimpleFrequencyModel>
   {
   protected:
-    void recalc();
+    void recalc(const vector<int>&);
 
     string super_parameter_name(int i) const;
 
@@ -512,7 +514,7 @@ namespace substitution {
 			       public ModelWithAlphabet<Codons>
   {
   protected:
-    void recalc();
+    void recalc(const vector<int>&);
 
     string super_parameter_name(int i) const;
 
@@ -548,7 +550,7 @@ namespace substitution {
     EigenValues eigensystem;
 
   protected:
-    void recalc();
+    void recalc_eigensystem();
 
   public:
     double rate() const;
@@ -566,7 +568,7 @@ namespace substitution {
   };
   
   class ReversibleMarkovSuperModel: public ReversibleMarkovModel,
-				    virtual public SuperModel,
+				    public SuperModel,
 				    public ModelWithAlphabet<alphabet>
   {
   protected:
@@ -576,7 +578,7 @@ namespace substitution {
     /// The frequency model
     OwnedPointer<ReversibleFrequencyModel> R;
 
-    void recalc();
+    void recalc(const vector<int>&);
 
     const ::Model& SubModels(int i) const {
       if (i==0)
@@ -679,9 +681,8 @@ namespace substitution {
   //known to be RA?  Would prefer not to use templates unless necessary/helpful.
 
   /// A linear combination of reversible additive models w/ identical equilibria
-  class MultiModel: public ReversibleAdditiveModel {
-    //  protected:
-    //    void recalc();
+  class MultiModel: public ReversibleAdditiveModel 
+  {
   public:
 
     typedef ReversibleAdditiveModel Base_Model_t;
@@ -751,7 +752,7 @@ namespace substitution {
     valarray<double> get_a(int m) const;
     void set_a(int m,const valarray<double>& f);
     
-    void recalc();
+    void recalc(const vector<int>&);
 
     inline double& a(int m,int l)       {return parameters_[m+l*fraction.size()];}
     inline double  a(int m,int l) const {return parameters_[m+l*fraction.size()];}
@@ -798,7 +799,7 @@ namespace substitution {
     /// The values it takes on
     vector<double> p_values;
 
-    void recalc();
+    void recalc_submodel_instances();
   public:
     MultiParameterModel* clone() const=0;
 
@@ -827,7 +828,7 @@ namespace substitution {
           RateDistribution& D();
     const RateDistribution& D() const;
 
-    void recalc();
+    void recalc(const vector<int>&);
 
   public:
 
@@ -876,7 +877,7 @@ namespace substitution {
   public:
     virtual WithINV* clone() const {return new WithINV(*this);}
 
-    void recalc();
+    void recalc(const vector<int>&);
 
     efloat_t super_prior() const;
 
@@ -898,10 +899,9 @@ namespace substitution {
     WithINV(const MultiModel& M);
   };
 
-  class YangM2: public MultiParameterModel,
-		virtual public SuperModel
+  class YangM2: public MultiParameterModel
   {
-    void recalc();
+    void recalc(const vector<int>&);
 
   public:
     
@@ -918,7 +918,7 @@ namespace substitution {
 
   class YangM3: public MultiParameterModel 
   {
-    void recalc();
+    void recalc(const vector<int>&);
   public:
     
     efloat_t super_prior() const;
@@ -952,7 +952,7 @@ namespace substitution {
   class MixtureModel: public MultiModel, public SuperModelOver<MultiModel> 
   {
     efloat_t super_prior() const;
-    void recalc();
+    void recalc(const vector<int>&);
 
     valarray<double> pi;
 

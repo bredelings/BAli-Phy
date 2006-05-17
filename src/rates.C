@@ -295,8 +295,6 @@ namespace substitution {
     // Set the rates and fractions
     for(int i=0;i<n_dists();i++)
       parameters_[i] = 1.0/n_dists();
-
-    recalc();
   }
 
   string MultipleDistribution::name() const {

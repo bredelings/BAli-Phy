@@ -172,8 +172,8 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
 }
 
 
-void SimpleIndelModel::recalc() {
-
+void SimpleIndelModel::recalc(const vector<int>&) 
+{
   /* Chain with transitions to End state */
   Q1 = get_branch_HMM(1);
 
@@ -224,10 +224,7 @@ SimpleIndelModel::SimpleIndelModel()
   parameters_[1] = -0.5;
   parameters_[2] = log(.001);
 
-  recalc();
-}
-
-void NewIndelModel::recalc() {
+  recalc_all();
 }
 
 efloat_t NewIndelModel::prior() const 
@@ -365,12 +362,8 @@ NewIndelModel::NewIndelModel(bool b)
   parameters_[3] = -5;
   parameters_[4] = 0.5;
   parameters_[5] = 5.0;
-
-  recalc();
 }
 
-void TKF1::recalc() {
-}
 
 efloat_t TKF1::prior() const 
 {
@@ -492,6 +485,4 @@ TKF1::TKF1(bool b)
   parameters_[3] = -5;
   parameters_[4] = 0.5;
   parameters_[5] = 5.0;
-
-  recalc();
 }

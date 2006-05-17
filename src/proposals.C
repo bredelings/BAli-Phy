@@ -156,25 +156,6 @@ double shift_epsilon(vector<double>& x, const vector<double>& p)
 }
 
 
-template <typename T>
-vector<T> read(const vector<T>& v,const vector<int>& indices)
-{
-  vector<T> values(indices.size());
-  for(int i=0;i<indices.size();i++)
-    values[i] = v[indices[i]];
-  return values;
-}
-
-
-template <typename T>
-vector<T> write(vector<T>& v,const vector<int>& indices,const vector<T>& values)
-{
-  assert(indices.size() == values.size());
-  for(int i=0;i<indices.size();i++)
-    v[indices[i]] = values[i];
-  return values;
-}
-
 double dirichlet_proposal(std::vector<double>& x,const std::vector<double>& p)
 {
   if (p.size() != 1) 
@@ -374,12 +355,9 @@ double Proposal2::operator()(alignment&, Parameters& P) const
   for(int i=0;i<p.size();i++)
     p[i] = loadvalue(P.keys, pnames[i]);
 
-  
-  // compute proposed parameter values
-  vector<double> x = read(parameters,indices);
+  // read, alter, and write parameter values
+  vector<double> x = P.parameters(indices);
   double ratio = (*proposal)(x,p);
-
-  // set the proposed values
   P.parameters(indices,x);
 
   return ratio;

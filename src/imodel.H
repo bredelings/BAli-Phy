@@ -43,7 +43,7 @@ public:
 
 class SimpleIndelModel : public IndelModel {
 protected:
-  void recalc();
+  void recalc(const vector<int>&);
 
   /// The transition matrix with G2 state removed
   indel::PairHMM Q1;
@@ -68,10 +68,9 @@ public:
 };
 
 
-class NewIndelModel: public IndelModel {
+class NewIndelModel: public IndelModel 
+{
   bool time_dependant;
-protected:
-  void recalc();
 public:
   efloat_t prior() const;
 
@@ -92,8 +91,6 @@ public:
 class TKF1: public IndelModel 
 {
   bool time_dependant;
-protected:
-  void recalc();
 public:
 
   efloat_t prior() const;
