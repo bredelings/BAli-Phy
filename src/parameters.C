@@ -178,12 +178,7 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
 {
   constants.push_back(-1);
 
-  // set up super_parameters_ and parameters
-  int total=0;
-  for(int m=0;m<n_submodels();m++)
-    total += SubModels(m).parameters().size();
-  
-  set_n_parameters(total,1);
+  set_super_parameters(1);
   read();
   parameters_[0] = 0.1;
 }
@@ -198,12 +193,7 @@ Parameters::Parameters(const substitution::MultiModel& SM,const SequenceTree& t)
 {
   constants.push_back(-1);
 
-  // set up super_parameters_ and parameters
-  int total=0;
-  for(int m=0;m<n_submodels();m++)
-    total += SubModels(m).parameters().size();
-  
-  set_n_parameters(total,1);
+  set_super_parameters(1);
   read();
   parameters_[0] = 0.1;
 }

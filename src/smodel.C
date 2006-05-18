@@ -518,9 +518,8 @@ namespace substitution {
      S(S1),
      R(R1)
   {
-    n_super_parameters = 0;
+    set_super_parameters(0);
 
-    set_n_parameters(S->parameters().size() + R->parameters().size());
     read();
     recalc_all();
   }
@@ -1168,7 +1167,7 @@ namespace substitution {
   {
     sub_models.push_back(RD);
 
-    set_n_parameters(M.parameters().size() + RD.parameters().size(),0);
+    set_super_parameters(0);
 
     // This never changes - since we use quantiles for the bins
     for(int i=0;i<p_values.size();i++)

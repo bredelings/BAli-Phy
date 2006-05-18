@@ -86,14 +86,30 @@ string Model::state() const
 }
 
 
-void SuperModel::set_n_parameters(int n) {
-  n_super_parameters = 0;
-  Model::set_n_parameters(n);
-}
+void SuperModel::set_super_parameters(int n) 
+{
+  n_super_parameters = n;
 
-void SuperModel::set_n_parameters(int n,int s) {
-  n_super_parameters = s;
-  Model::set_n_parameters(n+s);
+  // initialize first_index_of_model
+  first_index_of_model.push_back(n_super_parameters);
+  for(int m=0;m<n_submodels();m++) 
+  {
+    int next = first_index_of_model.back() + SubModels(m).parameters().size();
+    first_index_of_model.push_back(next);
+  }
+
+  // setup parameters_ and fixed_
+  Model::set_n_parameters(first_index_of_model.back());
+
+  //initialize model_of_index
+  model_of_index.resize(parameters_.size());
+
+  for(int i=0;i<first_index_of_model[0];i++)
+    model_of_index[i] = -1;
+
+  for(int m=0;m<n_submodels();m++) 
+    for(int i=first_index_of_model[m];i<first_index_of_model[m+1];i++)
+      model_of_index[i] = m;
 }
 
 void SuperModel::read() 

@@ -26,7 +26,7 @@ protected:
   /// Recalculate internal data based on current parameters
   virtual void recalc(const vector<int>&) {}
 
-  virtual void set_n_parameters(int);
+  void set_n_parameters(int);
 
   std::vector<bool> fixed_;
 
@@ -62,6 +62,8 @@ public:
   /// Set ALL model parameters
   virtual void parameters(const std::vector<double>& p);
 
+  unsigned n_parameters() const {return parameters_.size();}
+
   /// The model's name
   virtual std::string name() const =0;
 
@@ -85,6 +87,9 @@ class SuperModel: virtual public Model
 protected:
   int n_super_parameters;
 
+  vector<int> first_index_of_model;
+  vector<int> model_of_index;
+
   /// The prior for the parameters of the upper model
   virtual efloat_t super_prior() const {return 1.0;}
   
@@ -100,8 +105,7 @@ protected:
   /// Store SOME parameters down into submodels
   void write(const std::vector<int>&,vector<double>::const_iterator&);
 
-  virtual void set_n_parameters(int);
-  virtual void set_n_parameters(int,int);
+  void set_super_parameters(int);
 
 public:
   /// Make a copy of ourselves
@@ -173,11 +177,7 @@ public:
   SuperModelOver(const std::vector< OwnedPointer<SubModel_t> >& models,int dp)
     :sub_models(models)
   {
-    int total=0;
-    for(int m=0;m<n_submodels();m++)
-      total += SubModels(m).parameters().size();
-
-    set_n_parameters(total,dp);
+    set_super_parameters(dp);
     
     read();
   }
