@@ -91,6 +91,7 @@ void SuperModel::set_super_parameters(int n)
   n_super_parameters = n;
 
   // initialize first_index_of_model
+  first_index_of_model.clear();
   first_index_of_model.push_back(n_super_parameters);
   for(int m=0;m<n_submodels();m++) 
   {
@@ -114,20 +115,16 @@ void SuperModel::set_super_parameters(int n)
 
 void SuperModel::read() 
 {
-  // load parameters from each sub-model
-  int total=n_super_parameters;
-
-  for(int m=0;m<n_submodels();m++) {
+  for(int m=0;m<n_submodels();m++) 
+  {
+    unsigned offset = first_index_of_model[m];
     const vector<double>& sub_p = SubModels(m).parameters();
 
     for(int i=0;i<sub_p.size();i++) {
-      parameters_[i+total] = sub_p[i];
-      fixed_[i+total] = SubModels(m).fixed(i);
+      parameters_[i+offset] = sub_p[i];
+      fixed_[i+offset] = SubModels(m).fixed(i);
     }
-
-    total += sub_p.size();
   }
-  assert(total == parameters_.size());
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
@@ -138,24 +135,12 @@ void SuperModel::write(int index,double p)
 
   parameters_[index] = p;
 
-  // calculate model indices
-  vector<int> model_indices;
-  model_indices.push_back(n_super_parameters);
-  for(int m=0;m<n_submodels();m++) 
-  {
-    int next = model_indices.back() + SubModels(m).parameters().size();
-    model_indices.push_back(next);
-  }
-
-  if (index < model_indices[0]) return;
+  int m=model_of_index[index];
+  if (m == -1) return;
 
   // push value down into the sub-model
-  int m=0;
-  while(index <= model_indices[m+1])
-    m++;
-  assert(m < n_submodels());
-  assert(model_indices[m] <= index and index < model_indices[m+1]);
-  SubModels(m).parameter(index-model_indices[m],p);
+  int offset = first_index_of_model[m];
+  SubModels(m).parameter(index - offset,p);
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
@@ -169,36 +154,23 @@ void SuperModel::write(const vector<int>& indices,vector<double>::const_iterator
     parameters_[indices[i]] = *(p+i);
   }
 
-  // calculate model indices
-  vector<int> model_indices;
-  model_indices.push_back(n_super_parameters);
-  for(int m=0;m<n_submodels();m++) 
-  {
-    int next = model_indices.back() + SubModels(m).parameters().size();
-    model_indices.push_back(next);
-  }
-
-  // push values down into sub-models
   int i=0;
-  while(i< indices.size() and indices[i]<model_indices[0])
+  while(i<indices.size() and model_of_index[indices[i]] == -1)
   {
     i++;
     p++;
   }
 
+  // push values down into sub-models
   for(;i<indices.size();) 
   {
     // find the first model that changes
-    int m=0;
-    while(indices[i] >= model_indices[m+1])
-      m++;
-    assert(m < n_submodels());
-    assert(model_indices[m] <= indices[i] and indices[i] < model_indices[m+1]);
+    int m= model_of_index[indices[i]];
+    int offset = first_index_of_model[m];
 
     vector<int> sub_indices;
-    vector<double> sub_p;
-    for(;i<indices.size() and indices[i] < model_indices[m+1];i++)
-      sub_indices.push_back(indices[i]-model_indices[m]);
+    for(;i<indices.size() and model_of_index[indices[i]] == m;i++)
+      sub_indices.push_back(indices[i]-offset);
     SubModels(m).parameters(sub_indices,p);
   }
 }

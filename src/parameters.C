@@ -88,15 +88,13 @@ void Parameters::recalc(const vector<int>& indices)
   bool s_changed = false;
   bool i_changed = false;
 
-  int s_first = n_super_parameters;
-  int i_first = n_super_parameters + SModel().parameters().size();
-
-  for(int i=0;i<indices.size();i++)
-    if (indices[i] >= s_first)
-      if (indices[i] < i_first)
-	s_changed=true;
-      else
-	i_changed=true;
+  for(int i=0;i<indices.size();i++) {
+    int m = model_of_index[indices[i]];
+    if (m == 0)
+      s_changed=true;
+    else if (m == 1)
+      i_changed=true;
+  }
 
   assert(not i_changed or has_IModel());
 
