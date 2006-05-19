@@ -1,9 +1,7 @@
-2. DISTRUBITION of %-identity?
+2. DISTRIBUTION of %-identity?
 
 1. Proposals and Priors
-  a. sanitize setting parameters(): Allow setting only some.
-                                    Only recalculate models that changed. (should give speedup)
-  c. use a parameter_names_ vector.
+  a. use a parameter_names_ vector.
 6. Output move stats in tracer-readable format.
   a. or, at least, allow burn-in?
 7. Write program to chart percentage identity versus position.
@@ -509,6 +507,10 @@ the prior, because we never want to use it  differently.
 
 [DONE] Remove 'super_parameters_'
 
+[DONE] Models/SuperModels: Only recalculate models that changed, and allow
+                            recalc to avoid recalculating cached stuff when e.g. "mu"
+                            changes.
+
 *IDEAS*
 
  - We need better ways to compute compute marginal likelihoods.
@@ -545,7 +547,7 @@ the prior, because we never want to use it  differently.
 
  - consider a version of pair-HMM with 2x as many states: we would have a 
    "slow" and "fast" version of M,G1,G2 in which indels have different
-rates.
+   rates.
 
  -  more complex model: have 'slow' and 'fast' be properties of the
    individual letters in the state.  (gamma-distributed indel rates.)
