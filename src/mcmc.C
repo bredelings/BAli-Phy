@@ -258,7 +258,7 @@ int SingleMove::reset(double lambda) {
 void SingleMove::iterate(alignment& A,Parameters& P,MoveStats& Stats,int) 
 {
 #ifndef NDEBUG
-  clog<<" [single]move = "<<name<<endl;
+  clog<<" [single] move = "<<name<<endl;
 #endif
 
   iterations++;
