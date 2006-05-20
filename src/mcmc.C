@@ -439,7 +439,7 @@ void MoveEach::show_enabled(ostream& o,int depth) const {
 void MoveArgSingle::operator()(alignment& A,Parameters& P,MoveStats& Stats,int arg) 
 {
 #ifndef NDEBUG
-  clog<<" [single]move = "<<name<<endl;
+  clog<<" [single] move = "<<name<<endl;
 #endif
 
   iterations++;
