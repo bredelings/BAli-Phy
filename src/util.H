@@ -248,18 +248,22 @@ bool set_if_undef(std::map<std::string,U,T>& m,const std::string& name, const U&
 
 /// If m contains name, convert m[name] to T and return.  Otherwise return value.
 template <typename U, typename T>
-const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name, const U& value) {
-  if (m.find(name) != m.end() )
-    return m[name];
+const U& loadvalue(const std::map<std::string,U,T>& m,const std::string& name, const U& value) 
+{
+  typeof(m.begin()) here = m.find(name);
+  if (here != m.end() )
+    return here->second;
   else
     return value;
 }
 
 /// If m contains name, convert m[name] to T and return.  Otherwise return value.
 template <typename U, typename T>
-const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name) {
-  if (m.find(name) != m.end() )
-    return m[name];
+const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name) 
+{
+  typeof(m.begin()) here = m.find(name);
+  if (here != m.end() )
+    return here->second;
   else
     throw myexception()<<"Parameter '"<<name<<"' not set.";
 }

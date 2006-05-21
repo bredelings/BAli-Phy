@@ -134,8 +134,8 @@ void sample_two_nodes_base(alignment& A,const Parameters& P,const vector<int>& n
   }
   else 
   {
-    A5::updateQ(Matrices->Q,P.branch_HMMs,branches,A5::states_list); // 7%
-    // A5::fillQ(Matrices->Q,P.branch_HMMs,branches,A5::states_list); // 16%
+    //A5::updateQ(Matrices->Q,P.branch_HMMs,branches,A5::states_list); // 7%
+    A5::fillQ(Matrices->Q,P.branch_HMMs,branches,A5::states_list); // 16%
     Matrices->update_GQ();         // 12%
     Matrices->start_P = start_P;
     Matrices->set_length(seqall.size());

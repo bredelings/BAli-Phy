@@ -122,6 +122,10 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 						 sample_tri_branch_one,
 						 branches)
 			       ,false);
+    alignment_branch_moves.add(0.1,MoveArgSingle("sample_tri_branch_aligned","alignment:nodes:length",
+						 sample_tri_branch_type_one,
+						 branches)
+			       ,false);
   }
   alignment_moves.add(1, alignment_branch_moves, false);
   alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments","alignment:alignment_branch:nodes") );

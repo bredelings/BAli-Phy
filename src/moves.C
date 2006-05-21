@@ -84,6 +84,34 @@ void sample_tri_branch_one(alignment& A, Parameters& P, MoveStats& Stats,int b)
 }
 
 
+void sample_tri_branch_type_one(alignment& A, Parameters& P, MoveStats& Stats,int b) 
+{
+  if (not P.SModel().full_tree and b>=P.T.n_leaves())
+    return;
+
+  MCMC::Result result(1);
+
+  assert(P.has_IModel()); 
+
+  const SequenceTree& T = P.T;
+
+  int node1 = T.branch(b).target();
+  int node2 = T.branch(b).source();
+
+  if (myrandomf() < 0.5)
+    std::swap(node1,node2);
+
+  if (node1 < T.n_leaves())
+    std::swap(node1,node2);
+    
+  if (tri_sample_alignment_branch_model(A,P,node1,node2)) {
+    result.totals[0] = 1;
+  }
+
+  Stats.inc("sample_tri_branch_type",result);
+}
+
+
 void sample_alignments_one(alignment& A, Parameters& P, MoveStats&,int b) {
   assert(P.has_IModel()); 
 

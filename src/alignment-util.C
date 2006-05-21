@@ -827,3 +827,29 @@ alignment find_last_alignment(std::istream& ifile, const vector<OwnedPointer<alp
 
   return A;
 }
+
+void check_disconnected(const alignment& A,const valarray<bool>& mask)
+{
+  valarray<bool> g1 = mask;
+  valarray<bool> g2 = not mask;
+
+  for(int i=0;i<A.length();i++) {
+    if (not (all_gaps(A,i,g1) or all_gaps(A,i,g2))) {
+      cerr<<"bad homology in column i!"<<endl<<endl;
+      cerr<<A<<endl;
+      std::abort();
+    }
+  }
+}
+
+void check_disconnected(const alignment& A, const Tree& T, const std::vector<int>& disconnected)
+{
+  assert(disconnected.size() == T.n_branches());
+
+  for(int b=0;b<disconnected.size();b++)
+    if (disconnected[b]) {
+      valarray<bool> mask = T.partition(b);
+      check_disconnected(A,mask);
+    }
+  
+}

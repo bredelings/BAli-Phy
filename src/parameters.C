@@ -63,11 +63,20 @@ IndelModel& Parameters::IModel()
   std::abort();
 }
 
-void Parameters::recalc_imodel() {
-  // recalculate the cached branch HMMs
-  if (IModel_)
-    for(int b=0;b<branch_HMMs.size();b++)
-      branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
+void Parameters::recalc_imodel() 
+{
+  if (IModel_) {
+    for(int b=0;b<branch_HMMs.size();b++) 
+    {
+      // use the length, unless we are unaligned
+      double t = T.branch(b).length();
+      if (branch_HMM_type[b] == 1)
+	t = -1;
+
+      // compute and cache the branch HMM
+      branch_HMMs[b] = IModel_->get_branch_HMM(t);
+    }
+  }
 }
 
 void Parameters::recalc_smodel() 
@@ -149,8 +158,12 @@ string Parameters::super_parameter_name(int i) const
 
 void Parameters::setlength(int b,double l) {
   MatCache::setlength(b,l,T,*SModel_); 
-  if (IModel_)
-    branch_HMMs[b] = IModel_->get_branch_HMM(T.branch(b).length());
+  if (IModel_) {
+    double t = T.branch(b).length();
+    if (branch_HMM_type[b] == 1)
+      t = -1;
+    branch_HMMs[b] = IModel_->get_branch_HMM(t);
+  }
   LC.invalidate_branch(T,b);
 }
 
@@ -169,6 +182,7 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
    IModel_(IM),
    SModel_(SM),
    branch_HMMs(t.n_branches()),
+   branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0),
    features(0),
    T(t),

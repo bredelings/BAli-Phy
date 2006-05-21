@@ -35,6 +35,7 @@ public:
 
   /// cached branch HMMs
   vector<indel::PairHMM> branch_HMMs;
+  vector<int> branch_HMM_type;
 
   /// 1/Temperature parameters, for heated chains: when heated we aren't normalized...
   vector<double> beta;

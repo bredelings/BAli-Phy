@@ -6,6 +6,7 @@
 #include <gsl/gsl_sf.h>
 #include "probability.H"
 #include "alignment-util.H"
+#include "util.H"
 
 efloat_t topology_weight(const Parameters& P, const SequenceTree& T) 
 {
@@ -43,7 +44,8 @@ efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean) {
 }
 
 /// Hyper-prior + Tree prior + SModel prior + IModel prior
-efloat_t prior(const Parameters& P) {
+efloat_t prior(const Parameters& P) 
+{
   efloat_t p = 1;
 
   const double branch_mean_mean = 0.04;
@@ -58,8 +60,22 @@ efloat_t prior(const Parameters& P) {
   p *= P.SModel().prior();
 
   // prior on the insertion/deletion model
-  if (P.has_IModel())
+  if (P.has_IModel()) 
+  {
     p *= P.IModel().prior();
+
+    const double p_unaligned = loadvalue(P.keys,"P_aligned",0.0);
+
+    efloat_t pNA = p_unaligned;
+
+    efloat_t pA = (1.0 - p_unaligned);
+
+    for(int b=0;b<P.T.n_branches();b++)
+      if (not P.branch_HMM_type[b])
+	p *= pA;
+      else
+	p *= pNA;
+  }
 
   return p;
 }

@@ -23,6 +23,10 @@ void tri_sample_alignment(alignment& A,Parameters& P,int node1,int node2);
 bool tri_sample_alignment_branch(alignment&,Parameters&,
 				 int node1,int node2,int b,double rho,double length2);
 
+/// Resample the 3-star alignment and branch TYPE, holding the n2/n3 order constant.
+bool tri_sample_alignment_branch_model(alignment&,Parameters&,
+				       int node1,int node2);
+
 /// Resample gap/non-gap for internal nodes, where not already determined
 void sample_node(alignment& A,Parameters&,int node);
 
@@ -42,6 +46,7 @@ void walk_tree_sample_alignments(alignment&, Parameters&, MCMC::MoveStats&);
 void sample_alignments_one(alignment&, Parameters&, MCMC::MoveStats&, int);
 void sample_tri_one(alignment&, Parameters&, MCMC::MoveStats&, int);
 void sample_tri_branch_one(alignment&, Parameters&, MCMC::MoveStats&, int);
+void sample_tri_branch_type_one(alignment&, Parameters&, MCMC::MoveStats&, int);
 
 void sample_node_move(alignment&, Parameters&, MCMC::MoveStats&, int);
 void sample_two_nodes_move(alignment&, Parameters&, MCMC::MoveStats&, int);

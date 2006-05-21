@@ -89,4 +89,6 @@ alignment find_first_alignment(std::istream& ifile, const std::vector<OwnedPoint
 
 vector<OwnedPointer<alphabet> > load_alphabets(const boost::program_options::variables_map& args);
 
+void check_disconnected(const alignment& A, const Tree& T, const std::vector<int>& disconnected);
+
 #endif

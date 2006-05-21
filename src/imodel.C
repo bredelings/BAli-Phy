@@ -270,6 +270,9 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   double A = P_indel*(1.0-i);
   double delta = A/(1+A);
 
+  if (t < -0.5)
+    delta = 0.5;
+
   if (1 - 2*delta <0)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
 
@@ -287,8 +290,14 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   Q(S ,G2) = delta;
   Q(S ,E)  = 1;
 
-  Q(M ,S ) = 1-e;
-  Q(M ,M ) = e;
+  if (t < -0.5) {
+    Q(M ,S ) = 1;
+    Q(M ,M ) = 0;
+  }
+  else {
+    Q(M ,S ) = 1-e;
+    Q(M ,M ) = e;
+  }
   Q(M ,G1) = 0;
   Q(M ,G2) = 0;
   Q(M ,E)  = 0;

@@ -372,7 +372,7 @@ bool tri_sample_alignment_branch(alignment& A,Parameters& P,
 				 int node1,int node2,int b,double rho_,double length2)
 {
   //----------- Generate the Different Matrices ---------//
-  vector<alignment> a(1,A);
+  vector<alignment> a(2,A);
   vector<Parameters> p(2,P);
   p[1].setlength(b,length2);
 
@@ -381,6 +381,32 @@ bool tri_sample_alignment_branch(alignment& A,Parameters& P,
   vector<efloat_t> rho(2);
   rho[0] = 1;
   rho[1] = rho_;
+
+  int C = sample_tri_multi(a,p,nodes,rho,false,false);
+
+  if (C != -1) {
+    A = a[C];
+    P = p[C];
+  }
+
+  return (C > 0);
+}
+
+
+bool tri_sample_alignment_branch_model(alignment& A,Parameters& P,
+				       int node1,int node2)
+{
+  //----------- Generate the Different Matrices ---------//
+  vector<alignment> a(2,A);
+  vector<Parameters> p(2,P);
+
+  int b = P.T.branch(node1,node2);
+  p[1].branch_HMM_type[b] = 1 - p[1].branch_HMM_type[b];
+  p[1].recalc_imodel();
+
+  vector< vector<int> > nodes (2, get_nodes_branch_random(P.T,node1,node2) );
+
+  vector<efloat_t> rho(2,1.0);
 
   int C = sample_tri_multi(a,p,nodes,rho,false,false);
 

@@ -10,6 +10,7 @@
 #include "rng.H"
 #include "5way.H"
 #include "alignment-sums.H"
+#include "alignment-util.H"
 #include "substitution-index.H"
 
 #include "3way.H"
@@ -105,6 +106,9 @@ int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vec
 
 void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) 
 {
+  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+    return;
+
   vector<int> nodes = A5::get_nodes_random(P.T,b);
 
   select_root(P.T, b, P.LC);
@@ -133,6 +137,9 @@ void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int 
 
 void two_way_NNI_SPR_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) 
 {
+  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+    return;
+
   vector<int> nodes = A5::get_nodes_random(P.T,b);
 
   select_root(P.T, b, P.LC);
@@ -187,6 +194,9 @@ vector<int> NNI_branches(const Tree& T, int b)
 
 void two_way_NNI_and_branches_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) 
 {
+  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+    return;
+
   vector<int> nodes = A5::get_nodes_random(P.T,b);
 
   select_root(P.T, b, P.LC);
@@ -232,7 +242,11 @@ void two_way_NNI_and_branches_sample(alignment& A, Parameters& P, MoveStats& Sta
   Stats.inc("NNI (2-way) + branches", C>0);
 }
 
-void two_way_NNI_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) {
+void two_way_NNI_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) 
+{
+  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+    return;
+
   double U = uniform();
   if (U < 0.33333333)
     two_way_topology_sample(A,P,Stats,b);
@@ -257,6 +271,9 @@ int three_way_topology_sample(vector<alignment>& a,vector<Parameters>& p, const 
 //FIXME - go through code and create more exceptions, from asserts... 
 void three_way_topology_sample(alignment& A,Parameters& P, MoveStats& Stats, int b) 
 {
+  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+    return;
+
   vector<int> nodes = A5::get_nodes(P.T,b);
 
   //------ Generate Topologies and alter caches ------///
@@ -293,6 +310,9 @@ void three_way_topology_sample(alignment& A,Parameters& P, MoveStats& Stats, int
 void three_way_topology_and_alignment_sample(alignment& A,Parameters& P, MoveStats& Stats, int b) 
 {
   assert(b >= P.T.n_leafbranches());
+
+  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+    return;
 
   vector<int> two_way_nodes = A5::get_nodes_random(P.T,b);
 
