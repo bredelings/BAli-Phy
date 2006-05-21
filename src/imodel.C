@@ -13,20 +13,13 @@ using std::vector;
 using namespace A2;
 
 namespace indel {
-  PairHMM::PairHMM(): Matrix(5,5) {}
+  PairHMM::PairHMM(): Matrix(5,5),start_pi_(5,0) {}
 
   double PairHMM::start(int s) const {
     double total = 0;
     for(int i=0;i<n_states();i++)
-      total += (*this)(n_states(),i)*(*this)(i,s);
+      total += start_pi(i)*(*this)(i,s);
     return total;
-  }
-
-  vector<double> PairHMM::start_pi() const {
-    vector<double> pi(n_states()-1);
-    for(int i=0;i<pi.size();i++)
-      pi[i] = start_pi(i);
-    return pi;
   }
 }
 
@@ -162,11 +155,11 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
 
   remove_one_state(Q,states::S);
 
-  Q(S,S ) = 0;
-  Q(S,M ) = 1;
-  Q(S,G1) = 0;
-  Q(S,G2) = 0;
-  Q(S,E ) = 0;
+  Q.start_pi(S)  = 0;
+  Q.start_pi(M)  = 1;
+  Q.start_pi(G1) = 0;
+  Q.start_pi(G2) = 0;
+  Q.start_pi(E)  = 0;
 
   return Q;
 }
@@ -322,12 +315,11 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
 
   remove_one_state(Q,S);
 
-  // This is a bit of a hack...
-  Q(S ,S ) = 0;
-  Q(S ,M ) = 1;
-  Q(S ,G1) = 0;
-  Q(S ,G2) = 0;
-  Q(S ,E)  = 0;
+  Q.start_pi(S)  = 0;
+  Q.start_pi(M)  = 1;
+  Q.start_pi(G1) = 0;
+  Q.start_pi(G2) = 0;
+  Q.start_pi(E)  = 0;
 
   return Q;
 }
@@ -450,13 +442,11 @@ indel::PairHMM TKF1::get_branch_HMM(double t) const
 
   remove_one_state(Q,S);
 
-  // This is REALLY the start_pi !  I should make start_pi separate.
-  // In this case, its actually correct :)
-  Q(S ,S ) = 0;
-  Q(S ,M ) = 1;
-  Q(S ,G1) = 0;
-  Q(S ,G2) = 0;
-  Q(S ,E)  = 0;
+  Q.start_pi(S)  = 0;
+  Q.start_pi(M)  = 1;
+  Q.start_pi(G1) = 0;
+  Q.start_pi(G2) = 0;
+  Q.start_pi(E)  = 0;
 
   return Q;
 }

@@ -12,11 +12,13 @@
 
 namespace indel {
   class PairHMM: public Matrix {
+    std::vector<double> start_pi_;
   public:
     int n_states() const {return size1()-1;}
     double start(int i) const;
-    double start_pi(int i) const {return (*this)(n_states(),i);}
-    std::vector<double> start_pi() const;
+    double& start_pi(int i) {return start_pi_[i];}
+    double start_pi(int i) const {return start_pi_[i];}
+    const std::vector<double>& start_pi() const {return start_pi_;}
    PairHMM();
   };
 }
