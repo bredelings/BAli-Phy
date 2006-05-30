@@ -5,6 +5,7 @@
 #include <fstream>
 #include <valarray>
 #include <new>
+#include <signal.h>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -554,7 +555,6 @@ int main(int argc,char* argv[])
 
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
-     
 
     //---------- Open output files -----------//
     vector<string> filenames;
@@ -749,6 +749,9 @@ int main(int argc,char* argv[])
     if (args.count("show-only"))
       print_stats(cout,cout,A,P);
     else {
+      signal(SIGHUP,SIG_IGN);
+      signal(SIGXCPU,SIG_IGN);
+
       long int max_iterations = args["iterations"].as<long int>();
 
       do_sampling(args,A,P,max_iterations,*s_out,*s_trees,*s_parameters,*s_map);
