@@ -1,11 +1,8 @@
 #!/bin/sh
-#$ -V -S /bin/sh -cwd
 
-# A script for running bali-phy on the Sun Grid Engine (SGE)
+#### A script for running bali-phy on the Sun Grid Engine (SGE)
 
-#### CLASS=[class] VERSION=[version] sampler.sh data.fasta [optargs]
-
-# CLASS is optional, but VERSION is required.
+# % VERSION=[version] bali-phy.sh <data.fasta> [optargs]
 
 # We assume that binaries are in ~/bin/bali-phy/$VERSION-NDEBUG
 # (or ~/bin/bali-phy/$VERSION-DEBUG)
@@ -15,52 +12,39 @@ if [ "$DEBUG" ] ; then
     DEBUG="-DEBUG";
 fi
 
-#------ Attempt to determine the data directory ------
-if [ -e "Data/" ] ; then
-    true;
-elif [ "${BALI_PHY_DATA-unset}" = unset ] ; then
-    echo "Error: BALI_PHY_DATA is not set:"
-    echo "  * set it to the location of the BAli-Phy data directory."
-    echo "  * otherwise, set it to '' and specify --data-dir <dir>."
-    exit 1
-
-elif [ ! "$BALI_PHY_DATA" ] ; then
-    echo "Warning: BALI_PHY_DATA is set to '':"
-    echo "  * make sure you specified --data-dir <dir>."
-
-elif [ ! -e "$BALI_PHY_DATA" ] ; then
-    echo "Error: Data directory BALI_PHY_DATA='${BALI_PHY_DATA}' does not exist."
-    exit 1
-
-elif [ ! -d "$BALI_PHY_DATA" ] ; then
-    echo "Error: File BALI_PHY_DATA='${BALI_PHY_DATA}' is not a directory."
-    exit 1
-else
-    ln -sf ${BALI_PHY_DATA} Data;
-fi
-
 #----------- Determine the Version ----------#
 if [ "$VERSION" ] ; then
-    echo "Using specified version $VERSION."
+    BALI_PHY=~/bin/bali-phy/${VERSION}${DEBUG}
 else
-    V=1
-    pushd ~/bin/bali-phy > /dev/null
-    for file in *${DEBUG} ; do
-	V2=${file%-${DEBUG}}
-	if (( V2 > V )) 2>/dev/null ; then
-	    V=$V2;
-	fi
-    done
-    VERSION=$V
-    popd >/dev/null
-    echo "Using highest version $VERSION."
+    BALI_PHY=$(type -p bali-phy${DEBUG})
 fi
 
-#------ start the sampler with the specified args ----
-qsub=$(which qsub 2>/dev/null)
-if [ -x "$qsub" ] ; then
-    qsub -e err sge-run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@"
-else
-    (nohup sge-run.sh ~/bin/bali-phy/${VERSION}${DEBUG} "$@" 2>err &)
+QSUB=$(type -p qsub)
+#------ Run w/o SGE if not found ----
+if [ ! -x "$QSUB" ] ; then
+   echo "Not using SGE";
+   ($BALI_PHY "$@" &)
+   exit 0
 fi
 
+if [ ! -x "$BALI_PHY" ] ; then
+   echo "bali-phy-sge: I can't find 'bali-phy' to run it!"
+   echo "bali-phy-sge: If it is installed, please add it to your $PATH"
+   exit 1
+fi
+
+#------ write the script
+RUN_SH=/tmp/bali-phy-sge-$$
+trap "rm -f $RUN_SH" 2 3 15
+
+echo >$RUN_SH '#!/bin/sh
+exec $@'
+
+#------ start the sampler
+
+QSUB_ARGS='-V -S /bin/sh -cwd'
+
+qsub $QSUB_ARGS $RUN_SH $BALI_PHY $@
+
+#------ clean up 
+rm -f $RUN_SH
