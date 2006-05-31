@@ -391,6 +391,17 @@ variables_map parse_cmd_line(int argc,char* argv[])
   store(command_line_parser(argc, argv).options(all).positional(p).run(), args);
   notify(args);    
 
+  if (args.count("version")) {
+    cout<<"VERSION: 1.9.8\nBUILD: "<<__DATE__<<"\n";
+    exit(0);
+  }
+
+  if (args.count("help")) {
+    cout<<"Usage: bali-phy <sequence-file> [OPTIONS]\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
   if (args.count("config")) 
   {
     string filename = args["config"].as<string>();
@@ -428,17 +439,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   else
     cerr<<"Environment variable HOME not set!"<<endl;
 
-
-  if (args.count("version")) {
-    cout<<"VERSION: 1.9.8\nBUILD: "<<__DATE__<<"\n";
-    exit(0);
-  }
-
-  if (args.count("help")) {
-    cout<<"Usage: bali-phy <sequence-file> [OPTIONS]\n";
-    cout<<all<<"\n";
-    exit(0);
-  }
 
   if (not args.count("align"))
     throw myexception()<<"No sequence file given.";
@@ -571,6 +571,15 @@ string open_dir(const string& dirbase)
 }
 
 
+string hostname()
+{
+  string hostname="";
+  char temp[256];
+  if (not gethostname(temp,256))
+    hostname = temp;
+  return hostname;
+}
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -627,6 +636,11 @@ int main(int argc,char* argv[])
 	if (i != argc-1) *s_out<<" ";
       }
       *s_out<<endl;
+      *s_out<<"directory: "<<fs::initial_path().string()<<endl;
+      if (getenv("JOB_ID"))
+	*s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
+      *s_out<<"hostname: "<<hostname()<<endl;
+      *s_out<<"PID: "<<getpid()<<endl;
       *s_out<<endl;
     }
     s_out->precision(10);
