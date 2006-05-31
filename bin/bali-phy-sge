@@ -1,22 +1,18 @@
 #!/bin/sh
 
-# A script for running bali-phy on the Sun Grid Engine (SGE)
+### A script for running bali-phy on the Sun Grid Engine (SGE) ###
 
-#------------------ qsub options: ------------------
+#------------------------ qsub options: --------------------#
 # -V:         Give the job access to shell environment variables
 # -S /bin/sh: Use /bin/sh as the shell for the job.
 # -cwd:       Execute the job from the current working directory.
+# -N <name>   Specify job name
 
+QSUB_ARGS='-V -S /bin/sh -cwd -N bali-phy'
 
-#------------------ Locate the programs ---------------------#
+#------------------ Locate the programs --------------------#
 QSUB=$(type -p qsub)
 BALI_PHY=$(type -p bali-phy)
-
-if [ ! -x "$QSUB" ] ; then
-   echo "bali-phy-sge: I can't find the program 'qsub' to submit your job!"
-   echo "bali-phy-sge: Is the Sun Grid Engine installed?"
-   exit 1
-fi
 
 if [ ! -x "$BALI_PHY" ] ; then
    echo "bali-phy-sge: I can't find 'bali-phy' to run it!"
@@ -24,18 +20,15 @@ if [ ! -x "$BALI_PHY" ] ; then
    exit 1
 fi
 
-#------ write the script
-RUN_SH=/tmp/bali-phy-sge-$$
-trap "rm -f $RUN_SH" 2 3 15
-
-echo >$RUN_SH '#!/bin/sh
-exec $@'
+if [ ! -x "$QSUB" ] ; then
+   echo "bali-phy-sge: I can't find the program 'qsub' to submit your job!"
+   echo "bali-phy-sge: Is the Sun Grid Engine installed?"
+   exit 1
+fi
 
 #------ start the sampler
+qsub $QSUB_ARGS <<EOF 
+#!/bin/sh
+exec $BALI_PHY $@
+EOF
 
-QSUB_ARGS='-V -S /bin/sh -cwd'
-
-qsub $QSUB_ARGS $RUN_SH $BALI_PHY $@
-
-#------ clean up 
-rm -f $RUN_SH
