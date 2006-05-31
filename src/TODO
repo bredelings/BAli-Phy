@@ -7,6 +7,11 @@
 7. Write program to chart percentage identity versus position.
 8. Test sampling of epsilon.
 9. Implement new models, to see if we get good estimates of epsilon.
+10. Implement amino-acid no-codon-bias alphabet.
+    [only 20 frequency parameters]
+  a) e-mail about the method for converting matrices from WAG to codon level?
+12. Do the autoconf magic to compile BOOST and GSL in-tree.
+
 --------------------------------------------------------
 
 -51. Separate P(S,x) from start_pi(x)
@@ -510,6 +515,8 @@ the prior, because we never want to use it  differently.
 [DONE] Models/SuperModels: Only recalculate models that changed, and allow
                             recalc to avoid recalculating cached stuff when e.g. "mu"
                             changes.
+
+[DONE] Read (unset) settings from ~/.bali-phy.
 
 *IDEAS*
 

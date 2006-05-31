@@ -403,6 +403,31 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);
   }
 
+  if (getenv("HOME")) {
+    string home_dir = getenv("HOME");
+    if (not fs::exists(home_dir))
+      cerr<<"Home directory '"<<home_dir<<"' does not exist!"<<endl;
+    else if (not fs::is_directory(home_dir))
+      cerr<<"Home directory '"<<home_dir<<"' is not a directory!"<<endl;
+    else {
+      string filename = home_dir + "/.bali-phy";
+
+      if (fs::exists(filename)) {
+	cout<<"Reading ~/.bali-phy ...";
+	ifstream file(filename.c_str());
+	if (not file)
+	  throw myexception()<<"Con't load config file '"<<filename<<"'";
+      
+	store(parse_config_file(file, all), args);
+	file.close();
+	notify(args);
+	cout<<" done."<<endl;
+      }
+    }
+  }
+  else
+    cerr<<"Environment variable HOME not set!"<<endl;
+
 
   if (args.count("version")) {
     cout<<"VERSION: 1.9.8\nBUILD: "<<__DATE__<<"\n";
@@ -552,6 +577,7 @@ int main(int argc,char* argv[])
 
     fp_scale::initialize();
     std::ios::sync_with_stdio(false);
+    fs::path::default_name_check(fs::portable_posix_name);
 
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
@@ -619,13 +645,18 @@ int main(int argc,char* argv[])
     
     //---------- Determine Data dir ---------------//
     {
-      string filename = args["data-dir"].as<string>() + "/wag.dat";
-      ifstream temp(filename.c_str());
-      if (temp)
-	temp.close();
-      else {
-	cerr<<"Warning: couldn't open file '"<<filename<<"'"<<endl;
-	cerr<<"         Is '"<<args["data-dir"].as<string>()<<"' a valid Data/ directory?\n\n";
+      fs::path data_dir = args["data-dir"].as<string>();
+      if (not fs::exists(data_dir)) {
+	(*s_err)<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' does not exist!"<<endl;
+	(*s_err)<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl;
+      }
+      else if (not fs::is_directory(data_dir)) {
+	(*s_err)<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' is not a directory!"<<endl;
+	(*s_err)<<"         You must correctly specified the data directory using --data-dir <dir>."<<endl;
+      }
+      else if (not fs::exists( data_dir / "wag.dat")) {
+	(*s_err)<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' exists, but doesn't contain the important file 'wag.dat'."<<endl;
+	(*s_err)<<"         Have you correctly specified the data directory using --data-dir <dir>?."<<endl;
       }
     }
     
