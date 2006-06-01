@@ -96,11 +96,13 @@
 	</para>
 
 	<para><ulink url="http://fink.sourceforge.net">Fink</ulink>
-	provides Linux software for Mac OS X.  You may use it to install
-	the GSL library and include files, but the BOOST libraries that
-	come with fink <emphasis>will not work</emphasis>, because they are
+	provides Linux software for Mac OS X.  If you have Fink 0.8,
+	you can use it to install both GSL and BOOST.  However, if you
+	have 0.7 or lower, then you may use it to install the GSL
+	library and include files, but the BOOST libraries from
+	fink 0.7 <emphasis>will not work</emphasis>, because they are
 	compiled with GCC 3.3. You must therefore compile the BOOST
-	libraries yourself, using GCC 3.4 or higher.</para>
+	libraries yourself, using GCC 3.4 or higher.</para> 
 	</note>
 	</sect3>
 
@@ -109,13 +111,18 @@
 	<para>In addition, the following software packages are recommended,
 	although not required:
 	<itemizedlist>
-	  <listitem><para>The plotting program
-	  <application>gnuplot</application> (<ulink
-	  url="http://www.gnuplot.info/">gnuplot</ulink>)</para></listitem> 
 	  <listitem><para>GNU make version 3.80 or higher  (<ulink
 	  url="http://www.gnu.org/software/make">GNU make</ulink>).
 	  </para></listitem>
-	  <listitem><para>Mozilla or Mozilla/Firefox to view the math in
+	  <listitem><para>The plotting program
+	  <application>gnuplot</application> (<ulink
+	  url="http://www.gnuplot.info/">gnuplot</ulink>)</para></listitem> 
+	  <listitem><para><application>Tracer</application> - to
+	  analyze MCMC diagnostics 
+	  (<ulink
+	  url="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</ulink>) 
+	  </para></listitem>
+	  <listitem><para>Mozilla or Mozilla/Firefox - to view the math in
 	  the XHTML documentation. (<ulink url="http://www.mozilla.org/products/firefox/">Firefox</ulink>)</para></listitem>
 	</itemizedlist>
 	</para>
@@ -142,7 +149,8 @@
  
       If this command succeeds, then you can simply type
 
-      <screen><prompt>%</prompt> <userinput>make install</userinput></screen>
+      <screen><prompt>%</prompt> <userinput>make</userinput>
+<prompt>%</prompt> <userinput>make install</userinput></screen>
 
       to build and install <command>bali-phy</command> and its
       associated tools.  (This requires GNU <command>make</command>.)
@@ -157,7 +165,7 @@
 	<para>The configure script chooses to install
 	<command>bali-phy</command> in the directory
 	<filename>/usr/local/</filename> by default.  However, if you
-	do have superuser access, you may not be able to install in
+	do not have superuser access, you may not be able to install in
 	this directory.  An alternative is to install
 	<command>bali-phy</command> to ~/local/ in your home directory.</para>
       </sect2>
@@ -192,9 +200,9 @@
 	<title>Statically linked executables</title>
 	<para>Call <command>configure</command> with the flag
 	<userinput>--enable-static</userinput> to build static
-	executables.  They will run ofter run on other computers 
-	with the same CPU but slightly different versions of the
-	operating system.
+	executables.  Static executables will be able to run on other
+	computers with the with the same type of CPU but slightly
+	different versions of the operating system. 
 	</para> 
       </sect2>
 	    
@@ -219,7 +227,7 @@
     <para>The simplest way to run <application>BAli-Phy</application> is
     to invoke the <command>bali-phy</command> executable directly:
 
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --data-dir <replaceable>somewhere</replaceable>/bali-phy-1.9.8/Data</userinput>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --data-dir <replaceable>somewhere</replaceable>/Data</userinput>
 </screen>
 
     Here <replaceable>sequence-file</replaceable> is a FASTA or PHYLIP
@@ -236,70 +244,111 @@
       or you will see errors complaining that too few sequences have
       been provided.</para>
     </note>
+    </sect2>
 
-    <para>If you don't specify where the data directory is, then
-    <application>BAli-Phy</application> assumes that it is at
-    <filename>./Data</filename>.  To avoid specifying the location of
-    the directory every time, you may make a symbolic link (a
-    "shortcut"), or just make your own local copy of the data directory.</para>
+    <sect2>
+      <title>Specifying the location of the Data directory</title>
 
-    <para>To use a symbolic link, try the following:
+      <para>
+	<application>BAli-Phy</application> stores important
+	information in a "Data" directory.  This information includes
+	the genetic code and the WAG rate matrix.  If you put this
+	information in a configuration file, then you do not need to
+	specify it on the command line every time. Then, in the future
+	you can just type:
 
-    <screen><prompt>%</prompt> <userinput>ln -s <replaceable>somewhere</replaceable>/bali-phy-1.9.8/Data ./Data</userinput></screen>
+        <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable></userinput></screen>
 
-    To make your own local copy, try this instead.
+	If you don't specify where the data directory is, then
+	<application>BAli-Phy</application> will look for it at
+	<filename>./Data</filename>.
+      </para>
 
-    <screen><prompt>%</prompt> <userinput>cp -r <replaceable>somewhere</replaceable>/bali-phy-1.9.8/Data ./Data</userinput></screen>
+      <sect3>
+	<title>Put the location in the configuration file</title>
+	<para>
+	  Create a new file at <filename>~/.bali-phy</filename> and
+	  add the following line:
+<screen>data-dir = <replaceable>somewhere</replaceable>/Data</screen>
+          Then <command>bali-phy</command> will read this file
+	  every time and know where to find the Data directory.  This
+	  is the recommended method.
+	</para>
+      </sect3>
 
-    Then, in the future you can just type:
+      <sect3>
+	<title>Making a link/shortcut to the Data directory</title>
+	<para>Instead of specifying the location of the data
+	directory, you can make a shortcut from the Data directory to
+	a local directory called <filename>Data/</filename>:
 
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable></userinput></screen>
+        <screen><prompt>%</prompt> <userinput>ln -s <replaceable>somewhere</replaceable>/Data ./Data</userinput></screen>
 
-    </para>
+	Then <command>bali-phy</command> will find the data directory
+	at the default location <filename>Data/</filename>, but only
+	if you run it in the same directory.
+	</para>
+      </sect3>
+
+      <sect3>
+	<title>Making your own copy of the Data directory</title>
+	<para>
+	  Instead of specifying the location of the data
+	  directory, you can make a local copy of the Data directory 
+	  that is also called <filename>Data/</filename>:
+
+    <screen><prompt>%</prompt> <userinput>cp -r <replaceable>somewhere</replaceable>/Data ./Data</userinput></screen>
+
+	Then <command>bali-phy</command> will find the data directory
+	at the default location <filename>Data/</filename>, but only
+	if you run it in the same directory.
+	</para>
+      </sect3>
 
     </sect2>
 
     <sect2>
       <title>Running long simulations</title>
-    <para>In order to run a <command>bali-phy</command> for long
-    periods of time, some modifications to the above commands may be
-    necessary.
+      <para>In order to run a <command>bali-phy</command> for long
+      periods of time, some modifications to the above commands may be
+      necessary.</para>
 
-    <orderedlist>
-      <listitem><para>On some systems, the simulation will always
-      quit after 20 minutes when run from the command line.  It may
-      give an error message saying "CPU time limit exceeded".  This is
-      helpful for interactive programs, but annoying for simulations.
-      Using the BASH shell you use the following to find out the CPU
-      time limit (in seconds):
-      <screen><prompt>%</prompt> <userinput>ulimit -t</userinput></screen>
-      To change this, you may type:
-      <screen><prompt>%</prompt> <userinput>ulimit -t unlimited</userinput></screen>
-      Then check the CPU time limit again.  If it says "unlimited"
-      then you can run <application>BAli-Phy</application> without a
-      CPU time limit.  If not, then you cannot change the limit
-      yourself: ask your system administrator to change the limit for you.
-      </para></listitem>
+      <sect3>
+	<title>CPU time limits</title>
+	<para>If <command>bali-phy</command> is terminating
+	prematurely, CPU time limits may be the cause.  In the BASH
+	shell you can find the soft and hard time limits (in seconds)
+	using the commands <userinput>ulimit -St</userinput> and 
+	<userinput>ulimit -Ht</userinput>
+	respectively. <application>BAli-Phy</application> ignores the 
+	soft limit, but not the hard limit.  If the hard limit is not
+	long enough, you must ask your system administrator to change
+	it for you.
+        </para>
+      </sect3>
 
-      <listitem><para>The simulation may terminate when you log out,
-      making it difficult to run overnight jobs.  To prevent this, run
-      the simulation using the <command>nohup</command> command as
-      follows: 
-      <screen><prompt>%</prompt> <userinput>nohup bali-phy <replaceable>sequence-file</replaceable></userinput></screen>
-      </para></listitem>
+      <sect3>
+	<title>Hangup (HUP) Signals</title>
+	<para>Most programs will terminate when you log out,
+        or when you close the terminal that started them.  The 
+        <command>nohup</command> command is often used to avoid this.
+        <application>BAli-Phy</application> ignores the HUP (hangup)
+        signal in versions 1.9.9 and newer, making
+	<command>nohup</command> unnecessary. 
+        </para>
+      </sect3>
 
-      <listitem><para>On an SGE cluster, you must submit jobs using
-      the <command>qsub</command> command.  I have provided a sample
-      script to invoke <command>qsub</command> called
-      <command>bali-phy.sh</command>.  It call invokes
-      <command>qsub</command> on another script called
-      <command>sge-run.sh</command>.
-      </para></listitem>
+      <sect3>
+	<title>Submitting jobs on an SGE cluster</title>
+	<para>
+        You can use the wrapper script <command>bali-phy-sge</command>
+	to submit a <command>bali-phy</command> job on an SGE
+	cluster.  It takes the same arguments as
+	<command>bali-phy</command>, and submits a job for you using the
+	<command>qsub</command> command.
+        </para>
+      </sect3>
 
-    </orderedlist>
-    If you are using another kind of cluster, then you must find out
-    how to submit jobs on that cluster.
-    </para>
     </sect2>
   </sect1>
   
