@@ -1,28 +1,18 @@
+1. Test sampling of epsilon.  (Implement model where lambda & epsilon not coupled?)
+  a) e-mail about the method for converting matrices from WAG to codon level.
 2. DISTRIBUTION of %-identity?
-
-1. Proposals and Priors
+3. Do the autoconf magic to compile BOOST and GSL in-tree.
+4. Implement amino-acid no-codon-bias alphabet. [only 20 frequency parameters]
+5. Proposals and Priors
   a. use a parameter_names_ vector.
-6. Output move stats in tracer-readable format.
-  a. or, at least, allow burn-in?
-7. Write program to chart percentage identity versus position.
-8. Test sampling of epsilon.
-9. Implement new models, to see if we get good estimates of epsilon.
-10. Implement amino-acid no-codon-bias alphabet.
-    [only 20 frequency parameters]
-  a) e-mail about the method for converting matrices from WAG to codon level?
-12. Do the autoconf magic to compile BOOST and GSL in-tree.
+6. Output move stats in tracer-readable format. (or, at least, allow burn-in?)
 
 --------------------------------------------------------
-
--51. Separate P(S,x) from start_pi(x)
 
 -50. What is the proper way to handle gaps in an AU plot?
      - can they be handled in a tree-like fashion, or not?
 
--48. Implement new indel model where we sum over all root locations...
-   + how much more time do we spend calculating the prior?
-
--47. *Gamma* branch length distribution?
+-48. Indel model where we sum over all root locations: doesn't work for SPR?
 
 -46. Code an initial test for the same-frequencies assumption?
 	- likelihood ratio test: sequences S have frequencies p
@@ -40,12 +30,6 @@
     the number of branches that connect the non-gap characters.
 
 -------------------------------------------------------
-Named parameters, priors, and proposals branch!
-
--42. Allow external priors - attach to parameters by name.
-  + How can we reference other parameters of the model? (e.g. "mu")
-  + Can we ADD parameters to the model just to use as hyperparameters?
-
 -41. Improve proposals: 
   + Specify the NUMBER of times we do each increment per iteration.
   + How can we reference other parameters of the model? (e.g. "mu")
@@ -57,16 +41,7 @@ Named parameters, priors, and proposals branch!
 
 -40. Remove bitvector functions from tree.H!
 
--39. Usability for tracer:
-  + adjust burnin fraction?
-    - if the file has missing data at the begining, use as burnin,
-      don't count as having value '0'.
-    - oh, you CAN change the burnin fraction! (make this clearer?)
-  + adjust smoothing function of density?
-  + command line arguments 
-    - can it alread take filenames?
-    - a '--help' argument?
-  + why does tracer disagree on autocorrelation?
+-39. Why does tracer disagree on autocorrelation?
 
 -37. Improve trees-consensus
   + Compute the entire set of branches / counts for full partitions.
@@ -82,10 +57,7 @@ Named parameters, priors, and proposals branch!
       [But this wouldn't help for sub-partitions, would it?]
    c) We could report the number of full partitiosn that we observe.
 
--34. Output leaf branch lengths?  Total tree length?
-  + if mu has gamma prior, then does that simply alter prior on branches?
-  + how do we make mu and branch length priors conjugate?
-  + can we still scale the branch lengths if we do that?
+-34. Can we put a Gamma prior on branch length? (Conjugate?)
 
 -30. Find out where the system time is coming from...
   + Find out the system time for a test case with DP full-matrix.
@@ -95,8 +67,6 @@ Named parameters, priors, and proposals branch!
      Read some more tree-of-life papers.
 	Which protein was it that supposedly did not saturate?  Can we plot saturation?  
 	Can we determine the equilibrium distribution (effective entropy) ... by thinking about T ... ?
-     + expand the 5SrRNA data set.
-     + run it!
 
 -24. Benchmarking of mixing... 
   a) try with alignment fixed
@@ -105,25 +75,6 @@ Named parameters, priors, and proposals branch!
   c) compare mixing with few taxa, many taxa...
   d) handle alignment predicates in the SRQ plot.
      can we output residues which are mixing badly?
-
--23. Improve ease of installation:
-  + Autoconf-ify.  ("Just run configure")
-    - allow installation of binary in bin/bali-phy/$version
-  + Inline GSL and BOOST sources so that it is easier to build.
-    - write a reasonable autoconf system to build libboost-program-options
-    - include OUR version of the BOOST sources
-    - GSL is hopefully already autoconf-ified. It can be a subdir.
-    - this will allow us to use the debug version of the GCC libstdc++,
-      and also to use stlport again!
-  + Just use a Makefile.in - no automake?
-  + add version name to manual.
-  + add a 'tarball' target?  (use svn revision # unless a version number is given?)
-  + Move scripts to 'share'?
-    - Including the analysis script...
-  + Library: make the bali-phy objects into a library (*.a).
-     Only the objects that are USED will be added to the tools.
-     This will allow us to separate the build rules for the tools
-     and the main sampler.
 
 -22. FastLSA with Constraints:
   + We have a series of tiles that are linked at their corners.
@@ -135,28 +86,17 @@ Named parameters, priors, and proposals branch!
      (We crash on 'standardize' currently.)
 
 -20. MCMCMC
-   ??) Find a way to correctly run heated chains, avoiding:
-       0) ?
-       i) improper pairwise alignment distribution
-      ii) really expensive DP calculations...
-    a) Make the temperature affect only the likelihood... [done]
-    b) test speedups...
-    c) begin to implement the forking code / temperature identifier.
-    d) begin to implement the separate random number generators.
+    a) implement the forking code / temperature identifier.
+    b) implement the separate random number generators.
 
 -16. Compare estimates w/ MrBayes
      a) compare mixing, topologies, branch lengths, speed, etc.
      b) globin / EF-Tu 48b / P1-123 / P1-1234
 
--13. Make a program to compare two alignment distributions.
-     a) Flag homology pairs that have abs(log(p1/p2)) > thresh-hold. 
-     b) Output the pairs of residues that act up.
-       b.1) Have a method to convert the pairs to a color scheme.
-       b.2) Invent a color scheme that is something like 'grey' (1) +
-            red (0). 
-     c) Allow the user to specify either a sequence of alignment
-        samples or an alignment w/ '?' characters, and a level of
-        certainty at which to consider each pair in that alignment.
+-13. Make a program to compare two alignment samples. [N=1 is a special case]
+     a) If P(i~j) > 0.5, then compute P_1(i~j)P_2(i!~j)
+     b) Report by marking a consensus alignment with a continuous or thresh-hold color scheme.
+     c) How does a distribution of alignment CONSENSII fit into this?
  
 -12. Allow alignment-gild to annotate an alignment-consensus
 
@@ -164,54 +104,39 @@ Named parameters, priors, and proposals branch!
 
 -7. Sanitize use of the MAP tree when the count is 1. Report a median?
      + but the estimated probability of the median could be 0.
+     + this matters only when computing branch lengths?
 
 -3. Think more carefully about using walk_tree_path
-    when changing the topology...
+     + when changing the topology...  does this have to be reversible?
 
 ------
-0. Plot #topologies in confidence interval (0,p) vs p. (e.g. sort topologies)
+1. Plot #topologies in confidence interval (0,p) vs p. (e.g. sort topologies)
     Then plot this versus time...
 
     Also compare this between runs...
 
     Figure out burnin for bacteria data sets...
 
-1. Try with STLport, mudflap, valgrind, etc.
-  a) STLport could actually give us a speedup!
-
-2. Make a better framework for reporting acceptance rates.
-  a) pass an object to each move to record stats.
-  b) each move records stats under a name that it passes.
+2. Test with STLport, libstdc++ debugging code.
 
 3. Indel model - fix so that prior probabilities exist!
     a) for now, we condition on leaf sequence lengths.
 
 4. Start making some "nice" pictures to put up on the website.
     a) include pictures to give to Dr. Lake's lab.
-    b) include pictures to give to Dr. Sabatti.
 
-6. Make a more general substitution::Model class, so that we can e.g.
-    have trees with 2 sets of branch lengths...
+5. Allow branch length mixtures?
 
-8. Add partitions from M[0.5] to M[l] if they are revealed by deleting subtrees.
-   a) also mark "badly-rooted" subtrees?  (edges are hidden because of badly-rooted-ness?)
-
-10: If we are only changing bin frequencies in the smodel, we shouldn't have
-    to recalculate all the conditional likelihoods.  How to implement this?
-    Some kind of fiddle_safe() routine?
-
-11. Improve mixing for multi_freq model by sampling between columns.
+6. Improve mixing for multi_freq model by sampling between columns.
     a) well, firstly, why does convergence take SOO long?
     b) if we could easily just change bin probabilities, then that would
        make it easier to attack this problem by increasing the number
        of MH steps we do.
 
-12. Make a hash function for sub-partitions that is 
+7. Make a hash function for sub-partitions that is 
      (hash(left mask) * hash(right mask)), where the hash() function
      is a hash function for bitmasks and involves addition, not
      multiplication. 
-
-13. Add partitions to M[0.5] that imply l=0.5 sub-partitions.
 
 
 ------
@@ -517,6 +442,8 @@ the prior, because we never want to use it  differently.
                             changes.
 
 [DONE] Read (unset) settings from ~/.bali-phy.
+
+[DONE] Separate P(S,x) from start_pi(x)
 
 *IDEAS*
 
