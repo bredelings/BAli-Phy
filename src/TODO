@@ -6,6 +6,8 @@
 5. Proposals and Priors
   a. use a parameter_names_ vector.
 6. Output move stats in tracer-readable format. (or, at least, allow burn-in?)
+7. Complain about illegal characters (ASCII >=32 and <= 126)
+    when reading alignments.
 
 --------------------------------------------------------
 
