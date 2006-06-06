@@ -21,9 +21,9 @@ endif
 
 if HOST_DARWIN
 CXXFLAGS += -fvisibility=default
-INCLUDES += /opt/sw/include
-vpath %.dylib /opt/sw/lib
-vpath %.a /opt/sw/lib
+INCLUDES += /sw/include /opt/include /opt/sw/include /usr/local/include
+vpath %.dylib /sw/lib /opt/lib /opt/sw/lib /usr/local/lib
+vpath %.a     /sw/lib /opt/lib /opt/sw/lib /usr/local/lib
 if STATIC
 .LIBPATTERNS += lib%.a lib%.dylib 
 else
