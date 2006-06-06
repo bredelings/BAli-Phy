@@ -64,6 +64,16 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_RESULT([yes])],
  [AC_MSG_FAILURE([libboost_program_options failure])])
 
+LIBS="-lboost_filesystem${BOOST_SUFFIX} $LIBS"
+AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+  #include <boost/filesystem/operations.hpp>
+  namespace fs = boost::filesystem;
+]],
+[[fs::path::default_name_check(fs::portable_posix_name);]])],
+ [AC_MSG_RESULT([yes])],
+ [AC_MSG_FAILURE([libboost_filesystem failure])])
+
 # 3. Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
