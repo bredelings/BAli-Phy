@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(BAli-Phy, 1.9.9+, bredelin@ucla.edu)
+AC_INIT(BAli-Phy, 1.9.9-b1, benjamin_redelings@ncsu.edu)
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([1.9 foreign])
 AC_CONFIG_SRCDIR([src/bali-phy.C])
@@ -40,7 +40,15 @@ AC_ARG_VAR(CHIP,
 if test "$CHIP" = "" ; then
    echo ""
 else
-   CHIP="-march=$CHIP -mtune=$CHIP"
+   if test "$CHIP" = "G3" then
+      CHIP="-mcpu=G3 -mtune=G3"
+   elif test "$CHIP" = "G4" then
+      CHIP="-mcpu=G4 -mtune=G4"
+   elif test "$CHIP" = "G5" then
+      CHIP="-mcpu=G5 -mtune=G5"
+   else
+      CHIP="-march=$CHIP -mtune=$CHIP"
+   fi
 fi
 AC_SUBST(CHIP)
 
