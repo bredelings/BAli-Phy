@@ -1,3 +1,18 @@
+noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
+           dp-matrix.H mytypes.H setup.H 5way.H eigenvalue.H \
+           n_indels.H smodel.H alignment-constraint.H exponential.H \
+           parameters.H substitution-cache.H alignment.H hmm.H pow2.H \
+           substitution.H alignment-sums.H imodel.H probability.H \
+           substitution-index.H alignment-util.H likelihood.H proposals.H \
+           tree-branchnode.H alphabet.H log-double.H rates.H tree.H \
+           bits.H logsum.H refcount.H tree-util.H choose.H matcache.H  \
+           rng.H util.H clone.H mcmc.H sample.H util-random.H \
+           model.H sequence-format.H dp-array.H monitor.H sequence.H \
+           tools/bootstrap.H tools/inverse.H tools/statistics.H \
+           tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
+           tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
+           tools/findroot.H tools/parsimony.H
+
 CXXFLAGS = ${CHIP} @cxxflags@
 
 LDFLAGS = @ldflags@
