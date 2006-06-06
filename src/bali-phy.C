@@ -1,5 +1,9 @@
 /* Version 2: based on operating on multiple alignments */
 
+#ifndef BALI_PHY_VERSION
+#define BALI_PHY_VERSION "UNKNOWN"
+#endif
+
 #include <cmath>
 #include <iostream>
 #include <fstream>
@@ -392,7 +396,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("version")) {
-    cout<<"VERSION: 1.9.8\nBUILD: "<<__DATE__<<"\n";
+    cout<<"VERSION: "<<BALI_PHY_VERSION<<"\nBUILD: "<<__DATE__<<"\n";
     exit(0);
   }
 

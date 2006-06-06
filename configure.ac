@@ -39,16 +39,14 @@ AC_ARG_VAR(CHIP,
            [What CPU type should we specialize for to make a faster program?)])
 if test "$CHIP" = "" ; then
    echo ""
+elif test "$CHIP" = "G3" ; then
+   CHIP="-mcpu=G3 -mtune=G3"
+elif test "$CHIP" = "G4" ; then
+   CHIP="-mcpu=G4 -mtune=G4"
+elif test "$CHIP" = "G5" ; then
+   CHIP="-mcpu=G5 -mtune=G5"
 else
-   if test "$CHIP" = "G3" then
-      CHIP="-mcpu=G3 -mtune=G3"
-   elif test "$CHIP" = "G4" then
-      CHIP="-mcpu=G4 -mtune=G4"
-   elif test "$CHIP" = "G5" then
-      CHIP="-mcpu=G5 -mtune=G5"
-   else
-      CHIP="-march=$CHIP -mtune=$CHIP"
-   fi
+   CHIP="-march=$CHIP -mtune=$CHIP"
 fi
 AC_SUBST(CHIP)
 
@@ -103,6 +101,8 @@ AC_ARG_ENABLE([static],
               AS_HELP_STRING([--enable-static], [Link statically]),
              [static=$enableval],
              [static=no])
+
+cxxflags+=" -DBALI_PHY_VERSION=\\\"$PACKAGE_VERSION\\\""
 
 if test "$profile" = yes ; then
    cxxflags+=' -pg'
