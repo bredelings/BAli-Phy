@@ -15,4 +15,4 @@ EXTRA_HEADERS = @top_srcdir@/include/tnt/tnt_array1d.h \
                 @top_srcdir@/include/tnt/tnt_math_utils.h \
                 @top_srcdir@/include/tnt/jama_eig.h
 
-EXTRA_DIST = $(doc_DATA) $(EXTRA_HEADERS) $(bin_SCRIPTS) $(stuff_DATA)
+EXTRA_DIST = $(doc_DATA) $(EXTRA_HEADERS) $(bin_SCRIPTS) $(nobase_stuff_DATA)
