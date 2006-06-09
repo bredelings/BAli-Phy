@@ -1101,8 +1101,7 @@
     <sect2>
       <title>Output files</title>
       <para><application>BAli-PHy</application> produces the following output
-      files inside the directory that it creates..  For the last two
-      files, each line in these files corresponds to one iteration.</para>
+      files inside the directory that it creates:</para>
       
       <variablelist>
 	<varlistentry>
@@ -1135,6 +1134,7 @@
 	
       </variablelist>
       
+      <para>For the last two files, each line in these files corresponds to one iteration.</para>
     </sect2>
   </sect1>
 
