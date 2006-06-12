@@ -103,31 +103,6 @@ bool is_informative(const valarray<int>& count,int level)
 }
 
 
-double fraction_identical(const alignment& A,int s1,int s2,bool gaps_count) 
-{
-  unsigned total=0;
-  unsigned same =0;
-  for(int i=0;i<A.length();i++) {
-    if (A.gap(i,s1) and A.gap(i,s2)) 
-      continue;
-
-    if (not gaps_count and (A.gap(i,s1) or A.gap(i,s2)))
-      continue;
-
-    total++;
-
-    if (A(i,s1) == A(i,s2))
-      same++;
-  }
-
-  double f = 1;
-  if (total > 0)
-    f = double(same)/total;
-
-  return f;
-}
-
-
 double min_identity(const alignment& A,bool gaps_count)
 {
   double identity = 1.0;

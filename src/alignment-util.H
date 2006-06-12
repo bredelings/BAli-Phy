@@ -91,4 +91,10 @@ vector<OwnedPointer<alphabet> > load_alphabets(const boost::program_options::var
 
 void check_disconnected(const alignment& A, const Tree& T, const std::vector<int>& disconnected);
 
+double fraction_identical(const alignment& A,int s1,int s2,bool gaps_count);
+
+double fraction_homologous(const alignment& A,int s1,int s2);
+
+unsigned n_homologous(const alignment& A,int s1,int s2);
+
 #endif

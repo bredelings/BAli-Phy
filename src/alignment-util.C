@@ -853,3 +853,67 @@ void check_disconnected(const alignment& A, const Tree& T, const std::vector<int
     }
   
 }
+
+double fraction_identical(const alignment& A,int s1,int s2,bool gaps_count) 
+{
+  unsigned total=0;
+  unsigned same =0;
+  for(int i=0;i<A.length();i++) {
+    if (A.gap(i,s1) and A.gap(i,s2)) 
+      continue;
+
+    if (not gaps_count and (A.gap(i,s1) or A.gap(i,s2)))
+      continue;
+
+    total++;
+
+    if (A(i,s1) == A(i,s2))
+      same++;
+  }
+
+  double f = 1;
+  if (total > 0)
+    f = double(same)/total;
+
+  return f;
+}
+
+
+double fraction_homologous(const alignment& A,int s1,int s2) 
+{
+  unsigned total=0;
+  unsigned same =0;
+  for(int i=0;i<A.length();i++) 
+  {
+    if (not A.character(i,s1) and not A.character(i,s2)) 
+      continue;
+
+    total++;
+
+    if (A.character(i,s1) and A.character(i,s2))
+      same++;
+  }
+
+  double f = 1;
+  if (total > 0)
+    f = double(same)/total;
+
+  return f;
+}
+
+
+
+unsigned n_homologous(const alignment& A,int s1,int s2) 
+{
+  unsigned same =0;
+  for(int i=0;i<A.length();i++) 
+  {
+    if (A.character(i,s1) and A.character(i,s2))
+      same++;
+  }
+
+  return same;;
+}
+
+
+
