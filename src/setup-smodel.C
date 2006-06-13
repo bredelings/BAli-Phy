@@ -197,6 +197,16 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,IndependentNucleotideFrequencyModel(*T));
   }
+  else if (match(string_stack,"pi=amino_acids",arg)) 
+  {
+    const Codons* C = dynamic_cast<const Codons*>(&a);
+    if (not C)
+      throw myexception()<<"pi=amino_acids:: '"<<a.name<<"' is not a codon alphabet.";
+
+    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=nucleotides");
+
+    model_stack.back() = ReversibleMarkovSuperModel(*EM,AACodonFrequencyModel(*C));
+  }
   else if (match(string_stack,"pi=triplets",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&a);
@@ -215,7 +225,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=codons");
 
-    model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonFrequencyModel(*C));
+    model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonsFrequencyModel(*C));
   }
   else
     return false;
