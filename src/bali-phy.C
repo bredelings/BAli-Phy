@@ -597,8 +597,8 @@ int main(int argc,char* argv[])
 
     //---------- Open output files -----------//
     vector<string> filenames;
-    ostream* s_out = NULL;
-    ostream* s_err = NULL;
+    ostream* s_out = &cout;
+    ostream* s_err = &cerr;
     ostream* s_trees = NULL;
     ostream* s_parameters = NULL;
     ostream* s_map = NULL;
@@ -666,15 +666,15 @@ int main(int argc,char* argv[])
       fs::path data_dir = args["data-dir"].as<string>();
       if (not fs::exists(data_dir)) {
 	(*s_err)<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' does not exist!"<<endl;
-	(*s_err)<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl;
+	(*s_err)<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
       }
       else if (not fs::is_directory(data_dir)) {
 	(*s_err)<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' is not a directory!"<<endl;
-	(*s_err)<<"         You must correctly specified the data directory using --data-dir <dir>."<<endl;
+	(*s_err)<<"         You must correctly specified the data directory using --data-dir <dir>."<<endl<<endl;
       }
       else if (not fs::exists( data_dir / "wag.dat")) {
 	(*s_err)<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' exists, but doesn't contain the important file 'wag.dat'."<<endl;
-	(*s_err)<<"         Have you correctly specified the data directory using --data-dir <dir>?."<<endl;
+	(*s_err)<<"         Have you correctly specified the data directory using --data-dir <dir>?."<<endl<<endl;
       }
     }
     
