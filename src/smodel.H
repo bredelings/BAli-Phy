@@ -510,8 +510,35 @@ namespace substitution {
   };
 
   class CodonFrequencyModel: public ReversibleFrequencyModel,
-			       public NestedModelOver<TripletsFrequencyModel>,
 			       public ModelWithAlphabet<Codons>
+  {
+  public:
+    CodonFrequencyModel* clone() const =0;
+
+    explicit CodonFrequencyModel(const Codons& C);
+  };
+
+  class AACodonFrequencyModel: public CodonFrequencyModel,
+			       public NestedModelOver<SimpleFrequencyModel>
+  {
+  protected:
+    OwnedPointer<SimpleFrequencyModel> codons;
+
+    void recalc(const vector<int>&);
+
+    string super_parameter_name(int i) const;
+
+    int aa_size() const {return Alphabet().getAminoAcids().size();}
+  public:
+    AACodonFrequencyModel* clone() const {return new AACodonFrequencyModel(*this);}
+
+    string name() const;
+
+    explicit AACodonFrequencyModel(const Codons& C);
+  };
+
+  class CodonsFrequencyModel: public CodonFrequencyModel,
+			      public NestedModelOver<TripletsFrequencyModel>
   {
   protected:
     void recalc(const vector<int>&);
@@ -521,16 +548,16 @@ namespace substitution {
     int aa_size() const {return Alphabet().getAminoAcids().size();}
 
   public:
-    CodonFrequencyModel* clone() const {return new CodonFrequencyModel(*this);}
+    CodonsFrequencyModel* clone() const {return new CodonsFrequencyModel(*this);}
 
     efloat_t super_prior() const;
 
     string name() const;
 
-    explicit CodonFrequencyModel(const Codons& C);
+    explicit CodonsFrequencyModel(const Codons& C);
   };
 
-
+  
 
   //------------------------- Reversible Substitution Model -----------------------//
 

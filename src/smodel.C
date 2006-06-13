@@ -247,7 +247,7 @@ namespace substitution {
       NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),0),
       triplets(SimpleFrequencyModel(T))
   {
-    
+    recalc_all();
   }
 
 
@@ -324,8 +324,64 @@ namespace substitution {
   }
 
   //------------------- Codon Frequency Model -----------------//
+  CodonFrequencyModel::CodonFrequencyModel(const Codons& C)
+    :ReversibleFrequencyModel(C),
+     ModelWithAlphabet<Codons>(C)
+  { }
 
-  void CodonFrequencyModel::recalc(const vector<int>&)
+
+  void AACodonFrequencyModel::recalc(const vector<int>&)
+  {
+    //----------- get amino acid frequencyes and counts ------------//
+    valarray<double> f_aa = SubModel().frequencies();
+    vector<int> n_aa(aa_size(),0);
+    for(int i=0;i<Alphabet().size();i++) {
+      int aa = Alphabet().translate(i);
+      n_aa[aa]++;
+    }
+      
+    //------------------ compute triplet frequencies ------------------//
+    for(int i=0;i<pi.size();i++) {
+      int aa = Alphabet().translate(i);
+      pi[i] = f_aa[aa]/n_aa[aa];
+    }
+
+    vector<double> codon_parameters(size()+1);
+    codon_parameters[0] = SubModel().parameter(0);
+    set_varray(codon_parameters,1,pi);
+
+    codons->parameters(codon_parameters);
+
+    for(int i=0;i<size();i++)
+      for(int j=0;j<size();j++)
+	R(i,j) = (*codons)(i,j);
+  }
+
+  string AACodonFrequencyModel::super_parameter_name(int i) const
+  {
+    return ::parameter_name("",i,0);
+  }
+
+  string AACodonFrequencyModel::name() const
+  {
+    return "pi=amino acids";
+  }
+
+  
+  AACodonFrequencyModel::AACodonFrequencyModel(const Codons& C) 
+    : CodonFrequencyModel(C),
+      NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(C.getAminoAcids()),0),
+      codons(SimpleFrequencyModel(C))
+  {
+    recalc_all();
+  }
+
+
+
+
+  //------------------- Codons Frequency Model -----------------//
+
+  void CodonsFrequencyModel::recalc(const vector<int>&)
   {
     double c = parameters_[0];
 
@@ -373,17 +429,17 @@ namespace substitution {
       R(i,i) = 0;
   }
 
-  efloat_t CodonFrequencyModel::super_prior() const 
+  efloat_t CodonsFrequencyModel::super_prior() const 
   {
     return dirichlet_pdf(parameters_, 2, aa_size(), 1.0);
   }
 
-  string CodonFrequencyModel::name() const 
+  string CodonsFrequencyModel::name() const 
   {
     return "pi=codons";
   }
 
-  string CodonFrequencyModel::super_parameter_name(int i) const 
+  string CodonsFrequencyModel::super_parameter_name(int i) const 
   {
     if (i == 0)
       return "c";
@@ -395,10 +451,9 @@ namespace substitution {
       return s_parameter_name(i,Alphabet().getAminoAcids().size()+2);
   }
 
-  CodonFrequencyModel::CodonFrequencyModel(const Codons& C)
-    : ReversibleFrequencyModel(C),
-      NestedModelOver<TripletsFrequencyModel>(TripletsFrequencyModel(C), C.getAminoAcids().size() + 2),
-      ModelWithAlphabet<Codons>(C)
+  CodonsFrequencyModel::CodonsFrequencyModel(const Codons& C)
+    : CodonFrequencyModel(C),
+      NestedModelOver<TripletsFrequencyModel>(TripletsFrequencyModel(C), C.getAminoAcids().size() + 2)
   {
     parameters_[0] = 0.5; // c
     parameters_[1] = 0.5; // h
