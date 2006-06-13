@@ -66,7 +66,7 @@ void print_stats(std::ostream& o,std::ostream& trees,
   if (print_alignment)
     o<<standardize(A,P.T)<<"\n\n";
   
-  trees<<P.T<<std::endl;
+  trees<<P.T<<std::endl<<std::endl;
   
   show_parameters(o,P);
   o.flush();
