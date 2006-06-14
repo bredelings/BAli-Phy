@@ -597,14 +597,15 @@ int main(int argc,char* argv[])
 
     //---------- Open output files -----------//
     vector<string> filenames;
-    ostream* s_out = &cout;
-    ostream* s_err = &cerr;
+    ostream* s_out = NULL;
+    ostream* s_err = NULL;
     ostream* s_trees = NULL;
     ostream* s_parameters = NULL;
     ostream* s_map = NULL;
 
     if (args.count("show-only")){
       s_out = &cout;
+      s_err = &cerr;
     }
     else {
 
