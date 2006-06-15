@@ -1,8 +1,6 @@
 1. Test sampling of epsilon.  (Implement model where lambda & epsilon not coupled?)
   a) e-mail about the method for converting matrices from WAG to codon level.
-2. DISTRIBUTION of %-identity?
 3. Do the autoconf magic to compile BOOST and GSL in-tree.
-4. Implement amino-acid no-codon-bias alphabet. [only 20 frequency parameters]
 5. Proposals and Priors
   a. use a parameter_names_ vector.
 6. Output move stats in tracer-readable format. (or, at least, allow burn-in?)
@@ -446,6 +444,10 @@ the prior, because we never want to use it  differently.
 [DONE] Read (unset) settings from ~/.bali-phy.
 
 [DONE] Separate P(S,x) from start_pi(x)
+
+[DONE] DISTRIBUTION of %-identity?
+
+[DONE] Implement codon-frequencies from amino-acid frequencies [no codon  bias].
 
 *IDEAS*
 
