@@ -231,23 +231,29 @@
   </sect1>
 
   <sect1>
-    <title>Installing</title>
+    <title>Installation</title>
     <sect2>
       <title>Installing when compiling from source</title>
       <para>
       After compiling <application>BAli-Phy</application>, you can
-      simple type <command>make install</command>.  This will copy the
+      simply type <command>make install</command>.  This will copy the
       compiled binaries to the directory chosen when you ran
       <command>configure</command>. 
       </para>
     </sect2>
 
     <sect2>
-      <title>Installing when compiling from source</title>
-      <para>To install pre-compiled binaries, simply extra the
-      compress archive in the directory of your choice.  You can do
-      this on the command line using the <command>tar</command>
-      command:
+      <title>Installing precompiled binaries</title>
+      <para>To install pre-compiled binaries, simply extract the
+      compressed archive in the directory of your choice.  If you has
+      root access you might extract in
+      <filename>/usr/local</filename>; if not, you might make a
+      directory <filename>~/local</filename> in your home directory
+      and extract there.
+      </para>
+
+      <para>You can extract the compressed archive on the command line
+      using the <command>tar</command> command:
 <screen><prompt>%</prompt> tar -zxf bali-phy-<replaceable>version</replaceable>.tgz</screen>
       </para>
     </sect2>      
@@ -267,10 +273,8 @@
     </para>
 
     <para>
-    In the BASH shell, you can add
-    After installing the compiled binaries, you should modify your
-    PATH variable so that they are easy to run.  The PATH is a list of
-    directories that your computer searches for programs.  If you
+    Setting your default path is beyond the scope of this document,
+    but an internet search should reveal how to do this.
     </para>
     </sect2>
 
@@ -1181,33 +1185,51 @@ traditional = traditional
 
       </orderedlist>
 
+      <sect3>
+	<title>Syntax</title>
       <para>The first line of the file is a header consisting of an
    ordered list of sequence names separated by spaces. Each subsequent line
    consists of a space-separated list of sequence positions, with the first position
    corresponding to the first leaf sequence, the second position
    corresponding to the second leaf sequence, etc. Thus, if there are
-   &lt;n&gt; leaf taxa, then each line corresponds to a
-   space-separated list of &lt;n&gt; integers.</para>
+   <replaceable>n</replaceable> leaf taxa, then each line corresponds to a
+   space-separated list of <replaceable>n</replaceable> integers.</para>
+      </sect3>
+      <sect3>
+	<title>Examples</title>
+      <para>For example, the file</para>
 
-      <para>For example, the line</para>
+      <programlisting format="linespecific">A B C
+1 2 2</programlisting>
 
-      <programlisting format="linespecific">1 2 2</programlisting>
-
-      <para>means that position 1 of leaf sequence 1 is aligned to
-      position 2 of leaf sequences 2 and 3. Note that the first
+      <para>implies that position 1 of leaf sequence A is aligned to
+      position 2 of leaf sequences B and C. Note that the first
       position in a sequence is position 0.</para> 
 
       <para>Optionally, one may use a '-' instead of an integer, which
       denotes a lack of constraint for that sequence. This can be
       useful as follows:</para> 
 
-<programlisting format="linespecific">2 2 - - 
+<programlisting format="linespecific">A B C D
+2 2 - - 
 - - 2 2
 </programlisting>
 
       <para>The above constraints force alignment between position 2
-   of sequences 1 and 2, and between position 2 of sequence 3 and
-   4.</para>
+   of sequences A and B, and between position 2 of sequence C and
+   D.</para>
+      </sect3>
+
+      <sect3>
+	<title>Computing the constraints</title>
+	<para>
+	  The program <command>alignment-indices</command> may be used
+	  to aid in computing a constraint file from an input
+	  alignment.  Each line in the resulting file is a constraint 
+	  corresponding to one column of the input alignment.
+	  Simply remove the constraints that you do not want to keep.
+	</para>
+      </sect3>
     </sect2>
   </sect1>
 
