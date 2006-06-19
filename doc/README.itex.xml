@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
-<?xml-stylesheet type="text/xsl" href="docbook.xsl"?>
+<!-- DOCTYPE article PUBLIC "-//OASIS//DTD DocBook MathML Module V1.0//EN"
+  "http://www.docbook.org/xml/mathml/1.0/dbmathml.dtd" -->
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook MathML Module V1.0//EN"
-  "http://www.docbook.org/xml/mathml/1.0/dbmathml.dtd">
-
+                    "http://www.oasis-open.org/docbook/xml/mathml/1.0/dbmathml.dtd">
 <!-- DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
      "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [] -->
 <article lang="en">
@@ -164,10 +164,19 @@
 	<title>Installing to a location besides	<filename>/usr/local/</filename></title>
 	<para>The configure script chooses to install
 	<command>bali-phy</command> in the directory
-	<filename>/usr/local/</filename> by default.  However, if you
-	do not have superuser access, you may not be able to install in
-	this directory.  An alternative is to install
-	<command>bali-phy</command> to ~/local/ in your home directory.</para>
+	<filename>/usr/local/</filename> by default. We can install
+	binaries to another directory <replaceable>dir</replaceable>
+	by passing
+	<userinput>--prefix=<replaceable>dir</replaceable></userinput>.
+	For example, in order to install
+	<application>BAli-Phy</application> under
+	<filename>~/local</filename>, you can do:
+
+<screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure --prefix=&amp;HOME/local</userinput></screen>
+        This is recommended if you do not have permission to install
+	to <filename>/usr/local/</filename>.
+	</para>
+
       </sect2>
 
       <sect2>
@@ -180,19 +189,20 @@
 	<command>g++-4.0</command> as the C++ compiler when compiling
 	<application>BAli-Phy</application>, you can set the CXX
 	environment variable as follows:
-	    <screen><prompt>%</prompt> <userinput>CXX=g++-4.0 make install</userinput></screen>
-	    To change this, or to change other compilation options,
-	edit the makefile <filename>src/GNUmakefile</filename>.</para> 
+	    <screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure CXX=g++-4.0</userinput></screen>
+	</para>
       </sect2>
 
       <sect2>
 	<title>Optimizing for a specific architecture</title>
-	<para>On ix86 computers, you can add either
-	<userinput>ARCH=pentium3</userinput>,
-	<userinput>ARCH=pentium4</userinput>, or
-	<userinput>ARCH=athlon-xp</userinput> to the beginning of the
-	command line. This allows the compiler to generate faster code 
-	that only works on the specified architecture.
+	<para>You can specify optimizing for a specific brand of CPU,
+	by specifying the <userinput>CHIP</userinput> variable to
+	<command>configure</command>, as follows:
+	    <screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure CHIP=<replaceable>cpu</replaceable></userinput></screen>
+	You can set CHIP to any of <userinput>pentium3</userinput>,
+	<userinput>pentium4</userinput>,
+	<userinput>nocona</userinput>, <userinput>G3</userinput>,
+	<userinput>G4</userinput>, or <userinput>G5</userinput>.
 	</para>
       </sect2>
 
@@ -209,14 +219,61 @@
 
       <sect2>
 	<title>Examples</title>
-	<para>A
+	<para>
+        All this options to <command>configure</command> can be
+	combined, as follows:
+<screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure --prefix=HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
+        This example uses <command>g++-4.1</command> to build a
+	pentium4-optimized version of <command>bali-phy</command> with
+	static linkage.
 	</para>
       </sect2>
   </sect1>
 
   <sect1>
-    <title>Installation</title>
-    <para></para>
+    <title>Installing</title>
+    <sect2>
+      <title>Installing when compiling from source</title>
+      <para>
+      After compiling <application>BAli-Phy</application>, you can
+      simple type <command>make install</command>.  This will copy the
+      compiled binaries to the directory chosen when you ran
+      <command>configure</command>. 
+      </para>
+    </sect2>
+
+    <sect2>
+      <title>Installing when compiling from source</title>
+      <para>To install pre-compiled binaries, simply extra the
+      compress archive in the directory of your choice.  You can do
+      this on the command line using the <command>tar</command>
+      command:
+<screen><prompt>%</prompt> tar -zxf bali-phy-<replaceable>version</replaceable>.tgz</screen>
+      </para>
+    </sect2>      
+
+    <sect2>
+      <title>Setting the PATH</title>
+    <para>
+    If you installed <application>BAli-Phy</application> to the directory
+    <replaceable>dir</replaceable>, then you should put
+    <replaceable>dir</replaceable>/bin in your PATH.  This allows the
+    computer to find the programs and run them.  For example, if you
+    installed <application>BAli-Phy</application> to
+    <filename>/usr/local</filename>, then you should add
+    <filename>/usr/local/bin</filename> to your PATH so that you can
+    simply type <command>bali-phy</command> instead of
+    <command>/usr/local/bin/bali-phy</command>.
+    </para>
+
+    <para>
+    In the BASH shell, you can add
+    After installing the compiled binaries, you should modify your
+    PATH variable so that they are easy to run.  The PATH is a list of
+    directories that your computer searches for programs.  If you
+    </para>
+    </sect2>
+
   </sect1>
 
   <sect1>
@@ -279,14 +336,14 @@
       <sect3>
 	<title>Making a link/shortcut to the Data directory</title>
 	<para>Instead of specifying the location of the data
-	directory, you can make a shortcut from the Data directory to
-	a local directory called <filename>Data/</filename>:
+	directory, you can make a shortcut to the Data directory:
 
-        <screen><prompt>%</prompt> <userinput>ln -s <replaceable>somewhere</replaceable>/Data ./Data</userinput></screen>
+        <screen><prompt>%</prompt> <userinput>ln -s <replaceable>somewhere</replaceable>/Data</userinput></screen>
 
-	Then <command>bali-phy</command> will find the data directory
+	The shortcut will then be at <filename>./Data</filename>  Then
+	<command>bali-phy</command> will find the data directory  
 	at the default location <filename>Data/</filename>, but only
-	if you run it in the directory where you put the shortcut.
+	if you run it in the same directory as the shortcut.
 	</para>
       </sect3>
 
@@ -301,7 +358,7 @@
 
 	Then <command>bali-phy</command> will find the data directory
 	at the default location <filename>Data/</filename>, but only
-	if you run it in the directory where you put the local copy.
+	if you run it in the directory as the local copy.
 	</para>
       </sect3>
 
