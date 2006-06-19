@@ -247,7 +247,7 @@
     </sect2>
 
     <sect2>
-      <title>Specifying the location of the Data directory</title>
+      <title>Locating the Data directory</title>
 
       <para>
 	<application>BAli-Phy</application> stores important
@@ -286,7 +286,7 @@
 
 	Then <command>bali-phy</command> will find the data directory
 	at the default location <filename>Data/</filename>, but only
-	if you run it in the same directory.
+	if you run it in the directory where you put the shortcut.
 	</para>
       </sect3>
 
@@ -301,10 +301,83 @@
 
 	Then <command>bali-phy</command> will find the data directory
 	at the default location <filename>Data/</filename>, but only
-	if you run it in the same directory.
+	if you run it in the directory where you put the local copy.
 	</para>
       </sect3>
 
+    </sect2>
+
+    <sect2>
+      <title>Option files (Scripts)</title>
+      <para>
+	Putting the analysis options in an option file instead
+	of on the command line can be more convenient if you are going
+	to run the same analysis many times, or if you have a large
+	number of options.  In addition, the option file may
+	contain comments and blank lines, and can be a good way to
+	record what options you used in an analysis.
+      </para>
+
+      <sect3>
+	<title>Syntax</title>
+      <para>
+	An option file is specified the option "<userinput>--config
+	<replaceable>file</replaceable></userinput>" and uses the same
+	option names as the command line.  However, the syntax is
+	different.  In the option file, each given option is
+	on its own line using the syntax "<userinput>option =
+	value</userinput>" instead of the syntax "<userinput>--option
+	value</userinput>".  If the option has no value then it is
+	given using the syntax  "<userinput>option =
+	option</userinput>".  If values for an option are given both
+	on the the command line and in an option file, then the
+	command line value overrides the value in the option file.
+      </para>
+      </sect3>
+
+      <sect3>
+	<title>Example</title>
+	<para>
+  For example, consider the following
+	option file:
+<programlisting format="linespecific">#select a data set to analyze
+align = Data/EF-Tu/5d.fasta
+
+#select an substitution model
+smodel = gamma+INV
+
+#fix the alignment and do not model indels
+traditional = traditional
+</programlisting>
+        The first option, <userinput>align</userinput> is the name of
+	the sequence file, which has no name on the command line.
+	Lines that begin with # are comments, and blank lines are
+	ignored.  The option <userinput>--traditional</userinput> uses
+	the option name as the value, because it does not take a
+	value.  This, this configuration file corresponds to the
+	command line
+<screen><prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --traditional</userinput>
+</screen>
+      </para>
+      </sect3>
+
+      <sect3>
+	<title>The configuration file</title>
+	<para>
+	  The file <filename>~/.bali-phy</filename> is a special
+	  option file called the <emphasis>configuration
+	  file.</emphasis>  If it exists, it is always loaded, if
+	  options are given on the command line or an option file they
+	  always override values given in the configuration file.  You
+	  should use your configuration file to set global values that
+	  are the same in all your analyses, such as the location of
+	  the Data directory.  Thus, you probably would not want to
+	  set <userinput>align</userinput> in this file.  However,
+	  setting <userinput>smodel</userinput> would change the
+	  default substitution model while allowing a specific
+	  analysis to override the default.
+	</para>
+      </sect3>
     </sect2>
 
     <sect2>
