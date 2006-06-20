@@ -221,7 +221,7 @@ public:
   nodeview create_node_on_branch(int b);
 
   /// Remove a node 'n' with exactly two neighbors, merging two branches
-  void remove_node_from_branch(int n);
+  virtual void remove_node_from_branch(int n);
 
   /// remove a subtree
   virtual nodeview prune_subtree(int b);
@@ -267,6 +267,9 @@ public:
 
   /// is n2 a descendant of n1?
   bool ancestor(int n1, int n2) const;
+
+  /// Remove a node 'n' with exactly two neighbors, merging two branches
+  void remove_node_from_branch(int n);
 
   /// remove a subtree
   nodeview prune_subtree(int b);

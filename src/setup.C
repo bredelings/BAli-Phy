@@ -127,8 +127,14 @@ SequenceTree get_random_T(const alignment& A) {
 /// Remap T leaf indices to match A: check the result
 void link(alignment& A,SequenceTree& T,bool internal_sequences) 
 {
-  if (internal_sequences and not is_Cayley(T))
-    throw myexception()<<"Cannot link a non-Cayley tree to an alignment with internal sequences.";
+  // Later, might we WANT sub-branches???
+  if (has_sub_branches(T))
+    remove_sub_branches(T);
+
+  if (internal_sequences and not is_Cayley(T)) {
+    assert(has_polytomy(T));
+    throw myexception()<<"Cannot link a multifurcating tree to an alignment with internal sequences.";
+  }
 
   //------ IF sequences < leaf nodes THEN complain ---------//
   if (A.n_sequences() < T.n_leaves())
@@ -188,8 +194,14 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
 /// Remap T leaf indices to match A: check the result
 void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) 
 {
-  if (internal_sequences and not is_Cayley(T))
-    throw myexception()<<"Cannot link a non-Cayley tree to an alignment with internal sequences.";
+  // Later, might we WANT sub-branches???
+  if (has_sub_branches(T))
+    remove_sub_branches(T);
+
+  if (internal_sequences and not is_Cayley(T)) {
+    assert(has_polytomy(T));
+    throw myexception()<<"Cannot link a multifurcating tree to an alignment with internal sequences.";
+  }
 
   //------ IF sequences < leaf nodes THEN complain ---------//
   if (A.n_sequences() < T.n_leaves())

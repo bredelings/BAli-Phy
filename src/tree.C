@@ -975,6 +975,14 @@ void RootedTree::check_structure() const {
 }
 
 
+void RootedTree::remove_node_from_branch(int node) 
+{
+  if (root_->node == node)
+    root_ = nodes_[0];
+
+  Tree::remove_node_from_branch(node);
+}
+
 nodeview RootedTree::prune_subtree(int br) {
   if (partition(br)[root_->node])
     throw myexception()<<"Can't delete a subtree containing the root node!";
