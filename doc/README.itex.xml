@@ -1262,6 +1262,13 @@ traditional = traditional
 	    <para>Iteration numbers, alignments, and probabilities.</para>
 	  </listitem>
 	</varlistentry>
+
+	<varlistentry>
+	  <term>1.err</term>
+	  <listitem>
+	    <para>Success probabilities for transition kernels.</para>
+	  </listitem>
+	</varlistentry>
 	
 	<varlistentry>
 	  <term>1.MAP</term>
@@ -1295,9 +1302,16 @@ traditional = traditional
       
       <sect2>
 	<title>Running the analysis</title>
-      <para>Copy (or link, using <command>ln -s</command>) the file
-      <filename>bin/GNUmakefile</filename> into the current
-      directory. Then run the command:
+
+      <para>
+      First, enter the output directory.  Then make a local copy of
+      the the analysis makefile:
+<screen><prompt>%</prompt> <userinput>cp <replaceable>prefix</replaceable>/share/doc/bali-phy/GNUmakefile .</userinput></screen>
+      Here, <replaceable>prefix</replaceable> is the directory where
+      you installed <application>BAli-Phy</application>.
+      </para>
+
+      <para>After you have installed the analysis makefile, run the command:
 
       <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> make</userinput></screen>
 
@@ -1309,9 +1323,9 @@ traditional = traditional
       number of iterations to skip as burn-in, and
       <replaceable>iterations</replaceable> represents the maximum
       number of iterations to use in the analysis. In order for this
-      to work, you must have having built the tools in the
-      <filename>tools/</filename> directory and have placed them in
-      your path.</para>
+      to work, the directory containing the
+      <application>BAli-Phy</application> tools must be in your PATH.
+      </para>
 
       <para>Running the analysis will produce the three directories:
       <filename>Results/</filename>, <filename>Mixing</filename>, and
@@ -1327,7 +1341,7 @@ traditional = traditional
 
       <sect2>
 
-	<title>Results</title>
+	<title>Results/</title>
 
 	<para>Running the above command will produce the following files in
 	the <filename>Results/</filename> directory:</para>
@@ -1395,7 +1409,7 @@ traditional = traditional
     </sect2>
 
     <sect2>
-      <title>Mixing</title>
+      <title>Mixing/</title>
 
       <para>In addition, the following files will be produced in the
       <filename>Mixing/</filename> directory:</para> 
@@ -1419,8 +1433,8 @@ traditional = traditional
 
       </variablelist>
 
-      <para>Plots can be viewed by typing <userinput>plot
-      '<replaceable>file</replaceable>' with lines</userinput> in
+      <para>Plots can be viewed by typing "<userinput>plot
+      '<replaceable>file</replaceable>' with lines</userinput>" in
       <application>gnuplot</application>.</para>
     </sect2>
 
