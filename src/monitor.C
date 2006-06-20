@@ -64,10 +64,12 @@ void print_stats(std::ostream& o,std::ostream& trees,
    <<"    beta = " <<P.beta[0]  <<"\n";
 
   if (print_alignment)
-    o<<standardize(A,P.T)<<"\n\n";
+    o<<standardize(A,P.T)<<"\n";
   
-  trees<<P.T<<std::endl<<std::endl;
+  trees<<P.T<<std::endl;
+  trees.flush();
   
+  o<<"\n";
   show_parameters(o,P);
   o.flush();
 
