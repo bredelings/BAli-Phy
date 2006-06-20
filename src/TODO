@@ -1,12 +1,12 @@
 1. Test sampling of epsilon.  (Implement model where lambda & epsilon not coupled?)
   a) e-mail about the method for converting matrices from WAG to codon level.
+2. Put "epsilon" on the "mean_indel_length" scale.
 3. Do the autoconf magic to compile BOOST and GSL in-tree.
 5. Proposals and Priors
   a. use a parameter_names_ vector.
 6. Output move stats in tracer-readable format. (or, at least, allow burn-in?)
 7. Complain about illegal characters (ASCII >=32 and <= 126)
     when reading alignments.
-
 --------------------------------------------------------
 
 -50. What is the proper way to handle gaps in an AU plot?
@@ -55,7 +55,7 @@
       Some, if some of full partitions have a high frequency.
    b) Would this save CPU time?  Examine each partition once instead of n times.
       [But this wouldn't help for sub-partitions, would it?]
-   c) We could report the number of full partitiosn that we observe.
+   c) We could report the number of full partitions that we observe.
 
 -34. Can we put a Gamma prior on branch length? (Conjugate?)
 
@@ -448,6 +448,8 @@ the prior, because we never want to use it  differently.
 [DONE] DISTRIBUTION of %-identity?
 
 [DONE] Implement codon-frequencies from amino-acid frequencies [no codon  bias].
+
+[DONE] Go back to permitting trees w/ (e.g. root) nodes of degree 2.
 
 *IDEAS*
 
