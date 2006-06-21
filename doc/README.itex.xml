@@ -172,7 +172,7 @@
 	<application>BAli-Phy</application> under
 	<filename>~/local</filename>, you can do:
 
-<screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure --prefix=&amp;HOME/local</userinput></screen>
+<screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure --prefix=&#36;HOME/local</userinput></screen>
         This is recommended if you do not have permission to install
 	to <filename>/usr/local/</filename>.
 	</para>
@@ -222,7 +222,7 @@
 	<para>
         All this options to <command>configure</command> can be
 	combined, as follows:
-<screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure --prefix=HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
+<screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
         This example uses <command>g++-4.1</command> to build a
 	pentium4-optimized version of <command>bali-phy</command> with
 	static linkage.
@@ -307,7 +307,7 @@
     </note>
     </sect2>
 
-    <sect2>
+    <sect2 id="spec_data_dir">
       <title>Locating the Data directory</title>
 
       <para>
@@ -358,7 +358,7 @@
 	  directory, you can make a local copy of the Data directory 
 	  that is also called <filename>Data/</filename>:
 
-    <screen><prompt>%</prompt> <userinput>cp -r <replaceable>somewhere</replaceable>/Data ./Data</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>cp -r <replaceable>somewhere</replaceable>/Data .</userinput></screen>
 
 	Then <command>bali-phy</command> will find the data directory
 	at the default location <filename>Data/</filename>, but only
@@ -528,8 +528,19 @@ traditional = traditional
 	</varlistentry>
 
 	<varlistentry>
+	  <term><option>--config <replaceable>file</replaceable></option></term>
+	  <listitem><para>Option file to read.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
 	  <term><option>--show-only</option></term>
 	  <listitem><para>Analyze initial values and exit.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--seed <replaceable>seed</replaceable></option></term>
+	  <listitem><para>Use the specified seed to initialize the
+	  random number generator.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -538,9 +549,8 @@ traditional = traditional
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--seed <replaceable>seed</replaceable></option></term>
-	  <listitem><para>Use the specified seed to initialize the
-	  random number generator.</para></listitem>
+	  <term><option>--name <replaceable>string</replaceable></option></term>
+	  <listitem><para>Specify the name for the analysis directory.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -650,6 +660,12 @@ traditional = traditional
 	</varlistentry>
 
 	<varlistentry>
+	  <term><option>--genetic-code <replaceable>file=standard-code.txt</replaceable></option></term>
+	  <listitem><para>Specify alternate genetic code file in the
+	  data directory.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
 	  <term><option>--smodel <replaceable>name</replaceable></option></term>
 	  <listitem><para>Specify the substitution model.</para></listitem>
 	</varlistentry>
@@ -669,10 +685,9 @@ traditional = traditional
   <sect1>
     <title>Examples</title>
     <para>Here are some examples which demonstrate how to run
-    <application>BAli-PHy</application>.  These examples all assume
-    that you are running <command>bali-phy</command> from a directory
-    that contains a copy of the <filename>Data/</filename> directory
-    that is distributed with <application>BAli-PHy</application>.</para>
+    <application>BAli-Phy</application>.  These examples all assume
+    the location of the Data/ directory is specified as in <xref linkend="spec_data_dir"/>;
+    </para>
 
     <example>
       <title>No frills</title>
@@ -710,10 +725,10 @@ traditional = traditional
 
     <sect2>
       <title>Sequence formats</title>
-      <para><application>BAli-PHy</application> can read in sequences
+      <para><application>BAli-Phy</application> can read in sequences
       and alignments in both FASTA and PHYLIP formats.  However, in
       FASTA format, the file must not contain blank lines between the
-      sequences, because <application>BAli-PHy</application> will stop
+      sequences, because <application>BAli-Phy</application> will stop
       reading in sequences when it sees a blank line.
       </para>
     </sect2>
@@ -740,7 +755,7 @@ traditional = traditional
       <sect3>
 	<title>Too many taxa?</title>
 
-	<para><application>BAli-PHy</application> is quite CPU
+	<para><application>BAli-Phy</application> is quite CPU
 	intensive, and so we recommend using 12 or fewer taxa in order
 	to limit the time required to accumulate enough MCMC samples.
 	We note that many phylogenetic hypotheses can be reduced to
@@ -774,14 +789,30 @@ traditional = traditional
   <sect1>
     <title>Models</title>
 
-    <sect2>
-      <title>Substitution models</title>
-      <para>All of <application>BAli-PHy</application>'s substitution
-      models are mixtures of continuous-time Markov chains (CTMC).
-      These mixtures can consist of the same CTMC model run at a
-      mixture of rates (e.g. a gamma rate model) or parameters (e.g. a
-      Yang M2 model), or even a mixture of different models.
+    <sect2 id="subst_basic">
+      <title>Substitution models (Basic)</title>
+      <para>The basic substitution models in
+      <application>BAli-Phy</application> are continuous-time Markov
+      chains (CTMC). More advanced models such as the $\Gamma_4+INV$
+      model or the M2 codon model are described in section
+      (<xref linkend="subst_adv"/>). CTMC models can be characterized
+      by transition rates $Q_{ij}$ from letter $i$ to letter $j$.
+      After a given time $t$ the probability for transition from state
+      $i$ to state $j$ is given by \[P(t)_{ij}=e^{Q_{ij} \times t}\]
+      using a matrix exponential.  Becase the The CTMC models used in
+      <application>BAli-Phy</application> are all reversible, the rate
+      matrix for these reversible models can be decomposed into a
+      symmetric matrix $S$ and equilibrium frequencies $\pi$ as
+      follows:  \[Q_{ij} = S_{ij}\times\pi_j\]
+      The matrix $S$ is call the exchangability matrix, and
+      represents how exchangeable letters $i$ and $j$ are
+      independent of their frequencies.
       </para>
+
+      <sect3>
+	<title>Basic CTMC models</title>
+	<para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and YangM0.</para>
+      </sect3>
 
       <sect3>
 	<title>Default substitution models</title>
@@ -794,168 +825,7 @@ traditional = traditional
       </sect3>
 
       <sect3>
-	<title>Specifying a substitution model</title>
-
-	<para>Substitution models are specified using a stack, as
-	follows:
-<userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
-        where each model uses the previous models as input.  Arguments
-	are optional.
-	</para>
-
-      <para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and YangM0.</para>
-
-      <para>Model modifiers are gamma, INV, YangM2, YangM3, and YangM7.</para>
-      </sect3>
-
-
-      <sect3>
-	<title>Examples</title>
-	<para>Example: --smodel EQU --alphabet Triplets</para>
-	<para>Example: --smodel HKY</para>
-	<para>Example: --smodel TN+pi=constant</para>
-	<para>Example: --smodel Empirical[WAG]+gamma+INV</para>
-	<para>Example: --smodel YangM0 --alphabet Codons</para>
-	<para>Example: --smodel YangM0+pi=nucleotides --alphabet Codons</para>
-	<para>Example: --smodel YangM2 --alphabet Codons</para>
-	<para>Example: --smodel YangM0[TN]+YangM2 --alphabet Codons</para>
-
-
-      </sect3>
-
-      <sect3>
-	<title>CTMC Models</title>
-
-	<para>All CTMC models can be characterized by transition rates
-	$Q_{ij}$ from state $i$ to state $j$.  After a given time $t$
-	the probability for transition from state $i$ to state $j$ is
-	given by \[P(t)_{ij}=e^{Q_{ij} \times t}\] using a matrix exponential.</para>
-
-	<para>The CTMC models used in
-	<application>BAli-PHy</application> are all reversible.
-	Traditionally, the rate matrix for these reversible models has
-	been decomposed into a symmetric matrix $S$ and equilibrium
-	frequencies $\pi$ as follows: 
-	\[Q_{ij} = S_{ij}\times\pi_j\]
-	The matrix $S$ is call the exchangability matrix, and
-	represents how exchangeable letters $i$ and $j$ are
-	independent of their frequencies.
-	</para>
-      </sect3>
-
-      <sect3>
-	<title>CTMC Frequency models</title>
-	<para>The above decomposition can be generalized slightly to
-	yield the following decomposition, where $f$ ranges from $0$ to $1$.
-	\[Q_{ij} = S_{ij}\times\frac{\pi_j^f}{\pi_i^{1-f}},\]
-	Here the parameter $f$ specifies the relative importance of
-	unequal conservation ($f=0$) and unequal replacement ($f=1$) in
-	maintaining the equilibrium frequencies $\pi$.  
-	</para>
-	<para>
-	In fact, this can be generalized even further to \[ Q_{ij} =
-	S_{ij}\times R(\pi)_{ij} \] where \[ \pi_i \times R_{ij} =
-	\pi_j \times R_{ji}. \]
-	</para>
-	<para>These models can therefore be expressed as a combination
-	of an "exchange model" (for $S$) and a "frequency model" (for
-	$R$).
-	</para>
-      </sect3>
-
-      <sect3>
-	<title>Exchange Models</title>
-	<para>
-	</para>
-      </sect3>
-      
-
-      <sect3>
-	<title>Frequency Models</title>
-	<para>
-	</para>
-	<table frame="none" rowsep="1">
-	  <title>Frequency Models</title>
-	  <tgroup cols='4'>
-	    <colspec colnum="1" colname="col1" colwidth="1*"/>
-	    <colspec colnum="2" colname="col2" colwidth="1*"/>
-	    <colspec colnum="3" colname="col3" colwidth="1*"/>
-	    <colspec colnum="4" colname="col4" colwidth="1*"/>
-	  <thead><row>
-	    <entry>Model</entry>
-	    <entry>Alphabet</entry>
-	    <entry>Parameters</entry>
-	    <entry>Description</entry>
-	  </row></thead>
-
-	  <tbody>
-	    <row>
-	      <entry>
-		<para><userinput>pi</userinput></para>
-		<para>Simple frequency model</para>
-	      </entry>
-	      <entry>any</entry>
-	      <entry>
-		<para>$f$ (1)</para>
-		<para>$\pi$ ($|\alpha|$) </para>
-	      </entry>
-	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
-	    </row>
-	    <row>
-	      <entry>
-		<para><userinput>pi=nucleotides</userinput></para>
-		<para>Independent nucleotide frequency model</para>
-	      </entry>
-	      <entry>Triplets</entry>
-	      <entry>
-		<para>$f$ (1)</para>
-		<para>$\pi_N$ (4) </para>
-	      </entry>
-	      <entry>
-		<para>$\pi_\alpha = \pi_i \pi_j \pi_k$</para>
-		<para>$R_{\alpha\beta} = \frac{\pi_\beta^f}{\pi_\alpha^{1-f}}$.</para>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry><userinput>pi=triplets</userinput></entry>
-	      <entry>Triplets</entry>
-	      <entry>
-		<para>$f$ (1)</para>
-		<para>$g$ (1)</para>
-		<para>$\pi$ (4) </para>
-		<para>$\nu$ ($|\alpha|$) </para>
-	      </entry>
-	      <entry>$R_{\alpha\beta} = \frac{{(\pi_i \pi_j
-	      \pi_l)}^f}{{(\pi_i \pi_j \pi_k)}^{1-f}} \times \frac{\nu_\beta}{\nu_\alpha}$.</entry>
-	    </row>
-	    <row>
-	      <entry><userinput>pi=amino acids?</userinput></entry>
-	      <entry>Codons</entry>
-	      <entry>$f$</entry>
-	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
-	    </row>
-	    <row>
-	      <entry><userinput>pi=codons</userinput></entry>
-	      <entry>Codons</entry>
-	      <entry>$f$</entry>
-	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
-	    </row>
-	  </tbody>
-	  </tgroup>
-	</table>
-      </sect3>
-      
-
-
-      <sect3>
 	<title>Extended model descriptions</title>
-
-	<para>All basic CTMC models are reversible, and can be
-	characterized by rates \[Q_{ij} =
-	S_{ij}\times\frac{\pi_j^f}{\pi_i^{1-f}},\] where $S$ is a symmetric
-	matrix and $\pi$ denotes the equilibrium frequencies for the
-	Markov chain.  The transition matrix for a time $t$ is then
-	given by \[P(t)_{ij}=e^{Q_{ij} \times t},\] using a matrix exponential.</para>  
 
 	<table frame="none" rowsep="1">
 	  <title>Substitution Models</title>
@@ -1052,7 +922,7 @@ traditional = traditional
 
 	    <row>
 	      <entry>
-		<para><userinput>YangM0[<replaceable>nuc-model</replaceable>]</userinput></para>
+		<para><userinput>YangM0[<replaceable>nuc-model=HKY</replaceable>]</userinput></para>
 		<para>Nielsen and Yang (1998)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1061,10 +931,6 @@ traditional = traditional
 		<para>$\omega$: the dn/ds ratio</para>
 	      </entry>
 	      <entry>
-		<para>Setting <replaceable>nuc-model</replaceable>=HKY
-		gives the standard M0 model.  Setting
-		<replaceable>nuc-model</replaceable>=TN gives a codon
-		model with two transition rates.</para>
 		<para>If the nuc-model has transition matrix
 		$S^\prime_{ij}$ on nucleotides, then:</para>
 
@@ -1073,7 +939,218 @@ traditional = traditional
 		<para>$S_{\alpha\beta} = \omega S^\prime_{ij}$ for non-synonymous changes.</para>
 	      </entry> 
 	    </row>
+	  </tbody>
+	  </tgroup>
+	</table>
 
+      </sect3>
+    </sect2>
+
+    <sect2>
+      <title>Indel models</title>
+      <para>The current models are simple, fragments, and fragments+T.  The
+      default is fragments+T.</para>
+    </sect2>
+
+    <sect2>
+      <title>Alignment constraints</title>
+      <para>To pin columns of the alignment, specify alignment
+      constraints in a file as follows: </para>
+
+      <orderedlist inheritnum="ignore" continuation="restarts">
+	<listitem><para>Use the argument
+	<userinput>--align-constraint <replaceable>filename</replaceable></userinput></para></listitem> 
+
+	<listitem><para>The filename refers to a file in which each
+	line represents a constraint.</para></listitem> 
+
+      </orderedlist>
+
+      <sect3>
+	<title>Syntax</title>
+      <para>The first line of the file is a header consisting of an
+   ordered list of sequence names separated by spaces. Each subsequent line
+   consists of a space-separated list of sequence positions, with the first position
+   corresponding to the first leaf sequence, the second position
+   corresponding to the second leaf sequence, etc. Thus, if there are
+   <replaceable>n</replaceable> leaf taxa, then each line corresponds to a
+   space-separated list of <replaceable>n</replaceable> integers.</para>
+      </sect3>
+      <sect3>
+	<title>Examples</title>
+      <para>For example, the file</para>
+
+      <programlisting format="linespecific">A B C
+1 2 2</programlisting>
+
+      <para>implies that position 1 of leaf sequence A is aligned to
+      position 2 of leaf sequences B and C. Note that the first
+      position in a sequence is position 0.</para> 
+
+      <para>Optionally, one may use a '-' instead of an integer, which
+      denotes a lack of constraint for that sequence. This can be
+      useful as follows:</para> 
+
+<programlisting format="linespecific">A B C D
+2 2 - - 
+- - 2 2
+</programlisting>
+
+      <para>The above constraints force alignment between position 2
+   of sequences A and B, and between position 2 of sequence C and
+   D.</para>
+      </sect3>
+
+      <sect3>
+	<title>Computing the constraints</title>
+	<para>
+	  The program <command>alignment-indices</command> may be used
+	  to aid in computing a constraint file from an input
+	  alignment.  Each line in the resulting file is a constraint 
+	  corresponding to one column of the input alignment.
+	  Simply remove the constraints that you do not want to keep.
+	</para>
+      </sect3>
+    </sect2>
+  </sect1>
+
+  <sect1 id="subst_adv">
+    <title>Substitution Models (Advanced)</title>
+    <para>
+      Advanced substitution models in <application>BAli-Phy</application>
+      are constructed as mixtures of the basic CTMC models (see <xref
+      linkend="subst_basic"/>) run at different rates (e.g. $\Gamma_4+INV$)
+      or parameters (e.g. an M2 codon model).
+    </para>
+
+      <sect2>
+	<title>Specifying a substitution model</title>
+
+	<para>Substitution models are specified using a stack, as
+	follows:
+<userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
+        where each model uses the previous models as input.  Arguments
+	are optional.
+	</para>
+
+      <para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and YangM0.</para>
+
+      <para>Model modifiers are gamma, INV, YangM2, YangM3, and YangM7.</para>
+      </sect2>
+
+      <sect2>
+	<title>Examples</title>
+	<para>Example: --smodel EQU --alphabet Triplets</para>
+	<para>Example: --smodel HKY</para>
+	<para>Example: --smodel TN+pi=constant</para>
+	<para>Example: --smodel Empirical[WAG]+gamma+INV</para>
+	<para>Example: --smodel YangM0 --alphabet Codons</para>
+	<para>Example: --smodel YangM0+pi=nucleotides --alphabet Codons</para>
+	<para>Example: --smodel YangM2 --alphabet Codons</para>
+	<para>Example: --smodel YangM0[TN]+YangM2 --alphabet Codons</para>
+      </sect2>
+
+      <sect2>
+	<title>Frequency Models</title>
+	<para>
+	</para>
+	<table frame="none" rowsep="1">
+	  <title>Frequency Models</title>
+	  <tgroup cols='4'>
+	    <colspec colnum="1" colname="col1" colwidth="1*"/>
+	    <colspec colnum="2" colname="col2" colwidth="1*"/>
+	    <colspec colnum="3" colname="col3" colwidth="1*"/>
+	    <colspec colnum="4" colname="col4" colwidth="1*"/>
+	  <thead><row>
+	    <entry>Model</entry>
+	    <entry>Alphabet</entry>
+	    <entry>Parameters</entry>
+	    <entry>Description</entry>
+	  </row></thead>
+
+	  <tbody>
+	    <row>
+	      <entry>
+		<para><userinput>pi</userinput></para>
+		<para>Simple frequency model</para>
+	      </entry>
+	      <entry>any</entry>
+	      <entry>
+		<para>$f$ (1)</para>
+		<para>$\pi$ ($|\alpha|$) </para>
+	      </entry>
+	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
+	    </row>
+	    <row>
+	      <entry>
+		<para><userinput>pi=nucleotides</userinput></para>
+		<para>Independent nucleotide frequency model</para>
+	      </entry>
+	      <entry>Triplets</entry>
+	      <entry>
+		<para>$f$ (1)</para>
+		<para>$\pi_N$ (4) </para>
+	      </entry>
+	      <entry>
+		<para>$\pi_\alpha = \pi_i \pi_j \pi_k$</para>
+		<para>$R_{\alpha\beta} = \frac{\pi_\beta^f}{\pi_\alpha^{1-f}}$.</para>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry><userinput>pi=triplets</userinput></entry>
+	      <entry>Triplets</entry>
+	      <entry>
+		<para>$f$ (1)</para>
+		<para>$g$ (1)</para>
+		<para>$\pi$ (4) </para>
+		<para>$\nu$ ($|\alpha|$) </para>
+	      </entry>
+	      <entry>$R_{\alpha\beta} = \frac{{(\pi_i \pi_j
+	      \pi_l)}^f}{{(\pi_i \pi_j \pi_k)}^{1-f}} \times \frac{\nu_\beta}{\nu_\alpha}$.</entry>
+	    </row>
+	    <row>
+	      <entry><userinput>pi=amino acids?</userinput></entry>
+	      <entry>Codons</entry>
+	      <entry>$f$</entry>
+	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
+	    </row>
+	    <row>
+	      <entry><userinput>pi=codons</userinput></entry>
+	      <entry>Codons</entry>
+	      <entry>$f$</entry>
+	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
+	    </row>
+	  </tbody>
+	  </tgroup>
+	</table>
+      </sect2>
+      
+      <sect2>
+	<title>CTMC Frequency models</title>
+	<para>The above decomposition can be generalized slightly to
+	yield the following decomposition, where $f$ ranges from $0$ to $1$.
+	\[Q_{ij} = S_{ij}\times\frac{\pi_j^f}{\pi_i^{1-f}},\]
+	Here the parameter $f$ specifies the relative importance of
+	unequal conservation ($f=0$) and unequal replacement ($f=1$) in
+	maintaining the equilibrium frequencies $\pi$.  
+	</para>
+	<para>
+	In fact, this can be generalized even further to \[ Q_{ij} =
+	S_{ij}\times R(\pi)_{ij} \] where \[ \pi_i \times R_{ij} =
+	\pi_j \times R_{ji}. \]
+	</para>
+	<para>These models can therefore be expressed as a combination
+	of an "exchange model" (for $S$) and a "frequency model" (for
+	$R$).
+	</para>
+      </sect2>
+
+      <sect2>
+	<title>Exchange Models</title>
+	<table frame="none" rowsep="1">
+	  <title>Substitution Models</title>
+	  <tgroup cols='4'>
+	    <tbody>
 	    <row>
 	      <entry>
 		<para><userinput>YangM2</userinput></para>
@@ -1162,75 +1239,13 @@ traditional = traditional
 	  </tgroup>
 	</table>
 
-      </sect3>
-    </sect2>
 
-    <sect2>
-      <title>Indel models</title>
-      <para>The current models are simple, fragments, and fragments+T.  The
-      default is fragments+T.</para>
-    </sect2>
+      </sect2>
+      
 
-    <sect2>
-      <title>Alignment constraints</title>
-      <para>To pin columns of the alignment, specify alignment
-      constraints in a file as follows: </para>
 
-      <orderedlist inheritnum="ignore" continuation="restarts">
-	<listitem><para>Use the argument
-	<userinput>--align-constraint <replaceable>filename</replaceable></userinput></para></listitem> 
 
-	<listitem><para>The filename refers to a file in which each
-	line represents a constraint.</para></listitem> 
 
-      </orderedlist>
-
-      <sect3>
-	<title>Syntax</title>
-      <para>The first line of the file is a header consisting of an
-   ordered list of sequence names separated by spaces. Each subsequent line
-   consists of a space-separated list of sequence positions, with the first position
-   corresponding to the first leaf sequence, the second position
-   corresponding to the second leaf sequence, etc. Thus, if there are
-   <replaceable>n</replaceable> leaf taxa, then each line corresponds to a
-   space-separated list of <replaceable>n</replaceable> integers.</para>
-      </sect3>
-      <sect3>
-	<title>Examples</title>
-      <para>For example, the file</para>
-
-      <programlisting format="linespecific">A B C
-1 2 2</programlisting>
-
-      <para>implies that position 1 of leaf sequence A is aligned to
-      position 2 of leaf sequences B and C. Note that the first
-      position in a sequence is position 0.</para> 
-
-      <para>Optionally, one may use a '-' instead of an integer, which
-      denotes a lack of constraint for that sequence. This can be
-      useful as follows:</para> 
-
-<programlisting format="linespecific">A B C D
-2 2 - - 
-- - 2 2
-</programlisting>
-
-      <para>The above constraints force alignment between position 2
-   of sequences A and B, and between position 2 of sequence C and
-   D.</para>
-      </sect3>
-
-      <sect3>
-	<title>Computing the constraints</title>
-	<para>
-	  The program <command>alignment-indices</command> may be used
-	  to aid in computing a constraint file from an input
-	  alignment.  Each line in the resulting file is a constraint 
-	  corresponding to one column of the input alignment.
-	  Simply remove the constraints that you do not want to keep.
-	</para>
-      </sect3>
-    </sect2>
   </sect1>
 
   <sect1>
@@ -1252,7 +1267,7 @@ traditional = traditional
 
     <sect2>
       <title>Output files</title>
-      <para><application>BAli-PHy</application> produces the following output
+      <para><application>BAli-Phy</application> produces the following output
       files inside the directory that it creates:</para>
       
       <variablelist>
