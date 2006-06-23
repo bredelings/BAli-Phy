@@ -223,6 +223,8 @@ public:
 
 /// An Amino Acid alphabet
 class AminoAcids: public alphabet {
+protected:
+  AminoAcids(const std::string& s,const std::string& letters);
 public:
   virtual AminoAcids* clone() const {return new AminoAcids(*this);}
 

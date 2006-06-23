@@ -269,13 +269,21 @@ RNA::RNA()
 
 AminoAcids::AminoAcids() 
   :alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X")
-{}
+{
+  insert_class("B","DN");
+  insert_class("Z","EQ");
+}
+
+AminoAcids::AminoAcids(const string& s, const string& letters) 
+  :alphabet(s,string("ARNDCQEGHILKMFPSTWYV")+letters,"X")
+{
+  insert_class("B","DN");
+  insert_class("Z","EQ");
+}
 
 AminoAcidsWithStop::AminoAcidsWithStop() 
-{
-  name = "Amino Acids + stop";
-  insert("!");
-}
+  :AminoAcids("Amino Acids + stop","!")
+{ }
 
 
 void Triplets::setup_sub_nuc_table() {
