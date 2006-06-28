@@ -358,7 +358,7 @@ bool is_Cayley(const Tree& T);
 
 bool has_sub_branches(const Tree& T);
 
-bool has_polytomy(Tree& T);
+bool has_polytomy(const Tree& T);
 
 void remove_sub_branches(Tree& T);
 
