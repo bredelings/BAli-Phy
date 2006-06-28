@@ -129,7 +129,7 @@ RGB AA_color(char aa) {
     return blue;
   else if (strchr("ILMV",aa))
     return green;
-  else if (strchr("ACDENQ",aa))
+  else if (strchr("ACDENQZB",aa))
     return yellow;
   else if (strchr("-*+X ",aa))
     return grey;
