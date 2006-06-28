@@ -7,6 +7,7 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <valarray>
 #include <new>
 #include <signal.h>
@@ -89,7 +90,7 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
 }
 
 void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int max_iterations,
-		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map)
+		 const vector<ostream*> files)
 {
   // args for branch-based stuff
   vector<int> branches(P.T.n_branches());
@@ -310,6 +311,11 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   for(int i=0;i<enable.size();i++)
     sampler.enable(enable[i]);
   
+  ostream& s_out = *files[0];
+  ostream& s_trees = *files[2];
+  ostream& s_parameters = *files[3];
+  ostream& s_map = *files[4];
+  
   sampler.show_enabled(s_out);
   s_out<<"\n";
 
@@ -431,7 +437,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<"Reading ~/.bali-phy ...";
 	ifstream file(filename.c_str());
 	if (not file)
-	  throw myexception()<<"Con't load config file '"<<filename<<"'";
+	  throw myexception()<<"Can't load config file '"<<filename<<"'";
       
 	store(parse_config_file(file, all), args);
 	file.close();
@@ -523,13 +529,19 @@ void set_parameters(Parameters& P, const variables_map& args)
   }
 }
 
-void delete_files(vector<string>& filenames,vector<ofstream*>& files)
+void close_files(vector<ofstream*>& files)
 {
   for(int i=0;i<files.size();i++) {
     files[i]->close();
-    fs::remove(filenames[i]);
+    delete files[i];
   }
   files.clear();
+}
+
+void delete_files(vector<string>& filenames)
+{
+  for(int i=0;i<filenames.size();i++)
+    fs::remove(filenames[i]);
   filenames.clear();
 }
 
@@ -547,7 +559,8 @@ vector<ofstream*> open_files(const string& name, vector<string>& names)
       string filename = name + convertToString(i+1)+"."+names[j];
 
       if (fs::exists(filename)) {
-	delete_files(filenames,files);
+	close_files(files);
+	delete_files(filenames);
 	success = false;
 	break;
       }
@@ -584,73 +597,151 @@ string hostname()
   return hostname;
 }
 
+vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
+{
+  vector<ostream*> files(2,NULL);
+
+  if (args.count("show-only")){
+    files[0] = &cout;
+    files[1] = &cerr;
+  }
+  else {
+
+    string name = fs::path( args["align"].as<string>() ).leaf();
+    if (args.count("name"))
+      name = args["name"].as<string>();
+    
+    string dirname = open_dir(name);
+    cerr<<"Created directory '"<<dirname<<"' for output files."<<endl;
+    
+    vector<string> filenames;
+    filenames.push_back("out");
+    filenames.push_back("err");
+    filenames.push_back("trees");
+    filenames.push_back("p");
+    filenames.push_back("MAP");
+    
+    vector<ofstream*> files2 = open_files(dirname+"/",filenames);
+    files.clear();
+    for(int i=0;i<files2.size();i++)
+      files.push_back(files2[i]);
+
+    ostream& s_out = *files[0];
+    
+    s_out<<"command: ";
+    for(int i=0;i<argc;i++) {
+      s_out<<argv[i];
+      if (i != argc-1) s_out<<" ";
+    }
+    s_out<<endl;
+    s_out<<"directory: "<<fs::initial_path().string()<<endl;
+    if (getenv("JOB_ID"))
+      s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
+    s_out<<"hostname: "<<hostname()<<endl;
+    s_out<<"PID: "<<getpid()<<endl;
+    s_out<<endl;
+  }
+  //  files[0]->precision(10);
+  //  cerr.precision(10);
+
+  return files;
+}
+
+
+/*
+class teebuf: public std::streambuf 
+{
+protected:
+  std::streambuf* sb1;
+  std::streambuf* sb2;
+
+public:
+  typedef std::char_traits<char> traits_type;
+  typedef traits_type::int_type  int_type;
+  
+  int_type overflow(int_type c) {
+    if (sb1->sputc(c) == traits_type::eof()
+	|| sb2->sputc(c) == traits_type::eof())
+      return traits_type::eof();
+    return c;
+  }
+
+  int sync() {
+    int rc = sb1->pubsync();
+    rc = sb2->pubsync();
+    return rc;
+  } 
+
+  teebuf(std::streambuf* s1, std::streambuf* s2):
+    sb1(s2),
+    sb2(s1)
+  {}
+
+  ~teebuf() { sync(); }
+};
+*/
+
+class teebuf: public std::stringbuf
+{
+protected:
+  std::streambuf* sb1;
+  std::streambuf* sb2;
+
+public:
+  
+  int sync() {
+    string s = str();
+    sb1->sputn(s.c_str(), s.length());
+    sb2->sputn(s.c_str(), s.length());
+    int rc = sb1->pubsync();
+    rc = sb2->pubsync();
+    str(string());
+    return rc;
+  } 
+
+  teebuf(std::streambuf* s1, std::streambuf* s2):
+    sb1(s1),
+    sb2(s2)
+  {}
+
+  ~teebuf() {sync();}
+};
+
 int main(int argc,char* argv[]) 
 { 
+  std::ios::sync_with_stdio(false);
+  std::streambuf* const cerr_sbuf = cerr.rdbuf();
+  std::ostringstream errors;
+  teebuf tee1(cerr_sbuf, errors.rdbuf());
+
   try {
 
     fp_scale::initialize();
-    std::ios::sync_with_stdio(false);
     fs::path::default_name_check(fs::portable_posix_name);
+
+    //------ Capture copy of 'cerr' output in 'errors' ------//
+    cerr.rdbuf(&tee1);
 
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    //---------- Open output files -----------//
-    vector<string> filenames;
-    ostream* s_out = NULL;
-    ostream* s_err = NULL;
-    ostream* s_trees = NULL;
-    ostream* s_parameters = NULL;
-    ostream* s_map = NULL;
-
-    if (args.count("show-only")){
-      s_out = &cout;
-      s_err = &cerr;
-    }
-    else {
-
-      string name = fs::path( args["align"].as<string>() ).leaf();
-      if (args.count("name"))
-	name = args["name"].as<string>();
-
-      string dirname = open_dir(name);
-      cerr<<"Created directory '"<<dirname<<"' for output files."<<endl;
-
-      filenames.push_back("out");
-      filenames.push_back("err");
-      filenames.push_back("trees");
-      filenames.push_back("p");
-      filenames.push_back("MAP");
-
-      vector<ofstream*> files = open_files(dirname+"/",filenames);
-      
-      s_out = files[0];
-      s_err = files[1];
-      s_trees = files[2];
-      s_parameters = files[3];
-      s_map = files[4];
-
-      cerr.rdbuf(s_err->rdbuf());
-      clog.rdbuf(s_err->rdbuf());
-      cerr.flush();
-      clog.flush();
-
-      *s_out<<"command: ";
-      for(int i=0;i<argc;i++) {
-	*s_out<<argv[i];
-	if (i != argc-1) *s_out<<" ";
+    //---------- Determine Data dir ---------------//
+    {
+      fs::path data_dir = args["data-dir"].as<string>();
+      if (not fs::exists(data_dir)) {
+	cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' does not exist!"<<endl;
+	cerr<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
       }
-      *s_out<<endl;
-      *s_out<<"directory: "<<fs::initial_path().string()<<endl;
-      if (getenv("JOB_ID"))
-	*s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
-      *s_out<<"hostname: "<<hostname()<<endl;
-      *s_out<<"PID: "<<getpid()<<endl;
-      *s_out<<endl;
+      else if (not fs::is_directory(data_dir)) {
+	cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' is not a directory!"<<endl;
+	cerr<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
+      }
+      else if (not fs::exists( data_dir / "wag.dat")) {
+	cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' exists, but doesn't contain the"<<endl;
+	cerr<<"               important file 'wag.dat'."<<endl;
+	cerr<<"         Have you correctly specified the data directory using --data-dir <dir>?"<<endl<<endl;
+      }
     }
-    s_out->precision(10);
-    cerr.precision(10);
-
 
     //---------- Initialize random seed -----------//
     unsigned long seed = 0;
@@ -660,24 +751,6 @@ int main(int argc,char* argv[])
     }
     else
       seed = myrand_init();
-    (*s_out)<<"random seed = "<<seed<<endl<<endl;
-    
-    //---------- Determine Data dir ---------------//
-    {
-      fs::path data_dir = args["data-dir"].as<string>();
-      if (not fs::exists(data_dir)) {
-	(*s_err)<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' does not exist!"<<endl;
-	(*s_err)<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
-      }
-      else if (not fs::is_directory(data_dir)) {
-	(*s_err)<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' is not a directory!"<<endl;
-	(*s_err)<<"         You must correctly specified the data directory using --data-dir <dir>."<<endl<<endl;
-      }
-      else if (not fs::exists( data_dir / "wag.dat")) {
-	(*s_err)<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' exists, but doesn't contain the important file 'wag.dat'."<<endl;
-	(*s_err)<<"         Have you correctly specified the data directory using --data-dir <dir>?."<<endl<<endl;
-      }
-    }
     
     //----------- Load alignment and tree ---------//
     alignment A;
@@ -687,12 +760,22 @@ int main(int argc,char* argv[])
     else
       load_A_and_random_T(args,A,T);
 
-    (*s_out)<<"data = "<<args["align"].as<string>()<<endl<<endl;
-
-    (*s_out)<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
-
     if (A.n_sequences() < 3)
       throw myexception()<<"At least 3 sequences must be provided - you provided only "<<A.n_sequences()<<".\n(Perhaps you have BLANK LINES in your FASTA file?)";
+
+    //---------- Open output files -----------//
+    vector<ostream*> files = init_files(args,argc,argv);
+    ostream& s_out = *files[0];
+    ostream& s_err = *files[1];
+
+    s_out<<"random seed = "<<seed<<endl<<endl;
+    s_out<<"data = "<<args["align"].as<string>()<<endl<<endl;
+    s_out<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
+
+    s_err<<errors.str();
+
+    cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
+    clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
     //--------- Set up the substitution model --------//
     OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
@@ -712,17 +795,17 @@ int main(int argc,char* argv[])
     if (imodel)
       P = Parameters(*full_smodel,*imodel,T);
 
-    (*s_out)<<"subst model = "<<P.SModel().name();
+    s_out<<"subst model = "<<P.SModel().name();
     if (not P.SModel().full_tree)
-      (*s_out)<<", *-tree";
-    (*s_out)<<endl<<endl;
+      s_out<<", *-tree";
+    s_out<<endl<<endl;
 
-    (*s_out)<<"indel model = ";
+    s_out<<"indel model = ";
     if (imodel)
-      (*s_out)<<P.IModel().name();
+      s_out<<P.IModel().name();
     else
-      (*s_out)<<"none";
-    (*s_out)<<endl<<endl;
+      s_out<<"none";
+    s_out<<endl<<endl;
 
     P.alignment_constraint = load_alignment_constraint(args,T);
 
@@ -804,10 +887,10 @@ int main(int argc,char* argv[])
 
       long int max_iterations = args["iterations"].as<long int>();
 
-      do_sampling(args,A,P,max_iterations,*s_out,*s_trees,*s_parameters,*s_map);
+      do_sampling(args,A,P,max_iterations,files);
 
       // Close all the streams, and write a notification that we finished all the iterations.
-      // s_out->close(); s_trees->close(); s_parameters->close(); s_map->close();
+      // close_files(files);
     }
   }
   catch (std::bad_alloc) {
