@@ -79,7 +79,7 @@ public:
 
 
 template<class iterator_t,typename T>
-inline void append(const iterator_t& start,std::vector<T>& v) {
+inline void append(const iterator_t& start,T& v) {
   for(iterator_t i(start);i;i++)
     v.push_back(*i);
 }

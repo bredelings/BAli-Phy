@@ -1,6 +1,7 @@
 #include <map>
 #include <fstream>
 #include "tree-dist.H"
+#include "tree-util.H"
 #include "rng.H"
 #include "statistics.H"
 #include "mytypes.H"
@@ -546,22 +547,6 @@ tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample)
   sort(order.begin(),order.end(),ordering(topologies));
 }
 
-
-struct compare_complete_partitions {
-  bool operator()(const valarray<bool>& p1,const valarray<bool>& p2) const {
-    assert(p1.size() == p2.size());
-    //    assert(p1[0]);
-    //    assert(p2[0]);
-    
-    for(int i=0;i<p1.size();i++) {
-      if (p2[i] and not p1[i])
-	return true;
-      if (p1[i] and not p2[i])
-	return false;
-    }
-    return false;
-  }
-};
 
 struct p_count {
   int count;

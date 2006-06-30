@@ -1,12 +1,39 @@
+1. Estimate constraints using alignment-indices
+  a) specify number of constraints
+  b) no gaps nearby (distance W+G) from constraint
+  c) difference from consensus = 1 (no shared differences)
+  d) 
+  e) percentage of sites w/ an indel
+  f) print the column number in the comments of each row
+
+2. How much of the sequences is in each %-identity fraction?
+  a) How much information is in each fraction?
+
+3. Add a 'nice' argument?  No default - this could go in the config file!
+  a) But what if we run SGE jobs and regular jobs on the same machine?
+  b) Would we find some way to NOT use the nice if we are doing SGE?
+  c) I suppose we could do 'nice 0' in that case.
+  d) Or we could avoid using the config file in that case.
+  e) Well, nice isn't actually that hard to add by hand!
+  f) But add something to the documentation about this.
+
+4. How can the distribution of INV::p be so exponential?
+  a) how can we improve the relationship between the gamma category and the
+     other (e.g. INV) rate categories?
+5. Use a RJMCMC on a fixed alignment to model local changes in 'mu'
+   +  or use a change-point model?
+   +  or use a *nested* Change Point Model?
+   + we need some way to find out if the gamaa model "fits" well! (how
+much of the variation is spatial?)
+
 1. Test sampling of epsilon.  (Implement model where lambda & epsilon not coupled?)
   a) e-mail about the method for converting matrices from WAG to codon level.
 2. Put "epsilon" on the "mean_indel_length" scale.
 3. Do the autoconf magic to compile BOOST and GSL in-tree.
+4. Do something about "Amino Acids"?  (Use an underscore)
 5. Proposals and Priors
   a. use a parameter_names_ vector.
 6. Output move stats in tracer-readable format. (or, at least, allow burn-in?)
-7. Complain about illegal characters (ASCII >=32 and <= 126)
-    when reading alignments.
 --------------------------------------------------------
 
 -50. What is the proper way to handle gaps in an AU plot?
@@ -43,6 +70,11 @@
 
 -39. Why does tracer disagree on autocorrelation?
 
+-38. Reading alignments:
+     a) Complain about illegal characters (ASCII >=32 and <= 126) when
+        reading alignments.
+     b) Speed up time to read alignments.
+          
 -37. Improve trees-consensus
   + Compute the entire set of branches / counts for full partitions.
   + Compute the greedy tree using these counts.
@@ -450,6 +482,8 @@ the prior, because we never want to use it  differently.
 [DONE] Implement codon-frequencies from amino-acid frequencies [no codon  bias].
 
 [DONE] Go back to permitting trees w/ (e.g. root) nodes of degree 2.
+
+[DONE] Improve branch-mean-lengths
 
 *IDEAS*
 
