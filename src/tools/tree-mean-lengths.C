@@ -149,7 +149,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: tree-get-lengths <tree-file> < in-file\n";
+    cout<<"Usage: tree-mean-lengths <tree-file> < in-file\n";
     cout<<all<<"\n";
     exit(0);
   }
