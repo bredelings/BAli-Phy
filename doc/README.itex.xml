@@ -1256,10 +1256,11 @@ traditional = traditional
       <para><application>BAli-Phy</application> creates a new directory
       to store its output files in each time it is run.  By default, the
       directory name is the name of the sequence file, with a number
-      added on the end. <application>BAli-Phy</application> first checks
-      if there is already a directory called <replaceable>file</replaceable>-1/,
-      and then moves on to <replaceable>file</replaceable>-2/,
-      etc. until it finds an unused directory name.</para>
+      added on the end to make it unique. <application>BAli-Phy</application>
+      first checks  if there is already a directory called
+      <replaceable>file</replaceable>-1/, and then moves on to
+      <replaceable>file</replaceable>-2/, etc. until it finds an
+      unused directory name.</para> 
       
       <para>You can specify a different name to use instead of the
       sequence-file name by using the <userinput>--name</userinput> option.</para>
@@ -1386,8 +1387,7 @@ traditional = traditional
 	<replaceable>level</replaceable> (Newick format)</para> 
 	</listitem></varlistentry>
 
-	<varlistentry><term>c50.tree</term><listitem>
-	<para>The majority consensus topology + branch lengths (Newick format)</para> 
+	<varlistentry><term>c<replaceable>level</replaceable>.tree</term><listitem>	<para>The majority consensus topology + branch lengths (Newick format)</para> 
 	</listitem></varlistentry>
 
 	<varlistentry><term>MAP.topology</term><listitem>
@@ -1406,19 +1406,12 @@ traditional = traditional
 	<para>An estimate of the MAP alignment, w/ taxa sorted by similarity.
 	</para></listitem></varlistentry>
 
-      </variablelist>
-
-      <para>In addition, if you type <userinput>SKIP=<replaceable>burn-in</replaceable> make
-   Results/MAP-AU.html</userinput>, the following files will be produced:</para>
-
-      <variablelist>
-
 	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot
-    </para></listitem></varlistentry>
+	</para></listitem></varlistentry>
 
 	<varlistentry><term>MAP-AU.prob</term><listitem><para>The probabilities for each letter in the AU plot
-    </para></listitem></varlistentry>
-
+	</para></listitem></varlistentry>
+    
       </variablelist>
 
     </sect2>
@@ -1437,11 +1430,11 @@ traditional = traditional
 	using a block bootstrap.</para>
 	</listitem></varlistentry>
 
-	<varlistentry><term>SRQ.plot</term><listitem><para>A collection of
+	<varlistentry><term>partitions.SRQ</term><listitem><para>A collection of
 	SRQ plots for the supported partitions.
     </para></listitem></varlistentry>
 
-	<varlistentry><term>c50.plot</term><listitem><para>An
+	<varlistentry><term>c50.SRQ</term><listitem><para>An
 	SRQ plot for the majority consensus tree.
     </para></listitem></varlistentry>
 
