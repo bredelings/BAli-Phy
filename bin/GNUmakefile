@@ -113,7 +113,7 @@ Work/consensus-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 	alignment-consensus < Work/samples-${SKIP}+${SIZE} > $@
 
 Results/%-AU.prob: Work/%-unordered.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree
-	alignment-gild Work/$*-unordered.fasta Results/MAP.tree --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
+	alignment-gild Work/$*-unordered.fasta Results/MAP.tree --find-root --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
 
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
 	alignment-draw Results/$*.fasta Results/$*-AU.prob --width 100 > $@
