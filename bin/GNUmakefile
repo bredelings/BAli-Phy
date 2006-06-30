@@ -3,7 +3,7 @@ SHELL=/bin/sh
 
 TOPOLOGIES=c50 c66 c80 c90 c95 c99 c100 MAP
 
-TREES=c50 MAP
+TREES=${TOPOLOGIES}
 
 ifeq ($(origin CHAIN), undefined)
   CHAIN=1
@@ -33,7 +33,8 @@ Work/setup:
 Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
 		  Results/Report Results/MAP.fasta Results/MAP.phy \
-		  Mixing/partitions.SRQ Mixing/c50.SRQ Mixing/partitions.bs # MAP-AU.html median-AU.html
+		  Mixing/partitions.SRQ Mixing/c50.SRQ Mixing/partitions.bs \
+		  MAP-AU.html
 	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration $$(( ${SKIP} + 1))." > Results/analysis
 	@echo "Finished:  $$(date)" >> Results/analysis
 	@echo 
