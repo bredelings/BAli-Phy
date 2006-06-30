@@ -599,11 +599,11 @@ string hostname()
 
 vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
 {
-  vector<ostream*> files(2,NULL);
+  vector<ostream*> files;
 
   if (args.count("show-only")){
-    files[0] = &cout;
-    files[1] = &cerr;
+    files.push_back(&cout);
+    files.push_back(&cerr);
   }
   else {
 
