@@ -206,26 +206,41 @@ RootedSequenceTree standardized(const string& t)
   standardize(T);
   return T;
 }
+
+template <class T>
+struct array_order
+{
+  const vector<T>& array;
+  bool operator()(int i,int j) const {return std::less<T>()(array[i],array[j]);}
+
+  array_order(const vector<T>& n):array(n) {}
+};
+
+vector<int> compute_sorted_mapping(const vector<string>& names)
+{
+  vector<int> mapping(names.size());
+  for(int i=0;i<names.size();i++)
+    mapping[i] = i;
+
+  std::sort(mapping.begin(),mapping.end(),array_order<string>(names));
+
+  return invert(mapping);
+}
+
+
+
   
 //FIXME - return mapping of leaf nodes?  Of all nodes?
-void standardize(SequenceTree& T) {
-
-  vector<string> names = T.get_sequences();
-    
-  std::sort(names.begin(),names.end());
-
-  vector<int> mapping = compute_mapping(T.get_sequences(),names);
+void standardize(SequenceTree& T) 
+{
+  vector<int> mapping = compute_sorted_mapping(T.get_sequences());
 
   T.standardize(mapping);
 }
 
 void standardize(RootedSequenceTree& T) {
 
-  vector<string> names = T.get_sequences();
-    
-  std::sort(names.begin(),names.end());
-
-  vector<int> mapping = compute_mapping(T.get_sequences(),names);
+  vector<int> mapping = compute_sorted_mapping(T.get_sequences());
 
   T.standardize(mapping);
 
