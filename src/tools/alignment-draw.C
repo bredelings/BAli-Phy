@@ -644,6 +644,7 @@ BODY {\n\
 \n\
    font-size: 10pt; \n\
    font-weight: bold;\n\
+   font-family: monospace;\n\
 }\n\
 \n\
 .sequences TD.sequencename {\n\
@@ -651,6 +652,7 @@ BODY {\n\
 \n\
    font-weight: normal;\n\
    font-style: italic;\n\
+   font-family: sans-serif;\n\
 }\n\
 \n\
 .legend {\n\
