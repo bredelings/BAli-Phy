@@ -40,8 +40,26 @@ std::string convertToString(T t)
   return "conversion error";
 } 
 
+template<class T>
+struct bad_mapping: public myexception
+{
+  T missing;
+
+  bad_mapping(const T& t)
+    : missing(t)
+  { }
+
+  bad_mapping(const T& t,const std::string& s)
+    : myexception(s),
+      missing(t)
+  { }
+
+  ~bad_mapping() throw() {}
+};
+
 template <class T>
-std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& v2) {
+std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& v2) 
+{
   assert(v1.size() == v2.size());
 
   std::vector<int> mapping(v1.size());
@@ -53,8 +71,8 @@ std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& 
 	break;
       }
     }
-    if (target == -1)
-      throw myexception()<<"Vector v2 does not contain all elements of v1!";
+    if (target == -1) throw bad_mapping<T>(v1[i],"Vector v2 does not contain all elements of v1!");
+
     mapping[i] = target;
   }
 

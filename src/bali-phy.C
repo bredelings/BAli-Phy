@@ -32,6 +32,7 @@
 #include "monitor.H"
 #include "pow2.H"
 #include "proposals.H"
+#include "tree-util.H" //extends
 
 namespace fs = boost::filesystem;
 
@@ -355,7 +356,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("seed", value<unsigned long>(),"Random seed")
     ("data-dir", value<string>()->default_value("Data"),"Location of the Data/ directory")
     ("name", value<string>(),"Name for the analysis, instead of the alignment filename.")
-    ("align-constraint",value<string>(),"File with alignment constraints")
     ("traditional,t","Fix the alignment and don't model indels")
     ("letters",value<string>()->default_value("full_tree"),"If set to 'star', then use a star tree for substitution")
     ;
@@ -385,10 +385,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description model("Model options");
   model.add_options()
-    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino Acids, Amino Acids + stop, Triplets, Codons, or Codons + stop")
-    ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory")
-    ("smodel",value<string>(),"Substitution model")
-    ("imodel",value<string>()->default_value("fragment-based+T"),"Indel model: simple, fragment-based, or fragment-based+T")
+    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino Acids, Amino Acids + stop, Triplets, Codons, or Codons + stop.")
+    ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
+    ("smodel",value<string>(),"Substitution model.")
+    ("imodel",value<string>()->default_value("fragment-based+T"),"Indel model: simple, fragment-based, or fragment-based+T.")
+    ("align-constraint",value<string>(),"File with alignment constraints.")
+    ("t-constraint",value<string>(),"File with m.f. tree representing topology constraint.")
+    ("a-constraint",value<string>(),"File with m.f. tree representing alignment constraint.")
+    ("b-constraint",value<string>(),"File with m.f. tree representing branch length constraints.")
     ;
   options_description all("All options");
   all.add(general).add(mcmc).add(parameters).add(model);
@@ -707,6 +711,26 @@ public:
   ~teebuf() {sync();}
 };
 
+SequenceTree load_constraint_tree(const string& filename,const SequenceTree& T)
+{
+  RootedSequenceTree RT;
+  RT.read(filename);
+
+  SequenceTree constraint = RT;
+      
+  remove_sub_branches(constraint);
+  
+  try{
+    remap_T_indices(constraint,T);
+  }
+  catch(const bad_mapping<string>& b) {
+    bad_mapping<string> b2(b.missing);
+    b2<<"Constraint tree leaf sequence '"<<b2.missing<<"' doesn't occur in the alignment.";
+    throw b2;
+  }
+  return constraint;
+}
+
 int main(int argc,char* argv[]) 
 { 
   std::ios::sync_with_stdio(false);
@@ -807,7 +831,24 @@ int main(int argc,char* argv[])
       s_out<<"none";
     s_out<<endl<<endl;
 
+    //----------------- Tree constraints ----------------//
+    if (args.count("t-constraint"))
+      P.TC = load_constraint_tree(args["t-constraint"].as<string>(),T);
+    if (args.count("a-constraint"))
+      P.AC = load_constraint_tree(args["a-constraint"].as<string>(),T);
+    if (args.count("b-constraint"))
+      P.BC = load_constraint_tree(args["b-constraint"].as<string>(),T);
+
+    if (not extends(P.TC,P.AC))
+      throw myexception()<<"You may only constrain the alignment on constrained branches!";
+    if (not extends(P.TC,P.AC))
+      throw myexception()<<"You may only constrain the length of constrained branches!";
+
+    //---------- Alignment constraint (horizontal) -----------//
     P.alignment_constraint = load_alignment_constraint(args,T);
+
+    //---------- Alignment constraint (vertical) -----------//
+    //P.alignment_constraint = load_alignment_constraint(args,T);
 
     if (args.count("beta")) {
       string beta_s = args["beta"].as<string>();

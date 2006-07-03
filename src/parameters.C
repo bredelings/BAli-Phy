@@ -186,6 +186,9 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
    beta(2, 1.0),
    features(0),
    T(t),
+   TC(star_tree(t.get_sequences())),
+   AC(star_tree(t.get_sequences())),
+   BC(star_tree(t.get_sequences())),
    LC(T,SModel())
 {
   constants.push_back(-1);

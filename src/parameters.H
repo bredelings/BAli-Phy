@@ -72,6 +72,15 @@ public:
   /// The Tree
   SequenceTree T;
 
+  /// Topology Constraint
+  SequenceTree TC;
+
+  /// Alignment Constraint
+  SequenceTree AC;
+
+  /// Branch-length Constraint
+  SequenceTree BC;
+
   /// Alignment constraint
   ublas::matrix<int> alignment_constraint;
 

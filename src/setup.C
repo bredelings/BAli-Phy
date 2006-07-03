@@ -123,6 +123,59 @@ SequenceTree get_random_T(const alignment& A) {
   return T;
 }
 
+void remap_T_indices(SequenceTree& T,const vector<string>& names)
+{
+  //----- Remap leaf indices for T onto A's leaf sequence indices -----//
+  try {
+    vector<int> mapping = compute_mapping(T.get_sequences(),names);
+
+    T.standardize(mapping);
+  }
+  catch(const bad_mapping<string>& b)
+  {
+    bad_mapping<string> b2(b.missing);
+    b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in names.";
+    throw b2;
+  }
+}
+
+void remap_T_indices(SequenceTree& T,const alignment& A)
+{
+  if (A.n_sequences() < T.n_leaves())
+    throw myexception()<<"Tree has "<<T.n_leaves()<<" leaves, but alignment has only "<<A.n_sequences()<<" sequences.";
+
+  //----- Remap leaf indices for T onto A's leaf sequence indices -----//
+  try {
+    vector<string> names;  
+    for(int i=0;i<T.n_leaves();i++) 
+      names.push_back( A.seq(i).name );
+
+    remap_T_indices(T,names);
+  }
+  catch(const bad_mapping<string>& b)
+  {
+    bad_mapping<string> b2(b.missing);
+    b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in alignment.";
+    throw b2;
+  }
+}
+
+void remap_T_indices(SequenceTree& T1,const SequenceTree& T2)
+{
+  if (T1.n_leaves() != T2.n_leaves())
+    throw myexception()<<"Trees do not correspond: different numbers of leaves.";
+
+  //----- Remap leaf indices for T onto A's leaf sequence indices -----//
+  try {
+    remap_T_indices(T1,T2.get_sequences());
+  }
+  catch(const bad_mapping<string>& b)
+  {
+    bad_mapping<string> b2(b.missing);
+    b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in second tree.";
+    throw b2;
+  }
+}
 
 /// Remap T leaf indices to match A: check the result
 void link(alignment& A,SequenceTree& T,bool internal_sequences) 
@@ -168,24 +221,8 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
   else
     assert(A.n_sequences() == T.n_leaves());
 
-
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
-  vector<int> mapping(T.n_leaves());
-  for(int i=0;i<T.n_leaves();i++) {
-    int target = -1;
-    for(int j=0;j<T.n_leaves();j++) {
-      if (T.seq(i) == A.seq(j).name) {
-	target = j;
-	break;
-      }
-    }
-    if (target == -1)
-      throw myexception()<<"Couldn't find sequence \""<<T.seq(i)<<"\" in alignment";
-    mapping[i] = target;
-  }
-
-  T.standardize(mapping);
-
+  remap_T_indices(T,A);
 
   //---- Check to see that internal nodes satisfy constraints ----//
   check_alignment(A,T,internal_sequences);
@@ -232,22 +269,7 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
 
 
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
-  vector<int> mapping(T.n_leaves());
-  for(int i=0;i<T.n_leaves();i++) {
-    int target = -1;
-    for(int j=0;j<T.n_leaves();j++) {
-      if (T.seq(i) == A.seq(j).name) {
-	target = j;
-	break;
-      }
-    }
-    if (target == -1)
-      throw myexception()<<"Couldn't find sequence \""<<T.seq(i)<<"\" in alignment";
-    mapping[i] = target;
-  }
-
-  T.standardize(mapping);
-
+  remap_T_indices(T,A);
 
   //---- Check to see that internal nodes satisfy constraints ----//
   check_alignment(A,T,internal_sequences);

@@ -21,6 +21,10 @@ std::valarray<double> empirical_frequencies(const boost::program_options::variab
 
 SequenceTree get_random_T(const alignment& A);
 
+void remap_T_indices(SequenceTree& T1, const vector<std::string>& names);
+void remap_T_indices(SequenceTree& T1, const alignment& T2);
+void remap_T_indices(SequenceTree& T1, const SequenceTree& T2);
+
 /// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
