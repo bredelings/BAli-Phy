@@ -11,6 +11,7 @@ AC_CONFIG_HEADER([config.h])
 # 1. Checks for programs.
 AC_PROG_CXX
 AC_PROG_CPP
+AC_PROG_RANLIB
 AC_PROG_INSTALL
 
 # Set language
@@ -22,18 +23,6 @@ AM_PROG_CC_C_O
 
 # 2. Checks for libraries.
 # FIXME: Replace `main' with a function in `-lboost_program_options':
-
-# Boost libraries have a string suffix that identifies the compiler
-# they were built with, among other details.  For example, it can be
-# '-gcc', '-gcc-mt', '-gcc-mt-1_31', and many other combinations
-# depending on the build system.
-# Some systems provide symlinks that hide these suffixes, avoiding
-# this mess.  However, other systems don't; we have to provide a way
-# to let the user manually specify a suffix.  Guessing can be very
-# difficult, given the variety of possibilities.
-AC_ARG_VAR(BOOST_SUFFIX,
-           [String suffix that identifies Boost libraries (empty by default)])
-AC_SUBST(BOOST_SUFFIX)
 
 AC_ARG_VAR(CHIP,
            [What CPU type should we specialize for to make a faster program?)])
@@ -49,52 +38,6 @@ else
    CHIP="-march=$CHIP -mtune=$CHIP"
 fi
 AC_SUBST(CHIP)
-
-AC_CHECK_LIB(boost_program_options, main)
-# AC_CHECK_LIB(gsl, gsl_cdf_beta_P)
-AC_CHECK_LIB(gslcblas, main)
-
-LIBS="-lboost_program_options${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(for the libboost_program_options${BOOST_SUFFIX} library)
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-  #include <boost/program_options.hpp>
-  using namespace boost::program_options;
-]],
-[[options_description invisible("Invisible options");]])],
- [AC_MSG_RESULT([yes])],
- [AC_MSG_FAILURE([libboost_program_options failure])])
-
-LIBS="-lboost_filesystem${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-  #include <boost/filesystem/operations.hpp>
-  namespace fs = boost::filesystem;
-]],
-[[fs::path::default_name_check(fs::portable_posix_name);]])],
- [AC_MSG_RESULT([yes])],
- [AC_MSG_FAILURE([libboost_filesystem failure])])
-
-# 3. Checks for header files.
-
-# Checks for typedefs, structures, and compiler characteristics.
-# AC_HEADER_STDBOOL
-# AC_C_CONST
-# AC_C_INLINE
-AC_DEFUN([BOOST_VERSION_CHECK],
-[AC_CACHE_CHECK([boost version 1.32 or newer], ac_cv_version_boost,
-[
-  AC_TRY_RUN(
-  [#include <boost/version.hpp>
-  int main() { return (BOOST_VERSION < 103200); }],
-  ac_cv_version_boost=yes,
-  ac_cv_version_boost=no)
-])
-  if test $ac_cv_version_boost = no; then
-	AC_MSG_ERROR([boost 1.32 or newer required])
-  fi
-])
-BOOST_VERSION_CHECK
-
 
 AC_TYPE_SIZE_T
 
@@ -112,17 +55,18 @@ AC_ARG_ENABLE([static],
              [static=$enableval],
              [static=no])
 
-cxxflags+=" -DBALI_PHY_VERSION=\\\"$PACKAGE_VERSION\\\""
+cxxflags="$cxxflags -I\$(top_srcdir)/boost/include"
+cxxflags="$cxxflags -DBALI_PHY_VERSION=\\\"$PACKAGE_VERSION\\\""
 
 if test "$profile" = yes ; then
-   cxxflags+=' -pg'
-   ldflags+=' -pg'
+   cxxflags="$cxxflags -pg"
+   ldflags="$ldflags -pg"
 fi
 
 if test "$debug" = yes ; then
-   cxxflags+=' -g' 
+   cxxflags="$cxxflags -g"
 elif ! test "$profile" = yes; then
-   cxxflags+=' -fomit-frame-pointer'
+   cxxflags="$cxxflags -fomit-frame-pointer"
 fi
 
 AC_SUBST(cxxflags)
@@ -151,6 +95,13 @@ AC_FUNC_SELECT_ARGTYPES
 AC_CHECK_FUNCS([floor pow sqrt strchr])
 
 #AC_CONFIG_FILES([GNUmakefile])
-AC_OUTPUT([Makefile src/Makefile])
+AC_OUTPUT([
+  Makefile 
+  src/Makefile 
+  boost/Makefile 
+  boost/lib/Makefile 
+  boost/lib/filesystem/Makefile 
+  boost/lib/program_options/Makefile
+])
 
 

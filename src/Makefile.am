@@ -70,7 +70,9 @@ endif
 
 CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
 
-BOOST_LIBS = -lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}
+#BOOST_LIBS = -lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}
+BOOST_LIBS = @top_builddir@/boost/lib/filesystem/libboost_filesystem.a \
+             @top_builddir@/boost/lib/program_options/libboost_program_options.a
 
 LIBS = -lgsl -lgslcblas -lm ${BOOST_LIBS}
 
