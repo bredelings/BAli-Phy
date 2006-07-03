@@ -43,7 +43,7 @@ void guess_markov_model(vector<string>& string_stack,const alphabet& a)
   else if (dynamic_cast<const AminoAcids*>(&a))
     string_stack.push_back("Empirical");
   else if (dynamic_cast<const Codons*>(&a))
-    string_stack.push_back("YangM0");
+    string_stack.push_back("M0");
   else if (dynamic_cast<const Triplets*>(&a))
     string_stack.push_back("HKYx3");
 }
@@ -119,7 +119,7 @@ bool process_stack_Markov(vector<string>& string_stack,
 
     model_stack.push_back(Empirical(a,filename));
   }
-  else if (match(string_stack,"YangM0",arg)) 
+  else if (match(string_stack,"M0",arg)) 
   {
     const Codons* C = dynamic_cast<const Codons*>(&a);
     if (not C)
@@ -131,11 +131,11 @@ bool process_stack_Markov(vector<string>& string_stack,
       OwnedPointer< ::Model> submodel = get_smodel(args,arg,C->getNucleotides(),valarray<double>());
       NucleotideExchangeModel* temp = dynamic_cast<NucleotideExchangeModel*>( submodel.get());
       if (not temp)
-	throw myexception()<<"Submodel '"<<arg<<"' for YangM0 is not a nucleotide replacement model.";
+	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide replacement model.";
       N_submodel = temp->clone();
     }
 
-    model_stack.push_back( YangM0(*C, *N_submodel) );
+    model_stack.push_back( M0(*C, *N_submodel) );
   }
   else
     return false;
@@ -344,41 +344,41 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     model_stack.push_back(MixtureModel(models));
   }
-  else if (match(string_stack,"YangM2",arg)) {
+  else if (match(string_stack,"M2",arg)) {
 
-    YangM0* YM = dynamic_cast<YangM0*>(model_stack.back().get());
+    M0* YM = dynamic_cast<M0*>(model_stack.back().get());
 
     if (not YM)
-      throw myexception()<<"Trying to construct a Yang M2 model from a '"<<model_stack.back().get()->name()
-			 <<"' model, which is not a YangM0 model.";
+      throw myexception()<<"Trying to construct an M2 model from a '"<<model_stack.back().get()->name()
+			 <<"' model, which is not a M0 model.";
 
-    model_stack.back() = YangM2(*YM, SimpleFrequencyModel(YM->Alphabet()));
+    model_stack.back() = M2(*YM, SimpleFrequencyModel(YM->Alphabet()));
   }
-  else if (match(string_stack,"YangM3",arg)) {
+  else if (match(string_stack,"M3",arg)) {
     int n=3;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    YangM0* YM = dynamic_cast<YangM0*>(model_stack.back().get());
+    M0* YM = dynamic_cast<M0*>(model_stack.back().get());
 
     if (not YM)
-      throw myexception()<<"Trying to construct a Yang M3 model from a '"<<model_stack.back().get()->name()
-			 <<"' model, which is not a YangM0 model.";
+      throw myexception()<<"Trying to construct an M3 model from a '"<<model_stack.back().get()->name()
+			 <<"' model, which is not a M0 model.";
 
-    model_stack.back() = YangM3(*YM, SimpleFrequencyModel(YM->Alphabet()), n);
+    model_stack.back() = M3(*YM, SimpleFrequencyModel(YM->Alphabet()), n);
   }
-  else if (match(string_stack,"YangM7",arg)) {
+  else if (match(string_stack,"M7",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    YangM0* YM = dynamic_cast<YangM0*>(model_stack.back().get());
+    M0* YM = dynamic_cast<M0*>(model_stack.back().get());
 
     if (not YM)
-      throw myexception()<<"Trying to construct a Yang M7 model from a '"<<model_stack.back().get()->name()
-			 <<"' model, which is not a YangM0 model.";
+      throw myexception()<<"Trying to construct an M7 model from a '"<<model_stack.back().get()->name()
+			 <<"' model, which is not a M0 model.";
 
-    model_stack.back() = YangM7(*YM, SimpleFrequencyModel(YM->Alphabet()), n);
+    model_stack.back() = M7(*YM, SimpleFrequencyModel(YM->Alphabet()), n);
   }
   else
     return false;

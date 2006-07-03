@@ -1,3 +1,9 @@
+7. Re-organize todo, putting later stuff in 'ideas' not TODO
+
+9. Implement multiple data partitions...  (on a branch)
+  (a) More than one alignment + scaling between the trees
+  (b) More than one substitution model?
+
 1. Estimate constraints using alignment-indices
   a) specify number of constraints
   b) no gaps nearby (distance W+G) from constraint
@@ -9,17 +15,6 @@
 2. How much of the sequences is in each %-identity fraction?
   a) How much information is in each fraction?
 
-3. Add a 'nice' argument?  No default - this could go in the config file!
-  a) But what if we run SGE jobs and regular jobs on the same machine?
-  b) Would we find some way to NOT use the nice if we are doing SGE?
-  c) I suppose we could do 'nice 0' in that case.
-  d) Or we could avoid using the config file in that case.
-  e) Well, nice isn't actually that hard to add by hand!
-  f) But add something to the documentation about this.
-
-4. How can the distribution of INV::p be so exponential?
-  a) how can we improve the relationship between the gamma category and the
-     other (e.g. INV) rate categories?
 5. Use a RJMCMC on a fixed alignment to model local changes in 'mu'
    +  or use a change-point model?
    +  or use a *nested* Change Point Model?
@@ -29,7 +24,6 @@ much of the variation is spatial?)
 1. Test sampling of epsilon.  (Implement model where lambda & epsilon not coupled?)
   a) e-mail about the method for converting matrices from WAG to codon level.
 2. Put "epsilon" on the "mean_indel_length" scale.
-3. Do the autoconf magic to compile BOOST and GSL in-tree.
 4. Do something about "Amino Acids"?  (Use an underscore)
 5. Proposals and Priors
   a. use a parameter_names_ vector.
@@ -63,6 +57,18 @@ much of the variation is spatial?)
   + How do we pass back information about move success from each move?
   + Can we have the move parameters converge to something?
     - Should this be in the PROPOSAL, or something governing the proposal?
+
+-------------------------------------------------------
+Before 1.9.9:
+
+ * Implement tree constraints.
+ * Implement alignment constraints.
+ * Do the autoconf magic to compile GSL in-tree.
+
+-------------------------------------------------------
+Questions:
+
+ * How can the distribution of INV::p be so exponential? (AATS)
 
 -------------------------------------------------------
 
@@ -484,6 +490,10 @@ the prior, because we never want to use it  differently.
 [DONE] Go back to permitting trees w/ (e.g. root) nodes of degree 2.
 
 [DONE] Improve branch-mean-lengths
+
+[DONE] Make HTML alignments use mono-space fonts.
+
+[DONE] Remove 'Yang' from M? models. (code and options.)
 
 *IDEAS*
 

@@ -229,9 +229,9 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   add_MH_move(P, log_scaled(shift_gaussian),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(shift_gaussian),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(shift_gaussian),    "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_gaussian),    "YangM0::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, log_scaled(shift_gaussian),    "M0::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(more_than(0,shift_gaussian)),
-	                                        "YangM2::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
+	                                        "M2::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, between(0,1,shift_gaussian),   "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
   add_MH_move(P, between(0,1,shift_gaussian),   "c",              "c_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_gaussian),   "f",              "f_shift_sigma",      0.1,  parameter_moves);

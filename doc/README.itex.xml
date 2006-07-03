@@ -7,7 +7,7 @@
      "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [] -->
 <article lang="en">
   <articleinfo>
-    <title><application>BAli-Phy</application> User's Guide</title>
+    <title><application>BAli-Phy</application> User's Guide v1.9.9</title>
     <author>
       <firstname>Benjamin</firstname>
       <surname>Redelings</surname>
@@ -59,7 +59,12 @@
 	  development tools from Apple to compile
 	  <application>BAli-Phy</application>, the system must be 10.4 or
 	  higher, and you must upgrade to XCode 2.2 (see Software
-	  Requirements). 
+	  Requirements).
+	  </para>
+
+	  <para>You can use <ulink
+	  url="http://fink.sourceforge.net">Fink</ulink> to install
+	  other useful applications, such as gnuplot.
 	  </para>
 	</sect3>
 
@@ -811,7 +816,7 @@ traditional = traditional
 
       <sect3>
 	<title>Basic CTMC models</title>
-	<para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and YangM0.</para>
+	<para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and M0.</para>
       </sect3>
 
       <sect3>
@@ -819,7 +824,7 @@ traditional = traditional
 	<para>If the substitution model is not specified, then the
 	default model for the alphabet is used.  For DNA or RNA, the
 	default model is HKY.  For Triplets, the default is HKYx3. For
-        Codons, the default model is YangM0.  For AminoAcids, the
+        Codons, the default model is M0.  For AminoAcids, the
 	default model is Empirical[WAG]. 
 	</para>
       </sect3>
@@ -902,7 +907,7 @@ traditional = traditional
 
 	    <row>
 	      <entry>
-		<para><userinput>YangM0</userinput></para>
+		<para><userinput>M0</userinput></para>
 		<para>Nielsen and Yang (1998)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -922,7 +927,7 @@ traditional = traditional
 
 	    <row>
 	      <entry>
-		<para><userinput>YangM0[<replaceable>nuc-model=HKY</replaceable>]</userinput></para>
+		<para><userinput>M0[<replaceable>nuc-model=HKY</replaceable>]</userinput></para>
 		<para>Nielsen and Yang (1998)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1033,9 +1038,9 @@ traditional = traditional
 	are optional.
 	</para>
 
-      <para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and YangM0.</para>
+      <para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and M0.</para>
 
-      <para>Model modifiers are gamma, INV, YangM2, YangM3, and YangM7.</para>
+      <para>Model modifiers are gamma, INV, M2, M3, and M7.</para>
       </sect2>
 
       <sect2>
@@ -1044,10 +1049,10 @@ traditional = traditional
 	<para>Example: --smodel HKY</para>
 	<para>Example: --smodel TN+pi=constant</para>
 	<para>Example: --smodel Empirical[WAG]+gamma+INV</para>
-	<para>Example: --smodel YangM0 --alphabet Codons</para>
-	<para>Example: --smodel YangM0+pi=nucleotides --alphabet Codons</para>
-	<para>Example: --smodel YangM2 --alphabet Codons</para>
-	<para>Example: --smodel YangM0[TN]+YangM2 --alphabet Codons</para>
+	<para>Example: --smodel M0 --alphabet Codons</para>
+	<para>Example: --smodel M0+pi=nucleotides --alphabet Codons</para>
+	<para>Example: --smodel M2 --alphabet Codons</para>
+	<para>Example: --smodel M0[TN]+M2 --alphabet Codons</para>
       </sect2>
 
       <sect2>
@@ -1153,8 +1158,8 @@ traditional = traditional
 	    <tbody>
 	    <row>
 	      <entry>
-		<para><userinput>YangM2</userinput></para>
-		<para><userinput><replaceable>sub-model</replaceable> + YangM2</userinput></para>
+		<para><userinput>M2</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + M2</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1166,14 +1171,14 @@ traditional = traditional
 	      <entry>
 	      <para>$\Omega=\omega_i$ with probability $p_i$.</para>
 	      <para>$\omega_1 = 0$, $\omega_2 = 1$.</para>
-	      <para>The default for <replaceable>sub-model</replaceable> is YangM0.</para>
+	      <para>The default for <replaceable>sub-model</replaceable> is M0.</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput>YangM3[$n$]</userinput></para>
-		<para><userinput><replaceable>sub-model</replaceable> + YangM3[$n$]</userinput></para>
+		<para><userinput>M3[$n$]</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + M3[$n$]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1189,8 +1194,8 @@ traditional = traditional
 
 	    <row>
 	      <entry>
-		<para><userinput>YangM7[$n$]</userinput></para>
-		<para><userinput><replaceable>sub-model</replaceable> + YangM7[$n$]</userinput></para>
+		<para><userinput>M7[$n$]</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + M7[$n$]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1241,9 +1246,6 @@ traditional = traditional
 
 
       </sect2>
-      
-
-
 
 
   </sect1>

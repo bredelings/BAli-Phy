@@ -898,16 +898,16 @@ namespace substitution {
   { }
 
   /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  double YangM0::omega() const {
+  double M0::omega() const {
     return parameter(0);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  void YangM0::omega(double w) {
+  void M0::omega(double w) {
     parameter(0,w);
   }
 
-  void YangM0::recalc(const vector<int>&)
+  void M0::recalc(const vector<int>&)
   {
     for(int i=0;i<Alphabet().size();i++) {
 
@@ -941,32 +941,32 @@ namespace substitution {
     }
   }
 
-  efloat_t YangM0::super_prior() const {
+  efloat_t M0::super_prior() const {
     return shift_laplace_pdf(log(omega()), 0, 0.1);
   }
 
-  efloat_t YangM0::prior() const {
+  efloat_t M0::prior() const {
     return NestedModelOver<NucleotideExchangeModel>::prior();
   }
 
-  string YangM0::name() const {
-    return string("YangM0[") + SubModel().name() + "]";
+  string M0::name() const {
+    return string("M0[") + SubModel().name() + "]";
   }
 
-  string YangM0::super_parameter_name(int i) const {
+  string M0::super_parameter_name(int i) const {
     if (i==0)
-      return "YangM0::omega";
+      return "M0::omega";
     else
       return s_parameter_name(i,1);
   }
 
-  YangM0::YangM0(const Codons& C,const NucleotideExchangeModel& N)
+  M0::M0(const Codons& C,const NucleotideExchangeModel& N)
     :CodonExchangeModel(C),NestedModelOver<NucleotideExchangeModel>(N,1)
   { 
     omega(1.0);
   }
 
-  YangM0::~YangM0() {}
+  M0::~M0() {}
 
   //--------------- MultiRate Models ----------------//
 
@@ -1314,7 +1314,7 @@ namespace substitution {
     return dist;
   }
 
-  void YangM2::recalc(const vector<int>&) 
+  void M2::recalc(const vector<int>&) 
   {
     fraction[0] = parameter(0);
     fraction[1] = parameter(1);
@@ -1327,7 +1327,7 @@ namespace substitution {
     recalc_submodel_instances();
   }
 
-  efloat_t YangM2::super_prior() const 
+  efloat_t M2::super_prior() const 
   {
     // prior on frequencies
     valarray<double> q(3);
@@ -1342,25 +1342,25 @@ namespace substitution {
     return P;
   }
 
-  string YangM2::name() const {
-    return SubModel().name() + " + YangM2";
+  string M2::name() const {
+    return SubModel().name() + " + M2";
   }
 
-  string YangM2::super_parameter_name(int i) const 
+  string M2::super_parameter_name(int i) const 
   {
     if (i==0)
-      return "YangM2::f[AA INV]";
+      return "M2::f[AA INV]";
     else if (i==1)
-      return "YangM2::f[Neutral]";
+      return "M2::f[Neutral]";
     else if (i==2)
-      return "YangM2::f[Selected]";
+      return "M2::f[Selected]";
     else if (i==3)
-      return "YangM2::omega";
+      return "M2::omega";
     else
       return s_parameter_name(i,4);
   }
 
-  YangM2::YangM2(const YangM0& M1,const ReversibleFrequencyModel& R) 
+  M2::M2(const M0& M1,const ReversibleFrequencyModel& R) 
     :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
 			 4,0,3)
   {
@@ -1384,14 +1384,14 @@ namespace substitution {
     return -1;
   }
 
-  //YangM3
+  //M3
 
-  double YangM3::omega(int i) const {
+  double M3::omega(int i) const {
     return parameter(fraction.size() + i);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  void YangM3::omega(int i,double w) {
+  void M3::omega(int i,double w) {
     parameter(fraction.size()+i,w);
   }
 
@@ -1407,7 +1407,7 @@ namespace substitution {
     return x;
   }
 
-  void YangM3::recalc(const vector<int>&) 
+  void M3::recalc(const vector<int>&) 
   {
     for(int i=0;i<fraction.size();i++)
       fraction[i] = parameter(i);
@@ -1418,7 +1418,7 @@ namespace substitution {
     recalc_submodel_instances();
   }
 
-  efloat_t YangM3::super_prior() const 
+  efloat_t M3::super_prior() const 
   {
     efloat_t P = 1;
 
@@ -1432,23 +1432,23 @@ namespace substitution {
     return P;
   }
 
-  string YangM3::name() const {
-    return SubModel().name() + " + YangM3[" + convertToString(fraction.size()) + "]";
+  string M3::name() const {
+    return SubModel().name() + " + M3[" + convertToString(fraction.size()) + "]";
   }
 
-  string YangM3::super_parameter_name(int i) const 
+  string M3::super_parameter_name(int i) const 
   {
     if (i<fraction.size())
-      return "YangM3::f" + convertToString(i);
+      return "M3::f" + convertToString(i);
 
     else if (i<2*fraction.size())
-      return "YangM3::omega" + convertToString(i-fraction.size());
+      return "M3::omega" + convertToString(i-fraction.size());
 
     else
       return s_parameter_name(i,2*fraction.size());
   }
 
-  YangM3::YangM3(const YangM0& M1,const ReversibleFrequencyModel& R, int n) 
+  M3::M3(const M0& M1,const ReversibleFrequencyModel& R, int n) 
     :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
 			 2*n,0,n)
   {
@@ -1466,7 +1466,7 @@ namespace substitution {
 
 
 
-  YangM7::YangM7(const YangM0& M1,const ReversibleFrequencyModel& R, int n) 
+  M7::M7(const M0& M1,const ReversibleFrequencyModel& R, int n) 
     :DistributionParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
 				Beta(),0,n)
   { }

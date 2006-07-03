@@ -1,32 +1,32 @@
 /* TODO
-   0. Can we have a triplet model that isn't derived from YangM0*Neutral?
+   0. Can we have a triplet model that isn't derived from M0*Neutral?
 
    1. The WithINV models currently have INV frequencies = variant frequencies.
     a) If we had *2* submodels, then INV and the other models could have
        DIFFERENT frequencies.
 
-   2. If we want to do YangM0 + YangM7 + AAINV, then 
+   2. If we want to do M0 + M7 + AAINV, then 
       a) how do we make the AAINV model share the same alphabet model?
       b) could we make it share the same TripletFrequencies but
          use a different CodonFrequencies, and so have different AA 
          frequencies?
       c) can we use '+' to represent mixtures, instead of stacking?
-         YangM0~[w=0 + w~Beta( ) + w=1]
+         M0~[w=0 + w~Beta( ) + w=1]
          WAG~[rate=0 + rate~Gamma( )]  vs WAG~[INV + gamma] + WAG~[gamma+INV]
       d) It looks like we need to have a special class to specify a PRIOR on the mixture
          probabilities, though.
-      e) How about YangM0~[w=0] instead of Conserved?
+      e) How about M0~[w=0] instead of Conserved?
  
    3. Compare the marginal probability of CodonFrequencyModels on bglobin
       (fixed A) at different settings:
       a) f = 0.5 / nuX = 1/n (g=1) / c=0 (b_X=1/n, h=0) -> HKY (should match)
-      b) fX=1/n (f=1) / no constraint / c=0 (b_X=1/n, h=0) -> YangM0 (should match)
+      b) fX=1/n (f=1) / no constraint / c=0 (b_X=1/n, h=0) -> M0 (should match)
       c) fX=1/n (f=1) / nX = 1/n (g=1) / c=1 -> AA flat model
       d) fX=1/n (f=1) / no constraint /  c=1 -> AA flat model w/ codon bias
       e) no constraint / no constraint / c=1 -> AA flat model w/ codon bias + nuc. freqs.
       f) no constraint / no constraint / no constraint
 
-   4. What if we want to do {YangM0 + YangM7 + AAINV + Neutral} ?
+   4. What if we want to do {M0 + M7 + AAINV + Neutral} ?
       We should perhaps consider mixtures of exchange models.
       Would this handle gamma?
 
@@ -391,7 +391,7 @@ namespace substitution {
   };
 
 
-  class YangM0: public CodonExchangeModel,
+  class M0: public CodonExchangeModel,
 		public NestedModelOver<NucleotideExchangeModel>
   {
     void recalc(const vector<int>&);
@@ -400,7 +400,7 @@ namespace substitution {
 
     efloat_t prior() const;
 
-    YangM0* clone() const {return new YangM0(*this);}
+    M0* clone() const {return new M0(*this);}
 
     /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
     double omega() const;
@@ -410,9 +410,9 @@ namespace substitution {
     string name() const;
     string super_parameter_name(int i) const;
 
-    YangM0(const Codons& C,const NucleotideExchangeModel& M);
+    M0(const Codons& C,const NucleotideExchangeModel& M);
 
-    ~YangM0();
+    ~M0();
   };
 
   //------------------------ Reversible frequency model --------------------//
@@ -926,7 +926,7 @@ namespace substitution {
     WithINV(const MultiModel& M);
   };
 
-  class YangM2: public MultiParameterModel
+  class M2: public MultiParameterModel
   {
     void recalc(const vector<int>&);
 
@@ -934,23 +934,23 @@ namespace substitution {
     
     efloat_t super_prior() const;
 
-    YangM2* clone() const {return new YangM2(*this);}
+    M2* clone() const {return new M2(*this);}
 
     string name() const;
     string super_parameter_name(int i) const;
 
-    YangM2(const YangM0& M1,const ReversibleFrequencyModel& R);
+    M2(const M0& M1,const ReversibleFrequencyModel& R);
   };
 
 
-  class YangM3: public MultiParameterModel 
+  class M3: public MultiParameterModel 
   {
     void recalc(const vector<int>&);
   public:
     
     efloat_t super_prior() const;
 
-    YangM3* clone() const {return new YangM3(*this);}
+    M3* clone() const {return new M3(*this);}
 
     /// Get the parameter 'omega[i]' (non-synonymous/synonymous rate ratio)
     double omega(int i) const;
@@ -961,18 +961,18 @@ namespace substitution {
     string name() const;
     string super_parameter_name(int i) const;
 
-    YangM3(const YangM0& M1,const ReversibleFrequencyModel& R, int n);
+    M3(const M0& M1,const ReversibleFrequencyModel& R, int n);
   };
 
 
-  class YangM7: public DistributionParameterModel {
+  class M7: public DistributionParameterModel {
   public:
     
-    YangM7* clone() const {return new YangM7(*this);}
+    M7* clone() const {return new M7(*this);}
 
     //    string name() const;
 
-    YangM7(const YangM0& M1,const ReversibleFrequencyModel& R, int n);
+    M7(const M0& M1,const ReversibleFrequencyModel& R, int n);
   };
 
 
