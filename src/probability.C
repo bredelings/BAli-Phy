@@ -91,6 +91,14 @@ log_double_t shift_laplace_pdf(double x, double mu, double sigma) {
   return gsl_ran_laplace_pdf(x-mu,a);
 }
 
+log_double_t cauchy_pdf(double x, double l, double s)
+{
+  double C = (x-l)/s;
+  C = M_PI*s*(1.0+C*C);
+  log_double_t C2 = C;
+  return pow<log_double_t>(C,-1.0);
+}
+
 log_double_t beta_pdf(double p,double f, double N) {
     const double a  = 1.0 + N * f;
     const double b  = 1.0 + N * (1.0 - f);

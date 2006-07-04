@@ -55,6 +55,10 @@ double shift_laplace(double mu,double sigma) {
   return rng::standard->shift_laplace(mu,sigma);
 }
 
+double cauchy(double l,double s) {
+  return rng::standard->cauchy(l,s);
+}
+
 double exponential(double mu) {
   return rng::standard->exponential(mu);
 }
