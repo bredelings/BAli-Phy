@@ -185,7 +185,7 @@ efloat_t SimpleIndelModel::prior() const
   double pdel =  lambda_O-logdiff(0,lambda_O);
   double rate =  log(-logdiff(0,pdel)) - log(D);
 
-  Pr *= shift_laplace_pdf(rate,-5, 0.5);
+  Pr *= laplace_pdf(rate,-5, 0.5);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = parameters_[1];
@@ -227,7 +227,7 @@ efloat_t NewIndelModel::prior() const
   // Calculate prior on lambda_O
   double rate = parameters_[0];
 
-  Pr *= shift_laplace_pdf(rate,parameters_[3], parameters_[4]);
+  Pr *= laplace_pdf(rate,parameters_[3], parameters_[4]);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = parameters_[1];
@@ -373,7 +373,7 @@ efloat_t TKF1::prior() const
   // Calculate prior on lambda_O
   double rate = parameters_[0];
 
-  Pr *= shift_laplace_pdf(rate,parameters_[3], parameters_[4]);
+  Pr *= laplace_pdf(rate,parameters_[3], parameters_[4]);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = parameters_[1];

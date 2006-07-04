@@ -12,7 +12,7 @@ log_double_t exp_exponential_pdf(double y,double mu,double delta=0.0);
 
 log_double_t exponential_pdf(double x, double mu);
 
-log_double_t shift_laplace_pdf(double x, double mu, double sigma);
+log_double_t laplace_pdf(double x, double mu, double sigma);
 
 log_double_t cauchy_pdf(double x, double l=0.0, double s=1.0);
 

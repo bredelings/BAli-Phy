@@ -86,7 +86,7 @@ log_double_t exponential_pdf(double x, double mu) {
   return exp<log_double_t>(-x/mu)/mu;
 }
 
-log_double_t shift_laplace_pdf(double x, double mu, double sigma) {
+log_double_t laplace_pdf(double x, double mu, double sigma) {
   double a = sigma/sqrt(2);
   return gsl_ran_laplace_pdf(x-mu,a);
 }

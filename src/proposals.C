@@ -118,6 +118,37 @@ double shift_gaussian(vector<double>& x, const vector<double>& p)
   return 1.0;
 }
 
+double shift_laplace(vector<double>& x, const vector<double>& p)
+{
+  if (x.size() != 1) 
+    throw myexception()<<"shift_laplace: expected one dimension, got "<<x.size()<<".";
+
+  if (p.size() != 1) 
+    throw myexception()<<"shift_laplace: expected one parameter, got "<<p.size()<<".";
+
+  double& f = x[0];
+  double  s = p[0];
+
+  f += laplace(0,s);
+
+  return 1.0;
+}
+
+double shift_cauchy(vector<double>& x, const vector<double>& p)
+{
+  if (x.size() != 1) 
+    throw myexception()<<"shift_cauchy: expected one dimension, got "<<x.size()<<".";
+  if (p.size() != 1) 
+    throw myexception()<<"shift_cauchy: expected one parameter, got "<<p.size()<<".";
+
+  double& f = x[0];
+  double  s = p[0];
+
+  f += cauchy(0,s);
+
+  return 1.0;
+}
+
 double shift_delta(vector<double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 

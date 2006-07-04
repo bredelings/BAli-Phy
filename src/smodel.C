@@ -687,7 +687,7 @@ namespace substitution {
 
   efloat_t HKY::prior() const 
   {
-    return shift_laplace_pdf(log(kappa()), log(2), 0.25);
+    return laplace_pdf(log(kappa()), log(2), 0.25);
   }
 
   void HKY::recalc(const vector<int>&) {
@@ -727,8 +727,8 @@ namespace substitution {
     double beta  = (k1-k2)/2;
 
     efloat_t P = 1;
-    P *= shift_laplace_pdf(alpha, log(2), 0.25);
-    P *= shift_laplace_pdf(beta, 0, 0.10);
+    P *= laplace_pdf(alpha, log(2), 0.25);
+    P *= laplace_pdf(beta, 0, 0.10);
     return P;
   }
 
@@ -942,7 +942,7 @@ namespace substitution {
   }
 
   efloat_t M0::super_prior() const {
-    return shift_laplace_pdf(log(omega()), 0, 0.1);
+    return laplace_pdf(log(omega()), 0, 0.1);
   }
 
   efloat_t M0::prior() const {
@@ -1427,7 +1427,7 @@ namespace substitution {
 
     // prior on rates
     for(int i=0;i<fraction.size();i++)
-      P *= shift_laplace_pdf(log(omega(i)), 0, 0.1);
+      P *= laplace_pdf(log(omega(i)), 0, 0.1);
 
     return P;
   }

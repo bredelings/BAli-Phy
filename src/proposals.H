@@ -124,6 +124,10 @@ double scale_gaussian2(std::vector<double>& x,const std::vector<double>& p);
 
 double shift_gaussian(std::vector<double>& x,const std::vector<double>& p);
 
+double shift_laplace(std::vector<double>& x,const std::vector<double>& p);
+
+double shift_cauchy(std::vector<double>& x,const std::vector<double>& p);
+
 double shift_delta(std::vector<double>& x, const std::vector<double>& p);
 
 double shift_epsilon(std::vector<double>& x, const std::vector<double>& p);

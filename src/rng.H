@@ -25,7 +25,7 @@ double log_unif();
 double gaussian(double mu,double sigma);
 
 // return a shifted laplacian random variate
-double shift_laplace(double mu,double sigma);
+double laplace(double mu,double sigma);
 
 // return a shifted laplacian random variate
 double cauchy(double l=0.0,double s=1.0);
@@ -71,14 +71,13 @@ namespace rng {
 
     double log_unif() {return -gsl_ran_exponential(generator,1.0);}
 
-    double shift_laplace(double mu,double sigma) {return gsl_ran_laplace(generator,sigma)+mu;}
+    double laplace(double mu,double sigma) {return gsl_ran_laplace(generator,sigma)+mu;}
 
     double cauchy(double l=0.0,double s=1.0) {return gsl_ran_cauchy(generator,s)+l;}
 
     double gaussian(double mu,double sigma) {return gsl_ran_gaussian(generator,sigma/sqrt(2))+mu;}
 
     double exponential(double mu) {return gsl_ran_exponential(generator,mu);}
-
     double gamma(double a,double b) {return gsl_ran_gamma(generator,a,b);}
 
     int geometric (double p) {return gsl_ran_geometric(generator,p);}

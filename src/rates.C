@@ -128,7 +128,7 @@ namespace substitution {
   efloat_t Gamma::prior() const {
     double g_sigma = parameters_[0];
     double log_g_sigma = log(g_sigma);
-    return shift_laplace_pdf(log_g_sigma,-4,0.5);
+    return laplace_pdf(log_g_sigma,-4,0.5);
   }
 
   string Gamma::name() const {
@@ -170,7 +170,7 @@ namespace substitution {
 
     efloat_t P = 1;
     P *= beta_pdf(mu,0.99,20);
-    P *= shift_laplace_pdf(s,-4,0.5);
+    P *= laplace_pdf(s,-4,0.5);
     return P;
   }
 
