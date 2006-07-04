@@ -27,7 +27,8 @@ efloat_t topology_weight(const Parameters& P, const SequenceTree& T)
 
 
 /// Tree prior: branch lengths & topology
-efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean) {
+efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean) 
+{
   efloat_t p = 1;
 
   // --------- uniform prior on topologies --------//
@@ -48,7 +49,7 @@ efloat_t prior(const Parameters& P)
 {
   efloat_t p = 1;
 
-  const double branch_mean_mean = 0.04;
+  const double branch_mean_mean = loadvalue(P.keys,"branch_mean_mean",1.0);
 
   // prior on mu, the mean branch length
   p *= exponential_pdf(P.branch_mean(), branch_mean_mean);
