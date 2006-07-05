@@ -238,7 +238,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   add_MH_move(P, between(0,1,shift_gaussian),   "f",              "f_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_gaussian),   "g",              "g_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_gaussian),   "h",              "h_shift_sigma",      0.1,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_gaussian),    "beta::mu",       "mu_scale_sigma",     0.2,  parameter_moves);
+  add_MH_move(P, log_scaled(shift_gaussian),    "beta::mu",       "beta::mu_scale_sigma",     0.2,  parameter_moves);
   add_MH_move(P, log_scaled(more_than(-5.7,shift_gaussian)),
 	                                        "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, parameter_moves);
   add_MH_move(P, log_scaled(more_than(-4.0,shift_gaussian)),
@@ -247,14 +247,14 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 	                                        "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, parameter_moves);
 
   if (P.has_IModel()) {
-    add_MH_move(P, shift_delta,                 "delta",       "delta_shift_sigma",     0.35, parameter_moves);
+    add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, parameter_moves);
     add_MH_move(P, less_than(0,shift_gaussian), "lambda",      "lambda_shift_sigma",    0.35, parameter_moves);
     add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.15, parameter_moves);
     add_MH_move(P, between(0,1,shift_gaussian), "invariant",   "invariant_shift_sigma", 0.15, parameter_moves);
   }
   
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
-  P.keys["pi_dirichlet_N"] *= A.length();
+  P.keys["pi_dirichlet_N"] *= max(sequence_lengths(A,P.T.n_leaves()));
   add_MH_move(P, dirichlet_proposal,    "pi*",    "pi_dirichlet_N",      1,  parameter_moves);
 
   set_if_undef(P.keys,"GTR_dirichlet_N",1.0);

@@ -915,5 +915,18 @@ unsigned n_homologous(const alignment& A,int s1,int s2)
   return same;;
 }
 
+vector<unsigned> sequence_lengths(const alignment& A,unsigned n)
+{
+  vector<unsigned> lengths(n);
+  for(int i=0;i<n;i++)
+    lengths[i] = A.seqlength(i);
+  return lengths;
+}
+
+vector<unsigned> sequence_lengths(const alignment& A)
+{
+  return sequence_lengths(A,A.n_sequences());
+}
+
 
 

@@ -97,4 +97,8 @@ double fraction_homologous(const alignment& A,int s1,int s2);
 
 unsigned n_homologous(const alignment& A,int s1,int s2);
 
+std::vector<unsigned> sequence_lengths(const alignment& A);
+
+std::vector<unsigned> sequence_lengths(const alignment& A,unsigned n);
+
 #endif
