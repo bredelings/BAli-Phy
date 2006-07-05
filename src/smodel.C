@@ -1395,17 +1395,7 @@ namespace substitution {
     parameter(fraction.size()+i,w);
   }
 
-  double reflect_left(double x, double min) {
-    if (x < min)
-      x = min + (min-x);
-    return x;
-  }
-
-  double reflect_right(double x, double max) {
-    if (x > max)
-      x = max - (x-max);
-    return x;
-  }
+  //NOTE: we used to enforce ORDER for the M3 rates!
 
   void M3::recalc(const vector<int>&) 
   {
