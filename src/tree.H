@@ -54,6 +54,7 @@ protected:
 
   friend class branchview;
   friend class const_branchview;
+  friend std::vector<int> extends_map(const Tree&,const Tree&);
 
   /// an index to one BranchNode for each node
   std::vector<BranchNode*> nodes_;

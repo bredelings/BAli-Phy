@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <list>
 #include "tree-util.H"
 #include "myexception.H"
 
@@ -7,6 +8,7 @@ using boost::program_options::variables_map;
 using std::map;
 using std::string;
 using std::vector;
+using std::list;
 using std::valarray;
 using std::istream;
 using std::cout;
@@ -92,48 +94,40 @@ compare_complete_partitions::operator()(const std::valarray<bool>& p1,
   return false;
 }
 
-bool extends(const Tree& T,const Tree& Q)
+bool is_subset(const list<int>& L1,const list<int>& L2)
 {
-  assert(T.n_leaves() == Q.n_leaves());
+  list<int>::const_iterator i1 = L1.begin();
+  list<int>::const_iterator i2 = L2.begin();
 
-  if (T.n_branches() < Q.n_branches())
-    return false;
-
-  typedef map<valarray<bool>,int,compare_complete_partitions > container_t;
-  container_t branches;
-
-  // create leaves-only mask to use as temp var
-  std::valarray<bool> partition(T.n_leaves());
-
-  // insert informative partitions of T into 'branches'
-  for(int b=T.n_leafbranches();b<T.n_branches();b++) 
+  while(i1 != L1.end())
   {
-    partition = T.partition(b);
-    if (not partition[0])
-      partition = (not partition);
-    
-    branches.insert(container_t::value_type(partition,b));
-  };  
-  
-  // check if informative partitions of Q are in 'branches'
-  bool fail = false;
-  for(int b=Q.n_leafbranches();b<Q.n_branches();b++) 
-  {
-    partition = Q.partition(b);
-    if (not partition[0])
-      partition = (not partition);
+    if (i2 == L2.end()) return false;
 
-    container_t::iterator record = branches.find(partition);
-    if (record == branches.end())
-      fail = true;
+    if (*i1 > *i2) 
+      i2++;
+    else if (*i1 == *i2) {
+      i1++;
+      i2++;
+    }
+    else 
+      return false;
   }
-  return not fail;
+  return true;
 }
+
+
+struct node_info
+{
+  bool deleted;
+  int degree;
+  int leaf_degree;
+  list<int> adjacent_leaves;
+  node_info():deleted(false),degree(0),leaf_degree(0) { }
+};
+
 
 vector<int> extends_map(const Tree& T,const Tree& Q)
 {
-  assert(T.n_leaves() == Q.n_leaves());
-
   if (T.n_branches() < Q.n_branches())
     return vector<int>();
 
@@ -150,67 +144,139 @@ vector<int> extends_map(const Tree& T,const Tree& Q)
     branch_map[Qb.reverse().name()] = Tb.reverse().name();
   }
     
+  // collect pointers to leaves of both trees
+  vector<BranchNode*> leaves_Q(Q.n_leaves());
 
-  typedef map<valarray<bool>,int,compare_complete_partitions > container_t;
-  container_t branches;
+  vector<BranchNode*> leaves_T(T.n_leaves());
 
-  // create leaves-only mask to use as temp var
-  std::valarray<bool> partition(T.n_leaves());
+  vector<node_info> nodes_Q(Q.n_nodes());
+  vector<node_info> nodes_T(T.n_nodes());
 
-  // insert informative partitions of T into 'branches'
-  for(int b=T.n_leafbranches();b<T.n_branches();b++) 
+  // compute degree of each node
+  for(int i=0;i<Q.n_nodes();i++)
+    nodes_Q[i].degree = Q[i].degree();
+
+  for(int i=0;i<T.n_nodes();i++)
+    nodes_T[i].degree = T[i].degree();
+
+  // compute leaf degree and leaf neighbors of each node
+  for(int i=0;i<Q.n_leaves();i++) 
   {
-    partition = T.partition(b);
-    if (not partition[0])
-      partition = (not partition);
-    
-    branches.insert(container_t::value_type(partition,b));
-  };  
+    leaves_Q[i] = Q.nodes_[i];
+    int q = Q.branch(i).target();
+    nodes_Q[q].leaf_degree++;
+    nodes_Q[q].adjacent_leaves.push_back(i);
+  }
+
+  for(int i=0;i<T.n_leaves();i++) 
+  {
+    leaves_T[i] = T.nodes_[i];
+    int p = T.branch(i).target();
+    nodes_T[p].leaf_degree++;
+    nodes_T[p].adjacent_leaves.push_back(i);
+  }
+
+  // we just need to have BN->out == parent
+  for(int leaf=0;leaf<leaves_T.size();leaf++)
+  {
+    if (not leaves_T[leaf]) continue;
+
+    while (nodes_T[leaves_T[leaf]->out->node].leaf_degree >= 2)
+    {
+      int p = leaves_T[leaf]->out->node;
+      int q = leaves_Q[leaf]->out->node;
+
+      list<int>& LT = nodes_T[p].adjacent_leaves;
+      list<int>& LQ = nodes_Q[q].adjacent_leaves;
+
+      if (not is_subset(LT,LQ)) return vector<int>();
+
+      // remove all except first leaf node
+      int L = nodes_T[p].leaf_degree;
+
+      nodes_T[p].degree -= (L-1);
+      nodes_Q[q].degree -= (L-1);
+
+      nodes_T[p].leaf_degree -= (L-1);
+      nodes_Q[q].leaf_degree -= (L-1);
+
+      for(list<int>::iterator j = LT.begin(); j!= LT.end();) 
+	if (*j == leaf)
+	  j++;
+	else {
+	  int n1 = leaves_T[*j]->node;
+	  int n2 = leaves_Q[*j]->node;
+	  leaves_T[*j] = NULL;
+	  leaves_Q[*j] = NULL;
+	  nodes_T[n1].deleted = true;
+	  nodes_Q[n2].deleted = true;
+
+	  list<int>::iterator j2 = j;
+	  j++;
+	  LT.erase(j2);
+	}
+      
+      for(list<int>::iterator j = LQ.begin(); j!= LQ.end();) {
+	list<int>::iterator j2 = j;
+	j++;
+	if (not leaves_Q[*j2])
+	  LQ.erase(j2);
+      }
+
+      assert(leaves_T[leaf]);
+      assert(leaves_Q[leaf]);
+
+      if (nodes_Q[q].degree == 2) 
+	assert(nodes_T[p].degree == 2);
+
+      if (nodes_T[p].degree == 2) 
+      {
+	BranchNode* N = leaves_T[leaf];
+	nodes_T[N->node].deleted = true;
+	N = N->out;
+	while(nodes_T[N->out->node].deleted)
+	  N = N->next;
+	leaves_T[leaf] = N;
+	p = N->out->node;
+	nodes_T[p].adjacent_leaves.merge(LT);
+	nodes_T[p].leaf_degree++;
+      }
+
+      if (nodes_Q[q].degree == 2) 
+      {
+	BranchNode* N = leaves_Q[leaf];
+	nodes_Q[N->node].deleted = true;
+	N = N->out;
+	while(nodes_Q[N->out->node].deleted)
+	  N = N->next;
+	leaves_Q[leaf] = N;
+	q = N->out->node;
+	nodes_Q[q].adjacent_leaves.merge(LQ);
+	nodes_Q[q].leaf_degree++;
+
+	branch_map[leaves_Q[leaf]->branch] = leaves_T[leaf]->branch;
+	branch_map[leaves_Q[leaf]->out->branch] = leaves_T[leaf]->out->branch;
+
+	if (nodes_Q[q].leaf_degree == nodes_Q[q].degree)
+	  goto out;
+      }
+    }
+  }
+  cerr<<"got here."<<endl;
+  std::abort();
+ out:
+
+  for(int i=0;i<branch_map.size();i++)
+    assert(branch_map[i] != -1);
   
-  // check if informative partitions of Q are in 'branches'
-  bool fail = false;
-  for(int b=Q.n_leafbranches();b<Q.n_branches();b++) 
-  {
-    partition = Q.partition(b);
-    if (not partition[0])
-      partition = (not partition);
+  return branch_map;
+}
 
-    container_t::iterator record = branches.find(partition);
-    if (record == branches.end())
-      fail = true;
-    else {
-      int b2 = (*record).second;
+bool extends(const Tree& T,const Tree& Q)
+{
+  if (Q.n_branches() == Q.n_leafbranches())
+    return true;
 
-      const_branchview Qb = Q.directed_branch(b);
-      const_branchview Tb = T.directed_branch(b2);
-
-      if (T.partition(b2)[0] != Q.partition(b)[0])
-	Tb = Tb.reverse();
-      
-      branch_map[Qb.name()] = Tb.name();
-      branch_map[Qb.reverse().name()] = Tb.reverse().name();
-    }
-  }
-
-  if (fail)
-    return vector<int>();
-  else 
-  {
-    for(int i=0;i<branch_map.size();i++)
-      assert(branch_map[i] != -1);
-    
-    valarray<bool> partition1(T.n_leaves());
-    valarray<bool> partition2(Q.n_leaves());
-    for(int i=0;i<branch_map.size();i++) {
-      int b1 = branch_map[i];
-      int b2 = i;
-      
-      partition1 = T.partition(b1);
-      partition2 = Q.partition(b2);
-      
-      assert(equal(partition1,partition2));
-    }
-
-    return branch_map;
-  }
+  vector<int> branch_map = extends_map(T,Q);
+  return branch_map.size() != 0;
 }
