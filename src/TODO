@@ -61,9 +61,12 @@ much of the variation is spatial?)
 -------------------------------------------------------
 Before 1.9.9:
 
- * Implement tree constraints.
+ * Implement tree constraints, alignment constraints, branch-length constraints.
  * Implement alignment constraints.
+ * Mention HKYx3,TNx3,GTRx3 models.
  * Do the autoconf magic to compile GSL in-tree.
+ * Add Student T random variables - make cauchy a special case. 
+   (How about Levy stable distributions?)
 
 -------------------------------------------------------
 Questions:
@@ -514,8 +517,6 @@ the prior, because we never want to use it  differently.
  - introduce alphabet models - such as codon model frequencies depending
    on [A],[T],[G],and [C].  We allow them to deviate, but put evidence on
    them NOT deviating.
-
- - consider doing variable amino-acid frequencies in a CODON model!
 
  - consider modelling functional divergence - Karin's branch problem?
 
