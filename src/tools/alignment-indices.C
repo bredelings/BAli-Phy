@@ -80,6 +80,9 @@ int main(int argc,char* argv[])
       // start a comment
       cout<<"    #  ";
 
+      // write the column number
+      cout<<c+1<<"   ";
+
       // write the letters
       for(int i=0;i<MA.size2();i++)
 	cout<<a.lookup(A(c,i))<<" ";
