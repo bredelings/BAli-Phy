@@ -239,9 +239,9 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   add_MH_move(P, between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, log_scaled(shift_cauchy),    "beta::mu",       "beta::mu_scale_sigma",     0.2,  parameter_moves);
-  add_MH_move(P, log_scaled(more_than(-5.7,shift_cauchy)),
+  add_MH_move(P, log_scaled(shift_cauchy),
 	                                        "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, parameter_moves);
-  add_MH_move(P, log_scaled(more_than(-4.0,shift_cauchy)),
+  add_MH_move(P, log_scaled(shift_cauchy),
 	                                        "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, parameter_moves);
   add_MH_move(P, log_scaled(shift_cauchy),
 	                                        "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, parameter_moves);

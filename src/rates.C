@@ -10,6 +10,8 @@
 
 namespace substitution {
 
+  using std::cerr;
+  using std::endl;
   using std::vector;
   using std::valarray;
   using std::string;
@@ -139,34 +141,81 @@ namespace substitution {
     return "gamma::sigma/mu";
   }
 
-  double Gamma::cdf(double x) const {
-    double a = 1.0/(parameters_[0]*parameters_[0]);
-    double b = 1.0/a;
+  double Gamma::cdf(double x) const 
+  {
+    double s = parameters_[0];
 
-    return gsl_cdf_gamma_P(x,a,b);
+    double M = 1;
+    double V = (s*M)*(s*M);
+
+    double a = 1.0/(s*s);
+    double b = M/a;
+
+    if (a < 1000)
+      return gsl_cdf_gamma_P(x,a,b);
+    else {
+      double sigma2 =  log(V/(M*M) + 1);
+      double mu = log(M) - sigma2/2.0;
+      double sigma = sqrt(sigma2);
+
+      return gsl_cdf_lognormal_P(x,mu,sigma);
+    }
   }
 
   double Gamma::pdf(double x,double) const {
-    double a = 1.0/(parameters_[0]*parameters_[0]);
-    double b = 1.0/a;
+    double s = parameters_[0];
 
-    return gsl_ran_gamma_pdf(x,a,b);
+    double M = 1;
+    double V = (s*M)*(s*M);
+
+    double a = 1.0/(s*s);
+    double b = M/a;
+
+    if (a < 1000)
+      return gsl_ran_gamma_pdf(x,a,b);
+    else {
+      double sigma2 =  log(V/(M*M) + 1);
+      double mu = log(M) - sigma2/2.0;
+      double sigma = sqrt(sigma2);
+
+      return gsl_ran_lognormal_pdf(x,mu,sigma);
+    }
   }
 
   double Gamma::quantile(double p,double) const {
-    double a = 1.0/(parameters_[0]*parameters_[0]);
-    double b = 1.0/a;
-    
-    return gsl_cdf_gamma_Pinv(p,a,b);
+    double s = parameters_[0];
+
+    double M = 1;
+    double V = (s*M)*(s*M);
+
+    double a = 1.0/(s*s);
+    double b = M/a;
+
+    if (a < 1000)
+      return gsl_cdf_gamma_Pinv(p,a,b);
+    else {
+      double sigma2 =  log(V/(M*M) + 1);
+      double mu = log(M) - sigma2/2.0;
+      double sigma = sqrt(sigma2);
+
+      return gsl_cdf_lognormal_P(p,mu,sigma);
+    }
   }
 
 
 
   //--------------- GammaRateDistribution -----------------//
 
-  efloat_t Beta::prior() const {
+  efloat_t Beta::prior() const 
+  {
     double mu = parameters_[0];
     double s  = parameters_[1];
+
+    double a = (1 - mu - mu*s*s)/(s*s);
+    double b = a * (1-mu)/mu;
+
+    if (a<1.0 or b<1.0)
+      return 0.0;
 
     efloat_t P = 1;
     P *= beta_pdf(mu,0.99,20);
@@ -194,6 +243,15 @@ namespace substitution {
     double a = (1 - mu - mu*s*s)/(s*s);
     double b = a * (1-mu)/mu;
 
+    if (a<0 or b<0)
+      a=b=1;
+
+    double r = 100.0/std::max(a,b);
+    if (r < 1) {
+      a *= r;
+      b *= r;
+    }
+
     return gsl_cdf_beta_P(x,a,b);
   }
 
@@ -204,7 +262,36 @@ namespace substitution {
     double a = (1 - mu - mu*s*s)/(s*s);
     double b = a * (1-mu)/mu;
 
+    if (a<0 or b<0)
+      a=b=1;
+
+    double r = 100.0/std::max(a,b);
+    if (r < 1) {
+      a *= r;
+      b *= r;
+    }
+
     return gsl_ran_beta_pdf(x,a,b);
+  }
+
+  double Beta::quantile(double p,double) const
+  {
+    double mu = parameters_[0];
+    double  s = parameters_[1];
+
+    double a = (1 - mu - mu*s*s)/(s*s);
+    double b = a * (1-mu)/mu;
+
+    if (a<0 or b<0)
+      a=b=1;
+
+    double r = 100.0/std::max(a,b);
+    if (r < 1) {
+      a *= r;
+      b *= r;
+    }
+
+    return gsl_cdf_beta_Pinv(p,a,b);
   }
 
 
