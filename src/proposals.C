@@ -334,6 +334,7 @@ double log_scaled::operator()(std::vector<double>& x,const std::vector<double>& 
 
   x[0] = log(x[0]);
   double r = (*proposal)(x,p);
+  x[0] = wrap<double>(x[0],-500,500);
   x[0] = exp(x[0]);
 
   double x2 = x[0];
