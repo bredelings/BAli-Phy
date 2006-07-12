@@ -186,6 +186,9 @@ vector<int> extends_map(const Tree& T,const Tree& Q)
       int p = leaves_T[leaf]->out->node;
       int q = leaves_Q[leaf]->out->node;
 
+      if (nodes_Q[q].leaf_degree == nodes_Q[q].degree)
+	goto out;
+
       list<int>& LT = nodes_T[p].adjacent_leaves;
       list<int>& LQ = nodes_Q[q].adjacent_leaves;
 
@@ -256,9 +259,6 @@ vector<int> extends_map(const Tree& T,const Tree& Q)
 
 	branch_map[leaves_Q[leaf]->branch] = leaves_T[leaf]->branch;
 	branch_map[leaves_Q[leaf]->out->branch] = leaves_T[leaf]->out->branch;
-
-	if (nodes_Q[q].leaf_degree == nodes_Q[q].degree)
-	  goto out;
       }
     }
   }
