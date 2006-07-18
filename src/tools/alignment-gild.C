@@ -93,15 +93,46 @@ Matrix probability_to_distance_weights(const Matrix &Q)
   return W;
 }
 
+// character i of species s1 is not homologous to any character of species s2
+unsigned count_homology(int s1, int i1, int s2, int i2, 
+			const vector< vector< vector<int> > >& column_indices) 
+{
+  unsigned count = 0;
+  for(int j=0;j<column_indices.size();j++)
+  {
+    int c1 = column_indices[j][s1][i1];
+    int c2 = column_indices[j][s2][i2];
+    if (c1 == c2)
+      count++;
+  }
+  return count;
+}
+
+// character i of species s1 is not homologous to any character of species s2
+unsigned count_non_homology(int s1, int i1, int s2, const vector<ublas::matrix<int> >& Ms,
+			    const vector< vector< vector<int> > >& column_indices) 
+{
+  unsigned count = 0;
+  for(int j=0;j<column_indices.size();j++)
+  {
+    int c = column_indices[j][s1][i1];
+    if (Ms[j](c,s2) == alphabet::gap)
+      count++;
+  }
+  return count;
+}
+
 // Compute the probability that residues (i,j) are aligned
 //   - v[i][j] represents the column of the feature j in alignment i.
 //   - so if v[i][j] == v[i][k] then j and k are paired in alignment i.
-Matrix counts_to_probability(const Tree& T,const vector<int>& column, const vector< vector<int> >& v) 
+Matrix counts_to_probability(const Tree& T,const vector<int>& column, 
+			     const vector<ublas::matrix<int> >& Ms,
+			     const vector< vector< vector<int> > >& column_indices) 
 {
-  assert(v.size() > 0);
-  assert(v[0].size() > 0);
+  assert(T.n_leaves() == column.size());
+  assert(Ms.size() == column_indices.size());
 
-  int N = v[0].size();
+  const int N = column.size();
 
   // initialize the pseudocount matrix
   const double edge_prior = 0.5/(T.n_branches()/2);
@@ -120,20 +151,24 @@ Matrix counts_to_probability(const Tree& T,const vector<int>& column, const vect
   Matrix Pr_align_pair = 0.1*0.5*pseudocount;
 
   // For each label, count all present pairs
-  for(int l=0;l<v.size();l++) {
-    const vector<int>& label = v[l];
-    for(int i=0;i<label.size();i++) 
-      for(int j=0;j<i;j++) 
-	if (label[i] == label[j]) {
-	  Pr_align_pair(i,j)++;
-	  Pr_align_pair(j,i)++;
-	}
-  }
-
-  // Divide by count to yield an average
-  for(int i=0;i<N;i++)
-    for(int j=0;j<N;j++)
-      Pr_align_pair(i,j) /= (v.size() + 0.1*pseudocount(i,j));
+  for(int i=0;i<N;i++) 
+    for(int j=0;j<i;j++) 
+      if (column[i] == alphabet::unknown or column[j] == alphabet::unknown)
+	Pr_align_pair(i,j) = Pr_align_pair(j,i) = 1.0;
+      else if (column[i] == alphabet::gap and column[j] == alphabet::gap)
+	Pr_align_pair(i,j) = Pr_align_pair(j,i) = 1.0;
+      else {
+	if (column[i] == alphabet::gap)
+	  Pr_align_pair(i,j) += count_non_homology(j,column[j],i,Ms,column_indices);
+	else if (column[j] == alphabet::gap)
+	  Pr_align_pair(i,j) += count_non_homology(i,column[i],j,Ms,column_indices);
+	else
+	  Pr_align_pair(i,j) += count_homology(i,column[i],j,column[j],column_indices);
+	
+	// Divide by count to yield an average
+	Pr_align_pair(i,j) /= (Ms.size() + 0.1*pseudocount(i,j));
+	Pr_align_pair(j,i) = Pr_align_pair(i,j);
+      }
 
   // we didn't handle the diagonal entries at all...
   for(int i=0;i<N;i++)
@@ -149,7 +184,7 @@ Matrix counts_to_probability(const Tree& T,const vector<int>& column, const vect
       if (i==j)
 	assert(Pr_align_pair(i,j) == 1.0);
       else
-	assert(0.0 < Pr_align_pair(i,j) and Pr_align_pair(i,j) < 1.0);
+	assert(0.0 < Pr_align_pair(i,j) and Pr_align_pair(i,j) <= 1.0);
 
   return Pr_align_pair;
 }
@@ -486,13 +521,8 @@ int main(int argc,char* argv[]) {
     {
       vector<int> column = get_column(MA,c,T.n_leaves());
 
-      // Get labels - should I instead get *counts*?
-      vector< vector<int> > labels(alignments.size());
-      for(int i=0;i<alignments.size();i++)
-	labels[i] = get_splitgroup_columns(MA,c,Ms[i],column_indexes[i]);
-
       // Get the pairwise alignment probabilities
-      Matrix Q = counts_to_probability(T,column,labels);
+      Matrix Q = counts_to_probability(T,column, Ms, column_indexes);
 
       // Convert the pairwise probabilities to weights
       vector<double> w = letter_weights(column,Q,T,leaf_sets);

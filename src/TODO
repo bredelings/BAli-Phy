@@ -18,7 +18,7 @@
 5. Use a RJMCMC on a fixed alignment to model local changes in 'mu'
    +  or use a change-point model?
    +  or use a *nested* Change Point Model?
-   + we need some way to find out if the gamaa model "fits" well! (how
+   + we need some way to find out if the gamma model "fits" well! (how
 much of the variation is spatial?)
 
 1. Test sampling of epsilon.  (Implement model where lambda & epsilon not coupled?)
@@ -497,6 +497,8 @@ the prior, because we never want to use it  differently.
 [DONE] Make HTML alignments use mono-space fonts.
 
 [DONE] Remove 'Yang' from M? models. (code and options.)
+
+[DONE] Handle consensus alignments in alignment-gild.
 
 *IDEAS*
 
