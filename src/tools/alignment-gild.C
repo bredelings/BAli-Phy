@@ -196,11 +196,10 @@ vector<int> get_column(const ublas::matrix<int>& MA,int c,int nleaves) {
 }
 
 
-
-
 double get_column_probability(const vector<int>& column, 
 			      const list<alignment>& alignments,
-			      const vector< vector< vector<int> > >& column_indexes) {
+			      const vector< vector< vector<int> > >& column_indexes) 
+{
   unsigned int count=0;
   int i=0;
   foreach(A,alignments) {
@@ -223,20 +222,21 @@ double get_column_probability(const vector<int>& column,
 	c = cj;
       else if (c != cj)
 	found = false;
-
     }
     
     assert(c != -1);
 
-    // Does this column have gaps in the right place?
-    for(int j=0;j<column.size() and found;j++) {
-
-      // if there is a NOT gap in this column, ignore it
-      if (column[j] != alphabet::gap) continue;
-
-      // if the template doesn't have a gap, then this doesn't match
-      if (not A->gap(c,j))
-	found = false;
+    if (c != -1) {
+      // Does this column have gaps in the right place?
+      for(int j=0;j<column.size() and found;j++) {
+	
+	// if there is a NOT gap in this column, ignore it
+	if (column[j] != alphabet::gap) continue;
+	
+	// if the template doesn't have a gap, then this doesn't match
+	if (A->character(c,j))
+	  found = false;
+      }
     }
 
     if (found) count++;
@@ -322,6 +322,107 @@ root_position find_root_branch_and_position(const SequenceTree& T,const RootedSe
   return rootp;
 }
 
+vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q, const SequenceTree& T,
+				      vector<vector<int> >& leaf_sets)
+{
+  // get ordered list of features to keep (also a mapping)
+  vector<int> f;
+  for(int i=0;i<column.size();i++)
+    if (column[i] != alphabet::gap and column[i] != alphabet::unknown)
+      f.push_back(i);
+
+  vector<double> w(T.n_leaves(),-1);
+  
+  if (f.size() == 0)
+    throw myexception()<<"Column has no features!";
+  else if (f.size() == 1)
+    w[f[0]] = 1.0;
+  else if (f.size() == 2) {
+    double P = Q(f[0],f[1]);
+    w[f[0]] = sqrt(P);
+    w[f[1]] = sqrt(P);
+  }
+  else {
+    vector<int> remove;
+    for(int i=0;i<column.size();i++)
+      if (column[i] == alphabet::gap or column[i] == alphabet::unknown)
+	remove.push_back(i);
+
+    // Map the leaf indices of ST to the leaf indices of T
+    SequenceTree ST = T;
+    vector<int> mapping = ST.prune_leaves(remove);
+    assert(f == mapping);
+
+    // Project Q down
+    Matrix Q2 (f.size(),f.size());
+    for(int i=0;i<f.size();i++) {
+      Q2(i,i) = 1.0;
+      for(int j=0;j<i;j++)
+	Q2(i,j)=Q2(j,i)=Q(f[i],f[j]);
+    }
+
+    // Compute the LS branch lengths
+    Matrix D = probability_to_distance(Q2);
+    Matrix W = probability_to_distance_weights(Q2);
+
+    vector<double> LS_branch_lengths = FastLeastSquares(ST,D,partition_sets(ST));
+    
+    //    if (args.count("refine") and args["refine"].as<string>() == "WLS")
+    //      LS_branch_lengths = LeastSquares(T,D,W,leaf_sets);
+  
+    for(int b=0;b<ST.n_branches();b++)
+      ST.branch(b).set_length(std::max(0.0, LS_branch_lengths[b]));
+
+    // Find root on the tree
+    int r = ST.n_leaves();
+    double max = 0;
+    for(int i=ST.n_leaves();i<ST.n_nodes();i++)
+    {
+      double P=0;
+      for(int j=0;j<ST.n_leaves();j++)
+	P += exp(-ST.distance(i,j));
+      if (P > max) {
+	max = P;
+	r = i;
+      }
+    }
+
+    // Compute the uncertainty values for the letters
+    for(int i=0;i<ST.n_leaves();i++) {
+      double length = ST.distance(r,i);
+      w[f[i]] =  exp(-length);  // P(no events between leaf and root)
+    }
+  }
+
+  return w;
+}
+
+
+vector<double> letter_weights(const vector<int>& column, const Matrix& Q, const SequenceTree& T,
+			      vector<vector<int> >& leaf_sets)
+{
+  // Store ordered list of features to keep
+  vector<int> f;
+  for(int i=0;i<column.size();i++)
+    if (column[i] != alphabet::gap and column[i] != alphabet::unknown)
+      f.push_back(i);
+
+  // Compute weights for '+'
+  vector<double> w = letter_weights_project(column,Q,T,leaf_sets);
+
+  // Compute weights for '-' and '?'
+  for(int i=0;i<column.size();i++)
+    if (column[i] == alphabet::unknown)
+      w[i] = 1.0;
+    else if (column[i] == alphabet::gap) {
+      vector<double> P(f.size());
+      for(int j=0;j<f.size();j++)
+	P[j] = w[f[j]] * Q(i,f[j]);
+      w[i] = max(P);
+    }
+
+  return w;
+}
 
 int main(int argc,char* argv[]) { 
   try {
@@ -366,11 +467,11 @@ int main(int argc,char* argv[]) {
 
     //------- Print column names -------//
     for(int i=0;i<T.n_leaves();i++) {
-      std::cout<<T.seq(i);
+      cout<<T.seq(i);
       if (i != T.n_leaves()-1)
-	std::cout<<" ";
+	cout<<" ";
       else
-	std::cout<<endl;
+	cout<<endl;
     }
 
     //------- Analyze the columns -------//
@@ -390,55 +491,18 @@ int main(int argc,char* argv[]) {
       for(int i=0;i<alignments.size();i++)
 	labels[i] = get_splitgroup_columns(MA,c,Ms[i],column_indexes[i]);
 
-      //Get initial estimate using fast least squares
+      // Get the pairwise alignment probabilities
       Matrix Q = counts_to_probability(T,column,labels);
-      Matrix D = probability_to_distance(Q);
-      Matrix W = probability_to_distance_weights(Q);
 
-      P_total += D;
+      // Convert the pairwise probabilities to weights
+      vector<double> w = letter_weights(column,Q,T,leaf_sets);
 
-      // [FIXME] Remove leaves corresponding to '?' (and possibly '-'),
-      //         and get a distance matrix on the remainder.
+      // Print out the weights
+      for(int i=0;i<w.size();i++)
+	cout<<w[i]<<" ";
 
-      // [FIXME] Build an NJ tree, instead?
-
-      vector<double> LS_branch_lengths = FastLeastSquares(T,D,leaf_sets);
-
-      if (args.count("refine") and args["refine"].as<string>() == "WeightedLeastSquares")
-	LS_branch_lengths = LeastSquares(T,D,W,leaf_sets);
-
-      // Print uncertainty values for the letters
-      SequenceTree T2 = T;
-      for(int b=0;b<T2.n_branches();b++)
-	T2.branch(b).set_length(std::max(0.0, LS_branch_lengths[b]));
-
-      for(int i=0;i<T2.n_leaves();i++) {
-	double length = rootdistance(T2,i,rootp.b,rootp.x);
-	assert(length >= 0.0);
-	double P = exp(-length);  // P(no events between leaf and root)
-	std::cout<<P<<" ";
-      }
-      std::cout<<column_probabilities[c]<<endl;
+      cout<<column_probabilities[c]<<endl;
     }
-
-    // average the COUNTS instead of the LENGTHS?
-    // should count unalignment events differently? - i.e. AA-- gives counts out of (1,1,0,0)?
-
-    P_total /= A.length();
-    vector<double> branch_lengths = FastLeastSquares(T,P_total,leaf_sets);
-    for(int i=0;i<branch_lengths.size();i++)
-      if (branch_lengths[0] <0) branch_lengths[i] = 0;
-    
-    // Print uncertainty values for the letters
-    SequenceTree T2 = T;
-    for(int b=0;b<T2.n_branches();b++)
-      T2.branch(b).set_length(std::max(0.0,branch_lengths[b]));
-
-    // refine for a few iterations...
-    // FIXME - fix the refiners to take the alignment probability matrix...
-
-    std::cerr<<T2<<std::endl;
-    
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
