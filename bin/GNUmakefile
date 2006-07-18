@@ -116,7 +116,7 @@ Work/consensus-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 
 Results/%-AU.prob: Work/%-unordered.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree
 	@echo -e "Calculating AU probabilities for $* alignment ... \c"
-	@alignment-gild Work/$*-unordered.fasta Results/MAP.tree --find-root --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
+	@alignment-gild Work/$*-unordered.fasta Results/MAP.tree --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
 	@echo "done."
 
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
