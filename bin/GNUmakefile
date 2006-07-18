@@ -34,7 +34,7 @@ Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
 		  Results/Report Results/MAP.fasta Results/MAP.phy \
 		  Mixing/partitions.SRQ Mixing/c50.SRQ Mixing/partitions.bs \
-		  Results/MAP-AU.html
+		  Results/MAP-AU.html Results/consensus.fasta Results/consensus-AU.html
 	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration $$(( ${SKIP} + 1))." > Results/analysis
 	@echo "Finished:  $$(date)" >> Results/analysis
 	@echo 
