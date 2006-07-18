@@ -56,8 +56,9 @@ string strip(const string& s,const string& chars) {
 }
 
 
-vector<int> invert(const vector<int>& mapping) {
-  vector<int> imapping(mapping.size());
+vector<int> invert(const vector<int>& mapping) 
+{
+  vector<int> imapping(mapping.size(),-1);
 
   for(int i=0;i<imapping.size();i++)
     imapping[mapping[i]] = i;
