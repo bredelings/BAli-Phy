@@ -87,7 +87,7 @@ void alignment::delete_column(int column) {
 int alignment::seqlength(int i) const {
   int count =0;
   for(int column=0;column<length();column++) {
-    if (not gap(column,i))
+    if (character(column,i))
       count++;
   }
   return count;
