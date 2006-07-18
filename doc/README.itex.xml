@@ -1408,10 +1408,20 @@ traditional = traditional
 	<para>An estimate of the MAP alignment, w/ taxa sorted by similarity.
 	</para></listitem></varlistentry>
 
-	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot
+	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot of the MAP alignment.
 	</para></listitem></varlistentry>
 
-	<varlistentry><term>MAP-AU.prob</term><listitem><para>The probabilities for each letter in the AU plot
+	<varlistentry><term>MAP-AU.prob</term><listitem><para>The probabilities for each letter in the MAP alignment AU plot.
+	</para></listitem></varlistentry>
+    
+	<varlistentry><term>consensus.fasta</term><listitem>
+	<para>A consensus alignment, representing information shared by most alignment samples.
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>consensus-AU.html</term><listitem><para>An AU plot of the consensus alignment.
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>consensus-AU.prob</term><listitem><para>The probabilities for each letter in the consensus alignment AU plot.
 	</para></listitem></varlistentry>
     
       </variablelist>
