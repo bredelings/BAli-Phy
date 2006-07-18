@@ -83,7 +83,8 @@ vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
 }
 
 /// Replace each letter with its position in its sequence
-ublas::matrix<int> M(const alignment& A1) {
+ublas::matrix<int> M(const alignment& A1) 
+{
   ublas::matrix<int> A2(A1.length(),A1.n_sequences());
   for(int i=0;i<A2.size2();i++) {
     int pos=0;
@@ -97,7 +98,6 @@ ublas::matrix<int> M(const alignment& A1) {
     }
 
     assert(pos == A1.seqlength(i));
-
   }
   return A2;
 }
@@ -434,7 +434,7 @@ vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
     if (label[i] != alphabet::gap) continue;
 
     for(int j=0;j<label.size();j++) 
-      if (label[j] != alphabet::gap and M2(label[j],i) == alphabet::gap) {
+      if (label[j] != alphabet::gap and label[j] != alphabet::unknown and M2(label[j],i) == alphabet::gap) {
 	label[i] = label[j];
 	break;
       }
