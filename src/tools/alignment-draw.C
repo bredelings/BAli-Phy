@@ -287,8 +287,14 @@ using std::endl;
 
 string getstyle(double d,const string& s,const ColorScheme& color_scheme) {
   string style;
-  style += "background: " + color_scheme.bg_color(d,s).to_css() + ";" ;
-  style += "color: "      + color_scheme.fg_color(d,s).to_css() + ";" ;
+  if ((s == "?") or (s == "???")) {
+    style += "background: white;";
+    style += "color: white;";
+  }
+  else {
+    style += "background: " + color_scheme.bg_color(d,s).to_css() + ";" ;
+    style += "color: "      + color_scheme.fg_color(d,s).to_css() + ";" ;
+  }
   return style;
 }
 
