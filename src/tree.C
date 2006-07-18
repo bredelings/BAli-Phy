@@ -285,6 +285,54 @@ nodeview Tree::prune_subtree(int br) {
   return node_remainder;
 }
 
+/// Remove the subtree with root node n
+vector<int> Tree::prune_leaves(const vector<int>& remove) 
+{
+  // get pointers to the current leaves
+  vector<BranchNode*> leaves(n_leaves());
+  for(int i=0;i<leaves.size();i++)
+    leaves[i] = nodes_[i];
+
+  // get mask of leaves to remove
+  vector<int> do_remove(n_leaves(),false);
+  for(int i=0;i<remove.size();i++)
+    do_remove[remove[i]] = true;
+
+  // remove some leaves and shift others down
+  int shift = 0;
+  BranchNode* node_remainder = NULL;
+  for(int i=0;i<leaves.size();i++)
+  {
+    if (do_remove[i]) {
+      shift++;
+
+      BranchNode* leaf = leaves[i];
+      while(is_leaf_node(leaf) and leaf->out and leaf->out != leaf) {
+	BranchNode* parent = TreeView::unlink_subtree(leaf->out);
+	TreeView(leaf).destroy();
+	leaf = parent;
+      }
+
+      if (leaf->next != leaf and leaf->next->next == leaf)
+	TreeView::remove_node_from_branch(leaf);
+    }
+    else {
+      name_node(leaves[i],i-shift);
+      node_remainder = leaves[i];
+    }
+  }
+  
+  /// Reconstruct everything from node names
+  reanalyze(node_remainder);
+
+  vector<int> mapping(leaves.size() - shift);
+  for(int i=0;i<leaves.size();i++)
+    if (not do_remove[i])
+      mapping[leaves[i]->node] = i;
+
+  return mapping;
+}
+
 
 /* Guarantees for names: 
      1. Surviving leaf names will be in same order in each tree.
@@ -991,6 +1039,16 @@ nodeview RootedTree::prune_subtree(int br) {
     root_ = root_->next;
 
   return Tree::prune_subtree(br);
+}
+
+vector<int> RootedTree::prune_leaves(const vector<int>& remove) 
+{
+  root_ = NULL;
+
+  // if we need to do this, virtualize unlink_subtree to complain if the subtree
+  // contains the root.
+
+  return Tree::prune_leaves(remove);
 }
 
 

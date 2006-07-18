@@ -38,6 +38,9 @@ public:
   /// remove a subtree - SequenceTree variants duplicated  in both {U,R}SequenceTree
   nodeview prune_subtree(int b);
 
+  /// remove a subtree - SequenceTree variants duplicated  in both {U,R}SequenceTree
+  std::vector<int> prune_leaves(const std::vector<int>&);
+
   /// generate standard internal node and internal branch names given current leaf names
   virtual std::vector<int> standardize();
 
@@ -80,6 +83,9 @@ class RootedSequenceTree: public RootedTree, public SequenceTree {
 public:
   /// remove a subtree - SequenceTree variants duplicated  in both {U,R}SequenceTree
   nodeview prune_subtree(int b);
+
+  /// remove a subtree - SequenceTree variants duplicated  in both {U,R}SequenceTree
+  std::vector<int> prune_leaves(const std::vector<int>&);
 
   /// compute a string representing the tree, w/ or w/o branch lengths
   std::string write(bool=true) const;

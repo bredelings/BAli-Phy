@@ -227,6 +227,9 @@ public:
   /// remove a subtree
   virtual nodeview prune_subtree(int b);
 
+  /// remove leaves
+  virtual std::vector<int> prune_leaves(const std::vector<int>&);
+
   /// merge node 'tn' from subtree 'T' to node 'n'
   virtual void merge_tree(int n,const Tree& T,int tn);
 
@@ -274,6 +277,9 @@ public:
 
   /// remove a subtree
   nodeview prune_subtree(int b);
+
+  /// remove leaves
+  virtual std::vector<int> prune_leaves(const std::vector<int>&);
 
   void add_first_node();
 
