@@ -110,13 +110,19 @@ Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
 	@alignment-reorder Work/$*-unordered.fasta Results/c50.tree > $@ 2>/dev/null
 
 Work/consensus-unordered.fasta: Work/samples-${SKIP}+${SIZE}
-	alignment-consensus < Work/samples-${SKIP}+${SIZE} > $@
+	@echo -e "Computing consensus alignment ... \c"
+	@alignment-consensus < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
+	@echo "done."
 
 Results/%-AU.prob: Work/%-unordered.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree
-	alignment-gild Work/$*-unordered.fasta Results/MAP.tree --find-root --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
+	@echo -e "Calculating AU probabilities for $* alignment ... \c"
+	@alignment-gild Work/$*-unordered.fasta Results/MAP.tree --find-root --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
+	@echo "done."
 
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
-	alignment-draw Results/$*.fasta Results/$*-AU.prob --width 100 > $@
+	@echo -e "Drawing $* alignment ... \c"
+	@alignment-draw Results/$*.fasta Results/$*-AU.prob --width 100 > $@
+	@echo "done."
 
 Results/c%.topology: Results/consensus Work/setup
 	@pickout --no-header $*-consensus < $< > $@ 
