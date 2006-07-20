@@ -1044,15 +1044,23 @@ traditional = traditional
       </sect2>
 
       <sect2>
-	<title>Examples</title>
-	<para>Example: --smodel EQU --alphabet Triplets</para>
-	<para>Example: --smodel HKY</para>
-	<para>Example: --smodel TN+pi=constant</para>
-	<para>Example: --smodel Empirical[WAG]+gamma+INV</para>
-	<para>Example: --smodel M0 --alphabet Codons</para>
-	<para>Example: --smodel M0+pi=nucleotides --alphabet Codons</para>
-	<para>Example: --smodel M2 --alphabet Codons</para>
-	<para>Example: --smodel M0[TN]+M2 --alphabet Codons</para>
+	<title>CTMC Frequency models</title>
+	<para>The above decomposition can be generalized slightly to
+	yield the following decomposition, where $f$ ranges from $0$ to $1$.
+	\[Q_{ij} = S_{ij}\times\frac{\pi_j^f}{\pi_i^{1-f}},\]
+	Here the parameter $f$ specifies the relative importance of
+	unequal conservation ($f=0$) and unequal replacement ($f=1$) in
+	maintaining the equilibrium frequencies $\pi$.  
+	</para>
+	<para>
+	In fact, this can be generalized even further to \[ Q_{ij} =
+	S_{ij}\times R(\pi)_{ij} \] where \[ \pi_i \times R_{ij} =
+	\pi_j \times R_{ji}. \]
+	</para>
+	<para>These models can therefore be expressed as a combination
+	of an "exchange model" (for $S$) and a "frequency model" (for
+	$R$).
+	</para>
       </sect2>
 
       <sect2>
@@ -1101,7 +1109,7 @@ traditional = traditional
 		<para>$R_{\alpha\beta} = \frac{\pi_\beta^f}{\pi_\alpha^{1-f}}$.</para>
 	      </entry>
 	    </row>
-	    <row>
+	    <!-- row>
 	      <entry><userinput>pi=triplets</userinput></entry>
 	      <entry>Triplets</entry>
 	      <entry>
@@ -1112,54 +1120,63 @@ traditional = traditional
 	      </entry>
 	      <entry>$R_{\alpha\beta} = \frac{{(\pi_i \pi_j
 	      \pi_l)}^f}{{(\pi_i \pi_j \pi_k)}^{1-f}} \times \frac{\nu_\beta}{\nu_\alpha}$.</entry>
-	    </row>
+	    </row -->
 	    <row>
-	      <entry><userinput>pi=amino acids?</userinput></entry>
+	      <entry><userinput>pi=amino acids</userinput></entry>
 	      <entry>Codons</entry>
 	      <entry>$f$</entry>
 	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
 	    </row>
-	    <row>
+	    <!-- row>
 	      <entry><userinput>pi=codons</userinput></entry>
 	      <entry>Codons</entry>
 	      <entry>$f$</entry>
 	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
-	    </row>
+	    </row -->
 	  </tbody>
 	  </tgroup>
 	</table>
       </sect2>
       
       <sect2>
-	<title>CTMC Frequency models</title>
-	<para>The above decomposition can be generalized slightly to
-	yield the following decomposition, where $f$ ranges from $0$ to $1$.
-	\[Q_{ij} = S_{ij}\times\frac{\pi_j^f}{\pi_i^{1-f}},\]
-	Here the parameter $f$ specifies the relative importance of
-	unequal conservation ($f=0$) and unequal replacement ($f=1$) in
-	maintaining the equilibrium frequencies $\pi$.  
-	</para>
-	<para>
-	In fact, this can be generalized even further to \[ Q_{ij} =
-	S_{ij}\times R(\pi)_{ij} \] where \[ \pi_i \times R_{ij} =
-	\pi_j \times R_{ji}. \]
-	</para>
-	<para>These models can therefore be expressed as a combination
-	of an "exchange model" (for $S$) and a "frequency model" (for
-	$R$).
-	</para>
-      </sect2>
-
-      <sect2>
-	<title>Exchange Models</title>
+	<title>CTMC Mixture Models</title>
 	<table frame="none" rowsep="1">
-	  <title>Substitution Models</title>
+	  <title>Extended Model Descriptions</title>
 	  <tgroup cols='4'>
 	    <tbody>
 	    <row>
 	      <entry>
+		<para><userinput><replaceable>sm</replaceable> + INV</userinput></para>
+	      </entry>
+	      <entry><replaceable>sm</replaceable> alphabet</entry>
+	      <entry>
+		<para>$p$: invariant fraction.</para>
+	      </entry>
+	      <entry>
+	      <para>A fraction $p$ of sites do not allow substitutions.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput><replaceable>sm</replaceable> + gamma[$n$]</userinput></para>
+		<para>Yang (1994)</para>
+	      </entry>
+	      <entry><replaceable>sm</replaceable> alphabet</entry>
+	      <entry>
+		<para>$\sigma/\mu$: noise to signal ratio for $\Gamma$.</para>
+	      </entry>
+	      <entry>
+	      <para>rate $\sim \Gamma(\mu=1,\sigma)$.</para>
+	      <para>A discrete approximation to the $\Gamma$ with $n$
+     	            bins is used.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
 		<para><userinput>M2</userinput></para>
-		<para><userinput><replaceable>sub-model</replaceable> + M2</userinput></para>
+		<para><userinput><replaceable>sm</replaceable> + M2</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1171,14 +1188,14 @@ traditional = traditional
 	      <entry>
 	      <para>$\Omega=\omega_i$ with probability $p_i$.</para>
 	      <para>$\omega_1 = 0$, $\omega_2 = 1$.</para>
-	      <para>The default for <replaceable>sub-model</replaceable> is M0.</para>
+	      <para>The default for <replaceable>sm</replaceable> is M0.</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
 		<para><userinput>M3[$n$]</userinput></para>
-		<para><userinput><replaceable>sub-model</replaceable> + M3[$n$]</userinput></para>
+		<para><userinput><replaceable>sm</replaceable> + M3[$n$]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1195,7 +1212,7 @@ traditional = traditional
 	    <row>
 	      <entry>
 		<para><userinput>M7[$n$]</userinput></para>
-		<para><userinput><replaceable>sub-model</replaceable> + M7[$n$]</userinput></para>
+		<para><userinput><replaceable>sm</replaceable> + M7[$n$]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1210,41 +1227,24 @@ traditional = traditional
 	      </entry>
 	    </row>
 
-	    <row>
-	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + gamma[$n$]</userinput></para>
-		<para>Yang (1994)</para>
-	      </entry>
-	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
-	      <entry>
-		<para>$\sigma/\mu$: noise to signal ratio for $\Gamma$.</para>
-	      </entry>
-	      <entry>
-	      <para>rate $\sim \Gamma(\mu=1,\sigma)$.</para>
-	      <para>A discrete approximation to the $\Gamma$ with $n$
-     	            bins is used.</para>
-	      </entry>
-	    </row>
-
-	    <row>
-	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + INV</userinput></para>
-	      </entry>
-	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
-	      <entry>
-		<para>$p$: invariant fraction.</para>
-	      </entry>
-	      <entry>
-	      <para>A fraction $p$ of sites do not allow substitutions.</para>
-	      </entry>
-	    </row>
-
 	  </tbody>
 
 	  </tgroup>
 	</table>
 
 
+      </sect2>
+
+      <sect2>
+	<title>Examples</title>
+	<para>Example: --smodel EQU --alphabet Triplets</para>
+	<para>Example: --smodel HKY</para>
+	<para>Example: --smodel TN+pi=constant</para>
+	<para>Example: --smodel Empirical[WAG]+gamma+INV</para>
+	<para>Example: --smodel M0 --alphabet Codons</para>
+	<para>Example: --smodel M0+pi=nucleotides --alphabet Codons</para>
+	<para>Example: --smodel M2 --alphabet Codons</para>
+	<para>Example: --smodel M0[TN]+M2 --alphabet Codons</para>
       </sect2>
 
 
@@ -1453,12 +1453,118 @@ traditional = traditional
 
       </variablelist>
 
-      <para>Plots can be viewed by typing "<userinput>plot
+      <para>The SRQ plots can be viewed by typing "<userinput>plot
       '<replaceable>file</replaceable>' with lines</userinput>" in
       <application>gnuplot</application>.</para>
     </sect2>
 
 
+  </sect1>
+
+  <sect1>
+    <title>Tuning the Markov Chain</title>
+
+    <sect2>
+      <title>Parameters</title>
+      <para>
+
+	<table frame="none" rowsep="1">
+	  <title>Tunable Parameters</title>
+	  <tgroup cols='4'>
+	    <colspec colnum="1" colname="col1" colwidth="1*"/>
+	    <colspec colnum="2" colname="col2" colwidth="1*"/>
+	    <colspec colnum="3" colname="col3" colwidth="1*"/>
+	    <colspec colnum="4" colname="col4" colwidth="1*"/>
+	  <thead><row>
+	    <entry>Name</entry>
+	    <entry>Variable</entry>
+	    <entry>Default</entry>
+	    <entry>Meaning</entry>
+	  </row></thead>
+
+	  <tbody>
+	    <row>
+	      <entry>log_branch_sigma</entry>
+	      <entry>branch lengths</entry>
+	      <entry>0.6</entry>
+	      <entry>Scale of log-proposal.</entry>
+	    </row>
+
+	    <row>
+	      <entry>branch_sigma</entry>
+	      <entry>branch lengths</entry>
+	      <entry>0.6</entry>
+	      <entry>Scale of non-log-proposal.</entry>
+	    </row>
+
+	    <row>
+	      <entry>mu_scale_sigma</entry>
+	      <entry>mu</entry>
+	      <entry>0.6</entry>
+	      <entry>Width of proposal on log scale.</entry>
+	    </row>
+
+	    <row>
+	      <entry>kappa_scale_sigma</entry>
+	      <entry>HKY::kappa, TN::kappa(pur), TN::kappa(pyr)</entry>
+	      <entry>0.3</entry>
+	      <entry>Width of proposal on log scale.</entry>
+	    </row>
+
+	    <row>
+	      <entry>omega_scale_sigma</entry>
+	      <entry>M0::omega, M2::omega</entry>
+	      <entry>0.3</entry>
+	      <entry>Width of proposal on log scale.</entry>
+	    </row>
+
+	    <row>
+	      <entry>beta::mu_scale_sigma</entry>
+	      <entry>beta::mu</entry>
+	      <entry>0.2</entry>
+	      <entry>Width of proposal.</entry>
+	    </row>
+
+	    <row>
+	      <entry>INV::p_shift_sigma</entry>
+	      <entry>INV::p</entry>
+	      <entry>0.03</entry>
+	      <entry>Width of proposal.</entry>
+	    </row>
+
+	    <row>
+	      <entry>gamma::sigma_scale_sigma</entry>
+	      <entry>gamma::sigma/mu</entry>
+	      <entry>0.25</entry>
+	      <entry>Width of proposal of log scale.</entry>
+	    </row>
+
+	    <row>
+	      <entry>pi_dirichlet_N</entry>
+	      <entry>pi*</entry>
+	      <entry>1.0</entry>
+	      <entry>Tightness of dirichlet proposal for frequencies.</entry>
+	    </row>
+
+	    <row>
+	      <entry>lambda_shift_sigma</entry>
+	      <entry>delta, lambda</entry>
+	      <entry>0.35</entry>
+	      <entry>Width of proposal.</entry>
+	    </row>
+
+	    <row>
+	      <entry>epsilon_shift_sigma</entry>
+	      <entry>epsilon</entry>
+	      <entry>0.15</entry>
+	      <entry>Width of proposal.</entry>
+	    </row>
+
+	  </tbody>
+	  </tgroup>
+	</table>
+      </para>
+    </sect2>
   </sect1>
 
 
