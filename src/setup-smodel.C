@@ -315,6 +315,13 @@ bool process_stack_Multi(vector<string>& string_stack,
 						    -1,//rate!
 						    n);
   }
+  else if (match(string_stack,"lognormal",arg)) {
+    int n=4;
+    if (not arg.empty())
+      n = convertTo<int>(arg);
+
+    model_stack.back() = LogNormalParameterModel(*get_MM(model_stack,"gamma",frequencies),n);
+  }
   else if (match(string_stack,"multi_freq",arg)) {
     int n=4;
     if (not arg.empty())
