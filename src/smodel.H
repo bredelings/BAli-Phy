@@ -851,9 +851,13 @@ namespace substitution {
 
   class DistributionParameterModel: public MultiParameterModel
   {
+    bool good_enough;
+
   protected:
           RateDistribution& D();
     const RateDistribution& D() const;
+
+    efloat_t super_prior() const;
 
     void recalc(const vector<int>&);
 

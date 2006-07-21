@@ -302,8 +302,9 @@ namespace substitution {
   //          Var X = (exp(lsigma^2)-1  => log(Var X + 1) = lsigma^2
 
   efloat_t LogNormal::prior() const {
-    const double mean_stddev = 0.01;
-    return exponential_pdf(parameters_[0], mean_stddev);
+    double g_sigma = parameters_[0];
+    double log_g_sigma = log(g_sigma);
+    return laplace_pdf(log_g_sigma,-4,0.5);
   }
 
   double LogNormal::cdf(double x) const {

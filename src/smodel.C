@@ -1188,6 +1188,14 @@ namespace substitution {
 
   //--------------- Distribution-based Model----------------//
 
+  efloat_t DistributionParameterModel::super_prior() const
+  {
+    if (not good_enough)
+      return 0.0;
+    else
+      return 1.0;
+  }
+
   RateDistribution& DistributionParameterModel::D()
   {
     return SubModelAs<RateDistribution>(1);
@@ -1202,7 +1210,12 @@ namespace substitution {
   {
     // We only need to do this when the DISTRIBUTION changes (?)
     Discretization d(p_values.size(),D());
-    d.scale(1.0/d.scale());
+    double scale = d.scale();
+
+    good_enough = (scale > 1.0/1.5 and scale < 1.5);
+
+    d.scale(1.0/scale);
+
     fraction = d.f;
     p_values = d.r;
     
@@ -1220,7 +1233,8 @@ namespace substitution {
   }
 
   DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const RateDistribution& RD, int p, int n)
-    :MultiParameterModel(M,0,p,n)
+    :MultiParameterModel(M,0,p,n),
+     good_enough(false)
   {
     sub_models.push_back(RD);
 
