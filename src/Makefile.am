@@ -86,7 +86,8 @@ TOOLS = model_P statreport alignment-gild \
 	alignment-median alignment-indices pickout \
 	joint-indels alignment-consensus alignment-info \
 	subsample tree-mean-lengths trees-bootstrap \
-	joint-parsimony stats-merge stats-select alignment-identity
+	joint-parsimony stats-merge stats-select alignment-identity \
+	analyze_distances
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -235,6 +236,18 @@ cut_range_SOURCES = tools/cut-range.C util.C
 
 #---------------------------------------------------------------
 
+analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
+	sequence.C tools/distance-methods.C \
+	util.C sequencetree.C substitution.C eigenvalue.C tree.C \
+	exponential.C setup-smodel.C smodel.C imodel.C rng.C likelihood.C \
+	choose.C tools/optimize.C setup.C rates.C matcache.C alignment-util.C \
+	sequence-format.C randomtree.C model.C  probability.C \
+	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
+	alignment-random.C parameters.C myexception.C monitor.C \
+	tools/tree-dist.C tools/inverse.C
+
+#---------------------------------------------------------------
+
 alignment_cut: alignment.o alignment-util.o alphabet.o sequence.o \
 	sequence-format.o util.o tree.o ${BOOST_LIBS}
 
@@ -253,16 +266,6 @@ srq_analyze: rng.o tools/statistics.o ${LIBS}
 #---------------------------------------------------------------
 
 make_random_tree: tree.o sequencetree.o util.o rng.o ${LIBS}
-
-#---------------------------------------------------------------
-
-analyze_distances: alignment.o alphabet.o sequence.o tools/distance-methods.o \
-	util.o sequencetree.o substitution.o eigenvalue.o tree.o sequencetree.o \
-	exponential.o setup-smodel.o smodel.o imodel.o rng.o likelihood.o \
-	choose.o tools/optimize.o setup.o rates.o matcache.o alignment-util.o \
-	sequence-format.o randomtree.o model.o  probability.o \
-	substitution-cache.o substitution-index.o substitution-star.o tree-util.o \
-	alignment-random.o parameters.o myexception.o monitor.o ${LIBS}
 
 #---------------------------------------------------------------
 

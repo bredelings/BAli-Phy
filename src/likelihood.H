@@ -9,6 +9,9 @@
 efloat_t topology_weight(const Parameters& P, const SequenceTree& T);
 
 // Tree prior: branch lengths & topology
+efloat_t prior(const SequenceTree& T,double branch_mean);
+
+// Tree prior: branch lengths & topology
 efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean);
 
 // Tree prior + SModel prior

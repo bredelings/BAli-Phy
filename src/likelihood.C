@@ -27,7 +27,7 @@ efloat_t topology_weight(const Parameters& P, const SequenceTree& T)
 
 
 /// Tree prior: branch lengths & topology
-efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean) 
+efloat_t prior(const SequenceTree& T,double branch_mean) 
 {
   efloat_t p = 1;
 
@@ -35,11 +35,19 @@ efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean)
   if (T.n_leaves()>3)
     p /= num_topologies(T.n_leaves());
 
-  p *= topology_weight(P,T);
-
   // ---- Exponential prior on branch lengths ---- //
   for(int i=0;i<T.n_branches();i++) 
     p *= exponential_pdf(T.branch(i).length(), branch_mean);
+
+  return p;
+}
+
+/// Tree prior: branch lengths & topology
+efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean) 
+{
+  efloat_t p = prior(T,branch_mean);
+
+  p *= topology_weight(P,T);
 
   return p;
 }

@@ -1,10 +1,5 @@
 7. Re-organize todo, putting later stuff in 'ideas' not TODO
 
-1. Improve discretization of distributions:
-   (a) Forbid s/mu > number of bins.
-   (b) Make prior the same as for Gamma and Beta...
-   (c) Try out a mixture of gammas...
-
 2. Write a program to try to combine trees (sub-branches?)
    (a) Print out the tree of no-conflict branches
    (b) Show conflicting pairs of branches from each file.
@@ -520,6 +515,9 @@ the prior, because we never want to use it  differently.
 [DONE] Handle consensus alignments in alignment-gild.
 
 [DONE] Improve discretization of distributions.
+
+[DONE] Forbid values of sigma/mu that are too large
+       by using the discretization mean.
 
 *IDEAS*
 
