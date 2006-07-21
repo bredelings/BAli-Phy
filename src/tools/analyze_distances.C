@@ -312,6 +312,30 @@ void analyze_rates(const alignment& A,const SequenceTree& T,
 }
 
 
+void set_parameters(Model& M, const variables_map& args) 
+{
+  //-------------- Specify fixed parameters ----------------//
+  vector<string> doset;
+  if (args.count("set"))
+    doset = args["set"].as<vector<string> >();
+
+  // set parameters
+  for(int i=0;i<doset.size();i++) {
+    //parse
+    vector<string> parse = split(doset[i],'=');
+    if (parse.size() != 2)
+      throw myexception()<<"Ill-formed initial condition '"<<doset[i]<<"'.";
+
+    string name = parse[0];
+    double value = convertTo<double>(parse[1]);
+
+    int p=-1;
+    if (p=find_parameter(M,name),p!=-1)
+      M.parameter(p,value);
+  }
+}
+
+
 void estimate_tree(const alignment& A,
 		   SequenceTree& T,
 		   substitution::MultiModel& smodel,
@@ -422,6 +446,7 @@ int main(int argc,char* argv[])
     print_lower(cout,T.get_sequences(),S)<<"\n";
 
     OwnedPointer<substitution::MultiModel> smodel_in = get_smodel(args,A);
+    set_parameters(*smodel_in,args);
     cout<<"Using substitution model: "<<smodel_in->name()<<endl;
     smodel_in->set_rate(1);
     show_parameters(cout,*smodel_in);
