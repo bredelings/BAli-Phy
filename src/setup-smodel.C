@@ -315,7 +315,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 						    -1,//rate!
 						    n);
   }
-  else if (match(string_stack,"lognormal",arg)) {
+  else if (match(string_stack,"log-normal",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);

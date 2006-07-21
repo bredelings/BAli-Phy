@@ -1,11 +1,10 @@
 #include "rates.H"
 
+#include <cmath>
 #include <valarray>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
 #include "probability.H"
-#include "proposals.H"
-#include "rng.H"
 #include "util.H"
 
 namespace substitution {
@@ -401,5 +400,126 @@ namespace substitution {
     return n;
   }
 
+  /// Choose boundaries between bins based on quantiles
+  vector<double> uniform_boundaries(const vector<double>& r, const RateDistribution& D)
+  {
+    vector<double> b(r.size()-1);
+    
+    for(int i=0;i<b.size();i++)
+      b[i] = D.quantile( (D.cdf(r[i]) + D.cdf(r[i+1]))/2.0 ) ;
+    
+    return b;
+  }
+  
+  /// Choose boundaries between bins based on the log rates
+  vector<double> log_boundaries(const vector<double>& r)
+  {
+    vector<double> b(r.size()-1);
+    for(int i=0;i<b.size();i++)
+      b[i] = sqrt(r[i]*r[i+1]);
+    
+    return b;
+  }
+  
+  /// Compute the probability of each bin from the bin boundaries
+  vector<double> get_fractions(const vector<double>& b,const RateDistribution& D)
+  {
+    vector<double> f(b.size()+1);
+    f[0] = D.cdf(b.front());
+    for(int i=1;i<b.size();i++) 
+      f[i] = D.cdf(b[i])-D.cdf(b[i-1]);
+    f.back() = 1-D.cdf(b.back());
+    return f;
+  }
+  
+  double Discretization::operator()(double x) const
+  {
+    for(int i=0;i<b.size();i++)
+      if (x < b[i]) return r[i];
+    
+    return r.back();
+  }
+  
+  double Discretization::moment(double p) const 
+  {
+    double m=0;
+    for(int i=0;i<size();i++)
+      m += f[i]*pow(r[i],p);
+    return m;
+  }
+  
+  
+  void Discretization::scale(double S)
+  {
+    for(int i=0;i<r.size();i++)
+      r[i] *= S;
+  }
+
+  double Discretization::scale() const
+  {
+    double S=0;
+    for(int i=0;i<size();i++)
+      S += f[i]*r[i];
+    return S;
+  }
+  
+  
+  Discretization::Discretization(int N,const RateDistribution& D,double a)
+    :p(N),r(N),A(a)
+  {
+    for(int i=0;i<N;i++) {
+      double p1 = (2.0*i+1)/(2.0*N);
+      p[i] = gsl_cdf_beta_P(p1,A,A);
+    }
+    
+    for(int i=0;i<N;i++) 
+      r[i] = D.quantile(p[i]);
+    
+    b = log_boundaries(r);
+    f = get_fractions(b,D);
+  }
+  
+  
+  
+  UniformDiscretization::UniformDiscretization(int N):Discretization(N) { }
+    
+  UniformDiscretization::UniformDiscretization(int N, const RateDistribution& D)
+      :Discretization(N,D,1)
+  {
+    b = uniform_boundaries(r,D);
+    f = get_fractions(b,D);
+  }
+  
+  
+  double Discretization::error(double (*g)(double x),const RateDistribution& D) const
+  {
+    int N2 = (size()+2)*20;
+    if (N2 < 200) N2 = 200;
+    Discretization d2(N2,D);
+    
+    double E=0;
+    for(int i=0;i<d2.size();i++) {
+      double x = d2.r[i];
+      double e = std::abs(g(x) - g((*this)(x)));
+      E += d2.f[i]*e;
+    }
+    return E;
+  }
+  
+  double Discretization::error2(double (*g)(double x),const RateDistribution& D) const
+  {
+    int N2 = (size()+2)*20;
+    if (N2 < 200) N2 = 200;
+    Discretization d2(N2,D);
+    
+    double E=0;
+    for(int i=0;i<d2.size();i++) {
+      double x = d2.r[i];
+      double e = std::abs( g(x) - g((*this)(x)));
+      e = e*e;
+      E += d2.f[i]*e;
+    }
+    return E;
+  }
 
 }

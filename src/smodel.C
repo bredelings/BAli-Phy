@@ -1200,11 +1200,13 @@ namespace substitution {
 
   void DistributionParameterModel::recalc(const vector<int>&) 
   {
-    // We only need to do this when something BESIDES model parameters changes
-    for(int i=0;i<p_values.size();i++)
-      p_values[i] = D().quantile( double(2*i+1)/(2.0*p_values.size()) );
+    // We only need to do this when the DISTRIBUTION changes (?)
+    Discretization d(p_values.size(),D());
+    d.scale(1.0/d.scale());
+    fraction = d.f;
+    p_values = d.r;
     
-    // We only need to do this when something BESIDES the proportions changes.
+    // We need to do this when either P_values changes, or the SUBMODEL changes
     recalc_submodel_instances();
   }
 
@@ -1223,10 +1225,6 @@ namespace substitution {
     sub_models.push_back(RD);
 
     set_super_parameters(0);
-
-    // This never changes - since we use quantiles for the bins
-    for(int i=0;i<p_values.size();i++)
-      fraction[i] = 1.0/p_values.size();
 
     read();
     recalc_all();

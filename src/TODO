@@ -1,16 +1,27 @@
 7. Re-organize todo, putting later stuff in 'ideas' not TODO
 
 1. Improve discretization of distributions:
-   (a) forbid s/mu > number of bins.
-   (b) discretize based on beta with A=3
-   (c) choose boundaries based on log scale.
-   (d) Fix Log-Normal distribution to be more usable.
-       - already OK?  Make prior the same as for Gamma and Beta...
-   (e) Try out a mixture of gammas...
+   (a) Forbid s/mu > number of bins.
+   (b) Make prior the same as for Gamma and Beta...
+   (c) Try out a mixture of gammas...
 
-9. Implement multiple data partitions...  (on a branch)
+2. Write a program to try to combine trees (sub-branches?)
+   (a) Print out the tree of no-conflict branches
+   (b) Show conflicting pairs of branches from each file.
+   (c) Start with trees - no branches in the same file can conflict.
+
+3. Handle Wiegman's insect sequences
+   (a) Write a mixture-type model to handle this
+   (b) Fix analyze-distances to see rate distribution.
+   (c) Take a tree SAMPLE.  (posterior sample?)
+
+4. Implement multiple data partitions...  (on a branch)
   (a) More than one alignment + scaling between the trees
   (b) More than one substitution model?
+
+5. Implement Correlated Site Classes.
+  (a) Do the math.
+  (b) 
 
 1. Estimate constraints using alignment-indices
   a) specify number of constraints
@@ -507,6 +518,8 @@ the prior, because we never want to use it  differently.
 [DONE] Remove 'Yang' from M? models. (code and options.)
 
 [DONE] Handle consensus alignments in alignment-gild.
+
+[DONE] Improve discretization of distributions.
 
 *IDEAS*
 

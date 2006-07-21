@@ -171,5 +171,42 @@ namespace substitution {
     temp.push_back(D2);
     return substitution::MultipleDistribution(temp);
   }
+  
+  /// A Discretization of a Distribution
+  struct Discretization
+  {
+    vector<double> p;
+    vector<double> r;
+    
+    vector<double> b;
+    vector<double> f;
+    
+    double A;
+    
+    double operator()(double x) const;
+    
+    int size() const {return f.size();}
+    
+    double error(double (*f)(double x),const RateDistribution& D) const;
+    double error2(double (*f)(double x),const RateDistribution& D) const;
+    
+    double moment(double p) const;
+    
+    double scale() const; 
+    void scale(double r);
+    
+    Discretization(int N):r(N),f(N) { }
+    
+    Discretization(int N,const RateDistribution& D,double a=2);
+  };
+
+  /// A Discretization with equal bin probabilities
+  struct UniformDiscretization: public Discretization
+  {
+    UniformDiscretization(int N);
+    
+    UniformDiscretization(int N, const RateDistribution& D);
+  };
+
 }
 #endif
