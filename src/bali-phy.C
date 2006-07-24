@@ -406,7 +406,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("version")) {
-    cout<<"VERSION: "<<BALI_PHY_VERSION<<"\nBUILD: "<<__DATE__<<"\n";
+    cout<<"VERSION: "<<BALI_PHY_VERSION<<"\nBUILD: "<<__DATE__<<" "<<__TIME__<<"\n";
     exit(0);
   }
 
@@ -638,7 +638,7 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
       if (i != argc-1) s_out<<" ";
     }
     s_out<<endl;
-    cout<<"VERSION: "<<BALI_PHY_VERSION<<"\nBUILD: "<<__DATE__<<"\n";
+    s_out<<"VERSION: "<<BALI_PHY_VERSION<<"\nBUILD: "<<__DATE__<<" "<<__TIME__<<"\n";
     s_out<<"directory: "<<fs::initial_path().string()<<endl;
     if (getenv("JOB_ID"))
       s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
