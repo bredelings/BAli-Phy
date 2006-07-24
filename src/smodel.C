@@ -1290,7 +1290,7 @@ namespace substitution {
   efloat_t WithINV::super_prior() const {
     double p = parameter(0);
 
-    return beta_pdf(p, 0.02, 20);
+    return beta_pdf(p, 0.05, 20);
   }
 
     /// Access the base models
