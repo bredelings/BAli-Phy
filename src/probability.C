@@ -99,9 +99,10 @@ log_double_t cauchy_pdf(double x, double l, double s)
   return pow<log_double_t>(C,-1.0);
 }
 
-log_double_t beta_pdf(double p,double f, double N) {
-    const double a  = 1.0 + N * f;
-    const double b  = 1.0 + N * (1.0 - f);
+log_double_t beta_pdf(double p,double f, double N) 
+{
+    const double a  = N * f;
+    const double b  = N * (1.0 - f);
 
     if (p <= 0.0 or p >= 1.0)
       return 0;
