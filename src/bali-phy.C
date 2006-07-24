@@ -638,6 +638,7 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
       if (i != argc-1) s_out<<" ";
     }
     s_out<<endl;
+    cout<<"VERSION: "<<BALI_PHY_VERSION<<"\nBUILD: "<<__DATE__<<"\n";
     s_out<<"directory: "<<fs::initial_path().string()<<endl;
     if (getenv("JOB_ID"))
       s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
@@ -651,39 +652,6 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
   return files;
 }
 
-
-/*
-class teebuf: public std::streambuf 
-{
-protected:
-  std::streambuf* sb1;
-  std::streambuf* sb2;
-
-public:
-  typedef std::char_traits<char> traits_type;
-  typedef traits_type::int_type  int_type;
-  
-  int_type overflow(int_type c) {
-    if (sb1->sputc(c) == traits_type::eof()
-	|| sb2->sputc(c) == traits_type::eof())
-      return traits_type::eof();
-    return c;
-  }
-
-  int sync() {
-    int rc = sb1->pubsync();
-    rc = sb2->pubsync();
-    return rc;
-  } 
-
-  teebuf(std::streambuf* s1, std::streambuf* s2):
-    sb1(s2),
-    sb2(s1)
-  {}
-
-  ~teebuf() { sync(); }
-};
-*/
 
 class teebuf: public std::stringbuf
 {
