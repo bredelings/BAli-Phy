@@ -49,6 +49,21 @@ vector<double> get_post_rate_probs(const Matrix& P)
   return f;
 }
 
+double E_rate(const Matrix& P, int c,const substitution::MultiModel& smodel)
+{
+  double R=0;
+  for(int m=0;m<P.size2();m++)
+    R += P(c,m)*smodel.base_model(m).rate();
+  return R;
+}
+
+void show_rate_probs(std::ostream& o, const Matrix& P,
+		     const substitution::MultiModel& smodel)
+{
+  for(int c=0; c<P.size1(); c++)
+    o<<c<<" "<<E_rate(P,c,smodel)<<endl;
+}
+
 class likelihood: public function 
 {
 protected:
@@ -284,6 +299,8 @@ void analyze_rates(const alignment& A,const SequenceTree& T,
   vector<double> prior_bin_f = smodel.distribution();
   
   vector<double> post_bin_f = get_post_rate_probs(rate_probs);
+
+  show_rate_probs(cout,rate_probs,smodel);
     
   double prior_rate=0;
   double post_rate=0;
@@ -480,10 +497,9 @@ int main(int argc,char* argv[])
       cout<<"E T = "<<T2<<endl;
       show_parameters(cout,*smodel_est);
       cout<<endl<<endl;
-    }
 
-    //----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
-    analyze_rates(A,T2,*smodel_est);
+      analyze_rates(A,T2,*smodel_est);
+    }
 
     //------- Set up function to maximize --------//
     Matrix S1 = getSimilarity(T,*smodel_in);

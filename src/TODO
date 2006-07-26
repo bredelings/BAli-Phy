@@ -7,7 +7,6 @@
 
 3. Handle Wiegman's insect sequences
    (a) Write a mixture-type model to handle this
-   (b) Fix analyze-distances to see rate distribution.
    (c) Take a tree SAMPLE.  (posterior sample?)
 
 4. Implement multiple data partitions...  (on a branch)
