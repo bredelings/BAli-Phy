@@ -16,7 +16,7 @@ log_double_t laplace_pdf(double x, double mu, double sigma);
 
 log_double_t cauchy_pdf(double x, double l=0.0, double s=1.0);
 
-log_double_t beta_pdf(double p,double f, double N);
+log_double_t beta_pdf(double p,double a, double b);
 
 // -------- Topology counting functions ------ //
 log_double_t num_branches(int n);

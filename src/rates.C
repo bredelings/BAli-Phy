@@ -217,7 +217,7 @@ namespace substitution {
       return 0.0;
 
     efloat_t P = 1;
-    P *= beta_pdf(mu,0.95,20);
+    P *= beta_pdf(mu,10,1);
     P *= laplace_pdf(s,-4,0.5);
     return P;
   }

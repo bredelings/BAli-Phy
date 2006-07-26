@@ -239,7 +239,7 @@ efloat_t NewIndelModel::prior() const
   // Calculate prior on invariant fraction
   if (not fixed(2)) {
     double i = parameters_[2];
-    Pr *= beta_pdf(i,0.02,50);
+    Pr *= beta_pdf(i,1,25);
   }
 
   return Pr;
@@ -385,7 +385,7 @@ efloat_t TKF1::prior() const
   // Calculate prior on invariant fraction
   if (not fixed(2)) {
     double i = parameters_[2];
-    Pr *= beta_pdf(i,0.02,50);
+    Pr *= beta_pdf(i,1,25);
   }
 
   return Pr;
