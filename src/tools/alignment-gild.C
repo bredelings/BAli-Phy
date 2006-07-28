@@ -202,6 +202,8 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
   std::cerr<<"Loading alignments...";
   alignments = load_alignments(std::cin,alphabets,maxalignments);
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+  if (alignments.empty()) 
+    throw myexception()<<"Alignment sample is empty.";
 
   //-------- Check compatability of estimate & samples-------//
   assert(A.n_sequences() == T.n_leaves());
