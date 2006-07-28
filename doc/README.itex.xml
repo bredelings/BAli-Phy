@@ -58,7 +58,7 @@
 	  of OS X must be 10.1 or higher.  If you want to use the
 	  development tools from Apple to compile
 	  <application>BAli-Phy</application>, the system must be 10.4 or
-	  higher, and you must upgrade to XCode 2.2 (see Software
+	  higher, and you must upgrade to XCode 2.2 or higher(see Software
 	  Requirements).
 	  </para>
 
@@ -80,35 +80,35 @@
 
 	<itemizedlist>
 	  <listitem><para> A modern C++ compiler (<ulink
-	  url="http://gcc.gnu.org">GCC</ulink> version 3.4, 4.0, and 4.1 are known to work)</para></listitem>
-	  <listitem><para>GNU make version 3.80 or higher  (<ulink
-	  url="http://www.gnu.org/software/make">GNU make</ulink>).
-	  </para></listitem>
-	  <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>)</para></listitem>
-	  <listitem><para> The BOOST C++ Library (<ulink
-	  url="http://www.boost.org">BOOST</ulink>) version 1.32 or higher.</para></listitem>
-	</itemizedlist>
-	</para>
-
-	<note>
+	  url="http://gcc.gnu.org">GCC</ulink> version 3.4, 4.0, and 4.1 are known to work)</para>	<note>
 	<title>Mac OS X issues:</title>
 
 	<para>If you want to use the development tools shipped by Apple
 	(e.g. GCC) then you need OS X version 10.4 (Tiger) or higher, and
-	you need to install XCode 2.2.  (You can use a GCC compiler
+	you need to install XCode 2.2 or higher.  (You can use a GCC compiler
 	built from the non-apple FSF sources, but installing XCode is
 	much simpler.) 
 	</para>
 
-	<para><ulink url="http://fink.sourceforge.net">Fink</ulink>
+	<!-- para><ulink url="http://fink.sourceforge.net">Fink</ulink>
 	provides Linux software for Mac OS X.  If you have Fink 0.8,
 	you can use it to install both GSL and BOOST.  However, if you
 	have 0.7 or lower, then you may use it to install the GSL
 	library and include files, but the BOOST libraries from
 	fink 0.7 <emphasis>will not work</emphasis>, because they are
 	compiled with GCC 3.3. You must therefore compile the BOOST
-	libraries yourself, using GCC 3.4 or higher.</para> 
-	</note>
+	libraries yourself, using GCC 3.4 or higher.</para --> 
+	</note></listitem>
+	  <listitem><para>GNU make version 3.80 or higher  (<ulink
+	  url="http://www.gnu.org/software/make">GNU make</ulink>).
+	  </para></listitem>
+	  <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>) version 1.8 or higher.</para></listitem>
+	  <!-- listitem><para> The BOOST C++ Library (<ulink
+	  url="http://www.boost.org">BOOST</ulink>) version 1.32 or higher.</para></listitem -->
+	</itemizedlist>
+	</para>
+
+
 	</sect3>
 
 	<sect3>
@@ -250,7 +250,7 @@
     <sect2>
       <title>Installing precompiled binaries</title>
       <para>To install pre-compiled binaries, simply extract the
-      compressed archive in the directory of your choice.  If you has
+      compressed archive in the directory of your choice.  If you have
       root access you might extract in
       <filename>/usr/local</filename>; if not, you might make a
       directory <filename>~/local</filename> in your home directory
