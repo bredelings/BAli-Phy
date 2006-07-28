@@ -157,6 +157,9 @@ namespace substitution {
       double mu = log(M) - sigma2/2.0;
       double sigma = sqrt(sigma2);
 
+      // don't go crazy
+      sigma = std::max(sigma,1.0e-5);
+
       return gsl_cdf_lognormal_P(x,mu,sigma);
     }
   }
@@ -313,6 +316,9 @@ namespace substitution {
 
     double lsigma = sqrt(lVar);
     double lmu = -0.5 * lVar;
+
+    // don't go crazy
+    lsigma = std::max(lsigma,1.0e-5);
 
     return gsl_cdf_lognormal_P(x,lmu,lsigma);
   }
