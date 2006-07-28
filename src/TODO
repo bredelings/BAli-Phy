@@ -43,10 +43,9 @@ much of the variation is spatial?)
 6. Output move stats in tracer-readable format. (or, at least, allow burn-in?)
 --------------------------------------------------------
 
--50. What is the proper way to handle gaps in an AU plot?
-     - can they be handled in a tree-like fashion, or not?
-
 -48. Indel model where we sum over all root locations: doesn't work for SPR?
+  a. A mixture of P(A|root) doesn't factor into P(A[1]) * P(A[2]) * ... * P(A[B])
+  b. We would have to augment the data with a root.
 
 -46. Code an initial test for the same-frequencies assumption?
 	- likelihood ratio test: sequences S have frequencies p
