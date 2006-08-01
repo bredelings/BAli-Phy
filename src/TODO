@@ -15,7 +15,7 @@
 
 5. Implement Correlated Site Classes.
   (a) Do the math.
-  (b) 
+  (b) Do the coding?
 
 1. Estimate constraints using alignment-indices
   a) specify number of constraints
@@ -73,17 +73,22 @@ much of the variation is spatial?)
 -------------------------------------------------------
 Before 1.9.9:
 
- * Implement tree constraints, alignment constraints, branch-length constraints.
+ * Implement tree constraints, alignment constraints, branch-length
+   constraints. 
  * Implement alignment constraints.
  * Mention HKYx3,TNx3,GTRx3 models.
- * Do the autoconf magic to compile GSL in-tree.
- * Add Student T random variables - make cauchy a special case. 
-   (How about Levy stable distributions?)
+ * Allow specifying the location of GSL
+ * Allow debugging with _GLIBCXX_DEBUG
+ * 
 
+Before 2.0:
+ * Do the autoconf magic to compile GSL in-tree.
 -------------------------------------------------------
 Questions:
 
- * How can the distribution of INV::p be so exponential? (AATS)
+ Q: How can the distribution of INV::p be so exponential? (AATS)
+ A: Strong incorrect prior, not enought data!
+
 
 -------------------------------------------------------
 

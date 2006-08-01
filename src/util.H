@@ -133,6 +133,17 @@ inline T wrap(T x, T min, T max) {
   return wrap(x-min,max-min)+min;
 }
 
+
+template <typename T>
+inline T minmax(T x,T min, T max) {
+  if (x<min)
+    return min;
+  else if (x>max)
+    return max;
+  else
+    return x;
+}
+
 /// Get index of t in v
 template <typename T>
 int find_index(const std::vector<T>& v,const T& t) 

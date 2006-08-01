@@ -6,6 +6,7 @@
 #include <gsl/gsl_cdf.h>
 #include "probability.H"
 #include "util.H"
+#include "monitor.H"
 
 namespace substitution {
 
@@ -142,7 +143,7 @@ namespace substitution {
 
   double Gamma::cdf(double x) const 
   {
-    double s = parameters_[0];
+    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
 
     double M = 1;
     double V = (s*M)*(s*M);
@@ -153,19 +154,20 @@ namespace substitution {
     if (a < 1000)
       return gsl_cdf_gamma_P(x,a,b);
     else {
-      double sigma2 =  log(V/(M*M) + 1);
+      double sigma2 =  log1p(V/(M*M));
       double mu = log(M) - sigma2/2.0;
       double sigma = sqrt(sigma2);
 
       // don't go crazy
-      sigma = std::max(sigma,1.0e-5);
+      sigma = minmax(sigma, 1.0e-5, 1.0e5);
 
       return gsl_cdf_lognormal_P(x,mu,sigma);
     }
   }
 
-  double Gamma::pdf(double x,double) const {
-    double s = parameters_[0];
+  double Gamma::pdf(double x,double) const 
+  {
+    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
 
     double M = 1;
     double V = (s*M)*(s*M);
@@ -176,16 +178,20 @@ namespace substitution {
     if (a < 1000)
       return gsl_ran_gamma_pdf(x,a,b);
     else {
-      double sigma2 =  log(V/(M*M) + 1);
+      double sigma2 =  log1p(V/(M*M));
       double mu = log(M) - sigma2/2.0;
       double sigma = sqrt(sigma2);
+
+      // don't go crazy
+      sigma = minmax(sigma, 1.0e-5, 1.0e5);
 
       return gsl_ran_lognormal_pdf(x,mu,sigma);
     }
   }
 
-  double Gamma::quantile(double p,double) const {
-    double s = parameters_[0];
+  double Gamma::quantile(double p,double) const 
+  {
+    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
 
     double M = 1;
     double V = (s*M)*(s*M);
@@ -196,9 +202,12 @@ namespace substitution {
     if (a < 1000)
       return gsl_cdf_gamma_Pinv(p,a,b);
     else {
-      double sigma2 =  log(V/(M*M) + 1);
+      double sigma2 =  log1p(V/(M*M));
       double mu = log(M) - sigma2/2.0;
       double sigma = sqrt(sigma2);
+
+      // don't go crazy
+      sigma = minmax(sigma, 1.0e-5, 1.0e5);
 
       return gsl_cdf_lognormal_P(p,mu,sigma);
     }
@@ -297,7 +306,7 @@ namespace substitution {
   }
 
 
-  /*-------------- LogNormal Distribution ----------------*/
+  //-------------- LogNormal Distribution ----------------//
   // E X = exp(lmu + 0.5*lsigma^2)
   // Var X = (exp(lsigma^2)-1) - exp(2*lmu + lsigma^2)
 
@@ -310,36 +319,50 @@ namespace substitution {
     return laplace_pdf(log_g_sigma,-4,0.5);
   }
 
-  double LogNormal::cdf(double x) const {
-    double Var = parameters_[0]*parameters_[0];
-    double lVar = log(Var+1.0);
+  double LogNormal::cdf(double x) const 
+  {
+    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
+
+    double Var = s*s;
+    double lVar = log1p(Var);
 
     double lsigma = sqrt(lVar);
     double lmu = -0.5 * lVar;
 
     // don't go crazy
-    lsigma = std::max(lsigma,1.0e-5);
+    lsigma = minmax(lsigma, 1.0e-5, 1.0e5);
 
     return gsl_cdf_lognormal_P(x,lmu,lsigma);
   }
 
-  double LogNormal::pdf(double x,double) const {
-    double Var = parameters_[0]*parameters_[0];
-    double lVar = log(Var+1.0);
+  double LogNormal::pdf(double x,double) const 
+  {
+    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
+
+    double Var = s*s;
+    double lVar = log1p(Var);
 
     double lsigma = sqrt(lVar);
     double lmu = -0.5 * lVar;
+
+    // don't go crazy
+    lsigma = minmax(lsigma, 1.0e-5, 1.0e5);
 
     return gsl_ran_lognormal_pdf(x,lmu,lsigma);
   }
 
-  double LogNormal::quantile(double P,double) const {
-    double Var = parameters_[0]*parameters_[0];
-    double lVar = log(Var+1.0);
+  double LogNormal::quantile(double P,double) const 
+  {
+    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
+
+    double Var = s*s;
+    double lVar = log1p(Var);
 
     double lsigma = sqrt(lVar);
     double lmu = -0.5 * lVar;
 
+    // don't go crazy
+    lsigma = minmax(lsigma,1.0e-5,1.0e5);
 
     return gsl_cdf_lognormal_Pinv(P,lmu,lsigma);
   }
@@ -481,9 +504,27 @@ namespace substitution {
     
     for(int i=0;i<N;i++) 
       r[i] = D.quantile(p[i]);
-    
+
     b = log_boundaries(r);
+
     f = get_fractions(b,D);
+
+    // check for errors
+    bool error=false;
+
+    for(int i=0;i<f.size();i++)
+      if (std::isnan(f[i]) or std::isnan(r[i]))
+	error=true;
+
+    if (error) {
+      std::cerr<<"f[i] = NaN!"<<std::endl;
+      show_parameters(std::cerr,D);
+      for(int i=0;i<r.size();i++)
+	std::cerr<<"r["<<i<<"] = "<<r[i]<<std::endl;
+      for(int i=0;i<f.size();i++)
+	std::cerr<<"f["<<i<<"] = "<<f[i]<<std::endl;
+      std::abort();
+    }
   }
   
   
