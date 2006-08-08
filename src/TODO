@@ -1,12 +1,31 @@
 7. Re-organize todo, putting later stuff in 'ideas' not TODO
 
+1. Implement general distributions - we need a way to have special distributions
+   that are charaterized only by sigma/mu.
+   (a) how do we want to handle multiple parameterizations of distributions?
+       i) for example, the gamma as (a,b) and as (mu,s/mu)?
+      ii) for example, log-normal as (mu,s/mu) and as (lmu,lsigma)?
+   (b) Fix the Uniform distibution to have max range (0,2) ?
+
+2. Hmm... It seems that we have a scale parameter in each case...
+   And (except for mixture distributions) a width parameter.
+   (a) If we had an exponential distribution, then we have s/mu=1 by def.
+   (b) The set_rate( ) function for MultiModels
+
+3. Do we want to have moments?
+   (a) m[n] = \prod_0^n-1 (\alpha+i)\times\beta for gamma
+   (b) m[n] = exp(n\times\mu+n^2d^2/2) for log-normal
+   (c) m[n] = \prod_0^n-1 (\alpha+i)/(\alpha+\beta+i)
+
 2. Write a program to try to combine trees (sub-branches?)
    (a) Print out the tree of no-conflict branches
    (b) Show conflicting pairs of branches from each file.
    (c) Start with trees - no branches in the same file can conflict.
 
 3. Handle Wiegman's insect sequences
-   (a) Write a mixture-type model to handle this
+   (a) Write a mixture-type model to handle this.
+   (b) Implement different frequencies for INV sites.
+   (c) But then we have to handle unique names for INV::fA and gamma[4]::fA
    (c) Take a tree SAMPLE.  (posterior sample?)
 
 4. Implement multiple data partitions...  (on a branch)
@@ -75,11 +94,8 @@ Before 1.9.9:
 
  * Implement tree constraints, alignment constraints, branch-length
    constraints. 
- * Implement alignment constraints.
- * Mention HKYx3,TNx3,GTRx3 models.
  * Allow specifying the location of GSL
  * Allow debugging with _GLIBCXX_DEBUG
- * 
 
 Before 2.0:
  * Do the autoconf magic to compile GSL in-tree.

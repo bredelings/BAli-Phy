@@ -407,7 +407,7 @@
   For example, consider the following
 	option file:
 <programlisting format="linespecific">#select a data set to analyze
-align = Data/EF-Tu/5d.fasta
+align = examples/EF-Tu/5d.fasta
 
 #select an substitution model
 smodel = gamma+INV
@@ -422,7 +422,7 @@ traditional = traditional
 	the option name as the value, because it does not take a
 	value.  This, this configuration file corresponds to the
 	command line
-<screen><prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --traditional</userinput>
+<screen><prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta --smodel gamma+INV --traditional</userinput>
 </screen>
       </para>
       </sect3>
@@ -690,15 +690,19 @@ traditional = traditional
   <sect1>
     <title>Examples</title>
     <para>Here are some examples which demonstrate how to run
-    <application>BAli-Phy</application>.  These examples all assume
-    the location of the Data/ directory is specified as in <xref linkend="spec_data_dir"/>;
+    <application>BAli-Phy</application>.  In order to run these
+    examples, you must first do two things.  Firstly, you must specify
+    the location of the <filename>Data/</filename> directory is specified as in <xref
+    linkend="spec_data_dir"/>.  Secondly, you must go to a directory
+    which contains the <filename>examples/</filename> directory or a
+    shortcut to it.
     </para>
 
     <example>
       <title>No frills</title>
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
       the software.</para>
-      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta</userinput></screen>
     </example>
 
     <example>
@@ -708,7 +712,7 @@ traditional = traditional
       invariant sites.  The amount of rate variation and the fraction of
       invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy Data/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment</userinput></screen></example>
 
     <example>
       <title>Fixed alignment</title>
@@ -720,7 +724,7 @@ traditional = traditional
       estimated from the input sequences.
       </para> 
 
-      <screen> <prompt>%</prompt> <userinput>bali-phy Data/5S-rRNA/5d.fasta --smodel pi=constant --traditional</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy examples/5S-rRNA/5d.fasta --smodel pi=constant --traditional</userinput></screen>
 
     </example>
   </sect1>
@@ -809,14 +813,16 @@ traditional = traditional
       matrix for these reversible models can be decomposed into a
       symmetric matrix $S$ and equilibrium frequencies $\pi$ as
       follows:  \[Q_{ij} = S_{ij}\times\pi_j\]
-      The matrix $S$ is call the exchangability matrix, and
+      The matrix $S$ is called the exchangability matrix, and
       represents how exchangeable letters $i$ and $j$ are
       independent of their frequencies.
       </para>
 
       <sect3>
 	<title>Basic CTMC models</title>
-	<para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and M0.</para>
+	<para>The basic CTMC models are EQU, HKY, TN, GTR, HKYx3,
+	TNx3, GTRx3,  Empirical, and M0.  Each of these models is a
+	way of specifying the exchangeability matrix $S_{ij}$.</para>
       </sect3>
 
       <sect3>
@@ -903,6 +909,25 @@ traditional = traditional
 		<para>none.</para>
 	      </entry>
 	      <entry></entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput>HKYx3</userinput></para>
+		<para><userinput>TNx3</userinput></para>
+		<para><userinput>GTRx3</userinput></para>
+	      </entry>
+	      <entry>Triplets</entry>
+	      <entry>
+		<para><replaceable>nuc-model</replaceable> parameters.</para>
+	      </entry>
+	      <entry>
+		<para>If the nuc-model has transition matrix
+		$S^\prime_{ij}$ on nucleotides, then:</para>
+
+		<para>$S_{\alpha\beta} = 0$ for changes of more than one nucleotide.</para>
+		<para>$S_{\alpha\beta} = S^\prime_{ij}$ for single nucleotide  changes $i \to j$.</para>
+	      </entry> 
 	    </row>
 
 	    <row>
@@ -1255,8 +1280,8 @@ traditional = traditional
 
     <sect2>
       <title>Output directory</title>
-      <para><application>BAli-Phy</application> creates a new directory
-      to store its output files in each time it is run.  By default, the
+      <para><application>BAli-Phy</application> creates a new
+      directory to store its output files each time it is run.  By default, the
       directory name is the name of the sequence file, with a number
       added on the end to make it unique. <application>BAli-Phy</application>
       first checks  if there is already a directory called
