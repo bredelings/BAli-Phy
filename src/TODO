@@ -538,6 +538,8 @@ the prior, because we never want to use it  differently.
 [DONE] Forbid values of sigma/mu that are too large
        by using the discretization mean.
 
+[DONE] Separate Data/ files and examples.
+
 *IDEAS*
 
  - We need better ways to compute compute marginal likelihoods.

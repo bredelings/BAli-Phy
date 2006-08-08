@@ -8,11 +8,11 @@ UAC  Y
 UGC  C
 UUA  L
 UCA  S
-UAA  -
-UGA  -
+UAA  !
+UGA  !
 UUG  L
 UCG  S
-UAG  -
+UAG  !
 UGG  W
 CUU  L
 CCU  P
