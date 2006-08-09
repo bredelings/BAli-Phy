@@ -1,5 +1,10 @@
 7. Re-organize todo, putting later stuff in 'ideas' not TODO
 
+2. How much of the sequences is in each %-identity fraction?
+  a) How much information is in each fraction?
+  b) Can we combine measures of gappiness and %-identity to yield a
+     measure of ambiguity? 
+
 1. Implement general distributions - we need a way to have special distributions
    that are charaterized only by sigma/mu.
    (a) how do we want to handle multiple parameterizations of distributions?
@@ -44,9 +49,6 @@
   e) percentage of sites w/ an indel
   f) print the column number in the comments of each row
 
-2. How much of the sequences is in each %-identity fraction?
-  a) How much information is in each fraction?
-
 5. Use a RJMCMC on a fixed alignment to model local changes in 'mu'
    +  or use a change-point model?
    +  or use a *nested* Change Point Model?
@@ -60,6 +62,11 @@ much of the variation is spatial?)
 5. Proposals and Priors
   a. use a parameter_names_ vector.
 6. Output move stats in tracer-readable format. (or, at least, allow burn-in?)
+
+7. How about having an alphabet option "AAA -" to indicate that this item is missing?
+8. How about switching from '!' to '*' to indicate stop codons? 
+   (And stop using * as a wildcard character? We could use '.' instead, based on regular expressions.
+    And in most cases we can use N or X anyway.)
 --------------------------------------------------------
 
 -48. Indel model where we sum over all root locations: doesn't work for SPR?
@@ -94,6 +101,7 @@ Before 1.9.9:
 
  * Implement tree constraints, alignment constraints, branch-length
    constraints. 
+ * Don't crash on 'SKIP=<> make' in --traditional mode.
  * Allow specifying the location of GSL
  * Allow debugging with _GLIBCXX_DEBUG
 

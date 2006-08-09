@@ -34,7 +34,9 @@ Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
 		  Results/Report Results/MAP.fasta Results/MAP.phy \
 		  Mixing/partitions.SRQ Mixing/c50.SRQ Mixing/partitions.bs \
-		  Results/MAP-AU.html Results/consensus.fasta Results/consensus-AU.html
+		  Results/MAP-AU.html Results/MAP-AU2.html \
+		  Results/consensus.fasta Results/consensus-AU.html \
+		  Results/consensus-AU2.html
 	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration $$(( ${SKIP} + 1))." > Results/analysis
 	@echo "Finished:  $$(date)" >> Results/analysis
 	@echo 
@@ -120,8 +122,13 @@ Results/%-AU.prob: Work/%-unordered.fasta Work/samples-${SKIP}+${SIZE} Results/M
 	@echo "done."
 
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
-	@echo -e "Drawing $* alignment ... \c"
-	@alignment-draw Results/$*.fasta Results/$*-AU.prob --width 100 > $@
+	@echo -e "Drawing $* alignment plot ... \c"
+	@alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 > $@
+	@echo "done."
+
+Results/%-AU2.html: Results/%-AU.prob Results/%.fasta
+	@echo -e "Drawing $* alignment plot (2) ... \c"
+	@alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme AA+contrast+fade+fade+fade+fade > $@
 	@echo "done."
 
 Results/c%.topology: Results/consensus Work/setup
