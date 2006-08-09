@@ -263,7 +263,7 @@ void RootedSequenceTree::parse(const string& line)
 
       // insert merged trees into the next level down
       BN = ::add_node(BN);
-      BN->out->length = BN->length = 1;
+      BN->out->length = BN->length = -1;
       tree_stack.back().push_back(BN);
     }
     else if (prev == "(" or prev == "," or prev == "") {
