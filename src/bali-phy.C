@@ -390,9 +390,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("smodel",value<string>(),"Substitution model.")
     ("imodel",value<string>()->default_value("fragment-based+T"),"Indel model: simple, fragment-based, or fragment-based+T.")
     ("align-constraint",value<string>(),"File with alignment constraints.")
-    ("t-constraint",value<string>(),"File with m.f. tree representing topology constraint.")
-    ("a-constraint",value<string>(),"File with m.f. tree representing alignment constraint.")
-    ("b-constraint",value<string>(),"File with m.f. tree representing branch length constraints.")
+    ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
+    ("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
     ;
   options_description all("All options");
   all.add(general).add(mcmc).add(parameters).add(model);
@@ -516,6 +515,7 @@ void set_parameters(Parameters& P, const variables_map& args)
   }
 
   // set parameters
+  vector<double> parameters = P.parameters();
   for(int i=0;i<doset.size();i++) {
     //parse
     vector<string> parse = split(doset[i],'=');
@@ -527,10 +527,11 @@ void set_parameters(Parameters& P, const variables_map& args)
 
     int p=-1;
     if (p=find_parameter(P,name),p!=-1)
-      P.parameter(p,value);
+      parameters[p] = value;
     else
       P.keys[name] = value;
   }
+  P.parameters(parameters);
 }
 
 void close_files(vector<ofstream*>& files)
@@ -804,13 +805,6 @@ int main(int argc,char* argv[])
       P.TC = load_constraint_tree(args["t-constraint"].as<string>(),T);
     if (args.count("a-constraint"))
       P.AC = load_constraint_tree(args["a-constraint"].as<string>(),T);
-    if (args.count("b-constraint"))
-      P.BC = load_constraint_tree(args["b-constraint"].as<string>(),T);
-
-    if (not extends(P.TC,P.AC))
-      throw myexception()<<"You may only constrain the alignment on constrained branches!";
-    if (not extends(P.TC,P.AC))
-      throw myexception()<<"You may only constrain the length of constrained branches!";
 
     //---------- Alignment constraint (horizontal) -----------//
     P.alignment_constraint = load_alignment_constraint(args,T);
