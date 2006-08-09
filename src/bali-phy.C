@@ -700,6 +700,42 @@ SequenceTree load_constraint_tree(const string& filename,const SequenceTree& T)
   return constraint;
 }
 
+vector<vector<bool> > load_alignment_leaf_constraints(const string& filename, const SequenceTree& TC)
+{
+  // open file
+  ifstream file(filename.c_str());
+  if (not file)
+    throw myexception()<<"Con't load vertical alignment constraint file '"<<filename<<"'";
+
+  // read file
+  string line;
+  vector<vector<string> > name_groups;
+  while(getline(file,line)) {
+    vector<string> names = split(line,' ');
+    name_groups.push_back(names);
+  }
+
+  // parse the groups into mask_groups;
+  vector<vector<bool> > mask_groups;
+  for(int i=0;i<name_groups.size();i++) {
+    vector<bool> group(TC.n_leaves(),false);
+    for(int j=0;j<name_groups[i].size();j++) {
+      int index = find_index(TC.get_sequences(),name_groups[i][j]);
+      if (index == -1)
+	throw myexception()<<"Reading alignment constraint file '"<<filename<<"':\n"
+			   <<"   Can't find leaf taxon '"<<name_groups[i][j]<<"' in the tree.";
+      
+      group[index] = true;
+    }
+    mask_groups.push_back(group);
+  }
+
+  // check that each groups is a fully resolved clade in the constraint tree
+
+
+  return mask_groups;
+}
+
 int main(int argc,char* argv[]) 
 { 
   std::ios::sync_with_stdio(false);
@@ -800,11 +836,11 @@ int main(int argc,char* argv[])
       s_out<<"none";
     s_out<<endl<<endl;
 
-    //----------------- Tree constraints ----------------//
+    //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
       P.TC = load_constraint_tree(args["t-constraint"].as<string>(),T);
     if (args.count("a-constraint"))
-      P.AC = load_constraint_tree(args["a-constraint"].as<string>(),T);
+      P.AC = load_alignment_leaf_constraints(args["a-constraint"].as<string>(),P.TC);
 
     //---------- Alignment constraint (horizontal) -----------//
     P.alignment_constraint = load_alignment_constraint(args,T);

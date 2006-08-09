@@ -187,8 +187,6 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
    features(0),
    T(t),
    TC(star_tree(t.get_sequences())),
-   AC(star_tree(t.get_sequences())),
-   BC(star_tree(t.get_sequences())),
    LC(T,SModel())
 {
   constants.push_back(-1);
@@ -196,6 +194,9 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
   set_super_parameters(1);
   read();
   parameters_[0] = 0.1;
+
+  for(int b=0;b<TC.n_branches();b++)
+    TC.branch(b).set_length(-1);
 }
 
 Parameters::Parameters(const substitution::MultiModel& SM,const SequenceTree& t)
@@ -205,8 +206,6 @@ Parameters::Parameters(const substitution::MultiModel& SM,const SequenceTree& t)
    features(0),
    T(t),
    TC(star_tree(t.get_sequences())),
-   AC(star_tree(t.get_sequences())),
-   BC(star_tree(t.get_sequences())),
    LC(T,SModel())
 {
   constants.push_back(-1);
@@ -214,4 +213,7 @@ Parameters::Parameters(const substitution::MultiModel& SM,const SequenceTree& t)
   set_super_parameters(1);
   read();
   parameters_[0] = 0.1;
+
+  for(int b=0;b<TC.n_branches();b++)
+    TC.branch(b).set_length(-1);
 }
