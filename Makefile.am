@@ -7,7 +7,9 @@ doc_DATA = bin/GNUmakefile doc/README.xhtml # doc/README.pdf
 
 stuffdir = $(datadir)/@PACKAGE@/
 nobase_stuff_DATA = Data/wag.dat Data/wagstar.dat Data/jtt.dat Data/pam.dat \
-                Data/standard_code.dat
+                Data/standard-code.txt Data/mt-invert-code.txt \
+		Data/mt-protozoan-code.txt Data/mt-vert-code.txt \
+		Data/mt-yeast-code.txt
 
 examplesdir = $(datadir)/@PACKAGE@/
 nobase_examples_DATA = examples/EF-Tu/5d.fasta examples/EF-Tu/12d.fasta examples/EF-Tu/48b.fasta \
