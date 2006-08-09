@@ -794,8 +794,18 @@ namespace substitution {
     return dirichlet_pdf(parameters_, q);
   }
 
-  void GTR::recalc(const vector<int>&) {
+  void GTR::recalc(const vector<int>&) 
+  {
     assert(Alphabet().size()==4);
+
+    std::cerr<<"got here\n";
+
+    double total = 0;
+    for(int i=0;i<6;i++)
+      total += parameters_[i];
+
+    for(int i=0;i<6;i++)
+      parameters_[i] /= total;
 
     S(0,1) = parameters_[0]; // AG
     S(0,2) = parameters_[1]; // AT
