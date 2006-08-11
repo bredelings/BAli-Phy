@@ -76,7 +76,7 @@ public:
   SequenceTree TC;
 
   /// Alignment Constraint
-  std::vector<std::vector<bool> > AC;
+  std::vector<int> AC;
 
   /// Alignment constraint
   ublas::matrix<int> alignment_constraint;

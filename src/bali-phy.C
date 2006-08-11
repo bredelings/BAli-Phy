@@ -700,40 +700,83 @@ SequenceTree load_constraint_tree(const string& filename,const SequenceTree& T)
   return constraint;
 }
 
-vector<vector<bool> > load_alignment_leaf_constraints(const string& filename, const SequenceTree& TC)
+vector<int> load_alignment_branch_constraints(const string& filename, const SequenceTree& TC)
 {
   // open file
   ifstream file(filename.c_str());
   if (not file)
-    throw myexception()<<"Con't load vertical alignment constraint file '"<<filename<<"'";
+    throw myexception()<<"Can't load alignment-branch constraint file '"<<filename<<"'";
 
   // read file
   string line;
   vector<vector<string> > name_groups;
   while(getline(file,line)) {
     vector<string> names = split(line,' ');
+    for(int i=names.size()-1;i>=0;i--)
+      if (names[i].size() == 0)
+	names.erase(names.begin()+i);
+
+    if (names.size() == 0) 
+      continue;
+    else if (names.size() == 1)
+      throw myexception()<<"In alignment constraint file: you must specify more than one sequence per group.";
+    
     name_groups.push_back(names);
   }
 
   // parse the groups into mask_groups;
-  vector<vector<bool> > mask_groups;
-  for(int i=0;i<name_groups.size();i++) {
-    vector<bool> group(TC.n_leaves(),false);
-    for(int j=0;j<name_groups[i].size();j++) {
+  vector<valarray<bool> > mask_groups(name_groups.size());
+  for(int i=0;i<mask_groups.size();i++) 
+  {
+    mask_groups[i].resize(TC.n_leaves());
+    mask_groups[i] = false;
+
+    for(int j=0;j<name_groups[i].size();j++) 
+    {
       int index = find_index(TC.get_sequences(),name_groups[i][j]);
+
       if (index == -1)
 	throw myexception()<<"Reading alignment constraint file '"<<filename<<"':\n"
 			   <<"   Can't find leaf taxon '"<<name_groups[i][j]<<"' in the tree.";
-      
-      group[index] = true;
+      else
+	mask_groups[i][index] = true;
     }
-    mask_groups.push_back(group);
   }
 
-  // check that each groups is a fully resolved clade in the constraint tree
+  // check that each group is a fully resolved clade in the constraint tree
+  vector<int> branches;
+  for(int i=0;i<mask_groups.size();i++) 
+  {
+    // find the branch that corresponds to a mask
+    valarray<bool> mask(TC.n_leaves());
+    int found = -1;
+    for(int b=0;b<2*TC.n_branches() and found == -1;b++) 
+    {
+      mask = TC.partition(b);
+
+      if (equal(mask_groups[i],mask))
+	found = b;
+    }
+
+    // complain if we can't find it
+    if (found == -1) 
+      throw myexception()<<"Alignment constraint: clade '"
+			 <<join(name_groups[i],' ')
+			 <<"' not found in topology constraint tree.";
+    
+    // add child branches if we can find it
+    vector<const_branchview> b2 = branches_after(TC,found);
+    for(int j=0;j<b2.size();j++) {
+      if (b2[j].target().degree() > 3)
+	throw myexception()<<"Alignment constraint: clade '"
+			   <<join(name_groups[i],' ')
+			   <<"' has a polytomy in the topology constraint tree.";
+      branches.push_back(b2[j]);
+    }
+  }
 
 
-  return mask_groups;
+  return branches;
 }
 
 int main(int argc,char* argv[]) 
@@ -840,7 +883,7 @@ int main(int argc,char* argv[])
     if (args.count("t-constraint"))
       P.TC = load_constraint_tree(args["t-constraint"].as<string>(),T);
     if (args.count("a-constraint"))
-      P.AC = load_alignment_leaf_constraints(args["a-constraint"].as<string>(),P.TC);
+      P.AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),P.TC);
 
     //---------- Alignment constraint (horizontal) -----------//
     P.alignment_constraint = load_alignment_constraint(args,T);
