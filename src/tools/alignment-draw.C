@@ -645,7 +645,7 @@ BODY {\n\
 }\n\
 \n\
 .sequences TD { \n\
-   padding: 0;\n\
+   padding: 0.1em;\n\
    margin: 0;\n\
 \n\
    font-size: 10pt; \n\
