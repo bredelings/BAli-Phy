@@ -21,7 +21,7 @@ EXTRA_HEADERS = @top_srcdir@/include/tnt/tnt_array1d.h \
                 @top_srcdir@/include/tnt/jama_eig.h
 
 EXTRA_DIST = $(doc_DATA) $(EXTRA_HEADERS) $(bin_SCRIPTS) $(nobase_stuff_DATA) \
-             doc/Doxyfile 
+             $(nobase_examples_DATA) doc/Doxyfile 
 
 dist-hook:
 	rm -rf `find $(distdir) -name .svn`
