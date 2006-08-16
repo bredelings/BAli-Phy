@@ -8,11 +8,52 @@ AM_INIT_AUTOMAKE([1.9 foreign])
 AC_CONFIG_SRCDIR([src/bali-phy.C])
 AC_CONFIG_HEADER([config.h])
 
+# Specify extra include paths
+AC_ARG_WITH([extra-includes], AS_HELP_STRING([--with-extra-includes=DIR],[Add extra include paths]),
+  use_extra_includes="$withval",
+  use_extra_includes=NO
+)
+
+if test -n "$use_extra_includes" && test "$use_extra_includes" != "NO"; then
+  ac_save_ifs=$IFS
+  IFS=':'
+  for dir in $use_extra_includes; do
+    extra_includes="$extra_includes -I$dir"
+  done
+  IFS=$ac_save_ifs
+fi
+
+CPPFLAGS="$CPPFLAGS $extra_includes"
+AC_SUBST(extra_includes)
+
+# Specify extra library paths
+AC_ARG_WITH([extra-libs], AS_HELP_STRING([--with-extra-libs=DIR],[Add extra library paths]),
+  use_extra_libs="$withval",
+  use_extra_libs=NO
+)
+
+if test -n "$use_extra_libs" && test "$use_extra_libs" != "NO"; then
+  ac_save_ifs=$IFS
+  IFS=':'
+  for dir in $use_extra_libs; do
+    extra_libs="$extra_libs -L$dir"
+  done
+  IFS=$ac_save_ifs
+fi
+
+LDFLAGS="$LDFLAGS $extra_libs"
+
 # 1. Checks for programs.
+ORIG_CFLAGS=$CFLAGS
+ORIG_CXXFLAGS=$CXXFLAGS
+
 AC_PROG_CXX
 AC_PROG_CPP
 AC_PROG_RANLIB
 AC_PROG_INSTALL
+
+CFLAGS=$ORIG_CFLAGS
+CXXFLAGS=$ORIG_CXXFLAGS
 
 # Set language
 AC_LANG_CPLUSPLUS
@@ -37,7 +78,6 @@ elif test "$CHIP" = "G5" ; then
 else
    CHIP="-march=$CHIP -mtune=$CHIP"
 fi
-AC_SUBST(CHIP)
 
 AC_TYPE_SIZE_T
 
@@ -55,21 +95,36 @@ AC_ARG_ENABLE([static],
              [static=$enableval],
              [static=no])
 
-cxxflags="$cxxflags -I\$(top_srcdir)/boost/include"
-cxxflags="$cxxflags -DBALI_PHY_VERSION=\\\"$PACKAGE_VERSION\\\""
+CXXFLAGS="-I\$(top_srcdir)/boost/include $CXXFLAGS $CPPFLAGS"
+CXXFLAGS="-DBALI_PHY_VERSION=\\\"$PACKAGE_VERSION\\\" $CXXFLAGS"
 
-if test "$profile" = yes ; then
-   cxxflags="$cxxflags -pg"
-   ldflags="$ldflags -pg"
+# we only add extra flags if we recognize the compiler (g++)
+if test "$GXX" = yes ; then
+
+  CXXFLAGS="$CXXFLAGS -ffast-math -pipe"
+
+  # set flags for --enable-profile
+  if test "$profile" = yes ; then
+    CXXFLAGS="$CXXFLAGS -pg"
+    LDFLAGS="$LDFLAGS -pg"
+  fi
+
+  # set flags for --enable-debug
+  if test "$debug" = yes ; then
+    CXXFLAGS="$CXXFLAGS -g"
+
+  # set flags for optimization
+  else
+    CXXFLAGS="$CXXFLAGS $CHIP"
+    CXXFLAGS="$CXXFLAGS -O3 -funroll-loops -fweb"
+    CXXFLAGS="$CXXFLAGS -DNDEBUG -DNDEBUG_DP"
+    if test "$profile" != yes ; then 
+      CXXFLAGS="$CXXFLAGS -fomit-frame-pointer"
+    fi
+  fi
 fi
 
-if test "$debug" = yes ; then
-   cxxflags="$cxxflags -g"
-elif ! test "$profile" = yes; then
-   cxxflags="$cxxflags -fomit-frame-pointer"
-fi
-
-AC_SUBST(cxxflags)
+ldflags=$LDFLAGS
 AC_SUBST(ldflags)
 
 AM_CONDITIONAL(GCC, test "$GXX" = yes)
@@ -105,3 +160,5 @@ AC_OUTPUT([
 ])
 
 
+echo "CXXFLAGS = $CXXFLAGS"
+echo "LDFLAGS = $LDFLAGS"

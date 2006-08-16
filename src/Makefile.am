@@ -13,15 +13,14 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
            tools/findroot.H tools/parsimony.H
 
-CXXFLAGS = ${CHIP} @cxxflags@
-
 LDFLAGS = @ldflags@
+
+INCLUDES = -I@top_srcdir@/include
 
 if GCC
 
-CXXFLAGS += -ffast-math -pipe -pedantic
-
-INCLUDES = -I@top_srcdir@/include
+CXXFLAGS += -pedantic
+CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
 
 .LIBPATTERNS = 
 
@@ -55,20 +54,9 @@ else
 endif
 endif
 
-if !DEBUG
-CXXFLAGS += -O3 -funroll-loops -fweb
-# we can't choose between nocona & k8 only based on HOST_X86_64
-endif
 
 endif
 
-if DEBUG
-CXXFLAGS += -g
-else
-CXXFLAGS += -DNDEBUG -DNDEBUG_DP
-endif
-
-CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
 
 #BOOST_LIBS = -lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}
 BOOST_LIBS = @top_builddir@/boost/lib/filesystem/libboost_filesystem.a \
