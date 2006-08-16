@@ -489,6 +489,7 @@ traditional = traditional
       </sect3>
 
     </sect2>
+
   </sect1>
   
   <sect1>
@@ -1647,6 +1648,28 @@ traditional = traditional
       </para>
 
     </sect2>
+
+  </sect1>
+
+  <sect1>
+    <title>Frequently Asked Questions (FAQ)</title>
+
+    <para>Q1. How long will it take?</para>
+    <para>A1. It runs until you stop it.  Stop it when its done.</para>
+
+    <para>Q2. So, when is it done?</para>
+    <para>A2. After it has converged, and run for long enough to give
+              you >1000 effectively independent samples.</para>  
+
+    <para>Q3. How long is that?</para>
+    <para>A3. It depends on the data set.  To test convergence, run at
+              least 4 independent chains and see if they give the same
+              answer.</para>
+ 
+    <para>Q4. How can I check how many iterations the chain has
+              finished?</para>
+    <para>A4. Run <command>wc -l 1.p</command> inside the output
+              directory, and subtract 2.</para>
 
   </sect1>
 
