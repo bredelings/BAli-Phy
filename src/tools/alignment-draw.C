@@ -85,16 +85,19 @@ public:
 };
 
 /// ColorMap which represents uncertainty in terms of Rainbow colors
-struct Rainbow_ColorMap: public ColorMap {
+struct Rainbow_ColorMap: public ColorMap 
+{
   double start;
   double end;
+  bool gaps_different;
 
 public:
+
   Rainbow_ColorMap* clone() const {return new Rainbow_ColorMap(*this);}
 
   RGB bg_color(double x,const string& s) const {
 
-    if ((s == "-") or (s == "---")) {
+    if (gaps_different and ((s == "-") or (s == "---"))) {
       double v_uncertain = 1.0;
       double v_certain   = 0.6;
       double value = v_uncertain + x*(v_certain - v_uncertain);
@@ -112,11 +115,11 @@ public:
     return black;
   }
  
- Rainbow_ColorMap() :start(0.666),end(0)
+  Rainbow_ColorMap(bool g=true) :start(0.666),end(0),gaps_different(g)
   { }
 
-  Rainbow_ColorMap(double h1,double h2)
-    :start(h1),end(h2)
+  Rainbow_ColorMap(double h1,double h2,bool g=true)
+    :start(h1),end(h2),gaps_different(g)
   { }
 };
 
@@ -401,7 +404,7 @@ Scale get_scale(const variables_map& args) {
   return scale;
 }
 
-OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack)
+OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps_different)
 {
   OwnedPointer<ColorMap> color_map;
   if (match(string_stack,"plain"))
@@ -409,11 +412,11 @@ OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack)
   else if (match(string_stack,"bw"))
     color_map = OwnedPointer<ColorMap>(new BW_ColorMap);
   else if (match(string_stack,"RedBlue"))
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1));
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1,gaps_different));
   else if (match(string_stack,"BlueRed"))
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7));
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7,gaps_different));
   else if (match(string_stack,"Rainbow"))
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap);
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(gaps_different));
   else if (match(string_stack,"AA"))
     color_map = OwnedPointer<ColorMap>(new AA_colors);
   else if (match(string_stack,"DNA"))
@@ -427,7 +430,7 @@ OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack)
 }
 
 
-OwnedPointer<ColorMap> get_color_map(const variables_map& args) 
+OwnedPointer<ColorMap> get_color_map(const variables_map& args,bool gaps_different) 
 {
   // get the string stack
   vector<string> string_stack;
@@ -442,7 +445,7 @@ OwnedPointer<ColorMap> get_color_map(const variables_map& args)
   if (string_stack.empty())
     throw myexception()<<"Color scheme not specified. (but how?)";
   
-  OwnedPointer<ColorMap> color_map = get_base_color_map(string_stack);;
+  OwnedPointer<ColorMap> color_map = get_base_color_map(string_stack,gaps_different);
 
   while(string_stack.size()) {
     if (match(string_stack,"switch"))
@@ -459,7 +462,11 @@ OwnedPointer<ColorMap> get_color_map(const variables_map& args)
 
 OwnedPointer<ColorScheme> get_color_scheme(const variables_map& args) 
 {
-  OwnedPointer<ColorMap> color_map = get_color_map(args);
+  bool gaps_different = false;
+  if (args.count("gaps-different") and args["gaps-different"].as<string>() == "yes")
+    gaps_different = true;
+
+  OwnedPointer<ColorMap> color_map = get_color_map(args,gaps_different);
   assert(color_map);
 
   Scale scale = get_scale(args);
@@ -487,6 +494,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("column-colors","color-code column ticks by column certainty") 
     ("AU",value<string>(),"file with alignment uncertainties")
     ("show-gaps",value<string>()->default_value("yes"),"show gaps") 
+    ("gaps-different",value<string>()->default_value("yes"),"Color gaps in grey.") 
     ("width",value<int>()->default_value(70),"the number of columns per line")
     ("start",value<int>(),"the first column to plot")
     ("end",value<int>(),"the last column to plot")
@@ -677,9 +685,11 @@ BODY {\n\
 	draw_legend(cout,*color_scheme,"");
 	cout<<"</td>\n";
 
-	cout<<"<td>";
-	draw_legend(cout,*color_scheme,"-");
-	cout<<"</td>\n";
+	if (args.count("gaps-different") and args["gaps-different"].as<string>() == "yes") {
+	  cout<<"<td>";
+	  draw_legend(cout,*color_scheme,"-");
+	  cout<<"</td>\n";
+	}
 
 	cout<<"</tr></table>\n";
       }
