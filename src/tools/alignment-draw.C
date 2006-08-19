@@ -28,7 +28,11 @@ struct Scale {
   double max;
   double (*f)(double);
 
-  double operator()(double p) const {
+  double operator()(double p) const 
+  {
+    // pass-through
+    if (p < 0) return -1;
+
     double v = f(p);
     if (v < min) 
       return 0;
@@ -95,8 +99,12 @@ public:
 
   Rainbow_ColorMap* clone() const {return new Rainbow_ColorMap(*this);}
 
-  RGB bg_color(double x,const string& s) const {
+  RGB bg_color(double x,const string& s) const 
+  {
+    // pass-through
+    if (x < 0) return white;
 
+    // color gaps differently? (grey-scale?)
     if (gaps_different and ((s == "-") or (s == "---"))) {
       double v_uncertain = 1.0;
       double v_certain   = 0.6;
@@ -104,6 +112,7 @@ public:
 
       return HSV(0,0,value).to_RGB();
     }
+    // otherwise use the rainbow
     else {
       double hue     = start + x*(end - start);
 
@@ -115,7 +124,8 @@ public:
     return black;
   }
  
-  Rainbow_ColorMap(bool g=true) :start(0.666),end(0),gaps_different(g)
+  Rainbow_ColorMap(bool g=true) 
+    :start(0.666),end(0),gaps_different(g)
   { }
 
   Rainbow_ColorMap(double h1,double h2,bool g=true)
@@ -203,22 +213,23 @@ public:
 /// ColorMap which makes the bg color fade almost to white if uncertain
 class whiten_colors: public ColorMap {
   OwnedPointer<ColorMap> sub_map;
+  double min_fg;
+  double min_bg;
 public:
   whiten_colors* clone() const {return new whiten_colors(*this);}
 
   RGB bg_color(double x,const string& s) const {
-    double x2 = x;
-    if (x2<0.30) x2 = 0.30;
+    double x2 = std::max(x,min_bg);
     return whiten(sub_map->bg_color(x,s),1.0-sqrt(x2));
   }
 
   RGB fg_color(double x,const string& s) const {
-    if (x<0.2) x = 0.2;
+    x = std::max(x,min_fg);
     return whiten(sub_map->fg_color(x,s),1.0-sqrt(sqrt(x)));
   }
 
-  whiten_colors(const ColorMap& colors)
-    :sub_map(colors) 
+  whiten_colors(const ColorMap& colors,double m_fg=0.2,double m_bg=0.3)
+    :sub_map(colors),min_fg(m_fg), min_bg(m_bg)
   {}
 };
 
@@ -288,7 +299,8 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-string getstyle(double d,const string& s,const ColorScheme& color_scheme) {
+string getstyle(double d,const string& s,const ColorScheme& color_scheme) 
+{
   string style;
   if ((s == "?") or (s == "???")) {
     style += "background: white;";
@@ -334,13 +346,29 @@ ublas::matrix<double> read_alignment_certainty(const alignment& A, const string&
   //------------------ Read in the colors ------------------------//
   ublas::matrix<double> colors(A.length(),A.n_sequences()+1);
   for(int column=0;column<colors.size1();column++) 
+  { 
+    // read a line
+    string line;
+    getline(colorfile,line);
+
+    // collect the non-empty words
+    vector<string> words = split(line,' ');
+    for(int i=words.size()-1;i>=0;i--)
+      if (not words[i].size())
+	words.erase(words.begin()+i);
+
+    if (words.size() != colors.size2())
+      throw myexception()<<"AU probabilities (column "<<column+1<<"): expected "<<colors.size2()<<" probabilities, but got "<<words.size()<<" words.";
+
     //TODO - use an istringstream to make things properly per-line
-    for(int i=0;i<colors.size2();i++) {
-      double d;
-      colorfile >> d;
+    for(int i=0;i<words.size();i++) {
+      double d = -1;
+      if (words[i] != "-")
+	d = convertTo<double>(words[i]);
+
       colors(column,mapping[i]) = d;
     }
-  
+  }
   colorfile.close();
 
   return colors;
@@ -358,7 +386,32 @@ void draw_legend(std::ostream& o,ColorScheme& color_scheme,const string& letter)
 }
 
 /// Take something off the string stack, if its present
-bool match(vector<string>& sstack,const string& s) {
+bool match(vector<string>& sstack,const string& s,string& arg) {
+  if (not sstack.size())
+    return false;
+  
+  bool success=false;
+  string top = sstack.back();
+
+  if (top == s) {
+    arg = "";
+    success=true;
+  }
+  else if (top.size() > 1 and top[top.size()-1] == ']') {
+    int loc = top.find('[');
+    if (loc == -1) return false;
+    string name = top.substr(0,loc);
+    arg = top.substr(loc+1,top.size()-loc-2);
+    success = (name == s);
+  }
+
+  if (success)
+    sstack.pop_back();
+  return success;
+}
+
+/// Take something off the string stack, if its present
+bool match2(vector<string>& sstack,const string& s) {
   bool m = false;
   if (sstack.size() and sstack.back() == s) {
     m = true;
@@ -407,21 +460,34 @@ Scale get_scale(const variables_map& args) {
 OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps_different)
 {
   OwnedPointer<ColorMap> color_map;
-  if (match(string_stack,"plain"))
+  string arg;
+  if (match(string_stack,"plain",arg))
     color_map = OwnedPointer<ColorMap>(new Plain_ColorMap);
-  else if (match(string_stack,"bw"))
+  else if (match(string_stack,"bw",arg))
     color_map = OwnedPointer<ColorMap>(new BW_ColorMap);
-  else if (match(string_stack,"RedBlue"))
+  else if (match(string_stack,"RedBlue",arg))
     color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1,gaps_different));
-  else if (match(string_stack,"BlueRed"))
+  else if (match(string_stack,"BlueRed",arg))
     color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7,gaps_different));
-  else if (match(string_stack,"Rainbow"))
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(gaps_different));
-  else if (match(string_stack,"AA"))
+  else if (match(string_stack,"Rainbow",arg)) 
+  {
+    double start = 0.666;
+    double end = 0;
+    if (arg != "") {
+      vector<double> v = split<double>(arg,',');
+      if (v.size() != 2)
+	throw myexception()<<"Rainbow: argument should be for the form [start,end]";
+      start = v[0];
+      end = v[1];
+    }
+
+    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(start,end,gaps_different));
+  }
+  else if (match(string_stack,"AA",arg))
     color_map = OwnedPointer<ColorMap>(new AA_colors);
-  else if (match(string_stack,"DNA"))
+  else if (match(string_stack,"DNA",arg))
     color_map = OwnedPointer<ColorMap>(new DNA_colors);
-  else if (match(string_stack,"RNA"))
+  else if (match(string_stack,"RNA",arg))
     color_map = OwnedPointer<ColorMap>(new DNA_colors);
   else
     throw myexception()<<"Unrecognized base color scheme '"<<string_stack.back()<<"'";
@@ -447,13 +513,25 @@ OwnedPointer<ColorMap> get_color_map(const variables_map& args,bool gaps_differe
   
   OwnedPointer<ColorMap> color_map = get_base_color_map(string_stack,gaps_different);
 
+  string arg;
   while(string_stack.size()) {
-    if (match(string_stack,"switch"))
+    if (match(string_stack,"switch",arg))
       color_map = switch_fg_bg(*color_map);
-    else if (match(string_stack,"contrast"))
+    else if (match(string_stack,"contrast",arg))
       color_map = contrast(*color_map);
-    else if (match(string_stack,"fade"))
-      color_map = whiten_colors(*color_map);
+    else if (match(string_stack,"fade",arg)) {
+      if (arg == "")
+	color_map = whiten_colors(*color_map,0.2,0.3);
+      else {
+	vector<double> min = split<double>(arg,',');
+	if (min.size() == 1)
+	  color_map = whiten_colors(*color_map,0.2,min[0]);
+	else if (min.size() == 2)
+	  color_map = whiten_colors(*color_map,min[0],min[1]);
+	else
+	  throw myexception()<<"fade: argument '"<<arg<<"' not recognized.";
+      }
+    }
     else
       throw myexception()<<"Unrecognized color scheme modifier '"<<string_stack.back()<<"'";
   }
@@ -569,7 +647,7 @@ int main(int argc,char* argv[])
     else
       for(int i=0;i<colors.size1();i++)
 	for(int j=0;j<colors.size2();j++)
-	  colors(i,j) = 0;
+	  colors(i,j) = -1;
 
     //-------------------- Get width -----------------------//
     int width = args["width"].as<int>();
