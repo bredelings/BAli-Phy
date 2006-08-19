@@ -1,16 +1,22 @@
 7. Re-organize todo, putting later stuff in 'ideas' not TODO
 
-2. How much of the sequences is in each %-identity fraction?
-  a) How much information is in each fraction?
-  b) Can we combine measures of gappiness and %-identity to yield a
-     measure of ambiguity? 
-
 1. Implement general distributions - we need a way to have special distributions
    that are charaterized only by sigma/mu.
    (a) how do we want to handle multiple parameterizations of distributions?
        i) for example, the gamma as (a,b) and as (mu,s/mu)?
       ii) for example, log-normal as (mu,s/mu) and as (lmu,lsigma)?
    (b) Fix the Uniform distibution to have max range (0,2) ?
+   (c) Make the rate a parameter of the distribution?
+
+2. Implement general name handling, to avoid duplicate names!
+
+
+
+
+2. How much of the sequences is in each %-identity fraction?
+  a) How much information is in each fraction?
+  b) Can we combine measures of gappiness and %-identity to yield a
+     measure of ambiguity? 
 
 2. Hmm... It seems that we have a scale parameter in each case...
    And (except for mixture distributions) a width parameter.
@@ -104,12 +110,11 @@ Before 1.9.9:
 
  * Implement tree constraints, alignment constraints, branch-length constraints. 
  * Don't crash on 'SKIP=<> make' in --traditional mode.
- * Allow specifying the location of GSL
- * Document 'what files are installed'
-   (a) Describe where to find the installed example files.
+ * Document where/what files are installed - especial the example files.
  * Brief descriptions of some of the tools.
  * Debug with _GLIBCXX_DEBUG
- * Put sources up for anonymous subversion.
+ * (?) Put sources up for anonymous subversion.
+ * (?) Add some more comments to the  code.
 
 Before 2.0:
  * Do the autoconf magic to compile GSL in-tree.
@@ -553,6 +558,9 @@ the prior, because we never want to use it  differently.
        by using the discretization mean.
 
 [DONE] Separate Data/ files and examples.
+
+[DONE] Allow specifying the location of GSL.
+
 
 *IDEAS*
 

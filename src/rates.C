@@ -17,12 +17,6 @@ namespace substitution {
   using std::string;
 
   //--------------- RateDistribution -----------------//
-  double RateDistribution::pdf(double x,double dx) const {
-    double x1 = x-0.5*dx;
-    double x2 = x+0.5*dx;
-    if (x1<0) x1=0;
-    return (cdf(x2)-cdf(x1))/(x2-x1);
-  }
 
   // f(x) = cdf(x)-p, monotonically increasing from -p (@0) to 1-p (@ \infty)
   double RateDistribution::quantile(double p, double tol) const {
@@ -49,7 +43,7 @@ namespace substitution {
       else return x;
 
       // propose do Newton-Raphson step
-      double dfdx = pdf(x,std::abs(dx/100));
+      double dfdx = pdf(x);
       dx = -f/dfdx;
 
       // deal with trying to jump out of (min,max)
@@ -165,7 +159,7 @@ namespace substitution {
     }
   }
 
-  double Gamma::pdf(double x,double) const 
+  double Gamma::pdf(double x) const 
   {
     double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
 
@@ -266,7 +260,7 @@ namespace substitution {
     return gsl_cdf_beta_P(x,a,b);
   }
 
-  double Beta::pdf(double x,double) const {
+  double Beta::pdf(double x) const {
     double mu = parameters_[0];
     double  s = parameters_[1];
 
@@ -335,7 +329,7 @@ namespace substitution {
     return gsl_cdf_lognormal_P(x,lmu,lsigma);
   }
 
-  double LogNormal::pdf(double x,double) const 
+  double LogNormal::pdf(double x) const 
   {
     double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
 
@@ -397,10 +391,10 @@ namespace substitution {
     return P;
   }
 
-  double MultipleDistribution::pdf(double x,double dx) const {
+  double MultipleDistribution::pdf(double x) const {
     double density=0;
     for(int i=0;i<n_dists();i++) 
-      density += fraction(i) * SubModels(i).pdf(x,dx);
+      density += fraction(i) * SubModels(i).pdf(x);
 
     return density;
   }

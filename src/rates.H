@@ -25,7 +25,7 @@ namespace substitution {
     virtual double cdf(double x) const =0;
 
     /// The probability density function at x, estimated on scale dx
-    virtual double pdf(double x,double dx=0.001) const;
+    virtual double pdf(double x) const =0;
 
     /// Compute the p-th quantile, with tolerance tol
     virtual double quantile(double p,double tol=1.0e-6) const;
@@ -44,7 +44,7 @@ namespace substitution {
     Gamma* clone() const {return new Gamma(*this);}
 
     double cdf(double) const;
-    double pdf(double,double) const;
+    double pdf(double) const;
     double quantile(double,double tol=1.0e-6) const;
 
     efloat_t prior() const;
@@ -66,7 +66,7 @@ namespace substitution {
     Beta* clone() const {return new Beta(*this);}
 
     double cdf(double) const;
-    double pdf(double,double) const;
+    double pdf(double) const;
     double quantile(double,double tol=1.0e-6) const;
 
     efloat_t prior() const;
@@ -88,7 +88,7 @@ namespace substitution {
     LogNormal* clone() const {return new LogNormal(*this);}
 
     double cdf(double) const;
-    double pdf(double,double) const;
+    double pdf(double) const;
     double quantile(double,double tol=1.0e-6) const;
 
     efloat_t prior() const;
@@ -114,7 +114,7 @@ namespace substitution {
       if (x > 2) return 1;
       else return x/2;
     }
-    double pdf(double x,double) const {if (x < 0 or x > 2) return 0; else return 0.5;};
+    double pdf(double x) const {if (x < 0 or x > 2) return 0; else return 0.5;};
 
     efloat_t prior() const { return 0.5;}
 
@@ -139,7 +139,7 @@ namespace substitution {
     MultipleDistribution* clone() const {return new MultipleDistribution(*this);}
 
     double cdf(double) const;
-    double pdf(double,double) const;
+    double pdf(double) const;
     
     /// Number of sub-distributions
     int n_dists() const {return n_submodels();}
