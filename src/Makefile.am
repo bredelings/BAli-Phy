@@ -75,7 +75,7 @@ TOOLS = model_P statreport alignment-gild \
 	joint-indels alignment-consensus alignment-info \
 	subsample tree-mean-lengths trees-bootstrap \
 	joint-parsimony stats-merge stats-select alignment-identity \
-	analyze_distances
+	analyze_distances alignment-cut
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -178,6 +178,9 @@ joint_parsimony_SOURCES = tools/joint-parsimony.C alignment.C alphabet.C sequenc
 #---------------------------------------------------------------
 
 alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C 
+
+#---------------------------------------------------------------
+alignment_cut_SOURCES = tools/alignment-cut.C alignment.C alphabet.C sequence.C util.C alignment-util.C sequence-format.C tree.C
 
 #---------------------------------------------------------------
 
