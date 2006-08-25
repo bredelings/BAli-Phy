@@ -3,6 +3,8 @@ SHELL=/bin/sh
 
 TOPOLOGIES=c50 c66 c80 c90 c95 c99 c100 MAP
 
+IMODEL=$(shell head -n 40 1.out | pickout --no-header 'indel model')
+
 TREES=${TOPOLOGIES}
 
 ifeq ($(origin CHAIN), undefined)
@@ -30,13 +32,18 @@ Work/setup:
 	@touch Work/setup
 	@echo "done."
 
+
+ifeq ($(IMODEL),none)
+AU_TARGETS=
+else
+AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/consensus.fasta Results/consensus-AU.html Results/consensus-AU2.html
+endif
+
 Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
 		  Results/Report Results/MAP.fasta Results/MAP.phy \
 		  Mixing/partitions.SRQ Mixing/c50.SRQ Mixing/partitions.bs \
-		  Results/MAP-AU.html Results/MAP-AU2.html \
-		  Results/consensus.fasta Results/consensus-AU.html \
-		  Results/consensus-AU2.html
+		  $(AU_TARGETS)
 	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration $$(( ${SKIP} + 1))." > Results/analysis
 	@echo "Finished:  $$(date)" >> Results/analysis
 	@echo 
