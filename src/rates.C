@@ -370,9 +370,7 @@ namespace substitution {
       f[i] = fraction(i);
 
     // uniform - 1 observeration per bin
-    valarray<double> q(1.0,f.size());
-
-    return dirichlet_pdf(f,q);
+    return dirichlet_pdf(f,1);
   }
 
   double MultipleDistribution::cdf(double x) const {

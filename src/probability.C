@@ -51,25 +51,30 @@ log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n)
   return Pr;
 }
 
-// exp(p[i]) is Dirichlet
-log_double_t exp_dirichlet_pdf(const valarray<double>& p,const valarray<double>& n) 
+log_double_t dirichlet_pdf(const valarray<double>& p,double N,const valarray<double>& q)
 {
-  log_double_t Pr = dirichlet_pdf(p,n);
-
-  // This is because we our proposal is symmetric on the scale of log(p[i]).
-  for(int i=0;i<p.size();i++) 
-    Pr *= exp<log_double_t>(p[i]);
-
-  return Pr;
+  return dirichlet_pdf(p,N*p.size()*q);
 }
 
 log_double_t dirichlet_pdf(const valarray<double>& p,double N) {
   return dirichlet_pdf(p,valarray<double>(N,p.size()));
 }
 
-log_double_t dirichlet_pdf(const valarray<double>& p,double N,const valarray<double>& q)
+valarray<double> proper_count(valarray<double> n)
 {
-  return dirichlet_pdf(p,q*N);
+  for(int i=0;i<n.size();i++)
+    if (n[i] < 1.0) n[i] = 1.0;
+  return n;
+}
+
+log_double_t dirichlet_proper_pdf(const valarray<double>& p,const valarray<double>& n) 
+{
+  return dirichlet_pdf(p,proper_count(n));
+}
+
+log_double_t dirichlet_proper_pdf(const valarray<double>& p,double N, const valarray<double>& q) 
+{
+  return dirichlet_proper_pdf(p,N*p.size()*q);
 }
 
 /// log density for y if y=ln (x+delta), and x ~ Exp(mu)

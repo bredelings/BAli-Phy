@@ -8,6 +8,11 @@ log_double_t dirichlet_pdf(const std::valarray<double>& p,const std::valarray<do
 log_double_t dirichlet_pdf(const std::valarray<double>& p,double N,const std::valarray<double>& q);
 log_double_t dirichlet_pdf(const std::valarray<double>& p,double N);
 
+std::valarray<double> proper_count(std::valarray<double> n);
+
+log_double_t dirichlet_proper_pdf(const std::valarray<double>& p,const std::valarray<double>& n);
+log_double_t dirichlet_proper_pdf(const std::valarray<double>& p,double N,const std::valarray<double>& q);
+
 log_double_t exp_exponential_pdf(double y,double mu,double delta=0.0);
 
 log_double_t exponential_pdf(double x, double mu);

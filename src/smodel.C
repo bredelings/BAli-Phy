@@ -702,23 +702,23 @@ namespace substitution {
   /// return the LOG of the prior
   efloat_t GTR::prior() const 
   {
-    valarray<double> q(6);
+    valarray<double> n(6);
 
-    q[0] = 2; // AG - transition
+    n[0] = 2; // AG - transition
 
-    q[1] = 1; // AT - transversion
+    n[1] = 1; // AT - transversion
 
-    q[2] = 1; // AC - transversion
+    n[2] = 1; // AC - transversion
 
-    q[3] = 1; // GT - transversion
+    n[3] = 1; // GT - transversion
 
-    q[4] = 1; // GC - transversion
+    n[4] = 1; // GC - transversion
 
-    q[5] = 2; // TC - transition
+    n[5] = 2; // TC - transition
 
-    q *= 4;
+    n *= 4;
 
-    return dirichlet_pdf(parameters_, q);
+    return dirichlet_pdf(parameters_, n);
   }
 
   void GTR::recalc(const vector<int>&) 
@@ -1317,11 +1317,11 @@ namespace substitution {
   efloat_t M2::super_prior() const 
   {
     // prior on frequencies
-    valarray<double> q(3);
-    q[0] = 0.01;
-    q[1] = 0.98;
-    q[2] = 0.01;
-    efloat_t P = dirichlet_pdf(parameters_, 0, 3, 100.0*q);
+    valarray<double> n(3);
+    n[0] = 1;
+    n[1] = 98;
+    n[2] = 1;
+    efloat_t P = dirichlet_pdf(parameters_, 0, 3, n);
 
     // prior on omega
     double omega = parameter(3);
