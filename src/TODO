@@ -109,8 +109,13 @@ much of the variation is spatial?)
 Before 1.9.9:
 
  * Implement tree constraints, alignment constraints, branch-length constraints. 
- * Don't crash on 'SKIP=<> make' in --traditional mode.
+ * Fix gamma / beta distributions.
+ * Fix Dirichlet Priors
+   - fix prior on frequencies.
+   - fix prior on INV2.
+   - fix *proposals* for INV2?
  * Document where/what files are installed - especial the example files.
+ * Document specifying location of GSL
  * Brief descriptions of some of the tools.
  * Debug with _GLIBCXX_DEBUG
  * (?) Put sources up for anonymous subversion.
@@ -561,6 +566,7 @@ the prior, because we never want to use it  differently.
 
 [DONE] Allow specifying the location of GSL.
 
+[DONE] Don't crash on 'SKIP=<> make' in --traditional mode.
 
 *IDEAS*
 

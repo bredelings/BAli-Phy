@@ -42,16 +42,6 @@ void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
   }
 }
 
-void show_parameters(std::ostream& o,const Model& M) {
-  for(int i=0;i<M.parameters().size();i++) {
-    o<<"    ";
-    if (M.fixed(i)) 
-      o<<"*";
-    o<<M.parameter_name(i)<<" = "<<M.parameters()[i];
-  }
-  o<<"\n";
-}
-
 void print_stats(std::ostream& o,std::ostream& trees,
 		 const alignment& A,const Parameters& P,
 		 bool print_alignment) 

@@ -12,7 +12,6 @@ void print_stats(std::ostream& o,std::ostream& trees,const alignment& A,const Pa
 
 void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<double>&);
 void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel);
-void show_parameters(std::ostream& o,const Model& M);
 void report_mem();
 
 #endif

@@ -148,14 +148,6 @@ int Parameters::n_submodels() const
     return 1;
 }
 
-string Parameters::super_parameter_name(int i) const
-{
-  if (i == 0)
-    return "mu";
-  else
-    return ::parameter_name("f",i,1);
-}
-
 void Parameters::setlength(int b,double l) {
   MatCache::setlength(b,l,T,*SModel_); 
   if (IModel_) {
@@ -191,9 +183,12 @@ Parameters::Parameters(const substitution::MultiModel& SM,const IndelModel& IM,c
 {
   constants.push_back(-1);
 
-  set_super_parameters(1);
+  add_parameter("mu", 0.1);
+  add_submodel("S-model",SModel());
+  if (has_IModel())
+    add_submodel("I-model",IModel());
+
   read();
-  parameters_[0] = 0.1;
 
   for(int b=0;b<TC.n_branches();b++)
     TC.branch(b).set_length(-1);
@@ -210,9 +205,12 @@ Parameters::Parameters(const substitution::MultiModel& SM,const SequenceTree& t)
 {
   constants.push_back(-1);
 
-  set_super_parameters(1);
+  add_parameter("mu", 0.1);
+  add_submodel("S-model",SModel());
+  if (has_IModel())
+    add_submodel("I-model",IModel());
+
   read();
-  parameters_[0] = 0.1;
 
   for(int b=0;b<TC.n_branches();b++)
     TC.branch(b).set_length(-1);

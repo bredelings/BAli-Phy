@@ -10,13 +10,8 @@ namespace substitution {
 
   /// A generic distribution for rate variation
   /// We require that if X ~ d, the E(X) = 1
-  class RateDistribution: virtual public Model {
-  protected:
-    /// Construct a RateDistribution with np parameters
-    RateDistribution(int np) {
-      set_n_parameters(np);
-    };
-
+  class RateDistribution: virtual public ::Model 
+  {
   public:
     /// Make a copy of this object
     virtual RateDistribution* clone() const =0;
@@ -29,9 +24,6 @@ namespace substitution {
 
     /// Compute the p-th quantile, with tolerance tol
     virtual double quantile(double p,double tol=1.0e-6) const;
-
-    /// Construct a RateDistribution with np parameters
-    RateDistribution() {};
 
     virtual ~RateDistribution();
   };
@@ -50,12 +42,8 @@ namespace substitution {
     efloat_t prior() const;
 
     std::string name() const;
-    std::string parameter_name(int) const;
 
-    Gamma():RateDistribution(1) 
-    {
-      parameters_[0] = 0.1;
-    }
+    Gamma();
   };
 
 
@@ -72,13 +60,8 @@ namespace substitution {
     efloat_t prior() const;
 
     std::string name() const;
-    std::string parameter_name(int) const;
 
-    Beta():RateDistribution(2) 
-    {
-      parameters_[0] = 0.5;
-      parameters_[1] = 0.1;
-    }
+    Beta();
   };
 
 
@@ -94,12 +77,8 @@ namespace substitution {
     efloat_t prior() const;
 
     std::string name() const;
-    std::string parameter_name(int) const;
 
-    LogNormal():RateDistribution(1)
-    {
-      parameters_[0] = 0.1;
-    }
+    LogNormal();
   };
 
 
@@ -121,10 +100,6 @@ namespace substitution {
     double quantile(double p,double) const {return 2*p;}
 
     std::string name() const;
-    std::string parameter_name(int) const;
-
-    Uniform():RateDistribution(0) 
-    {}
 
     ~Uniform();
   };
@@ -157,7 +132,6 @@ namespace substitution {
     }
 
     std::string name() const;
-    std::string super_parameter_name(int) const;
 
     MultipleDistribution(const std::vector<OwnedPointer<RateDistribution> >&);
 

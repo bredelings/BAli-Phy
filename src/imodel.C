@@ -92,16 +92,6 @@ efloat_t SimpleIndelModel::lengthp(int l) const {
   return P;
 }
 
-IndelModel::IndelModel(int s)
-{ 
-  set_n_parameters(s);
-}
-
-
-IndelModel::IndelModel()
-{ }
-
-
 IndelModel::~IndelModel() {}
 
 
@@ -199,23 +189,12 @@ efloat_t SimpleIndelModel::prior() const
 
 string SimpleIndelModel::name() const {return "simple indels [HMM]";}
 
-string SimpleIndelModel::parameter_name(int i) const {
-  if (i==0)
-    return "delta";
-  else if (i==1)
-    return "epsilon";
-  else if (i==2)
-    return "tau";
-  else
-    return i_parameter_name(i,3);
-}
-
 SimpleIndelModel::SimpleIndelModel()
-  :IndelModel(3),QE(Q1.size1(),Q1.size2())
+  :QE(Q1.size1(),Q1.size2())
 {
-  parameters_[0] = -5;
-  parameters_[1] = -0.5;
-  parameters_[2] = log(.001);
+  add_parameter("delta",  -5);
+  add_parameter("epsilon",-0.5);
+  add_parameter("tau",    log(0.001));
 
   recalc_all();
 }
@@ -333,42 +312,19 @@ string NewIndelModel::name() const {
   return s;
 }
 
-string NewIndelModel::parameter_name(int i) const {
-  if (i==0)
-    return "lambda";
-  else if (i==1)
-    return "epsilon";
-  else if (i==2)
-    return "invariant";
-  else if (i==3)
-    return "lambda::prior_median";
-  else if (i==4)
-    return "lambda::prior_stddev";
-  else if (i==5)
-    return "epsilon::prior_length";
-  else
-    return i_parameter_name(i,6);
-}
-
 efloat_t NewIndelModel::lengthp(int) const {
   return 1;
 }
 
 NewIndelModel::NewIndelModel(bool b)
-  :IndelModel(6),time_dependant(b)
+  :time_dependant(b)
 {
-  // lambda
-  parameters_[0] = -5;
-  // epsilon
-  parameters_[1] = -0.5;
-  // invariant
-  parameters_[2] = 0.1;
-  // lambda::prior_median
-  parameters_[3] = -5.0;
-  // lambda::prior_stddev
-  parameters_[4] = 1.5;
-  // epsilon::prior_length
-  parameters_[5] = 5.0;
+  add_parameter("lambda",   -5);
+  add_parameter("epsilon",  -0.5);
+  add_parameter("invariant",0.1);
+  add_parameter("lambda::prior_median", -5);
+  add_parameter("lambda::prior_stddev", 1.5);
+  add_parameter("lambda::prior_length", 5);
 }
 
 
@@ -462,16 +418,6 @@ string TKF1::name() const
   return "TKF1";
 }
 
-string TKF1::parameter_name(int i) const 
-{
-  if (i==0)
-    return "lambda";
-  else if (i==1)
-    return "mean_length";
-  else
-    return i_parameter_name(i,2);
-}
-
 efloat_t TKF1::lengthp(int l) const 
 {
   double mean_length = parameters_[1];
@@ -482,12 +428,8 @@ efloat_t TKF1::lengthp(int l) const
 }
 
 TKF1::TKF1(bool b)
-  :IndelModel(6),time_dependant(b)
+  :time_dependant(b)
 {
-  parameters_[0] = -5;
-  parameters_[1] = -0.5;
-  parameters_[2] = 0.1;
-  parameters_[3] = -5;
-  parameters_[4] = 0.5;
-  parameters_[5] = 5.0;
+  add_parameter("lambda",-5);
+  add_parameter("mean_lengh",100);
 }

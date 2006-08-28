@@ -141,28 +141,18 @@ namespace substitution {
     return "pi";
   }
   
-  string SimpleFrequencyModel::parameter_name(int i) const {
-    if (i == 0)
-      return "f";
-    else if (i-1<size())
-      return string("pi") + Alphabet().letter(i-1);
-    else
-      return s_parameter_name(i,size()+1);
-  }
-  
   SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a)
     :ReversibleFrequencyModel(a),
      ModelWithAlphabet<alphabet>(a)
   {
-    set_n_parameters(a.size() + 1);
-
     // Start with *f = 1
-    parameters_[0] = 1.0;
+    add_parameter("f",1.0);
     fixed_[0] = true;
 
-    // Start with frequencies = (1/n, ... , 1/n)
-    for(int i=0;i<size();i++)
-      parameters_[i+1] = 1.0/size();
+    for(int i=0;i<size();i++) {
+      string pname = string("pi") + Alphabet().letter(i);
+      add_parameter(pname, 1.0/size());
+    }
 
     // initialize everything
     recalc_all();
@@ -172,17 +162,16 @@ namespace substitution {
     :ReversibleFrequencyModel(a),
      ModelWithAlphabet<alphabet>(a)
   {
-    set_n_parameters(a.size() + 1);
-
     // Start with *f = 1
-    parameters_[0] = 1.0;
+    add_parameter("f",1.0);
     fixed_[0] = true;
 
-    // Start with frequencies = (1/n, ... , 1/n)
     valarray<double> f = pi;
     f /= f.sum();
-    for(int i=0;i<size();i++)
-      parameters_[i+1] = f[i];
+    for(int i=0;i<size();i++) {
+      string pname = string("pi") + Alphabet().letter(i);
+      add_parameter(pname, f[i]);
+    }
 
     // initialize everything
     recalc_all();
@@ -216,9 +205,9 @@ namespace substitution {
   void IndependentNucleotideFrequencyModel::recalc(const vector<int>&)
   {
     //------------------ compute triplet frequencies ------------------//
-    pi = triplet_from_singlet_frequencies(Alphabet(),SubModel());
+    pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
 
-    vector<double> sub_parameters = SubModel().parameters();
+    vector<double> sub_parameters = SubModels(0).parameters();
 
     vector<double> triplet_parameters(size()+1);
     triplet_parameters[0] = sub_parameters[0];
@@ -231,11 +220,6 @@ namespace substitution {
 	R(i,j) = (*triplets)(i,j);
   }
 
-  string IndependentNucleotideFrequencyModel::super_parameter_name(int i) const
-  {
-    return ::parameter_name("",i,0);
-  }
-
   string IndependentNucleotideFrequencyModel::name() const
   {
     return "pi=nucleotides";
@@ -244,9 +228,9 @@ namespace substitution {
   
   IndependentNucleotideFrequencyModel::IndependentNucleotideFrequencyModel(const Triplets& T) 
     : TripletFrequencyModel(T),
-      NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),0),
       triplets(SimpleFrequencyModel(T))
   {
+    insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
     recalc_all();
   }
 
@@ -256,7 +240,7 @@ namespace substitution {
     valarray<double> nu = get_varray(parameters_, 1, size());
 
     //------------- compute frequencies ------------------//
-    pi = triplet_from_singlet_frequencies(Alphabet(),SubModel());
+    pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
 
     pi *= nu;
 
@@ -280,7 +264,7 @@ namespace substitution {
 	  int n1 = Alphabet().sub_nuc(i,k);
 	  int n2 = Alphabet().sub_nuc(j,k);
 	  if (n1 != n2)
-	    R(i,j) *= SubModel()(n1,n2);
+	    R(i,j) *= SubModels(0)(n1,n2);
 	}
       }
 
@@ -299,25 +283,17 @@ namespace substitution {
     return "pi=triplets";
   }
 
-  string TripletsFrequencyModel::super_parameter_name(int i) const 
-  {
-    if (i == 0)
-      return "g";
-    else if (i-1<size())
-      return string("v") + Alphabet().letter(i-1);
-    else
-      return s_parameter_name(i,size()+1);
-  }
-
   TripletsFrequencyModel::TripletsFrequencyModel(const Triplets& T)
-    : TripletFrequencyModel(T),
-      NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(T.getNucleotides()),T.size()+1)
-
+    : TripletFrequencyModel(T)
   {
-    parameters_[0] = 1; // g
+    add_super_parameter("g", 1);
 
-    for(int i=0;i<size();i++)
-      parameters_[i+1] = 1.0/size();
+    for(int i=0;i<size();i++) {
+      string pname = string("v") + Alphabet().letter(i-1);
+      add_super_parameter(pname, 1.0/size());
+    }
+
+    insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
 
     read();
     recalc_all();
@@ -333,7 +309,7 @@ namespace substitution {
   void AACodonFrequencyModel::recalc(const vector<int>&)
   {
     //----------- get amino acid frequencyes and counts ------------//
-    valarray<double> f_aa = SubModel().frequencies();
+    valarray<double> f_aa = SubModels(0).frequencies();
     vector<int> n_aa(aa_size(),0);
     for(int i=0;i<Alphabet().size();i++) {
       int aa = Alphabet().translate(i);
@@ -347,7 +323,7 @@ namespace substitution {
     }
 
     vector<double> codon_parameters(size()+1);
-    codon_parameters[0] = SubModel().parameter(0);
+    codon_parameters[0] = SubModels(0).parameter(0);
     set_varray(codon_parameters,1,pi);
 
     codons->parameters(codon_parameters);
@@ -355,11 +331,6 @@ namespace substitution {
     for(int i=0;i<size();i++)
       for(int j=0;j<size();j++)
 	R(i,j) = (*codons)(i,j);
-  }
-
-  string AACodonFrequencyModel::super_parameter_name(int i) const
-  {
-    return ::parameter_name("",i,0);
   }
 
   string AACodonFrequencyModel::name() const
@@ -370,10 +341,11 @@ namespace substitution {
   
   AACodonFrequencyModel::AACodonFrequencyModel(const Codons& C) 
     : CodonFrequencyModel(C),
-      NestedModelOver<SimpleFrequencyModel>(SimpleFrequencyModel(C.getAminoAcids()),0),
       codons(SimpleFrequencyModel(C))
   {
     recalc_all();
+
+    insert_submodel("1",SimpleFrequencyModel(C.getAminoAcids()));
   }
 
 
@@ -389,7 +361,7 @@ namespace substitution {
     valarray<double> aa_pi = get_varray(parameters_, 2, aa_size());
 
     // get codon frequencies of sub-alphabet
-    valarray<double> sub_pi = SubModel().frequencies();
+    valarray<double> sub_pi = SubModels(0).frequencies();
 
     // get aa frequencies of sub-alphabet
     valarray<double> sub_aa_pi(0.0,aa_size());
@@ -422,7 +394,7 @@ namespace substitution {
 
     for(int i=0;i<size();i++)
       for(int j=0;j<size();j++)
-	R(i,j) = SubModel()(i,j) * factor_h[i]/factor[i]*factor_h[j];
+	R(i,j) = SubModels(0)(i,j) * factor_h[i]/factor[i]*factor_h[j];
 
     // diagonal entries should have no effect
     for(int i=0;i<size();i++)
@@ -439,27 +411,18 @@ namespace substitution {
     return "pi=codons";
   }
 
-  string CodonsFrequencyModel::super_parameter_name(int i) const 
-  {
-    if (i == 0)
-      return "c";
-    else if (i == 1)
-      return "h";
-    else if (i-2<Alphabet().getAminoAcids().size())
-      return string("b_") + Alphabet().getAminoAcids().letter(i-2);
-    else
-      return s_parameter_name(i,Alphabet().getAminoAcids().size()+2);
-  }
-
   CodonsFrequencyModel::CodonsFrequencyModel(const Codons& C)
-    : CodonFrequencyModel(C),
-      NestedModelOver<TripletsFrequencyModel>(TripletsFrequencyModel(C), C.getAminoAcids().size() + 2)
+    : CodonFrequencyModel(C)
   {
-    parameters_[0] = 0.5; // c
-    parameters_[1] = 0.5; // h
+    add_super_parameter("c", 0.5);
+    add_super_parameter("h", 0.5);
 
-    for(int i=0;i<C.getAminoAcids().size();i++)
-      parameters_[i+2] = 1.0/C.getAminoAcids().size();
+    for(int i=0;i<C.getAminoAcids().size();i++) {
+      string pname = string("b_") + Alphabet().getAminoAcids().letter(i);
+      add_super_parameter(pname, 1.0/C.getAminoAcids().size());
+    }
+
+    insert_submodel("1",TripletsFrequencyModel(C));
 
     read();
     recalc_all();
@@ -562,10 +525,6 @@ namespace substitution {
     return S->name() + " * " + R->name();
   }
 
-  string ReversibleMarkovSuperModel::super_parameter_name(int i) const {
-    return ::parameter_name("",i,0);
-  }
-
   /// Construct a reversible Markov model on alphabet 'a'
   ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
     :ReversibleMarkovModel(S1.Alphabet()),
@@ -573,7 +532,8 @@ namespace substitution {
      S(S1),
      R(R1)
   {
-    set_super_parameters(0);
+    add_submodel("S",*S);
+    add_submodel("R",*R);
 
     read();
     recalc_all();
@@ -604,17 +564,11 @@ namespace substitution {
     return "INV";
   }
 
-  string INV_Model::parameter_name(int i) const 
-  {
-    if (i==0)
-      return "INV::f";
-    else
-      return s_parameter_name(i,1);
-  }
-
   INV_Model::INV_Model(const alphabet& a)
     :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   {
+    add_parameter("INV::f",1);
+
     // Calculate S matrix
     for(int i=0;i<S.size1();i++)
       for(int j=0;j<S.size2();j++)
@@ -622,10 +576,6 @@ namespace substitution {
   }
       
   //----------------------- EQU -------------------------//
-
-  string EQU::parameter_name(int i) const {
-    return s_parameter_name(i,0);
-  }
 
   string EQU::name() const {
     return "EQU";
@@ -643,10 +593,6 @@ namespace substitution {
 
   string Empirical::name() const {
     return "Empirical(" + modelname +")";
-  }
-
-  string Empirical::parameter_name(int i) const {
-    return s_parameter_name(i,0);
   }
 
   void Empirical::load_file(const string& filename) {
@@ -678,13 +624,6 @@ namespace substitution {
     return "HKY";
   }
 
-  string HKY::parameter_name(int i) const {
-    if (i==0)
-      return "HKY::kappa";
-    else
-      return s_parameter_name(i,1);
-  }
-
   efloat_t HKY::prior() const 
   {
     return laplace_pdf(log(kappa()), log(2), 0.25);
@@ -707,8 +646,7 @@ namespace substitution {
   HKY::HKY(const Nucleotides& N)
     : NucleotideExchangeModel(N)
   { 
-    set_n_parameters(1);
-    kappa(2);
+    add_parameter("HKY::kappa", 2);
   }
 
   //------------------------- TN -----------------------------//
@@ -747,23 +685,12 @@ namespace substitution {
       }
   }
 
-  string TN::parameter_name(int i) const 
-  {
-    if (i==0)
-      return "TN::kappa(pur)";
-    else if (i==1)
-      return "TN::kappa(pyr)";
-    else
-      return s_parameter_name(i,2);
-  }
-
-    /// Construct an HKY model on alphabet 'a'
+  /// Construct a TN model on alphabet 'a'
   TN::TN(const Nucleotides& N)
     : NucleotideExchangeModel(N)
   { 
-    set_n_parameters(2);
-    kappa1(2);
-    kappa2(2);
+    add_parameter("TN::kappa(pur)",2);
+    add_parameter("TN::kappa(pyr)",2);
   }
 
   string GTR::name() const {
@@ -817,34 +744,15 @@ namespace substitution {
     S(2,3) = parameters_[5]; // TC
   }
 
-  string GTR::parameter_name(int i) const 
-  {
-    if (i==0)
-      return "GTR::AG";
-    else if (i==1)
-      return "GTR::AT";
-    else if (i==2)
-      return "GTR::AC";
-
-    else if (i==3)
-      return "GTR::GT";
-    else if (i==4)
-      return "GTR::GC";
-
-    else if (i==5)
-      return "GTR::TC";
-
-    else
-      return s_parameter_name(i,6);
-  }
-
   GTR::GTR(const Nucleotides& N)
       : NucleotideExchangeModel(N)
     { 
-      set_n_parameters(6);
-
-      for(int i=0;i<parameters_.size();i++)
-	parameters_[i] = 1.0/6;
+      add_parameter("GTR::AG", 1.0/6);
+      add_parameter("GTR::AT", 1.0/6);
+      add_parameter("GTR::AC", 1.0/6);
+      add_parameter("GTR::GT", 1.0/6);
+      add_parameter("GTR::GC", 1.0/6);
+      add_parameter("GTR::TC", 1.0/6);
 
       recalc_all();
     }
@@ -878,25 +786,22 @@ namespace substitution {
 	  int l2 = Alphabet().sub_nuc(j,pos);
 	  assert(l1 != l2);
 
-	  S(i,j) = SubModel()(l1,l2);
+	  S(i,j) = SubModels(0)(l1,l2);
 	}
       }
   }
 
   string SingletToTripletExchangeModel::name() const {
-    string n = SubModel().name();
+    string n = SubModels(0).name();
     n += "x3";
     return n;
   }
   
-  string SingletToTripletExchangeModel::super_parameter_name(int i) const {
-    return ::parameter_name("",i,0);
-  }
-
   SingletToTripletExchangeModel::SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& N)
-    :TripletExchangeModel(T),NestedModelOver<NucleotideExchangeModel>(N,0)
+    :TripletExchangeModel(T)
   { 
-    n_super_parameters = 0;
+    insert_submodel("1",N);
+
     read();
     recalc_all();
   }
@@ -919,8 +824,8 @@ namespace substitution {
 
   void M0::recalc(const vector<int>&)
   {
-    for(int i=0;i<Alphabet().size();i++) {
-
+    for(int i=0;i<Alphabet().size();i++) 
+    {
       for(int j=0;j<i;j++) {
 	int nmuts=0;
 	int pos=-1;
@@ -940,7 +845,7 @@ namespace substitution {
 	  int l2 = Alphabet().sub_nuc(j,pos);
 	  assert(l1 != l2);
 
-	  rate = SubModel()(l1,l2);
+	  rate = SubModels(0)(l1,l2);
 
 	  if (AminoAcid(i) != AminoAcid(j))
 	    rate *= omega();	
@@ -956,24 +861,18 @@ namespace substitution {
   }
 
   efloat_t M0::prior() const {
-    return NestedModelOver<NucleotideExchangeModel>::prior();
+    return SuperModelOver<NucleotideExchangeModel>::prior();
   }
 
   string M0::name() const {
-    return string("M0[") + SubModel().name() + "]";
-  }
-
-  string M0::super_parameter_name(int i) const {
-    if (i==0)
-      return "M0::omega";
-    else
-      return s_parameter_name(i,1);
+    return string("M0[") + SubModels(0).name() + "]";
   }
 
   M0::M0(const Codons& C,const NucleotideExchangeModel& N)
-    :CodonExchangeModel(C),NestedModelOver<NucleotideExchangeModel>(N,1)
+    :CodonExchangeModel(C)
   { 
-    omega(1.0);
+    add_super_parameter("M0::omega", 1.0);
+    insert_submodel("1",N);
   }
 
   M0::~M0() {}
@@ -1011,13 +910,12 @@ namespace substitution {
   }
 
   string UnitModel::name() const {
-    return string("[") + SubModel().name() + "]";
+    return string("[") + SubModels(0).name() + "]";
   }
 
-  string UnitModel::super_parameter_name(int i) const {
-    return s_parameter_name(i,0);
-  }
-
+  UnitModel::UnitModel(const Base_Model_t& M)
+    :ReversibleWrapperOver<Base_Model_t>(M)
+  { }
 
   //------------- MultiFrequencyModel ---------------//
   valarray<double> MultiFrequencyModel::get_a(int l) const 
@@ -1088,30 +986,12 @@ namespace substitution {
   }
 
   string MultiFrequencyModel::name() const {
-    return SubModel().name() + " + multi_freq[" + 
+    return SubModels(0).name() + " + multi_freq[" + 
       convertToString(fraction.size()) + "]";
   }
 
-  string MultiFrequencyModel::super_parameter_name(int i) const 
-  {
-    if (i < fraction.size()*Alphabet().size()) {
-      int l = i/fraction.size();
-      int m = i%fraction.size();
-      string s = "a";
-      s += Alphabet().lookup(l);
-      s += convertToString(m);
-      return s;
-    }
-    else if (i==fraction.size()*Alphabet().size()) {
-      
-    }
-
-    return s_parameter_name(i,n_super_parameters);
-  }
-
   MultiFrequencyModel::MultiFrequencyModel(const ExchangeModel& E,int n)
-    :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E),n*E.Alphabet().size()+1),
-     //     sub_parameter_models(vector<OwnedPointer<SimpleReversibleMarkovModel> >(n,SimpleReversibleMarkovModel(E))),
+    :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E)),
      fraction(n)
   { 
     sub_parameter_models.resize(n);
@@ -1119,10 +999,11 @@ namespace substitution {
       sub_parameter_models[i] = SubModel();
 
     for(int l=0;l<Alphabet().size();l++)
-      for(int m=0;m<n;m++)
-	a(m,l) = 1.0/n;
+      for(int m=0;m<n;m++) {
+	string pname = string("a")+Alphabet().lookup(l)+convertToString(m);
+	add_super_parameter(pname,1.0/n);
+      }
 
-    n_super_parameters = 0;
     read();
     recalc_all();
   }
@@ -1178,8 +1059,8 @@ namespace substitution {
     }
   }
 
-  MultiParameterModel::MultiParameterModel(const MultiModel& M,int dp,int p,int n) 
-    :ReversibleWrapperOver<MultiModel>(M,dp),
+  MultiParameterModel::MultiParameterModel(const MultiModel& M,int p,int n) 
+    :ReversibleWrapperOver<MultiModel>(M),
      sub_parameter_models(vector<OwnedPointer<MultiModel> >(n,M)),
      fraction(n),
      p_change(p),
@@ -1236,19 +1117,17 @@ namespace substitution {
   string DistributionParameterModel::name() const {
     string p_name = "rate";
     if (p_change > -1)
-      p_name = SubModel().parameter_name(p_change);
+      p_name = SubModels(0).parameter_name(p_change);
 
     string dist_name = p_name + "~" + D().name() + "(" + convertToString(p_values.size()) + ")";
-    return SubModel().name() + " + " + dist_name;
+    return SubModels(0).name() + " + " + dist_name;
   }
 
   DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const RateDistribution& RD, int p, int n)
-    :MultiParameterModel(M,0,p,n),
+    :MultiParameterModel(M,p,n),
      good_enough(false)
   {
-    sub_models.push_back(RD);
-
-    set_super_parameters(0);
+    insert_submodel("DIST",RD);
 
     read();
     recalc_all();
@@ -1286,17 +1165,6 @@ namespace substitution {
     return SubModel().name() + " + INV";
   }
 
-  WithINV::WithINV(const MultiModel& M)
-    :ReversibleWrapperOver<MultiModel>(M,1),
-     INV(SimpleReversibleMarkovModel(INV_Model(M.Alphabet())))
-  {
-    parameters_[0] = 0.01;
-
-    read();
-    recalc_all();
-  }
-
-
   efloat_t WithINV::super_prior() const {
     double p = parameter(0);
 
@@ -1318,13 +1186,6 @@ namespace substitution {
       return *INV;
   }
 
-  string WithINV::super_parameter_name(int i) const {
-    if (i==0)
-      return "INV::p";
-    else
-      std::abort();
-  }
-
   vector<double> WithINV::distribution() const {
     double p = parameter(0);
 
@@ -1336,6 +1197,110 @@ namespace substitution {
     return dist;
   }
 
+  WithINV::WithINV(const MultiModel& M)
+    :ReversibleWrapperOver<MultiModel>(M),
+     INV(SimpleReversibleMarkovModel(INV_Model(M.Alphabet())))
+  {
+    add_super_parameter("INV::p", 0.01);
+
+    read();
+    recalc_all();
+  }
+
+
+  //--------------- Invariant Sites Model 2 ----------------//
+
+  const double WithINV2::inv_frac_mean = 0.1;
+  const double WithINV2::max_inv_rate = 0.01;
+
+  /// Get the equilibrium frequencies
+  //  const std::valarray<double>& WithINV2::frequencies() const {
+  //    return VAR->frequencies();
+  //  }
+
+  const MultiModel& WithINV2::VAR() const {
+    return SubModelAs<MultiModel>(0);
+  }
+
+  MultiModel& WithINV2::VAR() {
+    return SubModelAs<MultiModel>(0);
+  }
+
+  const SimpleReversibleMarkovModel& WithINV2::INV() const {
+    return SubModelAs<SimpleReversibleMarkovModel>(1);
+  }
+
+  SimpleReversibleMarkovModel& WithINV2::INV() {
+    return SubModelAs<SimpleReversibleMarkovModel>(1);
+  }
+
+  void WithINV2::recalc(const vector<int>&) 
+  {
+    double p = parameter(0);
+
+    freq = (1-p)*VAR().frequencies() + p*INV().frequencies();
+  }
+
+  string WithINV2::name() const 
+  {
+    return VAR().name() + " + INV2";
+  }
+
+  efloat_t WithINV2::super_prior() const 
+  {
+    double p = parameter(0);
+
+    return beta_pdf(p, 1, 2);
+  }
+
+    /// Access the base models
+  const MultiModel::Base_Model_t& WithINV2::base_model(int m) const {
+    if (m<VAR().n_base_models())
+      return VAR().base_model(m);
+    else
+      return INV();
+  }
+
+  MultiModel::Base_Model_t& WithINV2::base_model(int m) {
+    if (m<VAR().n_base_models())
+      return VAR().base_model(m);
+    else
+      return INV();
+  }
+
+  vector<double> WithINV2::distribution() const {
+    double p = parameter(0);
+
+    vector<double> dist = VAR().distribution();
+    for(int i=0;i<dist.size();i++)
+      dist[i] *= (1-p);
+
+    dist.push_back(p);
+    return dist;
+  }
+
+  const valarray<double>& WithINV2::frequencies() const {
+    return freq;
+
+  }
+
+//  NOTE: Shouldn't we have a generic 'frequencies' calculation if we need one?
+//  ????: And do we need one?
+
+  WithINV2::WithINV2(const MultiModel& M)
+    :freq(M.frequencies())
+  {
+    add_super_parameter("INV::p", 0.01);
+    insert_submodel("VAR", M);
+    insert_submodel("INV", SimpleReversibleMarkovModel(INV_Model(M.Alphabet())));
+
+    read();
+    recalc_all();
+  }
+
+
+
+  //-------------------- M2 --------------------//
   void M2::recalc(const vector<int>&) 
   {
     fraction[0] = parameter(0);
@@ -1365,31 +1330,16 @@ namespace substitution {
   }
 
   string M2::name() const {
-    return SubModel().name() + " + M2";
-  }
-
-  string M2::super_parameter_name(int i) const 
-  {
-    if (i==0)
-      return "M2::f[AA INV]";
-    else if (i==1)
-      return "M2::f[Neutral]";
-    else if (i==2)
-      return "M2::f[Selected]";
-    else if (i==3)
-      return "M2::omega";
-    else
-      return s_parameter_name(i,4);
+    return SubModels(0).name() + " + M2";
   }
 
   M2::M2(const M0& M1,const ReversibleFrequencyModel& R) 
-    :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
-			 4,0,3)
+    :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,3)
   {
-    parameters_[0] = 1.0/3;
-    parameters_[1] = 1.0/3;
-    parameters_[2] = 1.0 - parameters_[0] - parameters_[1];
-    parameters_[3] = 1.0;
+    add_super_parameter("M2::f[AA INV]",   1.0/3);
+    add_super_parameter("M2::f[Neutral]",  1.0/3);
+    add_super_parameter("M2::f[Selected]", 1.0 - parameters_[0] - parameters_[1]);
+    add_super_parameter("M2::omega", 1.0);
 
     read();
     recalc_all();
@@ -1445,32 +1395,23 @@ namespace substitution {
   }
 
   string M3::name() const {
-    return SubModel().name() + " + M3[" + convertToString(fraction.size()) + "]";
-  }
-
-  string M3::super_parameter_name(int i) const 
-  {
-    if (i<fraction.size())
-      return "M3::f" + convertToString(i);
-
-    else if (i<2*fraction.size())
-      return "M3::omega" + convertToString(i-fraction.size());
-
-    else
-      return s_parameter_name(i,2*fraction.size());
+    return SubModels(0).name() + " + M3[" + convertToString(fraction.size()) + "]";
   }
 
   M3::M3(const M0& M1,const ReversibleFrequencyModel& R, int n) 
-    :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
-			 2*n,0,n)
+    :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,n)
   {
     // p
-    for(int i=0;i<n;i++)
-      parameters_[i] = 1.0/n;
+    for(int i=0;i<n;i++) {
+      string pname = "M3::f" + convertToString(i+1);
+      add_super_parameter(pname, 1.0/n);
+    }
 
     // omega
-    for(int i=0;i<n;i++)
-      parameters_[i+n] = 1.0;
+    for(int i=0;i<n;i++) {
+      string pname = "M3::omega" + convertToString(i+1);
+      add_super_parameter(pname, 1.0);
+    }
 
     read();
     recalc_all();
@@ -1481,7 +1422,8 @@ namespace substitution {
   M7::M7(const M0& M1,const ReversibleFrequencyModel& R, int n) 
     :DistributionParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
 				Beta(),0,n)
-  { }
+  { 
+  }
 
   int MixtureModel::n_base_models() const 
   {
@@ -1556,23 +1498,6 @@ namespace substitution {
     return dist;
   }
 
-  string MixtureModel::super_parameter_name(int i) const 
-  {
-    if (i < n_submodels()) {
-      string name = "Mixture::p";
-      name += convertToString(i);
-      return name;
-    }
-    else if (i<2*n_submodels()) {
-      i -= n_submodels();
-      string name = "Mixture::prior";
-      name += convertToString(i);
-      return name;
-    }
-
-    return s_parameter_name(i,2*n_submodels());
-  }
-
   string MixtureModel::name() const {
     string name = "MixtureModel(";
     int n = n_submodels();
@@ -1587,13 +1512,17 @@ namespace substitution {
   }
 
   MixtureModel::MixtureModel(const std::vector<OwnedPointer<MultiModel> >& models)
-    :SuperModelOver<MultiModel>(models,2*models.size())
   {
-    for(int i=0;i<models.size();i++)
-      parameters_[i] = 1.0/models.size();
+    for(int i=0;i<models.size();i++) {
+      string pname = string("Mixture::p") + convertToString(i+1);
+      add_super_parameter(pname, 1.0/models.size());
+      insert_submodel(string("M")+convertToString(i+1),*models[i]);
+    }
 
-    for(int i=0;i<models.size();i++)
-      parameters_[i+models.size()] = 1.0/models.size();
+    for(int i=0;i<models.size();i++) {
+      string pname = string("Mixture::prior") + convertToString(i+1);
+      add_super_parameter(pname, 1.0/models.size());
+    }
 
     pi.resize(Alphabet().size());
 

@@ -26,14 +26,11 @@ void Model::recalc_all()
   recalc(indices);
 }
 
-
-void Model::set_n_parameters(int n) {
-  parameters_.resize(n);
-
-  int s = fixed_.size();
-  fixed_.resize(n);
-  for(int i=s;i<fixed_.size();i++)
-    fixed_[i] = false;
+void Model::add_parameter(const string& name,double value)
+{
+  parameter_names_.push_back(name);
+  parameters_.push_back(value);
+  fixed_.push_back(false);
 }
 
 std::vector<double> Model::parameters(const std::vector<int>& indices) const
@@ -85,32 +82,65 @@ string Model::state() const
   return join<double>(parameters(),'\t');
 }
 
-
-void SuperModel::set_super_parameters(int n) 
+int SuperModel::n_submodels() const 
 {
-  n_super_parameters = n;
+  return first_index_of_model.size();
+}
 
-  // initialize first_index_of_model
-  first_index_of_model.clear();
-  first_index_of_model.push_back(n_super_parameters);
-  for(int m=0;m<n_submodels();m++) 
-  {
-    int next = first_index_of_model.back() + SubModels(m).parameters().size();
-    first_index_of_model.push_back(next);
-  }
+int SuperModel::n_super_parameters() const 
+{
+  if (n_submodels() == 0)
+    return n_parameters();
+  else
+    return first_index_of_model[0];
+}
 
-  // setup parameters_ and fixed_
-  Model::set_n_parameters(first_index_of_model.back());
+void SuperModel::add_parameter(const string& name,double value)
+{
+  int m = ((int)first_index_of_model.size())-1;
 
-  //initialize model_of_index
-  model_of_index.resize(parameters_.size());
+  model_of_index.push_back(m);
 
-  for(int i=0;i<first_index_of_model[0];i++)
-    model_of_index[i] = -1;
+  Model::add_parameter(name,value);
+}
 
-  for(int m=0;m<n_submodels();m++) 
-    for(int i=first_index_of_model[m];i<first_index_of_model[m+1];i++)
-      model_of_index[i] = m;
+void SuperModel::add_super_parameter(const string& name,double value)
+{
+  int I = n_super_parameters();
+
+  parameters_.insert(parameters_.begin()+I           ,value);
+
+  parameter_names_.insert(parameter_names_.begin()+I ,name);
+
+  fixed_.insert(fixed_.begin()+I                     ,false);
+
+  model_of_index.insert(model_of_index.begin()+I     ,-1);
+
+  for(int i=0;i<first_index_of_model.size();i++)
+    first_index_of_model[i]++;
+}
+
+void SuperModel::add_submodel(const string& prefix,const Model& M)
+{
+  // store the prefix of this model
+  model_prefix.push_back(prefix+"::");
+
+  // store the first index of this model
+  first_index_of_model.push_back(n_parameters());
+
+  // store the parameter name
+  for(int i=0;i<M.n_parameters();i++)
+    add_parameter(M.parameter_name(i),M.parameter(i));
+
+  // check for duplicate names
+  for(int i=first_index_of_model.back();i<n_parameters();i++)
+    for(int j=0;j<first_index_of_model.back();j++)
+      if (parameter_name(i) == parameter_name(j)) {
+	if (model_of_index[i] != -1)
+	  parameter_names_[i] = model_prefix[model_of_index[i]]+parameter_names_[i];
+	if (model_of_index[j] != -1)
+	  parameter_names_[j] = model_prefix[model_of_index[j]]+parameter_names_[j];
+      }
 }
 
 void SuperModel::read() 
@@ -178,7 +208,7 @@ void SuperModel::write(const vector<int>& indices,vector<double>::const_iterator
 void SuperModel::write() 
 {
   // write parameters into each sub-model
-  int total=n_super_parameters;
+  int total=n_super_parameters();
 
   for(int m=0;m<n_submodels();m++) {
     vector<double> sub_p = SubModels(m).parameters();
@@ -193,21 +223,6 @@ void SuperModel::write()
 
     total += sub_p.size();
   }
-}
-
-string SuperModel::parameter_name(int p) const 
-{
-  assert(0 <= p and p < parameters_.size());
-  if (p<n_super_parameters)
-    return super_parameter_name(p);
-  p -= n_super_parameters;
-
-  for(int i=0;i<n_submodels();i++) {
-    if (p<SubModels(i).parameters().size())
-      return SubModels(i).parameter_name(p);
-    p -= SubModels(i).parameters().size();
-  }
-  return super_parameter_name(p);
 }
 
 efloat_t SuperModel::prior() const {
@@ -246,6 +261,10 @@ void SuperModel::parameters(const vector<int>& indices,const vector<double>& p)
   parameters(indices,b);
 }
 
+SuperModel::SuperModel()
+{
+}
+
 int find_parameter(const Model& M,const string& name) {
   for(int i=0;i<M.parameters().size();i++) 
     if (M.parameter_name(i) == name)
@@ -253,3 +272,13 @@ int find_parameter(const Model& M,const string& name) {
   return -1;
 }
  
+void show_parameters(std::ostream& o,const Model& M) {
+  for(int i=0;i<M.parameters().size();i++) {
+    o<<"    ";
+    if (M.fixed(i)) 
+      o<<"*";
+    o<<M.parameter_name(i)<<" = "<<M.parameters()[i];
+  }
+  o<<"\n";
+}
+

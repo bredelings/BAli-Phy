@@ -24,11 +24,9 @@ namespace indel {
 }
 
 /// A generic insertion/deletion model
-class IndelModel:public Model {
-protected:
-  IndelModel(int s);
-
-public:
+class IndelModel: public Model 
+{
+public: 
 
   virtual IndelModel* clone() const =0;
 
@@ -37,8 +35,6 @@ public:
 
   /// Alignment distribution for a branch of time t
   virtual indel::PairHMM get_branch_HMM(double t) const=0;
-
-  IndelModel();
 
   virtual ~IndelModel();
 };
@@ -64,8 +60,6 @@ public:
 
   std::string name() const;
 
-  std::string parameter_name(int) const;
-
   SimpleIndelModel();
 };
 
@@ -84,8 +78,6 @@ public:
 
   std::string name() const;
 
-  std::string parameter_name(int) const;
-
   explicit NewIndelModel(bool);
 };
 
@@ -103,8 +95,6 @@ public:
   indel::PairHMM get_branch_HMM(double t) const;
 
   std::string name() const;
-
-  std::string parameter_name(int) const;
 
   explicit TKF1(bool);
 };

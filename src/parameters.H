@@ -108,7 +108,6 @@ public:
   Parameters* clone() const {return new Parameters(*this);}
 
   string name() const {return "Full Model";}
-  string super_parameter_name(int) const;
 
   const Model& SubModels(int) const;
   Model& SubModels(int);

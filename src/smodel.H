@@ -220,7 +220,6 @@ namespace substitution {
     INV_Model* clone() const {return new INV_Model(*this);}
 
     string name() const;
-    string parameter_name(int i) const;
       
     INV_Model(const alphabet& a);
   };
@@ -236,7 +235,6 @@ namespace substitution {
     virtual EQU* clone() const {return new EQU(*this);}
 
     string name() const;
-    string parameter_name(int i) const;
 
     EQU(const alphabet& a);
 
@@ -259,7 +257,6 @@ namespace substitution {
     virtual Empirical* clone() const {return new Empirical(*this);}
 
     string name() const;
-    string parameter_name(int i) const;
 
     Empirical(const alphabet& a,const string& filename); 
 
@@ -294,7 +291,6 @@ namespace substitution {
     virtual efloat_t prior() const;
 
     string name() const;
-    string parameter_name(int i) const;
 
     /// Construct an HKY model on alphabet 'a'
     HKY(const Nucleotides& N);
@@ -321,7 +317,6 @@ namespace substitution {
     virtual efloat_t prior() const;
 
     string name() const;
-    string parameter_name(int i) const;
 
     /// Construct an HKY model on alphabet 'a'
     TN(const Nucleotides& N);
@@ -338,7 +333,6 @@ namespace substitution {
     virtual efloat_t prior() const;
 
     string name() const;
-    string parameter_name(int i) const;
 
     /// Construct a GTR model on alphabet 'a'
     GTR(const Nucleotides& N);
@@ -357,18 +351,16 @@ namespace substitution {
   };
 
   class SingletToTripletExchangeModel: public TripletExchangeModel,
-				       public NestedModelOver<NucleotideExchangeModel>
+				       public SuperModelOver<NucleotideExchangeModel>
   {
     void recalc(const vector<int>&);
   public:
 
-    efloat_t prior() const { return NestedModelOver<NucleotideExchangeModel>::prior(); }
+    efloat_t prior() const { return SuperModelOver<NucleotideExchangeModel>::prior(); }
 
     SingletToTripletExchangeModel* clone() const {return new SingletToTripletExchangeModel(*this);}
 
     string name() const;
-
-    string super_parameter_name(int i) const;
 
     SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& M);
 
@@ -392,7 +384,7 @@ namespace substitution {
 
 
   class M0: public CodonExchangeModel,
-		public NestedModelOver<NucleotideExchangeModel>
+		public SuperModelOver<NucleotideExchangeModel>
   {
     void recalc(const vector<int>&);
   public:
@@ -408,7 +400,6 @@ namespace substitution {
     void omega(double w);
 
     string name() const;
-    string super_parameter_name(int i) const;
 
     M0(const Codons& C,const NucleotideExchangeModel& M);
 
@@ -457,8 +448,6 @@ namespace substitution {
 
     string name() const;
 
-    string parameter_name(int i) const;
-
     explicit SimpleFrequencyModel(const alphabet& a);
 
     explicit SimpleFrequencyModel(const alphabet& a,const valarray<double>&);
@@ -474,13 +463,11 @@ namespace substitution {
   };
 
   class IndependentNucleotideFrequencyModel: public TripletFrequencyModel,
-					 public NestedModelOver<SimpleFrequencyModel>
+					 public SuperModelOver<SimpleFrequencyModel>
   {
     OwnedPointer<SimpleFrequencyModel> triplets;
 
     void recalc(const vector<int>&);
-
-    string super_parameter_name(int i) const;
 
   public:
     IndependentNucleotideFrequencyModel* clone() const {return new IndependentNucleotideFrequencyModel(*this);}
@@ -492,12 +479,10 @@ namespace substitution {
 
 
   class TripletsFrequencyModel: public TripletFrequencyModel,
-				public NestedModelOver<SimpleFrequencyModel>
+				public SuperModelOver<SimpleFrequencyModel>
   {
   protected:
     void recalc(const vector<int>&);
-
-    string super_parameter_name(int i) const;
 
   public:
     TripletsFrequencyModel* clone() const {return new TripletsFrequencyModel(*this);}
@@ -519,14 +504,12 @@ namespace substitution {
   };
 
   class AACodonFrequencyModel: public CodonFrequencyModel,
-			       public NestedModelOver<SimpleFrequencyModel>
+			       public SuperModelOver<SimpleFrequencyModel>
   {
   protected:
     OwnedPointer<SimpleFrequencyModel> codons;
 
     void recalc(const vector<int>&);
-
-    string super_parameter_name(int i) const;
 
     int aa_size() const {return Alphabet().getAminoAcids().size();}
   public:
@@ -538,12 +521,10 @@ namespace substitution {
   };
 
   class CodonsFrequencyModel: public CodonFrequencyModel,
-			      public NestedModelOver<TripletsFrequencyModel>
+			      public SuperModelOver<TripletsFrequencyModel>
   {
   protected:
     void recalc(const vector<int>&);
-
-    string super_parameter_name(int i) const;
 
     int aa_size() const {return Alphabet().getAminoAcids().size();}
 
@@ -625,8 +606,6 @@ namespace substitution {
 	std::abort();
     }
 
-    int n_submodels() const {return 2;}
-
   public:
 
     /// Make a copy of this object
@@ -638,8 +617,6 @@ namespace substitution {
     efloat_t prior() const {return S->prior() * R->prior();}
 
     string name() const;
-
-    string super_parameter_name(int i) const;
 
     /// Construct a reversible Markov model on alphabet 'a'
     ReversibleMarkovSuperModel(const ExchangeModel& S1, const ReversibleFrequencyModel& R1);
@@ -685,9 +662,9 @@ namespace substitution {
       return SubModel().Alphabet(); 
     }
 
-    ReversibleWrapperOver(const T& t,int dp)
-      : SuperModelOver< ::Model>(vector<OwnedPointer< ::Model> >(1,t),dp) 
-    {}
+    ReversibleWrapperOver(const T& M) {
+      insert_submodel("BASE",M);
+    }
   };
 
 
@@ -755,11 +732,8 @@ namespace substitution {
     std::vector<double> distribution() const {return vector<double>(1,1);}
 
     string name() const;
-    string super_parameter_name(int i) const;
 
-    UnitModel(const Base_Model_t& M):
-      ReversibleWrapperOver<Base_Model_t>(M,0)
-    { }
+    UnitModel(const Base_Model_t& M);
 
     ~UnitModel() {};
   };
@@ -803,7 +777,6 @@ namespace substitution {
     const valarray<double>& frequencies() const;
 
     string name() const;
-    string super_parameter_name(int i) const;
 
     MultiFrequencyModel(const ExchangeModel& M,int n_bins);
 
@@ -843,7 +816,7 @@ namespace substitution {
     /// Get the equilibrium frequencies
     const valarray<double>& frequencies() const;
 
-    MultiParameterModel(const MultiModel& M,int dp,int p,int n_bins);
+    MultiParameterModel(const MultiModel& M,int p,int n_bins);
 
     ~MultiParameterModel() {}
   };
@@ -925,9 +898,55 @@ namespace substitution {
     const valarray<double>& frequencies() const;
 
     string name() const;
-    string super_parameter_name(int i) const;
 
     WithINV(const MultiModel& M);
+  };
+
+  /// The Invariant-sites model: a certain fraction of the sites don't change
+
+  /// The Invariant-sites model: a certain fraction of the sites don't change
+  /// The only parameter is 'p', the fraction of sites which don't change
+  /// To keep branch lengths the same, inflate rates by 1/(1-p).
+  //  class WithINV2: public MultiModel, public ReversibleWrapperOver<MultiModel> 
+
+  class WithINV2: public MultiModel,
+		  public SuperModelOver< ::Model>
+  {
+    valarray<double> freq;
+
+    static const double inv_frac_mean;
+    static const double max_inv_rate;
+
+    const MultiModel& VAR() const;
+          MultiModel& VAR();
+
+    const SimpleReversibleMarkovModel& INV() const ;
+          SimpleReversibleMarkovModel& INV();
+
+  public:
+    virtual WithINV2* clone() const {return new WithINV2(*this);}
+
+    const alphabet& Alphabet() const {return VAR().Alphabet();}
+
+    void recalc(const vector<int>&);
+
+    efloat_t super_prior() const;
+
+    /// The number of models
+    int n_base_models() const {return 1 +  VAR().n_base_models();}
+
+    /// Access the base models
+    const Base_Model_t& base_model(int m) const;
+          Base_Model_t& base_model(int m)      ;
+
+    std::vector<double> distribution() const;
+
+    /// Get the equilibrium frequencies
+    const valarray<double>& frequencies() const;
+
+    string name() const;
+
+    WithINV2(const MultiModel& M);
   };
 
   class M2: public MultiParameterModel
@@ -941,7 +960,6 @@ namespace substitution {
     M2* clone() const {return new M2(*this);}
 
     string name() const;
-    string super_parameter_name(int i) const;
 
     M2(const M0& M1,const ReversibleFrequencyModel& R);
   };
@@ -963,7 +981,6 @@ namespace substitution {
 
 
     string name() const;
-    string super_parameter_name(int i) const;
 
     M3(const M0& M1,const ReversibleFrequencyModel& R, int n);
   };
@@ -1002,7 +1019,6 @@ namespace substitution {
     std::vector<double> distribution() const;
 
     string name() const;
-    string super_parameter_name(int i) const;
 
     const alphabet& Alphabet() const {
       assert(SubModels(0).Alphabet() == SubModels(1).Alphabet());

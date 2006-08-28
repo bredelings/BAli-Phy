@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 #include "clone.H"
 #include "mytypes.H"
@@ -18,17 +19,19 @@ std::string parameter_name(const string& prefix,int i,int n);
 class Model: public Cloneable 
 {
 protected:
-  /// Model parameters
+  /// Parameter values
   std::vector<double> parameters_;
+  /// Parameter names
+  std::vector<std::string> parameter_names_;
+  /// Is this parameter fixed?
+  std::vector<bool> fixed_;
+
+  virtual void add_parameter(const std::string&,double);
   
   /// Recalculate internal data based on changing one parameter
   void recalc_one(int);
   /// Recalculate internal data based on current parameters
   virtual void recalc(const vector<int>&) {}
-
-  void set_n_parameters(int);
-
-  std::vector<bool> fixed_;
 
 public:
   /// Recalculate all internal data based on current parameters
@@ -68,7 +71,7 @@ public:
   virtual std::string name() const =0;
 
   /// Names of the parameters
-  virtual std::string parameter_name(int i) const =0;
+  const std::string& parameter_name(int i) const {return parameter_names_[i];}
 
   std::string header() const;
 
@@ -85,16 +88,19 @@ public:
 class SuperModel: virtual public Model 
 {
 protected:
-  int n_super_parameters;
-
+  vector<std::string> model_prefix;
   vector<int> first_index_of_model;
   vector<int> model_of_index;
+
+  int n_super_parameters() const;
+
+  void add_parameter(const std::string&,double);
+  void add_super_parameter(const std::string&,double);
+  virtual void add_submodel(const std::string&,const Model&);
 
   /// The prior for the parameters of the upper model
   virtual efloat_t super_prior() const {return 1.0;}
   
-  virtual std::string super_parameter_name(int) const { std::abort(); }
-
   /// Load parameters from sub-models
   void read();
 
@@ -105,13 +111,9 @@ protected:
   /// Store SOME parameters down into submodels
   void write(const std::vector<int>&,vector<double>::const_iterator&);
 
-  void set_super_parameters(int);
-
 public:
   /// Make a copy of ourselves
   SuperModel* clone() const =0;
-  
-  std::string parameter_name(int i) const;
   
   efloat_t prior() const;
   
@@ -153,7 +155,9 @@ public:
 
   virtual const Model& SubModels(int) const=0;
   virtual Model& SubModels(int)=0;
-  virtual int n_submodels() const=0;
+  int n_submodels() const;
+
+  SuperModel();
 };
 
 /// This is a substitution model built over a submodel of a particular type
@@ -163,6 +167,12 @@ class SuperModelOver: virtual public SuperModel {
 protected:
   /// The sub-models this model is build upon
   std::vector< OwnedPointer<SubModel_t> > sub_models;
+
+  void insert_submodel(const std::string& name, const SubModel_t& M)
+  {
+    add_submodel(name,M);
+    sub_models.push_back(M);
+  }
   
   /// Reference the submodels
   const SubModel_t& SubModels(int i) const {return *sub_models[i];}
@@ -172,53 +182,10 @@ protected:
 public:
   /// Make a copy of ourselves
   SuperModelOver<SubModel_t>* clone() const =0;
-  
-  /// Construct a SuperModel based on model 'M', with 'dp' extra parameters
-  SuperModelOver(const std::vector< OwnedPointer<SubModel_t> >& models,int dp)
-    :sub_models(models)
-  {
-    set_super_parameters(dp);
-    
-    read();
-  }
-
-};
-
-/// Abstract class for substitution models built on a single submodel
-class NestedModel: virtual public SuperModel {
-  
-protected:
-  /// Access the submodel
-  virtual const Model& SubModel() const=0;
-  virtual Model& SubModel()=0;
-  
-public:
-  /// Make a copy of ourselves
-  NestedModel* clone() const =0;
-};
-
-
-/// This is a substitution model built over a submodel of a particular type
-template <class SubModel_t>
-class NestedModelOver: virtual public NestedModel, public SuperModelOver<SubModel_t> {
-  
-protected:
-  /// Access the submodel
-  const SubModel_t& SubModel() const {return SubModels(0);}
-  SubModel_t& SubModel() {return SubModels(0);}
-  
-public:
-  /// Make a copy of ourselves
-  NestedModelOver<SubModel_t>* clone() const =0;
-  
-  /// Construct a Nested model based on model 'M', with 'dp' extra parameters
-  NestedModelOver(const SubModel_t& M,int dp)
-    :SuperModelOver<SubModel_t>(std::vector< OwnedPointer<SubModel_t> >(1,M),dp)
-  { }
 };
 
 int find_parameter(const Model& M,const std::string& name);
 
-
+void show_parameters(std::ostream& o,const Model& M);
 
 #endif

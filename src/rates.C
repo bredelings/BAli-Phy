@@ -6,7 +6,6 @@
 #include <gsl/gsl_cdf.h>
 #include "probability.H"
 #include "util.H"
-#include "monitor.H"
 
 namespace substitution {
 
@@ -113,10 +112,6 @@ namespace substitution {
     return "Uniform";
   }
 
-  string Uniform::parameter_name(int) const {
-    std::abort();
-  }
-
   Uniform::~Uniform() {}
 
   //--------------- GammaRateDistribution -----------------//
@@ -129,10 +124,6 @@ namespace substitution {
 
   string Gamma::name() const {
     return "gamma";
-  }
-
-  string Gamma::parameter_name(int i) const {
-    return "gamma::sigma/mu";
   }
 
   double Gamma::cdf(double x) const 
@@ -207,7 +198,9 @@ namespace substitution {
     }
   }
 
-
+  Gamma::Gamma() {
+    add_parameter("gamma::sigma/mu", 0.1);
+  }
 
   //--------------- GammaRateDistribution -----------------//
 
@@ -225,20 +218,12 @@ namespace substitution {
     efloat_t P = 1;
     P *= beta_pdf(mu,10,1);
     P *= laplace_pdf(s,-4,0.5);
+
     return P;
   }
 
   string Beta::name() const {
     return "beta";
-  }
-
-  string Beta::parameter_name(int i) const {
-    if (i == 0)
-      return "beta::mu";
-    else if (i==1)
-      return "beta::sigma/mu";
-    else
-      throw myexception()<<"Beta: we only have two parameters.";
   }
 
   double Beta::cdf(double x) const {
@@ -299,6 +284,11 @@ namespace substitution {
     return gsl_cdf_beta_Pinv(p,a,b);
   }
 
+  Beta::Beta()
+  {
+    add_parameter("beta::mu", 0.5);
+    add_parameter("beta::sigma/mu", 0.1);
+  }
 
   //-------------- LogNormal Distribution ----------------//
   // E X = exp(lmu + 0.5*lsigma^2)
@@ -365,11 +355,13 @@ namespace substitution {
     return "log-normal";
   }
 
-  string LogNormal::parameter_name(int i) const {
-    return "log-normal::sigma/mu";
+  LogNormal::LogNormal() 
+  {
+    add_parameter("log-normal::sigma/mu", 0.1);
   }
+    
 
-  /*-------------- MultipleDistribution ----------------*/
+  //-------------- MultipleDistribution ----------------//
 
   efloat_t MultipleDistribution::super_prior() const 
   {
@@ -400,11 +392,15 @@ namespace substitution {
   }
 
   MultipleDistribution::MultipleDistribution(const std::vector<OwnedPointer<RateDistribution> >& models) 
-    :SuperModelOver<RateDistribution>(models,models.size())
   {
     // Set the rates and fractions
-    for(int i=0;i<n_dists();i++)
-      parameters_[i] = 1.0/n_dists();
+    for(int i=0;i<n_dists();i++) {
+      string pname = string("multi:p")+convertToString(i+1);
+      add_parameter(pname, 1.0/n_dists() );
+    }
+
+    for(int i=0;i<models.size();i++)
+      add_submodel(convertToString(i+1),*models[i]);
   }
 
   string MultipleDistribution::name() const {
@@ -415,12 +411,6 @@ namespace substitution {
 	n += " + ";
     }
     n += ")";
-    return n;
-  }
-
-  string MultipleDistribution::super_parameter_name(int i) const {
-    string n = "multi:p";
-    n += convertToString(i);
     return n;
   }
 
@@ -511,12 +501,13 @@ namespace substitution {
 	error=true;
 
     if (error) {
-      std::cerr<<"f[i] = NaN!"<<std::endl;
-      show_parameters(std::cerr,D);
+      cerr<<"f[i] = NaN!"<<endl;
+      show_parameters(cerr,D);
       for(int i=0;i<r.size();i++)
-	std::cerr<<"r["<<i<<"] = "<<r[i]<<std::endl;
+	cerr<<"r["<<i<<"] = "<<r[i]<<endl;
+      cerr<<endl;
       for(int i=0;i<f.size();i++)
-	std::cerr<<"f["<<i<<"] = "<<f[i]<<std::endl;
+	cerr<<"f["<<i<<"] = "<<f[i]<<endl;
       std::abort();
     }
   }

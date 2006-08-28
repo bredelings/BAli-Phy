@@ -256,6 +256,8 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
   P.keys["pi_dirichlet_N"] *= max(sequence_lengths(A,P.T.n_leaves()));
   add_MH_move(P, dirichlet_proposal,    "pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+  add_MH_move(P, dirichlet_proposal,    "INV::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+  add_MH_move(P, dirichlet_proposal,    "VAR::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
 
   set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
   P.keys["GTR_dirichlet_N"] *= 100;
