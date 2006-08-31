@@ -921,12 +921,12 @@ bool is_strict_subset(const valarray<bool>& v1,const valarray<bool>& v2) {
   return is_subset(v1,v2) and not equal(v1,v2);
 }
 
-bool wanders_over(const Partition& p1,const Partition& p2)
+bool partition_wanders_over(const Partition& p1,const Partition& p2)
 {
   return is_subset(p2.group1,p1.group2) and is_subset(p2.group2,p1.group2);
 }
 
-bool less_than(const Partition& p1,const Partition& p2)
+bool partition_less_than(const Partition& p1,const Partition& p2)
 {
   return 
     is_strict_subset(p1.group1,p2.group1) and 
@@ -938,12 +938,12 @@ bool sub_conflict(Partition p1,Partition p2)
   if (not intersect(p1.mask(),p2.mask()))
     return false;
 
-  if (less_than(p1,p2) or less_than(p1,p2.reverse()) or
-      less_than(p1.reverse(),p2) or less_than(p1.reverse(),p2.reverse()))
+  if (partition_less_than(p1,p2) or partition_less_than(p1,p2.reverse()) or
+      partition_less_than(p1.reverse(),p2) or partition_less_than(p1.reverse(),p2.reverse()))
     return false;
 
-  if (wanders_over(p1,p2) or wanders_over(p1.reverse(),p2) or
-      wanders_over(p2,p1) or wanders_over(p2.reverse(),p1))
+  if (partition_wanders_over(p1,p2) or partition_wanders_over(p1.reverse(),p2) or
+      partition_wanders_over(p2,p1) or partition_wanders_over(p2.reverse(),p1))
     return false;
 
   return true;

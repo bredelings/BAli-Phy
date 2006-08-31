@@ -200,6 +200,10 @@ bool merge_partition(std::vector<Partition>& partitions,const Partition& delta);
 /// load a collection of partition sets from a file
 void load_partitions(const std::string& filename, std::vector<std::vector<Partition> >&);
 
+bool partition_wanders_over(const Partition& p1,const Partition& p2);
+
+bool partition_less_than(const Partition& p1,const Partition& p2);
+
 std::vector<Partition> get_moveable_tree(std::vector<Partition> partitions);
 
 void write_partitions(std::ostream& o,const std::vector<Partition>& partitions);

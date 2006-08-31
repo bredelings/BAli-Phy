@@ -75,7 +75,7 @@ TOOLS = model_P statreport alignment-gild \
 	joint-indels alignment-consensus alignment-info \
 	subsample tree-mean-lengths trees-bootstrap \
 	joint-parsimony stats-merge stats-select alignment-identity \
-	analyze_distances alignment-cat
+	analyze_distances alignment-cat draw-graph
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -201,6 +201,10 @@ trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tr
 #---------------------------------------------------------------
 
 trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tree-dist.C util.C rng.C tools/statistics.C tools/bootstrap.C tree-util.C
+
+#---------------------------------------------------------------
+
+draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C util.C tree-util.C
 
 #---------------------------------------------------------------
 tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 

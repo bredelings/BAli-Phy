@@ -110,6 +110,9 @@ Before 1.9.9:
 
  * Implement tree constraints, alignment constraints, branch-length constraints. 
  * Fix gamma / beta distributions.
+   - Gamma: be less fragile to large sigma/mu proposals.
+   - Beta: don't assume the natural scale is 1.0!
+   - Beta: don't allow a,b < 1?
  * Fix Dirichlet Priors
    - fix prior on frequencies.
    - fix prior on INV2.
@@ -567,6 +570,8 @@ the prior, because we never want to use it  differently.
 [DONE] Allow specifying the location of GSL.
 
 [DONE] Don't crash on 'SKIP=<> make' in --traditional mode.
+
+[DONE] Draw MC tree using new tool 'draw-graph'.
 
 *IDEAS*
 
