@@ -228,11 +228,15 @@ int main(int argc,char* argv[])
 
       if (partitions[i].names != names)
 	throw myexception()<<"Partition "<<i+1<<" has different taxa than partition 1!";
+      if (not informative(partitions[i]))
+	throw myexception()<<"Partition "<<i+1<<" is not informative.";
     }
 
+    vector<Partition> partitions_old = partitions;
+    partitions = get_moveable_tree(partitions);
     // check that the tree is an MC tree
-    if (get_moveable_tree(partitions).size() != partitions.size())
-      throw myexception()<<"This is not a valid MC tree!";
+    if (partitions.size() != partitions_old.size())
+      cerr<<"Removing "<<partitions_old.size() - partitions.size()<<"/"<<partitions_old.size()<<" partitions to yield an MC  tree."<<endl;
 
     // add leaf branches
     for(int i=0;i<names.size();i++) {

@@ -559,25 +559,26 @@ int main(int argc,char* argv[])
 
       while (k<consensus_levels.size() and clevel < levels[j]) 
       {
-	vector<Partition> sub  = get_Ml_partitions(all_partitions,consensus_levels[k],N);
-	vector<Partition> full = select(sub,&Partition::full);
-	vector<Partition> moveable = get_moveable_tree(sub);
-
-	vector<Partition> full_hull = Ml_min_Hull(c50_full_partitions,sub);
+	vector<Partition> all  = get_Ml_partitions(all_partitions,consensus_levels[k],N);
+	vector<Partition> sub;
+	vector<Partition> full;
+	for(int i=0;i<all.size();i++)
+	  if (all[i].full())
+	    full.push_back(all[i]);
+	  else
+	    sub.push_back(all[i]);
 
 	SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
-	SequenceTree consensus_hull = get_mf_tree(tree_dist.names(),full_hull);
       
 	double L = consensus_levels[k]*100;
 	
 	cout.unsetf(ios::fixed | ios::showpoint);
 	
-	cout<<" "<<L<<"-consensus = "<<consensus.write(false)<<std::endl<<std::endl;
+	cout<<" "<<L<<"-consensus = "<<consensus.write(false)<<std::endl;
 	
 	if (show_sub) {
-	  cout<<" "<<L<<"-consensus+ = "<<consensus_hull.write(false)<<std::endl<<std::endl;
-	  cout<<" "<<L<<"-consensus' =\n";
-	  write_partitions(cout, moveable);
+	  for(int i=0;i<sub.size();i++)
+	    cout<<sub[i]<<endl;
 	}
 	cout<<endl<<endl;
 
