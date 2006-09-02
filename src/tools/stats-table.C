@@ -1,6 +1,7 @@
 #include "stats-table.H"
 #include "util.H"
 #include "myexception.H"
+
 using namespace std;
 
 vector<string> parse_header(const string& line)
@@ -29,4 +30,17 @@ vector<string> read_header(std::istream& file)
   }
 
   return parse_header(line);
+}
+
+void write_header(std::ostream& o, const vector<string>& headers)
+{
+  for(int i=0;i<headers.size();i++) 
+  {
+    cout<<headers[i];
+      
+    if (i == headers.size()-1)
+      o<<"\n";
+    else
+      o<<"\t";
+  }
 }

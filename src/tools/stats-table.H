@@ -9,4 +9,6 @@ std::vector<std::string> parse_header(const std::string&);
 
 std::vector<std::string> read_header(std::istream&);
 
+void write_header(std::ostream&,const std::vector<std::string>&);
+
 #endif
