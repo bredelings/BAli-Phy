@@ -910,8 +910,10 @@ void write_partitions(std::ostream& o,const vector<Partition>& partitions)
     else
       sub.push_back(partitions[i]);
 
-  SequenceTree consensus = get_mf_tree(partitions[0].names,full);
-  o<<consensus.write(false)<<endl;
+  if (full.size()) {
+    SequenceTree consensus = get_mf_tree(partitions[0].names,full);
+    o<<consensus.write(false)<<endl;
+  }
 
   for(int i=0;i<sub.size();i++)
     o<<sub[i]<<endl;
