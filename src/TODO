@@ -108,7 +108,9 @@ much of the variation is spatial?)
 -------------------------------------------------------
 Before 1.9.9:
 
- * Implement tree constraints, alignment constraints, branch-length constraints. 
+ * Implement {tree,alignment,branch-length} constraints.
+ * Avoid crash on DNA sequences...
+   - Make a AA_DNA color scheme that correctly guesses AA or DNA?
  * Fix gamma / beta distributions.
    - Gamma: be less fragile to large sigma/mu proposals.
    - Beta: don't assume the natural scale is 1.0!
@@ -117,6 +119,8 @@ Before 1.9.9:
    - fix prior on frequencies.
    - fix prior on INV2.
    - fix *proposals* for INV2?
+ * Profile trees-consensus on 48b.fasta
+   - It seems to take measurable time processing EACH level of consensus.
  * Document where/what files are installed - especial the example files.
  * Document specifying location of GSL
  * Brief descriptions of some of the tools.
