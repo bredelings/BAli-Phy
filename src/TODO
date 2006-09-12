@@ -108,6 +108,7 @@ much of the variation is spatial?)
 -------------------------------------------------------
 Before 1.9.9:
 
+ * Check that branch_mean move actually helps?
  * Implement {tree,alignment,branch-length} constraints.
  * Avoid crash on DNA sequences...
    - Make a AA_DNA color scheme that correctly guesses AA or DNA?
