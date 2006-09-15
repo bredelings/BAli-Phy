@@ -8,11 +8,6 @@
    (b) Fix the Uniform distibution to have max range (0,2) ?
    (c) Make the rate a parameter of the distribution?
 
-2. Implement general name handling, to avoid duplicate names!
-
-
-
-
 2. How much of the sequences is in each %-identity fraction?
   a) How much information is in each fraction?
   b) Can we combine measures of gappiness and %-identity to yield a
@@ -112,8 +107,7 @@ Before 1.9.9:
  * Implement {tree,alignment,branch-length} constraints.
  * Avoid crash on DNA sequences...
    - Make a AA_DNA color scheme that correctly guesses AA or DNA?
- * Fix gamma / beta distributions.
-   - Gamma: be less fragile to large sigma/mu proposals.
+ * Fix beta distributions.
    - Beta: don't assume the natural scale is 1.0!
    - Beta: don't allow a,b < 1?
  * Fix Dirichlet Priors
@@ -577,6 +571,8 @@ the prior, because we never want to use it  differently.
 [DONE] Don't crash on 'SKIP=<> make' in --traditional mode.
 
 [DONE] Draw MC tree using new tool 'draw-graph'.
+
+[DONE] Gamma: be less fragile to large sigma/mu proposals.
 
 *IDEAS*
 

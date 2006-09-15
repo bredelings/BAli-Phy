@@ -128,7 +128,7 @@ namespace substitution {
 
   double Gamma::cdf(double x) const 
   {
-    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
+    double s = minmax(parameters_[0], 1.0e-5, 3.0);
 
     double M = 1;
     double V = (s*M)*(s*M);
@@ -152,7 +152,7 @@ namespace substitution {
 
   double Gamma::pdf(double x) const 
   {
-    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
+    double s = minmax(parameters_[0], 1.0e-5, 3.0);
 
     double M = 1;
     double V = (s*M)*(s*M);
@@ -176,7 +176,7 @@ namespace substitution {
 
   double Gamma::quantile(double p,double) const 
   {
-    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
+    double s = minmax(parameters_[0], 1.0e-5, 3.0);
 
     double M = 1;
     double V = (s*M)*(s*M);
@@ -495,11 +495,10 @@ namespace substitution {
     bool error=false;
 
     for(int i=0;i<f.size();i++)
-      if (std::isnan(f[i]) or std::isnan(r[i]))
+      if ((not std::isfinite(f[i])) or (not std::isfinite(r[i])))
 	error=true;
 
     if (error) {
-      cerr<<"f[i] = NaN!"<<endl;
       show_parameters(cerr,D);
       for(int i=0;i<r.size();i++)
 	cerr<<"r["<<i<<"] = "<<r[i]<<endl;
