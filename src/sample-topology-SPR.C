@@ -7,6 +7,7 @@
 #include "likelihood.H"
 
 #include "3way.H"
+#include "tree-util.H"
 #include "alignment-sums.H"
 #include "alignment-constraint.H"
 #include "substitution-index.H"
@@ -128,6 +129,8 @@ void remove_duplicates(vector<int>& v) {
 
 MCMC::Result sample_SPR(alignment& A,Parameters& P,int b1,int b2) 
 {
+  const int bins = 4;
+
   int n1 = P.T.directed_branch(b1).target();
   int n2 = P.T.directed_branch(b1).source();
   assert(P.T.partition(b1)[P.T.branch(b2).target()]);
@@ -145,6 +148,8 @@ MCMC::Result sample_SPR(alignment& A,Parameters& P,int b1,int b2)
   //  std::cerr<<"before = "<<p[1].T<<endl;
 
   double ratio = do_SPR(p[1].T,b1,b2);
+  if (not extends(p[1].T, P.TC))
+    return MCMC::Result(2+bins,0);
 
   //  std::cerr<<"after = "<<p[1].T<<endl;
   for(edges_after_iterator i=p[1].T.directed_branch(n2,n1).branches_after();i;i++)
@@ -152,7 +157,6 @@ MCMC::Result sample_SPR(alignment& A,Parameters& P,int b1,int b2)
 
   remove_duplicates(branches);
     
-
   //----------- invalidate caches for changed branches -----------//
   assert(branches.size() <= 3);
   for(int i=0;i<branches.size();i++) {
@@ -191,7 +195,6 @@ MCMC::Result sample_SPR(alignment& A,Parameters& P,int b1,int b2)
 			(connected1[0] == connected2[1] and connected1[1] == connected2[0])
 			);
 
-  const int bins = 4;
   MCMC::Result result(2+bins,0);
 
   result.counts[0] = 1;

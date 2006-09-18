@@ -11,6 +11,7 @@
 #include "5way.H"
 #include "alignment-sums.H"
 #include "alignment-util.H"
+#include "tree-util.H"
 #include "substitution-index.H"
 
 #include "3way.H"
@@ -123,6 +124,9 @@ void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int 
   p[1].LC.invalidate_branch(p[1].T, b);
   invalidate_subA_index_branch(a[1], p[1].T, b);
   
+  if (not extends(p[1].T, P.TC))
+    return;
+
   const vector<efloat_t> rho(2,1);
 
   int C = two_way_topology_sample(a,p,rho,b);
@@ -154,6 +158,9 @@ void two_way_NNI_SPR_sample(alignment& A, Parameters& P, MoveStats& Stats, int b
   p[1].LC.invalidate_branch(p[1].T, b);
   invalidate_subA_index_branch(a[1], p[1].T, b);
   
+  if (not extends(p[1].T, P.TC))
+    return;
+
   double LA = p[0].T.branch(nodes[4],nodes[0]).length();
   double LB = p[0].T.branch(nodes[4],nodes[5]).length();
   double LC = p[0].T.branch(nodes[5],nodes[3]).length();
@@ -212,6 +219,9 @@ void two_way_NNI_and_branches_sample(alignment& A, Parameters& P, MoveStats& Sta
   p[1].LC.invalidate_branch(p[1].T, b);
   invalidate_subA_index_branch(a[1], p[1].T, b);
   
+  if (not extends(p[1].T, P.TC))
+    return;
+
   //------------- Propose new branch lengths ----------------//
   double ratio = 1.0;
   vector<int> branches = NNI_branches(p[1].T, b);
@@ -290,10 +300,16 @@ void three_way_topology_sample(alignment& A,Parameters& P, MoveStats& Stats, int
   p[1].LC.invalidate_branch(p[1].T, b);
   invalidate_subA_index_branch(a[1], p[1].T, b);
 
+  if (not extends(p[1].T, P.TC))
+    return;
+
   p[2].T.exchange_subtrees(b1,b3);
   p[2].LC.invalidate_branch(p[2].T, b);
   invalidate_subA_index_branch(a[2], p[2].T, b);
   
+  if (not extends(p[2].T, P.TC))
+    return;
+
   const vector<efloat_t> rho(3,1);
 
   //------ Resample alignments and select topology -----//
@@ -329,9 +345,15 @@ void three_way_topology_and_alignment_sample(alignment& A,Parameters& P, MoveSta
   p[1].LC.invalidate_branch(p[1].T, b);
   invalidate_subA_index_branch(a[1], p[1].T, b);
   
+  if (not extends(p[1].T, P.TC))
+    return;
+
   p[2].T.exchange_subtrees(b1,b3);
   p[2].LC.invalidate_branch(p[2].T, b);
   invalidate_subA_index_branch(a[2], p[2].T, b);
+
+  if (not extends(p[2].T, P.TC))
+    return;
 
   vector< vector< int> > nodes;
   for(int i=0;i<p.size();i++)
