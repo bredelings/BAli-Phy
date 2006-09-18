@@ -647,6 +647,7 @@ namespace substitution {
     : NucleotideExchangeModel(N)
   { 
     add_parameter("HKY::kappa", 2);
+    recalc_all();
   }
 
   //------------------------- TN -----------------------------//
@@ -691,6 +692,7 @@ namespace substitution {
   { 
     add_parameter("TN::kappa(pur)",2);
     add_parameter("TN::kappa(pyr)",2);
+    recalc_all();
   }
 
   string GTR::name() const {
