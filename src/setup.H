@@ -19,8 +19,6 @@ std::valarray<double> empirical_frequencies(const boost::program_options::variab
 //----------------- Load trees and alignments ---------------------//
 
 
-SequenceTree get_random_T(const alignment& A);
-
 void remap_T_indices(SequenceTree& T1, const vector<std::string>& names);
 void remap_T_indices(SequenceTree& T1, const alignment& T2);
 void remap_T_indices(SequenceTree& T1, const SequenceTree& T2);
@@ -42,6 +40,9 @@ void load_A_and_T(const boost::program_options::variables_map& args,
 /// Load an alignment A, generate a random SequenceTree T, and then link them.
 void load_A_and_random_T(const boost::program_options::variables_map& args,
 			 alignment& A,SequenceTree& T,bool internal_sequences=true);
+
+SequenceTree load_constraint_tree(const std::string& filename,const alignment& A);
+
 
 /// Count how many times each letter occurs in A
 std::valarray<double> letter_counts(const alignment& A);

@@ -39,6 +39,8 @@ public:
 
 BranchNode* get_first_node();
 BranchNode* add_node(BranchNode*);
+void insert_after(BranchNode*,BranchNode*);
+void connect_nodes(BranchNode*,BranchNode*);
 
 //------------------------------------ Tree -----------------------------//
 
@@ -71,9 +73,6 @@ protected:
       compute_partitions();
   }
 
-  /// re-compute all names and caches given leaf node names
-  virtual void reanalyze(BranchNode*);
-
   /// re-compute all caches
   virtual void recompute(BranchNode*,bool=true);
 
@@ -99,6 +98,9 @@ protected:
   }
 
 public:
+
+  /// re-compute all names and caches given leaf node names
+  virtual void reanalyze(BranchNode*);
 
   /// Create a copy of the tree, and return a pointer to node n in the copy
   TreeView copy(int n) const {
@@ -345,6 +347,8 @@ int n_elements(const std::valarray<bool>& v);
 
 /// How many of v's bits are true?
 int n_elements(const std::vector<bool>& v);
+
+Tree star_tree(int n);
 
 /// Construct a random tree with n leaf nodes
 Tree RandomTree(int n,double=1.0);

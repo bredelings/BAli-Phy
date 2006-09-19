@@ -845,7 +845,7 @@ void Tree::check_structure() const {
 #endif
 }
 
-void knit_node_together(vector<BranchNode*>& nodes) {
+void knit_node_together(const vector<BranchNode*>& nodes) {
   nodes[0]->prev = nodes.back();
   nodes.back()->next = nodes[0];
 
@@ -856,7 +856,47 @@ void knit_node_together(vector<BranchNode*>& nodes) {
   
 }
 
-void Tree::induce_partition(const std::valarray<bool>& partition) {
+void insert_after(BranchNode* n1,BranchNode* n2)
+{
+  n2->node = n1->node;
+
+  n2->prev = n1;
+  n2->next = n1->next;
+
+  n1->next = n2;
+  n2->next->prev = n2;
+}
+
+void connect_nodes(BranchNode* n1, BranchNode* n2)
+{
+  BranchNode* c1 = new BranchNode;
+  insert_after(n1,c1);
+
+  BranchNode* c2 = new BranchNode;
+  insert_after(n2,c2);
+
+  c1->length = c2->length = -1.0;
+
+  c1->out = c2;
+  c2->out = c1;
+}
+
+
+void split_node(vector<BranchNode*> group1,vector<BranchNode*> group2)
+{
+  // groups are already split!
+  if (group1.size() == 1 or group2.size() == 1) return;
+
+  // separate the two nodes
+  knit_node_together(group1);
+  knit_node_together(group2);
+  
+  // connect the two nodes
+  connect_nodes(group1.back(),group2.back());
+}
+
+void Tree::induce_partition(const std::valarray<bool>& partition) 
+{
   assert(partition.size() == n_leaves());
   
   prepare_partitions();
@@ -891,19 +931,10 @@ void Tree::induce_partition(const std::valarray<bool>& partition) {
     // this node can't separate the groups
     if (not group1.size() and not group2.size()) continue;
 
-    // condition is already true!
+    // groups are already split!
     if (group1.size() == 1 or group2.size() == 1) return;
 
-    // separate the two nodes
-    if (group1.size() > 1) group1.push_back(new BranchNode);
-    knit_node_together(group1);
-
-    if (group2.size() > 1) group2.push_back(new BranchNode);
-    knit_node_together(group2);
-
-    // connect the two nodes
-    group1.back()->out = group2.back();
-    group2.back()->out = group1.back();
+    split_node(group1,group2);
     
     reanalyze(nodes_[0]);
 
@@ -912,7 +943,8 @@ void Tree::induce_partition(const std::valarray<bool>& partition) {
   throw myexception()<<"induce_partition: partition conflicts with tree!";
 }
 
-Tree& Tree::operator=(const Tree& T) {
+Tree& Tree::operator=(const Tree& T) 
+{
     assert(&T != this);
 
     // bail if we are copying the same thing only ourselves
@@ -1188,6 +1220,15 @@ bool is_subset(const valarray<bool>& v1,const valarray<bool>& v2) {
     if (v1[i] and not v2[i])
       return false;
   return true;
+}
+
+Tree star_tree(int n) 
+{
+  BranchNode* center = get_first_node();
+  for(int i=0;i<n;i++)
+    add_node(center)->node = i;
+
+  return Tree(center);
 }
 
 valarray<bool> branch_partition(const Tree& T,int b) 

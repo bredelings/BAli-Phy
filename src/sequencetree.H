@@ -124,7 +124,9 @@ std::ostream& operator <<(std::ostream& o,const SequenceTree& T);
 
 bool same_topology(const SequenceTree&,const SequenceTree&);
 
-SequenceTree RandomTree(const std::vector<std::string>&,double=1.0);
+SequenceTree RandomTree(const std::vector<std::string>&,double);
+
+void RandomTree(Tree&,double);
 
 void delete_node(SequenceTree& T,const std::string& name);
 

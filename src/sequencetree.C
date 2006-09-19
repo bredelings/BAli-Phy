@@ -375,11 +375,7 @@ std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
 
 SequenceTree star_tree(const vector<string>& names) 
 {
-  BranchNode* center = get_first_node();
-  for(int i=0;i<names.size();i++)
-    add_node(center)->node = i;
-
-  return SequenceTree(Tree(center),names);
+  return SequenceTree(star_tree(names.size()), names);
 }
 
 int find_partition(const valarray<bool>& p1, const vector<valarray<bool> >& pv) {

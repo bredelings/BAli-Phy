@@ -113,16 +113,6 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
 }
 
 
-/// Make a random tree which matches the alignment;
-SequenceTree get_random_T(const alignment& A) {
-  // FIXME - this assumes that alignment doesn't specify internal nodes...
-  vector<string> s;
-  for(int i=0;i<A.n_sequences();i++)
-    s.push_back(A.seq(i).name);
-  SequenceTree T = RandomTree(s,0.05);
-  return T;
-}
-
 void remap_T_indices(SequenceTree& T,const vector<string>& names)
 {
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
@@ -146,9 +136,7 @@ void remap_T_indices(SequenceTree& T,const alignment& A)
 
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   try {
-    vector<string> names;  
-    for(int i=0;i<T.n_leaves();i++) 
-      names.push_back( A.seq(i).name );
+    vector<string> names = sequence_names(A,T.n_leaves());  
 
     remap_T_indices(T,names);
   }
@@ -319,7 +307,12 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
 {
   A = load_A(args,internal_sequences);
 
-  T = get_random_T(A);
+  SequenceTree TC = star_tree(sequence_names(A));
+  if (args.count("t-constraint"))
+    TC = load_constraint_tree(args["t-constraint"].as<string>(),A);
+
+  T = TC;
+  RandomTree(T,1.0);
 
   //------------- Link Alignment and Tree -----------------//
   link(A,T,internal_sequences);
@@ -338,6 +331,26 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
 
   //---- Check that internal sequence satisfy constraints ----//
   check_alignment(A,T,internal_sequences);
+}
+
+SequenceTree load_constraint_tree(const string& filename,const alignment& A)
+{
+  RootedSequenceTree RT;
+  RT.read(filename);
+
+  SequenceTree constraint = RT;
+      
+  remove_sub_branches(constraint);
+  
+  try{
+    remap_T_indices(constraint,A);
+  }
+  catch(const bad_mapping<string>& b) {
+    bad_mapping<string> b2(b.missing);
+    b2<<"Constraint tree leaf sequence '"<<b2.missing<<"' doesn't occur in the alignment.";
+    throw b2;
+  }
+  return constraint;
 }
 
 OwnedPointer<IndelModel> get_imodel(const variables_map& args) {

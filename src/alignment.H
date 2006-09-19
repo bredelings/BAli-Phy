@@ -11,17 +11,17 @@
 
 /// A multiple alignment between a group of sequences
 class alignment {
-  vector<sequence> sequences;
+  std::vector<sequence> sequences;
   ublas::matrix<int> array;
   
   void clear();
   void pad(int);
 
-  void add_row(const vector<int>&);
+  void add_row(const std::vector<int>&);
 
   OwnedPointer<alphabet> a;
 
-  mutable vector<ublas::matrix<int> > notes;
+  mutable std::vector<ublas::matrix<int> > notes;
   
 public:
 
@@ -49,18 +49,18 @@ public:
   void add_sequence(const sequence& s);
 
   /// Add sequences called names, using a as the alphabet
-  void load(const vector<sequence>& sequences);
+  void load(const std::vector<sequence>& sequences);
   /// Add sequences called names, using the first alphabet in alphabets that works
-  void load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<sequence>& sequences);
+  void load(const std::vector<OwnedPointer<alphabet> >& alphabets,const std::vector<sequence>& sequences);
 
   void load(sequence_format::loader_t,std::istream&);
-  void load(const vector<OwnedPointer<alphabet> >&,sequence_format::loader_t,std::istream&);
+  void load(const std::vector<OwnedPointer<alphabet> >&,sequence_format::loader_t,std::istream&);
 
   /// Load PHYLIP or FASTA file 'filename', depending on extention
   void load(const std::string& filename);
-  void load(const vector<OwnedPointer<alphabet> >&,const std::string& filename);
+  void load(const std::vector<OwnedPointer<alphabet> >&,const std::string& filename);
 
-  vector<sequence> get_sequences() const;
+  std::vector<sequence> get_sequences() const;
 
   void write_sequences(sequence_format::dumper_t,std::ostream&) const;
 
@@ -120,8 +120,10 @@ bool all_gaps(const alignment& A,int column);
 /// remove columns that contain only gaps
 void remove_empty_columns(alignment&);
 
-vector<int> get_path(const alignment&,int,int);
-vector<int> get_path_3way(const alignment&,int,int,int,int);
+std::vector<int> get_path(const alignment&,int,int);
+std::vector<int> get_path_3way(const alignment&,int,int,int,int);
+
+std::vector<string> sequence_names(const alignment&,int=-1);
 
 /// Generate a randomized alignment
 alignment randomize(const alignment&,int n=-1);

@@ -197,6 +197,8 @@ public:
 
   operator int() const {return name();}
 
+  operator BranchNode*() const {return n;}
+
   bool valid() const {return n;}
 
   nodeview(BranchNode* bn):n(bn) {}

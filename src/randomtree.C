@@ -16,7 +16,8 @@ vector<int> permutation(int n) {
   return p;
 }
 
-Tree remove_root_branch(RootedTree RT) {
+Tree remove_root_branch(RootedTree RT) 
+{
   nodeview r1 = RT.root();
   assert(r1.degree() == 1);
   nodeview r2 = *(RT.root().neighbors());
@@ -29,41 +30,71 @@ Tree remove_root_branch(RootedTree RT) {
   return Tree(RT);
 }
 
-Tree RandomTree(int n,double branch_mean) 
+BranchNode* random_sub_node(BranchNode* n)
 {
-  // construct the base root tree
-  RootedTree singleton;
-  singleton.add_first_node();
+  unsigned d = nodeview(n).degree();
+  unsigned temp = unsigned( uniform()*d );
+
+  for(unsigned i=0;i<temp;i++)
+    n = n->next;
+
+  return n;
+}
+
+BranchNode* randomly_split_node(BranchNode* n) 
+{
+  assert(nodeview(n).degree() > 3);
+
+  // pull out the first random node (subtree)
+  BranchNode* n1 = random_sub_node(n);
+  n = TreeView::unlink_subtree(n1);
+
+  // pull out the second random node (subtree)
+  BranchNode* n2 = random_sub_node(n);
+  n = TreeView::unlink_subtree(n2);
+  
+  // make a node containing both subtrees
+  insert_after(n2,n1);
+
+  // connect the two nodes
+  connect_nodes(n,n1);
+
+  return n;
+}
+
+void RandomTree(Tree& T) 
+{
+  for(BN_iterator BN(T[0]);BN;BN++) 
   {
-    int node = singleton.add_node(singleton.root());
-    singleton.reroot(node);
+    while(nodeview(*BN).degree() > 3) {
+      BranchNode * start = *BN;
+      start = randomly_split_node(start);
+      BN = BN_iterator(start);
+    }
   }
-  
-  vector<RootedTree> trees(n,singleton);
-  
+  T.reanalyze(T[0]);
+}
 
-  while(trees.size() > 1) {
-    int i1 = myrandom(trees.size());
-    RootedTree T1 = trees[i1];trees.erase(trees.begin()+i1);
 
-    int i2 = myrandom(trees.size());
-    RootedTree T2 = trees[i2];
-
-    RootedTree T3(T1,T2);
-    int new_root = T3.add_node(T3.root());
-    T3.reroot(new_root);
-
-    trees[i2] = T3;
-  }
-
-  Tree T = remove_root_branch(trees[0]);
+void RandomTree(Tree& T, double branch_mean) 
+{
+  RandomTree(T);
 
   for(int i=0;i<T.n_branches();i++) 
     T.branch(i).set_length( exponential(branch_mean) );
+}
 
+
+Tree RandomTree(int n,double branch_mean) 
+{
+  Tree T = star_tree(n);
+  RandomTree(T,branch_mean);
   return T;
 }
 
-SequenceTree RandomTree(const vector<string>& s,double branch_mean) {
-  return SequenceTree(RandomTree(s.size(),branch_mean),s);
+SequenceTree RandomTree(const vector<string>& s,double branch_mean) 
+{
+  SequenceTree T = star_tree(s);
+  RandomTree(T,branch_mean);
+  return T;
 }

@@ -682,26 +682,6 @@ public:
   ~teebuf() {sync();}
 };
 
-SequenceTree load_constraint_tree(const string& filename,const SequenceTree& T)
-{
-  RootedSequenceTree RT;
-  RT.read(filename);
-
-  SequenceTree constraint = RT;
-      
-  remove_sub_branches(constraint);
-  
-  try{
-    remap_T_indices(constraint,T);
-  }
-  catch(const bad_mapping<string>& b) {
-    bad_mapping<string> b2(b.missing);
-    b2<<"Constraint tree leaf sequence '"<<b2.missing<<"' doesn't occur in the alignment.";
-    throw b2;
-  }
-  return constraint;
-}
-
 vector<int> load_alignment_branch_constraints(const string& filename, const SequenceTree& TC)
 {
   // open file
@@ -883,9 +863,13 @@ int main(int argc,char* argv[])
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
-      P.TC = load_constraint_tree(args["t-constraint"].as<string>(),T);
+      P.TC = load_constraint_tree(args["t-constraint"].as<string>(),A);
+
     if (args.count("a-constraint"))
       P.AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),P.TC);
+
+    if (not extends(T,P.TC))
+      throw myexception()<<"Initial tree violates topology constraints.";
 
     //---------- Alignment constraint (horizontal) -----------//
     P.alignment_constraint = load_alignment_constraint(args,T);
