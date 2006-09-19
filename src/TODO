@@ -104,7 +104,7 @@ much of the variation is spatial?)
 Before 1.9.9:
 
  * Check that branch_mean move actually helps?
- * Implement {tree,alignment,branch-length} constraints.
+ * Implement {alignment,branch-length} constraints.
  * Avoid crash on DNA sequences...
    - Make a AA_DNA color scheme that correctly guesses AA or DNA?
  * Fix beta distributions.
@@ -573,6 +573,8 @@ the prior, because we never want to use it  differently.
 [DONE] Draw MC tree using new tool 'draw-graph'.
 
 [DONE] Gamma: be less fragile to large sigma/mu proposals.
+
+[DONE] Implement branch length constraints.
 
 *IDEAS*
 
