@@ -123,8 +123,11 @@ void remap_T_indices(SequenceTree& T,const vector<string>& names)
   }
   catch(const bad_mapping<string>& b)
   {
-    bad_mapping<string> b2(b.missing);
-    b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in names.";
+    bad_mapping<string> b2(b.missing,b.from);
+    if (b.from == 0)
+      b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in names.";
+    else
+      b2<<"Sequence '"<<b2.missing<<"' not found in the tree.";
     throw b2;
   }
 }
@@ -142,8 +145,11 @@ void remap_T_indices(SequenceTree& T,const alignment& A)
   }
   catch(const bad_mapping<string>& b)
   {
-    bad_mapping<string> b2(b.missing);
-    b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in alignment.";
+    bad_mapping<string> b2(b.missing,b.from);
+    if (b.from == 0)
+      b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in alignment.";
+    else
+      b2<<"Alignment sequence '"<<b2.missing<<"' not found in the tree.";
     throw b2;
   }
 }
@@ -159,8 +165,11 @@ void remap_T_indices(SequenceTree& T1,const SequenceTree& T2)
   }
   catch(const bad_mapping<string>& b)
   {
-    bad_mapping<string> b2(b.missing);
-    b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in second tree.";
+    bad_mapping<string> b2(b.missing,b.from);
+    if (b.from == 0)
+      b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in second tree.";
+    else
+      b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in first tree.";
     throw b2;
   }
 }
@@ -195,12 +204,12 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
 	A = A2;
       }
       else
-	throw myexception()<<"More sequences than leaf nodes!";
+	throw myexception()<<"More alignment sequences than leaf nodes!";
     } 
     else if (A.n_sequences() > T.n_nodes())
-      throw myexception()<<"More sequences than tree nodes!";
+      throw myexception()<<"More alignment sequences than tree nodes!";
     else if (A.n_sequences() < T.n_nodes())
-      throw myexception()<<"Less sequences than tree nodes!";
+      throw myexception()<<"Fewer alignment sequences than tree nodes!";
   }
   
   //---------- double-check that we have the right number of sequences ---------//
@@ -241,12 +250,12 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
   //----- IF sequences > leaf nodes THEN maybe complain -------//
   else {
     if (not internal_sequences)
-      throw myexception()<<"More sequences than leaf nodes!";
+      throw myexception()<<"More alignmentsequences than leaf nodes!";
 
     if (A.n_sequences() > T.n_nodes())
-      throw myexception()<<"More sequences than tree nodes!";
+      throw myexception()<<"More alignment sequences than tree nodes!";
     else if (A.n_sequences() < T.n_nodes())
-      throw myexception()<<"Less sequences than tree nodes!";
+      throw myexception()<<"Fewer alignment sequences than tree nodes!";
   }
   
   //---------- double-check that we have the right number of sequences ---------//
@@ -348,8 +357,11 @@ SequenceTree load_constraint_tree(const string& filename,const vector<string>& n
     remap_T_indices(constraint,names);
   }
   catch(const bad_mapping<string>& b) {
-    bad_mapping<string> b2(b.missing);
-    b2<<"Constraint tree leaf sequence '"<<b2.missing<<"' not found in the alignment.";
+    bad_mapping<string> b2(b.missing,b.from);
+    if (b.from == 0)
+      b2<<"Constraint tree leaf sequence '"<<b2.missing<<"' not found in the alignment.";
+    else
+      b2<<"Alignment sequence '"<<b2.missing<<"' not found in the constraint tree.";
     throw b2;
   }
   return constraint;

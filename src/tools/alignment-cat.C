@@ -35,25 +35,17 @@ vector<int> get_mapping(const vector<sequence>& S1, const vector<sequence>& S2)
   for(int i=0;i<S2.size();i++)
     names2[i] = S2[i].name;
 
-  if (S2.size() > S1.size())
-    try {
-      compute_mapping(names2,names1);
-    }
-    catch (const bad_mapping<string>& b) {
-      bad_mapping<string> b2(b.missing);
-      b2<<"Extra sequence '"<<b2.missing<<"' not contained in earlier alignments.";
-      throw b2;    
-    }
-
-
   vector<int> mapping;
 
   try {
     mapping = compute_mapping(names1,names2);
   }
   catch (const bad_mapping<string>& b) {
-    bad_mapping<string> b2(b.missing);
-    b2<<"Couldn't find sequence '"<<b2.missing<<"'.";
+    bad_mapping<string> b2(b.missing,b.from);
+    if (b.from == 0)
+      b2<<"Couldn't find sequence '"<<b2.missing<<"'.";
+    else
+      b2<<"Extra sequence '"<<b2.missing<<"' not contained in earlier alignments.";
     throw b2;    
   }
   return mapping;

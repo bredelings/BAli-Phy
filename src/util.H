@@ -45,13 +45,16 @@ struct bad_mapping: public myexception
 {
   T missing;
 
-  bad_mapping(const T& t)
-    : missing(t)
+  int from;
+
+  bad_mapping(const T& t,int f)
+    : missing(t),from(f)
   { }
 
-  bad_mapping(const T& t,const std::string& s)
+  bad_mapping(const T& t,int f,const std::string& s)
     : myexception(s),
-      missing(t)
+      missing(t),
+      from(f)
   { }
 
   ~bad_mapping() throw() {}
@@ -60,8 +63,6 @@ struct bad_mapping: public myexception
 template <class T>
 std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& v2) 
 {
-  assert(v1.size() == v2.size());
-
   std::vector<int> mapping(v1.size());
   for(int i=0;i<v1.size();i++) {
     int target = -1;
@@ -71,10 +72,19 @@ std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& 
 	break;
       }
     }
-    if (target == -1) throw bad_mapping<T>(v1[i],"Vector v2 does not contain all elements of v1!");
+    if (target == -1) throw bad_mapping<T>(v1[i],0,"Vector v2 does not contain all elements of v1!");
 
     mapping[i] = target;
   }
+
+  if (v1.size() < v2.size())
+    try {
+      compute_mapping(v2,v1);
+    }
+    catch(bad_mapping<T>& b) {
+      bad_mapping<T> b2(b.missing,1,"Vector v1 does not contain all elements of v2!");
+      throw b2;
+    }
 
   return mapping;
 }
