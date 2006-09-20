@@ -13,3 +13,4 @@ std::valarray<bool> constraint_satisfied(const ublas::matrix<int>& constraint,co
 
 void report_constraints(const std::valarray<bool>& s1, const std::valarray<bool>& s2);
 
+bool any_branches_constrained(const std::vector<int>&,const SequenceTree& T,const SequenceTree& TC, const std::vector<int>&);

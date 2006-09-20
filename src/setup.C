@@ -305,11 +305,13 @@ void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool in
 
 void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
 {
+  // NO internal sequences, yet!
   A = load_A(args,internal_sequences);
 
+  //------------- Load random tree ------------------------//
   SequenceTree TC = star_tree(sequence_names(A));
   if (args.count("t-constraint"))
-    TC = load_constraint_tree(args["t-constraint"].as<string>(),A);
+    TC = load_constraint_tree(args["t-constraint"].as<string>(),sequence_names(A));
 
   T = TC;
   RandomTree(T,1.0);
@@ -333,7 +335,7 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
   check_alignment(A,T,internal_sequences);
 }
 
-SequenceTree load_constraint_tree(const string& filename,const alignment& A)
+SequenceTree load_constraint_tree(const string& filename,const vector<string>& names)
 {
   RootedSequenceTree RT;
   RT.read(filename);
@@ -343,11 +345,11 @@ SequenceTree load_constraint_tree(const string& filename,const alignment& A)
   remove_sub_branches(constraint);
   
   try{
-    remap_T_indices(constraint,A);
+    remap_T_indices(constraint,names);
   }
   catch(const bad_mapping<string>& b) {
     bad_mapping<string> b2(b.missing);
-    b2<<"Constraint tree leaf sequence '"<<b2.missing<<"' doesn't occur in the alignment.";
+    b2<<"Constraint tree leaf sequence '"<<b2.missing<<"' not found in the alignment.";
     throw b2;
   }
   return constraint;

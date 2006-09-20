@@ -2,6 +2,7 @@
 #include <iostream>
 #include "alignment-constraint.H"
 #include "alignment-util.H"
+#include "tree-util.H"
 #include "util.H"
 
 using std::vector;
@@ -227,4 +228,18 @@ void report_constraints(const valarray<bool>& s1, const valarray<bool>& s2) {
     if (sum(s2) == s2.size())
       std::cerr<<"All constraints satisfied."<<std::endl;
   }
+}
+
+bool any_branches_constrained(const vector<int>& branches,const SequenceTree& T,const SequenceTree& TC, const vector<int>& AC)
+{
+  if (AC.size() == 0)
+    return false;
+
+  vector<int> c_branches = compose(AC,extends_map(T,TC));
+
+  for(int i=0;i<branches.size();i++)
+    if (includes(c_branches,branches[i]))
+      return true;
+
+  return false;
 }

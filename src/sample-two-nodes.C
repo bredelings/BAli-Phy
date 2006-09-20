@@ -11,6 +11,7 @@
 #include "5way.H"
 #include "alignment-sums.H"
 #include "alignment-util.H"
+#include "alignment-constraint.H"
 #include "substitution-index.H"
 #include <boost/numeric/ublas/io.hpp>
 #include "refcount.H"
@@ -222,6 +223,20 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,const vect
   vector<efloat_t> rho = rho_;
   assert(p.size() == nodes.size());
   
+  //------------ Check the alignment branch constraints ------------//
+  for(int i=0;i<p.size();i++) {
+    vector<int> branches;
+
+    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][4]));
+    branches.push_back(p[i].T.branch(nodes[i][1],nodes[i][4]));
+    branches.push_back(p[i].T.branch(nodes[i][2],nodes[i][5]));
+    branches.push_back(p[i].T.branch(nodes[i][3],nodes[i][5]));
+    branches.push_back(p[i].T.branch(nodes[i][4],nodes[i][5]));
+
+    if (any_branches_constrained(branches, p[i].T, p[i].TC, p[i].AC))
+      return -1;
+  }
+
   //----------- Generate the different states and Matrices ---------//
   const alignment A0 = a[0];
 #ifndef NDEBUG_DP

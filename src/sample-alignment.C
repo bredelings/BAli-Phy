@@ -52,6 +52,9 @@ void sample_alignment(alignment& A,Parameters& P,int b)
 {
   assert(P.has_IModel());
 
+  if (any_branches_constrained(vector<int>(1,b),P.T,P.TC,P.AC))
+    return;
+
   valarray<bool> s1 = constraint_satisfied(P.alignment_constraint,A);
 
   const Tree& T = P.T;

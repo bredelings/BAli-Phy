@@ -753,7 +753,7 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 	throw myexception()<<"Alignment constraint: clade '"
 			   <<join(name_groups[i],' ')
 			   <<"' has a polytomy in the topology constraint tree.";
-      branches.push_back(b2[j]);
+      branches.push_back(b2[j].undirected_name());
     }
   }
 
@@ -863,7 +863,7 @@ int main(int argc,char* argv[])
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
-      P.TC = load_constraint_tree(args["t-constraint"].as<string>(),A);
+      P.TC = load_constraint_tree(args["t-constraint"].as<string>(), T.get_sequences());
 
     if (args.count("a-constraint"))
       P.AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),P.TC);

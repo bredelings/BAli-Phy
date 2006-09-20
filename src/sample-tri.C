@@ -208,6 +208,17 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,const vector< ve
   vector<efloat_t> rho = rho_;
   assert(p.size() == nodes.size());
 
+  //------------ Check the alignment branch constraints ------------//
+  for(int i=0;i<p.size();i++) {
+    vector<int> branches;
+    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][1]));
+    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][2]));
+    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][3]));
+
+    if (any_branches_constrained(branches, p[i].T, p[i].TC, p[i].AC))
+      return -1;
+  }
+
   //----------- Generate the different states and Matrices ---------//
   const alignment A0 = a[0];
 #ifndef NDEBUG_DP

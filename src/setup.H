@@ -41,7 +41,7 @@ void load_A_and_T(const boost::program_options::variables_map& args,
 void load_A_and_random_T(const boost::program_options::variables_map& args,
 			 alignment& A,SequenceTree& T,bool internal_sequences=true);
 
-SequenceTree load_constraint_tree(const std::string& filename,const alignment& A);
+SequenceTree load_constraint_tree(const std::string& filename,const std::vector<string>&);
 
 
 /// Count how many times each letter occurs in A
