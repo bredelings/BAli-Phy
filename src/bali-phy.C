@@ -814,6 +814,10 @@ int main(int argc,char* argv[])
     else
       load_A_and_random_T(args,A,T);
 
+    for(int i=0;i<T.n_branches();i++)
+      if (T.branch(i).length() < 0)
+	T.branch(i).set_length(1);
+
     if (A.n_sequences() < 3)
       throw myexception()<<"At least 3 sequences must be provided - you provided only "<<A.n_sequences()<<".\n(Perhaps you have BLANK LINES in your FASTA file?)";
 
