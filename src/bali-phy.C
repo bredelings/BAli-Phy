@@ -267,25 +267,26 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   P.keys["v_dirichlet_N"] *= A.length();
   add_MH_move(P, dirichlet_proposal,    "v*", "v_dirichlet_N",     1,  parameter_moves);
 
-  set_if_undef(P.keys,"YangM2::f_dirichlet_N",1.0);
-  P.keys["YangM2::f_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "YangM2::f*", "YangM2::f_dirichlet_N",     1,  parameter_moves);
+  set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
+  P.keys["M2::f_dirichlet_N"] *= 10;
+  add_MH_move(P, dirichlet_proposal,    "M2::f*", "M2::f_dirichlet_N",     1,  parameter_moves);
 
-  set_if_undef(P.keys,"YangM3::f_dirichlet_N",1.0);
-  P.keys["YangM3::f_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "YangM3::f*", "YangM3::f_dirichlet_N",     1,  parameter_moves);
+  set_if_undef(P.keys,"M3::f_dirichlet_N",1.0);
+  P.keys["M3::f_dirichlet_N"] *= 10;
+  add_MH_move(P, dirichlet_proposal,    "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
 
   set_if_undef(P.keys,"multi:p_dirichlet_N",1.0);
   P.keys["multi:p_dirichlet_N"] *= 10;
   add_MH_move(P, dirichlet_proposal,    "multi:p*", "multi:p_dirichlet_N",     1,  parameter_moves);
 
   for(int i=0;;i++) {
-    string name = "YangM3::omega" + convertToString(i);
+    string name = "M3::omega" + convertToString(i+1);
     if (not has_parameter(P,name))
       break;
 
-    Proposal2 m(log_scaled(shift_cauchy), name, vector<string>(1,"omega_scale_sigma"), P);
-    parameter_moves.add(1, MCMC::MH_Move(m,"sample_YangM3::omega"));
+    add_MH_move(P, log_scaled(shift_cauchy), name, "omega_scale_sigma", 1, parameter_moves);
+    //    Proposal2 m(log_scaled(shift_cauchy), name, vector<string>(1,"omega_scale_sigma"), P);
+    //    parameter_moves.add(1, MCMC::MH_Move(m,"sample_M3::omega"));
   }
 
   set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
