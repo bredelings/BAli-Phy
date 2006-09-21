@@ -375,7 +375,7 @@
 
         <screen><prompt>%</prompt> <userinput>ln -s <replaceable>somewhere</replaceable>/Data</userinput></screen>
 
-	The shortcut will then be at <filename>./Data</filename>  Then
+	The shortcut will then be at <filename>./Data</filename>.  Then
 	<command>bali-phy</command> will find the data directory  
 	at the default location <filename>Data/</filename>, but only
 	if you run it in the same directory as the shortcut.
@@ -1377,7 +1377,7 @@ traditional = traditional
       how many iterations are required to give a good estimate.
       Unfortunately, this question is complicated and depends upon
       both the problem and the specific data set that is being
-      examined.  As a result,<application>BAli-Phy</application>
+      examined.  As a result, <application>BAli-Phy</application>
       relies on the user to determines when enough samples have been
       obtained - and to terminate the program when this happens. 
     </para>
@@ -1409,7 +1409,7 @@ traditional = traditional
 	  What is convergence, and how can you check if a Markov chain
 	  has "converged"?  We first note that "convergence" refers to
 	  the tendency of a Markov chain to converge to the desired
-	  distribution (its equilibrium distribution).  The Markov Chain starts at a
+	  distribution (its equilibrium distribution).  The Markov chain starts at a
 	  specific tree and alignment, which may not be representative
 	  of the equilibrium distribution, and so convergence
 	  represents the process of "forgetting" the starting value.
@@ -1426,7 +1426,7 @@ traditional = traditional
 	  In practice, most MCMC analyses designate some number of
 	  samples at the beginning of each chain as "burn-in".  These
 	  samples are discarded because they represent the initial
-	  starting point, but not the desired distribution.
+	  starting point, but not the equilibrium distribution.
 	</para>
 
 	<para>
@@ -1437,7 +1437,7 @@ traditional = traditional
 	  samples become "typical" of later values, and that number
 	  is chosen as the burn-in.  Unfortunately, it is always
 	  possible that if you run the Markov chain even longer, then
-	  the values will chain again.  Therefore, this method is not
+	  the values will change again.  Therefore, this method is not
 	  strong evidence that a chain converges before a given burn-in time.
 	</para>
       </sect3>
@@ -1451,7 +1451,7 @@ traditional = traditional
 	  stuck in local optima near its own starting value, but that
 	  the movement between the different local optima will be
 	  exceedingly slow.  However, if the posterior distributions
-	  from each Markov chain are identical, this gives some
+	  from each Markov chain are indistinguishable, then that gives some
 	  evidence that the MCMC procedure is truly converging to a
 	  global equilibrium.
 	</para>
