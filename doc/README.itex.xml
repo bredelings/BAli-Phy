@@ -1,8 +1,11 @@
 <?xml version="1.0"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook MathML Module V1.0//EN"
+                    "file:/usr/share/xml/docbook/custom/mathml/1.0/dbmathml.dtd">
+
+<!-- !DOCTYPE article PUBLIC "-//OASIS//DTD DocBook MathML Module V1.0//EN"
+                    "http://www.oasis-open.org/docbook/xml/mathml/1.0/dbmathml.dtd" -->
 <!-- DOCTYPE article PUBLIC "-//OASIS//DTD DocBook MathML Module V1.0//EN"
   "http://www.docbook.org/xml/mathml/1.0/dbmathml.dtd" -->
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook MathML Module V1.0//EN"
-                    "http://www.oasis-open.org/docbook/xml/mathml/1.0/dbmathml.dtd">
 <!-- DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
      "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [] -->
 <article lang="en">
@@ -185,6 +188,21 @@
       </sect2>
 
       <sect2>
+	<title>Specifying where to find libraries and header files (e.g. GSL)</title>
+	<para>You can instruct the compiler to look for include files
+	in directory <replaceable>dir</replaceable> by passing
+	<userinput>--with-extra-includes=<replaceable>dir</replaceable></userinput> to the <command>configure</command> script.
+	</para>
+
+	<para>You can instruct the compiler to look for libraries
+	files in directory
+	<filename><replaceable>dir</replaceable>/lib</filename> by
+	passing
+	<userinput>--with-extra-libs=<replaceable>dir</replaceable></userinput> to the <command>configure</command> script.  
+	</para> 
+      </sect2>
+
+      <sect2>
 	<title>Selecting a non-default C++ compiler</title>
 	
 	<para>The default C++ compiler is <command>g++</command>.  On
@@ -192,7 +210,7 @@
 	and the correct compiler is called something else, such as
 	<command>g++-4.0</command>.  To use
 	<command>g++-4.0</command> as the C++ compiler when compiling
-	<application>BAli-Phy</application>, you can set the CXX
+	<application>BAli-Phy</application>, you would set the CXX
 	environment variable as follows:
 	    <screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure CXX=g++-4.0</userinput></screen>
 	</para>
@@ -225,7 +243,7 @@
       <sect2>
 	<title>Examples</title>
 	<para>
-        All this options to <command>configure</command> can be
+        All these options to <command>configure</command> can be
 	combined, as follows:
 <screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
         This example uses <command>g++-4.1</command> to build a
@@ -293,15 +311,15 @@
     <para>The simplest way to run <application>BAli-Phy</application> is
     to invoke the <command>bali-phy</command> executable directly:
 
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --data-dir <replaceable>somewhere</replaceable>/Data</userinput>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --data-dir <replaceable>prefix</replaceable>/share/bali-phy/Data/</userinput>
 </screen>
 
     Here <replaceable>sequence-file</replaceable> is a FASTA or PHYLIP
     file containing the sequences you wish to analyze.  It should end
     in <userinput>.fasta</userinput> or <userinput>.phy</userinput> to
     indicate which format it is using.  Here
-    <replaceable>somewhere</replaceable> stands for the directory where you
-    extracted the bali-phy archive.</para>
+    <replaceable>prefix</replaceable> stands for the directory
+    where you extracted the bali-phy archive.</para>
 
     <note>
       <para>If your FASTA file has blank lines, then
@@ -313,15 +331,23 @@
     </sect2>
 
     <sect2 id="spec_data_dir">
-      <title>Locating the Data directory</title>
+      <title>Locating the Data/ directory</title>
 
       <para>
 	<application>BAli-Phy</application> stores important
-	information in a "Data" directory.  This information includes
-	the genetic code and the WAG rate matrix.  If you put this
-	information in a configuration file, then you do not need to
-	specify it on the command line every time. Then, in the future
-	you can just type:
+	information in a "Data" directory, and needs to know where to
+	find this information.  This information includes
+	the genetic code and the WAG rate matrix.  If you installed
+	<application>BAli-Phy</application> in a directory called
+	<replaceable>prefix</replaceable>, then the Data/ directory
+	will be at
+	<filename><replaceable>prefix</replaceable>/share/bali-phy/Data/</filename>.
+      </para>
+
+      <para>
+	If you specify the location of the Data/ directory in a
+	configuration file, then you do not need to specify it on the
+	command line every time. Then, in the future you can just type:
 
         <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable></userinput></screen>
 
