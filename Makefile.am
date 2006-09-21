@@ -3,7 +3,7 @@ SUBDIRS = boost/ src/
 bin_SCRIPTS = bin/bali-phy-sge bin/genreport.pl bin/pickout.pl
 
 docdir = $(datadir)/doc/@PACKAGE@
-doc_DATA = bin/GNUmakefile doc/README.xhtml # doc/README.pdf
+doc_DATA = bin/GNUmakefile doc/README.xhtml doc/docbook.css # doc/README.pdf
 
 stuffdir = $(datadir)/@PACKAGE@/
 nobase_stuff_DATA = Data/wag.dat Data/wagstar.dat Data/jtt.dat Data/pam.dat \
