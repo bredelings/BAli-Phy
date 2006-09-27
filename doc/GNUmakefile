@@ -7,6 +7,9 @@ clean:
 %.xml: %.itex.xml
 	itex2MML < $^ > $@
 
+%.html: %.xml docbook-html.xsl
+	xsltproc --xinclude docbook-html.xsl $*.xml > $@
+
 %.xhtml: %.xml docbook-xhtml.xsl
 	xsltproc --xinclude docbook-xhtml.xsl $*.xml > $@
 
