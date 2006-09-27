@@ -125,7 +125,7 @@ namespace statistics {
 
     // specify sample size if unspecified
     if (max==0) 
-      max = 1+N/4;
+      max = std::max(1+N/4,N-15);
 
     if (max >= N) 
       max = N-1;
