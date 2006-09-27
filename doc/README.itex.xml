@@ -361,7 +361,7 @@
 	<para>
 	  Create a new file at <filename>~/.bali-phy</filename> and
 	  add the following line:
-<screen>data-dir = <replaceable>somewhere</replaceable>/Data</screen>
+<screen>data-dir = <replaceable>somewhere</replaceable>/Data</screen>.
           Then <command>bali-phy</command> will read this file
 	  every time and know where to find the Data directory.  This
 	  is the recommended method.
@@ -436,7 +436,7 @@
 align = examples/EF-Tu/5d.fasta
 
 #select an substitution model
-smodel = gamma+INV
+smodel = log-normal+INV
 
 #fix the alignment and do not model indels
 traditional = traditional
@@ -446,9 +446,9 @@ traditional = traditional
 	Lines that begin with # are comments, and blank lines are
 	ignored.  The option <userinput>--traditional</userinput> uses
 	the option name as the value, because it does not take a
-	value.  This, this configuration file corresponds to the
+	value.  Thus, this configuration file corresponds to the
 	command line
-<screen><prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta --smodel gamma+INV --traditional</userinput>
+<screen><prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal+INV --traditional</userinput>
 </screen>
       </para>
       </sect3>
@@ -474,7 +474,7 @@ traditional = traditional
 
     <sect2>
       <title>Running long simulations</title>
-      <para>In order to run a <command>bali-phy</command> for long
+      <para>In order to run <command>bali-phy</command> for long
       periods of time, some modifications to the above commands may be
       necessary.</para>
 
@@ -486,9 +486,9 @@ traditional = traditional
 	using the commands <userinput>ulimit -St</userinput> and 
 	<userinput>ulimit -Ht</userinput>
 	respectively. <application>BAli-Phy</application> ignores the 
-	soft limit, but not the hard limit.  If the hard limit is not
-	long enough, you must ask your system administrator to change
-	it for you.
+	soft limit, but cannot ignore the hard limit.  If the hard
+	limit is not long enough, you must ask your system
+	administrator to change it for you.
         </para>
       </sect3>
 
@@ -720,26 +720,29 @@ traditional = traditional
     <application>BAli-Phy</application>.  In order to run these
     examples, you must first do two things.  Firstly, you must specify
     the location of the <filename>Data/</filename> directory is specified as in <xref
-    linkend="spec_data_dir"/>.  Secondly, you must go to a directory
-    which contains the <filename>examples/</filename> directory or a
-    shortcut to it.
+    linkend="spec_data_dir"/>.</para>
+
+    <para>Secondly, you must find the <filename>examples/</filename>
+    directory which contains the example files.  Typically, the
+    <filename>examples/</filename> directory will be found at
+    <filename><replaceable>prefix</replaceable>/share/bali-phy/examples/</filename> if you installed <application>bali-phy</application> in directory <replaceable>prefix</replaceable>.
     </para>
 
     <example>
       <title>No frills</title>
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
       the software.</para>
-      <screen> <prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy <replaceable>somewhere</replaceable>/examples/EF-Tu/5d.fasta</userinput></screen>
     </example>
 
     <example>
       <title>Multiple-Rate Substitution Model</title>
       <para>We now modify the previous example by changing the
-      substitution model to allow gamma-distributed rate variation and
+      substitution model to allow log-normal-distributed rate variation and
       invariant sites.  The amount of rate variation and the fraction of
       invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta --smodel gamma+INV --randomize-alignment</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy <replaceable>somewhere</replaceable>/examples/EF-Tu/5d.fasta --smodel log-normal+INV --randomize-alignment</userinput></screen></example>
 
     <example>
       <title>Fixed alignment</title>
@@ -751,7 +754,7 @@ traditional = traditional
       estimated from the input sequences.
       </para> 
 
-      <screen> <prompt>%</prompt> <userinput>bali-phy examples/5S-rRNA/5d.fasta --smodel pi=constant --traditional</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy <replaceable>somewhere</replaceable>/examples/5S-rRNA/5d.fasta --smodel pi=constant --traditional</userinput></screen>
 
     </example>
   </sect1>
@@ -1092,7 +1095,7 @@ traditional = traditional
 
       <para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and M0.</para>
 
-      <para>Model modifiers are gamma, INV, M2, M3, and M7.</para>
+      <para>Model modifiers are gamma, log-normal, INV, M2, M3, and M7.</para>
       </sect2>
 
       <sect2>
@@ -1227,6 +1230,21 @@ traditional = traditional
 
 	    <row>
 	      <entry>
+		<para><userinput><replaceable>sm</replaceable> + log-normal[$n$]</userinput></para>
+	      </entry>
+	      <entry><replaceable>sm</replaceable> alphabet</entry>
+	      <entry>
+		<para>$\sigma/\mu$: noise to signal ratio for $\log Normal$.</para>
+	      </entry>
+	      <entry>
+	      <para>rate $\sim \log Normal(\mu=1,\sigma)$.</para>
+	      <para>A discrete approximation to the $log Normal$ with $n$
+     	            bins is used.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
 		<para><userinput>M2</userinput></para>
 		<para><userinput><replaceable>sm</replaceable> + M2</userinput></para>
 		<para>Yang, et. al. (2000)</para>
@@ -1292,7 +1310,7 @@ traditional = traditional
 	<para>Example: --smodel EQU --alphabet Triplets</para>
 	<para>Example: --smodel HKY</para>
 	<para>Example: --smodel TN+pi=constant</para>
-	<para>Example: --smodel Empirical[WAG]+gamma+INV</para>
+	<para>Example: --smodel Empirical[WAG]+log-normal+INV</para>
 	<para>Example: --smodel M0 --alphabet Codons</para>
 	<para>Example: --smodel M0+pi=nucleotides --alphabet Codons</para>
 	<para>Example: --smodel M2 --alphabet Codons</para>
@@ -1312,8 +1330,8 @@ traditional = traditional
       directory name is the name of the sequence file, with a number
       added on the end to make it unique. <application>BAli-Phy</application>
       first checks  if there is already a directory called
-      <replaceable>file</replaceable>-1/, and then moves on to
-      <replaceable>file</replaceable>-2/, etc. until it finds an
+      <filename><replaceable>file</replaceable>-1/</filename>, and then moves on to
+      <filename><replaceable>file</replaceable>-2/</filename>, etc. until it finds an
       unused directory name.</para> 
       
       <para>You can specify a different name to use instead of the
@@ -1343,7 +1361,7 @@ traditional = traditional
 	<varlistentry>
 	  <term>1.MAP</term>
 	  <listitem>
-	    <para>successive estimates of the MAP point</para>
+	    <para>Successive estimates of the MAP point</para>
 	  </listitem>
 	</varlistentry>
 	
@@ -1357,7 +1375,7 @@ traditional = traditional
 	<varlistentry>
 	  <term>1.trees</term>
 	  <listitem>
-	    <para>tree samples</para>
+	    <para>Tree samples</para>
 	  </listitem>
 	</varlistentry>
 	
@@ -1451,7 +1469,7 @@ traditional = traditional
 	  stuck in local optima near its own starting value, but that
 	  the movement between the different local optima will be
 	  exceedingly slow.  However, if the posterior distributions
-	  from each Markov chain are indistinguishable, then that gives some
+	  from each Markov chain seem to be the same, then that gives some
 	  evidence that the MCMC procedure is truly converging to a
 	  global equilibrium.
 	</para>
@@ -1767,7 +1785,7 @@ traditional = traditional
       <para>Usage: trees-consensus <replaceable>file</replaceable>
       [OPTIONS] </para>
       <para>This program analyzes the tree sample contained in
-      <replaceable>file1</replaceable>.  It reports the MAP topology, the
+      <replaceable>file</replaceable>.  It reports the MAP topology, the
       supported taxa partitions (including partial partitions), and the
       majority consensus topology.
       </para> 
