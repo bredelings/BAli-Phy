@@ -250,7 +250,7 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
   //----- IF sequences > leaf nodes THEN maybe complain -------//
   else {
     if (not internal_sequences)
-      throw myexception()<<"More alignmentsequences than leaf nodes!";
+      throw myexception()<<"More alignment sequences than leaf nodes!";
 
     if (A.n_sequences() > T.n_nodes())
       throw myexception()<<"More alignment sequences than tree nodes!";
