@@ -62,7 +62,6 @@ much of the variation is spatial?)
 1. Test sampling of epsilon.  (Implement model where lambda & epsilon not coupled?)
   a) e-mail about the method for converting matrices from WAG to codon level.
 2. Put "epsilon" on the "mean_indel_length" scale.
-4. Do something about "Amino Acids"?  (Use an underscore)
 5. Proposals and Priors
   a. use a parameter_names_ vector.
 6. Output move stats in tracer-readable format. (or, at least, allow burn-in?)
@@ -107,6 +106,7 @@ Before 1.9.9:
  * Implement branch-length constraints.
  * Avoid crash on DNA sequences...
    - Make a AA_DNA color scheme that correctly guesses AA or DNA?
+ * Fix |A| calculation???
  * Fix beta distributions.
    - Beta: don't assume the natural scale is 1.0!
    - Beta: don't allow a,b < 1?
@@ -120,7 +120,6 @@ Before 1.9.9:
  * Document specifying location of GSL
  * Brief descriptions of some of the tools.
  * Debug with _GLIBCXX_DEBUG
- * (?) Put sources up for anonymous subversion.
  * (?) Add some more comments to the  code.
 
 Before 2.0:
@@ -577,6 +576,8 @@ the prior, because we never want to use it  differently.
 [DONE] Implement topology constraints.
 
 [DONE] Implement alignment constraints.
+
+[DONE] Remove spaces from alphabet names.
 
 *IDEAS*
 
