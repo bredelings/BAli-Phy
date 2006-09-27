@@ -335,7 +335,7 @@ namespace substitution {
 
   string AACodonFrequencyModel::name() const
   {
-    return "pi=amino acids";
+    return "pi=amino-acids";
   }
 
   

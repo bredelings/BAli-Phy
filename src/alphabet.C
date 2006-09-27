@@ -268,7 +268,7 @@ RNA::RNA()
 
 
 AminoAcids::AminoAcids() 
-  :alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X")
+  :alphabet("Amino-Acids","ARNDCQEGHILKMFPSTWYV","X")
 {
   insert_class("B","DN");
   insert_class("Z","EQ");
@@ -282,7 +282,7 @@ AminoAcids::AminoAcids(const string& s, const string& letters)
 }
 
 AminoAcidsWithStop::AminoAcidsWithStop() 
-  :AminoAcids("Amino Acids + stop","!")
+  :AminoAcids("Amino-Acids+stop","!")
 { }
 
 

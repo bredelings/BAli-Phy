@@ -688,7 +688,7 @@ traditional = traditional
       <variablelist>
 	<varlistentry>
 	  <term><option>--alphabet <replaceable>name</replaceable></option></term>
-	  <listitem><para>Specify the alphabet: DNA, RNA, Amino Acids, Amino Acids + stop, Triplets, Codons, or Codons + stop.</para></listitem>
+	  <listitem><para>Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons + stop.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -860,7 +860,7 @@ traditional = traditional
 	<para>If the substitution model is not specified, then the
 	default model for the alphabet is used.  For DNA or RNA, the
 	default model is HKY.  For Triplets, the default is HKYx3. For
-        Codons, the default model is M0.  For AminoAcids, the
+        Codons, the default model is M0.  For Amino-Acids, the
 	default model is Empirical[WAG]. 
 	</para>
       </sect3>
@@ -934,7 +934,7 @@ traditional = traditional
 		<para><userinput>Empirical[WAG]</userinput></para>
 		<para>Whelan and Goldman (2001)</para>
 	      </entry>
-	      <entry>Amino Acids</entry>
+	      <entry>Amino-Acids</entry>
 	      <entry>
 		<para>none.</para>
 	      </entry>
@@ -1177,9 +1177,15 @@ traditional = traditional
 	      \pi_l)}^f}{{(\pi_i \pi_j \pi_k)}^{1-f}} \times \frac{\nu_\beta}{\nu_\alpha}$.</entry>
 	    </row -->
 	    <row>
-	      <entry><userinput>pi=amino acids</userinput></entry>
+	      <entry>
+		<para><userinput>pi=amino-acids</userinput></para>
+		<para>Amino-acid based codon frequencies. (no codon bias)</para>
+	      </entry>
 	      <entry>Codons</entry>
-	      <entry>$f$</entry>
+	      <entry>
+		<para>$f$ (1)</para>
+		<para>$\pi_{AA}$ (20)</para>
+	      </entry>
 	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
 	    </row>
 	    <!-- row>

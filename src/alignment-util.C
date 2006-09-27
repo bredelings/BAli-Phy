@@ -519,7 +519,7 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
 
   const string name = args["alphabet"].as<string>();
 
-  if (name == "Codons" or name == "Codons + stop") {
+  if (name == "Codons" or name == "Codons+stop") {
 
     OwnedPointer<AminoAcids> AA;
     if (name == "Codons")
@@ -544,9 +544,9 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
     alphabets.push_back(DNA());
   else if (name == "RNA")
     alphabets.push_back(RNA());
-  else if (name == "Amino Acids")
+  else if (name == "Amino-Acids")
     alphabets.push_back(AminoAcids());
-  else if (name == "Amino Acids + stop")
+  else if (name == "Amino-Acids+stop")
     alphabets.push_back(AminoAcidsWithStop());
   else 
     throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
