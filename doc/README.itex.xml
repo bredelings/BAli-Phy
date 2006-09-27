@@ -147,13 +147,13 @@
       extract the source code archive, using a graphical archive
       manager, or the command-line tool <command>tar</command>:
       
-      <screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-1.9.8.tgz</userinput></screen>
+      <screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-1.9.9.tgz</userinput></screen>
       Then create a build directory, enter it, and run the
       configure command:
 
       <screen><prompt>%</prompt> <userinput>mkdir build</userinput>
 <prompt>%</prompt> <userinput>cd build</userinput>
-<prompt>%</prompt> <userinput>../bali-phy-1.9.8/configure</userinput></screen>
+<prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure</userinput></screen>
  
       If this command succeeds, then you can simply type
 
