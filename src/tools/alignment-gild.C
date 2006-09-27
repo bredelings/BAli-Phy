@@ -191,7 +191,7 @@ Matrix counts_to_probability(const Tree& T,const vector<int>& column,
 
 void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A,RootedSequenceTree& T) 
 {
-  //----------- Load and link template A and T -----------------//
+  //--------------- Load and link template A and T -----------------//
   load_A_and_T(args,A,T,false);
 
   //------------ Try to load alignments -----------//
@@ -205,21 +205,29 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
   if (alignments.empty()) 
     throw myexception()<<"Alignment sample is empty.";
 
-  //-------- Check compatability of estimate & samples-------//
+  //---------- Re-link the tree to the loaded alignments -----------//
+  alignment A2 = chop_internal(alignments.front());
+  
+  link(A2,T,false);
+
+  //---------- Check compatability of estimate & samples -----------//
   assert(A.n_sequences() == T.n_leaves());
   
   //  if (alignments.front().n_sequences() != T.n_nodes())
   //    throw myexception()<<"Number of sequences in alignment estimate is NOT equal to number of tree nodes!";
   
-  for(int i=0;i<A.n_sequences();i++) {
-    if (A.seq(i).name != alignments.front().seq(i).name)
+  vector<int> pi = compute_mapping(T.get_sequences(),sequence_names(A));
+
+  vector<string> names = sequence_names(A);
+  
+  for(int i=0;i<T.n_leaves();i++) {
+
+    if (A.seq(pi[i]).name != A2.seq(i).name)
       throw myexception()<<"Alignment estimate has different sequences or sequence order than alignment samples";
     
-    if (A.seq(i).name != alignments.front().seq(i).name)
-      throw myexception()<<"Sequence "<<i<<" has different length in alignment estimate and alignment samples!";
-    
+    if (A.seqlength(pi[i]) != A2.seqlength(i))
+      throw myexception()<<"Sequence '"<<T.seq(i)<<"' has different length in alignment estimate and alignment samples!";
   }
-
 }
 
 
@@ -480,6 +488,8 @@ int main(int argc,char* argv[]) {
     if (not is_Cayley(T))
       throw myexception()<<"Multifurcating trees are not handled yet.";
 
+    vector<int> pi = compute_mapping(T.get_sequences(),sequence_names(A));
+
     //----------- Find root branch ---------//
     if (args.count("find-root"))
       RT = find_rooted_tree(T);
@@ -497,7 +507,7 @@ int main(int argc,char* argv[]) {
     //--------- Compute full entire column probabilities -------- */
     vector<double> column_probabilities(A.length());
     for(int c=0;c<A.length();c++)
-      column_probabilities[c] = get_column_probability(get_column(MA,c,T.n_leaves()),
+      column_probabilities[c] = get_column_probability(compose(pi,get_column(MA,c,T.n_leaves())),
 						       alignments,
 						       column_indexes
 						       );
@@ -522,6 +532,8 @@ int main(int argc,char* argv[]) {
     for(int c=0;c<A.length();c++) 
     {
       vector<int> column = get_column(MA,c,T.n_leaves());
+
+      column = compose(pi,column);
 
       // Get the pairwise alignment probabilities
       Matrix Q = counts_to_probability(T,column, Ms, column_indexes);
