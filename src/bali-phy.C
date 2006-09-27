@@ -423,7 +423,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     string filename = args["config"].as<string>();
     ifstream file(filename.c_str());
     if (not file)
-      throw myexception()<<"Con't load config file '"<<filename<<"'";
+      throw myexception()<<"Can't load config file '"<<filename<<"'";
 
     store(parse_config_file(file, all), args);
     file.close();
