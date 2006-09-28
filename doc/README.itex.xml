@@ -361,7 +361,7 @@
 	<para>
 	  Create a new file at <filename>~/.bali-phy</filename> and
 	  add the following line:
-<screen>data-dir = <replaceable>somewhere</replaceable>/Data</screen>.
+<screen>data-dir = <replaceable>somewhere</replaceable>/Data</screen>
           Then <command>bali-phy</command> will read this file
 	  every time and know where to find the Data directory.  This
 	  is the recommended method.
