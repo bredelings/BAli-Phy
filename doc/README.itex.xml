@@ -196,7 +196,7 @@
 
 	<para>You can instruct the compiler to look for libraries
 	files in directory
-	<filename><replaceable>dir</replaceable>/lib</filename> by
+	<filename><replaceable>dir</replaceable></filename> by
 	passing
 	<userinput>--with-extra-libs=<replaceable>dir</replaceable></userinput> to the <command>configure</command> script.  
 	</para> 
