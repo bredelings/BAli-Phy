@@ -75,7 +75,8 @@ TOOLS = model_P statreport alignment-gild \
 	joint-indels alignment-consensus alignment-info \
 	subsample tree-mean-lengths trees-bootstrap \
 	joint-parsimony stats-merge stats-select alignment-identity \
-	analyze_distances alignment-cat draw-graph
+	analyze_distances alignment-cat draw-graph \
+	alignment-compare
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -129,6 +130,12 @@ alignment_median_SOURCES = tools/alignment-median.C alignment.C alphabet.C seque
 #---------------------------------------------------------------
 
 alignment_consensus_SOURCES = tools/alignment-consensus.C alignment.C alphabet.C sequence.C util.C rng.C \
+	tree.C sequencetree.C util-random.C \
+	sequence-format.C alignment-util.C 
+
+#---------------------------------------------------------------
+
+alignment_compare_SOURCES = tools/alignment-compare.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C util-random.C \
 	sequence-format.C alignment-util.C 
 

@@ -102,25 +102,30 @@ much of the variation is spatial?)
 -------------------------------------------------------
 Before 1.9.9:
 
- * Check that branch_mean move actually helps?
+ * Fix beta distributions.
+   - Beta: don't assume the natural scale is 1.0!  Instead compare to true scale.
+   - Beta: don't allow a,b < 1?
+ * Implement Branch length prior distributions
  * Implement branch-length constraints.
+ * Check that branch_mean move actually helps?
  * Avoid crash on DNA sequences...
    - Make a AA_DNA color scheme that correctly guesses AA or DNA?
  * Fix |A| calculation???
- * Fix beta distributions.
-   - Beta: don't assume the natural scale is 1.0!
-   - Beta: don't allow a,b < 1?
- * Fix Dirichlet Priors
+   - check the number of columns with all gaps, or no leaf letters?
+ * Fix Dirichlet Priors (?)
    - fix prior on frequencies.
    - fix prior on INV2.
    - fix *proposals* for INV2?
  * Profile trees-consensus on 48b.fasta
    - It seems to take measurable time processing EACH level of consensus.
- * Document where/what files are installed - especial the example files.
- * Document specifying location of GSL
  * Brief descriptions of some of the tools.
  * Debug with _GLIBCXX_DEBUG
  * (?) Add some more comments to the  code.
+ * Read PC/Mac Formatted Files
+   - what files to we read (that we control the parsing of)
+     + alignment, tree, genetic code, align-constraint, t-constraint, a-constraint
+   - what files do we read (that we do NOT control the parsing of)
+     + config, ~/.bali-phy
 
 Before 2.0:
  * Do the autoconf magic to compile GSL in-tree.
