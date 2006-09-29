@@ -24,6 +24,12 @@ if test -n "$use_extra_includes" && test "$use_extra_includes" != "NO"; then
 fi
 
 CPPFLAGS="$CPPFLAGS $extra_includes"
+
+if test "${host_os}" = "darwin" ; then
+  CPPFLAGS="$CPPFLAGS -I/sw/include -I/opt/include -I/opt/sw/include -I/usr/local/include"
+  CXXFLAGS="$CXXFLAGS -fvisibility=default"
+fi
+
 AC_SUBST(extra_includes)
 
 # Specify extra library paths
@@ -122,6 +128,12 @@ if test "$GXX" = yes ; then
       CXXFLAGS="$CXXFLAGS -fomit-frame-pointer"
     fi
   fi
+
+  # also set the LDFLAGS for a static build
+  if test "${host_os}" != "darwin" && test "$static" = yes ; then
+    LDFLAGS="$LDFLAGS -static"
+  fi
+
 fi
 
 ldflags=$LDFLAGS

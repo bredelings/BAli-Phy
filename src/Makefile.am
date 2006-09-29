@@ -26,7 +26,6 @@ CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasi
 
 if HOST_LINUX
 if STATIC
-LDFLAGS += -static
 .LIBPATTERNS += lib%.a
 else
 .LIBPATTERNS += lib%.so lib%.a
@@ -34,8 +33,6 @@ endif
 endif
 
 if HOST_DARWIN
-CXXFLAGS += -fvisibility=default
-INCLUDES += /sw/include /opt/include /opt/sw/include /usr/local/include
 vpath %.dylib /sw/lib /opt/lib /opt/sw/lib /usr/local/lib
 vpath %.a     /sw/lib /opt/lib /opt/sw/lib /usr/local/lib
 if STATIC
@@ -47,7 +44,6 @@ endif
 
 if HOST_MSWINDOWS
 if STATIC
-LDFLAGS += -static
 .LIBPATTERNS += lib%.a
 else
 .LIBPATTERNS += lib%.dll lib%.a
