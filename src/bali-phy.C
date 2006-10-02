@@ -815,10 +815,20 @@ int main(int argc,char* argv[])
     else
       load_A_and_random_T(args,A,T);
 
+    //--------- Handle branch lengths <= 0 --------//
+    double min_branch = 0.000001;
     for(int i=0;i<T.n_branches();i++)
-      if (T.branch(i).length() < 0)
-	T.branch(i).set_length(1);
+      if (T.branch(i).length() > 0)
+	min_branch = std::min(min_branch,T.branch(i).length());
 
+    for(int i=0;i<T.n_branches();i++) {
+      if (T.branch(i).length() == 0)
+	T.branch(i).set_length(min_branch);
+      if (T.branch(i).length() < 0)
+	T.branch(i).set_length( - T.branch(i).length() );
+    }
+
+    //--------- Do we have enough sequences? ------//
     if (A.n_sequences() < 3)
       throw myexception()<<"At least 3 sequences must be provided - you provided only "<<A.n_sequences()<<".\n(Perhaps you have BLANK LINES in your FASTA file?)";
 
