@@ -120,6 +120,12 @@ if test "$GXX" = yes ; then
     CXXFLAGS="$CXXFLAGS -g"
 
   # set flags for optimization
+  elif test "$debug" = nodefs ; then
+    CXXFLAGS="$CXXFLAGS $CHIP"
+    CXXFLAGS="$CXXFLAGS -O3 -funroll-loops -fweb"
+    if test "$profile" != yes ; then 
+      CXXFLAGS="$CXXFLAGS -fomit-frame-pointer"
+    fi
   else
     CXXFLAGS="$CXXFLAGS $CHIP"
     CXXFLAGS="$CXXFLAGS -O3 -funroll-loops -fweb"
