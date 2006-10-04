@@ -168,7 +168,7 @@ bool report_sample(std::ostream& o,
       else
 	scratch[j]=0.0;
 
-    tau[i] = autocorrelation_time(scratch,blocksize);
+    tau[i] = autocorrelation_time(scratch);
   }
 
   bool different = (dx <= 0) or n_dists==1;
@@ -355,9 +355,9 @@ int main(int argc,char* argv[])
     }
     
     //----------  Determine block size ----------//
-    unsigned blocksize = tree_dists[0].size()/100+1;
+    unsigned blocksize = tree_dists[0].size()/50+1;
     for(int i=1;i<tree_dists.size();i++)
-      blocksize = std::min(blocksize,tree_dists[i].size()/100+1);
+      blocksize = std::min(blocksize,tree_dists[i].size()/50+1);
 
     if (args.count("blocksize"))
       blocksize = args["blocksize"].as<unsigned>();

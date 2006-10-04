@@ -100,7 +100,7 @@ void show_stats(variables_map& args, const string& name,const vector<double>& va
       cout<<"  (NA,NA)"<<endl;
   }
 
-  double tau = autocorrelation_time(values2,2+values2.size()/4);
+  double tau = autocorrelation_time(values2);
 
   string spacer;spacer.append(name.size()-1,' ');
 
