@@ -120,12 +120,14 @@ Before 1.9.9:
    - It seems to take measurable time processing EACH level of consensus.
  * Brief descriptions of some of the tools.
  * Debug with _GLIBCXX_DEBUG
- * (?) Add some more comments to the  code.
+ * (?) Add some more comments to the code.
  * Read PC/Mac Formatted Files
    - what files to we read (that we control the parsing of)
      + alignment, tree, genetic code, align-constraint, t-constraint, a-constraint
    - what files do we read (that we do NOT control the parsing of)
      + config, ~/.bali-phy
+ * Separate NDEBUG from BOOST index debugging.
+ * Maximum alignment length?
 
 Before 2.0:
  * Do the autoconf magic to compile GSL in-tree.
@@ -583,6 +585,8 @@ the prior, because we never want to use it  differently.
 [DONE] Implement alignment constraints.
 
 [DONE] Remove spaces from alphabet names.
+
+[DONE] Improve initial convergence by fixing lambda/delta for first 5 iterations.
 
 *IDEAS*
 
