@@ -499,8 +499,19 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   }
   s_parameters<<"\t|T|"<<endl;
 
+  int restore = find_parameter(P,"lambda");
+  if (restore == -1)
+    restore = find_parameter(P,"delta");
+  if (restore != -1 and P.fixed(restore))
+    restore = -1;
+  if (restore != -1)
+    P.fixed(restore,true);
+
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max; iterations++) {
+
+    if (iterations == 5 and restore != -1)
+      P.fixed(restore,false);
 
     if (iterations < P.beta_series.size())
       P.beta[0] = P.beta_series[iterations];
