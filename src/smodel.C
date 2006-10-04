@@ -727,8 +727,6 @@ namespace substitution {
   {
     assert(Alphabet().size()==4);
 
-    std::cerr<<"got here\n";
-
     double total = 0;
     for(int i=0;i<6;i++)
       total += parameters_[i];
@@ -741,7 +739,7 @@ namespace substitution {
     S(0,3) = parameters_[2]; // AC
 
     S(1,2) = parameters_[3]; // GT
-    S(2,1) = parameters_[4]; // GC
+    S(1,3) = parameters_[4]; // GC
 
     S(2,3) = parameters_[5]; // TC
   }
