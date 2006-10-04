@@ -43,10 +43,12 @@ if test -n "$use_extra_libs" && test "$use_extra_libs" != "NO"; then
   IFS=':'
   for dir in $use_extra_libs; do
     extra_libs="$extra_libs -L$dir"
+    extra_libs2="$extra_libs2 $dir"
   done
   IFS=$ac_save_ifs
 fi
 
+AC_SUBST(extra_libs2)
 LDFLAGS="$LDFLAGS $extra_libs"
 
 # 1. Checks for programs.
@@ -121,11 +123,9 @@ if test "$GXX" = yes ; then
 
   # set flags for optimization
   elif test "$debug" = nodefs ; then
+    CXXFLAGS="$CXXFLAGS -g"
     CXXFLAGS="$CXXFLAGS $CHIP"
     CXXFLAGS="$CXXFLAGS -O3 -funroll-loops -fweb"
-    if test "$profile" != yes ; then 
-      CXXFLAGS="$CXXFLAGS -fomit-frame-pointer"
-    fi
   else
     CXXFLAGS="$CXXFLAGS $CHIP"
     CXXFLAGS="$CXXFLAGS -O3 -funroll-loops -fweb"

@@ -25,6 +25,8 @@ CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasi
 .LIBPATTERNS = 
 
 if HOST_LINUX
+vpath %.so    @extra_libs2@ /usr/lib /usr/local/lib
+vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
 if STATIC
 .LIBPATTERNS += lib%.a
 else
@@ -33,8 +35,8 @@ endif
 endif
 
 if HOST_DARWIN
-vpath %.dylib /sw/lib /opt/lib /opt/sw/lib /usr/local/lib
-vpath %.a     /sw/lib /opt/lib /opt/sw/lib /usr/local/lib
+vpath %.dylib @extra_libs2@ /sw/lib /opt/lib /opt/local/lib /opt/sw/lib /usr/local/lib
+vpath %.a     @extra_libs2@ /sw/lib /opt/lib /opt/local/lib /opt/sw/lib /usr/local/lib
 if STATIC
 .LIBPATTERNS += lib%.a lib%.dylib 
 else
@@ -43,6 +45,8 @@ endif
 endif
 
 if HOST_MSWINDOWS
+vpath %.so    @extra_libs2@ /usr/lib /usr/local/lib
+vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
 if STATIC
 .LIBPATTERNS += lib%.a
 else
