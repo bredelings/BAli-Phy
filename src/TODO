@@ -1,5 +1,3 @@
-7. Re-organize todo, putting later stuff in 'ideas' not TODO
-
 1. Implement general distributions - we need a way to have special distributions
    that are charaterized only by sigma/mu.
    (a) how do we want to handle multiple parameterizations of distributions?
@@ -7,11 +5,6 @@
       ii) for example, log-normal as (mu,s/mu) and as (lmu,lsigma)?
    (b) Fix the Uniform distibution to have max range (0,2) ?
    (c) Make the rate a parameter of the distribution?
-
-2. How much of the sequences is in each %-identity fraction?
-  a) How much information is in each fraction?
-  b) Can we combine measures of gappiness and %-identity to yield a
-     measure of ambiguity? 
 
 2. Hmm... It seems that we have a scale parameter in each case...
    And (except for mixture distributions) a width parameter.
@@ -23,29 +16,33 @@
    (b) m[n] = exp(n\times\mu+n^2d^2/2) for log-normal
    (c) m[n] = \prod_0^n-1 (\alpha+i)/(\alpha+\beta+i)
 
-4. When setting parameters on (e.g.) the GTR model, set all relevant
-   parameters at once?
 
-2. Write a program to try to combine trees (sub-branches?)
+
+4. How much of the sequence is in each %-identity fraction?
+  a) How much information is in each fraction?
+  b) How do we make sure that mismatched residues in the 90% identity fraction 
+      don't end up in the 0% identity fraction?
+  c) Do gaps count as "mismatches"? 
+     Which leads to...
+  d) Can we combine measures of gappiness and %-identity to yield a
+     measure of ambiguity? 
+
+5. GTR: When setting parameters, set all relevant parameters at once?
+
+6. Write a program to try to combine trees (sub-branches?)
    (a) Print out the tree of no-conflict branches
    (b) Show conflicting pairs of branches from each file.
    (c) Start with trees - no branches in the same file can conflict.
 
-3. Handle Wiegman's insect sequences
-   (a) Write a mixture-type model to handle this.
-   (b) Implement different frequencies for INV sites.
-   (c) But then we have to handle unique names for INV::fA and gamma[4]::fA
-   (c) Take a tree SAMPLE.  (posterior sample?)
-
-4. Implement multiple data partitions...  (on a branch)
+7. Implement multiple data partitions...  (on a branch)
   (a) More than one alignment + scaling between the trees
   (b) More than one substitution model?
 
-5. Implement Correlated Site Classes.
+8. Implement Correlated Site Classes.
   (a) Do the math.
   (b) Do the coding?
 
-1. Estimate constraints using alignment-indices
+9. Estimate constraints using alignment-indices
   a) specify number of constraints
   b) no gaps nearby (distance W+G) from constraint
   c) difference from consensus = 1 (no shared differences)
@@ -53,7 +50,7 @@
   e) percentage of sites w/ an indel
   f) print the column number in the comments of each row
 
-5. Use a RJMCMC on a fixed alignment to model local changes in 'mu'
+10. Use a RJMCMC on a fixed alignment to model local changes in 'mu'
    +  or use a change-point model?
    +  or use a *nested* Change Point Model?
    + we need some way to find out if the gamma model "fits" well! (how
