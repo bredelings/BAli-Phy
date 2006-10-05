@@ -646,6 +646,8 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
     s_out<<"directory: "<<fs::initial_path().string()<<endl;
     if (getenv("JOB_ID"))
       s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
+    if (getenv("LSB_JOBID"))
+      s_out<<"LSB_JOBID: "<<getenv("LSB_JOBID")<<endl;
     s_out<<"hostname: "<<hostname()<<endl;
     s_out<<"PID: "<<getpid()<<endl;
     s_out<<endl;
