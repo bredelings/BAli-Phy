@@ -143,12 +143,33 @@ void alignment::add_sequence(const sequence& s)
   sequences.back().strip_gaps();
 }
 
-void alignment::load(const vector<sequence>& seqs) {
-  clear();
+void alignment::load(const vector<sequence>& seqs) 
+{
+  // determine length
+  unsigned new_length = 0;
+  for(int i=0;i<seqs.size();i++) {
+    unsigned length = seqs[i].size()/(*a).width();
+    new_length = std::max(new_length,length);
+  }
+
+  // set the size of the array
+  sequences.clear();
+  array.resize(new_length,seqs.size());
 
   // Add the sequences to the alignment
   for(int i=0;i<seqs.size();i++)
-    add_sequence(seqs[i]);
+  {
+    vector<int> v = (*a)(seqs[i]);
+    assert(v.size() <= array.size1());
+    int k=0;
+    for(;k<v.size();k++)
+      array(k,i) = v[k];
+    for(;k<array.size1();k++)
+      array(k,i) = -1;
+
+    sequences.push_back(seqs[i]);
+    sequences.back().strip_gaps();
+  }
 }
 
 void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<sequence>& seqs) {

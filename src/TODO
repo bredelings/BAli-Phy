@@ -125,6 +125,8 @@ Before 1.9.9:
      + config, ~/.bali-phy
  * Separate NDEBUG from BOOST index debugging.
  * Maximum alignment length?
+ * speed up trees-consensus (for large trees)
+ * fix |indels| and count the number of columns w/ no leaves
 
 Before 2.0:
  * Do the autoconf magic to compile GSL in-tree.
@@ -584,6 +586,8 @@ the prior, because we never want to use it  differently.
 [DONE] Remove spaces from alphabet names.
 
 [DONE] Improve initial convergence by fixing lambda/delta for first 5 iterations.
+
+[DONE] Speed up loading of (large) alignments with many sequences.
 
 *IDEAS*
 
