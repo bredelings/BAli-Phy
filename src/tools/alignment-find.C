@@ -37,6 +37,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: alignment-find [OPTIONS] < in-file \n";
+    cout<<"Find the last (or first) FASTA alignment in a file.\n";
+    cout<<"  (Alignments are ended by blank lines.)\n\n";
     cout<<all<<"\n";
     exit(0);
   }

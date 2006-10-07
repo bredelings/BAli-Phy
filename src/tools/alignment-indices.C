@@ -35,6 +35,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: alignment-indices <alignment-file> [OPTIONS]\n";
+    cout<<"Show the alignment in terms of the index of each character in its sequence.\n\n";
     cout<<all<<"\n";
     exit(0);
   }

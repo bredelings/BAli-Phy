@@ -23,13 +23,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description invisible("Invisible options");
   invisible.add_options()
-    ("fields", value<vector<string> >(),"fields to keep")
+    ("columns", value<vector<string> >(),"columns to keep")
     ;
 
   options_description visible("All options");
   visible.add_options()
     ("help", "Produce help message")
-    ("no-header","Suppress the line of field names.")
+    ("no-header","Suppress the line of column names.")
     ;
 
   options_description all("All options");
@@ -37,7 +37,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   // positional options
   positional_options_description p;
-  p.add("fields", -1);
+  p.add("columns", -1);
 
   variables_map args;     
   store(command_line_parser(argc, argv).
@@ -45,8 +45,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cerr<<"Usage: stats-select [OPTIONS] < data-file \n";
-    cerr<<visible<<"\n";
+    cout<<"Usage: stats-select [OPTIONS] column-name [column-name ...] < data-file \n";
+    cout<<"Select columns from a Tracer-format data file.\n\n";
+    cout<<visible<<"\n";
     exit(0);
   }
 
@@ -59,32 +60,32 @@ int main(int argc,char* argv[])
     //----------- Parse command line  -----------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    if (not args.count("fields")) 
-      throw myexception()<<"No fields selected.";
+    if (not args.count("columns")) 
+      throw myexception()<<"No columns selected.";
 
     //------------ Parse column names ----------//
     vector<string> headers = read_header(std::cin);
 
     //------------ Parse column mask ----------//
-    vector<int> field_index;
+    vector<int> column_index;
     
-    vector<string> fields = args["fields"].as<vector<string> >();
+    vector<string> columns = args["columns"].as<vector<string> >();
     
-    for(int i=0;i<fields.size();i++) 
+    for(int i=0;i<columns.size();i++) 
     {
-      int loc = find_index(headers,fields[i]);
+      int loc = find_index(headers,columns[i]);
       if (loc == -1)
-	throw myexception()<<"Can't find field '"<<fields[i]<<" in table.";
-      field_index.push_back(loc);
+	throw myexception()<<"Can't find column '"<<columns[i]<<" in table.";
+      column_index.push_back(loc);
     }
     
     //------------ Print  column names ----------//
     if (not args.count("no-header"))
-      for(int i=0;i<field_index.size();i++) 
+      for(int i=0;i<column_index.size();i++) 
       {
-	cout<<headers[field_index[i]];
+	cout<<headers[column_index[i]];
 	
-	if (i == field_index.size()-1)
+	if (i == column_index.size()-1)
 	  cout<<"\n";
 	else
 	  cout<<"\t";
@@ -106,11 +107,11 @@ int main(int argc,char* argv[])
       if (v.size() != headers.size())
 	throw myexception()<<"Found "<<v.size()<<"/"<<headers.size()<<" values on line "<<line_number<<".";
 
-      for(int i=0;i<field_index.size();i++) 
+      for(int i=0;i<column_index.size();i++) 
       {
-	cout<<v[field_index[i]];
+	cout<<v[column_index[i]];
 
-	if (i == field_index.size()-1)
+	if (i == column_index.size()-1)
 	  cout<<"\n";
 	else
 	  cout<<"\t";

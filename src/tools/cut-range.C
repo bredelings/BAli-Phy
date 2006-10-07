@@ -33,6 +33,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: cut-range [OPTIONS]\n";
+    cout<<"Select lines between certain values of a key. (e.g. iterations)\n\n";
     cout<<all<<"\n";
     exit(0);
   }

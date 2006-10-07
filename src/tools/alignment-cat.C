@@ -155,6 +155,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help") or error) {
     cout<<"Usage: alignment-cat [file1] {[file2] ...} \n";
+    cout<<"Concatenate several alignments (with the same sequence names) end-to-end.\n\n";
     cout<<visible<<"\n";
     exit(0);
   }
@@ -232,7 +233,7 @@ int main(int argc,char* argv[])
     else if (args["output"].as<string>() == "fasta")
       write_fasta(cout,S);
     else
-      throw myexception()<<"Don't recognized requested format '"<<args["output"].as<string>()<<"'";
+      throw myexception()<<"I don't recognize requested format '"<<args["output"].as<string>()<<"'";
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

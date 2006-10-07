@@ -33,6 +33,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     std::cout<<"Usage: alignment-convert <alignment-file> [OPTIONS]\n";
+    std::cout<<"Convert the alignment to FASTA or PHYLIP.\n\n";
     std::cout<<all<<"\n";
     exit(0);
   }

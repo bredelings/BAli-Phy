@@ -29,6 +29,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: subsample [OPTIONS] < in-file\n";
+    cout<<"Subsample lines in a file.\n\n";
     cout<<all<<"\n";
     exit(0);
   }

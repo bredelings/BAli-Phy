@@ -150,6 +150,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: tree-mean-lengths <tree-file> < in-file\n";
+    cout<<"Compute the mean lengths for branches in the given topology.\n\n";
     cout<<all<<"\n";
     exit(0);
   }

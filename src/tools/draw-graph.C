@@ -100,7 +100,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: draw-MC-tree <file1>\n";
+    cout<<"Usage: draw-graph <file1>\n";
     cout<<all<<"\n";
     exit(0);
   }

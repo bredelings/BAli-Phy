@@ -79,6 +79,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: alignment-info <alignment-file> [<tree-file>] [OPTIONS]\n";
+    cout<<"Show useful statistics about the alignment.\n\n";
     cout<<all<<"\n";
     exit(0);
   }

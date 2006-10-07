@@ -114,6 +114,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: alignment-reorder <alignment-file> <tree-file>\n";
+    cout<<"Reorder sequences so that related sequences are adjacent.\n\n";
     cout<<all<<"\n";
     exit(0);
   }

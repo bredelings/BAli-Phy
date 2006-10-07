@@ -416,6 +416,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: trees-consensus <file> [OPTIONS]\n";
+    cout<<"Compute consensus trees and partitions.\n\n";
     cout<<visible<<"\n";
     exit(0);
   }

@@ -319,7 +319,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-gild <alignment-file> <tree-file> ... [OPTIONS]\n";
+    cout<<"Usage: alignment-gild alignment-file tree-file ... [OPTIONS] < alignments-file\n";
+    cout<<"Annotate each residue in the alignment according to the probability.\n";
+    cout<<" that it should align to the hypothetical root character in its column.\n\n";
     cout<<all<<"\n";
     exit(0);
   }

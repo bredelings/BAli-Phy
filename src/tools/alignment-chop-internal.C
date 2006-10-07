@@ -45,6 +45,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: alignment-chop-internal <alignment-file> [OPTIONS]\n";
+    cout<<"Remove ancestral sequences from an alignment.\n\n";
     cout<<all<<"\n";
     exit(0);
   }

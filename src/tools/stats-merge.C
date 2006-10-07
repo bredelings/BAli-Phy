@@ -44,8 +44,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cerr<<"Usage: stats-merge <file1> [<file2> ... ]\n";
-    cerr<<visible<<"\n";
+    cout<<"Usage: stats-merge <file1> [<file2> ... ]\n";
+    cout<<"Combine columns from different Tracer-format data files.\n\n";
+    cout<<visible<<"\n";
     exit(0);
   }
 

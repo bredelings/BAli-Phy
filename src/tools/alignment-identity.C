@@ -120,7 +120,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-consensus [OPTIONS] < sequence-file\n";
+    cout<<"Usage: alignment-identity [OPTIONS] < sequence-file\n";
+    cout<<"Report statistics on pairwise identity.\n\n";
     cout<<all<<"\n";
     exit(0);
   }

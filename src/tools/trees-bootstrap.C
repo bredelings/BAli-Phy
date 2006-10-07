@@ -285,6 +285,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: trees-bootstrap <file1> [<file2> ... ] --predicates <predicate file> [OPTIONS]\n";
+    cout<<"Compare support for partitions between different files.\n\n";
     cout<<all<<"\n";
     exit(0);
   }

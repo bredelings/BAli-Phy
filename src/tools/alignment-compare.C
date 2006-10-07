@@ -106,8 +106,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("file1", value<string>(),"first alignment file")
     ("file2", value<string>(),"second alignment file")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-    ("cutoff",value<double>()->default_value(0.75),"ignore events below this probability")
-    ("strict","require all implied pairs pass the cutoff")
     ;
 
   variables_map args;     
@@ -115,7 +113,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignments-conmpare <alignment-file1> <alignment-file2> [OPTIONS]\n";
+    cout<<"Usage: alignment-compare <alignment-file1> <alignment-file2> [OPTIONS]\n";
+    cout<<"Compare two alignment distributions.\n";
+    cout<<" o label each residue by its maximum pairwise homology deviance.\n";
+    cout<<" o output AU-style annotations for the alignment given by --align.\n\n";
     cout<<all<<"\n";
     exit(0);
   }

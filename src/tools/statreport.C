@@ -51,8 +51,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cerr<<"Usage: statreport [OPTIONS] < data-file \n";
-    cerr<<visible<<"\n";
+    cout<<"Usage: statreport [OPTIONS] < data-file \n";
+    cout<<"Compute summary statistics for Tracer-format data files.\n\n";
+    cout<<visible<<"\n";
     exit(0);
   }
 

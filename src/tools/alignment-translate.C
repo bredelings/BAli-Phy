@@ -28,7 +28,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
-    ("alphabet",value<string>()->default_value("Codons"),"set to 'Codons + stop' to allow stop codons")
+    ("alphabet",value<string>()->default_value("Codons"),"set to 'Codons+stop' to allow stop codons")
     ("frame",value<int>()->default_value(0),"frame 0, 1, or 2")
     ;
 
@@ -40,6 +40,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: alignment-translate [OPTIONS] < sequence-file [OPTIONS]\n";
+    cout<<"Translate a DNA/RNA alignment into amino acids.\n\n";
     cout<<all<<"\n";
     exit(0);
   }
