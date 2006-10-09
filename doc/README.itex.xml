@@ -36,6 +36,17 @@
       <sect2>
 	<title>Operating System requirements</title>
 
+	  <note>
+	    <title>Command line ahead!</title>
+	    
+	    <para><application>BAli-Phy</application> is not a
+	    graphical application.  While there are Mac and Windows
+	    version available, these assume that you understand some
+	    UNIX commands, or at least are not intimidated by them.
+	    BAli-Phy is (hopefully) usable, but it is not "user-friendly"!
+	    </para>
+	  </note>
+
 	<sect3>
 	  <title>Linux and UNIX</title>
 
@@ -48,9 +59,11 @@
 
 	  <para>On Windows you must first install <ulink
 	  url="http://www.cygwin.com">cygwin</ulink>.  Cygwin is a
-	  Linux environment for Windows, and includes GCC, GNU make,
-	  and other software.  You can access the Cygwin command line (not
-	  the normal windows command line) through the Start menu.</para>
+	  Linux environment for Windows.  You can use the cygwin
+	  installer to install other software packages that you
+	  need (See <xref linkend="software_req"/>). You can access the
+	  Cygwin command line (not the normal windows command line)
+	  through the Start menu.</para> 
 	</sect3>
 
 	<sect3>
@@ -61,7 +74,7 @@
 	  of OS X must be 10.1 or higher.  If you want to use the
 	  development tools from Apple to compile
 	  <application>BAli-Phy</application>, the system must be 10.4 or
-	  higher, and you must upgrade to XCode 2.2 or higher(see Software
+	  higher, and you must upgrade to XCode 2.2 or higher (see Software
 	  Requirements).
 	  </para>
 
@@ -74,7 +87,7 @@
       </sect2>
 
       <sect2>
-	<title>Software Requirements</title>
+	<title id="software_req">Software Requirements</title>
 
 	<sect3>
 	  <title>Compilation Requirements</title>
@@ -83,15 +96,18 @@
 
 	<itemizedlist>
 	  <listitem><para> A modern C++ compiler (<ulink
-	  url="http://gcc.gnu.org">GCC</ulink> version 3.4, 4.0, and 4.1 are known to work)</para>	<note>
-	<title>Mac OS X issues:</title>
+	  url="http://gcc.gnu.org">GCC</ulink> version 3.4, 4.0, and
+	  4.1 are known to work)</para>
 
-	<para>If you want to use the development tools shipped by Apple
-	(e.g. GCC) then you need OS X version 10.4 (Tiger) or higher, and
-	you need to install XCode 2.2 or higher.  (You can use a GCC compiler
-	built from the non-apple FSF sources, but installing XCode is
-	much simpler.) 
-	</para>
+	  <note>
+	    <title>Mac OS X issues:</title>
+	    
+	    <para>If you want to use the development tools shipped by Apple
+	    (e.g. GCC) then you need OS X version 10.4 (Tiger) or higher, and
+	    you need to install XCode 2.2 or higher.  (You can use a GCC compiler
+	    built from the non-apple FSF sources, but installing XCode is
+	    much simpler.) 
+	    </para>
 
 	<!-- para><ulink url="http://fink.sourceforge.net">Fink</ulink>
 	provides Linux software for Mac OS X.  If you have Fink 0.8,
@@ -115,29 +131,52 @@
 	</sect3>
 
 	<sect3>
-	  <title>Analysis and Documentation Requirements</title>
-	<para>In addition, the following software packages are recommended,
-	although not required:
-	<itemizedlist>
-	  <listitem><para>GNU make version 3.80 or higher  (<ulink
-	  url="http://www.gnu.org/software/make">GNU make</ulink>).
-	  </para></listitem>
-	  <listitem><para>The plotting program
-	  <application>gnuplot</application> (<ulink
-	  url="http://www.gnuplot.info/">gnuplot</ulink>)</para></listitem> 
-	  <listitem><para><application>Tracer</application> - to
-	  analyze MCMC diagnostics 
-	  (<ulink
-	  url="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</ulink>) 
-	  </para></listitem>
-	  <listitem><para>Mozilla or Mozilla/Firefox - to view the math in
-	  the XHTML documentation. (<ulink url="http://www.mozilla.org/products/firefox/">Firefox</ulink>)</para></listitem>
-	</itemizedlist>
-	</para>
-	</sect3>
+	  <title>Requirements for analyzing <application>BAli-Phy</application> output</title>
 
-    </sect2>
-  </sect1>
+	  <para>After you run <command>bali-phy</command> you will
+	  need to run an analysis of the resulting files (See <xref
+	  linkend="analysis"/>).  This analysis depends on the
+	  following software packages: 
+
+	  <itemizedlist>
+	    <listitem><para>GNU make version 3.80 or higher  (<ulink
+	    url="http://www.gnu.org/software/make">GNU make</ulink>).
+	    </para></listitem>
+
+	    <listitem><para>PERL</para></listitem>
+	  </itemizedlist>
+
+	  </para>
+	</sect3>
+	<sect3>
+	  <title>Recommendations for analysis and documentation</title>
+
+	  <para>In addition, the following software packages are
+	  strongly recommended.  These packages allow you to view
+	  plots and diagnostics for
+	  <application>BAli-Phy</application>, or to view the
+	  documentation correctly.
+
+	  <itemizedlist>
+	    <listitem><para><application>Tracer</application> - to
+	    analyze MCMC diagnostics 
+	    (<ulink
+	    url="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</ulink>) 
+	    </para></listitem>
+
+	    <listitem><para>The plotting program
+	    <application>gnuplot</application> (<ulink
+	    url="http://www.gnuplot.info/">gnuplot</ulink>)</para></listitem> 
+
+	    <listitem><para>Mozilla or Mozilla/Firefox - to view the math in
+	    the XHTML documentation. (<ulink url="http://www.mozilla.org/products/firefox/">Firefox</ulink>)</para></listitem>
+	  </itemizedlist>
+	  </para>
+	</sect3>
+	
+      </sect2>
+    </sect1>
+
     <sect1>
       <title>Compiling <application>BAli-Phy</application></title>
 
@@ -1843,23 +1882,49 @@ traditional = traditional
   <sect1>
     <title>Frequently Asked Questions (FAQ)</title>
 
-    <para>Q1. How long will it take?</para>
-    <para>A1. It runs until you stop it.  Stop it when its done.</para>
+    <sect2>
+      <title>Stopping <command>bali-phy</command>.</title>
 
-    <para>Q2. So, when is it done?</para>
-    <para>A2. After it has converged, and run for long enough to give
-              you >1000 effectively independent samples.</para>  
+    <qandaset>
+      <qandaentry>
+	<question><para>Why is <command>bali-phy</command> still
+	running? How long will it take?</para></question>
+	<answer>
+	  <para>It runs until you stop it.  Stop it when its
+	  done.</para>
+	</answer>
+      </qandaentry>
 
-    <para>Q3. How long is that?</para>
-    <para>A3. It depends on the data set.  To test convergence, run at
-              least 4 independent chains and see if they give the same
-              answer.</para>
- 
-    <para>Q4. How can I check how many iterations the chain has
-              finished?</para>
-    <para>A4. Run <command>wc -l 1.p</command> inside the output
-              directory, and subtract 2.</para>
+      <qandaentry>
+	<question><para>So, how can I know when to stop it?</para></question>
+	<answer>
+	  <para>You can stop it has both converged and also run for long enough to give
+	  you >1000 effectively independent samples.  </para>
+	</answer>
+      </qandaentry>
 
+      <qandaentry>
+	<question><para>How can you tell when the chain has converged?</para></question>
+	<answer>
+	  <para>It depends on the data set.  To test convergence, run at
+	  least 4 independent chains (preferably 10) from different
+	  random starting points and see if the posterior
+	  distributions for each chain are the same. 
+	  </para>
+	</answer>
+      </qandaentry>
+
+      <qandaentry>
+	<question><para>How can I check how many iterations the chain
+	has finished?</para></question>
+	<answer>
+	  <para>Run <command>wc -l 1.p</command> inside the output
+	  directory, and subtract 2.
+	  </para>
+	</answer>
+      </qandaentry>
+    </qandaset>
+    </sect2>
   </sect1>
 
 </article>
