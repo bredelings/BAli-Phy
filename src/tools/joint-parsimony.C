@@ -129,6 +129,24 @@ vector<unsigned> n_indels_with_phase(const alignment& A,const Tree& T)
   return indels;
 }
 
+unsigned total_length_indels2(const alignment& A,const Tree& T)
+{
+  unsigned total=0;
+  for(int c=0;c<A.length();c++)
+  {
+    for(int b=0;b<T.n_branches();b++) {
+      int t = T.branch(b).target();
+      int s = T.branch(b).source();
+      if (A.gap(c,t) and not A.gap(c,s))
+	total++;
+      if (A.gap(c,s) and not A.gap(c,t))
+	total++;
+    }
+  }
+  return total;
+}
+
+
 int main(int argc,char* argv[]) { 
   try {
     variables_map args = parse_cmd_line(argc,argv);
@@ -139,9 +157,11 @@ int main(int argc,char* argv[]) {
       const alignment& A = J.A[i];
       const SequenceTree& T = J.T[i];
 
-      cout<<"length = "<<n_mutations(A,T)<<"   ";
+      cout<<" length = "<<n_mutations(A,T)<<"   ";
       
-      cout<<" n_indels = "<<n_indels(A,T)<<"   ";
+      cout<<" #indels = "<<n_indels(A,T)<<"   ";
+
+      cout<<" |indels| = "<<total_length_indels2(A,T)<<"   ";
 
       vector<unsigned> indels = n_indels_with_phase(A,T);
 
