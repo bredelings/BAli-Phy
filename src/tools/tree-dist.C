@@ -798,7 +798,9 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
 	new_good_masks.push_front(*m);
 
       // store the new sub-partitions we found
-      partitions.insert(partitions.end(),sub_partitions.begin(),sub_partitions.end());
+      for(int i=0;i<sub_partitions.size();i++)
+ 	if (informative(sub_partitions[i].first))
+	  partitions.push_back(sub_partitions[i]);
     }
 
     old_masks.insert(old_masks.end(),masks.begin(),masks.end());
