@@ -68,6 +68,14 @@ namespace statistics {
     return double(n+pseudocount)/(N-n+pseudocount);
   }
 
+  inline double odds_ratio(unsigned n1,unsigned n2,unsigned N,unsigned pseudocount) 
+  {
+    double o1 = odds(n1,N,pseudocount);
+    double o2 = odds(n2,N,pseudocount);
+    
+    return o2/o1;
+  }
+
   double log_odds(const std::valarray<bool>& v);
 
   double median(const std::valarray<double>& values);

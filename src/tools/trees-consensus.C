@@ -89,14 +89,6 @@ void add_unique_partitions(vector<Partition>& partitions,const vector<Partition>
       partitions.push_back(delta[j]);
 }
 
-double odds_ratio(unsigned n1,unsigned n2,unsigned N,unsigned pseudocount) 
-{
-  double o1 = odds(n1,N,pseudocount);
-  double o2 = odds(n2,N,pseudocount);
-
-  return o2/o1;
-}
-
 double odds_ratio(const vector<pair<Partition,unsigned> >& partitions, const pair<Partition,unsigned>& delta,
 		  unsigned N, unsigned pseudocount=0)
 {
@@ -107,7 +99,7 @@ double odds_ratio(const vector<pair<Partition,unsigned> >& partitions, const pai
 
   unsigned n2 = delta.second;
 
-  return odds_ratio(n1,n2,N,pseudocount);
+  return statistics::odds_ratio(n1,n2,N,pseudocount);
 }
 
 double odds_ratio(vector<pair<Partition,unsigned> > partitions, int i,
@@ -129,7 +121,7 @@ bool covers(const pair<Partition,unsigned>& p1,const pair<Partition,unsigned>& p
   int n1 = p1.second;
   int n2 = p2.second;
 
-  return (odds_ratio(n1,n2,N,pseudocount) < ratio);
+  return (statistics::odds_ratio(n1,n2,N,pseudocount) < ratio);
 }
 
 bool covers(const vector<pair<Partition,unsigned> >& partitions, int exclude,
@@ -342,10 +334,10 @@ void show_level(const tree_sample& tree_dist,
   const vector<Partition> sub = get_Ml_partitions(all_partitions,level);
   const vector<Partition> full = select(sub,&Partition::full);
 
-  const vector<Partition> moveable = get_moveable_tree(sub);
-
-  vector<Partition> full_hull = Ml_min_Hull(full_skeleton,sub);
-  vector<Partition> sub_hull = Ml_min_Hull(skeleton,sub);
+  //  const vector<Partition> moveable = get_moveable_tree(sub);
+  
+  //  vector<Partition> full_hull = Ml_min_Hull(full_skeleton,sub);
+  //  vector<Partition> sub_hull = Ml_min_Hull(skeleton,sub);
     
   double fraction = double(level)/N;
 
@@ -357,9 +349,10 @@ void show_level(const tree_sample& tree_dist,
 
   if (show_sub) {
     cout<<"   sub = "       <<count(sub,informative);
-    cout<<"   consistent = "<<count(moveable,informative);
-    cout<<"   sub#1 = "     <<count(full_hull,informative);
-    cout<<"   sub#2 = "     <<count(sub_hull,informative);
+    //    cout<<"   consistent = "<<count(moveable,informative);
+    //    cout<<"   sub(50) = "<<count(moveable,informative);
+    //    cout<<"   sub#1 = "     <<count(full_hull,informative);
+    //    cout<<"   sub#2 = "     <<count(sub_hull,informative);
   }
 
   if (show_PP)
@@ -487,6 +480,7 @@ int main(int argc,char* argv[])
       double min_rooting = args["rooting"].as<double>();
 
       all_partitions = get_Ml_sub_partitions_and_counts(tree_dist,min_support,not ignore_mask,min_rooting,depth);
+      //      std::cerr<<"n_sub_partitions = "<<all_partitions.size()<<"\n";
     }
     else
       all_partitions = get_Ml_partitions_and_counts(tree_dist,min_support,not ignore_mask);
