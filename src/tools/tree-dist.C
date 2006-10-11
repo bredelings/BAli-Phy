@@ -777,9 +777,13 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
       // match up sub-partitions and full partitions
       vector<int> parents = match(full_partitions,sub_partitions);
 
-      // check for unimplied partitions, or badly-rooted partitions.
+      // check for partitions with increased support when *m is unplugged
       double rooting=1.0;
-      for(int i=0;i<parents.size();i++) {
+      for(int i=0;i<sub_partitions.size();i++) 
+      {
+	if (not informative(sub_partitions[i].first))
+	  continue;
+	    
 	double r = 1;
 	if (parents[i] == -1) {
 	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group1);
@@ -791,16 +795,20 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
 	  assert(r <= 1.0);
 	}
 	rooting = std::min(rooting,r);
+
+	// Store the new sub-partitions we found
+	if (r < 0.999 or 
+	    (parents[i] != -1 and statistics::odds_ratio(sub_partitions[i].second,
+							 full_partitions[parents[i]].second,
+							 sample.size(),
+							 10) > 1.1)
+	    )
+	  partitions.push_back(sub_partitions[i]);
       }
 
       // check if any of our branches make this branch badly rooted
       if (rooting < min_rooting)
 	new_good_masks.push_front(*m);
-
-      // store the new sub-partitions we found
-      for(int i=0;i<sub_partitions.size();i++)
- 	if (informative(sub_partitions[i].first))
-	  partitions.push_back(sub_partitions[i]);
     }
 
     old_masks.insert(old_masks.end(),masks.begin(),masks.end());
