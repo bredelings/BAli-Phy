@@ -1826,6 +1826,21 @@ traditional = traditional
     <title>Auxiliary tools</title>
 
     <sect2>
+      <title>alignment-find</title>
+      <para>Usage: alignment-find [OPTIONS] &lt; <replaceable>alignments-file</replaceable></para>
+      <para>Find the last (or first) FASTA alignment in a file.</para>
+    </sect2>
+
+    <sect2>
+      <title>alignment-draw</title>
+
+      <para>alignment-draw <replaceable>alignment-file</replaceable> [<replaceable>AU-file</replaceable>] [OPTIONS]</para>
+      <para>Draw an alignment to HTML, optionally coloring residues by AU.</para>
+    </sect2>
+
+
+
+    <sect2>
       <title>trees-consensus</title>
       <para>Usage: trees-consensus <replaceable>file</replaceable>
       [OPTIONS] </para>
