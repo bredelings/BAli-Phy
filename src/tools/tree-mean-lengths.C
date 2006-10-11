@@ -137,6 +137,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("skip",value<int>()->default_value(0),"number of tree samples to skip")
     ("max",value<int>(),"maximum number of tree samples to read")
     ("no-node-lengths","ignore branches not in the specified topology")
+    ("safe","Don't die if no trees match the topology");
     ;
 
   // positional options
@@ -212,8 +213,15 @@ int main(int argc,char* argv[])
     if (n_samples == 0)
       throw myexception()<<"No trees were read in!";
   
-    if (n_matches == 0)
-      throw myexception()<<"No trees matched the specified topology!";
+    if (n_matches == 0) {
+      if (args.count("safe")) {
+	std::cerr<<"Error: No trees matched the specified topology!";
+	std::cout<<Q.write(false)<<endl;
+	exit(0);
+      }
+      else 
+	throw myexception()<<"No trees matched the specified topology!";
+    }
   
     std::cerr<<n_matches<<" out of "<<n_samples<<" trees matched the topology";
     std::cerr<<" ("<<double(n_matches)/n_samples*100<<"%)"<<std::endl;

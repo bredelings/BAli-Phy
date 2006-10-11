@@ -99,6 +99,10 @@ much of the variation is spatial?)
 -------------------------------------------------------
 Before 1.9.9:
 
+ * tree-mean-lengths: compute the length of each branch or node, conditioned on the
+   existance of said branch or node.
+   - if a branch doesn't exist - give it length 0.
+   - if a node doesn't exist... also give it length 0?
  * Fix beta distributions.
    - Beta: don't assume the natural scale is 1.0!  Instead compare to true scale.
    - Beta: don't allow a,b < 1?

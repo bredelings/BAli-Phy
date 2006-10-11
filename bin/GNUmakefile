@@ -102,7 +102,7 @@ Results/c-sub-levels.plot : Results/consensus
 
 Results/%.tree : Results/%.topology Work/trees
 	@echo "Calculating branch lengths for $* tree."
-	@tree-mean-lengths $< --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@ 2>/dev/null
+	@tree-mean-lengths $< --safe --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@ 2>/dev/null
 
 Results/MAP.topology: Results/consensus Work/setup
 	@pickout --no-header MAP-0 < $< > $@
