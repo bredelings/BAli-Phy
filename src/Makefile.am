@@ -35,8 +35,8 @@ endif
 endif
 
 if HOST_DARWIN
-vpath %.dylib @extra_libs2@ /sw/lib /opt/lib /opt/local/lib /opt/sw/lib /usr/local/lib
-vpath %.a     @extra_libs2@ /sw/lib /opt/lib /opt/local/lib /opt/sw/lib /usr/local/lib
+vpath %.dylib @extra_libs2@ /sw/lib /opt/lib /opt/local/lib /opt/sw/lib /usr/lib /usr/local/lib
+vpath %.a     @extra_libs2@ /sw/lib /opt/lib /opt/local/lib /opt/sw/lib /usr/lib /usr/local/lib
 if STATIC
 .LIBPATTERNS += lib%.a lib%.dylib 
 else
