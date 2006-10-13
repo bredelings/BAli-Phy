@@ -5,6 +5,7 @@
 #endif
 
 #include <cmath>
+#include <ctime>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -642,6 +643,10 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
       if (i != argc-1) s_out<<" ";
     }
     s_out<<endl;
+    {
+      time_t now = time(NULL);
+      s_out<<"start time: "<<ctime(&now)<<endl;
+    }
     s_out<<"VERSION: "<<BALI_PHY_VERSION<<"\nBUILD: "<<__DATE__<<" "<<__TIME__<<"\n";
     s_out<<"directory: "<<fs::initial_path().string()<<endl;
     if (getenv("JOB_ID"))
