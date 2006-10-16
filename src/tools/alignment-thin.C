@@ -29,6 +29,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("align", value<string>(),"file with sequences and initial alignment")
     ("tree",value<string>(),"file with initial tree")
     ("cutoff",value<double>(),"only leave taxa w/ leaf branches longer than this")
+    ("longer-than",value<unsigned>(),"only leave taxa w/ sequences longer than this")
     ("keep",value<int>(),"number of taxa to keep")
     ;
 
@@ -50,8 +51,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     exit(0);
   }
 
-  if (not args.count("cutoff") and not args.count("keep"))
-    throw myexception()<<"neither keep nor cutoff specified";
+  if (not args.count("cutoff") and not args.count("keep") and not args.count("longer-than"))
+    throw myexception()<<"neither keep nor cutoff nor longer-than specified";
 
   return args;
 }
@@ -77,6 +78,20 @@ int main(int argc,char* argv[])
 
     //----- Standardize order by alphabetical order of names ----//
     vector<string> names;
+
+    if (args.count("longer-than")) {
+      int cutoff = args["longer-than"].as<unsigned>();
+      
+      for(int i=0;i<A.n_sequences();i++)
+      {
+	if (A.seqlength(i) > cutoff) continue;
+
+	string name = T.seq(i);
+
+	names.push_back(name);
+	delete_node(T,name);	
+      }
+    }
 
     while(true) 
     {
