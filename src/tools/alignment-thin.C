@@ -86,13 +86,17 @@ int main(int argc,char* argv[])
       {
 	if (A.seqlength(i) > cutoff) continue;
 
-	string name = T.seq(i);
+	if (T.n_leaves() <= 3)
+	  throw myexception()<<"Trying to remove too many tree leaves!";
+
+	string name = A.seq(i).name;
 
 	names.push_back(name);
 	delete_node(T,name);	
       }
     }
 
+    if (args.count("keep") or args.count("cutoff"))
     while(true) 
     {
       if (T.n_leaves() <= 3)
@@ -132,7 +136,7 @@ int main(int argc,char* argv[])
 
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"Exception: "<<e.what()<<endl;
     exit(1);
   }
   return 0;
