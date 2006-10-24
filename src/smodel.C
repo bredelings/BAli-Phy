@@ -658,16 +658,11 @@ namespace substitution {
   // This should be OK - the increments are linear combinations of gaussians...
 
   /// return the LOG of the prior
-  efloat_t TN::prior() const {
-    double k1 = log(kappa1());
-    double k2 = log(kappa2());
-    
-    double alpha = (k1+k2)/2;
-    double beta  = (k1-k2)/2;
-
+  efloat_t TN::prior() const 
+  {
     efloat_t P = 1;
-    P *= laplace_pdf(alpha, log(2), 0.25);
-    P *= laplace_pdf(beta, 0, 0.10);
+    P *= laplace_pdf(log(kappa1()), log(2), 0.25);
+    P *= laplace_pdf(log(kappa2()), log(2), 0.25);
     return P;
   }
 
