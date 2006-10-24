@@ -50,7 +50,7 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
 unsigned n_with_identity(const alignment& A,int s1,int s2,double I)
 {
   // Get matches
-  vector<int> F(A.length());
+  vector<int> F(A.length()+1);
 
   unsigned L=0;
   unsigned T = 0;
