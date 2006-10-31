@@ -130,24 +130,21 @@ namespace statistics {
     if (max >= N) 
       max = N-1;
 
-    // compute sums for means of X and shift[X,k]
-    vector<double> total(N+1);
-    total[0] = 0;
+    // compute mean of X
+    double mean = 0;
     for(int i=0;i<N;i++)
-      total[i+1] = total[i] + x[i];
+      mean += x[i];
+    mean /= N;
 
     // allocate covariances
     vector<double> rho(max);
 
     // compute each autocorrelation rho[k]
-    for(int k=0;k<max;k++) {
-
-      double xm1 = total[N-k]/(N-k);
-      double xm2 = (total[N] - total[k])/(N-k);
-
+    for(int k=0;k<max;k++) 
+    {
       double total = 0;
       for(int i=0;i<N-k;i++)
-	total += (x[i]-xm1)*(x[i+k]-xm2);
+	total += (x[i]-mean)*(x[i+k]-mean);
 
       rho[k] = total/(N-k);
 
