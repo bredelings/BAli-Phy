@@ -5,6 +5,7 @@
 #include "rng.H"
 #include "choose.H"
 #include "likelihood.H"
+#include "probability.H"
 
 #include "3way.H"
 #include "tree-util.H"
@@ -127,7 +128,7 @@ void remove_duplicates(vector<int>& v) {
   }
 }
 
-MCMC::Result sample_SPR(alignment& A,Parameters& P,int b1,int b2) 
+MCMC::Result sample_SPR(alignment& A,Parameters& P,int b1,int b2,bool change_branch) 
 {
   const int bins = 4;
 
@@ -163,6 +164,17 @@ MCMC::Result sample_SPR(alignment& A,Parameters& P,int b1,int b2)
     int bi = branches[i];
     p[1].setlength(bi,p[1].T.directed_branch(bi).length());
     invalidate_subA_index_branch(a[1], p[1].T, branches[i]);
+  }
+
+  //------------- change connecting branch length ----------------//
+  if (change_branch) {
+    double mu = P.branch_mean();
+    int b1u = P.T.directed_branch(b1).undirected_name();
+    double length1 = P.T.directed_branch(b1).length();
+    double length2 = exponential(mu);
+    efloat_t r = exponential_pdf(length1,mu)/exponential_pdf(length2,mu);
+    ratio *= r;
+    p[1].setlength(b1u,length2);
   }
 
   //----------- sample alignments and choose topology -----------//
@@ -235,14 +247,19 @@ void sample_SPR_flat(alignment& A,Parameters& P,MoveStats& Stats)
 {
   int n = poisson(P.T.n_branches()*0.1);
 
+  bool change_branch = (uniform() < 0.5);
+
   for(int i=0;i<n;i++) {
     int b1 = choose_subtree_branch_uniform(P.T);
 
     int b2 = choose_SPR_target(P.T,b1);
 
-    MCMC::Result result = sample_SPR(A,P,b1,b2);
+    MCMC::Result result = sample_SPR(A,P,b1,b2,change_branch);
 
-    Stats.inc("SPR (flat)", result);
+    if (change_branch)
+      Stats.inc("SPR2 (flat)", result);
+    else
+      Stats.inc("SPR (flat)", result);
   }
 }
 
@@ -350,13 +367,18 @@ void sample_SPR_nodes(alignment& A,Parameters& P,MoveStats& Stats)
 {
   int n = poisson(P.T.n_branches()*0.1);
 
+  bool change_branch = (uniform() < 0.5);
+
   for(int i=0;i<n;i++) {
 
     int b1=-1, b2=-1;
     choose_subtree_branch_nodes(P.T,b1,b2);
 
-    MCMC::Result result = sample_SPR(A,P,b1,b2);
+    MCMC::Result result = sample_SPR(A,P,b1,b2,change_branch);
 
-    Stats.inc("SPR (path)", result);
+    if (change_branch)
+      Stats.inc("SPR2 (path)", result);
+    else
+      Stats.inc("SPR (path)", result);
   }
 }
