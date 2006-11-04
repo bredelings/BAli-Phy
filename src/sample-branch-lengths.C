@@ -194,20 +194,45 @@ vector<double> gamma_approx(const alignment& A, const Parameters& P, int b)
 
 void change_branch_length_flat(const alignment& A, Parameters& P,MoveStats& Stats,int b,double sigma)
 {
+  const double L = P.T.branch(b).length();
+  const double mu = P.branch_mean();
+
   MCMC::Result result = change_branch_length_(A, P, b, sigma*P.branch_mean(), branch_twiddle_positive);
 
-  Stats.inc("branch-length",result);
+  Stats.inc("branch-length *",result);
+  if (L < mu/2.0)
+    Stats.inc("branch-length 1",result);
+  else if (L < mu)
+    Stats.inc("branch-length 2",result);
+  else if (L < mu*2)
+    Stats.inc("branch-length 3",result);
+  else 
+    Stats.inc("branch-length 4",result);
 }
 
 void change_branch_length_log_scale(const alignment& A, Parameters& P,MoveStats& Stats,int b,double sigma)
 {
+  const double L = P.T.branch(b).length();
+  const double mu = P.branch_mean();
+
   MCMC::Result result = change_branch_length_(A, P, b, sigma, scale_gaussian );
 
-  Stats.inc("branch-length (log)",result);
+  Stats.inc("branch-length (log) *",result);
+  if (L < mu/2.0)
+    Stats.inc("branch-length (log) 1",result);
+  else if (L < mu)
+    Stats.inc("branch-length (log) 2",result);
+  else if (L < mu*2)
+    Stats.inc("branch-length (log) 3",result);
+  else 
+    Stats.inc("branch-length (log) 4",result);
 }
 
 void change_branch_length_fit_gamma(const alignment& A, Parameters& P,MoveStats& Stats,int b)
 {
+  const double L = P.T.branch(b).length();
+  const double mu = P.branch_mean();
+
   select_root(P.T, b, P.LC);
 
   vector<double> v = gamma_approx(A,P,b);
@@ -236,7 +261,15 @@ void change_branch_length_fit_gamma(const alignment& A, Parameters& P,MoveStats&
     result.totals[1] = std::abs(length - newlength);
     result.totals[2] = std::abs(log(newlength/length));
   }
-  Stats.inc("branch-length (gamma)",result);
+  Stats.inc("branch-length (gamma) *",result);
+  if (L < mu/2.0)
+    Stats.inc("branch-length (gamma) 1",result);
+  else if (L < mu)
+    Stats.inc("branch-length (gamma) 2",result);
+  else if (L < mu*2)
+    Stats.inc("branch-length (gamma) 3",result);
+  else 
+    Stats.inc("branch-length (gamma) 4",result);
 }
 
 void change_branch_length(const alignment& A, Parameters& P,MoveStats& Stats,int b)
