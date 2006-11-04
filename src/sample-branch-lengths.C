@@ -103,7 +103,7 @@ vector<double> gamma_approx(const alignment& A, const Parameters& P, int b)
 {
   Parameters P2 = P;
   double w = 4;
-  double x2 = 0.2;
+  double x2 = P.branch_mean();
   double x1 = x2/w;
   double x3 = x2*w;
 
