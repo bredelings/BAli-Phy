@@ -43,6 +43,7 @@ int two_way_topology_sample(vector<alignment>& a,vector<Parameters>& p,const vec
 /*-------------- Top Level Sampling Routines -----------*/
 
 void walk_tree_sample_alignments(alignment&, Parameters&, MCMC::MoveStats&);
+void walk_tree_sample_branch_lengths(alignment&, Parameters&, MCMC::MoveStats&);
 void sample_alignments_one(alignment&, Parameters&, MCMC::MoveStats&, int);
 void sample_tri_one(alignment&, Parameters&, MCMC::MoveStats&, int);
 void sample_tri_branch_one(alignment&, Parameters&, MCMC::MoveStats&, int);

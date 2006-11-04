@@ -284,3 +284,19 @@ void walk_tree_sample_alignments(alignment& A, Parameters& P, MoveStats& Stats) 
       sample_alignments_one(A,P,Stats,b);
   }
 }
+
+void walk_tree_sample_branch_lengths(alignment& A, Parameters& P, MoveStats& Stats) 
+{
+  vector<int> branches = walk_tree_path(P.T,P.LC.root);
+
+  for(int i=0;i<branches.size();i++) {
+    int b = branches[i];
+
+    //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+
+    change_branch_length(A,P,Stats,b);
+    slide_node(A,P,Stats,b);
+    change_branch_length(A,P,Stats,b);
+    change_branch_length(A,P,Stats,b);
+  }
+}

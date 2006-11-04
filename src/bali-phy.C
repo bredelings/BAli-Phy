@@ -151,7 +151,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 				   internal_nodes)
 		   );
 
-  alignment_moves.add(2, nodes_moves);
+  alignment_moves.add(10, nodes_moves);
 
   //-------------------- tree (tree_moves) --------------------//
   MoveAll tree_moves("tree");
@@ -219,6 +219,10 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   length_moves.add(1,length_moves1,false);
   length_moves.add(1,SingleMove(scale_branch_lengths_and_mean,
 				"scale_branches_and_mean","lengths:mean")
+		   );
+
+  length_moves.add(1,SingleMove(walk_tree_sample_branch_lengths,
+				"walk_tree_sample_branch_lengths","lengths")
 		   );
 
   tree_moves.add(1,length_moves);
