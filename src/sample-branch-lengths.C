@@ -8,6 +8,7 @@
 #include "substitution.H"
 #include "likelihood.H"
 #include "proposals.H"
+#include <gsl/gsl_cdf.h>
 
 using MCMC::MoveStats;
 
@@ -37,7 +38,7 @@ double branch_twiddle_positive(double& T,double sigma) {
 MCMC::Result change_branch_length_(const alignment& A, Parameters& P,int b,
 				   double sigma,double (*twiddle)(double&,double)) 
 {
-  MCMC::Result result(2);
+  MCMC::Result result(3);
   
   //------------ Propose new length -------------//
   const double length = P.T.branch(b).length();
@@ -55,9 +56,140 @@ MCMC::Result change_branch_length_(const alignment& A, Parameters& P,int b,
   if (do_MH_move(A,P,P2,ratio)) {
     result.totals[0] = 1;
     result.totals[1] = std::abs(length - newlength);
+    result.totals[2] = std::abs(log(length/newlength));
   }
 
   return result;
+}
+
+
+double logp_(const alignment& A, Parameters& P, int b,double l)
+{
+  P.setlength(b,l);
+  return log(P.probability(A,P));
+}
+
+vector<double> fit_quadratic(double x1,double x2,double x3,double y1,double y2,double y3)
+{
+  double D = x1*x1*(x2-x3) - x2*x2*(x1-x3) + x3*x3*(x1-x2);
+  vector<double> v(3);
+  v[0] = y1*(x2-x3) - y2*(x1-x3) + y3*(x1-x2);
+  v[1] = x1*x1*(y2-y3) - x2*x2*(y1-y3) + x3*x3*(y1-y2);
+  v[2] = x1*x1*(x2*y3-x3*y2) - x2*x2*(x1*y3-x3*y1) + x3*x3*(x1*y2-x2*y1);
+  for(int i=0;i<v.size();i++)
+    v[i] /= D;
+
+  return v;
+}
+
+vector<double> fit_gamma(double x1,double x2,double x3,double y1,double y2,double y3)
+{
+  double D = log(x1)*(x2-x3) - log(x2)*(x1-x3) + log(x3)*(x1-x2);
+  vector<double> v(3);
+  v[0] = y1*(x2-x3) - y2*(x1-x3) + y3*(x1-x2);
+  v[1] = log(x1)*(y2-y3) - log(x2)*(y1-y3) + log(x3)*(y1-y2);
+  v[2] = log(x1)*(x2*y3-x3*y2) - log(x2)*(x1*y3-x3*y1) + log(x3)*(x1*y2-x2*y1);
+  for(int i=0;i<v.size();i++)
+    v[i] /= D;
+
+  //  std::cerr<<"x1 = "<<x1<<"\n";
+  //  std::cerr<<"x2 = "<<x2<<"\n";
+  //  std::cerr<<"x3 = "<<x3<<"\n";
+
+  return v;
+}
+
+vector<double> gamma_approx(const alignment& A, const Parameters& P, int b)
+{
+  Parameters P2 = P;
+  double w = 4;
+  double x2 = 0.2;
+  double x1 = x2/w;
+  double x3 = x2*w;
+
+  double L1 = logp_(A,P2,b,x1);
+  double L2 = logp_(A,P2,b,x2);
+  double L3 = logp_(A,P2,b,x3);
+
+  vector<double> v(3,0);
+  v[1] = -1.0/P.branch_mean();
+
+  for(int i=0;i<5;i++) 
+  {
+    vector<double> v2 = fit_gamma(x1,x2,x3,L1,L2,L3);
+    double a = v2[0]+1.0;
+    double B = -1.0/v2[1];
+
+    //    std::cerr<<"i = "<<i<<"  L = "<<P.T.branch(b).length()<<"  a = "<<a<<"  b = "<<B<<"  mu = "<<a*B<<"  s = "<<1.0/sqrt(a)<<"  w = "<<w<<"\n";
+
+    bool success = false;
+    if (a > 0 and B > 0) {
+      double xm = -v2[0]/v2[1];
+      if (xm < 0) xm = 1.0e-6;
+      double Lm = logp_(A,P2,b,xm);
+      double max = std::max(L1,std::max(L2,L3));
+
+      if (Lm < max) {
+	//	std::cerr<<"predicted max at "<<xm<<" but "<<Lm<<" < "<<max<<"\n";
+	if (v[0] == 0) v=v2;
+      }
+      else {
+	success = true;
+	x2 = xm;
+	L2 = Lm;
+	double a_old = v[0]+1.0;
+	double B_old = -1.0/v[1];
+	double mu_old = a_old * B_old;
+	double sd_old = B_old*sqrt(a_old);
+	double mu = a*B;
+	double sd = B*sqrt(a);
+
+	v = v2;
+	if (std::abs(log(sd/sd_old)) < 0.05 and std::abs((mu-mu_old)/sd)< 0.05) {
+	  //	  std::cerr<<"done!\n";
+	  break;
+	}
+
+
+	x1 = gsl_cdf_gamma_Pinv(0.05,a,B);
+	if (x2 < x1)
+	  x1 = gsl_cdf_gamma_Pinv(0.25,a,B);
+	else
+	  x1 = gsl_cdf_gamma_Pinv(0.01,a,B);
+	  
+	L1 = logp_(A,P2,b,x1);
+	
+	x3 = gsl_cdf_gamma_Pinv(0.99,a,B);
+	L3 = logp_(A,P2,b,x3);
+
+	w = 2.0*B*sqrt(a);
+      }
+    }
+
+    if (not success) {
+      if (L2 > L1 and L2> L3) {
+	w = sqrt(w);
+	x1 = x2/w;
+	x3 = x2*w;
+	L1 = logp_(A,P2,b,x1);
+	L3 = logp_(A,P2,b,x3);
+      }
+      else if (L1 > L2 and L1 > L3) {
+	x3 = x2;L3 = L2;
+	x2 = x1;L2 = L1;
+	x1 = x2/w;
+	L1 = logp_(A,P2,b,x1);
+      }
+      else {
+	x1 = x2; L1 = L2;
+	x2 = x3; L2 = L3;
+	x3 = x2*w;
+	L3 = logp_(A,P2,b,x3);
+      }
+    }
+  }
+
+  return v;
 }
 
 void change_branch_length_flat(const alignment& A, Parameters& P,MoveStats& Stats,int b,double sigma)
@@ -74,11 +206,46 @@ void change_branch_length_log_scale(const alignment& A, Parameters& P,MoveStats&
   Stats.inc("branch-length (log)",result);
 }
 
-void change_branch_length(const alignment& A, Parameters& P,MoveStats& Stats,int b) {
+void change_branch_length_fit_gamma(const alignment& A, Parameters& P,MoveStats& Stats,int b)
+{
+  select_root(P.T, b, P.LC);
 
-  double r = loadvalue(P.keys,"log_branch_fraction",0.75);
+  vector<double> v = gamma_approx(A,P,b);
 
-  if (myrandomf() < r) {
+  double a = v[0]+1.0;
+  double B = -1.0/v[1];
+  if (a < 0 or B<0)
+    return;
+  
+  MCMC::Result result(3);
+  
+  //------------ Propose new length -------------//
+  const double length = P.T.branch(b).length();
+  double newlength = gamma(a,B);
+  
+  double ratio = gsl_ran_gamma_pdf(length,a,B)/gsl_ran_gamma_pdf(newlength,a,B);
+  
+  //---------- Construct proposed Tree ----------//
+  
+  Parameters P2 = P;
+  P2.setlength(b,newlength);
+  
+  //--------- Do the M-H step if OK--------------//
+  if (do_MH_move(A,P,P2,ratio)) {
+    result.totals[0] = 1;
+    result.totals[1] = std::abs(length - newlength);
+    result.totals[2] = std::abs(log(newlength/length));
+  }
+  Stats.inc("branch-length (gamma)",result);
+}
+
+void change_branch_length(const alignment& A, Parameters& P,MoveStats& Stats,int b)
+{
+  double p = loadvalue(P.keys,"fraction_fit_gamma",0.01);
+  if (myrandomf() < p)
+    change_branch_length_fit_gamma(A, P, Stats, b);
+  else if (myrandomf() < 0.5)
+  {
     double sigma = loadvalue(P.keys,"log_branch_sigma",0.6);
     change_branch_length_log_scale(A, P, Stats, b, sigma);
   }
