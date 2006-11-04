@@ -16,7 +16,19 @@
    (b) m[n] = exp(n\times\mu+n^2d^2/2) for log-normal
    (c) m[n] = \prod_0^n-1 (\alpha+i)/(\alpha+\beta+i)
 
+4. Branch length proposals
+   (a) Can we SPEED UP the procedure to fit/estimate the posterior to a gamma?
+   (b) Single branch: can we accept more NNI/SPR if we sample the branch length?
+   (c) Can we sample from a MULTIPLE branch distribution?
 
+5. Topology proposals which alter branches
+   (1) SPR connecting branch
+   (2) SPR branch + merged branch
+   (3) SPR branch + split branch (2)
+   (4) SPR branch + split branch (2) + merged branch (1)
+   (6) SPR branch + merged branch (1) + neighbors (4)
+   (7) SPR branch + split branch (2) + neighbors (4)
+   (12) SPR branch + merged branch (1) + neighbors (4) + split branch (2) + neighbors (4)
 
 4. How much of the sequence is in each %-identity fraction?
   a) How much information is in each fraction?
@@ -50,11 +62,12 @@
   e) percentage of sites w/ an indel
   f) print the column number in the comments of each row
 
-10. Use a RJMCMC on a fixed alignment to model local changes in 'mu'
+10. Use a RJMCMC on a fixed alignment to model locate changes in 'mu'
    +  or use a change-point model?
    +  or use a *nested* Change Point Model?
    + we need some way to find out if the gamma model "fits" well! (how
 much of the variation is spatial?)
+
 
 1. Test sampling of epsilon.  (Implement model where lambda & epsilon not coupled?)
   a) e-mail about the method for converting matrices from WAG to codon level.
@@ -67,6 +80,7 @@ much of the variation is spatial?)
 8. How about switching from '!' to '*' to indicate stop codons? 
    (And stop using * as a wildcard character? We could use '.' instead, based on regular expressions.
     And in most cases we can use N or X anyway.)
+
 --------------------------------------------------------
 
 -48. Indel model where we sum over all root locations: doesn't work for SPR?
