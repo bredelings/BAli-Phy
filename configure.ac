@@ -125,7 +125,7 @@ if test "$GXX" = yes ; then
   elif test "$debug" = nodefs ; then
     CXXFLAGS="$CXXFLAGS -g"
     CXXFLAGS="$CXXFLAGS $CHIP"
-    CXXFLAGS="$CXXFLAGS -O3 -funroll-loops -fweb"
+    CXXFLAGS="$CXXFLAGS -O -funroll-loops -fweb"
   else
     CXXFLAGS="$CXXFLAGS $CHIP"
     CXXFLAGS="$CXXFLAGS -O3 -funroll-loops -fweb"
