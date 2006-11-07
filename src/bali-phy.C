@@ -151,7 +151,9 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 				   internal_nodes)
 		   );
 
-  alignment_moves.add(10, nodes_moves);
+  int nodes_weight = (int)(loadvalue(P.keys,"nodes_weight",1.0)+0.5);
+
+  alignment_moves.add(nodes_weight, nodes_moves);
 
   //-------------------- tree (tree_moves) --------------------//
   MoveAll tree_moves("tree");
