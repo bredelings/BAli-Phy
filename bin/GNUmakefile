@@ -142,6 +142,16 @@ Results/c%.topology: Results/consensus Work/setup
 	@pickout --no-header $*-consensus < $< > $@ 
 	@test -s $@
 
+Results/c%.mtree: Results/consensus Work/setup
+	@pickout --no-header --multi-line $*-consensus < $< > $@ 
+	@test -s $@
+
+Results/c%.dot: Results/c%.mtree
+	@draw-graph $< > $@
+
+Results/c%.ps: Results/c%.dot
+	@neato -Tps $< > $@
+
 Mixing/partitions.SRQ: Work/trees Work/partitions.pred
 	@echo -e "Generating SRQ plot for c50 partitions... \c"
 	@trees-to-SRQ Work/partitions.pred --skip ${SKIP} ${SIZE:%=--max %} < Work/trees> $@
