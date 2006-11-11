@@ -28,6 +28,17 @@ string getvalue(const string& line,int pos1) {
   return line.substr(pos1,pos2-pos1);
 }
 
+string get_multivalue(const string& line1,int pos1,std::istream& file) 
+{
+  string result = line1.substr(pos1);
+  string line;
+  while (getline(file,line) and line.size()) {
+    result += "\n";
+    result += line;
+  }
+  return result;
+}
+
 string get_largevalue(const string& line,int pos1) {
   return line.substr(pos1);
 }
@@ -46,7 +57,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   visible.add_options()
     ("help", "Produce help message.")
     ("no-header","Suppress the line of field names.")
-    ("large","Read one large value to the end of the line.")
+    ("large","The last value goes to the end of the line.")
+    ("multi-line","The last continues until a blank line.")
     ;
 
   // positional options
@@ -106,12 +118,14 @@ int main(int argc,char* argv[])
       }
       if (not linematches) continue;
       
+      for(int i=0;i<patterns.size()-1;i++)
+	words[i] = getvalue(line,matches[i] + patterns[i].size());
       if (args.count("large"))
-	for(int i=0;i<patterns.size();i++)
-	  words[i] = get_largevalue(line,matches[i] + patterns[i].size());
+	words.back() = get_largevalue(line,matches.back() + patterns.back().size());
+      else if (args.count("multi-line"))
+	words.back() = get_multivalue(line,matches.back() + patterns.back().size(),cin);
       else
-	for(int i=0;i<patterns.size();i++)
-	  words[i] = getvalue(line,matches[i] + patterns[i].size());
+	words.back() = getvalue(line,matches.back() + patterns.back().size());
 
       cout<<join(words,'\t')<<"\n";
     }
