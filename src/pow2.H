@@ -3,6 +3,14 @@
 
 #include <cmath>
 #include <cstdlib>
+#include "config.h"
+
+#ifndef HAVE_LOG2
+inline double log2(double x)
+{
+  return log(x)*M_LOG2E;
+}
+#endif
 
 namespace fp_scale {
 
