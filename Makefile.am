@@ -13,8 +13,12 @@ nobase_stuff_DATA = Data/wag.dat Data/wagstar.dat Data/jtt.dat Data/pam.dat \
 
 examplesdir = $(datadir)/@PACKAGE@/
 nobase_examples_DATA = examples/EF-Tu/5d.fasta examples/EF-Tu/12d.fasta examples/EF-Tu/48b.fasta \
-                examples/5S-rRNA/5d.fasta examples/5S-rRNA/21.fasta \
-		examples/5S-rRNA/48.fasta
+                examples/5S-rRNA/5d.fasta examples/5S-rRNA/5d-muscle.fasta \
+		examples/5S-rRNA/5d-clustalw.fasta examples/5S-rRNA/5d-clustalw.dnd \
+                examples/5S-rRNA/25.fasta examples/5S-rRNA/25-muscle.fasta \
+		examples/5S-rRNA/25-clustalw.fasta examples/5S-rRNA/25-clustalw.dnd \
+                examples/5S-rRNA/48.fasta examples/5S-rRNA/48-muscle.fasta \
+		examples/5S-rRNA/48-clustalw.fasta examples/5S-rRNA/48-clustalw.dnd
 
 EXTRA_HEADERS = @top_srcdir@/include/tnt/tnt_array1d.h \
                 @top_srcdir@/include/tnt/tnt_array2d.h \
