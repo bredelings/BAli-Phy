@@ -39,6 +39,30 @@ using namespace statistics;
 // What if everything in 'split' is true, but 1 taxa?
 //  These are true by definition...
 
+bool operator==(const vector<Partition>& p1,const vector<Partition>& p2)
+{
+  if (p1.size() != p2.size())
+    return false;
+
+  for(int i=0;i<p1.size();i++)
+    if (not includes(p2,p1[i]))
+      return false;
+
+  return true;
+}
+
+
+vector<vector<Partition> > remove_duplicates(vector<vector<Partition> >& partitions)
+{
+  vector<vector<Partition> > partitions2;
+  for(int i=0;i<partitions.size();i++)
+    if (not includes(partitions2,partitions[i]))
+      partitions2.push_back(partitions[i]);
+
+  return partitions2;
+}
+
+
 double getsum(const valarray<double>& v) {
   return v.sum();
 }
@@ -368,6 +392,8 @@ int main(int argc,char* argv[])
     //----------- Load Partitions ---------------//
     vector<vector<Partition> > partitions;
     load_partitions(args["predicates"].as<string>(), partitions);
+
+    partitions = remove_duplicates(partitions);
 
     //------- evaluate/cache predicate for each topology -------//
     vector< vector<valarray<bool> > > results(partitions.size());
