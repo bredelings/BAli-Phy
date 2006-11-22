@@ -165,7 +165,7 @@ AM_CONDITIONAL(HOST_PPC,test "${host_cpu}" = powerpc)
 AC_HEADER_STDC
 AC_FUNC_MALLOC
 AC_FUNC_SELECT_ARGTYPES
-AC_CHECK_FUNCS([floor pow sqrt strchr])
+AC_CHECK_FUNCS([floor pow sqrt strchr log2])
 
 #AC_CONFIG_FILES([GNUmakefile])
 AC_OUTPUT([
