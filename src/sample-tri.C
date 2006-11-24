@@ -1,7 +1,7 @@
 #include <valarray>
 #include <iostream>
 #include <cmath>
-#include "sample.H"
+
 #include "logsum.H"
 #include "choose.H"
 #include "bits.H"
