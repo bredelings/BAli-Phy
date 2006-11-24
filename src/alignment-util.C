@@ -705,7 +705,6 @@ list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphab
     assert(kill.empty());
     cerr<<" to "<<alignments.size()<<" alignments.\n";
   }
-  cerr<<"Scanned "<<nth<<" alignments total.\n";
 
   return alignments;
 }
