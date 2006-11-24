@@ -147,11 +147,11 @@ vector<int> get_cliques(const ublas::matrix<int>& connected)
 }
 
 // FIXME - page="8.5,11" ?
-void draw_graph(const MC_tree& T)
+void draw_graph(const MC_tree& T,const string& name)
 {
   const int N = T.n_nodes;
 
-  cout<<"digraph T { \n\
+  cout<<"digraph "<<name<<" { \n\
 \n\
       nodesep=1.0\n\
       ratio=auto\n\
@@ -215,7 +215,8 @@ int main(int argc,char* argv[])
 
     //----------- Load Partitions ---------------//
     vector<vector<Partition> > partitions1;
-    load_partitions(args["file"].as<string>(), partitions1);
+    string filename = args["file"].as<string>();
+    load_partitions(filename, partitions1);
 
     vector<Partition> partitions = partitions1[0];
 
@@ -341,7 +342,11 @@ int main(int argc,char* argv[])
 	  T.edges.push_back(edge(i,j,2,-1));
 
     //draw the graph
-    draw_graph(T);
+    int dot = filename.find('.');
+    string name = filename;
+    if (dot != -1)
+      name = filename.substr(0,dot);
+    draw_graph(T,name);
   }
   catch (std::exception& e) {
     cerr<<"Exception: "<<e.what()<<endl;
