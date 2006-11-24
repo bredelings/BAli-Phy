@@ -1052,7 +1052,7 @@ vector<Partition> get_moveable_tree(vector<Partition> partitions)
   // we can't remove leaf partitions
   vector<bool> invincible(N,true);
   for(int i=0;i<N;i++)
-    invincible[i] = is_leaf_partition(partitions[i]);
+    invincible[i] = partitions[i].full(); //is_leaf_partition(partitions[i]);
 
 
   vector<bool> solution = solve_conflicts(conflict,dominates,invincible);
