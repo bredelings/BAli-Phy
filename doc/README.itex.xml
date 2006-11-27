@@ -180,6 +180,11 @@
     <sect1>
       <title>Compiling <application>BAli-Phy</application></title>
 
+      <para>If you are compiling source code that you checked out using
+      subversion (and you probably aren't) then follow the directions
+      in <xref linkend="svnsource"/> before you start compiling.
+      </para>
+
       <sect2>
 	<title>Quick Start</title>
       <para>In order to compile the program on UNIX, first
@@ -187,7 +192,7 @@
       manager, or the command-line tool <command>tar</command>:
       
       <screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-1.9.9.tgz</userinput></screen>
-      Then create a build directory, enter it, and run the
+      Then create a <emphasis>separate</emphasis> build directory, enter it, and run the
       configure command:
 
       <screen><prompt>%</prompt> <userinput>mkdir build</userinput>
@@ -278,6 +283,31 @@
 	</para> 
       </sect2>
 	    
+      <sect2 id="svnsource">
+	<title>Generating Autoconf/Automake files</title> 
+	<para>This step is <emphasis>only</emphasis> necessary if you
+	are using the subversion (SVN) source.  It is
+	<emphasis>not</emphasis> necessary if you are compiling from a
+	distributed tar.gz archive of the source, because these
+	archives already include the files that this step will
+	generate, such as the <filename>configure</filename> script
+	and some Makefiles.
+	</para>
+
+	<para>To generate these files, you need automake 1.8 or higher
+	and autoconf 2.59 or higher.  Run these commands inside the
+	<filename>trunk/</filename> directory that you checked out.<screen><prompt>%</prompt> <userinput>autoheader</userinput>
+<prompt>%</prompt> <userinput>aclocal</userinput>
+<prompt>%</prompt> <userinput>automake -a</userinput>
+<prompt>%</prompt> <userinput>autoconf</userinput>
+</screen>
+        If your system has multiple version of automake, then you may
+	have to type <userinput>automake-1.8 -a</userinput> and
+	<userinput>aclocal-1.8</userinput> instead in order to specify which
+	version to use.
+	</para>
+      </sect2>
+
 
       <sect2>
 	<title>Examples</title>
