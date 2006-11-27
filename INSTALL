@@ -1,8 +1,22 @@
 See doc/README.xhtml
 
-To compile and install
+---- Compiling from subversion source ----
 
-Ultra Quick Version:
+This step is ONLY necessary if you are using the subversion source.
+Tarballs of the source should include the files that this step
+generates.  
+
+You need automake 1.8 or higher and autoconf 2.59 or higher to
+generate these files.
+
+% autoheader
+% aclocal
+% automake -a
+% autoconf
+
+These commands generate the configure script and Makefiles.
+
+--- Ultra Quick Version ---
 
 % tar -zxf bali-phy-<version>.tgz
 % cd bali-phy-<version>
@@ -10,7 +24,7 @@ Ultra Quick Version:
 % make
 % make install
 
-Quick Version:
+------- Quick Version ------
 
 1. Extract the sources:
 
