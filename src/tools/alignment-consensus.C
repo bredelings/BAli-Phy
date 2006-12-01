@@ -1,3 +1,5 @@
+#include <map>
+#include <utility>
 #include <fstream>
 #include <string>
 #include <cmath>
@@ -15,6 +17,9 @@
 #include "alignment-util.H"
 #include "distance-methods.H"
 #include "rng.H"
+#include "statistics.H"
+
+
 
 #include <boost/program_options.hpp>
 
@@ -56,6 +61,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("cutoff",value<double>()->default_value(0.75),"ignore events below this probability")
     ("strict","require all implied pairs pass the cutoff")
+    ("uncertainty",value<string>(),"file-name for AU uncertainty vs level")
     ;
 
   variables_map args;     
@@ -82,6 +88,7 @@ struct Edge
   int s2;
   int x2;
 
+  unsigned count;
   double p;
 };
 
@@ -198,7 +205,8 @@ void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
 	e.s2 = s2;
 	e.x2 = j-1;
 
-	e.p  = double(count(i,j))/Ms.size();
+	e.count = count(i,j);
+	e.p  = double(e.count)/Ms.size();
 
 	E.insert(e);
       }
@@ -210,6 +218,9 @@ class matrix: public ublas::matrix<int>
   vector<vector<int> > column_index;
 
 public:
+
+  int columns;
+  int unknowns;
 
   int  index(int i,int j) const {return (*this)(i,j);}
   int& index(int i,int j)       {return (*this)(i,j);}
@@ -225,11 +236,14 @@ public:
   bool consistent(int c1, int c2,const Edges& E, double cutoff) const;
 
   void merge_columns(int c1,int c2);
-  void merge_simple(const Edges& E,double p);
-  void merge_strict(const Edges& E,double p);
+  map<unsigned,pair<unsigned,unsigned> > merge(const Edges& E,double p,bool strict);
 
-  matrix(int C,const vector<int>& L)
-    :ublas::matrix<int>(C,L.size())
+  unsigned n_unknown() const;
+
+  unsigned n_columns() const;
+
+  matrix(int C, const vector<int>& L)
+    :ublas::matrix<int>(C,L.size()),columns(C),unknowns(0)
   {
     for(int i=0;i<L.size();i++)
       column_index.push_back(vector<int>(L[i]));
@@ -238,11 +252,7 @@ public:
 
 matrix unaligned_matrix(const vector<int>& L) 
 {
-  int C = 0;
-  for(int i=0;i<L.size();i++)
-    C += L[i];
-
-  matrix M(C,L);
+  matrix M(sum(L),L);
   
   for(int i=0;i<M.size1();i++)
     for(int j=0;j<M.size2();j++)
@@ -255,7 +265,11 @@ matrix unaligned_matrix(const vector<int>& L)
       M(c,i) = j;
     }
   }
-  assert(c == C);
+
+  M.unknowns = M.size1()*(M.size2()-1);
+
+  //  if (M.unknowns != M.n_unknown()) {std::cerr<<"A";abort();}
+  //  if (M.columns != M.n_columns()) {std::cerr<<"B";abort();}
 
   return M;
 }
@@ -303,36 +317,89 @@ bool matrix::consistent(int c1, int c2,const Edges& E, double cutoff) const
   return true;
 }
 
+unsigned count_unknowns(const matrix& M,int c)
+{
+  unsigned total = 0;
+  for(int i=0;i<M.size2();i++)
+    if (M(c,i) == alphabet::unknown)
+      total++;
+  return total;
+}
+
 void matrix::merge_columns(int c1, int c2) 
 {
+  //  if (n_unknown() != unknowns)
+  //    {cerr<<"D";abort();}
+
+  int before = count_unknowns(*this,c1)+count_unknowns(*this,c2);
+
   if (c1 > c2) std::swap(c1,c2);
 
   for(int i=0;i<size2();i++) 
   {
     // don't need to move an 'unknown'
-    if (index(c2,i) == -3)
+    if (index(c2,i) == alphabet::unknown)
       continue;
 
     // need to move a 'gap', and can merge with another 'gap'
-    if (index(c2,i) == -1) {
-      assert(index(c1,i) == -3 or index(c1,i) == -1);
-      index(c2,i) = -3;
-      index(c1,i) = -1;
-    }
+    if (index(c2,i) == alphabet::gap) 
+      assert(index(c1,i) == alphabet::unknown or index(c1,i) == alphabet::gap);
 
     // need to move a letter, and cannot merge w/ anything.
     else {
       assert(index(c2,i) >= 0);
+      assert(index(c1,i) == alphabet::unknown);
 
-      assert(index(c1,i) == -3);
-
-      index(c1,i) = index(c2,i);
-
-      column(i,index(c1,i)) = c1;
+      column(i,index(c2,i)) = c1;
     }
+
+    index(c1,i) = index(c2,i);
+    index(c2,i) = alphabet::unknown;
   }  
+
+  int after = count_unknowns(*this,c1);
+
+  unknowns = unknowns + after - before;
+  columns--;
+
+  //  if (n_unknown() != unknowns)
+  //    {cerr<<"E";abort();}
+
 }
 
+
+unsigned matrix::n_unknown() const
+{
+  unsigned total = 0;
+  for(int i=0;i<size1();i++) {
+    unsigned c_total_u = 0;
+    unsigned c_total = 0;
+    for(int j=0;j<size2();j++)
+      if ((*this)(i,j) == alphabet::unknown)
+	c_total_u++;
+      else if ((*this)(i,j) >= 0)
+	c_total++;
+    if (c_total)
+      total += c_total_u;
+  }
+
+  return total;
+}
+
+unsigned matrix::n_columns() const
+{
+  unsigned total = 0;
+  for(int i=0;i<size1();i++) {
+    unsigned c_total = 0;
+    for(int j=0;j<size2();j++)
+      if ((*this)(i,j) >= 0)
+	c_total++;
+    if (c_total)
+      total++;
+  }
+
+  return total;
+}
 
 bool skips(const ublas::matrix<int>& M,int c,const vector<int>& index) {
   for(int i=0;i<M.size2();i++) {
@@ -347,80 +414,63 @@ bool skips(const ublas::matrix<int>& M,int c,const vector<int>& index) {
   return false;
 }
 
-void matrix::merge_simple(const Edges& E,double cutoff)
+map<unsigned,pair<unsigned,unsigned> > matrix::merge(const Edges& E,double cutoff,bool strict)
 {
-    //-------- Merge some columns --------//
-    foreach(e,E) 
-    {
-      if (e->p < cutoff) break;
+  map<unsigned,pair<unsigned,unsigned> > graph;
 
-      if (e->x2 == -1) {
-	int c1 = column(e->s1,e->x1);
+  //-------- Merge some columns --------//
+  foreach(e,E) 
+  {
+    if (e->p < cutoff) break;
 
-	if (index(c1,e->s2) == -3)
-	  index(c1,e->s2) = -1;
-      }
-      else if (e->x1 == -1) {
-	int c1 = column(e->s2,e->x2);
+    if (e->x2 == -1) {
+      int c1 = column(e->s1,e->x1);
 
-	if (index(c1,e->s1) == -3)
-	  index(c1,e->s1) = -1;
-
-      }
-      else {
-	assert(e->x1 >= 0 and e-> x2>=0);
-
-	int c1 = column(e->s1,e->x1);
-	int c2 = column(e->s2,e->x2);
-
-	if (c1 == c2) continue;
-
-	if (not columns_conflict(c1,c2))
-	  merge_columns(c1,c2);
+      if (index(c1,e->s2) == -3) {
+	unknowns--;
+	index(c1,e->s2) = -1;
       }
     }
-}
+    else if (e->x1 == -1) {
+      int c2 = column(e->s2,e->x2);
 
-void matrix::merge_strict(const Edges& E,double cutoff)
-{
-    //-------- Merge some columns --------//
-    foreach(e,E) 
-    {
-      if (e->p < cutoff) break;
+      if (strict and not consistent(c2,e->s1,-1,E,cutoff))
+	continue;
 
-      if (e->x2 == -1) {
-	int c1 = column(e->s1,e->x1);
-
-	if (not consistent(c1,e->s2,-1,E,cutoff))
-	  continue;
-
-	if (index(c1,e->s2) == -3)
-	  index(c1,e->s2) = -1;
-      }
-      else if (e->x1 == -1) {
-	int c1 = column(e->s2,e->x2);
-
-	if (not consistent(c1,e->s1,-1,E,cutoff))
-	  continue;
-
-	if (index(c1,e->s1) == -3)
-	  index(c1,e->s1) = -1;
-
-      }
-      else {
-	assert(e->x1 >= 0 and e-> x2>=0);
-
-	int c1 = column(e->s1,e->x1);
-	int c2 = column(e->s2,e->x2);
-
-	if (c1 == c2) continue;
-
-	if (not columns_conflict(c1,c2) and 
-	    consistent(c1,c2,E,cutoff))
-	  merge_columns(c1,c2);
+      if (index(c2,e->s1) == -3) {
+	unknowns--;
+	index(c2,e->s1) = -1;
       }
     }
+    else 
+    {
+      assert(e->x1 >= 0 and e-> x2>=0);
+
+      int c1 = column(e->s1,e->x1);
+      int c2 = column(e->s2,e->x2);
+
+      if (c1 == c2)
+	continue;
+
+      if (columns_conflict(c1,c2))
+	continue;
+
+      if (strict and not consistent(c1,c2,E,cutoff))
+	continue;
+	  
+      merge_columns(c1,c2);
+    }
+
+    graph[e->count] = pair<unsigned,unsigned>(columns,unknowns);
+    //      if (n_columns() != columns)
+    //	abort();
+    //      if (n_unknown() != unknowns)
+    //	{cerr<<"C";abort();}
+  }
+
+  return graph;
 }
+
     
 
 ublas::matrix<int> get_ordered_matrix(const matrix& M)
@@ -504,6 +554,7 @@ int main(int argc,char* argv[])
   try {
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
+    bool strict = args.count("strict")>0;
 
     //---------- Initialize random seed -----------//
     unsigned long seed = 0;
@@ -557,16 +608,35 @@ int main(int argc,char* argv[])
     //-------- Build a beginning alignment --------//
     matrix M = unaligned_matrix(L);
 
-    if (args.count("strict"))
-      M.merge_strict(E,cutoff);
-    else
-      M.merge_simple(E,cutoff);
+    map<unsigned,pair<unsigned,unsigned> > graph = M.merge(E,cutoff,strict);
 
     ublas::matrix<int> M2 = get_ordered_matrix(M);
 
     alignment consensus = get_alignment(M2,alignments[0]);
 
     std::cout<<consensus<<std::endl;
+
+
+    if (args.count("uncertainty")) {
+
+      string filename = args["uncertainty"].as<string>();
+      ofstream graph_file(filename.c_str());
+
+      int total_seq_length=0;
+      for(int i=0;i<L.size();i++)
+	total_seq_length += L[i];
+
+      double scale1 = double(N)/total_seq_length;
+      double scale2 = 1.0/total_seq_length;
+
+      foreach(i,graph) {
+	double LOD = log10(statistics::odds((*i).first,Ms.size(),1));
+	unsigned columns = (*i).second.first;
+	unsigned unknowns = (*i).second.second;
+	graph_file<<LOD<<" "<<unknowns*scale2<<"  "<<columns*scale1<<endl;
+      }
+      graph_file.close();
+    }
 
   }
   catch (std::exception& e) {

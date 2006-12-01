@@ -36,7 +36,7 @@ Work/setup:
 ifeq ($(IMODEL),none)
 AU_TARGETS=
 else
-AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/consensus.fasta Results/consensus-AU.html Results/consensus-AU2.html
+AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/au-graph.plot Results/consensus.fasta Results/consensus-AU.html Results/consensus-AU2.html
 endif
 
 Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
@@ -118,9 +118,9 @@ Work/median-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
 	@alignment-reorder Work/$*-unordered.fasta Results/c50.tree > $@ 2>/dev/null
 
-Work/consensus-unordered.fasta: Work/samples-${SKIP}+${SIZE}
+Results/au-graph.plot Work/consensus-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 	@echo -e "Computing consensus alignment ... \c"
-	@alignment-consensus < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
+	@alignment-consensus --cutoff=0.5 --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
 	@echo "done."
 
 Results/%-AU.prob: Results/%.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree
