@@ -20,15 +20,20 @@
    (a) Can we SPEED UP the procedure to fit/estimate the posterior to a gamma?
    (b) Single branch: can we accept more NNI/SPR if we sample the branch length?
    (c) Can we sample from a MULTIPLE branch distribution?
+   (d) Can we ignore the indel effects on branch lengths when we do?
+   (e) How does the acceptance rate for fit_gamma depend on n_retries?
 
-5. Topology proposals which alter branches
+5. Topology proposals which alter multiple branches:
    (1) SPR connecting branch
    (2) SPR branch + merged branch
    (3) SPR branch + split branch (2)
    (4) SPR branch + split branch (2) + merged branch (1)
-   (6) SPR branch + merged branch (1) + neighbors (4)
-   (7) SPR branch + split branch (2) + neighbors (4)
-   (12) SPR branch + merged branch (1) + neighbors (4) + split branch (2) + neighbors (4)
+   (5) SPR branch + split branch (2) + adjacent in pruned tree (2)
+   (6) SPR branch + split branch (2) + merged branch (1) + adjacent in pruned tree (2)
+
+   (6?) SPR branch + merged branch (1) + neighbors (4)
+   (7?) SPR branch + split branch (2) + neighbors (4)
+   (12?) SPR branch + merged branch (1) + neighbors (4) + split branch (2) + neighbors (4)
 
 4. How much of the sequence is in each %-identity fraction?
   a) How much information is in each fraction?
@@ -144,7 +149,7 @@ Before 1.9.9:
  * Separate NDEBUG from BOOST index debugging.
  * Maximum alignment length?
  * speed up trees-consensus (for large trees)
- * fix |indels| and count the number of columns w/ no leaves
+ * fix alignment-find when last alignment is chopped.
 
 Before 2.0:
  * Do the autoconf magic to compile GSL in-tree.
