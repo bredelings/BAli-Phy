@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 SHELL=/bin/sh
 
-TOPOLOGIES=c50 c66 c80 c90 c95 c99 c100 MAP
+TOPOLOGIES=c50 c66 c80 c90 c95 c99 c100
 
 IMODEL=$(shell head -n 40 1.out | pickout --no-header 'indel model')
 
@@ -40,6 +40,7 @@ AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/au-graph.plot Resul
 endif
 
 Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
+                  ${TREES:%=Results/%.mtree} Results/MAP.topology Results/MAP.tree \
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
 		  Results/Report Results/MAP.fasta Results/MAP.phy \
 		  Mixing/partitions.SRQ Mixing/c50.SRQ Mixing/partitions.bs \
