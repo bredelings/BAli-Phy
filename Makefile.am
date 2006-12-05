@@ -18,7 +18,10 @@ nobase_examples_DATA = examples/EF-Tu/5d.fasta examples/EF-Tu/12d.fasta examples
                 examples/5S-rRNA/25.fasta examples/5S-rRNA/25-muscle.fasta \
 		examples/5S-rRNA/25-clustalw.fasta examples/5S-rRNA/25-clustalw.dnd \
                 examples/5S-rRNA/48.fasta examples/5S-rRNA/48-muscle.fasta \
-		examples/5S-rRNA/48-clustalw.fasta examples/5S-rRNA/48-clustalw.dnd
+		examples/5S-rRNA/48-clustalw.fasta examples/5S-rRNA/48-clustalw.dnd \
+		examples/Globins/many.fasta examples/Globins/few.fasta \
+		examples/Globins/few-clustalw.fasta examples/Globins/few-clustalw.dnd \
+		examples/Globins/few-muscle.fasta 
 
 EXTRA_HEADERS = @top_srcdir@/include/tnt/tnt_array1d.h \
                 @top_srcdir@/include/tnt/tnt_array2d.h \
