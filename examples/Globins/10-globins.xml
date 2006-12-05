@@ -1,0 +1,239 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<!-- This XML file specifies the example phylogeny and alignment co-estimation as explained
+	     in the paper, "Bayesian co-estimation of phylogeny and sequence alignment", GA Lunter,
+	     I Miklos, AJ Drummond, JL Jensen, J Hein, BMC Bioinformatics 2005.  To run, download
+	     the BEAST package (AJ Drummond and A Rambaut, http://evolve.zoo.ox.ac.uk/beast.   -->
+
+	<!-- Definition of the 10 taxa, for later reference -->
+	<taxa id="taxa1">
+		<taxon id="LGB1_LUPLU"/>
+		<taxon id="MYG_HUMAN"/>
+		<taxon id="MYG_GRAGE"/>
+		<taxon id="MYG_CHICK"/>
+		<taxon id="HBA_HUMAN"/>
+		<taxon id="HBB_HUMAN"/>
+		<taxon id="HBA_CHICK"/>
+		<taxon id="HBB_CHICK"/>
+		<taxon id="HBA_CHRPI"/>
+		<taxon id="HBB_CHRPI"/>
+	</taxa>
+
+	<!-- Define the sequences, and their initial alignment -->
+	<alignment id="globins" dataType="amino acid">
+		<sequence>
+			<taxon idref="LGB1_LUPLU"/>
+			GVLTDVQVALVKSSFEEFNANIPKNTHRFFTLVLEIAPGAKDLFSFLKGSS--EVPQNNPDLQAHAGKVFKLTYEAAIQLQVNGAVASDATLKSLGSVHVSKGVVDA-HFPVVKEAILKTIKEVVGDKWSEELNTAWTIAYDELAIIIKKEMKDAA---
+		</sequence>
+		<sequence>
+			<taxon idref="MYG_HUMAN"/>
+			-GLSDGEWQLVLNVWGKVEADIPGHGQEVLIRLFKGHPETLEKFDKFKHLKSEDEMKASEDLKKHGATVLTALGGILKKKG-----HHEAEIKPLAQSHATKHKIPVKYLEFISECIIQVLQSKHPGDFGADAQGAMNKALELFRKDMASNYKELGFQG
+		</sequence>
+		<sequence>
+			<taxon idref="MYG_GRAGE"/>
+			-GLSDDEWHHVLGIWAKVEPDLSAHGQEVIIRLFQVHPETQERFAKFKNLKTIDELRSSEEVKKHGTTVLTALGRILKLKN-----NHEPELKPLAESHATKHKIPVKYLEFICEIIVKVIAEKHPSDFGADSQAAMRKALELFRNDMASKYKEFGFQG
+		</sequence>
+		<sequence>
+			<taxon idref="MYG_CHICK"/>
+			-GLSDQEWQQVLTIWGKVEADIAGHGHEVLMRLFHDHPETLDRFDKFKGLKTPDQMKGSEDLKKHGATVLTQLGKILKQKG-----NHESELKPLAQTHATKHKIPVKYLEFISEVIIKVIAEKHAADFGADSQAAMKKALELFRNDMASKYKEFGFQG
+		</sequence>
+		<sequence>
+			<taxon idref="HBA_HUMAN"/>
+			-VLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHF-DLS-----HGSAQVKGHGKKVADALTNAVAHVD-----DMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKYR------
+		</sequence>
+		<sequence>
+			<taxon idref="HBB_HUMAN"/>
+			VHLTPEEKSAVTALWGKV--NVDEVGGEALGRLLVVYPWTQRFFESFGDLSTPDAVMGNPKVKAHGKKVLGAFSDGLAHLD-----NLKGTFATLSELHCDKLHVDPENFRLLGNVLVCVLAHHFGKEFTPPVQAAYQKVVAGVANALAHKYH------
+		</sequence>
+		<sequence>
+			<taxon idref="HBA_CHICK"/>
+			-VLSAADKNNVKGIFTKIAGHAEEYGAETLERMFTTYPPTKTYFPHF-DLS-----HGSAQIKGHGKKVVAALIEAANHID-----DIAGTLSKLSDLHAHKLRVDPVNFKLLGQCFLVVVAIHHPAALTPEVHASLDKFLCAVGTVLTAKYR------
+		</sequence>
+		<sequence>
+			<taxon idref="HBB_CHICK"/>
+			VHWTAEEKQLITGLWGKV--NVAECGAEALARLLIVYPWTQRFFASFGNLSSPTAILGNPMVRAHGKKVLTSFGDAVKNLD-----NIKNTFSQLSELHCDKLHVDPENFRLLGDILIIVLAAHFSKDFTPECQAAWQKLVRVVAHALARKYH------
+		</sequence>
+		<sequence>
+			<taxon idref="HBA_CHRPI"/>
+			-VLNAGDKANVKAVWNKVAAHVEEYGAETLERMFTVYPQTKTYFPHF-DLH-----HGSAQIRTHGKKVLTALGEAVNHID-----DLASALSKLSDIHAQTLRVDPVNFKFLNHCFLVVVAIHQPSVLTPEVHVSLDKFLSAVGTVLTSKYR------
+		</sequence>
+		<sequence>
+			<taxon idref="HBB_CHRPI"/>
+			VHWTADEKQLITSLWGKV--NVEECGSEALARLLIVYPWTQRFFSTFGNLSNAEAILHNPHVHAHGKKVLTSFGEAVKNLD-----HIKQTFATLSKLHCEKLHVDPENFKLLGNVLIIVLASHFTKEFTPACQAAWQKLVSAVAHALALGYH------
+		</sequence>
+	</alignment>
+  
+	<!-- create an starting tree using the UPGMA algorithm -->
+	<upgmaTree id="startTree" usingDates="false">
+	 	<distanceMatrix correction="JC">
+			<alignment idref="globins"/>
+		</distanceMatrix>
+	</upgmaTree>
+		
+	<treeModel id="treeModel1">
+		<tree idref="startTree"/>
+		<rootHeight>
+			<parameter id="root"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel1.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights rootNode="true" internalNodes="true">
+			<parameter id="treeModel1.allNodeHeights"/>
+		</nodeHeights>
+	</treeModel>	
+ 	
+	<aminoAcidModel id="blosum62" type="blosum62"/>
+	
+	<!-- The main likelihood function.  This computes the likelihood of phylogeny and alignment, 
+	     given evolutionary parameters, under the TKF91 model. -->
+	<tkf91Likelihood id="treeLikelihood1">
+		<alignment idref="globins"/>
+		<treeModel idref="treeModel1"/>
+		<siteModel>
+			<substitutionModel>
+				<aminoAcidModel idref="blosum62"/>
+			</substitutionModel>
+			<mutationRate> <parameter id="mu" value="1" upper="1.0" lower="1e-6"/> </mutationRate>
+		</siteModel>
+		<tkf91Model units="generations">
+			<lengthDistribution> <parameter id="lendistr" value="0.993243243" upper="0.9999999" lower="1e-6"/> </lengthDistribution>
+			<deathRate> <parameter id="deathRate" value="1.0" upper="2" lower="1e-6"/> </deathRate>
+		</tkf91Model>
+	</tkf91Likelihood>
+	
+	<taxa id="alpha">
+		<taxon idref="HBA_HUMAN"/>
+		<taxon idref="HBA_CHICK"/>
+		<taxon idref="HBA_CHRPI"/>
+	</taxa>
+	
+	<taxa id="beta">
+		<taxon idref="HBB_HUMAN"/>
+		<taxon idref="HBB_CHICK"/>
+		<taxon idref="HBB_CHRPI"/>
+	</taxa>
+	
+	<taxa id="myo">
+		<taxon idref="MYG_HUMAN"/>
+		<taxon idref="MYG_CHICK"/>
+		<taxon idref="MYG_GRAGE"/>
+	</taxa>
+	
+	<taxa id="ch_a">
+		<taxon idref="HBA_HUMAN"/>
+		<taxon idref="HBA_CHICK"/>
+	</taxa>
+	
+	<taxa id="ch_b">
+		<taxon idref="HBB_HUMAN"/>
+		<taxon idref="HBB_CHICK"/>
+	</taxa>
+	
+	<taxa id="ch_my">
+		<taxon idref="MYG_HUMAN"/>
+		<taxon idref="MYG_CHICK"/>
+	</taxa>
+	
+	<taxa id="ct_a">
+		<taxon idref="HBA_CHICK"/>
+		<taxon idref="HBA_CHRPI"/>
+	</taxa>
+	
+	<taxa id="ct_b">
+		<taxon idref="HBB_CHICK"/>
+		<taxon idref="HBB_CHRPI"/>
+	</taxa>
+	
+	<taxa id="ct_my">
+		<taxon idref="MYG_GRAGE"/>
+		<taxon idref="MYG_CHICK"/>
+	</taxa>
+
+	<!-- A bunch of statistics, to investigate the topology of the tree in detail -->
+	<tmrcaStatistic id="ctha" name="chickTurtleHeight_A"><treeModel idref="treeModel1"/><mrca><taxa idref="ct_a"/></mrca></tmrcaStatistic>
+	<tmrcaStatistic id="cthb" name="chickTurtleHeight_B"><treeModel idref="treeModel1"/><mrca><taxa idref="ct_b"/></mrca></tmrcaStatistic>
+	<tmrcaStatistic id="cthm" name="chickTurtleHeight_M"><treeModel idref="treeModel1"/><mrca><taxa idref="ct_my"/></mrca></tmrcaStatistic>
+	
+	<tmrcaStatistic id="ah" name="cthHeight_A"><treeModel idref="treeModel1"/><mrca><taxa idref="alpha"/></mrca></tmrcaStatistic>
+	<tmrcaStatistic id="bh" name="cthHeight_B"><treeModel idref="treeModel1"/><mrca><taxa idref="beta"/></mrca></tmrcaStatistic>
+	<tmrcaStatistic id="ch" name="cthHeight_M"><treeModel idref="treeModel1"/><mrca><taxa idref="myo"/></mrca></tmrcaStatistic>
+	
+	<monophylyStatistic id="chickHuman_A" name="chickHumanMono_A"><treeModel idref="treeModel1"/><mrca><taxa idref="ch_a"/></mrca></monophylyStatistic>
+	<monophylyStatistic id="chickHuman_B" name="chickHumanMono_B"><treeModel idref="treeModel1"/><mrca><taxa idref="ch_b"/></mrca></monophylyStatistic>
+	<monophylyStatistic id="chickHuman_M" name="chickHumanMono_M"><treeModel idref="treeModel1"/><mrca><taxa idref="ch_my"/></mrca></monophylyStatistic>
+	<monophylyStatistic id="chickTurtle_A" name="chickTurtleMono_A"><treeModel idref="treeModel1"/><mrca><taxa idref="ct_a"/></mrca></monophylyStatistic>
+	<monophylyStatistic id="chickTurtle_B" name="chickTurtleMono_B"><treeModel idref="treeModel1"/><mrca><taxa idref="ct_b"/></mrca></monophylyStatistic>
+	<monophylyStatistic id="chickTurtle_M" name="chickTurtleMono_M"><treeModel idref="treeModel1"/><mrca><taxa idref="ct_my"/></mrca></monophylyStatistic>
+
+    <!-- A bunch of operators, as input to the MCMC procedure.  The most important one is alignmentChunkOperator, which proposes
+         a new partial alignment using a score-based alignment proposal distribution.  See paper for details -->
+  	<operators id="operators1">
+		<uniformOperator weight="2"><parameter idref="treeModel1.internalNodeHeights"/></uniformOperator>
+		<scaleOperator scaleFactor="0.55" adapt="false" weight="1"><parameter idref="root"/></scaleOperator>
+		<scaleOperator scaleFactor="0.40" adapt="false" weight="1"><parameter idref="deathRate"/></scaleOperator>
+		<alignmentChunkOperator weight="7" iP="0.025" exponent="1.5" gapPenalty="-10"><tkf91Likelihood idref="treeLikelihood1"/></alignmentChunkOperator>
+		<subtreeSlide weight="1" size="0.2" gaussian="true"><treeModel idref="treeModel1"/></subtreeSlide>
+		<narrowExchange weight="1"><treeModel idref="treeModel1"/></narrowExchange>
+		<wideExchange weight="1"><treeModel idref="treeModel1"/></wideExchange>
+	</operators>
+
+	<!-- The main element, specifying the MCMC run and parameter logs -->
+	<mcmc id="mcmc1" chainLength="1000000" verbose="false">
+		<treeLikelihood idref="treeLikelihood1"/>
+		<operators idref="operators1"/>
+		<log logEvery="100">
+			<parameter idref="lendistr"/>
+			<parameter idref="deathRate"/>
+			<parameter idref="root"/>
+			
+			<statistic name="alignmentLength">
+				<tkf91Likelihood idref="treeLikelihood1"/>
+			</statistic>	
+			<treeLikelihood idref="treeLikelihood1"/>
+		</log>
+	    <log logEvery="100" fileName="globins_10_CAB.log">
+			<parameter idref="lendistr"/>
+			<parameter idref="deathRate"/>
+			<parameter idref="root"/>
+			
+			<statistic name="alignmentLength">
+				<tkf91Likelihood idref="treeLikelihood1"/>
+			</statistic>
+			
+			<monophylyStatistic idref="chickHuman_A"/>
+			<monophylyStatistic idref="chickHuman_B"/>
+			<monophylyStatistic idref="chickHuman_M"/>
+			<monophylyStatistic idref="chickTurtle_A"/>
+			<monophylyStatistic idref="chickTurtle_B"/>
+			<monophylyStatistic idref="chickTurtle_M"/>
+			<tmrcaStatistic idref="ctha"/>
+			<tmrcaStatistic idref="cthb"/>
+			<tmrcaStatistic idref="cthm"/>
+			<tmrcaStatistic idref="ah"/>
+			<tmrcaStatistic idref="bh"/>
+			<tmrcaStatistic idref="ch"/>
+			<treeLikelihood idref="treeLikelihood1"/>
+		</log>
+		<log logEvery="100" fileName="globins_10_trees.log">
+			<treeModel idref="treeModel1"/>
+		</log>
+		
+		<log logEvery="100" fileName="globins_10_operators.log">
+			<operators idref="operators1"/>
+		</log>
+		
+		<log logEvery="100" fileName="globins_10_alignments.log">
+			<treeLikelihood idref="treeLikelihood1"/>
+		</log>
+		
+	</mcmc>
+	
+    <!-- Output controls -->
+	<report>
+		MCMC took <property name="timer"><mcmc idref="mcmc1"/></property> seconds
+	</report>
+	
+	<traceAnalysis fileName="globins_10.log"/>
+</beast>
