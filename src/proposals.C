@@ -26,8 +26,8 @@ vector<double> convert(const valarray<double>& v1)
 double dirichlet_fiddle(valarray<double>& p2,double N)
 {
   valarray<double> p1 = p2;
-  p2 = dirichlet(proper_count(p1*N));
-  return dirichlet_pdf(p1,proper_count(p2*N))/dirichlet_pdf(p2,proper_count(p1*N));
+  p2 = dirichlet(safe_count(p1*N));
+  return dirichlet_pdf(p1,safe_count(p2*N))/dirichlet_pdf(p2,safe_count(p1*N));
 }
 
 double dirichlet_fiddle(vector<double>& p,double N)

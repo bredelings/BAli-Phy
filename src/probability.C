@@ -60,21 +60,21 @@ log_double_t dirichlet_pdf(const valarray<double>& p,double N) {
   return dirichlet_pdf(p,valarray<double>(N,p.size()));
 }
 
-valarray<double> proper_count(valarray<double> n)
+valarray<double> safe_count(valarray<double> n)
 {
   for(int i=0;i<n.size();i++)
     if (n[i] < 1.0) n[i] = 1.0;
   return n;
 }
 
-log_double_t dirichlet_proper_pdf(const valarray<double>& p,const valarray<double>& n) 
+log_double_t dirichlet_safe_pdf(const valarray<double>& p,const valarray<double>& n) 
 {
-  return dirichlet_pdf(p,proper_count(n));
+  return dirichlet_pdf(p,safe_count(n));
 }
 
-log_double_t dirichlet_proper_pdf(const valarray<double>& p,double N, const valarray<double>& q) 
+log_double_t dirichlet_safe_pdf(const valarray<double>& p,double N, const valarray<double>& q) 
 {
-  return dirichlet_proper_pdf(p,N*p.size()*q);
+  return dirichlet_safe_pdf(p,N*p.size()*q);
 }
 
 /// log density for y if y=ln (x+delta), and x ~ Exp(mu)
