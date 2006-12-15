@@ -150,23 +150,43 @@ int main(int argc,char* argv[])
     
     //----- Count informative/non-constant sites ----//
     valarray<bool> informative(A.length());
+    valarray<bool> informative2(A.length());
     valarray<bool> different(A.length());
+    valarray<bool> different2(A.length());
+    valarray<bool> contains_a_gap(false,A.length());
 
     valarray<int> count(a.size());
+    valarray<int> count2(2);
     for(int c=0;c<A.length();c++) {
       count = 0;
+      count2 = 0;
       for(int i=0;i<A.n_sequences();i++) {
 	int l = A(c,i);
 	if (a.is_letter(l))
 	  count[l]++;
+
+	if (a.is_feature(l))
+	  count2[0]++;
+	else if (l == alphabet::gap)
+	  count2[1]++;
       }
 
-      different[c] =  is_informative(count,0);
-      informative[c] = is_informative(count,1);
+      different[c]  =   is_informative(count ,0);
+      informative[c]  = is_informative(count ,1);
+
+      contains_a_gap[c] = (count2[1]>0);
+      different2[c] =   different[c] or contains_a_gap[c];
+      informative2[c] = informative[c] or is_informative(count2,1);
     }
     
-    int n_different = n_elements(different);
-    int n_informative = n_elements(informative);
+    int n_different  = n_elements(different);
+    int n_same = A.length() - n_different;
+    int n_informative  = n_elements(informative);
+
+    int n_different2 = n_elements(different2);
+    int n_same2 = A.length() - n_different2;
+    int n_informative2 = n_elements(informative2);
+    int n_with_gaps = n_elements(contains_a_gap);
 
 
     cout.precision(3);
@@ -178,10 +198,19 @@ int main(int argc,char* argv[])
     cout<<"Alphabet: "<<a.name<<"\n\n";
     cout<<"Alignment: "<<A.length()<<" columns of "<<A.n_sequences()<<" sequences\n";
     cout<<"  "<<max(lengths)<<"/"<<min(lengths)<<" max/min sequence lengths.\n";
+    cout<<"\n";
+    cout<<" ====== w/o indels ======\n";
+    cout<<"  "<<n_same<<" ("<<double(n_same)/A.length()*100<<"%) sites are constant.\n";
     cout<<"  "<<n_different<<" ("<<double(n_different)/A.length()*100<<"%) sites are not constant.\n";
-    cout<<"  "<<n_informative<<" ("<<double(n_informative)/A.length()*100<<"%) are informative.\n";
-
-    cout<<"  "<<min_identity(A,true)*100<<"%/"<<min_identity(A,false)*100<<"% minimum sequence identity with/without indels.\n";
+    cout<<"  "<<n_informative<<" ("<<double(n_informative)/A.length()*100<<"%) sites are informative.\n";
+    cout<<"  "<<min_identity(A,false)*100<<"% minimum sequence identity.\n";
+    cout<<"\n";
+    cout<<" ====== w/  indels ======";
+    cout<<"  "<<n_with_gaps<<" ("<<double(n_with_gaps)/A.length()*100<<"%) sites contain a gap.\n";
+    cout<<"  "<<n_same2<<" ("<<double(n_same2)/A.length()*100<<"%) sites are constant.\n";
+    cout<<"  "<<n_different<<" ("<<double(n_different2)/A.length()*100<<"%) sites are not constant.\n";
+    cout<<"  "<<n_informative2<<" ("<<double(n_informative2)/A.length()*100<<"%) sites are informative.\n";
+    cout<<"  "<<min_identity(A,true)*100<<"% minimum sequence identity.\n";
 
     //------------ Get Tree Lengths ------------//
     if (args.count("tree")) 
