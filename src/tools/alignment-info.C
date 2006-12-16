@@ -208,7 +208,7 @@ int main(int argc,char* argv[])
     cout<<" ====== w/  indels ======";
     cout<<"  "<<n_with_gaps<<" ("<<double(n_with_gaps)/A.length()*100<<"%) sites contain a gap.\n";
     cout<<"  "<<n_same2<<" ("<<double(n_same2)/A.length()*100<<"%) sites are constant.\n";
-    cout<<"  "<<n_different<<" ("<<double(n_different2)/A.length()*100<<"%) sites are not constant.\n";
+    cout<<"  "<<n_different2<<" ("<<double(n_different2)/A.length()*100<<"%) sites are not constant.\n";
     cout<<"  "<<n_informative2<<" ("<<double(n_informative2)/A.length()*100<<"%) sites are informative.\n";
     cout<<"  "<<min_identity(A,true)*100<<"% minimum sequence identity.\n";
 
