@@ -73,6 +73,10 @@
    + we need some way to find out if the gamma model "fits" well! (how
 much of the variation is spatial?)
 
+11. Find a way to display differences between alignments (alignment distributions?)
+   + show how alignments vary
+   + find parts of alignments which COVARY with the tree
+     - does the tree cause the alignment to vary, or vice versa?
 
 1. Test sampling of epsilon.  (Implement model where lambda & epsilon not coupled?)
   a) e-mail about the method for converting matrices from WAG to codon level.
