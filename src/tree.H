@@ -73,9 +73,11 @@ protected:
       compute_partitions();
   }
 
+public:
   /// re-compute all caches
   virtual void recompute(BranchNode*,bool=true);
 
+protected:
   /// check caches, linked lists, and naming conventions
   virtual void check_structure() const;
 

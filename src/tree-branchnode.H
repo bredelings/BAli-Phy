@@ -313,6 +313,8 @@ public:
   void set_length(double d) const {b->out->length = b->length = d;}
 
   operator int() const {return name();}
+  operator BranchNode*() const {return b;}
+
   bool valid() const {return b;}
   branchview(BranchNode* bn):b(bn) { }
 };
