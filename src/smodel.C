@@ -868,6 +868,7 @@ namespace substitution {
   { 
     add_super_parameter("M0::omega", 1.0);
     insert_submodel("1",N);
+    recalc_all();
   }
 
   M0::~M0() {}
