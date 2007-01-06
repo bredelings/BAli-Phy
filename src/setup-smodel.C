@@ -320,7 +320,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = LogNormalParameterModel(*get_MM(model_stack,"gamma",frequencies),n);
+    model_stack.back() = LogNormalParameterModel(*get_MM(model_stack,"log-normal",frequencies),n);
   }
   else if (match(string_stack,"multi_freq",arg)) {
     int n=4;
