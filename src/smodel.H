@@ -827,8 +827,8 @@ namespace substitution {
     bool good_enough;
 
   protected:
-          RateDistribution& D();
-    const RateDistribution& D() const;
+          Distribution& D();
+    const Distribution& D() const;
 
     efloat_t super_prior() const;
 
@@ -840,7 +840,7 @@ namespace substitution {
 
     string name() const;
 
-    DistributionParameterModel(const MultiModel& M, const RateDistribution& RD,int p,int n);
+    DistributionParameterModel(const MultiModel& M, const Distribution& RD,int p,int n);
   };
 
   /// A discrete-gamma Model

@@ -15,104 +15,17 @@ namespace substitution {
   using std::valarray;
   using std::string;
 
-  //--------------- RateDistribution -----------------//
+  //--------------- UniformRateDistribution -----------------//
 
-  // f(x) = cdf(x)-p, monotonically increasing from -p (@0) to 1-p (@ \infty)
-  double RateDistribution::quantile(double p, double tol) const {
-    assert(0.0 <= p and p <= 1.0);
-
-    double x = 1.0;
-
-    // We know the zero is in (min,max), if max>=min
-    double min=0.0;
-    double max=-1;
-
-    const int max_iterations = 2000;
-    int iterations=0;
-
-    double dx = 0.001;
-    while(std::abs(dx) > tol and iterations < max_iterations) {
-      double f = cdf(x)-p;
-
-      // take advantage of the monotonicity
-      if (f < 0)
-	min = x;
-      else if (f > 0)
-	max = x;
-      else return x;
-
-      // propose do Newton-Raphson step
-      double dfdx = pdf(x);
-      dx = -f/dfdx;
-
-      // deal with trying to jump out of (min,max)
-      double x2 = x;
-      if (x2+dx < min)
-	x2 = (x2+min)/2.0;
-      else if (x+dx > max and max >= 0)
-	x2 = (x2+max)/2.0;
-      else
-	x2 = x2 + dx;
-      iterations++;
-
-      double f2 = cdf(x2) - p;
-      // move to x2 if its an improvement
-      if (std::abs(f2) <= std::abs(f)) 
-	x = x2;
-      // If x2 is NOT an improvement then...
-      else {
-	assert(min <= x2);
-	assert(max < 0 or x2 <= max);
-
-	// ...update (min,max), ...
-	if (f2 < 0)
-	  min = x2;
-	else if (f2 > 0)
-	  max = x2;
-	else
-	  return x2;
-
-	assert(max >= 0);
-
-	if (max > 0) {
-	  // ...propose another location, ...
-	  x2 = 0.5*(min + max);
-
-	  f2 = cdf(x2) - p;
-	  if (f2 < 0)
-	    min = x2;
-	  else if (f2 > 0)
-	    max = x2;
-	  else
-	    return x2;
-	  
-	  // and try to move there.
-	  if (std::abs(f2) < std::abs(f))
-	    x = x2;
-	}
-
-      }
-
-      assert(min <= x);
-      if (max >= 0) {
-	assert(min <= max);
-	assert(x <= max);
-	assert(cdf(min) <= p and p <= cdf(max));
-      }
-      assert(iterations<max_iterations);
-    }
-    return x;
+  void Uniform::recalc(const vector<int>&)
+  {
+    vector<double> p(2);
+    p[0] = 0;
+    p[1] = 2;
+    D->parameters(p);
   }
 
-  RateDistribution::~RateDistribution() {}
-
-  /*--------------- UniformRateDistribution -----------------*/
-
-  string Uniform::name() const {
-    return "Uniform";
-  }
-
-  Uniform::~Uniform() {}
+  Uniform::Uniform() {}
 
   //--------------- GammaRateDistribution -----------------//
   
@@ -122,166 +35,48 @@ namespace substitution {
     return laplace_pdf(log_g_sigma,-4,0.5);
   }
 
-  string Gamma::name() const {
-    return "gamma";
-  }
-
-  double Gamma::cdf(double x) const 
+  void Gamma::recalc(const vector<int>&)
   {
     double s = minmax(parameters_[0], 1.0e-5, 3.0);
 
-    double M = 1;
-    double V = (s*M)*(s*M);
+    vector<double> p(2);
+    p[0] = 1.0/(s*s);
+    p[1] = 1.0/p[0];
 
-    double a = 1.0/(s*s);
-    double b = M/a;
-
-    if (a < 1000)
-      return gsl_cdf_gamma_P(x,a,b);
-    else {
-      double sigma2 =  log1p(V/(M*M));
-      double mu = log(M) - sigma2/2.0;
-      double sigma = sqrt(sigma2);
-
-      // don't go crazy
-      sigma = minmax(sigma, 1.0e-5, 1.0e5);
-
-      return gsl_cdf_lognormal_P(x,mu,sigma);
-    }
-  }
-
-  double Gamma::pdf(double x) const 
-  {
-    double s = minmax(parameters_[0], 1.0e-5, 3.0);
-
-    double M = 1;
-    double V = (s*M)*(s*M);
-
-    double a = 1.0/(s*s);
-    double b = M/a;
-
-    if (a < 1000)
-      return gsl_ran_gamma_pdf(x,a,b);
-    else {
-      double sigma2 =  log1p(V/(M*M));
-      double mu = log(M) - sigma2/2.0;
-      double sigma = sqrt(sigma2);
-
-      // don't go crazy
-      sigma = minmax(sigma, 1.0e-5, 1.0e5);
-
-      return gsl_ran_lognormal_pdf(x,mu,sigma);
-    }
-  }
-
-  double Gamma::quantile(double p,double) const 
-  {
-    double s = minmax(parameters_[0], 1.0e-5, 3.0);
-
-    double M = 1;
-    double V = (s*M)*(s*M);
-
-    double a = 1.0/(s*s);
-    double b = M/a;
-
-    if (a < 1000)
-      return gsl_cdf_gamma_Pinv(p,a,b);
-    else {
-      double sigma2 =  log1p(V/(M*M));
-      double mu = log(M) - sigma2/2.0;
-      double sigma = sqrt(sigma2);
-
-      // don't go crazy
-      sigma = minmax(sigma, 1.0e-5, 1.0e5);
-
-      return gsl_cdf_lognormal_P(p,mu,sigma);
-    }
+    D->parameters(p);
   }
 
   Gamma::Gamma() {
     add_parameter("gamma::sigma/mu", 0.1);
   }
 
-  //--------------- GammaRateDistribution -----------------//
+  //--------------- Beta RateDistribution -----------------//
+
+  void Beta::recalc(const vector<int>& indices)
+  {
+    double m = mean();
+    double s = sqrt(variance());
+
+    vector<double> p(2);
+    double a = p[0] = (1 - m - m*s*s)/(s*s);
+    double b = p[1] = a * (1-m)/m;
+
+    D->parameters(p);
+  }
 
   efloat_t Beta::prior() const 
   {
-    double mu = parameters_[0];
-    double s  = parameters_[1];
-
-    double a = (1 - mu - mu*s*s)/(s*s);
-    double b = a * (1-mu)/mu;
-
-    if (a<1.0 or b<1.0)
+    if (D->alpha()<1.0 or D->beta()<1.0)
       return 0.0;
 
+    double m = mean();
+    double s = sqrt(variance());
+
     efloat_t P = 1;
-    P *= beta_pdf(mu,10,1);
+    P *= beta_pdf(m,10,1);
     P *= laplace_pdf(s,-4,0.5);
 
     return P;
-  }
-
-  string Beta::name() const {
-    return "beta";
-  }
-
-  double Beta::cdf(double x) const {
-    double mu = parameters_[0];
-    double  s = parameters_[1];
-
-    double a = (1 - mu - mu*s*s)/(s*s);
-    double b = a * (1-mu)/mu;
-
-    if (a<0 or b<0)
-      a=b=1;
-
-    double r = 100.0/std::max(a,b);
-    if (r < 1) {
-      a *= r;
-      b *= r;
-    }
-
-    return gsl_cdf_beta_P(x,a,b);
-  }
-
-  double Beta::pdf(double x) const {
-    double mu = parameters_[0];
-    double  s = parameters_[1];
-
-    double a = (1 - mu - mu*s*s)/(s*s);
-    double b = a * (1-mu)/mu;
-
-    if (a<0 or b<0)
-      a=b=1;
-
-    double r = 100.0/std::max(a,b);
-    if (r < 1) {
-      a *= r;
-      b *= r;
-    }
-
-    return gsl_ran_beta_pdf(x,a,b);
-  }
-
-  double Beta::quantile(double p,double) const
-  {
-    double mu = parameters_[0];
-    double  s = parameters_[1];
-
-    double a = (1 - mu - mu*s*s)/(s*s);
-    double b = a * (1-mu)/mu;
-
-    if (a<0 or b<0)
-      a=b=1;
-
-    double r = 100.0/std::max(a,b);
-    if (r < 1) {
-      a *= r;
-      b *= r;
-    }
-
-    return gsl_cdf_beta_Pinv(p,a,b);
   }
 
   Beta::Beta()
@@ -303,56 +98,21 @@ namespace substitution {
     return laplace_pdf(log_g_sigma,-4,0.5);
   }
 
-  double LogNormal::cdf(double x) const 
+  void LogNormal::recalc(const vector<int>&)
   {
     double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
 
     double Var = s*s;
     double lVar = log1p(Var);
 
-    double lsigma = sqrt(lVar);
-    double lmu = -0.5 * lVar;
+    vector<double> p(2);
+    double lm = p[0] = -0.5 * lVar;
+    double ls = p[1] = sqrt(lVar);
 
     // don't go crazy
-    lsigma = minmax(lsigma, 1.0e-5, 1.0e5);
+    p[1] = std::max(ls,1.0e-5);
 
-    return gsl_cdf_lognormal_P(x,lmu,lsigma);
-  }
-
-  double LogNormal::pdf(double x) const 
-  {
-    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
-
-    double Var = s*s;
-    double lVar = log1p(Var);
-
-    double lsigma = sqrt(lVar);
-    double lmu = -0.5 * lVar;
-
-    // don't go crazy
-    lsigma = minmax(lsigma, 1.0e-5, 1.0e5);
-
-    return gsl_ran_lognormal_pdf(x,lmu,lsigma);
-  }
-
-  double LogNormal::quantile(double P,double) const 
-  {
-    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
-
-    double Var = s*s;
-    double lVar = log1p(Var);
-
-    double lsigma = sqrt(lVar);
-    double lmu = -0.5 * lVar;
-
-    // don't go crazy
-    lsigma = minmax(lsigma,1.0e-5,1.0e5);
-
-    return gsl_cdf_lognormal_Pinv(P,lmu,lsigma);
-  }
-
-  string LogNormal::name() const {
-    return "log-normal";
+    D->parameters(p);
   }
 
   LogNormal::LogNormal() 
@@ -373,7 +133,8 @@ namespace substitution {
     return dirichlet_pdf(f,1);
   }
 
-  double MultipleDistribution::cdf(double x) const {
+  double MultipleDistribution::cdf(double x) const 
+  {
     double P=0;
     for(int i=0;i<n_dists();i++) 
       P += fraction(i) * SubModels(i).cdf(x);
@@ -381,7 +142,8 @@ namespace substitution {
     return P;
   }
 
-  double MultipleDistribution::pdf(double x) const {
+  efloat_t MultipleDistribution::pdf(double x) const 
+  {
     double density=0;
     for(int i=0;i<n_dists();i++) 
       density += fraction(i) * SubModels(i).pdf(x);
@@ -389,7 +151,7 @@ namespace substitution {
     return density;
   }
 
-  MultipleDistribution::MultipleDistribution(const std::vector<OwnedPointer<RateDistribution> >& models) 
+  MultipleDistribution::MultipleDistribution(const std::vector<OwnedPointer<Distribution> >& models) 
   {
     // Set the rates and fractions
     for(int i=0;i<n_dists();i++) {
@@ -412,8 +174,17 @@ namespace substitution {
     return n;
   }
 
+  double MultipleDistribution::moment(int m) const
+  {
+    double M=0;
+    for(int i=0;i<n_dists();i++) 
+      M += fraction(i) * SubModels(i).moment(m);
+
+    return M;
+  }
+
   /// Choose boundaries between bins based on quantiles
-  vector<double> uniform_boundaries(const vector<double>& r, const RateDistribution& D)
+  vector<double> uniform_boundaries(const vector<double>& r, const Distribution& D)
   {
     vector<double> b(r.size()-1);
     
@@ -434,7 +205,7 @@ namespace substitution {
   }
   
   /// Compute the probability of each bin from the bin boundaries
-  vector<double> get_fractions(const vector<double>& b,const RateDistribution& D)
+  vector<double> get_fractions(const vector<double>& b,const probability::Distribution& D)
   {
     vector<double> f(b.size()+1);
     f[0] = D.cdf(b.front());
@@ -476,7 +247,7 @@ namespace substitution {
   }
   
   
-  Discretization::Discretization(int N,const RateDistribution& D,double a)
+  Discretization::Discretization(int N,const Distribution& D,double a)
     :p(N),r(N),A(a)
   {
     for(int i=0;i<N;i++) {
@@ -513,7 +284,7 @@ namespace substitution {
   
   UniformDiscretization::UniformDiscretization(int N):Discretization(N) { }
     
-  UniformDiscretization::UniformDiscretization(int N, const RateDistribution& D)
+  UniformDiscretization::UniformDiscretization(int N, const Distribution& D)
       :Discretization(N,D,1)
   {
     b = uniform_boundaries(r,D);
@@ -521,7 +292,7 @@ namespace substitution {
   }
   
   
-  double Discretization::error(double (*g)(double x),const RateDistribution& D) const
+  double Discretization::error(double (*g)(double x),const Distribution& D) const
   {
     int N2 = (size()+2)*20;
     if (N2 < 200) N2 = 200;
@@ -536,7 +307,7 @@ namespace substitution {
     return E;
   }
   
-  double Discretization::error2(double (*g)(double x),const RateDistribution& D) const
+  double Discretization::error2(double (*g)(double x),const Distribution& D) const
   {
     int N2 = (size()+2)*20;
     if (N2 < 200) N2 = 200;

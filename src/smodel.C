@@ -1083,25 +1083,25 @@ namespace substitution {
       return 1.0;
   }
 
-  RateDistribution& DistributionParameterModel::D()
+  Distribution& DistributionParameterModel::D()
   {
-    return SubModelAs<RateDistribution>(1);
+    return SubModelAs<Distribution>(1);
   }
 
-  const RateDistribution& DistributionParameterModel::D() const
+  const Distribution& DistributionParameterModel::D() const
   {
-    return SubModelAs<RateDistribution>(1);
+    return SubModelAs<Distribution>(1);
   }
 
   void DistributionParameterModel::recalc(const vector<int>&) 
   {
     // We only need to do this when the DISTRIBUTION changes (?)
     Discretization d(p_values.size(),D());
-    double scale = d.scale();
+    double ratio = d.scale()/D().mean();
 
-    good_enough = (scale > 1.0/1.5 and scale < 1.5);
+    good_enough = (ratio > 1.0/1.5 and ratio < 1.5);
 
-    d.scale(1.0/scale);
+    d.scale(1.0/ratio);
 
     fraction = d.f;
     p_values = d.r;
@@ -1119,7 +1119,7 @@ namespace substitution {
     return SubModels(0).name() + " + " + dist_name;
   }
 
-  DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const RateDistribution& RD, int p, int n)
+  DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const Distribution& RD, int p, int n)
     :MultiParameterModel(M,p,n),
      good_enough(false)
   {

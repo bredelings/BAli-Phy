@@ -93,7 +93,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-sums.C alignment-util.C probability.C model.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
-	  tools/tree-dist.C proposals.C n_indels.C
+	  tools/tree-dist.C proposals.C n_indels.C distribution.C
 
 #-----------------------------------------------------------------
 
@@ -249,7 +249,7 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	sequence-format.C randomtree.C model.C  probability.C \
 	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
 	alignment-random.C parameters.C myexception.C monitor.C \
-	tools/tree-dist.C tools/inverse.C
+	tools/tree-dist.C tools/inverse.C distribution.C
 
 #---------------------------------------------------------------
 
