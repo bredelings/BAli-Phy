@@ -1,29 +1,13 @@
-1. Implement general distributions - we need a way to have special distributions
-   that are charaterized only by sigma/mu.
-   (a) how do we want to handle multiple parameterizations of distributions?
-       i) for example, the gamma as (a,b) and as (mu,s/mu)?
-      ii) for example, log-normal as (mu,s/mu) and as (lmu,lsigma)?
-   (b) Fix the Uniform distibution to have max range (0,2) ?
-   (c) Make the rate a parameter of the distribution?
+1. Fix the Uniform distribution to have a sigma/mu parameter.
 
-2. Hmm... It seems that we have a scale parameter in each case...
-   And (except for mixture distributions) a width parameter.
-   (a) If we had an exponential distribution, then we have s/mu=1 by def.
-   (b) The set_rate( ) function for MultiModels
-
-3. Do we want to have moments?
-   (a) m[n] = \prod_0^n-1 (\alpha+i)\times\beta for gamma
-   (b) m[n] = exp(n\times\mu+n^2d^2/2) for log-normal
-   (c) m[n] = \prod_0^n-1 (\alpha+i)/(\alpha+\beta+i)
-
-4. Branch length proposals
+2. Branch length proposals
    (a) Can we SPEED UP the procedure to fit/estimate the posterior to a gamma?
    (b) Single branch: can we accept more NNI/SPR if we sample the branch length?
    (c) Can we sample from a MULTIPLE branch distribution?
    (d) Can we ignore the indel effects on branch lengths when we do?
    (e) How does the acceptance rate for fit_gamma depend on n_retries?
 
-5. Topology proposals which alter multiple branches:
+3. Topology proposals which alter multiple branches:
    (1) SPR connecting branch
    (2) SPR branch + merged branch
    (3) SPR branch + split branch (2)
@@ -35,7 +19,7 @@
    (7?) SPR branch + split branch (2) + neighbors (4)
    (12?) SPR branch + merged branch (1) + neighbors (4) + split branch (2) + neighbors (4)
 
-4. How much of the sequence is in each %-identity fraction?
+5. How much of the sequence is in each %-identity fraction?
   a) How much information is in each fraction?
   b) How do we make sure that mismatched residues in the 90% identity fraction 
       don't end up in the 0% identity fraction?
@@ -44,7 +28,7 @@
   d) Can we combine measures of gappiness and %-identity to yield a
      measure of ambiguity? 
 
-5. GTR: When setting parameters, set all relevant parameters at once?
+6. GTR: When setting parameters, set all relevant parameters at once?
 
 6. Write a program to try to combine trees (sub-branches?)
    (a) Print out the tree of no-conflict branches
@@ -127,9 +111,6 @@ Paper:
    from a fixed alignment?
 
 Before 1.9.9:
- * Fix beta distributions.
-   - Beta: don't assume the natural scale is 1.0!  Instead compare to true scale.
-   - Beta: don't allow a,b < 1?
  * Implement Branch length prior distributions
  * Implement branch-length constraints.
  * Avoid crash on DNA sequences...
@@ -620,6 +601,11 @@ the prior, because we never want to use it  differently.
 [DONE] Improve initial convergence by fixing lambda/delta for first 5 iterations.
 
 [DONE] Speed up loading of (large) alignments with many sequences.
+
+[DONE] Implement general distributions 
+         - but provide a parameterization by sigma/mu
+
+[DONE] Fix Beta distribution - don't assume the natural scale is 1.0!
 
 *IDEAS*
 
