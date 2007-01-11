@@ -96,6 +96,24 @@ much of the variation is spatial?)
     the number of branches that connect the non-gap characters.
 
 -------------------------------------------------------
+ o Parsimony Model -> constant branch lengths
+   - only change SPR, disable branch-length moves
+   - or, do it at the level of the substitution model
+ o Gamma branch length model
+ o compare posteriors for Full model, Parsimony model, and in-between model
+   where T[i] = mu^a * b[i]^(1-a)
+ o Use the parsimony posterior to propose or select far-away trees
+   - (but is this any better than simply bootstrapping the posterior sample?)
+   - MCMCMC approach with no (with parsimony) branch lengths.
+
+ o Separating NNI & SPR into their own files
+ o Add ECR 
+   - re-sampling internal node states on more than 2 branches
+ o Writing a function to approximate the branch-length distribution
+   for a large number of adjacent branches
+ o a better form for the joint branch density than a normal.
+
+-------------------------------------------------------
 
 -41. Improve proposals: 
   + Specify the NUMBER of times we do each increment per iteration.
