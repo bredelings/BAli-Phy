@@ -98,7 +98,11 @@ much of the variation is spatial?)
 -------------------------------------------------------
  o Parsimony Model -> constant branch lengths
    - only change SPR, disable branch-length moves
+     * this is if we do it at the tree-level
+     * this SHOULD handle the multiple-rates case... or does it?
    - or, do it at the level of the substitution model
+     * how do we set the length to "mu", or how do we handle P.branch_mean() in this case?
+     * this SHOULD handle the multiple-rates case... or does it?
  o Gamma branch length model
  o compare posteriors for Full model, Parsimony model, and in-between model
    where T[i] = mu^a * b[i]^(1-a)
