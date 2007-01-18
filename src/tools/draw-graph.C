@@ -341,11 +341,17 @@ int main(int argc,char* argv[])
 	if (connected(i,j)==2)
 	  T.edges.push_back(edge(i,j,2,-1));
 
-    //draw the graph
+    // remove the pathname 
+    while(filename.find('/') != -1) 
+      filename = filename.substr(filename.find('/')+1);
+
+    // remove the extension
     int dot = filename.find('.');
     string name = filename;
     if (dot != -1)
       name = filename.substr(0,dot);
+
+    //draw the graph
     draw_graph(T,name);
   }
   catch (std::exception& e) {
