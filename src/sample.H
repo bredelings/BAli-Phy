@@ -65,6 +65,7 @@ void scale_branch_lengths_and_mean(alignment&, Parameters&, MCMC::MoveStats&);
 void change_branch_length_move(alignment&, Parameters&, MCMC::MoveStats&, int);
 void change_branch_length_multi_move(alignment&, Parameters&, MCMC::MoveStats&, int);
 void change_branch_length_and_T(alignment&, Parameters&, MCMC::MoveStats&, int);
+void change_3_branch_lengths(alignment& A, Parameters& P, MCMC::MoveStats& Stats,int); 
 
 
 void sample_NNI_and_branch_lengths(alignment&, Parameters&, MCMC::MoveStats&);

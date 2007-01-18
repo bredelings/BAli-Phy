@@ -481,3 +481,72 @@ void scale_branch_lengths_and_mean(alignment& A, Parameters& P,MoveStats& Stats)
   Stats.inc("branch-mean",result);
 }
 
+/// Propose three neighboring branch lengths all anti-correlated
+void change_3_branch_lengths(alignment& A, Parameters& P,MoveStats& Stats,int n) 
+{
+  MCMC::Result result(2);
+
+  const Tree& T = P.T;
+  if (not T[n].is_internal_node()) return;
+
+  //-------------- Find branches ------------------//
+  vector<const_branchview> branches;
+  append(T[n].branches_out(),branches);
+  int b1 = branches[0].undirected_name();
+  int b2 = branches[1].undirected_name();
+  int b3 = branches[2].undirected_name();
+
+  //------------ Change coordinates ---------------//
+  double T1 = T.branch(b1).length();
+  double T2 = T.branch(b2).length();
+  double T3 = T.branch(b3).length();
+
+  double S12 = T1 + T2;
+  double S23 = T2 + T3;
+  double S31 = T3 + T1;
+
+  //----------- Propose new distances -------------//
+  double sigma = loadvalue(P.keys,"log_branch_sigma",0.6)/2.0;
+  double ratio = 1.0;
+
+  double T1_ = T1;
+  double T2_ = T2;
+  double T3_ = T3;
+
+  for(int i=0;i<20;i++) 
+  {
+    double R12 = exp(gaussian(0,sigma));
+    double R23 = exp(gaussian(0,sigma));
+    double R31 = exp(gaussian(0,sigma));
+
+    double S12_ = S12 * R12;
+    double S23_ = S23 * R23;
+    double S31_ = S31 * R31;
+
+    //---------------- Change back ------------------//
+    T1_ = (S12_ + S31_ - S23_)/2.0;
+    T2_ = (S12_ + S23_ - S31_)/2.0;
+    T3_ = (S23_ + S31_ - S12_)/2.0;
+
+    ratio = R12 * R23 * R31;
+
+    if (T1_ > 0.0 and T2_ > 0.0 and T3_ > 0.0) break;
+  }
+  if (T1_ <= 0.0 or T2_ <= 0.0 or T3_ <= 0.0) return;
+
+  //----------- Construct proposed Tree -----------//
+  P.LC.root = n;
+  
+  Parameters P2 = P;
+  P2.setlength(b1,T1_);
+  P2.setlength(b2,T2_);
+  P2.setlength(b3,T3_);
+  
+  //--------- Do the M-H step if OK--------------//
+  if (do_MH_move(A,P,P2,ratio)) {
+    result.totals[0] = 1;
+    result.totals[1] = abs(log(T1_/T1)) + abs(log(T2_/T2)) + abs(log(T3_/T3));
+  }
+
+  Stats.inc("3-branch-lengths",result);
+}

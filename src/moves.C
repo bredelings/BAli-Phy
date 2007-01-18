@@ -263,7 +263,17 @@ void sample_NNI_and_branch_lengths(alignment& A, Parameters& P, MoveStats& Stats
 	two_way_NNI_sample(A,P,Stats,b);
 
     change_branch_length(A,P,Stats,b);
-    slide_node(A,P,Stats,b);
+    {
+      const_branchview bv = P.T.directed_branch(b);
+      if (uniform() < 0.5)
+	bv = bv.reverse();
+      if (bv.target().is_leaf_node())
+	bv = bv.reverse();
+      if (myrandomf() < 0.5)
+	slide_node(A,P,Stats,bv);
+      else 
+	change_3_branch_lengths(A,P,Stats,bv.target());
+    }
     change_branch_length(A,P,Stats,b);
     change_branch_length(A,P,Stats,b);
   }
