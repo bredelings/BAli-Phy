@@ -30,6 +30,5 @@ alignment randomize(const alignment& A,int n) {
   }
 
   remove_empty_columns(A2);
-  std::cerr<<A2<<endl;
   return A2;
 }
