@@ -9,7 +9,12 @@
    (d) Can we ignore the indel effects on branch lengths when we do?
    (e) How does the acceptance rate for fit_gamma depend on n_retries?
 
-3. Topology proposals which alter multiple branches:
+3. Multiple branch-length proposals
+   (a) When considering multiple branch lengths, the information CAN be about the
+       specific branches T[i] instead of the distances D[i][j] if we can infer WHICH
+       branch the mutations happened on.
+
+4. Topology proposals which alter multiple branches:
    (1) SPR connecting branch
    (2) SPR branch + merged branch
    (3) SPR branch + split branch (2)
