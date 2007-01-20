@@ -32,7 +32,7 @@ namespace substitution {
   efloat_t Gamma::prior() const {
     double g_sigma = parameters_[0];
     double log_g_sigma = log(g_sigma);
-    return laplace_pdf(log_g_sigma,-4,0.5);
+    return laplace_pdf(log_g_sigma,-3,1.0);
   }
 
   void Gamma::recalc(const vector<int>&)
@@ -95,7 +95,7 @@ namespace substitution {
   efloat_t LogNormal::prior() const {
     double g_sigma = parameters_[0];
     double log_g_sigma = log(g_sigma);
-    return laplace_pdf(log_g_sigma,-4,0.5);
+    return laplace_pdf(log_g_sigma,-3,1.0);
   }
 
   void LogNormal::recalc(const vector<int>&)
