@@ -2,6 +2,8 @@
 
 2. Branch length proposals
    (a) Can we SPEED UP the procedure to fit/estimate the posterior to a gamma?
+       i. Guess the initial distance and variance from the conditional probabilities on
+          both sides of the branch...
    (b) Single branch: can we accept more NNI/SPR if we sample the branch length?
    (c) Can we sample from a MULTIPLE branch distribution?
    (d) Can we ignore the indel effects on branch lengths when we do?
