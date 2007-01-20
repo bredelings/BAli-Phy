@@ -127,7 +127,40 @@ void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int 
   if (not extends(p[1].T, P.TC))
     return;
 
-  const vector<efloat_t> rho(2,1);
+  vector<efloat_t> rho(2,1);
+
+  // because we would select between topologies before selecting
+  // internal node states, then reverse distribution cannot depend on 
+  // the internal node state of the proposed new topology/alignment
+  bool smart_inner_branch = (uniform() < 0.1) and not P.has_IModel();
+  if (smart_inner_branch) 
+  {
+    vector<double> G0 = gamma_approx(a[0],p[0],b);
+    vector<double> G1 = gamma_approx(a[1],p[1],b);
+
+    double a0 = G0[0]+1.0;
+    double b0 = -1.0/G0[1];
+
+    double a1 = G1[0]+1.0;
+    double b1 = -1.0/G1[1];
+
+    if (a0 < 0 or b0<0) {
+      std::cerr<<"a0 = "<<a0<<"  b0 = "<<b0<<std::endl;
+      a0 = 1;
+      b0 = p[0].branch_mean();
+    }
+
+    if (a1 < 0 or b1<0) {
+      std::cerr<<"a1 = "<<a0<<"  b1 = "<<b0<<std::endl;
+      a1 = 1;
+      b1 = p[1].branch_mean();
+    }
+
+    p[1].setlength(b,gamma(a1,b1));
+
+    rho[0] = gsl_ran_gamma_pdf(p[1].T.branch(b).length(),a1,b1);
+    rho[1] = gsl_ran_gamma_pdf(p[0].T.branch(b).length(),a0,b0);
+  }
 
   int C = two_way_topology_sample(a,p,rho,b);
 
@@ -136,7 +169,15 @@ void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int 
     P = p[C];
   }
 
-  Stats.inc("NNI (2-way)", C>0);
+  MCMC::Result result(2);
+
+  result.totals[0] = (C>0)?1:0;
+  result.totals[1] = p[0].T.branch(b).length();
+
+  if (smart_inner_branch)
+    Stats.inc("NNI (2-way,gamma)", result);
+  else 
+    Stats.inc("NNI (2-way)", result);
 }
 
 void two_way_NNI_SPR_sample(alignment& A, Parameters& P, MoveStats& Stats, int b) 

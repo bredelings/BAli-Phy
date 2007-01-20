@@ -167,19 +167,50 @@ MCMC::Result sample_SPR(alignment& A,Parameters& P,int b1,int b2,bool change_bra
   }
 
   //------------- change connecting branch length ----------------//
+  vector<efloat_t> rho(2,1);
   if (change_branch) {
-    double mu = P.branch_mean();
     int b1u = P.T.directed_branch(b1).undirected_name();
-    double length1 = P.T.directed_branch(b1).length();
-    double length2 = exponential(mu);
-    efloat_t r = exponential_pdf(length1,mu)/exponential_pdf(length2,mu);
-    ratio *= r;
-    p[1].setlength(b1u,length2);
+    if (P.has_IModel()) 
+    {
+      double mu = P.branch_mean();
+      double length1 = P.T.branch(b1u).length();
+      double length2 = exponential(mu);
+      efloat_t r = exponential_pdf(length1,mu)/exponential_pdf(length2,mu);
+      ratio *= r;
+      p[1].setlength(b1u,length2);
+      rho[1] = ratio;
+    }
+    else 
+    {
+      vector<double> G0 = gamma_approx(a[0],p[0],b1u);
+      vector<double> G1 = gamma_approx(a[1],p[1],b1u);
+
+      double a0 = G0[0]+1.0;
+      double B0 = -1.0/G0[1];
+
+      double a1 = G1[0]+1.0;
+      double B1 = -1.0/G1[1];
+
+      if (a0<0 or B0<0) {
+	std::cerr<<"a0 = "<<a0<<"  B0 = "<<B0<<std::endl;
+	a0 = 1;
+	B0 = p[0].branch_mean();
+      }
+      
+      if (a1<0 or B1<0) {
+	std::cerr<<"a1 = "<<a1<<"  B1 = "<<B1<<std::endl;
+	a1 = 1;
+	B1 = p[1].branch_mean();
+      }
+      
+      p[1].setlength(b1u,gamma(a1,B1));
+      
+      rho[0] = gsl_ran_gamma_pdf(p[1].T.branch(b1u).length(),a1,B1);
+      rho[1] = gsl_ran_gamma_pdf(p[0].T.branch(b1u).length(),a0,B0);
+    }
   }
 
   //----------- sample alignments and choose topology -----------//
-  vector<efloat_t> rho(2,1);
-  rho[1] = ratio;
   int C = topology_sample_SPR(a,p,rho,n1,n2);
 
   if (C != -1) 
@@ -247,7 +278,7 @@ void sample_SPR_flat(alignment& A,Parameters& P,MoveStats& Stats)
 {
   int n = poisson(P.T.n_branches()*0.1);
 
-  bool change_branch = (uniform() < 0.5);
+  bool change_branch = ((uniform() < 0.10) and (not P.has_IModel()));
 
   for(int i=0;i<n;i++) {
     int b1 = choose_subtree_branch_uniform(P.T);
@@ -367,7 +398,7 @@ void sample_SPR_nodes(alignment& A,Parameters& P,MoveStats& Stats)
 {
   int n = poisson(P.T.n_branches()*0.1);
 
-  bool change_branch = (uniform() < 0.5);
+  bool change_branch = ((uniform() < 0.10) and (not P.has_IModel()));
 
   for(int i=0;i<n;i++) {
 
