@@ -15,6 +15,7 @@
 #include "monitor.H"
 #include "proposals.H"
 #include "n_indels.H"
+#include "tools/parsimony.H"
 
 namespace MCMC {
   using std::valarray;
@@ -497,7 +498,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   if (P.has_IModel()) {
     s_parameters<<"\t|A|\t#indels\t|indels|";
   }
-  s_parameters<<"\t|T|"<<endl;
+  s_parameters<<"\t#substs\t|T|"<<endl;
 
   int restore = find_parameter(P,"lambda");
   if (restore == -1)
@@ -537,6 +538,7 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
 	s_parameters<<"\t"<<n_indels(A,P.T);
 	s_parameters<<"\t"<<total_length_indels(A,P.T);
       }
+      s_parameters<<"\t"<<n_mutations(A,P.T);
       s_parameters<<"\t"<<length(P.T)<<endl;
     }
 
