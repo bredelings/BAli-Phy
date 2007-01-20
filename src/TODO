@@ -49,6 +49,7 @@
 
 8. Implement Correlated Site Classes.
   (a) Do the math.
+    (i) When caching HMM state values, we must ALSO cache rates!
   (b) Do the coding?
 
 9. Estimate constraints using alignment-indices
@@ -154,7 +155,12 @@ Before 1.9.9:
    - what files do we read (that we do NOT control the parsing of)
      + config, ~/.bali-phy
 
+
+ * fix SPR2 to use ACTUAL gamma proposal, not stupid Exponential(mu) proposal.
+   (done, but worse acceptance rates?  And, only for --traditional.)
+
 After 1.9.9:
+
  * tree-mean-lengths: compute the length of each branch or node, conditioned on the
    existance of said branch or node.
    - if a branch doesn't exist - give it length 0.
