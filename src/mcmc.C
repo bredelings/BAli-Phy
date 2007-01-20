@@ -500,19 +500,26 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   }
   s_parameters<<"\t#substs\t|T|"<<endl;
 
-  int restore = find_parameter(P,"lambda");
-  if (restore == -1)
-    restore = find_parameter(P,"delta");
-  if (restore != -1 and P.fixed(restore))
-    restore = -1;
-  if (restore != -1)
-    P.fixed(restore,true);
-
+  vector<string> restore_names;
+  restore_names.push_back("lambda");
+  restore_names.push_back("delta");
+  restore_names.push_back("epsilon");
+  vector<int> restore;
+  for(int i=0;i<restore_names.size();i++) 
+  {
+    int index = find_parameter(P,restore_names[i]);
+    if (index != -1) {
+      restore.push_back(index);
+      P.fixed(index,true);
+    }
+  }
+      
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max; iterations++) {
 
-    if (iterations == 5 and restore != -1)
-      P.fixed(restore,false);
+    if (iterations == 5)
+      for(int i=0;i<restore.size();i++)
+      P.fixed(restore[i],false);
 
     if (iterations < P.beta_series.size())
       P.beta[0] = P.beta_series[iterations];
