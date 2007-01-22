@@ -1868,8 +1868,48 @@ traditional = traditional
       <para>Draw an alignment to HTML, optionally coloring residues by AU.</para>
     </sect2>
 
+    <sect2>
+      <title>alignment-thin</title>
+      <para>alignment-thin <replaceable>alignment-file</replaceable> <replaceable>tree-file</replaceable> [OPTIONS]</para>
+      <para>Remove taxa from an alignment to preserve the most
+      sequence diversity, as measured by the  total length of the tree
+      for the remaining taxa.</para> 
+    </sect2>
 
+    <sect2>
+      <title>alignment-chop-internal</title>
+      <para>alignment-chop-internal <replaceable>alignment-file</replaceable> [OPTIONS]</para>
+      <para>Remove ancestral sequences from an alignment.  (This
+      probably only works for alignments output by bali-phy.) </para>
+    </sect2>
 
+    <sect2>
+      <title>alignment-info</title>
+      <para>alignment-info <replaceable>alignment-file</replaceable> <replaceable>tree-file</replaceable>[OPTIONS]</para>
+      <para>Display basic information about the alignment, including
+      its length, the number of sequences, columns that are constant
+      or informative, letter frequencies, etc.</para>
+      <para>If a tree is supplied, then the unweighted parsimony score
+      is given as well.</para>
+    </sect2>
+    
+    <sect2>
+      <title>alignment-indices</title>
+      <para>alignment-indices <replaceable>alignment-file</replaceable> [OPTIONS]</para>
+      <para>Show the alignment in terms of the index of each character
+      in its sequence.  Each line in this file corresponds to one
+      alignment column.  This can be useful in producing alignment
+      constraint files.</para>
+    </sect2>
+    
+    <sect2>
+      <title>alignment-cat</title>
+      <para>alignment-cat <replaceable>file1</replaceable>
+      [<replaceable>file2</replaceable> ...]</para>
+      <para>Concatenate several alignments (with the same sequence
+      names) end-to-end.</para>
+    </sect2>
+    
     <sect2>
       <title>trees-consensus</title>
       <para>Usage: trees-consensus <replaceable>file</replaceable>
