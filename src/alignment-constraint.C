@@ -40,7 +40,7 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,SequenceT
 
     // Map columns to species
     string line;
-    getline(constraint_file,line);
+    getline_handle_dos(constraint_file,line);
     vector<string> names = split(clean(line),' ');
     vector<int> mapping;
     try {
@@ -72,7 +72,7 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,SequenceT
     // Load constraints
     int line_no=1;
     vector<vector<int> > constraints;
-    while(getline(constraint_file,line)) {
+    while(getline_handle_dos(constraint_file,line)) {
 
       int loc = line.find('#');
       if (loc == -1)

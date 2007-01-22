@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <list>
+#include "util.H"
 #include "tree-util.H"
 #include "myexception.H"
 
@@ -31,7 +32,7 @@ vector<string> load_lines(istream& file,int skip,int subsample, int max)
   vector<string> lines;
 
   string line;
-  for(int line_number=0;getline(file,line);line_number++) 
+  for(int line_number=0;getline_handle_dos(file,line);line_number++) 
   {
     // don't start if we haven't skipped enough trees
     if (line_number < skip) continue;

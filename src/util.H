@@ -11,6 +11,9 @@
 
 #define foreach(a,b) for(typeof((b).begin()) a=(b).begin();a != (b).end();a++)
 
+// this should actually be templatized... <class charT,Alloc,Traits>
+std::istream& getline_handle_dos(std::istream&,std::string&);
+
 template <class T>
 T convertTo(const std::string& s) { 
   std::istringstream i(s);

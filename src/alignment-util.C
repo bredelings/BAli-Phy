@@ -612,7 +612,7 @@ list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphab
     // CHECK if an alignment begins here
     if (not is_next_char(ifile,'>')) {
       string line;
-      getline(ifile,line);
+      getline_handle_dos(ifile,line);
       continue;
     }
 
@@ -623,7 +623,7 @@ list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphab
     if (nth%skip != 0) {
       string line;
       do {
-	getline(ifile,line);
+	getline_handle_dos(ifile,line);
       } while (line.size());
     }
 
@@ -718,7 +718,7 @@ vector<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alph
     // CHECK if an alignment begins here
     if (not is_next_char(ifile,'>')) {
       string line;
-      getline(ifile,line);
+      getline_handle_dos(ifile,line);
       continue;
     }
     
@@ -762,7 +762,7 @@ alignment find_first_alignment(std::istream& ifile, const vector<OwnedPointer<al
     // CHECK if an alignment begins here
     if (not is_next_char(ifile,'>')) {
       string line;
-      getline(ifile,line);
+      getline_handle_dos(ifile,line);
       continue;
     }
     
@@ -801,7 +801,7 @@ alignment find_last_alignment(std::istream& ifile, const vector<OwnedPointer<alp
     // CHECK if an alignment begins here
     if (not is_next_char(ifile,'>')) {
       string line;
-      getline(ifile,line);
+      getline_handle_dos(ifile,line);
       continue;
     }
     

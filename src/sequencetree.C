@@ -74,7 +74,7 @@ void SequenceTree::read(std::istream& file) {
 
   string total;
   string line;
-  while(getline(file,line))
+  while(getline_handle_dos(file,line))
     total += line;
   parse(total);
 }
@@ -360,7 +360,7 @@ RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTr
 std::istream& operator >>(std::istream& i,SequenceTree& T) 
 {
   string line;
-  while(getline(i,line)) {
+  while(getline_handle_dos(i,line)) {
     if (not line.empty()) {
       T.parse(line);
       return i;

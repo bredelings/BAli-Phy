@@ -39,7 +39,7 @@ namespace sequence_format {
 
     bool done = false;
 
-    while(not done and getline(file,line)) {
+    while(not done and getline_handle_dos(file,line)) {
 
       // quit reading after a blank line
       if (not line.size()) break;
@@ -66,7 +66,7 @@ namespace sequence_format {
 	if (c == '>') break;
 
 	// read the next line of letters
-	getline(file,line);
+	getline_handle_dos(file,line);
 
 	// quit reading after a blank line
 	if (not line.size()) { done = true; break;}
@@ -124,7 +124,7 @@ namespace sequence_format {
       throw myexception()<<"[Error reading PHYLIP alignment] File ends early!";
 
     string line;
-    getline(file,line);
+    getline_handle_dos(file,line);
 
     if (not strip(line," \t").size())
       return false;
@@ -192,7 +192,7 @@ namespace sequence_format {
     string line;
     for(int i=0;i<ntaxa;i++) {
       assert(file);
-      getline(file,line);
+      getline_handle_dos(file,line);
       if (not line.size())
 	throw myexception()<<"[Reading PHYLIP alignment] Read an empty line after "<<i<<" out of "<<ntaxa<<" sequences in this stanza.";
 
@@ -216,7 +216,7 @@ namespace sequence_format {
 
     // parse phylip header
     string line;
-    getline(file,line);
+    getline_handle_dos(file,line);
     int ntaxa = -1;
     int length = -1;
     {
@@ -241,7 +241,7 @@ namespace sequence_format {
 	// If there is not more data, then quit
 	if (not file.good()) break;
 	
-	getline(file,line);
+	getline_handle_dos(file,line);
 	
 	// If there is a line here, and we are still looking for data, it must be empty
 	if (line.size() != 0) 

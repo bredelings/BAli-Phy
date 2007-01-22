@@ -3,6 +3,18 @@
 using std::vector;
 using std::string;
 
+
+std::istream& getline_handle_dos(std::istream& file,std::string& s)
+{
+  int last = s.size()-1;
+  getline(file,s);
+  while(s.size() and (s[s.size()-1] == char(13) or s[s.size()-1] == char(10)))
+    s.erase(s.size()-1,1);
+
+  return file;
+}
+
+
 string join(const vector<string>& v,char c) {
   string s;
   if (v.size())
