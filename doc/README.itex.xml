@@ -244,6 +244,8 @@
 	passing
 	<userinput>--with-extra-libs=<replaceable>dir</replaceable></userinput> to the <command>configure</command> script.  
 	</para> 
+
+	<para>For example, if your system has GSL installed in <filename>/usr/local/</filename>, then you might need to add "<userinput>--with-extra-includes=/usr/local/include --with-extra-libs=/usr/local/lib</userinput>" to the configure script arguments so that the compiler can find the GSL include files and libraries.</para>
       </sect2>
 
       <sect2>
