@@ -1625,7 +1625,7 @@ traditional = traditional
       </para>
 
       <para>Running the analysis will produce the three directories:
-      <filename>Results/</filename>, <filename>Mixing</filename>, and
+      <filename>Results/</filename>, <filename>Mixing/</filename>, and
       <filename>Work/</filename>.  The <filename>Results/</filename>
       directory contains tree and alignment estimates and confidence
       levels.   The <filename>Mixing/</filename> directory contains various
@@ -1887,7 +1887,7 @@ traditional = traditional
 
     <sect2>
       <title>alignment-info</title>
-      <para>alignment-info <replaceable>alignment-file</replaceable> <replaceable>tree-file</replaceable>[OPTIONS]</para>
+      <para>alignment-info <replaceable>alignment-file</replaceable> <replaceable>tree-file</replaceable> [OPTIONS]</para>
       <para>Display basic information about the alignment, including
       its length, the number of sequences, columns that are constant
       or informative, letter frequencies, etc.</para>
