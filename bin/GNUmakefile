@@ -136,7 +136,7 @@ Results/%-AU.html: Results/%-AU.prob Results/%.fasta
 
 Results/%-AU2.html: Results/%-AU.prob Results/%.fasta
 	@echo -e "Drawing $* alignment plot (2) ... \c"
-	@alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme AA+contrast+fade+fade+fade+fade > $@
+	@if ! alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme AA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; then alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme DNA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; fi
 	@echo "done."
 
 Results/c%.topology: Results/consensus Work/setup

@@ -1694,7 +1694,9 @@ traditional = traditional
       </para>
 
       <variablelist>
-	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot of the MAP alignment.
+	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot of the MAP alignment (rainbow color-cheme).
+	</para></listitem></varlistentry>
+	<varlistentry><term>MAP-AU2.html</term><listitem><para>An AU plot of the MAP alignment (AA/DNA color-scheme).
 	</para></listitem></varlistentry>
 
 	<varlistentry><term>MAP-AU.prob</term><listitem><para>The probabilities for each letter in the MAP alignment AU plot.
@@ -1704,7 +1706,10 @@ traditional = traditional
 	<para>A consensus alignment, representing information shared by most alignment samples.
 	</para></listitem></varlistentry>
 
-	<varlistentry><term>consensus-AU.html</term><listitem><para>An AU plot of the consensus alignment.
+	<varlistentry><term>consensus-AU.html</term><listitem><para>An AU plot of the consensus alignment (rainbow color-scheme).
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>consensus-AU2.html</term><listitem><para>An AU plot of the MAP alignment (AA/DNA color-scheme).
 	</para></listitem></varlistentry>
 
 	<varlistentry><term>consensus-AU.prob</term><listitem><para>The probabilities for each letter in the consensus alignment AU plot.

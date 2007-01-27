@@ -144,8 +144,6 @@ Paper:
 Before 1.9.9:
  * Implement Branch length prior distributions
  * Implement branch-length constraints.
- * Avoid crash on DNA sequences...
-   - Make a AA_DNA color scheme that correctly guesses AA or DNA?
  * Brief descriptions of some of the tools.
  * Debug with _GLIBCXX_DEBUG
  * (?) Add some more comments to the code.
@@ -641,7 +639,9 @@ the prior, because we never want to use it  differently.
 
 [DONE] Fix Beta distribution - don't assume the natural scale is 1.0!
 
-[DONE] Handle characater 13 (PC format) in alignment and tree files.
+[DONE] Handle character 13 (PC format) in alignment and tree files.
+
+[DONE] Correctly create MAP-AU2 for DNA&RNA alignments.
 
 *IDEAS*
 

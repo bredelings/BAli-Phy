@@ -832,6 +832,7 @@ BODY {\n\
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
+    return 1;
   }
   return 0;
 
