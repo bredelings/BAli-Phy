@@ -387,7 +387,8 @@ int find_partition(const valarray<bool>& p1, const vector<valarray<bool> >& pv) 
   return -1;
 }
 
-double branch_distance(const SequenceTree& T1, const SequenceTree& T2) {
+double branch_distance(const SequenceTree& T1, const SequenceTree& T2) 
+{
   assert(T1.n_leaves() == T2.n_leaves());
 
   vector<double> d1(T1.n_branches());
@@ -430,15 +431,82 @@ double branch_distance(const SequenceTree& T1, const SequenceTree& T2) {
   return total;
 }
 
-double topology_distance(const SequenceTree& T1, const SequenceTree& T2) {
-  SequenceTree T1A = T1;
-  for(int b=0;b<T1A.n_branches();b++)
-    T1A.branch(b).set_length(0.5);
+double internal_branch_distance(const SequenceTree& T1, const SequenceTree& T2) 
+{
+  assert(T1.n_leaves() == T2.n_leaves());
 
-  SequenceTree T2A = T2;
-  for(int b=0;b<T2A.n_branches();b++)
-    T2A.branch(b).set_length(0.5);
+  unsigned n1 = T1.n_branches() - T1.n_leafbranches();
+  unsigned n2 = T2.n_branches() - T2.n_leafbranches();
 
-  return branch_distance(T1A,T2A);
+  vector<double> d1(n1);
+  vector<double> d2(n2);
+
+  vector< valarray<bool> > part1(n1,valarray<bool>(false,T1.n_leaves()));
+  vector< valarray<bool> > part2(n2,valarray<bool>(false,T2.n_leaves()));
+
+  // get partitions and lengths for T1
+  for(int i=0;i<n1;i++) {
+    d1[i] = T1.branch(i+n1).length();
+    part1[i] = branch_partition(T1,i+n1);
+  }
+
+  // get partitions and lengths for T2
+  for(int i=0;i<n2;i++) {
+    d2[i] = T1.branch(i+n2).length();
+    part2[i] = branch_partition(T2,i+n2);
+  }
+
+  // Accumulate distances for T1 partitions
+  vector<bool> found(n2,false);
+
+  double total = 0;
+  for(int i=0;i<part1.size();i++) {
+    int j = find_partition(part1[i],part2);
+    if (j == -1)
+      total += d1[i];
+    else {
+      found[j] = true;
+      total += abs(d1[i]-d2[j]);
+    }
+  }
+
+  for(int i=0;i<part2.size();i++) {
+    if (not found[i])
+      total += d2[i];
+  }
+
+  return total;
 }
 
+unsigned topology_distance(const SequenceTree& T1, const SequenceTree& T2) 
+{
+  assert(T1.n_leaves() == T2.n_leaves());
+
+  unsigned n1 = T1.n_branches() - T1.n_leafbranches();
+  unsigned n2 = T2.n_branches() - T2.n_leafbranches();
+
+  vector< valarray<bool> > part1(n1,valarray<bool>(false,T1.n_leaves()));
+  vector< valarray<bool> > part2(n2,valarray<bool>(false,T2.n_leaves()));
+
+  // get partitions and lengths for T1
+  for(int i=0;i<n1;i++)
+    part1[i] = branch_partition(T1,i+n1);
+
+  // get partitions and lengths for T2
+  for(int i=0;i<n2;i++)
+    part2[i] = branch_partition(T2,i+n2);
+
+  // Accumulate distances for T1 partitions
+  unsigned shared=0;
+  for(int i=0;i<part1.size();i++) {
+    if (find_partition(part1[i],part2) != -1)
+      shared++;
+  }
+
+  return (n1-shared) + (n2-shared);
+}
+
+double robinson_foulds_distance(const SequenceTree& T1, const SequenceTree& T2) 
+{
+  return 0.5*topology_distance(T1,T2);
+}

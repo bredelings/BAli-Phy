@@ -132,8 +132,10 @@ void delete_node(SequenceTree& T,const std::string& name);
 
 SequenceTree star_tree(const std::vector<std::string>&);
 
+double internal_branch_distance(const SequenceTree& T1, const SequenceTree& T2);
 double branch_distance(const SequenceTree& T1, const SequenceTree& T2);
-double topology_distance(const SequenceTree& T1, const SequenceTree& T2);
+double robinson_foulds_distance(const SequenceTree& T1, const SequenceTree& T2);
+unsigned topology_distance(const SequenceTree& T1, const SequenceTree& T2);
 
 std::string write(const RootedTree& T, const std::vector<std::string>& names, bool print_lengths=true); 
 
