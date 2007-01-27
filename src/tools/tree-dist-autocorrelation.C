@@ -7,38 +7,47 @@
 #include <map>
 #include <cmath>
 
+#include <boost/numeric/ublas/matrix.hpp>
 #include "sequencetree.H"
-#include "arguments.H"
 #include "util.H"
+#include "tree-util.H"
 #include "tree-dist.H"
+
+#include <boost/program_options.hpp>
+
+namespace ublas = boost::numeric::ublas;
+namespace po = boost::program_options;
+using po::variables_map;
 
 using namespace std;
 
-SequenceTree standardized(const string& t) {
-  SequenceTree T;
-  T.parse(t);
-  
-  map<string,int,lstr> sequences;
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
 
-  for(int i=0;i<T.get_sequences().size();i++) {
-    sequences.insert(pair<string,int>(T.get_sequences()[i],i));
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("topology", "Ignore branch lengths")
+    ("matrix", "write out the distance matrix")
+    ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
+    ("max",value<int>(),"maximum number of tree samples to read")
+    ("window",value<int>(),"maximum length to consider")
+    ;
+
+  variables_map args;     
+  store(parse_command_line(argc, argv, all), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: tree-dist-autocorrelation < trees-file\n";
+    cout<<"Compute the mean lengths for branches in the given topology.\n\n";
+    cout<<all<<"\n";
+    exit(0);
   }
 
-  vector<int> newnames(T.leaves());
-
-  int i=0;
-  foreach(s,sequences) {
-    pair<string,int> p = *s;
-    newnames[p.second] = i;
-    i++;
-  }
-
-  //  cerr<<t<<endl;
-  //  cerr<<T.write()<<endl;
-  //  cerr<<T.write(false)<<endl;
-  T.SequenceTree::standardize(newnames);
-  //  cerr<<T.write(false)<<endl;
-  return T;
+  return args;
 }
 
 
@@ -50,53 +59,76 @@ SequenceTree standardized(const string& t) {
 
 // Add trees1 vs trees2 arguments to compare distances from different programs
 
-int main(int argc,char* argv[]) { 
-  Arguments args;
-  args.read(argc,argv);
+int main(int argc,char* argv[]) 
+{ 
+  try 
+  {
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
 
-  try {
-    bool topology_only = false;
-    if (args.set("topology"))
-      topology_only = true;
+    bool topology_only = args.count("topology")>0;
 
-    vector<SequenceTree> trees;
-    
-    // read in the trees
-    string line;
-    while(getline(cin,line)) {
-      SequenceTree T = standardized(line); 
-      if (topology_only) 
-	for(int b=0;b<T.branches();b++)
-	  T.branch(b).length() = 1.0;
+    unsigned skip = args["skip"].as<unsigned>();
 
-      trees.push_back( T );
-    }
-    cout<<"# There were "<<trees.size()<<" trees scanned\n";
+    int max = -1;
+    if (args.count("max"))
+      max = args["max"].as<int>();
+
+    //----------- read in trees ------------//
+    vector<SequenceTree> trees = load_trees(cin,skip,1,max);
+
+    if (not trees.size())
+      throw myexception()<<"No trees were read in!";
+  
+    cerr<<"# There were "<<trees.size()<<" trees scanned\n";
 
     // set the window size
-    const int maxsize = int( double(trees.size()/20.0 + 1.0 ) );
-    int window = args.loadvalue("window", maxsize);
+    int window = int( double(trees.size()/20.0 + 1.0 ) );
+    if (args.count("window"))
+      window = min(window,args["window"].as<int>());
 
     // bound the window
     if (window >= trees.size()/2)
       window = trees.size()/2;
-    cout<<"# window size = "<<window<<endl;
+    cerr<<"# window size = "<<window<<endl;
 
-    // calculate the distances
-    valarray<double> distances(0.0,window);
+    // calculate the pairwise distances
+    ublas::matrix<double> D(trees.size(),trees.size());
     for(int i=0;i<trees.size();i++) {
-      const SequenceTree& T1 = trees[i];
-      for(int j=i;j<trees.size() and j-i < distances.size();j++) {
-	const SequenceTree& T2 = trees[j];
-	distances[j-i] += branch_distance(T1,T2);
+      for(int j=0;j<i;j++) {
+	double d=0;
+	if (topology_only)
+	  d = topology_distance(trees[i],trees[j]);
+	else
+	  d = branch_distance(trees[i],trees[j]);
+	D(i,j) = D(j,i) = d;
+      }
+      D(i,i) = 0;
+    }
+
+    if (args.count("matrix")) {
+      for(int i=0;i<trees.size();i++) {
+	vector<double> v(trees.size());
+	for(int j=0;j<trees.size();j++)
+	  v[j] = D(i,j);
+	cout<<join(v,'\t')<<endl;
       }
     }
-    for(int i=0;i<distances.size();i++)
-      distances[i] /= (trees.size()-i);
+    else {
 
-    // write out the average distances
-    for(int i=0;i<distances.size();i++)
-      cout<<i<<"   "<<distances[i]<<endl;
+      // write out the average distances
+      valarray<double> distances(0.0,window);
+      for(int d=0;d<distances.size();d++) {
+	double dd = 0;
+	for(int i=0;i+d<trees.size();i++)
+	  dd += D(i,i+d);
+	distances[d] = dd/(trees.size() - d);
+      }
+      
+      // write out the average distances
+      for(int i=0;i<distances.size();i++)
+	cout<<i<<"   "<<distances[i]<<endl;
+    }
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
