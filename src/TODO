@@ -152,6 +152,8 @@ Before 1.9.9:
  * fix SPR2 to use ACTUAL gamma proposal, not stupid Exponential(mu) proposal.
    (done, but worse acceptance rates?  And, only for --traditional.)
 
+ * fix "if HOST_MSWINDOWS" to look for dll's not so's.
+
 After 1.9.9:
 
  * tree-mean-lengths: compute the length of each branch or node, conditioned on the
