@@ -95,7 +95,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: tree-dist-autocorrelation < trees-file\n";
-    cout<<"Compute the mean lengths for branches in the given topology.\n\n";
+    cout<<"Compute autocorrelations for tree distances, or the distance matrix.\n\n";
     cout<<all<<"\n";
     exit(0);
   }
@@ -131,6 +131,8 @@ int main(int argc,char* argv[])
 
     //----------- read in trees ------------//
     vector<SequenceTree> trees = load_trees(cin,skip,subsample,max);
+    for(int i=0;i<trees.size();i++)
+      standardize(trees[i]);
 
     if (not trees.size())
       throw myexception()<<"No trees were read in!";

@@ -435,8 +435,11 @@ double internal_branch_distance(const SequenceTree& T1, const SequenceTree& T2)
 {
   assert(T1.n_leaves() == T2.n_leaves());
 
-  unsigned n1 = T1.n_branches() - T1.n_leafbranches();
-  unsigned n2 = T2.n_branches() - T2.n_leafbranches();
+  unsigned l1 = T1.n_leafbranches();
+  unsigned l2 = T2.n_leafbranches();
+
+  unsigned n1 = T1.n_branches() - l1;
+  unsigned n2 = T2.n_branches() - l2;
 
   vector<double> d1(n1);
   vector<double> d2(n2);
@@ -446,14 +449,14 @@ double internal_branch_distance(const SequenceTree& T1, const SequenceTree& T2)
 
   // get partitions and lengths for T1
   for(int i=0;i<n1;i++) {
-    d1[i] = T1.branch(i+n1).length();
-    part1[i] = branch_partition(T1,i+n1);
+    d1[i] = T1.branch(i+l1).length();
+    part1[i] = branch_partition(T1,i+l1);
   }
 
   // get partitions and lengths for T2
   for(int i=0;i<n2;i++) {
-    d2[i] = T1.branch(i+n2).length();
-    part2[i] = branch_partition(T2,i+n2);
+    d2[i] = T1.branch(i+l2).length();
+    part2[i] = branch_partition(T2,i+l2);
   }
 
   // Accumulate distances for T1 partitions
@@ -482,19 +485,22 @@ unsigned topology_distance(const SequenceTree& T1, const SequenceTree& T2)
 {
   assert(T1.n_leaves() == T2.n_leaves());
 
-  unsigned n1 = T1.n_branches() - T1.n_leafbranches();
-  unsigned n2 = T2.n_branches() - T2.n_leafbranches();
+  unsigned l1 = T1.n_leafbranches();
+  unsigned l2 = T2.n_leafbranches();
+
+  unsigned n1 = T1.n_branches() - l1;
+  unsigned n2 = T2.n_branches() - l2;
 
   vector< valarray<bool> > part1(n1,valarray<bool>(false,T1.n_leaves()));
   vector< valarray<bool> > part2(n2,valarray<bool>(false,T2.n_leaves()));
 
   // get partitions and lengths for T1
   for(int i=0;i<n1;i++)
-    part1[i] = branch_partition(T1,i+n1);
+    part1[i] = branch_partition(T1,i+l1);
 
   // get partitions and lengths for T2
   for(int i=0;i<n2;i++)
-    part2[i] = branch_partition(T2,i+n2);
+    part2[i] = branch_partition(T2,i+l2);
 
   // Accumulate distances for T1 partitions
   unsigned shared=0;
