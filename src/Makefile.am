@@ -255,7 +255,7 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 #---------------------------------------------------------------
 
 tree_dist_autocorrelation_SOURCES = tools/tree-dist-autocorrelation.C tree.C \
-	sequencetree.C tools/tree-dist.C util.C tree-util.C
+	sequencetree.C tools/tree-dist.C util.C tree-util.C tools/statistics.C
 
 #---------------------------------------------------------------
 
