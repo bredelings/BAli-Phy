@@ -23,8 +23,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("header","This file has a header - don't throw it out.")
     ;
 
+  // positional options
+  positional_options_description p;
+  p.add("factor", 1);
+  
   variables_map args;     
-  store(parse_command_line(argc, argv, all), args);
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
   notify(args);    
 
   if (args.count("help")) {
@@ -60,15 +66,18 @@ int main(int argc,char* argv[])
 
     // print selected lines
     int lines=0;
+    int count=0;
     while(getline(cin,line)) 
     {
       if (skip > 0)
 	skip--;
-      else if (max > 0 and lines >= max)
+      else if (max > 0 and count >= max)
 	break;
       else {
-	if (lines%subsample == 0)
+	if (lines%subsample == 0) {
 	  cout<<line<<endl;
+	  count++;
+	}
 	lines++;
       }
     }
