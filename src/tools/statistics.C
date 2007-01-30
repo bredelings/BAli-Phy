@@ -179,5 +179,26 @@ namespace statistics {
     return (1.0 + 2.0*sum/V);
   }
 
+  double probability_x_less_than_y(const std::valarray<double>& x, const std::valarray<double>& y)
+  {
+    vector<double> x2(x.size());
+    for(int i=0;i<x2.size();i++)
+      x2[i] = x[i];
+    sort(x2.begin(),x2.end());
+
+    vector<double> y2(y.size());
+    for(int i=0;i<y2.size();i++)
+      y2[i] = y[i];
+    sort(y2.begin(),y2.end());
+
+    valarray<double> FX(y.size());
+    int dx=0;
+    for(int dy=0;dy<FX.size();dy++) {
+      while((dx<x2.size()) and (x2[dx]<y2[dy]))
+	dx++;
+      FX[dy] = double(dx)/x2.size();
+    }
+    return FX.sum()/FX.size();
+  }
 }
 

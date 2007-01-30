@@ -264,7 +264,7 @@ void diameter(const ublas::matrix<double>& D,const string& name,variables_map& a
   d1 /= (N-1);
 
 
-  string name1 = string("D")+name+name;
+  string name1 = string("D")+name+name + "  ";
   string name2 = string("D")+name+"("+name+")";
   report_distances(d11,name1, args);cout<<endl;
   report_distances(d1 ,name2, args);
@@ -379,28 +379,65 @@ int main(int argc,char* argv[])
       ublas::matrix<double> D2 = distances(trees2,metric_fn);
       ublas::matrix<double> D  = distances(both,metric_fn);
       
-      diameter(D1,"1",args);cout<<endl;
-      cout<<"--------------------------------------"<<endl<<endl;
-      diameter(D2,"2",args);cout<<endl;
-      cout<<"--------------------------------------"<<endl<<endl;
+      valarray<double> d1(0.0, N1);
+      valarray<double> d11(0.0, N1*(N1-1)/2);
+      
+      {
+	int k=0;
+	for(int i=0;i<N1;i++)
+	  for(int j=0;j<i;j++) {
+	    d1[i] += D1(i,j);
+	    d1[j] += D1(i,j);
+	    d11[k++] = D1(i,j);
+	  }
+	d1 /= (N1-1);
+      }
 
-      valarray<double> distances12(0.0, N1*N2);
-      valarray<double> distances1(0.0, N1);
-      valarray<double> distances2(0.0, N2);
+      valarray<double> d2(0.0, N2);
+      valarray<double> d22(0.0, N2*(N2-1)/2);
+      
+      {
+	int k=0;
+	for(int i=0;i<N2;i++)
+	  for(int j=0;j<i;j++) {
+	    d2[i] += D2(i,j);
+	    d2[j] += D2(i,j);
+	    d22[k++] = D2(i,j);
+	  }
+	d2 /= (N2-1);
+      }
+
+      cout<<endl;
+      diameter(D1,"1",args);cout<<endl;
+      cout<<endl;
+      diameter(D2,"2",args);cout<<endl;
+      cout<<endl;
+
+      valarray<double> d12(0.0, N1*N2);
+      valarray<double> d12_1(0.0, N1);
+      valarray<double> d12_2(0.0, N2);
       for(int i=0;i<N1;i++)
 	for(int j=0;j<N2;j++) {
 	  double DIJ = D(i,N1+j);
-	  distances12[i*N2+j] = DIJ;
-	  distances1[i] += DIJ;
-	  distances2[j] += DIJ;
+	  d12[i*N2+j] = DIJ;
+	  d12_1[i] += DIJ;
+	  d12_2[j] += DIJ;
 	}
 
-      distances1 /= distances2.size();
-      distances2 /= distances1.size();
+      d12_1 /= N2;
+      d12_2 /= N1;
       
-      report_distances(distances12,"D12  ",args);cout<<endl;
-      report_distances(distances1 ,"D1(2)",args);cout<<endl;
-      report_distances(distances2 ,"D(1)2",args);
+      report_distances(d12,"D12  ",args);cout<<endl;
+      report_distances(d12_1 ,"D1(2)",args);cout<<endl;
+      report_distances(d12_2 ,"D2(1)",args);cout<<endl;
+      cout<<endl;
+
+      cout<<"    P(D12 > D11) = "<<probability_x_less_than_y(d11,d12)<<endl;
+      cout<<"    P(D12 > D11) = "<<1.0-probability_x_less_than_y(d12,d11)<<endl;
+      cout<<"    P(D12 > D22) = "<<probability_x_less_than_y(d22,d12)<<endl;
+      cout<<endl;
+      cout<<"    P(D1(2) > D1(1)) = "<<probability_x_less_than_y(d1,d12_1)<<endl;
+      cout<<"    P(D2(1) > D2(2)) = "<<probability_x_less_than_y(d2,d12_2)<<endl;
     }
 
     else if (analysis == "convergence") 

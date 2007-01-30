@@ -93,5 +93,7 @@ namespace statistics {
   std::vector<double> autocorrelation(const std::valarray<double>& x,unsigned max=0);
 
   double autocorrelation_time(const std::valarray<double>& x, unsigned max=0);
+
+  double probability_x_less_than_y(const std::valarray<double>& x, const std::valarray<double>& y);
 }
 #endif

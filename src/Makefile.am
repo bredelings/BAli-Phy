@@ -76,7 +76,7 @@ TOOLS = model_P statreport alignment-gild \
 	subsample tree-mean-lengths trees-bootstrap \
 	joint-parsimony stats-merge stats-select alignment-identity \
 	analyze_distances alignment-cat draw-graph \
-	alignment-compare tree-partitions tree-dist-autocorrelation
+	alignment-compare tree-partitions trees-distances
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -254,7 +254,7 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 
 #---------------------------------------------------------------
 
-tree_dist_autocorrelation_SOURCES = tools/tree-dist-autocorrelation.C tree.C \
+trees_distances_SOURCES = tools/trees-distances.C tree.C \
 	sequencetree.C tools/tree-dist.C util.C tree-util.C tools/statistics.C
 
 #---------------------------------------------------------------

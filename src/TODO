@@ -141,6 +141,10 @@ Paper:
    Average # of shared branches?  How else to measure bias resulting
    from a fixed alignment?
 
+WHY...
+ * is the fragment model downward-biased for epsilon?
+ * 
+
 Before 1.9.9:
  * Implement Branch length prior distributions
  * Implement branch-length constraints.
@@ -151,7 +155,6 @@ Before 1.9.9:
    moves???
  * fix SPR2 to use ACTUAL gamma proposal, not stupid Exponential(mu) proposal.
    (done, but worse acceptance rates?  And, only for --traditional.)
-
  * fix "if HOST_MSWINDOWS" to look for dll's not so's.
 
 After 1.9.9:
