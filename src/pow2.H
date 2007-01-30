@@ -6,10 +6,17 @@
 #include "config.h"
 
 #ifndef HAVE_LOG2
+#ifdef M_LOG2E
 inline double log2(double x)
 {
   return log(x)*M_LOG2E;
 }
+#elif M_LOG2_E
+inline double log2(double x)
+{
+  return log(x)*M_LOG2_E;
+}
+#endif
 #endif
 
 namespace fp_scale {
