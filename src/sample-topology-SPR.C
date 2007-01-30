@@ -243,7 +243,7 @@ MCMC::Result sample_SPR(alignment& A,Parameters& P,int b1,int b2,bool change_bra
   result.counts[0] = 1;
   if (C>0) result.totals[0] = 1;
 
-  int dist = (int)topology_distance(p[0].T,p[1].T);
+  int dist = topology_distance(p[0].T,p[1].T)/2;
 
   if (same_topology) 
     assert(dist == 0);
