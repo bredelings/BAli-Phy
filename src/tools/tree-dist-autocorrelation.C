@@ -99,6 +99,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("metric", value<string>()->default_value("topology"),"Tree distance: topology, branch, internal-branch")
     ("no-remove-duplicates","[matrix]: allow zero distances  between points.")
     ("max-lag",value<int>(),"[autocorrelation]: max lag to consider.")
+    ("CI",value<double>()->default_value(0.95),"Confidence interval size.")
+    ("converged",value<double>()->default_value(0.50),"What quantile of distance do we require for converged? (smaller is more strict).");
     ;
 
   options_description visible("All options");
@@ -192,46 +194,64 @@ vector<SequenceTree> load_trees(string filename,int skip,int subsample,int max)
   return trees;
 }
 
-void report_distances(const valarray<double>& distances,const string& name=string(""))
+double max(const valarray<double>& v)
 {
-  cout<<"  E D"<<name<<" = "<<distances.sum()/distances.size();
-  cout<<"   [+- "<<sqrt(Var(distances))<<"]"<<endl;
+  double m=v[0];
+  for(int i=1;i<v.size();i++)
+    m = std::max(m,v[i]);
+  return m;
+}
+
+double min(const valarray<double>& v)
+{
+  double m=v[0];
+  for(int i=1;i<v.size();i++)
+    m = std::min(m,v[i]);
+  return m;
+}
+
+void report_distances(const valarray<double>& distances,const string& name=string(""),double P=0.95)
+{
+  cout<<"    "<<name<<" in ["<<min(distances)<<", "<<max(distances)<<"]"<<endl;
+  //  cout<<"  E "<<name<<" = "<<distances.sum()/distances.size();
+  //  cout<<"   [+- "<<sqrt(Var(distances))<<"]"<<endl;
   
-  pair<double,double> interval = confidence_interval(distances,0.95);
-  cout<<"    D"<<name<<" ~ "<<median(distances);
+  pair<double,double> interval = confidence_interval(distances,P);
+  cout<<"    "<<name<<" ~ "<<median(distances);
   cout<<"   ("<<interval.first<<", "<<interval.second<<")"<<endl;
 }
 
-void diameter(const ublas::matrix<double>& D,const string& name=string(""))
+// We consider 4 random distributions:
+//  1. D(t[i],t[j])
+//  2. E_t[i] D(t[i],t[j])
+//  3. E_t[j] D(t[i],t[j])
+//  4. E_t[i],t[j] D(t[i],t[j])
+//
+//  If t[i] and t[j] have the same distribution then #2 == #3.
+//  Also, #4 is constant so it is not really a distribution.
+
+void diameter(const ublas::matrix<double>& D,const string& name,double P)
 {
   const unsigned N = D.size1();
 
-  if (N == 1) {
-    cout<<"    D = 0   (1 pt)"<<endl;
-    return;
-  }
+  int k=0;
+  valarray<double> d1(0.0, N);
+  valarray<double> d11(0.0, N*(N-1)/2);
 
-  double diameter = 0;
-  valarray<double> distances(0.0, N);
-  for(int i=0;i<D.size1();i++)
+  for(int i=0;i<N;i++)
     for(int j=0;j<i;j++) {
-      diameter = std::max(diameter,D(i,j));
-      distances[i] += D(i,j);
-      distances[j] += D(i,j);
+      d1[i] += D(i,j);
+      d1[j] += D(i,j);
+      d11[k++] = D(i,j);
     }
-  distances /= (N-1);
+  d1 /= (N-1);
 
-  cout<<"max D"<<name<<" = "<<diameter<<endl;
-  report_distances(distances,name);
+
+  string name1 = string("D")+name+name;
+  string name2 = string("D")+name+"("+name+")";
+  report_distances(d11,name1,P);cout<<endl;
+  report_distances(d1 ,name2,P);
 }
-
-// use magic-squares...
-// That is a good way to get pairs.
-// It is still random though.
-
-// We can cull to some specific length... e.g. 1000
-
-// Add trees1 vs trees2 arguments to compare distances from different programs
 
 int main(int argc,char* argv[]) 
 { 
@@ -245,6 +265,10 @@ int main(int argc,char* argv[])
     unsigned skip = args["skip"].as<unsigned>();
 
     int subsample=args["sub-sample"].as<int>();
+
+    double P = args["CI"].as<double>();
+
+    double alpha = args["converged"].as<double>();
 
     int max = -1;
     if (args.count("max"))
@@ -299,7 +323,6 @@ int main(int argc,char* argv[])
       // bound the max_lag
       if (max_lag >= trees.size()/2)
 	max_lag = trees.size()/2;
-      cerr<<"# max lag = "<<max_lag<<endl;
 
       // write out the average distances
       valarray<double> distances(0.0,max_lag);
@@ -324,7 +347,7 @@ int main(int argc,char* argv[])
 
       ublas::matrix<double> D = distances(trees,metric_fn);
       
-      diameter(D);
+      diameter(D,"1",P);
     }
 
     else if (analysis == "compare") 
@@ -343,19 +366,28 @@ int main(int argc,char* argv[])
       ublas::matrix<double> D2 = distances(trees2,metric_fn);
       ublas::matrix<double> D  = distances(both,metric_fn);
       
-      diameter(D1,"1");cout<<endl;
-      diameter(D2,"2");cout<<endl;
+      diameter(D1,"1",P);cout<<endl;
+      cout<<"--------------------------------------"<<endl<<endl;
+      diameter(D2,"2",P);cout<<endl;
+      cout<<"--------------------------------------"<<endl<<endl;
 
-      double diameter = 0;
-      valarray<double> distances(0.0, N1*N2);
+      valarray<double> distances12(0.0, N1*N2);
+      valarray<double> distances1(0.0, N1);
+      valarray<double> distances2(0.0, N2);
       for(int i=0;i<N1;i++)
 	for(int j=0;j<N2;j++) {
-	  diameter = std::max(diameter,D(i,N1+j));
-	  distances[i*N1+j] += D(i,N1+j);
+	  double DIJ = D(i,N1+j);
+	  distances12[i*N2+j] = DIJ;
+	  distances1[i] += DIJ;
+	  distances2[j] += DIJ;
 	}
 
-      cout<<"max D12 = "<<diameter<<endl;
-      report_distances(distances,"12");
+      distances1 /= distances2.size();
+      distances2 /= distances1.size();
+      
+      report_distances(distances12,"D12  ",P);cout<<endl;
+      report_distances(distances1 ,"D1(2)",P);cout<<endl;
+      report_distances(distances2 ,"D(1)2",P);
     }
 
     else if (analysis == "convergence") 
@@ -383,16 +415,20 @@ int main(int argc,char* argv[])
 	  distances[j] += D2(i,j);
 	}
       distances /= (trees2.size()-1);
-      double target = median(distances);
+      double target = quantile(distances,alpha);
 
-      for(int i=0;i<trees1.size();i++)
-	if (distance(trees1[i],trees2,metric_fn) <= target) {
+      double closest = distance(trees1[0],trees2,metric_fn);
+      for(int i=0;i<trees1.size();i++) {
+	double d = distance(trees1[i],trees2,metric_fn);
+	closest = min(closest,d);
+	if (d <= target) {
 	  cout<<"converged = "<<(i+1)<<endl;
 	  cout<<"target distance = "<<target<<endl;
 	  return 0;
 	}
+      }
       cout<<"Did not converge! ("<<trees1.size()<<" samples)."<<endl;
-      cout<<"target distance = "<<target<<endl;
+      cout<<"The closest we got was "<<closest<<" - target distance = "<<target<<endl;
     }
     else
       throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";
