@@ -45,7 +45,7 @@ endif
 endif
 
 if HOST_MSWINDOWS
-vpath %.so    @extra_libs2@ /usr/lib /usr/local/lib
+vpath %.dll   @extra_libs2@ /usr/lib /usr/local/lib
 vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
 if STATIC
 .LIBPATTERNS += lib%.a
