@@ -6,6 +6,7 @@
 #include "config.h"
 
 #ifndef HAVE_LOG2
+#ifndef log2
 #ifdef M_LOG2E
 inline double log2(double x)
 {
@@ -16,6 +17,13 @@ inline double log2(double x)
 {
   return log(x)*M_LOG2_E;
 }
+#else
+inline double log2(double x)
+{
+  static temp = 1.0/log(2);
+  return log(x)*temp;
+}
+#endif
 #endif
 #endif
 
