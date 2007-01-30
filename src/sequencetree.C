@@ -455,7 +455,7 @@ double internal_branch_distance(const SequenceTree& T1, const SequenceTree& T2)
 
   // get partitions and lengths for T2
   for(int i=0;i<n2;i++) {
-    d2[i] = T1.branch(i+l2).length();
+    d2[i] = T2.branch(i+l2).length();
     part2[i] = branch_partition(T2,i+l2);
   }
 
