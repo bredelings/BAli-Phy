@@ -100,7 +100,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("no-remove-duplicates","[matrix]: allow zero distances  between points.")
     ("max-lag",value<int>(),"[autocorrelation]: max lag to consider.")
     ("CI",value<double>()->default_value(0.95),"Confidence interval size.")
-    ("converged",value<double>()->default_value(0.50),"What quantile of distance do we require for converged? (smaller is more strict).");
+    ("converged",value<double>()->default_value(0.50),"What quantile of distance do we require for converged? (smaller is more strict).")
+    ("mean", "Show mean and standard deviation")
+    ("median", "Show median and confidence interval")
+    ("minmax", "Show minumum and maximum distances")
     ;
 
   options_description visible("All options");
@@ -210,15 +213,29 @@ double min(const valarray<double>& v)
   return m;
 }
 
-void report_distances(const valarray<double>& distances,const string& name=string(""),double P=0.95)
+void report_distances(const valarray<double>& distances,
+		      const string& name,
+		      variables_map& args
+		      )
 {
-  cout<<"    "<<name<<" in ["<<min(distances)<<", "<<max(distances)<<"]"<<endl;
-  //  cout<<"  E "<<name<<" = "<<distances.sum()/distances.size();
-  //  cout<<"   [+- "<<sqrt(Var(distances))<<"]"<<endl;
-  
-  pair<double,double> interval = confidence_interval(distances,P);
-  cout<<"    "<<name<<" ~ "<<median(distances);
-  cout<<"   ("<<interval.first<<", "<<interval.second<<")"<<endl;
+  bool show_mean = args.count("mean");
+  bool show_median = args.count("median");
+  bool show_minmax = args.count("minmax");
+  if (not show_mean and not show_median and not show_minmax)
+    show_median = true;
+
+  if (show_minmax)
+    cout<<"    "<<name<<" in ["<<min(distances)<<", "<<max(distances)<<"]"<<endl;
+  if (show_mean){
+      cout<<"  E "<<name<<" = "<<distances.sum()/distances.size();
+      cout<<"   [+- "<<sqrt(Var(distances))<<"]"<<endl;
+  }
+  if (show_median) {
+    double P = args["CI"].as<double>();
+    pair<double,double> interval = confidence_interval(distances,P);
+    cout<<"    "<<name<<" ~ "<<median(distances);
+    cout<<"   ("<<interval.first<<", "<<interval.second<<")"<<endl;
+  }
 }
 
 // We consider 4 random distributions:
@@ -230,7 +247,7 @@ void report_distances(const valarray<double>& distances,const string& name=strin
 //  If t[i] and t[j] have the same distribution then #2 == #3.
 //  Also, #4 is constant so it is not really a distribution.
 
-void diameter(const ublas::matrix<double>& D,const string& name,double P)
+void diameter(const ublas::matrix<double>& D,const string& name,variables_map& args)
 {
   const unsigned N = D.size1();
 
@@ -249,8 +266,8 @@ void diameter(const ublas::matrix<double>& D,const string& name,double P)
 
   string name1 = string("D")+name+name;
   string name2 = string("D")+name+"("+name+")";
-  report_distances(d11,name1,P);cout<<endl;
-  report_distances(d1 ,name2,P);
+  report_distances(d11,name1, args);cout<<endl;
+  report_distances(d1 ,name2, args);
 }
 
 int main(int argc,char* argv[]) 
@@ -265,10 +282,6 @@ int main(int argc,char* argv[])
     unsigned skip = args["skip"].as<unsigned>();
 
     int subsample=args["sub-sample"].as<int>();
-
-    double P = args["CI"].as<double>();
-
-    double alpha = args["converged"].as<double>();
 
     int max = -1;
     if (args.count("max"))
@@ -347,7 +360,7 @@ int main(int argc,char* argv[])
 
       ublas::matrix<double> D = distances(trees,metric_fn);
       
-      diameter(D,"1",P);
+      diameter(D,"1",args);
     }
 
     else if (analysis == "compare") 
@@ -366,9 +379,9 @@ int main(int argc,char* argv[])
       ublas::matrix<double> D2 = distances(trees2,metric_fn);
       ublas::matrix<double> D  = distances(both,metric_fn);
       
-      diameter(D1,"1",P);cout<<endl;
+      diameter(D1,"1",args);cout<<endl;
       cout<<"--------------------------------------"<<endl<<endl;
-      diameter(D2,"2",P);cout<<endl;
+      diameter(D2,"2",args);cout<<endl;
       cout<<"--------------------------------------"<<endl<<endl;
 
       valarray<double> distances12(0.0, N1*N2);
@@ -385,9 +398,9 @@ int main(int argc,char* argv[])
       distances1 /= distances2.size();
       distances2 /= distances1.size();
       
-      report_distances(distances12,"D12  ",P);cout<<endl;
-      report_distances(distances1 ,"D1(2)",P);cout<<endl;
-      report_distances(distances2 ,"D(1)2",P);
+      report_distances(distances12,"D12  ",args);cout<<endl;
+      report_distances(distances1 ,"D1(2)",args);cout<<endl;
+      report_distances(distances2 ,"D(1)2",args);
     }
 
     else if (analysis == "convergence") 
@@ -402,6 +415,8 @@ int main(int argc,char* argv[])
     }
     else if (analysis == "converged") 
     {
+      double alpha = args["converged"].as<double>();
+
       check_supplied_filenames(2,files);
 
       vector<SequenceTree> trees1 = load_trees(files[0],skip,subsample,max);
