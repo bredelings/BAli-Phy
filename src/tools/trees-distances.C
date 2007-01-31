@@ -270,6 +270,12 @@ void diameter(const ublas::matrix<double>& D,const string& name,variables_map& a
   report_distances(d1 ,name2, args);
 }
 
+double fair_probability_x_less_than_y(const valarray<double>& x,const valarray<double>& y)
+{
+  return 0.5*(probability_x_less_than_y(x,y) + 1.0 - probability_x_less_than_y(y,x));
+}
+
+
 int main(int argc,char* argv[]) 
 { 
   try 
@@ -291,10 +297,12 @@ int main(int argc,char* argv[])
     string metric = args["metric"].as<string>();
     if (metric == "topology" or metric == "RF")
       metric_fn = &robinson_foulds_distance;
-    else if (metric == "branch")
+    else if (metric == "branch" or metric == "branches")
       metric_fn = &branch_distance;
     else if (metric == "internal-branch")
       metric_fn = &internal_branch_distance;
+    else
+      throw myexception()<<"Metric '"<<metric<<"' not implemented.";
       
     //----------- read in trees ------------//
     vector<string> files;
@@ -432,12 +440,16 @@ int main(int argc,char* argv[])
       report_distances(d12_2 ,"D2(1)",args);cout<<endl;
       cout<<endl;
 
-      cout<<"    P(D12 > D11) = "<<probability_x_less_than_y(d11,d12)<<endl;
-      cout<<"    P(D12 > D11) = "<<1.0-probability_x_less_than_y(d12,d11)<<endl;
-      cout<<"    P(D12 > D22) = "<<probability_x_less_than_y(d22,d12)<<endl;
+      //NOTE: D12 != D11 when 1==2 because D12 includes the zero's on the diagonal.
+
+      cout<<"    P(D12 > D11) = "<<fair_probability_x_less_than_y(d11,d12)<<endl;
+      cout<<"    P(D12 > D22) = "<<fair_probability_x_less_than_y(d22,d12)<<endl;
       cout<<endl;
-      cout<<"    P(D1(2) > D1(1)) = "<<probability_x_less_than_y(d1,d12_1)<<endl;
-      cout<<"    P(D2(1) > D2(2)) = "<<probability_x_less_than_y(d2,d12_2)<<endl;
+      cout<<"    P(D2(1) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d12_2)<<endl;
+      cout<<"    P(D1(2) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d12_1)<<endl;
+      cout<<endl;
+      cout<<"    P(D1(2) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d12_1)<<endl;
+      cout<<"    P(D2(1) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d12_2)<<endl;
     }
 
     else if (analysis == "convergence") 
