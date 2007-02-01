@@ -100,7 +100,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("no-remove-duplicates","[matrix]: allow zero distances  between points.")
     ("max-lag",value<int>(),"[autocorrelation]: max lag to consider.")
     ("CI",value<double>()->default_value(0.95),"Confidence interval size.")
-    ("converged",value<double>()->default_value(0.50),"What quantile of distance do we require for converged? (smaller is more strict).")
+    ("converged",value<string>()->default_value("0.50"),"Comma-separated quantiles of distance required for converged? (smaller is more strict).")
     ("mean", "Show mean and standard deviation")
     ("median", "Show median and confidence interval")
     ("minmax", "Show minumum and maximum distances")
@@ -464,7 +464,10 @@ int main(int argc,char* argv[])
     }
     else if (analysis == "converged") 
     {
-      double alpha = args["converged"].as<double>();
+      vector<double> alpha = split<double>(args["converged"].as<string>(),',');
+
+      if (alpha.size() < 1)
+	throw myexception()<<"analysis='converged': zero convergence levels specified!";
 
       check_supplied_filenames(2,files);
 
@@ -479,20 +482,42 @@ int main(int argc,char* argv[])
 	  distances[j] += D2(i,j);
 	}
       distances /= (trees2.size()-1);
-      double target = quantile(distances,alpha);
+
+      vector<double> target = alpha;
+      for(int i=0;i<alpha.size();i++) {
+	if (alpha[i]<0)
+	  throw myexception()<<"analysis='converged': you cannot specify a convergence level "<<alpha[i]<<" < 0!";
+	if (alpha[i]>1)
+	  throw myexception()<<"analysis='converged': you cannot specify a convergence level "<<alpha[i]<<" > 1!";
+	target[i] = quantile(distances,alpha[i]);
+      }
+
+      sort(alpha.begin(),alpha.end());
+      reverse(alpha.begin(),alpha.end());
+      sort(target.begin(),target.end());
+      reverse(target.begin(),target.end());
 
       double closest = distance(trees1[0],trees2,metric_fn);
-      for(int i=0;i<trees1.size();i++) {
+      for(int i=0;i<trees1.size() and target.size();i++) {
 	double d = distance(trees1[i],trees2,metric_fn);
 	closest = min(closest,d);
-	if (d <= target) {
-	  cout<<"converged = "<<(i+1)<<endl;
-	  cout<<"target distance = "<<target<<endl;
-	  return 0;
+	for(int j=0;j<target.size();) {
+	  if (d <= target[j]) {
+	    cout<<"converged ("<<alpha[j]<<") -> "<<(i+1)<<"      target distance = "<<target[j]<<endl;
+	    target.erase(target.begin()+j);
+	    alpha.erase(alpha.begin()+j);
+	  }
+	  else
+	    j++;
 	}
       }
-      cout<<"Did not converge! ("<<trees1.size()<<" samples)."<<endl;
-      cout<<"The closest we got was "<<closest<<" - target distance = "<<target<<endl;
+
+      for(int i=0;i<target.size();i++) 
+	cout<<"Did not converge! ("<<alpha[i]<<" samples)     target distance = "<<target[i]<<endl;
+
+      if (target.size())
+	cout<<"The closest we got was "<<closest<<endl;
+
     }
     else
       throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";
