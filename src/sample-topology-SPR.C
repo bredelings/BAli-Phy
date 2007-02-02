@@ -276,7 +276,8 @@ int choose_subtree_branch_uniform(const Tree& T) {
 
 void sample_SPR_flat(alignment& A,Parameters& P,MoveStats& Stats) 
 {
-  int n = poisson(P.T.n_branches()*0.1);
+  double f = loadvalue(P.keys,"SPR_amount",0.1);
+  int n = poisson(P.T.n_branches()*f);
 
   bool change_branch = ((uniform() < 0.10) and (not P.has_IModel()));
 
@@ -396,7 +397,8 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
 
 void sample_SPR_nodes(alignment& A,Parameters& P,MoveStats& Stats) 
 {
-  int n = poisson(P.T.n_branches()*0.1);
+  double f = loadvalue(P.keys,"SPR_amount",0.1);
+  int n = poisson(P.T.n_branches()*f);
 
   bool change_branch = ((uniform() < 0.10) and (not P.has_IModel()));
 
