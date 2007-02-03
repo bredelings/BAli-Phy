@@ -185,7 +185,7 @@ joint_parsimony_SOURCES = tools/joint-parsimony.C alignment.C alphabet.C sequenc
 
 #---------------------------------------------------------------
 
-alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C 
+alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C
 
 #---------------------------------------------------------------
 alignment_cat_SOURCES = tools/alignment-cat.C alphabet.C sequence.C util.C sequence-format.C

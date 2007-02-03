@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <map>
 #include <string>
 #include "tree.H"
 #include "alignment.H"
@@ -8,9 +9,11 @@
 #include "setup.H"
 #include "findroot.H"
 #include "parsimony.H"
+#include "statistics.H"
 #include <boost/program_options.hpp>
 
 using std::valarray;
+using std::map;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -129,6 +132,90 @@ unsigned letter_classes(const alignment& A)
 
   return count;
 }
+struct gap {
+  int start;
+  int length;
+  mutable int type;
+  gap(int s,int l,int t):start(s),length(l),type(t) {}
+};
+
+bool operator==(const gap& i1,const gap& i2)
+{
+  return (i1.start== i2.start) and (i1.length == i2.length);
+}
+
+bool operator<(const gap& i1,const gap& i2)
+{
+  if (i1.start < i2.start)
+    return true;
+  if (i1.start > i2.start)
+    return false;
+  return (i1.length < i2.length);
+}
+
+vector<gap> find_gaps(const alignment& A,int t)
+{
+  vector<gap> gaps;
+  bool prev_gap=false;
+  for(int i=0;i<A.length();i++)
+  {
+    if (A.gap(i,t)) {
+      if (prev_gap)
+	gaps.back().length++;
+      else
+	gaps.push_back(gap(i,1,1));
+      prev_gap = true;
+    }
+    else
+      prev_gap=false;
+  }
+  return gaps;
+}
+
+unsigned n_insertions(const alignment& A,int start,int length)
+{
+  unsigned count=0;
+  for(int j=0;j<A.n_sequences();j++) {
+    bool found = false;
+    for(int k=0;k<length and not found;k++)
+      if (A.gap(start+k,j))
+	found=true;
+    if (not found)
+      count++;
+  }
+  return count;
+}
+
+map<gap,unsigned> guess_indels(const alignment& A)
+{
+  map<gap,unsigned> gaps;
+  for(int i=0;i<A.n_sequences();i++)
+  {
+    vector<gap> row = find_gaps(A,i);
+    for(int j=0;j<row.size();j++)
+      gaps[row[j]]++;
+  }
+
+  // flip deletions in many taxa to insertions in few taxa
+  for(map<gap,unsigned>::iterator i=gaps.begin();i!=gaps.end();) 
+  {
+    const gap& g = i->first;
+    unsigned ins_count = n_insertions(A,g.start,g.length);
+    if (ins_count < i->second) {
+      g.type = 2;
+      i->second = ins_count;
+    }
+
+    // increment counter and remove current element if count==0.
+    {
+      typeof(i) j = i;
+      i++;
+      if (not j->second)
+	gaps.erase(j);
+    }
+  }
+  return gaps;
+}
 
 int main(int argc,char* argv[]) 
 { 
@@ -205,12 +292,48 @@ int main(int argc,char* argv[])
     cout<<"  "<<n_informative<<" ("<<double(n_informative)/A.length()*100<<"%) sites are informative.\n";
     cout<<"  "<<min_identity(A,false)*100<<"% minimum sequence identity.\n";
     cout<<"\n";
-    cout<<" ====== w/  indels ======";
-    cout<<"  "<<n_with_gaps<<" ("<<double(n_with_gaps)/A.length()*100<<"%) sites contain a gap.\n";
+    cout<<" ====== w/  indels ======\n";
     cout<<"  "<<n_same2<<" ("<<double(n_same2)/A.length()*100<<"%) sites are constant.\n";
     cout<<"  "<<n_different2<<" ("<<double(n_different2)/A.length()*100<<"%) sites are not constant.\n";
     cout<<"  "<<n_informative2<<" ("<<double(n_informative2)/A.length()*100<<"%) sites are informative.\n";
     cout<<"  "<<min_identity(A,true)*100<<"% minimum sequence identity.\n";
+    cout<<"\n";
+
+    //----------- guess # of indels -----------//
+    cout<<" ========   gaps ========\n";
+    cout<<"  "<<n_with_gaps<<" ("<<double(n_with_gaps)/A.length()*100<<"%) sites contain a gap.\n";
+    map<gap,unsigned> gaps = guess_indels(A);
+    vector<int> gap_lengths;
+    int total_gaps =0;
+    int inf_gaps=0;
+    int unique = 0;
+    int n_ins=0;
+    int n_del=0;
+    foreach(i,gaps) {
+      total_gaps += (*i).second;
+      gap_lengths.push_back(i->first.length);
+      if (i->first.type == 1)
+	n_del++;
+      if (i->first.type == 2)
+	n_ins++;
+      if ((*i).second == 1)
+	unique++;
+      if (i->second > 1 and (A.n_sequences() - i->second > 1))
+	  inf_gaps++;
+    }
+    valarray<double> gap_lengths2(gap_lengths.size());
+    for(int i=0;i<gap_lengths2.size();i++)
+      gap_lengths2[i] = gap_lengths[i];
+    
+    cout<<"  "<<gaps.size()<<" indel groups seem to exist. ("<<total_gaps<<" separate)\n";
+    cout<<"       unique = "<<unique;
+    cout<<"     informative = "<<inf_gaps<<endl;
+    cout<<"       insertions = "<<n_ins;
+    cout<<"     deletions = "<<n_del<<endl;
+    cout<<"  Length:      mean = "<<statistics::median(gap_lengths2);
+    cout<<"      median = "<<statistics::average(gap_lengths2)<<endl;
+    cout<<endl;
+
 
     //------------ Get Tree Lengths ------------//
     if (args.count("tree")) 
