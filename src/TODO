@@ -146,6 +146,8 @@ WHY...
  * 
 
 Before 1.9.9:
+ * Fix '#substs' calculations for codon models
+ * Why aren't any likelihood moves accepted at all for the cad-v2 data set?
  * Implement Branch length prior distributions
  * Implement branch-length constraints.
  * Brief descriptions of some of the tools.
