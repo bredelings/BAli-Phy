@@ -352,19 +352,11 @@ efloat_t TKF1::prior() const
 }
 
 
-indel::PairHMM TKF1::get_branch_HMM(double t) const 
+// lambda is the insertion rate.
+// mu     is the deletion  rate.
+indel::PairHMM get_TKF1_HMM(double t,double lambda, double mu)
 {
   using namespace states;
-
-  if (not time_dependant)
-    t = 1;
-
-  double lambda = exp(parameter(0));
-  double mean_length = parameter(1);
-  double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
-  double mu = lambda/sigma;                       // s = lambda/mu
-
-  assert(lambda < mu);
 
   indel::PairHMM Q;
 
@@ -401,8 +393,6 @@ indel::PairHMM TKF1::get_branch_HMM(double t) const
   Q(E ,G2) = 0;
   Q(E ,E ) = 1;
 
-  remove_one_state(Q,S);
-
   Q.start_pi(S)  = 0;
   Q.start_pi(M)  = 1;
   Q.start_pi(G1) = 0;
@@ -410,6 +400,22 @@ indel::PairHMM TKF1::get_branch_HMM(double t) const
   Q.start_pi(E)  = 0;
 
   return Q;
+  
+}
+
+indel::PairHMM TKF1::get_branch_HMM(double t) const 
+{
+  if (not time_dependant)
+    t = 1;
+
+  double lambda = exp(parameter(0));
+  double mean_length = parameter(1);
+  double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
+  double mu = lambda/sigma;                       // s = lambda/mu
+
+  assert(lambda < mu);
+
+  return get_TKF1_HMM(t,lambda,mu);
 }
 
 string TKF1::name() const 
@@ -433,5 +439,74 @@ TKF1::TKF1(bool b)
   add_parameter("mean_length",100);
   add_parameter("lambda::prior_median", -5);
   add_parameter("lambda::prior_stddev", 1.5);
+  add_parameter("mean_length::prior_mean", 1.5);
+}
+
+
+efloat_t TKF2::prior() const 
+{
+  efloat_t Pr = 1;
+
+  // Calculate prior on lambda
+  Pr *= laplace_pdf(parameter(0),parameter(3), parameter(4));
+
+  // Calculate prior on epsilon
+  double lambda_E = parameter(1);
+  double E_length = lambda_E - logdiff(0,lambda_E);
+  double E_length_mean = parameter(5);
+
+  Pr *= exp_exponential_pdf(E_length,E_length_mean);
+
+  // Calculate prior on mean sequence length
+  Pr *= exponential_pdf(parameter(2), parameter(6));
+
+  return Pr;
+}
+
+indel::PairHMM TKF2::get_branch_HMM(double t) const 
+{
+  using namespace states;
+
+  if (not time_dependant)
+    t = 1;
+
+  double lambda = exp(parameter(0));
+  double e = exp(parameter(1));
+  double mean_length = parameter(2);
+  double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
+  double mu = lambda/sigma;                       // s = lambda/mu
+
+  assert(lambda < mu);
+
+  indel::PairHMM Q = get_TKF1_HMM(t,lambda,mu);
+  fragmentize(Q,e);
+  return Q;
+}
+
+string TKF2::name() const 
+{
+  return "TKF2";
+}
+
+efloat_t TKF2::lengthp(int l) const 
+{
+  // FIXME -  this is wrong
+  std::abort();
+  double mean_length = parameter(1);
+
+  double sigma = mean_length/(1.0 + mean_length);
+
+  return (1.0-sigma)*pow<efloat_t>(sigma,l);
+}
+
+TKF2::TKF2(bool b)
+  :time_dependant(b)
+{
+  add_parameter("lambda",-5);
+  add_parameter("epsilon",-0.5);
+  add_parameter("mean_length",100);
+  add_parameter("lambda::prior_median", -5);
+  add_parameter("lambda::prior_stddev", 1.5);
+  add_parameter("epsilon::prior_length", 5);
   add_parameter("mean_length::prior_mean", 1.5);
 }
