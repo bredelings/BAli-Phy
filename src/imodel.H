@@ -99,4 +99,21 @@ public:
   explicit TKF1(bool);
 };
 
+class TKF2: public IndelModel 
+{
+  bool time_dependant;
+public:
+
+  efloat_t prior() const;
+  
+  TKF2* clone() const {return new TKF2(*this);}
+
+  efloat_t lengthp(int i) const;
+  indel::PairHMM get_branch_HMM(double t) const;
+
+  std::string name() const;
+
+  explicit TKF2(bool);
+};
+
 #endif
