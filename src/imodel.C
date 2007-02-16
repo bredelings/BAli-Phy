@@ -12,8 +12,16 @@
 using std::vector;
 using namespace A2;
 
-namespace indel {
-  PairHMM::PairHMM(): Matrix(5,5),start_pi_(5,0) {}
+namespace indel 
+{
+  PairHMM::PairHMM()
+    : Matrix(5,5),
+      start_pi_(5,0) 
+  {
+    for(int i=0;i<size1();i++)
+      for(int j=0;j<size2();j++)
+	(*this)(i,j) = 0;
+  }
 
   double PairHMM::start(int s) const {
     double total = 0;
@@ -51,9 +59,35 @@ void remove_one_state(Matrix& Q,int S) {
 
 }
 
+/// Only continue from S1 if we don't go to S2
+void exitize(Matrix& Q,double t,int S1,int S2)
+{
+  for(int i=0;i<5;i++)
+    Q(S1,i) *= (1.0-t);
+  Q(S1,S2) += t;
+}
+
+/// Only continue from S, it we don't stay in the fragment
+void fragmentize(Matrix& Q,double e,int S)
+{
+  exitize(Q,e,S,S);
+}
+
+
+/// Modify a model on residues to a model on fragments of length L ~ Geometric(e)
+void fragmentize(Matrix& Q,double e)
+{
+  using namespace states;
+
+  fragmentize(Q,e,M);
+  fragmentize(Q,e,G1);
+  fragmentize(Q,e,G2);
+}
+
 // f_M(s) = [ ME  + s(MGxGE - MExGG) ] / [ 1 - s(GG + MM) + s^2(MMxGG - MGxGM) ]
 
-efloat_t SimpleIndelModel::lengthp(int l) const {
+efloat_t SimpleIndelModel::lengthp(int l) const 
+{
   using namespace states;
 
   //--------------- Remove the 'G2' State ----------------------//
@@ -98,9 +132,9 @@ IndelModel::~IndelModel() {}
 indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
   using namespace states;
 
-  double delta   = exp(parameters_[0]);
-  double e       = exp(parameters_[1]);
-  double t       = exp(parameters_[2]);
+  double delta   = exp(parameter(0));
+  double e       = exp(parameter(1));
+  double t       = exp(parameter(2));
 
   if (delta > 0.5)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
@@ -113,37 +147,29 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
   
   indel::PairHMM Q;
 
-  Q(S,S ) = 0;
-  Q(S,M ) = 1 - 2*delta;
-  Q(S,G1) = delta;
-  Q(S,G2) = delta;
-  Q(S,E ) = 0;
+  Q(S ,S ) = 0;
+  Q(S ,M ) = 1 - 2*delta;
+  Q(S ,G1) = delta;
+  Q(S ,G2) = delta;
+  Q(S ,E ) = 0;
 
-  Q(M,S)   = 1-t;
-  Q(M,M)   = 0;
-  Q(M,G1)  = 0;
-  Q(M,G2)  = 0;
-  Q(M,E)   = t;
+  Q(M ,S ) = 1;
+  Q(G1,S ) = 1;
+  Q(G2,S ) = 1;
 
-  Q(G1,S)  = (1-e) * (1-t);
-  Q(G1,M)  = 0;
-  Q(G1,G1) = e * (1-t);;
-  Q(G1,G2) = 0;
-  Q(G1,E)  = t;
-
-  Q(G2,S)  = (1-e) * (1-t);
-  Q(G2,M)  = 0;
-  Q(G2,G1) = 0;
-  Q(G2,G2) = e * (1-t);
-  Q(G2,E)  = t;
-
-  Q(E,S)   = 0;
-  Q(E,M)   = 0;
-  Q(E,G1)  = 0;
-  Q(E,G2)  = 0;
   Q(E,E)   = 1;
 
-  remove_one_state(Q,states::S);
+  // For the states G1, G2 fragment lengths are Geometric(e)
+  fragmentize(Q,e,G1);
+  fragmentize(Q,e,G2);
+
+  // For the states M, G1, G2 we might exit with probability t
+  exitize(Q,t,M ,E);
+  exitize(Q,t,G1,E);
+  exitize(Q,t,G2,E);
+
+  // When moving from another state, continue until we are not in S
+  remove_one_state(Q,S);
 
   Q.start_pi(S)  = 0;
   Q.start_pi(M)  = 1;
@@ -171,14 +197,14 @@ efloat_t SimpleIndelModel::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda_O
-  double lambda_O = parameters_[0];
+  double lambda_O = parameter(0);
   double pdel =  lambda_O-logdiff(0,lambda_O);
   double rate =  log(-logdiff(0,pdel)) - log(D);
 
   Pr *= laplace_pdf(rate,-5, 0.5);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double lambda_E = parameters_[1];
+  double lambda_E = parameter(1);
   double E_length = lambda_E - logdiff(0,lambda_E);
   double E_length_mean = 5.0;
 
@@ -204,20 +230,20 @@ efloat_t NewIndelModel::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda_O
-  double rate = parameters_[0];
+  double rate = parameter(0);
 
-  Pr *= laplace_pdf(rate,parameters_[3], parameters_[4]);
+  Pr *= laplace_pdf(rate,parameter(3), parameter(4));
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double lambda_E = parameters_[1];
+  double lambda_E = parameter(1);
   double E_length = lambda_E - logdiff(0,lambda_E);
-  double E_length_mean = parameters_[5];
+  double E_length_mean = parameter(5);
 
   Pr *= exp_exponential_pdf(E_length,E_length_mean);
 
   // Calculate prior on invariant fraction
   if (not fixed(2)) {
-    double i = parameters_[2];
+    double i = parameter(2);
     Pr *= beta_pdf(i,1,25);
   }
 
@@ -231,9 +257,9 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   if (not time_dependant)
     t = 1;
 
-  double rate    = exp(parameters_[0]);
-  double e = exp(parameters_[1]);
-  double i = parameters_[2];
+  double rate    = exp(parameter(0));
+  double e = exp(parameter(1));
+  double i = parameter(2);
 
   // (1-e) * delta / (1-delta) = P(indel)
   // But move the (1-e) into the RATE to make things work
@@ -260,37 +286,20 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   Q(S ,M ) = 1 - 2*delta;
   Q(S ,G1) = delta;
   Q(S ,G2) = delta;
-  Q(S ,E)  = 1;
+  Q(S ,E ) = 1;
 
-  if (t < -0.5) {
-    Q(M ,S ) = 1;
-    Q(M ,M ) = 0;
-  }
-  else {
-    Q(M ,S ) = 1-e;
-    Q(M ,M ) = e;
-  }
-  Q(M ,G1) = 0;
-  Q(M ,G2) = 0;
-  Q(M ,E)  = 0;
+  Q(M ,S ) = 1;
+  Q(G1,S ) = 1;
+  Q(G2,S ) = 1;
 
-  Q(G1,S ) = 1-e;
-  Q(G1,M ) = 0;
-  Q(G1,G1) = e;
-  Q(G1,G2) = 0;
-  Q(G1,E ) = 0;
-
-  Q(G2,S ) = 1-e;
-  Q(G2,M ) = 0;
-  Q(G2,G1) = 0;
-  Q(G2,G2) = e;
-  Q(G2,E ) = 0;
-
-  Q(E, S ) = 0;
-  Q(E ,M ) = 0;
-  Q(E ,G1) = 0;
-  Q(E ,G2) = 0;
   Q(E ,E ) = 1;
+
+  // unless this branch is disconnected...
+  if (t < -0.5) 
+    ;
+  // turn the model into a fragment model
+  else
+    fragmentize(Q,e);
 
   remove_one_state(Q,S);
 
@@ -303,7 +312,8 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   return Q;
 }
 
-string NewIndelModel::name() const {
+string NewIndelModel::name() const 
+{
   string s = "fragment-based indels ";
   
   if (time_dependant)
@@ -324,7 +334,7 @@ NewIndelModel::NewIndelModel(bool b)
   add_parameter("invariant",0.1);
   add_parameter("lambda::prior_median", -5);
   add_parameter("lambda::prior_stddev", 1.5);
-  add_parameter("lambda::prior_length", 5);
+  add_parameter("epsilon::prior_length", 5);
 }
 
 
@@ -332,26 +342,15 @@ efloat_t TKF1::prior() const
 {
   efloat_t Pr = 1;
 
-  // Calculate prior on lambda_O
-  double rate = parameters_[0];
+  // Calculate prior on lambda
+  Pr *= laplace_pdf(parameter(0),parameter(2), parameter(3));
 
-  Pr *= laplace_pdf(rate,parameters_[3], parameters_[4]);
-
-  // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double lambda_E = parameters_[1];
-  double E_length = lambda_E - logdiff(0,lambda_E);
-  double E_length_mean = parameters_[5];
-
-  Pr *= exp_exponential_pdf(E_length,E_length_mean);
-
-  // Calculate prior on invariant fraction
-  if (not fixed(2)) {
-    double i = parameters_[2];
-    Pr *= beta_pdf(i,1,25);
-  }
+  // Calculate prior on mean sequence length
+  Pr *= exponential_pdf(parameter(1), parameter(4));
 
   return Pr;
 }
+
 
 indel::PairHMM TKF1::get_branch_HMM(double t) const 
 {
@@ -360,8 +359,8 @@ indel::PairHMM TKF1::get_branch_HMM(double t) const
   if (not time_dependant)
     t = 1;
 
-  double lambda = exp(parameters_[0]);
-  double mean_length = parameters_[1];
+  double lambda = exp(parameter(0));
+  double mean_length = parameter(1);
   double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
   double mu = lambda/sigma;                       // s = lambda/mu
 
@@ -370,13 +369,13 @@ indel::PairHMM TKF1::get_branch_HMM(double t) const
   indel::PairHMM Q;
 
   double U = exp(-mu*t);
-  double B = (1.0 - exp((lambda-mu)*t))/(mu - lambda*exp((lambda-mu)*t));
+  double B = (1.0 - exp((lambda-mu)*t))/(mu - lambda*exp((lambda - mu)*t));
 
   Q(S ,S ) = 0;
-  Q(S ,M ) = (1.0-lambda*B) * (lambda/mu) * U;
+  Q(S ,M ) = (1.0 - lambda*B) * (lambda/mu) * U;
   Q(S ,G1) = lambda * B;
-  Q(S ,G2) = (1.0-lambda*B) * (lambda/mu) * (1.0-U);
-  Q(S ,E)  = (1.0-lambda*B) * (1.0-lambda/mu);
+  Q(S ,G2) = (1.0 - lambda*B) * (lambda/mu) * (1.0-U);
+  Q(S ,E)  = (1.0 - lambda*B) * (1.0 - lambda/mu);
 
   Q(M ,S ) = 0;
   Q(M ,M ) = Q(S, M);
@@ -420,7 +419,7 @@ string TKF1::name() const
 
 efloat_t TKF1::lengthp(int l) const 
 {
-  double mean_length = parameters_[1];
+  double mean_length = parameter(1);
 
   double sigma = mean_length/(1.0 + mean_length);
 
@@ -431,5 +430,8 @@ TKF1::TKF1(bool b)
   :time_dependant(b)
 {
   add_parameter("lambda",-5);
-  add_parameter("mean_lengh",100);
+  add_parameter("mean_length",100);
+  add_parameter("lambda::prior_median", -5);
+  add_parameter("lambda::prior_stddev", 1.5);
+  add_parameter("mean_length::prior_mean", 1.5);
 }
