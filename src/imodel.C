@@ -142,7 +142,7 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
   if (e >= 1.0)
     throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<e;
     
-  assert(delta > 0.0 and delta <= 1.0);
+  assert(delta >= 0.0 and delta <= 1.0);
   assert(e > 0.0 and e <= 1.0);
   
   indel::PairHMM Q;
@@ -277,7 +277,7 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   if (e >= 1)
     throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<e;
     
-  assert(delta > 0 and delta <= 1);
+  assert(delta >= 0 and delta <= 1);
   assert(e > 0 and e <= 1);
   
   indel::PairHMM Q;
