@@ -246,7 +246,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   // WARNING - cached_dparrays = funky magic
   if (cached_dparrays.size() < p.size())
     cached_dparrays.resize(p.size());
-  for(int i=0;i<cached_dparrays.size();i++)
+  for(int i=0;i<p.size();i++)
     if (cached_dparrays[i].size() < p[i].n_data_partitions())
       cached_dparrays[i].resize(p[i].n_data_partitions());
 
