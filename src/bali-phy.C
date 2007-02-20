@@ -239,9 +239,9 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   }
     
   add_MH_move(P, log_scaled(shift_cauchy),    "mu",             "mu_scale_sigma",     0.6,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(shift_cauchy),    "M0::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(more_than(0,shift_cauchy)),
 	                                        "M2::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
