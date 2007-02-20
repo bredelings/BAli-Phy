@@ -5,6 +5,7 @@
 #include "likelihood.H"
 #include "util.H"
 #include "proposals.H"
+#include "probability.H"
 
 using std::cerr;
 using std::endl;
@@ -29,18 +30,19 @@ void data_partition::recalc_imodel()
   {
     // use the length, unless we are unaligned
     double t = T.branch(b).length();
-    if (branch_HMM_type[b] == 1)
-      t = -1;
     
     // compute and cache the branch HMM
-    branch_HMMs[b] = IModel_->get_branch_HMM(t);
+    if (branch_HMM_type[b] == 1)
+      branch_HMMs[b] = IModel_->get_branch_HMM(-1);
+    else
+      branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());
   }
 }
 
 void data_partition::recalc_smodel() 
 {
   // set the rate to one
-  SModel_->set_rate(1);
+  SModel_->set_rate(branch_mean());
 
   //invalidate cached conditional likelihoods in case the model has changed
   LC.invalidate_all();
@@ -51,22 +53,31 @@ void data_partition::recalc_smodel()
 
 void data_partition::setlength(int b, double l)
 {
-  l *= branch_mean();
-
   MC.setlength(b,l,T,*SModel_); 
 
-  if (has_IModel()) {
+  if (has_IModel()) 
+  {
+    // use the length, unless we are unaligned
     double t = T.branch(b).length();
+
     if (branch_HMM_type[b] == 1)
-      t = -1;
-    branch_HMMs[b] = IModel_->get_branch_HMM(t);
+      branch_HMMs[b] = IModel_->get_branch_HMM(-1);
+    else
+      branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());
   }
   LC.invalidate_branch(T,b);
 }
 
 void data_partition::recalc(const vector<int>& indices)
 {
+  if (indices.size() and indices[0] != 0)
+    throw myexception()<<"What parameter is this???";
+
+  // the scale of the substitution tree changed
   recalc_smodel();
+
+  // the scale of the indel tree changed also
+  recalc_imodel();
 }
 
 double data_partition::branch_mean() const 
@@ -87,7 +98,8 @@ string data_partition::name() const
 efloat_t data_partition::prior_no_alignment() const 
 {
   // prior on mu, the mean branch length
-  return pow(efloat_t(branch_mean()),-1.0);
+  //  return pow(efloat_t(branch_mean()),-1.0);
+  return exponential_pdf(branch_mean(),1.0);
 }
 
 efloat_t data_partition::prior_alignment() const 
@@ -260,14 +272,7 @@ void Parameters::set_root(int node)
 void Parameters::tree_propagate()
 {
   for(int i=0;i<n_data_partitions();i++) 
-  {
     data_partitions[i].T = T;
-    double mu = data_partitions[i].branch_mean();
-    for(int b=0;b<T.n_branches();b++) {
-      double L = T.branch(b).length();
-      data_partitions[i].T.branch(b).set_length(L*mu);
-    }
-  }
 }
 
 void Parameters::invalidate_subA_index_branch(int b)
@@ -433,9 +438,19 @@ bool accept_MH(const Parameters& P1,const Parameters& P2,double rho)
 bool accept_MH_same_alignment(const Parameters& P1,const Parameters& P2,double rho) 
 {
   efloat_t p1 = P1.heated_likelihood() * P1.prior_no_alignment();
-  efloat_t p2 = P1.heated_likelihood() * P2.prior_no_alignment();
+  efloat_t p2 = P2.heated_likelihood() * P2.prior_no_alignment();
 
   double ratio = rho*(p2/p1);
+
+#ifndef NDEBUG
+  efloat_t q1 = P1.heated_probability();
+  efloat_t q2 = P2.heated_probability();
+  double diff = std::abs(log(p2/p1)-log(q2/q1));
+  if (diff > 1.0e-9) {
+    cerr<<"accept_MH_same_alignment: the alignment is NOT irrelevant!"<<endl;
+    cerr<<"  diff = "<<diff<<endl;
+  }
+#endif
 
   if (ratio >= 1 or myrandomf() < ratio) 
     return true;
