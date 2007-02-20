@@ -459,7 +459,6 @@ void Sampler::go(Parameters& P,int subsample,const int max,
 {
   P.recalc_all();
 
-  const alignment& A = P[0].A;
   const SequenceTree& T = P.T;
 
   // make sure that the Alignment and Tree are linked
@@ -505,10 +504,20 @@ void Sampler::go(Parameters& P,int subsample,const int max,
   s_parameters<<"iter\t";
   s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
-  if (P.has_IModel()) {
+  if (P.n_data_partitions() > 1) 
+    for(int i=0;i<P.n_data_partitions();i++) {
+      if (P.has_IModel()) {
+	s_parameters<<"\t|A"<<i+1<<"|";
+	s_parameters<<"\t#indels"<<i+1;
+	s_parameters<<"\t|indels"<<i+1<<"|";
+      }
+      s_parameters<<"\t#substs"<<i+1;
+    }
+  if (P.has_IModel())
     s_parameters<<"\t|A|\t#indels\t|indels|";
-  }
-  s_parameters<<"\t#substs\t|T|"<<endl;
+  s_parameters<<"\t#substs";
+
+  s_parameters<<"\t|T|"<<endl;
 
   vector<string> restore_names;
   restore_names.push_back("lambda");
@@ -551,12 +560,35 @@ void Sampler::go(Parameters& P,int subsample,const int max,
       s_parameters<<iterations<<"\t";
       s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
       s_parameters<<P.state();
-      if (P.has_IModel()) {
-	s_parameters<<"\t"<<A.length();
-	s_parameters<<"\t"<<n_indels(A,P.T);
-	s_parameters<<"\t"<<total_length_indels(A,P.T);
+
+      unsigned total_length=0;
+      unsigned total_indels=0;
+      unsigned total_indel_lengths=0;
+      unsigned total_substs=0;
+      for(int i=0;i<P.n_data_partitions();i++) {
+	if (P.has_IModel()) {
+	  unsigned x1 = P[i].A.length();
+	  total_length += x1;
+	  s_parameters<<"\t"<<x1;
+
+	  unsigned x2 = n_indels(P[i].A,P[i].T);
+	  total_indels += x2;
+	  s_parameters<<"\t"<<n_indels(P[i].A,P[i].T);
+
+	  unsigned x3 = total_length_indels(P[i].A,P[i].T);
+	  total_indel_lengths += x3;
+	  s_parameters<<"\t"<<x3;
+	}
+	unsigned x4 = n_mutations(P[i].A,P[i].T);
+	total_substs += x4;
+	s_parameters<<"\t"<<x4;
       }
-      s_parameters<<"\t"<<n_mutations(A,P.T);
+      if (P.has_IModel()) {
+	s_parameters<<"\t"<<total_length;
+	s_parameters<<"\t"<<total_indels;
+	s_parameters<<"\t"<<total_indel_lengths;
+      }
+      s_parameters<<"\t"<<total_substs;
       s_parameters<<"\t"<<length(P.T)<<endl;
     }
 
