@@ -304,6 +304,8 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
   // load the alignments
   alignments = load_alignments(filenames,alphabets);
 
+  T = load_T(args);
+
   link(alignments,T,internal_sequences);
 
   for(int i=0;i<alignments.size();i++) 
@@ -336,6 +338,8 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
 
   // load the alignments
   alignments = load_alignments(filenames,alphabets);
+
+  T = load_T(args);
 
   link(alignments,T,internal_sequences);
 
