@@ -569,19 +569,22 @@ void Sampler::go(Parameters& P,int subsample,const int max,
 	if (P.has_IModel()) {
 	  unsigned x1 = P[i].A.length();
 	  total_length += x1;
-	  s_parameters<<"\t"<<x1;
 
 	  unsigned x2 = n_indels(P[i].A,P[i].T);
 	  total_indels += x2;
-	  s_parameters<<"\t"<<n_indels(P[i].A,P[i].T);
 
 	  unsigned x3 = total_length_indels(P[i].A,P[i].T);
 	  total_indel_lengths += x3;
-	  s_parameters<<"\t"<<x3;
+	  if (P.n_data_partitions() >1) {
+	    s_parameters<<"\t"<<x1;
+	    s_parameters<<"\t"<<n_indels(P[i].A,P[i].T);
+	    s_parameters<<"\t"<<x3;
+	  }
 	}
 	unsigned x4 = n_mutations(P[i].A,P[i].T);
 	total_substs += x4;
-	s_parameters<<"\t"<<x4;
+	if (P.n_data_partitions() >1) 
+	  s_parameters<<"\t"<<x4;
       }
       if (P.has_IModel()) {
 	s_parameters<<"\t"<<total_length;
