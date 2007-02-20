@@ -199,7 +199,5 @@ public:
 
 bool accept_MH(const Parameters& P1,const Parameters& P2,double rho);
 
-bool accept_MH_same_alignment(const Parameters& P1,const Parameters& P2,double rho);
-
 
 #endif

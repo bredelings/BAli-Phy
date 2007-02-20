@@ -435,26 +435,3 @@ bool accept_MH(const Parameters& P1,const Parameters& P2,double rho)
     return false;
 }
 
-bool accept_MH_same_alignment(const Parameters& P1,const Parameters& P2,double rho) 
-{
-  efloat_t p1 = P1.heated_likelihood() * P1.prior_no_alignment();
-  efloat_t p2 = P2.heated_likelihood() * P2.prior_no_alignment();
-
-  double ratio = rho*(p2/p1);
-
-#ifndef NDEBUG
-  efloat_t q1 = P1.heated_probability();
-  efloat_t q2 = P2.heated_probability();
-  double diff = std::abs(log(p2/p1)-log(q2/q1));
-  if (diff > 1.0e-9) {
-    cerr<<"accept_MH_same_alignment: the alignment is NOT irrelevant!"<<endl;
-    cerr<<"  diff = "<<diff<<endl;
-  }
-#endif
-
-  if (ratio >= 1 or myrandomf() < ratio) 
-    return true;
-  else
-    return false;
-}
-

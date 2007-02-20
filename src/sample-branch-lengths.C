@@ -12,8 +12,9 @@
 
 using MCMC::MoveStats;
 
-bool do_MH_move(Parameters& P,const Parameters& P2,double rho) {
-  bool success = accept_MH_same_alignment(P,P2,rho);
+bool do_MH_move(Parameters& P,const Parameters& P2,double rho) 
+{
+  bool success = accept_MH(P,P2,rho);
 
   if (success) {
     P=P2;
