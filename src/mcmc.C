@@ -287,13 +287,13 @@ void MH_Move::iterate(Parameters& P,MoveStats& Stats,int)
   Result result(1);
 
 #ifndef NDEBUG
-  show_parameters(std::clog,P);
-  std::clog<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
-  std::clog<<endl<<endl;
+  show_parameters(std::cerr,P);
+  std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+  std::cerr<<endl<<endl;
 
-  show_parameters(std::clog,P2);
-  std::clog<<P2.probability()<<" = "<<P2.likelihood()<<" + "<<P2.prior();
-  std::clog<<endl<<endl;
+  show_parameters(std::cerr,P2);
+  std::cerr<<P2.probability()<<" = "<<P2.likelihood()<<" + "<<P2.prior();
+  std::cerr<<endl<<endl;
 #endif
 
   if (accept_MH(P,P2,ratio)) {
