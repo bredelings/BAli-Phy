@@ -341,10 +341,13 @@ std::istream& operator>>(std::istream& file,alignment& A) {
   return file;
 }
 
+vector<string> sequence_names(const alignment& A)
+{
+  return sequence_names(A,A.n_sequences());
+}
+
 vector<string> sequence_names(const alignment& A,int n)
 {
-  if (n == -1) n = A.n_sequences();
-
   vector<string> names;
 
   for(int i=0;i<n;i++)

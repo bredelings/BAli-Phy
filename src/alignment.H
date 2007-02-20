@@ -123,7 +123,8 @@ void remove_empty_columns(alignment&);
 std::vector<int> get_path(const alignment&,int,int);
 std::vector<int> get_path_3way(const alignment&,int,int,int,int);
 
-std::vector<string> sequence_names(const alignment&,int=-1);
+std::vector<string> sequence_names(const alignment&);
+std::vector<string> sequence_names(const alignment&,int);
 
 /// Generate a randomized alignment
 alignment randomize(const alignment&,int n=-1);
