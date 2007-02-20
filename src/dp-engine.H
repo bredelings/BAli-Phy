@@ -27,6 +27,8 @@ public:
     return path_GQ_path(g_path) * this->path_Q_subst(g_path);
   }
 
+  void check_sampling_probability(const vector<int>& g_path) const;
+
   DPengine(const vector<int>&,const vector<double>&,const Matrix&,double Temp);
 };
 

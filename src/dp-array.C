@@ -77,6 +77,11 @@ vector<int> DParray::sample_path() const {
   assert(i+di(state2)==0);
 
   std::reverse(path.begin(),path.end());
+
+#ifndef NDEBUG_DP
+  check_sampling_probability(path);
+#endif
+
   return path;
 }
 
@@ -195,6 +200,11 @@ vector<int> DParrayConstrained::sample_path() const {
   assert(i+di(state2)==0);
 
   std::reverse(path.begin(),path.end());
+
+#ifndef NDEBUG_DP
+  check_sampling_probability(path);
+#endif
+
   return path;
 }
 
