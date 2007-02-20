@@ -502,8 +502,8 @@ namespace substitution {
 #ifdef DEBUG_CACHING
     data_partition P2 = P;
     P2.LC.invalidate_all();
-    invalidate_subA_index_all(A);
-    efloat_t result2 = Pr(A, P2, P2.LC);
+    invalidate_subA_index_all(P2.A);
+    efloat_t result2 = Pr(P2, P2.LC);
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
       std::abort();
