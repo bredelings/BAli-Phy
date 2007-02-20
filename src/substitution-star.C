@@ -71,74 +71,17 @@ namespace substitution {
     return p;
   }
 
-  efloat_t Pr_star(const alignment& A,const Parameters& P) 
+  efloat_t Pr_star(const data_partition& P) 
   {
     if (P.T.n_leaves() == 2)
-      return Pr(A,P);
+      return Pr(P);
 
-    return Pr_star(A, P.T, P.SModel(), P);
+    return Pr_star(P.A, P.T, P.SModel(), P.MC);
   }
 
-  efloat_t Pr_star_constant(const alignment& A,const Parameters& P) 
+  efloat_t Pr_unaligned(const data_partition& P) 
   {
-    const Tree& T1 = P.T;
-    Parameters P2 = P;
-
-    //----------- Get Distance Matrix --------------//
-    Matrix D(T1.n_leaves(),T1.n_leaves());
-    for(int i=0;i<T1.n_leaves();i++) 
-      for(int j=0;j<T1.n_leaves();j++) 
-	D(i,j) = T1.distance(i,j);
-
-    //----------- Get Average Distance -------------//
-    double sum=0;
-    for(int i=0;i<T1.n_leaves();i++) 
-      for(int j=0;j<i;j++) 
-	sum += D(i,j);
-    const int n = (T1.n_leaves()*(T1.n_leaves()-1))/2;
-    double ave = sum/n;
-
-    //-------- Set branch lengths to ave/2  ----------//
-    for(int b=0;b<T1.n_leafbranches();b++)
-      P2.setlength(b,ave/2.0);
-
-
-    //----------- Get log L w/ new tree  -------------//
-    return Pr_star(A,P2);
-  }
-
-  efloat_t Pr_star_estimate(const alignment& A,const Parameters& P) {
-    const Tree& T1 = P.T;
-    Parameters P2 = P;
-    
-    //----------- Get Distance Matrix --------------//
-    Matrix D(T1.n_leaves(),T1.n_leaves());
-    for(int i=0;i<T1.n_leaves();i++) 
-      for(int j=0;j<T1.n_leaves();j++) 
-	D(i,j) = T1.distance(i,j);
-    
-    
-    //---- Set branch lengths to ave/2 per branch ----//
-    for(int i=0;i<T1.n_leaves();i++) {
-      double ave=0;
-      for(int j=0;j<T1.n_leaves();j++) {
-	if (i==j) continue;
-	ave += log(D(i,j));
-      }
-      ave /= (T1.n_leaves()-1);
-   
-      int b = i;
-      if (T1.n_leaves() == 2) b=0;
-
-      P2.setlength(b,exp(ave)/2.0);
-    }
-    
-    //----------- Get log L w/ new tree  -------------//
-    return Pr_star(A,P2);
-  }
-
-  efloat_t Pr_unaligned(const alignment& A,const Parameters& P) 
-  {
+    const alignment& A = P.A;
     const alphabet& a = A.get_alphabet();
 
     vector<efloat_t> f(P.SModel().frequencies().size());
@@ -160,8 +103,9 @@ namespace substitution {
     return total;
   }
 
-  efloat_t Pr_single_sequence(const alignment& A,const Parameters& P) 
+  efloat_t Pr_single_sequence(const data_partition& P) 
   {
+    const alignment& A = P.A;
     const alphabet& a = A.get_alphabet();
 
     vector<efloat_t> f(P.SModel().frequencies().size());

@@ -12,6 +12,9 @@
 #include "tree.H"
 #include "clone.H"
 
+/// Reorder the sequences of @A according to the permutation @mapping
+alignment reorder_sequences(const alignment& A, const std::vector<int>& mapping);
+
 // Remove sequences to A corresponding to internal nodes in T
 alignment chop_internal(alignment A);
 
@@ -20,6 +23,13 @@ alignment add_internal(alignment A,const Tree& T);
 
 /// Load an alignment from command line args align=filename
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
+
+/// Load an alignment from command line args align=filename
+alignment load_alignment(const std::string& filename, const vector<OwnedPointer<alphabet> >& alphabets);
+
+/// Load alignments from command line args align=filename
+std::vector<alignment> load_alignments(const vector<std::string>& filenames,
+				       const vector<OwnedPointer<alphabet> >& alphabets);
 
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);

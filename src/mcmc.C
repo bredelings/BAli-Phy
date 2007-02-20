@@ -149,14 +149,14 @@ void MoveGroup::disable(const string& s) {
     moves[i]->disable(s);
 }
 
-void MoveGroup::iterate(alignment& A,Parameters& P,MoveStats& Stats) {
+void MoveGroup::iterate(Parameters& P,MoveStats& Stats) {
   reset(1.0);
   for(int i=0;i<order.size();i++)
-    iterate(A,P,Stats,i);
+    iterate(P,Stats,i);
 }
 
 
-void MoveGroup::iterate(alignment& A,Parameters& P,MoveStats& Stats,int i) {
+void MoveGroup::iterate(Parameters& P,MoveStats& Stats,int i) {
   assert(i < order.size());
 
 #ifndef NDEBUG
@@ -164,7 +164,7 @@ void MoveGroup::iterate(alignment& A,Parameters& P,MoveStats& Stats,int i) {
   clog<<"   submove = "<<moves[order[i]]->name<<endl;
 #endif
 
-  moves[order[i]]->iterate(A,P,Stats,suborder[i]);
+  moves[order[i]]->iterate(P,Stats,suborder[i]);
 }
 
 int MoveGroup::reset(double l) {
@@ -256,14 +256,14 @@ int SingleMove::reset(double lambda) {
   return l + poisson(lambda);
 }
 
-void SingleMove::iterate(alignment& A,Parameters& P,MoveStats& Stats,int) 
+void SingleMove::iterate(Parameters& P,MoveStats& Stats,int) 
 {
 #ifndef NDEBUG
   clog<<" [single] move = "<<name<<endl;
 #endif
 
   iterations++;
-  (*m)(A,P,Stats);
+  (*m)(P,Stats);
 }
 
 int MH_Move::reset(double lambda) {
@@ -272,7 +272,7 @@ int MH_Move::reset(double lambda) {
   return l + poisson(lambda);
 }
 
-void MH_Move::iterate(alignment& A,Parameters& P,MoveStats& Stats,int) 
+void MH_Move::iterate(Parameters& P,MoveStats& Stats,int) 
 {
 #ifndef NDEBUG
   clog<<" [MH] move = "<<name<<endl;
@@ -282,21 +282,21 @@ void MH_Move::iterate(alignment& A,Parameters& P,MoveStats& Stats,int)
 
   Parameters P2 = P;
 
-  double ratio = (*proposal)(A,P2);
+  double ratio = (*proposal)(P2);
 
   Result result(1);
 
 #ifndef NDEBUG
   show_parameters(std::clog,P);
-  std::clog<<P.probability(A,P)<<" = "<<P.likelihood(A,P)<<" + "<<P.prior(A,P);
+  std::clog<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
   std::clog<<endl<<endl;
 
   show_parameters(std::clog,P2);
-  std::clog<<P.probability(A,P2)<<" = "<<P.likelihood(A,P2)<<" + "<<P.prior(A,P2);
+  std::clog<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
   std::clog<<endl<<endl;
 #endif
 
-  if (P.accept_MH(A,P,A,P2,ratio)) {
+  if (accept_MH(P,P2,ratio)) {
     P = P2;
     result.totals[0] = 1;
   }
@@ -330,13 +330,13 @@ int MoveArg::reset(double l)
   return order.size();
 }
 
-void MoveArg::iterate(alignment& A,Parameters& P,MoveStats& Stats) {
+void MoveArg::iterate(Parameters& P,MoveStats& Stats) {
   for(int i=0;i<order.size();i++)
-    iterate(A,P,Stats,i);
+    iterate(P,Stats,i);
 }
 
-void MoveArg::iterate(alignment& A,Parameters& P,MoveStats& Stats,int i) {
-  (*this)(A,P,Stats,order[i]);
+void MoveArg::iterate(Parameters& P,MoveStats& Stats,int i) {
+  (*this)(P,Stats,order[i]);
 }
 
 
@@ -419,14 +419,14 @@ int MoveEach::choose(int arg) const {
   return i;
 }
 
-void MoveEach::operator()(alignment& A,Parameters& P,MoveStats& Stats,int arg) {
+void MoveEach::operator()(Parameters& P,MoveStats& Stats,int arg) {
   iterations += 1.0/args.size();
   int m = choose(arg);
   MoveArg* temp = dynamic_cast<MoveArg*>(&*moves[m]);
   if (not temp)
     std::abort();
   else
-    (*temp)(A,P,Stats,subarg[m][arg]);
+    (*temp)(P,Stats,subarg[m][arg]);
 }
 
 
@@ -437,14 +437,14 @@ void MoveEach::show_enabled(ostream& o,int depth) const {
     moves[i]->show_enabled(o,depth+1);
 }
 
-void MoveArgSingle::operator()(alignment& A,Parameters& P,MoveStats& Stats,int arg) 
+void MoveArgSingle::operator()(Parameters& P,MoveStats& Stats,int arg) 
 {
 #ifndef NDEBUG
   clog<<" [single] move = "<<name<<endl;
 #endif
 
   iterations++;
-  (*m)(A,P,Stats,args[arg]);
+  (*m)(P,Stats,args[arg]);
 }
     
 
@@ -454,16 +454,22 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
   return o;
 }
 
-void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
+void Sampler::go(Parameters& P,int subsample,const int max,
 		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map)
 {
   P.recalc_all();
+
+  const alignment& A = P[0].A;
   const SequenceTree& T = P.T;
 
   // make sure that the Alignment and Tree are linked
-  assert(A.n_sequences() == T.n_nodes());
-  for(int i=0;i<T.n_leaves();i++)
-    assert(T.seq(i) == A.seq(i).name);
+  for(int i=0;i<P.n_data_partitions();i++) {
+    assert(P[i].A.n_sequences() == T.n_nodes());
+
+    for(int j=0;j<T.n_leaves();j++)
+      assert(T.seq(j) == P[i].A.seq(j).name);    
+  }
+
   
   //--------- Determine some values for this chain -----------//
   if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
@@ -474,24 +480,28 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
 
   s_out<<"\n\n\n";
 
-  if (const Triplets* T = dynamic_cast<const Triplets*>(&P.get_alphabet()) ) 
-  {
-    s_out<<"observed nucleotide frequencies = "<<endl;
-    valarray<double> counts = letter_counts(A);
-    valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*T,counts);
-
-    show_frequencies(s_out,T->getNucleotides(),N_counts/N_counts.sum());
-    s_out<<endl<<endl;
-
-    s_out<<"current nucleotide frequencies = "<<endl;
-    valarray<double> fT = P.SModel().frequencies();
-    valarray<double> fN = get_nucleotide_counts_from_codon_counts(*T,fT);
-    fN /= fN.sum();
-
-    show_frequencies(s_out,T->getNucleotides(),fN);
-    s_out<<endl<<endl;
+  for(int i=0;i<P.n_data_partitions();i++) {
+    const alignment& A = P[i].A;
+    s_out<<"Data Partition: "<<i+1<<endl;
+    if (const Triplets* T = dynamic_cast<const Triplets*>(&A.get_alphabet()) ) 
+      {
+	s_out<<"observed nucleotide frequencies = "<<endl;
+	valarray<double> counts = letter_counts(A);
+	valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*T,counts);
+	
+	show_frequencies(s_out,T->getNucleotides(),N_counts/N_counts.sum());
+	s_out<<endl<<endl;
+	
+	s_out<<"current nucleotide frequencies = "<<endl;
+	valarray<double> fT = P[i].SModel().frequencies();
+	valarray<double> fN = get_nucleotide_counts_from_codon_counts(*T,fT);
+	fN /= fN.sum();
+	
+	show_frequencies(s_out,T->getNucleotides(),fN);
+	s_out<<endl<<endl;
+      }
   }
-  
+
   s_parameters<<"iter\t";
   s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
@@ -522,20 +532,21 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
       P.fixed(restore[i],false);
 
     if (iterations < P.beta_series.size())
-      P.beta[0] = P.beta_series[iterations];
+      for(int i=0;i < P.n_data_partitions();i++)
+	P.beta[0] = P[i].beta[0] = P.beta_series[iterations];
 
     //------------------ record statistics ---------------------//
     s_out<<"iterations = "<<iterations<<"\n";
     clog<<"iterations = "<<iterations<<"\n";
 
-    efloat_t prior = P.basic_prior(A,P);
-    efloat_t likelihood = P.basic_likelihood(A,P);
+    efloat_t prior = P.prior();
+    efloat_t likelihood = P.likelihood();
     efloat_t Pr = prior * likelihood;
 
     if (iterations%subsample == 0) {
       bool show_alignment = (iterations%(10*subsample) == 0);
       if (not P.has_IModel()) show_alignment = false;
-      print_stats(s_out,s_trees,A,P,show_alignment);
+      print_stats(s_out,s_trees,P,show_alignment);
 
       s_parameters<<iterations<<"\t";
       s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
@@ -558,11 +569,11 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
     if (Pr > MAP_score) {
       MAP_score = Pr;
       s_map<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
-      print_stats(s_map,s_map,A,P);
+      print_stats(s_map,s_map,P);
     }
 
     //------------------- move to new position -----------------//
-    iterate(A,P,*this);
+    iterate(P,*this);
 
   }
 

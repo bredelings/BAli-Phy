@@ -10,6 +10,7 @@ extern "C" {
 #include "substitution.H"
 #include "likelihood.H"
 #include "setup.H"
+#include "alignment.H"
 #include "alignment-util.H"
 
 using std::valarray;
@@ -43,18 +44,19 @@ void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
 }
 
 void print_stats(std::ostream& o,std::ostream& trees,
-		 const alignment& A,const Parameters& P,
+		 const Parameters& P,
 		 bool print_alignment) 
 {
-   efloat_t Pr_prior = P.basic_prior(A,P);
-  efloat_t Pr_likelihood = P.basic_likelihood(A,P);
+  efloat_t Pr_prior = P.prior();
+  efloat_t Pr_likelihood = P.likelihood();
   efloat_t Pr = Pr_prior * Pr_likelihood;
 
   o<<"    prior = "<<Pr_prior<<"    likelihood = "<<Pr_likelihood<<"    logp = "<<Pr
    <<"    beta = " <<P.beta[0]  <<"\n";
 
   if (print_alignment)
-    o<<standardize(A,P.T)<<"\n";
+    for(int i=0;i<P.n_data_partitions();i++)
+      o<<standardize(P[i].A,P.T)<<"\n";
   
   trees<<P.T<<std::endl;
   trees.flush();
@@ -78,7 +80,8 @@ void print_stats(std::ostream& o,std::ostream& trees,
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
-  check_alignment(A,P.T,"print_stats:end");
+  for(int i=0;i<P.n_data_partitions();i++)
+    check_alignment(P[i].A,P.T,"print_stats:end");
 #endif
 }
 

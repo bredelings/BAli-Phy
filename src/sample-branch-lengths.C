@@ -12,16 +12,18 @@
 
 using MCMC::MoveStats;
 
-bool do_MH_move(const alignment& A,Parameters& P,const Parameters& P2,double rho) {
-  if (P.accept_MH(A,P,A,P2,rho)) {
+bool do_MH_move(Parameters& P,const Parameters& P2,double rho) {
+  bool success = accept_MH_same_alignment(P,P2,rho);
+
+  if (success) {
     P=P2;
     //    std::cerr<<"accepted\n";
-    return true;
   }
   else {
     //    std::cerr<<"rejected\n";
-    return false;
   }
+
+  return success;
 }
 
 double branch_twiddle(double& T,double sigma) {
@@ -35,8 +37,8 @@ double branch_twiddle_positive(double& T,double sigma) {
   return ratio;
 }
 
-MCMC::Result change_branch_length_(const alignment& A, Parameters& P,int b,
-				   double sigma,double (*twiddle)(double&,double)) 
+MCMC::Result change_branch_length_(Parameters& P,int b,double sigma,
+				   double (*twiddle)(double&,double)) 
 {
   MCMC::Result result(3);
   
@@ -47,13 +49,13 @@ MCMC::Result change_branch_length_(const alignment& A, Parameters& P,int b,
   double ratio = twiddle(newlength,sigma);
   
   //---------- Construct proposed Tree ----------//
-  select_root(P.T, b, P.LC);
+  P.select_root(b);
 
   Parameters P2 = P;
   P2.setlength(b,newlength);
 
   //--------- Do the M-H step if OK--------------//
-  if (do_MH_move(A,P,P2,ratio)) {
+  if (do_MH_move(P,P2,ratio)) {
     result.totals[0] = 1;
     result.totals[1] = std::abs(length - newlength);
     result.totals[2] = std::abs(log(length/newlength));
@@ -63,10 +65,10 @@ MCMC::Result change_branch_length_(const alignment& A, Parameters& P,int b,
 }
 
 
-double logp_(const alignment& A, Parameters& P, int b,double l)
+double logp_(Parameters& P, int b,double l)
 {
   P.setlength(b,l);
-  return log(P.probability(A,P));
+  return log(P.probability());
 }
 
 vector<double> fit_quadratic(double x1,double x2,double x3,double y1,double y2,double y3)
@@ -99,7 +101,7 @@ vector<double> fit_gamma(double x1,double x2,double x3,double y1,double y2,doubl
   return v;
 }
 
-vector<double> gamma_approx(const alignment& A, const Parameters& P, int b)
+vector<double> gamma_approx(const Parameters& P, int b)
 {
   Parameters P2 = P;
   double w = 4;
@@ -107,9 +109,9 @@ vector<double> gamma_approx(const alignment& A, const Parameters& P, int b)
   double x1 = x2/w;
   double x3 = x2*w;
 
-  double L1 = logp_(A,P2,b,x1);
-  double L2 = logp_(A,P2,b,x2);
-  double L3 = logp_(A,P2,b,x3);
+  double L1 = logp_(P2,b,x1);
+  double L2 = logp_(P2,b,x2);
+  double L3 = logp_(P2,b,x3);
 
   vector<double> v(3,0);
   v[1] = -1.0/P.branch_mean();
@@ -126,7 +128,7 @@ vector<double> gamma_approx(const alignment& A, const Parameters& P, int b)
     if (a > 0 and B > 0) {
       double xm = -v2[0]/v2[1];
       if (xm < 0) xm = 1.0e-6;
-      double Lm = logp_(A,P2,b,xm);
+      double Lm = logp_(P2,b,xm);
       double max = std::max(L1,std::max(L2,L3));
 
       if (Lm < max) {
@@ -157,10 +159,10 @@ vector<double> gamma_approx(const alignment& A, const Parameters& P, int b)
 	else
 	  x1 = gsl_cdf_gamma_Pinv(0.01,a,B);
 	  
-	L1 = logp_(A,P2,b,x1);
+	L1 = logp_(P2,b,x1);
 	
 	x3 = gsl_cdf_gamma_Pinv(0.99,a,B);
-	L3 = logp_(A,P2,b,x3);
+	L3 = logp_(P2,b,x3);
 
 	w = 2.0*B*sqrt(a);
       }
@@ -171,20 +173,20 @@ vector<double> gamma_approx(const alignment& A, const Parameters& P, int b)
 	w = sqrt(w);
 	x1 = x2/w;
 	x3 = x2*w;
-	L1 = logp_(A,P2,b,x1);
-	L3 = logp_(A,P2,b,x3);
+	L1 = logp_(P2,b,x1);
+	L3 = logp_(P2,b,x3);
       }
       else if (L1 > L2 and L1 > L3) {
 	x3 = x2;L3 = L2;
 	x2 = x1;L2 = L1;
 	x1 = x2/w;
-	L1 = logp_(A,P2,b,x1);
+	L1 = logp_(P2,b,x1);
       }
       else {
 	x1 = x2; L1 = L2;
 	x2 = x3; L2 = L3;
 	x3 = x2*w;
-	L3 = logp_(A,P2,b,x3);
+	L3 = logp_(P2,b,x3);
       }
     }
   }
@@ -192,12 +194,12 @@ vector<double> gamma_approx(const alignment& A, const Parameters& P, int b)
   return v;
 }
 
-void change_branch_length_flat(const alignment& A, Parameters& P,MoveStats& Stats,int b,double sigma)
+void change_branch_length_flat(Parameters& P,MoveStats& Stats,int b,double sigma)
 {
   const double L = P.T.branch(b).length();
   const double mu = P.branch_mean();
 
-  MCMC::Result result = change_branch_length_(A, P, b, sigma*P.branch_mean(), branch_twiddle_positive);
+  MCMC::Result result = change_branch_length_(P, b, sigma*P.branch_mean(), branch_twiddle_positive);
 
   Stats.inc("branch-length *",result);
   if (L < mu/2.0)
@@ -210,12 +212,12 @@ void change_branch_length_flat(const alignment& A, Parameters& P,MoveStats& Stat
     Stats.inc("branch-length 4",result);
 }
 
-void change_branch_length_log_scale(const alignment& A, Parameters& P,MoveStats& Stats,int b,double sigma)
+void change_branch_length_log_scale(Parameters& P,MoveStats& Stats,int b,double sigma)
 {
   const double L = P.T.branch(b).length();
   const double mu = P.branch_mean();
 
-  MCMC::Result result = change_branch_length_(A, P, b, sigma, scale_gaussian );
+  MCMC::Result result = change_branch_length_(P, b, sigma, scale_gaussian );
 
   Stats.inc("branch-length (log) *",result);
   if (L < mu/2.0)
@@ -228,14 +230,14 @@ void change_branch_length_log_scale(const alignment& A, Parameters& P,MoveStats&
     Stats.inc("branch-length (log) 4",result);
 }
 
-void change_branch_length_fit_gamma(const alignment& A, Parameters& P,MoveStats& Stats,int b)
+void change_branch_length_fit_gamma(Parameters& P,MoveStats& Stats,int b)
 {
   const double L = P.T.branch(b).length();
   const double mu = P.branch_mean();
 
-  select_root(P.T, b, P.LC);
+  P.select_root(b);
 
-  vector<double> v = gamma_approx(A,P,b);
+  vector<double> v = gamma_approx(P,b);
 
   double a = v[0]+1.0;
   double B = -1.0/v[1];
@@ -256,7 +258,7 @@ void change_branch_length_fit_gamma(const alignment& A, Parameters& P,MoveStats&
   P2.setlength(b,newlength);
   
   //--------- Do the M-H step if OK--------------//
-  if (do_MH_move(A,P,P2,ratio)) {
+  if (do_MH_move(P,P2,ratio)) {
     result.totals[0] = 1;
     result.totals[1] = std::abs(length - newlength);
     result.totals[2] = std::abs(log(newlength/length));
@@ -272,31 +274,31 @@ void change_branch_length_fit_gamma(const alignment& A, Parameters& P,MoveStats&
     Stats.inc("branch-length (gamma) 4",result);
 }
 
-void change_branch_length(const alignment& A, Parameters& P,MoveStats& Stats,int b)
+void change_branch_length(Parameters& P,MoveStats& Stats,int b)
 {
   double p = loadvalue(P.keys,"fraction_fit_gamma",0.01);
   if (myrandomf() < p)
-    change_branch_length_fit_gamma(A, P, Stats, b);
+    change_branch_length_fit_gamma(P, Stats, b);
   else if (myrandomf() < 0.5)
   {
     double sigma = loadvalue(P.keys,"log_branch_sigma",0.6);
-    change_branch_length_log_scale(A, P, Stats, b, sigma);
+    change_branch_length_log_scale(P, Stats, b, sigma);
   }
   else {
     double sigma = loadvalue(P.keys,"branch_sigma",0.6);
-    change_branch_length_flat(A, P, Stats, b, sigma);
+    change_branch_length_flat(P, Stats, b, sigma);
   }
 }
 
-void change_branch_length_multi(const alignment& A, Parameters& P,MoveStats& Stats,int b) 
+void change_branch_length_multi(Parameters& P,MoveStats& Stats,int b) 
 {
   const int n=3;
 
   for(int i=1;i<n;i++)
-    change_branch_length(A,P,Stats,b);
+    change_branch_length(P,Stats,b);
 }
 
-void change_branch_length_and_T(alignment& A, Parameters& P,MoveStats& Stats,int b) 
+void change_branch_length_and_T(Parameters& P,MoveStats& Stats,int b) 
 {
   MCMC::Result result(5,0);
 
@@ -314,13 +316,13 @@ void change_branch_length_and_T(alignment& A, Parameters& P,MoveStats& Stats,int
     result.counts[3] = 1;
 
     //---------- Construct proposed Tree ----------//
-    select_root(P.T, b, P.LC);
+    P.select_root(b);
 
     Parameters P2 = P;
     P2.setlength(b,newlength);
 
     //--------- Do the M-H step if OK--------------//
-    if (do_MH_move(A,P,P2,ratio)) {
+    if (do_MH_move(P,P2,ratio)) {
       result.totals[0] = 1;
       result.totals[1] = 1;
       result.totals[3] = std::abs(newlength - length);
@@ -334,7 +336,6 @@ void change_branch_length_and_T(alignment& A, Parameters& P,MoveStats& Stats,int
     result.counts[4] = 1;
 
     //----- Generate the Different Topologies ------//
-    vector<alignment> a(2,A);
     vector<Parameters> p(2,P);
     
     SequenceTree& T2 = p[1].T;
@@ -344,18 +345,15 @@ void change_branch_length_and_T(alignment& A, Parameters& P,MoveStats& Stats,int
     int b2 = T2.directed_branch(nodes[5],nodes[2]);
     T2.exchange_subtrees(b1,b2);
 
-    invalidate_subA_index_branch(a[1],T2,b);
+    p[1].invalidate_subA_index_branch(b);
 
-    p[1].setlength(b,-newlength);
-    
     vector<efloat_t> rho(2,1);
     rho[1] = ratio;
 
     //------ Sample the Different Topologies ------//
-    int C = two_way_topology_sample(a,p,rho,b);
+    int C = two_way_topology_sample(p,rho,b);
 
     if (C != -1) {
-      A = a[C];
       P = p[C];
     }
 
@@ -393,7 +391,7 @@ double slide_node_expand_branch(vector<double>& lengths,double sigma)
 }
 
 
-bool slide_node(const alignment& A, Parameters& P,
+bool slide_node(Parameters& P,
 		const vector<const_branchview>& b,
 		double (*slide)(vector<double>&,double)
 		) 
@@ -405,7 +403,7 @@ bool slide_node(const alignment& A, Parameters& P,
   assert(b[0].target() == b[1].source() and
 	 b[0].target() == b[2].source());
 
-  P.LC.root = b[0].target();
+  P.set_root(b[0].target());
 
   //---------------- Propose new lengths ---------------//
   vector<double> lengths(2);
@@ -421,12 +419,12 @@ bool slide_node(const alignment& A, Parameters& P,
   P2.setlength(b[1].undirected_name(), lengths[0]);
   P2.setlength(b[2].undirected_name(), lengths[1]);
     
-  bool success = do_MH_move(A,P,P2,ratio);
+  bool success = do_MH_move(P,P2,ratio);
 
   return success;
 }
 
-void slide_node(const alignment& A, Parameters& P,MoveStats& Stats,int b0)
+void slide_node(Parameters& P,MoveStats& Stats,int b0)
 {
   vector<const_branchview> b;
   b.push_back( P.T.directed_branch(b0) );
@@ -439,16 +437,16 @@ void slide_node(const alignment& A, Parameters& P,MoveStats& Stats,int b0)
   append(b[0].branches_after(),b);
 
   if (uniform() < 0.5) {
-    bool success = slide_node(A, P, b, slide_node_no_expand_branch);
+    bool success = slide_node(P, b, slide_node_no_expand_branch);
     Stats.inc("slide_node",success);
   }
   else {
-    bool success = slide_node(A, P, b, slide_node_expand_branch);
+    bool success = slide_node(P, b, slide_node_expand_branch);
     Stats.inc("slide_node_expand_branch",success);
   }
 }
-
-void scale_branch_lengths_and_mean(alignment& A, Parameters& P,MoveStats& Stats) 
+/*
+void scale_branch_lengths_and_mean(Parameters& P,MoveStats& Stats) 
 {
   if (P.fixed(0))
     return;
@@ -473,16 +471,17 @@ void scale_branch_lengths_and_mean(alignment& A, Parameters& P,MoveStats& Stats)
   double ratio =  pow(scale, 1 + T.n_branches() );
 
   //----------- Do the M-H step if OK--------------//
-  if (do_MH_move(A,P,P2, ratio)) {
+  if (do_MH_move(P,P2, ratio)) {
     result.totals[0] = 1;
     result.totals[1] = std::abs(log(scale));
   }
 
   Stats.inc("branch-mean",result);
 }
+*/
 
 /// Propose three neighboring branch lengths all anti-correlated
-void change_3_branch_lengths(alignment& A, Parameters& P,MoveStats& Stats,int n) 
+void change_3_branch_lengths(Parameters& P,MoveStats& Stats,int n) 
 {
   MCMC::Result result(2);
 
@@ -535,7 +534,7 @@ void change_3_branch_lengths(alignment& A, Parameters& P,MoveStats& Stats,int n)
   if (T1_ <= 0.0 or T2_ <= 0.0 or T3_ <= 0.0) return;
 
   //----------- Construct proposed Tree -----------//
-  P.LC.root = n;
+  P.set_root(n);
   
   Parameters P2 = P;
   P2.setlength(b1,T1_);
@@ -543,7 +542,7 @@ void change_3_branch_lengths(alignment& A, Parameters& P,MoveStats& Stats,int n)
   P2.setlength(b3,T3_);
   
   //--------- Do the M-H step if OK--------------//
-  if (do_MH_move(A,P,P2,ratio)) {
+  if (do_MH_move(P,P2,ratio)) {
     result.totals[0] = 1;
     result.totals[1] = abs(log(T1_/T1)) + abs(log(T2_/T2)) + abs(log(T3_/T3));
   }

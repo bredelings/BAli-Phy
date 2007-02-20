@@ -12,28 +12,29 @@ using MCMC::MoveStats;
 
 using std::valarray;
 
-void slide_node_move(alignment& A, Parameters& P, MoveStats& Stats,int b) {
+void slide_node_move(Parameters& P, MoveStats& Stats,int b) 
+{
   if (not P.SModel().full_tree)
     return;
 
-  slide_node(A,P,Stats,b);
+  slide_node(P,Stats,b);
 }
 
-void change_branch_length_move(alignment& A, Parameters& P, MoveStats& Stats,int b) {
+void change_branch_length_move(Parameters& P, MoveStats& Stats,int b) {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
     return;
 
-  change_branch_length(A,P,Stats,b);
+  change_branch_length(P,Stats,b);
 }
 
-void change_branch_length_multi_move(alignment& A, Parameters& P, MoveStats& Stats,int b) {
+void change_branch_length_multi_move(Parameters& P, MoveStats& Stats,int b) {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
     return;
 
-  change_branch_length_multi(A,P,Stats,b);
+  change_branch_length_multi(P,Stats,b);
 }
 
-void sample_tri_one(alignment& A, Parameters& P, MoveStats&,int b) {
+void sample_tri_one(Parameters& P, MoveStats&,int b) {
   assert(P.has_IModel()); 
 
   const SequenceTree& T = P.T;
@@ -47,10 +48,10 @@ void sample_tri_one(alignment& A, Parameters& P, MoveStats&,int b) {
   if (node1 < T.n_leaves())
     std::swap(node1,node2);
     
-  tri_sample_alignment(A,P,node1,node2);
+  tri_sample_alignment(P,node1,node2);
 }
 
-void sample_tri_branch_one(alignment& A, Parameters& P, MoveStats& Stats,int b) 
+void sample_tri_branch_one(Parameters& P, MoveStats& Stats,int b) 
 {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
     return;
@@ -75,7 +76,7 @@ void sample_tri_branch_one(alignment& A, Parameters& P, MoveStats& Stats,int b)
   double length2 = length1 + gaussian(0,sigma);
   if (length2 < 0) length2 = -length2;
 
-  if (tri_sample_alignment_branch(A,P,node1,node2,b,1,length2)) {
+  if (tri_sample_alignment_branch(P,node1,node2,b,1,length2)) {
     result.totals[0] = 1;
     result.totals[1] = std::abs(length2 - length1);
   }
@@ -84,7 +85,7 @@ void sample_tri_branch_one(alignment& A, Parameters& P, MoveStats& Stats,int b)
 }
 
 
-void sample_tri_branch_type_one(alignment& A, Parameters& P, MoveStats& Stats,int b) 
+void sample_tri_branch_type_one(Parameters& P, MoveStats& Stats,int b) 
 {
   if (not P.SModel().full_tree and b>=P.T.n_leaves())
     return;
@@ -104,7 +105,7 @@ void sample_tri_branch_type_one(alignment& A, Parameters& P, MoveStats& Stats,in
   if (node1 < T.n_leaves())
     std::swap(node1,node2);
     
-  if (tri_sample_alignment_branch_model(A,P,node1,node2)) {
+  if (tri_sample_alignment_branch_model(P,node1,node2)) {
     result.totals[0] = 1;
   }
 
@@ -112,19 +113,19 @@ void sample_tri_branch_type_one(alignment& A, Parameters& P, MoveStats& Stats,in
 }
 
 
-void sample_alignments_one(alignment& A, Parameters& P, MoveStats&,int b) {
+void sample_alignments_one(Parameters& P, MoveStats&,int b) {
   assert(P.has_IModel()); 
 
-  sample_alignment(A,P,b);
+  sample_alignment(P,b);
 }
 
-void sample_node_move(alignment& A, Parameters& P, MoveStats&,int node) {
+void sample_node_move(Parameters& P, MoveStats&,int node) {
   assert(P.has_IModel()); 
 
-  sample_node(A,P,node);
+  sample_node(P,node);
 }
 
-void sample_two_nodes_move(alignment& A, Parameters& P, MoveStats&,int n0) {
+void sample_two_nodes_move(Parameters& P, MoveStats&,int n0) {
   assert(P.has_IModel()); 
 
   vector<int> nodes = A3::get_nodes_random(P.T,n0);
@@ -138,7 +139,7 @@ void sample_two_nodes_move(alignment& A, Parameters& P, MoveStats&,int n0) {
 
   int b = P.T.branch(n0,n1);
 
-  sample_two_nodes(A,P,b);
+  sample_two_nodes(P,b);
 }
 
 vector<int> get_cost(const Tree& T) {
@@ -248,8 +249,9 @@ vector<int> walk_tree_path(const Tree& T,int root) {
   return branches2;
 }
 
-void sample_NNI_and_branch_lengths(alignment& A, Parameters& P, MoveStats& Stats) {
-  vector<int> branches = walk_tree_path(P.T,P.LC.root);
+void sample_NNI_and_branch_lengths(Parameters& P, MoveStats& Stats) 
+{
+  vector<int> branches = walk_tree_path(P.T, P[0].LC.root);
 
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
@@ -258,11 +260,11 @@ void sample_NNI_and_branch_lengths(alignment& A, Parameters& P, MoveStats& Stats
 
     if (P.T.branch(b).is_internal_branch())
       if (myrandomf() < 0.5)
-	three_way_topology_sample(A,P,Stats,b);
+	three_way_topology_sample(P,Stats,b);
       else
-	two_way_NNI_sample(A,P,Stats,b);
+	two_way_NNI_sample(P,Stats,b);
 
-    change_branch_length(A,P,Stats,b);
+    change_branch_length(P,Stats,b);
     {
       const_branchview bv = P.T.directed_branch(b);
       if (uniform() < 0.5)
@@ -270,18 +272,19 @@ void sample_NNI_and_branch_lengths(alignment& A, Parameters& P, MoveStats& Stats
       if (bv.target().is_leaf_node())
 	bv = bv.reverse();
       if (myrandomf() < 0.5)
-	slide_node(A,P,Stats,bv);
+	slide_node(P,Stats,bv);
       else 
-	change_3_branch_lengths(A,P,Stats,bv.target());
+	change_3_branch_lengths(P,Stats,bv.target());
     }
-    change_branch_length(A,P,Stats,b);
-    change_branch_length(A,P,Stats,b);
+    change_branch_length(P,Stats,b);
+    change_branch_length(P,Stats,b);
   }
 }
 
 
-void walk_tree_sample_alignments(alignment& A, Parameters& P, MoveStats& Stats) {
-  vector<int> branches = walk_tree_path(P.T,P.LC.root);
+void walk_tree_sample_alignments(Parameters& P, MoveStats& Stats) 
+{
+  vector<int> branches = walk_tree_path(P.T,P[0].LC.root);
 
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
@@ -289,24 +292,24 @@ void walk_tree_sample_alignments(alignment& A, Parameters& P, MoveStats& Stats) 
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if ((myrandomf() < 0.15) and (P.T.n_leaves() >2))
-      sample_tri_one(A,P,Stats,b);
+      sample_tri_one(P,Stats,b);
     else
-      sample_alignments_one(A,P,Stats,b);
+      sample_alignments_one(P,Stats,b);
   }
 }
 
-void walk_tree_sample_branch_lengths(alignment& A, Parameters& P, MoveStats& Stats) 
+void walk_tree_sample_branch_lengths(Parameters& P, MoveStats& Stats) 
 {
-  vector<int> branches = walk_tree_path(P.T,P.LC.root);
+  vector<int> branches = walk_tree_path(P.T,P[0].LC.root);
 
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
 
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
-    change_branch_length(A,P,Stats,b);
-    slide_node(A,P,Stats,b);
-    change_branch_length(A,P,Stats,b);
-    change_branch_length(A,P,Stats,b);
+    change_branch_length(P,Stats,b);
+    slide_node(P,Stats,b);
+    change_branch_length(P,Stats,b);
+    change_branch_length(P,Stats,b);
   }
 }

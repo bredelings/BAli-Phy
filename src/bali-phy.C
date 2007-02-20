@@ -91,7 +91,7 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
   }
 }
 
-void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int max_iterations,
+void do_sampling(const variables_map& args,Parameters& P,long int max_iterations,
 		 const vector<ostream*> files)
 {
   // args for branch-based stuff
@@ -219,9 +219,9 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
 					internal_branches)
 		      );
   length_moves.add(1,length_moves1,false);
-  length_moves.add(1,SingleMove(scale_branch_lengths_and_mean,
-				"scale_branches_and_mean","lengths:mean")
-		   );
+  //  length_moves.add(1,SingleMove(scale_branch_lengths_and_mean,
+  //				"scale_branches_and_mean","lengths:mean")
+  //		   );
 
   length_moves.add(1,SingleMove(walk_tree_sample_branch_lengths,
 				"walk_tree_sample_branch_lengths","lengths")
@@ -233,6 +233,11 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
 
+  for(int i=0;i<P.n_data_partitions();i++) {
+    string name = string("part") + convertToString(i+1) + "::mu";
+    add_MH_move(P, log_scaled(shift_cauchy),   name,             "mu_scale_sigma",     0.6,  parameter_moves);
+  }
+    
   add_MH_move(P, log_scaled(shift_cauchy),    "mu",             "mu_scale_sigma",     0.6,  parameter_moves);
   add_MH_move(P, log_scaled(shift_cauchy),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(shift_cauchy),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
@@ -261,7 +266,11 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   }
   
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
-  P.keys["pi_dirichlet_N"] *= max(sequence_lengths(A,P.T.n_leaves()));
+  unsigned total_length = 0;
+  for(int i=0;i<P.n_data_partitions();i++)
+    total_length += max(sequence_lengths(P[i].A, P.T.n_leaves()));
+  P.keys["pi_dirichlet_N"] *= total_length;
+
   add_MH_move(P, dirichlet_proposal,    "pi*",    "pi_dirichlet_N",      1,  parameter_moves);
   add_MH_move(P, dirichlet_proposal,    "INV::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
   add_MH_move(P, dirichlet_proposal,    "VAR::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
@@ -271,7 +280,7 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   add_MH_move(P, dirichlet_proposal,    "GTR::*", "GTR_dirichlet_N",     1,  parameter_moves);
 
   set_if_undef(P.keys,"v_dirichlet_N",1.0);
-  P.keys["v_dirichlet_N"] *= A.length();
+  P.keys["v_dirichlet_N"] *= total_length;
   add_MH_move(P, dirichlet_proposal,    "v*", "v_dirichlet_N",     1,  parameter_moves);
 
   set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
@@ -330,14 +339,22 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   sampler.show_enabled(s_out);
   s_out<<"\n";
 
-  if (P.alignment_constraint.size1() > 0)
-    std::cerr<<"Using "<<P.alignment_constraint.size1()<<" constraints.\n";
+  int total_c = 0;
+  for(int i=0;i<P.n_data_partitions();i++)
+    total_c += P[i].alignment_constraint.size1();
 
-  valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
-  valarray<bool> s1(false,s2.size());
-  report_constraints(s1,s2);
+  if (total_c > 0)
+    std::cerr<<"Using "<<total_c<<" constraints.\n";
 
-  sampler.go(A,P,subsample,max_iterations,s_out,s_trees,s_parameters,s_map);
+  //FIXME - partition
+
+  for(int i=0;i<P.n_data_partitions();i++) {
+    valarray<bool> s2 = constraint_satisfied(P[i].alignment_constraint,P[i].A);
+    valarray<bool> s1(false,s2.size());
+    report_constraints(s1,s2);
+  }
+
+  sampler.go(P,subsample,max_iterations,s_out,s_trees,s_parameters,s_map);
 }
 
 #ifdef DEBUG_MEMORY
@@ -383,7 +400,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     
   options_description parameters("Parameter options");
   parameters.add_options()
-    ("align", value<string>(),"File with sequences and initial alignment")
+    ("align", value<vector<string> >()->composing(),"Files with sequences and initial alignment")
     ("randomize-alignment","Randomly realign the sequences before use.")
     ("internal",value<string>(),"If set to '+', then make all internal node entries wildcards")
     ("tree",value<string>(),"File with initial tree")
@@ -408,7 +425,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   // positional options
   positional_options_description p;
-  p.add("align", 1);
+  p.add("align", -1);
   
   variables_map args;     
   store(command_line_parser(argc, argv).options(all).positional(p).run(), args);
@@ -420,7 +437,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   }
 
   if (args.count("help")) {
-    cout<<"Usage: bali-phy <sequence-file> [OPTIONS]\n";
+    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
     cout<<all<<"\n";
     exit(0);
   }
@@ -464,7 +481,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 
   if (not args.count("align"))
-    throw myexception()<<"No sequence file given.";
+    throw myexception()<<"No sequence files given.";
 
   return args;
 }
@@ -622,7 +639,11 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
   }
   else {
 
-    string name = fs::path( args["align"].as<string>() ).leaf();
+    vector<string> alignment_filenames = args["align"].as<vector<string> >();
+    for(int i=0;i<alignment_filenames.size();i++)
+      alignment_filenames[i] = fs::path( alignment_filenames[i] ).leaf();
+
+    string name = join(alignment_filenames,'-');
     if (args.count("name"))
       name = args["name"].as<string>();
     
@@ -821,12 +842,13 @@ int main(int argc,char* argv[])
       seed = myrand_init();
     
     //----------- Load alignment and tree ---------//
-    alignment A;
+    vector<string> filenames = args["align"].as<vector<string> >();
+    vector<alignment> A;
     SequenceTree T;
     if (args.count("tree"))
-      load_A_and_T(args,A,T);
+      load_As_and_T(args,A,T);
     else
-      load_A_and_random_T(args,A,T);
+      load_As_and_random_T(args,A,T);
 
     //--------- Handle branch lengths <= 0 --------//
     double min_branch = 0.000001;
@@ -842,8 +864,8 @@ int main(int argc,char* argv[])
     }
 
     //--------- Do we have enough sequences? ------//
-    if (A.n_sequences() < 3)
-      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<A.n_sequences()<<".\n(Perhaps you have BLANK LINES in your FASTA file?)";
+    if (T.n_leaves() < 3)
+      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".\n(Perhaps you have BLANK LINES in your FASTA file?)";
 
     //---------- Open output files -----------//
     vector<ostream*> files = init_files(args,argc,argv);
@@ -851,8 +873,10 @@ int main(int argc,char* argv[])
     ostream& s_err = *files[1];
 
     s_out<<"random seed = "<<seed<<endl<<endl;
-    s_out<<"data = "<<args["align"].as<string>()<<endl<<endl;
-    s_out<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
+    for(int i=0;i<filenames.size();i++) {
+      s_out<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
+      s_out<<"alphabet"<<i+1<<" = "<<A[i].get_alphabet().name<<endl<<endl;
+    }
 
     s_err<<errors.str();
 
@@ -860,7 +884,7 @@ int main(int argc,char* argv[])
     clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
     //--------- Set up the substitution model --------//
-    OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A);
+    OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A[0]);
     
     if (not full_smodel->full_tree)
       for(int i=T.n_leaves();i<T.n_branches();i++)
@@ -873,9 +897,9 @@ int main(int argc,char* argv[])
       imodel = get_imodel(args);
     
     //-------------Create the Parameters object--------------//
-    Parameters P(*full_smodel,T);
+    Parameters P(A, T, *full_smodel);
     if (imodel)
-      P = Parameters(*full_smodel,*imodel,T);
+      P = Parameters(A, T, *full_smodel,*imodel);
 
     s_out<<"subst model = "<<P.SModel().name();
     if (not P.SModel().full_tree)
@@ -896,11 +920,22 @@ int main(int argc,char* argv[])
     if (args.count("a-constraint"))
       P.AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),P.TC);
 
-    if (not extends(T,P.TC))
+    if (not extends(T, P.TC))
       throw myexception()<<"Initial tree violates topology constraints.";
 
     //---------- Alignment constraint (horizontal) -----------//
-    P.alignment_constraint = load_alignment_constraint(args,T);
+
+    vector<string> ac_filenames(P.n_data_partitions(),"");
+    if (args.count("align-constraint")) 
+    {
+      ac_filenames = split(args["align-constraint"].as<string>(),':');
+
+      if (ac_filenames.size() != P.n_data_partitions())
+	throw myexception()<<"Need "<<P.n_data_partitions()<<" alignment constraints (possibly empy) separated by colons, but got "<<ac_filenames.size();
+    }
+
+    for(int i=0;i<P.n_data_partitions();i++)
+      P[i].alignment_constraint = load_alignment_constraint(ac_filenames[i],T);
 
     //---------- Alignment constraint (vertical) -----------//
     //P.alignment_constraint = load_alignment_constraint(args,T);
@@ -908,10 +943,11 @@ int main(int argc,char* argv[])
     if (args.count("beta")) {
       string beta_s = args["beta"].as<string>();
       vector<double> beta = split<double>(beta_s,',');
-      for(int i=0;i<beta.size() and i<P.beta.size();i++)
-	P.beta[i] = beta[i];
+      for(int i=0;i<P.n_data_partitions();i++)
+	for(int j=0;j<P[i].beta.size() and j <beta.size();j++)
+	  P.beta[j] = P[i].beta[j] = beta[j];
 
-      P.beta_series.push_back(P.beta[0]);
+      P.beta_series.push_back(beta[0]);
     }
 
     if (args.count("dbeta")) {
@@ -966,24 +1002,26 @@ int main(int argc,char* argv[])
     // fix, unfix, and set parameters
     set_parameters(P,args);
 
-    P.LC.set_length(A.length());
+    for(int i=0;i<P.n_data_partitions();i++) {
+      P[i].LC.set_length(P[i].A.length());
 
-    add_leaf_seq_note(A,T.n_leaves());
-    add_subA_index_note(A,T.n_branches());
+      add_leaf_seq_note(P[i].A,T.n_leaves());
+      add_subA_index_note(P[i].A,T.n_branches());
+    }
 
     // Why do we need to do this, again?
     P.recalc_all();
 
     //---------------Do something------------------//
     if (args.count("show-only"))
-      print_stats(cout,cout,A,P);
+      print_stats(cout,cout,P);
     else {
       signal(SIGHUP,SIG_IGN);
       signal(SIGXCPU,SIG_IGN);
 
       long int max_iterations = args["iterations"].as<long int>();
 
-      do_sampling(args,A,P,max_iterations,files);
+      do_sampling(args,P,max_iterations,files);
 
       // Close all the streams, and write a notification that we finished all the iterations.
       // close_files(files);

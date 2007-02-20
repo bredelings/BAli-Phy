@@ -52,26 +52,23 @@ efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean)
   return p;
 }
 
-/// Hyper-prior + Tree prior + SModel prior + IModel prior
-efloat_t prior(const Parameters& P) 
+
+//FIXME - partitions - move into parameters.C
+efloat_t prior_no_alignment(const Parameters& P)
 {
-  efloat_t p = 1;
-
-  const double branch_mean_mean = loadvalue(P.keys,"branch_mean_mean",1.0);
-
-  // prior on mu, the mean branch length
-  p *= exponential_pdf(P.branch_mean(), branch_mean_mean);
+  efloat_t Pr = 1.0;
 
   // prior on the topology and branch lengths
-  p *= prior(P, P.T, P.branch_mean());
+  Pr *= prior(P, P.T, 1.0);
 
   // prior on the substitution model
-  p *= P.SModel().prior();
+  Pr *= P.SModel().prior();
 
   // prior on the insertion/deletion model
   if (P.has_IModel()) 
   {
-    p *= P.IModel().prior();
+    // prior on the insertion/deletion model
+    Pr *= P.IModel().prior();
 
     const double p_unaligned = loadvalue(P.keys,"P_aligned",0.0);
 
@@ -81,16 +78,16 @@ efloat_t prior(const Parameters& P)
 
     for(int b=0;b<P.T.n_branches();b++)
       if (not P.branch_HMM_type[b])
-	p *= pA;
+	Pr *= pA;
       else
-	p *= pNA;
+	Pr *= pNA;
   }
-
-  return p;
+  return Pr;
 }
 
 /// Probability of a pairwise alignment
-efloat_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,int source) {
+efloat_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,int source) 
+{
   vector<int> state = get_path(A,target,source);
 
   efloat_t P = Q.start(state[0]);
@@ -101,8 +98,9 @@ efloat_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,int 
 }
 
 /// Probability of a multiple alignment if branch alignments independant
-efloat_t prior_HMM_nogiven(const alignment& A,const Parameters& P) 
+efloat_t prior_HMM_nogiven(const data_partition& P) 
 {
+  const alignment& A = P.A;
   const Tree& T = P.T;
 
 #ifndef NDEBUG
@@ -122,8 +120,9 @@ efloat_t prior_HMM_nogiven(const alignment& A,const Parameters& P)
 }
 
 
-efloat_t prior_HMM_rootless_scale(const alignment& A, const Parameters& P)
+efloat_t prior_HMM_rootless_scale(const data_partition& P)
 {
+  const alignment& A = P.A;
   const Tree& T = P.T;
 
 #ifndef NDEBUG
@@ -144,7 +143,7 @@ efloat_t prior_HMM_rootless_scale(const alignment& A, const Parameters& P)
 
 //NOTE  - this will have to change if we ever have sequences at internal nodes
 //        that have other than 3 neighbors
-efloat_t prior_HMM(const alignment& A,const Parameters& P) 
+efloat_t prior_HMM(const data_partition& P) 
 {
-  return prior_HMM_nogiven(A,P) * prior_HMM_rootless_scale(A,P);
+  return prior_HMM_nogiven(P) * prior_HMM_rootless_scale(P);
 }

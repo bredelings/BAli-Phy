@@ -13,6 +13,20 @@ using std::istream;
 using boost::program_options::variables_map;
 
 
+alignment reorder_sequences(const alignment& A, const vector<int>& mapping) 
+{
+  alignment A2 = A;
+
+  for(int i=0;i<A2.n_sequences();i++) {
+    if (mapping[i] == i) continue;
+
+    A2.seq(mapping[i]) = A.seq(i);
+    for(int column=0;column<A2.length();column++)
+      A2(column,mapping[i]) = A(column,i);
+  }
+  return A2;
+}
+
 alignment chop_internal(alignment A) 
 {
   int N = (A.n_sequences()+2)/2;
@@ -554,6 +568,34 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
   return alphabets;
 }
 
+alignment load_alignment(const string& filename,const vector<OwnedPointer<alphabet> >& alphabets)
+{
+  alignment A;
+  if (filename == "-")
+    A.load(alphabets,sequence_format::read_guess,std::cin);
+  else
+    A.load(alphabets,filename);
+  
+  remove_empty_columns(A);
+  
+  if (A.n_sequences() == 0)
+    throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
+
+  return A;
+
+}
+
+vector<alignment> load_alignments(const vector<string>& filenames,const vector<OwnedPointer<alphabet> >& alphabets)
+{
+  vector<alignment> alignments;
+
+  for(int i=0;i<filenames.size();i++) 
+    alignments.push_back( load_alignment(filenames[i],alphabets) );
+
+  return alignments;
+
+}
+
 /// Load an alignment from command line args "--align filename"
 alignment load_A(const variables_map& args,bool keep_internal) 
 {
@@ -563,16 +605,8 @@ alignment load_A(const variables_map& args,bool keep_internal)
   if (not args.count("align")) 
     throw myexception("Alignment file not specified! (--align <filename>)");
   
-  alignment A;
-  if (args["align"].as<string>() == "-")
-    A.load(alphabets,sequence_format::read_guess,std::cin);
-  else
-    A.load(alphabets,args["align"].as<string>());
-  
-  remove_empty_columns(A);
-  
-  if (A.n_sequences() == 0)
-    throw myexception()<<"Alignment file "<<args["align"].as<string>()<<" didn't contain any sequences!";
+  string filename = args["align"].as<string>();
+  alignment A = load_alignment(filename,alphabets);
 
   if (not keep_internal)
     A = chop_internal(A);

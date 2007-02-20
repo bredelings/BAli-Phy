@@ -1,6 +1,7 @@
 #ifndef SETUP_H
 #define SETUP_H
 
+#include <vector>
 #include <valarray>
 #include "smodel.H"
 #include "imodel.H"
@@ -28,6 +29,16 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
 /// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,RootedSequenceTree& T,bool internal_sequences=true);
+
+void load_As_and_T(const boost::program_options::variables_map& args,
+		   std::vector<alignment>& A,SequenceTree& T,bool internal_sequences=true);
+
+void load_As_and_T(const boost::program_options::variables_map& args,
+		   std::vector<alignment>& A,RootedSequenceTree& T,bool internal_sequences=true);
+/// Load an alignment A, generate a random SequenceTree T, and then link them.
+void load_As_and_random_T(const boost::program_options::variables_map& args,
+			  std::vector<alignment>& A,SequenceTree& T,bool internal_sequences=true);
+
 
 /// Load and link() an alignment A and SequenceTree T
 void load_A_and_T(const boost::program_options::variables_map& args,

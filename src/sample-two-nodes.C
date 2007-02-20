@@ -43,10 +43,11 @@ using namespace A5;
 // We can choose between them with the total_sum (I mean, sum_all_paths).
 // Then, we can just debug one routine, basically.
 
-void sample_two_nodes_base(alignment& A,const Parameters& P,const vector<int>& nodes,
-			   DParrayConstrained*& Matrices) 
+void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
+			   DParrayConstrained*& Matrices)
 {
   const Tree& T = P.T;
+  alignment& A = P.A;
   alignment old = A;
 
   //  std::cerr<<"old = "<<old<<endl;
@@ -212,10 +213,10 @@ void sample_two_nodes_base(alignment& A,const Parameters& P,const vector<int>& n
 #endif
 }
 
-static vector<DParrayConstrained*> cached_dparrays;
+static vector<vector<DParrayConstrained*> > cached_dparrays;
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
-int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,const vector< vector<int> >& nodes_,
+int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 			   const vector<efloat_t>& rho_,bool do_OS,bool do_OP) 
 {
 
@@ -238,41 +239,68 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,const vect
   }
 
   //----------- Generate the different states and Matrices ---------//
-  const alignment A0 = a[0];
-#ifndef NDEBUG_DP
+#if !defined(NDEBUG_DP) || !defined(NDEBUG)
   const Parameters P0 = p[0];
 #endif
 
+  // WARNING - cached_dparrays = funky magic
   if (cached_dparrays.size() < p.size())
     cached_dparrays.resize(p.size());
+  for(int i=0;i<cached_dparrays.size();i++)
+    if (cached_dparrays[i].size() < p[i].n_data_partitions())
+      cached_dparrays[i].resize(p[i].n_data_partitions());
 
-  vector<DParrayConstrained*> Matrices;
-  for(int i=0;i<p.size();i++) {
-    sample_two_nodes_base(a[i],p[i],nodes[i],cached_dparrays[i]);
-    Matrices.push_back(cached_dparrays[i]);
-    //    p[i].LC.invalidate_node(p[i].T,nodes[i][4]);
-    //    p[i].LC.invalidate_node(p[i].T,nodes[i][5]);
+  
+  vector< vector<DParrayConstrained*> > Matrices(p.size());
+  for(int i=0;i<p.size();i++) 
+    for(int j=0;j<p[i].n_data_partitions();j++) 
+    {
+      sample_two_nodes_base(p[i][j],nodes[i],cached_dparrays[i][j]);
+      Matrices[i].push_back(cached_dparrays[i][j]);
+    //    p[i][j].LC.invalidate_node(p[i].T,nodes[i][4]);
+    //    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
-    if (i==0) substitution::check_subA(A0,a[0],p[0].T);
-    p[i].likelihood(a[i],p[i]);  // check the likelihood calculation
+      if (i==0) 
+	substitution::check_subA(P0[j].A,p[0][j].A,p[0].T);
+      p[i][j].likelihood();  // check the likelihood calculation
 #endif
-  }
+    }
+
 
   //-------- Calculate corrections to path probabilities ---------//
 
-  vector<efloat_t> OS(p.size(),1);
-  vector<efloat_t> OP(p.size(),1);
-  for(int i=0; i<p.size(); i++) {
-    if (do_OS) 
-      OS[i] = p[i].likelihood(a[i],p[i]);
+  vector< vector<efloat_t> > OS(p.size());
+  vector< vector<efloat_t> > OP(p.size());
+
+  for(int i=0; i<p.size(); i++) 
+  {
+    if (do_OS)
+      for(int j=0;j<p[i].n_data_partitions();j++)
+	OS[i].push_back( p[i][j].likelihood() );
+    else
+      OS[i] = vector<efloat_t>(p[i].n_data_partitions(),efloat_t(1));
+    
     if (do_OP)
-      OP[i] = other_prior(a[i],p[i],nodes[i]);
+      for(int j=0;j<p[i].n_data_partitions();j++)
+	OP[i].push_back( other_prior(p[i][j],nodes[i]) );
+    else
+      OP[i] = vector<efloat_t>(p[i].n_data_partitions(),efloat_t(1));
   }
 
   //---------------- Calculate choice probabilities --------------//
   vector<efloat_t> Pr(p.size());
-  for(int i=0;i<Pr.size();i++)
-    Pr[i] = rho[i] * OS[i] * Matrices[i]->Pr_sum_all_paths() * OP[i] * pow(prior(p[i]), p[i].beta[1]);
+
+  for(int i=0;i<Pr.size();i++) 
+  {
+    Pr[i] = rho[i] * p[i].prior_no_alignment();
+
+    // sum of substitution and alignment probability over all paths
+    for(int j=0;j<p[i].n_data_partitions();j++) {
+      Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
+      Pr[i] *= pow(OS[i][j], p[i][j].beta[0]);
+      Pr[i] *= OP[i][j];
+    }
+  }
 
   int C = choose_MH(0,Pr);
 
@@ -285,16 +313,15 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,const vect
   ignore[ nodes[0][5] ] = true;
 
   // Check that our constraints are met
-  for(int i=0;i<a.size();i++) {
-    if (not (A_constant(A0,a[i],ignore))) {
-      std::cerr<<A0<<endl;
-      std::cerr<<a[i]<<endl;
-      assert(A_constant(A0,a[i],ignore));
-    }
-  }
+  for(int i=0;i<p.size();i++) 
+    for(int j=0;j<p[i].n_data_partitions();j++) 
+      if (not A_constant(P0[j].A, p[i][j].A, ignore)) {
+	std::cerr<<P0[j].A<<endl;
+	std::cerr<<p[i][j].A<<endl;
+	assert(A_constant(P0[j].A, p[i][j].A, ignore));
+      }
 
   // Add another entry for the incoming configuration
-  a.push_back( A0 );
   p.push_back( P0 );
   nodes.push_back(nodes[0]);
   rho.push_back( rho[0] );
@@ -302,55 +329,66 @@ int sample_two_nodes_multi(vector<alignment>& a,vector<Parameters>& p,const vect
   OS.push_back( OS[0] );
   OP.push_back( OP[0] );
 
-  vector< vector<int> > paths;
+  vector< vector< vector<int> > >paths(p.size());
 
   vector<int> newnodes;
   for(int i=0;i<6;i++)
     newnodes.push_back(i);
 
   //------------------- Check offsets from path_Q -> P -----------------//
-  for(int i=0;i<p.size();i++) {
-    paths.push_back( get_path(A5::project(a[i],nodes[i]),newnodes,A5::states_list) );
+  for(int i=0;i<p.size();i++) 
+    for(int j=0;j<p[i].n_data_partitions();j++) 
+    {
+      paths[i].push_back( get_path(A5::project(p[i][j].A,nodes[i]),newnodes,A5::states_list) );
     
-    OS[i] = p[i].likelihood(a[i],p[i]);
-    OP[i] = other_prior(a[i],p[i],nodes[i]);
+      OS[i][j] = p[i][j].likelihood();
+      OP[i][j] = other_prior(p[i][j],nodes[i]);
 
-    efloat_t OP_i = OP[i] / A5::correction(a[i],p[i],nodes[i]);
+      efloat_t OP_i = OP[i][j] / A5::correction(p[i][j],nodes[i]);
 
-    check_match_P(a[i], p[i], OS[i], OP_i, paths[i], *Matrices[i]);
-  }
+      check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
+    }
 
   //--------- Compute path probabilities and sampling probabilities ---------//
   vector< vector<efloat_t> > PR(p.size());
 
-  for(int i=0;i<p.size();i++) {
-    efloat_t proposal_ratio = 1;
+  for(int i=0;i<p.size();i++) 
+  {
+    efloat_t choice_ratio = 1;
     if (i<Pr.size())
-      proposal_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
+      choice_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
     else
-      proposal_ratio = 1;
-
-    PR[i] = sample_P(a[i], p[i], proposal_ratio, rho[i], paths[i], *Matrices[i]);
-    PR[i][0] *= A5::correction(a[i],p[i],nodes[i]);
+      choice_ratio = 1;
+      
+    // sample_P(p[i][j], choice_ratio, rho[i], paths[i][j], *Matrices[i][j]);
+    // PR[i][j][0] *= A5::correction(p[i][j],nodes[i]);
+    PR[i] = vector<efloat_t>(4,1);
+    PR[i][0] = p[i].heated_probability(); // p[i].prior_no_alignment() * p[i].prior_alignment() * p[i].likelihood();
+    PR[i][2] = rho[i];
+    PR[i][3] = choice_ratio;
+    for(int j=0;j<p[i].n_data_partitions();j++) {
+      vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
+      PR[i][0] *= A5::correction(p[i][j],nodes[i]);
+      PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
+    } 
   }
 
   //--------- Check that each choice is sampled w/ the correct Probability ---------//
-  check_sampling_probabilities(PR,a);
+  check_sampling_probabilities(PR);
 #endif
 
   //---------------- Adjust for length of n4 and n5 changing --------------------//
 
   // if we reject the move, then don't do anything
-  if (myrandomf() > A5::acceptance_ratio(A0,p[0],nodes[0],a[C],p[C],nodes[C])) 
+  if (myrandomf() > A5::acceptance_ratio(P0,nodes[0],p[C],nodes[C])) 
     return -1;
 
   return C;
 }
 
 
-void sample_two_nodes(alignment& A, Parameters& P,int b) 
+void sample_two_nodes(Parameters& P,int b) 
 {
-  vector<alignment> a(1,A);
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
@@ -358,10 +396,9 @@ void sample_two_nodes(alignment& A, Parameters& P,int b)
 
   vector<efloat_t> rho(1,1);
 
-  int C = sample_two_nodes_multi(a,p,nodes,rho,false,false);
+  int C = sample_two_nodes_multi(p,nodes,rho,false,false);
 
   if (C != -1) {
-    A = a[C];
     P = p[C];
   }
 }

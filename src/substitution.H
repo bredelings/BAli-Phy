@@ -41,32 +41,29 @@ namespace substitution {
 
   /// Find the probabilities of all the data give each letter at the root
   vector<Matrix>
-  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
+  get_column_likelihoods(const data_partition&, const vector<int>& b,
 			 const vector<int>& req, const vector<int>& seq,int delta=0);
 
   Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
 				const MultiModel& MModel);
 
   /// Full likelihood - all columns, all rates
-  efloat_t Pr(const alignment& A, const Parameters& P);
+  efloat_t Pr(const data_partition&);
 
-  efloat_t other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes);
+  efloat_t other_subst(const data_partition&, const vector<int>& nodes);
   
   efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
 	    const MultiModel& MModel);
-  efloat_t Pr(const alignment& A, const Parameters& P,Likelihood_Cache& LC);
+  efloat_t Pr(const data_partition&,Likelihood_Cache& LC);
 
   // Full likelihood - all columns, all rates (star tree)
-  efloat_t Pr_star(const alignment& A,const Parameters& P);
-  
-  efloat_t Pr_star_constant(const alignment& A,const Parameters& P);
-  efloat_t Pr_star_estimate(const alignment& A,const Parameters& P);
+  efloat_t Pr_star(const data_partition&);
 
   // Full likelihood - if everything is unaligned....
-  efloat_t Pr_unaligned(const alignment& A,const Parameters& P);
+  efloat_t Pr_unaligned(const data_partition&);
 
   // Full likelihood of the single sequence with the lowest likelihood
-  efloat_t Pr_single_sequence(const alignment& A,const Parameters& P);
+  efloat_t Pr_single_sequence(const data_partition&);
 }
 
 #endif
