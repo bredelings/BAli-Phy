@@ -292,7 +292,7 @@ void MH_Move::iterate(Parameters& P,MoveStats& Stats,int)
   std::clog<<endl<<endl;
 
   show_parameters(std::clog,P2);
-  std::clog<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+  std::clog<<P2.probability()<<" = "<<P2.likelihood()<<" + "<<P2.prior();
   std::clog<<endl<<endl;
 #endif
 
