@@ -446,11 +446,15 @@ void slide_node(Parameters& P,MoveStats& Stats,int b0)
     Stats.inc("slide_node_expand_branch",success);
   }
 }
-/*
-void scale_branch_lengths_and_mean(Parameters& P,MoveStats& Stats) 
+
+void scale_means_only(Parameters& P,MoveStats& Stats)
 {
-  if (P.fixed(0))
-    return;
+  // If any of the partition rates are fixed, then we're out of luck
+  // FIXME - techincally, we could recompute likelihoods in just THOSE partitions :P
+  //       - also, I suppose, if they are fixed, then there is no mixing problem.
+  for(int i=0;i<P.n_data_partitions();i++)
+    if (P[i].fixed(0))
+      return;
 
   MCMC::Result result(2);
 
@@ -458,28 +462,55 @@ void scale_branch_lengths_and_mean(Parameters& P,MoveStats& Stats)
   const double sigma = loadvalue(P.keys,"log_branch_mean_sigma",0.6);
   double scale = exp( gaussian(0,sigma) );
 
-  //------- Propose branch lengths and mean -------//
+  //-------- Change branch lengths and mean -------//
   Parameters P2 = P;
-  const SequenceTree& T = P2.T;
 
-  for(int b=0;b<T.n_branches();b++) {
-    const double length = P.T.branch(b).length();
-    P2.setlength(b, length * scale);
+  for(int b=0;b<P2.T.n_branches();b++) {
+    const double length = P2.T.branch(b).length();
+    P2.T.branch(b).set_length(length/scale);
   }
+  P2.tree_propagate();
 
-  P2.branch_mean(P2.branch_mean() * scale);
+  for(int i=0;i<P.n_data_partitions();i++) 
+    P2[i].branch_mean_tricky(P2[i].branch_mean()*scale);
+  
+#ifndef NDEBUG
+  P2.recalc_imodel();
+  P2.recalc_smodel();
+  efloat_t L1 =  P.likelihood();
+  efloat_t L2 = P2.likelihood();
+  double diff = std::abs(log(L1)-log(L2));
+  if (diff > 1.0e-9) {
+    std::cerr<<"scale_mean_only: likelihood diff = "<<diff<<std::endl;
+    std::abort();
+  }
+#endif
 
-  double ratio =  pow(scale, 1 + T.n_branches() );
+  //--------- Compute proposal ratio ---------//
+  efloat_t p_ratio = pow(efloat_t(scale),P2.n_data_partitions()-P2.T.n_branches());
+  efloat_t a_ratio = P2.prior_no_alignment()/P.prior_no_alignment()*p_ratio;
 
-  //----------- Do the M-H step if OK--------------//
-  if (do_MH_move(P,P2, ratio)) {
+#ifndef NDEBUG
+  efloat_t a_ratio2 = P2.probability()/P.probability()*p_ratio;
+  double diff2 = std::abs(log(a_ratio2)-log(a_ratio));
+  if (diff2 > 1.0e-9) {
+    std::cerr<<"scale_mean_only: a_ratio diff = "<<diff2<<std::endl;
+    std::cerr<<"probability ratio = "<<log(P2.probability()/P.probability())<<std::endl;
+    std::cerr<<"likelihood ratio = "<<log(P2.likelihood()/P.likelihood())<<std::endl;
+    std::cerr<<"prior ratio = "<<log(P2.prior()/P.prior())<<std::endl;
+    std::cerr<<"    a ratio = "<<log(a_ratio)<<std::endl;
+    std::abort();
+  }
+#endif
+  
+  if (uniform() < double(a_ratio)) {
+    P=P2;
     result.totals[0] = 1;
     result.totals[1] = std::abs(log(scale));
   }
 
-  Stats.inc("branch-mean",result);
+  Stats.inc("branch-means-only",result);
 }
-*/
 
 /// Propose three neighboring branch lengths all anti-correlated
 void change_3_branch_lengths(Parameters& P,MoveStats& Stats,int n) 

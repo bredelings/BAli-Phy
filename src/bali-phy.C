@@ -219,10 +219,6 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 					internal_branches)
 		      );
   length_moves.add(1,length_moves1,false);
-  //  length_moves.add(1,SingleMove(scale_branch_lengths_and_mean,
-  //				"scale_branches_and_mean","lengths:mean")
-  //		   );
-
   length_moves.add(1,SingleMove(walk_tree_sample_branch_lengths,
 				"walk_tree_sample_branch_lengths","lengths")
 		   );
@@ -251,12 +247,13 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   add_MH_move(P, between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, log_scaled(shift_cauchy),    "beta::mu",       "beta::mu_scale_sigma",     0.2,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),
-	                                        "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),
-	                                        "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),
-	                                        "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, parameter_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, parameter_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, parameter_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, parameter_moves);
+  parameter_moves.add(4,SingleMove(scale_means_only,
+				   "scale_means_only","mean")
+		      );
+
 
   if (P.has_IModel()) {
     add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, parameter_moves);

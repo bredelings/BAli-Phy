@@ -83,6 +83,7 @@ public:
   /// parameter for exponential prior on branch length
   double branch_mean() const; 
   void branch_mean(double);
+  void branch_mean_tricky(double);
 
   // The prior, likelihood, and probability
   efloat_t prior_no_alignment() const;

@@ -90,6 +90,13 @@ void data_partition::branch_mean(double mu)
   parameter(0,mu);
 }
 
+void data_partition::branch_mean_tricky(double mu)
+{
+  parameters_[0] = mu;
+  // scale the substitution rate
+  SModel_->set_rate(branch_mean());
+}
+
 string data_partition::name() const 
 {
   return partition_name;
