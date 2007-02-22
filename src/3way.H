@@ -112,6 +112,9 @@ namespace A3 {
   /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
   efloat_t correction(const data_partition& P,const vector<int>& nodes);
 
+  /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
+  efloat_t correction(const Parameters& P,const vector<int>& nodes);
+
   efloat_t acceptance_ratio(const Parameters& P1,const vector<int>&,
 			    const Parameters& P2,const vector<int>&);
 

@@ -191,6 +191,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   }
 
   //----------- Generate the different states and Matrices ---------//
+  efloat_t C1 = A3::correction(p[0],nodes[0]);
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
   const Parameters P0 = p[0];
 #endif
@@ -322,7 +323,8 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   // if we reject the move, then don't do anything
   //FIXME - PARTITION - compute and cache P0 part before changing p[0], then we can
   //                     throw P0 away if we want to.
-  if (myrandomf() > acceptance_ratio(P0,nodes[0],p[C],nodes[C]))
+  efloat_t C2 = A3::correction(p[C],nodes[C]);
+  if (myrandomf() > double(C1/C2))
     return -1;
 
   return C;

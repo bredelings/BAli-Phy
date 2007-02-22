@@ -533,12 +533,17 @@ namespace A5 {
   }
 
 
+  efloat_t correction(const Parameters& P,const vector<int>& nodes) 
+  {
+    efloat_t C = 1.0;
+    for(int i=0;i<P.n_data_partitions();i++)
+      C *= correction(P[i],nodes);
+    return C;
+  }
+    
   efloat_t acceptance_ratio(const Parameters& P1,const vector<int>& nodes1,
 			      const Parameters& P2,const vector<int>& nodes2) 
   {
-    efloat_t R = 1.0;
-    for(int i=0;i<P1.n_data_partitions();i++)
-      R *= correction(P1[i],nodes1) / correction(P2[i],nodes2);
-    return R;
+    return correction(P1,nodes1)/correction(P2,nodes2);
   }
 }

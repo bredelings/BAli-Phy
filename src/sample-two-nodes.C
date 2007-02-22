@@ -239,6 +239,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   }
 
   //----------- Generate the different states and Matrices ---------//
+  efloat_t C1 = A5::correction(p[0],nodes[0]);
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
   const Parameters P0 = p[0];
 #endif
@@ -380,7 +381,8 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   //---------------- Adjust for length of n4 and n5 changing --------------------//
 
   // if we reject the move, then don't do anything
-  if (myrandomf() > A5::acceptance_ratio(P0,nodes[0],p[C],nodes[C])) 
+  efloat_t C2 = A5::correction(p[C],nodes[C]);
+  if (myrandomf() > double(C1/C2))
     return -1;
 
   return C;

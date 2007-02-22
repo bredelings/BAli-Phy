@@ -227,6 +227,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   }
 
   //----------- Generate the different states and Matrices ---------//
+  efloat_t C1 = A3::correction(p[0],nodes[0]);
 #ifndef NDEBUG_DP
   const Parameters P0 = p[0];
 #endif
@@ -385,7 +386,8 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   //---------------- Adjust for length of n4 and n5 changing --------------------//
 
   // if we reject the move, then don't do anything
-  if (myrandomf() > acceptance_ratio(P0,nodes[0],p[C],nodes[C]))
+  efloat_t C2 = A3::correction(p[C],nodes[C]);
+  if (myrandomf() > double(C1/C2))
     return -1;
 
   return C;
