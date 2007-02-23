@@ -146,6 +146,7 @@ WHY...
  * 
 
 Before 1.9.9:
+ * should I explicitly require PERL?
  * Fix '#substs' calculations for codon models
  * Eliminate dependency on PERL (genreport)
  * Why aren't any likelihood moves accepted at all for the cad-v2 data set?
@@ -161,12 +162,19 @@ Before 1.9.9:
  * fix "if HOST_MSWINDOWS" to look for dll's not so's.
 
 After 1.9.9:
-
+ * Write a tool to take a list of files, find common columns, and
+    write out differently names files: 1.p, 2.p, ...
+   - warn about over-writing files.
+ * Data Partitions
+   - reduce the time spent copying things around that aren't even changing!
+   - use cow_ptr<>!
+   - use boost::shared_ptr<> instead of my refcount.H?
+   - look up the lock() complications!
+   - 
  * tree-mean-lengths: compute the length of each branch or node, conditioned on the
    existance of said branch or node.
    - if a branch doesn't exist - give it length 0.
    - if a node doesn't exist... also give it length 0?
- * Check that branch_mean move actually helps?
  * fix alignment-find when last alignment is chopped.
  * speed up trees-consensus (for large trees)
  * Fix |A| calculation???
@@ -182,7 +190,7 @@ After 1.9.9:
    + report # of indels (but internal sequences are missing!)
 
 Before 2.0:
- * Do the autoconf magic to compile GSL in-tree.
+ * Do the autoconf magic to compile GSL in-tree?
 -------------------------------------------------------
 Questions:
 
