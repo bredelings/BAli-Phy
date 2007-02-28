@@ -146,19 +146,20 @@ WHY...
  * 
 
 Before 1.9.9:
- * Fix '#substs' calculations for codon models
  * Eliminate dependency on PERL (genreport)
- * Why aren't any likelihood moves accepted at all for the cad-v2 data set?
- * Implement Branch length prior distributions
- * Implement branch-length constraints.
  * Brief descriptions of some of the tools.
  * Debug with _GLIBCXX_DEBUG
  * (?) Add some more comments to the code.
  * Why do gcc 4.1 and 4.2 give different answers for alignment sampling
    moves???
+
+Before 2.0
+ * Why aren't any likelihood moves accepted at all for the cad-v2 data set?
+ * Implement Branch length prior distributions
  * fix SPR2 to use ACTUAL gamma proposal, not stupid Exponential(mu) proposal.
    (done, but worse acceptance rates?  And, only for --traditional.)
- * fix "if HOST_MSWINDOWS" to look for dll's not so's.
+ * Fix '#substs' calculations for codon models
+
 
 After 1.9.9:
 
@@ -166,11 +167,9 @@ After 1.9.9:
    existance of said branch or node.
    - if a branch doesn't exist - give it length 0.
    - if a node doesn't exist... also give it length 0?
- * Check that branch_mean move actually helps?
+ * print out several alignments in a way that can be extracted???
  * fix alignment-find when last alignment is chopped.
  * speed up trees-consensus (for large trees)
- * Fix |A| calculation???
-   - check the number of columns with all gaps, or no leaf letters?
  * Fix Dirichlet Priors (?)
    - fix prior on frequencies.
    - fix prior on INV2.
@@ -193,8 +192,6 @@ Questions:
 -------------------------------------------------------
 
 -40. Remove bitvector functions from tree.H!
-
--39. Why does tracer disagree on autocorrelation?
 
 -38. Reading alignments:
      a) Complain about illegal characters (ASCII >=32 and <= 126) when
