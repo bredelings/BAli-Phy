@@ -390,7 +390,8 @@ OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
 
 void load_bali_phy_rc(variables_map& args,const options_description& options)
 {
-  fs::path::default_name_check(fs::portable_posix_name);
+  if (fs::path::default_name_check_writable())
+    fs::path::default_name_check(fs::portable_posix_name);
 
   if (getenv("HOME")) {
     string home_dir = getenv("HOME");
