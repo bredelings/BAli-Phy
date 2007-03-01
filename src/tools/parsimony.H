@@ -8,7 +8,7 @@ Matrix unit_cost_matrix(unsigned size);
 
 Matrix unit_cost_matrix(const alphabet&);
 
-Matrix nucleotide_cost_matrix(const Triplets& C);
+Matrix nucleotide_cost_matrix(const Triplets& T);
 
 Matrix amino_acid_cost_matrix(const Codons& C);
 
