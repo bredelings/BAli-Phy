@@ -498,7 +498,12 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   if (P.has_IModel()) {
     s_parameters<<"\t|A|\t#indels\t|indels|";
   }
-  s_parameters<<"\t#substs\t|T|"<<endl;
+  s_parameters<<"\t#substs";
+  if (dynamic_cast<const Triplets*>(&P.get_alphabet()))
+    s_parameters<<"\t#substs(nuc)";
+  if (dynamic_cast<const Codons*>(&P.get_alphabet()))
+    s_parameters<<"\t#substs(aa)";
+  s_parameters<<"\t|T|"<<endl;
 
   vector<string> restore_names;
   restore_names.push_back("lambda");
@@ -546,6 +551,10 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
 	s_parameters<<"\t"<<total_length_indels(A,P.T);
       }
       s_parameters<<"\t"<<n_mutations(A,P.T);
+      if (const Triplets* Tr = dynamic_cast<const Triplets*>(&P.get_alphabet()))
+	s_parameters<<"\t"<<n_mutations(A,T,nucleotide_cost_matrix(*Tr));
+      if (const Codons* C = dynamic_cast<const Codons*>(&P.get_alphabet()))
+	s_parameters<<"\t"<<n_mutations(A,T,amino_acid_cost_matrix(*C));
       s_parameters<<"\t"<<length(P.T)<<endl;
     }
 
