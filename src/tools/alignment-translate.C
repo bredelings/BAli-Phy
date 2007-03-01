@@ -4,6 +4,7 @@
 #include "alignment.H"
 #include "alignment-util.H"
 #include "util.H"
+#include "setup.H"
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -36,14 +37,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
   store(parse_command_line(argc, argv, all), args);
   notify(args);    
 
-  notify(args);    
-
   if (args.count("help")) {
     cout<<"Usage: alignment-translate [OPTIONS] < sequence-file [OPTIONS]\n";
     cout<<"Translate a DNA/RNA alignment into amino acids.\n\n";
     cout<<all<<"\n";
     exit(0);
   }
+
+  load_bali_phy_rc(args,all);
 
   return args;
 }
