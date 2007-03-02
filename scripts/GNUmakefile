@@ -39,10 +39,10 @@ else
 AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/au-graph.plot Results/consensus.fasta Results/consensus-AU.html Results/consensus-AU2.html
 endif
 
-Results/analysis: Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
+Results/analysis: Results/Report Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
                   ${TREES:%=Results/%.mtree} Results/MAP.topology Results/MAP.tree \
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
-		  Results/Report Results/MAP.fasta Results/MAP.phy \
+		  Results/MAP.fasta Results/MAP.phy \
 		  Mixing/partitions.SRQ Mixing/c50.SRQ Mixing/partitions.bs \
 		  $(AU_TARGETS)
 	@echo "Analyzed:  $$(wc -l < Work/trees.from.${SKIP}+${SIZE}) trees from iteration $$(( ${SKIP} + 1))." > Results/analysis
@@ -58,7 +58,10 @@ Results/Report:  Work/header Work/p Results/MAP.topology
 	} > $@
 
 Work/header: Work/out Work/Pmarg
-	@{ genreport.pl Work/out; echo ; } > $@
+	@{ tail -n +2 Work/out | head -n 100 | grep data;\
+	   echo; \
+           tail -n +2 Work/out | head -n 100 | grep model;\
+           echo; } > $@
 
 Work/samples-${SKIP}+${SIZE}: Work/out
 	@cut-range --skip ${SKIP} ${SIZE:%=--size %} < $< > $@

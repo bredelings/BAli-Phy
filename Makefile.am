@@ -1,6 +1,6 @@
 SUBDIRS = boost/ src/ 
 
-bin_SCRIPTS = scripts/bali-phy-sge scripts/genreport.pl scripts/pickout.pl
+bin_SCRIPTS = scripts/bali-phy-sge 
 
 docdir = $(datadir)/doc/@PACKAGE@
 doc_DATA = scripts/GNUmakefile doc/README.xhtml doc/docbook.css # doc/README.pdf

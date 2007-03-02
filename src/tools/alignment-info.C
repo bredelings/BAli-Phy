@@ -87,6 +87,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     exit(0);
   }
 
+  load_bali_phy_rc(args,all);
+
   return args;
 }
 
@@ -326,18 +328,25 @@ int main(int argc,char* argv[])
       gap_lengths2[i] = gap_lengths[i];
     
     cout<<"  "<<gaps.size()<<" indel groups seem to exist. ("<<total_gaps<<" separate)\n";
-    cout<<"       unique = "<<unique;
-    cout<<"     informative = "<<inf_gaps<<endl;
-    cout<<"       insertions = "<<n_ins;
-    cout<<"     deletions = "<<n_del<<endl;
-    cout<<"  Length:      mean = "<<statistics::median(gap_lengths2);
-    cout<<"      median = "<<statistics::average(gap_lengths2)<<endl;
+    if (total_gaps) {
+      cout<<"       unique = "<<unique;
+      cout<<"     informative = "<<inf_gaps<<endl;
+      cout<<"       insertions = "<<n_ins;
+      cout<<"     deletions = "<<n_del<<endl;
+      cout<<"  Length:      mean = "<<statistics::median(gap_lengths2);
+      cout<<"      median = "<<statistics::average(gap_lengths2)<<endl;
+    }
     cout<<endl;
 
 
     //------------ Get Tree Lengths ------------//
-    if (args.count("tree")) 
+    if (args.count("tree")) {
       cout<<"  tree length = "<<n_mutations(A,T)<<"\n";
+      if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
+	cout<<"  tree length (nuc) = "<<n_mutations(A,T,nucleotide_cost_matrix(*Tr))<<"\n";
+      if (const Codons* C = dynamic_cast<const Codons*>(&a))
+	cout<<"  tree length (aa)  = "<<n_mutations(A,T,amino_acid_cost_matrix(*C))<<"\n";
+    }
 
     if (dynamic_cast<const Nucleotides*>(&a)) 
     {

@@ -1,4 +1,7 @@
 #include <vector>
+
+#include <boost/filesystem/operations.hpp>
+
 #include "setup.H"
 #include "util.H"
 #include "rates.H"
@@ -12,6 +15,8 @@ using std::valarray;
 using std::cout;
 using std::cerr;
 using std::endl;
+
+namespace fs = boost::filesystem;
 
 using namespace boost::program_options;
 
@@ -518,3 +523,33 @@ OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
   return imodel;
 }
 
+void load_bali_phy_rc(variables_map& args,const options_description& options)
+{
+  if (fs::path::default_name_check_writable())
+    fs::path::default_name_check(fs::portable_posix_name);
+
+  if (getenv("HOME")) {
+    string home_dir = getenv("HOME");
+    if (not fs::exists(home_dir))
+      cerr<<"Home directory '"<<home_dir<<"' does not exist!"<<endl;
+    else if (not fs::is_directory(home_dir))
+      cerr<<"Home directory '"<<home_dir<<"' is not a directory!"<<endl;
+    else {
+      string filename = home_dir + "/.bali-phy";
+
+      if (fs::exists(filename)) {
+	cout<<"Reading ~/.bali-phy ...";
+	ifstream file(filename.c_str());
+	if (not file)
+	  throw myexception()<<"Can't load config file '"<<filename<<"'";
+      
+	store(parse_config_file(file, options), args);
+	file.close();
+	notify(args);
+	cout<<" done."<<endl;
+      }
+    }
+  }
+  else
+    cerr<<"Environment variable HOME not set!"<<endl;
+}

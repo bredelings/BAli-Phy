@@ -504,19 +504,23 @@ void Sampler::go(Parameters& P,int subsample,const int max,
   s_parameters<<"iter\t";
   s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
-  if (P.n_data_partitions() > 1) 
-    for(int i=0;i<P.n_data_partitions();i++) {
-      if (P.has_IModel()) {
-	s_parameters<<"\t|A"<<i+1<<"|";
-	s_parameters<<"\t#indels"<<i+1;
-	s_parameters<<"\t|indels"<<i+1<<"|";
-      }
-      s_parameters<<"\t#substs"<<i+1;
+  for(int i=0;i<P.n_data_partitions();i++) {
+    if (P.has_IModel()) {
+      s_parameters<<"\t|A"<<i+1<<"|";
+      s_parameters<<"\t#indels"<<i+1;
+      s_parameters<<"\t|indels"<<i+1<<"|";
     }
-  if (P.has_IModel())
-    s_parameters<<"\t|A|\t#indels\t|indels|";
-  s_parameters<<"\t#substs";
-
+    s_parameters<<"\t#substs"<<i+1;
+    if (dynamic_cast<const Triplets*>(&P[i].get_alphabet()))
+      s_parameters<<"\t#substs(nuc)"<<i+1;
+    if (dynamic_cast<const Codons*>(&P[i].get_alphabet()))
+      s_parameters<<"\t#substs(aa)"<<i+1;
+  }
+  if (P.n_data_partitions() > 1) {
+    if (P.has_IModel())
+      s_parameters<<"\t|A|\t#indels\t|indels|";
+    s_parameters<<"\t#substs";
+  }
   s_parameters<<"\t|T|"<<endl;
 
   vector<string> restore_names;
@@ -575,23 +579,27 @@ void Sampler::go(Parameters& P,int subsample,const int max,
 
 	  unsigned x3 = total_length_indels(P[i].A,P[i].T);
 	  total_indel_lengths += x3;
-	  if (P.n_data_partitions() >1) {
-	    s_parameters<<"\t"<<x1;
-	    s_parameters<<"\t"<<n_indels(P[i].A,P[i].T);
-	    s_parameters<<"\t"<<x3;
-	  }
+	  s_parameters<<"\t"<<x1;
+	  s_parameters<<"\t"<<n_indels(P[i].A,P[i].T);
+	  s_parameters<<"\t"<<x3;
 	}
 	unsigned x4 = n_mutations(P[i].A,P[i].T);
 	total_substs += x4;
-	if (P.n_data_partitions() >1) 
-	  s_parameters<<"\t"<<x4;
+
+	s_parameters<<"\t"<<x4;
+	if (const Triplets* Tr = dynamic_cast<const Triplets*>(&P[i].get_alphabet()))
+	  s_parameters<<"\t"<<n_mutations(P[i].A,T,nucleotide_cost_matrix(*Tr));
+	if (const Codons* C = dynamic_cast<const Codons*>(&P[i].get_alphabet()))
+	  s_parameters<<"\t"<<n_mutations(P[i].A,T,amino_acid_cost_matrix(*C));
       }
-      if (P.has_IModel()) {
-	s_parameters<<"\t"<<total_length;
-	s_parameters<<"\t"<<total_indels;
-	s_parameters<<"\t"<<total_indel_lengths;
+      if (P.n_data_partitions() > 1) {
+	if (P.has_IModel()) {
+	  s_parameters<<"\t"<<total_length;
+	  s_parameters<<"\t"<<total_indels;
+	  s_parameters<<"\t"<<total_indel_lengths;
+	}
+	s_parameters<<"\t"<<total_substs;
       }
-      s_parameters<<"\t"<<total_substs;
       s_parameters<<"\t"<<length(P.T)<<endl;
     }
 

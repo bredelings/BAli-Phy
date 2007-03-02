@@ -451,33 +451,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);
   }
 
-  if (getenv("HOME")) {
-    string home_dir = getenv("HOME");
-    if (not fs::exists(home_dir))
-      cerr<<"Home directory '"<<home_dir<<"' does not exist!"<<endl;
-    else if (not fs::is_directory(home_dir))
-      cerr<<"Home directory '"<<home_dir<<"' is not a directory!"<<endl;
-    else {
-      string filename = home_dir + "/.bali-phy";
+  load_bali_phy_rc(args,all);
 
-      if (fs::exists(filename)) {
-	cout<<"Reading ~/.bali-phy ...";
-	ifstream file(filename.c_str());
-	if (not file)
-	  throw myexception()<<"Can't load config file '"<<filename<<"'";
-      
-	store(parse_config_file(file, all), args);
-	file.close();
-	notify(args);
-	cout<<" done."<<endl;
-      }
-    }
-  }
-  else
-    cerr<<"Environment variable HOME not set!"<<endl;
-
-
-  if (not args.count("align"))
+  if (not args.count("align")) 
     throw myexception()<<"No sequence files given.";
 
   return args;

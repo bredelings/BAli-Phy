@@ -192,7 +192,7 @@ alignment_cat_SOURCES = tools/alignment-cat.C alphabet.C sequence.C util.C seque
 
 #---------------------------------------------------------------
 
-alignment_translate_SOURCES = tools/alignment-translate.C alignment.C alignment-util.C alphabet.C sequence.C sequence-format.C util.C tree.C 
+alignment_translate_SOURCES = tools/alignment-translate.C alignment.C alignment-util.C alphabet.C sequence.C sequence-format.C util.C tree.C setup.C imodel.C model.C probability.C sequencetree.C randomtree.C rng.C tree-util.C alignment-random.C
 
 #---------------------------------------------------------------
 
