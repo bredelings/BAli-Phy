@@ -37,15 +37,9 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
   //------------ Try to load alignments -----------//
   int maxalignments = args["max-alignments"].as<int>();
 
-  // --------------- Alphabets to try --------------- //
-  vector<OwnedPointer<alphabet> > alphabets;
-  alphabets.push_back(DNA());
-  alphabets.push_back(RNA());
-  alphabets.push_back(AminoAcids());
-
   // --------------------- try ---------------------- //
   std::cerr<<"Loading alignments...";
-  list<alignment> As = load_alignments(std::cin,alphabets,maxalignments);
+  list<alignment> As = load_alignments(std::cin,load_alphabets(args),maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (not alignments.size())
@@ -64,6 +58,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("seed", value<unsigned long>(),"random seed")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("type", value<string>()->default_value("pairs"),"type of distance: pairs or splits")
+    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ;
 
   variables_map args;     

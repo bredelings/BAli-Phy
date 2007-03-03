@@ -6,6 +6,7 @@
 #include "rng.H"
 
 using std::string;
+using boost::shared_ptr;
 
 void resize(ublas::matrix<int>& M1,int s1,int s2,int clear=0)
 {
@@ -172,7 +173,7 @@ void alignment::load(const vector<sequence>& seqs)
   }
 }
 
-void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<sequence>& seqs) {
+void alignment::load(const vector<shared_ptr<const alphabet> >& alphabets,const vector<sequence>& seqs) {
   string errors = "Sequences don't fit any of the alphabets:";
   for(int i=0;i<alphabets.size();i++) {
     try {
@@ -181,7 +182,7 @@ void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vect
       break;
     }
     catch (bad_letter& e) {
-      a = NULL;
+      a.reset();
       errors += "\n";
       errors += e.what();
       if (i<alphabets.size()-1)
@@ -202,7 +203,7 @@ void alignment::load(sequence_format::loader_t loader,std::istream& file)
 }
 
 
-void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets, sequence_format::loader_t loader,
+void alignment::load(const vector<shared_ptr<const alphabet> >& alphabets, sequence_format::loader_t loader,
 			       std::istream& file) 
 {
   // read file
@@ -230,7 +231,7 @@ void alignment::load(const string& filename)
   load(seqs);
 }
 
-void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const string& filename) {
+void alignment::load(const vector<shared_ptr<const alphabet> >& alphabets,const string& filename) {
   // read from file
   vector<sequence> seqs = sequence_format::load_from_file(filename);
 
@@ -290,11 +291,11 @@ void alignment::print_phylip(std::ostream& file) const {
 }
 
 alignment::alignment(const alphabet& a1) 
-  :a(a1)
+  :a(a1.clone())
 {}
 
 alignment::alignment(const alphabet& a1,const string& filename) 
-    :a(a1)
+    :a(a1.clone())
 { 
   load(filename); 
 }

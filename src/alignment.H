@@ -7,7 +7,7 @@
 #include <iostream>
 #include <vector>
 #include "mytypes.H"
-#include "clone.H"
+#include <boost/shared_ptr.hpp>
 
 /// A multiple alignment between a group of sequences
 class alignment {
@@ -19,7 +19,7 @@ class alignment {
 
   void add_row(const std::vector<int>&);
 
-  OwnedPointer<alphabet> a;
+  boost::shared_ptr<const alphabet> a;
 
   mutable std::vector<ublas::matrix<int> > notes;
   
@@ -51,14 +51,14 @@ public:
   /// Add sequences called names, using a as the alphabet
   void load(const std::vector<sequence>& sequences);
   /// Add sequences called names, using the first alphabet in alphabets that works
-  void load(const std::vector<OwnedPointer<alphabet> >& alphabets,const std::vector<sequence>& sequences);
+  void load(const std::vector<boost::shared_ptr<const alphabet> >& alphabets,const std::vector<sequence>& sequences);
 
   void load(sequence_format::loader_t,std::istream&);
-  void load(const std::vector<OwnedPointer<alphabet> >&,sequence_format::loader_t,std::istream&);
+  void load(const std::vector<boost::shared_ptr<const alphabet> >&,sequence_format::loader_t,std::istream&);
 
   /// Load PHYLIP or FASTA file 'filename', depending on extention
   void load(const std::string& filename);
-  void load(const std::vector<OwnedPointer<alphabet> >&,const std::string& filename);
+  void load(const std::vector<boost::shared_ptr<const alphabet> >&,const std::string& filename);
 
   std::vector<sequence> get_sequences() const;
 

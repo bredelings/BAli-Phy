@@ -15,9 +15,11 @@
 #include "distance-methods.H"
 
 #include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace po = boost::program_options;
 using po::variables_map;
+using boost::shared_ptr;
 
 // FIXME - also show which COLUMNS are more that 99% conserved?
 
@@ -197,8 +199,8 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
   //------------ Try to load alignments -----------//
   int maxalignments = args["max-alignments"].as<int>();
 
-  vector< OwnedPointer<alphabet> > alphabets;
-  alphabets.push_back(A.get_alphabet());
+  vector< shared_ptr<const alphabet> > alphabets;
+  alphabets.push_back(shared_ptr<const alphabet>(A.get_alphabet().clone()));
   std::cerr<<"Loading alignments...";
   alignments = load_alignments(std::cin,alphabets,maxalignments);
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;

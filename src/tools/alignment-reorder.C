@@ -99,6 +99,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("align", value<string>(),"file with sequences and initial alignment")
     ("tree",value<string>(),"file with initial tree")
     ("use-root","use the root specified in the tree file")
+    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ;
 
   // positional options

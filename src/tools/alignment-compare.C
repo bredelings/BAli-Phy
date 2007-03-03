@@ -21,19 +21,17 @@
 #endif
 
 #include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace po = boost::program_options;
 using po::variables_map;
+using boost::shared_ptr;
 
 using namespace std;
 
-
-using std::cout;
-using std::endl;
-
 void load_alignments(vector<alignment>& alignments,
 		     const string& filename, 
-		     const vector<OwnedPointer<alphabet> >& alphabets,
+		     const vector<shared_ptr<const alphabet> >& alphabets,
 		     int maxalignments,
 		     string what)
 {
@@ -74,21 +72,15 @@ void do_setup(const variables_map& args,
   //------------ Try to load alignments -----------//
   int maxalignments = args["max-alignments"].as<int>();
 
-  // --------------- Alphabets to try --------------- //
-  vector<OwnedPointer<alphabet> > alphabets;
-  alphabets.push_back(DNA());
-  alphabets.push_back(RNA());
-  alphabets.push_back(AminoAcids());
-
   // --------------------- try ---------------------- //
   {
     string filename = args["file1"].as<string>();
-    load_alignments(alignments1,filename,alphabets,maxalignments,"#1");
+    load_alignments(alignments1,filename,load_alphabets(args),maxalignments,"#1");
   }
 
   {
     string filename = args["file2"].as<string>();
-    load_alignments(alignments2,filename,alphabets,maxalignments,"#2");
+    load_alignments(alignments2,filename,load_alphabets(args),maxalignments,"#2");
   }
 }
 
@@ -101,6 +93,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help", "produce help message")
+    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("seed", value<unsigned long>(),"random seed")
     ("align", value<string>(),"alignment to output values for.")
     ("file1", value<string>(),"first alignment file")

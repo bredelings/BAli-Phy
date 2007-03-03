@@ -1,6 +1,7 @@
 #include <vector>
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "setup.H"
 #include "util.H"
@@ -19,6 +20,7 @@ using std::endl;
 namespace fs = boost::filesystem;
 
 using namespace boost::program_options;
+using boost::shared_ptr;
 
 /// Reorder internal sequences of A to correspond to standardized node names for T
 alignment standardize(const alignment& A, const SequenceTree& T) 
@@ -303,11 +305,8 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
   //align - filenames
   vector<string> filenames = args["align"].as<vector<string> >();
 
-  //alphabet - alphabets
-  vector<OwnedPointer<alphabet> > alphabets = load_alphabets(args);
-
   // load the alignments
-  alignments = load_alignments(filenames,alphabets);
+  alignments = load_alignments(filenames,load_alphabets(args));
 
   T = load_T(args);
 
@@ -338,11 +337,8 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
   //align - filenames
   vector<string> filenames = args["align"].as<vector<string> >();
 
-  //alphabet - alphabets
-  vector<OwnedPointer<alphabet> > alphabets = load_alphabets(args);
-
   // load the alignments
-  alignments = load_alignments(filenames,alphabets);
+  alignments = load_alignments(filenames,load_alphabets(args));
 
   T = load_T(args);
 
@@ -374,11 +370,8 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
   //align - filenames
   vector<string> filenames = args["align"].as<vector<string> >();
 
-  //alphabet - alphabets
-  vector<OwnedPointer<alphabet> > alphabets = load_alphabets(args);
-
   // load the alignments
-  alignments = load_alignments(filenames,alphabets);
+  alignments = load_alignments(filenames,load_alphabets(args));
 
   //------------- Load random tree ------------------------//
   SequenceTree TC = star_tree(sequence_names(alignments[0]));
