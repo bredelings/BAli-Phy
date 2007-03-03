@@ -13,7 +13,7 @@
 #include "alignment-constraint.H"
 #include "likelihood.H"    // for prior()
 #include "substitution-index.H"
-#include "refcount.H"
+#include <boost/shared_ptr.hpp>
 #include "dp-array.H"
 
 //TODO - 1. calculate the probability of 
@@ -33,7 +33,7 @@ using std::valarray;
 
 using namespace A3;
 
-RefPtr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
+boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
 {
   const Tree& T = P.T;
 
@@ -112,7 +112,9 @@ RefPtr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>&
   
 
   // Actually create the Matrices & Chain
-  RefPtr<DParrayConstrained> Matrices = new DParrayConstrained(seq123.size(),state_emit,start_P,Q, P.beta[0]);
+  boost::shared_ptr<DParrayConstrained> 
+    Matrices( new DParrayConstrained(seq123.size(),state_emit,start_P,Q, P.beta[0])
+	      );
 
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices->size();c2++) {
@@ -196,7 +198,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   const Parameters P0 = p[0];
 #endif
 
-  vector< vector< RefPtr<DParrayConstrained> > > Matrices(p.size());
+  vector< vector< boost::shared_ptr<DParrayConstrained> > > Matrices(p.size());
   for(int i=0;i<p.size();i++) {
     for(int j=0;j<p[i].n_data_partitions();j++) {
       Matrices[i].push_back( sample_node_base(p[i][j],nodes[i]) );

@@ -5,7 +5,7 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            substitution.H alignment-sums.H imodel.H probability.H \
            substitution-index.H alignment-util.H likelihood.H proposals.H \
            tree-branchnode.H alphabet.H log-double.H rates.H tree.H \
-           bits.H logsum.H refcount.H tree-util.H choose.H matcache.H  \
+           bits.H logsum.H tree-util.H choose.H matcache.H  \
            rng.H util.H clone.H mcmc.H sample.H util-random.H \
            model.H sequence-format.H dp-array.H monitor.H sequence.H \
            tools/bootstrap.H tools/inverse.H tools/statistics.H \

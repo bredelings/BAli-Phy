@@ -12,7 +12,7 @@
 #include "alignment-util.H"
 #include "alignment-constraint.H"
 #include "likelihood.H"    // for prior()
-#include "refcount.H"
+#include <boost/shared_ptr.hpp>
 #include "dp-matrix.H"
 
 //Assumptions:
@@ -26,7 +26,7 @@ using namespace A3;
 
 // FIXME - resample the path multiple times - pick one on opposite side of the middle 
 
-RefPtr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P,const vector<int>& nodes)
+boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P,const vector<int>& nodes)
 {
   const Tree& T = P.T;
   alignment& A = P.A;
@@ -114,8 +114,10 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P,const ve
   vector<double> start_P = get_start_P(P.branch_HMMs,branches);
 
   // Actually create the Matrices & Chain
-  RefPtr<DPmatrixConstrained> Matrices = new DPmatrixConstrained(get_state_emit(), start_P, Q, P.beta[0],
-								 P.SModel().distribution(), dists1, dists23, frequency);
+  boost::shared_ptr<DPmatrixConstrained> 
+    Matrices(new DPmatrixConstrained(get_state_emit(), start_P, Q, P.beta[0],
+				     P.SModel().distribution(), dists1, dists23, frequency)
+	     );
 
   // Determine which states are allowed to match (,c2)
   for(int c2=0;c2<dists23.size()-1;c2++) {
@@ -232,7 +234,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   const Parameters P0 = p[0];
 #endif
 
-  vector<vector<RefPtr<DPmatrixConstrained> > > Matrices(p.size());
+  vector<vector<boost::shared_ptr<DPmatrixConstrained> > > Matrices(p.size());
   for(int i=0;i<p.size();i++) 
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {

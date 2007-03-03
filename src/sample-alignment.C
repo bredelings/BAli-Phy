@@ -9,6 +9,7 @@
 #include "substitution.H"
 #include "substitution-index.H"
 #include "dp-matrix.H"
+#include <boost/shared_ptr.hpp>
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
@@ -49,7 +50,7 @@ vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& s
 typedef vector< Matrix > (*distributions_t_local)(const data_partition&,
 						  const vector<int>&,int,bool);
 
-RefPtr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b) 
+boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b) 
 {
   assert(P.has_IModel());
 
@@ -76,7 +77,8 @@ RefPtr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
       seq2.push_back(column);
   }
 
-  if (not seq1.size() or not seq2.size()) return NULL;
+  if (not seq1.size() or not seq2.size()) 
+    return boost::shared_ptr<DPmatrixSimple>(); //NULL;
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
   distributions_t_local distributions = distributions_tree;
@@ -92,8 +94,11 @@ RefPtr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   state_emit[2] |= (1<<0);
   state_emit[3] |= 0;
 
-  RefPtr<DPmatrixSimple> Matrices = new DPmatrixSimple(state_emit, P.branch_HMMs[b].start_pi(),P.branch_HMMs[b], P.beta[0],
-						       P.SModel().distribution(), dists1, dists2, frequency);
+  boost::shared_ptr<DPmatrixSimple> 
+    Matrices( new DPmatrixSimple(state_emit, P.branch_HMMs[b].start_pi(),
+				 P.branch_HMMs[b], P.beta[0], 
+				 P.SModel().distribution(), dists1, dists2, frequency)
+	      );
 
   //------------------ Compute the DP matrix ---------------------//
   vector<int> path_old = get_path(old,node1,node2);
@@ -131,7 +136,7 @@ void sample_alignment(Parameters& P,int b)
   vector<Parameters> p;
   p.push_back(P);
 
-  vector< vector< RefPtr<DPmatrixSimple> > > Matrices(1);
+  vector< vector< boost::shared_ptr<DPmatrixSimple> > > Matrices(1);
   for(int i=0;i<p.size();i++) 
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {
