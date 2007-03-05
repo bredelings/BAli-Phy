@@ -333,8 +333,8 @@ int main(int argc,char* argv[])
       cout<<"     informative = "<<inf_gaps<<endl;
       cout<<"       insertions = "<<n_ins;
       cout<<"     deletions = "<<n_del<<endl;
-      cout<<"  Length:      mean = "<<statistics::median(gap_lengths2);
-      cout<<"      median = "<<statistics::average(gap_lengths2)<<endl;
+      cout<<"  Length:      mean = "<<statistics::average(gap_lengths2);
+      cout<<"      median = "<<statistics::median(gap_lengths2)<<endl;
     }
     cout<<endl;
 
