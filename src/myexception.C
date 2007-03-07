@@ -1,4 +1,5 @@
 #include "myexception.H"
+#include <cstdlib>
 #include <vector>
 using namespace std;
 
