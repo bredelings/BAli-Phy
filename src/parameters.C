@@ -353,15 +353,6 @@ const Model& Parameters::SubModels(int i) const
   return *data_partitions[i];
 }
 
-int Parameters::n_submodels() const
-{
-  int n_submodels = 1;
-  if (has_IModel()) n_submodels++;
-  n_submodels += n_data_partitions();
-
-  return n_submodels;
-}
-
 void Parameters::setlength(int b,double l) 
 {
   T->branch(b).set_length(l);

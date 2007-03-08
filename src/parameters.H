@@ -193,7 +193,6 @@ public:
 
   const Model& SubModels(int) const;
   Model& SubModels(int);
-  int n_submodels() const;
 
   Parameters(const vector<alignment>& A, const SequenceTree&, const substitution::MultiModel&);
   Parameters(const vector<alignment>& A, const SequenceTree&, const substitution::MultiModel&,const IndelModel&);
