@@ -148,7 +148,6 @@ WHY...
 Before 2.0
  * Eliminate dependency on PERL (genreport)
  * Brief descriptions of some of the tools.
- * Debug with _GLIBCXX_DEBUG
  * (?) Add some more comments to the code.
  * Why do gcc 4.1 and 4.2 give different answers for alignment sampling
    moves???
