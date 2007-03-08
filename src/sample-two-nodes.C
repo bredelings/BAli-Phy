@@ -45,8 +45,8 @@ using namespace A5;
 void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
 			   DParrayConstrained*& Matrices)
 {
-  const Tree& T = P.T;
-  alignment& A = P.A;
+  const Tree& T = *P.T;
+  alignment& A = *P.A;
   alignment old = A;
 
   //  std::cerr<<"old = "<<old<<endl;
@@ -227,13 +227,13 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   for(int i=0;i<p.size();i++) {
     vector<int> branches;
 
-    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][4]));
-    branches.push_back(p[i].T.branch(nodes[i][1],nodes[i][4]));
-    branches.push_back(p[i].T.branch(nodes[i][2],nodes[i][5]));
-    branches.push_back(p[i].T.branch(nodes[i][3],nodes[i][5]));
-    branches.push_back(p[i].T.branch(nodes[i][4],nodes[i][5]));
+    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][4]));
+    branches.push_back(p[i].T->branch(nodes[i][1],nodes[i][4]));
+    branches.push_back(p[i].T->branch(nodes[i][2],nodes[i][5]));
+    branches.push_back(p[i].T->branch(nodes[i][3],nodes[i][5]));
+    branches.push_back(p[i].T->branch(nodes[i][4],nodes[i][5]));
 
-    if (any_branches_constrained(branches, p[i].T, p[i].TC, p[i].AC))
+    if (any_branches_constrained(branches, *p[i].T, *p[i].TC, p[i].AC))
       return -1;
   }
 
@@ -261,7 +261,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
     //    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
       if (i==0) 
-	substitution::check_subA(P0[j].A,p[0][j].A,p[0].T);
+	substitution::check_subA(*P0[j].A, *p[0][j].A, *p[0].T);
       p[i][j].likelihood();  // check the likelihood calculation
 #endif
     }
@@ -308,17 +308,17 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore(false,p[0].T.n_nodes());
+  valarray<bool> ignore(false, p[0].T->n_nodes());
   ignore[ nodes[0][4] ] = true;
   ignore[ nodes[0][5] ] = true;
 
   // Check that our constraints are met
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (not A_constant(P0[j].A, p[i][j].A, ignore)) {
-	std::cerr<<P0[j].A<<endl;
-	std::cerr<<p[i][j].A<<endl;
-	assert(A_constant(P0[j].A, p[i][j].A, ignore));
+      if (not A_constant(*P0[j].A, *p[i][j].A, ignore)) {
+	std::cerr<<*P0[j].A<<endl;
+	std::cerr<<*p[i][j].A<<endl;
+	assert(A_constant(*P0[j].A, *p[i][j].A, ignore));
       }
 
   // Add another entry for the incoming configuration
@@ -339,7 +339,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
     {
-      paths[i].push_back( get_path(A5::project(p[i][j].A,nodes[i]),newnodes,A5::states_list) );
+      paths[i].push_back( get_path(A5::project(*p[i][j].A, nodes[i]),newnodes,A5::states_list) );
     
       OS[i][j] = p[i][j].likelihood();
       OP[i][j] = other_prior(p[i][j],nodes[i]);
@@ -393,7 +393,7 @@ void sample_two_nodes(Parameters& P,int b)
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
-  nodes[0] = A5::get_nodes_random(P.T,b);
+  nodes[0] = A5::get_nodes_random(*P.T, b);
 
   vector<efloat_t> rho(1,1);
 

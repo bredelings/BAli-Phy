@@ -59,7 +59,7 @@ efloat_t prior_no_alignment(const Parameters& P)
   efloat_t Pr = 1.0;
 
   // prior on the topology and branch lengths
-  Pr *= prior(P, P.T, 1.0);
+  Pr *= prior(P, *P.T, 1.0);
 
   // prior on the substitution model
   Pr *= P.SModel().prior();
@@ -76,7 +76,7 @@ efloat_t prior_no_alignment(const Parameters& P)
 
     efloat_t pA = (1.0 - p_unaligned);
 
-    for(int b=0;b<P.T.n_branches();b++)
+    for(int b=0;b<P.T->n_branches();b++)
       if (not P.branch_HMM_type[b])
 	Pr *= pA;
       else
@@ -100,8 +100,8 @@ efloat_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,int 
 /// Probability of a multiple alignment if branch alignments independant
 efloat_t prior_HMM_nogiven(const data_partition& P) 
 {
-  const alignment& A = P.A;
-  const Tree& T = P.T;
+  const alignment& A = *P.A;
+  const Tree& T = *P.T;
 
 #ifndef NDEBUG
   assert(P.has_IModel());
@@ -122,8 +122,8 @@ efloat_t prior_HMM_nogiven(const data_partition& P)
 
 efloat_t prior_HMM_rootless_scale(const data_partition& P)
 {
-  const alignment& A = P.A;
-  const Tree& T = P.T;
+  const alignment& A = *P.A;
+  const Tree& T = *P.T;
 
 #ifndef NDEBUG
   assert(P.has_IModel());

@@ -20,8 +20,8 @@ int topology_sample_SPR_and_A(vector<Parameters>& p,const vector<efloat_t>& rho,
 {
   //----------- Generate the Different node lists ---------//
   vector< vector<int> > nodes(2);
-  nodes[0] = A3::get_nodes_branch_random(p[0].T,n1,n2);
-  nodes[1] = A3::get_nodes_branch_random(p[1].T,n1,n2);
+  nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);
+  nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);
 
   return sample_tri_multi(p,nodes,rho,true,true);
 }
@@ -84,7 +84,7 @@ double do_SPR(SequenceTree& T1, int b1_,int b2)
 
 double do_SPR(Parameters& P, int b1, int b2)
 {
-  double ratio = do_SPR(P.T, b1, b2);
+  double ratio = do_SPR(*P.T, b1, b2);
   P.tree_propagate();
   return ratio;
 }
@@ -139,10 +139,10 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
 {
   const int bins = 4;
 
-  int n1 = P.T.directed_branch(b1).target();
-  int n2 = P.T.directed_branch(b1).source();
-  assert(P.T.partition(b1)[P.T.branch(b2).target()]);
-  assert(P.T.partition(b1)[P.T.branch(b2).source()]);
+  int n1 = P.T->directed_branch(b1).target();
+  int n2 = P.T->directed_branch(b1).source();
+  assert(P.T->partition(b1)[P.T->branch(b2).target()]);
+  assert(P.T->partition(b1)[P.T->branch(b2).source()]);
 
   //----- Generate the Different Topologies ----//
   P.set_root(n1);
@@ -150,16 +150,16 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
 
   //---------------- find the changed branches ------------------//
   vector<int> branches;
-  for(edges_after_iterator i=p[1].T.directed_branch(n2,n1).branches_after();i;i++)
+  for(edges_after_iterator i=p[1].T->directed_branch(n2,n1).branches_after();i;i++)
     branches.push_back((*i).undirected_name());
   //  std::cerr<<"before = "<<p[1].T<<endl;
 
   double ratio = do_SPR(p[1],b1,b2);
-  if (not extends(p[1].T, P.TC))
+  if (not extends(*p[1].T, *P.TC))
     return MCMC::Result(2+bins,0);
 
   //  std::cerr<<"after = "<<p[1].T<<endl;
-  for(edges_after_iterator i=p[1].T.directed_branch(n2,n1).branches_after();i;i++)
+  for(edges_after_iterator i=p[1].T->directed_branch(n2,n1).branches_after();i;i++)
     branches.push_back((*i).undirected_name());
 
   remove_duplicates(branches);
@@ -168,18 +168,18 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
   assert(branches.size() <= 3);
   for(int i=0;i<branches.size();i++) {
     int bi = branches[i];
-    p[1].setlength(bi,p[1].T.directed_branch(bi).length());
+    p[1].setlength(bi,p[1].T->directed_branch(bi).length());
     p[1].invalidate_subA_index_branch(branches[i]);
   }
 
   //------------- change connecting branch length ----------------//
   vector<efloat_t> rho(2,1);
   if (change_branch) {
-    int b1u = P.T.directed_branch(b1).undirected_name();
+    int b1u = P.T->directed_branch(b1).undirected_name();
     if (P.has_IModel()) 
     {
       double mu = P.branch_mean();
-      double length1 = P.T.branch(b1u).length();
+      double length1 = P.T->branch(b1u).length();
       double length2 = exponential(mu);
       efloat_t r = exponential_pdf(length1,mu)/exponential_pdf(length2,mu);
       ratio *= r;
@@ -211,8 +211,8 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
       
       p[1].setlength(b1u,gamma(a1,B1));
       
-      rho[0] = gsl_ran_gamma_pdf(p[1].T.branch(b1u).length(),a1,B1);
-      rho[1] = gsl_ran_gamma_pdf(p[0].T.branch(b1u).length(),a0,B0);
+      rho[0] = gsl_ran_gamma_pdf(p[1].T->branch(b1u).length(),a1,B1);
+      rho[1] = gsl_ran_gamma_pdf(p[0].T->branch(b1u).length(),a0,B0);
     }
   }
 
@@ -222,8 +222,8 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
   if (C != -1) 
   {
     for(int i=0;i<P.n_data_partitions();i++) {
-      valarray<bool> s1 = constraint_satisfied(P[i].alignment_constraint,P[i].A);
-      valarray<bool> s2 = constraint_satisfied(p[C][i].alignment_constraint,p[C][i].A);
+      valarray<bool> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+      valarray<bool> s2 = constraint_satisfied(p[C][i].alignment_constraint, *p[C][i].A);
 
       report_constraints(s1,s2);
     }
@@ -236,10 +236,10 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
 
   //---------------- Check if topology changed ----------------//
   vector<const_branchview> connected1;
-  append(p[0].T.directed_branch(n2,n1).branches_after(),connected1);
+  append(p[0].T->directed_branch(n2,n1).branches_after(),connected1);
 
   vector<const_branchview> connected2;
-  append(p[1].T.directed_branch(n2,n1).branches_after(),connected2);
+  append(p[1].T->directed_branch(n2,n1).branches_after(),connected2);
  
   bool same_topology = (
 			(connected1[0] == connected2[0] and connected1[1] == connected2[1]) or
@@ -251,7 +251,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
   result.counts[0] = 1;
   if (C>0) result.totals[0] = 1;
 
-  int dist = topology_distance(p[0].T,p[1].T)/2;
+  int dist = topology_distance(*p[0].T, *p[1].T)/2;
 
   if (same_topology) 
     assert(dist == 0);
@@ -285,14 +285,14 @@ int choose_subtree_branch_uniform(const Tree& T) {
 void sample_SPR_flat(Parameters& P,MoveStats& Stats) 
 {
   double f = loadvalue(P.keys,"SPR_amount",0.1);
-  int n = poisson(P.T.n_branches()*f);
+  int n = poisson(P.T->n_branches()*f);
 
   bool change_branch = ((uniform() < 0.10) and (not P.has_IModel()));
 
   for(int i=0;i<n;i++) {
-    int b1 = choose_subtree_branch_uniform(P.T);
+    int b1 = choose_subtree_branch_uniform(*P.T);
 
-    int b2 = choose_SPR_target(P.T,b1);
+    int b2 = choose_SPR_target(*P.T,b1);
 
     MCMC::Result result = sample_SPR(P,b1,b2,change_branch);
 
@@ -406,14 +406,14 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
 void sample_SPR_nodes(Parameters& P,MoveStats& Stats) 
 {
   double f = loadvalue(P.keys,"SPR_amount",0.1);
-  int n = poisson(P.T.n_branches()*f);
+  int n = poisson(P.T->n_branches()*f);
 
   bool change_branch = ((uniform() < 0.10) and (not P.has_IModel()));
 
   for(int i=0;i<n;i++) {
 
     int b1=-1, b2=-1;
-    choose_subtree_branch_nodes(P.T,b1,b2);
+    choose_subtree_branch_nodes(*P.T, b1, b2);
 
     MCMC::Result result = sample_SPR(P,b1,b2,change_branch);
 

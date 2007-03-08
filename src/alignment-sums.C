@@ -10,7 +10,7 @@ efloat_t other_subst(const data_partition& P, const vector<int>& nodes)
 
 efloat_t other_prior(const data_partition& P,const vector<int>& nodes) 
 {
-  const SequenceTree& T = P.T;
+  const SequenceTree& T = *P.T;
 
   efloat_t p = 1;
 
@@ -22,7 +22,7 @@ efloat_t other_prior(const data_partition& P,const vector<int>& nodes)
     if (includes(nodes,target) and includes(nodes,source))
       continue;
 
-    p *= prior_branch(P.A,P.branch_HMMs[b],target,source);
+    p *= prior_branch(*P.A, P.branch_HMMs[b], target, source);
   }
 
 
@@ -41,7 +41,7 @@ efloat_t other_prior(const data_partition& P,const vector<int>& nodes)
 	continue;
     }
 
-    p /= pow(P.IModel().lengthp(P.A.seqlength(n)) , 2.0);
+    p /= pow(P.IModel().lengthp(P.A->seqlength(n)) , 2.0);
   }
 
   return p;
@@ -53,10 +53,10 @@ efloat_t other_prior(const data_partition& P,const vector<int>& nodes)
 vector< Matrix > distributions_star(const data_partition& P,
 				    const vector<int>& seq,int,const valarray<bool>& group)
 {
-  const alignment& A = P.A;
+  const alignment& A = *P.A;
   const alphabet& a = A.get_alphabet();
   const substitution::MultiModel& MModel = P.SModel();
-  const SequenceTree& T = P.T;
+  const SequenceTree& T = *P.T;
 
   //FIXME modify this to add a shift of 2
 
@@ -94,7 +94,7 @@ vector< Matrix > distributions_star(const data_partition& P,
 /// Distributions function for a full tree
 vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int root,const valarray<bool>& group)
 {
-  const Tree& T = P.T;
+  const Tree& T = *P.T;
 
   vector<int> branches;
   vector<const_nodeview> neighbors;
@@ -151,7 +151,7 @@ void check_match_P(const data_partition& P, efloat_t OS, efloat_t OP, const vect
   if ( (std::abs(log(qs) - log(ls)) > 1.0e-9) or 
        (std::abs(log(qp) - log(lp)) > 1.0e-9) or 
        (std::abs(log(qt) - log(lt)) > 1.0e-9)) {
-    std::cerr<<P.A<<endl;
+    std::cerr<<*P.A<<endl;
     std::cerr<<"Can't match up DP probabilities to real probabilities!\n"<<show_stack_trace();
     std::abort();
   }

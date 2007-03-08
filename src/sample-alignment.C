@@ -20,7 +20,7 @@ using namespace A2;
 vector< Matrix > distributions_star(const data_partition& P,const vector<int>& seq,int b,bool up) 
 {
   //--------------- Find our branch, and orientation ----------------//
-  const SequenceTree& T = P.T;
+  const SequenceTree& T = *P.T;
   int root = T.branch(b).target();      //this is an arbitrary choice
 
   int node1 = T.branch(b).source();
@@ -35,7 +35,7 @@ vector< Matrix > distributions_star(const data_partition& P,const vector<int>& s
 vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int b,bool up)
 {
   //--------------- Find our branch, and orientation ----------------//
-  const SequenceTree& T = P.T;
+  const SequenceTree& T = *P.T;
   int root = T.branch(b).target();      //this is an arbitrary choice
 
   int node1 = T.branch(b).source();
@@ -54,11 +54,13 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 {
   assert(P.has_IModel());
 
-  valarray<bool> s1 = constraint_satisfied(P.alignment_constraint,P.A);
+  valarray<bool> s1 = constraint_satisfied(P.alignment_constraint, *P.A);
 
-  const Tree& T = P.T;
+  const Tree& T = *P.T;
+  //FIXME - partitions
   data_partition P0 = P;  // We COULD make this conditional... perhaps we should
-  alignment& old = P0.A;
+  //FIXME - partitions
+  alignment& old = *P0.A;
 
   const Matrix frequency = substitution::frequency_matrix(P.SModel());
 
@@ -107,16 +109,16 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   path.erase(path.begin()+path.size()-1);
 
-  P.A = construct(old,path,node1,node2,T,seq1,seq2);
-  P.LC.set_length(P.A.length());
+  *P.A = construct(old,path,node1,node2,T,seq1,seq2);
+  P.LC.set_length(P.A->length());
   P.LC.invalidate_branch_alignment(T,b);
 
 #ifndef NDEBUG_DP
-  assert(valid(P.A));
-  valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,P.A);
+  assert(valid(*P.A));
+  valarray<bool> s2 = constraint_satisfied(P.alignment_constraint, *P.A);
   report_constraints(s1,s2);
 
-  vector<int> path_new = get_path(P.A, node1, node2);
+  vector<int> path_new = get_path(*P.A, node1, node2);
   path.push_back(3);
   assert(path_new == path);
 #endif
@@ -127,7 +129,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 void sample_alignment(Parameters& P,int b)
 {
 
-  if (any_branches_constrained(vector<int>(1,b), P.T, P.TC, P.AC))
+  if (any_branches_constrained(vector<int>(1,b), *P.T, *P.TC, P.AC))
     return;
 
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)

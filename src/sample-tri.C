@@ -28,8 +28,8 @@ using namespace A3;
 
 boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P,const vector<int>& nodes)
 {
-  const Tree& T = P.T;
-  alignment& A = P.A;
+  const Tree& T = *P.T;
+  alignment& A = *P.A;
 
   assert(P.has_IModel());
 
@@ -220,11 +220,11 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   //------------ Check the alignment branch constraints ------------//
   for(int i=0;i<p.size();i++) {
     vector<int> branches;
-    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][1]));
-    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][2]));
-    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][3]));
+    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][1]));
+    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][2]));
+    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][3]));
 
-    if (any_branches_constrained(branches, p[i].T, p[i].TC, p[i].AC))
+    if (any_branches_constrained(branches, *p[i].T, *p[i].TC, p[i].AC))
       return -1;
   }
 
@@ -403,9 +403,9 @@ void tri_sample_alignment(Parameters& P,int node1,int node2) {
   for(int i=0;i<P.n_data_partitions();i++) 
   {
     s1[i].resize(P[i].alignment_constraint.size1());
-    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A);
+    s1[i] = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
 #ifndef NDEBUG
-    check_alignment(P[i].A,P[i].T,"tri_sample_alignment:in");
+    check_alignment(*P[i].A, *P[i].T, "tri_sample_alignment:in");
 #endif
   }
 
@@ -413,7 +413,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2) {
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
-  nodes[0] = get_nodes_branch_random(P.T,node1,node2);
+  nodes[0] = get_nodes_branch_random(*P.T,node1,node2);
 
   vector<efloat_t> rho(1,1);
 
@@ -426,10 +426,10 @@ void tri_sample_alignment(Parameters& P,int node1,int node2) {
   for(int i=0;i<P.n_data_partitions();i++) 
   {
 #ifndef NDEBUG
-    check_alignment(P[i].A,P[i].T,"tri_sample_alignment:out");
+    check_alignment(*P[i].A, *P[i].T,"tri_sample_alignment:out");
 #endif
 
-    valarray<bool> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A);
+    valarray<bool> s2 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
     report_constraints(s1[i],s2);
   }
 }
@@ -447,7 +447,7 @@ bool tri_sample_alignment_branch(Parameters& P,
   vector<Parameters> p(2,P);
   p[1].setlength(b,length2);
 
-  vector< vector<int> > nodes (2, get_nodes_branch_random(P.T,node1,node2) );
+  vector< vector<int> > nodes (2, get_nodes_branch_random(*P.T,node1,node2) );
 
   vector<efloat_t> rho(2);
   rho[0] = 1;
@@ -468,11 +468,11 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
   //----------- Generate the Different Matrices ---------//
   vector<Parameters> p(2,P);
 
-  int b = P.T.branch(node1,node2);
+  int b = P.T->branch(node1,node2);
   p[1].branch_HMM_type[b] = 1 - p[1].branch_HMM_type[b];
   p[1].recalc_imodel();
 
-  vector< vector<int> > nodes (2, get_nodes_branch_random(P.T,node1,node2) );
+  vector< vector<int> > nodes (2, get_nodes_branch_random(*P.T, node1,node2) );
 
   vector<efloat_t> rho(2,1.0);
 

@@ -531,7 +531,7 @@ namespace A3 {
   efloat_t correction(const data_partition& P,const vector<int>& nodes) 
   {
     // get the lengths of then internal node
-    int length = P.A.seqlength(nodes[0]);
+    int length = P.A->seqlength(nodes[0]);
 
     return pow(P.IModel().lengthp(length),2.0);
   }

@@ -29,7 +29,7 @@ void data_partition::recalc_imodel()
   for(int b=0;b<branch_HMMs.size();b++) 
   {
     // use the length, unless we are unaligned
-    double t = T.branch(b).length();
+    double t = T->branch(b).length();
     
     // compute and cache the branch HMM
     if (branch_HMM_type[b] == 1)
@@ -48,24 +48,24 @@ void data_partition::recalc_smodel()
   LC.invalidate_all();
 
   //invalidate the cached transition probabilities in case the model has changed
-  MC.recalc(T,*SModel_);
+  MC.recalc(*T,*SModel_);
 }
 
 void data_partition::setlength(int b, double l)
 {
-  MC.setlength(b,l,T,*SModel_); 
+  MC.setlength(b,l,*T,*SModel_); 
 
   if (has_IModel()) 
   {
     // use the length, unless we are unaligned
-    double t = T.branch(b).length();
+    double t = T->branch(b).length();
 
     if (branch_HMM_type[b] == 1)
       branch_HMMs[b] = IModel_->get_branch_HMM(-1);
     else
       branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());
   }
-  LC.invalidate_branch(T,b);
+  LC.invalidate_branch(*T,b);
 }
 
 void data_partition::recalc(const vector<int>& indices)
@@ -150,7 +150,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    A(a),
    T(t),
    MC(t,SM),
-   LC(T,SModel()),
+   LC(t,SModel()),
    branch_HMMs(t.n_branches()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
@@ -165,7 +165,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    A(a),
    T(t),
    MC(t,SM),
-   LC(T,SModel()),
+   LC(t,SModel()),
    branch_HMMs(t.n_branches()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
@@ -181,7 +181,7 @@ efloat_t Parameters::prior_no_alignment() const
   efloat_t Pr = ::prior_no_alignment(*this);
 
   for(int i=0;i<data_partitions.size();i++) 
-    Pr *= data_partitions[i].prior_no_alignment();
+    Pr *= data_partitions[i]->prior_no_alignment();
 
   return Pr;
 }
@@ -191,7 +191,7 @@ efloat_t Parameters::prior_alignment() const
   efloat_t Pr = 1;
 
   for(int i=0;i<data_partitions.size();i++) 
-    Pr *= data_partitions[i].prior_alignment();
+    Pr *= data_partitions[i]->prior_alignment();
 
   return Pr;
 }
@@ -205,7 +205,7 @@ efloat_t Parameters::likelihood() const
 {
   efloat_t Pr = 1;
   for(int i=0;i<data_partitions.size();i++) 
-    Pr *= data_partitions[i].likelihood();
+    Pr *= data_partitions[i]->likelihood();
   return Pr;
 }
 
@@ -214,7 +214,7 @@ efloat_t Parameters::heated_likelihood() const
   efloat_t Pr = 1;
 
   for(int i=0;i<data_partitions.size();i++) 
-    Pr *= data_partitions[i].heated_likelihood();
+    Pr *= data_partitions[i]->heated_likelihood();
 
   return Pr;
 }
@@ -241,10 +241,10 @@ void Parameters::recalc_imodel()
   for(int i=0;i<data_partitions.size();i++) 
   {
     // copy our IModel down into the data partition
-    data_partitions[i].IModel_ = IModel_;
+    data_partitions[i]->IModel_ = IModel_;
 
     // recompute cached computations
-    data_partitions[i].recalc_imodel();
+    data_partitions[i]->recalc_imodel();
   }
 }
 
@@ -257,41 +257,41 @@ void Parameters::recalc_smodel()
   for(int i=0;i<data_partitions.size();i++) 
   {
     // copy our IModel down into the data partition
-    data_partitions[i].SModel_ = SModel_;
+    data_partitions[i]->SModel_ = SModel_;
 
     // recompute cached computations
-    data_partitions[i].recalc_smodel();
+    data_partitions[i]->recalc_smodel();
   }
 }
 
 void Parameters::select_root(int b)
 {
   for(int i=0;i<data_partitions.size();i++)
-    ::select_root(data_partitions[i].T, b, data_partitions[i].LC);
+    ::select_root(*data_partitions[i]->T, b, data_partitions[i]->LC);
 }
 
 void Parameters::set_root(int node)
 {
   for(int i=0;i<data_partitions.size();i++)
-    data_partitions[i].LC.root = node;
+    data_partitions[i]->LC.root = node;
 }
 
 void Parameters::tree_propagate()
 {
   for(int i=0;i<n_data_partitions();i++) 
-    data_partitions[i].T = T;
+    data_partitions[i]->T = T;
 }
 
 void Parameters::invalidate_subA_index_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    ::invalidate_subA_index_branch(data_partitions[i].A,data_partitions[i].T,b);
+    ::invalidate_subA_index_branch(*data_partitions[i]->A,*data_partitions[i]->T,b);
 }
 
 void Parameters::LC_invalidate_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i].LC.invalidate_branch(data_partitions[i].T,b);
+    data_partitions[i]->LC.invalidate_branch(*data_partitions[i]->T,b);
 }
 
 void Parameters::recalc(const vector<int>& indices)
@@ -331,7 +331,7 @@ Model& Parameters::SubModels(int i)
     else
       i--;
 
-  return data_partitions[i];
+  return *data_partitions[i];
 }
 
 const Model& Parameters::SubModels(int i) const
@@ -350,7 +350,7 @@ const Model& Parameters::SubModels(int i) const
     else
       i--;
 
-  return data_partitions[i];
+  return *data_partitions[i];
 }
 
 int Parameters::n_submodels() const
@@ -364,9 +364,9 @@ int Parameters::n_submodels() const
 
 void Parameters::setlength(int b,double l) 
 {
-  T.branch(b).set_length(l);
+  T->branch(b).set_length(l);
   for(int i=0;i<data_partitions.size();i++) 
-    data_partitions[i].setlength(b,l);
+    data_partitions[i]->setlength(b,l);
 }
 
 double Parameters::branch_mean() const 
@@ -392,13 +392,13 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   read();
 
-  for(int b=0;b<TC.n_branches();b++)
-    TC.branch(b).set_length(-1);
+  for(int b=0;b<TC->n_branches();b++)
+    TC->branch(b).set_length(-1);
 
   for(int i=0;i<A.size();i++) {
     string name = string("part") + convertToString(i+1);
-    data_partitions.push_back(data_partition(name,A[i],T,SM,IM));
-    add_submodel(name,data_partitions[i]);
+    data_partitions.push_back(cow_ptr<data_partition>(data_partition(name,A[i],*T,SM,IM)));
+    add_submodel(name,*data_partitions[i]);
   }
 }
 
@@ -419,13 +419,13 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   read();
 
-  for(int b=0;b<TC.n_branches();b++)
-    TC.branch(b).set_length(-1);
+  for(int b=0;b<TC->n_branches();b++)
+    TC->branch(b).set_length(-1);
 
   for(int i=0;i<A.size();i++) {
     string name = string("part") + convertToString(i+1);
-    data_partitions.push_back(data_partition(name,A[i],T,SM));
-    add_submodel(name,data_partitions[i]);
+    data_partitions.push_back(cow_ptr<data_partition>(data_partition(name,A[i],*T,SM)));
+    add_submodel(name,*data_partitions[i]);
   }
 }
 

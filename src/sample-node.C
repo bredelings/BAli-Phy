@@ -35,11 +35,11 @@ using namespace A3;
 
 boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
 {
-  const Tree& T = P.T;
+  const Tree& T = *P.T;
 
   assert(P.has_IModel());
 
-  alignment old = P.A;
+  alignment old = *P.A;
 
   //  std::cerr<<"old = "<<old<<endl;
 
@@ -155,18 +155,18 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   vector<int> path_g = Matrices->sample_path();
   vector<int> path = Matrices->ungeneralize(path_g);
 
-  P.A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
+  *P.A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
 
 #ifndef NDEBUG
-  vector<int> path_new = get_path_3way(project(P.A,n0,n1,n2,n3),0,1,2,3);
-  vector<int> path_new2 = get_path_3way(P.A,n0,n1,n2,n3);
+  vector<int> path_new = get_path_3way(project(*P.A,n0,n1,n2,n3),0,1,2,3);
+  vector<int> path_new2 = get_path_3way(*P.A,n0,n1,n2,n3);
   assert(path_new == path_new2); // <- current implementation probably guarantees this
                                  //    but its not a NECESSARY effect of the routine.
 
   // get the generalized paths - no sequential silent states that can loop
   vector<int> path_new_g = Matrices->generalize(path_new);
   assert(path_new_g == path_g);
-  assert(valid(P.A));
+  assert(valid(*P.A));
 
 
 #endif
@@ -184,11 +184,11 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   //------------ Check the alignment branch constraints ------------//
   for(int i=0;i<p.size();i++) {
     vector<int> branches;
-    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][1]));
-    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][2]));
-    branches.push_back(p[i].T.branch(nodes[i][0],nodes[i][3]));
+    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][1]));
+    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][2]));
+    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][3]));
 
-    if (any_branches_constrained(branches, p[i].T, p[i].TC, p[i].AC))
+    if (any_branches_constrained(branches, *p[i].T, *p[i].TC, p[i].AC))
       return -1;
   }
 
@@ -204,7 +204,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
       Matrices[i].push_back( sample_node_base(p[i][j],nodes[i]) );
       //    p[i][j].LC.invalidate_node(p[i].T,nodes[i][0]);
 #ifndef NDEBUG
-      if (i==0) substitution::check_subA(P0[j].A,p[i][j].A,p[0].T);
+      if (i==0) substitution::check_subA(*P0[j].A, *p[i][j].A, *p[0].T);
       p[i][j].likelihood();  // check the likelihood calculation
 #endif
     }
@@ -338,7 +338,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
 void sample_node(Parameters& P,int node) 
 {
-  const Tree& T = P.T;
+  const Tree& T = *P.T;
 
   vector<Parameters> p(1,P);
 

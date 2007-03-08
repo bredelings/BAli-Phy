@@ -163,9 +163,6 @@ After 1.9.9:
     write out differently names files: 1.p, 2.p, ...
    - warn about over-writing files.
  * Data Partitions
-   - reduce the time spent copying things around that aren't even changing!
-   - use cow_ptr<>!
-   - use boost::shared_ptr<> instead of my refcount.H?
    - look up the lock() complications!
    - 
  * tree-mean-lengths: compute the length of each branch or node, conditioned on the
@@ -654,6 +651,11 @@ the prior, because we never want to use it  differently.
 [DONE] Correctly create MAP-AU2 for DNA&RNA alignments.
 
 [DONE] Report nuc- and aa- tree lengths in 1.p and alignment-info
+
+[DONE] Use boost::shared_ptr<> instead of my RefPtr<> in refcount.H
+
+[DONE] Reduce the time spent copying things:
+       + use a new cow_ptr<> based on boost::shared_ptr<> 
 
 *IDEAS*
 

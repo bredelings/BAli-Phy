@@ -459,14 +459,14 @@ void Sampler::go(Parameters& P,int subsample,const int max,
 {
   P.recalc_all();
 
-  const SequenceTree& T = P.T;
+  const SequenceTree& T = *P.T;
 
   // make sure that the Alignment and Tree are linked
   for(int i=0;i<P.n_data_partitions();i++) {
-    assert(P[i].A.n_sequences() == T.n_nodes());
+    assert(P[i].A->n_sequences() == T.n_nodes());
 
     for(int j=0;j<T.n_leaves();j++)
-      assert(T.seq(j) == P[i].A.seq(j).name);    
+      assert(T.seq(j) == P[i].A->seq(j).name);    
   }
 
   
@@ -480,7 +480,7 @@ void Sampler::go(Parameters& P,int subsample,const int max,
   s_out<<"\n\n\n";
 
   for(int i=0;i<P.n_data_partitions();i++) {
-    const alignment& A = P[i].A;
+    const alignment& A = *P[i].A;
     s_out<<"Data Partition: "<<i+1<<endl;
     if (const Triplets* T = dynamic_cast<const Triplets*>(&A.get_alphabet()) ) 
       {
@@ -571,26 +571,26 @@ void Sampler::go(Parameters& P,int subsample,const int max,
       unsigned total_substs=0;
       for(int i=0;i<P.n_data_partitions();i++) {
 	if (P.has_IModel()) {
-	  unsigned x1 = P[i].A.length();
+	  unsigned x1 = P[i].A->length();
 	  total_length += x1;
 
-	  unsigned x2 = n_indels(P[i].A,P[i].T);
+	  unsigned x2 = n_indels(*P[i].A, *P[i].T);
 	  total_indels += x2;
 
-	  unsigned x3 = total_length_indels(P[i].A,P[i].T);
+	  unsigned x3 = total_length_indels(*P[i].A, *P[i].T);
 	  total_indel_lengths += x3;
 	  s_parameters<<"\t"<<x1;
-	  s_parameters<<"\t"<<n_indels(P[i].A,P[i].T);
+	  s_parameters<<"\t"<<n_indels(*P[i].A, *P[i].T);
 	  s_parameters<<"\t"<<x3;
 	}
-	unsigned x4 = n_mutations(P[i].A,P[i].T);
+	unsigned x4 = n_mutations(*P[i].A, *P[i].T);
 	total_substs += x4;
 
 	s_parameters<<"\t"<<x4;
 	if (const Triplets* Tr = dynamic_cast<const Triplets*>(&P[i].get_alphabet()))
-	  s_parameters<<"\t"<<n_mutations(P[i].A,T,nucleotide_cost_matrix(*Tr));
+	  s_parameters<<"\t"<<n_mutations(*P[i].A, T ,nucleotide_cost_matrix(*Tr));
 	if (const Codons* C = dynamic_cast<const Codons*>(&P[i].get_alphabet()))
-	  s_parameters<<"\t"<<n_mutations(P[i].A,T,amino_acid_cost_matrix(*C));
+	  s_parameters<<"\t"<<n_mutations(*P[i].A, T,amino_acid_cost_matrix(*C));
       }
       if (P.n_data_partitions() > 1) {
 	if (P.has_IModel()) {
@@ -600,7 +600,7 @@ void Sampler::go(Parameters& P,int subsample,const int max,
 	}
 	s_parameters<<"\t"<<total_substs;
       }
-      s_parameters<<"\t"<<length(P.T)<<endl;
+      s_parameters<<"\t"<<length(*P.T)<<endl;
     }
 
     if (iterations%20 == 0) {

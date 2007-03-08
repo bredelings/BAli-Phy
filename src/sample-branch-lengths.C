@@ -44,7 +44,7 @@ MCMC::Result change_branch_length_(Parameters& P,int b,double sigma,
   MCMC::Result result(3);
   
   //------------ Propose new length -------------//
-  const double length = P.T.branch(b).length();
+  const double length = P.T->branch(b).length();
   double newlength = length;
 
   double ratio = twiddle(newlength,sigma);
@@ -197,7 +197,7 @@ vector<double> gamma_approx(const Parameters& P, int b)
 
 void change_branch_length_flat(Parameters& P,MoveStats& Stats,int b,double sigma)
 {
-  const double L = P.T.branch(b).length();
+  const double L = P.T->branch(b).length();
   const double mu = P.branch_mean();
 
   MCMC::Result result = change_branch_length_(P, b, sigma*P.branch_mean(), branch_twiddle_positive);
@@ -215,7 +215,7 @@ void change_branch_length_flat(Parameters& P,MoveStats& Stats,int b,double sigma
 
 void change_branch_length_log_scale(Parameters& P,MoveStats& Stats,int b,double sigma)
 {
-  const double L = P.T.branch(b).length();
+  const double L = P.T->branch(b).length();
   const double mu = P.branch_mean();
 
   MCMC::Result result = change_branch_length_(P, b, sigma, scale_gaussian );
@@ -233,7 +233,7 @@ void change_branch_length_log_scale(Parameters& P,MoveStats& Stats,int b,double 
 
 void change_branch_length_fit_gamma(Parameters& P,MoveStats& Stats,int b)
 {
-  const double L = P.T.branch(b).length();
+  const double L = P.T->branch(b).length();
   const double mu = P.branch_mean();
 
   P.select_root(b);
@@ -248,7 +248,7 @@ void change_branch_length_fit_gamma(Parameters& P,MoveStats& Stats,int b)
   MCMC::Result result(3);
   
   //------------ Propose new length -------------//
-  const double length = P.T.branch(b).length();
+  const double length = P.T->branch(b).length();
   double newlength = gamma(a,B);
   
   double ratio = gsl_ran_gamma_pdf(length,a,B)/gsl_ran_gamma_pdf(newlength,a,B);
@@ -306,7 +306,7 @@ void change_branch_length_and_T(Parameters& P,MoveStats& Stats,int b)
   result.counts[0] = 1;
 
   //------------- Propose new length --------------//
-  const double length = P.T.branch(b).length();
+  const double length = P.T->branch(b).length();
   double newlength = length;
   double ratio = branch_twiddle(newlength,P.branch_mean()*0.6);
 
@@ -339,7 +339,7 @@ void change_branch_length_and_T(Parameters& P,MoveStats& Stats,int b)
     //----- Generate the Different Topologies ------//
     vector<Parameters> p(2,P);
     
-    SequenceTree& T2 = p[1].T;
+    SequenceTree& T2 = *p[1].T;
     
     vector<int> nodes = A5::get_nodes_random(T2,b);
     int b1 = T2.directed_branch(nodes[4],nodes[1]);
@@ -428,7 +428,7 @@ bool slide_node(Parameters& P,
 void slide_node(Parameters& P,MoveStats& Stats,int b0)
 {
   vector<const_branchview> b;
-  b.push_back( P.T.directed_branch(b0) );
+  b.push_back( P.T->directed_branch(b0) );
 
   // choose branches to alter
   if (uniform() < 0.5)
@@ -465,9 +465,10 @@ void scale_means_only(Parameters& P,MoveStats& Stats)
   //-------- Change branch lengths and mean -------//
   Parameters P2 = P;
 
-  for(int b=0;b<P2.T.n_branches();b++) {
-    const double length = P2.T.branch(b).length();
-    P2.T.branch(b).set_length(length/scale);
+  SequenceTree& T2 = *P2.T;
+  for(int b=0;b<T2.n_branches();b++) {
+    const double length = T2.branch(b).length();
+    T2.branch(b).set_length(length/scale);
   }
   P2.tree_propagate();
 
@@ -487,7 +488,7 @@ void scale_means_only(Parameters& P,MoveStats& Stats)
 #endif
 
   //--------- Compute proposal ratio ---------//
-  efloat_t p_ratio = pow(efloat_t(scale),P2.n_data_partitions()-P2.T.n_branches());
+  efloat_t p_ratio = pow(efloat_t(scale),P2.n_data_partitions()-T2.n_branches());
   efloat_t a_ratio = P2.prior_no_alignment()/P.prior_no_alignment()*p_ratio;
 
 #ifndef NDEBUG
@@ -517,7 +518,7 @@ void change_3_branch_lengths(Parameters& P,MoveStats& Stats,int n)
 {
   MCMC::Result result(2);
 
-  const Tree& T = P.T;
+  const Tree& T = *P.T;
   if (not T[n].is_internal_node()) return;
 
   //-------------- Find branches ------------------//

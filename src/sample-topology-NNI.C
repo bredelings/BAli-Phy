@@ -56,8 +56,8 @@ using namespace A5;
 int two_way_topology_sample_fgaps(vector<Parameters>& p,const vector<efloat_t>& rho,int b) 
 {
   vector< vector<int> > nodes(2);
-  nodes[0] = A5::get_nodes_random(p[0].T,b);
-  nodes[1] = A5::get_nodes_random(p[1].T,b);
+  nodes[0] = A5::get_nodes_random(*p[0].T, b);
+  nodes[1] = A5::get_nodes_random(*p[1].T, b);
 
   return sample_two_nodes_multi(p,nodes,rho,true,false);
 }
@@ -67,9 +67,9 @@ int two_way_topology_sample_fgaps(vector<Parameters>& p,const vector<efloat_t>& 
 int three_way_topology_sample_fgaps(vector<Parameters>& p,const vector<efloat_t>& rho,int b) 
 {
   vector< vector<int> > nodes(3);
-  nodes[0] = A5::get_nodes_random(p[0].T,b);
-  nodes[1] = A5::get_nodes_random(p[1].T,b);
-  nodes[2] = A5::get_nodes_random(p[2].T,b);
+  nodes[0] = A5::get_nodes_random(*p[0].T, b);
+  nodes[1] = A5::get_nodes_random(*p[1].T, b);
+  nodes[2] = A5::get_nodes_random(*p[2].T, b);
 
   return sample_two_nodes_multi(p,nodes,rho,true,false);
 }
@@ -110,21 +110,21 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   if (P.has_IModel() and P.branch_HMM_type[b] == 1)
     return;
 
-  vector<int> nodes = A5::get_nodes_random(P.T,b);
+  vector<int> nodes = A5::get_nodes_random(*P.T, b);
 
   P.select_root(b);
 
   vector<Parameters> p(2,P);
 
-  int b1 = p[1].T.directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T.directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
-  p[1].T.exchange_subtrees(b1, b2);
+  p[1].T->exchange_subtrees(b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(p[1].T, P.TC))
+  if (not extends(*p[1].T, *P.TC))
     return;
 
   vector<efloat_t> rho(2,1);
@@ -158,8 +158,8 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
 
     p[1].setlength(b,gamma(a1,b1));
 
-    rho[0] = gsl_ran_gamma_pdf(p[1].T.branch(b).length(),a1,b1);
-    rho[1] = gsl_ran_gamma_pdf(p[0].T.branch(b).length(),a0,b0);
+    rho[0] = gsl_ran_gamma_pdf(p[1].T->branch(b).length(),a1,b1);
+    rho[1] = gsl_ran_gamma_pdf(p[0].T->branch(b).length(),a0,b0);
   }
 
   int C = two_way_topology_sample(p,rho,b);
@@ -171,7 +171,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   MCMC::Result result(2);
 
   result.totals[0] = (C>0)?1:0;
-  result.totals[1] = p[0].T.branch(b).length();
+  result.totals[1] = p[0].T->branch(b).length();
 
   if (smart_inner_branch)
     Stats.inc("NNI (2-way,gamma)", result);
@@ -184,30 +184,30 @@ void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b)
   if (P.has_IModel() and P.branch_HMM_type[b] == 1)
     return;
 
-  vector<int> nodes = A5::get_nodes_random(P.T,b);
+  vector<int> nodes = A5::get_nodes_random(*P.T, b);
 
   P.select_root(b);
 
   vector<Parameters> p(2,P);
 
-  int b1 = p[1].T.directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T.directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
-  p[1].T.exchange_subtrees(b1, b2);
+  p[1].T->exchange_subtrees(b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(p[1].T, P.TC))
+  if (not extends(*p[1].T, *P.TC))
     return;
 
-  double LA = p[0].T.branch(nodes[4],nodes[0]).length();
-  double LB = p[0].T.branch(nodes[4],nodes[5]).length();
-  double LC = p[0].T.branch(nodes[5],nodes[3]).length();
+  double LA = p[0].T->branch(nodes[4],nodes[0]).length();
+  double LB = p[0].T->branch(nodes[4],nodes[5]).length();
+  double LC = p[0].T->branch(nodes[5],nodes[3]).length();
 
-  p[1].setlength(p[1].T.branch(nodes[0],nodes[4]),LA + LB);
-  p[1].setlength(p[1].T.branch(nodes[4],nodes[5]),LC*uniform());
-  p[1].setlength(p[1].T.branch(nodes[5],nodes[3]),LC - p[1].T.branch(nodes[4],nodes[5]).length());
+  p[1].setlength(p[1].T->branch(nodes[0],nodes[4]),LA + LB);
+  p[1].setlength(p[1].T->branch(nodes[4],nodes[5]),LC*uniform());
+  p[1].setlength(p[1].T->branch(nodes[5],nodes[3]),LC - p[1].T->branch(nodes[4],nodes[5]).length());
 
   vector<efloat_t> rho(2,1);
   rho[1] = LC/(LA+LB);
@@ -243,33 +243,33 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
   if (P.has_IModel() and P.branch_HMM_type[b] == 1)
     return;
 
-  vector<int> nodes = A5::get_nodes_random(P.T,b);
+  vector<int> nodes = A5::get_nodes_random(*P.T,b);
 
   P.select_root(b);
 
   vector<Parameters> p(2,P);
 
   //---------------- Do the NNI operation -------------------//
-  int b1 = p[1].T.directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T.directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
-  p[1].T.exchange_subtrees(b1, b2);
+  p[1].T->exchange_subtrees(b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(p[1].T, P.TC))
+  if (not extends(*p[1].T, *P.TC))
     return;
 
   //------------- Propose new branch lengths ----------------//
   double ratio = 1.0;
-  vector<int> branches = NNI_branches(p[1].T, b);
+  vector<int> branches = NNI_branches(*p[1].T, b);
 
   for(int i=0;i<branches.size();i++) {
 
     double factor = exp(gaussian(0,0.05));
 
-    double L = p[1].T.branch( branches[i] ).length() * factor;
+    double L = p[1].T->branch( branches[i] ).length() * factor;
 
     p[1].setlength(branches[i], L);
 
@@ -322,31 +322,31 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   if (P.has_IModel() and P.branch_HMM_type[b] == 1)
     return;
 
-  vector<int> nodes = A5::get_nodes(P.T,b);
+  vector<int> nodes = A5::get_nodes(*P.T,b);
 
   //------ Generate Topologies and alter caches ------///
   P.select_root(b);
   
   vector<Parameters> p(3,P);
 
-  int b1 = P.T.directed_branch(nodes[4],nodes[1]);
-  int b2 = P.T.directed_branch(nodes[5],nodes[2]);
-  int b3 = P.T.directed_branch(nodes[5],nodes[3]);
+  int b1 = P.T->directed_branch(nodes[4],nodes[1]);
+  int b2 = P.T->directed_branch(nodes[5],nodes[2]);
+  int b3 = P.T->directed_branch(nodes[5],nodes[3]);
 
-  p[1].T.exchange_subtrees(b1,b2);
+  p[1].T->exchange_subtrees(b1,b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
 
-  if (not extends(p[1].T, P.TC))
+  if (not extends(*p[1].T, *P.TC))
     return;
 
-  p[2].T.exchange_subtrees(b1,b3);
+  p[2].T->exchange_subtrees(b1,b3);
   p[2].tree_propagate(); 
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
   
-  if (not extends(p[2].T, P.TC))
+  if (not extends(*p[2].T, *P.TC))
     return;
 
   const vector<efloat_t> rho(3,1);
@@ -363,40 +363,40 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
 
 void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  assert(b >= P.T.n_leafbranches());
+  assert(b >= P.T->n_leafbranches());
 
   if (P.has_IModel() and P.branch_HMM_type[b] == 1)
     return;
 
-  vector<int> two_way_nodes = A5::get_nodes_random(P.T,b);
+  vector<int> two_way_nodes = A5::get_nodes_random(*P.T, b);
 
   //--------- Generate the Different Topologies -------//
   // We ALWAYS resample the connection between two_way_nodes [0] and [4].
 
   vector<Parameters> p(3,P);
-  int b1 = p[0].T.directed_branch(two_way_nodes[4],two_way_nodes[1]);
-  int b2 = p[0].T.directed_branch(two_way_nodes[5],two_way_nodes[2]);
-  int b3 = p[0].T.directed_branch(two_way_nodes[5],two_way_nodes[3]);
+  int b1 = p[0].T->directed_branch(two_way_nodes[4],two_way_nodes[1]);
+  int b2 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[2]);
+  int b3 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[3]);
 
-  p[1].T.exchange_subtrees(b1,b2);
+  p[1].T->exchange_subtrees(b1,b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(p[1].T, P.TC))
+  if (not extends(*p[1].T, *P.TC))
     return;
 
-  p[2].T.exchange_subtrees(b1,b3);
+  p[2].T->exchange_subtrees(b1,b3);
   p[2].tree_propagate(); 
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
 
-  if (not extends(p[2].T, P.TC))
+  if (not extends(*p[2].T, *P.TC))
     return;
 
   vector< vector< int> > nodes;
   for(int i=0;i<p.size();i++)
-    nodes.push_back(A3::get_nodes_branch_random(p[i].T, two_way_nodes[4], two_way_nodes[0]) );
+    nodes.push_back(A3::get_nodes_branch_random(*p[i].T, two_way_nodes[4], two_way_nodes[0]) );
 
   const vector<efloat_t> rho(3,1);
 

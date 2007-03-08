@@ -15,6 +15,7 @@
 #include "substitution-cache.H"
 #include "util.H"
 #include "tools/tree-dist.H"
+#include "cow-ptr.H"
 
 //------------------------------- parameter-containing class --------------------------//
 
@@ -25,10 +26,10 @@ struct data_partition: public Model
   friend class Parameters;
 
   /// The IndelModel
-  OwnedPointer<IndelModel> IModel_;
+  polymorphic_cow_ptr<IndelModel> IModel_;
 
   /// The substitution::Model
-  OwnedPointer<substitution::MultiModel> SModel_;
+  polymorphic_cow_ptr<substitution::MultiModel> SModel_;
 
   string partition_name;
 
@@ -39,10 +40,10 @@ public:
   data_partition* clone() const {return new data_partition(*this);}
 
   /// The alignment data of this partition
-  alignment A;
+  cow_ptr<alignment> A;
 
   /// Tree pushed down from above
-  SequenceTree T;
+  cow_ptr<SequenceTree> T;
 
   /// Cached Transition Probabilities
   MatCache MC;
@@ -61,7 +62,7 @@ public:
   vector<double> beta;
 
   // get the alphabet for partition i
-  const alphabet& get_alphabet() const {return A.get_alphabet();}
+  const alphabet& get_alphabet() const {return A->get_alphabet();}
 
   /// Recalculate all the cached transition matrices
   void recalc_imodel();
@@ -106,28 +107,28 @@ public:
 class Parameters: public SuperModel
 {
   /// The IndelModel
-  OwnedPointer<IndelModel> IModel_;
+  polymorphic_cow_ptr<IndelModel> IModel_;
 
   /// The substitution::Model
-  OwnedPointer<substitution::MultiModel> SModel_;
+  polymorphic_cow_ptr<substitution::MultiModel> SModel_;
 
   void recalc(const vector<int>&);
 
 public:
 
   /// The alignments and cached computations
-  vector<data_partition> data_partitions;
+  vector<cow_ptr<data_partition> > data_partitions;
 
   int n_data_partitions() const {return data_partitions.size();}
 
-  const data_partition& operator[](int i) const {return data_partitions[i];}
-        data_partition& operator[](int i)       {return data_partitions[i];}
+  const data_partition& operator[](int i) const {return *data_partitions[i];}
+        data_partition& operator[](int i)       {return *data_partitions[i];}
 
   /// The Tree - mean branch lengths = 1
-  SequenceTree T;
+  cow_ptr<SequenceTree> T;
 
   /// Topology and Branch-Length Constraint
-  SequenceTree TC;
+  cow_ptr<SequenceTree> TC;
 
   /// Alignment-constrained branches
   std::vector<int> AC;

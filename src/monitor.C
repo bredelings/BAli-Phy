@@ -56,9 +56,9 @@ void print_stats(std::ostream& o,std::ostream& trees,
 
   if (print_alignment)
     for(int i=0;i<P.n_data_partitions();i++)
-      o<<standardize(P[i].A,P.T)<<"\n";
+      o<<standardize(*P[i].A, *P.T)<<"\n";
   
-  trees<<P.T<<std::endl;
+  trees<<*P.T<<std::endl;
   trees.flush();
   
   o<<"\n";
@@ -81,7 +81,7 @@ void print_stats(std::ostream& o,std::ostream& trees,
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
   for(int i=0;i<P.n_data_partitions();i++)
-    check_alignment(P[i].A,P.T,"print_stats:end");
+    check_alignment(*P[i].A, *P.T,"print_stats:end");
 #endif
 }
 

@@ -95,18 +95,18 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 		 const vector<ostream*> files)
 {
   // args for branch-based stuff
-  vector<int> branches(P.T.n_branches());
+  vector<int> branches(P.T->n_branches());
   for(int i=0;i<branches.size();i++)
     branches[i] = i;
 
   // args for branch-based stuff
   vector<int> internal_nodes;
-  for(int i=P.T.n_leaves();i<P.T.n_nodes();i++)
+  for(int i=P.T->n_leaves();i<P.T->n_nodes();i++)
     internal_nodes.push_back(i);
 
   // args for branch-based stuff
   vector<int> internal_branches;
-  for(int i=P.T.n_leaves();i<P.T.n_branches();i++)
+  for(int i=P.T->n_leaves();i<P.T->n_branches();i++)
     internal_branches.push_back(i);
 
   using namespace MCMC;
@@ -121,7 +121,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 					   sample_alignments_one,
 					   branches)
 			     );
-  if (P.T.n_leaves() >2) {
+  if (P.T->n_leaves() >2) {
     alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri","alignment:alignment_branch:nodes",
 						 sample_tri_one,
 						 branches)
@@ -140,12 +140,12 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 
   //---------- alignment::nodes_master (nodes_moves) ----------//
   MoveEach nodes_moves("nodes_master:nodes");
-  if (P.T.n_leaves() >= 3)
+  if (P.T->n_leaves() >= 3)
     nodes_moves.add(10,MoveArgSingle("sample_node","alignment:nodes",
 				   sample_node_move,
 				   internal_nodes)
 		   );
-  if (P.T.n_leaves() >= 4)
+  if (P.T->n_leaves() >= 4)
     nodes_moves.add(1,MoveArgSingle("sample_two_nodes","alignment:nodes",
 				   sample_two_nodes_move,
 				   internal_nodes)
@@ -198,7 +198,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 
   topology_move.add(1,NNI_move,false);
   topology_move.add(1,SPR_move);
-  if (P.T.n_leaves() >3 and P.SModel().full_tree)
+  if (P.T->n_leaves() >3 and P.SModel().full_tree)
     tree_moves.add(1,topology_move);
   
   //-------------- tree::lengths (length_moves) -------------//
@@ -265,7 +265,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
   unsigned total_length = 0;
   for(int i=0;i<P.n_data_partitions();i++)
-    total_length += max(sequence_lengths(P[i].A, P.T.n_leaves()));
+    total_length += max(sequence_lengths(*P[i].A, P.T->n_leaves()));
   P.keys["pi_dirichlet_N"] *= total_length;
 
   add_MH_move(P, dirichlet_proposal,    "pi*",    "pi_dirichlet_N",      1,  parameter_moves);
@@ -313,7 +313,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   if (P.has_IModel())
     sampler.add(1,alignment_moves);
   sampler.add(2,tree_moves);
-  sampler.add(4 + P.T.n_branches()/4.0,parameter_moves);
+  sampler.add(4 + P.T->n_branches()/4.0,parameter_moves);
 
   vector<string> disable;
   vector<string> enable;
@@ -346,7 +346,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   //FIXME - partition
 
   for(int i=0;i<P.n_data_partitions();i++) {
-    valarray<bool> s2 = constraint_satisfied(P[i].alignment_constraint,P[i].A);
+    valarray<bool> s2 = constraint_satisfied(P[i].alignment_constraint,*P[i].A);
     valarray<bool> s1(false,s2.size());
     report_constraints(s1,s2);
   }
@@ -888,12 +888,12 @@ int main(int argc,char* argv[])
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
-      P.TC = load_constraint_tree(args["t-constraint"].as<string>(), T.get_sequences());
+      P.TC = cow_ptr<SequenceTree>(load_constraint_tree(args["t-constraint"].as<string>(), T.get_sequences()));
 
     if (args.count("a-constraint"))
-      P.AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),P.TC);
+      P.AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),*P.TC);
 
-    if (not extends(T, P.TC))
+    if (not extends(T, *P.TC))
       throw myexception()<<"Initial tree violates topology constraints.";
 
     //---------- Alignment constraint (horizontal) -----------//
@@ -976,10 +976,10 @@ int main(int argc,char* argv[])
     set_parameters(P,args);
 
     for(int i=0;i<P.n_data_partitions();i++) {
-      P[i].LC.set_length(P[i].A.length());
+      P[i].LC.set_length(P[i].A->length());
 
-      add_leaf_seq_note(P[i].A,T.n_leaves());
-      add_subA_index_note(P[i].A,T.n_branches());
+      add_leaf_seq_note(*P[i].A, T.n_leaves());
+      add_subA_index_note(*P[i].A, T.n_branches());
     }
 
     // Why do we need to do this, again?

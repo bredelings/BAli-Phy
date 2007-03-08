@@ -124,7 +124,7 @@ namespace substitution {
   efloat_t calc_root_probability(const data_partition& P,const vector<int>& rb,
 			       const ublas::matrix<int>& index) 
   {
-    return calc_root_probability(P.A, P.T, P.LC, P.SModel(), rb, index);
+    return calc_root_probability(*P.A, *P.T, P.LC, P.SModel(), rb, index);
   }
 
   void peel_branch(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
@@ -258,7 +258,7 @@ namespace substitution {
   }
 
   int calculate_caches(const data_partition& P) {
-    return calculate_caches(P.A, P.MC, P.T, P.LC, P.SModel());
+    return calculate_caches(*P.A, P.MC, *P.T, P.LC, P.SModel());
   }
 
   Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,
@@ -353,8 +353,8 @@ namespace substitution {
   {
     const alphabet& a = P.get_alphabet();
 
-    const alignment& A = P.A;
-    const Tree& T = P.T;
+    const alignment& A = *P.A;
+    const Tree& T = *P.T;
     Likelihood_Cache& LC = P.LC;
 
 #ifndef NDEBUG
@@ -422,8 +422,8 @@ namespace substitution {
 
   efloat_t other_subst(const data_partition& P, const vector<int>& nodes) 
   {
-    const alignment& A = P.A;
-    const Tree& T = P.T;
+    const alignment& A = *P.A;
+    const Tree& T = *P.T;
     Likelihood_Cache& LC = P.LC;
 
     int n_br = calculate_caches(P);
@@ -493,7 +493,7 @@ namespace substitution {
   }
 
   efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr(P.A, P.MC, P.T, LC, P.SModel());
+    return Pr(*P.A, P.MC, *P.T, LC, P.SModel());
   }
 
   efloat_t Pr(const data_partition& P) {

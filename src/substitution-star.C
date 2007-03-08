@@ -73,15 +73,15 @@ namespace substitution {
 
   efloat_t Pr_star(const data_partition& P) 
   {
-    if (P.T.n_leaves() == 2)
+    if (P.T->n_leaves() == 2)
       return Pr(P);
 
-    return Pr_star(P.A, P.T, P.SModel(), P.MC);
+    return Pr_star(*P.A, *P.T, P.SModel(), P.MC);
   }
 
   efloat_t Pr_unaligned(const data_partition& P) 
   {
-    const alignment& A = P.A;
+    const alignment& A = *P.A;
     const alphabet& a = A.get_alphabet();
 
     vector<efloat_t> f(P.SModel().frequencies().size());
@@ -105,7 +105,7 @@ namespace substitution {
 
   efloat_t Pr_single_sequence(const data_partition& P) 
   {
-    const alignment& A = P.A;
+    const alignment& A = *P.A;
     const alphabet& a = A.get_alphabet();
 
     vector<efloat_t> f(P.SModel().frequencies().size());
