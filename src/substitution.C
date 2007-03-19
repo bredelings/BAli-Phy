@@ -26,9 +26,6 @@ namespace substitution {
     peeling_info(const Tree&T) { reserve(T.n_branches()); }
   };
 
-  typedef Likelihood_Cache& column_cache_t;
-
-
   /// compute log(probability) from conditional likelihoods (S) and equilibrium frequencies as in MModel
   efloat_t Pr(const Matrix& S,const MultiModel& MModel) {
     const alphabet& a = MModel.Alphabet();
@@ -124,13 +121,13 @@ namespace substitution {
     return total;
   }
 
-  efloat_t calc_root_probability(const alignment& A, const Parameters& P,const vector<int>& rb,
+  efloat_t calc_root_probability(const data_partition& P,const vector<int>& rb,
 			       const ublas::matrix<int>& index) 
   {
-    return calc_root_probability(A,P.T,P.LC,P.SModel(),rb,index);
+    return calc_root_probability(*P.A, *P.T, P.LC, P.SModel(), rb, index);
   }
 
-  void peel_branch(int b0,column_cache_t cache, const alignment& A, const Tree& T, 
+  void peel_branch(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 		   const MatCache& transition_P,const MultiModel& MModel)
   {
     const alphabet& a = A.get_alphabet();
@@ -247,7 +244,8 @@ namespace substitution {
     return peeling_operations;
   }
 
-  int calculate_caches(const alignment& A, const MatCache& MC, const Tree& T,column_cache_t cache,
+  static 
+  int calculate_caches(const alignment& A, const MatCache& MC, const Tree& T,Likelihood_Cache& cache,
 		       const MultiModel& MModel) {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches(T, cache);
@@ -259,15 +257,12 @@ namespace substitution {
     return ops.size();
   }
 
-  int calculate_caches(const alignment& A, const Parameters& P,column_cache_t cache) {
-    const Tree& T = P.T;
-    const MatCache& MC = P;
-
-    return calculate_caches(A,MC,T,cache,P.SModel());
+  int calculate_caches(const data_partition& P) {
+    return calculate_caches(*P.A, P.MC, *P.T, P.LC, P.SModel());
   }
 
-  Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,column_cache_t cache,
-				const MultiModel& MModel)
+  Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,
+				Likelihood_Cache& cache,const MultiModel& MModel)
   {
     const alphabet& a = A.get_alphabet();
 
@@ -353,13 +348,14 @@ namespace substitution {
 
   /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
   vector<Matrix>
-  get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
+  get_column_likelihoods(const data_partition& P, const vector<int>& b,
 			 const vector<int>& req,const vector<int>& seq,int delta)
   {
-    const alphabet& a = A.get_alphabet();
+    const alphabet& a = P.get_alphabet();
 
-    const Tree& T = P.T;
-    Likelihood_Cache& cache = P.LC;
+    const alignment& A = *P.A;
+    const Tree& T = *P.T;
+    Likelihood_Cache& LC = P.LC;
 
 #ifndef NDEBUG
     subA_index_check_footprint(A,T);
@@ -371,11 +367,11 @@ namespace substitution {
     int root = T.directed_branch(b[0]).target();
     for(int i=1;i<b.size();i++)
       assert(T.directed_branch(b[i]).target() == root);
-    cache.root = root;
+    LC.root = root;
 
     ublas::matrix<int> index = subA_index_any(b,A,T,req,seq);
 
-    int n_br = calculate_caches(A,P,cache);
+    int n_br = calculate_caches(P);
 #ifndef NDEBUG
     std::clog<<"get_column_likelihoods: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -383,7 +379,7 @@ namespace substitution {
     vector<Matrix> L;
     L.reserve(A.length()+2);
 
-    Matrix& S = cache.scratch(0);
+    Matrix& S = LC.scratch(0);
     const int n_models = S.size1();
     const int asize    = S.size2();
 
@@ -408,7 +404,7 @@ namespace substitution {
 	  int i0 = index(i,j);
 	  if (i0 != alphabet::gap)
 	    for(int l=0;l<asize;l++) 
-	      S(m,l) *= cache(i0,b[j])(m,l);
+	      S(m,l) *= LC(i0,b[j])(m,l);
 	}
 
 	if (root < T.n_leaves()) {
@@ -424,31 +420,32 @@ namespace substitution {
     return L;
   }
 
-  efloat_t other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) 
+  efloat_t other_subst(const data_partition& P, const vector<int>& nodes) 
   {
-    const Tree& T = P.T;
-    Likelihood_Cache& cache = P.LC;
+    const alignment& A = *P.A;
+    const Tree& T = *P.T;
+    Likelihood_Cache& LC = P.LC;
 
-    int n_br = calculate_caches(A,P,cache);
+    int n_br = calculate_caches(P);
 #ifndef NDEBUG
     std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
 #endif
 
     // compute root branches
     vector<int> rb;
-    for(const_in_edges_iterator i = T[cache.root].branches_in();i;i++)
+    for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
     ublas::matrix<int> index1 = subA_index_none(rb,A,T,nodes);
-    efloat_t Pr1 = calc_root_probability(A,P,rb,index1);
+    efloat_t Pr1 = calc_root_probability(P,rb,index1);
 
 #ifndef NDEBUG
     ublas::matrix<int> index2 = subA_index_any(rb,A,T,nodes);
     ublas::matrix<int> index  = subA_index(rb,A,T);
 
-    efloat_t Pr2 = calc_root_probability(A,P,rb,index2);
-    efloat_t Pr  = calc_root_probability(A,P,rb,index);
+    efloat_t Pr2 = calc_root_probability(P,rb,index2);
+    efloat_t Pr  = calc_root_probability(P,rb,index);
 
     assert(std::abs(log(Pr1 * Pr2) - log(Pr) ) < 1.0e-9);
 #endif
@@ -456,7 +453,7 @@ namespace substitution {
     return Pr1;
   }
 
-  efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& cache,
+  efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
 	    const MultiModel& MModel)
   {
 #ifndef NDEBUG
@@ -465,48 +462,48 @@ namespace substitution {
 #endif
 
 #ifndef DEBUG_CACHING
-    if (cache.cv_up_to_date()) {
+    if (LC.cv_up_to_date()) {
 #ifndef NDEBUG
-      std::clog<<"Pr: Using cached value "<<log(cache.cached_value)<<"\n";
+      std::clog<<"Pr: Using cached value "<<log(LC.cached_value)<<"\n";
 #endif
-      return cache.cached_value;
+      return LC.cached_value;
     }
 #endif
 
-    int n_br = calculate_caches(A,MC,T,cache,MModel);
+    int n_br = calculate_caches(A,MC,T,LC,MModel);
 #ifndef NDEBUG
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
 
     // compute root branches
     vector<int> rb;
-    for(const_in_edges_iterator i = T[cache.root].branches_in();i;i++)
+    for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
     ublas::matrix<int> index = subA_index(rb,A,T);
 
     // get the probability
-    efloat_t Pr = calc_root_probability(A,T,cache,MModel,rb,index);
+    efloat_t Pr = calc_root_probability(A,T,LC,MModel,rb,index);
 
-    cache.cached_value = Pr;
-    cache.cv_up_to_date() = true;
+    LC.cached_value = Pr;
+    LC.cv_up_to_date() = true;
 
     return Pr;
   }
 
-  efloat_t Pr(const alignment& A, const Parameters& P,Likelihood_Cache& cache) {
-    return Pr(A,P,P.T,cache,P.SModel());
+  efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) {
+    return Pr(*P.A, P.MC, *P.T, LC, P.SModel());
   }
 
-  efloat_t Pr(const alignment& A,const Parameters& P) {
-    efloat_t result = Pr(A, P, P.LC);
+  efloat_t Pr(const data_partition& P) {
+    efloat_t result = Pr(P, P.LC);
 
 #ifdef DEBUG_CACHING
-    Parameters P2 = P;
+    data_partition P2 = P;
     P2.LC.invalidate_all();
-    invalidate_subA_index_all(A);
-    efloat_t result2 = Pr(A, P2, P2.LC);
+    invalidate_subA_index_all(P2.A);
+    efloat_t result2 = Pr(P2, P2.LC);
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
       std::abort();

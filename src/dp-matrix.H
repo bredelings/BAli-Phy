@@ -3,9 +3,8 @@
 
 #include <vector>
 #include "dp-engine.H"
-#include "refcount.H"
 
-class state_matrix: public RefObject
+class state_matrix
 {
   const int s1;
   const int s2;

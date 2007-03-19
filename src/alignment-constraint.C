@@ -25,18 +25,15 @@ string clean(const string& in) {
   return out;
 }
     
-
-
-ublas::matrix<int> load_alignment_constraint(const variables_map& args,SequenceTree& T) 
+ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree& T) 
 {
   ublas::matrix<int> constraint(0,T.n_leaves());
 
-  if (args.count("align-constraint")) {
+  if (filename.size()) {
     // Load constraint file
-    ifstream constraint_file(args["align-constraint"].as<string>().c_str());
+    ifstream constraint_file(filename.c_str());
     if (not constraint_file)
-	throw myexception()<<"Couldn't open alignment-constraint file \""<<
-	  args["align-constraint"].as<string>()<<"\".";
+	throw myexception()<<"Couldn't open alignment-constraint file \""<<filename<<"\".";
 
     // Map columns to species
     string line;
@@ -49,8 +46,7 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,SequenceT
     catch (myexception& e) 
     {
       myexception error;
-      error <<"Problem loading alignment constraints from file '" <<
-	args["align-constraint"].as<string>() <<"':\n";
+      error <<"Problem loading alignment constraints from file '" <<filename<<"':\n";
 
       // complain about the names;
       if (names.size() != T.get_sequences().size())

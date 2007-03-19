@@ -221,7 +221,7 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const
   Pr *= p;
 
   assert(Pr > 0.0);
-  std::cerr<<"P(path) = "<<log(Pr)<<std::endl;
+  //std::cerr<<"P(path) = "<<log(Pr)<<std::endl;
   return Pr;
 }
 
@@ -257,6 +257,10 @@ vector<int> DPmatrix::sample_path() const
   assert(i+di(state2)==1 and j+dj(state2)==1);
 
   std::reverse(path.begin(),path.end());
+#ifndef NDEBUG_DP
+  check_sampling_probability(path);
+#endif
+
   return path;
 }
 
@@ -616,6 +620,11 @@ vector<int> DPmatrixConstrained::sample_path() const
   assert(i+di(S2)==1 and j+dj(S2)==1);
 
   std::reverse(path.begin(),path.end());
+
+#ifndef NDEBUG_DP
+  check_sampling_probability(path);
+#endif
+
   return path;
 }
 

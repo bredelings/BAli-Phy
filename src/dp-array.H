@@ -3,9 +3,8 @@
 
 #include <vector>
 #include "dp-engine.H"
-#include "refcount.H"
 
-class state_array: public RefObject
+class state_array
 {
   int s1;
   int s2;

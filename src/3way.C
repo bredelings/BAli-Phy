@@ -528,18 +528,26 @@ namespace A3 {
     return A2;
   }
 
-  efloat_t correction(const alignment& A,const Parameters& P,const vector<int>& nodes) {
-    int length = A.seqlength(nodes[0]);
+  efloat_t correction(const data_partition& P,const vector<int>& nodes) 
+  {
+    // get the lengths of then internal node
+    int length = P.A->seqlength(nodes[0]);
 
-    return pow(P.IModel().lengthp(length), 2.0*P.beta[1]);
+    return pow(P.IModel().lengthp(length),2.0);
   }
 
-
-  efloat_t acceptance_ratio(const alignment& A1,const Parameters& P1,const vector<int>& nodes1,
-			      const alignment& A2,const Parameters& P2,const vector<int>& nodes2) {
-    assert(P1.beta[1] == P2.beta[1]);
-
-    return correction(A1,P1,nodes1) / correction(A2,P2,nodes2);
+  efloat_t correction(const Parameters& P,const vector<int>& nodes) 
+  {
+    efloat_t C = 1.0;
+    for(int i=0;i<P.n_data_partitions();i++)
+      C *= correction(P[i],nodes);
+    return C;
+  }
+    
+  efloat_t acceptance_ratio(const Parameters& P1,const vector<int>& nodes1,
+			      const Parameters& P2,const vector<int>& nodes2) 
+  {
+    return correction(P1,nodes1)/correction(P2,nodes2);
   }
 
 }

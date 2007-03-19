@@ -7,7 +7,6 @@
 #include <string>
 #include <map>
 #include "mytypes.H"
-#include "alignment.H"
 #include "parameters.H"
 #include "rng.H"
 #include "util.H"
@@ -40,8 +39,8 @@ namespace MCMC {
   std::ostream& operator<<(const std::ostream& o, const MoveStats& Stats);
 
   //---------------------- Simple Move  ---------------------//
-  typedef void (*atomic_move)(alignment&,Parameters&,MoveStats&);
-  typedef void (*atomic_move_arg)(alignment&,Parameters&,MoveStats&,int);
+  typedef void (*atomic_move)(Parameters&,MoveStats&);
+  typedef void (*atomic_move_arg)(Parameters&,MoveStats&,int);
 
   //---------------- Move's w/ sub-moves --------------------//
   class Move: public Cloneable 
@@ -77,10 +76,10 @@ namespace MCMC {
     virtual int reset(double l) =0;
 
     /// Do a complete iteration (a top-level routine)
-    virtual void iterate(alignment&,Parameters&,MoveStats&) =0;
+    virtual void iterate(Parameters&,MoveStats&) =0;
 
     /// Do the i-th iteration for this round (not a top-level routine)
-    virtual void iterate(alignment&,Parameters&,MoveStats&,int i) =0;
+    virtual void iterate(Parameters&,MoveStats&,int i) =0;
 
     /// Show enabled-ness for this move and submoves
     virtual void show_enabled(std::ostream&,int depth=0) const;
@@ -135,8 +134,8 @@ namespace MCMC {
     void disable(const string&);
 
     int reset(double);
-    void iterate(alignment&,Parameters&,MoveStats&);
-    void iterate(alignment&,Parameters&,MoveStats&,int);
+    void iterate(Parameters&,MoveStats&);
+    void iterate(Parameters&,MoveStats&,int);
 
     void show_enabled(std::ostream&,int depth=0) const;
 
@@ -177,9 +176,9 @@ namespace MCMC {
 
     int reset(double lambda);
 
-    void iterate(alignment& A,Parameters& P,MoveStats& Stats) { iterate(A,P,Stats,0); }
+    void iterate(Parameters& P,MoveStats& Stats) { iterate(P,Stats,0); }
 
-    void iterate(alignment& A,Parameters& P,MoveStats&,int);
+    void iterate(Parameters& P,MoveStats&,int);
 
     SingleMove(atomic_move m1,const string& s)
       :Move(s),m(m1) {}
@@ -196,9 +195,9 @@ namespace MCMC {
 
     int reset(double lambda);
 
-    void iterate(alignment& A,Parameters& P,MoveStats& Stats) { iterate(A,P,Stats,0); }
+    void iterate(Parameters& P,MoveStats& Stats) { iterate(P,Stats,0); }
 
-    void iterate(alignment& A,Parameters& P,MoveStats&,int);
+    void iterate(Parameters& P,MoveStats&,int);
 
     MH_Move(const Proposal& P,const string& s)
       :Move(s),proposal(P) {}
@@ -219,11 +218,11 @@ namespace MCMC {
     vector<int> args;
 
     int reset(double);
-    void iterate(alignment&,Parameters&,MoveStats&);
-    void iterate(alignment&,Parameters&,MoveStats&,int);
+    void iterate(Parameters&,MoveStats&);
+    void iterate(Parameters&,MoveStats&,int);
 
     /// Operate on the 'a'-th arg
-    virtual void operator()(alignment&,Parameters&,MoveStats&,int a)=0;
+    virtual void operator()(Parameters&,MoveStats&,int a)=0;
 
     MoveArg(const string& s):Move(s) { }
     MoveArg(const string& s, const string& v):Move(s,v) { }
@@ -257,7 +256,7 @@ namespace MCMC {
     void enable(const string&);
     void disable(const string&);
 
-    void operator()(alignment&,Parameters&,MoveStats&,int);
+    void operator()(Parameters&,MoveStats&,int);
     
     void show_enabled(std::ostream&,int depth=0) const;
 
@@ -273,7 +272,7 @@ namespace MCMC {
   public:
     MoveArgSingle* clone() const {return new MoveArgSingle(*this);}
 
-    void operator()(alignment&,Parameters&,MoveStats&,int);
+    void operator()(Parameters&,MoveStats&,int);
 
     MoveArgSingle(const string& s,atomic_move_arg m1,const vector<int>& a)
       :MoveArg(s),m(m1) 
@@ -293,7 +292,7 @@ namespace MCMC {
 
   public:
     /// Run the sampler for 'max' iterations
-    void go(alignment& A, Parameters& P, int subsample, int max, 
+    void go(Parameters& P, int subsample, int max, 
 	    std::ostream&,std::ostream&,std::ostream&,std::ostream&);
 
     Sampler(const string& s)

@@ -11,7 +11,21 @@ using std::istream;
 
 
 using boost::program_options::variables_map;
+using boost::shared_ptr;
 
+alignment reorder_sequences(const alignment& A, const vector<int>& mapping) 
+{
+  alignment A2 = A;
+
+  for(int i=0;i<A2.n_sequences();i++) {
+    if (mapping[i] == i) continue;
+
+    A2.seq(mapping[i]) = A.seq(i);
+    for(int column=0;column<A2.length();column++)
+      A2(column,mapping[i]) = A(column,i);
+  }
+  return A2;
+}
 
 alignment chop_internal(alignment A) 
 {
@@ -504,15 +518,15 @@ long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> 
 }
 
 
-vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args) 
+vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args) 
 {
-  vector<OwnedPointer<alphabet> > alphabets; 
+  vector<shared_ptr<const alphabet> > alphabets; 
 
   if (not args.count("alphabet")) {
-    alphabets.push_back(DNA());
-    alphabets.push_back(RNA());
-    alphabets.push_back(AminoAcids());
-    alphabets.push_back(AminoAcidsWithStop());
+    alphabets.push_back(shared_ptr<const alphabet>(new DNA));
+    alphabets.push_back(shared_ptr<const alphabet>(new RNA));
+    alphabets.push_back(shared_ptr<const alphabet>(new AminoAcids));
+    alphabets.push_back(shared_ptr<const alphabet>(new AminoAcidsWithStop));
 
     return alphabets;
   }
@@ -521,11 +535,11 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
 
   if (name == "Codons" or name == "Codons+stop") {
 
-    OwnedPointer<AminoAcids> AA;
+    shared_ptr<const AminoAcids> AA;
     if (name == "Codons")
-      AA = AminoAcids();
+      AA = shared_ptr<const AminoAcids>(new AminoAcids);
     else
-      AA = AminoAcidsWithStop();
+      AA = shared_ptr<const AminoAcids>(new AminoAcidsWithStop);
     
     string genetic_code_filename = "standard-code.txt";
     if (args.count("genetic-code"))
@@ -533,46 +547,66 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
 
     genetic_code_filename = args["data-dir"].as<string>() + "/" + genetic_code_filename;
 
-    alphabets.push_back(Codons(DNA(),*AA,genetic_code_filename));
-    alphabets.push_back(Codons(RNA(),*AA,genetic_code_filename));
+    alphabets.push_back(shared_ptr<const alphabet>(new Codons(DNA(),*AA,genetic_code_filename)));
+    alphabets.push_back(shared_ptr<const alphabet>(new Codons(RNA(),*AA,genetic_code_filename)));
   }
   else if (name == "Triplets") {
-    alphabets.push_back(Triplets(DNA()));
-    alphabets.push_back(Triplets(RNA()));
+    alphabets.push_back(shared_ptr<const alphabet>(new Triplets(DNA())));
+    alphabets.push_back(shared_ptr<const alphabet>(new Triplets(RNA())));
   }
   else if (name == "DNA")
-    alphabets.push_back(DNA());
+    alphabets.push_back(shared_ptr<const alphabet>(new DNA()));
   else if (name == "RNA")
-    alphabets.push_back(RNA());
+    alphabets.push_back(shared_ptr<const alphabet>(new RNA()));
   else if (name == "Amino-Acids")
-    alphabets.push_back(AminoAcids());
+    alphabets.push_back(shared_ptr<const alphabet>(new AminoAcids()));
   else if (name == "Amino-Acids+stop")
-    alphabets.push_back(AminoAcidsWithStop());
+    alphabets.push_back(shared_ptr<const alphabet>(new AminoAcidsWithStop()));
   else 
     throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
 
   return alphabets;
 }
 
+alignment load_alignment(const string& filename,const vector<shared_ptr<const alphabet> >& alphabets)
+{
+  alignment A;
+  if (filename == "-")
+    A.load(alphabets,sequence_format::read_guess,std::cin);
+  else
+    A.load(alphabets,filename);
+  
+  remove_empty_columns(A);
+  
+  if (A.n_sequences() == 0)
+    throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
+
+  return A;
+
+}
+
+vector<alignment> load_alignments(const vector<string>& filenames,const vector<shared_ptr<const alphabet> >& alphabets)
+{
+  vector<alignment> alignments;
+
+  for(int i=0;i<filenames.size();i++) 
+    alignments.push_back( load_alignment(filenames[i],alphabets) );
+
+  return alignments;
+
+}
+
 /// Load an alignment from command line args "--align filename"
 alignment load_A(const variables_map& args,bool keep_internal) 
 {
-  vector<OwnedPointer<alphabet> > alphabets = load_alphabets(args);
+  vector<shared_ptr<const alphabet> > alphabets = load_alphabets(args);
   
   // ----- Try to load alignment ------ //
   if (not args.count("align")) 
     throw myexception("Alignment file not specified! (--align <filename>)");
   
-  alignment A;
-  if (args["align"].as<string>() == "-")
-    A.load(alphabets,sequence_format::read_guess,std::cin);
-  else
-    A.load(alphabets,args["align"].as<string>());
-  
-  remove_empty_columns(A);
-  
-  if (A.n_sequences() == 0)
-    throw myexception()<<"Alignment file "<<args["align"].as<string>()<<" didn't contain any sequences!";
+  string filename = args["align"].as<string>();
+  alignment A = load_alignment(filename,alphabets);
 
   if (not keep_internal)
     A = chop_internal(A);
@@ -597,7 +631,7 @@ bool is_next_char(istream& file,char match) {
     return false;
 }
 
-list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphabet> >& alphabets, int maxalignments) {
+list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets, int maxalignments) {
   list<alignment> alignments;
   
   // we are using every 'skip-th' alignment
@@ -709,7 +743,7 @@ list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphab
   return alignments;
 }
 
-vector<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphabet> >& alphabets) {
+vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets) {
   vector<alignment> alignments;
   
   alignment A;
@@ -751,7 +785,7 @@ vector<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alph
   return alignments;
 }
 
-alignment find_first_alignment(std::istream& ifile, const vector<OwnedPointer<alphabet> >& alphabets) 
+alignment find_first_alignment(std::istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets) 
 {
   alignment A;
 
@@ -790,7 +824,7 @@ alignment find_first_alignment(std::istream& ifile, const vector<OwnedPointer<al
   return A;
 }
 
-alignment find_last_alignment(std::istream& ifile, const vector<OwnedPointer<alphabet> >& alphabets) 
+alignment find_last_alignment(std::istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets) 
 {
   alignment A;
 

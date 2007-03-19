@@ -13,16 +13,15 @@ double dirichlet_fiddle_old(std::vector<double>& p,double sigma,const std::vecto
 
 double scale_gaussian(double& x,double sigma);
 
-#include "alignment.H"
 #include "parameters.H"
 
 class Proposal: public Cloneable {
 public:
   Proposal* clone() const =0;
-  virtual double operator()(alignment& A, Parameters& P) const=0;
+  virtual double operator()(Parameters& P) const=0;
 };
 
-typedef double (*generic_proposal)(alignment& A, Parameters& P);
+typedef double (*generic_proposal)(Parameters& P);
 
 class Generic_Proposal: public Proposal
 {
@@ -30,7 +29,7 @@ class Generic_Proposal: public Proposal
   
 public:
   Generic_Proposal* clone() const {return new Generic_Proposal(*this);}
-  double operator()(alignment& A, Parameters& P) const {return proposal(A,P);}
+  double operator()(Parameters& P) const {return proposal(P);}
   Generic_Proposal(generic_proposal gp):proposal(gp) {}
 };
 
@@ -110,7 +109,7 @@ class Proposal2: public Proposal
 
 public:
   Proposal2* clone() const {return new Proposal2(*this);}
-  double operator()(alignment& A, Parameters& P) const;
+  double operator()(Parameters& P) const;
   Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
 	    const Parameters& P);
   Proposal2(const Proposal_Fn& p,const std::vector<std::string>& s, const std::vector<string>& v,

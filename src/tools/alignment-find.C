@@ -21,6 +21,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help", "produce help message")
+    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("first", "get the first alignment in the file")
     ("last", "get the last alignment in the file (default)")
     ;
@@ -55,21 +56,15 @@ int main(int argc,char* argv[])
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    // --------------- Alphabets to try ---------------- //
-    vector<OwnedPointer<alphabet> > alphabets;
-    alphabets.push_back(DNA());
-    alphabets.push_back(RNA());
-    alphabets.push_back(AminoAcids());
-
     //--------------- Find the alignment ----------------//
     alignment A;
     if (args.count("first") and args.count("last"))
       throw myexception()<<"You must choose either --first or --last, not both";
 
     if (args.count("first"))
-      A = find_first_alignment(std::cin, alphabets);
+      A = find_first_alignment(std::cin, load_alphabets(args));
     else
-      A = find_last_alignment(std::cin, alphabets);
+      A = find_last_alignment(std::cin, load_alphabets(args));
 
     //------------------ Print it out -------------------//
     std::cout<<A;

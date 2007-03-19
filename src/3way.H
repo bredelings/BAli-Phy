@@ -110,10 +110,13 @@ namespace A3 {
   alignment project(const alignment& A1,const vector<int>&);
 
   /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
-  efloat_t correction(const alignment& A,const Parameters& P,const vector<int>& nodes);
+  efloat_t correction(const data_partition& P,const vector<int>& nodes);
 
-  efloat_t acceptance_ratio(const alignment& A1,const Parameters& P1,const vector<int>&,
-			      const alignment& A2,const Parameters& P2,const vector<int>&);
+  /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
+  efloat_t correction(const Parameters& P,const vector<int>& nodes);
+
+  efloat_t acceptance_ratio(const Parameters& P1,const vector<int>&,
+			    const Parameters& P2,const vector<int>&);
 
 }
 

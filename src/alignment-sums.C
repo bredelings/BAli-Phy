@@ -3,19 +3,16 @@
 #include "substitution.H"
 #include "util.H"
 
-efloat_t other_subst(const alignment& A, const Parameters& P, const vector<int>& nodes) {
-  efloat_t p = substitution::other_subst(A,P,nodes);
-
-  return pow(p, P.beta[0]);
+efloat_t other_subst(const data_partition& P, const vector<int>& nodes) 
+{
+  return substitution::other_subst(P,nodes);
 }
 
-efloat_t other_prior(const alignment& A, const Parameters& P,const vector<int>& nodes) {
-  const SequenceTree& T = P.T;
+efloat_t other_prior(const data_partition& P,const vector<int>& nodes) 
+{
+  const SequenceTree& T = *P.T;
 
   efloat_t p = 1;
-
-
-  p *= topology_weight(P,T);
 
   // Add in the branch alignments
   for(int b=0;b<T.n_branches();b++) {
@@ -25,7 +22,7 @@ efloat_t other_prior(const alignment& A, const Parameters& P,const vector<int>& 
     if (includes(nodes,target) and includes(nodes,source))
       continue;
 
-    p *= prior_branch(A,P.branch_HMMs[b],target,source);
+    p *= prior_branch(*P.A, P.branch_HMMs[b], target, source);
   }
 
 
@@ -44,22 +41,22 @@ efloat_t other_prior(const alignment& A, const Parameters& P,const vector<int>& 
 	continue;
     }
 
-    p /= P.IModel().lengthp(A.seqlength(n));
-    p /= P.IModel().lengthp(A.seqlength(n));
+    p /= pow(P.IModel().lengthp(P.A->seqlength(n)) , 2.0);
   }
 
-  return pow(p, P.beta[1]);
+  return p;
 }
 
 
 
 /// Distributions function for a star tree
-vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
+vector< Matrix > distributions_star(const data_partition& P,
 				    const vector<int>& seq,int,const valarray<bool>& group)
 {
+  const alignment& A = *P.A;
   const alphabet& a = A.get_alphabet();
   const substitution::MultiModel& MModel = P.SModel();
-  const SequenceTree& T = P.T;
+  const SequenceTree& T = *P.T;
 
   //FIXME modify this to add a shift of 2
 
@@ -76,7 +73,7 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 	if (not group[n]) continue;
 
 	int letter = A(seq[column],n);
-	const Matrix& Q = P.transition_P(m,n);
+	const Matrix& Q = P.MC.transition_P(m,n);
 
 	// Pr(root=l) includes Pr(l->letter)
 	if (a.is_letter(letter))
@@ -95,9 +92,9 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 
 
 /// Distributions function for a full tree
-vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const vector<int>& seq,int root,const valarray<bool>& group)
+vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int root,const valarray<bool>& group)
 {
-  const Tree& T = P.T;
+  const Tree& T = *P.T;
 
   vector<int> branches;
   vector<const_nodeview> neighbors;
@@ -114,34 +111,36 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,const
       required.push_back(T.directed_branch(branches[i]).source());
   }
 
-  vector< Matrix > dist = substitution::get_column_likelihoods(A,P,branches,required,seq,2);
+  vector< Matrix > dist = substitution::get_column_likelihoods(P,branches,required,seq,2);
   // note: we could normalize frequencies to sum to 1
   assert(dist.size() == seq.size()+2);
 
   return dist;
 }
 
-///Checks integration and sampling from collapsed state
-void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t OP, const vector<int>& path, const DPengine& Matrices) 
+/// Check offset between (HMM path probabilities) and P (true probabilities) 
+void check_match_P(const data_partition& P, efloat_t OS, efloat_t OP, const vector<int>& path, const DPengine& Matrices) 
 {
-
-  /*------------------- Check offsets from path_Q -> P -----------------*/
   vector<int> path_g = Matrices.generalize(path);
 
-  efloat_t qs = Matrices.path_Q_subst(path_g) * OS;
-  efloat_t ls = P.likelihood(A,P);
+  //--- Compare path emission probability VS likelihood
+  efloat_t qs = Matrices.path_Q_subst(path_g) * pow(OS,P.beta[0]);
+  efloat_t ls = pow(P.likelihood(), P.beta[0]);
   
+  //--- Compare the path probability (Q) and collapsed/generalized path probability (GQ)
   efloat_t qpGQ = Matrices.path_GQ_path(path_g) *  Matrices.generalize_P(path);
   efloat_t qpQ  = Matrices.path_Q_path(path);
 
   std::cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
   assert(std::abs(log(qpGQ)-log(qpQ)) < 1.0e-9);
   
-  efloat_t qp = Matrices.path_GQ_path(path_g) * Matrices.generalize_P(path) *OP;
-  efloat_t lp = pow(prior_HMM(A,P),P.beta[1]);
+  //--- Compare the path transition probabilities (Q) and the alignment prior
+  efloat_t qp = Matrices.path_Q_path(path) * OP;
+  efloat_t lp = P.prior_alignment();
 
-  efloat_t qt = qs * qp * pow(prior(P),P.beta[1]);
-  efloat_t lt = P.probability(A,P);
+  //--- Compare the offset path probability and the true heated probability
+  efloat_t qt = qs * qp * P.prior_no_alignment();
+  efloat_t lt = P.heated_probability();
 
   std::cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;
   std::cerr<<"lp = "<<lp<<"    qp = "<<qp
@@ -152,7 +151,7 @@ void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t
   if ( (std::abs(log(qs) - log(ls)) > 1.0e-9) or 
        (std::abs(log(qp) - log(lp)) > 1.0e-9) or 
        (std::abs(log(qt) - log(lt)) > 1.0e-9)) {
-    std::cerr<<A<<endl;
+    std::cerr<<*P.A<<endl;
     std::cerr<<"Can't match up DP probabilities to real probabilities!\n"<<show_stack_trace();
     std::abort();
   }
@@ -160,7 +159,7 @@ void check_match_P(const alignment& A,const Parameters& P, efloat_t OS, efloat_t
 }
 
 /// Computes true, sampling, and proposal probabilities
-vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
+vector<efloat_t> sample_P(const data_partition& P,
 			  efloat_t ratio, efloat_t rho,
 			  const vector<int>& path, const DPengine& Matrices) 
 {
@@ -169,7 +168,7 @@ vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
   vector<int> path_g = Matrices.generalize(path);
 
   // Probability
-  PR[0] = P.probability(A,P);
+  PR[0] = P.heated_probability();
 
   // Probability of sampling A | i
   PR[1] = Matrices.path_P(path_g) * Matrices.generalize_P(path);
@@ -185,9 +184,13 @@ vector<efloat_t> sample_P(const alignment& A,const Parameters& P,
   return PR;
 }
 
+// pi[i]*rho[i]*Q(i,0) = pi[0]*rho[0]*Q(0,i)
+
+// P(A,i) * rho[i] * choose_p(i->0) * P(A'|0) = P(A',0) * rho[0] * choose_p(0->i) * P(A|i)
+
 /// Check that [ pi(A,i) * rho[i] / P(A|i) ] * P(i,0)/P(0,i) = [ pi(A`,0) * rho[0] / P(A`|0) ]
 
-void check_sampling_probabilities(const vector< vector<efloat_t> >& PR,const vector<alignment>& a) 
+void check_sampling_probabilities(const vector< vector<efloat_t> >& PR) 
 {
   const vector<efloat_t>& P1 = PR.back();
   efloat_t ratio1 = P1[0]*P1[2]/P1[1];
@@ -209,8 +212,9 @@ void check_sampling_probabilities(const vector< vector<efloat_t> >& PR,const vec
 
     std::cerr<<"diff = "<<diff<<endl;
     if (std::abs(diff) > 1.0e-9) {
-      std::cerr<<a.back()<<endl;
-      std::cerr<<a[i]<<endl;
+      //      std::cerr<<a.back()<<endl;
+      //      std::cerr<<a[i]<<endl;
+      std::cerr<<"i = "<<i<<endl;
       
       throw myexception()<<"Sampling probabilities were incorrect\n"<<show_stack_trace();
     }

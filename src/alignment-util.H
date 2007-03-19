@@ -4,6 +4,7 @@
 #include <vector>
 #include <valarray>
 #include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
 #include <istream>
 #include <string>
 
@@ -11,6 +12,9 @@
 #include "alphabet.H"
 #include "tree.H"
 #include "clone.H"
+
+/// Reorder the sequences of @A according to the permutation @mapping
+alignment reorder_sequences(const alignment& A, const std::vector<int>& mapping);
 
 // Remove sequences to A corresponding to internal nodes in T
 alignment chop_internal(alignment A);
@@ -20,6 +24,13 @@ alignment add_internal(alignment A,const Tree& T);
 
 /// Load an alignment from command line args align=filename
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
+
+/// Load an alignment from command line args align=filename
+alignment load_alignment(const std::string& filename, const vector<boost::shared_ptr<const alphabet> >& alphabets);
+
+/// Load alignments from command line args align=filename
+std::vector<alignment> load_alignments(const vector<std::string>& filenames,
+				       const vector<boost::shared_ptr<const alphabet> >& alphabets);
 
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
@@ -79,15 +90,15 @@ long int splits_distance(const alignment& A1,const alignment& A2);
 long int splits_distance(const ublas::matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
 			 const ublas::matrix<int>& M2,const std::vector<std::vector<int> >& column_indices2);
 
-std::list<alignment> load_alignments(std::istream& ifile, const std::vector<OwnedPointer<alphabet> >& alphabets, int maxalignments);
+std::list<alignment> load_alignments(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets, int maxalignments);
 
-std::vector<alignment> load_alignments(std::istream&, const std::vector<OwnedPointer<alphabet> >&);
+std::vector<alignment> load_alignments(std::istream&, const std::vector<boost::shared_ptr<const alphabet> >&);
 
-alignment find_last_alignment(std::istream& ifile, const std::vector<OwnedPointer<alphabet> >& alphabets);
+alignment find_last_alignment(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
 
-alignment find_first_alignment(std::istream& ifile, const std::vector<OwnedPointer<alphabet> >& alphabets);
+alignment find_first_alignment(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
 
-vector<OwnedPointer<alphabet> > load_alphabets(const boost::program_options::variables_map& args);
+vector<boost::shared_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args);
 
 void check_disconnected(const alignment& A, const Tree& T, const std::vector<int>& disconnected);
 

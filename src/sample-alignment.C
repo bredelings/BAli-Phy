@@ -6,7 +6,10 @@
 #include "alignment-sums.H"
 #include "alignment-constraint.H"
 #include "alignment-util.H"
+#include "substitution.H"
+#include "substitution-index.H"
 #include "dp-matrix.H"
+#include <boost/shared_ptr.hpp>
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
@@ -14,11 +17,10 @@
 using std::abs;
 using namespace A2;
 
-vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
-						  const vector<int>& seq,int b,bool up) {
-
+vector< Matrix > distributions_star(const data_partition& P,const vector<int>& seq,int b,bool up) 
+{
   //--------------- Find our branch, and orientation ----------------//
-  const SequenceTree& T = P.T;
+  const SequenceTree& T = *P.T;
   int root = T.branch(b).target();      //this is an arbitrary choice
 
   int node1 = T.branch(b).source();
@@ -27,13 +29,13 @@ vector< Matrix > distributions_star(const alignment& A,const Parameters& P,
 
   valarray<bool> group = T.partition(node1,node2);
 
-  return ::distributions_star(A,P,seq,root,group);
+  return ::distributions_star(P,seq,root,group);
 }
 
-vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
-						  const vector<int>& seq,int b,bool up) {
+vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int b,bool up)
+{
   //--------------- Find our branch, and orientation ----------------//
-  const SequenceTree& T = P.T;
+  const SequenceTree& T = *P.T;
   int root = T.branch(b).target();      //this is an arbitrary choice
 
   int node1 = T.branch(b).source();
@@ -42,23 +44,23 @@ vector< Matrix > distributions_tree(const alignment& A,const Parameters& P,
 
   valarray<bool> group = T.partition(node1,node2);
 
-  return ::distributions_tree(A,P,seq,root,group);
+  return ::distributions_tree(P,seq,root,group);
 }
 
-typedef vector< Matrix > (*distributions_t_local)(const alignment&, const Parameters&,
-							      const vector<int>&,int,bool);
+typedef vector< Matrix > (*distributions_t_local)(const data_partition&,
+						  const vector<int>&,int,bool);
 
-void sample_alignment(alignment& A,Parameters& P,int b) 
+boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b) 
 {
   assert(P.has_IModel());
 
-  if (any_branches_constrained(vector<int>(1,b),P.T,P.TC,P.AC))
-    return;
+  valarray<bool> s1 = constraint_satisfied(P.alignment_constraint, *P.A);
 
-  valarray<bool> s1 = constraint_satisfied(P.alignment_constraint,A);
-
-  const Tree& T = P.T;
-  alignment old = A;
+  const Tree& T = *P.T;
+  //FIXME - partitions
+  data_partition P0 = P;  // We COULD make this conditional... perhaps we should
+  //FIXME - partitions
+  alignment& old = *P0.A;
 
   const Matrix frequency = substitution::frequency_matrix(P.SModel());
 
@@ -77,15 +79,16 @@ void sample_alignment(alignment& A,Parameters& P,int b)
       seq2.push_back(column);
   }
 
-  if (not seq1.size() or not seq2.size()) return;
+  if (not seq1.size() or not seq2.size()) 
+    return boost::shared_ptr<DPmatrixSimple>(); //NULL;
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
   distributions_t_local distributions = distributions_tree;
   if (not P.SModel().full_tree)
     distributions = distributions_star;
 
-  vector< Matrix > dists1 = distributions(old,P,seq1,b,true);
-  vector< Matrix > dists2 = distributions(old,P,seq2,b,false);
+  vector< Matrix > dists1 = distributions(P0,seq1,b,true);
+  vector< Matrix > dists2 = distributions(P0,seq2,b,false);
 
   vector<int> state_emit(4,0);
   state_emit[0] |= (1<<1)|(1<<0);
@@ -93,93 +96,142 @@ void sample_alignment(alignment& A,Parameters& P,int b)
   state_emit[2] |= (1<<0);
   state_emit[3] |= 0;
 
-  DPmatrixSimple Matrices(state_emit, P.branch_HMMs[b].start_pi(),P.branch_HMMs[b], P.beta[0],
-			  P.SModel().distribution(), dists1, dists2, frequency);
+  boost::shared_ptr<DPmatrixSimple> 
+    Matrices( new DPmatrixSimple(state_emit, P.branch_HMMs[b].start_pi(),
+				 P.branch_HMMs[b], P.beta[0], 
+				 P.SModel().distribution(), dists1, dists2, frequency)
+	      );
 
   //------------------ Compute the DP matrix ---------------------//
   vector<int> path_old = get_path(old,node1,node2);
   vector<vector<int> > pins = get_pins(P.alignment_constraint,old,group1,not group1,seq1,seq2);
-  vector<int> path = Matrices.forward(pins);
+  vector<int> path = Matrices->forward(pins);
 
   path.erase(path.begin()+path.size()-1);
 
-  A = construct(old,path,node1,node2,T,seq1,seq2);
+  *P.A = construct(old,path,node1,node2,T,seq1,seq2);
+  P.LC.set_length(P.A->length());
+  P.LC.invalidate_branch_alignment(T,b);
 
-  //--------------------------------------------------------------//
+#ifndef NDEBUG_DP
+  assert(valid(*P.A));
+  valarray<bool> s2 = constraint_satisfied(P.alignment_constraint, *P.A);
+  report_constraints(s1,s2);
+
+  vector<int> path_new = get_path(*P.A, node1, node2);
+  path.push_back(3);
+  assert(path_new == path);
+#endif
+
+  return Matrices;
+}
+
+void sample_alignment(Parameters& P,int b)
+{
+
+  if (any_branches_constrained(vector<int>(1,b), *P.T, *P.TC, P.AC))
+    return;
+
+#if !defined(NDEBUG_DP) || !defined(NDEBUG)
+  const Parameters P0 = P;
+#endif
+  vector<Parameters> p;
+  p.push_back(P);
+
+  vector< vector< boost::shared_ptr<DPmatrixSimple> > > Matrices(1);
+  for(int i=0;i<p.size();i++) 
+  {
+    for(int j=0;j<p[i].n_data_partitions();j++) {
+      Matrices[i].push_back(sample_alignment_base(p[i][j], b));
+#ifndef NDEBUG
+      substitution::check_subA(P0[j].A, p[i][j].A, p[0].T);
+      p[i][j].likelihood();  // check the likelihood calculation
+#endif
+    }
+  }
+
 #ifndef NDEBUG_DP
   std::cerr<<"\n\n----------------------------------------------\n";
+
+  int node1 = P.T.branch(b).target();
+  int node2 = P.T.branch(b).source();
+
   vector<int> nodes;
   nodes.push_back(node1);
   nodes.push_back(node2);
 
-  vector<alignment> a;    a.push_back(A);   a.push_back(old);
-  vector<Parameters> p(2,P);  p[0].LC.set_length(A.length()); p[0].LC.invalidate_branch_alignment(T,b);
-  vector< efloat_t > OS(2, 0.0);
-  vector< efloat_t > OP(2, 0.0);
-  vector< vector<int> > paths;
+  p.push_back(P0);
+  nodes.push_back( nodes[0] );
+  Matrices.push_back(Matrices[0]);
+
+  vector< vector< efloat_t > > OS(p.size());
+  vector< vector< efloat_t > > OP(p.size());
+  vector< vector< vector<int> > > paths(p.size());
 
   //------------------- Check offsets from path_Q -> P -----------------//
-  for(int i=0;i<p.size();i++) {
-    paths.push_back( get_path(a[i],node1,node2) );
+  for(int i=0;i<p.size();i++) 
+    for(int j=0;j<p[i].n_data_partitions();j++) 
+    {
+      paths[i].push_back( get_path(p[i][j].A, node1, node2) );
     
-    OS[i] = other_subst(a[i],p[i],nodes);
-    OP[i] = other_prior(a[i],p[i],nodes);
+      OS[i].push_back( other_subst(p[i][j],nodes) );
+      OP[i].push_back( other_prior(p[i][j],nodes) );
 
-    check_match_P(a[i], p[i], OS[i], OP[i], paths[i], Matrices);
-  }
+      check_match_P(p[i][j], OS[i][j], OP[i][j], paths[i][j], *Matrices[i][j]);
+    }
 
   //--------- Compute path probabilities and sampling probabilities ---------//
   vector< vector<efloat_t> > PR(p.size());
 
-  for(int i=0;i<p.size();i++) 
-    PR[i] = sample_P(a[i], p[i], 1, 1, paths[i], Matrices);
+  for(int i=0;i<p.size();i++)
+  {
+    // sample_P(p[i][j], 1, 1, paths[i][j], *Matrices[j]);
+    PR[i] = vector<efloat_t>(4,1);
+    PR[i][0] = p[i].heated_probability();
+    for(int j=0;j<p[i].n_data_partitions();j++) 
+    {
+      vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
+      PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
+    }
+  }
 
-  if (paths[0].size() > paths[1].size())
-    std::cerr<<"path got longer by "<<paths[0].size() - paths[1].size()<<"!\n";
-  if (paths[0].size() < paths[1].size())
-    std::cerr<<"path got shorter by "<<paths[1].size() - paths[0].size()<<"!\n";
+  for(int i=0;i<p[1].n_data_partitions();i++) 
+  {
+    if (paths[0][i].size() > paths[1][i].size())
+      std::cerr<<"path "<<i+1<<" got longer by "<<paths[0][0].size() - paths[1][0].size()<<"!\n";
+    if (paths[0][i].size() < paths[1][i].size())
+      std::cerr<<"path "<<i+1<<" got shorter by "<<paths[1][0].size() - paths[0][0].size()<<"!\n";
+  }
 
   //--------- Check that each choice is sampled w/ the correct Probability ---------//
-  check_sampling_probabilities(PR,a);
+  check_sampling_probabilities(PR);
 
   //--------- Check construction of A  ---------//
-  vector<int> path_new = get_path(A,node1,node2);
-  path.push_back(3);
-  assert(path_new == path);
+  for(int j=0;j<P.n_data_partitions();j++) 
+  {
+    double diff = log(PR[0][0]) - log(PR[1][0]);
+    std::cerr<<"before = "<<PR[1][0]<<"       after = "<<PR[0][0]<<
+      " diff = "<<diff<<std::endl;
 
-  double diff = log(PR[0][0]) - log(PR[1][0]);
-  std::cerr<<"before = "<<PR[1][0]<<"       after = "<<PR[0][0]<<
-    " diff = "<<diff<<std::endl;
-
-  if (diff < -10) {
-    efloat_t L1 = p[1].likelihood(a[1],p[1]);
-    efloat_t L2 = p[0].likelihood(a[0],p[0]);
-
-    efloat_t prior1 = p[1].prior(a[1],p[1]);
-    efloat_t prior2 = p[0].prior(a[0],p[0]);
-
-    std::cerr<<"Yelp!\n";
-
-    std::cerr<<std::endl;
-    std::cerr<<"DELTA Likelihood = "<<L2/L1<<std::endl;
-    std::cerr<<"DELTA prior = "<<prior2/prior1<<std::endl;
-    std::cerr<<std::endl;
-    
-    std::cerr<<"Sampling probability of good path is: "<<PR[1][1]<<std::endl;
-
-    std::cerr<<"delta = "<<log(P.branch_HMMs[b](0,1))<<"\n";
-    std::cerr<<"delta2 = "<<log(P.branch_HMMs[b](1,2))<<"\n";
+    if (diff < -10) {
+      efloat_t L1 = p[1].likelihood();
+      efloat_t L2 = p[0].likelihood();
+      
+      efloat_t prior1 = p[1].prior();
+      efloat_t prior2 = p[0].prior();
+      
+      std::cerr<<"Yelp!\n";
+      
+      std::cerr<<std::endl;
+      std::cerr<<"DELTA Likelihood = "<<L2/L1<<std::endl;
+      std::cerr<<"DELTA prior = "<<prior2/prior1<<std::endl;
+      std::cerr<<std::endl;
+      
+      std::cerr<<"Sampling probability of good path is: "<<PR[1][1]<<std::endl;
+    }
   }
 
 #endif
 
-  P.LC.set_length(A.length());
-  P.LC.invalidate_branch_alignment(T,b);
-
-  //--------------------------------------------------------------//
-  assert(valid(A));
-  valarray<bool> s2 = constraint_satisfied(P.alignment_constraint,A);
-  report_constraints(s1,s2);
 }
-
 

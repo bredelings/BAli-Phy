@@ -1,6 +1,7 @@
 #include <vector>
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "setup.H"
 #include "util.H"
@@ -19,28 +20,18 @@ using std::endl;
 namespace fs = boost::filesystem;
 
 using namespace boost::program_options;
-
-//FIXME - standardize them BOTH by leaf taxa names?
+using boost::shared_ptr;
 
 /// Reorder internal sequences of A to correspond to standardized node names for T
-alignment standardize(const alignment& A, const SequenceTree& T) {
+alignment standardize(const alignment& A, const SequenceTree& T) 
+{
   alignment A2 = A;
   SequenceTree T2 = T;
 
   // standardize NON-LEAF node and branch names in T
   vector<int> mapping = T2.standardize();
 
-  // FIXME - remove imapping and do this forwards instead of backwards?
-  vector<int> imapping = invert(mapping);
-
-  for(int i=0;i<A.n_sequences();i++) {
-    if (imapping[i] == i) continue;
-
-    A2.seq(i) = A.seq(imapping[i]);
-    for(int column=0;column<A2.length();column++)
-      A2(column,i) = A(column,imapping[i]);
-  }
-  return A2;
+  return reorder_sequences(A,mapping);
 }
 
 int letter_count(const alignment& A,int l) 
@@ -275,6 +266,143 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
 
   //---- Check to see that internal nodes satisfy constraints ----//
   check_alignment(A,T,internal_sequences);
+}
+
+void link(vector<alignment>& alignments, SequenceTree& T, bool internal_sequences)
+{
+  for(int i=1;i<alignments.size();i++)
+  {
+    if (alignments[i].n_sequences() != alignments[0].n_sequences())
+      throw myexception()<<"Alignment #"<<i+1<<" has "<<alignments[i].n_sequences()<<" sequences, but the previous alignments have "<<alignments[0].n_sequences()<<" sequences!";
+
+    vector<int> mapping = compute_mapping(sequence_names(alignments[i]),sequence_names(alignments[0]));
+
+    alignments[i] = reorder_sequences(alignments[i],mapping);
+  }
+
+  for(int i=0;i<alignments.size();i++) 
+    link(alignments[i],T,internal_sequences);
+}
+
+void link(vector<alignment>& alignments, RootedSequenceTree& T, bool internal_sequences)
+{
+  for(int i=1;i<alignments.size();i++)
+  {
+    if (alignments[i].n_sequences() != alignments[0].n_sequences())
+      throw myexception()<<"Alignment #"<<i+1<<" has "<<alignments[i].n_sequences()<<" sequences, but the previous alignments have "<<alignments[0].n_sequences()<<" sequences!";
+
+    vector<int> mapping = compute_mapping(sequence_names(alignments[i]),sequence_names(alignments[0]));
+
+    alignments[i] = reorder_sequences(alignments[i],mapping);
+  }
+
+  for(int i=0;i<alignments.size();i++) 
+    link(alignments[i],T,internal_sequences);
+}
+
+void load_As_and_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,bool internal_sequences)
+{
+  //align - filenames
+  vector<string> filenames = args["align"].as<vector<string> >();
+
+  // load the alignments
+  alignments = load_alignments(filenames,load_alphabets(args));
+
+  T = load_T(args);
+
+  link(alignments,T,internal_sequences);
+
+  for(int i=0;i<alignments.size();i++) 
+  {
+    
+    //---------------- Randomize alignment? -----------------//
+    if (args.count("randomize-alignment"))
+      alignments[i] = randomize(alignments[i],T.n_leaves());
+  
+    //------------------ Analyze 'internal'------------------//
+    if ((args.count("internal") and args["internal"].as<string>() == "+")
+	or args.count("randomize-alignment"))
+      for(int column=0;column< alignments[i].length();column++) {
+	for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
+	  alignments[i](column,j) = alphabet::not_gap;
+      }
+
+    //---- Check that internal sequence satisfy constraints ----//
+    check_alignment(alignments[i],T,internal_sequences);
+  }
+}
+
+void load_As_and_T(const variables_map& args,vector<alignment>& alignments,RootedSequenceTree& T,bool internal_sequences)
+{
+  //align - filenames
+  vector<string> filenames = args["align"].as<vector<string> >();
+
+  // load the alignments
+  alignments = load_alignments(filenames,load_alphabets(args));
+
+  T = load_T(args);
+
+  link(alignments,T,internal_sequences);
+
+  for(int i=0;i<alignments.size();i++) 
+  {
+    
+    //---------------- Randomize alignment? -----------------//
+    if (args.count("randomize-alignment"))
+      alignments[i] = randomize(alignments[i],T.n_leaves());
+  
+    //------------------ Analyze 'internal'------------------//
+    if ((args.count("internal") and args["internal"].as<string>() == "+")
+	or args.count("randomize-alignment"))
+      for(int column=0;column< alignments[i].length();column++) {
+	for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
+	  alignments[i](column,j) = alphabet::not_gap;
+      }
+
+    //---- Check that internal sequence satisfy constraints ----//
+    check_alignment(alignments[i],T,internal_sequences);
+  }
+}
+
+
+void load_As_and_random_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,bool internal_sequences)
+{
+  //align - filenames
+  vector<string> filenames = args["align"].as<vector<string> >();
+
+  // load the alignments
+  alignments = load_alignments(filenames,load_alphabets(args));
+
+  //------------- Load random tree ------------------------//
+  SequenceTree TC = star_tree(sequence_names(alignments[0]));
+  if (args.count("t-constraint"))
+    TC = load_constraint_tree(args["t-constraint"].as<string>(),sequence_names(alignments[0]));
+
+  T = TC;
+  RandomTree(T,1.0);
+
+  //-------------- Link --------------------------------//
+  link(alignments,T,internal_sequences);
+
+  //---------------process----------------//
+  for(int i=0;i<alignments.size();i++) 
+  {
+    
+    //---------------- Randomize alignment? -----------------//
+    if (args.count("randomize-alignment"))
+      alignments[i] = randomize(alignments[i],T.n_leaves());
+  
+    //------------------ Analyze 'internal'------------------//
+    if ((args.count("internal") and args["internal"].as<string>() == "+")
+	or args.count("randomize-alignment"))
+      for(int column=0;column< alignments[i].length();column++) {
+	for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
+	  alignments[i](column,j) = alphabet::not_gap;
+      }
+
+    //---- Check that internal sequence satisfy constraints ----//
+    check_alignment(alignments[i],T,internal_sequences);
+  }
 }
 
 // FIXME - we might still want to link things if

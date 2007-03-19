@@ -50,6 +50,7 @@
 #include <valarray>
 #include <vector>
 #include <string>
+#include <boost/shared_ptr.hpp>
 #include "mytypes.H"
 #include "alphabet.H"
 #include "rates.H"
@@ -73,12 +74,12 @@ namespace substitution {
   template <class alphabet_t>
   class ModelWithAlphabet: virtual public AlphabetModel
   {
-    OwnedPointer<alphabet_t> A;
+    boost::shared_ptr<const alphabet_t> A;
   public:
     const alphabet_t& Alphabet() const {return *A;}
 
     ModelWithAlphabet(const alphabet_t& a)
-      :A(a)
+      :A(a.clone())
     {}
   };
   

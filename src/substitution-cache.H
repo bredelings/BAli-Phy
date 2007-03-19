@@ -1,16 +1,15 @@
 #ifndef SUBSTITUTION_CACHE_H
 #define SUBSTITUTION_CACHE_H
 
+#include <boost/shared_ptr.hpp>
 #include <vector>
 #include "mytypes.H"
 #include "tree.H"
-#include "refcount.H"
 #include "smodel.H"
 
 
 /// A class to manage storage and sharing of cached conditional likelihoods.
-class Multi_Likelihood_Cache: public std::vector< std::vector< Matrix > >,
-			      public RefObject 
+class Multi_Likelihood_Cache: public std::vector< std::vector< Matrix > >
 {
 
 protected:
@@ -99,7 +98,7 @@ public:
 
 /// A single view into the shared Multi_Likelihood_Cache
 class Likelihood_Cache {
-  RefPtr<Multi_Likelihood_Cache> cache;
+  boost::shared_ptr<Multi_Likelihood_Cache> cache;
 
   /// The number of directed branches + 1
   int B;

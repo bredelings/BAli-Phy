@@ -365,7 +365,7 @@ LOD_scaled::LOD_scaled(const Proposal_Fn& P)
 { }
 
 
-double Proposal2::operator()(alignment&, Parameters& P) const
+double Proposal2::operator()(Parameters& P) const
 {
   vector<double> parameters = P.parameters();
   vector<bool> fixed = P.fixed();
