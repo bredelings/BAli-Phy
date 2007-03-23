@@ -182,7 +182,8 @@ void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
     for(int c=0;c<M.size1();c++) {
       int index1 = M(c,s1);
       int index2 = M(c,s2);
-      count(index1 + 1, index2 + 1)++;
+      if (index1 != -3 and index2 != -3)
+	count(index1 + 1, index2 + 1)++;
     }
   }
   count(0,0) = 0;
