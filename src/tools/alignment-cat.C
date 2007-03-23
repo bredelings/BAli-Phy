@@ -54,6 +54,9 @@ vector<int> get_mapping(const vector<sequence>& S1, const vector<sequence>& S2)
 
 vector<sequence> concatenate(const vector<sequence>& S1, const vector<sequence>& S2)
 {
+  if (not S1.size())
+    return S2;
+
   assert(S1.size() == S2.size());
 
   vector<sequence> S = S1;
@@ -72,7 +75,10 @@ void get_range(const string& range,int L,int& begin,int& end)
 {
   vector<string> R = split(range,'-');
 
-  if (R.size() != 2)
+  if (R.size() == 1) {
+    begin = end = convertTo<int>(range);
+  }
+  else if (R.size() != 2)
     throw myexception()<<"Malformed range '"<<range<<"'";
     
   begin = 0;
@@ -136,7 +142,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   visible.add_options()
     ("help", "produce help message")
     ("output", value<string>()->default_value("fasta"),"which output format: fasta or phylip?")
-    ("select,s", value<string>(),"Ranges of columns to keep, like: 1-10,30-")
+    ("columns,c", value<string>(),"Ranges of columns to keep, like: 1-10,30-")
+    ("taxa,t", value<string>(),"Taxa to keep, comma-separated")
     ;
 
   options_description all("All options");
@@ -192,6 +199,35 @@ vector<sequence> load_file(const string& filename)
   return s;
 }
 
+vector<sequence> select_taxa(const vector<sequence>& S,const vector<string>& names)
+{
+  vector<sequence> S2;
+
+  vector<int> mapping(names.size(),-1);
+  for(int i=0;i<names.size();i++) {
+    for(int j=0;j<S.size() and mapping[i] == -1;j++)
+      if (names[i] == S[j].name)
+	mapping[i] = j;
+  }
+
+  bool ok=true;
+  myexception error;
+  for(int i=0;i<mapping.size();i++)
+    if (mapping[i] == -1) {
+      if (not ok)
+	error<<"\n";
+      error<<"Alignment contains no sequence named '"<<names[i]<<"'";
+      ok = false;
+    }
+
+  if (not ok) throw error;
+
+  for(int i=0;i<mapping.size();i++)
+    S2.push_back(S[mapping[i]]);
+
+  return S2;
+}
+
 
 int main(int argc,char* argv[]) 
 { 
@@ -202,21 +238,27 @@ int main(int argc,char* argv[])
 
     assert(args.count("file"));
 
+    vector<string> names;
+    if (args.count("taxa"))
+      names = split(args["taxa"].as<string>(),',');
+
     //------- Try to load sequences --------//
     vector <sequence> S;
     if (not args.count("file")) {
       S = load_file(cin);
+      if (args.count("taxa"))
+	S = select_taxa(S,names);
     }
     else 
     {
       vector<string> filenames = args["file"].as<vector<string> >();
 
-      S = load_file(filenames[0]);
-
-      for(int i=1;i<filenames.size();i++) 
-      {
+      for(int i=0;i<filenames.size();i++) 
+	{
 	vector<sequence> s = load_file(filenames[i]);
 	try {
+	  if (args.count("taxa"))
+	    s = select_taxa(s,names);
 	  S = concatenate(S,s);
 	}
 	catch (std::exception& e) {
@@ -225,8 +267,8 @@ int main(int argc,char* argv[])
       }
     }
       
-    if (args.count("select"))
-      S = select(S,args["select"].as<string>());
+    if (args.count("columns"))
+      S = select(S,args["columns"].as<string>());
 
     if (args["output"].as<string>() == "phylip")
       write_phylip(cout,S);
