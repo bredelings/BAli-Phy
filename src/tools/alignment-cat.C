@@ -144,6 +144,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("output", value<string>()->default_value("fasta"),"which output format: fasta or phylip?")
     ("columns,c", value<string>(),"Ranges of columns to keep, like: 1-10,30-")
     ("taxa,t", value<string>(),"Taxa to keep, comma-separated")
+    ("pad", "Add gaps to make sequence lengths identical")
     ;
 
   options_description all("All options");
@@ -171,25 +172,45 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 
-vector<sequence> load_file(istream& file)
+void pad_to_same_length(vector<sequence>& s)
+{
+  // find total alignment length
+  vector<unsigned> L;
+  for(int i=0;i<s.size();i++)
+    L.push_back(s[i].size());
+  unsigned AL = max(L);
+
+  // pad sequences if they are less than this length
+  for(int i=0;i<s.size();i++)
+    if (L[i] < AL)
+      (string&)s[i] = (string&)s[i] + string(AL-L[i],'-');
+}
+
+vector<sequence> load_file(istream& file,bool pad)
 {
   vector<sequence> s = sequence_format::read_guess(file);
   if (s.size() == 0)
     throw myexception()<<"Alignment file didn't contain any sequences!";
 
+  if (pad)
+    pad_to_same_length(s);
+
   for(int i=1;i<s.size();i++)
     if (s[i].size() != s[0].size())
       throw myexception()<<"Alignment file: sequence #"<<i+1<<" '"<<s[i].name<<"' has length "
-			 <<s[i].size()<<" != "<<s[0].size();
+                         <<s[i].size()<<" != "<<s[0].size();
   return s;
 }
 
-vector<sequence> load_file(const string& filename)
+vector<sequence> load_file(const string& filename,bool pad)
 {
   ifstream file(filename.c_str());
   vector<sequence> s = sequence_format::read_guess(file);
   if (s.size() == 0)
     throw myexception()<<"Alignment file '"<<filename<<"' didn't contain any sequences!";
+
+  if (pad)
+    pad_to_same_length(s);
 
   for(int i=1;i<s.size();i++)
     if (s[i].size() != s[0].size())
@@ -238,6 +259,8 @@ int main(int argc,char* argv[])
 
     assert(args.count("file"));
 
+    bool pad = (args.count("pad")>0);
+
     vector<string> names;
     if (args.count("taxa"))
       names = split(args["taxa"].as<string>(),',');
@@ -245,7 +268,7 @@ int main(int argc,char* argv[])
     //------- Try to load sequences --------//
     vector <sequence> S;
     if (not args.count("file")) {
-      S = load_file(cin);
+      S = load_file(cin,pad);
       if (args.count("taxa"))
 	S = select_taxa(S,names);
     }
@@ -255,7 +278,7 @@ int main(int argc,char* argv[])
 
       for(int i=0;i<filenames.size();i++) 
 	{
-	vector<sequence> s = load_file(filenames[i]);
+	vector<sequence> s = load_file(filenames[i],pad);
 	try {
 	  if (args.count("taxa"))
 	    s = select_taxa(s,names);
