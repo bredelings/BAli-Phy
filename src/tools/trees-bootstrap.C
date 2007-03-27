@@ -209,7 +209,7 @@ bool report_sample(std::ostream& o,
   for(int i=0;i<n_dists;i++) {
 
     //------------- Write things out -------------//
-    o<<"   P"<<i<<" = "<<P[i]<<"  in  ("<<CI[i].first<<","<<CI[i].second<<")        (1="<<n[i]<<"  0="<<N[i]-n[i]<<")  ["<<nchanges_ave[i];
+    o<<"   PP"<<i<<" = "<<P[i]<<"  in  ("<<CI[i].first<<","<<CI[i].second<<")        (1="<<n[i]<<"  0="<<N[i]-n[i]<<")  ["<<nchanges_ave[i];
     if (nchanges[i] <= 4) {
       o<<" !!!";
     }
@@ -228,10 +228,10 @@ bool report_sample(std::ostream& o,
     
   for(int i=0;i<n_dists;i++) 
   {
-    o<<"   10s = "<<log10(O[i])<<"  in  ("<<log_CI[i].first<<","<<log_CI[i].second<<")";
+    o<<"  LOD"<<i<<" = "<<log10(O[i])<<"  in  ("<<log_CI[i].first<<","<<log_CI[i].second<<")";
     if (nchanges_ave[i] > 6) {
       //      o<<"    [Var]x = "<<Var_bootstrap[i]/Var_perfect[i]<<"          Ne = "<<Ne[i]<<endl;
-      o<<"    [Var]x = "<<tau[i]<<"          Ne = "<<N[i]/tau[i];
+      o<<"       ACT = "<<tau[i]<<"          Ne = "<<N[i]/tau[i];
     }
     o<<endl;
   }

@@ -501,7 +501,7 @@ int main(int argc,char* argv[])
       double o = odds(n,N,1);
 
       cout<<"MAP-"<<i<<" = "<<t<<endl;
-      cout<<"   PP = "<<PP<<"       10s = "<<log10(o)<<endl;
+      cout<<"   PP = "<<PP<<"       LOD = "<<log10(o)<<endl;
       cout<<"\n\n";
     }
 
@@ -523,7 +523,7 @@ int main(int argc,char* argv[])
       double PP = double(n)/N;
       double o = odds(n,N,1);
 
-      cout<<"   PP = "<<PP<<"       10s = "<<log10(o);
+      cout<<"   PP = "<<PP<<"       LOD = "<<log10(o);
 
       if (not good_partitions[i].first.full()) {
 	double ratio = odds_ratio(good_partitions,i,N,1);
