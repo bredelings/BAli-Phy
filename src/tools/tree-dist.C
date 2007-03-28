@@ -552,7 +552,7 @@ tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample)
   if (size() == 0)
     throw myexception()<<"No trees were read in!";
   
-  cout<<"# n_trees = "<<size()<<"   n_topologies = "<<topologies.size()<<" topologies."<<endl;
+  cout<<"# n_trees = "<<size()<<"   n_topologies = "<<topologies.size()<<endl;
     
   //---------------  Sort topologies by count  ---------------//
   order.resize(topologies.size());
