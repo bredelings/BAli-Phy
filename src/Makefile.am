@@ -132,7 +132,7 @@ alignment_median_SOURCES = tools/alignment-median.C alignment.C alphabet.C seque
 
 alignment_consensus_SOURCES = tools/alignment-consensus.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C util-random.C tools/statistics.C \
-	sequence-format.C alignment-util.C 
+	sequence-format.C alignment-util.C tools/index-matrix.C
 
 #---------------------------------------------------------------
 
@@ -144,7 +144,7 @@ alignment_compare_SOURCES = tools/alignment-compare.C alignment.C alphabet.C seq
 
 alignment_identity_SOURCES = tools/alignment-identity.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C util-random.C tools/statistics.C \
-	sequence-format.C alignment-util.C 
+	sequence-format.C alignment-util.C tools/index-matrix.C
 
 #---------------------------------------------------------------
 
