@@ -1,0 +1,12 @@
+Implications of molecular characters for the phylogeny of the
+Microbotryaceae (Basidiomycota: Urediniomycetes)
+
+Martin Kemler*, Markus Göker, Franz Oberwinkler and Dominik Begerow
+
+BMC Evolutionary Biology 2006, 6:35 doi:10.1186/1471-2148-6-35
+
+
+Notes:
+
+The sequences in 37.fasta are from the accessions listed as additional 
+sequences from Genbank.
