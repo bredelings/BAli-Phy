@@ -74,7 +74,7 @@ int main(int argc,char* argv[])
     
     for(int i=0;i<T.n_branches();i++)
       if (T.branch(i).length() < 0)
-	T.branch(i).set_length(0);
+	T.branch(i).set_length(-T.branch(i).length());
 
     //----- Standardize order by alphabetical order of names ----//
     vector<string> names;
