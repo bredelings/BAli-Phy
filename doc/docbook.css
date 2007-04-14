@@ -52,3 +52,6 @@ td { background-color: #F4F4F4;  }
 .vector { font-weight: bold }
 
 td > p { margin: 0; padding:0;}
+
+p + p { margin-top: 0.8em; }
+

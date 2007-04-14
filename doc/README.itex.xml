@@ -1656,11 +1656,11 @@ traditional = traditional
 
 	<varlistentry><term>consensus</term><listitem>
 	<para>Summary of MAP and consensus topologies, as well as supported
-	partitions. </para>
+	partitions (clades). </para>
 	</listitem></varlistentry>
 
 	<varlistentry><term>c-levels.plot</term><listitem>
-	<para>The number of partitions supported at each LOD level.</para>
+	<para>The number of partitions (clades) supported at each LOD level.</para>
 	</listitem></varlistentry>
 
 	<varlistentry><term>c<replaceable>level</replaceable>.topology</term><listitem>
@@ -1975,6 +1975,20 @@ traditional = traditional
     <title>Frequently Asked Questions (FAQ)</title>
 
     <sect2>
+      <title>Running <command>bali-phy</command>.</title>
+
+    <qandaset>
+      <qandaentry>
+	<question><para>Can I fix the alignment?</para></question>
+	<answer>
+	  <para>Yes.  Add <userinput>-t</userinput> or <userinput>--traditional</userinput> on the command line.</para>
+	</answer>
+      </qandaentry>
+    </qandaset>
+
+    </sect2>
+
+    <sect2>
       <title>Stopping <command>bali-phy</command>.</title>
 
     <qandaset>
@@ -1990,7 +2004,7 @@ traditional = traditional
       <qandaentry>
 	<question><para>So, how can I know when to stop it?</para></question>
 	<answer>
-	  <para>You can stop it has both converged and also run for long enough to give
+	  <para>You can stop when it has both converged and also run for long enough to give
 	  you >1000 effectively independent samples.  </para>
 	</answer>
       </qandaentry>
@@ -2003,6 +2017,8 @@ traditional = traditional
 	  random starting points and see if the posterior
 	  distributions for each chain are the same. 
 	  </para>
+
+	  <para>Unfortunately, when the distributions all seem to be this same, this doesn't <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing. </para>
 	</answer>
       </qandaentry>
 
@@ -2013,6 +2029,26 @@ traditional = traditional
 	  <para>Run <command>wc -l 1.p</command> inside the output
 	  directory, and subtract 2.
 	  </para>
+	</answer>
+      </qandaentry>
+    </qandaset>
+    </sect2>
+
+    <sect2>
+      <title>Interpreting the results.</title>
+
+    <qandaset>
+      <qandaentry>
+	<question><para>Where can I find the clade support?</para></question>
+	<answer>
+	  <para>Actually, BAli-Phy uses unrooted trees, so it only estimates bi-partition support.  A bi-partition is a division of taxa into two groups, but it does not specify which group contains the root. </para>
+	</answer>
+      </qandaentry>
+
+      <qandaentry>
+	<question><para>Where can I find the partition support?</para></question>
+	<answer>
+	  <para>After you analyze the output (<xref linkend="analysis"/>), the partition support is indicated in <filename>Results/consensus</filename>.  Support is measured by the posterior probability (PP) of each partition.  Only partitions with support >0.5 are shown by default. </para>
 	</answer>
       </qandaentry>
     </qandaset>
