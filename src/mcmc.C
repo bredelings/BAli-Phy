@@ -16,6 +16,7 @@
 #include "proposals.H"
 #include "n_indels.H"
 #include "tools/parsimony.H"
+#include "alignment-util.H"
 
 namespace MCMC {
   using std::valarray;
@@ -454,7 +455,7 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
   return o;
 }
 
-void Sampler::go(Parameters& P,int subsample,const int max,
+void Sampler::go(Parameters& P,int subsample,const int max_iter,
 		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map)
 {
   P.recalc_all();
@@ -536,9 +537,14 @@ void Sampler::go(Parameters& P,int subsample,const int max,
       P.fixed(index,true);
     }
   }
+  valarray<double> weights(P.n_data_partitions());
+  for(int i=0;i<weights.size();i++)
+    weights[i] = max(sequence_lengths(*P[i].A, P.T->n_leaves()));
+  weights /= weights.sum();
+
       
   //---------------- Run the MCMC chain -------------------//
-  for(int iterations=0; iterations < max; iterations++) {
+  for(int iterations=0; iterations < max_iter; iterations++) {
 
     if (iterations == 5)
       for(int i=0;i<restore.size();i++)
@@ -600,7 +606,10 @@ void Sampler::go(Parameters& P,int subsample,const int max,
 	}
 	s_parameters<<"\t"<<total_substs;
       }
-      s_parameters<<"\t"<<length(*P.T)<<endl;
+      double mu_scale=0;
+      for(int i=0;i<P.n_data_partitions();i++)
+	mu_scale += P[i].branch_mean()*weights[i];
+      s_parameters<<"\t"<<mu_scale*length(*P.T)<<endl;
     }
 
     if (iterations%20 == 0) {
@@ -622,7 +631,7 @@ void Sampler::go(Parameters& P,int subsample,const int max,
 
   std::cerr<<endl;
   std::cerr<<*(MoveStats*)this<<endl;
-  s_out<<"total samples = "<<max<<endl;
+  s_out<<"total samples = "<<max_iter<<endl;
 }
 
 
