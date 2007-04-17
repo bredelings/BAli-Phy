@@ -83,6 +83,9 @@ much of the variation is spatial?)
    (And stop using * as a wildcard character? We could use '.' instead, based on regular expressions.
     And in most cases we can use N or X anyway.)
 
+13.  It would be nice to handle revisiting a tree when removing duplicates
+     in trees-distances.
+
 
 FIX:
 1. Alignment consensus isn't taking into account conflict of the
