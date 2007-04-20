@@ -1717,6 +1717,17 @@ traditional = traditional
     
       </variablelist>
 
+      <sect3 id="consensus">
+	<title><filename>Results/consensus</filename>: partition support</title>
+	<para>
+	  This file reports the support of each bi-partition in terms
+	  of its posterior probability (PP) and posterior log-10 odds
+	  (LOD).
+
+	  Only partitions with PP>0.5 are shown by default.
+	</para>
+      </sect3>
+
     </sect2>
 
     <sect2>
@@ -1747,6 +1758,24 @@ traditional = traditional
       <para>The SRQ plots can be viewed by typing "<userinput>plot
       '<replaceable>file</replaceable>' with lines</userinput>" in
       <application>gnuplot</application>.</para>
+
+
+      <sect3>
+      <title><filename>Mixing/partitions.bs</filename>: partition mixing</title>
+      <para>
+	This file reports the quality of estimates of support for each
+	partition,in terms of the auto-correlation time (ACT),
+	effective sample size (Ne), and a 95% confidence interval for
+	posterior probability (PP) and log-10 odds (LOD).  It also
+	reports the number of samples that support (1) or do not
+	support (0) the partition, as well as the number of regenerations.
+
+	Only partitions with PP>0.5 are shown by default.
+      </para>
+      </sect3>
+
+
+
     </sect2>
 
 
@@ -2048,7 +2077,10 @@ traditional = traditional
       <qandaentry>
 	<question><para>Where can I find the partition support?</para></question>
 	<answer>
-	  <para>After you analyze the output (<xref linkend="analysis"/>), the partition support is indicated in <filename>Results/consensus</filename>.  Support is measured by the posterior probability (PP) of each partition.  Only partitions with support >0.5 are shown by default. </para>
+	  <para>After you analyze the output (<xref
+	  linkend="analysis"/>), the partition support is indicated in
+	  <filename>Results/consensus</filename>.  (see <xref
+	  linkend="consensus"/>. </para> 
 	</answer>
       </qandaentry>
     </qandaset>
