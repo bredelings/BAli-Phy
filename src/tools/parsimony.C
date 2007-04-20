@@ -53,24 +53,36 @@ Matrix amino_acid_cost_matrix(const Codons& C)
   return cost;
 }
 
-unsigned n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const Matrix& cost) 
+
+double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const Matrix& cost) 
 {
   const int A = a.size();
 
   assert(letters.size() == T.n_leaves());
+  assert(cost.size1() == A);
+  assert(cost.size2() == A);
 
-  vector< vector<int> > n_muts(T.n_nodes(),vector<int>(A,0));
+  vector< vector<double> > n_muts(T.n_nodes(),vector<double>(A,0));
 
   int root = T.directed_branch(0).target();
   vector<const_branchview> branches = branches_toward_node(T,root);
 
-  vector<int> temp(A);
+  vector<double> temp(A);
 
-  // set the leaf lengths
+  double max_cost = 0;
+  
+  for(int i=0;i<A;i++)
+    for(int j=0;j<A;j++)
+      max_cost = std::max(cost(i,j), max_cost);
+    
+  // set the leaf costs
   for(int s=0;s<T.n_leaves();s++)
     if (a.is_letter_class(letters[s]))
       for(int l=0;l<A;l++)
-	n_muts[s][l] = cost(l,letters[s]);
+	if (a.matches(l,letters[s]))
+	  n_muts[s][l] = 0;
+	else
+	  n_muts[s][l] = max_cost;
 
   for(int i=0;i<branches.size();i++) 
   {
@@ -87,30 +99,30 @@ unsigned n_mutations(const alphabet& a, const vector<int>& letters, const Sequen
   return min(n_muts[root]);
 }
 
-unsigned n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T) 
+double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T) 
 {
   return n_mutations(a,letters,T,unit_cost_matrix(a));
 }
 
 
-unsigned n_mutations(const alignment& A, const SequenceTree& T,const Matrix& cost)
+double n_mutations(const alignment& A, const SequenceTree& T,const Matrix& cost)
 {
   const alphabet& a = A.get_alphabet();
 
   vector<int> letters(T.n_leaves());
 
-  unsigned tree_length = 0;
+  double tree_length = 0;
   for(int c=0;c<A.length();c++) {
     for(int i=0;i<T.n_leaves();i++)
       letters[i] = A(c,i);
-    unsigned length = n_mutations(a,letters,T,cost);
+    double length = n_mutations(a,letters,T,cost);
     tree_length += length;
   }
 
   return tree_length;
 }
 
-unsigned n_mutations(const alignment& A, const SequenceTree& T)
+double n_mutations(const alignment& A, const SequenceTree& T)
 {
   return n_mutations(A,T,unit_cost_matrix(A.get_alphabet()));
 }
