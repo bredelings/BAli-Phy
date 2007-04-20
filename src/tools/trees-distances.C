@@ -97,7 +97,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   analysis.add_options()
     ("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, autocorrelation, diameter, compare, convergence, converged,")
     ("metric", value<string>()->default_value("topology"),"Tree distance: topology, branch, internal-branch")
-    ("no-remove-duplicates","[matrix]: allow zero distances  between points.")
+    ("remove-duplicates","[matrix]: disallow zero distances  between points.")
     ("max-lag",value<int>(),"[autocorrelation]: max lag to consider.")
     ("CI",value<double>()->default_value(0.95),"Confidence interval size.")
     ("converged",value<string>()->default_value("0.50"),"Comma-separated quantiles of distance required for converged? (smaller is more strict).")
@@ -318,7 +318,7 @@ int main(int argc,char* argv[])
 
       ublas::matrix<double> D = distances(trees,metric_fn);
 
-      if (not args.count("no-remove-duplicates"))
+      if (args.count("remove-duplicates"))
 	D = remove_duplicates(D);
 
       for(int i=0;i<D.size1();i++) {
