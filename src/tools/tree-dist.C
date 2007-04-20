@@ -786,14 +786,17 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
 	    
 	double r = 1;
 	if (parents[i] == -1) {
-	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group1);
-	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group2);
 	  r = 0;
 	}
 	else {
 	  r = full_partitions[parents[i]].second/double(sub_partitions[i].second);
 	  assert(r <= 1.0);
 	}
+	if (r < min_rooting) {
+	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group1);
+	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group2);
+	}
+
 	rooting = std::min(rooting,r);
 
 	// Store the new sub-partitions we found
