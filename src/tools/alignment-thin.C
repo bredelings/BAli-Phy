@@ -4,6 +4,7 @@
 #include "tree.H"
 #include "alignment.H"
 #include "alignment-util.H"
+#include "tree-util.H"
 #include "util.H"
 #include "setup.H"
 
@@ -30,7 +31,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree",value<string>(),"file with initial tree")
     ("cutoff",value<double>(),"only leave taxa w/ leaf branches longer than this")
     ("longer-than",value<unsigned>(),"only leave taxa w/ sequences longer than this")
+    ("shorter-than",value<unsigned>(),"only leave taxa w/ sequences shorter than this")
     ("keep",value<int>(),"number of taxa to keep")
+    ("show-lengths","just print out sequence lengths")
     ;
 
   // positional options
@@ -51,9 +54,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     exit(0);
   }
 
-  if (not args.count("cutoff") and not args.count("keep") and not args.count("longer-than"))
-    throw myexception()<<"neither keep nor cutoff nor longer-than specified";
-
   return args;
 }
 
@@ -68,15 +68,30 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     //----------- Load alignment and tree ---------//
-    alignment A;
+    alignment A = load_A(args,false);
+
     SequenceTree T;
-    load_A_and_T(args,A,T,false);
-    
-    for(int i=0;i<T.n_branches();i++)
-      if (T.branch(i).length() < 0)
-	T.branch(i).set_length(-T.branch(i).length());
+    if (args.count("tree")) 
+    {
+      T = load_T(args);
+
+      link(A,T,false);
+
+      for(int i=0;i<T.n_branches();i++)
+	if (T.branch(i).length() < 0)
+	  T.branch(i).set_length(-T.branch(i).length());
+    }
+
+    if (args.count("show-lengths")) {
+      for(int i=0;i<A.n_sequences();i++) {
+	cout<<A.seqlength(i)<<endl;
+      }
+      exit(0);
+    }
 
     //----- Standardize order by alphabetical order of names ----//
+
+    //FIXME - handle duplicate names!
     vector<string> names;
 
     if (args.count("longer-than")) {
@@ -86,17 +101,39 @@ int main(int argc,char* argv[])
       {
 	if (A.seqlength(i) > cutoff) continue;
 
-	if (T.n_leaves() <= 3)
+	if (A.n_sequences() <= 3)
 	  throw myexception()<<"Trying to remove too many tree leaves!";
 
 	string name = A.seq(i).name;
 
 	names.push_back(name);
-	delete_node(T,name);	
+	if (args.count("tree")) 
+	  delete_node(T,name);	
       }
     }
 
-    if (args.count("keep") or args.count("cutoff"))
+    if (args.count("shorter-than")) {
+      int cutoff = args["shorter-than"].as<unsigned>();
+      
+      for(int i=0;i<A.n_sequences();i++)
+      {
+	if (A.seqlength(i) < cutoff) continue;
+
+	if (A.n_sequences() <= 3)
+	  throw myexception()<<"Trying to remove too many tree leaves!";
+
+	string name = A.seq(i).name;
+
+	names.push_back(name);
+	if (args.count("tree")) 
+	  delete_node(T,name);	
+      }
+    }
+
+    cerr<<"Removed "<<names.size()<<" sequences because of length constraints."<<endl;
+
+
+    if (args.count("tree") and ((args.count("keep") or args.count("cutoff"))))
     while(true) 
     {
       if (T.n_leaves() <= 3)
@@ -123,7 +160,8 @@ int main(int argc,char* argv[])
       delete_node(T,name);
     }
 
-    cerr<<T.write()<<"\n";
+    if (args.count("tree"))
+      cerr<<T.write()<<"\n";
 
     //------- Print out the alignment -------//
     vector<sequence> sequences = A.get_sequences();
