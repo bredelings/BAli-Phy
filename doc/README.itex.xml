@@ -1784,6 +1784,8 @@ traditional = traditional
   <sect1>
     <title>Tuning the Markov Chain</title>
 
+    <para>These parameters can be set using the command line syntax "<userinput>--set <replaceable>parameter</replaceable>=<replaceable>value</replaceable></userinput>".</para>
+
     <sect2>
       <title>Parameters</title>
       <para>
@@ -1890,6 +1892,8 @@ traditional = traditional
 
   <sect1>
     <title>Auxiliary tools</title>
+
+    <para>Most of these tools will describe their options if given the "<userinput>--help</userinput>" argument on the command line.</para>
 
     <sect2>
       <title>alignment-find</title>
