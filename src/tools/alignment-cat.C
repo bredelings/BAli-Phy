@@ -76,56 +76,96 @@ void get_range(const string& range,int L,int& begin,int& end)
   vector<string> R = split(range,'-');
 
   if (R.size() == 1) {
-    begin = end = convertTo<int>(range);
+    begin = end = convertTo<int>(range)-1;
   }
   else if (R.size() != 2)
     throw myexception()<<"Malformed range '"<<range<<"'";
-    
-  begin = 0;
-  if (R[0].size())
-    begin = convertTo<int>(R[0])-1;
+  else {
+    begin = 0;
+    if (R[0].size())
+      begin = convertTo<int>(R[0])-1;
 
-  end = L-1;
-  if (R[1].size())
-    end = convertTo<int>(R[1])-1;
+    end = L-1;
+    if (R[1].size())
+      end = convertTo<int>(R[1])-1;
+  }
     
   if (begin < 0)
     throw myexception()<<"Bad range '"<<range<<"': begins before 1.";
     
   if (begin > L-1)
-    throw myexception()<<"Bad range '"<<range<<"': begins after sequence (L="<<L<<").";
+    throw myexception()<<"Bad range '"<<range<<"': begins after end of sequence (L="<<L<<").";
     
   if (end < 0)
     throw myexception()<<"Bad range '"<<range<<"': ends before 1!";
     
   if (end > L-1)
-    throw myexception()<<"Bad range '"<<range<<"': ends after sequence (L="<<L<<").";
+    throw myexception()<<"Bad range '"<<range<<"': ends after end of sequence (L="<<L<<").";
     
   if (end < begin)
     throw myexception()<<"Bad range '"<<range<<"': begins after end!";
 }
 
 
-vector<sequence> select(const vector<sequence>& s,const string& range)
+vector<sequence> select(const vector<sequence>& s,const vector<int>& columns)
 {
-  //------- Start computing result --------//
+  assert(all_same_length(s));
+
+  //------- Start with empty sequences --------//
   vector<sequence> S = s;
   for(int i=0;i<s.size();i++)
     S[i].string::operator=("");
 
+  //------- Append columns to sequences -------//
+  for(int i=0;i<columns.size();i++)
+    for(int j=0;j<s.size();j++)
+      S[j] += s[j][columns[i]];
+
+  return S;
+}
+
+vector<sequence> select(const vector<sequence>& s,const string& range)
+{
+  assert(all_same_length(s));
+
   vector<string> ranges = split(range,',');
 
+  vector<int> columns;
   for(int i=0;i<ranges.size();i++) 
   {
     int begin=-1,end=-1;
     
     get_range(ranges[i],s[0].size(),begin,end);
     
-    for(int k=0;k<s.size();k++)
-      S[k] += s[k].substr(begin,end-begin+1);
+    for(int c=begin;c<=end;c++)
+      columns.push_back(c);
   }
 
-  return S;
+  return select(s,columns);
+}
+
+vector<sequence> remove_empty_columns(const vector<sequence>& s,const vector<char>& missing)
+{
+  assert(all_same_length(s));
+
+  // cache length of longest sequences
+  int L = s[0].size();
+
+  // find non-empty columns
+  vector<int> columns;
+  for(int c=0;c<L;c++)
+  {
+    bool empty = true;
+    for(int j=0;j<s.size() and empty;j++)
+      if ((c < s[j].size()) and (not includes(missing,s[j][c])))
+	empty=false;
+
+    if (not empty)
+      columns.push_back(c);
+  }
+
+  // select the non-empty columns
+  return select(s,columns);
 }
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
@@ -145,6 +185,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("columns,c", value<string>(),"Ranges of columns to keep, like: 1-10,30-")
     ("taxa,t", value<string>(),"Taxa to keep, comma-separated")
     ("pad", "Add gaps to make sequence lengths identical")
+    ("remove-empty-columns,r","Remove columns with no characters (e.g. all-gap columns)")
+    ("missing",value<string>()->default_value("-?"),"Letters which don't count as characters (e.g. gaps)")
     ;
 
   options_description all("All options");
@@ -169,6 +211,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
   }
 
   return args;
+}
+
+bool all_same_length(const vector<sequence>& s)
+{
+  for(int i=1;i<s.size();i++)
+    if (s[i].size() != s[0].size())
+      return false;
+  return true;
 }
 
 
@@ -292,6 +342,14 @@ int main(int argc,char* argv[])
       
     if (args.count("columns"))
       S = select(S,args["columns"].as<string>());
+    
+    if (args.count("remove-empty-columns")) {
+      string missing = args["missing"].as<string>();
+      vector<char> missing2;
+      for(int i=0;i<missing.size();i++)
+	missing2.push_back(missing[i]);
+      S = remove_empty_columns(S,missing2);
+    }
 
     if (args["output"].as<string>() == "phylip")
       write_phylip(cout,S);
