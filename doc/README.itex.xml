@@ -356,20 +356,46 @@
       <title>Setting the PATH</title>
     <para>
     If you installed <application>BAli-Phy</application> to the directory
-    <replaceable>dir</replaceable>, then you should put
-    <replaceable>dir</replaceable>/bin in your PATH.  This allows the
-    computer to find the programs and run them.  For example, if you
-    installed <application>BAli-Phy</application> to
-    <filename>/usr/local</filename>, then you should add
-    <filename>/usr/local/bin</filename> to your PATH so that you can
-    simply type <command>bali-phy</command> instead of
-    <command>/usr/local/bin/bali-phy</command>.
+    <filename>/usr/local/</filename>, then you can run
+    bali-phy by typing <userinput>/usr/local/bin/bali-phy</userinput>.
+    However, it would be much nicer to simply type
+    <userinput>bali-phy</userinput> and let the computer find the
+    executable for you.  This can be achieved by putting the directory
+    that contains the <filename>bali-phy</filename> executables into
+    your "path".  (The directory that contains the executables will be
+    <filename>/usr/local/bin</filename> if you extracted the bali-phy
+    archive to the directory <filename>/usr/local</filename>, but will
+    be somewhere else if you extracted the bali-phy archive somewhere else.)
     </para>
 
     <para>
-    Setting your default path is beyond the scope of this document,
-    but an internet search should reveal how to do this.
+    The "path" is a colon-separated list of directories that is
+    searched to find program names that you type.  It is stored in a
+    variable called PATH.  You can examine it the current value of
+    this variable by 
+<screen><prompt>%</prompt> <userinput>echo &#36;PATH</userinput></screen>
+    We will assume that you extracted the bali-phy archive in
+    <filename>/usr/local</filename> and so you want to add
+    <filename>/usr/local/bin</filename> to your PATH.  The commands
+    for doing depend on what "shell" you are using.  Type
+    <userinput>echo &#36;SHELL</userinput> to find out.
     </para>
+
+    <para>If your shell is <command>sh</command> or
+    <command>bash</command> then the command looks like this: 
+<screen><prompt>%</prompt> <userinput>PATH=/usr/local/bin:&#36;PATH</userinput></screen>
+    If your shell is <command>csh</command> or
+    <command>tcsh</command>, then the command looks like this:
+<screen><prompt>%</prompt> <userinput>setenv PATH /usr/local/bin:&#36;PATH</userinput></screen>
+    Unfortunately, the effects of this will affect only the window you
+    are typing in, and will vanish when you reboot.  You can put these
+    command into the files <filename>.profile</filename> (for the
+    Bourne shell <command>sh</command>), 
+    <filename>.bash_profile</filename> (for BASH), or
+    <filename>.login</filename> (for tcsh).  However, the details are
+    beyond the scope of this document.
+    </para>
+
     </sect2>
 
   </sect1>
@@ -529,7 +555,7 @@ traditional = traditional
 	<para>
 	  The file <filename>~/.bali-phy</filename> is a special
 	  option file called the <emphasis>configuration
-	  file.</emphasis>  If it exists, it is always loaded, if
+	  file.</emphasis>  If it exists, it is always loaded.  If
 	  options are given on the command line or an option file they
 	  always override values given in the configuration file.  You
 	  should use your configuration file to set global values that
