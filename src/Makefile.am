@@ -77,7 +77,7 @@ TOOLS = model_P statreport alignment-gild \
 	joint-parsimony stats-merge stats-select alignment-identity \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
-	partitions-supported
+	partitions-supported trees-pair-distances
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -221,6 +221,9 @@ draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C 
 
 #---------------------------------------------------------------
 tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
+
+#---------------------------------------------------------------
+trees_pair_distances_SOURCES = tools/trees-pair-distances.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
 
 #---------------------------------------------------------------
 tree_partitions_SOURCES = tools/tree-partitions.C util.C tree.C sequencetree.C tools/tree-dist.C tree-util.C 
