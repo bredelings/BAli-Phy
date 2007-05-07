@@ -27,28 +27,6 @@ RootedSequenceTree load_T(const variables_map& args) {
   return RT;
 }
 
-vector<string> load_lines(istream& file,int skip,int subsample, int max)
-{
-  vector<string> lines;
-
-  string line;
-  for(int line_number=0;getline_handle_dos(file,line);line_number++) 
-  {
-    // don't start if we haven't skipped enough trees
-    if (line_number < skip) continue;
-
-    // skip trees unless they are a multiple of 'subsample'
-    if ((line_number-skip) % subsample != 0) continue;
-
-    // quit if we've read in 'max' trees
-    if (max >= 0 and lines.size() == max) break;
-
-    lines.push_back(line);
-  }
-
-  return lines;
-}
-
 vector<SequenceTree> load_trees(const vector<string>& lines) 
 {
   if (lines.size() == 0)
@@ -263,7 +241,6 @@ vector<int> extends_map(const Tree& T,const Tree& Q)
       }
     }
   }
-  cerr<<"got here."<<endl;
   std::abort();
  out:
 
@@ -281,3 +258,5 @@ bool extends(const Tree& T,const Tree& Q)
   vector<int> branch_map = extends_map(T,Q);
   return branch_map.size() != 0;
 }
+
+

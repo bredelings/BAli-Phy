@@ -3,6 +3,10 @@
 using std::vector;
 using std::string;
 
+#include <iostream>
+using std::cerr;
+using std::endl;
+
 
 std::istream& getline_handle_dos(std::istream& file,std::string& s)
 {
@@ -119,3 +123,35 @@ bool get_word(string& word, int& i, const string& s,
 
   return i < s.size();
 }
+
+void scan_lines(std::istream& file,int skip,int subsample, int max, 
+		accumulator<string>& op)
+{
+  int n_lines=0;
+  string line;
+  for(int line_number=0;getline_handle_dos(file,line);line_number++) 
+  {
+    // don't start if we haven't skipped enough trees
+    if (line_number < skip) continue;
+
+    // skip trees unless they are a multiple of 'subsample'
+    if ((line_number-skip) % subsample != 0) continue;
+
+    // quit if we've read in 'max' trees
+    if (max >= 0 and n_lines == max) break;
+
+    // should this be protected by a try { } catch(...) {} block?
+    op(line);
+    n_lines++;
+  }
+}
+
+vector<string> load_lines(std::istream& file,int skip,int subsample, int max)
+{
+  vector_accumulator<string> lines;
+
+  scan_lines(file,skip,subsample,max,lines);
+
+  return lines;
+}
+

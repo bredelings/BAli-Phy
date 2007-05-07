@@ -139,9 +139,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree", value<string>(),"tree to re-root")
     ("skip",value<int>()->default_value(0),"number of tree samples to skip")
     ("max",value<int>(),"maximum number of tree samples to read")
+    ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
     ("var","report standard deviation of branch lengths instead of mean")
     ("no-node-lengths","ignore branches not in the specified topology")
-    ("safe","Don't die if no trees match the topology");
+    ("safe","Don't die if no trees match the topology")
     ;
 
   // positional options
@@ -164,98 +165,103 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 
+struct accum_branch_lengths: public accumulator<SequenceTree>
+{
+  int n_samples;
+  int n_matches;
+
+  SequenceTree Q;
+
+  valarray<double> m1;
+  valarray<double> m2;
+  valarray<double> n1;
+
+  void operator()(const SequenceTree&);
+
+  void finalize() 
+  {
+    if (n_samples == 0)
+      throw myexception()<<"No trees were read in!";
+  
+    if (n_matches == 0)
+      throw myexception()<<"No trees matched the specified topology!";
+
+    m1 /= n_matches;
+    m2 /= n_matches;
+    n1 /= n_matches;
+
+    m2 -= m1*m1;
+    m2 = sqrt(m2);
+  }
+
+  accum_branch_lengths(const SequenceTree T)
+    :
+    n_samples(0),
+    n_matches(0),
+    Q(T),
+    m1(0.0, Q.n_branches()),
+    m2(0.0, Q.n_branches()),
+    n1(0.0, Q.n_nodes())
+  {}
+};
+
+void accum_branch_lengths::operator()(const SequenceTree& T)
+{
+  n_samples++;
+  if (update_lengths(Q,T,m1,m2,n1))
+    n_matches++;
+}
+
 int main(int argc,char* argv[]) 
 { 
   try {
     //----------- Parse command line  ----------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    //---------- Read in the topology ----------//
-    SequenceTree Q = load_T(args);
-    standardize(Q);
-    
-    //-------- Read in the tree samples --------//
     int skip = args["skip"].as<int>();
 
     int max = -1;
     if (args.count("max"))
       max = args["max"].as<int>();
 
-    valarray<double> branch_lengths(0.0,Q.n_branches());
-    valarray<double> branch_lengths_var(0.0,Q.n_branches());
-    valarray<double> node_lengths(0.0,Q.n_nodes());
+    int subsample = args["sub-sample"].as<int>();
 
-    int lines=0;
-    string line;
-    int n_samples=0;
-    int n_matches=0;
-    while(getline(std::cin,line)) {
+    //----------- Read the topology -----------//
+    SequenceTree Q = load_T(args);
+    standardize(Q);
+    const int B = Q.n_branches();
+    const int N = Q.n_nodes();
 
-      // don't start if we haven't skipped enough trees
-      if (lines++ < skip) continue;
+    //-------- Read in the tree samples --------//
+    accum_branch_lengths A(Q);
 
-      // quit if we've read in 'max' trees
-      if (max >= 0 and n_samples == max) break;
-
-      //--------- Count how many of each topology -----------//
-      SequenceTree T;
-      try {
-	// This should make all the branch & node numbers the same if the topology is the same
-	T = standardized(line);
-      }
-      catch (std::exception& e) {
-	std::cerr<<"Exception: "<<e.what()<<endl;
-	std::cerr<<" Quitting read of tree file"<<endl;
-	break;
-      }
-
-      if (update_lengths(Q,T,branch_lengths,branch_lengths_var,node_lengths)) {
-	n_matches++;
-      }
-      n_samples++;
+    try {
+      scan_trees(std::cin,skip,subsample,max,A);
+    }
+    catch (std::exception& e) 
+    {
+      if (args.count("safe"))
+	cout<<Q.write(false)<<endl;
+      throw myexception()<<e.what();
     }
 
-    if (n_samples == 0)
-      throw myexception()<<"No trees were read in!";
-  
-    if (n_matches == 0) {
-      if (args.count("safe")) {
-	std::cerr<<"Error: No trees matched the specified topology!";
-	std::cout<<Q.write(false)<<endl;
-	exit(0);
-      }
-      else 
-	throw myexception()<<"No trees matched the specified topology!";
-    }
-  
-    std::cerr<<n_matches<<" out of "<<n_samples<<" trees matched the topology";
-    std::cerr<<" ("<<double(n_matches)/n_samples*100<<"%)"<<std::endl;
+    std::cerr<<A.n_matches<<" out of "<<A.n_samples<<" trees matched the topology";
+    std::cerr<<" ("<<double(A.n_matches)/A.n_samples*100<<"%)"<<std::endl;
 
     //------- Merge lengths and topology -------//
-
-    branch_lengths /= n_matches;
-    branch_lengths_var /= n_matches;
-    node_lengths /= n_matches;
-
-    for(int i=0;i<branch_lengths_var.size();i++)
-    {
-      branch_lengths_var[i] -= branch_lengths[i]*branch_lengths[i];
-      branch_lengths_var[i] = sqrt(branch_lengths_var[i]);
-    }
-
     if (args.count("var"))
-      for(int b=0;b<branch_lengths.size();b++)
-	Q.branch(b).set_length(branch_lengths_var[b]);
+      for(int b=0;b<B;b++)
+	Q.branch(b).set_length(A.m2[b]);
     else 
     {
-      for(int b=0;b<branch_lengths.size();b++)
-	Q.branch(b).set_length(branch_lengths[b]);
+      for(int b=0;b<B;b++)
+	Q.branch(b).set_length(A.m1[b]);
 
       if (not args.count("no-node-lengths")) {
-	for(int n=0;n<node_lengths.size();n++) {
+	for(int n=0;n<N;n++) {
 	  int degree = Q[n].neighbors().size();
 	  for(out_edges_iterator b = Q[n].branches_out();b;b++)
-	    (*b).set_length((*b).length() + node_lengths[n]/degree);
+	    (*b).set_length((*b).length() + A.n1[n]/degree);
 	}
       }
     }
