@@ -103,6 +103,11 @@ AC_ARG_ENABLE([static],
              [static=$enableval],
              [static=no])
 
+AC_ARG_ENABLE([cairo],
+              AS_HELP_STRING([--enable-cairo], [Build drawing programs that depend on libcairo]),
+             [cairo=yes],
+             [cairo=no])
+
 CXXFLAGS="-I\$(top_srcdir)/boost/include $CXXFLAGS $CPPFLAGS"
 CXXFLAGS="-DBALI_PHY_VERSION=\\\"$PACKAGE_VERSION\\\" $CXXFLAGS"
 
@@ -161,6 +166,7 @@ AM_CONDITIONAL(HOST_I386,test "${host_cpu}" = i386)
 AM_CONDITIONAL(HOST_I686,test "${host_cpu}" = i686)
 AM_CONDITIONAL(HOST_X86_64,test "${host_cpu}" = x86_64)
 AM_CONDITIONAL(HOST_PPC,test "${host_cpu}" = powerpc)
+AM_CONDITIONAL(HAVE_CAIRO, test "${cairo}" = yes)
 
 # Checks for library functions.
 AC_HEADER_STDC
@@ -172,6 +178,14 @@ AC_CHECK_FUNCS([floor pow sqrt strchr log2])
 AC_CHECK_LIB(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas)" ; exit 1])
 AC_CHECK_LIB(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl)" ; exit 1])
 AC_CHECK_LIB(gsl, gsl_cdf_beta_P, [], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
+
+cairo_progs=""
+if test -n "$cairo" && test "$cairo" != "no"; then
+   PKG_CHECK_MODULES(CAIRO,cairo)
+   AC_SUBST(CAIRO_CFLAGS)
+   AC_SUBST(CAIRO_LIBS)
+fi
+AC_SUBST(cairo_progs)
 
 #AC_CONFIG_FILES([GNUmakefile])
 AC_OUTPUT([
@@ -186,3 +200,7 @@ AC_OUTPUT([
 
 echo "CXXFLAGS = $CXXFLAGS"
 echo "LDFLAGS = $LDFLAGS"
+if test -n "$cairo" && test "$cairo" != "no"; then
+  echo "CAIRO_CFLAGS = $CAIRO_CFLAGS"
+  echo "CAIRO_LIBS = $CAIRO_LIBS"
+fi

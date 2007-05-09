@@ -77,9 +77,14 @@ TOOLS = model_P statreport alignment-gild \
 	joint-parsimony stats-merge stats-select alignment-identity \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
-	partitions-supported trees-pair-distances draw-tree
+	partitions-supported trees-pair-distances
+
 
 bin_PROGRAMS = bali-phy ${TOOLS}
+
+if HAVE_CAIRO
+bin_PROGRAMS += draw-tree
+endif
 
 #-----------------------------------------------------------------
 
@@ -267,9 +272,10 @@ trees_distances_SOURCES = tools/trees-distances.C tree.C \
 
 #---------------------------------------------------------------
 
-draw_tree_SOURCES = tools/draw-tree.C
-draw_tree_CXXFLAGS = `pkg-config --cflags cairo`
-draw_tree_LDFLAGS = ${LDFLAGS} `pkg-config --libs cairo`
+draw_tree_SOURCES = tools/draw-tree.C tree.C sequencetree.C \
+	tools/tree-dist.C util.C tree-util.C
+draw_tree_CXXFLAGS = ${CXXFLAGS} ${CAIRO_CFLAGS}
+draw_tree_LDFLAGS = ${LDFLAGS} ${CAIRO_LIBS}
 
 #---------------------------------------------------------------
 
