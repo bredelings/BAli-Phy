@@ -203,24 +203,20 @@ MC_tree get_MC_tree(const string& filename)
       throw myexception()<<"Don't understand word="<<words[0];;
   }
 
-  cerr<<"Read "<<MC.branches.size()<<" partitions."<<endl;
+  cerr<<"Read "<<MC.branches.size()<<" partitions / "
+      <<count(MC.branches,&Partition::full)<<" full partitions."<<endl;
   return MC;
 }
 
 SequenceTree build_tree(const MC_tree& MC)
 {
-  vector<Partition> full_partitions;
+  SequenceTree MF = star_tree(MC.branches[0].names);
+
   for(int i=0;i<MC.branches.size();i++)
-    if (MC.branches[i].full())
-      full_partitions.push_back(MC.branches[i]);
-
-  cerr<<"Read "<<MC.branches.size()<<" partitions ... "<<full_partitions.size()<<" full partitions."<<endl;
-
-  SequenceTree MF = star_tree(full_partitions[0].names);
-  for(int i=0;i<full_partitions.size();i++) {
-    cerr<<"i = "<<i<<"    pi = "<<full_partitions[i]<<endl;
-    MF.induce_partition(full_partitions[i].group1);
-  }
+    if (MC.branches[i].full()) {
+      int b = MF.induce_partition(MC.branches[i].group1);
+      MF.branch(b).set_length(MC.branch_lengths[i]);
+    }
 
   //set the branch lengths!
 
