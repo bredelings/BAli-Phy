@@ -111,6 +111,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+// Actually, this assumes that connected-ness is a clique relation.
+// This function doesn't find cliques in a general connectedness matrix.
+
 vector<int> get_cliques(const ublas::matrix<int>& connected)
 {
   const int N = connected.size1();
@@ -156,7 +159,7 @@ void draw_graph(const MC_tree& T,const string& name)
       nodesep=1.0\n\
       ratio=auto\n\
 \n\
-      node[shape=none,width=auto]\n\n";
+      node[shape=plaintext,width=auto]\n\n";
 
   // edges
   for(int i=0;i<T.edges.size();i++) {
@@ -233,6 +236,7 @@ int main(int argc,char* argv[])
 	throw myexception()<<"Partition "<<i+1<<" is not informative.";
     }
 
+    //---- Throw out conflicting partitions ----//
     vector<Partition> partitions_old = partitions;
     partitions = get_moveable_tree(partitions);
     // check that the tree is an MC tree
@@ -282,6 +286,7 @@ int main(int argc,char* argv[])
 	    if (left_of(i,k) and wanders_over(k,j))
 	      directly_wanders_over(i,j)=0;
 
+    // directly wanders
     vector<bool> directly_wanders(2*N,false);
     for(int i=0;i<2*N;i++)
       for(int j=0;j<2*N;j++)

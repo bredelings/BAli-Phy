@@ -77,7 +77,7 @@ TOOLS = model_P statreport alignment-gild \
 	joint-parsimony stats-merge stats-select alignment-identity \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
-	partitions-supported trees-pair-distances
+	partitions-supported trees-pair-distances draw-tree
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -267,6 +267,12 @@ trees_distances_SOURCES = tools/trees-distances.C tree.C \
 
 #---------------------------------------------------------------
 
+draw_tree_SOURCES = tools/draw-tree.C
+draw_tree_CXXFLAGS = `pkg-config --cflags cairo`
+draw_tree_LDFLAGS = ${LDFLAGS} `pkg-config --libs cairo`
+
+#---------------------------------------------------------------
+
 alignment_cut: alignment.o alignment-util.o alphabet.o sequence.o \
 	sequence-format.o util.o tree.o ${BOOST_LIBS}
 
@@ -309,3 +315,4 @@ truckgraph2: alignment.o alphabet.o sequence.o util.o \
 #---------------------------------------------------------------
 
 truckgraph3d: alignment.o alphabet.o sequence.o util.o rng.o 
+
