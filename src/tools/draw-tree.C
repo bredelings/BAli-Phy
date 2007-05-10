@@ -340,12 +340,12 @@ void tree_plotter::operator()(cairo_t* cr)
   cout<<endl;
 
   // line width 5 points
-  cairo_set_line_width(cr, 5);
+  cairo_set_line_width(cr, 0.01);
 
   // move to center and flip up 
   cairo_translate(cr, 8.5*inch/2.0, 11.0*inch/2.0);
   cairo_scale(cr, 1, -1);
-  cairo_set_line_width(cr, 0.04);
+  //  cairo_set_line_width(cr, 0.04);
 
   // find scaling factor
   const double edge = 0.05;
@@ -375,7 +375,7 @@ void tree_plotter::operator()(cairo_t* cr)
     cairo_stroke (cr);
   }
 
-  const double dashes[] = {0.1,0.1};
+  const double dashes[] = {0.03, 0.03};
 
   cairo_set_dash (cr, dashes, 2, 0.0);
 
