@@ -21,69 +21,21 @@ using namespace std;
 
 const double inch = 72.0;
 
-void draw_curvy_rectangle(cairo_t* cr)
+struct cairo_plotter
 {
-  // a custom shape, that could be wrapped in a function 
-  double x0	   = 0.1;   /*< parameters like cairo_rectangle */
-  double y0	   = 0.1;
-  double rect_width  = 0.8;
-  double rect_height = 0.8;
-  double radius = 0.4;   /*< and an approximate curvature radius */
+  virtual void operator()(cairo_t*) = 0;
+  virtual ~cairo_plotter() {}
+};
 
-  cairo_scale(cr, 8.5*inch, 11*inch);
-  cairo_set_line_width(cr, 0.04);
-  
-  double x1 = x0 + rect_width;
-  double y1 = y0 + rect_height;
+struct fn_plotter: public cairo_plotter
+{
+  void (*f)(cairo_t*);
+  void operator()(cairo_t* cr) {f(cr);}
+  fn_plotter(void (*f1)(cairo_t*)):f(f1) {}
 
-  if (!rect_width || !rect_height)
-    return;
-  if (rect_width/2<radius) {
-    if (rect_height/2<radius) {
-      cairo_move_to  (cr, x0, (y0 + y1)/2);
-      cairo_curve_to (cr, x0 ,y0, x0, y0, (x0 + x1)/2, y0);
-      cairo_curve_to (cr, x1, y0, x1, y0, x1, (y0 + y1)/2);
-      cairo_curve_to (cr, x1, y1, x1, y1, (x1 + x0)/2, y1);
-      cairo_curve_to (cr, x0, y1, x0, y1, x0, (y0 + y1)/2);
-    } else {
-      cairo_move_to  (cr, x0, y0 + radius);
-      cairo_curve_to (cr, x0 ,y0, x0, y0, (x0 + x1)/2, y0);
-      cairo_curve_to (cr, x1, y0, x1, y0, x1, y0 + radius);
-      cairo_line_to (cr, x1 , y1 - radius);
-      cairo_curve_to (cr, x1, y1, x1, y1, (x1 + x0)/2, y1);
-      cairo_curve_to (cr, x0, y1, x0, y1, x0, y1- radius);
-    }
-  } else {
-    if (rect_height/2<radius) {
-      cairo_move_to  (cr, x0, (y0 + y1)/2);
-      cairo_curve_to (cr, x0 , y0, x0 , y0, x0 + radius, y0);
-      cairo_line_to (cr, x1 - radius, y0);
-      cairo_curve_to (cr, x1, y0, x1, y0, x1, (y0 + y1)/2);
-      cairo_curve_to (cr, x1, y1, x1, y1, x1 - radius, y1);
-      cairo_line_to (cr, x0 + radius, y1);
-      cairo_curve_to (cr, x0, y1, x0, y1, x0, (y0 + y1)/2);
-    } else {
-      cairo_move_to  (cr, x0, y0 + radius);
-      cairo_curve_to (cr, x0 , y0, x0 , y0, x0 + radius, y0);
-      cairo_line_to (cr, x1 - radius, y0);
-      cairo_curve_to (cr, x1, y0, x1, y0, x1, y0 + radius);
-      cairo_line_to (cr, x1 , y1 - radius);
-      cairo_curve_to (cr, x1, y1, x1, y1, x1 - radius, y1);
-      cairo_line_to (cr, x0 + radius, y1);
-      cairo_curve_to (cr, x0, y1, x0, y1, x0, y1- radius);
-    }
-  }
-  cairo_close_path (cr);
-  
-  cairo_set_source_rgb (cr, 0.5,0.5,1);
-  cairo_fill_preserve (cr);
-  // it seems that alpha blending results in a very large image ;S
-  //  cairo_set_source_rgba (cr, 0.5, 0, 0, 0.5);
-  cairo_set_source_rgb (cr, 0.5,0.0,0);
-  cairo_stroke (cr);
-}
+};
 
-void draw_to_page(cairo_surface_t* surface,void (*draw)(cairo_t*))
+void draw_to_page(cairo_surface_t* surface, cairo_plotter& draw)
 {
   cairo_t *cr = cairo_create(surface);
 
@@ -94,16 +46,16 @@ void draw_to_page(cairo_surface_t* surface,void (*draw)(cairo_t*))
   cairo_destroy(cr);
 }
 
-void draw_to_ps(const string& filename,void (*draw)(cairo_t*))
+void draw_to_ps(const string& filename, cairo_plotter& draw)
 {
-  cairo_surface_t *surface = cairo_ps_surface_create(filename.c_str(),8*72.0, 11*72.0);
+  cairo_surface_t *surface = cairo_ps_surface_create(filename.c_str(),8.5*inch, 11*inch);
 
   draw_to_page(surface,draw);
 }
 
-void draw_to_pdf(const string& filename,void (*draw)(cairo_t*))
+void draw_to_pdf(const string& filename, cairo_plotter& draw)
 {
-  cairo_surface_t *surface = cairo_pdf_surface_create(filename.c_str(),8*72.0, 11*72.0);
+  cairo_surface_t *surface = cairo_pdf_surface_create(filename.c_str(),8.5*inch, 11*inch);
 
   draw_to_page(surface,draw);
 }
@@ -225,6 +177,229 @@ SequenceTree build_tree(const MC_tree& MC)
   return MF;
 }
 
+struct point_position
+{
+  double x;
+  double y;
+  point_position():x(0),y(0) {}
+};
+
+
+struct tree_layout 
+{
+  SequenceTree T;
+  vector<double> node_radius;
+  vector<point_position> node_positions;
+  tree_layout(const SequenceTree& T1)
+    :T(T1),
+     node_radius(T.n_nodes(),0),
+     node_positions(T.n_nodes())
+  {}
+};
+
+int find_directed_branch(const Tree& T,const Partition& p)
+{
+  for(int b=0; b<2*T.n_branches(); b++)
+    if (equal(branch_partition(T,b), p.group1))
+      return b;
+  return -1;
+}
+
+int node_max_depth(const Tree& T,int node) 
+{
+  int depth = T.edges_distance(node,0);
+  for(int i=1;i<T.n_leaves();i++) 
+    depth = std::max(depth, T.edges_distance(node,i) );
+
+  return depth;
+}
+
+int n_children(const Tree& T,int b)
+{
+  return n_elements(branch_partition(T,b));
+}
+
+
+void circular_layout(tree_layout& L,int parent,double min_a,double max_a)
+{
+  SequenceTree& T = L.T;
+
+  if (n_children(T,parent) == 1) return;
+
+  double a1 = min_a;
+  for(out_edges_iterator b = T.branch(parent).branches_after();b;b++) 
+  {
+    double a2 = a1 + (max_a - min_a) * n_children(T,*b)/n_children(T,parent);
+    double a = (a1+a2)/2.0;
+
+    int n1 = (*b).source();
+    int n2 = (*b).target();
+    double length = (*b).length();
+
+    L.node_positions[n2] = L.node_positions[n1];
+    L.node_positions[n2].x += length*cos(a);
+    L.node_positions[n2].y += length*sin(a);
+
+    circular_layout(L,*b,a1,a2);
+    a1=a2;
+  }
+}
+
+tree_layout circular_layout(const MC_tree& MC)
+{
+  SequenceTree MF = build_tree(MC);
+
+
+  // determine node lengths
+  vector<double> node_radius(MF.n_nodes(),0);
+
+  for(int i=0;i<MC.nodes.size();i++)
+  {
+    const Partition& p = MC.nodes[i];
+    int b = find_directed_branch(MF,p);
+    if (b == -1) {
+      cerr<<"Can't find node '"<<p<<"'"<<endl;
+      continue;
+    }
+    int n = MF.directed_branch(b).target();
+
+    node_radius[n] = MC.node_lengths[i]/2.0;
+  }
+
+  for(int b=0;b<MF.n_branches();b++) {
+    double L = MF.branch(b).length();
+    int n1 = MF.branch(b).target();
+    int n2 = MF.branch(b).source();
+    L += node_radius[n1] + node_radius[n2];
+    MF.branch(b).set_length(L);
+  }
+
+
+  // place the root
+  int root = 0;
+  for(int n=0;n<MF.n_nodes();n++)
+    if (node_max_depth(MF,n) < node_max_depth(MF,root))
+      root = n;
+
+  cerr<<"root = "<<root<<endl;
+
+  tree_layout L(MF);
+  L.node_radius = node_radius;
+
+  double a1 = 0;
+  for(out_edges_iterator b = MF[root].branches_out();b;b++) 
+  {
+    double a2 = a1 + 2.0 * M_PI * n_children(MF,*b)/MF.n_leaves();
+    double a = (a1+a2)/2.0;
+
+    cerr<<"branch "<<(*b).name()<<"  n_children = "<<n_children(MF,*b)<<endl;
+
+    int n1 = (*b).source();
+    int n2 = (*b).target();
+    double length = (*b).length();
+
+    L.node_positions[n2] = L.node_positions[n1];
+    L.node_positions[n2].x += length*cos(a);
+    L.node_positions[n2].y += length*sin(a);
+
+    cerr<<"edge target = "<<n2<<"   a1 = "<<a1*180/M_PI<<" a = "<<a*360/(2*M_PI)<<" a2 = "<<a2*180/M_PI<<"   length = "<<length<<"  x = "<<    L.node_positions[n2].x<<" y = "<<L.node_positions[n2].x<<endl;
+    circular_layout(L,*b,a1,a2);
+    a1 = a2;
+  }
+  
+
+  return L;
+}
+
+struct tree_plotter: public cairo_plotter
+{
+  tree_layout L;
+  void operator()(cairo_t*);
+  tree_plotter(const tree_layout& tl):L(tl) {}
+};
+
+void tree_plotter::operator()(cairo_t* cr)
+{
+  double xmin = L.node_positions[0].x;
+  double xmax = L.node_positions[0].x;
+  for(int i=0;i<L.node_positions.size();i++)
+  {
+    xmin = min(xmin,L.node_positions[i].x);
+    xmax = max(xmax,L.node_positions[i].x);
+  }
+    
+  double ymin = L.node_positions[0].y;
+  double ymax = L.node_positions[0].y;
+  for(int i=0;i<L.node_positions.size();i++)
+  {
+    ymin = min(ymin,L.node_positions[i].y);
+    ymax = max(ymax,L.node_positions[i].y);
+  }
+  cout<<"x = ["<<xmin<<", "<<xmax<<"]"<<endl;
+  cout<<"y = ["<<ymin<<", "<<ymax<<"]"<<endl;
+  cout<<endl;
+
+  // line width 5 points
+  cairo_set_line_width(cr, 5);
+
+  // move to center and flip up 
+  cairo_translate(cr, 8.5*inch/2.0, 11.0*inch/2.0);
+  cairo_scale(cr, 1, -1);
+  cairo_set_line_width(cr, 0.04);
+
+  // find scaling factor
+  const double edge = 0.05;
+  const double factor = 1.0-edge*2;
+
+  double scale = std::min(8.5*inch/(xmax-xmin),11.5*inch/(ymax-ymin));
+  scale *= factor;
+  cairo_scale(cr, scale, scale);
+  cairo_translate(cr, factor*-0.5*(xmax+xmin), factor*-0.5*(ymax+ymin));
+  
+
+  // draw the branches
+  for(int b=0;b<L.T.n_branches();b++) 
+  {
+    int n1 = L.T.branch(b).source();
+    int n2 = L.T.branch(b).target();
+
+    double x1 = L.node_positions[n1].x;
+    double y1 = L.node_positions[n1].y;
+
+    double x2 = L.node_positions[n2].x;
+    double y2 = L.node_positions[n2].y;
+
+    cairo_move_to (cr, x1, y1);
+    cairo_line_to (cr, x2, y2);
+    cairo_set_source_rgb (cr, 0, 0 ,0);
+    cairo_stroke (cr);
+  }
+
+  const double dashes[] = {0.1,0.1};
+
+  cairo_set_dash (cr, dashes, 2, 0.0);
+
+  // draw the circles
+  for(int n=0;n<L.node_radius.size();n++) 
+  {
+    double x = L.node_positions[n].x;
+    double y = L.node_positions[n].y;
+
+    if (L.node_radius[n] > 0) {
+      cerr<<"node n="<<n<<"  radius = "<<L.node_radius[n]<<endl;
+      cairo_arc(cr, x, y, L.node_radius[n], 0.0, 2.0 * M_PI);
+
+      cairo_set_source_rgb (cr, 1 , 1, 1);
+      cairo_fill_preserve (cr);
+
+      cairo_set_source_rgb (cr, 0 , 0, 0);
+      cairo_stroke(cr);
+    }
+  }
+    
+ 
+}
+
 
 int main(int argc,char* argv[]) 
 {
@@ -233,18 +408,16 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     //-------- Load MC Tree and lengths -----//
-    MC_tree MC = get_MC_tree(args["file"].as<string>());
-
-    SequenceTree MF = build_tree(MC);
-
-    // do we need a generic draw-to-cr-context object?
+    string filename = args["file"].as<string>();
+    MC_tree MC = get_MC_tree(filename);
 
     // lay out the tree
+    tree_layout L = circular_layout(MC);
 
     // draw the tree
-
-    draw_to_ps("tree.ps",draw_curvy_rectangle);
-    draw_to_pdf("tree.pdf",draw_curvy_rectangle);
+    tree_plotter tp(L);
+    draw_to_ps(filename+"-tree.ps",tp);
+    draw_to_pdf(filename+"-tree.pdf",tp);
   }
   catch (std::exception& e) {
     cerr<<"Exception: "<<e.what()<<endl;
