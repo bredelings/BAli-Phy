@@ -186,6 +186,18 @@ struct point_position
 };
 
 
+// FIXME - how to handle text layout?
+//        (a) problem - we don't know the text sizes in the tree layout!
+//        (b) we could try to find the page boundaries in the page drawing code.
+//        (c) but then layout algorithms couldn't try to prevent label overlap.
+
+// 1. FIXME - figure out how much angle space we REALLY have!
+// 2. FIXME - give away unused angle space...
+// 3. Place short branches in a cluster near the edge of our angle space,
+//    place the longest ones in the middle!
+
+// 4. HOW hard would it be to allow manual adjustment of the placements???
+
 struct tree_layout 
 {
   SequenceTree T;
