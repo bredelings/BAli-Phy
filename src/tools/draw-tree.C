@@ -335,6 +335,20 @@ tree_layout circular_layout(const MC_tree& MC)
   return L;
 }
 
+double get_text_length(cairo_t* cr, const string& s)
+{
+  cairo_text_extents_t extents;
+  cairo_text_extents (cr, s.c_str(), &extents);
+  return extents.width;
+}
+
+double get_text_height(cairo_t* cr, const string& s)
+{
+  cairo_text_extents_t extents;
+  cairo_text_extents (cr, s.c_str(), &extents);
+  return extents.height;
+}
+
 struct tree_plotter: public cairo_plotter
 {
   tree_layout L;
@@ -364,11 +378,13 @@ void tree_plotter::operator()(cairo_t* cr)
   cout<<endl;
 
   // line width 5 points
-  cairo_set_line_width(cr, 0.01);
+  const double line_width = 0.005;
+  cairo_set_line_width(cr, line_width);
+  cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND);
 
   // move to center and flip up 
   cairo_translate(cr, 8.5*inch/2.0, 11.0*inch/2.0);
-  cairo_scale(cr, 1, -1);
+  //  cairo_scale(cr, 1, -1);
   //  cairo_set_line_width(cr, 0.04);
 
   // find scaling factor
@@ -399,7 +415,7 @@ void tree_plotter::operator()(cairo_t* cr)
     cairo_stroke (cr);
   }
 
-  const double dashes[] = {0.03, 0.03};
+  const double dashes[] = {line_width*3, line_width*3};
 
   cairo_set_dash (cr, dashes, 2, 0.0);
 
@@ -420,6 +436,47 @@ void tree_plotter::operator()(cairo_t* cr)
       cairo_stroke(cr);
     }
   }
+
+    cairo_select_font_face (cr, "Sans", 
+			    CAIRO_FONT_SLANT_NORMAL,
+			    CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_font_size (cr, 0.025);
+
+  for(int l=0;l<L.T.n_leaves();l++)
+  {  
+    double x1 = L.node_positions[l].x;
+    double y1 = L.node_positions[l].y;
+
+    int p = L.T.branch(l).target();
+
+    double x2 = L.node_positions[p].x;
+    double y2 = L.node_positions[p].y;
+
+    double a = atan2(y1-y2,x1-x2);
+
+    double W = get_text_length(cr, L.T.seq(l));
+    double H = get_text_height(cr, L.T.seq(l));
+
+    x1 += cos(a)*line_width;
+    y1 += sin(a)*line_width;
+
+    y1 += 0.5*H;
+
+    if (abs(cos(a) < 0.4))
+    {
+      if (cos(a) < 0)
+	x1 -= W;
+      
+      if (sin(a) < 0)
+	y1 -= H;
+      else
+	y1 += H;
+    }
+
+    cairo_move_to (cr, x1, y1);
+    cairo_show_text (cr, L.T.seq(l).c_str());
+  }
+
     
  
 }
