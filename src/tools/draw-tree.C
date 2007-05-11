@@ -13,6 +13,7 @@
 #include "myexception.H"
 #include "sequencetree.H"
 #include "tree-dist.H"
+#include "pow2.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -245,6 +246,29 @@ void circular_layout(tree_layout& L,int parent,double min_a,double max_a)
   }
 }
 
+// Consider a Cayley tree that is fractally expanded
+// iteratively, so that it has 3,9,21... internal edges.
+// If n=1, the number of tips Tn=3*2^(n-1), the number of
+// internal edges In = 3*(2^n - 1), the number of edges
+// from tip-to-tip Dn = 2n.  We want Dn/In as a function
+// of Tn (the degree), which gives us 
+//
+//   Dn/In  =  2n/3(2^n - 1)
+//
+//   Dn/In  = 2(log2(degree) - log2(3) + 1)/(2*degree - 3)
+double node_diameter(double lengths,int degree)
+{
+  double ratio = 1.0;
+
+  if (degree == 5)
+    ratio = 0.75;
+  else if (degree > 5)
+    ratio = 2.0*(1.0 + log2(degree) - log2(3))/(2.0*degree - 3.0);
+
+  return lengths*ratio;
+}
+
+
 tree_layout circular_layout(const MC_tree& MC)
 {
   SequenceTree MF = build_tree(MC);
@@ -262,8 +286,8 @@ tree_layout circular_layout(const MC_tree& MC)
       continue;
     }
     int n = MF.directed_branch(b).target();
-
-    node_radius[n] = MC.node_lengths[i]/2.0;
+    int d = MF[n].degree();
+    node_radius[n] = node_diameter(MC.node_lengths[i], d)/2.0;
   }
 
   for(int b=0;b<MF.n_branches();b++) {
