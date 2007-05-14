@@ -251,24 +251,14 @@ std::ostream& operator<<(std::ostream& o, const Partition& P)
 {
   assert(empty(P.group1 and P.group2));
 
-  if (n_elements(P.group1)<n_elements(P.group2)) {
-    for(int i=0;i<P.size();i++)
-      if (P.group1[i]) o<<P.names[i]<<" ";
-    
-    o<<"| ";
-    
-    for(int i=0;i<P.size();i++)
-      if (P.group2[i]) o<<P.names[i]<<" ";
-  }
-  else {
-    for(int i=0;i<P.size();i++)
-      if (P.group2[i]) o<<P.names[i]<<" ";
-    
-    o<<"| ";
-    
-    for(int i=0;i<P.size();i++)
-      if (P.group1[i]) o<<P.names[i]<<" ";
-  }
+  for(int i=0;i<P.size();i++)
+    if (P.group1[i]) o<<P.names[i]<<" ";
+  
+  o<<"| ";
+  
+  for(int i=0;i<P.size();i++)
+    if (P.group2[i]) o<<P.names[i]<<" ";
+
   std::valarray<bool> rmask = not(P.group1 or P.group2);
   if (statistics::count(rmask)) {
     o<<" [ ";
