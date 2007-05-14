@@ -11,7 +11,7 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            tools/bootstrap.H tools/inverse.H tools/statistics.H \
            tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
-           tools/findroot.H tools/parsimony.H distribution.H
+           tools/findroot.H tools/parsimony.H distribution.H tools/mctree.H
 
 LDFLAGS = @ldflags@
 
@@ -222,7 +222,7 @@ partitions_supported_SOURCES = tools/partitions-supported.C tree.C sequencetree.
 
 #---------------------------------------------------------------
 
-draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C util.C tree-util.C
+draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C util.C tree-util.C tools/mctree.C
 
 #---------------------------------------------------------------
 tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
