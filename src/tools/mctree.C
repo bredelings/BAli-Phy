@@ -63,60 +63,93 @@ MC_tree::MC_tree(const vector<Partition>& p)
     partitions.insert(partitions.begin()+i,Partition(names(),m));
   }
 
-  // add reversed branches
   N = partitions.size();
-  for(int i=0;i<N;i++)
-    partitions.push_back(partitions[i].reverse());
+  reverse_.resize(2*N,-1);
+
+  // Split full and partial partitions into groups
+  vector<Partition> full;
+  vector<Partition> partial;
+  for(int i=0;i<partitions.size();i++)
+    if (partitions[i].full())
+      full.push_back(partitions[i]);
+    else
+      partial.push_back(partitions[i]);
+
+  T = get_mf_tree(names_, full);
+  assert(full.size() == T.n_branches());
+
+  // Add the full partitions
+  partitions.clear();
+  for(int b=0;b<2*T.n_branches();b++) {
+    partitions.push_back(partition_from_branch(T,b));
+    reverse_[b] = T.directed_branch(b).reverse();
+  }
+
+  // Add the partial partitions
+  for(int i=0;i<partial.size();i++) {
+    int B1 = partitions.size();
+    int B2 = B1+1;
+
+    partitions.push_back(partial[i]);
+    partitions.push_back(partial[i].reverse());
+
+    reverse_[B1] = B2;
+    reverse_[B2] = B1;
+  }
+
+  assert(partitions.size() == 2*N);
 
   // left_of
-  ublas::matrix<int> left_of(2*N,2*N);
-  for(int i=0;i<2*N;i++)
-    for(int j=0;j<2*N;j++)
+  left_of.resize(partitions.size(), partitions.size());
+  for(int i=0;i<partitions.size();i++)
+    for(int j=0;j<partitions.size();j++)
       left_of(i,j) = partition_less_than(partitions[i],partitions[j])?1:0;
   
   // wanders_over
-  ublas::matrix<int> wanders_over(2*N,2*N);
-  for(int i=0;i<2*N;i++)
-    for(int j=0;j<2*N;j++)
+  wanders_over.resize(partitions.size(),partitions.size());
+  for(int i=0;i<partitions.size();i++)
+    for(int j=0;j<partitions.size();j++)
       wanders_over(i,j) = partition_wanders_over(partitions[i],partitions[j])?1:0;
   
   // directly_left_of
-  ublas::matrix<int> directly_left_of = left_of;
-  for(int i=0;i<2*N;i++)
-    for(int j=0;j<2*N;j++)
+  directly_left_of.resize(partitions.size(),partitions.size());
+  directly_left_of = left_of;
+  for(int i=0;i<partitions.size();i++)
+    for(int j=0;j<partitions.size();j++)
       if (left_of(i,j))
-	for(int k=0;k<2*N;k++)
+	for(int k=0;k<partitions.size();k++)
 	  if (left_of(i,k) and left_of(k,j))
 	    directly_left_of(i,j)=0;
   
 
   // directly_wanders_over
-  ublas::matrix<int> directly_wanders_over = wanders_over;
-  for(int i=0;i<2*N;i++)
-    for(int j=0;j<2*N;j++)
+  directly_wanders_over.resize(partitions.size(),partitions.size());
+  directly_wanders_over = wanders_over;
+  for(int i=0;i<partitions.size();i++)
+    for(int j=0;j<partitions.size();j++)
       if (wanders_over(i,j))
-	for(int k=0;k<2*N;k++)
+	for(int k=0;k<partitions.size();k++)
 	  if (left_of(i,k) and wanders_over(k,j))
 	    directly_wanders_over(i,j)=0;
   
   // directly wanders
-  vector<bool> directly_wanders(2*N,false);
-  for(int i=0;i<2*N;i++)
-    for(int j=0;j<2*N;j++)
+  directly_wanders = vector<bool>(partitions.size(),false);
+  for(int i=0;i<partitions.size();i++)
+    for(int j=0;j<partitions.size();j++)
       if (directly_wanders_over(i,j))
 	directly_wanders[i] = true;
 
   // connected_to
-  ublas::matrix<int> connected_to(2*N,2*N);
-  for(int i=0;i<2*N;i++)
-    for(int j=0;j<2*N;j++)
+  connected_to.resize(partitions.size(),partitions.size());
+  for(int i=0;i<partitions.size();i++)
+    for(int j=0;j<partitions.size();j++)
       if (directly_wanders[i] or directly_wanders[j])
 	connected_to(i,j)=0;
       else
-	connected_to(i,j) = directly_left_of(i, (j+N)%(2*N) );
+	connected_to(i,j) = directly_left_of(i, reverse(j) );
   
   /*
-    for(int i=0;i<2*N;i++)
+    for(int i=0;i<partitions.size();i++)
       for(int j=0;j<i;j++)
         if (connected_to(i,j)) {
           cerr<<"("<<partitions[i]<<") <-> ("<<partitions[j]<<")\n";
@@ -131,27 +164,42 @@ MC_tree::MC_tree(const vector<Partition>& p)
 
   n_nodes = C;
 
-  // connected
-  ublas::matrix<int> connected(C,C);
+  // clear connected
+  connected.resize(C, C);
   for(int i=0;i<C;i++)
     for(int j=0;j<C;j++)
       connected(i,j) = 0;
 
-  for(int i=0;i<N;i++) {
-    assert(not connected_to(i,i+N));
-    assert(mapping[i] != mapping[i+N]);
-    connected(mapping[i],mapping[i+N])=1;
-    connected(mapping[i+N],mapping[i])=1;
-    edges.push_back(edge(mapping[i],mapping[i+N],1,i));
+  // add 1 edge (not 2) for each partition
+  valarray<bool> visited(partitions.size());
+  for(int i=0;i<partitions.size();i++) 
+  {
+    assert(not connected_to(i,reverse(i)));
+    if (visited[i]) continue;
+
+    visited[i] = true;
+    visited[reverse(i)] = true;
+
+    int n1 = mapping[i];
+    int n2 = mapping[reverse(i)];
+
+    assert(n1 != n2);
+
+    connected(n1, n2) = 1;
+    connected(n2, n1) = 1;
+
+    edges.push_back(edge(n1,n2,1,i));
   }
 
-  for(int i=0;i<2*N;i++) 
-    for(int j=0;j<2*N;j++) 
+  // mark connection possibilities for wandering edges
+  for(int i=0;i<partitions.size();i++) 
+    for(int j=0;j<partitions.size();j++) 
       if (directly_wanders_over(i,j)) {
-	assert(directly_wanders_over(i,(j+N)%(2*N)));
+	assert(directly_wanders_over(i,reverse(j)));
 	connected(mapping[i],mapping[j])=2;
       }
   
+  // add a wandering edge for each connection point
   for(int i=0;i<C;i++)
     for(int j=0;j<C;j++)
       if (connected(i,j)==2)
