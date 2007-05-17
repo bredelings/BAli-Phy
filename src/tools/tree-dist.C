@@ -884,6 +884,9 @@ void load_partitions(const string& filename, vector<vector<Partition> >& partiti
 {
   std::ifstream file(filename.c_str());
 
+  if (not file)
+    throw myexception()<<"Can't open file '"<<filename<<"'";
+
   string line;
   while(file) {
     vector<Partition> P;
@@ -1009,6 +1012,9 @@ vector<bool> solve_conflicts(const ublas::matrix<int>& conflicts,
 
 vector<Partition> get_moveable_tree(vector<Partition> partitions)
 {
+  if (not partitions.size())
+    throw myexception()<<"Can't create an MC tree from an empty partition list.";
+
   // remove partitions that are implied by other partitions
   for(int i=partitions.size()-1;i>=0;i--) 
   {

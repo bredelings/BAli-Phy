@@ -44,8 +44,27 @@ vector<int> get_cliques(const ublas::matrix<int>& connected)
 MC_tree::MC_tree(const vector<Partition>& p)
   :partitions(p)
 {
+  if (not p.size())
+    throw myexception()<<"Can't create an MC tree from an empty partition list.";
+
+  names_ = p[0].names;
+
+  // remove uninformative branches
+  for(int i=0;i<partitions.size();)
+    if (not informative(partitions[i]))
+      partitions.erase(partitions.begin()+i);
+    else
+      i++;
+
+  // adds leaf branches
+  for(int i=0;i<n_leaves();i++) {
+    valarray<bool> m(true,n_leaves());
+    m[i] = false;
+    partitions.insert(partitions.begin()+i,Partition(names(),m));
+  }
+
   // add reversed branches
-  const int N = partitions.size();
+  N = partitions.size();
   for(int i=0;i<N;i++)
     partitions.push_back(partitions[i].reverse());
 

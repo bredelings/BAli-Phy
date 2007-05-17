@@ -73,9 +73,13 @@ int main(int argc,char* argv[])
     string filename = args["file"].as<string>();
     load_partitions(filename, partitions1);
 
+    if (not partitions1.size())
+      throw myexception()<<"Can't create an MC tree from an empty partition list.";
+
     vector<Partition> partitions = partitions1[0];
 
     // check that the taxon names are all the same
+
     vector<string> names = partitions[0].names;
     for(int i=0;i<partitions.size();i++) {
 
@@ -92,15 +96,10 @@ int main(int argc,char* argv[])
     vector<Partition> partitions_old = partitions;
     partitions = get_moveable_tree(partitions);
     // check that the tree is an MC tree
+
     if (partitions.size() != partitions_old.size())
       cerr<<"Removing "<<partitions_old.size() - partitions.size()<<"/"<<partitions_old.size()<<" partitions to yield an MC  tree."<<endl;
-
-    // add leaf branches
-    for(int i=0;i<names.size();i++) {
-      valarray<bool> m(true,names.size());
-      m[i] = false;
-      partitions.insert(partitions.begin()+i,Partition(names,m));
-    }
+    cerr<<"There are "<<partitions.size() - count(partitions,&Partition::full)<<"/"<<partitions.size()<<" full partitions."<<endl;
 
     MC_tree T(partitions);
 

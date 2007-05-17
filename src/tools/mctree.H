@@ -18,12 +18,19 @@ struct edge {
 
 struct MC_tree 
 {
+  int N;
+  std::vector<std::string> names_;
+
+public:
   std::vector<Partition> partitions;
   int n_nodes;
   std::vector<edge> edges;
   std::vector<int> mapping;
 
-  const std::vector<std::string>& names() const {return partitions[0].names;}
+  const std::vector<std::string>& names() const {return names_;}
+
+  int n_leaves() const {return names_.size();}
+  int n_branches() const {return N;}
 
   MC_tree(const std::vector<Partition>&);
 };
