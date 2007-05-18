@@ -19,17 +19,25 @@ struct edge {
 
 struct MC_tree 
 {
+  // number of branches
   int N;
+
+  // number of nodes
+  int C;
+
+  // leaf names
   std::vector<std::string> names_;
 
+  // index of reversed branch
   std::vector<int> reverse_;
 
 public:
   SequenceTree T;
 
   std::vector<Partition> partitions;
-  int n_nodes;
   std::vector<edge> edges;
+
+  // map (directed) branches to node names
   std::vector<int> mapping;
 
   // partition properties
@@ -43,10 +51,16 @@ public:
   // node properties
   ublas::matrix<int> connected;
 
+  // list of unique branches
+  vector<int> branch_order;
+
+  int branch_to_node(int n) const;
+
   const std::vector<std::string>& names() const {return names_;}
 
   int n_leaves() const {return names_.size();}
   int n_branches() const {return N;}
+  int n_nodes() const {return C;}
   int reverse(int i) const {return reverse_[i];}
 
   MC_tree(const std::vector<Partition>&);
@@ -55,5 +69,7 @@ public:
 void draw_graph(const MC_tree& T,const std::string& name);
 
 MC_tree load_MC_tree(const std::string&);
+
+std::ostream& operator<<(std::ostream& o, const MC_tree&);
 
 #endif

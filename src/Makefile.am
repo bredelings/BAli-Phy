@@ -73,7 +73,7 @@ TOOLS = model_P statreport alignment-gild \
 	trees-consensus cut-range alignment-translate \
 	alignment-median alignment-indices pickout \
 	joint-indels alignment-consensus alignment-info \
-	subsample tree-mean-lengths trees-bootstrap \
+	subsample tree-mean-lengths mctree-mean-lengths trees-bootstrap \
 	joint-parsimony stats-merge stats-select alignment-identity \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
@@ -226,6 +226,9 @@ draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C 
 
 #---------------------------------------------------------------
 tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
+
+#---------------------------------------------------------------
+mctree_mean_lengths_SOURCES = tools/mctree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C tools/mctree.C
 
 #---------------------------------------------------------------
 trees_pair_distances_SOURCES = tools/trees-pair-distances.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 

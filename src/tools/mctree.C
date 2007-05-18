@@ -42,7 +42,9 @@ vector<int> get_cliques(const ublas::matrix<int>& connected)
 }
 
 MC_tree::MC_tree(const vector<Partition>& p)
-  :partitions(p)
+  :N(-1),
+   C(-1),
+   partitions(p)
 {
   if (not p.size())
     throw myexception()<<"Can't create an MC tree from an empty partition list.";
@@ -75,6 +77,7 @@ MC_tree::MC_tree(const vector<Partition>& p)
     else
       partial.push_back(partitions[i]);
 
+  // this SHOULD already have standardized (sorted) leaf order from the partitions
   T = get_mf_tree(names_, full);
   assert(full.size() == T.n_branches());
 
@@ -120,7 +123,6 @@ MC_tree::MC_tree(const vector<Partition>& p)
 	for(int k=0;k<partitions.size();k++)
 	  if (left_of(i,k) and left_of(k,j))
 	    directly_left_of(i,j)=0;
-  
 
   // directly_wanders_over
   directly_wanders_over.resize(partitions.size(),partitions.size());
@@ -160,9 +162,7 @@ MC_tree::MC_tree(const vector<Partition>& p)
   // map nodes to clique indices
   mapping = get_cliques(connected_to);
   
-  int C = max(mapping)+1;
-
-  n_nodes = C;
+  C = max(mapping)+1;
 
   // clear connected
   connected.resize(C, C);
@@ -171,24 +171,34 @@ MC_tree::MC_tree(const vector<Partition>& p)
       connected(i,j) = 0;
 
   // add 1 edge (not 2) for each partition
-  valarray<bool> visited(partitions.size());
+  valarray<bool> visited(false,partitions.size());
   for(int i=0;i<partitions.size();i++) 
   {
-    assert(not connected_to(i,reverse(i)));
     if (visited[i]) continue;
-
     visited[i] = true;
     visited[reverse(i)] = true;
 
-    int n1 = mapping[i];
-    int n2 = mapping[reverse(i)];
+    branch_order.push_back(i);
+  }
+
+  assert(branch_order.size() == n_branches());
+
+
+  for(int i=0;i<branch_order.size();i++)
+  {
+    int b = branch_order[i];
+
+    assert(not connected_to(b,reverse(b)));
+
+    int n1 = mapping[b];
+    int n2 = mapping[reverse(b)];
 
     assert(n1 != n2);
 
     connected(n1, n2) = 1;
     connected(n2, n1) = 1;
 
-    edges.push_back(edge(n1,n2,1,i));
+    edges.push_back(edge(n1,n2,1,b));
   }
 
   // mark connection possibilities for wandering edges
@@ -206,11 +216,38 @@ MC_tree::MC_tree(const vector<Partition>& p)
 	edges.push_back(edge(i,j,2,-1));
 }
 
+int MC_tree::branch_to_node(int n) const
+{
+  if (n >= n_nodes())
+    throw myexception()<<"I only have "<<n_nodes()<<" nodes, can't handle node "<<n;
+  for(int i=0;i<2*n_branches();i++)
+  {
+    if (mapping[i] == n)
+      return i;
+  }
+  throw myexception()<<"Couldn't find any branches pointing to node '"<<n<<"'";
+}
+
+ostream& operator<<(ostream& o, const MC_tree& T)
+{
+  o<<T.T.write(false)<<endl;
+
+  for(int i=0;i<T.branch_order.size();i++)
+  {
+    int b = T.branch_order[i];
+
+    if (T.partitions[b].full()) continue;
+
+    o<<T.partitions[b]<<endl;
+  }
+  return o;
+}
+
 
 // FIXME - page="8.5,11" ?
 void draw_graph(const MC_tree& T,const string& name)
 {
-  const int N = T.n_nodes;
+  const int N = T.n_nodes();
 
   cout<<"digraph "<<name<<" { \n\
 \n\
@@ -296,7 +333,7 @@ MC_tree load_MC_tree(const std::string& filename)
 
   if (partitions.size() != partitions_old.size())
     cerr<<"Removing "<<partitions_old.size() - partitions.size()<<"/"<<partitions_old.size()<<" partitions to yield an MC  tree."<<endl;
-  cerr<<"There are "<<partitions.size() - count(partitions,&Partition::full)<<"/"<<partitions.size()<<" full partitions."<<endl;
+  cerr<<"There are "<<partitions.size() - count(partitions,&Partition::full)<<"/"<<partitions.size()<<" partial/full partitions."<<endl;
   
   return MC_tree(partitions);
 }

@@ -6,7 +6,7 @@
 #include "tree-util.H"
 #include "tree-dist.H"
 #include "myexception.H"
-
+#include "mctree.H"
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -91,11 +91,13 @@ vector<int> get_nodes_map(const SequenceTree& Q,const SequenceTree& T,
 }
 
 
-bool update_lengths(const SequenceTree& Q,const SequenceTree& T,
+bool update_lengths(const MC_tree& Q2,const SequenceTree& T,
 		    valarray<double>& branch_lengths, 
 		    valarray<double>& branch_lengths_squared, 
 		    valarray<double>& node_lengths)
 {
+  const SequenceTree& Q = Q2.T;
+
   // map branches from Q -> T
   vector<int> branches_map = extends_map(T,Q);
   if (not branches_map.size())
@@ -143,7 +145,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("var","report standard deviation of branch lengths instead of mean")
     ("no-node-lengths","ignore branches not in the specified topology")
     ("safe","Don't die if no trees match the topology")
-    ("special","Output special format")
+    ("drop-partial","Remove partial branches")
     ;
 
   // positional options
@@ -171,7 +173,7 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
   int n_samples;
   int n_matches;
 
-  SequenceTree Q;
+  MC_tree Q;
 
   valarray<double> m1;
   valarray<double> m2;
@@ -195,7 +197,7 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
     m2 = sqrt(m2);
   }
 
-  accum_branch_lengths(const SequenceTree& T)
+  accum_branch_lengths(const MC_tree& T)
     :
     n_samples(0),
     n_matches(0),
@@ -228,10 +230,7 @@ int main(int argc,char* argv[])
     int subsample = args["sub-sample"].as<int>();
 
     //----------- Read the topology -----------//
-    SequenceTree Q = load_T(args);
-    standardize(Q);
-    const int B = Q.n_branches();
-    const int N = Q.n_nodes();
+    MC_tree Q = load_MC_tree(args["tree"].as<string>());
 
     //-------- Read in the tree samples --------//
     accum_branch_lengths A(Q);
@@ -242,7 +241,7 @@ int main(int argc,char* argv[])
     catch (std::exception& e) 
     {
       if (args.count("safe"))
-	cout<<Q.write(false)<<endl;
+	cout<<Q<<endl;
       throw myexception()<<e.what();
     }
 
@@ -250,41 +249,21 @@ int main(int argc,char* argv[])
     std::cerr<<" ("<<double(A.n_matches)/A.n_samples*100<<"%)"<<std::endl;
 
     //------- Merge lengths and topology -------//
-    if (args.count("special")) {
-      for(int b=0;b<Q.n_branches();b++) {
-	cout<<"branch "<<A.m1[b]<<endl;
-	cout<<partition_from_branch(Q,b)<<endl;
-      }
-      for(int n=0;n<Q.n_nodes();n++) {
-	if (A.n1[n] > 0) {
-	  cout<<"node "<<A.n1[n]<<endl;
-	  int b = (*Q[n].branches_in()).name();
-	  cout<<partition_from_branch(Q,b)<<endl;
-	}
-      }
-      exit(0);
+    for(int i=0;i<Q.branch_order.size();i++) {
+      int b = Q.branch_order[i];
+      cout<<"branch "<<A.m1[i]<<endl;
+      cout<<Q.partitions[b]<<endl;
     }
 
-    if (args.count("var"))
-      for(int b=0;b<B;b++)
-	Q.branch(b).set_length(A.m2[b]);
-    else 
+    for(int n=0;n<Q.n_nodes();n++) 
     {
-      for(int b=0;b<B;b++)
-	Q.branch(b).set_length(A.m1[b]);
-
-      if (not args.count("no-node-lengths")) {
-	for(int n=0;n<N;n++) {
-	  int degree = Q[n].neighbors().size();
-	  for(out_edges_iterator b = Q[n].branches_out();b;b++)
-	    (*b).set_length((*b).length() + A.n1[n]/degree);
-	}
+      if (A.n1[n] > 0) {
+	cout<<"node "<<A.n1[n]<<endl;
+	int b = Q.branch_to_node(n);
+	//FIXME! don't reverse this - use the left group to point to the node
+	cout<<Q.partitions[Q.reverse(b)]<<endl;
       }
     }
-
-    //------- Merge lengths and topology -------//
-
-    std::cout<<Q<<endl;
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
