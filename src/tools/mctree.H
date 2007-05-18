@@ -49,10 +49,11 @@ public:
   int n_branches() const {return N;}
   int reverse(int i) const {return reverse_[i];}
 
-
   MC_tree(const std::vector<Partition>&);
 };
 
 void draw_graph(const MC_tree& T,const std::string& name);
+
+MC_tree load_MC_tree(const std::string&);
 
 #endif

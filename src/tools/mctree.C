@@ -264,3 +264,39 @@ void draw_graph(const MC_tree& T,const string& name)
 
 }
 
+MC_tree load_MC_tree(const std::string& filename)
+{
+  //----------- Load Partitions ---------------//
+  vector<vector<Partition> > partitions1;
+  load_partitions(filename, partitions1);
+
+  if (not partitions1.size())
+    throw myexception()<<"Can't create an MC tree from an empty partition list.";
+
+  vector<Partition> partitions = partitions1[0];
+
+  // check that the taxon names are all the same
+
+  vector<string> names = partitions[0].names;
+  for(int i=0;i<partitions.size();i++) {
+    
+    if (partitions[i].size() != names.size())
+      throw myexception()<<"Partition "<<i+1<<" has "<<partitions[i].size()<<" taxa instead of "<<partitions[0].size();
+    
+    if (partitions[i].names != names)
+      throw myexception()<<"Partition "<<i+1<<" has different taxa than partition 1!";
+    if (not informative(partitions[i]))
+      throw myexception()<<"Partition "<<i+1<<" is not informative.";
+  }
+
+  //---- Throw out conflicting partitions ----//
+  vector<Partition> partitions_old = partitions;
+  partitions = get_moveable_tree(partitions);
+  // check that the tree is an MC tree
+
+  if (partitions.size() != partitions_old.size())
+    cerr<<"Removing "<<partitions_old.size() - partitions.size()<<"/"<<partitions_old.size()<<" partitions to yield an MC  tree."<<endl;
+  cerr<<"There are "<<partitions.size() - count(partitions,&Partition::full)<<"/"<<partitions.size()<<" full partitions."<<endl;
+  
+  return MC_tree(partitions);
+}
