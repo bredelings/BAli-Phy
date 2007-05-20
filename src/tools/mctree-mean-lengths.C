@@ -1,3 +1,6 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <iostream>
 #include <list>
 #include <utility>
@@ -91,39 +94,138 @@ vector<int> get_nodes_map(const SequenceTree& Q,const SequenceTree& T,
 }
 
 
-bool update_lengths(const MC_tree& Q2,const SequenceTree& T,
+bool update_lengths(const MC_tree& Q,const SequenceTree& T,
 		    valarray<double>& branch_lengths, 
-		    valarray<double>& branch_lengths_squared, 
 		    valarray<double>& node_lengths)
 {
-  const SequenceTree& Q = Q2.T;
-
-  // map branches from Q -> T
-  vector<int> branches_map = extends_map(T,Q);
-  if (not branches_map.size())
-    return false;
-
-  // incorporate lengths of branches that map to Q
-  for(int b=0;b<Q.n_branches();b++)
+  // check that this tree is consistent with the MC Tree Q
+  for(int i=0;i<Q.branch_order.size();i++) 
   {
-    int b2 = branches_map[b];
-    double L = T.directed_branch(b2).length();
-    branch_lengths[b] += L;
-    branch_lengths_squared[b] += L*L;
+    int b = Q.branch_order[i];
+    if (not implies(T,Q.partitions[b]))
+      return false;
   }
 
-  // map nodes from T -> Q
-  vector<int> nodes_map = get_nodes_map(Q,T,branches_map);
-
-  // incorprate lengths of branches that map to nodes in Q
-  for(int i=T.n_leafbranches();i<T.n_branches();i++) 
+  // compute node masks
+  vector<valarray<bool> > node_masks;
+  for(int n=0;n<Q.n_nodes();n++)
   {
-    const_branchview b = T.branch(i);
-    int n1 = nodes_map[b.source()];
-    int n2 = nodes_map[b.target()];
+    cout<<"node "<<Q.partitions[Q.branch_to_node(n)]<<endl;
+    cout<<"degree = "<<Q.degree(n)<<endl;
+    valarray<bool> mask(true,Q.n_leaves());
+    for(int i=0;i<2*Q.n_branches();i++)
+    {
+      if (Q.mapping[i] == n and not Q.directly_wanders[i])
+	mask = mask and Q.partitions[i].mask();
+    }
+    node_masks.push_back(mask);
+    cout<<"mask = ";
+    for(int i=0;i<mask.size();i++)
+      if (mask[i])
+	cout<<Q.names()[i]<<" ";
+    cout<<endl;
+    cout<<endl;
+  }
 
-    if (n1 == n2)
-      node_lengths[n1] += T.branch(i).length();
+  // incorporate lengths of branches that map to Q
+  vector<Partition> partitions2;
+  for(int i=0;i<Q.branch_order.size();i++) 
+  {
+    int b = Q.branch_order[i];
+    int n1 = Q.mapping[b];
+    int n2 = Q.mapping[Q.reverse(b)];
+
+    Partition P = Q.partitions[b];
+    valarray<bool> mask = P.mask();
+
+    // find non-wandering branches directly left of me
+    for(int j=0;j<2*Q.n_branches();j++)
+    {
+      if (Q.directly_left_of(j,b) and 
+	  not Q.directly_wanders[j])
+	mask = mask and Q.partitions[j].mask();
+    }
+
+    // find non-wandering branches directly right of me
+    for(int j=0;j<2*Q.n_branches();j++)
+    {
+      if (Q.directly_left_of(b,j) and 
+	  not Q.directly_wanders[Q.reverse(j)])
+	mask = mask and Q.partitions[j].mask();
+    }
+
+    // partition masks should be computable from the masks
+    //    of both endpoint nodes.
+    // but how about degree=0 nodes? this shouldn't work then
+    assert(equal(mask,node_masks[n1] and node_masks[n2]));
+
+    P.group1 = P.group1 and mask;
+    P.group2 = P.group2 and mask;
+
+    partitions2.push_back(P);
+  }
+
+  // map branches of the input tree
+  for(int b=0;b<T.n_branches();b++)
+  {
+    Partition P = partition_from_branch(T,b);
+    vector<int> branches;
+    for(int i=0;i<Q.branch_order.size();i++) 
+    {
+      if (implies(P,partitions2[i]))
+	branches.push_back(i);
+    }
+
+    vector<int> nodes;
+    for(int n=0;n<Q.n_nodes();n++) 
+    {
+      if (Q.degree(n) == 0) continue;
+
+      Partition P2 = P;
+      P2.group1 = P2.group1 and node_masks[n];
+      P2.group2 = P2.group2 and node_masks[n];
+      if (n_elements(P2.group1) == 0 or n_elements(P2.group2) == 0)
+	continue;
+
+      bool ok = true;
+      int count = 0;
+      for(int b=0;b<2*Q.n_branches() and ok;b++)
+      {
+	if (Q.mapping[b] != n)  continue;
+	count++;
+	Partition P3 = Q.partitions[b];
+	P3.group1 = P3.group1 and node_masks[n];
+	P3.group2 = P3.group2 and node_masks[n];
+	if (partition_less_than(P3,P2) or partition_less_than(P3,P2.reverse()))
+	  ;
+	else
+	  ok=false;
+      }
+
+      if (ok) {
+	nodes.push_back(n);
+	assert(count == Q.degree(n));
+      }
+    }
+
+    cout<<"Branch maps to "<<branches.size()<<" branches."<<endl;
+    if (nodes.size()) {
+      cout<<"Branch inside node(s):"<<endl;
+      cout<<P<<endl;
+      for(int i=0;i<nodes.size();i++)
+	cout<<"    "<<Q.partitions[Q.branch_to_node(nodes[i])]<<endl;
+    }
+    assert(nodes.size() < 2);
+    if (branches.size()) assert(not nodes.size());
+    assert(branches.size() + nodes.size() > 0);
+
+    const double L = T.branch(b).length();
+
+    for(int i=0;i<branches.size();i++)
+      branch_lengths[branches[i]] += L/branches.size();
+
+    for(int i=0;i<nodes.size();i++)
+      node_lengths[nodes[i]] += L/nodes.size();
   }
 
   return true;
@@ -176,7 +278,6 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
   MC_tree Q;
 
   valarray<double> m1;
-  valarray<double> m2;
   valarray<double> n1;
 
   void operator()(const SequenceTree&);
@@ -190,11 +291,7 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
       throw myexception()<<"No trees matched the specified topology!";
 
     m1 /= n_matches;
-    m2 /= n_matches;
     n1 /= n_matches;
-
-    m2 -= m1*m1;
-    m2 = sqrt(m2);
   }
 
   accum_branch_lengths(const MC_tree& T)
@@ -203,7 +300,6 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
     n_matches(0),
     Q(T),
     m1(0.0, Q.n_branches()),
-    m2(0.0, Q.n_branches()),
     n1(0.0, Q.n_nodes())
   {}
 };
@@ -211,7 +307,7 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
 void accum_branch_lengths::operator()(const SequenceTree& T)
 {
   n_samples++;
-  if (update_lengths(Q,T,m1,m2,n1))
+  if (update_lengths(Q,T,m1,n1))
     n_matches++;
 }
 
@@ -260,7 +356,7 @@ int main(int argc,char* argv[])
       if (A.n1[n] > 0) {
 	cout<<"node "<<A.n1[n]<<endl;
 	int b = Q.branch_to_node(n);
-	//FIXME! don't reverse this - use the left group to point to the node
+	//FIXME! don't reverse this - use the L->R direction to point to the node
 	cout<<Q.partitions[Q.reverse(b)]<<endl;
       }
     }

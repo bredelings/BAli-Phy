@@ -41,12 +41,12 @@ public:
   std::vector<int> mapping;
 
   // partition properties
-  ublas::matrix<int> left_of;
-  ublas::matrix<int> wanders_over;
-  ublas::matrix<int> directly_left_of;
-  ublas::matrix<int> directly_wanders_over;
-  ublas::matrix<int> connected_to;
-  vector<bool> directly_wanders;
+  ublas::matrix<int> left_of;                // i<j
+  ublas::matrix<int> wanders_over;           // right end wanders
+  ublas::matrix<int> directly_left_of;       // i<j
+  ublas::matrix<int> directly_wanders_over;  // right end (group2)
+  ublas::matrix<int> connected_to;           // right end
+  vector<bool> directly_wanders;             // right end
 
   // node properties
   ublas::matrix<int> connected;
@@ -55,6 +55,7 @@ public:
   vector<int> branch_order;
 
   int branch_to_node(int n) const;
+  int degree(int n) const;
 
   const std::vector<std::string>& names() const {return names_;}
 

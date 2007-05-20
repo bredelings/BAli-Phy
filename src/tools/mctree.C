@@ -228,6 +228,15 @@ int MC_tree::branch_to_node(int n) const
   throw myexception()<<"Couldn't find any branches pointing to node '"<<n<<"'";
 }
 
+int MC_tree::degree(int n) const
+{
+  unsigned count=0;
+  for(int b=0;b<mapping.size();b++)
+    if (mapping[b] == n and not directly_wanders[b])
+      count++;
+  return count;
+}
+
 ostream& operator<<(ostream& o, const MC_tree& T)
 {
   o<<T.T.write(false)<<endl;
