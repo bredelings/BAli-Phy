@@ -97,7 +97,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-class MC_tree
+
+/// FIXME - name collision!
+class MC_tree_with_lengths
 {
 public:
   vector<Partition>  branches;
@@ -113,9 +115,9 @@ public:
 
 /// FIXME - check partitions to see that names are all unique?
 
-MC_tree get_MC_tree(const string& filename)
+MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
 {
-  MC_tree MC;
+  MC_tree_with_lengths MC;
   std::ifstream file(filename.c_str());
 
   if (not file)
@@ -161,7 +163,7 @@ MC_tree get_MC_tree(const string& filename)
   return MC;
 }
 
-SequenceTree build_tree(const MC_tree& MC)
+SequenceTree build_tree(const MC_tree_with_lengths& MC)
 {
   SequenceTree MF = star_tree(MC.branches[0].names);
 
@@ -209,6 +211,20 @@ struct tree_layout
      node_positions(T.n_nodes())
   {}
 };
+
+/*
+struct graph_layout
+{
+  MC_tree T;
+  vector<double> node_radius;
+  vector<point_position> node_positions;
+  graph_layour(const MC_tree& T1)
+    :T(T1),
+     node_radius(T.n_nodes(),0),
+     node_positions(T.n_nodes())
+  {}
+};
+*/
 
 int find_directed_branch(const Tree& T,const Partition& p)
 {
@@ -281,7 +297,7 @@ double node_diameter(double lengths,int degree)
 }
 
 
-tree_layout circular_layout(const MC_tree& MC)
+tree_layout circular_layout(const MC_tree_with_lengths& MC)
 {
   SequenceTree MF = build_tree(MC);
 
@@ -502,13 +518,16 @@ int main(int argc,char* argv[])
 
     //-------- Load MC Tree and lengths -----//
     string filename = args["file"].as<string>();
-    MC_tree MC = get_MC_tree(filename);
+
+    // FIX name collision!
+    MC_tree_with_lengths MC = get_MC_tree_with_lengths(filename);
 
     // lay out the tree
-    tree_layout L = circular_layout(MC);
+    tree_layout L1 = circular_layout(MC);
+    //    tree_layout L2 = graph_layout(MC);
 
     // draw the tree
-    tree_plotter tp(L);
+    tree_plotter tp(L1);
     draw_to_ps(filename+"-tree.ps",tp);
     draw_to_pdf(filename+"-tree.pdf",tp);
   }
@@ -518,4 +537,3 @@ int main(int argc,char* argv[])
   }
   return 0;
 }
-
