@@ -213,7 +213,7 @@ struct tree_layout
 int find_directed_branch(const Tree& T,const Partition& p)
 {
   for(int b=0; b<2*T.n_branches(); b++)
-    if (equal(branch_partition(T,b), p.group1))
+    if (equal(branch_partition(T,b), p.group2))
       return b;
   return -1;
 }

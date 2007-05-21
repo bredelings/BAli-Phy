@@ -34,11 +34,12 @@ valarray<bool> group_from_names(const vector<string>& names,const vector<string>
   return group;
 }
 
-Partition partition_from_branch(const SequenceTree& T,int b) {
+Partition partition_from_branch(const SequenceTree& T,int b) 
+{
   valarray<bool> group(T.n_leaves());
   group = T.partition(b);
 
-  return Partition(T.get_sequences(),group);
+  return Partition(T.get_sequences(),not group);
 }
 
 

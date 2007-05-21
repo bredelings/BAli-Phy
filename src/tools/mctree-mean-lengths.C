@@ -18,6 +18,7 @@ using po::variables_map;
 using std::cout;
 using std::cerr;
 using std::endl;
+using std::ostream;
 using std::string;
 using std::vector;
 using std::list;
@@ -93,8 +94,17 @@ vector<int> get_nodes_map(const SequenceTree& Q,const SequenceTree& T,
   return nodes_map;
 }
 
+ostream& show_name_set(ostream& o,const vector<string>& names, const valarray<bool>& mask)
+{
+  for(int i=0;i<mask.size();i++)
+    if (mask[i])
+      o<<names[i]<<" ";
+  return o;
+}
 
 bool update_lengths(const MC_tree& Q,const SequenceTree& T,
+		    const vector<valarray<bool> >& node_masks,
+		    const vector<Partition>& partitions2,
 		    valarray<double>& branch_lengths, 
 		    valarray<double>& node_lengths)
 {
@@ -104,65 +114,6 @@ bool update_lengths(const MC_tree& Q,const SequenceTree& T,
     int b = Q.branch_order[i];
     if (not implies(T,Q.partitions[b]))
       return false;
-  }
-
-  // compute node masks
-  vector<valarray<bool> > node_masks;
-  for(int n=0;n<Q.n_nodes();n++)
-  {
-    cout<<"node "<<Q.partitions[Q.branch_to_node(n)]<<endl;
-    cout<<"degree = "<<Q.degree(n)<<endl;
-    valarray<bool> mask(true,Q.n_leaves());
-    for(int i=0;i<2*Q.n_branches();i++)
-    {
-      if (Q.mapping[i] == n and not Q.directly_wanders[i])
-	mask = mask and Q.partitions[i].mask();
-    }
-    node_masks.push_back(mask);
-    cout<<"mask = ";
-    for(int i=0;i<mask.size();i++)
-      if (mask[i])
-	cout<<Q.names()[i]<<" ";
-    cout<<endl;
-    cout<<endl;
-  }
-
-  // incorporate lengths of branches that map to Q
-  vector<Partition> partitions2;
-  for(int i=0;i<Q.branch_order.size();i++) 
-  {
-    int b = Q.branch_order[i];
-    int n1 = Q.mapping[b];
-    int n2 = Q.mapping[Q.reverse(b)];
-
-    Partition P = Q.partitions[b];
-    valarray<bool> mask = P.mask();
-
-    // find non-wandering branches directly left of me
-    for(int j=0;j<2*Q.n_branches();j++)
-    {
-      if (Q.directly_left_of(j,b) and 
-	  not Q.directly_wanders[j])
-	mask = mask and Q.partitions[j].mask();
-    }
-
-    // find non-wandering branches directly right of me
-    for(int j=0;j<2*Q.n_branches();j++)
-    {
-      if (Q.directly_left_of(b,j) and 
-	  not Q.directly_wanders[Q.reverse(j)])
-	mask = mask and Q.partitions[j].mask();
-    }
-
-    // partition masks should be computable from the masks
-    //    of both endpoint nodes.
-    // but how about degree=0 nodes? this shouldn't work then
-    assert(equal(mask,node_masks[n1] and node_masks[n2]));
-
-    P.group1 = P.group1 and mask;
-    P.group2 = P.group2 and mask;
-
-    partitions2.push_back(P);
   }
 
   // map branches of the input tree
@@ -188,11 +139,9 @@ bool update_lengths(const MC_tree& Q,const SequenceTree& T,
 	continue;
 
       bool ok = true;
-      int count = 0;
       for(int b=0;b<2*Q.n_branches() and ok;b++)
       {
 	if (Q.mapping[b] != n)  continue;
-	count++;
 	Partition P3 = Q.partitions[b];
 	P3.group1 = P3.group1 and node_masks[n];
 	P3.group2 = P3.group2 and node_masks[n];
@@ -204,17 +153,20 @@ bool update_lengths(const MC_tree& Q,const SequenceTree& T,
 
       if (ok) {
 	nodes.push_back(n);
-	assert(count == Q.degree(n));
+	assert(Q.degree(n) > 3);
       }
     }
 
-    cout<<"Branch maps to "<<branches.size()<<" branches."<<endl;
+    /*
+    cerr<<"Branch: "<<P<<endl;
+    cerr<<"  - maps to "<<branches.size()<<" branches."<<endl;
     if (nodes.size()) {
-      cout<<"Branch inside node(s):"<<endl;
-      cout<<P<<endl;
+      cerr<<"  - inside node(s):"<<endl;
+      cerr<<P<<endl;
       for(int i=0;i<nodes.size();i++)
-	cout<<"    "<<Q.partitions[Q.branch_to_node(nodes[i])]<<endl;
+	cerr<<"    "<<Q.partitions[Q.branch_to_node(nodes[i])]<<endl;
     }
+    */
     assert(nodes.size() < 2);
     if (branches.size()) assert(not nodes.size());
     assert(branches.size() + nodes.size() > 0);
@@ -277,6 +229,9 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
 
   MC_tree Q;
 
+  vector<valarray<bool> > node_masks;
+  vector<Partition> partitions2;
+
   valarray<double> m1;
   valarray<double> n1;
 
@@ -294,20 +249,84 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
     n1 /= n_matches;
   }
 
-  accum_branch_lengths(const MC_tree& T)
-    :
-    n_samples(0),
-    n_matches(0),
-    Q(T),
-    m1(0.0, Q.n_branches()),
-    n1(0.0, Q.n_nodes())
-  {}
+  accum_branch_lengths(const MC_tree& T);
 };
+
+accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
+  :
+  n_samples(0),
+  n_matches(0),
+  Q(T),
+  m1(0.0, Q.n_branches()),
+  n1(0.0, Q.n_nodes())
+{
+  // compute node masks
+  for(int n=0;n<Q.n_nodes();n++)
+  {
+    //    cerr<<"node "<<Q.partitions[Q.branch_to_node(n)]<<endl;
+    //    cerr<<"degree = "<<Q.degree(n)<<endl;
+    valarray<bool> mask(true,Q.n_leaves());
+    for(int i=0;i<2*Q.n_branches();i++)
+    {
+      if (Q.mapping[i] == n and not Q.directly_wanders[i])
+	mask = mask and Q.partitions[i].mask();
+    }
+    node_masks.push_back(mask);
+    //    cerr<<"mask = ";
+    //    show_name_set(cerr,Q.names(),mask);
+    //    cerr<<endl<<endl;
+  }
+
+  // incorporate lengths of branches that map to Q
+  for(int i=0;i<Q.branch_order.size();i++) 
+  {
+    int b = Q.branch_order[i];
+    int n1 = Q.mapping[b];
+    int n2 = Q.mapping[Q.reverse(b)];
+
+    Partition P = Q.partitions[b];
+    valarray<bool> mask = P.mask();
+
+    // find non-wandering branches directly left of me
+    for(int j=0;j<2*Q.n_branches();j++)
+    {
+      if (Q.directly_left_of(j,b))
+	if (Q.directly_wanders[j])
+	  mask = mask and not Q.partitions[j].group1;
+	else
+	  mask = mask and Q.partitions[j].mask();
+    }
+
+    // find non-wandering branches directly right of me
+    for(int j=0;j<2*Q.n_branches();j++)
+    {
+      if (Q.directly_left_of(b,j))
+	if (Q.directly_wanders[Q.reverse(j)])
+	  mask = mask and not Q.partitions[j].group2;
+	else
+	  mask = mask and Q.partitions[j].mask();
+    }
+
+    // partition masks should be computable from the masks
+    //    of both endpoint nodes.
+    // but how about degree=0 nodes? this shouldn't work then
+    //    assert(equal(mask,node_masks[n1] and node_masks[n2]));
+
+    P.group1 = P.group1 and mask;
+    P.group2 = P.group2 and mask;
+
+    //    cerr<<"Branch: "<<P<<endl;
+    //    cerr<<"   mask = ";show_name_set(cerr,P.names,P.mask())<<endl;
+
+    partitions2.push_back(P);
+  }
+
+}
 
 void accum_branch_lengths::operator()(const SequenceTree& T)
 {
   n_samples++;
-  if (update_lengths(Q,T,m1,n1))
+  if (update_lengths(Q,T,node_masks,partitions2,m1,n1))
     n_matches++;
 }
 
@@ -356,8 +375,7 @@ int main(int argc,char* argv[])
       if (A.n1[n] > 0) {
 	cout<<"node "<<A.n1[n]<<endl;
 	int b = Q.branch_to_node(n);
-	//FIXME! don't reverse this - use the L->R direction to point to the node
-	cout<<Q.partitions[Q.reverse(b)]<<endl;
+	cout<<Q.partitions[b]<<endl;
       }
     }
   }
