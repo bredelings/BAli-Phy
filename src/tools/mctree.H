@@ -70,6 +70,8 @@ public:
 void draw_graph(const MC_tree& T,const std::string& name);
 
 MC_tree load_MC_tree(const std::string&);
+std::vector<Partition> check_MC_partitions(const std::vector<Partition>&);
+void check_partitions_informative(const std::vector<Partition>&);
 
 std::ostream& operator<<(std::ostream& o, const MC_tree&);
 

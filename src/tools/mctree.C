@@ -320,9 +320,14 @@ MC_tree load_MC_tree(const std::string& filename)
     throw myexception()<<"Can't create an MC tree from an empty partition list.";
 
   vector<Partition> partitions = partitions1[0];
+  check_partitions_informative(partitions);
 
-  // check that the taxon names are all the same
+  return MC_tree(check_MC_partitions(partitions));
+}
 
+vector<Partition> check_MC_partitions(const vector<Partition>& partitions)
+{
+  //--------- Check Partitions --------------//
   vector<string> names = partitions[0].names;
   for(int i=0;i<partitions.size();i++) {
     
@@ -331,18 +336,24 @@ MC_tree load_MC_tree(const std::string& filename)
     
     if (partitions[i].names != names)
       throw myexception()<<"Partition "<<i+1<<" has different taxa than partition 1!";
-    if (not informative(partitions[i]))
-      throw myexception()<<"Partition "<<i+1<<" is not informative.";
   }
 
   //---- Throw out conflicting partitions ----//
-  vector<Partition> partitions_old = partitions;
-  partitions = get_moveable_tree(partitions);
+  vector<Partition> mc_partitions = partitions;
+  mc_partitions = get_moveable_tree(partitions);
   // check that the tree is an MC tree
 
-  if (partitions.size() != partitions_old.size())
-    cerr<<"Removing "<<partitions_old.size() - partitions.size()<<"/"<<partitions_old.size()<<" partitions to yield an MC  tree."<<endl;
-  cerr<<"There are "<<partitions.size() - count(partitions,&Partition::full)<<"/"<<partitions.size()<<" partial/full partitions."<<endl;
+  if (mc_partitions.size() != partitions.size())
+    cerr<<"Removing "<<partitions.size() - mc_partitions.size()<<"/"<<partitions.size()<<" partitions to yield an MC  tree."<<endl;
+  cerr<<"There are "<<mc_partitions.size() - count(mc_partitions,&Partition::full)<<"/"<<partitions.size()<<" partial/full partitions."<<endl;
   
-  return MC_tree(partitions);
+  return mc_partitions;
+}
+
+void check_partitions_informative(const vector<Partition>& partitions)
+{
+  //--------- Check Partitions --------------//
+  for(int i=0;i<partitions.size();i++)
+    if (not informative(partitions[i]))
+      throw myexception()<<"Partition "<<i+1<<" is not informative.";
 }

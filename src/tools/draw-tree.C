@@ -14,6 +14,7 @@
 #include "sequencetree.H"
 #include "tree-dist.H"
 #include "pow2.H"
+#include "mctree.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -99,25 +100,43 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 
 /// FIXME - name collision!
-class MC_tree_with_lengths
+class MC_tree_with_lengths: public MC_tree
 {
-public:
-  vector<Partition>  branches;
   vector<double> branch_lengths;
-
-  vector<Partition> nodes;
   vector<double> node_lengths;
+public:
 
-  vector<Partition> mini_branches;
-  vector<double> mini_branch_lengths;
-  vector<int> parent_branch_of_mini_branch;
+  double  branch_length(int b) const {return branch_lengths[b];}
+  double& branch_length(int b)       {return branch_lengths[b];}
+
+  double  node_length(int n) const {return node_lengths[n];}
+  double& node_length(int n)       {return node_lengths[n];}
+
+  //  vector<Partition> mini_branches;
+  //  vector<double> mini_branch_lengths;
+  //  vector<int> parent_branch_of_mini_branch;
+  MC_tree_with_lengths(const vector<Partition>& branches)
+    :MC_tree(branches),
+     branch_lengths(2*n_branches(),0.0),
+     node_lengths(n_nodes(),0.0)
+  { }
 };
 
 /// FIXME - check partitions to see that names are all unique?
 
 MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
 {
-  MC_tree_with_lengths MC;
+  vector<Partition>  branches;
+  vector<double> branch_lengths;
+  
+  vector<Partition> nodes;
+  vector<double> node_lengths;
+
+  vector<Partition> mini_branches;
+  vector<double> mini_branch_lengths;
+  vector<int> parent_branch_of_mini_branch;
+
+  //-------------------- Read lengths from file --------------------//
   std::ifstream file(filename.c_str());
 
   if (not file)
@@ -143,41 +162,57 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
     Partition P(line);
     line = "";
     if (words[0] == "branch") {
-      MC.branches.push_back(P);
-      MC.branch_lengths.push_back(length);
+      branches.push_back(P);
+      branch_lengths.push_back(length);
     }
     else if (words[0] == "node") {
-      MC.nodes.push_back(P);
-      MC.node_lengths.push_back(length);
+      nodes.push_back(P);
+      node_lengths.push_back(length);
     }
     else if (words[0] == "mini-branch") {
-      MC.mini_branches.push_back(P);
-      MC.mini_branch_lengths.push_back(length);
+      mini_branches.push_back(P);
+      mini_branch_lengths.push_back(length);
     }
     else
-      throw myexception()<<"Don't understand word="<<words[0];;
+      throw myexception()<<"Don't understand word="<<words[0];
   }
 
-  cerr<<"Read "<<MC.branches.size()<<" partitions / "
-      <<count(MC.branches,&Partition::full)<<" full partitions."<<endl;
+  cerr<<"Read "<<branches.size()<<" partitions"<<endl;
+
+  //--------------- Construct MC tree with lengths  ---------------//
+  MC_tree_with_lengths MC(check_MC_partitions(branches));
+
+  for(int i=0;i<branches.size();i++)
+  {
+    double L = branch_lengths[i];
+
+    int b1 = find_index(MC.partitions,branches[i]);
+    if (b1 == -1)
+      throw myexception()<<"Can't find partition I just added to tree!\n"<<"     "<<branches[i];
+
+    int b2 = MC.reverse(b1);
+
+    MC.branch_length(b1) = MC.branch_length(b2) = L;
+
+    if (branches[i].full())
+      MC.T.directed_branch(b1).set_length(L);
+  }
+
+  for(int i=0;i<nodes.size();i++)
+  {
+    double L = node_lengths[i];
+
+    int b = find_index(MC.partitions,nodes[i]);
+    if (b == -1)
+      throw myexception()<<"Can't find node in tree!\n"<<"    "<<nodes[i];
+
+    int n = MC.mapping[b];
+    cerr<<"Processing node '"<<nodes[i]<<"'"<<endl;
+    cerr<<"degree = "<<MC.degree(n)<<endl;
+    MC.node_length(n) = L;
+  }
+
   return MC;
-}
-
-SequenceTree build_tree(const MC_tree_with_lengths& MC)
-{
-  SequenceTree MF = star_tree(MC.branches[0].names);
-
-  for(int i=0;i<MC.branches.size();i++)
-    if (MC.branches[i].full()) {
-      int b = MF.induce_partition(MC.branches[i].group1);
-      MF.branch(b).set_length(MC.branch_lengths[i]);
-    }
-
-  //set the branch lengths!
-
-  cout<<MF.write(true)<<endl;
-
-  return MF;
 }
 
 struct point_position
@@ -212,19 +247,19 @@ struct tree_layout
   {}
 };
 
-/*
+
 struct graph_layout
 {
-  MC_tree T;
+  MC_tree MC;
   vector<double> node_radius;
   vector<point_position> node_positions;
-  graph_layour(const MC_tree& T1)
-    :T(T1),
-     node_radius(T.n_nodes(),0),
-     node_positions(T.n_nodes())
+  graph_layout(const MC_tree& T)
+    :MC(T),
+     node_radius(MC.n_nodes(),0),
+     node_positions(MC.n_nodes())
   {}
 };
-*/
+
 
 int find_directed_branch(const Tree& T,const Partition& p)
 {
@@ -256,7 +291,7 @@ void circular_layout(tree_layout& L,int parent,double min_a,double max_a)
   if (n_children(T,parent) == 1) return;
 
   double a1 = min_a;
-  for(out_edges_iterator b = T.branch(parent).branches_after();b;b++) 
+  for(out_edges_iterator b = T.directed_branch(parent).branches_after();b;b++) 
   {
     double a2 = a1 + (max_a - min_a) * n_children(T,*b)/n_children(T,parent);
     double a = (a1+a2)/2.0;
@@ -296,29 +331,10 @@ double node_diameter(double lengths,int degree)
   return lengths*ratio;
 }
 
-
-tree_layout circular_layout(const MC_tree_with_lengths& MC)
+tree_layout circular_layout(SequenceTree MF,const vector<double>& node_radius)
 {
-  SequenceTree MF = build_tree(MC);
-
-
-  // determine node lengths
-  vector<double> node_radius(MF.n_nodes(),0);
-
-  for(int i=0;i<MC.nodes.size();i++)
+  for(int b=0;b<MF.n_branches();b++) 
   {
-    const Partition& p = MC.nodes[i];
-    int b = find_directed_branch(MF,p);
-    if (b == -1) {
-      cerr<<"Can't find node '"<<p<<"'"<<endl;
-      continue;
-    }
-    int n = MF.directed_branch(b).target();
-    int d = MF[n].degree();
-    node_radius[n] = node_diameter(MC.node_lengths[i], d)/2.0;
-  }
-
-  for(int b=0;b<MF.n_branches();b++) {
     double L = MF.branch(b).length();
     int n1 = MF.branch(b).target();
     int n2 = MF.branch(b).source();
@@ -326,13 +342,12 @@ tree_layout circular_layout(const MC_tree_with_lengths& MC)
     MF.branch(b).set_length(L);
   }
 
-
   // place the root
   int root = 0;
   for(int n=0;n<MF.n_nodes();n++)
     if (node_max_depth(MF,n) < node_max_depth(MF,root))
       root = n;
-
+  
   cerr<<"root = "<<root<<endl;
 
   tree_layout L(MF);
@@ -343,7 +358,7 @@ tree_layout circular_layout(const MC_tree_with_lengths& MC)
   {
     double a2 = a1 + 2.0 * M_PI * n_children(MF,*b)/MF.n_leaves();
     double a = (a1+a2)/2.0;
-
+    
     cerr<<"branch "<<(*b).name()<<"  n_children = "<<n_children(MF,*b)<<endl;
 
     int n1 = (*b).source();
@@ -358,9 +373,28 @@ tree_layout circular_layout(const MC_tree_with_lengths& MC)
     circular_layout(L,*b,a1,a2);
     a1 = a2;
   }
-  
-
   return L;
+}
+
+tree_layout circular_layout(const MC_tree_with_lengths& MC)
+{
+  SequenceTree MF = MC.T;
+
+  // determine node lengths
+  vector<double> node_radius(MF.n_nodes(),0);
+
+  for(int n=0;n<MC.n_nodes();n++)
+  {
+    int b = MC.branch_to_node(n);
+    if (not MC.partitions[b].full())
+      throw myexception()<<"Hey!  This procedure only works for full partitions!";
+
+    int mf_n = MF.directed_branch(b).target();
+    int d = MF[mf_n].degree();
+    node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
+  }
+
+  return circular_layout(MF,node_radius);
 }
 
 double get_text_length(cairo_t* cr, const string& s)
@@ -503,6 +537,154 @@ void tree_plotter::operator()(cairo_t* cr)
 
     cairo_move_to (cr, x1, y1);
     cairo_show_text (cr, L.T.seq(l).c_str());
+  }
+
+    
+ 
+}
+
+struct graph_plotter: public cairo_plotter
+{
+  graph_layout L;
+  void operator()(cairo_t*);
+  graph_plotter(const graph_layout& gl):L(gl) {}
+};
+
+void graph_plotter::operator()(cairo_t* cr)
+{
+  double xmin = L.node_positions[0].x;
+  double xmax = L.node_positions[0].x;
+  for(int i=0;i<L.node_positions.size();i++)
+  {
+    xmin = min(xmin,L.node_positions[i].x);
+    xmax = max(xmax,L.node_positions[i].x);
+  }
+    
+  double ymin = L.node_positions[0].y;
+  double ymax = L.node_positions[0].y;
+  for(int i=0;i<L.node_positions.size();i++)
+  {
+    ymin = min(ymin,L.node_positions[i].y);
+    ymax = max(ymax,L.node_positions[i].y);
+  }
+  //  cout<<"x = ["<<xmin<<", "<<xmax<<"]"<<endl;
+  //  cout<<"y = ["<<ymin<<", "<<ymax<<"]"<<endl;
+  //  cout<<endl;
+
+  // line width 5 points
+  const double line_width = 0.005;
+  cairo_set_line_width(cr, line_width);
+  cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND);
+
+  // move to center and flip up 
+  cairo_translate(cr, 8.5*inch/2.0, 11.0*inch/2.0);
+  //  cairo_scale(cr, 1, -1);
+  //  cairo_set_line_width(cr, 0.04);
+
+  // find scaling factor
+  const double edge = 0.05;
+  const double factor = 1.0-edge*2;
+
+  double scale = std::min(8.5*inch/(xmax-xmin),11.5*inch/(ymax-ymin));
+  scale *= factor;
+  cairo_scale(cr, scale, scale);
+  cairo_translate(cr, factor*-0.5*(xmax+xmin), factor*-0.5*(ymax+ymin));
+  
+  const double dashes[] = {line_width*3, line_width*3};
+
+  // draw the edges
+  for(int e=0;e<L.MC.edges.size();e++) 
+  {
+    int n1 = L.MC.edges[e].from;
+    int n2 = L.MC.edges[e].to;
+    int t =  L.MC.edges[e].type;
+    int b =  L.MC.edges[e].partition;
+    
+    double x1 = L.node_positions[n1].x;
+    double y1 = L.node_positions[n1].y;
+
+    double x2 = L.node_positions[n2].x;
+    double y2 = L.node_positions[n2].y;
+
+    cairo_save(cr); 
+    {
+      cairo_move_to (cr, x1, y1);
+      cairo_line_to (cr, x2, y2);
+      if (t == 1) {
+	if (L.MC.partitions[b].full())
+	  cairo_set_source_rgb (cr, 0, 0 ,0);
+	else
+	  cairo_set_source_rgb (cr, 0, 1.0 ,0);
+      }
+      else 
+	cairo_set_dash (cr, dashes, 2, 0.0);
+      
+      cairo_stroke (cr);
+    }
+    cairo_restore(cr);
+  }
+
+  cairo_set_dash (cr, dashes, 2, 0.0);
+
+  // draw the circles
+  for(int n=0;n<L.node_radius.size();n++) 
+  {
+    double x = L.node_positions[n].x;
+    double y = L.node_positions[n].y;
+
+    if (L.node_radius[n] > 0) {
+      cerr<<"node n="<<n<<"  radius = "<<L.node_radius[n]<<endl;
+      cairo_arc(cr, x, y, L.node_radius[n], 0.0, 2.0 * M_PI);
+
+      cairo_set_source_rgb (cr, 1 , 1, 1);
+      cairo_fill_preserve (cr);
+
+      cairo_set_source_rgb (cr, 0 , 0, 0);
+      cairo_stroke(cr);
+    }
+  }
+
+  cairo_select_font_face (cr, "Sans", 
+			    CAIRO_FONT_SLANT_NORMAL,
+			    CAIRO_FONT_WEIGHT_BOLD);
+  cairo_set_font_size (cr, 0.025);
+
+  for(int l=0;l<L.MC.n_leaves();l++)
+  {  
+    string name = L.MC.names()[l];
+    int b = L.MC.branch_to_node(l);
+    int n1 = L.MC.mapping[b];
+    int n2 = L.MC.mapping[L.MC.reverse(b)];
+
+    double x1 = L.node_positions[n1].x;
+    double y1 = L.node_positions[n1].y;
+
+    double x2 = L.node_positions[n2].x;
+    double y2 = L.node_positions[n2].y;
+
+    double a = atan2(y1-y2,x1-x2);
+
+    double W = get_text_length(cr, name);
+    double H = get_text_height(cr, name);
+
+    x1 += cos(a)*line_width;
+    y1 += sin(a)*line_width;
+
+    y1 += 0.5*H;
+
+    if (abs(cos(a) < 0.4))
+    {
+      if (cos(a) < 0)
+	x1 -= W;
+      
+      if (sin(a) < 0)
+	y1 -= H;
+      else
+	y1 += H;
+    }
+
+    cairo_move_to (cr, x1, y1);
+    cairo_show_text (cr, name.c_str());
   }
 
     
