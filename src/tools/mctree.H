@@ -56,6 +56,8 @@ public:
 
   int branch_to_node(int n) const;
   int degree(int n) const;
+  bool is_leaf_node(int n) const;
+  int leaf(int i) const;
 
   const std::vector<std::string>& names() const {return names_;}
 
@@ -75,4 +77,5 @@ void check_partitions_informative(const std::vector<Partition>&);
 
 std::ostream& operator<<(std::ostream& o, const MC_tree&);
 
+std::string get_graph_name(std::string filename);
 #endif

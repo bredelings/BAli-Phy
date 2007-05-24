@@ -237,6 +237,16 @@ int MC_tree::degree(int n) const
   return count;
 }
 
+bool MC_tree::is_leaf_node(int n) const
+{
+  return (degree(n) == 1);
+}
+
+int MC_tree::leaf(int i) const
+{
+  return mapping[reverse(i)];
+}
+
 ostream& operator<<(ostream& o, const MC_tree& T)
 {
   o<<T.T.write(false)<<endl;
@@ -299,11 +309,12 @@ void draw_graph(const MC_tree& T,const string& name)
   // leaf names
   vector<string> names = T.names();
   for(int i=0;i<names.size();i++)
-    cout<<"      N"<<i<<" [label=\""<<names[i]<<"\"]\n";
+    cout<<"      N"<<T.leaf(i)<<" [label=\""<<names[i]<<"\"]\n";
   cout<<endl;
 
-  for(int i=names.size();i<N;i++)
-    cout<<"      N"<<i<<" [label=\"\",shape=circle,hight=0.02,width=0.02,fontsize=1]\n";
+  for(int i=0;i<N;i++)
+    if (not T.is_leaf_node(i))
+      cout<<"      N"<<i<<" [label=\"\",shape=circle,hight=0.02,width=0.02,fontsize=1]\n";
   cout<<endl;
 
   cout<<"}\n";
@@ -343,9 +354,12 @@ vector<Partition> check_MC_partitions(const vector<Partition>& partitions)
   mc_partitions = get_moveable_tree(partitions);
   // check that the tree is an MC tree
 
+  int full = count(mc_partitions,&Partition::full);
+  int total = mc_partitions.size();
+  int partial = total - full;
   if (mc_partitions.size() != partitions.size())
     cerr<<"Removing "<<partitions.size() - mc_partitions.size()<<"/"<<partitions.size()<<" partitions to yield an MC  tree."<<endl;
-  cerr<<"There are "<<mc_partitions.size() - count(mc_partitions,&Partition::full)<<"/"<<partitions.size()<<" partial/full partitions."<<endl;
+  cerr<<"There are "<<partial<<" (partial) + "<<full<<" (full) = "<<total<<" (total) partitions."<<endl;
   
   return mc_partitions;
 }
@@ -357,3 +371,19 @@ void check_partitions_informative(const vector<Partition>& partitions)
     if (not informative(partitions[i]))
       throw myexception()<<"Partition "<<i+1<<" is not informative.";
 }
+
+string get_graph_name(string filename)
+{
+  // remove the pathname 
+  while(filename.find('/') != -1) 
+    filename = filename.substr(filename.find('/')+1);
+
+  // remove the extension
+  int dot = filename.find('.');
+  string name = filename;
+  if (dot != -1)
+    name = filename.substr(0,dot);
+
+  return name;
+}
+

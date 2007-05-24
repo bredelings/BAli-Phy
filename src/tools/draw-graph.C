@@ -58,21 +58,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-string get_graph_name(string filename)
-{
-  // remove the pathname 
-  while(filename.find('/') != -1) 
-    filename = filename.substr(filename.find('/')+1);
-
-  // remove the extension
-  int dot = filename.find('.');
-  string name = filename;
-  if (dot != -1)
-    name = filename.substr(0,dot);
-
-  return name;
-}
-
 int main(int argc,char* argv[]) 
 { 
   try {
