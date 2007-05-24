@@ -71,6 +71,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   input.add_options()
     ("help", "produce help message")
     ("file",value<string>(),"predicates to examine")
+    ("output",value<string>(),"DOT,PS,PDF")
     ;
   
   options_description all("All options");
@@ -244,19 +245,6 @@ struct tree_layout
     :T(T1),
      node_radius(T.n_nodes(),0),
      node_positions(T.n_nodes())
-  {}
-};
-
-
-struct graph_layout
-{
-  MC_tree MC;
-  vector<double> node_radius;
-  vector<point_position> node_positions;
-  graph_layout(const MC_tree& T)
-    :MC(T),
-     node_radius(MC.n_nodes(),0),
-     node_positions(MC.n_nodes())
   {}
 };
 
@@ -543,6 +531,22 @@ void tree_plotter::operator()(cairo_t* cr)
  
 }
 
+struct graph_layout
+{
+  MC_tree_with_lengths MC;
+  vector<double> node_radius;
+  vector<point_position> node_positions;
+  graph_layout(const MC_tree_with_lengths& T)
+    :MC(T),
+     node_radius(MC.n_nodes(),0),
+     node_positions(MC.n_nodes())
+  {
+    for(int n=0;n<MC.n_nodes();n++)
+      node_radius[n] = node_diameter(MC.node_length(n),MC.degree(n))/2.0;
+  }
+};
+
+
 struct graph_plotter: public cairo_plotter
 {
   graph_layout L;
@@ -691,6 +695,77 @@ void graph_plotter::operator()(cairo_t* cr)
  
 }
 
+// FIXME - page="8.5,11" ?
+void draw_graph(const MC_tree_with_lengths& T,const string& name)
+{
+  const int N = T.n_nodes();
+
+  cout<<"digraph "<<name<<" { \n\
+\n\
+      nodesep=1.0\n\
+      ratio=auto\n\
+\n\
+      node[shape=plaintext,width=auto]\n\n";
+
+  // edges
+  for(int i=0;i<T.edges.size();i++) 
+  {
+    const edge& e = T.edges[i];
+    cout<<"      N"<<e.from<<" -> N"<<e.to;
+    int b = e.partition;
+
+    vector<string> attributes;
+    vector<string> styles;
+
+    if (e.type == 1) {
+      attributes.push_back("arrowhead=none");
+      attributes.push_back(string("len=")+convertToString(5.0*T.branch_length(b)));
+      const Partition& p = T.partitions[e.partition];
+      if (informative(p))
+	styles.push_back("setlinewidth(2)");
+      if (not p.full())
+	attributes.push_back("color=green2");
+    }
+    else {
+      styles.push_back("dashed");
+      attributes.push_back("weight=0");
+    }
+
+    if (styles.size()) {
+      string style = "style=\"" + join(styles,',') + "\"";
+      attributes.push_back(style);
+    }
+    
+    cout<<" ["<<join(attributes,',')<<"]";
+    cout<<"\n";
+  }
+  cout<<endl;
+
+  // leaf names
+  vector<string> names = T.names();
+  for(int i=0;i<names.size();i++)
+    cout<<"      N"<<T.leaf(i)<<" [label=\""<<names[i]<<"\"]\n";
+  cout<<endl;
+
+  for(int n=0;n<N;n++) 
+  {
+    if (not T.is_leaf_node(n)) {
+      int d = T.degree(n);
+      double R = node_diameter(T.node_length(n),d)/2.0;
+      R *= 10.0;
+      if (R == 0.0)
+	cout<<"      N"<<n<<" [label=\"\",shape=circle,height=0.02,width=0.02,fontsize=1]\n";
+      else 
+	cout<<"      N"<<n<<" [label=\"\",shape=circle,style=dashed,height="<<R<<",width="<<R<<",fontsize=1]\n";
+    }
+  }
+
+  cout<<endl;
+
+  cout<<"}\n";
+
+}
+
 
 int main(int argc,char* argv[]) 
 {
@@ -703,6 +778,13 @@ int main(int argc,char* argv[])
 
     // FIX name collision!
     MC_tree_with_lengths MC = get_MC_tree_with_lengths(filename);
+
+    if (args.count("output") and args["output"].as<string>() == "DOT")
+    {
+      draw_graph(MC,get_graph_name(filename));
+      exit(1);
+    }
+      
 
     // lay out the tree
     tree_layout L1 = circular_layout(MC);
