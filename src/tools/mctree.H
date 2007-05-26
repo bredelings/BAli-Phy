@@ -46,7 +46,7 @@ public:
   ublas::matrix<int> directly_left_of;       // i<j
   ublas::matrix<int> directly_wanders_over;  // right end (group2)
   ublas::matrix<int> connected_to;           // right end
-  vector<bool> directly_wanders;             // right end
+  vector<int> directly_wanders;             // right end
 
   // node properties
   ublas::matrix<int> connected;

@@ -1003,7 +1003,8 @@ void draw_graph(const MC_tree_with_lengths& T,const string& name)
       nodesep=1.0\n\
       ratio=auto\n\
 \n\
-      node[shape=plaintext,width=auto]\n\n";
+      edge[style=\"setlinewidth(2)\"]\n\
+      node[shape=plaintext,width=auto,fontname=Helvitica,fontsize=10]\n\n";
 
   // edges
   for(int i=0;i<T.edges.size();i++) 
@@ -1026,7 +1027,10 @@ void draw_graph(const MC_tree_with_lengths& T,const string& name)
     }
     else {
       styles.push_back("dashed");
-      attributes.push_back("weight=0");
+      int b = T.branch_to_node(e.from);
+      double w = 1.0/(T.directly_wanders[b] + 1);
+      attributes.push_back(string("weight=")+convertToString(w));
+      attributes.push_back(string("w=")+convertToString(w));
     }
 
     if (styles.size()) {

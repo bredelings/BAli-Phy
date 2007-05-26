@@ -135,11 +135,14 @@ MC_tree::MC_tree(const vector<Partition>& p)
 	    directly_wanders_over(i,j)=0;
   
   // directly wanders
-  directly_wanders = vector<bool>(partitions.size(),false);
+  directly_wanders = vector<int>(partitions.size(),0);
   for(int i=0;i<partitions.size();i++)
     for(int j=0;j<partitions.size();j++)
       if (directly_wanders_over(i,j))
-	directly_wanders[i] = true;
+	directly_wanders[i]++;
+
+  for(int i=0;i<directly_wanders.size();i++)
+    directly_wanders[i] /= 2;
 
   // connected_to
   connected_to.resize(partitions.size(),partitions.size());
@@ -273,7 +276,8 @@ void draw_graph(const MC_tree& T,const string& name)
       nodesep=1.0\n\
       ratio=auto\n\
 \n\
-      node[shape=plaintext,width=auto]\n\n";
+      edge[style=\"setlinewidth(2)\"]\n\
+      node[shape=plaintext,width=auto,fontname=Helvitica,fontsize=10]\n\n";
 
   // edges
   for(int i=0;i<T.edges.size();i++) {
@@ -293,7 +297,10 @@ void draw_graph(const MC_tree& T,const string& name)
     }
     else {
       styles.push_back("dashed");
-      attributes.push_back("weight=0");
+      int b = T.branch_to_node(e.from);
+      double w = 1.0/(T.directly_wanders[b] + 1);
+      attributes.push_back(string("weight=")+convertToString(w));
+      attributes.push_back(string("w=")+convertToString(w));
     }
 
     if (styles.size()) {
