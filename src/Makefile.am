@@ -57,7 +57,7 @@ endif
 
 endif
 
-
+BOOST_SUFFIX = -st
 #BOOST_LIBS = -lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}
 BOOST_LIBS = @top_builddir@/boost/lib/filesystem/libboost_filesystem.a \
              @top_builddir@/boost/lib/program_options/libboost_program_options.a
@@ -276,7 +276,7 @@ trees_distances_SOURCES = tools/trees-distances.C tree.C \
 #---------------------------------------------------------------
 
 draw_tree_SOURCES = tools/draw-tree.C tree.C sequencetree.C \
-	tools/tree-dist.C util.C tree-util.C
+	tools/tree-dist.C util.C tree-util.C tools/mctree.C
 draw_tree_CXXFLAGS = ${CXXFLAGS} ${CAIRO_CFLAGS}
 draw_tree_LDFLAGS = ${LDFLAGS} ${CAIRO_LIBS}
 
