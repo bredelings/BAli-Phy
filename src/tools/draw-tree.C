@@ -582,6 +582,7 @@ graph_layout layout_on_circle(MC_tree_with_lengths& MC)
 struct graph_energy_function
 {
   virtual double operator()(const graph_layout& GL) const=0;
+  virtual ~graph_energy_function() {}
 };
 
 
@@ -676,15 +677,6 @@ struct energy2: public graph_energy_function
 
   double operator()(const graph_layout& GL) const 
   {
-    double t = 0;
-    for(int i=0;i<GL.MC.branch_order.size();i++) 
-    {
-      int b = GL.MC.branch_order[i];
-      t += GL.MC.branch_length(b);
-    }
-    for(int n=0;n<GL.MC.n_nodes();n++) 
-      t += GL.MC.node_length(n);
-
     /// edge length energies (type 1)
     double edge_energy =0;
     for(int e=0;e<GL.MC.edges.size();e++) 
@@ -699,13 +691,18 @@ struct energy2: public graph_energy_function
       if (L < 0) edge_energy += L*L;
 
       double L2 = 0;
-      if (b >= 0)
+      double weight = 1.0;
+      if (t == 1)
 	L2 = GL.MC.branch_length(b);
+      else {
+	int b = GL.MC.branch_to_node(GL.MC.edges[e].from);
+	weight = 1.0/(GL.MC.directly_wanders[b] + 1);
+	weight /= 10.0;
+      }
 
       //      cerr<<"edge "<<e<<": "<<n1<<" <-> "<<n2<<" b = "<<b<<"    L = "<<L<<"  L2 = "<<L2<<endl;
 
-      double E = (L-L2)*(L-L2);
-      if (t == 2) E /= 10;
+      double E = (L-L2)*(L-L2)*weight;
 
       edge_energy += E;
     }
@@ -917,8 +914,10 @@ void graph_plotter::operator()(cairo_t* cr)
 	else
 	  cairo_set_source_rgb (cr, 0.3, 1.0 ,0.3);
       }
-      else 
+      else {
+	cairo_set_line_width(cr, line_width/2.0);
 	cairo_set_dash (cr, dashes, 2, 0.0);
+      }
       
       cairo_stroke (cr);
     }
@@ -941,6 +940,7 @@ void graph_plotter::operator()(cairo_t* cr)
       cairo_fill_preserve (cr);
 
       cairo_set_source_rgb (cr, 0 , 0, 0);
+      cairo_set_line_width(cr, line_width/2.0);
       cairo_stroke(cr);
     }
   }
