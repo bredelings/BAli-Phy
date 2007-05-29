@@ -674,11 +674,17 @@ double distance_to_line_segment(const graph_layout& GL,int n1,int n2,int n3)
 struct energy2: public graph_energy_function
 {
   double length_weight;
+  double down_weight_stretchy;
 
   double operator()(const graph_layout& GL) const 
   {
     /// edge length energies (type 1)
     double edge_energy =0;
+
+    double stretchy_edge_energy = 0;
+
+    const double closest_fraction = 0.9;
+
     for(int e=0;e<GL.MC.edges.size();e++) 
     {
       int n1 = GL.MC.edges[e].from;
@@ -697,14 +703,17 @@ struct energy2: public graph_energy_function
       else {
 	int b = GL.MC.branch_to_node(GL.MC.edges[e].from);
 	weight = 1.0/(GL.MC.directly_wanders[b] + 1);
-	weight /= 10.0;
+	weight *= (1-closest_fraction);
       }
 
       //      cerr<<"edge "<<e<<": "<<n1<<" <-> "<<n2<<" b = "<<b<<"    L = "<<L<<"  L2 = "<<L2<<endl;
 
       double E = (L-L2)*(L-L2)*weight;
 
-      edge_energy += E;
+      if (t == 1)
+	edge_energy += E;
+      else
+	stretchy_edge_energy += E;
     }
 
     /// edge length energies (type 2)
@@ -728,7 +737,7 @@ struct energy2: public graph_energy_function
       }
 
       double D = min(distances);
-      edge_energy += D*D/2.0;
+      stretchy_edge_energy += D*D*closest_fraction;
     }
 
     /// node_distances
@@ -747,10 +756,10 @@ struct energy2: public graph_energy_function
 	node_energy += 1.0/std::abs(L);
       }
 
-    return node_energy + edge_energy*length_weight;
+    return node_energy + (edge_energy + stretchy_edge_energy/down_weight_stretchy)*length_weight;
   }
 
-  energy2(double L):length_weight(L) {}
+  energy2(double W1,double W2):length_weight(W1),down_weight_stretchy(W2) {}
 };
 
 
@@ -1104,37 +1113,23 @@ int main(int argc,char* argv[])
 
     graph_layout L3 = L2;
     for(int i=0;i<1;i++) {
-      L3 = energy_layout(L3,energy2(10));
+      L3 = energy_layout(L3,energy2(10000000,100));
       graph_plotter gp(L3);
       draw_to_ps(filename+"-graph.ps",gp);
       draw_to_pdf(filename+"-graph.pdf",gp);
     }
     for(int i=0;i<1;i++) {
-      L3 = energy_layout(L3,energy2(100));
-      graph_plotter gp(L3);
-      draw_to_ps(filename+"-graph.ps",gp);
-      draw_to_pdf(filename+"-graph.pdf",gp);
-    }
-    for(int i=0;i<3;i++) {
-      L3 = energy_layout(L3,energy2(1000));
+      L3 = energy_layout(L3,energy2(20000000,10));
       graph_plotter gp(L3);
       draw_to_ps(filename+"-graph.ps",gp);
       draw_to_pdf(filename+"-graph.pdf",gp);
     }
     for(int i=0;i<10;i++) {
-      L3 = energy_layout(L3,energy2(1000));
+      L3 = energy_layout(L3,energy2(40000000,2.5));
       graph_plotter gp(L3);
       draw_to_ps(filename+"-graph.ps",gp);
       draw_to_pdf(filename+"-graph.pdf",gp);
     }
-    for(int i=0;i<10;i++) {
-      // with this one - the wandering branches actually achieve zero distance...
-      L3 = energy_layout(L3,energy2(10000));
-      graph_plotter gp(L3);
-      draw_to_ps(filename+"-graph.ps",gp);
-      draw_to_pdf(filename+"-graph.pdf",gp);
-    }
-
   }
   catch (std::exception& e) {
     cerr<<"Exception: "<<e.what()<<endl;
