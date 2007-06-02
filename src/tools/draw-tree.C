@@ -540,6 +540,18 @@ struct graph_layout
   MC_tree_with_lengths MC;
   vector<double> node_radius;
   vector<point_position> node_positions;
+
+  double xmin() const;
+  double xmax() const;
+
+  double ymin() const;
+  double ymax() const;
+
+  double xwidth() const {return xmax() - xmin();}
+  double ywidth() const {return ymax() - ymin();}
+
+  void rotate_for_aspect_ratio(double xw,double yw);
+
   graph_layout(const MC_tree_with_lengths& T)
     :MC(T),
      node_radius(MC.n_nodes(),0),
@@ -566,6 +578,44 @@ struct graph_layout
       node_radius[n] = node_diameter(MC.node_length(n),MC.degree(n))/2.0;
   }
 };
+
+void graph_layout::rotate_for_aspect_ratio(double xw,double yw)
+{
+  
+}
+
+double graph_layout::xmin() const
+{
+  double m = node_positions[0].x;
+  for(int i=0;i<node_positions.size();i++)
+    m = min(m,node_positions[i].x);
+  return m;
+}
+
+double graph_layout::xmax() const
+{
+  double m = node_positions[0].x;
+  for(int i=0;i<node_positions.size();i++)
+    m = max(m,node_positions[i].x);
+  return m;
+}
+
+double graph_layout::ymin() const
+{
+  double m = node_positions[0].y;
+  for(int i=0;i<node_positions.size();i++)
+    m = min(m,node_positions[i].y);
+  return m;
+}
+
+double graph_layout::ymax() const
+{
+  double m = node_positions[0].y;
+  for(int i=0;i<node_positions.size();i++)
+    m = max(m,node_positions[i].y);
+  return m;
+}
+
 
 
 graph_layout layout_on_circle(MC_tree_with_lengths& MC,double R)
@@ -953,9 +1003,9 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
 
 
     // check D versus D2
-    vector<point_position> D2 = energy_derivative_2D(GL,E);
-    cerr<<"      derivative error = "<<sqrt(dot(D,D)/dot(D2,D2))
-    	<<"      angle = "<<dot(D2,D)/sqrt(dot(D2,D2)*dot(D,D))<<"\n";
+    //    vector<point_position> D2 = energy_derivative_2D(GL,E);
+    //    cerr<<"      derivative error = "<<sqrt(dot(D,D)/dot(D2,D2))
+    //    	<<"      angle = "<<dot(D2,D)/sqrt(dot(D2,D2)*dot(D,D))<<"\n";
 
     vector<point_position> temp = GL.node_positions;
     double delta = dt*sqrt(E1)/dot(D,D);
@@ -974,9 +1024,17 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
 	dt *= 2.0;
 	successes=0;
       }
+
+      // actually, we need an estimate of the CURVATURE to know when to stop!
+      vector<point_position> DELTA = add(GL.node_positions, -1.0, temp);
+      double ave_delta = sqrt(dot(DELTA,DELTA)/DELTA.size());
+      if (ave_delta/min(GL.xwidth(),GL.ywidth()) < 0.00001)
+      	return GL;
+
+      // (how to go from 'energy near bottom' to 'position near position at lowest energy',
+      //  which is what really matters?
+
     }
-    if (sqrt(dot(D,D)) < 1.0e-3)
-      break;
   }
 
   return GL;
@@ -991,21 +1049,12 @@ struct graph_plotter: public cairo_plotter
 
 void graph_plotter::operator()(cairo_t* cr)
 {
-  double xmin = L.node_positions[0].x;
-  double xmax = L.node_positions[0].x;
-  for(int i=0;i<L.node_positions.size();i++)
-  {
-    xmin = min(xmin,L.node_positions[i].x);
-    xmax = max(xmax,L.node_positions[i].x);
-  }
+  double xmin = L.xmin();
+  double xmax = L.xmax();
     
-  double ymin = L.node_positions[0].y;
-  double ymax = L.node_positions[0].y;
-  for(int i=0;i<L.node_positions.size();i++)
-  {
-    ymin = min(ymin,L.node_positions[i].y);
-    ymax = max(ymax,L.node_positions[i].y);
-  }
+  double ymin = L.ymin();
+  double ymax = L.ymax();
+
   //  cout<<"x = ["<<xmin<<", "<<xmax<<"]"<<endl;
   //  cout<<"y = ["<<ymin<<", "<<ymax<<"]"<<endl;
   //  cout<<endl;
@@ -1253,32 +1302,11 @@ int main(int argc,char* argv[])
     graph_layout L2 = layout_on_circle(MC,1);
 
     graph_layout L3 = L2;
-    for(int i=0;i<1;i++) {
-      L3 = energy_layout(L3,energy2(100000,1));
-      graph_plotter gp(L3);
-      draw_to_pdf(filename+"-graph.pdf",gp);
-    }
-    /*
-    for(int i=0;i<1;i++) {
-      L3 = energy_layout(L3,energy2(1000000,5));
-      graph_plotter gp(L3);
-      draw_to_pdf(filename+"-graph.pdf",gp);
-    }
-    for(int i=0;i<1;i++) {
-      L3 = energy_layout(L3,energy2(10000000,2));
-      graph_plotter gp(L3);
-      draw_to_pdf(filename+"-graph.pdf",gp);
-    }
     for(int i=0;i<3;i++) {
-      L3 = energy_layout(L3,energy2(20000000,10));
+      L3 = energy_layout(L3,energy2(1000000,1));
       graph_plotter gp(L3);
       draw_to_pdf(filename+"-graph.pdf",gp);
     }
-    for(int i=0;i<10;i++) {
-      L3 = energy_layout(L3,energy2(40000000,2.5));
-      graph_plotter gp(L3);
-      draw_to_pdf(filename+"-graph.pdf",gp);
-      }*/
   }
   catch (std::exception& e) {
     cerr<<"Exception: "<<e.what()<<endl;
