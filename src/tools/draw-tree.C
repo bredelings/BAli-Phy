@@ -671,6 +671,31 @@ double trunc(double t,double D)
   return D;
 }
 
+double distance_to_line_segment(const point_position& p1,
+				const point_position& p2,
+				const point_position& p3)
+{
+  double t = ((p1.x - p2.x)*(p3.x - p2.x) + (p1.y - p2.y)*(p3.y - p2.y))/
+    ((p3.x - p2.x)*(p3.x - p2.x) + (p3.y - p2.y)*(p3.y - p2.y));
+
+  if (t < 0) t = 0;
+  if (t > 1) t = 1;
+
+  double x = p2.x + t*(p3.x-p2.x);
+  double y = p2.y + t*(p3.y-p2.y);
+
+  return sqrt((p1.x-x)*(p1.x-x) + (p1.y-y)*(p1.y-y));
+}
+
+double distance_to_line_segment(const graph_layout& GL,int n1,int n2,int n3)
+{
+  return distance_to_line_segment(GL.node_positions[n1],
+				  GL.node_positions[n2],
+				  GL.node_positions[n3]);
+}
+
+
+
 // E = C*D(y1,y2)^2
 // y1 = x1
 // y2 = x2 + t*(x3-x2)
@@ -709,7 +734,7 @@ double graph_energy_function::node_edge_attraction(const graph_layout& GL, vecto
 
   double E = C*D*D;
 
-  double dE_dD = C*2*D;
+  double dE_dD = C*2.0*D;
 
   double dD_dy11 = (y11 - y21)/D;
   double dD_dy12 = (y12 - y22)/D;
@@ -717,16 +742,18 @@ double graph_energy_function::node_edge_attraction(const graph_layout& GL, vecto
   double dD_dy21 = - dD_dy11;
   double dD_dy22 = - dD_dy12;
 
-  cerr<<" D = "<<D<<" E = "<<E<<"  t = "<<t<<"   dE_dD = "<<dE_dD<<endl;
+  //  cerr<<" D = "<<D<<" D2 = "<<distance_to_line_segment(GL,n1,n2,n3)<<" E = "<<E<<"  t = "<<t<<"   dE_dD = "<<dE_dD<<endl;
 
   double dt_dx11 = trunc(t, (x31-x21) / t_low );
   double dt_dx12 = trunc(t, (x32-x22) / t_low );
 
-  double dt_dx21 = trunc(t, (t_low * (2*x21 - x11 - x31) - t_high * 2* (x21-x31))/(t_low*t_low) );
-  double dt_dx22 = trunc(t, (t_low * (2*x22 - x12 - x32) - t_high * 2* (x22-x32))/(t_low*t_low) );
+  double dt_dx21 = trunc(t, (t_low * (2.0*x21 - x11 - x31) - t_high * 2.0* (x21-x31))/(t_low*t_low) );
+  double dt_dx22 = trunc(t, (t_low * (2.0*x22 - x12 - x32) - t_high * 2.0* (x22-x32))/(t_low*t_low) );
 
-  double dt_dx31 = trunc(t, (t_low * (x11 - x21)         - t_high * 2* (x31-x21))/(t_low*t_low) );
-  double dt_dx32 = trunc(t, (t_low * (x12 - x22)         - t_high * 2* (x32-x22))/(t_low*t_low) );
+  double dt_dx31 = trunc(t, (t_low * (x11 - x21)           - t_high * 2.0* (x31-x21))/(t_low*t_low) );
+  double dt_dx32 = trunc(t, (t_low * (x12 - x22)           - t_high * 2.0* (x32-x22))/(t_low*t_low) );
+
+
 
   double dy21_dx11 =         (x31-x21)*dt_dx11;
   double dy21_dx12 =         (x31-x21)*dt_dx12;
@@ -737,50 +764,26 @@ double graph_energy_function::node_edge_attraction(const graph_layout& GL, vecto
   DEL[n1].x += dE_dD*(dD_dy11 + dD_dy21*dy21_dx11 + dD_dy22*dy22_dx11);
   DEL[n1].y += dE_dD*(dD_dy12 + dD_dy21*dy21_dx12 + dD_dy22*dy22_dx12);
 
-  double dy21_dx21 = 1 - t + (x31-x21)*dt_dx21;
-  double dy21_dx22 =   - t + (x31-x21)*dt_dx22;
+  double dy21_dx21 = 1.0 - t + (x31-x21)*dt_dx21;
+  double dy21_dx22 =           (x31-x21)*dt_dx22;
 
-  double dy22_dx21 =   - t + (x32-x22)*dt_dx21;
-  double dy22_dx22 = 1 - t + (x32-x22)*dt_dx22;
+  double dy22_dx21 =           (x32-x22)*dt_dx21;
+  double dy22_dx22 = 1.0 - t + (x32-x22)*dt_dx22;
 
   DEL[n2].x += dE_dD*(          dD_dy21*dy21_dx21 + dD_dy22*dy22_dx21);
   DEL[n2].y += dE_dD*(          dD_dy21*dy21_dx22 + dD_dy22*dy22_dx22);
 
-  double dy21_dx31 =     t + (x31-x21)*dt_dx31;
-  double dy21_dx32 =     t + (x31-x21)*dt_dx32;
+  double dy21_dx31 =       t + (x31-x21)*dt_dx31;
+  double dy21_dx32 =           (x31-x21)*dt_dx32;
 
-  double dy22_dx31 =     t + (x32-x22)*dt_dx31;
-  double dy22_dx32 =     t + (x32-x22)*dt_dx32;
+  double dy22_dx31 =           (x32-x22)*dt_dx31;
+  double dy22_dx32 =       t + (x32-x22)*dt_dx32;
 
   DEL[n3].x += dE_dD*(          dD_dy21*dy21_dx31 + dD_dy22*dy22_dx31);
   DEL[n3].y += dE_dD*(          dD_dy21*dy21_dx32 + dD_dy22*dy22_dx32);
 
   return E;
 }
-
-double distance_to_line_segment(const point_position& p1,
-				const point_position& p2,
-				const point_position& p3)
-{
-  double t = ((p1.x - p2.x)*(p3.x - p2.x) + (p1.y - p2.y)*(p3.y - p2.y))/
-    ((p3.x - p2.x)*(p3.x - p2.x) + (p3.y - p2.y)*(p3.y - p2.y));
-
-  if (t < 0) t = 0;
-  if (t > 1) t = 1;
-
-  double x = p2.x + t*(p3.x-p2.x);
-  double y = p2.y + t*(p3.y-p2.y);
-
-  return sqrt((p1.x-x)*(p1.x-x) + (p1.y-y)*(p1.y-y));
-}
-
-double distance_to_line_segment(const graph_layout& GL,int n1,int n2,int n3)
-{
-  return distance_to_line_segment(GL.node_positions[n1],
-				  GL.node_positions[n2],
-				  GL.node_positions[n3]);
-}
-
 
 
 struct energy2: public graph_energy_function
@@ -803,7 +806,7 @@ struct energy2: public graph_energy_function
     double E = 0;
 
     /// edge length energies (type 1)
-    const double closest_fraction = 0;
+    const double closest_fraction = 0.9;
 
     for(int e=0;e<GL.MC.edges.size();e++) 
     {
@@ -821,11 +824,10 @@ struct energy2: public graph_energy_function
 	int b = GL.MC.branch_to_node(GL.MC.edges[e].from);
 	w /= down_weight_stretchy;
 	w *= 1.0/(GL.MC.directly_wanders[b] + 1);
-	//	w *= (1.0-closest_fraction);
+	w *= (1.0-closest_fraction);
       }
       E += node_node_attraction(GL, D, n1, n2, w, L);
     }
-    /*
 
 
     /// edge length energies (type 2)
@@ -859,9 +861,8 @@ struct energy2: public graph_energy_function
       int n2 = GL.MC.mapping[b2];
       int n3 = GL.MC.mapping[GL.MC.reverse(b2)];
       
-      //      E += node_edge_attraction(GL, D, n1, n2, n3, closest_fraction*length_weight/down_weight_stretchy);
+      E += node_edge_attraction(GL, D, n1, n2, n3, closest_fraction*length_weight/down_weight_stretchy);
     }
-    */
 
     /// node_distances
     for(int i=0;i<GL.MC.n_nodes();i++)
