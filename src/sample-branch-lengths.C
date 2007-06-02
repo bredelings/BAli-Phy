@@ -344,7 +344,7 @@ void change_branch_length_and_T(Parameters& P,MoveStats& Stats,int b)
     vector<int> nodes = A5::get_nodes_random(T2,b);
     int b1 = T2.directed_branch(nodes[4],nodes[1]);
     int b2 = T2.directed_branch(nodes[5],nodes[2]);
-    T2.exchange_subtrees(b1,b2);
+    exchange_subtrees(T2,b1,b2);
 
     p[1].invalidate_subA_index_branch(b);
 
