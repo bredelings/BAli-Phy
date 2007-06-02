@@ -57,7 +57,7 @@ double do_SPR(SequenceTree& T1, int b1_,int b2)
       T2.directed_branch(b2).source() == b1.target()) 
     ;
   else
-    T2.SPR(b1.reverse(),b2);
+    SPR(T2,b1.reverse(),b2);
 
   //------ Find the two new branches ------//
   vector<const_branchview> connected1;

@@ -589,27 +589,10 @@ void Tree::compute_partitions() const {
   caches_valid = true;
 }
 
-
-void Tree::exchange_subtrees(int br1,int br2) {
-  BranchNode* b1 = branches_[br1];
-  BranchNode* b2 = branches_[br2];
-
-  // FIXME - add more clash conditions
-  if (subtree_contains(br1,b2->out->node))
-    std::abort();
-
-  if (subtree_contains(br2,b1->out->node))
-    std::abort();
-
-
-  TreeView::exchange_subtrees(b1,b2);
-
-  // doesn't mess with the names
-  recompute(nodes_[0]);
-}
-
 void exchange_subtrees(Tree& T, int br1, int br2) 
 {
+  BranchNode* n0 = (BranchNode*)T[0];
+
   BranchNode* b1 = (BranchNode*)T.branch(br1);
   BranchNode* b2 = (BranchNode*)T.branch(br2);
 
@@ -619,7 +602,7 @@ void exchange_subtrees(Tree& T, int br1, int br2)
   TreeView::exchange_subtrees(b1,b2);
 
   // don't mess with the names
-  T.recompute(b1);
+  T.recompute(n0);
 }
 
 nodeview Tree::create_node_on_branch(int br) 
@@ -667,38 +650,12 @@ void Tree::remove_node_from_branch(int node)
   }
 }
 
-
-/// SPR: move the subtree b1 into branch b2
-void Tree::SPR(int br1,int br2) {
-
-  BranchNode* b1 = branches_[br1];
-  BranchNode* b2 = branches_[br2];
-
-  assert(n_leaves() > 2);
-
-  // don't regraft to the sub-branches we are being pruned from
-  assert(b2 != b1->prev and b2 != b1->next);
-#ifndef NDEBUG
-  prepare_partitions();
-#endif  
-  assert(cached_partitions[b1->out->branch][b2->node]);
-  assert(cached_partitions[b1->out->branch][b2->out->node]);
-
-  //------------ Prune the subtree -----------------//
-  BranchNode* newbranch = TreeView::unlink_subtree(b1)->out;
-  int dead_branch = TreeView::remove_node_from_branch(newbranch->out);
-  
-  //----------- Regraft the subtree ---------------//
-  TreeView::create_node_on_branch(b2,dead_branch);
-  TreeView::merge_nodes(b1,b2->out);
-  name_node(b1,b1->node);
-
-  recompute(b1);
-}
-
 /// SPR: move the subtree b1 into branch b2
 void SPR(Tree& T, int br1,int br2) 
 {
+  //  T.SPR(br1,br2);
+  //  return;
+
   BranchNode* b1 = (BranchNode*)T.branch(br1);
   BranchNode* b2 = (BranchNode*)T.branch(br2);
 

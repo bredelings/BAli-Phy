@@ -212,12 +212,6 @@ public:
   /// is 'n' contained in the subtree delineated by 'b' 
   bool subtree_contains(int b,int n) const {return partition(b)[n];}
 
-  /// switch subtrees 'b1' and 'b2'
-  void exchange_subtrees(int b1,int b2);
-
-  /// Prune subtree 'b1' and regraft into branch 'b2'
-  void SPR(int b1,int b2);
-
   /// Find and split a multifurcating node to create this partition
   int induce_partition(const std::valarray<bool>& partition);
 
@@ -251,6 +245,10 @@ public:
 
   virtual ~Tree();
 };
+
+/// Prune subtree 'b1' and regraft into branch 'b2'
+void SPR(Tree& T,int b1,int b2);
+void exchange_subtrees(Tree&,int b2,int b2);
 
 //---------------------------- RootedTree -----------------------//
 

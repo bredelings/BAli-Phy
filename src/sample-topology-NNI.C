@@ -119,7 +119,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
-  p[1].T->exchange_subtrees(b1, b2);
+  exchange_subtrees(*p[1].T,b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
@@ -193,7 +193,7 @@ void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b)
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
-  p[1].T->exchange_subtrees(b1, b2);
+  exchange_subtrees(*p[1].T, b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
@@ -253,7 +253,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
-  p[1].T->exchange_subtrees(b1, b2);
+  exchange_subtrees(*p[1].T, b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
@@ -333,7 +333,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   int b2 = P.T->directed_branch(nodes[5],nodes[2]);
   int b3 = P.T->directed_branch(nodes[5],nodes[3]);
 
-  p[1].T->exchange_subtrees(b1,b2);
+  exchange_subtrees(*p[1].T,b1,b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
@@ -341,7 +341,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   if (not extends(*p[1].T, *P.TC))
     return;
 
-  p[2].T->exchange_subtrees(b1,b3);
+  exchange_subtrees(*p[2].T,b1,b3);
   p[2].tree_propagate(); 
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
@@ -378,7 +378,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
   int b2 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[2]);
   int b3 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[3]);
 
-  p[1].T->exchange_subtrees(b1,b2);
+  exchange_subtrees(*p[1].T,b1,b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
@@ -386,7 +386,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
   if (not extends(*p[1].T, *P.TC))
     return;
 
-  p[2].T->exchange_subtrees(b1,b3);
+  exchange_subtrees(*p[2].T,b1,b3);
   p[2].tree_propagate(); 
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
