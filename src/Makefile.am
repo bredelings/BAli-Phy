@@ -276,7 +276,7 @@ trees_distances_SOURCES = tools/trees-distances.C tree.C \
 #---------------------------------------------------------------
 
 draw_tree_SOURCES = tools/draw-tree.C tree.C sequencetree.C \
-	tools/tree-dist.C util.C tree-util.C tools/mctree.C
+	tools/tree-dist.C util.C tree-util.C tools/mctree.C rng.C util-random.C
 draw_tree_CXXFLAGS = ${CXXFLAGS} ${CAIRO_CFLAGS}
 draw_tree_LDFLAGS = ${LDFLAGS} ${CAIRO_LIBS}
 

@@ -16,6 +16,8 @@
 #include "pow2.H"
 #include "mctree.H"
 #include "util.H"
+#include "util-random.H"
+#include "rng.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -566,27 +568,22 @@ struct graph_layout
 };
 
 
-graph_layout layout_on_circle(MC_tree_with_lengths& MC)
+graph_layout layout_on_circle(MC_tree_with_lengths& MC,double R)
 {
   graph_layout GL(MC);
 
+  vector<int> pi = random_permutation(MC.n_nodes());
+
   for(int i=0;i<MC.n_nodes();i++)
   {
-    double angle = i*(2.0*M_PI/MC.n_nodes());
-    GL.node_positions[i].x = cos(angle);
-    GL.node_positions[i].y = sin(angle);
+    double angle = pi[i]*(2.0*M_PI/MC.n_nodes());
+    GL.node_positions[i].x = R*cos(angle);
+    GL.node_positions[i].y = R*sin(angle);
   }
   return GL;
 }
 
-struct graph_energy_function
-{
-  virtual double operator()(const graph_layout& GL) const=0;
-  virtual ~graph_energy_function() {}
-};
-
-
-double distance(const graph_layout& GL,int n1,int n2)
+double distance2(const graph_layout& GL,int n1,int n2)
 {
   double x1 = GL.node_positions[n1].x;
   double y1 = GL.node_positions[n1].y;
@@ -594,57 +591,172 @@ double distance(const graph_layout& GL,int n1,int n2)
   double x2 = GL.node_positions[n2].x;
   double y2 = GL.node_positions[n2].y;
 
-  double L = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+  double dx = x2-x1;
+  double dy = y2-y1;
 
-  return L;
+  return dx*dx + dy*dy;
 }
 
-struct energy1: public graph_energy_function
+double distance(const graph_layout& GL,int n1,int n2)
 {
-  double operator()(const graph_layout& GL) const 
-  {
-    /// edge length energies
-    double edge_energy =0;
-    for(int e=0;e<GL.MC.edges.size();e++) 
-    {
-      int n1 = GL.MC.edges[e].from;
-      int n2 = GL.MC.edges[e].to;
-      int b = GL.MC.edges[e].partition;
+  return sqrt(distance2(GL,n1,n2));
+}
 
-      double L = (distance(GL,n1,n2) - GL.node_radius[n1] - GL.node_radius[n2]);
+struct graph_energy_function
+{
+  virtual double operator()(const graph_layout& GL) const=0;
+  virtual double operator()(const graph_layout& GL, vector<point_position>&) const=0;
 
-      if (L < 0) edge_energy += L*L;
+  double node_node_repulsion(const graph_layout& GL,vector<point_position>& D,int n1,int n2, double C) const;
+  double node_node_attraction(const graph_layout& GL,vector<point_position>& D, int n1,int n2, double C, double l) const;
+  double node_edge_attraction(const graph_layout& GL,vector<point_position>& D, int n1,int n2,int n3, double C) const;
 
-      double L2 = 0;
-      if (b >= 0)
-	L2 = GL.MC.branch_length(b);
-
-      //      cerr<<"edge "<<e<<": "<<n1<<" <-> "<<n2<<" b = "<<b<<"    L = "<<L<<"  L2 = "<<L2<<endl;
-
-      edge_energy += (L-L2)*(L-L2);
-      if (L < 0) edge_energy += L*L;
-    }
-
-    /// node_distances
-    double node_energy = 0;
-    for(int i=0;i<GL.MC.n_nodes();i++)
-      for(int j=0;j<i;j++)
-      {
-	// don't repel the end of the branch that I'm attached to
-	if (GL.MC.connected(i,j) == 1) continue;
-
-	// don't repel nodes that wander over me, or that I wander to
-	if (GL.MC.connected(i,j) == 2 or GL.MC.connected(j,i) == 2) continue;
-
-	double L = distance(GL,i,j);
-
-	node_energy += 1.0/std::abs(L);
-      }
-
-    return node_energy + edge_energy*1000000.0;
-  }
+  virtual ~graph_energy_function() {}
 };
 
+double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C) const
+{
+  double x1 = GL.node_positions[n1].x;
+  double y1 = GL.node_positions[n1].y;
+
+  double x2 = GL.node_positions[n2].x;
+  double y2 = GL.node_positions[n2].y;
+
+  double D2 = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
+  double D  = sqrt(D2);
+  double dL = D - GL.node_radius[n1] - GL.node_radius[n2];
+
+  double E = C/dL;
+
+  double temp = C/(dL*dL*D);
+
+  DEL[n1].x += (x2-x1)*temp;
+  DEL[n1].y += (y2-y1)*temp;
+
+  DEL[n2].x += (x1-x2)*temp;
+  DEL[n2].y += (y1-y2)*temp;
+
+  return E;
+}
+
+double graph_energy_function::node_node_attraction(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C, double l) const
+{
+  double x1 = GL.node_positions[n1].x;
+  double y1 = GL.node_positions[n1].y;
+
+  double x2 = GL.node_positions[n2].x;
+  double y2 = GL.node_positions[n2].y;
+
+  double D2 = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
+  double D  = sqrt(D2);
+  double dL = D - GL.node_radius[n1] - GL.node_radius[n2] - l;
+
+  double E = C*dL*dL;
+
+  double temp = 2.0*C*dL/D;
+
+  DEL[n1].x += (x1-x2)*temp;
+  DEL[n1].y += (y1-y2)*temp;
+
+  DEL[n2].x += (x2-x1)*temp;
+  DEL[n2].y += (y2-y1)*temp;
+
+  return E;
+}
+
+double trunc(double t,double D)
+{
+  if (t <= 0 or t >= 1)
+    D = 0;
+  return D;
+}
+
+// E = C*D(y1,y2)^2
+// y1 = x1
+// y2 = x2 + t*(x3-x2)
+//  t = ...
+
+double graph_energy_function::node_edge_attraction(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2,int n3, double C) const
+{
+  const point_position& p1 = GL.node_positions[n1];
+  const point_position& p2 = GL.node_positions[n2];
+  const point_position& p3 = GL.node_positions[n3];
+
+  double x11 = p1.x;
+  double x12 = p1.y;
+
+  double x21 = p2.x;
+  double x22 = p2.y;
+
+  double x31 = p3.x;
+  double x32 = p3.y;
+
+  double t_high = ((x11 - x21)*(x31 - x21) + (x12 - x22)*(x32 - x22));
+  double t_low  = ((x31 - x21)*(x31 - x21) + (x32 - x22)*(x32 - x22));
+
+  double t = t_high/t_low;
+
+  if (t < 0) t = 0;
+  if (t > 1) t = 1;
+
+  double y11 = x11;
+  double y12 = x12;
+
+  double y21 = x21 + t*(x31 - x21);
+  double y22 = x22 + t*(x32 - x22);
+
+  double D =  sqrt((y11-y21)*(y11-y21) + (y12-y22)*(y12-y22));
+
+  double E = C*D*D;
+
+  double dE_dD = C*2*D;
+
+  double dD_dy11 = (y11 - y21)/D;
+  double dD_dy12 = (y12 - y22)/D;
+
+  double dD_dy21 = - dD_dy11;
+  double dD_dy22 = - dD_dy12;
+
+  cerr<<" D = "<<D<<" E = "<<E<<"  t = "<<t<<"   dE_dD = "<<dE_dD<<endl;
+
+  double dt_dx11 = trunc(t, (x31-x21) / t_low );
+  double dt_dx12 = trunc(t, (x32-x22) / t_low );
+
+  double dt_dx21 = trunc(t, (t_low * (2*x21 - x11 - x31) - t_high * 2* (x21-x31))/(t_low*t_low) );
+  double dt_dx22 = trunc(t, (t_low * (2*x22 - x12 - x32) - t_high * 2* (x22-x32))/(t_low*t_low) );
+
+  double dt_dx31 = trunc(t, (t_low * (x11 - x21)         - t_high * 2* (x31-x21))/(t_low*t_low) );
+  double dt_dx32 = trunc(t, (t_low * (x12 - x22)         - t_high * 2* (x32-x22))/(t_low*t_low) );
+
+  double dy21_dx11 =         (x31-x21)*dt_dx11;
+  double dy21_dx12 =         (x31-x21)*dt_dx12;
+
+  double dy22_dx11 =         (x32-x22)*dt_dx11;
+  double dy22_dx12 =         (x32-x22)*dt_dx12;
+
+  DEL[n1].x += dE_dD*(dD_dy11 + dD_dy21*dy21_dx11 + dD_dy22*dy22_dx11);
+  DEL[n1].y += dE_dD*(dD_dy12 + dD_dy21*dy21_dx12 + dD_dy22*dy22_dx12);
+
+  double dy21_dx21 = 1 - t + (x31-x21)*dt_dx21;
+  double dy21_dx22 =   - t + (x31-x21)*dt_dx22;
+
+  double dy22_dx21 =   - t + (x32-x22)*dt_dx21;
+  double dy22_dx22 = 1 - t + (x32-x22)*dt_dx22;
+
+  DEL[n2].x += dE_dD*(          dD_dy21*dy21_dx21 + dD_dy22*dy22_dx21);
+  DEL[n2].y += dE_dD*(          dD_dy21*dy21_dx22 + dD_dy22*dy22_dx22);
+
+  double dy21_dx31 =     t + (x31-x21)*dt_dx31;
+  double dy21_dx32 =     t + (x31-x21)*dt_dx32;
+
+  double dy22_dx31 =     t + (x32-x22)*dt_dx31;
+  double dy22_dx32 =     t + (x32-x22)*dt_dx32;
+
+  DEL[n3].x += dE_dD*(          dD_dy21*dy21_dx31 + dD_dy22*dy22_dx31);
+  DEL[n3].y += dE_dD*(          dD_dy21*dy21_dx32 + dD_dy22*dy22_dx32);
+
+  return E;
+}
 
 double distance_to_line_segment(const point_position& p1,
 				const point_position& p2,
@@ -678,45 +790,46 @@ struct energy2: public graph_energy_function
 
   double operator()(const graph_layout& GL) const 
   {
+    vector<point_position> D(GL.MC.n_nodes());
+    return operator()(GL,D);
+  }
+
+  double operator()(const graph_layout& GL, vector<point_position>& D) const 
+  {
+    if (D.size() != GL.MC.n_nodes()) D.resize(GL.MC.n_nodes());
+    for(int i=0;i<D.size();i++)
+      D[i].x = D[i].y = 0;
+
+    double E = 0;
+
     /// edge length energies (type 1)
-    double edge_energy =0;
-
-    double stretchy_edge_energy = 0;
-
-    const double closest_fraction = 0.9;
+    const double closest_fraction = 0;
 
     for(int e=0;e<GL.MC.edges.size();e++) 
     {
       int n1 = GL.MC.edges[e].from;
       int n2 = GL.MC.edges[e].to;
-      int b = GL.MC.edges[e].partition;
       int t = GL.MC.edges[e].type;
 
-      double L = distance(GL,n1,n2) - GL.node_radius[n1] - GL.node_radius[n2];
-
-      if (L < 0) edge_energy += L*L;
-
-      double L2 = 0;
-      double weight = 1.0;
-      if (t == 1)
-	L2 = GL.MC.branch_length(b);
+      double L = 0;
+      double w = length_weight;
+      if (t == 1) {
+	int b = GL.MC.edges[e].partition;
+	L = GL.MC.branch_length(b);
+      }
       else {
 	int b = GL.MC.branch_to_node(GL.MC.edges[e].from);
-	weight = 1.0/(GL.MC.directly_wanders[b] + 1);
-	weight *= (1-closest_fraction);
+	w /= down_weight_stretchy;
+	w *= 1.0/(GL.MC.directly_wanders[b] + 1);
+	//	w *= (1.0-closest_fraction);
       }
-
-      //      cerr<<"edge "<<e<<": "<<n1<<" <-> "<<n2<<" b = "<<b<<"    L = "<<L<<"  L2 = "<<L2<<endl;
-
-      double E = (L-L2)*(L-L2)*weight;
-
-      if (t == 1)
-	edge_energy += E;
-      else
-	stretchy_edge_energy += E;
+      E += node_node_attraction(GL, D, n1, n2, w, L);
     }
+    /*
+
 
     /// edge length energies (type 2)
+    // consider - find the closest edge OR NODE (with radius!) - may be smoother/better
     for(int b = 0;b<GL.MC.n_branches()*2;b++) 
     {
       if (not GL.MC.directly_wanders[b]) continue;
@@ -724,24 +837,33 @@ struct energy2: public graph_energy_function
       int n1 = GL.MC.mapping[b];
 
       vector<double> distances;
+      vector<int> branches;
       for(int i = 0;i<GL.MC.branch_order.size();i++) 
       {
 	int b2 = GL.MC.branch_order[i];
 
-	int n2 = GL.MC.mapping[b2];
-	int n3 = GL.MC.mapping[GL.MC.reverse(b2)];
+	if (GL.MC.directly_wanders_over(b,b2)) 
+	{
+	  int n2 = GL.MC.mapping[b2];
+	  int n3 = GL.MC.mapping[GL.MC.reverse(b2)];
 	
-	double d = distance_to_line_segment(GL,n1,n2,n3);
+	  double d = distance_to_line_segment(GL,n1,n2,n3);
 
-	distances.push_back(d);
+	  branches.push_back(b2);
+	  distances.push_back(d);
+	}
       }
 
-      double D = min(distances);
-      stretchy_edge_energy += D*D*closest_fraction;
+      int i = argmin(distances);
+      int b2 = branches[i];
+      int n2 = GL.MC.mapping[b2];
+      int n3 = GL.MC.mapping[GL.MC.reverse(b2)];
+      
+      //      E += node_edge_attraction(GL, D, n1, n2, n3, closest_fraction*length_weight/down_weight_stretchy);
     }
+    */
 
     /// node_distances
-    double node_energy = 0;
     for(int i=0;i<GL.MC.n_nodes();i++)
       for(int j=0;j<i;j++)
       {
@@ -751,21 +873,45 @@ struct energy2: public graph_energy_function
 	// don't repel nodes that wander over me, or that I wander to
 	if (GL.MC.connected(i,j) == 2 or GL.MC.connected(j,i) == 2) continue;
 
-	double L = distance(GL,i,j);
-
-	node_energy += 1.0/std::abs(L);
+	E += node_node_repulsion(GL, D, i, j, 1.0);
       }
 
-    return node_energy + (edge_energy + stretchy_edge_energy/down_weight_stretchy)*length_weight;
+    return E;
   }
 
   energy2(double W1,double W2):length_weight(W1),down_weight_stretchy(W2) {}
 };
 
+void inc(vector<point_position>& x1,double lambda,const vector<point_position>& v)
+{
+  for(int i=0;i<x1.size();i++) {
+    x1[i].x += lambda * v[i].x;
+    x1[i].y += lambda * v[i].y;
+    x1[i].z += lambda * v[i].z;
+  }
+}
+
+vector<point_position> add(const vector<point_position>& x1,double lambda,const vector<point_position>& v)
+{
+  vector<point_position> x2 = x1;
+  inc(x2,lambda,v);
+  return x2;
+}
+
+double dot(const vector<point_position>& v1,const vector<point_position>& v2)
+{
+  double T=0;
+  for(int i=0;i<v1.size();i++) {
+    T += v1[i].x * v2[i].x;
+    T += v1[i].y * v2[i].y;
+  }
+  return T;
+}
+
 
 vector<point_position> energy_derivative_2D(const graph_layout& GL1, const graph_energy_function& E)
 {
-  double DELTA = 0.0001;
+  double DELTA = 0.000001;
 
   graph_layout GL2 = GL1;
 
@@ -793,41 +939,26 @@ vector<point_position> energy_derivative_2D(const graph_layout& GL1, const graph
   return D;
 }
 
-vector<point_position> add(const vector<point_position>& x1,double lambda,const vector<point_position>& v)
-{
-  vector<point_position> x2 = x1;
-  for(int i=0;i<x2.size();i++) {
-    x2[i].x += lambda * v[i].x;
-    x2[i].y += lambda * v[i].y;
-    x2[i].z += lambda * v[i].z;
-  }
-
-  return x2;
-}
-
-double dot(const vector<point_position>& v1,const vector<point_position>& v2)
-{
-  double T=0;
-  for(int i=0;i<v1.size();i++) {
-    T += v1[i].x * v2[i].x;
-    T += v1[i].y * v2[i].y;
-  }
-  return T;
-}
-
 graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
 {
   double T = 0;
   double dt = 1.0;
   int successes=0;
 
+  vector<point_position> D;
   for(int i=0;i<1000;i++) {
-    double E1 = E(GL);
+    double E1 = E(GL,D);
     cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<endl;
-    vector<point_position> D = energy_derivative_2D(GL,E);
+
+
+    // check D versus D2
+    vector<point_position> D2 = energy_derivative_2D(GL,E);
+    cerr<<"      derivative error = "<<sqrt(dot(D,D)/dot(D2,D2))
+    	<<"      angle = "<<dot(D2,D)/sqrt(dot(D2,D2)*dot(D,D))<<"\n";
+
     vector<point_position> temp = GL.node_positions;
     double delta = dt*sqrt(E1)/dot(D,D);
-    GL.node_positions = add(GL.node_positions,-delta*sqrt(E1),D);
+    inc(GL.node_positions,-delta*sqrt(E1),D);
     double E2 = E(GL);
     if (E2 > E1) {
       cerr<<"    rejecting  E = "<<E2<<endl;
@@ -1084,6 +1215,15 @@ int main(int argc,char* argv[])
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
+    //---------- Initialize random seed -----------//
+    unsigned long seed = 0;
+    if (args.count("seed")) {
+      seed = args["seed"].as<unsigned long>();
+      myrand_init(seed);
+    }
+    else
+      seed = myrand_init();
+    
     //-------- Load MC Tree and lengths -----//
     string filename = args["file"].as<string>();
 
@@ -1109,27 +1249,35 @@ int main(int argc,char* argv[])
     //    draw_to_pdf(filename+"-tree.pdf",tp);
 
     // lay out the tree
-    graph_layout L2 = layout_on_circle(MC);
+    graph_layout L2 = layout_on_circle(MC,1);
 
     graph_layout L3 = L2;
     for(int i=0;i<1;i++) {
-      L3 = energy_layout(L3,energy2(10000000,100));
+      L3 = energy_layout(L3,energy2(100000,1));
       graph_plotter gp(L3);
-      draw_to_ps(filename+"-graph.ps",gp);
+      draw_to_pdf(filename+"-graph.pdf",gp);
+    }
+    /*
+    for(int i=0;i<1;i++) {
+      L3 = energy_layout(L3,energy2(1000000,5));
+      graph_plotter gp(L3);
       draw_to_pdf(filename+"-graph.pdf",gp);
     }
     for(int i=0;i<1;i++) {
+      L3 = energy_layout(L3,energy2(10000000,2));
+      graph_plotter gp(L3);
+      draw_to_pdf(filename+"-graph.pdf",gp);
+    }
+    for(int i=0;i<3;i++) {
       L3 = energy_layout(L3,energy2(20000000,10));
       graph_plotter gp(L3);
-      draw_to_ps(filename+"-graph.ps",gp);
       draw_to_pdf(filename+"-graph.pdf",gp);
     }
     for(int i=0;i<10;i++) {
       L3 = energy_layout(L3,energy2(40000000,2.5));
       graph_plotter gp(L3);
-      draw_to_ps(filename+"-graph.ps",gp);
       draw_to_pdf(filename+"-graph.pdf",gp);
-    }
+      }*/
   }
   catch (std::exception& e) {
     cerr<<"Exception: "<<e.what()<<endl;
