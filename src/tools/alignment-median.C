@@ -11,6 +11,7 @@
 #include "optimize.H"
 #include "findroot.H"
 #include "util.H"
+#include "util-random.H"
 #include "alignment-util.H"
 #include "distance-methods.H"
 #include "rng.H"

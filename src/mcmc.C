@@ -6,6 +6,7 @@
 #include "myexception.H"
 #include "rng.H"
 #include "util.H"
+#include "util-random.H"
 
 //for the different models used in print_stats()
 #include "likelihood.H"
