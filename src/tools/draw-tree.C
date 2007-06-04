@@ -26,9 +26,21 @@ using namespace std;
 
 const double inch = 72.0;
 
-struct cairo_plotter
+class cairo_plotter
 {
+  double page_x_width_;
+  double page_y_width_;
+public:
   virtual void operator()(cairo_t*) = 0;
+
+  double page_x_width() const {return page_x_width_;}
+  double page_y_width() const {return page_y_width_;}
+
+
+  cairo_plotter(double xw, double yw)
+    :page_x_width_(xw),
+     page_y_width_(yw)
+  {}
   virtual ~cairo_plotter() {}
 };
 
@@ -36,7 +48,10 @@ struct fn_plotter: public cairo_plotter
 {
   void (*f)(cairo_t*);
   void operator()(cairo_t* cr) {f(cr);}
-  fn_plotter(void (*f1)(cairo_t*)):f(f1) {}
+  fn_plotter(void (*f1)(cairo_t*),double xw, double yw)
+    :cairo_plotter(xw,yw),
+     f(f1)
+  {}
 
 };
 
@@ -53,14 +68,18 @@ void draw_to_page(cairo_surface_t* surface, cairo_plotter& draw)
 
 void draw_to_ps(const string& filename, cairo_plotter& draw)
 {
-  cairo_surface_t *surface = cairo_ps_surface_create(filename.c_str(),8.5*inch, 11*inch);
+  cairo_surface_t *surface = cairo_ps_surface_create(filename.c_str(),
+						     draw.page_x_width()*inch, 
+						     draw.page_y_width()*inch);
 
   draw_to_page(surface,draw);
 }
 
 void draw_to_pdf(const string& filename, cairo_plotter& draw)
 {
-  cairo_surface_t *surface = cairo_pdf_surface_create(filename.c_str(),8.5*inch, 11*inch);
+  cairo_surface_t *surface = cairo_pdf_surface_create(filename.c_str(),
+						      draw.page_x_width()*inch,
+						      draw.page_y_width()*inch);
 
   draw_to_page(surface,draw);
 }
@@ -73,8 +92,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description input("Input options");
   input.add_options()
     ("help", "produce help message")
+    ("width,w",value<double>()->default_value(8.5),"Page width in inches")
+    ("height,h",value<double>()->default_value(11),"Page height in inches")
     ("file",value<string>(),"predicates to examine")
     ("output",value<string>(),"DOT,PS,PDF")
+    ("seed", value<unsigned long>(),"Random seed")
     ;
   
   options_description all("All options");
@@ -211,8 +233,15 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
       throw myexception()<<"Can't find node in tree!\n"<<"    "<<nodes[i];
 
     int n = MC.mapping[b];
-    cerr<<"Processing node '"<<nodes[i]<<"'"<<endl;
-    cerr<<"degree = "<<MC.degree(n)<<endl;
+    int d = MC.degree(n);
+
+    if (d < 4) {
+      cerr<<"Processing node '"<<nodes[i]<<"'"<<endl;
+      cerr<<"degree = "<<MC.degree(n)<<endl;
+
+      throw myexception()<<"Error: node length given for node of degree "<<d<<"!";
+    }
+
     MC.node_length(n) = L;
   }
 
@@ -240,15 +269,121 @@ struct point_position
 
 // 4. HOW hard would it be to allow manual adjustment of the placements???
 
-struct tree_layout 
+struct common_layout
 {
-  SequenceTree T;
   vector<double> node_radius;
   vector<point_position> node_positions;
+
+  double xmin() const;
+  double xmax() const;
+
+  double ymin() const;
+  double ymax() const;
+
+  double x_width() const {return xmax() - xmin();}
+  double y_width() const {return ymax() - ymin();}
+
+  double x_center() const {return 0.5*(xmin()+xmax());}
+  double y_center() const {return 0.5*(ymin()+ymax());}
+
+  void center();
+
+  void rotate(double alpha,double xc, double yc);
+
+  void rotate_for_aspect_ratio(double xw,double yw);
+
+  common_layout(int n)
+    :node_radius(n,0),
+     node_positions(n)
+  {}
+};
+
+double common_layout::xmin() const
+{
+  double m = node_positions[0].x;
+  for(int i=0;i<node_positions.size();i++)
+    m = min(m,node_positions[i].x);
+  return m;
+}
+
+double common_layout::xmax() const
+{
+  double m = node_positions[0].x;
+  for(int i=0;i<node_positions.size();i++)
+    m = max(m,node_positions[i].x);
+  return m;
+}
+
+double common_layout::ymin() const
+{
+  double m = node_positions[0].y;
+  for(int i=0;i<node_positions.size();i++)
+    m = min(m,node_positions[i].y);
+  return m;
+}
+
+double common_layout::ymax() const
+{
+  double m = node_positions[0].y;
+  for(int i=0;i<node_positions.size();i++)
+    m = max(m,node_positions[i].y);
+  return m;
+}
+
+
+
+void common_layout::center()
+{
+  double xc = 0.5*(xmin() + xmax());
+  double yc = 0.5*(ymin() + ymax());
+
+  for(int i=0;i < node_positions.size();i++)
+  {
+    node_positions[i].x -= xc;
+    node_positions[i].y -= yc;
+  }
+}
+
+
+void common_layout::rotate(double alpha, double xc, double yc)
+{
+  for(int i=0;i < node_positions.size();i++)
+  {
+    double x = node_positions[i].x - xc;
+    double y = node_positions[i].y - yc;
+
+    node_positions[i].x = xc + cos(alpha)*x - sin(alpha)*y;
+    node_positions[i].y = yc + sin(alpha)*x + cos(alpha)*y;
+  }
+}
+
+void common_layout::rotate_for_aspect_ratio(double xw,double yw)
+{
+  int xc = x_center();
+  int yc = y_center();
+  const int n_parts = 100;
+  double angle = 0;
+  double scale = 0;
+  for(int i=0;i<n_parts;i++) {
+    double alpha = M_PI/n_parts * i;
+    common_layout L = *this;
+    L.rotate(alpha,xc,yc);
+    double l_scale = min(xw/L.x_width(),yw/L.y_width());
+    if (l_scale > scale) {
+      angle = alpha;
+      scale = l_scale;
+    }
+  }
+  rotate(angle,xc,yc);
+}
+
+
+struct tree_layout: public common_layout
+{
+  SequenceTree T;
   tree_layout(const SequenceTree& T1)
-    :T(T1),
-     node_radius(T.n_nodes(),0),
-     node_positions(T.n_nodes())
+    :common_layout(T1.n_nodes()),
+     T(T1)
   {}
 };
 
@@ -407,49 +542,35 @@ struct tree_plotter: public cairo_plotter
 {
   tree_layout L;
   void operator()(cairo_t*);
-  tree_plotter(const tree_layout& tl):L(tl) {}
+  tree_plotter(const tree_layout& tl,double xw, double yw)
+    :cairo_plotter(xw,yw),
+     L(tl) 
+  {}
 };
 
 void tree_plotter::operator()(cairo_t* cr)
 {
-  double xmin = L.node_positions[0].x;
-  double xmax = L.node_positions[0].x;
-  for(int i=0;i<L.node_positions.size();i++)
-  {
-    xmin = min(xmin,L.node_positions[i].x);
-    xmax = max(xmax,L.node_positions[i].x);
-  }
-    
-  double ymin = L.node_positions[0].y;
-  double ymax = L.node_positions[0].y;
-  for(int i=0;i<L.node_positions.size();i++)
-  {
-    ymin = min(ymin,L.node_positions[i].y);
-    ymax = max(ymax,L.node_positions[i].y);
-  }
-  cout<<"x = ["<<xmin<<", "<<xmax<<"]"<<endl;
-  cout<<"y = ["<<ymin<<", "<<ymax<<"]"<<endl;
-  cout<<endl;
+  double xc = 0.5*(L.xmin() + L.xmax());
+  double yc = 0.5*(L.ymin() + L.ymax());
+  double xw = L.x_width();
+  double yw = L.y_width();
 
   // line width 5 points
-  const double line_width = 0.005;
-  cairo_set_line_width(cr, line_width);
   cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND);
 
   // move to center and flip up 
-  cairo_translate(cr, 8.5*inch/2.0, 11.0*inch/2.0);
-  //  cairo_scale(cr, 1, -1);
-  //  cairo_set_line_width(cr, 0.04);
+  cairo_translate(cr, page_x_width()*inch/2.0, page_y_width()*inch/2.0);
 
   // find scaling factor
-  const double edge = 0.05;
+  const double edge = 0.10;
   const double factor = 1.0-edge*2;
 
-  double scale = std::min(8.5*inch/(xmax-xmin),11.5*inch/(ymax-ymin));
+  double scale = std::min(page_x_width()*inch/xw,page_y_width()*inch/yw);
   scale *= factor;
+  const double line_width = 3.0/scale;
   cairo_scale(cr, scale, scale);
-  cairo_translate(cr, factor*-0.5*(xmax+xmin), factor*-0.5*(ymax+ymin));
-  
+  cairo_translate(cr, -factor*xc, -factor*yc);
+  cairo_set_line_width(cr, line_width);
 
   // draw the branches
   for(int b=0;b<L.T.n_branches();b++) 
@@ -535,27 +656,13 @@ void tree_plotter::operator()(cairo_t* cr)
  
 }
 
-struct graph_layout
+struct graph_layout: public common_layout
 {
   MC_tree_with_lengths MC;
-  vector<double> node_radius;
-  vector<point_position> node_positions;
-
-  double xmin() const;
-  double xmax() const;
-
-  double ymin() const;
-  double ymax() const;
-
-  double xwidth() const {return xmax() - xmin();}
-  double ywidth() const {return ymax() - ymin();}
-
-  void rotate_for_aspect_ratio(double xw,double yw);
 
   graph_layout(const MC_tree_with_lengths& T)
-    :MC(T),
-     node_radius(MC.n_nodes(),0),
-     node_positions(MC.n_nodes())
+    :common_layout(T.n_nodes()),
+     MC(T)
   {
     //determine total length
     double t = 0;
@@ -578,43 +685,6 @@ struct graph_layout
       node_radius[n] = node_diameter(MC.node_length(n),MC.degree(n))/2.0;
   }
 };
-
-void graph_layout::rotate_for_aspect_ratio(double xw,double yw)
-{
-  
-}
-
-double graph_layout::xmin() const
-{
-  double m = node_positions[0].x;
-  for(int i=0;i<node_positions.size();i++)
-    m = min(m,node_positions[i].x);
-  return m;
-}
-
-double graph_layout::xmax() const
-{
-  double m = node_positions[0].x;
-  for(int i=0;i<node_positions.size();i++)
-    m = max(m,node_positions[i].x);
-  return m;
-}
-
-double graph_layout::ymin() const
-{
-  double m = node_positions[0].y;
-  for(int i=0;i<node_positions.size();i++)
-    m = min(m,node_positions[i].y);
-  return m;
-}
-
-double graph_layout::ymax() const
-{
-  double m = node_positions[0].y;
-  for(int i=0;i<node_positions.size();i++)
-    m = max(m,node_positions[i].y);
-  return m;
-}
 
 
 
@@ -657,14 +727,14 @@ struct graph_energy_function
   virtual double operator()(const graph_layout& GL) const=0;
   virtual double operator()(const graph_layout& GL, vector<point_position>&) const=0;
 
-  double node_node_repulsion(const graph_layout& GL,vector<point_position>& D,int n1,int n2, double C) const;
+  double node_node_repulsion(const graph_layout& GL,vector<point_position>& D,int n1,int n2, double C,int p=1) const;
   double node_node_attraction(const graph_layout& GL,vector<point_position>& D, int n1,int n2, double C, double l) const;
   double node_edge_attraction(const graph_layout& GL,vector<point_position>& D, int n1,int n2,int n3, double C) const;
 
   virtual ~graph_energy_function() {}
 };
 
-double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C) const
+double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C,int p) const
 {
   double x1 = GL.node_positions[n1].x;
   double y1 = GL.node_positions[n1].y;
@@ -676,9 +746,9 @@ double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector
   double D  = sqrt(D2);
   double dL = D - GL.node_radius[n1] - GL.node_radius[n2];
 
-  double E = C/dL;
+  double E = C/pow(dL,p);
 
-  double temp = C/(dL*dL*D);
+  double temp = C/(pow(dL,p+1)*D);
 
   DEL[n1].x += (x2-x1)*temp;
   DEL[n1].y += (y2-y1)*temp;
@@ -838,6 +908,7 @@ double graph_energy_function::node_edge_attraction(const graph_layout& GL, vecto
 
 struct energy2: public graph_energy_function
 {
+  double repulsion_weight;
   double length_weight;
   double down_weight_stretchy;
 
@@ -924,13 +995,16 @@ struct energy2: public graph_energy_function
 	// don't repel nodes that wander over me, or that I wander to
 	if (GL.MC.connected(i,j) == 2 or GL.MC.connected(j,i) == 2) continue;
 
-	E += node_node_repulsion(GL, D, i, j, 1.0);
+	E += node_node_repulsion(GL, D, i, j, repulsion_weight, 1);
       }
 
     return E;
   }
 
-  energy2(double W1,double W2):length_weight(W1),down_weight_stretchy(W2) {}
+  energy2(double W1, double W2,double W3)
+    :repulsion_weight(W1),
+     length_weight(W2),
+     down_weight_stretchy(W3) {}
 };
 
 void inc(vector<point_position>& x1,double lambda,const vector<point_position>& v)
@@ -990,6 +1064,16 @@ vector<point_position> energy_derivative_2D(const graph_layout& GL1, const graph
   return D;
 }
 
+double max_delta(const vector<point_position>& p)
+{
+  double m = max(abs(p[0].x),abs(p[0].y));
+  for(int i=1;i<p.size();i++) {
+    m = max(m,abs(p[i].x));
+    m = max(m,abs(p[i].y));
+  }
+  return m;
+}
+
 graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
 {
   double T = 0;
@@ -1026,9 +1110,7 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
       }
 
       // actually, we need an estimate of the CURVATURE to know when to stop!
-      vector<point_position> DELTA = add(GL.node_positions, -1.0, temp);
-      double ave_delta = sqrt(dot(DELTA,DELTA)/DELTA.size());
-      if (ave_delta/min(GL.xwidth(),GL.ywidth()) < 0.00001)
+      if (max_delta(GL.node_positions)/min(GL.x_width(),GL.y_width()) < 0.00001)
       	return GL;
 
       // (how to go from 'energy near bottom' to 'position near position at lowest energy',
@@ -1044,38 +1126,36 @@ struct graph_plotter: public cairo_plotter
 {
   graph_layout L;
   void operator()(cairo_t*);
-  graph_plotter(const graph_layout& gl):L(gl) {}
+
+  graph_plotter(const graph_layout& gl,double xw,double yw)
+    :cairo_plotter(xw,yw),
+     L(gl)
+  {}
 };
 
 void graph_plotter::operator()(cairo_t* cr)
 {
-  double xmin = L.xmin();
-  double xmax = L.xmax();
-    
-  double ymin = L.ymin();
-  double ymax = L.ymax();
+  double xc = 0.5*(L.xmin() + L.xmax());
+  double yc = 0.5*(L.ymin() + L.ymax());
+  double xw = L.x_width();
+  double yw = L.y_width();
 
   //  cout<<"x = ["<<xmin<<", "<<xmax<<"]"<<endl;
   //  cout<<"y = ["<<ymin<<", "<<ymax<<"]"<<endl;
   //  cout<<endl;
 
-  // line width 5 points
-  //  cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND);
-
   // move to center and flip up 
-  cairo_translate(cr, 8.5*inch/2.0, 11.0*inch/2.0);
-  //  cairo_scale(cr, 1, -1);
-  //cairo_set_line_width(cr, 0.04);
+  cairo_translate(cr, page_x_width()*inch/2.0, page_y_width()*inch/2.0);
 
   // find scaling factor
   const double edge = 0.10;
   const double factor = 1.0-edge*2;
 
-  double scale = std::min(8.5*inch/(xmax-xmin),11.5*inch/(ymax-ymin));
+  double scale = std::min(page_x_width()*inch/xw,page_y_width()*inch/yw);
   scale *= factor;
   const double line_width = 2.0/scale;
   cairo_scale(cr, scale, scale);
-  cairo_translate(cr, factor*-0.5*(xmax+xmin), factor*-0.5*(ymax+ymin));
+  cairo_translate(cr, -factor*xc, -factor*yc);
   cairo_set_line_width(cr, line_width);
   
   const double dashes[] = {3.0*line_width, 3.0*line_width};
@@ -1183,7 +1263,6 @@ void graph_plotter::operator()(cairo_t* cr)
  
 }
 
-// FIXME - page="8.5,11" ?
 void draw_graph(const MC_tree_with_lengths& T,const string& name)
 {
   const int N = T.n_nodes();
@@ -1274,6 +1353,9 @@ int main(int argc,char* argv[])
     else
       seed = myrand_init();
     
+    int xw = args["width"].as<double>();
+    int yw = args["height"].as<double>();
+
     //-------- Load MC Tree and lengths -----//
     string filename = args["file"].as<string>();
 
@@ -1303,8 +1385,9 @@ int main(int argc,char* argv[])
 
     graph_layout L3 = L2;
     for(int i=0;i<3;i++) {
-      L3 = energy_layout(L3,energy2(1000000,1));
-      graph_plotter gp(L3);
+      L3 = energy_layout(L3,energy2(1,1000000,1));
+      L3.rotate_for_aspect_ratio(xw,yw);
+      graph_plotter gp(L3, xw, yw);
       draw_to_pdf(filename+"-graph.pdf",gp);
     }
   }
