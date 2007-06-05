@@ -361,12 +361,14 @@ vector<Partition> check_MC_partitions(const vector<Partition>& partitions)
   mc_partitions = get_moveable_tree(partitions);
   // check that the tree is an MC tree
 
-  int full = count(mc_partitions,&Partition::full);
-  int total = mc_partitions.size();
+  vector<Partition> i1 = select(partitions,informative);
+  vector<Partition> i2 = select(mc_partitions,informative);
+  int full = count(i2,&Partition::full);
+  int total = i2.size();
   int partial = total - full;
-  if (mc_partitions.size() != partitions.size())
-    cerr<<"Removing "<<partitions.size() - mc_partitions.size()<<"/"<<partitions.size()<<" partitions to yield an MC  tree."<<endl;
-  cerr<<"There are "<<partial<<" (partial) + "<<full<<" (full) = "<<total<<" (total) partitions."<<endl;
+  if (i1.size() != i2.size())
+    cerr<<"Removing "<<i1.size() - i2.size()<<"/"<<i1.size()<<" informative partitions to yield an MC  tree."<<endl;
+  cerr<<"There are "<<partial<<" (partial) + "<<full<<" (full) = "<<total<<" (total) informative partitions."<<endl;
   
   return mc_partitions;
 }
