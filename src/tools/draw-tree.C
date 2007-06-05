@@ -1,3 +1,6 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <cmath>
 #include <string>
 #include <iostream>
@@ -7,6 +10,7 @@
 #include <cairo.h>
 #include <cairo-ps.h>
 #include <cairo-pdf.h>
+#include <cairo-svg.h>
 
 #include <boost/program_options.hpp>
 
@@ -84,6 +88,15 @@ void draw_to_pdf(const string& filename, cairo_plotter& draw)
   draw_to_page(surface,draw);
 }
 
+void draw_to_svg(const string& filename, cairo_plotter& draw)
+{
+  cairo_surface_t *surface = cairo_svg_surface_create(filename.c_str(),
+						      draw.page_x_width()*inch,
+						      draw.page_y_width()*inch);
+
+  draw_to_page(surface,draw);
+}
+
 variables_map parse_cmd_line(int argc,char* argv[])
 { 
   using namespace po;
@@ -95,7 +108,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("width,w",value<double>()->default_value(8.5),"Page width in inches")
     ("height,h",value<double>()->default_value(11),"Page height in inches")
     ("file",value<string>(),"predicates to examine")
-    ("output",value<string>(),"DOT,PS,PDF")
+    ("output",value<string>()->default_value("pdf"),"Type of output to write: dot,ps,pdf,svg")
+    ("full","consider only full partitions")
+    ("layout",value<string>()->default_value("graph"),"Layout method")
     ("seed", value<unsigned long>(),"Random seed")
     ;
   
@@ -359,8 +374,8 @@ void common_layout::rotate(double alpha, double xc, double yc)
 
 void common_layout::rotate_for_aspect_ratio(double xw,double yw)
 {
-  int xc = x_center();
-  int yc = y_center();
+  double xc = x_center();
+  double yc = y_center();
   const int n_parts = 100;
   double angle = 0;
   double scale = 0;
@@ -555,9 +570,6 @@ void tree_plotter::operator()(cairo_t* cr)
   double xw = L.x_width();
   double yw = L.y_width();
 
-  // line width 5 points
-  cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND);
-
   // move to center and flip up 
   cairo_translate(cr, page_x_width()*inch/2.0, page_y_width()*inch/2.0);
 
@@ -615,7 +627,7 @@ void tree_plotter::operator()(cairo_t* cr)
     cairo_select_font_face (cr, "Sans", 
 			    CAIRO_FONT_SLANT_NORMAL,
 			    CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_font_size (cr, 0.025);
+    cairo_set_font_size (cr, 10.0/scale);
 
   for(int l=0;l<L.T.n_leaves();l++)
   {  
@@ -918,6 +930,9 @@ struct energy2: public graph_energy_function
     return operator()(GL,D);
   }
 
+
+  // How should the repulsion terms be SCALED,
+  //   if they are to give a layout as well as avoiding collisions?
   double operator()(const graph_layout& GL, vector<point_position>& D) const 
   {
     if (D.size() != GL.MC.n_nodes()) D.resize(GL.MC.n_nodes());
@@ -1007,6 +1022,9 @@ struct energy2: public graph_energy_function
      down_weight_stretchy(W3) {}
 };
 
+// idea #3 - use Kamada-Kawai-type distances, but choose the 'closest' attatchment point to
+//           compute the distance across a stretchy branch.another ide
+
 void inc(vector<point_position>& x1,double lambda,const vector<point_position>& v)
 {
   for(int i=0;i<x1.size();i++) {
@@ -1085,12 +1103,12 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
     double E1 = E(GL,D);
     cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<endl;
 
-
+    /*
     // check D versus D2
-    //    vector<point_position> D2 = energy_derivative_2D(GL,E);
-    //    cerr<<"      derivative error = "<<sqrt(dot(D,D)/dot(D2,D2))
-    //    	<<"      angle = "<<dot(D2,D)/sqrt(dot(D2,D2)*dot(D,D))<<"\n";
-
+    vector<point_position> D2 = energy_derivative_2D(GL,E);
+    cerr<<"      derivative error = "<<sqrt(dot(D,D)/dot(D2,D2))
+	<<"      angle = "<<dot(D2,D)/sqrt(dot(D2,D2)*dot(D,D))<<"\n";
+    */
     // problem with these equations is STIFFness (? and rotation?)
 
     vector<point_position> temp = GL.node_positions;
@@ -1339,6 +1357,121 @@ void draw_graph(const MC_tree_with_lengths& T,const string& name)
 
 }
 
+MC_tree_with_lengths collapse_MC_tree(const MC_tree_with_lengths& MC1)
+{
+  vector<Partition> full;
+  for(int i=0;i<MC1.branch_order.size();i++) {
+    int b = MC1.branch_order[i];
+    if (MC1.partitions[b].full())
+      full.push_back(MC1.partitions[b]);
+  }
+
+  MC_tree_with_lengths MC2(full);
+  
+
+  // what node in MC2 do nodes in MC1 map to?
+  vector<int> node_mapping(MC1.n_nodes(),-1);
+  vector<int> branch_mapping(MC1.n_branches(),-1);
+
+  // map full branches in MC1 -> MC2
+  for(int i1=0;i1<MC1.n_branches();i1++)
+  {
+    int b1 = MC1.branch_order[i1];
+
+    if (not MC1.partitions[b1].full()) continue;
+
+    int b2 = find_index(MC2.partitions,MC1.partitions[b1]);
+    if (b2 == -1) throw myexception()<<"Can't find full partition in collapsed tree!\n"<<MC1.partitions[b1];
+
+    branch_mapping[i1] = b2;
+
+    int left1 = MC1.mapping[MC1.reverse(b1)];
+    int right1 = MC1.mapping[b1];
+
+    int left2 = MC2.mapping[MC2.reverse(b2)];
+    int right2 = MC2.mapping[b2];
+
+    node_mapping[right1] = right2;
+    node_mapping[left1] = left2;
+  }
+
+  // map partial branches in MC1 -> MC2 (slowly)
+  vector<int> active_branches = iota(2*MC1.n_branches());
+  while (active_branches.size())
+  {
+    vector<int> branches2;
+
+    for(int i=0;i<active_branches.size();i++)
+    {
+      int b = active_branches[i];
+      int left = MC1.mapping[MC1.reverse(b)];
+      int right = MC1.mapping[b];
+
+      if (node_mapping[left] != -1 and node_mapping[right] == -1) {
+	node_mapping[right] = node_mapping[left];
+      }
+      else if (node_mapping[left] == -1 and node_mapping[right] == -1)
+	branches2.push_back(b);
+    }
+    active_branches = branches2;
+  }
+
+
+  // accumulate branch lengths from MC1 -> MC2
+  for(int i1=0;i1<MC1.n_branches();i1++) 
+  {
+    int b1 = MC1.branch_order[i1];
+    int b2 = branch_mapping[i1];
+
+    cerr<<"b1 = "<<b1<<" -> "<<b2<<endl;
+    if (b2 != -1) {
+      int b2r = MC2.reverse(b2);
+      MC2.branch_length(b2) = MC2.branch_length(b2r) = MC1.branch_length(b1);
+    }
+    else {
+      int left1 = MC1.mapping[MC1.reverse(b1)];
+      int right1 = MC1.mapping[b1];
+      
+      assert(node_mapping[left1] == node_mapping[right1]);
+      
+      int node = node_mapping[left1];
+      MC2.node_length(node) += MC1.branch_length(b1);
+    }
+  }
+
+  // accumulate node lengths from MC1 -> MC2
+  for(int n=0;n<MC1.n_nodes();n++) 
+  {
+    assert(n != -1);
+    MC2.node_length(node_mapping[n]) += MC1.node_length(n);
+  }
+
+  // sync the MC2 branch lengths with the tree MC2.T
+  for(int b=0;b<MC2.T.n_branches();b++)
+    MC2.T.branch(b).set_length(MC2.branch_length(b));
+
+  return MC2;
+}
+
+void draw(string filename,const string& type,cairo_plotter& cp)
+{
+  if (type == "pdf")
+    filename = filename + ".pdf";
+  else if (type == "ps")
+    filename = filename + ".ps";
+  else if (type == "svg") 
+    filename = filename + ".svg";
+  else
+    throw myexception()<<"I don't recognize output type '"<<type<<" - type \'ps\', \'pdf\', or \'svg\'";
+
+  if (type == "pdf")
+    draw_to_pdf(filename,cp);
+  else if (type == "ps")
+    draw_to_ps(filename,cp);
+  else if (type == "svg")
+    draw_to_svg(filename,cp);
+}
+
 
 int main(int argc,char* argv[]) 
 {
@@ -1355,42 +1488,44 @@ int main(int argc,char* argv[])
     else
       seed = myrand_init();
     
-    int xw = args["width"].as<double>();
-    int yw = args["height"].as<double>();
+    double xw = args["width"].as<double>();
+    double yw = args["height"].as<double>();
+
+    string output = args["output"].as<string>();
 
     //-------- Load MC Tree and lengths -----//
     string filename = args["file"].as<string>();
+    string name = get_graph_name(filename);
 
+    // FIXME! - load a MF/MC tree w/ no length information
     // FIX name collision!
     MC_tree_with_lengths MC = get_MC_tree_with_lengths(filename);
+    if (args.count("full"))
+      MC = collapse_MC_tree(MC);
 
-    if (args.count("output") and args["output"].as<string>() == "DOT")
+    if (output == "dot")
     {
       draw_graph(MC,get_graph_name(filename));
       exit(1);
     }
-      
-    /// FIXME! - find some way to plot a MF tree from MC lengths
-    /// FIXME! - draw a MF/MC tree w/ no length information
 
-    // lay out the tree
-    //    tree_layout L1 = circular_layout(MC);
-    //    tree_layout L2 = graph_layout(MC);
+    // lay out using circular tree layout
+    if (args["layout"].as<string>() == "circular") 
+    {
+      tree_layout L = circular_layout(MC);
+      tree_plotter tp(L, xw, yw);
+      draw(name+"-tree",output,tp);
+      exit(0);
+    }
 
-    // draw the tree
-    //    tree_plotter tp(L1);
-    //    draw_to_ps(filename+"-tree.ps",tp);
-    //    draw_to_pdf(filename+"-tree.pdf",tp);
-
-    // lay out the tree
+    // lay out as a graph
     graph_layout L2 = layout_on_circle(MC,1);
-
     graph_layout L3 = L2;
     for(int i=0;i<3;i++) {
       L3 = energy_layout(L3,energy2(1,1000000,1));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw);
-      draw_to_pdf(filename+"-graph.pdf",gp);
+      draw(name+"-graph",output,gp);
     }
   }
   catch (std::exception& e) {
