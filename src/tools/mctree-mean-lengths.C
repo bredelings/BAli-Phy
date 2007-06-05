@@ -1,6 +1,3 @@
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
 #include <iostream>
 #include <list>
 #include <utility>
