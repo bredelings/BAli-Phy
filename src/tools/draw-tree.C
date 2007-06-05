@@ -1091,6 +1091,8 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
     //    cerr<<"      derivative error = "<<sqrt(dot(D,D)/dot(D2,D2))
     //    	<<"      angle = "<<dot(D2,D)/sqrt(dot(D2,D2)*dot(D,D))<<"\n";
 
+    // problem with these equations is STIFFness (? and rotation?)
+
     vector<point_position> temp = GL.node_positions;
     double delta = dt*sqrt(E1)/dot(D,D);
     inc(GL.node_positions,-delta*sqrt(E1),D);
