@@ -104,12 +104,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description input("Input options");
   input.add_options()
-    ("help", "produce help message")
+    ("help", "Produce help message")
     ("width,w",value<double>()->default_value(8.5),"Page width in inches")
     ("height,h",value<double>()->default_value(11),"Page height in inches")
     ("file",value<string>(),"predicates to examine")
-    ("output",value<string>()->default_value("pdf"),"Type of output to write: dot,ps,pdf,svg")
-    ("full","consider only full partitions")
+    ("output",value<string>()->default_value("pdf"),"Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg")
+    ("full","Consider only full partitions")
+    ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method")
     ("seed", value<unsigned long>(),"Random seed")
     ;
@@ -188,10 +189,8 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
   bool with_lengths = true;
   bool first_line = true;
 
-  int line_no=0;
   while(file) 
   {
-    cerr<<"line "<<++line_no<<endl;
     while (getline(file,line) and not line.size());
     if (not line.size()) break;
 
@@ -202,7 +201,6 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
       for(int b=0;b<T.n_branches();b++) {
 	Partition P = partition_from_branch(T,b);
 	double L = T.branch(b).length();
-	cerr<<"branch "<<b<<" length = "<<L<<endl;
 	if (L < 0)
 	  L = 1;
 	else
@@ -1721,6 +1719,34 @@ void draw(string filename,const string& type,cairo_plotter& cp)
     draw_to_svg(filename,cp);
 }
 
+MC_tree_with_lengths collapse_nodes(const MC_tree_with_lengths& MC1)
+{
+  MC_tree_with_lengths MC2 = MC1;
+  for(int n=0;n<MC2.n_nodes();n++) 
+  {
+    // find branches pointing to node
+    vector<int> branches;
+    for(int b=0;b<2*MC2.n_branches();b++)
+      if (MC2.mapping[b] == n)
+	branches.push_back(b);
+
+    // divide node lengths among branches
+    for(int i=0;i<branches.size();i++) {
+      int b1 = branches[i];
+      int b2 = MC2.reverse(b1);
+      MC2.branch_length(b1) += MC2.node_length(n)/branches.size();
+      MC2.branch_length(b2) = MC2.branch_length(b1);
+      if (MC2.partitions[b1].full())
+	MC2.T.directed_branch(b1).set_length(MC2.branch_length(b1));
+    }
+
+    // clear node length
+    MC2.node_length(n) = 0;
+  }
+
+  return MC2;
+}
+
 
 int main(int argc,char* argv[]) 
 {
@@ -1752,9 +1778,49 @@ int main(int argc,char* argv[])
     if (args.count("full"))
       MC = collapse_MC_tree(MC);
 
+
+    if (args.count("collapse"))
+      MC = collapse_nodes(MC);
+
     if (output == "dot")
     {
       draw_graph(MC,get_graph_name(filename));
+      exit(1);
+    }
+    else if (output == "topology")
+    {
+      cout<<MC.T.write(false)<<endl;
+      exit(1);
+    }
+    else if (output == "tree")
+    {
+      cout<<MC.T.write(true)<<endl;
+      exit(1);
+    }
+    else if (output == "mtree")
+    {
+      cout<<MC.T.write(false)<<endl;
+      for(int i=0;i<MC.branch_order.size();i++) {
+	const Partition& P = MC.partitions[MC.branch_order[i]];
+	if (not P.full())
+	  cout<<P<<endl;
+      }
+      exit(1);
+    }
+    else if (output == "lengths")
+    {
+      for(int i=0;i<MC.branch_order.size();i++) {
+	int b = MC.branch_order[i];
+	const Partition& P = MC.partitions[b];
+	cout<<"branch "<<MC.branch_length(b)<<"\n";
+	cout<<P<<endl;
+      }
+      for(int n=0;n<MC.n_nodes();n++) {
+	if (MC.node_length(n) > 0) {
+	  cout<<"node "<<MC.node_length(n)<<"\n";
+	  cout<<MC.partitions[MC.branch_to_node(n)]<<endl;
+	}
+      }
       exit(1);
     }
 
