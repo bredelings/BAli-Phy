@@ -184,44 +184,97 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
     throw myexception()<<"Can't open file '"<<filename<<"'";
 
   string line;
-  while(file) {
+
+  bool with_lengths = true;
+  bool first_line = true;
+
+  int line_no=0;
+  while(file) 
+  {
+    cerr<<"line "<<++line_no<<endl;
     while (getline(file,line) and not line.size());
-    if (not file) break;
+    if (not line.size()) break;
+
+    if (first_line and line[0] == '(') 
+    {
+      with_lengths=false;
+      SequenceTree T = standardized(line);
+      for(int b=0;b<T.n_branches();b++) {
+	Partition P = partition_from_branch(T,b);
+	double L = T.branch(b).length();
+	cerr<<"branch "<<b<<" length = "<<L<<endl;
+	if (L < 0)
+	  L = 1;
+	else
+	  with_lengths = true;
+	branches.push_back(P);
+	branch_lengths.push_back(L);
+      }
+      first_line=false;
+      continue;
+    }
+    first_line=false;
+
     vector<string> words = split(line,' ');
+    if (words.size() == 2 and words[0] == "branch")
+    {
+      // get the next line
+      if (not file or not getline(file,line))
+	throw myexception()<<"Missing partition after 'branch'!";
 
-    if (words.size() != 2)
-      throw myexception()<<"Don't understand line '"<<line<<"'";
+      if (not line.size())
+	throw myexception()<<"Empty line after 'branch'!";
 
-    double length = convertTo<double>(words[1]);
+      double length = convertTo<double>(words[1]);
+      Partition P(line);
 
-    if (not getline(file,line))
-      throw myexception()<<"Missing partition at end of file!";
-
-    if (not line.size())
-      throw myexception()<<"Empty line in middle of file?";
-
-    Partition P(line);
-    line = "";
-    if (words[0] == "branch") {
       branches.push_back(P);
       branch_lengths.push_back(length);
     }
-    else if (words[0] == "node") {
+    else if (words.size() == 2 and words[0] == "node")
+    {
+      // get the next line
+      if (not file or not getline(file,line))
+	throw myexception()<<"Missing partition after 'node'!";
+
+      if (not line.size())
+	throw myexception()<<"Empty line after 'node'!";
+
+      double length = convertTo<double>(words[1]);
+      Partition P(line);
+
       nodes.push_back(P);
       node_lengths.push_back(length);
     }
-    else if (words[0] == "mini-branch") {
+    else if (words.size() == 2 and words[0] == "mini-branch")
+    {
+      // get the next line
+      if (not file or not getline(file,line))
+	throw myexception()<<"Missing partition after 'mini-branch'!";
+
+      if (not line.size())
+	throw myexception()<<"Empty line after 'mini-branch'!";
+
+      double length = convertTo<double>(words[1]);
+      Partition P(line);
+
       mini_branches.push_back(P);
       mini_branch_lengths.push_back(length);
     }
-    else
-      throw myexception()<<"Don't understand word="<<words[0];
+    else {
+      if (with_lengths)
+	throw myexception()<<"Don't understand line='"<<line<<"'";
+      Partition P(line);
+      branches.push_back(P);
+      branch_lengths.push_back(1);
+    }
   }
 
   cerr<<"Read "<<branches.size()<<" partitions"<<endl;
 
   //--------------- Construct MC tree with lengths  ---------------//
-  MC_tree_with_lengths MC(check_MC_partitions(branches));
+  branches = check_MC_partitions(branches);
+  MC_tree_with_lengths MC(branches);
 
   for(int i=0;i<branches.size();i++)
   {
