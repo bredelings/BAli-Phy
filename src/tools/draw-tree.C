@@ -756,7 +756,7 @@ double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector
 
   double D2 = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
   double D  = sqrt(D2);
-  double dL = D - GL.node_radius[n1] - GL.node_radius[n2];
+  double dL = abs(D - GL.node_radius[n1] - GL.node_radius[n2]);
 
   double E = C/pow(dL,p);
 
@@ -918,11 +918,157 @@ double graph_energy_function::node_edge_attraction(const graph_layout& GL, vecto
 }
 
 
+double angle_difference(double a1, double a2)
+{
+  a1 = wrap(a1,-M_PI,M_PI);
+  a2 = wrap(a2,-M_PI,M_PI);
+
+  if (a1 > a2) std::swap(a1,a2);
+
+  return min (a2-a1,a1+M_PI*2-a2);
+}
+
+double get_angle_derivative(double x11, double x12,
+			    double x21, double x22, 
+			    double x31, double x32,
+			    double& da_dx11, double& da_dx12, 
+			    double& da_dx21, double& da_dx22,
+			    double& da_dx31, double& da_dx32)
+{
+  double A = (x11*x11 + x12*x12) - 2*(x11*x31+x12*x32) + (x31*x31+x32*x32);
+  double B = (x21*x21 + x22*x22) - 2*(x21*x31+x22*x32) + (x31*x31+x32*x32);
+  //  cerr<<"  A = "<<A<<" B = "<<B<<endl;
+  //  cerr<<"  x21 = "<<x21<<"    x22 = "<<x22<<endl;
+  double M = A*B;
+  double H = (x11*x21+x12*x22) - (x11*x31+x12*x32) - (x21*x31+x22*x32) + (x31*x31+x32*x32);
+  double L = sqrt(M);
+  double D = H/L;
+
+  //  cerr<<"D = "<<D<<"  L = "<<L<<"H = "<<H<<"  A = "<<A<<" B = "<<B<<endl;
+  assert(not isnan(x21) and isfinite(x21));
+  assert(not isnan(x22) and isfinite(x22));
+  assert(not isnan(D) and isfinite(D));
+  D = max(D,-1.0);
+  D = min(D,1.0);
+  double a = acos(D);
+  assert(not isnan(a) and isfinite(a));
+
+  double dA_dx11 = 2*(x11 - x31), dA_dx12 = 2*(x12 - x32);
+  double dA_dx21 = 0            , dA_dx22 = 0;
+  double dA_dx31 = 2*(x31 - x11), dA_dx32 = 2*(x32 - x12);
+
+  //----------------------------------------------------//
+
+  double dB_dx11 = 0            , dB_dx12 = 0;
+  double dB_dx21 = 2*(x21 - x31), dB_dx22 = 2*(x22 - x32);
+  double dB_dx31 = 2*(x31 - x21), dB_dx32 = 2*(x32 - x22);
+
+  //----------------------------------------------------//
+
+  double dH_dx11 = x21 - x31, dH_dx12 = x22 - x32;
+  double dH_dx21 = x11 - x31, dH_dx22 = x12 - x32;
+  double dH_dx31 = -x11 - x21 + 2*x31, dH_dx32 = -x12 - x22 + 2*x32;
+
+  //----------------------------------------------------//
+
+  double dL_dx11 = 0.5/L*(dA_dx11*B + dB_dx11*A);
+  double dL_dx12 = 0.5/L*(dA_dx12*B + dB_dx12*A);
+  
+  double dL_dx21 = 0.5/L*(dA_dx21*B + dB_dx21*A);
+  double dL_dx22 = 0.5/L*(dA_dx22*B + dB_dx22*A);
+  
+  double dL_dx31 = 0.5/L*(dA_dx31*B + dB_dx31*A);
+  double dL_dx32 = 0.5/L*(dA_dx32*B + dB_dx32*A);
+
+  //----------------------------------------------------//
+
+  da_dx11 = -1.0/sqrt(1-D*D) * (L*dH_dx11 - H*dL_dx11)/M;
+  da_dx12 = -1.0/sqrt(1-D*D) * (L*dH_dx12 - H*dL_dx12)/M;
+
+  da_dx21 = -1.0/sqrt(1-D*D) * (L*dH_dx21 - H*dL_dx21)/M;
+  da_dx22 = -1.0/sqrt(1-D*D) * (L*dH_dx22 - H*dL_dx22)/M;
+
+  da_dx31 = -1.0/sqrt(1-D*D) * (L*dH_dx31 - H*dL_dx31)/M;
+  da_dx32 = -1.0/sqrt(1-D*D) * (L*dH_dx32 - H*dL_dx32)/M;
+
+  return a;
+}
+
+
+// cot(a/2) + pi^2 - a^2
+double angle_penalty(double a)
+{
+  assert(-M_PI <= a and a <= M_PI);
+  assert(a >= 0);
+  a = abs(a);
+  return 1.0/tan(a/2) + M_PI*M_PI;// - a*a;
+}
+
+double angle_deriv(double a)
+{
+  assert(-M_PI <= a and a <= M_PI);
+  assert(a >= 0);
+  a = abs(a);
+  double s = sin(a/2.0);
+  return -0.5/(s*s);// - 2*a;
+}
+
+
+
+double angle_energy(const graph_layout& GL,vector<point_position>& D,
+		    int n1,int n2,int n3,double theta,
+		    double (*angle_penalty)(double),
+		    double(*angle_deriv)(double),
+		    double C)
+{
+  const point_position& p1 = GL.node_positions[n1];
+  const point_position& p2 = GL.node_positions[n2];
+  const point_position& p3 = GL.node_positions[n3];
+
+  double x11 = p1.x;
+  double x12 = p1.y;
+  
+  double x21 = p2.x;
+  double x22 = p2.y;
+  
+  double x31 = p3.x;
+  double x32 = p3.y;
+
+  double da_dx11,da_dx12,da_dx21,da_dx22,da_dx31,da_dx32;
+
+  double a = get_angle_derivative(x11,x12,x21,x22,x31,x32,
+				  da_dx11,da_dx12,
+				  da_dx21,da_dx22,
+				  da_dx31,da_dx32);
+
+  //  cerr<<"a = "<<a<<"   isnan(a) = "<<isnan(a)<<"   isnormal(a) = "<<isnormal(a)<<endl;
+  assert(isnormal(a));
+  if (not isnormal(a))
+    std::abort();
+  assert(abs(a-theta) < 1.0e-5);
+
+  double E = C*angle_penalty(a);
+  double DE = C*angle_deriv(a);
+
+  D[n1].x += DE*da_dx11;
+  D[n1].y += DE*da_dx12;
+
+  D[n2].x += DE*da_dx21;
+  D[n2].y += DE*da_dx22;
+
+  D[n3].x += DE*da_dx31;
+  D[n3].y += DE*da_dx32;
+
+  return E;
+}
+
+
 struct energy2: public graph_energy_function
 {
   double repulsion_weight;
   double length_weight;
   double down_weight_stretchy;
+  double angle_weight;
 
   double operator()(const graph_layout& GL) const 
   {
@@ -942,7 +1088,7 @@ struct energy2: public graph_energy_function
     double E = 0;
 
     /// edge length energies (type 1)
-    const double closest_fraction = 0.9;
+    const double closest_fraction = 1.0;
 
     for(int e=0;e<GL.MC.edges.size();e++) 
     {
@@ -1007,19 +1153,62 @@ struct energy2: public graph_energy_function
 	// don't repel the end of the branch that I'm attached to
 	if (GL.MC.connected(i,j) == 1) continue;
 
-	// don't repel nodes that wander over me, or that I wander to
-	if (GL.MC.connected(i,j) == 2 or GL.MC.connected(j,i) == 2) continue;
+	double w = repulsion_weight;
 
-	E += node_node_repulsion(GL, D, i, j, repulsion_weight, 1);
+	// don't repel nodes that wander over me, or that I wander to
+	if (GL.MC.connected(i,j) == 2 or GL.MC.connected(j,i) == 2) w /= 10;
+
+	E += node_node_repulsion(GL, D, i, j, w, 1);
       }
+
+    // angular resolution
+    if (angle_weight > 0)
+    for(int i=0;i<GL.MC.n_nodes();i++) {
+      vector<int> neighbors;
+      for(int j=0;j<GL.MC.n_nodes();j++)
+	if (GL.MC.connected(i,j) or GL.MC.connected(j,i))
+	  neighbors.push_back(j);
+
+      if (neighbors.size() < 2) continue;
+
+      vector<double> angles(neighbors.size());
+      for(int k=0;k<neighbors.size();k++) {
+	int j = neighbors[k];
+	double dx = GL.node_positions[j].x - GL.node_positions[i].x;
+	double dy = GL.node_positions[j].y - GL.node_positions[i].y;
+	angles[k] = atan2(dy,dx);
+      }
+      vector<int> order = iota<int>(neighbors.size());
+
+      std::sort(order.begin(),order.end(),sequence_order<double>(angles));
+
+      for(int k=0;k<order.size();k++)
+      {
+	int l = (k+1)%order.size();
+	int o1 = order[k];
+	int o2 = order[l];
+
+	int n1 = neighbors[o1];
+	int n2 = neighbors[o2];
+
+	double a1 = angles[o1];
+	double a2 = angles[o2];
+
+	double theta1 = abs(angle_difference(a1,a2));
+
+	E += angle_energy(GL,D,n1,n2,i,theta1,angle_penalty,angle_deriv,angle_weight);
+      }
+    }
 
     return E;
   }
 
-  energy2(double W1, double W2,double W3)
+  energy2(double W1, double W2,double W3,double W4)
     :repulsion_weight(W1),
      length_weight(W2),
-     down_weight_stretchy(W3) {}
+     down_weight_stretchy(W3),
+     angle_weight(W4)
+  {}
 };
 
 // idea #3 - use Kamada-Kawai-type distances, but choose the 'closest' attatchment point to
@@ -1095,12 +1284,18 @@ double max_delta(const vector<point_position>& p)
 graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
 {
   double T = 0;
-  double dt = 1.0;
   int successes=0;
 
   vector<point_position> D;
-  for(int i=0;i<1000;i++) {
+  E(GL,D);
+  D = energy_derivative_2D(GL,E);
+
+  double dt = E(GL,D)/dot(D,D);
+
+  for(int i=0;i<1000;i++) 
+  {
     double E1 = E(GL,D);
+    assert(E1 >= 0);
     cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<endl;
 
     /*
@@ -1108,12 +1303,13 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
     vector<point_position> D2 = energy_derivative_2D(GL,E);
     cerr<<"      derivative error = "<<sqrt(dot(D,D)/dot(D2,D2))
 	<<"      angle = "<<dot(D2,D)/sqrt(dot(D2,D2)*dot(D,D))<<"\n";
+    //    D = D2;
     */
+
     // problem with these equations is STIFFness (? and rotation?)
 
     vector<point_position> temp = GL.node_positions;
-    double delta = dt*sqrt(E1)/dot(D,D);
-    inc(GL.node_positions,-delta*sqrt(E1),D);
+    inc(GL.node_positions,-dt,D);
     double E2 = E(GL);
     if (E2 > E1) {
       cerr<<"    rejecting  E = "<<E2<<endl;
@@ -1122,7 +1318,7 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
       successes=0;
     } 
     else {
-      T += delta;
+      T += dt;
       successes++;
       if (successes>3) {
 	dt *= 2.0;
@@ -1519,10 +1715,18 @@ int main(int argc,char* argv[])
     }
 
     // lay out as a graph
-    graph_layout L2 = layout_on_circle(MC,1);
+    graph_layout L2 = layout_on_circle(MC,10);
     graph_layout L3 = L2;
-    for(int i=0;i<3;i++) {
-      L3 = energy_layout(L3,energy2(1,1000000,1));
+    for(int i=0;i<20;i++) {
+      L3 = energy_layout(L3,energy2(1,100000000,2,0));
+      L3.rotate_for_aspect_ratio(xw,yw);
+      graph_plotter gp(L3, xw, yw);
+      draw(name+"-graph",output,gp);
+    }
+
+    // improve angular resolution
+    for(int i=0;i<4;i++) {
+      L3 = energy_layout(L3,energy2(1,100000000,2,100));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw);
       draw(name+"-graph",output,gp);
