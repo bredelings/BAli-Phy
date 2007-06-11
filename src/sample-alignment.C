@@ -144,7 +144,7 @@ void sample_alignment(Parameters& P,int b)
     for(int j=0;j<p[i].n_data_partitions();j++) {
       Matrices[i].push_back(sample_alignment_base(p[i][j], b));
 #ifndef NDEBUG
-      substitution::check_subA(P0[j].A, p[i][j].A, p[0].T);
+      substitution::check_subA(*P0[j].A, *p[i][j].A, *p[0].T);
       p[i][j].likelihood();  // check the likelihood calculation
 #endif
     }
@@ -153,8 +153,8 @@ void sample_alignment(Parameters& P,int b)
 #ifndef NDEBUG_DP
   std::cerr<<"\n\n----------------------------------------------\n";
 
-  int node1 = P.T.branch(b).target();
-  int node2 = P.T.branch(b).source();
+  int node1 = P.T->branch(b).target();
+  int node2 = P.T->branch(b).source();
 
   vector<int> nodes;
   nodes.push_back(node1);
@@ -172,7 +172,7 @@ void sample_alignment(Parameters& P,int b)
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
     {
-      paths[i].push_back( get_path(p[i][j].A, node1, node2) );
+      paths[i].push_back( get_path(*p[i][j].A, node1, node2) );
     
       OS[i].push_back( other_subst(p[i][j],nodes) );
       OP[i].push_back( other_prior(p[i][j],nodes) );

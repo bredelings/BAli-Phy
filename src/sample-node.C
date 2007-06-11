@@ -255,16 +255,16 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore(false,p[0].T.n_nodes());
+  valarray<bool> ignore(false,p[0].T->n_nodes());
   ignore[ nodes[0][0] ] = true;
 
   // Check that our constraints are met
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (not A_constant(P0[j].A, p[i][j].A, ignore)) {
-	std::cerr<<P0[j].A<<endl;
-	std::cerr<<p[i][j].A<<endl;
-	assert(A_constant(P0[j].A, p[i][j].A, ignore));
+      if (not A_constant(*P0[j].A, *p[i][j].A, ignore)) {
+	std::cerr<<*P0[j].A<<endl;
+	std::cerr<<*p[i][j].A<<endl;
+	assert(A_constant(*P0[j].A, *p[i][j].A, ignore));
       }
 
   // Add another entry for the incoming configuration
@@ -281,7 +281,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
     {
-      paths[i].push_back( get_path_3way(A3::project(p[i][j].A,nodes[i]),0,1,2,3) );
+      paths[i].push_back( get_path_3way(A3::project(*p[i][j].A,nodes[i]),0,1,2,3) );
     
       OS[i][j] = p[i][j].likelihood();
       OP[i][j] = other_prior(p[i][j],nodes[i]);

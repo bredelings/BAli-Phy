@@ -291,10 +291,10 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore1A = not p[0].T.partition(nodes[0][0],nodes[0][1]);
-  valarray<bool> ignore2A = not (p[0].T.partition(nodes[0][0],nodes[0][2]) or p[0].T.partition(nodes[0][0],nodes[0][3]) );
-  valarray<bool> ignore1(p[0].T.n_nodes()); 
-  valarray<bool> ignore2(p[0].T.n_nodes()); 
+  valarray<bool> ignore1A = not p[0].T->partition(nodes[0][0],nodes[0][1]);
+  valarray<bool> ignore2A = not (p[0].T->partition(nodes[0][0],nodes[0][2]) or p[0].T->partition(nodes[0][0],nodes[0][3]) );
+  valarray<bool> ignore1(p[0].T->n_nodes()); 
+  valarray<bool> ignore2(p[0].T->n_nodes()); 
   for(int i=0;i<ignore1.size();i++) {
     ignore1[i] = ignore1A[i];
     ignore2[i] = ignore2A[i];
@@ -303,12 +303,12 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   // Check that our constraints are met
   for(int i=0;i<p.size();i++) {
     for(int j=0;j<p[i].n_data_partitions();j++) {
-      if (not(A_constant(P0[j].A, p[i][j].A, ignore1))) {
+      if (not(A_constant(*P0[j].A, *p[i][j].A, ignore1))) {
 	std::cerr<<P0[j].A<<endl;
 	std::cerr<<p[i][j].A<<endl;
-	assert(A_constant(P0[j].A, p[i][j].A, ignore1));
+	assert(A_constant(*P0[j].A, *p[i][j].A, ignore1));
       }
-      assert(A_constant(P0[j].A, p[i][j].A, ignore2));
+      assert(A_constant(*P0[j].A, *p[i][j].A, ignore2));
     }
   }
     
@@ -337,7 +337,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
     for(int j=0;j<p[i].n_data_partitions();j++) 
     {
-      paths[i].push_back( get_path_3way(A3::project(p[i][j].A, nodes[i]), 0,1,2,3) );
+      paths[i].push_back( get_path_3way(A3::project(*p[i][j].A, nodes[i]), 0,1,2,3) );
     
       OS[i][j] = other_subst(p[i][j],nodes[i]);
       OP[i][j] = other_prior(p[i][j],nodes[i]);
