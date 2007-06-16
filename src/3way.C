@@ -89,7 +89,7 @@ namespace A3 {
     
     vector<int> nodes2;
     nodes2.insert(nodes2.end(),nodes.begin()+1,nodes.end());
-    randomize(nodes2);
+    nodes2 = randomize(nodes2);
     nodes[1] = nodes2[0];
     nodes[2] = nodes2[1];
     nodes[3] = nodes2[2];
