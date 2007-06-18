@@ -242,7 +242,7 @@ trees_to_SRQ_SOURCES = tools/trees-to-SRQ.C util.C tree.C sequencetree.C tools/t
 
 #---------------------------------------------------------------
 
-tree_reroot_SOURCES = tools/tree-reroot.C tree.C sequencetree.C tree-util.C util.C
+tree_reroot_SOURCES = tools/tree-reroot.C tree.C sequencetree.C tree-util.C util.C tools/tree-dist.C
 
 #---------------------------------------------------------------
 
