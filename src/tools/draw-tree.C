@@ -110,6 +110,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("file",value<string>(),"predicates to examine")
     ("output",value<string>()->default_value("pdf"),"Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg")
     ("full","Consider only full partitions")
+    ("iterations",value<int>()->default_value(10),"Number of iterations for layout algorithm")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method")
     ("seed", value<unsigned long>(),"Random seed")
@@ -1152,6 +1153,7 @@ struct energy2: public graph_energy_function
       if (t == 1) {
 	int b = GL.MC.edges[e].partition;
 	L = GL.MC.branch_length(b);
+	w /= L;
       }
       else {
 	int b = GL.MC.branch_to_node(GL.MC.edges[e].from);
@@ -1407,11 +1409,11 @@ void graph_plotter::operator()(cairo_t* cr)
   double xw = L.x_width();
   double yw = L.y_width();
 
-  //  cout<<"x = ["<<xmin<<", "<<xmax<<"]"<<endl;
-  //  cout<<"y = ["<<ymin<<", "<<ymax<<"]"<<endl;
+  //  cout<<"x = ["<<L.xmin()<<", "<<L.xmax()<<"]"<<endl;
+  //  cout<<"y = ["<<L.ymin()<<", "<<L.ymax()<<"]"<<endl;
   //  cout<<endl;
 
-  // move to center and flip up 
+  // move to center
   cairo_translate(cr, page_x_width()*inch/2.0, page_y_width()*inch/2.0);
 
   // find scaling factor
@@ -1420,12 +1422,13 @@ void graph_plotter::operator()(cairo_t* cr)
 
   double scale = std::min(page_x_width()*inch/xw,page_y_width()*inch/yw);
   scale *= factor;
-  const double line_width = 2.0/scale;
   cairo_scale(cr, scale, scale);
-  cairo_translate(cr, -factor*xc, -factor*yc);
-  cairo_set_line_width(cr, line_width);
+  cairo_translate(cr, -xc, -yc);
   
+  const double pt = 1.0/scale;
+  const double line_width = 2.0*pt;
   const double dashes[] = {3.0*line_width, 3.0*line_width};
+  cairo_set_line_width(cr, line_width);
 
   // draw the edges
   for(int e=0;e<L.MC.edges.size();e++) 
@@ -1834,10 +1837,11 @@ int main(int argc,char* argv[])
     }
 
     // lay out as a graph
-    graph_layout L2 = layout_on_circle(MC,10);
+    graph_layout L2 = layout_on_circle(MC,2);
     graph_layout L3 = L2;
-    for(int i=0;i<20;i++) {
-      L3 = energy_layout(L3,energy2(1,100000000,2,0));
+    int n_iterations = args["iterations"].as<int>();
+    for(int i=0;i<n_iterations;i++) {
+      L3 = energy_layout(L3,energy2(1,10000000,2,0));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw);
       draw(name+"-graph",output,gp);
@@ -1845,7 +1849,7 @@ int main(int argc,char* argv[])
 
     // improve angular resolution
     for(int i=0;i<4;i++) {
-      L3 = energy_layout(L3,energy2(1,100000000,2,100));
+      L3 = energy_layout(L3,energy2(1,10000000,2,100));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw);
       draw(name+"-graph",output,gp);
