@@ -593,8 +593,8 @@ void exchange_subtrees(Tree& T, int br1, int br2)
 {
   BranchNode* n0 = (BranchNode*)T[0];
 
-  BranchNode* b1 = (BranchNode*)T.branch(br1);
-  BranchNode* b2 = (BranchNode*)T.branch(br2);
+  BranchNode* b1 = (BranchNode*)T.directed_branch(br1);
+  BranchNode* b2 = (BranchNode*)T.directed_branch(br2);
 
   assert(not T.subtree_contains(br1,b2->out->node));
   assert(not T.subtree_contains(br2,b1->out->node));
@@ -656,8 +656,8 @@ void SPR(Tree& T, int br1,int br2)
   //  T.SPR(br1,br2);
   //  return;
 
-  BranchNode* b1 = (BranchNode*)T.branch(br1);
-  BranchNode* b2 = (BranchNode*)T.branch(br2);
+  BranchNode* b1 = (BranchNode*)T.directed_branch(br1);
+  BranchNode* b2 = (BranchNode*)T.directed_branch(br2);
 
   assert(T.n_leaves() > 2);
 
