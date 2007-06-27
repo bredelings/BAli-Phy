@@ -18,6 +18,15 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+bool all_same_length(const vector<sequence>& s)
+{
+  for(int i=1;i<s.size();i++)
+    if (s[i].size() != s[0].size())
+      return false;
+  return true;
+}
+
+
 //FIXME - make this handle un-aligned gaps...
 // diagnose sequences which are not a multiple of 3
 // look for reading frames?  start codons?
@@ -212,15 +221,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   return args;
 }
-
-bool all_same_length(const vector<sequence>& s)
-{
-  for(int i=1;i<s.size();i++)
-    if (s[i].size() != s[0].size())
-      return false;
-  return true;
-}
-
 
 void pad_to_same_length(vector<sequence>& s)
 {
