@@ -595,9 +595,9 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
 	s_parameters<<"\t"<<x4;
 	if (const Triplets* Tr = dynamic_cast<const Triplets*>(&P[i].get_alphabet()))
-	  s_parameters<<"\t"<<n_mutations(*P[i].A, T ,nucleotide_cost_matrix(*Tr));
+	  s_parameters<<"\t"<<n_mutations(*P[i].A, *P[i].T ,nucleotide_cost_matrix(*Tr));
 	if (const Codons* C = dynamic_cast<const Codons*>(&P[i].get_alphabet()))
-	  s_parameters<<"\t"<<n_mutations(*P[i].A, T,amino_acid_cost_matrix(*C));
+	  s_parameters<<"\t"<<n_mutations(*P[i].A, *P[i].T, amino_acid_cost_matrix(*C));
       }
       if (P.n_data_partitions() > 1) {
 	if (P.has_IModel()) {
