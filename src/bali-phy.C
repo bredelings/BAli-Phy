@@ -769,6 +769,116 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
   return branches;
 }
 
+
+bool check_data_dir(const string& dir_name)
+{
+  fs::path data_dir = dir_name;
+
+  if (not fs::exists(data_dir)) {
+    cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' does not exist!"<<endl;
+    cerr<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
+    return false;
+  }
+  else if (not fs::is_directory(data_dir)) {
+    cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' is not a directory!"<<endl;
+    cerr<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
+    return false;
+  }
+  else if (not fs::exists( data_dir / "wag.dat")) {
+    cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' exists, but doesn't contain the"<<endl;
+    cerr<<"               important file 'wag.dat'."<<endl;
+    cerr<<"         Have you correctly specified the data directory using --data-dir <dir>?"<<endl<<endl;
+    return false;
+  }
+  return true;
+}
+
+unsigned long init_rng_and_get_seed(const variables_map& args)
+{
+  unsigned long seed = 0;
+  if (args.count("seed")) {
+    seed = args["seed"].as<unsigned long>();
+    myrand_init(seed);
+  }
+  else
+    seed = myrand_init();
+
+  return seed;
+}
+
+void sanitize_branch_lengths(SequenceTree& T)
+{
+  double min_branch = 0.000001;
+  for(int i=0;i<T.n_branches();i++)
+    if (T.branch(i).length() > 0)
+      min_branch = std::min(min_branch,T.branch(i).length());
+  
+  for(int i=0;i<T.n_branches();i++) {
+    if (T.branch(i).length() == 0)
+      T.branch(i).set_length(min_branch);
+    if (T.branch(i).length() < 0)
+      T.branch(i).set_length( - T.branch(i).length() );
+  }
+}
+
+void setup_heating(const variables_map& args, Parameters& P) 
+{
+  if (args.count("beta")) {
+    string beta_s = args["beta"].as<string>();
+    vector<double> beta = split<double>(beta_s,',');
+    for(int i=0;i<P.n_data_partitions();i++)
+      for(int j=0;j<P[i].beta.size() and j <beta.size();j++)
+	P.beta[j] = P[i].beta[j] = beta[j];
+    
+    P.beta_series.push_back(beta[0]);
+  }
+  
+  if (args.count("dbeta")) {
+    vector<string> deltas = split(args["dbeta"].as<string>(),',');
+    for(int i=0;i<deltas.size();i++) {
+      vector<double> D = split<double>(deltas[i],'*');
+      if (D.size() != 2)
+	throw myexception()<<"Couldn't parse beta increment '"<<deltas[i]<<"'";
+      int D1 = (int)D[0];
+      double D2 = D[1];
+      for(int i=0;i<D1;i++) {
+	double next = P.beta_series.back() + D2;
+	next = std::max(0.0,std::min(1.0,next));
+	P.beta_series.push_back(next);
+      }
+    }
+  }
+}
+
+void setup_partition_weights(const variables_map& args, Parameters& P) 
+{
+  if (args.count("partition-weights")) {
+
+    string filename = args["partition-weights"].as<string>();
+
+    const double n = 0.6;
+
+    ifstream partitions(filename.c_str());
+    string line;
+    while(getline_handle_dos(partitions,line)) {
+      Partition p(P.T->get_sequences(),line);
+      getline_handle_dos(partitions,line);
+      double o = convertTo<double>(line);
+      
+      cerr<<p<<"      P = "<<o<<endl;
+      if (o > n) {
+	double w = n/(1-n)*(1-o)/o;
+	efloat_t w2 = w;
+	
+	P.partitions.push_back(p);
+	P.partition_weights.push_back(w2);
+	
+	cerr<<P.partitions.back()<<"      weight = "<<w<<endl;
+      }
+    }
+  }
+}
+
 int main(int argc,char* argv[]) 
 { 
   std::ios::sync_with_stdio(false);
@@ -788,34 +898,12 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     //---------- Determine Data dir ---------------//
-    {
-      fs::path data_dir = args["data-dir"].as<string>();
-      if (not fs::exists(data_dir)) {
-	cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' does not exist!"<<endl;
-	cerr<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
-      }
-      else if (not fs::is_directory(data_dir)) {
-	cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' is not a directory!"<<endl;
-	cerr<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
-      }
-      else if (not fs::exists( data_dir / "wag.dat")) {
-	cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' exists, but doesn't contain the"<<endl;
-	cerr<<"               important file 'wag.dat'."<<endl;
-	cerr<<"         Have you correctly specified the data directory using --data-dir <dir>?"<<endl<<endl;
-      }
-    }
+    check_data_dir(args["data-dir"].as<string>());
 
     //---------- Initialize random seed -----------//
-    unsigned long seed = 0;
-    if (args.count("seed")) {
-      seed = args["seed"].as<unsigned long>();
-      myrand_init(seed);
-    }
-    else
-      seed = myrand_init();
+    unsigned long seed = init_rng_and_get_seed(args);
     
     //----------- Load alignment and tree ---------//
-    vector<string> filenames = args["align"].as<vector<string> >();
     vector<alignment> A;
     SequenceTree T;
     if (args.count("tree"))
@@ -824,17 +912,7 @@ int main(int argc,char* argv[])
       load_As_and_random_T(args,A,T);
 
     //--------- Handle branch lengths <= 0 --------//
-    double min_branch = 0.000001;
-    for(int i=0;i<T.n_branches();i++)
-      if (T.branch(i).length() > 0)
-	min_branch = std::min(min_branch,T.branch(i).length());
-
-    for(int i=0;i<T.n_branches();i++) {
-      if (T.branch(i).length() == 0)
-	T.branch(i).set_length(min_branch);
-      if (T.branch(i).length() < 0)
-	T.branch(i).set_length( - T.branch(i).length() );
-    }
+    sanitize_branch_lengths(T);
 
     //--------- Do we have enough sequences? ------//
     if (T.n_leaves() < 3)
@@ -846,6 +924,7 @@ int main(int argc,char* argv[])
     ostream& s_err = *files[1];
 
     s_out<<"random seed = "<<seed<<endl<<endl;
+    vector<string> filenames = args["align"].as<vector<string> >();
     for(int i=0;i<filenames.size();i++) {
       s_out<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
       s_out<<"alphabet"<<i+1<<" = "<<A[i].get_alphabet().name<<endl<<endl;
@@ -897,7 +976,6 @@ int main(int argc,char* argv[])
       throw myexception()<<"Initial tree violates topology constraints.";
 
     //---------- Alignment constraint (horizontal) -----------//
-
     vector<string> ac_filenames(P.n_data_partitions(),"");
     if (args.count("align-constraint")) 
     {
@@ -910,71 +988,16 @@ int main(int argc,char* argv[])
     for(int i=0;i<P.n_data_partitions();i++)
       P[i].alignment_constraint = load_alignment_constraint(ac_filenames[i],T);
 
-    //---------- Alignment constraint (vertical) -----------//
-    //P.alignment_constraint = load_alignment_constraint(args,T);
+    //------------------- Handle heating ---------------------//
+    setup_heating(args,P);
 
-    if (args.count("beta")) {
-      string beta_s = args["beta"].as<string>();
-      vector<double> beta = split<double>(beta_s,',');
-      for(int i=0;i<P.n_data_partitions();i++)
-	for(int j=0;j<P[i].beta.size() and j <beta.size();j++)
-	  P.beta[j] = P[i].beta[j] = beta[j];
-
-      P.beta_series.push_back(beta[0]);
-    }
-
-    if (args.count("dbeta")) {
-      vector<string> deltas = split(args["dbeta"].as<string>(),',');
-      for(int i=0;i<deltas.size();i++) {
-	vector<double> D = split<double>(deltas[i],'*');
-	if (D.size() != 2)
-	  throw myexception()<<"Couldn't parse beta increment '"<<deltas[i]<<"'";
-	int D1 = (int)D[0];
-	double D2 = D[1];
-	for(int i=0;i<D1;i++) {
-	  double next = P.beta_series.back() + D2;
-	  next = std::max(0.0,std::min(1.0,next));
-	  P.beta_series.push_back(next);
-	}
-      }
-    }
-
-    if (args.count("partition-weights")) {
-      string filename = args["partition-weights"].as<string>();
-
-      const double n = 0.6;
-
-      ifstream partitions(filename.c_str());
-      string line;
-      while(getline_handle_dos(partitions,line)) {
-	Partition p(T.get_sequences(),line);
-	getline_handle_dos(partitions,line);
-	double o = convertTo<double>(line);
-
-	cerr<<p<<"      P = "<<o<<endl;
-	if (o > n) {
-	  double w = n/(1-n)*(1-o)/o;
-	  efloat_t w2 = w;
-
-	  P.partitions.push_back(p);
-	  P.partition_weights.push_back(w2);
-
-	  cerr<<P.partitions.back()<<"      weight = "<<w<<endl;
-	}
-      }
-    }
-
-    /*
-    P.constants[0] = args.loadvalue("bandwidth",100.0);
-    if (args.set("pinning") and args["pinning"] == "enable")
-      P.features |= (1<<0);
-    if (args.set("banding") and args["banding"] == "enable")
-      P.features |= (1<<1);
-    */
+    // read and store partitions and weights, if any.
+    setup_partition_weights(args,P);
 
     // fix, unfix, and set parameters
     set_parameters(P,args);
 
+    //----- Initialize Likelihood caches and character index caches -----//
     for(int i=0;i<P.n_data_partitions();i++) {
       P[i].LC.set_length(P[i].A->length());
 
