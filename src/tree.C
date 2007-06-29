@@ -1274,7 +1274,9 @@ int subtree_height(const Tree& T,int b)
 
 int node_depth(const Tree& T,int node) 
 {
-  int depth = 0;
+  // re-write using branches_from_node
+
+  int depth = T.n_branches();
   for(int i=0;i<T.n_leaves();i++) 
     depth = std::min(depth, T.edges_distance(node,i) );
 
