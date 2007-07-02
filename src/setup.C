@@ -108,6 +108,28 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
   return frequencies;
 }
 
+/// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
+valarray<double> empirical_frequencies(const variables_map& args,const vector<alignment>& alignments) 
+{
+  int total=0;
+  for(int i=0;i<alignments.size();i++)
+    total += alignments[i].length();
+
+  alignment A(alignments[0]);
+  A.changelength(total);
+
+  int L=0;
+  for(int i=0;i<alignments.size();i++) 
+  {
+    for(int c=0;c<alignments[i].length();c++)
+      for(int s=0;s<alignments[i].n_sequences();s++)
+	A(c+L,s) = alignments[i](c,s);
+    L += alignments[i].length();
+  }
+
+  return empirical_frequencies(args,A);
+}
+
 
 void remap_T_indices(SequenceTree& T,const vector<string>& names)
 {

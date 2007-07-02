@@ -53,38 +53,6 @@ efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean)
 }
 
 
-//FIXME - partitions - move into parameters.C
-efloat_t prior_no_alignment(const Parameters& P)
-{
-  efloat_t Pr = 1.0;
-
-  // prior on the topology and branch lengths
-  Pr *= prior(P, *P.T, 1.0);
-
-  // prior on the substitution model
-  Pr *= P.SModel().prior();
-
-  // prior on the insertion/deletion model
-  if (P.has_IModel()) 
-  {
-    // prior on the insertion/deletion model
-    Pr *= P.IModel().prior();
-
-    const double p_unaligned = loadvalue(P.keys,"P_aligned",0.0);
-
-    efloat_t pNA = p_unaligned;
-
-    efloat_t pA = (1.0 - p_unaligned);
-
-    for(int b=0;b<P.T->n_branches();b++)
-      if (not P.branch_HMM_type[b])
-	Pr *= pA;
-      else
-	Pr *= pNA;
-  }
-  return Pr;
-}
-
 /// Probability of a pairwise alignment
 efloat_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,int source) 
 {

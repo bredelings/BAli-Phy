@@ -90,13 +90,11 @@ namespace substitution {
   {
   public:
     
-    bool full_tree;
-
     /// Make a copy of this object
     virtual Model* clone() const =0;
 
     /// Construct an empty model
-    Model():full_tree(true) {};
+    Model() {};
 
     virtual ~Model() {}
   };

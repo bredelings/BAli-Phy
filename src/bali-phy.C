@@ -198,7 +198,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 
   topology_move.add(1,NNI_move,false);
   topology_move.add(1,SPR_move);
-  if (P.T->n_leaves() >3 and P.SModel().full_tree)
+  if (P.T->n_leaves() >3 and P.smodel_full_tree)
     tree_moves.add(1,topology_move);
   
   //-------------- tree::lengths (length_moves) -------------//
@@ -213,7 +213,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 				   change_branch_length_multi_move,
 				   branches)
 		   );
-  if (P.SModel().full_tree)
+  if (P.smodel_full_tree)
     length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T","lengths:nodes:topology",
 					change_branch_length_and_T,
 					internal_branches)
@@ -411,7 +411,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   model.add_options()
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
-    ("smodel",value<string>(),"Substitution model.")
+    ("smodel",value<vector<string> >()->composing(),"Substitution model.")
     ("imodel",value<string>()->default_value("fragment-based+T"),"Indel model: simple, fragment-based, or fragment-based+T.")
     ("align-constraint",value<string>(),"File with alignment constraints.")
     ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
@@ -879,6 +879,134 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
   }
 }
 
+// how about --smodel=1,3,5:HKY  --smodel=4,5,6:Empirical[WAG]
+
+string parse_partitions_and_model(string model, vector<int>& partitions)
+{
+  partitions.clear();
+
+  int colon = model.find(':');
+  if (colon == -1)
+    return model;
+
+  string prefix = model.substr(0,colon);
+  model = model.substr(colon+1);
+
+  partitions = split<int>(prefix,',');
+
+  return model;
+}
+
+template <typename T>
+class shared_items
+{
+  // unique items
+  vector<T> items;
+
+public:
+
+  // from partition -> item
+  vector<int> item_for_partition;  
+
+  // from item -> partition
+  vector<vector<int> > partitions_for_item;
+
+  int n_unique_items() const {return items.size();}
+
+  int n_partitions() const {return item_for_partition.size();}
+
+  const T& unique(int i) const {return items[i];}
+        T& unique(int i)       {return items[i];}
+
+  const T& operator[](int i) const {return items[item_for_partition[i]];}
+        T& operator[](int i)       {return items[item_for_partition[i]];}
+
+  int n_partitions_for_item(int i) const {return partitions_for_item[i].size();}
+
+  shared_items(const vector<T>& v1, const vector<int>& v2)
+    :items(v1),
+     item_for_partition(v2),
+     partitions_for_item(items.size())
+  {
+    for(int i=0;i<n_partitions();i++) {
+      int item = item_for_partition[i];
+      partitions_for_item[item].push_back(i);
+    }
+  }
+};
+
+
+//allow partition NAMES from filename?
+shared_items<string> get_mapping(const variables_map& args, const string& key, int n)
+{
+  vector<string> models;
+  if (args.count(key))
+    models = args[key].as<vector<string> >();
+
+  vector<int> mapping(n,-1);
+  vector<string> model_names;
+
+  for(int i=0;i<models.size();i++) 
+  {
+    vector<int> partitions;
+    string model_name = parse_partitions_and_model(models[i],partitions);
+
+    // partitions must be specified, unless there is only one partition
+    if (partitions.size() == 0)
+      if (n == 1)
+	partitions.push_back(1);
+      else
+	throw myexception()<<"Failed to specify partition number(s) for '"<<key<<"' specification '"<<models[i];
+
+    // map partitions to this model, unless they are already mapped
+    for(int j=0;j<partitions.size();j++) 
+    {
+      // check for bad partition numbers
+      if (partitions[j] < 1 or partitions[j] > n)
+	throw myexception()<<"Partition "<<partitions[j]<<" doesn't exist.";
+
+      // check for partition already mapped
+      if (mapping[partitions[j]-1] != -1)
+	throw myexception()<<"Trying to set '"<<key<<"' for partition "<<partitions[j]<<" twice.";
+
+      // map partition to this model
+      mapping[partitions[j]-1] = model_names.size();
+    }
+
+    model_names.push_back(model_name);
+  }
+
+  // fill in default model mappings
+  for(int i=0;i<mapping.size();i++)
+    if (mapping[i] == -1) 
+    {
+      mapping[i] = model_names.size();
+      model_names.push_back("");
+    }
+
+  return shared_items<string>(model_names,mapping);
+}
+
+vector<polymorphic_cow_ptr<substitution::MultiModel> > 
+get_smodels(const variables_map& args, const vector<alignment>& A,
+	    const shared_items<string>& smodel_names_mapping)
+{
+  vector<polymorphic_cow_ptr<substitution::MultiModel> > smodels;
+  for(int i=0;i<smodel_names_mapping.n_unique_items();i++) 
+  {
+    vector<alignment> alignments;
+    for(int j=0;j<smodel_names_mapping.n_partitions_for_item(i);j++)
+      alignments.push_back(A[smodel_names_mapping.partitions_for_item[i][j]]);
+
+    OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,
+								    smodel_names_mapping.unique(i),
+								    alignments);
+    polymorphic_cow_ptr<substitution::MultiModel> temp (*full_smodel);
+    smodels.push_back(temp);
+  }
+  return smodels;
+}
+
 int main(int argc,char* argv[]) 
 { 
   std::ios::sync_with_stdio(false);
@@ -936,9 +1064,14 @@ int main(int argc,char* argv[])
     clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
     //--------- Set up the substitution model --------//
-    OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,A[0]);
+    shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", A.size());
     
-    if (not full_smodel->full_tree)
+    vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
+
+    vector<polymorphic_cow_ptr<substitution::MultiModel> > 
+      full_smodels = get_smodels(args,A,smodel_names_mapping);
+
+    if (args["letters"].as<string>() == "star")
       for(int i=T.n_leaves();i<T.n_branches();i++)
 	T.branch(i).set_length(0);
 
@@ -949,14 +1082,14 @@ int main(int argc,char* argv[])
       imodel = get_imodel(args);
     
     //-------------Create the Parameters object--------------//
-    Parameters P(A, T, *full_smodel);
+    Parameters P(A, T, full_smodels, smodel_mapping);
     if (imodel)
-      P = Parameters(A, T, *full_smodel,*imodel);
+      P = Parameters(A, T, full_smodels, smodel_mapping, *imodel);
 
-    s_out<<"subst model = "<<P.SModel().name();
-    if (not P.SModel().full_tree)
-      s_out<<", *-tree";
-    s_out<<endl<<endl;
+    if (not P.smodel_full_tree)
+      s_out<<"substitution model: *-tree"<<endl;
+    for(int i=0;i<P.n_smodels();i++) 
+      s_out<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
 
     s_out<<"indel model = ";
     if (imodel)
@@ -1023,7 +1156,7 @@ int main(int argc,char* argv[])
       // close_files(files);
     }
   }
-  catch (std::bad_alloc) {
+  catch (std::bad_alloc&) {
     cerr<<"Doh!  Some kind of memory problem?\n";
     report_mem();
     exit(1);

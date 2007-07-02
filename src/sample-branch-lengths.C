@@ -477,7 +477,7 @@ void scale_means_only(Parameters& P,MoveStats& Stats)
   
 #ifndef NDEBUG
   P2.recalc_imodel();
-  P2.recalc_smodel();
+  P2.recalc_smodels();
   efloat_t L1 =  P.likelihood();
   efloat_t L2 = P2.likelihood();
   double diff = std::abs(log(L1)-log(L2));

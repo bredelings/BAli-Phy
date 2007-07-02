@@ -42,6 +42,7 @@ void data_partition::recalc_imodel()
 void data_partition::recalc_smodel() 
 {
   // set the rate to one
+  // FIXME - we COPY the smodel here!
   SModel_->set_rate(branch_mean());
 
   //invalidate cached conditional likelihoods in case the model has changed
@@ -94,6 +95,7 @@ void data_partition::branch_mean_tricky(double mu)
 {
   parameters_[0] = mu;
   // scale the substitution rate
+  // FIXME - we COPY the smodel here!
   SModel_->set_rate(branch_mean());
 }
 
@@ -126,7 +128,7 @@ efloat_t data_partition::prior() const
 
 efloat_t data_partition::likelihood() const 
 {
-  if (SModel_->full_tree)
+  if (smodel_full_tree)
     return substitution::Pr(*this);
   else
     return substitution::Pr_star(*this);
@@ -147,6 +149,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
   :IModel_(IM),
    SModel_(SM),
    partition_name(n),
+   smodel_full_tree(true),
    A(a),
    T(t),
    MC(t,SM),
@@ -162,6 +165,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
 			       const substitution::MultiModel& SM)
   :SModel_(SM),
    partition_name(n),
+   smodel_full_tree(true),
    A(a),
    T(t),
    MC(t,SM),
@@ -178,9 +182,38 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
 
 efloat_t Parameters::prior_no_alignment() const 
 {
-  efloat_t Pr = ::prior_no_alignment(*this);
+  efloat_t Pr = 1.0;
 
-  for(int i=0;i<data_partitions.size();i++) 
+  // prior on the topology and branch lengths
+  Pr *= ::prior(*this, *T, 1.0);
+
+  // prior on the substitution model
+  for(int i=0;i<SModels.size();i++)
+    Pr *= SModel(i).prior();
+
+  // prior on the insertion/deletion model
+  if (has_IModel()) 
+    Pr *= IModel().prior();
+
+
+  // prior for each branch being aligned/unaliged
+  if (has_IModel()) 
+  {
+    const double p_unaligned = loadvalue(keys,"P_aligned",0.0);
+
+    efloat_t pNA = p_unaligned;
+
+    efloat_t pA = (1.0 - p_unaligned);
+
+    for(int b=0;b<T->n_branches();b++)
+      if (not branch_HMM_type[b])
+	Pr *= pA;
+      else
+	Pr *= pNA;
+  }
+
+  // prior on parameters in data partitions
+  for(int i=0;i<data_partitions.size();i++)
     Pr *= data_partitions[i]->prior_no_alignment();
 
   return Pr;
@@ -248,19 +281,27 @@ void Parameters::recalc_imodel()
   }
 }
 
-void Parameters::recalc_smodel() 
+void Parameters::recalc_smodels() 
+{
+  for(int i=0;i<SModels.size();i++)
+    recalc_smodel(i);
+}
+
+void Parameters::recalc_smodel(int m) 
 {
   // set the rate to one
-  SModel_->set_rate(1);
+  SModels[m]->set_rate(1);
   read();
 
   for(int i=0;i<data_partitions.size();i++) 
   {
-    // copy our IModel down into the data partition
-    data_partitions[i]->SModel_ = SModel_;
+    if (smodel_for_partition[i] == m) {
+      // copy our IModel down into the data partition
+      data_partitions[i]->SModel_ = SModels[m];
 
-    // recompute cached computations
-    data_partitions[i]->recalc_smodel();
+      // recompute cached computations
+      data_partitions[i]->recalc_smodel();
+    }
   }
 }
 
@@ -296,20 +337,21 @@ void Parameters::LC_invalidate_branch(int b)
 
 void Parameters::recalc(const vector<int>& indices)
 {
-  bool s_changed = false;
+  vector<bool> s_changed(SModels.size(),false);
   bool i_changed = false;
 
   for(int i=0;i<indices.size();i++) 
   {
     int m = model_of_index[indices[i]];
-    if (m == 0)
-      s_changed=true;
+    if (m < SModels.size())
+      s_changed[m]=true;
     else if (m == 1 and has_IModel())
       i_changed=true;
   }
 
-  if (s_changed)
-    recalc_smodel();
+  for(int m=0;m<SModels.size();m++)
+    if (s_changed[m])
+      recalc_smodel(m);
 
   if (i_changed)
     recalc_imodel();
@@ -320,10 +362,10 @@ Model& Parameters::SubModels(int i)
   if (i>=n_submodels())
     throw myexception()<<"Parameters: There is no sub-model #"<<i<<"!";
 
-  if (i==0) 
-    return SModel();
+  if (i<SModels.size()) 
+    return SModel(i);
   else
-    i--;
+    i -= SModels.size();
 
   if (has_IModel())
     if (i==0)
@@ -339,10 +381,10 @@ const Model& Parameters::SubModels(int i) const
   if (i>=n_submodels())
     throw myexception()<<"Parameters: There is no sub-model #"<<i<<"!";
 
-  if (i==0) 
-    return SModel();
+  if (i<SModels.size()) 
+    return SModel(i);
   else
-    i--;
+    i -= SModels.size();
 
   if (has_IModel())
     if (i==0)
@@ -366,9 +408,13 @@ double Parameters::branch_mean() const
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
-		       const substitution::MultiModel& SM,const IndelModel& IM)
-  :IModel_(IM),
-   SModel_(SM),
+		       const vector<polymorphic_cow_ptr<substitution::MultiModel> >& SMs,
+		       const vector<int>& mapping,
+		       const IndelModel& IM)
+  :SModels(SMs),
+   smodel_for_partition(mapping),
+   IModel_(IM),
+   smodel_full_tree(true),
    T(t),
    TC(star_tree(t.get_sequences())),
    branch_HMM_type(t.n_branches(),0),
@@ -377,25 +423,61 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 {
   constants.push_back(-1);
 
-  add_submodel("S-model",SModel());
-  if (has_IModel())
-    add_submodel("I-model",IModel());
+  // check that smodel mapping has correct size.
+  if (smodel_for_partition.size() != A.size())
+    throw myexception()<<"There are "<<A.size()
+		       <<" data partitions, but you mapped smodels onto "
+		       <<smodel_for_partition.size();
 
+  // register the substitution models as sub-models
+  for(int i=0;i<SModels.size();i++) {
+    string name = "S-model" + convertToString(i+1);
+    add_submodel(name, *SModels[i]);
+  }
+
+  // add the indel model
+  if (not has_IModel())
+    throw myexception()<<"NULL indel model provided??";
+  add_submodel("I-model",IModel());
+
+  // check that we only mapping existing smodels to data partitions
+  for(int i=0;i<smodel_for_partition.size();i++) {
+    int m = smodel_for_partition[i];
+    if (m >= SModels.size())
+      throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
+			 <<" because there are only "<<SModels.size()<<" smodels.";
+  }
+
+  // load values from sub-models (smodels/imodel)
   read();
 
+  // don't constrain any branch lengths
   for(int b=0;b<TC->n_branches();b++)
     TC->branch(b).set_length(-1);
 
-  for(int i=0;i<A.size();i++) {
+  // create data partitions and register as sub-models
+  for(int i=0;i<A.size();i++) 
+  {
+    // compute name for data-partition
     string name = string("part") + convertToString(i+1);
+
+    // get reference to smodel for data-partition
+    const substitution::MultiModel& SM = SModel(smodel_for_partition[i]);
+
+    // create data partition
     data_partitions.push_back(cow_ptr<data_partition>(data_partition(name,A[i],*T,SM,IM)));
+
+    // register data partition as sub-model
     add_submodel(name,*data_partitions[i]);
   }
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
-		       const substitution::MultiModel& SM)
-  :SModel_(SM),
+	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >& SMs,
+	     const vector<int>& mapping)
+  :SModels(SMs),
+   smodel_for_partition(mapping),
+   smodel_full_tree(true),
    T(t),
    TC(star_tree(t.get_sequences())),
    branch_HMM_type(t.n_branches(),0),
@@ -404,18 +486,48 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 {
   constants.push_back(-1);
 
-  add_submodel("S-model",SModel());
-  if (has_IModel())
-    add_submodel("I-model",IModel());
+  // check that smodel mapping has correct size.
+  if (smodel_for_partition.size() != A.size())
+    throw myexception()<<"There are "<<A.size()
+		       <<" data partitions, but you mapped smodels onto "
+		       <<smodel_for_partition.size();
 
+  // register the substitution models as sub-models
+  for(int i=0;i<SModels.size();i++) {
+    string name = "S-model" + convertToString(i+1);
+    add_submodel(name, *SModels[i]);
+  }
+
+  // NO indel model (in this constructor)
+
+  // check that we only mapping existing smodels to data partitions
+  for(int i=0;i<smodel_for_partition.size();i++) {
+    int m = smodel_for_partition[i];
+    if (m >= SModels.size())
+      throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
+			 <<" because there are only "<<SModels.size()<<" smodels.";
+  }
+
+  // load values from sub-models (smodels/imodel)
   read();
 
+  // don't constrain any branch lengths
   for(int b=0;b<TC->n_branches();b++)
     TC->branch(b).set_length(-1);
 
-  for(int i=0;i<A.size();i++) {
+  // create data partitions and register as sub-models
+  for(int i=0;i<A.size();i++) 
+  {
+    // compute name for data-partition
     string name = string("part") + convertToString(i+1);
+
+    // get reference to smodel for data-partition
+    const substitution::MultiModel& SM = SModel(smodel_for_partition[i]);
+
+    // create data partition
     data_partitions.push_back(cow_ptr<data_partition>(data_partition(name,A[i],*T,SM)));
+
+    // register data partition as sub-model
     add_submodel(name,*data_partitions[i]);
   }
 }

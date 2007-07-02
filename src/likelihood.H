@@ -19,7 +19,4 @@ efloat_t prior(const SequenceTree& T,double branch_mean);
 
 // Tree prior: branch lengths & topology
 efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean);
-
-// Tree prior + SModel prior
-efloat_t prior_no_alignment(const Parameters&);
 #endif

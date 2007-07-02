@@ -14,21 +14,21 @@ using std::valarray;
 
 void slide_node_move(Parameters& P, MoveStats& Stats,int b) 
 {
-  if (not P.SModel().full_tree)
+  if (not P.smodel_full_tree)
     return;
 
   slide_node(P,Stats,b);
 }
 
 void change_branch_length_move(Parameters& P, MoveStats& Stats,int b) {
-  if (not P.SModel().full_tree and b>=P.T->n_leaves())
+  if (not P.smodel_full_tree and b>=P.T->n_leaves())
     return;
 
   change_branch_length(P,Stats,b);
 }
 
 void change_branch_length_multi_move(Parameters& P, MoveStats& Stats,int b) {
-  if (not P.SModel().full_tree and b>=P.T->n_leaves())
+  if (not P.smodel_full_tree and b>=P.T->n_leaves())
     return;
 
   change_branch_length_multi(P,Stats,b);
@@ -53,7 +53,7 @@ void sample_tri_one(Parameters& P, MoveStats&,int b) {
 
 void sample_tri_branch_one(Parameters& P, MoveStats& Stats,int b) 
 {
-  if (not P.SModel().full_tree and b>=P.T->n_leaves())
+  if (not P.smodel_full_tree and b>=P.T->n_leaves())
     return;
 
   MCMC::Result result(2);
@@ -87,7 +87,7 @@ void sample_tri_branch_one(Parameters& P, MoveStats& Stats,int b)
 
 void sample_tri_branch_type_one(Parameters& P, MoveStats& Stats,int b) 
 {
-  if (not P.SModel().full_tree and b>=P.T->n_leaves())
+  if (not P.smodel_full_tree and b>=P.T->n_leaves())
     return;
 
   MCMC::Result result(1);

@@ -49,7 +49,7 @@ void guess_markov_model(vector<string>& string_stack,const alphabet& a)
 }
 
 OwnedPointer< ::Model> 
-get_smodel(const variables_map& args,const string& smodel,const alphabet& a,const valarray<double>&);
+get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,const valarray<double>&);
 
 bool process_stack_Markov(vector<string>& string_stack,
 			  vector<OwnedPointer< ::Model> >& model_stack,
@@ -128,7 +128,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     OwnedPointer<NucleotideExchangeModel> N_submodel = HKY(C->getNucleotides());
 
     if (not arg.empty()) {
-      OwnedPointer< ::Model> submodel = get_smodel(args,arg,C->getNucleotides(),valarray<double>());
+      OwnedPointer< ::Model> submodel = get_smodel_(args,arg,C->getNucleotides(),valarray<double>());
       NucleotideExchangeModel* temp = dynamic_cast<NucleotideExchangeModel*>( submodel.get());
       if (not temp)
 	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide replacement model.";
@@ -396,7 +396,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 }
 
 OwnedPointer< ::Model> 
-get_smodel(const variables_map& args,const string& smodel,const alphabet& a,
+get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,
 	   const valarray<double>& frequencies) 
 {
   // Initialize the string stack from the model name
@@ -438,27 +438,40 @@ get_smodel(const variables_map& args,const string& smodel,const alphabet& a,
 
 
 OwnedPointer<MultiModel>
-get_smodel(const variables_map& args, const alphabet& a,const valarray<double>& frequencies) 
+get_smodel(const variables_map& args, 
+	   const string& smodel_name, 
+	   const alphabet& a,
+	   const valarray<double>& frequencies) 
 {
   //------------------ Get smodel ----------------------//
-  string smodel_name = "";
-  if (args.count("smodel")) smodel_name = args["smodel"].as<string>();
-
-  OwnedPointer< ::Model> smodel = get_smodel(args,smodel_name,a,frequencies);
+  OwnedPointer< ::Model> smodel = get_smodel_(args,smodel_name,a,frequencies);
 
   // --------- Convert smodel to MultiModel ------------//
   OwnedPointer<MultiModel> full_smodel = get_MM(smodel.get(),"Final",frequencies);
 
-  //------------ How does the tree fit in? -------------//
-  if (args["letters"].as<string>() == "star") 
-    full_smodel->full_tree = false;
-  else
-    full_smodel->full_tree = true;
-      
   return full_smodel;
 }
 
-OwnedPointer<MultiModel> get_smodel(const variables_map& args, const alignment& A) {
-  return get_smodel(args,A.get_alphabet(),empirical_frequencies(args,A));
+OwnedPointer<MultiModel> get_smodel(const variables_map& args, 
+				    const string& smodel_name,
+				    const alignment& A) {
+  return get_smodel(args,smodel_name,A.get_alphabet(),empirical_frequencies(args,A));
+}
+
+OwnedPointer<MultiModel> get_smodel(const variables_map& args, 
+				    const alignment& A) 
+{
+  string smodel_name = args["smodel"].as<string>();
+  return get_smodel(args,smodel_name,A.get_alphabet(),empirical_frequencies(args,A));
+}
+
+OwnedPointer<MultiModel> get_smodel(const variables_map& args, 
+				    const string& smodel_name,
+				    const vector<alignment>& A) 
+{
+  for(int i=1;i<A.size();i++)
+    if (A[i].get_alphabet() != A[0].get_alphabet())
+      throw myexception()<<"alignments in partition don't all have the same alphabet!";
+  return get_smodel(args,smodel_name,A[0].get_alphabet(),empirical_frequencies(args,A));
 }
 

@@ -17,6 +17,10 @@ alignment standardize(const alignment& A, const SequenceTree& T);
 std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,
 					    const alignment& A);
 
+/// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
+std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,
+					    const vector<alignment>& A);
+
 //----------------- Load trees and alignments ---------------------//
 
 
@@ -70,9 +74,20 @@ void load_bali_phy_rc(boost::program_options::variables_map&,
 /// Return a substitution::Model specified by args
 OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
 						  const alphabet& a,const std::valarray<double>& default_frequencies);
+
+/// Return a substitution::Model specified by name
+OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
+						  const string&,
+						  const alignment& A);
+
 /// Return a substitution::Model specified by args
 OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
 						  const alignment& A);
+
+/// Return a substitution::Model specified by name
+OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
+						  const string&,
+						  const vector<alignment>& A);
 
 //--------------------------- Indel stuff --------------------------//
 OwnedPointer<IndelModel> get_imodel(const boost::program_options::variables_map& args);

@@ -37,6 +37,8 @@ struct data_partition: public Model
 
 public:
 
+  bool smodel_full_tree;
+
   data_partition* clone() const {return new data_partition(*this);}
 
   /// The alignment data of this partition
@@ -106,15 +108,18 @@ public:
 /// A class to contain all the MCMC state except the alignment
 class Parameters: public SuperModel
 {
+  /// The substitution::Model
+  vector<polymorphic_cow_ptr<substitution::MultiModel> > SModels;
+  vector<int> smodel_for_partition;
+
   /// The IndelModel
   polymorphic_cow_ptr<IndelModel> IModel_;
-
-  /// The substitution::Model
-  polymorphic_cow_ptr<substitution::MultiModel> SModel_;
 
   void recalc(const vector<int>&);
 
 public:
+
+  bool smodel_full_tree;
 
   /// The alignments and cached computations
   vector<cow_ptr<data_partition> > data_partitions;
@@ -166,18 +171,21 @@ public:
   /// The IndelModel
   IndelModel& IModel();
 
+  /// How many substitution models?
+  int n_smodels() const {return SModels.size();}
   /// Get the substitution::Model
-  const substitution::MultiModel& SModel() const {return *SModel_;}
+  const substitution::MultiModel& SModel(int i) const {return *SModels[i];}
   /// Get the substitution::Model
-  substitution::MultiModel& SModel() {return *SModel_;}
-
+        substitution::MultiModel& SModel(int i)       {return *SModels[i];}
+  
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 
   
   /// Recalculate all the cached transition matrices
   void recalc_imodel();
-  void recalc_smodel();
+  void recalc_smodels();
+  void recalc_smodel(int i);
   void tree_propagate();
 
   void select_root(int b);
@@ -194,8 +202,14 @@ public:
   const Model& SubModels(int) const;
   Model& SubModels(int);
 
-  Parameters(const vector<alignment>& A, const SequenceTree&, const substitution::MultiModel&);
-  Parameters(const vector<alignment>& A, const SequenceTree&, const substitution::MultiModel&,const IndelModel&);
+  Parameters(const vector<alignment>& A, const SequenceTree&, 
+	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
+	     const vector<int>&);
+
+  Parameters(const vector<alignment>& A, const SequenceTree&, 
+	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
+	     const vector<int>&,
+	     const IndelModel&);
 };
 
 bool accept_MH(const Parameters& P1,const Parameters& P2,double rho);
