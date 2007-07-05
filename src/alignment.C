@@ -171,6 +171,13 @@ void alignment::load(const vector<sequence>& seqs)
     sequences.push_back(seqs[i]);
     sequences.back().strip_gaps();
   }
+
+  // check that names are all unique
+  for(int i=1;i<n_sequences();i++) {
+    for(int j=0;j<i;j++)
+      if (seq(i).name == seq(j).name)
+	throw myexception()<<"Sequence name '"<<seq(i).name<<"' occurs multiple in the alignment";
+  }
 }
 
 void alignment::load(const vector<shared_ptr<const alphabet> >& alphabets,const vector<sequence>& seqs) {
@@ -298,6 +305,7 @@ alignment::alignment(const alphabet& a1,const string& filename)
     :a(a1.clone())
 { 
   load(filename); 
+
 }
 
 vector<int> get_path(const alignment& A,int node1, int node2) {
