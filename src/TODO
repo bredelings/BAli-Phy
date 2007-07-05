@@ -43,6 +43,8 @@ Improved Codon models/notation?
  A. F1x4 / F3x4 / F61
  B. We should be able to do some Marginal Likelihood tests on these.
 
+0. The trees-consensus "--ignore taxon1,taxon2,.." functionality doesn't actually work?
+
 1. Fix the Uniform distribution to have a sigma/mu parameter.
 
 2. Branch length proposals
