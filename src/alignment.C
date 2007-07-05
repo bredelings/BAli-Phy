@@ -170,6 +170,13 @@ void alignment::load(const vector<sequence>& seqs)
     sequences.push_back(seqs[i]);
     sequences.back().strip_gaps();
   }
+
+  // check that names are all unique
+  for(int i=1;i<n_sequences();i++) {
+    for(int j=0;j<i;j++)
+      if (seq(i).name == seq(j).name)
+	throw myexception()<<"Sequence name '"<<seq(i).name<<"' occurs multiple in the alignment";
+  }
 }
 
 void alignment::load(const vector<OwnedPointer<alphabet> >& alphabets,const vector<sequence>& seqs) {

@@ -1265,8 +1265,10 @@ bool is_subset(const valarray<bool>& v1,const valarray<bool>& v2) {
 Tree star_tree(int n) 
 {
   BranchNode* center = get_first_node();
-  for(int i=0;i<n;i++)
-    add_node(center)->node = i;
+
+  if (n > 1)
+    for(int i=0;i<n;i++)
+      add_node(center)->node = i;
 
   return Tree(center);
 }
