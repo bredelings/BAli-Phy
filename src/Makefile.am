@@ -57,10 +57,12 @@ endif
 
 endif
 
-BOOST_SUFFIX = -st
-#BOOST_LIBS = -lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}
+if SYSTEM_BOOST
+BOOST_LIBS = -lboost_program_options@BOOST_SUFFIX@ -lboost_filesystem@BOOST_SUFFIX@
+else
 BOOST_LIBS = @top_builddir@/boost/lib/filesystem/libboost_filesystem.a \
              @top_builddir@/boost/lib/program_options/libboost_program_options.a
+endif
 
 LIBS = -lgsl -lgslcblas -lm ${BOOST_LIBS}
 

@@ -51,6 +51,12 @@ fi
 AC_SUBST(extra_libs2)
 LDFLAGS="$LDFLAGS $extra_libs"
 
+# Specify extra library paths
+AC_ARG_WITH([system-boost], AS_HELP_STRING([--with-system-boost],[Add extra library paths]),
+  use_system_boost=YES,
+  use_system_boost=NO
+)
+
 # 1. Checks for programs.
 ORIG_CFLAGS=$CFLAGS
 ORIG_CXXFLAGS=$CXXFLAGS
@@ -108,13 +114,18 @@ AC_ARG_ENABLE([cairo],
              [cairo=yes],
              [cairo=no])
 
-CXXFLAGS="-I\$(top_srcdir)/boost/include $CXXFLAGS $CPPFLAGS"
+
+
 CXXFLAGS="-DBALI_PHY_VERSION=\\\"$PACKAGE_VERSION\\\" $CXXFLAGS"
 
 # we only add extra flags if we recognize the compiler (g++)
 if test "$GXX" = yes ; then
 
-  CXXFLAGS="$CXXFLAGS -ffast-math -pipe"
+  CXXFLAGS="$CXXFLAGS -pipe"
+
+  if test "$debug" != yes ; then
+    CXXFLAGS="$CXXFLAGS -ffast-math"
+  fi
 
   # set flags for --enable-profile
   if test "$profile" = yes ; then
@@ -154,6 +165,8 @@ AC_SUBST(ldflags)
 AM_CONDITIONAL(GCC, test "$GXX" = yes)
 AM_CONDITIONAL(DEBUG, test "$debug" = yes)
 AM_CONDITIONAL(STATIC, test "$static" = yes)
+AM_CONDITIONAL(SYSTEM_BOOST, test "$use_system_boost" = YES)
+AM_CONDITIONAL(NO_SYSTEM_BOOST, test "$use_system_boost" = NO)
 
 #determine the OS that is being targeted
 AM_CONDITIONAL(HOST_MSWINDOWS,test "${host_os}" = mingw32)
@@ -179,6 +192,46 @@ AC_CHECK_LIB(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-l
 AC_CHECK_LIB(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl)" ; exit 1])
 AC_CHECK_LIB(gsl, gsl_cdf_beta_P, [], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
 
+CXXFLAGS="$CXXFLAGS $CPPFLAGS"
+
+#---------------------- Check for BOOST ------------------#
+if test "$use_system_boost" = YES ; then
+AC_CHECK_LIB(boost_program_options,main)
+BOOST_SUFFIX=-st
+boost_includes=""
+boost_libs="-lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}";
+LIBS="$boost_libs $LIBS"
+CXXFLAGS="$boost_includes $CXXFLAGS"
+
+AC_MSG_CHECKING(for the libboost_program_options${BOOST_SUFFIX} library)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+  #include <boost/program_options.hpp>
+  using namespace boost::program_options;
+]],
+[[options_description invisible("Invisible options");]])],
+ [AC_MSG_RESULT([yes])],
+ [AC_MSG_FAILURE([libboost_program_options failure])])
+
+AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+  #include <boost/filesystem/operations.hpp>
+  namespace fs = boost::filesystem;
+]],
+[[fs::path::default_name_check(fs::portable_posix_name);]])],
+ [AC_MSG_RESULT([yes])],
+ [AC_MSG_FAILURE([libboost_filesystem failure])])
+else
+  boost_includes="-I\$(top_srcdir)/boost/include"
+  boost_libs="\$(top_builddir)/boost/lib/filesystem/libboost_filesystem.a \$(top_builddir)/boost/lib/program_options/libboost_program_options.a"
+
+  CXXFLAGS="$boost_includes $CXXFLAGS"
+  LIBS="$boost_libs $LIBS"
+fi
+AC_SUBST(boost_includes)
+AC_SUBST(boost_libs)
+AC_SUBST(BOOST_SUFFIX)
+
+#----------------------- Check for cairo ----------------#
 cairo_progs=""
 if test -n "$cairo" && test "$cairo" != "no"; then
    PKG_CHECK_MODULES(CAIRO,cairo)
