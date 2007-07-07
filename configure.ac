@@ -14,6 +14,12 @@ AC_ARG_WITH([extra-includes], AS_HELP_STRING([--with-extra-includes=DIR],[Add ex
   use_extra_includes=NO
 )
 
+# Specify extra library paths
+AC_ARG_WITH([extra-libs], AS_HELP_STRING([--with-extra-libs=DIR],[Add extra library paths]),
+  use_extra_libs="$withval",
+  use_extra_libs=NO
+)
+
 if test -n "$use_extra_includes" && test "$use_extra_includes" != "NO"; then
   ac_save_ifs=$IFS
   IFS=':'
@@ -22,21 +28,6 @@ if test -n "$use_extra_includes" && test "$use_extra_includes" != "NO"; then
   done
   IFS=$ac_save_ifs
 fi
-
-CPPFLAGS="$CPPFLAGS $extra_includes"
-
-if test "${host_os}" = "darwin" ; then
-  CPPFLAGS="$CPPFLAGS -I/sw/include -I/opt/include -I/opt/sw/include -I/usr/local/include"
-  CXXFLAGS="$CXXFLAGS -fvisibility=default"
-fi
-
-AC_SUBST(extra_includes)
-
-# Specify extra library paths
-AC_ARG_WITH([extra-libs], AS_HELP_STRING([--with-extra-libs=DIR],[Add extra library paths]),
-  use_extra_libs="$withval",
-  use_extra_libs=NO
-)
 
 if test -n "$use_extra_libs" && test "$use_extra_libs" != "NO"; then
   ac_save_ifs=$IFS
@@ -48,7 +39,17 @@ if test -n "$use_extra_libs" && test "$use_extra_libs" != "NO"; then
   IFS=$ac_save_ifs
 fi
 
+if test "${host_os}" = "darwin" ; then
+  extra_includes="$extra_includes -I/sw/include -I/opt/include -I/opt/sw/include -I/usr/local/include"
+  extra_libs="$extra_libs -L/sw/lib -L/opt/lib -L/opt/local/lib -L/opt/sw/lib -L/usr/local/lib"
+  extra_libs2="$extra_libs2 /sw/lib /opt/lib /opt/local/lib /opt/sw/lib /usr/local/lib"
+  CXXFLAGS="$CXXFLAGS -fvisibility=default"
+fi
+
+AC_SUBST(extra_includes)
 AC_SUBST(extra_libs2)
+
+CPPFLAGS="$CPPFLAGS $extra_includes"
 LDFLAGS="$LDFLAGS $extra_libs"
 
 # Specify extra library paths
@@ -78,6 +79,9 @@ AM_PROG_CC_C_O
 
 # 2. Checks for libraries.
 # FIXME: Replace `main' with a function in `-lboost_program_options':
+
+AC_ARG_VAR(BOOST_SUFFIX,
+	   [What suffix do the BOOST libraries have? (e.g. libboost_filesystem-st.so would have suffice '-st')])
 
 AC_ARG_VAR(CHIP,
            [What CPU type should we specialize for to make a faster program?)])
@@ -187,23 +191,54 @@ AC_FUNC_MALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_CHECK_FUNCS([floor pow sqrt strchr log2])
 
-# Checks for libraries
-AC_CHECK_LIB(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas)" ; exit 1])
-AC_CHECK_LIB(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl)" ; exit 1])
-AC_CHECK_LIB(gsl, gsl_cdf_beta_P, [], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
-
 CXXFLAGS="$CXXFLAGS $CPPFLAGS"
 
+#---------------------- Check for GSL ------------------#
+echo "------------------------------------------"
+echo " * Looking for the system GSL headers..."
+
+
+# Checks for libraries
+AC_CHECK_HEADERS([gsl/gsl_rng.h])
+AC_CHECK_HEADERS([gsl/gsl_cdf.h])
+AC_CHECK_HEADERS([gsl/gsl_randist.h])
+
+echo " * Looking for the system GSL headers..."
+
+AC_CHECK_LIB(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas)" ; exit 1])
+AC_CHECK_LIB(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl)" ; exit 1])
+AC_CHECK_LIB(gsl, gsl_cdf_beta_P, [echo "Good... you've got GSL version 1.8 or higher"], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
+
+LIBS="$LIBS -lgsl -lgslcblas -lm"
+
+AC_MSG_CHECKING(include/compile/link for the GSL library)
+
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+  #include <gsl/gsl_rng.h>
+  #include <gsl/gsl_cdf.h>
+  #include <gsl/gsl_randist.h>
+]],
+[[gsl_rng_env_setup();gsl_cdf_beta_P(0.5,1,1);]])],
+ [AC_MSG_RESULT([yes])],
+ [AC_MSG_FAILURE([GSL failure])])
+
+
 #---------------------- Check for BOOST ------------------#
+echo "------------------------------------------"
 if test "$use_system_boost" = YES ; then
-AC_CHECK_LIB(boost_program_options,main)
-BOOST_SUFFIX=-st
+echo " * Looking for the system BOOST headers..."
+AC_CHECK_HEADERS([boost/filesystem/operations.hpp])
+AC_CHECK_HEADERS([boost/program_options.hpp])
+
+echo " * Looking for the system BOOST libraries... (suffix = ${BOOST_SUFFIX})"
+AC_CHECK_LIB(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_program_options library! (-lboost_program_options${BOOST_SUFFIX})" ; exit 1])
+AC_CHECK_LIB(boost_filesystem${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_filesystem library! (-lboost_filesystem${BOOST_SUFFIX})" ; exit 1])
 boost_includes=""
 boost_libs="-lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}";
 LIBS="$boost_libs $LIBS"
 CXXFLAGS="$boost_includes $CXXFLAGS"
 
-AC_MSG_CHECKING(for the libboost_program_options${BOOST_SUFFIX} library)
+AC_MSG_CHECKING(include/compile/link for the BOOST program_options library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/program_options.hpp>
   using namespace boost::program_options;
@@ -212,7 +247,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_RESULT([yes])],
  [AC_MSG_FAILURE([libboost_program_options failure])])
 
-AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
+AC_MSG_CHECKING(include/compile/link for the BOOST filesystem library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/filesystem/operations.hpp>
   namespace fs = boost::filesystem;
@@ -221,6 +256,8 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_RESULT([yes])],
  [AC_MSG_FAILURE([libboost_filesystem failure])])
 else
+  echo " * Not using system BOOST libraries: we'll build our own."
+
   boost_includes="-I\$(top_srcdir)/boost/include"
   boost_libs="\$(top_builddir)/boost/lib/filesystem/libboost_filesystem.a \$(top_builddir)/boost/lib/program_options/libboost_program_options.a"
 
@@ -230,6 +267,7 @@ fi
 AC_SUBST(boost_includes)
 AC_SUBST(boost_libs)
 AC_SUBST(BOOST_SUFFIX)
+echo "------------------------------------------"
 
 #----------------------- Check for cairo ----------------#
 cairo_progs=""
@@ -250,7 +288,7 @@ AC_OUTPUT([
   boost/lib/program_options/Makefile
 ])
 
-
+echo ""
 echo "CXXFLAGS = $CXXFLAGS"
 echo "LDFLAGS = $LDFLAGS"
 if test -n "$cairo" && test "$cairo" != "no"; then

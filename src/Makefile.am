@@ -35,8 +35,8 @@ endif
 endif
 
 if HOST_DARWIN
-vpath %.dylib @extra_libs2@ /sw/lib /opt/lib /opt/local/lib /opt/sw/lib /usr/lib /usr/local/lib
-vpath %.a     @extra_libs2@ /sw/lib /opt/lib /opt/local/lib /opt/sw/lib /usr/lib /usr/local/lib
+vpath %.dylib @extra_libs2@ /usr/lib /usr/local/lib
+vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
 if STATIC
 .LIBPATTERNS += lib%.a lib%.dylib 
 else
@@ -57,12 +57,7 @@ endif
 
 endif
 
-if SYSTEM_BOOST
-BOOST_LIBS = -lboost_program_options@BOOST_SUFFIX@ -lboost_filesystem@BOOST_SUFFIX@
-else
-BOOST_LIBS = @top_builddir@/boost/lib/filesystem/libboost_filesystem.a \
-             @top_builddir@/boost/lib/program_options/libboost_program_options.a
-endif
+BOOST_LIBS = @boost_libs@
 
 LIBS = -lgsl -lgslcblas -lm ${BOOST_LIBS}
 
