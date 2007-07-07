@@ -1,4 +1,8 @@
-SUBDIRS = boost/ src/ 
+if NO_SYSTEM_BOOST
+  MAYBE_BOOST = boost/
+endif
+
+SUBDIRS = $(MAYBE_BOOST) src/ 
 
 bin_SCRIPTS = scripts/bali-phy-sge 
 
