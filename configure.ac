@@ -40,10 +40,14 @@ if test -n "$use_extra_libs" && test "$use_extra_libs" != "NO"; then
 fi
 
 if test "${host_os}" = "darwin" ; then
-  extra_includes="$extra_includes -I/sw/include -I/opt/include -I/opt/sw/include -I/usr/local/include"
-  extra_libs="$extra_libs -L/sw/lib -L/opt/lib -L/opt/local/lib -L/opt/sw/lib -L/usr/local/lib"
-  extra_libs2="$extra_libs2 /sw/lib /opt/lib /opt/local/lib /opt/sw/lib /usr/local/lib"
   CXXFLAGS="$CXXFLAGS -fvisibility=default"
+
+  # try to include Fink automagically
+  for dir in /sw /opt /opt/sw ; do
+    extra_includes="$extra_includes -I$dir/include"
+    extra_libs="$extra_libs -L$dir/lib"
+    extra_libs2="$extra_libs2 $dir/lib"
+  done
 fi
 
 AC_SUBST(extra_includes)
