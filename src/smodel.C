@@ -289,7 +289,7 @@ namespace substitution {
     add_super_parameter("g", 1);
 
     for(int i=0;i<size();i++) {
-      string pname = string("v") + Alphabet().letter(i-1);
+      string pname = string("v") + Alphabet().letter(i);
       add_super_parameter(pname, 1.0/size());
     }
 
