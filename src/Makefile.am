@@ -97,7 +97,11 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/tree-dist.C proposals.C n_indels.C distribution.C \
-	  tools/parsimony.C
+	  tools/parsimony.C version.C
+
+version.o: FORCE
+
+FORCE:
 
 #-----------------------------------------------------------------
 
