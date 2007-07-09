@@ -3,57 +3,35 @@
 #include "eigenvalue.H"
 
 
+// The approach used in this file works because of general properties
+// of the transition matrix of reversible (continuous time) markov
+// chains (CTMC).
+// 
+// Specifically, we have
+//  1. pi[i] * Q(i,j)= pi[j] * Q(j,i)
+// We note that 
+//  2. pi[i] * Q(i,j) is symmetric.
+// Therefore we can multiply both sides by the symmetric matrix
+// 1/sqrt( pi[i] * pi[j] ),  yielding 
+//  3. Q(i,j) * sqrt(pi[i] / pi[j]) is ALSO symmetric.
+// We consider PI as the diagonal diagonal matrix such that 
+// PI(i,j) = pi[i].  Then we can express this as
+//  4. PI^0.5 * Q * PI^-0.5
+// We then note that
+//  5. exp(PI^0.5 * Qt * PI^-0.5) = PI^0.5 * exp(Qt) * PI^-0.5
+// We can compute the first exponential using Singular Value
+// Decomposition, because the argument is a symmetric matrix.
+//  Therefore we note that
+//  5.  exp(Qt) = PI^-0.5 * exp(PI^0.5 * Qt * PI^-0.5) * PI^0.5
+// This holds in general for reversible Q, regardless of how Q is
+// constructued! 
+
+
 using std::vector;
 
-// exp(Q) = D^-a * exp(E) * D^a
-// E = exp(D^a * Q * D^-a) = exp(D^1/2 * S * D^1/2)
-
-// how do we make the M constant? - const_cast?
-// return inline matrix_expression?
-
-Matrix exp(const SMatrix& S,const vector<double>& D,double t,double f) 
+// compute the exponential of a matrix that is given in terms of its SVD
+Matrix exp(const EigenValues& solution,double t) 
 {
-  const int n = S.size1();
-
-  // compute S2 = D^1/2 * S * D^1/2
-  std::vector<double> DB(n);
-  std::vector<double> DP(n);
-  std::vector<double> DN(n);
-
-  for(int i=0;i<D.size();i++) {
-    DB[i] = pow(D[i],f - 0.5);
-    DP[i] = sqrt(D[i]);
-    DN[i] = 1.0/DP[i];
-  }
-
-  //SMatrix S2 = prod(DP,prod<Matrix>(S,DP));
-  SMatrix S2 = S;
-  for(int i=0;i<S2.size1();i++)
-    for(int j=0;j<=i;j++)
-      S2(i,j) *= DB[i]*DB[j];
-
-
-  // compute E = exp(S2)
-  Matrix E = exp(S2,t);
-
-  for(int i=0;i<E.size1();i++)
-    for(int j=0;j<E.size2();j++)
-      E(i,j) *= DN[i]*DP[j];
-
-
-  // Double-check that E(i,j) is always positive
-  for(int i=0;i<E.size1();i++)
-    for(int j=0;j<E.size2();j++) {
-      assert(E(i,j) >= -1.0e-13);
-      if (E(i,j)<0)
-	E(i,j)=0;
-    }
-
-  return E;
-}
-
-Matrix exp(const EigenValues& solution,double t) {
-
   Matrix O = solution.Rotation();
   std::vector<double> D = solution.Diagonal();
 
@@ -82,6 +60,7 @@ Matrix exp(const EigenValues& solution,double t) {
   return E;
 }
 
+/// Compute the exponential of a matrix from a reversible markov chain
 Matrix exp(const EigenValues& eigensystem,const vector<double>& D,const double t) {
   const int n = D.size();
 
@@ -102,6 +81,51 @@ Matrix exp(const EigenValues& eigensystem,const vector<double>& D,const double t
       E(i,j) *= DN[i]*DP[j];
 
 
+  for(int i=0;i<E.size1();i++)
+    for(int j=0;j<E.size2();j++) {
+      assert(E(i,j) >= -1.0e-13);
+      if (E(i,j)<0)
+	E(i,j)=0;
+    }
+
+  return E;
+}
+
+// exp(Q) = D^-a * exp(E) * D^a
+// E = exp(D^a * Q * D^-a) = exp(D^1/2 * S * D^1/2)
+
+// how do we make the M constant? - const_cast?
+// return inline matrix_expression?
+
+Matrix exp(const SMatrix& S,const vector<double>& D,double t) 
+{
+  const int n = S.size1();
+
+  // compute S2 = D^1/2 * S * D^1/2
+  std::vector<double> DP(n);
+  std::vector<double> DN(n);
+
+  for(int i=0;i<D.size();i++) {
+    DP[i] = sqrt(D[i]);
+    DN[i] = 1.0/DP[i];
+  }
+
+  //SMatrix S2 = prod(DP,prod<Matrix>(S,DP));
+  SMatrix S2 = S;
+  for(int i=0;i<S2.size1();i++)
+    for(int j=0;j<=i;j++)
+      S2(i,j) *= DP[i]*DP[j];
+
+
+  // compute E = exp(S2)
+  Matrix E = exp(S2,t);
+
+  for(int i=0;i<E.size1();i++)
+    for(int j=0;j<E.size2();j++)
+      E(i,j) *= DN[i]*DP[j];
+
+
+  // Double-check that E(i,j) is always positive
   for(int i=0;i<E.size1();i++)
     for(int j=0;j<E.size2();j++) {
       assert(E(i,j) >= -1.0e-13);
