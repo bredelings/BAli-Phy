@@ -1,9 +1,5 @@
 /* Version 2: based on operating on multiple alignments */
 
-#ifndef BALI_PHY_VERSION
-#define BALI_PHY_VERSION "UNKNOWN"
-#endif
-
 #include <cmath>
 #include <ctime>
 #include <iostream>
@@ -34,6 +30,7 @@
 #include "pow2.H"
 #include "proposals.H"
 #include "tree-util.H" //extends
+#include "version.H"
 
 namespace fs = boost::filesystem;
 
@@ -429,7 +426,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("version")) {
-    cout<<"VERSION: "<<BALI_PHY_VERSION<<"\nBUILD: "<<__DATE__<<" "<<__TIME__<<"\n";
+    print_version();
     exit(0);
   }
 
