@@ -239,7 +239,6 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   add_MH_move(P, log_scaled(more_than(0,shift_cauchy)),
 	                                        "M2::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
-  add_MH_move(P, between(0,1,shift_cauchy),   "c",              "c_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "f",              "f_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  parameter_moves);
@@ -276,6 +275,10 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   set_if_undef(P.keys,"v_dirichlet_N",1.0);
   P.keys["v_dirichlet_N"] *= total_length;
   add_MH_move(P, dirichlet_proposal,    "v*", "v_dirichlet_N",     1,  parameter_moves);
+
+  set_if_undef(P.keys,"b_dirichlet_N",1.0);
+  P.keys["b_dirichlet_N"] *= total_length;
+  add_MH_move(P, dirichlet_proposal,    "b_*", "b_dirichlet_N",     1,  parameter_moves);
 
   set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
   P.keys["M2::f_dirichlet_N"] *= 10;
