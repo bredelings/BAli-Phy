@@ -682,6 +682,12 @@ public:
     return rc;
   } 
 
+  std::streambuf* rdbuf1() {return sb1;}
+  std::streambuf* rdbuf2() {return sb2;}
+
+  void setbuf1(std::streambuf* sb) {sb1 = sb;}
+  void setbuf2(std::streambuf* sb) {sb2 = sb;}
+
   teebuf(std::streambuf* s1, std::streambuf* s2):
     sb1(s1),
     sb2(s2)
@@ -1010,17 +1016,26 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
 int main(int argc,char* argv[]) 
 { 
   std::ios::sync_with_stdio(false);
-  std::streambuf* const cerr_sbuf = cerr.rdbuf();
-  std::ostringstream errors;
-  teebuf tee1(cerr_sbuf, errors.rdbuf());
+
+  ostream out_screen(cout.rdbuf());
+  ostream err_screen(cerr.rdbuf());
+
+  std::ostringstream out_cache;
+  std::ostringstream err_cache;
+
+  teebuf tee_out(out_screen.rdbuf(), out_cache.rdbuf());
+  teebuf tee_err(err_screen.rdbuf(), err_cache.rdbuf());
+
+  ostream out_both(&tee_out);
+  ostream err_both(&tee_err);
 
   try {
 
     fp_scale::initialize();
     fs::path::default_name_check(fs::portable_posix_name);
 
-    //------ Capture copy of 'cerr' output in 'errors' ------//
-    cerr.rdbuf(&tee1);
+    //------ Capture copy of 'cerr' output in 'err_cache' ------//
+    cerr.rdbuf(err_both.rdbuf());
 
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
@@ -1031,6 +1046,8 @@ int main(int argc,char* argv[])
     //---------- Initialize random seed -----------//
     unsigned long seed = init_rng_and_get_seed(args);
     
+    out_cache<<"random seed = "<<seed<<endl<<endl;
+
     //----------- Load alignment and tree ---------//
     vector<alignment> A;
     SequenceTree T;
@@ -1038,6 +1055,12 @@ int main(int argc,char* argv[])
       load_As_and_T(args,A,T);
     else
       load_As_and_random_T(args,A,T);
+
+    vector<string> filenames = args["align"].as<vector<string> >();
+    for(int i=0;i<filenames.size();i++) {
+      out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
+      out_cache<<"alphabet"<<i+1<<" = "<<A[i].get_alphabet().name<<endl<<endl;
+    }
 
     //--------- Handle branch lengths <= 0 --------//
     sanitize_branch_lengths(T);
@@ -1048,17 +1071,16 @@ int main(int argc,char* argv[])
 
     //---------- Open output files -----------//
     vector<ostream*> files = init_files(args,argc,argv);
+
+    //------ Redirect output to files -------//
     ostream& s_out = *files[0];
     ostream& s_err = *files[1];
 
-    s_out<<"random seed = "<<seed<<endl<<endl;
-    vector<string> filenames = args["align"].as<vector<string> >();
-    for(int i=0;i<filenames.size();i++) {
-      s_out<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
-      s_out<<"alphabet"<<i+1<<" = "<<A[i].get_alphabet().name<<endl<<endl;
-    }
+    s_out<<out_cache.str(); s_out.clear();
+    s_err<<err_cache.str(); s_err.clear();
 
-    s_err<<errors.str();
+    tee_out.setbuf2(s_out.rdbuf());
+    tee_err.setbuf2(s_err.rdbuf());
 
     cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
     clog.flush() ; clog.rdbuf(s_err.rdbuf());
@@ -1157,12 +1179,12 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::bad_alloc&) {
-    cerr<<"Doh!  Some kind of memory problem?\n";
+    err_both<<"Doh!  Some kind of memory problem?\n";
     report_mem();
     exit(1);
   }
   catch (std::exception& e) {
-    cerr<<"Error: "<<e.what()<<endl;
+    err_both<<"Error: "<<e.what()<<endl;
     exit(1);
   }
 
