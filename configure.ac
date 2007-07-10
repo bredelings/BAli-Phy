@@ -203,8 +203,9 @@ AM_CONDITIONAL(HAVE_CAIRO, test "${cairo}" = yes)
 AC_HEADER_STDC
 AC_FUNC_MALLOC
 AC_FUNC_SELECT_ARGTYPES
-AC_CHECK_FUNCS([floor pow sqrt strchr log2])
-
+AC_CHECK_HEADERS([sys/resource.h])
+AC_CHECK_FUNCS([floor pow sqrt strchr log2 getrlimit setrlimit])
+AC_CHECK_TYPE(rlim_t, ,AC_DEFINE(rlim_t, [unsigned long],[declare rlim_t as unsigned long if not found in <sys/resource.h>]),[#include <sys/resource.h>])
 CXXFLAGS="$CXXFLAGS $CPPFLAGS"
 
 #---------------------- Check for GSL ------------------#

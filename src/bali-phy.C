@@ -1,5 +1,12 @@
 /* Version 2: based on operating on multiple alignments */
 
+#include "config.h"
+#ifdef HAVE_SYS_RESOURCE_H
+extern "C" {
+#include <sys/resource.h>
+}
+#endif
+
 #include <cmath>
 #include <ctime>
 #include <iostream>
@@ -356,12 +363,12 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 
 #ifdef DEBUG_MEMORY
 void * operator new(size_t sz) throw(std::bad_alloc) {
-  printf("new (_main.cpp) called, sz = %d\n",sz);
+  printf("new called, sz = %d\n",sz);
   return malloc(sz); 
 }
 
 void operator delete(void * p) throw() {
-  printf("delete (_main.cpp) called, content = %d\n",(*(int*)p));
+  printf("delete called, content = %d\n",(*(int*)p));
   free(p); 
 }
 #endif
@@ -1013,6 +1020,37 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
   return smodels;
 }
 
+#if defined(HAVE_SYS_RESOURCE_H)
+string rlim_minutes(rlim_t val)
+{
+  if (val == RLIM_INFINITY)
+    return "unlimited";
+  else
+    return convertToString<>(val/60) + " minutes";
+}
+
+void raise_cpu_limit(ostream& o)
+{
+  rlimit limits;
+
+  getrlimit(RLIMIT_CPU,&limits);
+
+  o<<"OLD cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
+
+  limits.rlim_cur = RLIM_INFINITY;
+
+  setrlimit(RLIMIT_CPU,&limits);
+  getrlimit(RLIMIT_CPU,&limits);
+
+  o<<"NEW cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
+}
+#else
+void raise_cpu_limit(ostream& o) 
+{
+  o<<"Not checking CPU time limits..."<<endl;
+}
+#endif
+
 int main(int argc,char* argv[]) 
 { 
   std::ios::sync_with_stdio(false);
@@ -1167,6 +1205,8 @@ int main(int argc,char* argv[])
     if (args.count("show-only"))
       print_stats(cout,cout,P);
     else {
+      raise_cpu_limit(err_both);
+
       signal(SIGHUP,SIG_IGN);
       signal(SIGXCPU,SIG_IGN);
 
