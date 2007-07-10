@@ -664,6 +664,12 @@ public:
     return rc;
   } 
 
+  std::streambuf* rdbuf1() {return sb1;}
+  std::streambuf* rdbuf2() {return sb2;}
+
+  void setbuf1(std::streambuf* sb) {sb1 = sb;}
+  void setbuf2(std::streambuf* sb) {sb2 = sb;}
+
   teebuf(std::streambuf* s1, std::streambuf* s2):
     sb1(s1),
     sb2(s2)
@@ -754,17 +760,26 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 int main(int argc,char* argv[]) 
 { 
   std::ios::sync_with_stdio(false);
-  std::streambuf* const cerr_sbuf = cerr.rdbuf();
-  std::ostringstream errors;
-  teebuf tee1(cerr_sbuf, errors.rdbuf());
+
+  ostream out_screen(cout.rdbuf());
+  ostream err_screen(cerr.rdbuf());
+
+  std::ostringstream out_cache;
+  std::ostringstream err_cache;
+
+  teebuf tee_out(out_screen.rdbuf(), out_cache.rdbuf());
+  teebuf tee_err(err_screen.rdbuf(), err_cache.rdbuf());
+
+  ostream out_both(&tee_out);
+  ostream err_both(&tee_err);
 
   try {
 
     fp_scale::initialize();
     fs::path::default_name_check(fs::portable_posix_name);
 
-    //------ Capture copy of 'cerr' output in 'errors' ------//
-    cerr.rdbuf(&tee1);
+    //------ Capture copy of 'cerr' output in 'err_cache' ------//
+    cerr.rdbuf(err_both.rdbuf());
 
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
@@ -796,6 +811,8 @@ int main(int argc,char* argv[])
     else
       seed = myrand_init();
     
+    out_cache<<"random seed = "<<seed<<endl<<endl;
+
     //----------- Load alignment and tree ---------//
     alignment A;
     SequenceTree T;
@@ -803,6 +820,9 @@ int main(int argc,char* argv[])
       load_A_and_T(args,A,T);
     else
       load_A_and_random_T(args,A,T);
+
+    out_cache<<"data = "<<args["align"].as<string>()<<endl<<endl;
+    out_cache<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
 
     //--------- Handle branch lengths <= 0 --------//
     double min_branch = 0.000001;
@@ -826,11 +846,11 @@ int main(int argc,char* argv[])
     ostream& s_out = *files[0];
     ostream& s_err = *files[1];
 
-    s_out<<"random seed = "<<seed<<endl<<endl;
-    s_out<<"data = "<<args["align"].as<string>()<<endl<<endl;
-    s_out<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
+    s_out<<out_cache.str(); s_out.clear();
+    s_err<<err_cache.str(); s_err.clear();
 
-    s_err<<errors.str();
+    tee_out.setbuf2(s_out.rdbuf());
+    tee_err.setbuf2(s_err.rdbuf());
 
     cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
     clog.flush() ; clog.rdbuf(s_err.rdbuf());
@@ -966,12 +986,12 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::bad_alloc) {
-    cerr<<"Doh!  Some kind of memory problem?\n";
+    err_both<<"Doh!  Some kind of memory problem?\n";
     report_mem();
     exit(1);
   }
   catch (std::exception& e) {
-    cerr<<"Error: "<<e.what()<<endl;
+    err_both<<"Error: "<<e.what()<<endl;
     exit(1);
   }
 
