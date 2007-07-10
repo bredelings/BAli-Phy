@@ -44,7 +44,17 @@ else
 endif
 endif
 
-if HOST_MSWINDOWS
+if HOST_MINGW32
+vpath %.dll   @extra_libs2@ /usr/lib /usr/local/lib
+vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
+if STATIC
+.LIBPATTERNS += lib%.a
+else
+.LIBPATTERNS += lib%.dll lib%.a
+endif
+endif
+
+if HOST_CYGWIN
 vpath %.dll   @extra_libs2@ /usr/lib /usr/local/lib
 vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
 if STATIC

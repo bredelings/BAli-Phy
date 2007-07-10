@@ -39,7 +39,16 @@ if test -n "$use_extra_libs" && test "$use_extra_libs" != "NO"; then
   IFS=$ac_save_ifs
 fi
 
-if test "${host_os}" = "darwin" ; then
+case "${host_os}" in  
+  cygwin* ) host_os_noversion=cygwin ;;
+  darwin*) host_os_noversion=darwin ;;
+  mingw32*) host_os_noversion=mingw32 ;;
+  linux*) host_os_noversion=linux ;;
+  *) ;;
+esac
+
+if test "${host_os_noversion}" = darwin ; then 
+
   CXXFLAGS="$CXXFLAGS -fvisibility=default"
 
   # try to include Fink automagically
@@ -160,7 +169,7 @@ if test "$GXX" = yes ; then
   fi
 
   # also set the LDFLAGS for a static build
-  if test "${host_os}" != "darwin" && test "$static" = yes ; then
+  if test "${host_os_noversion}" != "darwin" && test "$static" = yes ; then
     LDFLAGS="$LDFLAGS -static"
   fi
 
@@ -177,8 +186,9 @@ AM_CONDITIONAL(SYSTEM_BOOST, test "$use_system_boost" = YES)
 AM_CONDITIONAL(NO_SYSTEM_BOOST, test "$use_system_boost" = NO)
 
 #determine the OS that is being targeted
-AM_CONDITIONAL(HOST_MSWINDOWS,test "${host_os}" = mingw32)
-AM_CONDITIONAL(HOST_LINUX,test "${host_os}" = linux-gnu || test "${host_os}" = linux)
+AM_CONDITIONAL(HOST_MINGW32,test "${host_os_noversion}" = mingw32)
+AM_CONDITIONAL(HOST_CYGWIN,test "${host_os_noversion}" = cygwin)
+AM_CONDITIONAL(HOST_LINUX,test "${host_os_noversion}" = linux)
 AM_CONDITIONAL(HOST_DARWIN,test "${host_os}" = darwin)
 
 #determine the CPU that is being targetted:
