@@ -1,9 +1,5 @@
 /* Version 2: based on operating on multiple alignments */
 
-#ifndef BALI_PHY_VERSION
-#define BALI_PHY_VERSION "UNKNOWN"
-#endif
-
 #include <cmath>
 #include <ctime>
 #include <iostream>
@@ -34,6 +30,7 @@
 #include "pow2.H"
 #include "proposals.H"
 #include "tree-util.H" //extends
+#include "version.H"
 
 namespace fs = boost::filesystem;
 
@@ -241,7 +238,6 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   add_MH_move(P, log_scaled(more_than(0,shift_cauchy)),
 	                                        "M2::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
-  add_MH_move(P, between(0,1,shift_cauchy),   "c",              "c_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "f",              "f_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  parameter_moves);
@@ -273,6 +269,10 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   set_if_undef(P.keys,"v_dirichlet_N",1.0);
   P.keys["v_dirichlet_N"] *= A.length();
   add_MH_move(P, dirichlet_proposal,    "v*", "v_dirichlet_N",     1,  parameter_moves);
+
+  set_if_undef(P.keys,"b_dirichlet_N",1.0);
+  P.keys["b_dirichlet_N"] *= A.length();
+  add_MH_move(P, dirichlet_proposal,    "b_*", "b_dirichlet_N",     1,  parameter_moves);
 
   set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
   P.keys["M2::f_dirichlet_N"] *= 10;
@@ -415,7 +415,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("version")) {
-    cout<<"VERSION: "<<BALI_PHY_VERSION<<"\nBUILD: "<<__DATE__<<" "<<__TIME__<<"\n";
+    print_version();
     exit(0);
   }
 

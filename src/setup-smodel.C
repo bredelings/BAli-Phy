@@ -227,6 +227,16 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonsFrequencyModel(*C));
   }
+  else if (match(string_stack,"pi=codons2",arg)) 
+  {
+    const Codons* C = dynamic_cast<const Codons*>(&a);
+    if (not C)
+      throw myexception()<<"pi=codons2:: '"<<a.name<<"' is not a codon alphabet.";
+
+    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=codons2");
+
+    model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonsFrequencyModel2(*C));
+  }
   else
     return false;
   return true;

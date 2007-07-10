@@ -275,7 +275,7 @@ namespace substitution {
 
   efloat_t TripletsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(parameters_,1,size(),1.0);
+    return dirichlet_pdf(parameters_,1,size(),4.0);
   }
 
   string TripletsFrequencyModel::name() const 
@@ -308,7 +308,7 @@ namespace substitution {
 
   void AACodonFrequencyModel::recalc(const vector<int>&)
   {
-    //----------- get amino acid frequencyes and counts ------------//
+    //----------- get amino acid frequencies and counts ------------//
     valarray<double> f_aa = SubModels(0).frequencies();
     vector<int> n_aa(aa_size(),0);
     for(int i=0;i<Alphabet().size();i++) {
@@ -403,7 +403,7 @@ namespace substitution {
 
   efloat_t CodonsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(parameters_, 2, aa_size(), 1.0);
+    return dirichlet_pdf(parameters_, 2, aa_size(), 2.0);
   }
 
   string CodonsFrequencyModel::name() const 
@@ -415,6 +415,71 @@ namespace substitution {
     : CodonFrequencyModel(C)
   {
     add_super_parameter("c", 0.5);
+    add_super_parameter("h", 0.5);
+
+    for(int i=0;i<C.getAminoAcids().size();i++) {
+      string pname = string("b_") + Alphabet().getAminoAcids().letter(i);
+      add_super_parameter(pname, 1.0/C.getAminoAcids().size());
+    }
+
+    insert_submodel("1",TripletsFrequencyModel(C));
+
+    read();
+    recalc_all();
+  }
+
+  //------------------- Codons Frequency Model 2 -----------------//
+
+  void CodonsFrequencyModel2::recalc(const vector<int>&)
+  {
+    //------------- compute frequencies ------------------//
+    valarray<double> aa_pref_ = get_varray(parameters_, 1, aa_size());
+
+    valarray<double> aa_pref(size());
+    for(int i=0;i<size();i++)
+      aa_pref[i] = aa_pref_[Alphabet().translate(i)];
+
+    // get codon frequencies of sub-alphabet
+    valarray<double> sub_pi = SubModels(0).frequencies();
+
+    // scale triplet frequencies by aa prefs
+    for(int i=0;i<size();i++) 
+      pi[i] = sub_pi[i] * aa_pref[i];
+
+    // scale so as to sum to 1
+    pi /= pi.sum();
+
+
+    //------------ compute transition rates -------------//
+    double h = parameters_[0];
+
+    valarray<double> aa_pref_h(size());
+    for(int i=0;i<size();i++)
+      aa_pref_h[i] = pow(aa_pref[i], h);
+
+
+    for(int i=0;i<size();i++)
+      for(int j=0;j<size();j++)
+	R(i,j) = SubModels(0)(i,j) * aa_pref_h[i]/aa_pref[i] * aa_pref_h[j];
+
+    // diagonal entries should have no effect
+    for(int i=0;i<size();i++)
+      R(i,i) = 0;
+  }
+
+  efloat_t CodonsFrequencyModel2::super_prior() const 
+  {
+    return dirichlet_pdf(parameters_, 1, aa_size(), 2.0);
+  }
+
+  string CodonsFrequencyModel2::name() const 
+  {
+    return "pi=codons";
+  }
+
+  CodonsFrequencyModel2::CodonsFrequencyModel2(const Codons& C)
+    : CodonFrequencyModel(C)
+  {
     add_super_parameter("h", 0.5);
 
     for(int i=0;i<C.getAminoAcids().size();i++) {

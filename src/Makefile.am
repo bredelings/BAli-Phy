@@ -44,7 +44,17 @@ else
 endif
 endif
 
-if HOST_MSWINDOWS
+if HOST_MINGW32
+vpath %.dll   @extra_libs2@ /usr/lib /usr/local/lib
+vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
+if STATIC
+.LIBPATTERNS += lib%.a
+else
+.LIBPATTERNS += lib%.dll lib%.a
+endif
+endif
+
+if HOST_CYGWIN
 vpath %.dll   @extra_libs2@ /usr/lib /usr/local/lib
 vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
 if STATIC
@@ -91,7 +101,11 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/tree-dist.C proposals.C n_indels.C distribution.C \
-	  tools/parsimony.C
+	  tools/parsimony.C version.C
+
+version.o: FORCE
+
+FORCE:
 
 #-----------------------------------------------------------------
 

@@ -62,6 +62,7 @@ namespace substitution {
   using std::valarray;
 
   //--------------------- class AlphabetModel ----------------------//
+  /// A model that is associated with an alphabet
   class AlphabetModel: virtual public ::Model
   {
   public:
@@ -70,6 +71,7 @@ namespace substitution {
     unsigned size() const {return Alphabet().size();}
   };
 
+  /// This class stores an alphabet AND associates a model with it
   template <class alphabet_t>
   class ModelWithAlphabet: virtual public AlphabetModel
   {
@@ -84,7 +86,7 @@ namespace substitution {
   
 
 
-  /// A generic substitution model
+  /// A generic model of the process of substitution
   class Model: virtual public AlphabetModel
   {
   public:
@@ -107,8 +109,8 @@ namespace substitution {
   // non-overlapping intervals.  We should have that transition_p(t/2)^2 = transition_p(t)
   // This model must also be reversible
 
-  class ReversibleModel: virtual public Model {
-
+  class ReversibleModel: virtual public Model 
+  {
   public:
     /// Make a copy of this object
     virtual ReversibleModel* clone() const =0;
@@ -127,7 +129,8 @@ namespace substitution {
   /// In additive models P(X[t+tau]=b|X[t]=a) = P(X[tau]=b|X[0]=a)
   /// Also E f(X,(a,b)) = E f(X,(0,b-a))
 
-  class AdditiveModel: virtual public Model {
+  class AdditiveModel: virtual public Model 
+  {
   public:
     virtual AdditiveModel* clone() const=0;
 
@@ -137,7 +140,8 @@ namespace substitution {
     AdditiveModel() {}
   };
 
-  class ReversibleAdditiveModel: virtual public ReversibleModel, virtual public AdditiveModel {
+  class ReversibleAdditiveModel: virtual public ReversibleModel, virtual public AdditiveModel 
+  {
   public:
     virtual ReversibleAdditiveModel* clone() const=0;
   };
@@ -146,8 +150,8 @@ namespace substitution {
   // Q_t(a,b) = sum_c Q[0,tau](a,c) x Q[tau,t](c,b)
 
   // In an independant additive
-  class IndependantAdditiveModel: virtual public AdditiveModel {
-
+  class IndependantAdditiveModel: virtual public AdditiveModel 
+  {
   public:
     virtual IndependantAdditiveModel* clone() const=0;
 
@@ -539,6 +543,25 @@ namespace substitution {
   };
 
   
+  class CodonsFrequencyModel2: public CodonFrequencyModel,
+			      public SuperModelOver<TripletsFrequencyModel>
+  {
+  protected:
+    void recalc(const vector<int>&);
+
+    int aa_size() const {return Alphabet().getAminoAcids().size();}
+
+  public:
+    CodonsFrequencyModel2* clone() const {return new CodonsFrequencyModel2(*this);}
+
+    efloat_t super_prior() const;
+
+    string name() const;
+
+    explicit CodonsFrequencyModel2(const Codons& C);
+  };
+
+  
 
   //------------------------- Reversible Substitution Model -----------------------//
 
@@ -684,7 +707,7 @@ namespace substitution {
   //Do I really need to special-case this so that multi-models of RA models are
   //known to be RA?  Would prefer not to use templates unless necessary/helpful.
 
-  /// A linear combination of reversible additive models w/ identical equilibria
+  /// A mixture of reversible additive models
   class MultiModel: public ReversibleAdditiveModel 
   {
   public:
