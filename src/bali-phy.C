@@ -1035,6 +1035,7 @@ void raise_cpu_limit(ostream& o)
 
   getrlimit(RLIMIT_CPU,&limits);
 
+  o<<endl;
   o<<"OLD cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
 
   limits.rlim_cur = RLIM_INFINITY;
