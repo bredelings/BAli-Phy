@@ -549,8 +549,21 @@ namespace substitution {
     //--------------- Calculate eigensystem -----------------//
     SMatrix S(n,n);
     for(int i=0;i<n;i++)
-      for(int j=0;j<=i;j++)
+      for(int j=0;j<=i;j++) {
 	S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
+
+#ifndef NDEBUG
+	// check reversibility of rate matrix
+	if (i != j) {
+	  assert (S(i,j) >= 0);
+	  double p12 = Q(i,j)*frequencies()[i];
+	  double p21 = Q(j,i)*frequencies()[j];
+	  assert (abs(p12-p21) < 1.0e-12*(1.0+abs(p12)));
+	}
+	else
+	  assert (Q(i,j) <= 0);
+#endif
+      }
 
     //---------------- Compute eigensystem ------------------//
     eigensystem = EigenValues(S);
@@ -1136,6 +1149,57 @@ namespace substitution {
 
     if (p_change != -1)
       SubModel().fixed(p_change,true);
+  }
+
+  //--------------- Dirichlet-based Model----------------//
+
+  efloat_t DirichletParameterModel::super_prior() const
+  {
+    efloat_t Pr  = 1;
+    Pr *= dirichlet_pdf(parameters_,0              ,p_values.size(),4);
+    Pr *= dirichlet_pdf(parameters_,p_values.size(),p_values.size(),2);
+    return Pr;
+  }
+
+  void DirichletParameterModel::recalc(const vector<int>&) 
+  {
+    // write parameter values to fraction / p_values
+    for(int i=0;i<p_values.size();i++)
+    {
+      fraction[i] = parameters_[i];
+      p_values[i] = parameters_[i+p_values.size()];
+    }
+    
+    // We need to do this when either P_values changes, or the SUBMODEL changes
+    recalc_submodel_instances();
+  }
+
+  string DirichletParameterModel::name() const {
+    string p_name = "rate";
+    if (p_change > -1)
+      p_name = SubModels(0).parameter_name(p_change);
+
+    string dist_name = p_name + "~Dirichlet[" + convertToString(p_values.size()) + "]";
+    return SubModels(0).name() + " + " + dist_name;
+  }
+
+  DirichletParameterModel::DirichletParameterModel(const MultiModel& M, int p, int n)
+    :MultiParameterModel(M,p,n)
+  {
+    // bin frequencies
+    for(int i=0;i<n;i++) {
+      string pname = "DP::f" + convertToString(i+1);
+      add_super_parameter(pname, 1.0/n);
+    }
+
+    // bin values
+    string p_name = "DP::rate";
+    if (p >= 0) p_name = string("DP::") + M.parameter_name(p);
+    for(int i=0;i<n;i++)
+      add_super_parameter(p_name+convertToString(i+1), 1.0);
+
+    read();
+    recalc_all();
   }
 
   //--------------- Distribution-based Model----------------//
