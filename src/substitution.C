@@ -44,7 +44,7 @@ namespace substitution {
     }
 
     // SOME model must be possible
-    assert(0 < total and total <= 1.00000000001);
+    assert(0 <= total and total <= 1.00000000001);
 
     return total;
   }
@@ -112,7 +112,7 @@ namespace substitution {
       }
 
       // SOME model must be possible
-      assert(0 < p_col and p_col <= 1.00000000001);
+      assert(0 <= p_col and p_col <= 1.00000000001);
 
       total *= p_col;
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
@@ -338,7 +338,7 @@ namespace substitution {
       }
 
       // SOME model must be possible
-      assert(0 < p_col and p_col <= 1.00000000001);
+      assert(0 <= p_col and p_col <= 1.00000000001);
       for(int m=0;m<n_models;m++)
 	probs(i,m) /= p_col;
     }
