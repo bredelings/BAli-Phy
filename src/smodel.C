@@ -1163,6 +1163,23 @@ namespace substitution {
 
   void DirichletParameterModel::recalc(const vector<int>&) 
   {
+    // sort bins to enforce monotonically increasing order
+    vector<double> values;
+    for(int i=0;i<p_values.size();i++)
+      values.push_back(parameters_[i+p_values.size()]);
+    
+    vector<int> order = iota<int>(p_values.size());
+
+    sort(order.begin(), order.end(), sequence_order<double>(values));
+
+    vector<double> p2 = parameters_;
+    for(int i=0;i<p_values.size();i++) {
+      p2[i] = parameters_[order[i]];
+      p2[i+p_values.size()] = parameters_[order[i]+p_values.size()];
+    }
+
+    parameters_ = p2;
+
     // write parameter values to fraction / p_values
     for(int i=0;i<p_values.size();i++)
     {
