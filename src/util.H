@@ -424,4 +424,8 @@ void scan_lines(std::istream& file,int skip,int subsample, int max,
 		accumulator<std::string>& op);
 
 std::vector<std::string> load_lines(std::istream& file,int skip,int subsample, int max);
+
+std::string get_basename(std::string filename);
+
+std::string remove_extension(std::string filename);
 #endif

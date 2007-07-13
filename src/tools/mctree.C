@@ -383,16 +383,6 @@ void check_partitions_informative(const vector<Partition>& partitions)
 
 string get_graph_name(string filename)
 {
-  // remove the pathname 
-  while(filename.find('/') != -1) 
-    filename = filename.substr(filename.find('/')+1);
-
-  // remove the extension
-  int dot = filename.find('.');
-  string name = filename;
-  if (dot != -1)
-    name = filename.substr(0,dot);
-
-  return name;
+  return remove_extension(get_basename(filename));
 }
 

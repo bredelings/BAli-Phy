@@ -155,3 +155,21 @@ vector<string> load_lines(std::istream& file,int skip,int subsample, int max)
   return lines;
 }
 
+std::string get_basename(std::string filename)
+{
+  // remove the pathname 
+  while(filename.find('/') != -1) 
+    filename = filename.substr(filename.find('/')+1);
+
+  return filename;
+}
+
+std::string remove_extension(std::string filename)
+{
+  // remove the extension
+  int dot = filename.find('.');
+  string name = filename;
+  if (dot != -1)
+    name = filename.substr(0,dot);
+  return name;
+}

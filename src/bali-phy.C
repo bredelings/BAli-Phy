@@ -629,7 +629,7 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
 
     vector<string> alignment_filenames = args["align"].as<vector<string> >();
     for(int i=0;i<alignment_filenames.size();i++)
-      alignment_filenames[i] = fs::path( alignment_filenames[i] ).leaf();
+      alignment_filenames[i] = remove_extension(fs::path( alignment_filenames[i] ).leaf());
 
     string name = join(alignment_filenames,'-');
     if (args.count("name"))
