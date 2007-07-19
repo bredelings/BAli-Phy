@@ -1156,8 +1156,8 @@ namespace substitution {
   efloat_t DirichletParameterModel::super_prior() const
   {
     efloat_t Pr  = 1;
-    Pr *= dirichlet_pdf(parameters_,0              ,p_values.size(),4);
-    Pr *= dirichlet_pdf(parameters_,p_values.size(),p_values.size(),2);
+    Pr *= dirichlet_pdf(parameters_,0              ,p_values.size(),1);
+    Pr *= dirichlet_pdf(parameters_,p_values.size(),p_values.size(),1);
     return Pr;
   }
 
