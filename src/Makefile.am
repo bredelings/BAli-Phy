@@ -85,7 +85,7 @@ TOOLS = model_P statreport alignment-gild \
 	joint-parsimony stats-merge stats-select alignment-identity \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
-	partitions-supported trees-pair-distances
+	partitions-supported trees-pair-distances analyze-rates
 
 
 bin_PROGRAMS = bali-phy ${TOOLS}
@@ -129,6 +129,11 @@ stats_merge_SOURCES = tools/stats-merge.C util.C
 #-------------------------- statreport --------------------------
 
 stats_select_SOURCES = tools/stats-select.C util.C tools/stats-table.C
+
+#-------------------------- statreport --------------------------
+
+analyze_rates_SOURCES = tools/analyze-rates.C util.C tools/stats-table.C \
+	tools/statistics.C
 
 #---------------------------------------------------------------
 
