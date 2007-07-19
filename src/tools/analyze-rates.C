@@ -31,6 +31,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "Produce help message")
     ("level", value<double>()->default_value(0.5),"confidence level to report")
     ("bins", value<unsigned>()->default_value(100),"number of bins")
+    ("type", value<string>()->default_value("icdf"),"icdf, cdf, pdf")
     ;
 
   options_description all("All options");
@@ -76,10 +77,40 @@ struct discrete_distribution
       r[i] /= mr;
   }
 
+  void sort();
+
   discrete_distribution(int n)
     :f(n),r(n)
   {}
 };
+
+void discrete_distribution::sort()
+{
+  // sort bins to enforce monotonically increasing order of rates
+  vector<double> rates;
+  for(int i=0;i<size();i++)
+    rates.push_back(r[i]);
+    
+  vector<int> order = iota<int>(size());
+
+  ::sort(order.begin(), order.end(), sequence_order<double>(rates));
+
+  valarray<double> f2 = f;
+  valarray<double> r2 = r;
+
+  for(int i=0;i<size();i++) 
+  {
+    f2[i] = f[order[i]];
+    r2[i] = r[order[i]];
+  }
+
+  f = f2;
+  r = r2;
+}
+
+void add_triangle(double r1, double r2, double r3,double p, vector<double>& pdf, double R)
+{
+}
 
 int main(int argc,char* argv[]) 
 { 
@@ -136,6 +167,7 @@ int main(int argc,char* argv[])
 	D.r[i] = v[r_index[i]];
       }
       D.normalize();
+      D.sort();
 
       data.push_back(D);
 
@@ -169,10 +201,27 @@ int main(int argc,char* argv[])
 
     vector<double> q_rates(B);
     for(int b=0;b<B;b++) 
+      q_rates[b] = statistics::quantile(rates[b],l);
+
+
+    if (args["type"].as<string>() == "icdf")
+      for(int b=0;b<B;b++) {
+	double bl = (double(b)+0.5)/B;
+	cout<<bl<<"\t"<<q_rates[b]<<endl;
+      }
+    else if (args["type"].as<string>() == "cdf")
+      for(int b=0;b<B;b++) {
+	double bl = (double(b)+0.5)/B;
+	cout<<q_rates[b]<<"\t"<<bl<<endl;
+      }
+    else if (args["type"].as<string>() == "pdf")
     {
-      assert(rates[b].size() == data.size());
-      double bl = (double(b)+0.5)/B;
-      cout<<bl<<"\t"<<statistics::quantile(rates[b],l)<<endl;
+      double R = max(q_rates);
+
+      vector<double> pdf(1000,0);
+      for(int b=1;b<B-1;b++) {
+	add_triangle(q_rates[b-1],q_rates[b],q_rates[b],1.0/B,pdf,R);
+      }
     }
   }
   catch (std::exception& e) {
