@@ -31,6 +31,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "Produce help message")
     ("level", value<double>()->default_value(0.5),"confidence level to report")
     ("bins", value<unsigned>()->default_value(100),"number of bins")
+    ("smooth", value<unsigned>()->default_value(30),"number of smoothing iterations")
     ("type", value<string>()->default_value("icdf"),"icdf, cdf, pdf")
     ;
 
@@ -108,8 +109,24 @@ void discrete_distribution::sort()
   r = r2;
 }
 
-void add_triangle(double r1, double r2, double r3,double p, vector<double>& pdf, double R)
+vector<double> smooth(vector<double>& pdf,double f) 
 {
+  vector<double> pdf2(pdf.size(),0);
+
+  for(int i=1;i<pdf.size()-1;i++) {
+    pdf2[i-1] += pdf[i]*(1.0-f)/2.0;
+    pdf2[i+1] += pdf[i]*(1.0-f)/2.0;
+    pdf2[i  ] += pdf[i]*f;
+  }
+
+  pdf2[0] += pdf[0]*0.5*(f+1);
+  pdf2[1] += pdf[0]*(1.0-f)/2.0;
+
+  unsigned L = pdf.size()-1;
+  pdf2[L  ] += pdf[L]*0.5*(f+1);
+  pdf2[L-1] += pdf[L]*(1.0-f)/2.0;
+
+  return pdf2;
 }
 
 int main(int argc,char* argv[]) 
@@ -170,7 +187,6 @@ int main(int argc,char* argv[])
       D.sort();
 
       data.push_back(D);
-
     }
 
     //------------------------------------//
@@ -216,11 +232,37 @@ int main(int argc,char* argv[])
       }
     else if (args["type"].as<string>() == "pdf")
     {
+      vector<double> pdf(1000,0);
+
       double R = max(q_rates);
 
-      vector<double> pdf(1000,0);
-      for(int b=1;b<B-1;b++) {
-	add_triangle(q_rates[b-1],q_rates[b],q_rates[b],1.0/B,pdf,R);
+      for(int b=0;b<B-2;b++) 
+      {
+	double r1 = q_rates[b];
+	double r2 = q_rates[b+1];
+
+	double density = (1.0/B)/(r2-r1);
+
+	for(int r=0;r<pdf.size();r++) 
+        {
+	  double left  = (double(r))/pdf.size()*R;
+	  double center  = (double(r)+0.5)/pdf.size()*R;
+	  double right  = (double(r)+1.0)/pdf.size()*R;
+
+	  double ll = max(r1,left);
+	  double rr = min(r2,right);
+	  if (ll < rr) 
+	    pdf[r] += density*(rr-ll)/(right-left);
+	}
+      }
+
+      unsigned n_smooth = args["smooth"].as<unsigned>();
+      for(int i=0;i<n_smooth;i++)
+	pdf = smooth(pdf,0.7);
+
+      for(int r=0;r<pdf.size();r++) {
+	double center  = (double(r)+0.5)/pdf.size()*R;
+	cout<<center<<"\t"<<pdf[r]<<endl;
       }
     }
   }
