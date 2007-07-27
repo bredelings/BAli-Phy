@@ -598,7 +598,7 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
   }
   else {
 
-    string name = fs::path( args["align"].as<string>() ).leaf();
+    string name = remove_extension( fs::path( args["align"].as<string>() ).leaf() );
     if (args.count("name"))
       name = args["name"].as<string>();
     

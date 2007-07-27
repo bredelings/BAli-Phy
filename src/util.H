@@ -398,4 +398,8 @@ std::vector<T> write(std::vector<T>& v,const std::vector<int>& indices,const std
   return values;
 }
 
+
+std::string get_basename(std::string filename);
+
+std::string remove_extension(std::string filename);
 #endif
