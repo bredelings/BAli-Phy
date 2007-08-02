@@ -106,8 +106,10 @@ elif test "$CHIP" = "G4" ; then
    CHIP="-mcpu=G4 -mtune=G4"
 elif test "$CHIP" = "G5" ; then
    CHIP="-mcpu=G5 -mtune=G5"
+elif test "$CHIP" = "nocona-generic" ; then
+   CHIP="-march=nocona -mtune=generic"
 else
-   CHIP="-march=$CHIP -mtune=$CHIP"
+   CHIP="-march=$CHIP"
 fi
 
 AC_TYPE_SIZE_T
@@ -131,9 +133,6 @@ AC_ARG_ENABLE([cairo],
              [cairo=yes],
              [cairo=no])
 
-
-
-CXXFLAGS="-DBALI_PHY_VERSION=\\\"$PACKAGE_VERSION\\\" $CXXFLAGS"
 
 # we only add extra flags if we recognize the compiler (g++)
 if test "$GXX" = yes ; then

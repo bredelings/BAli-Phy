@@ -1,7 +1,9 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-void print_version();
+#include <iostream>
+
+void print_version_info(std::ostream&);
 
 #endif
 

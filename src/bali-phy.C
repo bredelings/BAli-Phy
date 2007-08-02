@@ -1,6 +1,8 @@
 /* Version 2: based on operating on multiple alignments */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 #ifdef HAVE_SYS_RESOURCE_H
 extern "C" {
 #include <sys/resource.h>
@@ -444,7 +446,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("version")) {
-    print_version();
+    print_version_info(cout);
     exit(0);
   }
 
@@ -662,7 +664,7 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
       time_t now = time(NULL);
       s_out<<"start time: "<<ctime(&now)<<endl;
     }
-    s_out<<"VERSION: "<<BALI_PHY_VERSION<<"\nBUILD: "<<__DATE__<<" "<<__TIME__<<"\n";
+    print_version_info(s_out);
     s_out<<"directory: "<<fs::initial_path().string()<<endl;
     if (getenv("JOB_ID"))
       s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
