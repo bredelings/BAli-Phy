@@ -12,7 +12,7 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
            tools/findroot.H tools/parsimony.H distribution.H tools/mctree.H \
-           version.H
+           version.H revision.H
 
 LDFLAGS = @ldflags@
 
