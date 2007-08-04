@@ -201,9 +201,11 @@ AC_CHECK_FUNCS([floor pow sqrt strchr log2])
 
 CXXFLAGS="$CXXFLAGS $CPPFLAGS"
 
+#---------------------- Check for math library ------------------#
+AC_CHECK_LIB(m,main)
 #---------------------- Check for GSL ------------------#
 echo "------------------------------------------"
-echo " * Looking for the system GSL headers..."
+echo " * Looking for GSL headers..."
 
 
 # Checks for libraries
@@ -211,13 +213,11 @@ AC_CHECK_HEADERS([gsl/gsl_rng.h])
 AC_CHECK_HEADERS([gsl/gsl_cdf.h])
 AC_CHECK_HEADERS([gsl/gsl_randist.h])
 
-echo " * Looking for the system GSL headers..."
+echo " * Looking for GSL libraries..."
 
 AC_CHECK_LIB(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas)" ; exit 1])
 AC_CHECK_LIB(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl)" ; exit 1])
 AC_CHECK_LIB(gsl, gsl_cdf_beta_P, [echo "Good... you've got GSL version 1.8 or higher"], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
-
-LIBS="$LIBS -lgsl -lgslcblas -lm"
 
 AC_MSG_CHECKING(include/compile/link for the GSL library)
 
@@ -237,14 +237,13 @@ if test "$use_system_boost" = YES ; then
 echo " * Looking for the system BOOST headers..."
 AC_CHECK_HEADERS([boost/filesystem/operations.hpp])
 AC_CHECK_HEADERS([boost/program_options.hpp])
+boost_includes=""
+CXXFLAGS="$boost_includes $CXXFLAGS"
 
 echo " * Looking for the system BOOST libraries... (suffix = ${BOOST_SUFFIX})"
 AC_CHECK_LIB(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_program_options library! (-lboost_program_options${BOOST_SUFFIX})" ; exit 1])
 AC_CHECK_LIB(boost_filesystem${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_filesystem library! (-lboost_filesystem${BOOST_SUFFIX})" ; exit 1])
-boost_includes=""
 boost_libs="-lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}";
-LIBS="$boost_libs $LIBS"
-CXXFLAGS="$boost_includes $CXXFLAGS"
 
 AC_MSG_CHECKING(include/compile/link for the BOOST program_options library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
