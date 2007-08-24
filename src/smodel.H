@@ -92,6 +92,10 @@ namespace substitution {
   {
   public:
     
+    virtual const vector<unsigned>& state_letters() const=0;
+
+    unsigned n_states() const { return state_letters().size();}
+
     /// Make a copy of this object
     virtual Model* clone() const =0;
 
@@ -181,6 +185,8 @@ namespace substitution {
     /// Rate matrix
     Matrix Q;
 
+    vector<unsigned> state_letters_;
+
   public:
 
     virtual MarkovModel* clone() const =0;
@@ -191,10 +197,10 @@ namespace substitution {
     /// The transition probability matrix
     virtual Matrix transition_p(double t) const =0;
 
+    virtual const vector<unsigned>& state_letters() const {return state_letters_;}
+
     /// Construct a Makov model on alphabet 'a_'
-    MarkovModel(const alphabet& a)
-      :Q(a.size(),a.size())
-    {}
+    MarkovModel(const alphabet& a);
   };
 
 
@@ -725,6 +731,8 @@ namespace substitution {
     double rate() const;
     void set_rate(double);
 
+    virtual const vector<unsigned>& state_letters() const {return base_model(0).state_letters();}
+
     /// Get the probability of each base models
     virtual std::vector<double> distribution() const=0;
 
@@ -1068,6 +1076,48 @@ namespace substitution {
     MixtureModel(const std::vector<OwnedPointer<MultiModel> >& models);
   };
 
+  
+  class ModulatedMarkovModel: public ReversibleMarkovModel,
+			      public SuperModel
+  {
+  protected:
+    OwnedPointer<MultiModel> M;
+    OwnedPointer<ExchangeModel> S;
+
+    valarray<double> pi;
+
+    void recalc(const vector<int>&);
+
+    const ::Model& SubModels(int i) const {
+      if (i==0)
+	return *M;
+      else if (i==1)
+	return *S;
+      else
+	std::abort();
+    }
+
+    ::Model& SubModels(int i) {
+      if (i==0)
+	return *M;
+      else if (i==1)
+	return *S;
+      else
+	std::abort();
+    }
+
+  public:
+
+    virtual ModulatedMarkovModel* clone() const {return new ModulatedMarkovModel(*this);}
+
+    const valarray<double>& frequencies() const {return pi;}
+
+    string name() const;
+
+    const alphabet& Alphabet() const {return M->Alphabet();}
+
+    ModulatedMarkovModel(const MultiModel& M, const ExchangeModel& S);
+  };
 }
 #endif
 

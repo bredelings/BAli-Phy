@@ -493,6 +493,15 @@ namespace substitution {
     recalc_all();
   }
 
+
+  /// Construct a Makov model on alphabet 'a'
+  MarkovModel::MarkovModel(const alphabet& a)
+    :Q(a.size(),a.size()),state_letters_(a.size())
+  {
+    for(int i=0;i<a.size();i++)
+      state_letters_[i] = i;
+  }
+  
   //----------------------- ReversibleMarkovModel --------------------------//
   // Q(i,j) = S(i,j)*pi[j]   for i!=j
   // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
@@ -1671,4 +1680,115 @@ namespace substitution {
     read();
     recalc_all();
   }
+
+
+  string ModulatedMarkovModel::name() const 
+  {
+    return M->name() + "+" + S->name();
+  }
+
+  void ModulatedMarkovModel::recalc(const vector<int>&) 
+  {
+    // calculate pi[ ] for each state
+    unsigned T = 0;
+    for(int m=0; m < M->n_base_models(); m++) {
+      unsigned N = M->base_model(m).n_states();
+      for(int s=0; s < N; s++) 
+	pi[T+s] = M->distribution()[m] * M->frequencies()[s];
+      T += N;
+    }
+    
+
+    // for each sub-model in a mixture of markov models the rates remain unchanged
+    T=0;
+    for(int m=0; m < M->n_base_models(); m++) 
+    {
+      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m));
+      if (not RM)
+	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model '"<<M->base_model(m).name()<<"'";
+
+      unsigned N = RM->n_states();
+      
+      for(int s1=0; s1 < N; s1++) 
+	for(int s2=0; s2 < N; s2++)
+	  Q(T+s1,T+s2) = RM->transition_rates()(s1,s2);
+      T += N;
+    }
+
+    // for each pair of sub-models
+    unsigned T1=0;
+    unsigned T2=0;
+    for(int m1=0; m1 < M->n_base_models(); m1++) 
+    {
+      const ReversibleMarkovModel* RM1 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m1));
+      unsigned N1 = RM1->n_states();
+
+      for(int m2=0; m2 < M->n_base_models(); m2++) 
+      {
+	const ReversibleMarkovModel* RM2 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m2));
+	unsigned N2 = RM2->n_states();
+
+	double S12 = (*S)(m1,m2);
+	for(int s1=0;s1<N1;s1++)
+	  for(int s2=0;s2<N2;s2++)
+	    Q(T1+s1,T2+s2) = S12*frequencies()[T2+s2];
+
+	T2 += N2;
+      }
+      T1 += N1;
+    }
+
+
+
+    // recompute rate matrix
+    for(int i=0;i<Q.size1();i++) 
+    {
+      double sum=0;
+      for(int j=0;j<Q.size2();j++)
+	if (i!=j)
+	  sum += Q(i,j);
+      Q(i,i) = -sum;
+    }
+
+    recalc_eigensystem();
+  }
+
+  ModulatedMarkovModel::ModulatedMarkovModel(const MultiModel& MM, const ExchangeModel& EM)
+    :ReversibleMarkovModel(MM.Alphabet()),M(MM),S(EM)
+  {
+    unsigned T = 0;
+    for(int m=0; m < M->n_base_models(); m++) 
+    {
+      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m));
+      if (not RM)
+	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model '"<<M->base_model(m).name()<<"'";
+      T += RM->n_states();
+    }
+
+    // resize for larger state set
+    pi.resize(T);
+
+    Q.resize(T,T);
+
+    state_letters_.resize(T);
+
+    // calculate the state_letters() map here!
+
+    T = 0;
+    for(int m=0; m < M->n_base_models(); m++) 
+    {
+      unsigned N = M->base_model(m).n_states();
+      for(int i=0; i<N; i++)
+	state_letters_[T+i] = M->base_model(m).state_letters()[i];
+
+      T += N;
+    }
+
+    add_submodel("M",*M);
+    add_submodel("S",*S);
+
+    read();
+    recalc_all();
+  }
+  
 }
