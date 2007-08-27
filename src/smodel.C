@@ -87,8 +87,40 @@ namespace substitution {
 
 
 
-  ExchangeModel::ExchangeModel(const alphabet& a)
-    :S(a.size(),a.size())
+  ExchangeModel::ExchangeModel(unsigned n)
+    :S(n,n)
+  {}
+
+  //SimpleExchangeModel::
+
+  efloat_t SimpleExchangeModel::prior() const {
+    return laplace_pdf(log(rho()), -4, 1);
+  }
+
+  void SimpleExchangeModel::recalc(const vector<int>&)
+  {
+    double r = rho();
+    for(int i=0;i<n_states();i++) 
+      for(int j=0;j<n_states();j++)
+	if (i != j)
+	  S(i,j) = r;
+  }
+
+  string SimpleExchangeModel::name() const 
+  {
+    return "SimpleExchangeModel";
+  }
+
+  SimpleExchangeModel::SimpleExchangeModel(unsigned n)
+    :ExchangeModel(n)
+  {
+    add_parameter("rho",exp(-4));
+    recalc_all();
+  }
+
+
+  AlphabetExchangeModel::AlphabetExchangeModel(const alphabet& a)
+    :ExchangeModel(a.size())
   {}
 
   //----------------------- Frequency Models ------------------------//
@@ -101,7 +133,7 @@ namespace substitution {
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
   {
     // set the frequency parameters
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       parameters_[i+1] = pi2[i];
 
     // recompute everything
@@ -111,20 +143,20 @@ namespace substitution {
   void SimpleFrequencyModel::recalc(const vector<int>&)
   {
     // compute frequencies
-    pi = get_varray(parameters_,1,size());
+    pi = get_varray(parameters_,1,n_letters());
     pi /= pi.sum();
     
     // compute transition rates
-    valarray<double> pi_f(size());
-    for(int i=0;i<size();i++)
+    valarray<double> pi_f(n_letters());
+    for(int i=0;i<n_letters();i++)
       pi_f[i] = pow(pi[i],f());
 
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
 	R(i,j) = pi_f[i]/pi[i] * pi_f[j];
 
     // diagonal entries should have no effect
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       R(i,i) = 0;
   }
 
@@ -134,7 +166,7 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    return dirichlet_pdf(parameters_, 1, size(), 1.0);
+    return dirichlet_pdf(parameters_, 1, n_letters(), 1.0);
   }
 
   string SimpleFrequencyModel::name() const {
@@ -149,9 +181,9 @@ namespace substitution {
     add_parameter("f",1.0);
     fixed_[0] = true;
 
-    for(int i=0;i<size();i++) {
+    for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(pname, 1.0/size());
+      add_parameter(pname, 1.0/n_letters());
     }
 
     // initialize everything
@@ -168,7 +200,7 @@ namespace substitution {
 
     valarray<double> f = pi;
     f /= f.sum();
-    for(int i=0;i<size();i++) {
+    for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
       add_parameter(pname, f[i]);
     }
@@ -209,14 +241,14 @@ namespace substitution {
 
     vector<double> sub_parameters = SubModels(0).parameters();
 
-    vector<double> triplet_parameters(size()+1);
+    vector<double> triplet_parameters(n_letters()+1);
     triplet_parameters[0] = sub_parameters[0];
     set_varray(triplet_parameters,1,pi);
 
     triplets->parameters(triplet_parameters);
 
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
 	R(i,j) = (*triplets)(i,j);
   }
 
@@ -237,7 +269,7 @@ namespace substitution {
 
   void TripletsFrequencyModel::recalc(const vector<int>&)
   {
-    valarray<double> nu = get_varray(parameters_, 1, size());
+    valarray<double> nu = get_varray(parameters_, 1, n_letters());
 
     //------------- compute frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
@@ -250,15 +282,15 @@ namespace substitution {
     //------------ compute transition rates -------------//
     double g = parameters_[0];
 
-    valarray<double> nu_g(size());
-    for(int i=0;i<size();i++)
+    valarray<double> nu_g(n_letters());
+    for(int i=0;i<n_letters();i++)
       nu_g[i] = pow(nu[i],g);
 
 
     // FIXME - can we really handle two mutations?
     // Should the restriction on 1 mutation be HERE?
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++) {
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++) {
 	R(i,j) = nu_g[i]/nu[i]*nu_g[j];
 	for(int k=0;k<3;k++) {
 	  int n1 = Alphabet().sub_nuc(i,k);
@@ -269,13 +301,13 @@ namespace substitution {
       }
 
     // diagonal entries should have no effect
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       R(i,i) = 0;
   }
 
   efloat_t TripletsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(parameters_,1,size(),4.0);
+    return dirichlet_pdf(parameters_,1,n_letters(),4.0);
   }
 
   string TripletsFrequencyModel::name() const 
@@ -288,9 +320,9 @@ namespace substitution {
   {
     add_super_parameter("g", 1);
 
-    for(int i=0;i<size();i++) {
+    for(int i=0;i<n_letters();i++) {
       string pname = string("v") + Alphabet().letter(i);
-      add_super_parameter(pname, 1.0/size());
+      add_super_parameter(pname, 1.0/n_letters());
     }
 
     insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
@@ -322,14 +354,14 @@ namespace substitution {
       pi[i] = f_aa[aa]/n_aa[aa];
     }
 
-    vector<double> codon_parameters(size()+1);
+    vector<double> codon_parameters(n_letters()+1);
     codon_parameters[0] = SubModels(0).parameter(0);
     set_varray(codon_parameters,1,pi);
 
     codons->parameters(codon_parameters);
 
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
 	R(i,j) = (*codons)(i,j);
   }
 
@@ -365,19 +397,19 @@ namespace substitution {
 
     // get aa frequencies of sub-alphabet
     valarray<double> sub_aa_pi(0.0,aa_size());
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       sub_aa_pi[Alphabet().translate(i)] += sub_pi[i];
 
     // get factors by which to multiply sub-alphabet frequencies
-    valarray<double> factor(size());
-    for(int i=0;i<size();i++) 
+    valarray<double> factor(n_letters());
+    for(int i=0;i<n_letters();i++) 
     {
       int j = Alphabet().translate(i);
       factor[i] = pow(aa_pi[j]/sub_aa_pi[j],c);
     }
 
     // compute aa-aware codon frequencies
-    for(int i=0;i<size();i++) 
+    for(int i=0;i<n_letters();i++) 
       pi[i] = sub_pi[i] * factor[i];
 
     // scale so as to sum to 1
@@ -387,17 +419,17 @@ namespace substitution {
     //------------ compute transition rates -------------//
     double h = parameters_[1];
 
-    valarray<double> factor_h(size());
-    for(int i=0;i<size();i++)
+    valarray<double> factor_h(n_letters());
+    for(int i=0;i<n_letters();i++)
       factor_h[i] = pow(factor[i],h);
 
 
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
 	R(i,j) = SubModels(0)(i,j) * factor_h[i]/factor[i]*factor_h[j];
 
     // diagonal entries should have no effect
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       R(i,i) = 0;
   }
 
@@ -435,15 +467,15 @@ namespace substitution {
     //------------- compute frequencies ------------------//
     valarray<double> aa_pref_ = get_varray(parameters_, 1, aa_size());
 
-    valarray<double> aa_pref(size());
-    for(int i=0;i<size();i++)
+    valarray<double> aa_pref(n_letters());
+    for(int i=0;i<n_letters();i++)
       aa_pref[i] = aa_pref_[Alphabet().translate(i)];
 
     // get codon frequencies of sub-alphabet
     valarray<double> sub_pi = SubModels(0).frequencies();
 
     // scale triplet frequencies by aa prefs
-    for(int i=0;i<size();i++) 
+    for(int i=0;i<n_letters();i++) 
       pi[i] = sub_pi[i] * aa_pref[i];
 
     // scale so as to sum to 1
@@ -453,17 +485,17 @@ namespace substitution {
     //------------ compute transition rates -------------//
     double h = parameters_[0];
 
-    valarray<double> aa_pref_h(size());
-    for(int i=0;i<size();i++)
+    valarray<double> aa_pref_h(n_letters());
+    for(int i=0;i<n_letters();i++)
       aa_pref_h[i] = pow(aa_pref[i], h);
 
 
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
 	R(i,j) = SubModels(0)(i,j) * aa_pref_h[i]/aa_pref[i] * aa_pref_h[j];
 
     // diagonal entries should have no effect
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       R(i,i) = 0;
   }
 
@@ -545,7 +577,7 @@ namespace substitution {
     std::cerr<<"scale = "<<rate()<<endl;
 #endif
 
-    const unsigned n = size();
+    const unsigned n = n_states();
 
     //--------- Compute pi[i]**0.5 and pi[i]**-0.5 ----------//
     vector<double> sqrt_pi(n);
@@ -580,8 +612,9 @@ namespace substitution {
 
   Matrix ReversibleMarkovModel::transition_p(double t) const 
   {
-    vector<double> pi(size());
+    vector<double> pi(n_states());
     const valarray<double> f = frequencies();
+    assert(pi.size() == f.size());
     for(int i=0;i<pi.size();i++)
       pi[i] = f[i];
     return exp(eigensystem,pi,t);
@@ -594,10 +627,12 @@ namespace substitution {
 
   void ReversibleMarkovSuperModel::recalc(const vector<int>&)
   {
+    const unsigned N = n_states();
+
     // recompute rate matrix
-    for(int i=0;i<size();i++) {
+    for(int i=0;i<N;i++) {
       double sum=0;
-      for(int j=0;j<size();j++) {
+      for(int j=0;j<N;j++) {
 	if (i==j) continue;
 	Q(i,j) = (*S)(i,j) * (*R)(i,j);
 	sum += Q(i,j);
@@ -613,7 +648,7 @@ namespace substitution {
   }
 
   /// Construct a reversible Markov model on alphabet 'a'
-  ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
+  ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const AlphabetExchangeModel& S1,const ReversibleFrequencyModel& R1)
     :ReversibleMarkovModel(S1.Alphabet()),
      ModelWithAlphabet<alphabet>(S1.Alphabet()),
      S(S1),
@@ -635,12 +670,12 @@ namespace substitution {
     read();
   }
 
-  SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ExchangeModel& E)
+  SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const AlphabetExchangeModel& E)
       :ReversibleMarkovSuperModel(E,SimpleFrequencyModel(E.Alphabet()))
   { }
 
   SimpleReversibleMarkovModel::
-  SimpleReversibleMarkovModel(const ExchangeModel& E,const valarray<double>& pi)
+  SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
       :ReversibleMarkovSuperModel(E,SimpleFrequencyModel(E.Alphabet(),pi))
   { }
 
@@ -652,7 +687,7 @@ namespace substitution {
   }
 
   INV_Model::INV_Model(const alphabet& a)
-    :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+    :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   {
     add_parameter("INV::f",1);
 
@@ -669,10 +704,10 @@ namespace substitution {
   }
 
   EQU::EQU(const alphabet& a) 
-    :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+    :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   {
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_states();i++)
+      for(int j=0;j<n_states();j++)
 	S(i,j) = 1;
   }
 
@@ -701,7 +736,7 @@ namespace substitution {
 
   /// Construct an Empirical model on alphabet 'a' with matrix from 'filename'
   Empirical::Empirical(const alphabet& a,const string& filename) 
-    :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+    :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   { 
     load_file(filename); 
   }
@@ -731,7 +766,7 @@ namespace substitution {
 
   /// Construct an HKY model on alphabet 'a'
   HKY::HKY(const Nucleotides& N)
-    : NucleotideExchangeModel(N)
+    : NucleotideAlphabetExchangeModel(N)
   { 
     add_parameter("HKY::kappa", 2);
     recalc_all();
@@ -770,7 +805,7 @@ namespace substitution {
 
   /// Construct a TN model on alphabet 'a'
   TN::TN(const Nucleotides& N)
-    : NucleotideExchangeModel(N)
+    : NucleotideAlphabetExchangeModel(N)
   { 
     add_parameter("TN::kappa(pur)",2);
     add_parameter("TN::kappa(pyr)",2);
@@ -827,7 +862,7 @@ namespace substitution {
   }
 
   GTR::GTR(const Nucleotides& N)
-      : NucleotideExchangeModel(N)
+      : NucleotideAlphabetExchangeModel(N)
     { 
       add_parameter("GTR::AG", 1.0/6);
       add_parameter("GTR::AT", 1.0/6);
@@ -841,11 +876,11 @@ namespace substitution {
 
   //------------------------ Triplet Models -------------------//
 
-  TripletExchangeModel::TripletExchangeModel(const Triplets& T)
-    :ExchangeModel(T),ModelWithAlphabet<Triplets>(T)
+  TripletAlphabetExchangeModel::TripletAlphabetExchangeModel(const Triplets& T)
+    :AlphabetExchangeModel(T),ModelWithAlphabet<Triplets>(T)
   { }
 
-  void SingletToTripletExchangeModel::recalc(const vector<int>&)
+  void SingletToTripletAlphabetExchangeModel::recalc(const vector<int>&)
   {
     for(int i=0;i<Alphabet().size();i++)
       for(int j=0;j<i;j++) 
@@ -873,14 +908,14 @@ namespace substitution {
       }
   }
 
-  string SingletToTripletExchangeModel::name() const {
+  string SingletToTripletAlphabetExchangeModel::name() const {
     string n = SubModels(0).name();
     n += "x3";
     return n;
   }
   
-  SingletToTripletExchangeModel::SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& N)
-    :TripletExchangeModel(T)
+  SingletToTripletAlphabetExchangeModel::SingletToTripletAlphabetExchangeModel(const Triplets& T,const NucleotideAlphabetExchangeModel& N)
+    :TripletAlphabetExchangeModel(T)
   { 
     insert_submodel("1",N);
 
@@ -890,8 +925,8 @@ namespace substitution {
 
   //------------------------ Codon Models -------------------//
 
-  CodonExchangeModel::CodonExchangeModel(const Codons& C)
-    :ExchangeModel(C),ModelWithAlphabet<Codons>(C)
+  CodonAlphabetExchangeModel::CodonAlphabetExchangeModel(const Codons& C)
+    :AlphabetExchangeModel(C),ModelWithAlphabet<Codons>(C)
   { }
 
   /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
@@ -943,15 +978,15 @@ namespace substitution {
   }
 
   efloat_t M0::prior() const {
-    return SuperModelOver<NucleotideExchangeModel>::prior();
+    return SuperModelOver<NucleotideAlphabetExchangeModel>::prior();
   }
 
   string M0::name() const {
     return string("M0[") + SubModels(0).name() + "]";
   }
 
-  M0::M0(const Codons& C,const NucleotideExchangeModel& N)
-    :CodonExchangeModel(C)
+  M0::M0(const Codons& C,const NucleotideAlphabetExchangeModel& N)
+    :CodonAlphabetExchangeModel(C)
   { 
     add_super_parameter("M0::omega", 1.0);
     insert_submodel("1",N);
@@ -1073,7 +1108,7 @@ namespace substitution {
       convertToString(fraction.size()) + "]";
   }
 
-  MultiFrequencyModel::MultiFrequencyModel(const ExchangeModel& E,int n)
+  MultiFrequencyModel::MultiFrequencyModel(const AlphabetExchangeModel& E,int n)
     :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E)),
      fraction(n)
   { 
