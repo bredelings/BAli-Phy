@@ -312,20 +312,20 @@ namespace substitution {
     ~Empirical() {}
   };
 
-  class NucleotideAlphabetExchangeModel: public AlphabetExchangeModel,
+  class NucleotideExchangeModel: public AlphabetExchangeModel,
 				 public ModelWithAlphabet<Nucleotides>
   {
   public:
-    NucleotideAlphabetExchangeModel* clone() const=0;
+    NucleotideExchangeModel* clone() const=0;
 
-    NucleotideAlphabetExchangeModel(const Nucleotides& N)
+    NucleotideExchangeModel(const Nucleotides& N)
       :AlphabetExchangeModel(N),
        ModelWithAlphabet<Nucleotides>(N)
     {}
   };
 
   /// The Hasegawa, Kishino, Yano (1985)
-  class HKY: public NucleotideAlphabetExchangeModel
+  class HKY: public NucleotideExchangeModel
   {
     virtual void recalc(const vector<int>&);
   public:
@@ -346,7 +346,7 @@ namespace substitution {
   };
 
   /// The Tamura-Nei (1993) model
-  class TN: public NucleotideAlphabetExchangeModel 
+  class TN: public NucleotideExchangeModel 
   {
     virtual void recalc(const vector<int>&);
   public:
@@ -372,7 +372,7 @@ namespace substitution {
   };
 
   /// The General Time Reversible model
-  class GTR: public NucleotideAlphabetExchangeModel 
+  class GTR: public NucleotideExchangeModel 
   {
     virtual void recalc(const vector<int>&);
   public:
@@ -388,32 +388,32 @@ namespace substitution {
   };
     
 
-  class TripletAlphabetExchangeModel: public AlphabetExchangeModel, 
+  class TripletExchangeModel: public AlphabetExchangeModel, 
 			      public ModelWithAlphabet<Triplets> 
   {
   public:
-    TripletAlphabetExchangeModel* clone() const=0;
+    TripletExchangeModel* clone() const=0;
 
-    TripletAlphabetExchangeModel(const Triplets& T);
+    TripletExchangeModel(const Triplets& T);
 
-    ~TripletAlphabetExchangeModel() {}
+    ~TripletExchangeModel() {}
   };
 
-  class SingletToTripletAlphabetExchangeModel: public TripletAlphabetExchangeModel,
-				       public SuperModelOver<NucleotideAlphabetExchangeModel>
+  class SingletToTripletExchangeModel: public TripletExchangeModel,
+				       public SuperModelOver<NucleotideExchangeModel>
   {
     void recalc(const vector<int>&);
   public:
 
-    efloat_t prior() const { return SuperModelOver<NucleotideAlphabetExchangeModel>::prior(); }
+    efloat_t prior() const { return SuperModelOver<NucleotideExchangeModel>::prior(); }
 
-    SingletToTripletAlphabetExchangeModel* clone() const {return new SingletToTripletAlphabetExchangeModel(*this);}
+    SingletToTripletExchangeModel* clone() const {return new SingletToTripletExchangeModel(*this);}
 
     string name() const;
 
-    SingletToTripletAlphabetExchangeModel(const Triplets& T,const NucleotideAlphabetExchangeModel& M);
+    SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& M);
 
-    ~SingletToTripletAlphabetExchangeModel() {}
+    ~SingletToTripletExchangeModel() {}
   };
 
 
@@ -433,7 +433,7 @@ namespace substitution {
 
 
   class M0: public CodonAlphabetExchangeModel,
-		public SuperModelOver<NucleotideAlphabetExchangeModel>
+		public SuperModelOver<NucleotideExchangeModel>
   {
     void recalc(const vector<int>&);
   public:
@@ -450,7 +450,7 @@ namespace substitution {
 
     string name() const;
 
-    M0(const Codons& C,const NucleotideAlphabetExchangeModel& M);
+    M0(const Codons& C,const NucleotideExchangeModel& M);
 
     ~M0();
   };

@@ -60,14 +60,19 @@ vector< Matrix > distributions_star(const data_partition& P,
 
   //FIXME modify this to add a shift of 2
 
-  vector< Matrix > dist(seq.size(), Matrix(MModel.n_base_models(),a.size()) );
+  const int n_models = MModel.n_base_models();
+  const int n_states = MModel.n_states();
 
-  for(int column=0;column<dist.size();column++) {
+  vector< Matrix > dist(seq.size(), Matrix(n_models, n_states) );
+
+  for(int column=0;column<dist.size();column++) 
+  {
     vector<int> residues(A.n_sequences());
 
-    for(int m=0;m<MModel.n_base_models();m++) {
-      for(int l=0;l<a.size();l++)
-	dist[column](m,l) = 1.0;
+    for(int m=0;m<n_models;m++) 
+    {
+      for(int s=0;s<n_states;s++)
+	dist[column](m,s) = 1.0;
 
       for(int n=0;n<T.n_leaves();n++) {
 	if (not group[n]) continue;
@@ -77,11 +82,11 @@ vector< Matrix > distributions_star(const data_partition& P,
 
 	// Pr(root=l) includes Pr(l->letter)
 	if (a.is_letter(letter))
-	  for(int l=0;l<a.size();l++)
-	    dist[column](m,l) *= Q(l,letter);
+	  for(int s=0;s<n_states;s++)
+	    dist[column](m,s) *= Q(s,letter);
 	else if (a.is_letter_class(letter))
-	  for(int l=0;l<a.size();l++)
-	    dist[column](m,l) *= substitution::sum(Q,l,letter,a);
+	  for(int s=0;s<n_states;s++)
+	    dist[column](m,s) *= substitution::sum(Q,s,letter,a);
       }
     }
   }

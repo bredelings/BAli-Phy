@@ -766,7 +766,7 @@ namespace substitution {
 
   /// Construct an HKY model on alphabet 'a'
   HKY::HKY(const Nucleotides& N)
-    : NucleotideAlphabetExchangeModel(N)
+    : NucleotideExchangeModel(N)
   { 
     add_parameter("HKY::kappa", 2);
     recalc_all();
@@ -805,7 +805,7 @@ namespace substitution {
 
   /// Construct a TN model on alphabet 'a'
   TN::TN(const Nucleotides& N)
-    : NucleotideAlphabetExchangeModel(N)
+    : NucleotideExchangeModel(N)
   { 
     add_parameter("TN::kappa(pur)",2);
     add_parameter("TN::kappa(pyr)",2);
@@ -862,7 +862,7 @@ namespace substitution {
   }
 
   GTR::GTR(const Nucleotides& N)
-      : NucleotideAlphabetExchangeModel(N)
+      : NucleotideExchangeModel(N)
     { 
       add_parameter("GTR::AG", 1.0/6);
       add_parameter("GTR::AT", 1.0/6);
@@ -876,11 +876,11 @@ namespace substitution {
 
   //------------------------ Triplet Models -------------------//
 
-  TripletAlphabetExchangeModel::TripletAlphabetExchangeModel(const Triplets& T)
+  TripletExchangeModel::TripletExchangeModel(const Triplets& T)
     :AlphabetExchangeModel(T),ModelWithAlphabet<Triplets>(T)
   { }
 
-  void SingletToTripletAlphabetExchangeModel::recalc(const vector<int>&)
+  void SingletToTripletExchangeModel::recalc(const vector<int>&)
   {
     for(int i=0;i<Alphabet().size();i++)
       for(int j=0;j<i;j++) 
@@ -908,14 +908,14 @@ namespace substitution {
       }
   }
 
-  string SingletToTripletAlphabetExchangeModel::name() const {
+  string SingletToTripletExchangeModel::name() const {
     string n = SubModels(0).name();
     n += "x3";
     return n;
   }
   
-  SingletToTripletAlphabetExchangeModel::SingletToTripletAlphabetExchangeModel(const Triplets& T,const NucleotideAlphabetExchangeModel& N)
-    :TripletAlphabetExchangeModel(T)
+  SingletToTripletExchangeModel::SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& N)
+    :TripletExchangeModel(T)
   { 
     insert_submodel("1",N);
 
@@ -978,14 +978,14 @@ namespace substitution {
   }
 
   efloat_t M0::prior() const {
-    return SuperModelOver<NucleotideAlphabetExchangeModel>::prior();
+    return SuperModelOver<NucleotideExchangeModel>::prior();
   }
 
   string M0::name() const {
     return string("M0[") + SubModels(0).name() + "]";
   }
 
-  M0::M0(const Codons& C,const NucleotideAlphabetExchangeModel& N)
+  M0::M0(const Codons& C,const NucleotideExchangeModel& N)
     :CodonAlphabetExchangeModel(C)
   { 
     add_super_parameter("M0::omega", 1.0);
@@ -1752,12 +1752,12 @@ namespace substitution {
 
     // for each pair of sub-models
     unsigned T1=0;
-    unsigned T2=0;
     for(int m1=0; m1 < M->n_base_models(); m1++) 
     {
       const ReversibleMarkovModel* RM1 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m1));
       unsigned N1 = RM1->n_states();
 
+      unsigned T2=0;
       for(int m2=0; m2 < M->n_base_models(); m2++) 
       {
 	const ReversibleMarkovModel* RM2 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m2));
