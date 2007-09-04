@@ -71,6 +71,24 @@ AC_ARG_WITH([system-boost], AS_HELP_STRING([--with-system-boost],[Add extra libr
   use_system_boost=NO
 )
 
+AC_ARG_VAR(CHIP,
+           [What CPU type should we specialize for to make a faster program?)])
+if test "$CHIP" = "" ; then
+   echo ""
+elif test "$CHIP" = "G3" ; then
+   CHIP="-mcpu=G3 -mtune=G3"
+elif test "$CHIP" = "G4" ; then
+   CHIP="-mcpu=G4 -mtune=G4"
+elif test "$CHIP" = "G5" ; then
+   CHIP="-mcpu=G5 -mtune=G5"
+elif test "$CHIP" = "nocona-generic" ; then
+   CHIP="-march=nocona -mtune=generic"
+else
+   CHIP="-march=$CHIP"
+fi
+
+CXXFLAGS="$CXXFLAGS $CHIP"
+
 # 1. Checks for programs.
 ORIG_CFLAGS=$CFLAGS
 ORIG_CXXFLAGS=$CXXFLAGS
@@ -95,22 +113,6 @@ AM_PROG_CC_C_O
 
 AC_ARG_VAR(BOOST_SUFFIX,
 	   [What suffix do the BOOST libraries have? (e.g. libboost_filesystem-st.so would have suffice '-st')])
-
-AC_ARG_VAR(CHIP,
-           [What CPU type should we specialize for to make a faster program?)])
-if test "$CHIP" = "" ; then
-   echo ""
-elif test "$CHIP" = "G3" ; then
-   CHIP="-mcpu=G3 -mtune=G3"
-elif test "$CHIP" = "G4" ; then
-   CHIP="-mcpu=G4 -mtune=G4"
-elif test "$CHIP" = "G5" ; then
-   CHIP="-mcpu=G5 -mtune=G5"
-elif test "$CHIP" = "nocona-generic" ; then
-   CHIP="-march=nocona -mtune=generic"
-else
-   CHIP="-march=$CHIP"
-fi
 
 AC_TYPE_SIZE_T
 
@@ -156,10 +158,8 @@ if test "$GXX" = yes ; then
   # set flags for optimization
   elif test "$debug" = nodefs ; then
     CXXFLAGS="$CXXFLAGS -g"
-    CXXFLAGS="$CXXFLAGS $CHIP"
     CXXFLAGS="$CXXFLAGS -O -funroll-loops -fweb"
   else
-    CXXFLAGS="$CXXFLAGS $CHIP"
     CXXFLAGS="$CXXFLAGS -O3 -funroll-loops -fweb"
     CXXFLAGS="$CXXFLAGS -DNDEBUG -DNDEBUG_DP"
     if test "$profile" != yes ; then 
