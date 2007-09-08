@@ -107,7 +107,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("file",value<string>(),"predicates to examine")
     ("output",value<string>()->default_value("pdf"),"Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg")
     ("full","Consider only full partitions")
-    ("iterations",value<int>()->default_value(10),"Number of iterations for layout algorithm")
+    ("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method")
     ("seed", value<unsigned long>(),"Random seed")
@@ -1150,7 +1150,7 @@ struct energy2: public graph_energy_function
       if (t == 1) {
 	int b = GL.MC.edges[e].partition;
 	L = GL.MC.branch_length(b);
-	w /= L;
+	//	w /= L;
       }
       else {
 	int b = GL.MC.branch_to_node(GL.MC.edges[e].from);
@@ -1192,8 +1192,14 @@ struct energy2: public graph_energy_function
       int b2 = branches[i];
       int n2 = GL.MC.mapping[b2];
       int n3 = GL.MC.mapping[GL.MC.reverse(b2)];
+
+      double w = closest_fraction*length_weight/down_weight_stretchy;
+
+      double L = GL.MC.branch_length(b);
       
-      E += node_edge_attraction(GL, D, n1, n2, n3, closest_fraction*length_weight/down_weight_stretchy);
+      //      w /= L;
+      
+      E += node_edge_attraction(GL, D, n1, n2, n3, w);
     }
 
     /// node_distances
@@ -1355,6 +1361,7 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
 	<<"      angle = "<<dot(D2,D)/sqrt(dot(D2,D2)*dot(D,D))<<"\n";
     //    D = D2;
     */
+
 
     // problem with these equations is STIFFness (? and rotation?)
 
@@ -1836,6 +1843,7 @@ int main(int argc,char* argv[])
     // lay out as a graph
     graph_layout L2 = layout_on_circle(MC,2);
     graph_layout L3 = L2;
+
     int n_iterations = args["iterations"].as<int>();
     for(int i=0;i<n_iterations;i++) {
       L3 = energy_layout(L3,energy2(1,10000000,2,0));
@@ -1845,8 +1853,8 @@ int main(int argc,char* argv[])
     }
 
     // improve angular resolution
-    for(int i=0;i<4;i++) {
-      L3 = energy_layout(L3,energy2(1,10000000,2,100));
+    for(int i=0;i<2;i++) {
+      L3 = energy_layout(L3,energy2(1,10000000,2,50));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw);
       draw(name+"-graph",output,gp);
