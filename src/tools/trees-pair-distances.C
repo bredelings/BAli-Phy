@@ -32,6 +32,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("skip",value<int>()->default_value(0),"number of tree samples to skip")
     ("max",value<int>(),"maximum number of tree samples to read")
     ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
+    ("RF",value<bool>()->default_value(true),"just count the number of branches")
     ("var","report standard deviation of branch lengths instead of mean")
     ;
 
@@ -51,6 +52,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 struct count_pair_distances:public accumulator<SequenceTree>
 {
+  bool RF;
   bool initialized;
   int n_samples;
   int N;
@@ -70,7 +72,12 @@ struct count_pair_distances:public accumulator<SequenceTree>
     m2 = sqrt(m2);
   }
 
-  count_pair_distances():initialized(false),n_samples(0),N(0) {}
+  count_pair_distances(bool b=false)
+    :RF(b),
+     initialized(false),
+     n_samples(0),
+     N(0)
+  {}
 };
 
 void count_pair_distances::operator()(const SequenceTree& T)
@@ -94,7 +101,11 @@ void count_pair_distances::operator()(const SequenceTree& T)
   for(int i=0;i<N;i++)
     for(int j=0;j<i;j++,k++) 
     {
-      double D = T.distance(i,j);
+      double D = 0;
+      if (RF)
+	D = T.edges_distance(i,j);
+      else
+	D = T.distance(i,j);
       m1[k] += D;
       m2[k] += D*D;
     }
@@ -116,7 +127,9 @@ int main(int argc,char* argv[])
 
     int subsample = args["sub-sample"].as<int>();
 
-    count_pair_distances D;
+    bool RF = args["RF"].as<bool>();
+
+    count_pair_distances D(RF);
 
     scan_trees(std::cin,skip,subsample,max, D);
 
