@@ -104,7 +104,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("cutoff",value<double>()->default_value(0.75),"ignore events below this probability")
     ("identity",value<double>()->default_value(0.4),"Find fraction of sequences that have this level of identity.")
-    ("analysis",value<string>(),"What analysis to do.")
+    ("analysis",value<string>(),"What analysis to do: default, matrix, nmatrix")
     ("strict","require all implied pairs pass the cutoff")
     ;
 
@@ -179,7 +179,8 @@ int main(int argc,char* argv[])
     if (cutoff < 0.5) cutoff = 0.5;
 
     //--------- matrix of alignabilities ----------//
-    if (args.count("analysis") and args["analysis"].as<string>() == "matrix")
+    if (args.count("analysis") and 
+	(args["analysis"].as<string>() == "matrix" or args["analysis"].as<string>() == "nmatrix"))
     {
       Matrix fraction_aligned(N,N);
       ublas::matrix<int> Matches(N,N);
@@ -214,9 +215,15 @@ int main(int argc,char* argv[])
 	}
       }
 
-      for(int s1=0;s1<N;s1++)
-	for(int s2=0;s2<N;s2++)
-	  fraction_aligned(s1,s2) = (2.0*Matches(s1,s2)+1.0*Gaps(s1,s2))/(L[s1]+L[s2]);
+      if (args["analysis"].as<string>() == "matrix")
+	for(int s1=0;s1<N;s1++)
+	  for(int s2=0;s2<N;s2++)
+	    fraction_aligned(s1,s2) = (2.0*Matches(s1,s2)+1.0*Gaps(s1,s2))/(L[s1]+L[s2]);
+      else
+	for(int s1=0;s1<N;s1++)
+	  for(int s2=0;s2<N;s2++)
+	    fraction_aligned(s1,s2) = Matches(s1,s2);
+	
 
 
       vector<string> s_out;
