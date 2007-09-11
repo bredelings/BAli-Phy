@@ -150,6 +150,9 @@ Results/c%.mtree: Results/consensus Work/setup
 	@pickout --no-header --multi-line $*-consensus < $< > $@ 
 	@test -s $@
 
+Results/c%.mlengths: Results/c%.mtree Work/trees
+	@mctree-mean-lengths $< --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
+
 Results/c%.dot: Results/c%.mtree
 	@draw-graph $< > $@
 
