@@ -426,7 +426,7 @@ double branch_distance(const SequenceTree& T1, const SequenceTree& T2)
     if (found == -1)
       total += std::abs(d2[i]);
     else
-      ; // this is already counted in the previous loop
+      { } // this is already counted in the previous loop
   }
   return total;
 }

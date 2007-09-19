@@ -18,7 +18,7 @@ efloat_t topology_weight(const Parameters& P, const SequenceTree& T)
       p *= P.partition_weights[i];
     }
     else
-      ;//      std::cerr<<"not found!  "<<P.partitions[i]<<std::endl;
+      { } //      std::cerr<<"not found!  "<<P.partitions[i]<<std::endl;
   }
   //  std::cerr<<"total_weight = "<<p<<std::endl;
 
