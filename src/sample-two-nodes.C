@@ -173,7 +173,7 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
 	  or (i1 == icol[c2-1] and j1 == jcol[c2-1] and k1 == kcol[c2-1] and l1 == lcol[c2-1]) )
 	Matrices->states(c2).push_back(S2);
       else
-	; // this state not allowed here
+	{ } // this state not allowed here
     }
   }
 

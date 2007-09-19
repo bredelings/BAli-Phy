@@ -248,7 +248,7 @@ public:
 
 /// Prune subtree 'b1' and regraft into branch 'b2'
 void SPR(Tree& T,int b1,int b2);
-void exchange_subtrees(Tree&,int b2,int b2);
+void exchange_subtrees(Tree&,int b1,int b2);
 
 //---------------------------- RootedTree -----------------------//
 
