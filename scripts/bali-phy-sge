@@ -27,7 +27,7 @@ if [ ! -x "$QSUB" ] ; then
 fi
 
 #------ start the sampler
-qsub $QSUB_ARGS <<EOF 
+exec qsub $QSUB_ARGS <<EOF 
 #!/bin/sh
 exec $BALI_PHY $@
 EOF
