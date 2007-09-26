@@ -311,14 +311,9 @@ namespace sequence_format {
     file.flush();
   }
 
-  vector<sequence> read_guess(std::istream& file) {
-    char c = file.get();
-    if (not file) 
-      return vector<sequence>();
-
-    file.putback(c);
-
-    if (c == '>')
+  vector<sequence> read_guess(std::istream& file) 
+  {
+    if (file.peek() == '>')
       return read_fasta(file);
     else
       return read_phylip(file);
