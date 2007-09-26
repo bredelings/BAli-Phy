@@ -1,4 +1,5 @@
 #include <cmath>
+#include <climits>
 #include "dp-matrix.H"
 #include "pow2.H"
 #include "choose.H"
