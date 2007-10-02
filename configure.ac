@@ -232,7 +232,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <gsl/gsl_cdf.h>
   #include <gsl/gsl_randist.h>
 ]],
-[[gsl_rng_env_setup();gsl_cdf_beta_P(0.5,1,1);]])],
+[[gsl_rng_env_setup();gsl_cdf_beta_Pinv(0.5,1,1);]])],
  [AC_MSG_RESULT([yes])],
  [AC_MSG_FAILURE([GSL failure])])
 
