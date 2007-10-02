@@ -223,7 +223,7 @@ echo " * Looking for GSL libraries..."
 
 AC_CHECK_LIB(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas)" ; exit 1])
 AC_CHECK_LIB(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl)" ; exit 1])
-AC_CHECK_LIB(gsl, gsl_cdf_beta_P, [echo "Good... you've got GSL version 1.8 or higher"], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
+AC_CHECK_LIB(gsl, gsl_cdf_beta_Pinv, [echo "Good... you've got GSL version 1.8 or higher"], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
 
 AC_MSG_CHECKING(include/compile/link for the GSL library)
 
