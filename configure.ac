@@ -106,6 +106,8 @@ elif test "$CHIP" = "G4" ; then
    CHIP="-mcpu=G4 -mtune=G4"
 elif test "$CHIP" = "G5" ; then
    CHIP="-mcpu=G5 -mtune=G5"
+elif test "$CHIP" = "nocona-generic" ; then
+   CHIP="-march=nocona -mtune=generic"
 else
    CHIP="-march=$CHIP -mtune=$CHIP"
 fi
@@ -217,7 +219,7 @@ echo " * Looking for GSL libraries..."
 
 AC_CHECK_LIB(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas)" ; exit 1])
 AC_CHECK_LIB(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl)" ; exit 1])
-AC_CHECK_LIB(gsl, gsl_cdf_beta_P, [echo "Good... you've got GSL version 1.8 or higher"], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
+AC_CHECK_LIB(gsl, gsl_cdf_beta_Pinv, [echo "Good... you've got GSL version 1.8 or higher"], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
 
 AC_MSG_CHECKING(include/compile/link for the GSL library)
 
@@ -226,7 +228,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <gsl/gsl_cdf.h>
   #include <gsl/gsl_randist.h>
 ]],
-[[gsl_rng_env_setup();gsl_cdf_beta_P(0.5,1,1);]])],
+[[gsl_rng_env_setup();gsl_cdf_beta_Pinv(0.5,1,1);]])],
  [AC_MSG_RESULT([yes])],
  [AC_MSG_FAILURE([GSL failure])])
 
