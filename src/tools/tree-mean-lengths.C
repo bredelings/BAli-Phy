@@ -243,7 +243,8 @@ int main(int argc,char* argv[])
     {
       if (args.count("safe"))
 	cout<<Q.write(false)<<endl;
-      throw myexception()<<e.what();
+      std::cerr<<"Exception: "<<e.what()<<endl;
+      exit(0);
     }
 
     std::cerr<<A.n_matches<<" out of "<<A.n_samples<<" trees matched the topology";
