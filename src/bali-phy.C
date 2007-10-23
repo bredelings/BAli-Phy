@@ -623,57 +623,52 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
 {
   vector<ostream*> files;
 
-  if (args.count("show-only")){
-    files.push_back(&cout);
-    files.push_back(&cerr);
+
+  vector<string> alignment_filenames = args["align"].as<vector<string> >();
+  for(int i=0;i<alignment_filenames.size();i++)
+    alignment_filenames[i] = remove_extension(fs::path( alignment_filenames[i] ).leaf());
+
+  string name = join(alignment_filenames,'-');
+  if (args.count("name"))
+    name = args["name"].as<string>();
+    
+  string dirname = open_dir(name);
+  cerr<<"Created directory '"<<dirname<<"' for output files."<<endl;
+    
+  vector<string> filenames;
+  filenames.push_back("out");
+  filenames.push_back("err");
+  filenames.push_back("trees");
+  filenames.push_back("p");
+  filenames.push_back("MAP");
+    
+  vector<ofstream*> files2 = open_files(dirname+"/",filenames);
+  files.clear();
+  for(int i=0;i<files2.size();i++)
+    files.push_back(files2[i]);
+
+  ostream& s_out = *files[0];
+    
+  s_out<<"command: ";
+  for(int i=0;i<argc;i++) {
+    s_out<<argv[i];
+    if (i != argc-1) s_out<<" ";
   }
-  else {
-
-    vector<string> alignment_filenames = args["align"].as<vector<string> >();
-    for(int i=0;i<alignment_filenames.size();i++)
-      alignment_filenames[i] = remove_extension(fs::path( alignment_filenames[i] ).leaf());
-
-    string name = join(alignment_filenames,'-');
-    if (args.count("name"))
-      name = args["name"].as<string>();
-    
-    string dirname = open_dir(name);
-    cerr<<"Created directory '"<<dirname<<"' for output files."<<endl;
-    
-    vector<string> filenames;
-    filenames.push_back("out");
-    filenames.push_back("err");
-    filenames.push_back("trees");
-    filenames.push_back("p");
-    filenames.push_back("MAP");
-    
-    vector<ofstream*> files2 = open_files(dirname+"/",filenames);
-    files.clear();
-    for(int i=0;i<files2.size();i++)
-      files.push_back(files2[i]);
-
-    ostream& s_out = *files[0];
-    
-    s_out<<"command: ";
-    for(int i=0;i<argc;i++) {
-      s_out<<argv[i];
-      if (i != argc-1) s_out<<" ";
-    }
-    s_out<<endl;
-    {
-      time_t now = time(NULL);
-      s_out<<"start time: "<<ctime(&now)<<endl;
-    }
-    print_version_info(s_out);
-    s_out<<"directory: "<<fs::initial_path().string()<<endl;
-    if (getenv("JOB_ID"))
-      s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
-    if (getenv("LSB_JOBID"))
-      s_out<<"LSB_JOBID: "<<getenv("LSB_JOBID")<<endl;
-    s_out<<"hostname: "<<hostname()<<endl;
-    s_out<<"PID: "<<getpid()<<endl;
-    s_out<<endl;
+  s_out<<endl;
+  {
+    time_t now = time(NULL);
+    s_out<<"start time: "<<ctime(&now)<<endl;
   }
+  print_version_info(s_out);
+  s_out<<"directory: "<<fs::initial_path().string()<<endl;
+  if (getenv("JOB_ID"))
+    s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
+  if (getenv("LSB_JOBID"))
+    s_out<<"LSB_JOBID: "<<getenv("LSB_JOBID")<<endl;
+  s_out<<"hostname: "<<hostname()<<endl;
+  s_out<<"PID: "<<getpid()<<endl;
+  s_out<<endl;
+
   //  files[0]->precision(10);
   //  cerr.precision(10);
 
@@ -1062,6 +1057,12 @@ void raise_cpu_limit(ostream& o)
 }
 #endif
 
+void my_gsl_error_handler(const char* reason, const char* file, int line, int gsl_errno)
+{
+  std::cerr<<"gsl: "<<file<<":"<<line<<" (errno="<<gsl_errno<<") ERROR:"<<reason<<endl;
+  std::abort();
+}
+
 int main(int argc,char* argv[]) 
 { 
   std::ios::sync_with_stdio(false);
@@ -1083,14 +1084,17 @@ int main(int argc,char* argv[])
     fp_scale::initialize();
     fs::path::default_name_check(fs::portable_posix_name);
 
-    //------ Capture copy of 'cerr' output in 'err_cache' ------//
-    cerr.rdbuf(err_both.rdbuf());
+    gsl_set_error_handler(&my_gsl_error_handler);
 
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
 
     //---------- Determine Data dir ---------------//
     check_data_dir(args["data-dir"].as<string>());
+
+    //------ Capture copy of 'cerr' output in 'err_cache' ------//
+    if (not args.count("show-only"))
+      cerr.rdbuf(err_both.rdbuf());
 
     //---------- Initialize random seed -----------//
     unsigned long seed = init_rng_and_get_seed(args);
@@ -1119,18 +1123,25 @@ int main(int argc,char* argv[])
       throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".\n(Perhaps you have BLANK LINES in your FASTA file?)";
 
     //---------- Open output files -----------//
-    vector<ostream*> files = init_files(args,argc,argv);
+    vector<ostream*> files;
+    if (not args.count("show-only"))
+      files = init_files(args,argc,argv);
+    else {
+      files.push_back(&cout);
+      files.push_back(&cerr);
+    }
 
     //------ Redirect output to files -------//
     ostream& s_out = *files[0];
     ostream& s_err = *files[1];
 
-    s_out<<out_cache.str(); s_out.clear();
-    s_err<<err_cache.str(); s_err.clear();
+    s_out<<out_cache.str();
+    s_err<<err_cache.str();
 
     tee_out.setbuf2(s_out.rdbuf());
     tee_err.setbuf2(s_err.rdbuf());
 
+    cout.flush() ;
     cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
     clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
