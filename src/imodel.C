@@ -280,6 +280,7 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   assert(delta >= 0 and delta <= 1);
   assert(e > 0 and e <= 1);
   
+  // transition probabilities default to *zero*
   indel::PairHMM Q;
 
   Q(S ,S ) = 0;
@@ -322,8 +323,15 @@ string NewIndelModel::name() const
   return s;
 }
 
-efloat_t NewIndelModel::lengthp(int) const {
-  return 1;
+efloat_t NewIndelModel::lengthp(int l) const 
+{
+  double e = exp(parameter(1));
+  if (l < 0)
+    return 0;
+  else if (l==0)
+    return 1.0;
+  else
+    return (1.0-e);
 }
 
 NewIndelModel::NewIndelModel(bool b)
