@@ -287,7 +287,7 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   Q(S ,M ) = 1 - 2*delta;
   Q(S ,G1) = delta;
   Q(S ,G2) = delta;
-  Q(S ,E ) = 1;
+  Q(S ,E ) = 1 - delta;
 
   Q(M ,S ) = 1;
   Q(G1,S ) = 1;
