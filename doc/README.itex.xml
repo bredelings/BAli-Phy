@@ -96,8 +96,8 @@
 
 	<itemizedlist>
 	  <listitem><para> A modern C++ compiler (<ulink
-	  url="http://gcc.gnu.org">GCC</ulink> version 3.4, 4.0, and
-	  4.1 are known to work)</para>
+	  url="http://gcc.gnu.org">GCC</ulink> version 3.4, 4.0, 4.1, and
+	  4.2 are known to work)</para>
 
 	  <note>
 	    <title>Mac OS X issues:</title>
