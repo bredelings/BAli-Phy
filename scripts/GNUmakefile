@@ -58,7 +58,9 @@ Results/Report:  Work/header Work/p Results/MAP.topology
 	} > $@
 
 Work/header: Work/out Work/Pmarg
-	@{ tail -n +2 Work/out | head -n 100 | grep data;\
+	@{ cat Work/Pmarg;\
+	   echo; \
+           tail -n +2 Work/out | head -n 100 | grep data;\
 	   echo; \
            tail -n +2 Work/out | head -n 100 | grep model;\
            echo; } > $@
