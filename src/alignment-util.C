@@ -585,18 +585,6 @@ using std::vector;
 using std::string;
 using std::list;
 
-bool is_next_char(istream& file,char match) {
-  if (not file) return false;
-
-  char c = file.get();
-  if (file) {
-    file.putback(c);
-    return (c==match);
-  }
-  else
-    return false;
-}
-
 list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphabet> >& alphabets, int maxalignments) {
   list<alignment> alignments;
   
@@ -610,7 +598,7 @@ list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphab
   while(ifile) {
     
     // CHECK if an alignment begins here
-    if (not is_next_char(ifile,'>')) {
+    if (ifile.peek() != '>') {
       string line;
       getline_handle_dos(ifile,line);
       continue;
@@ -625,6 +613,7 @@ list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphab
       do {
 	getline_handle_dos(ifile,line);
       } while (line.size());
+      continue;
     }
 
     // READ the next alignment
@@ -716,7 +705,7 @@ vector<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alph
   while(ifile) {
 
     // CHECK if an alignment begins here
-    if (not is_next_char(ifile,'>')) {
+    if (ifile.peek() != '>') {
       string line;
       getline_handle_dos(ifile,line);
       continue;
@@ -760,7 +749,7 @@ alignment find_first_alignment(std::istream& ifile, const vector<OwnedPointer<al
   while(ifile) {
     
     // CHECK if an alignment begins here
-    if (not is_next_char(ifile,'>')) {
+    if (ifile.peek() != '>') {
       string line;
       getline_handle_dos(ifile,line);
       continue;
@@ -799,7 +788,7 @@ alignment find_last_alignment(std::istream& ifile, const vector<OwnedPointer<alp
   while(ifile) {
     
     // CHECK if an alignment begins here
-    if (not is_next_char(ifile,'>')) {
+    if (ifile.peek() != '>') {
       string line;
       getline_handle_dos(ifile,line);
       continue;
