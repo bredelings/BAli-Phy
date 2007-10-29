@@ -778,11 +778,12 @@ int main(int argc,char* argv[])
     fp_scale::initialize();
     fs::path::default_name_check(fs::portable_posix_name);
 
-    //------ Capture copy of 'cerr' output in 'err_cache' ------//
-    cerr.rdbuf(err_both.rdbuf());
-
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
+
+    //------ Capture copy of 'cerr' output in 'err_cache' ------//
+    if (not args.count("show-only"))
+      cerr.rdbuf(err_both.rdbuf());
 
     //---------- Determine Data dir ---------------//
     {
