@@ -3,7 +3,10 @@
 
 #include <cmath>
 #include <cstdlib>
+
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #ifndef HAVE_LOG2
 #ifndef log2
