@@ -58,7 +58,9 @@ Results/Report:  Work/header Work/p Results/MAP.topology
 	} > $@
 
 Work/header: Work/out Work/Pmarg
-	@{ tail -n +2 Work/out | head -n 100 | grep data;\
+	@{ cat Work/Pmarg;\
+	   echo; \
+           tail -n +2 Work/out | head -n 100 | grep data;\
 	   echo; \
            tail -n +2 Work/out | head -n 100 | grep model;\
            echo; } > $@
@@ -124,7 +126,7 @@ Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
 
 Results/au-graph.plot Work/consensus-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 	@echo -e "Computing consensus alignment ... \c"
-	@alignment-consensus --cutoff=0.5 --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
+	@alignment-consensus --cutoff=0.75 --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
 	@echo "done."
 
 Results/%-AU.prob: Results/%.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree
