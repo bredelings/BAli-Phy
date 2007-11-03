@@ -91,19 +91,19 @@ namespace substitution {
     :S(n,n)
   {}
 
-  //SimpleExchangeModel::
-
   efloat_t SimpleExchangeModel::prior() const {
-    return laplace_pdf(log(rho()), -4, 1);
+    return laplace_pdf(log(rho()), -3, 1);
   }
 
   void SimpleExchangeModel::recalc(const vector<int>&)
   {
     double r = rho();
-    for(int i=0;i<n_states();i++) 
+    for(int i=0;i<n_states();i++) {
       for(int j=0;j<n_states();j++)
-	if (i != j)
-	  S(i,j) = r;
+	S(i,j) = r;
+
+      S(i,i) = 0;       // this is NOT a rate away.
+    }
   }
 
   string SimpleExchangeModel::name() const 
@@ -542,11 +542,31 @@ namespace substitution {
   // Then Q = S*D, and we can easily compute the exponential
   // So, S(i,j) = Q(i,i)/pi[i]
 
-  double ReversibleMarkovModel::rate() const {
-    // Rescale so that expected mutation rate is 1
+  double ReversibleMarkovModel::rate() const 
+  {
+    const unsigned N = n_states();
+    
     double scale=0;
-    for(int i=0;i<Q.size1();i++) 
-      scale -= frequencies()[i]*Q(i,i);
+
+    if (N == Alphabet().size()) 
+    {
+      for(int i=0;i<Q.size1();i++) 
+	scale -= frequencies()[i]*Q(i,i);
+    }
+    else 
+    {
+      const vector<unsigned>& smap = state_letters();
+
+      for(int s1=0;s1<N;s1++)
+      {
+	double temp = 0;
+	for(int s2=0;s2<N;s2++)
+	  if (smap[s1] != smap[s2])
+	    temp += Q(s1,s2);
+
+	scale += temp*frequencies()[s1];
+      }
+    }
 
     return scale/Alphabet().width();
   }
@@ -573,11 +593,19 @@ namespace substitution {
 
   void ReversibleMarkovModel::recalc_eigensystem()
   {
-#ifndef NDEBUG
-    std::cerr<<"scale = "<<rate()<<endl;
-#endif
-
     const unsigned n = n_states();
+
+#ifdef DEBUG_RATE_MATRIX
+    std::cerr<<"scale = "<<rate()<<endl;
+
+    assert(std::abs(frequencies().sum()-1.0) < 1.0e-6);
+    for(int i=0;i<n;i++) {
+      double sum = 0;
+      for(int j=0;j<n;j++)
+	sum += Q(i,j);
+      assert(abs(sum) < 1.0e-6);
+    }
+#endif
 
     //--------- Compute pi[i]**0.5 and pi[i]**-0.5 ----------//
     vector<double> sqrt_pi(n);
@@ -593,7 +621,7 @@ namespace substitution {
       for(int j=0;j<=i;j++) {
 	S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
 
-#ifndef NDEBUG
+#ifdef DEBUG_RATE_MATRIX
 	// check reversibility of rate matrix
 	if (i != j) {
 	  assert (S(i,j) >= 0);
@@ -1020,7 +1048,7 @@ namespace substitution {
   }
 
   Matrix frequency_matrix(const MultiModel& M) {
-    Matrix f(M.n_base_models(),M.Alphabet().size());
+    Matrix f(M.n_base_models(),M.n_states());
     for(int m=0;m<f.size1();m++)
       for(int l=0;l<f.size2();l++)
 	f(m,l) = M.base_model(m).frequencies()[l];
@@ -1722,21 +1750,60 @@ namespace substitution {
     return M->name() + "+" + S->name();
   }
 
+  // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
+  //         Q(mi -> ni) = R(m->n)        for model exchange
+  // and     Q(mi -> nj) = 0              for all other pairs
+
+  // We assume that R(m->n) = S(m,n) * M->distribution()[n]
+
+  // This should result in a Markov chain where the frequencies are
+  //  frequencies()[mi] = pi[i] * f[m] 
+  // with pi = M->frequencies() 
+  // and   f = M->distribution()
+
+  // PROBLEM: I don't have a good way of defining the switching rate.
+  // Right now, I have S(m,n) = rho, S(m,m) = 0
+  // But, the S(m,n) do not correspond to switching rates exactly.
+  // Instead, the switching rate is now rho*f[n], which is going to
+  // be something like rho*(n-1)/n if there are n categories.
+  
+  // ADDITIONALLY, depending on how fine-grained the categories are,
+  // a switching rate has a different interpretation.
+
+  // HOWEVER, I think the current approach works for now, because it
+  // approximates the model that at rate 'rho' the rate is randomly
+  // re-drawn from the underlying distribution.  A lot of the time it
+  // will fall in the same bin, giving a lower observed switching rate
+  // when the discrete approximation to the continuous distribution has
+  // low resolution.
+
   void ModulatedMarkovModel::recalc(const vector<int>&) 
   {
+    const int n_models = M->n_base_models();
+
+    M->set_rate(1);
+
+    const valarray<double>& M_pi = M->frequencies();
+    const vector<double>&   M_f  = M->distribution();
+
     // calculate pi[ ] for each state
     unsigned T = 0;
-    for(int m=0; m < M->n_base_models(); m++) {
+    for(int m=0; m < n_models; m++) {
       unsigned N = M->base_model(m).n_states();
       for(int s=0; s < N; s++) 
-	pi[T+s] = M->distribution()[m] * M->frequencies()[s];
+	pi[T+s] = M_pi[s] * M_f[m];
       T += N;
     }
     
 
-    // for each sub-model in a mixture of markov models the rates remain unchanged
+    // initially zero out the matrix
+    for(int i=0;i<Q.size1();i++)
+      for(int j=0;j<Q.size2();j++)
+	Q(i,j) = 0;
+
+    // rates for within-model transitions
     T=0;
-    for(int m=0; m < M->n_base_models(); m++) 
+    for(int m=0; m < n_models; m++) 
     {
       const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m));
       if (not RM)
@@ -1744,38 +1811,41 @@ namespace substitution {
 
       unsigned N = RM->n_states();
       
+
+      const Matrix& QM = RM->transition_rates();
       for(int s1=0; s1 < N; s1++) 
 	for(int s2=0; s2 < N; s2++)
-	  Q(T+s1,T+s2) = RM->transition_rates()(s1,s2);
+	  Q(T+s1,T+s2) = QM(s1,s2);
+
       T += N;
     }
 
-    // for each pair of sub-models
+    // rates for between-model transitions
     unsigned T1=0;
-    for(int m1=0; m1 < M->n_base_models(); m1++) 
+    for(int m1=0; m1 < n_models; m1++) 
     {
       const ReversibleMarkovModel* RM1 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m1));
       unsigned N1 = RM1->n_states();
 
       unsigned T2=0;
-      for(int m2=0; m2 < M->n_base_models(); m2++) 
+      for(int m2=0; m2 < n_models; m2++) 
       {
 	const ReversibleMarkovModel* RM2 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m2));
 	unsigned N2 = RM2->n_states();
+	assert(N1 == N2);
 
-	double S12 = (*S)(m1,m2);
-	for(int s1=0;s1<N1;s1++)
-	  for(int s2=0;s2<N2;s2++)
-	    Q(T1+s1,T2+s2) = S12*frequencies()[T2+s2];
+	if (m1 != m2) {
+	  double S12 = (*S)(m1,m2);
+	  for(int s1=0;s1<N1;s1++)
+	    Q(T1+s1,T2+s1) = S12*M_f[m2];
+	}
 
 	T2 += N2;
       }
       T1 += N1;
     }
 
-
-
-    // recompute rate matrix
+    // recompute diagonals 
     for(int i=0;i<Q.size1();i++) 
     {
       double sum=0;
