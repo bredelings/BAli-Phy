@@ -133,6 +133,41 @@ namespace substitution {
     return calc_root_probability(*P.A, *P.T, P.LC, P.SModel(), rb, index);
   }
 
+  inline double sum(const Matrix& Q, const vector<unsigned>& smap, int n_letters, 
+		    int s1, int l)
+  {
+    double total = 0;
+    int n_states = smap.size();
+#ifdef DEBUG_SMAP
+    for(int s2=0; s2<n_states; s2++)
+      if (smap[s2] == l)
+	total += Q(s1,s2);
+#else    
+    for(int s2=l; s2<n_states; s2+=n_letters)
+      total += Q(s1,s2);
+#endif
+    return total;
+  }
+
+  inline double sum(const Matrix Q,const vector<unsigned>& smap,
+		    int s1, int l2, const alphabet& a)
+  {
+    double total=0;
+    int n_states = smap.size();
+    int n_letters = a.n_letters();
+#ifdef DEBUG_SMAP
+    for(int s=0;s<smap.size();s++)
+      if (a.matches(smap[s],l2))
+	total += Q(s1,s);
+#else
+    for(int L=0;L<n_letters;L++)
+      if (a.matches(L,l2))
+	total += sum(Q,smap,n_letters,s1,L);
+#endif
+    return total;
+  }
+
+
   void peel_leaf_branch(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 			const MatCache& transition_P,const MultiModel& MModel)
   {
@@ -143,8 +178,10 @@ namespace substitution {
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
-    const int n_models = S.size1();
-    const int n_states = S.size2();
+    const int n_models  = S.size1();
+    const int n_states  = S.size2();
+    const int n_letters = a.n_letters();
+    const int N = n_states/n_letters;
     assert(MModel.n_states() == n_states);
 
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
@@ -158,24 +195,59 @@ namespace substitution {
       // compute the distribution at the parent node
       int l2 = A.note(0,i+1,b0);
 
-      /*      // single letter
       if (a.is_letter(l2))
 	for(int m=0;m<n_models;m++) {
 	  const Matrix& Q = transition_P[m][b0%B];
 	  for(int s1=0;s1<n_states;s1++)
 	    cache(i,b0)(m,s1) = Q(s1,l2);
-	    }*/
+	}
+      else if (a.is_letter_class(l2)) {
+	for(int m=0;m<n_models;m++) {
+	  const Matrix& Q = transition_P[m][b0%B];
+	  for(int s1=0;s1<n_states;s1++)
+	    cache(i,b0)(m,s1) = sum(Q,s1,l2,a);
+	}
+      }
+      else
+	for(int m=0;m<n_models;m++)
+	  for(int s=0;s<n_states;s++)
+	    cache(i,b0)(m,s) = 1;
+    }
+  }
+
+  void peel_leaf_branch_modulated(int b0,Likelihood_Cache& cache, const alignment& A, 
+				  const Tree& T, 
+				  const MatCache& transition_P,const MultiModel& MModel)
+  {
+    const alphabet& a = A.get_alphabet();
+
+    // The number of directed branches is twice the number of undirected branches
+    const int B        = T.n_branches();
+
+    // scratch matrix
+    Matrix& S = cache.scratch(0);
+    const int n_models  = S.size1();
+    const int n_states  = S.size2();
+    const int n_letters = a.n_letters();
+    const int N = n_states/n_letters;
+    assert(MModel.n_states() == n_states);
+
+    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
+    if (not subA_index_valid(A,b0))
+      update_subA_index_branch(A,T,b0);
+
+    const vector<unsigned>& smap = MModel.state_letters();
+
+    for(int i=0;i<subA_length(A,b0);i++)
+    {
+      // compute the distribution at the parent node
+      int l2 = A.note(0,i+1,b0);
 
       if (a.is_letter(l2))
 	for(int m=0;m<n_models;m++) {
 	  const Matrix& Q = transition_P[m][b0%B];
-	  for(int s1=0;s1<n_states;s1++) {
-	    double temp = 0;
-	    for(int s2=0;s2<n_states;s2++)
-	      if (smap[s2] == l2)
-		temp += Q(s1,s2);
-	    cache(i,b0)(m,s1) = temp;
-	  }
+	  for(int s1=0;s1<n_states;s1++)
+	    cache(i,b0)(m,s1) = sum(Q,smap,n_letters,s1,l2);
 	}
       else if (a.is_letter_class(l2)) {
 	for(int m=0;m<n_models;m++) {
@@ -258,8 +330,14 @@ namespace substitution {
     // compute branches-in
     int bb = T.directed_branch(b0).branches_before().size();
 
-    if (bb == 0)
-      peel_leaf_branch(b0, cache, A, T, transition_P, MModel);
+    if (bb == 0) {
+      int n_states = cache.scratch(0).size2();
+      int n_letters = A.get_alphabet().n_letters();
+      if (n_states == n_letters)
+	peel_leaf_branch(b0, cache, A, T, transition_P, MModel);
+      else
+	peel_leaf_branch_modulated(b0, cache, A, T, transition_P, MModel);
+    }
     else if (bb == 2)
       peel_internal_branch(b0, cache, A, T, transition_P, MModel);
     else
