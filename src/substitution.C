@@ -100,9 +100,10 @@ namespace substitution {
 	//--------- If there is a letter at the root, condition on it ---------//
 	if (root < T.n_leaves()) {
 	  int rl = A.seq(root)[i];
+	  // How about if its NOT a letter class?
 	  if (a.is_letter_class(rl))
 	    for(int s=0;s<n_states;s++)
-	      if (not a.matches(s,rl))
+	      if (not a.matches(MModel.state_letters()[s],rl))
 		S(m,s) = 0;
 	}
 
@@ -150,6 +151,8 @@ namespace substitution {
     if (not subA_index_valid(A,b0))
       update_subA_index_branch(A,T,b0);
 
+    const vector<unsigned>& smap = MModel.state_letters();
+
     for(int i=0;i<subA_length(A,b0);i++)
     {
       // compute the distribution at the parent node
@@ -169,7 +172,7 @@ namespace substitution {
 	  for(int s1=0;s1<n_states;s1++) {
 	    double temp = 0;
 	    for(int s2=0;s2<n_states;s2++)
-	      if (MModel.state_letters()[s2] == l2)
+	      if (smap[s2] == l2)
 		temp += Q(s1,s2);
 	    cache(i,b0)(m,s1) = temp;
 	  }
@@ -178,7 +181,7 @@ namespace substitution {
 	for(int m=0;m<n_models;m++) {
 	  const Matrix& Q = transition_P[m][b0%B];
 	  for(int s1=0;s1<n_states;s1++)
-	    cache(i,b0)(m,s1) = sum(Q,s1,l2,a);
+	    cache(i,b0)(m,s1) = sum(Q,smap,s1,l2,a);
 	}
       }
       else
@@ -345,6 +348,8 @@ namespace substitution {
 	F(m,s) = f[s]*p;
     }
 
+    const vector<unsigned>& smap = MModel.state_letters();
+
     for(int i=0;i<index.size1();i++) {
       double p_col = 0;
       for(int m=0;m<n_models;m++) {
@@ -366,7 +371,7 @@ namespace substitution {
 	  int rl = A.seq(root)[i];
 	  if (a.is_letter_class(rl))
 	    for(int s=0;s<n_states;s++)
-	      if (not a.matches(s,rl))
+	      if (not a.matches(smap[s],rl))
 		S(m,s) = 0;
 	}
 
@@ -437,6 +442,8 @@ namespace substitution {
 	L.push_back(S);
     }
 
+    const vector<unsigned>& smap = P.SModel().state_letters();
+
     for(int i=0;i<index.size1();i++) {
 
       for(int m=0;m<n_models;m++) {
@@ -455,7 +462,7 @@ namespace substitution {
 	  int rl = A.seq(root)[i];
 	  if (a.is_letter_class(rl))
 	    for(int s=0;s<n_states;s++)
-	      if (not a.matches(s,rl))
+	      if (not a.matches(smap[s],rl))
 		S(m,s) = 0;
 	}
       }

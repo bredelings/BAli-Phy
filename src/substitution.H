@@ -38,6 +38,16 @@ namespace substitution {
     return total;
   }
 
+  inline double sum(const Matrix Q,const vector<unsigned>& smap,
+		    int s1, int l2, const alphabet& a)
+  {
+    double total=0;
+    for(int s=0;s<smap.size();s++)
+      if (a.matches(smap[s],l2))
+	total += Q(s1,s);
+    return total;
+  }
+
 
   /// Find the probabilities of all the data give each letter at the root
   vector<Matrix>
