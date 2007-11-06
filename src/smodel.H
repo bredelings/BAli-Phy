@@ -69,7 +69,7 @@ namespace substitution {
   public:
     virtual const alphabet& Alphabet() const =0;
 
-    unsigned size() const {return Alphabet().size();}
+    unsigned n_letters() const {return Alphabet().size();}
   };
 
   /// This class stores an alphabet AND associates a model with it
@@ -92,6 +92,10 @@ namespace substitution {
   {
   public:
     
+    virtual const vector<unsigned>& state_letters() const=0;
+
+    unsigned n_states() const { return state_letters().size();}
+
     /// Make a copy of this object
     virtual Model* clone() const =0;
 
@@ -181,6 +185,8 @@ namespace substitution {
     /// Rate matrix
     Matrix Q;
 
+    vector<unsigned> state_letters_;
+
   public:
 
     virtual MarkovModel* clone() const =0;
@@ -191,15 +197,18 @@ namespace substitution {
     /// The transition probability matrix
     virtual Matrix transition_p(double t) const =0;
 
+    virtual const vector<unsigned>& state_letters() const {return state_letters_;}
+
     /// Construct a Makov model on alphabet 'a_'
-    MarkovModel(const alphabet& a)
-      :Q(a.size(),a.size())
-    {}
+    MarkovModel(const alphabet& a);
   };
 
 
   //------------------------ Exchangeability Model ----------------------//
-  class ExchangeModel: virtual public AlphabetModel
+
+
+
+  class ExchangeModel: virtual public ::Model
   {
   protected:
     SMatrix S;
@@ -208,15 +217,52 @@ namespace substitution {
     
     double operator()(int i,int j) const {return S(i,j);}
 
+    unsigned n_states() const {return S.size1();}
+
     ExchangeModel* clone() const =0;
     
-    ExchangeModel(const alphabet& a);
+    ExchangeModel(unsigned n);
 
     virtual ~ExchangeModel() {};
   };
 
+  class SimpleExchangeModel: public ExchangeModel
+  {
+    void recalc(const vector<int>&);
+
+  public:
+
+    SimpleExchangeModel* clone() const {return new SimpleExchangeModel(*this);}
+
+    /// Get the parameter 'rho' (model switching rate)
+    double rho() const {return parameter(0);}
+    /// Set the parameter 'rho' (model switching rate)
+    void   rho(double r) {parameter(0,r);}
+
+    virtual efloat_t prior() const;
+
+    string name() const;
+
+    SimpleExchangeModel(unsigned n);
+
+    ~SimpleExchangeModel() {}
+  };
+
+
+  class AlphabetExchangeModel: public ExchangeModel,
+			       virtual public AlphabetModel 
+  {
+  public:
+    
+    AlphabetExchangeModel* clone() const =0;
+    
+    AlphabetExchangeModel(const alphabet& a);
+
+    virtual ~AlphabetExchangeModel() {};
+  };
+
   
-  class INV_Model: public ExchangeModel,public ModelWithAlphabet<alphabet> 
+  class INV_Model: public AlphabetExchangeModel,public ModelWithAlphabet<alphabet> 
   {
     Matrix P;
   public:
@@ -231,7 +277,7 @@ namespace substitution {
 
   /// The EQU model for any alphabet - all letters are treated the same
   /// This model has no parameters
-  class EQU: public ExchangeModel,public ModelWithAlphabet<alphabet> 
+  class EQU: public AlphabetExchangeModel,public ModelWithAlphabet<alphabet> 
   {
   public:
 
@@ -247,7 +293,7 @@ namespace substitution {
   //------------------ Empirical Substitution Model ---------------------//
 
   /// A generic model for any alphabet - the exchangeability matrix is loaded from a file
-  class Empirical: public ExchangeModel,public ModelWithAlphabet<alphabet> 
+  class Empirical: public AlphabetExchangeModel,public ModelWithAlphabet<alphabet> 
   {
     /// Specificy this model based on the matrix that was loaded
     string modelname;
@@ -266,14 +312,14 @@ namespace substitution {
     ~Empirical() {}
   };
 
-  class NucleotideExchangeModel: public ExchangeModel,
+  class NucleotideExchangeModel: public AlphabetExchangeModel,
 				 public ModelWithAlphabet<Nucleotides>
   {
   public:
     NucleotideExchangeModel* clone() const=0;
 
     NucleotideExchangeModel(const Nucleotides& N)
-      :ExchangeModel(N),
+      :AlphabetExchangeModel(N),
        ModelWithAlphabet<Nucleotides>(N)
     {}
   };
@@ -342,7 +388,7 @@ namespace substitution {
   };
     
 
-  class TripletExchangeModel: public ExchangeModel, 
+  class TripletExchangeModel: public AlphabetExchangeModel, 
 			      public ModelWithAlphabet<Triplets> 
   {
   public:
@@ -372,21 +418,21 @@ namespace substitution {
 
 
 
-  class CodonExchangeModel: public ExchangeModel, 
+  class CodonAlphabetExchangeModel: public AlphabetExchangeModel, 
 			    public ModelWithAlphabet<Codons> 
   {
   public:
-    CodonExchangeModel* clone() const=0;
+    CodonAlphabetExchangeModel* clone() const=0;
 
     int AminoAcid(int l) const {return Alphabet().translate(l);}
 
-    CodonExchangeModel(const Codons& C);
+    CodonAlphabetExchangeModel(const Codons& C);
 
-    ~CodonExchangeModel() {}
+    ~CodonAlphabetExchangeModel() {}
   };
 
 
-  class M0: public CodonExchangeModel,
+  class M0: public CodonAlphabetExchangeModel,
 		public SuperModelOver<NucleotideExchangeModel>
   {
     void recalc(const vector<int>&);
@@ -603,7 +649,7 @@ namespace substitution {
   {
   protected:
     /// The exchange model
-    OwnedPointer<ExchangeModel> S;
+    OwnedPointer<AlphabetExchangeModel> S;
 
     /// The frequency model
     OwnedPointer<ReversibleFrequencyModel> R;
@@ -641,7 +687,7 @@ namespace substitution {
     string name() const;
 
     /// Construct a reversible Markov model on alphabet 'a'
-    ReversibleMarkovSuperModel(const ExchangeModel& S1, const ReversibleFrequencyModel& R1);
+    ReversibleMarkovSuperModel(const AlphabetExchangeModel& S1, const ReversibleFrequencyModel& R1);
     
     ~ReversibleMarkovSuperModel() {}
   };
@@ -657,8 +703,8 @@ namespace substitution {
     
     void frequencies(const valarray<double>& pi);
 
-    explicit SimpleReversibleMarkovModel(const ExchangeModel& E);
-    explicit SimpleReversibleMarkovModel(const ExchangeModel& E,const valarray<double>&);
+    explicit SimpleReversibleMarkovModel(const AlphabetExchangeModel& E);
+    explicit SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>&);
   };
 
   //--------------------------- Implement the underlying alphabet -------------------------//
@@ -724,6 +770,8 @@ namespace substitution {
 
     double rate() const;
     void set_rate(double);
+
+    virtual const vector<unsigned>& state_letters() const {return base_model(0).state_letters();}
 
     /// Get the probability of each base models
     virtual std::vector<double> distribution() const=0;
@@ -800,7 +848,7 @@ namespace substitution {
 
     string name() const;
 
-    MultiFrequencyModel(const ExchangeModel& M,int n_bins);
+    MultiFrequencyModel(const AlphabetExchangeModel& M,int n_bins);
 
     ~MultiFrequencyModel() {}
   };
@@ -1068,6 +1116,48 @@ namespace substitution {
     MixtureModel(const std::vector<OwnedPointer<MultiModel> >& models);
   };
 
+  
+  class ModulatedMarkovModel: public ReversibleMarkovModel,
+			      public SuperModel
+  {
+  protected:
+    OwnedPointer<MultiModel> M;
+    OwnedPointer<ExchangeModel> S;
+
+    valarray<double> pi;
+
+    void recalc(const vector<int>&);
+
+    const ::Model& SubModels(int i) const {
+      if (i==0)
+	return *M;
+      else if (i==1)
+	return *S;
+      else
+	std::abort();
+    }
+
+    ::Model& SubModels(int i) {
+      if (i==0)
+	return *M;
+      else if (i==1)
+	return *S;
+      else
+	std::abort();
+    }
+
+  public:
+
+    virtual ModulatedMarkovModel* clone() const {return new ModulatedMarkovModel(*this);}
+
+    const valarray<double>& frequencies() const {return pi;}
+
+    string name() const;
+
+    const alphabet& Alphabet() const {return M->Alphabet();}
+
+    ModulatedMarkovModel(const MultiModel& M, const ExchangeModel& S);
+  };
 }
 #endif
 

@@ -108,10 +108,11 @@ public:
   operator bool() const {return here;}
 
   unsigned size() const {
-    node_t* temp = start->next;
-    unsigned s = 1;
-    while(temp != start) {
+    node_t* temp = here;
+    unsigned s = 0;
+    while (temp) {
       temp = temp->next;
+      if (temp == start) temp = NULL;
       s++;
     }
     return s;

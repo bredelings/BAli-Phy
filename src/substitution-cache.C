@@ -48,7 +48,7 @@ void Multi_Likelihood_Cache::allocate(int s) {
   unused_locations.reserve(new_size);
 
   for(int i=0;i<s;i++) {
-    push_back(vector<Matrix>(C,Matrix(M,A)));
+    push_back(vector<Matrix>(C,Matrix(M,S)));
     n_uses.push_back(0);
     up_to_date_.push_back(false);
     unused_locations.push_back(old_size+i);
@@ -88,7 +88,7 @@ void Multi_Likelihood_Cache::set_length(int t,int l) {
 
     for(int i=0;i<size();i++)
       for(int j=0;j<delta;j++)
-	(*this)[i].push_back(Matrix(M,A));
+	(*this)[i].push_back(Matrix(M,S));
     std::clog<<"MLC now has "<<C<<" columns and "<<size()<<" branches.\n";
   }
   for(int i=0;i<size();i++) {
@@ -186,7 +186,7 @@ void Multi_Likelihood_Cache::release_token(int token) {
 Multi_Likelihood_Cache::Multi_Likelihood_Cache(const substitution::MultiModel& MM)
   :C(0),
    M(MM.n_base_models()),
-   A(MM.Alphabet().size())
+   S(MM.n_states())
 { }
 
 //------------------------------- Likelihood_Cache------------------------------//

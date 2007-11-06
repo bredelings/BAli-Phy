@@ -87,8 +87,40 @@ namespace substitution {
 
 
 
-  ExchangeModel::ExchangeModel(const alphabet& a)
-    :S(a.size(),a.size())
+  ExchangeModel::ExchangeModel(unsigned n)
+    :S(n,n)
+  {}
+
+  efloat_t SimpleExchangeModel::prior() const {
+    return laplace_pdf(log(rho()), -3, 1);
+  }
+
+  void SimpleExchangeModel::recalc(const vector<int>&)
+  {
+    double r = rho();
+    for(int i=0;i<n_states();i++) {
+      for(int j=0;j<n_states();j++)
+	S(i,j) = r;
+
+      S(i,i) = 0;       // this is NOT a rate away.
+    }
+  }
+
+  string SimpleExchangeModel::name() const 
+  {
+    return "SimpleExchangeModel";
+  }
+
+  SimpleExchangeModel::SimpleExchangeModel(unsigned n)
+    :ExchangeModel(n)
+  {
+    add_parameter("rho",exp(-4));
+    recalc_all();
+  }
+
+
+  AlphabetExchangeModel::AlphabetExchangeModel(const alphabet& a)
+    :ExchangeModel(a.size())
   {}
 
   //----------------------- Frequency Models ------------------------//
@@ -101,7 +133,7 @@ namespace substitution {
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
   {
     // set the frequency parameters
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       parameters_[i+1] = pi2[i];
 
     // recompute everything
@@ -111,20 +143,20 @@ namespace substitution {
   void SimpleFrequencyModel::recalc(const vector<int>&)
   {
     // compute frequencies
-    pi = get_varray(parameters_,1,size());
+    pi = get_varray(parameters_,1,n_letters());
     pi /= pi.sum();
     
     // compute transition rates
-    valarray<double> pi_f(size());
-    for(int i=0;i<size();i++)
+    valarray<double> pi_f(n_letters());
+    for(int i=0;i<n_letters();i++)
       pi_f[i] = pow(pi[i],f());
 
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
 	R(i,j) = pi_f[i]/pi[i] * pi_f[j];
 
     // diagonal entries should have no effect
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       R(i,i) = 0;
   }
 
@@ -134,7 +166,7 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    return dirichlet_pdf(parameters_, 1, size(), 1.0);
+    return dirichlet_pdf(parameters_, 1, n_letters(), 1.0);
   }
 
   string SimpleFrequencyModel::name() const {
@@ -149,9 +181,9 @@ namespace substitution {
     add_parameter("f",1.0);
     fixed_[0] = true;
 
-    for(int i=0;i<size();i++) {
+    for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(pname, 1.0/size());
+      add_parameter(pname, 1.0/n_letters());
     }
 
     // initialize everything
@@ -168,7 +200,7 @@ namespace substitution {
 
     valarray<double> f = pi;
     f /= f.sum();
-    for(int i=0;i<size();i++) {
+    for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
       add_parameter(pname, f[i]);
     }
@@ -209,14 +241,14 @@ namespace substitution {
 
     vector<double> sub_parameters = SubModels(0).parameters();
 
-    vector<double> triplet_parameters(size()+1);
+    vector<double> triplet_parameters(n_letters()+1);
     triplet_parameters[0] = sub_parameters[0];
     set_varray(triplet_parameters,1,pi);
 
     triplets->parameters(triplet_parameters);
 
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
 	R(i,j) = (*triplets)(i,j);
   }
 
@@ -237,7 +269,7 @@ namespace substitution {
 
   void TripletsFrequencyModel::recalc(const vector<int>&)
   {
-    valarray<double> nu = get_varray(parameters_, 1, size());
+    valarray<double> nu = get_varray(parameters_, 1, n_letters());
 
     //------------- compute frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
@@ -250,15 +282,15 @@ namespace substitution {
     //------------ compute transition rates -------------//
     double g = parameters_[0];
 
-    valarray<double> nu_g(size());
-    for(int i=0;i<size();i++)
+    valarray<double> nu_g(n_letters());
+    for(int i=0;i<n_letters();i++)
       nu_g[i] = pow(nu[i],g);
 
 
     // FIXME - can we really handle two mutations?
     // Should the restriction on 1 mutation be HERE?
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++) {
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++) {
 	R(i,j) = nu_g[i]/nu[i]*nu_g[j];
 	for(int k=0;k<3;k++) {
 	  int n1 = Alphabet().sub_nuc(i,k);
@@ -269,13 +301,13 @@ namespace substitution {
       }
 
     // diagonal entries should have no effect
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       R(i,i) = 0;
   }
 
   efloat_t TripletsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(parameters_,1,size(),4.0);
+    return dirichlet_pdf(parameters_,1,n_letters(),4.0);
   }
 
   string TripletsFrequencyModel::name() const 
@@ -288,9 +320,9 @@ namespace substitution {
   {
     add_super_parameter("g", 1);
 
-    for(int i=0;i<size();i++) {
+    for(int i=0;i<n_letters();i++) {
       string pname = string("v") + Alphabet().letter(i);
-      add_super_parameter(pname, 1.0/size());
+      add_super_parameter(pname, 1.0/n_letters());
     }
 
     insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
@@ -322,14 +354,14 @@ namespace substitution {
       pi[i] = f_aa[aa]/n_aa[aa];
     }
 
-    vector<double> codon_parameters(size()+1);
+    vector<double> codon_parameters(n_letters()+1);
     codon_parameters[0] = SubModels(0).parameter(0);
     set_varray(codon_parameters,1,pi);
 
     codons->parameters(codon_parameters);
 
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
 	R(i,j) = (*codons)(i,j);
   }
 
@@ -365,19 +397,19 @@ namespace substitution {
 
     // get aa frequencies of sub-alphabet
     valarray<double> sub_aa_pi(0.0,aa_size());
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       sub_aa_pi[Alphabet().translate(i)] += sub_pi[i];
 
     // get factors by which to multiply sub-alphabet frequencies
-    valarray<double> factor(size());
-    for(int i=0;i<size();i++) 
+    valarray<double> factor(n_letters());
+    for(int i=0;i<n_letters();i++) 
     {
       int j = Alphabet().translate(i);
       factor[i] = pow(aa_pi[j]/sub_aa_pi[j],c);
     }
 
     // compute aa-aware codon frequencies
-    for(int i=0;i<size();i++) 
+    for(int i=0;i<n_letters();i++) 
       pi[i] = sub_pi[i] * factor[i];
 
     // scale so as to sum to 1
@@ -387,17 +419,17 @@ namespace substitution {
     //------------ compute transition rates -------------//
     double h = parameters_[1];
 
-    valarray<double> factor_h(size());
-    for(int i=0;i<size();i++)
+    valarray<double> factor_h(n_letters());
+    for(int i=0;i<n_letters();i++)
       factor_h[i] = pow(factor[i],h);
 
 
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
 	R(i,j) = SubModels(0)(i,j) * factor_h[i]/factor[i]*factor_h[j];
 
     // diagonal entries should have no effect
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       R(i,i) = 0;
   }
 
@@ -435,15 +467,15 @@ namespace substitution {
     //------------- compute frequencies ------------------//
     valarray<double> aa_pref_ = get_varray(parameters_, 1, aa_size());
 
-    valarray<double> aa_pref(size());
-    for(int i=0;i<size();i++)
+    valarray<double> aa_pref(n_letters());
+    for(int i=0;i<n_letters();i++)
       aa_pref[i] = aa_pref_[Alphabet().translate(i)];
 
     // get codon frequencies of sub-alphabet
     valarray<double> sub_pi = SubModels(0).frequencies();
 
     // scale triplet frequencies by aa prefs
-    for(int i=0;i<size();i++) 
+    for(int i=0;i<n_letters();i++) 
       pi[i] = sub_pi[i] * aa_pref[i];
 
     // scale so as to sum to 1
@@ -453,17 +485,17 @@ namespace substitution {
     //------------ compute transition rates -------------//
     double h = parameters_[0];
 
-    valarray<double> aa_pref_h(size());
-    for(int i=0;i<size();i++)
+    valarray<double> aa_pref_h(n_letters());
+    for(int i=0;i<n_letters();i++)
       aa_pref_h[i] = pow(aa_pref[i], h);
 
 
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
 	R(i,j) = SubModels(0)(i,j) * aa_pref_h[i]/aa_pref[i] * aa_pref_h[j];
 
     // diagonal entries should have no effect
-    for(int i=0;i<size();i++)
+    for(int i=0;i<n_letters();i++)
       R(i,i) = 0;
   }
 
@@ -493,6 +525,15 @@ namespace substitution {
     recalc_all();
   }
 
+
+  /// Construct a Makov model on alphabet 'a'
+  MarkovModel::MarkovModel(const alphabet& a)
+    :Q(a.size(),a.size()),state_letters_(a.size())
+  {
+    for(int i=0;i<a.size();i++)
+      state_letters_[i] = i;
+  }
+  
   //----------------------- ReversibleMarkovModel --------------------------//
   // Q(i,j) = S(i,j)*pi[j]   for i!=j
   // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
@@ -501,11 +542,31 @@ namespace substitution {
   // Then Q = S*D, and we can easily compute the exponential
   // So, S(i,j) = Q(i,i)/pi[i]
 
-  double ReversibleMarkovModel::rate() const {
-    // Rescale so that expected mutation rate is 1
+  double ReversibleMarkovModel::rate() const 
+  {
+    const unsigned N = n_states();
+    
     double scale=0;
-    for(int i=0;i<Q.size1();i++) 
-      scale -= frequencies()[i]*Q(i,i);
+
+    if (N == Alphabet().size()) 
+    {
+      for(int i=0;i<Q.size1();i++) 
+	scale -= frequencies()[i]*Q(i,i);
+    }
+    else 
+    {
+      const vector<unsigned>& smap = state_letters();
+
+      for(int s1=0;s1<N;s1++)
+      {
+	double temp = 0;
+	for(int s2=0;s2<N;s2++)
+	  if (smap[s1] != smap[s2])
+	    temp += Q(s1,s2);
+
+	scale += temp*frequencies()[s1];
+      }
+    }
 
     return scale/Alphabet().width();
   }
@@ -532,11 +593,19 @@ namespace substitution {
 
   void ReversibleMarkovModel::recalc_eigensystem()
   {
-#ifndef NDEBUG
-    std::cerr<<"scale = "<<rate()<<endl;
-#endif
+    const unsigned n = n_states();
 
-    const unsigned n = size();
+#ifdef DEBUG_RATE_MATRIX
+    std::cerr<<"scale = "<<rate()<<endl;
+
+    assert(std::abs(frequencies().sum()-1.0) < 1.0e-6);
+    for(int i=0;i<n;i++) {
+      double sum = 0;
+      for(int j=0;j<n;j++)
+	sum += Q(i,j);
+      assert(abs(sum) < 1.0e-6);
+    }
+#endif
 
     //--------- Compute pi[i]**0.5 and pi[i]**-0.5 ----------//
     vector<double> sqrt_pi(n);
@@ -552,7 +621,7 @@ namespace substitution {
       for(int j=0;j<=i;j++) {
 	S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
 
-#ifndef NDEBUG
+#ifdef DEBUG_RATE_MATRIX
 	// check reversibility of rate matrix
 	if (i != j) {
 	  assert (S(i,j) >= 0);
@@ -571,8 +640,9 @@ namespace substitution {
 
   Matrix ReversibleMarkovModel::transition_p(double t) const 
   {
-    vector<double> pi(size());
+    vector<double> pi(n_states());
     const valarray<double> f = frequencies();
+    assert(pi.size() == f.size());
     for(int i=0;i<pi.size();i++)
       pi[i] = f[i];
     return exp(eigensystem,pi,t);
@@ -585,10 +655,12 @@ namespace substitution {
 
   void ReversibleMarkovSuperModel::recalc(const vector<int>&)
   {
+    const unsigned N = n_states();
+
     // recompute rate matrix
-    for(int i=0;i<size();i++) {
+    for(int i=0;i<N;i++) {
       double sum=0;
-      for(int j=0;j<size();j++) {
+      for(int j=0;j<N;j++) {
 	if (i==j) continue;
 	Q(i,j) = (*S)(i,j) * (*R)(i,j);
 	sum += Q(i,j);
@@ -604,7 +676,7 @@ namespace substitution {
   }
 
   /// Construct a reversible Markov model on alphabet 'a'
-  ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
+  ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const AlphabetExchangeModel& S1,const ReversibleFrequencyModel& R1)
     :ReversibleMarkovModel(S1.Alphabet()),
      ModelWithAlphabet<alphabet>(S1.Alphabet()),
      S(S1),
@@ -626,12 +698,12 @@ namespace substitution {
     read();
   }
 
-  SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ExchangeModel& E)
+  SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const AlphabetExchangeModel& E)
       :ReversibleMarkovSuperModel(E,SimpleFrequencyModel(E.Alphabet()))
   { }
 
   SimpleReversibleMarkovModel::
-  SimpleReversibleMarkovModel(const ExchangeModel& E,const valarray<double>& pi)
+  SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
       :ReversibleMarkovSuperModel(E,SimpleFrequencyModel(E.Alphabet(),pi))
   { }
 
@@ -643,7 +715,7 @@ namespace substitution {
   }
 
   INV_Model::INV_Model(const alphabet& a)
-    :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+    :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   {
     add_parameter("INV::f",1);
 
@@ -660,10 +732,10 @@ namespace substitution {
   }
 
   EQU::EQU(const alphabet& a) 
-    :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+    :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   {
-    for(int i=0;i<size();i++)
-      for(int j=0;j<size();j++)
+    for(int i=0;i<n_states();i++)
+      for(int j=0;j<n_states();j++)
 	S(i,j) = 1;
   }
 
@@ -692,7 +764,7 @@ namespace substitution {
 
   /// Construct an Empirical model on alphabet 'a' with matrix from 'filename'
   Empirical::Empirical(const alphabet& a,const string& filename) 
-    :ExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+    :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   { 
     load_file(filename); 
   }
@@ -833,7 +905,7 @@ namespace substitution {
   //------------------------ Triplet Models -------------------//
 
   TripletExchangeModel::TripletExchangeModel(const Triplets& T)
-    :ExchangeModel(T),ModelWithAlphabet<Triplets>(T)
+    :AlphabetExchangeModel(T),ModelWithAlphabet<Triplets>(T)
   { }
 
   void SingletToTripletExchangeModel::recalc(const vector<int>&)
@@ -881,8 +953,8 @@ namespace substitution {
 
   //------------------------ Codon Models -------------------//
 
-  CodonExchangeModel::CodonExchangeModel(const Codons& C)
-    :ExchangeModel(C),ModelWithAlphabet<Codons>(C)
+  CodonAlphabetExchangeModel::CodonAlphabetExchangeModel(const Codons& C)
+    :AlphabetExchangeModel(C),ModelWithAlphabet<Codons>(C)
   { }
 
   /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
@@ -942,7 +1014,7 @@ namespace substitution {
   }
 
   M0::M0(const Codons& C,const NucleotideExchangeModel& N)
-    :CodonExchangeModel(C)
+    :CodonAlphabetExchangeModel(C)
   { 
     add_super_parameter("M0::omega", 1.0);
     insert_submodel("1",N);
@@ -976,7 +1048,7 @@ namespace substitution {
   }
 
   Matrix frequency_matrix(const MultiModel& M) {
-    Matrix f(M.n_base_models(),M.Alphabet().size());
+    Matrix f(M.n_base_models(),M.n_states());
     for(int m=0;m<f.size1();m++)
       for(int l=0;l<f.size2();l++)
 	f(m,l) = M.base_model(m).frequencies()[l];
@@ -1064,7 +1136,7 @@ namespace substitution {
       convertToString(fraction.size()) + "]";
   }
 
-  MultiFrequencyModel::MultiFrequencyModel(const ExchangeModel& E,int n)
+  MultiFrequencyModel::MultiFrequencyModel(const AlphabetExchangeModel& E,int n)
     :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E)),
      fraction(n)
   { 
@@ -1671,4 +1743,157 @@ namespace substitution {
     read();
     recalc_all();
   }
+
+
+  string ModulatedMarkovModel::name() const 
+  {
+    return M->name() + "+" + S->name();
+  }
+
+  // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
+  //         Q(mi -> ni) = R(m->n)        for model exchange
+  // and     Q(mi -> nj) = 0              for all other pairs
+
+  // We assume that R(m->n) = S(m,n) * M->distribution()[n]
+
+  // This should result in a Markov chain where the frequencies are
+  //  frequencies()[mi] = pi[i] * f[m] 
+  // with pi = M->frequencies() 
+  // and   f = M->distribution()
+
+  // PROBLEM: I don't have a good way of defining the switching rate.
+  // Right now, I have S(m,n) = rho, S(m,m) = 0
+  // But, the S(m,n) do not correspond to switching rates exactly.
+  // Instead, the switching rate is now rho*f[n], which is going to
+  // be something like rho*(n-1)/n if there are n categories.
+  
+  // ADDITIONALLY, depending on how fine-grained the categories are,
+  // a switching rate has a different interpretation.
+
+  // HOWEVER, I think the current approach works for now, because it
+  // approximates the model that at rate 'rho' the rate is randomly
+  // re-drawn from the underlying distribution.  A lot of the time it
+  // will fall in the same bin, giving a lower observed switching rate
+  // when the discrete approximation to the continuous distribution has
+  // low resolution.
+
+  void ModulatedMarkovModel::recalc(const vector<int>&) 
+  {
+    const int n_models = M->n_base_models();
+
+    M->set_rate(1);
+
+    const valarray<double>& M_pi = M->frequencies();
+    const vector<double>&   M_f  = M->distribution();
+
+    // calculate pi[ ] for each state
+    unsigned T = 0;
+    for(int m=0; m < n_models; m++) {
+      unsigned N = M->base_model(m).n_states();
+      for(int s=0; s < N; s++) 
+	pi[T+s] = M_pi[s] * M_f[m];
+      T += N;
+    }
+    
+
+    // initially zero out the matrix
+    for(int i=0;i<Q.size1();i++)
+      for(int j=0;j<Q.size2();j++)
+	Q(i,j) = 0;
+
+    // rates for within-model transitions
+    T=0;
+    for(int m=0; m < n_models; m++) 
+    {
+      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m));
+      if (not RM)
+	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model '"<<M->base_model(m).name()<<"'";
+
+      unsigned N = RM->n_states();
+      
+
+      const Matrix& QM = RM->transition_rates();
+      for(int s1=0; s1 < N; s1++) 
+	for(int s2=0; s2 < N; s2++)
+	  Q(T+s1,T+s2) = QM(s1,s2);
+
+      T += N;
+    }
+
+    // rates for between-model transitions
+    unsigned T1=0;
+    for(int m1=0; m1 < n_models; m1++) 
+    {
+      const ReversibleMarkovModel* RM1 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m1));
+      unsigned N1 = RM1->n_states();
+
+      unsigned T2=0;
+      for(int m2=0; m2 < n_models; m2++) 
+      {
+	const ReversibleMarkovModel* RM2 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m2));
+	unsigned N2 = RM2->n_states();
+	assert(N1 == N2);
+
+	if (m1 != m2) {
+	  double S12 = (*S)(m1,m2);
+	  for(int s1=0;s1<N1;s1++)
+	    Q(T1+s1,T2+s1) = S12*M_f[m2];
+	}
+
+	T2 += N2;
+      }
+      T1 += N1;
+    }
+
+    // recompute diagonals 
+    for(int i=0;i<Q.size1();i++) 
+    {
+      double sum=0;
+      for(int j=0;j<Q.size2();j++)
+	if (i!=j)
+	  sum += Q(i,j);
+      Q(i,i) = -sum;
+    }
+
+    recalc_eigensystem();
+  }
+
+  ModulatedMarkovModel::ModulatedMarkovModel(const MultiModel& MM, const ExchangeModel& EM)
+    :ReversibleMarkovModel(MM.Alphabet()),M(MM),S(EM)
+  {
+    unsigned T = 0;
+    for(int m=0; m < M->n_base_models(); m++) 
+    {
+      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m));
+      if (not RM)
+	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model '"<<M->base_model(m).name()<<"'";
+      T += RM->n_states();
+    }
+
+    // resize for larger state set
+    pi.resize(T);
+
+    Q.resize(T,T);
+
+    state_letters_.resize(T);
+
+    // calculate the state_letters() map here!
+
+    T = 0;
+    for(int m=0; m < M->n_base_models(); m++) 
+    {
+      unsigned N = M->base_model(m).n_states();
+      for(int i=0; i<N; i++)
+	state_letters_[T+i] = M->base_model(m).state_letters()[i];
+
+      T += N;
+    }
+
+    add_submodel("M",*M);
+    add_submodel("S",*S);
+
+    read();
+    recalc_all();
+  }
+  
 }
