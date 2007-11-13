@@ -282,7 +282,7 @@ AminoAcids::AminoAcids(const string& s, const string& letters)
 }
 
 AminoAcidsWithStop::AminoAcidsWithStop() 
-  :AminoAcids("Amino-Acids+stop","!")
+  :AminoAcids("Amino-Acids+stop","*")
 { }
 
 
