@@ -34,9 +34,8 @@ void change_branch_length_multi_move(Parameters& P, MoveStats& Stats,int b) {
   change_branch_length_multi(P,Stats,b);
 }
 
-void sample_tri_one(Parameters& P, MoveStats&,int b) {
-  assert(P.has_IModel()); 
-
+void sample_tri_one(Parameters& P, MoveStats&,int b) 
+{
   const SequenceTree& T = *P.T;
 
   int node1 = T.branch(b).target();
@@ -58,7 +57,7 @@ void sample_tri_branch_one(Parameters& P, MoveStats& Stats,int b)
 
   MCMC::Result result(2);
 
-  assert(P.has_IModel()); 
+  assert(P.n_imodels() > 0); 
 
   const SequenceTree& T = *P.T;
 
@@ -92,7 +91,7 @@ void sample_tri_branch_type_one(Parameters& P, MoveStats& Stats,int b)
 
   MCMC::Result result(1);
 
-  assert(P.has_IModel()); 
+  assert(P.n_imodels() > 0); 
 
   const SequenceTree& T = *P.T;
 
@@ -114,19 +113,19 @@ void sample_tri_branch_type_one(Parameters& P, MoveStats& Stats,int b)
 
 
 void sample_alignments_one(Parameters& P, MoveStats&,int b) {
-  assert(P.has_IModel()); 
+  assert(P.n_imodels() > 0); 
 
   sample_alignment(P,b);
 }
 
 void sample_node_move(Parameters& P, MoveStats&,int node) {
-  assert(P.has_IModel()); 
+  assert(P.n_imodels() > 0); 
 
   sample_node(P,node);
 }
 
 void sample_two_nodes_move(Parameters& P, MoveStats&,int n0) {
-  assert(P.has_IModel()); 
+  assert(P.n_imodels() > 0); 
 
   vector<int> nodes = A3::get_nodes_random(*P.T,n0);
   int n1 = -1;

@@ -113,7 +113,8 @@ class Parameters: public SuperModel
   vector<int> smodel_for_partition;
 
   /// The IndelModel
-  polymorphic_cow_ptr<IndelModel> IModel_;
+  vector<polymorphic_cow_ptr<IndelModel> > IModels;
+  vector<int> imodel_for_partition;
 
   void recalc(const vector<int>&);
 
@@ -165,12 +166,6 @@ public:
   efloat_t heated_likelihood() const;
   efloat_t heated_probability() const;
 
-  bool has_IModel() const {return IModel_;}
-  /// The IndelModel
-  const IndelModel& IModel() const;
-  /// The IndelModel
-  IndelModel& IModel();
-
   /// How many substitution models?
   int n_smodels() const {return SModels.size();}
   /// Get the substitution::Model
@@ -178,12 +173,19 @@ public:
   /// Get the substitution::Model
         substitution::MultiModel& SModel(int i)       {return *SModels[i];}
   
+  /// How many substitution models?
+  int n_imodels() const {return IModels.size();}
+  /// Get the substitution::Model
+  const IndelModel& IModel(int i) const {return *IModels[i];}
+  /// Get the substitution::Model
+        IndelModel& IModel(int i)       {return *IModels[i];}
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 
   
   /// Recalculate all the cached transition matrices
-  void recalc_imodel();
+  void recalc_imodels();
+  void recalc_imodel(int i);
   void recalc_smodels();
   void recalc_smodel(int i);
   void tree_propagate();
@@ -209,7 +211,8 @@ public:
   Parameters(const vector<alignment>& A, const SequenceTree&, 
 	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
 	     const vector<int>&,
-	     const IndelModel&);
+	     const vector<polymorphic_cow_ptr<IndelModel> >&,
+	     const vector<int>&);
 };
 
 bool accept_MH(const Parameters& P1,const Parameters& P2,double rho);

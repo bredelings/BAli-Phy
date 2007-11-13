@@ -192,12 +192,11 @@ efloat_t Parameters::prior_no_alignment() const
     Pr *= SModel(i).prior();
 
   // prior on the insertion/deletion model
-  if (has_IModel()) 
-    Pr *= IModel().prior();
-
+  for(int i=0;i<IModels.size();i++)
+    Pr *= IModel(i).prior();
 
   // prior for each branch being aligned/unaliged
-  if (has_IModel()) 
+  if (n_imodels() > 0) 
   {
     const double p_unaligned = loadvalue(keys,"P_aligned",0.0);
 
@@ -257,27 +256,23 @@ efloat_t Parameters::heated_probability() const
   return prior() * heated_likelihood();
 }
 
-const IndelModel& Parameters::IModel() const
+void Parameters::recalc_imodels() 
 {
-  if (has_IModel()) return *IModel_;
-  std::abort();
+  for(int i=0;i<IModels.size();i++)
+    recalc_imodel(i);
 }
 
-IndelModel& Parameters::IModel()
-{
-  if (has_IModel()) return *IModel_;
-  std::abort();
-}
-
-void Parameters::recalc_imodel() 
+void Parameters::recalc_imodel(int m) 
 {
   for(int i=0;i<data_partitions.size();i++) 
   {
-    // copy our IModel down into the data partition
-    data_partitions[i]->IModel_ = IModel_;
+    if (imodel_for_partition[i] == m) {
+      // copy our IModel down into the data partition
+      data_partitions[i]->IModel_ = IModels[m];
 
-    // recompute cached computations
-    data_partitions[i]->recalc_imodel();
+      // recompute cached computations
+      data_partitions[i]->recalc_imodel();
+    }
   }
 }
 
@@ -337,24 +332,32 @@ void Parameters::LC_invalidate_branch(int b)
 
 void Parameters::recalc(const vector<int>& indices)
 {
-  vector<bool> s_changed(SModels.size(),false);
-  bool i_changed = false;
+  vector<bool> submodel_changed(n_submodels(),false);
 
   for(int i=0;i<indices.size();i++) 
   {
     int m = model_of_index[indices[i]];
-    if (m < SModels.size())
-      s_changed[m]=true;
-    else if (m == 1 and has_IModel())
-      i_changed=true;
+    submodel_changed[m] = true;
   }
 
-  for(int m=0;m<SModels.size();m++)
-    if (s_changed[m])
-      recalc_smodel(m);
+  for(int m=0;m<n_submodels();m++) 
+  {
+    if (not submodel_changed[m]) continue;
 
-  if (i_changed)
-    recalc_imodel();
+    int M = m;
+    if (M < n_smodels())
+      recalc_smodel(M);
+    else
+      M -= n_smodels();
+
+    if (M < n_imodels())
+      recalc_imodel(M);
+    else
+      M -= n_imodels();
+
+    // no need to call recalc for change in data-partition parameters? 
+    // (just part?::mu, I think, for now)  
+  }
 }
 
 Model& Parameters::SubModels(int i)
@@ -367,11 +370,10 @@ Model& Parameters::SubModels(int i)
   else
     i -= SModels.size();
 
-  if (has_IModel())
-    if (i==0)
-      return IModel();
-    else
-      i--;
+  if (i<IModels.size()) 
+    return IModel(i);
+  else
+    i -= IModels.size();
 
   return *data_partitions[i];
 }
@@ -386,11 +388,10 @@ const Model& Parameters::SubModels(int i) const
   else
     i -= SModels.size();
 
-  if (has_IModel())
-    if (i==0)
-      return IModel();
-    else
-      i--;
+  if (i<IModels.size()) 
+    return IModel(i);
+  else
+    i -= IModels.size();
 
   return *data_partitions[i];
 }
@@ -409,11 +410,13 @@ double Parameters::branch_mean() const
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       const vector<polymorphic_cow_ptr<substitution::MultiModel> >& SMs,
-		       const vector<int>& mapping,
-		       const IndelModel& IM)
+		       const vector<int>& s_mapping,
+		       const vector<polymorphic_cow_ptr<IndelModel> >& IMs,
+		       const vector<int>& i_mapping)
   :SModels(SMs),
-   smodel_for_partition(mapping),
-   IModel_(IM),
+   smodel_for_partition(s_mapping),
+   IModels(IMs),
+   imodel_for_partition(i_mapping),
    smodel_full_tree(true),
    T(t),
    TC(star_tree(t.get_sequences())),
@@ -435,10 +438,11 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     add_submodel(name, *SModels[i]);
   }
 
-  // add the indel model
-  if (not has_IModel())
-    throw myexception()<<"NULL indel model provided??";
-  add_submodel("I-model",IModel());
+  // register the indel models as sub-models
+  for(int i=0;i<IModels.size();i++) {
+    string name = "I-model" + convertToString(i+1);
+    add_submodel(name, *IModels[i]);
+  }
 
   // check that we only mapping existing smodels to data partitions
   for(int i=0;i<smodel_for_partition.size();i++) {
@@ -464,8 +468,17 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     // get reference to smodel for data-partition
     const substitution::MultiModel& SM = SModel(smodel_for_partition[i]);
 
-    // create data partition
-    data_partitions.push_back(cow_ptr<data_partition>(data_partition(name,A[i],*T,SM,IM)));
+    // create a data partition
+    cow_ptr<data_partition> dp;
+    if (imodel_for_partition[i] != -1) {
+      const IndelModel& IM = IModel(imodel_for_partition[i]);
+      dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,SM,IM));
+    }
+    else 
+      dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,SM));
+
+    // add the data partition
+    data_partitions.push_back(dp);
 
     // register data partition as sub-model
     add_submodel(name,*data_partitions[i]);

@@ -507,7 +507,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
   for(int i=0;i<P.n_data_partitions();i++) {
-    if (P.has_IModel()) {
+    if (P[i].has_IModel()) {
       s_parameters<<"\t|A"<<i+1<<"|";
       s_parameters<<"\t#indels"<<i+1;
       s_parameters<<"\t|indels"<<i+1<<"|";
@@ -519,7 +519,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       s_parameters<<"\t#substs(aa)"<<i+1;
   }
   if (P.n_data_partitions() > 1) {
-    if (P.has_IModel())
+    if (P.n_imodels() > 0)
       s_parameters<<"\t|A|\t#indels\t|indels|";
     s_parameters<<"\t#substs";
   }
@@ -565,7 +565,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
     if (iterations%subsample == 0) {
       bool show_alignment = (iterations%(10*subsample) == 0);
-      if (not P.has_IModel()) show_alignment = false;
+      if (not P.n_imodels()) show_alignment = false;
       print_stats(s_out,s_trees,P,show_alignment);
 
       s_parameters<<iterations<<"\t";
@@ -577,7 +577,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       unsigned total_indel_lengths=0;
       unsigned total_substs=0;
       for(int i=0;i<P.n_data_partitions();i++) {
-	if (P.has_IModel()) {
+	if (P[i].has_IModel()) {
 	  unsigned x1 = P[i].A->length();
 	  total_length += x1;
 
@@ -600,7 +600,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 	  s_parameters<<"\t"<<n_mutations(*P[i].A, *P[i].T, amino_acid_cost_matrix(*C));
       }
       if (P.n_data_partitions() > 1) {
-	if (P.has_IModel()) {
+	if (P.n_imodels() > 0) {
 	  s_parameters<<"\t"<<total_length;
 	  s_parameters<<"\t"<<total_indels;
 	  s_parameters<<"\t"<<total_indel_lengths;

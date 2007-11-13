@@ -465,6 +465,42 @@ void scale_means_only(Parameters& P,MoveStats& Stats)
   //-------- Change branch lengths and mean -------//
   Parameters P2 = P;
 
+#ifndef NDEBUG
+  {
+    efloat_t pi1 = P .probability();
+    efloat_t pi2 = P2.probability();
+    
+    double diff = std::abs(log(pi1)-log(pi2));
+    if (diff > 1.0e-9) {
+      std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
+      std::abort();
+    }
+    
+    P2.recalc_smodels();
+
+    pi1 = P .probability();
+    pi2 = P2.probability();
+    
+    diff = std::abs(log(pi1)-log(pi2));
+    if (diff > 1.0e-9) {
+      std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
+      std::abort();
+    }
+
+    P2.recalc_imodels();
+    P2.recalc_smodels();
+
+    pi1 = P .probability();
+    pi2 = P2.probability();
+    
+    diff = std::abs(log(pi1)-log(pi2));
+    if (diff > 1.0e-9) {
+      std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
+      std::abort();
+    }
+  }
+#endif
+
   SequenceTree& T2 = *P2.T;
   for(int b=0;b<T2.n_branches();b++) {
     const double length = T2.branch(b).length();
@@ -476,7 +512,7 @@ void scale_means_only(Parameters& P,MoveStats& Stats)
     P2[i].branch_mean_tricky(P2[i].branch_mean()*scale);
   
 #ifndef NDEBUG
-  P2.recalc_imodel();
+  P2.recalc_imodels();
   P2.recalc_smodels();
   efloat_t L1 =  P.likelihood();
   efloat_t L2 = P2.likelihood();
@@ -498,7 +534,9 @@ void scale_means_only(Parameters& P,MoveStats& Stats)
     std::cerr<<"scale_mean_only: a_ratio diff = "<<diff2<<std::endl;
     std::cerr<<"probability ratio = "<<log(P2.probability()/P.probability())<<std::endl;
     std::cerr<<"likelihood ratio = "<<log(P2.likelihood()/P.likelihood())<<std::endl;
-    std::cerr<<"prior ratio = "<<log(P2.prior()/P.prior())<<std::endl;
+    std::cerr<<"prior ratio       = "<<log(P2.prior()/P.prior())<<std::endl;
+    std::cerr<<"prior ratio (no A)= "<<log(P2.prior_no_alignment()/P.prior_no_alignment())<<std::endl;
+    std::cerr<<"prior ratio (   A)= "<<log(P2.prior_alignment()/P.prior_alignment())<<std::endl;
     std::cerr<<"    a ratio = "<<log(a_ratio)<<std::endl;
     std::abort();
   }

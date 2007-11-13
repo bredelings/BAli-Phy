@@ -525,11 +525,16 @@ namespace A5 {
 
   efloat_t correction(const data_partition& P,const vector<int>& nodes) 
   {
-    // get lengths of two internal nodes
-    int length1 = P.A->seqlength(nodes[4]);
-    int length2 = P.A->seqlength(nodes[5]);
-
-    return pow( P.IModel().lengthp(length1) * P.IModel().lengthp(length2) ,2.0);
+    if (P.has_IModel()) 
+    {
+      // get lengths of two internal nodes
+      int length1 = P.A->seqlength(nodes[4]);
+      int length2 = P.A->seqlength(nodes[5]);
+      
+      return pow( P.IModel().lengthp(length1) * P.IModel().lengthp(length2) ,2.0);
+    }
+    else
+      return 1;
   }
 
 

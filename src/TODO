@@ -1,20 +1,17 @@
 Partition Stuff
  A. partition-specific alphabets/smodels/imodels
-    (a) load alphabets as --alphabet 1,3,5:name1 --alpnabet 2,4:name2
-    (b) load smodels similarly
-    (c) load imodels similarly
- B. don't crash on alignments of 1 sequence...
- C. Store smodels above the partition level, with a mapping to partiitons
-	E3b. What logic here is re-usable?
- D. Currently we are altering the smodel inside the partitions.
+    (a) Load and use partition-specific *alphabets*.
+ B. Create separate moves for (e.g.) HKY::kappa, pi* in each partition.
+ C. Currently we are altering the smodel inside the partitions.
     This requires copying it...
     (a) how expensive is this?
     (b) how easy to change?
+ D. Did we add any slowdown in the -t case? In the other case?
+ E. Profile...
 
 General Branch Length Priors
  A. leaf branches / internal branches
  B. general prior against changes being shared?
- C. 
 
 "Rooted" version of indel models?
  A. Can we incorporate a better sequence length distribution?
@@ -24,9 +21,11 @@ General Branch Length Priors
     B3. Need to change the DP engines?
  C. "Conditionally normalized" indel models (transducers...)
 
-Markov-modulated substitution processes
- A. Allow different states to yield likelihood of "1" for the same letter.
- B. FUTURE: 
+Add more Markov-modulated models:
+ A. Right now we can do 
+    (a) Covarion:   INV+Modulated
+    (b) Periodically resample rate from same distribution as across-site rate distribution.
+ B. What models should we add?
 
 General construction of MHMMs from PHMM
  A. specify emission probabilities in PHMM
@@ -85,14 +84,10 @@ Improved Codon models/notation?
 
 6. GTR: When setting parameters, set all relevant parameters at once?
 
-6. Write a program to try to combine trees (sub-branches?)
+7. Write a program to try to combine trees (sub-branches?)
    (a) Print out the tree of no-conflict branches
    (b) Show conflicting pairs of branches from each file.
    (c) Start with trees - no branches in the same file can conflict.
-
-7. Implement multiple data partitions...  (on a branch)
-  (a) More than one alignment + scaling between the trees
-  (b) More than one substitution model?
 
 8. Implement Correlated Site Classes.
   (a) Do the math.
@@ -118,21 +113,12 @@ much of the variation is spatial?)
    + find parts of alignments which COVARY with the tree
      - does the tree cause the alignment to vary, or vice versa?
 
-1. Test sampling of epsilon.  (Implement model where lambda & epsilon not coupled?)
-  a) e-mail about the method for converting matrices from WAG to codon level.
 2. Put "epsilon" on the "mean_indel_length" scale.
 5. Proposals and Priors
   a. use a parameter_names_ vector.
 6. Output move stats in tracer-readable format. (or, at least, allow burn-in?)
 
 7. How about having an alphabet option "AAA -" to indicate that this item is missing?
-8. How about switching from '!' to '*' to indicate stop codons? 
-   (And stop using * as a wildcard character? We could use '.' instead, based on regular expressions.
-    And in most cases we can use N or X anyway.)
-
-13.  It would be nice to handle revisiting a tree when removing duplicates
-     in trees-distances.
-
 
 FIX:
 1. Alignment consensus isn't taking into account conflict of the
@@ -717,6 +703,21 @@ the prior, because we never want to use it  differently.
 
 [DONE] Reduce the time spent copying things:
        + use a new cow_ptr<> based on boost::shared_ptr<> 
+
+[DONE] Fix bug in sampling 'epsilon' :-)
+
+[DONE] Switch from '!' to '*' for stop codon, and '+' to '.' for default
+       wildcard.
+
+[DONE] Load and use partition-specific *substitution* models.
+
+[DONE] Load and use partition-specific *indel* models.
+
+alphabets as --alphabet 1,3,5:name1 --alphabet 2,4:name2
+    (b) load smodels similarly
+    (c) load imodels similarly
+
+
 
 *IDEAS*
 

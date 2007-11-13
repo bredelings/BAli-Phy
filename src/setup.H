@@ -90,6 +90,6 @@ OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::
 						  const vector<alignment>& A);
 
 //--------------------------- Indel stuff --------------------------//
-OwnedPointer<IndelModel> get_imodel(const boost::program_options::variables_map& args);
+OwnedPointer<IndelModel> get_imodel(string);
 
 #endif 

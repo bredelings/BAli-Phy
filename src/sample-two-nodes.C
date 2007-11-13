@@ -254,17 +254,21 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   vector< vector<DParrayConstrained*> > Matrices(p.size());
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-    {
-      sample_two_nodes_base(p[i][j],nodes[i],cached_dparrays[i][j]);
-      Matrices[i].push_back(cached_dparrays[i][j]);
-    //    p[i][j].LC.invalidate_node(p[i].T,nodes[i][4]);
-    //    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
+      if (p[i][j].has_IModel())
+      {
+	sample_two_nodes_base(p[i][j],nodes[i],cached_dparrays[i][j]);
+	Matrices[i].push_back(cached_dparrays[i][j]);
+	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][4]);
+	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
-      if (i==0) 
-	substitution::check_subA(*P0[j].A, *p[0][j].A, *p[0].T);
-      p[i][j].likelihood();  // check the likelihood calculation
+	if (i==0) 
+	  substitution::check_subA(*P0[j].A, *p[0][j].A, *p[0].T);
+	p[i][j].likelihood();  // check the likelihood calculation
 #endif
-    }
+      }
+      else
+	Matrices[i].push_back(NULL);
+	
 
 
   //-------- Calculate corrections to path probabilities ---------//
@@ -295,11 +299,15 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
     Pr[i] = rho[i] * p[i].prior_no_alignment();
 
     // sum of substitution and alignment probability over all paths
-    for(int j=0;j<p[i].n_data_partitions();j++) {
-      Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
-      Pr[i] *= pow(OS[i][j], p[i][j].beta[0]);
-      Pr[i] *= OP[i][j];
-    }
+    for(int j=0;j<p[i].n_data_partitions();j++) 
+      if (p[i][j].has_IModel())
+      {
+	Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
+	Pr[i] *= pow(OS[i][j], p[i][j].beta[0]);
+	Pr[i] *= OP[i][j];
+      }
+      else
+	Pr[i] *= p[i][j].heated_likelihood();
   }
 
   int C = choose_MH(0,Pr);
@@ -338,16 +346,19 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   //------------------- Check offsets from path_Q -> P -----------------//
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-    {
-      paths[i].push_back( get_path(A5::project(*p[i][j].A, nodes[i]),newnodes,A5::states_list) );
+      if (p[i][j].has_IModel())
+      {
+	paths[i].push_back( get_path(A5::project(*p[i][j].A, nodes[i]),newnodes,A5::states_list) );
     
-      OS[i][j] = p[i][j].likelihood();
-      OP[i][j] = other_prior(p[i][j],nodes[i]);
-
-      efloat_t OP_i = OP[i][j] / A5::correction(p[i][j],nodes[i]);
-
-      check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
-    }
+	OS[i][j] = p[i][j].likelihood();
+	OP[i][j] = other_prior(p[i][j],nodes[i]);
+	
+	efloat_t OP_i = OP[i][j] / A5::correction(p[i][j],nodes[i]);
+	
+	check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
+      }
+      else
+	paths[i].push_back( vector<int>() );
 
   //--------- Compute path probabilities and sampling probabilities ---------//
   vector< vector<efloat_t> > PR(p.size());
@@ -366,11 +377,12 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
     PR[i][0] = p[i].heated_probability(); // p[i].prior_no_alignment() * p[i].prior_alignment() * p[i].likelihood();
     PR[i][2] = rho[i];
     PR[i][3] = choice_ratio;
-    for(int j=0;j<p[i].n_data_partitions();j++) {
-      vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
-      PR[i][0] *= A5::correction(p[i][j],nodes[i]);
-      PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
-    } 
+    for(int j=0;j<p[i].n_data_partitions();j++) 
+      if (p[i][j].has_IModel()) {
+	vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
+	PR[i][0] *= A5::correction(p[i][j],nodes[i]);
+	PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
+      } 
   }
 
   //--------- Check that each choice is sampled w/ the correct Probability ---------//

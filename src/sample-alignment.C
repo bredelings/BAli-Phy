@@ -141,13 +141,17 @@ void sample_alignment(Parameters& P,int b)
   vector< vector< boost::shared_ptr<DPmatrixSimple> > > Matrices(1);
   for(int i=0;i<p.size();i++) 
   {
-    for(int j=0;j<p[i].n_data_partitions();j++) {
-      Matrices[i].push_back(sample_alignment_base(p[i][j], b));
+    for(int j=0;j<p[i].n_data_partitions();j++) 
+      if (p[i][j].has_IModel()) 
+      {
+	Matrices[i].push_back(sample_alignment_base(p[i][j], b));
 #ifndef NDEBUG
-      substitution::check_subA(*P0[j].A, *p[i][j].A, *p[0].T);
-      p[i][j].likelihood();  // check the likelihood calculation
+	substitution::check_subA(*P0[j].A, *p[i][j].A, *p[0].T);
+	p[i][j].likelihood();  // check the likelihood calculation
 #endif
-    }
+      }
+      else
+	Matrices[i].push_back(boost::shared_ptr<DPmatrixSimple>());
   }
 
 #ifndef NDEBUG_DP
@@ -171,15 +175,21 @@ void sample_alignment(Parameters& P,int b)
   //------------------- Check offsets from path_Q -> P -----------------//
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-    {
-      paths[i].push_back( get_path(*p[i][j].A, node1, node2) );
+      if (p[i][j].has_IModel())
+      {
+	paths[i].push_back( get_path(*p[i][j].A, node1, node2) );
     
-      OS[i].push_back( other_subst(p[i][j],nodes) );
-      OP[i].push_back( other_prior(p[i][j],nodes) );
-
-      check_match_P(p[i][j], OS[i][j], OP[i][j], paths[i][j], *Matrices[i][j]);
-    }
-
+	OS[i].push_back( other_subst(p[i][j],nodes) );
+	OP[i].push_back( other_prior(p[i][j],nodes) );
+	
+	check_match_P(p[i][j], OS[i][j], OP[i][j], paths[i][j], *Matrices[i][j]);
+      }
+      else {
+	paths[i].push_back( vector<int>() );
+	OS[i].push_back( 1 );
+	OP[i].push_back( 1 );
+      }
+  
   //--------- Compute path probabilities and sampling probabilities ---------//
   vector< vector<efloat_t> > PR(p.size());
 
@@ -189,10 +199,11 @@ void sample_alignment(Parameters& P,int b)
     PR[i] = vector<efloat_t>(4,1);
     PR[i][0] = p[i].heated_probability();
     for(int j=0;j<p[i].n_data_partitions();j++) 
-    {
-      vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
-      PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
-    }
+      if (p[i][j].has_IModel())
+      {
+	vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
+	PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
+      }
   }
 
   for(int i=0;i<p[1].n_data_partitions();i++) 

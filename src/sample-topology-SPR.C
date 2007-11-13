@@ -15,34 +15,16 @@
 
 using MCMC::MoveStats;
 
-///Sample between 2 topologies, ignoring gap priors on each case
-int topology_sample_SPR_and_A(vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
+int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
 {
+  assert(p[0].n_imodels() == p[1].n_imodels());
+
   //----------- Generate the Different node lists ---------//
   vector< vector<int> > nodes(2);
   nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);
   nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);
 
   return sample_tri_multi(p,nodes,rho,true,true);
-}
-
-///Sample between 2 topologies, ignoring gap priors on each case
-int topology_sample_SPR_sgaps(vector<Parameters>& p,const vector<efloat_t>& rho) 
-{
-  efloat_t Pr1 = rho[0] * p[0].probability();
-  efloat_t Pr2 = rho[1] * p[1].probability();
-
-  return choose2(Pr1,Pr2);
-}
-
-int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
-{
-  assert(p[0].has_IModel() == p[1].has_IModel());
-
-  if (p[0].has_IModel())
-    return topology_sample_SPR_and_A(p,rho,n1,n2);
-  else
-    return topology_sample_SPR_sgaps(p,rho);
 }
 
 /// Do a SPR move on T1, moving the subtree behind b1_ to branch b2
@@ -176,7 +158,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
   vector<efloat_t> rho(2,1);
   if (change_branch) {
     int b1u = P.T->directed_branch(b1).undirected_name();
-    if (P.has_IModel()) 
+    if (P.n_imodels()) 
     {
       double mu = P.branch_mean();
       double length1 = P.T->branch(b1u).length();
@@ -287,7 +269,7 @@ void sample_SPR_flat(Parameters& P,MoveStats& Stats)
   double f = loadvalue(P.keys,"SPR_amount",0.1);
   int n = poisson(P.T->n_branches()*f);
 
-  bool change_branch = ((uniform() < 0.10) and (not P.has_IModel()));
+  bool change_branch = ((uniform() < 0.10) and (not P.n_imodels()));
 
   for(int i=0;i<n;i++) {
     int b1 = choose_subtree_branch_uniform(*P.T);
@@ -408,7 +390,7 @@ void sample_SPR_nodes(Parameters& P,MoveStats& Stats)
   double f = loadvalue(P.keys,"SPR_amount",0.1);
   int n = poisson(P.T->n_branches()*f);
 
-  bool change_branch = ((uniform() < 0.10) and (not P.has_IModel()));
+  bool change_branch = ((uniform() < 0.10) and (not P.n_imodels()));
 
   for(int i=0;i<n;i++) {
 

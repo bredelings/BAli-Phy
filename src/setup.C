@@ -522,18 +522,25 @@ SequenceTree load_constraint_tree(const string& filename,const vector<string>& n
   return constraint;
 }
 
-OwnedPointer<IndelModel> get_imodel(const variables_map& args) {
+OwnedPointer<IndelModel> get_imodel(string name) 
+{
   //-------------Choose an indel model--------------//
   OwnedPointer<IndelModel> imodel;
 
-  if (args["imodel"].as<string>() == "simple")
+  // Default
+  if (name == "") 
+    name = "RS07";
+
+  if (name == "none")
+    { }
+  else if (name == "RS05")
     imodel = SimpleIndelModel();
-  else if (args["imodel"].as<string>() == "fragment-based")
+  else if (name == "RS07-no-T")
     imodel = NewIndelModel(false);
-  else if (args["imodel"].as<string>() == "fragment-based+T")
+  else if (name == "RS07")
     imodel = NewIndelModel(true);
   else
-    throw myexception()<<"Unrecognized indel model '"<<args["imodel"].as<string>()<<"'";
+    throw myexception()<<"Unrecognized indel model '"<<name<<"'";
   
   return imodel;
 }

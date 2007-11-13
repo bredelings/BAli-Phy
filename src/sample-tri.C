@@ -238,11 +238,10 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   for(int i=0;i<p.size();i++) 
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {
-      Matrices[i].push_back( tri_sample_alignment_base(p[i][j],nodes[i]) );
-      //    p[i][j].LC.invalidate_node(p[i].T,nodes[i][0]);
-#ifndef NDEBUG
-      p[i][j].likelihood();  // check the likelihood calculation
-#endif
+      if (p[i][j].has_IModel())
+	Matrices[i].push_back( tri_sample_alignment_base(p[i][j],nodes[i]) );
+      else
+	Matrices[i].push_back( boost::shared_ptr<DPmatrixConstrained>());
     }
   }
 
@@ -254,8 +253,12 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   for(int i=0; i<p.size(); i++) 
   {
     if (do_OS)
-      for(int j=0;j<p[i].n_data_partitions();j++) 
-	OS[i].push_back( other_subst(p[i][j],nodes[i]));
+      for(int j=0;j<p[i].n_data_partitions();j++)  {
+	if (p[i][j].has_IModel())
+	  OS[i].push_back( other_subst(p[i][j],nodes[i]));
+	else
+	  OS[i].push_back( 1 );
+      }
     else
       OS[i] = vector<efloat_t>(p[i].n_data_partitions(),efloat_t(1));
 
@@ -274,11 +277,14 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     Pr[i] = rho[i] * p[i].prior_no_alignment();
 
     // sum of substitution and alignment probability over all paths
-    for(int j=0;j<p[i].n_data_partitions();j++) {
-      Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
-      Pr[i] *= pow(OS[i][j], p[i][j].beta[0]);
-      Pr[i] *= OP[i][j];
-    }
+    for(int j=0;j<p[i].n_data_partitions();j++)
+      if (p[i][j].has_IModel()) {
+	Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
+	Pr[i] *= pow(OS[i][j], p[i][j].beta[0]);
+	Pr[i] *= OP[i][j];
+      }
+      else
+	Pr[i] *= p[i][j].heated_likelihood();
   }
 
   assert(Pr[0] > 0.0);
@@ -328,7 +334,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     // check whether this arrangement violates a constraint in any partition
     bool ok = true;
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
+      if (p[i][j].has_IModel() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
 	ok = false;
     if (not ok) {
       assert(i != 0 and i != p.size()-1);
@@ -336,16 +342,19 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     }
 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-    {
-      paths[i].push_back( get_path_3way(A3::project(*p[i][j].A, nodes[i]), 0,1,2,3) );
-    
-      OS[i][j] = other_subst(p[i][j],nodes[i]);
-      OP[i][j] = other_prior(p[i][j],nodes[i]);
-
-      efloat_t OP_i = OP[i][j] / A3::correction(p[i][j],nodes[i]);
-
-      check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
-    }
+      if (p[i][j].has_IModel())
+      {
+	paths[i].push_back( get_path_3way(A3::project(*p[i][j].A, nodes[i]), 0,1,2,3) );
+	  
+	OS[i][j] = other_subst(p[i][j],nodes[i]);
+	OP[i][j] = other_prior(p[i][j],nodes[i]);
+	
+	efloat_t OP_i = OP[i][j] / A3::correction(p[i][j],nodes[i]);
+	
+	check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
+      }
+      else
+	paths[i].push_back( vector<int>() );
   }
 
   //--------- Compute path probabilities and sampling probabilities ---------//
@@ -356,7 +365,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     // check whether this arrangement violates a constraint in any partition
     bool ok = true;
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
+      if (p[i][j].has_IModel() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
 	ok = false;
     if (not ok) {
       assert(i != 0 and i != p.size()-1);
@@ -374,11 +383,13 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     PR[i][0] = p[i].heated_probability();
     PR[i][2] = rho[i];
     PR[i][3] = choice_ratio;
-    for(int j=0;j<p[i].n_data_partitions();j++) {
-      vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
-      PR[i][0] *= A3::correction(p[i][j],nodes[i]);
-      PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
-    }
+    for(int j=0;j<p[i].n_data_partitions();j++) 
+      if (p[i][j].has_IModel())
+      {
+	vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
+	PR[i][0] *= A3::correction(p[i][j],nodes[i]);
+	PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
+      }
   }
 
   //--------- Check that each choice is sampled w/ the correct Probability ---------//
@@ -470,7 +481,7 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
 
   int b = P.T->branch(node1,node2);
   p[1].branch_HMM_type[b] = 1 - p[1].branch_HMM_type[b];
-  p[1].recalc_imodel();
+  p[1].recalc_imodels();
 
   vector< vector<int> > nodes (2, get_nodes_branch_random(*P.T, node1,node2) );
 

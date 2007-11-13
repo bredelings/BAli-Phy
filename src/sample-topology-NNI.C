@@ -53,8 +53,14 @@ using namespace A5;
 // The fact that we don't consider some paths should not make this non-reversible
 // Each combination of order for each topology is a reversible move, because each path proposes the others.
 
-int two_way_topology_sample_fgaps(vector<Parameters>& p,const vector<efloat_t>& rho,int b) 
+///Sample between 2 topologies, ignoring gap priors on each case
+
+int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, int b) 
 {
+  assert(p[0].n_imodels() == p[1].n_imodels());
+  for(int j=0;j<p[0].n_imodels();j++)
+    assert(p[0][j].has_IModel() == p[1][j].has_IModel());
+
   vector< vector<int> > nodes(2);
   nodes[0] = A5::get_nodes_random(*p[0].T, b);
   nodes[1] = A5::get_nodes_random(*p[1].T, b);
@@ -62,52 +68,10 @@ int two_way_topology_sample_fgaps(vector<Parameters>& p,const vector<efloat_t>& 
   return sample_two_nodes_multi(p,nodes,rho,true,false);
 }
 
-/// This has to be Gibbs, and use the same substitution::Model in each case...
-
-int three_way_topology_sample_fgaps(vector<Parameters>& p,const vector<efloat_t>& rho,int b) 
-{
-  vector< vector<int> > nodes(3);
-  nodes[0] = A5::get_nodes_random(*p[0].T, b);
-  nodes[1] = A5::get_nodes_random(*p[1].T, b);
-  nodes[2] = A5::get_nodes_random(*p[2].T, b);
-
-  return sample_two_nodes_multi(p,nodes,rho,true,false);
-}
-
-///Sample between 3 topologies, ignoring gap priors on each case
-int three_way_topology_sample_sgaps(vector<Parameters>& p,const vector<efloat_t>& rho) 
-{
-  vector<efloat_t> Pr(3);
-  for(int i=0;i< Pr.size();i++)
-    Pr[i] = rho[i]*p[i].probability();
-
-  return choose(Pr);
-}
-
-///Sample between 2 topologies, ignoring gap priors on each case
-int two_way_topology_sample_sgaps(vector<Parameters>& p,const vector<efloat_t>& rho) 
-{
-  efloat_t Pr1 = rho[0]*p[0].probability();
-  efloat_t Pr2 = rho[1]*p[1].probability();
-
-  return choose2(Pr1,Pr2);
-}
-
-///Sample between 2 topologies, ignoring gap priors on each case
-int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, int b) 
-{
-  assert(p[0].has_IModel() == p[1].has_IModel());
-
-  if (p[0].has_IModel())
-    return two_way_topology_sample_fgaps(p,rho,b);
-  else
-    return two_way_topology_sample_sgaps(p,rho);
-}
-
 
 void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
     return;
 
   vector<int> nodes = A5::get_nodes_random(*P.T, b);
@@ -132,7 +96,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   // because we would select between topologies before selecting
   // internal node states, then reverse distribution cannot depend on 
   // the internal node state of the proposed new topology/alignment
-  bool smart_inner_branch = (uniform() < 0.1) and not P.has_IModel();
+  bool smart_inner_branch = (uniform() < 0.1) and not P.n_imodels();
   if (smart_inner_branch) 
   {
     vector<double> G0 = gamma_approx(p[0],b);
@@ -181,7 +145,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
 
 void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
     return;
 
   vector<int> nodes = A5::get_nodes_random(*P.T, b);
@@ -240,7 +204,7 @@ vector<int> NNI_branches(const Tree& T, int b)
 
 void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
     return;
 
   vector<int> nodes = A5::get_nodes_random(*P.T,b);
@@ -292,7 +256,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
 
 void two_way_NNI_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
     return;
 
   double U = uniform();
@@ -304,22 +268,26 @@ void two_way_NNI_sample(Parameters& P, MoveStats& Stats, int b)
     two_way_NNI_and_branches_sample(P,Stats,b);
 }
 
+/// This has to be Gibbs, and use the same substitution::Model in each case...
+
 int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho, int b) 
 {
-  assert(p[0].has_IModel() == p[1].has_IModel());
-  assert(p[1].has_IModel() == p[2].has_IModel());
+  assert(p[0].n_imodels() == p[1].n_imodels());
+  assert(p[1].n_imodels() == p[2].n_imodels());
 
-  if (p[0].has_IModel())
-    return three_way_topology_sample_fgaps(p,rho,b);
-  else
-    return three_way_topology_sample_sgaps(p,rho);
+  vector< vector<int> > nodes(3);
+  nodes[0] = A5::get_nodes_random(*p[0].T, b);
+  nodes[1] = A5::get_nodes_random(*p[1].T, b);
+  nodes[2] = A5::get_nodes_random(*p[2].T, b);
+
+  return sample_two_nodes_multi(p,nodes,rho,true,false);
 }
 
 
 //FIXME - go through code and create more exceptions, from asserts... 
 void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
     return;
 
   vector<int> nodes = A5::get_nodes(*P.T,b);
@@ -365,7 +333,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
 {
   assert(b >= P.T->n_leafbranches());
 
-  if (P.has_IModel() and P.branch_HMM_type[b] == 1)
+  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
     return;
 
   vector<int> two_way_nodes = A5::get_nodes_random(*P.T, b);

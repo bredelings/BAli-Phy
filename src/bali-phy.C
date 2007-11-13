@@ -145,7 +145,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments","alignment:alignment_branch:nodes") );
 
   //---------- alignment::nodes_master (nodes_moves) ----------//
-  MoveEach nodes_moves("nodes_master:nodes");
+  MoveEach nodes_moves("nodes_master","alignment:nodes");
   if (P.T->n_leaves() >= 3)
     nodes_moves.add(10,MoveArgSingle("sample_node","alignment:nodes",
 				   sample_node_move,
@@ -167,7 +167,9 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   MoveEach NNI_move("NNI");
   MoveOne SPR_move("SPR");
 
-  if (P.has_IModel())
+  bool has_imodel = (P.n_imodels() > 0);
+
+  if (has_imodel)
     NNI_move.add(1,MoveArgSingle("three_way_NNI","alignment:nodes:topology",
 				 three_way_topology_sample,
 				 internal_branches)
@@ -185,7 +187,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 		    );
 
   //FIXME - doesn't yet deal with gaps=star
-  if (P.has_IModel())
+  if (has_imodel)
     NNI_move.add(0.025,MoveArgSingle("three_way_NNI_and_A","alignment:alignment_branch:nodes:topology",
 				   three_way_topology_and_alignment_sample,
 				     internal_branches)
@@ -193,7 +195,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 		 );
 
 
-  if (P.has_IModel()) {
+  if (has_imodel) {
     SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat","topology:lengths:nodes:alignment:alignment_branch"));
     SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths:nodes:alignment:alignment_branch"));
   }
@@ -261,7 +263,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 		      );
 
 
-  if (P.has_IModel()) {
+  if (has_imodel) {
     add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, parameter_moves);
     add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, parameter_moves);
     add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.15, parameter_moves);
@@ -328,7 +330,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 
   // full sampler
   Sampler sampler("sampler");
-  if (P.has_IModel())
+  if (has_imodel)
     sampler.add(1,alignment_moves);
   sampler.add(2,tree_moves);
   sampler.add(4 + P.T->n_branches()/4.0,parameter_moves);
@@ -430,7 +432,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
     ("smodel",value<vector<string> >()->composing(),"Substitution model.")
-    ("imodel",value<string>()->default_value("fragment-based+T"),"Indel model: simple, fragment-based, or fragment-based+T.")
+    ("imodel",value<vector<string> >()->composing(),"Indel model: RS05, RS07-no-T, or RS07.")
     ("align-constraint",value<string>(),"File with alignment constraints.")
     ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
     ("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
@@ -949,7 +951,8 @@ public:
   {
     for(int i=0;i<n_partitions();i++) {
       int item = item_for_partition[i];
-      partitions_for_item[item].push_back(i);
+      if (item != -1)
+	partitions_for_item[item].push_back(i);
     }
   }
 };
@@ -962,20 +965,34 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
   if (args.count(key))
     models = args[key].as<vector<string> >();
 
-  vector<int> mapping(n,-1);
+  vector<int> mapping(n,-2);
   vector<string> model_names;
 
   for(int i=0;i<models.size();i++) 
   {
     vector<int> partitions;
-    string model_name = parse_partitions_and_model(models[i],partitions);
 
-    // partitions must be specified, unless there is only one partition
-    if (partitions.size() == 0)
+    int index = model_names.size();
+    string model_name = parse_partitions_and_model(models[i],partitions);
+    if (model_name == "none")
+      index = -1;
+    else 
+      model_names.push_back(model_name);
+
+    // partitions must be specified, ...
+    if (partitions.size() == 0) 
+    {
+      //unless there is only one partition, or..
       if (n == 1)
 	partitions.push_back(1);
+      //this is the only model is specified, and then it gets ALL partitions
+      else if (models.size() == 1) {
+	for(int i=1;i<=n;i++)
+	  partitions.push_back(i);
+      }
       else
 	throw myexception()<<"Failed to specify partition number(s) for '"<<key<<"' specification '"<<models[i];
+    }
 
     // map partitions to this model, unless they are already mapped
     for(int j=0;j<partitions.size();j++) 
@@ -985,19 +1002,17 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
 	throw myexception()<<"Partition "<<partitions[j]<<" doesn't exist.";
 
       // check for partition already mapped
-      if (mapping[partitions[j]-1] != -1)
+      if (mapping[partitions[j]-1] != -2)
 	throw myexception()<<"Trying to set '"<<key<<"' for partition "<<partitions[j]<<" twice.";
 
       // map partition to this model
-      mapping[partitions[j]-1] = model_names.size();
+      mapping[partitions[j]-1] = index;
     }
-
-    model_names.push_back(model_name);
   }
 
   // fill in default model mappings
   for(int i=0;i<mapping.size();i++)
-    if (mapping[i] == -1) 
+    if (mapping[i] == -2) 
     {
       mapping[i] = model_names.size();
       model_names.push_back("");
@@ -1024,6 +1039,20 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
     smodels.push_back(temp);
   }
   return smodels;
+}
+
+vector<polymorphic_cow_ptr<IndelModel> > 
+get_imodels(const shared_items<string>& imodel_names_mapping)
+{
+  vector<polymorphic_cow_ptr<IndelModel> > imodels;
+  for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
+  {
+    OwnedPointer<IndelModel> full_imodel = get_imodel(imodel_names_mapping.unique(i));
+
+    polymorphic_cow_ptr<IndelModel> temp (*full_imodel);
+    imodels.push_back(temp);
+  }
+  return imodels;
 }
 
 #if defined(HAVE_SYS_RESOURCE_H)
@@ -1061,7 +1090,7 @@ void raise_cpu_limit(ostream& o)
 void my_gsl_error_handler(const char* reason, const char* file, int line, int gsl_errno)
 {
   std::cerr<<"gsl: "<<file<<":"<<line<<" (errno="<<gsl_errno<<") ERROR:"<<reason<<endl;
-  std::abort();
+  //  std::abort();
 }
 
 int main(int argc,char* argv[]) 
@@ -1163,27 +1192,33 @@ int main(int argc,char* argv[])
 	T.branch(i).set_length(0);
 
     //-------------Choose an indel model--------------//
-    OwnedPointer<IndelModel> imodel;
+    vector<int> imodel_mapping(A.size(),-1);
+    shared_items<string> imodel_names_mapping(vector<string>(),imodel_mapping);
 
-    if (not args.count("traditional"))
-      imodel = get_imodel(args);
-    
+    if (args.count("traditional")) {
+      if (args.count("imodel"))
+	throw myexception()<<"Error: you specified both --imodel <arg> and --traditional";
+    }
+    else {
+      imodel_names_mapping = get_mapping(args, "imodel", A.size());
+
+      imodel_mapping = imodel_names_mapping.item_for_partition;
+    }
+
+    vector<polymorphic_cow_ptr<IndelModel> > 
+      full_imodels = get_imodels(imodel_names_mapping);
+
     //-------------Create the Parameters object--------------//
-    Parameters P(A, T, full_smodels, smodel_mapping);
-    if (imodel)
-      P = Parameters(A, T, full_smodels, smodel_mapping, *imodel);
+    Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping);
 
     if (not P.smodel_full_tree)
       s_out<<"substitution model: *-tree"<<endl;
+
     for(int i=0;i<P.n_smodels();i++) 
       s_out<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
 
-    s_out<<"indel model = ";
-    if (imodel)
-      s_out<<P.IModel().name();
-    else
-      s_out<<"none";
-    s_out<<endl<<endl;
+    for(int i=0;i<P.n_imodels();i++) 
+      s_out<<"indel model"<<i+1<<" = "<<P.IModel(i).name()<<endl<<endl;
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
