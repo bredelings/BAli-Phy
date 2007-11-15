@@ -130,6 +130,46 @@ namespace substitution {
      pi(1.0/a.size(),a.size())
   { }
 
+  void UniformFrequencyModel::frequencies(const valarray<double>&) 
+  { }
+
+  void UniformFrequencyModel::recalc(const vector<int>&)
+  {
+    for(int i=0;i<n_letters();i++)
+      pi[i] = 1;
+    pi /= pi.sum();
+    
+    // compute transition rates
+    for(int i=0;i<n_letters();i++)
+      for(int j=0;j<n_letters();j++)
+	R(i,j) = 1;
+
+    // diagonal entries should have no effect
+    for(int i=0;i<n_letters();i++)
+      R(i,i) = 0;
+  }
+
+  string UniformFrequencyModel::name() const {
+    return "UF";
+  }
+  
+  UniformFrequencyModel::UniformFrequencyModel(const alphabet& a)
+    :ReversibleFrequencyModel(a),
+     ModelWithAlphabet<alphabet>(a)
+  {
+    // initialize everything
+    recalc_all();
+  }
+
+  UniformFrequencyModel::UniformFrequencyModel(const alphabet& a,const valarray<double>&)
+    :ReversibleFrequencyModel(a),
+     ModelWithAlphabet<alphabet>(a)
+  {
+    // initialize everything
+    recalc_all();
+  }
+
+
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
   {
     // set the frequency parameters
@@ -573,11 +613,12 @@ namespace substitution {
 
   void ReversibleMarkovModel::set_rate(double r)  {
     double scale = r/rate();
-    if (rate() == 0)
+    if (rate() == 0) {
       if (r == 0)
 	scale = 1;
       else
 	throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
+    }
     Q *= scale;
     for(int i=0;i<eigensystem.Diagonal().size();i++)
       eigensystem.Diagonal()[i] *= scale ;
@@ -1235,6 +1276,7 @@ namespace substitution {
 
   void DirichletParameterModel::recalc(const vector<int>&) 
   {
+    /*
     // sort bins to enforce monotonically increasing order
     vector<double> values;
     for(int i=0;i<p_values.size();i++)
@@ -1249,8 +1291,8 @@ namespace substitution {
       p2[i] = parameters_[order[i]];
       p2[i+p_values.size()] = parameters_[order[i]+p_values.size()];
     }
-
     parameters_ = p2;
+    */
 
     // write parameter values to fraction / p_values
     for(int i=0;i<p_values.size();i++)

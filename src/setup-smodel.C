@@ -170,8 +170,8 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 {
   string arg;
   
-  if (match(string_stack,"pi=constant",arg)) {
-    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=constant");
+  if (match(string_stack,"F=constant",arg)) {
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"F=constant");
 
     SimpleFrequencyModel F(a,frequencies);
 
@@ -180,61 +180,68 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,F);
   }
-  else if (match(string_stack,"pi",arg)) {
-    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi");
+  else if (match(string_stack,"F",arg)) {
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"F");
 
     SimpleFrequencyModel F(a,frequencies);
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,F);
   }
-  else if (match(string_stack,"pi=nucleotides",arg)) 
+  else if (match(string_stack,"F=uniform",arg)) {
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"F=uniform");
+
+    UniformFrequencyModel UF(a,frequencies);
+
+    model_stack.back() = ReversibleMarkovSuperModel(*EM,UF);
+  }
+  else if (match(string_stack,"F=nucleotides",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&a);
     if (not T)
-      throw myexception()<<"pi=nucleotides:: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"F=nucleotides:: '"<<a.name<<"' is not a triplet alphabet.";
 
-    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=nucleotides");
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"F=nucleotides");
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,IndependentNucleotideFrequencyModel(*T));
   }
-  else if (match(string_stack,"pi=amino-acids",arg)) 
+  else if (match(string_stack,"F=amino-acids",arg)) 
   {
     const Codons* C = dynamic_cast<const Codons*>(&a);
     if (not C)
-      throw myexception()<<"pi=amino-acids:: '"<<a.name<<"' is not a codon alphabet.";
+      throw myexception()<<"F=amino-acids:: '"<<a.name<<"' is not a codon alphabet.";
 
-    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=nucleotides");
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"F=nucleotides");
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,AACodonFrequencyModel(*C));
   }
-  else if (match(string_stack,"pi=triplets",arg)) 
+  else if (match(string_stack,"F=triplets",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&a);
     if (not T)
-      throw myexception()<<"pi=triplets:: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"F=triplets:: '"<<a.name<<"' is not a triplet alphabet.";
 
-    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=triplets");
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"F=triplets");
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,TripletsFrequencyModel(*T));
   }
-  else if (match(string_stack,"pi=codons",arg)) 
+  else if (match(string_stack,"F=codons",arg)) 
   {
     const Codons* C = dynamic_cast<const Codons*>(&a);
     if (not C)
-      throw myexception()<<"pi=codons:: '"<<a.name<<"' is not a codon alphabet.";
+      throw myexception()<<"F=codons:: '"<<a.name<<"' is not a codon alphabet.";
 
-    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=codons");
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"F=codons");
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonsFrequencyModel(*C));
   }
-  else if (match(string_stack,"pi=codons2",arg)) 
+  else if (match(string_stack,"F=codons2",arg)) 
   {
     const Codons* C = dynamic_cast<const Codons*>(&a);
     if (not C)
-      throw myexception()<<"pi=codons2:: '"<<a.name<<"' is not a codon alphabet.";
+      throw myexception()<<"F=codons2:: '"<<a.name<<"' is not a codon alphabet.";
 
-    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=codons2");
-    
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"F=codons2");
+
     model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonsFrequencyModel2(*C));
   }
   else

@@ -308,9 +308,14 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   P.keys["DP::f_dirichlet_N"] *= 10;
   add_MH_move(P, dirichlet_proposal,    "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
 
+  // FIXME - we need a proposal that sorts after changing
+  //         then we can un-hack the recalc function in smodel.C
+  //         BUT, this assumes that we have the DP::rate* names in *numerical* order
+  //          whereas we probably find them in *lexical* order....
+  //          ... or creation order?  That might be OK for now! 
   set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
   P.keys["DP::rate_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
+  add_MH_move(P, sorted(dirichlet_proposal),    "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
 
   for(int i=0;;i++) {
     string name = "M3::omega" + convertToString(i+1);

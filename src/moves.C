@@ -257,11 +257,12 @@ void sample_NNI_and_branch_lengths(Parameters& P, MoveStats& Stats)
 
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
-    if (P.T->branch(b).is_internal_branch())
+    if (P.T->branch(b).is_internal_branch()) {
       if (myrandomf() < 0.5)
 	three_way_topology_sample(P,Stats,b);
       else
 	two_way_NNI_sample(P,Stats,b);
+    }
 
     change_branch_length(P,Stats,b);
     {
