@@ -2,6 +2,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
                 xmlns:mml="http://www.w3.org/1998/Math/MathML"
+		xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 exclude-result-prefixes="doc mml"
                 version='1.0'>
 
@@ -19,5 +20,50 @@
 
 <xsl:param name="toc.indent.width" select="5"/>
 <xsl:param name="body.start.indent" select="0"/>
+
+<!-- In order to get MathML processed by Jeuclid, it has
+     to be wrapped in an fo:instream-foreign-object tag -->
+<xsl:template match="mml:math"
+xmlns:mml="http://www.w3.org/1998/Math/MathML">
+  <xsl:choose>
+    <!-- * If user is using passivetex, we don't wrap the output in -->
+    <!-- * fo:instream-foreign-object (which passivetex doesn't support).
+-->
+    <xsl:when test="not($passivetex.extensions = 0)">
+      <xsl:copy>
+        <xsl:copy-of select="@*"/>
+        <xsl:apply-templates/>
+      </xsl:copy>
+    </xsl:when>
+    <xsl:otherwise>
+      <fo:instream-foreign-object>
+
+        <!-- Support for two imagedata attributes -->
+        <xsl:if test="../@align">
+          <xsl:attribute name="text-align">
+            <xsl:value-of select="../@align"/>
+          </xsl:attribute>
+        </xsl:if>
+       
+        <xsl:if test="../@valign">
+          <xsl:attribute name="display-align">
+            <xsl:choose>
+              <xsl:when test="../@valign = 'top'">before</xsl:when>
+              <xsl:when test="../@valign = 'middle'">center</xsl:when>
+              <xsl:when test="../@valign = 'bottom'">after</xsl:when>
+              <xsl:otherwise>auto</xsl:otherwise>
+            </xsl:choose>
+          </xsl:attribute>
+        </xsl:if>
+     <!-- End of customization -->
+       
+        <xsl:copy>
+          <xsl:copy-of select="@*"/>
+          <xsl:apply-templates/>
+        </xsl:copy>
+      </fo:instream-foreign-object>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
 
 </xsl:stylesheet>
