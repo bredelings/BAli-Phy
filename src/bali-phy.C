@@ -757,6 +757,12 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
   return branches;
 }
 
+void my_gsl_error_handler(const char* reason, const char* file, int line, int gsl_errno)
+{
+  std::cerr<<"gsl: "<<file<<":"<<line<<" (errno="<<gsl_errno<<") ERROR:"<<reason<<endl;
+  //  std::abort();
+}
+
 int main(int argc,char* argv[]) 
 { 
   std::ios::sync_with_stdio(false);
@@ -777,6 +783,8 @@ int main(int argc,char* argv[])
 
     fp_scale::initialize();
     fs::path::default_name_check(fs::portable_posix_name);
+
+    gsl_set_error_handler(&my_gsl_error_handler);
 
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
