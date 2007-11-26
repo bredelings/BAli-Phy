@@ -32,7 +32,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("cutoff",value<double>(),"only leave taxa w/ leaf branches longer than this")
     ("longer-than",value<unsigned>(),"only leave taxa w/ sequences longer than this")
     ("shorter-than",value<unsigned>(),"only leave taxa w/ sequences shorter than this")
-    ("keep",value<int>(),"number of taxa to keep")
+    ("down-to",value<int>(),"number of taxa to keep")
+    ("keep",value<int>(),"comma-separated list of taxon names to keep - remove others")
+    ("remove",value<int>(),"comma-separated list of taxon names to remove")
     ("show-lengths","just print out sequence lengths")
     ;
 
@@ -133,15 +135,17 @@ int main(int argc,char* argv[])
     cerr<<"Removed "<<names.size()<<" sequences because of length constraints."<<endl;
 
 
-    if (args.count("tree") and ((args.count("keep") or args.count("cutoff"))))
+    if (args.count("tree") and ((args.count("down-to") or args.count("cutoff"))))
     while(true) 
     {
       if (T.n_leaves() <= 3)
 	throw myexception()<<"Trying to remove too many tree leaves!";
 
-      if (args.count("keep") and T.n_leaves() <= args["keep"].as<int>())
+      if (args.count("down-to") and T.n_leaves() <= args["down-to"].as<int>())
 	break;
 
+      // find shortest leaf sequences with leaf-branch-length < min
+      // FIXME: sequences with missing ends may OFTEN have shorter distances?
       double min = T.branch(0).length();
       int argmin = 0;
       for(int i=1;i<T.n_leaves();i++) {
@@ -150,6 +154,8 @@ int main(int argc,char* argv[])
 	  argmin = i;
 	}
       }
+
+      
 
       if (args.count("cutoff") and min > args["cutoff"].as<double>())
 	break;
@@ -162,6 +168,24 @@ int main(int argc,char* argv[])
 
     if (args.count("tree"))
       cerr<<T.write()<<"\n";
+
+    //------- Remove sequences --------------//
+
+    vector<string> keep = names;
+    if (args.count("keep"))
+      keep = split(args["keep"].as<string>(),',');
+
+    vector<string> remove;
+    if (args.count("remove"))
+      remove = split(args["remove"].as<string>(),',');
+
+
+    for(int i=0;i<names.size();) {
+      if (includes(keep,names[i]) and not includes(remove,names[i]))
+	i++;
+      else
+	names.erase(names.begin()+i);
+    }
 
     //------- Print out the alignment -------//
     vector<sequence> sequences = A.get_sequences();
