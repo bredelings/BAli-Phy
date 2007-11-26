@@ -313,6 +313,7 @@ vector<int> Tree::prune_leaves(const vector<int>& remove)
 	leaf = parent;
       }
 
+      // remove nodes of degree 2
       if (leaf->next != leaf and leaf->next->next == leaf)
 	TreeView::remove_node_from_branch(leaf);
     }
