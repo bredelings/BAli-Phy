@@ -12,7 +12,7 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
            tools/findroot.H tools/parsimony.H distribution.H tools/mctree.H \
-           version.H revision.H
+           version.H
 
 LDFLAGS = @ldflags@
 
@@ -108,9 +108,32 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/tree-dist.C proposals.C n_indels.C distribution.C \
-	  tools/parsimony.C version.C
+	  tools/parsimony.C
 
-version.o: FORCE
+bali_phy_LDADD = libversion.a
+
+REV_FILE    := $(top_srcdir)/REV
+DATE_FILE   := $(top_srcdir)/REV_DATE
+
+# what if file doesn't exist...
+
+REV_STRING := $(shell if [ -f ${REV_FILE} ] ; then cat ${REV_FILE}; fi )
+DATE_STRING := $(shell if [ -f ${DATE_FILE} ] ; then cat ${DATE_FILE}; fi )
+
+noinst_LIBRARIES = libversion.a
+libversion_a_SOURCES = version.C 
+libversion_a_DEPENDENCIES = version.H $(top_srcdir)/REV $(top_srcdir)/REV_DATE
+libversion_a_CXXFLAGS = $(CXXFLAGS) -DREVISION='"${REV_STRING}"' -DREVISION_DATE='"${DATE_STRING}"'
+
+# Defining these rules removes the automake rule...
+
+#  libversion.a: FORCE  
+
+#  libversion_a-version.o: $(REV_FILE) $(DATE_FILE) FORCE
+
+# This seems not to apply to version.C inside libversion.C
+
+#  version.o: $(REV_FILE) $(DATE_FILE) FORCE
 
 FORCE:
 
