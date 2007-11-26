@@ -133,8 +133,8 @@ void two_way_topology_sample(alignment& A, Parameters& P, MoveStats& Stats, int 
   // internal node states, then reverse distribution cannot depend on 
   // the internal node state of the proposed new topology/alignment
 
-  double p = loadvalue(P.keys,"fraction_fit_gamma",-0.01);
-  bool smart_inner_branch = (uniform() < p) and not P.has_IModel();
+  double p2 = loadvalue(P.keys,"fraction_fit_gamma",-0.01);
+  bool smart_inner_branch = (uniform() < p2) and not P.has_IModel();
 
   if (smart_inner_branch) 
   {
