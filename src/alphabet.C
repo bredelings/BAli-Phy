@@ -5,7 +5,8 @@
 
 using namespace std;
 
-static string sanitize(const string& s1)
+namespace {
+string sanitize(const string& s1)
 {
   string s2;
   for(int i=0;i<s1.size();i++) {
@@ -16,6 +17,7 @@ static string sanitize(const string& s1)
       s2 = s2 + "[" + convertToString((int)c) + "]";
   }
   return s2;
+}
 }
 
 bad_letter::bad_letter(const string& l)
