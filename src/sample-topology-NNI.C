@@ -96,7 +96,10 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   // because we would select between topologies before selecting
   // internal node states, then reverse distribution cannot depend on 
   // the internal node state of the proposed new topology/alignment
-  bool smart_inner_branch = (uniform() < 0.1) and not P.n_imodels();
+
+  double p2 = loadvalue(P.keys,"fraction_fit_gamma",-0.01);
+  bool smart_inner_branch = (uniform() < p2) and not P.n_imodels();
+
   if (smart_inner_branch) 
   {
     vector<double> G0 = gamma_approx(p[0],b);

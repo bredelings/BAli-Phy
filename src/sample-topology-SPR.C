@@ -269,7 +269,8 @@ void sample_SPR_flat(Parameters& P,MoveStats& Stats)
   double f = loadvalue(P.keys,"SPR_amount",0.1);
   int n = poisson(P.T->n_branches()*f);
 
-  bool change_branch = ((uniform() < 0.10) and (not P.n_imodels()));
+  double p = loadvalue(P.keys,"fraction_fit_gamma",-0.01);
+  bool change_branch = ((uniform() < p) and (not P.n_imodels()));
 
   for(int i=0;i<n;i++) {
     int b1 = choose_subtree_branch_uniform(*P.T);
@@ -390,7 +391,8 @@ void sample_SPR_nodes(Parameters& P,MoveStats& Stats)
   double f = loadvalue(P.keys,"SPR_amount",0.1);
   int n = poisson(P.T->n_branches()*f);
 
-  bool change_branch = ((uniform() < 0.10) and (not P.n_imodels()));
+  double p = loadvalue(P.keys,"fraction_fit_gamma",-0.01);
+  bool change_branch = ((uniform() < p) and (not P.n_imodels()));
 
   for(int i=0;i<n;i++) {
 

@@ -277,7 +277,7 @@ void change_branch_length_fit_gamma(Parameters& P,MoveStats& Stats,int b)
 
 void change_branch_length(Parameters& P,MoveStats& Stats,int b)
 {
-  double p = loadvalue(P.keys,"fraction_fit_gamma",0.01);
+  double p = loadvalue(P.keys,"fraction_fit_gamma",-0.01);
   if (myrandomf() < p)
     change_branch_length_fit_gamma(P, Stats, b);
   else if (myrandomf() < 0.5)
