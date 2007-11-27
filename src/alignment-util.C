@@ -78,7 +78,8 @@ alignment add_internal(alignment A,const Tree& T)
 
 
 /// Construct a mapping of letters to columns for each leaf sequence
-vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
+vector< vector<int> > column_lookup(const alignment& A,int nleaves) 
+{
   if (nleaves == -1)
     nleaves = A.n_sequences();
 
@@ -88,7 +89,7 @@ vector< vector<int> > column_lookup(const alignment& A,int nleaves) {
     vector<int>& columns = result[i];
     columns.reserve(A.length());
     for(int column=0;column<A.length();column++) {
-      if (not A.gap(column,i))
+      if (A.character(column,i))
 	columns.push_back(column);
     }
   }
@@ -119,7 +120,8 @@ ublas::matrix<int> M(const alignment& A1)
 /// Is the homology A1(column,s1)::A1(column,s2) preserved in A2 ?
 bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2, 
 	     const ublas::matrix<int>& M2,
-	     const vector< vector< int> >& column_indices) {
+	     const vector< vector< int> >& column_indices) 
+{
   if (M1(column,s1) == alphabet::gap and M1(column,s2)==alphabet::gap)
     return true;
 
@@ -378,11 +380,21 @@ long int asymmetric_pairs_distance(const ublas::matrix<int>& M1,const ublas::mat
 
   for(int column=0;column<M1.size1();column++) 
     for(int i=0;i<M1.size2();i++)
-      for(int j=0;j<M1.size2();j++)
+      for(int j=0;j<i;j++)
+      {
+	if (M1(column,i) == alphabet::unknown or M1(column,j) == alphabet::unknown)
+	  continue;
+
 	if (M1(column,i) != alphabet::gap or M1(column,j)!= alphabet::gap) {
-	  if (not A_match(M1,column,i,j,M2,column_indices2))
-	    mismatch++;
+	  if (not A_match(M1,column,i,j,M2,column_indices2)) 
+          {
+	    if (M1(column,i) != alphabet::gap)
+	      mismatch++;
+	    if (M1(column,j) != alphabet::gap)
+	      mismatch++;
+	  }
 	}
+      }
 
   return mismatch;
 }
@@ -441,6 +453,7 @@ vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
       label[i] = columns[i][M1(column,i)];
   }
 
+  /*
   // If letter from the original column is in a column with a gap here
   // then put this gap in the same column as the letter
   for(int i=0;i<label.size();i++) 
@@ -453,7 +466,7 @@ vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
 	break;
       }
   }
-  
+  */
 
   return label;
 }
@@ -480,7 +493,9 @@ long int asymmetric_splits_distance(const ublas::matrix<int>& M1,const ublas::ma
 
     vector<int> uniq;uniq.reserve(columns.size());
     for(int i=0;i<columns.size();i++)
-      if (not includes(uniq,columns[i]))
+      if (columns[i] != alphabet::unknown and 
+	  columns[i] != alphabet::gap and
+	  not includes(uniq,columns[i]))
 	uniq.push_back(columns[i]);
 
     int splits = uniq.size();
@@ -619,18 +634,20 @@ using std::vector;
 using std::string;
 using std::list;
 
-list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets, int maxalignments) {
+list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets, 
+				int skip, int maxalignments) 
+{
   list<alignment> alignments;
   
   // we are using every 'skip-th' alignment
-  int skip = 1;
+  int subsample = 1;
   int total = 0;
 
   alignment A;
   string line;
   int nth=0;
-  while(ifile) {
-    
+  while(ifile) 
+  {
     // CHECK if an alignment begins here
     if (ifile.peek() != '>') {
       string line;
@@ -638,11 +655,22 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
       continue;
     }
 
-    // Increment the counter SINCE we saw an alignment
-    nth++;
+    bool do_skip = false;
+
+    if (skip > 0) {
+      do_skip=true;
+      skip--;
+    }
+    else 
+    {
+      // Increment the counter SINCE we saw an alignment
+      nth++;
+
+      if (nth%subsample != 0) do_skip=true;
+    }
 
     // Skip this alignment IF it isn't the right multiple
-    if (nth%skip != 0) {
+    if (do_skip) {
       string line;
       do {
 	getline_handle_dos(ifile,line);
@@ -670,14 +698,14 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     if (A.n_sequences() == 0) 
       throw myexception(string("Alignment didn't contain any sequences!"));
     
-    // STORE the alignment if we're not going to skip it
+    // STORE the alignment if we're not going to subsample it
     alignments.push_back(A);
     total++;
 
     // If there are too many alignments
     if (total > 2*maxalignments) {
       // start skipping twice as many alignments
-      skip *= 2;
+      subsample *= 2;
 
       cerr<<"Went from "<<total;
       // Remove every other alignment

@@ -28,10 +28,11 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
 {
   //------------ Try to load alignments -----------//
   int maxalignments = args["max-alignments"].as<int>();
+  unsigned skip = args["skip"].as<unsigned>();
 
   // --------------------- try ---------------------- //
   std::cerr<<"Loading alignments...";
-  list<alignment> As = load_alignments(std::cin,load_alphabets(args),maxalignments);
+  list<alignment> As = load_alignments(std::cin,load_alphabets(args),skip,maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (not alignments.size())
@@ -49,6 +50,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "produce help message")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("seed", value<unsigned long>(),"random seed")
+    ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("cutoff",value<double>()->default_value(0.75),"ignore events below this probability")
     ("strict","require all implied pairs pass the cutoff")

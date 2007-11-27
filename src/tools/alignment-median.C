@@ -37,10 +37,11 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
 {
   //------------ Try to load alignments -----------//
   int maxalignments = args["max-alignments"].as<int>();
+  unsigned skip = args["skip"].as<unsigned>();
 
   // --------------------- try ---------------------- //
   std::cerr<<"Loading alignments...";
-  list<alignment> As = load_alignments(std::cin,load_alphabets(args),maxalignments);
+  list<alignment> As = load_alignments(std::cin,load_alphabets(args),skip,maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (not alignments.size())
@@ -57,8 +58,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("seed", value<unsigned long>(),"random seed")
+    ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("type", value<string>()->default_value("pairs"),"type of distance: pairs or splits")
+    ("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, median")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ;
 
@@ -81,7 +84,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 int main(int argc,char* argv[]) 
 { 
   try {
-    //---------- Parse command line  -------//
+    //----------- Parse command line ---------//
     variables_map args = parse_cmd_line(argc,argv);
 
     //---------- Initialize random seed -----------//
@@ -131,6 +134,25 @@ int main(int argc,char* argv[])
       order[i] = i;
     order = randomize(order);
     vector<int> iorder = invert(order);
+
+    if (args["analysis"].as<string>() == "matrix") 
+    {
+      vector< vector<double> > distances(Ms.size());
+
+      for(int i=0;i<Ms.size();i++) 
+      {
+	distances[i].resize(Ms.size());
+
+	for(int j=0;j<Ms.size();j++) {
+	
+	  double D = distance(Ms[i],column_indexes[i],Ms[j],column_indexes[j]);
+
+	  distances[i][j] = D;
+	}
+	cout<<join(distances[i],'\t')<<endl;
+      }
+      exit(0);
+    }
 
     //----------- accumulate distances ------------- //
     vector< vector<double> > distances(Ms.size());

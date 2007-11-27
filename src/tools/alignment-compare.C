@@ -43,7 +43,7 @@ void load_alignments(vector<alignment>& alignments,
   if (not file)
     throw myexception()<<"Can't load alignment sample"<<what<<" from file '"<<filename<<"'";
 
-  list<alignment> As = load_alignments(file, alphabets, maxalignments);
+  list<alignment> As = load_alignments(file, alphabets, 0, maxalignments);
 
   alignments.clear();
   alignments.insert(alignments.begin(),As.begin(),As.end());
