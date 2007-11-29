@@ -52,8 +52,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("seed", value<unsigned long>(),"random seed")
     ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-    ("cutoff",value<double>()->default_value(0.75),"ignore events below this probability")
-    ("strict","require all implied pairs pass the cutoff")
+    ("cutoff-strict",value<double>(),"ignore events below this probability")
+    ("cutoff",value<double>(),"ignore events below this probability")
     ("uncertainty",value<string>(),"file-name for AU uncertainty vs level")
     ;
 
@@ -76,7 +76,6 @@ int main(int argc,char* argv[])
   try {
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
-    bool strict = args.count("strict")>0;
 
     //---------- Initialize random seed -----------//
     unsigned long seed = 0;
@@ -124,13 +123,30 @@ int main(int argc,char* argv[])
 
     E.build_index();
     //--------- Build alignment from list ---------//
-    double cutoff = args["cutoff"].as<double>();
-    if (cutoff < 0.5) cutoff = 0.5;
+    double cutoff_strict = -1;
+    double cutoff = -1;
+
+    if (args.count("cutoff-strict"))
+      cutoff_strict = args["cutoff-strict"].as<double>();
+
+    if (args.count("cutoff"))
+      cutoff = args["cutoff"].as<double>();
+
+    if (cutoff_strict < 0 and cutoff < 0)
+      cutoff = 0.75;
 
     //-------- Build a beginning alignment --------//
     index_matrix M = unaligned_matrix(L);
 
-    map<unsigned,pair<unsigned,unsigned> > graph = M.merge(E,cutoff,strict);
+    map<unsigned,pair<unsigned,unsigned> > graph;
+
+    if (cutoff_strict > 0) 
+      graph = M.merge(E,cutoff_strict,true);
+
+    if (cutoff > 0) 
+      graph = M.merge(E,cutoff,false);
+
+    //-------- Construct Build a beginning alignment --------//
 
     ublas::matrix<int> M2 = get_ordered_matrix(M);
 
