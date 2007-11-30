@@ -10,7 +10,7 @@
      "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [] -->
 <article lang="en">
   <articleinfo>
-    <title><application>BAli-Phy</application> User's Guide v2.0.0</title>
+    <title><application>BAli-Phy</application> User's Guide v2.0.1</title>
     <author>
       <firstname>Benjamin</firstname>
       <surname>Redelings</surname>
@@ -191,13 +191,13 @@
       extract the source code archive, using a graphical archive
       manager, or the command-line tool <command>tar</command>:
       
-      <screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-2.0.0.tar.gz</userinput></screen>
+      <screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-2.0.1.tar.gz</userinput></screen>
       Then create a <emphasis>separate</emphasis> build directory, enter it, and run the
       configure command:
 
       <screen><prompt>%</prompt> <userinput>mkdir build</userinput>
 <prompt>%</prompt> <userinput>cd build</userinput>
-<prompt>%</prompt> <userinput>../bali-phy-2.0.0/configure</userinput></screen>
+<prompt>%</prompt> <userinput>../bali-phy-2.0.1/configure</userinput></screen>
  
       If this command succeeds, then you can simply type
 
@@ -224,7 +224,7 @@
 	<application>BAli-Phy</application> under
 	<filename>~/local</filename>, you can do:
 
-<screen><prompt>%</prompt> <userinput>../bali-phy-2.0.0/configure --prefix=&#36;HOME/local</userinput></screen>
+<screen><prompt>%</prompt> <userinput>../bali-phy-2.0.1/configure --prefix=&#36;HOME/local</userinput></screen>
         This is recommended if you do not have permission to install
 	to <filename>/usr/local/</filename>.
 	</para>
@@ -258,7 +258,7 @@
 	<command>g++-4.0</command> as the C++ compiler when compiling
 	<application>BAli-Phy</application>, you would set the CXX
 	environment variable as follows:
-	    <screen><prompt>%</prompt> <userinput>../bali-phy-2.0.0/configure CXX=g++-4.0</userinput></screen>
+	    <screen><prompt>%</prompt> <userinput>../bali-phy-2.0.1/configure CXX=g++-4.0</userinput></screen>
 	</para>
       </sect2>
 
@@ -267,7 +267,7 @@
 	<para>You can specify optimizing for a specific brand of CPU,
 	by specifying the <userinput>CHIP</userinput> variable to
 	<command>configure</command>, as follows:
-	    <screen><prompt>%</prompt> <userinput>../bali-phy-2.0.0/configure CHIP=<replaceable>cpu</replaceable></userinput></screen>
+	    <screen><prompt>%</prompt> <userinput>../bali-phy-2.0.1/configure CHIP=<replaceable>cpu</replaceable></userinput></screen>
 	You can set CHIP to any of <userinput>pentium3</userinput>,
 	<userinput>pentium4</userinput>,
 	<userinput>nocona</userinput>, <userinput>G3</userinput>,
@@ -316,7 +316,7 @@
 	<para>
         All these options to <command>configure</command> can be
 	combined, as follows:
-<screen><prompt>%</prompt> <userinput>../bali-phy-2.0.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
+<screen><prompt>%</prompt> <userinput>../bali-phy-2.0.1/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
         This example uses <command>g++-4.1</command> to build a
 	pentium4-optimized version of <command>bali-phy</command> with
 	static linkage.
