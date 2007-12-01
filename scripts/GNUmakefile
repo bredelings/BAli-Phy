@@ -119,7 +119,7 @@ Work/MAP-unordered.fasta: Work/MAP Work/setup
 	@echo "done."
 
 Work/median-unordered.fasta: Work/samples-${SKIP}+${SIZE}
-	alignment-median --max-alignments 2000 --type splits < $< > $@ 2>median.err
+	alignment-median --max-alignments 2000 --analysis=median< $< > $@ 2>Work/median.err
 
 Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
 	@alignment-reorder Work/$*-unordered.fasta Results/c50.tree > $@ 2>/dev/null
