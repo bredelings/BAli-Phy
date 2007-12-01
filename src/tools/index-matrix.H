@@ -43,6 +43,8 @@ class index_matrix: public ublas::matrix<int>
 
 public:
 
+  void check_column_indices() const;
+
   int columns;
   int unknowns;
 
@@ -61,6 +63,8 @@ public:
 
   void merge_columns(int c1,int c2);
   std::map<unsigned,std::pair<unsigned,unsigned> > merge(const Edges& E,double p,bool strict);
+
+  std::map<unsigned,std::pair<unsigned,unsigned> > merge2(const Edges& E,double p,bool strict);
 
   unsigned n_unknown() const;
 

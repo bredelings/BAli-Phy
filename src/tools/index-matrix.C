@@ -1,5 +1,4 @@
 #include "index-matrix.H"
-
 #include "util.H"
 
 using namespace std;
@@ -212,7 +211,7 @@ void index_matrix::merge_columns(int c1, int c2)
 
     index(c1,i) = index(c2,i);
     index(c2,i) = alphabet::unknown;
-  }  
+  }
 
   int after = count_unknowns(*this,c1);
 
@@ -258,17 +257,14 @@ unsigned index_matrix::n_columns() const
   return total;
 }
 
-bool skips(const ublas::matrix<int>& M,int c,const vector<int>& index) {
-  for(int i=0;i<M.size2();i++) {
-    if (M(c,i) < 0) continue;
-
-    assert(M(c,i) > index[i]);
-
-    if (M(c,i) > index[i]+1)
-      return true;
-  }
-
-  return false;
+void index_matrix::check_column_indices() const
+{
+  for(int i=0;i<size2();i++)
+    for(int c=0;c<size1();c++) {
+      int x = operator()(c,i);
+      if (x >= 0) 
+	assert(column(i,x) == c);
+    }
 }
 
 map<unsigned,pair<unsigned,unsigned> > index_matrix::merge(const Edges& E,double cutoff,bool strict)
@@ -282,6 +278,9 @@ map<unsigned,pair<unsigned,unsigned> > index_matrix::merge(const Edges& E,double
 
     if (e->x2 == -1) {
       int c1 = column(e->s1,e->x1);
+
+      if (strict and not consistent(c1,e->s2,-1,E,cutoff))
+	continue;
 
       if (index(c1,e->s2) == -3) {
 	unknowns--;
@@ -328,30 +327,571 @@ map<unsigned,pair<unsigned,unsigned> > index_matrix::merge(const Edges& E,double
   return graph;
 }
 
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/topological_sort.hpp>
+
+using namespace boost;
+
+typedef adjacency_list< vecS, vecS, bidirectionalS> Graph; 
+typedef graph_traits<Graph>::vertex_descriptor Vertex;
+typedef graph_traits<Graph>::edge_descriptor Edge_t;
+
+struct cycle_exception: public std::exception {
+  int x;
+  int y;
+  const char* what() const throw() {
+    std::ostringstream w;
+    w << "Adding edge "<<x<<"->"<<y<<" creates a cycle!";
+    return w.str().c_str();
+  }
+  cycle_exception(int x_,int y_) throw() 
+    :x(x_),y(y_) { }
+  virtual ~cycle_exception() throw() {}
+};
+
+struct online_topo_sort
+{
+private:
+  void do_add_edge(int x,int y);
+
+public:
+  Graph g;
+
+  // these two mappings should always be inverse of each other
+  vector<int> order;
+  vector<Vertex> vertices;
+
+  mutable vector<int> mark;
+
+  void allow_edge(int x,int y);
+  void add_edge(int x,int y);
+  void merge_nodes(int x,int y);
+
+  bool try_add_edge(int x,int y);
+  bool try_merge_nodes(int x,int y);
+
+  bool less_than(int x,int y) const;
+  
+  bool has_edge(int x,int y) const;
+
+  void check_order() const;
+  void check_in_edges(int n) const;
+  void check_out_edges(int n) const;
+  void check_node(int n) const;
+
+  online_topo_sort(int n)
+    :g(n),
+     mark(n,0)
+  {
+    order = iota(n);
+
+    for(int i=0;i<n;i++) {
+      vertices.push_back(vertex(i,g));
+      assert(get(vertex_index,g,i) == i);
+    }
+  }
+};
+
+void online_topo_sort::do_add_edge(int x,int y)
+{
+  Vertex vx = vertex(x,g);
+  Vertex vy = vertex(y,g);
+
+  assert(get(vertex_index,g,vx) == x);
+  assert(get(vertex_index,g,vy) == y);
+
+  assert(get(vertex_index,g,vertices[x]) == x);
+  assert(get(vertex_index,g,vertices[y]) == y);
+
+  assert(order[x] < order[y]);
+
+  if ( not has_edge(x,y) )
+    ::add_edge(vx,vy,g);
+}
+
+void check_empty(const vector<int>& mark)
+{
+  for(int i=0;i<mark.size();i++)
+    if (mark[i]) abort();
+}
+
+
+vector<int> merge(const vector<int>& a, const vector<int>& b)
+{
+  vector<int> result;
+  result.reserve(a.size()+b.size());
+  int i=0,j=0;
+  while ( i<a.size() or j<b.size()) 
+  {
+    if (i < a.size() and j < b.size()) {
+      if (a[i] < b[j])
+	result.push_back(a[i++]);
+      else
+	result.push_back(b[j++]);
+    }
+    else if (i < a.size())
+      result.push_back(a[i++]);
+    else
+      result.push_back(b[j++]);
+  }
+  return result;
+}
+
+
+bool online_topo_sort::has_edge(int x, int y) const
+{
+  Edge_t e;
+  bool found;
+  Vertex vx = vertex(x,g);
+  Vertex vy = vertex(y,g);
+
+  tie(e,found) = edge(vx,vy,g);
+  return found;
+}
+
+bool online_topo_sort::try_add_edge(int x, int y)
+{
+  try {
+    add_edge(x,y);
+    return true;
+  }
+  catch (const cycle_exception& c)
+  {
+    return false;
+  }
+}
+
+// y is the one that goes away when they are merged
+bool online_topo_sort::try_merge_nodes(int x,int y)
+{
+  try {
+    merge_nodes(x,y);
+    return true;
+  }
+  catch (const cycle_exception& c)
+  {
+    return false;
+  }
+}
+
+void online_topo_sort::allow_edge(int x,int y)
+{
+  assert(0 <= x < num_vertices(g));
+  assert(0 <= y < num_vertices(g));
+
+  if (order[x] < order[y])
+    return;
+
+#ifndef NDEBUG
+  check_empty(mark);
+#endif
+  vector<int> stack;
+
+  //find RF (i.e. items after  y, in the range order[y]..order[x])
+  vector<int> items_after_y; 
+
+  stack.push_back(y);
+  while(not stack.empty()) 
+  {
+    int vn = stack.back(); stack.pop_back();
+
+    if (mark[vn]) continue; // items MAY be on the stack twice
+
+    if (vn == x) {
+      for(int i=0;i<items_after_y.size();i++)
+	mark[items_after_y[i]] = 0;
+#ifndef NDEBUG
+      check_empty(mark);
+#endif
+      throw cycle_exception(x,y);
+    }
+
+    mark[vn] = 1;
+    items_after_y.push_back(vn);
+
+    graph_traits<Graph>::out_edge_iterator vi, vend;
+    for(tie(vi,vend) = out_edges(vertices[vn],g); vi != vend; ++vi)
+    { 
+      Vertex vo = target(*vi,g);
+      int von = get(vertex_index,g,vo);
+      if (order[von] <= order[x] and not mark[von])
+	stack.push_back(von);
+    }
+  }
+  sort(items_after_y.begin() , items_after_y.end() , sequence_order<int>(order));
+
+  //find RB (i.e. items before x, in the range order[y]..order[x])
+  vector<int> items_before_x;
+  stack.push_back(x);
+  while(not stack.empty()) 
+  {
+    int vn = stack.back(); stack.pop_back();
+
+    if (mark[vn]) continue; // items MAY be on the stack twice
+
+    if (vn == y)
+      std::abort(); // cycle - but we should have caught this above!
+
+    mark[vn] = 1;
+    items_before_x.push_back(vn);
+
+    graph_traits<Graph>::in_edge_iterator vi, vend;
+    for(tie(vi,vend) = in_edges(vertices[vn],g); vi != vend; ++vi)
+    { 
+      Vertex vo = source(*vi,g);
+      int von = get(vertex_index,g,vo);
+      if (order[von] >= order[y] and not mark[von])
+	stack.push_back(von);
+    }
+  }
+  sort(items_before_x.begin(), items_before_x.end(), sequence_order<int>(order));
+
+  //------ unmark items + get ordered list (L) of items ------//
+  vector<int> L;
+  for(int i=0;i<items_before_x.size();i++) {
+    int w = items_before_x[i];
+    items_before_x[i] = order[w];
+    mark[w] = 0;
+    L.push_back(w);
+  }
+
+  for(int i=0;i<items_after_y.size();i++) {
+    int w = items_after_y[i];
+    items_after_y[i] = order[w];
+    mark[w] = 0;
+    L.push_back(w);
+  }
     
+  //------------ get ordered list (R) of orders -------------//
+  vector<int> R = merge(items_before_x, items_after_y);
+
+  // set the new order of the i-th item to the 
+  for(int i=0;i<L.size();i++) 
+    order[L[i]] = R[i];
+
+#ifndef NDEBUG
+  check_empty(mark);
+  check_node(x);
+  check_node(y);
+#endif
+
+  assert(order[x] < order[y]);
+}
+
+void online_topo_sort::check_in_edges(int x) const
+{
+  Vertex vx = vertex(x,g);
+
+  graph_traits<Graph>::in_edge_iterator vi, vend;
+
+  for(tie(vi,vend) = in_edges(vx,g); vi != vend; ++vi)
+  { 
+    Vertex v = source(*vi,g);
+    int vn  = get(vertex_index,g,v);
+    
+    if (not(order[vn] < order[x]))
+      abort();
+  }
+}
+
+
+void online_topo_sort::check_out_edges(int x) const
+{
+  Vertex vx = vertex(x,g);
+
+  graph_traits<Graph>::out_edge_iterator vi, vend;
+
+  for(tie(vi,vend) = out_edges(vx,g); vi != vend; ++vi)
+  { 
+    Vertex v = target(*vi,g);
+    int vn  = get(vertex_index,g,v);
+    
+    if (not (order[x] < order[vn]))
+      abort();
+  }
+}
+
+
+void online_topo_sort::check_node(int n) const
+{
+  check_in_edges(n);
+  check_out_edges(n);
+}
+
+
+// separate add_edge from try_add_edge, which would include a check
+void online_topo_sort::add_edge(int x,int y)
+{
+  if (x == y)
+    throw myexception()<<"Trying to make a node less than itself!";
+
+  allow_edge(x,y);
+
+  do_add_edge(x,y);
+#ifndef NDEBUG
+  check_order();
+#endif
+}
+
+// y is the one that goes away when they are merged
+void online_topo_sort::merge_nodes(int x,int y)
+{
+  if (order[x] < order[y])
+    allow_edge(y,x);
+  else if (order[y] < order[x])
+    allow_edge(x,y);
+  
+  Vertex vy = vertices[y];
+  assert(get(vertex_index,g,vy) == y);
+
+  // add to x edges that point to y 
+  {
+    graph_traits<Graph>::in_edge_iterator vi, vend;
+    for(tie(vi,vend) = in_edges(vy,g); vi != vend; ++vi)
+      { 
+	Vertex v = source(*vi,g);
+	int vn  = get(vertex_index,g,v);
+
+	assert(order[vn] < order[y]);
+
+	add_edge(vn,x);
+      }
+  }
+  
+  // add to x edges that come from y
+  {
+    graph_traits<Graph>::out_edge_iterator vi, vend;
+    for(tie(vi,vend) = out_edges(vy,g); vi != vend; ++vi)
+      { 
+	Vertex v = target(*vi,g);
+	int vn  = get(vertex_index,g,v);
+
+	assert(order[y] < order[vn]);
+
+	add_edge(x,vn);
+      }
+  }
+
+  // remove edges from vy
+  clear_vertex(vy,g);
+
+  // remove_vertex(vy,g); // this would SHIFT all of the node names!
+}
+
+bool online_topo_sort::less_than(int x, int y) const
+{
+  if (order[x] >= order[y])
+    return false;
+
+#ifndef NDEBUG
+  check_empty(mark);
+#endif
+
+  vector<int> items_after_x;
+  vector<int> stack;
+
+  stack.push_back(x);
+  while(not stack.empty()) 
+  {
+    int vn = stack.back();
+    mark[vn] = true;
+    items_after_x.push_back(vn);
+
+    stack.pop_back();
+
+    graph_traits<Graph>::out_edge_iterator vi, vend;
+    for(tie(vi,vend) = out_edges(vertices[vn],g); vi != vend; ++vi)
+    { 
+      Vertex vo = target(*vi,g);
+      int von = get(vertex_index,g,vo);
+      if (order[von] <= order[y] and not mark[von])
+	stack.push_back(von);
+    }
+  }
+
+  for(int i=0;i<items_after_x.size();i++)
+    mark[items_after_x[i]] = 0;
+
+#ifndef NDEBUG
+  check_empty(mark);
+#endif
+
+  return true;
+}
+
+void online_topo_sort::check_order() const
+{
+  graph_traits<Graph>::vertex_iterator vi, vi_end;
+  for (tie(vi, vi_end) = ::vertices(g); vi != vi_end; ++vi) 
+  {
+    int index1 = get(vertex_index,g,*vi);
+    graph_traits<Graph>::out_edge_iterator ei, eend;
+    for(tie(ei,eend) = out_edges(*vi,g); ei != eend; ++ei)
+    { 
+      int index2 = get(vertex_index,g,target(*ei,g));
+      assert(order[index1] < order[index2]);
+    }
+  }
+}
+
+map<unsigned,pair<unsigned,unsigned> > index_matrix::merge2(const Edges& E,double cutoff,bool strict)
+{
+  map<unsigned,pair<unsigned,unsigned> > plot;
+
+  vector<int> order = iota<int>(size2());
+  vector<int> i_order = invert(order);
+
+  //----- Create initial graph of index matrix ----//
+  using namespace boost;
+  // what properties should this graph have?
+
+  online_topo_sort S(size1());
+
+  for(int c=0;c<size1();c++) 
+    for(int i=0;i<size2();i++) 
+    {
+      int x = operator()(c,i);
+
+      if (x == -1 or x == -3) 
+	continue;
+      else if (x+1 < length(i)) {
+	int c2 = column(i,x+1);
+	S.add_edge(c,c2);
+      }
+    }
+
+#ifndef NDEBUG
+  // complain if we find a cycle...
+  get_ordered_matrix(*this);
+  S.check_order();
+#endif
+
+  //-------- Merge some columns --------//
+  foreach(e,E) 
+  {
+    if (e->p < cutoff) break;
+
+    // add a gap, if we are able
+    if (e->x2 == -1) {
+      int c1 = column(e->s1,e->x1);
+
+      if (strict and not consistent(c1,e->s2,-1,E,cutoff))
+	continue;
+
+      if (index(c1,e->s2) == -3) {
+	unknowns--;
+	index(c1,e->s2) = -1;
+      }
+    }
+    // add a gap, if we are able
+    else if (e->x1 == -1) {
+      int c2 = column(e->s2,e->x2);
+
+      if (strict and not consistent(c2,e->s1,-1,E,cutoff))
+	continue;
+
+      if (index(c2,e->s1) == -3) {
+	unknowns--;
+	index(c2,e->s1) = -1;
+      }
+    }
+    // merge two columns
+    else 
+    {
+      assert(e->x1 >= 0 and e-> x2>=0);
+
+      int c1 = column(e->s1,e->x1);
+      int c2 = column(e->s2,e->x2);
+
+      if (c1 == c2)
+	continue;
+
+      if (columns_conflict(c1,c2))
+	continue;
+
+      if (strict and not consistent(c1,c2,E,cutoff))
+	continue;
+	  
+      try {
+	if (c1 > c2) std::swap(c1,c2);
+	S.merge_nodes(c1,c2);
+	merge_columns(c1,c2);
+      }
+      catch (cycle_exception& c)
+      { } // don't do anything
+    }
+
+    plot[e->count] = pair<unsigned,unsigned>(columns,unknowns);
+    //      if (n_columns() != columns)
+    //	abort();
+    //      if (n_unknown() != unknowns)
+    //	{cerr<<"C";abort();}
+  }
+
+#ifndef NDEBUG
+  S.check_order();
+#endif
+  return plot;
+}
+
+    
+
+bool skips(const ublas::matrix<int>& M,int c,const vector<int>& index) 
+{
+  for(int i=0;i<M.size2();i++) 
+  {
+    if (M(c,i) < 0) continue;
+
+    assert(M(c,i) > index[i]);
+
+    if (M(c,i) > index[i]+1)
+      return true;
+  }
+
+  return false;
+}
 
 ublas::matrix<int> get_ordered_matrix(const index_matrix& M)
 {
+#ifndef NDEBUG
+  M.check_column_indices();
+#endif
+
   //-------- sort columns of M ----------//
   vector<int> index(M.size2(),-1);
   vector<int> columns;
   while(true) {
+
+    bool all_done=true;
+    for(int i=0;i<index.size();i++)
+      if (index[i]+1 < M.length(i))
+	all_done=false;
+
+    if (all_done) break;
     
     int c1=-1;
-    for(int i=0;i<index.size();i++) {
+    for(int i=0;i<index.size();i++) 
+    {
       // skip this sequence if its already done
       if (index[i]+1 >= M.length(i)) continue;
       
       // what is the column where the next index in this sequence appears.
       c1 = M.column(i,index[i]+1);
       
-      if (not skips(M,c1,index))
+      // if this column does not involve skipping a letter in a sequence besides @i
+      if (skips(M,c1,index)) 
+	c1 = -1;
+      else
 	break;
     }
     
-    // if all the sequences are done, then bail.
+    // If we didn't find any column that contains a 'next letter' without
+    // skipping something, then ... we have a cycle?
     if (c1 == -1)
-      break;
+    {
+      abort();
+    }
     
     columns.push_back(c1);
     

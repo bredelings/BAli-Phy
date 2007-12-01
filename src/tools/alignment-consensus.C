@@ -52,7 +52,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("seed", value<unsigned long>(),"random seed")
     ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-    ("cutoff-strict",value<double>(),"ignore events below this probability")
+    ("strict",value<double>(),"ignore events below this probability")
     ("cutoff",value<double>(),"ignore events below this probability")
     ("uncertainty",value<string>(),"file-name for AU uncertainty vs level")
     ;
@@ -126,8 +126,8 @@ int main(int argc,char* argv[])
     double cutoff_strict = -1;
     double cutoff = -1;
 
-    if (args.count("cutoff-strict"))
-      cutoff_strict = args["cutoff-strict"].as<double>();
+    if (args.count("strict"))
+      cutoff_strict = args["strict"].as<double>();
 
     if (args.count("cutoff"))
       cutoff = args["cutoff"].as<double>();
@@ -141,10 +141,10 @@ int main(int argc,char* argv[])
     map<unsigned,pair<unsigned,unsigned> > graph;
 
     if (cutoff_strict > 0) 
-      graph = M.merge(E,cutoff_strict,true);
+      graph = M.merge2(E,cutoff_strict,true);
 
     if (cutoff > 0) 
-      graph = M.merge(E,cutoff,false);
+      graph = M.merge2(E,cutoff,false);
 
     //-------- Construct Build a beginning alignment --------//
 
