@@ -695,7 +695,19 @@ bool online_topo_sort::less_than(int x, int y) const
   while(not stack.empty()) 
   {
     int vn = stack.back();
-    mark[vn] = true;
+
+    if (mark[vn]) continue; // items MAY be on the stack twice
+
+    if (vn == y) {
+      for(int i=0;i<items_after_x.size();i++)
+	mark[items_after_x[i]] = 0;
+#ifndef NDEBUG
+      check_empty(mark);
+#endif
+      return false;
+    }
+
+    mark[vn] = 1;
     items_after_x.push_back(vn);
 
     stack.pop_back();
