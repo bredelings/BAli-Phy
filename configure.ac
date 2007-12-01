@@ -243,10 +243,11 @@ if test "$use_system_boost" = YES ; then
 echo " * Looking for the system BOOST headers..."
 AC_CHECK_HEADERS([boost/filesystem/operations.hpp])
 AC_CHECK_HEADERS([boost/program_options.hpp])
+AC_CHECK_HEADERS([boost/graph/graph_traits.hpp])
 boost_includes=""
 CXXFLAGS="$boost_includes $CXXFLAGS"
 
-echo " * Looking for the system BOOST libraries... (suffix = ${BOOST_SUFFIX})"
+echo " * Looking for the system BOOST libraries... (suffix = '${BOOST_SUFFIX}')"
 AC_CHECK_LIB(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_program_options library! (-lboost_program_options${BOOST_SUFFIX})" ; exit 1])
 AC_CHECK_LIB(boost_filesystem${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_filesystem library! (-lboost_filesystem${BOOST_SUFFIX})" ; exit 1])
 boost_libs="-lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}";
