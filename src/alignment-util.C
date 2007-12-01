@@ -483,12 +483,25 @@ long int asymmetric_splits_distance(const alignment& A1,const alignment& A2)
   return asymmetric_splits_distance(M1,M2,column_indices2);
 }
 
+long int asymmetric_splits_distance2(const alignment& A1,const alignment& A2) 
+{
+
+  ublas::matrix<int> M1 = M(A1);
+  ublas::matrix<int> M2 = M(A2);
+
+  // lookup and cache the column each feature is in
+  vector< vector< int> > column_indices2 = column_lookup(A2);
+
+  return asymmetric_splits_distance2(M1,M2,column_indices2);
+}
+
 long int asymmetric_splits_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
 				    const vector< vector<int> >& column_indices2)
 {
-  int match=0;
+  int distance=0;
 
-  for(int column=0;column<M1.size1();column++) {
+  for(int column=0;column<M1.size1();column++) 
+  {
     vector<int> columns = get_splitgroup_columns(M1,column,M2,column_indices2);
 
     vector<int> uniq;uniq.reserve(columns.size());
@@ -499,12 +512,37 @@ long int asymmetric_splits_distance(const ublas::matrix<int>& M1,const ublas::ma
 	uniq.push_back(columns[i]);
 
     int splits = uniq.size();
-    splits--;
-    assert(splits >= 0);
-    match += splits;
+    int delta = (splits-1);
+    assert(delta >= 0);
+    distance += delta;
   }
 
-  return match;
+  return distance;
+}
+
+long int asymmetric_splits_distance2(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+				    const vector< vector<int> >& column_indices2)
+{
+  int distance=0;
+
+  for(int column=0;column<M1.size1();column++) 
+  {
+    vector<int> columns = get_splitgroup_columns(M1,column,M2,column_indices2);
+
+    vector<int> uniq;uniq.reserve(columns.size());
+    for(int i=0;i<columns.size();i++)
+      if (columns[i] != alphabet::unknown and 
+	  columns[i] != alphabet::gap and
+	  not includes(uniq,columns[i]))
+	uniq.push_back(columns[i]);
+
+    int splits = uniq.size();
+    int delta = splits*(splits-1)/2;
+    assert(delta >= 0);
+    distance += delta;
+  }
+
+  return distance;
 }
 
 long int pairs_distance(const alignment& A1,const alignment& A2) 
@@ -525,11 +563,23 @@ long int splits_distance(const alignment& A1,const alignment& A2)
   return asymmetric_splits_distance(A1,A2)+asymmetric_splits_distance(A2,A1);
 }
 
+long int splits_distance2(const alignment& A1,const alignment& A2) 
+{
+  return asymmetric_splits_distance2(A1,A2)+asymmetric_splits_distance2(A2,A1);
+}
+
 long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
 			const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2)
 {
   return asymmetric_splits_distance(M1,M2,column_indices2)
     + asymmetric_splits_distance(M2,M1,column_indices1);
+}
+
+long int splits_distance2(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
+			const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2)
+{
+  return asymmetric_splits_distance2(M1,M2,column_indices2)
+    + asymmetric_splits_distance2(M2,M1,column_indices1);
 }
 
 

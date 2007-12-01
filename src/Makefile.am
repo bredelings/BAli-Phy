@@ -170,9 +170,8 @@ alignment_gild_LDADD = ${ATLAS_LIBS}
 
 #---------------------------------------------------------------
 
-alignment_median_SOURCES = tools/alignment-median.C alignment.C alphabet.C sequence.C util.C rng.C \
-	tree.C sequencetree.C util-random.C \
-	sequence-format.C alignment-util.C 
+alignment_median_SOURCES = tools/alignment-median.C alignment.C alphabet.C sequence.C util.C \
+	tree.C sequencetree.C sequence-format.C alignment-util.C 
 
 #---------------------------------------------------------------
 
