@@ -196,11 +196,12 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
 
   //------------ Try to load alignments -----------//
   int maxalignments = args["max-alignments"].as<int>();
+  unsigned skip = args["skip"].as<unsigned>();
 
   vector< OwnedPointer<alphabet> > alphabets;
   alphabets.push_back(A.get_alphabet());
   std::cerr<<"Loading alignments...";
-  alignments = load_alignments(std::cin,alphabets,maxalignments);
+  alignments = load_alignments(std::cin,alphabets,skip,maxalignments);
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (alignments.empty()) 
     throw myexception()<<"Alignment sample is empty.";
@@ -303,6 +304,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree",value<string>(),"file with initial tree")
     ("find-root","estimate the root position from branch lengths")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+    ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("refine", value<string>(),"procedure for refining Least-Squares positivized branch lengths: SSE, Poisson, LeastSquares")
     ;

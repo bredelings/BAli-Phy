@@ -27,10 +27,6 @@ using po::variables_map;
 
 using namespace std;
 
-
-using std::cout;
-using std::endl;
-
 void load_alignments(vector<alignment>& alignments,
 		     const string& filename, 
 		     const vector<OwnedPointer<alphabet> >& alphabets,
@@ -45,7 +41,7 @@ void load_alignments(vector<alignment>& alignments,
   if (not file)
     throw myexception()<<"Can't load alignment sample"<<what<<" from file '"<<filename<<"'";
 
-  list<alignment> As = load_alignments(file, alphabets, maxalignments);
+  list<alignment> As = load_alignments(file, alphabets, 0, maxalignments);
 
   alignments.clear();
   alignments.insert(alignments.begin(),As.begin(),As.end());
@@ -74,21 +70,15 @@ void do_setup(const variables_map& args,
   //------------ Try to load alignments -----------//
   int maxalignments = args["max-alignments"].as<int>();
 
-  // --------------- Alphabets to try --------------- //
-  vector<OwnedPointer<alphabet> > alphabets;
-  alphabets.push_back(DNA());
-  alphabets.push_back(RNA());
-  alphabets.push_back(AminoAcids());
-
   // --------------------- try ---------------------- //
   {
     string filename = args["file1"].as<string>();
-    load_alignments(alignments1,filename,alphabets,maxalignments,"#1");
+    load_alignments(alignments1,filename,load_alphabets(args),maxalignments,"#1");
   }
 
   {
     string filename = args["file2"].as<string>();
-    load_alignments(alignments2,filename,alphabets,maxalignments,"#2");
+    load_alignments(alignments2,filename,load_alphabets(args),maxalignments,"#2");
   }
 }
 
@@ -101,6 +91,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help", "produce help message")
+    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("seed", value<unsigned long>(),"random seed")
     ("align", value<string>(),"alignment to output values for.")
     ("file1", value<string>(),"first alignment file")

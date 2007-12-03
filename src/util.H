@@ -220,8 +220,15 @@ std::vector<int> invert(const std::vector<int>&);
 /// compose the two mappings
 std::vector<int> compose(const std::vector<int>&,const std::vector<int>&);
 
-/// Return a random permutation of the list
-std::vector<int> randomize(const std::vector<int>&);
+template <typename T>
+std::vector<T> iota(T size)
+{
+  typedef typename std::vector<T>::size_type size_type;
+  std::vector<T> v(size);
+  for(size_type i=0;i<v.size();i++)
+    v[i] = i;
+  return v;
+}
 
 /// Return the min of v
 template<class T>

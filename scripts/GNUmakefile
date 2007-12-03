@@ -126,7 +126,7 @@ Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
 
 Results/au-graph.plot Work/consensus-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 	@echo -e "Computing consensus alignment ... \c"
-	@alignment-consensus --cutoff=0.75 --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
+	@alignment-consensus --cutoff=0.50 --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
 	@echo "done."
 
 Results/%-AU.prob: Results/%.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree

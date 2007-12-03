@@ -1,18 +1,25 @@
-#include "rng.H"
 #include <cassert>
+#include "rng.H"
+#include "util.H"
 
 template <typename T>
-std::vector<T> randomize(const std::vector<T>& v) {
-  std::vector<T> work = v;
-
-  std::vector<T> newv = v;
-  for(int i=0;i<newv.size();i++) {
-    int j = myrandom(work.size());
-    newv[i] = work[j];
-    work.erase(work.begin()+j);
+void random_shuffle(std::vector<T>& v) 
+{
+  for(int i=1;i<v.size();i++) 
+  {
+    int l = myrandom(i+1);
+    if (l<i)
+      std::swap(v[l],v[i]);
   }
-  assert(work.size()==0);
-  assert(newv.size() == v.size());
-
-  return newv;
 }
+
+template <typename T>
+std::vector<T> randomize(const std::vector<T>& v) 
+{
+  std::vector<T> v2 = v;
+  random_shuffle(v2);
+  return v2;
+}
+
+
+std::vector<int> random_permutation(int size);

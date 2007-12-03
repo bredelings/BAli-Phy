@@ -56,7 +56,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description visible("All options");
   visible.add_options()
     ("help", "Produce help message.")
-    ("no-header","Suppress the line of field names.")
+    ("no-header,n","Suppress the line of field names.")
     ("large","The last value goes to the end of the line.")
     ("multi-line","The last continues until a blank line.")
     ;
