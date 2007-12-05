@@ -4,7 +4,7 @@ endif
 
 SUBDIRS = $(MAYBE_BOOST) src/ 
 
-bin_SCRIPTS = scripts/bali-phy-sge 
+bin_SCRIPTS = scripts/bali-phy-sge scripts/pairwise-alignment-distances scripts/fixedpt-alignment-distances
 
 docdir = $(datadir)/doc/@PACKAGE@
 doc_DATA = scripts/GNUmakefile doc/README.xhtml doc/docbook.css # doc/README.pdf
