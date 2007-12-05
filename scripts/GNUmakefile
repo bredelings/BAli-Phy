@@ -23,6 +23,8 @@ all: Results/analysis
 .PRECIOUS .SECONDARY: % 
 
 .PRECIOUS .SECONDARY: Results/%-AU.prob
+.PRECIOUS .SECONDARY: Results/distances
+.PRECIOUS .SECONDARY: Results/pairs
 
 Work/setup:
 	@echo -e "Setting up directories... \c"
@@ -194,3 +196,11 @@ clean:
 
 %.phy: %.fasta
 	@alignment-convert --output phylip < $< > $@
+
+Results/distances: Work/samples-${SKIP}+${SIZE} Work/MAP-unordered.fasta
+	@echo -e "Calculating alignment distances to MAP... \c"
+	@fixedpt-alignment-distances Work/MAP-unordered.fasta < Work/samples-${SKIP}+${SIZE} > $@
+
+Results/pairs: Work/samples-${SKIP}+${SIZE} 
+	@echo -e "Calculating pairwise distances between posterior alignment sample... \c"
+	@pairwise-alignment-distances ${THINTO} < Work/samples-${SKIP}+${SIZE} > $@

@@ -1,0 +1,194 @@
+#!/usr/bin/perl
+
+#
+# Program calculates the distance between a given (MAP) alignment and all alignments in 
+# a posterior sample.
+#
+# Command-line: fixedpt-alignment-distances [MAP alignment file] < [posterior sample file]
+#
+# By: Marc A. Suchard (2/26/06)
+#
+
+# Read in MAP alignment and construct all pairwise homology statements
+{	
+	local $/ = undef;
+	open(MAPFILE,"< $ARGV[0]");
+	$MAPstr = <MAPFILE>;
+	close(MAPFILE);
+	$MAPstr =~ s/>A\d+\s+?\n.*//s;  # throw out internal node states
+}
+$MAP = parse_fasta($MAPstr);
+$MAPpairs = pairwise_homologies( $MAP->{"array"} );
+$npairs = scalar( @$MAPpairs );
+print STDERR "Read in MAP alignment.\n";
+
+# Count number of observed sequences for distance preprocessing
+$standard = 0;
+for(my $i=0; $i<scalar(@{$MAP->{"lengths"}}); $i++) {
+	$standard += $MAP->{"lengths"}->[$i];
+}
+$standard *= (scalar(@{$MAP->{"lengths"}}) - 1);
+
+print STDERR "Reading posterior from <STDIN>...\n";
+# Parse posterior samples
+{ 
+    local $/ = undef;
+    my $bigstring = <STDIN>;
+    @chunks = split("\n\n(?=it)",$bigstring);
+}
+print STDERR "Done.\n";
+print STDERR "Processing samples...\n";
+foreach $chunk (@chunks) { # Iterate over samples
+	if( $chunk =~ /align\[sample/ ) {
+		# This sample contains an alignment
+		$chunk =~ /iterations = (\d+)/;
+		$iter = $1;
+		#$chunk =~ /align.*? =.?\n(.*)\n\n\n/s; # returns whole alignment (including internals)
+		$chunk =~ /align.*? =.?\n(.*?)>A\d+\s+?\n/s;  # returns only observed alignment 
+		$alignment = $1; 
+		# process retrieved alignment here
+		my $sample = parse_fasta($alignment);
+		my $samplepairs  = pairwise_homologies( $sample->{"array"} );
+		my $sum = 0;
+		for(my $i=0; $i<$npairs; $i++) {
+			$sum += distance( 
+		                   $MAPpairs->[$i], $samplepairs->[$i] );
+		}
+		$sum += $standard;
+		$sum /= $standard;
+		$str = sprintf("%0.4f",$sum);
+		print "$str\n";
+	}
+}	
+
+#
+# Subroutine returns a hash of homology statements from two aligned arrays
+#
+
+sub get_homologies {
+    my ($x, $y) = @_;
+    my %homologies = ();
+    $len = scalar(@$x);
+    for(my $k=0; $k<$len; $k++) {
+	if( $x->[$k] == 0 ) { # gap in first sequence
+	    if( $y->[$k] > 0 ) { # no gap in second sequence
+		# generate insertion event
+		$homologies{'I'}{$y->[$k]} = 1;
+		#push(@{$homologies{'I'}}, $y->[$k]);
+	    } # else both are gaps and ignore
+	} else { # no gap in first sequence
+	    if( $y->[$k] == 0) { # gap in second sequence
+		# generate deletion event
+		$homologies{'D'}{$x->[$k]} = 1;
+		#push(@{$homologies{'D'}}, $x->[$k]);
+	    } else { # no gap in either sequence
+		# generate match event
+		$homologies{'M'}{"$x->[$k]:$y->[$k]"} = 1;
+		#push(@{$homologies{'M'}}, "$x->[$k]:$y->[$k]");
+	    }
+	}
+    }
+    return \%homologies
+}
+
+#
+# Subroutine to return distance between two homology hashes
+# NB: true-distance = distance + length_x + length_y
+#
+
+sub distance { 
+    my ($x, $y) = @_;
+    return - 2 * card_intersection( $x->{'M'}, $y->{'M'} )
+	       - card_intersection( $x->{'D'}, $y->{'D'} )
+	       - card_intersection( $x->{'I'}, $y->{'I'} );
+}
+					 
+#
+# Subroutine to return the cardinality of the intersection of two hashes
+#
+
+sub card_intersection {
+    my ($x, $y) = @_;
+    my $count = 0;
+    for $e (keys %{$x}) {
+	if( $y->{$e} ) {
+	    $count++;
+	}
+    }
+    return $count;
+}
+
+#
+# Subroutine to return the cardinality of a hash
+#
+
+sub cardinality {
+    my ($x) = @_;
+    return scalar( keys %{$x} );
+}
+
+#
+# Subroutine parses a string containing an entire fasta alignment
+#
+
+sub parse_fasta {
+	my ($x) = shift;
+	my @blocks = split("(?=>)",$x);
+	my $nseq = scalar(@blocks);
+	my @names = ();
+	my @seq = ();
+	for(my $i=0; $i<$nseq; $i++) {
+		$blocks[$i] =~ />(\w+).*?\n(.*)\n?/m;
+		$names[$i] = $1;
+		my @tmp = split("",$2);
+		my $index = 1;
+		my $seqlen = scalar(@tmp);
+		for(my $k=0; $k<$seqlen; $k++) {
+			if( $tmp[$k] eq '-') {
+				$seq[$i][$k] = 0;
+			} else {
+				$seq[$i][$k] = $index++;
+			}
+		}
+		$length[$i] = $index - 1;
+	}
+	my %alignment = ();
+	$alignment{"names"} = \@names;
+	$alignment{"array"} = \@seq;
+	$alignment{"lengths"} = \@length;
+	return \%alignment;
+}
+
+#
+# Subroutine prints out a set of homology statements
+#
+
+sub print_homologies {
+	my $x = shift;
+	my %homology = %{$x};
+	for $type ('M','I','D') {
+	    print "$type: ";
+	    for $key( keys %{$homology{$type}} ) {
+		print "$key ";
+	    }
+	    print "\n";
+	}
+}
+
+#
+# Subroutine returns an array of all pairwise homology statements for an alignment
+#
+
+sub pairwise_homologies {
+	my $x = shift;
+	my @seq = @{$x};
+	my $ntaxa = scalar(@seq);
+	my @homologies = ();
+	for(my $i=0; $i<$ntaxa; $i++) {
+		for(my $j=$i+1; $j<$ntaxa; $j++) {
+			my %homology = %{ get_homologies( \@{$seq[$i]}, \@{$seq[$j]} ) };	
+			push(@homologies, \%homology);
+		}
+	}
+	return \@homologies;
+}
