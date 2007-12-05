@@ -188,7 +188,7 @@ AM_CONDITIONAL(NO_SYSTEM_BOOST, test "$use_system_boost" = NO)
 AM_CONDITIONAL(HOST_MINGW32,test "${host_os_noversion}" = mingw32)
 AM_CONDITIONAL(HOST_CYGWIN,test "${host_os_noversion}" = cygwin)
 AM_CONDITIONAL(HOST_LINUX,test "${host_os_noversion}" = linux)
-AM_CONDITIONAL(HOST_DARWIN,test "${host_os}" = darwin)
+AM_CONDITIONAL(HOST_DARWIN,test "${host_os_noversion}" = darwin)
 
 #determine the CPU that is being targetted:
 #AM_CONDITIONAL(TRUE, true)
