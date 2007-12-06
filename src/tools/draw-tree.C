@@ -108,6 +108,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("output",value<string>()->default_value("pdf"),"Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg")
     ("full","Consider only full partitions")
     ("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
+    ("angle_iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm with small-angle penalties")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method")
     ("seed", value<unsigned long>(),"Random seed")
@@ -721,6 +722,8 @@ struct graph_layout: public common_layout
 {
   MC_tree_with_lengths MC;
 
+  bool edges_cross(int b1,int b2) const;
+
   graph_layout(const MC_tree_with_lengths& T)
     :common_layout(T.n_nodes()),
      MC(T)
@@ -747,6 +750,61 @@ struct graph_layout: public common_layout
   }
 };
 
+
+bool segments_cross(const point_position& m1,
+		 const point_position& m2,
+		 const point_position& n1,
+		 const point_position& n2)
+{
+  double x1 = m1.x;
+  double y1 = m1.y;
+
+  double x2 = m2.x;
+  double y2 = m2.y;
+
+  double x3 = n1.x;
+  double y3 = n1.y;
+
+  double x4 = n2.x;
+  double y4 = n2.y;
+
+  double A = x2 - x1;
+  double B = x3 - x4;
+  double C = y2 - y1;
+  double D = y3 - y4;
+  double E = x3 - x1;
+  double F = y3 - y1;
+
+  double t_top = E*D-F*B;
+  double s_top = A*F-E*C;
+  double   det = A*D-B*C;
+
+  bool cross =  (s_top > 0 and s_top < det) and 
+                (t_top > 0 and t_top < det);
+
+  //  if (cross) {
+  //    cerr<<"t = "<<t_top/det<<endl;
+  //    cerr<<"s = "<<s_top/det<<endl;
+  //  }
+  return cross;
+}
+
+bool graph_layout::edges_cross(int e1,int e2) const
+{
+  int m1 = MC.edges[e1].from;
+  int m2 = MC.edges[e1].to;
+
+  int n1 = MC.edges[e2].from;
+  int n2 = MC.edges[e2].to;
+
+  if (m1 == n1 or m1 == n2) return false;
+  if (m2 == n1 or m2 == n2) return false;
+
+  return segments_cross(node_positions[m1],
+			node_positions[m2],
+			node_positions[n1],
+			node_positions[n2]);
+}
 
 
 graph_layout layout_on_circle(MC_tree_with_lengths& MC,double R)
@@ -1112,6 +1170,124 @@ double angle_energy(const graph_layout& GL,vector<point_position>& D,
 }
 
 
+vector<int> nodes_after(const MC_tree& MC,int b1)
+{
+  vector<int> mask(MC.n_nodes(),0);
+  mask[MC.mapping[b1]] = 1;
+  for(int b2=0;b2 < 2*MC.n_branches();b2++)
+    if (MC.left_of(b1,b2) or MC.wanders_over(b1,b2)) {
+      int b3 = MC.reverse(b2);
+      mask[MC.mapping[b2]] = 1;
+      mask[MC.mapping[b3]] = 1;
+    }
+
+  vector<int> nodes;
+  for(int i=0;i<MC.n_nodes();i++)
+    if (mask[i])
+      nodes.push_back(i);
+
+  return nodes;
+}
+
+ublas::matrix<int> edge_crossing_matrix(const graph_layout& GL)
+{
+  const unsigned n_edges = GL.MC.edges.size();
+
+  //--- check all edge pairs to see if they cross ---//
+  ublas::matrix<int> e_cross(n_edges,n_edges);
+  for(int i=0;i<e_cross.size1();i++)
+    for(int j=0;j<e_cross.size2();j++)
+      if (i==j)
+	e_cross(i,j) = 0;
+      else
+	e_cross(i,j) = GL.edges_cross(i,j);
+
+  return e_cross;
+}
+
+vector<bool> edge_crossing_vector(const graph_layout& GL)
+{
+  ublas::matrix<int> e_cross = edge_crossing_matrix(GL);
+
+  vector<bool> e_cross_v(e_cross.size1(),false);
+
+  for(int i=0;i < e_cross.size1(); i++)
+    for(int j=0;j < e_cross.size2(); j++)
+      if (e_cross(i,j) and GL.MC.edges[i].type == 1 and GL.MC.edges[j].type == 1 ) {
+	e_cross_v[i] = true;
+	e_cross_v[j] = true;
+      }
+
+  return e_cross_v;  
+}
+
+ublas::matrix<int> crossed_nodes_matrix(const graph_layout& GL)
+{
+  ublas::matrix<int> e_cross = edge_crossing_matrix(GL);
+
+  const MC_tree_with_lengths& MC = GL.MC;
+
+  const unsigned n_edges = MC.edges.size();
+
+  const unsigned n_nodes = MC.n_nodes();
+
+  ublas::matrix<int> n_cross(n_nodes,n_nodes);
+  for(int i=0;i<n_nodes;i++)
+    for(int j=0;j<n_nodes;j++)
+      n_cross(i,j) = 0;
+
+  for(int i=0;i<n_edges;i++)
+    if (MC.edges[i].type == 1)
+      for(int j=0;j<n_edges;j++)
+	if (MC.edges[j].type == 1)
+	  if (e_cross(i,j)) 
+	  {
+	    int b1 = MC.edges[i].partition;
+	    int b2 = MC.edges[j].partition;
+	    
+	    cerr<<"A: b1 = "<<b1<<"   b2 = "<<b2<<endl;
+
+	    if (MC.left_of(b1,b2) or MC.left_of(b1,MC.reverse(b2)))
+	      b1 = MC.reverse(b1);
+	    if (MC.left_of(b2,b1) or MC.left_of(b2,MC.reverse(b1)))
+	      b2 = MC.reverse(b2);
+	    if (not MC.left_of(MC.reverse(b1),b2)) continue;
+	    
+	    cerr<<"B: b1 = "<<b1<<"   b2 = "<<b2<<endl;
+
+	    assert(MC.left_of(MC.reverse(b1),b2));
+	    assert(MC.left_of(MC.reverse(b2),b1));
+	    
+	    vector<int> nodes_after1 = nodes_after(MC,b1);
+	    vector<int> nodes_after2 = nodes_after(MC,b2);
+	    
+	    for(int k=0;k<nodes_after1.size();k++)
+	      for(int l=0;l<nodes_after2.size();l++)
+		n_cross(nodes_after1[k],nodes_after2[l]) = 1;
+	  }
+
+  return n_cross;
+}
+
+
+vector<bool> crossed_nodes_vector(const graph_layout& GL)
+{
+  ublas::matrix<int> n_cross = crossed_nodes_matrix(GL);
+
+  vector<bool> n_cross_v(n_cross.size1(),false);
+
+  for(int i=0;i < n_cross.size1(); i++)
+    for(int j=0;j < n_cross.size2(); j++)
+      if (n_cross(i,j)) {
+	n_cross_v[i] = true;
+	n_cross_v[j] = true;
+      }
+
+  return n_cross_v;  
+}
+
+       
+
 struct energy2: public graph_energy_function
 {
   double repulsion_weight;
@@ -1130,7 +1306,16 @@ struct energy2: public graph_energy_function
   //   if they are to give a layout as well as avoiding collisions?
   double operator()(const graph_layout& GL, vector<point_position>& D) const 
   {
-    if (D.size() != GL.MC.n_nodes()) D.resize(GL.MC.n_nodes());
+    const MC_tree_with_lengths& MC = GL.MC;
+    
+    const unsigned n_edges = MC.edges.size();
+    const unsigned n_nodes = MC.n_nodes();
+
+    //--- check all edge pairs to see if they cross ---//
+    ublas::matrix<int> n_cross = crossed_nodes_matrix(GL);
+
+    //--------------- resize and zero D ---------------//
+    if (D.size() != n_nodes) D.resize(n_nodes);
     for(int i=0;i<D.size();i++)
       D[i].x = D[i].y = 0;
 
@@ -1209,6 +1394,8 @@ struct energy2: public graph_energy_function
 	// don't repel the end of the branch that I'm attached to
 	if (GL.MC.connected(i,j) == 1) continue;
 
+	if (n_cross(i,j)) continue;
+	
 	double w = repulsion_weight;
 
 	// don't repel nodes that wander over me, or that I wander to
@@ -1408,6 +1595,12 @@ struct graph_plotter: public cairo_plotter
 
 void graph_plotter::operator()(cairo_t* cr)
 {
+  vector<bool> e_cross_v = edge_crossing_vector(L);
+
+  ublas::matrix<int> n_cross = crossed_nodes_matrix(L);
+
+  vector<bool> n_cross_v = crossed_nodes_vector(L);
+
   double xc = 0.5*(L.xmin() + L.xmax());
   double yc = 0.5*(L.ymin() + L.ymax());
   double xw = L.x_width();
@@ -1452,6 +1645,7 @@ void graph_plotter::operator()(cairo_t* cr)
     {
       cairo_move_to (cr, x1, y1);
       cairo_line_to (cr, x2, y2);
+
       if (t == 1) {
 	if (L.MC.partitions[b].full())
 	  cairo_set_source_rgb (cr, 0, 0 ,0);
@@ -1462,6 +1656,8 @@ void graph_plotter::operator()(cairo_t* cr)
 	cairo_set_line_width(cr, line_width/2.0);
 	cairo_set_dash (cr, dashes, 2, 0.0);
       }
+      if (e_cross_v[e])
+	cairo_set_source_rgb (cr, 1 , 0, 0);
       
       cairo_stroke (cr);
     }
@@ -1487,6 +1683,21 @@ void graph_plotter::operator()(cairo_t* cr)
       cairo_set_line_width(cr, line_width/2.0);
       cairo_stroke(cr);
     }
+
+    cairo_save(cr);
+    if (n_cross_v[n]) {
+      cerr<<"n_cross: "<<n<<endl;
+      double R = 0.001;
+      cairo_arc(cr, x, y, R, 0.0, 2.0 * M_PI);
+
+      cairo_set_source_rgb (cr, 0 , 0, 1);
+      cairo_fill (cr);
+
+      //      cairo_set_source_rgb (cr, 0 , 0, 0);
+      //      cairo_set_line_width(cr, line_width/2.0);
+      //      cairo_stroke(cr);
+    }
+    cairo_restore(cr);
   }
 
   cairo_select_font_face (cr, "Sans", 
@@ -1853,7 +2064,8 @@ int main(int argc,char* argv[])
     }
 
     // improve angular resolution
-    for(int i=0;i<2;i++) {
+    int a_iterations = args["angle_iterations"].as<int>();
+    for(int i=0;i<a_iterations;i++) {
       L3 = energy_layout(L3,energy2(1,10000000,2,50));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw);

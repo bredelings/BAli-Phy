@@ -207,6 +207,14 @@ AC_CHECK_FUNCS([floor pow sqrt strchr log2 getrlimit setrlimit])
 AC_CHECK_TYPE(rlim_t, ,AC_DEFINE(rlim_t, [unsigned long],[declare rlim_t as unsigned long if not found in <sys/resource.h>]),[#include <sys/resource.h>])
 CXXFLAGS="$CXXFLAGS $CPPFLAGS"
 
+# FIXME!  AC_CHECK_LIB find libraries, but these libraries are not currently
+#  used by src/Makefile.am .
+# This is partly because AC_CHECK_LIB seems to look for static libraries
+#  entirely based on providing -static to gcc, and then giving -l<libraryname>
+#  to gcc.
+# However, on Mac OS X, the -static flag cannot be used.  Therefore, there
+#  is no way to search for static libraries.
+
 #---------------------- Check for math library ------------------#
 AC_CHECK_LIB(m,main)
 #---------------------- Check for GSL ------------------#
@@ -278,6 +286,8 @@ else
   CXXFLAGS="$boost_includes $CXXFLAGS"
   LIBS="$boost_libs $LIBS"
 fi
+libs=LIBS
+AC_SUBST(libs)
 AC_SUBST(boost_includes)
 AC_SUBST(boost_libs)
 AC_SUBST(BOOST_SUFFIX)
@@ -305,6 +315,7 @@ AC_OUTPUT([
 echo ""
 echo "CXXFLAGS = $CXXFLAGS"
 echo "LDFLAGS = $LDFLAGS"
+echo "LIBS = $LIBS"
 if test -n "$cairo" && test "$cairo" != "no"; then
   echo "CAIRO_CFLAGS = $CAIRO_CFLAGS"
   echo "CAIRO_LIBS = $CAIRO_LIBS"
