@@ -78,10 +78,7 @@ AC_ARG_VAR(TUNE,
            [Optimize for what CPU type? (-mtune=?: see 'man gcc')])
 
 if test "$CHIP" = "" ; then
-   echo
-   echo " (*) No chip architecture specified: chip-specific instructions not enabled."
-   echo "     See CHIP=?? and TUNE=?? options in 'configure --help' for  faster code."
-   echo
+   echo " No chip architecture specified: using default."
 elif test "$CHIP" = "G3" ; then
    CHIP="-mcpu=G3"
 elif test "$CHIP" = "G4" ; then
