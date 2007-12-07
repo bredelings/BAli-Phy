@@ -207,9 +207,6 @@ AC_CHECK_FUNCS([floor pow sqrt strchr log2 getrlimit setrlimit])
 AC_CHECK_TYPE(rlim_t, ,AC_DEFINE(rlim_t, [unsigned long],[declare rlim_t as unsigned long if not found in <sys/resource.h>]),[#include <sys/resource.h>])
 CXXFLAGS="$CXXFLAGS $CPPFLAGS"
 
-
-ac_search_lib_dirs="$extra_libs2 /usr/lib /usr/local/lib"
-
 # FIXME!  AC_CHECK_LIB find libraries, but these libraries are not currently
 #  used by src/Makefile.am .
 # This is partly because AC_CHECK_LIB seems to look for static libraries
@@ -220,7 +217,6 @@ ac_search_lib_dirs="$extra_libs2 /usr/lib /usr/local/lib"
 
 #---------------------- Check for math library ------------------#
 AC_CHECK_LIB(m,main)
-
 #---------------------- Check for GSL ------------------#
 echo "------------------------------------------"
 echo " * Looking for GSL headers..."
@@ -233,8 +229,8 @@ AC_CHECK_HEADERS([gsl/gsl_randist.h])
 
 echo " * Looking for GSL libraries..."
 
-AC_CHECK_LIB2(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas)" ; exit 1])
-AC_CHECK_LIB2(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl LIBs=$LIBS)" ; exit 1])
+AC_CHECK_LIB(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas)" ; exit 1])
+AC_CHECK_LIB(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl)" ; exit 1])
 AC_CHECK_LIB(gsl, gsl_cdf_beta_Pinv, [echo "Good... you've got GSL version 1.8 or higher"], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
 
 AC_MSG_CHECKING(include/compile/link for the GSL library)
@@ -260,7 +256,7 @@ boost_includes=""
 CXXFLAGS="$boost_includes $CXXFLAGS"
 
 echo " * Looking for the system BOOST libraries... (suffix = '${BOOST_SUFFIX}')"
-AC_CHECK_LIB3(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_program_options library! (-lboost_program_options${BOOST_SUFFIX})" ; exit 1])
+AC_CHECK_LIB(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_program_options library! (-lboost_program_options${BOOST_SUFFIX})" ; exit 1])
 AC_CHECK_LIB(boost_filesystem${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_filesystem library! (-lboost_filesystem${BOOST_SUFFIX})" ; exit 1])
 boost_libs="-lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}";
 
