@@ -14,10 +14,8 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            tools/findroot.H tools/parsimony.H distribution.H tools/mctree.H \
            version.H cow-ptr.H tools/index-matrix.H
 
-# getting LDFLAGS from autoconf
 LDFLAGS = @ldflags@
 
-# can I get CPPFLAGS from autoconf?
 INCLUDES = -I@top_srcdir@/include
 
 if GCC
