@@ -23,55 +23,11 @@ if GCC
 CXXFLAGS += -pedantic
 CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
 
-.LIBPATTERNS = 
-
-if HOST_LINUX
-vpath %.so    @extra_libs2@ /usr/lib /usr/local/lib
-vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
-if STATIC
-.LIBPATTERNS += lib%.a
-else
-.LIBPATTERNS += lib%.so lib%.a
-endif
-endif
-
-if HOST_DARWIN
-vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
-if STATIC
-vpath %.dylib /usr/lib
-.LIBPATTERNS += lib%.a lib%.dylib 
-else
-vpath %.dylib @extra_libs2@ /usr/lib /usr/local/lib
-.LIBPATTERNS += lib%.dylib lib%.a 
-endif
-endif
-
-if HOST_MINGW32
-vpath %.dll   @extra_libs2@ /usr/lib /usr/local/lib
-vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
-if STATIC
-.LIBPATTERNS += lib%.a
-else
-.LIBPATTERNS += lib%.dll lib%.a
-endif
-endif
-
-if HOST_CYGWIN
-vpath %.dll   @extra_libs2@ /usr/lib /usr/local/lib
-vpath %.a     @extra_libs2@ /usr/lib /usr/local/lib
-if STATIC
-.LIBPATTERNS += lib%.a
-else
-.LIBPATTERNS += lib%.dll lib%.a
-endif
-endif
-
-
 endif
 
 BOOST_LIBS = @boost_libs@
 
-LIBS = -lgsl -lgslcblas -lm ${BOOST_LIBS}
+LIBS = @libs@
 
 #-----------------------------------------------------------------
 
