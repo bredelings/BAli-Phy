@@ -28,8 +28,8 @@ namespace sequence_format {
     return sequence(name,comment);
   }
 
-  vector<sequence> read_fasta(std::istream& file) {
-
+  vector<sequence> read_fasta(std::istream& file, bool entire_file) 
+  {
     if (not file)
       throw myexception()<<"Reading sequences: file read error";
 
@@ -39,10 +39,16 @@ namespace sequence_format {
 
     bool done = false;
 
-    while(not done and getline_handle_dos(file,line)) {
-
-      // quit reading after a blank line
-      if (not line.size()) break;
+    while(not done and getline_handle_dos(file,line)) 
+    {
+      // after a blank line, quit reading, or skip
+      if (not line.size()) 
+      {
+	if (not entire_file) 
+	  { done = true; break;}
+	else
+	  continue;
+      }
 
       // compare if expectations are met...
       if (line[0] != '>') 
@@ -54,7 +60,8 @@ namespace sequence_format {
       // Parse the letters
       string& letters = s;
 
-      while (file) {
+      while (file) 
+      {
 	char c = file.get();
 
 	// bail on EOF
@@ -68,8 +75,14 @@ namespace sequence_format {
 	// read the next line of letters
 	getline_handle_dos(file,line);
 
-	// quit reading after a blank line
-	if (not line.size()) { done = true; break;}
+	// after a blank line, quit reading, or skip
+	if (not line.size()) 
+	{
+	  if (not entire_file) 
+	    { done = true; break;}
+	  else
+	    continue;
+	}
 	
 	// add the letters in
 	letters += line;
@@ -83,8 +96,19 @@ namespace sequence_format {
     return sequences;
   }
 
+  vector<sequence> read_fasta(std::istream& file) 
+  {
+    return read_fasta(file,false);
+  }
+
+  vector<sequence> read_fasta_entire_file(std::istream& file) 
+  {
+    return read_fasta(file,true);
+  }
+
   /// Read an alignments letters and names from a file in fasta format
-  void write_fasta(std::ostream& file, const std::vector<sequence>& sequences) {
+  void write_fasta(std::ostream& file, const std::vector<sequence>& sequences) 
+  {
     assert(sequences.size() > 0);
 
     const int letters_length = 70;
@@ -101,7 +125,8 @@ namespace sequence_format {
     file.flush();
   }
 
-  string strip_begin_end(const string& s) {
+  string strip_begin_end(const string& s) 
+  {
     int start=0;
     for(;start<s.size();start++) {
       if (s[start] != ' ' and s[start] != '\t')
@@ -311,15 +336,19 @@ namespace sequence_format {
     file.flush();
   }
 
+  // This load ASSUME that it has been told to load an alignment from a filename
+  // Therefore, it makes sense not to quit on blank lines for FASTA files.
   vector<sequence> read_guess(std::istream& file) 
   {
-    if (file.peek() == '>')
-      return read_fasta(file);
-    else
+    char c = file.peek();
+    if (c >= '0' and c <= '9')
       return read_phylip(file);
+    else
+      return read_fasta_entire_file(file);
   }
 
-  vector<sequence> load_from_file(loader_t loader,const string& filename) {
+  vector<sequence> load_from_file(loader_t loader,const string& filename) 
+  {
     ifstream file(filename.c_str());
     if (not file)
       throw myexception()<<"Couldn't open file '"<<filename<<"'";
@@ -328,7 +357,8 @@ namespace sequence_format {
     return sequences;
   }
 
-  string get_extension(const string& s) {
+  string get_extension(const string& s) 
+  {
     int pos = s.rfind('.');
     if (pos == -1)
       return "";
@@ -336,22 +366,36 @@ namespace sequence_format {
       return s.substr(pos);
   }
 
-  vector<sequence> load_from_file(const string& filename) {
+  string StringToLower(string strToConvert)
+  {
+    for(unsigned int i=0;i<strToConvert.length();i++)
+      strToConvert[i] = tolower(strToConvert[i]);
     
+    return strToConvert;//return the converted string
+  }
+
+  vector<sequence> load_from_file(const string& filename) 
+  {
     loader_t *loader = read_guess;
 
-    string extension = get_extension(filename);
+    string extension = StringToLower(get_extension(filename));
     if (extension == ".phy")
       loader = read_phylip;
-    else if (extension == ".fasta")
-      loader = read_fasta;
+    else if ((extension == ".fasta") or 
+	     (extension == ".mpfa") or
+	     (extension == ".fna") or
+	     (extension == ".fas") or
+	     (extension == ".fsa") or
+	     (extension == ".fa"))
+      loader = read_fasta_entire_file;
     
     // read from file
     return load_from_file(loader,filename);
   }
 
   vector<sequence> write_to_file(dumper_t dumper,const vector<sequence>& sequences,
-				 const string& filename) {
+				 const string& filename) 
+  {
     ofstream file(filename.c_str());
     if (not file)
       throw myexception()<<"Couldn't open file '"<<filename<<"'";
