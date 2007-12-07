@@ -645,7 +645,7 @@ list<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alphab
     // READ the next alignment
     try {
       if (alignments.empty())
-	A.load(alphabets,sequence_format::read_guess,ifile);
+	A.load(alphabets,sequence_format::read_fasta,ifile);
       else 
 	ifile>>A;
     }
@@ -740,7 +740,7 @@ vector<alignment> load_alignments(istream& ifile, const vector<OwnedPointer<alph
     // READ the next alignment
     try {
       if (alignments.empty())
-	A.load(alphabets,sequence_format::read_guess,ifile);
+	A.load(alphabets,sequence_format::read_fasta,ifile);
       else 
 	ifile>>A;
     }
@@ -784,7 +784,7 @@ alignment find_first_alignment(std::istream& ifile, const vector<OwnedPointer<al
     try {
       // read alignment into A
       alignment A2;
-      A2.load(alphabets,sequence_format::read_guess,ifile);
+      A2.load(alphabets,sequence_format::read_fasta,ifile);
       A = A2;
 
       // strip out empty columns
@@ -823,7 +823,7 @@ alignment find_last_alignment(std::istream& ifile, const vector<OwnedPointer<alp
     try {
       // read alignment into A
       alignment A2;
-      A2.load(alphabets,sequence_format::read_guess,ifile);
+      A2.load(alphabets,sequence_format::read_fasta,ifile);
       A = A2;
 
       // strip out empty columns

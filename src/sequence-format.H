@@ -20,7 +20,8 @@ namespace sequence_format {
   /// Read an alignments letters and names from a file in fasta format
   std::vector<sequence> read_fasta(std::istream& file);
 
-
+  /// Read an alignments letters and names from a file in fasta format
+  std::vector<sequence> read_fasta_entire_file(std::istream& file);
 
   typedef void (dumper_t)(std::ostream&, const std::vector<sequence>&);
 

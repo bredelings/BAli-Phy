@@ -338,13 +338,14 @@ void remove_empty_columns(alignment& A) {
   }
 }
 
-std::ostream& operator<<(std::ostream& file,const alignment& A) {
+std::ostream& operator<<(std::ostream& file,const alignment& A) 
+{
   A.print_fasta(file);
   return file;
 }
 
 std::istream& operator>>(std::istream& file,alignment& A) {
-  A.load(sequence_format::read_guess,file);
+  A.load(sequence_format::read_fasta,file);
   return file;
 }
 
