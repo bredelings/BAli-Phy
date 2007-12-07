@@ -1636,19 +1636,19 @@ traditional = traditional
 
       <para>After you have installed the analysis makefile, run the command:
 
-      <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> make</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>make SKIP=<replaceable>burn-in</replaceable></userinput></screen>
 
       or
 
-      <screen> <prompt>%</prompt> <userinput>SKIP=<replaceable>burn-in</replaceable> SIZE=<replaceable>iterations</replaceable> make</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>make SKIP=<replaceable>burn-in</replaceable> SIZE=<replaceable>iterations</replaceable></userinput></screen>
 
       Here, <replaceable>burn-in</replaceable> represents the
       number of iterations to skip as burn-in, and
       <replaceable>iterations</replaceable> represents the maximum
-      number of iterations to use in the analysis. In order for this
-      to work, the directory containing the
-      <application>BAli-Phy</application> tools must be in your PATH.
-      </para>
+      number of iterations to use in the analysis. Extra samples are
+      discarded.  In order for this to work, the directory containing
+      the <application>BAli-Phy</application> tools must be in your
+      PATH. </para>
 
       <para>Running the analysis will produce the three directories:
       <filename>Results/</filename>, <filename>Mixing/</filename>, and
