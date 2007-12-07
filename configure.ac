@@ -72,22 +72,33 @@ AC_ARG_WITH([system-boost], AS_HELP_STRING([--with-system-boost],[Add extra libr
 )
 
 AC_ARG_VAR(CHIP,
-           [What CPU type should we specialize for to make a faster program?)])
+           [Use features of what CPU type? (-march=?/-mcpu=?: see 'man gcc'])
+
+AC_ARG_VAR(TUNE,
+           [Optimize for what CPU type? (-mtune=?: see 'man gcc')])
+
 if test "$CHIP" = "" ; then
-   echo ""
+   echo
+   echo " (*) No chip architecture specified: chip-specific instructions not enabled."
+   echo "     See CHIP=?? and TUNE=?? options in 'configure --help' for  faster code."
+   echo
 elif test "$CHIP" = "G3" ; then
-   CHIP="-mcpu=G3 -mtune=G3"
+   CHIP="-mcpu=G3"
 elif test "$CHIP" = "G4" ; then
-   CHIP="-mcpu=G4 -mtune=G4"
+   CHIP="-mcpu=G4"
 elif test "$CHIP" = "G5" ; then
-   CHIP="-mcpu=G5 -mtune=G5"
-elif test "$CHIP" = "nocona-generic" ; then
-   CHIP="-march=nocona -mtune=generic"
+   CHIP="-mcpu=G5"
+elif test "$CHIP" = "fast" ; then
+   CHIP="-fast"
 else
    CHIP="-march=$CHIP"
 fi
 
-CXXFLAGS="$CXXFLAGS $CHIP"
+if test "$TUNE" != "" ; then
+   TUNE="-mtune=$TUNE"
+fi
+
+CXXFLAGS="$CXXFLAGS $CHIP $TUNE"
 
 # 1. Checks for programs.
 ORIG_CFLAGS=$CFLAGS
@@ -227,7 +238,7 @@ echo " * Looking for GSL libraries..."
 
 AC_CHECK_LIB2(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas)" ; exit 1])
 AC_CHECK_LIB2(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl LIBs=$LIBS)" ; exit 1])
-AC_CHECK_LIB(gsl, gsl_cdf_beta_Pinv, [echo "Good... you've got GSL version 1.8 or higher"], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
+AC_CHECK_LIB(gsl, gsl_cdf_beta_Pinv, [echo "Good... you've got GSL version 1.8 or higher."], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
 
 AC_MSG_CHECKING(include/compile/link for the GSL library)
 
