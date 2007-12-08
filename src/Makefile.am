@@ -79,7 +79,7 @@ DATE_STRING := $(shell if [ -f ${DATE_FILE} ] ; then cat ${DATE_FILE}; fi )
 
 noinst_LIBRARIES = libversion.a
 libversion_a_SOURCES = version.C 
-libversion_a_DEPENDENCIES = version.H $(top_srcdir)/REV $(top_srcdir)/REV_DATE
+libversion_a_DEPENDENCIES = version.H 
 libversion_a_CXXFLAGS = $(CXXFLAGS) -DREVISION='"${REV_STRING}"' -DREVISION_DATE='"${DATE_STRING}"'
 
 # Defining these rules removes the automake rule...
