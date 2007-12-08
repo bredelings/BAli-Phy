@@ -17,10 +17,10 @@
     </author>
   </articleinfo>
 
-  <sect1>
+  <sect1 id="pre-requisites">
     <title>Pre-requisites</title>
 
-      <sect2>
+      <sect2 id="hardware_requirements">
 	<title>Hardware Requirements</title>
 
 	<para><application>BAli-Phy</application> should be able to
@@ -33,7 +33,7 @@
 	with 1Gb of RAM and a 3 GHz processor.</para> 
       </sect2>
 
-      <sect2>
+      <sect2 id="os_requirements">
 	<title>Operating System requirements</title>
 
 	  <note>
@@ -41,7 +41,7 @@
 	    
 	    <para><application>BAli-Phy</application> is not a
 	    graphical application.  While there are Mac and Windows
-	    version available, these assume that you understand some
+	    versions available, these assume that you understand some
 	    UNIX commands, or at least are not intimidated by them.
 	    BAli-Phy is (hopefully) usable, but it is not "user-friendly"!
 	    </para>
@@ -86,13 +86,16 @@
 
       </sect2>
 
-      <sect2>
-	<title id="software_req">Software Requirements</title>
+      <sect2 id="software_req">
+	<title>Software Requirements</title>
 
 	<sect3>
 	  <title>Compilation Requirements</title>
 
-	<para>The following software packages are required for compiling BAli-Phy:
+	<para>The following software packages are required for
+	compiling BAli-Phy.  (Note that precompiled binaries are
+	available on the website, so that you may not need to do any
+	compilation.  In that case these requirements are not necessary.)
 
 	<itemizedlist>
 	  <listitem><para> A modern C++ compiler (<ulink
@@ -177,12 +180,20 @@
       </sect2>
     </sect1>
 
-    <sect1>
+    <sect1 id="compilation">
       <title>Compiling <application>BAli-Phy</application></title>
 
-      <para>If you are compiling source code that you checked out using
-      subversion (and you probably aren't) then follow the directions
-      in <xref linkend="svnsource"/> before you start compiling.
+      <para>Note that precompiled binaries are available on the web
+      for Linux, Mac, and Windows so that compilation may not be
+      necessary.  However, in case you want to compile your own binaries
+      for some reason, compiling <application>BAli-Phy</application>
+      is intended to be a relatively painless process.
+      </para>
+
+      <para>Also note that in case you are compiling "live" source
+      code that you checked out using subversion (and you probably
+      aren't) then you need to follow the directions in <xref
+      linkend="svnsource"/> before you start compiling.
       </para>
 
       <sect2>
@@ -259,6 +270,8 @@
 	<application>BAli-Phy</application>, you would set the CXX
 	environment variable as follows:
 	    <screen><prompt>%</prompt> <userinput>../bali-phy-2.0.1/configure CXX=g++-4.0</userinput></screen>
+	Alternatively, on Macintosh systems, you can run the command
+	<command>gcc_select 4.0</command> to choose the correct compiler.
 	</para>
       </sect2>
 
@@ -303,8 +316,8 @@
 <prompt>%</prompt> <userinput>automake -a</userinput>
 <prompt>%</prompt> <userinput>autoconf</userinput>
 </screen>
-        If your system has multiple version of automake, then you may
-	have to type <userinput>automake-1.8 -a</userinput> and
+        If your system has multiple versions of automake, then you may
+	have to type e.g. <userinput>automake-1.8 -a</userinput> and
 	<userinput>aclocal-1.8</userinput> instead in order to specify which
 	version to use.
 	</para>
@@ -324,7 +337,7 @@
       </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="installation">
     <title>Installation</title>
     <sect2>
       <title>Installing when compiling from source</title>
@@ -400,7 +413,7 @@
 
   </sect1>
 
-  <sect1>
+  <sect1 id="running">
     <title>Running the program</title>
 
     <sect2>
@@ -411,20 +424,13 @@
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --data-dir <replaceable>prefix</replaceable>/share/bali-phy/Data/</userinput>
 </screen>
 
-    Here <replaceable>sequence-file</replaceable> is a FASTA or PHYLIP
+    Here <replaceable>sequence-file</replaceable> is a FastA or PHYLIP
     file containing the sequences you wish to analyze.  It should end
     in <userinput>.fasta</userinput> or <userinput>.phy</userinput> to
     indicate which format it is using.  Here
     <replaceable>prefix</replaceable> stands for the directory
     where you extracted the bali-phy archive.</para>
 
-    <note>
-      <para>If your FASTA file has blank lines, then
-      <command>bali-phy</command> will quit reading the file when it
-      sees them.  You must remove blank lines from your FASTA files,
-      or you will see errors complaining that too few sequences have
-      been provided.</para>
-    </note>
     </sect2>
 
     <sect2 id="spec_data_dir">
@@ -456,7 +462,7 @@
       <sect3>
 	<title>Put the location in the configuration file</title>
 	<para>
-	  Create a new file at <filename>~/.bali-phy</filename> and
+	  Create a new text file at <filename>~/.bali-phy</filename> and
 	  add the following line:
 <screen>data-dir = <replaceable>somewhere</replaceable>/Data</screen>
           Then <command>bali-phy</command> will read this file
@@ -615,7 +621,7 @@ traditional = traditional
 
   </sect1>
   
-  <sect1>
+  <sect1 id="command_line_options">
     <title>Command-line options</title>
 
     <sect2>
@@ -630,13 +636,16 @@ traditional = traditional
       </cmdsynopsis>
 
       <para>The sequence file is the only required argument.  It can
-      be either a FASTA (*.fasta) file or a PHYLIP (*.phy) file.  The
+      be either a FastA (*.fasta) file or a PHYLIP (*.phy) file.  The
       file must end in one of these two suffixes or
       <application>BAli-Phy</application> won't know how to read
-      it. In addition your FASTA files should not contain any blank
+      it. In addition your FastA files should not contain any blank
       lines.</para> 
 
-      <para>The optional arguments are described below.</para>
+      <para>The optional arguments are described below.  They can also
+      be found by typing <userinput>bali-phy --help</userinput> on the
+      command line.
+      </para>
 	
     </sect2>
 
@@ -811,7 +820,7 @@ traditional = traditional
 
   </sect1>
 
-  <sect1>
+  <sect1 id="examples">
     <title>Examples</title>
     <para>Here are some examples which demonstrate how to run
     <application>BAli-Phy</application>.  In order to run these
@@ -822,7 +831,15 @@ traditional = traditional
     <para>Secondly, you must find the <filename>examples/</filename>
     directory which contains the example files.  Typically, the
     <filename>examples/</filename> directory will be found at
-    <filename><replaceable>prefix</replaceable>/share/bali-phy/examples/</filename> if you installed <application>bali-phy</application> in directory <replaceable>prefix</replaceable>.
+    <filename><replaceable>prefix</replaceable>/share/bali-phy/examples/</filename>
+    if you installed <application>bali-phy</application> in directory
+    <replaceable>prefix</replaceable>.
+    </para>
+
+    <para>Also note that <command>bali-phy</command> does run until it
+    is "finished", but continues to gather samples until the user
+    stops it.  Thus, it is useful to continually examine the output
+    files while the program is running.
     </para>
 
     <example>
@@ -847,7 +864,7 @@ traditional = traditional
       the software.  The alignment is fixed and the traditional
       likelihood model is used, making indels non-informative.  In
       addition, the transition kernel which samples nucleotide frequencies
-      is disabled, fixing the nucleotide frequencies to empirical values
+      is disabled, thus fixing the nucleotide frequencies to empirical values
       estimated from the input sequences.
       </para> 
 
@@ -856,16 +873,24 @@ traditional = traditional
     </example>
   </sect1>
 
-  <sect1>
+  <sect1 id="input">
     <title>Input</title>
 
     <sect2>
       <title>Sequence formats</title>
       <para><application>BAli-Phy</application> can read in sequences
-      and alignments in both FASTA and PHYLIP formats.  However, in
-      FASTA format, the file must not contain blank lines between the
-      sequences, because <application>BAli-Phy</application> will stop
-      reading in sequences when it sees a blank line.
+      and alignments in both FastA and PHYLIP formats.  Filenames for
+      FastA files should end in <userinput>.fasta</userinput>,
+      <userinput>.mpfa</userinput>, <userinput>.fna</userinput>,
+      <userinput>.fas</userinput>, <userinput>.fsa</userinput>, or
+      <userinput>.fa</userinput>.  Filenames for PHYLIP files should
+      end in <userinput>.phy</userinput>.  If one of these extensions
+      is not used, then <application>BAli-Phy</application> will
+      attempt to guess which format is being used.
+      </para>
+
+      <para>
+      Note that blank lines are now allowed in FastA files in version 2.0.1 and later.
       </para>
     </sect2>
 
@@ -922,7 +947,7 @@ traditional = traditional
 
   </sect1>
 
-  <sect1>
+  <sect1 id="models">
     <title>Models</title>
 
     <sect2 id="subst_basic">
@@ -930,8 +955,8 @@ traditional = traditional
       <para>The basic substitution models in
       <application>BAli-Phy</application> are continuous-time Markov
       chains (CTMC). More advanced models such as the $\Gamma_4+INV$
-      model or the M2 codon model are described in section
-      (<xref linkend="subst_adv"/>). CTMC models can be characterized
+      model or the M2 codon model are described <xref
+      linkend="subst_adv"/>. CTMC models can be characterized 
       by transition rates $Q_{ij}$ from letter $i$ to letter $j$.
       After a given time $t$ the probability for transition from state
       $i$ to state $j$ is given by \[P(t)_{ij}=e^{Q_{ij} \times t}\]
@@ -1423,7 +1448,7 @@ traditional = traditional
 
   </sect1>
 
-  <sect1>
+  <sect1 id="output">
     <title>Output</title>
 
     <sect2>
@@ -1499,7 +1524,7 @@ traditional = traditional
       Unfortunately, this question is complicated and depends upon
       both the problem and the specific data set that is being
       examined.  As a result, <application>BAli-Phy</application>
-      relies on the user to determines when enough samples have been
+      relies on the user to determine when enough samples have been
       obtained - and to terminate the program when this happens. 
     </para>
 
@@ -1807,7 +1832,7 @@ traditional = traditional
 
   </sect1>
 
-  <sect1>
+  <sect1 id="tuning_the_markov_chain">
     <title>Tuning the Markov Chain</title>
 
     <para>These parameters can be set using the command line syntax "<userinput>--set <replaceable>parameter</replaceable>=<replaceable>value</replaceable></userinput>".</para>
@@ -1916,7 +1941,7 @@ traditional = traditional
   </sect1>
 
 
-  <sect1>
+  <sect1 id="auxiliary_tools">
     <title>Auxiliary tools</title>
 
     <para>Most of these tools will describe their options if given the "<userinput>--help</userinput>" argument on the command line.</para>
@@ -1924,7 +1949,7 @@ traditional = traditional
     <sect2>
       <title>alignment-find</title>
       <para>Usage: alignment-find [OPTIONS] &lt; <replaceable>alignments-file</replaceable></para>
-      <para>Find the last (or first) FASTA alignment in a file.</para>
+      <para>Find the last (or first) FastA alignment in a file.</para>
     </sect2>
 
     <sect2>
@@ -2030,7 +2055,7 @@ traditional = traditional
 
   </sect1>
 
-  <sect1>
+  <sect1 id="FAQ">
     <title>Frequently Asked Questions (FAQ)</title>
 
     <sect2>
