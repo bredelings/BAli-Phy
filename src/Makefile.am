@@ -41,7 +41,7 @@ TOOLS = model_P statreport alignment-gild \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
 	partitions-supported trees-pair-distances analyze-rates \
-	truckgraph2
+	path-graph
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -277,7 +277,7 @@ draw_tree_LDFLAGS = ${LDFLAGS} ${CAIRO_LIBS}
 
 #---------------------------------------------------------------
 
-truckgraph2_SOURCES = tools/truckgraph2.C alignment.C alphabet.C sequence.C util.C \
+path_graph_SOURCES = tools/path-graph.C alignment.C alphabet.C sequence.C util.C \
 	sequence-format.C alignment-util.C tree.C
 
 #---------------------------------------------------------------

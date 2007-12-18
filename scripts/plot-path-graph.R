@@ -51,34 +51,28 @@ plotcolor = function(x)
 
 plotsegs = function(normal,xa0, ya0, xa1, ya1, weight, lab1, lab2)
 {
-  print(max(weight))
   xmax=max(xa1)
   ymax=max(ya1)
   weight = weight / normal
-  print(max(weight))
-  print(min(weight))
 
   plot(xa0,ya0,type="n",ylab=lab1,xlab=lab2,font.lab=3,cex.lab=tlab,cex.axis=tsize)
 
   tmp = data.frame(xa0,ya0,xa1,ya1,weight)
-  print(names(tmp))
   
   tmp2 = tmp
 
   tmp2 = tmp[tmp$weight>0.01, ]
-  print(length(which(tmp$weight>0.02)))
 
   o = sort.list(tmp2$weight);
   tmp3 = tmp2[o,]
   tmp2 = tmp3
   
   colors = plotcolor(tmp2$weight)
-  print(names(tmp2))
   segments(tmp2$xa0,tmp2$ya0,tmp2$xa1,tmp2$ya1,col=colors,lwd=1)
 
   mins =c(0.05, 0.25, 0.50, 0.75, 0.95)
   
-  legend(xmax*0.73,ymax*0.25,legend=levelnames,
+  legend(xmax*0.82,ymax*0.25,legend=levelnames,
          lwd=2,
          col=plotcolor(levels),
          cex=tsize,bty="n",
