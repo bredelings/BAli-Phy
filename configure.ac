@@ -253,9 +253,10 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 echo "------------------------------------------"
 if test "$use_system_boost" = YES ; then
 echo " * Looking for the system BOOST headers..."
-AC_CHECK_HEADERS([boost/filesystem/operations.hpp])
-AC_CHECK_HEADERS([boost/program_options.hpp])
-AC_CHECK_HEADERS([boost/graph/graph_traits.hpp])
+AC_CHECK_HEADERS([boost/config.hpp],[],[echo "Error: I can't find <boost/config.hpp>."; echo "Please install the BOOST headers, or specify their location using --with-extra-inclues". ; exit 1])
+AC_CHECK_HEADERS([boost/filesystem/operations.hpp],[],[echo "Error: I can't find <boost/filesystem/operations.hpp>."; echo "Please install the BOOST filesystem headers." ; exit 1])
+AC_CHECK_HEADERS([boost/program_options.hpp],[],[echo "Error: I can't find <boost/program_options.hpp>."; echo "Please install the BOOST program options headers." ; exit 1])
+AC_CHECK_HEADERS([boost/graph/graph_traits.hpp],[],[echo "Error: I can't find <boost/graph/graph_traits.hpp>."; echo "Please install the BOOST graph library headers." ; exit 1])
 
 echo " * Looking for the system BOOST libraries... (suffix = '${BOOST_SUFFIX}')"
 AC_CHECK_LIB(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_program_options library! (-lboost_program_options${BOOST_SUFFIX})" ; exit 1])
