@@ -40,8 +40,8 @@ TOOLS = model_P statreport alignment-gild \
 	joint-parsimony stats-merge stats-select alignment-identity \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
-	partitions-supported trees-pair-distances analyze-rates
-
+	partitions-supported trees-pair-distances analyze-rates \
+	truckgraph2
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -188,6 +188,7 @@ joint_parsimony_SOURCES = tools/joint-parsimony.C alignment.C alphabet.C sequenc
 alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C
 
 #---------------------------------------------------------------
+
 alignment_cat_SOURCES = tools/alignment-cat.C alphabet.C sequence.C util.C sequence-format.C
 
 #---------------------------------------------------------------
@@ -276,6 +277,11 @@ draw_tree_LDFLAGS = ${LDFLAGS} ${CAIRO_LIBS}
 
 #---------------------------------------------------------------
 
+truckgraph2_SOURCES = tools/truckgraph2.C alignment.C alphabet.C sequence.C util.C \
+	sequence-format.C alignment-util.C tree.C
+
+#---------------------------------------------------------------
+
 alignment_cut: alignment.o alignment-util.o alphabet.o sequence.o \
 	sequence-format.o util.o tree.o ${BOOST_LIBS}
 
@@ -309,11 +315,6 @@ test_smodel: alignment.o alphabet.o sequence.o tree.o sequencetree.o util.o \
 #---------------------------------------------------------------
 
 truckgraph: alignment.o alphabet.o sequence.o util.o rng.o ${LIBS}
-
-#---------------------------------------------------------------
-
-truckgraph2: alignment.o alphabet.o sequence.o util.o \
-		alignment-util.o rng.o ${LIBS}
 
 #---------------------------------------------------------------
 

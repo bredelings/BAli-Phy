@@ -1,28 +1,69 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include <list>
 #include "myexception.H"
 #include "alignment.H"
 #include "mytypes.H"
 #include "alignment-util.H"
 #include "util.H"
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
 
+namespace po = boost::program_options;
+using po::variables_map;
+
+using std::cout;
+using std::cerr;
+using std::endl;
 using std::map;
+using std::list;
 
-void do_setup(Arguments& args,vector<alignment>& alignments) {
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
 
-  /* ----- Alphabets to try ------ */
-  vector<alphabet> alphabets;
-  alphabets.push_back(alphabet("DNA nucleotides","AGTC","N"));
-  alphabets.push_back(alphabet("RNA nucleotides","AGUC","N"));
-  alphabets.push_back(alphabet("Amino Acids","ARNDCQEGHILKMFPSTWYV","X"));
+  // named options
+  options_description all("Allowed options");
+  all.add_options()
+    ("help", "produce help message")
+    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
+    ("taxa",value<string>(),"Colon-separate pair of taxon names")
+    ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
+    ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+    ;
 
-  /* ----- Try to load alignments ------ */
-  int maxalignments = 1000;
-  if (args.set("max-alignments"))
-    maxalignments = convertTo<int>(args["max-alignments"]);
+  // positional options
+  variables_map args;     
+  store(parse_command_line(argc, argv, all), args);
+  notify(args);    
 
-  alignments = load_alignments(std::cin,alphabets,maxalignments);
+  if (args.count("help")) {
+    cout<<"Usage: alignment-consensus [OPTIONS] < alignments-file\n";
+    cout<<"Compute a consensus alignment for the alignments given.\n\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
+
+  if (not args.count("taxa") or not args["taxa"].as<string>().size())
+    throw myexception(string("No taxa specified [taxa=name1:name2:...]"));
+
+  return args;
+}
+
+void do_setup(const variables_map& args,vector<alignment>& alignments) 
+{
+  //------------ Try to load alignments -----------//
+  int maxalignments = args["max-alignments"].as<int>();
+  unsigned skip = args["skip"].as<unsigned>();
+
+  // --------------------- try ---------------------- //
+  cerr<<"Loading alignments...";
+  list<alignment> As = load_alignments(std::cin,load_alphabets(args),skip,maxalignments);
+  alignments.insert(alignments.begin(),As.begin(),As.end());
+  cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+  if (not alignments.size())
+    throw myexception()<<"Alignment sample is empty.";
 }
 
 bool after(int c1, int c2, const alignment& A,const vector<int>& nodes) {
@@ -125,11 +166,11 @@ struct edge_lessthan {
 };
 
 void write_truck_graph(std::ostream& ofile,const vector<alignment>& alignments,int t1,int t2,
-		       const vector<string>& taxa) {
-
+		       const vector<string>& taxa) 
+{
   map<edge,int,edge_lessthan> edges;
 	
-  /*---------- Count the edges ----------*/
+  //---------- Count the edges ----------//
   for(int i=0;i<alignments.size();i++) {
     const alignment& A = alignments[i];
 
@@ -158,10 +199,10 @@ void write_truck_graph(std::ostream& ofile,const vector<alignment>& alignments,i
     }
   }
   
-  /*----------- Write out header ----------*/
+  //----------- Write out header ----------//
   ofile<<alignments.size()<<" "<<edges.size()<<" "<<taxa[t1]<<" "<<taxa[t2]<<endl;
 
-  /*----------- Write out edges and counts ----------*/
+  //----------- Write out edges and counts ----------//
   for(map<edge,int,edge_lessthan>::iterator here = edges.begin();
       here != edges.end();here++) {
     ofile<<here->first.x1<<" "
@@ -173,23 +214,19 @@ void write_truck_graph(std::ostream& ofile,const vector<alignment>& alignments,i
 }
 
 
-int main(int argc,char* argv[]) { 
+int main(int argc,char* argv[]) 
+{ 
   try {
-    Arguments args;
-    args.read(argc,argv);
-    args.print(std::cerr);
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
 
-    /*--------------------- Get taxon names --------------------*/
-    if (not args.set("taxa") or args["taxa"] == "")
-      throw myexception(string("No taxa specified [taxa=name1:name2:...]"));
-
-    vector<string> taxa = split(args["taxa"],':');
+    vector<string> taxa = split(args["taxa"].as<string>(),':');
 
     /*---------------- Load alignment and tree -----------------*/
     vector<alignment> alignments;
     do_setup(args,alignments);
 
-    std::cerr<<"Read "<<alignments.size()<<" alignments\n";
+    cerr<<"Read "<<alignments.size()<<" alignments\n";
 
     /*-------- Print the probabilistic truck graph for each pair -------*/
     for(int t1=0;t1<taxa.size();t1++)
@@ -197,7 +234,7 @@ int main(int argc,char* argv[]) {
 	write_truck_graph(std::cout,alignments,t1,t2,taxa);
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"Exception: "<<e.what()<<endl;
     exit(1);
   }
   return 0;
