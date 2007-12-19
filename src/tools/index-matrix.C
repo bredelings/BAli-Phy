@@ -516,6 +516,8 @@ void online_topo_sort::allow_edge(int x,int y)
       Vertex vo = target(*vi,g);
       int von = get(vertex_index,g,vo);
       if (order[von] <= order[x] and not mark[von])
+	// this line causes an ICE in 4.2 if -funroll-loops is set.
+	// error is in get_biv_step at loop-iv.c:775
 	stack.push_back(von);
     }
   }
