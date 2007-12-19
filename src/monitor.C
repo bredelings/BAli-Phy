@@ -2,9 +2,14 @@
 
 #include <cstdlib>
 #include <sstream>
+
+/*
+#ifdef HAVE_SYS_RESOURCE_H
 extern "C" {
 #include <sys/resource.h>
 }
+#endif
+*/
 
 #include <valarray>
 #include "substitution.H"
@@ -105,6 +110,7 @@ void print_stats(std::ostream& o,std::ostream& trees,
 }
 
 void report_mem() {
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
 /*
   struct rusage usage;
   std::cerr<<getrusage(RUSAGE_SELF,&usage);
@@ -120,5 +126,6 @@ void report_mem() {
   cmd<<"cat /proc/"<<pid<<"/status | grep Vm 1>&2";
   system(cmd.str().c_str());
   std::cerr.flush();
+#endif
 }
 

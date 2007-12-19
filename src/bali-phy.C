@@ -617,7 +617,23 @@ string open_dir(const string& dirbase)
   }
 }
 
+#if defined _MSC_VER || defined __MINGW32__
+#include <windows.h>
+#include <errno.h>
+#include <process.h>
 
+string hostname() 
+{
+  // We have to use MAX_COMPUTERNAME_LENGTH+1 so it doesn't fail in Win9x
+  char temp[MAX_COMPUTERNAME_LENGTH + 1];
+  DWORD size =  sizeof (temp);
+
+  if (!GetComputerName (temp, &size))
+    return "unknown";
+
+  return string(temp);
+}
+#else
 string hostname()
 {
   string hostname="";
@@ -626,6 +642,7 @@ string hostname()
     hostname = temp;
   return hostname;
 }
+#endif
 
 vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
 {
@@ -1272,10 +1289,12 @@ int main(int argc,char* argv[])
     if (args.count("show-only"))
       print_stats(cout,cout,P);
     else {
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
       raise_cpu_limit(err_both);
 
       signal(SIGHUP,SIG_IGN);
       signal(SIGXCPU,SIG_IGN);
+#endif
 
       long int max_iterations = args["iterations"].as<long int>();
 
