@@ -6,19 +6,17 @@
 
 using std::max;
 
-void state_matrix::clear() {
-  if (data) {
-    delete data; 
-    data = NULL;
-  }
-
-  if (scale_) {
-    delete scale_; 
-    scale_ = NULL;
-  }
+void state_matrix::clear() 
+{
+  delete[] data; 
+  data = NULL;
+  
+  delete[] scale_; 
+  scale_ = NULL;
 }
 
-state_matrix::~state_matrix() {
+state_matrix::~state_matrix() 
+{
   clear();
 }
 

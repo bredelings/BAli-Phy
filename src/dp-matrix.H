@@ -10,8 +10,11 @@ class state_matrix
   const int s2;
   const int s3;
 
-  vector<double>* data;
-  vector<int>* scale_;
+  double* data;
+  int* scale_;
+
+  // Guarantee that these things aren't ever copied
+  state_matrix& operator=(const state_matrix&) {return *this;}
 
 public:
 
@@ -25,32 +28,33 @@ public:
     assert(0 <= i and i < s1);
     assert(0 <= j and j < s2);
     assert(0 <= k and k < s3);
-    return (*data)[s3*(i*s2+j)+k];
+    return data[s3*(i*s2+j)+k];
   }
 
   double operator()(int i,int j,int k) const {
     assert(0 <= i and i < s1);
     assert(0 <= j and j < s2);
     assert(0 <= k and k < s3);
-    return (*data)[s3*(i*s2+j)+k];
+    return data[s3*(i*s2+j)+k];
   }
 
   int& scale(int i,int j) {
     assert(0 <= i and i < s1);
     assert(0 <= j and j < s2);
-    return (*scale_)[i*s2 + j];
+    return scale_[i*s2 + j];
   }
+
 
   int scale(int i,int j) const {
     assert(0 <= i and i < s1);
     assert(0 <= j and j < s2);
-    return (*scale_)[i*s2 + j];
+    return scale_[i*s2 + j];
   }
 
   state_matrix(int i1,int i2,int i3)
     :s1(i1),s2(i2),s3(i3),
-     data(new vector<double>(i1*i2*i3)),
-     scale_(new vector<int>(s1*s2))
+     data(new double[s1*s2*s3]),
+     scale_(new int[s1*s2]) 
   {}
 
   ~state_matrix();

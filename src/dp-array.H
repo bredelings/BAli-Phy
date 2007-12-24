@@ -12,6 +12,9 @@ class state_array
   vector<double> data;
   vector<int> scale_;
 
+  // Guarantee that these things aren't ever copied
+  state_array& operator=(const state_array&) {return *this;}
+
 public:
   int size1() const {return s1;}
   int size2() const {return s2;}
