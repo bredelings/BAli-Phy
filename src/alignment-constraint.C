@@ -164,15 +164,19 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
 
   // convert columns of enforced constraints to pairs of indices in seq1/seq2
   vector<vector<int> > pins(2);
-  for(int i=0;i<constraint.size1();i++) {
+  for(int i=0;i<constraint.size1();i++) 
+  {
     if (satisfied[i] == -1) continue;
     
     int x = find_index(seq1,satisfied[i]);
     int y = find_index(seq2,satisfied[i]);
 
-    // if there is no residue in the local sequence in the right column then
-    // no alignment within our range will satisfy the constraint so we must bail out.
-    if (x == seq1.size() or y == seq2.size()) {
+    // Even if the constraints for the leaf nodes are satisfied, we can't align
+    // to the relevant leaf characters THROUGH the relevant internal nodes, if the
+    // character is not present not present at the internal nodes that we have
+    // access to.  Therefore, no alignment that we choose can satisfy
+    // this constraint, so we must bail out.
+    if (x == -1 or y == -1) {
       vector< vector<int> > impossible;
       impossible.push_back(vector<int>(2,-1));
       return impossible;
