@@ -51,7 +51,7 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
 
   //  std::cerr<<"old = "<<old<<endl;
 
-  /*------------- Compute sequence properties --------------*/
+  //------------- Compute sequence properties --------------//
   vector<int> columns = getorder(old,nodes);
 
   //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
@@ -142,42 +142,48 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
     Matrices->set_length(seqall.size());
   }
 
+  // collect the silent-or-correct-emissions for each type columns
+  vector< vector<int> > allowed_states_for_mask(16);
+  for(int i=0;i<Matrices->nstates();i++) 
+  {
+    int S2 = Matrices->order(i);
+    int state2 = A5::states_list[S2] & 15; // 4 bits = 1+2+4+8
+    if (state2 == 0)
+      for(int j=0;j<16;j++)
+	allowed_states_for_mask[j].push_back(S2);
+    else
+      allowed_states_for_mask[state2].push_back(S2);
+  }
+
   // Determine which states are allowed to match (c2)
-  for(int c2=0;c2<Matrices->size();c2++) {
-    int i2 = icol[c2];
-    int j2 = jcol[c2];
-    int k2 = kcol[c2];
-    int l2 = lcol[c2];
-    Matrices->states(c2).clear();
-    Matrices->states(c2).reserve(Matrices->nstates());
-    for(int i=0;i<Matrices->nstates();i++) {
-      int S2 = Matrices->order(i);
-      int state2 = A5::states_list[S2];
+  for(int c2=0;c2<Matrices->size();c2++) 
+  {
+    vector<int>& allowed_states = Matrices->states(c2);
+    allowed_states.clear();
 
-      //---------- Get (,j1,k1) ----------
-      int i1 = i2;
-      if (bitset(state2,0)) i1--;
+    if (c2 == 0) {
+      allowed_states.reserve(Matrices->nstates());
+      for(int i=0;i<Matrices->nstates();i++)
+	allowed_states.push_back(Matrices->order(i));
+    }
+    else {
+      unsigned mask=0;
 
-      int j1 = j2;
-      if (bitset(state2,1)) j1--;
+      if (icol[c2] != icol[c2-1]) { mask |= (1<<0); assert(icol[c2] == 1+icol[c2-1]); }
+ 
+      if (jcol[c2] != jcol[c2-1]) { mask |= (1<<1); assert(jcol[c2] == 1+jcol[c2-1]); }
 
-      int k1 = k2;
-      if (bitset(state2,2)) k1--;
+      if (kcol[c2] != kcol[c2-1]) { mask |= (1<<2); assert(kcol[c2] == 1+kcol[c2-1]); }
 
-      int l1 = l2;
-      if (bitset(state2,3)) l1--;
-      
-      //------ Get c1, check if valid ------
-      if (c2==0 
-	  or (i1 == i2 and j1 == j2 and k1 == k2 and l1 == l2) 
-	  or (i1 == icol[c2-1] and j1 == jcol[c2-1] and k1 == kcol[c2-1] and l1 == lcol[c2-1]) )
-	Matrices->states(c2).push_back(S2);
-      else
-	{ } // this state not allowed here
+      if (lcol[c2] != lcol[c2-1]) { mask |= (1<<3); assert(lcol[c2] == 1+lcol[c2-1]); }
+
+      assert(mask);
+
+      allowed_states = allowed_states_for_mask[mask];
     }
   }
 
-  /*------------------ Compute the DP matrix ---------------------*/
+  //------------------ Compute the DP matrix ---------------------//
 
   //  Matrices.prune(); broken!
   Matrices->forward();
