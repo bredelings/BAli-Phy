@@ -203,11 +203,15 @@ void check_sampling_probabilities(const vector< vector<efloat_t> >& PR)
   const vector<efloat_t>& P1 = PR.back();
   efloat_t ratio1 = P1[0]*P1[2]/P1[1];
 
+  if (PR.back()[0] == 0.0 or PR[0][0] == 0.0)
+    throw myexception()<<"check_sampling_probabilities: Default choice should not be impossible!";
 
   for(int i=0;i<PR.size();i++) 
   {
     const vector<efloat_t>& P2 = PR[i];
     
+    if (P2[0] == 0.0) continue;
+
     std::cerr<<"\noption = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
 
     //    std::cerr<<" Pr1 * Rho1  = "<<P1[0]*P1[2]<<"    Pr2 * Rho2  = "<<P2[0]*P2[2]<<

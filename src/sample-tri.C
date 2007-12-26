@@ -41,7 +41,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
   // std::cerr<<"A = "<<A<<endl;
 
-  /*------------- Compute sequence properties --------------*/
+  //------------- Compute sequence properties --------------//
   valarray<bool> group1 = T.partition(nodes[0],nodes[1]);
   valarray<bool> group2 = T.partition(nodes[0],nodes[2]);
   valarray<bool> group3 = T.partition(nodes[0],nodes[3]);
@@ -120,7 +120,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 	     );
 
   // Determine which states are allowed to match (,c2)
-  for(int c2=0;c2<dists23.size()-1;c2++) {
+  for(int c2=0;c2<dists23.size()-1;c2++) 
+  {
     int j2 = jcol[c2];
     int k2 = kcol[c2];
     Matrices->states(c2).reserve(Matrices->nstates());
@@ -328,21 +329,23 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
   vector< vector< vector<int> > > paths(p.size());
 
-  //------------------- Check offsets from path_Q -> P -----------------//
-  for(int i=0;i<p.size();i++) {
+  // For the choices that violate a constraint, why don't we just ignore them?
+  // Well, this shifts the indices of each choice.  So, we don't do it yet.
 
+  //------------------- Check offsets from path_Q -> P -----------------//
+  for(int i=0;i<p.size();i++) 
+  {
     // check whether this arrangement violates a constraint in any partition
     bool ok = true;
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].has_IModel() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
 	ok = false;
-    if (not ok) {
+
+    if (not ok)
       assert(i != 0 and i != p.size()-1);
-      continue;
-    }
 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel())
+      if (p[i][j].has_IModel() and ok)
       {
 	paths[i].push_back( get_path_3way(A3::project(*p[i][j].A, nodes[i]), 0,1,2,3) );
 	  
@@ -360,14 +363,16 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   //--------- Compute path probabilities and sampling probabilities ---------//
   vector< vector<efloat_t> > PR(p.size());
 
-  for(int i=0;i<p.size();i++) 
+  for(int i=0;i<p.size();i++)
   {
     // check whether this arrangement violates a constraint in any partition
     bool ok = true;
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].has_IModel() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
 	ok = false;
+
     if (not ok) {
+      PR[i][0] = 0;
       assert(i != 0 and i != p.size()-1);
       continue;
     }
@@ -383,7 +388,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     PR[i][0] = p[i].heated_probability();
     PR[i][2] = rho[i];
     PR[i][3] = choice_ratio;
-    for(int j=0;j<p[i].n_data_partitions();j++) 
+    for(int j=0;j<p[i].n_data_partitions();j++)
       if (p[i][j].has_IModel())
       {
 	vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
