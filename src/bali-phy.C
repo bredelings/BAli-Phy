@@ -1259,7 +1259,7 @@ int main(int argc,char* argv[])
       ac_filenames = split(args["align-constraint"].as<string>(),':');
 
       if (ac_filenames.size() != P.n_data_partitions())
-	throw myexception()<<"Need "<<P.n_data_partitions()<<" alignment constraints (possibly empy) separated by colons, but got "<<ac_filenames.size();
+	throw myexception()<<"Need "<<P.n_data_partitions()<<" alignment constraints (possibly empty) separated by colons, but got "<<ac_filenames.size();
     }
 
     for(int i=0;i<P.n_data_partitions();i++)
