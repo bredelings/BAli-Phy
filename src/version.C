@@ -1,7 +1,10 @@
 #include "version.H"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "revision.H"
 
 #ifndef PACKAGE_VERSION
 #define PACKAGE_VERSION "UNKNOWN"
@@ -14,7 +17,6 @@ using namespace std;
 
 void print_version_info(ostream& file) 
 {
-
   file<<"VERSION: "<<PACKAGE_VERSION;
 #ifdef REVISION
   string svn_rev = REVISION;

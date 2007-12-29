@@ -63,34 +63,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/tree-dist.C proposals.C n_indels.C distribution.C \
-	  tools/parsimony.C
-
-bali_phy_LDADD = libversion.a
-
-REV_FILE    := $(top_srcdir)/REV
-DATE_FILE   := $(top_srcdir)/REV_DATE
-
-# what if file doesn't exist...
-
-REV_STRING := $(shell if [ -f ${REV_FILE} ] ; then cat ${REV_FILE}; fi )
-DATE_STRING := $(shell if [ -f ${DATE_FILE} ] ; then cat ${DATE_FILE}; fi )
-
-noinst_LIBRARIES = libversion.a
-libversion_a_SOURCES = version.C 
-libversion_a_DEPENDENCIES = version.H 
-libversion_a_CXXFLAGS = $(CXXFLAGS) -DREVISION='"${REV_STRING}"' -DREVISION_DATE='"${DATE_STRING}"'
-
-# Defining these rules removes the automake rule...
-
-#  libversion.a: FORCE  
-
-#  libversion_a-version.o: $(REV_FILE) $(DATE_FILE) FORCE
-
-# This seems not to apply to version.C inside libversion.C
-
-#  version.o: $(REV_FILE) $(DATE_FILE) FORCE
-
-FORCE:
+	  tools/parsimony.C version.C
 
 #-----------------------------------------------------------------
 

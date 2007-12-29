@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(BAli-Phy, pre-2.1.0, benjamin_redelings@ncsu.edu)
+AC_INIT(BAli-Phy, 2.1.0alpha1, benjamin_redelings@ncsu.edu)
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([1.9 foreign])
 AC_CONFIG_SRCDIR([src/bali-phy.C])
@@ -320,3 +320,12 @@ if test -n "$cairo" && test "$cairo" != "no"; then
   echo "CAIRO_CFLAGS = $CAIRO_CFLAGS"
   echo "CAIRO_LIBS = $CAIRO_LIBS"
 fi
+
+#------------ 
+# If src/revision.H does not exist in the source tree, then create an empty
+# version in the build tree.
+
+if test ! -f "$srcdir/src/revision.H" ; then
+   touch src/revision.H
+fi
+

@@ -2,17 +2,22 @@
 
 svn update "$@"
 
-rm -f REV REV_DATE
+rev="$(svn info $srcdir | awk '/Revision: / {print $2}')"  
 
-rev=`svn info | awk '/Revision:/ {print $2}'`;
+branch=`svn info $srcdir | sed -ne "/URL:/ {
+    s,.*/trunk,trunk,
+    s,.*/branches/,,
+    s,.*/tags/,,
+    p
+    }"`
 
-branch=`svn info | sed -ne "/URL:/ {
-s,.*/trunk,trunk,
-s,.*/branches/,,
-s,.*/tags/,,
-p
-}"`
+date=`TZ=UTC svn info $srcdir | sed  -ne '/Last Changed Date/ {
+    s/Last Changed Date: //
+    p 
+}'`
 
-date +'%b %d %Y %k:%M:%S' > REV_DATE
-
-echo "$branch revision $rev" > REV
+date2=`date -d"$date" +"%b %d %Y %k:%M:%S"`
+{
+echo "#define REVISION \"$branch revision $rev\""
+echo "#define REVISION_DATE \"$date2\""
+} > src/revision.H
