@@ -39,3 +39,5 @@ EXTRA_DIST = $(doc_DATA) $(EXTRA_HEADERS) $(bin_SCRIPTS) $(nobase_stuff_DATA) \
 dist-hook:
 	rm -rf `find $(distdir) -name .svn`
 	rm -rf `find $(distdir) -name TODO`
+	rm -f $(distdir)/src/revision.H
+	touch $(distdir)/src/revision.H

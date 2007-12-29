@@ -20,4 +20,11 @@ date2=`date -d"$date" +"%b %d %Y %k:%M:%S"`
 {
 echo "#define REVISION \"$branch revision $rev\""
 echo "#define REVISION_DATE \"$date2\""
-} > src/revision.H
+} > src/revision.H-tmp
+
+if cmp -s src/revision.H src/revision.H-tmp ; then
+    rm src/revision.H-tmp
+else
+    mv src/revision.H-tmp src/revision.H
+fi
+    
