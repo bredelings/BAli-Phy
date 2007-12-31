@@ -72,6 +72,8 @@ protected:
   /// Access size of dim 2
   int size2() const {return state_matrix::size2();}
 
+  virtual void compute_Pr_sum_all_paths();
+
 public:
   /// Does state S emit in dimension 1?
   bool di(int S) const {bool e = false; if (state_emit[S]&(1<<0)) e=true;return e;}
@@ -213,10 +215,17 @@ public:
 
 
 /// Dynamic Programming matrix with constraints on the states
-class DPmatrixConstrained: public DPmatrixEmit {
+class DPmatrixConstrained: public DPmatrixEmit 
+{
   int order_of_computation() const;
   vector< vector<int> > allowed_states;
+
+  virtual void compute_Pr_sum_all_paths();
 public:
+
+  efloat_t path_P(const vector<int>& path) const;
+
+
   /// Sample a path from the HMM
   vector<int> sample_path() const;
 

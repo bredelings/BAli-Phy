@@ -266,7 +266,7 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double B
   for(int S=0;S<nstates()+1;S++)
     if (not silent_network(S))
       non_silent_network.push_back(S);
-  
+
   //---------------- compute the probability of -------------------//
   update_GQ();
 
@@ -287,4 +287,16 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double B
   }
 #endif
 
+#ifndef NDEBUG
+  for(int s1=0;s1<nstates();s1++) {
+    int S1 = order(s1);
+    if (not silent(S1)) continue;
+
+    for(int s2=s1;s2<nstates();s2++) {
+      int S2 = order(s2);
+      assert(not connected(S1,S2));
+    }
+  }
+#endif
+  
 }
