@@ -160,7 +160,7 @@ if test "$GXX" = yes ; then
       CXXFLAGS="$CXXFLAGS -pg"
       LDFLAGS="$LDFLAGS -pg"
   elif test "$profile" = oprofile ; then
-      CXXFLAGS="$CXXFLAGS -g"
+      CXXFLAGS="$CXXFLAGS -g -fno-omit-frame-pointer"
   fi
 
   # --enable-bounds-checking
@@ -186,6 +186,8 @@ if test "$GXX" = yes ; then
   #   If $enableval !=yes and !=no, then the user can specify their own optimization flags.
   if test "$debug" = yes ; then
       CXXFLAGS="$CXXFLAGS -g"
+      # no -ffast-math because it affects handling of NaNs, which result from
+      # uninitialized values, among other things
   fi
 
   if test "$debug" = no ; then
