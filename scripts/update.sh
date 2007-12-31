@@ -1,8 +1,25 @@
 #!/bin/sh
 
-svn update "$@"
+if ! test -d '.svn' ; then
+  echo "Error: this is not an SVN source directory"
+  exit 1
+fi
+
+if ! test -f src/bali-phy.C ; then
+  echo "'$0' must be run from the top SVN source directory."
+  exit 1
+fi
+
+svn status | grep -v '?'
+svn update "$@" 
 
 rev="$(svn info $srcdir | awk '/Revision: / {print $2}')"  
+
+status="$(svn status | grep -v '?')"
+
+if test -n "$status" ; then
+    rev="${rev}+"
+fi
 
 branch=`svn info $srcdir | sed -ne "/URL:/ {
     s,.*/trunk,trunk,
