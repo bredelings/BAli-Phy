@@ -197,6 +197,11 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
   //  std::cerr<<"ungeneralized A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
 
   A = construct(old,path,nodes,T,seqs,A5::states_list);
+  P.note_alignment_changed_on_branch(T.branch(nodes[0],nodes[4]));
+  P.note_alignment_changed_on_branch(T.branch(nodes[1],nodes[4]));
+  P.note_alignment_changed_on_branch(T.branch(nodes[2],nodes[5]));
+  P.note_alignment_changed_on_branch(T.branch(nodes[3],nodes[5]));
+  P.note_alignment_changed_on_branch(T.branch(nodes[4],nodes[5]));
 
   //  std::cerr<<"A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
 

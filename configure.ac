@@ -246,6 +246,7 @@ AC_CHECK_FUNCS([floor pow sqrt strchr log2 getrlimit setrlimit])
 AC_CHECK_TYPE(rlim_t, ,AC_DEFINE(rlim_t, [unsigned long],[declare rlim_t as unsigned long if not found in <sys/resource.h>]),[#include <sys/resource.h>])
 CXXFLAGS="$CXXFLAGS $CPPFLAGS"
 
+AC_CHECK_HEADERS([fenv.h])
 
 ac_search_lib_dirs="$extra_libs2 /usr/lib /usr/local/lib"
 

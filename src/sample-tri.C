@@ -173,6 +173,10 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   vector<int> path = Matrices->ungeneralize(path_g);
 
   A = construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
+  for(int i=1;i<4;i++) {
+    int b = T.branch(nodes[0],nodes[i]);
+    P.note_alignment_changed_on_branch(b);
+  }
 
 #ifndef NDEBUG_DP
   //--------------- Check alignment construction ------------------//

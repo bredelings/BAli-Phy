@@ -138,7 +138,7 @@ public:
   /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
   void invalidate_branch(const Tree&,int b);
 
-  /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
+  /// Mark cached conditional likelihoods for all branches after b or b* invalid.
   void invalidate_branch_alignment(const Tree&,int b);
 
   /// Mark cached conditional likelihoods all branches after n invalid.

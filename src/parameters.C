@@ -26,6 +26,8 @@ void data_partition::recalc_imodel()
 {
   if (not has_IModel()) return;
 
+  cached_alignment_prior.invalidate();
+
   for(int b=0;b<branch_HMMs.size();b++) 
   {
     // use the length, unless we are unaligned
@@ -65,8 +67,15 @@ void data_partition::setlength(int b, double l)
       branch_HMMs[b] = IModel_->get_branch_HMM(-1);
     else
       branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());
+
+    note_alignment_changed_on_branch(b);
   }
   LC.invalidate_branch(*T,b);
+}
+
+void data_partition::note_alignment_changed_on_branch(int b)
+{
+  cached_alignment_prior.invalidate();
 }
 
 void data_partition::recalc(const vector<int>& indices)
@@ -113,10 +122,14 @@ efloat_t data_partition::prior_no_alignment() const
 
 efloat_t data_partition::prior_alignment() const 
 {
-  if (IModel_) 
-    return ::prior_HMM(*this);
+  if (not IModel_) return 1;
+
+  if (not cached_alignment_prior.is_valid())
+    cached_alignment_prior = ::prior_HMM(*this);
   else
-    return 1;
+    assert(std::abs(log(cached_alignment_prior) - log(::prior_HMM(*this))) < 1.0e-10);
+
+  return cached_alignment_prior;
 }
 
 efloat_t data_partition::prior() const 
@@ -318,16 +331,22 @@ void Parameters::tree_propagate()
     data_partitions[i]->T = T;
 }
 
+void Parameters::LC_invalidate_branch(int b)
+{
+  for(int i=0;i<n_data_partitions();i++)
+    data_partitions[i]->LC.invalidate_branch(*data_partitions[i]->T,b);
+}
+
 void Parameters::invalidate_subA_index_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
     ::invalidate_subA_index_branch(*data_partitions[i]->A,*data_partitions[i]->T,b);
 }
 
-void Parameters::LC_invalidate_branch(int b)
+void Parameters::note_alignment_changed_on_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->LC.invalidate_branch(*data_partitions[i]->T,b);
+    data_partitions[i]->note_alignment_changed_on_branch(b);
 }
 
 void Parameters::recalc(const vector<int>& indices)

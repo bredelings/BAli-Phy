@@ -106,7 +106,8 @@ int source)
   for(int i=0;i<3;i++)
     for(int j=0;j<3;j++) {
       efloat_t Qij = Q(i,j);
-      P *= pow<efloat_t>(Qij,counts(i,j));
+      if (counts(i,j))
+	P *= pow<efloat_t>(Qij,counts(i,j));
     }
   
   // Account for ?-E end probability

@@ -8,6 +8,11 @@ extern "C" {
 #include <sys/resource.h>
 }
 #endif
+#ifdef HAVE_FENV
+extern "C" {
+#include "fenv.h"
+}
+#endif
 
 #include <cmath>
 #include <ctime>
@@ -40,6 +45,7 @@ extern "C" {
 #include "proposals.H"
 #include "tree-util.H" //extends
 #include "version.H"
+
 
 namespace fs = boost::filesystem;
 
@@ -527,7 +533,7 @@ void set_parameters(Parameters& P, const variables_map& args)
     if (p=find_parameter(P,fix[i]),p!=-1)
       P.fixed(p,true);
     else
-      throw myexception()<<"Can't find parameter '"<<fix[i]<<"' to unfix.";
+      throw myexception()<<"Can't find parameter '"<<fix[i]<<"' to fix.";
   }
 
   // unfix parameters
@@ -1132,7 +1138,9 @@ int main(int argc,char* argv[])
   ostream err_both(&tee_err);
 
   try {
-
+#if defined(HAVE_FENV) && !defined(NDEBUG)
+    feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+#endif
     fp_scale::initialize();
     fs::path::default_name_check(fs::portable_posix_name);
 

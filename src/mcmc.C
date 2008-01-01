@@ -74,7 +74,11 @@ namespace MCMC {
 
       // print move stats
       for(int i=0;i<R.size();i++) {
-	o<<"  X"<<i<<" = "<<R.totals[i]/R.counts[i];
+	o<<"  X"<<i<<" = ";
+	if (R.counts[i])
+	  o<<R.totals[i]/R.counts[i];
+	else
+	  o<<"?";
 	o<<" ["<<R.counts[i]<<"]";
       }
       o<<endl;

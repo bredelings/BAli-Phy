@@ -16,6 +16,7 @@
 #include "util.H"
 #include "tools/tree-dist.H"
 #include "cow-ptr.H"
+#include "cached_value.H"
 
 //------------------------------- parameter-containing class --------------------------//
 
@@ -34,6 +35,8 @@ struct data_partition: public Model
   string partition_name;
 
   void recalc(const vector<int>&);
+
+  mutable cached_value<efloat_t> cached_alignment_prior;
 
 public:
 
@@ -82,6 +85,7 @@ public:
   substitution::MultiModel& SModel() {return *SModel_;}
 
   void setlength(int b, double l);
+  void note_alignment_changed_on_branch(int b);
 
   /// parameter for exponential prior on branch length
   double branch_mean() const; 
@@ -192,8 +196,14 @@ public:
 
   void select_root(int b);
   void set_root(int b);
-  void invalidate_subA_index_branch(int b);
+
+  // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
   void LC_invalidate_branch(int b);
+
+  // invalidate subA indices on b and b* and all DIRECTED branches after them
+  void invalidate_subA_index_branch(int b);
+
+  void note_alignment_changed_on_branch(int b);
 
   double branch_mean() const; 
 

@@ -156,6 +156,10 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   vector<int> path = Matrices->ungeneralize(path_g);
 
   *P.A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
+  for(int i=1;i<4;i++) {
+    int b = T.branch(nodes[0],nodes[i]);
+    P.note_alignment_changed_on_branch(b);
+  }
 
 #ifndef NDEBUG
   vector<int> path_new = get_path_3way(project(*P.A,n0,n1,n2,n3),0,1,2,3);
