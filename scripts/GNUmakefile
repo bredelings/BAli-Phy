@@ -35,7 +35,7 @@ Work/setup:
 	@echo "done."
 
 
-ifeq ($(IMODEL),none)
+ifeq ($(IMODEL),)
 AU_TARGETS=
 else
 AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/au-graph.plot Results/consensus.fasta Results/consensus-AU.html Results/consensus-AU2.html
