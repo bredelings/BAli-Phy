@@ -152,6 +152,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
     int bi = branches[i];
     p[1].setlength(bi,p[1].T->directed_branch(bi).length());
     p[1].invalidate_subA_index_branch(branches[i]);
+    p[1].note_alignment_changed_on_branch(bi);
   }
 
   //------------- change connecting branch length ----------------//

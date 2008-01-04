@@ -88,14 +88,11 @@ ublas::matrix<int> get_path_counts(const alignment& A,int node1, int node2)
 }
 
 /// Probability of a pairwise alignment
-efloat_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,
-int source) 
+efloat_t prior_branch_from_counts(const ublas::matrix<int>& counts,const indel::PairHMM& Q)
 {
   using namespace A2;
 
   efloat_t P=1;
-
-  ublas::matrix<int> counts = get_path_counts(A,target,source);
 
   // Account for S-? start probability
   for(int i=0;i<Q.size2();i++)
@@ -120,21 +117,12 @@ int source)
 }
 
 /// Probability of a pairwise alignment
-efloat_t prior_branch_old(const alignment& A,const indel::PairHMM& Q,int target,int source) 
+efloat_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,
+int source) 
 {
-  vector<int> state = get_path(A,target,source);
+  ublas::matrix<int> counts = get_path_counts(A,target,source);
 
-  efloat_t P = Q.start(state[0]);
-  for(int i=1;i<state.size();i++) 
-    P *= Q(state[i-1],state[i]);
-  
-#ifndef NDEBUG
-  efloat_t P2 = prior_branch(A,Q,target,source);
-  double diff = log(P2)-log(P);
-  assert(std::abs(diff) < 1.0e-10);
-#endif
-
-  return P;
+  return prior_branch_from_counts(counts,Q);
 }
 
 /// Probability of a multiple alignment if branch alignments independant
@@ -173,9 +161,9 @@ efloat_t prior_HMM_rootless_scale(const data_partition& P)
   efloat_t Pr = 1;
 
   for(int i=T.n_leaves();i<T.n_nodes();i++) {
-    int l = A.seqlength(i);
-    Pr /= P.IModel().lengthp(l);
-    Pr /= P.IModel().lengthp(l);
+    int l = P.seqlength(i);
+    efloat_t temp = P.IModel().lengthp(l);
+    Pr /= (temp*temp);
   }
 
   return Pr;

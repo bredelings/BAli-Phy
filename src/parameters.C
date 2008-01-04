@@ -28,6 +28,9 @@ void data_partition::recalc_imodel()
 
   cached_alignment_prior.invalidate();
 
+  for(int b=0;b<cached_alignment_prior_for_branch.size();b++)
+    cached_alignment_prior_for_branch[b].invalidate();
+
   for(int b=0;b<branch_HMMs.size();b++) 
   {
     // use the length, unless we are unaligned
@@ -58,7 +61,7 @@ void data_partition::setlength(int b, double l)
 {
   MC.setlength(b,l,*T,*SModel_); 
 
-  if (has_IModel()) 
+  if (has_IModel())
   {
     // use the length, unless we are unaligned
     double t = T->branch(b).length();
@@ -68,14 +71,41 @@ void data_partition::setlength(int b, double l)
     else
       branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());
 
-    note_alignment_changed_on_branch(b);
+    cached_alignment_prior.invalidate();
+    cached_alignment_prior_for_branch[b].invalidate();
   }
   LC.invalidate_branch(*T,b);
+}
+
+int data_partition::seqlength(int n) const
+{
+  if (not cached_sequence_lengths[n].is_valid())
+    cached_sequence_lengths[n] = A->seqlength(n);
+
+  assert(cached_sequence_lengths[n] == A->seqlength(n));
+
+  return cached_sequence_lengths[n];
+}
+
+void data_partition::note_sequence_length_changed(int n)
+{
+  cached_sequence_lengths[n].invalidate();
 }
 
 void data_partition::note_alignment_changed_on_branch(int b)
 {
   cached_alignment_prior.invalidate();
+  cached_alignment_prior_for_branch[b].invalidate();
+  cached_alignment_counts_for_branch[b].invalidate();
+
+  const Tree& TT = *T;
+  int target = TT.branch(b).target();
+  int source = TT.branch(b).source();
+
+  if (target >= TT.n_leaves())
+    note_sequence_length_changed(target);
+  if (source >= TT.n_leaves())
+    note_sequence_length_changed(source);
 }
 
 void data_partition::recalc(const vector<int>& indices)
@@ -120,14 +150,62 @@ efloat_t data_partition::prior_no_alignment() const
   return exponential_pdf(branch_mean(),1.0);
 }
 
+// We want to decrease 
+// (a) the number of times get_counts( ) is called
+// (b) the number of times seqlength( ) is called
+// (c) the number of times log( ) is called
+// This should give a further 6% speedup.
+
 efloat_t data_partition::prior_alignment() const 
 {
   if (not IModel_) return 1;
 
-  if (not cached_alignment_prior.is_valid())
-    cached_alignment_prior = ::prior_HMM(*this);
-  else
-    assert(std::abs(log(cached_alignment_prior) - log(::prior_HMM(*this))) < 1.0e-10);
+  if (not cached_alignment_prior.is_valid()) 
+  {
+    const alignment& AA = *A;
+    const SequenceTree& TT = *T;
+
+    for(int b=0;b<TT.n_branches();b++) {
+      if (not cached_alignment_counts_for_branch[b].is_valid()) {
+	int target = TT.branch(b).target();
+	int source  = TT.branch(b).source();
+	cached_alignment_counts_for_branch[b] = get_path_counts(AA,target,source);
+      }
+#ifndef NDEBUG
+      else
+      {
+	int target = TT.branch(b).target();
+	int source  = TT.branch(b).source();
+	ublas::matrix<int> counts = get_path_counts(AA,target,source);
+	for(int i=0;i<counts.size1();i++)
+	  for(int j=0;j<counts.size2();j++)
+	    assert(cached_alignment_counts_for_branch[b].value()(i,j) == counts(i,j));
+      }
+#endif
+    }
+
+    for(int b=0;b<TT.n_branches();b++) {
+      if (not cached_alignment_prior_for_branch[b].is_valid())
+      {
+	ublas::matrix<int>& counts = cached_alignment_counts_for_branch[b];
+	cached_alignment_prior_for_branch[b] = prior_branch_from_counts(counts, branch_HMMs[b]);
+      }
+#ifndef NDEBUG      
+      int target = TT.branch(b).target();
+      int source  = TT.branch(b).source();
+      assert(std::abs(log(cached_alignment_prior_for_branch[b]) - log(prior_branch(AA, branch_HMMs[b], target, source))) < 1.0e-10);
+#endif
+    }
+
+    efloat_t Pr = 1;
+    for(int b=0;b<TT.n_branches();b++)
+      Pr *= cached_alignment_prior_for_branch[b];
+
+    cached_alignment_prior = Pr * prior_HMM_rootless_scale(*this);
+  }
+
+  
+  assert(std::abs(log(cached_alignment_prior) - log(::prior_HMM(*this))) < 1.0e-10);
 
   return cached_alignment_prior;
 }
@@ -162,6 +240,9 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
   :IModel_(IM),
    SModel_(SM),
    partition_name(n),
+   cached_alignment_prior_for_branch(t.n_branches()),
+   cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
+   cached_sequence_lengths(a.n_sequences()),
    smodel_full_tree(true),
    A(a),
    T(t),
@@ -172,12 +253,17 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    beta(2, 1.0)
 {
   add_parameter("mu", 0.1);
+  for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
+    cached_alignment_counts_for_branch[b].invalidate();
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
 			       const substitution::MultiModel& SM)
   :SModel_(SM),
    partition_name(n),
+   cached_alignment_prior_for_branch(t.n_branches()),
+   cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
+   cached_sequence_lengths(a.n_sequences()),
    smodel_full_tree(true),
    A(a),
    T(t),
@@ -188,6 +274,8 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    beta(2, 1.0)
 {
   add_parameter("mu", 0.1);
+  for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
+    cached_alignment_counts_for_branch[b].invalidate();
 }
 
 //-----------------------------------------------------------------------------//
@@ -347,6 +435,12 @@ void Parameters::note_alignment_changed_on_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
     data_partitions[i]->note_alignment_changed_on_branch(b);
+}
+
+void Parameters::note_sequence_length_changed(int n)
+{
+  for(int i=0;i<n_data_partitions();i++)
+    data_partitions[i]->note_sequence_length_changed(n);
 }
 
 void Parameters::recalc(const vector<int>& indices)
