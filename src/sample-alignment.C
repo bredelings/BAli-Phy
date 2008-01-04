@@ -79,6 +79,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
       seq2.push_back(column);
   }
 
+  //FIXME - this makes the debug routines crash
   if (not seq1.size() or not seq2.size()) 
     return boost::shared_ptr<DPmatrixSimple>(); //NULL;
 
