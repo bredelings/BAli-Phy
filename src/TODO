@@ -123,17 +123,6 @@ much of the variation is spatial?)
 
 7. How about having an alphabet option "AAA -" to indicate that this item is missing?
 
-FIX:
-1. Alignment consensus isn't taking into account conflict of the
-partial ordering that is created by the requirement that residues in
-each sequence must have a lower column number that later characters in
-the same sequence.
-  a. For example 1:x ~ 2:y forbids 1:x-1 ~ 2:y+1
-  b. In general, 1:x ~ 2:y means that residues in sequence 1 are now
-ordered ALSO with respect to residues in sequence 2.
-  c. When trying to align 1:x ~ 2:y we find the neighboring residues
-in 1:* that are aligned to 2:*. When check that their indices in 2:*
-bracket y.  (If we do this for 1:* then we don't have to do it for 2:*).
 --------------------------------------------------------
 
 -48. Indel model where we sum over all root locations: doesn't work for SPR?
@@ -719,6 +708,8 @@ the prior, because we never want to use it  differently.
 [DONE] Add a sorted( ) wrapper for dirichlet proposals, so we can
        stop trying to sort DP::rate*'s in recalc(), which is a hack.
 
+[DONE] Handle conflicting partial orders when adding a homology pair to the
+       partial alignment.
 
 
 *IDEAS*
