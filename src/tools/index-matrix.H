@@ -25,6 +25,7 @@ struct edge_comp {
 class Edges: public std::multiset<Edge,edge_comp>
 {
   vector<vector<vector<std::multiset<Edge,edge_comp>::iterator> > > lookup;
+
 public:
   void build_index();
 
@@ -35,7 +36,7 @@ public:
 };
 
 void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
-	       int s1,int s2,int L1, int L2);
+	       int s1,int s2,int L1, int L2,double cutoff);
 
 class index_matrix: public ublas::matrix<int> 
 {

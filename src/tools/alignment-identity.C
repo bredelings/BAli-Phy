@@ -259,7 +259,7 @@ int main(int argc,char* argv[])
 
     for(int s1=0;s1<N;s1++)
       for(int s2=0;s2<s1;s2++)
-	add_edges(E,Ms,s1,s2,L[s1],L[s2]);
+	add_edges(E,Ms,s1,s2,L[s1],L[s2],0.5);
 
     E.build_index();
 
