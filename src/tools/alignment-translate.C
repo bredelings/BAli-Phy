@@ -92,7 +92,30 @@ int main(int argc,char* argv[])
       S.comment = A1.seq(i).comment;
       for(int column=0;column<A1.length();column++) {
 	int cc = A1(column,i);
-	int aa = C->translate(cc);
+	int aa = alphabet::not_gap;
+
+	if (cc < C->size())
+	  aa = C->translate(cc);
+	else {
+	  vector<int> ccs;
+	  vector<int> aas;
+	  for(int i=0;i<C->size();i++)
+	    if (C->matches(i,cc))
+	      ccs.push_back(i);
+	  for(int i=0;i<ccs.size();i++)
+	    aas.push_back(C->translate(ccs[i]));
+
+	  vector<int> uniq_aas;
+	  for(int i=0;i<aas.size();i++)
+	    if (i == 0 or aas[i] != aas[i-1])
+	      uniq_aas.push_back(aas[i]);
+
+	  if (uniq_aas.size() == 1)
+	    aa = uniq_aas[0];
+	  //	  else
+	  //	    cerr<<"Codon class maps to "<<uniq_aas.size()<<" amino acids."<<endl;
+	}
+
 	S += AA->lookup(aa);
       }
       A2.add_sequence(S);
