@@ -283,12 +283,7 @@ public:
   }
 
   /// What amino acid does codon map to?
-  int translate(int codon) const {
-    if (codon == alphabet::gap or codon==alphabet::not_gap)
-      return codon;
-    assert(codon >= 0 and codon < translation_table.size() );
-    return translation_table[codon];
-  }
+  int translate(int codon) const; 
 
   /// What AminoAcids alphabet are we using?
   const AminoAcids& getAminoAcids() const {return *A;}

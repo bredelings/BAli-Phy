@@ -533,6 +533,18 @@ void Codons::setup_table(const string& filename) {
   genetic_code.close();
 }
 
+
+/// What amino acid does codon map to?
+int Codons::translate(int codon) const
+{
+  if (codon == alphabet::gap or codon == alphabet::not_gap)
+    return codon;
+
+  assert(codon >= 0 and codon < translation_table.size() );
+  return translation_table[codon];
+}
+
+
 Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
 	       const vector<string> cc,const vector<string> aa) 
   :Triplets(N1),A(A1)
