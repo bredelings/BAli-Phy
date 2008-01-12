@@ -68,6 +68,52 @@ bool has_parameter(const Model& M, const string& name)
   return false;
 }
 
+bool match(const string& s1, const string& s2)
+{
+  if (s2.size() and s2[s2.size()-1] == '*') {
+    int L = s2.size() - 1;
+    if (L > s1.size()) return false;
+    return (s1.substr(0,L) == s2.substr(0,L));
+  }
+  else
+    return s1 == s2;
+}
+
+
+vector<int> parameters_with_extension(const Model& M, const string& name)
+{
+  vector<int> indices;
+
+  const vector<string> path2 = split(name,"::");
+
+  if (not path2.size()) return indices;
+
+  for(int i=0;i<M.parameters().size();i++)
+  {
+    vector<string> path1 = split(M.parameter_name(i),"::");
+
+    if (not path2[0].size()) 
+      path1.erase(path1.begin());
+    else if (path2.size() > path1.size())
+      continue;
+    else
+    {
+      int n = path1.size() - path2.size();
+      path1.erase(path1.begin(),path1.begin() + n);
+    }
+
+    if (not match(path1.back(),path2.back())) continue;
+
+    path1.pop_back();
+
+    vector<string> temp = path2;
+    temp.pop_back();
+
+    if (path1 == temp) indices.push_back(i);
+  }
+  return indices;
+}
+
 vector<string> get_parameters(const Model& M,const string& prefix)
 {
   vector<string> names;
@@ -96,10 +142,14 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
 
     M.add(1, MCMC::MH_Move(move_mu,string("sample_")+name));
   }
-  else if (has_parameter(P,name) and not P.fixed(find_parameter(P,name))) {
-    set_if_undef(P.keys, pname, sigma);
-    Proposal2 move_mu(p, name, vector<string>(1,pname), P);
-    M.add(1, MCMC::MH_Move(move_mu,string("sample_")+name));
+  else {
+    vector<int> indices = parameters_with_extension(P,name);
+    for(int i=0;i<indices.size();i++) 
+      if (not P.fixed(indices[i])) {
+	set_if_undef(P.keys, pname, sigma);
+	Proposal2 move_mu(p, P.parameter_name(indices[i]), vector<string>(1,pname), P);
+	M.add(1, MCMC::MH_Move(move_mu,string("sample_")+P.parameter_name(indices[i])));
+      }
   }
 }
 
@@ -243,11 +293,6 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
 
-  for(int i=0;i<P.n_data_partitions();i++) {
-    string name = string("part") + convertToString(i+1) + "::mu";
-    add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),   name,             "mu_scale_sigma",     0.6,  parameter_moves);
-  }
-    
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu",             "mu_scale_sigma",     0.6,  parameter_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "rho",     "rho_scale_sigma",  0.2,  parameter_moves);
@@ -269,12 +314,11 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 		      );
 
 
-  if (has_imodel) {
-    add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, parameter_moves);
-    add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, parameter_moves);
-    add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.15, parameter_moves);
-    add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, parameter_moves);
-  }
+  
+  add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, parameter_moves);
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, parameter_moves);
+  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.15, parameter_moves);
+  add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, parameter_moves);
   
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
   unsigned total_length = 0;

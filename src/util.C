@@ -29,8 +29,20 @@ string join(const vector<string>& v,char c) {
   return s;
 }
 
+string join(const vector<string>& v,const string& token) {
+  string s;
+  if (v.size())
+    s = v[0];
+  for(int i=1;i<v.size();i++) {
+    s += token;
+    s += v[i];
+  }
+  return s;
+}
 
-vector<string> split(const string& s, char c) {
+
+vector<string> split(const string& s, char c) 
+{
   vector<string> strings;
   int length=0;
   for(int i=0;i<s.size();i++)
@@ -42,6 +54,31 @@ vector<string> split(const string& s, char c) {
       length++;
   
   strings.push_back(s.substr(s.size()-length,length));
+  return strings;
+}
+
+vector<string> split(const string& s, const string& token)
+{
+  vector<string> strings;
+
+  int p1 = 0;
+  do {
+    int p2 = s.find(token,p1);
+    if (p2 == -1)
+    {
+      strings.push_back(s.substr(p1));
+      break;
+    }
+    else 
+    {
+      assert(p2 < s.size());
+
+      strings.push_back(s.substr(p1,p2-p1));
+      p1 = p2 + token.size();
+
+      assert(p1 <= s.size());
+    }
+  } while (true);
   return strings;
 }
 

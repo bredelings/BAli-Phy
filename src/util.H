@@ -186,6 +186,8 @@ bool includes(const std::vector<T>& v1, const std::vector<T>& v2) {
 /// Concatenate members of v, separating by char c
 std::string join(const std::vector<std::string>& v,char c);
 
+std::string join(const std::vector<std::string>& v,const std::string& s);
+
 template<class T>
 std::string join(const std::vector<T>& vT, char c)
 {
@@ -195,8 +197,18 @@ std::string join(const std::vector<T>& vT, char c)
   return join(v,c);
 }
 
+template<class T>
+std::string join(const std::vector<T>& vT, const std::string& s)
+{
+  std::vector<std::string> v;
+  for(int i=0;i<vT.size();i++)
+    v.push_back(convertToString(vT[i]));
+  return join(v,s);
+}
+
 /// Split the line into pieces at c
 std::vector<std::string> split(const std::string& line,char c);
+std::vector<std::string> split(const std::string& line,const std::string& s);
 
 /// Split the line into pieces at c and convert to T
 template<class T>
@@ -208,6 +220,17 @@ std::vector<T> split(const std::string& s,char c) {
 
   return vT;
 }
+
+template<class T>
+std::vector<T> split(const std::string& s,const std::string& token) {
+  std::vector<std::string> v = split(s,token);
+  std::vector<T> vT;
+  for(int i=0;i<v.size();i++)
+    vT.push_back(convertTo<T>(v[i]));
+
+  return vT;
+}
+
 
 /// Remove all occurrences of char c from line
 std::string strip(const std::string& line,char c);
