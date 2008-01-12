@@ -1092,6 +1092,38 @@ string rlim_minutes(rlim_t val)
     return convertToString<>(val/60) + " minutes";
 }
 
+string duration(time_t T)
+{
+  time_t total = T;
+  unsigned long seconds = T%60;
+  T = (T - seconds)/60;
+
+  unsigned long minutes = T%60;
+  T  = (T - minutes)/60;
+
+  unsigned long hours = T%24;
+  T  = (T - hours)/24;
+
+  unsigned long days = T;
+
+  string s = convertToString(total) + " seconds";
+
+  if (not minutes) return s;
+
+  s = convertToString(minutes) + "m " +
+      convertToString(seconds) + "s  (" + s + ")";
+
+  if (not hours) return s;
+
+  s = convertToString(hours) + "h " + s;
+
+  if (not days) return s;
+
+  s = convertToString(days) + "days " + s;
+
+  return s;
+}
+
 void raise_cpu_limit(ostream& o)
 {
   rlimit limits;
@@ -1136,6 +1168,8 @@ int main(int argc,char* argv[])
 
   ostream out_both(&tee_out);
   ostream err_both(&tee_err);
+
+  time_t start_time = time(NULL);
 
   try {
 #if defined(HAVE_FENV) && !defined(NDEBUG)
@@ -1311,6 +1345,12 @@ int main(int argc,char* argv[])
       // Close all the streams, and write a notification that we finished all the iterations.
       // close_files(files);
     }
+    time_t end_time = time(NULL);
+
+    s_out<<endl;
+    s_out<<"start time: "<<ctime(&start_time)<<endl;
+    s_out<<"  end time: "<<ctime(&end_time)<<endl;
+    s_out<<"total time: "<<duration(end_time-start_time)<<endl;
   }
   catch (std::bad_alloc&) {
     err_both<<"Doh!  Some kind of memory problem?\n";
