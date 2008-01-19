@@ -156,22 +156,12 @@ nodeview RootedSequenceTree::prune_subtree(int branch) {
 
 vector<int> RootedSequenceTree::prune_leaves(const vector<int>& remove) 
 {
-  // remove the subtree
-  vector<int> mapping = SequenceTree::prune_leaves(remove);
-
-  // figure out the mapping
-  vector<string> newnames(mapping.size());
-  for(int i=0;i<mapping.size();i++)
-    newnames[i] = sequences[mapping[i]];
-
-  // select the new names
-  sequences = newnames;
+  root_ = NULL;
 
   // if we need to do this, virtualize unlink_subtree to complain if the subtree
   // contains the root.
-  root_ = NULL;
 
-  return mapping;
+  return SequenceTree::prune_leaves(remove);
 }
 
 string write(const vector<string>& names, const_branchview b, bool print_lengths)
