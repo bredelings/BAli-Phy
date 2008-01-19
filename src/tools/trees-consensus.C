@@ -465,10 +465,10 @@ int main(int argc,char* argv[])
     if (not file)
       throw myexception()<<"Couldn't open file "<<filename;
       
-    tree_sample tree_dist(file,skip,max,subsample);
+    tree_sample tree_dist(file,skip,max,subsample,ignore);
     const unsigned N = tree_dist.size();
 
-    valarray<bool> ignore_mask = group_from_names(tree_dist.names(),ignore);
+    valarray<bool> ignore_mask = group_from_names(tree_dist.names(),vector<string>());
 
     //------ Compute Ml partitions or sub-partitions --------//
     vector< pair<Partition,unsigned> > all_partitions;

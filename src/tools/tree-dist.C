@@ -208,6 +208,32 @@ RootedSequenceTree standardized(const string& t)
   return T;
 }
 
+RootedSequenceTree standardized_prune(const string& t,const vector<string>& names) 
+{
+  RootedSequenceTree T;
+  T.parse(t);
+  
+  if (T.root().degree() == 2)
+    T.remove_node_from_branch(T.root());
+
+  vector<int> remove;
+  for(int i=0;i<names.size();i++) {
+    int index = find_index(T.get_sequences(),names[i]);
+    if (index == -1)
+      throw myexception()<<"Cannot find leaf '"<<names[i]<<"' in sampled tree.";
+    remove.push_back(index);
+  }
+
+  if (remove.size())
+    T.prune_leaves(remove);
+
+  if (has_sub_branches(T))
+    throw myexception()<<"Tree has node of degree 2";
+
+  standardize(T);
+  return T;
+}
+
 template <class T>
 struct array_order
 {
@@ -495,7 +521,7 @@ tree_sample::topology_record::topology_record(const SequenceTree& T,
 }
 
 
-tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample) 
+tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample,const vector<string>& prune) 
 {
   int lines=0;
   string line;
@@ -514,7 +540,7 @@ tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample)
     RootedSequenceTree T;
     try {
       // This should make all the branch & node numbers the same if the topology is the same
-      T = standardized(line);
+      T = standardized_prune(line,prune);
     }
     catch (std::exception& e) {
       cerr<<"Exception: "<<e.what()<<endl;
@@ -997,12 +1023,30 @@ int get_n_conflicts(const ublas::matrix<int>& conflicts,
   return total;
 }
 
+// How do we find an optimal set of resolved partitions here?
+// We can now discover more partitions with lots of wandering, so
+//  branches can wander further.
+// How about... prefer branches that wander over the fewest number of other branches
+//  + how do we weight wandering versus conflicting?  That is, if a branch conflicts
+//    with fewer branches, but 
+
+
+// I guess the over-all goal is (could be) to find an MC tree that has the smallest
+// number of BF trees extending it...
+
+
 vector<bool> solve_conflicts(const ublas::matrix<int>& conflicts,
 			     const ublas::matrix<int>& dominates,
 			     vector<bool> invincible)
 {
   const int N = invincible.size();
   vector<bool> survives(N,true);
+
+  // we should be able to GENERATE restricted version of splits that might be interesting.
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      if (dominates(i,j))
+	survives[j] = false;
 
   int n=0;
   for(int i=0;i<N;i++)
@@ -1012,11 +1056,19 @@ vector<bool> solve_conflicts(const ublas::matrix<int>& conflicts,
   do {
     vector<int> n_conflicts(N,0);
 
+    // We would LIKE to find the largest of the branches that this branch conflicts
+    // with that do not conflict with each other.
+
     for(int i=0;i<N;i++)
-      if (survives[i] and not invincible[i]) {
+      if (survives[i] and not invincible[i]) 
+      {
+	// here we find out how many branches each branch conflicts with...
 	n_conflicts[i]  = get_n_conflicts(conflicts,i,survives);
+	// .. that aren't sub-branches of itself.
 	n_conflicts[i] -= get_n_conflicts(dominates,i,survives);
 	assert(n_conflicts[i] >= 0);
+
+	// HOWEVER...we DO double-count sub-branches of neighbors.
       }
 
     int die = argmax(n_conflicts);
