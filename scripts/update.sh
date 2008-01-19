@@ -11,6 +11,7 @@ if ! test -f src/bali-phy.C ; then
 fi
 
 svn status | grep -v '?'
+echo "------------------------------"
 svn update "$@" 
 
 rev="$(svn info $srcdir | awk '/Revision: / {print $2}')"  
