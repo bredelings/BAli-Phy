@@ -133,7 +133,7 @@ std::string get_basename(std::string filename)
 std::string remove_extension(std::string filename)
 {
   // remove the extension
-  int dot = filename.find('.');
+  int dot = filename.rfind('.');
   string name = filename;
   if (dot != -1)
     name = filename.substr(0,dot);
