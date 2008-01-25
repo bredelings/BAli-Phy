@@ -547,13 +547,13 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   // register the substitution models as sub-models
   for(int i=0;i<SModels.size();i++) {
-    string name = "S-model" + convertToString(i+1);
+    string name = "S" + convertToString(i+1);
     add_submodel(name, *SModels[i]);
   }
 
   // register the indel models as sub-models
   for(int i=0;i<IModels.size();i++) {
-    string name = "I-model" + convertToString(i+1);
+    string name = "I" + convertToString(i+1);
     add_submodel(name, *IModels[i]);
   }
 
@@ -620,7 +620,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   // register the substitution models as sub-models
   for(int i=0;i<SModels.size();i++) {
-    string name = "S-model" + convertToString(i+1);
+    string name = "S" + convertToString(i+1);
     add_submodel(name, *SModels[i]);
   }
 
