@@ -1,6 +1,7 @@
 #include <iostream>
 #include "alignment.H"
 #include "alignment-util.H"
+#include "util.H"
 
 #include <boost/program_options.hpp>
 
@@ -21,6 +22,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("align", value<string>(),"file with sequences and initial alignment")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+    ("invariant",value<int>(),"print only sites where this site and <arg> neighbors are invariant.")
+    ("differences",value<int>()->default_value(0),"how many sequences may differ from the majority?")
     ;
 
   // positional options
@@ -43,6 +46,22 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+
+vector<int> column_count(const alignment& A, int c)
+{
+  const alphabet& a = A.get_alphabet();
+  vector<int> count(a.size()+1,0);
+
+  for(int i=0;i<A.n_sequences();i++) {
+    int l = A(c,i);
+    if (A.get_alphabet().is_letter(l))
+      count[l]++;
+
+    if (l == alphabet::gap or l == alphabet::unknown)
+      count.back()++;
+  }
+  return count;
+}
 
 int main(int argc,char* argv[]) 
 { 
@@ -67,11 +86,73 @@ int main(int argc,char* argv[])
       
     const alphabet& a = A.get_alphabet();
 
+
+    //------- Determine invariant sites -----//
+    int allowed_differences = args["differences"].as<int>();
+
+    vector<int> majority(A.length(), alphabet::unknown);
+
+    vector<int> safe(A.length(), 0);
+
+    for(int c=0;c<majority.size();c++) 
+    {
+      vector<int> count = column_count(A,c);
+
+      int max_letter = argmax(count);
+      majority[c] = max_letter;
+
+      if (count[a.size()])
+	majority[c] = alphabet::gap;
+      else if (A.n_sequences() - count[max_letter] <= allowed_differences)
+	safe[c] = 1;
+    }
+
+    int invariant = -1;
+    vector<int> safe2 = safe;
+
+    if (args.count("invariant")) 
+    {
+      invariant = args["invariant"].as<int>();
+
+      for(int i=0;i<safe2.size();i++) 
+      {
+	bool ok = true;
+	if (not safe2[i]) continue;
+
+
+	for(int k=i-3;k<=i+3 and ok;k++) 
+        {
+	  if (k < 0 or k >= A.length())
+	    ;
+	  else if (majority[k] == alphabet::gap)
+	    ok = false;
+	}
+
+	for(int k=i-invariant;k<=i+invariant and ok;k++) 
+        {
+	  if (k < 0 or k >= A.length())
+	    ok = false;
+	  else if (majority[k] == alphabet::gap)
+	    ok = false;
+	  else if (not safe[k])
+	    ok = false;
+	}
+
+	if (not ok)
+	  safe2[i] = 0;
+      }
+
+    }
+
     //------- Write the columns ------//
-    for(int c=0;c<MA.size1();c++) {
+    for(int c=0;c<MA.size1();c++) 
+    {
+      if (invariant != -1 and not safe2[c]) continue;
+
       // write the indices
       for(int i=0;i<MA.size2();i++) {
-	if (MA(c,i) == alphabet::gap or MA(c,i) == alphabet::unknown)
+	if (MA(c,i) == alphabet::gap or MA(c,i) == alphabet::unknown
+	    or (invariant != -1 and A(c,i) != majority[c]))
 	  cout<<"-";
 	else
 	  cout<<MA(c,i);
