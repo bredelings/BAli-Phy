@@ -1,0 +1,12 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/autotools.mk
+
+# where sources are
+#DEB_SRCDIR = $(CURDIR)
+
+# in which directory to build
+#DEB_BUILDDIR = $(DEB_SRCDIR)/debian/build
+
+DEB_CONFIGURE_EXTRA_FLAGS = --with-system-boost
