@@ -110,7 +110,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
     ("angle_iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm with small-angle penalties")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
-    ("layout",value<string>()->default_value("graph"),"Layout method")
+    ("layout",value<string>()->default_value("graph"),"Layout method: graph, circular, equal-daylight, etc.")
     ("seed", value<unsigned long>(),"Random seed")
     ;
   
@@ -190,7 +190,7 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
 
   while(file) 
   {
-    while (getline(file,line) and not line.size());
+    while (getline(file,line) and not line.size()) {}
     if (not line.size()) break;
 
     if (first_line and line[0] == '(') 
@@ -334,10 +334,20 @@ struct point_position
 
 // 4. HOW hard would it be to allow manual adjustment of the placements???
 
+struct RGB 
+{
+  double R;
+  double G;
+  double B;
+  RGB():R(0),G(0),B(0) {}
+  RGB(double r, double g, double b):R(r),G(g),B(b) { }
+};
+
 struct common_layout
 {
   vector<double> node_radius;
   vector<point_position> node_positions;
+  vector<RGB> node_color;
 
   double xmin() const;
   double xmax() const;
@@ -359,7 +369,8 @@ struct common_layout
 
   common_layout(int n)
     :node_radius(n,0),
-     node_positions(n)
+     node_positions(n),
+     node_color(n,RGB(1,1,1))
   {}
 };
 
@@ -446,6 +457,9 @@ void common_layout::rotate_for_aspect_ratio(double xw,double yw)
 struct tree_layout: public common_layout
 {
   SequenceTree T;
+
+  void rotate_subtree(int b, double alpha);
+
   tree_layout(const SequenceTree& T1)
     :common_layout(T1.n_nodes()),
      T(T1)
@@ -540,7 +554,7 @@ tree_layout circular_layout(SequenceTree MF,const vector<double>& node_radius)
     if (node_max_depth(MF,n) < node_max_depth(MF,root))
       root = n;
   
-  cerr<<"root = "<<root<<endl;
+  // cerr<<"root = "<<root<<endl;
 
   tree_layout L(MF);
   L.node_radius = node_radius;
@@ -551,7 +565,7 @@ tree_layout circular_layout(SequenceTree MF,const vector<double>& node_radius)
     double a2 = a1 + 2.0 * M_PI * n_children(MF,*b)/MF.n_leaves();
     double a = (a1+a2)/2.0;
     
-    cerr<<"branch "<<(*b).name()<<"  n_children = "<<n_children(MF,*b)<<endl;
+    // cerr<<"branch "<<(*b).name()<<"  n_children = "<<n_children(MF,*b)<<endl;
 
     int n1 = (*b).source();
     int n2 = (*b).target();
@@ -561,12 +575,13 @@ tree_layout circular_layout(SequenceTree MF,const vector<double>& node_radius)
     L.node_positions[n2].x += length*cos(a);
     L.node_positions[n2].y += length*sin(a);
 
-    cerr<<"edge target = "<<n2<<"   a1 = "<<a1*180/M_PI<<" a = "<<a*360/(2*M_PI)<<" a2 = "<<a2*180/M_PI<<"   length = "<<length<<"  x = "<<    L.node_positions[n2].x<<" y = "<<L.node_positions[n2].x<<endl;
+    // cerr<<"edge target = "<<n2<<"   a1 = "<<a1*180/M_PI<<" a = "<<a*360/(2*M_PI)<<" a2 = "<<a2*180/M_PI<<"   length = "<<length<<"  x = "<<    L.node_positions[n2].x<<" y = "<<L.node_positions[n2].x<<endl;
     circular_layout(L,*b,a1,a2);
     a1 = a2;
   }
   return L;
 }
+
 
 tree_layout circular_layout(const MC_tree_with_lengths& MC)
 {
@@ -588,6 +603,225 @@ tree_layout circular_layout(const MC_tree_with_lengths& MC)
 
   return circular_layout(MF,node_radius);
 }
+
+void rotate(point_position& pp,double xc, double yc, double alpha)
+{
+  pp.x -= xc;
+  pp.y -= yc;
+  
+  double X = pp.x;
+  double Y = pp.y;
+
+  pp.x = cos(alpha)*X - sin(alpha)*Y;
+  pp.y = sin(alpha)*X + cos(alpha)*Y;
+
+  pp.x += xc;
+  pp.y += yc;
+}
+
+void tree_layout::rotate_subtree(int b,double alpha)
+{
+  double xc = node_positions[T.directed_branch(b).source()].x;
+  double yc = node_positions[T.directed_branch(b).source()].y;
+
+  vector<const_branchview> branches = branches_after(T, b);
+  for(int i=0;i < branches.size();i++)
+  {
+    point_position& pp = node_positions[branches[i].target()];
+    ::rotate(pp,xc,yc,alpha);
+  }
+}
+
+double get_angle(const tree_layout& L, int b)
+{
+  const Tree& T = L.T;
+  int source = T.directed_branch(b).source();
+  int target = T.directed_branch(b).target();
+
+  const point_position& s = L.node_positions[source];
+  const point_position& t = L.node_positions[target];
+
+  return atan2(t.y - s.y, t.x - s.x);
+}
+
+
+// x - y: should always be non-negative
+double circular_minus(double x, double y)
+{
+  x -= 2.0*M_PI*int((x - -M_PI)/(2.0*M_PI));
+  y -= 2.0*M_PI*int((y - -M_PI)/(2.0*M_PI));
+
+  if (x > y) 
+    return x-y;
+  else
+    return (2.0*M_PI - (y-x));
+}
+
+// A (clockwise) circular range structure
+// All entries should be between 0 and 2 PI
+struct circular_range 
+{
+  double min;
+  double max;
+
+  static double standardize(double d) {return d - 2.0*M_PI*int((d - -M_PI)/(2.0*M_PI));}
+
+  circular_range() {}
+  circular_range(double d1,double d2):min(standardize(d1)),max(standardize(d2)) {}
+
+  double measure() {return circular_minus(max,min);}
+
+  circular_range& shift(double d) {
+    min = standardize(min+d);
+    max = standardize(max+d);
+    return *this;
+  }
+
+  bool contains(double d) const 
+  {
+    d = standardize(d);
+    if (min <= max) 
+      return ((min <= d) and (d <= max));
+    else
+      return ((d <= max) or (min <= d));
+  }
+
+  const circular_range& operator+=(double d) 
+  {
+    if (contains(d)) return *this;
+
+    // move whichever boundary is closer, on the circle
+    if (circular_minus(d,max) < circular_minus(min,d))
+      max = d;
+    else
+      min = d;
+
+    return *this;
+  };
+  
+  const circular_range& operator+=(circular_range& r);
+  
+  double operator-(const circular_range& r) const;
+};
+
+bool overlaps(const circular_range& r1, circular_range& r2)
+{
+  if (r1.contains(r2.min) or r1.contains(r2.max)) return true;
+  if (r2.contains(r1.max) or r2.contains(r1.max)) return true;
+  return false;
+}
+
+double circular_range::operator-(const circular_range& r) const
+{
+  if (contains(r.max)) return 0.0;
+
+  return circular_minus(min,r.max);
+}
+
+circular_range get_angles(const tree_layout& L,int b,int n)
+{
+  const Tree& T = L.T;
+  const point_position& c = L.node_positions[n];
+
+  double A = get_angle(L,b);
+  circular_range R(A,A);
+
+  vector<const_branchview> branches = branches_after(L.T,b);
+  for(int i=0;i<branches.size();i++) 
+  {
+    int source = T.directed_branch(branches[i]).source();
+    int target = T.directed_branch(branches[i]).target();
+    
+    const point_position& s = L.node_positions[source];
+    const point_position& t = L.node_positions[target];
+    
+    double A1 = atan2(s.y - c.y,s.x - c.x);
+    double A2 = atan2(t.y - c.y,t.x - c.x);
+
+    // FIXME - we should really determine the angle range of the line,
+    //         instead of just the angle of the endpoint.
+    R += A2;
+  }
+
+  return R;
+}
+
+void equalize_daylight(tree_layout& L,int n)
+{
+  const Tree& T = L.T;
+
+  // get outwards branches - which point to subtrees
+  vector<int> branches;
+  for(const_out_edges_iterator i = T[n].branches_out();i;i++)
+    branches.push_back(*i);
+  
+
+  //get the circular ranges for branch subtree
+  vector<circular_range> angles;
+  for(int i=0;i<branches.size();i++) 
+    angles.push_back( get_angles(L,branches[i],n) );
+
+  for(int b=0;b<branches.size();b++)
+  {
+    vector<double> daylight_before(branches.size(),2.0*M_PI);
+    vector<double> daylight_after(branches.size(),2.0*M_PI);
+
+    for(int i=0;i<branches.size();i++) {
+      for(int j=0;j<branches.size();j++) 
+	if (i!=j) {
+	  double delta = angles[j] - angles[i];
+	  daylight_after[i] = min(daylight_after[i],delta);
+	  daylight_before[j] = min(daylight_before[j],delta);
+	}
+    }
+
+    if (daylight_after[b] > 0 and daylight_before[b] > 0)
+    {
+      double delta = (daylight_after[b] - daylight_before[b])/2.0;
+      angles[b].shift(delta);
+      L.rotate_subtree(branches[b],delta);
+    }
+  }
+}
+
+void equalize_daylight(tree_layout& L)
+{
+  const Tree& T = L.T;
+  for(int i=T.n_leaves();i<T.n_nodes();i++)
+    equalize_daylight(L,i);
+}
+
+tree_layout equal_daylight_layout(SequenceTree MF,const vector<double>& node_radius)
+{
+  tree_layout L = circular_layout(MF,node_radius);
+
+  for(int i=0;i<10;i++)
+    equalize_daylight(L);
+
+  return L;
+}
+
+tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC)
+{
+  SequenceTree MF = MC.T;
+
+  // determine node lengths
+  vector<double> node_radius(MF.n_nodes(),0);
+
+  for(int n=0;n<MC.n_nodes();n++)
+  {
+    int b = MC.branch_to_node(n);
+    if (not MC.partitions[b].full())
+      throw myexception()<<"Hey!  This procedure only works for full partitions!";
+
+    int mf_n = MF.directed_branch(b).target();
+    int d = MF[mf_n].degree();
+    node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
+  }
+
+  return equal_daylight_layout(MF,node_radius);
+}
+
 
 double get_text_length(cairo_t* cr, const string& s)
 {
@@ -629,9 +863,12 @@ void tree_plotter::operator()(cairo_t* cr)
 
   double scale = std::min(page_x_width()*inch/xw,page_y_width()*inch/yw);
   scale *= factor;
-  const double line_width = 3.0/scale;
   cairo_scale(cr, scale, scale);
-  cairo_translate(cr, -factor*xc, -factor*yc);
+  cairo_translate(cr, -xc, -yc);
+
+  const double pt = 1.0/scale;
+  const double line_width = 2.0*pt;
+  const double dashes[] = {3.0*line_width, 3.0*line_width};
   cairo_set_line_width(cr, line_width);
 
   // draw the branches
@@ -652,8 +889,6 @@ void tree_plotter::operator()(cairo_t* cr)
     cairo_stroke (cr);
   }
 
-  const double dashes[] = {line_width*3, line_width*3};
-
   cairo_set_dash (cr, dashes, 2, 0.0);
 
   // draw the circles
@@ -663,22 +898,26 @@ void tree_plotter::operator()(cairo_t* cr)
     double y = L.node_positions[n].y;
 
     if (L.node_radius[n] > 0) {
-      cerr<<"node n="<<n<<"  radius = "<<L.node_radius[n]<<endl;
+      cairo_save(cr);
+      RGB& color = L.node_color[n];
+      // cerr<<"node n="<<n<<"  radius = "<<L.node_radius[n]<<endl;
       cairo_arc(cr, x, y, L.node_radius[n], 0.0, 2.0 * M_PI);
 
-      cairo_set_source_rgb (cr, 1 , 1, 1);
+      cairo_set_source_rgb (cr, color.R , color.G, color.B);
       cairo_fill_preserve (cr);
 
       cairo_set_source_rgb (cr, 0 , 0, 0);
+      cairo_set_line_width(cr, line_width/2.0);
       cairo_stroke(cr);
+      cairo_restore(cr);
     }
   }
 
-    cairo_select_font_face (cr, "Sans", 
-			    CAIRO_FONT_SLANT_NORMAL,
-			    CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_font_size (cr, 10.0/scale);
-
+  cairo_select_font_face (cr, "Sans", 
+			  CAIRO_FONT_SLANT_NORMAL,
+			  CAIRO_FONT_WEIGHT_BOLD);
+  cairo_set_font_size (cr, 10.0/scale);
+  
   for(int l=0;l<L.T.n_leaves();l++)
   {  
     double x1 = L.node_positions[l].x;
@@ -1245,7 +1484,7 @@ ublas::matrix<int> crossed_nodes_matrix(const graph_layout& GL)
 	    int b1 = MC.edges[i].partition;
 	    int b2 = MC.edges[j].partition;
 	    
-	    cerr<<"A: b1 = "<<b1<<"   b2 = "<<b2<<endl;
+	    //	    cerr<<"A: b1 = "<<b1<<"   b2 = "<<b2<<endl;
 
 	    if (MC.left_of(b1,b2) or MC.left_of(b1,MC.reverse(b2)))
 	      b1 = MC.reverse(b1);
@@ -1253,7 +1492,7 @@ ublas::matrix<int> crossed_nodes_matrix(const graph_layout& GL)
 	      b2 = MC.reverse(b2);
 	    if (not MC.left_of(MC.reverse(b1),b2)) continue;
 	    
-	    cerr<<"B: b1 = "<<b1<<"   b2 = "<<b2<<endl;
+	    //	    cerr<<"B: b1 = "<<b1<<"   b2 = "<<b2<<endl;
 
 	    assert(MC.left_of(MC.reverse(b1),b2));
 	    assert(MC.left_of(MC.reverse(b2),b1));
@@ -1394,14 +1633,18 @@ struct energy2: public graph_energy_function
 	// don't repel the end of the branch that I'm attached to
 	if (GL.MC.connected(i,j) == 1) continue;
 
-	if (n_cross(i,j)) continue;
-	
 	double w = repulsion_weight;
 
-	// don't repel nodes that wander over me, or that I wander to
-	if (GL.MC.connected(i,j) == 2 or GL.MC.connected(j,i) == 2) w /= 10;
+	if (n_cross(i,j)) {
+	  E += node_node_attraction(GL, D, i, j, w, -1);
+	}
+	else {
+	  
+	  // don't repel nodes that wander over me, or that I wander to
+	  if (GL.MC.connected(i,j) == 2 or GL.MC.connected(j,i) == 2) w /= 10;
 
-	E += node_node_repulsion(GL, D, i, j, w, 1);
+	  E += node_node_repulsion(GL, D, i, j, w, 1);
+	}
       }
 
     // angular resolution
@@ -1673,20 +1916,23 @@ void graph_plotter::operator()(cairo_t* cr)
     double y = L.node_positions[n].y;
 
     if (L.node_radius[n] > 0) {
-      cerr<<"node n="<<n<<"  radius = "<<L.node_radius[n]<<endl;
+      cairo_save(cr);
+      RGB& color = L.node_color[n];
+      //cerr<<"node n="<<n<<"  radius = "<<L.node_radius[n]<<endl;
       cairo_arc(cr, x, y, L.node_radius[n], 0.0, 2.0 * M_PI);
 
-      cairo_set_source_rgb (cr, 1 , 1, 1);
+      cairo_set_source_rgb (cr, color.R , color.G, color.B);
       cairo_fill_preserve (cr);
 
       cairo_set_source_rgb (cr, 0 , 0, 0);
       cairo_set_line_width(cr, line_width/2.0);
       cairo_stroke(cr);
+      cairo_restore(cr);
     }
 
     cairo_save(cr);
     if (n_cross_v[n]) {
-      cerr<<"n_cross: "<<n<<endl;
+      //      cerr<<"n_cross: "<<n<<endl;
       double R = 0.001;
       cairo_arc(cr, x, y, R, 0.0, 2.0 * M_PI);
 
@@ -1888,7 +2134,7 @@ MC_tree_with_lengths collapse_MC_tree(const MC_tree_with_lengths& MC1)
     int b1 = MC1.branch_order[i1];
     int b2 = branch_mapping[i1];
 
-    cerr<<"b1 = "<<b1<<" -> "<<b2<<endl;
+    // cerr<<"b1 = "<<b1<<" -> "<<b2<<endl;
     if (b2 != -1) {
       int b2r = MC2.reverse(b2);
       MC2.branch_length(b2) = MC2.branch_length(b2r) = MC1.branch_length(b1);
@@ -2046,8 +2292,17 @@ int main(int argc,char* argv[])
     if (args["layout"].as<string>() == "circular") 
     {
       tree_layout L = circular_layout(MC);
+      L.rotate_for_aspect_ratio(xw,yw);
       tree_plotter tp(L, xw, yw);
       draw(name+"-tree",output,tp);
+      exit(0);
+    }
+    else if (args["layout"].as<string>() == "equal-daylight")
+    {
+      tree_layout L = equal_daylight_layout(MC);
+      L.rotate_for_aspect_ratio(xw,yw);
+      tree_plotter tp(L, xw, yw);
+      draw(name+"-tree",output,tp);	
       exit(0);
     }
 
