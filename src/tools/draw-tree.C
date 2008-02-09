@@ -106,11 +106,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("height,h",value<double>()->default_value(11),"Page height in inches")
     ("file",value<string>(),"predicates to examine")
     ("output",value<string>()->default_value("pdf"),"Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg")
-    ("full","Consider only full partitions")
+    ("full","Consider only full splits by collapsing any partial splits.")
     ("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
     ("angle_iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm with small-angle penalties")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
-    ("layout",value<string>()->default_value("graph"),"Layout method: graph, circular, equal-daylight, etc.")
+    ("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
     ("seed", value<unsigned long>(),"Random seed")
     ;
   
@@ -490,7 +490,7 @@ int n_children(const Tree& T,int b)
 }
 
 
-void circular_layout(tree_layout& L,int parent,double min_a,double max_a)
+void equal_angle_layout(tree_layout& L,int parent,double min_a,double max_a)
 {
   SequenceTree& T = L.T;
 
@@ -510,7 +510,7 @@ void circular_layout(tree_layout& L,int parent,double min_a,double max_a)
     L.node_positions[n2].x += length*cos(a);
     L.node_positions[n2].y += length*sin(a);
 
-    circular_layout(L,*b,a1,a2);
+    equal_angle_layout(L,*b,a1,a2);
     a1=a2;
   }
 }
@@ -537,7 +537,7 @@ double node_diameter(double lengths,int degree)
   return lengths*ratio;
 }
 
-tree_layout circular_layout(SequenceTree MF,const vector<double>& node_radius)
+tree_layout equal_angle_layout(SequenceTree MF,const vector<double>& node_radius)
 {
   for(int b=0;b<MF.n_branches();b++) 
   {
@@ -576,14 +576,14 @@ tree_layout circular_layout(SequenceTree MF,const vector<double>& node_radius)
     L.node_positions[n2].y += length*sin(a);
 
     // cerr<<"edge target = "<<n2<<"   a1 = "<<a1*180/M_PI<<" a = "<<a*360/(2*M_PI)<<" a2 = "<<a2*180/M_PI<<"   length = "<<length<<"  x = "<<    L.node_positions[n2].x<<" y = "<<L.node_positions[n2].x<<endl;
-    circular_layout(L,*b,a1,a2);
+    equal_angle_layout(L,*b,a1,a2);
     a1 = a2;
   }
   return L;
 }
 
 
-tree_layout circular_layout(const MC_tree_with_lengths& MC)
+tree_layout equal_angle_layout(const MC_tree_with_lengths& MC)
 {
   SequenceTree MF = MC.T;
 
@@ -601,7 +601,7 @@ tree_layout circular_layout(const MC_tree_with_lengths& MC)
     node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
   }
 
-  return circular_layout(MF,node_radius);
+  return equal_angle_layout(MF,node_radius);
 }
 
 void rotate(point_position& pp,double xc, double yc, double alpha)
@@ -793,7 +793,7 @@ void equalize_daylight(tree_layout& L)
 
 tree_layout equal_daylight_layout(SequenceTree MF,const vector<double>& node_radius)
 {
-  tree_layout L = circular_layout(MF,node_radius);
+  tree_layout L = equal_angle_layout(MF,node_radius);
 
   for(int i=0;i<10;i++)
     equalize_daylight(L);
@@ -2289,9 +2289,9 @@ int main(int argc,char* argv[])
     }
 
     // lay out using circular tree layout
-    if (args["layout"].as<string>() == "circular") 
+    if (args["layout"].as<string>() == "equal-angle") 
     {
-      tree_layout L = circular_layout(MC);
+      tree_layout L = equal_angle_layout(MC);
       L.rotate_for_aspect_ratio(xw,yw);
       tree_plotter tp(L, xw, yw);
       draw(name+"-tree",output,tp);
