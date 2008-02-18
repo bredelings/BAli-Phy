@@ -41,7 +41,7 @@ TOOLS = model_P statreport alignment-gild \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
 	partitions-supported trees-pair-distances analyze-rates \
-	path-graph
+	path-graph alignment-find-conserved
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -175,6 +175,10 @@ alignment_find_SOURCES = tools/alignment-find.C alignment.C alphabet.C sequence.
 #---------------------------------------------------------------
 
 alignment_convert_SOURCES = tools/alignment-convert.C alignment.C alignment-util.C sequence.C alphabet.C util.C sequence-format.C tree.C 
+
+#---------------------------------------------------------------
+
+alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C
 
 #---------------------------------------------------------------
 
