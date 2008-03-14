@@ -9,6 +9,8 @@ Partition Stuff
  D. Did we add any slowdown in the -t case? In the other case?
  E. Profile...
 
+IDEA: parse "...+var~dist"  (could be +Something[var,dist]
+
 General Branch Length Priors
  A. leaf branches / internal branches
  B. general prior against changes being shared?

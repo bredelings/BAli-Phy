@@ -737,6 +737,7 @@ namespace substitution {
     SimpleFrequencyModel* R2 = dynamic_cast<SimpleFrequencyModel*>(R.get());
     R2->frequencies(pi);
     read();
+    recalc_all();
   }
 
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const AlphabetExchangeModel& E)
@@ -1104,29 +1105,21 @@ namespace substitution {
     :ReversibleWrapperOver<Base_Model_t>(M)
   { }
 
-  //------------- MultiFrequencyModel ---------------//
-  valarray<double> MultiFrequencyModel::get_a(int l) const 
-  {
-    valarray<double> al(fraction.size());
-
-    for(int m=0;m<al.size();m++)
-      al[m] = a(m,l);
-
-    return al;
-  }
-
-  void MultiFrequencyModel::set_a(int l,const valarray<double>& al) 
-  {
-    for(int m=0;m<al.size();m++)
-      a(m,l) = al[m];
-  }
-
+  //---------------------- MultiFrequencyModel -----------------------//
   efloat_t MultiFrequencyModel::super_prior() const 
   {
-    // uniform - 10 counts per bin
+    const int n = fraction.size();
+
     efloat_t Pr = 1;
+
     for(int l=0;l<Alphabet().size();l++) 
-      Pr *= ::dirichlet_pdf(get_a(l),10);
+    {
+      valarray<double> a_l(n);
+      for(int m=0;m<a_l.size();m++)
+	a_l[m] = a(m,l);
+
+      Pr *= ::dirichlet_pdf(a_l, n/2.0);
+    }
 
     return Pr;
   }
@@ -1150,21 +1143,29 @@ namespace substitution {
 
   void MultiFrequencyModel::recalc(const vector<int>&) 
   {
+    // get underlying frequencies from our submodel
     valarray<double> f = frequencies();
 
     // calculate probability of each sub-model
-    for(int m=0;m<fraction.size();m++) {
+    for(int m=0;m<fraction.size();m++) 
+    {
+      // Pr(m) = sum_l Pr(m|l)*Pr(l)
       fraction[m] = 0;
       for(int l=0;l<Alphabet().size();l++)
 	fraction[m] += a(m,l)*f[l];
     }
 
-    // recalc sub-models
+    if (std::abs(sum(fraction) - 1.0) > 1.0e-5) std::cerr<<"ERROR: sum(fraction) = "<<sum(fraction)<<endl;
+
+    // recalculate sub-models
     valarray<double> fm(Alphabet().size());
-    for(int m=0;m<fraction.size();m++) {
-      
+    for(int m=0;m<fraction.size();m++) 
+    {
+      // Pr(l|m) = Pr(m|l)*Pr(l)/Pr(m)
       for(int l=0;l<fm.size();l++)
 	fm[l] = a(m,l)*f[l]/fraction[m];
+
+      if (std::abs(fm.sum() - 1.0) > 1.0e-5) std::cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<fm.sum()<<endl;
 
       // get a new copy of the sub-model and set the frequencies
       sub_parameter_models[m] = &SubModel();
@@ -1185,11 +1186,19 @@ namespace substitution {
     for(int i=0;i<n;i++)
       sub_parameter_models[i] = SubModel();
 
-    for(int l=0;l<Alphabet().size();l++)
-      for(int m=0;m<n;m++) {
-	string pname = string("a")+Alphabet().lookup(l)+convertToString(m);
-	add_super_parameter(pname,1.0/n);
+    // Set up variable names
+    //   - initial probability that a letter l is in a submodel of type m = 1/n
+    for(int l=0;l<Alphabet().size();l++) 
+    {
+      string letter = Alphabet().lookup(l);
+
+      for(int m=0;m<n;m++) 
+      {
+	string index = convertToString(m+1);
+	string pname = string("a") + letter + index;
+	add_super_parameter(pname, 1.0/n);
       }
+    }
 
     read();
     recalc_all();

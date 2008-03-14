@@ -352,11 +352,30 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 
   set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
   P.keys["multi::p_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "multi:p*", "multi:p_dirichlet_N",     1,  parameter_moves);
+  add_MH_move(P, dirichlet_proposal,    "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);
 
   set_if_undef(P.keys,"DP::f_dirichlet_N",1.0);
   P.keys["DP::f_dirichlet_N"] *= 10;
   add_MH_move(P, dirichlet_proposal,    "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
+
+  set_if_undef(P.keys,"MF::dirichlet_N",10.0);
+  for(int s=0;s<P.n_smodels();s++) {
+    string index = convertToString(s+1);
+    const alphabet& a = P.SModel(s).Alphabet();
+    const int asize = a.size();
+
+    string prefix = string("S") + index + "::";
+
+    // special case - no prefix 
+    if (P.n_smodels() == 1)
+      prefix = "";
+
+    for(int l=0;l<asize;l++) {
+      string pname = prefix+ "a" + a.lookup(l) + "*";
+      cerr<<pname<<endl;
+      add_MH_move(P, dirichlet_proposal, pname, "MF::dirichlet_N",     1,  parameter_moves);
+    }
+  }
 
   // FIXME - we need a proposal that sorts after changing
   //         then we can un-hack the recalc function in smodel.C
