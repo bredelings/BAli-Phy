@@ -1,3 +1,7 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include "util.H"
 #include "parsimony.H"
 using namespace std;
@@ -53,8 +57,17 @@ Matrix amino_acid_cost_matrix(const Codons& C)
   return cost;
 }
 
+// Decompose into 2 functions
+// (a) one should construct the cost matrix
+// (b) one should use this to reconstruct the letters at each node
+// Also change the vector< vector< double> > to a Matrix
 
-double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const Matrix& cost) 
+// Finally, I should templatize these functions, in order to allow an <int> and
+// a <double> version.  Do I need to put ALL the code in the headers, or can I
+// just instantiate the <int> and <double> versions, with the code in the *.C file?
+
+vector<vector<double> > 
+peel_n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const Matrix& cost,int root)
 {
   const int A = a.size();
 
@@ -64,7 +77,6 @@ double n_mutations(const alphabet& a, const vector<int>& letters, const Sequence
 
   vector< vector<double> > n_muts(T.n_nodes(),vector<double>(A,0));
 
-  int root = T.directed_branch(0).target();
   vector<const_branchview> branches = branches_toward_node(T,root);
 
   vector<double> temp(A);
@@ -73,7 +85,7 @@ double n_mutations(const alphabet& a, const vector<int>& letters, const Sequence
   
   for(int i=0;i<A;i++)
     for(int j=0;j<A;j++)
-      max_cost = std::max(cost(i,j), max_cost);
+      max_cost = std::max(cost(i,j)+1, max_cost);
     
   // set the leaf costs
   for(int s=0;s<T.n_leaves();s++)
@@ -95,8 +107,50 @@ double n_mutations(const alphabet& a, const vector<int>& letters, const Sequence
       n_muts[t][l] += min(temp);
     }
   }
+  
+  return n_muts;
+}
 
+double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const Matrix& cost)
+{
+  int root = T.directed_branch(0).target();
+  vector< vector<double> > n_muts = peel_n_mutations(a,letters,T,cost,root);
   return min(n_muts[root]);
+}
+
+vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const Matrix& cost)
+{
+  int root = T.directed_branch(0).target();
+  vector< vector<double> > n_muts = peel_n_mutations(a,letters,T,cost,root);
+
+  // get an order list of branches point away from the root;
+  vector<const_branchview> branches = branches_from_node(T,root);
+  std::reverse(branches.begin(),branches.end());
+  
+  // Allocate space to store the letter for each node
+  vector<int> node_letters(T.n_nodes(),-1);
+
+  // choose the cheapest letter at the root
+  node_letters[root] = argmin(n_muts[root]);
+
+  const unsigned A = a.size();
+  vector<double> temp(A);
+
+  for(int i=0;i<branches.size();i++) 
+  {
+    int s = branches[i].source();
+    int t = branches[i].target();
+
+    int k = node_letters[s];
+    assert(k != -1);
+
+    for(int l=0;l<A;l++)
+      temp[l] = n_muts[t][l]+cost(l,k);
+
+    node_letters[t] = argmin(temp);
+  }
+
+  return node_letters;
 }
 
 double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T) 
