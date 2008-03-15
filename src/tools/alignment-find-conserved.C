@@ -7,6 +7,8 @@
 #include "setup.H"
 #include "alignment-util.H"
 #include "util.H"
+#include "parsimony.H"
+#include "tree-dist.H"
 
 #include <boost/program_options.hpp>
 
@@ -30,7 +32,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("groups", value<string>(),"file with taxon groups")
+    ("split",value<vector<string> >()->composing(),"a split to consider")
     ("ignore-rate-change","ignore rate changes")
+    ("require-conservation","Highlight conserved regions")
+    ("require-change","Highlight regions if conservation changes")
+    ("require-all-different","Taxa differences are interesting of there is no letter overlap")
     ;
 
   // positional options
@@ -53,20 +59,36 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+struct sequence_group
+{
+  string name;
+  vector<int> taxa;
+};
 
-vector<vector<int> > load_groups(const alignment& A,const string& filename)
+
+vector<sequence_group> load_groups(const alignment& A,const string& filename)
 {
   vector<string> seq_names = sequence_names(A);
-  vector<vector<int> > groups;
+  vector<sequence_group> groups;
 
   ifstream file(filename.c_str());
   string line;
   for(int g=1;getline(file,line);g++)
   {
-    if (not groups.size() or groups.back().size())
-      groups.push_back(vector<int>());
+    if (not groups.size() or groups.back().taxa.size())
+      groups.push_back(sequence_group());
 
     vector<string> names = split(line,' ');
+
+    sequence_group& current_group = groups.back();
+
+    string n = names[0];
+    if (n[n.size()-1] != ':')
+      throw myexception()<<"Group "<<g<<": Group doesn't start with a name (ending in a ':')";
+    n = n.substr(0,n.size()-1);
+    names.erase(names.begin());
+
+    current_group.name = n;
 
     for(int i=0;i<names.size();i++)
       if (names[i].size())
@@ -74,7 +96,7 @@ vector<vector<int> > load_groups(const alignment& A,const string& filename)
 	int j = find_index(seq_names, names[i]);
 	if (j == -1)
 	  throw myexception()<<"Group "<<g<<": I cant find taxon '"<<names[i]<<"' in the alignment!";
-	groups.back().push_back(j);
+	current_group.taxa.push_back(j);
       }
   }
 
@@ -146,7 +168,23 @@ int number_of(const vector<int>& v,int n)
   return count;
 }
 
-int main(int argc,char* argv[]) 
+bool all_different(const alignment& A,int c, const vector<sequence_group>& groups, int g1, int g2)
+{
+  for(int i=0;i<groups[g1].taxa.size();i++) 
+  {
+    int t1 = groups[g1].taxa[i];
+    int l1 = A(c,t1);
+    for(int j=0;j<groups[g2].taxa.size();j++) {
+      int t2 = groups[g2].taxa[j];
+      int l2 = A(c,t2);
+      if (l1 == l2) return false;
+    }
+  }
+  return true;
+}
+
+
+int main(int argc,char* argv[])
 { 
   try {
     //---------- Parse command line  -------//
@@ -163,25 +201,25 @@ int main(int argc,char* argv[])
     const alphabet& a = A.get_alphabet();
     
     //------- Load groups and find branches -------//
-    vector<vector<int> > groups;
+    vector<sequence_group> groups;
     if (args.count("groups")) 
       groups = load_groups(A,args["groups"].as<string>());
 
     for(int i=0;i<groups.size();i++) {
-      for(int j=0;j<groups[i].size();j++)
-	cerr<<A.seq(groups[i][j]).name<<" ";
+      cerr<<groups[i].name<<": ";
+      for(int j=0;j<groups[i].taxa.size();j++)
+	cerr<<A.seq(groups[i].taxa[j]).name<<" ";
       cerr<<endl;
     }
 
     vector<int> group_branches;
-    if (args.count("tree")) 
+    if (args.count("tree"))
     {
-      for(int i=0;i<groups.size();i++) 
+      for(int i=0;i<groups.size();i++)
       {
 	valarray<bool> p(false,T.n_leaves());
-	for(int j=0;j<groups[i].size();j++)
-	  p[groups[i][j]] = true;
-	
+	for(int j=0;j<groups[i].taxa.size();j++)
+	  p[groups[i].taxa[j]] = true;
 
 	int found = -1;
 	for(int b=0;b<2*T.n_branches() and found == -1;b++)
@@ -192,6 +230,18 @@ int main(int argc,char* argv[])
 	
 	group_branches.push_back(found);
       }
+    }
+
+    vector<string> group_names;
+    for(int i=0;i<groups.size();i++)
+      group_names.push_back(groups[i].name);
+
+    vector<Partition> splits;
+    if (args.count("split")) 
+    {
+      vector<string> split = args["split"].as<vector<string> >();
+      for(int i=0;i<split.size();i++) 
+	splits.push_back(Partition(group_names,split[i]));
     }
 
     //-------------------------------------------//
@@ -205,43 +255,190 @@ int main(int argc,char* argv[])
 
     for(int c=0;c<C.size1();c++) 
     {
+      vector<bool> interesting(groups.size(), true);
+
+      //-------------------------------------------------------//
+      vector<int> leaf_letters( T.n_leaves() );
+      for(int j=0;j<leaf_letters.size();j++)
+	leaf_letters[j] = A(c,j);
+      vector<vector<int> > node_letters = get_all_parsimony_letters(a,leaf_letters,T,unit_cost_matrix(a));
+
+      vector<vector<int> > initial_value(groups.size());
+      for(int g=0;g<groups.size();g++) 
+      {
+	int n = T.directed_branch(group_branches[g]).target();
+	initial_value[g] = node_letters[n];
+      }
+
+      //------------ find 'group conserved at' values ----------//
       vector<int> value(groups.size(),alphabet::gap);
 
       for(int g=0;g<groups.size();g++) 
       {
 	vector<int> temp;
-	for(int i=0;i<groups[g].size();i++)
-	  temp.push_back(A(c,groups[g][i]));
+	for(int i=0;i<groups[g].taxa.size();i++)
+	  temp.push_back(A(c,groups[g].taxa[i]));
 
 	int best = most_common(temp);
 	int count = number_of(temp,best);
 	
-	if (count >= groups[g].size()-1 and count >=3 and count> groups[g].size()/2)
+	if (count >= groups[g].taxa.size()-1 and count >=3 and count> groups[g].taxa.size()/2)
 	  value[g] = best;
       }
 
+      //-------- Determine whether column is interesting --------//
+      if (args.count("require-all-different"))
+      {
+	if (args.count("split"))
+	{
+	  vector<bool> in_changed_split(groups.size(),false);
+	  for(int i=0;i<splits.size();i++) 
+	  {
+	    bool some_different = false;
+	    for(int g1=0;g1<groups.size();g1++)
+	      for(int g2=0;g2<groups.size();g2++)
+		if (splits[i].group1[g1] and splits[i].group2[g2]) {
+		  if (all_different(A,c,groups,g1,g2))
+		    some_different = true;
+		}
+	  
+	    bool no_same = true;
+	    for(int g1=0;g1<groups.size();g1++)
+	      for(int g2=0;g2<groups.size();g2++)
+		if (splits[i].group1[g1] and splits[i].group2[g2])
+		  if (not all_different(A,c,groups,g1,g2))
+		    no_same = false;
 
+	    if (some_different and no_same) 
+	      for(int g=0;g<groups.size();g++)
+		if (splits[i].group1[g] or splits[i].group2[g])
+		  in_changed_split[g] = true;
+	  }
+
+	  for(int g=0;g<groups.size();g++)
+	    interesting[g] = interesting[g] and in_changed_split[g];
+	}
+
+	else {
+	  bool different = false;
+	  for(int g1=0;g1<groups.size();g1++)
+	    for(int g2=0;g2<groups.size();g2++)
+	      if (all_different(A,c,groups,g1,g2))
+		different = true;
+
+	  if (not different)
+	    for(int g=0;g<groups.size();g++) 
+	      interesting[g] = false;
+	}
+      }
+    
+      if (args.count("require-change"))
+      {
+	if (args.count("split"))
+	{
+	  vector<bool> in_changed_split(groups.size(),false);
+	  for(int i=0;i<splits.size();i++) 
+	  {
+	    bool some_different = false;
+	    for(int g1=0;g1<groups.size();g1++)
+	      for(int g2=0;g2<groups.size();g2++)
+		if (splits[i].group1[g1] and splits[i].group2[g2]) {
+		  if (value[g1] != value[g2])
+		    if (not args.count("ignore-rate-change") or 
+			(value[g1] != alphabet::gap and value[g2] != alphabet::gap))
+		      some_different = true;
+		}
+	  
+	    bool no_same = true;
+	    for(int g1=0;g1<groups.size();g1++)
+	      for(int g2=0;g2<groups.size();g2++)
+		if (splits[i].group1[g1] and splits[i].group2[g2])
+		  if (value[g1] == value[g2])
+		    no_same = false;
+
+	    // This is Option #1 
+	    //  - some conserved differences but no conserved similarities
+	    // Also consider Option #2
+	    //  - a change in both LETTER and CONSERVATION on at least one of the
+	    //    two branches leading from the duplication.
+	    if (some_different and no_same) 
+	      for(int g=0;g<groups.size();g++)
+		if (splits[i].group1[g] or splits[i].group2[g])
+		  in_changed_split[g] = true;
+	  }
+
+	  for(int g=0;g<groups.size();g++)
+	    interesting[g] = interesting[g] and in_changed_split[g];
+
+
+	}
+
+	else {
+	  if (args.count("ignore-rate-change")) 
+	  {
+	    for(int g=0;g<groups.size();g++) 
+	      interesting[g] = interesting[g] and not all_same_or(value,alphabet::gap);
+	  }
+	  else 
+	  {
+	    for(int g=0;g<groups.size();g++)
+		interesting[g] = interesting[g] and not all_same(value);
+	  }
+	}
+      }
+    
+      // A group is only interesting if its conserved
+      if (args.count("require-conservation"))
+	for(int g=0;g<groups.size();g++)
+	  interesting[g] = interesting[g] and (value[g] != alphabet::gap);
+
+      // A group is only interesting if it is in one of the splits
+      if (args.count("split"))
+	for(int g=0;g<groups.size();g++) {
+	  bool found = false;
+	  for(int i=0;i<splits.size() and not found;i++) 
+	    if (splits[i].group1[g] or splits[i].group2[g])
+	      found = true;
+	  interesting[g] = interesting[g] and found;
+	}
+
+      //------------ print 'group conserved at' values ----------//
       cerr<<c+1<<"   ";
       for(int i=0;i<value.size();i++) 
 	cerr<<a.lookup(value[i])<<" ";
+      cerr<<"     ";
 
-      bool different = not all_same(value);
+      for(int g=0;g<groups.size();g++) 
+	if (interesting[g])
+	  cerr<<"1 ";
+	else
+	  cerr<<"0 ";
+      cerr<<endl;
 
-      if (args.count("ignore-rate-change"))
-	different = not all_same_or(value,alphabet::gap);
+      //------------- print parsimony initial values --------------//
+      cerr<<"     ";
+      for(int i=0;i<initial_value.size();i++) {
+	for(int j=0;j<initial_value[i].size();j++)
+	  cerr<<a.lookup(initial_value[i][j]);
+	cerr<<" "; 
+      }     
+      cerr<<"    "<<n_mutations(a,leaf_letters,T,unit_cost_matrix(a))<<endl;
+      cerr<<endl;
 
-      cerr<<"    "<<different<<endl;
 
-      // When something becomes less conserved, that is interesting, but not
-      // as interesting as an AMINO ACID CHANGE that happens on the branch that
-      // stems from the duplication!
 
-      // So, EEEEE vs EEKEE isn't so interesting, since the K didn't change on the duplication
-      // branch...
+      //--------------------- Set highlighting ---------------------//
+      // Interesting groups -> 1.0
+      for(int g=0;g<groups.size();g++)
+	if (interesting[g])
+	  for(int i=0;i<groups[g].taxa.size();i++)
+	    C(c,groups[g].taxa[i]) = 1.0;
+
+      // Set conserved groups -> 0.5
       for(int g=0;g<groups.size();g++)
 	if (value[g] != alphabet::gap)
-	  for(int i=0;i<groups[g].size();i++)
-	    C(c,groups[g][i]) = different?1.0:0.5;
+	  for(int i=0;i<groups[g].taxa.size();i++)
+	    C(c,groups[g].taxa[i]) = max(0.5, C(c,groups[g].taxa[i]));
     }
 
 
