@@ -153,6 +153,61 @@ vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters,
   return node_letters;
 }
 
+
+
+vector<vector<int> > get_all_parsimony_letters(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const Matrix& cost)
+{
+  int root = T.directed_branch(0).target();
+  vector< vector<double> > n_muts = peel_n_mutations(a,letters,T,cost,root);
+
+  // get an order list of branches point away from the root;
+  vector<const_branchview> branches = branches_from_node(T,root);
+  std::reverse(branches.begin(),branches.end());
+  
+  // Allocate space to store the letters for each node
+  vector<vector<int> > node_letters(T.n_nodes());
+
+  const unsigned A = a.size();
+
+  // choose the cheapest letters at the root
+  {
+    double m = min(n_muts[root]);
+    for(int l=0;l<A;l++)
+      if (n_muts[root][l] <= m)
+	node_letters[root].push_back(l);
+  }
+
+  vector<double> temp(A);
+
+  for(int i=0;i<branches.size();i++) 
+  {
+    int s = branches[i].source();
+    int t = branches[i].target();
+
+    vector<double> best(node_letters[s].size());
+
+    for(int j=0;j<node_letters[s].size();j++) 
+    {
+      for(int l=0;l<A;l++)
+	temp[l] = n_muts[t][l]+cost(l,node_letters[s][j]);
+      best[j] = min(temp);
+    }
+    
+    for(int l=0;l<A;l++) 
+    {
+      bool is_best = false;
+      for(int j=0;j<node_letters[s].size() and not is_best;j++) 
+	if (n_muts[t][l]+cost(l,node_letters[s][j]) <= best[j])
+	  is_best=true;
+      if (is_best)
+	node_letters[t].push_back(l);
+    }
+
+  }
+
+  return node_letters;
+}
+
 double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T) 
 {
   return n_mutations(a,letters,T,unit_cost_matrix(a));
