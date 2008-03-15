@@ -440,7 +440,7 @@ namespace probability {
 
   double Normal::quantile(double p,double) const 
   {
-    return gsl_cdf_gaussian_Pinv(p-mu(),sigma());
+    return mu()+gsl_cdf_gaussian_Pinv(p,sigma());
   }
 
   double Normal::moment(int n) const
