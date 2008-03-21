@@ -5,6 +5,8 @@ TOPOLOGIES=c50 c66 c80 c90 c95 c99 c100
 
 IMODEL=$(shell head -n 40 1.out | pickout --no-header 'indel model1')
 
+PARTITIONS=$(shell grep data 1.out | sed "s/data\(.*\) = .*/\1/")
+
 TREES=${TOPOLOGIES}
 
 ifeq ($(origin CHAIN), undefined)
@@ -23,8 +25,8 @@ all: Results/analysis
 .PRECIOUS .SECONDARY: % 
 
 .PRECIOUS .SECONDARY: Results/%-AU.prob
-.PRECIOUS .SECONDARY: Results/distances
-.PRECIOUS .SECONDARY: Results/pairs
+.PRECIOUS .SECONDARY: Results/distances%
+.PRECIOUS .SECONDARY: Results/pairs%
 
 Work/setup:
 	@echo -e "Setting up directories... \c"
@@ -38,8 +40,10 @@ Work/setup:
 ifeq ($(IMODEL),)
 AU_TARGETS=
 else
-AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/consensus-75.fasta Results/consensus-50.fasta Results/consensus-25.fasta Results/consensus-10.fasta Results/consensus-10-AU.html Results/consensus-10-AU2.html
+#AU_TARGETS=$(foreach i,$(PARTITIONS),Results/MAP$(i)-AU.html Results/MAP$(i)-AU2.html Results/consensus-75-$(i).fasta Results/consensus-50-$(i).fasta Results/consensus-25-$(i).fasta Results/consensus-10-$(i).fasta Results/consensus-10-$(i)-AU.html Results/consensus-10-$(i)-AU2.html)
+AU_TARGETS=$(foreach i,$(PARTITIONS),Results/consensus-75-$(i).fasta Results/consensus-50-$(i).fasta Results/consensus-25-$(i).fasta Results/consensus-10-$(i).fasta Results/consensus-10-$(i)-AU.html Results/consensus-10-$(i)-AU2.html) Results/MAP-AU.html Results/MAP-AU2.html
 endif
+
 
 Results/analysis: Results/Report Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
                   ${TREES:%=Results/%.mtree} Results/MAP.topology Results/MAP.tree \
@@ -67,7 +71,7 @@ Work/header: Work/out Work/Pmarg
            tail -n +2 Work/out | head -n 100 | grep model;\
            echo; } > $@
 
-Work/samples-${SKIP}+${SIZE}: Work/out
+Work/samples%-${SKIP}+${SIZE}: Work/partition%.fastas Work/setup
 	@cut-range --skip ${SKIP} ${SIZE:%=--size %} < $< > $@
 
 %.from.${SKIP}: %
@@ -120,20 +124,36 @@ Work/MAP-unordered.fasta: Work/MAP Work/setup
 	@alignment-find < Work/MAP > $@
 	@echo "done."
 
-Work/median-unordered.fasta: Work/samples-${SKIP}+${SIZE}
-	alignment-median --max-alignments 2000 --analysis=median< $< > $@ 2>Work/median.err
+Work/median%-unordered.fasta: Work/samples%-${SKIP}+${SIZE}
+	alignment-median --max-alignments 2000 --analysis=median< $< > $@ 2>Work/median$*.err
 
 Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
 	@alignment-reorder Work/$*-unordered.fasta Results/c50.tree > $@ 2>/dev/null
 
-Results/au-graph-%.plot Work/consensus-%-unordered.fasta: Work/samples-${SKIP}+${SIZE}
-	@echo -e "Computing consensus-$* alignment ... \c"
-	@alignment-consensus --cutoff=0.$* --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
+Results/au-graph%.plot Work/consensus-75-%-unordered.fasta: Work/samples%-${SKIP}+${SIZE}
+	@echo -e "Computing consensus-75-$* alignment ... \c"
+	@alignment-consensus --cutoff=0.75 --uncertainty=Results/au-graph.plot < Work/samples$*-${SKIP}+${SIZE} > $@ 2>/dev/null
 	@echo "done."
 
-Results/%-AU.prob: Results/%.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree
+Results/au-graph%.plot Work/consensus-50-%-unordered.fasta: Work/samples%-${SKIP}+${SIZE}
+	@echo -e "Computing consensus-50-$* alignment ... \c"
+	@alignment-consensus --cutoff=0.50 --uncertainty=Results/au-graph.plot < Work/samples$*-${SKIP}+${SIZE} > $@ 2>/dev/null
+	@echo "done."
+
+Results/au-graph%.plot Work/consensus-25-%-unordered.fasta: Work/samples%-${SKIP}+${SIZE}
+	@echo -e "Computing consensus-25-$* alignment ... \c"
+	@alignment-consensus --cutoff=0.25 --uncertainty=Results/au-graph.plot < Work/samples$*-${SKIP}+${SIZE} > $@ 2>/dev/null
+	@echo "done."
+
+Results/au-graph%.plot Work/consensus-10-%-unordered.fasta: Work/samples%-${SKIP}+${SIZE}
+	@echo -e "Computing consensus-10-$* alignment ... \c"
+	@alignment-consensus --cutoff=0.10 --uncertainty=Results/au-graph.plot < Work/samples$*-${SKIP}+${SIZE} > $@ 2>/dev/null
+	@echo "done."
+
+# Results/$file-$partition-AU.prob: Results/$file.fasta Work/samples$partitions-${SKIP}+${SIZE} Results/MAP.tree
+Results/%-AU.prob: Results/%.fasta Work/samples1-${SKIP}+${SIZE} Results/MAP.tree
 	@echo -e "Calculating AU probabilities for $* alignment ... \c"
-	@alignment-gild Results/$*.fasta Results/MAP.tree --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
+	@alignment-gild Results/$*.fasta Results/MAP.tree --max-alignments 500 < Work/samples1-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
 	@echo "done."
 
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
@@ -143,7 +163,7 @@ Results/%-AU.html: Results/%-AU.prob Results/%.fasta
 
 Results/%-AU2.html: Results/%-AU.prob Results/%.fasta
 	@echo -e "Drawing $* alignment plot (2) ... \c"
-	@if ! alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme AA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; then alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme DNA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; fi
+	@if ! alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme DNA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; then alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme AA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; fi
 	@echo "done."
 
 Results/c%.topology: Results/consensus Work/setup
@@ -200,10 +220,10 @@ clean:
 %.phy: %.fasta
 	@alignment-convert --output phylip < $< > $@
 
-Results/distances: Work/samples-${SKIP}+${SIZE} Work/MAP-unordered.fasta
+Results/distances%: Work/samples%-${SKIP}+${SIZE} Work/MAP-unordered.fasta
 	@echo -e "Calculating alignment distances to MAP... \c"
-	@fixedpt-alignment-distances Work/MAP-unordered.fasta < Work/samples-${SKIP}+${SIZE} > $@
+	@fixedpt-alignment-distances Work/MAP-unordered.fasta < Work/samples$*-${SKIP}+${SIZE} > $@
 
-Results/pairs: Work/samples-${SKIP}+${SIZE} 
+Results/pairs%: Work/samples%-${SKIP}+${SIZE} 
 	@echo -e "Calculating pairwise distances between posterior alignment sample... \c"
-	@pairwise-alignment-distances ${THINTO} < Work/samples-${SKIP}+${SIZE} > $@
+	@pairwise-alignment-distances ${THINTO} < Work/samples$*-${SKIP}+${SIZE} > $@

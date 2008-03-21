@@ -154,7 +154,7 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
 }
 
 void do_sampling(const variables_map& args,Parameters& P,long int max_iterations,
-		 const vector<ostream*> files)
+		 vector<ostream*>& files)
 {
   // args for branch-based stuff
   vector<int> branches(P.T->n_branches());
@@ -445,7 +445,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
     report_constraints(s1,s2);
   }
 
-  sampler.go(P,subsample,max_iterations,s_out,s_trees,s_parameters,s_map);
+  sampler.go(P,subsample,max_iterations,s_out,s_trees,s_parameters,s_map,files);
 }
 
 #ifdef DEBUG_MEMORY
@@ -713,7 +713,7 @@ string hostname()
 }
 #endif
 
-vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
+vector<ostream*> init_files(const variables_map& args,int argc,char* argv[],int n_partitions)
 {
   vector<ostream*> files;
 
@@ -735,6 +735,10 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[])
   filenames.push_back("trees");
   filenames.push_back("p");
   filenames.push_back("MAP");
+  for(int i=0;i<n_partitions;i++) {
+    string filename = string("partition") + convertToString(i+1) + ".fastas";
+    filenames.push_back(filename);
+  }
     
   vector<ofstream*> files2 = open_files(dirname+"/",filenames);
   files.clear();
@@ -1286,7 +1290,7 @@ int main(int argc,char* argv[])
     //---------- Open output files -----------//
     vector<ostream*> files;
     if (not args.count("show-only"))
-      files = init_files(args,argc,argv);
+      files = init_files(args, argc, argv, A.size());
     else {
       files.push_back(&cout);
       files.push_back(&cerr);

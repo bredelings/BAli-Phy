@@ -293,7 +293,7 @@ namespace MCMC {
   public:
     /// Run the sampler for 'max' iterations
     void go(Parameters& P, int subsample, int max, 
-	    std::ostream&,std::ostream&,std::ostream&,std::ostream&);
+	    std::ostream&,std::ostream&,std::ostream&,std::ostream&,std::vector<std::ostream*>& files);
 
     Sampler(const string& s)
       :MoveAll(s) {};

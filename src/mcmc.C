@@ -461,7 +461,8 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
 }
 
 void Sampler::go(Parameters& P,int subsample,const int max_iter,
-		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map)
+		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map,
+		 vector<ostream*>& files)
 {
   P.recalc_all();
 
@@ -567,10 +568,18 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     efloat_t likelihood = P.likelihood();
     efloat_t Pr = prior * likelihood;
 
-    if (iterations%subsample == 0) {
+    if (iterations%subsample == 0) 
+    {
       bool show_alignment = (iterations%(10*subsample) == 0);
       if (not P.n_imodels()) show_alignment = false;
       print_stats(s_out,s_trees,P,show_alignment);
+      if (show_alignment) {
+	for(int i=0;i<P.n_data_partitions();i++) 
+	{
+	  (*files[5+i])<<"iterations = "<<iterations<<"\n\n";
+	  (*files[5+i])<<standardize(*P[i].A, *P.T)<<"\n";
+	}
+      }
 
       s_parameters<<iterations<<"\t";
       s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
