@@ -28,6 +28,12 @@ bad_letter::bad_letter(const string& l,const string& name)
   :myexception(string("Letter '") + sanitize(l) + string("' not in alphabet '") + name + "'."),letter(l)
 {}
 
+// Legally, we have to define this to give them a location.
+// This only triggers an error in g++ if they aren't inlined.
+const int alphabet::gap;
+const int alphabet::not_gap;
+const int alphabet::unknown;
+
 bool alphabet::contains(char l) const {
   string s(1U,l);
   return contains(s);
