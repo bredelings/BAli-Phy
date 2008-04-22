@@ -494,7 +494,7 @@ void equal_angle_layout(tree_layout& L,int parent,double min_a,double max_a)
 {
   SequenceTree& T = L.T;
 
-  if (n_children(T,parent) == 1) return;
+  if (T.directed_branch(parent).target().is_leaf_node()) return;
 
   double a1 = min_a;
   for(out_edges_iterator b = T.directed_branch(parent).branches_after();b;b++) 
@@ -537,8 +537,43 @@ double node_diameter(double lengths,int degree)
   return lengths*ratio;
 }
 
-tree_layout equal_angle_layout(SequenceTree MF,const vector<double>& node_radius)
+tree_layout equal_angle_layout(SequenceTree MF,vector<double> node_radius)
 {
+  /*
+
+  vector<nodeview> nodes;
+  for(int i=0;i<MF.n_nodes();i++)
+    nodes.push_back(MF[i]);
+
+  vector<branchview> branches;
+
+  for(int j=0;j<3;j++) {
+    for(int i=0;i<MF.n_branches();i++)
+      branches.push_back(MF.branch(i));
+
+    for(int i=0;i<branches.size();i++) {
+      
+      nodeview n = MF.create_node_on_branch(branches[i]);
+      
+      out_edges_iterator temp = n.branches_out();
+      branchview b1 = *temp;
+      temp++;
+      branchview b2 = *temp;
+      
+      double L = b1.length() + b2.length();
+      b1.set_length(L/2.0);
+      b2.set_length(L/2.0);
+    }
+  }
+
+  // remap node radii
+  vector<double> old_node_radius = node_radius;
+  node_radius = vector<double>(MF.n_nodes(), 0.0);
+  for(int i=0;i<old_node_radius.size();i++)
+    node_radius[nodes[i]] = old_node_radius[i];
+*/
+
+
   for(int b=0;b<MF.n_branches();b++) 
   {
     double L = MF.branch(b).length();
@@ -1635,7 +1670,7 @@ struct energy2: public graph_energy_function
 
 	double w = repulsion_weight;
 
-	if (n_cross(i,j)) {
+	if (n_cross(i,j) and false) {
 	  E += node_node_attraction(GL, D, i, j, w, -1);
 	}
 	else {
@@ -1899,7 +1934,7 @@ void graph_plotter::operator()(cairo_t* cr)
 	cairo_set_line_width(cr, line_width/2.0);
 	cairo_set_dash (cr, dashes, 2, 0.0);
       }
-      if (e_cross_v[e])
+      if (e_cross_v[e] and false)
 	cairo_set_source_rgb (cr, 1 , 0, 0);
       
       cairo_stroke (cr);
@@ -1931,7 +1966,7 @@ void graph_plotter::operator()(cairo_t* cr)
     }
 
     cairo_save(cr);
-    if (n_cross_v[n]) {
+    if (n_cross_v[n] and false) {
       //      cerr<<"n_cross: "<<n<<endl;
       double R = 0.001;
       cairo_arc(cr, x, y, R, 0.0, 2.0 * M_PI);
@@ -1996,6 +2031,13 @@ void graph_plotter::operator()(cairo_t* cr)
 
 void draw_graph(const MC_tree_with_lengths& T,const string& name)
 {
+  // try to scale lengths in the *.dot file so that the average is 1.0
+  double scale = 1.0;
+  double total_branch_length = 0;
+  for(int b=0;b<T.n_branches();b++)
+    total_branch_length += T.branch_length(b);
+  scale = 0.5*T.n_branches()/total_branch_length;
+
   const int N = T.n_nodes();
 
   cout<<"digraph "<<name<<" { \n\
@@ -2018,7 +2060,7 @@ void draw_graph(const MC_tree_with_lengths& T,const string& name)
 
     if (e.type == 1) {
       attributes.push_back("arrowhead=none");
-      attributes.push_back(string("len=")+convertToString(5.0*T.branch_length(b)));
+      attributes.push_back(string("len=")+convertToString(scale*T.branch_length(b)));
       const Partition& p = T.partitions[e.partition];
       if (informative(p))
 	styles.push_back("setlinewidth(2)");
