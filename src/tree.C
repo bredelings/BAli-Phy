@@ -180,7 +180,8 @@ int TreeView::remove_node_from_branch(BranchNode* n1) {
   return dead_branch_name;
 }
 
-BranchNode* TreeView::unlink_subtree(BranchNode* b) {
+BranchNode* TreeView::unlink_subtree(BranchNode* b) 
+{
   if (not is_leaf_node(b)) {
     BranchNode* prev = b->prev;
 
@@ -201,6 +202,17 @@ BranchNode* TreeView::unlink_subtree(BranchNode* b) {
 
     return copy;
   }
+}
+
+void knit_node_together(const vector<BranchNode*>& nodes) {
+  nodes[0]->prev = nodes.back();
+  nodes.back()->next = nodes[0];
+
+  for(int i=0;i<nodes.size()-1;i++) {
+    nodes[i]->next = nodes[i+1];
+    nodes[i+1]->prev = nodes[i];
+  }
+  
 }
 
 //------------------------ Begin definition of Tree::* routines ------------------------//
@@ -299,13 +311,12 @@ vector<int> Tree::prune_leaves(const vector<int>& remove)
     do_remove[remove[i]] = true;
 
   // remove some leaves and shift others down
-  int shift = 0;
+  int new_leaves=0;
   BranchNode* node_remainder = NULL;
   for(int i=0;i<leaves.size();i++)
   {
-    if (do_remove[i]) {
-      shift++;
-
+    if (do_remove[i]) 
+    {
       BranchNode* leaf = leaves[i];
       while(is_leaf_node(leaf) and leaf->out and leaf->out != leaf) {
 	BranchNode* parent = TreeView::unlink_subtree(leaf->out);
@@ -318,18 +329,25 @@ vector<int> Tree::prune_leaves(const vector<int>& remove)
 	TreeView::remove_node_from_branch(leaf);
     }
     else {
-      name_node(leaves[i],i-shift);
+      name_node(leaves[i],new_leaves++);
       node_remainder = leaves[i];
     }
   }
+  assert(new_leaves == leaves.size() - remove.size());
   
   /// Reconstruct everything from node names
   reanalyze(node_remainder);
 
-  vector<int> mapping(leaves.size() - shift);
+  vector<int> mapping(new_leaves,-1);
   for(int i=0;i<leaves.size();i++)
     if (not do_remove[i])
       mapping[leaves[i]->node] = i;
+
+  for(int i=0;i<mapping.size();i++) {
+    assert(mapping[i] != -1);
+    for(int j=0;j<i;j++)
+      assert(mapping[i] != mapping[j]);
+  }
 
   return mapping;
 }
@@ -841,17 +859,6 @@ void Tree::check_structure() const {
   }
 
 #endif
-}
-
-void knit_node_together(const vector<BranchNode*>& nodes) {
-  nodes[0]->prev = nodes.back();
-  nodes.back()->next = nodes[0];
-
-  for(int i=0;i<nodes.size()-1;i++) {
-    nodes[i]->next = nodes[i+1];
-    nodes[i+1]->prev = nodes[i];
-  }
-  
 }
 
 void insert_after(BranchNode* n1,BranchNode* n2)

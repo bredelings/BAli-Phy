@@ -41,6 +41,8 @@ BranchNode* get_first_node();
 BranchNode* add_node(BranchNode*);
 BranchNode* connect_nodes(BranchNode*,BranchNode*);
 void insert_after(BranchNode*,BranchNode*);
+void name_node(BranchNode*,int);
+void knit_node_together(const std::vector<BranchNode*>&);
 
 //------------------------------------ Tree -----------------------------//
 
@@ -211,6 +213,14 @@ public:
 
   /// is 'n' contained in the subtree delineated by 'b' 
   bool subtree_contains(int b,int n) const {return partition(b)[n];}
+
+  /// is 'b2' contained in the subtree delineated by 'b1' 
+  bool subtree_contains_branch(int b1,int b2) const 
+  {
+    const_branchview bv2 = directed_branch(b2);
+    return subtree_contains(b1,bv2.source()) and subtree_contains(b1,bv2.target());
+  }
+
 
   /// Find and split a multifurcating node to create this partition
   int induce_partition(const std::valarray<bool>& partition);
