@@ -73,15 +73,15 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    options(all).positional(p).run(), args);
   notify(args);    
 
-  if (not args.count("fields")) {
-    cerr<<"Error: no fields specified!"<<endl;
-    exit(1);
-  }
-
   if (args.count("help")) {
     cerr<<"Usage: pickout [OPTIONS] field1 [field2 ... ] < data-file \n";
     cerr<<visible<<"\n";
     exit(0);
+  }
+
+  if (not args.count("fields")) {
+    cerr<<"Error: no fields specified!"<<endl;
+    exit(1);
   }
 
   return args;
