@@ -1,14 +1,47 @@
+FIX DP::rate_dirichlet_N to multiple by the number of categories in the dirichlet...
+
+Output and Postprocessing
+ A. How does BEAST do this?
+ B. Write a program...  (PERL -> C++)
+    (i) Stop using 'make'
+    (ii)Generate nice HTML output.
+    (iii) Generate PDFs/figures for all trees/alignments
+    (iv) Make a Cairo version of alignment-draw
+ C. 
+
+
 Partition Stuff
- A. partition-specific alphabets/smodels/imodels
-    (a) Load and use partition-specific *alphabets*.
- B. Create separate moves for (e.g.) HKY::kappa, pi* in each partition.
- C. Currently we are altering the smodel inside the partitions.
+ A. Partition-specific alphabets/smodels/imodels
+    (a) TIME SCALE (mu) - allow it to be different
+    (b) ALPHABET        - allow specifying
+
+ C. How to print out COLLECTIONS of alignments?
+    (a) 1.P1.fastas
+    (b) 1.P1.MAP
+    (c) <chain>.P<partition>.MAP
+
+ D. OUTPUT FILE NAMES: 
+    + Change consensus-10 -> P1-consensus-10%.fasta
+    + Also include P1-initial.fasta
+
+ E. Create separate MOVES for (e.g.) HKY::kappa, pi* in each SModel.
+
+ f. Currently we are altering the smodel inside the partitions.
     This requires copying it...
     (a) how expensive is this?
     (b) how easy to change?
- D. Did we add any slowdown in the -t case? In the other case?
- E. Profile...
 
+ g. Did we add any slowdown in the -t case? In the other case?
+
+ h. SPEED:
+    + profile ...  this stage should be fast!!!
+
+
+Code Cleanliness
+ A. Make tree-dist.H stop relying on copying valarrays of different size.
+    What is the appropriate valarray-specific method to copy PART of a valarray to another valarray?
+
+    
 IDEA: parse "...+var~dist"  (could be +Something[var,dist]
 
 General Branch Length Priors

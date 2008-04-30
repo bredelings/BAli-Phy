@@ -382,8 +382,10 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   //         BUT, this assumes that we have the DP::rate* names in *numerical* order
   //          whereas we probably find them in *lexical* order....
   //          ... or creation order?  That might be OK for now! 
+
+  //FIXME - this should probably be 20*#rate_categories...
   set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
-  P.keys["DP::rate_dirichlet_N"] *= 10;
+  P.keys["DP::rate_dirichlet_N"] *= 10*10;
   add_MH_move(P, sorted(dirichlet_proposal),    "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
 
   for(int i=0;;i++) {
