@@ -255,6 +255,9 @@ vector<sequence> load_file(istream& file,bool pad)
 vector<sequence> load_file(const string& filename,bool pad)
 {
   ifstream file(filename.c_str());
+  if (not file)
+    throw myexception()<<"Can't open file '"<<filename<<"'!";
+
   vector<sequence> s = sequence_format::read_guess(file);
   if (s.size() == 0)
     throw myexception()<<"Alignment file '"<<filename<<"' didn't contain any sequences!";
