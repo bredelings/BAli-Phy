@@ -41,12 +41,12 @@ ifeq ($(IMODEL),)
 AU_TARGETS=
 else
 #AU_TARGETS=$(foreach i,$(PARTITIONS),Results/MAP$(i)-AU.html Results/MAP$(i)-AU2.html Results/consensus-75-$(i).fasta Results/consensus-50-$(i).fasta Results/consensus-25-$(i).fasta Results/consensus-10-$(i).fasta Results/consensus-10-$(i)-AU.html Results/consensus-10-$(i)-AU2.html)
-AU_TARGETS=$(foreach i,$(PARTITIONS),Results/consensus-75-$(i).fasta Results/consensus-50-$(i).fasta Results/consensus-25-$(i).fasta Results/consensus-10-$(i).fasta Results/consensus-10-$(i)-AU.html Results/consensus-10-$(i)-AU2.html) Results/MAP-AU.html Results/MAP-AU2.html
+AU_TARGETS=$(foreach i,$(PARTITIONS),Results/MAP.html Results/consensus-10-1.html Results/consensus-75-$(i).fasta Results/consensus-50-$(i).fasta Results/consensus-25-$(i).fasta Results/consensus-10-$(i).fasta Results/consensus-10-$(i)-AU.html Results/consensus-10-$(i)-AU2.html Results/initial.html) Results/MAP-AU.html Results/MAP-AU2.html
 endif
 
 
 Results/analysis: Results/Report Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
-                  ${TREES:%=Results/%.mtree} Results/MAP.topology Results/MAP.tree \
+                  ${TREES:%=Results/%.mtree} ${TREES:%=Results/%-tree.pdf} Results/MAP.topology Results/MAP.tree \
                   Results/c-levels.plot Results/c-sub-levels.plot Work/trees.from.${SKIP}+${SIZE} \
 		  Results/MAP.fasta Results/MAP.phy \
 		  Mixing/partitions.SRQ Mixing/c50.SRQ Mixing/partitions.bs \
@@ -71,7 +71,7 @@ Work/header: Work/out Work/Pmarg
            tail -n +2 Work/out | head -n 100 | grep model;\
            echo; } > $@
 
-Work/samples%-${SKIP}+${SIZE}: Work/partition%.fastas Work/setup
+Work/samples%-${SKIP}+${SIZE}: Work/P%.fastas Work/setup
 	@cut-range --skip ${SKIP} ${SIZE:%=--size %} < $< > $@
 
 %.from.${SKIP}: %
@@ -124,6 +124,11 @@ Work/MAP-unordered.fasta: Work/MAP Work/setup
 	@alignment-find < Work/MAP > $@
 	@echo "done."
 
+Work/initial-unordered.fasta: Work/MAP Work/setup
+	@echo -e "Locating MAP alignment... \c"
+	@alignment-find --first < Work/MAP > $@
+	@echo "done."
+
 Work/median%-unordered.fasta: Work/samples%-${SKIP}+${SIZE}
 	alignment-median --max-alignments 2000 --analysis=median< $< > $@ 2>Work/median$*.err
 
@@ -157,13 +162,18 @@ Results/%-AU.prob: Results/%.fasta Work/samples1-${SKIP}+${SIZE} Results/MAP.tre
 	@echo "done."
 
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
-	@echo -e "Drawing $* alignment plot ... \c"
-	@alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 > $@
+	@echo -e "Drawing $* alignment uncertainty plot ... \c"
+	@alignment-draw Results/$*.fasta Results/$*-AU.prob > $@
 	@echo "done."
 
 Results/%-AU2.html: Results/%-AU.prob Results/%.fasta
-	@echo -e "Drawing $* alignment plot (2) ... \c"
-	@if ! alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme DNA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; then alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme AA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; fi
+	@echo -e "Drawing $* alignment uncertainty plot (2) ... \c"
+	@if ! alignment-draw Results/$*.fasta Results/$*-AU.prob --color-scheme DNA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; then alignment-draw Results/$*.fasta Results/$*-AU.prob --color-scheme AA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; fi
+	@echo "done."
+
+Results/%.html: Results/%.fasta
+	@echo -e "Drawing $* alignment ... \c"
+	@if ! alignment-draw Results/$*.fasta --color-scheme DNA+contrast > $@ 2>/dev/null ; then alignment-draw Results/$*.fasta --color-scheme AA+contrast > $@ 2>/dev/null ; fi
 	@echo "done."
 
 Results/c%.topology: Results/consensus Work/setup
@@ -177,11 +187,11 @@ Results/c%.mtree: Results/consensus Work/setup
 Results/c%.mlengths: Results/c%.mtree Work/trees
 	@mctree-mean-lengths $< --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
 
-Results/c%.dot: Results/c%.mtree
+Results/c%-tree.dot: Results/c%.mtree
 	@draw-graph $< > $@
 
-Results/c%.ps: Results/c%.dot
-	@neato -Tps $< > $@
+Results/%.pdf: Results/%.dot
+	@neato -Tpdf $< > $@
 
 Mixing/partitions.SRQ: Work/trees Work/partitions.pred
 	@echo -e "Generating SRQ plot for c50 partitions... \c"
