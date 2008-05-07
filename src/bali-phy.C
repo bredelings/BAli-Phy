@@ -738,7 +738,7 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[],int 
   filenames.push_back("p");
   filenames.push_back("MAP");
   for(int i=0;i<n_partitions;i++) {
-    string filename = string("partition") + convertToString(i+1) + ".fastas";
+    string filename = string("P") + convertToString(i+1) + ".fastas";
     filenames.push_back(filename);
   }
     

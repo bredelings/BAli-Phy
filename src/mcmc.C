@@ -572,7 +572,12 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     {
       bool show_alignment = (iterations%(10*subsample) == 0);
       if (not P.n_imodels()) show_alignment = false;
-      print_stats(s_out,s_trees,P,show_alignment);
+
+      // Don't print alignments here - hard to separate alignments
+      //                               from different partitions.
+      print_stats(s_out,s_trees,P,false);
+
+      // Print the alignments here instead
       if (show_alignment) {
 	for(int i=0;i<P.n_data_partitions();i++) 
 	{
