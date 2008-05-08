@@ -1344,6 +1344,12 @@ int main(int argc,char* argv[])
     //-------------Create the Parameters object--------------//
     Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping);
 
+    for(int i=0;i<P.n_data_partitions();i++) {
+      s_out<<"smodel-index"<<i+1<<" = "<<smodel_mapping[i]<<endl;
+      s_out<<"imodel-index"<<i+1<<" = "<<imodel_mapping[i]<<endl;
+    }
+    s_out<<endl;
+
     if (not P.smodel_full_tree)
       s_out<<"substitution model: *-tree"<<endl;
 
