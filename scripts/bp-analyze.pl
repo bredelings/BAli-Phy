@@ -1,19 +1,21 @@
 #!/usr/bin/perl -w 
 
+#TODO:
+# 1. Print topologies with CIRCLES at polytomies.
+# 2. Output number of topologies in 95% confidence interval.
+# 3. Show MPD alignment as well...
+
 use strict;
 
 sub do_init()
 {
-    mkdir "Work";
-    mkdir "Mixing";
     mkdir "Results";
+    mkdir "Results/Work";
 }
 
 sub do_cleanup()
 {
-    rmdir_recursive("Work");
-    rmdir_recursive("Mixing");
-    rmdir_recursive("Results");
+    rmdir_recursive("Results") if (-e "Results")
 }
 
 sub rmdir_recursive 
@@ -26,7 +28,7 @@ sub rmdir_recursive
 	next if /^\.{1,2}$/;
 	my $path = "$dir/$_";
 	unlink $path if -f $path;
-	cleanup($path) if -d $path;
+	rmdir_recursive($path) if -d $path;
     }
     closedir DIR;
     rmdir $dir or print "error - $!";
@@ -45,9 +47,82 @@ sub get_partitions()
 	if ($line =~ /data(.+) = (.+)/) {
 	    push @partitions,$2;
 	}
-	last if ($line =~ /iterations/);
+	last if ($line =~ /^iterations = 0/);
     }
     return [@partitions];
+}
+
+sub get_smodels()
+{
+    local *FILE;
+
+    open FILE, "1.out" or die "Can't open 1.out!";
+
+    my @smodels = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /subst model(.+) = (.+)/) {
+	    push @smodels,$2;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    return [@smodels];
+}
+
+sub get_imodels()
+{
+    local *FILE;
+
+    open FILE, "1.out" or die "Can't open 1.out!";
+
+    my @imodels = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /indel model(.+) = (.+)/) {
+	    push @imodels,$2;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    return [@imodels];
+}
+
+sub get_smodel_indices()
+{
+    local *FILE;
+
+    open FILE, "1.out" or die "Can't open 1.out!";
+
+    my @smodel_indices = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /smodel-index(.+) = (.+)/) {
+	    push @smodel_indices,$2;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+
+    return [@smodel_indices];
+}
+
+sub get_imodel_indices()
+{
+    local *FILE;
+
+    open FILE, "1.out" or die "Can't open 1.out!";
+
+    my @imodel_indices = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /imodel-index(.+) = (.+)/) {
+	    push @imodel_indices,$2;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    return [@imodel_indices];
 }
 
 sub get_n_lines($)
@@ -89,7 +164,7 @@ sub more_recent_than($;$)
 
 #----------------------------- MAIN --------------------------#
 
-my $burnin = 0;
+my $burnin;
 my $max_iter;
 my $subsample = 1;
 my $min_support;
@@ -120,7 +195,24 @@ do_init();
 my @partitions = @{ get_partitions() };
 my $n_partitions = 1+$#partitions;
 my $n_iterations = get_n_iterations();
+my @smodels = @{ get_smodels() };
+my @imodels = @{ get_imodels() };
 
+my @smodel_indices = @{ get_smodel_indices() };
+push @smodel_indices,0 if ($#smodel_indices == -1);
+
+my @imodel_indices = @{ get_imodel_indices() };
+if ($#imodel_indices == -1)
+{
+    if ($#imodels == -1 || $imodels[0] eq "none") {
+	push @imodel_indices,-1;
+    }
+    else {
+	push @imodel_indices,0;
+    }
+}
+
+$burnin = int 0.1*$n_iterations if (!defined($burnin));
 
 my @trees = ();
 my %tree_name = ();
@@ -158,10 +250,17 @@ for my $cvalue (@tree_consensus_values)
     if (! more_recent_than("Results/$tree.mtree","Results/consensus")) {
 	`pickout $value-consensus -n --multi-line < Results/consensus > Results/$tree.mtree`;
     }
+
+    if (! more_recent_than("Results/$tree.dot","Results/$tree.mtree")) {
+	`draw-graph Results/$tree.mtree > Results/$tree.dot 2>/dev/null`;
+	`neato -Tsvg Results/$tree.dot > Results/$tree-mctree.svg`;
+	`neato -Tpdf Results/$tree.dot > Results/$tree-mctree.pdf`;
+    }
     
     print "$tree ";
     if (! more_recent_than("Results/$tree.tree","1.trees")) {
-    `tree-mean-lengths Results/$tree.topology --safe --skip=$burnin $max_arg < 1.trees > Results/$tree.tree 2>/dev/null`;
+    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths --skip=$burnin $max_arg < 1.trees > Results/$tree.ltree 2>/dev/null`;
+    `head -n1 Results/$tree.ltree > Results/$tree.tree`;
     }
 }
 print "done.\n";
@@ -182,8 +281,8 @@ print "done.\n";
 # 4. compute images
 print " Drawing trees ... ";
 for my $tree (@trees) {
-    `cd Results ; draw-tree $tree.tree --layout=equal-daylight 2>/dev/null`;
-    `cd Results ; draw-tree $tree.tree --layout=equal-daylight --output=svg 2>/dev/null`;
+    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight 2>/dev/null`;
+    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg 2>/dev/null`;
 }
 print "done.\n";
 
@@ -208,7 +307,10 @@ for(my $i=0;$i<$n_partitions;$i++)
     push @alignments,$name;
     $alignment_names{$name} = "Initial";
 
-    `alignment-find --first < 1.P$p.fastas > Work/$name-unordered.fasta`;
+    `alignment-find --first < 1.P$p.fastas > Results/Work/$name-unordered.fasta 2>/dev/null`;
+    if ($? && $n_partitions==1) {
+	`alignment-find --first < 1.MAP > Results/Work/$name-unordered.fasta`;
+    }
 }
 print "done.\n";
 
@@ -217,6 +319,8 @@ my @alignment_consensus_values = sort(0.1,0.25,0.5,0.75);
 
 for(my $i=0;$i<$n_partitions;$i++)
 {
+    next if ($imodel_indices[$i] == -1);
+
     my $p = $i+1;
     my $infile = "1.P$p.fastas";
 
@@ -225,8 +329,8 @@ for(my $i=0;$i<$n_partitions;$i++)
 	my $value = $cvalue*100;
 	my $name = "P$p-consensus-$value";
 	print "c$value ";
-	if (! more_recent_than("Work/$name-unordered.fasta",$infile)) {
-	    `cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Work/$name-unordered.fasta 2>/dev/null`;
+	if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
+	    `cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta 2>/dev/null`;
 	}
 	push @alignments,$name;
 	$alignment_names{$name} = "$value% consensus";
@@ -236,9 +340,12 @@ for(my $i=0;$i<$n_partitions;$i++)
 }
 
 for my $alignment (@alignments) {
-    `alignment-reorder Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta 2>/dev/null`;
-    `alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=AA+contrast > Results/$alignment.html`;
-    `alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html`;
+    `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta 2>/dev/null`;
+    `alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
+    if ($?) {
+	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=AA+contrast > Results/$alignment.html`;
+    }
+
 }
 
 # 8. AU plots
@@ -254,24 +361,95 @@ for my $alignment (@AU_alignments)
 	`cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob 2>/dev/null`;
 	}
 	print "done.\n";
+	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null`;
+	if ($?) {
 	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
-	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
+	}
     }
 }
 
+# 9. Estimate marginal likelihood
+print "Calculating marginal likelihood... ";
+my $temp = $burnin+2;
+if (!more_recent_than("Results/Pmarg","1.p")) {
+`stats-select likelihood --no-header < 1.p | tail -n +$temp | model_P > Results/Pmarg 2>/dev/null`;
+}
+print "done.\n";
+my $marginal_prob = `cat Results/Pmarg`;
 
+
+
+# 10. Mixing diagnostics -- block bootstrap
+
+if (!more_recent_than("Results/partitions","Results/consensus")) {
+    `pickout --no-header --large pi < Results/consensus > Results/partitions`;
+}
+if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
+    `sed "s/\$/\\n/" < Results/partitions > Results/partitions.pred`;
+}
+
+if (!more_recent_than("Results/partitions.bs","1.trees")) {
+    `trees-bootstrap --skip=$burnin $max_arg 1.trees --pred Results/partitions.pred > Results/partitions.bs`;
+}
+
+# 11. c-levels.plot - FIXME!
+
+`pickout --no-header LOD full < Results/consensus > Results/c-levels.plot`;
+`gnuplot <<EOF
+set terminal svg
+set output "Results/c-levels.svg"
+set xlabel "Log10 posterior Odds (LOD)"
+set ylabel "Supported Partitions"
+plot [0:] 'Results/c-levels.plot' with lines
+EOF`;
+
+# 12. Mixing diagnostics - SRQ plots
+my @SRQ = ();
+
+print "Generate SRQ plot for partitions ... ";
+if (!more_recent_than("Results/partitions.SRQ","1.trees")) {
+`trees-to-SRQ Results/partitions.pred --skip=$burnin $max_arg < 1.trees > Results/partitions.SRQ`;
+}
+print "done.\n";
+
+push @SRQ,"partitions";
+
+print "Generate SRQ plot for c50 tree ... ";
+if (!more_recent_than("Results/c50.SRQ","1.trees")) {
+`trees-to-SRQ Results/c50.topology --skip=$burnin $max_arg < 1.trees > Results/c50.SRQ`;
+}
+print "done.\n";
+
+push @SRQ,"c50";
+
+for my $srq (@SRQ) {
+`gnuplot <<EOF
+set terminal svg
+set output "Results/$srq.SRQ.svg"
+set key right bottom
+set xlabel "Regenerations (fraction)"
+set ylabel "Time (fraction)"
+set title "Scaled Regeneration Quantile (SRQ) plot: $srq"
+plot 'Results/$srq.SRQ' title "$srq" with linespoints 1, x title "Goal" lw 2 lt 3
+EOF
+`;
+}
+
+# 13. Get # of topologies sampled
+
+my $n_topologies = `pickout n_topologies -n < Results/consensus`;
 
 #------------------------- Print Index -----------------------#
 
 open INDEX,">Results/index.html";
 
-my $title = "Analysis";
+my $title = "MCMC Post-hoc Analysis";
 
 print INDEX '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
 ';
-print INDEX "<title>$title</title>\n";
+print INDEX "<title>BAli-Phy: $title</title>\n";
 print INDEX 
 '    <style type="text/css">
       ol li {padding-bottom:0.5em}
@@ -280,31 +458,48 @@ print INDEX
       td {padding-left: 0.3em;}
       td {padding-right: 0.3em;}
 
+      .backlit td {background: rgb(220,220,220);}
     </style>';
 
 
 print INDEX "<h1>$title</h2>\n";
-print INDEX "  <p>$n_partitions partitions</p>\n";
-print INDEX "<ol>\n";
-for my $partition (@partitions) {
-    print INDEX "<li>$partition</li>\n";
-}
-print INDEX "</ol>\n";
 
+print INDEX "<h2>Data</h2>\n";
+print INDEX "<table class=\"backlit\">\n";
+print INDEX "<tr><th>Partition #</th><th>Sequences</th><th>Substitution Model</th><th>Indel Model</th></tr>\n";
+for(my $p=0;$p<=$#partitions;$p++) 
+{
+    print INDEX "<tr>\n";
+    print INDEX " <td>".($p+1)."</td>\n";
+    print INDEX " <td>$partitions[$p]</td>\n";
+    my $smodel = $smodels[$smodel_indices[$p]];
+    print INDEX " <td>$smodel</td>\n";
+    my $imodel ="none";
+    $imodel = $imodels[$imodel_indices[$p]] if ($imodel_indices[$p] != -1);
+    print INDEX " <td>$imodel</td>\n";
+    print INDEX "</tr>\n";
+}
+
+print INDEX "</table>\n";
+
+print INDEX "<h2>Analysis</h2>\n";
 print INDEX '<table style="width:100%;text-align:center"><tr>'."\n";
 print INDEX "<td>burn-in = $burnin</td>\n";
 print INDEX "<td>sub-sample = $subsample</td>\n" if ($subsample != 1);
-print INDEX "<td>total iterations = $n_iterations</td>\n";
+print INDEX "<td>after burnin = ".($n_iterations-$burnin)."</td>\n";
 print INDEX "</table>\n";
+print INDEX "<p>$marginal_prob</p>\n";
+print INDEX "<p>topologies sampled: $n_topologies</p>\n";
 
-print INDEX "<h2>Parameters</h2>\n";
+print INDEX "<h2>Parameter Distribution</h2>\n";
 print INDEX "<ul><li><a href=\"Report\">Summary</a></li></ul>\n";
 
-print INDEX "<h2>Phylogeny</h2>\n";
+print INDEX "<h2>Phylogeny Distribution</h2>\n";
 
 print INDEX "  </head>\n  <body>\n";
 
 print INDEX "<p>Partition support: <a href=\"consensus\">Summary</a></p>\n";
+print INDEX "<p>Partition support graph: <a href=\"c-levels.svg\">SVG</a></p>\n";
 
 print INDEX "<table>\n";
 for my $tree (@trees)
@@ -322,11 +517,23 @@ for my $tree (@trees)
     }
     print INDEX "<td><a href=\"$tree-tree.pdf\">PDF</a></td>";
     print INDEX "<td><a href=\"$tree-tree.svg\">SVG</a></td>";
+    if (-f "Results/$tree-mctree.pdf") {
+	print INDEX "<td><a href=\"$tree-mctree.pdf\">MC Tree (PDF)</a></td>";
+    }
+    else {
+	print INDEX "<td></td>"     
+    }
+    if (-f "Results/$tree-mctree.svg") {
+	print INDEX "<td><a href=\"$tree-mctree.svg\">MC Tree (SVG)</a></td>";
+    }
+    else {
+	print INDEX "<td></td>"     
+    }
     print INDEX "</tr>";
 }
 print INDEX "</table>\n";
 
-print INDEX "<h2>Alignments</h2>\n";
+print INDEX "<h2>Alignment Distribution</h2>\n";
 
 for(my $i=0;$i<$n_partitions;$i++) 
 {
@@ -356,6 +563,15 @@ for(my $i=0;$i<$n_partitions;$i++)
     }
     print INDEX "</table>\n";
 }
+
+print INDEX "<h2>Mixing</h2>\n";
+
+print INDEX "<ol>\n";
+print INDEX "<li><a href=\"partitions.bs\">Partition uncertainty</a></li>\n";
+for my $srq (@SRQ) {
+    print INDEX "<li><a href=\"$srq.SRQ.svg\">SRQ plot: $srq (SVG)</a></li>\n";
+}
+print INDEX "</ol>\n";
 
 print INDEX "  </body>\n";
 print INDEX "</html>\n";
