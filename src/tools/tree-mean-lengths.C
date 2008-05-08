@@ -143,7 +143,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("var","report standard deviation of branch lengths instead of mean")
     ("no-node-lengths","ignore branches not in the specified topology")
     ("safe","Don't die if no trees match the topology")
-    ("special","Output special format")
+    ("show-node-lengths","Output special format")
     ;
 
   // positional options
@@ -251,41 +251,39 @@ int main(int argc,char* argv[])
     std::cerr<<" ("<<double(A.n_matches)/A.n_samples*100<<"%)"<<std::endl;
 
     //------- Merge lengths and topology -------//
-    if (args.count("special")) {
-      for(int b=0;b<Q.n_branches();b++) {
-	cout<<"branch "<<A.m1[b]<<endl;
-	cout<<partition_from_branch(Q,b)<<endl;
-      }
-      for(int n=0;n<Q.n_nodes();n++) {
-	if (A.n1[n] > 0) {
-	  cout<<"node "<<A.n1[n]<<endl;
-	  int b = (*Q[n].branches_in()).name();
-	  cout<<partition_from_branch(Q,b)<<endl;
-	}
-      }
-      exit(0);
-    }
-
-    if (args.count("var"))
+    if (args.count("var")) {
       for(int b=0;b<B;b++)
 	Q.branch(b).set_length(A.m2[b]);
-    else 
-    {
+      cout<<Q;
+      exit(0);
+    }
+    else {
       for(int b=0;b<B;b++)
 	Q.branch(b).set_length(A.m1[b]);
 
-      if (not args.count("no-node-lengths")) {
+      if (not args.count("no-node-lengths") and 
+	  not args.count("show-node-lengths")) {
 	for(int n=0;n<N;n++) {
 	  int degree = Q[n].neighbors().size();
 	  for(out_edges_iterator b = Q[n].branches_out();b;b++)
 	    (*b).set_length((*b).length() + A.n1[n]/degree);
 	}
       }
+
+      //------- Print Tree and branch lengths -------//
+      cout<<Q<<endl;
+
+      //------------ Print node lengths -------------//
+      if (args.count("show-node-lengths"))
+	for(int n=0;n<Q.n_nodes();n++) {
+	  if (A.n1[n] > 0) {
+	    cout<<"node "<<A.n1[n]<<endl;
+	    int b = (*Q[n].branches_in()).name();
+	    cout<<partition_from_branch(Q,b)<<endl;
+	  }
+	}
+
     }
-
-    //------- Merge lengths and topology -------//
-
-    std::cout<<Q<<endl;
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;
