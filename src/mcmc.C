@@ -486,9 +486,9 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
   s_out<<"\n\n\n";
 
-  for(int i=0;i<P.n_data_partitions();i++) {
+  for(int i=0;i<P.n_data_partitions();i++) 
+  {
     const alignment& A = *P[i].A;
-    s_out<<"Data Partition: "<<i+1<<endl;
     if (const Triplets* T = dynamic_cast<const Triplets*>(&A.get_alphabet()) ) 
       {
 	s_out<<"observed nucleotide frequencies = "<<endl;
@@ -571,7 +571,6 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     if (iterations%subsample == 0) 
     {
       bool show_alignment = (iterations%(10*subsample) == 0);
-      if (not P.n_imodels()) show_alignment = false;
 
       // Don't print alignments here - hard to separate alignments
       //                               from different partitions.
@@ -582,7 +581,8 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 	for(int i=0;i<P.n_data_partitions();i++) 
 	{
 	  (*files[5+i])<<"iterations = "<<iterations<<"\n\n";
-	  (*files[5+i])<<standardize(*P[i].A, *P.T)<<"\n";
+	  if (not iterations or P[i].has_IModel())
+	    (*files[5+i])<<standardize(*P[i].A, *P.T)<<"\n";
 	}
       }
 
