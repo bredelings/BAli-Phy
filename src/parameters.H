@@ -145,6 +145,10 @@ public:
   const data_partition& operator[](int i) const {return *data_partitions[i];}
         data_partition& operator[](int i)       {return *data_partitions[i];}
 
+  int get_smodel_index_for_partition(int i) const {return smodel_for_partition[i];}
+
+  int get_imodel_index_for_partition(int i) const {return imodel_for_partition[i];}
+
   /// The Tree - mean branch lengths = 1
   cow_ptr<SequenceTree> T;
 
