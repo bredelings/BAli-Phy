@@ -60,11 +60,22 @@ Partition partition_from_names(const vector<string>& names, const vector<string>
   return Partition(names,group1,group1 or group2);
 }
 
-vector<Partition> partitions_from_tree(const SequenceTree& T) 
+vector<Partition> internal_partitions_from_tree(const SequenceTree& T) 
 {
   vector<Partition> partitions;
 
   for(int b=T.n_leafbranches();b<T.n_branches();b++)
+    partitions.push_back(partition_from_branch(T,b));
+
+  return partitions;
+}
+
+
+vector<Partition> all_partitions_from_tree(const SequenceTree& T) 
+{
+  vector<Partition> partitions;
+
+  for(int b=0;b<T.n_branches();b++)
     partitions.push_back(partition_from_branch(T,b));
 
   return partitions;
@@ -940,7 +951,7 @@ void load_partitions(const string& filename, vector<vector<Partition> >& partiti
     while(getline(file,line) and line.size()) {
       if (line[0] == '(') {
 	SequenceTree T = standardized(line);
-	vector<Partition> TP = partitions_from_tree(T);
+	vector<Partition> TP = all_partitions_from_tree(T);
 	P.insert(P.end(),TP.begin(),TP.end());
       }
       else

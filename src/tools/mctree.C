@@ -338,7 +338,7 @@ MC_tree load_MC_tree(const std::string& filename)
     throw myexception()<<"Can't create an MC tree from an empty partition list.";
 
   vector<Partition> partitions = partitions1[0];
-  check_partitions_informative(partitions);
+  //  check_partitions_informative(partitions);
 
   return MC_tree(check_MC_partitions(partitions));
 }

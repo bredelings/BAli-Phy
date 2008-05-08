@@ -69,7 +69,8 @@ std::valarray<bool> group_from_names(const std::vector<std::string>& names,const
 
 Partition partition_from_branch(const SequenceTree& T,int b);
 
-std::vector<Partition> partitions_from_tree(const SequenceTree& T);
+std::vector<Partition> all_partitions_from_tree(const SequenceTree& T);
+std::vector<Partition> internal_partitions_from_tree(const SequenceTree& T);
 
 Partition full_partition_from_names(const std::vector<std::string>&,const std::vector<std::string>&);
 
