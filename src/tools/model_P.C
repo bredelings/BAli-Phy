@@ -175,7 +175,7 @@ int main(int argc,char* argv[])
 
     double PM = Pr_smoothed(values);
 
-    cout<<"P(M|data) = "<<PM<<"  ";
+    cout<<"P(data|M) = "<<PM<<"  ";
     cout.flush();
 
     //---------- Get bootstrap sample --------------/
