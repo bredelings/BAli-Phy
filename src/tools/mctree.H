@@ -55,6 +55,7 @@ public:
   vector<int> branch_order;
 
   int branch_to_node(int n) const;
+  int find_branch(const Partition&) const;
   int degree(int n) const;
   bool is_leaf_node(int n) const;
   int leaf(int i) const;

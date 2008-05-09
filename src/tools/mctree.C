@@ -231,6 +231,24 @@ int MC_tree::branch_to_node(int n) const
   throw myexception()<<"Couldn't find any branches pointing to node '"<<n<<"'";
 }
 
+bool directed_equal(const Partition& p1, const Partition& p2)
+{
+  return 
+    ((p1.names == p2.names) and 
+    equal(p1.group1,p2.group1) and
+    equal(p1.group2,p2.group2)
+    );
+}
+
+int MC_tree::find_branch(const Partition& p) const
+{
+  for(int i=0;i<partitions.size();i++)
+    if (directed_equal(p, partitions[i]))
+      return i;
+
+  return -1;
+}
+
 int MC_tree::degree(int n) const
 {
   unsigned count=0;
