@@ -163,6 +163,7 @@ public:
   { }
 };
 
+
 /// FIXME - check partitions to see that names are all unique?
 
 MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
@@ -293,7 +294,8 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
   {
     double L = node_lengths[i];
 
-    int b = find_index(MC.partitions,nodes[i]);
+    int b = MC.find_branch(nodes[i]);
+
     if (b == -1)
       throw myexception()<<"Can't find node in tree!\n"<<"    "<<nodes[i];
 
@@ -302,7 +304,13 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
 
     if (d < 4) {
       cerr<<"Processing node '"<<nodes[i]<<"'"<<endl;
+      cerr<<"Found as branch '"<<MC.partitions[b]<<"'"<<endl;
       cerr<<"degree = "<<MC.degree(n)<<endl;
+
+      for(int i=0;i<2*MC.n_branches();i++)
+	if (MC.mapping[i] == n)
+	  cerr<<MC.partitions[i]<<endl;
+
 
       throw myexception()<<"Error: node length given for node of degree "<<d<<"!";
     }
