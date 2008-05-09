@@ -1,9 +1,8 @@
 #!/usr/bin/perl -w 
 
 #TODO:
-# 1. Print topologies with CIRCLES at polytomies.
-# 2. Output number of topologies in 95% confidence interval.
-# 3. Show MPD alignment as well...
+# 1. Output number of topologies in 95% confidence interval.
+# 2. Show MPD alignment as well...
 
 use strict;
 
@@ -272,7 +271,8 @@ if (! more_recent_than("Results/MAP.topology","Results/consensus")) {
 }
 print " Calculating branch lengths for MAP tree... ";
 if (! more_recent_than("Results/MAP.tree","1.trees")) {
-    `tree-mean-lengths Results/MAP.topology --safe --skip=$burnin $max_arg < 1.trees > Results/MAP.tree 2>/dev/null`;
+    `tree-mean-lengths Results/MAP.topology --safe --skip=$burnin $max_arg < 1.trees > Results/MAP.ltree 2>/dev/null`;
+    `head -n1 Results/MAP.ltree > Results/MAP.tree`;
 }
 push @trees,"MAP";
 $tree_name{"MAP"} = "MAP";
@@ -313,6 +313,17 @@ for(my $i=0;$i<$n_partitions;$i++)
     }
 }
 print "done.\n";
+
+# 6.5. Compute MUSCLE alignments
+
+for(my $i=0;$i<$n_partitions;$i++) {
+    my $p = ($i+1);
+    my $name = "P$p-muscle";
+    `muscle -in Results/Work/P$p-initial-unordered.fasta -out Results/Work/$name-unordered.fasta -quiet`;
+    push @alignments,$name;
+    $alignment_names{$name} = "MUSCLE";
+
+}
 
 # 7. Compute consensus-alignments
 my @alignment_consensus_values = sort(0.1,0.25,0.5,0.75);
@@ -400,7 +411,7 @@ set terminal svg
 set output "Results/c-levels.svg"
 set xlabel "Log10 posterior Odds (LOD)"
 set ylabel "Supported Partitions"
-plot [0:] 'Results/c-levels.plot' with lines
+plot [0:][0:] 'Results/c-levels.plot' with lines
 EOF`;
 
 # 12. Mixing diagnostics - SRQ plots
@@ -424,8 +435,8 @@ push @SRQ,"c50";
 
 for my $srq (@SRQ) {
 `gnuplot <<EOF
-set terminal svg
-set output "Results/$srq.SRQ.svg"
+set terminal png size 800,600
+set output "Results/$srq.SRQ.png"
 set key right bottom
 set xlabel "Regenerations (fraction)"
 set ylabel "Time (fraction)"
@@ -569,7 +580,7 @@ print INDEX "<h2>Mixing</h2>\n";
 print INDEX "<ol>\n";
 print INDEX "<li><a href=\"partitions.bs\">Partition uncertainty</a></li>\n";
 for my $srq (@SRQ) {
-    print INDEX "<li><a href=\"$srq.SRQ.svg\">SRQ plot: $srq (SVG)</a></li>\n";
+    print INDEX "<li><a href=\"$srq.SRQ.png\">SRQ plot: $srq</a></li>\n";
 }
 print INDEX "</ol>\n";
 
