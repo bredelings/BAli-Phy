@@ -293,10 +293,17 @@ int main(int argc,char* argv[])
     std::cerr<<" ("<<double(A.n_matches)/A.n_samples*100<<"%)"<<std::endl;
 
     //------- Merge lengths and topology -------//
-    for(int i=0;i<Q.branch_order.size();i++) {
+    for(int b=0;b<Q.n_branches();b++)
+      Q.T.branch(b).set_length(A.m1[b]);
+    cout<<Q.T<<endl;
+
+    for(int i=0;i<Q.branch_order.size();i++)
+    {
       int b = Q.branch_order[i];
-      cout<<"branch "<<A.m1[i]<<endl;
-      cout<<Q.partitions[b]<<endl;
+      if (not Q.partitions[b].full()) {
+	cout<<"branch "<<A.m1[i]<<endl;
+	cout<<Q.partitions[b]<<endl;
+      }
     }
 
     for(int n=0;n<Q.n_nodes();n++) 
