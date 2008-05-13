@@ -31,6 +31,10 @@ Partition Stuff
     (a) how expensive is this?
     (b) how easy to change?
 
+ F. I need some partitions to have the same scaling factor.  Therefore,
+    the scaling factors need to have a MAPPING to the partitions, like the
+    substitution models.
+
  g. Did we add any slowdown in the -t case? In the other case?
 
  h. SPEED:
