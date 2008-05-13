@@ -227,11 +227,11 @@ my $consensus_arg = "--consensus=".join(',',@tree_consensus_values);
 my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
 
-print STDERR "Summarizing topology distribution ... ";
+print "Summarizing topology distribution ... ";
 if (! more_recent_than("Results/consensus","1.trees")) {
     `trees-consensus 1.trees --skip=$burnin $max_arg $min_support_arg --sub-partitions $consensus_arg > Results/consensus`;
 }
-print STDERR "done.\n";
+print "done.\n";
 
 # 2. compute consensus trees
 
