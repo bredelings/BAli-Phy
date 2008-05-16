@@ -1,3 +1,5 @@
+# Output CXXFLAGS and ARCH information as well!
+
 FIX DP::rate_dirichlet_N to multiple by the number of categories in the dirichlet...
 
 Output and Postprocessing
