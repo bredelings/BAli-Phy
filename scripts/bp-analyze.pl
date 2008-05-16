@@ -1,5 +1,12 @@
 #!/usr/bin/perl -w 
 
+# TODO
+# 1. # of sequences
+# 2. alignment properties (#indels, etc)
+# 3. alphabet of each partition
+# 4. Somehow print posterior distribution of # of indels (really)
+#    and substitutions (really - not just parsimony score?)     
+
 use strict;
 
 my $home = $ENV{'HOME'};
@@ -46,6 +53,11 @@ sub get_partitions()
 	    $filename =~ s/$home/~/;
 	    push @partitions,$filename;
 	}
+	if ($line =~ /data = (.+)/) {
+	    my $filename = $1;
+	    $filename =~ s/$home/~/;
+	    push @partitions,$filename;
+	}
 	last if ($line =~ /^iterations = 0/);
     }
     return [@partitions];
@@ -77,6 +89,22 @@ sub uc
     tr/a-z/A-Z/;
 }
 
+sub sanitize_smodel($)
+{
+    my $smodel = shift;
+
+    if ($smodel =~ m|(Empirical\(.*/(.*).dat\))|)
+    {
+	my $temp1 = $1;
+	my $temp2 = $2;
+	$temp2 =~ tr/a-z/A-Z/;
+	
+	$smodel =~ s/\Q$temp1/$temp2/;
+    }
+
+    return $smodel;
+}
+
 sub get_smodels()
 {
     local *FILE;
@@ -88,17 +116,10 @@ sub get_smodels()
     while (my $line = <FILE>) 
     {
 	if ($line =~ /subst model(.+) = (.+)/) {
-	    my $smodel = $2;
-	    if ($smodel =~ m|(Empirical\(.*/(.*).dat\))|)
-	    {
-		my $temp1 = $1;
-		my $temp2 = $2;
-		$temp2 =~ tr/a-z/A-Z/;
-
-		$smodel =~ s/\Q$temp1/$temp2/;
-	    }
-
-	    push @smodels,$smodel;
+	    push @smodels,$2;
+	}
+	if ($line =~ /subst model = (.+)/) {
+	    push @smodels,$1;
 	}
 	last if ($line =~ /^iterations = 0/);
     }
@@ -114,16 +135,22 @@ sub get_imodels()
     open FILE, "1.out" or die "Can't open 1.out!";
 
     my @imodels = ();
+    my $imodel0;
 
     while (my $line = <FILE>) 
     {
 	if ($line =~ /indel model(.+) = (.+)/) {
 	    push @imodels,$2;
 	}
+	if ($line =~ /indel model = (.+)/) {
+	    push @imodels,$1;
+	}
+
 	last if ($line =~ /^iterations = 0/);
     }
     close FILE;
 
+    push @imodels,$imodel0 if ($#imodels == -1);
     return [@imodels];
 }
 
@@ -351,8 +378,12 @@ print "done.\n";
 # 4. compute images
 print " Drawing trees ... ";
 for my $tree (@trees) {
-    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight 2>/dev/null`;
-    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg 2>/dev/null`;
+    if (! more_recent_than("Results/$tree-tree.pdf","Results/$tree.ltree")) {
+	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight 2>/dev/null`;
+    }
+    if (! more_recent_than("Results/$tree-tree.svg","Results/$tree.ltree")) {
+	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg 2>/dev/null`;
+    }
 }
 print "done.\n";
 
@@ -377,7 +408,10 @@ for(my $i=0;$i<$n_partitions;$i++)
     push @alignments,$name;
     $alignment_names{$name} = "Initial";
 
-    `alignment-find --first < 1.P$p.fastas > Results/Work/$name-unordered.fasta 2>/dev/null`;
+    # These initial alignments should never change!
+    if (! -e "Results/Work/$name-unordered.fasta") {
+	`alignment-find --first < 1.P$p.fastas > Results/Work/$name-unordered.fasta 2>/dev/null`;
+    }
     if ($? && $n_partitions==1) {
 	`alignment-find --first < 1.MAP > Results/Work/$name-unordered.fasta`;
     }
@@ -391,7 +425,9 @@ print "\nComputing MUSCLE alignments... ";
 for(my $i=0;$i<$n_partitions;$i++) {
     my $p = ($i+1);
     my $name = "P$p-muscle";
-    `muscle -in Results/Work/P$p-initial-unordered.fasta -out Results/Work/$name-unordered.fasta -quiet`;
+    if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
+	`muscle -in Results/Work/P$p-initial-unordered.fasta -out Results/Work/$name-unordered.fasta -quiet`;
+    }
     push @alignments,$name;
     $alignment_names{$name} = "MUSCLE";
 
@@ -448,12 +484,16 @@ for(my $i=0;$i<$n_partitions;$i++)
 print "Drawing alignments... ";
 for my $alignment (@alignments) 
 {
+    if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta")) {
     `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta 2>/dev/null`;
+    }
 
-    `alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
+    if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
+	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
 
-    if ($?) {
-	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=AA+contrast > Results/$alignment.html 2>/dev/null`;
+	if ($?) {
+	    `alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=AA+contrast > Results/$alignment.html 2>/dev/null`;
+	}
     }
 
 }
@@ -602,7 +642,7 @@ for(my $p=0;$p<=$#partitions;$p++)
     print INDEX "<tr>\n";
     print INDEX " <td>".($p+1)."</td>\n";
     print INDEX " <td>$partitions[$p]</td>\n";
-    my $smodel = $smodels[$smodel_indices[$p]];
+    my $smodel = sanitize_smodel( $smodels[$smodel_indices[$p]] );
     print INDEX " <td>$smodel</td>\n";
     my $imodel ="none";
     $imodel = $imodels[$imodel_indices[$p]] if ($imodel_indices[$p] != -1);
