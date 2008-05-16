@@ -209,8 +209,12 @@ namespace substitution {
     return dirichlet_pdf(parameters_, 1, n_letters(), 1.0);
   }
 
-  string SimpleFrequencyModel::name() const {
-    return "pi";
+  string SimpleFrequencyModel::name() const 
+  {
+    if (fixed_[0] and parameters_[0] == 1.0)
+      return "F";
+    else
+      return "gwF";
   }
   
   SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a)
@@ -294,7 +298,7 @@ namespace substitution {
 
   string IndependentNucleotideFrequencyModel::name() const
   {
-    return "pi=nucleotides";
+    return "F1x4";
   }
 
   
@@ -352,7 +356,7 @@ namespace substitution {
 
   string TripletsFrequencyModel::name() const 
   {
-    return "pi=triplets";
+    return "FF=triplets";
   }
 
   TripletsFrequencyModel::TripletsFrequencyModel(const Triplets& T)
@@ -407,7 +411,7 @@ namespace substitution {
 
   string AACodonFrequencyModel::name() const
   {
-    return "pi=amino-acids";
+    return "FF=amino-acids";
   }
 
   
@@ -480,7 +484,7 @@ namespace substitution {
 
   string CodonsFrequencyModel::name() const 
   {
-    return "pi=codons";
+    return "FF=codons1";
   }
 
   CodonsFrequencyModel::CodonsFrequencyModel(const Codons& C)
@@ -546,7 +550,7 @@ namespace substitution {
 
   string CodonsFrequencyModel2::name() const 
   {
-    return "pi=codons";
+    return "FF=codons2";
   }
 
   CodonsFrequencyModel2::CodonsFrequencyModel2(const Codons& C)
@@ -713,7 +717,7 @@ namespace substitution {
   }
 
   string ReversibleMarkovSuperModel::name() const {
-    return S->name() + " * " + R->name();
+    return S->name() + "+" + R->name();
   }
 
   /// Construct a reversible Markov model on alphabet 'a'
@@ -1798,7 +1802,7 @@ namespace substitution {
 
   string ModulatedMarkovModel::name() const 
   {
-    return M->name() + "+" + S->name();
+    return M->name() + " + " + S->name();
   }
 
   // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange

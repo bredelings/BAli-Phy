@@ -1344,6 +1344,8 @@ int main(int argc,char* argv[])
     //-------------Create the Parameters object--------------//
     Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping);
 
+    set_parameters(P,args);
+
     for(int i=0;i<P.n_data_partitions();i++) {
       s_out<<"smodel-index"<<i+1<<" = "<<smodel_mapping[i]<<endl;
       s_out<<"imodel-index"<<i+1<<" = "<<imodel_mapping[i]<<endl;
@@ -1387,9 +1389,6 @@ int main(int argc,char* argv[])
 
     // read and store partitions and weights, if any.
     setup_partition_weights(args,P);
-
-    // fix, unfix, and set parameters
-    set_parameters(P,args);
 
     //----- Initialize Likelihood caches and character index caches -----//
     for(int i=0;i<P.n_data_partitions();i++) {
