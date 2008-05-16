@@ -411,9 +411,9 @@ for(my $i=0;$i<$n_partitions;$i++)
     # These initial alignments should never change!
     if (! -e "Results/Work/$name-unordered.fasta") {
 	`alignment-find --first < 1.P$p.fastas > Results/Work/$name-unordered.fasta 2>/dev/null`;
-    }
-    if ($? && $n_partitions==1) {
-	`alignment-find --first < 1.MAP > Results/Work/$name-unordered.fasta`;
+	if ($? && $n_partitions==1) {
+	    `alignment-find --first < 1.MAP > Results/Work/$name-unordered.fasta`;
+	}
     }
 }
 print "done.\n";
