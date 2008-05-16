@@ -16,15 +16,18 @@ alignment randomize(const alignment& A,int n) {
   A2.changelength(newlength);
 
   const int temp = alphabet::gap;
-  for(int i=0;i<n;i++) {
-    vector<int> s(A.length());
-    for(int c=0;c<s.size();c++)
-      s[c] = A(c,i);
+  for(int i=0;i<n;i++) 
+  {
+    vector<int> s;
+    for(int c=0;c<A.length();c++)
+      if (A.character(c,i))
+	s.push_back(A(c,i));
 
     while(s.size() < newlength) {
       int pos = myrandom(s.size()+1);
       s.insert(s.begin()+pos,temp);
     }
+
     for(int c=0;c<A2.length();c++)
       A2(c,i) = s[c];
   }
