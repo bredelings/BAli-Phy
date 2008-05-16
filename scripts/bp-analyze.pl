@@ -1,9 +1,5 @@
 #!/usr/bin/perl -w 
 
-#TODO:
-# 1. Output number of topologies in 95% confidence interval.
-# 2. Show MPD alignment as well...
-
 use strict;
 
 sub do_init()
@@ -14,7 +10,7 @@ sub do_init()
 
 sub do_cleanup()
 {
-    rmdir_recursive("Results") if (-e "Results")
+    rmdir_recursive("Results") if (-e "Results");
 }
 
 sub rmdir_recursive 
@@ -161,9 +157,24 @@ sub more_recent_than($;$)
     return 0;
 }
 
+my $burnin;
+
+sub get_prev_burnin
+{
+    my $prev_burnin;
+    $prev_burnin = `cat Results/burnin` if (-e "Results/burnin");
+    return $prev_burnin;
+}
+
+sub record_burnin
+{
+    open BURN,">Results/burnin";
+    print BURN $burnin;
+    close BURN;
+}
+
 #----------------------------- MAIN --------------------------#
 
-my $burnin;
 my $max_iter;
 my $subsample = 1;
 my $min_support;
@@ -252,13 +263,23 @@ for my $cvalue (@tree_consensus_values)
 
     if (! more_recent_than("Results/$tree.dot","Results/$tree.mtree")) {
 	`draw-graph Results/$tree.mtree > Results/$tree.dot 2>/dev/null`;
+    }
+    if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.dot")) {
 	`neato -Tsvg Results/$tree.dot > Results/$tree-mctree.svg`;
-	`neato -Tpdf Results/$tree.dot > Results/$tree-mctree.pdf`;
+    }
+    if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.dot")) {
+	`neato -Tpdf Results/$tree.dot > Results/$tree-mctree.pdf 2>/dev/null`;
+	if ($?) {
+	    `neato -Tps Results/$tree.dot > Results/$tree-mctree.ps`;
+	    `ps2pdf Results/$tree-mctree.ps Results/$tree-mctree.pdf`;
+	}
     }
     
     print "$tree ";
-    if (! more_recent_than("Results/$tree.tree","1.trees")) {
+    if (! more_recent_than("Results/$tree.ltree","1.trees")) {
     `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths --skip=$burnin $max_arg < 1.trees > Results/$tree.ltree 2>/dev/null`;
+    }
+    if (! more_recent_than("Results/$tree.tree","Results/$tree.ltree")) {
     `head -n1 Results/$tree.ltree > Results/$tree.tree`;
     }
 }
@@ -270,8 +291,10 @@ if (! more_recent_than("Results/MAP.topology","Results/consensus")) {
     `pickout MAP-0 -n < Results/consensus > Results/MAP.topology`;
 }
 print " Calculating branch lengths for MAP tree... ";
-if (! more_recent_than("Results/MAP.tree","1.trees")) {
+if (! more_recent_than("Results/MAP.ltree","1.trees")) {
     `tree-mean-lengths Results/MAP.topology --safe --skip=$burnin $max_arg < 1.trees > Results/MAP.ltree 2>/dev/null`;
+}
+if (! more_recent_than("Results/MAP.tree","Results/MAP.ltree")) {
     `head -n1 Results/MAP.ltree > Results/MAP.tree`;
 }
 push @trees,"MAP";
@@ -316,6 +339,8 @@ print "done.\n";
 
 # 6.5. Compute MUSCLE alignments
 
+print "\nComputing MUSCLE alignments... ";
+
 for(my $i=0;$i<$n_partitions;$i++) {
     my $p = ($i+1);
     my $name = "P$p-muscle";
@@ -324,6 +349,29 @@ for(my $i=0;$i<$n_partitions;$i++) {
     $alignment_names{$name} = "MUSCLE";
 
 }
+print "done.\n";
+
+# 6.7 Compute maximum (weighted posterior decoding) alignments
+
+print "\nComputing WMPD alignments... ";
+
+for(my $i=0;$i<$n_partitions;$i++) 
+{
+    next if ($imodel_indices[$i] == -1);
+
+    my $p = $i+1;
+    my $infile = "1.P$p.fastas";
+
+    my $name = "P$p-max";
+    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
+	`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta 2>/dev/null`;
+    }
+    push @alignments,$name;
+    $alignment_names{$name} = "Best (WMPD)";
+    push @AU_alignments,$name;
+}
+
+print "done.\n";
 
 # 7. Compute consensus-alignments
 my @alignment_consensus_values = sort(0.1,0.25,0.5,0.75);
@@ -350,14 +398,19 @@ for(my $i=0;$i<$n_partitions;$i++)
     push @AU_alignments,"P$p-consensus-10";
 }
 
-for my $alignment (@alignments) {
+print "Drawing alignments... ";
+for my $alignment (@alignments) 
+{
     `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta 2>/dev/null`;
+
     `alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
+
     if ($?) {
-	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=AA+contrast > Results/$alignment.html`;
+	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=AA+contrast > Results/$alignment.html 2>/dev/null`;
     }
 
 }
+print "done.\n";
 
 # 8. AU plots
 
@@ -450,6 +503,16 @@ EOF
 
 my $n_topologies = `pickout n_topologies -n < Results/consensus`;
 
+my $n_topologies_95;
+
+open CONSENSUS, "Results/consensus";
+while(my $line = <CONSENSUS>) {
+    if ($line =~ /contains ([^ ]+) topologies/) {
+	$n_topologies_95 = $1;
+	last;
+    }
+}
+
 #------------------------- Print Index -----------------------#
 
 open INDEX,">Results/index.html";
@@ -470,6 +533,12 @@ print INDEX
       td {padding-right: 0.3em;}
 
       .backlit td {background: rgb(220,220,220);}
+
+      h1 {font-size: 150%;}
+      h2 {font-size: 130%; margin-bottom: 0.2em;}
+      h3 {font-size: 110%; margin-top: 0.3em ; margin-bottom: 0.2em}
+
+      ul {margin-top: 0.4em;}
     </style>';
 
 
@@ -477,7 +546,7 @@ print INDEX "<h1>$title</h2>\n";
 
 print INDEX "<h2>Data</h2>\n";
 print INDEX "<table class=\"backlit\">\n";
-print INDEX "<tr><th>Partition #</th><th>Sequences</th><th>Substitution Model</th><th>Indel Model</th></tr>\n";
+print INDEX "<tr><th>Partition</th><th>Sequences</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
 for(my $p=0;$p<=$#partitions;$p++) 
 {
     print INDEX "<tr>\n";
@@ -494,13 +563,18 @@ for(my $p=0;$p<=$#partitions;$p++)
 print INDEX "</table>\n";
 
 print INDEX "<h2>Analysis</h2>\n";
-print INDEX '<table style="width:100%;text-align:center"><tr>'."\n";
+print INDEX '<table style="width:100%;"><tr>'."\n";
 print INDEX "<td>burn-in = $burnin</td>\n";
-print INDEX "<td>sub-sample = $subsample</td>\n" if ($subsample != 1);
 print INDEX "<td>after burnin = ".($n_iterations-$burnin)."</td>\n";
-print INDEX "</table>\n";
-print INDEX "<p>$marginal_prob</p>\n";
-print INDEX "<p>topologies sampled: $n_topologies</p>\n";
+print INDEX "<td>sub-sample = $subsample</td>\n" if ($subsample != 1);
+print INDEX "</tr><tr>\n";
+print INDEX "<td>$marginal_prob</td>\n";
+print INDEX "</tr><tr>\n";
+print INDEX "<td>Complete sample: $n_topologies topologies</td>\n";
+print INDEX "<td>95% confidence interval: $n_topologies_95 topologies</td>\n";
+print INDEX "</tr></table>\n";
+
+
 
 print INDEX "<h2>Parameter Distribution</h2>\n";
 print INDEX "<ul><li><a href=\"Report\">Summary</a></li></ul>\n";
@@ -509,8 +583,10 @@ print INDEX "<h2>Phylogeny Distribution</h2>\n";
 
 print INDEX "  </head>\n  <body>\n";
 
-print INDEX "<p>Partition support: <a href=\"consensus\">Summary</a></p>\n";
-print INDEX "<p>Partition support graph: <a href=\"c-levels.svg\">SVG</a></p>\n";
+print INDEX '<table style="width:100%;"><tr>'."\n";
+print INDEX "<td>Partition support: <a href=\"consensus\">Summary</a></td>\n";
+print INDEX "<td>Partition support graph: <a href=\"c-levels.svg\">SVG</a></td>\n";
+print INDEX "</tr></table>\n";
 
 print INDEX "<table>\n";
 for my $tree (@trees)
