@@ -502,8 +502,21 @@ int main(int argc,char* argv[])
 
       cout<<"MAP-"<<i<<" = "<<t<<endl;
       cout<<"   PP = "<<PP<<"       LOD = "<<log10(o)<<endl;
-      cout<<"\n\n";
+      cout<<"\n";
     }
+
+    
+    for(int i=0,n=0;i<tree_dist.topologies.size();i++) 
+    {
+      n += tree_dist.topologies[tree_dist.order[i]].count;
+      double PP = double(n)/N;
+
+      if (PP >= 0.95) {
+	cout<<"95% credible set contains "<<i+1<<" topologies."<<endl;
+	break;
+      }
+    }
+    cout<<"\n\n";
 
 
     //------- Print out support for each partition --------//
