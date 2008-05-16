@@ -481,8 +481,8 @@ bool online_topo_sort::try_merge_nodes(int x,int y)
 
 void online_topo_sort::allow_edge(int x,int y)
 {
-  assert(0 <= x < num_vertices(g));
-  assert(0 <= y < num_vertices(g));
+  assert(0 <= x and x < num_vertices(g));
+  assert(0 <= y and y < num_vertices(g));
 
   if (order[x] < order[y])
     return;
