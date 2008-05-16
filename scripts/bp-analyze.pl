@@ -2,6 +2,8 @@
 
 use strict;
 
+my $home = $ENV{'HOME'};
+
 sub do_init()
 {
     mkdir "Results";
@@ -40,11 +42,39 @@ sub get_partitions()
     while (my $line = <FILE>) 
     {
 	if ($line =~ /data(.+) = (.+)/) {
-	    push @partitions,$2;
+	    my $filename = $2;
+	    $filename =~ s/$home/~/;
+	    push @partitions,$filename;
 	}
 	last if ($line =~ /^iterations = 0/);
     }
     return [@partitions];
+}
+
+sub get_command()
+{
+    local *FILE;
+
+    open FILE, "1.out" or die "Can't open 1.out!";
+
+    my $line = <FILE>;
+
+    if ($line =~ /^command: (.*)$/) {
+	$line = $1;
+    }
+    else {
+	$line = "Cannot fine command line in output file!";
+    }
+
+    close FILE;
+    return $line;
+}
+
+#Empirical(/home/bredelings/local/share/bali-phy/Data//wag.dat) 
+
+sub uc
+{
+    tr/a-z/A-Z/;
 }
 
 sub get_smodels()
@@ -58,10 +88,22 @@ sub get_smodels()
     while (my $line = <FILE>) 
     {
 	if ($line =~ /subst model(.+) = (.+)/) {
-	    push @smodels,$2;
+	    my $smodel = $2;
+	    if ($smodel =~ m|(Empirical\(.*/(.*).dat\))|)
+	    {
+		my $temp1 = $1;
+		my $temp2 = $2;
+		$temp2 =~ tr/a-z/A-Z/;
+
+		$smodel =~ s/\Q$temp1/$temp2/;
+	    }
+
+	    push @smodels,$smodel;
 	}
 	last if ($line =~ /^iterations = 0/);
     }
+    close FILE;
+
     return [@smodels];
 }
 
@@ -80,6 +122,8 @@ sub get_imodels()
 	}
 	last if ($line =~ /^iterations = 0/);
     }
+    close FILE;
+
     return [@imodels];
 }
 
@@ -98,6 +142,7 @@ sub get_smodel_indices()
 	}
 	last if ($line =~ /^iterations = 0/);
     }
+    close FILE;
 
     return [@smodel_indices];
 }
@@ -201,6 +246,8 @@ while ($#ARGV > -1)
 }
 
 do_init();
+
+my $command = get_command();
 
 my @partitions = @{ get_partitions() };
 my $n_partitions = 1+$#partitions;
@@ -543,6 +590,9 @@ print INDEX
 
 
 print INDEX "<h1>$title</h2>\n";
+
+print INDEX "<p>Analysis of samples created by the following command line:";
+print INDEX "<p><b>command line:</b> $command</p>\n";
 
 print INDEX "<h2>Data</h2>\n";
 print INDEX "<table class=\"backlit\">\n";
