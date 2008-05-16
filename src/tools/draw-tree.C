@@ -533,17 +533,18 @@ void equal_angle_layout(tree_layout& L,int parent,double min_a,double max_a)
 //   Dn/In  =  2n/3(2^n - 1)
 //
 //   Dn/In  = 2(log2(degree) - log2(3) + 1)/(2*degree - 3)
+
+double node_ratio(int degree)
+{
+  return (1.0 + log2(degree) - log2(3))/(2.0*degree - 3.0);
+}
+
+
 double node_diameter(double lengths,int degree)
 {
-  double ratio = 1.0;
-
-  if (degree == 5)
-    ratio = 0.75;
-  else if (degree > 5)
-    ratio = 2.0*(1.0 + log2(degree) - log2(3))/(2.0*degree - 3.0);
-
-  return lengths*ratio;
+  return lengths*node_ratio(degree)/node_ratio(4);
 }
+
 
 tree_layout equal_angle_layout(SequenceTree MF,vector<double> node_radius)
 {
