@@ -241,6 +241,8 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
       double length = convertTo<double>(words[1]);
       Partition P(line);
 
+      assert(not isnan(length));
+
       nodes.push_back(P);
       node_lengths.push_back(length);
     }
@@ -536,6 +538,7 @@ void equal_angle_layout(tree_layout& L,int parent,double min_a,double max_a)
 
 double node_ratio(int degree)
 {
+  assert(degree > 0);
   return (1.0 + log2(degree) - log2(3))/(2.0*degree - 3.0);
 }
 
@@ -642,7 +645,12 @@ tree_layout equal_angle_layout(const MC_tree_with_lengths& MC)
 
     int mf_n = MF.directed_branch(b).target();
     int d = MF[mf_n].degree();
-    node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
+    node_radius[mf_n] = 0;
+
+    // The degree could be zero is this node is at the end of a branch that
+    // directly wanders over another branch.
+    if (d > 0)
+      node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
   }
 
   return equal_angle_layout(MF,node_radius);
@@ -860,7 +868,12 @@ tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC)
 
     int mf_n = MF.directed_branch(b).target();
     int d = MF[mf_n].degree();
-    node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
+    node_radius[mf_n] = 0;
+
+    // The degree could be zero is this node is at the end of a branch that
+    // directly wanders over another branch.
+    if (d > 0)
+      node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
   }
 
   return equal_daylight_layout(MF,node_radius);
@@ -1028,8 +1041,15 @@ struct graph_layout: public common_layout
       MC.node_length(n) /= t;
     
     // determine node radii
-    for(int n=0;n<MC.n_nodes();n++)
-      node_radius[n] = node_diameter(MC.node_length(n),MC.degree(n))/2.0;
+    for(int n=0;n<MC.n_nodes();n++) {
+      node_radius[n] = 0;
+      int d = MC.degree(n);
+
+      // The degree could be zero is this node is at the end of a branch that
+      // directly wanders over another branch.
+      if (d > 0)
+	node_radius[n] = node_diameter(MC.node_length(n), d)/2.0;
+    }
   }
 };
 
@@ -1183,6 +1203,7 @@ double graph_energy_function::node_node_attraction(const graph_layout& GL, vecto
   DEL[n2].x += (x2-x1)*temp;
   DEL[n2].y += (y2-y1)*temp;
 
+  assert(not isnan(E));
   return E;
 }
 
@@ -2292,6 +2313,9 @@ int main(int argc,char* argv[])
     MC_tree_with_lengths MC = get_MC_tree_with_lengths(filename);
     if (args.count("full"))
       MC = collapse_MC_tree(MC);
+
+    for(int i=0;i<MC.n_nodes();i++)
+      assert(not isnan(MC.node_length(i)));
 
 
     if (args.count("collapse"))
