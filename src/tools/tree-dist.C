@@ -37,7 +37,10 @@ valarray<bool> group_from_names(const vector<string>& names,const vector<string>
 Partition partition_from_branch(const SequenceTree& T,int b) 
 {
   valarray<bool> group(T.n_leaves());
-  group = T.partition(b);
+  const valarray<bool>& with_internal = T.partition(b);
+
+  for(int i=0;i<group.size();i++)
+    group[i] = with_internal[i];
 
   return Partition(T.get_sequences(),not group);
 }
