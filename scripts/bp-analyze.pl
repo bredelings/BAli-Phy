@@ -63,31 +63,31 @@ sub get_partitions()
     return [@partitions];
 }
 
-sub get_command()
+sub get_header_attribute($)
 {
+    my $attribute = shift;
+    my $value = "Cannot find value \"$attribute\" in output file!";
+
     local *FILE;
 
     open FILE, "1.out" or die "Can't open 1.out!";
 
-    my $line = <FILE>;
+    my @partitions = ();
 
-    if ($line =~ /^command: (.*)$/) {
-	$line = $1;
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /$attribute: (.*)$/) {
+	    $value = $1;
+	    last;
+	}
+	last if ($line =~ /^iterations = 0/);
     }
-    else {
-	$line = "Cannot fine command line in output file!";
-    }
-
     close FILE;
-    return $line;
+
+    return $value;
 }
 
 #Empirical(/home/bredelings/local/share/bali-phy/Data//wag.dat) 
-
-sub uc
-{
-    tr/a-z/A-Z/;
-}
 
 sub sanitize_smodel($)
 {
@@ -274,7 +274,10 @@ while ($#ARGV > -1)
 
 do_init();
 
-my $command = get_command();
+my $command = get_header_attribute("command");
+my $directory = get_header_attribute("directory");
+my $subdir    = get_header_attribute("subdirectory");
+
 
 my @partitions = @{ get_partitions() };
 my $n_partitions = 1+$#partitions;
@@ -636,8 +639,10 @@ print INDEX
 
 print INDEX "<h1>$title</h2>\n";
 
-print INDEX "<p>Analysis of samples created by the following command line:";
+print INDEX "<p>Samples were created by the following command line:";
 print INDEX "<p><b>command line:</b> $command</p>\n";
+print INDEX "<p><b>directory:</b> $directory</p>\n";
+print INDEX "<p><b>subdirectory:</b> $subdir</p>\n";
 
 print INDEX "<h2>Data</h2>\n";
 print INDEX "<table class=\"backlit\">\n";
@@ -659,8 +664,8 @@ print INDEX "</table>\n";
 
 print INDEX "<h2>Analysis</h2>\n";
 print INDEX '<table style="width:100%;"><tr>'."\n";
-print INDEX "<td>burn-in = $burnin</td>\n";
-print INDEX "<td>after burnin = ".($n_iterations-$burnin)."</td>\n";
+print INDEX "<td>burn-in = $burnin samples</td>\n";
+print INDEX "<td>after burnin = ".($n_iterations-$burnin)." samples</td>\n";
 print INDEX "<td>sub-sample = $subsample</td>\n" if ($subsample != 1);
 print INDEX "</tr><tr>\n";
 print INDEX "<td>$marginal_prob</td>\n";
