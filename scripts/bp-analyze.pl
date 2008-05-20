@@ -296,6 +296,11 @@ if ($#imodel_indices == -1)
     }
 }
 
+die "I can't find sample file '1.out' - are you running this in the right directory?" if (! -e '1.out');
+
+`ln -s 1.out 1.P1.fastas` if (! -e '1.P1.fastas' && $n_partitions == 1);
+
+
 $burnin = int 0.1*$n_iterations if (!defined($burnin));
 
 my @trees = ();
