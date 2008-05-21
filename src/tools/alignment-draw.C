@@ -740,6 +740,8 @@ BODY {\n\
    font-size: 10pt; \n\
    font-weight: bold;\n\
    font-family: monospace;\n\
+\n\
+   white-space: nowrap;\n\
 }\n\
 \n\
 .sequences TD.sequencename {\n\
