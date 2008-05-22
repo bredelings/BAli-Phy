@@ -328,7 +328,11 @@ echo "------------------------------------------"
 #----------------------- Check for cairo ----------------#
 cairo_progs=""
 if test -n "$cairo" && test "$cairo" != "no"; then
-   PKG_CHECK_MODULES(CAIRO,cairo)
+   temp=""
+   if test "$static" == "yes" ; then
+     temp="--static"
+   fi
+   PKG_CHECK_MODULES(CAIRO,"cairo $temp")
    AC_SUBST(CAIRO_CFLAGS)
    AC_SUBST(CAIRO_LIBS)
 fi
