@@ -106,6 +106,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("height,h",value<double>()->default_value(11),"Page height in inches")
     ("file",value<string>(),"predicates to examine")
     ("output",value<string>()->default_value("pdf"),"Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg")
+    ("out",value<string>(),"Output filename (without extension)")
     ("full","Consider only full splits by collapsing any partial splits.")
     ("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
     ("angle_iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm with small-angle penalties")
@@ -2363,13 +2364,20 @@ int main(int argc,char* argv[])
       exit(1);
     }
 
+
+
     // lay out using circular tree layout
     if (args["layout"].as<string>() == "equal-angle") 
     {
       tree_layout L = equal_angle_layout(MC);
       L.rotate_for_aspect_ratio(xw,yw);
       tree_plotter tp(L, xw, yw);
-      draw(name+"-tree",output,tp);
+
+      string filename = name+"-tree";
+      if (args.count("out"))
+	filename = args["out"].as<string>();
+
+      draw(filename,output,tp);
       exit(0);
     }
     else if (args["layout"].as<string>() == "equal-daylight")
@@ -2377,9 +2385,16 @@ int main(int argc,char* argv[])
       tree_layout L = equal_daylight_layout(MC);
       L.rotate_for_aspect_ratio(xw,yw);
       tree_plotter tp(L, xw, yw);
-      draw(name+"-tree",output,tp);	
+
+      string filename = name+"-tree";
+      if (args.count("out"))
+	filename = args["out"].as<string>();
+
+      draw(filename,output,tp);	
       exit(0);
     }
+
+    
 
     // lay out as a graph
     graph_layout L2 = layout_on_circle(MC,2);
@@ -2390,7 +2405,12 @@ int main(int argc,char* argv[])
       L3 = energy_layout(L3,energy2(1,10000000,2,0));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw);
-      draw(name+"-graph",output,gp);
+
+      string filename = name+"-mctree";
+      if (args.count("out"))
+	filename = args["out"].as<string>();
+
+      draw(filename,output,gp);
     }
 
     // improve angular resolution
@@ -2399,7 +2419,12 @@ int main(int argc,char* argv[])
       L3 = energy_layout(L3,energy2(1,10000000,2,50));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw);
-      draw(name+"-graph",output,gp);
+
+      string filename = name+"-mctree";
+      if (args.count("out"))
+	filename = args["out"].as<string>();
+
+      draw(filename,output,gp);
     }
   }
   catch (std::exception& e) {
