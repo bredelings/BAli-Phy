@@ -6,6 +6,7 @@
 # 3. alphabet of each partition
 # 4. Somehow print posterior distribution of # of indels (really)
 #    and substitutions (really - not just parsimony score?)     
+# 5. Include links from top to sections.
 
 use strict;
 
@@ -68,7 +69,7 @@ sub get_partitions()
 sub get_header_attribute($)
 {
     my $attribute = shift;
-    my $value = "Cannot find value \"$attribute\" in output file!";
+    my $value;
 
     local *FILE;
 
@@ -357,18 +358,11 @@ for my $cvalue (@tree_consensus_values)
 	`pickout $value-consensus -n --multi-line < Results/consensus > Results/$tree.mtree`;
     }
 
-    if (! more_recent_than("Results/$tree.dot","Results/$tree.mtree")) {
-	`draw-graph Results/$tree.mtree > Results/$tree.dot 2>/dev/null`;
+    if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.mtree")) {
+	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg 2>/dev/null`;
     }
-    if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.dot")) {
-	`neato -Tsvg Results/$tree.dot > Results/$tree-mctree.svg`;
-    }
-    if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.dot")) {
-	`neato -Tpdf Results/$tree.dot > Results/$tree-mctree.pdf 2>/dev/null`;
-	if ($?) {
-	    `neato -Tps Results/$tree.dot > Results/$tree-mctree.ps`;
-	    `ps2pdf Results/$tree-mctree.ps Results/$tree-mctree.pdf`;
-	}
+    if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.mtree")) {
+	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree 2>/dev/null`;
     }
     
     print "$tree ";
@@ -747,9 +741,10 @@ print INDEX "<h1>$title</h2>\n";
 print INDEX "<p>Samples were created by the following command line:";
 print INDEX "<p><b>command line:</b> $command</p>\n";
 print INDEX "<p><b>directory:</b> $directory</p>\n";
-print INDEX "<p><b>subdirectory:</b> $subdir</p>\n";
+print INDEX "<p><b>subdirectory:</b> $subdir</p>\n" if (defined($subdir));
 
-print INDEX "<h2>Data</h2>\n";
+
+print INDEX "<h2 name=\"data\">Data</h2>\n";
 print INDEX "<table class=\"backlit\">\n";
 print INDEX "<tr><th>Partition</th><th>Sequences</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
 for(my $p=0;$p<=$#partitions;$p++) 
@@ -767,7 +762,7 @@ for(my $p=0;$p<=$#partitions;$p++)
 
 print INDEX "</table>\n";
 
-print INDEX "<h2>Analysis</h2>\n";
+print INDEX "<h2 name=\"analysis\">Analysis</h2>\n";
 print INDEX '<table style="width:100%;"><tr>'."\n";
 print INDEX "<td>burn-in = $burnin samples</td>\n";
 print INDEX "<td>after burnin = $after_burnin samples</td>\n";
@@ -779,12 +774,7 @@ print INDEX "<td>Complete sample: $n_topologies topologies</td>\n";
 print INDEX "<td>95% Bayesian credible interval: $n_topologies_95 topologies</td>\n";
 print INDEX "</tr></table>\n";
 
-
-
-print INDEX "<h2>Parameter Distribution</h2>\n";
-print INDEX "<ul><li><a href=\"Report\">Summary</a></li></ul>\n";
-
-print INDEX "<h2>Phylogeny Distribution</h2>\n";
+print INDEX "<h2 name=\"topology\">Phylogeny Distribution</h2>\n";
 
 print INDEX "  </head>\n  <body>\n";
 
@@ -825,7 +815,7 @@ for my $tree (@trees)
 }
 print INDEX "</table>\n";
 
-print INDEX "<h2>Alignment Distribution</h2>\n";
+print INDEX "<h2 name=\"alignment\">Alignment Distribution</h2>\n";
 
 for(my $i=0;$i<$n_partitions;$i++) 
 {
@@ -856,7 +846,7 @@ for(my $i=0;$i<$n_partitions;$i++)
     print INDEX "</table>\n";
 }
 
-print INDEX "<h2>Mixing: Topologies</h2>\n";
+print INDEX "<h2 name=\"topology-mixing\">Mixing: Topologies</h2>\n";
 
 print INDEX "<ol>\n";
 print INDEX "<li><a href=\"partitions.bs\">Partition uncertainty</a></li>\n";
@@ -865,14 +855,14 @@ for my $srq (@SRQ) {
 }
 print INDEX "</ol>\n";
 
-print INDEX "<h2>Scalar variables</h2>\n";
+print INDEX "<h2 name=\"parameters\">Scalar variables</h2>\n";
 
 print INDEX "<table>\n";
 print INDEX "<tr><th>Statistic</th><th>Median</th><th>95% BCI</th><th>ACT</th><th>Ne</th></tr>\n";
 
 my @sne = sort {$a <=> $b} values(%Ne);
 my $min_Ne = $sne[0];
-print "min_Ne = $min_Ne\n";
+print "\nNOTE: min_Ne = $min_Ne\n";
 
 for(my $i=1;$i <= $#var_names; $i++) 
 {
@@ -905,3 +895,5 @@ print INDEX "</table>\n";
 
 print INDEX "  </body>\n";
 print INDEX "</html>\n";
+
+
