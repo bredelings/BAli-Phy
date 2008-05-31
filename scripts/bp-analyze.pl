@@ -9,6 +9,8 @@
 
 use strict;
 
+use POSIX;
+
 my $home = $ENV{'HOME'};
 
 sub do_init()
@@ -250,6 +252,8 @@ sub record_burnin
 my $max_iter;
 my $subsample = 1;
 my $min_support;
+my $muscle = 0;
+my $probcons = 0;
 
 while ($#ARGV > -1) 
 {
@@ -269,6 +273,15 @@ while ($#ARGV > -1)
     }
     elsif ($arg =~ /--min-support=(.+)/) {
 	$min_support = $1;
+    }
+    elsif ($arg =~ /--muscle/) {
+	$muscle = 1;
+    }
+    elsif ($arg =~ /--probcons/) {
+	$probcons = 1;
+    }
+    else {
+	die "I don't recognize option $arg";
     }
 }
 
@@ -305,6 +318,7 @@ die "I can't find sample file '1.out' - are you running this in the right direct
 
 
 $burnin = int 0.1*$n_iterations if (!defined($burnin));
+my $after_burnin = $n_iterations - $burnin +1;
 
 my @trees = ();
 my %tree_name = ();
@@ -398,7 +412,7 @@ print "done.\n";
 # 5. Summarize scalar parameters
 print "\nSummarizing distribution of numerical parameters... ";
 if (! more_recent_than("Results/Report","1.p")) {
-    `statreport --skip=$burnin $max_arg < 1.p > Results/Report 2>/dev/null`;
+    `statreport 2: --skip=$burnin $max_arg < 1.p > Results/Report 2>/dev/null`;
 }
 print "done.\n";
 
@@ -428,6 +442,7 @@ print "done.\n";
 
 # 6.5. Compute MUSCLE alignments
 
+if ($muscle) {
 print "\nComputing MUSCLE alignments... ";
 
 for(my $i=0;$i<$n_partitions;$i++) {
@@ -441,10 +456,29 @@ for(my $i=0;$i<$n_partitions;$i++) {
 
 }
 print "done.\n";
+}
+
+# 6.5. Compute ProbCons alignments
+
+if ($probcons) {
+print "\nComputing ProbCons alignments... ";
+
+for(my $i=0;$i<$n_partitions;$i++) {
+    my $p = ($i+1);
+    my $name = "P$p-probcons";
+    if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
+	`probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
+    }
+    push @alignments,$name;
+    $alignment_names{$name} = "ProbCons";
+
+}
+print "done.\n";
+}
 
 # 6.7 Compute maximum (weighted posterior decoding) alignments
 
-print "\nComputing WMPD alignments... ";
+print "\nComputing WPD alignments... ";
 
 for(my $i=0;$i<$n_partitions;$i++) 
 {
@@ -458,7 +492,7 @@ for(my $i=0;$i<$n_partitions;$i++)
 	`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta 2>/dev/null`;
     }
     push @alignments,$name;
-    $alignment_names{$name} = "Best (WMPD)";
+    $alignment_names{$name} = "Best (WPD)";
     push @AU_alignments,$name;
 }
 
@@ -608,6 +642,77 @@ while(my $line = <CONSENSUS>) {
     }
 }
 
+# 14. Traceplots for scalar variables
+open VARS, "1.p";
+my $header = <VARS>;
+chomp $header;
+my @var_names = split(/\t/,$header);
+close VARS;
+
+open REPORT, "Results/Report";
+
+my %median = ();
+my %CI_low = ();
+my %CI_high = ();
+my %ACT = ();
+my %Ne = ();
+
+print "Generating trace-plots ... ";
+
+while (my $line = <REPORT>) {
+    chomp $line;
+    next if ($line eq "");
+
+    if ($line =~ /\s+(.+) ~ (.+)\s+\((.+),(.+)\)/) 
+    {
+	my $var = $1;
+	$median{$var} = $2;
+	$CI_low{$var} = $3;
+	$CI_high{$var} = $4;
+	$line = <REPORT>;
+
+	$line =~ /t @ (.+)\s+Ne = (.+)/;
+	$ACT{$var} = $1;
+	$Ne{$var} = $2;
+    }
+    elsif ($line =~ /\s+(.+) = (.+)/) {
+	$median{$1} = $2;
+    }
+}
+
+my $Nmax = 5000;
+
+for(my $i=1;$i<= $#var_names; $i++) 
+{
+    next if (more_recent_than("Results/$i.trace.png","1.p"));
+
+    my $var = $var_names[$i];
+    next if (!defined($CI_low{$var}));
+
+    my $file1 = "Results/Work/1.p.$i";
+    `stats-select iter '$var' --no-header < 1.p > $file1`;
+
+    my $file2 = $file1.".2";
+
+    my $N = $after_burnin;
+
+    $N = 1000 if ($N > 1000);
+
+    my $factor = ceil($after_burnin / $N);
+
+    `subsample --skip=$burnin $factor < $file1 > $file2`;
+
+    `gnuplot <<EOF
+set terminal png size 800,600
+set output "Results/$i.trace.png"
+set key right bottom
+set xlabel "Iteration"
+set ylabel "$var"
+plot '$file2' title '$var' with lines
+EOF`;
+}
+
+print "done\n";
 #------------------------- Print Index -----------------------#
 
 open INDEX,">Results/index.html";
@@ -665,13 +770,13 @@ print INDEX "</table>\n";
 print INDEX "<h2>Analysis</h2>\n";
 print INDEX '<table style="width:100%;"><tr>'."\n";
 print INDEX "<td>burn-in = $burnin samples</td>\n";
-print INDEX "<td>after burnin = ".($n_iterations-$burnin)." samples</td>\n";
+print INDEX "<td>after burnin = $after_burnin samples</td>\n";
 print INDEX "<td>sub-sample = $subsample</td>\n" if ($subsample != 1);
 print INDEX "</tr><tr>\n";
 print INDEX "<td>$marginal_prob</td>\n";
 print INDEX "</tr><tr>\n";
 print INDEX "<td>Complete sample: $n_topologies topologies</td>\n";
-print INDEX "<td>95% confidence interval: $n_topologies_95 topologies</td>\n";
+print INDEX "<td>95% Bayesian credible interval: $n_topologies_95 topologies</td>\n";
 print INDEX "</tr></table>\n";
 
 
@@ -751,7 +856,7 @@ for(my $i=0;$i<$n_partitions;$i++)
     print INDEX "</table>\n";
 }
 
-print INDEX "<h2>Mixing</h2>\n";
+print INDEX "<h2>Mixing: Topologies</h2>\n";
 
 print INDEX "<ol>\n";
 print INDEX "<li><a href=\"partitions.bs\">Partition uncertainty</a></li>\n";
@@ -759,6 +864,44 @@ for my $srq (@SRQ) {
     print INDEX "<li><a href=\"$srq.SRQ.png\">SRQ plot: $srq</a></li>\n";
 }
 print INDEX "</ol>\n";
+
+print INDEX "<h2>Scalar variables</h2>\n";
+
+print INDEX "<table>\n";
+print INDEX "<tr><th>Statistic</th><th>Median</th><th>95% BCI</th><th>ACT</th><th>Ne</th></tr>\n";
+
+my @sne = sort {$a <=> $b} values(%Ne);
+my $min_Ne = $sne[0];
+print "min_Ne = $min_Ne\n";
+
+for(my $i=1;$i <= $#var_names; $i++) 
+{
+    my $var = $var_names[$i];
+
+    next if ($var eq "iter");
+
+    print INDEX "<tr>\n";
+    print INDEX "<td>$var</td>\n";
+    print INDEX "<td>$median{$var}</td>\n";
+    if (defined($CI_low{$var})) {
+	print INDEX "<td>($CI_low{$var},$CI_high{$var})</td>\n";
+	print INDEX "<td>$ACT{$var}</td>\n";
+	my $style = "";
+	$style = ' style="color:red"' if ($Ne{$var} < 100);
+	$style = ' style="color:red"' if ($Ne{$var} <= $min_Ne);
+	print INDEX "<td $style>$Ne{$var}</td>\n";
+	print INDEX "<td><a href=\"$i.trace.png\">Trace</a></td>\n";
+    }
+    else {
+	print INDEX "<td></td>";
+	print INDEX "<td></td>";
+	print INDEX "<td></td>";
+	print INDEX "<td></td>";
+    }
+    print INDEX "</tr>\n";
+}
+print INDEX "</table>\n";
+
 
 print INDEX "  </body>\n";
 print INDEX "</html>\n";
