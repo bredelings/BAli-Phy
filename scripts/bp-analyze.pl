@@ -195,6 +195,30 @@ sub get_imodel_indices()
     return [@imodel_indices];
 }
 
+sub get_alphabets()
+{
+    local *FILE;
+
+    open FILE, "1.out" or die "Can't open 1.out!";
+
+    my @alphabets = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /alphabet(.+) = (.+)/) {
+	    push @alphabets,$2;
+	}
+	if ($line =~ /alphabet = (.+)/) {
+	    push @alphabets,$1;
+	}
+
+	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    return @alphabets;
+}
+
 sub get_n_lines($)
 {
     my $filename = shift;
@@ -246,6 +270,48 @@ sub record_burnin
     open BURN,">Results/burnin";
     print BURN $burnin;
     close BURN;
+}
+
+sub get_alignment_info 
+{
+    my $filename = shift;
+    open INFO,"alignment-info $filename 2>/dev/null |";
+
+    my %features = ();
+
+    my $indels = 0;
+    while(my $line=<INFO>) {
+	if ($line =~ /Alignment: (.+) columns of (.+) sequences/) 
+	{
+	    $features{"length"} = $1;
+	    $features{"n_sequences"} = $2;
+	}
+	if ($line =~ /sequence lengths: ([^ ]+)-([^ ]+)/) {
+	    $features{"min_length"} = $1;
+	    $features{"max_length"} = $2;
+	}
+	if ($line =~ m|w/  indels|) {
+	    $indels = 1;
+	}
+	next if ($indels == 0);
+
+	if ($line =~ / const.: ([^ ]+) \(([^ ]+)\%\)/) {
+	    $features{"n_const"} = $1;
+	    $features{"p_const"} = $2;
+	}
+	if ($line =~ /non-const.: ([^ ]+) \(([^ ]+)\%\)/) {
+	    $features{"n_non-const"} = $1;
+	    $features{"p_non-const"} = $2;
+	}
+	if ($line =~ /inform.: ([^ ]+) \(([^ ]+)\%\)/) {
+	    $features{"n_inform"} = $1;
+	    $features{"p_inform"} = $2;
+	}
+	if ($line =~ / ([^ ]+)% minimum sequence identity/){
+	    $features{"min_p_identity"} = $1;
+	}
+    }
+    return {%features};
 }
 
 #----------------------------- MAIN --------------------------#
@@ -312,6 +378,8 @@ if ($#imodel_indices == -1)
 	push @imodel_indices,0;
     }
 }
+
+my @alphabets = get_alphabets();
 
 die "I can't find sample file '1.out' - are you running this in the right directory?" if (! -e '1.out');
 
@@ -482,7 +550,8 @@ for(my $i=0;$i<$n_partitions;$i++)
     my $infile = "1.P$p.fastas";
 
     my $name = "P$p-max";
-    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
+    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
+	! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
 	`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta 2>/dev/null`;
     }
     push @alignments,$name;
@@ -520,7 +589,8 @@ for(my $i=0;$i<$n_partitions;$i++)
 print "Drawing alignments... ";
 for my $alignment (@alignments) 
 {
-    if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta")) {
+    if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta") ||
+	! more_recent_than("Results/$alignment.fasta","Results/c50.tree")) {
     `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta 2>/dev/null`;
     }
 
@@ -709,9 +779,13 @@ EOF`;
 print "done\n";
 #------------------------- Print Index -----------------------#
 
+my $p1_features = get_alignment_info("Results/P1-initial.fasta");
+
+my $n_sequences = ${$p1_features}{"n_sequences"};
+
 open INDEX,">Results/index.html";
 
-my $title = "MCMC Post-hoc Analysis";
+my $title = "MCMC Post-hoc Analysis: $n_sequences sequences";
 
 print INDEX '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -746,12 +820,17 @@ print INDEX "<p><b>subdirectory:</b> $subdir</p>\n" if (defined($subdir));
 
 print INDEX "<h2 name=\"data\">Data</h2>\n";
 print INDEX "<table class=\"backlit\">\n";
-print INDEX "<tr><th>Partition</th><th>Sequences</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
+print INDEX "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
 for(my $p=0;$p<=$#partitions;$p++) 
 {
     print INDEX "<tr>\n";
     print INDEX " <td>".($p+1)."</td>\n";
     print INDEX " <td>$partitions[$p]</td>\n";
+    my $features = get_alignment_info("Results/P".($p+1)."-initial.fasta");
+    my $min = $features->{'min_length'};
+    my $max = $features->{'max_length'};
+    my $alphabet = $alphabets[$p];
+    print INDEX " <td>$min - $max $alphabet</td>\n";
     my $smodel = sanitize_smodel( $smodels[$smodel_indices[$p]] );
     print INDEX " <td>$smodel</td>\n";
     my $imodel ="none";
@@ -822,10 +901,23 @@ for(my $i=0;$i<$n_partitions;$i++)
     my $p = $i+1;
     print INDEX "<h3>Partition $p</h3>\n";
     print INDEX "<table>\n";
+    print INDEX "<tr>\n";
+    print INDEX "<th></th>\n";
+    print INDEX "<th></th>\n";
+    print INDEX "<th></th>\n";
+    print INDEX "<th></th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\">Min. %identify</th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\"># Sites</th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\">Constant</th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\">Variable</th>\n";
+    print INDEX "<th>Parsimony-Informative</th>\n";
+    print INDEX "</tr>\n";
     for my $alignment (@alignments) 
     {
 	next if ($alignment !~ /^P$p-/);
 	my $name = $alignment_names{$alignment};
+	my $features = get_alignment_info("Results/$alignment.fasta");
+
 	print INDEX "<tr>\n";
 	print INDEX "<td>$name</td>\n";
 	print INDEX "<td><a href=\"$alignment.fasta\">FASTA</a></td>\n";
@@ -841,6 +933,11 @@ for(my $i=0;$i<$n_partitions;$i++)
 	else {
 	    print INDEX "<td></td>\n";
 	}
+	print INDEX "<td style=\"text-align: center\">${$features}{'min_p_identity'}%</td>\n";
+	print INDEX "<td style=\"text-align: center\">${$features}{'length'}</td>\n";
+	print INDEX "<td style=\"text-align: center\">${$features}{'n_const'} (${$features}{'p_const'}%)</td>\n";
+	print INDEX "<td style=\"text-align: center\">${$features}{'n_non-const'} (${$features}{'p_non-const'}%)</td>\n";
+	print INDEX "<td style=\"text-align: center\">${$features}{'n_inform'} (${$features}{'p_inform'}%)</td>\n";
 	print INDEX "</tr>\n";
     }
     print INDEX "</table>\n";
