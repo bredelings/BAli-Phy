@@ -41,7 +41,7 @@ TOOLS = model_P statreport alignment-gild \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
 	partitions-supported trees-pair-distances analyze-rates \
-	path-graph alignment-find-conserved alignment-max
+	path-graph alignment-find-conserved alignment-max alignments-align
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -147,6 +147,10 @@ alignment_chop_internal_SOURCES = tools/alignment-chop-internal.C alignment.C al
 #---------------------------------------------------------------
 
 alignment_indices_SOURCES = tools/alignment-indices.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C 
+
+#---------------------------------------------------------------
+
+alignments_align_SOURCES = tools/alignment-align.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C 
 
 #---------------------------------------------------------------
 
