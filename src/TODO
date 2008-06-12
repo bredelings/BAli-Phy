@@ -1,30 +1,27 @@
-# Output CXXFLAGS and ARCH information as well!
+Alignment issues:
+ - sometimes we actually WANT to retain empty columns!
+ - sometimes we actually WANT to allow multiple sequences.
+ - can I figure out all places where these checks get called, and move the checks to there?
 
-FIX DP::rate_dirichlet_N to multiple by the number of categories in the dirichlet...
+FIX DP::rate_dirichlet_N to multiply by the number of categories in the dirichlet...
+
+FIX gamma quantile function to not return NaN ever.
 
 Output and Postprocessing
- A. How does BEAST do this?
- B. Write a program...  (PERL -> C++)
-    (i) Stop using 'make'
-    (ii)Generate nice HTML output.
-    (iii) Generate PDFs/figures for all trees/alignments
-    (iv) Make a Cairo version of alignment-draw
- C. 
-
+ (A) Continue to improve HTML output to make it nicer.
+ (B) Include more and more information
+ (C) Allow COMPARING alignments
+   (i)  Align the alignments :-)
+   (ii) Allow drawing two alignments, one on top of the other.
+   (iii) Shade differences in the second alignment in red?
+   (iv) Write an alignment-diff that outputs text differences?   
+ (D) Update the framework for the analysis script.  Move beyond PERL?
+ (E) Make a Cairo version of alignment-draw to generate PS/PDF/SVG
 
 Partition Stuff
  A. Partition-specific alphabets/smodels/imodels
-    (a) TIME SCALE (mu) - allow it to be different
+    (a) TIME SCALE (mu) - allow it to be different OR the same
     (b) ALPHABET        - allow specifying
-
- C. How to print out COLLECTIONS of alignments?
-    (a) 1.P1.fastas
-    (b) 1.P1.MAP
-    (c) <chain>.P<partition>.MAP
-
- D. OUTPUT FILE NAMES: 
-    + Change consensus-10 -> P1-consensus-10%.fasta
-    + Also include P1-initial.fasta
 
  E. Create separate MOVES for (e.g.) HKY::kappa, pi* in each SModel.
 
@@ -32,10 +29,6 @@ Partition Stuff
     This requires copying it...
     (a) how expensive is this?
     (b) how easy to change?
-
- F. I need some partitions to have the same scaling factor.  Therefore,
-    the scaling factors need to have a MAPPING to the partitions, like the
-    substitution models.
 
  g. Did we add any slowdown in the -t case? In the other case?
 
@@ -47,7 +40,6 @@ Code Cleanliness
  A. Make tree-dist.H stop relying on copying valarrays of different size.
     What is the appropriate valarray-specific method to copy PART of a valarray to another valarray?
 
-    
 IDEA: parse "...+var~dist"  (could be +Something[var,dist]
 
 General Branch Length Priors
@@ -751,6 +743,9 @@ the prior, because we never want to use it  differently.
 
 [DONE] Handle conflicting partial orders when adding a homology pair to the
        partial alignment.
+
+[DONE] Output build FLAGS and ARCH information as part of the version information.
+
 
 
 *IDEAS*

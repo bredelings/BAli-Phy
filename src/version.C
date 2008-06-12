@@ -32,4 +32,15 @@ void print_version_info(ostream& file)
 
   file<<endl;
   file<<"BUILD: "<<__DATE__<<" "<<__TIME__<<endl;
+#ifdef _ARCH_
+  file<<"ARCH: "<<_ARCH_<<endl;
+#endif
+
+#ifdef __GNUC__
+  file<<"COMPILER: GCC "<<__VERSION__<<endl;
+#endif
+
+#ifdef _CXXFLAGS_
+  file<<"FLAGS: "<<_CXXFLAGS_<<endl;
+#endif
 }

@@ -338,6 +338,17 @@ if test -n "$cairo" && test "$cairo" != "no"; then
 fi
 AC_SUBST(cairo_progs)
 
+echo ""
+echo "CXXFLAGS = $CXXFLAGS"
+echo "LDFLAGS = $LDFLAGS"
+echo "LIBS = $LIBS"
+if test -n "$cairo" && test "$cairo" != "no"; then
+  echo "CAIRO_CFLAGS = $CAIRO_CFLAGS"
+  echo "CAIRO_LIBS = $CAIRO_LIBS"
+fi
+
+CXXFLAGS="$CXXFLAGS -D_CXXFLAGS_=\"\\\"$CXXFLAGS\\\"\" -D_ARCH_=\"\\\"$host_os\\\"\""
+
 #AC_CONFIG_FILES([GNUmakefile])
 AC_OUTPUT([
   Makefile 
@@ -348,14 +359,6 @@ AC_OUTPUT([
   boost/lib/program_options/Makefile
 ])
 
-echo ""
-echo "CXXFLAGS = $CXXFLAGS"
-echo "LDFLAGS = $LDFLAGS"
-echo "LIBS = $LIBS"
-if test -n "$cairo" && test "$cairo" != "no"; then
-  echo "CAIRO_CFLAGS = $CAIRO_CFLAGS"
-  echo "CAIRO_LIBS = $CAIRO_LIBS"
-fi
 
 #------------ 
 # If src/revision.H does not exist in the source tree, then create an empty
