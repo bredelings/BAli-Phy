@@ -347,7 +347,7 @@ if test -n "$cairo" && test "$cairo" != "no"; then
   echo "CAIRO_LIBS = $CAIRO_LIBS"
 fi
 
-CXXFLAGS="$CXXFLAGS -D_CXXFLAGS_=\"\\\"$CXXFLAGS\\\"\" -D_ARCH_=\"\\\"$host_os\\\"\""
+CXXFLAGS="$CXXFLAGS -D_CXXFLAGS_=\"\\\"$CXXFLAGS\\\"\" -D_ARCH_=\"\\\"$host\\\"\""
 
 #AC_CONFIG_FILES([GNUmakefile])
 AC_OUTPUT([
