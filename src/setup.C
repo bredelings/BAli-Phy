@@ -195,6 +195,8 @@ void remap_T_indices(SequenceTree& T1,const SequenceTree& T2)
 /// Remap T leaf indices to match A: check the result
 void link(alignment& A,SequenceTree& T,bool internal_sequences) 
 {
+  check_names_unique(A);
+
   // Later, might we WANT sub-branches???
   if (has_sub_branches(T))
     remove_sub_branches(T);
@@ -246,6 +248,8 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
 /// Remap T leaf indices to match A: check the result
 void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) 
 {
+  check_names_unique(A);
+
   // Later, might we WANT sub-branches???
   if (has_sub_branches(T))
     remove_sub_branches(T);
