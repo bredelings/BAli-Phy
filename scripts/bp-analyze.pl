@@ -314,6 +314,12 @@ sub get_alignment_info
     return {%features};
 }
 
+sub tooltip
+{
+    my $text = shift;
+    return "<a title=\"$text\">?</a>";
+}
+
 #----------------------------- MAIN --------------------------#
 
 my $max_iter;
@@ -595,13 +601,36 @@ for my $alignment (@alignments)
     }
 
     if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
-	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
+	`alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
 
 	if ($?) {
-	    `alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=AA+contrast > Results/$alignment.html 2>/dev/null`;
+	    `alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html 2>/dev/null`;
 	}
     }
+}
 
+for my $alignment (@alignments) 
+{
+    my $p;
+    if ($alignment =~ /^P([^-]+)-/) {
+	$p=$1;
+    }
+    else {
+	next;
+    }
+
+    if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta"))
+    {
+	`alignments-align Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown > Results/$alignment-diff.fasta`;
+    }
+
+    if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.fasta")) {
+	`alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment-diff.html 2>/dev/null`;
+
+	if ($?) {
+	    `alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment-diff.html 2>/dev/null`;
+	}
+    }
 }
 print "done.\n";
 
@@ -618,9 +647,9 @@ for my $alignment (@AU_alignments)
 	`cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob 2>/dev/null`;
 	}
 	print "done.\n";
-	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null`;
+	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null`;
 	if ($?) {
-	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
+	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
 	}
     }
 }
@@ -807,6 +836,9 @@ print INDEX
       h3 {font-size: 110%; margin-top: 0.3em ; margin-bottom: 0.2em}
 
       ul {margin-top: 0.4em;}
+
+      *[title] {cursor:help;}
+      a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
     </style>';
 
 
@@ -859,7 +891,7 @@ print INDEX "  </head>\n  <body>\n";
 
 print INDEX '<table style="width:100%;"><tr>'."\n";
 print INDEX "<td>Partition support: <a href=\"consensus\">Summary</a></td>\n";
-print INDEX "<td>Partition support graph: <a href=\"c-levels.svg\">SVG</a></td>\n";
+print INDEX "<td><span title=\"How many partitions are supported at each level of Posterior Log Odds (LOD)?\">Partition support graph:</span> <a href=\"c-levels.svg\">SVG</a></td>\n";
 print INDEX "</tr></table>\n";
 
 print INDEX "<table>\n";
@@ -905,14 +937,15 @@ for(my $i=0;$i<$n_partitions;$i++)
     print INDEX "<th></th>\n";
     print INDEX "<th></th>\n";
     print INDEX "<th></th>\n";
+    print INDEX "<th title=\"Comparison of this alignment (top) to the WPD alignment (bottom)\">Diff</th>\n";
     print INDEX "<th></th>\n";
-    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\">Min. %identify</th>\n";
-    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\"># Sites</th>\n";
-    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\">Constant</th>\n";
-    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\">Variable</th>\n";
-    print INDEX "<th>Parsimony-Informative</th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Percent identity of the most dissimilar sequences\">Min. %identity</th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of columns in the alignment\"># Sites</th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of invariant columns\">Constant</th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of variant columns\">Variable</th>\n";
+    print INDEX "<th title=\"Number of parsiomny-informative columns.\">Parsimony-Informative</th>\n";
     print INDEX "</tr>\n";
-    for my $alignment (@alignments) 
+    for my $alignment (@alignments)
     {
 	next if ($alignment !~ /^P$p-/);
 	my $name = $alignment_names{$alignment};
@@ -923,6 +956,12 @@ for(my $i=0;$i<$n_partitions;$i++)
 	print INDEX "<td><a href=\"$alignment.fasta\">FASTA</a></td>\n";
 	if (-f "Results/$alignment.html") {
 	    print INDEX "<td><a href=\"$alignment.html\">HTML</a></td>\n";
+	}
+	else {
+	    print INDEX "<td></td>\n";
+	}
+	if (-f "Results/$alignment-diff.html") {
+	    print INDEX "<td><a href=\"$alignment-diff.html\">Diff</a></td>\n";
 	}
 	else {
 	    print INDEX "<td></td>\n";
@@ -955,7 +994,7 @@ print INDEX "</ol>\n";
 print INDEX "<h2 name=\"parameters\">Scalar variables</h2>\n";
 
 print INDEX "<table>\n";
-print INDEX "<tr><th>Statistic</th><th>Median</th><th>95% BCI</th><th>ACT</th><th>Ne</th></tr>\n";
+print INDEX "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th></tr>\n";
 
 my @sne = sort {$a <=> $b} values(%Ne);
 my $min_Ne = $sne[0];
@@ -992,5 +1031,3 @@ print INDEX "</table>\n";
 
 print INDEX "  </body>\n";
 print INDEX "</html>\n";
-
-
