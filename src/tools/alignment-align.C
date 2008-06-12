@@ -68,18 +68,18 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // store(parse_command_line(argc, argv, desc), args);
   notify(args);    
 
-  if (not args.count("alignment1"))
-    throw myexception()<<"No alignment file names given!";
-
-  if (not args.count("alignment2"))
-    throw myexception()<<"Only one alignment file names given!";
-
   if (args.count("help")) {
     cout<<"Usage: alignment-align alignment-file1 alignment-file2 ... [OPTIONS] < alignments-file\n";
     cout<<"Align two alignments for comparison.\n";
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (not args.count("alignment1"))
+    throw myexception()<<"No alignment file names given!";
+
+  if (not args.count("alignment2"))
+    throw myexception()<<"Only one alignment file names given!";
 
   return args;
 }
