@@ -91,11 +91,16 @@ int score(const ublas::matrix<int>& M1, const ublas::matrix<int>& M2, int c1, in
 
   int total = 0;
 
-  for(int i=0;i<N;i++) {
+  for(int i=0;i<N;i++) 
+  {
+    if (M1(c1,i) == alphabet::unknown or M2(c2,i) == alphabet::unknown)
+      continue;
+
+    if (M1(c1,i) == alphabet::unknown or M2(c2,i) == alphabet::gap)
+      continue;
+
     if (M1(c1,i) == M2(c2,i))
       total++;
-    else
-      total--;
   }
 
   return total;
@@ -159,9 +164,9 @@ int main(int argc,char* argv[])
     for(int i=0;i<F.size1();i++)
       for(int j=0;j<F.size2();j++) {
 	F(i,j) = 0;
-	if (i>1)         F(i,j) = max(F(i,j),F(i-1,j  ));
-	if (j>1)         F(i,j) = max(F(i,j),F(i  ,j-1));
-	if (i>1 and j>1) F(i,j) = max(F(i,j),F(i-1,j-1)+score(M1,M2,i-1,j-1));
+	if (i>0)         F(i,j) = max(F(i,j),F(i-1,j  ));
+	if (j>0)         F(i,j) = max(F(i,j),F(i  ,j-1));
+	if (i>0 and j>0) F(i,j) = max(F(i,j),F(i-1,j-1)+score(M1,M2,i-1,j-1));
       }
 
     //-------------- Find best path --------------//
@@ -172,7 +177,7 @@ int main(int argc,char* argv[])
     int j=F.size2()-1;
 
     vector<int> S(3);
-    while (i>0 and j>0) 
+    while (i>0 or j>0) 
     {
       if (i>0) 
 	S[0] = F(i-1,j);
@@ -190,6 +195,8 @@ int main(int argc,char* argv[])
 	S[2] = -1;
 
       int C = argmax(S);
+
+      // cerr<<i<<"  "<<j<<"   C="<<C<<"    "<<S[0]<<" "<<S[1]<<" "<<S[2]<<endl;
 
       if (C == 0) {
 	i--;
