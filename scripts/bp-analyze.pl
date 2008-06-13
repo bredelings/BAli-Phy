@@ -621,7 +621,7 @@ for my $alignment (@alignments)
 
     if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta"))
     {
-	`alignments-align Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown > Results/$alignment-diff.fasta`;
+	`alignments-diff Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown > Results/$alignment-diff.fasta`;
     }
 
     if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.fasta")) {
