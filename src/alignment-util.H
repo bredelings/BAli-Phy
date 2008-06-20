@@ -123,4 +123,6 @@ std::vector<unsigned> sequence_lengths(const alignment& A);
 
 std::vector<unsigned> sequence_lengths(const alignment& A,unsigned n);
 
+int add_column_type_note(alignment& A);
+
 #endif

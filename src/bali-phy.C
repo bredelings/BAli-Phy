@@ -317,7 +317,12 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   
   add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, parameter_moves);
   add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, parameter_moves);
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda_s",      "lambda_shift_sigma",    0.35, parameter_moves);
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda_f",      "lambda_shift_sigma",    0.35, parameter_moves);
   add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.15, parameter_moves);
+  add_MH_move(P, shift_epsilon,               "r_s",     "epsilon_shift_sigma",   0.15, parameter_moves);
+  add_MH_move(P, shift_epsilon,               "r_f",     "epsilon_shift_sigma",   0.15, parameter_moves);
+  add_MH_move(P, between(0,1,shift_cauchy), "switch",   "invariant_shift_sigma", 0.15, parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, parameter_moves);
   
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
@@ -1225,6 +1230,17 @@ void my_gsl_error_handler(const char* reason, const char* file, int line, int gs
 
 int main(int argc,char* argv[]) 
 { 
+
+  TKF1_Transducer Q(false);
+
+  Q.get_branch_Transducer(1.0);
+
+  FS_Transducer Q_FS(false);
+
+  Q_FS.get_branch_Transducer(1.0);
+  
+  //  exit(0);
+
   std::ios::sync_with_stdio(false);
 
   ostream out_screen(cout.rdbuf());
@@ -1339,8 +1355,8 @@ int main(int argc,char* argv[])
       imodel_mapping = imodel_names_mapping.item_for_partition;
     }
 
-    vector<polymorphic_cow_ptr<IndelModel> > 
-      full_imodels = get_imodels(imodel_names_mapping);
+    vector<polymorphic_cow_ptr<TransducerIndelModel> > full_imodels;
+    full_imodels.push_back(polymorphic_cow_ptr<TransducerIndelModel>(Q_FS));
 
     //-------------Create the Parameters object--------------//
     Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping);
@@ -1397,6 +1413,7 @@ int main(int argc,char* argv[])
 
       add_leaf_seq_note(*P[i].A, T.n_leaves());
       add_subA_index_note(*P[i].A, T.n_branches());
+      add_column_type_note(*P[i].A);
     }
 
     // Why do we need to do this, again?

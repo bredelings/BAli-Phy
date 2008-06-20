@@ -12,31 +12,6 @@
 using std::vector;
 using namespace A2;
 
-namespace indel 
-{
-  PairHMM::PairHMM()
-    : Matrix(5,5),
-      start_pi_(5,0) 
-  {
-    for(int i=0;i<size1();i++)
-      for(int j=0;j<size2();j++)
-	(*this)(i,j) = 0;
-  }
-
-  double PairHMM::start(int s) const {
-    double total = 0;
-    for(int i=0;i<n_states();i++)
-      total += start_pi(i)*(*this)(i,s);
-    return total;
-  }
-}
-
-string i_parameter_name(int i,int n) {
-  if (i>=n)
-    throw myexception()<<"substitution model: refered to parameter "<<i<<" but there are only "<<n<<" parameters.";
-  return string("pI") + convertToString(i);
-}
-
 void remove_one_state(Matrix& Q,int S) {
   assert(Q.size1() == Q.size2());
 
@@ -57,6 +32,132 @@ void remove_one_state(Matrix& Q,int S) {
   for(int j=0;j<Q.size2();j++) 
     Q(S,j) /= temp;
 
+}
+
+namespace indel 
+{
+  PairHMM::PairHMM()
+    : Matrix(5,5),
+      start_pi_(5,0) 
+  {
+    for(int i=0;i<size1();i++)
+      for(int j=0;j<size2();j++)
+	(*this)(i,j) = 0;
+  }
+
+  double PairHMM::start(int s) const {
+    double total = 0;
+    for(int i=0;i<n_states();i++)
+      total += start_pi(i)*(*this)(i,s);
+    return total;
+  }
+
+  //------------------------------------------------------------------------//
+
+  bool PairTransducer::is_match(int i)  const {return e1[i]>=0 and e2[i]>=0;}
+  bool PairTransducer::is_insert(int i) const {return e1[i]< 0 and e2[i]>=0;}
+  bool PairTransducer::is_delete(int i) const {return e1[i]>=0 and e2[i]< 0;}
+  bool PairTransducer::is_silent(int i) const {return e1[i]< 0 and e2[i]< 0;}
+  bool PairTransducer::is_start(int i)  const {return i == start_;}
+  bool PairTransducer::is_end(int i)    const {return i == end_;}
+
+  void PairTransducer::remove_silent()
+  {
+    int new_start = -1;
+    int new_end = -1;
+    vector<int> keep;
+    for(int i=0;i<n_states();i++)
+      if (is_start(i) or is_end(i) or not is_silent(i)) {
+	if (is_start(i))
+	  new_start = keep.size();
+	if (is_end(i))
+	  new_end = keep.size();
+	keep.push_back(i);
+      }
+      else
+	remove_one_state(*this,i);
+
+    Matrix Q(keep.size(),keep.size());
+    for(int i=0;i<Q.size1();i++)
+      for(int j=0;j<Q.size2();j++)
+	Q(i,j) = (*this)(keep[i],keep[j]);
+    
+    e1 = apply_indices(e1,keep);
+    e2 = apply_indices(e2,keep);
+    start_ = new_start;
+    end_ = new_end;
+
+    this->swap(Q);
+
+    for(int i=0;i<n_states();i++)
+      assert(is_start(i) or is_end(i) or not is_silent(i));
+  }
+
+  void PairTransducer::check_states() 
+  {
+    Matrix& Q = *this;
+
+    Matrix temp = Q;
+
+    vector<int> from;
+
+    // Collect states that emit in Seq1 and remove others
+    for(int i=0;i<n_states();i++) 
+    {
+      if (is_end(i))
+	continue;
+      else if (is_start(i) or e1[i] >= 0)
+	from.push_back(i);
+      else
+	remove_one_state(*this,i);
+    }
+
+    // Collect all sets of states which have transition probability of 1.0
+    vector< vector<int> > to;
+    for(int l=0;l<n_letters();l++) {
+      to.push_back(vector<int>());
+      for(int i=0;i<n_states();i++)
+	if (e1[i] == l)
+	  to.back().push_back(i);
+    }
+    to.push_back(vector<int>(1,end_state()));
+
+    // Check transitions from each reading state j to each letter i
+    for(int i=0;i<to.size();i++)
+      for(int j=0;j<from.size();j++)
+      {
+	double total = 0;
+	for(int k=0;k<to[i].size();k++)
+	  total += Q(from[j],to[i][k]);
+
+	if (std::abs(total - 1.0) > 1.0e-9) {
+	  std::cerr<<"Transition from state "<<j<<" to letter "<<i<<" was "<<total<<", not 1.0!"<<endl;
+	  abort();
+	}
+	  
+      }
+
+    Q = temp;
+  }
+
+  PairTransducer::PairTransducer(int s,int e,const vector<int>& v1, const vector<int>& v2)
+    :Matrix(v1.size(),v1.size()),e1(v1),e2(v2),start_(s),end_(e)
+  {
+    assert(e1.size() == n_states());
+    assert(e2.size() == n_states());
+
+    n_letters_ = 1+std::max(max(v1),max(v2));
+
+    for(int i=0;i<size1();i++)
+      for(int j=0;j<size2();j++)
+	(*this)(i,j) = 0;
+  }
+}
+
+string i_parameter_name(int i,int n) {
+  if (i>=n)
+    throw myexception()<<"substitution model: refered to parameter "<<i<<" but there are only "<<n<<" parameters.";
+  return string("pI") + convertToString(i);
 }
 
 /// Only continue from S1 if we don't go to S2
@@ -515,5 +616,388 @@ TKF2::TKF2(bool b)
   add_parameter("lambda::prior_median", -5);
   add_parameter("lambda::prior_stddev", 1.5);
   add_parameter("epsilon::prior_length", 5);
+  add_parameter("mean_length::prior_mean", 1.5);
+}
+
+TransducerIndelModel::~TransducerIndelModel() {}
+
+efloat_t TKF1_Transducer::prior() const 
+{
+  efloat_t Pr = 1;
+
+  // Calculate prior on lambda
+  Pr *= laplace_pdf(parameter(0),parameter(2), parameter(3));
+
+  // Calculate prior on mean sequence length
+  Pr *= exponential_pdf(parameter(1), parameter(4));
+
+  return Pr;
+}
+
+// States: S, letters, E
+Matrix TKF1_Transducer::root_chain() const
+{
+  double lambda = exp(parameter(0));
+  double mean_length = parameter(1);
+  double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
+  double mu = lambda/sigma;                       // s = lambda/mu
+
+  Matrix M(3,3);
+
+  for(int i=0;i<M.size1();i++)
+    for(int j=0;j<M.size2();j++)
+      M(i,j) = 0;
+
+  M(0,1) = lambda/mu;
+  M(0,2) = 1 - M(0,1);
+
+  M(1,1) = lambda/mu;
+  M(1,2) = 1 - M(1,1);
+
+  return M;
+}
+
+// lambda is the insertion rate.
+// mu     is the deletion  rate.
+indel::PairTransducer get_TKF1_Transducer(double t,double lambda, double mu)
+{
+  const int S = 0;
+  const int M = 1;
+  const int D = 2;
+  const int I = 3;
+  const int E = 4;
+  const int W = 6;
+
+  vector<int> e1(7);
+  e1[S] = -1;
+  e1[M] =  0;
+  e1[D] =  0;
+  e1[I] = -1;
+  e1[E] = -1;
+  e1[5] = -1;
+  e1[W] = -1;
+
+  vector<int> e2(7);
+  e2[S] = -1;
+  e2[M] =  0;
+  e2[D] = -1;
+  e2[I] =  0;
+  e2[E] = -1;
+  e2[5] = -1;
+  e2[W] = -1;
+
+  indel::PairTransducer Q(0,4,e1,e2);
+
+  double U = exp(-mu*t);
+  double B = (1.0 - exp((lambda-mu)*t))/(mu - lambda*exp((lambda - mu)*t));
+
+  Q(S ,5 ) = 1;
+
+  Q(M, 5)  = 1.0;
+
+  Q(D, W)  = mu*B/(1.0 - U);
+  Q(D, I)  = 1.0 - Q(D,W);
+
+  Q(I, I)  = lambda*B;
+  Q(I, W)  = 1.0 - Q(I,I);
+
+  Q(5, I ) = lambda * B;
+  Q(5, W ) = 1.0 - Q(5,I);
+
+  Q(W, M ) = U;
+  Q(W, D ) = 1.0 - U;
+  Q(W, E ) = 1.0;
+
+
+  Q.remove_silent();
+
+  Q.check_states();
+
+  return Q;
+  
+}
+
+indel::PairTransducer TKF1_Transducer::get_branch_Transducer(double t) const 
+{
+  if (not time_dependent)
+    t = 1;
+
+  double lambda = exp(parameter(0));
+  double mean_length = parameter(1);
+  double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
+  double mu = lambda/sigma;                       // s = lambda/mu
+
+  assert(lambda < mu);
+
+  return get_TKF1_Transducer(t,lambda,mu);
+}
+
+string TKF1_Transducer::name() const 
+{
+  return "TKF1_Transducer";
+}
+
+TKF1_Transducer::TKF1_Transducer(bool b)
+  :time_dependent(b)
+{
+  add_parameter("lambda",-5);
+  add_parameter("mean_length",100);
+  add_parameter("lambda::prior_median", -5);
+  add_parameter("lambda::prior_stddev", 1.5);
+  add_parameter("mean_length::prior_mean", 1.5);
+}
+
+
+// States: S, letters, E
+Matrix FS_Transducer::root_chain() const
+{
+  double tau      = parameter(6);
+  double mean_s   = parameter(4);
+  double mean_f   = parameter(5);
+
+  double e_s = mean_s/(1+mean_s);
+  double e_f = mean_f/(1+mean_f);
+
+  Matrix M(4,4);
+
+  for(int i=0;i<M.size1();i++)
+    for(int j=0;j<M.size2();j++)
+      M(i,j) = 0;
+
+  M(0,1) = 0.5;
+  M(0,2) = 0.5;
+
+  M(1,1) = e_s/(1 - tau*tau*(1-e_s)*(1-e_f) );
+  M(1,2) = tau*(1-e_s)*e_f/(1 - tau*tau*(1-e_s)*(1-e_f) );
+  M(1,3) = 1 - M(1,1) - M(1,2);
+
+  M(2,1) = tau*(1-e_f)*e_s/(1 - tau*tau*(1-e_f)*(1-e_s) );
+  M(2,2) = e_f/(1 - tau*tau*(1-e_f)*(1-e_s) );
+  M(2,3) = 1 - M(2,1) - M(2,2);
+
+  return M;
+}
+
+efloat_t FS_Transducer::prior() const 
+{
+  efloat_t Pr = 1;
+
+  // Calculate prior on lambda
+  Pr *= laplace_pdf(parameter(0), parameter(7), parameter(9));
+  Pr *= laplace_pdf(parameter(1), parameter(8), parameter(9));
+
+  // Calculate prior on r_s
+  double E_length_mean = parameter(9);
+
+  double log_r_s = parameter(2);
+  double E_length_r_s = log_r_s - logdiff(0,log_r_s);
+  Pr *= exp_exponential_pdf(E_length_r_s,E_length_mean);
+
+  double log_r_f = parameter(3);
+  double E_length_r_f = log_r_f - logdiff(0,log_r_f);
+  Pr *= exp_exponential_pdf(E_length_r_f ,E_length_mean);
+
+  // Calculate prior on mean sequence length
+  //  Pr *= exponential_pdf(parameter(2), parameter(4));
+  //  Pr *= exponential_pdf(parameter(3), parameter(5));
+
+  return Pr;
+}
+
+
+// This transducer does NOT allow S/S -/F -/F S/S
+// The transition to the end state is also rather hacked in.
+
+// lambda is the insertion rate.
+// mu     is the deletion  rate.
+indel::PairTransducer get_FS_Transducer(double t,double delta_s,double delta_f, double r_s, double r_f, double tau)
+{
+  const int S = 0;
+
+  const int Ms  = 1;
+  const int Ds  = 2;
+  const int IsA = 3;
+  const int IsB = 4;
+  const int Ws  = 5;
+  const int WsD = 6;
+  const int TsA = 7;
+  const int TsB = 8;
+  const int E   = 9;
+
+  const int Mf  = 10;
+  const int Df  = 11;
+  const int IfA = 12;
+  const int IfB = 13;
+  const int Wf  = 14;
+  const int WfD = 15;
+  const int TfA = 16;
+  const int TfB = 17;
+  // 15
+
+  vector<int> e1(18);
+  e1[S]   = -1;
+
+  e1[Ms]  =  0;
+  e1[Ds]  =  0;
+  e1[IsA] = -1;
+  e1[IsB] = -1;
+  e1[Ws]  = -1;
+  e1[WsD] = -1;
+  e1[TsA] = -1;
+  e1[TsB] = -1;
+
+  e1[E]   = -1;
+
+  e1[Mf]  =  1;
+  e1[Df]  =  1;
+  e1[IfA] = -1;
+  e1[IfB] = -1;
+  e1[Wf]  = -1;
+  e1[WfD] = -1;
+  e1[TfA] = -1;
+  e1[TfB] = -1;
+
+  vector<int> e2(18);
+  e2[S]   = -1;
+
+  e2[Ms]  =  0;
+  e2[Ds]  = -1;
+  e2[IsA] =  0;
+  e2[IsB] =  0;
+  e2[Ws]  = -1;
+  e2[WsD] = -1;
+  e2[TsA] = -1;
+  e2[TsB] = -1;
+  e2[E]   = -1;
+
+  e2[Mf]  =  1;
+  e2[Df]  = -1;
+  e2[IfA] =  1;
+  e2[IfB] =  1;
+  e2[Wf]  = -1;
+  e2[WfD] = -1;
+  e2[TfA] = -1;
+  e2[TfB] = -1;
+
+
+  indel::PairTransducer Q(S,E,e1,e2);
+
+  Q(S,TsA)    = 1;
+  Q(S,TfA)    = 1;
+
+  Q(Ms,TsA)   = 1;
+  Q(Ms,TsB)   = 1;        // link to path out of S into F
+
+  Q(Ds,TsA)   = 1 - r_s;
+  Q(Ds,WsD)   = r_s;
+  Q(Ds,TsB)   = 1;        // link to path out of S into F
+
+  Q(IsA,IsA)  = r_s;
+  Q(IsA,TsA)  = 1 - r_s;
+
+  Q(IsB,IsB)  = r_s;
+  Q(IsB,TsB)  = 1 - r_s;
+
+  Q(Ws,Ms)    = (1-2*delta_s)/(1-delta_s);
+  Q(Ws,Ds)    = 1 - Q(Ws,Ms);
+
+  Q(WsD,Ds)   = 1;
+
+  Q(TsA,IsA)  = delta_s;
+  Q(TsA,Ws)   = (1 - delta_s)*(1 - tau*tau);
+  Q(TsA,TfB)  = (1 - delta_s)*tau*tau;
+
+  Q(TsB,IsB)  = delta_s;
+  Q(TsB,TfA)  = 1 - delta_s;
+
+  Q(Mf,TfA)   = 1;
+  Q(Mf,TfB)   = 1;        // link to path out of F into S
+
+  Q(Df,TfA)   = 1 - r_f;
+  Q(Df,WfD)   = r_f;
+  Q(Df,TfB)   = 1;        // link to path out of F into F
+
+  Q(IfA,IfA)  = r_f;
+  Q(IfA,TfA)  = 1 - r_f;
+
+  Q(IfB,IfB)  = r_f;
+  Q(IfB,TfB)  = 1 - r_f;
+
+  Q(Wf,Mf)    = (1-2*delta_f)/(1-delta_f);
+  Q(Wf,Df)    = 1 - Q(Wf,Mf);
+
+  Q(WfD,Df)   = 1;
+
+  Q(TfA,IfA)  = delta_f;
+  Q(TfA,Wf)   = (1 - delta_f)*(1 - tau*tau);
+  Q(TfA,TsB)  = (1 - delta_f)*tau*tau;
+
+  Q(TfB,IfB)  = delta_f;
+  Q(TfB,TsA)  = 1 - delta_f;
+  
+  Q(S ,E) = 1;
+  Q(Ms,E) = 1;
+  Q(Ds,E) = 1;
+  Q(Mf,E) = 1;
+  Q(Df,E) = 1;
+
+  Q.remove_silent();
+
+  Q.check_states();
+
+  return Q;
+}
+
+indel::PairTransducer FS_Transducer::get_branch_Transducer(double t) const 
+{
+  if (not time_dependent)
+    t = 1;
+
+  double lambda_s = exp(parameter(0));
+  double lambda_f = exp(parameter(1));
+  double r_s      = exp(parameter(2));
+  double r_f      = exp(parameter(3));
+  double mean_length_s = parameter(4);
+  double mean_length_f = parameter(5);
+  double tau      = parameter(6);
+
+  double sigma_s = mean_length_s/(1.0 + mean_length_s); // E L = s/(1-s)
+  double mu_s = lambda_s/sigma_s;                       // s = lambda/mu
+
+  double sigma_f = mean_length_f/(1.0 + mean_length_f); // E L = s/(1-s)
+  double mu_f = lambda_f/sigma_f;                       // s = lambda/mu
+
+  assert(lambda_s < mu_s);
+  assert(lambda_f < mu_f);
+
+  double A_s = lambda_s*t/(1.0 - r_s);
+  double B_s = 1.0 - exp(-A_s);
+  double delta_s = B_s/(1+B_s);
+
+  double A_f = lambda_f*t/(1.0 - r_f);
+  double B_f = 1.0 - exp(-A_f);
+  double delta_f = B_f/(1+B_f);
+
+  return get_FS_Transducer(t,delta_s,delta_f,r_s,r_f,tau);
+}
+
+string FS_Transducer::name() const 
+{
+  return "FS_Transducer";
+}
+
+FS_Transducer::FS_Transducer(bool b)
+  :time_dependent(b)
+{
+  add_parameter("lambda_s", -5);
+  add_parameter("lambda_f", -3);
+  add_parameter("r_s", -0.5);
+  add_parameter("r_f", -0.3);
+  add_parameter("mean_length_s", 20);
+  add_parameter("mean_length_f", 20);
+  add_parameter("switch", 0.01);
+  add_parameter("lambda::prior_median_s", -5);
+  add_parameter("lambda::prior_median_f", -3);
+  add_parameter("lambda::prior_stddev", 1.5);
   add_parameter("mean_length::prior_mean", 1.5);
 }

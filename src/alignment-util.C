@@ -1028,5 +1028,12 @@ vector<unsigned> sequence_lengths(const alignment& A)
   return sequence_lengths(A,A.n_sequences());
 }
 
+int add_column_type_note(alignment& A)
+{
+  int index = A.add_note(1);
 
+  for(int i=0;i<A.length();i++)
+    A.note(index,i,0) = 0;
 
+  return index;
+}

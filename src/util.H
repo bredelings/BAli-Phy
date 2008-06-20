@@ -92,6 +92,17 @@ std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& 
   return mapping;
 }
 
+/// Apply an inverse mapping
+template <class T>
+std::vector<T> apply_indices(const std::vector<T>& v,const std::vector<int>& indices)
+{
+  std::vector<T> v2(indices.size());
+  for(int i=0;i<indices.size();i++)
+    v2[i] = v[indices[i]];
+  return v2;
+}
+
+
 template <class T>
 std::vector<T> apply_mapping(const std::vector<T>& v1,const std::vector<int>& mapping) {
   std::vector<T> v2(v1.size());

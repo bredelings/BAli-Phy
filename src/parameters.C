@@ -22,6 +22,18 @@ IndelModel& data_partition::IModel()
   std::abort();
 }
 
+const TransducerIndelModel& data_partition::TIModel() const
+{
+  if (has_TIModel()) return *TIModel_;
+  std::abort();
+}
+
+      TransducerIndelModel& data_partition::TIModel()
+{
+  if (has_TIModel()) return *TIModel_;
+  std::abort();
+}
+
 void data_partition::recalc_imodel() 
 {
   if (not has_IModel()) return;
@@ -42,6 +54,11 @@ void data_partition::recalc_imodel()
     else
       branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());
   }
+}
+
+void data_partition::recalc_timodel() 
+{
+  if (not has_TIModel()) return;
 }
 
 void data_partition::recalc_smodel() 
@@ -156,8 +173,225 @@ efloat_t data_partition::prior_no_alignment() const
 // (c) the number of times log( ) is called
 // This should give a further 6% speedup.
 
+vector<vector<int> > get_type_sequences(const alignment& A, const TransducerIndelModel& T)
+{
+  vector<vector<int> > sequences(A.n_sequences());
+
+  const ublas::matrix<int>& type_note = A.note(2);
+  
+  for(int i=0;i<sequences.size();i++)
+  {
+    sequences[i].push_back(0);
+    sequences[i].reserve(A.length());
+    for(int j=0;j<A.length();j++)
+      if (A.character(j,i))
+	sequences[i].push_back(type_note(j,0));
+    sequences[i].push_back(T.n_letters());
+  }
+
+  return sequences;
+}
+
+vector<int> get_type_sequence(const alignment& A,int n,const TransducerIndelModel& T)
+{
+  vector<int> sequence;
+
+  const ublas::matrix<int>& type_note = A.note(2);
+  
+  sequence.reserve(A.length()+2);
+  sequence.push_back(0);
+  for(int i=0;i<A.length();i++)
+    if (A.character(i,n))
+      sequence.push_back(1+type_note(i,0));
+  sequence.push_back(T.n_letters() + 1);
+
+  return sequence;
+}
+
+vector<int> get_possible_next_letters(int s0, const indel::PairTransducer& PTM)
+{
+  vector<int> visited(PTM.n_states(),0);
+
+  vector<int> next;
+  next.push_back(s0);
+
+  vector<int> possible(PTM.n_letters()+1,0);
+
+  while (next.size())
+  {
+    // states to consider next time around
+    vector<int> next2;
+
+    // For each next (unvisited) letter s1
+    for(int i=0;i<next.size();i++)
+    {
+      int s1 = next[i];
+
+      if (visited[s1]) continue;
+
+      visited[s1] = 1;
+
+      // For each unvisited neighbor s2 of s1
+      for(int s2=0;s2<PTM.n_states();s2++)
+	if (PTM(s1,s2) > 0)
+	  // If it emits a letter in sequence1, then that letter is possible;
+	  if (PTM.emits_1(s2) != -1) {
+	    possible[PTM.emits_1(s2)] = 1;
+	    visited[s2] = 1;
+	  }
+          // If it is the end state, then the end state is possible
+	  else if (s2 == PTM.end_state()) {
+	    possible.back() = 1;
+	    visited[s2] = 1;
+	  }
+          // If is silent in sequence 1 and not the end state, the consider
+          // that state's neighbors.
+	  else if (not visited[s2])
+	    next2.push_back(s2);
+    }
+
+    next = next2;
+  }
+
+  return possible;
+}
+
+
+vector<int> get_FS_state_path(const alignment& A,int n1, int n2, const indel::PairTransducer& PTM)
+{
+  // Find possible next letters
+  vector< vector<int> > possible;
+  for(int i=0;i<PTM.n_states();i++)
+    possible.push_back(get_possible_next_letters(i,PTM));
+
+
+  // Find unique states S[i,j] of type Si that next emit j in sequence 1
+  const int o = PTM.n_letters()+1;
+  ublas::matrix<int> M(o,o);
+  ublas::matrix<int> D(o,o);
+  ublas::matrix<int> I(o,o);
+
+  for(int i=0;i<o;i++)
+    for(int j=0;j<o;j++)
+      M(i,j) = D(i,j) = I(i,j) = -1;
+
+  for(int i=0;i<PTM.n_states();i++)
+  {
+    int t1 = PTM.emits_1(i);
+    if (t1 == -1)
+      t1 = PTM.emits_2(i);
+    if (t1 == -1)
+      continue;
+
+    for(int t2=0;t2<PTM.n_letters()+1;t2++) 
+      if (possible[i][t2]) {
+
+	if (PTM.is_match(i)) {
+	  assert(M(t1,t2) == -1);
+	  M(t1,t2) = i;
+	}
+	if (PTM.is_delete(i)) {
+	  assert(D(t1,t2) == -1);
+	  D(t1,t2) = i;
+	}
+	if (PTM.is_insert(i)) {
+	  assert(I(t1,t2) == -1);
+	  I(t1,t2) = i;
+	}
+      }
+  }
+
+  const ublas::matrix<int>& type_note = A.note(2);
+
+  // Construct the type-of-next-residue-in-sequence-n1 array
+  vector<int> next_type(A.length());
+  int current = -1;
+  for(int i=0;i<A.length();i++)
+  {
+    if (A.character(i,n1)) {
+      for(int k=current+1;k<=i;k++)
+	next_type[k] = type_note(i,0);
+      current = i;
+    }
+  }
+
+  // how about the end?  (fast)
+  for(int k=current+1;k<A.length();k++)
+    next_type[k] = PTM.n_letters();
+  
+  vector<int> path;
+
+  // add start state
+  path.push_back(PTM.start_state());
+
+  for(int i=0;i<A.length();i++) 
+  {
+    bool c1 = A.character(i,n1);
+    bool c2 = A.character(i,n2);
+    if (not c1 and not c2) continue;
+
+    int t1 = type_note(i,0);
+    int t2 = next_type[i];
+    int s=-1;
+
+    if (c1 and c2)
+      s = M(t1,t2);
+
+    if (c1 and not c2)
+      s = D(t1,t2);
+
+    if (not c1 and c2)
+      s = I(t1,t2);
+
+    assert(s != -1);
+    path.push_back(s);
+  }
+
+  // add end state
+  path.push_back(PTM.end_state());
+
+  return path;
+}
+
 efloat_t data_partition::prior_alignment() const 
 {
+  if (TIModel_)
+  {
+    efloat_t Pr = 1;
+
+    int root = T->n_nodes()-1;
+
+    const alignment& AA = *A;
+
+    // Compute probability for root sequence
+    vector<int> root_sequence = get_type_sequence(AA,root,*TIModel_);
+
+    Matrix root_P = TIModel_->root_chain();
+
+    for(int i=1;i<root_sequence.size();i++)
+      Pr *= root_P(root_sequence[i-1],root_sequence[i]);
+ 
+    // Compute probability for descendant branches
+    vector<const_branchview> branches = branches_from_node(*T,root);
+
+    indel::PairTransducer M1 = TIModel_->get_branch_Transducer(1);
+
+    for(int i=0;i<branches.size();i++)
+    {
+      indel::PairTransducer M = TIModel_->get_branch_Transducer(branches[i].length()*branch_mean());
+      
+      int n1 = branches[i].source();
+      int n2 = branches[i].target();
+
+      vector<int> state_path = get_FS_state_path(AA,n1,n2,M1);
+
+      for(int j=1;j<state_path.size();j++)
+	Pr *= M(state_path[j-1],state_path[j]);
+    }
+
+    return Pr;
+  }
+
   if (not IModel_) return 1;
 
   if (not cached_alignment_prior.is_valid()) 
@@ -258,6 +492,28 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
+			       const substitution::MultiModel& SM,const TransducerIndelModel& TIM)
+  :TIModel_(TIM),
+   SModel_(SM),
+   partition_name(n),
+   cached_alignment_prior_for_branch(t.n_branches()),
+   cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
+   cached_sequence_lengths(a.n_sequences()),
+   smodel_full_tree(true),
+   A(a),
+   T(t),
+   MC(t,SM),
+   LC(t,SModel()),
+   branch_HMMs(t.n_branches()),
+   branch_HMM_type(t.n_branches(),0),
+   beta(2, 1.0)
+{
+  add_parameter("mu", 0.1);
+  for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
+    cached_alignment_counts_for_branch[b].invalidate();
+}
+
+data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
 			       const substitution::MultiModel& SM)
   :SModel_(SM),
    partition_name(n),
@@ -295,6 +551,10 @@ efloat_t Parameters::prior_no_alignment() const
   // prior on the insertion/deletion model
   for(int i=0;i<IModels.size();i++)
     Pr *= IModel(i).prior();
+
+  // prior on the insertion/deletion model
+  for(int i=0;i<TIModels.size();i++)
+    Pr *= TIModel(i).prior();
 
   // prior for each branch being aligned/unaliged
   if (n_imodels() > 0) 
@@ -363,6 +623,12 @@ void Parameters::recalc_imodels()
     recalc_imodel(i);
 }
 
+void Parameters::recalc_timodels() 
+{
+  for(int i=0;i<TIModels.size();i++)
+    recalc_timodel(i);
+}
+
 void Parameters::recalc_imodel(int m) 
 {
   for(int i=0;i<data_partitions.size();i++) 
@@ -373,6 +639,20 @@ void Parameters::recalc_imodel(int m)
 
       // recompute cached computations
       data_partitions[i]->recalc_imodel();
+    }
+  }
+}
+
+void Parameters::recalc_timodel(int m) 
+{
+  for(int i=0;i<data_partitions.size();i++) 
+  {
+    if (timodel_for_partition[i] == m) {
+      // copy our IModel down into the data partition
+      data_partitions[i]->TIModel_ = TIModels[m];
+
+      // recompute cached computations
+      data_partitions[i]->recalc_timodel();
     }
   }
 }
@@ -468,6 +748,11 @@ void Parameters::recalc(const vector<int>& indices)
     else
       M -= n_imodels();
 
+    if (M < n_timodels())
+      recalc_timodel(M);
+    else
+      M -= n_timodels();
+
     // no need to call recalc for change in data-partition parameters? 
     // (just part?::mu, I think, for now)  
   }
@@ -488,6 +773,11 @@ Model& Parameters::SubModels(int i)
   else
     i -= IModels.size();
 
+  if (i<TIModels.size()) 
+    return TIModel(i);
+  else
+    i -= TIModels.size();
+
   return *data_partitions[i];
 }
 
@@ -505,6 +795,11 @@ const Model& Parameters::SubModels(int i) const
     return IModel(i);
   else
     i -= IModels.size();
+
+  if (i<TIModels.size()) 
+    return TIModel(i);
+  else
+    i -= TIModels.size();
 
   return *data_partitions[i];
 }
@@ -586,6 +881,83 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     if (imodel_for_partition[i] != -1) {
       const IndelModel& IM = IModel(imodel_for_partition[i]);
       dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,SM,IM));
+    }
+    else 
+      dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,SM));
+
+    // add the data partition
+    data_partitions.push_back(dp);
+
+    // register data partition as sub-model
+    add_submodel(name,*data_partitions[i]);
+  }
+}
+
+Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
+		       const vector<polymorphic_cow_ptr<substitution::MultiModel> >& SMs,
+		       const vector<int>& s_mapping,
+		       const vector<polymorphic_cow_ptr<TransducerIndelModel> >& TIMs,
+		       const vector<int>& ti_mapping)
+  :SModels(SMs),
+   smodel_for_partition(s_mapping),
+   TIModels(TIMs),
+   timodel_for_partition(ti_mapping),
+   smodel_full_tree(true),
+   T(t),
+   TC(star_tree(t.get_sequences())),
+   branch_HMM_type(t.n_branches(),0),
+   beta(2, 1.0),
+   features(0)
+{
+  constants.push_back(-1);
+
+  // check that smodel mapping has correct size.
+  if (smodel_for_partition.size() != A.size())
+    throw myexception()<<"There are "<<A.size()
+		       <<" data partitions, but you mapped smodels onto "
+		       <<smodel_for_partition.size();
+
+  // register the substitution models as sub-models
+  for(int i=0;i<SModels.size();i++) {
+    string name = "S" + convertToString(i+1);
+    add_submodel(name, *SModels[i]);
+  }
+
+  // register the indel models as sub-models
+  for(int i=0;i<TIModels.size();i++) {
+    string name = "TI" + convertToString(i+1);
+    add_submodel(name, *TIModels[i]);
+  }
+
+  // check that we only mapping existing smodels to data partitions
+  for(int i=0;i<smodel_for_partition.size();i++) {
+    int m = smodel_for_partition[i];
+    if (m >= SModels.size())
+      throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
+			 <<" because there are only "<<SModels.size()<<" smodels.";
+  }
+
+  // load values from sub-models (smodels/imodel)
+  read();
+
+  // don't constrain any branch lengths
+  for(int b=0;b<TC->n_branches();b++)
+    TC->branch(b).set_length(-1);
+
+  // create data partitions and register as sub-models
+  for(int i=0;i<A.size();i++) 
+  {
+    // compute name for data-partition
+    string name = string("part") + convertToString(i+1);
+
+    // get reference to smodel for data-partition
+    const substitution::MultiModel& SM = SModel(smodel_for_partition[i]);
+
+    // create a data partition
+    cow_ptr<data_partition> dp;
+    if (timodel_for_partition[i] != -1) {
+      const TransducerIndelModel& TIM = TIModel(timodel_for_partition[i]);
+      dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,SM,TIM));
     }
     else 
       dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,SM));

@@ -19,8 +19,51 @@ namespace indel {
     double& start_pi(int i) {return start_pi_[i];}
     double start_pi(int i) const {return start_pi_[i];}
     const std::vector<double>& start_pi() const {return start_pi_;}
-   PairHMM();
+    PairHMM();
   };
+
+  class PairTransducer: public Matrix
+  {
+    /// letter emitted from sequence 1
+    vector<int> e1;
+
+    /// letter emitted from sequence 2
+    vector<int> e2;
+
+    int n_letters_;
+
+    int start_;
+
+    int end_;
+
+  public:
+
+    int n_states() const {return size1();}
+
+    /// how many letters
+    int n_letters() const {return n_letters_;}
+
+    int emits_1(int i) const {return e1[i];}
+    int emits_2(int i) const {return e2[i];}
+
+    bool is_match(int) const;
+    bool is_insert(int) const;
+    bool is_delete(int) const;
+    bool is_silent(int) const;
+    bool is_start(int) const;
+    bool is_end(int)  const;
+
+    int start_state() const {return start_;}
+    int end_state() const {return end_;}
+
+    void remove_silent();
+
+    void check_states();
+
+    PairTransducer(int,int);
+    PairTransducer(int,int,const vector<int>&,const vector<int>&);
+  };
+
 }
 
 /// A generic insertion/deletion model
@@ -114,6 +157,51 @@ public:
   std::string name() const;
 
   explicit TKF2(bool);
+};
+
+/// A generic insertion/deletion model
+class TransducerIndelModel: public Model 
+{
+public: 
+
+  virtual Matrix root_chain() const =0;
+
+  virtual TransducerIndelModel* clone() const =0;
+
+  /// Alignment distribution for a branch of time t
+  virtual indel::PairTransducer get_branch_Transducer(double t) const=0;
+
+  virtual int n_letters() const =0;
+
+  virtual ~TransducerIndelModel();
+};
+
+class TKF1_Transducer: public TransducerIndelModel
+{
+  bool time_dependent;
+public:
+  Matrix root_chain() const;
+
+  efloat_t prior() const;
+  TKF1_Transducer* clone() const {return new TKF1_Transducer(*this);}
+  indel::PairTransducer get_branch_Transducer(double t) const;
+  std::string name() const;
+  int n_letters() const {return 1;}
+  TKF1_Transducer(bool);
+};
+
+class FS_Transducer: public TransducerIndelModel
+{
+  bool time_dependent;
+public:
+  Matrix root_chain() const;
+
+  efloat_t prior() const;
+  FS_Transducer* clone() const {return new FS_Transducer(*this);}
+  indel::PairTransducer get_branch_Transducer(double t) const;
+  std::string name() const;
+  int n_letters() const {return 2;}
+  FS_Transducer(bool);
 };
 
 #endif
