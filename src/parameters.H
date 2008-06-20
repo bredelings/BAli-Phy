@@ -57,6 +57,9 @@ class data_partition: public Probability_Model, public Mat_Cache
   /// The IndelModel
   polymorphic_cow_ptr<IndelModel> IModel_;
 
+  /// The Transducer IndelModel
+  polymorphic_cow_ptr<TransducerIndelModel> TIModel_;
+
   /// The substitution::Model
   polymorphic_cow_ptr<substitution::MultiModel> SModel_;
 
@@ -139,15 +142,22 @@ public:
 
   /// Recalculate all the cached transition matrices
   void recalc_imodel();
+  void recalc_timodel();
   void recalc_smodel();
-
+ 
   bool has_IModel() const {return IModel_;}
   /// The IndelModel
   const IndelModel& IModel() const;
   /// The IndelModel
   IndelModel& IModel();
 
-  /// Get the substitution::Model
+  bool has_TIModel() const {return TIModel_;}
+  /// The IndelModel
+  const TransducerIndelModel& TIModel() const;
+  /// The IndelModel
+  TransducerIndelModel& TIModel();
+
+ /// Get the substitution::Model
   const substitution::MultiModel& SModel() const {return *SModel_;}
   /// Get the substitution::Model
   substitution::MultiModel& SModel() {return *SModel_;}
@@ -190,6 +200,8 @@ public:
 		 const substitution::MultiModel&);
   data_partition(const std::string& n, const alignment&, const SequenceTree&,
 		 const substitution::MultiModel&, const IndelModel&);
+  data_partition(const string& n, const alignment&, const SequenceTree&,
+		 const substitution::MultiModel&, const TransducerIndelModel&);
 };
 
 /// A class to contain all the MCMC state except the alignment
@@ -202,6 +214,10 @@ class Parameters: public SuperModel, public Probability_Model
   /// The IndelModel
   std::vector<polymorphic_cow_ptr<IndelModel> > IModels;
   std::vector<int> imodel_for_partition;
+
+  /// The IndelModel
+  vector<polymorphic_cow_ptr<TransducerIndelModel> > TIModels;
+  vector<int> timodel_for_partition;
 
   // Scale for partition
   std::vector<int> scale_for_partition;
@@ -231,6 +247,8 @@ public:
   int get_smodel_index_for_partition(int i) const {return smodel_for_partition[i];}
 
   int get_imodel_index_for_partition(int i) const {return imodel_for_partition[i];}
+
+  int get_timodel_index_for_partition(int i) const {return timodel_for_partition[i];}
 
   void set_beta(double b);
   double get_beta() const;
@@ -288,6 +306,13 @@ public:
   /// Get the substitution::Model
         IndelModel& IModel(int i)       {return *IModels[i];}
 
+  /// How many substitution models?
+  int n_timodels() const {return TIModels.size();}
+  /// Get the substitution::Model
+  const TransducerIndelModel& TIModel(int i) const {return *TIModels[i];}
+  /// Get the substitution::Model
+        TransducerIndelModel& TIModel(int i)       {return *TIModels[i];}
+
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 
   void setlength_no_invalidate_LC(int b,double l); 
@@ -295,6 +320,8 @@ public:
   /// Recalculate all the cached transition matrices
   void recalc_imodels();
   void recalc_imodel(int i);
+  void recalc_timodels();
+  void recalc_timodel(int i);
   void recalc_smodels();
   void recalc_smodel(int i);
   void tree_propagate();
@@ -354,6 +381,13 @@ public:
 	     const std::vector<polymorphic_cow_ptr<IndelModel> >&,
 	     const std::vector<int>&,
 	     const std::vector<int>&);
+
+  Parameters(const vector<alignment>& A, const SequenceTree&, 
+	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
+	     const vector<int>&,
+	     const vector<polymorphic_cow_ptr<TransducerIndelModel> >&,
+	     const vector<int>&,	
+	     const vector<int>&);
 };
 
 bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho);

@@ -1598,3 +1598,13 @@ alignment unalign_all(const alignment& A, int n)
  
   return A2;
 }
+
+int add_column_type_note(alignment& A)
+{
+  int index = A.add_note(1);
+
+  for(int i=0;i<A.length();i++)
+    A.note(index,i,0) = 0;
+
+  return index;
+}
