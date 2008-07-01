@@ -8,6 +8,7 @@
 #include "substitution.H"
 #include "likelihood.H"
 #include "proposals.H"
+#include "distribution.H"
 #include <gsl/gsl_cdf.h>
 
 using MCMC::MoveStats;
@@ -104,6 +105,8 @@ vector<double> fit_gamma(double x1,double x2,double x3,double y1,double y2,doubl
 
 vector<double> gamma_approx(const Parameters& P, int b)
 {
+  using namespace probability;
+
   Parameters P2 = P;
   double w = 4;
   double x2 = P.branch_mean();
@@ -154,15 +157,15 @@ vector<double> gamma_approx(const Parameters& P, int b)
 	}
 
 
-	x1 = gsl_cdf_gamma_Pinv(0.05,a,B);
+	x1 = gamma_quantile(0.05,a,B);
 	if (x2 < x1)
-	  x1 = gsl_cdf_gamma_Pinv(0.25,a,B);
+	  x1 = gamma_quantile(0.25,a,B);
 	else
-	  x1 = gsl_cdf_gamma_Pinv(0.01,a,B);
+	  x1 = gamma_quantile(0.01,a,B);
 	  
 	L1 = logp_(P2,b,x1);
 	
-	x3 = gsl_cdf_gamma_Pinv(0.99,a,B);
+	x3 = gamma_quantile(0.99,a,B);
 	L3 = logp_(P2,b,x3);
 
 	w = 2.0*B*sqrt(a);

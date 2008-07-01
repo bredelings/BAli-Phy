@@ -259,6 +259,9 @@ namespace probability {
     ~Cauchy();
   };
 
+
+  double gamma_quantile_no_approx(double p, double a, double b);
+  double gamma_quantile(double p, double a, double b);
 }
 
 #endif
