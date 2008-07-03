@@ -723,10 +723,12 @@ vector<int> match(const vector<pair<Partition,unsigned> >& full_partitions,
   for(int i=0;i<sub_partitions.size();i++) 
     for(int j=0;j<full_partitions.size();j++) 
       if (implies(full_partitions[j].first,sub_partitions[i].first))
+      {
         if (m[i] == -1)
 	  m[i] = j;
 	else if (full_partitions[j].second > full_partitions[m[i]].second)
 	  m[i] = j;
+      }
 
   return m;
 }
@@ -763,7 +765,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
   {
     vector<pair<Partition,unsigned> > full_partitions = partitions;
 
-    //cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   masks: "<<masks.size()<<endl;    
+    //cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   masks: "<<masks.size()<<endl;
     list<valarray<bool> > new_good_masks;
     list<valarray<bool> > new_unit_masks;
 
@@ -786,18 +788,30 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
 	    
 	double r = 1;
 	if (parents[i] == -1) {
-	  r = 0;
+	  r = (l*sample.size())/double(sub_partitions[i].second);
 	}
 	else {
 	  r = full_partitions[parents[i]].second/double(sub_partitions[i].second);
 	  assert(r <= 1.0);
 	}
-	if (r < min_rooting) {
+
+	double OD = statistics::odds(sub_partitions[i].second-5,sample.size(),10);
+
+	// actually, considering bad rooting of low-probability edges may be a better (or alternate)
+	// strategy to unplugging edges that are only slightly bad.
+
+	// Determination of rooting probabilities seems to have the largest effect on computation time
+	//  - thus, in the long run, new_good_masks has a larger effect than new_unit_masks.
+	//  - actually, this makes kind of makes sense...
+	//    + new_unit_masks can add partitions they reveal under fairly weak conditions.
+	//    + however, unless a new unit mask ends up being a good_mask, it won't trigger the quadratic behavior.
+
+	// What happens when we consider unplugging ratios for branches (now) supported at level l<0.5?
+	if (r < min_rooting and OD > 0.5) {
 	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group1);
 	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group2);
+	  rooting = std::min(rooting,r);
 	}
-
-	rooting = std::min(rooting,r);
 
 	// Store the new sub-partitions we found
 	if (r < 0.999 or 
@@ -850,6 +864,11 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
 	foreach(j,new_good_masks)
 	  add_unique(masks,old_masks,*i and *j);
     }
+
+    //cerr<<"   new good masks = "<<new_good_masks.size()<<"    new unit masks = "<<new_unit_masks.size()<<endl;
+    //cerr<<"       good masks = "<<good_masks.size()    <<"       total masks = "<<old_masks.size()<<"       found = "<<partitions.size()<<endl;
+
+
   }
 
   return partitions;
