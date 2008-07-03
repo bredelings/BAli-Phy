@@ -61,10 +61,6 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  tools/tree-dist.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C
 
-version.o: FORCE
-
-FORCE:
-
 #-----------------------------------------------------------------
 
 model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C

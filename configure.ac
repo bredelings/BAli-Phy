@@ -304,3 +304,12 @@ echo ""
 echo "CXXFLAGS = $CXXFLAGS"
 echo "LDFLAGS = $LDFLAGS"
 echo "LIBS = $LIBS"
+
+#------------ 
+# If src/revision.H does not exist in the source tree, then create an empty
+# version in the build tree.
+
+if test ! -f "$srcdir/src/revision.H" ; then
+   touch src/revision.H
+fi
+
