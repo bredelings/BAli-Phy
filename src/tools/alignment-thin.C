@@ -7,6 +7,10 @@
 #include "tree-util.H"
 #include "util.H"
 #include "setup.H"
+#include "distance-methods.H"
+#include <utility>
+
+using std::pair;
 
 #include <boost/program_options.hpp>
 
@@ -28,18 +32,18 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("align", value<string>(),"file with sequences and initial alignment")
-    ("tree",value<string>(),"file with initial tree")
-    ("cutoff",value<double>(),"only leave taxa w/ leaf branches longer than this")
+    ("cutoff",value<unsigned>(),"only leave taxa with more mismatches than this value")
     ("longer-than",value<unsigned>(),"only leave taxa w/ sequences longer than this")
     ("shorter-than",value<unsigned>(),"only leave taxa w/ sequences shorter than this")
-    ("keep",value<int>(),"number of taxa to keep")
+    ("down-to",value<int>(),"number of taxa to keep")
+    ("keep",value<int>(),"comma-separated list of taxon names to keep - remove others")
+    ("remove",value<int>(),"comma-separated list of taxon names to remove")
     ("show-lengths","just print out sequence lengths")
     ;
 
   // positional options
   positional_options_description p;
   p.add("align", 1);
-  p.add("tree", 2);
   
   variables_map args;     
   store(command_line_parser(argc, argv).
@@ -48,13 +52,54 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-thin <alignment-file> <tree-file>\n";
+    cout<<"Usage: alignment-thin <alignment-file>\n";
     cout<<"Remove the most closely related sequences from an alignment.\n\n";
     cout<<all<<"\n";
     exit(0);
   }
 
   return args;
+}
+
+std::pair<int,int> argmin(ublas::matrix<int>& M)
+{
+  double mvalue = M(0,0);
+  int m1 = 0;
+  int m2 = 0;
+
+  for(int i=0;i<M.size1();i++)
+    for(int j=0;j<M.size2();j++)
+      if (M(i,j) < mvalue) {
+	mvalue = M(i,j);
+	m1 = i;
+	m2 = j;
+      }
+  return std::pair<int,int>(m1,m2);
+}
+
+unsigned pairwise_distance(const alignment& A,int i,int j)
+{
+  const int L = A.length();
+  unsigned D=0;
+
+  for(int c=0;c<L;c++)
+    if (A(c,i) >= 0 and A(c,i) != A(c,j))
+      D++;
+
+  return D;
+}
+
+ublas::matrix<int> pairwise_distance_matrix(const alignment& A)
+{
+  const int N = A.n_sequences();
+
+  ublas::matrix<int> D(N,N);
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      D(i,j) = pairwise_distance(A,i,j);
+
+  return D;
 }
 
 
@@ -69,105 +114,125 @@ int main(int argc,char* argv[])
 
     //----------- Load alignment and tree ---------//
     alignment A = load_A(args,false);
+    const int N = A.n_sequences();
+    const int L = A.length();
 
-    SequenceTree T;
-    if (args.count("tree")) 
-    {
-      T = load_T(args);
-
-      link(A,T,false);
-
-      for(int i=0;i<T.n_branches();i++)
-	if (T.branch(i).length() < 0)
-	  T.branch(i).set_length(-T.branch(i).length());
-    }
+    vector<string> names = sequence_names(A);
+    vector<int> AL(N);
+    for(int i=0;i<N;i++)
+      AL[i] = A.seqlength(i);
 
     if (args.count("show-lengths")) {
       for(int i=0;i<A.n_sequences();i++) {
-	cout<<A.seqlength(i)<<endl;
+	cout<<AL[i]<<endl;
       }
       exit(0);
     }
 
     //----- Standardize order by alphabetical order of names ----//
 
-    //FIXME - handle duplicate names!
-    vector<string> names;
+    vector<int> keep(A.n_sequences(),1);
 
-    if (args.count("longer-than")) {
-      int cutoff = args["longer-than"].as<unsigned>();
-      
-      for(int i=0;i<A.n_sequences();i++)
-      {
-	if (A.seqlength(i) > cutoff) continue;
-
-	if (A.n_sequences() <= 3)
-	  throw myexception()<<"Trying to remove too many tree leaves!";
-
-	string name = A.seq(i).name;
-
-	names.push_back(name);
-	if (args.count("tree")) 
-	  delete_node(T,name);	
-      }
-    }
-
-    if (args.count("shorter-than")) {
-      int cutoff = args["shorter-than"].as<unsigned>();
-      
-      for(int i=0;i<A.n_sequences();i++)
-      {
-	if (A.seqlength(i) < cutoff) continue;
-
-	if (A.n_sequences() <= 3)
-	  throw myexception()<<"Trying to remove too many tree leaves!";
-
-	string name = A.seq(i).name;
-
-	names.push_back(name);
-	if (args.count("tree")) 
-	  delete_node(T,name);	
-      }
-    }
-
-    cerr<<"Removed "<<names.size()<<" sequences because of length constraints."<<endl;
-
-
-    if (args.count("tree") and ((args.count("keep") or args.count("cutoff"))))
-    while(true) 
+    if (args.count("longer-than")) 
     {
-      if (T.n_leaves() <= 3)
-	throw myexception()<<"Trying to remove too many tree leaves!";
-
-      if (args.count("keep") and T.n_leaves() <= args["keep"].as<int>())
-	break;
-
-      double min = T.branch(0).length();
-      int argmin = 0;
-      for(int i=1;i<T.n_leaves();i++) {
-	if (T.branch(i).length() < min) {
-	  min = T.branch(i).length();
-	  argmin = i;
-	}
-      }
-
-      if (args.count("cutoff") and min > args["cutoff"].as<double>())
-	break;
-
-      string name = T.seq(argmin);
-
-      names.push_back(name);
-      delete_node(T,name);
+      unsigned cutoff = args["longer-than"].as<unsigned>();
+      
+      for(int i=0;i<A.n_sequences();i++)
+	if (keep[i] and A.seqlength(i) <= cutoff)
+	  keep[i] = 0;
     }
 
-    if (args.count("tree"))
-      cerr<<T.write()<<"\n";
+    if (args.count("shorter-than")) 
+    {
+      unsigned cutoff = args["shorter-than"].as<unsigned>();
+      
+      for(int i=0;i<A.n_sequences();i++)
+	if (keep[i] and A.seqlength(i) >= cutoff)
+	  keep[i] = 0;
+    }
+
+    //----------------------------------------//
+
+    vector<string> remove;
+    if (args.count("remove"))
+      remove = split(args["remove"].as<string>(),',');
+
+    for(int i=0;i<remove.size();i++) {
+      int r = find_index(names,remove[i]);
+      if (r == -1)
+	throw myexception()<<"remove: can't find sequence '"<<remove[i]<<"' to remove.";
+      keep[r] = 0;
+    }
+      
+
+    vector<string> protect;
+    if (args.count("keep"))
+      protect = split(args["keep"].as<string>(),',');
+
+    for(int i=0;i<protect.size();i++) {
+      int p = find_index(names,protect[i]);
+      if (p == -1)
+	throw myexception()<<"keep: can't find sequence '"<<protect[i]<<"' to keep.";
+      keep[p] = 0;
+    }
+
+    cerr<<"Removed "<<keep.size()-sum(keep)<<" sequences because of length constraints."<<endl;
+    //------- Find the most redundant --------//
+
+    ublas::matrix<int> D = pairwise_distance_matrix(A);
+    for(int i=0;i<N;i++)
+      for(int j=0;j<N;j++)
+	if (not keep[i] or not keep[j])
+	  D(i,j) = L+1;
+	else if (i==j)
+	  D(i,j) = L;
+
+    while(true)
+    {
+      std::pair<int,int> p = argmin(D);
+      
+      int p1 = p.first;
+      int p2 = p.second;
+      
+      int MD = D(p1,p2);
+      
+      bool done = true;
+      if (args.count("down-to") and sum(keep) > args["down-to"].as<int>()) done = false;
+      if (args.count("cutoff")  and MD < args["cutoff"].as<unsigned>()) done = false;
+      if (done) break;
+      
+      
+      //remove the second sequence, if they are the same
+      if (D(p1,p2) == D(p2,p1) and p1 < p2)
+	std::swap(p1,p2);
+      
+      keep[p1] = 0;
+      for(int i=0;i<N;i++)
+	D(p1,i) = D(i,p1) = L+1;
+    }
+
+    if (args.count("down-to")) 
+      while(sum(keep) > args["down-to"].as<int>())
+      {
+	std::pair<int,int> p = argmin(D);
+	
+	int p1 = p.first;
+	int p2 = p.second;
+	
+	//remove the second sequence, if they are the same
+	if (D(p1,p2) == D(p2,p1) and p1 < p2)
+	  std::swap(p1,p2);
+	
+	keep[p1] = 0;
+	for(int i=0;i<N;i++)
+	  D(p1,i) = D(i,p1) = L+1;
+      }
 
     //------- Print out the alignment -------//
     vector<sequence> sequences = A.get_sequences();
     alignment A2(A.get_alphabet());
     for(int i=0;i<A.n_sequences();i++)
-      if (not includes(names,sequences[i].name))
+      if (keep[i])
 	A2.add_sequence(sequences[i]);
 
     std::cout<<A2;

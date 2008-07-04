@@ -125,7 +125,8 @@ alignment_reorder_SOURCES = tools/alignment-reorder.C alignment.C alphabet.C seq
 
 alignment_thin_SOURCES = tools/alignment-thin.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C setup.C imodel.C sequence-format.C randomtree.C \
-	alignment-util.C probability.C alignment-random.C model.C tree-util.C
+	alignment-util.C probability.C alignment-random.C model.C tree-util.C \
+	tools/distance-methods.C tools/inverse.C
 
 #---------------------------------------------------------------
 

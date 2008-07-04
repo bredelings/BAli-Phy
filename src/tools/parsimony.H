@@ -18,3 +18,7 @@ double n_mutations(const alphabet& a, const std::vector<int>& letters, const Seq
 
 double n_mutations(const alignment& A, const SequenceTree& T,const Matrix& cost);
 double n_mutations(const alignment& A, const SequenceTree& T);
+
+std::vector<int> get_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const Matrix& cost);
+
+std::vector<vector<int> > get_all_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const Matrix& cost);

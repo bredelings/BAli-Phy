@@ -831,24 +831,23 @@ namespace substitution {
   };
 
 
-  /// A substitution model based on running Reversible Models with the same equilibrium at different rates
+  /// A substitution model based on running identical copies of an input model with different frequencies.
   class MultiFrequencyModel: public MultiModel, 
 			     public ReversibleWrapperOver<SimpleReversibleMarkovModel> 
   {
   protected:
-    /// MultiModels w/ different values of the parameter set
+    /// Components of the mixture - Reversible Markov models express as S+R
     vector<OwnedPointer<SimpleReversibleMarkovModel> > sub_parameter_models;
 
-    /// Fraction of the sites with each parameter value
+    /// Fraction of the sites with each parameter value (weights on the mixture components)
     vector<double> fraction;
 
-    valarray<double> get_a(int m) const;
-    void set_a(int m,const valarray<double>& f);
-    
-    void recalc(const vector<int>&);
-
+    // a(m,l) is the probability that a letter is in component "m" given that it is of type "l"
     inline double& a(int m,int l)       {return parameters_[m+l*fraction.size()];}
     inline double  a(int m,int l) const {return parameters_[m+l*fraction.size()];}
+
+    void recalc(const vector<int>&);
+
 
   public:
     efloat_t super_prior() const;
