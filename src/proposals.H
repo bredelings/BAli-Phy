@@ -102,6 +102,15 @@ public:
   LOD_scaled(const Proposal_Fn& P);
 };
 
+class sorted: public Proposal_Fn
+{
+  OwnedPointer<Proposal_Fn> proposal;
+public:
+  sorted* clone() const {return new sorted(*this);}
+  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
+  sorted(const Proposal_Fn& P);
+};
+
 class Proposal2: public Proposal
 {
   OwnedPointer<Proposal_Fn> proposal;

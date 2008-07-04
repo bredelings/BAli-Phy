@@ -365,6 +365,19 @@ LOD_scaled::LOD_scaled(const Proposal_Fn& P)
 { }
 
 
+double sorted::operator()(std::vector<double>& x,const std::vector<double>& p) const
+{
+  double ratio = (*proposal)(x,p);
+
+  std::sort(x.begin(),x.end());
+
+  return ratio;
+}
+
+sorted::sorted(const Proposal_Fn& P)
+  :proposal(P)
+{ }
+
 double Proposal2::operator()(alignment&, Parameters& P) const
 {
   vector<double> parameters = P.parameters();

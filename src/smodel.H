@@ -503,6 +503,27 @@ namespace substitution {
     explicit SimpleFrequencyModel(const alphabet& a,const valarray<double>&);
   };
 
+  class UniformFrequencyModel: public ReversibleFrequencyModel,
+			      public ModelWithAlphabet<alphabet>
+  {
+  protected:
+    void recalc(const vector<int>&);
+
+  public:
+    
+    const valarray<double>& frequencies() const {return pi;}
+
+    void frequencies(const valarray<double>&);
+    
+    UniformFrequencyModel* clone() const {return new UniformFrequencyModel(*this);}
+
+    string name() const;
+
+    explicit UniformFrequencyModel(const alphabet& a);
+
+    explicit UniformFrequencyModel(const alphabet& a,const valarray<double>&);
+  };
+
   class TripletFrequencyModel: public ReversibleFrequencyModel,
 			       public ModelWithAlphabet<Triplets>
   {
