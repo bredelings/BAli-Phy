@@ -122,7 +122,7 @@ RefPtr<DParrayConstrained> sample_node_base(alignment& A,const Parameters& P,con
     for(int i=0;i<Matrices->nstates();i++) {
       int S2 = Matrices->order(i);
 
-      //---------- Get (,j1,k1) ----------
+      //---------- Get (i1,j1,k1) ----------
       int i1 = i2;
       if (di(S2)) i1--;
 
