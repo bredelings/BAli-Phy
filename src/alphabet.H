@@ -75,10 +75,10 @@ public:
   /// Index of a gap ('-')
   static const int gap = -1;
 
-  /// Index of an unknown letter ('*')
+  /// Index of an unknown letter ('+')
   static const int not_gap = -2;
 
-  /// Index of unknown: no information ('?')
+  /// Index of unknown: no information ('?' - '+' or '-')
   static const int unknown = -3;
 
 

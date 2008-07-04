@@ -8,11 +8,11 @@ UAC  Y
 UGC  C
 UUA  L
 UCA  S
-UAA  !
+UAA  *
 UGA  W
 UUG  L
 UCG  S
-UAG  !
+UAG  *
 UGG  W
 CUU  L
 CCU  P
@@ -41,11 +41,11 @@ AGC  S
 AUA  M
 ACA  T
 AAA  K
-AGA  !
+AGA  *
 AUG  M
 ACG  T
 AAG  K
-AGG  !
+AGG  *
 GUU  V
 GCU  A
 GAU  D

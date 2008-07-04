@@ -209,11 +209,13 @@ valarray<bool> constraint_satisfied(const ublas::matrix<int>& constraint,const a
   return satisfied;
 }
 
-static int sum(const valarray<bool>& v) {
+namespace {
+int sum(const valarray<bool>& v) {
   int count = 0;
   for(int i=0;i<v.size();i++)
     if (v[i]) count++;
   return count;
+}
 }
 
 void report_constraints(const valarray<bool>& s1, const valarray<bool>& s2) {
