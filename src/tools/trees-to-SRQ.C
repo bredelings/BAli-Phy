@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <list>
-#include <ext/hash_map>
 #include <map>
 #include <cmath>
 

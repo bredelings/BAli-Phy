@@ -88,7 +88,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   }
 
   load_bali_phy_rc(args,all);
-
+  cout<<endl;
   return args;
 }
 
@@ -280,24 +280,26 @@ int main(int argc,char* argv[])
 
     cout.precision(3);
 
-    vector<int> lengths;
+    valarray<double> lengths(A.n_sequences());
     for(int i=0;i<A.n_sequences();i++)
-      lengths.push_back(A.seqlength(i));
+      lengths[i] = A.seqlength(i);
 
-    cout<<"Alphabet: "<<a.name<<"\n\n";
-    cout<<"Alignment: "<<A.length()<<" columns of "<<A.n_sequences()<<" sequences\n";
-    cout<<"  "<<max(lengths)<<"/"<<min(lengths)<<" max/min sequence lengths.\n";
+    cout<<"Alignment: "<<A.length()<<" columns of "<<A.n_sequences()<<" sequences         ";
+    cout<<"Alphabet: "<<a.name<<"\n";
+    cout<<"  sequence lengths: "<<lengths.min()<<"-"<<lengths.max();
+    cout<<"      mean = "<<statistics::average(lengths);
+    cout<<"      median = "<<statistics::median(lengths)<<"\n";
     cout<<"\n";
     cout<<" ====== w/o indels ======\n";
-    cout<<"  "<<n_same<<" ("<<double(n_same)/A.length()*100<<"%) sites are constant.\n";
-    cout<<"  "<<n_different<<" ("<<double(n_different)/A.length()*100<<"%) sites are not constant.\n";
-    cout<<"  "<<n_informative<<" ("<<double(n_informative)/A.length()*100<<"%) sites are informative.\n";
+    cout<<"  const.: "<<n_same<<" ("<<double(n_same)/A.length()*100<<"%)    ";
+    cout<<"  non-const.: "<<n_different<<" ("<<double(n_different)/A.length()*100<<"%)    ";
+    cout<<"  inform.: "<<n_informative<<" ("<<double(n_informative)/A.length()*100<<"%)\n";
     cout<<"  "<<min_identity(A,false)*100<<"% minimum sequence identity.\n";
     cout<<"\n";
     cout<<" ====== w/  indels ======\n";
-    cout<<"  "<<n_same2<<" ("<<double(n_same2)/A.length()*100<<"%) sites are constant.\n";
-    cout<<"  "<<n_different2<<" ("<<double(n_different2)/A.length()*100<<"%) sites are not constant.\n";
-    cout<<"  "<<n_informative2<<" ("<<double(n_informative2)/A.length()*100<<"%) sites are informative.\n";
+    cout<<"  const.: "<<n_same2<<" ("<<double(n_same2)/A.length()*100<<"%)    ";
+    cout<<"  non-const.: "<<n_different2<<" ("<<double(n_different2)/A.length()*100<<"%)    ";
+    cout<<"  inform.: "<<n_informative2<<" ("<<double(n_informative2)/A.length()*100<<"%)\n";
     cout<<"  "<<min_identity(A,true)*100<<"% minimum sequence identity.\n";
     cout<<"\n";
 
@@ -329,12 +331,12 @@ int main(int argc,char* argv[])
     
     cout<<"  "<<gaps.size()<<" indel groups seem to exist. ("<<total_gaps<<" separate)\n";
     if (total_gaps) {
-      cout<<"       unique = "<<unique;
-      cout<<"     informative = "<<inf_gaps<<endl;
-      cout<<"       insertions = "<<n_ins;
-      cout<<"     deletions = "<<n_del<<endl;
-      cout<<"  Length:      mean = "<<statistics::average(gap_lengths2);
-      cout<<"      median = "<<statistics::median(gap_lengths2)<<endl;
+      cout<<"       unique/inform. = "<<unique<<"/"<<inf_gaps;
+      cout<<"       ins./del. = "<<n_ins<<"/"<<n_del<<endl;
+
+      cout<<"  gap lengths: "<<gap_lengths2.min()<<"-"<<gap_lengths2.max();
+      cout<<"      mean = "<<statistics::average(gap_lengths2);
+      cout<<"      median = "<<statistics::median(gap_lengths2)<<"\n";
     }
     cout<<endl;
 
@@ -357,15 +359,13 @@ int main(int argc,char* argv[])
       add(found, find_triplet( sequences , "TGA" ) );
       add(found, find_triplet( sequences , "TAG" ) );
 
-      cout<<"\nStop Codons:\n";
-      for(int i=0;i<3;i++) 
-	cout<<"   Frame "<<i<<": "<<found[i]<<"\n";
+      cout<<"Stop Codons:  "<<join(found,'/')<<"\n";
     }
 
     valarray<double> counts = letter_counts(A);
     valarray<double> frequencies = A.get_alphabet().get_frequencies_from_counts(counts,A.n_sequences()/2);
 
-    cout<<"\nFreqencies:\n  ";
+    cout<<"\nFreqencies:   ";
     for(int i=0;i<a.size();i++)
       cout<<a.lookup(i)<<"="<<frequencies[i]*100<<"%  ";
     cout<<"\n";
@@ -373,7 +373,7 @@ int main(int argc,char* argv[])
     int classes = letter_classes(A);
     int wildcards = letter_count(A,alphabet::not_gap);
     int total = classes + wildcards + (int)counts.sum();
-    cout<<"  Classes:  "<<classes<<" ["<<double(classes)/total*100<<"%]\n";
+    cout<<"  Classes:  "<<classes<<" ["<<double(classes)/total*100<<"%]      ";
     cout<<"  Wildcards: "<<wildcards<<" ["<<double(wildcards)/total*100<<"%]\n";
   }
   catch (std::exception& e) {

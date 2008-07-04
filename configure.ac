@@ -67,8 +67,8 @@ LDFLAGS="$LDFLAGS $extra_libs"
 
 # Specify extra library paths
 AC_ARG_WITH([system-boost], AS_HELP_STRING([--with-system-boost],[Add extra library paths]),
-  use_system_boost=YES,
-  use_system_boost=NO
+  use_system_boost=yes,
+  use_system_boost=no
 )
 
 AC_ARG_VAR(CHIP,
@@ -126,7 +126,13 @@ AC_TYPE_SIZE_T
 
 AC_ARG_ENABLE([debug],
               AS_HELP_STRING([--enable-debug], [Compile in debug mode]),
-             [debug=$enableval])
+             [debug=$enableval],
+	     [debug=no])
+
+AC_ARG_ENABLE([bounds_checking],
+              AS_HELP_STRING([--enable-bounds-checking], [Compile with bounds checking enabled=yes,no,boost]),
+             [bounds_checking=$enableval],
+	     [bounds_checking=no])
 
 AC_ARG_ENABLE([profile],
               AS_HELP_STRING([--enable-profile], [Compile with profiling information]),
@@ -135,7 +141,7 @@ AC_ARG_ENABLE([profile],
 
 AC_ARG_ENABLE([static],
               AS_HELP_STRING([--enable-static], [Link statically]),
-             [static=$enableval],
+             [static=yes],
              [static=no])
 
 
@@ -145,30 +151,55 @@ if test "$GXX" = yes ; then
 
   CXXFLAGS="$CXXFLAGS -pipe"
 
-  if test "$debug" != yes ; then
-    CXXFLAGS="$CXXFLAGS -ffast-math"
-  fi
-
-  # set flags for --enable-profile
+  # --enable-profile
   if test "$profile" = yes ; then
-    CXXFLAGS="$CXXFLAGS -pg"
-    LDFLAGS="$LDFLAGS -pg"
+      CXXFLAGS="$CXXFLAGS -pg"
+      LDFLAGS="$LDFLAGS -pg"
+  elif test "$profile" = oprofile ; then
+      CXXFLAGS="$CXXFLAGS -g -fno-omit-frame-pointer"
   fi
 
-  # set flags for --enable-debug
-  if test "$debug" = yes ; then
-    CXXFLAGS="$CXXFLAGS -g"
+  # --enable-bounds-checking
+  if test "$bounds_checking" = yes ; then
+      CXXFLAGS="$CXXFLAGS -D_GLIBCXX_DEBUG"
+      if test "$use_system_boost" = yes ; then
+          echo "Error: cannot bounds check STL if compiled with system BOOST libraries"
+          exit 1
+      fi  
+  elif test "$bounds_checking" = no ; then
+      if test "$debug" != no ; then
+          CXXFLAGS="$CXXFLAGS -DBOOST_UBLAS_INLINE=inline"
+          CXXFLAGS="$CXXFLAGS -DBOOST_UBLAS_CHECK_ENABLE=0"
+          CXXFLAGS="$CXXFLAGS -DBOOST_UBLAS_TYPE_CHECK=0"
+      fi
+  elif test "$bounds_checking" != boost ; then
+      echo "I don't recognize --enable-bounds-checking=$bounds_checking."
+      echo "Please use values yes,no, or boost"
+      exit 1
+  fi  
 
-  # set flags for optimization
-  elif test "$debug" = nodefs ; then
-    CXXFLAGS="$CXXFLAGS -g"
-    CXXFLAGS="$CXXFLAGS -O -funroll-loops -fweb"
-  else
-    CXXFLAGS="$CXXFLAGS -O3 -funroll-loops -fweb"
-    CXXFLAGS="$CXXFLAGS -DNDEBUG -DNDEBUG_DP"
-    if test "$profile" != yes ; then 
-      CXXFLAGS="$CXXFLAGS -fomit-frame-pointer"
-    fi
+  # --enable-debug
+  #   If $enableval !=yes and !=no, then the user can specify their own optimization flags.
+  if test "$debug" = yes ; then
+      CXXFLAGS="$CXXFLAGS -g"
+      # no -ffast-math because it affects handling of NaNs, which result from
+      # uninitialized values, among other things
+  fi
+
+  if test "$debug" = no ; then
+      CXXFLAGS="-ffast-math $CXXFLAGS"
+      CXXFLAGS="-O3 -funroll-loops -fweb $CXXFLAGS"
+      CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
+      if test "$profile" = no ; then 
+          CXXFLAGS="-fomit-frame-pointer $CXXFLAGS"
+      fi
+  elif test "$debug" = O2 ; then
+      CXXFLAGS="-ffast-math $CXXFLAGS"
+      CXXFLAGS="-O2 -funroll-loops -fweb $CXXFLAGS"
+      CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
+      if test "$profile" = no ; then 
+          CXXFLAGS="-fomit-frame-pointer $CXXFLAGS"
+      fi
   fi
 
   # also set the LDFLAGS for a static build
@@ -185,8 +216,8 @@ AC_SUBST(ldflags)
 AM_CONDITIONAL(GCC, test "$GXX" = yes)
 AM_CONDITIONAL(DEBUG, test "$debug" = yes)
 AM_CONDITIONAL(STATIC, test "$static" = yes)
-AM_CONDITIONAL(SYSTEM_BOOST, test "$use_system_boost" = YES)
-AM_CONDITIONAL(NO_SYSTEM_BOOST, test "$use_system_boost" = NO)
+AM_CONDITIONAL(SYSTEM_BOOST, test "$use_system_boost" = yes)
+AM_CONDITIONAL(NO_SYSTEM_BOOST, test "$use_system_boost" = no)
 
 #determine the OS that is being targeted
 AM_CONDITIONAL(HOST_MINGW32,test "${host_os_noversion}" = mingw32)
@@ -244,7 +275,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 
 #---------------------- Check for BOOST ------------------#
 echo "------------------------------------------"
-if test "$use_system_boost" = YES ; then
+if test "$use_system_boost" = yes ; then
 echo " * Looking for the system BOOST headers..."
 AC_CHECK_HEADERS([boost/config.hpp],[],[echo "Error: I can't find <boost/config.hpp>."; echo "Please install the BOOST headers, or specify their location using --with-extra-inclues". ; exit 1])
 AC_CHECK_HEADERS([boost/filesystem/operations.hpp],[],[echo "Error: I can't find <boost/filesystem/operations.hpp>."; echo "Please install the BOOST filesystem headers." ; exit 1])

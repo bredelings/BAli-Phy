@@ -1,10 +1,12 @@
-See doc/README.xhtml
+This file briefly explains how to compile bali-phy.
+
+See doc/README.html for full instructions with much more helpful detail.
 
 ---- Compiling from subversion source ----
 
-This step is ONLY necessary if you are using the subversion source.
-Tarballs of the source should include the files that this step
-generates.  
+This step is ONLY necessary if you are using the subversion source
+(which you probably are not).  Tarballs of the source should include
+the files that this step generates.  
 
 You need automake 1.8 or higher and autoconf 2.59 or higher to
 generate these files.
@@ -18,40 +20,37 @@ These commands generate the configure script and Makefiles.
 
 --- Ultra Quick Version ---
 
-% tar -zxf bali-phy-<version>.tgz
-% cd bali-phy-<version>
-% ./configure
-% make
-% make install
+% tar -zxf bali-phy-<version>.tgz      # Extract/uncompress the archive
+                                          to create the source directory.
 
-------- Quick Version ------
+% mkdir bali-phy-<version>-build       # Make a SEPARATE build directory.
 
-1. Extract the sources:
+% cd bali-phy-<version>-build          # Enter the build directory.
 
-% tar -zxf bali-phy-<version>.tgz
+% ../bali-phy-<version>/configure      # Run the configure script 
+                                       #  from the source directory.
 
-2. Make a build directory
+% make                                 # Build the software.
 
-% mkdir bali-phy-build
-% cd bali-phy-build
+% make install                         # Install to /usr/local
 
-3. Run the configure script in the bali-phy directory:
+Installed locations:
+ /usr/local/bin                      - Binary executables.
+ /usr/local/share/bali-phy/examples  - Example files.
+ /usr/local/share/bali-phy/Data      - Data directory.
+ /usr/local/share/doc/bali-phy/      - Documentation.
 
-% ../bali-phy-<version>/configure
+------ More options ------
 
-By default, the software will be installed in /usr/local
+If you wish to install it under <prefix> instead of under 
+ /usr/local, then supply the flag --prefix=<prefix> to the configure
+ script. For example, to install it in your home directory under
+ ~/local, specify:
 
-If you wish to install it somewhere else, say $HOME/local
-then run:
+% ../bali-phy-<version>/configure --prefix=$HOME/local 
 
-% ../bali-phy-<version>/configure --prefix=$HOME/local
+Extra options to configure can be revealed by supplying the --help
+flag.
 
-4. Build the software
+You should browse the User Guide at /usr/local/share/doc/bali-phy/README.html
 
-% make
-
-5. Install the software
-
-% make install
-
-This will install the software in the directory <prefix>/bin/.
