@@ -143,18 +143,18 @@ bool process_stack_Markov(vector<string>& string_stack,
   return true;
 }
 
-OwnedPointer<ExchangeModel> get_EM(::Model* M, const string& name)
+OwnedPointer<AlphabetExchangeModel> get_EM(::Model* M, const string& name)
 {
-  ExchangeModel* EM = dynamic_cast<ExchangeModel*>(M);
+  AlphabetExchangeModel* AEM = dynamic_cast<AlphabetExchangeModel*>(M);
 
-  if (not EM) 
+  if (not AEM) 
     throw myexception()<<name<<":couldn't find an exchange-model to use.";
 
-  return *EM;
+  return *AEM;
 }
 
 
-OwnedPointer<ExchangeModel> get_EM(vector<OwnedPointer< ::Model> >& model_stack, const string& name)
+OwnedPointer<AlphabetExchangeModel> get_EM(vector<OwnedPointer< ::Model> >& model_stack, const string& name)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": couldn't find any model to use.";
@@ -171,7 +171,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   string arg;
   
   if (match(string_stack,"pi=constant",arg)) {
-    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=constant");
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=constant");
 
     SimpleFrequencyModel F(a,frequencies);
 
@@ -181,7 +181,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     model_stack.back() = ReversibleMarkovSuperModel(*EM,F);
   }
   else if (match(string_stack,"pi",arg)) {
-    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi");
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi");
 
     SimpleFrequencyModel F(a,frequencies);
 
@@ -193,7 +193,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     if (not T)
       throw myexception()<<"pi=nucleotides:: '"<<a.name<<"' is not a triplet alphabet.";
 
-    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=nucleotides");
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=nucleotides");
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,IndependentNucleotideFrequencyModel(*T));
   }
@@ -203,7 +203,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     if (not C)
       throw myexception()<<"pi=amino-acids:: '"<<a.name<<"' is not a codon alphabet.";
 
-    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=nucleotides");
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=nucleotides");
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,AACodonFrequencyModel(*C));
   }
@@ -213,7 +213,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     if (not T)
       throw myexception()<<"pi=triplets:: '"<<a.name<<"' is not a triplet alphabet.";
 
-    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=triplets");
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=triplets");
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,TripletsFrequencyModel(*T));
   }
@@ -223,7 +223,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     if (not C)
       throw myexception()<<"pi=codons:: '"<<a.name<<"' is not a codon alphabet.";
 
-    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=codons");
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=codons");
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonsFrequencyModel(*C));
   }
@@ -233,8 +233,8 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     if (not C)
       throw myexception()<<"pi=codons2:: '"<<a.name<<"' is not a codon alphabet.";
 
-    OwnedPointer<ExchangeModel> EM = get_EM(model_stack,"pi=codons2");
-
+    OwnedPointer<AlphabetExchangeModel> EM = get_EM(model_stack,"pi=codons2");
+    
     model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonsFrequencyModel2(*C));
   }
   else
@@ -351,8 +351,16 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(arg);
     model_stack.back() = DirichletParameterModel(*get_MM(model_stack,"DP",frequencies),-1,n);
   }
-    
-  else if (match(string_stack,"Mixture",arg)) {
+  else if (match(string_stack,"Modulated",arg))
+  {
+    OwnedPointer<MultiModel> MM = get_MM(model_stack,"Modulated",frequencies);
+
+    int n = MM->n_base_models();
+    model_stack.back() = ModulatedMarkovModel(*MM,
+					      SimpleExchangeModel(n));
+  }
+  else if (match(string_stack,"Mixture",arg)) 
+  {
     int n=1;
     if (arg.empty())
       throw myexception()<<"Mixture model must specify number of submodels as Mixture[n]";

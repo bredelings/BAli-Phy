@@ -16,7 +16,7 @@ class Multi_Likelihood_Cache: public std::vector< std::vector< Matrix > >,
 protected:
   int C; // # the (maximum) number of columns available per branch
   int M; // # models
-  int A; // # letters
+  int S; // # states
 
   /// mapping[token][branch] -> location
   std::vector<std::vector<int> > mapping;
@@ -69,7 +69,7 @@ public:
   /// Determine the number of CTMC models out model is a mixture of.
   int n_models() const {return M;}
   /// The size of the alphabet
-  int n_letters() const {return A;}
+  int n_states() const {return S;}
 
   /// Mark cached conditional likelihoods for token t/branch b invalid.
   void invalidate_one_branch(int token,int branch);
@@ -127,8 +127,8 @@ public:
   int n_branches() const {return B/2;}
   /// The number of CTMC models in our mixture.
   int n_models() const {return cache->n_models();}
-  /// The number of letters in our alphabet.
-  int n_letters() const {return cache->n_letters();}
+  /// The number of states in our alphabet.
+  int n_states() const {return cache->n_states();}
 
   /// Mark cached conditional likelihoods for all branches invalid.
   void invalidate_all();

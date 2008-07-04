@@ -38,7 +38,6 @@ namespace substitution {
     return total;
   }
 
-
   /// Find the probabilities of all the data give each letter at the root
   vector<Matrix>
   get_column_likelihoods(const alignment& A,const Parameters& P, const vector<int>& b,
