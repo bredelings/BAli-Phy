@@ -25,8 +25,6 @@ CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasi
 
 endif
 
-BOOST_LIBS = @boost_libs@
-
 LIBS = @libs@
 
 #-----------------------------------------------------------------

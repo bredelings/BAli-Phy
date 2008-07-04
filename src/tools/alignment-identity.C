@@ -173,6 +173,43 @@ Matrix aligned_fraction(const variables_map& args,unsigned N,const vector<int>& 
   return fraction_aligned;
 }
 
+double ave_aligned_fraction(const vector< ublas::matrix<int> >& Ms, 
+			    int s1,int s2,int L1, int L2) 
+{
+  ublas::matrix<int> count(L1+1,L2+1);
+  for(int i=0;i<count.size1();i++)
+    for(int j=0;j<count.size2();j++)
+      count(i,j) = 0;
+
+  // get counts of each against each
+  for(int i=0;i<Ms.size();i++) {
+    const ublas::matrix<int>& M = Ms[i];
+
+    for(int c=0;c<M.size1();c++) {
+      int index1 = M(c,s1);
+      int index2 = M(c,s2);
+      if (index1 != -3 and index2 != -3)
+	count(index1 + 1, index2 + 1)++;
+    }
+  }
+  count(0,0) = 0;
+
+  valarray<int> max1(0.0, L1);
+  valarray<int> max2(0.0, L2);
+
+  for(int i=0;i<count.size1();i++)
+    for(int j=0;j<count.size2();j++) {
+      if (i>0)
+	max1[i-1] = std::max(max1[i-1],count(i,j));
+      if (j>0)
+	max2[j-1] = std::max(max2[j-1],count(i,j));
+    }
+
+  int total = max1.sum()+max2.sum();
+  cerr<<total<<"   "<<double(total)/(max1.size()+max2.size())/Ms.size()<<endl;
+
+  return double(total)/(max1.size()+max2.size())/Ms.size();
+}
 
 int main(int argc,char* argv[]) 
 { 
@@ -233,34 +270,56 @@ int main(int argc,char* argv[])
     double cutoff=cutoffs[0];
     
     //--------- matrix of alignabilities ----------//
+    // get fraction of residues aligned at some level
     if (args.count("analysis") and 
 	(args["analysis"].as<string>() == "matrix" or args["analysis"].as<string>() == "nmatrix")) 
-      {
-	vector<string> s_out;
-	vector<double> v_out;
-	s_out.push_back("level");
-	for(int s1=0;s1<N;s1++)
-	  for(int s2=0;s2<s1;s2++) {
-	    string name1 = A.seq(s1).name;
-	    string name2 = A.seq(s2).name;
-	    if (std::less<string>()(name2,name1)) std::swap(name1,name2);
-	    s_out.push_back(name1 +"-"+name2);
-	  }
-	cout<<join(s_out,'\t')<<endl;
-
-	for(int i=0;i<cutoffs.size();i++) {
-	  Matrix AF = aligned_fraction(args,N,L,A,E,cutoffs[i]);
-
-	  v_out.clear();
-	  v_out.push_back(cutoffs[i]);
-	  for(int s1=0;s1<N;s1++)
-	    for(int s2=0;s2<s1;s2++)
-	      v_out.push_back(AF(s1,s2));
-	  cout<<join(v_out,'\t')<<endl;
+    {
+      vector<string> s_out;
+      vector<double> v_out;
+      s_out.push_back("level");
+      for(int s1=0;s1<N;s1++)
+	for(int s2=0;s2<s1;s2++) {
+	  string name1 = A.seq(s1).name;
+	  string name2 = A.seq(s2).name;
+	  if (std::less<string>()(name2,name1)) std::swap(name1,name2);
+	  s_out.push_back(name1 +"-"+name2);
 	}
-
-	exit(0);
+      cout<<join(s_out,'\t')<<endl;
+      
+      for(int i=0;i<cutoffs.size();i++) {
+	Matrix AF = aligned_fraction(args,N,L,A,E,cutoffs[i]);
+	
+	v_out.clear();
+	v_out.push_back(cutoffs[i]);
+	for(int s1=0;s1<N;s1++)
+	  for(int s2=0;s2<s1;s2++)
+	    v_out.push_back(AF(s1,s2));
+	cout<<join(v_out,'\t')<<endl;
       }
+      
+      exit(0);
+    }
+    // get some kind of distance matrix to find out which pairs are badly aligned
+    else if (args.count("analysis") and args["analysis"].as<string>() == "d-matrix")
+    {
+      Matrix D(N,N);
+      for(int s1=0;s1<N;s1++)
+	for(int s2=0;s2<=s1;s2++)
+	  if (s1 == s2)
+	    D(s1,s2) = 0;
+	  else
+	    D(s2,s1) = D(s1,s2) = 1.0-ave_aligned_fraction(Ms,s1,s2,L[s1],L[s2]);
+
+      for(int i=0;i<D.size1();i++) {
+	vector<double> v(D.size2());
+	for(int j=0;j<v.size();j++)
+	  v[j] = D(i,j);
+	cout<<join(v,'\t')<<endl;
+      }
+
+      exit(0);
+      
+    }
 
 
     //-------- Build a beginning alignment --------//

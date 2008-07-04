@@ -281,8 +281,6 @@ AC_CHECK_HEADERS([boost/config.hpp],[],[echo "Error: I can't find <boost/config.
 AC_CHECK_HEADERS([boost/filesystem/operations.hpp],[],[echo "Error: I can't find <boost/filesystem/operations.hpp>."; echo "Please install the BOOST filesystem headers." ; exit 1])
 AC_CHECK_HEADERS([boost/program_options.hpp],[],[echo "Error: I can't find <boost/program_options.hpp>."; echo "Please install the BOOST program options headers." ; exit 1])
 AC_CHECK_HEADERS([boost/graph/graph_traits.hpp],[],[echo "Error: I can't find <boost/graph/graph_traits.hpp>."; echo "Please install the BOOST graph library headers." ; exit 1])
-boost_includes=""
-CXXFLAGS="$boost_includes $CXXFLAGS"
 
 echo " * Looking for the system BOOST libraries... (suffix = '${BOOST_SUFFIX}')"
 AC_CHECK_LIB(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_program_options library! (-lboost_program_options${BOOST_SUFFIX})" ; exit 1])
@@ -317,9 +315,6 @@ else
 fi
 libs=$LIBS
 AC_SUBST(libs)
-AC_SUBST(boost_includes)
-AC_SUBST(boost_libs)
-AC_SUBST(BOOST_SUFFIX)
 echo "------------------------------------------"
 
 echo ""
