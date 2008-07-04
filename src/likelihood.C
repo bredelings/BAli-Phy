@@ -128,7 +128,7 @@ efloat_t prior_HMM_rootless_scale(const alignment& A, const Parameters& P)
 
 #ifndef NDEBUG
   assert(P.has_IModel());
-  check_internal_nodes_connected(A,T);
+  check_internal_nodes_connected(*P.A,T);
 #endif
   
   efloat_t Pr = 1;
