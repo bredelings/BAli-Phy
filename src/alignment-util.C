@@ -638,7 +638,7 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
   return alphabets;
 }
 
-alignment load_alignment(const string& filename,const vector<OwnedPointer<const alphabet> >& alphabets)
+alignment load_alignment(const string& filename,const vector<OwnedPointer<alphabet> >& alphabets)
 {
   alignment A;
   if (filename == "-")
