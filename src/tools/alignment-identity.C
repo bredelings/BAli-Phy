@@ -106,6 +106,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("cutoff",value<double>()->default_value(0.75),"ignore events below this probability")
     ("identity",value<double>()->default_value(0.4),"Find fraction of sequences that have this level of identity.")
+    ("analysis",value<string>(),"What analysis to do.")
     ("strict","require all implied pairs pass the cutoff")
     ;
 
@@ -140,7 +141,7 @@ int main(int argc,char* argv[])
       seed = myrand_init();
     cerr<<"random seed = "<<seed<<endl<<endl;
     
-    //------------ Load alignment and tree ----------//
+    //------------ Load alignments ---- ----------//
     vector<alignment> alignments;
     vector<ublas::matrix<int> > Ms;
 
@@ -161,12 +162,10 @@ int main(int argc,char* argv[])
     vector<int> L(N);
     for(int i=0;i<L.size();i++)
       L[i] = A.seqlength(i);
-
     
     //--------- Construct alignment indexes ---------//
     for(int i=0;i<alignments.size();i++)
       Ms.push_back(M(alignments[i]));
-
 
     //--------- Get list of supported pairs ---------//
     Edges E(L);
@@ -175,11 +174,71 @@ int main(int argc,char* argv[])
       for(int s2=0;s2<s1;s2++)
 	add_edges(E,Ms,s1,s2,L[s1],L[s2],0.5);
 
-
     E.build_index();
+
     //--------- Build alignment from list ---------//
     double cutoff = args["cutoff"].as<double>();
     if (cutoff < 0.5) cutoff = 0.5;
+
+    //--------- matrix of alignabilities ----------//
+    if (args.count("analysis") and args["analysis"].as<string>() == "matrix")
+    {
+      Matrix fraction_aligned(N,N);
+      ublas::matrix<int> Matches(N,N);
+      ublas::matrix<int> Gaps(N,N);
+
+      
+      for(int s1=0;s1<N;s1++) {
+	for(int s2=0;s2<N;s2++) {
+	  fraction_aligned(s1,s2)=0;
+	  Matches(s1,s2) = 0;
+	  Gaps(s1,s2)=0;
+	}
+	fraction_aligned(s1,s1) = 1.0;
+	Matches(s1,s1) = L[s1];
+      }
+
+      // count supported matches and gaps at each level
+      foreach(e,E) 
+      {
+	// supposedly the list is sorted
+	if (e->p < cutoff) break;
+
+	//	cout<<"s1 = "<<e->s1<<" s2 = "<<e->s2<<"  x1 = "<<e->x2<<" x2 = "<<e->x2<<" p = "<<e->p<<endl;
+
+	if (e->x1 >=0 and e->x2 >=0) {
+	  Matches(e->s1, e->s2)++;
+	  Matches(e->s2, e->s1)++;
+	}
+	else {
+	  Gaps(e->s1, e->s2)++;
+	  Gaps(e->s2, e->s1)++;
+	}
+      }
+
+      for(int s1=0;s1<N;s1++)
+	for(int s2=0;s2<N;s2++)
+	  fraction_aligned(s1,s2) = (2.0*Matches(s1,s2)+1.0*Gaps(s1,s2))/(L[s1]+L[s2]);
+
+
+      vector<string> s_out;
+      vector<double> v_out;
+      s_out.push_back("level");
+      v_out.push_back(cutoff);
+
+      for(int s1=0;s1<N;s1++)
+	for(int s2=0;s2<s1;s2++) {
+	  string name1 = A.seq(s1).name;
+	  string name2 = A.seq(s2).name;
+	  if (std::less<string>()(name2,name1)) std::swap(name1,name2);
+	  s_out.push_back(name1 +"-"+name2);
+	  v_out.push_back(fraction_aligned(s1,s2));
+	}
+      cout<<join(s_out,'\t')<<endl;
+      cout<<join(v_out,'\t')<<endl;
+
+      exit(1);
+    }
 
     //-------- Build a beginning alignment --------//
     index_matrix M = unaligned_matrix(L);

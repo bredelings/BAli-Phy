@@ -93,6 +93,7 @@ vector<int> get_nodes_map(const SequenceTree& Q,const SequenceTree& T,
 
 bool update_lengths(const SequenceTree& Q,const SequenceTree& T,
 		    valarray<double>& branch_lengths, 
+		    valarray<double>& branch_lengths_squared, 
 		    valarray<double>& node_lengths)
 {
   // map branches from Q -> T
@@ -104,7 +105,9 @@ bool update_lengths(const SequenceTree& Q,const SequenceTree& T,
   for(int b=0;b<Q.n_branches();b++)
   {
     int b2 = branches_map[b];
-    branch_lengths[b] += T.directed_branch(b2).length();
+    double L = T.directed_branch(b2).length();
+    branch_lengths[b] += L;
+    branch_lengths_squared[b] += L*L;
   }
 
   // map nodes from T -> Q
@@ -136,6 +139,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree", value<string>(),"tree to re-root")
     ("skip",value<int>()->default_value(0),"number of tree samples to skip")
     ("max",value<int>(),"maximum number of tree samples to read")
+    ("var","report standard deviation of branch lengths instead of mean")
     ("no-node-lengths","ignore branches not in the specified topology")
     ("safe","Don't die if no trees match the topology");
     ;
@@ -178,6 +182,7 @@ int main(int argc,char* argv[])
       max = args["max"].as<int>();
 
     valarray<double> branch_lengths(0.0,Q.n_branches());
+    valarray<double> branch_lengths_var(0.0,Q.n_branches());
     valarray<double> node_lengths(0.0,Q.n_nodes());
 
     int lines=0;
@@ -204,7 +209,7 @@ int main(int argc,char* argv[])
 	break;
       }
 
-      if (update_lengths(Q,T,branch_lengths,node_lengths)) {
+      if (update_lengths(Q,T,branch_lengths,branch_lengths_var,node_lengths)) {
 	n_matches++;
       }
       n_samples++;
@@ -229,16 +234,29 @@ int main(int argc,char* argv[])
     //------- Merge lengths and topology -------//
 
     branch_lengths /= n_matches;
+    branch_lengths_var /= n_matches;
     node_lengths /= n_matches;
 
-    for(int b=0;b<branch_lengths.size();b++)
-      Q.branch(b).set_length(branch_lengths[b]); 
+    for(int i=0;i<branch_lengths_var.size();i++)
+    {
+      branch_lengths_var[i] -= branch_lengths[i]*branch_lengths[i];
+      branch_lengths_var[i] = sqrt(branch_lengths_var[i]);
+    }
 
-    if (not args.count("no-node-lengths")) {
-      for(int n=0;n<node_lengths.size();n++) {
-	int degree = Q[n].neighbors().size();
-	for(out_edges_iterator b = Q[n].branches_out();b;b++)
-	  (*b).set_length((*b).length() + node_lengths[n]/degree);
+    if (args.count("var"))
+      for(int b=0;b<branch_lengths.size();b++)
+	Q.branch(b).set_length(branch_lengths_var[b]);
+    else 
+    {
+      for(int b=0;b<branch_lengths.size();b++)
+	Q.branch(b).set_length(branch_lengths[b]);
+
+      if (not args.count("no-node-lengths")) {
+	for(int n=0;n<node_lengths.size();n++) {
+	  int degree = Q[n].neighbors().size();
+	  for(out_edges_iterator b = Q[n].branches_out();b;b++)
+	    (*b).set_length((*b).length() + node_lengths[n]/degree);
+	}
       }
     }
 
@@ -251,5 +269,4 @@ int main(int argc,char* argv[])
     exit(1);
   }
   return 0;
-
 }
