@@ -136,7 +136,7 @@ RefPtr<DPmatrixConstrained> tri_sample_alignment_base(alignment& A,const Paramet
       if (c2==0 or (j1 == j2 and k1 == k2) or (j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
 	Matrices->states(c2+1).push_back(S2);
       else
-	; // this state not allowed here
+	{ } // this state not allowed here
     }
   }
 

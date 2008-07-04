@@ -138,7 +138,7 @@ RefPtr<DParrayConstrained> sample_node_base(alignment& A,const Parameters& P,con
 	  or (i1 == icol[c2-1] and j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
 	Matrices->states(c2).push_back(S2);
       else
-	; // this state not allowed here
+	{ } // this state not allowed here
     }
   }
 
