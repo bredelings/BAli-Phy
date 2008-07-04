@@ -77,6 +77,7 @@ void sample_alignment(alignment& A,Parameters& P,int b)
       seq2.push_back(column);
   }
 
+  //FIXME - this makes the debug routines crash
   if (not seq1.size() or not seq2.size()) return;
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
