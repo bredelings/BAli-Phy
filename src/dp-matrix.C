@@ -3,16 +3,25 @@
 #include "dp-matrix.H"
 #include "pow2.H"
 #include "choose.H"
+#include "util.H"
 
 using std::max;
+using std::isnan;
+using std::isfinite;
 
 void state_matrix::clear() 
 {
-  delete[] data; 
-  data = NULL;
+  if (data) 
+  {
+    delete[] data; 
+    data = NULL;
+  }
   
-  delete[] scale_; 
-  scale_ = NULL;
+  if (scale_)
+  {
+    delete[] scale_; 
+    scale_ = NULL;
+  }
 }
 
 state_matrix::~state_matrix() 
@@ -27,6 +36,12 @@ inline void DPmatrix::clear_cell(int i2,int j2)
     (*this)(i2,j2,S) = 0;
 }
 
+// 1. order( ) must be considered here, because the 3-way HMM has
+//     a silent state at 7.  
+// 2. Alternatively, we could just ignore S1==S2, since both the
+//     3-way and 1-way HMMs have no more than 1 silent state
+//     (not counting the start or end states).
+
 inline void DPmatrix::forward_first_cell(int i2,int j2) 
 { 
   assert(0 < i2 and i2 < size1());
@@ -37,16 +52,22 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
 
   double maximum = 0;
 
-  for(int S2=0;S2<nstates();S2++) 
+  for(int s2=0;s2<nstates();s2++) 
   {
     double temp;
+
+    int S2 = order(s2);
     if (di(S2) or dj(S2))
       temp = start_P[S2];
     else {
       //--- compute arrival probability ----
-      temp  = 0;
-      for(int S1=0;S1<nstates();S1++)
+      temp = 0;
+      // bound is s2, since this is only for silent states
+      for(int s1=0;s1<s2;s1++)  {
+	int S1 = order(s1);
+
 	temp += (*this)(i2,j2,S1) * GQ(S1,S2);
+      }
     }
 
     // record maximum
@@ -115,18 +136,27 @@ inline void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
   }
 }
 
-void DPmatrix::forward_square() {
+void DPmatrix::compute_Pr_sum_all_paths()
+{
   const int I = size1()-1;
   const int J = size2()-1;
 
-  forward_square_first(1,1,I,J);
-
-  // store total
   double total = 0.0;
   for(int state1=0;state1<nstates();state1++)
     total += (*this)(I,J,state1)*GQ(state1,endstate());
 
   Pr_total = pow<efloat_t>(2.0,scale(I,J)) * total;
+  assert(not isnan(Pr_total) and isfinite(Pr_total));
+}
+
+void DPmatrix::forward_square() 
+{
+  const int I = size1()-1;
+  const int J = size2()-1;
+
+  forward_square_first(1,1,I,J);
+
+  compute_Pr_sum_all_paths();
 }
 
 // FIXME - fix up pins for new matrix coordinates
@@ -153,12 +183,7 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins)
     forward_square(x[p]+1,y[p]+1,I,J);
   }
   
-  // store total
-  double total = 0.0;
-  for(int state1=0;state1<nstates();state1++)
-    total += (*this)(I,J,state1)*GQ(state1,endstate());
-
-  Pr_total = pow<efloat_t>(2.0,scale(I,J)) * total;
+  compute_Pr_sum_all_paths();
 }
 
 vector<int> DPmatrix::forward(const vector<vector<int> >& pins) 
@@ -241,8 +266,10 @@ vector<int> DPmatrix::sample_path() const
   // - since the start state is simulated by a non-silent state
   //   NS(0,0) we should go negative
   // - check that we came from (0,0) though
-  while (i>=1 and j>=1) {
+  while (i>=1 and j>=1) 
+  {
     path.push_back(state2);
+
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
 
@@ -285,8 +312,10 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2)
 
   double maximum = 0;
 
-  for(int S2=0;S2<nstates();S2++) 
+  for(int s2=0;s2<nstates();s2++) 
   {
+    int S2 = order(s2);
+
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
     if (di(S2)) i1--;
@@ -295,9 +324,15 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2)
     if (dj(S2)) j1--;
 
     //--- compute arrival probability ----
+    int MAX = nstates();
+    if (not di(S2) and not dj(S2)) MAX = s2;
+
     double temp  = 0;
-    for(int S1=0;S1<nstates();S1++)
+    for(int s1=0;s1<MAX;s1++) {
+      int S1 = order(s1);
+
       temp += (*this)(i1,j1,S1) * GQ(S1,S2);
+    }
 
     // rescale result to scale of this cell
     if (scale(i1,j1) != scale(i2,j2))
@@ -451,6 +486,11 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2)
 
   double maximum = 0;
 
+  // If we have silent states, then we have to process them in
+  // the correct order: after all non-silent states and maybe
+  // after some silent states.
+  assert(not silent(order(nstates()-1)));
+
   for(int S2=0;S2<nstates();S2++) 
   {
     //--- Get (i1,j1) from (i2,j2) and S2
@@ -519,9 +559,9 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
 
   double maximum = 0;
 
-  for(int i=0;i<states(j2).size();i++) 
+  for(int s2=0;s2<states(j2).size();s2++) 
   {
-    int S2 = states(j2)[i];
+    int S2 = states(j2)[s2];
 
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
@@ -531,10 +571,13 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
     if (dj(S2)) j1--;
 
     //--- Compute Arrival Probability ----
+    unsigned MAX = states(j1).size();
+    if (not di(S2) and not dj(S2)) MAX = s2;
+
     double temp = 0.0;
-    const unsigned NS1 = states(j1).size();
-    for(int s=0;s<NS1;s++) {
-      int S1 = states(j1)[s];
+    for(int s1=0;s1<MAX;s1++) {
+      int S1 = states(j1)[s1];
+
       temp +=  (*this)(i1,j1,S1) * GQ(S1,S2);
     }
 
@@ -574,6 +617,86 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
   }
 }
 
+void DPmatrixConstrained::compute_Pr_sum_all_paths()
+{
+  const int I = size1()-1;
+  const int J = size2()-1;
+
+  double total = 0.0;
+  for(int s1=0;s1<states(J).size();s1++) {
+    int S1 = states(J)[s1];
+    total += (*this)(I,J,S1)*GQ(S1,endstate());
+  }
+
+  Pr_total = pow<efloat_t>(2.0,scale(I,J)) * total;
+  assert(not isnan(Pr_total) and isfinite(Pr_total));
+}
+
+efloat_t DPmatrixConstrained::path_P(const vector<int>& path) const 
+{
+  const int I = size1()-1;
+  const int J = size2()-1;
+
+  // we are at S1(i,j) coming from S2, and seek to determine S1
+  int S2 = endstate();
+  int i = I;
+  int j = J;
+
+  int l = path.size()-1;
+
+  efloat_t Pr=1.0;
+
+  vector<double> transition(nstates());
+
+  //We should really stop when we reach the Start state.
+  // - since the start state is simulated by a non-silent state
+  //   NS(0,0) we should go negative
+  // - but we would have to check path[-1] to see which state
+  //   made sample_path go negative
+  // - instead we can check if l==0 - we know that the start state
+  //   is at path[-1]
+  while (l>0) 
+  {
+    transition.resize(states(j).size());
+    for(int s1=0;s1<states(j).size();s1++)
+    {
+      int S1 = states(j)[s1];
+      transition[s1] = (*this)(i,j,S1)*GQ(S1,S2);
+    }
+
+    int S1 = path[l-1];
+    int s1 = find_index(states(j),S1);
+
+    double p = choose_P(s1,transition);
+    assert(p > 0.0);
+
+    if (di(S1)) i--;
+    if (dj(S1)) j--;
+
+    l--;
+    S2 = S1;
+    Pr *= p;
+  }
+  assert(l == 0);
+  assert(i == 1 and j == 1);
+
+  // include probability of choosing 'Start' vs ---+ !
+  transition.resize(nstates());
+  for(int S1=0;S1<nstates();S1++)
+    transition[S1] = (*this)(1,1,S1) * GQ(S1,S2);
+
+  // Get the probability that the previous state was 'Start'
+  double p=0.0;
+  for(int S1=0;S1<nstates();S1++)  
+    if (not silent(S1))
+      p += choose_P(S1,transition);
+
+  Pr *= p;
+
+  assert(Pr > 0.0);
+  //std::cerr<<"P(path) = "<<log(Pr)<<std::endl;
+  return Pr;
+}
 
 vector<int> DPmatrixConstrained::sample_path() const 
 {
@@ -582,7 +705,7 @@ vector<int> DPmatrixConstrained::sample_path() const
   const int I = size1()-1;
   const int J = size2()-1;
 
-  // we are at S1(i,j) coming from S2, and see to determine S1
+  // we are at S1(i,j) coming from S2, and seek to determine S1
   int S2 = endstate();
   int i = I;
   int j = J;
