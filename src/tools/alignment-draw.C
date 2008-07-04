@@ -178,7 +178,7 @@ RGB DNA_color(char aa) {
   else if (strchr("TU",aa))
     return green;
   else if (strchr("G",aa))
-    return orange;
+    return yellow;
   else if (strchr("C",aa))
     return blue;
   else if (strchr("-*+NYR ",aa))
@@ -573,7 +573,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("AU",value<string>(),"file with alignment uncertainties")
     ("show-gaps",value<string>()->default_value("yes"),"show gaps") 
     ("gaps-different",value<string>()->default_value("yes"),"Color gaps in grey.") 
-    ("width",value<int>()->default_value(70),"the number of columns per line")
+    ("width",value<int>(),"the number of columns per line")
     ("start",value<int>(),"the first column to plot")
     ("end",value<int>(),"the last column to plot")
     ("format",value<string>()->default_value("HTML"),"produce a plot in this format")
@@ -651,7 +651,9 @@ int main(int argc,char* argv[])
 	  colors(i,j) = -1;
 
     //-------------------- Get width -----------------------//
-    int width = args["width"].as<int>();
+    int width = 2*A.length();
+    if (args.count("width"))
+      width = args["width"].as<int>();
 
     //-------------------- Get start -----------------------//
     int start=0;

@@ -1130,8 +1130,7 @@ traditional = traditional
 
     <sect2>
       <title>Indel models</title>
-      <para>The current models are simple, fragments, and fragments+T.  The
-      default is fragments+T.</para>
+      <para>The current models are RS05, RS07-no-T, and RS07.  The default is RS07.</para>
     </sect2>
 
     <sect2>
@@ -1208,14 +1207,18 @@ traditional = traditional
       <sect2>
 	<title>Specifying a substitution model</title>
 
-	<para>Substitution models are specified using a stack, as
-	follows:
-<userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
+	<para>Substitution models are specified using a stack, as follows:
+	<userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
         where each model uses the previous models as input.  Arguments
 	are optional.
-	</para>
 
-      <para>The basic CTMC models are EQU, HKY, TN, GTR, Empirical, and M0.</para>
+	<note>
+	  <para>
+	  If you are using the C-shell command line shell, then it will try to interpret each argument as an array reference, giving the error message "bali-phy: Not found."  To avoid this you may need to insert backslashes before the left square brackes, like this: <userinput>Model&#92;[arg]+Model&#92;[arg]+...+Model&#92;[arg]</userinput>.
+	  </para>
+	</note>
+
+	</para>
 
       <para>Model modifiers are gamma, log-normal, INV, M2, M3, and M7.</para>
       </sect2>
@@ -2070,6 +2073,21 @@ traditional = traditional
       </qandaentry>
     </qandaset>
 
+    </sect2>
+
+    <sect2>
+      <title>Figuring out run-time errors</title>
+      
+    <qandaset>
+      <qandaentry>
+	<question><para>I tried to use <userinput>--smodel gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
+	<answer>
+	  <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
+	  <para>To avoid this, put a backslash in front of the first "[" and write <userinput>--smodel gamma&#92;[6]</userinput>.  This will keep the C-shell from interfering with your command.
+	  </para>
+	</answer>
+      </qandaentry>
+    </qandaset>
     </sect2>
 
     <sect2>

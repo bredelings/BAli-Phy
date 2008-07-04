@@ -213,7 +213,7 @@ efloat_t SimpleIndelModel::prior() const
   return Pr;
 }
 
-string SimpleIndelModel::name() const {return "simple indels [HMM]";}
+string SimpleIndelModel::name() const {return "RS05";}
 
 SimpleIndelModel::SimpleIndelModel()
   :QE(Q1.size1(),Q1.size2())
@@ -315,11 +315,10 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
 
 string NewIndelModel::name() const 
 {
-  string s = "fragment-based indels ";
+  string s = "RS07";
   
-  if (time_dependant)
-    s += "+ T ";
-  s += "[HMM]";
+  if (not time_dependant)
+    s += "[-T]";
   return s;
 }
 
