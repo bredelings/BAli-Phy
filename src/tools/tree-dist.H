@@ -208,4 +208,6 @@ std::vector<Partition> get_moveable_tree(std::vector<Partition> partitions);
 
 void write_partitions(std::ostream& o,const std::vector<Partition>& partitions);
 
+void scan_trees(std::istream&,int skip,int subsample,int max,accumulator<SequenceTree>& op);
+
 #endif

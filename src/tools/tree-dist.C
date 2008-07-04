@@ -1139,3 +1139,41 @@ vector<Partition> get_moveable_tree(vector<Partition> partitions)
 
   return moveable;
 }
+
+
+// there are actually a lot of things we might want to do
+// * skip certain lines (e.g. in front)
+// * stop at a certain line
+// * report no more than X trees (compress the trees)
+// * 
+
+struct string_to_standardized_tree_op: public accumulator<string>
+{
+  accumulator<SequenceTree>& tree_op;
+
+  void operator()(const std::string& line);
+
+  string_to_standardized_tree_op(accumulator<SequenceTree>& o):tree_op(o) {};
+};
+
+void string_to_standardized_tree_op::operator()(const string& line)
+{
+  try {
+    SequenceTree T = standardized(line);
+    tree_op(T);
+  }
+  catch (std::exception& e) {
+    std::cerr<<"Badly formed tree (ignored): "<<e.what()<<endl;
+  }
+}
+
+
+void scan_trees(std::istream& file,int skip,int subsample,int max,
+		accumulator<SequenceTree>& op)
+{
+  string_to_standardized_tree_op string_op(op);
+
+  scan_lines(file,skip,subsample,max,string_op);
+
+  op.finalize();
+}

@@ -405,6 +405,25 @@ std::vector<T> write(std::vector<T>& v,const std::vector<int>& indices,const std
   return values;
 }
 
+template <class T>
+struct accumulator
+{
+  virtual void operator()(const T&)=0;
+  virtual void finalize() {}
+  virtual ~accumulator() {}
+};
+
+template <class T>
+struct vector_accumulator: accumulator<T>,
+			   public std::vector<T>
+{
+  void operator()(const T& t){push_back(t);}
+};
+
+void scan_lines(std::istream& file,int skip,int subsample, int max, 
+		accumulator<std::string>& op);
+
+std::vector<std::string> load_lines(std::istream& file,int skip,int subsample, int max);
 
 std::string get_basename(std::string filename);
 
