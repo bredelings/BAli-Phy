@@ -154,6 +154,26 @@ bool A_constant(alignment A1, alignment A2, const valarray<bool>& ignore) {
   return true;
 }
 
+void check_names_unique(const alignment& A)
+{
+  // check that names are all unique
+  for(int i=0;i<A.n_sequences();i++) {
+    for(int j=0;j<i;j++)
+      if (A.seq(i).name == A.seq(j).name)
+	throw myexception()<<"Sequence name '"<<A.seq(i).name<<"' occurs multiple times in the alignment!";
+  }
+}
+
+bool names_are_unique(const alignment& A)
+{
+  // check that names are all unique
+  for(int i=0;i<A.n_sequences();i++)
+    for(int j=0;j<i;j++)
+      if (A.seq(i).name == A.seq(j).name)
+	return false;
+  return true;
+}
+
 bool bit_set(const valarray<bool>& v) {
   for(int i=0;i<v.size();i++)
     if (v[i]) return true;
@@ -618,7 +638,7 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
   return alphabets;
 }
 
-alignment load_alignment(const string& filename,const vector<shared_ptr<const alphabet> >& alphabets)
+alignment load_alignment(const string& filename,const vector<OwnedPointer<const alphabet> >& alphabets)
 {
   alignment A;
   if (filename == "-")

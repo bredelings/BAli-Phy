@@ -22,7 +22,7 @@ alignment add_internal(alignment A,const Tree& T);
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
 
 /// Load an alignment from command line args align=filename
-alignment load_alignment(const std::string& filename, const vector<boost::shared_ptr<const alphabet> >& alphabets);
+alignment load_alignment(const std::string& filename, const vector<OwnedPointer<const alphabet> >& alphabets);
 
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
@@ -37,6 +37,10 @@ bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2,
 
 /// Is the alignment of un-ignored sequences in A1 and A2 the same?
 bool A_constant(alignment A1, alignment A2, const std::valarray<bool>& ignore);
+
+void check_names_unique(const alignment& A);
+
+bool names_are_unique(const alignment& A);
 
 /// Check that internal nodes don't have letters 
 void check_internal_sequences_composition(const alignment& A,int n_leaves);

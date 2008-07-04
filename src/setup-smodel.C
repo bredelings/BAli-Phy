@@ -114,7 +114,7 @@ bool process_stack_Markov(vector<string>& string_stack,
   }
   else if (match(string_stack,"Empirical",arg)) {
     string filename = arg;
-    if (filename.empty()) filename = "wag";
+    if (filename.empty()) filename = "WAG";
     filename = args["data-dir"].as<string>() + "/" + filename + ".dat";
 
     model_stack.push_back(Empirical(a,filename));

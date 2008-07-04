@@ -878,9 +878,9 @@ int main(int argc,char* argv[])
 	cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' is not a directory!"<<endl;
 	cerr<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
       }
-      else if (not fs::exists( data_dir / "wag.dat")) {
+      else if (not fs::exists( data_dir / "WAG.dat")) {
 	cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' exists, but doesn't contain the"<<endl;
-	cerr<<"               important file 'wag.dat'."<<endl;
+	cerr<<"               important file 'WAG.dat'."<<endl;
 	cerr<<"         Have you correctly specified the data directory using --data-dir <dir>?"<<endl<<endl;
       }
     }
