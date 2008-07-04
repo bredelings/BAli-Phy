@@ -143,6 +143,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("var","report standard deviation of branch lengths instead of mean")
     ("no-node-lengths","ignore branches not in the specified topology")
     ("safe","Don't die if no trees match the topology")
+    ("special","Output special format")
     ;
 
   // positional options
@@ -249,6 +250,21 @@ int main(int argc,char* argv[])
     std::cerr<<" ("<<double(A.n_matches)/A.n_samples*100<<"%)"<<std::endl;
 
     //------- Merge lengths and topology -------//
+    if (args.count("special")) {
+      for(int b=0;b<Q.n_branches();b++) {
+	cout<<"branch "<<A.m1[b]<<endl;
+	cout<<partition_from_branch(Q,b)<<endl;
+      }
+      for(int n=0;n<Q.n_nodes();n++) {
+	if (A.n1[n] > 0) {
+	  cout<<"node "<<A.n1[n]<<endl;
+	  int b = (*Q[n].branches_in()).name();
+	  cout<<partition_from_branch(Q,b)<<endl;
+	}
+      }
+      exit(0);
+    }
+
     if (args.count("var"))
       for(int b=0;b<B;b++)
 	Q.branch(b).set_length(A.m2[b]);

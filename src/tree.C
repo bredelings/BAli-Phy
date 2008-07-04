@@ -907,7 +907,7 @@ void insert_after(BranchNode* n1,BranchNode* n2)
   n2->next->prev = n2;
 }
 
-void connect_nodes(BranchNode* n1, BranchNode* n2)
+BranchNode* connect_nodes(BranchNode* n1, BranchNode* n2)
 {
   BranchNode* c1 = new BranchNode;
   insert_after(n1,c1);
@@ -919,23 +919,25 @@ void connect_nodes(BranchNode* n1, BranchNode* n2)
 
   c1->out = c2;
   c2->out = c1;
+
+  return c1;
 }
 
 
-void split_node(vector<BranchNode*> group1,vector<BranchNode*> group2)
+BranchNode* split_node(vector<BranchNode*> group1,vector<BranchNode*> group2)
 {
   // groups are already split!
-  if (group1.size() == 1 or group2.size() == 1) return;
+  if (group1.size() == 1 or group2.size() == 1) return NULL;
 
   // separate the two nodes
   knit_node_together(group1);
   knit_node_together(group2);
   
   // connect the two nodes
-  connect_nodes(group1.back(),group2.back());
+  return connect_nodes(group1.back(),group2.back());
 }
 
-void Tree::induce_partition(const std::valarray<bool>& partition) 
+int Tree::induce_partition(const std::valarray<bool>& partition) 
 {
   assert(partition.size() == n_leaves());
   
@@ -971,14 +973,24 @@ void Tree::induce_partition(const std::valarray<bool>& partition)
     // this node can't separate the groups
     if (not group1.size() and not group2.size()) continue;
 
+    BranchNode* bn = NULL;
+
     // groups are already split!
-    if (group1.size() == 1 or group2.size() == 1) return;
+    if (group1.size() == 1)
+      bn = group1[0];
+    // groups are already split!
+    else if (group2.size() == 1)
+      bn = group2[0];
+    // split the node and note the name of the newly added branch
+    else {
+      bn = split_node(group1,group2);
+      reanalyze(nodes_[0]);
+    }
 
-    split_node(group1,group2);
-    
-    reanalyze(nodes_[0]);
-
-    return;
+    if (not bn)
+      return -1;
+    else
+      return std::min(bn->branch,bn->out->branch);
   }
   throw myexception()<<"induce_partition: partition conflicts with tree!";
 }

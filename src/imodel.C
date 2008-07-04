@@ -235,8 +235,8 @@ efloat_t NewIndelModel::prior() const
   Pr *= laplace_pdf(rate,parameter(3), parameter(4));
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double lambda_E = parameter(1);
-  double E_length = lambda_E - logdiff(0,lambda_E);
+  double log_epsilon = parameter(1);
+  double E_length = log_epsilon - logdiff(0,log_epsilon);
   double E_length_mean = parameter(5);
 
   Pr *= exp_exponential_pdf(E_length,E_length_mean);

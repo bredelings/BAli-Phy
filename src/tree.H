@@ -39,8 +39,8 @@ public:
 
 BranchNode* get_first_node();
 BranchNode* add_node(BranchNode*);
+BranchNode* connect_nodes(BranchNode*,BranchNode*);
 void insert_after(BranchNode*,BranchNode*);
-void connect_nodes(BranchNode*,BranchNode*);
 
 //------------------------------------ Tree -----------------------------//
 
@@ -219,7 +219,7 @@ public:
   void SPR(int b1,int b2);
 
   /// Find and split a multifurcating node to create this partition
-  void induce_partition(const std::valarray<bool>& partition);
+  int induce_partition(const std::valarray<bool>& partition);
 
 
   /// Add a node onto a branch 'b', splitting it into two sub-neighbors
