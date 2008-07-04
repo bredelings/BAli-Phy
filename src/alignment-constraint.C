@@ -83,6 +83,8 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,SequenceT
 
       line = line.substr(0,loc);
 
+      if (not line.size()) continue;
+
       // lex contraint line
       vector<string> entries = split(clean(line),' ');
       if (entries.size() != T.n_leaves())

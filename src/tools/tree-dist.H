@@ -168,7 +168,7 @@ public:
   double PP(const Partition& P) const;
   double PP(const std::vector<Partition>&) const;
 
-  tree_sample(std::istream&,int skip=0,int max=-1,int subsample=1);
+  tree_sample(std::istream&,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
 };
 
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);

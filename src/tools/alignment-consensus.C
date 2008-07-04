@@ -113,15 +113,6 @@ int main(int argc,char* argv[])
       Ms.push_back(M(alignments[i]));
 
 
-    //--------- Get list of supported pairs ---------//
-    Edges E(L);
-
-    for(int s1=0;s1<N;s1++)
-      for(int s2=0;s2<s1;s2++)
-	add_edges(E,Ms,s1,s2,L[s1],L[s2]);
-
-
-    E.build_index();
     //--------- Build alignment from list ---------//
     double cutoff_strict = -1;
     double cutoff = -1;
@@ -134,6 +125,18 @@ int main(int argc,char* argv[])
 
     if (cutoff_strict < 0 and cutoff < 0)
       cutoff = 0.75;
+
+    //--------- Get list of supported pairs ---------//
+    Edges E(L);
+
+    for(int s1=0;s1<N;s1++)
+      for(int s2=0;s2<s1;s2++)
+	add_edges(E,Ms,s1,s2,L[s1],L[s2],
+		  min(abs(cutoff),abs(cutoff_strict))
+		  );
+
+
+    E.build_index();
 
     //-------- Build a beginning alignment --------//
     index_matrix M = unaligned_matrix(L);

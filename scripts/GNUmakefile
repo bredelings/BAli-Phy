@@ -3,7 +3,7 @@ SHELL=/bin/sh
 
 TOPOLOGIES=c50 c66 c80 c90 c95 c99 c100
 
-IMODEL=$(shell head -n 40 1.out | pickout --no-header 'indel model')
+IMODEL=$(shell head -n 40 1.out | pickout --no-header 'indel model1')
 
 TREES=${TOPOLOGIES}
 
@@ -38,7 +38,7 @@ Work/setup:
 ifeq ($(IMODEL),none)
 AU_TARGETS=
 else
-AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/au-graph.plot Results/consensus.fasta Results/consensus-AU.html Results/consensus-AU2.html
+AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/consensus-75.fasta Results/consensus-50.fasta Results/consensus-25.fasta Results/consensus-10.fasta Results/consensus-10-AU.html Results/consensus-10-AU2.html
 endif
 
 Results/analysis: Results/Report Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
@@ -126,9 +126,9 @@ Work/median-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
 	@alignment-reorder Work/$*-unordered.fasta Results/c50.tree > $@ 2>/dev/null
 
-Results/au-graph.plot Work/consensus-unordered.fasta: Work/samples-${SKIP}+${SIZE}
-	@echo -e "Computing consensus alignment ... \c"
-	@alignment-consensus --cutoff=0.50 --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
+Results/au-graph-%.plot Work/consensus-%-unordered.fasta: Work/samples-${SKIP}+${SIZE}
+	@echo -e "Computing consensus-$* alignment ... \c"
+	@alignment-consensus --cutoff=0.$* --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
 	@echo "done."
 
 Results/%-AU.prob: Results/%.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree

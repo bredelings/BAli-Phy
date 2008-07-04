@@ -16,8 +16,10 @@ Edges::Edges(const vector<int>& L)
     }
 }
 
-void Edges::build_index() {
-  foreach(e,*this) {
+void Edges::build_index() 
+{
+  foreach(e,*this) 
+  {
     if (e->x1 >= 0)
       lookup[e->s1][e->s2][e->x1] = e;
 
@@ -65,7 +67,7 @@ int Edges::index_in_sequence(int s1,int x1,int s2) const
 
 
 void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
-		   int s1,int s2,int L1, int L2) 
+	       int s1,int s2,int L1, int L2,double cutoff) 
 { 
   ublas::matrix<int> count(L1+1,L2+1);
   for(int i=0;i<count.size1();i++)
@@ -90,7 +92,9 @@ void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
   for(int i=0;i<count.size1();i++) 
     for(int j=0;j<count.size2();j++) 
     {
-      if (2*count(i,j) > Ms.size()) {
+      double Pr = double(count(i,j))/Ms.size();
+
+      if (Pr > cutoff) {
 	Edge e;
 	e.s1 = s1;
 	e.x1 = i-1;
@@ -99,7 +103,7 @@ void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
 	e.x2 = j-1;
 
 	e.count = count(i,j);
-	e.p  = double(e.count)/Ms.size();
+	e.p  = Pr;
 
 	E.insert(e);
       }
