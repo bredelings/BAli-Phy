@@ -292,19 +292,12 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   add_MH_move(P, dirichlet_proposal,    "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
 
   set_if_undef(P.keys,"MF::dirichlet_N",10.0);
-  for(int s=0;s<P.n_smodels();s++) {
-    string index = convertToString(s+1);
-    const alphabet& a = P.SModel(s).Alphabet();
+  {
+    const alphabet& a = P.SModel().Alphabet();
     const int asize = a.size();
 
-    string prefix = string("S") + index + "::";
-
-    // special case - no prefix 
-    if (P.n_smodels() == 1)
-      prefix = "";
-
     for(int l=0;l<asize;l++) {
-      string pname = prefix+ "a" + a.lookup(l) + "*";
+      string pname = "a" + a.lookup(l) + "*";
       cerr<<pname<<endl;
       add_MH_move(P, dirichlet_proposal, pname, "MF::dirichlet_N",     1,  parameter_moves);
     }
