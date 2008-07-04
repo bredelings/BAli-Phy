@@ -66,6 +66,11 @@ long int asymmetric_splits_distance(const alignment& A1,const alignment& A2);
 long int asymmetric_splits_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
 				    const std::vector<std::vector<int> >& column_indices2);
 
+long int asymmetric_splits_distance2(const alignment& A1,const alignment& A2);
+
+long int asymmetric_splits_distance2(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+				    const std::vector<std::vector<int> >& column_indices2);
+
 double homologies_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
 			   const std::vector<std::vector<int> >& column_indices2);
 
@@ -77,6 +82,11 @@ long int pairs_distance(const ublas::matrix<int>& M1,const std::vector<std::vect
 long int splits_distance(const alignment& A1,const alignment& A2);
 
 long int splits_distance(const ublas::matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
+			 const ublas::matrix<int>& M2,const std::vector<std::vector<int> >& column_indices2);
+
+long int splits_distance2(const alignment& A1,const alignment& A2);
+
+long int splits_distance2(const ublas::matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
 			 const ublas::matrix<int>& M2,const std::vector<std::vector<int> >& column_indices2);
 
 std::list<alignment> load_alignments(std::istream& ifile, const std::vector<OwnedPointer<alphabet> >& alphabets, int skip, int maxalignments);

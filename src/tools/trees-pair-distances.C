@@ -32,7 +32,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("skip",value<int>()->default_value(0),"number of tree samples to skip")
     ("max",value<int>(),"maximum number of tree samples to read")
     ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
-    ("RF",value<bool>()->default_value(true),"just count the number of branches")
+    ("RF","just count the number of branches")
     ("var","report standard deviation of branch lengths instead of mean")
     ;
 
@@ -127,7 +127,7 @@ int main(int argc,char* argv[])
 
     int subsample = args["sub-sample"].as<int>();
 
-    bool RF = args["RF"].as<bool>();
+    bool RF = args.count("RF")>0;
 
     count_pair_distances D(RF);
 
