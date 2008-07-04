@@ -845,6 +845,24 @@ namespace substitution {
   };
 
 
+  /// A class of uncoupled rates/values
+  class DirichletParameterModel: public MultiParameterModel
+  {
+  protected:
+    efloat_t super_prior() const;
+
+    void recalc(const vector<int>&);
+
+  public:
+
+    DirichletParameterModel* clone() const {return new DirichletParameterModel(*this);}
+
+    string name() const;
+
+    DirichletParameterModel(const MultiModel& M,int p,int n);
+  };
+
+
   class DistributionParameterModel: public MultiParameterModel
   {
     bool good_enough;

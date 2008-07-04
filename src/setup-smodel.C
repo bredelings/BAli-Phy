@@ -345,6 +345,13 @@ bool process_stack_Multi(vector<string>& string_stack,
   else if (match(string_stack,"INV2",arg))
     model_stack.back() = WithINV2(*get_MM(model_stack,"INV2",frequencies));
 
+  else if (match(string_stack,"DP",arg)) {
+    int n=4;
+    if (not arg.empty())
+      n = convertTo<int>(arg);
+    model_stack.back() = DirichletParameterModel(*get_MM(model_stack,"DP",frequencies),-1,n);
+  }
+    
   else if (match(string_stack,"Mixture",arg)) {
     int n=1;
     if (arg.empty())

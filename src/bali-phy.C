@@ -282,9 +282,17 @@ void do_sampling(const variables_map& args,alignment& A,Parameters& P,long int m
   P.keys["M3::f_dirichlet_N"] *= 10;
   add_MH_move(P, dirichlet_proposal,    "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
 
-  set_if_undef(P.keys,"multi:p_dirichlet_N",1.0);
-  P.keys["multi:p_dirichlet_N"] *= 10;
+  set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
+  P.keys["multi::p_dirichlet_N"] *= 10;
   add_MH_move(P, dirichlet_proposal,    "multi:p*", "multi:p_dirichlet_N",     1,  parameter_moves);
+
+  set_if_undef(P.keys,"DP::f_dirichlet_N",1.0);
+  P.keys["DP::f_dirichlet_N"] *= 10;
+  add_MH_move(P, dirichlet_proposal,    "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
+
+  set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
+  P.keys["DP::rate_dirichlet_N"] *= 10;
+  add_MH_move(P, dirichlet_proposal,    "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
 
   for(int i=0;;i++) {
     string name = "M3::omega" + convertToString(i+1);
