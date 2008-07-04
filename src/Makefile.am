@@ -42,7 +42,7 @@ TOOLS = model_P statreport alignment-gild \
 	joint-parsimony stats-merge stats-select alignment-identity \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
-	analyze-rates trees-pair-distances
+	partitions-supported trees-pair-distances analyze-rates 
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -180,6 +180,10 @@ trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tr
 #---------------------------------------------------------------
 
 trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tree-dist.C util.C rng.C tools/statistics.C tools/bootstrap.C tree-util.C
+
+#---------------------------------------------------------------
+
+partitions_supported_SOURCES = tools/partitions-supported.C tree.C sequencetree.C tools/tree-dist.C util.C  tools/statistics.C tree-util.C
 
 #---------------------------------------------------------------
 

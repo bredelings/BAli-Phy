@@ -1,0 +1,204 @@
+// FIXME -  Try to put the variance and stuff on one line:
+//   0.656 (56/100)   +- 0.007 -> 0.070
+
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <vector>
+#include <list>
+#include <set>
+#include <map>
+#include <cmath>
+#include <fstream>
+#include <sstream>
+#include <map>
+#include <list>
+
+#include "sequencetree.H"
+#include "util.H"
+#include "statistics.H"
+#include "tree-dist.H"
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using po::variables_map;
+
+using namespace std;
+
+using std::cout;
+using std::cerr;
+using std::endl;
+
+using namespace statistics;
+
+// What if everything in 'split' is true?
+// What if everything in 'split' is true, but 1 taxa?
+//  These are true by definition...
+
+bool operator==(const vector<Partition>& p1,const vector<Partition>& p2)
+{
+  if (p1.size() != p2.size())
+    return false;
+
+  for(int i=0;i<p1.size();i++)
+    if (not includes(p2,p1[i]))
+      return false;
+
+  return true;
+}
+
+
+vector<vector<Partition> > remove_duplicates(vector<vector<Partition> >& partitions)
+{
+  vector<vector<Partition> > partitions2;
+  for(int i=0;i<partitions.size();i++)
+    if (not includes(partitions2,partitions[i]))
+      partitions2.push_back(partitions[i]);
+
+  return partitions2;
+}
+
+
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+  using namespace po;
+
+  // named options
+  options_description invisible("Invisible options");
+  invisible.add_options()
+    ("predicates",value<string>(),"predicates to examine")
+    ("file",value<string>(),"tree samples to examine");
+
+  options_description input("Input options");
+  input.add_options()
+    ("help", "produce help message")
+    ("skip",value<unsigned>()->default_value(0),"number of trees to skip")
+    ("max",value<unsigned>(),"maximum number of trees to read")
+    ("sub-sample",value<unsigned>(),"factor by which to sub-sample")
+    ;
+  
+  options_description reporting("Reporting options");
+  reporting.add_options()
+    ("not,n", "invert the results")
+    ("below,b", value<double>(),"only report partitions with PP < arg")
+    ("above,a",value<double>(), "only report partitions with PP > arg")
+    ;
+  
+  options_description all("All options");
+  all.add(invisible).add(input).add(reporting);
+
+  // positional options
+  positional_options_description p;
+  p.add("predicates", 1);
+  p.add("file", 2);
+  
+  variables_map args;     
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
+  // store(parse_command_line(argc, argv, desc), args);
+  notify(args);    
+
+  if (args.count("help")) {
+    cout<<"Usage: trees-bootstrap <partitions-file> <trees-file> [OPTIONS]\n";
+    cout<<"Select only partitions with support in the specified range.\n\n";
+    cout<<input<<reporting<<"\n";
+    exit(0);
+  }
+
+  if (not args.count("predicates"))
+    throw myexception()<<"No predicates supplied.";
+
+  return args;
+}
+
+tree_sample load_tree_file(const variables_map& args, const string& filename)
+{
+  int skip = args["skip"].as<unsigned>();
+
+  int max = -1;
+  if (args.count("max"))
+    max = args["max"].as<unsigned>();
+
+  int subsample=1;
+  if (args.count("sub-sample"))
+    subsample = args["sub-sample"].as<unsigned>();
+
+  if (filename == "-") {
+    cerr<<"# Loading trees from STDIN...\n";
+    return tree_sample(cin,skip,max,subsample);
+  }
+
+  ifstream file(filename.c_str());
+  if (not file)
+    throw myexception()<<"Couldn't open file '"<<filename<<"'";
+  
+  cout<<"# Loading trees from '"<<filename<<"'...\n";
+  return tree_sample(file,skip,max,subsample);
+}
+
+int main(int argc,char* argv[]) 
+{ 
+  try {
+
+    cout.precision(3);
+    cout.setf(ios::fixed);
+
+    //---------- Parse command line  -------//
+    variables_map args = parse_cmd_line(argc,argv);
+
+    bool flip = false;
+    if (args.count("not")) flip = true;
+
+    //-------------- Read in tree distribution --------------//
+    string filename = "-";
+    if (args.count("file"))
+      filename = args["file"].as<string>();
+
+    tree_sample trees = load_tree_file(args,filename);
+
+    //--------- compute upper and lower bounds -----------------//
+    unsigned S = trees.size();
+    unsigned upper = S;
+    unsigned lower = S;
+    if (args.count("below")) {
+      upper = (unsigned)floor(S * args["below"].as<double>());
+      upper = min(upper,S);
+    }
+    if (args.count("above")) {
+      lower = (unsigned) ceil(S * args["above"].as<double>());
+      lower = max(lower,0U);
+    }
+
+    //----------- Load Partitions ---------------//
+    vector<vector<Partition> > partitions;
+    load_partitions(args["predicates"].as<string>(), partitions);
+
+    partitions = remove_duplicates(partitions);
+
+    //------- evaluate/cache predicate for each topology -------//
+    vector<unsigned> support;
+
+    for(int p=0;p<partitions.size();p++) 
+    {
+      unsigned c = count(trees.support(partitions[p]));
+      support.push_back(c);
+    }
+
+    for(int p=0;p<partitions.size();p++) 
+    {
+      bool match = (lower <= support[p] and support[p] <= upper);
+      if (flip) match = not match;
+      if (match) {
+	for(int i=0;i<partitions[p].size();i++) 
+	  cout<<partitions[p][i]<<endl;
+	cout<<endl;
+      }
+    }
+  }
+  catch (std::exception& e) {
+    cerr<<"Exception: "<<e.what()<<endl;
+    exit(1);
+  }
+  return 0;
+}
