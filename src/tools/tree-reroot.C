@@ -1,11 +1,14 @@
 #include <iostream>
 #include "tree.H"
+#include "tree-dist.H"
 #include "sequencetree.H"
+#include "util.H"
 #include "tree-util.H"
 #include "myexception.H"
 
 #include <boost/program_options.hpp>
 
+using namespace std;
 namespace po = boost::program_options;
 using po::variables_map;
 
@@ -23,13 +26,16 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("tree", value<string>(),"tree to re-root")
-    ("outgroup", value<string>(),"sequence to use as the outgroup")
+    ("outgroup", value<string>(),"Add root in middle of branch to this leaf")
+    ("leaf", value<string>(),"Root tree at this leaf")
+    ("taxa",value<string>(),"3 sequences to triangulate node position")
+    ("parent-of",value<string>(),"Root at parent of this leaf taxon")
+    ("branch",value<string>(),"Add root in middle of this branch (partition)")
     ;
 
   // positional options
   positional_options_description p;
   p.add("tree", 1);
-  p.add("outgroup", 2);
   
   variables_map args;     
   store(command_line_parser(argc, argv).
@@ -47,6 +53,30 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 
+int find_leaf(const SequenceTree& T,const string& name)
+{
+  int index = T.index(name);
+  if (index == -1)
+    throw myexception()<<"Can't find taxon '"<<name<<"' in tree";
+
+  return index;
+}
+
+int split_branch(Tree& T,int b)
+{
+  double L = T.branch(b).length();
+
+  int n = T.create_node_on_branch(b);
+
+  // even the lengths here.
+  vector<branchview> branches;
+  append(T[n].branches_out(),branches);
+  
+  (branches[0]).set_length(L/2);
+  (branches[1]).set_length(L/2);
+
+  return n;
+}
 
 
 int main(int argc,char* argv[]) 
@@ -55,23 +85,82 @@ int main(int argc,char* argv[])
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    SequenceTree T = load_T(args);
+    RootedSequenceTree T = load_T(args);
     
-    if (not args.count("outgroup"))
-      throw myexception("outgroup not specified!");
+    int root=-1;
+    if (args.count("outgroup")) 
+    {
+      string outgroup = args["outgroup"].as<string>();
 
-    int leaf=-1;
-    for(int i=0;i<T.n_leaves();i++) {
-      if (T.seq(i) == args["outgroup"].as<string>()) {
-	leaf=i;
-	break;
-      }
+      int leaf = find_leaf(T,outgroup);
+
+      root = split_branch(T,leaf);
     }
+    else if (args.count("taxa"))
+    {
+      string taxa = args["taxa"].as<string>();
 
-    if (leaf == -1)
-      throw myexception()<<"outgroup '"<<args["outgroup"].as<string>()<<"' not found in tree!";
+      vector<string> taxon = split(taxa,',');
+      
+      if (taxon.size() != 3)
+	throw myexception()<<"You must supply exactly 3 taxa, but you supplied "<<taxon.size();
 
-    std::cout<<add_root(T,leaf)<<endl;
+      int n1 = find_leaf(T,taxon[0]);
+      int n2 = find_leaf(T,taxon[1]);
+      int n3 = find_leaf(T,taxon[2]);
+
+      T.reroot(n1);
+
+      root = T.common_ancestor(n2,n3);
+    }
+    else if (args.count("leaf"))
+    {
+      string leaf_name = args["leaf"].as<string>();
+
+      root = find_leaf(T,leaf_name);
+    }
+    else if (args.count("parent-of"))
+    {
+      string leaf_name = args["parent-of"].as<string>();
+
+      int leaf = find_leaf(T,leaf_name);
+
+      root = T.branch(leaf).target();
+    }
+    else if (args.count("branch"))
+    {
+      string p = args["branch"].as<string>();
+      vector<string> taxa = split(p,' ');
+      valarray<bool> mask(false,T.n_leaves());
+      valarray<bool> group1(false,T.n_leaves());
+      int separator = find_index(taxa,string("|"));
+      if (separator == -1)
+	throw myexception()<<"Partition is missing a separator";
+
+      for(int i=0;i<separator;i++) 
+      {
+	int ii = find_leaf(T,taxa[i]);
+	mask[ii] = true;
+	group1[ii] = true;
+      }
+      for(int i=separator+1;i<taxa.size();i++) 
+      {
+	int ii = find_leaf(T,taxa[i]);
+	mask[ii] = true;
+      }
+
+      Partition P(T.get_sequences(),group1,mask);
+      cerr<<P<<endl;
+      int b = which_partition(T,P);
+      cerr<<partition_from_branch(T,b)<<endl;
+      root = split_branch(T,b);
+    }
+    else
+      throw myexception("neither --outgroup nor --taxa nor --leaf specified!");
+
+    
+    T.reroot(root);
+    std::cout<<T<<endl;
   }
   catch (std::exception& e) {
     std::cerr<<"Exception: "<<e.what()<<endl;

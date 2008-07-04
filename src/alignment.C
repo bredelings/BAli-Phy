@@ -304,6 +304,7 @@ alignment::alignment(const alphabet& a1,const string& filename)
     :a(a1)
 { 
   load(filename); 
+
 }
 
 vector<int> get_path(const alignment& A,int node1, int node2) {

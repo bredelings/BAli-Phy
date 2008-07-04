@@ -261,7 +261,7 @@ void RootedSequenceTree::parse(const string& line)
       BN->out = BN->next = BN->prev = BN;
 
       BN = ::add_node(BN);
-      BN->out->length = BN->length = 1;
+      BN->out->length = BN->length = -1;
       tree_stack.back().push_back(BN);
 
       sequences.push_back(word);
