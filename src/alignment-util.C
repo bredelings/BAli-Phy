@@ -618,6 +618,23 @@ vector<OwnedPointer<alphabet> > load_alphabets(const variables_map& args)
   return alphabets;
 }
 
+alignment load_alignment(const string& filename,const vector<shared_ptr<const alphabet> >& alphabets)
+{
+  alignment A;
+  if (filename == "-")
+    A.load(alphabets,sequence_format::read_guess,std::cin);
+  else
+    A.load(alphabets,filename);
+  
+  remove_empty_columns(A);
+  
+  if (A.n_sequences() == 0)
+    throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
+
+  return A;
+
+}
+
 /// Load an alignment from command line args "--align filename"
 alignment load_A(const variables_map& args,bool keep_internal) 
 {

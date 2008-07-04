@@ -21,6 +21,9 @@ alignment add_internal(alignment A,const Tree& T);
 /// Load an alignment from command line args align=filename
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
 
+/// Load an alignment from command line args align=filename
+alignment load_alignment(const std::string& filename, const vector<boost::shared_ptr<const alphabet> >& alphabets);
+
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
 

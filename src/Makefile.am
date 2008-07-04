@@ -40,7 +40,8 @@ TOOLS = model_P statreport alignment-gild \
 	joint-parsimony stats-merge stats-select alignment-identity \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
-	partitions-supported trees-pair-distances analyze-rates 
+	partitions-supported trees-pair-distances analyze-rates \
+	alignment-max alignments-align
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -104,6 +105,12 @@ alignment_consensus_SOURCES = tools/alignment-consensus.C alignment.C alphabet.C
 
 #---------------------------------------------------------------
 
+alignment_max_SOURCES = tools/alignment-max.C alignment.C alphabet.C sequence.C util.C rng.C \
+	tree.C sequencetree.C util-random.C tools/statistics.C \
+	sequence-format.C alignment-util.C tools/index-matrix.C
+
+#---------------------------------------------------------------
+
 alignment_compare_SOURCES = tools/alignment-compare.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C util-random.C \
 	sequence-format.C alignment-util.C 
@@ -136,6 +143,10 @@ alignment_chop_internal_SOURCES = tools/alignment-chop-internal.C alignment.C al
 #---------------------------------------------------------------
 
 alignment_indices_SOURCES = tools/alignment-indices.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C 
+
+#---------------------------------------------------------------
+
+alignments_align_SOURCES = tools/alignment-align.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C 
 
 #---------------------------------------------------------------
 
