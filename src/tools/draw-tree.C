@@ -1041,21 +1041,12 @@ void tree_plotter::operator()(cairo_t* cr)
     double W = get_text_length(cr, L.T.seq(l));
     double H = get_text_height(cr, L.T.seq(l));
 
-    x1 += cos(a)*line_width;
-    y1 += sin(a)*line_width;
+    x1 += cos(a)*(line_width+H/8);
+    y1 += sin(a)*(line_width+H/2);
 
     y1 += 0.5*H;
 
-    if (abs(cos(a) < 0.4))
-    {
-      if (cos(a) < 0)
-	x1 -= W;
-      
-      if (sin(a) < 0)
-	y1 -= H;
-      else
-	y1 += H;
-    }
+    if (cos(a) < 0) x1 -= W;
 
     cairo_move_to (cr, x1, y1);
     cairo_show_text (cr, L.T.seq(l).c_str());
@@ -2300,21 +2291,12 @@ void graph_plotter::operator()(cairo_t* cr)
     double W = get_text_length(cr, name);
     double H = get_text_height(cr, name);
 
-    x1 += cos(a)*line_width;
-    y1 += sin(a)*line_width;
+    x1 += cos(a)*(line_width+H/8);
+    y1 += sin(a)*(line_width+H/2);
 
     y1 += 0.5*H;
 
-    if (abs(cos(a) < 0.4))
-    {
-      if (cos(a) < 0)
-	x1 -= W;
-      
-      if (sin(a) < 0)
-	y1 -= H;
-      else
-	y1 += H;
-    }
+    if (cos(a) < 0) x1 -= W;
 
     cairo_move_to (cr, x1, y1);
     cairo_show_text (cr, name.c_str());
