@@ -65,6 +65,9 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  tools/tree-dist.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C
 
+bali_phy_CXXFLAGS = @MPI_CXXFLAGS@
+bali_phy_LDADD = @MPI_LDFLAGS@
+
 #-----------------------------------------------------------------
 
 model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C

@@ -150,6 +150,12 @@ AC_ARG_ENABLE([cairo],
              [cairo=no])
 
 
+# Specify extra library paths
+AC_ARG_WITH([mpi], AS_HELP_STRING([--with-mpi],[Compile with OpenMPI]),
+  use_mpi="openmpi",
+  use_mpi="no"
+)
+
 # we only add extra flags if we recognize the compiler (g++)
 if test "$GXX" = yes ; then
 
@@ -337,6 +343,29 @@ if test -n "$cairo" && test "$cairo" != "no"; then
    AC_SUBST(CAIRO_LIBS)
 fi
 AC_SUBST(cairo_progs)
+
+#--------------------- Check for OpenMPI -----------------------#
+
+if test "$use_mpi" = "openmpi" ; then
+   echo "checking for OpenMPI ..."
+   if mpic++ --showme:version ; then 
+      MPI_CXXFLAGS="$(mpic++ --showme:compile) -fpermissive"
+      echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
+      MPI_LDFLAGS=$(mpic++ --showme:link)
+      echo "MPI_LDFLAGS=$MPI_LDFLAGS"
+   else
+      echo "Cannot find 'mpic++': no MPI... failure";
+      exit 1;
+   fi 
+
+   AC_DEFINE([HAVE_MPI],[] ,[We have a working OpenMPI implementation.])
+
+   AC_SUBST(MPI_CXXFLAGS)   
+   AC_SUBST(MPI_LDFLAGS)   
+fi
+
+ldflags=$LDFLAGS
+AC_SUBST(ldflags)
 
 CXXFLAGS="$CXXFLAGS -D_CXXFLAGS_=\"\\\"$CXXFLAGS\\\"\" -D_ARCH_=\"\\\"$host\\\"\""
 
