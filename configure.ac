@@ -358,7 +358,7 @@ if test "$use_mpi" = "openmpi" ; then
       exit 1;
    fi 
 
-   AC_DEFINE([HAVE_MPI],[] ,[We have a working OpenMPI implementation.])
+   AC_DEFINE([HAVE_MPI],[] ,[You have a working OpenMPI implementation.])
 
    AC_SUBST(MPI_CXXFLAGS)   
    AC_SUBST(MPI_LDFLAGS)   
@@ -367,7 +367,7 @@ fi
 ldflags=$LDFLAGS
 AC_SUBST(ldflags)
 
-CXXFLAGS="$CXXFLAGS -D_CXXFLAGS_=\"\\\"$CXXFLAGS\\\"\" -D_ARCH_=\"\\\"$host\\\"\""
+CXXFLAGS="$CXXFLAGS -D_CXXFLAGS_=\"\\\"$CXXFLAGS $MPI_CXXFLAGS\\\"\" -D_ARCH_=\"\\\"$host\\\"\""
 
 #AC_CONFIG_FILES([GNUmakefile])
 AC_OUTPUT([
