@@ -19,6 +19,14 @@
 #include "tools/parsimony.H"
 #include "alignment-util.H"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_MPI
+#include <mpi/mpi.h>
+#endif
+
 namespace MCMC {
   using std::valarray;
   using std::cerr;
@@ -646,6 +654,119 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     //------------------- move to new position -----------------//
     iterate(P,*this);
 
+
+#ifdef HAVE_MPI
+    //------------------ Exchange Temperatures -----------------//
+
+    // FIXME - propose based on nearest TEMPERATURE, not nearest ID!
+    // 1. Stop proposing based on ID
+    // 2. Start proposing based on temperature
+    // 3. What statistics should we print?
+    //   (a) # of transitions between low/high temp?
+    //   (b)
+    // 4. How am I going to allow larger proposals for different temperatures?
+    // 5. How am I going to merge results for the same temperature, while
+    //     keeping track of the threading of each change through the temperatures?
+
+    // FIXME - let the temperatures go equilibrium, given likelihoods?
+
+    int proc_id = MPI::COMM_WORLD.Get_rank();
+    int n_procs = MPI::COMM_WORLD.Get_size();
+
+    vector<int> p(n_procs);
+    if (proc_id == 0) 
+    {
+      p = random_permutation(n_procs);
+
+      int* pi = new int[p.size()];
+      for(int i=0;i<p.size();i++)
+	pi[i] = p[i];
+
+      for(int dest=1;dest<n_procs;dest++)
+	MPI::COMM_WORLD.Send (pi, p.size(), MPI::INT, dest, 0 );
+    }
+    else {
+      int * pi = new int[p.size()];
+
+      MPI::COMM_WORLD.Recv   (pi, p.size(), MPI::INT,  0, MPI::ANY_TAG);
+      for(int i=0;i<p.size();i++)
+	p[i] = pi[i];
+    }
+
+    int partner = -1;
+
+    if (iterations%2) {
+      if (proc_id%2)
+	partner = proc_id-1;
+      else
+	partner = proc_id+1;
+    }
+    else
+    {
+      if (proc_id%2)
+	partner = proc_id+1;
+      else
+	partner = proc_id-1;
+    }
+
+    cerr<<"Proc "<<proc_id<<": choosing partner "<<partner<<endl;
+    if (partner >=0 and partner < n_procs)
+    {
+      double L1 = log(P.likelihood());
+
+      double b1 = P.beta[0];
+
+      if (proc_id > partner) {
+	cerr<<"Proc "<<proc_id<<": sending beta = "<<b1<<endl;
+	MPI::COMM_WORLD.Send   (&b1, 1, MPI::DOUBLE,  partner, 0);
+	cerr<<"Proc "<<proc_id<<": sending likelihood = "<<L1<<endl;
+	MPI::COMM_WORLD.Send   (&L1, 1, MPI::DOUBLE,  partner, 0);
+	int exchange = -1;
+	MPI::COMM_WORLD.Recv   (&exchange, 1, MPI::INT,     partner, MPI::ANY_TAG);
+	cerr<<"Proc "<<proc_id<<": result = "<<exchange<<endl;
+	if (exchange == 1) {
+	  MPI::COMM_WORLD.Recv   (&b1,       1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
+	  cerr<<"Proc "<<proc_id<<": new beta = "<<b1<<endl;
+	  P.beta[0] = b1;
+	  for(int i=0;i<P.n_data_partitions();i++)
+	    P[i].beta[0] = b1;
+	}
+      }
+      else {
+	double L2;
+	double b2;
+
+	MPI::COMM_WORLD.Recv   (&b2, 1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
+	MPI::COMM_WORLD.Recv   (&L2, 1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
+
+	cerr<<"Proc "<<proc_id<<": b1 = "<<b1<<endl;
+	cerr<<"Proc "<<proc_id<<": b2 = "<<b2<<endl;
+	cerr<<"Proc "<<proc_id<<": L1 = "<<L1<<endl;
+	cerr<<"Proc "<<proc_id<<": L2 = "<<L2<<endl;
+	
+	double ratio = exp( (b2-b1)*(L1-L2) );
+	int exchange = 0;
+	if (ratio >= 1 or uniform() < ratio)
+	  exchange = 1;
+
+	cerr<<"Proc "<<proc_id<<": ratio = "<<ratio<<endl;
+	cerr<<"Proc "<<proc_id<<": result = "<<exchange<<endl;
+	MPI::COMM_WORLD.Send   (&exchange, 1, MPI::INT,  partner, 0);
+	if (exchange == 1) {
+	  MPI::COMM_WORLD.Send   (&b1, 1, MPI::DOUBLE,  partner, 0);
+	  P.beta[0] = b2;
+	  for(int i=0;i<P.n_data_partitions();i++)
+	    P[i].beta[0] = b2;
+	}
+      }
+
+
+
+      
+    }
+
+
+#endif
   }
 
   std::cerr<<endl;
