@@ -667,6 +667,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     // 4. How am I going to allow larger proposals for different temperatures?
     // 5. How am I going to merge results for the same temperature, while
     //     keeping track of the threading of each change through the temperatures?
+    // 6. Switch to BOOST MPI
 
     // FIXME - let the temperatures go equilibrium, given likelihoods?
 
@@ -695,21 +696,25 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
     int partner = -1;
 
-    if (iterations%2) {
-      if (proc_id%2)
-	partner = proc_id-1;
-      else
-	partner = proc_id+1;
-    }
-    else
+    for(int i=0;i<p.size();i++) 
     {
-      if (proc_id%2)
-	partner = proc_id+1;
+      if (p[i] != proc_id) continue;
+
+      if (i%2)
+	partner = i-1;
       else
-	partner = proc_id-1;
+	partner = i+1;
+
+      break;
     }
 
-    cerr<<"Proc "<<proc_id<<": choosing partner "<<partner<<endl;
+    if (partner < p.size())
+      partner = p[partner];
+    else
+      partner = -1;
+
+    cerr<<"iteration="<<iterations<<"   proc="<<proc_id<<": choosing partner "<<partner<<endl;
+
     if (partner >=0 and partner < n_procs)
     {
       double L1 = log(P.likelihood());
