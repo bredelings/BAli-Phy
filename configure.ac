@@ -228,6 +228,7 @@ AM_CONDITIONAL(DEBUG, test "$debug" = yes)
 AM_CONDITIONAL(STATIC, test "$static" = yes)
 AM_CONDITIONAL(SYSTEM_BOOST, test "$use_system_boost" = yes)
 AM_CONDITIONAL(NO_SYSTEM_BOOST, test "$use_system_boost" = no)
+AM_CONDITIONAL(WITH_MPI, test "$use_mpi" = openmpi)
 
 #determine the OS that is being targeted
 AM_CONDITIONAL(HOST_MINGW32,test "${host_os_noversion}" = mingw32)
@@ -326,9 +327,13 @@ else
 
   CXXFLAGS="$boost_includes $CXXFLAGS"
   LIBS="$boost_libs $LIBS"
+  if test "$use_mpi" != no ; then
+     BOOST_MPI_LIBS="\$(top_builddir)/boost/lib/mpi/libboost_mpi.a \$(top_builddir)/boost/lib/serialization/libboost_serialization.a"
+  fi
 fi
 libs=$LIBS
 AC_SUBST(libs)
+AC_SUBST(BOOST_MPI_LIBS)
 echo "------------------------------------------"
 
 #----------------------- Check for cairo ----------------#
@@ -377,6 +382,8 @@ AC_OUTPUT([
   boost/lib/Makefile 
   boost/lib/filesystem/Makefile 
   boost/lib/program_options/Makefile
+  boost/lib/serialization/Makefile
+  boost/lib/mpi/Makefile
 ])
 
 echo ""
