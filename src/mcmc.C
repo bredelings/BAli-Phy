@@ -1,5 +1,6 @@
 #include <boost/numeric/ublas/io.hpp>
 #include <iostream>
+#include <algorithm>
 
 #include "mcmc.H"
 #include "sample.H"
@@ -468,6 +469,171 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
   return o;
 }
 
+#ifdef HAVE_MPI
+void exchange_random_pairs(int iterations, Parameters& P)
+{
+  int proc_id = MPI::COMM_WORLD.Get_rank();
+  int n_procs = MPI::COMM_WORLD.Get_size();
+  
+  vector<int> p(n_procs);
+  if (proc_id == 0) 
+  {
+    p = random_permutation(n_procs);
+
+    int* pi = new int[p.size()];
+    for(int i=0;i<p.size();i++)
+      pi[i] = p[i];
+    
+    for(int dest=1;dest<n_procs;dest++)
+      MPI::COMM_WORLD.Send (pi, p.size(), MPI::INT, dest, 0 );
+  }
+  else {
+    int * pi = new int[p.size()];
+
+    MPI::COMM_WORLD.Recv   (pi, p.size(), MPI::INT,  0, MPI::ANY_TAG);
+    for(int i=0;i<p.size();i++)
+      p[i] = pi[i];
+  }
+
+  int partner = -1;
+
+  for(int i=0;i<p.size();i++) 
+  {
+    if (p[i] != proc_id) continue;
+    
+    if (i%2)
+      partner = i-1;
+    else
+      partner = i+1;
+    
+    break;
+  }
+
+  if (partner < p.size())
+    partner = p[partner];
+  else
+    partner = -1;
+  
+  cerr<<"iteration="<<iterations<<"   proc="<<proc_id<<": choosing partner "<<partner<<endl;
+
+  if (partner >=0 and partner < n_procs)
+  {
+    double L1 = log(P.likelihood());
+
+    double b1 = P.beta[0];
+    
+    if (proc_id > partner) {
+      cerr<<"Proc "<<proc_id<<": sending beta = "<<b1<<endl;
+      MPI::COMM_WORLD.Send   (&b1, 1, MPI::DOUBLE,  partner, 0);
+      cerr<<"Proc "<<proc_id<<": sending likelihood = "<<L1<<endl;
+      MPI::COMM_WORLD.Send   (&L1, 1, MPI::DOUBLE,  partner, 0);
+      int exchange = -1;
+      MPI::COMM_WORLD.Recv   (&exchange, 1, MPI::INT,     partner, MPI::ANY_TAG);
+      cerr<<"Proc "<<proc_id<<": result = "<<exchange<<endl;
+      if (exchange == 1) {
+	MPI::COMM_WORLD.Recv   (&b1,       1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
+	cerr<<"Proc "<<proc_id<<": new beta = "<<b1<<endl;
+	P.beta[0] = b1;
+	for(int i=0;i<P.n_data_partitions();i++)
+	  P[i].beta[0] = b1;
+      }
+    }
+    else {
+      double L2;
+      double b2;
+      
+      MPI::COMM_WORLD.Recv   (&b2, 1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
+      MPI::COMM_WORLD.Recv   (&L2, 1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
+      
+      cerr<<"Proc "<<proc_id<<": b1 = "<<b1<<endl;
+      cerr<<"Proc "<<proc_id<<": b2 = "<<b2<<endl;
+      cerr<<"Proc "<<proc_id<<": L1 = "<<L1<<endl;
+      cerr<<"Proc "<<proc_id<<": L2 = "<<L2<<endl;
+      
+      double ratio = exp( (b2-b1)*(L1-L2) );
+      int exchange = 0;
+      if (ratio >= 1 or uniform() < ratio)
+	exchange = 1;
+      
+      cerr<<"Proc "<<proc_id<<": ratio = "<<ratio<<endl;
+      cerr<<"Proc "<<proc_id<<": result = "<<exchange<<endl;
+      MPI::COMM_WORLD.Send   (&exchange, 1, MPI::INT,  partner, 0);
+      if (exchange == 1) {
+	MPI::COMM_WORLD.Send   (&b1, 1, MPI::DOUBLE,  partner, 0);
+	P.beta[0] = b2;
+	for(int i=0;i<P.n_data_partitions();i++)
+	  P[i].beta[0] = b2;
+      }
+    }
+  }
+}
+
+void exchange_adjacent_pairs(int iterations, Parameters& P)
+{
+  int proc_id = MPI::COMM_WORLD.Get_rank();
+  int n_procs = MPI::COMM_WORLD.Get_size();
+  
+  double beta = P.beta[0];
+  double l    = log(P.likelihood());
+  double oldbeta = beta;
+  double* betas = 0;
+  double* L = 0;
+  if (proc_id == 0) {
+    betas = new double[n_procs];
+    L     = new double[n_procs];
+  }
+
+  // Collect the Betas and log-Likelihoods in chain 0 (master)
+  MPI::COMM_WORLD.Gather(&beta, 1, MPI::DOUBLE, betas, 1, MPI::DOUBLE, 0);
+  MPI::COMM_WORLD.Gather(&l   , 1, MPI::DOUBLE, L    , 1, MPI::DOUBLE, 0);
+
+  if (proc_id == 0) 
+  {
+    //----- Compute an order of chains in decreasing order of beta -----//
+    vector<double> vbeta(n_procs);
+    for(int i=0;i<vbeta.size();i++)
+      vbeta[i] = betas[i];
+    vector<int> order = iota<int>(n_procs);
+    
+    sort(order.begin(), order.end(), sequence_order<double>(vbeta));
+    std::reverse(order.begin(), order.end());
+    
+    for(int i=0;i<3;i++) 
+    {
+      //----- Propose pairs of adjacent-temperature chains  ----//
+      for(int j=0;j<n_procs-1;j++) 
+      {
+	double b1 = betas[order[j]];
+	double b2 = betas[order[j+1]];
+	double L1 = L[order[j]];
+	double L2 = L[order[j+1]];
+
+	//---- We swap both betas and order to preserve the decreasing betas ----//
+	if (uniform() < exp( (b2-b1)*(L1-L2) ) )
+	{
+	  std::swap(betas[order[j]],betas[order[j+1]]);
+	  std::swap(order[j],order[j+1]);
+	}
+      }
+    }
+  }
+
+  // Broadcast the new betas for each chain
+  MPI::COMM_WORLD.Scatter(betas, 1, MPI::DOUBLE, &beta, 1, MPI::DOUBLE, 0);
+
+  cerr<<"Proc["<<proc_id<<"] changing from "<<oldbeta<<" -> "<<beta<<endl;
+
+  P.beta[0] = beta;
+  for(int i=0;i<P.n_data_partitions();i++)
+    P[i].beta[0] = beta;
+
+  if (proc_id == 0) {
+    delete[] betas;
+    delete[] L;
+  }
+}
+#endif
+
 void Sampler::go(Parameters& P,int subsample,const int max_iter,
 		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map,
 		 vector<ostream*>& files)
@@ -558,8 +724,8 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
       
   //---------------- Run the MCMC chain -------------------//
-  for(int iterations=0; iterations < max_iter; iterations++) {
-
+  for(int iterations=0; iterations < max_iter; iterations++) 
+  {
     if (iterations == 5)
       for(int i=0;i<restore.size();i++)
       P.fixed(restore[i],false);
@@ -658,9 +824,8 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 #ifdef HAVE_MPI
     //------------------ Exchange Temperatures -----------------//
 
-    // FIXME - propose based on nearest TEMPERATURE, not nearest ID!
-    // 1. Stop proposing based on ID
-    // 2. Start proposing based on temperature
+    // FIXME
+    // 1. How do I log the results in a meaningful way?
     // 3. What statistics should we print?
     //   (a) # of transitions between low/high temp?
     //   (b)
@@ -670,107 +835,9 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     // 6. Switch to BOOST MPI
 
     // FIXME - let the temperatures go equilibrium, given likelihoods?
-
-    int proc_id = MPI::COMM_WORLD.Get_rank();
-    int n_procs = MPI::COMM_WORLD.Get_size();
-
-    vector<int> p(n_procs);
-    if (proc_id == 0) 
-    {
-      p = random_permutation(n_procs);
-
-      int* pi = new int[p.size()];
-      for(int i=0;i<p.size();i++)
-	pi[i] = p[i];
-
-      for(int dest=1;dest<n_procs;dest++)
-	MPI::COMM_WORLD.Send (pi, p.size(), MPI::INT, dest, 0 );
-    }
-    else {
-      int * pi = new int[p.size()];
-
-      MPI::COMM_WORLD.Recv   (pi, p.size(), MPI::INT,  0, MPI::ANY_TAG);
-      for(int i=0;i<p.size();i++)
-	p[i] = pi[i];
-    }
-
-    int partner = -1;
-
-    for(int i=0;i<p.size();i++) 
-    {
-      if (p[i] != proc_id) continue;
-
-      if (i%2)
-	partner = i-1;
-      else
-	partner = i+1;
-
-      break;
-    }
-
-    if (partner < p.size())
-      partner = p[partner];
-    else
-      partner = -1;
-
-    cerr<<"iteration="<<iterations<<"   proc="<<proc_id<<": choosing partner "<<partner<<endl;
-
-    if (partner >=0 and partner < n_procs)
-    {
-      double L1 = log(P.likelihood());
-
-      double b1 = P.beta[0];
-
-      if (proc_id > partner) {
-	cerr<<"Proc "<<proc_id<<": sending beta = "<<b1<<endl;
-	MPI::COMM_WORLD.Send   (&b1, 1, MPI::DOUBLE,  partner, 0);
-	cerr<<"Proc "<<proc_id<<": sending likelihood = "<<L1<<endl;
-	MPI::COMM_WORLD.Send   (&L1, 1, MPI::DOUBLE,  partner, 0);
-	int exchange = -1;
-	MPI::COMM_WORLD.Recv   (&exchange, 1, MPI::INT,     partner, MPI::ANY_TAG);
-	cerr<<"Proc "<<proc_id<<": result = "<<exchange<<endl;
-	if (exchange == 1) {
-	  MPI::COMM_WORLD.Recv   (&b1,       1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
-	  cerr<<"Proc "<<proc_id<<": new beta = "<<b1<<endl;
-	  P.beta[0] = b1;
-	  for(int i=0;i<P.n_data_partitions();i++)
-	    P[i].beta[0] = b1;
-	}
-      }
-      else {
-	double L2;
-	double b2;
-
-	MPI::COMM_WORLD.Recv   (&b2, 1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
-	MPI::COMM_WORLD.Recv   (&L2, 1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
-
-	cerr<<"Proc "<<proc_id<<": b1 = "<<b1<<endl;
-	cerr<<"Proc "<<proc_id<<": b2 = "<<b2<<endl;
-	cerr<<"Proc "<<proc_id<<": L1 = "<<L1<<endl;
-	cerr<<"Proc "<<proc_id<<": L2 = "<<L2<<endl;
-	
-	double ratio = exp( (b2-b1)*(L1-L2) );
-	int exchange = 0;
-	if (ratio >= 1 or uniform() < ratio)
-	  exchange = 1;
-
-	cerr<<"Proc "<<proc_id<<": ratio = "<<ratio<<endl;
-	cerr<<"Proc "<<proc_id<<": result = "<<exchange<<endl;
-	MPI::COMM_WORLD.Send   (&exchange, 1, MPI::INT,  partner, 0);
-	if (exchange == 1) {
-	  MPI::COMM_WORLD.Send   (&b1, 1, MPI::DOUBLE,  partner, 0);
-	  P.beta[0] = b2;
-	  for(int i=0;i<P.n_data_partitions();i++)
-	    P[i].beta[0] = b2;
-	}
-      }
-
-
-
-      
-    }
-
-
+    MPI::COMM_WORLD.Barrier();
+    exchange_random_pairs(iterations,P);
+    exchange_adjacent_pairs(iterations,P);
 #endif
   }
 
