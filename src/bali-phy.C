@@ -1324,6 +1324,7 @@ int main(int argc,char* argv[])
     vector<ostream*> files;
     if (not args.count("show-only")) {
       string dir_name="";
+#ifdef HAVE_MPI
       if (not proc_id) {
 	dir_name = init_dir(args);
 	int size = dir_name.size();
@@ -1356,7 +1357,9 @@ int main(int argc,char* argv[])
 	delete[] buffer;
       }
       cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
-
+#else
+      dir_name = init_dir(args);
+#endif
       files = init_files(proc_id, dir_name, argc, argv, A.size());
     }
     else {
