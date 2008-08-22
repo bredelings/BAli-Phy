@@ -18,6 +18,8 @@ extern "C" {
 
 #ifdef HAVE_MPI
 #include <mpi/mpi.h>
+#include <boost/mpi.hpp>
+namespace mpi = boost::mpi;
 #endif
 
 #include <cmath>
@@ -1243,9 +1245,11 @@ int main(int argc,char* argv[])
   int proc_id = 0;
 
 #ifdef HAVE_MPI
-  MPI::Init ( argc, argv ); 
-  proc_id = MPI::COMM_WORLD.Get_rank();
-  n_procs = MPI::COMM_WORLD.Get_size();
+  mpi::environment env(argc, argv);
+  mpi::communicator world;
+
+  proc_id = world.rank();
+  n_procs = world.size();
 
   std::cout << "Hello, world!  I am #" << proc_id << " of " << n_procs << std::endl;
 #endif
@@ -1327,36 +1331,14 @@ int main(int argc,char* argv[])
 #ifdef HAVE_MPI
       if (not proc_id) {
 	dir_name = init_dir(args);
-	int size = dir_name.size();
+
 	for(int dest=1;dest<n_procs;dest++) 
-        {
-	  //	  cerr<<"Proc "<<proc_id<<": Sending size..."<<endl;
-	  MPI::COMM_WORLD.Send ( &size,            1,                 MPI::INT,  dest, 0 );
-	  //	  cerr<<"Proc "<<proc_id<<": sent."<<endl;
-
-	  //	  cerr<<"Proc "<<proc_id<<": Sending string..."<<endl;
-	  MPI::COMM_WORLD.Send ( dir_name.c_str(), dir_name.length(), MPI::CHAR, dest, 0 );
-	  //	  cerr<<"Proc "<<proc_id<<": sent."<<endl;
-	}
+	  world.send(dest, 0, dir_name);
       }
-      else {
-	int size;
-	dir_name = "";
+      else
+	world.recv(0, 0, dir_name);
 
-	//	cerr<<"Proc "<<proc_id<<": Receiving size..."<<endl;
-	MPI::COMM_WORLD.Recv ( &size,  1,    MPI::INT,  0, MPI::ANY_TAG);
-	//	cerr<<"Proc "<<proc_id<<": got it."<<endl;
-
-	char* buffer = new char[size+1];
-	//	cerr<<"Proc "<<proc_id<<": Receiving string..."<<endl;
-	MPI::COMM_WORLD.Recv ( buffer, size, MPI::CHAR, 0,               MPI::ANY_TAG);
-	buffer[size]=0;
-	//	cerr<<"Proc "<<proc_id<<": got it."<<endl;
-
-	dir_name = buffer;
-	delete[] buffer;
-      }
-      cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
+      // cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
 #else
       dir_name = init_dir(args);
 #endif
@@ -1507,10 +1489,6 @@ int main(int argc,char* argv[])
       err_both<<"Error: "<<e.what()<<endl;
     exit(1);
   }
-
-#ifdef HAVE_HPI
-  MPI::Finalize();
-#endif
 
   return 0;
 }
