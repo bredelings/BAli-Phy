@@ -79,7 +79,8 @@ struct advance_backward
 
 ///// iteration, depth == 1
 
-#elif BOOST_PP_ITERATION_DEPTH() == 1
+#elif defined(BOOST_PP_ITERATION_DEPTH)
+#if BOOST_PP_ITERATION_DEPTH() == 1
 #define i_ BOOST_PP_FRAME_ITERATION(1)
 
 template<>
@@ -108,10 +109,11 @@ struct advance_backward< BOOST_PP_FRAME_ITERATION(1) >
 };
 
 #undef i_
-
+#endif
 ///// iteration, depth == 2
 
-#elif BOOST_PP_ITERATION_DEPTH() == 2
+#elif defined(BOOST_PP_ITERATION_DEPTH)
+#if BOOST_PP_ITERATION_DEPTH() == 2
 
 #   define AUX778076_ITER_0 BOOST_PP_CAT(iter,BOOST_PP_DEC(BOOST_PP_FRAME_ITERATION(2)))
 #   define AUX778076_ITER_1 BOOST_PP_CAT(iter,BOOST_PP_FRAME_ITERATION(2))
@@ -120,5 +122,5 @@ struct advance_backward< BOOST_PP_FRAME_ITERATION(1) >
         
 #   undef AUX778076_ITER_1
 #   undef AUX778076_ITER_0
-
+#endif
 #endif // BOOST_PP_IS_ITERATING
