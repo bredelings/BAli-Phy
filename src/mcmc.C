@@ -472,13 +472,15 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
 }
 
 #ifdef HAVE_MPI
-void exchange_random_pairs(int iterations, Parameters& P)
+  void exchange_random_pairs(int iterations, Parameters& P, MCMC::MoveStats& Stats)
 {
   mpi::communicator world;
   world.barrier();
 
   int proc_id = world.rank();
   int n_procs = world.size();
+  
+  if (n_procs < 2) return;
   
   vector<int> p(n_procs);
   if (proc_id == 0) 
@@ -573,13 +575,15 @@ void exchange_random_pairs(int iterations, Parameters& P)
   }
 }
 
-void exchange_adjacent_pairs(int iterations, Parameters& P)
+void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Stats)
 {
   mpi::communicator world;
   world.barrier();
 
   int proc_id = world.rank();
   int n_procs = world.size();
+
+  if (n_procs < 2) return;
   
   double beta = P.beta[0];
   double l    = log(P.likelihood());
@@ -599,6 +603,8 @@ void exchange_adjacent_pairs(int iterations, Parameters& P)
     sort(order.begin(), order.end(), sequence_order<double>(betas));
     std::reverse(order.begin(), order.end());
     
+    MCMC::Result result(n_procs-1,0);
+
     for(int i=0;i<3;i++) 
     {
       //----- Propose pairs of adjacent-temperature chains  ----//
@@ -610,13 +616,20 @@ void exchange_adjacent_pairs(int iterations, Parameters& P)
 	double L2 = L[order[j+1]];
 
 	//---- We swap both betas and order to preserve the decreasing betas ----//
+
+	result.counts[j]++;
 	if (uniform() < exp( (b2-b1)*(L1-L2) ) )
 	{
 	  std::swap(betas[order[j]],betas[order[j+1]]);
 	  std::swap(order[j],order[j+1]);
+	  result.totals[j]++;
 	}
+	
+	
       }
     }
+
+    Stats.inc("Exchange",result);
   }
 
   // Broadcast the new betas for each chain
@@ -831,8 +844,8 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     // 6. Switch to BOOST MPI
 
     // FIXME - let the temperatures go equilibrium, given likelihoods?
-    exchange_random_pairs(iterations,P);
-    exchange_adjacent_pairs(iterations,P);
+    exchange_random_pairs(iterations,P,*this);
+    exchange_adjacent_pairs(iterations,P,*this);
 #endif
   }
 
