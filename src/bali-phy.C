@@ -661,7 +661,7 @@ vector<ofstream*> open_files(int proc_id, const string& name, vector<string>& na
 
   for(int j=0;j<names.size();j++) 
   {
-    string filename = name + convertToString(proc_id+1)+"."+names[j];
+    string filename = name + "C" + convertToString(proc_id+1)+"."+names[j];
       
     if (fs::exists(filename)) {
       close_files(files);
@@ -777,8 +777,10 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
     s_out<<"LSB_JOBID: "<<getenv("LSB_JOBID")<<endl;
   s_out<<"hostname: "<<hostname()<<endl;
   s_out<<"PID: "<<getpid()<<endl;
-#ifdef HAVE_HPI
-  s_out<<"MPI_PROC_ID: "<<proc_id<<endl;
+#ifdef HAVE_MPI
+  mpi::communicator world;
+  s_out<<"MPI_RANK: "<<world.rank()<<endl;
+  s_out<<"MPI_SIZE: "<<world.size()<<endl;
 #endif
   s_out<<endl;
 
@@ -1250,8 +1252,6 @@ int main(int argc,char* argv[])
 
   proc_id = world.rank();
   n_procs = world.size();
-
-  std::cout << "Hello, world!  I am #" << proc_id << " of " << n_procs << std::endl;
 #endif
 
   std::ios::sync_with_stdio(false);
