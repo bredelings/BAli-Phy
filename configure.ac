@@ -152,9 +152,16 @@ AC_ARG_ENABLE([cairo],
 
 # Specify extra library paths
 AC_ARG_WITH([mpi], AS_HELP_STRING([--with-mpi],[Compile with OpenMPI]),
-  use_mpi="openmpi",
+  use_mpi="$withval",
   use_mpi="no"
 )
+
+AC_ARG_VAR(MPICXX,
+           [What is the mpicxx command for compiling C++ with MPI?])
+
+if test -z "$MPICXX" ; then
+   MPICXX=mpicxx
+fi
 
 # we only add extra flags if we recognize the compiler (g++)
 if test "$GXX" = yes ; then
@@ -228,7 +235,7 @@ AM_CONDITIONAL(DEBUG, test "$debug" = yes)
 AM_CONDITIONAL(STATIC, test "$static" = yes)
 AM_CONDITIONAL(SYSTEM_BOOST, test "$use_system_boost" = yes)
 AM_CONDITIONAL(NO_SYSTEM_BOOST, test "$use_system_boost" = no)
-AM_CONDITIONAL(WITH_MPI, test "$use_mpi" = openmpi)
+AM_CONDITIONAL(WITH_MPI, test "$use_mpi" != no)
 
 #determine the OS that is being targeted
 AM_CONDITIONAL(HOST_MINGW32,test "${host_os_noversion}" = mingw32)
@@ -349,22 +356,48 @@ if test -n "$cairo" && test "$cairo" != "no"; then
 fi
 AC_SUBST(cairo_progs)
 
-#--------------------- Check for OpenMPI -----------------------#
+#------------------- Check for OpenMPI or MPICH ------------------#
 
-if test "$use_mpi" = "openmpi" ; then
-   echo "checking for OpenMPI ..."
-   if mpic++ --showme:version ; then 
-      MPI_CXXFLAGS="$(mpic++ --showme:compile) -fpermissive"
-      echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
-      MPI_LDFLAGS=$(mpic++ --showme:link)
-      echo "MPI_LDFLAGS=$MPI_LDFLAGS"
-   else
-      echo "Cannot find 'mpic++': no MPI... failure";
-      exit 1;
-   fi 
+if test "$use_mpi" != no ; then
 
+   if test "$use_mpi" = yes ; then
+      if $MPICXX --showme:version >/dev/null 2>/dev/null; then 
+      	 echo "Choosing OpenMPI to provide MPI interface."
+      	 use_mpi=openmpi
+      elif $MPICXX -show > /dev/null ; then
+      	 echo "Choosing MPICH to provide MPI interface."
+         use_mpi=mpich
+      else
+         echo "I can't guess which MPI implementation you are using!"
+      fi
+   fi
+
+   if test "$use_mpi" = "openmpi" ; then
+      echo "checking for OpenMPI ..."
+      if $MPICXX --showme:version ; then 
+         MPI_CXXFLAGS="$($MPICXX --showme:compile) -fpermissive"
+         echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
+         MPI_LDFLAGS=$($MPICXX --showme:link)
+         echo "MPI_LDFLAGS=$MPI_LDFLAGS"
+      else
+	 echo "MPI c++ wrapper '$MPICXX' does not work : failure.";
+         exit 1;
+      fi 
+
+   elif test "$use_mpi" = mpich ; then
+      echo "checking for mpich..."
+
+      if $MPICXX -show >/dev/null ; then 
+      	 MPI_CXXFLAGS="$($MPICXX -compile-info -CC= | sed 's/-c//') -fpermissive"
+	 echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
+	 [ MPI_LDFLAGS=$($MPICXX -link-info -CC= | sed 's/-D[^-\]* //g') ]
+      	 echo "MPI_LDFLAGS=$MPI_LDFLAGS"
+      else
+	 echo "MPI c++ wrapper '$MPICXX' does not work : failure.";
+         exit 1;
+      fi 
+   fi
    AC_DEFINE([HAVE_MPI],[] ,[You have a working OpenMPI implementation.])
-
    AC_SUBST(MPI_CXXFLAGS)   
    AC_SUBST(MPI_LDFLAGS)   
 fi

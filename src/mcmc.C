@@ -25,7 +25,7 @@
 #endif
 
 #ifdef HAVE_MPI
-#include <mpi/mpi.h>
+#include <mpi.h>
 #include <boost/mpi.hpp>
 namespace mpi = boost::mpi;
 #endif
