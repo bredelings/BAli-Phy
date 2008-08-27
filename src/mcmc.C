@@ -554,6 +554,7 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
       cerr<<"Proc "<<proc_id<<": L1 = "<<L1<<endl;
       cerr<<"Proc "<<proc_id<<": L2 = "<<L2<<endl;
       
+      // db * dL = -db*dE   because E = -L = -log(likelihood)
       double ratio = exp( (b2-b1)*(L1-L2) );
       int exchange = 0;
       if (ratio >= 1 or uniform() < ratio)
@@ -590,10 +591,13 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
   double oldbeta = beta;
   vector<double> betas;
   vector<double> L;
+  vector<int> updowns;
 
   // Collect the Betas and log-Likelihoods in chain 0 (master)
   gather(world, beta, betas, 0); // MPI::COMM_WORLD.Gather(&beta, 1, MPI::DOUBLE, betas, 1, MPI::DOUBLE, 0);
   gather(world, l   , L    , 0); // MPI::COMM_WORLD.Gather(&l   , 1, MPI::DOUBLE, L    , 1, MPI::DOUBLE, 0);
+  gather(world, P.updown, updowns, 0);
+
 
   if (proc_id == 0) 
   {
@@ -603,8 +607,7 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
     sort(order.begin(), order.end(), sequence_order<double>(betas));
     std::reverse(order.begin(), order.end());
     
-    MCMC::Result result(n_procs-1,0);
-
+    MCMC::Result exchange(n_procs-1,0);
     for(int i=0;i<3;i++) 
     {
       //----- Propose pairs of adjacent-temperature chains  ----//
@@ -617,23 +620,52 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
 
 	//---- We swap both betas and order to preserve the decreasing betas ----//
 
-	result.counts[j]++;
+	exchange.counts[j]++;
 	if (uniform() < exp( (b2-b1)*(L1-L2) ) )
 	{
 	  std::swap(betas[order[j]],betas[order[j+1]]);
 	  std::swap(order[j],order[j+1]);
-	  result.totals[j]++;
+	  exchange.totals[j]++;
 	}
 	
 	
       }
     }
 
-    Stats.inc("Exchange",result);
+    // estimate average regeneration times for beta high->low->high
+    MCMC:Result regeneration(n_procs,0);
+
+    if (updowns[order[0]] == 0)
+      regeneration.counts[order[0]]++;
+
+    for(int i=0;i<n_procs;i++)
+      regeneration.totals[i]++;
+    
+
+    // fraction of visitors that most recently visited highest Beta
+    MCMC::Result f_recent_high(n_procs, 0); 
+
+    updowns[order[0]] = 1;
+    updowns[order.back()] = 0;
+
+    for(int j=0;j<n_procs;j++)
+      if (updowns[order[j]] == 1) {
+	f_recent_high.counts[j] = 1;
+	f_recent_high.totals[j] = 1;
+      }
+      else if (updowns[order[j]] == 0)
+	f_recent_high.counts[j] = 1;
+
+	
+
+    Stats.inc("MC^3::Exchange",exchange);
+    Stats.inc("MC^3::Frac_recent_high",f_recent_high);
+    Stats.inc("MC^3::Beta_regeneration_times",regeneration);
   }
 
   // Broadcast the new betas for each chain
-  scatter(world, betas, beta, 0); // MPI::COMM_WORLD.Scatter(betas, 1, MPI::DOUBLE, &beta, 1, MPI::DOUBLE, 0);
+  scatter(world, betas, beta, 0);
+  scatter(world, updowns, P.updown, 0);
 
   cerr<<"Proc["<<proc_id<<"] changing from "<<oldbeta<<" -> "<<beta<<endl;
 
@@ -844,7 +876,10 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     // 6. Switch to BOOST MPI
 
     // FIXME - let the temperatures go equilibrium, given likelihoods?
-    exchange_random_pairs(iterations,P,*this);
+
+    // This move doesn't respect up/down at the moment
+    //exchange_random_pairs(iterations,P,*this);
+
     exchange_adjacent_pairs(iterations,P,*this);
 #endif
   }
