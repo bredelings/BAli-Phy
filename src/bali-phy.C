@@ -831,7 +831,17 @@ string duration(time_t T)
 
 void my_gsl_error_handler(const char* reason, const char* file, int line, int gsl_errno)
 {
-  std::cerr<<"gsl: "<<file<<":"<<line<<" (errno="<<gsl_errno<<") ERROR:"<<reason<<endl;
+  const int max_errors=100;
+  static int n_errors=0;
+
+  if (n_errors < max_errors) {
+  
+    std::cerr<<"gsl: "<<file<<":"<<line<<" (errno="<<gsl_errno<<") ERROR:"<<reason<<endl;
+    n_errors++;
+    if (n_errors == max_errors)
+      std::cerr<<"gsl: "<<max_errors<<" errors reported - stopping error messages."<<endl;
+  }
+
   //  std::abort();
 }
 
