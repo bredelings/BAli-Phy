@@ -287,7 +287,8 @@ BOOST_MPL_AUX_NA_SPEC2(2, AUX778076_OP_ARITY, AUX778076_OP_NAME)
 
 ///// iteration, depth == 1
 
-#elif BOOST_PP_ITERATION_DEPTH() == 1
+#elif defined(BOOST_PP_ITERATION_DEPTH)
+#if BOOST_PP_ITERATION_DEPTH() == 1
 
 #   define i_ BOOST_PP_FRAME_ITERATION(1)
 
@@ -307,5 +308,5 @@ struct AUX778076_OP_NAME<BOOST_MPL_PP_PARTIAL_SPEC_PARAMS(i_, N, na)>
 #endif
 
 #   undef i_
-
+#endif
 #endif // BOOST_PP_IS_ITERATING

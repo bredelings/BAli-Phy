@@ -227,7 +227,8 @@ BOOST_MPL_AUX_NA_SPEC2(2, 3, lambda)
 
 ///// iteration, depth == 1
 
-#elif BOOST_PP_ITERATION_DEPTH() == 1
+#elif defined(BOOST_PP_ITERATION_DEPTH)
+#if BOOST_PP_ITERATION_DEPTH() == 1
 #define i_ BOOST_PP_FRAME_ITERATION(1)
 
 #if i_ > 0
@@ -347,4 +348,5 @@ struct lambda<
 };
 
 #undef i_
+#endif
 #endif // BOOST_PP_IS_ITERATING
