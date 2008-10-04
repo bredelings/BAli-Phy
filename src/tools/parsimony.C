@@ -1,7 +1,3 @@
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-
 #include "util.H"
 #include "parsimony.H"
 using namespace std;
