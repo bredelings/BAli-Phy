@@ -523,19 +523,19 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
     if (proc_id > partner) {
       cerr<<"Proc "<<proc_id<<": sending beta = "<<b1<<endl;
 
-      world.send(partner, 0, b1); // MPI::COMM_WORLD.Send   (&b1, 1, MPI::DOUBLE,  partner, 0);
+      world.send(partner, 0, b1);
 
       cerr<<"Proc "<<proc_id<<": sending likelihood = "<<L1<<endl;
 
-      world.send(partner, 0, L1); // MPI::COMM_WORLD.Send   (&L1, 1, MPI::DOUBLE,  partner, 0);
+      world.send(partner, 0, L1);
 
       int exchange = -1;
       
-      world.recv(partner, mpi::any_tag, exchange); // MPI::COMM_WORLD.Recv   (&exchange, 1, MPI::INT,     partner, MPI::ANY_TAG);
+      world.recv(partner, mpi::any_tag, exchange);
 
       cerr<<"Proc "<<proc_id<<": result = "<<exchange<<endl;
       if (exchange == 1) {
-	world.recv(partner, mpi::any_tag, b1); // MPI::COMM_WORLD.Recv   (&b1,       1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
+	world.recv(partner, mpi::any_tag, b1);
 	cerr<<"Proc "<<proc_id<<": new beta = "<<b1<<endl;
 	P.beta[0] = b1;
 	for(int i=0;i<P.n_data_partitions();i++)
@@ -546,8 +546,8 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
       double L2;
       double b2;
       
-      world.recv(partner, 0, b2); // MPI::COMM_WORLD.Recv   (&b2, 1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
-      world.recv(partner, 0, L2); // MPI::COMM_WORLD.Recv   (&L2, 1, MPI::DOUBLE,  partner, MPI::ANY_TAG);
+      world.recv(partner, 0, b2);
+      world.recv(partner, 0, L2);
       
       cerr<<"Proc "<<proc_id<<": b1 = "<<b1<<endl;
       cerr<<"Proc "<<proc_id<<": b2 = "<<b2<<endl;
@@ -594,8 +594,8 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
   vector<int> updowns;
 
   // Collect the Betas and log-Likelihoods in chain 0 (master)
-  gather(world, beta, betas, 0); // MPI::COMM_WORLD.Gather(&beta, 1, MPI::DOUBLE, betas, 1, MPI::DOUBLE, 0);
-  gather(world, l   , L    , 0); // MPI::COMM_WORLD.Gather(&l   , 1, MPI::DOUBLE, L    , 1, MPI::DOUBLE, 0);
+  gather(world, beta, betas, 0);
+  gather(world, l   , L    , 0);
   gather(world, P.updown, updowns, 0);
 
 
@@ -615,6 +615,8 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
       {
 	double b1 = betas[order[j]];
 	double b2 = betas[order[j+1]];
+	assert(b2 <= b1);
+
 	double L1 = L[order[j]];
 	double L2 = L[order[j+1]];
 
@@ -667,7 +669,7 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
   scatter(world, betas, beta, 0);
   scatter(world, updowns, P.updown, 0);
 
-  cerr<<"Proc["<<proc_id<<"] changing from "<<oldbeta<<" -> "<<beta<<endl;
+  // cerr<<"Proc["<<proc_id<<"] changing from "<<oldbeta<<" -> "<<beta<<endl;
 
   P.beta[0] = beta;
   for(int i=0;i<P.n_data_partitions();i++)
