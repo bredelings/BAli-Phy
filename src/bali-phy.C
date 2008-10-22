@@ -845,6 +845,23 @@ void my_gsl_error_handler(const char* reason, const char* file, int line, int gs
   //  std::abort();
 }
 
+void check_alignment_names(const alignment& A)
+{
+  for(int i=0;i<A.n_sequences();i++) {
+    string name = A.seq(i).name;
+    for(int j=0;j<name.size();j++) {
+      if (name[j] == ')')
+	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character ')'";
+      if (name[j] == '(')
+	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character '('";
+      if (name[j] == ':')
+	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character ':'";
+      if (name[j] == ';')
+	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character ';'";
+    }
+  }
+}
+
 int main(int argc,char* argv[]) 
 { 
   std::ios::sync_with_stdio(false);
@@ -920,6 +937,8 @@ int main(int argc,char* argv[])
 
     out_cache<<"data = "<<args["align"].as<string>()<<endl<<endl;
     out_cache<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
+
+    check_alignment_names(A);
 
     //--------- Handle branch lengths <= 0 --------//
     double min_branch = 0.000001;
