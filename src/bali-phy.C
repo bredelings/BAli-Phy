@@ -1251,6 +1251,23 @@ void my_gsl_error_handler(const char* reason, const char* file, int line, int gs
   //  std::abort();
 }
 
+void check_alignment_names(const alignment& A)
+{
+  for(int i=0;i<A.n_sequences();i++) {
+    string name = A.seq(i).name;
+    for(int j=0;j<name.size();j++) {
+      if (name[j] == ')')
+	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character ')'";
+      if (name[j] == '(')
+	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character '('";
+      if (name[j] == ':')
+	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character ':'";
+      if (name[j] == ';')
+	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character ';'";
+    }
+  }
+}
+
 int main(int argc,char* argv[]) 
 { 
   int n_procs = 1;
@@ -1298,7 +1315,6 @@ int main(int argc,char* argv[])
     }
     else {
       if (proc_id) return 0;
-      std::cout << "Hello, world!  I am #" << proc_id << " of " << n_procs << std::endl;
     }
 
     //---------- Determine Data dir ---------------//
@@ -1326,6 +1342,8 @@ int main(int argc,char* argv[])
       out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
       out_cache<<"alphabet"<<i+1<<" = "<<A[i].get_alphabet().name<<endl<<endl;
     }
+    for(int i=0;i<A.size();i++)
+      check_alignment_names(A[i]);
 
     //--------- Handle branch lengths <= 0 --------//
     sanitize_branch_lengths(T);
