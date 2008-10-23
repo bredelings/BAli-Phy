@@ -10,7 +10,7 @@ extern "C" {
 }
 #endif
 
-#ifdef HAVE_FENV
+#ifdef HAVE_FENV_H
 extern "C" {
 #include "fenv.h"
 }
@@ -1295,7 +1295,7 @@ int main(int argc,char* argv[])
   time_t start_time = time(NULL);
 
   try {
-#if defined(HAVE_FENV) && !defined(NDEBUG)
+#if defined(HAVE_FENV_H) && !defined(NDEBUG)
     feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
     fp_scale::initialize();
