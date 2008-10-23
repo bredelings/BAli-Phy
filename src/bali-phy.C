@@ -1253,18 +1253,15 @@ void my_gsl_error_handler(const char* reason, const char* file, int line, int gs
 
 void check_alignment_names(const alignment& A)
 {
+  const string forbidden = "();:\"'[]&";
+
   for(int i=0;i<A.n_sequences();i++) {
-    string name = A.seq(i).name;
-    for(int j=0;j<name.size();j++) {
-      if (name[j] == ')')
-	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character ')'";
-      if (name[j] == '(')
-	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character '('";
-      if (name[j] == ':')
-	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character ':'";
-      if (name[j] == ';')
-	throw myexception()<<"Sequence name '"<<name<<"' contains illegal character ';'";
-    }
+    const string& name = A.seq(i).name;
+    for(int j=0;j<name.size();j++)
+      for(int c=0;c<forbidden.size();c++)
+	for(int pos=0;pos<name.size();pos++)
+	  if (name[pos] == forbidden[c])
+	    throw myexception()<<"Sequence name '"<<name<<"' contains illegal character '"<<forbidden[c]<<"'";
   }
 }
 
