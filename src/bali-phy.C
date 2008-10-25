@@ -1253,7 +1253,7 @@ void my_gsl_error_handler(const char* reason, const char* file, int line, int gs
 
 void check_alignment_names(const alignment& A)
 {
-  const string forbidden = "();:\"'[]&";
+  const string forbidden = "();:\"'[]&,";
 
   for(int i=0;i<A.n_sequences();i++) {
     const string& name = A.seq(i).name;
