@@ -118,7 +118,7 @@ bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask);
 bool all_gaps(const alignment& A,int column);
 
 /// remove columns that contain only gaps
-void remove_empty_columns(alignment&);
+int remove_empty_columns(alignment&);
 
 std::vector<int> get_path(const alignment&,int,int);
 std::vector<int> get_path_3way(const alignment&,int,int,int,int);

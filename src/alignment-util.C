@@ -13,7 +13,7 @@ using std::istream;
 using boost::program_options::variables_map;
 
 
-alignment chop_internal(alignment A) 
+alignment chop_internal(alignment A, bool keep_empty_columns) 
 {
   int N = (A.n_sequences()+2)/2;
 
@@ -36,6 +36,9 @@ alignment chop_internal(alignment A)
 
   while(A.n_sequences() > N)
     A.del_sequence(N);
+
+  if (not keep_empty_columns)
+    remove_empty_columns(A);
 
   return A;
 }
@@ -646,7 +649,9 @@ alignment load_alignment(const string& filename,const vector<OwnedPointer<alphab
   else
     A.load(alphabets,filename);
   
-  remove_empty_columns(A);
+  int n_empty = remove_empty_columns(A);
+  if (n_empty)
+    cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
   
   if (A.n_sequences() == 0)
     throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";

@@ -13,7 +13,7 @@
 #include "clone.H"
 
 // Remove sequences to A corresponding to internal nodes in T
-alignment chop_internal(alignment A);
+alignment chop_internal(alignment A,bool keep_empty_columns=false);
 
 // Add sequences to A corresponding to internal nodes in T
 alignment add_internal(alignment A,const Tree& T);
