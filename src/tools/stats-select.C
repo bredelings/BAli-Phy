@@ -30,6 +30,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   visible.add_options()
     ("help", "Produce help message")
     ("no-header","Suppress the line of column names.")
+    ("remove,r","Remove selected columns, instead of keeping them.")
     ;
 
   options_description all("All options");
@@ -60,25 +61,36 @@ int main(int argc,char* argv[])
     //----------- Parse command line  -----------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    if (not args.count("columns")) 
-      throw myexception()<<"No columns selected.";
-
     //------------ Parse column names ----------//
     vector<string> headers = read_header(std::cin);
 
     //------------ Parse column mask ----------//
     vector<int> column_index;
-    
-    vector<string> columns = args["columns"].as<vector<string> >();
-    
-    for(int i=0;i<columns.size();i++) 
+    if (not args.count("columns"))
+      column_index = iota<int>(headers.size());
+    else 
     {
-      int loc = find_index(headers,columns[i]);
-      if (loc == -1)
-	throw myexception()<<"Can't find column '"<<columns[i]<<" in table.";
-      column_index.push_back(loc);
+      vector<string> columns = args["columns"].as<vector<string> >();
+    
+      for(int i=0;i<columns.size();i++)
+      {
+	int loc = find_index(headers,columns[i]);
+	if (loc == -1)
+	  throw myexception()<<"Can't find column '"<<columns[i]<<" in table.";
+	column_index.push_back(loc);
+      }
     }
     
+    //------------ Invert column mask -----------//
+
+    if (args.count("remove")) {
+      vector<int> others;
+      for(int i=0;i<headers.size();i++)
+	if (not includes(column_index,i))
+	  others.push_back(i);
+      column_index = others;
+    }
+
     //------------ Print  column names ----------//
     if (not args.count("no-header"))
       for(int i=0;i<column_index.size();i++) 

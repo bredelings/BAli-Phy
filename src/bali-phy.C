@@ -847,7 +847,7 @@ void my_gsl_error_handler(const char* reason, const char* file, int line, int gs
 
 void check_alignment_names(const alignment& A)
 {
-  const string forbidden = "();:\"'[]&";
+  const string forbidden = "();:\"'[]&,";
 
   for(int i=0;i<A.n_sequences();i++) {
     const string& name = A.seq(i).name;
@@ -856,6 +856,20 @@ void check_alignment_names(const alignment& A)
 	for(int pos=0;pos<name.size();pos++)
 	  if (name[pos] == forbidden[c])
 	    throw myexception()<<"Sequence name '"<<name<<"' contains illegal character '"<<forbidden[c]<<"'";
+  }
+}
+
+void check_alignment_values(const alignment& A,const string& filename)
+{
+  const alphabet& a = A.get_alphabet();
+
+  for(int i=0;i<A.n_sequences();i++)
+  {
+    string name = A.seq(i).name;
+
+    for(int j=0;j<A.length();j++) 
+      if (A.unknown(j,i))
+	throw myexception()<<"Alignment file '"<<filename<<"' has a '"<<a.unknown_letter<<"' in sequence '"<<name<<"'.\n (Please replace with gap character '"<<a.gap_letter<<"' or wildcard '"<<a.wildcard<<"'.)";
   }
 }
 
@@ -936,6 +950,7 @@ int main(int argc,char* argv[])
     out_cache<<"alphabet = "<<A.get_alphabet().name<<endl<<endl;
 
     check_alignment_names(A);
+    check_alignment_values(A, args["align"].as<string>());
 
     //--------- Handle branch lengths <= 0 --------//
     double min_branch = 0.000001;
@@ -1119,7 +1134,7 @@ int main(int argc,char* argv[])
     exit(1);
   }
   catch (std::exception& e) {
-    err_both<<"Error: "<<e.what()<<endl;
+    err_both<<argv[0]<<": Error! "<<e.what()<<endl;
     exit(1);
   }
 
