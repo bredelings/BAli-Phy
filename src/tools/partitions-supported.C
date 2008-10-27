@@ -197,7 +197,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"partitions-supported: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

@@ -55,7 +55,7 @@ Results/analysis: Results/Report Results/consensus ${TOPOLOGIES:%=Results/%.topo
 
 Results/Report:  Work/header Work/p Results/MAP.topology
 	@{ cat Work/header ; \
-	statreport 2: --skip ${SKIP} ${SIZE:%=--max %} < Work/p 2>/dev/null ; \
+	statreport 2: --skip ${SKIP} ${SIZE:%=--max %} < Work/p ; \
 	cat Results/MAP.topology ; \
 	} > $@
 
@@ -110,7 +110,7 @@ Results/c-sub-levels.plot : Results/consensus
 
 Results/%.tree : Results/%.topology Work/trees
 	@echo "Calculating branch lengths for $* tree."
-	@tree-mean-lengths $< --safe --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@ 2>/dev/null
+	@tree-mean-lengths $< --safe --skip ${SKIP} ${SIZE:%=--max %} < Work/trees > $@
 
 Results/MAP.topology: Results/consensus Work/setup
 	@pickout --no-header MAP-0 < $< > $@
@@ -121,19 +121,19 @@ Work/MAP-unordered.fasta: Work/MAP Work/setup
 	@echo "done."
 
 Work/median-unordered.fasta: Work/samples-${SKIP}+${SIZE}
-	alignment-median --max-alignments 2000 --analysis=median< $< > $@ 2>Work/median.err
+	alignment-median --max-alignments 2000 --analysis=median< $< > $@
 
 Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
-	@alignment-reorder Work/$*-unordered.fasta Results/c50.tree > $@ 2>/dev/null
+	@alignment-reorder Work/$*-unordered.fasta Results/c50.tree > $@
 
 Results/au-graph-%.plot Work/consensus-%-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 	@echo -e "Computing consensus-$* alignment ... \c"
-	@alignment-consensus --cutoff=0.$* --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@ 2>/dev/null
+	@alignment-consensus --cutoff=0.$* --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@
 	@echo "done."
 
 Results/%-AU.prob: Results/%.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree
 	@echo -e "Calculating AU probabilities for $* alignment ... \c"
-	@alignment-gild Results/$*.fasta Results/MAP.tree --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@ 2> Work/$*-AU.err
+	@alignment-gild Results/$*.fasta Results/MAP.tree --max-alignments 500 < Work/samples-${SKIP}+${SIZE} > $@
 	@echo "done."
 
 Results/%-AU.html: Results/%-AU.prob Results/%.fasta
@@ -143,7 +143,7 @@ Results/%-AU.html: Results/%-AU.prob Results/%.fasta
 
 Results/%-AU2.html: Results/%-AU.prob Results/%.fasta
 	@echo -e "Drawing $* alignment plot (2) ... \c"
-	@if ! alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme AA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; then alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme DNA+contrast+fade+fade+fade+fade > $@ 2>/dev/null ; fi
+	@if ! alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme AA+contrast+fade+fade+fade+fade > $@ ; then alignment-draw Results/$*.fasta Results/$*-AU.prob --width 80 --color-scheme DNA+contrast+fade+fade+fade+fade > $@ ; fi
 	@echo "done."
 
 Results/c%.topology: Results/consensus Work/setup
@@ -185,7 +185,7 @@ Work/Likelihood: Work/p Work/setup
 
 Work/Pmarg: Work/Likelihood.from.${SKIP}+${SIZE}
 	@echo -e "Calculating marginal likelihood... \c"
-	@model_P < $< > $@ 2>/dev/null
+	@model_P < $< > $@
 	@echo "done."
 
 clean:

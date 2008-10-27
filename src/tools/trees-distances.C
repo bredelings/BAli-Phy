@@ -522,7 +522,7 @@ int main(int argc,char* argv[])
       throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"trees-distances: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

@@ -377,7 +377,7 @@ int main(int argc,char* argv[])
     cout<<"  Wildcards: "<<wildcards<<" ["<<double(wildcards)/total*100<<"%]\n";
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"alignment-info: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

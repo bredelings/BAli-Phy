@@ -124,7 +124,7 @@ int main(int argc,char* argv[])
     std::cout<<A2<<std::endl;
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-translate: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

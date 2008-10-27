@@ -28,7 +28,7 @@ int main(int argc,char* argv[]) {
     
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"make_gaps: Error! "<<e.what()<<endl;
     return 1;
   }
   return 0;

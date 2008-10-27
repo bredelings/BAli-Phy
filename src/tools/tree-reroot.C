@@ -163,7 +163,7 @@ int main(int argc,char* argv[])
     std::cout<<T<<endl;
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"tree-reroot: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

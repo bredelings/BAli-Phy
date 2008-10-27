@@ -362,7 +362,7 @@ int main(int argc,char* argv[])
       throw myexception()<<"I don't recognize requested format '"<<args["output"].as<string>()<<"'";
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-cat: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;
