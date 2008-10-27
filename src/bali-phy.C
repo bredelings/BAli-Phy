@@ -1134,7 +1134,7 @@ int main(int argc,char* argv[])
     exit(1);
   }
   catch (std::exception& e) {
-    err_both<<argv[0]<<": Error! "<<e.what()<<endl;
+    err_both<<"bali-phy: Error! "<<e.what()<<endl;
     exit(1);
   }
 
