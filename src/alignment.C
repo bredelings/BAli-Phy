@@ -325,13 +325,16 @@ vector<int> get_path(const alignment& A,int node1, int node2) {
   return state;
 }
 
-void remove_empty_columns(alignment& A) {
+int remove_empty_columns(alignment& A) 
+{
+  int n_empty = 0;
   for(int column=A.length()-1;column>=0;column--) {
     if (all_gaps(A,column)) {
       A.delete_column(column);
-      std::cerr<<"Deleted a column: all gaps"<<std::endl;
+      n_empty++;
     }
   }
+  return n_empty;
 }
 
 std::ostream& operator<<(std::ostream& file,const alignment& A) 
