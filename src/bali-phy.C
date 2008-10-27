@@ -1525,9 +1525,9 @@ int main(int argc,char* argv[])
   }
   catch (std::exception& e) {
     if (n_procs > 1)
-      err_both<<argv[0]<<": Error["<<proc_id<<"]! "<<e.what()<<endl;
+      err_both<<"bali-phy: Error["<<proc_id<<"]! "<<e.what()<<endl;
     else
-      err_both<<argv[0]<<": Error! "<<e.what()<<endl;
+      err_both<<"bali-phy: Error! "<<e.what()<<endl;
     exit(1);
   }
 
