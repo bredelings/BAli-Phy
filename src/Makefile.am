@@ -70,7 +70,7 @@ bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@
 
 #-----------------------------------------------------------------
 
-model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C
+model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C util.C
 
 #-------------------------- statreport --------------------------
 

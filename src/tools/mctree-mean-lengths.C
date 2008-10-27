@@ -128,6 +128,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("no-node-lengths","ignore branches not in the specified topology")
     ("safe","Don't die if no trees match the topology")
     ("drop-partial","Remove partial branches")
+    ("verbose","Output more log messages on stderr.")
     ;
 
   // positional options
@@ -145,6 +146,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -289,8 +292,8 @@ int main(int argc,char* argv[])
       exit(0);
     }
 
-    std::cerr<<A.n_matches<<" out of "<<A.n_samples<<" trees matched the topology";
-    std::cerr<<" ("<<double(A.n_matches)/A.n_samples*100<<"%)"<<std::endl;
+    if (log_verbose) std::cerr<<"mctree-mean-lengths: "<<A.n_matches<<" out of "<<A.n_samples<<" trees matched the topology";
+    if (log_verbose) std::cerr<<"mctree-mean-lengths: "<<" ("<<double(A.n_matches)/A.n_samples*100<<"%)"<<std::endl;
 
     //------- Merge lengths and topology -------//
     for(int b=0;b<Q.n_branches();b++)

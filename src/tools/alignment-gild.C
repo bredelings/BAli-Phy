@@ -202,9 +202,9 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
 
   vector< shared_ptr<const alphabet> > alphabets;
   alphabets.push_back(shared_ptr<const alphabet>(A.get_alphabet().clone()));
-  std::cerr<<"Loading alignments...";
+  if (log_verbose) std::cerr<<"alignment-gild: Loading alignments...";
   alignments = load_alignments(std::cin,alphabets,skip,maxalignments);
-  std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+  if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (alignments.empty()) 
     throw myexception()<<"Alignment sample is empty.";
 

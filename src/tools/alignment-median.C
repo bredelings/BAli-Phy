@@ -40,10 +40,10 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
   unsigned skip = args["skip"].as<unsigned>();
 
   // --------------------- try ---------------------- //
-  cerr<<"Loading alignments...";
+  if (log_verbose) cerr<<"alignment-median: Loading alignments...";
   list<alignment> As = load_alignments(cin,load_alphabets(args),skip,maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
-  cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
+  if (log_verbose) cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
   if (not alignments.size())
     throw myexception()<<"Alignment sample is empty.";
 }

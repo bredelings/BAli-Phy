@@ -7,6 +7,7 @@ using std::string;
 using std::cerr;
 using std::endl;
 
+int log_verbose = 0;
 
 std::istream& getline_handle_dos(std::istream& file,std::string& s)
 {

@@ -327,7 +327,7 @@ sub record_burnin
 sub get_alignment_info 
 {
     my $filename = shift;
-    open INFO,"alignment-info $filename 2>/dev/null |";
+    open INFO,"alignment-info $filename |";
 
     my %features = ();
 
@@ -378,8 +378,8 @@ if (-e 'C1.out')
     $out_file = 'C1.out';
     $n_chains = get_header_attribute("MPI_SIZE");
     for(my $i=0;$i<$n_chains;$i++) {
-	push @out_files,"C$1.out" if (-e "C$i.out");
-	push @tree_files,"C$1.trees" if (-e "C$i.trees");
+	push @out_files,"C$i.out" if (-e "C$i.out");
+	push @tree_files,"C$i.trees" if (-e "C$i.trees");
     }
 
     if ($n_chains == 1) {
@@ -584,15 +584,15 @@ for my $cvalue (@tree_consensus_values)
     }
 
     if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.mtree")) {
-	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg 2>/dev/null`;
+	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg`;
     }
     if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.mtree")) {
-	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree 2>/dev/null`;
+	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree`;
     }
     
     print "$tree ";
     if (! more_recent_than("Results/$tree.ltree",$trees_file)) {
-    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg < $trees_file > Results/$tree.ltree 2>/dev/null`;
+    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg < $trees_file > Results/$tree.ltree`;
     }
     if (! more_recent_than("Results/$tree.tree","Results/$tree.ltree")) {
     `head -n1 Results/$tree.ltree > Results/$tree.tree`;
@@ -607,7 +607,7 @@ if (! more_recent_than("Results/MAP.topology","Results/consensus")) {
 }
 print " Calculating branch lengths for MAP tree... ";
 if (! more_recent_than("Results/MAP.ltree",$trees_file)) {
-    `tree-mean-lengths Results/MAP.topology --safe $max_arg < $trees_file > Results/MAP.ltree 2>/dev/null`;
+    `tree-mean-lengths Results/MAP.topology --safe $max_arg < $trees_file > Results/MAP.ltree`;
 }
 if (! more_recent_than("Results/MAP.tree","Results/MAP.ltree")) {
     `head -n1 Results/MAP.ltree > Results/MAP.tree`;
@@ -620,10 +620,10 @@ print "done.\n";
 print " Drawing trees ... ";
 for my $tree (@trees) {
     if (! more_recent_than("Results/$tree-tree.pdf","Results/$tree.ltree")) {
-	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight 2>/dev/null`;
+	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight`;
     }
     if (! more_recent_than("Results/$tree-tree.svg","Results/$tree.ltree")) {
-	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg 2>/dev/null`;
+	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg`;
     }
 }
 print "done.\n";
@@ -631,7 +631,7 @@ print "done.\n";
 # 5. Summarize scalar parameters
 print "\nSummarizing distribution of numerical parameters... ";
 if (! more_recent_than("Results/Report",$parameters_file)) {
-    `statreport 2: $max_arg < $parameters_file > Results/Report 2>/dev/null`;
+    `statreport 2: $max_arg < $parameters_file > Results/Report`;
 }
 print "done.\n";
 
@@ -650,9 +650,9 @@ for(my $i=0;$i<$n_partitions;$i++)
     $alignment_names{$name} = "Initial";
 
     # These initial alignments should never change!
-    if (! -e "Results/Work/$name-unordered.fasta") {
+    if (! -s "Results/Work/$name-unordered.fasta") {
 	`alignment-find --first < $partition_samples[$i] > Results/Work/$name-unordered.fasta 2>/dev/null`;
-	if ($? && $n_partitions==1) {
+	if ($? && $n_chains==1 && defined($MAP_file)) {
 	    `alignment-find --first < $MAP_file > Results/Work/$name-unordered.fasta`;
 	}
     }
@@ -686,7 +686,7 @@ for(my $i=0;$i<$n_partitions;$i++) {
     my $p = ($i+1);
     my $name = "P$p-probcons";
     if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-	`probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
+	`probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta`;
     }
     push @alignments,$name;
     $alignment_names{$name} = "ProbCons";
@@ -709,7 +709,7 @@ for(my $i=0;$i<$n_partitions;$i++)
     my $name = "P$p-max";
     if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
 	! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
-	`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta 2>/dev/null`;
+	`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta`;
     }
     push @alignments,$name;
     $alignment_names{$name} = "Best (WPD)";
@@ -734,7 +734,7 @@ for(my $i=0;$i<$n_partitions;$i++)
 	my $name = "P$p-consensus-$value";
 	print "c$value ";
 	if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
-	    `cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta 2>/dev/null`;
+	    `cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta`;
 	}
 	push @alignments,$name;
 	$alignment_names{$name} = "$value% consensus";
@@ -748,14 +748,14 @@ for my $alignment (@alignments)
 {
     if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta") ||
 	! more_recent_than("Results/$alignment.fasta","Results/c50.tree")) {
-    `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta 2>/dev/null`;
+    `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta`;
     }
 
     if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
 	`alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
 
 	if ($?) {
-	    `alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html 2>/dev/null`;
+	    `alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html`;
 	}
     }
 }
@@ -776,10 +776,10 @@ for my $alignment (@alignments)
     }
 
     if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.fasta")) {
-	`alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment-diff.html 2>/dev/null`;
+	`alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment-diff.html`;
 
 	if ($?) {
-	    `alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment-diff.html 2>/dev/null`;
+	    `alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment-diff.html`;
 	}
     }
 }
@@ -795,10 +795,10 @@ for my $alignment (@AU_alignments)
 	my $infile = $partition_samples[$p-1];
 
 	if (!more_recent_than("Results/$alignment-AU.prob",$infile)) {
-	`cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob 2>/dev/null`;
+	`cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob`;
 	}
 	print "done.\n";
-	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null`;
+	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
 	if ($?) {
 	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
 	}
@@ -809,7 +809,7 @@ for my $alignment (@AU_alignments)
 print "Calculating marginal likelihood... ";
 
 if (!more_recent_than("Results/Pmarg",$parameters_file)) {
-`stats-select likelihood --no-header < $parameters_file | model_P > Results/Pmarg 2>/dev/null`;
+`stats-select likelihood --no-header < $parameters_file | model_P > Results/Pmarg`;
 }
 print "done.\n";
 my $marginal_prob = `cat Results/Pmarg`;
