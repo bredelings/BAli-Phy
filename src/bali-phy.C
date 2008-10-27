@@ -1265,6 +1265,20 @@ void check_alignment_names(const alignment& A)
   }
 }
 
+void check_alignment_values(const alignment& A,const string& filename)
+{
+  const alphabet& a = A.get_alphabet();
+
+  for(int i=0;i<A.n_sequences();i++)
+  {
+    string name = A.seq(i).name;
+
+    for(int j=0;j<A.length();j++) 
+      if (A.unknown(j,i))
+	throw myexception()<<"Alignment file '"<<filename<<"' has a '"<<a.unknown_letter<<"' in sequence '"<<name<<"'.\n (Please replace with gap character '"<<a.gap_letter<<"' or wildcard '"<<a.wildcard<<"'.)";
+  }
+}
+
 int main(int argc,char* argv[]) 
 { 
   int n_procs = 1;
@@ -1339,8 +1353,10 @@ int main(int argc,char* argv[])
       out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
       out_cache<<"alphabet"<<i+1<<" = "<<A[i].get_alphabet().name<<endl<<endl;
     }
-    for(int i=0;i<A.size();i++)
+    for(int i=0;i<A.size();i++) {
       check_alignment_names(A[i]);
+      check_alignment_values(A[i],filenames[i]);
+    }
 
     //--------- Handle branch lengths <= 0 --------//
     sanitize_branch_lengths(T);
