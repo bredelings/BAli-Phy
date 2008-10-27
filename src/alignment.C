@@ -29,14 +29,14 @@ int alignment::add_note(int l) const {
 
 bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask) {
   for(int i=0;i<A.n_sequences();i++)
-    if (mask[i] and not A.gap(column,i))
+    if (mask[i] and A.character(column,i))
       return false;
   return true;
 }
 
 bool all_gaps(const alignment& A,int column) {
   for(int i=0;i<A.n_sequences();i++)
-    if (not A.gap(column,i))
+    if (A.character(column,i))
       return false;
   return true;
 }
