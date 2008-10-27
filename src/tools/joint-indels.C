@@ -158,7 +158,7 @@ int main(int argc,char* argv[]) {
     run_analysis(args);
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"joint-indels: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

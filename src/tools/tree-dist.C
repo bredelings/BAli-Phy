@@ -557,7 +557,7 @@ tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample,const
       T = standardized_prune(line,prune);
     }
     catch (std::exception& e) {
-      cerr<<"Exception: "<<e.what()<<endl;
+      cerr<<"tree-dist: Error! "<<e.what()<<endl;
       cerr<<" Quitting read of tree file"<<endl;
       break;
     }

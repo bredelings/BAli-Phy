@@ -60,7 +60,7 @@ int main(int argc,char* argv[]) {
       throw myexception()<<"Don't recognized requested format '"<<args["output"].as<string>()<<"'";
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-convert: Error! "<<e.what()<<endl;
     exit(1);
   }
 

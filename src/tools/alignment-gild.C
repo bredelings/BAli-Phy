@@ -555,7 +555,7 @@ int main(int argc,char* argv[]) {
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-gild: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

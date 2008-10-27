@@ -172,7 +172,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"alignment-indices: Error! "<<e.what()<<endl;
   }
   return 0;
 }

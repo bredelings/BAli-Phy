@@ -160,7 +160,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"stats-select: Error! "<<e.what()<<endl;
     exit(1);
   }
 

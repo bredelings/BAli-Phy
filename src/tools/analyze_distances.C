@@ -524,7 +524,7 @@ int main(int argc,char* argv[])
 
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"analyze_distances: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

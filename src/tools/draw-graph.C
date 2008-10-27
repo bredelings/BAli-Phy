@@ -77,7 +77,7 @@ int main(int argc,char* argv[])
     draw_graph(T,name);
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"draw-graph: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

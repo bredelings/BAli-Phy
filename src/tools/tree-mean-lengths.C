@@ -243,7 +243,7 @@ int main(int argc,char* argv[])
     {
       if (args.count("safe"))
 	cout<<Q.write(false)<<endl;
-      std::cerr<<"Exception: "<<e.what()<<endl;
+      std::cerr<<"tree-mean-lengths: Error! "<<e.what()<<endl;
       exit(0);
     }
 
@@ -286,7 +286,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"tree-mean-lengths: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

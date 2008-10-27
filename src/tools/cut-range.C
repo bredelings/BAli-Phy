@@ -106,7 +106,7 @@ int main(int argc,char* argv[]) {
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<std::endl;
+    std::cerr<<"cut-range: Error! "<<e.what()<<std::endl;
     exit(1);
   }
 }

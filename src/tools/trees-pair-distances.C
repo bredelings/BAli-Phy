@@ -156,7 +156,7 @@ int main(int argc,char* argv[])
     cout<<join(v2_out,'\t')<<endl;
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"trees-pair-distances: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

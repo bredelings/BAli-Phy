@@ -234,7 +234,7 @@ int main(int argc,char* argv[])
 	write_truck_graph(std::cout,alignments,t1,t2,taxa);
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"path-graph: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;
