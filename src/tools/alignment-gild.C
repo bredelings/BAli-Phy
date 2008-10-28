@@ -200,9 +200,9 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
 
   vector< OwnedPointer<alphabet> > alphabets;
   alphabets.push_back(A.get_alphabet());
-  std::cerr<<"Loading alignments...";
+  if (log_verbose) std::cerr<<"alignment-gild: Loading alignments...";
   alignments = load_alignments(std::cin,alphabets,skip,maxalignments);
-  std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+  if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (alignments.empty()) 
     throw myexception()<<"Alignment sample is empty.";
 

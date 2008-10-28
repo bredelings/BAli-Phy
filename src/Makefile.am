@@ -63,7 +63,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 
 #-----------------------------------------------------------------
 
-model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C
+model_P_SOURCES = tools/model_P.C tools/statistics.C rng.C util.C
 
 #-------------------------- statreport --------------------------
 

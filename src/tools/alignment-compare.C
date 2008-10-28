@@ -35,7 +35,9 @@ void load_alignments(vector<alignment>& alignments,
 {
   if (what.size() > 0)
     what = string(" ")+what;
-  std::cerr<<"Loading alignment sample"<<what<<"...";
+
+  if (log_verbose)
+    std::cerr<<"alignment-compare: Loading alignment sample"<<what<<"...";
 
   ifstream file(filename.c_str());
   if (not file)
@@ -46,7 +48,8 @@ void load_alignments(vector<alignment>& alignments,
   alignments.clear();
   alignments.insert(alignments.begin(),As.begin(),As.end());
 
-  std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+  if (log_verbose)
+    std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (not alignments.size())
     throw myexception()<<"Alignment sample"<<what<<" is empty.";  
 
@@ -97,6 +100,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("file1", value<string>(),"first alignment file")
     ("file2", value<string>(),"second alignment file")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+    ("verbose","Output more log messages on stderr.")
     ;
 
   variables_map args;     
@@ -111,6 +115,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -243,7 +249,9 @@ int main(int argc,char* argv[])
     }
     else
       seed = myrand_init();
-    cerr<<"random seed = "<<seed<<endl<<endl;
+
+    if (log_verbose)
+      cerr<<"alignment-compare: random seed = "<<seed<<endl<<endl;
     
     //------------ Load alignment and tree ----------//
     vector<alignment> alignments1;

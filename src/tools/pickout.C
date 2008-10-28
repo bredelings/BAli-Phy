@@ -74,13 +74,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cerr<<"Usage: pickout [OPTIONS] field1 [field2 ... ] < data-file \n";
-    cerr<<visible<<"\n";
+    cout<<"Usage: pickout [OPTIONS] field1 [field2 ... ] < data-file \n";
+    cout<<visible<<"\n";
     exit(0);
   }
 
   if (not args.count("fields")) {
-    cerr<<"Error: no fields specified!"<<endl;
+    throw myexception()<<"No fields specified!";
     exit(1);
   }
 
@@ -136,7 +136,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    cerr<<"Error: "<<e.what()<<endl;
+    cerr<<"pickout: Error! "<<e.what()<<endl;
     exit(1);
   }
 

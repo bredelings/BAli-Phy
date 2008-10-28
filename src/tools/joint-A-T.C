@@ -26,10 +26,10 @@ joint_A_T::joint_A_T(const vector<alignment>& A1,const vector<SequenceTree>& T1,
 {
   unsigned s = min(A.size(),T.size());
   if (s != A.size())
-    std::cerr<<"Warning: only using "<<s<<"/"<<A.size()<<" alignments to match number of trees."<<endl;
+    std::cerr<<"joint-A-T: Warning! only using "<<s<<"/"<<A.size()<<" alignments to match number of trees."<<endl;
 
   if (s != T.size())
-    std::cerr<<"Warning: only using "<<s<<"/"<<T.size()<<" trees to match number of alignments."<<endl;
+    std::cerr<<"joint-A-T: Warning! only using "<<s<<"/"<<T.size()<<" trees to match number of alignments."<<endl;
 
   A.resize(s);
   T.resize(s);

@@ -36,6 +36,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("autocorrelation", "Show autocorrelation time and effective sample size.")
     ("confidence",value<double>()->default_value(0.95),"Confidence level")
     ("precision", value<unsigned>()->default_value(4),"Number of significant figures")
+    ("verbose","Output more log messages on stderr.")
     ;
 
   options_description all("All options");
@@ -56,6 +57,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<visible<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -184,7 +187,7 @@ int main(int argc,char* argv[])
     if (data[0].size() == 0)
       throw myexception()<<"No data line read in!";
 
-    cerr<<"Read in "<<data[0].size()<<" lines.\n";
+    if (log_verbose) cerr<<"statreport: Read in "<<data[0].size()<<" lines.\n";
 
     for(int i=0;i<headers.size();i++) 
       if (mask[i]) {

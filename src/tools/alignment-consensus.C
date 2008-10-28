@@ -31,10 +31,13 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
   unsigned skip = args["skip"].as<unsigned>();
 
   // --------------------- try ---------------------- //
-  std::cerr<<"Loading alignments...";
+  if (log_verbose)
+    std::cerr<<"alignment-consensus: Loading alignments...";
   list<alignment> As = load_alignments(std::cin,load_alphabets(args),skip,maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
-  std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+  if (log_verbose)
+    std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+
   if (not alignments.size())
     throw myexception()<<"Alignment sample is empty.";
 }
@@ -55,6 +58,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("strict",value<double>(),"ignore events below this probability")
     ("cutoff",value<double>(),"ignore events below this probability")
     ("uncertainty",value<string>(),"file-name for AU uncertainty vs level")
+    ("verbose","Output more log messages on stderr.")
     ;
 
   variables_map args;     
@@ -67,6 +71,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -85,7 +91,8 @@ int main(int argc,char* argv[])
     }
     else
       seed = myrand_init();
-    cerr<<"random seed = "<<seed<<endl<<endl;
+    if (log_verbose)
+      cerr<<"alignment-consensus: random seed = "<<seed<<endl<<endl;
     
     //------------ Load alignment and tree ----------//
     vector<alignment> alignments;
