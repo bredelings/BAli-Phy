@@ -1,5 +1,15 @@
+Branch priors
+1. Use Gamma(1/2,mu)
+2. Allow also Uniform(0,n), Exponential(mu), and ???
+3. What IS the second-largest eigenvalue... what does it mean?
+
+MPI
+1. Output
+2. Good estimates of LOD score < -3 and > 3
+3. Good diagnostics for MC^3
+
 Alignment issues:
- - sometimes we actually WANT to retain empty columns!
+ - sometimes we actually WANT to retain empty columns! (For alignment-diff)
  - sometimes we actually WANT to allow multiple sequences.
  - can I figure out all places where these checks get called, and move the checks to there?
 
