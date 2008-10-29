@@ -3,7 +3,7 @@ SHELL=/bin/sh
 
 TOPOLOGIES=c50 c66 c80 c90 c95 c99 c100
 
-IMODEL=$(shell head -n 40 1.out | pickout --no-header 'indel model1')
+IMODEL=$(shell head -n 40 1.out | pickout --no-header 'indel model')
 
 TREES=${TOPOLOGIES}
 
