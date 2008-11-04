@@ -1,6 +1,15 @@
 #!/usr/bin/perl -w 
 
 # TODO
+
+# !! For alignment-diff, invert fg/bg based on AU>0.5 (bg=white,fg=color)
+#    Would look cool!
+#    Or, us color (DNA/AA) only if AU<0.5
+
+# !! How to select alignments from a given temperature level?
+#    Annotate alignments with information... ?
+
+
 # 0. (a) Instead of making symbolic links, just use a variable to determine
 #    the correct files to analyze, so that we can handle the single-chain
 #    case without creating a lot of useless files.
@@ -176,7 +185,6 @@ sub get_imodels()
     open FILE, $out_file or die "Can't open $out_file!";
 
     my @imodels = ();
-    my $imodel0;
 
     while (my $line = <FILE>) 
     {
@@ -191,7 +199,7 @@ sub get_imodels()
     }
     close FILE;
 
-    push @imodels,$imodel0 if ($#imodels == -1);
+    push @imodels, "none" if ($#imodels == -1);
     return [@imodels];
 }
 
@@ -425,6 +433,12 @@ if ($out_file eq "C1.out") {
 	    push @partition_samples,"C1.P$p.fastas";
 	}
     }
+    else {
+	## FIXME - How do we construct these?
+	for(my $p=1;$p<=$n_partitions;$p++) {
+	    push @partition_samples,"C1.P$p.fastas";
+	}
+    }
 }
 else {
     for(my $p=1;$p<=$n_partitions;$p++) {
@@ -522,21 +536,28 @@ if ($n_chains > 1)
 	
 	if (! more_recent_than_all_of("Results/C$i.pt",["C$i.trees","C$i.p"]))
 	{
-	    `stats-merge C$i.p Results/C$i.t > Results/C$i.pt`;
+	    `stats-merge C$i.p Results/C$i.t > Results/C$i.pt 2>/dev/null`;
 	}
 
-	if (! more_recent_than("Results/C${i}T1.pt","Results/C$i.pt")) {
-	    `subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 > Results/C${i}T1.pt` if ($i==1);
-	    `subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 --no-header > Results/C${i}T1.pt` if ($i!=1);
+	if (! more_recent_than("Results/C${i}T1.pt","Results/C$i.pt")) 
+	{
+	    my $use_header = "";
+	    $use_header = "--no-header" if ($i != 1);
+
+	    `subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 $use_header > Results/C${i}T1.pt`;
 	}
     }
 
     my $cmd = "cat ";
+    my $rerun=0;
     for(my $i=1;$i<=$n_chains;$i++) {
-	$cmd = "$cmd Results/C${i}T1.pt ";
+	if (-e "Results/C${i}T1.pt") {
+	    $cmd = "$cmd Results/C${i}T1.pt ";
+	    $rerun=1 if (! more_recent_than("Results/T1.p","Results/C${i}T1.pt"));
+	}
     }
     $cmd = "$cmd > Results/T1.pt";
-    `$cmd`;
+    `$cmd` if ($rerun);
 
     if (! more_recent_than("Results/T1.trees","Results/T1.pt")) {
 	`stats-select tree --no-header < Results/T1.pt > Results/T1.trees`;
@@ -544,6 +565,10 @@ if ($n_chains > 1)
     
     if (! more_recent_than("Results/T1.p","Results/T1.pt")) {
 	`stats-select -r tree < Results/T1.pt > Results/T1.p`;
+
+#       This messes up the printing of statistics
+#	`stats-select -i -r tree < Results/T1.pt > Results/T1.p`;
+
     }
 
     $trees_file = "Results/T1.trees";
@@ -562,6 +587,8 @@ $size_arg = "--size=$max_iter" if defined($max_iter);
 
 print "Summarizing topology distribution ... ";
 if (! more_recent_than("Results/consensus",$trees_file)) {
+    my $skip="";
+    $skip="--skip=$burnin" if ($trees_file eq "Results/T1.trees");
     `trees-consensus $trees_file $max_arg $min_support_arg --sub-partitions $consensus_arg > Results/consensus`;
 }
 print "done.\n";
@@ -765,10 +792,14 @@ for my $alignment (@alignments)
     my $p;
     if ($alignment =~ /^P([^-]+)-/) {
 	$p=$1;
+	next if ($imodel_indices[$p-1] == -1);
     }
     else {
 	next;
     }
+
+    next if ($alignment eq "P$p-max");
+    next if (! -e "Results/P$p-max.fasta");
 
     if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta"))
     {
@@ -776,7 +807,7 @@ for my $alignment (@alignments)
     }
 
     if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.fasta")) {
-	`alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment-diff.html`;
+	`alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment-diff.html 2>/dev/null`;
 
 	if ($?) {
 	    `alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment-diff.html`;
@@ -798,7 +829,7 @@ for my $alignment (@AU_alignments)
 	`cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob`;
 	}
 	print "done.\n";
-	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
+	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null`;
 	if ($?) {
 	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
 	}
