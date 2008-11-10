@@ -487,7 +487,7 @@ my $probcons = 0;
 while ($#ARGV > -1) 
 {
     my $arg = shift;
-    if ($arg eq "clean") {
+    if ($arg eq "clean" || $arg eq "--clean") {
 	do_cleanup();
 	exit;
     }
@@ -713,7 +713,7 @@ for(my $i=0;$i<$n_partitions;$i++) {
     my $p = ($i+1);
     my $name = "P$p-probcons";
     if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-	`probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta`;
+	`probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
     }
     push @alignments,$name;
     $alignment_names{$name} = "ProbCons";
@@ -801,17 +801,14 @@ for my $alignment (@alignments)
     next if ($alignment eq "P$p-max");
     next if (! -e "Results/P$p-max.fasta");
 
-    if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta"))
+    if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta") || 
+	! more_recent_than("Results/$alignment-diff.AU","Results/$alignment.fasta") )
     {
-	`alignments-diff Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown > Results/$alignment-diff.fasta`;
+	`alignments-diff Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown -d Results/$alignment-diff.AU > Results/$alignment-diff.fasta`;
     }
 
     if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.fasta")) {
-	`alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment-diff.html 2>/dev/null`;
-
-	if ($?) {
-	    `alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment-diff.html`;
-	}
+	`alignment-draw Results/$alignment-diff.fasta --scale=invert --AU Results/$alignment-diff.AU --show-ruler --color-scheme=Rainbow+fade[1,0]+contrast > Results/$alignment-diff.html`;
     }
 }
 print "done.\n";
@@ -1149,7 +1146,7 @@ for(my $i=0;$i<$n_partitions;$i++)
 	    print INDEX "<td></td>\n";
 	}
 	if (-f "Results/$alignment-AU.html") {
-	    print INDEX "<td><a href=\"$alignment-AU.html\">AU-HTML</a></td>\n";
+	    print INDEX "<td><a href=\"$alignment-AU.html\">AU</a></td>\n";
 	}
 	else {
 	    print INDEX "<td></td>\n";

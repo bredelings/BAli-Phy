@@ -17,6 +17,7 @@ using namespace colors;
 
 // some scale functions
 double identity(double x) {return x;}
+double invert(double x) {return 1.0-x;}
 double square(double x) {return x*x;}
 double cube(double x) {return x*x*x;}
 
@@ -426,6 +427,13 @@ Scale get_scale(const variables_map& args) {
   string scale_name = args["scale"].as<string>();
   if (scale_name == "identity") {
     scale.f = identity;
+    scale.min = 0;
+    scale.max = 1;
+    if (args.count("min")) scale.min = args["min"].as<double>();
+    if (args.count("max")) scale.max = args["max"].as<double>();
+  }
+  if (scale_name == "invert") {
+    scale.f = invert;
     scale.min = 0;
     scale.max = 1;
     if (args.count("min")) scale.min = args["min"].as<double>();
