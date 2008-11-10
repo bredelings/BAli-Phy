@@ -23,6 +23,17 @@
 ///  a) randomly
 ///  b) according to posterior probabilities (?greedy?)
 
+// TODO: 
+// 1. Construct a set of @n trees that contain splits down to a frequency of 0.1
+// 2. Consider seeding the branches-to-unplug with splits of lower frequency than 0.5?
+//  2a. But, perhaps we should try the 0.5 branches FIRST.
+//  2b. Or, perhaps we should only try branches consistent with the high-prob branches.
+//      In short, construct a greedy tree, and use that...
+// 3. Consider trying to construct disjoint sets of trees with the most resolved branches total.
+/// 3a. This is better than trying to consider the highest MAP trees, since those trees may all
+///     be very similar to each other: imagine of one branch has 1/3 on each NNI possibility...
+/// 3b. This approach would capture correlations and anti-correlations, as well...
+
 
 namespace po = boost::program_options;
 using po::variables_map;
