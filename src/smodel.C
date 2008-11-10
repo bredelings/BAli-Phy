@@ -615,14 +615,14 @@ namespace substitution {
     return scale/Alphabet().width();
   }
 
-  void ReversibleMarkovModel::set_rate(double r)  {
+  void ReversibleMarkovModel::set_rate(double r)  
+  {
+    if (r == rate()) return;
+
+    if (rate() == 0 and r != 0)
+      throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
+
     double scale = r/rate();
-    if (rate() == 0) {
-      if (r == 0)
-	scale = 1;
-      else
-	throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
-    }
     Q *= scale;
     for(int i=0;i<eigensystem.Diagonal().size();i++)
       eigensystem.Diagonal()[i] *= scale ;
