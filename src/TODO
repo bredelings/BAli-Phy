@@ -1,3 +1,5 @@
+Why does INV+Modulated+gamma[4]+INV crash
+
 Branch priors
 1. Use Gamma(1/2,mu)
 2. Allow also Uniform(0,n), Exponential(mu), and ???
@@ -14,8 +16,6 @@ Alignment issues:
  - can I figure out all places where these checks get called, and move the checks to there?
 
 FIX DP::rate_dirichlet_N to multiply by the number of categories in the dirichlet...
-
-FIX gamma quantile function to not return NaN ever.
 
 Output and Postprocessing
  (A) Continue to improve HTML output to make it nicer.
@@ -228,18 +228,6 @@ WHY...
  * is the fragment model downward-biased for epsilon?
  * 
 
-Before 2.0
- * Eliminate dependency on PERL (genreport)
- * Brief descriptions of some of the tools.
- * (?) Add some more comments to the code.
- * Why do gcc 4.1 and 4.2 give different answers for alignment sampling
-   moves???
- * Why aren't any likelihood moves accepted at all for the cad-v2 data set?
- * Implement Branch length prior distributions
- * fix SPR2 to use ACTUAL gamma proposal, not stupid Exponential(mu) proposal.
-   (done, but worse acceptance rates?  And, only for --traditional.)
-
-
 After 1.9.9:
  * Write a tool to take a list of files, find common columns, and
     write out differently names files: 1.p, 2.p, ...
@@ -264,14 +252,13 @@ After 1.9.9:
    + use a neighbor-joining tree if no tree is supplied?
    + report # of indels (but internal sequences are missing!)
 
-Before 2.0:
- * Do the autoconf magic to compile GSL in-tree?
 -------------------------------------------------------
 Questions:
 
  Q: How can the distribution of INV::p be so exponential? (AATS)
- A: Strong incorrect prior, not enought data!
-
+ A1: Strong incorrect prior, not enought data!
+ A2: Probably this happens more with gamma[] than log-normal[], since the gamma
+     allow very low rate classes.  Does it happen with DP[5]?
 
 -------------------------------------------------------
 
@@ -755,6 +742,8 @@ the prior, because we never want to use it  differently.
        partial alignment.
 
 [DONE] Output build FLAGS and ARCH information as part of the version information.
+
+[DONE] FIX gamma quantile function to not return NaN ever.
 
 
 
