@@ -341,6 +341,9 @@ sub get_alignment_info
 
     my $indels = 0;
     while(my $line=<INFO>) {
+	if ($line =~ /Alphabet: (.*)$/) {
+	    $features{"alphabet"} = $1;
+	}
 	if ($line =~ /Alignment: (.+) columns of (.+) sequences/) 
 	{
 	    $features{"length"} = $1;
@@ -712,7 +715,19 @@ print "\nComputing ProbCons alignments... ";
 for(my $i=0;$i<$n_partitions;$i++) {
     my $p = ($i+1);
     my $name = "P$p-probcons";
-    if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
+    
+    my $alignment_info = get_alignment_info("Results/Work/P$p-initial-unordered.fasta");
+    my $alphabet = $$alignment_info{"alphabet"};
+
+    print "alphabet = $alphabet\n";
+
+    if ($alphabet =~ /RNA nucleotides/) {
+	print "got here\n";
+	if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
+	`probcons-RNA Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
+	}
+    }
+    elsif (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
 	`probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
     }
     push @alignments,$name;
