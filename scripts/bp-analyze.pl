@@ -716,10 +716,8 @@ for(my $i=0;$i<$n_partitions;$i++) {
     my $p = ($i+1);
     my $name = "P$p-probcons";
     
-    my $alignment_info = get_alignment_info("Results/Work/P$p-initial-unordered.fasta");
-    my $alphabet = $$alignment_info{"alphabet"};
-
-    print "alphabet = $alphabet\n";
+#    my $alignment_info = get_alignment_info("Results/Work/P$p-initial-unordered.fasta");
+    my $alphabet = $alphabets[$i];
 
     if ($alphabet =~ /RNA nucleotides/) {
 	print "got here\n";
