@@ -10,6 +10,7 @@
 // These have const A, cant be a "move"
 void slide_node(Parameters& P, MCMC::MoveStats& Stats, int);
 void change_branch_length(Parameters&, MCMC::MoveStats&, int);
+void slice_sample_branch_length(Parameters&, MCMC::MoveStats&, int);
 void change_branch_length_multi(Parameters&, MCMC::MoveStats&, int);
 
 /// Resample the alignment parent->child

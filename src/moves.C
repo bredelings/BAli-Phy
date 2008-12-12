@@ -264,8 +264,10 @@ void sample_NNI_and_branch_lengths(Parameters& P, MoveStats& Stats)
 	two_way_NNI_sample(P,Stats,b);
     }
 
-    change_branch_length(P,Stats,b);
-    {
+    double slice_fraction = loadvalue(P.keys,"branch_slice_fraction",0.0);
+    if (uniform() < slice_fraction) {
+      slice_sample_branch_length(P,Stats,b);
+
       const_branchview bv = P.T->directed_branch(b);
       if (uniform() < 0.5)
 	bv = bv.reverse();
@@ -276,8 +278,22 @@ void sample_NNI_and_branch_lengths(Parameters& P, MoveStats& Stats)
       else 
 	change_3_branch_lengths(P,Stats,bv.target());
     }
-    change_branch_length(P,Stats,b);
-    change_branch_length(P,Stats,b);
+    else {
+      change_branch_length(P,Stats,b);
+      {
+	const_branchview bv = P.T->directed_branch(b);
+	if (uniform() < 0.5)
+	  bv = bv.reverse();
+	if (bv.target().is_leaf_node())
+	  bv = bv.reverse();
+	if (myrandomf() < 0.5)
+	  slide_node(P,Stats,bv);
+	else 
+	  change_3_branch_lengths(P,Stats,bv.target());
+      }
+      change_branch_length(P,Stats,b);
+      change_branch_length(P,Stats,b);
+    }
   }
 }
 
@@ -307,9 +323,16 @@ void walk_tree_sample_branch_lengths(Parameters& P, MoveStats& Stats)
 
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
-    change_branch_length(P,Stats,b);
-    slide_node(P,Stats,b);
-    change_branch_length(P,Stats,b);
-    change_branch_length(P,Stats,b);
+    double slice_fraction = loadvalue(P.keys,"branch_slice_fraction",0.0);
+    if (uniform() < slice_fraction) {
+      slice_sample_branch_length(P,Stats,b);
+      slide_node(P,Stats,b);
+    }
+    else {
+      change_branch_length(P,Stats,b);
+      slide_node(P,Stats,b);
+      change_branch_length(P,Stats,b);
+      change_branch_length(P,Stats,b);
+    }
   }
 }

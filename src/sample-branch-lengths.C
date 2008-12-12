@@ -278,12 +278,43 @@ void change_branch_length_fit_gamma(Parameters& P,MoveStats& Stats,int b)
     Stats.inc("branch-length (gamma) 4",result);
 }
 
+#include "slice-sampling.H"
+
+void slice_sample_branch_length(Parameters& P,MoveStats& Stats,int b)
+{
+  const double L = P.T->branch(b).length();
+  const double mu = P.branch_mean();
+
+  P.select_root(b);
+
+  MCMC::Result result(3);
+  
+  //------------- Find new length --------------//
+  
+  double sigma = loadvalue(P.keys,"slice_branch_sigma",0.3);
+  double w = sigma*(mu+L)/2.0;
+  branch_length_slice_function logp(P,b);
+  double L2 = slice_sample(L,logp,sigma,100,true,0,false,0);
+
+  //---------- Record Statistics - -------------//
+  result.totals[0] = std::abs(L2 - L);
+  result.totals[1] = std::abs(log(L2/L));
+  result.totals[2] = logp.count;
+
+  Stats.inc("branch-length (slice) *",result);
+  if (L < mu/2.0)
+    Stats.inc("branch-length (slice) 1",result);
+  else if (L < mu)
+    Stats.inc("branch-length (slice) 2",result);
+  else if (L < mu*2)
+    Stats.inc("branch-length (slice) 3",result);
+  else 
+    Stats.inc("branch-length (slice) 4",result);
+}
+
 void change_branch_length(Parameters& P,MoveStats& Stats,int b)
 {
-  double p = loadvalue(P.keys,"fraction_fit_gamma",-0.01);
-  if (myrandomf() < p)
-    change_branch_length_fit_gamma(P, Stats, b);
-  else if (myrandomf() < 0.5)
+  if (myrandomf() < 0.5)
   {
     double sigma = loadvalue(P.keys,"log_branch_sigma",0.6);
     change_branch_length_log_scale(P, Stats, b, sigma);
@@ -428,6 +459,8 @@ bool slide_node(Parameters& P,
   return success;
 }
 
+// FIXME: Can we make a slice-sampled version of this?
+
 void slide_node(Parameters& P,MoveStats& Stats,int b0)
 {
   vector<const_branchview> b;
@@ -449,6 +482,8 @@ void slide_node(Parameters& P,MoveStats& Stats,int b0)
     Stats.inc("slide_node_expand_branch",success);
   }
 }
+
+// FIXME: Can we make a slice-sampled version of this?
 
 void scale_means_only(Parameters& P,MoveStats& Stats)
 {
