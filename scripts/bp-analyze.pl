@@ -692,7 +692,7 @@ print "done.\n";
 # 6.5. Compute MUSCLE alignments
 
 if ($muscle) {
-print "\nComputing MUSCLE alignments... ";
+print "\nComputing MUSCLE alignment... ";
 
 for(my $i=0;$i<$n_partitions;$i++) {
     my $p = ($i+1);
@@ -710,7 +710,7 @@ print "done.\n";
 # 6.5. Compute ProbCons alignments
 
 if ($probcons) {
-print "\nComputing ProbCons alignments... ";
+print "\nComputing ProbCons alignment... ";
 
 for(my $i=0;$i<$n_partitions;$i++) {
     my $p = ($i+1);
@@ -1134,7 +1134,7 @@ for(my $i=0;$i<$n_partitions;$i++)
     print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Percent identity of the most dissimilar sequences\">Min. %identity</th>\n";
     print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of columns in the alignment\"># Sites</th>\n";
     print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of invariant columns\">Constant</th>\n";
-    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of variant columns\">Variable</th>\n";
+#    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of variant columns\">Variable</th>\n";
     print INDEX "<th title=\"Number of parsiomny-informative columns.\">Parsimony-Informative</th>\n";
     print INDEX "</tr>\n";
     for my $alignment (@alignments)
@@ -1167,7 +1167,7 @@ for(my $i=0;$i<$n_partitions;$i++)
 	print INDEX "<td style=\"text-align: center\">${$features}{'min_p_identity'}%</td>\n";
 	print INDEX "<td style=\"text-align: center\">${$features}{'length'}</td>\n";
 	print INDEX "<td style=\"text-align: center\">${$features}{'n_const'} (${$features}{'p_const'}%)</td>\n";
-	print INDEX "<td style=\"text-align: center\">${$features}{'n_non-const'} (${$features}{'p_non-const'}%)</td>\n";
+#	print INDEX "<td style=\"text-align: center\">${$features}{'n_non-const'} (${$features}{'p_non-const'}%)</td>\n";
 	print INDEX "<td style=\"text-align: center\">${$features}{'n_inform'} (${$features}{'p_inform'}%)</td>\n";
 	print INDEX "</tr>\n";
     }
