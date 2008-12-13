@@ -20,6 +20,8 @@
 #include "tools/parsimony.H"
 #include "alignment-util.H"
 
+#include "slice-sampling.H"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -301,7 +303,11 @@ void MH_Move::iterate(Parameters& P,MoveStats& Stats,int)
 
   double ratio = (*proposal)(P2);
 
-  Result result(1);
+  int n = 1;
+  Proposal2* p2 = dynamic_cast<Proposal2*>(&(*proposal));
+  if (p2 and p2->get_indices().size() == 1)
+    n = 2;
+  Result result(n);
 
 #ifndef NDEBUG
   show_parameters(std::cerr,P);
@@ -314,12 +320,94 @@ void MH_Move::iterate(Parameters& P,MoveStats& Stats,int)
 #endif
 
   if (accept_MH(P,P2,ratio)) {
-    P = P2;
     result.totals[0] = 1;
+    if (n == 2) {
+      int i = p2->get_indices()[0];
+      double v1 = P.parameter(i);
+      double v2 = P2.parameter(i);
+      //      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
+      result.totals[1] = std::abs(v2-v1);
+    }
+    P = P2;
   }
 
   Stats.inc(name,result);
 }
+
+int Slice_Move::reset(double lambda) {
+  int l = (int)lambda;
+  lambda -= l;
+  return l + poisson(lambda);
+}
+
+void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int) 
+{
+#ifndef NDEBUG
+  clog<<" [Slice] move = "<<name<<endl;
+#endif
+
+  iterations++;
+
+  //------------- Find new value --------------//
+#ifndef NDEBUG
+  show_parameters(std::cerr,P);
+  std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+  std::cerr<<endl<<endl;
+#endif
+
+  double v1 = P.parameter(index);
+  parameter_slice_function logp(P,index,transform,inverse);
+  double v2 = slice_sample(transform(v1),logp,W,100,lower_bound,lower,upper_bound,upper);
+
+#ifndef NDEBUG
+  show_parameters(std::cerr,P);
+  std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+  std::cerr<<endl<<endl;
+#endif
+
+  //---------- Record Statistics - -------------//
+  Result result(2);
+  result.totals[0] = std::abs(v2-v1);
+  result.totals[1] = logp.count;
+
+  Stats.inc(name,result);
+}
+
+Slice_Move::Slice_Move(const string& s,int i,
+		       bool lb,double l,bool ub,double u,double W_)
+  :Move(s),index(i),
+   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),
+   transform(slice_sampling::identity),
+   inverse(slice_sampling::identity)
+{}
+
+Slice_Move::Slice_Move(const string& s, const string& v,int i,
+		       bool lb,double l,bool ub,double u,double W_)
+  :Move(s,v),index(i),
+   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),
+   transform(slice_sampling::identity),
+   inverse(slice_sampling::identity)
+{}
+
+Slice_Move::Slice_Move(const string& s,int i,
+		       bool lb,double l,bool ub,double u,double W_,
+		       double(*f1)(double),
+		       double(*f2)(double))
+  :Move(s),index(i),
+   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),
+   transform(f1),
+   inverse(f2)
+{}
+
+Slice_Move::Slice_Move(const string& s, const string& v,int i,
+		       bool lb,double l,bool ub,double u,double W_,
+		       double(*f1)(double),
+		       double(*f2)(double))
+  :Move(s,v),index(i),
+   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),
+   transform(f1),
+   inverse(f2)
+{}
 
 int MoveArg::reset(double l) 
 {

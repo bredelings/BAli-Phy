@@ -117,6 +117,7 @@ class Proposal2: public Proposal
   std::vector<std::string> pnames;
 
 public:
+  const std::vector<int>& get_indices() const {return indices;}
   Proposal2* clone() const {return new Proposal2(*this);}
   double operator()(Parameters& P) const;
   Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,

@@ -1,15 +1,26 @@
 #include "slice-sampling.H"
 #include "rng.H"
 
+namespace slice_sampling {
+  double identity(double x) {return x;}
+}
 double parameter_slice_function::operator()(double x)
 {
   count++;
-  P.parameter(n,x);
+  P.parameter(n,inverse(x));
   return log(P.probability());
 }
 
 parameter_slice_function::parameter_slice_function(Parameters& P_,int n_)
-  :count(0),P(P_),n(n_)
+  :count(0),P(P_),n(n_),
+   transform(slice_sampling::identity),
+   inverse(slice_sampling::identity)
+{ }
+
+parameter_slice_function::parameter_slice_function(Parameters& P_,int n_,
+						   double(*f1)(double),
+						   double(*f2)(double))
+  :count(0),P(P_),n(n_),transform(f1),inverse(f2)
 { }
 
 double branch_length_slice_function::operator()(double l)
@@ -85,4 +96,18 @@ double slice_sample(double x0, slice_function& g,
   }
 
   return x1;
+}
+
+double transform_epsilon(double lambda_E)
+{
+  double E_length = lambda_E - logdiff(0,lambda_E);
+
+  return E_length;
+}
+
+double inverse_epsilon(double E_length)
+{
+  double lambda_E = E_length - logsum(0,E_length);
+
+  return lambda_E;
 }

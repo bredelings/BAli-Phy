@@ -53,7 +53,7 @@ namespace mpi = boost::mpi;
 #include "proposals.H"
 #include "tree-util.H" //extends
 #include "version.H"
-
+#include "slice-sampling.H"
 
 namespace fs = boost::filesystem;
 
@@ -148,7 +148,7 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
     set_if_undef(P.keys, pname, sigma);
     Proposal2 move_mu(p, names2, vector<string>(1,pname), P);
 
-    M.add(1, MCMC::MH_Move(move_mu,string("sample_")+name));
+    M.add(1, MCMC::MH_Move(move_mu,string("MH_sample_")+name));
   }
   else {
     vector<int> indices = parameters_with_extension(P,name);
@@ -156,8 +156,62 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
       if (not P.fixed(indices[i])) {
 	set_if_undef(P.keys, pname, sigma);
 	Proposal2 move_mu(p, P.parameter_name(indices[i]), vector<string>(1,pname), P);
-	M.add(1, MCMC::MH_Move(move_mu,string("sample_")+P.parameter_name(indices[i])));
+	M.add(1, MCMC::MH_Move(move_mu,string("MH_sample_")+P.parameter_name(indices[i])));
       }
+  }
+}
+
+
+// We need
+//   1. A way to guess initial window size
+//   2. 
+
+void add_slice_moves(Parameters& P, const string& name, 
+		     const string& pname, double W,
+		     bool lower_bound, double lower,
+		     bool upper_bound, double upper,
+		     MCMC::MoveAll& M)
+{
+  vector<int> indices = parameters_with_extension(P,name);
+  for(int i=0;i<indices.size();i++) 
+  {
+    if (P.fixed(indices[i])) continue;
+
+    // Use W as default window size of "pname" is not set.
+    set_if_undef(P.keys, pname, W);
+    W = P.keys[pname];
+
+    M.add(1, 
+	  MCMC::Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
+			   indices[i],
+			   lower_bound,lower,upper_bound,upper,W)
+	  );
+  }
+}
+
+void add_slice_moves(Parameters& P, const string& name, 
+		     const string& pname, double W,
+		     bool lower_bound, double lower,
+		     bool upper_bound, double upper,
+		     MCMC::MoveAll& M,
+		     double(&f1)(double),
+		     double(&f2)(double)
+		     )
+{
+  vector<int> indices = parameters_with_extension(P,name);
+  for(int i=0;i<indices.size();i++) 
+  {
+    if (P.fixed(indices[i])) continue;
+
+    // Use W as default window size of "pname" is not set.
+    set_if_undef(P.keys, pname, W);
+    W = P.keys[pname];
+
+    M.add(1, 
+	  MCMC::Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
+			   indices[i],
+			   lower_bound,lower,upper_bound,upper,W,f1,f2)
+	  );
   }
 }
 
@@ -325,7 +379,15 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   
   add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, parameter_moves);
   add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, parameter_moves);
-  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.15, parameter_moves);
+  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, parameter_moves);
+
+  if (P.keys["enable_slice_sampling"] > 0.5) {
+    // FIXME - check if we are accidentally evaluating the likelihood or something.
+    add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,parameter_moves);
+    add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
+		  false,0,false,0,parameter_moves,transform_epsilon,inverse_epsilon);
+  }
+
   add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, parameter_moves);
   
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);

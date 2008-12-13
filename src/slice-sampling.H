@@ -3,6 +3,10 @@
 
 #include "parameters.H"
 
+namespace slice_sampling {
+  double identity(double x);
+}
+
 struct slice_function {
   virtual double operator()(double)=0;
 };
@@ -25,8 +29,15 @@ struct parameter_slice_function:public slice_function
 
   double operator()(double);
 
+  // function to go from the stored value to the value on which the prior is.
+  double (*transform)(double);
+  // function to go from the value on which the prior is to the stored value.
+  double (*inverse)(double);
+
   parameter_slice_function(Parameters&,int);
+  parameter_slice_function(Parameters&,int,double(*)(double),double(*)(double));
 };
+
 
 struct branch_length_slice_function:public slice_function
 {
@@ -40,5 +51,8 @@ struct branch_length_slice_function:public slice_function
 
   branch_length_slice_function(Parameters&,int);
 };
+
+double transform_epsilon(double);
+double inverse_epsilon(double);
 
 #endif
