@@ -666,7 +666,7 @@ alignment load_alignment(const string& filename,const vector<shared_ptr<const al
   
   int n_empty = remove_empty_columns(A);
   if (n_empty)
-    cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
+    if (log_verbose) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
   
   if (A.n_sequences() == 0)
     throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
@@ -782,7 +782,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
       // start skipping twice as many alignments
       subsample *= 2;
 
-      cerr<<"Went from "<<total;
+      if (log_verbose) cerr<<"Went from "<<total;
       // Remove every other alignment
       for(typeof(alignments.begin()) loc =alignments.begin();loc!=alignments.end();) {
 	typeof(loc) j = loc++;
@@ -796,7 +796,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 	  loc++;
       }
 	
-      cerr<<" to "<<total<<" alignments.\n";
+      if (log_verbose) cerr<<" to "<<total<<" alignments.\n";
 
     }
   }
@@ -810,7 +810,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     const int extra = total - maxalignments;
 
     // Remove this many alignments from the array
-    cerr<<"Went from "<<total;
+    if (log_verbose) cerr<<"Went from "<<total;
 
     vector<int> kill(extra);
     for(int i=0;i<kill.size();i++)
@@ -829,7 +829,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 	loc++;
     }
     assert(kill.empty());
-    cerr<<" to "<<alignments.size()<<" alignments.\n";
+    if (log_verbose) cerr<<" to "<<alignments.size()<<" alignments.\n";
   }
 
   return alignments;
@@ -872,7 +872,7 @@ vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const 
     alignments.push_back(A);
   }
 
-  std::cerr<<"Loaded "<<alignments.size()<<" alignments.\n";
+  if (log_verbose) std::cerr<<"Loaded "<<alignments.size()<<" alignments.\n";
 
   return alignments;
 }
