@@ -381,7 +381,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, parameter_moves);
   add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, parameter_moves);
 
-  if (P.keys["enable_slice_sampling"] > 0.5) {
+  if (P.keys["disable_slice_sampling"] > 0.5) {
     // FIXME - check if we are accidentally evaluating the likelihood or something.
     add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,parameter_moves);
     add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
