@@ -9,6 +9,8 @@ namespace slice_sampling {
 
 struct slice_function {
   virtual double operator()(double)=0;
+
+  virtual double operator()()=0;
 };
 
 
@@ -19,6 +21,13 @@ double slice_sample(double x0, slice_function& g,
 		    bool upper_bound,
 		    double upper);
 
+std::pair<int,double> slice_sample_multi(double x0, vector<slice_function*>& g,
+					 double w, int m, 
+					 bool lower_bound,
+					 double lower, 
+					 bool upper_bound,
+					 double upper);
+
 struct parameter_slice_function:public slice_function
 {
   int count;
@@ -28,6 +37,8 @@ struct parameter_slice_function:public slice_function
   int n;
 
   double operator()(double);
+
+  double operator()();
 
   // function to go from the stored value to the value on which the prior is.
   double (*transform)(double);
@@ -48,6 +59,8 @@ struct branch_length_slice_function:public slice_function
   int b;
 
   double operator()(double);
+
+  double operator()();
 
   branch_length_slice_function(Parameters&,int);
 };
