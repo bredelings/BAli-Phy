@@ -264,7 +264,7 @@ void sample_NNI_and_branch_lengths(Parameters& P, MoveStats& Stats)
 	two_way_NNI_sample(P,Stats,b);
     }
 
-    double slice_fraction = loadvalue(P.keys,"branch_slice_fraction",0.0);
+    double slice_fraction = loadvalue(P.keys,"branch_slice_fraction",0.9);
     if (uniform() < slice_fraction) {
       slice_sample_branch_length(P,Stats,b);
 
@@ -323,7 +323,7 @@ void walk_tree_sample_branch_lengths(Parameters& P, MoveStats& Stats)
 
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
-    double slice_fraction = loadvalue(P.keys,"branch_slice_fraction",0.0);
+    double slice_fraction = loadvalue(P.keys,"branch_slice_fraction",0.9);
     if (uniform() < slice_fraction) {
       slice_sample_branch_length(P,Stats,b);
       slide_node(P,Stats,b);
