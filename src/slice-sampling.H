@@ -7,26 +7,40 @@ namespace slice_sampling {
   double identity(double x);
 }
 
-struct slice_function {
+struct slice_function 
+{
   virtual double operator()(double)=0;
 
   virtual double operator()()=0;
+
+  virtual double current_value() const;
+
+  bool has_lower_bound;
+  double lower_bound;
+
+  bool has_upper_bound;
+  double upper_bound;
+
+  bool below_lower_bound(double x) const { return (has_lower_bound and x<lower_bound); }
+  bool above_upper_bound(double x) const { return (has_upper_bound and x>upper_bound); }
+  bool in_range(double x) const  { return (not below_lower_bound(x) and not above_upper_bound(x));}
+
+  void set_lower_bound(double);
+  void set_upper_bound(double);
+
+  slice_function();
 };
 
 
-double slice_sample(double x0, slice_function& g,
-		    double w, int m, 
-		    bool lower_bound,
-		    double lower, 
-		    bool upper_bound,
-		    double upper);
+double slice_sample(double x0, slice_function& g, double w, int m);
 
-std::pair<int,double> slice_sample_multi(double x0, vector<slice_function*>& g,
-					 double w, int m, 
-					 bool lower_bound,
-					 double lower, 
-					 bool upper_bound,
-					 double upper);
+double slice_sample(slice_function& g, double w, int m);
+
+std::pair<int,double> slice_sample_multi(double x0, vector<slice_function*>& g, double w, int m);
+
+std::pair<int,double> slice_sample_multi(vector<double>& X0, vector<slice_function*>& g, double w, int m);
+
+std::pair<int,double> slice_sample_multi(vector<slice_function*>& g, double w, int m);
 
 struct parameter_slice_function:public slice_function
 {
@@ -39,6 +53,8 @@ struct parameter_slice_function:public slice_function
   double operator()(double);
 
   double operator()();
+
+  double current_value() const;
 
   // function to go from the stored value to the value on which the prior is.
   double (*transform)(double);
@@ -62,7 +78,24 @@ struct branch_length_slice_function:public slice_function
 
   double operator()();
 
+  double current_value() const;
+
   branch_length_slice_function(Parameters&,int);
+};
+
+struct slide_node_slice_function: public slice_function {
+  int count;
+  int b1;
+  int b2;
+  double total;
+
+  Parameters& P;
+
+  double operator()(double);
+  double operator()();
+  double current_value() const;
+  slide_node_slice_function(Parameters&,int);
+  slide_node_slice_function(Parameters&,int,int);
 };
 
 double transform_epsilon(double);

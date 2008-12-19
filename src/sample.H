@@ -70,6 +70,4 @@ void change_3_branch_lengths(Parameters& P, MCMC::MoveStats& Stats,int);
 
 void sample_NNI_and_branch_lengths(Parameters&, MCMC::MoveStats&);
 
-std::vector<double> gamma_approx(const Parameters&, int b);
-
 #endif

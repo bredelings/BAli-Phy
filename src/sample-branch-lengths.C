@@ -67,137 +67,6 @@ MCMC::Result change_branch_length_(Parameters& P,int b,double sigma,
 }
 
 
-double logp_(Parameters& P, int b,double l)
-{
-  P.setlength(b,l);
-  return log(P.probability());
-}
-
-vector<double> fit_quadratic(double x1,double x2,double x3,double y1,double y2,double y3)
-{
-  double D = x1*x1*(x2-x3) - x2*x2*(x1-x3) + x3*x3*(x1-x2);
-  vector<double> v(3);
-  v[0] = y1*(x2-x3) - y2*(x1-x3) + y3*(x1-x2);
-  v[1] = x1*x1*(y2-y3) - x2*x2*(y1-y3) + x3*x3*(y1-y2);
-  v[2] = x1*x1*(x2*y3-x3*y2) - x2*x2*(x1*y3-x3*y1) + x3*x3*(x1*y2-x2*y1);
-  for(int i=0;i<v.size();i++)
-    v[i] /= D;
-
-  return v;
-}
-
-vector<double> fit_gamma(double x1,double x2,double x3,double y1,double y2,double y3)
-{
-  double D = log(x1)*(x2-x3) - log(x2)*(x1-x3) + log(x3)*(x1-x2);
-  vector<double> v(3);
-  v[0] = y1*(x2-x3) - y2*(x1-x3) + y3*(x1-x2);
-  v[1] = log(x1)*(y2-y3) - log(x2)*(y1-y3) + log(x3)*(y1-y2);
-  v[2] = log(x1)*(x2*y3-x3*y2) - log(x2)*(x1*y3-x3*y1) + log(x3)*(x1*y2-x2*y1);
-  for(int i=0;i<v.size();i++)
-    v[i] /= D;
-
-  //  std::cerr<<"x1 = "<<x1<<"\n";
-  //  std::cerr<<"x2 = "<<x2<<"\n";
-  //  std::cerr<<"x3 = "<<x3<<"\n";
-
-  return v;
-}
-
-vector<double> gamma_approx(const Parameters& P, int b)
-{
-  using namespace probability;
-
-  Parameters P2 = P;
-  double w = 4;
-  double x2 = P.branch_mean();
-  double x1 = x2/w;
-  double x3 = x2*w;
-
-  double L1 = logp_(P2,b,x1);
-  double L2 = logp_(P2,b,x2);
-  double L3 = logp_(P2,b,x3);
-
-  vector<double> v(3,0);
-  v[1] = -1.0/P.branch_mean();
-
-  for(int i=0;i<5;i++) 
-  {
-    vector<double> v2 = fit_gamma(x1,x2,x3,L1,L2,L3);
-    double a = v2[0]+1.0;
-    double B = -1.0/v2[1];
-
-    //    std::cerr<<"i = "<<i<<"  L = "<<P.T.branch(b).length()<<"  a = "<<a<<"  b = "<<B<<"  mu = "<<a*B<<"  s = "<<1.0/sqrt(a)<<"  w = "<<w<<"\n";
-
-    bool success = false;
-    if (a > 0 and B > 0) {
-      double xm = -v2[0]/v2[1];
-      if (xm < 0) xm = 1.0e-6;
-      double Lm = logp_(P2,b,xm);
-      double max = std::max(L1,std::max(L2,L3));
-
-      if (Lm < max) {
-	//	std::cerr<<"predicted max at "<<xm<<" but "<<Lm<<" < "<<max<<"\n";
-	if (v[0] == 0) v=v2;
-      }
-      else {
-	success = true;
-	x2 = xm;
-	L2 = Lm;
-	double a_old = v[0]+1.0;
-	double B_old = -1.0/v[1];
-	double mu_old = a_old * B_old;
-	double sd_old = B_old*sqrt(a_old);
-	double mu = a*B;
-	double sd = B*sqrt(a);
-
-	v = v2;
-	if (std::abs(log(sd/sd_old)) < 0.05 and std::abs((mu-mu_old)/sd)< 0.05) {
-	  //	  std::cerr<<"done!\n";
-	  break;
-	}
-
-
-	x1 = gamma_quantile(0.05,a,B);
-	if (x2 < x1)
-	  x1 = gamma_quantile(0.25,a,B);
-	else
-	  x1 = gamma_quantile(0.01,a,B);
-	  
-	L1 = logp_(P2,b,x1);
-	
-	x3 = gamma_quantile(0.99,a,B);
-	L3 = logp_(P2,b,x3);
-
-	w = 2.0*B*sqrt(a);
-      }
-    }
-
-    if (not success) {
-      if (L2 > L1 and L2> L3) {
-	w = sqrt(w);
-	x1 = x2/w;
-	x3 = x2*w;
-	L1 = logp_(P2,b,x1);
-	L3 = logp_(P2,b,x3);
-      }
-      else if (L1 > L2 and L1 > L3) {
-	x3 = x2;L3 = L2;
-	x2 = x1;L2 = L1;
-	x1 = x2/w;
-	L1 = logp_(P2,b,x1);
-      }
-      else {
-	x1 = x2; L1 = L2;
-	x2 = x3; L2 = L3;
-	x3 = x2*w;
-	L3 = logp_(P2,b,x3);
-      }
-    }
-  }
-
-  return v;
-}
-
 void change_branch_length_flat(Parameters& P,MoveStats& Stats,int b,double sigma)
 {
   const double L = P.T->branch(b).length();
@@ -234,50 +103,6 @@ void change_branch_length_log_scale(Parameters& P,MoveStats& Stats,int b,double 
     Stats.inc("branch-length (log) 4",result);
 }
 
-void change_branch_length_fit_gamma(Parameters& P,MoveStats& Stats,int b)
-{
-  const double L = P.T->branch(b).length();
-  const double mu = P.branch_mean();
-
-  P.select_root(b);
-
-  vector<double> v = gamma_approx(P,b);
-
-  double a = v[0]+1.0;
-  double B = -1.0/v[1];
-  if (a < 0 or B<0)
-    return;
-  
-  MCMC::Result result(3);
-  
-  //------------ Propose new length -------------//
-  const double length = P.T->branch(b).length();
-  double newlength = gamma(a,B);
-  
-  double ratio = gsl_ran_gamma_pdf(length,a,B)/gsl_ran_gamma_pdf(newlength,a,B);
-  
-  //---------- Construct proposed Tree ----------//
-  
-  Parameters P2 = P;
-  P2.setlength(b,newlength);
-  
-  //--------- Do the M-H step if OK--------------//
-  if (do_MH_move(P,P2,ratio)) {
-    result.totals[0] = 1;
-    result.totals[1] = std::abs(length - newlength);
-    result.totals[2] = std::abs(log(newlength/length));
-  }
-  Stats.inc("branch-length (gamma) *",result);
-  if (L < mu/2.0)
-    Stats.inc("branch-length (gamma) 1",result);
-  else if (L < mu)
-    Stats.inc("branch-length (gamma) 2",result);
-  else if (L < mu*2)
-    Stats.inc("branch-length (gamma) 3",result);
-  else 
-    Stats.inc("branch-length (gamma) 4",result);
-}
-
 #include "slice-sampling.H"
 
 void slice_sample_branch_length(Parameters& P,MoveStats& Stats,int b)
@@ -291,10 +116,11 @@ void slice_sample_branch_length(Parameters& P,MoveStats& Stats,int b)
   
   //------------- Find new length --------------//
   
-  double sigma = loadvalue(P.keys,"slice_branch_sigma",0.3);
-  double w = sigma*(mu+L)/2.0;
+  double sigma = loadvalue(P.keys,"slice_branch_fraction",1.5);
+  // NOTE - it is OK to depend on L below.
+  double w = sigma*(P.branch_mean()+L);
   branch_length_slice_function logp(P,b);
-  double L2 = slice_sample(L,logp,sigma,100,true,0,false,0);
+  double L2 = slice_sample(L,logp,w,100);
 
   //---------- Record Statistics - -------------//
   result.totals[0] = std::abs(L2 - L);
@@ -425,7 +251,6 @@ double slide_node_expand_branch(vector<double>& lengths,double sigma)
   return ratio*ratio;
 }
 
-
 bool slide_node(Parameters& P,
 		const vector<const_branchview>& b,
 		double (*slide)(vector<double>&,double)
@@ -437,8 +262,6 @@ bool slide_node(Parameters& P,
   // check that the last two are after the first one
   assert(b[0].target() == b[1].source() and
 	 b[0].target() == b[2].source());
-
-  P.set_root(b[0].target());
 
   //---------------- Propose new lengths ---------------//
   vector<double> lengths(2);
@@ -459,7 +282,6 @@ bool slide_node(Parameters& P,
   return success;
 }
 
-// FIXME: Can we make a slice-sampled version of this?
 
 void slide_node(Parameters& P,MoveStats& Stats,int b0)
 {
@@ -473,17 +295,46 @@ void slide_node(Parameters& P,MoveStats& Stats,int b0)
     b[0] = b[0].reverse();
   append(b[0].branches_after(),b);
 
-  if (uniform() < 0.5) {
-    bool success = slide_node(P, b, slide_node_no_expand_branch);
-    Stats.inc("slide_node",success);
+  b0 = b[0].name();
+  int b1 = b[1].undirected_name();
+  int b2 = b[2].undirected_name();
+  double L1a = P.T->branch(b1).length();
+  double L2a = P.T->branch(b2).length();
+
+  P.set_root(b[0].target());
+
+  double p = loadvalue(P.keys,"branch_slice_fraction",0.9);
+  if (uniform() < p)
+  {
+    slide_node_slice_function logp(P,b0);
+    double w = logp.total * loadvalue(P.keys,"slide_branch_slice_window",0.3);
+    double L1b = slice_sample(logp,w,100);
+    
+    MCMC::Result result(2);
+    result.totals[0] = 2.0*std::abs(L1b-L1a);
+    result.totals[1] = logp.count;
+    Stats.inc("slide_node_slice",result);
   }
   else {
-    bool success = slide_node(P, b, slide_node_expand_branch);
-    Stats.inc("slide_node_expand_branch",success);
+    bool success; string name;
+    if (uniform() < 0.5) {
+      success = slide_node(P, b, slide_node_no_expand_branch);
+      name = "slide_node";
+    }
+    else {
+      success = slide_node(P, b, slide_node_expand_branch);
+      name = "slide_node_expand_branch";
+    }
+    double L1b = P.T->branch(b1).length();
+    double L2b = P.T->branch(b2).length();
+
+    MCMC::Result result(2);
+    result.totals[0] = success?1:0;
+    result.totals[1] = std::abs(L1b-L1a) + std::abs(L2b-L2a);
+    Stats.inc(name,result);
   }
 }
 
-// FIXME: Can we make a slice-sampled version of this?
 
 void scale_means_only(Parameters& P,MoveStats& Stats)
 {
@@ -653,7 +504,7 @@ void change_3_branch_lengths(Parameters& P,MoveStats& Stats,int n)
   //--------- Do the M-H step if OK--------------//
   if (do_MH_move(P,P2,ratio)) {
     result.totals[0] = 1;
-    result.totals[1] = abs(log(T1_/T1)) + abs(log(T2_/T2)) + abs(log(T3_/T3));
+    result.totals[1] = abs(T1_-T1) + abs(T2_-T2) + abs(T3_-T3);
   }
 
   Stats.inc("3-branch-lengths",result);

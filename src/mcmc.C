@@ -357,7 +357,9 @@ void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
 
   double v1 = P.parameter(index);
   parameter_slice_function logp(P,index,transform,inverse);
-  double v2 = slice_sample(transform(v1),logp,W,100,lower_bound,lower,upper_bound,upper);
+  if (lower_bound) logp.set_lower_bound(lower);
+  if (upper_bound) logp.set_upper_bound(upper);
+  double v2 = slice_sample(transform(v1),logp,W,100);
 
 #ifndef NDEBUG
   show_parameters(std::cerr,P);

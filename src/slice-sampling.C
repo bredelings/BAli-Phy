@@ -6,7 +6,27 @@ namespace slice_sampling {
   double identity(double x) {return x;}
 }
 
+double slice_function::current_value() const
+{
+  std::abort();
+}
 
+void slice_function::set_lower_bound(double x)
+{
+  has_lower_bound = true;
+  lower_bound = x;
+}
+
+void slice_function::set_upper_bound(double x)
+{
+  has_upper_bound = true;
+  upper_bound = x;
+}
+
+slice_function::slice_function() 
+  :has_lower_bound(false),lower_bound(0),
+   has_upper_bound(false),upper_bound(0)
+{ }
 
 double parameter_slice_function::operator()(double x)
 {
@@ -19,6 +39,11 @@ double parameter_slice_function::operator()()
 {
   count++;
   return log(P.probability());
+}
+
+double parameter_slice_function::current_value() const
+{
+  return P.parameter(n);
 }
 
 parameter_slice_function::parameter_slice_function(Parameters& P_,int n_)
@@ -46,16 +71,64 @@ double branch_length_slice_function::operator()()
   return log(P.probability());
 }
 
+double branch_length_slice_function::current_value() const
+{
+  return P.T->branch(b).length();
+}
+
 branch_length_slice_function::branch_length_slice_function(Parameters& P_,int b_)
   :count(0),P(P_),b(b_)
-{ }
+{ 
+  set_lower_bound(0);
+}
 
+double slide_node_slice_function::operator()() {
+  count++;
+  return log(P.probability());
+}
+
+double slide_node_slice_function::operator()(double x) 
+{
+  assert(0 <= x and x <= total);
+  P.setlength(b1,x);
+  P.setlength(b2,total-x);
+  return operator()();
+}
+
+double slide_node_slice_function::current_value() const
+{
+  return P.T->branch(b1).length();
+}
+
+slide_node_slice_function::slide_node_slice_function(Parameters& P_,int b0)
+  :count(0),P(P_)
+{
+  vector<const_branchview> b;
+  b.push_back( P.T->directed_branch(b0) );
+
+  // choose branches to alter
+  append(b[0].branches_after(),b);
+
+  if (not b.size() == 3)
+    throw myexception()<<"pointing to leaf node!";
+
+  b1 = b[1].undirected_name();
+  b2 = b[2].undirected_name();
+
+  total = P.T->branch(b1).length() + P.T->branch(b2).length();
+
+  set_lower_bound(0);
+  set_upper_bound(total);
+}
+
+slide_node_slice_function::slide_node_slice_function(Parameters& P_,int i1,int i2)
+  :count(0),b1(i1),b2(i2),P(P_)
+{
+  total = P.T->branch(b1).length() + P.T->branch(b2).length();
+}
 
 std::pair<double,double> 
-find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy,
-				   double w,int m,
-				   bool lower_bound,double lower,
-				   bool upper_bound,double upper)
+find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, double w,int m)
 {
   double u = uniform()*w;
   double L = x0 - u;
@@ -68,28 +141,28 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy,
     int J = floor(uniform()*m);
     int K = (m-1)-J;
 
-    while (J>0 and ((not lower_bound) or L>lower) and g(L)>logy) {
+    while (J>0 and (not g.below_lower_bound(L)) and g(L)>logy) {
       L -= w;
       J--;
     }
 
-    while (K>0 and ((not upper_bound) or R<upper) and g(R)>logy) {
+    while (K>0 and (not g.above_upper_bound(R)) and g(R)>logy) {
       R += w;
       K--;
     }
   }
   else {
-    while (((not lower_bound) or L>lower) and g(L)>logy)
+    while ((not g.below_lower_bound(L)) and g(L)>logy)
       L -= w;
 
-    while (((not upper_bound) or R<upper) and g(R)>logy)
+    while ((not g.above_upper_bound(R)) and g(R)>logy)
       R += w;
   }
 
   // Shrink interval to lower and upper bounds.
 
-  if (lower_bound and L<lower) L = lower;
-  if (upper_bound and R>upper) R = upper;
+  if (g.below_lower_bound(L)) L = g.lower_bound;
+  if (g.above_upper_bound(R)) R = g.upper_bound;
 
   return std::pair<double,double>(L,R);
 }
@@ -99,7 +172,7 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy,
 
 double search_interval(double x0,double& L, double& R, slice_function& g,double logy)
 {
-  assert(g(x0) > g(L) and g(x0) > g(R));
+  //  assert(g(x0) > g(L) and g(x0) > g(R));
   assert(g(x0) > logy);
 
   while(1)
@@ -117,12 +190,7 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
   }
 }
 
-double slice_sample(double x0, slice_function& g,
-		    double w, int m, 
-		    bool lower_bound,
-		    double lower, 
-		    bool upper_bound,
-		    double upper)
+double slice_sample(double x0, slice_function& g,double w, int m)
 {
   double gx0 = g();
 
@@ -134,7 +202,7 @@ double slice_sample(double x0, slice_function& g,
 
   // Find the initial interval to sample from.
 
-  std::pair<double,double> interval = find_slice_boundaries_stepping_out(x0,g,logy,w,m,lower_bound,lower,upper_bound,upper);
+  std::pair<double,double> interval = find_slice_boundaries_stepping_out(x0,g,logy,w,m);
   double L = interval.first;
   double R = interval.second;
 
@@ -143,21 +211,26 @@ double slice_sample(double x0, slice_function& g,
   return search_interval(x0,L,R,g,logy);
 }
 
-inline static void dec(double& x,double w, bool lb, double lower,bool& hit_lower_bound)
+double slice_sample(slice_function& g, double w, int m)
+{
+  double x0 = g.current_value();
+  return slice_sample(x0,g,w,m);
+}
+
+inline static void dec(double& x, double w, const slice_function& g, bool& hit_lower_bound)
 {
   x -= w;
-  if (lb and (x<lower)) {
-    x = lower;
+  if (g.below_lower_bound(x)) {
+    x = g.lower_bound;
     hit_lower_bound=true;
   }
 }
 
-inline static void inc(double& x,double w, bool ub, double upper,bool& hit_upper_bound)
+inline static void inc(double& x, double w, const slice_function& g, bool& hit_upper_bound)
 {
   x += w;
-  if (ub and (x<upper)) 
-  {
-    x = upper;
+  if (g.above_upper_bound(x)) {
+    x = g.upper_bound;
     hit_upper_bound = true;
   }
 }
@@ -165,13 +238,11 @@ inline static void inc(double& x,double w, bool ub, double upper,bool& hit_upper
 
 // Assumes uni-modal
 std::pair<double,double> find_slice_boundaries_search(double& x0,slice_function& g,double logy,
-						      double w,int m,
-						      bool lower_bound,double lower,
-						      bool upper_bound,double upper)
+						      double w,int m)
 {
   // the initial point should be within the bounds, if the exist
-  assert(not lower_bound or (x0 > lower));
-  assert(not upper_bound or (x0 < upper));
+  assert(not g.below_lower_bound(x0));
+  assert(not g.above_upper_bound(x0));
 
   bool hit_lower_bound=false;
   bool hit_upper_bound=false;
@@ -180,7 +251,7 @@ std::pair<double,double> find_slice_boundaries_search(double& x0,slice_function&
 
   double L = x0;
   double R = L;
-  inc(R,w,upper_bound,upper,hit_upper_bound);
+  inc(R,w,g,hit_upper_bound);
   
   //  if (gx > logy) return find_slice_boundaries_stepping_out(x,g,logy,w,m,lower_bound,lower,upper_bound,upper);
 
@@ -207,14 +278,14 @@ std::pair<double,double> find_slice_boundaries_search(double& x0,slice_function&
       if (state == 2)
 	break;
       else if (state == 1) {
-	inc(R,w,upper_bound,upper,hit_upper_bound);
+	inc(R,w,g,hit_upper_bound);
 	break;
       }
 
       state = 0;
       hit_lower_bound=false;
       L = R;
-      inc(R,w,upper_bound,upper,hit_upper_bound);
+      inc(R,w,g,hit_upper_bound);
     }
     // below bound, and slopes upwards to the left
     else if (gL < logy and gR < gL) 
@@ -223,26 +294,26 @@ std::pair<double,double> find_slice_boundaries_search(double& x0,slice_function&
 	break;
       if (state == 1)
       {
-	dec(L,w,lower_bound,lower,hit_lower_bound);
+	dec(L,w,g,hit_lower_bound);
 	break;
       }
 
       state = 1;
       hit_upper_bound=false;
       R = L;
-      dec(L,w,lower_bound,lower,hit_lower_bound);
+      dec(L,w,g,hit_lower_bound);
     }
     else {
       state = 2;
       bool moved = false;
       if (gL >= logy and not hit_lower_bound) {
 	moved = true;
-	dec(L,w,lower_bound,lower,hit_lower_bound);
+	dec(L,w,g,hit_lower_bound);
       }
 
       if (gR >= logy and not hit_upper_bound) {
 	moved = true;
-	inc(R,w,upper_bound,upper,hit_upper_bound);
+	inc(R,w,g,hit_upper_bound);
       }
 
       if (not moved) break;
@@ -316,19 +387,13 @@ std::pair<int,double> search_multi_intervals(vector<double>& X0,
   }
 }
 					   
-
-std::pair<int,double> slice_sample_multi(double x0, vector<slice_function*>& g,
-					 double w, int m, 
-					 bool lower_bound,
-					 double lower, 
-					 bool upper_bound,
-					 double upper)
+std::pair<int,double> slice_sample_multi(vector<double>& X0, vector<slice_function*>& g, double w, int m)
 {
   int N = g.size();
 
   double g1x0 = (*g[0])();
 
-  assert(std::abs(g1x0 - (*g[0])(x0)) < 1.0e-9);
+  assert(std::abs(g1x0 - (*g[0])(X0[0])) < 1.0e-9);
 
   // Determine the slice level, in log terms.
 
@@ -336,17 +401,30 @@ std::pair<int,double> slice_sample_multi(double x0, vector<slice_function*>& g,
 
   // Find the initial interval to sample from - in G[0]
 
-  vector<double> X0(N,x0);
-
   vector<std::pair<double,double> > intervals(N);
 
-  intervals[0] = find_slice_boundaries_stepping_out(X0[0],*g[0],logy,w,m,lower_bound,lower,upper_bound,upper);
+  intervals[0] = find_slice_boundaries_stepping_out(X0[0],*g[0],logy,w,m);
 
   for(int i=1;i<N;i++)
-    intervals[i] = find_slice_boundaries_search(X0[i],*g[i],logy,w,m,lower_bound,lower,upper_bound,upper);
+    intervals[i] = find_slice_boundaries_search(X0[i],*g[i],logy,w,m);
 
   // Sample from the intervals, shrinking them on each rejection
   return search_multi_intervals(X0,intervals,g,logy);
+}
+
+std::pair<int,double> slice_sample_multi(double x0, vector<slice_function*>& g, double w, int m)
+{
+  int N = g.size();
+
+  vector<double> X0(N,x0);
+
+  return slice_sample_multi(X0,g,w,m);
+}
+
+std::pair<int,double> slice_sample_multi(vector<slice_function*>& g, double w, int m)
+{
+  double x0 = g[0]->current_value();
+  return slice_sample_multi(x0,g,w,m);
 }
 
 double transform_epsilon(double lambda_E)
