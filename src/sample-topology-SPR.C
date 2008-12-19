@@ -27,6 +27,54 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1
   return sample_tri_multi(p,nodes,rho,true,true);
 }
 
+#include "slice-sampling.H"
+
+int topology_sample_SPR_slice_connecting_branch(vector<Parameters>& p,int b) 
+{
+  int b_ = p[0].T->directed_branch(b).undirected_name();
+
+  branch_length_slice_function logp1(p[0],b_);
+  branch_length_slice_function logp2(p[1],b_);
+
+  double Pr1 = log(p[0].probability());
+  double Pr2 = log(p[1].probability());
+
+  vector<slice_function*> logp;
+  logp.push_back(&logp1);
+  logp.push_back(&logp2);
+
+  double w = p[0].branch_mean();
+
+  std::pair<int,double> choice = slice_sample_multi(logp,w,-1);
+
+  return choice.first;
+}
+
+int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b) 
+{
+  int b_ = p[0].T->directed_branch(b).undirected_name();
+
+  slide_node_slice_function logp1(p[0],b);
+  slide_node_slice_function logp2(p[1],b);
+
+  double Pr1 = log(p[0].probability());
+  double Pr2 = log(p[1].probability());
+
+  vector<slice_function*> logp;
+  logp.push_back(&logp1);
+  logp.push_back(&logp2);
+
+  double w = p[0].branch_mean();
+
+  vector<double> X0(2);
+  X0[0] = logp1.current_value();
+  X0[1] = uniform()*(logp2.upper_bound);
+
+  std::pair<int,double> choice = slice_sample_multi(X0,logp,w,-1);
+
+  return choice.first;
+}
+
 /// Do a SPR move on T1, moving the subtree behind b1_ to branch b2
 double do_SPR(SequenceTree& T1, int b1_,int b2) 
 {
@@ -117,7 +165,7 @@ void remove_duplicates(vector<int>& v) {
   }
 }
 
-MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch) 
+MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false) 
 {
   const int bins = 4;
 
@@ -155,65 +203,33 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
     p[1].note_alignment_changed_on_branch(bi);
   }
 
-  //------------- change connecting branch length ----------------//
-  vector<efloat_t> rho(2,1);
-  if (change_branch) {
-    int b1u = P.T->directed_branch(b1).undirected_name();
-    if (P.n_imodels()) 
-    {
-      double mu = P.branch_mean();
-      double length1 = P.T->branch(b1u).length();
-      double length2 = exponential(mu);
-      efloat_t r = exponential_pdf(length1,mu)/exponential_pdf(length2,mu);
-      ratio *= r;
-      p[1].setlength(b1u,length2);
-      rho[1] = ratio;
-    }
-    else 
-    {
-      vector<double> G0 = gamma_approx(p[0],b1u);
-      vector<double> G1 = gamma_approx(p[1],b1u);
-
-      double a0 = G0[0]+1.0;
-      double B0 = -1.0/G0[1];
-
-      double a1 = G1[0]+1.0;
-      double B1 = -1.0/G1[1];
-
-      if (a0<0 or B0<0) {
-	std::cerr<<"a0 = "<<a0<<"  B0 = "<<B0<<std::endl;
-	a0 = 1;
-	B0 = p[0].branch_mean();
-      }
-      
-      if (a1<0 or B1<0) {
-	std::cerr<<"a1 = "<<a1<<"  B1 = "<<B1<<std::endl;
-	a1 = 1;
-	B1 = p[1].branch_mean();
-      }
-      
-      p[1].setlength(b1u,gamma(a1,B1));
-      
-      rho[0] = gsl_ran_gamma_pdf(p[1].T->branch(b1u).length(),a1,B1);
-      rho[1] = gsl_ran_gamma_pdf(p[0].T->branch(b1u).length(),a0,B0);
-    }
-  }
-
-  //----------- sample alignments and choose topology -----------//
-  int C = topology_sample_SPR(p,rho,n1,n2);
-
-  if (C != -1) 
+  int C;
+  if (slice)
   {
-    for(int i=0;i<P.n_data_partitions();i++) {
-      valarray<bool> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
-      valarray<bool> s2 = constraint_satisfied(p[C][i].alignment_constraint, *p[C][i].A);
-
-      report_constraints(s1,s2);
-    }
+    C = topology_sample_SPR_slice_slide_node(p,b1);
     P = p[C];
+  }
+  else {
+
+    //------------- change connecting branch length ----------------//
+    vector<efloat_t> rho(2,1);
+
+    //----------- sample alignments and choose topology -----------//
+    int C = topology_sample_SPR(p,rho,n1,n2);
+    
+    if (C != -1) 
+    {
+      for(int i=0;i<P.n_data_partitions();i++) {
+	valarray<bool> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+	valarray<bool> s2 = constraint_satisfied(p[C][i].alignment_constraint, *p[C][i].A);
+	
+	report_constraints(s1,s2);
+      }
+      P = p[C];
 
     // If the new topology conflicts with the constraints, then it should have P=0
     // and therefore not be chosen.  So the following SHOULD be safe!
+    }
   }
 
 
@@ -236,7 +252,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
 
   int dist = topology_distance(*p[0].T, *p[1].T)/2;
 
-  if (same_topology) 
+  if (same_topology)
     assert(dist == 0);
   else
     assert(dist > 0);
@@ -250,10 +266,8 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool change_branch)
     }
   }
 
-
   return result;
 }
-
 
 int choose_subtree_branch_uniform(const Tree& T) {
   int b1 = -1;
@@ -270,20 +284,22 @@ void sample_SPR_flat(Parameters& P,MoveStats& Stats)
   double f = loadvalue(P.keys,"SPR_amount",0.1);
   int n = poisson(P.T->n_branches()*f);
 
-  double p = loadvalue(P.keys,"fraction_fit_gamma",-0.01);
-  bool change_branch = ((uniform() < p) and (not P.n_imodels()));
+  double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
 
-  for(int i=0;i<n;i++) {
+  for(int i=0;i<n;i++) 
+  {
     int b1 = choose_subtree_branch_uniform(*P.T);
 
     int b2 = choose_SPR_target(*P.T,b1);
 
-    MCMC::Result result = sample_SPR(P,b1,b2,change_branch);
-
-    if (change_branch)
-      Stats.inc("SPR2 (flat)", result);
-    else
+    if (P.n_imodels() == 0 and uniform() < p) {
+      MCMC::Result result = sample_SPR(P,b1,b2,true);
+      Stats.inc("SPR (flat/slice)", result);
+    }
+    else {
+      MCMC::Result result = sample_SPR(P,b1,b2);
       Stats.inc("SPR (flat)", result);
+    }
   }
 }
 
@@ -392,19 +408,20 @@ void sample_SPR_nodes(Parameters& P,MoveStats& Stats)
   double f = loadvalue(P.keys,"SPR_amount",0.1);
   int n = poisson(P.T->n_branches()*f);
 
-  double p = loadvalue(P.keys,"fraction_fit_gamma",-0.01);
-  bool change_branch = ((uniform() < p) and (not P.n_imodels()));
+  double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
 
   for(int i=0;i<n;i++) {
 
     int b1=-1, b2=-1;
     choose_subtree_branch_nodes(*P.T, b1, b2);
 
-    MCMC::Result result = sample_SPR(P,b1,b2,change_branch);
-
-    if (change_branch)
-      Stats.inc("SPR2 (path)", result);
-    else
+    if (P.n_imodels() == 0 and uniform()< p) {
+      MCMC::Result result = sample_SPR(P,b1,b2,true);
+      Stats.inc("SPR (path/slice)", result);
+    }
+    else {
+      MCMC::Result result = sample_SPR(P,b1,b2);
       Stats.inc("SPR (path)", result);
+    }
   }
 }
