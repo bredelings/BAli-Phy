@@ -44,6 +44,9 @@ struct data_partition: public Model
 
   mutable vector<cached_value<int> > cached_sequence_lengths;
 
+  void branch_mean(double);
+  void branch_mean_tricky(double);
+
 public:
 
   bool smodel_full_tree;
@@ -100,8 +103,6 @@ public:
 
   /// parameter for exponential prior on branch length
   double branch_mean() const; 
-  void branch_mean(double);
-  void branch_mean_tricky(double);
 
   // The prior, likelihood, and probability
   efloat_t prior_no_alignment() const;
@@ -226,6 +227,8 @@ public:
   void note_sequence_length_changed(int n);
 
   double branch_mean() const; 
+
+  void branch_mean_tricky(int i,double); 
 
   Parameters* clone() const {return new Parameters(*this);}
 

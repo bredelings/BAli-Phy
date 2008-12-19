@@ -356,6 +356,9 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   MoveAll parameter_moves("parameters");
 
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu",             "mu_scale_sigma",     0.6,  parameter_moves);
+  if (P.keys["disable_slice_sampling"] < 0.5) {
+    add_slice_moves(P, "mu",      "mu_slice_window",    0.3, true,0,false,0,parameter_moves);
+  }
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "rho",     "rho_scale_sigma",  0.2,  parameter_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);

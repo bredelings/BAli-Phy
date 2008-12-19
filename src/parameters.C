@@ -127,6 +127,7 @@ double data_partition::branch_mean() const
 
 void data_partition::branch_mean(double mu)
 {
+  // unsafe!  Must then read this value into parent.
   parameter(0,mu);
 }
 
@@ -519,6 +520,12 @@ void Parameters::setlength(int b,double l)
 double Parameters::branch_mean() const 
 {
   return 1.0;
+}
+
+void Parameters::branch_mean_tricky(int i,double x)
+{
+  (*this)[i].branch_mean_tricky(x);
+  read();
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,

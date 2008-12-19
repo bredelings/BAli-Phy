@@ -335,6 +335,40 @@ void slide_node(Parameters& P,MoveStats& Stats,int b0)
   }
 }
 
+void check_caching(const Parameters& P1,Parameters& P2)
+{
+  efloat_t pi1 = P1.probability();
+  efloat_t pi2 = P2.probability();
+  
+  double diff = std::abs(log(pi1)-log(pi2));
+  if (diff > 1.0e-9) {
+    std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
+    std::abort();
+  }
+    
+  P2.recalc_smodels();
+
+  pi1 = P1.probability();
+  pi2 = P2.probability();
+    
+  diff = std::abs(log(pi1)-log(pi2));
+  if (diff > 1.0e-9) {
+    std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
+    std::abort();
+  }
+
+  P2.recalc_imodels();
+  P2.recalc_smodels();
+
+  pi1 = P1.probability();
+  pi2 = P2.probability();
+    
+  diff = std::abs(log(pi1)-log(pi2));
+  if (diff > 1.0e-9) {
+    std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
+    std::abort();
+  }
+}
 
 void scale_means_only(Parameters& P,MoveStats& Stats)
 {
@@ -356,37 +390,8 @@ void scale_means_only(Parameters& P,MoveStats& Stats)
 
 #ifndef NDEBUG
   {
-    efloat_t pi1 = P .probability();
-    efloat_t pi2 = P2.probability();
-    
-    double diff = std::abs(log(pi1)-log(pi2));
-    if (diff > 1.0e-9) {
-      std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
-      std::abort();
-    }
-    
-    P2.recalc_smodels();
-
-    pi1 = P .probability();
-    pi2 = P2.probability();
-    
-    diff = std::abs(log(pi1)-log(pi2));
-    if (diff > 1.0e-9) {
-      std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
-      std::abort();
-    }
-
-    P2.recalc_imodels();
-    P2.recalc_smodels();
-
-    pi1 = P .probability();
-    pi2 = P2.probability();
-    
-    diff = std::abs(log(pi1)-log(pi2));
-    if (diff > 1.0e-9) {
-      std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
-      std::abort();
-    }
+    Parameters P3 = P2;
+    check_caching(P,P3);
   }
 #endif
 
@@ -398,13 +403,14 @@ void scale_means_only(Parameters& P,MoveStats& Stats)
   P2.tree_propagate();
 
   for(int i=0;i<P.n_data_partitions();i++) 
-    P2[i].branch_mean_tricky(P2[i].branch_mean()*scale);
+    P2.branch_mean_tricky(i,P2[i].branch_mean()*scale);
   
 #ifndef NDEBUG
-  P2.recalc_imodels();
-  P2.recalc_smodels();
+  Parameters P3 = P2;
+  P3.recalc_imodels();
+  P3.recalc_smodels();
   efloat_t L1 =  P.likelihood();
-  efloat_t L2 = P2.likelihood();
+  efloat_t L2 = P3.likelihood();
   double diff = std::abs(log(L1)-log(L2));
   if (diff > 1.0e-9) {
     std::cerr<<"scale_mean_only: likelihood diff = "<<diff<<std::endl;
