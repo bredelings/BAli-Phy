@@ -342,6 +342,8 @@ int Slice_Move::reset(double lambda) {
 
 void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int) 
 {
+  if (P.fixed(index)) return;
+
 #ifndef NDEBUG
   clog<<" [Slice] move = "<<name<<endl;
 #endif
