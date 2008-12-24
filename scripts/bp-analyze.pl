@@ -878,7 +878,7 @@ set terminal svg
 set output "Results/c-levels.svg"
 set xlabel "Log10 posterior Odds (LOD)"
 set ylabel "Supported Partitions"
-plot [0:][0:] 'Results/c-levels.plot' with lines
+plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 EOF`;
 
 # 12. Mixing diagnostics - SRQ plots
@@ -1021,6 +1021,27 @@ print INDEX
       td {padding-left: 0.3em;}
       td {padding-right: 0.3em;}
 
+#topbar {
+	background-color: rgb(201,217,233);
+	margin: 0;
+	width: 99%;
+	padding: 0.2em 0.2em 0.5em 0.2em; /* .5 is on the bottom */
+	display: table;
+	border: none; /* only needed for Netscape 4.x */
+        width: 100%;
+}
+#topbar #menu {
+	font-size: 90%;
+	display: table-cell;
+	text-align: right; 
+}
+#topbar #path {
+	font-weight: bold;
+	display: table-cell;
+	text-align: left; 
+	white-space: nowrap;
+/*	whitespace: nowrap; only for Netscape 4.x, but causes invalidation */
+}
       .backlit td {background: rgb(220,220,220);}
 
       h1 {font-size: 150%;}
@@ -1031,18 +1052,37 @@ print INDEX
 
       *[title] {cursor:help;}
       a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
-    </style>';
+      .floating_picture {float:left;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}    
+      .r_floating_picture {float:right;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}    
+      .clear {clear:both;}    
+    </style>
+</head>
+<body>
+';
+
+print INDEX '<p id="topbar"> 
+   <span id="path">Sections:</span>
+   <span id="menu">
+    [<a href="#data">Data+Model</a>]
+    [<a href="#analysis">Analysis</a>]
+    [<a href="#alignment">Alignment</a>]
+    [<a href="#topology">Phylogeny</a>]
+    [<a href="#topology-mixing">Phylogeny:Mixing</a>]
+    [<a href="#parameters">Parameters</a>]
+   </span>
+</p>
+';
 
 
-print INDEX "<h1>$title</h2>\n";
-
-print INDEX "<p>Samples were created by the following command line:";
+print INDEX "<h1>$title</h1>\n";
+print INDEX '<object class="floating_picture" data="c50-tree.svg" type="image/svg+xml" height="200pt" width="200pt"></object>';
+#print INDEX "<p>Samples were created by the following command line:</p>";
 print INDEX "<p><b>command line:</b> $command</p>\n";
 print INDEX "<p><b>directory:</b> $directory</p>\n";
 print INDEX "<p><b>subdirectory:</b> $subdir</p>\n" if (defined($subdir));
 
 
-print INDEX "<h2 name=\"data\">Data</h2>\n";
+print INDEX "<h2 style=\"clear:both\"><a name=\"data\">Data &amp; Model</a></h2>\n";
 print INDEX "<table class=\"backlit\">\n";
 print INDEX "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
 for(my $p=0;$p<=$#partitions;$p++) 
@@ -1065,7 +1105,7 @@ for(my $p=0;$p<=$#partitions;$p++)
 
 print INDEX "</table>\n";
 
-print INDEX "<h2 name=\"analysis\">Analysis</h2>\n";
+print INDEX "<h2><a name=\"analysis\">Analysis</a></h2>\n";
 print INDEX '<table style="width:100%;"><tr>'."\n";
 print INDEX "<td>burn-in = $burnin samples</td>\n";
 print INDEX "<td>after burnin = $after_burnin samples</td>\n";
@@ -1077,14 +1117,14 @@ print INDEX "<td>Complete sample: $n_topologies topologies</td>\n";
 print INDEX "<td>95% Bayesian credible interval: $n_topologies_95 topologies</td>\n";
 print INDEX "</tr></table>\n";
 
-print INDEX "<h2 name=\"topology\">Phylogeny Distribution</h2>\n";
+print INDEX "<h2><a name=\"topology\">Phylogeny Distribution</a></h2>\n";
 
-print INDEX "  </head>\n  <body>\n";
+print INDEX '<object class="r_floating_picture" data="c-levels.svg" type="image/svg+xml" width="400pt" height="300pt"></object>';
 
-print INDEX '<table style="width:100%;"><tr>'."\n";
-print INDEX "<td>Partition support: <a href=\"consensus\">Summary</a></td>\n";
-print INDEX "<td><span title=\"How many partitions are supported at each level of Posterior Log Odds (LOD)?\">Partition support graph:</span> <a href=\"c-levels.svg\">SVG</a></td>\n";
-print INDEX "</tr></table>\n";
+print INDEX '<table>'."\n";
+print INDEX "<tr><td>Partition support: <a href=\"consensus\">Summary</a></td></tr>\n";
+print INDEX "<tr><td><span title=\"How many partitions are supported at each level of Posterior Log Odds (LOD)?\">Partition support graph:</span> <a href=\"c-levels.svg\">SVG</a></td></tr>\n";
+print INDEX "</table>\n";
 
 print INDEX "<table>\n";
 for my $tree (@trees)
@@ -1092,24 +1132,25 @@ for my $tree (@trees)
     my $name = $tree_name{$tree};
     print INDEX "<tr>";
     print INDEX "<td>$name</td>";
-    print INDEX "<td><a href=\"$tree.topology\">topology</a></td>";
-    print INDEX "<td><a href=\"$tree.tree\">tree</a></td>";
+    print INDEX "<td><a href=\"$tree.topology\">-L</a></td>";
+    print INDEX "<td><a href=\"$tree.tree\">+L</a></td>";
+    print INDEX "<td><a href=\"$tree-tree.pdf\">PDF</a></td>";
+    print INDEX "<td><a href=\"$tree-tree.svg\">SVG</a></td>";
+    print INDEX "<td>MC Tree:</td>";
     if (-f "Results/$tree.mtree") {
-	print INDEX "<td><a href=\"$tree.mtree\">mtree</a></td>"     
+	print INDEX "<td><a href=\"$tree.mtree\">-L</a></td>"     
     }
     else {
 	print INDEX "<td></td>"     
     }
-    print INDEX "<td><a href=\"$tree-tree.pdf\">PDF</a></td>";
-    print INDEX "<td><a href=\"$tree-tree.svg\">SVG</a></td>";
     if (-f "Results/$tree-mctree.pdf") {
-	print INDEX "<td><a href=\"$tree-mctree.pdf\">MC Tree (PDF)</a></td>";
+	print INDEX "<td><a href=\"$tree-mctree.pdf\">PDF</a></td>";
     }
     else {
 	print INDEX "<td></td>"     
     }
     if (-f "Results/$tree-mctree.svg") {
-	print INDEX "<td><a href=\"$tree-mctree.svg\">MC Tree (SVG)</a></td>";
+	print INDEX "<td><a href=\"$tree-mctree.svg\">SVG</a></td>";
     }
     else {
 	print INDEX "<td></td>"     
@@ -1118,7 +1159,7 @@ for my $tree (@trees)
 }
 print INDEX "</table>\n";
 
-print INDEX "<h2 name=\"alignment\">Alignment Distribution</h2>\n";
+print INDEX "<h2 class=\"clear\"><a name=\"alignment\">Alignment Distribution</a></h2>\n";
 
 for(my $i=0;$i<$n_partitions;$i++) 
 {
@@ -1135,7 +1176,7 @@ for(my $i=0;$i<$n_partitions;$i++)
     print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of columns in the alignment\"># Sites</th>\n";
     print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of invariant columns\">Constant</th>\n";
 #    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of variant columns\">Variable</th>\n";
-    print INDEX "<th title=\"Number of parsiomny-informative columns.\">Parsimony-Informative</th>\n";
+    print INDEX "<th title=\"Number of parsiomny-informative columns.\">Informative</th>\n";
     print INDEX "</tr>\n";
     for my $alignment (@alignments)
     {
@@ -1174,7 +1215,9 @@ for(my $i=0;$i<$n_partitions;$i++)
     print INDEX "</table>\n";
 }
 
-print INDEX "<h2 name=\"topology-mixing\">Mixing: Topologies</h2>\n";
+print INDEX '<img src="partitions.SRQ.png" height="200pt" class="r_floating_picture" alt="SRQ plot for support of each partition."/>';
+print INDEX '<img src="c50.SRQ.png" height="200pt" class="r_floating_picture" alt="SRQ plot for supprt of 50% consensus tree."/>';
+print INDEX "<h2><a name=\"topology-mixing\">Mixing: Topologies</a></h2>\n";
 
 print INDEX "<ol>\n";
 print INDEX "<li><a href=\"partitions.bs\">Partition uncertainty</a></li>\n";
@@ -1183,7 +1226,8 @@ for my $srq (@SRQ) {
 }
 print INDEX "</ol>\n";
 
-print INDEX "<h2 name=\"parameters\">Scalar variables</h2>\n";
+
+print INDEX "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
 
 print INDEX "<table>\n";
 print INDEX "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th></tr>\n";
