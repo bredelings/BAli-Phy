@@ -329,7 +329,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 else
   echo " * Not using system BOOST libraries: we'll build our own."
 
-  boost_includes="-I\$(top_srcdir)/boost/include"
+  boost_includes="-isystem \$(top_srcdir)/boost/include"
   boost_libs="\$(top_builddir)/boost/lib/filesystem/libboost_filesystem.a \$(top_builddir)/boost/lib/program_options/libboost_program_options.a"
 
   CXXFLAGS="$boost_includes $CXXFLAGS"
@@ -375,7 +375,7 @@ if test "$use_mpi" != no ; then
    if test "$use_mpi" = "openmpi" ; then
       echo "checking for OpenMPI ..."
       if $MPICXX --showme:version ; then 
-         MPI_CXXFLAGS="$($MPICXX --showme:compile) -fpermissive"
+         MPI_CXXFLAGS="$($MPICXX --showme:compile | sed 's/-I/-isystem /g') -fpermissive"
          echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
          MPI_LDFLAGS=$($MPICXX --showme:link)
          echo "MPI_LDFLAGS=$MPI_LDFLAGS"
