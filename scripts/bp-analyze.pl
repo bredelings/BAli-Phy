@@ -471,9 +471,6 @@ if ($#imodel_indices == -1)
 
 my @alphabets = get_alphabets();
 
-$burnin = int 0.1*$n_iterations if (!defined($burnin));
-my $after_burnin = $n_iterations - $burnin +1;
-
 my @trees = ();
 my %tree_name = ();
 
@@ -516,6 +513,9 @@ while ($#ARGV > -1)
 	die "I don't recognize option $arg";
     }
 }
+
+$burnin = int 0.1*$n_iterations if (!defined($burnin));
+my $after_burnin = $n_iterations - $burnin +1;
 
 do_init();
 
@@ -1136,7 +1136,14 @@ for my $tree (@trees)
     print INDEX "<td><a href=\"$tree.tree\">+L</a></td>";
     print INDEX "<td><a href=\"$tree-tree.pdf\">PDF</a></td>";
     print INDEX "<td><a href=\"$tree-tree.svg\">SVG</a></td>";
-    print INDEX "<td>MC Tree:</td>";
+
+    if (-f "Results/$tree.mtree" || -f "Results/$tree-mctree.svg" || -f "Results/$tree-mctree.pdf" ) {
+	print INDEX "<td>MC Tree:</td>";
+    }
+    else {
+	print INDEX "<td></td>"     
+    }
+
     if (-f "Results/$tree.mtree") {
 	print INDEX "<td><a href=\"$tree.mtree\">-L</a></td>"     
     }
