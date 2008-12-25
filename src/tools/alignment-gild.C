@@ -383,7 +383,7 @@ vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q
   vector<double> w(T.n_leaves(),-1);
   
   if (f.size() == 0)
-    throw myexception()<<"Column has no features!";
+    throw myexception()<<"Column has no non-gap features!";
   else if (f.size() == 1)
     w[f[0]] = 1.0;
   else if (f.size() == 2) {
