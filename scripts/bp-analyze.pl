@@ -587,12 +587,12 @@ $min_support_arg = "--min-support=$min_support" if (defined($min_support));
 my $consensus_arg = "--consensus=".join(',',@tree_consensus_values);
 my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
+my $skip="";
+$skip="--skip=$burnin" if ($trees_file ne "Results/T1.trees");
 
 print "Summarizing topology distribution ... ";
 if (! more_recent_than("Results/consensus",$trees_file)) {
-    my $skip="";
-    $skip="--skip=$burnin" if ($trees_file eq "Results/T1.trees");
-    `trees-consensus $trees_file $max_arg $min_support_arg --sub-partitions $consensus_arg > Results/consensus`;
+    `trees-consensus $trees_file $max_arg $min_support_arg $skip --sub-partitions $consensus_arg > Results/consensus`;
 }
 print "done.\n";
 
@@ -622,7 +622,7 @@ for my $cvalue (@tree_consensus_values)
     
     print "$tree ";
     if (! more_recent_than("Results/$tree.ltree",$trees_file)) {
-    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg < $trees_file > Results/$tree.ltree`;
+    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg $skip < $trees_file > Results/$tree.ltree`;
     }
     if (! more_recent_than("Results/$tree.tree","Results/$tree.ltree")) {
     `head -n1 Results/$tree.ltree > Results/$tree.tree`;
@@ -637,7 +637,7 @@ if (! more_recent_than("Results/MAP.topology","Results/consensus")) {
 }
 print " Calculating branch lengths for MAP tree... ";
 if (! more_recent_than("Results/MAP.ltree",$trees_file)) {
-    `tree-mean-lengths Results/MAP.topology --safe $max_arg < $trees_file > Results/MAP.ltree`;
+    `tree-mean-lengths Results/MAP.topology --safe $max_arg $skip < $trees_file > Results/MAP.ltree`;
 }
 if (! more_recent_than("Results/MAP.tree","Results/MAP.ltree")) {
     `head -n1 Results/MAP.ltree > Results/MAP.tree`;
@@ -661,7 +661,7 @@ print "done.\n";
 # 5. Summarize scalar parameters
 print "\nSummarizing distribution of numerical parameters... ";
 if (! more_recent_than("Results/Report",$parameters_file)) {
-    `statreport 2: $max_arg < $parameters_file > Results/Report`;
+    `statreport 2: $max_arg $skip < $parameters_file > Results/Report`;
 }
 print "done.\n";
 
@@ -867,7 +867,7 @@ if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
 }
 
 if (!more_recent_than("Results/partitions.bs",$trees_file)) {
-    `trees-bootstrap $max_arg $trees_file --pred Results/partitions.pred > Results/partitions.bs`;
+    `trees-bootstrap $max_arg $trees_file $skip --pred Results/partitions.pred > Results/partitions.bs`;
 }
 
 # 11. c-levels.plot - FIXME!
@@ -886,7 +886,7 @@ my @SRQ = ();
 
 print "Generate SRQ plot for partitions ... ";
 if (!more_recent_than("Results/partitions.SRQ",$trees_file)) {
-`trees-to-SRQ Results/partitions.pred $max_arg < $trees_file > Results/partitions.SRQ`;
+`trees-to-SRQ Results/partitions.pred $max_arg $skip --max-points=1000 < $trees_file > Results/partitions.SRQ`;
 }
 print "done.\n";
 
@@ -894,7 +894,7 @@ push @SRQ,"partitions";
 
 print "Generate SRQ plot for c50 tree ... ";
 if (!more_recent_than("Results/c50.SRQ",$trees_file)) {
-`trees-to-SRQ Results/c50.topology $max_arg < $trees_file > Results/c50.SRQ`;
+`trees-to-SRQ Results/c50.topology $max_arg $skip --max-points=1000 < $trees_file > Results/c50.SRQ`;
 }
 print "done.\n";
 
@@ -902,8 +902,8 @@ push @SRQ,"c50";
 
 for my $srq (@SRQ) {
 `gnuplot <<EOF
-set terminal png size 800,600
-set output "Results/$srq.SRQ.png"
+set terminal svg
+set output "Results/$srq.SRQ.svg"
 set key right bottom
 set xlabel "Regenerations (fraction)"
 set ylabel "Time (fraction)"
@@ -1222,14 +1222,16 @@ for(my $i=0;$i<$n_partitions;$i++)
     print INDEX "</table>\n";
 }
 
-print INDEX '<img src="partitions.SRQ.png" height="200pt" class="r_floating_picture" alt="SRQ plot for support of each partition."/>';
-print INDEX '<img src="c50.SRQ.png" height="200pt" class="r_floating_picture" alt="SRQ plot for supprt of 50% consensus tree."/>';
+print INDEX '<object class="r_floating_picture" data="partitions.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
+#print INDEX '<img src="partitions.SRQ.png" height="200pt" class="r_floating_picture" alt="SRQ plot for support of each partition."/>';
+print INDEX '<object class="r_floating_picture" data="c50.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
+#print INDEX '<img src="c50.SRQ.png" height="200pt" class="r_floating_picture" alt="SRQ plot for supprt of 50% consensus tree."/>';
 print INDEX "<h2><a name=\"topology-mixing\">Mixing: Topologies</a></h2>\n";
 
 print INDEX "<ol>\n";
 print INDEX "<li><a href=\"partitions.bs\">Partition uncertainty</a></li>\n";
 for my $srq (@SRQ) {
-    print INDEX "<li><a href=\"$srq.SRQ.png\">SRQ plot: $srq</a></li>\n";
+    print INDEX "<li><a href=\"$srq.SRQ.svg\">SRQ plot: $srq</a></li>\n";
 }
 print INDEX "</ol>\n";
 
