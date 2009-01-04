@@ -36,8 +36,9 @@ int topology_sample_SPR_slice_connecting_branch(vector<Parameters>& p,int b)
   branch_length_slice_function logp1(p[0],b_);
   branch_length_slice_function logp2(p[1],b_);
 
-  double Pr1 = log(p[0].probability());
-  double Pr2 = log(p[1].probability());
+  //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
+  //  double Pr1 = log(p[0].probability());
+  //  double Pr2 = log(p[1].probability());
 
   vector<slice_function*> logp;
   logp.push_back(&logp1);
@@ -57,8 +58,9 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
   slide_node_slice_function logp1(p[0],b);
   slide_node_slice_function logp2(p[1],b);
 
-  double Pr1 = log(p[0].probability());
-  double Pr2 = log(p[1].probability());
+  //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
+  //  double Pr1 = log(p[0].probability());
+  //  double Pr2 = log(p[1].probability());
 
   vector<slice_function*> logp;
   logp.push_back(&logp1);
@@ -215,7 +217,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     vector<efloat_t> rho(2,1);
 
     //----------- sample alignments and choose topology -----------//
-    int C = topology_sample_SPR(p,rho,n1,n2);
+    C = topology_sample_SPR(p,rho,n1,n2);
     
     if (C != -1) 
     {

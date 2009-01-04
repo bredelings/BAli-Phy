@@ -83,6 +83,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T,b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -91,13 +92,14 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   if (not extends(*p[1].T, *P.TC))
     return;
 
-  double Pr1 = log(p[0].probability());
-  double Pr2 = log(p[1].probability());
+  //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
+  //  double Pr1 = log(p[0].probability());
+  //  double Pr2 = log(p[1].probability());
 
   vector<efloat_t> rho(2,1);
 
-  // because we would select between topologies before selecting
-  // internal node states, then reverse distribution cannot depend on 
+  // Because we would select between topologies before selecting
+  // internal node states, the reverse distribution cannot depend on 
   // the internal node state of the proposed new topology/alignment
 
   int C = two_way_topology_sample(p,rho,b);
@@ -150,6 +152,7 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T,b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -160,8 +163,9 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
 
   double L = P.T->branch(b).length();
 
-  double Pr1 = log(p[0].probability());
-  double Pr2 = log(p[1].probability());
+  //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
+  //  double Pr1 = log(p[0].probability());
+  //  double Pr2 = log(p[1].probability());
 
   branch_length_slice_function logp1(p[0],b);
   branch_length_slice_function logp2(p[1],b);
@@ -210,6 +214,7 @@ void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b)
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T, b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -270,6 +275,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T, b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -353,6 +359,7 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
   int b2 = P.T->directed_branch(nodes[5],nodes[2]);
   int b3 = P.T->directed_branch(nodes[5],nodes[3]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T,b1,b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -361,6 +368,7 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
   if (not extends(*p[1].T, *P.TC))
     return;
 
+  // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
   exchange_subtrees(*p[2].T,b1,b3);
   p[2].tree_propagate(); 
   p[2].LC_invalidate_branch(b);
@@ -373,9 +381,10 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
 
   double L = P.T->branch(b).length();
 
-  double Pr1 = log(p[0].probability());
-  double Pr2 = log(p[1].probability());
-  double Pr3 = log(p[2].probability());
+  //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
+  //  double Pr1 = log(p[0].probability());
+  //  double Pr2 = log(p[1].probability());
+  //  double Pr3 = log(p[2].probability());
 
   branch_length_slice_function logp1(p[0],b);
   branch_length_slice_function logp2(p[1],b);
@@ -433,6 +442,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   int b2 = P.T->directed_branch(nodes[5],nodes[2]);
   int b3 = P.T->directed_branch(nodes[5],nodes[3]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T,b1,b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -441,6 +451,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   if (not extends(*p[1].T, *P.TC))
     return;
 
+  // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
   exchange_subtrees(*p[2].T,b1,b3);
   p[2].tree_propagate(); 
   p[2].LC_invalidate_branch(b);
@@ -478,6 +489,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
   int b2 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[2]);
   int b3 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[3]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T,b1,b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -486,6 +498,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
   if (not extends(*p[1].T, *P.TC))
     return;
 
+  // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
   exchange_subtrees(*p[2].T,b1,b3);
   p[2].tree_propagate(); 
   p[2].LC_invalidate_branch(b);
