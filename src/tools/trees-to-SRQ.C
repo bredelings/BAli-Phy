@@ -57,6 +57,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("predicates",value<string>(),"predicates to examine")
     ("skip",value<int>()->default_value(0),"number of trees to skip")
     ("max",value<int>(),"maximum number of trees to read")
+    ("max-points",value<int>(),"maximum number of points to record")
     ("mode", value<string>()->default_value("SRQ"),"SRQ, sum, or values")
     ("invert","consider the inverse of each event instead")
     ("no-scale-x","don't scale X")
@@ -100,6 +101,10 @@ int main(int argc,char* argv[])
     if (args.count("max"))
       max = args["max"].as<int>();
 
+    int max_points = -1;
+    if (args.count("max-points"))
+      max_points = args["max-points"].as<int>();
+
     tree_sample tree_dist(std::cin,skip,max);
 
 
@@ -142,6 +147,7 @@ int main(int argc,char* argv[])
     {
       // write out plots
 
+      const double delta = 1.0/max_points;
       for(int i=0;i<plots.size();i++) {
 	double scale_x = plots[i].size()-1;
 	double scale_y = plots[i].back();
@@ -153,8 +159,19 @@ int main(int argc,char* argv[])
 	if (args.count("no-scale-y"))
 	  scale_y = 1;
 	
+	double x1 = 0;
+	double y1 = 0;
 	for(int j=0;j<plots[i].size();j++) 
-	  cout<<j/scale_x<<"   "<<plots[i][j]/scale_y<<endl;
+	{
+	  double x2 = double(j)/(plots[i].size()-1);
+	  double y2 = plots[i][j]/(plots[i].back());
+	  
+	  if ((x2-x1 > delta or y2-y1 > delta) or j==0 or j==plots[i].size()-1) {
+	    cout<<j/scale_x<<"   "<<plots[i][j]/scale_y<<endl;
+	    x1 = x2;
+	    y1 = y2;
+	  }
+	}
 	cout<<endl;
       }
     }
