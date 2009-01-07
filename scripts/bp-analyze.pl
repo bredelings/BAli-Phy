@@ -483,6 +483,7 @@ my $subsample = 1;
 my $min_support;
 my $muscle = 0;
 my $probcons = 0;
+my $sub_partitions=1;
 
 while ($#ARGV > -1) 
 {
@@ -508,6 +509,9 @@ while ($#ARGV > -1)
     }
     elsif ($arg =~ /--probcons/) {
 	$probcons = 1;
+    }
+    elsif ($arg =~ /--no-sub/) {
+	$sub_partitions=0;
     }
     else {
 	die "I don't recognize option $arg";
@@ -592,7 +596,9 @@ $skip="--skip=$burnin" if ($trees_file ne "Results/T1.trees");
 
 print "Summarizing topology distribution ... ";
 if (! more_recent_than("Results/consensus",$trees_file)) {
-    `trees-consensus $trees_file $max_arg $min_support_arg $skip --sub-partitions $consensus_arg > Results/consensus`;
+    my $sub_string = "--sub-partitions";
+    $sub_string = "" if (!$sub_partitions);
+    `trees-consensus $trees_file $max_arg $min_support_arg $skip $sub_string $consensus_arg > Results/consensus`;
 }
 print "done.\n";
 
@@ -613,11 +619,13 @@ for my $cvalue (@tree_consensus_values)
 	`pickout $value-consensus -n --multi-line < Results/consensus > Results/$tree.mtree`;
     }
 
+    if ($sub_partitions) {
     if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.mtree")) {
 	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg`;
     }
     if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.mtree")) {
 	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree`;
+    }
     }
     
     print "$tree ";
@@ -1137,26 +1145,26 @@ for my $tree (@trees)
     print INDEX "<td><a href=\"$tree-tree.pdf\">PDF</a></td>";
     print INDEX "<td><a href=\"$tree-tree.svg\">SVG</a></td>";
 
-    if (-f "Results/$tree.mtree" || -f "Results/$tree-mctree.svg" || -f "Results/$tree-mctree.pdf" ) {
+    if ($sub_partitions && (-f "Results/$tree.mtree" || -f "Results/$tree-mctree.svg" || -f "Results/$tree-mctree.pdf" )) {
 	print INDEX "<td>MC Tree:</td>";
     }
     else {
 	print INDEX "<td></td>"     
     }
 
-    if (-f "Results/$tree.mtree") {
+    if ($sub_partitions && -f "Results/$tree.mtree") {
 	print INDEX "<td><a href=\"$tree.mtree\">-L</a></td>"     
     }
     else {
 	print INDEX "<td></td>"     
     }
-    if (-f "Results/$tree-mctree.pdf") {
+    if ($sub_partitions && -f "Results/$tree-mctree.pdf") {
 	print INDEX "<td><a href=\"$tree-mctree.pdf\">PDF</a></td>";
     }
     else {
 	print INDEX "<td></td>"     
     }
-    if (-f "Results/$tree-mctree.svg") {
+    if ($sub_partitions && -f "Results/$tree-mctree.svg") {
 	print INDEX "<td><a href=\"$tree-mctree.svg\">SVG</a></td>";
     }
     else {
