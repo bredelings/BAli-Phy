@@ -38,6 +38,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("down-to",value<int>(),"number of taxa to keep")
     ("keep",value<int>(),"comma-separated list of taxon names to keep - remove others")
     ("remove",value<int>(),"comma-separated list of taxon names to remove")
+    ("min-letters",value<int>(),"Remove columns with fewer letters.")
+    ("verbose","Output more log messages on stderr.")
     ("show-lengths","just print out sequence lengths")
     ;
 
@@ -57,6 +59,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -100,6 +104,28 @@ ublas::matrix<int> pairwise_distance_matrix(const alignment& A)
       D(i,j) = pairwise_distance(A,i,j);
 
   return D;
+}
+
+int n_characters(const alignment& A, int column) 
+{
+  int count=0;
+  for(int i=0;i<A.n_sequences();i++)
+    if (A.character(column,i))
+      count++;
+  return count;
+}
+
+
+int remove_almost_empty_columns(alignment& A,int n) 
+{
+  int n_empty = 0;
+  for(int column=A.length()-1;column>=0;column--) {
+    if (n_characters(A,column) < n) {
+      A.delete_column(column);
+      n_empty++;
+    }
+  }
+  return n_empty;
 }
 
 
@@ -176,7 +202,7 @@ int main(int argc,char* argv[])
       keep[p] = 0;
     }
 
-    cerr<<"Removed "<<keep.size()-sum(keep)<<" sequences because of length constraints."<<endl;
+    if (log_verbose) cerr<<"Removed "<<keep.size()-sum(keep)<<" sequences because of length constraints."<<endl;
     //------- Find the most redundant --------//
 
     ublas::matrix<int> D = pairwise_distance_matrix(A);
@@ -228,14 +254,24 @@ int main(int argc,char* argv[])
 	  D(p1,i) = D(i,p1) = L+1;
       }
 
-    //------- Print out the alignment -------//
+    //------- Select the sequences -------//
     vector<sequence> sequences = A.get_sequences();
     alignment A2(A.get_alphabet());
     for(int i=0;i<A.n_sequences();i++)
       if (keep[i])
 	A2.add_sequence(sequences[i]);
 
+    //------- Remove columns with too few letters ------//
+    if (args.count("min-letters")) {
+      int m = args["min-letters"].as<int>();
+      remove_almost_empty_columns(A2,m);
+    }
+
+    //------- Print out the alignment -------//
     std::cout<<A2;
+
+    if (log_verbose) cerr<<"Went from "<<A.n_sequences()<<" -> "<<A2.n_sequences()<<" sequences."<<endl;
+    if (log_verbose) cerr<<"Went from "<<A.length()<<" -> "<<A2.length()<<" columns."<<endl;
 
   }
   catch (std::exception& e) {
