@@ -858,7 +858,7 @@ for my $alignment (@AU_alignments)
 print "Calculating marginal likelihood... ";
 
 if (!more_recent_than("Results/Pmarg",$parameters_file)) {
-`stats-select likelihood --no-header < $parameters_file | model_P > Results/Pmarg`;
+`stats-select likelihood --no-header < $parameters_file | tail -n+$burnin | model_P > Results/Pmarg`;
 }
 print "done.\n";
 my $marginal_prob = `cat Results/Pmarg`;
