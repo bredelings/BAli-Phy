@@ -116,7 +116,7 @@ void slice_sample_branch_length(Parameters& P,MoveStats& Stats,int b)
   
   //------------- Find new length --------------//
   
-  double sigma = loadvalue(P.keys,"slice_branch_fraction",1.5);
+  double sigma = loadvalue(P.keys,"slice_branch_sigma",1.5);
   // NOTE - it is OK to depend on L below.
   double w = sigma*(P.branch_mean()+L);
   branch_length_slice_function logp(P,b);
