@@ -130,6 +130,14 @@ vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2) {
   return mapping;
 }
 
+bool is_identity(const std::vector<int>& mapping)
+{
+  for(int i=0;i<mapping.size();i++)
+    if (mapping[i] != i)
+      return false;
+  return true;
+}
+
 bool contains_char(const string& s,char c) {
   for(int i=0;i<s.size();i++)
     if (s[i] == c)

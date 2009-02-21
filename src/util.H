@@ -243,6 +243,8 @@ std::vector<int> invert(const std::vector<int>&);
 /// compose the two mappings
 std::vector<int> compose(const std::vector<int>&,const std::vector<int>&);
 
+bool is_identity(const std::vector<int>&);
+
 template <typename T>
 std::vector<T> iota(T size)
 {
