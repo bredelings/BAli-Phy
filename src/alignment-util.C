@@ -71,10 +71,10 @@ alignment add_internal(alignment A,const Tree& T)
     A.add_sequence(s);
   }
 
-  // Set them to all wildcards
+  // Set them to all gaps
   for(int column=0;column<A.length();column++)
     for(int i=T.n_leaves();i<T.n_nodes();i++)
-      A(column,i) = alphabet::not_gap;
+      A(column,i) = alphabet::gap;
 
   return A;
 }
@@ -198,6 +198,35 @@ bool bit_set(const valarray<bool>& v) {
 }
 
 
+void connect_all_characters(const Tree& T,valarray<bool>& present)
+{
+  assert(present.size() == T.n_nodes());
+  
+  //---------- for each internal node... -------------//
+  for(int n1=T.n_leaves(); n1<T.n_nodes(); n1++) 
+  {
+    if (present[n1]) continue;
+
+    //------- if it is '-' and not ignored ... -------//
+    vector<const_nodeview> neighbors;
+    append(T[n1].neighbors(),neighbors);
+    assert(neighbors.size() == 3);
+
+    //---- check the three attatched subtrees ... ----//
+    int total=0;
+    for(int i=0;i<neighbors.size();i++)
+    {
+      valarray<bool> group = T.partition(n1,neighbors[i]);
+      if (bit_set(present and group))
+	total++;
+    }
+
+    if (total > 1)
+      present[n1] = true;
+  }
+  assert(all_characters_connected(T,present,vector<int>()));
+}
+
 /// Check that any two present nodes are connected by a path of present nodes
 bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<int>& _ignore) {
   assert(present.size() == T.n_nodes());
@@ -249,6 +278,30 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 	throw myexception()<<"Found a illegal index "<<A(column,i)
 			   <<"in column "<<column<<" of internal sequence '"
 			   <<A.seq(i).name<<"': only - and * are allowed";
+}
+
+
+/// Force internal node states are consistent by connecting leaf characters
+void connect_leaf_characters(alignment& A,const Tree& T)
+{
+  assert(A.n_sequences() == T.n_nodes());
+
+  for(int column=0;column<A.length();column++)
+  {
+    // construct leaf presence/absence mask
+    valarray<bool> present(T.n_nodes());
+    for(int i=0;i<T.n_nodes();i++)
+      present[i] = not A.gap(column,i);
+    
+    // compute presence/absence for internal nodes
+    connect_all_characters(T,present);
+
+    // put present characters into the alignment.
+    for(int i=T.n_leaves();i<T.n_nodes();i++) {
+      if (present[i])
+	A(column,i) = alphabet::not_gap;
+    }
+  }
 }
 
 /// Check that internal node states are consistent
@@ -306,16 +359,17 @@ void check_leaf_sequences(const alignment& A,int n_leaves) {
     if (not (a(sequences[i]) == a(A.seq(i)))) {
       cerr<<"leaf sequence "<<i<<" corrupted!\n";
 
-      cerr<<sequences[i]<<endl;
+      cerr<<"orig: "<<A.seq(i)<<endl;
 
-      cerr<<A.seq(i)<<endl;
+      cerr<<"new : "<<sequences[i]<<endl;
 
       std::abort();
     }
   }
 }
 
-void check_alignment(const alignment& A,const Tree& T,bool internal_sequences) {
+void check_alignment(const alignment& A,const Tree& T,bool internal_sequences) 
+{
   // First check that there are no illegal letters
   check_letters_OK(A);
 
@@ -444,11 +498,12 @@ long int homologies_preserved(const ublas::matrix<int>& M1,const ublas::matrix<i
     for(int i=0;i<M1.size2();i++)
       if (M1(column,i) != alphabet::gap and M1(column,i) != alphabet::unknown)
 	for(int j=0;j<M1.size2();j++)
-	  if (j != i)
+	  if (j != i) {
 	    if (A_match(M1,column,i,j,M2,column_indices2))
 	      match++;
 	    else
 	      mismatch++;
+	  }
 	
   assert(homologies_total(M1) == homologies_total(M2));
   assert(homologies_total(M1) == match + mismatch);
@@ -721,6 +776,9 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
   alignment A;
   string line;
   int nth=0;
+
+  vector<string> n1;
+
   while(ifile) 
   {
     // CHECK if an alignment begins here
@@ -755,8 +813,10 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 
     // READ the next alignment
     try {
-      if (alignments.empty())
+      if (alignments.empty()) {
 	A.load(alphabets,sequence_format::read_fasta,ifile);
+	n1 = sequence_names(A);
+      }
       else 
 	ifile>>A;
     }
@@ -773,6 +833,15 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     if (A.n_sequences() == 0) 
       throw myexception(string("Alignment didn't contain any sequences!"));
     
+
+    // Check the names and stuff.
+    vector<string> n2 = sequence_names(A);
+
+    if (n1 != n2) {
+      vector<int> mapping = compute_mapping(n2,n1);
+      A = reorder_sequences(A,mapping);
+    }
+
     // STORE the alignment if we're not going to subsample it
     alignments.push_back(A);
     total++;
@@ -838,6 +907,8 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets) {
   vector<alignment> alignments;
   
+  vector<string> n1;
+
   alignment A;
   while(ifile) {
 
@@ -850,8 +921,10 @@ vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const 
     
     // READ the next alignment
     try {
-      if (alignments.empty())
+      if (alignments.empty()) {
 	A.load(alphabets,sequence_format::read_fasta,ifile);
+	n1 = sequence_names(A);
+      }
       else 
 	ifile>>A;
     }
@@ -868,6 +941,14 @@ vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const 
     if (A.n_sequences() == 0) 
       throw myexception(string("Alignment didn't contain any sequences!"));
     
+    // Check the names and stuff.
+    vector<string> n2 = sequence_names(A);
+
+    if (n1 != n2) {
+      vector<int> mapping = compute_mapping(n2,n1);
+      A = reorder_sequences(A,mapping);
+    }
+
     // STORE the alignment if we're not going to skip it
     alignments.push_back(A);
   }

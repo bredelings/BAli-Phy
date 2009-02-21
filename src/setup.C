@@ -241,6 +241,9 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   remap_T_indices(T,A);
 
+  if (internal_sequences)
+    connect_leaf_characters(A,T);
+
   //---- Check to see that internal nodes satisfy constraints ----//
   check_alignment(A,T,internal_sequences);
 }
@@ -289,6 +292,9 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
 
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   remap_T_indices(T,A);
+
+  if (internal_sequences)
+    connect_leaf_characters(A,T);
 
   //---- Check to see that internal nodes satisfy constraints ----//
   check_alignment(A,T,internal_sequences);
