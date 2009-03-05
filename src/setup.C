@@ -25,13 +25,13 @@ using boost::shared_ptr;
 /// Reorder internal sequences of A to correspond to standardized node names for T
 alignment standardize(const alignment& A, const SequenceTree& T) 
 {
-  alignment A2 = A;
   SequenceTree T2 = T;
 
   // standardize NON-LEAF node and branch names in T
   vector<int> mapping = T2.standardize();
+  vector<int> new_order = invert(mapping);
 
-  return reorder_sequences(A,mapping);
+  return reorder_sequences(A,new_order);
 }
 
 int letter_count(const alignment& A,int l) 
@@ -308,8 +308,9 @@ void link(vector<alignment>& alignments, SequenceTree& T, bool internal_sequence
       throw myexception()<<"Alignment #"<<i+1<<" has "<<alignments[i].n_sequences()<<" sequences, but the previous alignments have "<<alignments[0].n_sequences()<<" sequences!";
 
     vector<int> mapping = compute_mapping(sequence_names(alignments[i]),sequence_names(alignments[0]));
+    vector<int> new_order = invert(mapping);
 
-    alignments[i] = reorder_sequences(alignments[i],mapping);
+    alignments[i] = reorder_sequences(alignments[i],new_order);
   }
 
   for(int i=0;i<alignments.size();i++) 
@@ -324,8 +325,9 @@ void link(vector<alignment>& alignments, RootedSequenceTree& T, bool internal_se
       throw myexception()<<"Alignment #"<<i+1<<" has "<<alignments[i].n_sequences()<<" sequences, but the previous alignments have "<<alignments[0].n_sequences()<<" sequences!";
 
     vector<int> mapping = compute_mapping(sequence_names(alignments[i]),sequence_names(alignments[0]));
+    vector<int> new_order = invert(mapping);
 
-    alignments[i] = reorder_sequences(alignments[i],mapping);
+    alignments[i] = reorder_sequences(alignments[i],new_order);
   }
 
   for(int i=0;i<alignments.size();i++) 

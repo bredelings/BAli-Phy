@@ -37,8 +37,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("shorter-than",value<unsigned>(),"only leave taxa w/ sequences shorter than this")
     ("down-to",value<int>(),"number of taxa to keep")
     ("keep",value<int>(),"comma-separated list of taxon names to keep - remove others")
-    ("remove",value<int>(),"comma-separated list of taxon names to remove")
+    ("remove",value<string>(),"comma-separated list of taxon names to remove")
     ("min-letters",value<int>(),"Remove columns with fewer letters.")
+    ("remove-unique",value<int>(),"Remove insertions in a single sequence if longer than this many letters")
     ("verbose","Output more log messages on stderr.")
     ("show-lengths","just print out sequence lengths")
     ;
@@ -86,6 +87,8 @@ unsigned pairwise_distance(const alignment& A,int i,int j)
   const int L = A.length();
   unsigned D=0;
 
+  if (i==j) return 0;
+
   for(int c=0;c<L;c++)
     if (A(c,i) >= 0 and A(c,i) != A(c,j))
       D++;
@@ -106,30 +109,37 @@ ublas::matrix<int> pairwise_distance_matrix(const alignment& A)
   return D;
 }
 
-int n_characters(const alignment& A, int column) 
+int remove_almost_empty_columns(alignment& A,int n)
 {
-  int count=0;
-  for(int i=0;i<A.n_sequences();i++)
-    if (A.character(column,i))
-      count++;
-  return count;
-}
+  int length = 0;
 
-
-int remove_almost_empty_columns(alignment& A,int n) 
-{
-  int n_empty = 0;
-  for(int column=A.length()-1;column>=0;column--) {
-    if (n_characters(A,column) < n) {
-      A.delete_column(column);
-      n_empty++;
+  for(int column=0;column<A.length();column++)
+    if (n_characters(A,column) >= n) 
+    {
+      if (column != length)
+	for(int i=0;i<A.n_sequences();i++)
+	  A(length,i) = A(column,i);
+      length++;
     }
-  }
+
+  int n_empty = A.length() - length;
+
+  A.changelength(length);
+
   return n_empty;
 }
 
+int unique_letter(const alignment& A,int c)
+{
+  if (n_characters(A,c) != 1) return -1;
 
-int main(int argc,char* argv[]) 
+  for(int i=0;i<A.n_sequences();i++)
+    if (A.character(c,i))
+      return i;
+}
+
+
+int main(int argc,char* argv[])
 {
   try {
     cerr.precision(10);
@@ -143,7 +153,11 @@ int main(int argc,char* argv[])
     const int N = A.n_sequences();
     const int L = A.length();
 
+    if (log_verbose) 
+      cerr<<"Read "<<N<<" sequences at length "<<L<<endl;
+
     vector<string> names = sequence_names(A);
+
     vector<int> AL(N);
     for(int i=0;i<N;i++)
       AL[i] = A.seqlength(i);
@@ -155,41 +169,29 @@ int main(int argc,char* argv[])
       exit(0);
     }
 
-    //----- Standardize order by alphabetical order of names ----//
-
     vector<int> keep(A.n_sequences(),1);
 
-    if (args.count("longer-than")) 
+    //----------------- remove by length ------------------//
+
+    if (args.count("longer-than"))
     {
       unsigned cutoff = args["longer-than"].as<unsigned>();
       
       for(int i=0;i<A.n_sequences();i++)
-	if (keep[i] and A.seqlength(i) <= cutoff)
+	if (AL[i] <= cutoff)
 	  keep[i] = 0;
     }
 
-    if (args.count("shorter-than")) 
+    if (args.count("shorter-than"))
     {
       unsigned cutoff = args["shorter-than"].as<unsigned>();
       
       for(int i=0;i<A.n_sequences();i++)
-	if (keep[i] and A.seqlength(i) >= cutoff)
+	if (AL[i] >= cutoff)
 	  keep[i] = 0;
     }
 
-    //----------------------------------------//
-
-    vector<string> remove;
-    if (args.count("remove"))
-      remove = split(args["remove"].as<string>(),',');
-
-    for(int i=0;i<remove.size();i++) {
-      int r = find_index(names,remove[i]);
-      if (r == -1)
-	throw myexception()<<"remove: can't find sequence '"<<remove[i]<<"' to remove.";
-      keep[r] = 0;
-    }
-      
+    //--------------------- keep -------------------------//
 
     vector<string> protect;
     if (args.count("keep"))
@@ -199,51 +201,56 @@ int main(int argc,char* argv[])
       int p = find_index(names,protect[i]);
       if (p == -1)
 	throw myexception()<<"keep: can't find sequence '"<<protect[i]<<"' to keep.";
-      keep[p] = 0;
+      keep[p] = 2;
     }
 
-    if (log_verbose) cerr<<"Removed "<<keep.size()-sum(keep)<<" sequences because of length constraints."<<endl;
+    //-------------------- remove ------------------------//
+
+    vector<string> remove;
+    if (args.count("remove"))
+      remove = split(args["remove"].as<string>(),',');
+
+    for(int i=0;i<remove.size();i++) {
+      int r = find_index(names,remove[i]);
+      if (r == -1)
+	throw myexception()<<"remove: can't find sequence '"<<remove[i]<<"' to remove.";
+      if (keep[r] == 2)
+	throw myexception()<<"Can't both keep AND remove '"<<remove[i]<<"'.";
+      keep[r] = 0;
+    }
+      
+
+    if (log_verbose and keep.size() != sum(keep)) cerr<<"Removed "<<keep.size()-sum(keep)<<" sequences because of length constraints."<<endl;
+
     //------- Find the most redundant --------//
+    ublas::matrix<int> D;
 
-    ublas::matrix<int> D = pairwise_distance_matrix(A);
-    for(int i=0;i<N;i++)
-      for(int j=0;j<N;j++)
-	if (not keep[i] or not keep[j])
-	  D(i,j) = L+1;
-	else if (i==j)
-	  D(i,j) = L;
-
-    while(true)
+    if (args.count("down-to") or args.count("cutoff"))
     {
-      std::pair<int,int> p = argmin(D);
-      
-      int p1 = p.first;
-      int p2 = p.second;
-      
-      int MD = D(p1,p2);
-      
-      bool done = true;
-      if (args.count("down-to") and sum(keep) > args["down-to"].as<int>()) done = false;
-      if (args.count("cutoff")  and MD < args["cutoff"].as<unsigned>()) done = false;
-      if (done) break;
-      
-      
-      //remove the second sequence, if they are the same
-      if (D(p1,p2) == D(p2,p1) and p1 < p2)
-	std::swap(p1,p2);
-      
-      keep[p1] = 0;
-      for(int i=0;i<N;i++)
-	D(p1,i) = D(i,p1) = L+1;
-    }
+      D = pairwise_distance_matrix(A);
 
-    if (args.count("down-to")) 
-      while(sum(keep) > args["down-to"].as<int>())
+      // make sure that removed sequences are never part of an argmin pair.
+      for(int i=0;i<N;i++)
+	for(int j=0;j<N;j++)
+	  if (not keep[i] or not keep[j])
+	    D(i,j) = L+1;
+	  else if (i==j)
+	    D(i,j) = L;
+
+      while(true)
       {
 	std::pair<int,int> p = argmin(D);
-	
+      
 	int p1 = p.first;
 	int p2 = p.second;
+	
+	int MD = D(p1,p2);
+	
+	bool done = true;
+	if (args.count("down-to") and sum(keep) > args["down-to"].as<int>()) done = false;
+	if (args.count("cutoff")  and MD < args["cutoff"].as<unsigned>()) done = false;
+	if (done) break;
+	
 	
 	//remove the second sequence, if they are the same
 	if (D(p1,p2) == D(p2,p1) and p1 < p2)
@@ -253,13 +260,51 @@ int main(int argc,char* argv[])
 	for(int i=0;i<N;i++)
 	  D(p1,i) = D(i,p1) = L+1;
       }
+    }
 
     //------- Select the sequences -------//
-    vector<sequence> sequences = A.get_sequences();
-    alignment A2(A.get_alphabet());
-    for(int i=0;i<A.n_sequences();i++)
-      if (keep[i])
-	A2.add_sequence(sequences[i]);
+    alignment A2 = select_rows(A,keep);
+
+    //------- Remove consecutive unique sites -----//
+
+    // Question: should I remove ALL of the sites, or just the sites beyond L aa/nucs?
+    //    And, how would I remove the MIDDLE sites?
+    // Question: should I remove only sites that have no ?  How should I do so?
+    if (args.count("remove-unique"))
+    {
+      int L = args["remove-unique"].as<int>();
+
+      vector<int> keep_sites(A2.length(),1);
+
+      int last=-1;
+      int count=0;
+      for(int i=0;i<keep_sites.size();i++)
+      {
+	int u = unique_letter(A,i);
+	if (u == -1)
+	  count = 0;
+	else {
+	  if (u == last)
+	    count++;
+	  else
+	    count = 1;
+	}
+	if (count > L)
+	  keep_sites[i] = 0;
+	if (count == L+1)
+	  for(int j=0;j<L-1;j++)
+	    keep_sites[i-j-1] = 0;
+	last = u;
+      }
+
+      // actually remove the unwanted sites
+      vector<int> sites;
+      for(int i=0;i<keep_sites.size();i++)
+	if (keep_sites[i])
+	  sites.push_back(i);
+      A2 = select_columns(A2,sites);
+    }
+
 
     //------- Remove columns with too few letters ------//
     if (args.count("min-letters")) {

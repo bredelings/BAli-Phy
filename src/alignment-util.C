@@ -13,20 +13,6 @@ using std::istream;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
 
-alignment reorder_sequences(const alignment& A, const vector<int>& mapping) 
-{
-  alignment A2 = A;
-
-  for(int i=0;i<A2.n_sequences();i++) {
-    if (mapping[i] == i) continue;
-
-    A2.seq(mapping[i]) = A.seq(i);
-    for(int column=0;column<A2.length();column++)
-      A2(column,mapping[i]) = A(column,i);
-  }
-  return A2;
-}
-
 alignment chop_internal(alignment A, bool keep_empty_columns) 
 {
   int N = (A.n_sequences()+2)/2;
@@ -349,7 +335,7 @@ void check_letters_OK(const alignment& A) {
 
 void check_leaf_sequences(const alignment& A,int n_leaves) {
 
-  vector<sequence> sequences = A.get_sequences();
+  vector<sequence> sequences = A.convert_to_sequences();
 
   const alphabet& a = A.get_alphabet();
 
@@ -837,9 +823,10 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     // Check the names and stuff.
     vector<string> n2 = sequence_names(A);
 
-    if (n1 != n2) {
-      vector<int> mapping = compute_mapping(n2,n1);
-      A = reorder_sequences(A,mapping);
+    if (n1 != n2) { 
+      // inverse of the mapping n2->n1
+      vector<int> new_order = compute_mapping(n1,n2);
+      A = reorder_sequences(A,new_order);
     }
 
     // STORE the alignment if we're not going to subsample it
@@ -945,8 +932,9 @@ vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const 
     vector<string> n2 = sequence_names(A);
 
     if (n1 != n2) {
-      vector<int> mapping = compute_mapping(n2,n1);
-      A = reorder_sequences(A,mapping);
+      // inverse of the mapping n2->n1
+      vector<int> new_order = compute_mapping(n1,n2);
+      A = reorder_sequences(A,new_order);
     }
 
     // STORE the alignment if we're not going to skip it
@@ -1135,4 +1123,57 @@ vector<unsigned> sequence_lengths(const alignment& A)
 }
 
 
+alignment shuffle_alignment(const alignment& A, const vector<int>& order)
+{
+  unsigned L = A.length();
+
+  alignment A2(A.get_alphabet(), order.size(), L);
+
+  for(int i=0;i<order.size();i++) 
+  {
+    int j = order[i];
+    assert(0 <= j and j < A.n_sequences());
+
+    A2.seq(i) = A.seq(j);
+    for(int c=0;c<L;c++)
+      A2(c,i) = A(c,j);
+  }
+
+  return A2;
+}
+
+alignment reorder_sequences(const alignment& A,const vector<int>& order)
+{
+  return shuffle_alignment(A,order);
+}
+
+alignment select_rows(const alignment& A,const vector<int>& keep)
+{
+  bool changed=false;
+
+  vector<int> order;
+  order.reserve(keep.size());
+  for(int i=0;i<keep.size();i++)
+    if (keep[i])
+      order.push_back(i);
+    else
+      changed=true;
+
+  if (changed)
+    return reorder_sequences(A,order);
+  else
+    return A;
+}
+
+alignment select_columns(const alignment& A,const vector<int>& sites) 
+{
+  alignment A2 = A;
+  A2.changelength(sites.size());
+  for(int i=0;i<sites.size();i++) {
+    int column = sites[i];
+    for(int j=0;j<A2.n_sequences();j++)
+      A2(i,j) = A(column,j);
+  }
+  return A2;
+}
 

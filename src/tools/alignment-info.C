@@ -352,7 +352,7 @@ int main(int argc,char* argv[])
 
     if (dynamic_cast<const Nucleotides*>(&a)) 
     {
-      vector<sequence> sequences = A.get_sequences();
+      vector<sequence> sequences = A.convert_to_sequences();
 
       vector<int> found(3,0);
       add(found, find_triplet( sequences , "TAA" ) );

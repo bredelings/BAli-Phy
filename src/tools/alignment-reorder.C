@@ -170,7 +170,8 @@ int main(int argc,char* argv[])
     vector<int> mapping2 = get_leaf_order(T);
 
     // re-phrase the mapping in terms of the order of sequence in A
-    vector<int> mapping = compose(mapping2,invert(mapping1));
+    vector<int> mapping = compose(invert(mapping1),mapping2);
+    vector<int> order = invert(mapping);
 
     if (log_verbose) {
       cerr<<"alignment-reorder: ";
@@ -182,10 +183,8 @@ int main(int argc,char* argv[])
     }
 
     //------- Print out the alignment -------//
-    vector<sequence> sequences = A.get_sequences();
-    alignment A2(A.get_alphabet());
-    for(int i=0;i<T.n_leaves();i++)
-      A2.add_sequence(sequences[mapping[i]]);
+
+    alignment A2 = reorder_sequences(A,order);
 
     std::cout<<A2;
 

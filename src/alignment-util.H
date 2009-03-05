@@ -130,4 +130,7 @@ std::vector<unsigned> sequence_lengths(const alignment& A);
 
 std::vector<unsigned> sequence_lengths(const alignment& A,unsigned n);
 
+alignment select_rows(const alignment& A,const vector<int>& keep);
+
+alignment select_columns(const alignment& A,const vector<int>& sites);
 #endif
