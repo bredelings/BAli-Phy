@@ -1,4 +1,5 @@
 #include "index-matrix.H"
+#include "alignment-util.H"
 #include "util.H"
 
 using namespace std;
@@ -132,6 +133,33 @@ index_matrix unaligned_matrix(const vector<int>& L)
   //  if (M.columns != M.n_columns()) {std::cerr<<"B";abort();}
 
   return M;
+}
+
+index_matrix::index_matrix(const alignment& A)
+  :ublas::matrix<int>(M(A)),
+   column_index(A.n_sequences()),
+   columns(A.length()),
+   unknowns(0)
+{
+  vector<int> L(A.n_sequences());
+
+  for(int i=0;i<L.size();i++) {
+    column_index[i].resize(A.seqlength(i));
+    for(int j=0;j<L[i];j++)
+      column(i,j) = -1;
+  }
+
+  for(int c=0;c<size1();c++) {
+    for(int s=0;s<size2();s++) {
+      int index = (*this)(c,s);
+      if (index >= 0)
+	column(s,index) = c;
+    }
+  }
+
+  for(int i=0;i<L.size();i++)
+    for(int j=0;j<L[i];j++)
+      assert(column(i,j) >= 0);
 }
 
 bool index_matrix::columns_conflict(int c1, int c2) const
@@ -932,7 +960,7 @@ ublas::matrix<int> get_ordered_matrix(const index_matrix& M)
   return M2;
 }
 
-alignment get_alignment(const ublas::matrix<int>& M, alignment& A1) 
+alignment get_alignment(const ublas::matrix<int>& M, const alignment& A1) 
 {
   alignment A2 = A1;
   A2.changelength(M.size1());
@@ -962,5 +990,7 @@ alignment get_alignment(const ublas::matrix<int>& M, alignment& A1)
   return A2;
 }
 
-
-
+alignment get_ordered_alignment(const alignment& A)
+{
+  return get_alignment(get_ordered_matrix(index_matrix(A)),A);
+}

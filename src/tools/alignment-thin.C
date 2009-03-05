@@ -9,6 +9,7 @@
 #include "setup.H"
 #include "distance-methods.H"
 #include <utility>
+#include "index-matrix.H"
 
 using std::pair;
 
@@ -42,6 +43,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("remove-unique",value<int>(),"Remove insertions in a single sequence if longer than this many letters")
     ("verbose","Output more log messages on stderr.")
     ("show-lengths","just print out sequence lengths")
+    ("sort","Sort partially ordered columns to minimize the number of visible indels.")
     ;
 
   // positional options
@@ -311,6 +313,9 @@ int main(int argc,char* argv[])
       int m = args["min-letters"].as<int>();
       remove_almost_empty_columns(A2,m);
     }
+
+    if (args.count("sort"))
+      A2 = get_ordered_alignment(A2);
 
     //------- Print out the alignment -------//
     std::cout<<A2;
