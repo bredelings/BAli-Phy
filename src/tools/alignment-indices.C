@@ -63,6 +63,37 @@ vector<int> column_count(const alignment& A, int c)
   return count;
 }
 
+std::pair<vector<int>,vector<int> > find_major_character(const alignment& A,int allowed_differences)
+{
+  const alphabet& a = A.get_alphabet();
+
+  vector<int> majority(A.length(), alphabet::unknown);
+
+  vector<int> safe(A.length(), 0);
+
+  for(int c=0;c<majority.size();c++) 
+  {
+    vector<int> count = column_count(A,c);
+    
+    int max_letter = argmax(count);
+    majority[c] = max_letter;
+    
+    // NOTE! Major character is gap if there is more than 1 gap!
+    if (count[a.size()] > 1)
+      majority[c] = alphabet::gap;
+    else if (A.n_sequences() - count[max_letter] <= allowed_differences)
+      safe[c] = 1;
+    
+    /*
+      if (safe[c] == 1) {
+      std::cerr<<"Column "<<c+1<<" is safe: "<<a.lookup(max_letter)<<"\n";
+      }
+    */
+  }
+  
+  return std::pair<vector<int>,vector<int> >(majority,safe);
+}
+
 int main(int argc,char* argv[]) 
 { 
 
@@ -90,22 +121,9 @@ int main(int argc,char* argv[])
     //------- Determine invariant sites -----//
     int allowed_differences = args["differences"].as<int>();
 
-    vector<int> majority(A.length(), alphabet::unknown);
-
-    vector<int> safe(A.length(), 0);
-
-    for(int c=0;c<majority.size();c++) 
-    {
-      vector<int> count = column_count(A,c);
-
-      int max_letter = argmax(count);
-      majority[c] = max_letter;
-
-      if (count[a.size()])
-	majority[c] = alphabet::gap;
-      else if (A.n_sequences() - count[max_letter] <= allowed_differences)
-	safe[c] = 1;
-    }
+    std::pair<vector<int>,vector<int> > result = find_major_character(A,allowed_differences);
+    vector<int> majority = result.first;
+    vector<int> safe     = result.second;
 
     int invariant = -1;
     vector<int> safe2 = safe;
@@ -119,7 +137,7 @@ int main(int argc,char* argv[])
 	bool ok = true;
 	if (not safe2[i]) continue;
 
-
+	// Unsafe if we are in 3 residues of a gap
 	for(int k=i-3;k<=i+3 and ok;k++) 
         {
 	  if (k < 0 or k >= A.length())
@@ -128,6 +146,7 @@ int main(int argc,char* argv[])
 	    ok = false;
 	}
 
+	// Unsafe if we are in @invariant characters of a gap or an unsafe column
 	for(int k=i-invariant;k<=i+invariant and ok;k++) 
         {
 	  if (k < 0 or k >= A.length())
