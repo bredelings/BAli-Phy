@@ -170,8 +170,8 @@ int main(int argc,char* argv[])
     vector<int> mapping2 = get_leaf_order(T);
 
     // re-phrase the mapping in terms of the order of sequence in A
-    vector<int> mapping = compose(invert(mapping1),mapping2);
-    vector<int> order = invert(mapping);
+    // 
+    vector<int> order = compose(mapping2,invert(mapping1));
 
     if (log_verbose) {
       cerr<<"alignment-reorder: ";
