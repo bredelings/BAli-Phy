@@ -255,7 +255,7 @@ int main(int argc,char* argv[])
 	
 	
 	//remove the second sequence, if they are the same
-	if (D(p1,p2) == D(p2,p1) and p1 < p2)
+	if (D(p1,p2) == D(p2,p1) and A.seq(p1).comment.size() > A.seq(p2).comment.size())
 	  std::swap(p1,p2);
 	
 	keep[p1] = 0;
