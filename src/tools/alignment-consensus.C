@@ -67,7 +67,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: alignment-consensus [OPTIONS] < alignments-file\n";
-    cout<<"Compute a consensus alignment for the alignments given.\n\n";
+    cout<<"Construct a consensus alignment to summarize an alignment sample.\n\n";
     cout<<all<<"\n";
     exit(0);
   }
