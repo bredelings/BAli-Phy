@@ -41,9 +41,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("remove",value<string>(),"comma-separated list of taxon names to remove")
     ("min-letters",value<int>(),"Remove columns with fewer letters.")
     ("remove-unique",value<int>(),"Remove insertions in a single sequence if longer than this many letters")
-    ("verbose","Output more log messages on stderr.")
+    ("verbose,v","Output more log messages on stderr.")
     ("show-lengths","just print out sequence lengths")
     ("sort","Sort partially ordered columns to minimize the number of visible indels.")
+    ("remove-crazy",value<int>(),"Remove sequence that have deleted conserved sites")
+    ("conserved-fraction",value<double>()->default_value(0.75),"Fraction of sequences that must contain a letter for it to be considered conserved.")
     ;
 
   // positional options
@@ -223,6 +225,45 @@ int main(int argc,char* argv[])
       
 
     if (log_verbose and keep.size() != sum(keep)) cerr<<"Removed "<<keep.size()-sum(keep)<<" sequences because of length constraints."<<endl;
+
+    //-------------------- remove ------------------------//
+
+    if (args.count("remove-crazy")) 
+    {
+      int n_remove = args["remove-crazy"].as<int>();
+      double conserved_fraction = args["conserved-fraction"].as<double>();
+
+      vector<int> conserved(A.n_sequences());
+      int n_conserved_columns=0;
+      for(int i=0;i<A.length();i++)
+      {
+	double fraction = double(n_characters(A,i))/A.n_sequences();
+	if (fraction < conserved_fraction) continue;
+
+	n_conserved_columns++;
+	
+	for(int j=0;j<A.n_sequences();j++)
+	  if (A.character(i,j))
+	    conserved[j]++;
+      }
+
+      vector<int> order = iota<int>(conserved.size());
+      sort(order.begin(), order.end(), sequence_order<int>(conserved));
+
+      if (log_verbose) {
+	cerr<<"total # conserved columns = "<<n_conserved_columns<<endl;
+	cerr<<"  conserved: ";
+	cerr<<"  min = "<<conserved[order[0]];
+	cerr<<"  median = "<<conserved[order[order.size()/2]];
+	cerr<<"  max = "<<conserved[order.back()]<<endl;
+      }
+      for(int i=0;i<n_remove;i++) {
+	if ("remove_crazy")
+	  cerr<<"Remove crazy: "<<names[order[i]]<<"    "<<conserved[order[i]]<<endl;
+	keep[order[i]] = 0;
+      }
+
+    }
 
     //------- Find the most redundant --------//
     ublas::matrix<int> D;
