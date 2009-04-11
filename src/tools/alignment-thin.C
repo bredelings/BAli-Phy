@@ -140,6 +140,8 @@ int unique_letter(const alignment& A,int c)
   for(int i=0;i<A.n_sequences();i++)
     if (A.character(c,i))
       return i;
+
+  return -1;
 }
 
 
@@ -319,25 +321,47 @@ int main(int argc,char* argv[])
 
       vector<int> keep_sites(A2.length(),1);
 
-      int last=-1;
-      int count=0;
-      for(int i=0;i<keep_sites.size();i++)
+      vector<int> unique(A2.length(),-1);
+      for(int i=0;i<A2.length();i++)
+	unique[i] = unique_letter(A,i);
+
+      vector<vector<int> > columns = column_lookup(A);
+
+      for(int i=0;i<A.n_sequences();i++)
       {
-	int u = unique_letter(A,i);
-	if (u == -1)
-	  count = 0;
-	else {
-	  if (u == last)
+	int count =0;
+
+	for(int j=0;j<columns[i].size()+1;j++)
+	{
+	  int u = -1;
+	  if (j< columns[i].size())
+	    u = unique[columns[i][j]];
+
+	  if (u == i)
 	    count++;
-	  else
-	    count = 1;
+	  else {
+	    // close out the current insertion if there is one
+	    if (count > L) 
+	    {
+	      // remove count-L sites from the middle of the insertion
+	      int start = j - count;
+	      int end   = j - 1;
+
+	      if (start == 0)
+		end -= L;
+	      else if (end == columns[i].size()-1)
+		start += L;
+	      else {
+		start += L/2;
+		end   -= (L-L/2);
+	      }
+
+	      for(int k=start;k<=end;k++)
+		keep_sites[columns[i][k]]=0;
+	    }
+	    count = 0;
+	  }
 	}
-	if (count > L)
-	  keep_sites[i] = 0;
-	if (count == L+1)
-	  for(int j=0;j<L-1;j++)
-	    keep_sites[i-j-1] = 0;
-	last = u;
       }
 
       // actually remove the unwanted sites
