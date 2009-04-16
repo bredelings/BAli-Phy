@@ -34,6 +34,7 @@ namespace mpi = boost::mpi;
 #include <boost/program_options.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include "substitution.H"
 #include "myexception.H"
 #include "mytypes.H"
 #include "sequencetree.H"
@@ -1344,7 +1345,34 @@ void check_alignment_values(const alignment& A,const string& filename)
   }
 }
 
-int main(int argc,char* argv[]) 
+time_t start_time = time(NULL);
+
+void show_ending_messages()
+{
+  time_t end_time = time(NULL);
+  
+  cout<<endl;
+  cout<<"start time: "<<ctime(&start_time)<<endl;
+  cout<<"  end time: "<<ctime(&end_time)<<endl;
+  cout<<"total time: "<<duration(end_time-start_time)<<endl;
+  cout<<endl;
+  cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
+  cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
+  cout<<"total branches peeled = "<<substitution::total_peel_branches<<endl;
+}
+
+void die_on_signal(int sig)
+{
+  // Throwing exceptions from signal handlers is not allowed.  Bummer.
+  cout<<"recieved signal "<<sig<<".  Dying."<<endl;
+  cerr<<"recieved signal "<<sig<<".  Dying."<<endl;
+
+  show_ending_messages();
+
+  exit(3);
+}
+
+int main(int argc,char* argv[])
 { 
   int n_procs = 1;
   int proc_id = 0;
@@ -1372,6 +1400,8 @@ int main(int argc,char* argv[])
   ostream err_both(&tee_err);
 
   time_t start_time = time(NULL);
+
+  int retval=0;
 
   try {
 #if defined(HAVE_FENV_H) && !defined(NDEBUG)
@@ -1465,7 +1495,7 @@ int main(int argc,char* argv[])
     tee_out.setbuf2(s_out.rdbuf());
     tee_err.setbuf2(s_err.rdbuf());
 
-    cout.flush() ;
+    cout.flush() ; cout.rdbuf(s_out.rdbuf());
     cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
     clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
@@ -1567,6 +1597,12 @@ int main(int argc,char* argv[])
 
       signal(SIGHUP,SIG_IGN);
       signal(SIGXCPU,SIG_IGN);
+
+      
+      struct sigaction sa_old;
+      struct sigaction sa_new;
+      sa_new.sa_handler = &die_on_signal;
+      sigaction(SIGINT,&sa_new,&sa_old);
 #endif
 
       long int max_iterations = args["iterations"].as<long int>();
@@ -1576,26 +1612,21 @@ int main(int argc,char* argv[])
       // Close all the streams, and write a notification that we finished all the iterations.
       // close_files(files);
     }
-    time_t end_time = time(NULL);
-
-    s_out<<endl;
-    s_out<<"start time: "<<ctime(&start_time)<<endl;
-    s_out<<"  end time: "<<ctime(&end_time)<<endl;
-    s_out<<"total time: "<<duration(end_time-start_time)<<endl;
   }
   catch (std::bad_alloc&) {
     err_both<<"Doh!  Some kind of memory problem?\n";
     report_mem();
-    exit(1);
+    retval=2;
   }
   catch (std::exception& e) {
     if (n_procs > 1)
       err_both<<"bali-phy: Error["<<proc_id<<"]! "<<e.what()<<endl;
     else
       err_both<<"bali-phy: Error! "<<e.what()<<endl;
-    exit(1);
+    retval=1;
   }
 
-  return 0;
-}
+  show_ending_messages();
 
+  return retval;
+}
