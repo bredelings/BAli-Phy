@@ -214,6 +214,7 @@ namespace MCMC {
     bool upper_bound;
     double upper;
     double W;
+    double (*window)(const Parameters&);
 
     double (*transform)(double);
     double (*inverse)(double);
@@ -232,6 +233,12 @@ namespace MCMC {
 
     Slice_Move(const string& s, const string& v,int i,
 	       bool lb,double l,bool ub,double u,double W_);
+
+    Slice_Move(const string& s,int i,
+	       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&));
+
+    Slice_Move(const string& s, const string& v,int i,
+	       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&));
 
     Slice_Move(const string& s,int i,
 	       bool lb,double l,bool ub,double u,double W_,

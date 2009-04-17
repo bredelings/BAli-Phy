@@ -346,6 +346,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 					internal_branches)
 		      );
   length_moves.add(1,length_moves1,false);
+  // FIXME - Do we really want to do this, under slice sampling?
   length_moves.add(1,SingleMove(walk_tree_sample_branch_lengths,
 				"walk_tree_sample_branch_lengths","lengths")
 		   );
@@ -355,11 +356,17 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
+  MoveAll slice_moves("parameters:slice");
+  MoveAll MH_moves("parameters:MH");
 
-  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu",             "mu_scale_sigma",     0.6,  parameter_moves);
-  if (P.keys["disable_slice_sampling"] < 0.5) {
-    add_slice_moves(P, "mu",      "mu_slice_window",    0.3, true,0,false,0,parameter_moves);
-  }
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu",             "mu_scale_sigma",     0.6,  MH_moves);
+
+
+  add_slice_moves(P, "mu",      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
+  add_slice_moves(P, "gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
+  add_slice_moves(P, "INV::p",         "INV::p_shift_sigma", 0.1, true,0,true,1,slice_moves);
+
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "rho",     "rho_scale_sigma",  0.2,  parameter_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
@@ -367,30 +374,28 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   add_MH_move(P, log_scaled(shift_cauchy),    "M0::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(more_than(0,shift_cauchy)),
 	                                        "M2::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
+  add_MH_move(P, between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, MH_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "f",              "f_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, log_scaled(shift_cauchy),    "beta::mu",       "beta::mu_scale_sigma",     0.2,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, parameter_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
   add_MH_move(P, log_scaled(shift_cauchy),    "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, parameter_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);
   parameter_moves.add(4,SingleMove(scale_means_only,
 				   "scale_means_only","mean")
 		      );
 
 
   
-  add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, parameter_moves);
-  add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, parameter_moves);
-  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, parameter_moves);
+  add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, MH_moves);
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves);
+  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves);
 
-  if (P.keys["disable_slice_sampling"] < 0.5) {
-    // FIXME - check if we are accidentally evaluating the likelihood or something.
-    add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,parameter_moves);
-    add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
-		  false,0,false,0,parameter_moves,transform_epsilon,inverse_epsilon);
-  }
+  // FIXME - check if we are accidentally evaluating the likelihood or something.
+  add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
+  add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
+		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
 
   add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, parameter_moves);
   
@@ -483,7 +488,19 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   if (has_imodel)
     sampler.add(1,alignment_moves);
   sampler.add(2,tree_moves);
+
+  // FIXME - do we really want to do this for (say) lambda and epsilon?  4+25/4 = 10.25
+  // FIXME - can we separate the moves into (say) moves which depend on branch lengths, and those that don't?
+  //       - MH_smodel / MH_imodel ...
   sampler.add(4 + P.T->n_branches()/4.0,parameter_moves);
+  if (P.keys["disable_MH_sampling"] > 0.5)
+    sampler.add(1,MH_moves);
+  else
+    sampler.add(4 + P.T->n_branches()/4.0,MH_moves);
+  // Question: how are these moves intermixed with the other ones?
+
+  if (P.keys["disable_slice_sampling"] < 0.5)
+    sampler.add(1,slice_moves);
 
   vector<string> disable;
   vector<string> enable;

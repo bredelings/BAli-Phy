@@ -340,7 +340,7 @@ int Slice_Move::reset(double lambda) {
   return l + poisson(lambda);
 }
 
-void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int) 
+void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
 {
   if (P.fixed(index)) return;
 
@@ -361,7 +361,9 @@ void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
   parameter_slice_function logp(P,index,transform,inverse);
   if (lower_bound) logp.set_lower_bound(lower);
   if (upper_bound) logp.set_upper_bound(upper);
-  double v2 = slice_sample(transform(v1),logp,W,100);
+
+  double w = W;
+  double v2 = slice_sample(transform(v1),logp,w,100);
 
 #ifndef NDEBUG
   show_parameters(std::cerr,P);
@@ -380,7 +382,7 @@ void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
 Slice_Move::Slice_Move(const string& s,int i,
 		       bool lb,double l,bool ub,double u,double W_)
   :Move(s),index(i),
-   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),
+   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),window(0),
    transform(slice_sampling::identity),
    inverse(slice_sampling::identity)
 {}
@@ -388,7 +390,23 @@ Slice_Move::Slice_Move(const string& s,int i,
 Slice_Move::Slice_Move(const string& s, const string& v,int i,
 		       bool lb,double l,bool ub,double u,double W_)
   :Move(s,v),index(i),
-   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),
+   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),window(0),
+   transform(slice_sampling::identity),
+   inverse(slice_sampling::identity)
+{}
+
+Slice_Move::Slice_Move(const string& s,int i,
+		       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&))
+  :Move(s),index(i),
+   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(0),window(W_),
+   transform(slice_sampling::identity),
+   inverse(slice_sampling::identity)
+{}
+
+Slice_Move::Slice_Move(const string& s, const string& v,int i,
+		       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&))
+  :Move(s,v),index(i),
+   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(0),window(W_),
    transform(slice_sampling::identity),
    inverse(slice_sampling::identity)
 {}
@@ -863,7 +881,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   {
     if (iterations == 5)
       for(int i=0;i<restore.size();i++)
-      P.fixed(restore[i],false);
+	P.fixed(restore[i],false);
 
     if (iterations < P.beta_series.size())
       for(int i=0;i < P.n_data_partitions();i++)
