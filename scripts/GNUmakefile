@@ -38,7 +38,7 @@ Work/setup:
 ifeq ($(IMODEL),none)
 AU_TARGETS=
 else
-AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/consensus-75.fasta Results/consensus-50.fasta Results/consensus-25.fasta Results/consensus-10.fasta Results/consensus-10-AU.html Results/consensus-10-AU2.html
+AU_TARGETS= Results/MAP-AU.html Results/MAP-AU2.html Results/consensus-75.fasta Results/consensus-50.fasta Results/consensus-25.fasta Results/consensus-10.fasta Results/consensus-10-AU.html Results/consensus-10-AU2.html Results/max.fasta
 endif
 
 Results/analysis: Results/Report Results/consensus ${TOPOLOGIES:%=Results/%.topology} ${TREES:%=Results/%.tree} \
@@ -129,6 +129,11 @@ Results/%.fasta: Results/c50.tree Work/%-unordered.fasta
 Results/au-graph-%.plot Work/consensus-%-unordered.fasta: Work/samples-${SKIP}+${SIZE}
 	@echo -e "Computing consensus-$* alignment ... \c"
 	@alignment-consensus --cutoff=0.$* --uncertainty=Results/au-graph.plot < Work/samples-${SKIP}+${SIZE} > $@
+	@echo "done."
+
+Work/max-unordered.fasta: Work/samples-${SKIP}+${SIZE}
+	@echo -e "Computing Posterior Decoding alignment ... \c"
+	@alignment-max < Work/samples-${SKIP}+${SIZE} > $@
 	@echo "done."
 
 Results/%-AU.prob: Results/%.fasta Work/samples-${SKIP}+${SIZE} Results/MAP.tree
