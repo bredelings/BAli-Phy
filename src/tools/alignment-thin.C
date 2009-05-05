@@ -37,7 +37,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("longer-than",value<unsigned>(),"only leave taxa w/ sequences longer than this")
     ("shorter-than",value<unsigned>(),"only leave taxa w/ sequences shorter than this")
     ("down-to",value<int>(),"number of taxa to keep")
-    ("keep",value<int>(),"comma-separated list of taxon names to keep - remove others")
+    ("keep",value<string>(),"comma-separated list of taxon names to keep - remove others")
     ("remove",value<string>(),"comma-separated list of taxon names to remove")
     ("min-letters",value<int>(),"Remove columns with fewer letters.")
     ("remove-unique",value<int>(),"Remove insertions in a single sequence if longer than this many letters")
@@ -98,6 +98,15 @@ unsigned pairwise_distance(const alignment& A,int i,int j)
       D++;
 
   return D;
+}
+
+int n_positive(const vector<int>& v) 
+{
+  int count=0;
+  for(int i=0;i<v.size();i++)
+    if (v[i]>0)
+      count++;
+  return count;
 }
 
 ublas::matrix<int> pairwise_distance_matrix(const alignment& A)
@@ -221,12 +230,15 @@ int main(int argc,char* argv[])
       if (r == -1)
 	throw myexception()<<"remove: can't find sequence '"<<remove[i]<<"' to remove.";
       if (keep[r] == 2)
-	throw myexception()<<"Can't both keep AND remove '"<<remove[i]<<"'.";
-      keep[r] = 0;
+      //	throw myexception()<<"Can't both keep AND remove '"<<remove[i]<<"'.";
+	;
+      else
+	keep[r] = 0;
+
     }
       
 
-    if (log_verbose and keep.size() != sum(keep)) cerr<<"Removed "<<keep.size()-sum(keep)<<" sequences because of length constraints."<<endl;
+    if (log_verbose and keep.size() != n_positive(keep)) cerr<<"Removed "<<keep.size()-sum(keep)<<" sequences because of length constraints."<<endl;
 
     //-------------------- remove ------------------------//
 
