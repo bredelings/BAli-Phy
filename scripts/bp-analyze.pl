@@ -388,6 +388,7 @@ if (-e 'C1.out')
 {
     $out_file = 'C1.out';
     $n_chains = get_header_attribute("MPI_SIZE");
+    $n_chains=1 if (!defined($n_chains));
     for(my $i=0;$i<$n_chains;$i++) {
 	push @out_files,"C$i.out" if (-e "C$i.out");
 	push @tree_files,"C$i.trees" if (-e "C$i.trees");
