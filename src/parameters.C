@@ -672,9 +672,9 @@ bool accept_MH(const Parameters& P1,const Parameters& P2,double rho)
   efloat_t p1 = P1.heated_probability();
   efloat_t p2 = P2.heated_probability();
 
-  double ratio = rho*double(p2/p1);
+  efloat_t ratio = efloat_t(rho)*(p2/p1);
 
-  if (ratio >= 1 or myrandomf() < ratio) 
+  if (ratio >= 1.0 or myrandomf() < ratio) 
     return true;
   else
     return false;
