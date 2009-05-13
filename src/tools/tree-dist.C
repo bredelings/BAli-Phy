@@ -799,7 +799,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
   {
     vector<pair<Partition,unsigned> > full_partitions = partitions;
 
-    //cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   masks: "<<masks.size()<<endl;
+    if (log_verbose) cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   masks: "<<masks.size()<<endl;
     list<valarray<bool> > new_good_masks;
     list<valarray<bool> > new_unit_masks;
 
@@ -866,6 +866,10 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
     old_masks.insert(old_masks.end(),masks.begin(),masks.end());
     masks.clear();
     masks = new_unit_masks;
+
+    if (log_verbose) cerr<<"new unit_masks = "<<new_unit_masks.size()<<endl;
+
+    if (depth == 0) continue;
 
     // FIXME!! We need to find a way to consider only masks which are
     // 'close' togther - defined in terms of the number and support 
