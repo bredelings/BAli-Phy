@@ -36,16 +36,25 @@ class cairo_plotter
 {
   double page_x_width_;
   double page_y_width_;
+  double font_size_;
 public:
   virtual void operator()(cairo_t*) = 0;
 
   double page_x_width() const {return page_x_width_;}
   double page_y_width() const {return page_y_width_;}
 
+  double font_size() const {return font_size_;}
 
   cairo_plotter(double xw, double yw)
     :page_x_width_(xw),
-     page_y_width_(yw)
+     page_y_width_(yw),
+     font_size_(10)
+  {}
+
+  cairo_plotter(double xw, double yw, double fs)
+    :page_x_width_(xw),
+     page_y_width_(yw),
+     font_size_(fs)
   {}
   virtual ~cairo_plotter() {}
 };
@@ -114,6 +123,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("out",value<string>(),"Output filename (without extension)")
     ("full","Consider only full splits by collapsing any partial splits.")
     ("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
+    ("font-size",value<double>()->default_value(10),"Font size for taxon names")
     ("angle_iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm with small-angle penalties")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
@@ -956,6 +966,10 @@ struct tree_plotter: public cairo_plotter
     :cairo_plotter(xw,yw),
      L(tl) 
   {}
+  tree_plotter(const tree_layout& tl,double xw, double yw,double fs)
+    :cairo_plotter(xw,yw,fs),
+     L(tl) 
+  {}
 };
 
 void tree_plotter::operator()(cairo_t* cr)
@@ -1027,7 +1041,7 @@ void tree_plotter::operator()(cairo_t* cr)
   cairo_select_font_face (cr, "Sans", 
 			  CAIRO_FONT_SLANT_NORMAL,
 			  CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size (cr, 10.0/scale);
+  cairo_set_font_size (cr, font_size()/scale);
   
   for(int l=0;l<L.T.n_leaves();l++)
   {  
@@ -1661,7 +1675,7 @@ struct energy2: public graph_energy_function
     const unsigned n_nodes = MC.n_nodes();
 
     //--- check all edge pairs to see if they cross ---//
-    ublas::matrix<int> n_cross = crossed_nodes_matrix(GL);
+    //    ublas::matrix<int> n_cross = crossed_nodes_matrix(GL);
 
     //--------------- resize and zero D ---------------//
     if (D.size() != n_nodes) D.resize(n_nodes);
@@ -1745,10 +1759,11 @@ struct energy2: public graph_energy_function
 
 	double w = repulsion_weight;
 
-	if (n_cross(i,j) and false) {
-	  E += node_node_attraction(GL, D, i, j, w, -1);
-	}
-	else {
+	//	if (n_cross(i,j) and false) {
+	//	  E += node_node_attraction(GL, D, i, j, w, -1);
+	//	}
+	//	else 
+	{
 	  
 	  // don't repel nodes that wander over me, or that I wander to
 	  if (GL.MC.connected(i,j) == 2 or GL.MC.connected(j,i) == 2) w /= 10;
@@ -2101,8 +2116,8 @@ struct graph_plotter: public cairo_plotter
 
   bool draw_clouds;
 
-  graph_plotter(const graph_layout& gl,double xw,double yw)
-    :cairo_plotter(xw,yw),
+  graph_plotter(const graph_layout& gl,double xw,double yw, double fs)
+    :cairo_plotter(xw,yw,fs),
      L(gl),
      draw_clouds(false)
   {}
@@ -2181,14 +2196,14 @@ void graph_plotter::operator()(cairo_t* cr)
 	  cairo_line_to (cr, x2, y2);
 	  
 	  double L = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
-	  cairo_set_line_width(cr, L*(0.50+D/5.0));
+	  cairo_set_line_width(cr, line_width*(4+D*2) );
 	  
 	  if (C == 0)
-	    cairo_set_source_rgb (cr, 1 , 0.90, 0.90);
+	    cairo_set_source_rgb (cr, 1 , 0.80, 0.80);
 	  else if (C == 1)
-	    cairo_set_source_rgb (cr, 0.90 , 0.90, 1);
+	    cairo_set_source_rgb (cr, 0.80 , 0.80, 1);
 	  else if (C == 2)
-	    cairo_set_source_rgb (cr, 0.90 , 1, 0.90);
+	    cairo_set_source_rgb (cr, 0.80 , 1, 0.80);
 	  
 	  cairo_stroke (cr);
 	}
@@ -2276,7 +2291,7 @@ void graph_plotter::operator()(cairo_t* cr)
   cairo_select_font_face (cr, "Sans", 
 			    CAIRO_FONT_SLANT_NORMAL,
 			    CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size (cr, 10.0/scale);
+  cairo_set_font_size (cr, font_size()/scale);
 
   for(int l=0;l<L.MC.n_leaves();l++)
   {  
@@ -2554,6 +2569,7 @@ int main(int argc,char* argv[])
     
     double xw = args["width"].as<double>();
     double yw = args["height"].as<double>();
+    double font_size = args["font-size"].as<double>();
 
     string output = args["output"].as<string>();
 
@@ -2624,7 +2640,7 @@ int main(int argc,char* argv[])
     {
       tree_layout L = equal_angle_layout(MC);
       L.rotate_for_aspect_ratio(xw,yw);
-      tree_plotter tp(L, xw, yw);
+      tree_plotter tp(L, xw, yw, font_size);
 
       string filename = name+"-tree";
       if (args.count("out"))
@@ -2637,7 +2653,7 @@ int main(int argc,char* argv[])
     {
       tree_layout L = equal_daylight_layout(MC);
       L.rotate_for_aspect_ratio(xw,yw);
-      tree_plotter tp(L, xw, yw);
+      tree_plotter tp(L, xw, yw, font_size);
 
       string filename = name+"-tree";
       if (args.count("out"))
@@ -2657,7 +2673,7 @@ int main(int argc,char* argv[])
     for(int i=0;i<n_iterations;i++) {
       L3 = energy_layout(L3,energy2(1,10000000,2,0));
       L3.rotate_for_aspect_ratio(xw,yw);
-      graph_plotter gp(L3, xw, yw);
+      graph_plotter gp(L3, xw, yw, font_size);
 
       if (args.count("draw-clouds"))
 	gp.draw_clouds = true;
@@ -2674,7 +2690,7 @@ int main(int argc,char* argv[])
     for(int i=0;i<a_iterations;i++) {
       L3 = energy_layout(L3,energy2(1,10000000,2,50));
       L3.rotate_for_aspect_ratio(xw,yw);
-      graph_plotter gp(L3, xw, yw);
+      graph_plotter gp(L3, xw, yw, font_size);
 
       if (args.count("draw-clouds"))
 	gp.draw_clouds = true;
