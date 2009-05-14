@@ -400,6 +400,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("depth",value<int>()->default_value(1),"depth at which to look for partitions of taxa subsets")
     ("rooting",value<double>()->default_value(0.9),"depth at which to look for partitions of taxa subsets")
     ("odds-ratio",value<double>()->default_value(1.5),"Report sub-partitions if removing taxa improves the odds by at least this ratio.")
+    ("verbose,v","Output more log messages on stderr.")
     ;
     
   options_description visible("All options");
@@ -424,6 +425,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<visible<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
