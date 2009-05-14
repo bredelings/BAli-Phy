@@ -216,6 +216,12 @@ void add_slice_moves(Parameters& P, const string& name,
   }
 }
 
+//FIXME - how to make a number of variants with certain things fixed, for burn-in?
+// 0. Get an initial tree estimate using NJ or something? (as an option...)
+// 1. First estimate tree and parameters with alignment fixed.
+// 2. Then allow the alignment to change.
+
+
 void do_sampling(const variables_map& args,Parameters& P,long int max_iterations,
 		 vector<ostream*>& files)
 {
@@ -360,9 +366,13 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   MoveAll MH_moves("parameters:MH");
 
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu",             "mu_scale_sigma",     0.6,  MH_moves);
-
+  for(int i=0;i<P.n_branch_means();i++)
+    add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
 
   add_slice_moves(P, "mu",      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+  for(int i=0;i<P.n_branch_means();i++)
+    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+    
   add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
   add_slice_moves(P, "gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
   add_slice_moves(P, "INV::p",         "INV::p_shift_sigma", 0.1, true,0,true,1,slice_moves);
@@ -600,6 +610,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
     ("smodel",value<vector<string> >()->composing(),"Substitution model.")
     ("imodel",value<vector<string> >()->composing(),"Indel model: RS05, RS07-no-T, or RS07.")
+    ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
     ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
     ("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
@@ -1545,8 +1556,13 @@ int main(int argc,char* argv[])
     vector<polymorphic_cow_ptr<IndelModel> > 
       full_imodels = get_imodels(imodel_names_mapping);
 
+    //-------------- Which partitions share a scale? -----------//
+    shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
+
+    vector<int> scale_mapping = scale_names_mapping.item_for_partition;
+
     //-------------Create the Parameters object--------------//
-    Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping);
+    Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
 
     set_parameters(P,args);
 

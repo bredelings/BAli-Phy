@@ -375,8 +375,8 @@ void scale_means_only(Parameters& P,MoveStats& Stats)
   // If any of the partition rates are fixed, then we're out of luck
   // FIXME - techincally, we could recompute likelihoods in just THOSE partitions :P
   //       - also, I suppose, if they are fixed, then there is no mixing problem.
-  for(int i=0;i<P.n_data_partitions();i++)
-    if (P[i].fixed(0))
+  for(int i=0;i<P.n_branch_means();i++)
+    if (P.fixed(i))
       return;
 
   MCMC::Result result(2);
@@ -402,8 +402,8 @@ void scale_means_only(Parameters& P,MoveStats& Stats)
   }
   P2.tree_propagate();
 
-  for(int i=0;i<P.n_data_partitions();i++) 
-    P2.branch_mean_tricky(i,P2[i].branch_mean()*scale);
+  for(int i=0;i<P.n_branch_means();i++) 
+    P2.branch_mean_tricky(i,P2.branch_mean(i)*scale);
   
 #ifndef NDEBUG
   Parameters P3 = P2;
