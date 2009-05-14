@@ -38,6 +38,8 @@
 namespace po = boost::program_options;
 using po::variables_map;
 
+using boost::dynamic_bitset;
+
 using namespace std;
 
 using std::cout;
@@ -260,10 +262,10 @@ vector<unsigned> get_Ml_levels(const vector<pair<Partition,unsigned> >& sp,unsig
 vector<Partition> Ml_min_Hull(const vector<Partition>& full,const vector<Partition>& sub)
 {
   // compute full partitions to keep
-  valarray<bool> keep(false,full.size());
-  valarray<bool> covered(false,sub.size());
+  dynamic_bitset<> keep(full.size());
+  dynamic_bitset<> covered(sub.size());
 
-  while (n_elements(covered) < covered.size()) 
+  while (covered.count() < covered.size()) 
   {
     // how many UNCOVERED subs does each UNKEPT full branch imply?
     vector<int> covers(full.size(),0);
@@ -482,7 +484,7 @@ int main(int argc,char* argv[])
     tree_sample tree_dist(file,skip,max,subsample,ignore);
     const unsigned N = tree_dist.size();
 
-    valarray<bool> ignore_mask = group_from_names(tree_dist.names(),vector<string>());
+    dynamic_bitset<> ignore_mask = group_from_names(tree_dist.names(),vector<string>());
 
     //------ Compute Ml partitions or sub-partitions --------//
     vector< pair<Partition,unsigned> > all_partitions;
@@ -493,11 +495,11 @@ int main(int argc,char* argv[])
 
       double min_rooting = args["rooting"].as<double>();
 
-      all_partitions = get_Ml_sub_partitions_and_counts(tree_dist,min_support,not ignore_mask,min_rooting,depth);
+      all_partitions = get_Ml_sub_partitions_and_counts(tree_dist,min_support, ~ignore_mask,min_rooting,depth);
       //      std::cerr<<"n_sub_partitions = "<<all_partitions.size()<<"\n";
     }
     else
-      all_partitions = get_Ml_partitions_and_counts(tree_dist,min_support,not ignore_mask);
+      all_partitions = get_Ml_partitions_and_counts(tree_dist,min_support, ~ignore_mask);
 
 
     //------  Topologies to analyze -----//
@@ -581,6 +583,8 @@ int main(int argc,char* argv[])
 
       while (k<consensus_levels.size() and clevel < levels[j]) 
       {
+	clevel = (unsigned)(consensus_levels[k]*N);
+
 	vector<Partition> all  = get_Ml_partitions(all_partitions,consensus_levels[k],N);
 	vector<Partition> sub;
 	vector<Partition> full;
@@ -604,7 +608,7 @@ int main(int argc,char* argv[])
 	}
 	cout<<endl<<endl;
 
-	clevel = (unsigned)(consensus_levels[++k]*N);
+	k++;
       }
 	
 

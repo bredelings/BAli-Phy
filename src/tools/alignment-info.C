@@ -11,12 +11,15 @@
 #include "parsimony.H"
 #include "statistics.H"
 #include <boost/program_options.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 using std::valarray;
 using std::map;
 
 namespace po = boost::program_options;
 using po::variables_map;
+
+using boost::dynamic_bitset;
 
 using std::cout;
 using std::cerr;
@@ -238,11 +241,11 @@ int main(int argc,char* argv[])
     const alphabet& a = A.get_alphabet();
     
     //----- Count informative/non-constant sites ----//
-    valarray<bool> informative(A.length());
-    valarray<bool> informative2(A.length());
-    valarray<bool> different(A.length());
-    valarray<bool> different2(A.length());
-    valarray<bool> contains_a_gap(false,A.length());
+    dynamic_bitset<> informative(A.length());
+    dynamic_bitset<> informative2(A.length());
+    dynamic_bitset<> different(A.length());
+    dynamic_bitset<> different2(A.length());
+    dynamic_bitset<> contains_a_gap(A.length());
 
     valarray<int> count(a.size());
     valarray<int> count2(2);
@@ -268,14 +271,14 @@ int main(int argc,char* argv[])
       informative2[c] = informative[c] or is_informative(count2,1);
     }
     
-    int n_different  = n_elements(different);
+    int n_different  = different.count();
     int n_same = A.length() - n_different;
-    int n_informative  = n_elements(informative);
+    int n_informative  = informative.count();
 
-    int n_different2 = n_elements(different2);
+    int n_different2 = different2.count();
     int n_same2 = A.length() - n_different2;
-    int n_informative2 = n_elements(informative2);
-    int n_with_gaps = n_elements(contains_a_gap);
+    int n_informative2 = informative2.count();
+    int n_with_gaps = contains_a_gap.count();
 
 
     cout.precision(3);

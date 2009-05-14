@@ -1,5 +1,4 @@
 #include <cmath>
-#include <valarray>
 #include <iostream>
 #include "sample.H"
 #include "rng.H"
@@ -14,6 +13,8 @@
 #include "substitution-index.H"
 
 using MCMC::MoveStats;
+
+using boost::dynamic_bitset;
 
 int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
 {
@@ -126,7 +127,7 @@ int choose_SPR_target(SequenceTree& T1, int b1_)
   const_branchview b1 = T1.directed_branch(b1_);
 
   //----- Select the branch to move to ------//
-  valarray<bool> subtree_nodes = T1.partition(b1.reverse());
+  dynamic_bitset<> subtree_nodes = T1.partition(b1.reverse());
   subtree_nodes[b1.target()] = true;
 
   vector<int> branches;
@@ -222,8 +223,8 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     if (C != -1) 
     {
       for(int i=0;i<P.n_data_partitions();i++) {
-	valarray<bool> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
-	valarray<bool> s2 = constraint_satisfied(p[C][i].alignment_constraint, *p[C][i].A);
+	dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+	dynamic_bitset<> s2 = constraint_satisfied(p[C][i].alignment_constraint, *p[C][i].A);
 	
 	report_constraints(s1,s2);
       }

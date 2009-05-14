@@ -1,4 +1,3 @@
-#include <valarray>
 #include <iostream>
 #include <cmath>
 
@@ -20,7 +19,7 @@
 
 using std::abs;
 using std::vector;
-using std::valarray;
+using boost::dynamic_bitset;
 
 using namespace A3;
 
@@ -42,9 +41,9 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   // std::cerr<<"A = "<<A<<endl;
 
   //------------- Compute sequence properties --------------//
-  valarray<bool> group1 = T.partition(nodes[0],nodes[1]);
-  valarray<bool> group2 = T.partition(nodes[0],nodes[2]);
-  valarray<bool> group3 = T.partition(nodes[0],nodes[3]);
+  dynamic_bitset<> group1 = T.partition(nodes[0],nodes[1]);
+  dynamic_bitset<> group2 = T.partition(nodes[0],nodes[2]);
+  dynamic_bitset<> group3 = T.partition(nodes[0],nodes[3]);
 
 
   //  std::clog<<"n0 = "<<nodes[0]<<"   n1 = "<<nodes[1]<<"    n2 = "<<nodes[2]<<"    n3 = "<<nodes[3]<<std::endl;
@@ -154,7 +153,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   //  vector<int> path_old_g = Matrices.generalize(path_old);
 
   //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 or group3,seq1,seq23);
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23);
 
   // if the constraints are currently met but cannot be met
   if (pins.size() == 1 and pins[0][0] == -1)
@@ -302,10 +301,10 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore1A = not p[0].T->partition(nodes[0][0],nodes[0][1]);
-  valarray<bool> ignore2A = not (p[0].T->partition(nodes[0][0],nodes[0][2]) or p[0].T->partition(nodes[0][0],nodes[0][3]) );
-  valarray<bool> ignore1(p[0].T->n_nodes()); 
-  valarray<bool> ignore2(p[0].T->n_nodes()); 
+  dynamic_bitset<> ignore1A = ~p[0].T->partition(nodes[0][0],nodes[0][1]);
+  dynamic_bitset<> ignore2A = ~(p[0].T->partition(nodes[0][0],nodes[0][2]) | p[0].T->partition(nodes[0][0],nodes[0][3]) );
+  dynamic_bitset<> ignore1(p[0].T->n_nodes()); 
+  dynamic_bitset<> ignore2(p[0].T->n_nodes()); 
   for(int i=0;i<ignore1.size();i++) {
     ignore1[i] = ignore1A[i];
     ignore2[i] = ignore2A[i];
@@ -419,7 +418,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
 void tri_sample_alignment(Parameters& P,int node1,int node2) {
 
-  vector<valarray<bool> > s1(P.n_data_partitions());
+  vector<dynamic_bitset<> > s1(P.n_data_partitions());
   for(int i=0;i<P.n_data_partitions();i++) 
   {
     s1[i].resize(P[i].alignment_constraint.size1());
@@ -449,7 +448,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2) {
     check_alignment(*P[i].A, *P[i].T,"tri_sample_alignment:out");
 #endif
 
-    valarray<bool> s2 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
     report_constraints(s1[i],s2);
   }
 }

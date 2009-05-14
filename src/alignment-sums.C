@@ -3,6 +3,8 @@
 #include "substitution.H"
 #include "util.H"
 
+using boost::dynamic_bitset;
+
 efloat_t other_subst(const data_partition& P, const vector<int>& nodes) 
 {
   return substitution::other_subst(P,nodes);
@@ -54,7 +56,7 @@ efloat_t other_prior(const data_partition& P,const vector<int>& nodes)
 
 /// Distributions function for a star tree
 vector< Matrix > distributions_star(const data_partition& P,
-				    const vector<int>& seq,int,const valarray<bool>& group)
+				    const vector<int>& seq,int,const dynamic_bitset<>& group)
 {
   const alignment& A = *P.A;
   const alphabet& a = A.get_alphabet();
@@ -100,7 +102,7 @@ vector< Matrix > distributions_star(const data_partition& P,
 
 
 /// Distributions function for a full tree
-vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int root,const valarray<bool>& group)
+vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int root,const dynamic_bitset<>& group)
 {
   const Tree& T = *P.T;
 

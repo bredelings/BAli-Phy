@@ -3,6 +3,8 @@
 
 using namespace std;
 
+using boost::dynamic_bitset;
+
 // Actually, this assumes that connected-ness is a clique relation.
 // This function doesn't find cliques in a general connectedness matrix.
 
@@ -60,7 +62,7 @@ MC_tree::MC_tree(const vector<Partition>& p)
 
   // adds leaf branches
   for(int i=0;i<n_leaves();i++) {
-    valarray<bool> m(true,n_leaves());
+    dynamic_bitset<> m(n_leaves()); m.flip();
     m[i] = false;
     partitions.insert(partitions.begin()+i,Partition(names(),m));
   }
@@ -174,7 +176,7 @@ MC_tree::MC_tree(const vector<Partition>& p)
       connected(i,j) = 0;
 
   // add 1 edge (not 2) for each partition
-  valarray<bool> visited(false,partitions.size());
+  dynamic_bitset<> visited(partitions.size());
   for(int i=0;i<partitions.size();i++) 
   {
     if (visited[i]) continue;
@@ -235,8 +237,8 @@ bool directed_equal(const Partition& p1, const Partition& p2)
 {
   return 
     ((p1.names == p2.names) and 
-    equal(p1.group1,p2.group1) and
-    equal(p1.group2,p2.group2)
+     (p1.group1 == p2.group1) and
+     (p1.group2 == p2.group2)
     );
 }
 

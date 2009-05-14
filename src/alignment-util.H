@@ -2,9 +2,9 @@
 #define ALIGNMENT_UTIL_H
 
 #include <vector>
-#include <valarray>
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <istream>
 #include <string>
 
@@ -44,7 +44,7 @@ bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2,
 	     const std::vector< std::vector< int> >& column_indices);
 
 /// Is the alignment of un-ignored sequences in A1 and A2 the same?
-bool A_constant(alignment A1, alignment A2, const std::valarray<bool>& ignore);
+bool A_constant(alignment A1, alignment A2, const boost::dynamic_bitset<>& ignore);
 
 void check_names_unique(const alignment& A);
 
@@ -57,7 +57,7 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves);
 void check_internal_nodes_connected(const alignment& A,const Tree& T,const std::vector<int>& ignore=vector<int>());
 
 /// Are all un-ignored characters in column 'present' connected on T?
-bool all_characters_connected(const Tree& T,std::valarray<bool> present,const std::vector<int>& ignore);
+bool all_characters_connected(const Tree& T,boost::dynamic_bitset<> present,const std::vector<int>& ignore);
 
 /// Force internal node states are consistent by connecting leaf characters
 void connect_leaf_characters(alignment& A,const Tree& T);

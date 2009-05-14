@@ -106,7 +106,7 @@ RootedSequenceTree find_rooted_tree(const SequenceTree& T)
 
   assert(branches.size() == 2);
 
-  if (equal(branch_partition(RT,branches[0]),branch_partition(T,b)))
+  if (branch_partition(RT,branches[0]) == branch_partition(T,b))
     x = 1.0 - x;
 
   branches[0].set_length(x*T.branch(b).length());

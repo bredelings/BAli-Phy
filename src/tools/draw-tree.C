@@ -501,7 +501,7 @@ struct tree_layout: public common_layout
 int find_directed_branch(const Tree& T,const Partition& p)
 {
   for(int b=0; b<2*T.n_branches(); b++)
-    if (equal(branch_partition(T,b), p.group2))
+    if (branch_partition(T,b) == p.group2)
       return b;
   return -1;
 }
@@ -517,7 +517,7 @@ int node_max_depth(const Tree& T,int node)
 
 int n_children(const Tree& T,int b)
 {
-  return n_elements(branch_partition(T,b));
+  return branch_partition(T,b).count();
 }
 
 

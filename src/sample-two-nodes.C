@@ -1,4 +1,3 @@
-#include <valarray>
 #include <iostream>
 #include <cmath>
 #include <cassert>
@@ -33,7 +32,8 @@
 // are 4,5; internal branch is 5.
 
 using std::abs;
-using std::valarray;
+
+using boost::dynamic_bitset;
 
 using namespace A5;
 
@@ -327,7 +327,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore(false, p[0].T->n_nodes());
+  dynamic_bitset<> ignore(p[0].T->n_nodes());
   ignore[ nodes[0][4] ] = true;
   ignore[ nodes[0][5] ] = true;
 

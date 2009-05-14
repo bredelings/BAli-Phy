@@ -8,9 +8,12 @@
 #include "myexception.H"
 #include "mctree.H"
 #include <boost/program_options.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 namespace po = boost::program_options;
 using po::variables_map;
+
+using boost::dynamic_bitset;
 
 using std::cout;
 using std::cerr;
@@ -22,7 +25,7 @@ using std::list;
 using std::valarray;
 using std::pair;
 
-ostream& show_name_set(ostream& o,const vector<string>& names, const valarray<bool>& mask)
+ostream& show_name_set(ostream& o,const vector<string>& names, const dynamic_bitset<>& mask)
 {
   for(int i=0;i<mask.size();i++)
     if (mask[i])
@@ -31,7 +34,7 @@ ostream& show_name_set(ostream& o,const vector<string>& names, const valarray<bo
 }
 
 bool update_lengths(const MC_tree& Q,const SequenceTree& T,
-		    const vector<valarray<bool> >& node_masks,
+		    const vector<dynamic_bitset<> >& node_masks,
 		    const vector<Partition>& partitions2,
 		    valarray<double>& branch_lengths, 
 		    valarray<double>& node_lengths)
@@ -61,9 +64,9 @@ bool update_lengths(const MC_tree& Q,const SequenceTree& T,
       if (Q.degree(n) == 0) continue;
 
       Partition P2 = P;
-      P2.group1 = P2.group1 and node_masks[n];
-      P2.group2 = P2.group2 and node_masks[n];
-      if (n_elements(P2.group1) == 0 or n_elements(P2.group2) == 0)
+      P2.group1 = P2.group1 & node_masks[n];
+      P2.group2 = P2.group2 & node_masks[n];
+      if (P2.group1.none() or P2.group2.none())
 	continue;
 
       bool ok = true;
@@ -71,8 +74,8 @@ bool update_lengths(const MC_tree& Q,const SequenceTree& T,
       {
 	if (Q.mapping[b] != n)  continue;
 	Partition P3 = Q.partitions[b];
-	P3.group1 = P3.group1 and node_masks[n];
-	P3.group2 = P3.group2 and node_masks[n];
+	P3.group1 = P3.group1 & node_masks[n];
+	P3.group2 = P3.group2 & node_masks[n];
 	if (partition_less_than(P3,P2) or partition_less_than(P3,P2.reverse()))
 	  ;
 	else
@@ -160,7 +163,7 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
 
   MC_tree Q;
 
-  vector<valarray<bool> > node_masks;
+  vector<dynamic_bitset<> > node_masks;
   vector<Partition> partitions2;
 
   valarray<double> m1;
@@ -196,11 +199,12 @@ accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
   {
     //    cerr<<"node "<<Q.partitions[Q.branch_to_node(n)]<<endl;
     //    cerr<<"degree = "<<Q.degree(n)<<endl;
-    valarray<bool> mask(true,Q.n_leaves());
+    dynamic_bitset<> mask(Q.n_leaves()); mask.flip();
+
     for(int i=0;i<2*Q.n_branches();i++)
     {
       if (Q.mapping[i] == n and not Q.directly_wanders[i])
-	mask = mask and Q.partitions[i].mask();
+	mask &= Q.partitions[i].mask();
     }
     node_masks.push_back(mask);
     //    cerr<<"mask = ";
@@ -216,26 +220,30 @@ accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
     int n2 = Q.mapping[Q.reverse(b)];
 
     Partition P = Q.partitions[b];
-    valarray<bool> mask = P.mask();
+    dynamic_bitset<> mask = P.mask();
 
     // find non-wandering branches directly left of me
     for(int j=0;j<2*Q.n_branches();j++)
     {
-      if (Q.directly_left_of(j,b))
+      if (Q.directly_left_of(j,b)) 
+      {
 	if (Q.directly_wanders[j])
-	  mask = mask and not Q.partitions[j].group1;
+	  mask &= ~Q.partitions[j].group1;
 	else
-	  mask = mask and Q.partitions[j].mask();
+	  mask &= Q.partitions[j].mask();
+      }
     }
 
     // find non-wandering branches directly right of me
     for(int j=0;j<2*Q.n_branches();j++)
     {
-      if (Q.directly_left_of(b,j))
+      if (Q.directly_left_of(b,j)) 
+      {
 	if (Q.directly_wanders[Q.reverse(j)])
-	  mask = mask and not Q.partitions[j].group2;
+	  mask &= ~Q.partitions[j].group2;
 	else
-	  mask = mask and Q.partitions[j].mask();
+	  mask &= Q.partitions[j].mask();
+      }
     }
 
     // partition masks should be computable from the masks
@@ -243,8 +251,8 @@ accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
     // but how about degree=0 nodes? this shouldn't work then
     //    assert(equal(mask,node_masks[n1] and node_masks[n2]));
 
-    P.group1 = P.group1 and mask;
-    P.group2 = P.group2 and mask;
+    P.group1 &= mask;
+    P.group2 &= mask;
 
     //    cerr<<"Branch: "<<P<<endl;
     //    cerr<<"   mask = ";show_name_set(cerr,P.names,P.mask())<<endl;

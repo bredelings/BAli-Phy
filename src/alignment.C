@@ -28,7 +28,7 @@ int alignment::add_note(int l) const {
   return notes.size()-1;
 }
 
-bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask) {
+bool all_gaps(const alignment& A,int column,const boost::dynamic_bitset<>& mask) {
   for(int i=0;i<A.n_sequences();i++)
     if (mask[i] and A.character(column,i))
       return false;

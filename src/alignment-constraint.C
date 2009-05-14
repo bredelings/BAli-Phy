@@ -9,6 +9,7 @@ using std::vector;
 using std::valarray;
 
 using boost::program_options::variables_map;
+using boost::dynamic_bitset;
 
 string clean(const string& in) {
   string out;
@@ -111,7 +112,7 @@ ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree
   return constraint;
 }
 
-bool constrained(const std::valarray<bool>& group,const ublas::matrix<int>& constraint,int c) 
+bool constrained(const dynamic_bitset<>& group,const ublas::matrix<int>& constraint,int c) 
 {
   bool present = false;
   for(int i=0;i<constraint.size2();i++)
@@ -150,7 +151,7 @@ vector<int> constraint_columns(const ublas::matrix<int>& constraint,const alignm
 }
 
 vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignment& A,
-			       const valarray<bool>& group1,const valarray<bool>& group2,
+			       const dynamic_bitset<>& group1,const dynamic_bitset<>& group2,
 			       const vector<int>& seq1,const vector<int>& seq2) 
 {
   // determine which constraints are satisfied (not necessarily enforceable!)
@@ -194,11 +195,11 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
 }
 
 
-valarray<bool> constraint_satisfied(const ublas::matrix<int>& constraint,const alignment& A) 
+dynamic_bitset<> constraint_satisfied(const ublas::matrix<int>& constraint,const alignment& A) 
 {
   vector<int> columns = constraint_columns(constraint,A);
 
-  valarray<bool> satisfied(columns.size());
+  dynamic_bitset<> satisfied(columns.size());
   for(int i=0;i<satisfied.size();i++)
     satisfied[i] = columns[i] != -1;
 
@@ -206,7 +207,7 @@ valarray<bool> constraint_satisfied(const ublas::matrix<int>& constraint,const a
 }
 
 namespace {
-int sum(const valarray<bool>& v) {
+int sum(const dynamic_bitset<>& v) {
   int count = 0;
   for(int i=0;i<v.size();i++)
     if (v[i]) count++;
@@ -214,7 +215,7 @@ int sum(const valarray<bool>& v) {
 }
 }
 
-void report_constraints(const valarray<bool>& s1, const valarray<bool>& s2) {
+void report_constraints(const dynamic_bitset<>& s1, const dynamic_bitset<>& s2) {
   assert(s1.size() == s2.size());
 
   if (not s1.size()) return;

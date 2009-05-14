@@ -27,7 +27,6 @@ namespace mpi = boost::mpi;
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <valarray>
 #include <new>
 #include <signal.h>
 
@@ -67,7 +66,7 @@ using std::clog;
 using std::endl;
 using std::ostream;
 
-using std::valarray;
+using boost::dynamic_bitset;
 
 bool has_parameter(const Model& M, const string& name)
 {
@@ -543,10 +542,10 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   //FIXME - partition
 
   for(int i=0;i<P.n_data_partitions();i++) {
-    valarray<bool> s2 = constraint_satisfied(P[i].alignment_constraint,*P[i].A);
-    valarray<bool> s1(false,s2.size());
+    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint,*P[i].A);
+    dynamic_bitset<> s1(s2.size());
     report_constraints(s1,s2);
-  }
+  } 
 
   sampler.go(P,subsample,max_iterations,s_out,s_trees,s_parameters,s_map,files);
 }
@@ -942,11 +941,11 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
   }
 
   // parse the groups into mask_groups;
-  vector<valarray<bool> > mask_groups(name_groups.size());
+  vector< dynamic_bitset<> > mask_groups(name_groups.size());
   for(int i=0;i<mask_groups.size();i++) 
   {
     mask_groups[i].resize(TC.n_leaves());
-    mask_groups[i] = false;
+    mask_groups[i].reset();
 
     for(int j=0;j<name_groups[i].size();j++) 
     {
@@ -965,13 +964,13 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
   for(int i=0;i<mask_groups.size();i++) 
   {
     // find the branch that corresponds to a mask
-    valarray<bool> mask(TC.n_leaves());
+    boost::dynamic_bitset<> mask(TC.n_leaves());
     int found = -1;
     for(int b=0;b<2*TC.n_branches() and found == -1;b++) 
     {
       mask = TC.partition(b);
 
-      if (equal(mask_groups[i],mask))
+      if (mask_groups[i] == mask)
 	found = b;
     }
 
@@ -1426,8 +1425,6 @@ int main(int argc,char* argv[])
 
   ostream out_both(&tee_out);
   ostream err_both(&tee_err);
-
-  time_t start_time = time(NULL);
 
   int retval=0;
 

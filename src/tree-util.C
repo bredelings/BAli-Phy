@@ -10,11 +10,12 @@ using std::map;
 using std::string;
 using std::vector;
 using std::list;
-using std::valarray;
 using std::istream;
 using std::cout;
 using std::cerr;
 using std::endl;
+
+using boost::dynamic_bitset;
 
 /// Load a tree from command line args "--tree filename"
 RootedSequenceTree load_T(const variables_map& args) {
@@ -59,11 +60,11 @@ vector<SequenceTree> load_trees(istream& file,int skip,int subsample,int max)
 }
 
 bool 
-compare_complete_partitions::operator()(const std::valarray<bool>& p1,
-					const std::valarray<bool>& p2) const
+compare_complete_partitions::operator()(const dynamic_bitset<>& p1,
+					const dynamic_bitset<>& p2) const
 {
   assert(p1.size() == p2.size());
-  
+
   for(int i=0;i<p1.size();i++) {
     if (p2[i] and not p1[i])
       return true;

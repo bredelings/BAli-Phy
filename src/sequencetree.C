@@ -1,10 +1,13 @@
 #include <iostream>
 #include <fstream>
+#include <cmath>
 #include "sequencetree.H"
 #include "myexception.H"
 #include "util.H"
 
 using namespace std;
+
+using boost::dynamic_bitset;
 
 int SequenceSet::index(const string& s) const {
   for(int i=0;i<sequences.size();i++)
@@ -368,10 +371,10 @@ SequenceTree star_tree(const vector<string>& names)
   return SequenceTree(star_tree(names.size()), names);
 }
 
-int find_partition(const valarray<bool>& p1, const vector<valarray<bool> >& pv) {
-  valarray<bool> np1 = not p1;
+int find_partition(const dynamic_bitset<>& p1, const vector< dynamic_bitset<> >& pv) {
+  dynamic_bitset<> np1 = ~p1;
   for(int i=0;i<pv.size();i++) {
-    if (equal(pv[i],p1) or equal(pv[i],np1))
+    if ((pv[i] == p1) or (pv[i]==np1))
       return i;
   }
   return -1;
@@ -382,10 +385,10 @@ double branch_distance(const SequenceTree& T1, const SequenceTree& T2)
   assert(T1.n_leaves() == T2.n_leaves());
 
   vector<double> d1(T1.n_branches());
-  vector< valarray<bool> > part1(T1.n_branches(),valarray<bool>(false,T1.n_leaves()));
+  vector< dynamic_bitset<> > part1(T1.n_branches(),dynamic_bitset<>(T1.n_leaves()));
 
   vector<double> d2(T2.n_branches());
-  vector< valarray<bool> > part2(T2.n_branches(),valarray<bool>(false,T2.n_leaves()));
+  vector< dynamic_bitset<> > part2(T1.n_branches(),dynamic_bitset<>(T2.n_leaves()));
 
   // get partitions and lengths for T1
   for(int b=0;b<T1.n_branches();b++) {
@@ -434,8 +437,8 @@ double internal_branch_distance(const SequenceTree& T1, const SequenceTree& T2)
   vector<double> d1(n1);
   vector<double> d2(n2);
 
-  vector< valarray<bool> > part1(n1,valarray<bool>(false,T1.n_leaves()));
-  vector< valarray<bool> > part2(n2,valarray<bool>(false,T2.n_leaves()));
+  vector< dynamic_bitset<> > part1(n1,dynamic_bitset<>(T1.n_leaves()));
+  vector< dynamic_bitset<> > part2(n2,dynamic_bitset<>(T2.n_leaves()));
 
   // get partitions and lengths for T1
   for(int i=0;i<n1;i++) {
@@ -481,8 +484,8 @@ unsigned topology_distance(const SequenceTree& T1, const SequenceTree& T2)
   unsigned n1 = T1.n_branches() - l1;
   unsigned n2 = T2.n_branches() - l2;
 
-  vector< valarray<bool> > part1(n1,valarray<bool>(false,T1.n_leaves()));
-  vector< valarray<bool> > part2(n2,valarray<bool>(false,T2.n_leaves()));
+  vector< dynamic_bitset<> > part1(n1,dynamic_bitset<>(T1.n_leaves()));
+  vector< dynamic_bitset<> > part2(n2,dynamic_bitset<>(T2.n_leaves()));
 
   // get partitions and lengths for T1
   for(int i=0;i<n1;i++)

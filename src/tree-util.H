@@ -1,7 +1,8 @@
 #ifndef TREE_UTIL_H
 #define TREE_UTIL_H
 #include <boost/program_options.hpp>
-#include <valarray>
+#include <boost/dynamic_bitset.hpp>
+
 #include "sequencetree.H"
 
 /// Load a tree from command line args --tree filename
@@ -18,8 +19,8 @@ std::vector<int> extends_map(const Tree& T,const Tree& Q);
 /// A comparison operator for complete (and directed) partitions
 struct compare_complete_partitions 
 {
-  bool operator()(const std::valarray<bool>& p1,
-		  const std::valarray<bool>& p2) const;
+  bool operator()(const boost::dynamic_bitset<>& p1,
+		  const boost::dynamic_bitset<>& p2) const;
 };
 
 

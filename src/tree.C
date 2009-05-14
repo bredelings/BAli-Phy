@@ -4,7 +4,7 @@
 #include "myexception.H"
 
 using std::vector;
-using std::valarray;
+using boost::dynamic_bitset;
 
 void TreeView::destroy_tree(BranchNode* start) {
   assert(start);
@@ -577,7 +577,8 @@ vector<const_branchview> branches_from_leaves(const Tree& T)
   return branch_list;
 }
 
-void Tree::compute_partitions() const {
+void Tree::compute_partitions() const 
+{
   vector<const_branchview> branch_list = branches_from_node(*this,nodes_[0]->node);
 
   // set up cached partition masks
@@ -587,11 +588,12 @@ void Tree::compute_partitions() const {
       cached_partitions[i].resize(n_nodes());
 
   // compute partition masks
-  for(int i=0;i<branch_list.size();i++) {
+  for(int i=0;i<branch_list.size();i++) 
+  {
     const_branchview b = branch_list[i];
 
     if (b.target().is_leaf_node())
-      cached_partitions[b] = false;
+      cached_partitions[b].reset();
     else {
       const_edges_after_iterator j = b.branches_after();
 
@@ -602,7 +604,7 @@ void Tree::compute_partitions() const {
 
     cached_partitions[b][b.target()] = true;
 
-    cached_partitions[b.reverse()] = not cached_partitions[b]; 
+    cached_partitions[b.reverse()] = ~cached_partitions[b]; 
   }
 
   caches_valid = true;
@@ -902,29 +904,34 @@ BranchNode* split_node(vector<BranchNode*> group1,vector<BranchNode*> group2)
   return connect_nodes(group1.back(),group2.back());
 }
 
-int Tree::induce_partition(const std::valarray<bool>& partition) 
+int Tree::induce_partition(const dynamic_bitset<>& partition) 
 {
   assert(partition.size() == n_leaves());
   
   prepare_partitions();
 
-  valarray<bool> partition1(false,n_nodes());
-  valarray<bool> partition2(false,n_nodes());
+  dynamic_bitset<> partition1(n_nodes());
+  dynamic_bitset<> partition2(n_nodes());
+
+  // copy bits from smaller bitset on leaves to larger bitset on all nodes
   for(int i=0;i<partition.size();i++) {
-    partition1[i] = partition[i];
-    partition2[i] = not partition[i];
+    if (partition[i])
+      partition1.flip(i);
+    else
+      partition2.flip(i);
   }
 
-  for(int i=n_leaves();i<n_nodes();i++) {
+  for(int i=n_leaves();i<n_nodes();i++) 
+  {
     vector<BranchNode*> group1;
     vector<BranchNode*> group2;
 
     // divide the branches out into two groups
     BranchNode * BN = nodes_[i];
     do {
-      if (empty(partition1 and cached_partitions[BN->branch]))
+      if (not partition1.intersects(cached_partitions[BN->branch]))
 	group2.push_back(BN);
-      else if (empty(partition2 and cached_partitions[BN->branch]))
+      else if (not partition2.intersects(cached_partitions[BN->branch]))
 	group1.push_back(BN);
       else {
 	group1.clear();
@@ -1196,49 +1203,6 @@ vector<const_branchview> sorted_branches_after(const_branchview b) {
   return branches;
 }
 
-int n_elements(const valarray<bool>& v) {
-  int count = 0;
-  for(int i=0;i<v.size() ;i++)  
-    if (v[i]) count++;
-  return count;
-}
-
-int n_elements(const vector<bool>& v) {
-  int count = 0;
-  for(int i=0;i<v.size() ;i++)  
-    if (v[i]) count++;
-  return count;
-}
-
-
-bool empty(const valarray<bool>& v) {
-  for(int i=0;i<v.size() ;i++)  
-    if (v[i]) return false;
-  return true;
-}
-
-bool equal(const valarray<bool>& v1,const valarray<bool>& v2) {
-  assert(v1.size() == v2.size());
-  for(int i=0;i<v1.size();i++)
-    if (v1[i] != v2[i]) 
-      return false;
-  return true;
-}
-
-bool intersect(const valarray<bool>& v1,const valarray<bool>& v2) 
-{
-  assert(v1.size() == v2.size());
-  return not empty(v1&v2);
-}
-
-bool is_subset(const valarray<bool>& v1,const valarray<bool>& v2) {
-  assert(v1.size() == v2.size());
-  for(int i=0;i<v1.size();i++)
-    if (v1[i] and not v2[i])
-      return false;
-  return true;
-}
-
 Tree star_tree(int n) 
 {
   BranchNode* center = get_first_node();
@@ -1250,12 +1214,13 @@ Tree star_tree(int n)
   return Tree(center);
 }
 
-valarray<bool> branch_partition(const Tree& T,int b) 
+boost::dynamic_bitset<> branch_partition(const Tree& T,int b) 
 {
-  valarray<bool> temp = T.partition(b);
-  valarray<bool> p(T.n_leaves());
+  const dynamic_bitset<>& temp = T.partition(b);
+  dynamic_bitset<> p(T.n_leaves());
   for(int i=0;i<p.size();i++)
-    p[i] = temp[i];
+    if (temp[i])
+      p[i].flip();
 
   return p;
 }

@@ -8,6 +8,7 @@
 #include <vector>
 #include "mytypes.H"
 #include <boost/shared_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 /// A multiple alignment between a group of sequences
 class alignment {
@@ -121,7 +122,7 @@ std::istream& operator>>(std::istream& file,alignment& A);
 bool valid(const alignment&);
 
 /// Does the column contain only gaps for taxa in mask?
-bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask);
+bool all_gaps(const alignment& A,int column,const boost::dynamic_bitset<>& mask);
 
 /// Does the column contain only gaps?
 bool all_gaps(const alignment& A,int column);

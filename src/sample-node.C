@@ -1,4 +1,3 @@
-#include <valarray>
 #include <iostream>
 #include <cmath>
 #include "sample.H"
@@ -29,7 +28,8 @@
 //     sequence in each of the sub-alignments
 
 using std::abs;
-using std::valarray;
+
+using boost::dynamic_bitset;
 
 using namespace A3;
 
@@ -263,7 +263,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  valarray<bool> ignore(false,p[0].T->n_nodes());
+  dynamic_bitset<> ignore(p[0].T->n_nodes());
   ignore[ nodes[0][0] ] = true;
 
   // Check that our constraints are met

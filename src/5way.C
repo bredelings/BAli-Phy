@@ -5,7 +5,7 @@
 #include "alignment-util.H"
 #include "substitution-index.H"
 
-using std::valarray;
+using boost::dynamic_bitset;
 
 namespace A5 {
 
@@ -381,7 +381,7 @@ namespace A5 {
 		      const vector<int>& nodes,const Tree& T,const vector< vector<int> >& seq,const  vector<int>& states_list) {
 
     // Construct the list of nodes present in the 4 sub-trees
-    vector< valarray<bool> > group;
+    vector< dynamic_bitset<> > group;
     group.push_back(T.partition(nodes[4],nodes[0]));
     group.push_back(T.partition(nodes[4],nodes[1]));
     group.push_back(T.partition(nodes[5],nodes[2]));

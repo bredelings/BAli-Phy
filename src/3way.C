@@ -6,7 +6,7 @@
 #include "rng.H"
 #include "substitution-index.H"
 
-using std::valarray;
+using boost::dynamic_bitset;
 
 using namespace A3;
 
@@ -338,7 +338,7 @@ namespace A3 {
     vector< vector<int> > seq;
     seq.push_back(seq1); seq.push_back(seq2); seq.push_back(seq3);
 
-    vector< valarray<bool> > group;
+    vector< dynamic_bitset<> > group;
     group.push_back( T.partition(n0,n1) );
     group.push_back( T.partition(n0,n2) );
     group.push_back( T.partition(n0,n3) );

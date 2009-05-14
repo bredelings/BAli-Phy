@@ -2,9 +2,10 @@
 #define TREE_DIST_H
 
 #include <vector>
+#include <valarray>
 #include <utility>
 #include <list>
-#include <valarray>
+#include <boost/dynamic_bitset.hpp>
 
 #include <string>
 #include <iostream>
@@ -28,10 +29,10 @@ struct Partition {
   std::vector<std::string> names;
 
   /// the taxa in the first group
-  std::valarray<bool> group1;
+  boost::dynamic_bitset<> group1;
 
   /// the taxa in the second group
-  std::valarray<bool> group2;
+  boost::dynamic_bitset<> group2;
 
   /// Is this a full partition?
   bool full() const; 
@@ -43,29 +44,29 @@ struct Partition {
   
   Partition reverse() const;
 
-  std::valarray<bool> mask() const {return group1 or group2;}
+  boost::dynamic_bitset<> mask() const {return group1 | group2;}
 
   /// Create a partition from p, but masked by @mask
-  Partition(const Partition& p,const std::valarray<bool>& mask);
+  Partition(const Partition& p,const boost::dynamic_bitset<>& mask);
 
   /// Create a partition of all taxa (g=0->g1,g=1->g2)
-  Partition(const std::valarray<bool>& g);
+  Partition(const boost::dynamic_bitset<>& g);
 
   /// Create a partition of all taxa (g=0->g1,g=1->g2)
-  Partition(const std::vector<std::string>& n,const std::valarray<bool>& g); 
+  Partition(const std::vector<std::string>& n,const boost::dynamic_bitset<>& g); 
  
   /// Create a partition of taxa present in @mask (g=0->g1,g=1->g2) 
-  Partition(const std::valarray<bool>& g,const std::valarray<bool>& mask); 
+  Partition(const boost::dynamic_bitset<>& g,const boost::dynamic_bitset<>& mask); 
 
   /// Create a partition of taxa present in @mask (g=0->g1,g=1->g2) 
-  Partition(const std::vector<std::string>& n,const std::valarray<bool>& g,const std::valarray<bool>& mask);
+  Partition(const std::vector<std::string>& n,const boost::dynamic_bitset<>& g,const boost::dynamic_bitset<>& mask);
   /// Create a partition from its description
   Partition(const std::string& line);
   /// Create a partition from its description with names already ordered
   Partition(const std::vector<std::string>& n,const std::string& line);
 };
 
-std::valarray<bool> group_from_names(const std::vector<std::string>& names,const std::vector<std::string>& subset);
+boost::dynamic_bitset<> group_from_names(const std::vector<std::string>& names,const std::vector<std::string>& subset);
 
 Partition partition_from_branch(const SequenceTree& T,int b);
 
@@ -134,7 +135,7 @@ public:
     std::string topology;
 
     // a tree structure for this topology
-    std::vector<std::valarray<bool> > partitions;
+    std::vector<boost::dynamic_bitset<> > partitions;
 
     // how many times did we see this topology
     unsigned count;
@@ -173,10 +174,10 @@ public:
 };
 
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);
-std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, const std::valarray<bool>&);
+std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, const boost::dynamic_bitset<>&);
 
 std::vector<std::pair<Partition,unsigned> > 
-get_Ml_partitions_and_counts(const tree_sample& sample,double l, const std::valarray<bool>&);
+get_Ml_partitions_and_counts(const tree_sample& sample,double l, const boost::dynamic_bitset<>&);
 
 std::vector<std::pair<Partition,unsigned> > 
 get_Ml_partitions_and_counts(const tree_sample& sample,double l);
@@ -187,14 +188,14 @@ std::vector<std::pair<Partition,unsigned> >
 get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double,int search=1);
 
 std::vector<std::pair<Partition,unsigned> >
-get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const std::valarray<bool>&,
+get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const boost::dynamic_bitset<>&,
 				 double,int search=1);
 
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
 			 const std::vector<Partition>& partitions);
 
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
-			 const std::vector<std::valarray<bool> >& partitions);
+			 const std::vector<boost::dynamic_bitset<> >& partitions);
 
 bool merge_partition(std::vector<Partition>& partitions,const Partition& delta);
 

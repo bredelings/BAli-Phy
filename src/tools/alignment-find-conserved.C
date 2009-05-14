@@ -13,6 +13,9 @@
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
+
+using boost::dynamic_bitset;
+
 using po::variables_map;
 using std::string;
 using std::cout;
@@ -217,13 +220,13 @@ int main(int argc,char* argv[])
     {
       for(int i=0;i<groups.size();i++)
       {
-	valarray<bool> p(false,T.n_leaves());
+	dynamic_bitset<> p(T.n_leaves());
 	for(int j=0;j<groups[i].taxa.size();j++)
 	  p[groups[i].taxa[j]] = true;
 
 	int found = -1;
 	for(int b=0;b<2*T.n_branches() and found == -1;b++)
-	  if (equal(p,branch_partition(T,b)))
+	  if (p == branch_partition(T,b))
 	    found = b;
 	if (found == -1)
 	  throw myexception()<<"I can't find group "<<i+1<<" on the tree!";

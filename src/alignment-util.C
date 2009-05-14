@@ -3,12 +3,12 @@
 #include "util.H"
 #include "setup.H"
 
-using std::vector;
 using std::valarray;
 using std::cout;
 using std::cerr;
 using std::istream;
 
+using boost::dynamic_bitset;
 
 using boost::program_options::variables_map;
 using boost::shared_ptr;
@@ -124,7 +124,7 @@ bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2,
 }
 
 
-bool A_constant(alignment A1, alignment A2, const valarray<bool>& ignore) {
+bool A_constant(alignment A1, alignment A2, const dynamic_bitset<>& ignore) {
   assert(A1.n_sequences() == A2.n_sequences());
   assert(ignore.size() == A1.n_sequences());
 
@@ -177,14 +177,7 @@ bool names_are_unique(const alignment& A)
   return true;
 }
 
-bool bit_set(const valarray<bool>& v) {
-  for(int i=0;i<v.size();i++)
-    if (v[i]) return true;
-  return false;
-}
-
-
-void connect_all_characters(const Tree& T,valarray<bool>& present)
+void connect_all_characters(const Tree& T,dynamic_bitset<>& present)
 {
   assert(present.size() == T.n_nodes());
   
@@ -202,8 +195,8 @@ void connect_all_characters(const Tree& T,valarray<bool>& present)
     int total=0;
     for(int i=0;i<neighbors.size();i++)
     {
-      valarray<bool> group = T.partition(n1,neighbors[i]);
-      if (bit_set(present and group))
+      dynamic_bitset<> group = T.partition(n1,neighbors[i]);
+      if (present.intersects(group))
 	total++;
     }
 
@@ -214,11 +207,11 @@ void connect_all_characters(const Tree& T,valarray<bool>& present)
 }
 
 /// Check that any two present nodes are connected by a path of present nodes
-bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<int>& _ignore) {
+bool all_characters_connected(const Tree& T,dynamic_bitset<> present,const vector<int>& _ignore) {
   assert(present.size() == T.n_nodes());
 
   //--------- set the ignored nodes to 'not present' -----------//
-  valarray<bool> ignore(false,present.size());
+  dynamic_bitset<> ignore(present.size());
   for(int i=0;i<_ignore.size();i++) {
     int n = _ignore[i];
     present[n] = false;
@@ -238,8 +231,8 @@ bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<
     //---- check the three attatched subtrees ... ----//
     int total=0;
     for(int i=0;i<neighbors.size();i++) {
-      valarray<bool> group = T.partition(n1,neighbors[i]);
-      if (bit_set(present and group))
+      dynamic_bitset<> group = T.partition(n1,neighbors[i]);
+      if (present.intersects(group))
 	total++;
     }
 
@@ -275,7 +268,7 @@ void connect_leaf_characters(alignment& A,const Tree& T)
   for(int column=0;column<A.length();column++)
   {
     // construct leaf presence/absence mask
-    valarray<bool> present(T.n_nodes());
+    dynamic_bitset<> present(T.n_nodes());
     for(int i=0;i<T.n_nodes();i++)
       present[i] = not A.gap(column,i);
     
@@ -293,7 +286,7 @@ void connect_leaf_characters(alignment& A,const Tree& T)
 /// Check that internal node states are consistent
 void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore) {
   for(int column=0;column<A.length();column++) {
-    valarray<bool> present(T.n_nodes());
+    dynamic_bitset<> present(T.n_nodes());
     for(int i=0;i<T.n_nodes();i++) 
       present[i] = not A.gap(column,i);
     
@@ -1022,10 +1015,10 @@ alignment find_last_alignment(std::istream& ifile, const vector<shared_ptr<const
   return A;
 }
 
-void check_disconnected(const alignment& A,const valarray<bool>& mask)
+void check_disconnected(const alignment& A,const dynamic_bitset<>& mask)
 {
-  valarray<bool> g1 = mask;
-  valarray<bool> g2 = not mask;
+  dynamic_bitset<> g1 = mask;
+  dynamic_bitset<> g2 = ~mask;
 
   for(int i=0;i<A.length();i++) {
     if (not (all_gaps(A,i,g1) or all_gaps(A,i,g2))) {
@@ -1042,7 +1035,7 @@ void check_disconnected(const alignment& A, const Tree& T, const std::vector<int
 
   for(int b=0;b<disconnected.size();b++)
     if (disconnected[b]) {
-      valarray<bool> mask = T.partition(b);
+      dynamic_bitset<> mask = T.partition(b);
       check_disconnected(A,mask);
     }
   

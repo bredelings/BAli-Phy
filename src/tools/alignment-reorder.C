@@ -20,14 +20,6 @@ using std::valarray;
 
 using std::string;
 
-int first_bit(const valarray<bool>& v) 
-{
-  for(int i=0;i<v.size();i++) {
-    if (v[i]) return i;
-  }
-  return v.size();
-}
-
 struct branch_order {
   const Tree& T;
 
@@ -36,7 +28,7 @@ struct branch_order {
       return true;
     if (subtree_height(T,b1) > subtree_height(T,b2))
       return false;
-    return first_bit(T.partition(b1)) < first_bit(T.partition(b2));
+    return T.partition(b1).find_first() < T.partition(b2).find_first();
   }
 
   branch_order(const Tree& T_): T(T_) {}
