@@ -197,22 +197,23 @@ if test "$GXX" = yes ; then
 
   # --enable-debug
   #   If $enableval !=yes and !=no, then the user can specify their own optimization flags.
-  if test "$debug" = yes ; then
+  if test "$debug" != no ; then
       CXXFLAGS="$CXXFLAGS -g"
       # no -ffast-math because it affects handling of NaNs, which result from
       # uninitialized values, among other things
   fi
 
   if test "$debug" = no ; then
-      CXXFLAGS="-ffast-math $CXXFLAGS"
-      CXXFLAGS="-O3 -funroll-loops -fweb $CXXFLAGS"
-      CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
-      if test "$profile" = no ; then 
-          CXXFLAGS="-fomit-frame-pointer $CXXFLAGS"
-      fi
+      CXXFLAGS="$CXXFLAGS -O3"
+  elif test "$debug" = O ; then
+      CXXFLAGS="$CXXFLAGS -O"
   elif test "$debug" = O2 ; then
+      CXXFLAGS="$CXXFLAGS -O2"
+  fi
+
+  if test "$debug" != yes ; then
       CXXFLAGS="-ffast-math $CXXFLAGS"
-      CXXFLAGS="-O2 -funroll-loops -fweb $CXXFLAGS"
+      CXXFLAGS="-funroll-loops -fweb $CXXFLAGS"
       CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
       if test "$profile" = no ; then 
           CXXFLAGS="-fomit-frame-pointer $CXXFLAGS"
