@@ -1303,6 +1303,8 @@ double distance_to_line_segment(const graph_layout& GL,int n1,int n2,int n3)
 // y2 = x2 + t*(x3-x2)
 //  t = ...
 
+//FIXME - add target distance (currently assumed to be 0)?
+
 double graph_energy_function::node_edge_attraction(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2,int n3, double C) const
 {
   const point_position& p1 = GL.node_positions[n1];
@@ -2124,10 +2126,12 @@ vector< cloud > get_clouds(const MC_tree& MC)
 {
   vector<cloud> clouds;
 
+  // Consider each (order) branch...
   for(int b=0;b<MC.partitions.size();b++)
   {
     vector<int> child_branches;
 
+    // ... to see what it wanders over.
     for(int i=0;i<MC.branch_order.size();i++)
     {
       int b2 = MC.branch_order[i];
@@ -2137,14 +2141,24 @@ vector< cloud > get_clouds(const MC_tree& MC)
 
     if (not child_branches.size()) continue;
 
+    //How many branches does this branch wander over?
+    //cerr<<"size = "<<child_branches.size()<<endl;
+
+    // Search the clouds found so far... which should be in order of increasing size
     int which = -1;
     int larger = -1;
     for(int i=0;i<clouds.size();i++) {
       if (clouds[i].child_branches == child_branches)
 	which = i;
-      if (clouds[i].size() > child_branches.size())
+
+      // select the FIRST (and therefore SMALLEST) cloud that is larger than this one.
+      if (clouds[i].size() > child_branches.size() and larger == -1)
 	larger = i;
     }
+
+    //The first clouds that is larger than this one
+    //cerr<<"larger = "<<larger<<endl;
+    //cerr<<endl;
 
     // NOTE: clouds should be sorted by size.
     if (which == -1)
@@ -2320,6 +2334,12 @@ void graph_plotter::operator()(cairo_t* cr)
 	    cairo_set_source_rgb (cr, 0.80 , 0.80, 1);
 	  else if (C == 2)
 	    cairo_set_source_rgb (cr, 0.80 , 1, 0.80);
+	  else if (C == 3)
+	    cairo_set_source_rgb (cr, 0.80 , 1, 1);
+	  else if (C == 4)
+	    cairo_set_source_rgb (cr, 1, 1, 0.80);
+	  else if (C == 5)
+	    cairo_set_source_rgb (cr, 1, 0.80, 0.80);
 	  
 	  cairo_stroke (cr);
 	}
@@ -2837,3 +2857,39 @@ int main(int argc,char* argv[])
   }
   return 0;
 }
+
+
+/*
+
+Drawing cloud/range representations.
+
+1. We have a collection of ranges R[i].
+2. Some branches connect TO THE RANGES instead of to nodes.
+3. All ranges that share a node must have a different color.
+4. Ranges must be ordered -> this ordering is used in drawing to determine
+                             which ranges are drawn on top of other ranges
+			     at nodes and on edges.
+   (a) Q:Do we need to have (R[i] in R[j] -> R[i] < R[j])?
+       A?: Well... if 
+
+Alternatives for drawing:
+(a) At nodes, clouds may have changed widths in order to not obscure each other.
+(b)  ... OR they could be transparent to some degree. (widths from branches)
+(c)  ....OR they could just obscure each other. (widths from branches)
+
+(a) We could also just draw branches as multiple adjacent/parallel lines to indicate
+    the ranges that include each branch. 
+    - black -> no ranges
+    - red -> green
+
+    Thus, the drawing has no nesting of ranges.
+
+(b) Cloud representation:
+    - allows (?requires) nesting of ranges.
+
+Alternatives for layout:
+(a) Resolve to MF tree. (Specifies attatchment points at existing nodes)
+(b) Resolve to MF tree, but allow attachment points in the middle of branches.
+    (b1) Require the new branch-pieces to be parallel.
+
+ */
