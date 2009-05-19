@@ -6,13 +6,13 @@
 #include "tree-dist.H"
 #include "mytypes.H"
 
-struct edge {
+struct mc_tree_edge {
   int from;
   int to;
   int type;
   int partition;
 
-  edge(int f,int t,int T,int p)
+  mc_tree_edge(int f,int t,int T,int p)
     :from(f),to(t),type(T),partition(p)
   {}
 };
@@ -35,7 +35,7 @@ public:
   SequenceTree T;
 
   std::vector<Partition> partitions;
-  std::vector<edge> edges;
+  std::vector<mc_tree_edge> edges;
 
   // map (directed) branches to node names
   std::vector<int> mapping;

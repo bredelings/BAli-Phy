@@ -1892,6 +1892,122 @@ double max_delta(const vector<point_position>& p)
   return m;
 }
 
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/topological_sort.hpp>
+#include <boost/graph/kamada_kawai_spring_layout.hpp>
+#include <boost/graph/fruchterman_reingold.hpp>
+
+using namespace boost;
+
+typedef adjacency_list< vecS, vecS, bidirectionalS> Graph; 
+typedef graph_traits<Graph>::vertex_descriptor Vertex;
+typedef graph_traits<Graph>::edge_descriptor Edge_t;
+
+
+graph_layout kamada_kawai_layout(graph_layout GL)
+{
+  const MC_tree& MC = GL.MC;
+  Graph g(MC.n_nodes());
+
+  //------------ Construct the Graph --------------//
+  for(int i=0;i<MC.edges.size();i++) {
+    const mc_tree_edge& e = MC.edges[i];
+    add_edge(e.from, e.to, g);
+  }
+
+  //--------- Package position as property ---------//
+  typedef vector<point_position> PositionVec;
+  typedef iterator_property_map<PositionVec::iterator,
+                                property_map<Graph, vertex_index_t>::type>
+    PositionMap;
+
+  PositionMap position(GL.node_positions.begin(), get(vertex_index, g));
+
+  //--------- Package weights as property ---------//
+  vector<double> weights(num_edges(g));
+
+  typedef vector<double> WeightVec;
+  typedef iterator_property_map<WeightVec::iterator, 
+    property_map<Graph, edge_index_t>::type>
+    WeightMap;
+
+  WeightMap weight(weights.begin(), get(edge_index,g));
+
+  // kamada_kawai_spring_layout(g, position, weight, boost::side_length(1.0) );
+
+  return GL;
+}
+
+struct my_square_distance_attractive_force {
+  template<typename Graph, typename T>
+  T
+  operator()(typename graph_traits<Graph>::edge_descriptor,
+             T k,
+             T d,
+             const Graph&) const
+  {
+    k /= 10;
+    d -= k;
+    double temp = 100.0*d * d / k;
+    if (d < k) temp *= -1;
+    return temp;
+  }
+};
+
+
+#include <boost/graph/random_layout.hpp>
+#include <boost/random/linear_congruential.hpp>
+
+graph_layout fruchterman_reingold_layout(graph_layout GL, double width, double height)
+{
+  const MC_tree& MC = GL.MC;
+  Graph g(MC.n_nodes());
+
+  //------------ Construct the Graph --------------//
+  for(int i=0;i<MC.edges.size();i++) {
+    const mc_tree_edge& e = MC.edges[i];
+    add_edge(e.from, e.to, g);
+  }
+
+  //--------- Package position as property ---------//
+  typedef vector<point_position> PositionVec;
+  typedef iterator_property_map<PositionVec::iterator,
+                                property_map<Graph, vertex_index_t>::type>
+    PositionMap;
+
+  PositionMap position(GL.node_positions.begin(), get(vertex_index, g));
+
+  cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
+
+  //------------ Initial random layout ------------//
+  minstd_rand gen;
+  gen.seed(rng::get_random_seed());
+  random_graph_layout(g, position, -width/2, width/2, -height/2, height/2, gen);
+  cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
+
+  //------------ Final force-directed layout ------------//
+  //  width *= MC.n_branches()*100;
+  //  height *= MC.n_branches()*100;
+  width *= 100;
+  height *= 100;
+
+  PositionVec Displacements(num_vertices(g));
+  PositionMap displacements(Displacements.begin(), get(vertex_index, g));
+
+  fruchterman_reingold_force_directed_layout(g, position, width, height,
+					     my_square_distance_attractive_force(),
+					     square_distance_repulsive_force(),
+					     make_grid_force_pairs(width,height,position,g),
+					     linear_cooling<double>(1000),
+					     displacements
+					     );
+
+  cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
+
+  return GL;
+}
+
 graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
 {
   double T = 0;
@@ -2349,7 +2465,7 @@ void draw_graph(const MC_tree_with_lengths& T,const string& name)
   // edges
   for(int i=0;i<T.edges.size();i++) 
   {
-    const edge& e = T.edges[i];
+    const mc_tree_edge& e = T.edges[i];
     cout<<"      N"<<e.from<<" -> N"<<e.to;
     int b = e.partition;
 
@@ -2662,7 +2778,20 @@ int main(int argc,char* argv[])
       draw(filename,output,tp);	
       exit(0);
     }
+    else if (args["layout"].as<string>() == "fr")
+    {
+      graph_layout L = layout_on_circle(MC,2);
+      L = fruchterman_reingold_layout(L,xw,yw);
 
+      string filename = name+"-mctree";
+      if (args.count("out"))
+	filename = args["out"].as<string>();
+
+      graph_plotter gp(L, xw, yw, font_size);
+      draw(filename,output,gp);
+      exit(0);
+    }
+    
     
 
     // lay out as a graph

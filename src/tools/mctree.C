@@ -203,7 +203,7 @@ MC_tree::MC_tree(const vector<Partition>& p)
     connected(n1, n2) = 1;
     connected(n2, n1) = 1;
 
-    edges.push_back(edge(n1,n2,1,b));
+    edges.push_back(mc_tree_edge(n1,n2,1,b));
   }
 
   // mark connection possibilities for wandering edges
@@ -218,7 +218,7 @@ MC_tree::MC_tree(const vector<Partition>& p)
   for(int i=0;i<C;i++)
     for(int j=0;j<C;j++)
       if (connected(i,j)==2)
-	edges.push_back(edge(i,j,2,-1));
+	edges.push_back(mc_tree_edge(i,j,2,-1));
 }
 
 int MC_tree::branch_to_node(int n) const
@@ -301,7 +301,7 @@ void draw_graph(const MC_tree& T,const string& name)
 
   // edges
   for(int i=0;i<T.edges.size();i++) {
-    const edge& e = T.edges[i];
+    const mc_tree_edge& e = T.edges[i];
     cout<<"      N"<<e.from<<" -> N"<<e.to;
 
     vector<string> attributes;
