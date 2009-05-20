@@ -16,6 +16,16 @@
 
 #include <boost/program_options.hpp>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_FENV_H
+extern "C" {
+#include "fenv.h"
+}
+#endif
+
 #include "myexception.H"
 #include "sequencetree.H"
 #include "tree-dist.H"
@@ -127,7 +137,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("angle_iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm with small-angle penalties")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
-    ("draw-clouds","Draw wandering-ranges in MC trees as clouds.")
+    ("draw-clouds",value<string>(),"Draw wandering-ranges in MC trees as clouds.")
     ("seed", value<unsigned long>(),"Random seed")
     ("verbose","Output more log messages on stderr.")
     ;
@@ -1227,8 +1237,10 @@ double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector
   double D  = sqrt(D2);
   double dL = abs(D - GL.node_radius[n1] - GL.node_radius[n2]);
 
+  if (dL < 1.0e-15) dL=1.0e-15;
   double E = C/pow(dL,p);
 
+  if (D < 1.0e-15) D=1.0e-15;
   double temp = C/(pow(dL,p+1)*D);
 
   DEL[n1].x += (x2-x1)*temp;
@@ -1453,6 +1465,9 @@ double get_angle_derivative(double x11, double x12,
   double dL_dx32 = 0.5/L*(dA_dx32*B + dB_dx32*A);
 
   //----------------------------------------------------//
+
+  // FIXME: we can get SIGFPE when D==1
+  if (std::abs(D-1) < 1-0e-8) D=1.0-1.0e-8;
 
   da_dx11 = -1.0/sqrt(1-D*D) * (L*dH_dx11 - H*dL_dx11)/M;
   da_dx12 = -1.0/sqrt(1-D*D) * (L*dH_dx12 - H*dL_dx12)/M;
@@ -2010,7 +2025,7 @@ graph_layout fruchterman_reingold_layout(graph_layout GL, double width, double h
   return GL;
 }
 
-graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
+graph_layout energy_layout(graph_layout GL, const graph_energy_function& E,int n=1000)
 {
   double T = 0;
   int successes=0;
@@ -2021,11 +2036,15 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
 
   double dt = E(GL,D)/dot(D,D);
 
-  for(int i=0;i<1000;i++) 
+  for(int i=0;i<n;i++) 
   {
     double E1 = E(GL,D);
     assert(E1 >= 0);
-    if (log_verbose) cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<endl;
+    if (log_verbose) 
+      cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<"   dt = "<<dt<<endl;
+
+    if (log_verbose)
+      cerr<<"  x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
 
     /*
     // check D versus D2
@@ -2052,6 +2071,7 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
       successes++;
       if (successes>3) {
 	dt *= 2.0;
+	if (dt > 1.0) dt = 1.0;
 	successes=0;
       }
 
@@ -2246,10 +2266,13 @@ struct graph_plotter: public cairo_plotter
 
   bool draw_clouds;
 
+  bool draw_type_2_edges;
+
   graph_plotter(const graph_layout& gl,double xw,double yw, double fs)
     :cairo_plotter(xw,yw,fs),
      L(gl),
-     draw_clouds(false)
+    draw_clouds(false),
+    draw_type_2_edges(true)
   {}
 };
 
@@ -2257,9 +2280,9 @@ void graph_plotter::operator()(cairo_t* cr)
 {
   vector<bool> e_cross_v = edge_crossing_vector(L);
 
-  ublas::matrix<int> n_cross = crossed_nodes_matrix(L);
+  //  ublas::matrix<int> n_cross = crossed_nodes_matrix(L);
 
-  vector<bool> n_cross_v = crossed_nodes_vector(L);
+  //  vector<bool> n_cross_v = crossed_nodes_vector(L);
 
   double xc = 0.5*(L.xmin() + L.xmax());
   double yc = 0.5*(L.ymin() + L.ymax());
@@ -2377,10 +2400,11 @@ void graph_plotter::operator()(cairo_t* cr)
 	cairo_set_line_width(cr, line_width/2.0);
 	cairo_set_dash (cr, dashes, 2, 0.0);
       }
-      if (e_cross_v[e] and false)
+      if (false) // if (e_cross_v[e])
 	cairo_set_source_rgb (cr, 1 , 0, 0);
       
-      cairo_stroke (cr);
+      if (t==1 or draw_type_2_edges)
+	cairo_stroke (cr);
     }
     cairo_restore(cr);
   }
@@ -2409,7 +2433,7 @@ void graph_plotter::operator()(cairo_t* cr)
     }
 
     cairo_save(cr);
-    if (n_cross_v[n] and false) {
+    if (false) { // if (n_cross_v[n])
       //      cerr<<"n_cross: "<<n<<endl;
       double R = 0.001;
       cairo_arc(cr, x, y, R, 0.0, 2.0 * M_PI);
@@ -2691,6 +2715,10 @@ MC_tree_with_lengths collapse_nodes(const MC_tree_with_lengths& MC1)
 int main(int argc,char* argv[]) 
 {
   try {
+#if defined(HAVE_FENV_H) && !defined(NDEBUG)
+    feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+#endif
+
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
@@ -2813,36 +2841,54 @@ int main(int argc,char* argv[])
     }
     
     
-
+    
     // lay out as a graph
     graph_layout L2 = layout_on_circle(MC,2);
     graph_layout L3 = L2;
 
+    double length_weight = 10000000;
     int n_iterations = args["iterations"].as<int>();
+    /*
+    for(int i=0;i<10;i++) {
+      double w = length_weight/100*double(i)/10;
+      L3 = energy_layout(L3,energy2(1,w,1,0),1000);
+    }
+    */
     for(int i=0;i<n_iterations;i++) {
-      L3 = energy_layout(L3,energy2(1,10000000,2,0));
+      double w = length_weight;
+      if (i==0) w /= 100;
+      if (i==1) w /= 10;
+      L3 = energy_layout(L3,energy2(1,w,2,0));
       L3.rotate_for_aspect_ratio(xw,yw);
+
       graph_plotter gp(L3, xw, yw, font_size);
 
-      if (args.count("draw-clouds"))
+      if (args.count("draw-clouds")) {
 	gp.draw_clouds = true;
-
+	if (args["draw-clouds"].as<string>() == "only")
+	  gp.draw_type_2_edges = false;
+      }
+      
       string filename = name+"-mctree";
       if (args.count("out"))
 	filename = args["out"].as<string>();
-
+      
       draw(filename,output,gp);
     }
 
     // improve angular resolution
     int a_iterations = args["angle_iterations"].as<int>();
     for(int i=0;i<a_iterations;i++) {
-      L3 = energy_layout(L3,energy2(1,10000000,2,50));
+      L3 = energy_layout(L3,energy2(1,10000000,0.01,50));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw, font_size);
 
-      if (args.count("draw-clouds"))
+      if (args.count("draw-clouds")) {
 	gp.draw_clouds = true;
+
+	if (args["draw-clouds"].as<string>() == "only")
+	  gp.draw_type_2_edges = false;
+      }
 
       string filename = name+"-mctree";
       if (args.count("out"))
