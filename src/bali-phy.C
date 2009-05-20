@@ -88,15 +88,21 @@ bool match(const string& s1, const string& s2)
 }
 
 
-vector<int> parameters_with_extension(const Model& M, const string& name)
+vector<int> parameters_with_extension(const Model& M, string name)
 {
+  bool complete_match = false;
+  if (name.size() and name[0] == '^') {
+    complete_match = true;
+    name = name.substr(1,name.size()-1);
+  }
+
   vector<int> indices;
 
   const vector<string> path2 = split(name,"::");
 
   if (not path2.size()) return indices;
 
-  for(int i=0;i<M.parameters().size();i++)
+  for(int i=0;i<M.n_parameters();i++)
   {
     vector<string> path1 = split(M.parameter_name(i),"::");
 
@@ -104,7 +110,7 @@ vector<int> parameters_with_extension(const Model& M, const string& name)
       path1.erase(path1.begin());
     else if (path2.size() > path1.size())
       continue;
-    else
+    else if (not complete_match)
     {
       int n = path1.size() - path2.size();
       path1.erase(path1.begin(),path1.begin() + n);
@@ -122,31 +128,19 @@ vector<int> parameters_with_extension(const Model& M, const string& name)
   return indices;
 }
 
-vector<string> get_parameters(const Model& M,const string& prefix)
-{
-  vector<string> names;
-  for(int i=0;i<M.parameters().size();i++)
-  {
-    string s = M.parameter_name(i);
-    if (s.size() > prefix.size() and s.substr(0,prefix.size()) == prefix)
-      names.push_back(s);
-  }
-  return names;
-}
-
 void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, MCMC::MoveAll& M)
 {
   if (name.size() and name[name.size()-1] == '*')
   {
-    vector<string> names = get_parameters(P,name.substr(0,name.size()-1));
-    vector<string> names2;
-    for(int i=0;i<names.size();i++)
-      if (not P.fixed(find_parameter(P,names[i])))
-	names2.push_back(names[i]);
+    vector<int> indices = parameters_with_extension(P,name);
+    vector<string> names;
+    for(int i=0;i<indices.size();i++)
+      names.push_back(P.parameter_name(indices[i]));
 
-    if (names2.empty()) return;
+    if (names.empty()) return;
+
     set_if_undef(P.keys, pname, sigma);
-    Proposal2 move_mu(p, names2, vector<string>(1,pname), P);
+    Proposal2 move_mu(p, names, vector<string>(1,pname), P);
 
     M.add(1, MCMC::MH_Move(move_mu,string("MH_sample_")+name));
   }
@@ -414,49 +408,58 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
     total_length += max(sequence_lengths(*P[i].A, P.T->n_leaves()));
   P.keys["pi_dirichlet_N"] *= total_length;
 
-  add_MH_move(P, dirichlet_proposal,    "pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-  add_MH_move(P, dirichlet_proposal,    "INV::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-  add_MH_move(P, dirichlet_proposal,    "VAR::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-
-  set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
-  P.keys["GTR_dirichlet_N"] *= 100;
-  add_MH_move(P, dirichlet_proposal,    "GTR::*", "GTR_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"v_dirichlet_N",1.0);
-  P.keys["v_dirichlet_N"] *= total_length;
-  add_MH_move(P, dirichlet_proposal,    "v*", "v_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"b_dirichlet_N",1.0);
-  P.keys["b_dirichlet_N"] *= total_length;
-  add_MH_move(P, dirichlet_proposal,    "b_*", "b_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
-  P.keys["M2::f_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "M2::f*", "M2::f_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"M3::f_dirichlet_N",1.0);
-  P.keys["M3::f_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
-  P.keys["multi::p_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"DP::f_dirichlet_N",1.0);
-  P.keys["DP::f_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"MF::dirichlet_N",10.0);
-  for(int s=0;s<P.n_smodels();s++) {
+  for(int s=0;s<=P.n_smodels();s++) 
+  {
     string index = convertToString(s+1);
+    string prefix = "^S" + index + "::";
+
+    if (s==P.n_smodels())
+      prefix = "^";
+
+    add_MH_move(P, dirichlet_proposal,  prefix + "pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    
+    add_MH_move(P, dirichlet_proposal,  prefix + "INV::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "VAR::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+
+    set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
+    P.keys["GTR_dirichlet_N"] *= 100;
+    add_MH_move(P, dirichlet_proposal,  prefix + "GTR::*", "GTR_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"v_dirichlet_N",1.0);
+    P.keys["v_dirichlet_N"] *= total_length;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "v*", "v_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"b_dirichlet_N",1.0);
+    P.keys["b_dirichlet_N"] *= total_length;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "b_*", "b_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
+    P.keys["M2::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "M2::f*", "M2::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"M3::f_dirichlet_N",1.0);
+    P.keys["M3::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
+    P.keys["multi::p_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"DP::f_dirichlet_N",1.0);
+    P.keys["DP::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
+
+  //FIXME - this should probably be 20*#rate_categories...
+    set_if_undef(P.keys,"DP::rate_dirichlet_N",100.0);
+    add_MH_move(P, sorted(dirichlet_proposal), prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
+
+    if (s >= P.n_smodels()) continue;
+
+    // Handle multi-frequency models
+    set_if_undef(P.keys,"MF::dirichlet_N",10.0);
+
     const alphabet& a = P.SModel(s).Alphabet();
     const int asize = a.size();
-
-    string prefix = string("S") + index + "::";
-
-    // special case - no prefix 
-    if (P.n_smodels() == 1)
-      prefix = "";
 
     for(int l=0;l<asize;l++) {
       string pname = prefix+ "a" + a.lookup(l) + "*";
@@ -471,10 +474,6 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   //          whereas we probably find them in *lexical* order....
   //          ... or creation order?  That might be OK for now! 
 
-  //FIXME - this should probably be 20*#rate_categories...
-  set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
-  P.keys["DP::rate_dirichlet_N"] *= 10*10;
-  add_MH_move(P, sorted(dirichlet_proposal),    "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
 
   for(int i=0;;i++) {
     string name = "M3::omega" + convertToString(i+1);
