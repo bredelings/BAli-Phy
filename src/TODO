@@ -1,6 +1,8 @@
 Why does INV+Modulated+gamma[4]+INV crash?
     - Because you can't add models with different alphabet sizes ATM.
 
+Search SPR w/ multiple attachment sites.
+
 Branch priors
 1. Use Gamma(1/2,mu)
 2. Allow also Uniform(0,n), Exponential(mu), and ???
@@ -33,29 +35,7 @@ Output and Postprocessing
 
 Multiple Data Partition Stuff
  A. Partition-specific alphabets/smodels/imodels
-    (a) TIME SCALE (mu) - allow it to be different OR the same
-    	+ How are we using the partition branch_mean?
-	+ data_partition::recalc_imodel()
-	  - t*branch_mean;
-	+ data_partition::recalc_smodel()
-	  - SModel_->set_rate(branch_mean())
-    	+ data_partition::branch_mean_tricky(double mu)
-	  - SModel_->set_rate(branch_mean())
-	  
-	So, in general if  branch_mean  changes, then we must recalculate
-	both SModel and IModel.
-
-	However, if t*mu remains constant for all branches, then we just need
-	to rescale the SModel, since the cached results depend only on
-	t*mu and will not change. (branch_mean_tricky.)
-
-	Therefore, we could make a scale_branch_lengths_and_mean(T,mu)
-	routine in Parameters.
-
     (b) ALPHABET        - allow specifying
-
-
- E. Create separate MOVES for (e.g.) HKY::kappa, pi* in each SModel.
 
  f. Currently we are altering the smodel inside the partitions.
     This requires copying it...
@@ -69,8 +49,6 @@ Multiple Data Partition Stuff
 
 
 Code Cleanliness
- A. Make tree-dist.H stop relying on copying valarrays of different size.
-    What is the appropriate valarray-specific method to copy PART of a valarray to another valarray?
 
 IDEA: parse "...+var~dist"  (could be +Something[var,dist]
 
@@ -762,7 +740,13 @@ the prior, because we never want to use it  differently.
 
 [DONE] FIX gamma quantile function to not return NaN ever.
 
+[DONE] Allow partitions to share scales.
 
+[DONE] Create separate MOVES for (e.g.) HKY::kappa, pi* in each SModel.
+
+[DONE] Stop abusing valarray (comparing w/ unequal lengths)
+
+[DONE] Use dynamic_bitset<> instead of valarray<bool> for sets.
 
 *IDEAS*
 
