@@ -88,6 +88,7 @@ public:
 class SuperModel: virtual public Model 
 {
 protected:
+  vector<std::string> short_parameter_names;
   vector<std::string> model_prefix;
   vector<int> first_index_of_model;
   vector<int> model_of_index;
@@ -110,6 +111,8 @@ protected:
   void write(int i,double p);
   /// Store SOME parameters down into submodels
   void write(const std::vector<int>&,vector<double>::const_iterator&);
+
+  void prefix_names();
 
 public:
   /// Make a copy of ourselves

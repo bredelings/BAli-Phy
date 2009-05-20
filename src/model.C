@@ -102,6 +102,8 @@ void SuperModel::add_parameter(const string& name,double value)
   model_of_index.push_back(m);
 
   Model::add_parameter(name,value);
+  short_parameter_names.push_back(name);
+  assert(parameter_names_.size() == short_parameter_names.size());
 }
 
 void SuperModel::add_super_parameter(const string& name,double value)
@@ -112,6 +114,8 @@ void SuperModel::add_super_parameter(const string& name,double value)
 
   parameter_names_.insert(parameter_names_.begin()+I ,name);
 
+  short_parameter_names.insert(short_parameter_names.begin()+I ,name);
+
   fixed_.insert(fixed_.begin()+I                     ,false);
 
   model_of_index.insert(model_of_index.begin()+I     ,-1);
@@ -119,6 +123,42 @@ void SuperModel::add_super_parameter(const string& name,double value)
   for(int i=0;i<first_index_of_model.size();i++)
     first_index_of_model[i]++;
 }
+
+void SuperModel::prefix_names() 
+{
+  assert(parameter_names_.size() == short_parameter_names.size());
+
+  if (n_submodels() <= 1) return;
+
+  vector<int> add_prefix(n_submodels(),0);
+
+  for(int i=0;i<n_parameters();i++) {
+    for(int j=0;j<i;j++) {
+      if (short_parameter_names[i] == short_parameter_names[j]) 
+      {
+	int m1 = model_of_index[i];
+	int m2 = model_of_index[j];
+
+	if (m1 != -1) add_prefix[m1] = 1;
+	if (m2 != -1) add_prefix[m2] = 1;
+      }
+    }
+  }
+
+  for(int m=0;m<n_submodels();m++) {
+    int n = SubModels(m).n_parameters();
+    int index = first_index_of_model[m];
+
+    string prefix = model_prefix[m];
+
+    for(int i=0;i<n;i++)
+      if (add_prefix[m])
+	parameter_names_[index+i] = prefix + short_parameter_names[index+i];
+      else
+	parameter_names_[index+i] = short_parameter_names[index+i];
+  }
+}
+
 
 void SuperModel::add_submodel(const string& prefix,const Model& M)
 {
@@ -131,6 +171,8 @@ void SuperModel::add_submodel(const string& prefix,const Model& M)
   // store the parameter name
   for(int i=0;i<M.n_parameters();i++)
     add_parameter(M.parameter_name(i),M.parameter(i));
+
+  prefix_names();
 
   // check for duplicate names
   for(int i=first_index_of_model.back();i<n_parameters();i++)
