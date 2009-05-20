@@ -422,36 +422,41 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
     add_MH_move(P, dirichlet_proposal,  prefix + "VAR::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
 
     set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
-    P.keys["GTR_dirichlet_N"] *= 100;
+    if (s==0) P.keys["GTR_dirichlet_N"] *= 100;
     add_MH_move(P, dirichlet_proposal,  prefix + "GTR::*", "GTR_dirichlet_N",     1,  parameter_moves);
 
     set_if_undef(P.keys,"v_dirichlet_N",1.0);
-    P.keys["v_dirichlet_N"] *= total_length;
+    if (s==0) P.keys["v_dirichlet_N"] *= total_length;
     add_MH_move(P, dirichlet_proposal,  prefix +  "v*", "v_dirichlet_N",     1,  parameter_moves);
 
     set_if_undef(P.keys,"b_dirichlet_N",1.0);
-    P.keys["b_dirichlet_N"] *= total_length;
+    if (s==0) P.keys["b_dirichlet_N"] *= total_length;
     add_MH_move(P, dirichlet_proposal,  prefix +  "b_*", "b_dirichlet_N",     1,  parameter_moves);
 
     set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
-    P.keys["M2::f_dirichlet_N"] *= 10;
+    if (s==0) P.keys["M2::f_dirichlet_N"] *= 10;
     add_MH_move(P, dirichlet_proposal,  prefix +  "M2::f*", "M2::f_dirichlet_N",     1,  parameter_moves);
 
     set_if_undef(P.keys,"M3::f_dirichlet_N",1.0);
-    P.keys["M3::f_dirichlet_N"] *= 10;
+    if (s==0) P.keys["M3::f_dirichlet_N"] *= 10;
     add_MH_move(P, dirichlet_proposal,   prefix + "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
 
     set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
-    P.keys["multi::p_dirichlet_N"] *= 10;
+    if (s==0) P.keys["multi::p_dirichlet_N"] *= 10;
     add_MH_move(P, dirichlet_proposal,   prefix + "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);
 
     set_if_undef(P.keys,"DP::f_dirichlet_N",1.0);
-    P.keys["DP::f_dirichlet_N"] *= 10;
+    if (s==0) P.keys["DP::f_dirichlet_N"] *= 10;
     add_MH_move(P, dirichlet_proposal,   prefix + "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
 
-  //FIXME - this should probably be 20*#rate_categories...
-    set_if_undef(P.keys,"DP::rate_dirichlet_N",100.0);
+    set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
+    //FIXME - this should probably be 20*#rate_categories...
+    if (s==0) P.keys["DP::rate_dirichlet_N"] *= 10*10;
     add_MH_move(P, sorted(dirichlet_proposal), prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
+    if (s==0) P.keys["Mixture::p_dirichlet_N"] *= 10*10;
+    add_MH_move(P, dirichlet_proposal,         prefix + "Mixture::p*", "Mixture::p_dirichlet_N",     1,  parameter_moves);
 
     if (s >= P.n_smodels()) continue;
 
@@ -484,10 +489,6 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
     //    Proposal2 m(log_scaled(shift_cauchy), name, vector<string>(1,"omega_scale_sigma"), P);
     //    parameter_moves.add(1, MCMC::MH_Move(m,"sample_M3::omega"));
   }
-
-  set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
-  P.keys["Mixture::p_dirichlet_N"] *= 10*10;
-  add_MH_move(P, dirichlet_proposal,    "Mixture::p*", "Mixture::p_dirichlet_N",     1,  parameter_moves);
 
   int subsample = args["subsample"].as<int>();
 
