@@ -134,7 +134,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("full","Consider only full splits by collapsing any partial splits.")
     ("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
     ("font-size",value<double>()->default_value(10),"Font size for taxon names")
-    ("angle_iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm with small-angle penalties")
+    ("angle_iterations",value<int>()->default_value(0),"Number of iterations for layout algorithm with small-angle penalties")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
     ("draw-clouds",value<string>(),"Draw wandering-ranges in MC trees as clouds.")
@@ -1218,23 +1218,38 @@ struct graph_energy_function
   virtual double operator()(const graph_layout& GL) const=0;
   virtual double operator()(const graph_layout& GL, vector<point_position>&) const=0;
 
-  double node_node_repulsion(const graph_layout& GL,vector<point_position>& D,int n1,int n2, double C,int p=1) const;
+  double node_node_repulsion(const graph_layout& GL,vector<point_position>& D,int n1,int n2, double C) const;
   double node_node_attraction(const graph_layout& GL,vector<point_position>& D, int n1,int n2, double C, double l) const;
   double node_edge_attraction(const graph_layout& GL,vector<point_position>& D, int n1,int n2,int n3, double C) const;
 
   virtual ~graph_energy_function() {}
 };
 
-double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C,int p) const
+double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C) const
 {
+  const int p=1;
+
+  assert(n1 != n2);
+
+  // don't repel the ends of the branch that I'm attached to
+  if (GL.MC.connected(n1,n2) == 1) return 0;;
+	
+  // don't repel nodes that wander over me, or that I wander to
+  if (GL.MC.connected(n1,n2) == 2 or GL.MC.connected(n2,n1) == 2) return 0;
+
+  // FIXME - also don't repel other nodes that wander over same branch.
+
   double x1 = GL.node_positions[n1].x;
   double y1 = GL.node_positions[n1].y;
 
   double x2 = GL.node_positions[n2].x;
   double y2 = GL.node_positions[n2].y;
 
-  double D2 = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
-  double D  = sqrt(D2);
+  double dx = x2 - x1;
+  double dy = y2 - y1;
+
+  double D = sqrt(dx*dx + dy*dy);
+
   double dL = abs(D - GL.node_radius[n1] - GL.node_radius[n2]);
 
   if (dL < 1.0e-15) dL=1.0e-15;
@@ -1243,17 +1258,19 @@ double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector
   if (D < 1.0e-15) D=1.0e-15;
   double temp = C/(pow(dL,p+1)*D);
 
-  DEL[n1].x += (x2-x1)*temp;
-  DEL[n1].y += (y2-y1)*temp;
+  DEL[n1].x += dx*temp;
+  DEL[n1].y += dy*temp;
 
-  DEL[n2].x += (x1-x2)*temp;
-  DEL[n2].y += (y1-y2)*temp;
+  DEL[n2].x -= dx*temp;
+  DEL[n2].y -= dy*temp;
 
   return E;
 }
 
 double graph_energy_function::node_node_attraction(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C, double l) const
 {
+  assert(n1 != n2);
+
   double x1 = GL.node_positions[n1].x;
   double y1 = GL.node_positions[n1].y;
 
@@ -1266,6 +1283,7 @@ double graph_energy_function::node_node_attraction(const graph_layout& GL, vecto
 
   double E = C*dL*dL;
 
+  if (D < 1.0e-15) D=1.0e-15;
   double temp = 2.0*C*dL/D;
 
   DEL[n1].x += (x1-x2)*temp;
@@ -1704,6 +1722,7 @@ struct energy2: public graph_energy_function
     /// edge length energies (type 1)
     const double closest_fraction = 1.0;
 
+    // O(E)
     for(int e=0;e<GL.MC.edges.size();e++) 
     {
       int n1 = GL.MC.edges[e].from;
@@ -1768,27 +1787,11 @@ struct energy2: public graph_energy_function
     }
 
     /// node_distances
-    for(int i=0;i<GL.MC.n_nodes();i++)
-      for(int j=0;j<i;j++)
-      {
-	// don't repel the end of the branch that I'm attached to
-	if (GL.MC.connected(i,j) == 1) continue;
-
-	double w = repulsion_weight;
-
-	//	if (n_cross(i,j) and false) {
-	//	  E += node_node_attraction(GL, D, i, j, w, -1);
-	//	}
-	//	else 
-	{
-	  
-	  // don't repel nodes that wander over me, or that I wander to
-	  if (GL.MC.connected(i,j) == 2 or GL.MC.connected(j,i) == 2) w /= 10;
-
-	  E += node_node_repulsion(GL, D, i, j, w, 1);
-	}
-      }
-
+    // O(n*n)
+    for(int n1=0;n1<GL.MC.n_nodes();n1++) 
+      for(int n2=0;n2<n1;n2++) 
+	E += node_node_repulsion(GL, D, n1, n2, repulsion_weight);
+    
     // angular resolution
     if (angle_weight > 0)
     for(int i=0;i<GL.MC.n_nodes();i++) {
@@ -2025,16 +2028,15 @@ graph_layout fruchterman_reingold_layout(graph_layout GL, double width, double h
   return GL;
 }
 
-graph_layout energy_layout(graph_layout GL, const graph_energy_function& E,int n=1000)
+void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
 {
   double T = 0;
   int successes=0;
 
   vector<point_position> D;
-  E(GL,D);
-  D = energy_derivative_2D(GL,E);
+  //  double E = E(GL,D);
 
-  double dt = E(GL,D)/dot(D,D);
+  double dt = 1;//E(GL,D)/dot(D,D);
 
   for(int i=0;i<n;i++) 
   {
@@ -2057,8 +2059,19 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E,int n
 
     // problem with these equations is STIFFness (? and rotation?)
 
+
+    // Make a scaled version
+    vector<point_position> DD = D;
+    for(int i=0;i<DD.size();i++) 
+    {
+      double v = sqrt(DD[i].x*DD[i].x + DD[i].y*DD[i].y);
+      DD[i].x /= v;
+      DD[i].y /= v;
+    }
+
     vector<point_position> temp = GL.node_positions;
-    inc(GL.node_positions,-dt,D);
+    inc(GL.node_positions,-dt,DD);
+
     double E2 = E(GL);
     if (E2 > E1) {
       if (log_verbose) cerr<<"draw-tree:    rejecting  E = "<<E2<<endl;
@@ -2077,15 +2090,13 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E,int n
 
       // actually, we need an estimate of the CURVATURE to know when to stop!
       if (max_delta(GL.node_positions)/min(GL.x_width(),GL.y_width()) < 0.00001)
-      	return GL;
+	return;
 
       // (how to go from 'energy near bottom' to 'position near position at lowest energy',
       //  which is what really matters?
 
     }
   }
-
-  return GL;
 }
 
 // FIXME: construct child_nodes
@@ -2362,7 +2373,7 @@ void graph_plotter::operator()(cairo_t* cr)
 	  else if (C == 4)
 	    cairo_set_source_rgb (cr, 1, 1, 0.80);
 	  else if (C == 5)
-	    cairo_set_source_rgb (cr, 1, 0.80, 0.80);
+	    cairo_set_source_rgb (cr, 1, 0.80, 1);
 	  
 	  cairo_stroke (cr);
 	}
@@ -2846,7 +2857,9 @@ int main(int argc,char* argv[])
     graph_layout L2 = layout_on_circle(MC,2);
     graph_layout L3 = L2;
 
+
     double length_weight = 10000000;
+
     int n_iterations = args["iterations"].as<int>();
     /*
     for(int i=0;i<10;i++) {
@@ -2854,11 +2867,26 @@ int main(int argc,char* argv[])
       L3 = energy_layout(L3,energy2(1,w,1,0),1000);
     }
     */
-    for(int i=0;i<n_iterations;i++) {
-      double w = length_weight;
-      if (i==0) w /= 100;
-      if (i==1) w /= 10;
-      L3 = energy_layout(L3,energy2(1,w,2,0));
+
+    double stretchy_weight = 1.0;
+    if (args.count("draw-clouds") and args["draw-clouds"].as<string>() == "only") {
+      stretchy_weight = 0.1;
+
+    }
+
+
+    // FIXME - the repulsion should actually depend on the number of nodes!
+    energy_layout(L3,energy2(1,1,stretchy_weight,0),200);
+    energy_layout(L3,energy2(1,10,stretchy_weight,0),200);
+    energy_layout(L3,energy2(1,100,stretchy_weight,0),200);
+    energy_layout(L3,energy2(1,1000,stretchy_weight,0),200);
+    energy_layout(L3,energy2(1,10000,stretchy_weight,0),200);
+    energy_layout(L3,energy2(1,100000,stretchy_weight,0),400);
+    energy_layout(L3,energy2(1,1000000,stretchy_weight,0),800);
+
+    for(int i=0;i<n_iterations;i++) 
+    {
+      energy_layout(L3,energy2(1,length_weight,stretchy_weight,0));
       L3.rotate_for_aspect_ratio(xw,yw);
 
       graph_plotter gp(L3, xw, yw, font_size);
@@ -2879,7 +2907,7 @@ int main(int argc,char* argv[])
     // improve angular resolution
     int a_iterations = args["angle_iterations"].as<int>();
     for(int i=0;i<a_iterations;i++) {
-      L3 = energy_layout(L3,energy2(1,10000000,0.01,50));
+      energy_layout(L3,energy2(1,10000000,0.01,50));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw, font_size);
 
