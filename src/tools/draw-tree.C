@@ -1225,6 +1225,9 @@ struct graph_energy_function
   virtual ~graph_energy_function() {}
 };
 
+// In fr, (attractive) scaling factor is d*d/k, where k=sqrt(w*h/num_vertices)
+// In fr, (repulsive) scaling factor is k*k/d, where d=distance
+
 double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C) const
 {
   const int p=1;
@@ -1232,10 +1235,12 @@ double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector
   assert(n1 != n2);
 
   // don't repel the ends of the branch that I'm attached to
-  if (GL.MC.connected(n1,n2) == 1) return 0;;
+  if (GL.MC.connected(n1,n2) == 1) return 0;
 	
   // don't repel nodes that wander over me, or that I wander to
   if (GL.MC.connected(n1,n2) == 2 or GL.MC.connected(n2,n1) == 2) return 0;
+
+  C /= GL.MC.n_nodes();
 
   // FIXME - also don't repel other nodes that wander over same branch.
 
@@ -2876,11 +2881,8 @@ int main(int argc,char* argv[])
 
 
     // FIXME - the repulsion should actually depend on the number of nodes!
-    energy_layout(L3,energy2(1,1,stretchy_weight,0),200);
-    energy_layout(L3,energy2(1,10,stretchy_weight,0),200);
-    energy_layout(L3,energy2(1,100,stretchy_weight,0),200);
-    energy_layout(L3,energy2(1,1000,stretchy_weight,0),200);
-    energy_layout(L3,energy2(1,10000,stretchy_weight,0),200);
+    energy_layout(L3,energy2(1,1000,stretchy_weight,0),400);
+    energy_layout(L3,energy2(1,10000,stretchy_weight,0),400);
     energy_layout(L3,energy2(1,100000,stretchy_weight,0),400);
     energy_layout(L3,energy2(1,1000000,stretchy_weight,0),800);
 
