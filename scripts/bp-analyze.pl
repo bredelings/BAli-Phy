@@ -475,8 +475,6 @@ my @alphabets = get_alphabets();
 my @trees = ();
 my %tree_name = ();
 
-my @tree_consensus_values = sort(0.5,0.66,0.8,0.9,0.95,0.99,1.0);
-
 #
 
 my $max_iter;
@@ -485,6 +483,8 @@ my $min_support;
 my $muscle = 0;
 my $probcons = 0;
 my $sub_partitions=1;
+
+my $speed=1;
 
 while ($#ARGV > -1) 
 {
@@ -495,6 +495,12 @@ while ($#ARGV > -1)
     }
     elsif ($arg =~ /--burnin=(.+)/) {
 	$burnin = $1;
+    }
+    elsif ($arg =~ /--fast/) {
+	$speed = 2;
+    }
+    elsif ($arg =~ /--slow/) {
+	$speed = 0;
     }
     elsif ($arg =~ /--subsample=(.+)/) {
 	$subsample = $1;
@@ -518,6 +524,21 @@ while ($#ARGV > -1)
 	die "I don't recognize option $arg";
     }
 }
+
+my @tree_consensus_values = sort(0.5,0.66,0.8,0.9,0.95,0.99,1.0);
+
+my @alignment_consensus_values;
+if ($speed == 0) {
+    @alignment_consensus_values = sort(0.1,0.25,0.5,0.75);
+}
+elsif ($speed == 1) # default
+{
+    @alignment_consensus_values = (0.5);
+}
+elsif ($speed == 2) {
+    @alignment_consensus_values = ();
+}
+
 
 $burnin = int 0.1*$n_iterations if (!defined($burnin));
 my $after_burnin = $n_iterations - $burnin +1;
@@ -620,13 +641,14 @@ for my $cvalue (@tree_consensus_values)
 	`pickout $value-consensus -n --multi-line < Results/consensus > Results/$tree.mtree`;
     }
 
-    if ($sub_partitions) {
-    if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.mtree")) {
-	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg`;
-    }
-    if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.mtree")) {
-	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree`;
-    }
+    if ($sub_partitions && ($speed < 2)) 
+    {
+	if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.mtree")) {
+	    `draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg`;
+	}
+	if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.mtree")) {
+	    `draw-tree Results/$tree.mtree --out=Results/$tree-mctree`;
+	}
     }
     
     print "$tree ";
@@ -768,7 +790,6 @@ for(my $i=0;$i<$n_partitions;$i++)
 print "done.\n";
 
 # 7. Compute consensus-alignments
-my @alignment_consensus_values = sort(0.1,0.25,0.5,0.75);
 
 for(my $i=0;$i<$n_partitions;$i++)
 {
@@ -789,7 +810,7 @@ for(my $i=0;$i<$n_partitions;$i++)
 	$alignment_names{$name} = "$value% consensus";
     }
     print "done.\n\n";
-    push @AU_alignments,"P$p-consensus-10";
+    push @AU_alignments,"P$p-consensus-10" if ($speed == 0);
 }
 
 print "Drawing alignments... ";
