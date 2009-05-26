@@ -2162,12 +2162,12 @@ vector< cloud > get_clouds(const MC_tree& MC)
 {
   vector<cloud> clouds;
 
-  // Consider each (order) branch...
+  // Consider each (ordered) branch...
   for(int b=0;b<MC.partitions.size();b++)
   {
     vector<int> child_branches;
 
-    // ... to see what it wanders over.
+    // ... to see what (unordered) branches it wanders over.
     for(int i=0;i<MC.branch_order.size();i++)
     {
       int b2 = MC.branch_order[i];
@@ -2275,6 +2275,15 @@ vector< cloud > get_clouds(const MC_tree& MC)
 }
 
 
+int find_cloud(const vector<cloud>& clouds,int b)
+{
+  for(int c=0;c<clouds.size();c++)
+    if (includes(clouds[c].parent_branches,b))
+      return c;
+
+  return -1;
+}
+
 struct graph_plotter: public cairo_plotter
 {
   graph_layout L;
@@ -2291,6 +2300,97 @@ struct graph_plotter: public cairo_plotter
     draw_type_2_edges(true)
   {}
 };
+
+void cairo_make_cloud_branch_path(cairo_t* cr,int b, const double W,const graph_layout& GL,
+				  vector<int>& nodes_visited)
+{
+  int n1 = GL.MC.edges[b].from;
+  int n2 = GL.MC.edges[b].to;
+
+  nodes_visited[n1]++;
+  nodes_visited[n2]++;
+
+  double x1 = GL.node_positions[n1].x;
+  double y1 = GL.node_positions[n1].y;
+
+  double x2 = GL.node_positions[n2].x;
+  double y2 = GL.node_positions[n2].y;
+
+  double dx = x2-x1;
+  double dy = y2-y1;
+
+  double L = sqrt(dx*dx + dy*dy);
+
+  cairo_save(cr);
+  cairo_translate(cr,x1,y1);
+
+  // begins a new sub-path (e.g. a discontinuous part of the path
+  cairo_move_to(cr,0,0);
+  cairo_rotate(cr, atan2(dy,dx));
+    
+  cairo_move_to(cr, 0, 0.5*W);
+  cairo_line_to(cr, L, 0.5*W);
+  //	    cairo_line_to(cr, 1, -0.5);
+  cairo_arc_negative(cr, L, 0.0, 0.5*W, M_PI/2.0,-M_PI/2.0);
+  cairo_line_to(cr, 0, -0.5*W);
+  //	    cairo_line_to(cr, 0, 0.5*W);
+  cairo_arc_negative(cr, 0.0 , 0.0, 0.5*W, -M_PI/2.0,M_PI/2.0);
+  
+  cairo_close_path(cr);
+  
+  cairo_restore(cr);
+}
+
+// Create a cairo "path" (possibly with disconnected components -- "sub-paths") 
+//   reprenting the cloud @C.
+// This path can then be stroked, or filled, or used to clip, or whatever.
+void cairo_make_cloud_path(cairo_t* cr,const cloud& C,const double line_width, const graph_layout& L) 
+{
+  int depth = C.depth;
+
+  double W = line_width*(4+depth*2);
+
+  vector<int> nodes_visited(L.node_positions.size(),0);
+
+  for(int i=0;i<C.child_branches.size();i++) 
+  {
+    int b = C.child_branches[i];
+    cairo_make_cloud_branch_path(cr,b,W,L,nodes_visited);
+  }
+
+  for(int n=0;n<nodes_visited.size();n++) 
+  {
+    if (nodes_visited[n] and (nodes_visited[n]%2==0)) 
+    {
+      //      cerr<<"node "<<n<<": visited "<<nodes_visited[n]<<" times."<<endl;
+      double x = L.node_positions[n].x;
+      double y = L.node_positions[n].y;
+
+      cairo_new_sub_path(cr);
+      cairo_arc(cr, x, y, 0.5*W, 0, 2*M_PI);    
+      cairo_close_path(cr);
+    }
+  }
+
+}
+
+void cairo_add_clip_extents_as_path(cairo_t* cr)
+{
+  double x1;
+  double y1;
+  double x2;
+  double y2;
+
+  cairo_clip_extents (cr, &x1, &y1, &x2, &y2);
+
+  //  cerr<<"clip extents ("<<x1<<","<<y1<<") - ("<<x2<<","<<y2<<")\n";
+
+  cairo_move_to(cr,x1,y1);
+  cairo_line_to(cr,x2,y1);
+  cairo_line_to(cr,x2,y2);
+  cairo_line_to(cr,x1,y2);
+  cairo_close_path(cr);
+}
 
 void graph_plotter::operator()(cairo_t* cr)
 {
@@ -2326,11 +2426,13 @@ void graph_plotter::operator()(cairo_t* cr)
   const double dashes[] = {3.0*line_width, 3.0*line_width};
   cairo_set_line_width(cr, line_width);
 
-  if (draw_clouds) {
-    vector<cloud> clouds = get_clouds(L.MC);
+  vector<cloud> clouds = get_clouds(L.MC);
+  if (draw_clouds)
+  {
     if (log_verbose) cerr<<"draw-tree: Got "<<clouds.size()<<" clouds.\n";
     
-    for(int c=clouds.size()-1;c>=0;c--) {
+    for(int c=clouds.size()-1;c>=0;c--)
+    {
       if (log_verbose) cerr<<"draw-tree: "<<c+1<<":  depth = "<<clouds[c].depth<<"   size = "<<clouds[c].size()<<"\n";
       int D = clouds[c].depth;
       int C = clouds[c].color;
@@ -2343,7 +2445,7 @@ void graph_plotter::operator()(cairo_t* cr)
 	for(int i=0;i<clouds[c].child_nodes.size();i++)
 	  cout<<"draw-tree:   node : "<<clouds[c].child_nodes[i]<<endl;
       }
-      for(int i=0;i<clouds[c].size();i++) 
+      for(int i=0;i<clouds[c].size();i++)
       {
 	int e = clouds[c].child_branches[i];
 	if (log_verbose) cerr<<"draw-tree:   edge : "<<e<<"\n";
@@ -2364,7 +2466,7 @@ void graph_plotter::operator()(cairo_t* cr)
 	  cairo_move_to (cr, x1, y1);
 	  cairo_line_to (cr, x2, y2);
 	  
-	  double L = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+	  //	  double L = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
 	  cairo_set_line_width(cr, line_width*(4+D*2) );
 	  
 	  if (C == 0)
@@ -2403,14 +2505,50 @@ void graph_plotter::operator()(cairo_t* cr)
 
     cairo_save(cr); 
     {
-      cairo_move_to (cr, x1, y1);
-      cairo_line_to (cr, x2, y2);
-
-      if (t == 1) {
+      if (t == 1) 
+      {
 	if (L.MC.partitions[b].full())
 	  cairo_set_source_rgb (cr, 0, 0 ,0);
 	else
 	  cairo_set_source_rgb (cr, 0.3, 1.0 ,0.3);
+
+	// pointing the other way
+	int b2 = L.MC.reverse(b);
+
+	int c1 = find_cloud(clouds,b);
+	int c2 = find_cloud(clouds,b2);
+
+	//	cairo_reset_clip(cr);
+
+	/// This is a counter-clockwise path...
+
+	if (c1 != -1 or c2 != -1 and draw_clouds and not draw_type_2_edges) 
+	{
+	  /*
+	  cairo_save(cr);
+	  cairo_make_cloud_path(cr, clouds[c1], line_width,L);
+
+	  cairo_set_source_rgb (cr, 0 , 0, 1);
+	  cairo_set_line_width(cr, line_width*2);
+	  //	  cairo_set_dash (cr, dashes, 2, 0.0);
+	  cairo_stroke(cr);
+	  cairo_restore(cr);
+	  */
+
+	  // so this must be clockwise, in order to work?
+	  cairo_add_clip_extents_as_path(cr);
+
+	  if (c1 != -1)
+	    cairo_make_cloud_path(cr, clouds[c1], line_width,L);
+
+	  if (c2 != -1)
+	    cairo_make_cloud_path(cr, clouds[c2], line_width,L);
+
+	  cairo_clip(cr);
+	}
+	
+	// Um, but BOTH ends might wander!
+	// clip to all the ONE cloud that we wander over
       }
       else {
 	cairo_set_line_width(cr, line_width/2.0);
@@ -2419,6 +2557,9 @@ void graph_plotter::operator()(cairo_t* cr)
       if (false) // if (e_cross_v[e])
 	cairo_set_source_rgb (cr, 1 , 0, 0);
       
+      cairo_move_to (cr, x1, y1);
+      cairo_line_to (cr, x2, y2);
+
       if (t==1 or draw_type_2_edges)
 	cairo_stroke (cr);
     }
