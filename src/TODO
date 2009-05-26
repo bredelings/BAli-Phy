@@ -1,3 +1,14 @@
+[Post-processing:]
+  + Speed up estimating mean branch lengths.
+    - Stop requiring binary tree to exactly extend query tree.
+      (This doesn't work for large trees.)
+    - But, then how can we estimate node lengths?
+
+  + When printing SRQ plots, indicate the LOD range (or its abs?).
+
+  + Modify stat-report to take multiple (identical) files for estimation of
+    means, ACT, etc.
+
 Why does INV+Modulated+gamma[4]+INV crash?
     - Because you can't add models with different alphabet sizes ATM.
 
