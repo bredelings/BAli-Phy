@@ -67,10 +67,15 @@ ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree
     }
 
     // Load constraints
-    int line_no=1;
     vector<vector<int> > constraints;
-    while(getline_handle_dos(constraint_file,line)) {
 
+    // We start on line 1
+    int line_no=0;
+    while(getline_handle_dos(constraint_file,line)) 
+    {
+      line_no++;
+
+      // Check for comment marker -- stop before it.
       int loc = line.find('#');
       if (loc == -1)
 	loc = line.length();
@@ -89,17 +94,29 @@ ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree
 	  " only has "<<entries.size()<<"/"<<T.n_leaves()<<" entries.";
 
       // parse contraint line
+      int n_characters = 0;
       vector<int> c_line(T.n_leaves());
       for(int i=0;i<entries.size();i++) {
 	if (entries[i] == "-")
 	  c_line[mapping[i]] = alphabet::gap;
-	else
-	  //FIXME - we should probably check that c_line[i] is in [0,length(i)-1]
-	  c_line[mapping[i]] = convertTo<int>(entries[i]);
+	else {
+	  int index = convertTo<int>(entries[i]);
+
+	  if (index < 0)
+	    throw myexception()<<"constraint: line "<<line_no<<
+	      " has negative index '"<<index<<"' for species '"<<names[i]<<"' (entry "<<i+1<<").";
+
+	  //FIXME - we should probably check that the index is less than the length of the sequence
+
+	  c_line[mapping[i]] = index;
+
+	  n_characters++;
+	}
       }
 
-      constraints.push_back(c_line);
-      line_no++;
+      // Only add a constraint if we are "constraining" more than 1 character
+      if (n_characters >= 2)
+	constraints.push_back(c_line);
     }
 
     // load constraints into matrix
