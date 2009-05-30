@@ -73,11 +73,17 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   // Find sub-alignments and sequences
   vector<int> seq1;
   vector<int> seq2;
-  for(int column=0;column<old.length();column++) {
-    if (old(column,node1) != alphabet::gap)
+  vector<int> seq12;
+
+  for(int column=0;column<old.length();column++)
+  {
+    if (not old.gap(column,node1))
       seq1.push_back(column);
-    if (old(column,node2) != alphabet::gap)
+    if (not old.gap(column,node2))
       seq2.push_back(column);
+
+    if (not old.gap(column,node1) or old.gap(column,node2))
+      seq12.push_back(column);
   }
 
   //FIXME - this makes the debug routines crash
@@ -106,7 +112,8 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   //------------------ Compute the DP matrix ---------------------//
   vector<int> path_old = get_path(old,node1,node2);
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,old,group1,~group1,seq1,seq2);
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,old,group1,~group1,seq1,seq2,seq12);
+
   vector<int> path = Matrices->forward(pins);
 
   path.erase(path.begin()+path.size()-1);
