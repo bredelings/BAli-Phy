@@ -422,3 +422,165 @@ string get_graph_name(string filename)
   return remove_extension(get_basename(filename));
 }
 
+bool partition_wanders_over(const Partition& p1,const Partition& p2)
+{
+  return p2.group1.is_subset_of(p1.group2) and p2.group2.is_subset_of(p1.group2);
+}
+
+bool partition_less_than(const Partition& p1,const Partition& p2)
+{
+  return 
+    p1.group1.is_proper_subset_of(p2.group1) and 
+    p2.group2.is_proper_subset_of(p1.group2);
+}
+
+bool sub_conflict(Partition p1,Partition p2)
+{
+  if (not p1.mask().intersects(p2.mask()))
+    return false;
+
+  if (partition_less_than(p1,p2) or partition_less_than(p1,p2.reverse()) or
+      partition_less_than(p1.reverse(),p2) or partition_less_than(p1.reverse(),p2.reverse()))
+    return false;
+
+  if (partition_wanders_over(p1,p2) or partition_wanders_over(p1.reverse(),p2) or
+      partition_wanders_over(p2,p1) or partition_wanders_over(p2.reverse(),p1))
+    return false;
+
+  return true;
+}
+
+bool is_leaf_partition(const Partition& p)
+{
+  return p.full() and (p.group1.count() == 1 or (p.group2.count() == 1));
+}
+
+int get_n_conflicts(const ublas::matrix<int>& conflicts,
+		    int n,
+		    const dynamic_bitset<>& mask)
+{
+  assert(mask.size() == conflicts.size1());
+  assert(mask.size() == conflicts.size2());
+
+  int total = 0;
+  for(int i=0;i<mask.size();i++)
+    if (mask[i] and conflicts(n,i))
+      total++;
+
+  return total;
+}
+
+// How do we find an optimal set of resolved partitions here?
+// We can now discover more partitions with lots of wandering, so
+//  branches can wander further.
+// How about... prefer branches that wander over the fewest number of other branches
+//  + how do we weight wandering versus conflicting?  That is, if a branch conflicts
+//    with fewer branches, but 
+
+
+// I guess the over-all goal is (could be) to find an MC tree that has the smallest
+// number of BF trees extending it...
+
+
+dynamic_bitset<> solve_conflicts(const ublas::matrix<int>& conflicts,
+			     const ublas::matrix<int>& dominates,
+			     dynamic_bitset<> invincible)
+{
+  const int N = invincible.size();
+  dynamic_bitset<> survives(N);
+  survives.flip();
+
+  // we should be able to GENERATE restricted version of splits that might be interesting.
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      if (dominates(i,j))
+	survives[j] = false;
+
+  int n=0;
+  for(int i=0;i<N;i++)
+    if (invincible[i])
+      n++;
+
+  do {
+    vector<int> n_conflicts(N,0);
+
+    // We would LIKE to find the largest of the branches that this branch conflicts
+    // with that do not conflict with each other.
+
+    for(int i=0;i<N;i++)
+      if (survives[i] and not invincible[i]) 
+      {
+	// here we find out how many branches each branch conflicts with...
+	n_conflicts[i]  = get_n_conflicts(conflicts,i,survives);
+
+	// .. that aren't sub-branches of itself.
+	n_conflicts[i] -= get_n_conflicts(dominates,i,survives);
+	assert(n_conflicts[i] >= 0);
+
+	// HOWEVER...we DO double-count sub-branches of neighbors.
+      }
+
+    int die = argmax(n_conflicts);
+
+    if (not n_conflicts[die]) break;
+
+    survives[die] = false;
+
+  } while(true);
+
+  return survives;
+}
+
+vector<Partition> get_moveable_tree(vector<Partition> partitions)
+{
+  if (not partitions.size())
+    throw myexception()<<"Can't create an MC tree from an empty partition list.";
+
+  // remove partitions that are implied by other partitions
+  for(int i=partitions.size()-1;i>=0;i--) 
+  {
+    bool found = false;
+    for(int j=i-1;j>=0 and not found;j--)
+      if (implies(partitions[j],partitions[i]))
+	found = true;
+
+    if (found)
+      partitions.erase(partitions.begin() + i);
+  }
+
+  const int N = partitions.size();
+
+  // create and zero conflict matrix
+  ublas::matrix<int> conflict(N,N);
+  ublas::matrix<int> dominates(N,N);
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++) {
+      conflict(i,j) = 0;
+      dominates(i,j) = 0;
+    }
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++) 
+      if (i!=j) {
+	if (sub_conflict(partitions[i],partitions[j]))
+	  conflict(i,j) = 1;
+	if (conflict(i,j) and partitions[j].mask().is_proper_subset_of(partitions[i].mask()))
+	  dominates(i,j) = 1;
+      }
+  
+  // we can't remove leaf partitions
+  dynamic_bitset<> invincible(N);
+  for(int i=0;i<N;i++)
+    invincible[i] = partitions[i].full(); //is_leaf_partition(partitions[i]);
+
+  dynamic_bitset<> solution = solve_conflicts(conflict,dominates,invincible);
+
+  vector<Partition> moveable;
+  for(int i=0;i<solution.size();i++)
+    if (solution[i])
+      moveable.push_back(partitions[i]);
+
+  return moveable;
+}
+

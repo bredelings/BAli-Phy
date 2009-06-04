@@ -196,7 +196,7 @@ alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment.C 
 
 #---------------------------------------------------------------
 
-trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C tree-util.C
+trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C tree-util.C tools/mctree.C
 
 #---------------------------------------------------------------
 

@@ -6,6 +6,12 @@
 #include "tree-dist.H"
 #include "mytypes.H"
 
+bool partition_wanders_over(const Partition& p1,const Partition& p2);
+
+bool partition_less_than(const Partition& p1,const Partition& p2);
+
+std::vector<Partition> get_moveable_tree(std::vector<Partition> partitions);
+
 struct mc_tree_edge {
   int from;
   int to;
