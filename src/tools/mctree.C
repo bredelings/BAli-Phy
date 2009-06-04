@@ -251,6 +251,21 @@ int MC_tree::find_branch(const Partition& p) const
   return -1;
 }
 
+int MC_tree::score() const 
+{
+  int total=0;
+
+  for(int i=0;i<n_branches();i++)
+  {
+    int b = branch_order[i];
+
+    if (informative(partitions[b]))
+      total += partitions[b].mask().count();
+  }
+
+  return total;
+}
+
 int MC_tree::degree(int n) const
 {
   unsigned count=0;

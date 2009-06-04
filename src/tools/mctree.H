@@ -46,13 +46,15 @@ public:
   ublas::matrix<int> directly_left_of;       // i<j
   ublas::matrix<int> directly_wanders_over;  // right end (group2)
   ublas::matrix<int> connected_to;           // right end
-  vector<int> directly_wanders;             // right end
+  vector<int> directly_wanders;              // right end
 
   // node properties
   ublas::matrix<int> connected;
 
   // list of unique branches
   vector<int> branch_order;
+
+  int score() const;
 
   int branch_to_node(int n) const;
   int find_branch(const Partition&) const;
@@ -79,4 +81,14 @@ void check_partitions_informative(const std::vector<Partition>&);
 std::ostream& operator<<(std::ostream& o, const MC_tree&);
 
 std::string get_graph_name(std::string filename);
+
+// Resolve: resolve an MC tree to an MF tree, either
+// (a) making sure that no branches resolve to the same thing, or
+// (b) removing duplicate resolved branches, while 
+//     maintaining a mapping of old->new branch indices.
+
+
+// Check: Is C an MC tree?  Given that C is an MC tree, is C+X an MC tree?
+//        How can we improve the order on this?
+//        If we can improve the order, then we could compute #sub-partitions.
 #endif

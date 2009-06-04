@@ -2902,6 +2902,10 @@ int main(int argc,char* argv[])
     // FIXME! - load a MF/MC tree w/ no length information
     // FIX name collision!
     MC_tree_with_lengths MC = get_MC_tree_with_lengths(filename);
+    if (log_verbose) {
+      cerr<<"score = "<<MC.score()<<"    "<<double(MC.score())/MC.n_leaves()<<" / "<<MC.n_leaves()-3<<" branches\n";
+    }
+
     if (args.count("full"))
       MC = collapse_MC_tree(MC);
 
