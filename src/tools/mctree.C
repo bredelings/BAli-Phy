@@ -1,5 +1,6 @@
 #include "mctree.H"
 #include "mytypes.H"
+#include "rng.H"
 
 using namespace std;
 
@@ -482,9 +483,10 @@ int get_n_conflicts(const ublas::matrix<int>& conflicts,
 // number of BF trees extending it...
 
 
-dynamic_bitset<> solve_conflicts(const ublas::matrix<int>& conflicts,
-			     const ublas::matrix<int>& dominates,
-			     dynamic_bitset<> invincible)
+std::pair<dynamic_bitset<>, int> solve_conflicts(const ublas::matrix<int>& conflicts,
+				 const ublas::matrix<int>& dominates,
+				 dynamic_bitset<> invincible,
+				 const vector<int>& goodness)
 {
   const int N = invincible.size();
   dynamic_bitset<> survives(N);
@@ -494,6 +496,11 @@ dynamic_bitset<> solve_conflicts(const ublas::matrix<int>& conflicts,
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
       if (dominates(i,j))
+	survives[j] = false;
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      if (conflicts(i,j) and invincible[i])
 	survives[j] = false;
 
   int n=0;
@@ -507,6 +514,8 @@ dynamic_bitset<> solve_conflicts(const ublas::matrix<int>& conflicts,
     // We would LIKE to find the largest of the branches that this branch conflicts
     // with that do not conflict with each other.
 
+    int m = 0;
+    vector<int> maxes;
     for(int i=0;i<N;i++)
       if (survives[i] and not invincible[i]) 
       {
@@ -518,17 +527,38 @@ dynamic_bitset<> solve_conflicts(const ublas::matrix<int>& conflicts,
 	assert(n_conflicts[i] >= 0);
 
 	// HOWEVER...we DO double-count sub-branches of neighbors.
+	if (n_conflicts[i] > m) {
+	  m = n_conflicts[i];
+	  maxes.clear();
+	}
+
+	if (n_conflicts[i] == m)
+	  maxes.push_back(i);
       }
 
-    int die = argmax(n_conflicts);
+    // stop removing partitions if largest number of conflicts is 0.
+    if (m == 0) break;
 
-    if (not n_conflicts[die]) break;
+
+    int die_index = uniform()*maxes.size();
+    if (die_index >= maxes.size()) die_index--;
+
+    int die = maxes[die_index];
 
     survives[die] = false;
 
   } while(true);
 
-  return survives;
+  int score = 0;
+  for(int i=0;i<N;i++)
+    if (survives[i])
+      score += goodness[i];
+
+  if (log_verbose)
+    cerr<<"solution: score = "<<score<<endl;
+
+
+  return std::pair< dynamic_bitset<>,int>(survives,score);
 }
 
 vector<Partition> get_moveable_tree(vector<Partition> partitions)
@@ -574,7 +604,23 @@ vector<Partition> get_moveable_tree(vector<Partition> partitions)
   for(int i=0;i<N;i++)
     invincible[i] = partitions[i].full(); //is_leaf_partition(partitions[i]);
 
-  dynamic_bitset<> solution = solve_conflicts(conflict,dominates,invincible);
+  vector<int> goodness(N,0);
+  for(int i=0;i<goodness.size();i++)
+    if (informative(partitions[i]))
+      goodness[i] = partitions[i].mask().count();
+
+  dynamic_bitset<> solution;
+  int score = 0;
+  for(int i=0;i<100;i++) 
+  {
+    std::pair<dynamic_bitset<>,int> s_pair = solve_conflicts(conflict,dominates,invincible,goodness);
+    if (i==0) solution = s_pair.first;
+    else if (s_pair.second > score) 
+    {
+      score = s_pair.second;
+      solution = s_pair.first;
+    }
+  }
 
   vector<Partition> moveable;
   for(int i=0;i<solution.size();i++)
@@ -583,4 +629,3 @@ vector<Partition> get_moveable_tree(vector<Partition> partitions)
 
   return moveable;
 }
-

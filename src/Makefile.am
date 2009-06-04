@@ -196,7 +196,7 @@ alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment.C 
 
 #---------------------------------------------------------------
 
-trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C tree-util.C tools/mctree.C
+trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C tree-util.C tools/mctree.C rng.C
 
 #---------------------------------------------------------------
 
@@ -208,13 +208,13 @@ partitions_supported_SOURCES = tools/partitions-supported.C tree.C sequencetree.
 
 #---------------------------------------------------------------
 
-draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C util.C tree-util.C tools/mctree.C
+draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C util.C tree-util.C tools/mctree.C rng.C
 
 #---------------------------------------------------------------
 tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
 
 #---------------------------------------------------------------
-mctree_mean_lengths_SOURCES = tools/mctree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C tools/mctree.C
+mctree_mean_lengths_SOURCES = tools/mctree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C tools/mctree.C rng.C
 
 #---------------------------------------------------------------
 trees_pair_distances_SOURCES = tools/trees-pair-distances.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
