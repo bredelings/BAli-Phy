@@ -77,8 +77,13 @@ int alphabet::operator[](char l) const {
   return (*this)[s];
 }
 
+/// FIXME - use a hash table
 int alphabet::operator[](const string& l) const 
 {
+  // Check for a gap
+  if (l == gap_letter) 
+    return alphabet::gap;
+
   // Check the letters
   for(int i=0;i<size();i++) {
     if (letter(i)==l)
@@ -90,10 +95,6 @@ int alphabet::operator[](const string& l) const
     if (letter_class(i) == l)
       return i;
   }
-
-  // Check for a gap
-  if (l == gap_letter) 
-    return alphabet::gap;
 
   // Check for a wildcard
   if (l == wildcard) 
@@ -107,7 +108,9 @@ int alphabet::operator[](const string& l) const
   throw bad_letter(l,name);
 }
 
-vector<int> alphabet::operator() (const string& s) const{
+// FIXME - this is somewhat wasteful...
+vector<int> alphabet::operator() (const string& s) const
+{
   const int lsize = width();
 
   if (s.size()%lsize != 0)

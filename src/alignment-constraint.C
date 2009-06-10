@@ -70,10 +70,15 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,SequenceT
     }
 
     // Load constraints
-    int line_no=1;
     vector<vector<int> > constraints;
-    while(getline_handle_dos(constraint_file,line)) {
 
+    // We start on line 1
+    int line_no=0;
+    while(getline_handle_dos(constraint_file,line)) 
+    {
+      line_no++;
+
+      // Check for comment marker -- stop before it.
       int loc = line.find('#');
       if (loc == -1)
 	loc = line.length();
@@ -92,17 +97,29 @@ ublas::matrix<int> load_alignment_constraint(const variables_map& args,SequenceT
 	  " only has "<<entries.size()<<"/"<<T.n_leaves()<<" entries.";
 
       // parse contraint line
+      int n_characters = 0;
       vector<int> c_line(T.n_leaves());
       for(int i=0;i<entries.size();i++) {
 	if (entries[i] == "-")
 	  c_line[mapping[i]] = alphabet::gap;
-	else
-	  //FIXME - we should probably check that c_line[i] is in [0,length(i)-1]
-	  c_line[mapping[i]] = convertTo<int>(entries[i]);
+	else {
+	  int index = convertTo<int>(entries[i]);
+
+	  if (index < 0)
+	    throw myexception()<<"constraint: line "<<line_no<<
+	      " has negative index '"<<index<<"' for species '"<<names[i]<<"' (entry "<<i+1<<").";
+
+	  //FIXME - we should probably check that the index is less than the length of the sequence
+
+	  c_line[mapping[i]] = index;
+
+	  n_characters++;
+	}
       }
 
-      constraints.push_back(c_line);
-      line_no++;
+      // Only add a constraint if we are "constraining" more than 1 character
+      if (n_characters >= 2)
+	constraints.push_back(c_line);
     }
 
     // load constraints into matrix
@@ -153,45 +170,77 @@ vector<int> constraint_columns(const ublas::matrix<int>& constraint,const alignm
   return columns;
 }
 
+// We need to make sure that the pinned column coordinates always increase.
+// By considering constrains between seq1 and seq2 in the order of seq12 we can guarantee this,
+//  or bail out if it is impossible.
+
 vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignment& A,
 			       const valarray<bool>& group1,const valarray<bool>& group2,
-			       const vector<int>& seq1,const vector<int>& seq2) 
+			       const vector<int>& seq1,const vector<int>& seq2,
+			       const vector<int>& seq12) 
 {
   // determine which constraints are satisfied (not necessarily enforceable!)
   vector<int> satisfied = constraint_columns(constraint,A);
 
-  // determine which of the satisfied constraints are enforceable
-  for(int i=0;i<satisfied.size();i++) {
-    // ignore columns in which all constrained residues are in either group1 or group2
-    // we cannot enforce these constraints, and also cannot affect them
+  // ignore columns in which all constrained residues are in either group1 or group2
+  // we cannot enforce these constraints, and also cannot affect them
+  for(int i=0;i<satisfied.size();i++) 
     if (not (constrained(group1,constraint,i) and constrained(group2,constraint,i)))
       satisfied[i] = -1;
+
+  // Mark and check each alignment column which is going to get pinned.
+  vector<int> pinned(A.length(),0);
+  for(int i=0;i<satisfied.size();i++) 
+  {
+    int column = satisfied[i];
+
+    if (column != -1 and not pinned[column]) 
+    {
+      pinned[column] = 1;
+    
+      int x = find_index(seq1,column);
+      int y = find_index(seq2,column);
+
+      // Even if the constraints for the leaf nodes are satisfied, we can't align
+      // to the relevant leaf characters THROUGH the relevant internal nodes, if the
+      // character is not present not present at the internal nodes that we have
+      // access to.  Therefore, no alignment that we choose can satisfy
+      // this constraint, so we must bail out.
+      if (x == -1 or y == -1) {
+	vector< vector<int> > impossible;
+	impossible.push_back(vector<int>(2,-1));
+	return impossible;
+      }    
+    }
   }
 
-  // convert columns of enforced constraints to pairs of indices in seq1/seq2
+  // Go through the pinned columns in seq12 order to guarantee that x and y always increase
   vector<vector<int> > pins(2);
-  for(int i=0;i<constraint.size1();i++) 
-  {
-    if (satisfied[i] == -1) continue;
-    
-    int x = find_index(seq1,satisfied[i]);
-    int y = find_index(seq2,satisfied[i]);
+  vector<int>& X = pins[0];
+  vector<int>& Y = pins[1];
 
-    // Even if the constraints for the leaf nodes are satisfied, we can't align
-    // to the relevant leaf characters THROUGH the relevant internal nodes, if the
-    // character is not present not present at the internal nodes that we have
-    // access to.  Therefore, no alignment that we choose can satisfy
-    // this constraint, so we must bail out.
-    if (x == -1 or y == -1) {
-      vector< vector<int> > impossible;
-      impossible.push_back(vector<int>(2,-1));
-      return impossible;
-    }
+  for(int i=0;i<seq12.size();i++)
+  {
+    int column = seq12[i];
+
+    if (not pinned[column]) continue;
+    
+    int x = find_index(seq1,column);
+    int y = find_index(seq2,column);
+
     assert(x >=0 and x < seq1.size());
     assert(y >=0 and y < seq2.size());
 
-    pins[0].push_back(x+1);
-    pins[1].push_back(y+1);
+    if (x == -1 or y == -1)
+      throw myexception()<<"Did not already bail out on un-pinnable column?!?";
+
+    X.push_back(x+1);
+    Y.push_back(y+1);
+
+    if (X.size() >= 2 and X[pins.size()-2] > X[pins.size()-1])
+      throw myexception()<<"X pins not always increasing!";
+    if (Y.size() >= 2 and Y[pins.size()-2] > Y[pins.size()-1])
+      throw myexception()<<"X pins not always increasing!";
   }
 
   return pins;
