@@ -24,6 +24,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("invariant",value<int>(),"print only sites where this site and <arg> neighbors are invariant.")
     ("differences",value<int>()->default_value(0),"how many sequences may differ from the majority?")
+    ("avoid-gaps",value<int>()->default_value(3),"How far from a gap must a column be to be invariant?")
     ;
 
   // positional options
@@ -120,6 +121,7 @@ int main(int argc,char* argv[])
 
     //------- Determine invariant sites -----//
     int allowed_differences = args["differences"].as<int>();
+    int avoid_gaps = args["avoid-gaps"].as<int>();
 
     std::pair<vector<int>,vector<int> > result = find_major_character(A,allowed_differences);
     vector<int> majority = result.first;
@@ -138,7 +140,7 @@ int main(int argc,char* argv[])
 	if (not safe2[i]) continue;
 
 	// Unsafe if we are in 3 residues of a gap
-	for(int k=i-3;k<=i+3 and ok;k++) 
+	for(int k=i-avoid_gaps;k<=i+avoid_gaps and ok;k++) 
         {
 	  if (k < 0 or k >= A.length())
 	    ;
