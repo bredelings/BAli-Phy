@@ -285,14 +285,19 @@ int main(int argc,char* argv[])
     if (args.count("down-to") or args.count("cutoff"))
     {
       D = pairwise_distance_matrix(A);
+      ublas::matrix<int> D2 = D;
 
-      // make sure that removed sequences are never part of an argmin pair.
+      // make sure that manually removed sequences are never part of an argmin pair.
       for(int i=0;i<N;i++)
 	for(int j=0;j<N;j++)
 	  if (not keep[i] or not keep[j])
 	    D(i,j) = L+1;
 	  else if (i==j)
 	    D(i,j) = L;
+
+      vector<int> removed_in_favor_of(A.n_sequences(),-1);
+
+      vector<int> removed;
 
       while(true)
       {
@@ -314,8 +319,35 @@ int main(int argc,char* argv[])
 	  std::swap(p1,p2);
 	
 	keep[p1] = 0;
+	removed_in_favor_of[p1] = p2;
+	removed.push_back(p1);
+
 	for(int i=0;i<N;i++)
 	  D(p1,i) = D(i,p1) = L+1;
+      }
+
+      if (log_verbose) 
+      {
+	cerr<<"\nRemoved "<<removed.size()<<" similar sequences:"<<endl;
+
+	for(int i=0;i<removed.size();i++) 
+	{
+	  int p1 = removed[i];
+
+	  int p2 = p1;
+
+	  while (1) 
+	  {
+	    int p3 = removed_in_favor_of[p2];
+
+	    if (p3 == -1)
+		break;
+	    else
+	      p2=p3;
+	  }
+
+	  cerr<<"  #"<<i+1<<": "<<names[p1]<<" -> "<<names[p2]<<"  D=[ "<<D2(p1,p2)<<" / "<<D2(p2,p1)<<" ]"<<endl;
+	}
       }
     }
 
