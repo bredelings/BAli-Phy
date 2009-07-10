@@ -86,6 +86,39 @@ std::pair<int,int> argmin(ublas::matrix<int>& M)
   return std::pair<int,int>(m1,m2);
 }
 
+std::pair<int,int> argmin(ublas::matrix<int>& M, const vector<int>& keep)
+{
+  double mvalue = -1;
+  int m1 = -1;
+  int m2 = -1;
+
+  for(int i=0;i<M.size1();i++)
+    if (keep[i])
+      for(int j=0;j<M.size2();j++)
+	if (keep[j])
+	  if (M(i,j) < mvalue or m1 == -1) {
+	    mvalue = M(i,j);
+	    m1 = i;
+	    m2 = j;
+	  }
+  return std::pair<int,int>(m1,m2);
+}
+
+int argmin_row(ublas::matrix<int>& M, int i, const vector<int>& keep)
+{
+  double mvalue = -1;
+  int m2 = -1;
+
+  for(int j=0;j<M.size2();j++)
+    if (keep[j])
+      if (M(i,j) < mvalue or m2 == -1) {
+	mvalue = M(i,j);
+	m2 = j;
+      }
+
+  return m2;
+}
+
 unsigned pairwise_distance(const alignment& A,int i,int j)
 {
   const int L = A.length();
@@ -282,71 +315,67 @@ int main(int argc,char* argv[])
     //------- Find the most redundant --------//
     ublas::matrix<int> D;
 
-    if (args.count("down-to") or args.count("cutoff"))
+    if (args.count("cutoff"))
     {
+      int cutoff = args["cutoff"].as<unsigned>();
+
       D = pairwise_distance_matrix(A);
-      ublas::matrix<int> D2 = D;
-
-      // make sure that manually removed sequences are never part of an argmin pair.
-      for(int i=0;i<N;i++)
-	for(int j=0;j<N;j++)
-	  if (not keep[i] or not keep[j])
-	    D(i,j) = L+1;
-	  else if (i==j)
-	    D(i,j) = L;
-
-      vector<int> removed_in_favor_of(A.n_sequences(),-1);
 
       vector<int> removed;
 
       while(true)
       {
-	std::pair<int,int> p = argmin(D);
-      
+	// find the smallest pair (p1,p2) where neither has been removed.
+	std::pair<int,int> p = argmin(D,keep);
 	int p1 = p.first;
 	int p2 = p.second;
-	
 	int MD = D(p1,p2);
 	
-	bool done = true;
-	if (args.count("down-to") and sum(keep) > args["down-to"].as<int>()) done = false;
-	if (args.count("cutoff")  and MD < args["cutoff"].as<unsigned>()) done = false;
-	if (done) break;
+	// exit if this distance is larger than the cutoff.
+	if (MD >= cutoff) break;
 	
-	
-	//remove the second sequence, if they are the same
+	// remove the sequence with the shorter comment, if they are the same
 	if (D(p1,p2) == D(p2,p1) and A.seq(p1).comment.size() > A.seq(p2).comment.size())
 	  std::swap(p1,p2);
 	
+	// mark as removed
 	keep[p1] = 0;
-	removed_in_favor_of[p1] = p2;
 	removed.push_back(p1);
+      }
 
-	for(int i=0;i<N;i++)
-	  D(p1,i) = D(i,p1) = L+1;
+      // compute distances to those that remain
+      vector<int> closest(removed.size());
+      vector<int> distance(removed.size());
+      int n_removed=0;
+      for(int i=closest.size()-1; i>=0; i++) 
+      {
+	closest[i]  = argmin_row(D,removed[i],keep);
+	distance[i] = D(removed[i],closest[i]);
+
+	// put item back if too far from remaining items
+	if (distance[i] >= cutoff)
+	  keep[removed[i]] = 1;
+	else
+	  n_removed++;
       }
 
       if (log_verbose) 
       {
-	cerr<<"\nRemoved "<<removed.size()<<" similar sequences:"<<endl;
+	vector<int> order = iota<int>(removed.size());
+	sort(order.begin(), order.end(), sequence_order<int>(distance));
+
+	cerr<<"\nRemoved "<<n_removed<<" similar sequences:"<<endl;
+	n_removed=0;
 
 	for(int i=0;i<removed.size();i++) 
 	{
-	  int p1 = removed[i];
+	  int p1 = removed[order[i]];
 
-	  int p2 = p1;
+	  int p2 = closest[order[i]];
 
-	  while (1) 
-	  {
-	    int p3 = removed_in_favor_of[p2];
+	  if (keep[order[i]] == 0) continue;
 
-	    if (p3 == -1)
-		break;
-	    else
-	      p2=p3;
-	  }
-
-	  cerr<<"  #"<<i+1<<": "<<names[p1]<<" -> "<<names[p2]<<"  D=[ "<<D2(p1,p2)<<" / "<<D2(p2,p1)<<" ]"<<endl;
+	  cerr<<"  #"<<++n_removed<<": "<<names[p1]<<" -> "<<names[p2]<<"  D=[ "<<D(p1,p2)<<" / "<<D(p2,p1)<<" ]"<<endl;
 	}
       }
     }
