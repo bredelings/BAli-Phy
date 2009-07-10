@@ -95,7 +95,7 @@ std::pair<int,int> argmin(ublas::matrix<int>& M, const vector<int>& keep)
   for(int i=0;i<M.size1();i++)
     if (keep[i])
       for(int j=0;j<M.size2();j++)
-	if (keep[j])
+	if (i != j and keep[j])
 	  if (M(i,j) < mvalue or m1 == -1) {
 	    mvalue = M(i,j);
 	    m1 = i;
@@ -347,7 +347,8 @@ int main(int argc,char* argv[])
       vector<int> closest(removed.size());
       vector<int> distance(removed.size());
       int n_removed=0;
-      for(int i=closest.size()-1; i>=0; i++) 
+
+      for(int i=closest.size()-1; i>=0; i--) 
       {
 	closest[i]  = argmin_row(D,removed[i],keep);
 	distance[i] = D(removed[i],closest[i]);
@@ -373,7 +374,7 @@ int main(int argc,char* argv[])
 
 	  int p2 = closest[order[i]];
 
-	  if (keep[order[i]] == 0) continue;
+	  if (keep[p1] == 1) continue;
 
 	  cerr<<"  #"<<++n_removed<<": "<<names[p1]<<" -> "<<names[p2]<<"  D=[ "<<D(p1,p2)<<" / "<<D(p2,p1)<<" ]"<<endl;
 	}
