@@ -275,7 +275,7 @@ int main(int argc,char* argv[])
 
     //-------------------- remove ------------------------//
 
-    if (args.count("remove-crazy")) 
+    if (args.count("remove-crazy"))
     {
       int n_remove = args["remove-crazy"].as<int>();
       double conserved_fraction = args["conserved-fraction"].as<double>();
@@ -304,12 +304,14 @@ int main(int argc,char* argv[])
 	cerr<<"  median = "<<conserved[order[order.size()/2]];
 	cerr<<"  max = "<<conserved[order.back()]<<endl;
       }
-      for(int i=0;i<n_remove;i++) {
-	if ("remove_crazy")
-	  cerr<<"Remove crazy: "<<names[order[i]]<<"    "<<conserved[order[i]]<<endl;
-	keep[order[i]] = 0;
-      }
 
+      for(int i=0;i<n_remove;i++) 
+	if (keep[order[i]] == 1 and keep[order[i]] != 2) {
+	  cerr<<"Remove crazy: "<<names[order[i]]<<"    "<<conserved[order[i]]<<endl;
+	  keep[order[i]] = 0;
+	}
+	else if (n_remove < order.size())
+	  n_remove++;
     }
 
     //------- Find the most redundant --------//
@@ -374,7 +376,7 @@ int main(int argc,char* argv[])
 
 	  int p2 = closest[order[i]];
 
-	  if (keep[p1] == 1) continue;
+	  if (keep[p1] > 0) continue;
 
 	  cerr<<"  #"<<++n_removed<<": "<<names[p1]<<" -> "<<names[p2]<<"  D=[ "<<D(p1,p2)<<" / "<<D(p2,p1)<<" ]"<<endl;
 	}
