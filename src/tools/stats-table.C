@@ -25,7 +25,7 @@ vector<string> read_header(std::istream& file)
   while (file) 
   {
     getline(file,line);
-    if (line.size() and line[0] != '#')
+    if (line.size())
       break;
   }
 
