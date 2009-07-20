@@ -88,6 +88,12 @@ string SequenceTree::write(bool print_lengths) const
   return RT.write(print_lengths);
 }
 
+string SequenceTree::write_with_bootstrap_fraction(const vector<double>& bf, bool print_lengths) const 
+{
+  RootedSequenceTree RT(*this,directed_branch(0).target());
+  return RT.write_with_bootstrap_fraction(bf, print_lengths);
+}
+
 vector<int> SequenceTree::standardize() {
   return Tree::standardize();
 }
@@ -194,6 +200,40 @@ string write(const vector<string>& names, const_branchview b, bool print_lengths
   return output;
 }
 
+string write_with_bootstrap_fraction(const vector<string>& names, const_branchview b, 
+				     const vector<double>& bf, bool print_lengths)
+{
+  string output;
+
+  // If this is a leaf node, then print the name
+  if (b.target().is_leaf_node())
+    output += names[b.target()];
+  // If this is an internal node, then print the subtrees
+  else {
+    vector<const_branchview> branches = sorted_branches_after(b);
+    output = "(";
+    for(int i=0;i<branches.size();i++) {
+      output += write_with_bootstrap_fraction(names,branches[i],bf,print_lengths);
+
+      if (i+1<branches.size())
+	output += ",";
+    }
+    output += ")";
+  }
+
+  // print the branch length if requested
+  double bfb = bf[b.undirected_name()];
+  if (bfb >= 0)
+    output += " " + convertToString<double>(bf[b.undirected_name()]);
+
+  if (print_lengths)
+    output += ":" + convertToString(b.length());
+  else if (bfb >= 0)
+    output += ":1.0";
+
+  return output;
+}
+
 string write(const RootedTree& T, const vector<string>& names, bool print_lengths) 
 {
   vector<const_branchview> branches = sorted_neighbors(T.root());
@@ -208,6 +248,21 @@ string write(const RootedTree& T, const vector<string>& names, bool print_length
   return output;
 }
 
+string write_with_bootstrap_fraction(const RootedTree& T, const vector<string>& names, 
+				     const vector<double>& bf, bool print_lengths) 
+{
+  vector<const_branchview> branches = sorted_neighbors(T.root());
+
+  string output = "(";
+  for(int i=0;i<branches.size();i++) {
+    output += write_with_bootstrap_fraction(names,branches[i],bf,print_lengths);
+    if (i+1 < branches.size())
+      output += ',';
+  }
+  output += ");";
+  return output;
+}
+
 string RootedSequenceTree::write(const_branchview b,bool print_lengths) const {
   return ::write(get_sequences(), b, print_lengths);
 }
@@ -215,6 +270,11 @@ string RootedSequenceTree::write(const_branchview b,bool print_lengths) const {
 string RootedSequenceTree::write(bool print_lengths) const 
 {
   return ::write(*this, get_sequences(), print_lengths);
+}
+
+string RootedSequenceTree::write_with_bootstrap_fraction(const vector<double>& bf, bool print_lengths) const 
+{
+  return ::write_with_bootstrap_fraction(*this, get_sequences(), bf, print_lengths);
 }
 
 // count depth -> if we are at depth 0, and have
@@ -239,7 +299,7 @@ void RootedSequenceTree::parse(const string& line)
     if (word == "(") {
       tree_stack.push_back(vector<BranchNode*>());
       if (not (prev == "(" or prev == "," or prev == ""))
-	throw myexception()<<"In tree file, found '(' in the middle of word \""<<word<<"\"";
+	throw myexception()<<"In tree file, found '(' in the middle of word \""<<word<<"\"  (prev = \""<<prev<<"\")";
     }
     else if (word == ")") {
       // We need at least 2 levels of trees
