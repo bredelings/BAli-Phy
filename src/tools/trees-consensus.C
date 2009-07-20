@@ -251,6 +251,18 @@ vector<unsigned> get_Ml_levels(const vector<pair<Partition,unsigned> >& sp,unsig
   return levels2;
 }
 
+unsigned
+get_partition_count(const vector<pair<Partition,unsigned> >& sp, const Partition& p)
+{
+  for(int i=0;i<sp.size();i++) {
+    if (sp[i].first == p)
+      return sp[i].second;
+  }
+
+  throw myexception()<<"Can't find partition "<<p;
+}
+
+
 
 // FIXME - we use all full parition in 'sub'
 //   - only do exhaustive search on partial partitions?
@@ -595,11 +607,29 @@ int main(int argc,char* argv[])
 	    sub.push_back(all[i]);
 
 	SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
+	SequenceTree consensus2 = consensus;
       
 	double L = consensus_levels[k]*100;
 	
 	cout.unsetf(ios::fixed | ios::showpoint);
 	
+	vector<double> bf(consensus.n_branches(),1.0);
+	for(int i=0;i<bf.size();i++) 
+	{
+	  if (consensus.branch(i).is_leaf_branch())
+	    bf[i] = -1.0;
+	  else {
+	    dynamic_bitset<> mask = branch_partition(consensus,i);
+	    Partition p(tree_dist.names(),mask);
+	    unsigned count = get_partition_count(all_partitions,p);
+	    bf[i] = double(count)/N;
+	  }
+	  consensus2.branch(i).set_length(bf[i]);
+	}
+
+	
+	cout<<" "<<L<<"-consensus-PP = "<<consensus2.write(true)<<std::endl;
+	//cout<<" "<<L<<"-consensus-PP2 = "<<consensus.write_with_bootstrap_fraction(bf,false)<<std::endl;
 	cout<<" "<<L<<"-consensus = "<<consensus.write(false)<<std::endl;
 	
 	if (show_sub) {
