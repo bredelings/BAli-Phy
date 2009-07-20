@@ -33,6 +33,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("align", value<string>(),"file with sequences and initial alignment")
+    ("find-dups", value<string>(),"for each other sequence, find the closest sequence")
     ("cutoff",value<unsigned>(),"only leave taxa with more mismatches than this value")
     ("longer-than",value<unsigned>(),"only leave taxa w/ sequences longer than this")
     ("shorter-than",value<unsigned>(),"only leave taxa w/ sequences shorter than this")
@@ -119,7 +120,7 @@ int argmin_row(ublas::matrix<int>& M, int i, const vector<int>& keep)
   return m2;
 }
 
-unsigned pairwise_distance(const alignment& A,int i,int j)
+unsigned asymmetric_distance(const alignment& A,int i,int j)
 {
   const int L = A.length();
   unsigned D=0;
@@ -128,6 +129,32 @@ unsigned pairwise_distance(const alignment& A,int i,int j)
 
   for(int c=0;c<L;c++)
     if (A(c,i) >= 0 and A(c,i) != A(c,j))
+      D++;
+
+  return D;
+}
+
+unsigned symmetric_distance(const alignment& A,int i,int j)
+{
+  const int L = A.length();
+  unsigned D=0;
+
+  if (i==j) return 0;
+
+  for(int c=0;c<L;c++)
+    if (A(c,i) >= 0 and A(c,j)>=0 and A(c,i) != A(c,j))
+      D++;
+
+  return D;
+}
+
+double symmetric_overlap(const alignment& A,int i,int j)
+{
+  const int L = A.length();
+  unsigned D=0;
+
+  for(int c=0;c<L;c++)
+    if (A(c,i) >= 0 and A(c,j)>=0)
       D++;
 
   return D;
@@ -142,7 +169,7 @@ int n_positive(const vector<int>& v)
   return count;
 }
 
-ublas::matrix<int> pairwise_distance_matrix(const alignment& A)
+ublas::matrix<int> asymmetric_distance_matrix(const alignment& A)
 {
   const int N = A.n_sequences();
 
@@ -150,7 +177,33 @@ ublas::matrix<int> pairwise_distance_matrix(const alignment& A)
 
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
-      D(i,j) = pairwise_distance(A,i,j);
+      D(i,j) = asymmetric_distance(A,i,j);
+
+  return D;
+}
+
+ublas::matrix<int> symmetric_distance_matrix(const alignment& A)
+{
+  const int N = A.n_sequences();
+
+  ublas::matrix<int> D(N,N);
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<=i;j++)
+      D(i,j) = D(j,i) = symmetric_distance(A,i,j);
+
+  return D;
+}
+
+ublas::matrix<int> symmetric_overlap_matrix(const alignment& A)
+{
+  const int N = A.n_sequences();
+
+  ublas::matrix<int> D(N,N);
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<=i;j++)
+      D(i,j) = D(j,i) = symmetric_overlap(A,i,j);
 
   return D;
 }
@@ -184,6 +237,26 @@ int unique_letter(const alignment& A,int c)
       return i;
 
   return -1;
+}
+
+vector<int> get_taxon_indices(const vector<string>& names,const vector<string>& lookup)
+{
+  vector<int> indices(lookup.size());
+  for(int i=0;i<indices.size();i++) 
+  {
+    int l = find_index(names,lookup[i]);
+    if (l == -1)
+      throw myexception()<<"keep: can't find sequence '"<<lookup[i]<<"' to keep.";
+    indices[i] = l;
+  }
+  return indices;
+}
+
+vector<int> get_taxon_indices(const vector<string>& names,const string& lookup)
+{
+  vector<string> lookup_v = split(lookup,',');
+
+  return get_taxon_indices(names,lookup_v);
 }
 
 
@@ -317,12 +390,68 @@ int main(int argc,char* argv[])
     //------- Find the most redundant --------//
     ublas::matrix<int> D;
 
+    // report distances to specified taxa
+    if (args.count("find-dups"))
+    {
+      D = asymmetric_distance_matrix(A);
+      ublas::matrix<int> DS = symmetric_distance_matrix(A);
+      ublas::matrix<int> DO = symmetric_overlap_matrix(A);
+
+      ublas::matrix<double> DEV(D.size1(),D.size2());
+      for(int i=0;i<DEV.size1();i++) 
+	for(int j=0;j<DEV.size2();j++)
+	  if (not DO(i,j))
+	    DEV(i,j) = 1.0;
+	  else {
+	    DEV(i,j) = double(DS(i,j)+5.0)/double(DO(i,j)+5.0);
+	  }
+	
+      
+      // get the indices for the taxa to compare to
+      vector<int> compare_to = get_taxon_indices(names, args["find-dups"].as<string>());
+
+      // convert the indices to a mask
+      vector<int> target(names.size(),0);
+      for(int i=0;i<compare_to.size();i++)
+	target[compare_to[i]] = 1;
+
+      // compute get the indices of the other taxa
+      vector<int> not_compare_to;
+      for(int i=0;i<target.size();i++)
+	if (not target[i])
+	  not_compare_to.push_back(i);
+
+      // find the closest neighbors
+      vector<int> closest(not_compare_to.size());
+      vector<double> distance(not_compare_to.size());
+      for(int i=0;i<not_compare_to.size();i++) {
+	closest[i] = argmin_row(DS,not_compare_to[i],target);
+	distance[i] = DEV(not_compare_to[i],closest[i]);
+      }
+	
+      vector<int> order = iota<int>(not_compare_to.size());
+      sort(order.begin(), order.end(), sequence_order<double>(distance));
+
+      for(int i=0;i<not_compare_to.size();i++) 
+      {
+	  int p1 = not_compare_to[order[i]];
+
+	  int p2 = closest[order[i]];
+
+	  int percent = DEV(p1,p2)*100;
+	  cerr<<"  #"<<i<<": "<<names[p1]<<" -> "<<names[p2];
+	  cerr<<"     D=[ "<<D(p1,p2)<<" / "<<D(p2,p1)<<" ]";
+	  cerr<<"     D = "<<percent<<"% [ "<<DS(p1,p2)<<"/"<<DO(p1,p2)<<" ] "<<endl;
+      }
+    }
+
     if (args.count("cutoff"))
     {
       int cutoff = args["cutoff"].as<unsigned>();
 
-      D = pairwise_distance_matrix(A);
-
+      D = asymmetric_distance_matrix(A);
+      ublas::matrix<int> DS = symmetric_distance_matrix(A);
+      
       vector<int> removed;
 
       while(true)
@@ -378,7 +507,7 @@ int main(int argc,char* argv[])
 
 	  if (keep[p1] > 0) continue;
 
-	  cerr<<"  #"<<++n_removed<<": "<<names[p1]<<" -> "<<names[p2]<<"  D=[ "<<D(p1,p2)<<" / "<<D(p2,p1)<<" ]"<<endl;
+	  cerr<<"  #"<<++n_removed<<": "<<names[p1]<<" -> "<<names[p2]<<"  D=[ "<<D(p1,p2)<<" / "<<D(p2,p1)<<" / "<<DS(p2,p1)<<" ]"<<endl;
 	}
       }
     }
