@@ -28,6 +28,7 @@ use POSIX;
 
 my $home = $ENV{'HOME'};
 
+my $personality="";
 my $out_file;
 my $trees_file;
 my $parameters_file;
@@ -66,6 +67,8 @@ sub rmdir_recursive
 
 sub get_partitions()
 {
+    return [] if ($personality ne "bali-phy");
+
     local *FILE;
 
     open FILE, $out_file or die "Can't open $out_file!";
@@ -91,6 +94,7 @@ sub get_partitions()
 
 sub get_cmdline_attribute($)
 {
+    return "unknown" if ($personality ne "bali-phy");
     my $attribute = shift;
     my $value;
 
@@ -115,6 +119,7 @@ sub get_cmdline_attribute($)
 
 sub get_header_attribute($)
 {
+    return "unknown" if ($personality ne "bali-phy");
     my $attribute = shift;
     my $value;
 
@@ -157,6 +162,8 @@ sub sanitize_smodel($)
 
 sub get_smodels()
 {
+    return [] if ($personality ne "bali-phy");
+
     local *FILE;
 
     open FILE, $out_file or die "Can't open $out_file!";
@@ -180,6 +187,8 @@ sub get_smodels()
 
 sub get_imodels()
 {
+    return [] if ($personality ne "bali-phy");
+
     local *FILE;
 
     open FILE, $out_file or die "Can't open $out_file!";
@@ -205,6 +214,8 @@ sub get_imodels()
 
 sub get_smodel_indices()
 {
+    return [] if ($personality ne "bali-phy");
+
     local *FILE;
 
     open FILE, $out_file or die "Can't open $out_file!";
@@ -225,6 +236,8 @@ sub get_smodel_indices()
 
 sub get_imodel_indices()
 {
+    return [] if ($personality ne "bali-phy");
+
     local *FILE;
 
     open FILE, $out_file or die "Can't open $out_file!";
@@ -243,6 +256,8 @@ sub get_imodel_indices()
 
 sub get_alphabets()
 {
+    return [] if ($personality ne "bali-phy");
+
     local *FILE;
 
     open FILE, $out_file or die "Can't open $out_file!";
@@ -284,9 +299,7 @@ sub get_n_lines($)
 
 sub get_n_iterations()
 {
-    return get_n_lines("C1.trees")-1 if (-e 'C1.trees') ;
-    return get_n_lines("1.trees")-1  if (-e '1.trees');
-    die "Error: I can't find either 1.trees or C1.trees!";
+    return get_n_lines($trees_file)-1;
 }
 
 sub more_recent_than($;$)
@@ -334,6 +347,8 @@ sub record_burnin
 
 sub get_alignment_info 
 {
+    return {} if ($personality ne "bali-phy");
+
     my $filename = shift;
     open INFO,"alignment-info $filename |";
 
@@ -383,9 +398,65 @@ sub tooltip
     return "<a title=\"$text\">?</a>";
 }
 
-#----------------------------- SETUP --------------------------#
+#----------------------------- SETUP 2 --------------------------#
+
+my $max_iter;
+my $subsample = 1;
+my $min_support;
+my $muscle = 0;
+my $probcons = 0;
+my $sub_partitions=1;
+
+my $speed=1;
+
+while ($#ARGV > -1) 
+{
+    my $arg = shift;
+    if ($arg eq "clean" || $arg eq "--clean") {
+	do_cleanup();
+	exit;
+    }
+    elsif ($arg =~ /--burnin=(.+)/) {
+	$burnin = $1;
+    }
+    elsif ($arg =~ /--fast/) {
+	$speed = 2;
+    }
+    elsif ($arg =~ /--slow/) {
+	$speed = 0;
+    }
+    elsif ($arg =~ /--subsample=(.+)/) {
+	$subsample = $1;
+    }
+    elsif ($arg =~ /--max=(.+)/) {
+	$max_iter = $1;
+    }
+    elsif ($arg =~ /--min-support=(.+)/) {
+	$min_support = $1;
+    }
+    elsif ($arg =~ /--muscle/) {
+	$muscle = 1;
+    }
+    elsif ($arg =~ /--probcons/) {
+	$probcons = 1;
+    }
+    elsif ($arg =~ /--no-sub/) {
+	$sub_partitions=0;
+    }
+    elsif ($arg =~ /--treefile=(.+)/) {
+	$personality = "treefile";
+	$trees_file = $1;
+    }    
+    else {
+	die "I don't recognize option $arg";
+    }
+}
+
+
+#----------------------------- SETUP 2 --------------------------#
 if (-e 'C1.out') 
 {
+    $personality = "bali-phy";
     $out_file = 'C1.out';
     $n_chains = get_header_attribute("MPI_SIZE");
     $n_chains=1 if (!defined($n_chains));
@@ -404,7 +475,9 @@ if (-e 'C1.out')
 	$MAP_file = "C1.MAP";
     }
 }
-elsif (-e '1.out') {
+elsif (-e '1.out') 
+{
+    $personality = "bali-phy";
     $out_file = '1.out';
     $trees_file = '1.trees';
     $parameters_file = '1.p';
@@ -417,7 +490,28 @@ elsif (-e '1.out') {
     $MAP_file = "1.MAP";
 }
 else {
-    die "I can't find file '1.out' or 'C1.out' - are you running this in the right directory?";
+    my @treelists = glob("*.treelist");
+    if ($personality eq "treefile") {
+	$out_file = "";
+	$n_chains = 1;
+	$parameters_file = "";
+    }
+    elsif ($#treelists == -1) {
+	die "I can't find file '1.out' or 'C1.out' - are you running this in the right directory?";
+    }
+    else {
+	print "I can't find file '1.out' or 'C1.out' - analyzing $treelists[0] as a phylobayes file.\n";
+	# fixme - handle personality=treefile, to analyze raxml bootstrap trees.
+
+	# fixme - I want to be able to handle partitions with no alignment info attached.
+	$personality = "phylobayes";
+	$out_file = "";
+	$n_chains = 1;
+	$trees_file = $treelists[0];
+	my $prefix = $trees_file;
+	$prefix =~ s/.treelist//;
+	$parameters_file = "$prefix.trace";
+    }
 }
 
 my $command = get_header_attribute("command");
@@ -476,54 +570,6 @@ my @trees = ();
 my %tree_name = ();
 
 #
-
-my $max_iter;
-my $subsample = 1;
-my $min_support;
-my $muscle = 0;
-my $probcons = 0;
-my $sub_partitions=1;
-
-my $speed=1;
-
-while ($#ARGV > -1) 
-{
-    my $arg = shift;
-    if ($arg eq "clean" || $arg eq "--clean") {
-	do_cleanup();
-	exit;
-    }
-    elsif ($arg =~ /--burnin=(.+)/) {
-	$burnin = $1;
-    }
-    elsif ($arg =~ /--fast/) {
-	$speed = 2;
-    }
-    elsif ($arg =~ /--slow/) {
-	$speed = 0;
-    }
-    elsif ($arg =~ /--subsample=(.+)/) {
-	$subsample = $1;
-    }
-    elsif ($arg =~ /--max=(.+)/) {
-	$max_iter = $1;
-    }
-    elsif ($arg =~ /--min-support=(.+)/) {
-	$min_support = $1;
-    }
-    elsif ($arg =~ /--muscle/) {
-	$muscle = 1;
-    }
-    elsif ($arg =~ /--probcons/) {
-	$probcons = 1;
-    }
-    elsif ($arg =~ /--no-sub/) {
-	$sub_partitions=0;
-    }
-    else {
-	die "I don't recognize option $arg";
-    }
-}
 
 my @tree_consensus_values = sort(0.5,0.66,0.8,0.9,0.95,0.99,1.0);
 
@@ -637,6 +683,9 @@ for my $cvalue (@tree_consensus_values)
     if (! more_recent_than("Results/$tree.topology","Results/consensus")) {
 	`pickout $value-consensus -n < Results/consensus > Results/$tree.topology`;
     }
+    if (! more_recent_than("Results/$tree.PP.topology","Results/consensus")) {
+	`pickout $value-consensus-PP -n < Results/consensus > Results/$tree.PP.topology`;
+    }
     if (! more_recent_than("Results/$tree.mtree","Results/consensus")) {
 	`pickout $value-consensus -n --multi-line < Results/consensus > Results/$tree.mtree`;
     }
@@ -644,10 +693,10 @@ for my $cvalue (@tree_consensus_values)
     if ($sub_partitions && ($speed < 2)) 
     {
 	if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.mtree")) {
-	    `draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg`;
+	    `draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg --draw-clouds=only`;
 	}
 	if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.mtree")) {
-	    `draw-tree Results/$tree.mtree --out=Results/$tree-mctree`;
+	    `draw-tree Results/$tree.mtree --out=Results/$tree-mctree --draw-clouds=only`;
 	}
     }
     
@@ -657,6 +706,9 @@ for my $cvalue (@tree_consensus_values)
     }
     if (! more_recent_than("Results/$tree.tree","Results/$tree.ltree")) {
     `head -n1 Results/$tree.ltree > Results/$tree.tree`;
+    }
+    if (! more_recent_than("Results/$tree.PP.tree","Results/$tree.PP.topology")) {
+	`tree-mean-lengths Results/$tree.PP.topology --safe < Results/$tree.tree > Results/$tree.PP.tree`;
     }
 }
 print "done.\n";
@@ -690,104 +742,114 @@ for my $tree (@trees) {
 print "done.\n";
 
 # 5. Summarize scalar parameters
-print "\nSummarizing distribution of numerical parameters... ";
-if (! more_recent_than("Results/Report",$parameters_file)) {
-    `statreport 2: $max_arg $skip < $parameters_file > Results/Report`;
+if ($personality ne "treefile") {
+    print "\nSummarizing distribution of numerical parameters... ";
+    if (! more_recent_than("Results/Report",$parameters_file)) {
+	`statreport 2: $max_arg $skip < $parameters_file > Results/Report`;
+    }
+    print "done.\n";
 }
-print "done.\n";
-
+    
 # 6. Compute initial alignments
 
-print "\nComputing initial alignments... ";
 my @alignments = ();
 my @AU_alignments = ();
 my %alignment_names = ();
 
-for(my $i=0;$i<$n_partitions;$i++)
-{
-    my $p = $i+1;
-    my $name = "P$p-initial";
-    push @alignments,$name;
-    $alignment_names{$name} = "Initial";
-
-    # These initial alignments should never change!
-    if (! -s "Results/Work/$name-unordered.fasta") {
-	`alignment-find --first < $partition_samples[$i] > Results/Work/$name-unordered.fasta 2>/dev/null`;
-	if ($? && $n_chains==1 && defined($MAP_file)) {
-	    `alignment-find --first < $MAP_file > Results/Work/$name-unordered.fasta`;
+if ($personality eq "bali-phy") {
+    print "\nComputing initial alignments... ";
+    for(my $i=0;$i<$n_partitions;$i++)
+    {
+	my $p = $i+1;
+	my $name = "P$p-initial";
+	push @alignments,$name;
+	$alignment_names{$name} = "Initial";
+	
+	# These initial alignments should never change!
+	if (! -s "Results/Work/$name-unordered.fasta") {
+	    `alignment-find --first < $partition_samples[$i] > Results/Work/$name-unordered.fasta 2>/dev/null`;
+	    if ($? && $n_chains==1 && defined($MAP_file)) {
+		`alignment-find --first < $MAP_file > Results/Work/$name-unordered.fasta`;
+	    }
 	}
     }
+    print "done.\n";
 }
-print "done.\n";
 
 # 6.5. Compute MUSCLE alignments
 
-if ($muscle) {
-print "\nComputing MUSCLE alignment... ";
+if ($personality eq "bali-phy") {
+    if ($muscle) {
+	print "\nComputing MUSCLE alignment... ";
 
-for(my $i=0;$i<$n_partitions;$i++) {
-    my $p = ($i+1);
-    my $name = "P$p-muscle";
-    if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-	`muscle -in Results/Work/P$p-initial-unordered.fasta -out Results/Work/$name-unordered.fasta -quiet`;
+	for(my $i=0;$i<$n_partitions;$i++) {
+	    my $p = ($i+1);
+	    my $name = "P$p-muscle";
+	    if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
+		`muscle -in Results/Work/P$p-initial-unordered.fasta -out Results/Work/$name-unordered.fasta -quiet`;
+	    }
+	    push @alignments,$name;
+	    $alignment_names{$name} = "MUSCLE";
+	    
+	}
+	print "done.\n";
     }
-    push @alignments,$name;
-    $alignment_names{$name} = "MUSCLE";
-
-}
-print "done.\n";
 }
 
 # 6.5. Compute ProbCons alignments
 
-if ($probcons) {
-print "\nComputing ProbCons alignment... ";
-
-for(my $i=0;$i<$n_partitions;$i++) {
-    my $p = ($i+1);
-    my $name = "P$p-probcons";
-    
+if ($personality eq "bali-phy") {
+    if ($probcons) {
+	print "\nComputing ProbCons alignment... ";
+	
+	for(my $i=0;$i<$n_partitions;$i++) {
+	    my $p = ($i+1);
+	    my $name = "P$p-probcons";
+	    
 #    my $alignment_info = get_alignment_info("Results/Work/P$p-initial-unordered.fasta");
-    my $alphabet = $alphabets[$i];
-
-    if ($alphabet =~ /RNA nucleotides/) {
-	print "got here\n";
-	if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-	`probcons-RNA Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
+	    my $alphabet = $alphabets[$i];
+	    
+	    if ($alphabet =~ /RNA nucleotides/) {
+		print "got here\n";
+		if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
+		    `probcons-RNA Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
+		}
+	    }
+	    elsif (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
+		`probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
+	    }
+	    push @alignments,$name;
+	    $alignment_names{$name} = "ProbCons";
+	    
 	}
+	print "done.\n";
     }
-    elsif (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-	`probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
-    }
-    push @alignments,$name;
-    $alignment_names{$name} = "ProbCons";
-
-}
-print "done.\n";
 }
 
 # 6.7 Compute maximum (weighted posterior decoding) alignments
 
-print "\nComputing WPD alignments... ";
+if ($personality eq "bali-phy") {
+    print "\nComputing WPD alignments... ";
 
-for(my $i=0;$i<$n_partitions;$i++) 
-{
-    next if ($imodel_indices[$i] == -1);
-
-    my $p = $i+1;
-    my $infile = $partition_samples[$i];
-
-    my $name = "P$p-max";
-    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
-	! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
-	`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta`;
+    for(my $i=0;$i<$n_partitions;$i++) 
+    {
+	next if ($imodel_indices[$i] == -1);
+	
+	my $p = $i+1;
+	my $infile = $partition_samples[$i];
+	
+	my $name = "P$p-max";
+	if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
+	    ! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
+	    `cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta`;
+	}
+	push @alignments,$name;
+	$alignment_names{$name} = "Best (WPD)";
+	push @AU_alignments,$name;
     }
-    push @alignments,$name;
-    $alignment_names{$name} = "Best (WPD)";
-    push @AU_alignments,$name;
+    
+    print "done.\n";
 }
-
-print "done.\n";
 
 # 7. Compute consensus-alignments
 
@@ -813,19 +875,21 @@ for(my $i=0;$i<$n_partitions;$i++)
     push @AU_alignments,"P$p-consensus-10" if ($speed == 0);
 }
 
-print "Drawing alignments... ";
-for my $alignment (@alignments) 
-{
-    if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta") ||
-	! more_recent_than("Results/$alignment.fasta","Results/c50.tree")) {
-    `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta`;
-    }
-
-    if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
-	`alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
-
-	if ($?) {
-	    `alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html`;
+if ($#alignments != -1) {
+    print "Drawing alignments... ";
+    for my $alignment (@alignments) 
+    {
+	if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta") ||
+	    ! more_recent_than("Results/$alignment.fasta","Results/c50.tree")) {
+	    `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta`;
+	}
+	
+	if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
+	    `alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
+	    
+	    if ($?) {
+		`alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html`;
+	    }
 	}
     }
 }
@@ -877,17 +941,24 @@ for my $alignment (@AU_alignments)
 }
 
 # 9. Estimate marginal likelihood
-print "Calculating marginal likelihood... ";
+my $marginal_prob = "unknown";
+if ($personality ne "treefile") 
+{
+    print "Calculating marginal likelihood... ";
 
-if (!more_recent_than("Results/Pmarg",$parameters_file)) {
-`stats-select likelihood --no-header < $parameters_file | tail -n+$burnin | model_P > Results/Pmarg`;
+    if (!more_recent_than("Results/Pmarg",$parameters_file)) {
+	my $likelihood = "likelihood";
+	$likelihood = "loglik" if ($personality eq "phylobayes");
+	`stats-select $likelihood --no-header < $parameters_file | tail -n+$burnin | model_P > Results/Pmarg`;
+    }
+    print "done.\n";
+    $marginal_prob = `cat Results/Pmarg`;
 }
-print "done.\n";
-my $marginal_prob = `cat Results/Pmarg`;
 
 
 
 # 10. Mixing diagnostics -- block bootstrap
+print "Generate mixing diagnostics for topologies ... ";
 
 if (!more_recent_than("Results/partitions","Results/consensus")) {
     `pickout --no-header --large pi < Results/consensus > Results/partitions`;
@@ -899,6 +970,7 @@ if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
 if (!more_recent_than("Results/partitions.bs",$trees_file)) {
     `trees-bootstrap $max_arg $trees_file $skip --pred Results/partitions.pred > Results/partitions.bs`;
 }
+print "done.\n";
 
 # 11. c-levels.plot - FIXME!
 
@@ -932,13 +1004,13 @@ push @SRQ,"c50";
 
 for my $srq (@SRQ) {
 `gnuplot <<EOF
-set terminal svg
-set output "Results/$srq.SRQ.svg"
+set terminal png size 300,300
+set output "Results/$srq.SRQ.png"
 set key right bottom
 set xlabel "Regenerations (fraction)"
 set ylabel "Time (fraction)"
 set title "Scaled Regeneration Quantile (SRQ) plot: $srq"
-plot 'Results/$srq.SRQ' title "$srq" with linespoints 1, x title "Goal" lw 2 lt 3
+plot 'Results/$srq.SRQ' title "$srq" with linespoints lw 1 lt 1, x title "Goal" lw 1 lt 3
 EOF
 `;
 }
@@ -957,67 +1029,77 @@ while(my $line = <CONSENSUS>) {
     }
 }
 
+
 # 14. Traceplots for scalar variables
-open VARS, $parameters_file;
-my $header = <VARS>;
-chomp $header;
-my @var_names = split(/\t/,$header);
-close VARS;
 
-open REPORT, "Results/Report";
-
+my @var_names = ();
 my %median = ();
 my %CI_low = ();
 my %CI_high = ();
 my %ACT = ();
 my %Ne = ();
-
-print "Generating trace-plots ... ";
-
-while (my $line = <REPORT>) {
-    chomp $line;
-    next if ($line eq "");
-
-    if ($line =~ /\s+(.+) ~ (.+)\s+\((.+),(.+)\)/) 
-    {
-	my $var = $1;
-	$median{$var} = $2;
-	$CI_low{$var} = $3;
-	$CI_high{$var} = $4;
-	$line = <REPORT>;
-
-	$line =~ /t @ (.+)\s+Ne = (.+)/;
-	$ACT{$var} = $1;
-	$Ne{$var} = $2;
-    }
-    elsif ($line =~ /\s+(.+) = (.+)/) {
-	$median{$1} = $2;
-    }
-}
-
-my $Nmax = 5000;
-
-for(my $i=1;$i<= $#var_names; $i++) 
+    
+if ("$parameters_file") 
 {
-    next if (more_recent_than("Results/$i.trace.png",$parameters_file));
+    open VARS, $parameters_file;
+    my $header = <VARS>;
+    chomp $header;
+    @var_names = split(/\t/,$header);
+    close VARS;
+    
+    open REPORT, "Results/Report";
+    
+    print "Generating trace-plots ... ";
+    
+    while (my $line = <REPORT>) {
+	chomp $line;
+	next if ($line eq "");
+	
+	if ($line =~ /\s+(.+) ~ (.+)\s+\((.+),(.+)\)/)
+	{
+	    my $var = $1;
+	    $median{$var} = $2;
+	    $CI_low{$var} = $3;
+	    $CI_high{$var} = $4;
+	    $line = <REPORT>;
+	    
+	    $line =~ /t @ (.+)\s+Ne = (.+)/;
+	    $ACT{$var} = $1;
+	    $Ne{$var} = $2;
+	}
+	elsif ($line =~ /\s+(.+) = (.+)/) {
+	    $median{$1} = $2;
+	}
+    }
 
-    my $var = $var_names[$i];
-    next if (!defined($CI_low{$var}));
+    my $Nmax = 5000;
 
-    my $file1 = "Results/Work/T1.p.$i";
-    `stats-select iter '$var' --no-header < $parameters_file > $file1`;
-
-    my $file2 = $file1.".2";
-
-    my $N = $after_burnin;
-
-    $N = 1000 if ($N > 1000);
-
-    my $factor = ceil($after_burnin / $N);
-
-    `subsample --skip=$burnin $factor < $file1 > $file2`;
-
-    `gnuplot <<EOF
+    for(my $i=1;$i<= $#var_names; $i++)
+    {
+	next if (more_recent_than("Results/$i.trace.png",$parameters_file));
+	
+	my $var = $var_names[$i];
+	next if (!defined($CI_low{$var}));
+	
+	my $file1 = "Results/Work/T1.p.$i";
+	if ($personality eq "bali-phy") {
+	    `stats-select iter '$var' --no-header < $parameters_file > $file1`;
+	}
+	elsif ($personality eq "phylobayes") {
+	    `stats-select time '$var' --no-header < $parameters_file > $file1`;
+	}
+	
+	my $file2 = $file1.".2";
+	
+	my $N = $after_burnin;
+	
+	$N = 1000 if ($N > 1000);
+	
+	my $factor = ceil($after_burnin / $N);
+	
+	`subsample --skip=$burnin $factor < $file1 > $file2`;
+	
+	`gnuplot <<EOF
 set terminal png size 800,600
 set output "Results/$i.trace.png"
 set key right bottom
@@ -1025,9 +1107,11 @@ set xlabel "Iteration"
 set ylabel "$var"
 plot '$file2' title '$var' with lines
 EOF`;
+    }
+
+    print "done\n";
 }
 
-print "done\n";
 #------------------------- Print Index -----------------------#
 
 my $p1_features = get_alignment_info("Results/P1-initial.fasta");
@@ -1036,7 +1120,8 @@ my $n_sequences = ${$p1_features}{"n_sequences"};
 
 open INDEX,">Results/index.html";
 
-my $title = "MCMC Post-hoc Analysis: $n_sequences sequences";
+my $title = "MCMC Post-hoc Analysis";
+$title = $title . ": $n_sequences sequences" if defined($n_sequences);
 
 print INDEX '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -1196,7 +1281,7 @@ for my $tree (@trees)
 }
 print INDEX "</table>\n";
 
-print INDEX "<h2 class=\"clear\"><a name=\"alignment\">Alignment Distribution</a></h2>\n";
+print INDEX "<h2 class=\"clear\"><a name=\"alignment\">Alignment Distribution</a></h2>\n" if ($n_partitions > 0);
 
 for(my $i=0;$i<$n_partitions;$i++) 
 {
@@ -1252,34 +1337,46 @@ for(my $i=0;$i<$n_partitions;$i++)
     print INDEX "</table>\n";
 }
 
-print INDEX '<object class="r_floating_picture" data="partitions.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
-#print INDEX '<img src="partitions.SRQ.png" height="200pt" class="r_floating_picture" alt="SRQ plot for support of each partition."/>';
-print INDEX '<object class="r_floating_picture" data="c50.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
-#print INDEX '<img src="c50.SRQ.png" height="200pt" class="r_floating_picture" alt="SRQ plot for supprt of 50% consensus tree."/>';
+#print INDEX '<object class="r_floating_picture" data="partitions.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
+print INDEX '<img src="partitions.SRQ.png" class="r_floating_picture" alt="SRQ plot for support of each partition."/>';
+#print INDEX '<object class="r_floating_picture" data="c50.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
+#print INDEX '<embed class="r_floating_picture" src="c50.SRQ.svg" type="image/svg+xml" height="200" />';
+#print INDEX '<embed class="r_floating_picture" src="partitions.SRQ.svg" type="image/svg+xml" height="200" />';
+print INDEX '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for supprt of 50% consensus tree."/>';
 print INDEX "<h2><a name=\"topology-mixing\">Mixing: Topologies</a></h2>\n";
 
 print INDEX "<ol>\n";
 print INDEX "<li><a href=\"partitions.bs\">Partition uncertainty</a></li>\n";
 for my $srq (@SRQ) {
-    print INDEX "<li><a href=\"$srq.SRQ.svg\">SRQ plot: $srq</a></li>\n";
+    print INDEX "<li><a href=\"$srq.SRQ.png\">SRQ plot: $srq</a></li>\n";
 }
 print INDEX "</ol>\n";
 
 
-print INDEX "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
+if ($#var_names != -1) {
+    print INDEX "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
 
-print INDEX "<table>\n";
-print INDEX "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th></tr>\n";
+    print INDEX "<table>\n";
+    print INDEX "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th></tr>\n";
+}
+    
+my $tne_string = `pickout -n Ne < Results/partitions.bs`;
+my @tne_array = split(/\n/,$tne_string);
+@tne_array = sort {$a <=> $b} @tne_array;
+my $min_tNe = $tne_array[0];
 
 my @sne = sort {$a <=> $b} values(%Ne);
 my $min_Ne = $sne[0];
-print "\nNOTE: min_Ne = $min_Ne\n";
+print "\nNOTE: min_Ne (scalar)    = $min_Ne\n" if defined($min_Ne);
+print "NOTE: min_Ne (partition) = $min_tNe\n" if defined($min_tNe);
 
 for(my $i=1;$i <= $#var_names; $i++) 
 {
     my $var = $var_names[$i];
 
     next if ($var eq "iter");
+    next if (($var eq "time") && ($personality eq "phylobayes"));
+    next if (($var eq "#treegen") && ($personality eq "phylobayes"));
 
     print INDEX "<tr>\n";
     print INDEX "<td>$var</td>\n";
