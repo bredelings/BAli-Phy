@@ -523,6 +523,7 @@ std::pair<dynamic_bitset<>, int> solve_conflicts(const ublas::matrix<int>& confl
 	n_conflicts[i]  = get_n_conflicts(conflicts,i,survives);
 
 	// .. that aren't sub-branches of itself.
+	// DOES THIS HELP?
 	n_conflicts[i] -= get_n_conflicts(dominates,i,survives);
 	assert(n_conflicts[i] >= 0);
 
