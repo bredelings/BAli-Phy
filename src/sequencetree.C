@@ -299,7 +299,7 @@ void RootedSequenceTree::parse(const string& line)
     if (word == "(") {
       tree_stack.push_back(vector<BranchNode*>());
       if (not (prev == "(" or prev == "," or prev == ""))
-	throw myexception()<<"In tree file, found '(' in the middle of word \""<<word<<"\"  (prev = \""<<prev<<"\")";
+	throw myexception()<<"In tree file, found '(' in the middle of word \""<<prev<<"\"";
     }
     else if (word == ")") {
       // We need at least 2 levels of trees
