@@ -205,6 +205,7 @@ if test "$GXX" = yes ; then
 
   if test "$debug" = no ; then
       CXXFLAGS="$CXXFLAGS -O3"
+      CXXFLAGS="-funroll-loops -fweb $CXXFLAGS"
   elif test "$debug" = O ; then
       CXXFLAGS="$CXXFLAGS -O"
   elif test "$debug" = O2 ; then
@@ -213,7 +214,6 @@ if test "$GXX" = yes ; then
 
   if test "$debug" != yes ; then
       CXXFLAGS="-ffast-math $CXXFLAGS"
-      CXXFLAGS="-funroll-loops -fweb $CXXFLAGS"
       CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
       if test "$profile" = no ; then 
           CXXFLAGS="-fomit-frame-pointer $CXXFLAGS"
