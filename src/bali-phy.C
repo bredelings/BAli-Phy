@@ -178,6 +178,8 @@ using std::vector;
 
 using boost::dynamic_bitset;
 
+
+  alignment_moves.add(1, SingleMove(sample_alignment_rates, "alignment_rates") );
   add_MH_move(P, less_than(0,shift_cauchy), "lambda_s",      "lambda_shift_sigma",    0.35, parameter_moves);
   add_MH_move(P, less_than(0,shift_cauchy), "lambda_f",      "lambda_shift_sigma",    0.35, parameter_moves);
   add_MH_move(P, shift_epsilon,               "r_s",     "epsilon_shift_sigma",   0.15, parameter_moves);
@@ -1299,6 +1301,10 @@ int main(int argc,char* argv[])
 
     // Why do we need to do this, again?
     P.recalc_all();
+
+    MCMC::MoveStats S;
+    sample_alignment_rates(P,S);
+    exit(0);
 
     //---------------Do something------------------//
     if (args.count("show-only"))

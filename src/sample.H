@@ -98,4 +98,6 @@ void change_3_branch_lengths(owned_ptr<Probability_Model>& P, MCMC::MoveStats& S
 
 
 
+void sample_alignment_rates(Parameters&, MCMC::MoveStats&);
+
 #endif
