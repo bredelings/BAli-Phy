@@ -22,6 +22,12 @@ using std::vector;
 // * 
 namespace substitution {
 
+  int total_peel_leaf_branches=0;
+  int total_peel_internal_branches=0;
+  int total_peel_branches=0;
+  int total_likelihood=0;
+  int total_calc_root_prob=0;
+
   struct peeling_info: public vector<int> {
     peeling_info(const Tree&T) { reserve(T.n_branches()); }
   };
@@ -57,6 +63,8 @@ namespace substitution {
   efloat_t calc_root_probability(const alignment& A,const Tree& T,Likelihood_Cache& cache,
 			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
+    total_calc_root_prob++;
+
     const alphabet& a = A.get_alphabet();
 
     const int root = cache.root;
@@ -171,6 +179,8 @@ namespace substitution {
   void peel_leaf_branch(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 			const MatCache& transition_P,const MultiModel& MModel)
   {
+    total_peel_leaf_branches++;
+
     const alphabet& a = A.get_alphabet();
 
     // The number of directed branches is twice the number of undirected branches
@@ -219,6 +229,8 @@ namespace substitution {
 				  const Tree& T, 
 				  const MatCache& transition_P,const MultiModel& MModel)
   {
+    total_peel_leaf_branches++;
+
     const alphabet& a = A.get_alphabet();
 
     // The number of directed branches is twice the number of undirected branches
@@ -267,6 +279,8 @@ namespace substitution {
   void peel_internal_branch(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 			    const MatCache& transition_P,const MultiModel& MModel)
   {
+    total_peel_internal_branches++;
+
     // find the names of the (two) branches behind b0
     vector<int> b;
     for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
@@ -327,6 +341,8 @@ namespace substitution {
   void peel_branch(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 		   const MatCache& transition_P, const MultiModel& MModel)
   {
+    total_peel_branches++;
+
     // compute branches-in
     int bb = T.directed_branch(b0).branches_before().size();
 
@@ -585,6 +601,8 @@ namespace substitution {
   efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
 	    const MultiModel& MModel)
   {
+    total_likelihood++;
+
 #ifndef NDEBUG
     subA_index_check_footprint(A,T);
     subA_index_check_regenerate(A,T);

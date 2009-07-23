@@ -47,6 +47,11 @@ struct data_partition: public Model
 
   mutable vector<cached_value<int> > cached_sequence_lengths;
 
+  double branch_mean_;
+
+  void branch_mean(double);
+  void branch_mean_tricky(double);
+
 public:
 
   bool smodel_full_tree;
@@ -110,8 +115,6 @@ public:
 
   /// parameter for exponential prior on branch length
   double branch_mean() const; 
-  void branch_mean(double);
-  void branch_mean_tricky(double);
 
   // The prior, likelihood, and probability
   efloat_t prior_no_alignment() const;
@@ -146,6 +149,10 @@ class Parameters: public SuperModel
   /// The IndelModel
   vector<polymorphic_cow_ptr<TransducerIndelModel> > TIModels;
   vector<int> timodel_for_partition;
+
+  // Scale for partition
+  vector<int> scale_for_partition;
+  int n_scales;
 
   void recalc(const vector<int>&);
 
@@ -252,7 +259,13 @@ public:
 
   void note_sequence_length_changed(int n);
 
-  double branch_mean() const; 
+  int n_branch_means() const;
+
+  double branch_mean() const;
+
+  double branch_mean(int i) const;
+
+  void branch_mean_tricky(int i,double); 
 
   Parameters* clone() const {return new Parameters(*this);}
 
@@ -263,18 +276,21 @@ public:
 
   Parameters(const vector<alignment>& A, const SequenceTree&, 
 	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
+	     const vector<int>&,
 	     const vector<int>&);
 
   Parameters(const vector<alignment>& A, const SequenceTree&, 
 	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
 	     const vector<int>&,
 	     const vector<polymorphic_cow_ptr<IndelModel> >&,
+	     const vector<int>&,
 	     const vector<int>&);
 
   Parameters(const vector<alignment>& A, const SequenceTree&, 
 	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
 	     const vector<int>&,
 	     const vector<polymorphic_cow_ptr<TransducerIndelModel> >&,
+	     const vector<int>&,
 	     const vector<int>&);
 };
 

@@ -63,6 +63,12 @@ namespace substitution {
 
   // Full likelihood of the single sequence with the lowest likelihood
   efloat_t Pr_single_sequence(const data_partition&);
+
+  extern int total_peel_leaf_branches;
+  extern int total_peel_internal_branches;
+  extern int total_peel_branches;
+  extern int total_calc_root_prob;
+  extern int total_likelihood;
 }
 
 #endif

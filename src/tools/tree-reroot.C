@@ -17,6 +17,8 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+using boost::dynamic_bitset;
+
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
   using namespace po;
@@ -131,8 +133,10 @@ int main(int argc,char* argv[])
     {
       string p = args["branch"].as<string>();
       vector<string> taxa = split(p,' ');
-      valarray<bool> mask(false,T.n_leaves());
-      valarray<bool> group1(false,T.n_leaves());
+
+      dynamic_bitset<> mask(T.n_leaves());
+      dynamic_bitset<> group1(T.n_leaves());
+
       int separator = find_index(taxa,string("|"));
       if (separator == -1)
 	throw myexception()<<"Partition is missing a separator";

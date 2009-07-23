@@ -15,6 +15,7 @@
 // for both sequences, this process is symmetric
 
 using std::abs;
+using boost::dynamic_bitset;
 using namespace A2;
 
 vector< Matrix > distributions_star(const data_partition& P,const vector<int>& seq,int b,bool up) 
@@ -27,7 +28,7 @@ vector< Matrix > distributions_star(const data_partition& P,const vector<int>& s
   int node2 = T.branch(b).target();
   if (not up) std::swap(node1,node2);
 
-  valarray<bool> group = T.partition(node1,node2);
+  dynamic_bitset<> group = T.partition(node1,node2);
 
   return ::distributions_star(P,seq,root,group);
 }
@@ -42,7 +43,7 @@ vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& s
   int node2 = T.branch(b).target();
   if (not up) std::swap(node1,node2);
 
-  valarray<bool> group = T.partition(node1,node2);
+  dynamic_bitset<> group = T.partition(node1,node2);
 
   return ::distributions_tree(P,seq,root,group);
 }
@@ -54,7 +55,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 {
   assert(P.has_IModel());
 
-  valarray<bool> s1 = constraint_satisfied(P.alignment_constraint, *P.A);
+  dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, *P.A);
 
   const Tree& T = *P.T;
   //FIXME - partitions
@@ -67,16 +68,22 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   int node1 = T.branch(b).target();
   int node2 = T.branch(b).source();
 
-  valarray<bool> group1 = T.partition(node2,node1);
+  dynamic_bitset<> group1 = T.partition(node2,node1);
 
   // Find sub-alignments and sequences
   vector<int> seq1;
   vector<int> seq2;
-  for(int column=0;column<old.length();column++) {
-    if (old(column,node1) != alphabet::gap)
+  vector<int> seq12;
+
+  for(int column=0;column<old.length();column++)
+  {
+    if (not old.gap(column,node1))
       seq1.push_back(column);
-    if (old(column,node2) != alphabet::gap)
+    if (not old.gap(column,node2))
       seq2.push_back(column);
+
+    if (not old.gap(column,node1) or old.gap(column,node2))
+      seq12.push_back(column);
   }
 
   //FIXME - this makes the debug routines crash
@@ -105,7 +112,8 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   //------------------ Compute the DP matrix ---------------------//
   vector<int> path_old = get_path(old,node1,node2);
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,old,group1,not group1,seq1,seq2);
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,old,group1,~group1,seq1,seq2,seq12);
+
   vector<int> path = Matrices->forward(pins);
 
   path.erase(path.begin()+path.size()-1);
@@ -117,7 +125,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
 #ifndef NDEBUG_DP
   assert(valid(*P.A));
-  valarray<bool> s2 = constraint_satisfied(P.alignment_constraint, *P.A);
+  dynamic_bitset<> s2 = constraint_satisfied(P.alignment_constraint, *P.A);
   report_constraints(s1,s2);
 
   vector<int> path_new = get_path(*P.A, node1, node2);

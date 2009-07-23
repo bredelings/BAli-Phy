@@ -18,11 +18,13 @@ using std::endl;
 using std::cerr;
 using std::cout;
 
-valarray<bool> group_from_names(const vector<string>& names,const vector<string>& subset)
+using boost::dynamic_bitset;
+
+dynamic_bitset<> group_from_names(const vector<string>& names,const vector<string>& subset)
 {
   assert(subset.size() <= names.size());
 
-  valarray<bool> group(false,names.size());
+  dynamic_bitset<> group(names.size());
 
   for(int i=0; i<subset.size(); i++) {
     if (includes(names,subset[i]))
@@ -36,19 +38,19 @@ valarray<bool> group_from_names(const vector<string>& names,const vector<string>
 
 Partition partition_from_branch(const SequenceTree& T,int b) 
 {
-  valarray<bool> group(T.n_leaves());
-  const valarray<bool>& with_internal = T.partition(b);
+  dynamic_bitset<> group(T.n_leaves());
+  const dynamic_bitset<>& with_internal = T.partition(b);
 
   for(int i=0;i<group.size();i++)
     group[i] = with_internal[i];
 
-  return Partition(T.get_sequences(),not group);
+  return Partition(T.get_sequences(), ~group);
 }
 
 
 Partition full_partition_from_names(const vector<string>& names, const vector<string>& names1) 
 {
-  valarray<bool> group1 = group_from_names(names,names1);
+  dynamic_bitset<> group1 = group_from_names(names,names1);
 
   return Partition(names,group1);
 }
@@ -57,10 +59,10 @@ Partition full_partition_from_names(const vector<string>& names, const vector<st
 Partition partition_from_names(const vector<string>& names, const vector<string>& names1,
 			       const vector<string>& names2)
 {
-  valarray<bool> group1 = group_from_names(names,names1);
-  valarray<bool> group2 = group_from_names(names,names2);
+  dynamic_bitset<> group1 = group_from_names(names,names1);
+  dynamic_bitset<> group2 = group_from_names(names,names2);
 
-  return Partition(names,group1,group1 or group2);
+  return Partition(names, group1, group1 | group2);
 }
 
 vector<Partition> internal_partitions_from_tree(const SequenceTree& T) 
@@ -103,42 +105,41 @@ Partition Partition::reverse() const {
   return p2;
 }
 
-Partition::Partition(const Partition& p,const valarray<bool>& mask)
+Partition::Partition(const Partition& p,const dynamic_bitset<>& mask)
   :names(p.names),
-   group1(p.group1 and mask),
-   group2(p.group2 and mask)
+   group1(p.group1 & mask),
+   group2(p.group2 & mask)
 {
   assert(mask.size() == p.group1.size());
-  assert(empty(group1 and group2));
+  assert(not group1.intersects(group2));
 }
 
-Partition::Partition(const valarray<bool>& g) 
-  :group1(g),group2(not g)
+Partition::Partition(const dynamic_bitset<>& g) 
+  :group1(g),group2(~g)
 { 
-  assert(empty(group1 and group2));
+  assert(not group1.intersects(group2));
 }
 
-Partition::Partition(const valarray<bool>& g,const valarray<bool>& mask) 
-  :group1(g and mask),group2((not g) and mask)
+Partition::Partition(const dynamic_bitset<>& g,const dynamic_bitset<>& mask) 
+  :group1(g & mask),group2((~g) & mask)
 {
   assert(g.size() == mask.size());
-  assert(empty(group1 and group2));
+  assert(not group1.intersects(group2));
 }
 
-Partition::Partition(const vector<string>& n,const valarray<bool>& g) 
-  :names(n),group1(g),group2(not g)
+Partition::Partition(const vector<string>& n,const dynamic_bitset<>& g) 
+  :names(n),group1(g),group2(~g)
 {
   assert(n.size() == g.size());
-  assert(empty(group1 and group2));
+  assert(not group1.intersects(group2));
 }
 
-Partition::Partition(const vector<string>& n,const valarray<bool>& g,const valarray<bool>& mask) 
-  :names(n),group1(g and mask),group2((not g) and mask)
+Partition::Partition(const vector<string>& n,const dynamic_bitset<>& g,const dynamic_bitset<>& mask) 
+  :names(n),group1(g & mask),group2((~ g) & mask)
 {
   assert(n.size() == g.size());
   assert(g.size() == mask.size());
-  assert(empty(group1 and not group1));
-  assert(empty(group1 and group2));
+  assert(not group1.intersects(group2));
 }
 
 vector< vector<string> > parse_partition(const string& line)
@@ -185,26 +186,26 @@ Partition::Partition(const string& line)
   
   group1 = group_from_names(names,name_groups[0]);
   group2 = group_from_names(names,name_groups[1]);
-  assert(empty(group1 and group2));
+  assert(not group1.intersects(group2));
 }
 
 Partition::Partition(const vector<string>& n,const string& line) 
-  :names(n),group1(false,n.size()),group2(false,n.size())
+  :names(n),group1(n.size()),group2(n.size())
 {
   vector< vector<string> > name_groups = parse_partition(line);
 
   group1 = group_from_names(names,name_groups[0]);
   group2 = group_from_names(names,name_groups[1]);
 
-  assert(empty(group1 and group2));
+  assert(not group1.intersects(group2));
 }
 
 bool informative(const Partition& p) {
-  return n_elements(p.group1) > 1 and n_elements(p.group2) > 1;
+  return (p.group1.count() >= 2) and (p.group2.count() >= 2);
 }
 
 bool valid(const Partition& p) {
-  return n_elements(p.group1) > 0 and n_elements(p.group2) > 0;
+  return p.group1.any() and p.group2.any();
 }
 
 RootedSequenceTree standardized(const string& t) 
@@ -290,7 +291,7 @@ void standardize(RootedSequenceTree& T) {
 
 std::ostream& operator<<(std::ostream& o, const Partition& P) 
 {
-  assert(empty(P.group1 and P.group2));
+  assert(not P.group1.intersects(P.group2));
 
   for(int i=0;i<P.size();i++)
     if (P.group1[i]) o<<P.names[i]<<" ";
@@ -300,8 +301,8 @@ std::ostream& operator<<(std::ostream& o, const Partition& P)
   for(int i=0;i<P.size();i++)
     if (P.group2[i]) o<<P.names[i]<<" ";
 
-  std::valarray<bool> rmask = not(P.group1 or P.group2);
-  if (statistics::count(rmask)) {
+  dynamic_bitset<> rmask = ~(P.group1 | P.group2);
+  if (rmask.any()) {
     o<<" [ ";
     for(int i=0;i<P.size();i++) {
       if (rmask[i]) o<<P.names[i]<<" ";
@@ -332,7 +333,7 @@ SequenceTree get_mf_tree(const std::vector<std::string>& names,
 }
 
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
-			 const std::vector<std::valarray<bool> >& partitions) 
+			 const std::vector<dynamic_bitset<> >& partitions) 
 {
   SequenceTree T = star_tree(names);
 
@@ -349,17 +350,17 @@ bool operator==(const Partition& p1, const Partition& p2) {
   return 
     (p1.names == p2.names) and 
     (
-     (equal(p1.group1,p2.group1) and equal(p1.group2,p2.group2)) or
-     (equal(p1.group1,p2.group2) and equal(p1.group2,p2.group1))
+     ((p1.group1 == p2.group1) and (p1.group2 == p2.group2)) or
+     ((p1.group1 == p2.group2) and (p1.group2 == p2.group1))
     );
 }
 
 bool consistent(const Partition& p1, const Partition& p2) {
-  if (not intersect(p1.group1,p2.group1)) return true;
-  if (not intersect(p1.group1,p2.group2)) return true;
+  if (not p1.group1.intersects(p2.group1)) return true;
+  if (not p1.group1.intersects(p2.group2)) return true;
 
-  if (not intersect(p1.group2,p2.group1)) return true;
-  if (not intersect(p1.group2,p2.group2)) return true;
+  if (not p1.group2.intersects(p2.group1)) return true;
+  if (not p1.group2.intersects(p2.group2)) return true;
 
   return false;
 }
@@ -368,9 +369,9 @@ bool consistent(const Partition& p1, const Partition& p2) {
 /// Does the grouping of all nodes bm, imply *this?
 bool implies(const Partition& p1, const Partition& p2) 
 {
-  if (is_subset(p2.group1,p1.group1) and is_subset(p2.group2,p1.group2)) return true;
+  if (p2.group1.is_subset_of(p1.group1) and p2.group2.is_subset_of(p1.group2)) return true;
 
-  if (is_subset(p2.group2,p1.group1) and is_subset(p2.group1,p1.group2)) return true;
+  if (p2.group2.is_subset_of(p1.group1) and p2.group1.is_subset_of(p1.group2)) return true;
 
   return false;
 }
@@ -379,7 +380,7 @@ bool implies(const Partition& p1, const Partition& p2)
 bool implies(const SequenceTree& T,const Partition& p) {
   bool result = false;
   for(int b=0;b<T.n_branches() and not result;b++) {
-    valarray<bool> bp = branch_partition(T,b);
+    dynamic_bitset<> bp = branch_partition(T,b);
 
     if (implies(bp,p)) return true;
   }
@@ -427,7 +428,7 @@ bool merge_partitions(vector<Partition>& partitions,const vector<Partition>& del
 
 int which_partition(const SequenceTree& T, const Partition& p) {
   for(int b=0; b<T.n_branches(); b++) {
-    valarray<bool> bp = branch_partition(T,b);
+    dynamic_bitset<> bp = branch_partition(T,b);
     if( implies(bp,p) )
       return b;
   }
@@ -462,7 +463,7 @@ valarray<bool> tree_sample::support(const Partition& p) const
   for(int i=0;i<result.size();i++) 
   {
     // Get a tree with the same topology
-    const vector<valarray<bool> > & T = topologies[ which_topology[i] ].partitions;
+    const vector<dynamic_bitset<> > & T = topologies[ which_topology[i] ].partitions;
     
     result[i] = implies(T,p);
   }
@@ -476,7 +477,7 @@ valarray<bool> tree_sample::support(const vector<Partition>& partitions) const
   for(int i=0;i<result.size();i++) 
   {
     // Get a tree with the same topology
-    const vector<valarray<bool> >& T = topologies[ which_topology[i] ].partitions;
+    const vector<dynamic_bitset<> >& T = topologies[ which_topology[i] ].partitions;
     
     result[i] = implies(T,partitions);
   }
@@ -527,11 +528,11 @@ struct ordering {
 tree_sample::topology_record::topology_record(const SequenceTree& T,
 					      const string& s)
   :topology(s),
-   partitions(T.n_branches(),valarray<bool>(T.n_leaves())),
+   partitions(T.n_branches(),dynamic_bitset<>(T.n_leaves())),
    count(0)
 { 
   for(int i=0;i<T.n_branches();i++)
-    partitions[i] = T.partition(i);
+    partitions[i] = branch_partition(T,i);
 }
 
 
@@ -601,13 +602,10 @@ struct p_count {
 };
 
 vector<pair<Partition,unsigned> > 
-get_Ml_partitions_and_counts(const tree_sample& sample,double l,const valarray<bool>&  mask) 
+get_Ml_partitions_and_counts(const tree_sample& sample,double l,const dynamic_bitset<>&  mask) 
 {
   // find the first bit
-  int first=0;
-  while(first<mask.size() and not mask[first])
-    first++;
-  assert(first < mask.size());
+  int first = mask.find_first();
 
   if (l <= 0.0)
     throw myexception()<<"Consensus level must be > 0.0";
@@ -615,7 +613,7 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const valarray<b
     throw myexception()<<"Consensus level must be <= 1.0";
 
   // use a sorted list of <partition,count>, sorted by partition.
-  typedef map<valarray<bool>,p_count,compare_complete_partitions > container_t;
+  typedef map<dynamic_bitset<>,p_count> container_t;
   container_t counts;
 
   // use a linked list of pointers to <partition,count> records.
@@ -627,7 +625,7 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const valarray<b
 
   for(int i=0;i<sample.topologies.size();i++) 
   {
-    const vector<valarray<bool> >& T = sample.topologies[i].partitions;
+    const vector<dynamic_bitset<> >& T = sample.topologies[i].partitions;
 
     unsigned delta = sample.topologies[i].count;
 
@@ -637,14 +635,15 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const valarray<b
     unsigned min_new = std::min(1+(unsigned)(l*count),count);
 
     // for each partition in the next tree
-    std::valarray<bool> partition(names.size());
+    dynamic_bitset<> partition(names.size());
     for(int b=0;b<T.size();b++) 
     {
       partition = T[b];
+
       if (not partition[first])
-	partition = (not partition) and mask;
-      else
-	partition = partition and mask;
+	partition.flip();
+
+      partition &= mask;
 
       // Look up record for this partition
       container_t::iterator record = counts.find(partition);
@@ -684,7 +683,7 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const valarray<b
   vector<pair<Partition,unsigned> > partitions;
   partitions.reserve( 2*names.size() );
   for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
-    const valarray<bool>& partition =(*p)->first;
+    const dynamic_bitset<>& partition =(*p)->first;
  
     Partition pi(names,partition,mask);
     unsigned p_count = (*p)->second.count;
@@ -700,7 +699,8 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const valarray<b
 vector<pair<Partition,unsigned> > 
 get_Ml_partitions_and_counts(const tree_sample& sample,double l) 
 {
-  valarray<bool> mask(true,sample.names().size());
+  dynamic_bitset<> mask(sample.names().size());
+  mask.flip();
   return get_Ml_partitions_and_counts(sample,l,mask);
 }
 
@@ -721,27 +721,27 @@ get_Ml_partitions(const tree_sample& sample,double l)
   return remove_counts(get_Ml_partitions_and_counts(sample,l));
 }
 
-void add_unique(list<valarray<bool> >& masks,const list<valarray<bool> >& old_masks,
-		const valarray<bool>& mask) 
+void add_unique(list<dynamic_bitset<> >& masks,const list<dynamic_bitset<> >& old_masks,
+		const dynamic_bitset<>& mask) 
 {
   // don't add the mask unless contains internal partitions (it could be all 0)
-  if (n_elements(mask) < 4) return;
+  if (mask.count() < 4) return;
 
   // don't add the mask if we already have that mask
   foreach(m,masks)
-    if (equal(*m,mask)) return;
+    if (*m == mask) return;
 
   foreach(m,old_masks)
-    if (equal(*m,mask)) return;
+    if (*m == mask) return;
 
   // otherwise, add the mask
   masks.push_front(mask);
 }
 
 
-void add_unique(list<valarray<bool> >& masks,const valarray<bool>& mask) 
+void add_unique(list<dynamic_bitset<> >& masks,const dynamic_bitset<>& mask) 
 {
-  return add_unique(masks,list<valarray<bool> >(),mask);
+  return add_unique(masks,list<dynamic_bitset<> >(),mask);
 }
 
 
@@ -751,15 +751,20 @@ vector<int> match(const vector<pair<Partition,unsigned> >& full_partitions,
 {
   vector<int> m(sub_partitions.size(),-1);
 
-  for(int i=0;i<sub_partitions.size();i++) 
+  for(int i=0;i<sub_partitions.size();i++)
     for(int j=0;j<full_partitions.size();j++) 
-      if (implies(full_partitions[j].first,sub_partitions[i].first))
+    {
+      // things that imply us cannot have a higher probability
+      if (full_partitions[j].second > sub_partitions[i].second)
+	continue;
+
+      // skip this possible parent if it isn't as good as one we've found so far.
+      if (m[i] == -1 or full_partitions[j].second > full_partitions[m[i]].second)
       {
-        if (m[i] == -1)
-	  m[i] = j;
-	else if (full_partitions[j].second > full_partitions[m[i]].second)
+	if (implies(full_partitions[j].first,sub_partitions[i].first))
 	  m[i] = j;
       }
+    }
 
   return m;
 }
@@ -767,10 +772,10 @@ vector<int> match(const vector<pair<Partition,unsigned> >& full_partitions,
 
 // also construct list "who is implied by whom"
 
-//consider only pulling out combinations of branches pointing to the same node
+// consider only pulling out combinations of branches pointing to the same node
 
 vector<pair<Partition,unsigned> > 
-get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarray<bool>& mask,
+get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynamic_bitset<>& mask,
 				 double min_rooting,int depth) 
 {
   // get list of branches to consider cutting
@@ -782,26 +787,26 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
 
   // construct unit masks
   // - unit masks are masks that come directly from a supported branch (full, or partial)
-  list< valarray<bool> > unit_masks;
+  list< dynamic_bitset<> > unit_masks;
   for(int b=0;b<branches.size();b++)
-    add_unique(unit_masks, mask and branch_partition(c50,branches[b]) );
+    add_unique(unit_masks, mask & branch_partition(c50,branches[b]) );
 
   // construct beginning masks
-  list<valarray<bool> > masks = unit_masks;
-  list<valarray<bool> > old_masks = unit_masks;
+  list<dynamic_bitset<> > masks = unit_masks;
+  list<dynamic_bitset<> > old_masks = unit_masks;
 
   // start collecting partitions at M[l]
   vector<pair<Partition,unsigned> > partitions = get_Ml_partitions_and_counts(sample,l,mask);
 
   // any good mask should be combined w/ other good masks
-  list<valarray<bool> > good_masks;
+  list<dynamic_bitset<> > good_masks;
   for(int iterations=0;not masks.empty();iterations++)
   {
     vector<pair<Partition,unsigned> > full_partitions = partitions;
 
-    //cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   masks: "<<masks.size()<<endl;
-    list<valarray<bool> > new_good_masks;
-    list<valarray<bool> > new_unit_masks;
+    if (log_verbose) cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   masks: "<<masks.size()<<endl;
+    list<dynamic_bitset<> > new_good_masks;
+    list<dynamic_bitset<> > new_unit_masks;
 
     // get sub-partitions for each mask
     vector<Partition> all_sub_partitions;
@@ -867,6 +872,10 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
     masks.clear();
     masks = new_unit_masks;
 
+    if (log_verbose) cerr<<"new unit_masks = "<<new_unit_masks.size()<<endl;
+
+    if (depth == 0) continue;
+
     // FIXME!! We need to find a way to consider only masks which are
     // 'close' togther - defined in terms of the number and support 
     // of branches that are in the between them.
@@ -876,8 +885,8 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
     good_masks.insert(good_masks.end(),new_good_masks.begin(),new_good_masks.end());
     foreach(i,new_good_masks)
       foreach(j,good_masks)
-        if (not equal(*i,*j))
-          add_unique(masks,old_masks,*i and *j);
+        if (*i != *j)
+          add_unique(masks,old_masks,*i & *j);
 
     // what will we operate on next time? 
     // - perhaps change to look at pairs of branches connected to a node
@@ -887,17 +896,17 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
 
       foreach(i,old_masks)
 	foreach(j,unit_masks)
-	  add_unique(masks,old_masks,*i and *j);
+	  add_unique(masks,old_masks,*i & *j);
 
       // old good_masks were considered with unit_masks last_time
       foreach(i,new_good_masks)
       	foreach(j,unit_masks)
-      	  add_unique(masks,old_masks,*i and *j);
+      	  add_unique(masks,old_masks,*i & *j);
 
       // old good_masks were considered with unit_masks already
       foreach(i,old_masks)
 	foreach(j,new_good_masks)
-	  add_unique(masks,old_masks,*i and *j);
+	  add_unique(masks,old_masks,*i & *j);
     }
 
     //cerr<<"   new good masks = "<<new_good_masks.size()<<"    new unit masks = "<<new_unit_masks.size()<<endl;
@@ -912,7 +921,8 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
 vector<pair<Partition,unsigned> > 
 get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double min_rooting,int depth) 
 {
-  valarray<bool> mask(true,sample.names().size());
+  dynamic_bitset<> mask(sample.names().size());
+  mask.flip();
   return get_Ml_sub_partitions_and_counts(sample,l,mask,min_rooting,depth);
   
 }
@@ -987,172 +997,6 @@ void write_partitions(std::ostream& o,const vector<Partition>& partitions)
 
   for(int i=0;i<sub.size();i++)
     o<<sub[i]<<endl;
-}
-
-bool is_strict_subset(const valarray<bool>& v1,const valarray<bool>& v2) {
-  return is_subset(v1,v2) and not equal(v1,v2);
-}
-
-bool partition_wanders_over(const Partition& p1,const Partition& p2)
-{
-  return is_subset(p2.group1,p1.group2) and is_subset(p2.group2,p1.group2);
-}
-
-bool partition_less_than(const Partition& p1,const Partition& p2)
-{
-  return 
-    is_strict_subset(p1.group1,p2.group1) and 
-    is_strict_subset(p2.group2,p1.group2);
-}
-
-bool sub_conflict(Partition p1,Partition p2)
-{
-  if (not intersect(p1.mask(),p2.mask()))
-    return false;
-
-  if (partition_less_than(p1,p2) or partition_less_than(p1,p2.reverse()) or
-      partition_less_than(p1.reverse(),p2) or partition_less_than(p1.reverse(),p2.reverse()))
-    return false;
-
-  if (partition_wanders_over(p1,p2) or partition_wanders_over(p1.reverse(),p2) or
-      partition_wanders_over(p2,p1) or partition_wanders_over(p2.reverse(),p1))
-    return false;
-
-  return true;
-}
-
-bool is_leaf_partition(const Partition& p)
-{
-  return p.full() and (n_elements(p.group1) == 1 or n_elements(p.group2) == 1);
-}
-
-int get_n_conflicts(const ublas::matrix<int>& conflicts,
-		    int n,
-		    const vector<bool>& mask)
-{
-  assert(mask.size() == conflicts.size1());
-  assert(mask.size() == conflicts.size2());
-
-  int total = 0;
-  for(int i=0;i<mask.size();i++)
-    if (mask[i] and conflicts(n,i))
-      total++;
-
-  return total;
-}
-
-// How do we find an optimal set of resolved partitions here?
-// We can now discover more partitions with lots of wandering, so
-//  branches can wander further.
-// How about... prefer branches that wander over the fewest number of other branches
-//  + how do we weight wandering versus conflicting?  That is, if a branch conflicts
-//    with fewer branches, but 
-
-
-// I guess the over-all goal is (could be) to find an MC tree that has the smallest
-// number of BF trees extending it...
-
-
-vector<bool> solve_conflicts(const ublas::matrix<int>& conflicts,
-			     const ublas::matrix<int>& dominates,
-			     vector<bool> invincible)
-{
-  const int N = invincible.size();
-  vector<bool> survives(N,true);
-
-  // we should be able to GENERATE restricted version of splits that might be interesting.
-  for(int i=0;i<N;i++)
-    for(int j=0;j<N;j++)
-      if (dominates(i,j))
-	survives[j] = false;
-
-  int n=0;
-  for(int i=0;i<N;i++)
-    if (invincible[i])
-      n++;
-
-  do {
-    vector<int> n_conflicts(N,0);
-
-    // We would LIKE to find the largest of the branches that this branch conflicts
-    // with that do not conflict with each other.
-
-    for(int i=0;i<N;i++)
-      if (survives[i] and not invincible[i]) 
-      {
-	// here we find out how many branches each branch conflicts with...
-	n_conflicts[i]  = get_n_conflicts(conflicts,i,survives);
-	// .. that aren't sub-branches of itself.
-	n_conflicts[i] -= get_n_conflicts(dominates,i,survives);
-	assert(n_conflicts[i] >= 0);
-
-	// HOWEVER...we DO double-count sub-branches of neighbors.
-      }
-
-    int die = argmax(n_conflicts);
-
-    if (not n_conflicts[die]) break;
-
-    survives[die] = false;
-
-  } while(true);
-
-  return survives;
-}
-
-vector<Partition> get_moveable_tree(vector<Partition> partitions)
-{
-  if (not partitions.size())
-    throw myexception()<<"Can't create an MC tree from an empty partition list.";
-
-  // remove partitions that are implied by other partitions
-  for(int i=partitions.size()-1;i>=0;i--) 
-  {
-    bool found = false;
-    for(int j=i-1;j>=0 and not found;j--)
-      if (implies(partitions[j],partitions[i]))
-	found = true;
-
-    if (found)
-      partitions.erase(partitions.begin() + i);
-  }
-
-  const int N = partitions.size();
-
-  // create and zero conflict matrix
-  ublas::matrix<int> conflict(N,N);
-  ublas::matrix<int> dominates(N,N);
-
-  for(int i=0;i<N;i++)
-    for(int j=0;j<N;j++) {
-      conflict(i,j) = 0;
-      dominates(i,j) = 0;
-    }
-
-  for(int i=0;i<N;i++)
-    for(int j=0;j<N;j++) 
-      if (i!=j) {
-	if (sub_conflict(partitions[i],partitions[j]))
-	  conflict(i,j) = 1;
-	if (conflict(i,j) and is_strict_subset(partitions[j].mask(),partitions[i].mask()))
-	  dominates(i,j) = 1;
-      }
-  
-  // we can't remove leaf partitions
-  vector<bool> invincible(N,true);
-  for(int i=0;i<N;i++)
-    invincible[i] = partitions[i].full(); //is_leaf_partition(partitions[i]);
-
-
-  vector<bool> solution = solve_conflicts(conflict,dominates,invincible);
-
-
-  vector<Partition> moveable;
-  for(int i=0;i<solution.size();i++)
-    if (solution[i])
-      moveable.push_back(partitions[i]);
-
-  return moveable;
 }
 
 

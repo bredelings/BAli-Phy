@@ -7,16 +7,17 @@
 #include "dp-engine.H"
 #include "alignment.H"
 #include "parameters.H"
+#include <boost/dynamic_bitset.hpp>
 
 /// Define type for a function which return the distributions for each column and rate give SOME leaves
-typedef vector< Matrix > (*distributions_t)(const data_partition&,const vector<int>&,int,const valarray<bool>&);
+typedef vector< Matrix > (*distributions_t)(const data_partition&,const vector<int>&,int,const boost::dynamic_bitset<>&);
 
 
 /// Distributions function for a star tree
-vector< Matrix > distributions_star(const data_partition& P,const vector<int>& seq,int root,const valarray<bool>& group);
+vector< Matrix > distributions_star(const data_partition& P,const vector<int>& seq,int root,const boost::dynamic_bitset<>& group);
 
 /// Distributions function for a full tree
-vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int root,const valarray<bool>& group);
+vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int root,const boost::dynamic_bitset<>& group);
 
 
 /// Sum of likelihoods for columns which don't contain any characters in sequences mentioned in 'nodes'

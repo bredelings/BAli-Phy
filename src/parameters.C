@@ -127,8 +127,19 @@ void data_partition::note_alignment_changed_on_branch(int b)
 
 void data_partition::recalc(const vector<int>& indices)
 {
-  if (indices.size() and indices[0] != 0)
+  if (indices.size())
     throw myexception()<<"What parameter is this???";
+}
+
+double data_partition::branch_mean() const 
+{
+  return branch_mean_;
+}
+
+void data_partition::branch_mean(double mu)
+{
+  // unsafe!  Must then read this value into parent.
+  branch_mean_ = mu;
 
   // the scale of the substitution tree changed
   recalc_smodel();
@@ -137,19 +148,9 @@ void data_partition::recalc(const vector<int>& indices)
   recalc_imodel();
 }
 
-double data_partition::branch_mean() const 
-{
-  return parameter(0);
-}
-
-void data_partition::branch_mean(double mu)
-{
-  parameter(0,mu);
-}
-
 void data_partition::branch_mean_tricky(double mu)
 {
-  parameters_[0] = mu;
+  branch_mean_ = mu;
   // scale the substitution rate
   // FIXME - we COPY the smodel here!
   SModel_->set_rate(branch_mean());
@@ -162,9 +163,7 @@ string data_partition::name() const
 
 efloat_t data_partition::prior_no_alignment() const 
 {
-  // prior on mu, the mean branch length
-  //  return pow(efloat_t(branch_mean()),-1.0);
-  return exponential_pdf(branch_mean(),1.0);
+  return 1.0;
 }
 
 // We want to decrease 
@@ -477,6 +476,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_alignment_prior_for_branch(t.n_branches()),
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
+   branch_mean_(1.0),
    smodel_full_tree(true),
    A(a),
    T(t),
@@ -486,7 +486,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
-  add_parameter("mu", 0.1);
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 }
@@ -520,6 +519,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_alignment_prior_for_branch(t.n_branches()),
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
+   branch_mean_(1.0),
    smodel_full_tree(true),
    A(a),
    T(t),
@@ -529,7 +529,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
-  add_parameter("mu", 0.1);
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 }
@@ -544,6 +543,12 @@ efloat_t Parameters::prior_no_alignment() const
   // prior on the topology and branch lengths
   Pr *= ::prior(*this, *T, 1.0);
 
+  // prior on mu[i], the mean branch length for scale i
+  for(int i=0;i<n_branch_means();i++) {
+    //  return pow(efloat_t(branch_mean()),-1.0);
+    Pr *= exponential_pdf(branch_mean(i), 1.0);
+  }
+    
   // prior on the substitution model
   for(int i=0;i<SModels.size();i++)
     Pr *= SModel(i).prior();
@@ -730,7 +735,19 @@ void Parameters::recalc(const vector<int>& indices)
   for(int i=0;i<indices.size();i++) 
   {
     int m = model_of_index[indices[i]];
-    submodel_changed[m] = true;
+
+    if (m == -1) {
+      int s = indices[i];
+      assert(0 <= s and s < n_scales);
+
+      double mu = parameter(s);
+
+      for(int j=0;j<scale_for_partition.size();j++)
+	if (scale_for_partition[j] == s)
+	  data_partitions[j]->branch_mean(mu);
+    }
+    else
+      submodel_changed[m] = true;
   }
 
   for(int m=0;m<n_submodels();m++) 
@@ -816,24 +833,55 @@ double Parameters::branch_mean() const
   return 1.0;
 }
 
+
+int Parameters::n_branch_means() const
+{
+  return n_scales;
+}
+
+double Parameters::branch_mean(int i) const 
+{
+  assert(0 <= i and i < n_branch_means());
+
+  return parameter(i);
+}
+
+
+void Parameters::branch_mean_tricky(int i,double x)
+{
+  assert(0 <= i and i < n_branch_means());
+
+  parameters_[i] = x;
+  
+  for(int j=0;j<scale_for_partition.size();j++)
+    if (scale_for_partition[j] == i)
+      data_partitions[j]->branch_mean_tricky(x);
+}
+
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       const vector<polymorphic_cow_ptr<substitution::MultiModel> >& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<polymorphic_cow_ptr<IndelModel> >& IMs,
-		       const vector<int>& i_mapping)
+		       const vector<int>& i_mapping,
+		       const vector<int>& scale_mapping)
   :SModels(SMs),
    smodel_for_partition(s_mapping),
    IModels(IMs),
    imodel_for_partition(i_mapping),
+   scale_for_partition(scale_mapping),
+   n_scales(max(scale_mapping)+1),
    smodel_full_tree(true),
    T(t),
    TC(star_tree(t.get_sequences())),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0),
    updown(-1),
-   features(0)
+   features(0) 
 {
   constants.push_back(-1);
+
+  for(int i=0;i<n_scales;i++)
+    add_super_parameter("mu"+convertToString(i+1),1.0);
 
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
@@ -853,7 +901,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     add_submodel(name, *IModels[i]);
   }
 
-  // check that we only mapping existing smodels to data partitions
+  // check that we only map existing smodels to data partitions
   for(int i=0;i<smodel_for_partition.size();i++) {
     int m = smodel_for_partition[i];
     if (m >= SModels.size())
@@ -898,19 +946,26 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       const vector<polymorphic_cow_ptr<substitution::MultiModel> >& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<polymorphic_cow_ptr<TransducerIndelModel> >& TIMs,
-		       const vector<int>& ti_mapping)
+		       const vector<int>& ti_mapping,
+		       const vector<int>& scale_mapping)
   :SModels(SMs),
    smodel_for_partition(s_mapping),
    TIModels(TIMs),
    timodel_for_partition(ti_mapping),
+   scale_for_partition(scale_mapping),
+   n_scales(max(scale_mapping)+1),
    smodel_full_tree(true),
    T(t),
    TC(star_tree(t.get_sequences())),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0),
-   features(0)
+   updown(-1),
+   features(0) 
 {
   constants.push_back(-1);
+
+  for(int i=0;i<n_scales;i++)
+    add_super_parameter("mu"+convertToString(i+1),1.0);
 
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
@@ -930,7 +985,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     add_submodel(name, *TIModels[i]);
   }
 
-  // check that we only mapping existing smodels to data partitions
+  // check that we only map existing smodels to data partitions
   for(int i=0;i<smodel_for_partition.size();i++) {
     int m = smodel_for_partition[i];
     if (m >= SModels.size())
@@ -971,11 +1026,14 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
 }
 
+
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
-	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >& SMs,
-	     const vector<int>& mapping)
+		       const vector<polymorphic_cow_ptr<substitution::MultiModel> >& SMs,
+		       const vector<int>& s_mapping,
+		       const vector<int>& scale_mapping)
   :SModels(SMs),
-   smodel_for_partition(mapping),
+   smodel_for_partition(s_mapping),
+   scale_for_partition(scale_mapping),
    smodel_full_tree(true),
    T(t),
    TC(star_tree(t.get_sequences())),
@@ -985,6 +1043,9 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    features(0)
 {
   constants.push_back(-1);
+
+  for(int i=0;i<n_scales;i++)
+    add_super_parameter("mu"+convertToString(i+1),1.0);
 
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
@@ -1037,9 +1098,9 @@ bool accept_MH(const Parameters& P1,const Parameters& P2,double rho)
   efloat_t p1 = P1.heated_probability();
   efloat_t p2 = P2.heated_probability();
 
-  double ratio = rho*double(p2/p1);
+  efloat_t ratio = efloat_t(rho)*(p2/p1);
 
-  if (ratio >= 1 or myrandomf() < ratio) 
+  if (ratio >= 1.0 or myrandomf() < ratio) 
     return true;
   else
     return false;

@@ -16,10 +16,12 @@
 
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 namespace po = boost::program_options;
 using po::variables_map;
 using boost::shared_ptr;
+using boost::dynamic_bitset;
 
 // FIXME - also show which COLUMNS are more that 99% conserved?
 
@@ -333,12 +335,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-int which_directed_branch_equals(const Tree& T, const valarray<bool>& p)
+int which_directed_branch_equals(const Tree& T, const dynamic_bitset<>& p)
 {
   assert(p.size() == T.n_leaves());
 
   for(int b=0;b<2*T.n_branches();b++)
-    if (equal(branch_partition(T,b),p))
+    if (p == branch_partition(T,b))
       return b;
 
   return -1;

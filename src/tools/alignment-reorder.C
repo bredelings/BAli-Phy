@@ -20,14 +20,6 @@ using std::valarray;
 
 using std::string;
 
-int first_bit(const valarray<bool>& v) 
-{
-  for(int i=0;i<v.size();i++) {
-    if (v[i]) return i;
-  }
-  return v.size();
-}
-
 struct branch_order {
   const Tree& T;
 
@@ -36,7 +28,7 @@ struct branch_order {
       return true;
     if (subtree_height(T,b1) > subtree_height(T,b2))
       return false;
-    return first_bit(T.partition(b1)) < first_bit(T.partition(b2));
+    return T.partition(b1).find_first() < T.partition(b2).find_first();
   }
 
   branch_order(const Tree& T_): T(T_) {}
@@ -170,7 +162,8 @@ int main(int argc,char* argv[])
     vector<int> mapping2 = get_leaf_order(T);
 
     // re-phrase the mapping in terms of the order of sequence in A
-    vector<int> mapping = compose(mapping2,invert(mapping1));
+    // 
+    vector<int> order = compose(mapping2,invert(mapping1));
 
     if (log_verbose) {
       cerr<<"alignment-reorder: ";
@@ -182,10 +175,8 @@ int main(int argc,char* argv[])
     }
 
     //------- Print out the alignment -------//
-    vector<sequence> sequences = A.get_sequences();
-    alignment A2(A.get_alphabet());
-    for(int i=0;i<T.n_leaves();i++)
-      A2.add_sequence(sequences[mapping[i]]);
+
+    alignment A2 = reorder_sequences(A,order);
 
     std::cout<<A2;
 

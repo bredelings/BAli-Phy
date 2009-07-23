@@ -197,22 +197,23 @@ if test "$GXX" = yes ; then
 
   # --enable-debug
   #   If $enableval !=yes and !=no, then the user can specify their own optimization flags.
-  if test "$debug" = yes ; then
+  if test "$debug" != no ; then
       CXXFLAGS="$CXXFLAGS -g"
       # no -ffast-math because it affects handling of NaNs, which result from
       # uninitialized values, among other things
   fi
 
   if test "$debug" = no ; then
-      CXXFLAGS="-ffast-math $CXXFLAGS"
-      CXXFLAGS="-O3 -funroll-loops -fweb $CXXFLAGS"
-      CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
-      if test "$profile" = no ; then 
-          CXXFLAGS="-fomit-frame-pointer $CXXFLAGS"
-      fi
+      CXXFLAGS="$CXXFLAGS -O3"
+      CXXFLAGS="-funroll-loops -fweb $CXXFLAGS"
+  elif test "$debug" = O ; then
+      CXXFLAGS="$CXXFLAGS -O"
   elif test "$debug" = O2 ; then
+      CXXFLAGS="$CXXFLAGS -O2"
+  fi
+
+  if test "$debug" != yes ; then
       CXXFLAGS="-ffast-math $CXXFLAGS"
-      CXXFLAGS="-O2 -funroll-loops -fweb $CXXFLAGS"
       CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
       if test "$profile" = no ; then 
           CXXFLAGS="-fomit-frame-pointer $CXXFLAGS"
@@ -329,7 +330,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 else
   echo " * Not using system BOOST libraries: we'll build our own."
 
-  boost_includes="-I\$(top_srcdir)/boost/include"
+  boost_includes="-isystem \$(top_srcdir)/boost/include"
   boost_libs="\$(top_builddir)/boost/lib/filesystem/libboost_filesystem.a \$(top_builddir)/boost/lib/program_options/libboost_program_options.a"
 
   CXXFLAGS="$boost_includes $CXXFLAGS"
@@ -375,7 +376,7 @@ if test "$use_mpi" != no ; then
    if test "$use_mpi" = "openmpi" ; then
       echo "checking for OpenMPI ..."
       if $MPICXX --showme:version ; then 
-         MPI_CXXFLAGS="$($MPICXX --showme:compile) -fpermissive"
+         MPI_CXXFLAGS="$($MPICXX --showme:compile | sed 's/-I/-isystem /g') -fpermissive"
          echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
          MPI_LDFLAGS=$($MPICXX --showme:link)
          echo "MPI_LDFLAGS=$MPI_LDFLAGS"

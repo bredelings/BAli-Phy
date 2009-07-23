@@ -8,6 +8,7 @@
 #include <vector>
 #include "mytypes.H"
 #include <boost/shared_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 /// A multiple alignment between a group of sequences
 class alignment {
@@ -60,7 +61,7 @@ public:
   void load(const std::string& filename);
   void load(const std::vector<boost::shared_ptr<const alphabet> >&,const std::string& filename);
 
-  std::vector<sequence> get_sequences() const;
+  std::vector<sequence> convert_to_sequences() const;
 
   void write_sequences(sequence_format::dumper_t,std::ostream&) const;
 
@@ -101,7 +102,16 @@ public:
 
   explicit alignment(const alphabet&);
 
-  explicit alignment(const alphabet&,const std::string&);
+  // not safe
+  explicit alignment(const alphabet&,int n);
+
+  // not safe
+  explicit alignment(const alphabet&,const vector<sequence>&);
+
+  // not safe
+  explicit alignment(const alphabet&,int n,int L);
+
+  explicit alignment(const alphabet&,const std::string& filename);
 };
 
 std::ostream& operator<<(std::ostream& file,const alignment& A);
@@ -112,10 +122,12 @@ std::istream& operator>>(std::istream& file,alignment& A);
 bool valid(const alignment&);
 
 /// Does the column contain only gaps for taxa in mask?
-bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask);
+bool all_gaps(const alignment& A,int column,const boost::dynamic_bitset<>& mask);
 
 /// Does the column contain only gaps?
 bool all_gaps(const alignment& A,int column);
+
+int n_characters(const alignment& A, int column);
 
 /// remove columns that contain only gaps
 int remove_empty_columns(alignment&);

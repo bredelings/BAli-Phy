@@ -1,0 +1,97 @@
+>Methanospirillum   hungatei 1
+-U---?-------CAA?---U-A-----G--CGGCCACAG-CAGGU--G-UG-UC-ACACCCGUUCCCAUUCCGAACAC-GGAAGUUAAGACACCUCACGUG--GAUGA----C-G-GUACUGAGGUACGCGAGU-------C---------------C--UC-GGGA----A-AUCAU-C--CUCGCUGCU?-----------------AU?------UGUU------
+>Haloarcula   
+-------------UUA------G-----G--CGGCCACAG-CGGUG--G-GG-UUGCCUCCCGUACCCAUCCCGAACAC-GGAAGAUAAGCCCACCAGCGUU--CCGGG----G-A-GUACUGGAGUGCGCGAGC-------C---------------U--CU-GGGA----A-ACGCG-G--UUCGCCGCC----------------------A------CC------
+>Halobacterium   
+-------------UUA?---A-G-----G--CGGCCAUAG-CGGUG--G-GG-UU-ACUCCCGUACCCAUCCCGAACAC-GGAAGAUAAGCCCGCCUGCGUU--CCGGU----C-A-GUACUGGAGUG--CGAGC-------C---------------U--CU-GGGA----A-AUCCG-G--UUCGCCGCC---------------------UA------CU------
+>Haloferax   
+-------------UUA?---A-G-----G--CGGCCAGAG-CGGUG--A-GG-UU-CCACCCGUACCCAUCCCGAACAC-GGAAGUUAAGCUCACCUGCGUU--CUGGU----C-A-GUACUGGAGUGAGCGAUC-------C---------------U--CU-GGGA----A-AUCCA-G--UUCGCCGCC----------------------C------CU------
+>Halorubrum   distributum 1
+-------------GUA------G-----G--CGGCCAAAG-CGGCA--G-GG-AA-AGACCCGUACCCAUUCCGAACAC-GGAAGUGAAGCCUGCCAGCGUA--CCAGC----U-A-GUACUGGAGUGGGAGACC-------C---------------U--CU-GGGA----G-CGCUG-G--UUCGCCGCC---------------------U----------ACUC-
+>Natrinema   sp. 1
+-------------UUA?---C-G-----G--CGGCCACAG-CGGCG--A-GG-UA-CCUCCCGUACCCAUCCCGAACAC-GGAAGAUAAGCUCGCCUGCGUU--UCGGU----C-A-GUACUGGAGUGGGCGACC-------C---------------U--CU-GGGA----A-CCCCG-A--UUCGCCGCC----------------------A------C-CACUC-
+>Methanolobus   tindarius 1
+-G-----------G--U-----G-----G--CGGCCAUAG-CGGCG--G-GG-CA-AUUCCUGUACCCAUCCCGAACAC-AGAAGAUAAGCCCGCCUGCGUU--CUAUA----C-U-GUACUAAAGUAUGAGAGU-------C---------------U--UU-GGGA----A-AUAUG-G--AACGCUGCC?-----------------AC?------CAAC------
+>Methanosarcina   
+-GGAG?--------UU?---U-G-----G--C-GCCAUAG-CGGCA--G-UG-UA-ACUCCUGUACCCAUCCCGAACAC-AGUAGAUAAGCCUGCCCGCGUU--CCUUA----C-U-GUACUGAAGUGUGCGAGC-------C---------------U--UC-GGGA----A-CUCUG-G--AUCGCUGCC?-----------------A-?--UACUCACC------
+>Methanosarcina.v   
+-G---?-------AUC?---U-G-----G--CAGCCAUAG-CGGCA--GGUG-UA-A-UCCUGUACCCAUCCCGAACAC-AGUAGAUAAGCCUGCCCGCGUU--CCUUG---CC-U-GUACUGAAGUGUGCGAGC-----------------------U--UC-GGGA----A-CUCUG-G--AUCG-UGCC?-----------------A-?--UA-UCAGU------
+>Nanoarchaeum   equitans 1
+-G---?-------UUU?---C--GUGGGA--GGGCCAUAG-CGGCCC-G-GG-AA-CCACCCGUACCCAUCUCGAACAC-GGAAGUUAAGCCGGGCCGCGUC--CCGAG----U-G-GUACUGC--CCCGCGAAG-------G---------------G--GU-GGGA----A-GCUCG-G--GAUGC------------------------C---------C------
+>Thermoplasma   
+-G-----------GCA------------A--CGGUCAUAG-CAGCA--G-GG-AA-ACACCAGAUCCCAUUCCGAACUC-GACGGUUAAGCCU-GCUGCGUA--UUGCG----U-U-GUACUGUAUGCCGCGAGG-------G---------------U--AC?GGGA----A-GCGCA-A--UAUGCUGUU?-----------------AC?------CACU------
+>Methanococcus   
+UG---?-------ACA?---U-A-----A--CGGUCAAAG-CGGAG--G-UG-UA-ACAUCCGAUCCCAUCCCGAUCUC-GGAAAUUAAGCCCUCCAGCGAU--UCUUU----A-A-GUACUGCUAUCU-----------------------------A--GU-GGGA----A-CAAAG-U--GACGCCGUU?-----------------AG?------UCAC------
+>Methanothermococcus   
+UG---?-------AUA?---U-A-----A--CGGUCAUAG-CGGAG--G-AG-CC-ACAUCCGAUCCCGUCCCGAUCUC-GGAAAUUAAGCCCUCCAGCGAU--ACCCU----A-A-GUACUGCCAUUU-----------------------------G--GU-GGGA----A-CAGGG-U--GACGCUGUU?-----------------GA?------UCAC------
+>Methanothermobacter   
+-G-----------UU-------G-----G--CGGUCAUGG-CGUGG--G-GU-UU-AUACCUGAUCUCGUUUCGAUCUC-AGUAGUUAAGUCCUGCUGCGUU--GUGGG----U-GUGUACUGCGG?--------UUUUUUGC---------------U--GU-GGGA----A-GCCCA-C--UUCACUGCC?-----------------AG?------ACAA------
+>Methanothermus   
+-G---?-------GUA?---C-G-----G--CGACCAUAG-CGGGG--G-GG-CC-ACACCUGAACCCGUUCCGAUCUC-AGAAGUUAAGCCCCCCUGCGUU--GGAGG----U-G-GUACUGCAA---------C-GUUAGU---------------U--GC-GGGA----A-GCCUC-C--AACGUCGCC?-----------------GG?------CCCA------
+>Pyrococcus   
+-G---?-------GUA?---C-G-----G--CGGUCAUAG-CGGGG--G-GG-CC-ACACCCGGUCUCAUUUCGAACCC-GGAAGUUAAGCCCCCCAGCGAU--CCCGG----C-U-GUACUGCCCUCCGAGAGG-------G---------------G--GC-GGGA----A-CCG-G-G--GACGCCGCC?-----------------GG?------CCA-------
+>Thermococcus   
+-G---?-------GUA?---C-G-----G--CGGUCAUAG-CGGCG--G-GG-UC-ACACCCGGUCUCGUUUCGACCCC-GGAAGUUAAGCCCGCCAGCGAU--CCCGG----U-U-GUACUGCCCUCCGGGAGG-------G---------------G--GC-GGGA----A-CCG-G-G--GACGCCGCC?-----------------GG?------CCAC------
+>Streptomyces   ambofaciens 1
+-G---?-------UUU?---C-G-----G--UGGUCAUAG-CGUUA--G-GG-AA-ACGCCCGGUUACAUUCCGAACCC-GGAAGCUAAGCCUUACAGCGCC-------GAU---G-GUACUGCA------------------GG---GGGGACCC--U--GU?GGGAGAGUA---------GGACGCCGCC------------------GA?------ACA-------
+>Agrobacterium   tumefaciens 6
+-C---?--GA----CC?---U-G-----G--UGGUCAUCG-CGGGG--C-GG-CU-GCACCCGUUCCCUUUCCGAACAC-GGCCGUGAAACGCCCCAGCGCC-------AAU---G-GUACUUCG------------------U-----CUCAAGA--C--GC?GGGAGAGUA---------GGUCGCUGCC?-----------------AG?------GUCU------
+>Escherichia   
+-U---?-------GCC?---U-G-----G--CGGCCGUAG-CGCGG--U-GG-UC-CCACCUGACCCCAUGCCGAACUC-AGAAGUGAAACGCCGUAGCGCC-------GAU---G-GUAGUGUG------------------GG----GUCUCCC--C--AU?GCGAGAGUA---------GGGAACUGCC?-----------------AG?------GCAU------
+>Thermus   
+-----?----AAUCCC?---C-C-----G--UGCCCAUAG-CGGCG--U-GG-AA-CCACCCGUUCCCAUUCCGAACAC-GGAAGUGAAACGCGCCAGCGCC-------GAU---G-GUACUGGG------------------CG---GGCGACCG--C--CU?GGGAGAGUA---------GGUCGGUGCG?-----------------GG?------GGAU------
+>Aquifex   aeolicus 1
+-C---?-------CCC?---U-G-----G--UGGCCAUAG-CGGGG--G-GG-AA-ACACCCGGUCCCAUUCCGAACCC-GGCAGUUAAGCCCCCCAGCGCC-------GAU---G-AUACUGUG------------------CC---GGCAGCGG--C--AC?GGGAAAGUA---------GGUCGCUGCC?-----------------AG?------GGG-------
+>Thermotoga   maritima 1
+-----?AU------C-?CCCG-G-----G--UGCCGAUAC-UGGGG-CG-GG-AA-ACACCCGGUUCCAUUCCGAACCC-GGCCGUUAAGCCGCCCUGGGCC-------GAU---G-GUAGUAUG------------------GG---GGCAGCCC--C--AU?GCGAGAGUA---------GGUAGCGCCC?-----------------GG-------GGAU------
+>Campylobacter   jejuni 3
+-A---?-------UGU----C-C-----G--UGAUUAUAC-AGAUG--U-GG-AA-ACGCCUUGCUCCAUCCCGAACCA-AGAAGCUAAGCACAUCGUGGGU-------GAU---G-AUACUACG------------------C-----CUUACUGGCA--GG?GGGAAAGUA---------GCUCAUUGCG-------------------G?------ACUU------
+>Chlamydia   trachomatis 1
+-C---U--------------U-G-----G--UGAUAAUAG-AGAGA--G-GG-AA-ACACCUGACACCAUUCCGAACUC-AGAAGUUAAGCCUCUGAUCGCU-------GAU---G-GUACUAUA------------------C-----ACAAGAG--U--AU?GGGAGAGUA---------GGUCGUCGCC?-----------------AA?------GCAU------
+>Bacillus   anthracis 1
+-U---U--------------U-G-----G--UGAUGAUGG-CAGAG--A-GG-UC-ACACCCGUUCCCAUACCGAACAC-GGAAGUUAAGCUCUCUAGCGCC-------GAU---G-GUAGU-----------------------UGGGACCU-UGU--CCCU?GUGAGAGUA---------GGACGUCGCC------------------AA-------GC--------
+>Geobacillus   stearothermophilus 1
+-C---C--------------U-A-----G--UGGUGAUAG-CGGAG--G-GG-AA-ACACCCGUUCCCAUCCCGAACAC-GGAAGUUAAGCCCUCCAGCGCC-------GAU---G-GUAGU-----------------------UGGGGCCAGCGC--CCCU?GCAAGAGUA---------GGUCGCUGCU------------------AG-------GC--------
+>Flavobacterium   hydatis 1
+-U---A--------------A-G-----G--UGGUUAUUG-CGGCG--G-GG-CU-CGACCUCUUCCCAUCCCGAACAG-AGUAGUUAAGCCCGCCUGCGCA-------GAU---G-GUACUG---------------------------CAGUUA--U--GU?GGGAGAGUA---------UGUCGUCGCC------------------UU-------UC--------
+>Spirochaeta   aurantia 1
+-C---C--------------U-G-----G--UGAUCAUAG-CGAAG--A-GG-UC-CCACCCGUUCCCAUCCCGAACAC-GGAAGUUAAGCUCUUCAGCGCC-------GAU---G-GUACUG---------------------------CUAUUG-------CGGGAGAGUA---------GGUCGUCGCC------------------AG-------GC-------U
+>Archeoglobus   
+-A---?-------UGC?---C-G-----A--CGGUCAUAG-GACGG--G-GG-AA-ACACCCGGACUCAUUCCGAACCC-GGAAGUUAAGCCCCGUUCCGUC--CCGCA----C-A-GUACUGUGUUCCGAGAGG-------G---------------C--AC-GGGA----A-CUGCG-G--GA-ACCGUC------------------GG?------C-UU------
+>Pyrobaculum   aerophilum 1
+-G---?-------CCC?---CUA-----ACCCGGCCAUAGGCGCCG--G-UG-AU-ACGCCCGGUCUCAUCA-GAACCC-GGAAGCUAAGGCCGGCGCCGCG--CUCGG----G-A-GUACUGGGCUCCGCGAGG-------G---------------C--CC-GGGA----A-ACCGG-C--GU-GCUG?-?-----------GGAG-GGG?------GCUU------
+>Desulfurococcus   mobilis 1
+-U---?-------GCC?---C-G-----ACCCGGCCAUAG-UGGCC--G-GG-CA-ACACCCGGUCUCGUUUCGAACCC-GGAAGUUAAGCCGGCCA-CGUCAGAACGG----C-C-G---UGAGGUCCGAGAGG-------C---------------C--UC-GC------AGCCGUUCU--GA-GCUG?-?-----------GGAUCGGG?------CACC------
+>Sulfolobus   
+-G-----------CCC------------ACCCGGUCACAG-UGAGC--G-GG-CA-ACACCCGGACUCAUUUCGAACCC-GGAAGUUAAGCCGCUCA-CGUUAGUGGGG----C-C-G---UGGAUACCGUGAGG-------A---------------U--CC-GC------AGCCCCACU--AA-GCUG--?-----------GGAU-GGG?------UUUU------
+>Gelidium   amansii 1
+-A-----------CAU----U----------CGGCCAUAC-UAAGU--C-GACAU-GUACCCGAUCCCAUCCCGAACUC-GGAAGUCAAGUCGCUUCAGGC---CGGGU----U-A-GUACUGAGGUGAGGGAUC-------A---------------C--UC-GGGA----A-UCCCC-G--GU-GCCGAAUG----------------------------U------
+>Cryptosporidium   parvum 1
+-G-----------CAA----U----------CGGCCAUAC-UACAU--C-GA-AU-AUACCGGAUCCCAUCA-GAACUC-CGAAGUCAAGCGGUGUAAGGU---UCGGU----U-A-GUACUAGGGUGGGGGACC-------A---------------C--CU-GGGA----A-GACCA-GA-AU-GUCGAUCGC?????CUC--------------------------
+>Nosema   bombycis 1
+-G------------AU----A----------CGGUUAUAU-UUACU--G-AA-AA-CCACCGGAACCCAUCA-GAACUC-CGAAGUUAAACCAGUAUGAGC---UUAAU----U-A-GUACUAAGAAGGGAGACC-------A---------------C--UU-GGGA----A-CGUUG-G--GU-G---------GUA------------------------------
+>Zea   mays 1
+-G-----------GAU----G----------CGAUCAUAC-CAGCA--C-UA-AA-GCACCGGAUCCCAUCA-GAACUC-CGAAGUUAAGCGUGCUUGGGC---GAGAG----U-A-GUACUAGGAUGGGUGACC-------U---------------C--CU-GGGA----A-GUCCU-C--GU-GUUGCAUUC-??-C-----------------------------
+>Euglena   
+-G-----------AGU----A----------CGGCCAUAC-UACCG--G-GA-AU-ACACCUGAACCCGUUC-GAUUUC-AGAAGUUAAGCCGGGUUAGGC---CCAGU----U-A-GUACUGA-GUGGGCGACC-------A---------------C--UU-GGGA----A-CACUG-G--GU-GCUGUACGC????-U---------------------U------
+>Caenorhabditis   elegans 1
+-G-----------CUU----A----------CGACCAUAU-CACGU--U-GA-AU-GCACGCCAUCCCGUCC-GAUCUG-GCAAGUUAAGCAACGUUGAGU---CCAGU----U-A-GUACUUGGAUCGGAGACG-------G---------------C--CU-GGGA----A-UCCUG-G--AU-GUUGUAAGCU?--------------------------------
+>Drosophila   melanogaster 1
+-G-----------CCA----A----------CGACCAUAC-CACGC--U-GA-AU-ACAUCGGUUCUCGUCC-GAUCAC-CGAAAUUAAGCAGCGUCGGGC---GCGGU----U-A-GUACUUAGAUGGGGGACC-------G---------------C--UU-GGGA----A-CACCG-C--GU-GUUGUUGGC????-C---------------------U------
+>Xenopus   laevis 1
+-G-----------CCU----A----------CGGCCAUAC-CACCC--U-GA-AA-GUGCCCGAUAUCGUCU-GAUCUC-GGAAGCCAAGCAGGGUCGGGC---CUGGU----U-A-GUACUUGGAUGGGAGACC-------G---------------C--CU-GGGA----A-UACCA-G--GU-GUCGUAGGC????-U---------------------U------
+>Cryptobranchus   alleganiensis 1
+-G-----------CCU----A----------CGGCCAUAC-CACCC--U-GA-AU-GCGCCCGAUCUCGUCU-GAACUC-AGAAGCUAAGCAGGCUUGGGC---CUGGU----U-A-GUACUUGGAUGGGAGACU-------G---------------C--CU-GGGA----A-UACCA-G--GU-GCUGUAGGC????-UU-U-------------------------
+>Homo   
+-G-----------UCU----A----------CGGCCAUAC-CACCC--U-GA-AC-GCGCCCGAUCUCGUCU-GAUCUC-GGAAGCUAAGCAGGGUCGGGC---CUGGU----U-A-GUACUUGGAUGGGAGACC-------G---------------C--CU-GGGA----A-UACCG-G--GU-GCUGUAGGC????-UU-U-------------------------
+>Dictyostelium   discoideum 1
+-G-----------UAU----A----------CGGCCAUAC-UAGGU--U-GG-AA-ACACAUCAUCCCGUUC-GAUCUG-AUAAGUAAAUCGACCUCAGGC---CUUCC----A-A-GUACUCUGGUUGGAGACA-------A---------------C--AG-GGGA----A-CAUAG-G--GU-GCUGUAUACU?--------------------------------
+>Physarum   polycephalum 1
+-G-----------GAU----G----------CGGCCAUAC-UAAGG--A-GA-AA-GCACCUCAUCCCGUCC-GAUCUG-AGAAGUUAAGCUCCUUCAGGC---GUGGU----U-A-GUACUGGGGUGGGGGACC-------A---------------C--CU-GGGA----A-UCCCA-C--GU-GCUGCAUUC????-U---------------------U------
+>Amoebidium   parasiticum 1
+-G-----------GUU----A----------CGGCCAUAC-CUAGC--A-GA-AA-GCACCCCAUCUCGUCC-GAUCUG-GGAAGUUAAACUGCUAUGGGC---GUGGU----U-A-GUACUGCGGUGGGGGACC-------A---------------C--GC-GGGA----A-UACCA-C--GU-GCUGUAAUCU?--------------------------------
+>Candida   albicans 1
+-G-----------GUU----G----------CGGCCAUAU-CUAGC--A-GA-AA-GCACCGUUCCCCGUUC-GAUCAACCGUAGUUAAGCUGCUAAGAGC---AAUAC----CGA-GUAGUGUAGUGGGAGACC-------A---------------U--AC-GCGA----A-ACUAU-U--GU-GCUGCAAUCU?--------------------------------
+>Saccharomyces   
+-G-----------GUU----G----------CGGCCAUAU-CUACC--A-GA-AA-GCACCGUUCUCCGUCC-GAUCAACUGUAGUUAAGCUGGUAAGAGC---CUGAC----CGA-GUAGUGUAGUGGGUGACC-------A---------------U--AC-GCGA----A-ACUCA-G--GU-GCUGCAAUCU?--------------------------------
+

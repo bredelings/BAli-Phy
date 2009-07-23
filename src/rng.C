@@ -11,6 +11,22 @@ using std::valarray;
 /************* Interfaces to rng::standard *********************/
 namespace rng {
   RNG* standard;
+
+  unsigned long get_random_seed()
+  {
+    unsigned long s=0;
+
+    std::ifstream random("/dev/urandom");
+    for(int i=0;i<sizeof(s);i++) {
+      unsigned char c;
+      random >> c;
+      s <<= 8;
+      s |=  c;
+    }
+    random.close();
+
+    return s;
+  }
 }
 
 unsigned long myrand_init() {
@@ -90,18 +106,10 @@ void rng::init() {
   standard = new RNG;
 }
 
-unsigned long RNG::seed() {
-  unsigned long s=0;
 
-  std::ifstream random("/dev/urandom");
-  for(int i=0;i<sizeof(s);i++) {
-    unsigned char c;
-    random >> c;
-    s <<= 8;
-    s |=  c;
-  }
-  random.close();
-  return seed(s);
+
+unsigned long RNG::seed() {
+  return seed(get_random_seed());
 }
 
 unsigned long RNG::seed(unsigned long int s) {

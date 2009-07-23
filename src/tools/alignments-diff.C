@@ -239,7 +239,7 @@ int main(int argc,char* argv[])
 	O(c,O.n_sequences()-1) = fill;
 
       // append the second alignment as extra rows
-      vector<sequence> sequences = A2b.get_sequences();
+      vector<sequence> sequences = A2b.convert_to_sequences();
       for(int i=0;i<A2b.n_sequences();i++) {
 	sequence s = sequences[i];
 	s.name += '2';

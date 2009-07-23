@@ -43,6 +43,9 @@ std::string convertToString(T t)
   return "conversion error";
 } 
 
+/// How many of v's bits are true?
+int n_elements(const std::vector<bool>& v);
+
 template<class T>
 struct bad_mapping: public myexception
 {
@@ -253,6 +256,8 @@ std::vector<int> invert(const std::vector<int>&);
 
 /// compose the two mappings
 std::vector<int> compose(const std::vector<int>&,const std::vector<int>&);
+
+bool is_identity(const std::vector<int>&);
 
 template <typename T>
 std::vector<T> iota(T size)

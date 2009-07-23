@@ -217,9 +217,12 @@ void report_distances(const valarray<double>& distances,
 		      variables_map& args
 		      )
 {
+  if (not distances.size()) return;
+
   bool show_mean = args.count("mean");
   bool show_median = args.count("median");
   bool show_minmax = args.count("minmax");
+
   if (not show_mean and not show_median and not show_minmax)
     show_median = true;
 

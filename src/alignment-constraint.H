@@ -1,15 +1,17 @@
 #include <boost/program_options.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include "alignment.H"
 #include "sequencetree.H"
 
 ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree& T);
 
 std::vector< std::vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignment& A,
-					 const std::valarray<bool>& group1,const std::valarray<bool>& group2,
-					 const std::vector<int>& seq1,const std::vector<int>& seq2);
+					 const boost::dynamic_bitset<>& group1,const boost::dynamic_bitset<>& group2,
+					 const std::vector<int>& seq1,const std::vector<int>& seq2,
+					 const std::vector<int>& seq12);
 
-std::valarray<bool> constraint_satisfied(const ublas::matrix<int>& constraint,const alignment& A);
+boost::dynamic_bitset<> constraint_satisfied(const ublas::matrix<int>& constraint,const alignment& A);
 
-void report_constraints(const std::valarray<bool>& s1, const std::valarray<bool>& s2);
+void report_constraints(const boost::dynamic_bitset<>& s1, const boost::dynamic_bitset<>& s2);
 
 bool any_branches_constrained(const std::vector<int>&,const SequenceTree& T,const SequenceTree& TC, const std::vector<int>&);

@@ -235,6 +235,9 @@ int main(int argc,char* argv[])
     standardize(Q);
     const int B = Q.n_branches();
     const int N = Q.n_nodes();
+    vector<double> bf(B);
+    for(int b=0;b<bf.size();b++)
+      bf[b] = Q.branch(b).length();
 
     //-------- Read in the tree samples --------//
     accum_branch_lengths A(Q);
@@ -274,7 +277,7 @@ int main(int argc,char* argv[])
       }
 
       //------- Print Tree and branch lengths -------//
-      cout<<Q<<endl;
+      cout<<Q.write_with_bootstrap_fraction(bf,true)<<endl;
 
       //------------ Print node lengths -------------//
       if (args.count("show-node-lengths"))

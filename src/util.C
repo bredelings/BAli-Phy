@@ -9,6 +9,14 @@ using std::endl;
 
 int log_verbose = 0;
 
+int n_elements(const vector<bool>& v) {
+  int count = 0;
+  for(int i=0;i<v.size() ;i++)  
+    if (v[i]) count++;
+  return count;
+}
+
+
 std::istream& getline_handle_dos(std::istream& file,std::string& s)
 {
   getline(file,s);
@@ -128,6 +136,14 @@ vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2) {
     mapping[i] = mapping2[mapping1[i]];
 
   return mapping;
+}
+
+bool is_identity(const std::vector<int>& mapping)
+{
+  for(int i=0;i<mapping.size();i++)
+    if (mapping[i] != i)
+      return false;
+  return true;
 }
 
 bool contains_char(const string& s,char c) {

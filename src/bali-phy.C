@@ -27,13 +27,13 @@ namespace mpi = boost::mpi;
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <valarray>
 #include <new>
 #include <signal.h>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include "substitution.H"
 #include "myexception.H"
 #include "mytypes.H"
 #include "sequencetree.H"
@@ -53,7 +53,7 @@ namespace mpi = boost::mpi;
 #include "proposals.H"
 #include "tree-util.H" //extends
 #include "version.H"
-
+#include "slice-sampling.H"
 
 namespace fs = boost::filesystem;
 
@@ -66,7 +66,7 @@ using std::clog;
 using std::endl;
 using std::ostream;
 
-using std::valarray;
+using boost::dynamic_bitset;
 
 bool has_parameter(const Model& M, const string& name)
 {
@@ -88,15 +88,21 @@ bool match(const string& s1, const string& s2)
 }
 
 
-vector<int> parameters_with_extension(const Model& M, const string& name)
+vector<int> parameters_with_extension(const Model& M, string name)
 {
+  bool complete_match = false;
+  if (name.size() and name[0] == '^') {
+    complete_match = true;
+    name = name.substr(1,name.size()-1);
+  }
+
   vector<int> indices;
 
   const vector<string> path2 = split(name,"::");
 
   if (not path2.size()) return indices;
 
-  for(int i=0;i<M.parameters().size();i++)
+  for(int i=0;i<M.n_parameters();i++)
   {
     vector<string> path1 = split(M.parameter_name(i),"::");
 
@@ -104,7 +110,7 @@ vector<int> parameters_with_extension(const Model& M, const string& name)
       path1.erase(path1.begin());
     else if (path2.size() > path1.size())
       continue;
-    else
+    else if (not complete_match)
     {
       int n = path1.size() - path2.size();
       path1.erase(path1.begin(),path1.begin() + n);
@@ -122,33 +128,21 @@ vector<int> parameters_with_extension(const Model& M, const string& name)
   return indices;
 }
 
-vector<string> get_parameters(const Model& M,const string& prefix)
-{
-  vector<string> names;
-  for(int i=0;i<M.parameters().size();i++)
-  {
-    string s = M.parameter_name(i);
-    if (s.size() > prefix.size() and s.substr(0,prefix.size()) == prefix)
-      names.push_back(s);
-  }
-  return names;
-}
-
 void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, MCMC::MoveAll& M)
 {
   if (name.size() and name[name.size()-1] == '*')
   {
-    vector<string> names = get_parameters(P,name.substr(0,name.size()-1));
-    vector<string> names2;
-    for(int i=0;i<names.size();i++)
-      if (not P.fixed(find_parameter(P,names[i])))
-	names2.push_back(names[i]);
+    vector<int> indices = parameters_with_extension(P,name);
+    vector<string> names;
+    for(int i=0;i<indices.size();i++)
+      names.push_back(P.parameter_name(indices[i]));
 
-    if (names2.empty()) return;
+    if (names.empty()) return;
+
     set_if_undef(P.keys, pname, sigma);
-    Proposal2 move_mu(p, names2, vector<string>(1,pname), P);
+    Proposal2 move_mu(p, names, vector<string>(1,pname), P);
 
-    M.add(1, MCMC::MH_Move(move_mu,string("sample_")+name));
+    M.add(1, MCMC::MH_Move(move_mu,string("MH_sample_")+name));
   }
   else {
     vector<int> indices = parameters_with_extension(P,name);
@@ -156,10 +150,70 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
       if (not P.fixed(indices[i])) {
 	set_if_undef(P.keys, pname, sigma);
 	Proposal2 move_mu(p, P.parameter_name(indices[i]), vector<string>(1,pname), P);
-	M.add(1, MCMC::MH_Move(move_mu,string("sample_")+P.parameter_name(indices[i])));
+	M.add(1, MCMC::MH_Move(move_mu,string("MH_sample_")+P.parameter_name(indices[i])));
       }
   }
 }
+
+
+// We need
+//   1. A way to guess initial window size
+//   2. 
+
+void add_slice_moves(Parameters& P, const string& name, 
+		     const string& pname, double W,
+		     bool lower_bound, double lower,
+		     bool upper_bound, double upper,
+		     MCMC::MoveAll& M)
+{
+  vector<int> indices = parameters_with_extension(P,name);
+  for(int i=0;i<indices.size();i++) 
+  {
+    if (P.fixed(indices[i])) continue;
+
+    // Use W as default window size of "pname" is not set.
+    set_if_undef(P.keys, pname, W);
+    W = P.keys[pname];
+
+    M.add(1, 
+	  MCMC::Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
+			   indices[i],
+			   lower_bound,lower,upper_bound,upper,W)
+	  );
+  }
+}
+
+void add_slice_moves(Parameters& P, const string& name, 
+		     const string& pname, double W,
+		     bool lower_bound, double lower,
+		     bool upper_bound, double upper,
+		     MCMC::MoveAll& M,
+		     double(&f1)(double),
+		     double(&f2)(double)
+		     )
+{
+  vector<int> indices = parameters_with_extension(P,name);
+  for(int i=0;i<indices.size();i++) 
+  {
+    if (P.fixed(indices[i])) continue;
+
+    // Use W as default window size of "pname" is not set.
+    set_if_undef(P.keys, pname, W);
+    W = P.keys[pname];
+
+    M.add(1, 
+	  MCMC::Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
+			   indices[i],
+			   lower_bound,lower,upper_bound,upper,W,f1,f2)
+	  );
+  }
+}
+
+//FIXME - how to make a number of variants with certain things fixed, for burn-in?
+// 0. Get an initial tree estimate using NJ or something? (as an option...)
+// 1. First estimate tree and parameters with alignment fixed.
+// 2. Then allow the alignment to change.
+
 
 void do_sampling(const variables_map& args,Parameters& P,long int max_iterations,
 		 vector<ostream*>& files)
@@ -293,6 +347,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 					internal_branches)
 		      );
   length_moves.add(1,length_moves1,false);
+  // FIXME - Do we really want to do this, under slice sampling?
   length_moves.add(1,SingleMove(walk_tree_sample_branch_lengths,
 				"walk_tree_sample_branch_lengths","lengths")
 		   );
@@ -302,8 +357,21 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 
   //------------- parameters (parameters_moves) --------------//
   MoveAll parameter_moves("parameters");
+  MoveAll slice_moves("parameters:slice");
+  MoveAll MH_moves("parameters:MH");
 
-  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu",             "mu_scale_sigma",     0.6,  parameter_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu",             "mu_scale_sigma",     0.6,  MH_moves);
+  for(int i=0;i<P.n_branch_means();i++)
+    add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
+
+  add_slice_moves(P, "mu",      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+  for(int i=0;i<P.n_branch_means();i++)
+    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+    
+  add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
+  add_slice_moves(P, "gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
+  add_slice_moves(P, "INV::p",         "INV::p_shift_sigma", 0.1, true,0,true,1,slice_moves);
+
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "rho",     "rho_scale_sigma",  0.2,  parameter_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
@@ -311,25 +379,31 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   add_MH_move(P, log_scaled(shift_cauchy),    "M0::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(more_than(0,shift_cauchy)),
 	                                        "M2::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, parameter_moves);
+  add_MH_move(P, between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, MH_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "f",              "f_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  parameter_moves);
   add_MH_move(P, log_scaled(shift_cauchy),    "beta::mu",       "beta::mu_scale_sigma",     0.2,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, parameter_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
   add_MH_move(P, log_scaled(shift_cauchy),    "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, parameter_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);
   parameter_moves.add(4,SingleMove(scale_means_only,
 				   "scale_means_only","mean")
 		      );
 
 
   
-  add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, parameter_moves);
-  add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, parameter_moves);
+  add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, MH_moves);
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves);
   add_MH_move(P, less_than(0,shift_cauchy), "lambda_s",      "lambda_shift_sigma",    0.35, parameter_moves);
   add_MH_move(P, less_than(0,shift_cauchy), "lambda_f",      "lambda_shift_sigma",    0.35, parameter_moves);
-  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.15, parameter_moves);
+  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves);
+
+  // FIXME - check if we are accidentally evaluating the likelihood or something.
+  add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
+  add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
+		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
+
   add_MH_move(P, shift_epsilon,               "r_s",     "epsilon_shift_sigma",   0.15, parameter_moves);
   add_MH_move(P, shift_epsilon,               "r_f",     "epsilon_shift_sigma",   0.15, parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy), "switch",   "invariant_shift_sigma", 0.15, parameter_moves);
@@ -341,49 +415,63 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
     total_length += max(sequence_lengths(*P[i].A, P.T->n_leaves()));
   P.keys["pi_dirichlet_N"] *= total_length;
 
-  add_MH_move(P, dirichlet_proposal,    "pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-  add_MH_move(P, dirichlet_proposal,    "INV::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-  add_MH_move(P, dirichlet_proposal,    "VAR::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-
-  set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
-  P.keys["GTR_dirichlet_N"] *= 100;
-  add_MH_move(P, dirichlet_proposal,    "GTR::*", "GTR_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"v_dirichlet_N",1.0);
-  P.keys["v_dirichlet_N"] *= total_length;
-  add_MH_move(P, dirichlet_proposal,    "v*", "v_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"b_dirichlet_N",1.0);
-  P.keys["b_dirichlet_N"] *= total_length;
-  add_MH_move(P, dirichlet_proposal,    "b_*", "b_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
-  P.keys["M2::f_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "M2::f*", "M2::f_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"M3::f_dirichlet_N",1.0);
-  P.keys["M3::f_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
-  P.keys["multi::p_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"DP::f_dirichlet_N",1.0);
-  P.keys["DP::f_dirichlet_N"] *= 10;
-  add_MH_move(P, dirichlet_proposal,    "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
-
-  set_if_undef(P.keys,"MF::dirichlet_N",10.0);
-  for(int s=0;s<P.n_smodels();s++) {
+  for(int s=0;s<=P.n_smodels();s++) 
+  {
     string index = convertToString(s+1);
+    string prefix = "^S" + index + "::";
+
+    if (s==P.n_smodels())
+      prefix = "^";
+
+    add_MH_move(P, dirichlet_proposal,  prefix + "pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    
+    add_MH_move(P, dirichlet_proposal,  prefix + "INV::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "VAR::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+
+    set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
+    if (s==0) P.keys["GTR_dirichlet_N"] *= 100;
+    add_MH_move(P, dirichlet_proposal,  prefix + "GTR::*", "GTR_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"v_dirichlet_N",1.0);
+    if (s==0) P.keys["v_dirichlet_N"] *= total_length;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "v*", "v_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"b_dirichlet_N",1.0);
+    if (s==0) P.keys["b_dirichlet_N"] *= total_length;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "b_*", "b_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
+    if (s==0) P.keys["M2::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "M2::f*", "M2::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"M3::f_dirichlet_N",1.0);
+    if (s==0) P.keys["M3::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
+    if (s==0) P.keys["multi::p_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"DP::f_dirichlet_N",1.0);
+    if (s==0) P.keys["DP::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
+    //FIXME - this should probably be 20*#rate_categories...
+    if (s==0) P.keys["DP::rate_dirichlet_N"] *= 10*10;
+    add_MH_move(P, sorted(dirichlet_proposal), prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
+    if (s==0) P.keys["Mixture::p_dirichlet_N"] *= 10*10;
+    add_MH_move(P, dirichlet_proposal,         prefix + "Mixture::p*", "Mixture::p_dirichlet_N",     1,  parameter_moves);
+
+    if (s >= P.n_smodels()) continue;
+
+    // Handle multi-frequency models
+    set_if_undef(P.keys,"MF::dirichlet_N",10.0);
+
     const alphabet& a = P.SModel(s).Alphabet();
     const int asize = a.size();
-
-    string prefix = string("S") + index + "::";
-
-    // special case - no prefix 
-    if (P.n_smodels() == 1)
-      prefix = "";
 
     for(int l=0;l<asize;l++) {
       string pname = prefix+ "a" + a.lookup(l) + "*";
@@ -398,10 +486,6 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   //          whereas we probably find them in *lexical* order....
   //          ... or creation order?  That might be OK for now! 
 
-  //FIXME - this should probably be 20*#rate_categories...
-  set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
-  P.keys["DP::rate_dirichlet_N"] *= 10*10;
-  add_MH_move(P, sorted(dirichlet_proposal),    "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
 
   for(int i=0;;i++) {
     string name = "M3::omega" + convertToString(i+1);
@@ -413,10 +497,6 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
     //    parameter_moves.add(1, MCMC::MH_Move(m,"sample_M3::omega"));
   }
 
-  set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
-  P.keys["Mixture::p_dirichlet_N"] *= 10*10;
-  add_MH_move(P, dirichlet_proposal,    "Mixture::p*", "Mixture::p_dirichlet_N",     1,  parameter_moves);
-
   int subsample = args["subsample"].as<int>();
 
   // full sampler
@@ -424,7 +504,19 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   if (has_imodel)
     sampler.add(1,alignment_moves);
   sampler.add(2,tree_moves);
+
+  // FIXME - do we really want to do this for (say) lambda and epsilon?  4+25/4 = 10.25
+  // FIXME - can we separate the moves into (say) moves which depend on branch lengths, and those that don't?
+  //       - MH_smodel / MH_imodel ...
   sampler.add(4 + P.T->n_branches()/4.0,parameter_moves);
+  if (P.keys["disable_MH_sampling"] > 0.5)
+    sampler.add(1,MH_moves);
+  else
+    sampler.add(4 + P.T->n_branches()/4.0,MH_moves);
+  // Question: how are these moves intermixed with the other ones?
+
+  if (P.keys["disable_slice_sampling"] < 0.5)
+    sampler.add(1,slice_moves);
 
   vector<string> disable;
   vector<string> enable;
@@ -457,10 +549,10 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   //FIXME - partition
 
   for(int i=0;i<P.n_data_partitions();i++) {
-    valarray<bool> s2 = constraint_satisfied(P[i].alignment_constraint,*P[i].A);
-    valarray<bool> s1(false,s2.size());
+    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint,*P[i].A);
+    dynamic_bitset<> s1(s2.size());
     report_constraints(s1,s2);
-  }
+  } 
 
   sampler.go(P,subsample,max_iterations,s_out,s_trees,s_parameters,s_map,files);
 }
@@ -524,6 +616,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
     ("smodel",value<vector<string> >()->composing(),"Substitution model.")
     ("imodel",value<vector<string> >()->composing(),"Indel model: RS05, RS07-no-T, or RS07.")
+    ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
     ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
     ("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
@@ -855,11 +948,11 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
   }
 
   // parse the groups into mask_groups;
-  vector<valarray<bool> > mask_groups(name_groups.size());
+  vector< dynamic_bitset<> > mask_groups(name_groups.size());
   for(int i=0;i<mask_groups.size();i++) 
   {
     mask_groups[i].resize(TC.n_leaves());
-    mask_groups[i] = false;
+    mask_groups[i].reset();
 
     for(int j=0;j<name_groups[i].size();j++) 
     {
@@ -878,13 +971,13 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
   for(int i=0;i<mask_groups.size();i++) 
   {
     // find the branch that corresponds to a mask
-    valarray<bool> mask(TC.n_leaves());
+    boost::dynamic_bitset<> mask(TC.n_leaves());
     int found = -1;
     for(int b=0;b<2*TC.n_branches() and found == -1;b++) 
     {
       mask = TC.partition(b);
 
-      if (equal(mask_groups[i],mask))
+      if (mask_groups[i] == mask)
 	found = b;
     }
 
@@ -1286,7 +1379,34 @@ void check_alignment_values(const alignment& A,const string& filename)
   }
 }
 
-int main(int argc,char* argv[]) 
+time_t start_time = time(NULL);
+
+void show_ending_messages()
+{
+  time_t end_time = time(NULL);
+  
+  cout<<endl;
+  cout<<"start time: "<<ctime(&start_time)<<endl;
+  cout<<"  end time: "<<ctime(&end_time)<<endl;
+  cout<<"total time: "<<duration(end_time-start_time)<<endl;
+  cout<<endl;
+  cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
+  cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
+  cout<<"total branches peeled = "<<substitution::total_peel_branches<<endl;
+}
+
+void die_on_signal(int sig)
+{
+  // Throwing exceptions from signal handlers is not allowed.  Bummer.
+  cout<<"recieved signal "<<sig<<".  Dying."<<endl;
+  cerr<<"recieved signal "<<sig<<".  Dying."<<endl;
+
+  show_ending_messages();
+
+  exit(3);
+}
+
+int main(int argc,char* argv[])
 { 
 
   TKF1_Transducer Q(false);
@@ -1310,7 +1430,6 @@ int main(int argc,char* argv[])
   n_procs = world.size();
 #endif
 
->>>>>>> .merge-right.r2522
   std::ios::sync_with_stdio(false);
 
   ostream out_screen(cout.rdbuf());
@@ -1325,7 +1444,7 @@ int main(int argc,char* argv[])
   ostream out_both(&tee_out);
   ostream err_both(&tee_err);
 
-  time_t start_time = time(NULL);
+  int retval=0;
 
   try {
 #if defined(HAVE_FENV_H) && !defined(NDEBUG)
@@ -1419,7 +1538,7 @@ int main(int argc,char* argv[])
     tee_out.setbuf2(s_out.rdbuf());
     tee_err.setbuf2(s_err.rdbuf());
 
-    cout.flush() ;
+    cout.flush() ; cout.rdbuf(s_out.rdbuf());
     cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
     clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
@@ -1452,8 +1571,13 @@ int main(int argc,char* argv[])
     vector<polymorphic_cow_ptr<TransducerIndelModel> > full_imodels;
     full_imodels.push_back(polymorphic_cow_ptr<TransducerIndelModel>(Q_FS));
 
+    //-------------- Which partitions share a scale? -----------//
+    shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
+
+    vector<int> scale_mapping = scale_names_mapping.item_for_partition;
+
     //-------------Create the Parameters object--------------//
-    Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping);
+    Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
 
     set_parameters(P,args);
 
@@ -1526,6 +1650,12 @@ int main(int argc,char* argv[])
 
       signal(SIGHUP,SIG_IGN);
       signal(SIGXCPU,SIG_IGN);
+
+      
+      struct sigaction sa_old;
+      struct sigaction sa_new;
+      sa_new.sa_handler = &die_on_signal;
+      sigaction(SIGINT,&sa_new,&sa_old);
 #endif
 
       long int max_iterations = args["iterations"].as<long int>();
@@ -1535,26 +1665,21 @@ int main(int argc,char* argv[])
       // Close all the streams, and write a notification that we finished all the iterations.
       // close_files(files);
     }
-    time_t end_time = time(NULL);
-
-    s_out<<endl;
-    s_out<<"start time: "<<ctime(&start_time)<<endl;
-    s_out<<"  end time: "<<ctime(&end_time)<<endl;
-    s_out<<"total time: "<<duration(end_time-start_time)<<endl;
   }
   catch (std::bad_alloc&) {
     err_both<<"Doh!  Some kind of memory problem?\n";
     report_mem();
-    exit(1);
+    retval=2;
   }
   catch (std::exception& e) {
     if (n_procs > 1)
       err_both<<"bali-phy: Error["<<proc_id<<"]! "<<e.what()<<endl;
     else
       err_both<<"bali-phy: Error! "<<e.what()<<endl;
-    exit(1);
+    retval=1;
   }
 
-  return 0;
-}
+  show_ending_messages();
 
+  return retval;
+}

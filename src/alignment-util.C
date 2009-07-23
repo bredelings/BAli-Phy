@@ -3,29 +3,15 @@
 #include "util.H"
 #include "setup.H"
 
-using std::vector;
 using std::valarray;
 using std::cout;
 using std::cerr;
 using std::istream;
 
+using boost::dynamic_bitset;
 
 using boost::program_options::variables_map;
 using boost::shared_ptr;
-
-alignment reorder_sequences(const alignment& A, const vector<int>& mapping) 
-{
-  alignment A2 = A;
-
-  for(int i=0;i<A2.n_sequences();i++) {
-    if (mapping[i] == i) continue;
-
-    A2.seq(mapping[i]) = A.seq(i);
-    for(int column=0;column<A2.length();column++)
-      A2(column,mapping[i]) = A(column,i);
-  }
-  return A2;
-}
 
 alignment chop_internal(alignment A, bool keep_empty_columns) 
 {
@@ -71,10 +57,10 @@ alignment add_internal(alignment A,const Tree& T)
     A.add_sequence(s);
   }
 
-  // Set them to all wildcards
+  // Set them to all gaps
   for(int column=0;column<A.length();column++)
     for(int i=T.n_leaves();i<T.n_nodes();i++)
-      A(column,i) = alphabet::not_gap;
+      A(column,i) = alphabet::gap;
 
   return A;
 }
@@ -138,7 +124,7 @@ bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2,
 }
 
 
-bool A_constant(alignment A1, alignment A2, const valarray<bool>& ignore) {
+bool A_constant(alignment A1, alignment A2, const dynamic_bitset<>& ignore) {
   assert(A1.n_sequences() == A2.n_sequences());
   assert(ignore.size() == A1.n_sequences());
 
@@ -191,19 +177,41 @@ bool names_are_unique(const alignment& A)
   return true;
 }
 
-bool bit_set(const valarray<bool>& v) {
-  for(int i=0;i<v.size();i++)
-    if (v[i]) return true;
-  return false;
+void connect_all_characters(const Tree& T,dynamic_bitset<>& present)
+{
+  assert(present.size() == T.n_nodes());
+  
+  //---------- for each internal node... -------------//
+  for(int n1=T.n_leaves(); n1<T.n_nodes(); n1++) 
+  {
+    if (present[n1]) continue;
+
+    //------- if it is '-' and not ignored ... -------//
+    vector<const_nodeview> neighbors;
+    append(T[n1].neighbors(),neighbors);
+    assert(neighbors.size() == 3);
+
+    //---- check the three attatched subtrees ... ----//
+    int total=0;
+    for(int i=0;i<neighbors.size();i++)
+    {
+      dynamic_bitset<> group = T.partition(n1,neighbors[i]);
+      if (present.intersects(group))
+	total++;
+    }
+
+    if (total > 1)
+      present[n1] = true;
+  }
+  assert(all_characters_connected(T,present,vector<int>()));
 }
 
-
 /// Check that any two present nodes are connected by a path of present nodes
-bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<int>& _ignore) {
+bool all_characters_connected(const Tree& T,dynamic_bitset<> present,const vector<int>& _ignore) {
   assert(present.size() == T.n_nodes());
 
   //--------- set the ignored nodes to 'not present' -----------//
-  valarray<bool> ignore(false,present.size());
+  dynamic_bitset<> ignore(present.size());
   for(int i=0;i<_ignore.size();i++) {
     int n = _ignore[i];
     present[n] = false;
@@ -223,8 +231,8 @@ bool all_characters_connected(const Tree& T,valarray<bool> present,const vector<
     //---- check the three attatched subtrees ... ----//
     int total=0;
     for(int i=0;i<neighbors.size();i++) {
-      valarray<bool> group = T.partition(n1,neighbors[i]);
-      if (bit_set(present and group))
+      dynamic_bitset<> group = T.partition(n1,neighbors[i]);
+      if (present.intersects(group))
 	total++;
     }
 
@@ -251,10 +259,34 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 			   <<A.seq(i).name<<"': only - and * are allowed";
 }
 
+
+/// Force internal node states are consistent by connecting leaf characters
+void connect_leaf_characters(alignment& A,const Tree& T)
+{
+  assert(A.n_sequences() == T.n_nodes());
+
+  for(int column=0;column<A.length();column++)
+  {
+    // construct leaf presence/absence mask
+    dynamic_bitset<> present(T.n_nodes());
+    for(int i=0;i<T.n_nodes();i++)
+      present[i] = not A.gap(column,i);
+    
+    // compute presence/absence for internal nodes
+    connect_all_characters(T,present);
+
+    // put present characters into the alignment.
+    for(int i=T.n_leaves();i<T.n_nodes();i++) {
+      if (present[i])
+	A(column,i) = alphabet::not_gap;
+    }
+  }
+}
+
 /// Check that internal node states are consistent
 void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore) {
   for(int column=0;column<A.length();column++) {
-    valarray<bool> present(T.n_nodes());
+    dynamic_bitset<> present(T.n_nodes());
     for(int i=0;i<T.n_nodes();i++) 
       present[i] = not A.gap(column,i);
     
@@ -296,7 +328,7 @@ void check_letters_OK(const alignment& A) {
 
 void check_leaf_sequences(const alignment& A,int n_leaves) {
 
-  vector<sequence> sequences = A.get_sequences();
+  vector<sequence> sequences = A.convert_to_sequences();
 
   const alphabet& a = A.get_alphabet();
 
@@ -306,16 +338,17 @@ void check_leaf_sequences(const alignment& A,int n_leaves) {
     if (not (a(sequences[i]) == a(A.seq(i)))) {
       cerr<<"leaf sequence "<<i<<" corrupted!\n";
 
-      cerr<<sequences[i]<<endl;
+      cerr<<"orig: "<<A.seq(i)<<endl;
 
-      cerr<<A.seq(i)<<endl;
+      cerr<<"new : "<<sequences[i]<<endl;
 
       std::abort();
     }
   }
 }
 
-void check_alignment(const alignment& A,const Tree& T,bool internal_sequences) {
+void check_alignment(const alignment& A,const Tree& T,bool internal_sequences) 
+{
   // First check that there are no illegal letters
   check_letters_OK(A);
 
@@ -444,11 +477,12 @@ long int homologies_preserved(const ublas::matrix<int>& M1,const ublas::matrix<i
     for(int i=0;i<M1.size2();i++)
       if (M1(column,i) != alphabet::gap and M1(column,i) != alphabet::unknown)
 	for(int j=0;j<M1.size2();j++)
-	  if (j != i)
+	  if (j != i) {
 	    if (A_match(M1,column,i,j,M2,column_indices2))
 	      match++;
 	    else
 	      mismatch++;
+	  }
 	
   assert(homologies_total(M1) == homologies_total(M2));
   assert(homologies_total(M1) == match + mismatch);
@@ -666,7 +700,7 @@ alignment load_alignment(const string& filename,const vector<shared_ptr<const al
   
   int n_empty = remove_empty_columns(A);
   if (n_empty)
-    cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
+    if (log_verbose) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
   
   if (A.n_sequences() == 0)
     throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
@@ -721,6 +755,9 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
   alignment A;
   string line;
   int nth=0;
+
+  vector<string> n1;
+
   while(ifile) 
   {
     // CHECK if an alignment begins here
@@ -755,8 +792,10 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 
     // READ the next alignment
     try {
-      if (alignments.empty())
+      if (alignments.empty()) {
 	A.load(alphabets,sequence_format::read_fasta,ifile);
+	n1 = sequence_names(A);
+      }
       else 
 	ifile>>A;
     }
@@ -773,6 +812,16 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     if (A.n_sequences() == 0) 
       throw myexception(string("Alignment didn't contain any sequences!"));
     
+
+    // Check the names and stuff.
+    vector<string> n2 = sequence_names(A);
+
+    if (n1 != n2) { 
+      // inverse of the mapping n2->n1
+      vector<int> new_order = compute_mapping(n1,n2);
+      A = reorder_sequences(A,new_order);
+    }
+
     // STORE the alignment if we're not going to subsample it
     alignments.push_back(A);
     total++;
@@ -782,7 +831,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
       // start skipping twice as many alignments
       subsample *= 2;
 
-      cerr<<"Went from "<<total;
+      if (log_verbose) cerr<<"Went from "<<total;
       // Remove every other alignment
       for(typeof(alignments.begin()) loc =alignments.begin();loc!=alignments.end();) {
 	typeof(loc) j = loc++;
@@ -796,7 +845,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 	  loc++;
       }
 	
-      cerr<<" to "<<total<<" alignments.\n";
+      if (log_verbose) cerr<<" to "<<total<<" alignments.\n";
 
     }
   }
@@ -810,7 +859,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     const int extra = total - maxalignments;
 
     // Remove this many alignments from the array
-    cerr<<"Went from "<<total;
+    if (log_verbose) cerr<<"Went from "<<total;
 
     vector<int> kill(extra);
     for(int i=0;i<kill.size();i++)
@@ -829,7 +878,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 	loc++;
     }
     assert(kill.empty());
-    cerr<<" to "<<alignments.size()<<" alignments.\n";
+    if (log_verbose) cerr<<" to "<<alignments.size()<<" alignments.\n";
   }
 
   return alignments;
@@ -838,6 +887,8 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets) {
   vector<alignment> alignments;
   
+  vector<string> n1;
+
   alignment A;
   while(ifile) {
 
@@ -850,8 +901,10 @@ vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const 
     
     // READ the next alignment
     try {
-      if (alignments.empty())
+      if (alignments.empty()) {
 	A.load(alphabets,sequence_format::read_fasta,ifile);
+	n1 = sequence_names(A);
+      }
       else 
 	ifile>>A;
     }
@@ -868,11 +921,20 @@ vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const 
     if (A.n_sequences() == 0) 
       throw myexception(string("Alignment didn't contain any sequences!"));
     
+    // Check the names and stuff.
+    vector<string> n2 = sequence_names(A);
+
+    if (n1 != n2) {
+      // inverse of the mapping n2->n1
+      vector<int> new_order = compute_mapping(n1,n2);
+      A = reorder_sequences(A,new_order);
+    }
+
     // STORE the alignment if we're not going to skip it
     alignments.push_back(A);
   }
 
-  std::cerr<<"Loaded "<<alignments.size()<<" alignments.\n";
+  if (log_verbose) std::cerr<<"Loaded "<<alignments.size()<<" alignments.\n";
 
   return alignments;
 }
@@ -953,10 +1015,10 @@ alignment find_last_alignment(std::istream& ifile, const vector<shared_ptr<const
   return A;
 }
 
-void check_disconnected(const alignment& A,const valarray<bool>& mask)
+void check_disconnected(const alignment& A,const dynamic_bitset<>& mask)
 {
-  valarray<bool> g1 = mask;
-  valarray<bool> g2 = not mask;
+  dynamic_bitset<> g1 = mask;
+  dynamic_bitset<> g2 = ~mask;
 
   for(int i=0;i<A.length();i++) {
     if (not (all_gaps(A,i,g1) or all_gaps(A,i,g2))) {
@@ -973,7 +1035,7 @@ void check_disconnected(const alignment& A, const Tree& T, const std::vector<int
 
   for(int b=0;b<disconnected.size();b++)
     if (disconnected[b]) {
-      valarray<bool> mask = T.partition(b);
+      dynamic_bitset<> mask = T.partition(b);
       check_disconnected(A,mask);
     }
   
@@ -1062,3 +1124,57 @@ int add_column_type_note(alignment& A)
 
   return index;
 }
+alignment shuffle_alignment(const alignment& A, const vector<int>& order)
+{
+  unsigned L = A.length();
+
+  alignment A2(A.get_alphabet(), order.size(), L);
+
+  for(int i=0;i<order.size();i++) 
+  {
+    int j = order[i];
+    assert(0 <= j and j < A.n_sequences());
+
+    A2.seq(i) = A.seq(j);
+    for(int c=0;c<L;c++)
+      A2(c,i) = A(c,j);
+  }
+
+  return A2;
+}
+
+alignment reorder_sequences(const alignment& A,const vector<int>& order)
+{
+  return shuffle_alignment(A,order);
+}
+
+alignment select_rows(const alignment& A,const vector<int>& keep)
+{
+  bool changed=false;
+
+  vector<int> order;
+  order.reserve(keep.size());
+  for(int i=0;i<keep.size();i++)
+    if (keep[i])
+      order.push_back(i);
+    else
+      changed=true;
+
+  if (changed)
+    return reorder_sequences(A,order);
+  else
+    return A;
+}
+
+alignment select_columns(const alignment& A,const vector<int>& sites) 
+{
+  alignment A2 = A;
+  A2.changelength(sites.size());
+  for(int i=0;i<sites.size();i++) {
+    int column = sites[i];
+    for(int j=0;j<A2.n_sequences();j++)
+      A2(i,j) = A(column,j);
+  }
+  return A2;
+}
+

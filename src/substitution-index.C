@@ -1,8 +1,9 @@
 #include "substitution-index.H"
 #include "util.H"
 
-using std::valarray;
 using std::vector;
+
+using boost::dynamic_bitset;
 
 /* The algorithms in this file provide each column in a sub-alignment
  * with a name that persists through alignment and tree changes that
@@ -339,7 +340,7 @@ int add_subA_index_note(const alignment& A,int b)
 
 /// return index of lowest-numbered node behind b
 int rank(const Tree& T,int b) {
-  const valarray<bool>& mask = T.partition(T.directed_branch(b).reverse());
+  const dynamic_bitset<>& mask = T.partition(T.directed_branch(b).reverse());
   for(int i=0;i<mask.size();i++)
     if (mask[i])
       return i;
@@ -483,7 +484,7 @@ void subA_index_check_footprint(const alignment& A,const Tree& T)
     for(int c=0;c<A.length();c++) {
 
       bool leaf_present = false;
-      const valarray<bool>& leaves = T.partition(T.directed_branch(b).reverse());
+      const dynamic_bitset<>& leaves = T.partition(T.directed_branch(b).reverse());
       for(int i=0;i<T.n_leaves();i++)
 	if (leaves[i] and not A.gap(c,i))
 	  leaf_present=true;

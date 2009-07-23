@@ -28,7 +28,7 @@ int alignment::add_note(int l) const {
   return notes.size()-1;
 }
 
-bool all_gaps(const alignment& A,int column,const std::valarray<bool>& mask) {
+bool all_gaps(const alignment& A,int column,const boost::dynamic_bitset<>& mask) {
   for(int i=0;i<A.n_sequences();i++)
     if (mask[i] and A.character(column,i))
       return false;
@@ -41,6 +41,16 @@ bool all_gaps(const alignment& A,int column) {
       return false;
   return true;
 }
+
+int n_characters(const alignment& A, int column) 
+{
+  int count=0;
+  for(int i=0;i<A.n_sequences();i++)
+    if (A.character(column,i))
+      count++;
+  return count;
+}
+
 
 bool valid(const alignment& A) {
   for(int column=0;column<A.length();column++)
@@ -166,7 +176,7 @@ void alignment::load(const vector<sequence>& seqs)
     for(;k<v.size();k++)
       array(k,i) = v[k];
     for(;k<array.size1();k++)
-      array(k,i) = -1;
+      array(k,i) = alphabet::gap;
 
     sequences.push_back(seqs[i]);
     sequences.back().strip_gaps();
@@ -260,7 +270,7 @@ void alignment::print(std::ostream& file) const{
   }
 }
 
-vector<sequence> alignment::get_sequences() const 
+vector<sequence> alignment::convert_to_sequences() const 
 {
 
   vector<sequence> seqs(n_sequences());
@@ -279,7 +289,7 @@ vector<sequence> alignment::get_sequences() const
 }
 
 void alignment::write_sequences(sequence_format::dumper_t method,std::ostream& file) const {
-  vector<sequence> seqs = get_sequences();
+  vector<sequence> seqs = convert_to_sequences();
   (*method)(file,seqs);
 }
 
@@ -293,6 +303,20 @@ void alignment::print_phylip(std::ostream& file) const {
 
 alignment::alignment(const alphabet& a1) 
   :a(a1.clone())
+{}
+
+alignment::alignment(const alphabet& a1,int n,int L)
+  :sequences(vector<sequence>(n)),array(L,n),a(a1.clone())
+{
+}
+
+alignment::alignment(const alphabet& a1,int n)
+  :sequences(vector<sequence>(n)),array(0,n),a(a1.clone())
+{
+}
+
+alignment::alignment(const alphabet& a1, const vector<sequence>& S) 
+  :sequences(S),array(0,S.size()),a(a1.clone())
 {}
 
 alignment::alignment(const alphabet& a1,const string& filename) 
@@ -325,15 +349,24 @@ vector<int> get_path(const alignment& A,int node1, int node2) {
   return state;
 }
 
+
 int remove_empty_columns(alignment& A) 
 {
-  int n_empty = 0;
-  for(int column=A.length()-1;column>=0;column--) {
-    if (all_gaps(A,column)) {
-      A.delete_column(column);
-      n_empty++;
+  int length = 0;
+
+  for(int column=0;column<A.length();column++)
+    if (not all_gaps(A,column)) 
+    {
+      if (column != length)
+	for(int i=0;i<A.n_sequences();i++)
+	  A(length,i) = A(column,i);
+      length++;
     }
-  }
+
+  int n_empty = A.length() - length;
+
+  A.changelength(length);
+
   return n_empty;
 }
 

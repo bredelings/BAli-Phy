@@ -63,7 +63,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/tree-dist.C proposals.C n_indels.C distribution.C \
-	  tools/parsimony.C version.C sample-alignment-rates.C
+	  tools/parsimony.C version.C slice-sampling.C sample-alignment-rates.C
 
 bali_phy_CXXFLAGS = @MPI_CXXFLAGS@
 bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@ 
@@ -140,7 +140,7 @@ alignment_reorder_SOURCES = tools/alignment-reorder.C alignment.C alphabet.C seq
 alignment_thin_SOURCES = tools/alignment-thin.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C setup.C imodel.C sequence-format.C randomtree.C \
 	alignment-util.C probability.C alignment-random.C model.C tree-util.C \
-	tools/distance-methods.C tools/inverse.C
+	tools/distance-methods.C tools/inverse.C tools/index-matrix.C
 
 #---------------------------------------------------------------
 
@@ -196,7 +196,7 @@ alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment.C 
 
 #---------------------------------------------------------------
 
-trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C tree-util.C
+trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C tree-util.C tools/mctree.C rng.C
 
 #---------------------------------------------------------------
 
@@ -208,13 +208,13 @@ partitions_supported_SOURCES = tools/partitions-supported.C tree.C sequencetree.
 
 #---------------------------------------------------------------
 
-draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C util.C tree-util.C tools/mctree.C
+draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C util.C tree-util.C tools/mctree.C rng.C
 
 #---------------------------------------------------------------
 tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
 
 #---------------------------------------------------------------
-mctree_mean_lengths_SOURCES = tools/mctree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C tools/mctree.C
+mctree_mean_lengths_SOURCES = tools/mctree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C tools/mctree.C rng.C
 
 #---------------------------------------------------------------
 trees_pair_distances_SOURCES = tools/trees-pair-distances.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 

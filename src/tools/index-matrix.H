@@ -77,6 +77,8 @@ public:
     for(int i=0;i<L.size();i++)
       column_index.push_back(vector<int>(L[i]));
   }
+
+  index_matrix(const alignment& A);
 };
 
 index_matrix unaligned_matrix(const std::vector<int>& L);
@@ -85,4 +87,7 @@ unsigned count_unknowns(const index_matrix& M,int c);
 
 ublas::matrix<int> get_ordered_matrix(const index_matrix& M);
 
-alignment get_alignment(const ublas::matrix<int>& M, alignment& A1);
+alignment get_alignment(const ublas::matrix<int>& M, const alignment& A);
+
+alignment get_ordered_alignment(const alignment& A);
+

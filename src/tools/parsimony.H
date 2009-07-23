@@ -4,21 +4,22 @@
 #include "alignment.H"
 #include "sequencetree.H"
 
-Matrix unit_cost_matrix(unsigned size);
+ublas::matrix<int> unit_cost_matrix(unsigned size);
 
-Matrix unit_cost_matrix(const alphabet&);
+ublas::matrix<int> unit_cost_matrix(const alphabet&);
 
-Matrix nucleotide_cost_matrix(const Triplets& T);
+ublas::matrix<int> nucleotide_cost_matrix(const Triplets& T);
 
-Matrix amino_acid_cost_matrix(const Codons& C);
+ublas::matrix<int> amino_acid_cost_matrix(const Codons& C);
 
+template <class B>
+B n_mutations(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const ublas::matrix<B>& cost);
 
-double n_mutations(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const Matrix& cost);
-double n_mutations(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T);
+template <typename B>
+B n_mutations(const alignment& A, const SequenceTree& T,const ublas::matrix<B>& cost);
 
-double n_mutations(const alignment& A, const SequenceTree& T,const Matrix& cost);
-double n_mutations(const alignment& A, const SequenceTree& T);
+int n_mutations(const alignment& A, const SequenceTree& T);
 
-std::vector<int> get_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const Matrix& cost);
+std::vector<int> get_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const ublas::matrix<int>& cost);
 
-std::vector<vector<int> > get_all_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const Matrix& cost);
+std::vector<std::vector<int> > get_all_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const ublas::matrix<int>& cost);

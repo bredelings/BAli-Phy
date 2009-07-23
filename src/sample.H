@@ -10,6 +10,7 @@
 // These have const A, cant be a "move"
 void slide_node(Parameters& P, MCMC::MoveStats& Stats, int);
 void change_branch_length(Parameters&, MCMC::MoveStats&, int);
+void slice_sample_branch_length(Parameters&, MCMC::MoveStats&, int);
 void change_branch_length_multi(Parameters&, MCMC::MoveStats&, int);
 
 /// Resample the alignment parent->child
@@ -68,8 +69,6 @@ void change_3_branch_lengths(Parameters& P, MCMC::MoveStats& Stats,int);
 
 
 void sample_NNI_and_branch_lengths(Parameters&, MCMC::MoveStats&);
-
-std::vector<double> gamma_approx(const Parameters&, int b);
 
 void sample_alignment_rates(Parameters&, MCMC::MoveStats&);
 

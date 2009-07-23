@@ -205,6 +205,52 @@ namespace MCMC {
       :Move(s,v),proposal(P) {}
   };
 
+  // Improve: make W into a FUNCTION to determine the initial width
+  class Slice_Move: public Move 
+  {
+    int index;
+    bool lower_bound;
+    double lower;
+    bool upper_bound;
+    double upper;
+    double W;
+    double (*window)(const Parameters&);
+
+    double (*transform)(double);
+    double (*inverse)(double);
+
+  public:
+    Slice_Move* clone() const {return new Slice_Move(*this);}
+
+    int reset(double lambda);
+
+    void iterate(Parameters& P,MoveStats& Stats) { iterate(P,Stats,0); }
+
+    void iterate(Parameters& P,MoveStats&,int);
+
+    Slice_Move(const string& s,int i,
+	       bool lb,double l,bool ub,double u,double W_);
+
+    Slice_Move(const string& s, const string& v,int i,
+	       bool lb,double l,bool ub,double u,double W_);
+
+    Slice_Move(const string& s,int i,
+	       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&));
+
+    Slice_Move(const string& s, const string& v,int i,
+	       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&));
+
+    Slice_Move(const string& s,int i,
+	       bool lb,double l,bool ub,double u,double W_,
+	       double(*f1)(double),
+	       double(*f2)(double));
+
+    Slice_Move(const string& s, const string& v,int i,
+	       bool lb,double l,bool ub,double u,double W_,
+	       double(*f1)(double),
+	       double(*f2)(double));
+  };
+
 
   /// A move which takes an integer argument from a supplied list
   class MoveArg: public Move {

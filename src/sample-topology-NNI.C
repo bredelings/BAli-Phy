@@ -83,6 +83,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T,b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -91,43 +92,15 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   if (not extends(*p[1].T, *P.TC))
     return;
 
+  //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
+  //  double Pr1 = log(p[0].probability());
+  //  double Pr2 = log(p[1].probability());
+
   vector<efloat_t> rho(2,1);
 
-  // because we would select between topologies before selecting
-  // internal node states, then reverse distribution cannot depend on 
+  // Because we would select between topologies before selecting
+  // internal node states, the reverse distribution cannot depend on 
   // the internal node state of the proposed new topology/alignment
-
-  double p2 = loadvalue(P.keys,"fraction_fit_gamma",-0.01);
-  bool smart_inner_branch = (uniform() < p2) and not P.n_imodels();
-
-  if (smart_inner_branch) 
-  {
-    vector<double> G0 = gamma_approx(p[0],b);
-    vector<double> G1 = gamma_approx(p[1],b);
-
-    double a0 = G0[0]+1.0;
-    double b0 = -1.0/G0[1];
-
-    double a1 = G1[0]+1.0;
-    double b1 = -1.0/G1[1];
-
-    if (a0 < 0 or b0<0) {
-      std::cerr<<"a0 = "<<a0<<"  b0 = "<<b0<<std::endl;
-      a0 = 1;
-      b0 = p[0].branch_mean();
-    }
-
-    if (a1 < 0 or b1<0) {
-      std::cerr<<"a1 = "<<a0<<"  b1 = "<<b0<<std::endl;
-      a1 = 1;
-      b1 = p[1].branch_mean();
-    }
-
-    p[1].setlength(b,gamma(a1,b1));
-
-    rho[0] = gsl_ran_gamma_pdf(p[1].T->branch(b).length(),a1,b1);
-    rho[1] = gsl_ran_gamma_pdf(p[0].T->branch(b).length(),a0,b0);
-  }
 
   int C = two_way_topology_sample(p,rho,b);
 
@@ -135,15 +108,96 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
     P = p[C];
   }
 
+  //  if (C == 1) std::cerr<<"MH-diff = "<<Pr2 - Pr1<<"\n";
+
   MCMC::Result result(2);
 
   result.totals[0] = (C>0)?1:0;
-  result.totals[1] = p[0].T->branch(b).length();
+  // This gives us the average length of branches prior to successful swaps
+  if (C>0)
+    result.totals[1] = p[0].T->branch(b).length();
+  else
+    result.counts[1] = 0;
 
-  if (smart_inner_branch)
-    Stats.inc("NNI (2-way,gamma)", result);
-  else 
-    Stats.inc("NNI (2-way)", result);
+  Stats.inc("NNI (2-way)", result);
+}
+
+#include "slice-sampling.H"
+
+// Notes: the two-say slice sampler is more likely to accept topologies
+//        which have a low probability without branch adjustment.
+//        
+//        If we look at the distribution for accepted changes of
+//        log(P2)-log(P1) without adjusting the branch lengths,
+//        then 1% are below -3.23 for MH and -6.3 for slice.
+
+//        Also, 2% are below -5.19 for slice, adjusting for the fact
+//        that there are fewer (half?) acceptances for slice.
+
+//        Finally, the bottom 5% for slice make up the bottom .7%
+//        (unadjusted) for slice...
+
+
+void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b) 
+{
+  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+    return;
+
+  vector<int> nodes = A5::get_nodes_random(*P.T, b);
+
+  P.select_root(b);
+
+  vector<Parameters> p(2,P);
+
+  int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
+
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
+  exchange_subtrees(*p[1].T,b1, b2);
+  p[1].tree_propagate(); 
+  p[1].LC_invalidate_branch(b);
+  p[1].invalidate_subA_index_branch(b);
+  
+  if (not extends(*p[1].T, *P.TC))
+    return;
+
+  double L = P.T->branch(b).length();
+
+  //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
+  //  double Pr1 = log(p[0].probability());
+  //  double Pr2 = log(p[1].probability());
+
+  branch_length_slice_function logp1(p[0],b);
+  branch_length_slice_function logp2(p[1],b);
+
+  vector<slice_function*> logp;
+  logp.push_back(&logp1);
+  logp.push_back(&logp2);
+
+  double w = P.branch_mean();
+
+  //  std::pair<int,double> choice = two_way_slice_sample(L,logp1,logp2,w,-1,true,0,false,0);
+  std::pair<int,double> choice = slice_sample_multi(L,logp,w,-1);
+
+  int C = choice.first;
+  if (choice.first == 0)
+    P = p[0];
+  else
+    P = p[1];
+
+  MCMC::Result result(3);
+
+  result.totals[0] = (C>0)?1:0;
+  // This gives us the average length of branches prior to successful swaps
+  if (C>0)
+    result.totals[1] = L;
+  else
+    result.counts[1] = 0;
+  result.totals[2] = std::abs(P.T->branch(b).length() - L);
+
+  //  if (C == 1) std::cerr<<"slice-diff = "<<Pr2 - Pr1<<"\n";
+
+  Stats.inc("NNI (2-way,slice)", result);
 }
 
 void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b) 
@@ -160,6 +214,7 @@ void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b)
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T, b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -220,6 +275,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T, b1, b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -287,10 +343,9 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho
 }
 
 
-//FIXME - go through code and create more exceptions, from asserts... 
-void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
+void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+  if (P.n_imodels())
     return;
 
   vector<int> nodes = A5::get_nodes(*P.T,b);
@@ -304,6 +359,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   int b2 = P.T->directed_branch(nodes[5],nodes[2]);
   int b3 = P.T->directed_branch(nodes[5],nodes[3]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T,b1,b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -312,6 +368,90 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   if (not extends(*p[1].T, *P.TC))
     return;
 
+  // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
+  exchange_subtrees(*p[2].T,b1,b3);
+  p[2].tree_propagate(); 
+  p[2].LC_invalidate_branch(b);
+  p[2].invalidate_subA_index_branch(b);
+  
+  if (not extends(*p[2].T, *P.TC))
+    return;
+
+  const vector<efloat_t> rho(3,1);
+
+  double L = P.T->branch(b).length();
+
+  //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
+  //  double Pr1 = log(p[0].probability());
+  //  double Pr2 = log(p[1].probability());
+  //  double Pr3 = log(p[2].probability());
+
+  branch_length_slice_function logp1(p[0],b);
+  branch_length_slice_function logp2(p[1],b);
+  branch_length_slice_function logp3(p[2],b);
+
+  vector<slice_function*> logp;
+  logp.push_back(&logp1);
+  logp.push_back(&logp2);
+  logp.push_back(&logp3);
+
+  double w = P.branch_mean();
+
+  std::pair<int,double> choice = slice_sample_multi(L,logp,w,-1);
+
+  int C = choice.first;
+  P = p[C];
+
+  MCMC::Result result(4);
+
+  result.totals[0] = (C>0)?1:0;
+  // This gives us the average length of branches prior to successful swaps
+  if (C>0)
+    result.totals[1] = L;
+  else
+    result.counts[1] = 0;
+  result.totals[2] = std::abs(P.T->branch(b).length() - L);
+  result.totals[3] = logp1.count + logp2.count + logp3.count;
+
+  //  if (C == 1) std::cerr<<"slice-diff3 = "<<Pr2 - Pr1<<"\n";
+  //  if (C == 2) std::cerr<<"slice-diff3 = "<<Pr3 - Pr1<<"\n";
+
+  Stats.inc("NNI (3-way,slice)", result);
+}
+
+void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
+{
+  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+    return;
+
+  double slice_fraction = loadvalue(P.keys,"NNI_slice_fraction",-0.25);
+
+  if (not P.n_imodels() and uniform() < slice_fraction) {
+    three_way_topology_sample_slice(P,Stats,b);
+    return;
+  }
+
+  vector<int> nodes = A5::get_nodes(*P.T,b);
+
+  //------ Generate Topologies and alter caches ------///
+  P.select_root(b);
+  
+  vector<Parameters> p(3,P);
+
+  int b1 = P.T->directed_branch(nodes[4],nodes[1]);
+  int b2 = P.T->directed_branch(nodes[5],nodes[2]);
+  int b3 = P.T->directed_branch(nodes[5],nodes[3]);
+
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
+  exchange_subtrees(*p[1].T,b1,b2);
+  p[1].tree_propagate(); 
+  p[1].LC_invalidate_branch(b);
+  p[1].invalidate_subA_index_branch(b);
+
+  if (not extends(*p[1].T, *P.TC))
+    return;
+
+  // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
   exchange_subtrees(*p[2].T,b1,b3);
   p[2].tree_propagate(); 
   p[2].LC_invalidate_branch(b);
@@ -349,6 +489,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
   int b2 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[2]);
   int b3 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[3]);
 
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T,b1,b2);
   p[1].tree_propagate(); 
   p[1].LC_invalidate_branch(b);
@@ -357,6 +498,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
   if (not extends(*p[1].T, *P.TC))
     return;
 
+  // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
   exchange_subtrees(*p[2].T,b1,b3);
   p[2].tree_propagate(); 
   p[2].LC_invalidate_branch(b);

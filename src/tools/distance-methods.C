@@ -6,7 +6,8 @@
 #include "inverse.H"
 
 using std::list;
-using std::valarray;
+
+using boost::dynamic_bitset;
 
 /// Compute the sum of all path lengths delta[b] passing through each branch b.
 vector<double> FastMTM(const Tree& T,const Matrix& D,
@@ -82,7 +83,7 @@ vector<double> SlowMTM(const Tree& T,const Matrix& D,
 
 bool A(const Tree& T,int k,int i,int j)
 {
-  const valarray<bool>& partition = T.partition(k);
+  const dynamic_bitset<>& partition = T.partition(k);
   return partition[i] != partition[j];
 }
 

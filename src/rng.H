@@ -47,6 +47,8 @@ std::valarray<double> dirichlet(const std::valarray<double>& n);
 
 namespace rng {
 
+  unsigned long get_random_seed();
+
   typedef int amount_t;
   typedef std::valarray<amount_t> tuple;
 

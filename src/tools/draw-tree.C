@@ -16,6 +16,16 @@
 
 #include <boost/program_options.hpp>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_FENV_H
+extern "C" {
+#include "fenv.h"
+}
+#endif
+
 #include "myexception.H"
 #include "sequencetree.H"
 #include "tree-dist.H"
@@ -36,16 +46,25 @@ class cairo_plotter
 {
   double page_x_width_;
   double page_y_width_;
+  double font_size_;
 public:
   virtual void operator()(cairo_t*) = 0;
 
   double page_x_width() const {return page_x_width_;}
   double page_y_width() const {return page_y_width_;}
 
+  double font_size() const {return font_size_;}
 
   cairo_plotter(double xw, double yw)
     :page_x_width_(xw),
-     page_y_width_(yw)
+     page_y_width_(yw),
+     font_size_(10)
+  {}
+
+  cairo_plotter(double xw, double yw, double fs)
+    :page_x_width_(xw),
+     page_y_width_(yw),
+     font_size_(fs)
   {}
   virtual ~cairo_plotter() {}
 };
@@ -114,10 +133,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("out",value<string>(),"Output filename (without extension)")
     ("full","Consider only full splits by collapsing any partial splits.")
     ("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
-    ("angle_iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm with small-angle penalties")
+    ("font-size",value<double>()->default_value(10),"Font size for taxon names")
+    ("angle_iterations",value<int>()->default_value(0),"Number of iterations for layout algorithm with small-angle penalties")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
-    ("draw-clouds","Draw wandering-ranges in MC trees as clouds.")
+    ("draw-clouds",value<string>(),"Draw wandering-ranges in MC trees as clouds.")
     ("seed", value<unsigned long>(),"Random seed")
     ("verbose","Output more log messages on stderr.")
     ;
@@ -491,7 +511,7 @@ struct tree_layout: public common_layout
 int find_directed_branch(const Tree& T,const Partition& p)
 {
   for(int b=0; b<2*T.n_branches(); b++)
-    if (equal(branch_partition(T,b), p.group2))
+    if (branch_partition(T,b) == p.group2)
       return b;
   return -1;
 }
@@ -507,7 +527,7 @@ int node_max_depth(const Tree& T,int node)
 
 int n_children(const Tree& T,int b)
 {
-  return n_elements(branch_partition(T,b));
+  return branch_partition(T,b).count();
 }
 
 
@@ -956,6 +976,10 @@ struct tree_plotter: public cairo_plotter
     :cairo_plotter(xw,yw),
      L(tl) 
   {}
+  tree_plotter(const tree_layout& tl,double xw, double yw,double fs)
+    :cairo_plotter(xw,yw,fs),
+     L(tl) 
+  {}
 };
 
 void tree_plotter::operator()(cairo_t* cr)
@@ -1027,7 +1051,7 @@ void tree_plotter::operator()(cairo_t* cr)
   cairo_select_font_face (cr, "Sans", 
 			  CAIRO_FONT_SLANT_NORMAL,
 			  CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size (cr, 10.0/scale);
+  cairo_set_font_size (cr, font_size()/scale);
   
   for(int l=0;l<L.T.n_leaves();l++)
   {  
@@ -1194,40 +1218,64 @@ struct graph_energy_function
   virtual double operator()(const graph_layout& GL) const=0;
   virtual double operator()(const graph_layout& GL, vector<point_position>&) const=0;
 
-  double node_node_repulsion(const graph_layout& GL,vector<point_position>& D,int n1,int n2, double C,int p=1) const;
+  double node_node_repulsion(const graph_layout& GL,vector<point_position>& D,int n1,int n2, double C) const;
   double node_node_attraction(const graph_layout& GL,vector<point_position>& D, int n1,int n2, double C, double l) const;
   double node_edge_attraction(const graph_layout& GL,vector<point_position>& D, int n1,int n2,int n3, double C) const;
 
   virtual ~graph_energy_function() {}
 };
 
-double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C,int p) const
+// In fr, (attractive) scaling factor is d*d/k, where k=sqrt(w*h/num_vertices)
+// In fr, (repulsive) scaling factor is k*k/d, where d=distance
+
+double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C) const
 {
+  const int p=1;
+
+  assert(n1 != n2);
+
+  // don't repel the ends of the branch that I'm attached to
+  if (GL.MC.connected(n1,n2) == 1) return 0;
+	
+  // don't repel nodes that wander over me, or that I wander to
+  if (GL.MC.connected(n1,n2) == 2 or GL.MC.connected(n2,n1) == 2) return 0;
+
+  C /= GL.MC.n_nodes();
+
+  // FIXME - also don't repel other nodes that wander over same branch.
+
   double x1 = GL.node_positions[n1].x;
   double y1 = GL.node_positions[n1].y;
 
   double x2 = GL.node_positions[n2].x;
   double y2 = GL.node_positions[n2].y;
 
-  double D2 = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
-  double D  = sqrt(D2);
+  double dx = x2 - x1;
+  double dy = y2 - y1;
+
+  double D = sqrt(dx*dx + dy*dy);
+
   double dL = abs(D - GL.node_radius[n1] - GL.node_radius[n2]);
 
+  if (dL < 1.0e-15) dL=1.0e-15;
   double E = C/pow(dL,p);
 
+  if (D < 1.0e-15) D=1.0e-15;
   double temp = C/(pow(dL,p+1)*D);
 
-  DEL[n1].x += (x2-x1)*temp;
-  DEL[n1].y += (y2-y1)*temp;
+  DEL[n1].x += dx*temp;
+  DEL[n1].y += dy*temp;
 
-  DEL[n2].x += (x1-x2)*temp;
-  DEL[n2].y += (y1-y2)*temp;
+  DEL[n2].x -= dx*temp;
+  DEL[n2].y -= dy*temp;
 
   return E;
 }
 
 double graph_energy_function::node_node_attraction(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C, double l) const
 {
+  assert(n1 != n2);
+
   double x1 = GL.node_positions[n1].x;
   double y1 = GL.node_positions[n1].y;
 
@@ -1240,6 +1288,7 @@ double graph_energy_function::node_node_attraction(const graph_layout& GL, vecto
 
   double E = C*dL*dL;
 
+  if (D < 1.0e-15) D=1.0e-15;
   double temp = 2.0*C*dL/D;
 
   DEL[n1].x += (x1-x2)*temp;
@@ -1288,6 +1337,8 @@ double distance_to_line_segment(const graph_layout& GL,int n1,int n2,int n3)
 // y1 = x1
 // y2 = x2 + t*(x3-x2)
 //  t = ...
+
+//FIXME - add target distance (currently assumed to be 0)?
 
 double graph_energy_function::node_edge_attraction(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2,int n3, double C) const
 {
@@ -1437,6 +1488,9 @@ double get_angle_derivative(double x11, double x12,
   double dL_dx32 = 0.5/L*(dA_dx32*B + dB_dx32*A);
 
   //----------------------------------------------------//
+
+  // FIXME: we can get SIGFPE when D==1
+  if (std::abs(D-1) < 1-0e-8) D=1.0-1.0e-8;
 
   da_dx11 = -1.0/sqrt(1-D*D) * (L*dH_dx11 - H*dL_dx11)/M;
   da_dx12 = -1.0/sqrt(1-D*D) * (L*dH_dx12 - H*dL_dx12)/M;
@@ -1661,7 +1715,7 @@ struct energy2: public graph_energy_function
     const unsigned n_nodes = MC.n_nodes();
 
     //--- check all edge pairs to see if they cross ---//
-    ublas::matrix<int> n_cross = crossed_nodes_matrix(GL);
+    //    ublas::matrix<int> n_cross = crossed_nodes_matrix(GL);
 
     //--------------- resize and zero D ---------------//
     if (D.size() != n_nodes) D.resize(n_nodes);
@@ -1673,6 +1727,7 @@ struct energy2: public graph_energy_function
     /// edge length energies (type 1)
     const double closest_fraction = 1.0;
 
+    // O(E)
     for(int e=0;e<GL.MC.edges.size();e++) 
     {
       int n1 = GL.MC.edges[e].from;
@@ -1737,26 +1792,11 @@ struct energy2: public graph_energy_function
     }
 
     /// node_distances
-    for(int i=0;i<GL.MC.n_nodes();i++)
-      for(int j=0;j<i;j++)
-      {
-	// don't repel the end of the branch that I'm attached to
-	if (GL.MC.connected(i,j) == 1) continue;
-
-	double w = repulsion_weight;
-
-	if (n_cross(i,j) and false) {
-	  E += node_node_attraction(GL, D, i, j, w, -1);
-	}
-	else {
-	  
-	  // don't repel nodes that wander over me, or that I wander to
-	  if (GL.MC.connected(i,j) == 2 or GL.MC.connected(j,i) == 2) w /= 10;
-
-	  E += node_node_repulsion(GL, D, i, j, w, 1);
-	}
-      }
-
+    // O(n*n)
+    for(int n1=0;n1<GL.MC.n_nodes();n1++) 
+      for(int n2=0;n2<n1;n2++) 
+	E += node_node_repulsion(GL, D, n1, n2, repulsion_weight);
+    
     // angular resolution
     if (angle_weight > 0)
     for(int i=0;i<GL.MC.n_nodes();i++) {
@@ -1877,22 +1917,141 @@ double max_delta(const vector<point_position>& p)
   return m;
 }
 
-graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/topological_sort.hpp>
+#include <boost/graph/kamada_kawai_spring_layout.hpp>
+#include <boost/graph/fruchterman_reingold.hpp>
+
+using namespace boost;
+
+typedef adjacency_list< vecS, vecS, bidirectionalS> Graph; 
+typedef graph_traits<Graph>::vertex_descriptor Vertex;
+typedef graph_traits<Graph>::edge_descriptor Edge_t;
+
+
+graph_layout kamada_kawai_layout(graph_layout GL)
+{
+  const MC_tree& MC = GL.MC;
+  Graph g(MC.n_nodes());
+
+  //------------ Construct the Graph --------------//
+  for(int i=0;i<MC.edges.size();i++) {
+    const mc_tree_edge& e = MC.edges[i];
+    add_edge(e.from, e.to, g);
+  }
+
+  //--------- Package position as property ---------//
+  typedef vector<point_position> PositionVec;
+  typedef iterator_property_map<PositionVec::iterator,
+                                property_map<Graph, vertex_index_t>::type>
+    PositionMap;
+
+  PositionMap position(GL.node_positions.begin(), get(vertex_index, g));
+
+  //--------- Package weights as property ---------//
+  vector<double> weights(num_edges(g));
+
+  typedef vector<double> WeightVec;
+  typedef iterator_property_map<WeightVec::iterator, 
+    property_map<Graph, edge_index_t>::type>
+    WeightMap;
+
+  WeightMap weight(weights.begin(), get(edge_index,g));
+
+  // kamada_kawai_spring_layout(g, position, weight, boost::side_length(1.0) );
+
+  return GL;
+}
+
+struct my_square_distance_attractive_force {
+  template<typename Graph, typename T>
+  T
+  operator()(typename graph_traits<Graph>::edge_descriptor,
+             T k,
+             T d,
+             const Graph&) const
+  {
+    k /= 10;
+    d -= k;
+    double temp = 100.0*d * d / k;
+    if (d < k) temp *= -1;
+    return temp;
+  }
+};
+
+
+#include <boost/graph/random_layout.hpp>
+#include <boost/random/linear_congruential.hpp>
+
+graph_layout fruchterman_reingold_layout(graph_layout GL, double width, double height)
+{
+  const MC_tree& MC = GL.MC;
+  Graph g(MC.n_nodes());
+
+  //------------ Construct the Graph --------------//
+  for(int i=0;i<MC.edges.size();i++) {
+    const mc_tree_edge& e = MC.edges[i];
+    add_edge(e.from, e.to, g);
+  }
+
+  //--------- Package position as property ---------//
+  typedef vector<point_position> PositionVec;
+  typedef iterator_property_map<PositionVec::iterator,
+                                property_map<Graph, vertex_index_t>::type>
+    PositionMap;
+
+  PositionMap position(GL.node_positions.begin(), get(vertex_index, g));
+
+  cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
+
+  //------------ Initial random layout ------------//
+  minstd_rand gen;
+  gen.seed(rng::get_random_seed());
+  random_graph_layout(g, position, -width/2, width/2, -height/2, height/2, gen);
+  cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
+
+  //------------ Final force-directed layout ------------//
+  //  width *= MC.n_branches()*100;
+  //  height *= MC.n_branches()*100;
+  width *= 100;
+  height *= 100;
+
+  PositionVec Displacements(num_vertices(g));
+  PositionMap displacements(Displacements.begin(), get(vertex_index, g));
+
+  fruchterman_reingold_force_directed_layout(g, position, width, height,
+					     my_square_distance_attractive_force(),
+					     square_distance_repulsive_force(),
+					     make_grid_force_pairs(width,height,position,g),
+					     linear_cooling<double>(1000),
+					     displacements
+					     );
+
+  cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
+
+  return GL;
+}
+
+void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
 {
   double T = 0;
   int successes=0;
 
   vector<point_position> D;
-  E(GL,D);
-  D = energy_derivative_2D(GL,E);
+  //  double E = E(GL,D);
 
-  double dt = E(GL,D)/dot(D,D);
+  double dt = 1;//E(GL,D)/dot(D,D);
 
-  for(int i=0;i<1000;i++) 
+  for(int i=0;i<n;i++) 
   {
     double E1 = E(GL,D);
     assert(E1 >= 0);
-    if (log_verbose) cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<endl;
+    if (log_verbose) 
+      cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<"   dt = "<<dt<<endl;
+
+    if (log_verbose)
+      cerr<<"  x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
 
     /*
     // check D versus D2
@@ -1905,8 +2064,19 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
 
     // problem with these equations is STIFFness (? and rotation?)
 
+
+    // Make a scaled version
+    vector<point_position> DD = D;
+    for(int i=0;i<DD.size();i++) 
+    {
+      double v = sqrt(DD[i].x*DD[i].x + DD[i].y*DD[i].y);
+      DD[i].x /= v;
+      DD[i].y /= v;
+    }
+
     vector<point_position> temp = GL.node_positions;
-    inc(GL.node_positions,-dt,D);
+    inc(GL.node_positions,-dt,DD);
+
     double E2 = E(GL);
     if (E2 > E1) {
       if (log_verbose) cerr<<"draw-tree:    rejecting  E = "<<E2<<endl;
@@ -1919,20 +2089,19 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
       successes++;
       if (successes>3) {
 	dt *= 2.0;
+	if (dt > 1.0) dt = 1.0;
 	successes=0;
       }
 
       // actually, we need an estimate of the CURVATURE to know when to stop!
       if (max_delta(GL.node_positions)/min(GL.x_width(),GL.y_width()) < 0.00001)
-      	return GL;
+	return;
 
       // (how to go from 'energy near bottom' to 'position near position at lowest energy',
       //  which is what really matters?
 
     }
   }
-
-  return GL;
 }
 
 // FIXME: construct child_nodes
@@ -1993,10 +2162,12 @@ vector< cloud > get_clouds(const MC_tree& MC)
 {
   vector<cloud> clouds;
 
+  // Consider each (ordered) branch...
   for(int b=0;b<MC.partitions.size();b++)
   {
     vector<int> child_branches;
 
+    // ... to see what (unordered) branches it wanders over.
     for(int i=0;i<MC.branch_order.size();i++)
     {
       int b2 = MC.branch_order[i];
@@ -2006,14 +2177,24 @@ vector< cloud > get_clouds(const MC_tree& MC)
 
     if (not child_branches.size()) continue;
 
+    //How many branches does this branch wander over?
+    //cerr<<"size = "<<child_branches.size()<<endl;
+
+    // Search the clouds found so far... which should be in order of increasing size
     int which = -1;
     int larger = -1;
     for(int i=0;i<clouds.size();i++) {
       if (clouds[i].child_branches == child_branches)
 	which = i;
-      if (clouds[i].size() > child_branches.size())
+
+      // select the FIRST (and therefore SMALLEST) cloud that is larger than this one.
+      if (clouds[i].size() > child_branches.size() and larger == -1)
 	larger = i;
     }
+
+    //The first clouds that is larger than this one
+    //cerr<<"larger = "<<larger<<endl;
+    //cerr<<endl;
 
     // NOTE: clouds should be sorted by size.
     if (which == -1)
@@ -2094,6 +2275,15 @@ vector< cloud > get_clouds(const MC_tree& MC)
 }
 
 
+int find_cloud(const vector<cloud>& clouds,int b)
+{
+  for(int c=0;c<clouds.size();c++)
+    if (includes(clouds[c].parent_branches,b))
+      return c;
+
+  return -1;
+}
+
 struct graph_plotter: public cairo_plotter
 {
   graph_layout L;
@@ -2101,20 +2291,114 @@ struct graph_plotter: public cairo_plotter
 
   bool draw_clouds;
 
-  graph_plotter(const graph_layout& gl,double xw,double yw)
-    :cairo_plotter(xw,yw),
+  bool draw_type_2_edges;
+
+  graph_plotter(const graph_layout& gl,double xw,double yw, double fs)
+    :cairo_plotter(xw,yw,fs),
      L(gl),
-     draw_clouds(false)
+    draw_clouds(false),
+    draw_type_2_edges(true)
   {}
 };
+
+void cairo_make_cloud_branch_path(cairo_t* cr,int b, const double W,const graph_layout& GL,
+				  vector<int>& nodes_visited)
+{
+  int n1 = GL.MC.edges[b].from;
+  int n2 = GL.MC.edges[b].to;
+
+  nodes_visited[n1]++;
+  nodes_visited[n2]++;
+
+  double x1 = GL.node_positions[n1].x;
+  double y1 = GL.node_positions[n1].y;
+
+  double x2 = GL.node_positions[n2].x;
+  double y2 = GL.node_positions[n2].y;
+
+  double dx = x2-x1;
+  double dy = y2-y1;
+
+  double L = sqrt(dx*dx + dy*dy);
+
+  cairo_save(cr);
+  cairo_translate(cr,x1,y1);
+
+  // begins a new sub-path (e.g. a discontinuous part of the path
+  cairo_move_to(cr,0,0);
+  cairo_rotate(cr, atan2(dy,dx));
+    
+  cairo_move_to(cr, 0, 0.5*W);
+  cairo_line_to(cr, L, 0.5*W);
+  //	    cairo_line_to(cr, 1, -0.5);
+  cairo_arc_negative(cr, L, 0.0, 0.5*W, M_PI/2.0,-M_PI/2.0);
+  cairo_line_to(cr, 0, -0.5*W);
+  //	    cairo_line_to(cr, 0, 0.5*W);
+  cairo_arc_negative(cr, 0.0 , 0.0, 0.5*W, -M_PI/2.0,M_PI/2.0);
+  
+  cairo_close_path(cr);
+  
+  cairo_restore(cr);
+}
+
+// Create a cairo "path" (possibly with disconnected components -- "sub-paths") 
+//   reprenting the cloud @C.
+// This path can then be stroked, or filled, or used to clip, or whatever.
+void cairo_make_cloud_path(cairo_t* cr,const cloud& C,const double line_width, const graph_layout& L) 
+{
+  int depth = C.depth;
+
+  double W = line_width*(4+depth*2);
+
+  vector<int> nodes_visited(L.node_positions.size(),0);
+
+  for(int i=0;i<C.child_branches.size();i++) 
+  {
+    int b = C.child_branches[i];
+    cairo_make_cloud_branch_path(cr,b,W,L,nodes_visited);
+  }
+
+  for(int n=0;n<nodes_visited.size();n++) 
+  {
+    if (nodes_visited[n] and (nodes_visited[n]%2==0)) 
+    {
+      //      cerr<<"node "<<n<<": visited "<<nodes_visited[n]<<" times."<<endl;
+      double x = L.node_positions[n].x;
+      double y = L.node_positions[n].y;
+
+      cairo_new_sub_path(cr);
+      cairo_arc(cr, x, y, 0.5*W, 0, 2*M_PI);    
+      cairo_close_path(cr);
+    }
+  }
+
+}
+
+void cairo_add_clip_extents_as_path(cairo_t* cr)
+{
+  double x1;
+  double y1;
+  double x2;
+  double y2;
+
+  cairo_clip_extents (cr, &x1, &y1, &x2, &y2);
+
+  //  cerr<<"clip extents ("<<x1<<","<<y1<<") - ("<<x2<<","<<y2<<")\n";
+
+  cairo_move_to(cr,x1,y1);
+  cairo_line_to(cr,x2,y1);
+  cairo_line_to(cr,x2,y2);
+  cairo_line_to(cr,x1,y2);
+  cairo_close_path(cr);
+}
 
 void graph_plotter::operator()(cairo_t* cr)
 {
   vector<bool> e_cross_v = edge_crossing_vector(L);
 
-  ublas::matrix<int> n_cross = crossed_nodes_matrix(L);
+  //  ublas::matrix<int> n_cross = crossed_nodes_matrix(L);
 
-  vector<bool> n_cross_v = crossed_nodes_vector(L);
+  //  vector<bool> n_cross_v = crossed_nodes_vector(L);
 
   double xc = 0.5*(L.xmin() + L.xmax());
   double yc = 0.5*(L.ymin() + L.ymax());
@@ -2142,11 +2426,13 @@ void graph_plotter::operator()(cairo_t* cr)
   const double dashes[] = {3.0*line_width, 3.0*line_width};
   cairo_set_line_width(cr, line_width);
 
-  if (draw_clouds) {
-    vector<cloud> clouds = get_clouds(L.MC);
+  vector<cloud> clouds = get_clouds(L.MC);
+  if (draw_clouds)
+  {
     if (log_verbose) cerr<<"draw-tree: Got "<<clouds.size()<<" clouds.\n";
     
-    for(int c=clouds.size()-1;c>=0;c--) {
+    for(int c=clouds.size()-1;c>=0;c--)
+    {
       if (log_verbose) cerr<<"draw-tree: "<<c+1<<":  depth = "<<clouds[c].depth<<"   size = "<<clouds[c].size()<<"\n";
       int D = clouds[c].depth;
       int C = clouds[c].color;
@@ -2159,7 +2445,7 @@ void graph_plotter::operator()(cairo_t* cr)
 	for(int i=0;i<clouds[c].child_nodes.size();i++)
 	  cout<<"draw-tree:   node : "<<clouds[c].child_nodes[i]<<endl;
       }
-      for(int i=0;i<clouds[c].size();i++) 
+      for(int i=0;i<clouds[c].size();i++)
       {
 	int e = clouds[c].child_branches[i];
 	if (log_verbose) cerr<<"draw-tree:   edge : "<<e<<"\n";
@@ -2180,15 +2466,21 @@ void graph_plotter::operator()(cairo_t* cr)
 	  cairo_move_to (cr, x1, y1);
 	  cairo_line_to (cr, x2, y2);
 	  
-	  double L = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
-	  cairo_set_line_width(cr, L*(0.50+D/5.0));
+	  //	  double L = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+	  cairo_set_line_width(cr, line_width*(4+D*2) );
 	  
 	  if (C == 0)
-	    cairo_set_source_rgb (cr, 1 , 0.90, 0.90);
+	    cairo_set_source_rgb (cr, 1 , 0.80, 0.80);
 	  else if (C == 1)
-	    cairo_set_source_rgb (cr, 0.90 , 0.90, 1);
+	    cairo_set_source_rgb (cr, 0.80 , 0.80, 1);
 	  else if (C == 2)
-	    cairo_set_source_rgb (cr, 0.90 , 1, 0.90);
+	    cairo_set_source_rgb (cr, 0.80 , 1, 0.80);
+	  else if (C == 3)
+	    cairo_set_source_rgb (cr, 0.80 , 1, 1);
+	  else if (C == 4)
+	    cairo_set_source_rgb (cr, 1, 1, 0.80);
+	  else if (C == 5)
+	    cairo_set_source_rgb (cr, 1, 0.80, 1);
 	  
 	  cairo_stroke (cr);
 	}
@@ -2213,23 +2505,63 @@ void graph_plotter::operator()(cairo_t* cr)
 
     cairo_save(cr); 
     {
-      cairo_move_to (cr, x1, y1);
-      cairo_line_to (cr, x2, y2);
-
-      if (t == 1) {
+      if (t == 1) 
+      {
 	if (L.MC.partitions[b].full())
 	  cairo_set_source_rgb (cr, 0, 0 ,0);
 	else
 	  cairo_set_source_rgb (cr, 0.3, 1.0 ,0.3);
+
+	// pointing the other way
+	int b2 = L.MC.reverse(b);
+
+	int c1 = find_cloud(clouds,b);
+	int c2 = find_cloud(clouds,b2);
+
+	//	cairo_reset_clip(cr);
+
+	/// This is a counter-clockwise path...
+
+	if (c1 != -1 or c2 != -1 and draw_clouds and not draw_type_2_edges) 
+	{
+	  /*
+	  cairo_save(cr);
+	  cairo_make_cloud_path(cr, clouds[c1], line_width,L);
+
+	  cairo_set_source_rgb (cr, 0 , 0, 1);
+	  cairo_set_line_width(cr, line_width*2);
+	  //	  cairo_set_dash (cr, dashes, 2, 0.0);
+	  cairo_stroke(cr);
+	  cairo_restore(cr);
+	  */
+
+	  // so this must be clockwise, in order to work?
+	  cairo_add_clip_extents_as_path(cr);
+
+	  if (c1 != -1)
+	    cairo_make_cloud_path(cr, clouds[c1], line_width,L);
+
+	  if (c2 != -1)
+	    cairo_make_cloud_path(cr, clouds[c2], line_width,L);
+
+	  cairo_clip(cr);
+	}
+	
+	// Um, but BOTH ends might wander!
+	// clip to all the ONE cloud that we wander over
       }
       else {
 	cairo_set_line_width(cr, line_width/2.0);
 	cairo_set_dash (cr, dashes, 2, 0.0);
       }
-      if (e_cross_v[e] and false)
+      if (false) // if (e_cross_v[e])
 	cairo_set_source_rgb (cr, 1 , 0, 0);
       
-      cairo_stroke (cr);
+      cairo_move_to (cr, x1, y1);
+      cairo_line_to (cr, x2, y2);
+
+      if (t==1 or draw_type_2_edges)
+	cairo_stroke (cr);
     }
     cairo_restore(cr);
   }
@@ -2258,7 +2590,7 @@ void graph_plotter::operator()(cairo_t* cr)
     }
 
     cairo_save(cr);
-    if (n_cross_v[n] and false) {
+    if (false) { // if (n_cross_v[n])
       //      cerr<<"n_cross: "<<n<<endl;
       double R = 0.001;
       cairo_arc(cr, x, y, R, 0.0, 2.0 * M_PI);
@@ -2276,7 +2608,7 @@ void graph_plotter::operator()(cairo_t* cr)
   cairo_select_font_face (cr, "Sans", 
 			    CAIRO_FONT_SLANT_NORMAL,
 			    CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size (cr, 10.0/scale);
+  cairo_set_font_size (cr, font_size()/scale);
 
   for(int l=0;l<L.MC.n_leaves();l++)
   {  
@@ -2334,7 +2666,7 @@ void draw_graph(const MC_tree_with_lengths& T,const string& name)
   // edges
   for(int i=0;i<T.edges.size();i++) 
   {
-    const edge& e = T.edges[i];
+    const mc_tree_edge& e = T.edges[i];
     cout<<"      N"<<e.from<<" -> N"<<e.to;
     int b = e.partition;
 
@@ -2540,6 +2872,10 @@ MC_tree_with_lengths collapse_nodes(const MC_tree_with_lengths& MC1)
 int main(int argc,char* argv[]) 
 {
   try {
+#if defined(HAVE_FENV_H) && !defined(NDEBUG)
+    feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+#endif
+
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
@@ -2554,6 +2890,7 @@ int main(int argc,char* argv[])
     
     double xw = args["width"].as<double>();
     double yw = args["height"].as<double>();
+    double font_size = args["font-size"].as<double>();
 
     string output = args["output"].as<string>();
 
@@ -2565,6 +2902,10 @@ int main(int argc,char* argv[])
     // FIXME! - load a MF/MC tree w/ no length information
     // FIX name collision!
     MC_tree_with_lengths MC = get_MC_tree_with_lengths(filename);
+    if (log_verbose) {
+      cerr<<"score = "<<MC.score()<<"    "<<double(MC.score())/MC.n_leaves()<<" / "<<MC.n_leaves()-3<<" branches\n";
+    }
+
     if (args.count("full"))
       MC = collapse_MC_tree(MC);
 
@@ -2624,7 +2965,7 @@ int main(int argc,char* argv[])
     {
       tree_layout L = equal_angle_layout(MC);
       L.rotate_for_aspect_ratio(xw,yw);
-      tree_plotter tp(L, xw, yw);
+      tree_plotter tp(L, xw, yw, font_size);
 
       string filename = name+"-tree";
       if (args.count("out"))
@@ -2637,7 +2978,7 @@ int main(int argc,char* argv[])
     {
       tree_layout L = equal_daylight_layout(MC);
       L.rotate_for_aspect_ratio(xw,yw);
-      tree_plotter tp(L, xw, yw);
+      tree_plotter tp(L, xw, yw, font_size);
 
       string filename = name+"-tree";
       if (args.count("out"))
@@ -2646,38 +2987,83 @@ int main(int argc,char* argv[])
       draw(filename,output,tp);	
       exit(0);
     }
-
-    
-
-    // lay out as a graph
-    graph_layout L2 = layout_on_circle(MC,2);
-    graph_layout L3 = L2;
-
-    int n_iterations = args["iterations"].as<int>();
-    for(int i=0;i<n_iterations;i++) {
-      L3 = energy_layout(L3,energy2(1,10000000,2,0));
-      L3.rotate_for_aspect_ratio(xw,yw);
-      graph_plotter gp(L3, xw, yw);
-
-      if (args.count("draw-clouds"))
-	gp.draw_clouds = true;
+    else if (args["layout"].as<string>() == "fr")
+    {
+      graph_layout L = layout_on_circle(MC,2);
+      L = fruchterman_reingold_layout(L,xw,yw);
 
       string filename = name+"-mctree";
       if (args.count("out"))
 	filename = args["out"].as<string>();
 
+      graph_plotter gp(L, xw, yw, font_size);
+      draw(filename,output,gp);
+      exit(0);
+    }
+    
+    
+    
+    // lay out as a graph
+    graph_layout L2 = layout_on_circle(MC,2);
+    graph_layout L3 = L2;
+
+
+    double length_weight = 10000000;
+
+    int n_iterations = args["iterations"].as<int>();
+    /*
+    for(int i=0;i<10;i++) {
+      double w = length_weight/100*double(i)/10;
+      L3 = energy_layout(L3,energy2(1,w,1,0),1000);
+    }
+    */
+
+    double stretchy_weight = 1.0;
+    if (args.count("draw-clouds") and args["draw-clouds"].as<string>() == "only") {
+      stretchy_weight = 0.1;
+
+    }
+
+
+    // FIXME - the repulsion should actually depend on the number of nodes!
+    energy_layout(L3,energy2(1,1000,stretchy_weight,0),400);
+    energy_layout(L3,energy2(1,10000,stretchy_weight,0),400);
+    energy_layout(L3,energy2(1,100000,stretchy_weight,0),400);
+    energy_layout(L3,energy2(1,1000000,stretchy_weight,0),800);
+
+    for(int i=0;i<n_iterations;i++) 
+    {
+      energy_layout(L3,energy2(1,length_weight,stretchy_weight,0));
+      L3.rotate_for_aspect_ratio(xw,yw);
+
+      graph_plotter gp(L3, xw, yw, font_size);
+
+      if (args.count("draw-clouds")) {
+	gp.draw_clouds = true;
+	if (args["draw-clouds"].as<string>() == "only")
+	  gp.draw_type_2_edges = false;
+      }
+      
+      string filename = name+"-mctree";
+      if (args.count("out"))
+	filename = args["out"].as<string>();
+      
       draw(filename,output,gp);
     }
 
     // improve angular resolution
     int a_iterations = args["angle_iterations"].as<int>();
     for(int i=0;i<a_iterations;i++) {
-      L3 = energy_layout(L3,energy2(1,10000000,2,50));
+      energy_layout(L3,energy2(1,10000000,0.01,50));
       L3.rotate_for_aspect_ratio(xw,yw);
-      graph_plotter gp(L3, xw, yw);
+      graph_plotter gp(L3, xw, yw, font_size);
 
-      if (args.count("draw-clouds"))
+      if (args.count("draw-clouds")) {
 	gp.draw_clouds = true;
+
+	if (args["draw-clouds"].as<string>() == "only")
+	  gp.draw_type_2_edges = false;
+      }
 
       string filename = name+"-mctree";
       if (args.count("out"))
@@ -2692,3 +3078,39 @@ int main(int argc,char* argv[])
   }
   return 0;
 }
+
+
+/*
+
+Drawing cloud/range representations.
+
+1. We have a collection of ranges R[i].
+2. Some branches connect TO THE RANGES instead of to nodes.
+3. All ranges that share a node must have a different color.
+4. Ranges must be ordered -> this ordering is used in drawing to determine
+                             which ranges are drawn on top of other ranges
+			     at nodes and on edges.
+   (a) Q:Do we need to have (R[i] in R[j] -> R[i] < R[j])?
+       A?: Well... if 
+
+Alternatives for drawing:
+(a) At nodes, clouds may have changed widths in order to not obscure each other.
+(b)  ... OR they could be transparent to some degree. (widths from branches)
+(c)  ....OR they could just obscure each other. (widths from branches)
+
+(a) We could also just draw branches as multiple adjacent/parallel lines to indicate
+    the ranges that include each branch. 
+    - black -> no ranges
+    - red -> green
+
+    Thus, the drawing has no nesting of ranges.
+
+(b) Cloud representation:
+    - allows (?requires) nesting of ranges.
+
+Alternatives for layout:
+(a) Resolve to MF tree. (Specifies attatchment points at existing nodes)
+(b) Resolve to MF tree, but allow attachment points in the middle of branches.
+    (b1) Require the new branch-pieces to be parallel.
+
+ */

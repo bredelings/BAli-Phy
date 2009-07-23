@@ -2,7 +2,6 @@
 #define TWOWAY_H
 
 #include <vector>
-#include <valarray>
 #include "alignment.H"
 #include "tree.H"
 
