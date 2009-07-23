@@ -180,12 +180,12 @@ vector<vector<int> > get_type_sequences(const alignment& A, const TransducerInde
   
   for(int i=0;i<sequences.size();i++)
   {
+    sequences[i].reserve(A.length()+2);
     sequences[i].push_back(0);
-    sequences[i].reserve(A.length());
     for(int j=0;j<A.length();j++)
       if (A.character(j,i))
-	sequences[i].push_back(type_note(j,0));
-    sequences[i].push_back(T.n_letters());
+	sequences[i].push_back(1+type_note(j,0));
+    sequences[i].push_back(T.n_letters()+1);
   }
 
   return sequences;
