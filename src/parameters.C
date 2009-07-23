@@ -507,7 +507,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
-  add_parameter("mu", 0.1);
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 }
