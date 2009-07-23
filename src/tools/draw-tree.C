@@ -4,6 +4,11 @@
 #include <vector>
 #include <fstream>
 
+// FIXME - Add a command-line option to turn on clouds.
+//       - Actually draw arrows on type 2 edges.
+//       - Figure out how to use boost's Kamada-Kawai layout.
+//       - Change the coloring algorithm to find conflicts based on shared NODES.
+
 #include <cairo.h>
 #include <cairo-ps.h>
 #include <cairo-pdf.h>
@@ -112,6 +117,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("angle_iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm with small-angle penalties")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
+    ("draw-clouds","Draw wandering-ranges in MC trees as clouds.")
     ("seed", value<unsigned long>(),"Random seed")
     ;
   
@@ -463,6 +469,7 @@ void common_layout::rotate_for_aspect_ratio(double xw,double yw)
   }
   rotate(angle,xc,yc);
 }
+
 
 
 struct tree_layout: public common_layout
@@ -879,6 +886,49 @@ tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC)
 
   return equal_daylight_layout(MF,node_radius);
 }
+
+
+vector<int> walk_tree(const tree_layout& TL, const vector<int>& edges)
+{
+  vector<int> edges_order;
+
+  int e = edges[0];
+  
+  do {
+
+    edges_order.push_back(e);
+
+    double A0 = get_angle(TL,e);
+
+    vector<const_branchview> children;
+    append(TL.T.directed_branch(e).branches_after(),children);
+
+    if (children.size()) {
+      vector<double> angles(children.size());
+      for(int i=0;i<children.size();i++)
+	angles[i] = circular_minus(get_angle(TL,children[i]), A0);
+
+      int nexti = argmin(angles);
+      e = children[nexti];
+    }
+    else 
+      e = TL.T.directed_branch(e).reverse();
+
+    
+  } while (e != edges[0]);
+
+  return edges_order;
+}
+
+vector<int> walk_tree(const tree_layout& TL)
+{
+  vector<int> edges;
+  for(int i=0;i<TL.T.n_branches();i++)
+    edges.push_back(i);
+
+  return walk_tree(TL,edges);
+}
+
 
 
 double get_text_length(cairo_t* cr, const string& s)
@@ -1891,14 +1941,176 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
   return GL;
 }
 
+// FIXME: construct child_nodes
+// FIXME: construct color so that no clouds with overlapping child nodes have the same color.
+//        Algorithm: Welsh and Powell
+//                   1. Sort clouds by number of neighbors
+//                   2. Color with smallest color that is unused by neighbors.
+
+struct cloud 
+{
+  vector<int> child_nodes;     // FIXME - compute child nodes!
+
+  vector<int> child_branches;  // These UNDIRECTED branches are wandered over.
+
+  vector<int> parent_branches; // These DIRECTED branches wander DIRECTLY over this cloud;
+
+  int depth;
+
+  int color;
+
+  vector<int> neighbors;
+
+  int degree() const { return neighbors.size();}
+
+  int size() const {return child_branches.size();}
+
+  cloud():depth(0) {}
+  cloud(const vector<int>& v): child_branches(v),depth(0),color(-1) {}
+  cloud(const vector<int>& v,int p): child_branches(v),parent_branches(1,p),depth(0) {}
+};
+
+bool overlap(const vector<int>& v1, const vector<int>& v2)
+{
+  for(int i=0;i<v1.size();i++)
+    for(int j=0;j<v2.size();j++)
+      if (v1[i] == v2[j])
+	return true;
+  return false;
+}
+
+bool overlap(const cloud& c1, const cloud& c2)
+{
+  return overlap(c1.child_branches, c2.child_branches);
+}
+
+
+struct degree_order
+{
+  const vector<cloud>& clouds;
+  bool operator()(int i,int j) const {
+    return clouds[i].degree() > clouds[j].degree();
+  }
+
+  degree_order(const vector<cloud>& v):clouds(v) {}
+};
+
+vector< cloud > get_clouds(const MC_tree& MC)
+{
+  vector<cloud> clouds;
+
+  for(int b=0;b<MC.partitions.size();b++)
+  {
+    vector<int> child_branches;
+
+    for(int i=0;i<MC.branch_order.size();i++)
+    {
+      int b2 = MC.branch_order[i];
+      if (MC.directly_wanders_over(b,b2))
+	child_branches.push_back(i);
+    }
+
+    if (not child_branches.size()) continue;
+
+    int which = -1;
+    int larger = -1;
+    for(int i=0;i<clouds.size();i++) {
+      if (clouds[i].child_branches == child_branches)
+	which = i;
+      if (clouds[i].size() > child_branches.size())
+	larger = i;
+    }
+
+    // NOTE: clouds should be sorted by size.
+    if (which == -1)
+    { 
+      cloud C(child_branches,b);
+
+      if (larger == -1)  	// add new cloud at end
+	clouds.push_back(C);
+      else                      // insert new cloud before larger cloud
+	clouds.insert(clouds.begin()+larger,C);
+    }
+    else // add to parent list of existing cloud
+      clouds[which].parent_branches.push_back(b);
+  }  
+
+  // Add branch i to consistent 0:i-1 other branches
+  for(int i=0;i<clouds.size();i++)
+    for(int j=0;j<i;j++)
+      if (overlap(clouds[i],clouds[j]))
+	clouds[i].depth = clouds[j].depth + 1;
+
+
+  // Find child nodes
+  for(int i=0;i<clouds.size();i++)
+  {
+    for(int j=0;j<clouds[i].child_branches.size();j++)
+    {
+      int b = clouds[i].child_branches[j];
+
+      int n1 = MC.edges[b].from;
+      int n2 = MC.edges[b].to;
+
+      if (not includes(clouds[i].child_nodes,n1))
+	clouds[i].child_nodes.push_back(n1);
+      if (not includes(clouds[i].child_nodes,n2))
+	clouds[i].child_nodes.push_back(n2);
+    }
+  }
+
+  // Find neighbors (clouds that cannot have the same color)
+  for(int i=0;i<clouds.size();i++)
+    for(int j=0;j<i;j++) 
+      if (overlap(clouds[i].child_nodes, clouds[j].child_nodes))
+      {
+	clouds[i].neighbors.push_back(j);
+	clouds[j].neighbors.push_back(i);
+      }
+
+
+  // Sort list to have decreasing number of neighbors
+  vector<int> order = iota<int>(clouds.size());
+
+  degree_order D(clouds);
+
+  std::sort(order.begin(), order.end(), D);
+
+  // Color nodes to have different colors than all their neighbors.
+  for(int i=0;i<order.size();i++) 
+  {
+    cloud& c = clouds[order[i]];
+
+    int color = -1;
+    while(1)
+    {
+      color++;
+      bool ok = true;
+      for(int j=0;j<c.neighbors.size() and ok;j++)
+	if (clouds[c.neighbors[j]].color == color)
+	  ok = false;
+      if (ok) break;
+    }
+
+    c.color = color;
+  }
+
+
+  return clouds;
+}
+
+
 struct graph_plotter: public cairo_plotter
 {
   graph_layout L;
   void operator()(cairo_t*);
 
+  bool draw_clouds;
+
   graph_plotter(const graph_layout& gl,double xw,double yw)
     :cairo_plotter(xw,yw),
-     L(gl)
+     L(gl),
+     draw_clouds(false)
   {}
 };
 
@@ -1936,6 +2148,58 @@ void graph_plotter::operator()(cairo_t* cr)
   const double dashes[] = {3.0*line_width, 3.0*line_width};
   cairo_set_line_width(cr, line_width);
 
+  if (draw_clouds) {
+    vector<cloud> clouds = get_clouds(L.MC);
+    cerr<<"Got "<<clouds.size()<<" clouds.\n";
+    
+    for(int c=clouds.size()-1;c>=0;c--) {
+      cerr<<c+1<<":  depth = "<<clouds[c].depth<<"   size = "<<clouds[c].size()<<"\n";
+      int D = clouds[c].depth;
+      int C = clouds[c].color;
+      cerr<<" degree : "<<clouds[c].degree()<<endl;
+      cerr<<" color  : "<<clouds[c].color<<endl;
+      cerr<<"     #b : "<<clouds[c].child_branches.size()<<endl;
+      cerr<<"     #n : "<<clouds[c].child_nodes.size()<<endl;
+      for(int i=0;i<clouds[c].child_nodes.size();i++)
+	cout<<"   node : "<<clouds[c].child_nodes[i]<<endl;
+      for(int i=0;i<clouds[c].size();i++) 
+      {
+	int e = clouds[c].child_branches[i];
+	cerr<<"   edge : "<<e<<"\n";
+	
+	int n1 = L.MC.edges[e].from;
+	int n2 = L.MC.edges[e].to;
+	int t =  L.MC.edges[e].type;
+	int b =  L.MC.edges[e].partition;
+	
+	double x1 = L.node_positions[n1].x;
+	double y1 = L.node_positions[n1].y;
+	
+	double x2 = L.node_positions[n2].x;
+	double y2 = L.node_positions[n2].y;
+	cairo_save(cr); 
+	{
+	  cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND); 
+	  cairo_move_to (cr, x1, y1);
+	  cairo_line_to (cr, x2, y2);
+	  
+	  double L = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+	  cairo_set_line_width(cr, L*(0.50+D/5.0));
+	  
+	  if (C == 0)
+	    cairo_set_source_rgb (cr, 1 , 0.90, 0.90);
+	  else if (C == 1)
+	    cairo_set_source_rgb (cr, 0.90 , 0.90, 1);
+	  else if (C == 2)
+	    cairo_set_source_rgb (cr, 0.90 , 1, 0.90);
+	  
+	  cairo_stroke (cr);
+	}
+	cairo_restore(cr);
+      }
+    }
+  }
+  
   // draw the edges
   for(int e=0;e<L.MC.edges.size();e++) 
   {
@@ -2305,6 +2569,7 @@ int main(int argc,char* argv[])
 
     string output = args["output"].as<string>();
 
+
     //-------- Load MC Tree and lengths -----//
     string filename = args["file"].as<string>();
     string name = get_graph_name(filename);
@@ -2406,6 +2671,9 @@ int main(int argc,char* argv[])
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw);
 
+      if (args.count("draw-clouds"))
+	gp.draw_clouds = true;
+
       string filename = name+"-mctree";
       if (args.count("out"))
 	filename = args["out"].as<string>();
@@ -2419,6 +2687,9 @@ int main(int argc,char* argv[])
       L3 = energy_layout(L3,energy2(1,10000000,2,50));
       L3.rotate_for_aspect_ratio(xw,yw);
       graph_plotter gp(L3, xw, yw);
+
+      if (args.count("draw-clouds"))
+	gp.draw_clouds = true;
 
       string filename = name+"-mctree";
       if (args.count("out"))

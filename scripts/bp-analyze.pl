@@ -195,6 +195,30 @@ sub get_imodel_indices()
     return [@imodel_indices];
 }
 
+sub get_alphabets()
+{
+    local *FILE;
+
+    open FILE, "1.out" or die "Can't open 1.out!";
+
+    my @alphabets = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /alphabet(.+) = (.+)/) {
+	    push @alphabets,$2;
+	}
+	if ($line =~ /alphabet = (.+)/) {
+	    push @alphabets,$1;
+	}
+
+	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    return @alphabets;
+}
+
 sub get_n_lines($)
 {
     my $filename = shift;
@@ -246,6 +270,54 @@ sub record_burnin
     open BURN,">Results/burnin";
     print BURN $burnin;
     close BURN;
+}
+
+sub get_alignment_info 
+{
+    my $filename = shift;
+    open INFO,"alignment-info $filename 2>/dev/null |";
+
+    my %features = ();
+
+    my $indels = 0;
+    while(my $line=<INFO>) {
+	if ($line =~ /Alignment: (.+) columns of (.+) sequences/) 
+	{
+	    $features{"length"} = $1;
+	    $features{"n_sequences"} = $2;
+	}
+	if ($line =~ /sequence lengths: ([^ ]+)-([^ ]+)/) {
+	    $features{"min_length"} = $1;
+	    $features{"max_length"} = $2;
+	}
+	if ($line =~ m|w/  indels|) {
+	    $indels = 1;
+	}
+	next if ($indels == 0);
+
+	if ($line =~ / const.: ([^ ]+) \(([^ ]+)\%\)/) {
+	    $features{"n_const"} = $1;
+	    $features{"p_const"} = $2;
+	}
+	if ($line =~ /non-const.: ([^ ]+) \(([^ ]+)\%\)/) {
+	    $features{"n_non-const"} = $1;
+	    $features{"p_non-const"} = $2;
+	}
+	if ($line =~ /inform.: ([^ ]+) \(([^ ]+)\%\)/) {
+	    $features{"n_inform"} = $1;
+	    $features{"p_inform"} = $2;
+	}
+	if ($line =~ / ([^ ]+)% minimum sequence identity/){
+	    $features{"min_p_identity"} = $1;
+	}
+    }
+    return {%features};
+}
+
+sub tooltip
+{
+    my $text = shift;
+    return "<a title=\"$text\">?</a>";
 }
 
 #----------------------------- MAIN --------------------------#
@@ -312,6 +384,8 @@ if ($#imodel_indices == -1)
 	push @imodel_indices,0;
     }
 }
+
+my @alphabets = get_alphabets();
 
 die "I can't find sample file '1.out' - are you running this in the right directory?" if (! -e '1.out');
 
@@ -482,7 +556,8 @@ for(my $i=0;$i<$n_partitions;$i++)
     my $infile = "1.P$p.fastas";
 
     my $name = "P$p-max";
-    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
+    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
+	! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
 	`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta 2>/dev/null`;
     }
     push @alignments,$name;
@@ -520,18 +595,42 @@ for(my $i=0;$i<$n_partitions;$i++)
 print "Drawing alignments... ";
 for my $alignment (@alignments) 
 {
-    if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta")) {
+    if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta") ||
+	! more_recent_than("Results/$alignment.fasta","Results/c50.tree")) {
     `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta 2>/dev/null`;
     }
 
     if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
-	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
+	`alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
 
 	if ($?) {
-	    `alignment-draw Results/$alignment.fasta --no-legend --show-ruler --color-scheme=AA+contrast > Results/$alignment.html 2>/dev/null`;
+	    `alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html 2>/dev/null`;
 	}
     }
+}
 
+for my $alignment (@alignments) 
+{
+    my $p;
+    if ($alignment =~ /^P([^-]+)-/) {
+	$p=$1;
+    }
+    else {
+	next;
+    }
+
+    if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta"))
+    {
+	`alignments-diff Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown > Results/$alignment-diff.fasta`;
+    }
+
+    if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.fasta")) {
+	`alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment-diff.html 2>/dev/null`;
+
+	if ($?) {
+	    `alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment-diff.html 2>/dev/null`;
+	}
+    }
 }
 print "done.\n";
 
@@ -548,9 +647,9 @@ for my $alignment (@AU_alignments)
 	`cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob 2>/dev/null`;
 	}
 	print "done.\n";
-	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null`;
+	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null`;
 	if ($?) {
-	`alignment-draw Results/$alignment.fasta --no-legend --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
+	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
 	}
     }
 }
@@ -709,9 +808,13 @@ EOF`;
 print "done\n";
 #------------------------- Print Index -----------------------#
 
+my $p1_features = get_alignment_info("Results/P1-initial.fasta");
+
+my $n_sequences = ${$p1_features}{"n_sequences"};
+
 open INDEX,">Results/index.html";
 
-my $title = "MCMC Post-hoc Analysis";
+my $title = "MCMC Post-hoc Analysis: $n_sequences sequences";
 
 print INDEX '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -733,6 +836,9 @@ print INDEX
       h3 {font-size: 110%; margin-top: 0.3em ; margin-bottom: 0.2em}
 
       ul {margin-top: 0.4em;}
+
+      *[title] {cursor:help;}
+      a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
     </style>';
 
 
@@ -746,12 +852,17 @@ print INDEX "<p><b>subdirectory:</b> $subdir</p>\n" if (defined($subdir));
 
 print INDEX "<h2 name=\"data\">Data</h2>\n";
 print INDEX "<table class=\"backlit\">\n";
-print INDEX "<tr><th>Partition</th><th>Sequences</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
+print INDEX "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
 for(my $p=0;$p<=$#partitions;$p++) 
 {
     print INDEX "<tr>\n";
     print INDEX " <td>".($p+1)."</td>\n";
     print INDEX " <td>$partitions[$p]</td>\n";
+    my $features = get_alignment_info("Results/P".($p+1)."-initial.fasta");
+    my $min = $features->{'min_length'};
+    my $max = $features->{'max_length'};
+    my $alphabet = $alphabets[$p];
+    print INDEX " <td>$min - $max $alphabet</td>\n";
     my $smodel = sanitize_smodel( $smodels[$smodel_indices[$p]] );
     print INDEX " <td>$smodel</td>\n";
     my $imodel ="none";
@@ -780,7 +891,7 @@ print INDEX "  </head>\n  <body>\n";
 
 print INDEX '<table style="width:100%;"><tr>'."\n";
 print INDEX "<td>Partition support: <a href=\"consensus\">Summary</a></td>\n";
-print INDEX "<td>Partition support graph: <a href=\"c-levels.svg\">SVG</a></td>\n";
+print INDEX "<td><span title=\"How many partitions are supported at each level of Posterior Log Odds (LOD)?\">Partition support graph:</span> <a href=\"c-levels.svg\">SVG</a></td>\n";
 print INDEX "</tr></table>\n";
 
 print INDEX "<table>\n";
@@ -822,15 +933,35 @@ for(my $i=0;$i<$n_partitions;$i++)
     my $p = $i+1;
     print INDEX "<h3>Partition $p</h3>\n";
     print INDEX "<table>\n";
-    for my $alignment (@alignments) 
+    print INDEX "<tr>\n";
+    print INDEX "<th></th>\n";
+    print INDEX "<th></th>\n";
+    print INDEX "<th></th>\n";
+    print INDEX "<th title=\"Comparison of this alignment (top) to the WPD alignment (bottom)\">Diff</th>\n";
+    print INDEX "<th></th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Percent identity of the most dissimilar sequences\">Min. %identity</th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of columns in the alignment\"># Sites</th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of invariant columns\">Constant</th>\n";
+    print INDEX "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of variant columns\">Variable</th>\n";
+    print INDEX "<th title=\"Number of parsiomny-informative columns.\">Parsimony-Informative</th>\n";
+    print INDEX "</tr>\n";
+    for my $alignment (@alignments)
     {
 	next if ($alignment !~ /^P$p-/);
 	my $name = $alignment_names{$alignment};
+	my $features = get_alignment_info("Results/$alignment.fasta");
+
 	print INDEX "<tr>\n";
 	print INDEX "<td>$name</td>\n";
 	print INDEX "<td><a href=\"$alignment.fasta\">FASTA</a></td>\n";
 	if (-f "Results/$alignment.html") {
 	    print INDEX "<td><a href=\"$alignment.html\">HTML</a></td>\n";
+	}
+	else {
+	    print INDEX "<td></td>\n";
+	}
+	if (-f "Results/$alignment-diff.html") {
+	    print INDEX "<td><a href=\"$alignment-diff.html\">Diff</a></td>\n";
 	}
 	else {
 	    print INDEX "<td></td>\n";
@@ -841,6 +972,11 @@ for(my $i=0;$i<$n_partitions;$i++)
 	else {
 	    print INDEX "<td></td>\n";
 	}
+	print INDEX "<td style=\"text-align: center\">${$features}{'min_p_identity'}%</td>\n";
+	print INDEX "<td style=\"text-align: center\">${$features}{'length'}</td>\n";
+	print INDEX "<td style=\"text-align: center\">${$features}{'n_const'} (${$features}{'p_const'}%)</td>\n";
+	print INDEX "<td style=\"text-align: center\">${$features}{'n_non-const'} (${$features}{'p_non-const'}%)</td>\n";
+	print INDEX "<td style=\"text-align: center\">${$features}{'n_inform'} (${$features}{'p_inform'}%)</td>\n";
 	print INDEX "</tr>\n";
     }
     print INDEX "</table>\n";
@@ -858,7 +994,7 @@ print INDEX "</ol>\n";
 print INDEX "<h2 name=\"parameters\">Scalar variables</h2>\n";
 
 print INDEX "<table>\n";
-print INDEX "<tr><th>Statistic</th><th>Median</th><th>95% BCI</th><th>ACT</th><th>Ne</th></tr>\n";
+print INDEX "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th></tr>\n";
 
 my @sne = sort {$a <=> $b} values(%Ne);
 my $min_Ne = $sne[0];
@@ -895,5 +1031,3 @@ print INDEX "</table>\n";
 
 print INDEX "  </body>\n";
 print INDEX "</html>\n";
-
-

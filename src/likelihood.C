@@ -150,12 +150,11 @@ efloat_t prior_HMM_nogiven(const data_partition& P)
 
 efloat_t prior_HMM_rootless_scale(const data_partition& P)
 {
-  const alignment& A = *P.A;
   const Tree& T = *P.T;
 
 #ifndef NDEBUG
   assert(P.has_IModel());
-  check_internal_nodes_connected(A,T);
+  check_internal_nodes_connected(*P.A,T);
 #endif
   
   efloat_t Pr = 1;

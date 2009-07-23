@@ -46,6 +46,10 @@ bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2,
 /// Is the alignment of un-ignored sequences in A1 and A2 the same?
 bool A_constant(alignment A1, alignment A2, const std::valarray<bool>& ignore);
 
+void check_names_unique(const alignment& A);
+
+bool names_are_unique(const alignment& A);
+
 /// Check that internal nodes don't have letters 
 void check_internal_sequences_composition(const alignment& A,int n_leaves);
 

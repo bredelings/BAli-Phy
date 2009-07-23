@@ -10,7 +10,7 @@ docdir = $(datadir)/doc/@PACKAGE@
 doc_DATA = scripts/GNUmakefile doc/README.xhtml doc/docbook.css # doc/README.pdf
 
 stuffdir = $(datadir)/@PACKAGE@/
-nobase_stuff_DATA = Data/wag.dat Data/wagstar.dat Data/jtt.dat Data/pam.dat \
+nobase_stuff_DATA = Data/WAG.dat Data/WAGSTAR.dat Data/JTT.dat Data/PAM.dat \
                 Data/standard-code.txt Data/mt-invert-code.txt \
 		Data/mt-protozoan-code.txt Data/mt-vert-code.txt \
 		Data/mt-yeast-code.txt

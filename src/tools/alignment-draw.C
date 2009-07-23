@@ -561,25 +561,25 @@ variables_map parse_cmd_line(int argc,char* argv[])
   general.add_options()
     ("help", "produce help message")
     ("align", value<string>(),"file with sequences and initial alignment")
-    ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+    ("alphabet",value<string>(),"Set to 'Codons' to prefer codon alphabets")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ;
   
   options_description output("Output");
   output.add_options()
-    ("no-legend","don't print a legend") 
-    ("show-ruler","print a ruler to show column numbers") 
-    ("column-colors","color-code column ticks by column certainty") 
+    ("legend","Print a legend showing how color-scheme indicates uncertainty.") 
+    ("show-ruler","Print a ruler to show column numbers") 
+    ("column-colors","Color-code column ticks by column certainty") 
     ("AU",value<string>(),"file with alignment uncertainties")
-    ("show-gaps",value<string>()->default_value("yes"),"show gaps") 
+    ("show-gaps",value<string>()->default_value("yes"),"Show gaps") 
     ("gaps-different",value<string>()->default_value("yes"),"Color gaps in grey.") 
-    ("width",value<int>(),"the number of columns per line")
-    ("start",value<int>(),"the first column to plot")
-    ("end",value<int>(),"the last column to plot")
+    ("width",value<int>(),"The number of columns per line")
+    ("start",value<int>(),"The first column to plot")
+    ("end",value<int>(),"The last column to plot")
     ("format",value<string>()->default_value("HTML"),"produce a plot in this format")
-    ("min",value<double>(),"minimum value of scale function")
-    ("max",value<double>(),"maximum value of scale function")
-    ("color-scheme",value<string>(),"include a length of how certainties map to colors")
+    ("min",value<double>(),"Minimum value of scale function")
+    ("max",value<double>(),"Maximum value of scale function")
+    ("color-scheme",value<string>(),"Include a length of how certainties map to colors")
     ("scale",value<string>()->default_value("LOD"),"scale for the uncertainties")
     ;
 
@@ -761,7 +761,7 @@ BODY {\n\
   <body>\n\n";
 
       //-------------------- Print a legend ------------------------//
-      if (not args.count("no-legend")) {
+      if (args.count("legend")) {
 	cout<<"\n<table class=\"legend\"><tr>\n";
 
 	cout<<"<td>";
