@@ -71,4 +71,6 @@ void sample_NNI_and_branch_lengths(Parameters&, MCMC::MoveStats&);
 
 std::vector<double> gamma_approx(const Parameters&, int b);
 
+void sample_alignment_rates(Parameters&, MCMC::MoveStats&);
+
 #endif

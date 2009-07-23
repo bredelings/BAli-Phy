@@ -183,6 +183,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 					   sample_alignments_one,
 					   branches)
 			     );
+
   if (P.T->n_leaves() >2) {
     alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri","alignment:alignment_branch:nodes",
 						 sample_tri_one,
@@ -199,6 +200,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   }
   alignment_moves.add(1, alignment_branch_moves, false);
   alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments","alignment:alignment_branch:nodes") );
+  alignment_moves.add(1, SingleMove(sample_alignment_rates, "alignment_rates") );
 
   //---------- alignment::nodes_master (nodes_moves) ----------//
   MoveEach nodes_moves("nodes_master","alignment:nodes");
@@ -1418,6 +1420,10 @@ int main(int argc,char* argv[])
 
     // Why do we need to do this, again?
     P.recalc_all();
+
+    MCMC::MoveStats S;
+    sample_alignment_rates(P,S);
+    exit(0);
 
     //---------------Do something------------------//
     if (args.count("show-only"))
