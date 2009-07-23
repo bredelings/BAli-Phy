@@ -110,10 +110,13 @@ struct insertion
 
 struct insertion_graph
 {
+
   vector<int> insertion_for_column;
 
+  // the 0th insertion is the top sequence.
   vector<insertion> insertions;
 
+  // for each column, including the 'E' column
   vector< vector<int> > insertions_ending_in_column;
 
   insertion_graph(const alignment& A, const Tree& T, int root);
@@ -144,6 +147,9 @@ insertion_graph::insertion_graph(const alignment& A, const Tree& T,int root)
 
   // FIXME - what about the DEFAULT insertion? (on "branch -1")
 
+  insertions.push_back(insertion(-1));
+  insertions[0].columns.push_back(-1);
+
   // For each column ...
   for(int c=0; c<=A.length(); c++)
   {
@@ -164,7 +170,7 @@ insertion_graph::insertion_graph(const alignment& A, const Tree& T,int root)
       // Does column==c/branch==j have an insertion?
       bool ins = (c != A.length() and not A.character(c,n1) and A.character(c,n2));
 
-      if (ins) 
+      if (ins)
       {
 	// There can be at most one insertion in each column;
 	assert(insertion_for_column[c] == -1);
@@ -209,7 +215,15 @@ insertion_graph::insertion_graph(const alignment& A, const Tree& T,int root)
 
       prev_column[b] = c;
     }
+
+    if (insertion_for_column[c] == -1 and c < A.length()) 
+    {
+      insertion_for_column[c] = 0;
+      insertions[0].columns.push_back(c);
+    }
   }
+
+  insertions[0].columns.push_back(A.length());
 }
 
 // PROBLEM! Each insertion then needs to know which sub-insertions fit inside it.
@@ -260,6 +274,8 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
     cerr<<"] "<<I.next()<<" )"<<endl;
   }
 
+
+  cerr<<join(G.insertion_for_column," ")<<endl;
   
   // go through insertions
   for(int c=0; c<A.length(); c++)
