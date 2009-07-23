@@ -3,15 +3,21 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
 #ifdef HAVE_SYS_RESOURCE_H
 extern "C" {
 #include <sys/resource.h>
 }
 #endif
+
 #ifdef HAVE_FENV
 extern "C" {
 #include "fenv.h"
 }
+#endif
+
+#ifdef HAVE_MPI
+#include <mpi/mpi.h>
 #endif
 
 #include <cmath>
@@ -653,31 +659,26 @@ void delete_files(vector<string>& filenames)
   filenames.clear();
 }
 
-vector<ofstream*> open_files(const string& name, vector<string>& names)
+vector<ofstream*> open_files(int proc_id, const string& name, vector<string>& names)
 {
   vector<ofstream*> files;
   vector<string> filenames;
 
-  bool success=false;
-  for(int i=0;not success;i++) 
+  for(int j=0;j<names.size();j++) 
   {
-    success = true;
-    for(int j=0;j<names.size();j++) 
-    {
-      string filename = name + convertToString(i+1)+"."+names[j];
-
-      if (fs::exists(filename)) {
-	close_files(files);
-	delete_files(filenames);
-	success = false;
-	break;
-      }
-      else {
-	files.push_back(new ofstream(filename.c_str()));
-	filenames.push_back(filename);
-      }
+    string filename = name + convertToString(proc_id+1)+"."+names[j];
+      
+    if (fs::exists(filename)) {
+      close_files(files);
+      delete_files(filenames);
+      throw myexception()<<"Trying to open '"<<filename<<"' but it already exists!";
+    }
+    else {
+      files.push_back(new ofstream(filename.c_str()));
+      filenames.push_back(filename);
     }
   }
+
   names = filenames;
 
   return files;
@@ -722,11 +723,8 @@ string hostname()
 }
 #endif
 
-vector<ostream*> init_files(const variables_map& args,int argc,char* argv[],int n_partitions)
+string init_dir(const variables_map& args)
 {
-  vector<ostream*> files;
-
-
   vector<string> alignment_filenames = args["align"].as<vector<string> >();
   for(int i=0;i<alignment_filenames.size();i++)
     alignment_filenames[i] = remove_extension(fs::path( alignment_filenames[i] ).leaf());
@@ -737,7 +735,16 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[],int 
     
   string dirname = open_dir(name);
   cerr<<"Created directory '"<<dirname<<"' for output files."<<endl;
-    
+
+  return dirname;
+}
+
+
+vector<ostream*> init_files(int proc_id, const string& dirname,
+			    int argc,char* argv[],int n_partitions)
+{
+  vector<ostream*> files;
+
   vector<string> filenames;
   filenames.push_back("out");
   filenames.push_back("err");
@@ -749,7 +756,7 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[],int 
     filenames.push_back(filename);
   }
     
-  vector<ofstream*> files2 = open_files(dirname+"/",filenames);
+  vector<ofstream*> files2 = open_files(proc_id, dirname+"/",filenames);
   files.clear();
   for(int i=0;i<files2.size();i++)
     files.push_back(files2[i]);
@@ -775,6 +782,9 @@ vector<ostream*> init_files(const variables_map& args,int argc,char* argv[],int 
     s_out<<"LSB_JOBID: "<<getenv("LSB_JOBID")<<endl;
   s_out<<"hostname: "<<hostname()<<endl;
   s_out<<"PID: "<<getpid()<<endl;
+#ifdef HAVE_HPI
+  s_out<<"MPI_PROC_ID: "<<proc_id<<endl;
+#endif
   s_out<<endl;
 
   //  files[0]->precision(10);
@@ -947,16 +957,20 @@ void sanitize_branch_lengths(SequenceTree& T)
   }
 }
 
-void setup_heating(const variables_map& args, Parameters& P) 
+void setup_heating(int proc_id, const variables_map& args, Parameters& P) 
 {
-  if (args.count("beta")) {
+  if (args.count("beta")) 
+  {
     string beta_s = args["beta"].as<string>();
     vector<double> beta = split<double>(beta_s,',');
+
+    if (proc_id > beta.size())
+      throw myexception()<<"not enough temperatures given";
+
     for(int i=0;i<P.n_data_partitions();i++)
-      for(int j=0;j<P[i].beta.size() and j <beta.size();j++)
-	P.beta[j] = P[i].beta[j] = beta[j];
+      P.beta[0] = P[i].beta[0] = beta[proc_id];
     
-    P.beta_series.push_back(beta[0]);
+    P.beta_series.push_back(beta[proc_id]);
   }
   
   if (args.count("dbeta")) {
@@ -1243,6 +1257,18 @@ int main(int argc,char* argv[])
   
   //  exit(0);
 
+  int n_procs = 1;
+  int proc_id = 0;
+
+#ifdef HAVE_MPI
+  MPI::Init ( argc, argv ); 
+  proc_id = MPI::COMM_WORLD.Get_rank();
+  n_procs = MPI::COMM_WORLD.Get_size();
+
+  std::cout << "Hello, world!  I am #" << proc_id << " of " << n_procs << std::endl;
+#endif
+
+>>>>>>> .merge-right.r2522
   std::ios::sync_with_stdio(false);
 
   ostream out_screen(cout.rdbuf());
@@ -1272,8 +1298,13 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     //------ Capture copy of 'cerr' output in 'err_cache' ------//
-    if (not args.count("show-only"))
+    if (not args.count("show-only")) {
       cerr.rdbuf(err_both.rdbuf());
+    }
+    else {
+      if (proc_id) return 0;
+      std::cout << "Hello, world!  I am #" << proc_id << " of " << n_procs << std::endl;
+    }
 
     //---------- Determine Data dir ---------------//
     check_data_dir(args["data-dir"].as<string>());
@@ -1310,8 +1341,46 @@ int main(int argc,char* argv[])
 
     //---------- Open output files -----------//
     vector<ostream*> files;
-    if (not args.count("show-only"))
-      files = init_files(args, argc, argv, A.size());
+    if (not args.count("show-only")) {
+      string dir_name="";
+#ifdef HAVE_MPI
+      if (not proc_id) {
+	dir_name = init_dir(args);
+	int size = dir_name.size();
+	for(int dest=1;dest<n_procs;dest++) 
+        {
+	  //	  cerr<<"Proc "<<proc_id<<": Sending size..."<<endl;
+	  MPI::COMM_WORLD.Send ( &size,            1,                 MPI::INT,  dest, 0 );
+	  //	  cerr<<"Proc "<<proc_id<<": sent."<<endl;
+
+	  //	  cerr<<"Proc "<<proc_id<<": Sending string..."<<endl;
+	  MPI::COMM_WORLD.Send ( dir_name.c_str(), dir_name.length(), MPI::CHAR, dest, 0 );
+	  //	  cerr<<"Proc "<<proc_id<<": sent."<<endl;
+	}
+      }
+      else {
+	int size;
+	dir_name = "";
+
+	//	cerr<<"Proc "<<proc_id<<": Receiving size..."<<endl;
+	MPI::COMM_WORLD.Recv ( &size,  1,    MPI::INT,  0, MPI::ANY_TAG);
+	//	cerr<<"Proc "<<proc_id<<": got it."<<endl;
+
+	char* buffer = new char[size+1];
+	//	cerr<<"Proc "<<proc_id<<": Receiving string..."<<endl;
+	MPI::COMM_WORLD.Recv ( buffer, size, MPI::CHAR, 0,               MPI::ANY_TAG);
+	buffer[size]=0;
+	//	cerr<<"Proc "<<proc_id<<": got it."<<endl;
+
+	dir_name = buffer;
+	delete[] buffer;
+      }
+      cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
+#else
+      dir_name = init_dir(args);
+#endif
+      files = init_files(proc_id, dir_name, argc, argv, A.size());
+    }
     else {
       files.push_back(&cout);
       files.push_back(&cerr);
@@ -1404,7 +1473,7 @@ int main(int argc,char* argv[])
       P[i].alignment_constraint = load_alignment_constraint(ac_filenames[i],T);
 
     //------------------- Handle heating ---------------------//
-    setup_heating(args,P);
+    setup_heating(proc_id,args,P);
 
     // read and store partitions and weights, if any.
     setup_partition_weights(args,P);
@@ -1456,9 +1525,16 @@ int main(int argc,char* argv[])
     exit(1);
   }
   catch (std::exception& e) {
-    err_both<<"Error: "<<e.what()<<endl;
+    if (n_procs > 1)
+      err_both<<"Error["<<proc_id<<"]: "<<e.what()<<endl;
+    else
+      err_both<<"Error: "<<e.what()<<endl;
     exit(1);
   }
+
+#ifdef HAVE_HPI
+  MPI::Finalize();
+#endif
 
   return 0;
 }
