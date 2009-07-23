@@ -452,7 +452,7 @@ int main(int argc,char* argv[])
     
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-find-conserved: Error! "<<e.what()<<endl;
     exit(1);
   }
 

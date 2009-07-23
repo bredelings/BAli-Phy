@@ -1,7 +1,21 @@
 #!/usr/bin/perl -w 
 
 # TODO
-# 1. # of sequences
+
+# !! For alignment-diff, invert fg/bg based on AU>0.5 (bg=white,fg=color)
+#    Would look cool!
+#    Or, us color (DNA/AA) only if AU<0.5
+
+# !! How to select alignments from a given temperature level?
+#    Annotate alignments with information... ?
+
+
+# 0. (a) Instead of making symbolic links, just use a variable to determine
+#    the correct files to analyze, so that we can handle the single-chain
+#    case without creating a lot of useless files.
+#    (b) This would also make it easier to handle a lot of output from older
+#    versions without using symbolic links.
+# 1. Histogram for distribution of each statistic.
 # 2. alignment properties (#indels, etc)
 # 3. alphabet of each partition
 # 4. Somehow print posterior distribution of # of indels (really)
@@ -13,6 +27,15 @@ use strict;
 use POSIX;
 
 my $home = $ENV{'HOME'};
+
+my $out_file;
+my $trees_file;
+my $parameters_file;
+my $n_chains;
+my @out_files;
+my @tree_files;
+my @partition_samples;
+my $MAP_file;
 
 sub do_init()
 {
@@ -45,7 +68,7 @@ sub get_partitions()
 {
     local *FILE;
 
-    open FILE, "1.out" or die "Can't open 1.out!";
+    open FILE, $out_file or die "Can't open $out_file!";
 
     my @partitions = ();
 
@@ -66,6 +89,30 @@ sub get_partitions()
     return [@partitions];
 }
 
+sub get_cmdline_attribute($)
+{
+    my $attribute = shift;
+    my $value;
+
+    local *FILE;
+
+    open FILE, $out_file or die "Can't open $out_file!";
+
+    my @partitions = ();
+
+    my $line = <FILE>;
+    {
+	if ($line =~ /--$attribute[ =]([^ ]*)$/) {
+	    $value = $1;
+	    last;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    return $value;
+}
+
 sub get_header_attribute($)
 {
     my $attribute = shift;
@@ -73,7 +120,7 @@ sub get_header_attribute($)
 
     local *FILE;
 
-    open FILE, "1.out" or die "Can't open 1.out!";
+    open FILE, $out_file or die "Can't open $out_file!";
 
     my @partitions = ();
 
@@ -112,7 +159,7 @@ sub get_smodels()
 {
     local *FILE;
 
-    open FILE, "1.out" or die "Can't open 1.out!";
+    open FILE, $out_file or die "Can't open $out_file!";
 
     my @smodels = ();
 
@@ -135,10 +182,9 @@ sub get_imodels()
 {
     local *FILE;
 
-    open FILE, "1.out" or die "Can't open 1.out!";
+    open FILE, $out_file or die "Can't open $out_file!";
 
     my @imodels = ();
-    my $imodel0;
 
     while (my $line = <FILE>) 
     {
@@ -153,7 +199,7 @@ sub get_imodels()
     }
     close FILE;
 
-    push @imodels,$imodel0 if ($#imodels == -1);
+    push @imodels, "none" if ($#imodels == -1);
     return [@imodels];
 }
 
@@ -161,7 +207,7 @@ sub get_smodel_indices()
 {
     local *FILE;
 
-    open FILE, "1.out" or die "Can't open 1.out!";
+    open FILE, $out_file or die "Can't open $out_file!";
 
     my @smodel_indices = ();
 
@@ -181,7 +227,7 @@ sub get_imodel_indices()
 {
     local *FILE;
 
-    open FILE, "1.out" or die "Can't open 1.out!";
+    open FILE, $out_file or die "Can't open $out_file!";
 
     my @imodel_indices = ();
 
@@ -199,7 +245,7 @@ sub get_alphabets()
 {
     local *FILE;
 
-    open FILE, "1.out" or die "Can't open 1.out!";
+    open FILE, $out_file or die "Can't open $out_file!";
 
     my @alphabets = ();
 
@@ -238,7 +284,9 @@ sub get_n_lines($)
 
 sub get_n_iterations()
 {
-    return get_n_lines("1.trees")-1;
+    return get_n_lines("C1.trees")-1 if (-e 'C1.trees') ;
+    return get_n_lines("1.trees")-1  if (-e '1.trees');
+    die "Error: I can't find either 1.trees or C1.trees!";
 }
 
 sub more_recent_than($;$)
@@ -256,6 +304,18 @@ sub more_recent_than($;$)
     return 0;
 }
 
+sub more_recent_than_all_of($;$)
+{
+    my $filename1 = shift;
+    my $temp = shift;
+    my @filenames2 = @$temp;
+
+    foreach my $filename2 (@filenames2) {
+	return 0 if (!more_recent_than($filename1,$filename2));
+    }
+
+    return 1;
+}
 my $burnin;
 
 sub get_prev_burnin
@@ -275,7 +335,7 @@ sub record_burnin
 sub get_alignment_info 
 {
     my $filename = shift;
-    open INFO,"alignment-info $filename 2>/dev/null |";
+    open INFO,"alignment-info $filename |";
 
     my %features = ();
 
@@ -320,7 +380,103 @@ sub tooltip
     return "<a title=\"$text\">?</a>";
 }
 
-#----------------------------- MAIN --------------------------#
+#----------------------------- SETUP --------------------------#
+if (-e 'C1.out') 
+{
+    $out_file = 'C1.out';
+    $n_chains = get_header_attribute("MPI_SIZE");
+    for(my $i=0;$i<$n_chains;$i++) {
+	push @out_files,"C$i.out" if (-e "C$i.out");
+	push @tree_files,"C$i.trees" if (-e "C$i.trees");
+    }
+
+    if ($n_chains == 1) {
+	$trees_file = 'C1.trees';
+	die "error: I can't find 'C1.trees'" if (! -e 'C1.trees');
+
+	$parameters_file = 'C1.p';
+	die "error: I can't find 'C1.p'" if (! -e 'C1.p');
+
+	$MAP_file = "C1.MAP";
+    }
+}
+elsif (-e '1.out') {
+    $out_file = '1.out';
+    $trees_file = '1.trees';
+    $parameters_file = '1.p';
+    die "error: I can't find '1.trees'" if (! -e '1.trees');
+
+    $n_chains = 1;
+    @out_files = ( '1.out' );
+    @tree_files = ( '1.trees' );
+
+    $MAP_file = "1.MAP";
+}
+else {
+    die "I can't find file '1.out' or 'C1.out' - are you running this in the right directory?";
+}
+
+my $command = get_header_attribute("command");
+my $directory = get_header_attribute("directory");
+my $subdir    = get_header_attribute("subdirectory");
+
+my $betas = get_cmdline_attribute("beta");
+my @beta = (1);
+@beta = split(/,/, $betas) if (defined($betas));
+
+
+my @partitions = @{ get_partitions() };
+my $n_partitions = 1+$#partitions;
+if ($out_file eq "C1.out") {
+    if ($n_chains == 1) {
+	for(my $p=1;$p<=$n_partitions;$p++) {
+	    push @partition_samples,"C1.P$p.fastas";
+	}
+    }
+    else {
+	## FIXME - How do we construct these?
+	for(my $p=1;$p<=$n_partitions;$p++) {
+	    push @partition_samples,"C1.P$p.fastas";
+	}
+    }
+}
+else {
+    for(my $p=1;$p<=$n_partitions;$p++) {
+	push @partition_samples,"1.P$p.fastas" if (-e "1.P$p.fastas");
+    }
+    @partition_samples = ("1.out") if ($#partition_samples == -1);
+}
+
+
+my $n_iterations = get_n_iterations();
+my @smodels = @{ get_smodels() };
+my @imodels = @{ get_imodels() };
+
+my @smodel_indices = @{ get_smodel_indices() };
+push @smodel_indices,0 if ($#smodel_indices == -1);
+
+my @imodel_indices = @{ get_imodel_indices() };
+if ($#imodel_indices == -1)
+{
+    if ($#imodels == -1 || $imodels[0] eq "none") {
+	push @imodel_indices,-1;
+    }
+    else {
+	push @imodel_indices,0;
+    }
+}
+
+my @alphabets = get_alphabets();
+
+$burnin = int 0.1*$n_iterations if (!defined($burnin));
+my $after_burnin = $n_iterations - $burnin +1;
+
+my @trees = ();
+my %tree_name = ();
+
+my @tree_consensus_values = sort(0.5,0.66,0.8,0.9,0.95,0.99,1.0);
+
+#
 
 my $max_iter;
 my $subsample = 1;
@@ -331,7 +487,7 @@ my $probcons = 0;
 while ($#ARGV > -1) 
 {
     my $arg = shift;
-    if ($arg eq "clean") {
+    if ($arg eq "clean" || $arg eq "--clean") {
 	do_cleanup();
 	exit;
     }
@@ -360,45 +516,65 @@ while ($#ARGV > -1)
 
 do_init();
 
-my $command = get_header_attribute("command");
-my $directory = get_header_attribute("directory");
-my $subdir    = get_header_attribute("subdirectory");
+# 0. Compute T1.p and T1.trees
 
-
-my @partitions = @{ get_partitions() };
-my $n_partitions = 1+$#partitions;
-my $n_iterations = get_n_iterations();
-my @smodels = @{ get_smodels() };
-my @imodels = @{ get_imodels() };
-
-my @smodel_indices = @{ get_smodel_indices() };
-push @smodel_indices,0 if ($#smodel_indices == -1);
-
-my @imodel_indices = @{ get_imodel_indices() };
-if ($#imodel_indices == -1)
+if ($n_chains > 1) 
 {
-    if ($#imodels == -1 || $imodels[0] eq "none") {
-	push @imodel_indices,-1;
+    for(my $i=1;$i<=$n_chains;$i++)
+    {
+	# Construct C1.pt
+	# Construct C1Ti.pt
+	# Construct C1Ti.p
+	# Construct C1Ti.trees
+	next if (! -e "C$i.trees" );
+
+	if (! more_recent_than("Results/C$i.t","C$i.trees"))
+	{
+	    `echo "tree" > Results/C$i.t`;
+	    `cat C$i.trees >> Results/C$i.t`;
+	}
+	
+	if (! more_recent_than_all_of("Results/C$i.pt",["C$i.trees","C$i.p"]))
+	{
+	    `stats-merge C$i.p Results/C$i.t > Results/C$i.pt 2>/dev/null`;
+	}
+
+	if (! more_recent_than("Results/C${i}T1.pt","Results/C$i.pt")) 
+	{
+	    my $use_header = "";
+	    $use_header = "--no-header" if ($i != 1);
+
+	    `subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 $use_header > Results/C${i}T1.pt`;
+	}
     }
-    else {
-	push @imodel_indices,0;
+
+    my $cmd = "cat ";
+    my $rerun=0;
+    for(my $i=1;$i<=$n_chains;$i++) {
+	if (-e "Results/C${i}T1.pt") {
+	    $cmd = "$cmd Results/C${i}T1.pt ";
+	    $rerun=1 if (! more_recent_than("Results/T1.p","Results/C${i}T1.pt"));
+	}
     }
+    $cmd = "$cmd > Results/T1.pt";
+    `$cmd` if ($rerun);
+
+    if (! more_recent_than("Results/T1.trees","Results/T1.pt")) {
+	`stats-select tree --no-header < Results/T1.pt > Results/T1.trees`;
+    }
+    
+    if (! more_recent_than("Results/T1.p","Results/T1.pt")) {
+	`stats-select -r tree < Results/T1.pt > Results/T1.p`;
+
+#       This messes up the printing of statistics
+#	`stats-select -i -r tree < Results/T1.pt > Results/T1.p`;
+
+    }
+
+    $trees_file = "Results/T1.trees";
+    $parameters_file = "Results/T1.p";
 }
 
-my @alphabets = get_alphabets();
-
-die "I can't find sample file '1.out' - are you running this in the right directory?" if (! -e '1.out');
-
-`ln -s 1.out 1.P1.fastas` if (! -e '1.P1.fastas' && $n_partitions == 1);
-
-
-$burnin = int 0.1*$n_iterations if (!defined($burnin));
-my $after_burnin = $n_iterations - $burnin +1;
-
-my @trees = ();
-my %tree_name = ();
-
-my @tree_consensus_values = sort(0.5,0.66,0.8,0.9,0.95,0.99,1.0);
 
 # 1. compute consensus trees
 my $max_arg = "";
@@ -410,8 +586,10 @@ my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
 
 print "Summarizing topology distribution ... ";
-if (! more_recent_than("Results/consensus","1.trees")) {
-    `trees-consensus 1.trees --skip=$burnin $max_arg $min_support_arg --sub-partitions $consensus_arg > Results/consensus`;
+if (! more_recent_than("Results/consensus",$trees_file)) {
+    my $skip="";
+    $skip="--skip=$burnin" if ($trees_file eq "Results/T1.trees");
+    `trees-consensus $trees_file $max_arg $min_support_arg --sub-partitions $consensus_arg > Results/consensus`;
 }
 print "done.\n";
 
@@ -433,15 +611,15 @@ for my $cvalue (@tree_consensus_values)
     }
 
     if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.mtree")) {
-	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg 2>/dev/null`;
+	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg`;
     }
     if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.mtree")) {
-	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree 2>/dev/null`;
+	`draw-tree Results/$tree.mtree --out=Results/$tree-mctree`;
     }
     
     print "$tree ";
-    if (! more_recent_than("Results/$tree.ltree","1.trees")) {
-    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths --skip=$burnin $max_arg < 1.trees > Results/$tree.ltree 2>/dev/null`;
+    if (! more_recent_than("Results/$tree.ltree",$trees_file)) {
+    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg < $trees_file > Results/$tree.ltree`;
     }
     if (! more_recent_than("Results/$tree.tree","Results/$tree.ltree")) {
     `head -n1 Results/$tree.ltree > Results/$tree.tree`;
@@ -455,8 +633,8 @@ if (! more_recent_than("Results/MAP.topology","Results/consensus")) {
     `pickout MAP-0 -n < Results/consensus > Results/MAP.topology`;
 }
 print " Calculating branch lengths for MAP tree... ";
-if (! more_recent_than("Results/MAP.ltree","1.trees")) {
-    `tree-mean-lengths Results/MAP.topology --safe --skip=$burnin $max_arg < 1.trees > Results/MAP.ltree 2>/dev/null`;
+if (! more_recent_than("Results/MAP.ltree",$trees_file)) {
+    `tree-mean-lengths Results/MAP.topology --safe $max_arg < $trees_file > Results/MAP.ltree`;
 }
 if (! more_recent_than("Results/MAP.tree","Results/MAP.ltree")) {
     `head -n1 Results/MAP.ltree > Results/MAP.tree`;
@@ -469,18 +647,18 @@ print "done.\n";
 print " Drawing trees ... ";
 for my $tree (@trees) {
     if (! more_recent_than("Results/$tree-tree.pdf","Results/$tree.ltree")) {
-	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight 2>/dev/null`;
+	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight`;
     }
     if (! more_recent_than("Results/$tree-tree.svg","Results/$tree.ltree")) {
-	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg 2>/dev/null`;
+	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg`;
     }
 }
 print "done.\n";
 
 # 5. Summarize scalar parameters
 print "\nSummarizing distribution of numerical parameters... ";
-if (! more_recent_than("Results/Report","1.p")) {
-    `statreport 2: --skip=$burnin $max_arg < 1.p > Results/Report 2>/dev/null`;
+if (! more_recent_than("Results/Report",$parameters_file)) {
+    `statreport 2: $max_arg < $parameters_file > Results/Report`;
 }
 print "done.\n";
 
@@ -499,10 +677,10 @@ for(my $i=0;$i<$n_partitions;$i++)
     $alignment_names{$name} = "Initial";
 
     # These initial alignments should never change!
-    if (! -e "Results/Work/$name-unordered.fasta") {
-	`alignment-find --first < 1.P$p.fastas > Results/Work/$name-unordered.fasta 2>/dev/null`;
-	if ($? && $n_partitions==1) {
-	    `alignment-find --first < 1.MAP > Results/Work/$name-unordered.fasta`;
+    if (! -s "Results/Work/$name-unordered.fasta") {
+	`alignment-find --first < $partition_samples[$i] > Results/Work/$name-unordered.fasta 2>/dev/null`;
+	if ($? && $n_chains==1 && defined($MAP_file)) {
+	    `alignment-find --first < $MAP_file > Results/Work/$name-unordered.fasta`;
 	}
     }
 }
@@ -553,12 +731,12 @@ for(my $i=0;$i<$n_partitions;$i++)
     next if ($imodel_indices[$i] == -1);
 
     my $p = $i+1;
-    my $infile = "1.P$p.fastas";
+    my $infile = $partition_samples[$i];
 
     my $name = "P$p-max";
     if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
 	! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
-	`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta 2>/dev/null`;
+	`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta`;
     }
     push @alignments,$name;
     $alignment_names{$name} = "Best (WPD)";
@@ -575,7 +753,7 @@ for(my $i=0;$i<$n_partitions;$i++)
     next if ($imodel_indices[$i] == -1);
 
     my $p = $i+1;
-    my $infile = "1.P$p.fastas";
+    my $infile = $partition_samples[$i];
 
     print " Partition $p: Computing consensus alignments: \n   ";
     for my $cvalue (@alignment_consensus_values) {
@@ -583,7 +761,7 @@ for(my $i=0;$i<$n_partitions;$i++)
 	my $name = "P$p-consensus-$value";
 	print "c$value ";
 	if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
-	    `cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta 2>/dev/null`;
+	    `cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta`;
 	}
 	push @alignments,$name;
 	$alignment_names{$name} = "$value% consensus";
@@ -597,14 +775,14 @@ for my $alignment (@alignments)
 {
     if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta") ||
 	! more_recent_than("Results/$alignment.fasta","Results/c50.tree")) {
-    `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta 2>/dev/null`;
+    `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta`;
     }
 
     if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
 	`alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
 
 	if ($?) {
-	    `alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html 2>/dev/null`;
+	    `alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html`;
 	}
     }
 }
@@ -614,22 +792,23 @@ for my $alignment (@alignments)
     my $p;
     if ($alignment =~ /^P([^-]+)-/) {
 	$p=$1;
+	next if ($imodel_indices[$p-1] == -1);
     }
     else {
 	next;
     }
 
-    if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta"))
+    next if ($alignment eq "P$p-max");
+    next if (! -e "Results/P$p-max.fasta");
+
+    if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta") || 
+	! more_recent_than("Results/$alignment-diff.AU","Results/$alignment.fasta") )
     {
-	`alignments-diff Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown > Results/$alignment-diff.fasta`;
+	`alignments-diff Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown -d Results/$alignment-diff.AU > Results/$alignment-diff.fasta`;
     }
 
     if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.fasta")) {
-	`alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment-diff.html 2>/dev/null`;
-
-	if ($?) {
-	    `alignment-draw Results/$alignment-diff.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment-diff.html 2>/dev/null`;
-	}
+	`alignment-draw Results/$alignment-diff.fasta --scale=invert --AU Results/$alignment-diff.AU --show-ruler --color-scheme=Rainbow+fade[1,0]+contrast > Results/$alignment-diff.html`;
     }
 }
 print "done.\n";
@@ -641,10 +820,10 @@ for my $alignment (@AU_alignments)
     if ($alignment =~ /^P([^-]+)-.*/) {
 	print "Generating AU values for $alignment... ";
 	my $p = $1;
-	my $infile = "1.P$p.fastas";
+	my $infile = $partition_samples[$p-1];
 
 	if (!more_recent_than("Results/$alignment-AU.prob",$infile)) {
-	`cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob 2>/dev/null`;
+	`cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob`;
 	}
 	print "done.\n";
 	`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null`;
@@ -656,9 +835,9 @@ for my $alignment (@AU_alignments)
 
 # 9. Estimate marginal likelihood
 print "Calculating marginal likelihood... ";
-my $temp = $burnin+2;
-if (!more_recent_than("Results/Pmarg","1.p")) {
-`stats-select likelihood --no-header < 1.p | tail -n +$temp | model_P > Results/Pmarg 2>/dev/null`;
+
+if (!more_recent_than("Results/Pmarg",$parameters_file)) {
+`stats-select likelihood --no-header < $parameters_file | model_P > Results/Pmarg`;
 }
 print "done.\n";
 my $marginal_prob = `cat Results/Pmarg`;
@@ -674,8 +853,8 @@ if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
     `sed "s/\$/\\n/" < Results/partitions > Results/partitions.pred`;
 }
 
-if (!more_recent_than("Results/partitions.bs","1.trees")) {
-    `trees-bootstrap --skip=$burnin $max_arg 1.trees --pred Results/partitions.pred > Results/partitions.bs`;
+if (!more_recent_than("Results/partitions.bs",$trees_file)) {
+    `trees-bootstrap $max_arg $trees_file --pred Results/partitions.pred > Results/partitions.bs`;
 }
 
 # 11. c-levels.plot - FIXME!
@@ -693,16 +872,16 @@ EOF`;
 my @SRQ = ();
 
 print "Generate SRQ plot for partitions ... ";
-if (!more_recent_than("Results/partitions.SRQ","1.trees")) {
-`trees-to-SRQ Results/partitions.pred --skip=$burnin $max_arg < 1.trees > Results/partitions.SRQ`;
+if (!more_recent_than("Results/partitions.SRQ",$trees_file)) {
+`trees-to-SRQ Results/partitions.pred $max_arg < $trees_file > Results/partitions.SRQ`;
 }
 print "done.\n";
 
 push @SRQ,"partitions";
 
 print "Generate SRQ plot for c50 tree ... ";
-if (!more_recent_than("Results/c50.SRQ","1.trees")) {
-`trees-to-SRQ Results/c50.topology --skip=$burnin $max_arg < 1.trees > Results/c50.SRQ`;
+if (!more_recent_than("Results/c50.SRQ",$trees_file)) {
+`trees-to-SRQ Results/c50.topology $max_arg < $trees_file > Results/c50.SRQ`;
 }
 print "done.\n";
 
@@ -736,7 +915,7 @@ while(my $line = <CONSENSUS>) {
 }
 
 # 14. Traceplots for scalar variables
-open VARS, "1.p";
+open VARS, $parameters_file;
 my $header = <VARS>;
 chomp $header;
 my @var_names = split(/\t/,$header);
@@ -777,13 +956,13 @@ my $Nmax = 5000;
 
 for(my $i=1;$i<= $#var_names; $i++) 
 {
-    next if (more_recent_than("Results/$i.trace.png","1.p"));
+    next if (more_recent_than("Results/$i.trace.png",$parameters_file));
 
     my $var = $var_names[$i];
     next if (!defined($CI_low{$var}));
 
-    my $file1 = "Results/Work/1.p.$i";
-    `stats-select iter '$var' --no-header < 1.p > $file1`;
+    my $file1 = "Results/Work/T1.p.$i";
+    `stats-select iter '$var' --no-header < $parameters_file > $file1`;
 
     my $file2 = $file1.".2";
 
@@ -967,7 +1146,7 @@ for(my $i=0;$i<$n_partitions;$i++)
 	    print INDEX "<td></td>\n";
 	}
 	if (-f "Results/$alignment-AU.html") {
-	    print INDEX "<td><a href=\"$alignment-AU.html\">AU-HTML</a></td>\n";
+	    print INDEX "<td><a href=\"$alignment-AU.html\">AU</a></td>\n";
 	}
 	else {
 	    print INDEX "<td></td>\n";

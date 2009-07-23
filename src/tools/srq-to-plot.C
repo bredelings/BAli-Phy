@@ -64,7 +64,7 @@ int main(int argc,char* argv[]) {
       cout<<i/scalex<<"   "<<plot[i]/scaley<<endl;
   }
   catch (exception& e) {
-    cerr<<"Exception: "<<e.what()<<std::endl;
+    cerr<<"srq-to-plot: Error! "<<e.what()<<std::endl;
     exit(1);
   }
 }

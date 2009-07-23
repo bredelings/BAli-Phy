@@ -76,6 +76,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("skip",value<unsigned>()->default_value(0),"number of trees to skip")
     ("max",value<unsigned>(),"maximum number of trees to read")
     ("sub-sample",value<unsigned>(),"factor by which to sub-sample")
+    ("verbose","Output more log messages on stderr.")
     ;
   
   options_description reporting("Reporting options");
@@ -109,6 +110,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   if (not args.count("predicates"))
     throw myexception()<<"No predicates supplied.";
 
+  if (args.count("verbose")) log_verbose = 1;
+
   return args;
 }
 
@@ -125,7 +128,7 @@ tree_sample load_tree_file(const variables_map& args, const string& filename)
     subsample = args["sub-sample"].as<unsigned>();
 
   if (filename == "-") {
-    cerr<<"# Loading trees from STDIN...\n";
+    if (log_verbose) cerr<<"partitions-supported: Loading trees from STDIN...\n";
     return tree_sample(cin,skip,max,subsample);
   }
 
@@ -133,7 +136,7 @@ tree_sample load_tree_file(const variables_map& args, const string& filename)
   if (not file)
     throw myexception()<<"Couldn't open file '"<<filename<<"'";
   
-  cout<<"# Loading trees from '"<<filename<<"'...\n";
+  cerr<<"partitions-supported: Loading trees from '"<<filename<<"'...\n";
   return tree_sample(file,skip,max,subsample);
 }
 
@@ -197,7 +200,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"partitions-supported: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

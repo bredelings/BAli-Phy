@@ -39,10 +39,10 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
   unsigned skip = args["skip"].as<unsigned>();
 
   // --------------------- try ---------------------- //
-  std::cerr<<"Loading alignments...";
+  if (log_verbose) std::cerr<<"alignment-max: Loading alignments...";
   list<alignment> As = load_alignments(std::cin,load_alphabets(args),skip,maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
-  std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+  if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (not alignments.size())
     throw myexception()<<"Alignment sample is empty.";
 }
@@ -62,6 +62,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("analysis",value<string>()->default_value("wsum"),"sum, wsum, multiply")
     ("out",value<string>()->default_value("-"),"Output file (defaults to stdout)")
     ("out-probabilities",value<string>(),"Output file for column probabilities, if specified")
+    ("verbose","Output more log messages on stderr.")
     ;
 
   variables_map args;     
@@ -74,6 +75,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -301,7 +304,7 @@ int main(int argc,char* argv[])
       ec_from_x[ec->second] = ec;
     }
 
-    cerr<<"\nchecking edges...\n";
+    if (log_verbose) cerr<<"\nalignment-max: checking edges...\n";
     {
       graph_traits<Graph>::vertex_iterator vi, vi_end;
       for (tie(vi, vi_end) = ::vertices(g); vi != vi_end; ++vi) 
@@ -321,26 +324,30 @@ int main(int argc,char* argv[])
 
 	      if (index1 == 0 or index2 == 1) continue;
 
-	      if (ec1->first.size() != ec2->first.size()) {
-		cerr<<"index1 = "<<index1<<endl;
-		cerr<<"index2 = "<<index2<<endl;
-		cerr<<"ec1->first.size() = "<<ec1->first.size()<<endl;
-		cerr<<"ec2->first.size() = "<<ec2->first.size()<<endl;
+	      if (ec1->first.size() != ec2->first.size() and log_verbose >=2) {
+		cerr<<"alignment-max: index1 = "<<index1<<endl;
+		cerr<<"alignment-max: index2 = "<<index2<<endl;
+		cerr<<"alignment-max: ec1->first.size() = "<<ec1->first.size()<<endl;
+		cerr<<"alignment-max: ec2->first.size() = "<<ec2->first.size()<<endl;
 	      }
 		
 
-	      if (not eco(ec1->first,ec2->first))
+	      if (not eco(ec1->first,ec2->first) and log_verbose >=2)
 	      {
+		cerr<<"alignment-max: ";
 		for(int i=0;i<ec1->first.size();i++)
 		  cerr<<ec1->first.emitted[i]<<" ";
 		cerr<<endl;
+		cerr<<"alignment-max: ";
 		for(int i=0;i<ec1->first.size();i++)
 		  cerr<<ec1->first.column[i]<<" ";
 		cerr<<endl;
 		cerr<<endl;
+		cerr<<"alignment-max: ";
 		for(int i=0;i<ec2->first.size();i++)
 		  cerr<<ec2->first.emitted[i]<<" ";
 		cerr<<endl;
+		cerr<<"alignment-max: ";
 		for(int i=0;i<ec2->first.size();i++)
 		  cerr<<ec2->first.column[i]<<" ";
 		  cerr<<endl;
@@ -349,7 +356,7 @@ int main(int argc,char* argv[])
 	    }
 	}
     }
-    cerr<<"done"<<endl;
+    if (log_verbose) cerr<<"alignment-max: done."<<endl;
 
     //---------- Construct score ------------------//
 
@@ -437,7 +444,7 @@ int main(int argc,char* argv[])
 
     assert(visited[1]);
 
-    cerr<<"Best score is: "<<forward[1]<<endl;
+    if (log_verbose) cerr<<"alignment-max: Best score is: "<<forward[1]<<endl;
 
     //----------------- Backward Path Selection -------------------//
     vector<int> path(1,1); // start with just the end state
@@ -488,7 +495,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-max: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

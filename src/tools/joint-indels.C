@@ -36,13 +36,13 @@ void run_analysis(const variables_map& args) {
   vector<string> pnames = split(args["partition"].as<string>(),':');
 
   //--------------------- Load (A,T) ------------------------//
-  cerr<<"Loading alignments and trees...\n";
+  if (log_verbose) cerr<<"joint-indels: Loading alignments and trees...\n";
   joint_A_T J = get_joint_A_T(args,true);
 
   if (J.size() == 0) 
     throw myexception()<<"No (A,T) read in!";
   else
-    cerr<<"Loaded "<<J.size()<<" (A,T) pairs."<<endl;;
+    if (log_verbose) cerr<<"joint-indels: Loaded "<<J.size()<<" (A,T) pairs."<<endl;;
 
   std::cout << "Iter\tPart\tLen\tIndels" << endl;
   
@@ -98,11 +98,12 @@ void run_analysis(const variables_map& args) {
   }
 
 
-  cerr<<"Total # samples      = " << J.size() << endl;
-  cerr<<"# Consistent samples = " << consistentsamples << endl;
-  cerr<<"# Indel samples      = " << numindels << endl;
-  cerr<<"Posterior prob       = " << ((double)numindels/(double)J.size()) << endl;
-
+  if (log_verbose) {
+    cerr<<"joint-indels: Total # samples      = " << J.size() << endl;
+    cerr<<"joint-indels: # Consistent samples = " << consistentsamples << endl;
+    cerr<<"joint-indels: # Indel samples      = " << numindels << endl;
+    cerr<<"joint-indels: Posterior prob       = " << ((double)numindels/(double)J.size()) << endl;
+  }
 }
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
@@ -124,6 +125,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("partition", value<string>(), "find indels along internal branch that bi-partitions given taxa (<taxa1>:<taxa2>:...)")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("data-dir", value<string>()->default_value("Data"),"subdirectory that contains genetic code files")
+    ("verbose","Output more log messages on stderr.")
     ;
 
   options_description all("All options");
@@ -146,6 +148,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     exit(0);
   }
 
+  if (args.count("verbose")) log_verbose = 1;
+
   return args;
 }
 
@@ -158,7 +162,7 @@ int main(int argc,char* argv[]) {
     run_analysis(args);
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"joint-indels: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

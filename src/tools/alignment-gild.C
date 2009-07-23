@@ -202,9 +202,9 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
 
   vector< shared_ptr<const alphabet> > alphabets;
   alphabets.push_back(shared_ptr<const alphabet>(A.get_alphabet().clone()));
-  std::cerr<<"Loading alignments...";
+  if (log_verbose) std::cerr<<"alignment-gild: Loading alignments...";
   alignments = load_alignments(std::cin,alphabets,skip,maxalignments);
-  std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+  if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (alignments.empty()) 
     throw myexception()<<"Alignment sample is empty.";
 
@@ -385,7 +385,7 @@ vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q
   vector<double> w(T.n_leaves(),-1);
   
   if (f.size() == 0)
-    throw myexception()<<"Column has no features!";
+    throw myexception()<<"Column has no non-gap features!";
   else if (f.size() == 1)
     w[f[0]] = 1.0;
   else if (f.size() == 2) {
@@ -555,7 +555,7 @@ int main(int argc,char* argv[]) {
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-gild: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

@@ -615,14 +615,14 @@ namespace substitution {
     return scale/Alphabet().width();
   }
 
-  void ReversibleMarkovModel::set_rate(double r)  {
+  void ReversibleMarkovModel::set_rate(double r)  
+  {
+    if (r == rate()) return;
+
+    if (rate() == 0 and r != 0)
+      throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
+
     double scale = r/rate();
-    if (rate() == 0) {
-      if (r == 0)
-	scale = 1;
-      else
-	throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
-    }
     Q *= scale;
     for(int i=0;i<eigensystem.Diagonal().size();i++)
       eigensystem.Diagonal()[i] *= scale ;
@@ -1282,8 +1282,15 @@ namespace substitution {
   efloat_t DirichletParameterModel::super_prior() const
   {
     efloat_t Pr  = 1;
-    Pr *= dirichlet_pdf(parameters_,0              ,p_values.size(),1);
-    Pr *= dirichlet_pdf(parameters_,p_values.size(),p_values.size(),1);
+
+    // Prior on the fractions
+    double n_f = 1.0 + p_values.size()/2.0;
+    Pr *= dirichlet_pdf(parameters_,0              ,p_values.size(),n_f);
+
+    // Prior on the rates
+    double n_r = 2.0; // + p_values.size()/2.0;
+    Pr *= dirichlet_pdf(parameters_,p_values.size(),p_values.size(),n_r);
+
     return Pr;
   }
 

@@ -119,6 +119,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
     ("draw-clouds","Draw wandering-ranges in MC trees as clouds.")
     ("seed", value<unsigned long>(),"Random seed")
+    ("verbose","Output more log messages on stderr.")
     ;
   
   options_description all("All options");
@@ -142,6 +143,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (not args.count("file"))
     throw myexception()<<"No file supplied.";
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -277,7 +280,7 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
     }
   }
 
-  cerr<<"Read "<<branches.size()<<" partitions"<<endl;
+  if (log_verbose) cerr<<"draw-tree: Read "<<branches.size()<<" partitions"<<endl;
 
   //--------------- Construct MC tree with lengths  ---------------//
   branches = check_MC_partitions(branches);
@@ -311,14 +314,14 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
     int n = MC.mapping[b];
     int d = MC.degree(n);
 
-    if (d < 4) {
-      cerr<<"Processing node '"<<nodes[i]<<"'"<<endl;
-      cerr<<"Found as branch '"<<MC.partitions[b]<<"'"<<endl;
-      cerr<<"degree = "<<MC.degree(n)<<endl;
+    if (d < 4 and log_verbose) {
+      cerr<<"draw-tree: Processing node '"<<nodes[i]<<"'"<<endl;
+      cerr<<"draw-tree: Found as branch '"<<MC.partitions[b]<<"'"<<endl;
+      cerr<<"draw-tree: degree = "<<MC.degree(n)<<endl;
 
       for(int i=0;i<2*MC.n_branches();i++)
 	if (MC.mapping[i] == n)
-	  cerr<<MC.partitions[i]<<endl;
+	  cerr<<"draw-tree: "<<MC.partitions[i]<<endl;
 
 
       throw myexception()<<"Error: node length given for node of degree "<<d<<"!";
@@ -1889,7 +1892,7 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
   {
     double E1 = E(GL,D);
     assert(E1 >= 0);
-    cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<endl;
+    if (log_verbose) cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<endl;
 
     /*
     // check D versus D2
@@ -1906,7 +1909,7 @@ graph_layout energy_layout(graph_layout GL, const graph_energy_function& E)
     inc(GL.node_positions,-dt,D);
     double E2 = E(GL);
     if (E2 > E1) {
-      cerr<<"    rejecting  E = "<<E2<<endl;
+      if (log_verbose) cerr<<"draw-tree:    rejecting  E = "<<E2<<endl;
       GL.node_positions = temp;
       dt /= 2.0;
       successes=0;
@@ -2141,22 +2144,25 @@ void graph_plotter::operator()(cairo_t* cr)
 
   if (draw_clouds) {
     vector<cloud> clouds = get_clouds(L.MC);
-    cerr<<"Got "<<clouds.size()<<" clouds.\n";
+    if (log_verbose) cerr<<"draw-tree: Got "<<clouds.size()<<" clouds.\n";
     
     for(int c=clouds.size()-1;c>=0;c--) {
-      cerr<<c+1<<":  depth = "<<clouds[c].depth<<"   size = "<<clouds[c].size()<<"\n";
+      if (log_verbose) cerr<<"draw-tree: "<<c+1<<":  depth = "<<clouds[c].depth<<"   size = "<<clouds[c].size()<<"\n";
       int D = clouds[c].depth;
       int C = clouds[c].color;
-      cerr<<" degree : "<<clouds[c].degree()<<endl;
-      cerr<<" color  : "<<clouds[c].color<<endl;
-      cerr<<"     #b : "<<clouds[c].child_branches.size()<<endl;
-      cerr<<"     #n : "<<clouds[c].child_nodes.size()<<endl;
-      for(int i=0;i<clouds[c].child_nodes.size();i++)
-	cout<<"   node : "<<clouds[c].child_nodes[i]<<endl;
+      if (log_verbose) {
+	cerr<<"draw-tree:  degree : "<<clouds[c].degree()<<endl;
+	cerr<<"draw-tree:  color  : "<<clouds[c].color<<endl;
+	cerr<<"draw-tree:     #b : "<<clouds[c].child_branches.size()<<endl;
+	cerr<<"draw-tree:     #n : "<<clouds[c].child_nodes.size()<<endl;
+
+	for(int i=0;i<clouds[c].child_nodes.size();i++)
+	  cout<<"draw-tree:   node : "<<clouds[c].child_nodes[i]<<endl;
+      }
       for(int i=0;i<clouds[c].size();i++) 
       {
 	int e = clouds[c].child_branches[i];
-	cerr<<"   edge : "<<e<<"\n";
+	if (log_verbose) cerr<<"draw-tree:   edge : "<<e<<"\n";
 	
 	int n1 = L.MC.edges[e].from;
 	int n2 = L.MC.edges[e].to;
@@ -2681,7 +2687,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"draw-tree: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

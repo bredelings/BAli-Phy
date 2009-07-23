@@ -462,4 +462,6 @@ std::vector<std::string> load_lines(std::istream& file,int skip,int subsample, i
 std::string get_basename(std::string filename);
 
 std::string remove_extension(std::string filename);
+
+extern int log_verbose;
 #endif

@@ -160,7 +160,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"trees-to-SRQ: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

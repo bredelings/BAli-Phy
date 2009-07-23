@@ -6,6 +6,7 @@
 #include "statistics.H"
 #include "bootstrap.H"
 #include "logsum.H"
+#include "util.H"
 
 #include <boost/program_options.hpp>
 
@@ -102,7 +103,7 @@ double Pr_smoothed(const valarray<double>& v) {
 
     // if we aren't converging, warn and don't give an answer
     if (iterations >400) {
-      std::cerr<<"Probabilities not converging!!!";
+      std::cerr<<"model_P: Probabilities not converging!!!\n";
       return log_0;
       //      exit(1);
     }
@@ -120,6 +121,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("seed", value<unsigned long>(),"random seed")
+    ("verbose","Output more log messages on stderr.")
     ;
 
   variables_map args;     
@@ -131,6 +133,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -157,7 +161,9 @@ int main(int argc,char* argv[])
     }
     else
       seed = myrand_init();
-    cerr<<"random seed = "<<seed<<endl<<endl;
+
+    if (log_verbose)
+      cerr<<"model_P: random seed = "<<seed<<endl<<endl;
 
     vector<double> data;
 
@@ -166,7 +172,8 @@ int main(int argc,char* argv[])
       data.push_back(d);
     }
 
-    cerr<<"OK: read "<<data.size()<< " values."<<endl;
+    if (log_verbose)
+      cerr<<"model_P: OK. Read "<<data.size()<< " values."<<endl;
  
     // Translate vector to valarray...
     valarray<double> values(data.size());
@@ -191,7 +198,7 @@ int main(int argc,char* argv[])
     std::cout<<"  +- "<<stddev<<endl;
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"model_P: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

@@ -55,6 +55,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("merge","Stack the two alignments into one alignment with duplicate names")
     ("fill",value<string>()->default_value("gap"),"blank columns filled with: gap or unknown")
+    ("differences-file,d",value<string>(),"Filename to store differences in AU format")
     ;
 
   // positional options
@@ -225,17 +226,70 @@ int main(int argc,char* argv[])
     alignment A1b = stretch(A1,columns1,fill);
     alignment A2b = stretch(A2,columns2,fill);
 
+    ublas::matrix<int> M1b = M(A1b);
+    ublas::matrix<int> M2b = M(A2b);
+
     if (args.count("merge")) 
     {
-      A1b.add_sequence(sequence("",""));
-      for(int c=0;c<A1b.length();c++)
-	A1b(c,A1b.n_sequences()-1) = fill;
+      alignment O = A1b;
+      // add a blank row
 
+      O.add_sequence(sequence("",""));
+      for(int c=0;c<O.length();c++)
+	O(c,O.n_sequences()-1) = fill;
+
+      // append the second alignment as extra rows
       vector<sequence> sequences = A2b.get_sequences();
-      for(int i=0;i<A2b.n_sequences();i++)
-	A1b.add_sequence(sequences[i]);
+      for(int i=0;i<A2b.n_sequences();i++) {
+	sequence s = sequences[i];
+	s.name += '2';
+	O.add_sequence(s);
+      }
 
-      cout<<A1b<<endl;
+      cout<<O<<endl;
+
+      if (args.count("differences-file")) 
+      {
+	const int N = A1b.n_sequences();
+
+	//	cerr<<"N = "<<N<<"  O is "<<O.n_sequences()<<" x "<<O.length()<<endl;
+	// construct difference matrix C in AU format
+	ublas::matrix<int> D(O.length(), O.n_sequences()+1);
+	for(int c=0;c<D.size1();c++) {
+	  D(c,N)=0;
+	  D(c,2*N+1)=0;
+	  for(int j=0;j<N;j++) {
+	    if (M1b(c,j) == M2b(c,j) and M1b(c,j) >= 0)
+	      D(c,j) = D(c,j+1+N)=1;
+	    else
+	      D(c,j) = D(c,j+1+N)=0;
+	  }
+	}
+
+	// write out header: sequence names
+	string filename = args["differences-file"].as<string>();
+	ofstream d(filename.c_str());
+	for(int i=0;i<O.n_sequences();i++) {
+	  d<<O.seq(i).name;
+	  if (i !=  O.n_sequences()-1)
+	    d<<" ";
+	  else
+	    d<<endl;
+	}
+
+	// write out D matrix
+	for(int c=0;c<D.size1();c++) 
+	{
+	  for(int j=0;j<D.size2();j++) 
+	  {
+	    d<<D(c,j);
+	    if (j != D.size2()-1)
+	      d<<" ";
+	    else
+	      d<<endl;
+	  }
+	}
+      }
     }
     else {
       cout<<A1b<<endl<<endl;
@@ -243,7 +297,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignments-diff: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

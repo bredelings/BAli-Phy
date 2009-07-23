@@ -384,9 +384,10 @@ vector<Partition> check_MC_partitions(const vector<Partition>& partitions)
   int full = count(i2,&Partition::full);
   int total = i2.size();
   int partial = total - full;
-  if (i1.size() != i2.size())
-    cerr<<"Removing "<<i1.size() - i2.size()<<"/"<<i1.size()<<" informative partitions to yield an MC  tree."<<endl;
-  cerr<<"There are "<<partial<<" (partial) + "<<full<<" (full) = "<<total<<" (total) informative partitions."<<endl;
+  if (i1.size() != i2.size() and log_verbose)
+    cerr<<"mctree.C: Removing "<<i1.size() - i2.size()<<"/"<<i1.size()<<" informative partitions to yield an MC  tree."<<endl;
+  if (log_verbose)
+    cerr<<"mctree.C: There are "<<partial<<" (partial) + "<<full<<" (full) = "<<total<<" (total) informative partitions."<<endl;
   
   return mc_partitions;
 }

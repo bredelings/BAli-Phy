@@ -29,7 +29,8 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
   unsigned skip = args["skip"].as<unsigned>();
 
   // --------------------- try ---------------------- //
-  std::cerr<<"Loading alignments...";
+  if (log_verbose)
+  std::cerr<<"alignment-identity: Loading alignments...";
   list<alignment> As = load_alignments(std::cin,load_alphabets(args),skip,maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
   std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
@@ -206,7 +207,7 @@ double ave_aligned_fraction(const vector< ublas::matrix<int> >& Ms,
     }
 
   int total = max1.sum()+max2.sum();
-  cerr<<total<<"   "<<double(total)/(max1.size()+max2.size())/Ms.size()<<endl;
+  if (log_verbose) cerr<<"alignment-identity: "<<total<<"   "<<double(total)/(max1.size()+max2.size())/Ms.size()<<endl;
 
   return double(total)/(max1.size()+max2.size())/Ms.size();
 }
@@ -226,7 +227,7 @@ int main(int argc,char* argv[])
     }
     else
       seed = myrand_init();
-    cerr<<"random seed = "<<seed<<endl<<endl;
+    if (log_verbose) cerr<<"alignment-identity: random seed = "<<seed<<endl<<endl;
     
     //------------ Load alignments ---- ----------//
     vector<alignment> alignments;
@@ -434,7 +435,7 @@ int main(int argc,char* argv[])
     
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-identity: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

@@ -30,6 +30,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   visible.add_options()
     ("help", "Produce help message")
     ("no-header","Suppress the line of column names.")
+    ("select,s",value<vector<string> >()->composing(),"Select on key=value pairs")
+    ("remove,r","Remove selected columns, instead of keeping them.")
     ;
 
   options_description all("All options");
@@ -42,6 +44,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   variables_map args;     
   store(command_line_parser(argc, argv).
 	    options(all).positional(p).run(), args);
+
   notify(args);    
 
   if (args.count("help")) {
@@ -60,25 +63,56 @@ int main(int argc,char* argv[])
     //----------- Parse command line  -----------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    if (not args.count("columns")) 
-      throw myexception()<<"No columns selected.";
-
     //------------ Parse column names ----------//
     vector<string> headers = read_header(std::cin);
 
     //------------ Parse column mask ----------//
     vector<int> column_index;
-    
-    vector<string> columns = args["columns"].as<vector<string> >();
-    
-    for(int i=0;i<columns.size();i++) 
+    if (not args.count("columns"))
+      column_index = iota<int>(headers.size());
+    else 
     {
-      int loc = find_index(headers,columns[i]);
+      vector<string> columns = args["columns"].as<vector<string> >();
+    
+      for(int i=0;i<columns.size();i++)
+      {
+	int loc = find_index(headers,columns[i]);
+	if (loc == -1)
+	  throw myexception()<<"Can't find column '"<<columns[i]<<" in table.";
+	column_index.push_back(loc);
+      }
+    }
+
+    //----------- Parse conditions ------------//
+    vector<string> conditions(headers.size());
+
+    vector<string> selections;
+    if (args.count("select"))
+      selections = args["select"].as<vector<string> >();
+
+    for(int i=0;i<selections.size();i++) {
+      vector<string> parse = split(selections[i],'=');
+      if (parse.size() != 2)
+	throw myexception()<<"I can't understand the condition '"<<selections[i]<<"' as a key=value pair.";
+      
+      int loc = find_index(headers,parse[0]);
       if (loc == -1)
-	throw myexception()<<"Can't find column '"<<columns[i]<<" in table.";
-      column_index.push_back(loc);
+	throw myexception()<<"Can't find column '"<<parse[0]<<"' in table.";
+
+      conditions[loc] = parse[1];
     }
     
+    
+    //------------ Invert column mask -----------//
+
+    if (args.count("remove")) {
+      vector<int> others;
+      for(int i=0;i<headers.size();i++)
+	if (not includes(column_index,i))
+	  others.push_back(i);
+      column_index = others;
+    }
+
     //------------ Print  column names ----------//
     if (not args.count("no-header"))
       for(int i=0;i<column_index.size();i++) 
@@ -107,6 +141,13 @@ int main(int argc,char* argv[])
       if (v.size() != headers.size())
 	throw myexception()<<"Found "<<v.size()<<"/"<<headers.size()<<" values on line "<<line_number<<".";
 
+      // check if conditions on values are met
+      bool ok = true;
+      for(int i=0;i<conditions.size() and ok;i++)
+	if (conditions[i].size())
+	  ok = (v[i] == conditions[i]);
+      if (not ok) continue;
+
       for(int i=0;i<column_index.size();i++) 
       {
 	cout<<v[column_index[i]];
@@ -119,7 +160,7 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"stats-select: Error! "<<e.what()<<endl;
     exit(1);
   }
 

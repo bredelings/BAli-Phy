@@ -557,7 +557,7 @@ tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample,const
       T = standardized_prune(line,prune);
     }
     catch (std::exception& e) {
-      cerr<<"Exception: "<<e.what()<<endl;
+      cerr<<"tree-dist: Error! "<<e.what()<<endl;
       cerr<<" Quitting read of tree file"<<endl;
       break;
     }
@@ -774,11 +774,14 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
 				 double min_rooting,int depth) 
 {
   // get list of branches to consider cutting
+  //   FIXME - consider 4n-12 most probable partitions, here?
+  //         - Perhaps NOT, though.
   vector<Partition> partitions_c50 = get_Ml_partitions(sample, 0.5);
   SequenceTree c50 = get_mf_tree(sample.names(),partitions_c50);
   vector<const_branchview> branches = branches_from_leaves(c50);  
 
   // construct unit masks
+  // - unit masks are masks that come directly from a supported branch (full, or partial)
   list< valarray<bool> > unit_masks;
   for(int b=0;b<branches.size();b++)
     add_unique(unit_masks, mask and branch_partition(c50,branches[b]) );
@@ -808,6 +811,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const valarr
       vector<pair<Partition,unsigned> > sub_partitions = get_Ml_partitions_and_counts(sample,l,*m);
     
       // match up sub-partitions and full partitions
+      // FIXME - aren't we RE-doing a lot of work, here?
       vector<int> parents = match(full_partitions,sub_partitions);
 
       // check for partitions with increased support when *m is unplugged

@@ -70,7 +70,7 @@ int main(int argc,char* argv[])
     std::cout<<A;
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-find: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

@@ -17,6 +17,7 @@ using namespace colors;
 
 // some scale functions
 double identity(double x) {return x;}
+double invert(double x) {return 1.0-x;}
 double square(double x) {return x*x;}
 double cube(double x) {return x*x*x;}
 
@@ -431,6 +432,13 @@ Scale get_scale(const variables_map& args) {
     if (args.count("min")) scale.min = args["min"].as<double>();
     if (args.count("max")) scale.max = args["max"].as<double>();
   }
+  if (scale_name == "invert") {
+    scale.f = invert;
+    scale.min = 0;
+    scale.max = 1;
+    if (args.count("min")) scale.min = args["min"].as<double>();
+    if (args.count("max")) scale.max = args["max"].as<double>();
+  }
   else if (scale_name == "square") {
     scale.f = square;
     scale.min = 0;
@@ -835,7 +843,7 @@ BODY {\n\
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-draw: Error! "<<e.what()<<endl;
     return 1;
   }
   return 0;

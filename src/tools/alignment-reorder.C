@@ -100,6 +100,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree",value<string>(),"file with initial tree")
     ("use-root","use the root specified in the tree file")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
+    ("verbose","Output more log messages on stderr.")
     ;
 
   // positional options
@@ -119,6 +120,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -143,10 +146,12 @@ int main(int argc,char* argv[])
       int rootb=-1;
       double rootd = -1;
       find_root(T,rootb,rootd);
-      std::cerr<<"root branch = "<<rootb<<std::endl;
-      std::cerr<<"x = "<<rootd<<std::endl;
-      for(int i=0;i<T.n_leaves();i++)
-	std::cerr<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
+      if (log_verbose) {
+	std::cerr<<"alignment-reorder: root branch = "<<rootb<<std::endl;
+	std::cerr<<"alignment-reorder: x = "<<rootd<<std::endl;
+	for(int i=0;i<T.n_leaves();i++)
+	  std::cerr<<"alignment-reorder: "<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
+      }
       
       T = add_root((SequenceTree)T,rootb);  // we don't care about the lengths anymore
     }
@@ -167,11 +172,14 @@ int main(int argc,char* argv[])
     // re-phrase the mapping in terms of the order of sequence in A
     vector<int> mapping = compose(mapping2,invert(mapping1));
 
-    for(int i=0;i<mapping2.size();i++)
-      cerr<<T.seq(mapping2[i])<<" ";
-    cerr<<std::endl;
-
-    cerr<<"tree = "<<T.write()<<"\n";
+    if (log_verbose) {
+      cerr<<"alignment-reorder: ";
+      for(int i=0;i<mapping2.size();i++)
+	cerr<<T.seq(mapping2[i])<<" ";
+      cerr<<std::endl;
+      
+      cerr<<"alignment-reorder: tree = "<<T.write()<<"\n";
+    }
 
     //------- Print out the alignment -------//
     vector<sequence> sequences = A.get_sequences();
@@ -183,7 +191,7 @@ int main(int argc,char* argv[])
 
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<endl;
+    std::cerr<<"alignment-reorder: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

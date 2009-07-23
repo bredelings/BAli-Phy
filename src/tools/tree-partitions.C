@@ -73,7 +73,7 @@ int main(int argc,char* argv[])
       cout<<partitions[p]<<endl<<endl;
   }
   catch (std::exception& e) {
-    cerr<<"Exception: "<<e.what()<<endl;
+    cerr<<"tree-partitions: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

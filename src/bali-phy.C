@@ -10,14 +10,16 @@ extern "C" {
 }
 #endif
 
-#ifdef HAVE_FENV
+#ifdef HAVE_FENV_H
 extern "C" {
 #include "fenv.h"
 }
 #endif
 
 #ifdef HAVE_MPI
-#include <mpi/mpi.h>
+#include <mpi.h>
+#include <boost/mpi.hpp>
+namespace mpi = boost::mpi;
 #endif
 
 #include <cmath>
@@ -666,7 +668,7 @@ vector<ofstream*> open_files(int proc_id, const string& name, vector<string>& na
 
   for(int j=0;j<names.size();j++) 
   {
-    string filename = name + convertToString(proc_id+1)+"."+names[j];
+    string filename = name + "C" + convertToString(proc_id+1)+"."+names[j];
       
     if (fs::exists(filename)) {
       close_files(files);
@@ -782,8 +784,10 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
     s_out<<"LSB_JOBID: "<<getenv("LSB_JOBID")<<endl;
   s_out<<"hostname: "<<hostname()<<endl;
   s_out<<"PID: "<<getpid()<<endl;
-#ifdef HAVE_HPI
-  s_out<<"MPI_PROC_ID: "<<proc_id<<endl;
+#ifdef HAVE_MPI
+  mpi::communicator world;
+  s_out<<"MPI_RANK: "<<world.rank()<<endl;
+  s_out<<"MPI_SIZE: "<<world.size()<<endl;
 #endif
   s_out<<endl;
 
@@ -1240,8 +1244,46 @@ void raise_cpu_limit(ostream& o)
 
 void my_gsl_error_handler(const char* reason, const char* file, int line, int gsl_errno)
 {
-  std::cerr<<"gsl: "<<file<<":"<<line<<" (errno="<<gsl_errno<<") ERROR:"<<reason<<endl;
+  const int max_errors=100;
+  static int n_errors=0;
+
+  if (n_errors < max_errors) {
+  
+    std::cerr<<"gsl: "<<file<<":"<<line<<" (errno="<<gsl_errno<<") ERROR:"<<reason<<endl;
+    n_errors++;
+    if (n_errors == max_errors)
+      std::cerr<<"gsl: "<<max_errors<<" errors reported - stopping error messages."<<endl;
+  }
+
   //  std::abort();
+}
+
+void check_alignment_names(const alignment& A)
+{
+  const string forbidden = "();:\"'[]&,";
+
+  for(int i=0;i<A.n_sequences();i++) {
+    const string& name = A.seq(i).name;
+    for(int j=0;j<name.size();j++)
+      for(int c=0;c<forbidden.size();c++)
+	for(int pos=0;pos<name.size();pos++)
+	  if (name[pos] == forbidden[c])
+	    throw myexception()<<"Sequence name '"<<name<<"' contains illegal character '"<<forbidden[c]<<"'";
+  }
+}
+
+void check_alignment_values(const alignment& A,const string& filename)
+{
+  const alphabet& a = A.get_alphabet();
+
+  for(int i=0;i<A.n_sequences();i++)
+  {
+    string name = A.seq(i).name;
+
+    for(int j=0;j<A.length();j++) 
+      if (A.unknown(j,i))
+	throw myexception()<<"Alignment file '"<<filename<<"' has a '"<<a.unknown_letter<<"' in sequence '"<<name<<"'.\n (Please replace with gap character '"<<a.gap_letter<<"' or wildcard '"<<a.wildcard<<"'.)";
+  }
 }
 
 int main(int argc,char* argv[]) 
@@ -1261,11 +1303,11 @@ int main(int argc,char* argv[])
   int proc_id = 0;
 
 #ifdef HAVE_MPI
-  MPI::Init ( argc, argv ); 
-  proc_id = MPI::COMM_WORLD.Get_rank();
-  n_procs = MPI::COMM_WORLD.Get_size();
+  mpi::environment env(argc, argv);
+  mpi::communicator world;
 
-  std::cout << "Hello, world!  I am #" << proc_id << " of " << n_procs << std::endl;
+  proc_id = world.rank();
+  n_procs = world.size();
 #endif
 
 >>>>>>> .merge-right.r2522
@@ -1286,7 +1328,7 @@ int main(int argc,char* argv[])
   time_t start_time = time(NULL);
 
   try {
-#if defined(HAVE_FENV) && !defined(NDEBUG)
+#if defined(HAVE_FENV_H) && !defined(NDEBUG)
     feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
     fp_scale::initialize();
@@ -1303,7 +1345,6 @@ int main(int argc,char* argv[])
     }
     else {
       if (proc_id) return 0;
-      std::cout << "Hello, world!  I am #" << proc_id << " of " << n_procs << std::endl;
     }
 
     //---------- Determine Data dir ---------------//
@@ -1331,6 +1372,10 @@ int main(int argc,char* argv[])
       out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
       out_cache<<"alphabet"<<i+1<<" = "<<A[i].get_alphabet().name<<endl<<endl;
     }
+    for(int i=0;i<A.size();i++) {
+      check_alignment_names(A[i]);
+      check_alignment_values(A[i],filenames[i]);
+    }
 
     //--------- Handle branch lengths <= 0 --------//
     sanitize_branch_lengths(T);
@@ -1346,36 +1391,14 @@ int main(int argc,char* argv[])
 #ifdef HAVE_MPI
       if (not proc_id) {
 	dir_name = init_dir(args);
-	int size = dir_name.size();
+
 	for(int dest=1;dest<n_procs;dest++) 
-        {
-	  //	  cerr<<"Proc "<<proc_id<<": Sending size..."<<endl;
-	  MPI::COMM_WORLD.Send ( &size,            1,                 MPI::INT,  dest, 0 );
-	  //	  cerr<<"Proc "<<proc_id<<": sent."<<endl;
-
-	  //	  cerr<<"Proc "<<proc_id<<": Sending string..."<<endl;
-	  MPI::COMM_WORLD.Send ( dir_name.c_str(), dir_name.length(), MPI::CHAR, dest, 0 );
-	  //	  cerr<<"Proc "<<proc_id<<": sent."<<endl;
-	}
+	  world.send(dest, 0, dir_name);
       }
-      else {
-	int size;
-	dir_name = "";
+      else
+	world.recv(0, 0, dir_name);
 
-	//	cerr<<"Proc "<<proc_id<<": Receiving size..."<<endl;
-	MPI::COMM_WORLD.Recv ( &size,  1,    MPI::INT,  0, MPI::ANY_TAG);
-	//	cerr<<"Proc "<<proc_id<<": got it."<<endl;
-
-	char* buffer = new char[size+1];
-	//	cerr<<"Proc "<<proc_id<<": Receiving string..."<<endl;
-	MPI::COMM_WORLD.Recv ( buffer, size, MPI::CHAR, 0,               MPI::ANY_TAG);
-	buffer[size]=0;
-	//	cerr<<"Proc "<<proc_id<<": got it."<<endl;
-
-	dir_name = buffer;
-	delete[] buffer;
-      }
-      cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
+      // cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
 #else
       dir_name = init_dir(args);
 #endif
@@ -1526,15 +1549,11 @@ int main(int argc,char* argv[])
   }
   catch (std::exception& e) {
     if (n_procs > 1)
-      err_both<<"Error["<<proc_id<<"]: "<<e.what()<<endl;
+      err_both<<"bali-phy: Error["<<proc_id<<"]! "<<e.what()<<endl;
     else
-      err_both<<"Error: "<<e.what()<<endl;
+      err_both<<"bali-phy: Error! "<<e.what()<<endl;
     exit(1);
   }
-
-#ifdef HAVE_HPI
-  MPI::Finalize();
-#endif
 
   return 0;
 }

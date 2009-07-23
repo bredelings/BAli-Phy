@@ -25,6 +25,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("skip",value<int>(),"the number of samples to skip")
     ("size",value<int>(),"maximum number of samples to use")
     ("until",value<int>(),"last sample to use")
+    ("verbose","Output more log messages on stderr.")
     ;
 
   variables_map args;     
@@ -37,6 +38,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -106,7 +109,7 @@ int main(int argc,char* argv[]) {
     }
   }
   catch (std::exception& e) {
-    std::cerr<<"Exception: "<<e.what()<<std::endl;
+    std::cerr<<"cut-range: Error! "<<e.what()<<std::endl;
     exit(1);
   }
 }

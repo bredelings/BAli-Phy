@@ -184,6 +184,9 @@ public:
   vector<double> beta;
   vector<double> beta_series;
 
+  /// Did we most recently hit beta==1 (1) or beta=0 (0)
+  int updown;
+
   /// Tree partitions to weight
   vector<Partition> partitions;
   vector<efloat_t> partition_weights;
