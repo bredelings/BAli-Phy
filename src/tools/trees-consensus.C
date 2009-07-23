@@ -16,6 +16,7 @@
 #include "statistics.H"
 #include "bootstrap.H"
 #include "tree-dist.H"
+#include "mctree.H"
 
 #include <boost/program_options.hpp>
 
