@@ -1,4 +1,5 @@
-// (C) Copyright Jonathan Turkanis 2005.
+// (C) Copyright 2008 CodeRage, LLC (turkanis at coderage dot com)
+// (C) Copyright 2005-2007 Jonathan Turkanis
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
@@ -49,6 +50,7 @@ public:
                              BOOST_IOS::in | BOOST_IOS::out )
     { return iostreams::seek(device_, off, way, which); }
 public:
+    non_blocking_adapter& operator=(const non_blocking_adapter&);
     Device& device_;
 };
 

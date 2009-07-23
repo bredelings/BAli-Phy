@@ -2,13 +2,9 @@
 //  Copyright (c) 2000-2002
 //  Joerg Walter, Mathias Koch
 //
-//  Permission to use, copy, modify, distribute and sell this software
-//  and its documentation for any purpose is hereby granted without fee,
-//  provided that the above copyright notice appear in all copies and
-//  that both that copyright notice and this permission notice appear
-//  in supporting documentation.  The authors make no representations
-//  about the suitability of this software for any purpose.
-//  It is provided "as is" without express or implied warranty.
+//  Distributed under the Boost Software License, Version 1.0. (See
+//  accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt)
 //
 //  The authors gratefully acknowledge the support of
 //  GeNeSys mbH & Co. KG in producing this work.
@@ -64,22 +60,28 @@ namespace boost { namespace numeric { namespace ublas {
     template<class E>
     class matrix_reference;
 
-    template<class E>
+    template<class V>
     class vector_range;
-    template<class E>
+    template<class V>
     class vector_slice;
-    template<class E, class IA = indirect_array<> >
+    template<class V, class IA = indirect_array<> >
     class vector_indirect;
 
-    template<class E>
+    template<class M>
     class matrix_row;
-    template<class E>
+    template<class M>
     class matrix_column;
-    template<class E>
+    template<class M>
+    class matrix_vector_range;
+    template<class M>
+    class matrix_vector_slice;
+    template<class M, class IA = indirect_array<> >
+    class matrix_vector_indirect;
+    template<class M>
     class matrix_range;
-    template<class E>
+    template<class M>
     class matrix_slice;
-    template<class E, class IA = indirect_array<> >
+    template<class M, class IA = indirect_array<> >
     class matrix_indirect;
 
     template<class T, class A = unbounded_array<T> >
@@ -87,11 +89,11 @@ namespace boost { namespace numeric { namespace ublas {
     template<class T, std::size_t N>
     class bounded_vector;
 
-    template<class T = int>
+    template<class T = int, class ALLOC = std::allocator<T> >
     class unit_vector;
-    template<class T = int>
+    template<class T = int, class ALLOC = std::allocator<T> >
     class zero_vector;
-    template<class T = int>
+    template<class T = int, class ALLOC = std::allocator<T> >
     class scalar_vector;
 
     template<class T, std::size_t N>
@@ -124,11 +126,11 @@ namespace boost { namespace numeric { namespace ublas {
     template<class T, std::size_t M, std::size_t N, class L = row_major>
     class bounded_matrix;
 
-    template<class T = int>
+    template<class T = int, class ALLOC = std::allocator<T> >
     class identity_matrix;
-    template<class T = int>
+    template<class T = int, class ALLOC = std::allocator<T> >
     class zero_matrix;
-    template<class T = int>
+    template<class T = int, class ALLOC = std::allocator<T> >
     class scalar_matrix;
 
     template<class T, std::size_t M, std::size_t N>

@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: uniform_int_float.hpp,v 1.3 2004/07/27 03:43:32 dgregor Exp $
+ * $Id: uniform_int_float.hpp 41369 2007-11-25 18:07:19Z bemandawes $
  *
  */
 
@@ -29,8 +29,8 @@ public:
   typedef UniformRandomNumberGenerator base_type;
   typedef IntType result_type;
 
-  uniform_int_float(base_type rng, IntType min = 0, IntType max = 0xffffffff)
-    : _rng(rng), _min(min), _max(max)
+  uniform_int_float(base_type rng, IntType min_arg = 0, IntType max_arg = 0xffffffff)
+    : _rng(rng), _min(min_arg), _max(max_arg)
   {
     init();
   }

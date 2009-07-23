@@ -1,4 +1,5 @@
-// (C) Copyright Jonathan Turkanis 2003.
+// (C) Copyright 2008 CodeRage, LLC (turkanis at coderage dot com)
+// (C) Copyright 2003-2007 Jonathan Turkanis
 // (C) Copyright Craig Henderson 2002.   'boost/memmap.hpp' from sandbox
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
@@ -62,12 +63,25 @@ struct mapped_file_impl;
 
 struct mapped_file_params {
     explicit mapped_file_params()
-        : mode(), offset(0), length(static_cast<std::size_t>(-1)),
+    #if BOOST_WORKAROUND(BOOST_MSVC, < 1400) && defined(BOOST_RWSTD_VER) || \
+        defined(__BORLANDC__) && defined(_CPPLIB_VER)
+        /**/
+        : mode(std::ios_base::openmode(0)),
+    #else
+        : mode(),
+    #endif
+          offset(0), length(static_cast<std::size_t>(-1)),
           new_file_size(0), hint(0)
         { }
     explicit mapped_file_params(const std::string& path)
-        : path(path), mode(), offset(0),
-          length(static_cast<std::size_t>(-1)),
+        : path(path),
+    #if BOOST_WORKAROUND(BOOST_MSVC, < 1400) && defined(BOOST_RWSTD_VER) || \
+        defined(__BORLANDC__) && defined(_CPPLIB_VER)
+          mode(std::ios_base::openmode(0)),
+    #else
+          mode(),
+    #endif
+          offset(0), length(static_cast<std::size_t>(-1)),
           new_file_size(0), hint(0)
         { }
     std::string          path;
@@ -211,6 +225,7 @@ struct BOOST_IOSTREAMS_DECL mapped_file_sink : private mapped_file {
           public closable_tag
         { };
     using mapped_file::close;
+    using mapped_file::size;
     explicit mapped_file_sink(mapped_file_params p);
     explicit mapped_file_sink( const std::string& path,
                                size_type length = max_length,

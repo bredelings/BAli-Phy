@@ -11,9 +11,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: /cvsroot/boost/boost/boost/mpl/stable_partition.hpp,v $
-// $Date: 2004/11/28 01:58:27 $
-// $Revision: 1.4 $
+// $Source$
+// $Date: 2004-11-27 20:58:27 -0500 (Sat, 27 Nov 2004) $
+// $Revision: 26325 $
 
 #include <boost/mpl/fold.hpp>
 #include <boost/mpl/reverse_fold.hpp>

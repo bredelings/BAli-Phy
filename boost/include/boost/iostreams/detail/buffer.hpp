@@ -1,4 +1,5 @@
-// (C) Copyright Jonathan Turkanis 2003-5.
+// (C) Copyright 2008 CodeRage, LLC (turkanis at coderage dot com)
+// (C) Copyright 2003-2007 Jonathan Turkanis
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
@@ -95,11 +96,11 @@ public:
     typename int_type_of<Source>::type fill(Source& src) 
     {
         using namespace std;
-        streamsize keep;
-        if ((keep = static_cast<streamsize>(eptr_ - ptr_)) > 0)
+        std::streamsize keep;
+        if ((keep = static_cast<std::streamsize>(eptr_ - ptr_)) > 0)
             traits_type::move(this->data(), ptr_, keep);
         set(0, keep);
-        streamsize result = 
+        std::streamsize result = 
             iostreams::read(src, this->data() + keep, this->size() - keep);
         if (result != -1)
             this->set(0, keep + result);
@@ -121,8 +122,8 @@ public:
     bool flush(Sink& dest) 
     {
         using namespace std;
-        streamsize amt = static_cast<std::streamsize>(eptr_ - ptr_);
-        streamsize result = iostreams::write_if(dest, ptr_, amt);
+        std::streamsize amt = static_cast<std::streamsize>(eptr_ - ptr_);
+        std::streamsize result = iostreams::write_if(dest, ptr_, amt);
         if (result < amt) {
             traits_type::move( this->data(), 
                                ptr_ + result, 

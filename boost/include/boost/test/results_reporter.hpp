@@ -1,13 +1,13 @@
-//  (C) Copyright Gennadiy Rozental 2001-2005.
+//  (C) Copyright Gennadiy Rozental 2001-2007.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at 
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile: results_reporter.hpp,v $
+//  File        : $RCSfile$
 //
-//  Version     : $Revision: 1.1 $
+//  Version     : $Revision: 41369 $
 //
 //  Description : defines class unit_test_result that is responsible for 
 //  gathering test results and presenting this information to end-user
@@ -37,7 +37,7 @@ namespace results_reporter {
 // **************              formatter interface             ************** //
 // ************************************************************************** //
 
-class format {
+class BOOST_TEST_DECL format {
 public:
     // Destructor
     virtual ~format() {}
@@ -55,19 +55,24 @@ public:
 // **************              report configuration            ************** //
 // ************************************************************************** //
 
-void set_level( report_level );
-void set_stream( std::ostream& );
-void set_format( output_format );
-void set_format( results_reporter::format* );
+BOOST_TEST_DECL void    set_level( report_level );
+BOOST_TEST_DECL void    set_stream( std::ostream& );
+BOOST_TEST_DECL void    set_format( output_format );
+BOOST_TEST_DECL void    set_format( results_reporter::format* );
+
+BOOST_TEST_DECL std::ostream& get_stream();
 
 // ************************************************************************** //
 // **************               report initiation              ************** //
 // ************************************************************************** //
 
-void        make_report( report_level l = INV_REPORT_LEVEL, test_unit_id = INV_TEST_UNIT_ID );
-inline void confirmation_report( test_unit_id id = INV_TEST_UNIT_ID )   { make_report( CONFIRMATION_REPORT, id ); }
-inline void short_report( test_unit_id id = INV_TEST_UNIT_ID )          { make_report( SHORT_REPORT, id ); }
-inline void detailed_report( test_unit_id id = INV_TEST_UNIT_ID )       { make_report( DETAILED_REPORT, id ); }
+BOOST_TEST_DECL void    make_report( report_level l = INV_REPORT_LEVEL, test_unit_id = INV_TEST_UNIT_ID );
+inline void             confirmation_report( test_unit_id id = INV_TEST_UNIT_ID )   
+{ make_report( CONFIRMATION_REPORT, id ); }
+inline void             short_report( test_unit_id id = INV_TEST_UNIT_ID )
+{ make_report( SHORT_REPORT, id ); }
+inline void             detailed_report( test_unit_id id = INV_TEST_UNIT_ID )
+{ make_report( DETAILED_REPORT, id ); }
 
 } // namespace results_reporter
 
@@ -78,15 +83,6 @@ inline void detailed_report( test_unit_id id = INV_TEST_UNIT_ID )       { make_r
 //____________________________________________________________________________//
 
 #include <boost/test/detail/enable_warnings.hpp>
-
-// ***************************************************************************
-//  Revision History :
-//  
-//  $Log: results_reporter.hpp,v $
-//  Revision 1.1  2005/02/20 08:27:06  rogeeff
-//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
-//
-// ***************************************************************************
 
 #endif // BOOST_TEST_RESULTS_REPORTER_HPP_021205GER
 

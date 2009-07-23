@@ -1,6 +1,6 @@
 
-#ifndef BOOST_MPL_SET_AUX_AT_IMPL_HPP_INCLUDED
-#define BOOST_MPL_SET_AUX_AT_IMPL_HPP_INCLUDED
+#ifndef BOOST_MPL_MAP_AUX_AT_IMPL_HPP_INCLUDED
+#define BOOST_MPL_MAP_AUX_AT_IMPL_HPP_INCLUDED
 
 // Copyright Aleksey Gurtovoy 2003-2004
 // Copyright David Abrahams 2003-2004
@@ -11,9 +11,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: /cvsroot/boost/boost/boost/mpl/map/aux_/at_impl.hpp,v $
-// $Date: 2004/12/14 14:05:31 $
-// $Revision: 1.6 $
+// $Source$
+// $Date: 2005-12-05 12:59:21 -0500 (Mon, 05 Dec 2005) $
+// $Revision: 31919 $
 
 #include <boost/mpl/at_fwd.hpp>
 #include <boost/mpl/long.hpp>

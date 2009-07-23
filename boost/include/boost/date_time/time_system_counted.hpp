@@ -4,9 +4,9 @@
 /* Copyright (c) 2002,2003 CrystalClear Software, Inc.
  * Use, modification and distribution is subject to the 
  * Boost Software License, Version 1.0. (See accompanying
- * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
+ * file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
  * Author: Jeff Garland, Bart Garst
- * $Date: 2004/12/07 11:00:12 $
+ * $Date: 2008-02-27 15:00:24 -0500 (Wed, 27 Feb 2008) $
  */
 
 
@@ -31,15 +31,15 @@ namespace date_time {
     typedef typename config::time_duration_type time_duration_type;
     typedef typename config::resolution_traits   resolution_traits;
     
-    counted_time_rep(const date_type& d, const time_duration_type& tod) 
+    counted_time_rep(const date_type& d, const time_duration_type& time_of_day) 
       : time_count_(1)
     {
-      if(d.is_infinity() || d.is_not_a_date() || tod.is_special()) {
-        time_count_ = tod.get_rep() + d.day_count();
+      if(d.is_infinity() || d.is_not_a_date() || time_of_day.is_special()) {
+        time_count_ = time_of_day.get_rep() + d.day_count();
         //std::cout << time_count_ << std::endl;
       }
       else {    
-        time_count_ = (d.day_number() * frac_sec_per_day()) + tod.ticks();
+        time_count_ = (d.day_number() * frac_sec_per_day()) + time_of_day.ticks();
       }
     }
     explicit counted_time_rep(int_type count) :

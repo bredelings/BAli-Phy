@@ -1,13 +1,13 @@
-//  (C) Copyright Gennadiy Rozental 2001-2005.
+//  (C) Copyright Gennadiy Rozental 2001-2007.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at 
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile: global_typedef.hpp,v $
+//  File        : $RCSfile$
 //
-//  Version     : $Revision: 1.1 $
+//  Version     : $Revision: 41369 $
 //
 //  Description : some trivial global typedefs
 // ***************************************************************************
@@ -16,7 +16,7 @@
 #define BOOST_TEST_GLOBAL_TYPEDEF_HPP_021005GER
 
 #include <boost/test/utils/basic_cstring/basic_cstring.hpp>
-#define BOOST_TEST_L( s )         boost::unit_test::literal_string( s, sizeof( s ) - 1 )
+#define BOOST_TEST_L( s )         boost::unit_test::const_string( s, sizeof( s ) - 1 )
 #define BOOST_TEST_STRINGIZE( s ) BOOST_TEST_L( BOOST_STRINGIZE( s ) )
 #define BOOST_TEST_EMPTY_STRING   BOOST_TEST_L( "" )
 
@@ -68,14 +68,5 @@ test_id_2_unit_type( test_unit_id id )
 //____________________________________________________________________________//
 
 #include <boost/test/detail/enable_warnings.hpp>
-
-// ***************************************************************************
-//  Revision History :
-//  
-//  $Log: global_typedef.hpp,v $
-//  Revision 1.1  2005/02/20 08:27:06  rogeeff
-//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
-//
-// ***************************************************************************
 
 #endif // BOOST_TEST_GLOBAL_TYPEDEF_HPP_021005GER

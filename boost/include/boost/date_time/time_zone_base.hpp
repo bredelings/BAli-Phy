@@ -3,13 +3,14 @@
 
 /* Copyright (c) 2003-2005 CrystalClear Software, Inc.
  * Subject to the Boost Software License, Version 1.0. 
- * (See accompanying file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
+ * (See accompanying file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
  * Author: Jeff Garland, Bart Garst
- * $Date: 2005/04/17 21:48:19 $
+ * $Date: 2008-02-27 15:00:24 -0500 (Wed, 27 Feb 2008) $
  */
 
 
 #include <string>
+#include <sstream>
 
 namespace boost {
 namespace date_time {
@@ -29,11 +30,12 @@ namespace date_time {
    * Note that this class is intended to be used as a shared
    * resource (hence the derivation from boost::counted_base.  
    */
-  template<typename time_type, typename CharT = char>
+  template<typename time_type, typename CharT>
   class time_zone_base  {
   public:
+    typedef CharT char_type;
     typedef std::basic_string<CharT> string_type;
-    typedef std::basic_stringstream<CharT> stringstream_type;
+    typedef std::basic_ostringstream<CharT> stringstream_type;
     typedef typename time_type::date_type::year_type year_type;
     typedef typename time_type::time_duration_type time_duration_type;
 

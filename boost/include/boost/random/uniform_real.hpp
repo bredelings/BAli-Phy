@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: uniform_real.hpp,v 1.17 2005/01/28 15:04:17 dgregor Exp $
+ * $Id: uniform_real.hpp 47233 2008-07-08 16:22:46Z steven_watanabe $
  *
  * Revision history
  *  2001-04-08  added min<max assertion (N. Becker)
@@ -33,14 +33,14 @@ public:
   typedef RealType input_type;
   typedef RealType result_type;
 
-  explicit uniform_real(RealType min = RealType(0),
-                        RealType max = RealType(1))
-    : _min(min), _max(max)
+  explicit uniform_real(RealType min_arg = RealType(0),
+                        RealType max_arg = RealType(1))
+    : _min(min_arg), _max(max_arg)
   {
 #ifndef BOOST_NO_LIMITS_COMPILE_TIME_CONSTANTS
     BOOST_STATIC_ASSERT(!std::numeric_limits<RealType>::is_integer);
 #endif
-    assert(min < max);
+    assert(min_arg <= max_arg);
   }
 
   // compiler-generated copy ctor and assignment operator are fine

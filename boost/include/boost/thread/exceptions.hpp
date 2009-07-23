@@ -1,13 +1,9 @@
 // Copyright (C) 2001-2003
 // William E. Kempf
+// Copyright (C) 2007-8 Anthony Williams
 //
-// Permission to use, copy, modify, distribute and sell this software
-// and its documentation for any purpose is hereby granted without fee,
-// provided that the above copyright notice appear in all copies and
-// that both that copyright notice and this permission notice appear
-// in supporting documentation.  William E. Kempf makes no representations
-// about the suitability of this software for any purpose.
-// It is provided "as is" without express or implied warranty.
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying 
+//  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef BOOST_THREAD_EXCEPTIONS_PDM070801_H
 #define BOOST_THREAD_EXCEPTIONS_PDM070801_H
@@ -23,7 +19,13 @@
 #include <string>
 #include <stdexcept>
 
-namespace boost {
+#include <boost/config/abi_prefix.hpp>
+
+namespace boost
+{
+
+    class BOOST_THREAD_DECL thread_interrupted
+    {};
 
 class BOOST_THREAD_DECL thread_exception : public std::exception
 {
@@ -36,11 +38,20 @@ public:
 
     int native_error() const;
 
-    const char* message() const;
-
 private:
     int m_sys_err;
 };
+
+    class condition_error:
+        public std::exception
+    {
+    public:
+        const char* what() const throw()
+        {
+            return "Condition error";
+        }
+    };
+    
 
 class BOOST_THREAD_DECL lock_error : public thread_exception
 {
@@ -93,6 +104,8 @@ public:
 };
 
 } // namespace boost
+
+#include <boost/config/abi_suffix.hpp>
 
 #endif // BOOST_THREAD_CONFIG_PDM070801_H
 

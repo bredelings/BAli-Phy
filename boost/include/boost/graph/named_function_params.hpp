@@ -177,6 +177,14 @@ namespace boost {
       return Params(pmap, *this);
     }
 
+    template <typename LowPointMap>
+    bgl_named_params<LowPointMap, vertex_lowpoint_t, self>
+    lowpoint_map(const LowPointMap& pmap) const {
+      typedef bgl_named_params<LowPointMap, vertex_lowpoint_t, self>
+        Params;
+      return Params(pmap, *this);
+    }
+
     template <typename IndexMap>
     bgl_named_params<IndexMap, vertex_index_t, self>
     vertex_index_map(const IndexMap& pmap) const {
@@ -273,6 +281,27 @@ namespace boost {
     bgl_named_params<VertexInvar, vertex_invariant_t, self>
     vertex_invariant(const VertexInvar& c) const {
       typedef bgl_named_params<VertexInvar, vertex_invariant_t, self> Params;
+      return Params(c, *this);
+    }
+
+    template <typename VertexInvar>
+    bgl_named_params<VertexInvar, vertex_invariant1_t, self>
+    vertex_invariant1(const VertexInvar& c) const {
+      typedef bgl_named_params<VertexInvar, vertex_invariant1_t, self> Params;
+      return Params(c, *this);
+    }
+
+    template <typename VertexInvar>
+    bgl_named_params<VertexInvar, vertex_invariant2_t, self>
+    vertex_invariant2(const VertexInvar& c) const {
+      typedef bgl_named_params<VertexInvar, vertex_invariant2_t, self> Params;
+      return Params(c, *this);
+    }
+
+    template <typename VertexMaxInvar>
+    bgl_named_params<VertexMaxInvar, vertex_max_invariant_t, self>
+    vertex_max_invariant(const VertexMaxInvar& c) const {
+      typedef bgl_named_params<VertexMaxInvar, vertex_max_invariant_t, self> Params;
       return Params(c, *this);
     }
 
@@ -434,6 +463,13 @@ namespace boost {
     return Params(pmap);
   }
 
+  template <typename LowPointMap>
+  bgl_named_params<LowPointMap, vertex_lowpoint_t>
+  lowpoint_map(LowPointMap pmap) {
+    typedef bgl_named_params<LowPointMap, vertex_lowpoint_t> Params;
+    return Params(pmap);
+  }
+
   template <typename IndexMap>
   bgl_named_params<IndexMap, vertex_index_t>
   vertex_index_map(IndexMap pmap) {
@@ -529,6 +565,27 @@ namespace boost {
   bgl_named_params<VertexInvar, vertex_invariant_t>
   vertex_invariant(const VertexInvar& c) {
     typedef bgl_named_params<VertexInvar, vertex_invariant_t> Params;
+    return Params(c);
+  }
+
+  template <typename VertexInvar>
+  bgl_named_params<VertexInvar, vertex_invariant1_t>
+  vertex_invariant1(const VertexInvar& c) {
+    typedef bgl_named_params<VertexInvar, vertex_invariant1_t> Params;
+    return Params(c);
+  }
+
+  template <typename VertexInvar>
+  bgl_named_params<VertexInvar, vertex_invariant2_t>
+  vertex_invariant2(const VertexInvar& c) {
+    typedef bgl_named_params<VertexInvar, vertex_invariant2_t> Params;
+    return Params(c);
+  }
+
+  template <typename VertexMaxInvar>
+  bgl_named_params<VertexMaxInvar, vertex_max_invariant_t>
+  vertex_max_invariant(const VertexMaxInvar& c) {
+    typedef bgl_named_params<VertexMaxInvar, vertex_max_invariant_t> Params;
     return Params(c);
   }
 

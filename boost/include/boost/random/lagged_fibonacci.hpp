@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: lagged_fibonacci.hpp,v 1.28 2005/05/21 15:57:00 dgregor Exp $
+ * $Id: lagged_fibonacci.hpp 41369 2007-11-25 18:07:19Z bemandawes $
  *
  * Revision history
  *  2001-02-18  moved to individual header files
@@ -102,8 +102,8 @@ private:
   void init_wordmask()
   {
     wordmask = 0;
-    for(int i = 0; i < w; ++i)
-      wordmask |= (1u << i);
+    for(int j = 0; j < w; ++j)
+      wordmask |= (1u << j);
   }
 
 public:
@@ -319,8 +319,8 @@ public:
     unsigned int j;
     for(j = 0; j < long_lag && first != last; ++j, ++first) {
       x[j] = RealType(0);
-      for(int i = 0; i < w/32 && first != last; ++i, ++first)
-        x[j] += *first / pow(two32,i+1);
+      for(int k = 0; k < w/32 && first != last; ++k, ++first)
+        x[j] += *first / pow(two32,k+1);
       if(first != last && mask != 0)
         x[j] += fmod((*first & mask) / _modulus, RealType(1));
     }

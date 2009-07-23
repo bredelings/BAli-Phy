@@ -23,6 +23,7 @@
 #include "boost/multi_array/storage_order.hpp"
 #include "boost/multi_array/subarray.hpp"
 #include "boost/multi_array/algorithm.hpp"
+#include "boost/type_traits/is_integral.hpp"
 #include "boost/array.hpp"
 #include "boost/limits.hpp"
 #include <algorithm>
@@ -72,7 +73,15 @@ public:
 
 
   template <class BaseList>
-  void reindex(const BaseList& values) {
+#ifdef BOOST_NO_SFINAE
+  void
+#else
+  typename
+  disable_if<typename boost::is_integral<BaseList>::type,void >::type
+#endif
+  reindex(const BaseList& values) {
+    boost::function_requires<
+      detail::multi_array::CollectionConcept<BaseList> >();
     boost::detail::multi_array::
       copy_n(values.begin(),num_dimensions(),index_base_list_.begin());
     origin_offset_ =
@@ -109,9 +118,11 @@ public:
 
   template <typename IndexList>
   const element& operator()(IndexList indices) const {
+    boost::function_requires<
+      detail::multi_array::CollectionConcept<IndexList> >();
     return super_type::access_element(boost::type<const element&>(),
-                                      origin(),
-                                      indices,strides());
+                                      indices,origin(),
+                                      shape(),strides(),index_bases());
   }
 
   // Only allow const element access
@@ -233,10 +244,7 @@ public: // should be protected
 
     // Calculate the array size
     num_elements_ = std::accumulate(extent_list_.begin(),extent_list_.end(),
-                            size_type(1),std::multiplies<size_type>());
-#if 0
-    assert(num_elements_ != 0);
-#endif
+                                    size_type(1),std::multiplies<size_type>());
   }
 
   typedef boost::array<size_type,NumDims> size_list;
@@ -293,9 +301,9 @@ public:
       ConstMultiArrayConcept<ConstMultiArray,NumDims> >();
 
     // make sure the dimensions agree
-    assert(other.num_dimensions() == this->num_dimensions());
-    assert(std::equal(other.shape(),other.shape()+this->num_dimensions(),
-                      this->shape()));
+    BOOST_ASSERT(other.num_dimensions() == this->num_dimensions());
+    BOOST_ASSERT(std::equal(other.shape(),other.shape()+this->num_dimensions(),
+                            this->shape()));
     // iterator-based copy
     std::copy(other.begin(),other.end(),begin());
     return *this;
@@ -305,9 +313,10 @@ public:
   multi_array_view& operator=(const multi_array_view& other) {
     if (&other != this) {
       // make sure the dimensions agree
-      assert(other.num_dimensions() == this->num_dimensions());
-      assert(std::equal(other.shape(),other.shape()+this->num_dimensions(),
-                        this->shape()));
+      BOOST_ASSERT(other.num_dimensions() == this->num_dimensions());
+      BOOST_ASSERT(std::equal(other.shape(),
+                              other.shape()+this->num_dimensions(),
+                              this->shape()));
       // iterator-based copy
       std::copy(other.begin(),other.end(),begin());
     }
@@ -318,9 +327,12 @@ public:
 
   template <class IndexList>
   element& operator()(const IndexList& indices) {
+    boost::function_requires<
+      detail::multi_array::CollectionConcept<IndexList> >();
     return super_type::access_element(boost::type<element&>(),
-                                      origin(),
-                                      indices,this->strides());
+                                      indices,origin(),
+                                      this->shape(),this->strides(),
+                                      this->index_bases());
   }
 
 
@@ -379,6 +391,8 @@ public:
 
   template <class IndexList>
   const element& operator()(const IndexList& indices) const {
+    boost::function_requires<
+      detail::multi_array::CollectionConcept<IndexList> >();
     return super_type::operator()(indices);
   }
 

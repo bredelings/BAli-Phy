@@ -17,76 +17,77 @@
 //  See http://www.boost.org for updates, documentation, and revision history.
 
 #include <istream>
-#include <boost/archive/detail/auto_link_archive.hpp>
-#include <boost/archive/basic_binary_iarchive.hpp>
-#include <boost/archive/basic_binary_iprimitive.hpp>
-
-#include <boost/archive/detail/abi_prefix.hpp> // must be the last header
+#include <boost/archive/binary_iarchive_impl.hpp>
 
 namespace boost { 
 namespace archive {
 
-template<class Archive>
-class binary_iarchive_impl : 
-    public basic_binary_iprimitive<Archive, std::istream>,
-    public basic_binary_iarchive<Archive>
-{
-#ifdef BOOST_NO_MEMBER_TEMPLATE_FRIENDS
-public:
-#else
-    friend class detail::interface_iarchive<Archive>;
-    friend class basic_binary_iarchive<Archive>;
-    friend class load_access;
-protected:
-#endif
-    // note: the following should not needed - but one compiler (vc 7.1)
-    // fails to compile one test (test_shared_ptr) without it !!!
-    // make this protected so it can be called from a derived archive
-    template<class T>
-    void load_override(T & t, BOOST_PFTO int){
-        basic_binary_iarchive<Archive>::load_override(t, 0);
-    }
-    void init(){
-        #if ! defined(__MWERKS__)
-            this->basic_binary_iarchive<Archive>::init();
-            this->basic_binary_iprimitive<Archive, std::istream>::init();
-        #else
-            basic_binary_iarchive<Archive>::init();
-            basic_binary_iprimitive<Archive, std::istream>::init();
-        #endif
-    }
-    binary_iarchive_impl(std::istream & is, unsigned int flags) :
-        basic_binary_iprimitive<Archive, std::istream>(
-            is, 
-            0 != (flags & no_codecvt)
-        ),
-        basic_binary_iarchive<Archive>(flags)
-    {
-        if(0 == (flags & no_header)){
-            init();
-        }
-    }
-};
-
-// do not derive from this class.  If you want to extend this functionality
-// via inhertance, derived from binary_iarchive_impl instead.  This will
+// do not derive from the classes below.  If you want to extend this functionality
+// via inhertance, derived from text_iarchive_impl instead.  This will
 // preserve correct static polymorphism.
-class binary_iarchive : 
-    public binary_iarchive_impl<binary_iarchive>
+
+// same as binary_iarchive below - without the shared_ptr_helper
+class naked_binary_iarchive : 
+    public binary_iarchive_impl<
+        boost::archive::naked_binary_iarchive, 
+        std::istream::char_type, 
+        std::istream::traits_type
+    >
 {
 public:
-    binary_iarchive(std::istream & is, unsigned int flags = 0) :
-        binary_iarchive_impl<binary_iarchive>(is, flags)
+    naked_binary_iarchive(std::istream & is, unsigned int flags = 0) :
+        binary_iarchive_impl<
+            naked_binary_iarchive, std::istream::char_type, std::istream::traits_type
+        >(is, flags)
+    {}
+    naked_binary_iarchive(std::streambuf & bsb, unsigned int flags = 0) :
+        binary_iarchive_impl<
+            naked_binary_iarchive, std::istream::char_type, std::istream::traits_type
+        >(bsb, flags)
     {}
 };
 
 } // namespace archive
 } // namespace boost
 
-// required by smart_cast for compilers not implementing 
-// partial template specialization
-BOOST_BROKEN_COMPILER_TYPE_TRAITS_SPECIALIZATION(boost::archive::binary_iarchive)
+// note special treatment of shared_ptr. This type needs a special
+// structure associated with every archive.  We created a "mix-in"
+// class to provide this functionality.  Since shared_ptr holds a
+// special esteem in the boost library - we included it here by default.
+#include <boost/archive/shared_ptr_helper.hpp>
 
-#include <boost/archive/detail/abi_suffix.hpp> // pops abi_suffix.hpp pragmas
+namespace boost { 
+namespace archive {
+
+// do not derive from this class.  If you want to extend this functionality
+// via inhertance, derived from binary_iarchive_impl instead.  This will
+// preserve correct static polymorphism.
+class binary_iarchive : 
+    public binary_iarchive_impl<
+        boost::archive::binary_iarchive, 
+        std::istream::char_type, 
+        std::istream::traits_type
+    >,
+    public detail::shared_ptr_helper
+{
+public:
+    binary_iarchive(std::istream & is, unsigned int flags = 0) :
+        binary_iarchive_impl<
+            binary_iarchive, std::istream::char_type, std::istream::traits_type
+        >(is, flags)
+    {}
+    binary_iarchive(std::streambuf & bsb, unsigned int flags = 0) :
+        binary_iarchive_impl<
+            binary_iarchive, std::istream::char_type, std::istream::traits_type
+        >(bsb, flags)
+    {}
+};
+
+} // namespace archive
+} // namespace boost
+
+// required by export
+BOOST_SERIALIZATION_REGISTER_ARCHIVE(boost::archive::binary_iarchive)
+BOOST_SERIALIZATION_USE_ARRAY_OPTIMIZATION(boost::archive::binary_iarchive)
 
 #endif // BOOST_ARCHIVE_BINARY_IARCHIVE_HPP

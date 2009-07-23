@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: const_mod.hpp,v 1.8 2004/07/27 03:43:32 dgregor Exp $
+ * $Id: const_mod.hpp 41369 2007-11-25 18:07:19Z bemandawes $
  *
  * Revision history
  *  2001-02-18  moved to individual header files
@@ -43,10 +43,10 @@ namespace detail {
     template<class IntType>
     static IntType add(IntType m, IntType x, IntType c)
     {
-      x += (c-m);
-      if(x < 0)
-        x += m;
-      return x;
+      if (x < m - c)
+        return x + c;
+      else
+        return x - (m-c);
     }
   };
 

@@ -10,9 +10,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: /cvsroot/boost/boost/boost/mpl/is_sequence.hpp,v $
-// $Date: 2004/09/02 15:40:41 $
-// $Revision: 1.8 $
+// $Source$
+// $Date: 2005-08-25 12:27:28 -0400 (Thu, 25 Aug 2005) $
+// $Revision: 30670 $
 
 #include <boost/mpl/not.hpp>
 #include <boost/mpl/and.hpp>
@@ -29,7 +29,7 @@
 #include <boost/mpl/aux_/config/eti.hpp>
 #include <boost/mpl/aux_/config/msvc.hpp>
 #include <boost/mpl/aux_/config/workaround.hpp>
-#if BOOST_WORKAROUND(BOOST_MSVC, <= 1200)
+#if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
 #   include <boost/mpl/aux_/msvc_is_class.hpp>
 #elif BOOST_WORKAROUND(BOOST_MSVC, == 1300)
 #   include <boost/type_traits/is_class.hpp>
@@ -63,7 +63,7 @@ template<
     >
 struct is_sequence
     : if_<
-#if BOOST_WORKAROUND(BOOST_MSVC, <= 1200)
+#if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
           aux::msvc_is_class<T> 
 #else
           boost::is_class<T> 

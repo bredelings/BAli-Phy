@@ -1,6 +1,6 @@
 // Boost Lambda Library  lambda_functor_base.hpp -----------------------------
 //
-// Copyright (C) 1999, 2000 Jaakko Järvi (jaakko.jarvi@cs.utu.fi)
+// Copyright (C) 1999, 2000 Jaakko Jarvi (jaakko.jarvi@cs.utu.fi)
 //
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at
@@ -27,7 +27,7 @@ public:
   
   typedef T element_t;
 
-  // take all parameters as const rererences. Note that non-const references
+  // take all parameters as const references. Note that non-const references
   // stay as they are.
   typedef typename boost::add_reference<
     typename boost::add_const<T>::type
@@ -317,7 +317,7 @@ public:
 };  
 
 
-//  These specializatoins provide a shorter notation to define actions.
+//  These specializations provide a shorter notation to define actions.
 //  These lambda_functor_base instances take care of the recursive evaluation
 //  of the arguments and pass the evaluated arguments to the apply function
 //  of an action class. To make action X work with these classes, one must

@@ -10,9 +10,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: /cvsroot/boost/boost/boost/mpl/aux_/yes_no.hpp,v $
-// $Date: 2004/09/28 13:56:59 $
-// $Revision: 1.7 $
+// $Source$
+// $Date: 2005-08-25 12:27:28 -0400 (Thu, 25 Aug 2005) $
+// $Revision: 30670 $
 
 #include <boost/mpl/aux_/nttp_decl.hpp>
 #include <boost/mpl/aux_/config/arrays.hpp>
@@ -38,7 +38,7 @@ template<> struct yes_no_tag<true>
 
 template< BOOST_MPL_AUX_NTTP_DECL(long, n) > struct weighted_tag
 {
-#if !BOOST_WORKAROUND(BOOST_MSVC, == 1200)
+#if !BOOST_WORKAROUND(BOOST_MSVC, < 1300)
     typedef char (&type)[n];
 #else
     char buf[n];

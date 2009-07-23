@@ -1,4 +1,4 @@
-/* Copyright 2003-2005 Joaquín M López Muñoz.
+/* Copyright 2003-2008 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -65,7 +65,7 @@ struct multi_index_node_type
 
   typedef typename mpl::reverse_iter_fold<
     IndexSpecifierList,
-    index_node_base<Value>,
+    index_node_base<Value,Allocator>,
     mpl::bind2<index_node_applier,mpl::_2,mpl::_1>
   >::type type;
 };

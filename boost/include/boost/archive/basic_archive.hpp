@@ -86,8 +86,8 @@ enum archive_flags {
     no_header = 1,  // suppress archive header info
     no_codecvt = 2,  // suppress alteration of codecvt facet
     no_xml_tag_checking = 4,   // suppress checking of xml tags
-    no_tracking = 8           // suppress ALL tracking
-//    no_object_creation = 16    // don't create any new objects
+    no_tracking = 8,           // suppress ALL tracking
+    flags_last = 8
 };
 
 #define NULL_POINTER_TAG class_id_type(-1)
@@ -116,15 +116,5 @@ BOOST_CLASS_IMPLEMENTATION(boost::archive::class_name_type, primitive_type)
 BOOST_CLASS_IMPLEMENTATION(boost::archive::object_id_type, primitive_type)
 BOOST_CLASS_IMPLEMENTATION(boost::archive::object_reference_type, primitive_type)
 BOOST_CLASS_IMPLEMENTATION(boost::archive::tracking_type, primitive_type)
-
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
-// Make sure that the export.hpp header isn't included before any archive header
-// Doing so would inhibit construction of correct mpl list of known archive
-// types which in turn would inhibit instantiation of all combinations of
-// serialization/archive types.
-
-#ifdef BOOST_SERIALIZATION_EXPORT_HPP
-#error "export.hpp must not be included before any archive header"
-#endif
 
 #endif //BOOST_ARCHIVE_BASIC_ARCHIVE_HPP

@@ -17,106 +17,116 @@
 #endif
 
 #include <boost/config.hpp>
-#include <cassert>
+#include <boost/iterator/iterator_adaptor.hpp>
+#include <boost/utility/compare_pointees.hpp>
 #include <utility>
 
+#if defined(BOOST_MSVC)  
+# pragma warning(push)  
+# pragma warning(disable:4512)    // Assignment operator could not be generated.  
+#endif 
+
 namespace boost
-{
-    //namespace ptr_container_detail
-    //{
-        template
-        < 
-            typename I, // original iterator 
-            typename K, // key type
-            typename V  // return value type of operator*()
-        > 
-        class ptr_map_iterator
+{ 
+    namespace ptr_container_detail
+    {
+        template< class F, class S >
+        struct ref_pair
         {
-            I iter_;
-            typedef K              key_type;
-            
-        public:
-            typedef std::ptrdiff_t difference_type;
-            typedef V              value_type;
-            typedef V*             pointer;
-            typedef V&             reference;
-            typedef                std::bidirectional_iterator_tag  iterator_category;        
-            
-        public:
-            ptr_map_iterator()                                  {}
-            ptr_map_iterator( const I& i ) : iter_( i )         {}
-            
-            template< class MutableIterator, class K2, class V2 >
-            ptr_map_iterator( const ptr_map_iterator<MutableIterator,K2,V2>& r ) 
-             : iter_(r.base())
+            typedef F first_type;
+            typedef S second_type;
+
+            const F& first;
+            S        second;
+
+            template< class F2, class S2 >
+            ref_pair( const std::pair<F2,S2>& p )
+            : first(p.first), second(static_cast<S>(p.second))
+            { }
+
+            template< class RP >
+            ref_pair( const RP* rp )
+            : first(rp->first), second(rp->second)
             { }
             
-            V& operator*() const
+            const ref_pair* const operator->() const
             {
-                return *static_cast<V*>( iter_->second );
+                return this;
             }
 
-            V* operator->() const
+            friend inline bool operator==( ref_pair l, ref_pair r )
             {
-                return static_cast<V*>( iter_->second );
-            }
-            
-            ptr_map_iterator& operator++()
-            {
-                ++iter_;
-                return *this;
+                return l.first == r.first && 
+                       boost::equal_pointees( l.second, r.second );
             }
 
-            ptr_map_iterator operator++(int)
+            friend inline bool operator!=( ref_pair l, ref_pair r )
             {
-                ptr_map_iterator res = *this;
-                ++iter_;
-                return res;
+                return !( l == r );
             }
 
-            ptr_map_iterator& operator--()
+            friend inline bool operator<( ref_pair l, ref_pair r )
             {
-                --iter_;
-                return *this;
+                if( l.first == r.first )
+                    return boost::less_pointees( l.second, r.second );
+                else 
+                    return l.first < r.first;
             }
 
-            ptr_map_iterator operator--(int)
+            friend inline bool operator>( ref_pair l, ref_pair r )
             {
-                ptr_map_iterator res = *this;
-                --iter_;
-                return res;
-
+                return r < l;
             }
 
-            I base() const
+            friend inline bool operator<=( ref_pair l, ref_pair r )
             {
-                return iter_;
+                return !(r < l);
             }
 
-            key_type key() const
+            friend inline bool operator>=( ref_pair l, ref_pair r )
             {
-                return iter_->first;
+                return !(l < r);
             }
 
-       }; // class 'ptr_map_iterator'
+        };
+    }
+    
+    template< 
+              class I, // base iterator 
+              class F, // first type, key type
+              class S  // second type, mapped type
+            > 
+    class ptr_map_iterator : 
+        public boost::iterator_adaptor< ptr_map_iterator<I,F,S>, I, 
+                                        ptr_container_detail::ref_pair<F,S>, 
+                                        use_default, 
+                                        ptr_container_detail::ref_pair<F,S> >
+    {
+        typedef boost::iterator_adaptor< ptr_map_iterator<I,F,S>, I, 
+                                         ptr_container_detail::ref_pair<F,S>,
+                                         use_default, 
+                                         ptr_container_detail::ref_pair<F,S> > 
+            base_type;
 
 
-       
-       template< class I, class K, class V, class I2, class K2, class V2 >
-       inline bool operator==( const ptr_map_iterator<I,K,V>& l, 
-                               const ptr_map_iterator<I2,K2,V2>& r )
-       {
-           return l.base() == r.base();
-       }
+    public:
+        ptr_map_iterator() : base_type()                                 
+        { }
+        
+        explicit ptr_map_iterator( const I& i ) : base_type(i)
+        { }
 
+        template< class I2, class F2, class S2 >
+            ptr_map_iterator( const ptr_map_iterator<I2,F2,S2>& r ) 
+         : base_type(r.base())
+        { }
+        
+   }; // class 'ptr_map_iterator'
 
-       
-       template< class I, class K, class V, class I2, class K2, class V2 >
-       inline bool operator!=( const ptr_map_iterator<I,K,V>& l, 
-                               const ptr_map_iterator<I2,K2,V2>& r )
-       {
-           return l.base() != r.base();
-       }
 }
+
+#if defined(BOOST_MSVC)  
+# pragma warning(pop)  
+#endif 
 
 #endif

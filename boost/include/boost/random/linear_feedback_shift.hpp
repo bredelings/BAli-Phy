@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: linear_feedback_shift.hpp,v 1.12 2005/05/21 15:57:00 dgregor Exp $
+ * $Id: linear_feedback_shift.hpp 29116 2005-05-21 15:57:01Z dgregor $
  *
  */
 

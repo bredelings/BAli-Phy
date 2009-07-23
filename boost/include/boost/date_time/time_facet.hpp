@@ -5,9 +5,9 @@
 /* Copyright (c) 2004-2005 CrystalClear Software, Inc.
  * Use, modification and distribution is subject to the 
  * Boost Software License, Version 1.0. (See accompanying
- * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
+ * file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
  * Author:  Martin Andrian, Jeff Garland, Bart Garst
- * $Date: 2005/07/17 23:57:59 $
+ * $Date: 2008-02-27 15:00:24 -0500 (Wed, 27 Feb 2008) $
  */
 
 #include "boost/date_time/date_facet.hpp"
@@ -197,7 +197,7 @@ namespace date_time {
 #endif
 
     //! sets default formats for ptime, local_date_time, and time_duration
-    explicit time_facet(::size_t a_ref = 0) 
+    explicit time_facet(::size_t /* a_ref */ = 0) 
       //: base_type(standard_format),
       : base_type(default_time_format), 
         m_time_duration_format(string_type(duration_sign_negative_only) + default_time_duration_format)
@@ -281,7 +281,7 @@ namespace date_time {
 
           // if zone_name() returns an empty string, we want to
           // erase zone_name_format & one preceeding space
-          std::basic_stringstream<char_type> ss;
+          std::basic_ostringstream<char_type> ss;
           ss << ' ' << zone_name_format;
           boost::algorithm::replace_all(format,
                                         ss.str(),
@@ -301,7 +301,7 @@ namespace date_time {
 
           // if zone_abbrev() returns an empty string, we want to
           // erase zone_abbrev_format & one preceeding space
-          std::basic_stringstream<char_type> ss;
+          std::basic_ostringstream<char_type> ss;
           ss << ' ' << zone_abbrev_format;
           boost::algorithm::replace_all(format,
                                         ss.str(),
@@ -490,7 +490,7 @@ namespace date_time {
       ss.imbue(std::locale::classic()); // don't want any formatting
       ss << std::setw(time_duration_type::num_fractional_digits())
          << std::setfill(static_cast<char_type>('0'));
-#if (defined(BOOST_MSVC) && (_MSC_VER <= 1200))  // 1200 == VC++ 6.0
+#if (defined(BOOST_MSVC) && (_MSC_VER < 1300))
       // JDG [7/6/02 VC++ compatibility]
       char_type buff[34];
       ss << _i64toa(static_cast<boost::int64_t>(frac_sec), buff, 10);

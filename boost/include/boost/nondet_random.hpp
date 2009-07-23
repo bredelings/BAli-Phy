@@ -5,7 +5,7 @@
  * accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
  *
- * $Id: nondet_random.hpp,v 1.9 2004/07/27 03:43:27 dgregor Exp $
+ * $Id: nondet_random.hpp 24096 2004-07-27 03:43:34Z dgregor $
  *
  * Revision history
  *  2000-02-18  Portability fixes (thanks to Beman Dawes)

@@ -4,7 +4,7 @@
     
     http://www.boost.org/
 
-    Copyright (c) 2001-2005 Hartmut Kaiser. Distributed under the Boost
+    Copyright (c) 2001-2008 Hartmut Kaiser. Distributed under the Boost
     Software License, Version 1.0. (See accompanying file
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -22,6 +22,12 @@
 #include <boost/wave/cpp_exceptions.hpp>
 #include <boost/wave/language_support.hpp>
 #include <boost/wave/util/file_position.hpp>
+// #include <boost/spirit/include/iterator/classic_multi_pass.hpp> // make_multi_pass 
+
+// this must occur after all of the includes and before any code appears
+#ifdef BOOST_HAS_ABI_HEADERS
+#include BOOST_ABI_PREFIX
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace boost {
@@ -31,9 +37,9 @@ namespace iteration_context_policies {
 ///////////////////////////////////////////////////////////////////////////////
 //
 //      The iteration_context_policies templates are policies for the 
-//      boost::wave::iteration_context which allows to control, how a given input file 
-//      is to be represented by a pair of iterators pointing to the begin and 
-//      the end of the resulting input sequence.
+//      boost::wave::iteration_context which allows to control, how a given 
+//      input file is to be represented by a pair of iterators pointing to the 
+//      begin and the end of the resulting input sequence.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -54,31 +60,26 @@ namespace iteration_context_policies {
             template <typename PositionT>
             static 
             void init_iterators(IterContextT &iter_ctx, 
-                PositionT const &act_pos)
+                PositionT const &act_pos, language_support language)
             {
                 typedef typename IterContextT::iterator_type iterator_type;
                 
+                // read in the file
                 std::ifstream instream(iter_ctx.filename.c_str());
                 if (!instream.is_open()) {
-                    BOOST_WAVE_THROW(preprocess_exception, bad_include_file, 
-                        iter_ctx.filename.c_str(), act_pos);
+                    BOOST_WAVE_THROW_CTX(iter_ctx.ctx, preprocess_exception, 
+                        bad_include_file, iter_ctx.filename.c_str(), act_pos);
+                    return;
                 }
                 instream.unsetf(std::ios::skipws);
                 
-#if defined(BOOST_NO_TEMPLATED_ITERATOR_CONSTRUCTORS)
-            // this is known to be very slow for large files on some systems
-                std::copy (istream_iterator<char>(instream),
-                    istream_iterator<char>(), 
-                    std::inserter(iter_ctx.instring, iter_ctx.instring.end()));
-#else
-                iter_ctx.instring = std::string(
+                iter_ctx.instring.assign(
                     std::istreambuf_iterator<char>(instream.rdbuf()),
                     std::istreambuf_iterator<char>());
-#endif // defined(BOOST_NO_TEMPLATED_ITERATOR_CONSTRUCTORS)
 
-                iter_ctx.first = iterator_type(iter_ctx.instring.begin(), 
-                    iter_ctx.instring.end(), PositionT(iter_ctx.filename),
-                    iter_ctx.language);
+                iter_ctx.first = iterator_type(
+                    iter_ctx.instring.begin(), iter_ctx.instring.end(), 
+                    PositionT(iter_ctx.filename), language);
                 iter_ctx.last = iterator_type();
             }
 
@@ -87,67 +88,24 @@ namespace iteration_context_policies {
         };
     };
     
-///////////////////////////////////////////////////////////////////////////////
-//
-//  load_file
-//
-//      The load_file policy opens a given file and returns the wrapped
-//      istreambuf_iterators.
-//
-///////////////////////////////////////////////////////////////////////////////
-    struct load_file 
-    {
-        template <typename IterContextT>
-        class inner {
-
-        public:
-            ~inner() { if (instream.is_open()) instream.close(); }
-            
-            template <typename PositionT>
-            static 
-            void init_iterators(IterContextT &iter_ctx, 
-                PositionT const &act_pos)
-            {
-                typedef typename IterContextT::iterator_type iterator_type;
-                
-                iter_ctx.instream.open(iter_ctx.filename.c_str());
-                if (!iter_ctx.instream.is_open()) {
-                    BOOST_WAVE_THROW(preprocess_exception, bad_include_file, 
-                        iter_ctx.filename.c_str(), act_pos);
-                }
-                iter_ctx.instream.unsetf(std::ios::skipws);
-
-                using boost::spirit::make_multi_pass;
-                iter_ctx.first = iterator_type(
-                    make_multi_pass(std::istreambuf_iterator<char>(
-                        iter_ctx.instream.rdbuf())),
-                    make_multi_pass(std::istreambuf_iterator<char>()),
-                    PositionT(iter_ctx.filename), iter_ctx.language);
-                iter_ctx.last = iterator_type();
-            }
-
-        private:
-            std::ifstream instream;
-        };
-    };
-    
-}   // namespace iterattion_context_policies
+}   // namespace iteration_context_policies
 
 ///////////////////////////////////////////////////////////////////////////////
 //  
-template <typename IteratorT>
+template <typename ContextT, typename IteratorT>
 struct base_iteration_context 
 {
 public:
-    base_iteration_context(
+    base_iteration_context(ContextT& ctx_,
             BOOST_WAVE_STRINGTYPE const &fname, std::size_t if_block_depth = 0)   
-    :   real_filename(fname), filename(fname), line(1), emitted_lines(1),
-        if_block_depth(if_block_depth)
+    :   real_filename(fname), filename(fname), line(1), emitted_lines(1), 
+        if_block_depth(if_block_depth), ctx(ctx_) 
     {}
-    base_iteration_context(IteratorT const &first_, IteratorT const &last_, 
+    base_iteration_context(ContextT& ctx_, 
+            IteratorT const &first_, IteratorT const &last_, 
             BOOST_WAVE_STRINGTYPE const &fname, std::size_t if_block_depth = 0)
     :   first(first_), last(last_), real_filename(fname), filename(fname), 
-        line(1), emitted_lines(1), if_block_depth(if_block_depth)
+        line(1), emitted_lines(1), if_block_depth(if_block_depth), ctx(ctx_) 
     {}
 
 // the actual input stream
@@ -158,39 +116,42 @@ public:
     unsigned int line;                    // line counter of underlying stream
     unsigned int emitted_lines;           // count of emitted newlines
     std::size_t if_block_depth; // depth of #if block recursion
+    ContextT& ctx;              // corresponding context<> object
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 //  
 template <
-    typename IteratorT, 
-    typename InputPolicyT = 
-        iteration_context_policies::load_file_to_string 
+    typename ContextT, typename IteratorT, 
+    typename InputPolicyT = typename ContextT::input_policy_type 
 >
 struct iteration_context
-:   public base_iteration_context<IteratorT>,
+:   public base_iteration_context<ContextT, IteratorT>,
     public InputPolicyT::template 
-        inner<iteration_context<IteratorT, InputPolicyT> >
+        inner<iteration_context<ContextT, IteratorT, InputPolicyT> >
 {
     typedef IteratorT iterator_type;
     typedef typename IteratorT::token_type::position_type position_type;
     
-    typedef iteration_context<IteratorT, InputPolicyT> self_type;
+    typedef iteration_context<ContextT, IteratorT, InputPolicyT> self_type;
     
-    iteration_context(BOOST_WAVE_STRINGTYPE const &fname, 
+    iteration_context(ContextT& ctx, BOOST_WAVE_STRINGTYPE const &fname, 
             position_type const &act_pos, 
             boost::wave::language_support language_) 
-    :   base_iteration_context<IteratorT>(fname), 
-        language(language_)
+    :   base_iteration_context<ContextT, IteratorT>(ctx, fname)
     {
-        InputPolicyT::template inner<self_type>::init_iterators(*this, act_pos);
+        InputPolicyT::template inner<self_type>::init_iterators(
+            *this, act_pos, language_);
     }
-    
-    boost::wave::language_support language;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 }   // namespace wave
 }   // namespace boost
+
+// the suffix header occurs after all of the code
+#ifdef BOOST_HAS_ABI_HEADERS
+#include BOOST_ABI_SUFFIX
+#endif
 
 #endif // !defined(CPP_ITERATION_CONTEXT_HPP_00312288_9DDB_4668_AFE5_25D3994FD095_INCLUDED)

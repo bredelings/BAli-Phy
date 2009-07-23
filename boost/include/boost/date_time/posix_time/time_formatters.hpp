@@ -4,9 +4,9 @@
 /* Copyright (c) 2002-2004 CrystalClear Software, Inc.
  * Use, modification and distribution is subject to the 
  * Boost Software License, Version 1.0. (See accompanying
- * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
+ * file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
  * Author: Jeff Garland, Bart Garst
- * $Date: 2005/01/30 20:58:52 $
+ * $Date: 2008-02-27 15:00:24 -0500 (Wed, 27 Feb 2008) $
  */
 
 #include "boost/date_time/gregorian/gregorian.hpp"
@@ -64,7 +64,7 @@ namespace posix_time {
       ss  << std::setw(2) << std::setfill(fill_char) 
           << date_time::absolute_value(td.seconds());
       //TODO the following is totally non-generic, yelling FIXME
-#if (defined(BOOST_MSVC) && (_MSC_VER <= 1200))  // 1200 == VC++ 6.0
+#if (defined(BOOST_MSVC) && (_MSC_VER < 1300))
       boost::int64_t frac_sec = 
         date_time::absolute_value(td.fractional_seconds());
       // JDG [7/6/02 VC++ compatibility]
@@ -79,7 +79,7 @@ namespace posix_time {
             << std::setfill(fill_char)
           
           // JDG [7/6/02 VC++ compatibility]
-#if (defined(BOOST_MSVC) && (_MSC_VER <= 1200))  // 1200 == VC++ 6.0
+#if (defined(BOOST_MSVC) && (_MSC_VER < 1300))
             << buff;
 #else
         << frac_sec;
@@ -133,7 +133,7 @@ namespace posix_time {
       ss  << std::setw(2) << std::setfill(fill_char) 
           << date_time::absolute_value(td.seconds());
       //TODO the following is totally non-generic, yelling FIXME
-#if (defined(BOOST_MSVC) && (_MSC_VER <= 1200))  // 1200 == VC++ 6.0
+#if (defined(BOOST_MSVC) && (_MSC_VER < 1300))
       boost::int64_t frac_sec = 
         date_time::absolute_value(td.fractional_seconds());
       // JDG [7/6/02 VC++ compatibility]
@@ -148,7 +148,7 @@ namespace posix_time {
             << std::setfill(fill_char)
           
           // JDG [7/6/02 VC++ compatibility]
-#if (defined(BOOST_MSVC) && (_MSC_VER <= 1200))  // 1200 == VC++ 6.0
+#if (defined(BOOST_MSVC) && (_MSC_VER < 1300))
             << buff;
 #else
         << frac_sec;

@@ -24,8 +24,15 @@
 
 namespace boost{
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
 #endif
 
 template <class OutputIterator, class BidirectionalIterator, class traits, class charT>
@@ -45,7 +52,7 @@ OutputIterator regex_replace(OutputIterator out,
    }
    else
    {
-      BidirectionalIterator last_m = first;
+      BidirectionalIterator last_m(first);
       while(i != j)
       {
          if(!(flags & regex_constants::format_no_copy))
@@ -97,8 +104,15 @@ std::basic_string<charT> regex_replace(const std::basic_string<charT>& s,
    return result;
 }
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
 #endif
 
 } // namespace boost

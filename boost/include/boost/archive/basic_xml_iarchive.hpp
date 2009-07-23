@@ -9,7 +9,7 @@
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
 // basic_xml_iarchive.hpp
 
-// (C) Copyright 2002 Robert Ramey - http://www.rrsd.com . 
+// (C) Copyright 2002 Robert Ramey - http://www.rrsd.com .
 // Use, modification and distribution is subject to the Boost Software
 // License, Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -20,12 +20,12 @@
 #include <boost/pfto.hpp>
 #include <boost/detail/workaround.hpp>
 
-#include <boost/archive/detail/iserializer.hpp>
-#include <boost/archive/detail/interface_iarchive.hpp>
 #include <boost/archive/detail/common_iarchive.hpp>
 
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/string.hpp>
+
+#include <boost/mpl/assert.hpp>
 
 #include <boost/archive/detail/abi_prefix.hpp> // must be the last header
 
@@ -35,19 +35,18 @@ namespace archive {
 /////////////////////////////////////////////////////////////////////////
 // class xml_iarchive - read serialized objects from a input text stream
 template<class Archive>
-class basic_xml_iarchive : 
+class basic_xml_iarchive :
     public detail::common_iarchive<Archive>
 {
+protected:
 #if BOOST_WORKAROUND(BOOST_MSVC, <= 1300)
 public:
 #elif defined(BOOST_MSVC)
     // for some inexplicable reason insertion of "class" generates compile erro
     // on msvc 7.1
-    friend detail::interface_iarchive<Archive>;
-protected:
+    friend detail::interface_oarchive<Archive>;
 #else
-    friend class detail::interface_iarchive<Archive>;
-protected:
+    friend class detail::interface_oarchive<Archive>;
 #endif
     unsigned int depth;
     BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
@@ -63,21 +62,23 @@ protected:
         // If your program fails to compile here, its most likely due to
         // not specifying an nvp wrapper around the variable to
         // be serialized.
-        BOOST_STATIC_ASSERT(0 == sizeof(T));
+        BOOST_MPL_ASSERT((serialization::is_wrapper<T>));
+        this->detail_common_iarchive::load_override(t, 0);
     }
 
     // Anything not an attribute - see below - should be a name value
     // pair and be processed here
+    typedef detail::common_iarchive<Archive> detail_common_iarchive;
     template<class T>
     void load_override(
-                #ifndef BOOST_NO_FUNCTION_TEMPLATE_ORDERING
-                const
-                #endif
-                boost::serialization::nvp<T> & t, 
-                int
-        ){
+        #ifndef BOOST_NO_FUNCTION_TEMPLATE_ORDERING
+        const
+        #endif
+        boost::serialization::nvp<T> & t,
+        int
+    ){
         load_start(t.name());
-        archive::load(* this->This(), t.value());
+        this->detail_common_iarchive::load_override(t.value(), 0);
         load_end(t.name());
     }
 
@@ -103,9 +104,9 @@ protected:
     // handle this.
     // void load_override(class_name_type & t, int);
 
-    BOOST_ARCHIVE_OR_WARCHIVE_DECL(BOOST_PP_EMPTY()) 
+    BOOST_ARCHIVE_OR_WARCHIVE_DECL(BOOST_PP_EMPTY())
     basic_xml_iarchive(unsigned int flags);
-    BOOST_ARCHIVE_OR_WARCHIVE_DECL(BOOST_PP_EMPTY()) 
+    BOOST_ARCHIVE_OR_WARCHIVE_DECL(BOOST_PP_EMPTY())
     ~basic_xml_iarchive();
 };
 

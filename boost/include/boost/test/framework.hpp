@@ -1,15 +1,15 @@
-//  (C) Copyright Gennadiy Rozental 2005.
+//  (C) Copyright Gennadiy Rozental 2005-2007.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at 
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile: framework.hpp,v $
+//  File        : $RCSfile$
 //
-//  Version     : $Revision: 1.3 $
+//  Version     : $Revision: 41369 $
 //
-//  Description : defines framework singletom object
+//  Description : defines framework interface
 // ***************************************************************************
 
 #ifndef BOOST_TEST_FRAMEWORK_HPP_020805GER
@@ -22,11 +22,24 @@
 
 #include <boost/test/detail/suppress_warnings.hpp>
 
+// STL
+#include <stdexcept>
+
 //____________________________________________________________________________//
 
 namespace boost {
 
 namespace unit_test {
+
+// ************************************************************************** //
+// **************              init_unit_test_func             ************** //
+// ************************************************************************** //
+
+#ifdef BOOST_TEST_ALTERNATIVE_INIT_API
+typedef bool        (*init_unit_test_func)();
+#else
+typedef test_suite* (*init_unit_test_func)( int, char* [] );
+#endif
 
 // ************************************************************************** //
 // **************                   framework                  ************** //
@@ -35,42 +48,49 @@ namespace unit_test {
 namespace framework {
 
 // initialization
-void                init( int argc, char* argv[] );
+BOOST_TEST_DECL void    init( init_unit_test_func init_func, int argc, char* argv[] );
+BOOST_TEST_DECL bool    is_initialized();
 
 // mutation access methods
-void                register_test_unit( test_case* tc );
-void                register_test_unit( test_suite* ts );
+BOOST_TEST_DECL void    register_test_unit( test_case* tc );
+BOOST_TEST_DECL void    register_test_unit( test_suite* ts );
 
-void                register_observer( test_observer& );
-void                reset_observers();
+BOOST_TEST_DECL void    register_observer( test_observer& );
+BOOST_TEST_DECL void    deregister_observer( test_observer& );
+BOOST_TEST_DECL void    reset_observers();
+
+BOOST_TEST_DECL master_test_suite_t& master_test_suite();
 
 // constant access methods
-test_suite const&   master_test_suite();
-test_case const&    current_test_case();
-#if BOOST_WORKAROUND(__SUNPRO_CC, BOOST_TESTED_AT(0x530) )
+BOOST_TEST_DECL test_case const&    current_test_case();
+
+BOOST_TEST_DECL test_unit&  get( test_unit_id, test_unit_type );
 template<typename UnitType>
-UnitType const&     get( test_unit_id id )
+UnitType&               get( test_unit_id id )
 {
-    return static_cast<UnitType const&>( get( id, (test_unit_type)UnitType::type ) );
+    return static_cast<UnitType&>( get( id, (test_unit_type)UnitType::type ) );
 }
-test_unit const&    get( test_unit_id, test_unit_type );
-#else
-test_unit const&    get( test_unit_id, test_unit_type );
-template<typename UnitType>
-UnitType const&     get( test_unit_id id )
-{
-    return static_cast<UnitType const&>( get( id, (test_unit_type)UnitType::type ) );
-}
-#endif
 
 // test initiation
-void                run( test_unit_id = INV_TEST_UNIT_ID, bool continue_test = true );
-void                run( test_unit const*, bool continue_test = true );
+BOOST_TEST_DECL void    run( test_unit_id = INV_TEST_UNIT_ID, bool continue_test = true );
+BOOST_TEST_DECL void    run( test_unit const*, bool continue_test = true );
 
 // public test events dispatchers
-void                assertion_result( bool passed );
-void                exception_caught( execution_exception const& );
-void                test_unit_aborted();
+BOOST_TEST_DECL void    assertion_result( bool passed );
+BOOST_TEST_DECL void    exception_caught( execution_exception const& );
+BOOST_TEST_DECL void    test_unit_aborted( test_unit const& );
+
+// ************************************************************************** //
+// **************                framework errors              ************** //
+// ************************************************************************** //
+
+struct internal_error : std::runtime_error {
+    internal_error( const_string m ) : std::runtime_error( std::string( m.begin(), m.size() ) ) {}
+};
+
+struct setup_error : std::runtime_error {
+    setup_error( const_string m ) : std::runtime_error( std::string( m.begin(), m.size() ) ) {}
+};
 
 } // namespace framework
 
@@ -81,21 +101,6 @@ void                test_unit_aborted();
 //____________________________________________________________________________//
 
 #include <boost/test/detail/enable_warnings.hpp>
-
-// ***************************************************************************
-//  Revision History :
-//  
-//  $Log: framework.hpp,v $
-//  Revision 1.3  2005/03/24 04:02:32  rogeeff
-//  portability fixes
-//
-//  Revision 1.2  2005/03/23 21:02:10  rogeeff
-//  Sunpro CC 5.3 fixes
-//
-//  Revision 1.1  2005/02/20 08:27:05  rogeeff
-//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
-//
-// ***************************************************************************
 
 #endif // BOOST_TEST_FRAMEWORK_HPP_020805GER
 

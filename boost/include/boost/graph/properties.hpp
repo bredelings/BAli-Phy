@@ -16,6 +16,13 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/type_traits/is_convertible.hpp>
 
+
+#if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
+// Stay out of the way of the concept checking class
+# define Graph Graph_
+# define RandomAccessContainer RandomAccessContainer_
+#endif
+
 namespace boost {
 
   enum default_color_type { white_color, gray_color, green_color, red_color, black_color };
@@ -94,6 +101,7 @@ namespace boost {
   BOOST_DEF_PROPERTY(vertex, predecessor);
   BOOST_DEF_PROPERTY(vertex, rank);
   BOOST_DEF_PROPERTY(vertex, centrality);
+  BOOST_DEF_PROPERTY(vertex, lowpoint);
   BOOST_DEF_PROPERTY(edge, reverse);
   BOOST_DEF_PROPERTY(edge, capacity);
   BOOST_DEF_PROPERTY(edge, residual_capacity);
@@ -321,7 +329,7 @@ namespace boost {
 #if defined (BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
 #  define BOOST_GRAPH_NO_BUNDLED_PROPERTIES
 #endif
-
+ 
 #ifndef BOOST_GRAPH_NO_BUNDLED_PROPERTIES
   template<typename Graph, typename Descriptor, typename Bundle, typename T>
   struct bundle_property_map
@@ -331,7 +339,8 @@ namespace boost {
     typedef T value_type;
     typedef T& reference;
     typedef lvalue_property_map_tag category;
-
+ 
+    bundle_property_map() { }
     bundle_property_map(Graph* g_, T Bundle::* pm_) : g(g_), pm(pm_) {}
 
     reference operator[](key_type k) const { return (*g)[k].*pm; }
@@ -342,7 +351,7 @@ namespace boost {
 
   namespace detail {
     template<typename VertexBundle, typename EdgeBundle, typename Bundle>
-      struct is_vertex_bundle : is_convertible<Bundle*, VertexBundle*> {};
+      struct is_vertex_bundle : is_convertible<VertexBundle*, Bundle*> {};
   }
   
   template <typename Graph, typename T, typename Bundle>
@@ -352,17 +361,29 @@ namespace boost {
     typedef graph_traits<Graph> traits;
     typedef typename Graph::vertex_bundled vertex_bundled;
     typedef typename Graph::edge_bundled edge_bundled;
-    typedef typename ct_if<(detail::is_vertex_bundle<vertex_bundled, edge_bundled, Bundle>::value),
+    typedef typename mpl::if_c<(detail::is_vertex_bundle<vertex_bundled, edge_bundled, Bundle>::value),
                        typename traits::vertex_descriptor,
                        typename traits::edge_descriptor>::type
       descriptor;
+    typedef typename mpl::if_c<(detail::is_vertex_bundle<vertex_bundled, edge_bundled, Bundle>::value),
+                       vertex_bundled,
+                       edge_bundled>::type
+      actual_bundle;
     
   public:
-    typedef bundle_property_map<Graph, descriptor, Bundle, T> type;
-    typedef bundle_property_map<const Graph, descriptor, Bundle, const T> const_type;
+    typedef bundle_property_map<Graph, descriptor, actual_bundle, T> type;
+    typedef bundle_property_map<const Graph, descriptor, actual_bundle, const T>
+      const_type;
   };
 #endif
 
 } // namespace boost
+
+#if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
+// Stay out of the way of the concept checking class
+# undef Graph
+# undef RandomAccessIterator
+#endif
+
 
 #endif /* BOOST_GRAPH_PROPERTIES_HPPA */

@@ -1,4 +1,5 @@
-// (C) Copyright Jonathan Turkanis 2003.
+// (C) Copyright 2008 CodeRage, LLC (turkanis at coderage dot com)
+// (C) Copyright 2003-2007 Jonathan Turkanis
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
@@ -15,9 +16,10 @@
 #include <boost/utility/enable_if.hpp>                  
 #include <boost/iostreams/traits_fwd.hpp>  // is_std_io.
 
-#ifndef BOOST_NO_SFINAE
+#if !defined(BOOST_NO_SFINAE) && \
+    !BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x592))
 # define BOOST_IOSTREAMS_ENABLE_IF_STREAM(T) \
-    , typename boost::enable_if< boost::iostreams::is_std_io<T> >::type* = 0  \
+    , typename boost::enable_if< boost::iostreams::is_std_io<T> >::type* = 0 \
     /**/
 # define BOOST_IOSTREAMS_DISABLE_IF_STREAM(T) \
     , typename boost::disable_if< boost::iostreams::is_std_io<T> >::type* = 0 \

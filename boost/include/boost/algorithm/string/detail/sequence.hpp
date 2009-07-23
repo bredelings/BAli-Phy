@@ -1,11 +1,12 @@
 //  Boost string_algo library sequence.hpp header file  ---------------------------//
 
-//  Copyright Pavol Droba 2002-2003. Use, modification and
-//  distribution is subject to the Boost Software License, Version
-//  1.0. (See accompanying file LICENSE_1_0.txt or copy at
-//  http://www.boost.org/LICENSE_1_0.txt)
+//  Copyright Pavol Droba 2002-2003.
+//
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
 
-//  See http://www.boost.org for updates, documentation, and revision history.
+//  See http://www.boost.org/ for updates, documentation, and revision history.
 
 #ifndef BOOST_STRING_DETAIL_SEQUENCE_HPP
 #define BOOST_STRING_DETAIL_SEQUENCE_HPP
@@ -40,7 +41,7 @@ namespace boost {
                 BOOST_STRING_TYPENAME InputT::iterator At,
                 const InsertT& Insert )
             {
-                insert( Input, At, begin(Insert), end(Insert) );
+                insert( Input, At, ::boost::begin(Insert), ::boost::end(Insert) );
             }
            
 //  erase helper  ---------------------------------------------------//
@@ -183,11 +184,11 @@ namespace boost {
             {
                 if(From!=To)
                 {
-                    replace( Input, From, To, begin(Insert), end(Insert) );
+                    replace( Input, From, To, ::boost::begin(Insert), ::boost::end(Insert) );
                 }
                 else
                 {
-                    insert( Input, From, begin(Insert), end(Insert) );
+                    insert( Input, From, ::boost::begin(Insert), ::boost::end(Insert) );
                 }
             }
 

@@ -1,4 +1,4 @@
-/* Copyright 2003-2005 Joaquín M López Muñoz.
+/* Copyright 2003-2008 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -26,14 +26,15 @@ namespace detail{
 template<typename Value,typename KeyFromValue,typename Compare>
 struct value_comparison:std::binary_function<Value,Value,bool>
 {
-  value_comparison(KeyFromValue key_=KeyFromValue(),Compare comp_=Compare()):
+  value_comparison(
+    const KeyFromValue& key_=KeyFromValue(),const Compare& comp_=Compare()):
     key(key_),comp(comp_)
   {
   }
 
   bool operator()(
     typename call_traits<Value>::param_type x,
-    typename call_traits<Value>::param_type y)
+    typename call_traits<Value>::param_type y)const
   {
     return comp(key(x),key(y));
   }

@@ -17,9 +17,15 @@
 #include <assert.h>
 #include <boost/config.hpp>
 #include <boost/tuple/tuple.hpp>
-#ifndef BOOST_NO_SLIST
-#  include <slist> // shouldn't have to include this... -JGS
+
+#if !defined BOOST_NO_SLIST
+#  ifdef BOOST_SLIST_HEADER
+#    include BOOST_SLIST_HEADER
+#  else
+#    include <slist>
+#  endif
 #endif
+
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/properties.hpp>
 #include <boost/pending/container_traits.hpp>
@@ -379,7 +385,7 @@ namespace boost {
         if (*ui != *vi) {
           for (tie(ci, ci_end) = vertices(g); ci != ci_end; ++ci) 
             put(color, *ci, Color::white());
-          if (! is_reachable(*ui, *vi, color))
+          if (! is_reachable(*ui, *vi, g, color))
             return false;
         }
     return true;

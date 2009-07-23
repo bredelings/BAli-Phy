@@ -1,13 +1,13 @@
-//  (C) Copyright Gennadiy Rozental 2005.
+//  (C) Copyright Gennadiy Rozental 2005-2007.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile: results_collector.ipp,v $
+//  File        : $RCSfile$
 //
-//  Version     : $Revision: 1.2 $
+//  Version     : $Revision: 41369 $
 //
 //  Description : implements Unit Test results collecting facility.
 // ***************************************************************************
@@ -16,8 +16,8 @@
 #define BOOST_TEST_RESULTS_COLLECTOR_IPP_021105GER
 
 // Boost.Test
-#include <boost/test/unit_test_suite.hpp>
-#include <boost/test/test_tools.hpp>
+#include <boost/test/unit_test_suite_impl.hpp>
+#include <boost/test/unit_test_log.hpp>
 #include <boost/test/results_collector.hpp>
 #include <boost/test/framework.hpp>
 
@@ -76,6 +76,7 @@ test_results::operator+=( test_results const& tr )
     p_test_cases_passed.value   += tr.p_test_cases_passed;
     p_test_cases_failed.value   += tr.p_test_cases_failed;
     p_test_cases_skipped.value  += tr.p_test_cases_skipped;
+    p_test_cases_aborted.value  += tr.p_test_cases_aborted;
 }
 
 //____________________________________________________________________________//
@@ -89,6 +90,7 @@ test_results::clear()
     p_test_cases_passed.value    = 0;
     p_test_cases_failed.value    = 0;
     p_test_cases_skipped.value   = 0;
+    p_test_cases_aborted.value   = 0;
     p_aborted.value              = false;
     p_skipped.value              = true;
 }
@@ -99,6 +101,8 @@ test_results::clear()
 // **************               results_collector              ************** //
 // ************************************************************************** //
 
+#if !BOOST_WORKAROUND(BOOST_MSVC, <1300)
+
 namespace {
 
 struct results_collector_impl {
@@ -108,6 +112,16 @@ struct results_collector_impl {
 results_collector_impl& s_rc_impl() { static results_collector_impl the_inst; return the_inst; }
 
 } // local namespace
+
+#else
+
+struct results_collector_impl {
+    std::map<test_unit_id,test_results> m_results_store;
+};
+
+static results_collector_impl& s_rc_impl() { static results_collector_impl the_inst; return the_inst; }
+
+#endif
 
 //____________________________________________________________________________//
 
@@ -162,8 +176,11 @@ public:
             m_tr.p_test_cases_passed.value++;
         else if( tr.p_skipped )
             m_tr.p_test_cases_skipped.value++;
-        else
+        else {
+            if( tr.p_aborted )
+                m_tr.p_test_cases_aborted.value++;
             m_tr.p_test_cases_failed.value++;
+        }
     }
     bool    test_suite_start( test_suite const& ts )
     {
@@ -194,7 +211,13 @@ results_collector_t::test_unit_finish( test_unit const& tu, unsigned long )
     else {
         test_results const& tr = s_rc_impl().m_results_store[tu.p_id];
         
-        BOOST_WARN_MESSAGE( tr.p_aborted || tr.p_assertions_failed >= tr.p_expected_failures, "Test case has less failures then expected" );
+        bool num_failures_match = tr.p_aborted || tr.p_assertions_failed >= tr.p_expected_failures;
+        if( !num_failures_match )
+            BOOST_TEST_MESSAGE( "Test case " << tu.p_name << " has fewer failures than expected" );
+
+        bool has_any_assertions = tr.p_aborted || (tr.p_assertions_failed != 0) || (tr.p_assertions_passed != 0);
+        if( !has_any_assertions )
+            BOOST_TEST_MESSAGE( "Test case " << tu.p_name << " doesn't include any assertions" );
     }
 }
 
@@ -212,7 +235,7 @@ results_collector_t::test_unit_skipped( test_unit const& tu )
         tr.clear();
     
         tr.p_skipped.value              = true;
-        tr.p_test_cases_skipped.value   = tcc.m_count;
+        tr.p_test_cases_skipped.value   = tcc.p_count;
     }
 }
 
@@ -237,7 +260,9 @@ results_collector_t::assertion_result( bool passed )
 void
 results_collector_t::exception_caught( execution_exception const& )
 {
-    // do nothing
+    test_results& tr = s_rc_impl().m_results_store[framework::current_test_case().p_id];
+
+    tr.p_assertions_failed.value++;
 }
 
 //____________________________________________________________________________//
@@ -265,17 +290,5 @@ results_collector_t::results( test_unit_id id ) const
 //____________________________________________________________________________//
 
 #include <boost/test/detail/enable_warnings.hpp>
-
-// ***************************************************************************
-//  Revision History :
-//
-//  $Log: results_collector.ipp,v $
-//  Revision 1.2  2005/03/24 04:02:33  rogeeff
-//  portability fixes
-//
-//  Revision 1.1  2005/02/20 08:27:07  rogeeff
-//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
-//
-// ***************************************************************************
 
 #endif // BOOST_TEST_RESULTS_COLLECTOR_IPP_021105GER

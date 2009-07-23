@@ -1,13 +1,13 @@
-//  (C) Copyright Gennadiy Rozental 2005.
+//  (C) Copyright Gennadiy Rozental 2005-2007.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile: plain_report_formatter.ipp,v $
+//  File        : $RCSfile$
 //
-//  Version     : $Revision: 1.1.2.2 $
+//  Version     : $Revision: 41369 $
 //
 //  Description : plain report formatter definition
 // ***************************************************************************
@@ -19,7 +19,7 @@
 #include <boost/test/output/plain_report_formatter.hpp>
 #include <boost/test/utils/custom_manip.hpp>
 #include <boost/test/results_collector.hpp>
-#include <boost/test/unit_test_suite.hpp>
+#include <boost/test/unit_test_suite_impl.hpp>
 
 #include <boost/test/utils/basic_cstring/io.hpp>
 
@@ -116,7 +116,7 @@ plain_report_formatter::test_unit_report_start( test_unit const& tu, std::ostrea
          << "Test " << (tu.p_type == tut_case ? "case " : "suite " ) << quote() << tu.p_name << ' ' << descr;
 
     if( tr.p_skipped ) {
-        ostr << '\n';
+        ostr << " due to " << (tu.check_dependencies() ? "test aborting\n" : "failed dependancy\n" );
         m_indent += 2;
         return;
     }
@@ -136,6 +136,7 @@ plain_report_formatter::test_unit_report_start( test_unit const& tu, std::ostrea
     print_stat_value( ostr, tr.p_test_cases_passed, m_indent, total_tc        , "test case", "passed" );
     print_stat_value( ostr, tr.p_test_cases_failed, m_indent, total_tc        , "test case", "failed" );
     print_stat_value( ostr, tr.p_test_cases_skipped, m_indent, total_tc       , "test case", "skipped" );
+    print_stat_value( ostr, tr.p_test_cases_aborted, m_indent, total_tc       , "test case", "aborted" );
     
     ostr << '\n';
 }
@@ -161,7 +162,8 @@ plain_report_formatter::do_confirmation_report( test_unit const& tu, std::ostrea
     }
         
     if( tr.p_skipped ) {
-        ostr << "*** Test " << tu.p_type_name << " skipped \n";
+        ostr << "*** Test " << tu.p_type_name << " skipped due to " 
+             << (tu.check_dependencies() ? "test aborting\n" : "failed dependancy\n" );
         return;
     }
 
@@ -171,8 +173,9 @@ plain_report_formatter::do_confirmation_report( test_unit const& tu, std::ostrea
         return;
     }
 
-
-    ostr << "*** " << tr.p_assertions_failed << " failure" << ( tr.p_assertions_failed != 1 ? "s" : "" ) << " detected";
+    counter_t num_failures = tr.p_assertions_failed;
+    
+    ostr << "*** " << num_failures << " failure" << ( num_failures != 1 ? "s" : "" ) << " detected";
     
     if( tr.p_expected_failures > 0 )
         ostr << " (" << tr.p_expected_failures << " failure" << ( tr.p_expected_failures != 1 ? "s" : "" ) << " expected)";
@@ -191,20 +194,5 @@ plain_report_formatter::do_confirmation_report( test_unit const& tu, std::ostrea
 //____________________________________________________________________________//
 
 #include <boost/test/detail/enable_warnings.hpp>
-
-// ***************************************************************************
-//  Revision History :
-//
-//  $Log: plain_report_formatter.ipp,v $
-//  Revision 1.1.2.2  2005/11/28 11:57:07  dgregor
-//  Make that.... iostream
-//
-//  Revision 1.1.2.1  2005/11/28 00:02:36  dgregor
-//  Include ostream
-//
-//  Revision 1.1  2005/02/20 08:27:07  rogeeff
-//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
-//
-// ***************************************************************************
 
 #endif // BOOST_TEST_PLAIN_REPORT_FORMATTER_IPP_020105GER

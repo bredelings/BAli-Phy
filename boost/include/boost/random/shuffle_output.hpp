@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: shuffle_output.hpp,v 1.9 2004/07/27 03:43:32 dgregor Exp $
+ * $Id: shuffle_output.hpp 41369 2007-11-25 18:07:19Z bemandawes $
  *
  * Revision history
  *  2001-02-18  moved to individual header files
@@ -46,13 +46,13 @@ public:
   BOOST_STATIC_CONSTANT(int, buffer_size = k);
 
   shuffle_output() : _rng() { init(); }
-#if defined(BOOST_MSVC) && _MSC_VER <= 1200
+#if defined(BOOST_MSVC) && _MSC_VER < 1300
   // MSVC does not implicitly generate the copy constructor here
   shuffle_output(const shuffle_output & x)
     : _rng(x._rng), y(x.y) { std::copy(x.v, x.v+k, v); }
 #endif
   template<class T>
-  explicit shuffle_output(T seed) : _rng(seed) { init(); }
+  explicit shuffle_output(T s) : _rng(s) { init(); }
   explicit shuffle_output(const base_type & rng) : _rng(rng) { init(); }
   template<class It> shuffle_output(It& first, It last)
     : _rng(first, last) { init(); }

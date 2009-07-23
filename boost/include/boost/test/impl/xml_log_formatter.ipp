@@ -1,13 +1,13 @@
-//  (C) Copyright Gennadiy Rozental 2005.
+//  (C) Copyright Gennadiy Rozental 2005-2007.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at 
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile: xml_log_formatter.ipp,v $
+//  File        : $RCSfile$
 //
-//  Version     : $Revision: 1.4 $
+//  Version     : $Revision: 41369 $
 //
 //  Description : implements XML Log formatter
 // ***************************************************************************
@@ -17,7 +17,7 @@
 
 // Boost.Test
 #include <boost/test/output/xml_log_formatter.hpp>
-#include <boost/test/unit_test_suite.hpp>
+#include <boost/test/unit_test_suite_impl.hpp>
 #include <boost/test/framework.hpp>
 #include <boost/test/utils/basic_cstring/io.hpp>
 
@@ -115,9 +115,9 @@ xml_log_formatter::log_exception( std::ostream& ostr, log_checkpoint_data const&
     ostr << "<Exception name" << attr_value() << framework::current_test_case().p_name.get() << ">"
            << pcdata() << explanation;
 
-    if( !checkpoint_data.m_message.empty() ) {
-        ostr << "<LastCheckpoint file" << attr_value() << checkpoint_data.m_file
-             << " line"                << attr_value() << checkpoint_data.m_line
+    if( !checkpoint_data.m_file_name.is_empty() ) {
+        ostr << "<LastCheckpoint file" << attr_value() << checkpoint_data.m_file_name
+             << " line"                << attr_value() << checkpoint_data.m_line_num
              << ">"
              << pcdata() << checkpoint_data.m_message
              << "</LastCheckpoint>";
@@ -135,8 +135,8 @@ xml_log_formatter::log_entry_start( std::ostream& ostr, log_entry_data const& en
 
     m_curr_tag = xml_tags[let];
     ostr << '<' << m_curr_tag
-         << " file" << attr_value() << entry_data.m_file
-         << " line" << attr_value() << entry_data.m_line
+         << " file" << attr_value() << entry_data.m_file_name
+         << " line" << attr_value() << entry_data.m_line_num
          << ">";
 }
 
@@ -169,24 +169,5 @@ xml_log_formatter::log_entry_finish( std::ostream& ostr )
 //____________________________________________________________________________//
 
 #include <boost/test/detail/enable_warnings.hpp>
-
-// ***************************************************************************
-//  Revision History :
-//
-//  $Log: xml_log_formatter.ipp,v $
-//  Revision 1.4  2005/04/30 16:47:14  rogeeff
-//  warning supressed
-//
-//  Revision 1.3  2005/04/29 06:29:35  rogeeff
-//  bug fix for incorect XML output
-//
-//  Revision 1.2  2005/02/20 08:27:07  rogeeff
-//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
-//
-//  Revision 1.1  2005/02/01 08:59:38  rogeeff
-//  supplied_log_formatters split
-//  change formatters interface to simplify result interface
-//
-// ***************************************************************************
 
 #endif // BOOST_TEST_XML_LOG_FORMATTER_IPP_020105GER

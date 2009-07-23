@@ -18,6 +18,9 @@
 
 #include <boost/archive/detail/basic_iarchive.hpp>
 #include <boost/archive/detail/interface_iarchive.hpp>
+#include <boost/archive/detail/iserializer.hpp>
+#include <boost/archive/detail/register_archive.hpp>
+#include <boost/pfto.hpp>
 
 namespace boost {
 namespace archive {
@@ -29,6 +32,7 @@ class common_iarchive :
     public basic_iarchive,
     public interface_iarchive<Archive>
 {
+    friend class interface_iarchive<Archive>;
 private:
     virtual void vload(version_type & t){
         * this->This() >> t; 
@@ -49,12 +53,17 @@ private:
         * this->This() >> s;
     }
 protected:
+    // default processing - invoke serialization library
+    template<class T>
+    void load_override(T & t, BOOST_PFTO int){
+        archive::load(* this->This(), t);
+    }
     // default implementations of functions which emit start/end tags for
     // archive types that require them.
-    void load_start(const char *name){}
-    void load_end(const char *name){}
+    void load_start(const char * /*name*/){}
+    void load_end(const char * /*name*/){}
     // default archive initialization
-    common_iarchive(unsigned int flags) : 
+    common_iarchive(unsigned int flags = 0) : 
         basic_iarchive(flags),
         interface_iarchive<Archive>()
     {}

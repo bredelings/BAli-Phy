@@ -5,8 +5,8 @@
 /* Copyright (c) 2002,2003 CrystalClear Software, Inc.
  * Use, modification and distribution is subject to the 
  * Boost Software License, Version 1.0. (See accompanying
- * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
- * $Date: 2003/11/23 03:29:56 $
+ * file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
+ * $Date: 2008-03-26 17:16:15 -0400 (Wed, 26 Mar 2008) $
  */
 
 

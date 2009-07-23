@@ -4,9 +4,9 @@
 /* Copyright (c) 2002,2003,2005 CrystalClear Software, Inc.
  * Use, modification and distribution is subject to the
  * Boost Software License, Version 1.0. (See accompanying
- * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
+ * file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
  * Author: Jeff Garland, Bart Garst
- * $Date: 2005/10/28 13:32:38 $
+ * $Date: 2008-02-27 15:00:24 -0500 (Wed, 27 Feb 2008) $
  */
 
 
@@ -16,6 +16,7 @@
 
 #include <boost/detail/workaround.hpp>
 #include "boost/date_time/c_time.hpp"
+#include "boost/date_time/time_clock.hpp"
 #include "boost/cstdint.hpp"
 #include "boost/shared_ptr.hpp"
 
@@ -119,6 +120,10 @@ namespace date_time {
       FILETIME ft_utc;
       GetSystemTimeAsFileTime(&ft_utc);
       FileTimeToLocalFileTime(&ft_utc,&ft);
+      #elif defined(BOOST_NO_GETSYSTEMTIMEASFILETIME)
+      SYSTEMTIME st;
+      GetSystemTime( &st );
+      SystemTimeToFileTime( &st, &ft );
       #else
       GetSystemTimeAsFileTime(&ft);
       #endif
@@ -133,6 +138,10 @@ namespace date_time {
       FILETIME ft_utc;
       GetSystemTimeAsFileTime(&ft_utc);
       FileTimeToLocalFileTime(&ft_utc,&ft);
+      #elif defined(BOOST_NO_GETSYSTEMTIMEASFILETIME)
+      SYSTEMTIME st;
+      GetSystemTime( &st );
+      SystemTimeToFileTime( &st, &ft );
       #else
       GetSystemTimeAsFileTime(&ft);
       #endif
@@ -153,7 +162,8 @@ namespace date_time {
       filetime -= OFFSET;
       // filetime now holds 100-nanoseconds since 1970-Jan-01
 
-      boost::uint32_t sub_sec = (filetime % 10000000) / 10; // microseconds
+      // microseconds -- static casts supress warnings
+      boost::uint32_t sub_sec = static_cast<boost::uint32_t>((filetime % 10000000) / 10);
 
       std::time_t t = static_cast<time_t>(filetime / 10000000); // seconds since epoch
       
@@ -172,7 +182,7 @@ namespace date_time {
       //of the current time system.  For example, if the time system
       //doesn't support fractional seconds then res_adjust returns 0
       //and all the fractional seconds return 0.
-      int adjust = resolution_traits_type::res_adjust()/1000000;
+      int adjust = static_cast<int>(resolution_traits_type::res_adjust()/1000000);
 
       time_duration_type td(curr_ptr->tm_hour,
                             curr_ptr->tm_min,

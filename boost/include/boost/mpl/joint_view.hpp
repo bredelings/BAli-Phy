@@ -10,9 +10,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: /cvsroot/boost/boost/boost/mpl/joint_view.hpp,v $
-// $Date: 2004/10/02 19:08:57 $
-// $Revision: 1.8 $
+// $Source$
+// $Date: 2004-10-02 15:08:57 -0400 (Sat, 02 Oct 2004) $
+// $Revision: 25528 $
 
 #include <boost/mpl/aux_/joint_iter.hpp>
 #include <boost/mpl/plus.hpp>

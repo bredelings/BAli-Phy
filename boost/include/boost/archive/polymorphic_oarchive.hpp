@@ -17,6 +17,7 @@
 //  See http://www.boost.org for updates, documentation, and revision history.
 
 #include <cstddef> // size_t
+#include <climits> // ULONG_MAX 
 #include <string>
 
 #include <boost/config.hpp>
@@ -31,14 +32,22 @@ namespace std{
 #include <boost/archive/detail/oserializer.hpp>
 #include <boost/archive/detail/interface_oarchive.hpp>
 #include <boost/serialization/nvp.hpp>
+#include <boost/archive/detail/register_archive.hpp>
 
 // determine if its necessary to handle (u)int64_t specifically
 // i.e. that its not a synonym for (unsigned) long
 // if there is no 64 bit int or if its the same as a long
 // we shouldn't define separate functions for int64 data types.
-#if defined(BOOST_NO_INT64_T) \
-    || (ULONG_MAX != 0xffffffff && ULONG_MAX == 18446744073709551615u) // 2**64 - 1
-#   define BOOST_NO_INTRINSIC_INT64_T
+#if defined(BOOST_NO_INT64_T)
+    #define BOOST_NO_INTRINSIC_INT64_T
+#else 
+    #if defined(ULONG_MAX)
+        #if(ULONG_MAX != 0xffffffff && ULONG_MAX == 18446744073709551615u) // 2**64 - 1
+            #define BOOST_NO_INTRINSIC_INT64_T
+        #endif
+    #else 
+        #define BOOST_NO_INTRINSIC_INT64_T
+    #endif
 #endif
 
 namespace boost {
@@ -53,7 +62,9 @@ namespace detail {
     class basic_oserializer;
 }
 
-class polymorphic_oarchive :
+class polymorphic_oarchive;
+
+class polymorphic_oarchive_impl :
     public detail::interface_oarchive<polymorphic_oarchive>
 {
 #ifdef BOOST_NO_MEMBER_TEMPLATE_FRIENDS
@@ -97,16 +108,7 @@ public:
     virtual void save_start(const char * name) = 0;
     virtual void save_end(const char * name) = 0;
     virtual void register_basic_serializer(const detail::basic_oserializer & bos) = 0;
-    virtual void lookup_basic_helper(
-        const boost::serialization::extended_type_info * const eti,
-                boost::shared_ptr<void> & sph
-    ) = 0;
-    virtual void insert_basic_helper(
-        const boost::serialization::extended_type_info * const eti,
-                shared_ptr<void> & sph
-    ) = 0;
 
-    virtual unsigned int get_library_version() const = 0;
     virtual void end_preamble() = 0;
 
     // msvc and borland won't automatically pass these to the base class so
@@ -114,7 +116,7 @@ public:
     template<class T>
     void save_override(T & t, BOOST_PFTO int)
     {
-        archive::save(* this, t);
+        archive::save(* this->This(), t);
     }
     // special treatment for name-value pairs.
     template<class T>
@@ -125,12 +127,15 @@ public:
                 ::boost::serialization::nvp<T> & t, int
         ){
         save_start(t.name());
-        archive::save(* this, t.const_value());
+        archive::save(* this->This(), t.const_value());
         save_end(t.name());
     }
+protected:
+    virtual ~polymorphic_oarchive_impl(){};
 public:
+    // utility functions implemented by all legal archives
     virtual unsigned int get_flags() const = 0;
-    // utility function implemented by all legal archives
+    virtual unsigned int get_library_version() const = 0;
     virtual void save_binary(const void * t, std::size_t size) = 0;
 
     virtual void save_object(
@@ -143,11 +148,18 @@ public:
     ) = 0;
 };
 
+// note: preserve naming symmetry
+class polymorphic_oarchive : 
+    public polymorphic_oarchive_impl
+{
+public:
+    virtual ~polymorphic_oarchive(){};
+};
+
 } // namespace archive
 } // namespace boost
 
-// required by smart_cast for compilers not implementing
-// partial template specialization
-BOOST_BROKEN_COMPILER_TYPE_TRAITS_SPECIALIZATION(boost::archive::polymorphic_oarchive)
+// required by export
+BOOST_SERIALIZATION_REGISTER_ARCHIVE(boost::archive::polymorphic_oarchive)
 
 #endif // BOOST_ARCHIVE_POLYMORPHIC_OARCHIVE_HPP

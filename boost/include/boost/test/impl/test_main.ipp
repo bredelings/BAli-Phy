@@ -1,4 +1,4 @@
-//  (C) Copyright Gennadiy Rozental 2001-2005.
+//  (C) Copyright Gennadiy Rozental 2001-2007.
 //  (C) Copyright Beman Dawes 1995-2001.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at
@@ -6,9 +6,9 @@
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile: test_main.ipp,v $
+//  File        : $RCSfile$
 //
-//  Version     : $$Revision: 1.6 $
+//  Version     : $$Revision: 41369 $
 //
 //  Description : implements main function for Test Execution Monitor.
 // ***************************************************************************
@@ -17,8 +17,9 @@
 #define BOOST_TEST_TEST_MAIN_IPP_012205GER
 
 // Boost.Test
-#include <boost/test/unit_test_suite.hpp>
+#include <boost/test/framework.hpp>
 #include <boost/test/test_tools.hpp>
+#include <boost/test/unit_test_suite.hpp>
 
 // Boost
 #include <boost/cstdlib.hpp>
@@ -53,24 +54,15 @@ private:
 init_unit_test_suite( int argc, char* argv[] ) {
     using namespace ::boost::unit_test;
     
-    test_suite* test = BOOST_TEST_SUITE( "Test Program" );
+    framework::master_test_suite().p_name.value = "Test Program";
     
-    test->add( BOOST_TEST_CASE( test_main_caller( argc, argv ) ) );
+    framework::master_test_suite().add( BOOST_TEST_CASE( test_main_caller( argc, argv ) ) );
     
-    return test;
+    return 0;
 }
 
 //____________________________________________________________________________//
 
 #include <boost/test/detail/enable_warnings.hpp>
-
-// ***************************************************************************
-//  Revision History :
-//
-//  $Log: test_main.ipp,v $
-//  Revision 1.6  2005/02/20 08:27:07  rogeeff
-//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
-//
-// ***************************************************************************
 
 #endif // BOOST_TEST_TEST_MAIN_IPP_012205GER

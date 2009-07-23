@@ -1,4 +1,5 @@
-// (C) Copyright Jonathan Turkanis 2003.
+// (C) Copyright 2008 CodeRage, LLC (turkanis at coderage dot com)
+// (C) Copyright 2003-2007 Jonathan Turkanis
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
@@ -114,6 +115,7 @@ public:
     std::streamsize optimal_buffer_size() const
     { return iostreams::optimal_buffer_size(t_); }
 public:
+    concept_adapter& operator=(const concept_adapter&);
     value_type t_;
 };
 
@@ -218,7 +220,7 @@ struct flt_wrapper_impl<any_tag> {
     template<typename Filter, typename Device>
     static std::streampos
     seek( Filter& f, Device* dev, stream_offset off,
-          BOOST_IOS::seekdir way, BOOST_IOS::openmode which,
+          BOOST_IOS::seekdir way, BOOST_IOS::openmode,
           random_access, any_tag )
     { return f.seek(*dev, off, way); }
 

@@ -17,6 +17,9 @@
 
 //  See http://www.boost.org for updates, documentation, and revision history.
 
+#include <cstddef> // NULL
+#include <boost/serialization/force_include.hpp>
+
 namespace boost {
 namespace serialization {
 namespace void_cast_detail{
@@ -25,8 +28,8 @@ class void_caster;
 template<class Derived, class Base>
 BOOST_DLLEXPORT 
 inline const void_cast_detail::void_caster & void_cast_register(
-    const Derived * /* dnull = NULL */, 
-    const Base * /* bnull = NULL */
+    const Derived * dnull = NULL, 
+    const Base * bnull = NULL
 ) BOOST_USED;
 } // namespace serialization
 } // namespace boost

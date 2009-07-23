@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: ranlux.hpp,v 1.5 2004/07/27 03:43:32 dgregor Exp $
+ * $Id: ranlux.hpp 24096 2004-07-27 03:43:34Z dgregor $
  *
  * Revision history
  *  2001-02-18  created

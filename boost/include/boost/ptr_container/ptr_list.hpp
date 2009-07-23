@@ -38,12 +38,14 @@ namespace boost
                                          CloneAllocator >
             base_class;
 
-        typedef ptr_list<T,CloneAllocator,Allocator> this_type;
+        typedef ptr_list<T,CloneAllocator,Allocator>  this_type;
         
     public:
-        BOOST_PTR_CONTAINER_DEFINE_NON_INHERITED_MEMBERS( ptr_list, 
-                                                          base_class,
-                                                          this_type );
+        BOOST_PTR_CONTAINER_DEFINE_SEQEUENCE_MEMBERS( ptr_list, 
+                                                      base_class,
+                                                      this_type )
+
+        typedef BOOST_DEDUCED_TYPENAME base_class::value_type value_type;
         
     public:
         using base_class::merge;
@@ -56,8 +58,7 @@ namespace boost
         template< typename Compare > 
         void merge( ptr_list& x, Compare comp )                   
         {
-            this->c_private().merge( x.c_private(), void_ptr_indirect_fun<Compare,T>( comp ) );
-        }
+            this->base().merge( x.base(), void_ptr_indirect_fun<Compare,T>( comp ) ); }
 
         void sort()                                                    
         { 
@@ -67,8 +68,22 @@ namespace boost
         template< typename Compare > 
         void sort( Compare comp )                             
         {
-            this->c_private().sort( void_ptr_indirect_fun<Compare,T>( comp ) );
+            this->base().sort( void_ptr_indirect_fun<Compare,T>( comp ) );
         }
+
+        template< class Pred >
+        void erase_if( iterator first, iterator last, Pred pred )
+        {
+            base_class::erase_if( first, last, pred );
+        }
+        
+        template< class Pred >
+        void erase_if( Pred pred )
+        {
+            this->base().remove_if( BOOST_DEDUCED_TYPENAME base_class:: 
+                    BOOST_NESTED_TEMPLATE void_ptr_delete_if<Pred,value_type>
+                                    (pred) );
+        } 
 
     }; // class 'ptr_list'
 

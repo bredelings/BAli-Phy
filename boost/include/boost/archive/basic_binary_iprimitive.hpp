@@ -6,6 +6,10 @@
 # pragma once
 #endif
 
+#if defined(_MSC_VER)
+#pragma warning( disable : 4800 )
+#endif
+
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
 // basic_binary_iprimitive.hpp
 //
@@ -25,9 +29,10 @@
 
 #include <iosfwd>
 #include <cassert>
+#include <locale>
 #include <cstring> // std::memcpy
 #include <cstddef> // std::size_t
-
+#include <streambuf> // basic_streambuf
 #include <string>
 
 #include <boost/config.hpp>
@@ -38,14 +43,18 @@ namespace std{
 } // namespace std
 #endif
 
-#include <boost/throw_exception.hpp>
-#include <boost/limits.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/io/ios_state.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/throw_exception.hpp>
+//#include <boost/limits.hpp>
+//#include <boost/io/ios_state.hpp>
 
+#include <boost/archive/basic_streambuf_locale_saver.hpp>
 #include <boost/archive/archive_exception.hpp>
-
+#include <boost/archive/detail/auto_link_archive.hpp>
+#include <boost/mpl/placeholders.hpp>
+#include <boost/serialization/is_bitwise_serializable.hpp>
+#include <boost/serialization/array.hpp>
 #include <boost/archive/detail/abi_prefix.hpp> // must be the last header
 
 namespace boost { 
@@ -53,7 +62,7 @@ namespace archive {
 
 /////////////////////////////////////////////////////////////////////////////
 // class binary_iarchive - read serialized objects from a input binary stream
-template<class Archive, class IStream>
+template<class Archive, class Elem, class Tr>
 class basic_binary_iprimitive
 {
 #ifndef BOOST_NO_MEMBER_TEMPLATE_FRIENDS
@@ -62,16 +71,16 @@ protected:
 #else
 public:
 #endif
+    std::basic_streambuf<Elem, Tr> & m_sb;
     // return a pointer to the most derived class
     Archive * This(){
         return static_cast<Archive *>(this);
     }
-    // native streams are always handled as bytes
-    IStream &is;
+
+    #ifndef BOOST_NO_STD_LOCALE
     boost::scoped_ptr<std::locale> archive_locale;
-    io::basic_ios_locale_saver<
-        BOOST_DEDUCED_TYPENAME IStream::char_type, BOOST_DEDUCED_TYPENAME IStream::traits_type
-    > locale_saver;
+    basic_streambuf_locale_saver<Elem, Tr> locale_saver;
+    #endif
 
     // main template for serilization of primitive types
     template<class T>
@@ -79,6 +88,16 @@ public:
         load_binary(& t, sizeof(T));
     }
 
+    /////////////////////////////////////////////////////////
+    // fundamental types that need special treatment
+    
+    // trap usage of invalid uninitialized boolean 
+    void load(bool & t){
+        load_binary(& t, sizeof(t));
+        int i = t;
+        assert(0 == i || 1 == i);
+        (void)i; // warning suppression for release builds.
+    }
     BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
     load(std::string &s);
     #ifndef BOOST_NO_STD_WSTRING
@@ -93,39 +112,60 @@ public:
     BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
     init();
     BOOST_ARCHIVE_OR_WARCHIVE_DECL(BOOST_PP_EMPTY()) 
-    basic_binary_iprimitive(IStream  &is_, bool no_codecvt);
+    basic_binary_iprimitive(
+        std::basic_streambuf<Elem, Tr> & sb, 
+        bool no_codecvt
+    );
     BOOST_ARCHIVE_OR_WARCHIVE_DECL(BOOST_PP_EMPTY()) 
     ~basic_binary_iprimitive();
 public:
+    // we provide an optimized load for all fundamental types
+    // typedef serialization::is_bitwise_serializable<mpl::_1> 
+    // use_array_optimization;
+    struct use_array_optimization {
+        template <class T>
+        struct apply : public serialization::is_bitwise_serializable<T> {};
+    };
+
+    // the optimized load_array dispatches to load_binary 
+    template <class ValueType>
+    void load_array(serialization::array<ValueType>& a, unsigned int)
+    {
+      load_binary(a.address(),a.count()*sizeof(ValueType));
+    }
+
     void
     load_binary(void *address, std::size_t count);
 };
 
-template<class Archive, class IStream>
+template<class Archive, class Elem, class Tr>
 inline void
-basic_binary_iprimitive<Archive, IStream>::load_binary(
+basic_binary_iprimitive<Archive, Elem, Tr>::load_binary(
     void *address, 
     std::size_t count
 ){
-    assert(
-        static_cast<std::size_t>((std::numeric_limits<std::streamsize>::max)()) >= count
-    );
-    if(is.fail())
-        boost::throw_exception(archive_exception(archive_exception::stream_error));
     // note: an optimizer should eliminate the following for char files
-    std::size_t s = count / sizeof(BOOST_DEDUCED_TYPENAME IStream::char_type);
-    is.read(
-        static_cast<BOOST_DEDUCED_TYPENAME IStream::char_type *>(address), 
+    std::streamsize s = count / sizeof(Elem);
+    std::streamsize scount = m_sb.sgetn(
+        static_cast<Elem *>(address), 
         s
     );
+    if(scount != static_cast<std::streamsize>(s))
+        boost::throw_exception(
+            archive_exception(archive_exception::stream_error)
+        );
     // note: an optimizer should eliminate the following for char files
-    s = count % sizeof(BOOST_DEDUCED_TYPENAME IStream::char_type);
+    s = count % sizeof(Elem);
     if(0 < s){
-        if(is.fail())
-            boost::throw_exception(archive_exception(archive_exception::stream_error));
-        BOOST_DEDUCED_TYPENAME IStream::char_type t;
-        is.read(& t, 1);
-        std::memcpy(address, &t, s);
+//        if(is.fail())
+//            boost::throw_exception(archive_exception(archive_exception::stream_error));
+        Elem t;
+        scount = m_sb.sgetn(& t, 1);
+        if(scount != 1)
+            boost::throw_exception(
+                archive_exception(archive_exception::stream_error)
+            );
+        std::memcpy(static_cast<char*>(address) + (count - s), &t, s);
     }
 }
 

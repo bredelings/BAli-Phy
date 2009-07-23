@@ -12,7 +12,9 @@
 #ifndef BOOST_PTR_CONTAINER_CLONE_ALLOCATOR_HPP
 #define BOOST_PTR_CONTAINER_CLONE_ALLOCATOR_HPP
 
+#include <boost/assert.hpp>
 #include <boost/checked_delete.hpp>
+#include <typeinfo>
 
 namespace boost
 {
@@ -23,7 +25,16 @@ namespace boost
     template< class T >
     inline T* new_clone( const T& r )
     {
-        return new T( r );
+        //
+        // @remark: if you get a compile-error here,
+        //          it is most likely because you did not
+        //          define new_clone( const T& ) in the namespace
+        //          of T.
+        //
+        T* res = new T( r );
+        BOOST_ASSERT( typeid(r) == typeid(*res) &&
+                      "Default new_clone() sliced object!" );
+        return res;
     }
 
     template< class T >
@@ -59,36 +70,16 @@ namespace boost
         template< class U >
         static U* allocate_clone( const U& r )
         {
-            return const_cast<U*>( &r );
+            return const_cast<U*>(&r);
         }
 
         template< class U >
-        static void deallocate_clone( const U* r )
+        static void deallocate_clone( const U* /*r*/ )
         {
             // do nothing
         }
     };
 
-    /////////////////////////////////////////////////////////////////////////
-    // MapCloneAllocator concept
-    /////////////////////////////////////////////////////////////////////////
-
-    template< class T >
-    inline T* new_default_clone( const T* )
-    {
-        return new T();
-    }
-        
-    struct map_heap_clone_allocator : heap_clone_allocator
-    {   
-        template< class U >
-        static U* allocate_default_clone()
-        {
-            static const U* ptr = 0;
-            return new_default_clone(ptr);
-        }
-    };
-    
 } // namespace 'boost'
 
 #endif

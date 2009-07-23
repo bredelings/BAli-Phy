@@ -9,13 +9,13 @@
 //  See http://www.boost.org for updates, documentation, and revision history.
 
 #include <cassert>
+#include <cstddef> // NULL
 #include <algorithm>
 
 #include <boost/throw_exception.hpp>
 
 #include <boost/archive/basic_xml_iarchive.hpp>
 #include <boost/serialization/tracking.hpp>
-//#include <boost/serialization/extended_type_info.hpp>
 
 namespace boost {
 namespace archive {
@@ -57,7 +57,7 @@ basic_xml_iarchive<Archive>::load_end(const char *name){
     if(0 == --depth)
         return;
         
-    if(0 != (this->get_flags() & no_xml_tag_checking)){
+    if(0 == (this->get_flags() & no_xml_tag_checking)){
         // double check that the tag matches what is expected - useful for debug
         if(0 != name[this->This()->gimpl->rv.object_name.size()]
         || ! std::equal(

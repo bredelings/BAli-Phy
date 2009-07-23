@@ -3,7 +3,7 @@
 
     http://www.boost.org/
 
-    Copyright (c) 2001-2005 Hartmut Kaiser. Distributed under the Boost
+    Copyright (c) 2001-2008 Hartmut Kaiser. Distributed under the Boost
     Software License, Version 1.0. (See accompanying file
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -11,30 +11,29 @@
 #if !defined(CPP_INTLIT_GRAMMAR_HPP_2E1E70B1_F15C_4132_8554_10A231B0D91C_INCLUDED)
 #define CPP_INTLIT_GRAMMAR_HPP_2E1E70B1_F15C_4132_8554_10A231B0D91C_INCLUDED
 
-#include <boost/spirit/core.hpp>
-#include <boost/spirit/attribute/closure.hpp>
-#if SPIRIT_VERSION >= 0x1700
-#include <boost/spirit/actor/assign_actor.hpp>
-#include <boost/spirit/actor/push_back_actor.hpp>
-#endif // SPIRIT_VERSION >= 0x1700
-
-#include <boost/spirit/phoenix/operators.hpp>
-#include <boost/spirit/phoenix/primitives.hpp>
-#include <boost/spirit/phoenix/statements.hpp>
-
 #include <boost/wave/wave_config.hpp>
+
+#include <boost/spirit/include/classic_core.hpp>
+#include <boost/spirit/include/classic_closure.hpp>
+#include <boost/spirit/include/classic_assign_actor.hpp>
+#include <boost/spirit/include/classic_push_back_actor.hpp>
+
+#include <boost/spirit/include/phoenix1_operators.hpp>
+#include <boost/spirit/include/phoenix1_primitives.hpp>
+#include <boost/spirit/include/phoenix1_statements.hpp>
+
 #include <boost/wave/cpp_exceptions.hpp>
 #include <boost/wave/grammars/cpp_literal_grammar_gen.hpp>
 
 #if !defined(spirit_append_actor)
-#if SPIRIT_VERSION >= 0x1700
-#define spirit_append_actor(actor) boost::spirit::push_back_a(actor)
-#define spirit_assign_actor(actor) boost::spirit::assign_a(actor)
-#else
-#define spirit_append_actor(actor) boost::spirit::append(actor)
-#define spirit_assign_actor(actor) boost::spirit::assign(actor)
-#endif // SPIRIT_VERSION >= 0x1700
+#define spirit_append_actor(actor) boost::spirit::classic::push_back_a(actor)
+#define spirit_assign_actor(actor) boost::spirit::classic::assign_a(actor)
 #endif // !defined(spirit_append_actor)
+
+// this must occur after all of the includes and before any code appears
+#ifdef BOOST_HAS_ABI_HEADERS
+#include BOOST_ABI_PREFIX
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -45,10 +44,11 @@ namespace boost {
 namespace wave { 
 namespace grammars {
 
+///////////////////////////////////////////////////////////////////////////////
 namespace closures {
 
     struct intlit_closure 
-    :   boost::spirit::closure<intlit_closure, unsigned long> 
+    :   boost::spirit::classic::closure<intlit_closure, uint_literal_type> 
     {
         member1 val;
     };
@@ -61,7 +61,7 @@ namespace closures {
     /**/
 
 struct intlit_grammar :
-    boost::spirit::grammar<intlit_grammar, closures::intlit_closure::context_t>
+    boost::spirit::classic::grammar<intlit_grammar, closures::intlit_closure::context_t>
 {
     intlit_grammar(bool &is_unsigned_) : is_unsigned(is_unsigned_)
     {
@@ -72,51 +72,52 @@ struct intlit_grammar :
     template <typename ScannerT>
     struct definition
     {
-        typedef boost::spirit::rule<ScannerT> rule_t;
+        typedef boost::spirit::classic::rule<ScannerT> rule_t;
 
         rule_t int_lit;
-        boost::spirit::subrule<0> sub_int_lit;
-        boost::spirit::subrule<1> oct_lit;
-        boost::spirit::subrule<2> hex_lit;
-        boost::spirit::subrule<3> dec_lit;
+        boost::spirit::classic::subrule<0> sub_int_lit;
+        boost::spirit::classic::subrule<1> oct_lit;
+        boost::spirit::classic::subrule<2> hex_lit;
+        boost::spirit::classic::subrule<3> dec_lit;
 
         definition(intlit_grammar const &self)
         {
-            using namespace boost::spirit;
-            using namespace phoenix;
+            using namespace boost::spirit::classic;
+            namespace phx = phoenix;
+ 
             
             int_lit = (
                     sub_int_lit = 
-                        (    ch_p('0')[self.val = 0] >> (hex_lit | oct_lit)
+                        (   ch_p('0')[self.val = 0] >> (hex_lit | oct_lit)
                         |   dec_lit
                         )
                         >> !as_lower_d[
-                                (ch_p('u')[var(self.is_unsigned) = true] || ch_p('l')) 
-                            |   (ch_p('l') || ch_p('u')[var(self.is_unsigned) = true])
+                                (ch_p('u')[phx::var(self.is_unsigned) = true] || ch_p('l')) 
+                            |   (ch_p('l') || ch_p('u')[phx::var(self.is_unsigned) = true])
                             ]
                     ,
 
                     hex_lit =
                             (ch_p('X') | ch_p('x'))
-                        >>  uint_parser<unsigned long, 16>()
+                        >>  uint_parser<uint_literal_type, 16>()
                             [
-                                self.val = arg1,
-                                var(self.is_unsigned) = true
+                                self.val = phx::arg1,
+                                phx::var(self.is_unsigned) = true
                             ]
                     ,
                         
                     oct_lit =
-                       !uint_parser<unsigned long, 8>()
+                       !uint_parser<uint_literal_type, 8>()
                         [
-                            self.val = arg1,
-                            var(self.is_unsigned) = true
+                            self.val = phx::arg1,
+                            phx::var(self.is_unsigned) = true
                         ]
                     ,
                         
                     dec_lit =
-                        int_parser<long, 10>()
+                        uint_parser<uint_literal_type, 10>()
                         [
-                            self.val = arg1
+                            self.val = phx::arg1
                         ]
                     )
                 ;
@@ -153,14 +154,14 @@ struct intlit_grammar :
 
 template <typename TokenT>
 BOOST_WAVE_INTLITGRAMMAR_GEN_INLINE 
-unsigned long 
+uint_literal_type 
 intlit_grammar_gen<TokenT>::evaluate(TokenT const &token, 
     bool &is_unsigned)
 {
-    using namespace boost::spirit;
+    using namespace boost::spirit::classic;
     
 intlit_grammar g(is_unsigned);
-unsigned long result = 0;
+uint_literal_type result = 0;
 typename TokenT::string_type const &token_val = token.get_value();
 parse_info<typename TokenT::string_type::const_iterator> hit =
     parse(token_val.begin(), token_val.end(), g[spirit_assign_actor(result)]);
@@ -178,5 +179,10 @@ parse_info<typename TokenT::string_type::const_iterator> hit =
 }   // namespace grammars
 }   // namespace wave
 }   // namespace boost
+
+// the suffix header occurs after all of the code
+#ifdef BOOST_HAS_ABI_HEADERS
+#include BOOST_ABI_SUFFIX
+#endif
 
 #endif // !defined(CPP_INTLIT_GRAMMAR_HPP_2E1E70B1_F15C_4132_8554_10A231B0D91C_INCLUDED)

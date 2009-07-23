@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: mersenne_twister.hpp,v 1.20 2005/07/21 22:04:31 jmaurer Exp $
+ * $Id: mersenne_twister.hpp 41369 2007-11-25 18:07:19Z bemandawes $
  *
  * Revision history
  *  2001-02-18  moved to individual header files
@@ -120,8 +120,8 @@ public:
   {
     // avoid "left shift count >= with of type" warning
     result_type res = 0;
-    for(int i = 0; i < w; ++i)
-      res |= (1u << i);
+    for(int j = 0; j < w; ++j)
+      res |= (1u << j);
     return res;
   }
 

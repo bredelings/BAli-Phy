@@ -59,6 +59,8 @@ namespace api
   
   struct const_attribute_policies;
   struct attribute_policies;
+  struct const_objattribute_policies;
+  struct objattribute_policies;
   struct const_item_policies;
   struct item_policies;
   struct const_slice_policies;
@@ -67,6 +69,8 @@ namespace api
 
   typedef proxy<const_attribute_policies> const_object_attribute;
   typedef proxy<attribute_policies> object_attribute;
+  typedef proxy<const_objattribute_policies> const_object_objattribute;
+  typedef proxy<objattribute_policies> object_objattribute;
   typedef proxy<const_item_policies> const_object_item;
   typedef proxy<item_policies> object_item;
   typedef proxy<const_slice_policies> const_object_slice;
@@ -86,7 +90,7 @@ namespace api
   class object_operators : public def_visitor<U>
   {
    protected:
-# if !defined(BOOST_MSVC) || BOOST_MSVC > 1200
+# if !defined(BOOST_MSVC) || BOOST_MSVC >= 1300
       typedef object const& object_cref;
 # else 
       typedef object object_cref;
@@ -108,6 +112,8 @@ namespace api
       //
       const_object_attribute attr(char const*) const;
       object_attribute attr(char const*);
+      const_object_objattribute attr(object const&) const;
+      object_objattribute attr(object const&);
 
       // item access
       //
@@ -300,7 +306,7 @@ namespace api
       template <class T>
       explicit object(
           T const& x
-# if BOOST_WORKAROUND(BOOST_MSVC, == 1200)
+# if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
           // use some SFINAE to un-confuse MSVC about its
           // copy-initialization ambiguity claim.
         , typename mpl::if_<is_proxy<T>,int&,int>::type* = 0
@@ -331,7 +337,7 @@ namespace api
     inline explicit derived(python::detail::new_non_null_reference p)   \
         : base(p) {}
 
-# if !defined(BOOST_MSVC) || BOOST_MSVC > 1200
+# if !defined(BOOST_MSVC) || BOOST_MSVC >= 1300
 #  define BOOST_PYTHON_FORWARD_OBJECT_CONSTRUCTORS BOOST_PYTHON_FORWARD_OBJECT_CONSTRUCTORS_
 # else
   // MSVC6 has a bug which causes an explicit template constructor to
@@ -470,6 +476,9 @@ namespace converter
       {
           return python::detail::new_non_null_reference(x);
       }
+#ifndef BOOST_PYTHON_NO_PY_SIGNATURES
+      static PyTypeObject const *get_pytype() {return 0;}
+#endif
   };
 }
 

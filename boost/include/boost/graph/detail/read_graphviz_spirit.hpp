@@ -1,7 +1,7 @@
 // Copyright 2004-5 Trustees of Indiana University
 
-// Use, modification and distribution is subject to the Boost Software
-// License, Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
 //
@@ -53,6 +53,7 @@
 #include <utility>
 #include <map>
 #include <boost/graph/graphviz.hpp>
+#include <boost/throw_exception.hpp>
 
 namespace phoenix {
 // Workaround:  std::map::operator[] uses a different return type than all
@@ -70,10 +71,6 @@ namespace boost {
 namespace detail {
 namespace graph {
 
-using namespace std;
-using namespace boost;
-using namespace boost::spirit;
-using namespace phoenix;
 
 /////////////////////////////////////////////////////////////////////////////
 // Application-specific type definitions
@@ -135,25 +132,25 @@ struct subgraph_closure : boost::spirit::closure<subgraph_closure,
 /////////////////////////////////////////////////////////////////////////////
 
 // Grammar for a dot file.
-struct dot_grammar : public grammar<dot_grammar> { 
+struct dot_grammar : public boost::spirit::grammar<dot_grammar> { 
   mutate_graph& graph_;
   explicit dot_grammar(mutate_graph& graph) : graph_(graph) { }
 
   template <class ScannerT>
   struct definition {
-    
+   
     definition(dot_grammar const& self) : self(self), subgraph_depth(0),
     keyword_p("0-9a-zA-Z_") {
-
+      using namespace boost::spirit;
+      using namespace phoenix;
       
       // RG - Future Work
       // - Handle multi-line strings using \ line continuation
       // - Make keywords case insensitive
-
       ID 
           = ( lexeme_d[((alpha_p | ch_p('_')) >> *(alnum_p | ch_p('_')))]
             | real_p
-            | confix_p('"', *c_escape_ch_p, '"')
+            | lexeme_d[confix_p('"', *c_escape_ch_p, '"')]
             | comment_nest_p('<', '>')
             )[ID.name = construct_<std::string>(arg1,arg2)]
           ; 
@@ -165,7 +162,7 @@ struct dot_grammar : public grammar<dot_grammar> {
                     >> !( ch_p('=')
                           >> ID[a_list.value = arg1])
                           [phoenix::bind(&definition::call_prop_actor)
-                          (var(*this),a_list.key,a_list.value)],ch_p(','));
+                          (var(*this),a_list.key,a_list.value)],!ch_p(','));
       
       attr_list = +(ch_p('[') >> !a_list >> ch_p(']'));
 
@@ -185,6 +182,14 @@ struct dot_grammar : public grammar<dot_grammar> {
       node_id
           = ( ID[node_id.name = arg1] >> (!port) )
              [phoenix::bind(&definition::memoize_node)(var(*this))];
+
+      graph_stmt
+          = (ID[graph_stmt.key = arg1] >>
+             ch_p('=') >>
+             ID[graph_stmt.value = arg1])
+        [phoenix::bind(&definition::call_graph_prop)
+         (var(*this),graph_stmt.key,graph_stmt.value)]
+        ; // Graph property.
 
       attr_stmt
           = (as_lower_d[keyword_p("graph")]
@@ -240,7 +245,7 @@ struct dot_grammar : public grammar<dot_grammar> {
 
 
       stmt
-          = (ID >> ch_p('=') >> ID) // Graph property -- ignore.
+          = graph_stmt 
           | attr_stmt
           | data_stmt
           ;
@@ -277,7 +282,7 @@ struct dot_grammar : public grammar<dot_grammar> {
 
     } // definition()
 
-    typedef rule<ScannerT> rule_t;
+    typedef boost::spirit::rule<ScannerT> rule_t;
 
     rule_t const& start() const { return the_grammar; }
 
@@ -288,12 +293,12 @@ struct dot_grammar : public grammar<dot_grammar> {
 
     void check_undirected() {
       if(self.graph_.is_directed())
-        throw boost::undirected_graph_error();
+          boost::throw_exception(boost::undirected_graph_error());
     }
 
     void check_directed() {
       if(!self.graph_.is_directed())
-        throw boost::directed_graph_error();
+          boost::throw_exception(boost::directed_graph_error());
     }
     
     void memoize_node() {
@@ -335,7 +340,7 @@ struct dot_grammar : public grammar<dot_grammar> {
       edge_stack_t& edge_stack = data_stmt.edge_stack();
       for(nodes_t::iterator i = sources.begin(); i != sources.end(); ++i) {
         for(nodes_t::iterator j = dests.begin(); j != dests.end(); ++j) {
-          // Create the edge and and push onto the edge stack.
+          // Create the edge and push onto the edge stack.
 #ifdef BOOST_GRAPH_DEBUG
           std::cout << "Edge " << *i << " to " << *j << std::endl;
 #endif // BOOST_GRAPH_DEBUG
@@ -380,8 +385,13 @@ struct dot_grammar : public grammar<dot_grammar> {
       }
     }
 
-    // default_graph_prop - Just ignore graph properties.
-    void default_graph_prop(id_t const&, id_t const&) { }
+    // default_graph_prop - Store as a graph property.
+    void default_graph_prop(id_t const& key, id_t const& value) {
+#ifdef BOOST_GRAPH_DEBUG
+      std::cout << key << " = " << value << std::endl;
+#endif // BOOST_GRAPH_DEBUG
+        self.graph_.set_graph_property(key, value);
+    }
 
     // default_node_prop - declare default properties for any future new nodes
     void default_node_prop(id_t const& key, id_t const& value) {
@@ -436,6 +446,15 @@ struct dot_grammar : public grammar<dot_grammar> {
         actor(lhs,rhs);
     }
 
+    void call_graph_prop(std::string const& lhs, std::string const& rhs) {
+      // If first and last characters of the rhs are double-quotes,
+      // remove them.
+      if (!rhs.empty() && rhs[0] == '"' && rhs[rhs.size() - 1] == '"')
+        this->default_graph_prop(lhs, rhs.substr(1, rhs.size()-2));
+      else
+        this->default_graph_prop(lhs,rhs);
+    }
+
     void set_node_property(node_t const& node, id_t const& key,
                            id_t const& value) {
 
@@ -458,7 +477,11 @@ struct dot_grammar : public grammar<dot_grammar> {
       self.graph_.set_edge_property(key, edge, value);
 #ifdef BOOST_GRAPH_DEBUG
       // Tell the world
-      std::cout << "(" << edge.first << "," << edge.second << "): "
+#if 0 // RG - edge representation changed, 
+            std::cout << "(" << edge.first << "," << edge.second << "): "
+#else
+            std::cout << "an edge: " 
+#endif // 0
                 << key << " = " << value << std::endl;
 #endif // BOOST_GRAPH_DEBUG
     }
@@ -469,20 +492,21 @@ struct dot_grammar : public grammar<dot_grammar> {
     int subgraph_depth; 
 
     // Keywords;
-    const distinct_parser<> keyword_p;
+    const boost::spirit::distinct_parser<> keyword_p;
     //
     // rules that make up the grammar
     //
-    rule<ScannerT,id_closure::context_t> ID;
-    rule<ScannerT,property_closure::context_t> a_list;
-    rule<ScannerT,attr_list_closure::context_t> attr_list;
+    boost::spirit::rule<ScannerT,id_closure::context_t> ID;
+    boost::spirit::rule<ScannerT,property_closure::context_t> a_list;
+    boost::spirit::rule<ScannerT,attr_list_closure::context_t> attr_list;
     rule_t port_location;
     rule_t port_angle;
     rule_t port;
-    rule<ScannerT,node_id_closure::context_t> node_id;
+    boost::spirit::rule<ScannerT,node_id_closure::context_t> node_id;
+    boost::spirit::rule<ScannerT,property_closure::context_t> graph_stmt;
     rule_t attr_stmt;
-    rule<ScannerT,data_stmt_closure::context_t> data_stmt;
-    rule<ScannerT,subgraph_closure::context_t> subgraph;
+    boost::spirit::rule<ScannerT,data_stmt_closure::context_t> data_stmt;
+    boost::spirit::rule<ScannerT,subgraph_closure::context_t> subgraph;
     rule_t edgeop;
     rule_t edgeRHS;
     rule_t stmt;
@@ -520,7 +544,7 @@ struct dot_grammar : public grammar<dot_grammar> {
 //
 // dot_skipper - GraphViz whitespace and comment skipper
 //
-struct dot_skipper : public grammar<dot_skipper>
+struct dot_skipper : public boost::spirit::grammar<dot_skipper>
 {
     dot_skipper() {}
 
@@ -528,10 +552,12 @@ struct dot_skipper : public grammar<dot_skipper>
     struct definition
     {
         definition(dot_skipper const& /*self*/)  {
+          using namespace boost::spirit;
+          using namespace phoenix;
           // comment forms
-          skip = space_p
+          skip = eol_p >> comment_p("#")  
+               | space_p
                | comment_p("//")                 
-               | comment_p("#")  
 #if BOOST_WORKAROUND(BOOST_MSVC, <= 1400)
                | confix_p(str_p("/*") ,*anychar_p, str_p("*/"))
 #else
@@ -544,8 +570,8 @@ struct dot_skipper : public grammar<dot_skipper>
 #endif
         }
 
-      rule<ScannerT>  skip;
-      rule<ScannerT> const&
+      boost::spirit::rule<ScannerT>  skip;
+      boost::spirit::rule<ScannerT> const&
       start() const { return skip; }
     }; // definition
 }; // dot_skipper
@@ -566,10 +592,11 @@ bool read_graphviz(MultiPassIterator begin, MultiPassIterator end,
   typedef scanner_policies<iter_policy_t> scanner_policies_t;
   typedef scanner<iterator_t, scanner_policies_t> scanner_t;
 
-  detail::graph::mutate_graph_impl<MutableGraph> m_graph(graph, dp, node_id);
+  ::boost::detail::graph::mutate_graph_impl<MutableGraph> 
+      m_graph(graph, dp, node_id);
 
-  boost::detail::graph::dot_grammar p(m_graph);
-  boost::detail::graph::dot_skipper skip_p;
+  ::boost::detail::graph::dot_grammar p(m_graph);
+  ::boost::detail::graph::dot_skipper skip_p;
 
   iter_policy_t iter_policy(skip_p);
   scanner_policies_t policies(iter_policy);

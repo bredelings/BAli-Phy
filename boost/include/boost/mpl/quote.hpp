@@ -14,9 +14,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: /cvsroot/boost/boost/boost/mpl/quote.hpp,v $
-// $Date: 2004/09/02 15:40:42 $
-// $Revision: 1.5 $
+// $Source$
+// $Date: 2006-05-02 23:27:58 -0400 (Tue, 02 May 2006) $
+// $Revision: 33913 $
 
 #if !defined(BOOST_MPL_PREPROCESSING_MODE)
 #   include <boost/mpl/void.hpp>
@@ -60,9 +60,19 @@ namespace boost { namespace mpl {
 
 template< typename T, bool has_type_ >
 struct quote_impl
+// GCC has a problem with metafunction forwarding when T is a
+// specialization of a template called 'type'.
+# if BOOST_WORKAROUND(__GNUC__, BOOST_TESTED_AT(4)) \
+    && BOOST_WORKAROUND(__GNUC_MINOR__, BOOST_TESTED_AT(0)) \
+    && BOOST_WORKAROUND(__GNUC_PATCHLEVEL__, BOOST_TESTED_AT(2))
+{
+    typedef typename T::type type;
+};
+# else 
     : T
 {
 };
+# endif 
 
 template< typename T >
 struct quote_impl<T,false>

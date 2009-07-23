@@ -1,13 +1,13 @@
-//  (C) Copyright Gennadiy Rozental 2005.
+//  (C) Copyright Gennadiy Rozental 2005-2007.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at 
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile: progress_monitor.hpp,v $
+//  File        : $RCSfile$
 //
-//  Version     : $Revision: 1.2 $
+//  Version     : $Revision: 41369 $
 //
 //  Description : defines simple text based progress monitor
 // ***************************************************************************
@@ -34,7 +34,7 @@ namespace unit_test {
 // **************                progress_monitor              ************** //
 // ************************************************************************** //
 
-class progress_monitor_t : public test_observer, public singleton<progress_monitor_t> {
+class BOOST_TEST_DECL progress_monitor_t : public test_observer, public singleton<progress_monitor_t> {
 public:
     // test observer interface
     void    test_start( counter_t test_cases_amount );
@@ -46,7 +46,7 @@ public:
     void    test_unit_skipped( test_unit const& );
     void    test_unit_aborted( test_unit const& ) {}
 
-    void    assertion_result( bool passed ) {}
+    void    assertion_result( bool ) {}
     void    exception_caught( execution_exception const& ) {}
 
     // configuration
@@ -65,18 +65,6 @@ BOOST_TEST_SINGLETON_INST( progress_monitor )
 //____________________________________________________________________________//
 
 #include <boost/test/detail/enable_warnings.hpp>
-
-// ***************************************************************************
-//  Revision History :
-//  
-//  $Log: progress_monitor.hpp,v $
-//  Revision 1.2  2005/06/24 04:09:34  rogeeff
-//  added missing iosfwd
-//
-//  Revision 1.1  2005/02/20 08:27:06  rogeeff
-//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
-//
-// ***************************************************************************
 
 #endif // BOOST_TEST_PROGRESS_MONITOR_HPP_020105GER
 

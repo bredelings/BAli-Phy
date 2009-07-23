@@ -15,13 +15,14 @@
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 #include <boost/preprocessor/cat.hpp>
+#include <boost/detail/workaround.hpp>
 
 #define BOOST_PARAMETER_FUN_TEMPLATE_HEAD1(n) \
     template<BOOST_PP_ENUM_PARAMS(n, class T)>
 
 #define BOOST_PARAMETER_FUN_TEMPLATE_HEAD0(n)
 
-#ifndef BOOST_NO_SFINAE
+#if ! defined(BOOST_NO_SFINAE) && ! BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x592)) 
 
 # define BOOST_PARAMETER_MATCH_TYPE(n, param)           \
             BOOST_PP_EXPR_IF(n, typename) param::match  \
@@ -78,7 +79,7 @@
 #define BOOST_PARAMETER_FUN(ret, name, lo, hi, parameters)                          \
                                                                                     \
     template<class Params>                                                          \
-    ret BOOST_PP_CAT(name, _with_named_params)(Params const&);                      \
+    ret BOOST_PP_CAT(name, _with_named_params)(Params const& p);                    \
                                                                                     \
     BOOST_PP_REPEAT_FROM_TO(                                                        \
         lo, BOOST_PP_INC(hi), BOOST_PARAMETER_FUN_DECL, (ret, name, parameters))    \

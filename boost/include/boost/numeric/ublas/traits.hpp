@@ -2,13 +2,9 @@
 //  Copyright (c) 2000-2002
 //  Joerg Walter, Mathias Koch
 //
-//  Permission to use, copy, modify, distribute and sell this software
-//  and its documentation for any purpose is hereby granted without fee,
-//  provided that the above copyright notice appear in all copies and
-//  that both that copyright notice and this permission notice appear
-//  in supporting documentation.  The authors make no representations
-//  about the suitability of this software for any purpose.
-//  It is provided "as is" without express or implied warranty.
+//  Distributed under the Boost Software License, Version 1.0. (See
+//  accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt)
 //
 //  The authors gratefully acknowledge the support of
 //  GeNeSys mbH & Co. KG in producing this work.
@@ -25,6 +21,8 @@
 #include <boost/numeric/ublas/detail/iterator.hpp>
 #include <boost/numeric/ublas/detail/returntype_deduction.hpp>
 
+#include <boost/type_traits.hpp>
+#include <complex>
 
 namespace boost { namespace numeric { namespace ublas {
 
@@ -49,7 +47,7 @@ namespace boost { namespace numeric { namespace ublas {
     };
 
 
-        // Type traits - generic numeric properties and functions
+    // Type traits - generic numeric properties and functions
     template<class T>
     struct type_traits;
         
@@ -85,29 +83,34 @@ namespace boost { namespace numeric { namespace ublas {
 
         static
         BOOST_UBLAS_INLINE
-        real_type abs (const_reference t) {
-            return std::abs (t);
+        real_type type_abs (const_reference t) {
+            // we'll find either std::abs or else another version via ADL:
+            using namespace std;
+            return abs (t);
         }
         static
         BOOST_UBLAS_INLINE
-        value_type sqrt (const_reference t) {
-            return std::sqrt (t);
+        value_type type_sqrt (const_reference t) {
+            using namespace std;
+            // force a type conversion back to value_type for intgral types
+            // we'll find either std::sqrt or else another version via ADL:
+            return value_type (sqrt (t));
         }
 
         static
         BOOST_UBLAS_INLINE
         real_type norm_1 (const_reference t) {
-            return self_type::abs (t);
+            return self_type::type_abs (t);
         }
         static
         BOOST_UBLAS_INLINE
         real_type norm_2 (const_reference t) {
-            return self_type::abs (t);
+            return self_type::type_abs (t);
         }
         static
         BOOST_UBLAS_INLINE
         real_type norm_inf (const_reference t) {
-            return self_type::abs (t);
+            return self_type::type_abs (t);
         }
 
         static
@@ -119,7 +122,7 @@ namespace boost { namespace numeric { namespace ublas {
                              BOOST_UBLAS_TYPE_CHECK_MIN);
         }
     };
-    
+
     // Define default type traits, assume T is a scalar type
     template<class T>
     struct type_traits : scalar_traits <T> {
@@ -195,31 +198,31 @@ namespace boost { namespace numeric { namespace ublas {
 
         static
         BOOST_UBLAS_INLINE
-        real_type abs (const_reference t) {
-                return std::abs (t);
+        real_type type_abs (const_reference t) {
+                return abs (t);
         }
         static
         BOOST_UBLAS_INLINE
-        value_type sqrt (const_reference t) {
-                return std::sqrt (t);
+        value_type type_sqrt (const_reference t) {
+                return sqrt (t);
         }
 
         static
         BOOST_UBLAS_INLINE
         real_type norm_1 (const_reference t) {
-            return type_traits<real_type>::abs (self_type::real (t)) +
-                   type_traits<real_type>::abs (self_type::imag (t));
+            return type_traits<real_type>::type_abs (self_type::real (t)) +
+                   type_traits<real_type>::type_abs (self_type::imag (t));
         }
         static
         BOOST_UBLAS_INLINE
         real_type norm_2 (const_reference t) {
-            return self_type::abs (t);
+            return self_type::type_abs (t);
         }
         static
         BOOST_UBLAS_INLINE
         real_type norm_inf (const_reference t) {
-            return (std::max) (type_traits<real_type>::abs (self_type::real (t)),
-                             type_traits<real_type>::abs (self_type::imag (t)));
+            return (std::max) (type_traits<real_type>::type_abs (self_type::real (t)),
+                             type_traits<real_type>::type_abs (self_type::imag (t)));
         }
 
         static
@@ -263,59 +266,9 @@ namespace boost { namespace numeric { namespace ublas {
     };
 
 #ifdef BOOST_UBLAS_USE_INTERVAL
-    // Define properties for a generic scalar interval type
-    template<class T>
-    struct scalar_interval_type_traits : scalar_type_traits<T> {
-        typedef scalar_interval_type_traits<T> self_type;
-        typedef boost::numeric::interval<float> value_type;
-        typedef const value_type &const_reference;
-        typedef value_type &reference;
-        typedef value_type real_type;
-        typedef real_type precision_type;       // we do not know what type has more precision then the real_type
-
-        static const unsigned plus_complexity = 1;
-        static const unsigned multiplies_complexity = 1;
-
-        static
-        BOOST_UBLAS_INLINE
-        real_type abs (const_reference t) {
-            return boost::numeric::abs (t);
-        }
-        static
-        BOOST_UBLAS_INLINE
-        value_type sqrt (const_reference t) {
-            return boost::numeric::sqrt (t);
-        }
-
-        static
-        BOOST_UBLAS_INLINE
-        real_type norm_1 (const_reference t) {
-            return self_type::abs (t);
-        }
-        static
-        BOOST_UBLAS_INLINE
-        real_type norm_2 (const_reference t) {
-            return self_type::abs (t);
-        }
-        static
-        BOOST_UBLAS_INLINE
-        real_type norm_inf (const_reference t) {
-            return self_type::abs (t);
-        }
-
-        static
-        BOOST_UBLAS_INLINE
-        bool equals (const_reference t1, const_reference t2) {
-            return self_type::norm_inf (t1 - t2) < BOOST_UBLAS_TYPE_CHECK_EPSILON *
-                   (std::max) ((std::max) (self_type::norm_inf (t1),
-                                       self_type::norm_inf (t2)),
-                             BOOST_UBLAS_TYPE_CHECK_MIN);
-        }
-    };
-
     // Define scalar interval type traits
     template<>
-    struct type_traits<boost::numeric::interval<float> > : scalar_interval_type_traits<boost::numeric::interval<float> > {
+    struct type_traits<boost::numeric::interval<float> > : scalar_traits<boost::numeric::interval<float> > {
         typedef type_traits<boost::numeric::interval<float> > self_type;
         typedef boost::numeric::interval<float> value_type;
         typedef const value_type &const_reference;
@@ -325,7 +278,7 @@ namespace boost { namespace numeric { namespace ublas {
 
     };
     template<>
-    struct type_traits<boost::numeric::interval<double> > : scalar_interval_type_traits<boost::numeric::interval<double> > {
+    struct type_traits<boost::numeric::interval<double> > : scalar_traits<boost::numeric::interval<double> > {
         typedef type_traits<boost::numeric::interval<double> > self_type;
         typedef boost::numeric::interval<double> value_type;
         typedef const value_type &const_reference;
@@ -334,7 +287,7 @@ namespace boost { namespace numeric { namespace ublas {
         typedef boost::numeric::interval<long double> precision_type;
     };
     template<>
-    struct type_traits<boost::numeric::interval<long double> > : scalar_interval_type_traits<boost::numeric::interval<long double> > {
+    struct type_traits<boost::numeric::interval<long double> > : scalar_traits<boost::numeric::interval<long double> > {
         typedef type_traits<boost::numeric::interval<long double> > self_type;
         typedef boost::numeric::interval<long double> value_type;
         typedef const value_type &const_reference;
@@ -342,7 +295,6 @@ namespace boost { namespace numeric { namespace ublas {
         typedef value_type real_type;
         typedef value_type precision_type;
     };
-
 #endif
 
 
@@ -529,6 +481,24 @@ namespace boost { namespace numeric { namespace ublas {
         }
 #endif
         it = it_end;
+    }
+
+    namespace detail {
+
+        // specialisation which define whether a type has a trivial constructor
+        // or not. This is used by array types.
+        template<typename T>
+        struct has_trivial_constructor : public boost::has_trivial_constructor<T> {};
+
+        template<typename T>
+        struct has_trivial_destructor : public boost::has_trivial_destructor<T> {};
+
+        template<typename FLT>
+        struct has_trivial_constructor<std::complex<FLT> > : public boost::true_type {};
+        
+        template<typename FLT>
+        struct has_trivial_destructor<std::complex<FLT> > : public boost::true_type {};
+
     }
 
 }}}

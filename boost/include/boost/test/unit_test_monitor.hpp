@@ -1,13 +1,13 @@
-//  (C) Copyright Gennadiy Rozental 2001-2005.
+//  (C) Copyright Gennadiy Rozental 2001-2007.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at 
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile: unit_test_monitor.hpp,v $
+//  File        : $RCSfile$
 //
-//  Version     : $Revision: 1.1 $
+//  Version     : $Revision: 41369 $
 //
 //  Description : defines specific version of execution monitor used to managed 
 //  run unit of test cases. Translates execution exception into error level
@@ -34,7 +34,7 @@ namespace unit_test {
 // **************               unit_test_monitor              ************** //
 // ************************************************************************** //
 
-class unit_test_monitor_t : public singleton<unit_test_monitor_t>, public execution_monitor {
+class BOOST_TEST_DECL unit_test_monitor_t : public singleton<unit_test_monitor_t>, public execution_monitor {
 public:
     enum error_level { 
         test_fail               =  1,
@@ -65,14 +65,5 @@ BOOST_TEST_SINGLETON_INST( unit_test_monitor )
 //____________________________________________________________________________//
 
 #include <boost/test/detail/enable_warnings.hpp>
-
-// ***************************************************************************
-//  Revision History :
-//  
-//  $Log: unit_test_monitor.hpp,v $
-//  Revision 1.1  2005/02/20 08:27:06  rogeeff
-//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
-//
-// ***************************************************************************
 
 #endif // BOOST_TEST_UNIT_TEST_MONITOR_HPP_020905GER

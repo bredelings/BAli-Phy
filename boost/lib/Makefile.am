@@ -1,3 +1,7 @@
-SUBDIRS = filesystem program_options
+if WITH_MPI
+  MAYBE_MPI = serialization/ mpi/
+endif
 
-EXTRA_DIST = detail
+SUBDIRS = filesystem program_options $(MAYBE_MPI)
+
+EXTRA_DIST = detail system

@@ -1,4 +1,4 @@
-/* Copyright 2003-2005 Joaquín M López Muñoz.
+/* Copyright 2003-2008 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -14,10 +14,11 @@
 #endif
 
 #include <boost/config.hpp> /* keep it first to prevent nasty warns in MSVC */
-#include <boost/aligned_storage.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/serialization/serialization.hpp>
+#include <boost/type_traits/aligned_storage.hpp>
+#include <boost/type_traits/alignment_of.hpp> 
 
 namespace boost{
 
@@ -63,10 +64,10 @@ struct archive_constructed:private noncopyable
     (&get())->~T();
   }
 
-  T& get(){return *static_cast<T*>(space.address());}
+  T& get(){return *static_cast<T*>(static_cast<void*>(&space));}
 
 private:
-  aligned_storage<sizeof(T)> space;
+  typename aligned_storage<sizeof(T),alignment_of<T>::value>::type space;
 };
 
 } /* namespace multi_index::detail */

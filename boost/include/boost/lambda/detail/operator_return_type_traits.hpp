@@ -1,6 +1,6 @@
 //  operator_return_type_traits.hpp -- Boost Lambda Library ------------------
 
-// Copyright (C) 1999, 2000 Jaakko Järvi (jaakko.jarvi@cs.utu.fi)
+// Copyright (C) 1999, 2000 Jaakko Jarvi (jaakko.jarvi@cs.utu.fi)
 //
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at
@@ -859,7 +859,7 @@ struct return_type_2<other_action<subscript_action>, A, B> {
 
 
 // Forward declarations are incompatible with the libstdc++ debug mode.
-#if BOOST_WORKAROUND(__GNUC__, >= 3) && _GLIBCXX_DEBUG
+#if BOOST_WORKAROUND(__GNUC__, >= 3) && defined(_GLIBCXX_DEBUG)
 #include <string>
 #include <vector>
 #include <map>

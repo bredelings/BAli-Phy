@@ -20,8 +20,20 @@
 #ifndef BOOST_REGEX_V4_BASIC_REGEX_CREATOR_HPP
 #define BOOST_REGEX_V4_BASIC_REGEX_CREATOR_HPP
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
+#endif
+
+#ifdef BOOST_MSVC
+#  pragma warning(push)
+#  pragma warning(disable: 4800)
 #endif
 
 namespace boost{
@@ -194,10 +206,10 @@ public:
    {
       return static_cast<re_syntax_base*>(static_cast<void*>(static_cast<char*>(base) + off));
    }
-   void init(unsigned flags)
+   void init(unsigned l_flags)
    {
-      m_pdata->m_flags = flags;
-      m_icase = flags & regex_constants::icase;
+      m_pdata->m_flags = l_flags;
+      m_icase = l_flags & regex_constants::icase;
    }
    regbase::flag_type flags()
    {
@@ -265,6 +277,7 @@ basic_regex_creator<charT, traits>::basic_regex_creator(regex_data<charT, traits
    m_lower_mask = m_traits.lookup_classname(l, l + 5);
    m_upper_mask = m_traits.lookup_classname(u, u + 5);
    m_alpha_mask = m_traits.lookup_classname(a, a + 5);
+   m_pdata->m_word_mask = m_word_mask;
    BOOST_ASSERT(m_word_mask != 0); 
    BOOST_ASSERT(m_mask_space != 0); 
    BOOST_ASSERT(m_lower_mask != 0); 
@@ -571,9 +584,10 @@ re_syntax_base* basic_regex_creator<charT, traits>::append_set(
             // Oops error:
             return 0;
          }
+         BOOST_ASSERT(c3[1] == charT(0));
          for(unsigned i = 0; i < (1u << CHAR_BIT); ++i)
          {
-            charT c3[2] = { static_cast<charT>(i), charT(0), };
+            c3[0] = static_cast<charT>(i);
             string_type s3 = this->m_traits.transform(c3, c3 +1);
             if((s1 <= s3) && (s3 <= s2))
                result->_map[i] = true;
@@ -795,6 +809,7 @@ void basic_regex_creator<charT, traits>::create_startmaps(re_syntax_base* state)
       v.pop_back();
 
       // Build maps:
+      m_bad_repeats = 0;
       create_startmap(state->next.p, static_cast<re_alt*>(state)->_map, &static_cast<re_alt*>(state)->can_be_null, mask_take);
       m_bad_repeats = 0;
       create_startmap(static_cast<re_alt*>(state)->alt.p, static_cast<re_alt*>(state)->_map, &static_cast<re_alt*>(state)->can_be_null, mask_skip);
@@ -1062,6 +1077,8 @@ void basic_regex_creator<charT, traits>::create_startmap(re_syntax_base* state, 
                if(is_bad_repeat(state))
                {
                   set_all_masks(l_map, mask);
+                  if(pnull)
+                     *pnull |= mask;
                   return;
                }
                set_bad_repeat(state);
@@ -1180,7 +1197,8 @@ bool basic_regex_creator<charT, traits>::is_bad_repeat(re_syntax_base* pt)
          unsigned id = static_cast<re_repeat*>(pt)->id;
          if(id > sizeof(m_bad_repeats) * CHAR_BIT)
             return true;  // run out of bits, assume we can't traverse this one.
-         return m_bad_repeats & static_cast<boost::uintmax_t>(1uL << id);
+         static const boost::uintmax_t one = 1uL;
+         return m_bad_repeats & (one << id);
       }
    default:
       return false;
@@ -1199,8 +1217,9 @@ void basic_regex_creator<charT, traits>::set_bad_repeat(re_syntax_base* pt)
    case syntax_element_long_set_rep:
       {
          unsigned id = static_cast<re_repeat*>(pt)->id;
+         static const boost::uintmax_t one = 1uL;
          if(id <= sizeof(m_bad_repeats) * CHAR_BIT)
-            m_bad_repeats |= static_cast<boost::uintmax_t>(1uL << id);
+            m_bad_repeats |= (one << id);
       }
    default:
       break;
@@ -1251,6 +1270,19 @@ void basic_regex_creator<charT, traits>::probe_leading_repeat(re_syntax_base* st
             state = state->next.p;
             continue;
          }
+         if((static_cast<re_brace*>(state)->index == -1)
+            || (static_cast<re_brace*>(state)->index == -2))
+         {
+            // skip past the zero width assertion:
+            state = static_cast<const re_jump*>(state->next.p)->alt.p->next.p;
+            continue;
+         }
+         if(static_cast<re_brace*>(state)->index == -3)
+         {
+            // Have to skip the leading jump state:
+            state = state->next.p->next.p;
+            continue;
+         }
          return;
       case syntax_element_endmark:
       case syntax_element_start_line:
@@ -1282,8 +1314,19 @@ void basic_regex_creator<charT, traits>::probe_leading_repeat(re_syntax_base* st
 
 } // namespace boost
 
+#ifdef BOOST_MSVC
+#  pragma warning(pop)
+#endif
+
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
 #endif
 
 #endif

@@ -68,8 +68,9 @@ struct with_custodian_and_ward : BasePolicy_
     
         bool result = BasePolicy_::precall(args_);
 
-        if (!result)
+        if (!result) {
             Py_DECREF(life_support);
+        }
     
         return result;
     }
@@ -84,7 +85,14 @@ struct with_custodian_and_ward_postcall : BasePolicy_
     static PyObject* postcall(ArgumentPackage const& args_, PyObject* result)
     {
         std::size_t arity_ = detail::arity(args_);
+#if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
         if ( custodian > arity_ || ward > arity_ )
+#else
+        // check if either custodian or ward exceeds the arity
+        // (this weird formulation avoids "always false" warnings
+        // for arity_ = 0)
+        if ( (std::max)(custodian, ward) > arity_ )
+#endif
         {
             PyErr_SetString(
                 PyExc_IndexError

@@ -39,11 +39,13 @@ namespace std{
 namespace boost {
 namespace archive {
 
+#if 0
 BOOST_WARCHIVE_DECL(std::wostream &)
 operator<<(std::wostream &os, const char *t);
 
 BOOST_WARCHIVE_DECL(std::wostream &)
 operator<<(std::wostream &os, const char t);
+#endif
 
 template<class Archive>
 class xml_woarchive_impl : 
@@ -58,9 +60,9 @@ public:
     friend class save_access;
 protected:
 #endif
-    void end_preamble(){
-        basic_xml_oarchive<Archive>::end_preamble();
-    }
+    //void end_preamble(){
+    //    basic_xml_oarchive<Archive>::end_preamble();
+    //}
     template<class T>
     void 
     save(const T & t){
@@ -113,12 +115,13 @@ public:
     ~xml_woarchive(){}
 };
 
+typedef xml_woarchive naked_xml_woarchive;
+
 } // namespace archive
 } // namespace boost
 
-// required by smart_cast for compilers not implementing 
-// partial template specialization
-BOOST_BROKEN_COMPILER_TYPE_TRAITS_SPECIALIZATION(boost::archive::xml_woarchive)
+// required by export
+BOOST_SERIALIZATION_REGISTER_ARCHIVE(boost::archive::xml_woarchive)
 
 #include <boost/archive/detail/abi_suffix.hpp> // pops abi_suffix.hpp pragmas
 

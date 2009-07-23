@@ -3,7 +3,7 @@
 
     http://www.boost.org/
 
-    Copyright (c) 2001-2005 Hartmut Kaiser. Distributed under the Boost
+    Copyright (c) 2001-2008 Hartmut Kaiser. Distributed under the Boost
     Software License, Version 1.0. (See accompanying file
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -11,23 +11,37 @@
 #if !defined(CPP_CHLIT_GRAMMAR_HPP_9527D349_6592_449A_A409_42A001E6C64C_INCLUDED)
 #define CPP_CHLIT_GRAMMAR_HPP_9527D349_6592_449A_A409_42A001E6C64C_INCLUDED
 
-#include <limits>     // sid::numeric_limits
+#include <limits>     // std::numeric_limits
+#include <climits>    // CHAR_BIT
+
+#include <boost/wave/wave_config.hpp>   
 
 #include <boost/static_assert.hpp>
 #include <boost/cstdint.hpp>
 
-#include <boost/spirit/core.hpp>
-#include <boost/spirit/attribute/closure.hpp>
-#include <boost/spirit/dynamic/if.hpp>
+#include <boost/spirit/include/classic_core.hpp>
+#include <boost/spirit/include/classic_closure.hpp>
+#include <boost/spirit/include/classic_if.hpp>
+#include <boost/spirit/include/classic_assign_actor.hpp>
+#include <boost/spirit/include/classic_push_back_actor.hpp>
 
-#include <boost/spirit/phoenix/operators.hpp>
-#include <boost/spirit/phoenix/primitives.hpp>
-#include <boost/spirit/phoenix/statements.hpp>
-#include <boost/spirit/phoenix/functions.hpp>
+#include <boost/spirit/include/phoenix1_operators.hpp>
+#include <boost/spirit/include/phoenix1_primitives.hpp>
+#include <boost/spirit/include/phoenix1_statements.hpp>
+#include <boost/spirit/include/phoenix1_functions.hpp>
 
-#include <boost/wave/wave_config.hpp>   
 #include <boost/wave/cpp_exceptions.hpp>   
 #include <boost/wave/grammars/cpp_literal_grammar_gen.hpp>
+
+#if !defined(spirit_append_actor)
+#define spirit_append_actor(actor) boost::spirit::classic::push_back_a(actor)
+#define spirit_assign_actor(actor) boost::spirit::classic::assign_a(actor)
+#endif // !defined(spirit_append_actor)
+
+// this must occur after all of the includes and before any code appears
+#ifdef BOOST_HAS_ABI_HEADERS
+#include BOOST_ABI_PREFIX
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -41,7 +55,7 @@ namespace grammars {
 namespace closures {
 
     struct chlit_closure 
-    :   boost::spirit::closure<chlit_closure, boost::uint32_t, bool> 
+    :   boost::spirit::classic::closure<chlit_closure, boost::uint32_t, bool> 
     {
         member1 value;
         member2 long_lit;
@@ -57,9 +71,9 @@ namespace impl {
 ///////////////////////////////////////////////////////////////////////////////
     struct compose_character_literal {
 
-        template <typename ResultT, typename A1, typename A2, typename A3>
-        struct result { 
-        
+        template <typename A1, typename A2, typename A3, typename A4>
+        struct result 
+        { 
             typedef void type; 
         };
 
@@ -85,8 +99,8 @@ namespace impl {
                 else {
                 // calculate the new value (avoiding a warning regarding 
                 // shifting count >= size of the type)
-                    value <<= 8 * (sizeof(wchar_t)-1);
-                    value <<= 8;  
+                    value <<= CHAR_BIT * (sizeof(wchar_t)-1);
+                    value <<= CHAR_BIT;  
                     value |= character & masks[sizeof(wchar_t)-1];
                 }
             }
@@ -97,7 +111,7 @@ namespace impl {
                 }
                 else {
                 // calculate the new value
-                    value <<= 8 * sizeof(char);
+                    value <<= CHAR_BIT * sizeof(char);
                     value |= character & masks[sizeof(char)-1];
                 }
             }
@@ -114,7 +128,7 @@ namespace impl {
     /**/
 
 struct chlit_grammar :
-    public boost::spirit::grammar<chlit_grammar, 
+    public boost::spirit::classic::grammar<chlit_grammar, 
         closures::chlit_closure::context_t>
 {
     chlit_grammar()
@@ -124,19 +138,23 @@ struct chlit_grammar :
             TRACE_CHLIT_GRAMMAR);
     }
     
+    // no need for copy constructor/assignment operator
+    chlit_grammar(chlit_grammar const&);
+    chlit_grammar& operator=(chlit_grammar const&);
+    
     template <typename ScannerT>
     struct definition
     {
-        typedef 
-            boost::spirit::rule<ScannerT, closures::chlit_closure::context_t> 
+        typedef boost::spirit::classic::rule<
+                ScannerT, closures::chlit_closure::context_t> 
             rule_t;
 
         rule_t ch_lit;
 
         definition(chlit_grammar const &self)
         {
-            using namespace boost::spirit;
-            using namespace phoenix;
+            using namespace boost::spirit::classic;
+            namespace phx = phoenix;
             
             // special parsers for '\x..' and L'\x....'
             typedef uint_parser<
@@ -148,65 +166,65 @@ struct chlit_grammar :
 
             // the rule for a character literal
             ch_lit
-                =   eps_p[self.value = val(0), self.long_lit = val(false)]
-                    >> !ch_p('L')[self.long_lit = val(true)]
+                =   eps_p[self.value = phx::val(0), self.long_lit = phx::val(false)]
+                    >> !ch_p('L')[self.long_lit = phx::val(true)]
                     >>  ch_p('\'')
                     >> +(   (
                             ch_p('\\') 
                             >>  (   ch_p('a')    // BEL
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val(0x07))
+                                            phx::var(self.overflow), phx::val(0x07))
                                     ]
                                 |   ch_p('b')    // BS
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val(0x08))
+                                            phx::var(self.overflow), phx::val(0x08))
                                     ]
                                 |   ch_p('t')    // HT
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val(0x09))
+                                            phx::var(self.overflow), phx::val(0x09))
                                     ]
                                 |   ch_p('n')    // NL
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val(0x0a))
+                                            phx::var(self.overflow), phx::val(0x0a))
                                     ]
                                 |   ch_p('v')    // VT
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val(0x0b))
+                                            phx::var(self.overflow), phx::val(0x0b))
                                     ]
                                 |   ch_p('f')    // FF
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val(0x0c))
+                                            phx::var(self.overflow), phx::val(0x0c))
                                     ]
                                 |   ch_p('r')    // CR
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val(0x0d))
+                                            phx::var(self.overflow), phx::val(0x0d))
                                     ]
                                 |   ch_p('?')
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val('?'))
+                                            phx::var(self.overflow), phx::val('?'))
                                     ]
                                 |   ch_p('\'')
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val('\''))
+                                            phx::var(self.overflow), phx::val('\''))
                                     ]
                                 |   ch_p('\"')
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val('\"'))
+                                            phx::var(self.overflow), phx::val('\"'))
                                     ]
                                 |   ch_p('\\')
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), val('\\'))
+                                            phx::var(self.overflow), phx::val('\\'))
                                     ]
                                 |   ch_p('x') 
                                     >>  if_p(self.long_lit) 
@@ -214,7 +232,7 @@ struct chlit_grammar :
                                             hex_wchar_parser_type()
                                             [
                                                 impl::compose(self.value, self.long_lit, 
-                                                    var(self.overflow), arg1)
+                                                    phx::var(self.overflow), phx::arg1)
                                             ]
                                         ]
                                         .else_p
@@ -222,32 +240,32 @@ struct chlit_grammar :
                                             hex_char_parser_type()
                                             [
                                                 impl::compose(self.value, self.long_lit, 
-                                                    var(self.overflow), arg1)
+                                                    phx::var(self.overflow), phx::arg1)
                                             ]
                                         ]
                                 |   ch_p('u') 
                                     >>  uint_parser<unsigned int, 16, 4, 4>()
                                         [
                                             impl::compose(self.value, self.long_lit, 
-                                                var(self.overflow), arg1)
+                                                phx::var(self.overflow), phx::arg1)
                                         ]
                                 |   ch_p('U')
                                     >>  uint_parser<unsigned int, 16, 8, 8>()
                                         [
                                             impl::compose(self.value, self.long_lit, 
-                                                var(self.overflow), arg1)
+                                                phx::var(self.overflow), phx::arg1)
                                         ]
                                 |   uint_parser<unsigned int, 8, 1, 3>()
                                     [
                                         impl::compose(self.value, self.long_lit, 
-                                            var(self.overflow), arg1)
+                                            phx::var(self.overflow), phx::arg1)
                                     ]
                                 )
                             )
                         |   ~eps_p(ch_p('\'')) >> anychar_p
                             [
                                 impl::compose(self.value, self.long_lit, 
-                                    var(self.overflow), arg1)
+                                    phx::var(self.overflow), phx::arg1)
                             ]
                         )
                     >>  ch_p('\'')
@@ -283,9 +301,9 @@ struct chlit_grammar :
 template <typename TokenT>
 BOOST_WAVE_CHLITGRAMMAR_GEN_INLINE 
 unsigned int
-chlit_grammar_gen<TokenT>::evaluate(TokenT const &token)
+chlit_grammar_gen<TokenT>::evaluate(TokenT const &token, value_error &status)
 {
-    using namespace boost::spirit;
+    using namespace boost::spirit::classic;
     
 chlit_grammar g;
 boost::uint32_t result = 0;
@@ -300,25 +318,21 @@ parse_info<typename TokenT::string_type::const_iterator> hit =
     else {
     // range check
         if ('L' == token_val[0]) {
-        // recognised wide character
+        // recognized wide character
             if (g.overflow || 
                 result > (unsigned long)(std::numeric_limits<wchar_t>::max)()) 
             {
             // out of range
-                BOOST_WAVE_THROW(preprocess_exception, 
-                    character_literal_out_of_range, 
-                    token_val.c_str(), token.get_position());
+                status = error_character_overflow;
             }
         }
         else {
-        // recognised narrow ('normal') character
+        // recognized narrow ('normal') character
             if (g.overflow || 
                 result > (unsigned long)(std::numeric_limits<unsigned char>::max)()) 
             {
             // out of range
-                BOOST_WAVE_THROW(preprocess_exception, 
-                    character_literal_out_of_range, 
-                    token_val.c_str(), token.get_position());
+                status = error_character_overflow;
             }
         }
     }
@@ -331,5 +345,10 @@ parse_info<typename TokenT::string_type::const_iterator> hit =
 }   // namespace grammars
 }   // namespace wave
 }   // namespace boost
+
+// the suffix header occurs after all of the code
+#ifdef BOOST_HAS_ABI_HEADERS
+#include BOOST_ABI_SUFFIX
+#endif
 
 #endif // !defined(CPP_CHLIT_GRAMMAR_HPP_9527D349_6592_449A_A409_42A001E6C64C_INCLUDED)

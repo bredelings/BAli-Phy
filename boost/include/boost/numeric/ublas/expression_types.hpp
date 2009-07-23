@@ -2,13 +2,9 @@
 //  Copyright (c) 2000-2002
 //  Joerg Walter, Mathias Koch
 //
-//  Permission to use, copy, modify, distribute and sell this software
-//  and its documentation for any purpose is hereby granted without fee,
-//  provided that the above copyright notice appear in all copies and
-//  that both that copyright notice and this permission notice appear
-//  in supporting documentation.  The authors make no representations
-//  about the suitability of this software for any purpose.
-//  It is provided "as is" without express or implied warranty.
+//  Distributed under the Boost Software License, Version 1.0. (See
+//  accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt)
 //
 //  The authors gratefully acknowledge the support of
 //  GeNeSys mbH & Co. KG in producing this work.
@@ -221,13 +217,13 @@ namespace boost { namespace numeric { namespace ublas {
         }
         template<class A>
         BOOST_UBLAS_INLINE
-        const vector_indirect<const E, A> operator () (const indirect_array<A> &ia) const {
-            return vector_indirect<const E, A>  (operator () (), ia);
+        const vector_indirect<const E, indirect_array<A> > operator () (const indirect_array<A> &ia) const {
+            return vector_indirect<const E, indirect_array<A> >  (operator () (), ia);
         }
         template<class A>
         BOOST_UBLAS_INLINE
-        vector_indirect<E, A> operator () (const indirect_array<A> &ia) {
-            return vector_indirect<E, A> (operator () (), ia);
+        vector_indirect<E, indirect_array<A> > operator () (const indirect_array<A> &ia) {
+            return vector_indirect<E, indirect_array<A> > (operator () (), ia);
         }
 
         BOOST_UBLAS_INLINE
@@ -248,13 +244,13 @@ namespace boost { namespace numeric { namespace ublas {
         }
         template<class A>
         BOOST_UBLAS_INLINE
-        const vector_indirect<const E, A> project (const indirect_array<A> &ia) const {
-            return vector_indirect<const E, A> (operator () (), ia);
+        const vector_indirect<const E, indirect_array<A> > project (const indirect_array<A> &ia) const {
+            return vector_indirect<const E, indirect_array<A> > (operator () (), ia);
         }
         template<class A>
         BOOST_UBLAS_INLINE
-        vector_indirect<E, A> project (const indirect_array<A> &ia) {
-            return vector_indirect<E, A> (operator () (), ia);
+        vector_indirect<E, indirect_array<A> > project (const indirect_array<A> &ia) {
+            return vector_indirect<E, indirect_array<A> > (operator () (), ia);
         }
 #endif
     };
@@ -375,13 +371,13 @@ namespace boost { namespace numeric { namespace ublas {
         }
         template<class A>
         BOOST_UBLAS_INLINE
-        const matrix_indirect<const E, A> operator () (const indirect_array<A> &ia1, const indirect_array<A> &ia2) const {
-            return matrix_indirect<const E, A> (operator () (), ia1, ia2);
+        const matrix_indirect<const E, indirect_array<A> > operator () (const indirect_array<A> &ia1, const indirect_array<A> &ia2) const {
+            return matrix_indirect<const E, indirect_array<A> > (operator () (), ia1, ia2);
         }
         template<class A>
         BOOST_UBLAS_INLINE
-        matrix_indirect<E, A> operator () (const indirect_array<A> &ia1, const indirect_array<A> &ia2) {
-            return matrix_indirect<E, A> (operator () (), ia1, ia2);
+        matrix_indirect<E, indirect_array<A> > operator () (const indirect_array<A> &ia1, const indirect_array<A> &ia2) {
+            return matrix_indirect<E, indirect_array<A> > (operator () (), ia1, ia2);
         }
 
         BOOST_UBLAS_INLINE
@@ -402,13 +398,13 @@ namespace boost { namespace numeric { namespace ublas {
         }
         template<class A>
         BOOST_UBLAS_INLINE
-        const matrix_indirect<const E, A> project (const indirect_array<A> &ia1, const indirect_array<A> &ia2) const {
-            return matrix_indirect<const E, A> (operator () (), ia1, ia2);
+        const matrix_indirect<const E, indirect_array<A> > project (const indirect_array<A> &ia1, const indirect_array<A> &ia2) const {
+            return matrix_indirect<const E, indirect_array<A> > (operator () (), ia1, ia2);
         }
         template<class A>
         BOOST_UBLAS_INLINE
-        matrix_indirect<E, A> project (const indirect_array<A> &ia1, const indirect_array<A> &ia2) {
-            return matrix_indirect<E, A> (operator () (), ia1, ia2);
+        matrix_indirect<E, indirect_array<A> > project (const indirect_array<A> &ia1, const indirect_array<A> &ia2) {
+            return matrix_indirect<E, indirect_array<A> > (operator () (), ia1, ia2);
         }
 #endif
     };

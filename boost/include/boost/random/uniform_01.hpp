@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: uniform_01.hpp,v 1.18 2004/07/27 03:43:32 dgregor Exp $
+ * $Id: uniform_01.hpp 41369 2007-11-25 18:07:19Z bemandawes $
  *
  * Revision history
  *  2001-02-18  moved to individual header files
@@ -55,7 +55,11 @@ public:
   void reset() { }
 
   result_type operator()() {
-    return result_type(_rng() - (_rng.min)()) * _factor;
+    for (;;) {
+      result_type result = result_type(_rng() - (_rng.min)()) * _factor;
+      if (result < result_type(1))
+	return result;
+    }
   }
 
 #if !defined(BOOST_NO_OPERATORS_IN_NAMESPACE) && !defined(BOOST_NO_MEMBER_TEMPLATE_FRIENDS)

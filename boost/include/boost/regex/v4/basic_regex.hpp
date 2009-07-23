@@ -3,14 +3,14 @@
  * Copyright (c) 1998-2004
  * John Maddock
  *
- * Use, modification and distribution are subject to the 
- * Boost Software License, Version 1.0. (See accompanying file 
- * LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+ * Distributed under the Boost Software License, Version 1.0.
+ * (See accompanying file LICENSE_1_0.txt or copy at
+ * http://www.boost.org/LICENSE_1_0.txt)
  *
  */
 
  /*
-  *   LOCATION:    see http://www.boost.org for most recent version.
+  *   LOCATION:    see http://www.boost.org/ for most recent version.
   *   FILE         basic_regex.cpp
   *   VERSION      see <boost/version.hpp>
   *   DESCRIPTION: Declares template class basic_regex.
@@ -19,14 +19,21 @@
 #ifndef BOOST_REGEX_V4_BASIC_REGEX_HPP
 #define BOOST_REGEX_V4_BASIC_REGEX_HPP
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
 #endif
 
 namespace boost{
 #ifdef BOOST_MSVC
 #pragma warning(push)
-#pragma warning(disable : 4251 4231 4660)
+#pragma warning(disable : 4251 4231 4660 4800)
 #endif
 
 namespace re_detail{
@@ -66,6 +73,7 @@ struct regex_data
    unsigned char               m_startmap[1 << CHAR_BIT]; // which characters can start a match
    unsigned int                m_can_be_null;             // whether we can match a null string
    re_detail::raw_storage      m_data;                    // the buffer in which our states are constructed
+   typename traits::char_class_type    m_word_mask;       // mask used to determine if a character is a word character
 };
 //
 // class basic_regex_implementation
@@ -253,7 +261,7 @@ public:
    {
       return do_assign(p1, p2, f);
    }
-#if !defined(BOOST_NO_MEMBER_TEMPLATES) && !defined(__IBMCPP__)
+#if !defined(BOOST_NO_MEMBER_TEMPLATES)
 
    template <class ST, class SA>
    unsigned int BOOST_REGEX_CALL set_expression(const std::basic_string<charT, ST, SA>& p, flag_type f = regex_constants::normal)
@@ -342,7 +350,7 @@ public:
    //
    // getflags:
    // retained for backwards compatibility only, "flags"
-   // is now the prefered name:
+   // is now the preferred name:
    flag_type BOOST_REGEX_CALL getflags()const
    { 
       return flags();
@@ -589,7 +597,7 @@ public:
       return this->assign(that);
    }
 
-#if !defined(BOOST_NO_MEMBER_TEMPLATES) && !defined(__IBMCPP__)
+#if !defined(BOOST_NO_MEMBER_TEMPLATES)
    template <class ST, class SA>
    explicit reg_expression(const std::basic_string<charT, ST, SA>& p, flag_type f = regex_constants::normal)
    : basic_regex<charT, traits>(p, f)
@@ -629,8 +637,15 @@ public:
 
 } // namespace boost
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
 #endif
 
 #endif

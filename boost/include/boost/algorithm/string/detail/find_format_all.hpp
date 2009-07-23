@@ -1,11 +1,12 @@
 //  Boost string_algo library find_format_all.hpp header file  ---------------------------//
 
-//  Copyright Pavol Droba 2002-2003. Use, modification and
-//  distribution is subject to the Boost Software License, Version
-//  1.0. (See accompanying file LICENSE_1_0.txt or copy at
-//  http://www.boost.org/LICENSE_1_0.txt)
+//  Copyright Pavol Droba 2002-2003.
+//
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
 
-//  See http://www.boost.org for updates, documentation, and revision history.
+//  See http://www.boost.org/ for updates, documentation, and revision history.
 
 #ifndef BOOST_STRING_FIND_FORMAT_ALL_DETAIL_HPP
 #define BOOST_STRING_FIND_FORMAT_ALL_DETAIL_HPP
@@ -72,7 +73,7 @@ namespace boost {
                 store_type M( FindResult, FormatResult, Formatter );
 
                 // Initialize last match
-                input_iterator_type LastMatch=begin(Input);
+                input_iterator_type LastMatch=::boost::begin(Input);
 
                 // Iterate through all matches
                 while( M )
@@ -80,15 +81,15 @@ namespace boost {
                     // Copy the beginning of the sequence
                     std::copy( LastMatch, M.begin(), Output );
                     // Copy formated result
-                    std::copy( begin(M.format_result()), end(M.format_result()), Output );
+                    std::copy( ::boost::begin(M.format_result()), ::boost::end(M.format_result()), Output );
 
                     // Proceed to the next match
                     LastMatch=M.end();
-                    M=Finder( LastMatch, end(Input) );
+                    M=Finder( LastMatch, ::boost::end(Input) );
                 }
 
                 // Copy the rest of the sequence
-                std::copy( LastMatch, end(Input), Output );
+                std::copy( LastMatch, ::boost::end(Input), Output );
 
                 return Output;
             }
@@ -139,7 +140,7 @@ namespace boost {
                 store_type M( FindResult, FormatResult, Formatter );
 
                 // Initialize last match
-                input_iterator_type LastMatch=begin(Input);
+                input_iterator_type LastMatch=::boost::begin(Input);
 
                 // Output temporary
                 InputT Output;
@@ -148,17 +149,17 @@ namespace boost {
                 while( M )
                 {
                     // Copy the beginning of the sequence
-                    insert( Output, end(Output), LastMatch, M.begin() );
+                    insert( Output, ::boost::end(Output), LastMatch, M.begin() );
                     // Copy formated result
-                    insert( Output, end(Output), M.format_result() );
+                    insert( Output, ::boost::end(Output), M.format_result() );
 
                     // Proceed to the next match
                     LastMatch=M.end();
-                    M=Finder( LastMatch, end(Input) );
+                    M=Finder( LastMatch, ::boost::end(Input) );
                 }
 
                 // Copy the rest of the sequence
-                insert( Output, end(Output), LastMatch, end(Input) );
+                insert( Output, ::boost::end(Output), LastMatch, ::boost::end(Input) );
 
                 return Output;
             }
@@ -212,8 +213,8 @@ namespace boost {
                     BOOST_STRING_TYPENAME range_value<InputT>::type> Storage;
 
                 // Initialize replacement iterators
-                input_iterator_type InsertIt=begin(Input);
-                input_iterator_type SearchIt=begin(Input);
+                input_iterator_type InsertIt=::boost::begin(Input);
+                input_iterator_type SearchIt=::boost::begin(Input);
                 
                 while( M )
                 {
@@ -232,7 +233,7 @@ namespace boost {
                     copy_to_storage( Storage, M.format_result() );
 
                     // Find range for a next match
-                    M=Finder( SearchIt, end(Input) );
+                    M=Finder( SearchIt, ::boost::end(Input) );
                 }
 
                 // process the last segment
@@ -241,17 +242,17 @@ namespace boost {
                     Input,
                     InsertIt,
                     SearchIt,
-                    end(Input) );
+                    ::boost::end(Input) );
                 
                 if ( Storage.empty() )
                 {
                     // Truncate input
-                    erase( Input, InsertIt, end(Input) );
+                    erase( Input, InsertIt, ::boost::end(Input) );
                 }
                 else
                 {
                     // Copy remaining data to the end of input
-                    insert( Input, end(Input), Storage.begin(), Storage.end() );
+                    insert( Input, ::boost::end(Input), Storage.begin(), Storage.end() );
                 }
             }
 

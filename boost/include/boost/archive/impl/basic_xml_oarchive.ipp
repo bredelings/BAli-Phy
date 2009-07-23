@@ -9,6 +9,7 @@
 //  See http://www.boost.org for updates, documentation, and revision history.
 
 #include <algorithm>
+#include <cstddef> // NULL
 #include <cstring>
 #if defined(BOOST_NO_STDC_NAMESPACE) && ! defined(__LIBCOMO__)
 namespace std{
@@ -18,6 +19,7 @@ namespace std{
 
 #include <boost/archive/basic_xml_archive.hpp>
 #include <boost/archive/basic_xml_oarchive.hpp>
+#include <boost/archive/xml_archive_exception.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 
 namespace boost {
@@ -78,7 +80,7 @@ basic_xml_oarchive<Archive>::write_attribute(
     this->This()->put(' ');
     this->This()->put(attribute_name);
     this->This()->put("=\"");
-    this->This()->put(key);
+    this->This()->save(key);
     this->This()->put('"');
 }
 
@@ -144,7 +146,7 @@ basic_xml_oarchive<Archive>::end_preamble(){
         pending_preamble = false;
     }
 }
-
+#if 0
 template<class Archive>
 BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
 basic_xml_oarchive<Archive>::save_override(const object_id_type & t, int)
@@ -168,6 +170,33 @@ basic_xml_oarchive<Archive>::save_override(const version_type & t, int)
     int i = t.t; // extra .t is for borland
     write_attribute(VERSION(), i);
 }
+#endif
+
+template<class Archive>
+BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
+basic_xml_oarchive<Archive>::save_override(const object_id_type & t, int)
+{
+    // borland doesn't do conversion of STRONG_TYPEDEFs very well
+    const unsigned int i = t;
+    write_attribute(OBJECT_ID(), i, "=\"_");
+}
+template<class Archive>
+BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
+basic_xml_oarchive<Archive>::save_override(
+    const object_reference_type & t,
+    int
+){
+    const unsigned int i = t;
+    write_attribute(OBJECT_REFERENCE(), i, "=\"_");
+}
+template<class Archive>
+BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
+basic_xml_oarchive<Archive>::save_override(const version_type & t, int)
+{
+    const unsigned int i = t;
+    write_attribute(VERSION(), i);
+}
+
 template<class Archive>
 BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
 basic_xml_oarchive<Archive>::save_override(const class_id_type & t, int)
@@ -199,11 +228,12 @@ basic_xml_oarchive<Archive>::save_override(const class_name_type & t, int)
         return;
     write_attribute(CLASS_NAME(), key);
 }
+
 template<class Archive>
 BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
 basic_xml_oarchive<Archive>::save_override(const tracking_type & t, int)
 {
-    write_attribute(TRACKING(), t.t); // extra .t is for borland
+    write_attribute(TRACKING(), t.t);
 }
 
 template<class Archive>

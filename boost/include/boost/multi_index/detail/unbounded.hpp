@@ -1,4 +1,4 @@
-/* Copyright 2003-2005 Joaquín M López Muñoz.
+/* Copyright 2003-2008 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -13,24 +13,68 @@
 #pragma once
 #endif
 
+#include <boost/config.hpp> /* keep it first to prevent nasty warns in MSVC */
+#include <boost/detail/workaround.hpp>
+
 namespace boost{
 
 namespace multi_index{
 
 /* dummy type and variable for use in ordered_index::range() */
 
-namespace detail{
+#if BOOST_WORKAROUND(BOOST_MSVC,<1300)
+/* The default branch actually works for MSVC 6.0, but seems like
+ * this implementation of unbounded improves the performance of ordered
+ * indices! This behavior is hard to explain and probably a test artifact,
+ * but it does not hurt to have the workaround anyway.
+ */
 
-struct unbounded_type{};
-
-} /* namespace multi_index::detail */
+namespace detail{struct unbounded_type{};}
 
 namespace{
 
-detail::unbounded_type  unbounded_obj=detail::unbounded_type();
-detail::unbounded_type& unbounded=unbounded_obj;
+static detail::unbounded_type  unbounded_obj=detail::unbounded_type();
+static detail::unbounded_type& unbounded=unbounded_obj;
 
 } /* unnamed */
+#else
+/* ODR-abiding technique shown at the example attached to
+ * http://lists.boost.org/Archives/boost/2006/07/108355.php
+ */
+
+namespace detail{class unbounded_helper;}
+
+detail::unbounded_helper unbounded(detail::unbounded_helper);
+
+namespace detail{
+
+class unbounded_helper
+{
+  unbounded_helper(){}
+  unbounded_helper(const unbounded_helper&){}
+  friend unbounded_helper multi_index::unbounded(unbounded_helper);
+};
+
+typedef unbounded_helper (*unbounded_type)(unbounded_helper);
+
+} /* namespace multi_index::detail */
+
+inline detail::unbounded_helper unbounded(detail::unbounded_helper)
+{
+  return detail::unbounded_helper();
+}
+#endif
+
+/* tags used in the implementation of range */
+
+namespace detail{
+
+struct none_unbounded_tag{};
+struct lower_unbounded_tag{};
+struct upper_unbounded_tag{};
+struct both_unbounded_tag{};
+
+} /* namespace multi_index::detail */
 
 } /* namespace multi_index */
 

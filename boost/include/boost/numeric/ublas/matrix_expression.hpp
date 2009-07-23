@@ -2,13 +2,9 @@
 //  Copyright (c) 2000-2002
 //  Joerg Walter, Mathias Koch
 //
-//  Permission to use, copy, modify, distribute and sell this software
-//  and its documentation for any purpose is hereby granted without fee,
-//  provided that the above copyright notice appear in all copies and
-//  that both that copyright notice and this permission notice appear
-//  in supporting documentation.  The authors make no representations
-//  about the suitability of this software for any purpose.
-//  It is provided "as is" without express or implied warranty.
+//  Distributed under the Boost Software License, Version 1.0. (See
+//  accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt)
 //
 //  The authors gratefully acknowledge the support of
 //  GeNeSys mbH & Co. KG in producing this work.
@@ -42,15 +38,15 @@ namespace boost { namespace numeric { namespace ublas {
         typedef typename boost::mpl::if_<boost::is_const<E>,
                                           typename E::const_reference,
                                           typename E::reference>::type reference;
-        typedef E refered_type;
+        typedef E referred_type;
         typedef const self_type const_closure_type;
-        typedef const_closure_type closure_type;
+        typedef self_type closure_type;
         typedef typename E::orientation_category orientation_category;
         typedef typename E::storage_category storage_category;
 
         // Construction and destruction
         BOOST_UBLAS_INLINE
-        explicit matrix_reference (refered_type &e):
+        explicit matrix_reference (referred_type &e):
               e_ (e) {}
 
         // Accessors
@@ -66,11 +62,11 @@ namespace boost { namespace numeric { namespace ublas {
     public:
         // Expression accessors - const correct
         BOOST_UBLAS_INLINE
-        const refered_type &expression () const {
+        const referred_type &expression () const {
             return e_;
         }
         BOOST_UBLAS_INLINE
-        refered_type &expression () {
+        referred_type &expression () {
             return e_;
         }
 
@@ -269,7 +265,7 @@ namespace boost { namespace numeric { namespace ublas {
         }
 
     private:
-        refered_type &e_;
+        referred_type &e_;
     };
 
 
@@ -478,6 +474,10 @@ namespace boost { namespace numeric { namespace ublas {
                 return functor_type::apply (*it1_, *it2_);
 #endif
             }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
+            }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
             BOOST_UBLAS_INLINE
@@ -638,6 +638,10 @@ namespace boost { namespace numeric { namespace ublas {
 #else
                 return functor_type::apply (*it1_, *it2_);
 #endif
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
@@ -934,6 +938,10 @@ namespace boost { namespace numeric { namespace ublas {
             const_reference operator * () const {
                 return functor_type::apply (*it_);
             }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
+            }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
             BOOST_UBLAS_INLINE
@@ -1064,6 +1072,10 @@ namespace boost { namespace numeric { namespace ublas {
             BOOST_UBLAS_INLINE
             const_reference operator * () const {
                 return functor_type::apply (*it_);
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
@@ -1239,7 +1251,6 @@ namespace boost { namespace numeric { namespace ublas {
 
         typedef const self_type const_closure_type;
         typedef self_type closure_type;
-        // typedef typename E::orientation_category orientation_category;
         typedef typename boost::mpl::if_<boost::is_same<typename E::orientation_category,
                                                          row_major_tag>,
                                           column_major_tag,
@@ -1247,13 +1258,12 @@ namespace boost { namespace numeric { namespace ublas {
                                                          column_major_tag>,
                                           row_major_tag,
                                           typename E::orientation_category>::type>::type orientation_category;
-        // typedef unknown_storage_tag storage_category;
         typedef typename E::storage_category storage_category;
 
         // Construction and destruction
         BOOST_UBLAS_INLINE
-        // ISSUE may be used as mutable expression.
-        // matrix_unary2 (const expression_type &e):
+        // matrix_unary2 may be used as mutable expression -
+        // this is the only non const expression constructor
         explicit matrix_unary2 (expression_type &e):
             e_ (e) {}
 
@@ -1391,6 +1401,10 @@ namespace boost { namespace numeric { namespace ublas {
             const_reference operator * () const {
                 return functor_type::apply (*it_);
             }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
+            }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
             BOOST_UBLAS_INLINE
@@ -1521,6 +1535,10 @@ namespace boost { namespace numeric { namespace ublas {
             BOOST_UBLAS_INLINE
             const_reference operator * () const {
                 return functor_type::apply (*it_);
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
@@ -1814,14 +1832,23 @@ namespace boost { namespace numeric { namespace ublas {
                              const const_iterator21_type &it2, const const_iterator21_type &it2_end):
                 container_const_reference<self_type> (mb), i_ (i), j_ (j), it1_ (it1), it1_end_ (it1_end), it2_ (it2), it2_end_ (it2_end) {}
 
+        private:
             // Dense specializations
             BOOST_UBLAS_INLINE
             void increment (dense_random_access_iterator_tag) {
-                ++ i_, ++ it1_, ++ it2_;
+                ++ i_; ++ it1_; ++ it2_;
             }
             BOOST_UBLAS_INLINE
             void decrement (dense_random_access_iterator_tag) {
-                -- i_, -- it1_, -- it2_;
+                -- i_; -- it1_; -- it2_;
+            }
+            BOOST_UBLAS_INLINE
+            void increment (dense_random_access_iterator_tag, difference_type n) {
+                 i_ += n; it1_ += n; it2_ += n;
+            }
+            BOOST_UBLAS_INLINE
+            void decrement (dense_random_access_iterator_tag, difference_type n) {
+                i_ -= n; it1_ -= n; it2_ -= n;
             }
             BOOST_UBLAS_INLINE
             value_type dereference (dense_random_access_iterator_tag) const {
@@ -1848,6 +1875,28 @@ namespace boost { namespace numeric { namespace ublas {
                     if (i_ <= it2_.index1 ())
                         -- it2_;
                 -- i_;
+            }
+            BOOST_UBLAS_INLINE
+            void increment (packed_random_access_iterator_tag, difference_type n) {
+                while (n > 0) {
+                    increment (packed_random_access_iterator_tag ());
+                    --n;
+                }
+                while (n < 0) {
+                    decrement (packed_random_access_iterator_tag ());
+                    ++n;
+                }
+            }
+            BOOST_UBLAS_INLINE
+            void decrement (packed_random_access_iterator_tag, difference_type n) {
+                while (n > 0) {
+                    decrement (packed_random_access_iterator_tag ());
+                    --n;
+                }
+                while (n < 0) {
+                    increment (packed_random_access_iterator_tag ());
+                    ++n;
+                }
             }
             BOOST_UBLAS_INLINE
             value_type dereference (packed_random_access_iterator_tag) const {
@@ -1904,6 +1953,28 @@ namespace boost { namespace numeric { namespace ublas {
                 i_ = (std::max) (index1, index2);
             }
             BOOST_UBLAS_INLINE
+            void increment (sparse_bidirectional_iterator_tag, difference_type n) {
+                while (n > 0) {
+                    increment (sparse_bidirectional_iterator_tag ());
+                    --n;
+                }
+                while (n < 0) {
+                    decrement (sparse_bidirectional_iterator_tag ());
+                    ++n;
+                }
+            }
+            BOOST_UBLAS_INLINE
+            void decrement (sparse_bidirectional_iterator_tag, difference_type n) {
+                while (n > 0) {
+                    decrement (sparse_bidirectional_iterator_tag ());
+                    --n;
+                }
+                while (n < 0) {
+                    increment (sparse_bidirectional_iterator_tag ());
+                    ++n;
+                }
+            }
+            BOOST_UBLAS_INLINE
             value_type dereference (sparse_bidirectional_iterator_tag) const {
                 value_type t1 = value_type/*zero*/();
                 if (it1_ != it1_end_) {
@@ -1920,6 +1991,7 @@ namespace boost { namespace numeric { namespace ublas {
                 return functor_type::apply (t1, t2);
             }
 
+        public:
             // Arithmetic
             BOOST_UBLAS_INLINE
             const_iterator1 &operator ++ () {
@@ -1933,12 +2005,12 @@ namespace boost { namespace numeric { namespace ublas {
             }
             BOOST_UBLAS_INLINE
             const_iterator1 &operator += (difference_type n) {
-                i_ += n, it1_ += n, it2_ += n;
+                increment (iterator_category (), n);
                 return *this;
             }
             BOOST_UBLAS_INLINE
             const_iterator1 &operator -= (difference_type n) {
-                i_ -= n, it1_ -= n, it2_ -= n;
+                decrement (iterator_category (), n);
                 return *this;
             }
             BOOST_UBLAS_INLINE
@@ -1952,6 +2024,10 @@ namespace boost { namespace numeric { namespace ublas {
             BOOST_UBLAS_INLINE
             const_reference operator * () const {
                 return dereference (iterator_category ());
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
@@ -2071,14 +2147,23 @@ namespace boost { namespace numeric { namespace ublas {
                              const const_iterator22_type &it2, const const_iterator22_type &it2_end):
                 container_const_reference<self_type> (mb), i_ (i), j_ (j), it1_ (it1), it1_end_ (it1_end), it2_ (it2), it2_end_ (it2_end) {}
 
+        private:
             // Dense access specializations
             BOOST_UBLAS_INLINE
             void increment (dense_random_access_iterator_tag) {
-                ++ j_, ++ it1_, ++ it2_;
+                ++ j_; ++ it1_; ++ it2_;
             }
             BOOST_UBLAS_INLINE
             void decrement (dense_random_access_iterator_tag) {
-                -- j_, -- it1_, -- it2_;
+                -- j_; -- it1_; -- it2_;
+            }
+            BOOST_UBLAS_INLINE
+            void increment (dense_random_access_iterator_tag, difference_type n) {
+                j_ += n; it1_ += n; it2_ += n;
+            }
+            BOOST_UBLAS_INLINE
+            void decrement (dense_random_access_iterator_tag, difference_type n) {
+                j_ -= n; it1_ -= n; it2_ -= n;
             }
             BOOST_UBLAS_INLINE
             value_type dereference (dense_random_access_iterator_tag) const {
@@ -2105,6 +2190,28 @@ namespace boost { namespace numeric { namespace ublas {
                     if (j_ <= it2_.index2 ())
                         -- it2_;
                 -- j_;
+            }
+            BOOST_UBLAS_INLINE
+            void increment (packed_random_access_iterator_tag, difference_type n) {
+                while (n > 0) {
+                    increment (packed_random_access_iterator_tag ());
+                    --n;
+                }
+                while (n < 0) {
+                    decrement (packed_random_access_iterator_tag ());
+                    ++n;
+                }
+            }
+            BOOST_UBLAS_INLINE
+            void decrement (packed_random_access_iterator_tag, difference_type n) {
+                while (n > 0) {
+                    decrement (packed_random_access_iterator_tag ());
+                    --n;
+                }
+                while (n < 0) {
+                    increment (packed_random_access_iterator_tag ());
+                    ++n;
+                }
             }
             BOOST_UBLAS_INLINE
             value_type dereference (packed_random_access_iterator_tag) const {
@@ -2161,6 +2268,28 @@ namespace boost { namespace numeric { namespace ublas {
                 j_ = (std::max) (index1, index2);
             }
             BOOST_UBLAS_INLINE
+            void increment (sparse_bidirectional_iterator_tag, difference_type n) {
+                while (n > 0) {
+                    increment (sparse_bidirectional_iterator_tag ());
+                    --n;
+                }
+                while (n < 0) {
+                    decrement (sparse_bidirectional_iterator_tag ());
+                    ++n;
+                }
+            }
+            BOOST_UBLAS_INLINE
+            void decrement (sparse_bidirectional_iterator_tag, difference_type n) {
+                while (n > 0) {
+                    decrement (sparse_bidirectional_iterator_tag ());
+                    --n;
+                }
+                while (n < 0) {
+                    increment (sparse_bidirectional_iterator_tag ());
+                    ++n;
+                }
+            }
+            BOOST_UBLAS_INLINE
             value_type dereference (sparse_bidirectional_iterator_tag) const {
                 value_type t1 = value_type/*zero*/();
                 if (it1_ != it1_end_) {
@@ -2177,6 +2306,7 @@ namespace boost { namespace numeric { namespace ublas {
                 return functor_type::apply (t1, t2);
             }
 
+        public:
             // Arithmetic
             BOOST_UBLAS_INLINE
             const_iterator2 &operator ++ () {
@@ -2190,12 +2320,12 @@ namespace boost { namespace numeric { namespace ublas {
             }
             BOOST_UBLAS_INLINE
             const_iterator2 &operator += (difference_type n) {
-                j_ += n, it1_ += n, it2_ += n;
+                increment (iterator_category (), n);
                 return *this;
             }
             BOOST_UBLAS_INLINE
             const_iterator2 &operator -= (difference_type n) {
-                j_ -= n, it1_ -= n, it2_ -= n;
+                decrement (iterator_category (), n);
                 return *this;
             }
             BOOST_UBLAS_INLINE
@@ -2209,6 +2339,10 @@ namespace boost { namespace numeric { namespace ublas {
             BOOST_UBLAS_INLINE
             const_reference operator * () const {
                 return dereference (iterator_category ());
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
@@ -2344,7 +2478,7 @@ namespace boost { namespace numeric { namespace ublas {
     operator + (const matrix_expression<E1> &e1,
                 const matrix_expression<E2> &e2) {
         typedef typename matrix_binary_traits<E1, E2, scalar_plus<typename E1::value_type,
-                                                                              typename E2::value_type> >::expression_type expression_type;
+                                                                  typename E2::value_type> >::expression_type expression_type;
         return expression_type (e1 (), e2 ());
     }
 
@@ -2356,7 +2490,7 @@ namespace boost { namespace numeric { namespace ublas {
     operator - (const matrix_expression<E1> &e1,
                 const matrix_expression<E2> &e2) {
         typedef typename matrix_binary_traits<E1, E2, scalar_minus<typename E1::value_type,
-                                                                               typename E2::value_type> >::expression_type expression_type;
+                                                                   typename E2::value_type> >::expression_type expression_type;
         return expression_type (e1 (), e2 ());
     }
 
@@ -2368,7 +2502,7 @@ namespace boost { namespace numeric { namespace ublas {
     element_prod (const matrix_expression<E1> &e1,
                   const matrix_expression<E2> &e2) {
         typedef typename matrix_binary_traits<E1, E2, scalar_multiplies<typename E1::value_type,
-                                                                                    typename E2::value_type> >::expression_type expression_type;
+                                                                        typename E2::value_type> >::expression_type expression_type;
         return expression_type (e1 (), e2 ());
     }
 
@@ -2376,11 +2510,11 @@ namespace boost { namespace numeric { namespace ublas {
     template<class E1, class E2>
     BOOST_UBLAS_INLINE
     typename matrix_binary_traits<E1, E2, scalar_divides<typename E1::value_type,
-                                                       typename E2::value_type> >::result_type
+                                                         typename E2::value_type> >::result_type
     element_div (const matrix_expression<E1> &e1,
                  const matrix_expression<E2> &e2) {
         typedef typename matrix_binary_traits<E1, E2, scalar_divides<typename E1::value_type,
-                                                                                 typename E2::value_type> >::expression_type expression_type;
+                                                                     typename E2::value_type> >::expression_type expression_type;
         return expression_type (e1 (), e2 ());
     }
 
@@ -2539,6 +2673,10 @@ namespace boost { namespace numeric { namespace ublas {
             const_reference operator * () const {
                 return functor_type::apply (it1_, *it2_);
             }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
+            }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
             BOOST_UBLAS_INLINE
@@ -2677,6 +2815,10 @@ namespace boost { namespace numeric { namespace ublas {
             BOOST_UBLAS_INLINE
             const_reference operator * () const {
                 return functor_type::apply (it1_, *it2_);
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
@@ -2964,6 +3106,10 @@ namespace boost { namespace numeric { namespace ublas {
             const_reference operator * () const {
                 return functor_type::apply (*it1_, it2_);
             }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
+            }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
             BOOST_UBLAS_INLINE
@@ -3102,6 +3248,10 @@ namespace boost { namespace numeric { namespace ublas {
             BOOST_UBLAS_INLINE
             const_reference operator * () const {
                 return functor_type::apply (*it1_, it2_);
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
@@ -3363,6 +3513,7 @@ namespace boost { namespace numeric { namespace ublas {
                 container_const_reference<self_type> (mvb), it1_ (it1) {}
 #endif
 
+        private:
             // Dense random access specialization
             BOOST_UBLAS_INLINE
             value_type dereference (dense_random_access_iterator_tag) const {
@@ -3425,6 +3576,7 @@ namespace boost { namespace numeric { namespace ublas {
 #endif
             }
 
+        public:
             // Arithmetic
             BOOST_UBLAS_INLINE
             const_iterator &operator ++ () {
@@ -3456,6 +3608,10 @@ namespace boost { namespace numeric { namespace ublas {
             BOOST_UBLAS_INLINE
             const_reference operator * () const {
                 return dereference (iterator_category ());
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
             // Index
@@ -3529,7 +3685,7 @@ namespace boost { namespace numeric { namespace ublas {
         typedef unknown_storage_tag storage_category;
         typedef row_major_tag orientation_category;
         typedef typename promote_traits<T1, T2>::promote_type promote_type;
-        typedef matrix_vector_binary1<E1, E2, matrix_vector_prod1<T1, T2, promote_type> > expression_type;
+        typedef matrix_vector_binary1<E1, E2, matrix_vector_prod1<E1, E2, promote_type> > expression_type;
 #ifndef BOOST_UBLAS_SIMPLE_ET_DEBUG
         typedef expression_type result_type;
 #else
@@ -3546,7 +3702,7 @@ namespace boost { namespace numeric { namespace ublas {
           unknown_storage_tag,
           row_major_tag) {
         typedef typename matrix_vector_binary1_traits<typename E1::value_type, E1,
-                                                                  typename E2::value_type, E2>::expression_type expression_type;
+                                                      typename E2::value_type, E2>::expression_type expression_type;
         return expression_type (e1 (), e2 ());
     }
 
@@ -3559,9 +3715,9 @@ namespace boost { namespace numeric { namespace ublas {
           const vector_expression<E2> &e2) {
         BOOST_STATIC_ASSERT (E2::complexity == 0);
         typedef typename matrix_vector_binary1_traits<typename E1::value_type, E1,
-                                                                  typename E2::value_type, E2>::storage_category storage_category;
+                                                      typename E2::value_type, E2>::storage_category storage_category;
         typedef typename matrix_vector_binary1_traits<typename E1::value_type, E1,
-                                                                  typename E2::value_type, E2>::orientation_category orientation_category;
+                                                      typename E2::value_type, E2>::orientation_category orientation_category;
         return prod (e1, e2, storage_category (), orientation_category ());
     }
 
@@ -3574,7 +3730,7 @@ namespace boost { namespace numeric { namespace ublas {
                unknown_storage_tag,
                row_major_tag) {
         typedef typename matrix_vector_binary1_traits<typename type_traits<typename E1::value_type>::precision_type, E1,
-                                                                  typename type_traits<typename E2::value_type>::precision_type, E2>::expression_type expression_type;
+                                                      typename type_traits<typename E2::value_type>::precision_type, E2>::expression_type expression_type;
         return expression_type (e1 (), e2 ());
     }
 
@@ -3587,9 +3743,9 @@ namespace boost { namespace numeric { namespace ublas {
                const vector_expression<E2> &e2) {
         BOOST_STATIC_ASSERT (E2::complexity == 0);
         typedef typename matrix_vector_binary1_traits<typename type_traits<typename E1::value_type>::precision_type, E1,
-                                                                  typename type_traits<typename E2::value_type>::precision_type, E2>::storage_category storage_category;
+                                                      typename type_traits<typename E2::value_type>::precision_type, E2>::storage_category storage_category;
         typedef typename matrix_vector_binary1_traits<typename type_traits<typename E1::value_type>::precision_type, E1,
-                                                                  typename type_traits<typename E2::value_type>::precision_type, E2>::orientation_category orientation_category;
+                                                      typename type_traits<typename E2::value_type>::precision_type, E2>::orientation_category orientation_category;
         return prec_prod (e1, e2, storage_category (), orientation_category ());
     }
 
@@ -3747,6 +3903,7 @@ namespace boost { namespace numeric { namespace ublas {
                 container_const_reference<self_type> (mvb), it2_ (it2) {}
 #endif
 
+        private:
             // Dense random access specialization
             BOOST_UBLAS_INLINE
             value_type dereference (dense_random_access_iterator_tag) const {
@@ -3809,6 +3966,7 @@ namespace boost { namespace numeric { namespace ublas {
 #endif
             }
 
+        public:
             // Arithmetic
             BOOST_UBLAS_INLINE
             const_iterator &operator ++ () {
@@ -3840,6 +3998,10 @@ namespace boost { namespace numeric { namespace ublas {
             BOOST_UBLAS_INLINE
             const_reference operator * () const {
                 return dereference (iterator_category ());
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
             // Index
@@ -3913,7 +4075,7 @@ namespace boost { namespace numeric { namespace ublas {
         typedef unknown_storage_tag storage_category;
         typedef column_major_tag orientation_category;
         typedef typename promote_traits<T1, T2>::promote_type promote_type;
-        typedef matrix_vector_binary2<E1, E2, matrix_vector_prod2<T1, T2, promote_type> > expression_type;
+        typedef matrix_vector_binary2<E1, E2, matrix_vector_prod2<E1, E2, promote_type> > expression_type;
 #ifndef BOOST_UBLAS_SIMPLE_ET_DEBUG
         typedef expression_type result_type;
 #else
@@ -3930,7 +4092,7 @@ namespace boost { namespace numeric { namespace ublas {
           unknown_storage_tag,
           column_major_tag) {
         typedef typename matrix_vector_binary2_traits<typename E1::value_type, E1,
-                                                                  typename E2::value_type, E2>::expression_type expression_type;
+                                                      typename E2::value_type, E2>::expression_type expression_type;
         return expression_type (e1 (), e2 ());
     }
 
@@ -3943,9 +4105,9 @@ namespace boost { namespace numeric { namespace ublas {
           const matrix_expression<E2> &e2) {
         BOOST_STATIC_ASSERT (E1::complexity == 0);
         typedef typename matrix_vector_binary2_traits<typename E1::value_type, E1,
-                                                                  typename E2::value_type, E2>::storage_category storage_category;
+                                                      typename E2::value_type, E2>::storage_category storage_category;
         typedef typename matrix_vector_binary2_traits<typename E1::value_type, E1,
-                                                                  typename E2::value_type, E2>::orientation_category orientation_category;
+                                                      typename E2::value_type, E2>::orientation_category orientation_category;
         return prod (e1, e2, storage_category (), orientation_category ());
     }
 
@@ -3958,7 +4120,7 @@ namespace boost { namespace numeric { namespace ublas {
                unknown_storage_tag,
                column_major_tag) {
         typedef typename matrix_vector_binary2_traits<typename type_traits<typename E1::value_type>::precision_type, E1,
-                                                                  typename type_traits<typename E2::value_type>::precision_type, E2>::expression_type expression_type;
+                                                      typename type_traits<typename E2::value_type>::precision_type, E2>::expression_type expression_type;
         return expression_type (e1 (), e2 ());
     }
 
@@ -3971,9 +4133,9 @@ namespace boost { namespace numeric { namespace ublas {
                const matrix_expression<E2> &e2) {
         BOOST_STATIC_ASSERT (E1::complexity == 0);
         typedef typename matrix_vector_binary2_traits<typename type_traits<typename E1::value_type>::precision_type, E1,
-                                                                  typename type_traits<typename E2::value_type>::precision_type, E2>::storage_category storage_category;
+                                                      typename type_traits<typename E2::value_type>::precision_type, E2>::storage_category storage_category;
         typedef typename matrix_vector_binary2_traits<typename type_traits<typename E1::value_type>::precision_type, E1,
-                                                                  typename type_traits<typename E2::value_type>::precision_type, E2>::orientation_category orientation_category;
+                                                      typename type_traits<typename E2::value_type>::precision_type, E2>::orientation_category orientation_category;
         return prec_prod (e1, e2, storage_category (), orientation_category ());
     }
 
@@ -4170,6 +4332,7 @@ namespace boost { namespace numeric { namespace ublas {
                 container_const_reference<self_type> (mmb), it1_ (it1), it2_ (it2) {}
 #endif
 
+        private:
             // Random access specialization
             BOOST_UBLAS_INLINE
             value_type dereference (dense_random_access_iterator_tag) const {
@@ -4234,6 +4397,7 @@ namespace boost { namespace numeric { namespace ublas {
 #endif
             }
 
+        public:
             // Arithmetic
             BOOST_UBLAS_INLINE
             const_iterator1 &operator ++ () {
@@ -4266,6 +4430,10 @@ namespace boost { namespace numeric { namespace ublas {
             BOOST_UBLAS_INLINE
             const_reference operator * () const {
                 return dereference (iterator_category ());
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
@@ -4390,6 +4558,7 @@ namespace boost { namespace numeric { namespace ublas {
                 container_const_reference<self_type> (mmb), it1_ (it1), it2_ (it2) {}
 #endif
 
+        private:
             // Random access specialization
             BOOST_UBLAS_INLINE
             value_type dereference (dense_random_access_iterator_tag) const {
@@ -4454,6 +4623,7 @@ namespace boost { namespace numeric { namespace ublas {
 #endif
             }
 
+        public:
             // Arithmetic
             BOOST_UBLAS_INLINE
             const_iterator2 &operator ++ () {
@@ -4486,6 +4656,10 @@ namespace boost { namespace numeric { namespace ublas {
             BOOST_UBLAS_INLINE
             const_reference operator * () const {
                 return dereference (iterator_category ());
+            }
+            BOOST_UBLAS_INLINE
+            const_reference operator [] (difference_type n) const {
+                return *(*this + n);
             }
 
 #ifndef BOOST_UBLAS_NO_NESTED_CLASS_RELATION
@@ -4606,7 +4780,7 @@ namespace boost { namespace numeric { namespace ublas {
         typedef unknown_storage_tag storage_category;
         typedef unknown_orientation_tag orientation_category;
         typedef typename promote_traits<T1, T2>::promote_type promote_type;
-        typedef matrix_matrix_binary<E1, E2, matrix_matrix_prod<T1, T2, promote_type> > expression_type;
+        typedef matrix_matrix_binary<E1, E2, matrix_matrix_prod<E1, E2, promote_type> > expression_type;
 #ifndef BOOST_UBLAS_SIMPLE_ET_DEBUG
         typedef expression_type result_type;
 #else
@@ -4623,7 +4797,7 @@ namespace boost { namespace numeric { namespace ublas {
           unknown_storage_tag,
           unknown_orientation_tag) {
         typedef typename matrix_matrix_binary_traits<typename E1::value_type, E1,
-                                                                 typename E2::value_type, E2>::expression_type expression_type;
+                                                     typename E2::value_type, E2>::expression_type expression_type;
         return expression_type (e1 (), e2 ());
     }
 
@@ -4636,9 +4810,9 @@ namespace boost { namespace numeric { namespace ublas {
           const matrix_expression<E2> &e2) {
         BOOST_STATIC_ASSERT (E1::complexity == 0 && E2::complexity == 0);
         typedef typename matrix_matrix_binary_traits<typename E1::value_type, E1,
-                                                                 typename E2::value_type, E2>::storage_category storage_category;
+                                                     typename E2::value_type, E2>::storage_category storage_category;
         typedef typename matrix_matrix_binary_traits<typename E1::value_type, E1,
-                                                                 typename E2::value_type, E2>::orientation_category orientation_category;
+                                                     typename E2::value_type, E2>::orientation_category orientation_category;
         return prod (e1, e2, storage_category (), orientation_category ());
     }
 
@@ -4651,7 +4825,7 @@ namespace boost { namespace numeric { namespace ublas {
                unknown_storage_tag,
                unknown_orientation_tag) {
         typedef typename matrix_matrix_binary_traits<typename type_traits<typename E1::value_type>::precision_type, E1,
-                                                                 typename type_traits<typename E2::value_type>::precision_type, E2>::expression_type expression_type;
+                                                     typename type_traits<typename E2::value_type>::precision_type, E2>::expression_type expression_type;
         return expression_type (e1 (), e2 ());
     }
 
@@ -4664,9 +4838,9 @@ namespace boost { namespace numeric { namespace ublas {
                const matrix_expression<E2> &e2) {
         BOOST_STATIC_ASSERT (E1::complexity == 0 && E2::complexity == 0);
         typedef typename matrix_matrix_binary_traits<typename type_traits<typename E1::value_type>::precision_type, E1,
-                                                                 typename type_traits<typename E2::value_type>::precision_type, E2>::storage_category storage_category;
+                                                     typename type_traits<typename E2::value_type>::precision_type, E2>::storage_category storage_category;
         typedef typename matrix_matrix_binary_traits<typename type_traits<typename E1::value_type>::precision_type, E1,
-                                                                 typename type_traits<typename E2::value_type>::precision_type, E2>::orientation_category orientation_category;
+                                                     typename type_traits<typename E2::value_type>::precision_type, E2>::orientation_category orientation_category;
         return prec_prod (e1, e2, storage_category (), orientation_category ());
     }
 
@@ -4747,25 +4921,25 @@ namespace boost { namespace numeric { namespace ublas {
 
     template<class E>
     BOOST_UBLAS_INLINE
-    typename matrix_scalar_unary_traits<E, matrix_norm_1<typename E::value_type> >::result_type
+    typename matrix_scalar_unary_traits<E, matrix_norm_1<E> >::result_type
     norm_1 (const matrix_expression<E> &e) {
-        typedef typename matrix_scalar_unary_traits<E, matrix_norm_1<typename E::value_type> >::expression_type expression_type;
+        typedef typename matrix_scalar_unary_traits<E, matrix_norm_1<E> >::expression_type expression_type;
         return expression_type (e ());
     }
 
     template<class E>
     BOOST_UBLAS_INLINE
-    typename matrix_scalar_unary_traits<E, matrix_norm_frobenius<typename E::value_type> >::result_type
+    typename matrix_scalar_unary_traits<E, matrix_norm_frobenius<E> >::result_type
     norm_frobenius (const matrix_expression<E> &e) {
-        typedef typename matrix_scalar_unary_traits<E, matrix_norm_frobenius<typename E::value_type> >::expression_type expression_type;
+        typedef typename matrix_scalar_unary_traits<E, matrix_norm_frobenius<E> >::expression_type expression_type;
         return expression_type (e ());
     }
 
     template<class E>
     BOOST_UBLAS_INLINE
-    typename matrix_scalar_unary_traits<E, matrix_norm_inf<typename E::value_type> >::result_type
+    typename matrix_scalar_unary_traits<E, matrix_norm_inf<E> >::result_type
     norm_inf (const matrix_expression<E> &e) {
-        typedef typename matrix_scalar_unary_traits<E, matrix_norm_inf<typename E::value_type> >::expression_type expression_type;
+        typedef typename matrix_scalar_unary_traits<E, matrix_norm_inf<E> >::expression_type expression_type;
         return expression_type (e ());
     }
 

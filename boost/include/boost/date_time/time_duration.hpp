@@ -4,9 +4,9 @@
 /* Copyright (c) 2002,2003 CrystalClear Software, Inc.
  * Use, modification and distribution is subject to the 
  * Boost Software License, Version 1.0. (See accompanying
- * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
+ * file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
  * Author: Jeff Garland, Bart Garst
- * $Date: 2005/04/04 11:05:30 $
+ * $Date: 2008-02-27 15:00:24 -0500 (Wed, 27 Feb 2008) $
  */
 
 #include "boost/operators.hpp"
@@ -51,11 +51,11 @@ namespace date_time {
     typedef typename rep_type::impl_type impl_type;
 
     time_duration() : ticks_(0) {} 
-    time_duration(hour_type hours, 
-                  min_type minutes, 
-                  sec_type seconds=0,
-                  fractional_seconds_type frac_sec = 0) :
-      ticks_(rep_type::to_tick_count(hours,minutes,seconds,frac_sec)) 
+    time_duration(hour_type hours_in, 
+                  min_type minutes_in, 
+                  sec_type seconds_in=0,
+                  fractional_seconds_type frac_sec_in = 0) :
+      ticks_(rep_type::to_tick_count(hours_in,minutes_in,seconds_in,frac_sec_in)) 
     {}
     // copy constructor required for dividable<>
     //! Construct from another time_duration (Copy constructor)

@@ -5,7 +5,7 @@
     
     http://www.boost.org/
 
-    Copyright (c) 2001-2005 Hartmut Kaiser. Distributed under the Boost
+    Copyright (c) 2001-2008 Hartmut Kaiser. Distributed under the Boost
     Software License, Version 1.0. (See accompanying file
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -17,10 +17,16 @@
 
 #include <boost/wave/wave_config.hpp>
 #include <boost/wave/token_ids.hpp>
+#include <boost/wave/util/unput_queue_iterator.hpp> 
+
+// this must occur after all of the includes and before any code appears
+#ifdef BOOST_HAS_ABI_HEADERS
+#include BOOST_ABI_PREFIX
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// This file contains the definition of several token sequence analyse 
+// This file contains the definition of several token sequence analyze 
 // and transformation utility functions needed during macro handling.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -94,7 +100,8 @@ namespace on_exit {
     //
     ///////////////////////////////////////////////////////////////////////////
     template <typename IteratorT, typename UnputIteratorT>
-    class assign {
+    class assign
+    {
     public:
         assign(IteratorT &it_, UnputIteratorT const &uit_) 
         :   it(it_), uit(uit_) {}
@@ -154,30 +161,6 @@ is_special_macroname (StringT const &name)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Test, whether a given identifier resolves to a operator name
-//
-///////////////////////////////////////////////////////////////////////////////
-//template <typename StringT>
-//inline bool 
-//is_operator_macroname (StringT const &name)
-//{
-//    if (name.size() < 2 || name.size() > 6)
-//        return false;
-//        
-//    if (str == "and"    || str == "and_eq" || 
-//        str == "bitand" || str == "bitor" ||
-//        str == "compl"  || 
-//        str == "not"    || str == "not_eq" || 
-//        str == "or"     || str == "or_eq" || 
-//        str == "xor"    || str == "xor_eq")
-//    {
-//        return true;
-//    }
-//    return false;
-//}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 //  Test, whether two tokens are to be considered equal (different sequences
 //  of whitespace are considered to be equal)
 //
@@ -188,20 +171,15 @@ token_equals(TokenT const &left, TokenT const &right)
 {
     using namespace boost::wave;
     
-#if BOOST_WAVE_SUPPORT_VARIADICS_PLACEMARKERS != 0
-    if (T_PARAMETERBASE == token_id(left) || 
-        T_EXTPARAMETERBASE == token_id(left)) 
-#else
-    if (T_PARAMETERBASE == token_id(left))
-#endif 
-    {
+    if (IS_CATEGORY(left, ParameterTokenType)) {
     //  if the existing token is of type T_PARAMETERBASE, then the right token 
     //  must be of type T_IDENTIFIER or a keyword
     token_id id = token_id(right);
      
         return (T_IDENTIFIER == id || 
                 IS_CATEGORY(id, KeywordTokenType) ||
-                IS_EXTCATEGORY(id, OperatorTokenType|AltExtTokenType)) && 
+                IS_EXTCATEGORY(id, OperatorTokenType|AltExtTokenType) ||
+                IS_CATEGORY(id, BoolLiteralTokenType)) && 
             left.get_value() == right.get_value();
     }
 
@@ -229,7 +207,8 @@ const_iterator_type last1 = definition.end();
 const_iterator_type first2 = new_definition.begin();
 const_iterator_type last2 = new_definition.end();
     
-    while (first1 != last1 && token_equals(*first1, *first2)) {
+    while (first1 != last1 && first2 != last2 && token_equals(*first1, *first2)) 
+    {
     // skip whitespace, if both sequences have a whitespace next
     token_id id1 = next_token<const_iterator_type>::peek(first1, last1, false);
     token_id id2 = next_token<const_iterator_type>::peek(first2, last2, false);
@@ -273,8 +252,9 @@ parameters_equal(ContainerT const &parameters, ContainerT const &new_parameters)
 const_iterator_type first1 = parameters.begin();
 const_iterator_type last1 = parameters.end();
 const_iterator_type first2 = new_parameters.begin();
+const_iterator_type last2 = new_parameters.end();
 
-    while (first1 != last1) {
+    while (first1 != last1 && first2 != last2) {
     // parameters are different, if the corresponding tokens are different
         using namespace boost::wave;
         if (token_id(*first1) != token_id(*first2) ||
@@ -285,7 +265,7 @@ const_iterator_type first2 = new_parameters.begin();
         ++first1;
         ++first2;
     }
-    return (first1 == last1) ? true : false;
+    return (first1 == last1 && first2 == last2) ? true : false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -382,7 +362,7 @@ remove_placeholders (ContainerT &replacement_list)
 ///////////////////////////////////////////////////////////////////////////////
 template <typename ContainerT>
 inline void
-trim_argument_left (ContainerT &argument)
+trim_sequence_left (ContainerT &argument)
 {
     using namespace boost::wave;
     
@@ -401,7 +381,7 @@ trim_argument_left (ContainerT &argument)
 ///////////////////////////////////////////////////////////////////////////////
 template <typename ContainerT>
 inline void
-trim_argument_right (ContainerT &argument)
+trim_sequence_right (ContainerT &argument)
 {
     using namespace boost::wave;
     
@@ -415,16 +395,16 @@ trim_argument_right (ContainerT &argument)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Remove all whitespace tokens on the keft and right sides of the given token 
+//  Remove all whitespace tokens on the left and right sides of the given token 
 //  sequence
 //
 ///////////////////////////////////////////////////////////////////////////////
 template <typename ContainerT>
 inline void
-trim_argument (ContainerT &argument)
+trim_sequence (ContainerT &argument)
 {
-    trim_argument_left(argument);
-    trim_argument_right(argument);
+    trim_sequence_left(argument);
+    trim_sequence_right(argument);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -436,8 +416,6 @@ template <typename ContainerT>
 inline bool
 is_whitespace_only (ContainerT const &argument)
 {
-    using namespace cpplexer;
-    
     typename ContainerT::const_iterator end = argument.end();
     for (typename ContainerT::const_iterator it = argument.begin();
           it != end; ++it)
@@ -455,7 +433,8 @@ is_whitespace_only (ContainerT const &argument)
 ///////////////////////////////////////////////////////////////////////////////
 template <typename IteratorT>
 inline bool 
-skip_to_token(IteratorT &it, IteratorT const &end, token_id id)
+skip_to_token(IteratorT &it, IteratorT const &end, token_id id, 
+    bool& seen_newline)
 {
     using namespace boost::wave;
     if (token_id(*it) == id) 
@@ -464,8 +443,10 @@ skip_to_token(IteratorT &it, IteratorT const &end, token_id id)
         return false;
 
     while (IS_CATEGORY(*it, WhiteSpaceTokenType) || 
-            T_NEWLINE == token_id(*it)) 
+           T_NEWLINE == token_id(*it)) 
     {
+        if (T_NEWLINE == token_id(*it))
+            seen_newline = true;
         if (++it == end)
             return false;
     }
@@ -514,11 +495,60 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+//  Convert a string of an arbitrary string compatible type to a internal 
+//  string (BOOST_WAVE_STRING)
+template <typename Target, typename Src>
+struct to_string_helper
+{
+    typedef Target type;
+    
+    static Target call(Src const& str)
+    {
+        return Target(str.c_str());
+    }
+};
+
+// do nothing if types are equal
+template <typename Src>
+struct to_string_helper<Src, Src>
+{
+    typedef Src const& type;
+
+    static Src const& call(Src const& str)
+    {
+        return str;
+    }
+};
+
+template <typename Target>
+struct to_string_helper<Target, char const*>
+{
+    typedef Target type;
+
+    static Target call(char const* str)
+    {
+        return Target(str);
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////
 }   // namespace impl
+
+template <typename Target, typename Src>
+inline typename impl::to_string_helper<Target, Src>::type
+to_string(Src const& src)
+{
+    return impl::to_string_helper<Target, Src>::call(src);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 }   // namespace util
 }   // namespace wave
 }   // namespace boost
+
+// the suffix header occurs after all of the code
+#ifdef BOOST_HAS_ABI_HEADERS
+#include BOOST_ABI_SUFFIX
+#endif
 
 #endif // !defined(CPP_MACROMAP_UTIL_HPP_HK041119)

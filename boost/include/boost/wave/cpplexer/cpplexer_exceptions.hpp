@@ -3,7 +3,7 @@
 
     http://www.boost.org/
 
-    Copyright (c) 2001-2005 Hartmut Kaiser. Distributed under the Boost
+    Copyright (c) 2001-2008 Hartmut Kaiser. Distributed under the Boost
     Software License, Version 1.0. (See accompanying file
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -16,7 +16,14 @@
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
+#include <boost/throw_exception.hpp>
+
 #include <boost/wave/wave_config.hpp>
+
+// this must occur after all of the includes and before any code appears
+#ifdef BOOST_HAS_ABI_HEADERS
+#include BOOST_ABI_PREFIX
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // helper macro for throwing exceptions
@@ -29,10 +36,11 @@
     std::strstream stream;                                                    \
         stream << cls::severity_text(cls::code) << ": "                       \
         << cls::error_text(cls::code);                                        \
-    if (msg[0] != 0) stream << ": " << msg;                                   \
+    if ((msg)[0] != 0) stream << ": " << (msg);                               \
     stream << std::ends;                                                      \
     std::string throwmsg = stream.str(); stream.freeze(false);                \
-    throw cls(throwmsg.c_str(), cls::code, line, column, name);               \
+    boost::throw_exception(cls(throwmsg.c_str(), cls::code, line, column,     \
+        name));                                                               \
     }                                                                         \
     /**/
 #else
@@ -43,9 +51,45 @@
     std::stringstream stream;                                                 \
         stream << cls::severity_text(cls::code) << ": "                       \
         << cls::error_text(cls::code);                                        \
-    if (msg[0] != 0) stream << ": " << msg;                                   \
+    if ((msg)[0] != 0) stream << ": " << (msg);                               \
     stream << std::ends;                                                      \
-    throw cls(stream.str().c_str(), cls::code, line, column, name);           \
+    boost::throw_exception(cls(stream.str().c_str(), cls::code, line, column, \
+        name));                                                               \
+    }                                                                         \
+    /**/
+#endif // BOOST_NO_STRINGSTREAM
+#endif // BOOST_WAVE_LEXER_THROW
+
+#if !defined(BOOST_WAVE_LEXER_THROW_VAR)
+#ifdef BOOST_NO_STRINGSTREAM
+#include <strstream>
+#define BOOST_WAVE_LEXER_THROW_VAR(cls, codearg, msg, line, column, name)     \
+    {                                                                         \
+    using namespace boost::wave;                                              \
+    cls::error_code code = static_cast<cls::error_code>(codearg);             \
+    std::strstream stream;                                                    \
+        stream << cls::severity_text(code) << ": "                            \
+        << cls::error_text(code);                                             \
+    if ((msg)[0] != 0) stream << ": " << (msg);                               \
+    stream << std::ends;                                                      \
+    std::string throwmsg = stream.str(); stream.freeze(false);                \
+    boost::throw_exception(cls(throwmsg.c_str(), code, line, column,          \
+        name));                                                               \
+    }                                                                         \
+    /**/
+#else
+#include <sstream>
+#define BOOST_WAVE_LEXER_THROW_VAR(cls, codearg, msg, line, column, name)     \
+    {                                                                         \
+    using namespace boost::wave;                                              \
+    cls::error_code code = static_cast<cls::error_code>(codearg);             \
+    std::stringstream stream;                                                 \
+        stream << cls::severity_text(code) << ": "                            \
+        << cls::error_text(code);                                             \
+    if ((msg)[0] != 0) stream << ": " << (msg);                               \
+    stream << std::ends;                                                      \
+    boost::throw_exception(cls(stream.str().c_str(), code, line, column,      \
+        name));                                                               \
     }                                                                         \
     /**/
 #endif // BOOST_NO_STRINGSTREAM
@@ -92,7 +136,7 @@ public:
     :   line(line_), column(column_) 
     {
         unsigned int off = 0;
-        while (off < sizeof(filename) && *filename_)
+        while (off < sizeof(filename)-1 && *filename_)
             filename[off++] = *filename_++;
         filename[off] = 0;
     }
@@ -100,7 +144,10 @@ public:
     
     virtual char const *what() const throw() = 0;   // to be overloaded
     virtual char const *description() const throw() = 0;
-    
+    virtual int get_errorcode() const throw() = 0;
+    virtual int get_severity() const throw() = 0;
+    virtual bool is_recoverable() const throw() = 0;
+
     int line_no() const throw() { return line; }
     int column_no() const throw() { return column; }
     char const *file_name() const throw() { return filename; }
@@ -123,13 +170,14 @@ public:
         universal_char_base_charset = 2,
         universal_char_not_allowed = 3,
         invalid_long_long_literal = 4,
-        generic_lexing_error = 5
+        generic_lexing_error = 5,
+        generic_lexing_warning = 6
     };
 
     lexing_exception(char const *what_, error_code code, int line_, 
         int column_, char const *filename_) throw() 
     :   cpplexer_exception(line_, column_, filename_), 
-        level(severity_level(code))
+        level(severity_level(code)), code(code)
     {
         unsigned int off = 0;
         while (off < sizeof(buffer) && *what_)
@@ -146,11 +194,32 @@ public:
     {
         return buffer;
     }
-    util::severity get_severity()
+    virtual int get_severity() const throw()
     {
         return level;
     }
-
+    virtual int get_errorcode() const throw()
+    {
+        return code;
+    }
+    virtual bool is_recoverable() const throw()
+    {
+        switch (get_errorcode()) {
+        case lexing_exception::universal_char_invalid:
+        case lexing_exception::universal_char_base_charset:
+        case lexing_exception::universal_char_not_allowed:
+        case lexing_exception::invalid_long_long_literal:
+        case lexing_exception::generic_lexing_warning:
+        case lexing_exception::generic_lexing_error:
+            return true;    // for now allow all exceptions to be recoverable
+            
+        case lexing_exception::unexpected_error:
+        default:
+            break;
+        }
+        return false;
+    }
+    
     static char const *error_text(int code)
     {
     // error texts in this array must appear in the same order as the items in
@@ -163,7 +232,8 @@ public:
             "this universal character is not allowed in an identifier", // universal_char_not_allowed 
             "long long suffixes are not allowed in pure C++ mode, "
             "enable long_long mode to allow these",     // invalid_long_long_literal
-            "generic lexing error"                      // generic_lexing_error
+            "generic lexer error",                      // generic_lexing_error
+            "generic lexer warning"                     // generic_lexing_warning
         };
         return preprocess_exception_errors[code];
     }
@@ -176,7 +246,8 @@ public:
             util::severity_error,               // universal_char_base_charset
             util::severity_error,               // universal_char_not_allowed
             util::severity_warning,             // invalid_long_long_literal
-            util::severity_error                // generic_lexing_error                
+            util::severity_error,               // generic_lexing_error                
+            util::severity_warning              // invalid_long_long_literal
         };
         return preprocess_exception_severity[code];
     }
@@ -188,11 +259,32 @@ public:
 private:
     char buffer[512];
     util::severity level;
+    error_code code;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+//
+//  The is_recoverable() function allows to decide, whether it is possible 
+//  simply to continue after a given exception was thrown by Wave.
+//
+//  This is kind of a hack to allow to recover from certain errors as long as 
+//  Wave doesn't provide better means of error recovery.
+//
+///////////////////////////////////////////////////////////////////////////////
+inline bool
+is_recoverable(lexing_exception const& e)
+{
+    return e.is_recoverable();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 }   // namespace cpplexer
 }   // namespace wave
 }   // namespace boost 
+
+// the suffix header occurs after all of the code
+#ifdef BOOST_HAS_ABI_HEADERS
+#include BOOST_ABI_SUFFIX
+#endif
 
 #endif // !defined(CPPLEXER_EXCEPTIONS_HPP_1A09DE1A_6D1F_4091_AF7F_5F13AB0D31AB_INCLUDED)

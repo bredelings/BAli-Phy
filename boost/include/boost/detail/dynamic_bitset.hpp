@@ -1,7 +1,7 @@
 // --------------------------------------------------
 //
 // (C) Copyright Chuck Allison and Jeremy Siek 2001 - 2002.
-// (C) Copyright Gennaro Prota                 2003 - 2004.
+// (C) Copyright Gennaro Prota                 2003 - 2006.
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -9,8 +9,9 @@
 //
 // -----------------------------------------------------------
 
-//  See http://www.boost.org/libs/dynamic_bitset for documentation.
-
+//  See http://www.boost.org/libs/dynamic_bitset/ for documentation.
+//
+//  $Revision: 41316 $ $Date: 2007-11-23 12:03:14 -0500 (Fri, 23 Nov 2007) $ - $Name$
 
 #ifndef BOOST_DETAIL_DYNAMIC_BITSET_HPP
 #define BOOST_DETAIL_DYNAMIC_BITSET_HPP
@@ -18,7 +19,6 @@
 #include <cstddef> // for std::size_t
 #include "boost/config.hpp"
 #include "boost/detail/workaround.hpp"
-//#include "boost/static_assert.hpp" // gps
 
 
 namespace boost {
@@ -35,6 +35,14 @@ namespace boost {
         return static_cast<const unsigned char *>(static_cast<const void *>(p));
     }
 
+    template<typename T, int amount, int width /* = default */>
+    struct shifter
+    {
+        static void left_shift(T & v) {
+            amount >= width ? (v = 0)
+                : (v >>= BOOST_DYNAMIC_BITSET_WRAP_CONSTANT(amount));
+        }
+    };
 
     // ------- count function implementation --------------
 

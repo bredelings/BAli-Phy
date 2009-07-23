@@ -4,9 +4,9 @@
 /* Copyright (c) 2002,2003 CrystalClear Software, Inc.
  * Use, modification and distribution is subject to the 
  * Boost Software License, Version 1.0. (See accompanying
- * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
+ * file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
  * Author: Jeff Garland, Bart Garst
- * $Date: 2003/12/03 03:01:05 $
+ * $Date: 2008-02-27 15:00:24 -0500 (Wed, 27 Feb 2008) $
  */
 
 
@@ -61,7 +61,7 @@ namespace date_time {
   
   template<typename frac_sec_type, 
            time_resolutions res,
-#if (defined(BOOST_MSVC) && (_MSC_VER <= 1200))  // 1200 == VC++ 6.0
+#if (defined(BOOST_MSVC) && (_MSC_VER < 1300))
              boost::int64_t resolution_adjust,
 #else
              typename frac_sec_type::int_type resolution_adjust,
@@ -120,11 +120,10 @@ namespace date_time {
                    + (fractional_seconds_type(minutes)*60) 
                    + seconds)*res_adjust()) + fs) * -1);
       }
-      else{
-        return (((fractional_seconds_type(hours)*3600) 
-                 + (fractional_seconds_type(minutes)*60) 
-                 + seconds)*res_adjust()) + fs;
-      }
+
+      return (((fractional_seconds_type(hours)*3600) 
+               + (fractional_seconds_type(minutes)*60) 
+               + seconds)*res_adjust()) + fs;
     }
     
   };

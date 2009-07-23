@@ -311,7 +311,7 @@ class known_get
     : public static_visitor<T&>
 {
 
-#if !BOOST_WORKAROUND(BOOST_MSVC, <= 1200)
+#if !BOOST_WORKAROUND(BOOST_MSVC, < 1300)
 
 public: // visitor interface
 
@@ -477,16 +477,16 @@ class direct_assigner
 {
 private: // representation
 
-    T& rhs_;
+    const T& rhs_;
 
 public: // structors
 
-    explicit direct_assigner(T& rhs)
+    explicit direct_assigner(const T& rhs)
         : rhs_(rhs)
     {
     }
 
-#if !BOOST_WORKAROUND(BOOST_MSVC, <= 1200)
+#if !BOOST_WORKAROUND(BOOST_MSVC, < 1300)
 
 public: // visitor interface
 
@@ -1568,7 +1568,7 @@ private: // helpers, for modifiers (below)
     void assign(const T& rhs)
     {
         // If direct T-to-T assignment is not possible...
-        detail::variant::direct_assigner<const T> direct_assign(rhs);
+        detail::variant::direct_assigner<T> direct_assign(rhs);
         if (this->apply_visitor(direct_assign) == false)
         {
             // ...then convert rhs to variant and assign:

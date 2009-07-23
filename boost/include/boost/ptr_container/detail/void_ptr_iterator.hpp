@@ -18,11 +18,10 @@
 
 #include <boost/config.hpp>
 #include <boost/iterator/iterator_traits.hpp>
+#include <boost/type_traits/remove_const.hpp>
 
 namespace boost
 {
-    //namespace ptr_container_detail
-    //{
         template
         < 
             class VoidIter, 
@@ -31,7 +30,8 @@ namespace boost
         class void_ptr_iterator
         {
         public:
-            typedef T        value_type;
+            typedef BOOST_DEDUCED_TYPENAME boost::remove_const<T>::type        
+                             value_type;
             typedef T&       reference;
             typedef T*       pointer;
 

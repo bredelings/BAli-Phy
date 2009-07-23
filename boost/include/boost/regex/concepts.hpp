@@ -68,7 +68,13 @@ struct char_architype
 //
 } // namespace boost
 namespace std{
-   template<> struct char_traits<boost::char_architype>{};
+   template<> struct char_traits<boost::char_architype>
+   {
+      // The intent is that this template is not instantiated,
+      // but this typedef gives us a chance of compilation in
+      // case it is:
+      typedef boost::char_architype char_type;
+   };
 }
 namespace boost{
 //
@@ -205,6 +211,8 @@ struct RegexTraitsConcept
    const traits m_ctraits;
    const char_type* m_pointer;
    char_type m_char;
+private:
+   RegexTraitsConcept& operator=(RegexTraitsConcept&);
 };
 
 //
@@ -227,7 +235,7 @@ template <class Regex>
 struct BaseRegexConcept
 {
    typedef typename Regex::value_type value_type;
-   typedef typename Regex::size_type size_type;
+   //typedef typename Regex::size_type size_type;
    typedef typename Regex::flag_type flag_type;
    typedef typename Regex::locale_type locale_type;
    typedef input_iterator_archetype<value_type> input_iterator_type;
@@ -360,9 +368,7 @@ struct BaseRegexConcept
 
       // access:
       const Regex ce;
-      bool b = ce.empty();
-      ignore_unused_variable_warning(b);
-      size_type i = ce.mark_count();
+      unsigned i = ce.mark_count();
       ignore_unused_variable_warning(i);
       m_flags = ce.flags();
       e.imbue(ce.getloc());
@@ -377,7 +383,7 @@ struct BaseRegexConcept
       typedef typename sub_match_type::iterator sub_iter_type;
       BOOST_STATIC_ASSERT((::boost::is_same<sub_value_type, value_type>::value));
       BOOST_STATIC_ASSERT((::boost::is_same<sub_iter_type, BidiIterator>::value));
-      b = m_sub.matched;
+      bool b = m_sub.matched;
       ignore_unused_variable_warning(b);
       BidiIterator bi = m_sub.first;
       ignore_unused_variable_warning(bi);
@@ -403,6 +409,8 @@ struct BaseRegexConcept
       match_results_type m3(m1);
       m1 = m2;
 
+      int ival = 0;
+
       mr_size_type mrs = m_cresults.size();
       ignore_unused_variable_warning(mrs);
       mrs = m_cresults.max_size();
@@ -411,14 +419,14 @@ struct BaseRegexConcept
       ignore_unused_variable_warning(b);
       mr_difference_type mrd = m_cresults.length();
       ignore_unused_variable_warning(mrd);
-      mrd = m_cresults.length(mrs);
+      mrd = m_cresults.length(ival);
       ignore_unused_variable_warning(mrd);
       mrd = m_cresults.position();
       ignore_unused_variable_warning(mrd);
       mrd = m_cresults.position(mrs);
       ignore_unused_variable_warning(mrd);
 
-      mr_const_reference mrcr = m_cresults[m_size];
+      mr_const_reference mrcr = m_cresults[ival];
       ignore_unused_variable_warning(mrcr);
       mr_const_reference mrcr2 = m_cresults.prefix();
       ignore_unused_variable_warning(mrcr2);
@@ -523,7 +531,7 @@ struct BaseRegexConcept
 
    pointer_type m_pointer;
    flag_type m_flags;
-   size_type m_size;
+   std::size_t m_size;
    input_iterator_type in1, in2;
    const sub_match_type m_sub;
    const value_type m_char;
@@ -547,7 +555,7 @@ template <class Regex>
 struct RegexConcept
 {
    typedef typename Regex::value_type value_type;
-   typedef typename Regex::size_type size_type;
+   //typedef typename Regex::size_type size_type;
    typedef typename Regex::flag_type flag_type;
    typedef typename Regex::locale_type locale_type;
 
@@ -738,6 +746,7 @@ struct RegexConcept
    RegexConcept& operator=(const RegexConcept&);
 };
 
+#ifndef BOOST_REGEX_TEST_STD
 //
 // BoostRegexConcept:
 // Test every interface in the Boost implementation:
@@ -777,6 +786,8 @@ struct BoostRegexConcept
          | global_regex_namespace::regex_constants::format_no_copy
          | global_regex_namespace::regex_constants::format_first_only;
 
+      (void)mopts;
+
       function_requires<RegexConcept<Regex> >();
       const global_regex_namespace::regex_error except(global_regex_namespace::regex_constants::error_collate);
       std::ptrdiff_t pt = except.position();
@@ -792,6 +803,8 @@ struct BoostRegexConcept
       int i2 = ce.compare(ce2);
       ignore_unused_variable_warning(i2);
       bool b = ce == ce2;
+      ignore_unused_variable_warning(b);
+      b = ce.empty();
       ignore_unused_variable_warning(b);
       b = ce != ce2;
       ignore_unused_variable_warning(b);
@@ -849,6 +862,8 @@ struct BoostRegexConcept
    BoostRegexConcept(const BoostRegexConcept&);
    BoostRegexConcept& operator=(const BoostRegexConcept&);
 };
+
+#endif // BOOST_REGEX_TEST_STD
 
 }
 

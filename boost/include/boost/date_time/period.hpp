@@ -4,9 +4,9 @@
 /* Copyright (c) 2002,2003 CrystalClear Software, Inc.
  * Use, modification and distribution is subject to the 
  * Boost Software License, Version 1.0. (See accompanying
- * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
+ * file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
  * Author: Jeff Garland, Bart Garst 
- * $Date: 2005/07/24 23:47:50 $
+ * $Date: 2008-02-27 15:00:24 -0500 (Wed, 27 Feb 2008) $
  */
 
 /*! \file period.hpp
@@ -67,6 +67,7 @@ namespace date_time {
     bool operator==(const period& rhs) const;
     bool operator<(const period& rhs) const;
     void shift(const duration_rep& d);
+    void expand(const duration_rep& d);
     bool contains(const point_rep& point) const;
     bool contains(const period& other) const;
     bool intersects(const period& other) const;
@@ -172,6 +173,33 @@ namespace date_time {
   void period<point_rep,duration_rep>::shift(const duration_rep& d)
   {
     begin_ = begin_ + d;
+    last_  = last_  + d;
+  }
+
+  /** Expands the size of the period by the duration on both ends.
+   *
+   *So before expand 
+   *@code
+   *
+   *         [-------]
+   * ^   ^   ^   ^   ^   ^  ^
+   * 1   2   3   4   5   6  7
+   * 
+   *@endcode
+   * After expand(2)
+   *@code
+   *
+   * [----------------------]
+   * ^   ^   ^   ^   ^   ^  ^
+   * 1   2   3   4   5   6  7
+   * 
+   *@endcode
+   */
+  template<class point_rep, class duration_rep>
+  inline
+  void period<point_rep,duration_rep>::expand(const duration_rep& d)
+  {
+    begin_ = begin_ - d;
     last_  = last_  + d;
   }
 

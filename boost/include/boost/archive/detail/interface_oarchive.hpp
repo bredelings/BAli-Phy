@@ -16,22 +16,21 @@
 
 //  See http://www.boost.org for updates, documentation, and revision history.
 #include <string>
+#include <cstddef> // NULL
 #include <boost/cstdint.hpp>
 #include <boost/mpl/bool.hpp>
 
 #include <boost/archive/detail/auto_link_archive.hpp>
+#include <boost/archive/detail/oserializer.hpp>
 #include <boost/archive/detail/abi_prefix.hpp> // must be the last header
 
-namespace boost { 
-template<class T>
-class shared_ptr;
-namespace serialization {
-    class extended_type_info;
-} // namespace serialization
+#include <boost/serialization/singleton.hpp>
+
+namespace boost {
 namespace archive {
 namespace detail {
 
-class BOOST_ARCHIVE_DECL(BOOST_PP_EMPTY()) basic_pointer_oserializer;
+class BOOST_ARCHIVE_OR_WARCHIVE_DECL(BOOST_PP_EMPTY()) basic_pointer_oserializer;
 
 template<class Archive>
 class interface_oarchive 
@@ -50,29 +49,16 @@ public:
     }
 
     template<class T>
-    const basic_pointer_oserializer * register_type(const T * = NULL){
+    const basic_pointer_oserializer * 
+    register_type(const T * = NULL){
         const basic_pointer_oserializer & bpos =
-            instantiate_pointer_oserializer(
-                static_cast<Archive *>(NULL),
-                static_cast<T *>(NULL)
-            );
+            boost::serialization::singleton<
+                pointer_oserializer<Archive, T>
+            >::get_const_instance();
         this->This()->register_basic_serializer(bpos.get_basic_serializer());
         return & bpos;
     }
 
-    void lookup_helper(
-        const boost::serialization::extended_type_info * const eti,
-        boost::shared_ptr<void> & sph
-    ){
-        this->This()->lookup_basic_helper(eti, sph);
-    }
-
-    void insert_helper(
-        const boost::serialization::extended_type_info * const eti,
-        shared_ptr<void> & sph
-    ){
-        this->This()->insert_basic_helper(eti, sph);
-    }
     template<class T>
     Archive & operator<<(T & t){
         this->This()->save_override(t, 0);

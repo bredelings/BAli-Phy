@@ -1,4 +1,4 @@
-//  (C) Copyright Gennadiy Rozental 2001-2005.
+//  (C) Copyright Gennadiy Rozental 2001-2007.
 //  (C) Copyright Beman Dawes 2001.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at 
@@ -6,9 +6,9 @@
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile: execution_monitor.hpp,v $
+//  File        : $RCSfile$
 //
-//  Version     : $Revision: 1.23 $
+//  Version     : $Revision: 41369 $
 //
 //  Description : defines abstract monitor interfaces and implements execution exception
 //  The original Boost Test Library included an implementation detail function
@@ -36,9 +36,11 @@
 #include <boost/test/detail/global_typedef.hpp>
 #include <boost/test/detail/fwd_decl.hpp>
 #include <boost/test/utils/callback.hpp>
+#include <boost/test/utils/class_properties.hpp>
 
 // Boost
 #include <boost/scoped_ptr.hpp>
+#include <boost/scoped_array.hpp>
 #include <boost/type.hpp>
 #include <boost/cstdlib.hpp>
 
@@ -54,7 +56,7 @@ namespace detail {
 // **************       detail::translate_exception_base       ************** //
 // ************************************************************************** //
 
-class translate_exception_base {
+class BOOST_TEST_DECL translate_exception_base {
 public:
     // Constructor
     explicit    translate_exception_base( boost::scoped_ptr<translate_exception_base>& next )
@@ -80,7 +82,7 @@ protected:
     
 //  design rationale: fear of being out (or nearly out) of memory.
     
-class execution_exception {
+class BOOST_TEST_DECL execution_exception {
     typedef boost::unit_test::const_string const_string;
 public:
     enum error_code {
@@ -129,16 +131,38 @@ private:
 // **************               execution_monitor              ************** //
 // ************************************************************************** //
 
-class execution_monitor {
+class BOOST_TEST_DECL execution_monitor {
 public:
-    int execute( unit_test::callback0<int> const& F, bool catch_system_errors = true, int timeout = 0 ); 
-    //  The catch_system_errors parameter specifies whether the monitor should 
+    // Constructor
+    execution_monitor()
+    : p_catch_system_errors( true )
+    , p_auto_start_dbg( false )
+    , p_timeout( 0 )
+    , p_use_alt_stack( true )
+    , p_detect_fp_exceptions( false )
+    {}
+
+    // Public properties
+    
+    //  The p_catch_system_errors parameter specifies whether the monitor should 
     //  try to catch system errors/exceptions that would cause program to crash 
     //  in regular case
-    //  The timeout argument specifies the seconds that elapse before
+    unit_test::readwrite_property<bool> p_catch_system_errors; 
+    //  The p_auto_start_dbg parameter specifies whether the monitor should 
+    //  try to attach debugger in case of caught system error
+    unit_test::readwrite_property<bool> p_auto_start_dbg;
+    //  The p_timeout parameter specifies the seconds that elapse before
     //  a timer_error occurs.  May be ignored on some platforms.
-    //
-    //  Returns:  Value returned by function().
+    unit_test::readwrite_property<int>  p_timeout;
+    //  The p_use_alt_stack parameter specifies whether the monitor should
+    //  use alternative stack for the signal catching
+    unit_test::readwrite_property<bool> p_use_alt_stack;
+    //  The p_detect_fp_exceptions parameter specifies whether the monitor should
+    //  try to detect hardware floating point exceptions
+    unit_test::readwrite_property<bool> p_detect_fp_exceptions;
+
+    int         execute( unit_test::callback0<int> const& F ); 
+    //  Returns:  Value returned by function call F().
     //
     //  Effects:  Calls executes supplied function F inside a try/catch block which also may
     //  include other unspecified platform dependent error detection code.
@@ -154,10 +178,11 @@ public:
 
 private:
     // implementation helpers
-    int         catch_signals( unit_test::callback0<int> const& F, bool catch_system_errors, int timeout );
+    int         catch_signals( unit_test::callback0<int> const& F );
 
     // Data members
     boost::scoped_ptr<detail::translate_exception_base> m_custom_translators;
+    boost::scoped_array<char>                           m_alt_stack;
 }; // execution_monitor
 
 namespace detail {
@@ -200,47 +225,30 @@ execution_monitor::register_exception_translator( ExceptionTranslator const& tr,
 }
 
 // ************************************************************************** //
-// **************              detect_memory_leak              ************** //
-// ************************************************************************** //
-
-// turn on system memory leak detection
-void    detect_memory_leak( long mem_leak_alloc_num = 0 );
-
-// ************************************************************************** //
 // **************               execution_aborted              ************** //
 // ************************************************************************** //
 
 struct execution_aborted {};
+
+// ************************************************************************** //
+// **************                  system_error                ************** //
+// ************************************************************************** //
+
+class system_error {
+public:
+    // Constructor
+    explicit    system_error( char const* exp );
+
+    unit_test::readonly_property<long>          p_errno; 
+    unit_test::readonly_property<char const*>   p_failed_exp; 
+};
+
+#define BOOST_TEST_SYS_ASSERT( exp ) if( (exp) ) ; else throw ::boost::system_error( BOOST_STRINGIZE( exp ) )
 
 }  // namespace boost
 
 //____________________________________________________________________________//
 
 #include <boost/test/detail/enable_warnings.hpp>
-
-// ***************************************************************************
-//  Revision History :
-//  
-//  $Log: execution_monitor.hpp,v $
-//  Revision 1.23  2005/04/05 06:11:37  rogeeff
-//  memory leak allocation point detection\nextra help with _WIN32_WINNT
-//
-//  Revision 1.22  2005/02/20 08:27:05  rogeeff
-//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
-//
-//  Revision 1.21  2005/02/01 08:59:28  rogeeff
-//  supplied_log_formatters split
-//  change formatters interface to simplify result interface
-//
-//  Revision 1.20  2005/02/01 06:40:06  rogeeff
-//  copyright update
-//  old log entries removed
-//  minor stilistic changes
-//  depricated tools removed
-//
-//  Revision 1.19  2005/01/31 05:59:18  rogeeff
-//  detect_memory_leak feature added
-//
-// ***************************************************************************
 
 #endif

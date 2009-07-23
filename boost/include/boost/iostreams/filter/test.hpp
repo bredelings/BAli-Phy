@@ -1,4 +1,5 @@
-// (C) Copyright Jonathan Turkanis 2005.
+// (C) Copyright 2008 CodeRage, LLC (turkanis at coderage dot com)
+// (C) Copyright 2005-2007 Jonathan Turkanis
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
@@ -34,7 +35,6 @@
 #include <boost/iostreams/categories.hpp>
 #include <boost/iostreams/compose.hpp>
 #include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/detail/adapter/basic_adapter.hpp>
 #include <boost/iostreams/detail/bool_trait_def.hpp>
 #include <boost/iostreams/detail/ios.hpp>
 #include <boost/iostreams/device/array.hpp>
@@ -134,6 +134,7 @@ public:
         return amt;
     }
 private:
+    non_blocking_sink& operator=(const non_blocking_sink&);
     std::string&     dest_;
     std::streamsize  inc_;
 };

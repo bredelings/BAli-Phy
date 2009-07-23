@@ -23,17 +23,16 @@
 #include <boost/config.hpp>
 
 #include <list>
+#include <cstddef> // NULL
 
-#include <boost/serialization/detail/shared_ptr_132.hpp>
-
-#include <boost/serialization/is_abstract.hpp>
+#include <boost/serialization/assume_abstract.hpp>
 #include <boost/serialization/split_free.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/tracking.hpp>
 #include <boost/serialization/void_cast.hpp>
 
 // mark base class as an (uncreatable) base class
-BOOST_IS_ABSTRACT(boost_132::detail::sp_counted_base)
+#include <boost/serialization/detail/shared_ptr_132.hpp>
 
 /////////////////////////////////////////////////////////////
 // Maintain a couple of lists of loaded shared pointers of the old previous
@@ -45,25 +44,6 @@ namespace detail {
 
 struct null_deleter {
     void operator()(void const *) const {}
-};
-
-class shared_ptr_helper{
-    typedef std::list<shared_ptr<void> > collection_type;
-    typedef collection_type::iterator iterator_type;
-    // list of loaded pointers.  This is used to be sure that the pointers
-    // stay around long enough to be "matched" with other pointers loaded
-    // by the same archive.  These are created with a "null_deleter" so that
-    // when this list is destroyed - the underlaying raw pointers are not
-    // destroyed.  This has to be done because the pointers are also held by
-    // new system which is disjoint from this set.  This is implemented
-    // by a change in load_construct_data below.  It makes this file suitable
-    // only for loading pointers into a 1.33 or later boost system.
-    collection_type m_pointers;
-public:
-    void append(const boost_132::shared_ptr<void> & t){
-        m_pointers.push_back(t);
-    }
-    virtual ~shared_ptr_helper(){}
 };
 
 } // namespace detail
@@ -96,8 +76,9 @@ inline void serialize(
 template<class Archive, class P, class D>
 inline void save_construct_data(
     Archive & ar,
-    const boost_132::detail::sp_counted_base_impl<P, D> *t, 
-    const unsigned int /* file_version */
+    const 
+    boost_132::detail::sp_counted_base_impl<P, D> *t, 
+    const BOOST_PFTO unsigned int /* file_version */
 ){
     // variables used for construction
     ar << boost::serialization::make_nvp("ptr", t->ptr);
@@ -111,7 +92,8 @@ inline void load_construct_data(
 ){
     P ptr_;
     ar >> boost::serialization::make_nvp("ptr", ptr_);
-//    ::new(t)boost_132::detail::sp_counted_base_impl<P, D>(ptr_,  D()); // placement
+    // ::new(t)boost_132::detail::sp_counted_base_impl<P, D>(ptr_,  D()); 
+    // placement
     // note: the original ::new... above is replaced by the one here.  This one
     // creates all new objects with a null_deleter so that after the archive
     // is finished loading and the shared_ptrs are destroyed - the underlying
@@ -227,7 +209,7 @@ inline void serialize(
         boost::checked_deleter< T >                                \
     > __shared_ptr_ ## T;                                          \
     BOOST_CLASS_EXPORT_GUID(__shared_ptr_ ## T, "__shared_ptr_" K) \
-    BOOST_CLASS_EXPORT_GUID(T, K)                                  \
+    BOOST_CLASS_EXPORT_GUID_1(T, K)                                \
     /**/
 
 #define BOOST_SHARED_POINTER_EXPORT(T)                             \

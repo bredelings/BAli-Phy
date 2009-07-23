@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: variate_generator.hpp,v 1.8 2005/02/14 11:53:50 johnmaddock Exp $
+ * $Id: variate_generator.hpp 27375 2005-02-14 11:53:50Z johnmaddock $
  *
  */
 

@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: triangle_distribution.hpp,v 1.11 2004/07/27 03:43:32 dgregor Exp $
+ * $Id: triangle_distribution.hpp 41369 2007-11-25 18:07:19Z bemandawes $
  *
  * Revision history
  *  2001-02-18  moved to individual header files
@@ -31,10 +31,10 @@ public:
   typedef RealType input_type;
   typedef RealType result_type;
 
-  explicit triangle_distribution(result_type a = result_type(0),
-                                 result_type b = result_type(0.5),
-                                 result_type c = result_type(1))
-    : _a(a), _b(b), _c(c)
+  explicit triangle_distribution(result_type a_arg = result_type(0),
+                                 result_type b_arg = result_type(0.5),
+                                 result_type c_arg = result_type(1))
+    : _a(a_arg), _b(b_arg), _c(c_arg)
   {
     assert(_a <= _b && _b <= _c);
     init();
