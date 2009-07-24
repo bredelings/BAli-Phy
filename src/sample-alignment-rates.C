@@ -261,8 +261,6 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
   
   insertion_graph G(A,T,root);
 
-  cerr<<"got here"<<endl;
-
   for(int i=0;i<G.insertions.size();i++) {
     const insertion& I = G.insertions[i];
     cerr<<i<<" ("<<I.prev()<<" [";
@@ -276,12 +274,48 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
 
 
   cerr<<join(G.insertion_for_column," ")<<endl;
+
+  vector<int> index_into_insertion(G.insertions.size(),0);
   
+  // Allocate space for calculating forward probabilities Forward[pS][nS](c,cS)
+  //   where we are conditioning of PREV-state (pS) and NEXT-state (nS)
+
+  // We are not reserving space for 
+  matrix<double> M(A.length(),R);
+  vector< vector<matrix<double> > > Forward(R,vector<matrix<double> >(R,M));
+
   // go through insertions
   for(int c=0; c<A.length(); c++)
   {
-  }
+    int which_ins = G.insertion_for_column[c];
+    
+    index_into_insertion[which_ins]++;
 
+    assert(G.insertions[which_ins].columns[index_into_insertion[which_ins]] == c);
+
+    insertion& current_insertion = G.insertions[which_ins];
+
+    int prev_column = current_insertion.columns[index_into_insertion[which_ins]-1];
+
+    // previous column in insertion is conditioned on (as PREV column), not summed over
+    if (current_insertion.prev() == prev_column)
+    {
+      for(int pS=0;pS<R;pS++)
+	for(int nS=0;nS<R;nS++)
+	  for(int cS=0;cS<R;cS++)
+	    Forward[pS][nS](c,cS) = 1; //transition_p(G.b, 
+    }
+    else {
+      for(int pS=0;pS<R;pS++)
+	for(int nS=0;nS<R;nS++)
+	  for(int cS=0;cS<R;cS++)
+	  {
+	    double total = 1;
+	    
+	    Forward[pS][nS](c,cS) = total; //transition_p(G.b, 	  
+	  }
+    }
+  }
 
   // Forward probabilities F[i][j][k]:
     // these are the probabilities of the insertion we are in, up to the current point.
@@ -320,3 +354,30 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
    For each column, process 
    * each 
    */
+void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
+{
+  MCMC::Result result(1);
+
+  Parameters P2 = P;
+
+  alignment& A = *P2[0].A;
+
+  int c = (int)(uniform()*A.length());
+
+  ublas::matrix<int>& type_note = A.note(2);
+
+  type_note(c,0) = 1-type_note(c,0);
+
+  bool success = accept_MH(P,P2,1.0);
+
+  if (success) {
+    P=P2;
+    //    std::cerr<<"accepted\n";
+    result.totals[0] = 1;
+  }
+  else {
+    //    std::cerr<<"rejected\n";
+  }
+
+  Stats.inc("flip-column",result);
+}
