@@ -61,8 +61,10 @@ namespace indel
   bool PairTransducer::is_start(int i)  const {return i == start_;}
   bool PairTransducer::is_end(int i)    const {return i == end_;}
 
+  // find a set of non-silent states (along with start and end) to use instead
   void PairTransducer::remove_silent()
   {
+    // construct the new set of states, and mark the (single) start and (single) end
     int new_start = -1;
     int new_end = -1;
     vector<int> keep;
@@ -77,16 +79,21 @@ namespace indel
       else
 	remove_one_state(*this,i);
 
+    // This only works because we already REMOVED the other states
     Matrix Q(keep.size(),keep.size());
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
 	Q(i,j) = (*this)(keep[i],keep[j]);
     
+    // only keep the emission information for states we are going to keep
     e1 = apply_indices(e1,keep);
     e2 = apply_indices(e2,keep);
+
+    // swap in the new start and end
     start_ = new_start;
     end_ = new_end;
 
+    // swap in the new transition probs
     this->swap(Q);
 
     for(int i=0;i<n_states();i++)
@@ -97,6 +104,7 @@ namespace indel
   {
     Matrix& Q = *this;
 
+    // store a copy of our transition probabilities to restore at the end
     Matrix temp = Q;
 
     vector<int> from;
@@ -137,6 +145,7 @@ namespace indel
 	  
       }
 
+    // restore the saved copy of our transition probabilities
     Q = temp;
   }
 
@@ -816,130 +825,142 @@ indel::PairTransducer get_FS_Transducer(double t,double delta_s,double delta_f, 
 
   const int Ms  = 1;
   const int Ds  = 2;
-  const int IsA = 3;
-  const int IsB = 4;
+  const int IsS = 3;
+  const int IsF = 4;
   const int Ws  = 5;
   const int WsD = 6;
-  const int TsA = 7;
-  const int TsB = 8;
+  const int TsS = 7;
+  const int TsF = 8;
   const int E   = 9;
 
   const int Mf  = 10;
   const int Df  = 11;
-  const int IfA = 12;
-  const int IfB = 13;
+  const int IfF = 12;
+  const int IfS = 13;
   const int Wf  = 14;
   const int WfD = 15;
-  const int TfA = 16;
-  const int TfB = 17;
+  const int TfF = 16;
+  const int TfS = 17;
   // 15
 
-  vector<int> e1(18);
-  e1[S]   = -1;
+  const int TsE = 18;
+  const int IsE = 19;
+  const int TfE = 20;
+  const int IfE = 21;
 
-  e1[Ms]  =  0;
+  vector<int> e1(22, -1);
+  vector<int> e2(22, -1);
+
+  // matches
+  e1[Ms]  =  e2[Ms]  =  0;
+  e1[Mf]  =  e2[Mf]  =  1;
+
+  // deletes
   e1[Ds]  =  0;
-  e1[IsA] = -1;
-  e1[IsB] = -1;
-  e1[Ws]  = -1;
-  e1[WsD] = -1;
-  e1[TsA] = -1;
-  e1[TsB] = -1;
-
-  e1[E]   = -1;
-
-  e1[Mf]  =  1;
   e1[Df]  =  1;
-  e1[IfA] = -1;
-  e1[IfB] = -1;
-  e1[Wf]  = -1;
-  e1[WfD] = -1;
-  e1[TfA] = -1;
-  e1[TfB] = -1;
 
-  vector<int> e2(18);
-  e2[S]   = -1;
+  // inserts - conditional on the next letter in the input sequence
+  e2[IsS] =  0;
+  e2[IsF] =  0;
+  e2[IsE] =  0;
 
-  e2[Ms]  =  0;
-  e2[Ds]  = -1;
-  e2[IsA] =  0;
-  e2[IsB] =  0;
-  e2[Ws]  = -1;
-  e2[WsD] = -1;
-  e2[TsA] = -1;
-  e2[TsB] = -1;
-  e2[E]   = -1;
-
-  e2[Mf]  =  1;
-  e2[Df]  = -1;
-  e2[IfA] =  1;
-  e2[IfB] =  1;
-  e2[Wf]  = -1;
-  e2[WfD] = -1;
-  e2[TfA] = -1;
-  e2[TfB] = -1;
-
+  e2[IfS] =  1;
+  e2[IfF] =  1;
+  e2[IfE] =  1;
 
   indel::PairTransducer Q(S,E,e1,e2);
 
-  Q(S,TsA)    = 1;
-  Q(S,TfA)    = 1;
+  Q(S,TsS)    = 1;
+  Q(S,TfF)    = 1;
+  Q(S,TfE)    = 1; // this is NOT L/R symmetric or F/S symmetric
 
-  Q(Ms,TsA)   = 1;
-  Q(Ms,TsB)   = 1;        // link to path out of S into F
+  /*************************************************/
 
-  Q(Ds,TsA)   = 1 - r_s;
-  Q(Ds,WsD)   = r_s;
-  Q(Ds,TsB)   = 1;        // link to path out of S into F
+  // Once you've hit state TsS, the next state (in seq 1) will be an S
+  // Except for the link-outs (below) these probs should all sum to 1
 
-  Q(IsA,IsA)  = r_s;
-  Q(IsA,TsA)  = 1 - r_s;
+  Q(TsS,IsS)  = delta_s;
+  Q(TsS,Ws)   = (1 - delta_s)*(1 - tau*tau);
+  Q(TsS,TfS)  = (1 - delta_s)*tau*tau;
 
-  Q(IsB,IsB)  = r_s;
-  Q(IsB,TsB)  = 1 - r_s;
+  Q(IsS,IsS)  = r_s;
+  Q(IsS,TsS)  = 1 - r_s;
 
+  Q(TfS,IfS)  = delta_f;
+  Q(TfS,TsS)  = 1 - delta_f;
+  
   Q(Ws,Ms)    = (1-2*delta_s)/(1-delta_s);
   Q(Ws,Ds)    = 1 - Q(Ws,Ms);
 
+  Q(Ms,TsS)   = 1;
+
+  Q(Ds,TsS)   = 1 - r_s;
+  Q(Ds,WsD)   = r_s;
+
   Q(WsD,Ds)   = 1;
 
-  Q(TsA,IsA)  = delta_s;
-  Q(TsA,Ws)   = (1 - delta_s)*(1 - tau*tau);
-  Q(TsA,TfB)  = (1 - delta_s)*tau*tau;
+  Q(IsF,IsF)  = r_s;
+  Q(IsF,TsF)  = 1 - r_s;
 
-  Q(TsB,IsB)  = delta_s;
-  Q(TsB,TfA)  = 1 - delta_s;
+  
+  //  This is different than coming from the START state
+  //  because we are conditioning on the previous state being an S.
+  Q(Ms,TsF)   = Q(Ds,TsF) = 1;    // Link to path out of S into F
+  Q(Ms,TsE)   = Q(Ds,TsE) = 1;    // Link to path out of S into E
 
-  Q(Mf,TfA)   = 1;
-  Q(Mf,TfB)   = 1;        // link to path out of F into S
+  /*************************************************/
 
-  Q(Df,TfA)   = 1 - r_f;
-  Q(Df,WfD)   = r_f;
-  Q(Df,TfB)   = 1;        // link to path out of F into F
+  // Once you've hit state TsF, the next state (in seq 1) will be an F
+  // Except for the link-outs (below) these probs should all sum to 1
 
-  Q(IfA,IfA)  = r_f;
-  Q(IfA,TfA)  = 1 - r_f;
+  Q(TfF,IfF)  = delta_f;
+  Q(TfF,Wf)   = (1 - delta_f)*(1 - tau*tau);
+  Q(TfF,TsF)  = (1 - delta_f)*tau*tau;
 
-  Q(IfB,IfB)  = r_f;
-  Q(IfB,TfB)  = 1 - r_f;
+  Q(IfF,IfF)  = r_f;
+  Q(IfF,TfF)  = 1 - r_f;
+
+  Q(TsF,IsF)  = delta_s;
+  Q(TsF,TfF)  = 1 - delta_s;
 
   Q(Wf,Mf)    = (1-2*delta_f)/(1-delta_f);
   Q(Wf,Df)    = 1 - Q(Wf,Mf);
 
+  Q(Mf,TfF)   = 1;
+
+  Q(Df,TfF)   = 1 - r_f;
+  Q(Df,WfD)   = r_f;
+
   Q(WfD,Df)   = 1;
 
-  Q(TfA,IfA)  = delta_f;
-  Q(TfA,Wf)   = (1 - delta_f)*(1 - tau*tau);
-  Q(TfA,TsB)  = (1 - delta_f)*tau*tau;
+  Q(IfS,IfS)  = r_f;
+  Q(IfS,TfS)  = 1 - r_f;
 
-  Q(TfB,IfB)  = delta_f;
-  Q(TfB,TsA)  = 1 - delta_f;
-  
-  Q(S ,E) = 1;
-  Q(Ms,E) = 1;
-  Q(Ds,E) = 1;
-  Q(Mf,E) = 1;
-  Q(Df,E) = 1;
+  //  This is different than coming from the START state
+  //  because we are conditioning on the previous state being an S.
+  Q(Mf,TfS)   = Q(Df,TfS) = 1;    // Link to path out of F into S
+  Q(Mf,TfE)   = Q(Df,TfE) = 1;    // Link to path out of F into E
+
+
+
+  /*************************************************/
+
+  // This may not be the best idea...
+
+  Q(TsE,IsE) = delta_s;
+  Q(TsE,E)   = (1 - delta_s)*(1 - tau*tau);
+  Q(TsE,TfE) = (1 - delta_s)*tau*tau;
+
+  Q(IsE,IsE) = r_s;
+  Q(IsE,TsE) = 1 - r_s;
+
+  Q(TfE,IfE) = delta_f;
+  Q(TfE,E)   = (1 - delta_f)*(1 - tau*tau);
+  Q(TfE,TfE) = (1 - delta_f)*tau*tau;
+
+  Q(IfE,IfE) = r_f;
+  Q(IfE,TfE) = 1 - r_f;
+
 
   Q.remove_silent();
 
