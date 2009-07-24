@@ -356,28 +356,34 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
    */
 void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
 {
-  MCMC::Result result(1);
+  int L = P[0].A->length();
+  int total = 0;
 
-  Parameters P2 = P;
+  for(int c=0;c<L;c++) 
+  {
+    Parameters P2 = P;
+    alignment& A = *P2[0].A;
+    ublas::matrix<int>& type_note = A.note(2);
+    type_note(c,0) = 1-type_note(c,0);
 
-  alignment& A = *P2[0].A;
+    bool success = accept_MH(P,P2,1.0);
 
-  int c = (int)(uniform()*A.length());
-
-  ublas::matrix<int>& type_note = A.note(2);
-
-  type_note(c,0) = 1-type_note(c,0);
-
-  bool success = accept_MH(P,P2,1.0);
-
-  if (success) {
-    P=P2;
-    //    std::cerr<<"accepted\n";
-    result.totals[0] = 1;
+    if (success) {
+      P=P2;
+      //    std::cerr<<"accepted\n";
+      total ++;
+    }
+    else {
+      //    std::cerr<<"rejected\n";
+    }
+    
   }
-  else {
-    //    std::cerr<<"rejected\n";
-  }
+
+  MCMC::Result result(2);
+  result.totals[0] = total;
+  result.counts[0] = L;
+
+  result.totals[1] = total;
 
   Stats.inc("flip-column",result);
 }
