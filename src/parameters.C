@@ -422,10 +422,16 @@ vector<int> get_type_sequence(const alignment& A,int n,const TransducerIndelMode
   const ublas::matrix<int>& type_note = A.note(2);
   
   sequence.reserve(A.length()+2);
+
+  // 0 for start (?)
   sequence.push_back(0);
+
+  // 1,2..L for letters
   for(int i=0;i<A.length();i++)
     if (A.character(i,n))
       sequence.push_back(1+type_note(i,0));
+
+  // L+1 for end
   sequence.push_back(T.n_letters() + 1);
 
   return sequence;
