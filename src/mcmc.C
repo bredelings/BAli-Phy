@@ -844,6 +844,10 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       s_parameters<<"\t#indels"<<i+1;
       s_parameters<<"\t|indels"<<i+1<<"|";
     }
+    if (P[i].has_TIModel()) {
+      s_parameters<<"\t#F"<<i+1;
+      s_parameters<<"\t#S"<<i+1;
+    }
     s_parameters<<"\t#substs"<<i+1;
     if (dynamic_cast<const Triplets*>(&P[i].get_alphabet()))
       s_parameters<<"\t#substs(nuc)"<<i+1;
@@ -910,6 +914,20 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 	  (*files[5+i])<<"iterations = "<<iterations<<"\n\n";
 	  if (not iterations or P[i].has_IModel())
 	    (*files[5+i])<<standardize(*P[i].A, *P.T)<<"\n";
+
+	  if (P[i].has_TIModel()) 
+	  {
+	    (*files[5+i])<<endl;
+	    const alignment& A = *P[i].A;
+	    ublas::matrix<int>& type_note = A.note(2);
+	    for(int c=0;c<A.length();c++)
+	      if (type_note(c,0) == 0)
+		(*files[5+i])<<"S";
+	      else
+		(*files[5+i])<<"F";
+	    (*files[5+i])<<endl;
+	  }
+	    
 	}
       }
 
@@ -934,6 +952,16 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 	  s_parameters<<"\t"<<x1;
 	  s_parameters<<"\t"<<n_indels(*P[i].A, *P[i].T);
 	  s_parameters<<"\t"<<x3;
+	}
+	if (P[i].has_TIModel()) {
+	  alignment& A = *P[i].A;
+	  ublas::matrix<int>& type_note = A.note(2);
+	  int count_s=0;
+	  for(int c=0;c<A.length();c++)
+	    if (type_note(c,0) == 0)
+	      count_s++;
+	  s_parameters<<"\t"<<count_s;
+	  s_parameters<<"\t"<<A.length() - count_s;
 	}
 	unsigned x4 = n_mutations(*P[i].A, *P[i].T);
 	total_substs += x4;
