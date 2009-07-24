@@ -839,7 +839,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
   for(int i=0;i<P.n_data_partitions();i++) {
-    if (P[i].has_IModel()) {
+    if (P[i].has_IModel() or P[i].has_TIModel()) {
       s_parameters<<"\t|A"<<i+1<<"|";
       s_parameters<<"\t#indels"<<i+1;
       s_parameters<<"\t|indels"<<i+1<<"|";
@@ -922,7 +922,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       unsigned total_indel_lengths=0;
       unsigned total_substs=0;
       for(int i=0;i<P.n_data_partitions();i++) {
-	if (P[i].has_IModel()) {
+	if (P[i].has_IModel() or P[i].has_TIModel()) {
 	  unsigned x1 = P[i].A->length();
 	  total_length += x1;
 
