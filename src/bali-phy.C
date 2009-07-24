@@ -578,6 +578,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("name", value<string>(),"Name for the analysis, instead of the alignment filename.")
     ("traditional,t","Fix the alignment and don't model indels")
     ("letters",value<string>()->default_value("full_tree"),"If set to 'star', then use a star tree for substitution")
+    ("verbose","Print extra output in case of error")
     ;
   
   options_description mcmc("MCMC options");
@@ -629,6 +630,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     print_version_info(cout);
     exit(0);
   }
+
+  if (args.count("verbose"))
+    log_verbose = 1;
 
   if (args.count("help")) {
     cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
@@ -1377,15 +1381,20 @@ time_t start_time = time(NULL);
 void show_ending_messages()
 {
   time_t end_time = time(NULL);
-  
-  cout<<endl;
-  cout<<"start time: "<<ctime(&start_time)<<endl;
-  cout<<"  end time: "<<ctime(&end_time)<<endl;
-  cout<<"total time: "<<duration(end_time-start_time)<<endl;
-  cout<<endl;
-  cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
-  cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
-  cout<<"total branches peeled = "<<substitution::total_peel_branches<<endl;
+
+  if (end_time - start_time > 2) 
+  {
+    cout<<endl;
+    cout<<"start time: "<<ctime(&start_time)<<endl;
+    cout<<"  end time: "<<ctime(&end_time)<<endl;
+    cout<<"total time: "<<duration(end_time-start_time)<<endl;
+  }
+  if (substitution::total_likelihood > 1) {
+    cout<<endl;
+    cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
+    cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
+    cout<<"total branches peeled = "<<substitution::total_peel_branches<<endl;
+  }
 }
 
 void die_on_signal(int sig)
@@ -1485,45 +1494,6 @@ int main(int argc,char* argv[])
     if (T.n_leaves() < 3)
       throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".\n(Perhaps you have BLANK LINES in your FASTA file?)";
 
-    //---------- Open output files -----------//
-    vector<ostream*> files;
-    if (not args.count("show-only")) {
-      string dir_name="";
-#ifdef HAVE_MPI
-      if (not proc_id) {
-	dir_name = init_dir(args);
-
-	for(int dest=1;dest<n_procs;dest++) 
-	  world.send(dest, 0, dir_name);
-      }
-      else
-	world.recv(0, 0, dir_name);
-
-      // cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
-#else
-      dir_name = init_dir(args);
-#endif
-      files = init_files(proc_id, dir_name, argc, argv, A.size());
-    }
-    else {
-      files.push_back(&cout);
-      files.push_back(&cerr);
-    }
-
-    //------ Redirect output to files -------//
-    ostream& s_out = *files[0];
-    ostream& s_err = *files[1];
-
-    s_out<<out_cache.str();
-    s_err<<err_cache.str();
-
-    tee_out.setbuf2(s_out.rdbuf());
-    tee_err.setbuf2(s_err.rdbuf());
-
-    cout.flush() ; cout.rdbuf(s_out.rdbuf());
-    cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
-    clog.flush() ; clog.rdbuf(s_err.rdbuf());
-
     //--------- Set up the substitution model --------//
     shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", A.size());
     
@@ -1563,20 +1533,21 @@ int main(int argc,char* argv[])
 
     set_parameters(P,args);
 
+    //-------- Log some stuff -----------//
     for(int i=0;i<P.n_data_partitions();i++) {
-      s_out<<"smodel-index"<<i+1<<" = "<<smodel_mapping[i]<<endl;
-      s_out<<"imodel-index"<<i+1<<" = "<<imodel_mapping[i]<<endl;
+      out_cache<<"smodel-index"<<i+1<<" = "<<smodel_mapping[i]<<endl;
+      out_cache<<"imodel-index"<<i+1<<" = "<<imodel_mapping[i]<<endl;
     }
-    s_out<<endl;
+    out_cache<<endl;
 
     if (not P.smodel_full_tree)
-      s_out<<"substitution model: *-tree"<<endl;
+      out_cache<<"substitution model: *-tree"<<endl;
 
     for(int i=0;i<P.n_smodels();i++) 
-      s_out<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
+      out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
 
     for(int i=0;i<P.n_imodels();i++) 
-      s_out<<"indel model"<<i+1<<" = "<<P.IModel(i).name()<<endl<<endl;
+      out_cache<<"indel model"<<i+1<<" = "<<P.IModel(i).name()<<endl<<endl;
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
@@ -1637,6 +1608,46 @@ int main(int argc,char* argv[])
 
       long int max_iterations = args["iterations"].as<long int>();
 
+      //---------- Open output files -----------//
+      vector<ostream*> files;
+      if (not args.count("show-only")) {
+	string dir_name="";
+#ifdef HAVE_MPI
+	if (not proc_id) {
+	  dir_name = init_dir(args);
+
+	  for(int dest=1;dest<n_procs;dest++) 
+	    world.send(dest, 0, dir_name);
+	}
+	else
+	  world.recv(0, 0, dir_name);
+
+	// cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
+#else
+	dir_name = init_dir(args);
+#endif
+	files = init_files(proc_id, dir_name, argc, argv, A.size());
+      }
+      else {
+	files.push_back(&cout);
+	files.push_back(&cerr);
+      }
+
+      //------ Redirect output to files -------//
+      ostream& s_out = *files[0];
+      ostream& s_err = *files[1];
+
+      s_out<<out_cache.str(); out_cache.str().clear();
+      s_err<<err_cache.str(); err_cache.str().clear();
+
+      tee_out.setbuf2(s_out.rdbuf());
+      tee_err.setbuf2(s_err.rdbuf());
+
+      cout.flush() ; cout.rdbuf(s_out.rdbuf());
+      cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
+      clog.flush() ; clog.rdbuf(s_err.rdbuf());
+
+      //-------- Start the MCMC  -----------//
       do_sampling(args,P,max_iterations,files);
 
       // Close all the streams, and write a notification that we finished all the iterations.
@@ -1644,11 +1655,17 @@ int main(int argc,char* argv[])
     }
   }
   catch (std::bad_alloc&) {
-    err_both<<"Doh!  Some kind of memory problem?\n";
+    if (log_verbose)
+      out_both<<out_cache.str(); out_both.flush();
+    err_both<<err_cache.str(); err_both.flush();
+    err_both<<"Doh!  Some kind of memory problem?\n"<<endl;
     report_mem();
     retval=2;
   }
   catch (std::exception& e) {
+    if (log_verbose)
+      out_both<<out_cache.str(); out_both.flush();
+    err_both<<err_cache.str(); err_both.flush();
     if (n_procs > 1)
       err_both<<"bali-phy: Error["<<proc_id<<"]! "<<e.what()<<endl;
     else

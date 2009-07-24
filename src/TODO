@@ -1,7 +1,7 @@
 [Post-processing:]
   + Speed up estimating mean branch lengths.
-    - Stop requiring binary tree to exactly extend query tree.
-      (This doesn't work for large trees.)
+    - Stop requiring the binary tree to exactly extend query tree.
+      + (Because this requirement is too stringent, for large trees.)
     - But, then how can we estimate node lengths?
 
   + When printing SRQ plots, indicate the LOD range (or its abs?).
