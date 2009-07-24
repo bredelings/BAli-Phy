@@ -1315,12 +1315,11 @@ int main(int argc,char* argv[])
 
     //----- Initialize Likelihood caches and character index caches -----//
       add_column_type_note(*P[i].A);
+      for(int c=0;c<P[i].A->length();c++)
+	P[i].A->note(2)(c,0) = (c/5)%2;
 
     // Why do we need to do this, again?
     P.recalc_all();
-
-    MCMC::MoveStats S;
-    sample_alignment_rates(P,S);
 
     //---------------Do something------------------//
     if (args.count("show-only"))
@@ -1396,6 +1395,10 @@ int main(int argc,char* argv[])
       cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
       clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
+      // FIXME!
+      MCMC::MoveStats S;
+      sample_alignment_rates(P,S);
+      
       //------ Redirect output to files -------//
       owned_ptr<Probability_Model> Ptr(P);
 
