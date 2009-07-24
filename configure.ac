@@ -206,18 +206,12 @@ if test "$GXX" = yes ; then
   if test "$debug" = no ; then
       CXXFLAGS="$CXXFLAGS -O3"
       CXXFLAGS="-funroll-loops -fweb $CXXFLAGS"
+      CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
+      CXXFLAGS="-ffast-math $CXXFLAGS"
   elif test "$debug" = O ; then
       CXXFLAGS="$CXXFLAGS -O"
   elif test "$debug" = O2 ; then
       CXXFLAGS="$CXXFLAGS -O2"
-  fi
-
-  if test "$debug" != yes ; then
-      CXXFLAGS="-ffast-math $CXXFLAGS"
-      CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
-      if test "$profile" = no ; then 
-          CXXFLAGS="-fomit-frame-pointer $CXXFLAGS"
-      fi
   fi
 
   # also set the LDFLAGS for a static build
