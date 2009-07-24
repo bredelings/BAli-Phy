@@ -1011,7 +1011,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
   // Check that the Alignments and Tree are properly linked
   for(int i=0;i<P.n_data_partitions();i++) 
   {
-    if (P[i].has_IModel())
+    if (P[i].has_IModel() or P[i].has_TIModel())
       assert(P[i].A->n_sequences() == T.n_nodes() and P[i].variable_alignment()); 
     else
       assert(P[i].A->n_sequences() == T.n_leaves() and not P[i].variable_alignment());
