@@ -1623,13 +1623,12 @@ int main(int argc,char* argv[])
       add_leaf_seq_note(*P[i].A, T.n_leaves());
       add_subA_index_note(*P[i].A, T.n_branches());
       add_column_type_note(*P[i].A);
+      for(int c=0;c<P[i].A->length();c++)
+	P[i].A->note(2)(c,0) = (c/5)%2;
     }
 
     // Why do we need to do this, again?
     P.recalc_all();
-
-    MCMC::MoveStats S;
-    sample_alignment_rates(P,S);
 
     //---------------Do something------------------//
     if (args.count("show-only"))
@@ -1688,6 +1687,10 @@ int main(int argc,char* argv[])
       cout.flush() ; cout.rdbuf(s_out.rdbuf());
       cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
       clog.flush() ; clog.rdbuf(s_err.rdbuf());
+
+      // FIXME!
+      MCMC::MoveStats S;
+      sample_alignment_rates(P,S);
 
       //-------- Start the MCMC  -----------//
       do_sampling(args,P,max_iterations,files);
