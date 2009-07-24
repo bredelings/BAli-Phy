@@ -393,7 +393,6 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 				   "scale_means_only","mean")
 		      );
 
-
   
   add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, MH_moves);
   add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves);
@@ -406,6 +405,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, MH_moves);
 
   // FIXME - check if we are accidentally evaluating the likelihood or something.
+  add_slice_moves(P, "delta",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
   add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
   add_slice_moves(P, "lambda_s",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
   add_slice_moves(P, "lambda_f",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
@@ -520,14 +520,16 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   }
   sampler.add(2,tree_moves);
 
-  // FIXME - do we really want to do this for (say) lambda and epsilon?  4+25/4 = 10.25
-  // FIXME - can we separate the moves into (say) moves which depend on branch lengths, and those that don't?
-  //       - MH_smodel / MH_imodel ...
-  sampler.add(4 + P.T->n_branches()/4.0,parameter_moves);
-  if (P.keys["disable_MH_sampling"] > 0.5)
-    sampler.add(1,MH_moves);
+  // FIXME - We certainly don't want to do scale_means_only O(branches) times - thats quadratic!
+  // FIXME - Perhaps we want to do MH_sample_epsilon more times, though.
+  // FIXME -   But we should do that by weighting the epsilon moves, above.
+  // FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
+  // FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
+  sampler.add(5 + log(P.T->n_branches()),parameter_moves);
+  if (P.keys["enable_MH_sampling"] > 0.5)
+    sampler.add(5 + log(P.T->n_branches()),MH_moves);
   else
-    sampler.add(4 + P.T->n_branches()/4.0,MH_moves);
+    sampler.add(1,MH_moves);
   // Question: how are these moves intermixed with the other ones?
 
   if (P.keys["disable_slice_sampling"] < 0.5)
@@ -1337,15 +1339,18 @@ void raise_cpu_limit(ostream& o)
 
   getrlimit(RLIMIT_CPU,&limits);
 
-  o<<endl;
-  o<<"OLD cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
+  if (log_verbose) {
+    o<<endl;
+    o<<"OLD cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
+  }
 
   limits.rlim_cur = RLIM_INFINITY;
 
   setrlimit(RLIMIT_CPU,&limits);
   getrlimit(RLIMIT_CPU,&limits);
 
-  o<<"NEW cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
+  if (log_verbose)
+    o<<"NEW cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
 }
 #else
 void raise_cpu_limit(ostream& o) 
