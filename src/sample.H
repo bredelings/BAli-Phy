@@ -71,5 +71,6 @@ void change_3_branch_lengths(Parameters& P, MCMC::MoveStats& Stats,int);
 void sample_NNI_and_branch_lengths(Parameters&, MCMC::MoveStats&);
 
 void sample_alignment_rates(Parameters&, MCMC::MoveStats&);
+void sample_alignment_rates_flip_column(Parameters&, MCMC::MoveStats&);
 
 #endif
