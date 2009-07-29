@@ -251,6 +251,15 @@ struct DP_insertion: public insertion
 
 using std::cerr;
 
+int get_prev_column(const alignment& A,int n1, int n2, int c)
+{
+  for(int i=c-1;i>=0;i--)
+    if (A.character(i,n1) or A.character(i,n2))
+      return i;
+  return -1;
+}
+
+
 void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
 {
   // handle the first partition ONLY
@@ -284,18 +293,49 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
   matrix<double> M(A.length(),R);
   vector< vector<matrix<double> > > Forward(R,vector<matrix<double> >(R,M));
 
+  // List of correctly oriented branches
+  vector<const_branchview> branches = branches_from_node(T,root);
+
   // go through insertions
   for(int c=0; c<A.length(); c++)
   {
     int which_ins = G.insertion_for_column[c];
     
-    index_into_insertion[which_ins]++;
-
-    assert(G.insertions[which_ins].columns[index_into_insertion[which_ins]] == c);
-
     insertion& current_insertion = G.insertions[which_ins];
 
+    index_into_insertion[which_ins]++;
+
+    assert(current_insertion.columns[index_into_insertion[which_ins]] == c);
+
     int prev_column = current_insertion.columns[index_into_insertion[which_ins]-1];
+
+    cerr<<"\ncolumn "<<c<<":     which_ins = "<<which_ins<<"       prev_column = "<<prev_column<<endl;
+
+    vector<int> prev_columns;
+    prev_columns.push_back(prev_column);
+    for(int j=0;j<branches.size();j++) 
+    {
+      int n1 = branches[j].source();
+      int n2 = branches[j].target();
+      int b =  branches[j].undirected_name();
+
+      if (not A.character(c,n1) and not A.character(c,n2))
+	continue;
+
+      int pc = get_prev_column(A,n1,n2,c);
+      //      if (b == current_insertion.b)
+      //	assert(pc == prev_column);
+      if (pc < prev_column) {
+	if (not includes(prev_columns,pc))
+	  prev_columns.push_back(pc);
+	cerr<<"    branch "<<b<<":  pc = "<<pc<<endl;
+      }
+    }
+
+    if (prev_columns.size() > 1)
+      cerr<<" column "<<c<<":  "<<prev_columns.size()<<" in-edges."<<endl;
+    
+    
 
     // previous column in insertion is conditioned on (as PREV column), not summed over
     if (current_insertion.prev() == prev_column)
