@@ -1324,6 +1324,10 @@ int main(int argc,char* argv[])
     //---------------Do something------------------//
     if (args.count("show-only"))
     {
+      // FIXME!
+      MCMC::MoveStats S;
+      sample_alignment_rates(P,S);
+
       // FIXME ! How do we print the tree to stdout?
       print_stats(cout,P);
       // Separate the tree printer from the file writer?
@@ -1395,9 +1399,6 @@ int main(int argc,char* argv[])
       cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
       clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
-      // FIXME!
-      MCMC::MoveStats S;
-      sample_alignment_rates(P,S);
       
       //------ Redirect output to files -------//
       owned_ptr<Probability_Model> Ptr(P);
