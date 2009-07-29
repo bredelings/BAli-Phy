@@ -720,7 +720,9 @@ indel::PairTransducer get_TKF1_Transducer(double t,double lambda, double mu)
 
   Q.remove_silent();
 
+#ifndef NDEBUG
   Q.check_states();
+#endif
 
   return Q;
   
@@ -872,7 +874,7 @@ indel::PairTransducer get_FS_Transducer(double t,double delta_s,double delta_f, 
 
   Q(S,TsS)    = 1;
   Q(S,TfF)    = 1;
-  Q(S,TfE)    = 1; // this is NOT L/R symmetric or F/S symmetric
+  Q(S,TfE)    = 1; // this is not F/S symmetric
 
   /*************************************************/
 
@@ -964,7 +966,9 @@ indel::PairTransducer get_FS_Transducer(double t,double delta_s,double delta_f, 
 
   Q.remove_silent();
 
+#ifndef NDEBUG
   Q.check_states();
+#endif
 
   return Q;
 }
