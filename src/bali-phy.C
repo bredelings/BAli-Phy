@@ -1631,8 +1631,13 @@ int main(int argc,char* argv[])
     P.recalc_all();
 
     //---------------Do something------------------//
-    if (args.count("show-only"))
+    if (args.count("show-only")) {
+      // FIXME!
+      MCMC::MoveStats S;
+      sample_alignment_rates(P,S);
+
       print_stats(cout,cout,P);
+    }
     else {
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
       raise_cpu_limit(err_both);
@@ -1687,10 +1692,6 @@ int main(int argc,char* argv[])
       cout.flush() ; cout.rdbuf(s_out.rdbuf());
       cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
       clog.flush() ; clog.rdbuf(s_err.rdbuf());
-
-      // FIXME!
-      MCMC::MoveStats S;
-      sample_alignment_rates(P,S);
 
       //-------- Start the MCMC  -----------//
       do_sampling(args,P,max_iterations,files);
