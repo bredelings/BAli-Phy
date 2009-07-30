@@ -1083,8 +1083,8 @@ void mcmc_log(long iterations, long max_iter, int subsample, Parameters& P, ostr
 	  for(int c=0;c<A.length();c++)
 	    if (type_note(c,0) == 0)
 	      count_s++;
-	  s_parameters<<"\t"<<count_s;
 	  s_parameters<<"\t"<<A.length() - count_s;
+	  s_parameters<<"\t"<<count_s;
 
   for(int i=0;i<loggers.size();i++)
     (*loggers[i])(P,iterations);
