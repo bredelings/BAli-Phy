@@ -396,35 +396,84 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
    */
 void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
 {
-  int L = P[0].A->length();
   int total = 0;
+  int successful = 0;
+  int flipped = 0;
 
-  for(int c=0;c<L;c++) 
+  for(int p=0;p<P.n_data_partitions();p++) 
   {
-    Parameters P2 = P;
-    alignment& A = *P2[0].A;
-    ublas::matrix<int>& type_note = A.note(2);
-    type_note(c,0) = 1-type_note(c,0);
-    P2[0].note_column_label_changed();
+    int L = P[p].A->length();
 
-    bool success = accept_MH(P,P2,1.0);
+    total += L;
 
-    if (success) {
-      P=P2;
-      //    std::cerr<<"accepted\n";
-      total ++;
+    // do all single flips
+    for(int c=0;c<L;c++) 
+    {
+      Parameters P2 = P;
+      alignment& A2 = *P2[p].A;
+      ublas::matrix<int>& type_note = A2.note(2);
+      type_note(c,0) = 1-type_note(c,0);
+      P2[p].note_column_label_changed();
+      
+      bool success = accept_MH(P,P2,1.0);
+      
+      if (success) {
+	P=P2;
+	//    std::cerr<<"accepted\n";
+	successful ++;
+      }
+      else {
+	//    std::cerr<<"rejected\n";
+      }
     }
-    else {
-      //    std::cerr<<"rejected\n";
+
+    // do some larger flips also
+    for(int i=0;i<L;i++) 
+    {
+      Parameters P2 = P;
+      alignment& A2 = *P2[p].A;
+      ublas::matrix<int>& type_note = A2.note(2);
+
+      int size = geometric(0.25);
+
+      int location = uniform()*(L-size);
+      for(int j=0;j<size;j++) {
+	int c = location + j;
+	type_note(c,0) = 1-type_note(c,0);
+      }
+      P2[p].note_column_label_changed();
+	
+      bool success = accept_MH(P,P2,1.0);
+      
+      if (success) {
+	P=P2;
+	//    std::cerr<<"accepted\n";
+	successful ++;
+	flipped += size;
+      }
+      else {
+	//    std::cerr<<"rejected\n";
+      }
     }
-    
+      
   }
 
-  MCMC::Result result(2);
-  result.totals[0] = total;
-  result.counts[0] = L;
+  MCMC::Result single_result(2);
+  single_result.totals[0] = successful; // number of accepted proposals
+  
+  single_result.counts[0] = total; // number of columns = number of MH moves
+  
+  single_result.totals[1] = successful; // number of accepted proposals / 1
+  
+  Stats.inc("flip-single-column",single_result);
 
-  result.totals[1] = total;
 
-  Stats.inc("flip-column",result);
+  MCMC::Result multiple_result(2);
+  multiple_result.totals[0] = successful; // number of accepted proposals
+
+  multiple_result.counts[0] = total; // number of columns = number of MH moves
+  
+  multiple_result.totals[1] = flipped; // number of changed letters / 1
+    
+  Stats.inc("flip-multiple-column",multiple_result);
 }
