@@ -823,22 +823,22 @@ efloat_t FS_Transducer::prior() const
 // mu     is the deletion  rate.
 indel::PairTransducer get_FS_Transducer(double t,double delta_s,double delta_f, double r_s, double r_f, double tau)
 {
-  const int S = 0;
+  const int S = 0;   // 0
 
-  const int Ms  = 1;
-  const int Ds  = 2;
-  const int IsS = 3;
-  const int IsF = 4;
+  const int Ms  = 1; // 1
+  const int Ds  = 2; // 2
+  const int IsS = 3; // 3
+  const int IsF = 4; // 4
   const int Ws  = 5;
   const int WsD = 6;
   const int TsS = 7;
   const int TsF = 8;
-  const int E   = 9;
+  const int E   = 9; // 5
 
-  const int Mf  = 10;
-  const int Df  = 11;
-  const int IfF = 12;
-  const int IfS = 13;
+  const int Mf  = 10; // 6
+  const int Df  = 11; // 7
+  const int IfF = 12; // 8
+  const int IfS = 13; // 9
   const int Wf  = 14;
   const int WfD = 15;
   const int TfF = 16;
@@ -846,9 +846,9 @@ indel::PairTransducer get_FS_Transducer(double t,double delta_s,double delta_f, 
   // 15
 
   const int TsE = 18;
-  const int IsE = 19;
+  const int IsE = 19; // 10
   const int TfE = 20;
-  const int IfE = 21;
+  const int IfE = 21; // 11
 
   vector<int> e1(22, -1);
   vector<int> e2(22, -1);
