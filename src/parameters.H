@@ -72,6 +72,7 @@ public:
 
   /// cached branch HMMs
   vector<indel::PairHMM> branch_HMMs;
+  vector<indel::PairTransducer> branch_PTMs;
   vector<int> branch_HMM_type;
 
   /// Alignment constraint
