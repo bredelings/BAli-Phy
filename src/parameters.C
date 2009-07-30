@@ -771,7 +771,7 @@ efloat_t data_partition::prior_alignment() const
 #ifndef NDEBUG
 	else
 	{
-	  ublas::matrix<int> counts = get_FS_counts(AA,target,source);
+	  ublas::matrix<int> counts = get_FS_counts(AA,target,source,branch_PTMs[b]);
 	  for(int i=0;i<counts.size1();i++)
 	    for(int j=0;j<counts.size2();j++)
 	      assert(cached_transducer_counts_for_branch[b].value()(i,j) == counts(i,j));
