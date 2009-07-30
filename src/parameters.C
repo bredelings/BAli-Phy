@@ -323,14 +323,12 @@ transducer_state_info::transducer_state_info(const indel::PairTransducer& PTM)
 
 }
 
+boost::shared_ptr<transducer_state_info> SS;
 
 vector<int> get_FS_state_path(const alignment& A,int n1, int n2, const indel::PairTransducer& PTM)
 {
-  static boost::shared_ptr<transducer_state_info> SS;
-
   if (not SS)
     SS = boost::shared_ptr<transducer_state_info>(new transducer_state_info(PTM));
-
 
   const ublas::matrix<int>& M = SS->M;
   const ublas::matrix<int>& D = SS->D;
@@ -384,6 +382,65 @@ vector<int> get_FS_state_path(const alignment& A,int n1, int n2, const indel::Pa
   return path;
 }
 
+ublas::matrix<int> get_FS_counts(const alignment& A,int n1, int n2, const indel::PairTransducer& PTM)
+{
+  ublas::matrix<int> counts(PTM.n_states(), PTM.n_states());
+  counts.clear();
+
+  if (not SS)
+    SS = boost::shared_ptr<transducer_state_info>(new transducer_state_info(PTM));
+
+  const ublas::matrix<int>& M = SS->M;
+  const ublas::matrix<int>& D = SS->D;
+  const ublas::matrix<int>& I = SS->I;
+
+  const ublas::matrix<int>& type_note = A.note(2);
+
+  /******* Construct the type-of-next-residue-in-sequence-n1 array for sequence n1  ************/
+  vector<int> next_type(A.length(),-1);
+
+  int last_type = PTM.n_letters(); // the END state.
+  for(int c=A.length()-1; c >= 0; c--)
+  {
+    next_type[c] = last_type;
+    if (A.character(c,n1))
+      last_type = type_note(c,0);
+  }
+
+  
+  // add start state
+  int last_state = PTM.start_state();
+  for(int i=0;i<A.length();i++) 
+  {
+    bool c1 = A.character(i,n1);
+    bool c2 = A.character(i,n2);
+    if (not c1 and not c2) continue;
+
+    int t1 = type_note(i,0);
+    int t2 = next_type[i];
+    int s=-1;
+
+    if (c1 and c2)
+      s = M(t1,t2);
+
+    if (c1 and not c2)
+      s = D(t1,t2);
+
+    if (not c1 and c2)
+      s = I(t1,t2);
+
+    assert(s != -1);
+
+    counts(last_state,s)++;
+    last_state = s;
+  }
+
+  // add the transition to the end state
+  counts(last_state,PTM.end_state())++;
+
+  return counts;
+}
+
 efloat_t data_partition::prior_alignment() const 
 {
   if (TIModel_)
@@ -414,10 +471,17 @@ efloat_t data_partition::prior_alignment() const
       int n1 = branches[i].source();
       int n2 = branches[i].target();
 
-      vector<int> state_path = get_FS_state_path(AA,n1,n2,M1);
+      efloat_t Pr2=1;
 
-      for(int j=1;j<state_path.size();j++)
-	Pr *= M(state_path[j-1],state_path[j]);
+      ublas::matrix<int> counts = get_FS_counts(AA,n1,n2,M1);
+      for(int s1=0;s1<counts.size1();s1++)
+	for(int s2=0;s2<counts.size2();s2++)
+	  if (counts(s1,s2)) {
+	    efloat_t M12 = M(s1,s2);
+	    Pr2 *= pow<efloat_t>(M12,counts(s1,s2));
+	  }
+
+      Pr *= Pr2;
     }
 
     return Pr;
