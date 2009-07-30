@@ -462,7 +462,9 @@ vector<int> get_possible_next_letters(int s0, const indel::PairTransducer& PTM)
 
       // For each unvisited neighbor s2 of s1
       for(int s2=0;s2<PTM.n_states();s2++)
-	if (PTM(s1,s2) > 0)
+      {
+	if (PTM(s1,s2) > 0) 
+	{
 	  // If it emits a letter in sequence1, then that letter is possible;
 	  if (PTM.emits_1(s2) != -1) {
 	    possible[PTM.emits_1(s2)] = 1;
@@ -477,6 +479,8 @@ vector<int> get_possible_next_letters(int s0, const indel::PairTransducer& PTM)
           // that state's neighbors.
 	  else if (not visited[s2])
 	    next2.push_back(s2);
+	}
+      }
     }
 
     next = next2;
@@ -485,20 +489,26 @@ vector<int> get_possible_next_letters(int s0, const indel::PairTransducer& PTM)
   return possible;
 }
 
-
-vector<int> get_FS_state_path(const alignment& A,int n1, int n2, const indel::PairTransducer& PTM)
+struct transducer_state_info
+{
+  ublas::matrix<int> M;
+  ublas::matrix<int> D;
+  ublas::matrix<int> I;
+  transducer_state_info(const indel::PairTransducer& P);
+};
+  
+transducer_state_info::transducer_state_info(const indel::PairTransducer& PTM)
+  :M(PTM.n_letters()+1,PTM.n_letters()+1),
+   D(PTM.n_letters()+1,PTM.n_letters()+1),
+   I(PTM.n_letters()+1,PTM.n_letters()+1)
 {
   // Find possible next letters
   vector< vector<int> > possible;
   for(int i=0;i<PTM.n_states();i++)
     possible.push_back(get_possible_next_letters(i,PTM));
 
-
   // Find unique states S[i,j] of type Si that next emit j in sequence 1
   const int o = PTM.n_letters()+1;
-  ublas::matrix<int> M(o,o);
-  ublas::matrix<int> D(o,o);
-  ublas::matrix<int> I(o,o);
 
   for(int i=0;i<o;i++)
     for(int j=0;j<o;j++)
@@ -530,9 +540,27 @@ vector<int> get_FS_state_path(const alignment& A,int n1, int n2, const indel::Pa
       }
   }
 
+
+}
+
+
+vector<int> get_FS_state_path(const alignment& A,int n1, int n2, const indel::PairTransducer& PTM)
+{
+  static boost::shared_ptr<transducer_state_info> SS;
+
+  if (not SS)
+    SS = boost::shared_ptr<transducer_state_info>(new transducer_state_info(PTM));
+
+
+  const int o = PTM.n_letters()+1;
+  const ublas::matrix<int>& M = SS->M;
+  const ublas::matrix<int>& D = SS->D;
+  const ublas::matrix<int>& I = SS->I;
+
   const ublas::matrix<int>& type_note = A.note(2);
 
-  // Construct the type-of-next-residue-in-sequence-n1 array
+  // Construct the type-of-next-residue-in-sequence-n1 array for sequence n1
+  // Alternatively, I could simply go backwards...
   vector<int> next_type(A.length());
   int current = -1;
   for(int i=0;i<A.length();i++)
