@@ -405,6 +405,7 @@ void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
     alignment& A = *P2[0].A;
     ublas::matrix<int>& type_note = A.note(2);
     type_note(c,0) = 1-type_note(c,0);
+    P2[0].note_column_label_changed();
 
     bool success = accept_MH(P,P2,1.0);
 
