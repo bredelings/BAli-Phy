@@ -250,6 +250,34 @@ vector<int> get_type_sequence(const alignment& A,int n,const TransducerIndelMode
   return sequence;
 }
 
+ublas::matrix<int> get_root_transition_counts(const alignment& A,int n,const TransducerIndelModel& T)
+{
+  ublas::matrix<int> counts(T.n_letters()+2,T.n_letters()+2);
+  counts.clear();
+
+  const ublas::matrix<int>& type_note = A.note(2);
+  
+  const int START = 0;
+  const int END = T.n_letters()+1;
+
+  // 0 for letters
+  int p = START;
+
+  // 1,2..L for letters
+  for(int c=0; c<A.length(); c++)
+    if (A.character(c,n)) 
+    {
+      int s = 1+type_note(c,0);
+      counts(p,s)++;
+      p = s;
+    }
+
+  // L+1 for end
+  counts(p,END)++;
+
+  return counts;
+}
+
 // Get a bitmask of the list of possible next letters emitted in sequence 1 after state @s0
 // The mask is indexed by letter1, letter2, ... , E
 vector<int> get_possible_next_letters(int s0, const indel::PairTransducer& PTM)
@@ -542,13 +570,12 @@ efloat_t data_partition::prior_alignment() const
     int root = T->n_nodes()-1;
 
     // Compute probability for root sequence
-    vector<int> root_sequence = get_type_sequence(AA,root,*TIModel_);
+    ublas::matrix<int> root_counts  = get_root_transition_counts(AA,root,*TIModel_);
 
     Matrix root_P = TIModel_->root_chain();
 
-    for(int i=1;i<root_sequence.size();i++)
-      Pr *= root_P(root_sequence[i-1],root_sequence[i]);
- 
+    Pr *= transition_pr_from_counts(root_counts, root_P);
+
     cached_alignment_prior = Pr;
   }
 
