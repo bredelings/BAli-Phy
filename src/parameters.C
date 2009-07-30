@@ -437,6 +437,8 @@ vector<int> get_type_sequence(const alignment& A,int n,const TransducerIndelMode
   return sequence;
 }
 
+// Get a bitmask of the list of possible next letters emitted in sequence 1 after state @s0
+// The mask is indexed by letter1, letter2, ... , E
 vector<int> get_possible_next_letters(int s0, const indel::PairTransducer& PTM)
 {
   vector<int> visited(PTM.n_states(),0);
@@ -489,6 +491,8 @@ vector<int> get_possible_next_letters(int s0, const indel::PairTransducer& PTM)
   return possible;
 }
 
+// Construct matrices M(i,j) for the M state emitting letter i, where letter j is going to be the next letter emitted.
+// The indices i and j range from L1 (0), L2 (1), ... , E (n_letters())
 struct transducer_state_info
 {
   ublas::matrix<int> M;
@@ -552,31 +556,25 @@ vector<int> get_FS_state_path(const alignment& A,int n1, int n2, const indel::Pa
     SS = boost::shared_ptr<transducer_state_info>(new transducer_state_info(PTM));
 
 
-  const int o = PTM.n_letters()+1;
   const ublas::matrix<int>& M = SS->M;
   const ublas::matrix<int>& D = SS->D;
   const ublas::matrix<int>& I = SS->I;
 
   const ublas::matrix<int>& type_note = A.note(2);
 
-  // Construct the type-of-next-residue-in-sequence-n1 array for sequence n1
-  // Alternatively, I could simply go backwards...
-  vector<int> next_type(A.length());
-  int current = -1;
-  for(int i=0;i<A.length();i++)
+  /******* Construct the type-of-next-residue-in-sequence-n1 array for sequence n1  ************/
+  vector<int> next_type(A.length(),-1);
+
+  int last_type = PTM.n_letters(); // the END state.
+  for(int c=A.length()-1; c >= 0; c--)
   {
-    if (A.character(i,n1)) {
-      for(int k=current+1;k<=i;k++)
-	next_type[k] = type_note(i,0);
-      current = i;
-    }
+    next_type[c] = last_type;
+    if (A.character(c,n1))
+      last_type = type_note(c,0);
   }
 
-  // how about the end?  (fast)
-  for(int k=current+1;k<A.length();k++)
-    next_type[k] = PTM.n_letters();
   
-  vector<int> path;
+  vector<int> path; path.reserve(A.length());
 
   // add start state
   path.push_back(PTM.start_state());
