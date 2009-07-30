@@ -197,6 +197,11 @@ void data_partition::recalc_timodel()
 {
   if (not has_TIModel()) return;
 
+  cached_alignment_prior.invalidate();
+
+  for(int b=0;b<cached_alignment_prior_for_branch.size();b++)
+    cached_alignment_prior_for_branch[b].invalidate();
+
   for(int b=0;b<branch_PTMs.size();b++) 
   {
     // use the length - we don't handle unalignment yet for Transducers
@@ -250,8 +255,8 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
 
     branch_PTMs[b] = TIModel_->get_branch_Transducer(t*branch_mean());
 
-    //cached_alignment_prior.invalidate();
-    //cached_alignment_prior_for_branch[b].invalidate();
+    cached_alignment_prior.invalidate();
+    cached_alignment_prior_for_branch[b].invalidate();
   }
 
   default_timer_stack.pop_timer();
@@ -331,6 +336,7 @@ void data_partition::note_alignment_changed_on_branch(int b)
   cached_alignment_prior.invalidate();
   cached_alignment_prior_for_branch[b].invalidate();
   cached_alignment_counts_for_branch[b].invalidate();
+  cached_transducer_counts_for_branch[b].invalidate();
 
   const Tree& TT = *T;
   int target = TT.branch(b).target();
@@ -361,6 +367,16 @@ void data_partition::note_alignment_changed()
     note_alignment_changed_on_branch(b);
 
   // this automatically marks all non-leaf sequence lengths for recomputation.
+}
+
+void data_partition::note_column_label_changed()
+{
+  cached_alignment_prior.invalidate();
+
+  for(int b=0;b<T->n_branches();b++) {
+    cached_alignment_prior_for_branch[b].invalidate();
+    cached_transducer_counts_for_branch[b].invalidate();
+  }
 }
 
 void data_partition::recalc(const vector<int>& indices)
@@ -687,15 +703,68 @@ ublas::matrix<int> get_FS_counts(const alignment& A,int n1, int n2, const indel:
   return counts;
 }
 
+efloat_t transition_pr_from_counts(const ublas::matrix<int>& counts, const ublas::matrix<double>& M)
+{
+  assert(counts.size1() == M.size1());
+  assert(counts.size1() == M.size2());
+
+  efloat_t Pr = 1;
+
+  for(int s1=0;s1<counts.size1();s1++)
+    for(int s2=0;s2<counts.size2();s2++)
+      if (counts(s1,s2)) {
+	efloat_t M12 = M(s1,s2);
+	Pr *= pow<efloat_t>(M12,counts(s1,s2));
+      }
+
+  return Pr;
+}
+
 efloat_t data_partition::prior_alignment() const 
 {
   if (not variable_alignment()) return 1;
+
+  if (has_TIModel() and not cached_alignment_prior.is_valid())
   {
+    const alignment& AA = *A;
+    const SequenceTree& TT = *T;
+
+    /*********** update the cached branch probabilities ************/
+    for(int b=0;b<TT.n_branches();b++) 
+    {
+      int target = TT.branch(b).target();
+      int source  = TT.branch(b).source();
+
+      /*********** update the cached transition counts *************/
+      if (not cached_alignment_prior_for_branch[b].is_valid())
+      {
+	if (not cached_transducer_counts_for_branch[b].is_valid())
+	  cached_alignment_counts_for_branch[b] = get_FS_counts(AA,target,source,branch_PTMs[b]);
+#ifndef NDEBUG
+	else
+	{
+	  ublas::matrix<int> counts = get_FS_counts(AA,target,source);
+	  for(int i=0;i<counts.size1();i++)
+	    for(int j=0;j<counts.size2();j++)
+	      assert(cached_transducer_counts_for_branch[b].value()(i,j) == counts(i,j));
+	}
+#endif	
+
+	ublas::matrix<int>& counts = cached_alignment_counts_for_branch[b];
+
+	cached_alignment_prior_for_branch[b] = transition_pr_from_counts(counts, branch_PTMs[b]);
+      }
+#ifndef NDEBUG      
+
+      //      assert(std::abs(log(cached_alignment_prior_for_branch[b]) - log(prior_branch(AA, branch_HMMs[b], target, source))) < 1.0e-10);
+#endif
+    }
+
     efloat_t Pr = 1;
+    for(int b=0;b<TT.n_branches();b++)
+      Pr *= cached_alignment_prior_for_branch[b];
 
     int root = T->n_nodes()-1;
-
-    const alignment& AA = *A;
 
     // Compute probability for root sequence
     vector<int> root_sequence = get_type_sequence(AA,root,*TIModel_);
@@ -705,35 +774,10 @@ efloat_t data_partition::prior_alignment() const
     for(int i=1;i<root_sequence.size();i++)
       Pr *= root_P(root_sequence[i-1],root_sequence[i]);
  
-    // Compute probability for descendant branches
-    vector<const_branchview> branches = branches_from_node(*T,root);
-
-    for(int i=0;i<branches.size();i++)
-    {
-      indel::PairTransducer M = branch_PTMs[i];
-      //indel::PairTransducer M = TIModel_->get_branch_Transducer(branches[i].length()*branch_mean());      
-
-      int n1 = branches[i].source();
-      int n2 = branches[i].target();
-
-      efloat_t Pr2=1;
-
-      ublas::matrix<int> counts = get_FS_counts(AA,n1,n2,M);
-      for(int s1=0;s1<counts.size1();s1++)
-	for(int s2=0;s2<counts.size2();s2++)
-	  if (counts(s1,s2)) {
-	    efloat_t M12 = M(s1,s2);
-	    Pr2 *= pow<efloat_t>(M12,counts(s1,s2));
-	  }
-
-      Pr *= Pr2;
-    }
-
-    return Pr;
+    cached_alignment_prior = Pr;
   }
 
-
-  if (not cached_alignment_prior.is_valid()) 
+  if (has_IModel() and not cached_alignment_prior.is_valid())
   {
     const alignment& AA = *A;
     const SequenceTree& TT = *T;
@@ -776,7 +820,6 @@ efloat_t data_partition::prior_alignment() const
 
     cached_alignment_prior = Pr * prior_HMM_rootless_scale(*this);
   }
-
   
   assert(not different(cached_alignment_prior, ::prior_HMM(*this)));
 
@@ -851,6 +894,8 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    partition_name(n),
    cached_alignment_prior_for_branch(t.n_branches()),
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
+   cached_transducer_counts_for_branch(t.n_branches(),ublas::matrix<int>(TIM.get_branch_Transducer(1).n_states(),
+									 TIM.get_branch_Transducer(1).n_states())),
    cached_sequence_lengths(a.n_sequences()),
    smodel_full_tree(true),
    A(a),
@@ -863,6 +908,8 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
 {
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
+  for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
+    cached_transducer_counts_for_branch[b].invalidate();
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
