@@ -123,6 +123,7 @@ public:
   const indel::PairHMM& get_branch_HMM(int b) const;
   std::vector<indel::PairHMM> get_branch_HMMs(const std::vector<int>&) const;
 
+  vector<indel::PairTransducer> branch_PTMs;
   std::vector<int> branch_HMM_type;
 
   /// Alignment constraint

@@ -196,6 +196,15 @@ void data_partition::recalc_imodel()
 void data_partition::recalc_timodel() 
 {
   if (not has_TIModel()) return;
+
+  for(int b=0;b<branch_PTMs.size();b++) 
+  {
+    // use the length - we don't handle unalignment yet for Transducers
+    double t = T->branch(b).length();
+    
+    // compute and cache the branch PTM
+    branch_PTMs[b] = TIModel_->get_branch_Transducer(t*branch_mean());
+  }
 }
 /// \brief Recalculate cached values relating to the substitution model.
 ///
@@ -233,12 +242,25 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
 
   recalc_imodel_for_branch(b);
 
+
+  if (has_TIModel())
+  {
+    // use the length, unless we are unaligned
+    double t = T->branch(b).length();
+
+    branch_PTMs[b] = TIModel_->get_branch_Transducer(t*branch_mean());
+
+    //cached_alignment_prior.invalidate();
+    //cached_alignment_prior_for_branch[b].invalidate();
+  }
+
   default_timer_stack.pop_timer();
 }
 
 void data_partition::setlength(int b, double l)
 {
   setlength_no_invalidate_LC(b,l);
+
   LC.invalidate_branch(*T,b);
 }
 
@@ -686,18 +708,17 @@ efloat_t data_partition::prior_alignment() const
     // Compute probability for descendant branches
     vector<const_branchview> branches = branches_from_node(*T,root);
 
-    indel::PairTransducer M1 = TIModel_->get_branch_Transducer(1);
-
     for(int i=0;i<branches.size();i++)
     {
-      indel::PairTransducer M = TIModel_->get_branch_Transducer(branches[i].length()*branch_mean());
-      
+      indel::PairTransducer M = branch_PTMs[i];
+      //indel::PairTransducer M = TIModel_->get_branch_Transducer(branches[i].length()*branch_mean());      
+
       int n1 = branches[i].source();
       int n2 = branches[i].target();
 
       efloat_t Pr2=1;
 
-      ublas::matrix<int> counts = get_FS_counts(AA,n1,n2,M1);
+      ublas::matrix<int> counts = get_FS_counts(AA,n1,n2,M);
       for(int s1=0;s1<counts.size1();s1++)
 	for(int s2=0;s2<counts.size2();s2++)
 	  if (counts(s1,s2)) {
@@ -802,6 +823,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    A(a),
    T(t),
    LC(t,SModel()),
+   branch_PTMs(t.n_branches(),TIM.get_branch_Transducer(1)),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
