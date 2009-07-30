@@ -958,7 +958,7 @@ indel::PairTransducer get_FS_Transducer(double t,double delta_s,double delta_f, 
 
   Q(TfE,IfE) = delta_f;
   Q(TfE,E)   = (1 - delta_f)*(1 - tau*tau);
-  Q(TfE,TfE) = (1 - delta_f)*tau*tau;
+  Q(TfE,TsE) = (1 - delta_f)*tau*tau;
 
   Q(IfE,IfE) = r_f;
   Q(IfE,TfE) = 1 - r_f;
