@@ -163,6 +163,106 @@ namespace indel
   }
 }
 
+// Get a bitmask of the list of possible next letters emitted in sequence 1 after state @s0
+// The mask is indexed by letter1, letter2, ... , E
+vector<int> get_possible_next_letters(int s0, const indel::PairTransducer& PTM)
+{
+  vector<int> visited(PTM.n_states(),0);
+
+  vector<int> next;
+  next.push_back(s0);
+
+  vector<int> possible(PTM.n_letters()+1,0);
+
+  while (next.size())
+  {
+    // states to consider next time around
+    vector<int> next2;
+
+    // For each next (unvisited) letter s1
+    for(int i=0;i<next.size();i++)
+    {
+      int s1 = next[i];
+
+      if (visited[s1]) continue;
+
+      visited[s1] = 1;
+
+      // For each unvisited neighbor s2 of s1
+      for(int s2=0;s2<PTM.n_states();s2++)
+      {
+	if (PTM(s1,s2) > 0) 
+	{
+	  // If it emits a letter in sequence1, then that letter is possible;
+	  if (PTM.emits_1(s2) != -1) {
+	    possible[PTM.emits_1(s2)] = 1;
+	    visited[s2] = 1;
+	  }
+          // If it is the end state, then the end state is possible
+	  else if (s2 == PTM.end_state()) {
+	    possible.back() = 1;
+	    visited[s2] = 1;
+	  }
+          // If is silent in sequence 1 and not the end state, the consider
+          // that state's neighbors.
+	  else if (not visited[s2])
+	    next2.push_back(s2);
+	}
+      }
+    }
+
+    next = next2;
+  }
+
+  return possible;
+}
+
+transducer_state_info::transducer_state_info(const indel::PairTransducer& PTM)
+  :M(PTM.n_letters()+1,PTM.n_letters()+1),
+   D(PTM.n_letters()+1,PTM.n_letters()+1),
+   I(PTM.n_letters()+1,PTM.n_letters()+1)
+{
+  // Find possible next letters
+  vector< vector<int> > possible;
+  for(int i=0;i<PTM.n_states();i++)
+    possible.push_back(get_possible_next_letters(i,PTM));
+
+  // Find unique states S[i,j] of type Si that next emit j in sequence 1
+  const int o = PTM.n_letters()+1;
+
+  for(int i=0;i<o;i++)
+    for(int j=0;j<o;j++)
+      M(i,j) = D(i,j) = I(i,j) = -1;
+
+  for(int i=0;i<PTM.n_states();i++)
+  {
+    int t1 = PTM.emits_1(i);
+    if (t1 == -1)
+      t1 = PTM.emits_2(i);
+    if (t1 == -1)
+      continue;
+
+    for(int t2=0;t2<PTM.n_letters()+1;t2++) 
+      if (possible[i][t2]) {
+
+	if (PTM.is_match(i)) {
+	  assert(M(t1,t2) == -1);
+	  M(t1,t2) = i;
+	}
+	if (PTM.is_delete(i)) {
+	  assert(D(t1,t2) == -1);
+	  D(t1,t2) = i;
+	}
+	if (PTM.is_insert(i)) {
+	  assert(I(t1,t2) == -1);
+	  I(t1,t2) = i;
+	}
+      }
+  }
+
+
+}
+
 string i_parameter_name(int i,int n) {
   if (i>=n)
     throw myexception()<<"substitution model: refered to parameter "<<i<<" but there are only "<<n<<" parameters.";
@@ -808,10 +908,14 @@ efloat_t FS_Transducer::prior() const
   double E_length_r_f = log_r_f - logdiff(0,log_r_f);
   Pr *= exp_exponential_pdf(E_length_r_f ,E_length_mean);
 
+  if (log_r_f < log_r_s) return 0;
+
   // Calculate prior on mean sequence length
   //  Pr *= exponential_pdf(parameter(2), parameter(4));
   //  Pr *= exponential_pdf(parameter(3), parameter(5));
 
+  double tau = parameter(6);
+  Pr *= exponential_pdf(tau, 0.1);
   return Pr;
 }
 
@@ -1020,7 +1124,7 @@ FS_Transducer::FS_Transducer(bool b)
   add_parameter("r_f", -0.3);
   add_parameter("mean_length_s", 20);
   add_parameter("mean_length_f", 20);
-  add_parameter("switch", 0.01);
+  add_parameter("switch", 0.1);
   add_parameter("lambda::prior_median_s", -5);
   add_parameter("lambda::prior_median_f", -3);
   add_parameter("lambda::prior_stddev", 1.5);

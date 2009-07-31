@@ -66,6 +66,16 @@ namespace indel {
 
 }
 
+// Construct matrices M(i,j) for the M state emitting letter i, where letter j is going to be the next letter emitted.
+// The indices i and j range from L1 (0), L2 (1), ... , E (n_letters())
+struct transducer_state_info
+{
+  ublas::matrix<int> M;
+  ublas::matrix<int> D;
+  ublas::matrix<int> I;
+  transducer_state_info(const indel::PairTransducer& P);
+};
+
 /// A generic insertion/deletion model
 class IndelModel: public Model 
 {
