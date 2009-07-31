@@ -511,9 +511,9 @@ efloat_t data_partition::prior_alignment() const
       Pr *= cached_alignment_prior_for_branch[b];
 
     cached_alignment_prior = Pr * prior_HMM_rootless_scale(*this);
+
+    assert(std::abs(log(cached_alignment_prior) - log(::prior_HMM(*this))) < 1.0e-10);
   }
-  
-  assert(std::abs(log(cached_alignment_prior) - log(::prior_HMM(*this))) < 1.0e-10);
 
   return cached_alignment_prior;
 }
