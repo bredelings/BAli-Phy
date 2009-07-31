@@ -1120,11 +1120,11 @@ indel::PairTransducer FS_Transducer::get_branch_Transducer(double t) const
   assert(lambda_s < mu_s);
   assert(lambda_f < mu_f);
 
-  double A_s = lambda_s*t/(1.0 - r);
+  double A_s = lambda_s*t;
   double B_s = 1.0 - exp(-A_s);
   double delta_s = B_s/(1+B_s);
 
-  double A_f = lambda_f*t/(1.0 - r);
+  double A_f = lambda_f*t;
   double B_f = 1.0 - exp(-A_f);
   double delta_f = B_f/(1+B_f);
 
