@@ -736,9 +736,9 @@ efloat_t data_partition::prior_alignment() const
       Pr *= cached_alignment_prior_for_branch[b];
 
     cached_alignment_prior = Pr * prior_HMM_rootless_scale(*this);
-  }
-  
+
   assert(not different(cached_alignment_prior, ::prior_HMM(*this)));
+  }
 
   return cached_alignment_prior;
 }
