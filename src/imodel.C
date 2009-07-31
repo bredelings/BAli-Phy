@@ -894,8 +894,11 @@ efloat_t FS_Transducer::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda
-  Pr *= laplace_pdf(parameter(0), parameter(7), parameter(9));
-  Pr *= laplace_pdf(parameter(1), parameter(8), parameter(9));
+  double lambda_s = parameter(0);
+  double lambda_f = parameter(1);
+
+  Pr *= laplace_pdf(lambda_s, parameter(7), parameter(9));
+  Pr *= laplace_pdf(lambda_f, parameter(8), parameter(9));
 
   // Calculate prior on r_s
   double E_length_mean = parameter(9);
@@ -909,6 +912,8 @@ efloat_t FS_Transducer::prior() const
   Pr *= exp_exponential_pdf(E_length_r_f ,E_length_mean);
 
   if (log_r_f < log_r_s) return 0;
+
+  if (lambda_f < lambda_s) return 0;
 
   // Calculate prior on mean sequence length
   //  Pr *= exponential_pdf(parameter(2), parameter(4));
