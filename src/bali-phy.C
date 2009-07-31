@@ -184,6 +184,7 @@ using boost::dynamic_bitset;
 
   add_MH_move(P, less_than(0,shift_cauchy), "lambda_s",      "lambda_shift_sigma",    0.35, MH_moves);
   add_MH_move(P, less_than(0,shift_cauchy), "lambda_f",      "lambda_shift_sigma",    0.35, MH_moves);
+  add_MH_move(P, shift_epsilon,               "r",     "epsilon_shift_sigma",   0.15, MH_moves);
   add_MH_move(P, shift_epsilon,               "r_s",     "epsilon_shift_sigma",   0.15, MH_moves);
   add_MH_move(P, shift_epsilon,               "r_f",     "epsilon_shift_sigma",   0.15, MH_moves);
   add_MH_move(P, between(0,1,shift_cauchy), "switch",   "invariant_shift_sigma", 0.15, MH_moves);
@@ -191,6 +192,8 @@ using boost::dynamic_bitset;
   add_slice_moves(P, "lambda_s",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
   add_slice_moves(P, "lambda_f",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
 
+  add_slice_moves(P, "r",     "epsilon_slice_window",   1.0,
+		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
   add_slice_moves(P, "r_s",     "epsilon_slice_window",   1.0,
 		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
   add_slice_moves(P, "r_f",     "epsilon_slice_window",   1.0,
@@ -262,6 +265,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("fix",value<vector<string> >()->composing(),"Fix parameter[=<value>]")
     ("unfix",value<vector<string> >()->composing(),"Un-fix parameter[=<initial value>]")
     ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.") 
+    ("rate-labels",value<string>(),"Filename containing initial rate labels for the alignment")
     ;
 
   options_description model("Model options");
@@ -1034,6 +1038,28 @@ void check_alignment_values(const alignment& A,const string& filename)
   }
 }
 
+vector<int> read_rate_labels(const string& filename)
+{
+  ifstream file(filename.c_str());
+  if (not file)
+    throw myexception()<<"Can't load rate labels file '"<<filename<<"'";
+
+  string line;
+  getline_handle_dos(file,line);
+  vector<int> labels(line.size(),-1);
+
+  for(int i=0;i<labels.size();i++) {
+    if (line[i] == 'S')
+      labels[i] = 0;
+    else if (line[i] == 'F')
+      labels[i] = 1;
+    else
+      throw myexception()<<"I don't recognize label letter '"<<labels[i];
+  }
+
+  return labels;
+}
+
 time_t start_time = time(NULL);
 
 void show_ending_messages()
@@ -1313,10 +1339,23 @@ int main(int argc,char* argv[])
     // read and store partitions and weights, if any.
     setup_partition_weights(args,P);
 
+    vector<int> rate_labels;
+    if (args.count("rate-labels"))
+      rate_labels = read_rate_labels(args["rate-labels"].as<string>());
+
     //----- Initialize Likelihood caches and character index caches -----//
       add_column_type_note(*P[i].A);
-      for(int c=0;c<P[i].A->length();c++)
-	P[i].A->note(2)(c,0) = (c/5)%2;
+
+      if (rate_labels.size()) {
+	if (rate_labels.size() != P[i].A->length())
+	  throw myexception()<<"Got "<<rate_labels.size()<<" labels, but the alignment has "<<P[i].A->length()<<" columns";
+
+	for(int c=0;c<P[i].A->length();c++)
+	  P[i].A->note(2)(c,0) = rate_labels[c];
+      }
+      else
+	for(int c=0;c<P[i].A->length();c++)
+	  P[i].A->note(2)(c,0) = (c/5)%2;
 
     // Why do we need to do this, again?
     P.recalc_all();
@@ -1324,9 +1363,76 @@ int main(int argc,char* argv[])
     //---------------Do something------------------//
     if (args.count("show-only"))
     {
+      const TransducerIndelModel& TIM = P[0].TIModel();
+
+      indel::PairTransducer PTM = TIM.get_branch_Transducer(1.0);
+
+      transducer_state_info TSI(PTM);
+
+      {
+	int S = 1;
+	int F = 2;
+	Matrix root_P = Q_FS.root_chain();
+	cout<<"S->S = "<<log(root_P(S,S))<<endl;
+	cout<<"S->F = "<<log(root_P(S,F))<<endl;
+	cout<<"F->S = "<<log(root_P(F,S))<<endl;
+	cout<<"F->F = "<<log(root_P(F,F))<<endl;
+      }
+
+
+      int S = 0;
+      int F = 1;
+      int E = 2;
+      int Ms  = TSI.M(S,S);
+      int Mf  = TSI.M(F,F);
+      int IfF = TSI.I(F,F);
+      int IfS = TSI.I(F,S);
+      int IfE = TSI.I(F,E);
+      int IsF = TSI.I(S,F);
+      int IsS = TSI.I(S,S);
+      int IsE = TSI.I(S,E);
+
+      cout<<"Ms = "<<Ms<<endl;
+      cout<<"Mf = "<<Mf<<endl;
+      cout<<"IfF = "<<IfF<<endl;
+      cout<<"IfS = "<<IfS<<endl;
+      cout<<"IfE = "<<IfE<<endl;
+      cout<<"ISF = "<<IsF<<endl;
+      cout<<"ISS = "<<IsS<<endl;
+      cout<<"ISE = "<<IsE<<endl;
+
+      cout<<"Ms->Ms = "<<log(PTM(Ms,Ms))<<endl;
+      cout<<"Mf->Mf = "<<log(PTM(Mf,Mf))<<endl;
+      cout<<"Ms->Mf = "<<log(PTM(Ms,Mf))<<endl;
+      cout<<"Mf->Ms = "<<log(PTM(Mf,Ms))<<endl;
+
+      cout<<"Ms->If[f] = "<<log(PTM(Ms,IfF))<<endl;
+      cout<<"Ms->If[s] = "<<log(PTM(Ms,IfS))<<endl;
+      cout<<"Ms->Is[f] = "<<log(PTM(Ms,IsF))<<endl;
+      cout<<"Ms->Is[s] = "<<log(PTM(Ms,IsS))<<endl;
+
+      cout<<"Mf->If[f] = "<<log(PTM(Mf,IfF))<<endl;
+      cout<<"Mf->If[s] = "<<log(PTM(Mf,IfS))<<endl;
+
+      cout<<"If[f]->Mf = "<<log(PTM(IfF,Mf))<<endl;
+      cout<<"If[f]->Ms = "<<log(PTM(IfF,Ms))<<endl;
+      cout<<"If[s]->Ms = "<<log(PTM(IfS,Ms))<<endl;
+
+      cout<<"Is[f]->Mf = "<<log(PTM(IsF,Mf))<<endl;
+      cout<<"Is[f]->Ms = "<<log(PTM(IsF,Ms))<<endl;
+      cout<<"Is[s]->Ms = "<<log(PTM(IsS,Ms))<<endl;
+
+      cout<<"If[f]->If[f] = "<<log(PTM(IfF,IfF))<<endl;
+      cout<<"If[f]->Is[f] = "<<log(PTM(IfF,IsF))<<endl;
+      cout<<"Is[s]->Is[s] = "<<log(PTM(IsS,IsS))<<endl;
+      cout<<"Is[s]->If[s] = "<<log(PTM(IsS,IfS))<<endl;
+      cout<<"Is[E]->Is[E] = "<<log(PTM(IsE,IsE))<<endl;
+      cout<<"Is[E]->If[E] = "<<log(PTM(IsE,IfE))<<endl;
+      cout<<"If[E]->Is[E] = "<<log(PTM(IfE,IsE))<<endl;
+
       // FIXME!
-      MCMC::MoveStats S;
-      sample_alignment_rates(P,S);
+      MCMC::MoveStats St;
+      sample_alignment_rates(P,St);
 
       // FIXME ! How do we print the tree to stdout?
       print_stats(cout,P);
