@@ -259,6 +259,13 @@ int get_prev_column(const alignment& A,int n1, int n2, int c)
   return -1;
 }
 
+int get_prev_column(const alignment& A,const Tree& T, int b, int c)
+{
+  int n1 = T.branch(b).source();
+  int n2 = T.branch(b).target();
+  return get_prev_column(A,n1,n2,c);
+}
+
 
 void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
 {
@@ -323,12 +330,32 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
 	continue;
 
       int pc = get_prev_column(A,n1,n2,c);
+
       //      if (b == current_insertion.b)
       //	assert(pc == prev_column);
+
       if (pc < prev_column) {
 	if (not includes(prev_columns,pc))
 	  prev_columns.push_back(pc);
 	cerr<<"    branch "<<b<<":  pc = "<<pc<<endl;
+      }
+      else if (pc > prev_column) {
+	// This must be an insertion nested in to this one...
+	int prev_ins = G.insertion_for_column[pc];
+	insertion& nested_insertion = G.insertions[prev_ins];
+
+	if (nested_insertion.next() != c) {
+	  cerr<<"    nested insertion? "<<prev_ins<<endl;
+	  cerr<<"    branch "<<nested_insertion.b<<": pc = "<<pc<<" NEXT = "<<nested_insertion.next()<<endl;
+	}
+	// We can handle these directly.
+	if (nested_insertion.prev() == prev_column) {
+	  cerr<<"    PROCESS = "<<prev_ins<<"  ["<<nested_insertion.prev()<<"-"<<nested_insertion.next()<<"]   branch = "<<nested_insertion.b<<endl;
+	}
+	// Don't handle these, because these are included in the ones we DO process.
+	else {
+	  cerr<<"        SUB = "<<prev_ins<<"  ["<<nested_insertion.prev()<<"-"<<nested_insertion.next()<<"]   branch = "<<nested_insertion.b<<endl;
+	}
       }
     }
 
@@ -428,6 +455,9 @@ void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
     }
 
     // do some larger flips also
+
+    //FIXME - probably need to build a graph to actually change things...
+    //      - record ALL (and only) the neighbors of each column, and then choose from those...
     for(int i=0;i<L;i++) 
     {
       Parameters P2 = P;
