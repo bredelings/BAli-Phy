@@ -54,6 +54,7 @@ namespace mpi = boost::mpi;
 #include "tree-util.H" //extends
 #include "version.H"
 #include "slice-sampling.H"
+#include "2way.H"
 
 namespace fs = boost::filesystem;
 
@@ -1724,11 +1725,11 @@ int main(int argc,char* argv[])
       cout<<"Mf->If[s] = "<<log(PTM(Mf,IfS))<<endl;
 
       cout<<"If[f]->Mf = "<<log(PTM(IfF,Mf))<<endl;
-      cout<<"If[f]->Ms = "<<log(PTM(IfF,Ms))<<endl;
+      //      cout<<"If[f]->Ms = "<<log(PTM(IfF,Ms))<<endl;
       cout<<"If[s]->Ms = "<<log(PTM(IfS,Ms))<<endl;
 
       cout<<"Is[f]->Mf = "<<log(PTM(IsF,Mf))<<endl;
-      cout<<"Is[f]->Ms = "<<log(PTM(IsF,Ms))<<endl;
+      //      cout<<"Is[f]->Ms = "<<log(PTM(IsF,Ms))<<endl;
       cout<<"Is[s]->Ms = "<<log(PTM(IsS,Ms))<<endl;
 
       cout<<"If[f]->If[f] = "<<log(PTM(IfF,IfF))<<endl;
@@ -1738,6 +1739,27 @@ int main(int argc,char* argv[])
       cout<<"Is[E]->Is[E] = "<<log(PTM(IsE,IsE))<<endl;
       cout<<"Is[E]->If[E] = "<<log(PTM(IsE,IfE))<<endl;
       cout<<"If[E]->Is[E] = "<<log(PTM(IfE,IsE))<<endl;
+
+      double lambda_s = TIM.parameter(0);
+      double lambda_f = TIM.parameter(1);
+      double r        = TIM.parameter(2);
+
+      NewIndelModel RS07_S(true);
+      RS07_S.parameter(0,lambda_s);
+      RS07_S.parameter(1,r);
+
+      NewIndelModel RS07_F(true);
+      RS07_F.parameter(0,lambda_f);
+      RS07_F.parameter(1,r);
+
+      indel::PairHMM HMM_S = RS07_S.get_branch_HMM(1);
+      indel::PairHMM HMM_F = RS07_F.get_branch_HMM(1);
+
+      using namespace A2;
+      double MIS = HMM_S(states::M,states::G1);
+      double MIF = HMM_F(states::M,states::G1);
+      cout<<"RS07[S]  M->I = "<<log(MIS)<<"     ["<<log(MIS/(1-MIS))<<"]"<<endl;
+      cout<<"RS07[F]  M->I = "<<log(MIF)<<"     ["<<log(MIF/(1-MIF))<<"]"<<endl;
 
       // FIXME!
       MCMC::MoveStats St;
