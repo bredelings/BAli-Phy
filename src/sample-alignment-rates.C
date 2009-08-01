@@ -415,6 +415,101 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
   //    (We aren't actually change the ALIGNMENT yet.
   // 4. 
 
+struct column_adjacency_graph 
+{
+  int size() const {return prev.size();}
+
+  vector< vector<int> > prev;
+  vector< vector<int> > next;
+
+  void add_edge(int i,int j) 
+  {
+    if (not includes(next[i],j)) {
+      next[i].push_back(j);
+      prev[j].push_back(i);
+    }
+  }
+
+  column_adjacency_graph(int L)
+    :prev(L), next(L) 
+  { }
+};
+
+column_adjacency_graph get_adjacency_graph(const alignment& A, const Tree& T, int root)
+{
+
+  column_adjacency_graph G(A.length());
+
+  // add edges for the root sequence
+  int last_c = -1;
+  for(int c=0;c<A.length();c++) 
+  {
+    if (A.character(c,root)) {
+      if (last_c != -1)
+	G.add_edge(last_c,c);
+      last_c = c;
+    }
+  }
+
+  vector<const_branchview> branches = branches_from_node(T,root);
+
+  // add edges for each branch sequence
+  for(int j=0;j<branches.size();j++)
+  {
+    int n1 = branches[j].source();
+    int n2 = branches[j].target();
+    int last_c = -1;
+
+    // add edges for branch b
+    for(int c=0;c<A.length();c++) {
+      if (A.character(c,n1) or A.character(c,n2)) {
+	if (last_c != -1)
+	  G.add_edge(last_c,c);
+	last_c = c;
+      }
+    }
+
+  }    
+
+  return G;
+}
+    
+
+// to consider edges only once... only consider edges to a non-visted node?
+vector<int> get_cluster(const column_adjacency_graph& G, double p,int c)
+{
+  vector<int> visited(G.size(),0);
+
+  vector<int> nodes;
+  nodes.push_back(c);
+  visited[c] = 1;
+
+  for(int i=0;i<nodes.size();i++)
+  {
+    int n = nodes[i];
+    
+    // scan the nodes before n
+    for(int j=0;j<G.prev[n].size();j++) {
+      int n2 = G.prev[n][j];
+      if (not visited[n2] and (uniform() < p)) {
+	nodes.push_back(n2);
+	visited[n2] = 1;
+      }
+    }
+    
+    // scan the nodes after n
+    for(int j=0;j<G.next[n].size();j++) {
+      int n2 = G.next[n][j];
+      if (not visited[n2] and (uniform() < p))
+      {
+	nodes.push_back(n2);
+	visited[n2] = 1;
+      }
+    }
+  }
+
+  return nodes;
+}
 
 /*
  * Go through columns in order.  
@@ -424,8 +519,11 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
 void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
 {
   int total = 0;
-  int successful = 0;
+  int successful1 = 0;
+  int successful2 = 0;
   int flipped = 0;
+
+  int root = P.T->n_nodes()-1;
 
   for(int p=0;p<P.n_data_partitions();p++) 
   {
@@ -447,12 +545,14 @@ void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
       if (success) {
 	P=P2;
 	//    std::cerr<<"accepted\n";
-	successful ++;
+	successful1++;
       }
       else {
 	//    std::cerr<<"rejected\n";
       }
     }
+
+    column_adjacency_graph G = get_adjacency_graph(*P[p].A,*P.T,root);
 
     // do some larger flips also
 
@@ -464,11 +564,12 @@ void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
       alignment& A2 = *P2[p].A;
       ublas::matrix<int>& type_note = A2.note(2);
 
-      int size = geometric(0.25);
+      // Average size will be 1+2/(1-r)   
+      vector<int> cluster = get_cluster(G, 0.70, i);
+      //      cerr<<"column "<<i<<": size = "<<cluster.size()<<"     [ "<<join(cluster,' ')<<" ]"<<endl;
 
-      int location = uniform()*(L-size);
-      for(int j=0;j<size;j++) {
-	int c = location + j;
+      for(int j=0;j<cluster.size();j++) {
+	int c = cluster[j];
 	type_note(c,0) = 1-type_note(c,0);
       }
       P2[p].note_column_label_changed();
@@ -478,8 +579,8 @@ void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
       if (success) {
 	P=P2;
 	//    std::cerr<<"accepted\n";
-	successful ++;
-	flipped += size;
+	successful2++;
+	flipped += cluster.size();
       }
       else {
 	//    std::cerr<<"rejected\n";
@@ -489,17 +590,17 @@ void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
   }
 
   MCMC::Result single_result(2);
-  single_result.totals[0] = successful; // number of accepted proposals
+  single_result.totals[0] = successful1; // number of accepted proposals
   
   single_result.counts[0] = total; // number of columns = number of MH moves
   
-  single_result.totals[1] = successful; // number of accepted proposals / 1
+  single_result.totals[1] = successful1; // number of accepted proposals / 1
   
   Stats.inc("flip-single-column",single_result);
 
 
   MCMC::Result multiple_result(2);
-  multiple_result.totals[0] = successful; // number of accepted proposals
+  multiple_result.totals[0] = successful2; // number of accepted proposals
 
   multiple_result.counts[0] = total; // number of columns = number of MH moves
   
