@@ -417,21 +417,21 @@ void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
 
 struct column_adjacency_graph 
 {
-  int size() const {return prev.size();}
+  vector< vector<int> > neighbors;
 
-  vector< vector<int> > prev;
-  vector< vector<int> > next;
+  int size() const {return neighbors.size();}
 
   void add_edge(int i,int j) 
   {
-    if (not includes(next[i],j)) {
-      next[i].push_back(j);
-      prev[j].push_back(i);
+    if (not includes(neighbors[i],j)) 
+    {
+      neighbors[i].push_back(j);
+      neighbors[j].push_back(i);
     }
   }
 
   column_adjacency_graph(int L)
-    :prev(L), next(L) 
+    :neighbors(L)
   { }
 };
 
@@ -468,47 +468,90 @@ column_adjacency_graph get_adjacency_graph(const alignment& A, const Tree& T, in
 	last_c = c;
       }
     }
-
-  }    
+  }
 
   return G;
 }
     
+// compute to proposal ration (rho_ji/rho_ij) for finding same-spin clusters.
+efloat_t cluster_proposal_ratio(const column_adjacency_graph& G, double p, const alignment& A, 
+				const vector<int>& cluster)
+{
+  ublas::matrix<int>& type_note = A.note(2);
+  int current_spin = type_note(cluster[0],0);
+
+  // mark nodes that are part of the cluster, to avoid searching every time.
+  vector<int> part_of_cluster(G.size(),0);
+  for(int i=0;i<cluster.size();i++)
+    part_of_cluster[cluster[i]] = 1;
+
+  // find out how many bordering nodes have the same or different spins as the cluster
+  int n_same = 0;
+  int n_diff = 0;
+
+  for(int i=0;i<cluster.size();i++) 
+  {
+    int c = cluster[i];
+
+    // scan the columns next to c
+    for(int j=0;j<G.neighbors[c].size();j++) 
+    {
+      int c2 = G.neighbors[c][j];
+
+      // only consider columns that are not in the cluster
+      if (part_of_cluster[c2]) continue;
+
+      if (type_note(c2,0) == current_spin)
+	n_same++;
+
+      if (type_note(c2,0) != current_spin)
+	n_diff++;
+    }
+
+
+  }
+
+  //  std::cerr<<"    spin = "<<current_spin<<"   n_same = "<<n_same<<"  n_diff = "<<n_diff<<endl;
+  efloat_t R = (1-p);
+  efloat_t rho_12 = pow<efloat_t>(R,n_same);
+  efloat_t rho_21 = pow<efloat_t>(R,n_diff);
+
+  return rho_21/rho_12;
+}
 
 // to consider edges only once... only consider edges to a non-visted node?
-vector<int> get_cluster(const column_adjacency_graph& G, double p,int c)
+vector<int> get_cluster(const column_adjacency_graph& G, double p, const alignment& A, int c)
 {
-  vector<int> visited(G.size(),0);
+  ublas::matrix<int>& type_note = A.note(2);
+  int current_spin = type_note(c,0);
 
-  vector<int> nodes;
-  nodes.push_back(c);
-  visited[c] = 1;
+  vector<int> part_of_cluster(G.size(),0);
 
-  for(int i=0;i<nodes.size();i++)
+  vector<int> columns;
+  columns.push_back(c);
+  part_of_cluster[c] = 1;
+
+  for(int i=0;i<columns.size();i++)
   {
-    int n = nodes[i];
+    int c = columns[i];
     
-    // scan the nodes before n
-    for(int j=0;j<G.prev[n].size();j++) {
-      int n2 = G.prev[n][j];
-      if (not visited[n2] and (uniform() < p)) {
-	nodes.push_back(n2);
-	visited[n2] = 1;
-      }
-    }
-    
-    // scan the nodes after n
-    for(int j=0;j<G.next[n].size();j++) {
-      int n2 = G.next[n][j];
-      if (not visited[n2] and (uniform() < p))
-      {
-	nodes.push_back(n2);
-	visited[n2] = 1;
+    // scan the columns next to c
+    for(int j=0;j<G.neighbors[c].size();j++) 
+    {
+      int c2 = G.neighbors[c][j];
+
+      // ignore columns we've already added, or disallowed columns
+      if (part_of_cluster[c2] or type_note(c2,0) != current_spin)
+	continue;
+
+      if (uniform() < p) {
+	columns.push_back(c2);
+	part_of_cluster[c2] = 1;
       }
     }
   }
 
-  return nodes;
+  return columns;
 }
 
 /*
@@ -518,22 +561,17 @@ vector<int> get_cluster(const column_adjacency_graph& G, double p,int c)
    */
 void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
 {
-  int total = 0;
-  int successful1 = 0;
-  int successful2 = 0;
-  int flipped = 0;
-
   int root = P.T->n_nodes()-1;
 
   for(int p=0;p<P.n_data_partitions();p++) 
   {
     int L = P[p].A->length();
 
-    total += L;
-
     // do all single flips
     for(int c=0;c<L;c++) 
     {
+      MCMC::Result result(2);
+
       Parameters P2 = P;
       alignment& A2 = *P2[p].A;
       ublas::matrix<int>& type_note = A2.note(2);
@@ -545,27 +583,37 @@ void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
       if (success) {
 	P=P2;
 	//    std::cerr<<"accepted\n";
-	successful1++;
+	result.totals[0] = 1; // number of successful moves
+	result.totals[1] = 1; // number of columns flipped
       }
       else {
 	//    std::cerr<<"rejected\n";
       }
+  
+  
+  
+      Stats.inc("flip-single-column",result);
+
     }
 
     column_adjacency_graph G = get_adjacency_graph(*P[p].A,*P.T,root);
 
-    // do some larger flips also
-
-    //FIXME - probably need to build a graph to actually change things...
-    //      - record ALL (and only) the neighbors of each column, and then choose from those...
+    // Do a Wolff-stype algorithm that flips neighboring groups with the same spin
     for(int i=0;i<L;i++) 
     {
+      MCMC::Result result(4);
+
       Parameters P2 = P;
       alignment& A2 = *P2[p].A;
       ublas::matrix<int>& type_note = A2.note(2);
 
       // Average size will be 1+2/(1-r)   
-      vector<int> cluster = get_cluster(G, 0.70, i);
+      double p = 0.8;
+      if (uniform() < 0.5)
+	p = 0.6;
+      vector<int> cluster = get_cluster(G, p, A2, i);
+      efloat_t rho = cluster_proposal_ratio(G, p, A2, cluster);
+
       //      cerr<<"column "<<i<<": size = "<<cluster.size()<<"     [ "<<join(cluster,' ')<<" ]"<<endl;
 
       for(int j=0;j<cluster.size();j++) {
@@ -574,37 +622,26 @@ void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
       }
       P2[p].note_column_label_changed();
 	
-      bool success = accept_MH(P,P2,1.0);
+      bool success = accept_MH(P,P2,rho);
       
+      result.totals[2] = cluster.size(); // number of columns flipped
       if (success) {
 	P=P2;
 	//    std::cerr<<"accepted\n";
-	successful2++;
-	flipped += cluster.size();
+	result.totals[0] = 1;              // number of successful moves
+	result.totals[1] = cluster.size(); // number of columns flipped
+	result.totals[3] = cluster.size(); // number of columns flipped
       }
       else {
+	result.counts[3] = 0;
 	//    std::cerr<<"rejected\n";
       }
+      if (p < 0.7)
+	Stats.inc("flip-multiple-column-0.6",result);
+      else
+	Stats.inc("flip-multiple-column-0.8",result);
+
     }
       
   }
-
-  MCMC::Result single_result(2);
-  single_result.totals[0] = successful1; // number of accepted proposals
-  
-  single_result.counts[0] = total; // number of columns = number of MH moves
-  
-  single_result.totals[1] = successful1; // number of accepted proposals / 1
-  
-  Stats.inc("flip-single-column",single_result);
-
-
-  MCMC::Result multiple_result(2);
-  multiple_result.totals[0] = successful2; // number of accepted proposals
-
-  multiple_result.counts[0] = total; // number of columns = number of MH moves
-  
-  multiple_result.totals[1] = flipped; // number of changed letters / 1
-    
-  Stats.inc("flip-multiple-column",multiple_result);
 }
