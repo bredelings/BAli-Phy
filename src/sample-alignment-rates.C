@@ -2,6 +2,98 @@
 
 #include "parameters.H"
 
+#include "choose.H"
+
+int accept_multiple_try_MH(efloat_t p1, const vector<efloat_t>& p2,efloat_t rho)
+{
+  const int n = p2.size();
+
+  int c = choose<efloat_t>(p2);
+
+  efloat_t ratio_bottom = p1*efloat_t(n);
+
+  efloat_t ratio_top = 0;
+  for(int i=0;i<n;i++)
+    ratio_top    += p2[i];
+
+  efloat_t ratio = ratio_top/ratio_bottom*rho;
+
+  if (ratio >= 1.0 or uniform() < ratio) 
+    return c;
+  else
+    return -1;
+}
+
+int accept_multiple_try_MH(efloat_t p1, const vector<efloat_t>& p2,
+			   const vector<efloat_t>& rho_12, const vector<efloat_t>& rho_21)
+{
+  const int n = p2.size();
+
+  int c = choose<efloat_t>(p2);
+
+  efloat_t ratio_top    = 0;
+  efloat_t ratio_bottom = 0;
+  for(int i=0;i<n;i++) {
+    ratio_top    += p2[i]*rho_21[i];
+    ratio_bottom += p1   *rho_12[i];
+  }
+
+  efloat_t ratio = ratio_top/ratio_bottom;
+
+  if (ratio >= 1.0 or uniform() < ratio) 
+    return c;
+  else
+    return -1;
+}
+
+int accept_multiple_try_MH(const Parameters& P1,const vector<Parameters>& P2,
+			    const vector<efloat_t>& rho_12, const vector<efloat_t>& rho_21)
+{
+  const int n = P2.size();
+
+  efloat_t p1 = P1.heated_probability();
+
+  vector<efloat_t> p2(n);
+  for(int i=0;i<n;i++)
+    p2[i] = P2[i].heated_probability();
+
+  return accept_multiple_try_MH(p1,p2,rho_12,rho_21);
+}
+
+int accept_multiple_try_symmetric(efloat_t p1, const vector<efloat_t>& p2)
+{
+  const int n = p2.size();
+
+  int c = choose<efloat_t>(p2);
+
+  efloat_t ratio_bottom = p1*efloat_t(n);
+
+  efloat_t ratio_top = 0;
+  for(int i=0;i<n;i++)
+    ratio_top    += p2[i];
+
+  efloat_t ratio = ratio_top/ratio_bottom;
+
+  if (ratio >= 1.0 or uniform() < ratio) 
+    return c;
+  else
+    return -1;
+}
+
+
+int accept_multiple_try_symmetric(const Parameters& P1,const vector<Parameters>& P2)
+{
+  const int n = P2.size();
+
+  efloat_t p1 = P1.heated_probability();
+
+  vector<efloat_t> p2(n);
+  for(int i=0;i<n;i++)
+    p2[i] = P2[i].heated_probability();
+
+  return accept_multiple_try_symmetric(p1,p2);
+}
+
 
 /*
 
@@ -473,9 +565,8 @@ column_adjacency_graph get_adjacency_graph(const alignment& A, const Tree& T, in
   return G;
 }
     
-// compute to proposal ration (rho_ji/rho_ij) for finding same-spin clusters.
-efloat_t cluster_proposal_ratio(const column_adjacency_graph& G, double p, const alignment& A, 
-				const vector<int>& cluster)
+void cluster_proposal_probs(const column_adjacency_graph& G, double p, const alignment& A, 
+			    const vector<int>& cluster, efloat_t rho_12,efloat_t rho_21)
 {
   ublas::matrix<int>& type_note = A.note(2);
   int current_spin = type_note(cluster[0],0);
@@ -513,9 +604,18 @@ efloat_t cluster_proposal_ratio(const column_adjacency_graph& G, double p, const
 
   //  std::cerr<<"    spin = "<<current_spin<<"   n_same = "<<n_same<<"  n_diff = "<<n_diff<<endl;
   efloat_t R = (1-p);
-  efloat_t rho_12 = pow<efloat_t>(R,n_same);
-  efloat_t rho_21 = pow<efloat_t>(R,n_diff);
+  rho_12 = pow<efloat_t>(R,n_same);
+  rho_21 = pow<efloat_t>(R,n_diff);
+}
 
+
+// compute to proposal ration (rho_ji/rho_ij) for finding same-spin clusters.
+efloat_t cluster_proposal_ratio(const column_adjacency_graph& G, double p, const alignment& A, 
+				const vector<int>& cluster)
+{
+  efloat_t rho_12=1;
+  efloat_t rho_21=1;
+  cluster_proposal_probs(G,p,A,cluster,rho_12,rho_21);
   return rho_21/rho_12;
 }
 
@@ -589,19 +689,30 @@ void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
       else {
 	//    std::cerr<<"rejected\n";
       }
-  
-  
-  
+    
       Stats.inc("flip-single-column",result);
 
     }
 
     column_adjacency_graph G = get_adjacency_graph(*P[p].A,*P.T,root);
 
+    int LS_index = find_parameter(P,"lambda_s");
+    int LF_index = find_parameter(P,"lambda_f");
+    vector<int> L_indices;
+    L_indices.push_back(LS_index);    
+    L_indices.push_back(LF_index);    
+
+    vector<double> L_values(2);
+
+    if (LS_index == -1)
+      throw myexception()<<"Can't find parameter lambda_s!";
+    if (LF_index == -1)
+      throw myexception()<<"Can't find parameter lambda_s!";
+
     // Do a Wolff-stype algorithm that flips neighboring groups with the same spin
     for(int i=0;i<L;i++) 
     {
-      MCMC::Result result(4);
+      MCMC::Result result(6);
 
       Parameters P2 = P;
       alignment& A2 = *P2[p].A;
@@ -622,25 +733,46 @@ void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
       }
       P2[p].note_column_label_changed();
 	
+      string name = "flip-multiple-column-";
+      if (p < 0.7)
+	name += "0.6";
+      else
+	name += "0.8";
+
+      // Also 
+      if (uniform() < 0.25) 
+      {
+	bool s = (uniform()<0.5);
+	if (s) {
+	  P2.parameter(LS_index,P.parameter(LS_index)+gaussian(0,1.0));
+	  name += "-LS";
+	}
+	else {
+	  P2.parameter(LF_index,P.parameter(LF_index)+gaussian(0,0.25));
+	  name += "-LF";
+	}
+      }
+
       bool success = accept_MH(P,P2,rho);
       
       result.totals[2] = cluster.size(); // number of columns flipped
       if (success) {
-	P=P2;
 	//    std::cerr<<"accepted\n";
 	result.totals[0] = 1;              // number of successful moves
 	result.totals[1] = cluster.size(); // number of columns flipped
 	result.totals[3] = cluster.size(); // number of columns flipped
+	result.totals[4] = std::abs(P2.parameter(LS_index)-P.parameter(LS_index));
+	result.totals[5] = std::abs(P2.parameter(LF_index)-P.parameter(LF_index));
+	P=P2;
       }
       else {
 	result.counts[3] = 0;
+	result.counts[4] = 0;
+	result.counts[5] = 0;
 	//    std::cerr<<"rejected\n";
       }
-      if (p < 0.7)
-	Stats.inc("flip-multiple-column-0.6",result);
-      else
-	Stats.inc("flip-multiple-column-0.8",result);
 
+      Stats.inc(name,result);
     }
       
   }
