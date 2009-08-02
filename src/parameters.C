@@ -657,7 +657,7 @@ efloat_t data_partition::prior_alignment() const
       if (not cached_alignment_prior_for_branch[b].is_valid())
       {
 	if (not cached_transducer_counts_for_branch[b].is_valid())
-	  cached_alignment_counts_for_branch[b] = get_FS_counts(AA,target,source,branch_PTMs[b]);
+	  cached_transducer_counts_for_branch[b] = get_FS_counts(AA,target,source,branch_PTMs[b]);
 #ifndef NDEBUG
 	else
 	{
@@ -668,7 +668,7 @@ efloat_t data_partition::prior_alignment() const
 	}
 #endif	
 
-	ublas::matrix<int>& counts = cached_alignment_counts_for_branch[b];
+	ublas::matrix<int>& counts = cached_transducer_counts_for_branch[b];
 
 	cached_alignment_prior_for_branch[b] = transition_pr_from_counts(counts, branch_PTMs[b]);
       }
@@ -825,7 +825,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
 {
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
-  for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
+  for(int b=0;b<cached_transducer_counts_for_branch.size();b++)
     cached_transducer_counts_for_branch[b].invalidate();
 }
 
