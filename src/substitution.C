@@ -603,11 +603,6 @@ namespace substitution {
   {
     total_likelihood++;
 
-#ifndef NDEBUG
-    subA_index_check_footprint(A,T);
-    subA_index_check_regenerate(A,T);
-#endif
-
 #ifndef DEBUG_CACHING
     if (LC.cv_up_to_date()) {
 #ifndef NDEBUG
@@ -615,6 +610,11 @@ namespace substitution {
 #endif
       return LC.cached_value;
     }
+#endif
+
+#ifndef NDEBUG
+    subA_index_check_footprint(A,T);
+    subA_index_check_regenerate(A,T);
 #endif
 
     int n_br = calculate_caches(A,MC,T,LC,MModel);
