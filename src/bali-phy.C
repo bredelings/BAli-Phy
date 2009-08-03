@@ -1682,7 +1682,7 @@ int main(int argc,char* argv[])
       {
 	int S = 1;
 	int F = 2;
-	Matrix root_P = Q_FS.root_chain();
+	Matrix root_P = TIM.root_chain();
 	cout<<"S->S = "<<log(root_P(S,S))<<endl;
 	cout<<"S->F = "<<log(root_P(S,F))<<endl;
 	cout<<"F->S = "<<log(root_P(F,S))<<endl;
@@ -1701,6 +1701,8 @@ int main(int argc,char* argv[])
       int IsF = TSI.I(S,F);
       int IsS = TSI.I(S,S);
       int IsE = TSI.I(S,E);
+
+      int Df = TSI.D(F,F);
 
       cout<<"Ms = "<<Ms<<endl;
       cout<<"Mf = "<<Mf<<endl;
@@ -1740,6 +1742,19 @@ int main(int argc,char* argv[])
       cout<<"Is[E]->If[E] = "<<log(PTM(IsE,IfE))<<endl;
       cout<<"If[E]->Is[E] = "<<log(PTM(IfE,IsE))<<endl;
 
+      cout<<"Mf->Mf  = "<<log(PTM(Mf,Mf))<<endl;
+      cout<<"Mf->Df  = "<<log(PTM(Mf,Df))<<endl;
+      cout<<"Mf->If  = "<<log(PTM(Mf,IfF))<<endl;
+      cout<<endl;
+      cout<<"Df->Mf  = "<<log(PTM(Df,Mf))<<endl;
+      cout<<"Df->Df  = "<<log(PTM(Df,Df))<<endl;
+      cout<<"Df->If  = "<<log(PTM(Df,IfF))<<endl;
+      cout<<endl;
+      cout<<"If->Mf  = "<<log(PTM(IfF,Mf))<<endl;
+      cout<<"If->Df  = "<<log(PTM(IfF,Df))<<endl;
+      cout<<"If->If  = "<<log(PTM(IfF,IfF))<<endl;
+      cout<<endl;
+
       double lambda_s = TIM.parameter(0);
       double lambda_f = TIM.parameter(1);
       double r        = TIM.parameter(2);
@@ -1757,9 +1772,20 @@ int main(int argc,char* argv[])
 
       using namespace A2;
       double MIS = HMM_S(states::M,states::G1);
-      double MIF = HMM_F(states::M,states::G1);
-      cout<<"RS07[S]  M->I = "<<log(MIS)<<"     ["<<log(MIS/(1-MIS))<<"]"<<endl;
-      cout<<"RS07[F]  M->I = "<<log(MIF)<<"     ["<<log(MIF/(1-MIF))<<"]"<<endl;
+      cout<<"RS07[S]  M->I = "<<log(HMM_S(states::M,states::G1))<<endl;
+
+      cout<<endl;
+      cout<<"RS07[F]  M->M = "<<log(HMM_F(states::M,states::M))<<endl;
+      cout<<"RS07[F]  M->D = "<<log(HMM_F(states::M,states::G2))<<endl;
+      cout<<"RS07[F]  M->I = "<<log(HMM_F(states::M,states::G1))<<endl;
+      cout<<endl;
+      cout<<"RS07[F]  D->M = "<<log(HMM_F(states::G2,states::M))<<endl;
+      cout<<"RS07[F]  D->D = "<<log(HMM_F(states::G2,states::G2))<<endl;
+      cout<<"RS07[F]  D->I = "<<log(HMM_F(states::G2,states::G1))<<endl;
+      cout<<endl;
+      cout<<"RS07[F]  I->M = "<<log(HMM_F(states::G1,states::M))<<endl;
+      cout<<"RS07[F]  I->D = "<<log(HMM_F(states::G1,states::G2))<<endl;
+      cout<<"RS07[F]  I->I = "<<log(HMM_F(states::G1,states::G1))<<endl;
 
       // FIXME!
       MCMC::MoveStats St;
