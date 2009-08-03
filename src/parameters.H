@@ -127,6 +127,7 @@ public:
   efloat_t prior() const;
   efloat_t likelihood() const;
   efloat_t probability() const {return prior() * likelihood();}
+  efloat_t heated_prior() const;
   efloat_t heated_likelihood() const;
   efloat_t heated_probability() const;
 
@@ -215,6 +216,7 @@ public:
   efloat_t likelihood() const;
   efloat_t probability() const { return prior() * likelihood(); }
 
+  efloat_t heated_prior() const;
   efloat_t heated_likelihood() const;
   efloat_t heated_probability() const;
 

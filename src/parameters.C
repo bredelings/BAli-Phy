@@ -533,6 +533,12 @@ efloat_t data_partition::likelihood() const
     return substitution::Pr_star(*this);
 }
 
+efloat_t data_partition::heated_prior() const 
+{
+  return prior();
+}
+
+
 efloat_t data_partition::heated_likelihood() const 
 {
   return pow(likelihood(),beta[0]);
@@ -540,7 +546,7 @@ efloat_t data_partition::heated_likelihood() const
 
 efloat_t data_partition::heated_probability() const 
 {
-  return prior() * heated_likelihood();
+  return heated_prior() * heated_likelihood();
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
@@ -686,6 +692,11 @@ efloat_t Parameters::likelihood() const
   return Pr;
 }
 
+efloat_t Parameters::heated_prior() const 
+{
+  return prior();
+}
+
 efloat_t Parameters::heated_likelihood() const 
 {
   efloat_t Pr = 1;
@@ -698,7 +709,7 @@ efloat_t Parameters::heated_likelihood() const
 
 efloat_t Parameters::heated_probability() const 
 {
-  return prior() * heated_likelihood();
+  return heated_prior() * heated_likelihood();
 }
 
 void Parameters::recalc_imodels() 
