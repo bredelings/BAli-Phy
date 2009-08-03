@@ -1155,11 +1155,11 @@ void write_initial_alignments(const vector<alignment>& A, int proc_id, string di
 int main(int argc,char* argv[])
 { 
 
-  TKF1_Transducer Q(false);
+  TKF1_Transducer Q(true);
 
   Q.get_branch_Transducer(1.0);
 
-  FS_Transducer Q_FS(false);
+  FS_Transducer Q_FS(true);
 
   Q_FS.get_branch_Transducer(1.0);
   
