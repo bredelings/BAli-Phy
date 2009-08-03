@@ -400,8 +400,11 @@ void data_partition::branch_mean(double mu)
   // the scale of the substitution tree changed
   recalc_smodel();
 
-  // the scale of the indel tree changed also
+  // the scale of the HMM/indel tree changed also
   recalc_imodel();
+
+  // the scale of the transducer/indel tree changed also
+  recalc_timodel();
 }
 
 /// \brief Set the mean branch length to \a mu without invalidating cached values
