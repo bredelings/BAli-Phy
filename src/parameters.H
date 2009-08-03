@@ -68,6 +68,8 @@ public:
   mutable Likelihood_Cache LC;
 
   /// cached branch HMMs
+  //FIXME - WHy not a cached_value< >?
+  //REASON: Dynamic Programming uses this and assumes its always up-to-date.
   vector<indel::PairHMM> branch_HMMs;
   vector<int> branch_HMM_type;
 
