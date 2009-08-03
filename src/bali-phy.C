@@ -1465,11 +1465,11 @@ void die_on_signal(int sig)
 int main(int argc,char* argv[])
 { 
 
-  TKF1_Transducer Q(false);
+  TKF1_Transducer Q(true);
 
   Q.get_branch_Transducer(1.0);
 
-  FS_Transducer Q_FS(false);
+  FS_Transducer Q_FS(true);
 
   Q_FS.get_branch_Transducer(1.0);
   
