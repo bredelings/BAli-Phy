@@ -709,7 +709,7 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
   gather(world, P.updown, updowns, 0);
 
 
-  if (proc_id == 0) 
+  if (proc_id == 0)
   {
     //----- Compute an order of chains in decreasing order of beta -----//
     vector<int> order = iota<int>(n_procs);
@@ -718,10 +718,10 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
     std::reverse(order.begin(), order.end());
     
     MCMC::Result exchange(n_procs-1,0);
-    for(int i=0;i<3;i++) 
+    for(int i=0;i<3;i++)
     {
       //----- Propose pairs of adjacent-temperature chains  ----//
-      for(int j=0;j<n_procs-1;j++) 
+      for(int j=0;j<n_procs-1;j++)
       {
 	double b1 = betas[order[j]];
 	double b2 = betas[order[j+1]];
@@ -813,7 +813,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
   s_out<<"\n\n\n";
 
-  for(int i=0;i<P.n_data_partitions();i++) 
+  for(int i=0;i<P.n_data_partitions();i++)
   {
     const alignment& A = *P[i].A;
     if (const Triplets* T = dynamic_cast<const Triplets*>(&A.get_alphabet()) ) 
@@ -836,7 +836,10 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   }
 
   s_parameters<<"iter\t";
-  s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
+  s_parameters<<"prior\t";
+  for(int i=0;i<P.n_data_partitions();i++)
+    s_parameters<<"prior_A"<<i+1<<"\t";
+  s_parameters<<"likelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
   for(int i=0;i<P.n_data_partitions();i++) {
     if (P[i].has_IModel()) {
@@ -914,14 +917,18 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       }
 
       s_parameters<<iterations<<"\t";
-      s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
+      s_parameters<<prior<<"\t";
+      for(int i=0;i<P.n_data_partitions();i++)
+	s_parameters<<P[i].prior_alignment()<<"\t";
+      s_parameters<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
       s_parameters<<P.state();
 
       unsigned total_length=0;
       unsigned total_indels=0;
       unsigned total_indel_lengths=0;
       unsigned total_substs=0;
-      for(int i=0;i<P.n_data_partitions();i++) {
+      for(int i=0;i<P.n_data_partitions();i++)
+      {
 	if (P[i].has_IModel()) {
 	  unsigned x1 = P[i].A->length();
 	  total_length += x1;
