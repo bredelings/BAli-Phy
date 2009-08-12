@@ -1,3 +1,18 @@
+P1. Search SPR w/ multiple attachment sites.
+P2. Determine how much tree sampling could be improved by proposing
+     with the right branch lengths.
+P3. Improve initial alignment / tree search procedure (for burn-in)
+P4. Allow deterministic searching for internal node states, for SPR tree moves without re-aligning.
+P5. Speed up post-processing.
+P6. Improve usability. (post-processing?  installation?  visualization?)
+P7. ECR2 moves (for fixed-A, and for variable-A, with P4).
+P8. Branch Priors - (allow a gamma?)
+P9. MCMC / MPI - Construct a heated alignment prior.
+P10. C20 CAT model
+P11. Make post-processing handle multiple chains, assess convergence.
+P12. Speed up likelihood calculations when there are lots of gaps?
+P13. 
+
 [Post-processing:]
   + Speed up estimating mean branch lengths.
     - Stop requiring the binary tree to exactly extend query tree.
@@ -6,13 +21,12 @@
 
   + When printing SRQ plots, indicate the LOD range (or its abs?).
 
-  + Modify stat-report to take multiple (identical) files for estimation of
+  + Modify statreport to take multiple (identical) files for estimation of
     means, ACT, etc.
 
 Why does INV+Modulated+gamma[4]+INV crash?
     - Because you can't add models with different alphabet sizes ATM.
 
-Search SPR w/ multiple attachment sites.
 
 Branch priors
 1. Use Gamma(1/2,mu)
@@ -182,6 +196,7 @@ much of the variation is spatial?)
 -48. Indel model where we sum over all root locations: doesn't work for SPR?
   a. A mixture of P(A|root) doesn't factor into P(A[1]) * P(A[2]) * ... * P(A[B])
   b. We would have to augment the data with a root.
+  [NOTE] But can we resample an alignment under a *mixture* of distributions.
 
 -46. Code an initial test for the same-frequencies assumption?
 	- likelihood ratio test: sequences S have frequencies p
@@ -235,10 +250,6 @@ Paper:
    Average # of shared branches?  How else to measure bias resulting
    from a fixed alignment?
 
-WHY...
- * is the fragment model downward-biased for epsilon?
- * 
-
 TODO:
  * Write a tool to take a list of files, find common columns, and
     write out differently names files: 1.p, 2.p, ...
@@ -248,12 +259,7 @@ TODO:
    existance of said branch or node.
    - if a branch doesn't exist - give it length 0.
    - if a node doesn't exist... also give it length 0?
- * print out several alignments in a way that can be extracted???
-   - Use # as an alignment separator?
  * fix alignment-find when last alignment is chopped.
- * speed up trees-consensus (for large trees)
- * Profile trees-consensus on 48b.fasta
-   - It seems to take measurable time processing EACH level of consensus.
  * alignment-info
    + use a neighbor-joining tree if no tree is supplied?
    + report # of indels (but internal sequences are missing!)
@@ -268,13 +274,6 @@ Questions:
 
 -------------------------------------------------------
 
--40. Remove bitvector functions from tree.H!
-
--38. Reading alignments:
-     a) Complain about illegal characters (ASCII >=32 and <= 126) when
-        reading alignments.
-     b) Speed up time to read alignments.
-          
 -37. Improve trees-consensus
   + Compute the entire set of branches / counts for full partitions.
   + Compute the greedy tree using these counts.
@@ -314,9 +313,6 @@ Questions:
     - We sample backwards given the (last) state at the (I,J) corner.
     - We need to SHARE the emission probabilities between tiles.
 
--21. Complain if a tree has two leaves with the same name?
-     (We crash on 'standardize' currently.)
-
 -20. MCMCMC
     a) implement the forking code / temperature identifier.
     b) implement the separate random number generators.
@@ -348,8 +344,6 @@ Questions:
     Also compare this between runs...
 
     Figure out burnin for bacteria data sets...
-
-2. Test with STLport, libstdc++ debugging code.
 
 3. Indel model - fix so that prior probabilities exist!
     a) for now, we condition on leaf sequence lengths.
@@ -405,18 +399,7 @@ G. Find a better distance measure for alignment-median?
 ------------------------------
 
 
-
 I. fix: gamma+frequency+INV
-
-II. model: Make INV categories depend on letters, somehow...
-
-III. sample lengths/topologies MORE often when alignment sampling also?
-
-IV. A new ggobi is available!  Try multidimensional scaling...
-
-V. Start proposing INV::p on the log odds scale. It is OK to change
-the prior, because we never want to use it  differently.
-
 
 ------------------------------------------------------------------------------
 [FIXED] s-parameters aren't accepted/sampled often enough.
