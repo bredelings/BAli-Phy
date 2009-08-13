@@ -17,6 +17,7 @@
 #include "bootstrap.H"
 #include "tree-dist.H"
 #include "mctree.H"
+#include "rng.H"
 
 #include <boost/program_options.hpp>
 
@@ -395,11 +396,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description invisible("Invisible options");
   invisible.add_options()
     ("file",value<string>(),"tree sample to examine")
+    ("seed", value<unsigned long>(),"Random seed")
     ;
 
   options_description input("Input options");
   input.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("skip",value<int>()->default_value(0),"number of trees to skip")
     ("max",value<int>(),"maximum number of trees to read")
     ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
@@ -465,6 +467,13 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     //--------------------- Initialize ---------------------//
+    if (args.count("seed")) {
+      unsigned long seed = args["seed"].as<unsigned long>();
+      myrand_init(seed);
+    }
+    else
+      myrand_init();
+
     int skip = args["skip"].as<int>();
 
     int subsample=args["sub-sample"].as<int>();
