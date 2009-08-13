@@ -119,6 +119,14 @@ bool process_stack_Markov(vector<string>& string_stack,
 
     model_stack.push_back(Empirical(a,filename));
   }
+  else if (match(string_stack,"CAT-Fix",arg)) {
+    string filename = arg;
+    if (filename.empty()) filename = "C20";
+    filename = args["data-dir"].as<string>() + "/" + filename + ".dat";
+
+    model_stack.push_back(CAT_FixedFrequencyModel(a,filename));
+  }
+
   else if (match(string_stack,"M0",arg)) 
   {
     const Codons* C = dynamic_cast<const Codons*>(&a);

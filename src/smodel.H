@@ -774,6 +774,9 @@ namespace substitution {
   //known to be RA?  Would prefer not to use templates unless necessary/helpful.
 
   /// A mixture of reversible additive models
+
+  /// Umm... is this reversible?
+  /// Also, what if we have two base classes: ReversibleAdditive, and F81?
   class MultiModel: public ReversibleAdditiveModel 
   {
   public:
@@ -871,6 +874,47 @@ namespace substitution {
     MultiFrequencyModel(const AlphabetExchangeModel& M,int n_bins);
 
     ~MultiFrequencyModel() {}
+  };
+
+
+  /// A substitution model based on running identical copies of an input model with different frequencies.
+  class CAT_FixedFrequencyModel: public MultiModel, public ModelWithAlphabet<alphabet>
+  {
+  protected:
+    /// Components of the mixture - Reversible Markov models express as S+R
+    vector<OwnedPointer<SimpleReversibleMarkovModel> > sub_parameter_models;
+
+    /// Fraction of the sites with each parameter value (weights on the mixture components)
+    vector<double> fraction;
+
+    string model_name;
+
+    void load_file(const string& filename);
+
+  public:
+
+    // no parameters: super_prior() == 1
+
+    CAT_FixedFrequencyModel* clone() const {return new CAT_FixedFrequencyModel(*this);}
+
+    /// The number of models
+    int n_base_models() const {return fraction.size();}
+
+    /// Access the base models
+    const Base_Model_t& base_model(int m) const;
+          Base_Model_t& base_model(int m)      ;
+
+    /// Get the probability of each base models
+    std::vector<double> distribution() const;
+
+    /// Get the equilibrium frequencies - Gotta define this, cuz MultiModel is reversible...
+    const valarray<double>& frequencies() const;
+
+    string name() const;
+
+    CAT_FixedFrequencyModel(const alphabet& a, const string& filename);
+
+    ~CAT_FixedFrequencyModel() {}
   };
 
 

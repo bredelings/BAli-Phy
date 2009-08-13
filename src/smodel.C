@@ -1208,6 +1208,89 @@ namespace substitution {
     recalc_all();
   }
 
+  //---------------------- CAT_FixedFrequencyModel -----------------------//
+
+  const MultiModel::Base_Model_t& CAT_FixedFrequencyModel::base_model(int i) const {
+    return *sub_parameter_models[i];
+  }
+
+  MultiModel::Base_Model_t& CAT_FixedFrequencyModel::base_model(int i) {
+    return *sub_parameter_models[i];
+  }
+  
+  vector<double> CAT_FixedFrequencyModel::distribution() const {
+    return fraction;
+  }
+
+  /// Get the equilibrium frequencies
+  const std::valarray<double>& CAT_FixedFrequencyModel::frequencies() const {
+    std::cerr<<"CAT model with fixed frequences does not HAVE an 'overall' frequencies method."<<endl;
+    std::abort();
+  }
+
+  string CAT_FixedFrequencyModel::name() const {
+    return model_name;
+  }
+
+  void CAT_FixedFrequencyModel::load_file(const string& filename)
+  {
+    const alphabet& a = Alphabet();
+    std::ifstream ifile(filename.c_str());
+
+    if (not ifile)
+      throw myexception(string("Couldn't open file '")+filename+"'");
+
+    string line;
+
+    //------- 1: Model name --------------//
+    getline_handle_dos(ifile,model_name);
+
+    //------- 2: # of categories ---------//
+    getline_handle_dos(ifile,line);
+    const int n_cat = convertTo<int>(line);
+
+    //------- 3: category weights --------//
+    getline_handle_dos(ifile,line);
+    fraction = split<double>(line,' ');
+    if (fraction.size() != n_cat) 
+      throw myexception()<<"In reading CAT-Fixed model '"<<model_name<<"' expected weights for "<<n_cat<<" categories, but got "<<fraction.size();
+
+    //------- 4: alphabet order ---------//
+    getline_handle_dos(ifile,line);
+    vector<int> letter(a.size(),-1);
+    vector<string> unordered_letters = split(line,' ');
+    if (unordered_letters.size() != a.size())
+      throw myexception()<<"In reading CAT-Fixed model '"<<model_name<<"' expected "<<a.size()<<" letters, but got "<<unordered_letters.size();
+
+    // I could put a try,catch block here to re-throw with context information.
+    for(int i=0;i<unordered_letters.size();i++)
+      letter[i] = a[unordered_letters[i]];
+
+    //------- 5-end: frequencies of the actual classes ----//
+    for(int i=0;i<n_cat;i++)
+    {
+      getline_handle_dos(ifile,line);
+
+      if (ifile.bad())
+	throw myexception()<<"Failed to read frequencies for category "<<i+1;
+
+      vector<double> f = split<double>(line,' ');
+
+      valarray<double> f_ordered(a.size());
+      for(int j=0;j<f_ordered.size();j++)
+	    f_ordered[letter[j]] = f[j];
+
+      sub_parameter_models.push_back(SimpleReversibleMarkovModel(EQU(a),f_ordered));
+      sub_parameter_models.back()->set_rate(1);
+    }
+  }
+
+  CAT_FixedFrequencyModel::CAT_FixedFrequencyModel(const alphabet& a, const string& filename)
+    :ModelWithAlphabet<alphabet>(a)
+  { 
+    load_file(filename);
+  }
+
   //---------------------------- class MultiModel --------------------------//
   const MultiModel::Base_Model_t& MultiParameterModel::base_model(int m) const {
     int i = m / SubModel().n_base_models();

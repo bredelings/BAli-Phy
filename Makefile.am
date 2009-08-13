@@ -13,7 +13,7 @@ stuffdir = $(datadir)/@PACKAGE@/
 nobase_stuff_DATA = Data/WAG.dat Data/WAGSTAR.dat Data/JTT.dat Data/PAM.dat \
                 Data/standard-code.txt Data/mt-invert-code.txt \
 		Data/mt-protozoan-code.txt Data/mt-vert-code.txt \
-		Data/mt-yeast-code.txt
+		Data/mt-yeast-code.txt Data/C20.dat
 
 examplesdir = $(datadir)/@PACKAGE@/
 nobase_examples_DATA = examples/EF-Tu/5d.fasta examples/EF-Tu/12d.fasta examples/EF-Tu/48b.fasta \
