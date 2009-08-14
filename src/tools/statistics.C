@@ -148,7 +148,7 @@ namespace statistics {
 
       rho[k] = total/(N-k);
 
-      if (rho[k] <= 0.0) {
+      if (rho[k] < 0.0 and k>0) {
 	rho.resize(k);
 	break;
       }
