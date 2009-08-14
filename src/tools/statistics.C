@@ -168,6 +168,8 @@ namespace statistics {
 
   double autocorrelation_time(const valarray<double>& x,unsigned max)
   {
+    if (x.size() < 2) return 1.0;
+
     vector<double> cv = autocovariance(x,max);
 
     double V = cv[0];
