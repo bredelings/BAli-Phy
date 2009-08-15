@@ -666,7 +666,9 @@ print "Summarizing topology distribution ... ";
 if (! more_recent_than("Results/consensus",$trees_file)) {
     my $sub_string = "--sub-partitions";
     $sub_string = "" if (!$sub_partitions);
-    `trees-consensus $trees_file $max_arg $min_support_arg $skip $sub_string $consensus_arg > Results/consensus`;
+    my $subsample_string = "--sub-sample=$subsample";
+    $subsample_string = "" if ($subsample == 1);
+    `trees-consensus $trees_file $max_arg $min_support_arg $skip $sub_string $consensus_arg $subsample_string > Results/consensus`;
 }
 print "done.\n";
 
