@@ -111,3 +111,12 @@ log_double_t beta_pdf(double p,double a, double b)
     else
       return gsl_ran_beta_pdf(p,a,b);
 }
+
+log_double_t gamma_pdf(double x,double a, double b) 
+{
+  log_double_t Pr = 1;
+
+  Pr.log() = (a-1)*log(x) - x/b - log_gamma(a) - a*log(b);
+
+  return Pr;
+}
