@@ -145,6 +145,9 @@ class Parameters: public SuperModel
 
 public:
 
+  /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
+  int branch_prior_type;
+
   bool smodel_full_tree;
 
   /// The alignments and cached computations

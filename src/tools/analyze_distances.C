@@ -123,7 +123,7 @@ double branch_likelihood::operator()(const optimize::Vector& v) const
   LC.invalidate_all();
   MatCache MC(T2,*smodel);
 
-  return log(substitution::Pr(A,MC,T2,LC,*smodel) * smodel->prior() * prior(T2,0.2));
+  return log(substitution::Pr(A,MC,T2,LC,*smodel) * smodel->prior() * prior_exponential(T2,0.2));
 }
 
 
@@ -162,7 +162,7 @@ double log_branch_likelihood::operator()(const optimize::Vector& v) const
   LC.invalidate_all();
   MatCache MC(T2,*smodel);
 
-  return log(substitution::Pr(A,MC,T2,LC,*smodel) * smodel->prior() * prior(T2,0.2));
+  return log(substitution::Pr(A,MC,T2,LC,*smodel) * smodel->prior() * prior_exponential(T2,0.2));
 }
 
 

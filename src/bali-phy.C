@@ -611,6 +611,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
     ("smodel",value<vector<string> >()->composing(),"Substitution model.")
     ("imodel",value<vector<string> >()->composing(),"Indel model: RS05, RS07-no-T, or RS07.")
+    ("prior-branch",value<string>()->default_value("Exponential"),"Exponential or Gamma")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
     ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
@@ -1540,6 +1541,10 @@ int main(int argc,char* argv[])
 
     set_parameters(P,args);
 
+    //-------------Create the Parameters object--------------//
+    if (args["prior-branch"].as<string>() == "Gamma")
+      P.branch_prior_type = 1;
+
     //-------- Log some stuff -----------//
     for(int i=0;i<P.n_data_partitions();i++) {
       out_cache<<"smodel-index"<<i+1<<" = "<<smodel_mapping[i]<<endl;
@@ -1568,6 +1573,13 @@ int main(int argc,char* argv[])
       out_screen<<" indel ~ "<<i_name<<" ("<<i_index+1<<")"<<endl;;
     }
     out_screen<<"\n";
+
+    if (P.branch_prior_type == 0)
+      out_both<<"Branch length mean: Exponential(mu)"<<endl;
+    else 
+      out_both<<"Branch length mean: Gamma(0.5, 2*mu)"<<endl;
+    out_both<<" mu ~ Exponential(1)"<<endl;
+    out_both<<endl;
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
