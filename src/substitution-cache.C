@@ -39,8 +39,10 @@ void Multi_Likelihood_Cache::release_location(int loc) {
 void Multi_Likelihood_Cache::allocate(int s) {
   int old_size = size();
   int new_size = old_size + s;
-  std::clog<<"Allocating "<<old_size<<" -> "<<new_size<<" branches ("<<s<<")\n";
-  std::clog<<"  Each branch has "<<C<<" columns.\n";
+  if (log_verbose) {
+    std::clog<<"Allocating "<<old_size<<" -> "<<new_size<<" branches ("<<s<<")\n";
+    std::clog<<"  Each branch has "<<C<<" columns.\n";
+  }
 
   reserve(new_size);
   n_uses.reserve(new_size);
@@ -89,7 +91,9 @@ void Multi_Likelihood_Cache::set_length(int t,int l) {
     for(int i=0;i<size();i++)
       for(int j=0;j<delta;j++)
 	(*this)[i].push_back(Matrix(M,S));
-    std::clog<<"MLC now has "<<C<<" columns and "<<size()<<" branches.\n";
+
+    if (log_verbose)
+      std::clog<<"MLC now has "<<C<<" columns and "<<size()<<" branches.\n";
   }
   for(int i=0;i<size();i++) {
     assert((*this)[i].size() == C);
@@ -124,7 +128,8 @@ int Multi_Likelihood_Cache::add_token(int B) {
   allocate(B);
 #endif
 
-  std::clog<<"There are now "<<active.size()<<" tokens.\n";
+  if (log_verbose)
+    std::clog<<"There are now "<<active.size()<<" tokens.\n";
 
   return token;
 }

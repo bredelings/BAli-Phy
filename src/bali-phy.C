@@ -468,7 +468,6 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 
     for(int l=0;l<asize;l++) {
       string pname = prefix+ "a" + a.lookup(l) + "*";
-      cerr<<pname<<endl;
       add_MH_move(P, dirichlet_proposal, pname, "MF::dirichlet_N",     1,  parameter_moves);
     }
   }
@@ -1413,6 +1412,13 @@ void die_on_signal(int sig)
   exit(3);
 }
 
+/* FIXME - stop outputting non-errors to cerr */
+/* Then stop suppressing cerr to early */
+
+/* Only output summaries when everything is ready.
+   We were avoiding this before to catch errors, but:
+    New Strategy: only do that if (log_verbose). */
+
 int main(int argc,char* argv[])
 { 
   int n_procs = 1;
@@ -1464,10 +1470,6 @@ int main(int argc,char* argv[])
 
     //---------- Determine Data dir ---------------//
     check_data_dir(args["data-dir"].as<string>());
-
-    //------ Capture copy of 'cerr' output in 'err_cache' ------//
-    if (not args.count("show-only"))
-      cerr.rdbuf(err_both.rdbuf());
 
     //---------- Initialize random seed -----------//
     unsigned long seed = init_rng_and_get_seed(args);
@@ -1553,6 +1555,19 @@ int main(int argc,char* argv[])
 
     for(int i=0;i<P.n_imodels();i++) 
       out_cache<<"indel model"<<i+1<<" = "<<P.IModel(i).name()<<endl<<endl;
+
+    out_screen<<"\n";
+    for(int i=0;i<P.n_data_partitions();i++) {
+      int s_index = P.get_smodel_index_for_partition(i);
+      out_screen<<"#"<<i+1<<": subst ~ "<<P[i].SModel().name()<<" ("<<s_index+1<<")    ";
+
+      int i_index = P.get_imodel_index_for_partition(i);
+      string i_name = "none";
+      if (i_index != -1)
+	i_name = P[i].IModel().name();
+      out_screen<<" indel ~ "<<i_name<<" ("<<i_index+1<<")"<<endl;;
+    }
+    out_screen<<"\n";
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
