@@ -251,6 +251,7 @@ public:
 
   /// load this tree from the string @s
   virtual int parse_no_names(const std::string& s);
+  virtual int parse_with_names(const std::string& s,const std::vector<std::string>& names);
 
   Tree():n_leaves_(0) {}
   explicit Tree(const BranchNode*);
@@ -302,6 +303,7 @@ public:
 
   /// load this tree from the string @s
   virtual int parse_no_names(const std::string& s);
+  virtual int parse_with_names(const std::string& s,const std::vector<std::string>& names);
 
   RootedTree():root_(NULL) {}
   explicit RootedTree(const BranchNode*);
@@ -323,6 +325,7 @@ inline RootedTree operator+(const RootedTree& t1,const RootedTree& t2) {
 }
 
 std::string write(const RootedTree& T, const std::vector<std::string>& names, bool print_lengths=true); 
+std::string write(const Tree& T, const std::vector<std::string>& names, bool print_lengths=true); 
 std::string write_no_names(const RootedTree& T, bool print_lengths=true); 
 std::string write_no_names(const Tree& T, bool print_lengths=true); 
 
