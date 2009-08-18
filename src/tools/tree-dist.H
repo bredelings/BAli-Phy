@@ -124,6 +124,7 @@ struct trees_file_reader_t
 public:
   virtual const std::vector<std::string>& names() const {return leaf_names;}
   virtual bool next_tree(Tree&) = 0;
+  virtual bool next_tree(RootedTree&) = 0;
   virtual bool skip(int) = 0;
   virtual bool done() const = 0;
   virtual ~trees_file_reader_t() {}
@@ -135,6 +136,7 @@ class NEWICK_trees_file_reader: public trees_file_reader_t
   std::istream* file;
 public:
   bool next_tree(Tree&);
+  bool next_tree(RootedTree&);
   bool skip(int);
   bool done() const;
   NEWICK_trees_file_reader(const std::string& filename);
@@ -146,6 +148,7 @@ class NEXUS_trees_file_reader: public trees_file_reader_t
 {
 public:
   bool next_tree(Tree&);
+  bool next_tree(RootedTree&);
   bool skip(int);
   bool done() const;
   NEXUS_trees_file_reader(const std::string& filename);
@@ -158,6 +161,7 @@ class pruned_trees_file_reader: public trees_file_reader_t
   std::vector<int> prune_index;
 public:
   bool next_tree(Tree&);
+  bool next_tree(RootedTree&);
   bool skip(int);
   bool done() const;
   pruned_trees_file_reader(trees_file_reader_t& t,const std::vector<std::string>&);

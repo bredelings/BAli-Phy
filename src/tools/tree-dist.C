@@ -451,6 +451,22 @@ bool NEWICK_trees_file_reader::next_tree(Tree& T)
   return not done();
 }
 
+bool NEWICK_trees_file_reader::next_tree(RootedTree& T)
+{
+  while (getline(*file,line) and not line.size());
+  if (not line.size()) return false;
+  try {
+    T.parse_with_names(line,leaf_names);
+  }
+  catch (std::exception& e) {
+    cerr<<" Error! "<<e.what()<<endl;
+    cerr<<" Quitting read of tree file."<<endl;
+    file->setstate(std::ios::badbit);
+    return false;
+  }
+  return not done();
+}
+
 bool NEWICK_trees_file_reader::skip(int n)
 {
   for(int i=0;i<n and *file;i++)
@@ -492,6 +508,14 @@ NEWICK_trees_file_reader::~NEWICK_trees_file_reader()
 {}
 
 bool pruned_trees_file_reader::next_tree(Tree& T)
+{
+  bool success = tfr.next_tree(T);
+  if (success and prune_index.size()) 
+    T.prune_leaves(prune_index);
+  return success;
+}
+
+bool pruned_trees_file_reader::next_tree(RootedTree& T)
 {
   bool success = tfr.next_tree(T);
   if (success and prune_index.size()) 
@@ -696,7 +720,7 @@ tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample,const
     if (max >= 0 and size() == max) break;
 
     //--------- Count how many of each topology -----------//
-    Tree T;
+    RootedTree T;
     if (trees.next_tree(T)) {
       add_tree(T);
       lines++;
