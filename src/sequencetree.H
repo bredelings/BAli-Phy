@@ -54,7 +54,8 @@ public:
   virtual std::string write_with_bootstrap_fraction(const std::vector<double>& bf, bool print_lengths=true) const;
 
   /// load this tree from the string @s
-  virtual void parse(const std::string& s);
+  virtual int parse(const std::string& s);
+  virtual int parse_nexus(const std::string& s,const std::vector<std::string>& names);
 
   /// load this tree from the file @file
   virtual void read(std::istream& file);
@@ -82,8 +83,6 @@ public:
 /// A RootedTree with leaves labelled by sequences
 class RootedSequenceTree: public RootedTree, public SequenceTree 
 {
-  std::string write(const_branchview,bool) const;
-
 public:
   /// remove a subtree - SequenceTree variants duplicated  in both {U,R}SequenceTree
   nodeview prune_subtree(int b);
@@ -97,7 +96,8 @@ public:
   std::string write_with_bootstrap_fraction(const std::vector<double>&, bool print_lengths=true) const;
 
   /// load this tree from the string @s
-  void parse(const std::string& s);
+  int parse(const std::string& s);
+  int parse_nexus(const std::string& s,const std::vector<std::string>&);
 
   RootedSequenceTree& operator=(const RootedSequenceTree&);
 
@@ -142,7 +142,5 @@ double internal_branch_distance(const SequenceTree& T1, const SequenceTree& T2);
 double branch_distance(const SequenceTree& T1, const SequenceTree& T2);
 double robinson_foulds_distance(const SequenceTree& T1, const SequenceTree& T2);
 unsigned topology_distance(const SequenceTree& T1, const SequenceTree& T2);
-
-std::string write(const RootedTree& T, const std::vector<std::string>& names, bool print_lengths=true); 
 
 #endif

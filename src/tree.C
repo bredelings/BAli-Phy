@@ -1,9 +1,11 @@
 #include "tree.H"
+#include "util.H"
 #include <algorithm>
 #include <sstream>
 #include "myexception.H"
 
 using std::vector;
+using std::string;
 using boost::dynamic_bitset;
 
 void TreeView::destroy_tree(BranchNode* start) {
@@ -969,29 +971,107 @@ int Tree::induce_partition(const dynamic_bitset<>& partition)
 
 Tree& Tree::operator=(const Tree& T) 
 {
-    assert(&T != this);
+  assert(&T != this);
 
-    // bail if we are copying the same thing only ourselves
-    if (&T == this)
-      return *this;
-
-    // destroy old tree structure
-    if (nodes_.size()) TreeView(nodes_[0]).destroy();
-
-    n_leaves_ = T.n_leaves_;
-    caches_valid = T.caches_valid;
-    cached_partitions.clear();
-    if (caches_valid)
-      cached_partitions = T.cached_partitions;
-    nodes_ = std::vector<BranchNode*>(T.nodes_.size(),(BranchNode*)NULL);
-    branches_ = std::vector<BranchNode*>(T.branches_.size(),(BranchNode*)NULL);
-
-    // recalculate pointer indices
-    BranchNode* start = T.copy();
-    recompute(start,false);
-
+  // bail if we are copying the same thing only ourselves
+  if (&T == this)
     return *this;
+
+  // destroy old tree structure
+  if (nodes_.size()) TreeView(nodes_[0]).destroy();
+
+  n_leaves_ = T.n_leaves_;
+  caches_valid = T.caches_valid;
+  cached_partitions.clear();
+  if (caches_valid)
+    cached_partitions = T.cached_partitions;
+  nodes_ = std::vector<BranchNode*>(T.nodes_.size(),(BranchNode*)NULL);
+  branches_ = std::vector<BranchNode*>(T.branches_.size(),(BranchNode*)NULL);
+  
+  // recalculate pointer indices
+  BranchNode* start = T.copy();
+  recompute(start,false);
+  
+  return *this;
+}
+
+// count depth -> if we are at depth 0, and have
+// one object on the stack then we quit
+
+// FIXME - don't we need to destroy the current tree?
+int Tree::parse_no_names(const string& line)
+{
+  // destroy old tree structure
+  if (nodes_.size()) TreeView(nodes_[0]).destroy();
+
+  vector< vector<BranchNode*> > tree_stack(1);
+
+  const string delimiters = "(),:;";
+  const string whitespace = "\t\n ";
+
+  string prev;
+  string word;
+  for(int i=0;get_word(word,i,line,delimiters,whitespace);prev=word) 
+  {
+    //std::cerr<<"word = '"<<word<<"'    depth = "<<tree_stack.size()<<"   stack size = "<<tree_stack.back().size()<<std::endl;
+
+    if (word == ";") break;
+
+    //------ Process the data given the current state ------//
+    if (word == "(") {
+      tree_stack.push_back(vector<BranchNode*>());
+      if (not (prev == "(" or prev == "," or prev == ""))
+	throw myexception()<<"In tree file, found '(' in the middle of word \""<<prev<<"\"";
+    }
+    else if (word == ")") {
+      // We need at least 2 levels of trees
+      if (tree_stack.size() < 2)
+	throw myexception()<<"In tree file, too many end parenthesis.";
+
+      // merge the trees in the top level
+      BranchNode* BN = tree_stack.back()[0];
+      for(int i=1;i<tree_stack.back().size();i++)
+	TreeView::merge_nodes(BN,tree_stack.back()[i]);
+
+      // destroy the top level
+      tree_stack.pop_back();
+
+      // insert merged trees into the next level down
+      BN = ::add_node(BN);
+      BN->out->length = BN->length = -1;
+      tree_stack.back().push_back(BN);
+    }
+    else if (prev == "(" or prev == "," or prev == "") 
+    {
+      int leaf_index = convertTo<int>(word)-1;
+
+      BranchNode* BN = new BranchNode(-1,leaf_index,-1);
+      BN->out = BN->next = BN->prev = BN;
+
+      BN = ::add_node(BN);
+      BN->out->length = BN->length = -1;
+      tree_stack.back().push_back(BN);
+    }
+    else if (prev == ":") {
+      BranchNode* BN = tree_stack.back().back();
+      BN->out->length = BN->length = convertTo<double>(word);
+    }
   }
+
+
+  if (tree_stack.size() != 1)
+    throw myexception()<<"Attempted to read w/o enough left parenthesis";
+  if (tree_stack.back().size() != 1)
+    throw myexception()<<"Multiple trees on the same line";
+
+  BranchNode* remainder = tree_stack.back()[0];
+  BranchNode* root_ = TreeView::unlink_subtree(remainder->out);
+  TreeView(remainder).destroy();
+
+  reanalyze(root_);
+
+  return root_->node;
+}
 
 Tree::Tree(const BranchNode* BN) 
   :caches_valid(false)
@@ -1153,6 +1233,111 @@ RootedTree& RootedTree::operator=(const RootedTree& RT) {
   root_ = nodes_[RT.root_->node];
 
   return *this;
+}
+
+int RootedTree::parse_no_names(const string& s)
+{
+  int r = Tree::parse_no_names(s);
+
+  root_ = nodes_[r];
+
+  return r;
+}
+
+string write(const vector<string>& names, const_branchview b, bool print_lengths)
+{
+  string output;
+
+  // If this is a leaf node, then print the name
+  if (b.target().is_leaf_node())
+    output += names[b.target()];
+  // If this is an internal node, then print the subtrees
+  else {
+    vector<const_branchview> branches = sorted_branches_after(b);
+    output = "(";
+    for(int i=0;i<branches.size();i++) {
+      output += write(names,branches[i],print_lengths);
+
+      if (i+1<branches.size())
+	output += ",";
+    }
+    output += ")";
+  }
+
+  // print the branch length if requested
+  if (print_lengths)
+    output += ":" + convertToString(b.length());
+
+  return output;
+}
+
+string write(const RootedTree& T, const vector<string>& names, bool print_lengths) 
+{
+  vector<const_branchview> branches = sorted_neighbors(T.root());
+
+  string output = "(";
+  for(int i=0;i<branches.size();i++) {
+    output += write(names,branches[i],print_lengths);
+    if (i+1 < branches.size())
+      output += ',';
+  }
+  output += ");";
+  return output;
+}
+
+string write_no_names(const_branchview b, bool print_lengths)
+{
+  string output;
+
+  // If this is a leaf node, then print the name
+  if (b.target().is_leaf_node())
+    output += convertToString(b.target().name()+1);
+  // If this is an internal node, then print the subtrees
+  else {
+    vector<const_branchview> branches = sorted_branches_after(b);
+    output = "(";
+    for(int i=0;i<branches.size();i++) {
+      output += write_no_names(branches[i],print_lengths);
+
+      if (i+1<branches.size())
+	output += ",";
+    }
+    output += ")";
+  }
+
+  // print the branch length if requested
+  if (print_lengths)
+    output += ":" + convertToString(b.length());
+
+  return output;
+}
+
+string write_no_names(const RootedTree& T, bool print_lengths) 
+{
+  vector<const_branchview> branches = sorted_neighbors(T.root());
+
+  string output = "(";
+  for(int i=0;i<branches.size();i++) {
+    output += write_no_names(branches[i],print_lengths);
+    if (i+1 < branches.size())
+      output += ',';
+  }
+  output += ");";
+  return output;
+}
+
+string write_no_names(const Tree& T, bool print_lengths) 
+{
+  vector<const_branchview> branches = sorted_neighbors(T.directed_branch(0).target());
+
+  string output = "(";
+  for(int i=0;i<branches.size();i++) {
+    output += write_no_names(branches[i],print_lengths);
+    if (i+1 < branches.size())
+      output += ',';
+  }
+  output += ");";
+  return output;
 }
 
 RootedTree::RootedTree(const BranchNode* BN)
