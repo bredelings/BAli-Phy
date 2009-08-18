@@ -118,6 +118,50 @@ std::ostream& operator<<(std::ostream& o, const Partition& P);
 bool informative(const Partition& p);
 bool valid(const Partition& p);
 
+struct trees_file_reader_t
+{
+  std::vector<std::string> leaf_names;
+public:
+  virtual const std::vector<std::string>& names() const {return leaf_names;}
+  virtual bool next_tree(Tree&) = 0;
+  virtual bool skip(int) = 0;
+  virtual bool done() const = 0;
+  virtual ~trees_file_reader_t() {}
+};
+
+class NEWICK_trees_file_reader: public trees_file_reader_t
+{
+  std::string line;
+  std::istream* file;
+public:
+  bool next_tree(Tree&);
+  bool skip(int);
+  bool done() const;
+  NEWICK_trees_file_reader(const std::string& filename);
+  NEWICK_trees_file_reader(std::istream&);
+  ~NEWICK_trees_file_reader();
+};
+
+class NEXUS_trees_file_reader: public trees_file_reader_t
+{
+public:
+  bool next_tree(Tree&);
+  bool skip(int);
+  bool done() const;
+  NEXUS_trees_file_reader(const std::string& filename);
+};
+
+class pruned_trees_file_reader: public trees_file_reader_t
+{
+  trees_file_reader_t& tfr; 
+  std::vector<std::string> prune;
+  std::vector<int> prune_index;
+public:
+  bool next_tree(Tree&);
+  bool skip(int);
+  bool done() const;
+  pruned_trees_file_reader(trees_file_reader_t& t,const std::vector<std::string>&);
+};
 
 /// A class for loading tree distributions - somewhat biased towards tree-dist-compare
 class tree_sample 
@@ -140,8 +184,12 @@ public:
     // how many times did we see this topology
     unsigned count;
 
-    topology_record(const SequenceTree&,const std::string&);
+    topology_record(const Tree&,const std::string&);
   };
+
+  /// Add an tree with indices following leaf_names
+  void add_tree(Tree& T);
+  void add_tree(RootedTree& T);
 
   // mapping from index in the sample to topology record
   std::vector<unsigned> which_topology;
@@ -171,6 +219,7 @@ public:
   double PP(const std::vector<Partition>&) const;
 
   tree_sample(std::istream&,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
+  tree_sample(const std::string& filename,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
 };
 
 std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);

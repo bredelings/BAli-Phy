@@ -435,6 +435,98 @@ int which_partition(const SequenceTree& T, const Partition& p) {
   throw myexception(string("Partition not found in tree!"));
 }
 
+bool NEWICK_trees_file_reader::next_tree(Tree& T)
+{
+  while (getline(*file,line) and not line.size());
+  if (not line.size()) return false;
+  try {
+    T.parse_with_names(line,leaf_names);
+  }
+  catch (std::exception& e) {
+    cerr<<" Error! "<<e.what()<<endl;
+    cerr<<" Quitting read of tree file."<<endl;
+    file->setstate(std::ios::badbit);
+    return false;
+  }
+  return not done();
+}
+
+bool NEWICK_trees_file_reader::skip(int n)
+{
+  for(int i=0;i<n and *file;i++)
+    getline(*file,line);
+  return not done();
+}
+
+bool NEWICK_trees_file_reader::done() const
+{
+  return (not *file);
+}
+
+NEWICK_trees_file_reader::NEWICK_trees_file_reader(const std::string& filename)
+{
+  ifstream file_(filename.c_str());
+  SequenceTree T;
+  getline(file_,line);
+  T.parse(line);
+  leaf_names = T.get_sequences();
+  std::sort(leaf_names.begin(),leaf_names.end());
+  file_.close();
+
+  file = new ifstream(filename.c_str());
+}
+
+NEWICK_trees_file_reader::NEWICK_trees_file_reader(std::istream& i)
+  :file(&i)
+{
+  SequenceTree T;
+  getline(*file,line);
+  T.parse(line);
+  leaf_names = T.get_sequences();
+  std::sort(leaf_names.begin(),leaf_names.end());
+
+  //FIXME - this loses the first line!
+}
+
+NEWICK_trees_file_reader::~NEWICK_trees_file_reader()
+{}
+
+bool pruned_trees_file_reader::next_tree(Tree& T)
+{
+  bool success = tfr.next_tree(T);
+  if (success and prune_index.size()) 
+    T.prune_leaves(prune_index);
+  return success;
+}
+
+bool pruned_trees_file_reader::skip(int n)
+{
+  return tfr.skip(n);
+}
+
+bool pruned_trees_file_reader::done() const
+{
+  return tfr.done();
+}
+
+pruned_trees_file_reader::
+pruned_trees_file_reader(trees_file_reader_t& t,const vector<string>& p)
+  :tfr(t),prune(p)
+{
+  vector<string> all_names = t.names();
+  for(int i=0;i<all_names.size();i++) {
+    if (not includes(prune,all_names[i]))
+      leaf_names.push_back(all_names[i]);
+  }
+
+  for(int i=0;i<prune.size();i++) {
+    int index = find_index(all_names,prune[i]);
+    if (index == -1)
+      throw myexception()<<"Cannot find leaf '"<<all_names[i]<<"' in sampled tree.";
+    prune_index.push_back(index);
+  }
+}
+
 SequenceTree tree_sample::T(int i) const {
   return get_mf_tree(leaf_names,topologies[i].partitions);
 }
@@ -525,10 +617,10 @@ struct ordering {
 };
 
 
-tree_sample::topology_record::topology_record(const SequenceTree& T,
+tree_sample::topology_record::topology_record(const Tree& T,
 					      const string& s)
   :topology(s),
-   partitions(T.n_branches(),dynamic_bitset<>(T.n_leaves())),
+   partitions(T.n_branches()),
    count(0)
 { 
   for(int i=0;i<T.n_branches();i++)
@@ -536,49 +628,79 @@ tree_sample::topology_record::topology_record(const SequenceTree& T,
 }
 
 
+void tree_sample::add_tree(Tree& T)
+{
+  //------------ check tree ---------------//
+  if (has_sub_branches(T))
+    throw myexception()<<"Tree has node of degree 2";
+
+  // Compute the standardized representation
+  T.standardize();
+  string t = write(T,leaf_names,false);
+      
+  // If it hasn't been seen before, insert it
+  if (index.find(t) == index.end()) {
+    topologies.push_back(topology_record(T,t));
+    
+    index[t] = topologies.size()-1;              // add to map of  (topology->index)
+  }
+
+  //FIXME - I'm doing the index[t] lookup twice;
+      
+  //----------- Add tree to distribution -------------//
+  int i = index[t];
+  which_topology.push_back(i);
+  topologies[i].count++;
+}
+
+void tree_sample::add_tree(RootedTree& T)
+{
+  if (T.root().degree() == 2)
+    T.remove_node_from_branch(T.root());
+
+  add_tree(static_cast<Tree&>(T));
+}
+
+// What we actually want is a standardized STRING representation.
+//  - We need to have ways of *reading* a NEWICK or NEXUS file and then
+//  - ... converting to some intermediate record structure..
+//  - ... which in this case in the standard string.
+
+// We should be able to avoid sorting the leaves with every tree... in both cases!
+
+// Reading an individual tree requires (a) one line, and (b) some state: ordered leaf names.
+
+// Because we have to prune everything anyway, let's make the standard intermediate format
+// .. be a (unrooted) Tree -- the names should be determined and given beforehand.
+
 tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample,const vector<string>& prune) 
 {
+  NEWICK_trees_file_reader trees_newick(file);
+
+  pruned_trees_file_reader trees(trees_newick,prune);
+
+  leaf_names = trees.names();
+
   int lines=0;
   string line;
-  while(getline(file,line)) 
+  while (not trees.done()) 
   {
-    // don't start if we haven't skipped enough trees
-    if (lines++ < skip) continue;
-
-    // skip trees unless they are a multiple of 'subsample'
-    if ((lines-skip) % subsample != 0) continue;
+    while (lines < skip or 
+	   (lines-skip) % subsample != 0) 
+    {
+      lines++;
+      trees.skip(1);
+    }
 
     // quit if we've read in 'max' trees
     if (max >= 0 and size() == max) break;
 
     //--------- Count how many of each topology -----------//
-    RootedSequenceTree T;
-    try {
-      // This should make all the branch & node numbers the same if the topology is the same
-      T = standardized_prune(line,prune);
+    Tree T;
+    if (trees.next_tree(T)) {
+      add_tree(T);
+      lines++;
     }
-    catch (std::exception& e) {
-      cerr<<"tree-dist: Error! "<<e.what()<<endl;
-      cerr<<" Quitting read of tree file"<<endl;
-      break;
-    }
-
-    if (not leaf_names.size()) leaf_names = T.get_sequences();
-
-    // This should be a standard string representation
-    string t = T.write(false);
-      
-    // If it hasn't been seen before, insert it
-    if (index.find(t) == index.end()) {
-      topologies.push_back(topology_record(T,t));
-
-      index[t] = topologies.size()-1;              // add to map of  (topology->index)
-    }
-      
-    //----------- Add tree to distribution -------------//
-    int i = index[t];
-    which_topology.push_back(i);
-    topologies[i].count++;
   }
 
   if (size() == 0)
