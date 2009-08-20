@@ -146,12 +146,18 @@ public:
 
 class NEXUS_trees_file_reader: public trees_file_reader_t
 {
+  std::string line;
+  std::istream* file;
+  bool translate;
+  void parse_translate_command(const std::string&);
 public:
   bool next_tree(Tree&);
   bool next_tree(RootedTree&);
   bool skip(int);
   bool done() const;
   NEXUS_trees_file_reader(const std::string& filename);
+  NEXUS_trees_file_reader(std::istream&);
+  ~NEXUS_trees_file_reader();
 };
 
 class pruned_trees_file_reader: public trees_file_reader_t

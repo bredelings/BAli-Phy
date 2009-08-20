@@ -353,6 +353,7 @@ bool defined(std::map<std::string,U,T>& m,const std::string& name)
   return (m.find(name) != m.end());
 }
 
+bool contains_char(const std::string& s,char c);
 
 /// get the next word starting at position i, return true if not done.
 bool get_word(std::string& word, int& i,const std::string& s,

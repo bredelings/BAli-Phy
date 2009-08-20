@@ -156,6 +156,9 @@ bool contains_char(const string& s,char c) {
 bool get_word(string& word, int& i, const string& s,
 	      const string& delimiters,const string& whitespace) 
 {
+  if (i >= s.size()) 
+    return false;
+
   while(contains_char(whitespace,s[i])) {
     i++;
     if (i >= s.size()) 
@@ -166,7 +169,7 @@ bool get_word(string& word, int& i, const string& s,
   if (contains_char(delimiters,s[i])) {
     word = s.substr(i,1);
     i++;
-    return i < s.size();
+    return true;
   }
 
   do { i++; }
@@ -175,7 +178,7 @@ bool get_word(string& word, int& i, const string& s,
 
   word = s.substr(start,i-start);
 
-  return i < s.size();
+  return true;
 }
 
 void scan_lines(std::istream& file,int skip,int subsample, int max, 

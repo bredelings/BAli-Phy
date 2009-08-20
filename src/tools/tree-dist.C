@@ -5,6 +5,7 @@
 #include "rng.H"
 #include "statistics.H"
 #include "mytypes.H"
+#include "util.H"
 
 using std::vector;
 using std::list;
@@ -507,6 +508,293 @@ NEWICK_trees_file_reader::NEWICK_trees_file_reader(std::istream& i)
 NEWICK_trees_file_reader::~NEWICK_trees_file_reader()
 {}
 
+bool NEXUS_trees_file_reader::skip(int n)
+{
+  for(int i=0;i<n and *file;i++)
+    getline(*file,line);
+  return not done();
+}
+
+bool NEXUS_trees_file_reader::done() const
+{
+  return (not *file);
+}
+
+std::istream& get_NEXUS_command(std::istream& file,std::string& s)
+{
+  return getline(file,s,';');
+}
+
+void NEXUS_skip_ws(int& i, const string& s)
+{
+  static const string whitespace = "\t\n\r ";
+
+  bool in_comment = false;
+
+  while(contains_char(whitespace,s[i]) or in_comment or s[i]=='[') 
+  {
+    if (s[i] == '[')
+      in_comment = true;
+    else if (s[i] == ']')
+      in_comment = false;
+
+    i++;
+
+    if (i >= s.size()) 
+      return;
+  } 
+}
+
+
+bool get_word_NEXUS(string& word, int& i, const string& s)
+{
+  //  static const string delimiters = "()[]{}/\\,;:=*`'\"+-<>";
+  // REMOVE apostrophe... how to handle this?
+  static const string delimiters = "(){}/\\,;:=*`\"+-<>";
+  static const string whitespace = "\t\n\r ";
+
+  if (i >= s.size()) 
+    return false;
+
+  NEXUS_skip_ws(i,s);
+
+  if (i >= s.size()) 
+    return false;
+
+  int start = i;
+  if (contains_char(delimiters,s[i])) {
+    word = s.substr(i,1);
+    i++;
+    return true;
+  }
+
+  do { i++; }
+  while(not contains_char(delimiters,s[i]) and not contains_char(whitespace,s[i])
+	and i < s.size());
+
+  word = s.substr(start,i-start);
+
+  return true;
+}
+
+vector<string> NEXUS_parse_line(const string& line)
+{
+  string word;
+  vector<string> words;
+  int pos=0;
+  while (get_word_NEXUS(word,pos,line))
+    words.push_back(word);
+
+  return words;
+}
+
+bool NEXUS_trees_file_reader::next_tree(Tree& T)
+{
+  get_NEXUS_command(*file,line);
+  if (not line.size()) return false;
+  try {
+    string word;
+    int pos=0;
+    get_word_NEXUS(word,pos,line);
+    if (word == "end" or word == "END") {
+      file->setstate(std::ios::badbit);
+      return false;
+    }
+    get_word_NEXUS(word,pos,line);
+    if (not (word == "=")) {
+      get_word_NEXUS(word,pos,line);
+      assert(word == "=");
+    }
+    NEXUS_skip_ws(pos,line);
+
+    if (translate)
+      T.parse_no_names(line.substr(pos,line.size()-pos));
+    else
+      T.parse_with_names(line.substr(pos,line.size()-pos),leaf_names);
+  }
+  catch (std::exception& e) {
+    cerr<<" Error! "<<e.what()<<endl;
+    cerr<<" Quitting read of tree file."<<endl;
+    file->setstate(std::ios::badbit);
+    return false;
+  }
+  return not done();
+}
+
+bool NEXUS_trees_file_reader::next_tree(RootedTree& T)
+{
+  get_NEXUS_command(*file,line);
+  if (not line.size()) return false;
+  try {
+    string word;
+    int pos=0;
+    get_word_NEXUS(word,pos,line);
+    if (word == "end" or word == "END") {
+      file->setstate(std::ios::badbit);
+      return false;
+    }
+    get_word_NEXUS(word,pos,line);
+    if (not (word == "=")) {
+      get_word_NEXUS(word,pos,line);
+      assert(word == "=");
+    }
+    NEXUS_skip_ws(pos,line);
+
+    if (translate)
+      T.parse_no_names(line.substr(pos,line.size()-pos));
+    else
+      T.parse_with_names(line.substr(pos,line.size()-pos),leaf_names);
+  }
+  catch (std::exception& e) {
+    cerr<<" Error! "<<e.what()<<endl;
+    cerr<<" Quitting read of tree file."<<endl;
+    file->setstate(std::ios::badbit);
+    return false;
+  }
+  return not done();
+}
+
+void NEXUS_trees_file_reader::parse_translate_command(const std::string& line)
+{
+  translate = true;
+
+  //  cerr<<"translating: "<<line<<endl;
+
+  vector<string> words = NEXUS_parse_line(line);
+
+  if (words.size()%3 != 2)
+    throw myexception()<<"Malformed 'TRANSLATE' command: wrong number of tokens.";
+
+  leaf_names.resize(words.size()/3+1);
+  for(int i=0;i<leaf_names.size();i++) 
+  {
+    leaf_names[i] = words[i*3+1];
+
+    if (i>0) assert(words[i*3-1] == ",");
+  }
+}
+
+NEXUS_trees_file_reader::NEXUS_trees_file_reader(const std::string& filename)
+  :file(new ifstream(filename.c_str())),translate(false)
+{
+  // Check #NEXUS
+  getline(*file,line);
+  if (line != "#NEXUS")
+    throw myexception()<<"NEXUS trees reader: File does not begin with '#NEXUS' and may not be a NEXUS file.";
+  
+  // [ and ] do not break words
+
+  string word;
+
+  bool in_trees_block=false;
+
+  while(get_NEXUS_command(*file,line))
+  {
+    //    cerr<<"line: "<<line<<endl;
+    int pos=0;
+
+    if (not get_word_NEXUS(word,pos,line)) continue;
+
+    //cerr<<"NEXUS: command = :"<<word<<":"<<"     in_trees_block = "<<in_trees_block<<endl;
+
+    // Parse BEGIN TREES
+    if (word == "BEGIN" or word == "begin") {
+      if (not get_word_NEXUS(word,pos,line)) continue;
+      if (word == "trees" or word == "TREES")
+	in_trees_block = true;
+    }
+
+    if (not in_trees_block) continue;
+
+    // Parse TRANSLATE ...
+    if (word == "translate" or word == "TRANSLATE") {
+      parse_translate_command(line.substr(pos,line.size()-pos));
+      //      cerr<<"leaf names = "<<join(leaf_names,',')<<endl;
+      return;
+    }
+    else if (word == "tree" or word == "TREE") {
+      try {
+	get_word_NEXUS(word,pos,line);
+	if (not (word == "="))
+	  get_word_NEXUS(word,pos,line);
+	NEXUS_skip_ws(pos,line);
+	SequenceTree T;
+	T.parse(line.substr(pos,line.size()-pos));
+	leaf_names = T.get_sequences();
+	std::sort(leaf_names.begin(),leaf_names.end());
+	return;
+      }
+      catch (std::exception& e) {
+	cerr<<" Error! "<<e.what()<<endl;
+	cerr<<" Quitting read of tree file."<<endl;
+	file->setstate(std::ios::badbit);
+      }
+    }
+  }
+}
+
+NEXUS_trees_file_reader::NEXUS_trees_file_reader(std::istream& f)
+  :file(&f),translate(false)
+{
+  // Check #NEXUS
+  getline(*file,line);
+  if (line != "#NEXUS")
+    throw myexception()<<"NEXUS trees reader: File does not begin with '#NEXUS' and may not be a NEXUS file.";
+  
+  // [ and ] do not break words
+
+  string word;
+
+  bool in_trees_block=false;
+
+  while(get_NEXUS_command(*file,line))
+  {
+    //    cerr<<"line: "<<line<<endl;
+    int pos=0;
+
+    if (not get_word_NEXUS(word,pos,line)) continue;
+
+    //cerr<<"NEXUS: command = :"<<word<<":"<<"     in_trees_block = "<<in_trees_block<<endl;
+
+    // Parse BEGIN TREES
+    if (word == "BEGIN" or word == "begin") {
+      if (not get_word_NEXUS(word,pos,line)) continue;
+      if (word == "trees" or word == "TREES")
+	in_trees_block = true;
+    }
+
+    if (not in_trees_block) continue;
+
+    // Parse TRANSLATE ...
+    if (word == "translate" or word == "TRANSLATE") {
+      parse_translate_command(line.substr(pos,line.size()-pos));
+      //      cerr<<"leaf names = "<<join(leaf_names,',')<<endl;
+      return;
+    }
+    else if (word == "tree" or word == "TREE") {
+      try {
+	get_word_NEXUS(word,pos,line);
+	if (not (word == "="))
+	  get_word_NEXUS(word,pos,line);
+	NEXUS_skip_ws(pos,line);
+	SequenceTree T;
+	T.parse(line.substr(pos,line.size()-pos));
+	leaf_names = T.get_sequences();
+	std::sort(leaf_names.begin(),leaf_names.end());
+	return;
+      }
+      catch (std::exception& e) {
+	cerr<<" Error! "<<e.what()<<endl;
+	cerr<<" Quitting read of tree file."<<endl;
+	file->setstate(std::ios::badbit);
+      }
+    }
+  }
+}
+
+NEXUS_trees_file_reader::~NEXUS_trees_file_reader()
+{}
+
 bool pruned_trees_file_reader::next_tree(Tree& T)
 {
   bool success = tfr.next_tree(T);
@@ -699,9 +987,13 @@ void tree_sample::add_tree(RootedTree& T)
 
 tree_sample::tree_sample(std::istream& file,int skip,int max,int subsample,const vector<string>& prune) 
 {
-  NEWICK_trees_file_reader trees_newick(file);
+  trees_file_reader_t* tfr = 0;
+  if (file.peek() == '#') 
+    tfr = new NEXUS_trees_file_reader(file);
+  else
+    tfr = new NEWICK_trees_file_reader(file);
 
-  pruned_trees_file_reader trees(trees_newick,prune);
+  pruned_trees_file_reader trees(*tfr,prune);
 
   leaf_names = trees.names();
 
