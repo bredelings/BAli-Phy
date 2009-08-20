@@ -6,6 +6,7 @@
 #include <utility>
 #include <list>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <string>
 #include <iostream>
@@ -118,60 +119,148 @@ std::ostream& operator<<(std::ostream& o, const Partition& P);
 bool informative(const Partition& p);
 bool valid(const Partition& p);
 
-struct trees_file_reader_t
-{
-  std::vector<std::string> leaf_names;
-public:
-  virtual const std::vector<std::string>& names() const {return leaf_names;}
-  virtual bool next_tree(Tree&) = 0;
-  virtual bool next_tree(RootedTree&) = 0;
-  virtual bool skip(int) = 0;
-  virtual bool done() const = 0;
-  virtual ~trees_file_reader_t() {}
-};
+namespace trees_format {
 
-class NEWICK_trees_file_reader: public trees_file_reader_t
-{
-  std::string line;
-  std::istream* file;
-public:
-  bool next_tree(Tree&);
-  bool next_tree(RootedTree&);
-  bool skip(int);
-  bool done() const;
-  NEWICK_trees_file_reader(const std::string& filename);
-  NEWICK_trees_file_reader(std::istream&);
-  ~NEWICK_trees_file_reader();
-};
+  struct reader_t
+  {
+    std::vector<std::string> leaf_names;
+    virtual bool next_tree_(Tree&,int&)=0;
+    int lines_;
 
-class NEXUS_trees_file_reader: public trees_file_reader_t
-{
-  std::string line;
-  std::istream* file;
-  bool translate;
-  void parse_translate_command(const std::string&);
-public:
-  bool next_tree(Tree&);
-  bool next_tree(RootedTree&);
-  bool skip(int);
-  bool done() const;
-  NEXUS_trees_file_reader(const std::string& filename);
-  NEXUS_trees_file_reader(std::istream&);
-  ~NEXUS_trees_file_reader();
-};
+  public:
+    virtual reader_t* clone() const=0;
+    virtual const std::vector<std::string>& names() const;
+    virtual bool next_tree(Tree&);
+    virtual bool next_tree(RootedTree&);
+    virtual bool next_tree(SequenceTree&);
+    virtual bool next_tree(RootedSequenceTree&);
+    int lines() const;
+    virtual bool skip(int) = 0;
+    virtual bool done() const = 0;
+    virtual ~reader_t() {}
+  };
 
-class pruned_trees_file_reader: public trees_file_reader_t
-{
-  trees_file_reader_t& tfr; 
-  std::vector<std::string> prune;
-  std::vector<int> prune_index;
-public:
-  bool next_tree(Tree&);
-  bool next_tree(RootedTree&);
-  bool skip(int);
-  bool done() const;
-  pruned_trees_file_reader(trees_file_reader_t& t,const std::vector<std::string>&);
-};
+  class Newick: public reader_t
+  {
+    std::string line;
+    std::istream* file;
+
+    void initialize();
+
+    bool next_tree_(Tree&,int&);
+  public:
+    Newick* clone() const {return new Newick(*this);}
+
+    bool skip(int);
+    bool done() const;
+
+    Newick(const std::string& filename);
+    Newick(std::istream&);
+    ~Newick();
+  };
+
+  class NEXUS: public reader_t
+  {
+    std::string line;
+    std::istream* file;
+    bool translate;
+
+    void parse_translate_command(const std::string&);
+    void initialize();
+
+    bool next_tree_(Tree&,int&);
+  public:
+    NEXUS* clone() const {return new NEXUS(*this);}
+
+    bool skip(int);
+    bool done() const;
+
+    NEXUS(const std::string& filename);
+    NEXUS(std::istream&);
+    ~NEXUS();
+  };
+
+  class wrapped_reader_t: public reader_t
+  {
+  protected:
+    boost::shared_ptr<reader_t> tfr;
+
+    bool next_tree_(Tree&,int&);
+  public:
+    virtual wrapped_reader_t* clone() const=0;
+    const std::vector<std::string>& names() const;
+
+    bool skip(int);
+    bool done() const;
+
+    wrapped_reader_t();
+    wrapped_reader_t(const reader_t&);
+  };
+
+  class Newick_or_NEXUS: public wrapped_reader_t
+  {
+  public:
+    Newick_or_NEXUS* clone() const {return new Newick_or_NEXUS(*this);}
+
+    Newick_or_NEXUS(const std::string&);
+    Newick_or_NEXUS(std::istream&);
+  };
+
+  class Prune: public wrapped_reader_t
+  {
+    std::vector<std::string> prune;
+    std::vector<int> prune_index;
+
+    bool next_tree_(Tree&,int&);
+
+  public:
+    Prune* clone() const {return new Prune(*this);}
+    const std::vector<std::string>& names() const;
+
+    Prune(const std::vector<std::string>&, const reader_t&);
+  };
+
+  class Skip: public wrapped_reader_t
+  {
+  public:
+    Skip* clone() const {return new Skip(*this);}
+
+    Skip(int, const reader_t&);
+  };
+
+  class Subsample: public wrapped_reader_t
+  {
+    int subsample;
+
+    bool next_tree_(Tree&,int& r);
+  public:
+    Subsample* clone() const {return new Subsample(*this);}
+    
+    Subsample(int, const reader_t&);
+  };
+
+  class Max: public wrapped_reader_t
+  {
+    int m;
+
+    bool next_tree_(Tree&,int& r);
+  public:
+    Max* clone() const {return new Max(*this);}
+    
+    Max(int, const reader_t&);
+  };
+
+
+  class Fixroot: public wrapped_reader_t
+  {
+    bool next_tree_(Tree&,int& r);
+  public:
+    Fixroot* clone() const {return new Fixroot(*this);}
+    
+    Fixroot(const reader_t&);
+  };
+
+}
 
 /// A class for loading tree distributions - somewhat biased towards tree-dist-compare
 class tree_sample 
