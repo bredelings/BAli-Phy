@@ -13,6 +13,9 @@ P11. Make post-processing handle multiple chains, assess convergence.
 P12. Speed up likelihood calculations when there are lots of gaps?
 P13. Handle reading NEXUS tree files.
 
+P13. [Read NEXUS files]
+  + Don't skip the first tree, but cache it after reading branch lengths.
+
 P5. [Post-processing:]
   + Speed up estimating mean branch lengths.
     - Stop requiring the binary tree to exactly extend query tree.

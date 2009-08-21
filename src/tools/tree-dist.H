@@ -3,8 +3,6 @@
 
 #include <vector>
 #include <valarray>
-#include <utility>
-#include <list>
 #include <boost/shared_ptr.hpp>
 
 #include <string>
@@ -218,24 +216,6 @@ public:
   tree_sample(std::istream&,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
   tree_sample(const std::string& filename,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
 };
-
-std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l);
-std::vector<Partition> get_Ml_partitions(const tree_sample& sample,double l, const boost::dynamic_bitset<>&);
-
-std::vector<std::pair<Partition,unsigned> > 
-get_Ml_partitions_and_counts(const tree_sample& sample,double l, const boost::dynamic_bitset<>&);
-
-std::vector<std::pair<Partition,unsigned> > 
-get_Ml_partitions_and_counts(const tree_sample& sample,double l);
-
-std::vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,double,int search=1);
-
-std::vector<std::pair<Partition,unsigned> >
-get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double,int search=1);
-
-std::vector<std::pair<Partition,unsigned> >
-get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const boost::dynamic_bitset<>&,
-				 double,int search=1);
 
 void scan_trees(std::istream&,int skip,int subsample,int max,accumulator<SequenceTree>& op);
 

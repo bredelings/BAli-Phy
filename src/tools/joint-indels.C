@@ -13,7 +13,7 @@
 #include "alignment-util.H"
 #include "distance-methods.H"
 #include "joint-A-T.H"
-#include "tree-dist.H"
+#include "partition.H"
 #include "2way.H"
 
 using std::cin;

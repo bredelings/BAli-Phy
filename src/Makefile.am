@@ -12,7 +12,8 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
            tools/findroot.H tools/parsimony.H distribution.H tools/mctree.H \
-           version.H cow-ptr.H tools/index-matrix.H cached_value.H tools/partition.H
+           version.H cow-ptr.H tools/index-matrix.H cached_value.H \
+	   tools/consensus-tree.H
 
 LDFLAGS = @ldflags@
 
@@ -161,7 +162,7 @@ alignment_draw_SOURCES = tools/alignment-draw.C alignment.C alphabet.C sequence.
 
 #---------------------------------------------------------------
 
-joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C model.C alignment-random.C alignment-util.C randomtree.C tools/tree-dist.C tools/statistics.C tools/joint-A-T.C tools/partition.C
+joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C model.C alignment-random.C alignment-util.C randomtree.C tools/statistics.C tools/joint-A-T.C tools/partition.C
 
 #---------------------------------------------------------------
 
@@ -192,11 +193,11 @@ alignment_convert_SOURCES = tools/alignment-convert.C alignment.C alignment-util
 
 #---------------------------------------------------------------
 
-alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C tools/tree-dist.C tools/partition.C
+alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C tools/partition.C
 
 #---------------------------------------------------------------
 
-trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C tree-util.C tools/mctree.C rng.C  tools/partition.C
+trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C tree-util.C tools/mctree.C rng.C  tools/partition.C tools/consensus-tree.C
 
 #---------------------------------------------------------------
 
