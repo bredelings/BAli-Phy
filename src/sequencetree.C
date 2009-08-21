@@ -547,3 +547,57 @@ double robinson_foulds_distance(const SequenceTree& T1, const SequenceTree& T2)
 {
   return 0.5*topology_distance(T1,T2);
 }
+
+template <class T>
+struct array_order
+{
+  const vector<T>& array;
+  bool operator()(int i,int j) const {return std::less<T>()(array[i],array[j]);}
+
+  array_order(const vector<T>& n):array(n) {}
+};
+
+vector<int> compute_sorted_mapping(const vector<string>& names)
+{
+  vector<int> mapping(names.size());
+  for(int i=0;i<names.size();i++)
+    mapping[i] = i;
+
+  std::sort(mapping.begin(),mapping.end(),array_order<string>(names));
+
+  return invert(mapping);
+}
+
+
+//FIXME - return mapping of leaf nodes?  Of all nodes?
+void standardize(SequenceTree& T) 
+{
+  vector<int> mapping = compute_sorted_mapping(T.get_sequences());
+
+  T.standardize(mapping);
+}
+
+void standardize(RootedSequenceTree& T) {
+
+  vector<int> mapping = compute_sorted_mapping(T.get_sequences());
+
+  T.standardize(mapping);
+
+  T.reroot(T.directed_branch(0).target());
+}
+
+RootedSequenceTree standardized(const string& t) 
+{
+  RootedSequenceTree T;
+  T.parse(t);
+
+  if (T.root().degree() == 2)
+    T.remove_node_from_branch(T.root());
+
+  if (has_sub_branches(T))
+    throw myexception()<<"Tree has node of degree 2";
+
+  standardize(T);
+  return T;
+}
+

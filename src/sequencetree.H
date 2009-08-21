@@ -143,4 +143,10 @@ double branch_distance(const SequenceTree& T1, const SequenceTree& T2);
 double robinson_foulds_distance(const SequenceTree& T1, const SequenceTree& T2);
 unsigned topology_distance(const SequenceTree& T1, const SequenceTree& T2);
 
+void standardize(RootedSequenceTree& T);
+
+void standardize(SequenceTree& T);
+
+RootedSequenceTree standardized(const std::string& t);
+
 #endif

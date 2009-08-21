@@ -12,7 +12,7 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
            tools/findroot.H tools/parsimony.H distribution.H tools/mctree.H \
-           version.H cow-ptr.H tools/index-matrix.H cached_value.H
+           version.H cow-ptr.H tools/index-matrix.H cached_value.H tools/partition.H
 
 LDFLAGS = @ldflags@
 
@@ -62,7 +62,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-sums.C alignment-util.C probability.C model.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
-	  tools/tree-dist.C proposals.C n_indels.C distribution.C \
+	  tools/partition.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C
 
 bali_phy_CXXFLAGS = @MPI_CXXFLAGS@
@@ -161,7 +161,7 @@ alignment_draw_SOURCES = tools/alignment-draw.C alignment.C alphabet.C sequence.
 
 #---------------------------------------------------------------
 
-joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C model.C alignment-random.C alignment-util.C randomtree.C tools/tree-dist.C tools/statistics.C tools/joint-A-T.C 
+joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C model.C alignment-random.C alignment-util.C randomtree.C tools/tree-dist.C tools/statistics.C tools/joint-A-T.C tools/partition.C
 
 #---------------------------------------------------------------
 
@@ -192,43 +192,43 @@ alignment_convert_SOURCES = tools/alignment-convert.C alignment.C alignment-util
 
 #---------------------------------------------------------------
 
-alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C tools/tree-dist.C
+alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C tools/tree-dist.C tools/partition.C
 
 #---------------------------------------------------------------
 
-trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C tree-util.C tools/mctree.C rng.C
+trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tree-dist.C util.C tools/statistics.C tree-util.C tools/mctree.C rng.C  tools/partition.C
 
 #---------------------------------------------------------------
 
-trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tree-dist.C util.C rng.C tools/statistics.C tools/bootstrap.C tree-util.C
+trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tree-dist.C util.C rng.C tools/statistics.C tools/bootstrap.C tree-util.C  tools/partition.C
 
 #---------------------------------------------------------------
 
-partitions_supported_SOURCES = tools/partitions-supported.C tree.C sequencetree.C tools/tree-dist.C util.C  tools/statistics.C tree-util.C
+partitions_supported_SOURCES = tools/partitions-supported.C tree.C sequencetree.C tools/tree-dist.C util.C  tools/statistics.C tree-util.C  tools/partition.C
 
 #---------------------------------------------------------------
 
-draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C util.C tree-util.C tools/mctree.C rng.C
+draw_graph_SOURCES = tools/draw-graph.C tree.C sequencetree.C tools/tree-dist.C util.C tree-util.C tools/mctree.C rng.C  tools/partition.C
 
 #---------------------------------------------------------------
-tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
+tree_mean_lengths_SOURCES = tools/tree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C  tools/partition.C
 
 #---------------------------------------------------------------
-mctree_mean_lengths_SOURCES = tools/mctree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C tools/mctree.C rng.C
+mctree_mean_lengths_SOURCES = tools/mctree-mean-lengths.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C tools/mctree.C rng.C tools/partition.C
 
 #---------------------------------------------------------------
-trees_pair_distances_SOURCES = tools/trees-pair-distances.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C 
+trees_pair_distances_SOURCES = tools/trees-pair-distances.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C  tools/partition.C
 
 #---------------------------------------------------------------
-tree_partitions_SOURCES = tools/tree-partitions.C util.C tree.C sequencetree.C tools/tree-dist.C tree-util.C 
-
-#---------------------------------------------------------------
-
-trees_to_SRQ_SOURCES = tools/trees-to-SRQ.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C
+tree_partitions_SOURCES = tools/tree-partitions.C util.C tree.C sequencetree.C tools/tree-dist.C tree-util.C  tools/partition.C
 
 #---------------------------------------------------------------
 
-tree_reroot_SOURCES = tools/tree-reroot.C tree.C sequencetree.C tree-util.C util.C tools/tree-dist.C
+trees_to_SRQ_SOURCES = tools/trees-to-SRQ.C util.C tree.C sequencetree.C tools/tree-dist.C tools/statistics.C tree-util.C tools/partition.C
+
+#---------------------------------------------------------------
+
+tree_reroot_SOURCES = tools/tree-reroot.C tree.C sequencetree.C tree-util.C util.C tools/tree-dist.C tools/partition.C
 
 #---------------------------------------------------------------
 
@@ -252,17 +252,19 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	sequence-format.C randomtree.C model.C  probability.C \
 	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
 	alignment-random.C parameters.C myexception.C monitor.C \
-	tools/tree-dist.C tools/inverse.C distribution.C
+	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C
 
 #---------------------------------------------------------------
 
 trees_distances_SOURCES = tools/trees-distances.C tree.C \
-	sequencetree.C tools/tree-dist.C util.C tree-util.C tools/statistics.C
+	sequencetree.C tools/tree-dist.C tools/partition.C util.C \
+	tree-util.C tools/statistics.C
 
 #---------------------------------------------------------------
 
 draw_tree_SOURCES = tools/draw-tree.C tree.C sequencetree.C \
-	tools/tree-dist.C util.C tree-util.C tools/mctree.C rng.C util-random.C
+	tools/tree-dist.C util.C tree-util.C tools/mctree.C rng.C \
+	util-random.C tools/partition.C
 draw_tree_CXXFLAGS = ${CAIRO_CFLAGS}
 draw_tree_LDADD = ${CAIRO_LIBS}
 

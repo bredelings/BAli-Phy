@@ -6,14 +6,14 @@ P4. Allow deterministic searching for internal node states, for SPR tree moves w
 P5. Speed up post-processing.
 P6. Improve usability. (post-processing?  installation?  visualization?)
 P7. ECR2 moves (for fixed-A, and for variable-A, with P4).
-P8. Branch Priors - (allow a gamma?)
 P9. MCMC / MPI - Construct a heated alignment prior.
+P8. Allow a Gamma branch prior [DONE]
 P10. C20 CAT model
 P11. Make post-processing handle multiple chains, assess convergence.
 P12. Speed up likelihood calculations when there are lots of gaps?
-P13. 
+P13. Handle reading NEXUS tree files.
 
-[Post-processing:]
+P5. [Post-processing:]
   + Speed up estimating mean branch lengths.
     - Stop requiring the binary tree to exactly extend query tree.
       + (Because this requirement is too stringent, for large trees.)
@@ -21,18 +21,19 @@ P13.
 
   + When printing SRQ plots, indicate the LOD range (or its abs?).
 
+P11. [Summarize multiple chains]
   + Modify statreport to take multiple (identical) files for estimation of
     means, ACT, etc.
 
 Why does INV+Modulated+gamma[4]+INV crash?
     - Because you can't add models with different alphabet sizes ATM.
 
-
-Branch priors
-1. Use Gamma(1/2,mu)
+P8. [Branch priors]
+1. [DONE] Use Gamma(1/2,mu) 
 2. Allow also Uniform(0,n), Exponential(mu), and ???
 3. What IS the second-largest eigenvalue... what does it mean?
-4. Where in the code do I assume exponential priors?
+4. leaf branches / internal branches
+5. general prior against changes being shared?
 
 MPI
 1. Output
@@ -69,17 +70,10 @@ Multiple Data Partition Stuff
 
  g. Did we add any slowdown in the -t case? In the other case?
 
- h. SPEED:
-    + profile ...  this stage should be fast!!!
-
-
 Code Cleanliness
 
 IDEA: parse "...+var~dist"  (could be +Something[var,dist]
 
-General Branch Length Priors
- A. leaf branches / internal branches
- B. general prior against changes being shared?
 
 "Rooted" version of indel models?
  A. Can we incorporate a better sequence length distribution?
@@ -741,6 +735,8 @@ I. fix: gamma+frequency+INV
 [DONE] Stop abusing valarray (comparing w/ unequal lengths)
 
 [DONE] Use dynamic_bitset<> instead of valarray<bool> for sets.
+
+[DONE] Allow a gamma branch prior.
 
 *IDEAS*
 

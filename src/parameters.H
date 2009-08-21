@@ -14,7 +14,7 @@
 #include "clone.H"
 #include "substitution-cache.H"
 #include "util.H"
-#include "tools/tree-dist.H"
+#include "tools/partition.H"
 #include "cow-ptr.H"
 #include "cached_value.H"
 
