@@ -16,6 +16,7 @@
 #include "statistics.H"
 #include "bootstrap.H"
 #include "tree-dist.H"
+#include "consensus-tree.H"
 #include "mctree.H"
 #include "rng.H"
 
