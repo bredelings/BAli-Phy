@@ -65,7 +65,8 @@ namespace trees_format
   
   bool Newick::next_tree_(Tree& T,int& r)
   {
-    while (getline(*file,line) and not line.size());
+    if (not line.size())
+      while (getline(*file,line) and not line.size());
     if (not line.size()) return false;
     try {
       r = T.parse_with_names(line,leaf_names);
@@ -76,6 +77,7 @@ namespace trees_format
       file->setstate(std::ios::badbit);
       return false;
     }
+    line.clear();
     return not done();
   }
 
@@ -200,7 +202,8 @@ namespace trees_format
 
   bool NEXUS::next_tree_(Tree& T,int& r)
   {
-    get_NEXUS_command(*file,line);
+    if (not line.size())
+      get_NEXUS_command(*file,line);
     if (not line.size()) return false;
     try {
       string word;
@@ -228,16 +231,17 @@ namespace trees_format
       file->setstate(std::ios::badbit);
       return false;
     }
+    line.clear();
     return not done();
   }
 
-  void NEXUS::parse_translate_command(const std::string& line)
+  void NEXUS::parse_translate_command(const std::string& s)
   {
     translate = true;
   
     //  cerr<<"translating: "<<line<<endl;
   
-    vector<string> words = NEXUS_parse_line(line);
+    vector<string> words = NEXUS_parse_line(s);
 
     if (words.size()%3 != 2)
       throw myexception()<<"Malformed 'TRANSLATE' command: wrong number of tokens.";
@@ -271,7 +275,7 @@ namespace trees_format
       
       if (not get_word_NEXUS(word,pos,line)) continue;
 
-      //cerr<<"NEXUS: command = :"<<word<<":"<<"     in_trees_block = "<<in_trees_block<<endl;
+      //      cerr<<"NEXUS: command = :"<<word<<":"<<"     in_trees_block = "<<in_trees_block<<endl;
       
       // Parse BEGIN TREES
       if (word == "BEGIN" or word == "begin") {
@@ -286,6 +290,7 @@ namespace trees_format
       if (word == "translate" or word == "TRANSLATE") {
 	parse_translate_command(line.substr(pos,line.size()-pos));
 	//      cerr<<"leaf names = "<<join(leaf_names,',')<<endl;
+	line.clear();
 	return;
       }
       else if (word == "tree" or word == "TREE") {
