@@ -198,32 +198,6 @@ bool valid(const Partition& p) {
   return p.group1.any() and p.group2.any();
 }
 
-RootedSequenceTree standardized_prune(const string& t,const vector<string>& names) 
-{
-  RootedSequenceTree T;
-  T.parse(t);
-  
-  if (T.root().degree() == 2)
-    T.remove_node_from_branch(T.root());
-
-  vector<int> remove;
-  for(int i=0;i<names.size();i++) {
-    int index = find_index(T.get_sequences(),names[i]);
-    if (index == -1)
-      throw myexception()<<"Cannot find leaf '"<<names[i]<<"' in sampled tree.";
-    remove.push_back(index);
-  }
-
-  if (remove.size())
-    T.prune_leaves(remove);
-
-  if (has_sub_branches(T))
-    throw myexception()<<"Tree has node of degree 2";
-
-  standardize(T);
-  return T;
-}
-
 std::ostream& operator<<(std::ostream& o, const Partition& P) 
 {
   assert(not P.group1.intersects(P.group2));
