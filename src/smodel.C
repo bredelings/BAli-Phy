@@ -698,6 +698,93 @@ namespace substitution {
      eigensystem(a.size())
   { }
 
+  void F81_Model::recalc(const vector<int>&)
+  {
+    const int N = n_states();
+    assert(N == n_letters());
+
+    pi = get_varray(parameters_,0,N);
+    pi /= pi.sum();
+
+    for(int i=0;i<N;i++)
+      for(int j=0;j<N;j++)
+	Q(i,j) = (pi[j] - ((i==j)?1:0))*alpha_;
+  }
+
+  double  F81_Model::rate() const
+  {
+    const unsigned N = n_states();
+
+    double sum=0;
+    for(int i=0;i<N;i++)
+      sum += pi[i]*(1.0-pi[i]);
+
+    return sum*alpha_;
+  }
+
+  void F81_Model::set_rate(double r)
+  {
+    if (r == rate()) return;
+
+    if (rate() == 0 and r != 0)
+      throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
+
+    alpha_ /= rate();
+  }
+  
+  Matrix F81_Model::transition_p(double t) const
+  {
+    const unsigned N = n_states();
+
+    Matrix E(N,N);
+
+    const double exp_a_t = exp(-alpha_ * t);
+
+    for(int i=0;i<N;i++)
+      for(int j=0;j<N;j++)
+	E(i,j) = pi[j] + (((i==j)?1.0:0.0) - pi[j])*exp_a_t;
+
+    return E;
+  }
+
+  efloat_t F81_Model::prior() const
+  {
+    // uniform prior on f
+    efloat_t Pr = 1;
+
+    // uniform - 1 observeration per letter
+    return dirichlet_pdf(parameters_, 0, n_letters(), 1.0);
+  }
+
+  string F81_Model::name() const
+  {
+    return string("F81[")+Alphabet().name+"]";
+  }
+
+  F81_Model::F81_Model(const alphabet& a)
+    :ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a),alpha_(1),pi(a.size())
+  {
+    for(int i=0;i<n_letters();i++) {
+      string pname = string("pi") + Alphabet().letter(i);
+      add_parameter(pname, 1.0/n_letters());
+    }
+
+    recalc_all();
+  }
+
+  F81_Model::F81_Model(const alphabet& a,const valarray<double>& f)
+    :ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a),alpha_(1),pi(a.size())
+  {
+    assert(f.size() == n_letters());
+
+    for(int i=0;i<n_letters();i++) {
+      string pname = string("pi") + Alphabet().letter(i);
+      add_parameter(pname, f[i]);
+    }
+
+    recalc_all();
+  }
+
   void ReversibleMarkovSuperModel::recalc(const vector<int>&)
   {
     const unsigned N = n_states();
@@ -1278,9 +1365,9 @@ namespace substitution {
 
       valarray<double> f_ordered(a.size());
       for(int j=0;j<f_ordered.size();j++)
-	    f_ordered[letter[j]] = f[j];
+	f_ordered[letter[j]] = f[j];
 
-      sub_parameter_models.push_back(SimpleReversibleMarkovModel(EQU(a),f_ordered));
+      sub_parameter_models.push_back(F81_Model(a,f_ordered));
       sub_parameter_models.back()->set_rate(1);
     }
   }

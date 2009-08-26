@@ -54,13 +54,16 @@ get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,con
 bool process_stack_Markov(vector<string>& string_stack,
 			  vector<OwnedPointer< ::Model> >& model_stack,
 			  const alphabet& a,
-			  const variables_map& args) 
+			  const variables_map& args,
+			  const valarray<double>& frequencies)
 {
   string arg;
 
   //------ Get the base markov model (Reversible Markov) ------//
   if (match(string_stack,"EQU",arg))
     model_stack.push_back(EQU(a));
+  else if (match(string_stack,"F81",arg))
+    model_stack.push_back(F81_Model(a,frequencies));
   else if (match(string_stack,"HKY",arg)) {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
     if (N)
@@ -447,9 +450,9 @@ get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,
 
   // Initialize the model stack 
   vector<OwnedPointer< ::Model> > model_stack;
-  if (not process_stack_Markov(string_stack,model_stack,a,args)) {
+  if (not process_stack_Markov(string_stack,model_stack,a,args,frequencies)) {
     guess_markov_model(string_stack,a);
-    if (not process_stack_Markov(string_stack,model_stack,a,args))
+    if (not process_stack_Markov(string_stack,model_stack,a,args,frequencies))
       throw myexception()<<"Can't guess the base CTMC model for alphabet '"<<a.name<<"'";
   }
 
@@ -458,7 +461,7 @@ get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,
   while(string_stack.size()) {
     int length = string_stack.size();
 
-    process_stack_Markov(string_stack,model_stack,a,args);
+    process_stack_Markov(string_stack,model_stack,a,args,frequencies);
 
     process_stack_Frequencies(string_stack,model_stack,a,frequencies);
 

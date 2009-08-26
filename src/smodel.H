@@ -664,6 +664,38 @@ namespace substitution {
     ~ReversibleMarkovModel() {}
   };
   
+  /// A Felsenstein-81 model, in which Q_ij = a*pi[j]
+  class F81_Model: public ReversibleMarkovModel, ModelWithAlphabet<alphabet>
+  {
+    double alpha_;
+    valarray<double> pi;
+
+    void recalc(const vector<int>&);
+  public:
+    double rate() const;
+    void set_rate(double);
+
+    double alpha() const {return alpha_;}
+
+    /// Make a copy of this object
+    virtual F81_Model* clone() const {return new F81_Model(*this);}
+
+    /// The transition probability matrix - which we can now compute
+    Matrix transition_p(double t) const;
+
+    /// Get the equilibrium frequencies
+    const valarray<double>& frequencies() const {return pi;}
+
+    virtual efloat_t prior() const;
+
+    string name() const;
+
+    F81_Model(const alphabet& a);
+    F81_Model(const alphabet& a,const valarray<double>&);
+    ~F81_Model() {}
+  };
+
+
   class ReversibleMarkovSuperModel: public ReversibleMarkovModel,
 				    public SuperModel,
 				    public ModelWithAlphabet<alphabet>
@@ -882,7 +914,7 @@ namespace substitution {
   {
   protected:
     /// Components of the mixture - Reversible Markov models express as S+R
-    vector<OwnedPointer<SimpleReversibleMarkovModel> > sub_parameter_models;
+    vector<OwnedPointer<F81_Model> > sub_parameter_models;
 
     /// Fraction of the sites with each parameter value (weights on the mixture components)
     vector<double> fraction;
