@@ -698,6 +698,8 @@ namespace substitution {
      eigensystem(a.size())
   { }
 
+  //------------------------ F81 Model -------------------------//
+
   void F81_Model::recalc(const vector<int>&)
   {
     const int N = n_states();
@@ -728,6 +730,8 @@ namespace substitution {
 
     if (rate() == 0 and r != 0)
       throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
+
+    Q /= rate();
 
     alpha_ /= rate();
   }
