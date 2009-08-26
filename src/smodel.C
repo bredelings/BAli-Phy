@@ -731,9 +731,11 @@ namespace substitution {
     if (rate() == 0 and r != 0)
       throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
 
-    Q /= rate();
+    double scale = r/rate();
 
-    alpha_ /= rate();
+    Q *= scale;
+
+    alpha_ *= scale;
   }
   
   Matrix F81_Model::transition_p(double t) const
