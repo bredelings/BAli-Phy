@@ -83,7 +83,7 @@ namespace substitution {
     const int n_models = S.size1();
     const int n_states = S.size2();
 
-    // cache matrix of frequencies
+    // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
     for(int m=0;m<n_models;m++) {
       double p = MModel.distribution()[m];
@@ -93,47 +93,55 @@ namespace substitution {
     }
 
     efloat_t total = 1;
-    for(int i=0;i<index.size1();i++) {
-
-      double p_col=0;
-      for(int m=0;m<n_models;m++) {
-	double p_model = 0;
-
-	//-------------- Set letter & model prior probabilities  ---------------//
+    for(int i=0;i<index.size1();i++) 
+    {
+      //-------------- Set letter & model prior probabilities  ---------------//
+      // S = F
+      for(int m=0;m<n_models;m++) 
 	for(int s=0;s<n_states;s++) 
 	  S(m,s) = F(m,s);
 
-	//-------------- Propagate and collect information at 'root' -----------//
-	for(int j=0;j<rb.size();j++) {
-	  int i0 = index(i,j);
-	  if (i0 != alphabet::gap)
+      //-------------- Propagate and collect information at 'root' -----------//
+      for(int j=0;j<rb.size();j++) {
+	int i0 = index(i,j);
+	if (i0 != alphabet::gap)
+	  for(int m=0;m<n_models;m++) 
 	    for(int s=0;s<n_states;s++) 
 	      S(m,s) *= cache(i0,rb[j])(m,s);
-	}
+      }
 
-	//--------- If there is a letter at the root, condition on it ---------//
-	if (root < T.n_leaves()) {
-	  int rl = A.seq(root)[i];
-	  // How about if its NOT a letter class?
-	  if (a.is_letter_class(rl))
-	    for(int s=0;s<n_states;s++)
-	      if (not a.matches(MModel.state_letters()[s],rl))
+      //--------- If there is a letter at the root, condition on it ---------//
+      if (root < T.n_leaves()) {
+	int rl = A.seq(root)[i];
+	// How about if its NOT a letter class?
+	if (a.is_letter_class(rl))
+	  for(int s=0;s<n_states;s++)
+	    if (not a.matches(MModel.state_letters()[s],rl))
+	      for(int m=0;m<n_models;m++) 
 		S(m,s) = 0;
-	}
+      }
 
-	//--------- If there is a letter at the root, condition on it ---------//
+#ifndef NDEBUG     
+      //--------- If there is a letter at the root, condition on it ---------//
+      for(int m=0;m<n_models;m++) {
+	double p_model=0;
 	for(int s=0;s<n_states;s++)
 	  p_model += S(m,s);
-
 	// A specific model (e.g. the INV model) could be impossible
 	assert(0 <= p_model and p_model <= 1.00000000001);
-
-	p_col += p_model;
       }
+#endif
+
+      // What is the total probability of the models?
+      double p_col=0;
+      for(int m=0;m<n_models;m++) 
+	for(int s=0;s<n_states;s++) 
+	  p_col += S(m,s);
 
       // SOME model must be possible
       assert(0 <= p_col and p_col <= 1.00000000001);
-
+      
+      // This does a log( ) operation.
       total *= p_col;
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
