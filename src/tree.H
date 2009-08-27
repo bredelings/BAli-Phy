@@ -1,3 +1,10 @@
+/**
+ * @file tree.H
+ *
+ * @brief This file defines an unrooted Tree class and a (derived) rooted Tree class.
+ *        This structure is based on the unrooted tree structure in Felsenstein's
+ *        Phylogenetics book, but may not be exactly identical.
+ */
 #ifndef ETREE_H
 #define ETREE_H
 
@@ -9,13 +16,18 @@
 
 //---------------------------------- TreeView --------------------------//
 
+/// This class wraps a BranchNode* and treats it as a reference to a tree.
 class TreeView {
 protected:
+  /// A BranchNode in the tree
   BranchNode* root;
 
 public:
+  /// Deallocate the tree pointed too.
   static void destroy_tree(BranchNode*);
+  /// Create a duplicate node ring with the same node numbers, branch numbers, and branch lengths.
   static BranchNode* copy_node(const BranchNode*);
+  /// Create a duplicate tree.
   static BranchNode* copy_tree(const BranchNode*);
 
   /// Exchange the subtrees pointed to by b1 and b2
@@ -23,33 +35,65 @@ public:
 
   /// Remove subtree 'b', and point 'b' to it
   static BranchNode* create_node_on_branch(BranchNode* b,int new_branchname);
+
+  /// Remove a node 'n' with exactly two neighbors, merging its two adjacent branches
   static int  remove_node_from_branch(BranchNode* n1);
 
+  /// Merge the node rings into a single node ring.
   static void merge_nodes(BranchNode* n1,BranchNode* n2);
+
+  /// Cut the branch b and remove its BranchNode from the target of b.
   static BranchNode* unlink_subtree(BranchNode* b);
 
+  /// Create a duplicate tree.
   TreeView copy() const;
+  /// Deallocate the current tree.
   void destroy() {destroy_tree(root);}
 
+  /// Access the BranchNode we are wrapping.
   operator BranchNode*() {return root;}
 
+  /// Construct a TreeView wrapper from a BranchNode
   TreeView(BranchNode* b):root(b) {}
   ~TreeView() {}
 };
 
+/// Allocate, initialize and return a single-node tree.
 BranchNode* get_first_node();
-BranchNode* add_node(BranchNode*);
-BranchNode* connect_nodes(BranchNode*,BranchNode*);
-void insert_after(BranchNode*,BranchNode*);
-void name_node(BranchNode*,int);
-void knit_node_together(const std::vector<BranchNode*>&);
+/// Allocate, initialize and a new leaf node that is connected to this node.
+BranchNode* add_node(BranchNode* n);
+/// Create a branch connecting nodes n1 and n2
+BranchNode* connect_nodes(BranchNode* n1,BranchNode* n2);
+/// Add a BranchNode* to the node ring of n1, right after n1
+void insert_after(BranchNode* n1,BranchNode* n2);
+/// Mark all BranchNode's in the node right of start as being part of node i.
+void name_node(BranchNode* start,int i);
+/// Link all the BranchNode's into a node ring.
+void knit_node_together(const std::vector<BranchNode*>& nodes);
 
 //------------------------------------ Tree -----------------------------//
 
+/**
+ * @brief An unrooted tree class.
+ *
+ *        This structure is based on the unrooted tree structure in Felsenstein's
+ *        Phylogenetics book, but may not be exactly identical.
+ *
+ *        Each node of degree d consists of a circular list (a node ring) of d 
+ *        BranchNode's.  Each BranchNode in the ring corresponds to one of the
+ *        outgoing branches, and has an extra pointer that points to a BranchNode
+ *        in the node right of the target node.  Thus, each branch has two
+ *        BranchNode's - one at each endpoint.  A BranchNode may therefore indicate
+ *        either the node (ring) of which it is a part, or it may indiate
+ *        a directed branch pointing from that node, to the node (ring) containing the
+ *        BranchNode to which it points.
+ */
 class Tree 
 {
+  /// Are the cached_partitions valid?
   mutable bool caches_valid;
 
+  /// Cached partitions.
   mutable std::vector< boost::dynamic_bitset<> > cached_partitions;
 
 protected:
@@ -180,10 +224,12 @@ public:
     return bv;
   }
   
+  /// Get a reference to the 'i'-th node
         nodeview operator[](int i)       {return nodes_[i];}
+  /// Get a reference to the 'i'-th node
   const_nodeview operator[](int i) const {return nodes_[i];}
 
-  /// are node1 and node2 connected by a branch?
+  /// Precidate: are node1 and node2 connected by a branch?
   bool is_connected(int node1,int node2) const {
     return find_branch_pointer(node1,node2) != NULL;
   }
@@ -205,16 +251,16 @@ public:
     return partition(directed_branch(n1,n2));
   }
 
-  /// construct standard names for leaves and branches
+  /// Construct standard names for leaves and branches
   virtual std::vector<int> standardize();
 
-  /// permute leaf nodes and then construct standard names for leaves and branches
+  /// Permute leaf nodes and then construct standard names for leaves and branches
   virtual std::vector<int> standardize(const std::vector<int>&);
 
-  /// is 'n' contained in the subtree delineated by 'b' 
+  /// Is 'n' contained in the subtree delineated by 'b'?
   bool subtree_contains(int b,int n) const {return partition(b)[n];}
 
-  /// is 'b2' contained in the subtree delineated by 'b1' 
+  /// Is 'b2' contained in the subtree delineated by 'b1'?
   bool subtree_contains_branch(int b1,int b2) const 
   {
     const_branchview bv2 = directed_branch(b2);
@@ -229,7 +275,7 @@ public:
   /// Add a node onto a branch 'b', splitting it into two sub-neighbors
   nodeview create_node_on_branch(int b);
 
-  /// Remove a node 'n' with exactly two neighbors, merging two branches
+  /// Remove a node 'n' with exactly two neighbors, merging its two adjacent branches
   virtual void remove_node_from_branch(int n);
 
   /// remove a subtree
@@ -247,14 +293,19 @@ public:
   /// add a node, linking to node 'n'
   nodeview add_node(int n);
 
+  /// Create an identical tree that does not share memory with the original
   Tree& operator=(const Tree& T); 
 
-  /// load this tree from the string s
+  /// Parse and load the Newick format string 's', where node names are numerical starting at 1
   virtual int parse_no_names(const std::string& s);
+  /// Parse and load the Newick format string 's', where node names are given in 'names'
   virtual int parse_with_names(const std::string& s,const std::vector<std::string>& names);
 
+  /// Create an empty tree
   Tree():n_leaves_(0) {}
-  explicit Tree(const BranchNode*);
+  /// Create a tree by taking over the tree structure containing BranchNode* n.
+  explicit Tree(const BranchNode* n);
+  /// Create a new tree that is identical to T but does not share memory with it. 
   Tree(const Tree& T);
 
   virtual ~Tree();
@@ -262,21 +313,27 @@ public:
 
 /// Prune subtree 'b1' and regraft into branch 'b2'
 void SPR(Tree& T,int b1,int b2);
+/// Swap the branches b1 and b2, along with the subtrees they point to.
 void exchange_subtrees(Tree&,int b1,int b2);
 
 //---------------------------- RootedTree -----------------------//
 
 // In rooted_tree, we will assume that nodes_[i] gives the TOP node in a ring
 
-class RootedTree: virtual public Tree {
+/// A rooted tree class, consisting of an unrooted tree and a pointer to the root node.
+class RootedTree: virtual public Tree 
+{
 protected:
+  /// A pointer to the root node of the tree.
   BranchNode* root_;
 
   void recompute(BranchNode*,bool=true);
 
   void check_structure() const;
 public:
+  /// Return the root node
   const_nodeview root() const {return root_;}
+  /// Return the root node
         nodeview root()       {return root_;}
 
   /// More the root from the current node to node 'n'
@@ -305,11 +362,18 @@ public:
   virtual int parse_no_names(const std::string& s);
   virtual int parse_with_names(const std::string& s,const std::vector<std::string>& names);
 
+  /// Create an empty tree with a NULL root
   RootedTree():root_(NULL) {}
+
+  /// Create a tree by taking over the tree structure containing BranchNode* n, and using n as the root.
   explicit RootedTree(const BranchNode*);
-  RootedTree(const Tree&,int r);
+
+  /// Construct a rooted tree from an unrooted tree by marking node 'r' as the root.
+  RootedTree(const Tree& T,int r);
+  /// Create a new rooted tree that is identical to T but does not share memory with it. 
   RootedTree(const RootedTree&);
 
+  /// Create a new rooted tree by joining the root nodes of 't1' and 't2'
   RootedTree(const RootedTree& t1,const RootedTree& t2);
 
   ~RootedTree() {}
@@ -318,18 +382,25 @@ public:
 /// Create a copy of T with a new root node on branch b
 RootedTree add_root(Tree T,int b);
 
+/// Create a new rooted tree by joining the root nodes of 't1' and 't2'
 inline RootedTree operator+(const RootedTree& t1,const RootedTree& t2) {
   RootedTree t3(t1,t2);
 
   return t3;
 }
 
+/// Return a Newick string representation of the rooted tree 'T' with names 'names', including branch lengths by default.
 std::string write(const RootedTree& T, const std::vector<std::string>& names, bool print_lengths=true); 
+/// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
 std::string write(const Tree& T, const std::vector<std::string>& names, bool print_lengths=true); 
+/// Return a Newick string representation of the Rooted tree 'T', where node names are integers.
 std::string write_no_names(const RootedTree& T, bool print_lengths=true); 
+/// Return a Newick string representation of the tree 'T', where node names are integers.
 std::string write_no_names(const Tree& T, bool print_lengths=true); 
 
+/// Append branches before all of the branches passed in.
 void get_branches_before(std::vector<const_branchview>& branch_list);
+/// Append branches after all of the branches passed in.
 void get_branches_after(std::vector<const_branchview>& branch_list);
 
 /// list of all branches before b, with children before parents
@@ -353,6 +424,7 @@ std::vector<const_branchview> sorted_neighbors(const_nodeview n);
 /// list of all outgoing branches, sorted by branch name
 std::vector<const_branchview> sorted_branches_after(const_branchview b);
 
+/// Construct a star tree with 'n' leaves.
 Tree star_tree(int n);
 
 /// Construct a random tree with n leaf nodes
@@ -364,18 +436,25 @@ boost::dynamic_bitset<> branch_partition(const Tree& T,int b);
 /// Sum of the lengths of all branches
 double length(const Tree& T);
 
+/// Return the maximum distance from T.branch(b).target() to nodes after b.
 int subtree_height(const Tree& T,int b);
 
+/// What is the depth of the node in tree 'T'?
 int node_depth(const Tree& T,int node);
 
+/// Construct the list of leaves pointed to by each branch
 std::vector<std::vector<int> > partition_sets(const Tree& T);
 
+/// Predicate: return true if the Tree 't' has only nodes of degree 1 or 3.
 bool is_Cayley(const Tree& T);
 
+/// Predicate: return true if the Tree 't' has nodes of degree 2.
 bool has_sub_branches(const Tree& T);
 
+/// Predicate: return true if the Tree 't' has a polytomy
 bool has_polytomy(const Tree& T);
 
+/// Remove nodes of degree 2 and merge the resulting branches.
 void remove_sub_branches(Tree& T);
 
 #endif

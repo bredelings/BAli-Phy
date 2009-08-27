@@ -4,7 +4,7 @@
  * @brief This file defines the struct BranchNode, which is used in creating
  *        an unrooted tree class defined in tree.H.  It also defines 
  *        several iterator classes for walking the tree in various ways.
- *        This structure is based on the unrooted tree structure in Felsensteins
+ *        This structure is based on the unrooted tree structure in Felsenstein's
  *        Phylogenetics book, but may not be exactly identical.
  */
 
