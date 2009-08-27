@@ -169,7 +169,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 
-struct accum_branch_lengths: public accumulator<SequenceTree>
+struct accum_branch_lengths_same_topology: public accumulator<SequenceTree>
 {
   int n_samples;
   int n_matches;
@@ -198,7 +198,7 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
     m2 = sqrt(m2);
   }
 
-  accum_branch_lengths(const SequenceTree& T)
+  accum_branch_lengths_same_topology(const SequenceTree& T)
     :
     n_samples(0),
     n_matches(0),
@@ -209,7 +209,7 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
   {}
 };
 
-void accum_branch_lengths::operator()(const SequenceTree& T)
+void accum_branch_lengths_same_topology::operator()(const SequenceTree& T)
 {
   n_samples++;
   if (update_lengths(Q,T,m1,m2,n1))
@@ -240,7 +240,7 @@ int main(int argc,char* argv[])
       bf[b] = Q.branch(b).length();
 
     //-------- Read in the tree samples --------//
-    accum_branch_lengths A(Q);
+    accum_branch_lengths_same_topology A(Q);
 
     try {
       scan_trees(std::cin,skip,subsample,max,A);
