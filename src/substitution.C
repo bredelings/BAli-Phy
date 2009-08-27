@@ -26,6 +26,63 @@ using std::vector;
 // * we don't need to work in log space for a single column
 //
 // * 
+
+
+inline void element_assign(Matrix& M1,const Matrix& M2)
+{
+  assert(M1.size1() == M2.size1());
+  assert(M1.size2() == M2.size2());
+  
+  const int size = M1.data().size();
+  double * __restrict__ m1 = M1.data().begin();
+  const double * __restrict__ m2 = M2.data().begin();
+  
+  for(int i=0;i<size;i++)
+    m1[i] = m2[i];
+}
+
+inline void element_prod_assign(Matrix& M1,const Matrix& M2)
+{
+  assert(M1.size1() == M2.size1());
+  assert(M1.size2() == M2.size2());
+  
+  const int size = M1.data().size();
+  double * __restrict__ m1 = M1.data().begin();
+  const double * __restrict__ m2 = M2.data().begin();
+  
+  for(int i=0;i<size;i++)
+    m1[i] *= m2[i];
+}
+
+inline void element_prod_assign3(Matrix& M1,const Matrix& M2,const Matrix& M3)
+{
+  assert(M1.size1() == M2.size1());
+  assert(M1.size2() == M2.size2());
+  
+  assert(M1.size1() == M3.size1());
+  assert(M1.size2() == M3.size2());
+  
+  const int size = M1.data().size();
+  double * __restrict__ m1 = M1.data().begin();
+  const double * __restrict__ m2 = M2.data().begin();
+  const double * __restrict__ m3 = M3.data().begin();
+  
+  for(int i=0;i<size;i++)
+    m1[i] = m2[i]*m3[i];
+}
+
+inline double element_sum(const Matrix& M1)
+{
+  const int size = M1.data().size();
+  const double * __restrict__ m1 = M1.data().begin();
+  
+  double sum = 0;
+  for(int i=0;i<size;i++)
+    sum += m1[i];
+  return sum;
+}
+
+
 namespace substitution {
 
   int total_peel_leaf_branches=0;
@@ -96,18 +153,13 @@ namespace substitution {
     for(int i=0;i<index.size1();i++) 
     {
       //-------------- Set letter & model prior probabilities  ---------------//
-      // S = F
-      for(int m=0;m<n_models;m++) 
-	for(int s=0;s<n_states;s++) 
-	  S(m,s) = F(m,s);
+      element_assign(S,F); // noalias(S) = F;
 
       //-------------- Propagate and collect information at 'root' -----------//
       for(int j=0;j<rb.size();j++) {
 	int i0 = index(i,j);
 	if (i0 != alphabet::gap)
-	  for(int m=0;m<n_models;m++) 
-	    for(int s=0;s<n_states;s++) 
-	      S(m,s) *= cache(i0,rb[j])(m,s);
+	  element_prod_assign(S,cache(i0,rb[j]));
       }
 
       //--------- If there is a letter at the root, condition on it ---------//
@@ -133,10 +185,7 @@ namespace substitution {
 #endif
 
       // What is the total probability of the models?
-      double p_col=0;
-      for(int m=0;m<n_models;m++) 
-	for(int s=0;s<n_states;s++) 
-	  p_col += S(m,s);
+      double p_col = element_sum(S);
 
       // SOME model must be possible
       assert(0 <= p_col and p_col <= 1.00000000001);
