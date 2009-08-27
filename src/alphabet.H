@@ -120,6 +120,8 @@ public:
     assert(letter_masks_.size() == letter_classes_.size());
     return letter_masks_[i];
   }
+
+  /// Returns true if the letter i1 is part of the letter class i2
   bool matches(int i1,int i2) const {
     if (i2 == not_gap)
       return true;
@@ -170,15 +172,21 @@ public:
   /// Compare two alphabets
   friend bool operator==(const alphabet&,const alphabet&);
 
+  /// Estimate frequencies from counts in a way that uses alphabet-dependant pseudocounts
   virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
 
-  alphabet(const std::string&);
+  /// Construct an alphabet with the given name
+  alphabet(const std::string& name);
 
-  alphabet(const std::string&,const std::string&);
-  alphabet(const std::string&,const std::string&,const std::string&);
+  /// Construct an alphabet with name 'n', letters 'l'
+  alphabet(const std::string& n,const std::string& l);
+  /// Construct an alphabet with name 'n', letters 'l'
+  alphabet(const std::string& n, const std::vector<std::string>& l);
 
-  alphabet(const std::string&, const std::vector<std::string>&);
-  alphabet(const std::string&, const std::vector<std::string>&,const std::string&);
+  /// Construct an alphabet with name 'n', letters 'l', and wildcard 'm'
+  alphabet(const std::string& n,const std::string& l, const std::string& m);
+  /// Construct an alphabet with name 'n', letters 'l', and wildcard 'm'
+  alphabet(const std::string& n, const std::vector<std::string>& l,const std::string& m);
 
   virtual ~alphabet() {};
 };
@@ -315,10 +323,13 @@ public:
 //------------------------------- Codons ------------------------------//
 
 
+/// Check if two alphabets are unequal
 inline bool operator!=(const alphabet& a1,const alphabet& a2) {return not (a1==a2);}
 
+/// Compute nucleotide counts from codon counts
 std::valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,const std::valarray<double>& C_counts);
 
+/// Compute codon frequences from nucleotide frequencies if the nucleotide positions in the codon are independant
 std::valarray<double> get_codon_frequencies_from_independant_nucleotide_frequencies(const Triplets& C,const std::valarray<double>& fN );
 
 #endif
