@@ -249,7 +249,7 @@ public:
 
   Tree& operator=(const Tree& T); 
 
-  /// load this tree from the string @s
+  /// load this tree from the string s
   virtual int parse_no_names(const std::string& s);
   virtual int parse_with_names(const std::string& s,const std::vector<std::string>& names);
 
@@ -301,7 +301,7 @@ public:
 
   RootedTree& operator=(const RootedTree&);
 
-  /// load this tree from the string @s
+  /// load this tree from the string s
   virtual int parse_no_names(const std::string& s);
   virtual int parse_with_names(const std::string& s,const std::vector<std::string>& names);
 

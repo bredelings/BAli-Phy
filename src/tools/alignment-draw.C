@@ -13,6 +13,8 @@ namespace po = boost::program_options;
 using po::variables_map;
 
 using std::string;
+using std::vector;
+using std::ifstream;
 using namespace colors;
 
 // some scale functions

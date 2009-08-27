@@ -1,10 +1,13 @@
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #include "alignment-constraint.H"
 #include "alignment-util.H"
 #include "tree-util.H"
 #include "util.H"
 
+using std::string;
+using std::ifstream;
 using std::vector;
 using std::valarray;
 

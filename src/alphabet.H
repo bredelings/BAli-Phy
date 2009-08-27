@@ -1,3 +1,7 @@
+/**
+ * @file alphabet.H
+ */
+
 #ifndef ALPHABET_H
 #define ALPHABET_H
 
@@ -9,10 +13,16 @@
 #include "myexception.H"
 #include "clone.H"
 
-struct bad_letter:public myexception {
+
+/// An exception that is thrown upon reading a letter that is not in the current alphabet.
+struct bad_letter:public myexception 
+{
+  /// The letter that was read
   std::string letter;
 
+  /// Event: the letter "l" was not in the alphabet
   bad_letter(const std::string& l);
+  /// Event: the letter "l" was not in alphabet "name"
   bad_letter(const std::string& l,const std::string& name);
 
   virtual ~bad_letter() throw() {}
@@ -62,23 +72,25 @@ public:
   /// The name of the alphabet
   std::string name;
 
+  /// The string for a gap (often '-')
   std::string gap_letter;
 
-  /// Stands for any letter: no information
+  /// The string for a not_gap (often 'N' or 'X')
   std::string wildcard;
 
+  /// The string for a unknown (often '?')
   std::string unknown_letter;
 
-  /// The number of real letters per letter of the alphabet
+  /// The number of singlet letters per alphabet letter.
   int width() const {return letters_[0].size();}
 
   /// Index of a gap ('-')
   static const int gap = -1;
 
-  /// Index of an unknown letter ('+')
+  /// Index of an letter whose value is missing ('N' or 'X')
   static const int not_gap = -2;
 
-  /// Index of unknown: no information ('?' - '+' or '-')
+  /// Index of unknown ('?'): an ambiguous 'gap or not_gap' symbol.
   static const int unknown = -3;
 
 
@@ -155,6 +167,7 @@ public:
   /// Is index 'l' a letter, class, or wildcard?
   static bool is_feature(int l) {return l==not_gap or is_letter_class(l);}
 
+  /// Compare two alphabets
   friend bool operator==(const alphabet&,const alphabet&);
 
   virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;

@@ -9,6 +9,9 @@
 namespace po = boost::program_options;
 using po::variables_map;
 
+using std::string;
+using std::endl;
+
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
   using namespace po;

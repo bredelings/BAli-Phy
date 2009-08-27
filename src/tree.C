@@ -158,6 +158,9 @@ int TreeView::remove_node_from_branch(BranchNode* n1) {
   BranchNode* b1 = n1->out;
   BranchNode* b2 = n2->out;
 
+  // Remove the branch leading to the higher numbered node
+  // FIXME - remove the higher numbered branch?
+  // FIXME - what if I want to specify which branch to move?
   if (b1->node > b2->node) {
     std::swap(n1,n2);
     std::swap(b1,b2);
@@ -692,6 +695,7 @@ void SPR(Tree& T, int br1,int br2)
   //------------ Prune the subtree -----------------//
   BranchNode* newbranch = TreeView::unlink_subtree(b1)->out;
   int dead_branch = TreeView::remove_node_from_branch(newbranch->out);
+  assert(dead_branch >= T.n_leafbranches());
   
   //----------- Regraft the subtree ---------------//
   TreeView::create_node_on_branch(b2,dead_branch);

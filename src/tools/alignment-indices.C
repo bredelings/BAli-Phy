@@ -8,6 +8,10 @@
 namespace po = boost::program_options;
 using po::variables_map;
 
+using std::string;
+using std::vector;
+using std::endl;
+
 using std::cout;
 using std::cerr;
 

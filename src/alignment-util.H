@@ -26,11 +26,11 @@ alignment add_internal(alignment A,const Tree& T);
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
 
 /// Load an alignment from command line args align=filename
-alignment load_alignment(const std::string& filename, const vector<boost::shared_ptr<const alphabet> >& alphabets);
+alignment load_alignment(const std::string& filename, const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
 
 /// Load alignments from command line args align=filename
-std::vector<alignment> load_alignments(const vector<std::string>& filenames,
-				       const vector<boost::shared_ptr<const alphabet> >& alphabets);
+std::vector<alignment> load_alignments(const std::vector<std::string>& filenames,
+				       const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
 
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
@@ -54,7 +54,7 @@ bool names_are_unique(const alignment& A);
 void check_internal_sequences_composition(const alignment& A,int n_leaves);
 
 /// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const Tree& T,const std::vector<int>& ignore=vector<int>());
+void check_internal_nodes_connected(const alignment& A,const Tree& T,const std::vector<int>& ignore=std::vector<int>());
 
 /// Are all un-ignored characters in column 'present' connected on T?
 bool all_characters_connected(const Tree& T,boost::dynamic_bitset<> present,const std::vector<int>& ignore);
@@ -69,10 +69,10 @@ void letters_OK(const alignment& A);
 
 void check_alignment(const alignment& A,const Tree& T,bool internal_sequences);
 
-vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
-				   int column,
-				   const ublas::matrix<int>& M2,
-				   const std::vector<std::vector<int> >& columns);
+std::vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
+					int column,
+					const ublas::matrix<int>& M2,
+					const std::vector<std::vector<int> >& columns);
 
 long int asymmetric_pairs_distance(const alignment& A1,const alignment& A2);
 
@@ -116,7 +116,7 @@ alignment find_last_alignment(std::istream& ifile, const std::vector<boost::shar
 
 alignment find_first_alignment(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
 
-vector<boost::shared_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args);
+std::vector<boost::shared_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args);
 
 void check_disconnected(const alignment& A, const Tree& T, const std::vector<int>& disconnected);
 
@@ -130,7 +130,7 @@ std::vector<unsigned> sequence_lengths(const alignment& A);
 
 std::vector<unsigned> sequence_lengths(const alignment& A,unsigned n);
 
-alignment select_rows(const alignment& A,const vector<int>& keep);
+alignment select_rows(const alignment& A,const std::vector<int>& keep);
 
-alignment select_columns(const alignment& A,const vector<int>& sites);
+alignment select_columns(const alignment& A,const std::vector<int>& sites);
 #endif

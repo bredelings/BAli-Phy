@@ -6,7 +6,11 @@
 #include "rng.H"
 
 using std::string;
+using std::vector;
+using std::endl;
 using boost::shared_ptr;
+
+namespace ublas = boost::numeric::ublas;
 
 void resize(ublas::matrix<int>& M1,int s1,int s2,int clear=0)
 {

@@ -3,7 +3,7 @@
 #include "alignment.H"
 #include "sequencetree.H"
 
-ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree& T);
+ublas::matrix<int> load_alignment_constraint(const std::string& filename,SequenceTree& T);
 
 std::vector< std::vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignment& A,
 					 const boost::dynamic_bitset<>& group1,const boost::dynamic_bitset<>& group2,

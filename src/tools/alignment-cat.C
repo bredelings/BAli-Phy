@@ -13,6 +13,9 @@ using po::variables_map;
 
 using std::ifstream;
 using std::istream;
+using std::vector;
+using std::string;
+
 using std::cin;
 using std::cout;
 using std::cerr;

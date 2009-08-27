@@ -1,6 +1,8 @@
 #include "alignment.H"
 #include "rng.H"
 
+using std::vector;
+
 alignment randomize(const alignment& A,int n) {
   if (n == -1)
     n = A.n_sequences();

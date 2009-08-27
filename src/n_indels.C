@@ -2,6 +2,8 @@
 #include "2way.H"
 #include "util.H"
 
+using std::vector;
+
 namespace states = A2::states;
 
 vector<int> get_indel_lengths(const alignment& A,const Tree& T, int b)
