@@ -12,9 +12,20 @@ P10. C20 CAT model
 P11. Make post-processing handle multiple chains, assess convergence.
 P12. Speed up likelihood calculations when there are lots of gaps?
 P13. Handle reading NEXUS tree files.
+P14. Instead of setting things equal to one in substitution.C, 
+     make a generic 1's matrix, and set things equal to that matrix.
+     
+P3. [Speed up burn-in]
+- Do an initial tree search.  Does this decrease temporary unalignment?
+  + Branch lengths?
+  + Topology?
+- Do an initial POY-style optimization.  How much faster can this be?
 
-P13. [Read NEXUS files]
-  + Don't skip the first tree, but cache it after reading branch lengths.
+P14. How often do I do this - is it only in leaf branches?
+
+P10. Make CAT models faster.
+ - Can this be virtualized?  How much speed do we lose by computing exp(Qt)*v using a virtual call?
+ - Can I avoid recalculating exp_a_t to often?
 
 P5. [Post-processing:]
   + Speed up estimating mean branch lengths.
@@ -740,6 +751,8 @@ I. fix: gamma+frequency+INV
 [DONE] Use dynamic_bitset<> instead of valarray<bool> for sets.
 
 [DONE] Allow a gamma branch prior.
+
+[DONE] Read NEXUS tree files.
 
 *IDEAS*
 
