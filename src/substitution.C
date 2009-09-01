@@ -324,7 +324,7 @@ namespace substitution {
 
     //    const vector<unsigned>& smap = MModel.state_letters();
 
-    vector<const F81_Model*> SubModels(n_states);
+    vector<const F81_Model*> SubModels(n_models);
     for(int m=0;m<n_models;m++) {
       SubModels[m] = static_cast<const F81_Model*>(&MModel.base_model(m));
       assert(SubModels[m]);
@@ -511,7 +511,7 @@ namespace substitution {
     const int n_states = S.size2();
     assert(MModel.n_states() == n_states);
 
-    vector<const F81_Model*> SubModels(n_states);
+    vector<const F81_Model*> SubModels(n_models);
     for(int m=0;m<n_models;m++) {
       SubModels[m] = static_cast<const F81_Model*>(&MModel.base_model(m));
       assert(SubModels[m]);
