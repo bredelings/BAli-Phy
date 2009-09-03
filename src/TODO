@@ -16,8 +16,12 @@ P14. Instead of setting things equal to one in substitution.C,
      make a generic 1's matrix, and set things equal to that matrix.
 P15. Make matcaches (a) [b][m] instead of [m][b] and (b) be able to invalidate indivual branches.     
 
+P1. Implement the multi-branch SPR search
+ * Make an MC_invalidate_one_branch( ) function for Parameters and data_partition.
+ * Write more of the SPR_all( ) function.  Make sure the algorithm is the most efficient version.
+
 P3. [Speed up burn-in]
-- Do, in order:
+ * Do, in order:
 
 Step 1
  * scale parameters
