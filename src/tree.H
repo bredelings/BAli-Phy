@@ -312,7 +312,7 @@ public:
 };
 
 /// Prune subtree 'b1' and regraft into branch 'b2'
-void SPR(Tree& T,int b1,int b2);
+int SPR(Tree& T,int b1,int b2);
 /// Swap the branches b1 and b2, along with the subtrees they point to.
 void exchange_subtrees(Tree&,int b1,int b2);
 

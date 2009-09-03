@@ -115,6 +115,10 @@ void TreeView::merge_nodes(BranchNode* n1,BranchNode* n2) {
 // this preserves sub-branch directions
 // the node with the smaller name maintains the name of its attatched branch
 
+//         b1 <-----> b2
+//            goes to...
+
+
 BranchNode* TreeView::create_node_on_branch(BranchNode* b1, int  new_branchname) {
 
   BranchNode* b2 = b1->out;
@@ -150,8 +154,18 @@ BranchNode* TreeView::create_node_on_branch(BranchNode* b1, int  new_branchname)
   return n1;
 }
 
+
+// b1 <-----> [n1,n2] <-------> b2
+//            goes to...
+//         b1 <-----> b2
+// The larger NODE name gets to keep its... BRANCH direction?
+//
+// The direction of the remaining branch stays unchanged. (b2->branch = n1->branch)
+//
+
 /// Merge sub-branches, adding their lengths, and reporting which branch name didn't survive.
-int TreeView::remove_node_from_branch(BranchNode* n1) {
+int TreeView::remove_node_from_branch(BranchNode* n1) 
+{
   BranchNode* n2 = n1->next;
   assert(n2->next == n1);
 
@@ -161,7 +175,8 @@ int TreeView::remove_node_from_branch(BranchNode* n1) {
   // Remove the branch leading to the higher numbered node
   // FIXME - remove the higher numbered branch?
   // FIXME - what if I want to specify which branch to move?
-  if (b1->node > b2->node) {
+  if (b1->node > b2->node) 
+  {
     std::swap(n1,n2);
     std::swap(b1,b2);
   }
@@ -174,9 +189,10 @@ int TreeView::remove_node_from_branch(BranchNode* n1) {
   b1->out = b2;
   b2->out = b1;
 
-  b2->branch = n1->branch;
   b1->length += b2->length;
   b2->length = b1->length;
+
+  b2->branch = n1->branch; // preserve the direction of the remaining branch.
 
   //-------- Remove the node, and reconnect --------//
   delete n1;
@@ -677,11 +693,12 @@ void Tree::remove_node_from_branch(int node)
 }
 
 /// SPR: move the subtree b1 into branch b2
-void SPR(Tree& T, int br1,int br2) 
+/*
+ * How do the branch and node names change?
+ * 
+ */
+int SPR(Tree& T, int br1,int br2) 
 {
-  //  T.SPR(br1,br2);
-  //  return;
-
   BranchNode* b1 = (BranchNode*)T.directed_branch(br1);
   BranchNode* b2 = (BranchNode*)T.directed_branch(br2);
 
@@ -703,6 +720,8 @@ void SPR(Tree& T, int br1,int br2)
   name_node(b1,b1->node);
 
   T.recompute(b1);
+
+  return dead_branch;
 }
 
 /// Return a pointer to the BN in @start which points towards the root
