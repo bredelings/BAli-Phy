@@ -14,18 +14,37 @@ P12. Speed up likelihood calculations when there are lots of gaps?
 P13. Handle reading NEXUS tree files.
 P14. Instead of setting things equal to one in substitution.C, 
      make a generic 1's matrix, and set things equal to that matrix.
-     
+P15. Make matcaches (a) [b][m] instead of [m][b] and (b) be able to invalidate indivual branches.     
+
 P3. [Speed up burn-in]
+- Do, in order:
+
+Step 1
+ * scale parameters
+ * branch lengths
+ * substitution model parameters
+ * indel model parameters
+ * internal node states?
+
+Step 2
+ * topology
+ * alignment
+
+- Do an initial MCMC with alternative parameters
+  + Where do we send output for this MCMC?
 - Do an initial tree search.  Does this decrease temporary unalignment?
   + Branch lengths?
   + Topology?
 - Do an initial POY-style optimization.  How much faster can this be?
+- Issue: we can just try to estimate alignments, BUT
+  + How do we score gap penalties?
+  + There is A/T interaction.
 
 P14. How often do I do this - is it only in leaf branches?
 
 P10. Make CAT models faster.
  - Can this be virtualized?  How much speed do we lose by computing exp(Qt)*v using a virtual call?
- - Can I avoid recalculating exp_a_t to often?
+ - Can I avoid recalculating exp_a_t so often?
 
 P5. [Post-processing:]
   + Speed up estimating mean branch lengths.
