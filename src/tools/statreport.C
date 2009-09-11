@@ -49,7 +49,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   variables_map args;     
   store(command_line_parser(argc, argv).
 	    options(all).positional(p).run(), args);
-  notify(args);    
+  notify(args);
 
   if (args.count("help")) {
     cout<<"Usage: statreport [OPTIONS] < data-file \n";
@@ -72,8 +72,11 @@ bool constant(const vector<double>& values)
 }
 
 
-void show_stats(variables_map& args, const string& name,const vector<double>& values)
+void show_stats(variables_map& args, const stats_table& data,int index)
 {
+  const string& name = data.names()[index];
+  const vector<double>& values = data.column(index);
+
   using namespace statistics;
 
   if (constant(values)) {
@@ -146,52 +149,30 @@ int main(int argc,char* argv[])
 
     cout.precision(args["precision"].as<unsigned>());
 
-    //------------ Parse column names ----------//
-    vector<string> headers = read_header(std::cin);
-
-    //------------ Parse column mask ----------//
-    vector<bool> mask(headers.size(),true);
-    
-    if (args.count("mask"))
-      mask = get_mask(args["mask"].as<string>(),mask);
-
-    //------------ Read Data ---------------//
-    vector< vector<double> > data(headers.size());
-    
     int skip = args["skip"].as<int>();
 
     int max = -1;
     if (args.count("max"))
       max = args["max"].as<int>();
 
-    int line_number=0;
-    string line;
-    while(getline(cin,line)) 
-    {
-      line_number++;
+    //------------ Read Data ---------------//
+    stats_table data(std::cin,skip,max);
 
-      if (line_number <= skip) continue;
-
-      vector<double> v = split<double>(line,'\t');
-
-      if (v.size() != headers.size())
-	throw myexception()<<"Found "<<v.size()<<"/"<<headers.size()<<" values on line "<<line_number<<".";
-
-      for(int i=0;i<v.size();i++)
-	data[i].push_back(v[i]);
-
-      if (max != -1 and data[0].size() >= max)
-	break;
-    }
-
-    if (data[0].size() == 0)
+    if (data.n_rows() == 0)
       throw myexception()<<"No data line read in!";
 
-    if (log_verbose) cerr<<"statreport: Read in "<<data[0].size()<<" lines.\n";
+    if (log_verbose) cerr<<"statreport: Read in "<<data.n_rows()<<" lines.\n";
 
-    for(int i=0;i<headers.size();i++) 
+    //------------ Parse column mask ----------//
+    vector<bool> mask(data.n_columns(),true);
+    
+    if (args.count("mask"))
+      mask = get_mask(args["mask"].as<string>(),mask);
+
+    //------------ Generate Report ----------//
+    for(int i=0;i<data.n_columns();i++) 
       if (mask[i]) {
-	show_stats(args,headers[i],data[i]);
+	show_stats(args, data, i);
 	cout<<endl;
       }
   }
