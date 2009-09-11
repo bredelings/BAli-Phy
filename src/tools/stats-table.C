@@ -44,3 +44,46 @@ void write_header(std::ostream& o, const vector<string>& headers)
       o<<"\t";
   }
 }
+
+void stats_table::add_row(const vector<double>& row)
+{
+  assert(row.size() == n_columns());
+
+  for(int i=0;i<row.size();i++)
+    data_[i].push_back(row[i]);
+}
+
+void stats_table::load_file(istream& file,int skip,int max)
+{
+  // Read in heaers from file
+  names_ = read_header(file);
+
+  data_.resize(names_.size());
+
+  // Read in data
+  int line_number=0;
+  string line;
+  while(getline(file,line)) 
+  {
+    line_number++;
+
+    if (line_number <= skip) continue;
+
+    vector<double> v = split<double>(line,'\t');
+
+    if (v.size() != n_columns())
+      throw myexception()<<"Found "<<v.size()<<"/"<<n_columns()<<" values on line "<<line_number<<".";
+    
+    add_row(v);
+
+    if (max != -1 and n_rows() >= max)
+      break;
+  }
+
+
+}
+
+stats_table::stats_table(istream& file,int skip,int max)
+{
+  load_file(file,skip,max);
+}
