@@ -662,12 +662,13 @@ $size_arg = "--size=$max_iter" if defined($max_iter);
 my $skip="";
 $skip="--skip=$burnin" if ($trees_file ne "Results/T1.trees");
 
+my $subsample_string = "--sub-sample=$subsample";
+$subsample_string = "" if ($subsample == 1);
+
 print "Summarizing topology distribution ... ";
 if (! more_recent_than("Results/consensus",$trees_file)) {
     my $sub_string = "--sub-partitions";
     $sub_string = "" if (!$sub_partitions);
-    my $subsample_string = "--sub-sample=$subsample";
-    $subsample_string = "" if ($subsample == 1);
     `trees-consensus $trees_file $max_arg $min_support_arg $skip $sub_string $consensus_arg $subsample_string > Results/consensus`;
 }
 print "done.\n";
@@ -704,7 +705,7 @@ for my $cvalue (@tree_consensus_values)
     
     print "$tree ";
     if (! more_recent_than("Results/$tree.ltree",$trees_file)) {
-    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg $skip < $trees_file > Results/$tree.ltree`;
+    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg $skip $subsample_string < $trees_file > Results/$tree.ltree`;
     }
     if (! more_recent_than("Results/$tree.tree","Results/$tree.ltree")) {
     `head -n1 Results/$tree.ltree > Results/$tree.tree`;
@@ -722,7 +723,7 @@ if (! more_recent_than("Results/MAP.topology","Results/consensus")) {
 }
 print " Calculating branch lengths for MAP tree... ";
 if (! more_recent_than("Results/MAP.ltree",$trees_file)) {
-    `tree-mean-lengths Results/MAP.topology --safe $max_arg $skip < $trees_file > Results/MAP.ltree`;
+    `tree-mean-lengths Results/MAP.topology --safe $max_arg $skip $subsample_string < $trees_file > Results/MAP.ltree`;
 }
 if (! more_recent_than("Results/MAP.tree","Results/MAP.ltree")) {
     `head -n1 Results/MAP.ltree > Results/MAP.tree`;
@@ -970,7 +971,7 @@ if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
 }
 
 if (!more_recent_than("Results/partitions.bs",$trees_file)) {
-    `trees-bootstrap $max_arg $trees_file $skip --pred Results/partitions.pred > Results/partitions.bs`;
+    `trees-bootstrap $max_arg $trees_file $skip $subsample_string --pred Results/partitions.pred > Results/partitions.bs`;
 }
 print "done.\n";
 
