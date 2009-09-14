@@ -201,7 +201,7 @@ trees_consensus_SOURCES = tools/trees-consensus.C tree.C sequencetree.C tools/tr
 
 #---------------------------------------------------------------
 
-trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tree-dist.C util.C rng.C tools/statistics.C tools/bootstrap.C tree-util.C  tools/partition.C
+trees_bootstrap_SOURCES = tools/trees-bootstrap.C tree.C sequencetree.C tools/tree-dist.C util.C rng.C tools/statistics.C tools/bootstrap.C tree-util.C  tools/partition.C tools/consensus-tree.C
 
 #---------------------------------------------------------------
 

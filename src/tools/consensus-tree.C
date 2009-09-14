@@ -5,6 +5,7 @@
 
 #include "myexception.H"
 #include "statistics.H"
+#include "util.H"
 
 using std::vector;
 using std::string;
@@ -16,6 +17,59 @@ using std::endl;
 using std::cerr;
 
 using boost::dynamic_bitset;
+
+
+void add_partitions_and_counts(const vector<tree_sample>& samples, int index, map<dynamic_bitset<>,p_counts>& counts)
+{
+  const tree_sample& sample = samples[index];
+
+  vector<string> names = sample.names();
+
+  typedef map<dynamic_bitset<>,p_counts> container_t;
+
+  for(int i=0;i<sample.topologies.size();i++) 
+  {
+    const vector<dynamic_bitset<> >& T = sample.topologies[i].partitions;
+
+    unsigned delta = sample.topologies[i].count;
+
+    // for each partition in the next tree
+    dynamic_bitset<> partition(names.size());
+    for(int b=0;b<T.size();b++) 
+    {
+      partition = T[b];
+
+      if (not partition[0])
+	partition.flip();
+
+      // Look up record for this partition
+      container_t::iterator record = counts.find(partition);
+      if (record == counts.end()) {
+	counts.insert(container_t::value_type(partition,p_counts(samples.size())));
+	record = counts.find(partition);
+	assert(record != counts.end());
+      }
+
+      //      cerr<<" dist = "<<index<<" topology = "<<i<<" branch = "<<b<<"    split="<<partition<<endl;
+    
+      // Record this tree as having the partition if we haven't already done so. 
+      p_counts& pc = record->second;
+      //      cerr<<"    "<<join(pc.counts,' ')<<endl;
+      pc.counts[index] += delta;
+      //      cerr<<"    "<<join(pc.counts,' ')<<endl;
+    }
+  }
+}
+
+map<dynamic_bitset<>,p_counts> get_multi_partitions_and_counts(const vector<tree_sample>& samples)
+{
+  map<dynamic_bitset<>,p_counts> partitions;
+
+  for(int i=0;i<samples.size();i++)
+    add_partitions_and_counts(samples, i, partitions);
+
+  return partitions;
+}
 
 struct p_count {
   int count;
