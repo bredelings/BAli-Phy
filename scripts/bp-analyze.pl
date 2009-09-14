@@ -747,7 +747,7 @@ print "done.\n";
 if ($personality ne "treefile") {
     print "\nSummarizing distribution of numerical parameters... ";
     if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport 2: $max_arg $skip < $parameters_file > Results/Report`;
+	`statreport --ignore=iter $max_arg $skip $parameters_file > Results/Report`;
     }
     print "done.\n";
 }

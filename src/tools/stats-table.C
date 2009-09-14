@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "stats-table.H"
 #include "util.H"
 #include "myexception.H"
@@ -86,4 +88,17 @@ void stats_table::load_file(istream& file,int skip,int max)
 stats_table::stats_table(istream& file,int skip,int max)
 {
   load_file(file,skip,max);
+  if (log_verbose) cerr<<"STDIN: Read in "<<n_rows()<<" lines.\n";
+}
+
+stats_table::stats_table(const string& filename,int skip,int max)
+{
+  ifstream file(filename.c_str());
+  if (not file)
+    throw myexception()<<"Can't open file '"<<filename<<"'";
+
+  load_file(file,skip,max);
+  if (log_verbose) cerr<<filename<<": Read in "<<n_rows()<<" lines.\n";
+
+  file.close();
 }

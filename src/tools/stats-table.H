@@ -35,6 +35,9 @@ public:
 
   /// Load the table from a file
   stats_table(std::istream&,int,int);
+
+  /// Load the table from a file by name
+  stats_table(const std::string&,int,int);
 };
 
 std::vector<std::string> parse_header(const std::string&);

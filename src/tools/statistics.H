@@ -78,10 +78,13 @@ namespace statistics {
 
   double log_odds(const std::valarray<bool>& v);
 
+  double median(const std::vector<double>& values);
   double median(const std::valarray<double>& values);
   double quantile(const std::valarray<double>& values, double Q);
+  double quantile(std::vector<double> values, double Q);
 
   std::pair<double,double> confidence_interval(const std::valarray<double>& values, double P);
+  std::pair<double,double> confidence_interval(std::vector<double> values, double P);
 
   std::valarray<bool> add_pseudocount(const std::valarray<bool>& sample1,int pseudocount);
 
@@ -89,10 +92,13 @@ namespace statistics {
   std::vector<int> regeneration_times(const std::valarray<bool>& v);
 
   std::vector<double> autocovariance(const std::valarray<double>& x,unsigned max=0);
+  std::vector<double> autocovariance(const std::vector<double>& x,unsigned max=0);
 
   std::vector<double> autocorrelation(const std::valarray<double>& x,unsigned max=0);
+  std::vector<double> autocorrelation(const std::vector<double>& x,unsigned max=0);
 
   double autocorrelation_time(const std::valarray<double>& x, unsigned max=0);
+  double autocorrelation_time(const std::vector<double>& x, unsigned max=0);
 
   double probability_x_less_than_y(const std::valarray<double>& x, const std::valarray<double>& y);
 }
