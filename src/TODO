@@ -11,10 +11,12 @@ P8. Allow a Gamma branch prior [DONE]
 P10. C20 CAT model
 P11. Make post-processing handle multiple chains, assess convergence.
 P12. Speed up likelihood calculations when there are lots of gaps?
-P13. Handle reading NEXUS tree files.
+[done] P13. Handle reading NEXUS tree files.
 P14. Instead of setting things equal to one in substitution.C, 
      make a generic 1's matrix, and set things equal to that matrix.
 P15. Make matcaches (a) [b][m] instead of [m][b] and (b) be able to invalidate indivual branches.     
+P16. Generate better mixing diagnostics
+P17. Speed up trees-distances so that we can compare more distributions, or distributions with more trees.
 
 P1. Implement the multi-branch SPR search
  * Figure out how to handle the branch-naming: we can't properly handle SPR to leaf branches.
@@ -55,12 +57,23 @@ P5. [Post-processing:]
     - Stop requiring the binary tree to exactly extend query tree.
       + (Because this requirement is too stringent, for large trees.)
     - But, then how can we estimate node lengths?
+    - Start caching mean branch lengths in topology-sample again.
+      + How much cost would there be to caching partition-counts in the first pass through the file?
 
   + When printing SRQ plots, indicate the LOD range (or its abs?).
+  + Make trees-bootstrap less RAM-intensive: don't cache so many things.
 
 P11. [Summarize multiple chains]
   + Modify statreport to take multiple (identical) files for estimation of
     means, ACT, etc.
+
+P17. [Speed up trees-distances]
+ + We should be able to ignore splits for leaf branches.
+ + Does "topology-record" succeed in ignoring these splits?  Can we try that?
+ + What if we wanted topology_record to record average branch lengths?  Can we do that?
+ + We could sort the branches of the tree by bit-order, to make it easy to find which ones match.
+   - This should substantially reduce the N^2 cost.
+
 
 Why does INV+Modulated+gamma[4]+INV crash?
     - Because you can't add models with different alphabet sizes ATM.
@@ -71,6 +84,30 @@ P8. [Branch priors]
 3. What IS the second-largest eigenvalue... what does it mean?
 4. leaf branches / internal branches
 5. general prior against changes being shared?
+
+P16. [Improving Mixing Diagnostics / Improve Distribution-Comparison Diagnostics]
+1. AWTY is right: some of these diagnostics are going to be plots.
+
+2. Generalize statreport to
+ (a) Take multiple input files.
+ (b) Write out Global estimates
+ (c) Write out Mixing diagnostics
+
+3. Generalize trees-bootstrap to
+ (a) Write out Global estimates
+ (b) Write out Mixing diagnostics
+ (c) Compare the different distribution groups.
+
+4. What plots should be generated?
+ (a) [AWTY] Cumulative & Sliding Window pictures of the most variable plots.
+ (b) [AWTY] Pairwise comparise comparison of split frequencies between two runs.
+ (c) [other] Give an ordered list of splits, with a 95% confidence interval for the estimates.
+ (d) 'Var' analysis? -- Compare within / between variance for multiple chains.
+
+5. Diagnostics
+ (a) For discrete ranges: average fraction of total confidence interval in individual 80% ranges/0.8
+     * This should not allow large changes in the statistic for infinitessimal changes in the distribution.
+ (b) 
 
 MPI
 1. Output
