@@ -77,8 +77,9 @@ struct var_stats
   double Ne;
   double RCI;
   double RNe;
-  var_stats(double a, double b, double c)
-    :Ne(a), RCI(b), RNe(c)
+  double RCF;
+  var_stats(double a, double b, double c, double d)
+    :Ne(a), RCI(b), RNe(c), RCF(d)
   {}
 };
 
@@ -89,6 +90,8 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
   using namespace statistics;
 
+  double compare_level=0.8;
+
   bool show_individual = (args.count("individual")>0) and (tables.size() >1);
 
   vector<double> total;
@@ -97,7 +100,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
   if (constant(total)) {
     cout<<"   "<<name<<" = "<<total[0]<<endl;
-    return var_stats(total.size(),1,1);
+    return var_stats(total.size(),1,1,1);
   }
 
   // Print out mean and standard deviation
@@ -113,7 +116,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
     const vector<double>& values = total;
     if (show_individual)
-      cout<<" E "<<name<<"    = "<<average(values);
+      cout<<" E "<<name<<"     = "<<average(values);
     else
       cout<<" E "<<name<<" = "<<average(values);
     cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
@@ -123,6 +126,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   // Print out median and confidence interval
   double sum_CI=0;
   double total_CI=0;
+  double sum_fraction_contained=0;
   if (args.count("median") or not args.count("mean")) {
     double P = args["confidence"].as<double>();
 
@@ -132,7 +136,11 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
     
 	if (tables.size() > 1)
 	{
-	  pair<double,double> interval_80 = confidence_interval(values,0.8);
+	  pair<double,double> interval_80 = confidence_interval(values,compare_level);
+	  double x = fraction_in_interval(values,interval_80.first,interval_80.second)/
+	    fraction_in_interval(tables.back().column(index),interval_80.first,interval_80.second);
+
+	  sum_fraction_contained += x;
 	  sum_CI += std::abs(interval_80.second - interval_80.first);
 	}
 	pair<double,double> interval = confidence_interval(values,P);
@@ -149,9 +157,10 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
     
     if (tables.size() > 1)
     {
-      pair<double,double> interval_80 = confidence_interval(values,0.8);
-      total_CI = std::abs(interval_80.second - interval_80.first);
+      pair<double,double> interval_compare = confidence_interval(values,compare_level);
+      total_CI = std::abs(interval_compare.second - interval_compare.first);
       sum_CI /= tables.size();
+      sum_fraction_contained /= tables.size();
     }
     pair<double,double> interval = confidence_interval(values,P);
     if (show_individual)
@@ -190,14 +199,17 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   cout<<"   Ne = "<<Ne<<endl;
   double RNe = 1;
   double RCI = 1;
+  double RCF = 1;
   if (tables.size() > 1) {
     RNe = tau/sum_tau*tables.size();
     cout<<"   RNe = "<<RNe<<endl;
     RCI = total_CI/sum_CI;
     cout<<"   RCI = "<<RCI<<endl;
+    RCF = sum_fraction_contained; //compare_level;
+    cout<<"   RCF = "<<RCF<<endl;
   }
   cout<<endl;
-  return var_stats(Ne,RCI,RNe);
+  return var_stats(Ne,RCI,RNe,RCF);
 }
 
 vector<bool> 
@@ -314,6 +326,7 @@ int main(int argc,char* argv[])
     index_value<double> worst_Ne;
     index_value<double> worst_RCI;
     index_value<double> worst_RNe;
+    index_value<double> worst_RCF;
 
     for(int i=0;i<n_columns;i++) 
     {
@@ -324,6 +337,7 @@ int main(int argc,char* argv[])
 	worst_Ne.check_min(i,S.Ne);
 	worst_RCI.check_max(i,S.RCI);
 	worst_RNe.check_max(i,S.RNe);
+	worst_RCF.check_max(i,S.RCF);
       }
     }
 
@@ -331,6 +345,7 @@ int main(int argc,char* argv[])
     if (tables.size() > 1) {
       cout<<" RCI <= "<<worst_RCI.value<<"    ("<<field_names[worst_RCI.index]<<")"<<endl;
       cout<<" RNe <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
+      cout<<" RCF <= "<<worst_RCF.value<<"    ("<<field_names[worst_RCF.index]<<")"<<endl;
     }
   }
   catch (std::exception& e) {

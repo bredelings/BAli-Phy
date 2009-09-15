@@ -84,6 +84,19 @@ namespace statistics {
     return quantile(values2,Q);
   }
 
+  double fraction_in_interval(vector<double> values, double L, double R)
+  {
+    assert(L <= R);
+    assert(values.size() > 0);
+
+    int count=0;
+    for(int i=0;i<values.size();i++)
+      if (L <= values[i] and values[i] <= R)
+	count++;
+
+    return double(count)/values.size();
+  }
+
   double median(const valarray<double>& values)
   {
     return quantile(values,0.5);

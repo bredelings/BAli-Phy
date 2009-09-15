@@ -82,6 +82,7 @@ namespace statistics {
   double median(const std::valarray<double>& values);
   double quantile(const std::valarray<double>& values, double Q);
   double quantile(std::vector<double> values, double Q);
+  double fraction_in_interval(std::vector<double> values,double L, double R);
 
   std::pair<double,double> confidence_interval(const std::valarray<double>& values, double P);
   std::pair<double,double> confidence_interval(std::vector<double> values, double P);
