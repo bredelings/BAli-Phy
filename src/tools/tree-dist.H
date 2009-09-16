@@ -165,6 +165,8 @@ class tree_sample
 
   std::vector<std::string> leaf_names;
 
+  void load_file(std::istream&,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
+
 public:
 
   /// The information we store about each topology

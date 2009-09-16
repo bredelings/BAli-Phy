@@ -604,7 +604,9 @@ void tree_sample::add_tree(RootedTree& T)
 // Because we have to prune everything anyway, let's make the standard intermediate format
 // .. be a (unrooted) Tree -- the names should be determined and given beforehand.
 
-tree_sample::tree_sample(istream& file,int skip,int max,int subsample,const vector<string>& prune)
+
+
+void tree_sample::load_file(istream& file,int skip,int max,int subsample,const vector<string>& prune)
 {
   using namespace trees_format;
 
@@ -645,8 +647,20 @@ tree_sample::tree_sample(istream& file,int skip,int max,int subsample,const vect
   sort(order.begin(),order.end(),ordering(topologies));
 }
 
+tree_sample::tree_sample(istream& file,int skip,int max,int subsample,const vector<string>& prune)
+{
+  load_file(file,skip,max,subsample,prune);
+}
 
-
+tree_sample::tree_sample(const string& filename,int skip,int max,int subsample,const vector<string>& prune)
+{
+  ifstream file(filename.c_str());
+  if (not file)
+    throw myexception()<<"Couldn't open file "<<filename;
+  
+  load_file(file,skip,max,subsample,prune);
+  file.close();
+}
 
 void scan_trees(istream& file,int skip,int subsample,int max,
 		accumulator<SequenceTree>& op)
