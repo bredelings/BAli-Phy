@@ -449,6 +449,32 @@ struct vector_accumulator: accumulator<T>,
   void operator()(const T& t){push_back(t);}
 };
 
+template <typename T>
+struct index_value
+{
+  int index;
+  T value;
+  T check_min(int index2, T value2) 
+  {
+    if (index == -1 or (value2 < value)) {
+      index = index2;
+      value = value2;
+    }
+    return value;
+  }
+  T check_max(int index2, T value2) 
+  {
+    if (index == -1 or (value2 > value)) {
+      index = index2;
+      value = value2;
+    }
+    return value;
+  }
+  index_value():index(-1) {}
+  index_value(const T& t):index(-1),value(t) {}
+};
+  
+
 void scan_lines(std::istream& file,int skip,int subsample, int max, 
 		accumulator<std::string>& op);
 
