@@ -1021,6 +1021,13 @@ Tree& Tree::operator=(const Tree& T)
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit
 
+bool is_digit(char c) {
+  if ('0' <= c and c <= '9')
+    return true;
+  else
+    return false;
+}
+
 // FIXME - don't we need to destroy the current tree?
 int Tree::parse_no_names(const string& line)
 {
@@ -1066,7 +1073,11 @@ int Tree::parse_no_names(const string& line)
     }
     else if (prev == "(" or prev == "," or prev == "") 
     {
+      if (not is_digit(word[0]))
+	throw myexception()<<"Leaf name '"<<word<<"' is not an integer!\n";
       int leaf_index = convertTo<int>(word)-1;
+      if (leaf_index < 0)
+	throw myexception()<<"Leaf index '"<<word<<"' is negative: now allowed!";
 
       BranchNode* BN = new BranchNode(-1,leaf_index,-1);
       BN->out = BN->next = BN->prev = BN;
@@ -1141,7 +1152,19 @@ int Tree::parse_with_names(const string& line,const vector<string>& names)
     }
     else if (prev == "(" or prev == "," or prev == "") 
     {
-      int leaf_index = find_index(names,word);
+      int leaf_index = -1;
+      if (is_digit(word[0])) {
+	leaf_index = convertTo<int>(word)-1;
+	if (leaf_index < 0)
+	  throw myexception()<<"Leaf index '"<<word<<"' is negative: now allowed!";
+	if (leaf_index >= names.size())
+	  throw myexception()<<"Leaf index '"<<word<<"' is too high: the taxon set contains only "<<names.size()<<" taxa.";
+      }
+      else {
+	leaf_index = find_index(names,word);
+	if (leaf_index == -1)
+	  throw myexception()<<"Leaf name '"<<word<<"' is not in the specified taxon set!";
+      }
 
       BranchNode* BN = new BranchNode(-1,leaf_index,-1);
       BN->out = BN->next = BN->prev = BN;
