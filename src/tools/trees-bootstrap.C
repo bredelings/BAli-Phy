@@ -1,6 +1,13 @@
 // FIXME -  Try to put the variance and stuff on one line:
 //   0.656 (56/100)   +- 0.007 -> 0.070
 
+// FIXME - lining up columns by adding spaces produces inability to use pickout -> write out table directly?
+// FIXME - Construct RCI for branch lengths, condition on branch existing?
+// FIXME - 2*9000 trees takes 354 Mb for 68 tips, ~200 partitions: too much RAM to do 100,000 trees!
+// FIXME - could we get some compression by storing identical partitions once?
+// FIXME - var_stats::calculate( ) takes too long for all-1's partitions?
+// FIXME - speed, in general.
+
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -41,6 +48,78 @@ using namespace statistics;
 // What if everything in 'split' is true?
 // What if everything in 'split' is true, but 1 taxa?
 //  These are true by definition...
+
+class tree_sample_collection
+{
+  vector<tree_sample> tree_dists;
+  vector<int> n_samples_;
+  vector< vector<int> > index_;
+
+  vector<string> leaf_names_;
+public:
+
+  const vector<string>& leaf_names() const { return leaf_names_;}
+
+  int index(int d,int i) const {return index_[d][i];}
+
+  int n_dists() const {return index_.size();}
+
+  int n_samples(int d) const {return n_samples_[d];}
+
+  int n_samples() const {return tree_dists.size();}
+
+  const tree_sample& sample(int d,int i) const {return tree_dists[index(d,i)];}
+        tree_sample& sample(int d,int i)       {return tree_dists[index(d,i)];}
+
+  const tree_sample& sample(int i) const {return tree_dists[i];}
+        tree_sample& sample(int i)       {return tree_dists[i];}
+
+  const vector<tree_sample>& all_samples() const {return tree_dists;}
+
+  int add_sample(int d, const tree_sample& s) 
+  {
+    int i = tree_dists.size();
+    index_[d].push_back(i);
+    tree_dists.push_back(s);
+
+    n_samples_[d]++;
+
+    if (not leaf_names_.size())
+      leaf_names_ = tree_dists.back().names();
+    else if (tree_dists.back().names() != leaf_names_)
+      throw myexception()<<"Trees have different taxa than previous files.";
+
+    return i;
+  }
+
+  int add_sample_new_distribution(const tree_sample& s)
+  {
+    int d = n_samples_.size();
+    index_.push_back(vector<int>());
+    n_samples_.push_back(0);
+    add_sample(d,s);
+    return d;
+  }
+
+  tree_sample_collection() {}
+
+  tree_sample_collection(const vector<vector<string> >& filenames,int skip, int max, int subsample)
+  {
+    for(int i=0;i<filenames.size();i++) 
+    {
+      if (filenames[i].size() < 1)
+	throw myexception()<<"Group "<<i+1<<" doesn't contain any files!";
+
+      cout<<"# Loading trees from '"<<filenames[i][0]<<"'...\n";
+      int d = add_sample_new_distribution(tree_sample(filenames[i][0],skip,max,subsample));
+      for(int j=1;j<filenames[i].size();j++) {
+	cout<<"# Loading trees from '"<<filenames[i][j]<<"'...\n";
+	add_sample(d,tree_sample(filenames[i][j],skip,max,subsample));
+      }
+    }
+  }
+};
+
 
 bool operator==(const vector<Partition>& p1,const vector<Partition>& p2)
 {
@@ -129,150 +208,194 @@ double separated_by(const valarray<double>& d1,const valarray<double>d2,double d
 //   .... but how do you merge them?
 // - 
 
+// Things we calculate or cache per partition
+struct var_stats
+{
+  int N;
+  int n;
+  double P;
+  double O;
+  valarray<bool> results;
+  valarray<double> distributions;
+  valarray<double> LOD_distributions;
+
+  pair<double,double> CI;
+  pair<double,double> log_CI;
+
+  unsigned nchanges;
+  unsigned nchanges_ave;
+
+  double Var_perfect;
+  double Var_bootstrap;
+  double stddev_bootstrap;
+  double Ne;
+  double tau;
+
+  void calculate(double, double);
+};
 
 
+void var_stats::calculate(double pseudocount, double confidence) 
+{
+  using namespace statistics;
+
+  N = results.size();
+  n = statistics::count(results);
+  P = fraction(n, N, pseudocount);
+  O = odds(n, N, pseudocount);
+
+  //---------- Confidence Interval -------------//
+  CI = statistics::confidence_interval(distributions, confidence);
+  log_CI.first = log10(odds(CI.first));
+  log_CI.second = log10(odds(CI.second));
+
+  
+  //--------- LOD distributions ---------------//
+  LOD_distributions.resize(distributions.size());
+  for(int j=0;j<LOD_distributions.size();j++)
+    LOD_distributions[j] = log10(odds(distributions[j]));
+
+  //------- Numbers of Constant blocks ---------//
+  nchanges = changes(results,true) + changes(results,false);
+
+  nchanges_ave = (nchanges + 1)/2;
+
+  //----------------- Variances ---------------//
+  Var_perfect = P*(1.0-P)/N;
+
+  Var_bootstrap = statistics::Var(distributions);
+  
+  stddev_bootstrap = sqrt( Var_bootstrap );
+  
+  Ne = P*(1.0-P)/Var_bootstrap;
+  
+  //---------- Autocorrelation times ----------//
+  valarray<double> scratch(N);
+  for(int j=0;j<scratch.size();j++)
+    if (results[j])
+      scratch[j]=1.0;
+    else
+      scratch[j]=0.0;
+  
+  tau = autocorrelation_time(scratch);
+}
 
 bool report_sample(std::ostream& o,
 		   unsigned blocksize,
-		   const vector<valarray<bool> >& samples, 
-		   const vector<valarray<double> >& distributions,
-		   int pseudocount, double confidence, double dx=-1) {
+		   const tree_sample_collection& tree_dists,
+		   vector< vector< vector< var_stats > > >& VS,
+		   int p,
+		   int pseudocount, double confidence, double dx=-1) 
+{
+
   o.precision(3);
   o.setf(ios::fixed);
 
-  const int n_dists = samples.size();
+  bool any_mixing=false;
 
-  //FIXME - we need to create a merged sample so that we can calculate statistics from that.
+  vector<int> D(tree_dists.n_dists());
+  for(int d=0;d<D.size();d++) {
+    D[d] = tree_dists.n_samples(d);
+    if (D[d] > 1) {
+      D[d]++;
+      any_mixing=true;
+    }
+  }
 
   //---------- Basic statistics -------------//
-  vector<int> N(n_dists);
-  vector<int> n(n_dists);
-  vector<double> P(n_dists);
-  vector<double> O(n_dists);
-  for(int i=0;i<n_dists;i++) {
-    N[i] = samples[i].size();
-    n[i] = statistics::count(samples[i]);
-    P[i] = fraction(n[i],N[i],pseudocount);
-    O[i] = odds(n[i],N[i],pseudocount);
-  }
+  for(int g=0; g<tree_dists.n_dists(); g++) 
+    for(int d=0; d<D[g] ;d++) {
+      VS[g][d][p].calculate(pseudocount, confidence);
+    }
 
-  vector< valarray<double> > values;
-
-  vector< pair<double,double> > CI(n_dists);
-  vector< pair<double,double> > log_CI(n_dists);
-
-  vector< unsigned > nchanges ( n_dists);
-  vector< unsigned > nchanges_ave (n_dists);
-
-  vector<double> Var_perfect(n_dists);
-  vector<double> Var_bootstrap(n_dists);
-  vector<double> stddev_bootstrap(n_dists);
-  vector<double> Ne(n_dists);
-
-  vector<double> tau(n_dists);
-
-  vector<valarray<double> > LOD_distributions = distributions;
-
-  for(int i=0;i<n_dists;i++) 
-  {
-    //---------- Confidence Interval -------------//
-    CI[i] = statistics::confidence_interval(distributions[i],confidence);
-    log_CI[i].first = log10(odds(CI[i].first));
-    log_CI[i].second = log10(odds(CI[i].second));
-
-    //--------- LOD distributions ---------------//
-    for(int j=0;j<LOD_distributions[i].size();j++)
-      LOD_distributions[i][j] = log10(odds(LOD_distributions[i][j]));
-
-    //------- Numbers of Constant blocks ---------//
-    nchanges[i] = changes(samples[i],true) + changes(samples[i],false);
-
-    nchanges_ave[i] = (nchanges[i] + 1)/2;
-
-    //----------------- Variances ---------------//
-    Var_perfect[i] = P[i]*(1.0-P[i])/N[i];
-
-    Var_bootstrap[i] = statistics::Var(distributions[i]);
-
-    stddev_bootstrap[i] = sqrt( Var_bootstrap[i] );
-
-    Ne[i] = P[i]*(1.0-P[i])/Var_bootstrap[i];
-
-    //---------- Autocorrelation times ----------//
-    valarray<double> scratch(N[i]);
-    for(int j=0;j<scratch.size();j++)
-      if (samples[i][j])
-	scratch[j]=1.0;
-      else
-	scratch[j]=0.0;
-
-    tau[i] = autocorrelation_time(scratch);
-  }
-
-  bool different = (dx <= 0) or n_dists==1;
+  bool different = (dx <= 0) or tree_dists.n_dists()==1;
   if (not different) {
-    for(int i=0;i<n_dists;i++)
+
+    for(int i=0;i<tree_dists.n_dists();i++)
       for(int j=0;j<i;j++) {
-	if (separated_by(LOD_distributions[i],LOD_distributions[j],dx) >= confidence)
+	if (separated_by(VS[i][D[i]][p].LOD_distributions,VS[j][D[j]][p].LOD_distributions,dx) >= confidence)
 	  different = true;
       }
   }
   if (not different)
     return false;
 
-  for(int i=0;i<n_dists;i++) {
-
-    //------------- Write things out -------------//
-    o<<"   PP";
-    if (i<n_dists-1)
-      o<<i;
-    else if (n_dists >= 2)
-      o<<" ";
-    o<<" = "<<P[i]<<"  in  ("<<CI[i].first<<","<<CI[i].second<<")        (1="<<n[i]<<"  0="<<N[i]-n[i]<<")  ["<<nchanges_ave[i];
-
-    if (nchanges[i] <= 4) {
-      o<<" !!!";
-    }
-    else if (nchanges[i] <= 20) {
-      o<<" !!";
-    }
-    else if (nchanges[i] <= 50) {
-      o<<" !";
-    }
-    o<<"]";
-    if (nchanges_ave[i] > 6)
-      o<<"     sigma = "<<stddev_bootstrap[i];
-    o<<endl;
-  }    
-  o<<endl;
-    
-  double sum_tau=0;
-  double sum_CI=0;
-  for(int i=0;i<n_dists;i++) 
+  for(int g=0;g<tree_dists.n_dists();g++) 
   {
-    o<<"  LOD";
-    if (i<n_dists-1)
-      o<<i;
-    else if (n_dists >= 2)
-      o<<" ";
-    o<<" = "<<log10(O[i])<<"  in  ("<<log_CI[i].first<<","<<log_CI[i].second<<")";
-    if (nchanges_ave[i] > 6) {
-      //      o<<"    [Var]x = "<<Var_bootstrap[i]/Var_perfect[i]<<"          Ne = "<<Ne[i]<<endl;
-      o<<"       ACT = "<<tau[i]<<"          Ne = "<<N[i]/tau[i];
+    if (g > 0) o<<endl;
+  
+    int n_dists = tree_dists.n_samples(g);
+    for(int d=0;d<D[g];d++)
+    {
+      const var_stats& vs = VS[g][d][p];
+      o<<"   PP"<<g+1;
+      if (d<D[g]-1)
+	o<<"-"<<d+1;
+      else if (any_mixing)
+	o<<"  ";
+      o<<" = "<<vs.P<<"  in  ("<<vs.CI.first<<","<<vs.CI.second<<")        (1="<<vs.n<<"  0="<<vs.N-vs.n<<")  ["<<vs.nchanges_ave;
+
+      if (vs.nchanges <= 4) {
+	o<<" !!!";
+      }
+      else if (vs.nchanges <= 20) {
+	o<<" !!";
+      }
+      else if (vs.nchanges <= 50) {
+	o<<" !";
+      }
+      o<<"]";
+      if (vs.nchanges_ave > 6)
+	o<<"     sigma = "<<vs.stddev_bootstrap;
+      o<<endl;
     }
-    o<<endl;
-    if (i < n_dists-1) {
-      sum_CI += std::abs(CI[i].second - CI[i].first);
-      sum_tau += tau[i];
-    }
-    else if (n_dists > 1) {
-      o<<"  RNe = "<<tau[i]/(sum_tau/(n_dists-1))<<endl;
-      o<<"  RCI = "<<std::abs(CI[i].second - CI[i].first)/(sum_CI/(n_dists-1))<<endl;
+  }
+  o<<endl;
+
+
+  vector<double> sum_tau(tree_dists.n_dists(), 0);
+  vector<double> sum_CI(tree_dists.n_dists(), 0);
+
+  for(int g=0;g<tree_dists.n_dists();g++) 
+  {
+    if (g > 0) o<<endl;
+    
+    int n_dists = tree_dists.n_samples(g);
+    for(int d=0;d<D[g];d++)
+    {
+      const var_stats& vs = VS[g][d][p];
+      o<<"  LOD"<<g+1;
+      if (d < D[g]-1)
+	o<<"-"<<d+1;
+      else if (any_mixing)
+	o<<"  ";
+      o<<" = "<<log10(vs.O)<<"  in  ("<<vs.log_CI.first<<","<<vs.log_CI.second<<")";
+      if (vs.nchanges_ave > 6) {
+      //      o<<"    [Var]x = "<<vs.Var_bootstrap/vs.Var_perfect<<"          Ne = "<<vs.Ne<<endl;
+	o<<"       ACT = "<<vs.tau<<"          Ne = "<<vs.N/vs.tau;
+      }
+      o<<endl;
+      if (d < D[g]-1) {
+	sum_CI[g] += std::abs(vs.CI.second - vs.CI.first);
+	sum_tau[g] += vs.tau;
+      }
     }
   }
 
-  return true;
+  if (any_mixing) o<<endl;
+
+  for(int g=0;g<tree_dists.n_dists();g++) 
+  {
+    int n_dists = tree_dists.n_samples(g);
+    if (n_dists > 1) {
+      const var_stats& vs = VS[g][n_dists][p];
+      o<<"  RNe"<<g+1<<" = "<<vs.tau/(sum_tau[g]/n_dists)<<endl;
+      o<<"  RCI"<<g+1<<" = "<<std::abs(vs.CI.second - vs.CI.first)/(sum_CI[g]/n_dists)<<endl;
+    }
+  }
+  return true; 
 }
+
 
 unsigned count(const vector<int>& indices, const valarray<bool>& results,unsigned pseudocount) {
   unsigned total = 0;
@@ -356,26 +479,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-tree_sample load_tree_file(const variables_map& args, const string& filename)
-{
-  int skip = args["skip"].as<unsigned>();
-
-  int max = -1;
-  if (args.count("max"))
-    max = args["max"].as<unsigned>();
-
-  int subsample=1;
-  if (args.count("sub-sample"))
-    subsample = args["sub-sample"].as<unsigned>();
-
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Couldn't open file "<<filename;
-  
-  cout<<"# Loading trees from '"<<filename<<"'...\n";
-  return tree_sample(file,skip,max,subsample);
-}
-
 /*
  * How can we compute the ASDSF values?  How can we compute over convergence values?
  * 1. Compute the splits with support <asdsf-min> or higher
@@ -396,17 +499,18 @@ tree_sample load_tree_file(const variables_map& args, const string& filename)
 // .. and what is the scenario underlying confidence intervals, anyway?
 
 /// Compute the average standard deviation of split frequencies
-pair<double,double> am_sdsf(const vector<tree_sample>& tree_dists, const map<dynamic_bitset<>, p_counts>& counts, double min_f)
+pair<double,double> 
+am_sdsf(const tree_sample_collection& tree_dists, int d, const map<dynamic_bitset<>, p_counts>& counts, double min_f)
 {
   double msdsf = 0;
   // tree_dists is only used to get the number of distributions, and the number of samples for each one.
-  if (tree_dists.size() < 2)
+  if (tree_dists.n_samples(d) < 2)
     throw myexception()<<"You can't calculate the ASDSF for less than two runs!";
 
   // Get minimum counts
-  vector<int> min(tree_dists.size());
-  for(int i=0;i<tree_dists.size();i++)
-    min[i] = (int)(min_f*tree_dists[i].size());
+  vector<int> min(tree_dists.n_samples(d));
+  for(int i=0;i<tree_dists.n_samples(d);i++)
+    min[i] = (int)(min_f*tree_dists.sample(d,i).size());
 
   // How many partitions did we count?
   int n_partitions = 0;
@@ -414,30 +518,33 @@ pair<double,double> am_sdsf(const vector<tree_sample>& tree_dists, const map<dyn
   // What is the running sum of the Standard Deviation of Split Frequencies?
   double asdsf = 0;
 
+  int N = tree_dists.n_samples(d);
+  
   // For each sampled partition
   foreach(record,counts) 
   {
     // Skip records that have a frequency that is too low
     bool skip=true;
     const vector<int>& x = record->second.counts;
-    for(int i=0;i<x.size();i++)
-      if (x[i] > min[i]) {
+    for(int i=0;i<N;i++) {
+      if (x[tree_dists.index(d,i)] > min[i]) {
 	skip = false;
 	break;
       }
+    }
     
     // Compute the empirical moments
     double sum=0;
     double sumsq=0;
-    for(int i=0;i<x.size();i++)
+    for(int i=0;i<N;i++)
     {
-      double q = double(x[i])/tree_dists[i].size();
+      double q = double(x[tree_dists.index(d,i)])/tree_dists.sample(d,i).size();
       sum += q;
       sumsq += q*q;
     }
 
     // Compute an estimate of the average: the variance
-    double f = (sumsq - sum*sum/x.size()) / (x.size()-1);
+    double f = (sumsq - sum*sum/N) / (N-1);
 
     // Take a sqrt to compute the standard deviation
     if (f < 0.0)
@@ -450,6 +557,7 @@ pair<double,double> am_sdsf(const vector<tree_sample>& tree_dists, const map<dyn
       asdsf += f;
       // Increment the number of partitions that were considered.
       n_partitions++;
+
     }
 
     msdsf = std::max(msdsf,f);
@@ -460,7 +568,6 @@ pair<double,double> am_sdsf(const vector<tree_sample>& tree_dists, const map<dyn
 
   return pair<double,double>(asdsf,msdsf);
 }
-
 
 int main(int argc,char* argv[]) 
 { 
@@ -488,31 +595,39 @@ int main(int argc,char* argv[])
     double confidence = args["confidence"].as<double>();
 
     double min_support = args["min-support"].as<double>();
+
+    int skip = args["skip"].as<unsigned>();
+
+    int max = -1;
+    if (args.count("max"))
+      max = args["max"].as<unsigned>();
+    
+    int subsample=1;
+    if (args.count("sub-sample"))
+      subsample = args["sub-sample"].as<unsigned>();
+
     //-------------- Read in tree distributions --------------//
     if (not args.count("files"))
       throw myexception()<<"Tree files not specified!";
 
     vector<string> files = args["files"].as< vector<string> >();
-    vector<tree_sample> tree_dists;
-
-    vector<string> leaf_names;
+    vector< vector<string> > filenames(files.size());
     for(int i=0;i<files.size();i++) 
-    {
-      tree_dists.push_back(load_tree_file(args,files[i]));
+      filenames[i] = split(files[i],',');
 
-      if (i==0)
-	leaf_names = tree_dists.back().names();
-      else if (tree_dists.back().names() != leaf_names)
-	throw myexception()<<"Trees loaded from file '"<<files[i]<<"' have different taxon than previous files.";
+    tree_sample_collection tree_dists(filenames,skip,max,subsample);
+
+    vector<int> D(tree_dists.n_dists());
+    for(int d=0;d<D.size();d++) {
+      D[d] = tree_dists.n_samples(d);
+      if (D[d] > 1)
+	D[d]++;
     }
-    
-    int D = tree_dists.size();
-    if (D>1) D++;
 
     //----------  Determine block size ----------//
-    unsigned blocksize = tree_dists[0].size()/50+1;
-    for(int i=1;i<tree_dists.size();i++)
-      blocksize = std::min(blocksize,tree_dists[i].size()/50+1);
+    unsigned blocksize = tree_dists.sample(0).size()/50+1;
+    for(int i=1;i<tree_dists.n_samples();i++)
+      blocksize = std::min(blocksize,tree_dists.sample(i).size()/50+1);
 
     if (args.count("blocksize"))
       blocksize = args["blocksize"].as<unsigned>();
@@ -520,7 +635,7 @@ int main(int argc,char* argv[])
     cout<<"# [ seed = "<<seed<<"    pseudocount = "<<pseudocount<<"    blocksize = "<<blocksize<<" ]"<<endl<<endl;
 
     //-------- Scan the full partitions ----------//
-    map< dynamic_bitset<>, p_counts> counts = get_multi_partitions_and_counts(tree_dists);
+    map< dynamic_bitset<>, p_counts> counts = get_multi_partitions_and_counts(tree_dists.all_samples());
 
 
     //----------- Load Partitions ---------------//
@@ -531,9 +646,9 @@ int main(int argc,char* argv[])
     }
     else {
       // Get minimum counts
-      vector<int> min(tree_dists.size());
-      for(int i=0;i<tree_dists.size();i++)
-	min[i] = (int)(min_support*tree_dists[i].size());
+      vector<int> min(tree_dists.n_samples());
+      for(int i=0;i<tree_dists.n_samples();i++)
+	min[i] = (int)(min_support*tree_dists.sample(i).size());
 
       vector<dynamic_bitset<> > splits;
       vector<unsigned> counts2;
@@ -564,63 +679,77 @@ int main(int argc,char* argv[])
       std::sort(order.begin(),order.end(),sequence_order<unsigned>(counts2));
       std::reverse(order.begin(),order.end());
       for(int i=0;i<order.size();i++)
-	partitions.push_back(vector<Partition>(1,Partition(leaf_names,splits[order[i]])));
+	partitions.push_back(vector<Partition>(1,Partition(tree_dists.leaf_names(),splits[order[i]])));
       if (log_verbose) cerr<<n_splits<<" total splits        "<<order.size()<<" splits with PP > "<<min_support<<endl;
     }
 
 
 
-    // FIXME - there is a faster way to bookstrap resample
+    // FIXME - there is a faster way to bootstrap resample
     // -- Compute the cumulative sums, and then when we choose a block we know
     //     the sum over the block already.  (sum[i+W]-sum[i]).
 
     //------- evaluate/cache predicate for each topology -------//
-    vector< vector<valarray<bool> > > results(partitions.size());
+    vector< vector< vector< var_stats > > > VS (tree_dists.n_dists() );
 
-    for(int p=0;p<partitions.size();p++) 
+    for(int g=0;g<tree_dists.n_dists();g++) 
     {
-      results[p].resize(D);
+      VS[g].resize(D[g]);
 
       int total_size=0;
-      for(int d=0;d<tree_dists.size();d++) {
 
-	unsigned size = tree_dists[d].size();
+      // Analyze the group members
+      for(int d=0;d<tree_dists.n_samples(g);d++)
+      {
+	VS[g][d].resize(partitions.size());
 
+	int size = tree_dists.sample(g,d).size();
 	total_size += size;
 
-	results[p][d].resize(size);
-
-	results[p][d] = tree_dists[d].support(partitions[p]);
+	for(int p=0; p<partitions.size(); p++) 
+	{
+	  VS[g][d][p].results.resize( size );
+	  VS[g][d][p].results = tree_dists.sample(g,d).support(partitions[p]);
+	}
       }
 
-      if (D > 1) {
+      // Analyze the group total
+      if (D[g] > 1) 
+      {
+	int T = tree_dists.n_samples(g);
+	VS[g][T].resize(partitions.size());
 	// concatenate the individual runs to yield the total
-	results[p][tree_dists.size()].resize(total_size);
-	for(int d=0,i=0;d<tree_dists.size();d++) 
-	  for(int j=0;j<results[p][d].size();j++)
-	    results[p][tree_dists.size()][i++] = results[p][d][j];
+	for(int p=0; p<partitions.size(); p++) 
+	{
+	  VS[g][T][p].results.resize(total_size);
+
+	  for(int d=0,i=0;d<tree_dists.n_samples(g);d++) 
+	    for(int j=0;j<VS[g][d][p].results.size();j++)
+	      VS[g][T][p].results[i++] = VS[g][d][p].results[j];
+	}
       }
     }
 
     //----------  Compute bootstrap samples of fraction ----------//
-    vector< vector< valarray<double> > > distributions(partitions.size(),
-						       vector<valarray<double> >(D));
+
+    // generate a bootstrap sample for each g,d,s : but all the p share the same bootstrap sample.
 
     const unsigned n_samples = args["samples"].as<unsigned>();
-    vector<int> resample;
       
-    for(int d=0;d<D;d++) {
- 
-      for(int p=0; p<partitions.size(); p++)
-	distributions[p][d].resize(n_samples);
-	
-      for(int s=0; s<n_samples; s++) {
-	resample = bootstrap_sample_indices(results[0][d].size() + 2*pseudocount, blocksize);
-	
+    for(int g=0;g<tree_dists.n_dists();g++)
+      for(int d=0;d<D[g];d++) 
+      {
 	for(int p=0; p<partitions.size(); p++)
-	  distributions[p][d][s] = fraction(resample,results[p][d],pseudocount);
+	  VS[g][d][p].distributions.resize(n_samples);
+
+	for(int s=0; s<n_samples; s++) {
+	  vector<int> resample = bootstrap_sample_indices(VS[g][d][0].results.size() + 2*pseudocount, blocksize);
+
+	  for(int p=0; p<partitions.size(); p++) {
+	    VS[g][d][p].distributions[s] = fraction(resample, VS[g][d][p].results, pseudocount);
+	  }
+	}
       }
-    }
 
 
     //------- Print out support for each partition --------//
@@ -629,7 +758,7 @@ int main(int argc,char* argv[])
     {
       std::ostringstream report;
 
-      bool show = report_sample(report, blocksize, results[p], distributions[p], pseudocount, confidence, compare_dx);
+      bool show = report_sample(report, blocksize, tree_dists, VS, p, pseudocount, confidence, compare_dx);
 
       /*
       /// Check if our counts match the ones calculated the hard way.
@@ -657,6 +786,7 @@ int main(int argc,char* argv[])
       //-------- Determine and print the partition -----------//
       if (not show) continue;
 
+      cout<<p+1<<"/"<<partitions.size()<<":"<<endl;
       for(int i=0;i<partitions[p].size();i++)
 	cout<<partitions[p][i]<<endl;
 
@@ -665,9 +795,18 @@ int main(int argc,char* argv[])
       cout<<endl<<endl;
     }
 
-    if (tree_dists.size() >= 2) {
-      pair<double,double> p = am_sdsf(tree_dists, counts, min_support);
-      cout<<"ASDSF[min="<<min_support<<"] = "<<p.first<<"     MSDSF = "<<p.second<<endl;
+    for(int d=0;d<tree_dists.n_dists();d++) {
+      if (tree_dists.n_samples(d) >= 2) {
+	pair<double,double> p = am_sdsf(tree_dists, d, counts, min_support);
+	cout<<"ASDSF[min="<<min_support<<"] = "<<p.first<<"     MSDSF = "<<p.second<<endl;
+      }
+      index_value<double> worst_Ne;
+      int T = VS[d].size()-1;
+      for(int p=0;p<partitions.size();p++) {
+	if (VS[d][T][p].nchanges_ave > 10)
+	  worst_Ne.check_min(p,VS[d][T][p].Ne);
+      }
+      cout<<"min Ne = "<<worst_Ne.value<<"    (partition = "<<worst_Ne.index+1<<")"<<endl;
     }
   }
   catch (std::exception& e) {
