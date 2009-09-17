@@ -86,6 +86,7 @@ namespace trees_format
   {
     for(int i=0;i<n and *file;i++)
       getline(*file,line);
+    line.clear();
     return not done();
   }
 
@@ -123,7 +124,8 @@ namespace trees_format
   bool NEXUS::skip(int n)
   {
     for(int i=0;i<n and *file;i++)
-      getline(*file,line);
+      getline(*file,line,';');
+    line.clear();
     return not done();
   }
 
@@ -134,7 +136,11 @@ namespace trees_format
 
   istream& get_NEXUS_command(istream& file,std::string& s)
   {
-    return getline(file,s,';');
+    static const string eol = "\n\r";
+
+    istream& is = getline(file,s,';');
+    s = strip(s,eol);
+    return is;
   }
 
   void NEXUS_skip_ws(int& i, const string& s)
@@ -220,10 +226,10 @@ namespace trees_format
       }
       NEXUS_skip_ws(pos,line);
       
-      if (translate)
-	r = T.parse_no_names(line.substr(pos,line.size()-pos));
-      else
+      if (leaf_names.size())
 	r = T.parse_with_names(line.substr(pos,line.size()-pos),leaf_names);
+      else
+	r = T.parse_no_names(line.substr(pos,line.size()-pos));
     }
     catch (std::exception& e) {
       cerr<<" Error! "<<e.what()<<endl;
