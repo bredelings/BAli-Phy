@@ -557,11 +557,12 @@ struct ordering {
 tree_sample::topology_record::topology_record(const Tree& T,
 					      const string& s)
   :topology(s),
-   partitions(T.n_branches()),
+   partitions(T.n_branches()-T.n_leafbranches()),
    count(0)
 { 
-  for(int i=0;i<T.n_branches();i++)
-    partitions[i] = branch_partition(T,i);
+  const int L = T.n_leafbranches();
+  for(int i=L;i<T.n_branches();i++)
+    partitions[i-L] = branch_partition(T,i);
 }
 
 
