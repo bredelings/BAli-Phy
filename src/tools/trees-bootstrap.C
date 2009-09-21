@@ -7,6 +7,10 @@
 // FIXME - could we get some compression by storing identical partitions once?
 // FIXME - var_stats::calculate( ) takes too long for all-1's partitions?
 // FIXME - speed, in general.
+// FIXME - Block-Bootstrap-based RCI: require individual runs to have at least 20 regenerations.
+
+
+// NOTE - the number of regenerations that we see definitely depends on how much we subsample.
 
 #include <iostream>
 #include <algorithm>
@@ -267,7 +271,7 @@ void var_stats::calculate(double pseudocount, double confidence)
   
   stddev_bootstrap = sqrt( Var_bootstrap );
   
-  Ne = P*(1.0-P)/Var_bootstrap;
+  // Ne = P*(1.0-P)/Var_bootstrap;
   
   //---------- Autocorrelation times ----------//
   valarray<double> scratch(N);
@@ -278,6 +282,8 @@ void var_stats::calculate(double pseudocount, double confidence)
       scratch[j]=0.0;
   
   tau = autocorrelation_time(scratch);
+
+  Ne = N/tau;
 }
 
 bool report_sample(std::ostream& o,
