@@ -33,6 +33,9 @@ public:
   /// How many columns does the table contain?
   int n_columns() const {return names_.size();}
 
+  /// Remove burnin samples
+  void chop_first_rows(int n);
+
   /// Load the table from a file
   stats_table(std::istream&,int,int);
 

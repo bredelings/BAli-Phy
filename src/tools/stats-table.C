@@ -81,8 +81,26 @@ void stats_table::load_file(istream& file,int skip,int max)
     if (max != -1 and n_rows() >= max)
       break;
   }
+}
+
+void remove_first_elements(vector<double>& v,int n)
+{
+  if (n >= v.size()) {
+    v.clear();
+    return;
+  }
+
+  for(int i=0;i<v.size()-n;i++)
+    v[i] = v[i+n];
+
+  v.resize(v.size()-n);
+}
 
 
+void stats_table::chop_first_rows(int n)
+{
+  for(int i=0;i<data_.size();i++)
+    remove_first_elements(data_[i],n);
 }
 
 stats_table::stats_table(istream& file,int skip,int max)

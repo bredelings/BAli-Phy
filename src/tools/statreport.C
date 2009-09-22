@@ -34,7 +34,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("max",value<int>(),"maximum number of trees to read")
     ("mean", "Show mean and standard deviation")
     ("median", "Show median and confidence level")
-    ("autocorrelation", "Show autocorrelation time and effective sample size.")
     ("confidence",value<double>()->default_value(0.95),"Confidence level")
     ("precision", value<unsigned>()->default_value(4),"Number of significant figures")
     ("verbose","Output more log messages on stderr.")
@@ -84,7 +83,90 @@ struct var_stats
 };
 
 
-var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index)
+
+int time_to_cross_above(const vector<double>& data, int start, double x)
+{
+  for(int i=start+2;i<data.size();i++)
+  {
+    if (data[i-1] < x and data[i] >= x)
+      return i;
+  }
+  // never occurs
+  return data.size();
+}
+
+int time_to_cross_below(const vector<double>& data, int start, double x)
+{
+  for(int i=start+1;i<data.size();i++)
+  {
+    if (data[i-1] > x and data[i] <= x)
+      return i;
+  }
+  // never occurs
+  return data.size();
+}
+
+int time_to_cross(const vector<double>& data, int start, double x1,double x2,int direction)
+{
+  if (direction == 1)
+    return time_to_cross_above(data,start,x2);
+  else if (direction == 0)
+    return time_to_cross_below(data,start,x1);
+  else
+    std::abort();
+}
+
+int get_burn_in(const vector<double>& data, const vector<double>& equilibrium, double alpha,int n)
+{
+  using namespace statistics;
+
+  if (constant(data)) return 1;
+
+  double x1 = quantile(equilibrium, alpha);
+  double x2 = median(equilibrium);
+  double x3 = quantile(equilibrium, 1.0 - alpha);
+
+  int t = 1;
+
+  int direction = 0;
+  if (data[t] < x2)
+    direction = 1;
+
+  t = time_to_cross(data,t,x1,x3,direction);
+  direction = !direction;
+  n--;
+  
+  for(;n>0;n--) {
+    t = time_to_cross(data,t,x1,x3,direction);
+    t = time_to_cross(data,t,x1,x3,!direction);
+  }
+  return t;
+}
+
+
+int get_burn_in(const vector<double>& data, double alpha,int n)
+{
+  using namespace statistics;
+
+  /// construct the sample representing the equilibrium
+  vector<double> equilibrium;
+
+  for(int i=data.size()*2/3;i<data.size();i++)
+    equilibrium.push_back(data[i]);
+
+  return get_burn_in(data,equilibrium,alpha,n);
+}
+
+string burnin_value(int b,const vector<double>& v)
+{
+  if (b<v.size()*2/3)
+    return convertToString(b);
+  else 
+    return "Not Converged!";
+}
+
+
+var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index,const vector<vector<int> >& burnin)
 {
   const string& name = tables[0].names()[index];
 
@@ -174,7 +256,9 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
       cout<<"  (NA,NA)"<<endl;
   }
 
+  // Print out autocorrelation times, Ne, and minimum burn-in
   double sum_tau=0;
+  index_value<int> worst_burnin;
   if (tables.size() > 1)
     for(int i=0;i<tables.size();i++) {
       const vector<double>& values = tables[i].column(index);
@@ -182,12 +266,16 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
       double tau = autocorrelation_time(values);
       sum_tau += tau;
 
+      int b = burnin[i][index];
+
       string spacer;spacer.append(name.size()-1,' ');
 
       if (show_individual) {
 	cout<<"   "<<spacer<<"t @ "<<tau;
-	cout<<"   Ne = "<<values.size()/tau<<endl;
+	cout<<"   Ne = "<<values.size()/tau;
+	cout<<"   burnin = "<<b<<endl;
       }
+      worst_burnin.check_max(i,b);
     }
   const vector<double>& values = total;
   double tau = autocorrelation_time(values);
@@ -196,18 +284,24 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
   cout<<"   "<<spacer<<"t @ "<<tau;
   double Ne = values.size()/tau;
-  cout<<"   Ne = "<<Ne<<endl;
+  cout<<"   Ne = "<<Ne;
+  if (tables.size() == 1)
+    worst_burnin.value = burnin[0][index];
+  cout<<"   burnin >= "<<worst_burnin.value<<endl;
+
+  // Print out Potential Scale Reduction Factors (PSRFs)
   double RNe = 1;
   double RCI = 1;
   double RCF = 1;
   if (tables.size() > 1) {
     RNe = tau/sum_tau*tables.size();
-    cout<<"   RNe = "<<RNe<<endl;
+    cout<<"   RNe = "<<RNe;
     RCI = total_CI/sum_CI;
-    cout<<"   RCI = "<<RCI<<endl;
+    cout<<"       RCI = "<<RCI;
     RCF = sum_fraction_contained; //compare_level;
-    cout<<"   RCF = "<<RCF<<endl;
+    cout<<"       RCF = "<<RCF<<endl;
   }
+
   cout<<endl;
   return var_stats(Ne,RCI,RNe,RCF);
 }
@@ -249,6 +343,9 @@ get_mask_by_ignoring(const vector<string>& strings,const vector<string>& names, 
   return mask;
 }
 
+// stats-table can't distinguish double && int
+// stats-table can't handle burnin appropriately
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -268,13 +365,13 @@ int main(int argc,char* argv[])
     vector<string> filenames;
 
     if (not args.count("filenames")) {
-      tables.push_back(stats_table(std::cin,skip,max));
+      tables.push_back(stats_table(std::cin,0,max));
       filenames.push_back("STDIN");
     }
     else {
       filenames = args["filenames"].as< vector<string> >();
       for(int i=0;i<filenames.size();i++) 
-	tables.push_back(stats_table(filenames[i],skip,max));
+	tables.push_back(stats_table(filenames[i],0,max));
     }
 
     if (tables.size() < 1)
@@ -296,6 +393,21 @@ int main(int argc,char* argv[])
     if (args.count("ignore"))
       mask = get_mask_by_ignoring(args["ignore"].as<vector<string> >(), field_names, mask);
 
+    //------------ Handle Burnin ------------//
+    vector< vector<int> > burnin(tables.size(), vector<int>(n_columns,1));
+
+    index_value<int>    worst_burnin(1); 
+
+    for(int i=0;i<tables.size();i++) {
+      for(int j=0;j<n_columns;j++) 
+	if (mask[j]) {
+	  int b = get_burn_in(tables[i].column(j), 0.05, 2);
+	  burnin[i][j] = b;
+	  worst_burnin.check_max(j,b);
+	}
+      tables[i].chop_first_rows(skip);
+    }
+    
     //------------ Generate Report ----------//
     index_value<double> worst_Ne;
     index_value<double> worst_RCI;
@@ -305,7 +417,7 @@ int main(int argc,char* argv[])
     for(int i=0;i<n_columns;i++) 
     {
       if (mask[i]) {
-	var_stats S = show_stats(args, tables, i);
+	var_stats S = show_stats(args, tables, i, burnin);
 	cout<<endl;
 
 	worst_Ne.check_min(i,S.Ne);
@@ -316,6 +428,7 @@ int main(int argc,char* argv[])
     }
 
     cout<<" Ne  >= "<<worst_Ne.value<<"    ("<<field_names[worst_Ne.index]<<")"<<endl;
+    cout<<" min burnin <= "<<worst_burnin.value<<"    ("<<field_names[worst_burnin.index]<<")"<<endl;
     if (tables.size() > 1) {
       cout<<" RCI <= "<<worst_RCI.value<<"    ("<<field_names[worst_RCI.index]<<")"<<endl;
       cout<<" RNe <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
