@@ -55,31 +55,43 @@ void stats_table::add_row(const vector<double>& row)
     data_[i].push_back(row[i]);
 }
 
-void stats_table::load_file(istream& file,int skip,int max)
+//FIXME - can we use scan_lines?
+//        This would add sub-sampling automatically.
+
+void stats_table::load_file(istream& file,int skip,int subsample, int max)
 {
-  // Read in heaers from file
+  // Read in headers from file
   names_ = read_header(file);
 
   data_.resize(names_.size());
 
   // Read in data
-  int line_number=0;
+  int n_lines=0;
   string line;
-  while(getline(file,line)) 
+  vector<double> v;
+  for(int line_number=0;getline_handle_dos(file,line);line_number++) 
   {
-    line_number++;
+    // don't start if we haven't skipped enough trees
+    if (line_number < skip) continue;
 
-    if (line_number <= skip) continue;
+    // skip trees unless they are a multiple of 'subsample'
+    if ((line_number-skip) % subsample != 0) continue;
 
-    vector<double> v = split<double>(line,'\t');
+    // quit if we've read in 'max' trees
+    if (max >= 0 and n_lines == max) break;
 
-    if (v.size() != n_columns())
-      throw myexception()<<"Found "<<v.size()<<"/"<<n_columns()<<" values on line "<<line_number<<".";
+    // This is the 'op'
+    {
+      // should this be protected by a try { } catch(...) {} block?
+      v = split<double>(line,'\t');
+
+      if (v.size() != n_columns())
+	throw myexception()<<"Found "<<v.size()<<"/"<<n_columns()<<" values on line "<<line_number<<".";
     
-    add_row(v);
+      add_row(v);
+    }
 
-    if (max != -1 and n_rows() >= max)
-      break;
+    n_lines++;
   }
 }
 
@@ -96,26 +108,25 @@ void remove_first_elements(vector<double>& v,int n)
   v.resize(v.size()-n);
 }
 
-
 void stats_table::chop_first_rows(int n)
 {
   for(int i=0;i<data_.size();i++)
     remove_first_elements(data_[i],n);
 }
 
-stats_table::stats_table(istream& file,int skip,int max)
+stats_table::stats_table(istream& file, int skip, int subsample, int max)
 {
-  load_file(file,skip,max);
+  load_file(file,skip,subsample,max);
   if (log_verbose) cerr<<"STDIN: Read in "<<n_rows()<<" lines.\n";
 }
 
-stats_table::stats_table(const string& filename,int skip,int max)
+stats_table::stats_table(const string& filename, int skip, int subsample, int max)
 {
   ifstream file(filename.c_str());
   if (not file)
     throw myexception()<<"Can't open file '"<<filename<<"'";
 
-  load_file(file,skip,max);
+  load_file(file,skip,subsample,max);
   if (log_verbose) cerr<<filename<<": Read in "<<n_rows()<<" lines.\n";
 
   file.close();

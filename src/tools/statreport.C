@@ -31,6 +31,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("ignore", value<vector<string> >()->composing(),"which fields to print")
     ("individual","which fields to print")
     ("skip",value<int>()->default_value(0),"number of trees to skip")
+    ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
     ("max",value<int>(),"maximum number of trees to read")
     ("mean", "Show mean and standard deviation")
     ("median", "Show median and confidence level")
@@ -116,15 +117,23 @@ int time_to_cross(const vector<double>& data, int start, double x1,double x2,int
     std::abort();
 }
 
-int get_burn_in(const vector<double>& data, const vector<double>& equilibrium, double alpha,int n)
+int get_burn_in(const vector<double>& data, double alpha,int n)
 {
   using namespace statistics;
 
   if (constant(data)) return 1;
 
-  double x1 = quantile(equilibrium, alpha);
-  double x2 = median(equilibrium);
-  double x3 = quantile(equilibrium, 1.0 - alpha);
+  /// construct the sample representing the equilibrium
+  vector<double> equilibrium;
+
+  for(int i=data.size()*2/3;i<data.size();i++)
+    equilibrium.push_back(data[i]);
+
+  std::sort(equilibrium.begin(), equilibrium.end());
+
+  double x1 = quantile_sorted(equilibrium, alpha);
+  double x2 = quantile_sorted(equilibrium,0.5);
+  double x3 = quantile_sorted(equilibrium, 1.0 - alpha);
 
   int t = 1;
 
@@ -141,20 +150,6 @@ int get_burn_in(const vector<double>& data, const vector<double>& equilibrium, d
     t = time_to_cross(data,t,x1,x3,!direction);
   }
   return t;
-}
-
-
-int get_burn_in(const vector<double>& data, double alpha,int n)
-{
-  using namespace statistics;
-
-  /// construct the sample representing the equilibrium
-  vector<double> equilibrium;
-
-  for(int i=data.size()*2/3;i<data.size();i++)
-    equilibrium.push_back(data[i]);
-
-  return get_burn_in(data,equilibrium,alpha,n);
 }
 
 string burnin_value(int b,const vector<double>& v)
@@ -287,7 +282,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   cout<<"   Ne = "<<Ne;
   if (tables.size() == 1)
     worst_burnin.value = burnin[0][index];
-  cout<<"   burnin >= "<<worst_burnin.value<<endl;
+  cout<<"   burnin = "<<worst_burnin.value<<endl;
 
   // Print out Potential Scale Reduction Factors (PSRFs)
   double RNe = 1;
@@ -344,7 +339,14 @@ get_mask_by_ignoring(const vector<string>& strings,const vector<string>& names, 
 }
 
 // stats-table can't distinguish double && int
-// stats-table can't handle burnin appropriately
+
+/// FIXME - reduce the numbers of quantile/median/confidence_interval calls?
+///       - 543 calls to median for 42*6: 
+///       - (Remember that SOME of the calls are only sorting the last THIRD of the data.)
+
+//  FIXME - use scan_lines and an accumulator to read the data?
+
+/// Why is the autocorrelation taking so long?  Can we speed it up for the combined runs anyhow?
 
 int main(int argc,char* argv[]) 
 { 
@@ -356,6 +358,8 @@ int main(int argc,char* argv[])
 
     int skip = args["skip"].as<int>();
 
+    int subsample=args["sub-sample"].as<int>();
+
     int max = -1;
     if (args.count("max"))
       max = args["max"].as<int>();
@@ -365,13 +369,16 @@ int main(int argc,char* argv[])
     vector<string> filenames;
 
     if (not args.count("filenames")) {
-      tables.push_back(stats_table(std::cin,0,max));
+      tables.push_back(stats_table(std::cin,0,subsample,max));
       filenames.push_back("STDIN");
     }
     else {
       filenames = args["filenames"].as< vector<string> >();
-      for(int i=0;i<filenames.size();i++) 
-	tables.push_back(stats_table(filenames[i],0,max));
+      for(int i=0;i<filenames.size();i++) {
+	tables.push_back(stats_table(filenames[i],0,subsample,max));
+	if (not tables.back().n_rows())
+	  throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
+      }
     }
 
     if (tables.size() < 1)
@@ -406,7 +413,10 @@ int main(int argc,char* argv[])
 	  worst_burnin.check_max(j,b);
 	}
       tables[i].chop_first_rows(skip);
+      if (not tables[i].n_rows())
+	throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
     }
+
     
     //------------ Generate Report ----------//
     index_value<double> worst_Ne;
