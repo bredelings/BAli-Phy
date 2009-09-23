@@ -141,10 +141,6 @@ int get_burn_in(const vector<double>& data, double alpha,int n)
   if (data[t] < x2)
     direction = 1;
 
-  t = time_to_cross(data,t,x1,x3,direction);
-  direction = !direction;
-  n--;
-  
   for(;n>0;n--) {
     t = time_to_cross(data,t,x1,x3,direction);
     t = time_to_cross(data,t,x1,x3,!direction);
