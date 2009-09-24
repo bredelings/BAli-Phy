@@ -28,7 +28,6 @@ extern "C" {
 
 #include "myexception.H"
 #include "sequencetree.H"
-#include "tree-dist.H"
 #include "pow2.H"
 #include "mctree.H"
 #include "util.H"
