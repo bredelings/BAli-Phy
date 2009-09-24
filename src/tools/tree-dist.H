@@ -158,6 +158,24 @@ namespace trees_format {
 
 }
 
+/// The information we store about each topology
+struct tree_record 
+{
+  // the topology string
+  std::string topology;
+  
+  // a tree structure for this topology
+  std::vector<boost::dynamic_bitset<> > partitions;
+  
+  // how many times did we see this topology
+  unsigned count;
+  
+  std::vector<double> branch_lengths;
+
+  tree_record(const Tree&,const std::string&);
+};
+
+
 /// A class for loading tree distributions - somewhat biased towards tree-dist-compare
 class tree_sample 
 {
@@ -169,21 +187,6 @@ class tree_sample
 
 public:
 
-  /// The information we store about each topology
-  struct topology_record 
-  {
-    // the topology string
-    std::string topology;
-
-    // a tree structure for this topology
-    std::vector<boost::dynamic_bitset<> > partitions;
-
-    // how many times did we see this topology
-    unsigned count;
-
-    topology_record(const Tree&,const std::string&);
-  };
-
   /// Add an tree with indices following leaf_names
   void add_tree(Tree& T);
   void add_tree(RootedTree& T);
@@ -194,7 +197,7 @@ public:
   std::vector<unsigned> order;
 
   // the list of topologies, and associated info
-  std::vector<topology_record> topologies;
+  std::vector<tree_record> topologies;
 
   std::vector<std::string> names() const {return leaf_names;}
 

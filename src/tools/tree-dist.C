@@ -545,16 +545,16 @@ double tree_sample::PP(const vector<Partition>& partitions) const
 }
 
 struct ordering {
-  const vector<tree_sample::topology_record>& v;
+  const vector<tree_record>& v;
 
   // decreasing order of count
   bool operator()(int i,int j) {return v[i].count > v[j].count;}
   
-  ordering(const vector<tree_sample::topology_record>& v_):v(v_) {}
+  ordering(const vector<tree_record>& v_):v(v_) {}
 };
 
 
-tree_sample::topology_record::topology_record(const Tree& T,
+tree_record::tree_record(const Tree& T,
 					      const string& s)
   :topology(s),
    partitions(T.n_branches()-T.n_leafbranches()),
@@ -578,7 +578,7 @@ void tree_sample::add_tree(Tree& T)
       
   // If it hasn't been seen before, insert it
   if (index.find(t) == index.end()) {
-    topologies.push_back(topology_record(T,t));
+    topologies.push_back(tree_record(T,t));
     
     index[t] = topologies.size()-1;              // add to map of  (topology->index)
   }
