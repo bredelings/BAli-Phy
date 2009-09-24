@@ -544,7 +544,8 @@ double tree_sample::PP(const vector<Partition>& partitions) const
   return double(count(partitions))/size();
 }
 
-struct ordering {
+struct ordering 
+{
   const vector<tree_record>& v;
 
   // decreasing order of count
@@ -555,7 +556,8 @@ struct ordering {
 
 
 tree_record::tree_record(const Tree& T)
-  :partitions(T.n_branches()-T.n_leafbranches()),
+  :n_leaves(T.n_leaves()),
+   partitions(T.n_branches()-T.n_leafbranches()),
    count(0)
 { 
   const int L = T.n_leafbranches();

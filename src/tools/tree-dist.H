@@ -161,10 +161,13 @@ namespace trees_format {
 /// The information we store about each topology
 struct tree_record 
 {
-  // a tree structure for this topology
+  /// how many leaves does the tree have
+  int n_leaves;
+
+  /// the internal branches for this topology
   std::vector<boost::dynamic_bitset<> > partitions;
   
-  // how many times did we see this topology
+  /// how many times did we see this topology
   unsigned count;
   
   std::vector<double> branch_lengths;
