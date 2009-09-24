@@ -554,10 +554,8 @@ struct ordering {
 };
 
 
-tree_record::tree_record(const Tree& T,
-					      const string& s)
-  :topology(s),
-   partitions(T.n_branches()-T.n_leafbranches()),
+tree_record::tree_record(const Tree& T)
+  :partitions(T.n_branches()-T.n_leafbranches()),
    count(0)
 { 
   const int L = T.n_leafbranches();
@@ -578,7 +576,7 @@ void tree_sample::add_tree(Tree& T)
       
   // If it hasn't been seen before, insert it
   if (index.find(t) == index.end()) {
-    topologies.push_back(tree_record(T,t));
+    topologies.push_back(tree_record(T));
     
     index[t] = topologies.size()-1;              // add to map of  (topology->index)
   }

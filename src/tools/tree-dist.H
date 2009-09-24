@@ -161,9 +161,6 @@ namespace trees_format {
 /// The information we store about each topology
 struct tree_record 
 {
-  // the topology string
-  std::string topology;
-  
   // a tree structure for this topology
   std::vector<boost::dynamic_bitset<> > partitions;
   
@@ -172,7 +169,7 @@ struct tree_record
   
   std::vector<double> branch_lengths;
 
-  tree_record(const Tree&,const std::string&);
+  tree_record(const Tree&);
 };
 
 

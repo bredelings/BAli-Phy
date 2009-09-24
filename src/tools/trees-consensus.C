@@ -533,7 +533,7 @@ int main(int argc,char* argv[])
     {
       if (i >= tree_dist.topologies.size()) continue;
 
-      string t = tree_dist.topologies[tree_dist.order[i]].topology;
+      string t = tree_dist.T(tree_dist.order[i]).write(false);
 
       unsigned n = tree_dist.topologies[tree_dist.order[i]].count;
       double PP = double(n)/N;
