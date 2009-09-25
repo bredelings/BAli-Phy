@@ -470,7 +470,7 @@ struct index_value
     }
     return value;
   }
-  index_value():index(-1) {}
+  index_value():index(-1),value() {}
   index_value(const T& t):index(-1),value(t) {}
 };
   
