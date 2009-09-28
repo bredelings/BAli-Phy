@@ -27,11 +27,9 @@ void add_partitions_and_counts(const vector<tree_sample>& samples, int index, ma
 
   typedef map<dynamic_bitset<>,p_counts> container_t;
 
-  for(int i=0;i<sample.topologies.size();i++) 
+  for(int i=0;i<sample.trees.size();i++) 
   {
-    const vector<dynamic_bitset<> >& T = sample.topologies[i].partitions;
-
-    unsigned delta = sample.topologies[i].count;
+    const vector<dynamic_bitset<> >& T = sample.trees[i].partitions;
 
     // for each partition in the next tree
     dynamic_bitset<> partition(names.size());
@@ -55,7 +53,7 @@ void add_partitions_and_counts(const vector<tree_sample>& samples, int index, ma
       // Record this tree as having the partition if we haven't already done so. 
       p_counts& pc = record->second;
       //      cerr<<"    "<<join(pc.counts,' ')<<endl;
-      pc.counts[index] += delta;
+      pc.counts[index] ++;
       //      cerr<<"    "<<join(pc.counts,' ')<<endl;
     }
   }
@@ -99,15 +97,13 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const dynamic_bi
 
   unsigned count = 0;
 
-  for(int i=0;i<sample.topologies.size();i++) 
+  for(int i=0;i<sample.trees.size();i++) 
   {
-    const vector<dynamic_bitset<> >& T = sample.topologies[i].partitions;
-
-    unsigned delta = sample.topologies[i].count;
+    const vector<dynamic_bitset<> >& T = sample.trees[i].partitions;
 
     unsigned min_old = std::min(1+(unsigned)(l*count),count);
 
-    count += delta;
+    count ++;
     unsigned min_new = std::min(1+(unsigned)(l*count),count);
 
     // for each partition in the next tree
@@ -135,7 +131,7 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const dynamic_bi
       int C1 = C2;
       if (pc.last_tree != i) {
 	pc.last_tree=i;
-	C2 += delta;
+	C2 ++;
       }
       
       // add the partition if it wasn't good before, but is now

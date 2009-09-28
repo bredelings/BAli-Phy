@@ -90,6 +90,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
     ("max",value<int>(),"maximum number of tree samples to read")
     ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
+    ("verbose,v","Output more log messages on stderr.")
     ;
 
   options_description analysis("Analysis options");
@@ -129,12 +130,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
     exit(0);
   }
 
+  if (args.count("verbose")) log_verbose = 1;
+
   return args;
 }
 
-typedef double (*tree_metric_fn)(const SequenceTree&,const SequenceTree&);
+typedef double (*tree_metric_fn)(const tree_record&,const tree_record&);
 
-ublas::matrix<double> distances(const vector<SequenceTree>& trees, 
+ublas::matrix<double> distances(const vector<tree_record>& trees, 
 				tree_metric_fn metric_fn
 				)
 {
@@ -149,8 +152,8 @@ ublas::matrix<double> distances(const vector<SequenceTree>& trees,
     return D;
 }
 
-double distance(const SequenceTree& T, 
-		const vector<SequenceTree>& trees,
+double distance(const tree_record& T, 
+		const vector<tree_record>& trees,
 		tree_metric_fn metric_fn
 		)
 {
@@ -172,28 +175,6 @@ void check_supplied_filenames(int n,vector<string>& files)
     throw myexception()<<"Wanted "<<n<<" filenames, but got only "<<files.size()<<".";
   if (files.size() > n)
     cerr<<"Warning: ignoring "<<files.size()-n<<" extra filenames."<<endl;
-}
-
-vector<SequenceTree> load_trees(string filename,int skip,int subsample,int max)
-{
-  vector<SequenceTree> trees;
-  if (filename == "-") {
-    filename = "STDIN";
-    trees = load_trees(cin,skip,subsample,max);
-  }
-  else {
-    ifstream file(filename.c_str());
-    if (not file)
-      throw myexception()<<"Can't open file '"<<filename<<"'.";
-    trees = load_trees(file,skip,subsample,max);
-    file.close();
-  }
-  for(int i=0;i<trees.size();i++)
-    standardize(trees[i]);
-  if (not trees.size())
-    throw myexception()<<filename<<": no trees were read in!";
-  cerr<<filename<<": scanned "<<trees.size()<<" trees.\n";
-  return trees;
 }
 
 double max(const valarray<double>& v)
@@ -278,6 +259,50 @@ double fair_probability_x_less_than_y(const valarray<double>& x,const valarray<d
 }
 
 
+int topology_distance2(const tree_record& t1, const tree_record& t2)
+{
+  assert(t1.n_leaves() == t2.n_leaves());
+
+  unsigned n1 = t1.n_internal_branches();
+  unsigned n2 = t2.n_internal_branches();
+
+  // Accumulate distances for T1 partitions
+  unsigned shared=0;
+
+  int i=0,j=0;
+  while (1) {
+    if (i >= n1) break;
+    if (j >= n2) break;
+
+    if (t1.partitions[i] == t2.partitions[j]) {
+      i++;
+      j++;
+      shared++;
+    }
+    else if (t1.partitions[i] < t2.partitions[j])
+      i++;
+    else
+      j++;
+  }
+
+  return (n1-shared) + (n2-shared);
+}
+
+double robinson_foulds_distance2(const tree_record& t1, const tree_record& t2)
+{
+  return topology_distance2(t1,t2) * 0.5;
+}
+
+double branch_distance2(const tree_record& t1, const tree_record& t2)
+{
+  return topology_distance2(t1,t2) * 0.5;
+}
+
+double internal_branch_distance2(const tree_record& t1, const tree_record& t2)
+{
+  return topology_distance2(t1,t2) * 0.5;
+}
+
 int main(int argc,char* argv[]) 
 { 
   try 
@@ -298,11 +323,11 @@ int main(int argc,char* argv[])
     tree_metric_fn metric_fn = NULL;
     string metric = args["metric"].as<string>();
     if (metric == "topology" or metric == "RF")
-      metric_fn = &robinson_foulds_distance;
+      metric_fn = &robinson_foulds_distance2;
     else if (metric == "branch" or metric == "branches")
-      metric_fn = &branch_distance;
+      metric_fn = &branch_distance2;
     else if (metric == "internal-branch")
-      metric_fn = &internal_branch_distance;
+      metric_fn = &internal_branch_distance2;
     else
       throw myexception()<<"Metric '"<<metric<<"' not implemented.";
       
@@ -316,7 +341,7 @@ int main(int argc,char* argv[])
     if (analysis == "matrix") 
     {
       check_supplied_filenames(1,files);
-      vector<SequenceTree> trees = load_trees(files[0],skip,subsample,max);
+      tree_sample trees(files[0],skip,subsample,max);
 
       ublas::matrix<double> D = distances(trees,metric_fn);
 
@@ -334,7 +359,7 @@ int main(int argc,char* argv[])
     else if (analysis == "autocorrelation") 
     {
       check_supplied_filenames(1,files);
-      vector<SequenceTree> trees = load_trees(files[0],skip,subsample,max);
+      tree_sample trees(files[0],skip,subsample,max);
 
       ublas::matrix<double> D = distances(trees,metric_fn);
       
@@ -364,7 +389,7 @@ int main(int argc,char* argv[])
     else if (analysis == "diameter") 
     {
       check_supplied_filenames(1,files);
-      vector<SequenceTree> trees = load_trees(files[0],skip,subsample,max);
+      tree_sample trees(files[0],skip,subsample,max);
       if (trees.size() < 2)
 	throw myexception()<<"diameter: only 1 point in set.";
 
@@ -377,13 +402,14 @@ int main(int argc,char* argv[])
     {
       check_supplied_filenames(2,files);
 
-      vector<SequenceTree> trees1 = load_trees(files[0],skip,subsample,max);
-      vector<SequenceTree> trees2 = load_trees(files[1],skip,subsample,max);
+      tree_sample trees1(files[0],skip,subsample,max);
+      tree_sample trees2(files[1],skip,subsample,max);
       const unsigned N1 = trees1.size();
       const unsigned N2 = trees2.size();
 
-      vector<SequenceTree> both = trees1;
-      both.insert(both.end(),trees2.begin(),trees2.end());
+      tree_sample both = trees1;
+      for(int i=0;i<trees2.size();i++)
+	both.add_tree(trees2.trees[i]);
 
       ublas::matrix<double> D1 = distances(trees1,metric_fn);
       ublas::matrix<double> D2 = distances(trees2,metric_fn);
@@ -458,8 +484,8 @@ int main(int argc,char* argv[])
     {
       check_supplied_filenames(2,files);
 
-      vector<SequenceTree> trees1 = load_trees(files[0],skip,subsample,max);
-      vector<SequenceTree> trees2 = load_trees(files[1],skip,subsample,max);
+      tree_sample trees1(files[0],skip,subsample,max);
+      tree_sample trees2(files[1],skip,subsample,max);
 
       for(int i=0;i<trees1.size();i++)
 	cout<<distance(trees1[i],trees2,metric_fn)<<"\n";
@@ -473,8 +499,8 @@ int main(int argc,char* argv[])
 
       check_supplied_filenames(2,files);
 
-      vector<SequenceTree> trees1 = load_trees(files[0],skip,subsample,max);
-      vector<SequenceTree> trees2 = load_trees(files[1],skip,subsample,max);
+      tree_sample trees1(files[0],skip,subsample,max);
+      tree_sample trees2(files[1],skip,subsample,max);
 
       ublas::matrix<double> D2 = distances(trees2,metric_fn);
       valarray<double> distances(0.0, trees2.size());

@@ -33,6 +33,7 @@ namespace trees_format {
     int lines() const;
     virtual bool skip(int) = 0;
     virtual bool done() const = 0;
+    reader_t():lines_(0) {}
     virtual ~reader_t() {}
   };
 
@@ -162,25 +163,30 @@ namespace trees_format {
 struct tree_record 
 {
   /// how many leaves does the tree have
-  int n_leaves;
+  int n_leaves_;
 
   /// the internal branches for this topology
   std::vector<boost::dynamic_bitset<> > partitions;
   
-  /// how many times did we see this topology
-  unsigned count;
-  
   std::vector<double> branch_lengths;
+
+  int n_leaves() const {return n_leaves_;}
+  int n_leaf_branches() const {return n_leaves();}
+  int n_internal_branches() const {return partitions.size();}
+  int n_branches() const {return n_leaf_branches() + n_internal_branches();}
 
   tree_record(const Tree&);
 };
 
+int cmp(const tree_record&, const tree_record&);
+
+bool operator<(const tree_record&, const tree_record&);
+
+bool operator>(const tree_record&, const tree_record&);
 
 /// A class for loading tree distributions - somewhat biased towards tree-dist-compare
 class tree_sample 
 {
-  mutable std::map<std::string,unsigned> index;
-
   std::vector<std::string> leaf_names;
 
   void load_file(std::istream&,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
@@ -188,25 +194,22 @@ class tree_sample
 public:
 
   /// Add an tree with indices following leaf_names
+  void add_tree(const tree_record& T);
   void add_tree(Tree& T);
   void add_tree(RootedTree& T);
 
-  // mapping from index in the sample to topology record
-  std::vector<unsigned> which_topology;
-
-  std::vector<unsigned> order;
-
   // the list of topologies, and associated info
-  std::vector<tree_record> topologies;
+  std::vector<tree_record> trees;
 
   std::vector<std::string> names() const {return leaf_names;}
 
   SequenceTree T(int i) const;
 
-  // this should equal trees.size(), but should be MUCH faster!
-  unsigned size() const {return which_topology.size();}
+  const tree_record& operator[](int i) const {return trees[i];}
+        tree_record& operator[](int i)       {return trees[i];}
 
-  std::valarray<bool> support(const std::string& t) const;
+  // this should equal trees.size(), but should be MUCH faster!
+  unsigned size() const {return trees.size();}
 
   std::valarray<bool> support(const Partition& P) const;
 
@@ -217,6 +220,9 @@ public:
 
   double PP(const Partition& P) const;
   double PP(const std::vector<Partition>&) const;
+
+  operator std::vector<tree_record>& () {return trees;}
+  operator const std::vector<tree_record>& () const {return trees;}
 
   tree_sample(std::istream&,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
   tree_sample(const std::string& filename,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());

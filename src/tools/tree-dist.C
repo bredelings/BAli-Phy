@@ -84,6 +84,10 @@ namespace trees_format
 
   bool Newick::skip(int n)
   {
+    if (line.size()) {
+      line.clear();
+      n--;
+    }
     for(int i=0;i<n and *file;i++)
       getline(*file,line);
     line.clear();
@@ -123,6 +127,10 @@ namespace trees_format
 
   bool NEXUS::skip(int n)
   {
+    if (line.size()) {
+      line.clear();
+      n--;
+    }
     for(int i=0;i<n and *file;i++)
       getline(*file,line,';');
     line.clear();
@@ -464,25 +472,40 @@ namespace trees_format
   { }
 }
 
-SequenceTree tree_sample::T(int i) const {
-  return get_mf_tree(leaf_names,topologies[i].partitions);
+int cmp(const tree_record& t1, const tree_record& t2)
+{
+  int x = (int)t1.n_leaves() - (int)t2.n_leaves();
+
+  if (x != 0) return x;
+
+  x = (int)t1.n_internal_branches() - (int)t2.n_internal_branches();
+
+  if (x != 0) return x;
+
+  for(int i=0;i<t1.n_internal_branches();i++)
+  {
+    if (t1.partitions[i] == t2.partitions[i])
+      continue;
+    else if (t1.partitions[i] < t2.partitions[i])
+      return -1;
+    else
+      return 1;
+  }
+  return 0;
 }
 
-valarray<bool> tree_sample::support(const string& t) const 
+bool operator<(const tree_record& t1, const tree_record& t2)
 {
-  typeof(index.begin()) here = index.find(t);
+  return cmp(t1,t2) < 0;
+}
 
-  if (here == index.end())
-    return valarray<bool>(false,size());
+bool operator>(const tree_record& t1, const tree_record& t2)
+{
+  return cmp(t1,t2) > 0;
+}
 
-  int t_i = index[t];
-
-  valarray<bool> result(size());
-
-  for(int i=0;i<result.size();i++)
-    result[i] = (t_i == which_topology[i]);
-
-  return result;
+SequenceTree tree_sample::T(int i) const {
+  return get_mf_tree(leaf_names,trees[i].partitions);
 }
 
 valarray<bool> tree_sample::support(const Partition& p) const 
@@ -492,7 +515,7 @@ valarray<bool> tree_sample::support(const Partition& p) const
   for(int i=0;i<result.size();i++) 
   {
     // Get a tree with the same topology
-    const vector<dynamic_bitset<> > & T = topologies[ which_topology[i] ].partitions;
+    const vector<dynamic_bitset<> > & T = trees[i].partitions;
     
     result[i] = implies(T,p);
   }
@@ -506,7 +529,7 @@ valarray<bool> tree_sample::support(const vector<Partition>& partitions) const
   for(int i=0;i<result.size();i++) 
   {
     // Get a tree with the same topology
-    const vector<dynamic_bitset<> >& T = topologies[ which_topology[i] ].partitions;
+    const vector<dynamic_bitset<> >& T = trees[i].partitions;
     
     result[i] = implies(T,partitions);
   }
@@ -516,9 +539,9 @@ valarray<bool> tree_sample::support(const vector<Partition>& partitions) const
 unsigned tree_sample::count(const Partition& P) const 
 {
   unsigned count=0;
-  for(int t=0;t<topologies.size();t++) 
-    if (implies(topologies[t].partitions,P))
-	count += topologies[t].count;
+  for(int t=0;t<trees.size();t++) 
+    if (implies(trees[t].partitions,P))
+      count ++;
    
   return count;
 }
@@ -526,9 +549,9 @@ unsigned tree_sample::count(const Partition& P) const
 unsigned tree_sample::count(const vector<Partition>& partitions) const 
 {
   unsigned count=0;
-  for(int t=0;t<topologies.size();t++) {
-    if (implies(topologies[t].partitions,partitions))
-      count += topologies[t].count;
+  for(int t=0;t<trees.size();t++) {
+    if (implies(trees[t].partitions,partitions))
+      count ++;
   }
    
   return count;
@@ -544,27 +567,24 @@ double tree_sample::PP(const vector<Partition>& partitions) const
   return double(count(partitions))/size();
 }
 
-struct ordering 
-{
-  const vector<tree_record>& v;
-
-  // decreasing order of count
-  bool operator()(int i,int j) {return v[i].count > v[j].count;}
-  
-  ordering(const vector<tree_record>& v_):v(v_) {}
-};
-
-
 tree_record::tree_record(const Tree& T)
-  :n_leaves(T.n_leaves()),
-   partitions(T.n_branches()-T.n_leafbranches()),
-   count(0)
+  :n_leaves_(T.n_leaves()),
+   partitions(T.n_branches()-T.n_leafbranches())
 { 
   const int L = T.n_leafbranches();
-  for(int i=L;i<T.n_branches();i++)
+  for(int i=L;i<T.n_branches();i++) {
     partitions[i-L] = branch_partition(T,i);
+    if (not partitions[i-L][0])
+      partitions[i-L].flip();
+  }
+  std::sort(partitions.begin(),partitions.end());
 }
 
+
+void tree_sample::add_tree(const tree_record& T)
+{
+  trees.push_back(T);
+}
 
 void tree_sample::add_tree(Tree& T)
 {
@@ -574,21 +594,7 @@ void tree_sample::add_tree(Tree& T)
 
   // Compute the standardized representation
   T.standardize();
-  string t = write(T,leaf_names,false);
-      
-  // If it hasn't been seen before, insert it
-  if (index.find(t) == index.end()) {
-    topologies.push_back(tree_record(T));
-    
-    index[t] = topologies.size()-1;              // add to map of  (topology->index)
-  }
-
-  //FIXME - I'm doing the index[t] lookup twice;
-      
-  //----------- Add tree to distribution -------------//
-  int i = index[t];
-  which_topology.push_back(i);
-  topologies[i].count++;
+  add_tree(tree_record(T));
 }
 
 void tree_sample::add_tree(RootedTree& T)
@@ -613,59 +619,50 @@ void tree_sample::add_tree(RootedTree& T)
 
 
 
-void tree_sample::load_file(istream& file,int skip,int max,int subsample,const vector<string>& prune)
+void tree_sample::load_file(istream& file,int skip,int subsample,int max,const vector<string>& prune)
 {
   using namespace trees_format;
 
   //----------- Construct File Reader / Filter -----------//
-  shared_ptr<reader_t> trees(new Newick_or_NEXUS(file));
+  shared_ptr<reader_t> trees_in(new Newick_or_NEXUS(file));
 
   if (skip > 0)
-    trees = shared_ptr<reader_t>(new Skip(skip,*trees));
+    trees_in = shared_ptr<reader_t>(new Skip(skip,*trees_in));
 
   if (subsample > 1)
-    trees = shared_ptr<reader_t>(new Subsample(subsample,*trees));
+    trees_in = shared_ptr<reader_t>(new Subsample(subsample,*trees_in));
 
   if (max > 0)
-    trees = shared_ptr<reader_t>(new Max(max,*trees));
+    trees_in = shared_ptr<reader_t>(new Max(max,*trees_in));
 
-  trees = shared_ptr<reader_t>(new Fixroot(*trees));
+  trees_in = shared_ptr<reader_t>(new Fixroot(*trees_in));
 
   if (prune.size())
-    trees = shared_ptr<reader_t>(new Prune(prune,*trees));
+    trees_in = shared_ptr<reader_t>(new Prune(prune,*trees_in));
 
-  leaf_names = trees->names();
+  leaf_names = trees_in->names();
 
   //------------------- Process Trees --------------------//
   RootedTree T;
-  while (trees->next_tree(T))
+  while (trees_in->next_tree(T))
     add_tree(T);
 
   if (size() == 0)
     throw myexception()<<"No trees were read in!";
-  
-  cout<<"# n_trees = "<<size()<<"   n_topologies = "<<topologies.size()<<endl;
-    
-  //---------------  Sort topologies by count  ---------------//
-  order.resize(topologies.size());
-  for(int i=0;i<order.size();i++)
-    order[i] = i;
-  
-  sort(order.begin(),order.end(),ordering(topologies));
 }
 
-tree_sample::tree_sample(istream& file,int skip,int max,int subsample,const vector<string>& prune)
+tree_sample::tree_sample(istream& file,int skip,int subsample,int max,const vector<string>& prune)
 {
-  load_file(file,skip,max,subsample,prune);
+  load_file(file,skip,subsample,max,prune);
 }
 
-tree_sample::tree_sample(const string& filename,int skip,int max,int subsample,const vector<string>& prune)
+tree_sample::tree_sample(const string& filename,int skip,int subsample,int max,const vector<string>& prune)
 {
   ifstream file(filename.c_str());
   if (not file)
     throw myexception()<<"Couldn't open file "<<filename;
   
-  load_file(file,skip,max,subsample,prune);
+  load_file(file,skip,subsample,max,prune);
   file.close();
 }
 

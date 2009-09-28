@@ -504,7 +504,7 @@ int main(int argc,char* argv[])
     if (not file)
       throw myexception()<<"Couldn't open file "<<filename;
       
-    tree_sample tree_dist(file,skip,max,subsample,ignore);
+    tree_sample tree_dist(file,skip,subsample,max,ignore);
     const unsigned N = tree_dist.size();
 
     dynamic_bitset<> ignore_mask = group_from_names(tree_dist.names(),vector<string>());
@@ -524,18 +524,40 @@ int main(int argc,char* argv[])
     else
       all_partitions = get_Ml_partitions_and_counts(tree_dist,min_support, ~ignore_mask);
 
+    vector<int> which_topology;
+    vector<int> topology_counts;
+    std::map<tree_record,int> topologies_index;
+
+    for(int i=0;i<tree_dist.size();i++)
+    {
+      std::map<tree_record,int>::iterator record = topologies_index.find(tree_dist[i]);
+      if (record == topologies_index.end())
+      {
+	which_topology.push_back(i);
+	topology_counts.push_back(0);
+
+	topologies_index[tree_dist[i]] = which_topology.size()-1;
+	record = topologies_index.find(tree_dist[i]);
+      }
+      topology_counts[record->second]++;
+    }
+    vector<int> order = iota<int>(topology_counts.size());
+
+    std::sort(order.begin(),order.end(),sequence_order<int>(topology_counts));
+    std::reverse(order.begin(), order.end());
 
     //------  Topologies to analyze -----//
     vector<string> topologies;
 
+    cout<<"# n_trees = "<<tree_dist.size()<<"   n_topologies = "<<topology_counts.size()<<endl;
     cout<<"\nTopology support: \n\n";
     for(int i=0;i < args["map-trees"].as<int>() ;i++) 
     {
-      if (i >= tree_dist.topologies.size()) continue;
+      if (i >= order.size()) continue;
 
-      string t = tree_dist.T(tree_dist.order[i]).write(false);
+      string t = tree_dist.T(which_topology[order[i]]).write(false);
 
-      unsigned n = tree_dist.topologies[tree_dist.order[i]].count;
+      unsigned n = topology_counts[order[i]];
       double PP = double(n)/N;
       double o = odds(n,N,1);
 
@@ -545,9 +567,9 @@ int main(int argc,char* argv[])
     }
 
     
-    for(int i=0,n=0;i<tree_dist.topologies.size();i++) 
+    for(int i=0,n=0;i<topology_counts.size();i++) 
     {
-      n += tree_dist.topologies[tree_dist.order[i]].count;
+      n += topology_counts[i];
       double PP = double(n)/N;
 
       if (PP >= 0.95) {

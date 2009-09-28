@@ -129,7 +129,7 @@ tree_sample load_tree_file(const variables_map& args, const string& filename)
 
   if (filename == "-") {
     if (log_verbose) cerr<<"partitions-supported: Loading trees from STDIN...\n";
-    return tree_sample(cin,skip,max,subsample);
+    return tree_sample(cin,skip,subsample,max);
   }
 
   ifstream file(filename.c_str());
@@ -137,7 +137,7 @@ tree_sample load_tree_file(const variables_map& args, const string& filename)
     throw myexception()<<"Couldn't open file '"<<filename<<"'";
   
   cerr<<"partitions-supported: Loading trees from '"<<filename<<"'...\n";
-  return tree_sample(file,skip,max,subsample);
+  return tree_sample(file,skip,subsample,max);
 }
 
 int main(int argc,char* argv[]) 
