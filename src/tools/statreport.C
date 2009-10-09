@@ -148,9 +148,9 @@ int get_burn_in(const vector<double>& data, double alpha,int n)
   return t;
 }
 
-string burnin_value(int b,const vector<double>& v)
+string burnin_value(int b,unsigned total)
 {
-  if (b<v.size()*2/3)
+  if (b < total*2/3)
     return convertToString(b);
   else 
     return "Not Converged!";
@@ -264,7 +264,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
       if (show_individual) {
 	cout<<"   "<<spacer<<"t @ "<<tau;
 	cout<<"   Ne = "<<values.size()/tau;
-	cout<<"   burnin = "<<b<<endl;
+	cout<<"   burnin = "<<burnin_value(b,values.size())<<endl;
       }
       worst_burnin.check_max(i,b);
     }
@@ -278,7 +278,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   cout<<"   Ne = "<<Ne;
   if (tables.size() == 1)
     worst_burnin.value = burnin[0][index];
-  cout<<"   burnin = "<<worst_burnin.value<<endl;
+  cout<<"   burnin = "<<burnin_value(worst_burnin.value,values.size())<<endl;
 
   // Print out Potential Scale Reduction Factors (PSRFs)
   double RNe = 1;
@@ -434,7 +434,7 @@ int main(int argc,char* argv[])
     }
 
     cout<<" Ne  >= "<<worst_Ne.value<<"    ("<<field_names[worst_Ne.index]<<")"<<endl;
-    cout<<" min burnin <= "<<worst_burnin.value<<"    ("<<field_names[worst_burnin.index]<<")"<<endl;
+    cout<<" min burnin <= "<<burnin_value(worst_burnin.value,tables.back().n_rows())<<"    ("<<field_names[worst_burnin.index]<<")"<<endl;
     if (tables.size() > 1) {
       cout<<" RCI <= "<<worst_RCI.value<<"    ("<<field_names[worst_RCI.index]<<")"<<endl;
       cout<<" RNe <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
