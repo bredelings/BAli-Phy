@@ -276,9 +276,12 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   cout<<"   "<<spacer<<"t @ "<<tau;
   double Ne = values.size()/tau;
   cout<<"   Ne = "<<Ne;
+  int individual_size_worst = values.size();
   if (tables.size() == 1)
     worst_burnin.value = burnin[0][index];
-  cout<<"   burnin = "<<burnin_value(worst_burnin.value,values.size())<<endl;
+  else
+    individual_size_worst = tables[worst_burnin.index].column(index).size();
+  cout<<"   burnin = "<<burnin_value(worst_burnin.value,individual_size_worst)<<endl;
 
   // Print out Potential Scale Reduction Factors (PSRFs)
   double RNe = 1;
