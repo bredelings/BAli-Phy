@@ -491,15 +491,14 @@ elsif (-e '1.out')
 }
 else {
     my @treelists = glob("*.treelist");
+    my @beast_trees = glob("*.trees");
+
     if ($personality eq "treefile") {
 	$out_file = "";
 	$n_chains = 1;
 	$parameters_file = "";
     }
-    elsif ($#treelists == -1) {
-	die "I can't find file '1.out' or 'C1.out' - are you running this in the right directory?";
-    }
-    else {
+    elsif ($#treelists >= 0) {
 	print "I can't find file '1.out' or 'C1.out' - analyzing $treelists[0] as a phylobayes file.\n";
 	# fixme - handle personality=treefile, to analyze raxml bootstrap trees.
 
@@ -511,6 +510,22 @@ else {
 	my $prefix = $trees_file;
 	$prefix =~ s/.treelist//;
 	$parameters_file = "$prefix.trace";
+    }
+    elsif ($#beast_trees >= 0) {
+	print "I can't find file '1.out' or 'C1.out' - analyzing $beast_trees[0] as a BEAST file.\n";
+	# fixme - handle personality=treefile, to analyze raxml bootstrap trees.
+
+	# fixme - I want to be able to handle partitions with no alignment info attached.
+	$personality = "beast";
+	$out_file = "";
+	$n_chains = 1;
+	$trees_file = $beast_trees[0];
+	my $prefix = $trees_file;
+	$prefix =~ s/.trees//;
+	$parameters_file = "$prefix.log";
+    }
+    else {
+	die "I can't find file '1.out' or 'C1.out' - are you running this in the right directory?";
     }
 }
 
@@ -745,10 +760,24 @@ for my $tree (@trees) {
 print "done.\n";
 
 # 5. Summarize scalar parameters
-if ($personality ne "treefile") {
+if ($personality eq "bali-phy") {
     print "\nSummarizing distribution of numerical parameters... ";
     if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport --ignore=iter $max_arg $skip $parameters_file > Results/Report`;
+	`statreport $subsample_string --ignore=iter $max_arg $skip $parameters_file > Results/Report`;
+    }
+    print "done.\n";
+}
+elsif ($personality eq "beast") {
+    print "\nSummarizing distribution of numerical parameters... ";
+    if (! more_recent_than("Results/Report",$parameters_file)) {
+	`statreport $subsample_string --ignore=state $max_arg $skip $parameters_file > Results/Report`;
+    }
+    print "done.\n";
+}
+elsif ($personality eq "phylobayes") {
+    print "\nSummarizing distribution of numerical parameters... ";
+    if (! more_recent_than("Results/Report",$parameters_file)) {
+	`statreport $subsample_string --ignore=#cycle --ignore=#treegen --ignore=time $max_arg $skip $parameters_file > Results/Report`;
     }
     print "done.\n";
 }
@@ -1046,6 +1075,9 @@ if ("$parameters_file")
 {
     open VARS, $parameters_file;
     my $header = <VARS>;
+    while ($header eq "" or substr($header,0,1) eq "#") {
+	$header = <VARS>;
+    }
     chomp $header;
     @var_names = split(/\t/,$header);
     close VARS;
@@ -1066,7 +1098,7 @@ if ("$parameters_file")
 	    $CI_high{$var} = $4;
 	    $line = <REPORT>;
 	    
-	    $line =~ /t @ (.+)\s+Ne = (.+)/;
+	    $line =~ /t @ (.+)\s+Ne = ([^ ]+)/;
 	    $ACT{$var} = $1;
 	    $Ne{$var} = $2;
 	}
@@ -1090,6 +1122,10 @@ if ("$parameters_file")
 	}
 	elsif ($personality eq "phylobayes") {
 	    `stats-select time '$var' --no-header < $parameters_file > $file1`;
+	}
+	elsif ($personality eq "beast")
+	{
+	    `stats-select state '$var' --no-header < $parameters_file > $file1`;
 	}
 	
 	my $file2 = $file1.".2";
