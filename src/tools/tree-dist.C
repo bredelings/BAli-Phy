@@ -269,6 +269,13 @@ namespace trees_format
       }
   }
 
+  string uppercase(string word) 
+  {
+    for(int i=0;i<word.size();i++)
+      word[i] = std::toupper(word[i]);
+    return word;
+  }
+
   void NEXUS::initialize()
   {
     // Check #NEXUS
@@ -292,22 +299,22 @@ namespace trees_format
       //      cerr<<"NEXUS: command = :"<<word<<":"<<"     in_trees_block = "<<in_trees_block<<endl;
       
       // Parse BEGIN TREES
-      if (word == "BEGIN" or word == "begin") {
+      if (uppercase(word) == "BEGIN") {
 	if (not get_word_NEXUS(word,pos,line)) continue;
-	if (word == "trees" or word == "TREES")
+	if (uppercase(word) == "TREES")
 	  in_trees_block = true;
       }
       
       if (not in_trees_block) continue;
       
       // Parse TRANSLATE ...
-      if (word == "translate" or word == "TRANSLATE") {
+      if (uppercase(word) == "TRANSLATE") {
 	parse_translate_command(line.substr(pos,line.size()-pos));
 	//      cerr<<"leaf names = "<<join(leaf_names,',')<<endl;
 	line.clear();
 	return;
       }
-      else if (word == "tree" or word == "TREE") {
+      else if (uppercase(word) == "TREE") {
 	try {
 	  get_word_NEXUS(word,pos,line);
 	  if (not (word == "="))
