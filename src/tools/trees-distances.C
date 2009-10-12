@@ -492,60 +492,59 @@ int main(int argc,char* argv[])
     }
     else if (analysis == "converged") 
     {
-      vector<double> alpha = split<double>(args["converged"].as<string>(),',');
-
-      if (alpha.size() < 1)
-	throw myexception()<<"analysis='converged': zero convergence levels specified!";
-
+      double alpha = args["converged"].as<double>();
+      if (alpha <= 0 or alpha >= 1)
+        throw myexception()<<"Converged quartile "<<alpha<<" is not between 0 and 1";
+      
+      if (alpha > 0.5) alpha = 1.0-alpha;
+      
       check_supplied_filenames(2,files);
-
+      
       tree_sample trees1(files[0],skip,subsample,max);
       tree_sample trees2(files[1],skip,subsample,max);
-
+      
       ublas::matrix<double> D2 = distances(trees2,metric_fn);
       valarray<double> distances(0.0, trees2.size());
       for(int i=0;i<D2.size1();i++)
-	for(int j=0;j<i;j++) {
-	  distances[i] += D2(i,j);
-	  distances[j] += D2(i,j);
+        for(int j=0;j<i;j++) {
+          distances[i] += D2(i,j);
+          distances[j] += D2(i,j);
 	}
       distances /= (trees2.size()-1);
 
-      vector<double> target = alpha;
-      for(int i=0;i<alpha.size();i++) {
-	if (alpha[i]<0)
-	  throw myexception()<<"analysis='converged': you cannot specify a convergence level "<<alpha[i]<<" < 0!";
-	if (alpha[i]>1)
-	  throw myexception()<<"analysis='converged': you cannot specify a convergence level "<<alpha[i]<<" > 1!";
-	target[i] = quantile(distances,alpha[i]);
-      }
+      double x1 = quantile(distances,alpha);
+      double x2 = quantile(distances,0.5);
+      double x3 = quantile(distances,1.0-alpha);
 
-      sort(alpha.begin(),alpha.end());
-      reverse(alpha.begin(),alpha.end());
-      sort(target.begin(),target.end());
-      reverse(target.begin(),target.end());
+      cout<<"Equilibrium: median = "<<x2<<"     target distances["<<alpha<<"] = ("<<x1<<", "<<x3<<")\n";
 
       double closest = distance(trees1[0],trees2,metric_fn);
-      for(int i=0;i<trees1.size() and target.size();i++) {
-	double d = distance(trees1[i],trees2,metric_fn);
-	closest = min(closest,d);
-	for(int j=0;j<target.size();) {
-	  if (d <= target[j]) {
-	    cout<<"converged ("<<alpha[j]<<") -> "<<(i+1)<<"      target distance = "<<target[j]<<endl;
-	    target.erase(target.begin()+j);
-	    alpha.erase(alpha.begin()+j);
-	  }
-	  else
-	    j++;
-	}
+      int direction = 0;
+      int required_hits = 4;
+      int t=1;
+      for(;t<trees1.size() and required_hits;t++) 
+      {
+        double d = distance(trees1[t],trees2,metric_fn);
+        closest = min(closest,d);
+
+        if (direction == 0 and d < x1) {
+          if (required_hits ==4)
+            cout<<"First hit at iteration "<<t<<endl;
+          required_hits--;
+          direction = !direction;
+        }
+        if (direction == 1 and d > x3) {
+          required_hits--;
+          direction = !direction;
+        }
       }
 
-      for(int i=0;i<target.size();i++) 
-	cout<<"Did not converge! ("<<alpha[i]<<" samples)     target distance = "<<target[i]<<endl;
+      if (not required_hits)
+        cout<<"Stabilized ["<<alpha<<"] at iteration "<<t<<endl;
+      else
+        cout<<"Did not converge! (Hit "<<(required_hits-4)<<" boundaries.)";
 
-      if (target.size())
-	cout<<"The closest we got was "<<closest<<endl;
-
+      cout<<"The closest we got to the equilibrium was "<<closest<<endl;
     }
     else
       throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";
