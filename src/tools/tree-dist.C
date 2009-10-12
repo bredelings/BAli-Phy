@@ -151,6 +151,28 @@ namespace trees_format
     return is;
   }
 
+  string strip_NEXUS_comments(const string& s)
+  {
+    string s2;
+    s2.resize(s.size());
+
+    bool in_comment = false;
+
+    int j=0;
+    for(int i=0;i<s.size();i++)
+    {
+      if (s[i] == '[')
+	in_comment = true;
+      else if (s[i] == ']')
+	in_comment = false;
+      else if (not in_comment)
+	s2[j++] = s[i];
+    }
+
+    s2.resize(j);
+    return s2;
+  }
+
   void NEXUS_skip_ws(int& i, const string& s)
   {
     static const string whitespace = "\t\n\r ";
@@ -214,6 +236,13 @@ namespace trees_format
     return words;
   }
 
+  string uppercase(string word) 
+  {
+    for(int i=0;i<word.size();i++)
+      word[i] = std::toupper(word[i]);
+    return word;
+  }
+
   bool NEXUS::next_tree_(Tree& T,int& r)
   {
     if (not line.size())
@@ -223,7 +252,7 @@ namespace trees_format
       string word;
       int pos=0;
       get_word_NEXUS(word,pos,line);
-      if (word == "end" or word == "END") {
+      if (uppercase(word) == "END") {
 	file->setstate(std::ios::badbit);
 	return false;
       }
@@ -234,10 +263,11 @@ namespace trees_format
       }
       NEXUS_skip_ws(pos,line);
       
+      string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos));
       if (leaf_names.size())
-	r = T.parse_with_names(line.substr(pos,line.size()-pos),leaf_names);
+	r = T.parse_with_names(t, leaf_names);
       else
-	r = T.parse_no_names(line.substr(pos,line.size()-pos));
+	r = T.parse_no_names(t);
     }
     catch (std::exception& e) {
       cerr<<" Error! "<<e.what()<<endl;
@@ -267,13 +297,6 @@ namespace trees_format
 
 	if (i>0) assert(words[i*3-1] == ",");
       }
-  }
-
-  string uppercase(string word) 
-  {
-    for(int i=0;i<word.size();i++)
-      word[i] = std::toupper(word[i]);
-    return word;
   }
 
   void NEXUS::initialize()
@@ -321,7 +344,8 @@ namespace trees_format
 	    get_word_NEXUS(word,pos,line);
 	  NEXUS_skip_ws(pos,line);
 	  SequenceTree T;
-	  T.parse(line.substr(pos,line.size()-pos));
+	  string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos));
+	  T.parse(t);
 	  leaf_names = T.get_sequences();
 	  std::sort(leaf_names.begin(),leaf_names.end());
 	  return;
