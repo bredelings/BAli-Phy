@@ -9,6 +9,8 @@
 
 #include <boost/program_options.hpp>
 
+using boost::dynamic_bitset;
+
 namespace po = boost::program_options;
 using po::variables_map;
 
@@ -139,6 +141,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree", value<string>(),"tree to re-root")
     ("skip",value<int>()->default_value(0),"number of tree samples to skip")
     ("max",value<int>(),"maximum number of tree samples to read")
+    ("simple","Ignore all branches not in the query tree")
     ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
     ("var","report standard deviation of branch lengths instead of mean")
     ("no-node-lengths","ignore branches not in the specified topology")
@@ -216,6 +219,81 @@ void accum_branch_lengths_same_topology::operator()(const SequenceTree& T)
     n_matches++;
 }
 
+
+struct accum_branch_lengths_ignore_topology: public accumulator<SequenceTree>
+{
+  int n_samples;
+  valarray<int> n_matches;
+
+  SequenceTree Q;
+
+  valarray<double> m1;
+  valarray<double> m2;
+
+  void operator()(const SequenceTree&);
+
+  void finalize() 
+  {
+    if (n_samples == 0)
+      throw myexception()<<"No trees were read in!";
+  
+    for(int i=0;i<n_matches.size();i++) 
+      if (n_matches[i] > 0) {
+	m1[i] /= n_matches[i];
+	m2[i] /= n_matches[i];
+      }
+      else {
+	m1[i] = 0;
+	m2[i] = 0;
+      }
+
+    m2 -= m1*m1;
+    m2 = sqrt(m2);
+  }
+
+  accum_branch_lengths_ignore_topology(const SequenceTree& T)
+    :
+    n_samples(0),
+    n_matches(0, T.n_branches()),
+    Q(T),
+    m1(0.0, Q.n_branches()),
+    m2(0.0, Q.n_branches())
+  {}
+};
+
+void accum_branch_lengths_ignore_topology::operator()(const SequenceTree& T)
+{
+  n_samples++;
+  for(int b1=0;b1<Q.n_branches();b1++)
+  {
+    // this is a complete waste of CPU time.
+    dynamic_bitset<> bp1 = branch_partition(Q,b1);
+    if (not bp1[0]) bp1.flip();
+
+    // search for Q.branch(b1) in tree T
+    int b2 = -1;
+    for(int i=0;i<T.n_branches();i++) 
+    {
+      dynamic_bitset<> bp2 = branch_partition(T,i);
+      if (not bp2[0]) bp2.flip();
+
+      if (bp1 == bp2) {
+	b2 = i;
+	break;
+      }
+    }
+
+    if (b2 != -1) {
+      double L = T.branch(b2).length();
+      m1[b1] += L;
+      m2[b1] += L*L;
+      n_matches[b1]++;
+    }
+  }
+}
+
+
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -240,6 +318,15 @@ int main(int argc,char* argv[])
       bf[b] = Q.branch(b).length();
 
     //-------- Read in the tree samples --------//
+    if ( args.count("simple") ) {
+      accum_branch_lengths_ignore_topology A(Q);
+      scan_trees(std::cin,skip,subsample,max,A);
+      for(int b=0;b<B;b++)
+	Q.branch(b).set_length(A.m1[b]);
+      cout<<Q.write_with_bootstrap_fraction(bf,true)<<endl;
+      exit(0);
+    }
+
     accum_branch_lengths_same_topology A(Q);
 
     try {
