@@ -100,7 +100,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("remove-duplicates","[matrix]: disallow zero distances  between points.")
     ("max-lag",value<int>(),"[autocorrelation]: max lag to consider.")
     ("CI",value<double>()->default_value(0.95),"Confidence interval size.")
-    ("converged",value<string>()->default_value("0.50"),"Comma-separated quantiles of distance required for converged? (smaller is more strict).")
+    ("converged",value<double>()->default_value(0.05),"Comma-separated quantiles of distance required for converged? (smaller is more strict).")
     ("mean", "Show mean and standard deviation")
     ("median", "Show median and confidence interval")
     ("minmax", "Show minumum and maximum distances")
@@ -341,7 +341,12 @@ int main(int argc,char* argv[])
     if (analysis == "matrix") 
     {
       check_supplied_filenames(1,files);
-      tree_sample trees(files[0],skip,subsample,max);
+      tree_sample trees;
+      if (files[0] == "-")
+	trees = tree_sample(std::cin,skip,subsample,max);
+      else
+	trees = tree_sample(files[0],skip,subsample,max);
+      //      tree_sample trees(files[0],skip,subsample,max);
 
       ublas::matrix<double> D = distances(trees,metric_fn);
 
@@ -495,9 +500,9 @@ int main(int argc,char* argv[])
       double alpha = args["converged"].as<double>();
       if (alpha <= 0 or alpha >= 1)
         throw myexception()<<"Converged quartile "<<alpha<<" is not between 0 and 1";
-      
+
       if (alpha > 0.5) alpha = 1.0-alpha;
-      
+
       check_supplied_filenames(2,files);
       
       tree_sample trees1(files[0],skip,subsample,max);
