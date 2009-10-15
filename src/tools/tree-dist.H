@@ -224,6 +224,7 @@ public:
   operator std::vector<tree_record>& () {return trees;}
   operator const std::vector<tree_record>& () const {return trees;}
 
+  tree_sample() {}
   tree_sample(std::istream&,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
   tree_sample(const std::string& filename,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
 };
