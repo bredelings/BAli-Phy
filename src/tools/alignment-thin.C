@@ -87,6 +87,9 @@ std::pair<int,int> argmin(ublas::matrix<int>& M)
   return std::pair<int,int>(m1,m2);
 }
 
+
+/// Find a pair m1,m2 such that D(m1,m2) is smallest among the sequences not yet removed (keep[]==0) and such that 
+/// m1 is not protected (keep[m1]==
 std::pair<int,int> argmin(ublas::matrix<int>& M, const vector<int>& keep)
 {
   double mvalue = -1;
@@ -94,7 +97,7 @@ std::pair<int,int> argmin(ublas::matrix<int>& M, const vector<int>& keep)
   int m2 = -1;
 
   for(int i=0;i<M.size1();i++)
-    if (keep[i])
+    if (keep[i] == 1) // present, but not protected
       for(int j=0;j<M.size2();j++)
 	if (i != j and keep[j])
 	  if (M(i,j) < mvalue or m1 == -1) {
@@ -290,29 +293,10 @@ int main(int argc,char* argv[])
       exit(0);
     }
 
-    vector<int> keep(A.n_sequences(),1);
-
-    //----------------- remove by length ------------------//
-
-    if (args.count("longer-than"))
-    {
-      unsigned cutoff = args["longer-than"].as<unsigned>();
-      
-      for(int i=0;i<A.n_sequences();i++)
-	if (AL[i] <= cutoff)
-	  keep[i] = 0;
-    }
-
-    if (args.count("shorter-than"))
-    {
-      unsigned cutoff = args["shorter-than"].as<unsigned>();
-      
-      for(int i=0;i<A.n_sequences();i++)
-	if (AL[i] >= cutoff)
-	  keep[i] = 0;
-    }
-
     //--------------------- keep -------------------------//
+
+    // By default every sequence has status 1 which means, removeable, but not removed.
+    vector<int> keep(A.n_sequences(),1);
 
     vector<string> protect;
     if (args.count("keep"))
@@ -323,6 +307,26 @@ int main(int argc,char* argv[])
       if (p == -1)
 	throw myexception()<<"keep: can't find sequence '"<<protect[i]<<"' to keep.";
       keep[p] = 2;
+    }
+
+    //----------------- remove by length ------------------//
+
+    if (args.count("longer-than"))
+    {
+      unsigned cutoff = args["longer-than"].as<unsigned>();
+      
+      for(int i=0;i<A.n_sequences();i++)
+	if (AL[i] <= cutoff and keep[i] < 2)
+	  keep[i] = 0;
+    }
+
+    if (args.count("shorter-than"))
+    {
+      unsigned cutoff = args["shorter-than"].as<unsigned>();
+      
+      for(int i=0;i<A.n_sequences();i++)
+	if (AL[i] >= cutoff and keep[i] < 2)
+	  keep[i] = 0;
     }
 
     //-------------------- remove ------------------------//
@@ -466,7 +470,7 @@ int main(int argc,char* argv[])
 	if (MD >= cutoff) break;
 	
 	// remove the sequence with the shorter comment, if they are the same
-	if (D(p1,p2) == D(p2,p1) and A.seq(p1).comment.size() > A.seq(p2).comment.size())
+	if (D(p1,p2) == D(p2,p1) and keep[p2]< 2 and A.seq(p1).comment.size() > A.seq(p2).comment.size())
 	  std::swap(p1,p2);
 	
 	// mark as removed
