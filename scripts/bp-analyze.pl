@@ -1075,7 +1075,7 @@ if ("$parameters_file")
 {
     open VARS, $parameters_file;
     my $header = <VARS>;
-    while ($header eq "" or substr($header,0,1) eq "#") {
+    while ($header eq "" or substr($header,0,2) eq "# ") {
 	$header = <VARS>;
     }
     chomp $header;
