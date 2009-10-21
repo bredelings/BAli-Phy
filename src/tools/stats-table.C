@@ -27,8 +27,14 @@ vector<string> read_header(std::istream& file)
   while (file) 
   {
     getline(file,line);
-    if (line.size() and line[0] != '#')
-      break;
+
+    // Skip comments lines - but what is a comment line?
+    if (line.size() and line[0] == '#') {
+
+      // If the '#' is not followed by a space, then its not a comment
+      if (line.size() >= 2 and line[1] != ' ')
+	break;
+    }
   }
 
   return parse_header(line);
