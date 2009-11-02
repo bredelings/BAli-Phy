@@ -965,17 +965,18 @@ alignment get_alignment(const ublas::matrix<int>& M, const alignment& A1)
   alignment A2 = A1;
   A2.changelength(M.size1());
 
-  // get letters information
+  // Reconstruct the list of letters
   vector<vector<int> > sequences;
   for(int i=0;i<A1.n_sequences();i++) {
     vector<int> sequence;
     for(int c=0;c<A1.length();c++) {
-      if (not A1.gap(c,i))
+      if (A1.character(c,i))
 	sequence.push_back(A1(c,i));
     }
     sequences.push_back(sequence);
   }
 
+  // Plug the letters into their slots
   for(int i=0;i<A2.n_sequences();i++) {
     for(int c=0;c<A2.length();c++) {
       int index = M(c,i);
