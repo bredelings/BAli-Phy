@@ -619,7 +619,7 @@ int main(int argc,char* argv[])
     vector<string> files = args["files"].as< vector<string> >();
     vector< vector<string> > filenames(files.size());
     for(int i=0;i<files.size();i++) 
-      filenames[i] = split(files[i],',');
+      filenames[i] = split(files[i],':');
 
     tree_sample_collection tree_dists(filenames,skip,subsample,max);
 
