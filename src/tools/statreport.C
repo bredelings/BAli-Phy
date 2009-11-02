@@ -358,6 +358,7 @@ int main(int argc,char* argv[])
     int skip = args["skip"].as<int>();
 
     int subsample=args["sub-sample"].as<int>();
+    skip /= subsample; //FIXME!  This is a side-effect of passing in 0 below.
 
     int max = -1;
     if (args.count("max"))
