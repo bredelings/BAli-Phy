@@ -184,7 +184,7 @@ RGB DNA_color(char aa) {
     return yellow;
   else if (strchr("C",aa))
     return blue;
-  else if (strchr("-*+NYR ",aa))
+  else if (strchr("-*+NYRWS ",aa))
     return grey;
   
   throw myexception()<<"Letter '"<<aa<<" does not appear to be an nucleic acid";
