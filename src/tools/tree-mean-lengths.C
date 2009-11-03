@@ -141,6 +141,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree", value<string>(),"tree to re-root")
     ("skip",value<int>()->default_value(0),"number of tree samples to skip")
     ("max",value<int>(),"maximum number of tree samples to read")
+    ("prune",value<string>(),"Comma-separated taxa to remove")
     ("simple","Ignore all branches not in the query tree")
     ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
     ("var","report standard deviation of branch lengths instead of mean")
@@ -308,6 +309,13 @@ int main(int argc,char* argv[])
 
     int subsample = args["sub-sample"].as<int>();
 
+    vector<string> prune;
+    if (args.count("prune")) {
+      string p = args["prune"].as<string>();
+      prune = split(p,',');
+    }
+      
+
     //----------- Read the topology -----------//
     SequenceTree Q = load_T(args);
     standardize(Q);
@@ -320,7 +328,7 @@ int main(int argc,char* argv[])
     //-------- Read in the tree samples --------//
     if ( args.count("simple") ) {
       accum_branch_lengths_ignore_topology A(Q);
-      scan_trees(std::cin,skip,subsample,max,A);
+      scan_trees(std::cin,skip,subsample,max,prune,A);
       for(int b=0;b<B;b++)
 	Q.branch(b).set_length(A.m1[b]);
       cout<<Q.write_with_bootstrap_fraction(bf,true)<<endl;
@@ -330,7 +338,7 @@ int main(int argc,char* argv[])
     accum_branch_lengths_same_topology A(Q);
 
     try {
-      scan_trees(std::cin,skip,subsample,max,A);
+      scan_trees(std::cin,skip,subsample,max,prune,A);
     }
     catch (std::exception& e) 
     {

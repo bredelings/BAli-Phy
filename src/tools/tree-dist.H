@@ -230,5 +230,6 @@ public:
 };
 
 void scan_trees(std::istream&,int skip,int subsample,int max,accumulator<SequenceTree>& op);
+void scan_trees(std::istream&,int skip,int subsample,int max,const std::vector<std::string>& prune,accumulator<SequenceTree>& op);
 
 #endif

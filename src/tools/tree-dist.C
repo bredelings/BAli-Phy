@@ -724,3 +724,34 @@ void scan_trees(istream& file,int skip,int subsample,int max,
   //---------------------- Finalize ----------------------//
   op.finalize();
 }
+
+void scan_trees(istream& file,int skip,int subsample,int max, const vector<string>& prune,
+		accumulator<SequenceTree>& op)
+{
+  using namespace trees_format;
+
+  //----------- Construct File Reader / Filter -----------//
+  shared_ptr<reader_t> trees(new Newick_or_NEXUS(file));
+
+  if (skip > 0)
+    trees = shared_ptr<reader_t>(new Skip(skip,*trees));
+
+  if (subsample > 1)
+    trees = shared_ptr<reader_t>(new Subsample(subsample,*trees));
+
+  if (max > 0)
+    trees = shared_ptr<reader_t>(new Max(max,*trees));
+
+  trees = shared_ptr<reader_t>(new Fixroot(*trees));
+
+  if (prune.size())
+    trees = shared_ptr<reader_t>(new Prune(prune,*trees));
+
+  //------------------- Process Trees --------------------//
+  RootedSequenceTree T;
+  while (trees->next_tree(T))
+    op(T);
+
+  //---------------------- Finalize ----------------------//
+  op.finalize();
+}
