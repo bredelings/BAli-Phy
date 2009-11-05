@@ -32,9 +32,9 @@ class Multi_Likelihood_Cache: public std::vector< std::vector< Matrix > >
 {
 
 protected:
-  int C; // # the (maximum) number of columns available per branch
-  int M; // # models
-  int S; // # states
+  int C; // the (maximum) number of columns available per branch
+  int M; // number of models
+  int S; // number of states
 
   /// mapping[token][branch] -> location
   std::vector<std::vector<int> > mapping;
@@ -156,6 +156,9 @@ public:
 
   /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
   void invalidate_branch(const Tree&,int b);
+
+  /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
+  void invalidate_one_branch(int b);
 
   /// Mark cached conditional likelihoods for all branches after b or b* invalid.
   void invalidate_branch_alignment(const Tree&,int b);
