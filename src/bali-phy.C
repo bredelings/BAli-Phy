@@ -683,6 +683,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 //FIXME - how to record that the user said '--fix A' ?
 
+/// Parse command line arguments of the form --fix X=x or --unfix X=x or --set X=x and modify P
 void set_parameters(Parameters& P, const variables_map& args) 
 {
   //-------------- Specify fixed parameters ----------------//
@@ -756,6 +757,7 @@ void set_parameters(Parameters& P, const variables_map& args)
   P.parameters(parameters);
 }
 
+/// Close the files.
 void close_files(vector<ofstream*>& files)
 {
   for(int i=0;i<files.size();i++) {
@@ -765,6 +767,7 @@ void close_files(vector<ofstream*>& files)
   files.clear();
 }
 
+/// Delete the files specified by 'filenames'
 void delete_files(vector<string>& filenames)
 {
   for(int i=0;i<filenames.size();i++)
@@ -836,6 +839,7 @@ string hostname()
 }
 #endif
 
+/// Create the directory for output files and return the name
 string init_dir(const variables_map& args)
 {
   vector<string> alignment_filenames = args["align"].as<vector<string> >();
@@ -852,7 +856,7 @@ string init_dir(const variables_map& args)
   return dirname;
 }
 
-
+/// Create output files for thread 'proc_id' in directory 'dirname'
 vector<ostream*> init_files(int proc_id, const string& dirname,
 			    int argc,char* argv[],int n_partitions)
 {
@@ -908,7 +912,7 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
   return files;
 }
 
-
+/// A stringbuf that write to 2 streambufs
 class teebuf: public std::stringbuf
 {
 protected:
@@ -1021,6 +1025,7 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 }
 
 
+/// Check that we can find the data directory, return true if we can.
 bool check_data_dir(const string& dir_name)
 {
   fs::path data_dir = dir_name;
@@ -1044,6 +1049,7 @@ bool check_data_dir(const string& dir_name)
   return true;
 }
 
+/// Initialize the default random number generator and return the seed
 unsigned long init_rng_and_get_seed(const variables_map& args)
 {
   unsigned long seed = 0;
@@ -1057,6 +1063,7 @@ unsigned long init_rng_and_get_seed(const variables_map& args)
   return seed;
 }
 
+/// Replace negative or zero branch lengths with saner values.
 void sanitize_branch_lengths(SequenceTree& T)
 {
   double min_branch = 0.000001;
