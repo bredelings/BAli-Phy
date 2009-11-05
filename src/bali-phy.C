@@ -1439,12 +1439,50 @@ void die_on_signal(int sig)
   exit(3);
 }
 
-/* FIXME - stop outputting non-errors to cerr */
-/* Then stop suppressing cerr to early */
+void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const Parameters& P,const variables_map& args)
+{
+  //-------- Log some stuff -----------//
+  vector<string> filenames = args["align"].as<vector<string> >();
+  for(int i=0;i<filenames.size();i++) {
+    out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
+    out_cache<<"alphabet"<<i+1<<" = "<<P[i].get_alphabet().name<<endl<<endl;
+  }
 
-/* Only output summaries when everything is ready.
-   We were avoiding this before to catch errors, but:
-    New Strategy: only do that if (log_verbose). */
+  for(int i=0;i<P.n_data_partitions();i++) {
+    out_cache<<"smodel-index"<<i+1<<" = "<<P.get_smodel_index_for_partition(i)<<endl;
+    out_cache<<"imodel-index"<<i+1<<" = "<<P.get_imodel_index_for_partition(i)<<endl;
+  }
+  out_cache<<endl;
+
+  if (not P.smodel_full_tree)
+    out_cache<<"substitution model: *-tree"<<endl;
+
+  for(int i=0;i<P.n_smodels();i++)
+    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
+
+  for(int i=0;i<P.n_imodels();i++)
+    out_cache<<"indel model"<<i+1<<" = "<<P.IModel(i).name()<<endl<<endl;
+
+  out_screen<<"\n";
+  for(int i=0;i<P.n_data_partitions();i++) {
+    int s_index = P.get_smodel_index_for_partition(i);
+    out_screen<<"#"<<i+1<<": subst ~ "<<P[i].SModel().name()<<" ("<<s_index+1<<")    ";
+
+    int i_index = P.get_imodel_index_for_partition(i);
+    string i_name = "none";
+    if (i_index != -1)
+      i_name = P[i].IModel().name();
+    out_screen<<" indel ~ "<<i_name<<" ("<<i_index+1<<")"<<endl;;
+  }
+  out_screen<<"\n";
+
+  if (P.branch_prior_type == 0)
+    out_both<<"Branch length mean: Exponential(mu)"<<endl;
+  else
+    out_both<<"Branch length mean: Gamma(0.5, 2*mu)"<<endl;
+  out_both<<" mu ~ Exponential(1)"<<endl;
+  out_both<<endl;
+}
 
 int main(int argc,char* argv[])
 { 
@@ -1512,10 +1550,6 @@ int main(int argc,char* argv[])
       load_As_and_random_T(args,A,T);
 
     vector<string> filenames = args["align"].as<vector<string> >();
-    for(int i=0;i<filenames.size();i++) {
-      out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
-      out_cache<<"alphabet"<<i+1<<" = "<<A[i].get_alphabet().name<<endl<<endl;
-    }
     for(int i=0;i<A.size();i++) {
       check_alignment_names(A[i]);
       check_alignment_values(A[i],filenames[i]);
@@ -1567,45 +1601,11 @@ int main(int argc,char* argv[])
 
     set_parameters(P,args);
 
+    log_summary(out_cache,out_screen,out_both,P,args);
+
     //-------------Create the Parameters object--------------//
     if (args["prior-branch"].as<string>() == "Gamma")
       P.branch_prior_type = 1;
-
-    //-------- Log some stuff -----------//
-    for(int i=0;i<P.n_data_partitions();i++) {
-      out_cache<<"smodel-index"<<i+1<<" = "<<smodel_mapping[i]<<endl;
-      out_cache<<"imodel-index"<<i+1<<" = "<<imodel_mapping[i]<<endl;
-    }
-    out_cache<<endl;
-
-    if (not P.smodel_full_tree)
-      out_cache<<"substitution model: *-tree"<<endl;
-
-    for(int i=0;i<P.n_smodels();i++) 
-      out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
-
-    for(int i=0;i<P.n_imodels();i++) 
-      out_cache<<"indel model"<<i+1<<" = "<<P.IModel(i).name()<<endl<<endl;
-
-    out_screen<<"\n";
-    for(int i=0;i<P.n_data_partitions();i++) {
-      int s_index = P.get_smodel_index_for_partition(i);
-      out_screen<<"#"<<i+1<<": subst ~ "<<P[i].SModel().name()<<" ("<<s_index+1<<")    ";
-
-      int i_index = P.get_imodel_index_for_partition(i);
-      string i_name = "none";
-      if (i_index != -1)
-	i_name = P[i].IModel().name();
-      out_screen<<" indel ~ "<<i_name<<" ("<<i_index+1<<")"<<endl;;
-    }
-    out_screen<<"\n";
-
-    if (P.branch_prior_type == 0)
-      out_both<<"Branch length mean: Exponential(mu)"<<endl;
-    else 
-      out_both<<"Branch length mean: Gamma(0.5, 2*mu)"<<endl;
-    out_both<<" mu ~ Exponential(1)"<<endl;
-    out_both<<endl;
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
