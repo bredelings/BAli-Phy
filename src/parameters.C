@@ -76,7 +76,7 @@ void data_partition::recalc_smodel()
   MC.recalc(*T,*SModel_);
 }
 
-void data_partition::setlength(int b, double l)
+void data_partition::setlength_no_invalidate_LC(int b, double l)
 {
   MC.setlength(b,l,*T,*SModel_); 
 
@@ -93,6 +93,11 @@ void data_partition::setlength(int b, double l)
     cached_alignment_prior.invalidate();
     cached_alignment_prior_for_branch[b].invalidate();
   }
+}
+
+void data_partition::setlength(int b, double l)
+{
+  setlength_no_invalidate_LC(b,l);
   LC.invalidate_branch(*T,b);
 }
 
@@ -554,6 +559,13 @@ const Model& Parameters::SubModels(int i) const
     i -= IModels.size();
 
   return *data_partitions[i];
+}
+
+void Parameters::setlength_no_invalidate_LC(int b,double l) 
+{
+  T->branch(b).set_length(l);
+  for(int i=0;i<data_partitions.size();i++) 
+    data_partitions[i]->setlength_no_invalidate_LC(b,l);
 }
 
 void Parameters::setlength(int b,double l) 

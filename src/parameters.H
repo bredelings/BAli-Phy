@@ -117,6 +117,7 @@ public:
   substitution::MultiModel& SModel() {return *SModel_;}
 
   void setlength(int b, double l);
+  void setlength_no_invalidate_LC(int b, double l);
 
   int seqlength(int n) const;
 
@@ -237,6 +238,7 @@ public:
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 
+  void setlength_no_invalidate_LC(int b,double l); 
   
   /// Recalculate all the cached transition matrices
   void recalc_imodels();
