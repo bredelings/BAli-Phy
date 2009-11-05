@@ -11,12 +11,10 @@ P8. Allow a Gamma branch prior [DONE]
 P10. C20 CAT model
 P11. Make post-processing handle multiple chains, assess convergence.
 P12. Speed up likelihood calculations when there are lots of gaps?
-[done] P13. Handle reading NEXUS tree files.
 P14. Instead of setting things equal to one in substitution.C, 
      make a generic 1's matrix, and set things equal to that matrix.
 P15. Make matcaches (a) [b][m] instead of [m][b] and (b) be able to invalidate indivual branches.     
 P16. Generate better mixing diagnostics
-P17. Speed up trees-distances so that we can compare more distributions, or distributions with more trees.
 
 P1. Implement the multi-branch SPR search
  * Figure out how to handle the branch-naming: we can't properly handle SPR to leaf branches.
@@ -53,6 +51,7 @@ P10. Make CAT models faster.
  - Can I avoid recalculating exp_a_t so often?
 
 P5. [Post-processing:]
+  + We actually spend a lot of time DRAWING the mc trees.
   + Speed up estimating mean branch lengths.
     - Stop requiring the binary tree to exactly extend query tree.
       + (Because this requirement is too stringent, for large trees.)
@@ -62,10 +61,14 @@ P5. [Post-processing:]
 
   + When printing SRQ plots, indicate the LOD range (or its abs?).
   + Make trees-bootstrap less RAM-intensive: don't cache so many things.
+  + We actually need to compute:
+    * Bootstrap sample of LOD
+    * Bootstrap sample of PP
 
 P11. [Summarize multiple chains]
   + Modify statreport to take multiple (identical) files for estimation of
     means, ACT, etc.
+  + Make bp-analyze handle multiple INPUT directories!
 
 P17. [Speed up trees-distances]
  + We should be able to ignore splits for leaf branches.
@@ -73,6 +76,43 @@ P17. [Speed up trees-distances]
  + What if we wanted topology_record to record average branch lengths?  Can we do that?
  + We could sort the branches of the tree by bit-order, to make it easy to find which ones match.
    - This should substantially reduce the N^2 cost.
+
+P6. What different tasks do I want?  How can I make a generic tree processor?
+ + Find the PP>X consensus tree
+ + Find the PP>X splits
+ + Find the PP>X partial splits
+ + Annotate branches of a Query tree with their lengths from a tree sample
+ + Annotate branches of a Query tree with their PP/BF   from a tree sample
+
+consensus ->
+ * x[i].topology
+ * x[i].PP.topology
+ * x[i].mtree
+ * x[i]-mctree.svg
+ * x[i]-mctree.pdf
+ * x[i].ltree
+ * x[i].tree
+ * x[i].PP.tree
+ * MAP.topology
+ * MAP.ltree
+ * MAP.tree
+ * x[i]-tree.pdf
+ * x[i]-tree.svg
+ * partitions (supported partitions)
+ * partitions.pred
+ * partitions.bs
+ * c-levels.plot
+ * c-levels.svg
+ * partitions.SRQ
+ * c50.SRQ
+ * {c50,partitions}.SRQ.png
+ * # of topologies in 95% interval
+ ? # of SPLIT in 95% "interval"
+
+Also, the easiest time to calculate branch lengths would be when we
+are looking up the branches in the first place. Do we really want to
+have a "calculate branch lengths" and a "don't calculate branch
+lengths" option on estimating partition support? 
 
 
 Why does INV+Modulated+gamma[4]+INV crash?
@@ -813,6 +853,8 @@ I. fix: gamma+frequency+INV
 [DONE] Allow a gamma branch prior.
 
 [DONE] Read NEXUS tree files.
+
+[DONE] P17. Speed up trees-distances so that we can compare more distributions, or distributions with more trees.
 
 *IDEAS*
 
