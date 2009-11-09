@@ -406,6 +406,7 @@ my $min_support;
 my $muscle = 0;
 my $probcons = 0;
 my $sub_partitions=1;
+my $prune;
 
 my $speed=1;
 
@@ -427,6 +428,9 @@ while ($#ARGV > -1)
     }
     elsif ($arg =~ /--subsample=(.+)/) {
 	$subsample = $1;
+    }
+    elsif ($arg =~ /--prune=(.+)/) {
+	$prune = $1;
     }
     elsif ($arg =~ /--max=(.+)/) {
 	$max_iter = $1;
@@ -684,7 +688,9 @@ print "Summarizing topology distribution ... ";
 if (! more_recent_than("Results/consensus",$trees_file)) {
     my $sub_string = "--sub-partitions";
     $sub_string = "" if (!$sub_partitions);
-    `trees-consensus $trees_file $max_arg $min_support_arg $skip $sub_string $consensus_arg $subsample_string > Results/consensus`;
+    my $prune_arg = "";
+    $prune_arg = "--ignore $prune" if (defined($prune));
+    `trees-consensus $trees_file $max_arg $min_support_arg $skip $sub_string $consensus_arg $subsample_string $prune_arg > Results/consensus`;
 }
 print "done.\n";
 
@@ -719,8 +725,10 @@ for my $cvalue (@tree_consensus_values)
     }
     
     print "$tree ";
+    my $prune_arg = "";
+    $prune_arg = "--prune $prune" if defined($prune);
     if (! more_recent_than("Results/$tree.ltree",$trees_file)) {
-    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg $skip $subsample_string < $trees_file > Results/$tree.ltree`;
+    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg < $trees_file > Results/$tree.ltree`;
     }
     if (! more_recent_than("Results/$tree.tree","Results/$tree.ltree")) {
     `head -n1 Results/$tree.ltree > Results/$tree.tree`;
@@ -738,7 +746,9 @@ if (! more_recent_than("Results/MAP.topology","Results/consensus")) {
 }
 print " Calculating branch lengths for MAP tree... ";
 if (! more_recent_than("Results/MAP.ltree",$trees_file)) {
-    `tree-mean-lengths Results/MAP.topology --safe $max_arg $skip $subsample_string < $trees_file > Results/MAP.ltree`;
+    my $prune_arg = "";
+    $prune_arg = "--prune $prune" if defined($prune);
+    `tree-mean-lengths Results/MAP.topology $prune_arg --safe $max_arg $skip $subsample_string < $trees_file > Results/MAP.ltree`;
 }
 if (! more_recent_than("Results/MAP.tree","Results/MAP.ltree")) {
     `head -n1 Results/MAP.ltree > Results/MAP.tree`;
