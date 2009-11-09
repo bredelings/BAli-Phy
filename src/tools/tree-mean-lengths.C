@@ -234,6 +234,11 @@ struct accum_branch_lengths_same_topology: public accumulator<SequenceTree>
 
 void accum_branch_lengths_same_topology::operator()(const SequenceTree& T)
 {
+  if (not n_samples) {
+    if (T.n_leaves() != Q.n_leaves())
+      throw myexception()<<"Query tree has "<<Q.n_leaves()<<" leaves, but tree sample has "<<T.n_leaves()<<" leaves.";
+  }
+
   n_samples++;
   if (update_lengths(Q,T,m1,m2,n1))
     n_matches++;
