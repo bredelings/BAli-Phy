@@ -89,7 +89,7 @@ int main(int argc,char* argv[])
       throw myexception()<<"You may only specify frame 0, 1, or 2: "<<frame<<" is right out.";
     
     for(int i=0;i<sequences.size();i++) {
-      if (sequences.size() > frame)
+      if (sequences[i].size() > frame)
 	sequences[i].erase(sequences[i].begin(),sequences[i].begin()+frame);
       unsigned newsize = sequences[i].size();
       newsize -= newsize%3;
