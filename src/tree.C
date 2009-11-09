@@ -375,9 +375,10 @@ vector<int> Tree::prune_leaves(const vector<int>& remove)
   }
   assert(new_leaves == leaves.size() - remove.size());
   
-  /// Reconstruct everything from node names
+  // Reconstruct everything from node names
   reanalyze(node_remainder);
 
+  // Construct the map from new to old leaf names
   vector<int> mapping(new_leaves,-1);
   for(int i=0;i<leaves.size();i++)
     if (not do_remove[i])
