@@ -33,6 +33,10 @@ using std::istream;
 using boost::dynamic_bitset;
 using boost::shared_ptr;
 
+// FIXME: next_tree_(T) may invoke virtual functions of T that cause trouble.
+// EXAMPLE: T.prune_leaves( ) messeses with sequence names if not prevented by
+//          calling T.Tree::prune_leaves( ).
+
 namespace trees_format 
 {
   const vector<string>& reader_t::names() const
@@ -451,7 +455,7 @@ namespace trees_format
   {
     bool success = tfr->next_tree_(T,r);
     if (success and prune_index.size()) {
-      T.prune_leaves(prune_index);
+      T.Tree::prune_leaves(prune_index);
       // FIXME -- there has to be a more intelligent way to do this...
       r = T.n_nodes()-1;
     }
