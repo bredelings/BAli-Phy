@@ -839,6 +839,8 @@ void Tree::reanalyze(BranchNode* start) {
 /// Computes nodes_[] and branch_[] indices, and cached_partitions[]
 void Tree::recompute(BranchNode* start,bool recompute_partitions) 
 {
+  if (not start) return;
+
   n_leaves_ = 0;
   for(BN_iterator BN(start);BN;BN++) {
 
