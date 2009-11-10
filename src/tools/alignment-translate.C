@@ -33,6 +33,8 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+using boost::shared_ptr;
+
 //FIXME - make this handle un-aligned gaps...
 // diagnose sequences which are not a multiple of 3
 // look for reading frames?  start codons?
@@ -48,8 +50,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   all.add_options()
     ("help", "produce help message")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
-    ("alphabet",value<string>()->default_value("Codons"),"set to 'Codons+stop' to allow stop codons")
+    ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
     ("frame",value<int>()->default_value(0),"frame 0, 1, or 2")
+    ("reverse-complement","Just return the reverse complement")
     ;
 
   variables_map args;     
@@ -85,65 +88,69 @@ int main(int argc,char* argv[])
     //------- Convert sequences to specified reading frame --------//
     int frame = args["frame"].as<int>();
 
-    if (frame < 0 or frame > 2)
+    if (frame < -3 or frame > 3)
       throw myexception()<<"You may only specify frame 0, 1, or 2: "<<frame<<" is right out.";
+    bool reverse = (frame < 0);
+
+    frame = (frame+3)%3;
     
-    for(int i=0;i<sequences.size();i++) {
-      if (sequences[i].size() > frame)
-	sequences[i].erase(sequences[i].begin(),sequences[i].begin()+frame);
-      unsigned newsize = sequences[i].size();
-      newsize -= newsize%3;
-      sequences[i].resize(newsize);
-    }
-
-    //----------- Convert sequences to codons ------------//
+    //--------- Load alignment & determine RNA or DNA ----------//
     alignment A1;
-    A1.load(load_alphabets(args), sequences);
+    vector<shared_ptr<const alphabet> > alphabets;
+    alphabets.push_back(shared_ptr<const alphabet>(new DNA));
+    alphabets.push_back(shared_ptr<const alphabet>(new RNA));
+    A1.load(alphabets, sequences);
 
-    OwnedPointer<Codons> C = *dynamic_cast<const Codons*>(&A1.get_alphabet());
-    OwnedPointer<AminoAcids> AA = C->getAminoAcids();
+    OwnedPointer<Nucleotides> N(dynamic_cast<Nucleotides*>(A1.get_alphabet().clone()));
+    assert(N);
+
+    //------------------ Reverse Complement? -------------------//
+
+    if (args.count("reverse-complement")) {
+      cout<<reverse_complement(A1)<<endl;
+      exit(0);
+    }
+      
+    if (reverse) 
+      A1 = reverse_complement(A1);
+
+    //------- Construct the alphabets that we are using  --------//
+    string genetic_code_filename = "standard-code.txt";
+    if (args.count("genetic-code"))
+      genetic_code_filename = args["genetic-code"].as<string>();
+    genetic_code_filename = args["data-dir"].as<string>() + "/" + genetic_code_filename;
+
+    AminoAcidsWithStop AA;
+    Codons C(*N, AA, genetic_code_filename);
     
     //------- Convert sequence codons to amino acids  --------//
-    alignment A2(*AA);
-    for(int i=0;i<A1.n_sequences();i++) {
+    alignment A2(AA);
+
+    for(int i=0;i<A1.n_sequences();i++) 
+    {
       sequence S;
       S.name = A1.seq(i).name;
       S.comment = A1.seq(i).comment;
-      for(int column=0;column<A1.length();column++) {
-	int cc = A1(column,i);
-	int aa = alphabet::not_gap;
 
-	if (cc < C->size())
-	  aa = C->translate(cc);
-	else {
-	  vector<int> ccs;
-	  vector<int> aas;
-	  for(int i=0;i<C->size();i++)
-	    if (C->matches(i,cc))
-	      ccs.push_back(i);
-	  for(int i=0;i<ccs.size();i++)
-	    aas.push_back(C->translate(ccs[i]));
+      for(int column=frame;column<A1.length()-2;column+=3) 
+      {
+	int n0 = A1(column,i);
+	int n1 = A1(column+1,i);
+	int n2 = A1(column+2,i);
 
-	  vector<int> uniq_aas;
-	  for(int i=0;i<aas.size();i++)
-	    if (i == 0 or aas[i] != aas[i-1])
-	      uniq_aas.push_back(aas[i]);
+	int cc = C.get_triplet(n0,n1,n2);
 
-	  if (uniq_aas.size() == 1)
-	    aa = uniq_aas[0];
-	  //	  else
-	  //	    cerr<<"Codon class maps to "<<uniq_aas.size()<<" amino acids."<<endl;
-	}
+	int aa = C.translate(cc);
 
-	S += AA->lookup(aa);
+	S += AA.lookup(aa);
       }
       A2.add_sequence(S);
     }
 
-    std::cout<<A2<<std::endl;
+    cout<<A2<<endl;
   }
   catch (std::exception& e) {
-    std::cerr<<"alignment-translate: Error! "<<e.what()<<endl;
+    cerr<<"alignment-translate: Error! "<<e.what()<<endl;
     exit(1);
   }
   return 0;

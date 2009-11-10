@@ -272,6 +272,27 @@ alphabet::alphabet(const string& s,const vector<string>& letters,const string& m
     insert(letters[i]);
 }
 
+int Nucleotides::complement(int l) const
+{
+  assert(l >= -3);
+  assert(l < n_letter_classes());
+
+  switch (l) {
+  case 0: // A
+    return 1;
+  case 1: // G
+    return 0;
+  case 2: // T or U
+    return 3;
+  case 3: // C
+    return 2;
+  }
+  if (l < 0)
+    return l;
+  else 
+    return alphabet::not_gap;
+}
+
 Nucleotides::Nucleotides(const string& s, char c)
   :alphabet(s,"","N")
 {
@@ -325,11 +346,14 @@ void Triplets::setup_sub_nuc_table() {
   for(int i=0;i<sub_nuc_table.size();i++) {
     const string& codon = letter(i);
 
-    sub_nuc_table[i].resize(codon.length());
+    assert(codon.length() == 3);
+    sub_nuc_table[i].resize(3);
 
-    for(int j=0; j<codon.length(); j++) {
-      sub_nuc_table[i][j] = (*N)[ codon.substr(j,1) ];
-    }
+    int n0 = sub_nuc_table[i][0] = (*N)[ codon.substr(0,1) ];
+    int n1 = sub_nuc_table[i][1] = (*N)[ codon.substr(1,1) ];
+    int n2 = sub_nuc_table[i][2] = (*N)[ codon.substr(2,1) ];
+
+    codon_table[n0][n1][n2] = i;
   }
 }
 
@@ -444,6 +468,26 @@ valarray<double> get_codon_frequencies_from_independant_nucleotide_frequencies(c
     return fC;
 }
 
+int Triplets::get_triplet(int n1, int n2, int n3) const
+{
+  if (is_feature(n1) and is_feature(n2) and is_feature(n3)) 
+  {
+    if (is_letter(n1) and is_letter(n2) and is_letter(n3))
+      {
+	int index = codon_table[n1][n2][n3];
+	if (index == -1) 
+	  throw myexception()<<"get_triplet: Triplet is not in this alphabet";
+	return index;
+      }
+    else 
+      return alphabet::not_gap;
+  }
+  else if (n1 == alphabet::gap or n2 == alphabet::gap or n3 == alphabet::gap)
+    return alphabet::gap;
+  else
+    return alphabet::unknown;
+}
+
 valarray<double> Triplets::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {
 
   //--------- Level 1 pseudocount (nucleotides) ---------------//
@@ -459,7 +503,8 @@ valarray<double> Triplets::get_frequencies_from_counts(const valarray<double>& c
 }
 
 Triplets::Triplets(const Nucleotides& a)
-  :alphabet(string("Triplets of ")+a.name,getTriplets(a)),N(a)
+  :alphabet(string("Triplets of ")+a.name,getTriplets(a)),N(a),
+   codon_table(4,vector<vector<int> >(4,vector<int>(4,-1)))
 {
   // compute our 'wildcard' letter
   wildcard = N->wildcard+N->wildcard+N->wildcard;
@@ -569,7 +614,21 @@ int Codons::translate(int codon) const
     return codon;
 
   assert(codon >= 0 and codon < translation_table.size() );
-  return translation_table[codon];
+
+  int aa = -1;
+  if (is_letter(codon))
+    aa = translation_table[codon];
+  else if (is_letter_class(codon))
+  {
+    for(int i=0;i<size();i++)
+      if (matches(i,codon)) {
+	int aa_ = translate(i);
+	if (aa != -1 and aa != aa_)
+	  return alphabet::not_gap;
+	aa = aa_;
+      }
+  }
+  return aa;
 }
 
 

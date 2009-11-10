@@ -152,4 +152,10 @@ std::vector<unsigned> sequence_lengths(const alignment& A,unsigned n);
 alignment select_rows(const alignment& A,const std::vector<int>& keep);
 
 alignment select_columns(const alignment& A,const std::vector<int>& sites);
+
+alignment reverse(const alignment& A);
+
+alignment complement(const alignment& A);
+
+alignment reverse_complement(const alignment& A);
 #endif

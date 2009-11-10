@@ -1189,3 +1189,56 @@ alignment select_columns(const alignment& A,const vector<int>& sites)
   return A2;
 }
 
+alignment reverse(const alignment& A)
+{
+  int L = A.length();
+
+  alignment A2 = A;
+
+  // Reverse
+  for(int i=0;i<A2.n_sequences();i++) 
+    for(int j=0;j<A2.length();j++)
+      A2(i,j) = A(L-j-1,i);
+
+  return A2;
+}
+
+alignment complement(const alignment& A)
+{
+  const alphabet& a = A.get_alphabet();
+
+  OwnedPointer<Nucleotides> N(dynamic_cast<Nucleotides*>(a.clone()));
+
+  if (not N)
+    throw myexception()<<"Sequences have alphabet "<<a.name<<" -- reverse complement not allowed";
+
+  alignment A2 = A;
+
+  // Reverse
+  for(int i=0;i<A2.n_sequences();i++) 
+    for(int j=0;j<A2.length();j++)
+      A2(i,j) = N->complement(A(i,j));
+
+  return A2;
+}
+
+alignment reverse_complement(const alignment& A)
+{
+  const alphabet& a = A.get_alphabet();
+
+  OwnedPointer<Nucleotides> N(dynamic_cast<Nucleotides*>(a.clone()));
+
+  if (not N)
+    throw myexception()<<"Sequences have alphabet "<<a.name<<" -- reverse complement not allowed";
+
+  int L = A.length();
+
+  alignment A2 = A;
+
+  // Reverse
+  for(int i=0;i<A2.n_sequences();i++) 
+    for(int j=0;j<A2.length();j++)
+      A2(i,j) = N->complement(A(L-j-1,i));
+
+  return A2;
+}

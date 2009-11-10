@@ -236,6 +236,8 @@ public:
   int T() const {return 2;}
   /// Get the index of C
   int C() const {return 3;}
+
+  int complement(int l) const;
   
   Nucleotides(const std::string& s,char c);
 
@@ -284,6 +286,7 @@ protected:
   OwnedPointer<Nucleotides> N;
 
   std::vector<std::vector<int> > sub_nuc_table;
+  std::vector<std::vector<std::vector<int> > > codon_table;
 
   void setup_sub_nuc_table();
   void setup_letter_classes();
@@ -295,6 +298,8 @@ public:
 
   /// The alphabet of nucleotides that we construct triplets from
   int sub_nuc(int codon,int pos) const;
+
+  int get_triplet(int n1, int n2, int n3) const;
 
   std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
 
