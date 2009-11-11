@@ -51,7 +51,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "produce help message")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
-    ("frame",value<int>()->default_value(0),"frame 0, 1, or 2")
+    ("frame",value<int>()->default_value(1),"frame 1, 2, 3, -1, -2, or -3")
     ("reverse-complement","Just return the reverse complement")
     ;
 
@@ -88,11 +88,12 @@ int main(int argc,char* argv[])
     //------- Convert sequences to specified reading frame --------//
     int frame = args["frame"].as<int>();
 
-    if (frame < -3 or frame > 3)
-      throw myexception()<<"You may only specify frame 0, 1, or 2: "<<frame<<" is right out.";
+    if (frame < -3 or frame > 3 or frame == 0)
+      throw myexception()<<"You may only specify frame 1, 2, 3, -1, -2, or -3: "<<frame<<" is right out.";
     bool reverse = (frame < 0);
 
-    frame = (frame+3)%3;
+    // shift to the 0,1,2 scale
+    frame = (std::abs(frame)+2)%3;
     
     //--------- Load alignment & determine RNA or DNA ----------//
     alignment A1;
