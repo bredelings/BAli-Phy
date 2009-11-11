@@ -591,7 +591,8 @@ void load_bali_phy_rc(variables_map& args,const options_description& options)
       string filename = home_dir + "/.bali-phy";
 
       if (fs::exists(filename)) {
-	cout<<"Reading ~/.bali-phy ...";
+	if (log_verbose)
+	  cerr<<"Reading ~/.bali-phy ...";
 	ifstream file(filename.c_str());
 	if (not file)
 	  throw myexception()<<"Can't load config file '"<<filename<<"'";
@@ -599,7 +600,8 @@ void load_bali_phy_rc(variables_map& args,const options_description& options)
 	store(parse_config_file(file, options), args);
 	file.close();
 	notify(args);
-	cout<<" done."<<endl;
+	if (log_verbose)
+	  cerr<<" done."<<endl;
       }
     }
   }
