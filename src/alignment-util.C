@@ -1198,7 +1198,7 @@ alignment reverse(const alignment& A)
   // Reverse
   for(int i=0;i<A2.n_sequences();i++) 
     for(int j=0;j<A2.length();j++)
-      A2(i,j) = A(L-j-1,i);
+      A2(j,i) = A(L-j-1,i);
 
   return A2;
 }
@@ -1217,7 +1217,7 @@ alignment complement(const alignment& A)
   // Reverse
   for(int i=0;i<A2.n_sequences();i++) 
     for(int j=0;j<A2.length();j++)
-      A2(i,j) = N->complement(A(i,j));
+      A2(j,i) = N->complement(A(j,i));
 
   return A2;
 }
@@ -1238,7 +1238,7 @@ alignment reverse_complement(const alignment& A)
   // Reverse
   for(int i=0;i<A2.n_sequences();i++) 
     for(int j=0;j<A2.length();j++)
-      A2(i,j) = N->complement(A(L-j-1,i));
+      A2(j,i) = N->complement(A(L-j-1,i));
 
   return A2;
 }
