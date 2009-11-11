@@ -48,11 +48,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
-    ("frame",value<int>()->default_value(1),"frame 1, 2, 3, -1, -2, or -3")
-    ("reverse-complement","Just return the reverse complement")
+    ("frame,f",value<int>()->default_value(1),"frame 1, 2, 3, -1, -2, or -3")
+    ("reverse,r","Just return the reverse")
+    ("complement,c","Just return the complement")
+    ("translate,t",value<bool>()->default_value(true),"Translate the sequences")
     ;
 
   variables_map args;     
@@ -90,7 +92,7 @@ int main(int argc,char* argv[])
 
     if (frame < -3 or frame > 3 or frame == 0)
       throw myexception()<<"You may only specify frame 1, 2, 3, -1, -2, or -3: "<<frame<<" is right out.";
-    bool reverse = (frame < 0);
+    bool do_reverse = (frame < 0);
 
     // shift to the 0,1,2 scale
     frame = (std::abs(frame)+2)%3;
@@ -107,12 +109,19 @@ int main(int argc,char* argv[])
 
     //------------------ Reverse Complement? -------------------//
 
-    if (args.count("reverse-complement")) {
-      cout<<reverse_complement(A1)<<endl;
+    if (args.count("reverse") and args.count("complement"))
+      A1 = reverse_complement(A1);
+    else if (args.count("reverse"))
+      A1 = reverse(A1);
+    else if (args.count("complement"))
+      A1 = complement(A1);
+
+    if (not args["translate"].as<bool>()) {
+      cout<<A1;
       exit(0);
     }
       
-    if (reverse) 
+    if (do_reverse) 
       A1 = reverse_complement(A1);
 
     //------- Construct the alphabets that we are using  --------//
@@ -148,7 +157,7 @@ int main(int argc,char* argv[])
       A2.add_sequence(S);
     }
 
-    cout<<A2<<endl;
+    cout<<A2;
   }
   catch (std::exception& e) {
     cerr<<"alignment-translate: Error! "<<e.what()<<endl;
