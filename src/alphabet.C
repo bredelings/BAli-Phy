@@ -318,6 +318,12 @@ RNA::RNA()
 { }
 
 
+bool AminoAcids::is_stop(int i) const
+{
+  // FIXME - this is incredibly slow and hackish.  Fix if ever on a fast path...
+  return lookup(i) == "*";
+}
+
 AminoAcids::AminoAcids() 
   :alphabet("Amino-Acids","ARNDCQEGHILKMFPSTWYV","X")
 {

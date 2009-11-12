@@ -270,6 +270,8 @@ protected:
 public:
   virtual AminoAcids* clone() const {return new AminoAcids(*this);}
 
+  bool is_stop(int i) const;
+
   AminoAcids();
 };
 
@@ -324,7 +326,7 @@ public:
   bool stop_codon(int codon) const {
     assert(0 <= codon && codon <translation_table.size() );
     int aa = translation_table[codon];
-    return A->lookup(aa) == "!";
+    return A->is_stop(aa);
   }
 
   /// What amino acid does codon map to?
