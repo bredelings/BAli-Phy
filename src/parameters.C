@@ -78,6 +78,8 @@ void data_partition::recalc_smodel()
 
 void data_partition::setlength_no_invalidate_LC(int b, double l)
 {
+  b = T->directed_branch(b).undirected_name();
+
   MC.setlength(b,l,*T,*SModel_); 
 
   if (has_IModel())
@@ -118,6 +120,8 @@ void data_partition::note_sequence_length_changed(int n)
 
 void data_partition::note_alignment_changed_on_branch(int b)
 {
+  b = T->directed_branch(b).undirected_name();
+
   cached_alignment_prior.invalidate();
   cached_alignment_prior_for_branch[b].invalidate();
   cached_alignment_counts_for_branch[b].invalidate();
@@ -569,14 +573,14 @@ const Model& Parameters::SubModels(int i) const
 
 void Parameters::setlength_no_invalidate_LC(int b,double l) 
 {
-  T->branch(b).set_length(l);
+  T->directed_branch(b).set_length(l);
   for(int i=0;i<data_partitions.size();i++) 
     data_partitions[i]->setlength_no_invalidate_LC(b,l);
 }
 
 void Parameters::setlength(int b,double l) 
 {
-  T->branch(b).set_length(l);
+  T->directed_branch(b).set_length(l);
   for(int i=0;i<data_partitions.size();i++) 
     data_partitions[i]->setlength(b,l);
 }
