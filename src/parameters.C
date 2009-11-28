@@ -120,6 +120,8 @@ void data_partition::note_sequence_length_changed(int n)
 
 void data_partition::note_alignment_changed_on_branch(int b)
 {
+  if (not has_IModel()) return;
+
   b = T->directed_branch(b).undirected_name();
 
   cached_alignment_prior.invalidate();

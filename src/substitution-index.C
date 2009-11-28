@@ -283,7 +283,7 @@ namespace substitution {
 /// create a note with leaf sequences ...
 int add_leaf_seq_note(alignment& A,int n) 
 {
-  assert(n < A.n_sequences());
+  assert(n <= A.n_sequences());
 
   int index = A.add_note(n);
 
