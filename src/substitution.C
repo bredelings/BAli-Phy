@@ -850,6 +850,54 @@ namespace substitution {
     return Pr1;
   }
 
+  bool check_equal(double x, double y)
+  {
+    return (std::abs(x-y) < std::min(x,y)*1.0e-9);
+  }
+
+  void compare_caches(const alignment& A1, const alignment& A2, const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, int b)
+  {
+    int L = subA_length(A1,b);
+    assert(L == subA_length(A2,b));
+
+    const int n_models  = LC1.n_models();
+    const int n_states  = LC1.n_states();
+
+    bool equal = true;
+    for(int i=0;i<L;i++) 
+    {
+      const Matrix& M1 = LC1(i,b);
+      const Matrix& M2 = LC2(i,b);
+      
+      for(int m=0;m<n_models;m++) 
+	for(int s1=0;s1<n_states;s1++)
+	  equal = equal and check_equal(M1(m,s1), M2(m,s1));
+    }
+    if (equal)
+      ; //std::cerr<<"branch "<<b<<": caches are equal"<<endl;
+    else
+      std::cerr<<"branch "<<b<<": caches are NOT equal"<<endl;
+  }
+
+  void compare_caches(const alignment& A1, const alignment& A2, const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, const Tree& T)
+  {
+    assert(LC1.root == LC2.root);
+    
+    vector<const_branchview> branches; branches.reserve(T.n_branches());
+    append(T[LC1.root].branches_in(),branches);
+
+    for(int i=0;i<branches.size();i++)
+    {
+	const const_branchview& db = branches[i];
+
+	append(db.branches_before(),branches);
+
+	if (LC1.up_to_date(db) and LC2.up_to_date(db))
+	  compare_caches(A1,A2,LC1,LC2,db);
+    }
+
+  }
+
   efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
 	    const MultiModel& MModel)
   {
@@ -901,10 +949,14 @@ namespace substitution {
 #ifdef DEBUG_CACHING
     data_partition P2 = P;
     P2.LC.invalidate_all();
-    invalidate_subA_index_all(P2.A);
+    invalidate_subA_index_all(*P2.A);
+    for(int i=0;i<P2.T->n_branches();i++)
+      P2.setlength(i,P2.T->branch(i).length());
     efloat_t result2 = Pr(P2, P2.LC);
+
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
+      compare_caches(*P.A, *P2.A, P.LC, P2.LC, *P.T);
       std::abort();
     }
 #endif
