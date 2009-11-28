@@ -178,8 +178,22 @@ public:
 
   
   /// Cached conditional likelihoods for index i, branch b
+  const Matrix& operator()(int i,int b) const {
+    int loc = cache->location(token,b);
+    assert(0 <= i and i < get_length());
+    return (*cache)[loc][i];
+  }
+
+  /// Cached conditional likelihoods for index i, branch b
   Matrix& operator()(int i,int b) {
     int loc = cache->location(token,b);
+    assert(0 <= i and i < get_length());
+    return (*cache)[loc][i];
+  }
+
+  /// Scratch matrix i
+  const Matrix& scratch(int i) const {
+    int loc = cache->location(token,B-1);
     assert(0 <= i and i < get_length());
     return (*cache)[loc][i];
   }
