@@ -437,7 +437,7 @@ int find_partition(const dynamic_bitset<>& p1, const vector< dynamic_bitset<> >&
   return -1;
 }
 
-double branch_distance(const SequenceTree& T1, const SequenceTree& T2) 
+double branch_distance(const Tree& T1, const Tree& T2) 
 {
   assert(T1.n_leaves() == T2.n_leaves());
 
@@ -481,7 +481,7 @@ double branch_distance(const SequenceTree& T1, const SequenceTree& T2)
   return total;
 }
 
-double internal_branch_distance(const SequenceTree& T1, const SequenceTree& T2) 
+double internal_branch_distance(const Tree& T1, const Tree& T2) 
 {
   assert(T1.n_leaves() == T2.n_leaves());
 
@@ -531,7 +531,7 @@ double internal_branch_distance(const SequenceTree& T1, const SequenceTree& T2)
   return total;
 }
 
-unsigned topology_distance(const SequenceTree& T1, const SequenceTree& T2) 
+unsigned topology_distance(const Tree& T1, const Tree& T2) 
 {
   assert(T1.n_leaves() == T2.n_leaves());
 
@@ -562,7 +562,7 @@ unsigned topology_distance(const SequenceTree& T1, const SequenceTree& T2)
   return (n1-shared) + (n2-shared);
 }
 
-double robinson_foulds_distance(const SequenceTree& T1, const SequenceTree& T2) 
+double robinson_foulds_distance(const Tree& T1, const Tree& T2) 
 {
   return 0.5*topology_distance(T1,T2);
 }
