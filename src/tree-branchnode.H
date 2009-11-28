@@ -507,4 +507,7 @@ inline branchview out_edges_iterator::operator*() const {
   return here;
 }
 
+std::vector<int> directed_names(const std::vector<branchview>& v);
+std::vector<int> directed_names(const std::vector<const_branchview>& v);
+
 #endif

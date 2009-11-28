@@ -264,6 +264,23 @@ void knit_node_together(const vector<BranchNode*>& nodes) {
   
 }
 
+vector<int> directed_names(const vector<branchview>& v)
+{
+  vector<int> names(v.size());
+  for(int i=0;i<names.size();i++)
+    names[i] = v[i].name();
+  return names;
+}
+
+vector<int> directed_names(const vector<const_branchview>& v)
+{
+  vector<int> names(v.size());
+  for(int i=0;i<names.size();i++)
+    names[i] = v[i].name();
+  return names;
+}
+
+
 //------------------------ Begin definition of Tree::* routines ------------------------//
 
 void name_node(BranchNode* start,int i) {
