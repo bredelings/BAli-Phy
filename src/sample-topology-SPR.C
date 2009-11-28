@@ -187,6 +187,97 @@ void remove_duplicates(vector<int>& v) {
   }
 }
 
+MCMC::Result SPR_stats(const Tree& T1, Tree& T2, bool success, int bins, int b1 = -1)
+{
+  MCMC::Result result(2+bins,0);
+
+  result.counts[0] = 1;
+  if (success) result.totals[0] = 1;
+
+  int dist = topology_distance(T1,T2)/2;
+  std::cerr<<"dist = "<<dist<<endl;
+  if (b1 != -1) 
+  //---------------- Check if topology changed ----------------//
+  {
+    int n1 = T1.directed_branch(b1).target();
+    int n2 = T1.directed_branch(b1).source();
+    assert( n1 == T2.directed_branch(b1).target() );
+    assert( n2 == T2.directed_branch(b1).source() );
+
+    vector<const_branchview> connected1;
+    append(T1.directed_branch(n2,n1).branches_after(),connected1);
+
+    vector<const_branchview> connected2;
+    append(T2.directed_branch(n2,n1).branches_after(),connected2);
+ 
+    bool same_topology = (
+			  (connected1[0] == connected2[0] and connected1[1] == connected2[1]) or
+			  (connected1[0] == connected2[1] and connected1[1] == connected2[0])
+			  );
+
+    if (same_topology)
+      assert(dist == 0);
+    else
+      assert(dist > 0);
+  }
+
+  // count dist in [0,bins)
+  if (dist > bins) dist = bins;
+  for(int i=0;i<=bins;i++) {
+    if (dist == i) {
+      result.counts[1+i] = 1;
+      if (success) result.totals[1+i] = 1;
+    }
+  }
+
+  return result;
+}
+
+/* 
+ * What causes things to be invalidated in an SPR move?
+ * - Cause #1: branch length changes (propagate away from branch in both directions)
+ *   (This therefore includes one direction -- but not both directions -- of every branch in the tree)
+ * - Cause #2: pruning and regrafting.  This changes subA indices, and also changes cached likelihoods.
+ *
+ * What has to be invalidated in an SPR move?
+ * - All likelihood caches on and after both directions of the now-united branch from which the subtree was pruned.
+ * - All subA indices on and after both directions of the now-united branch from which the subtree was pruned.
+ * - Likelihood caches and subA indices for the direction of that branch that was pointed away from the pruned subtree.
+ * 
+ * - SubA indices on all branches that are after (on the result tree) the branch that the pruned subtree is behind.
+ * - Likelihood caches on all the same branches.
+ * - SubA indices on the pruned tree that are pointing away from the regrafting point.
+ * - Likelihood caches on all the same (directed) branches.
+
+ * - SubA indices and Likelihood caches on and after both directions of the moving branch.
+
+ * Query: is this the same as invalidating all subA indices and likelihood caches on all branches after the attachment node
+          (i) first on the initial tree
+ *        (ii) and then on the target tree?
+ * Answer: Yes, I think so.  At least I don't see what is missing...
+ *
+ *
+ * Also, we have to mark pairwise alignments for updating on the merged-branch and the two parts of the split-branch.
+ */
+
+/*
+ * Q: Now, the procedure below simply changes the length on the merge and split branches (2 or 3 total)
+ *     and also calls invalidate_subA_index_branch( ) on them.
+ *    So, why does the procedure below actually work? 
+ * A: Well, both of these calls go out bidirectionally and invalidate neighbors on both sides.
+ *    o Therefore the fact that we have only one direction of the merged-branch doesn't matter. 
+ *    o Therefore the fact that we don't explicitly invalidate the branches behind b1 is OK - they get invalidated
+        anyway, from one of the directions of their immediate children.
+ *
+ * Actually this is could be overkill.  We don't need to invalidate BOTH directions of their children.
+ * We just need to invalidate the direction that points away from the attachment node.  Of course, the likelihood
+ * caches of both directions are going to get blown away anyway, because the length of the child branches is changing.
+ * But we could preserve the subA indices of the directed branches that point toward the attachment node.
+ *
+ * However, this bi-directional invalidate of the three child branches is fairly simply, and blows away everything with one stone.
+ * We don't need to explicitly blow away both directions of the moveable branch. (i.e. the one unduplicated in remove_duplicates)
+ */
+
 MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false) 
 {
   const int bins = 4;
@@ -220,9 +311,9 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   assert(branches.size() <= 3);
   for(int i=0;i<branches.size();i++) {
     int bi = branches[i];
-    p[1].setlength(bi,p[1].T->directed_branch(bi).length());
-    p[1].invalidate_subA_index_branch(branches[i]);
-    p[1].note_alignment_changed_on_branch(bi);
+    p[1].setlength(bi,p[1].T->directed_branch(bi).length());     // bidirectional effect
+    p[1].invalidate_subA_index_branch(bi);              // bidirectional effect
+    p[1].note_alignment_changed_on_branch(bi); // Yes, this works even for data_partition's with no indel model.
   }
 
   int C;
@@ -254,41 +345,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     }
   }
 
-
-  //---------------- Check if topology changed ----------------//
-  vector<const_branchview> connected1;
-  append(p[0].T->directed_branch(n2,n1).branches_after(),connected1);
-
-  vector<const_branchview> connected2;
-  append(p[1].T->directed_branch(n2,n1).branches_after(),connected2);
- 
-  bool same_topology = (
-			(connected1[0] == connected2[0] and connected1[1] == connected2[1]) or
-			(connected1[0] == connected2[1] and connected1[1] == connected2[0])
-			);
-
-  MCMC::Result result(2+bins,0);
-
-  result.counts[0] = 1;
-  if (C>0) result.totals[0] = 1;
-
-  int dist = topology_distance(*p[0].T, *p[1].T)/2;
-
-  if (same_topology)
-    assert(dist == 0);
-  else
-    assert(dist > 0);
-
-  // count dist in [0,bins)
-  if (dist > bins) dist = bins;
-  for(int i=0;i<=bins;i++) {
-    if (dist == i) {
-      result.counts[1+i] = 1;
-      if (C>0) result.totals[1+i] = 1;
-    }
-  }
-
-  return result;
+  return SPR_stats(*p[0].T, *p[1].T, C>0, bins, b1);
 }
 
 int choose_subtree_branch_uniform(const Tree& T) {
