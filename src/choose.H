@@ -25,8 +25,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mytypes.H"
 #include "myexception.H"
 
+/// Select from choice 0 or 1 in proportion to the probabilities given.
 int choose2(efloat_t, efloat_t);
 
+/// Select from choices [0,P.size-1] in proportion to the probabilities given, using pre-allocated scratch space.
 template <typename F>
 int choose_scratch(const std::vector<F>& P, std::vector<F>& sum) 
 {
