@@ -191,18 +191,24 @@ int TreeView::remove_node_from_branch(BranchNode* n1)
   BranchNode* b1 = n1->out;
   BranchNode* b2 = n2->out;
 
-  // Remove the branch leading to the higher numbered node
-  // FIXME - remove the higher numbered branch?
-  // FIXME - what if I want to specify which branch to move?
-  if (b1->node > b2->node) 
+  int b1_name = std::min(b1->branch, b1->out->branch);
+  int b2_name = std::min(b2->branch, b2->out->branch);
+
+  // Preserve the name of the branch with the smaller name (to avoid renaming leaf branches!)
+  // (The name of the b1<--->n1 branch gets preserved)
+  if (b1_name > b2_name)
   {
     std::swap(n1,n2);
     std::swap(b1,b2);
+    std::swap(b1_name, b2_name);
   }
 
   //---------- get delta - and check it ------------//
-  assert(std::abs(b1->branch - b1->out->branch) == std::abs(b2->branch - b2->out->branch));
-  int dead_branch_name = std::min(b2->branch,b2->out->branch);
+#ifndef NDEBUG
+  int delta1 = std::abs(b1->branch - b1->out->branch);
+  int delta2 = std::abs(b2->branch - b2->out->branch);
+  assert(delta1 == delta2);
+#endif
 
   //-- Connect branches, merge lengths, use new name --//
   b1->out = b2;
@@ -217,7 +223,10 @@ int TreeView::remove_node_from_branch(BranchNode* n1)
   delete n1;
   delete n2;
 
-  return dead_branch_name;
+  //-------- report which branch name didn't survive -------//
+  assert(b2_name > b1_name);
+  assert(b2_name >= ((delta1+3)/2));
+  return b2_name;
 }
 
 BranchNode* TreeView::unlink_subtree(BranchNode* b) 
