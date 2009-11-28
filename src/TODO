@@ -15,6 +15,7 @@ P14. Instead of setting things equal to one in substitution.C,
      make a generic 1's matrix, and set things equal to that matrix.
 P15. Make matcaches (a) [b][m] instead of [m][b] and (b) be able to invalidate indivual branches.     
 P16. Generate better mixing diagnostics
+P17. Better handle lower-case nucleotides.
 
 P1. Implement the multi-branch SPR search
  * Figure out how to handle the branch-naming: we can't properly handle SPR to leaf branches.
