@@ -913,8 +913,8 @@ namespace substitution {
 #endif
 
 #ifndef NDEBUG
-    subA_index_check_footprint(A,T);
-    subA_index_check_regenerate(A,T);
+    subA_index_check_footprint(A, T);
+    subA_index_check_regenerate(A, T, LC.root);
 #endif
 
     IF_DEBUG(int n_br =) calculate_caches(A,MC,T,LC,MModel);

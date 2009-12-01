@@ -483,6 +483,36 @@ void Parameters::invalidate_subA_index_branch(int b)
     ::invalidate_subA_index_branch(*data_partitions[i]->A,*data_partitions[i]->T,b);
 }
 
+void Parameters::invalidate_subA_index_one_branch(int b)
+{
+  int b2 = T->directed_branch(b).reverse();
+  for(int i=0;i<n_data_partitions();i++) {
+    ::invalidate_subA_index_one(*data_partitions[i]->A,b);
+    ::invalidate_subA_index_one(*data_partitions[i]->A,b2);
+  }
+}
+
+void Parameters::invalidate_subA_index_all()
+{
+  for(int i=0;i<n_data_partitions();i++)
+    ::invalidate_subA_index_all(*data_partitions[i]->A);
+}
+
+void Parameters::subA_index_allow_invalid_branches(bool b)
+{
+  ::subA_index_allow_invalid_branches(b);
+
+#ifndef NDEBUG
+  if (not subA_index_may_have_invalid_branches())
+  {
+    for(int i=0;i<n_data_partitions();i++) {
+      subA_index_check_footprint(*data_partitions[i]->A, *T);
+      subA_index_check_regenerate(*data_partitions[i]->A, *T);
+    }
+  }
+#endif
+}
+
 void Parameters::note_alignment_changed_on_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)

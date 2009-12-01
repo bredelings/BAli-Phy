@@ -76,13 +76,20 @@ inline int subA_length(const alignment& A,int b) {
 }
 
 void invalidate_subA_index_all(const alignment& A);
+void invalidate_subA_index_one(const alignment& A,int b);
 void invalidate_subA_index_branch(const alignment& A,const Tree& T,int b);
 void update_subA_index_branch(const alignment& A,const Tree& T,int b);
 
 void recompute_subA_notes(const alignment& A,const Tree& T);
 
 void subA_index_check_regenerate(const alignment& A1,const Tree& T);
+void subA_index_check_regenerate(const alignment& A1,const Tree& T,int root);
+void subA_index_check_footprint_for_branch(const alignment& A1,const Tree& T,int b);
 void subA_index_check_footprint(const alignment& A1,const Tree& T);
+
+// Not thread-safe: move to alignment(s) themselves (remember multiple partitions)
+int subA_index_may_have_invalid_branches();
+void subA_index_allow_invalid_branches(bool);
 
 alignment blank_copy(const alignment&,int length=0);
 #endif

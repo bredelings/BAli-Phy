@@ -20,6 +20,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution-index.H"
 #include "util.H"
 
+#ifdef NDEBUG
+#define IF_DEBUG(x)
+#else
+#define IF_DEBUG(x) x
+#endif
+
 using std::vector;
 
 using boost::dynamic_bitset;
@@ -72,11 +78,15 @@ namespace substitution {
     ublas::matrix<int> subA(A.length(),branches.size());
 
     // copy sub-A indices for each branch
-    for(int j=0;j<branches.size();j++) {
+    for(int j=0;j<branches.size();j++) 
+    {
       if (branches[j] == -1)
 	for(int c=0;c<A.length();c++)
 	  subA(c,j) = -1;
-      else {
+      else 
+      {
+	IF_DEBUG( subA_index_check_footprint_for_branch(A,T,branches[j]) );
+
 	if (not subA_index_valid(A,branches[j]))
 	  update_subA_index_branch(A,T,branches[j]);
 	for(int c=0;c<A.length();c++)
@@ -321,7 +331,7 @@ int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M)
   return index;
 }
 
-inline void invalidate_subA_index_one(const alignment& A,int b) {
+void invalidate_subA_index_one(const alignment& A,int b) {
   A.note(1,0,b) = -1;
 }
 
@@ -463,7 +473,13 @@ void update_subA_index_branch(const alignment& A,const Tree& T,int b)
 
 #ifndef NDEBUG  
   subA_index_check_footprint(A,T);
-  subA_index_check_regenerate(A,T);
+
+  // FIXME - we should check the branches that point to the root, but we
+  // don't know the root, so just disable the checking here.
+  // FIXME - this could actually be very expensive to check every branch,
+  //         probably it would be O(b^2)
+  if (not subA_index_may_have_invalid_branches())
+    subA_index_check_regenerate(A,T);
 #endif
 }
 
@@ -479,14 +495,28 @@ void recompute_subA_notes(const alignment& A,const Tree& T)
   }
 }
 
+bool allow_invalid_branches_ = false;
+
+int subA_index_may_have_invalid_branches()
+{
+  return allow_invalid_branches_;
+}
+
+void subA_index_allow_invalid_branches(bool allowed)
+{
+  allow_invalid_branches_ = allowed;
+}
+
 void subA_index_check_regenerate(const alignment& A1,const Tree& T) 
 {
+  vector<int> branch_names = iota<int>(T.n_branches()*2);
 
   // compare against calculation from scratch
   alignment A2 = A1;
   recompute_subA_notes(A2,T);
 
-  for(int b=0;b<T.n_branches()*2;b++) {
+  for(int i=0;i<branch_names.size();i++) {
+    int b = branch_names[i];
     if (subA_index_valid(A1,b)) {
       assert(subA_length(A1,b) == subA_length(A2,b));
       for(int c=0;c<A1.length();c++)
@@ -495,27 +525,69 @@ void subA_index_check_regenerate(const alignment& A1,const Tree& T)
   }
 }
 
-void subA_index_check_footprint(const alignment& A,const Tree& T) 
+void subA_index_check_regenerate(const alignment& A1,const Tree& T,int root) 
 {
-  for(int b=0;b<T.n_branches()*2;b++) {
-    if (not subA_index_valid(A,b)) continue;
+  vector<int> branch_names = iota<int>(T.n_branches()*2);
 
-    for(int c=0;c<A.length();c++) {
+  if (subA_index_may_have_invalid_branches())
+    branch_names = directed_names(branches_toward_node(T,root));
 
-      bool leaf_present = false;
-      const dynamic_bitset<>& leaves = T.partition(T.directed_branch(b).reverse());
-      for(int i=0;i<T.n_leaves();i++)
-	if (leaves[i] and not A.gap(c,i))
-	  leaf_present=true;
+  // compare against calculation from scratch
+  alignment A2 = A1;
+  recompute_subA_notes(A2,T);
 
-      if (leaf_present)
-	assert(A.note(1,c+1,b) != -1);
-      else
-	assert(A.note(1,c+1,b) == -1);
+  for(int i=0;i<branch_names.size();i++) {
+    int b = branch_names[i];
+    if (subA_index_valid(A1,b)) {
+      assert(subA_length(A1,b) == subA_length(A2,b));
+      for(int c=0;c<A1.length();c++)
+	assert(A1.note(1,c+1,b) == A1.note(1,c+1,b));
     }
   }
 }
 
+
+// If branch 'b' is markes as having an up-to-date index, then
+//  * check that the index includes each column for which there are leaf characters behind the branch ...
+//  * ... and no others. 
+// That is, if a column includes only gaps behind the branch, then it should not be in the branch's index.
+void subA_index_check_footprint_for_branch(const alignment& A, const Tree& T, int b)
+{
+  // Don't check here if we're temporarily messing with things, and allowing a funny state.
+  if (not subA_index_valid(A,b)) return;
+
+  for(int c=0;c<A.length();c++) 
+  {
+    // Determine if there are any leaf characters behind branch b in column c
+    bool leaf_present = false;
+    const dynamic_bitset<>& leaves = T.partition(T.directed_branch(b).reverse());
+    for(int i=0;i<T.n_leaves();i++)
+      if (leaves[i] and not A.gap(c,i))
+	leaf_present=true;
+    
+    // If so, then this column should have a non-null (null==-1) index for this branch.
+    if (leaf_present)
+      assert(A.note(1,c+1,b) != -1);
+    // Otherwise, this column should how have an index for this branch.
+    else
+      assert(A.note(1,c+1,b) == -1);
+  }
+}
+
+// Check that for each branch that is marked as having an up-to-date index,
+// we include each column in the index for which there are leaf characters that are behind the branch.
+// (We need to propagate conditional likelihoods up to the root, then.)
+// Also check that, we do not include in the index any columns for which there are only gaps behind
+// the  branch.
+
+void subA_index_check_footprint(const alignment& A,const Tree& T) 
+{
+  if (subA_index_may_have_invalid_branches())
+    return;
+
+  for(int b=0;b<T.n_branches()*2;b++)
+    subA_index_check_footprint_for_branch(A,T,b);
+}
 
 alignment blank_copy(const alignment& A1,int length) 
 {
@@ -541,5 +613,3 @@ alignment blank_copy(const alignment& A1,int length)
 
   return A2;
 }
-
-
