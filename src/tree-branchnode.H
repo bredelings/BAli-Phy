@@ -25,11 +25,18 @@ along with BAli-Phy; see the file COPYING.  If not see
  *        several iterator classes for walking the tree in various ways.
  *        This structure is based on the unrooted tree structure in Felsenstein's
  *        Phylogenetics book, but may not be exactly identical.
+ *
+ *        FIXME - Rewrite circular iterators to fit into the standard framework by
+ *                + having a circular list class with ..
+ *                + begin() and end() functions?
+ *                Nontrivial, but could be done.
+ *                Then, the container class, not the iterators, could convert to vector<>.
  */
 
 #ifndef BRANCHNODE
 #define BRANCHNODE
 
+#include <vector>
 
 /// A structure that uniquely identifies both a node and a directed branch
 struct BranchNode 
@@ -155,7 +162,7 @@ protected:
 public:
 
   /// Dereference: return the current location
-  virtual view_t operator*() const =0;
+  virtual view_t operator*() const {return here;}
 
   /// Increment: step forward
   void operator++() {
@@ -170,6 +177,29 @@ public:
 
   /// Have we finished yet?
   operator bool() const {return here;}
+
+  operator std::vector<view_t> () const
+  {
+    std::vector<view_t> v;
+    append(*this,v);
+    return v;
+  }
+
+  template <template<typename,typename> class V,class A> 
+  V<view_t,A> as() const
+  {
+    V<view_t,A> v;
+    append(*this,v);
+    return v;
+  }
+
+  template <template<typename,typename> class V> 
+  V<view_t,std::allocator<view_t> > as() const
+  {
+    V<view_t,std::allocator<view_t> > v;
+    append(*this,v);
+    return v;
+  }
 
   /// How many outgoing edges do we have?
   unsigned size() const {
