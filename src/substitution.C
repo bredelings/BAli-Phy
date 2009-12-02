@@ -548,13 +548,16 @@ namespace substitution {
       int i0 = index(i,0);
       int i1 = index(i,1);
 
+      const Matrix& C1 = (*branch_cache[0])[i0];
+      const Matrix& C2 = (*branch_cache[1])[i1];
+
       const Matrix* C = &S;
       if (i0 != alphabet::gap and i1 != alphabet::gap)
-	element_prod_assign(S, (*branch_cache[0])[i0], (*branch_cache[1])[i1] );
+	element_prod_assign(S, C1, C2);
       else if (i0 != alphabet::gap)
-	C = &(*branch_cache[0])[i0];
+	C = &C1;
       else if (i1 != alphabet::gap)
-	C = &(*branch_cache[1])[i1];
+	C = &C2;
       else
 	std::abort(); // columns like this should not be in the index
 
