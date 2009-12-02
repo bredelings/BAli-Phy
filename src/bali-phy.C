@@ -335,10 +335,13 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   if (has_imodel) {
     SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat","topology:lengths:nodes:alignment:alignment_branch"));
     SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths:nodes:alignment:alignment_branch"));
+    //    Not Ready Yet
+    //    SPR_move.add(1,SingleMove(sample_SPR_all,"SPR_and_A_all","topology:lengths:nodes:alignment:alignment_branch"));
   }
   else {
     SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat","topology:lengths"));
     SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths"));
+    SPR_move.add(10,SingleMove(sample_SPR_all,"SPR_and_A_all","topology:lengths"));
   }
 
   topology_move.add(1,NNI_move,false);
