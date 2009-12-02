@@ -60,7 +60,7 @@ inline void element_assign(Matrix& M1,const Matrix& M2)
     m1[i] = m2[i];
 }
 
-inline void element_prod_assign(Matrix& M1,const Matrix& M2)
+inline void element_prod_modify(Matrix& M1,const Matrix& M2)
 {
   assert(M1.size1() == M2.size1());
   assert(M1.size2() == M2.size2());
@@ -254,7 +254,7 @@ namespace substitution {
       for(int j=0;j<rb.size();j++) {
 	int i0 = index(i,j);
 	if (i0 != alphabet::gap)
-	  element_prod_assign(S,(*branch_cache[j])[i0]);
+	  element_prod_modify(S,(*branch_cache[j])[i0]);
       }
 
 #ifndef NDEBUG     
@@ -547,17 +547,14 @@ namespace substitution {
       // compute the source distribution from 2 branch distributions
       int i0 = index(i,0);
       int i1 = index(i,1);
+
+      const Matrix* C = &S;
       if (i0 != alphabet::gap and i1 != alphabet::gap)
-	/*
-	for(int m=0;m<n_models;m++) 
-	  for(int s=0;s<n_states;s++)
-	    S(m,s) = cache(i0,b[0])(m,s)* cache(i1,b[1])(m,s);
-	*/
 	element_prod_assign(S, (*branch_cache[0])[i0], (*branch_cache[1])[i1] );
       else if (i0 != alphabet::gap)
-	element_assign(S,(*branch_cache[0])[i0]);
+	C = &(*branch_cache[0])[i0];
       else if (i1 != alphabet::gap)
-	element_assign(S,(*branch_cache[1])[i1]);
+	C = &(*branch_cache[1])[i1];
       else
 	std::abort(); // columns like this should not be in the index
 
@@ -572,7 +569,7 @@ namespace substitution {
 	for(int s1=0;s1<n_states;s1++) {
 	  double temp=0;
 	  for(int s2=0;s2<n_states;s2++)
-	    temp += Q(s1,s2)*S(m,s2);
+	    temp += Q(s1,s2)*(*C)(m,s2);
 	  R(m,s1) = temp;
 	}
       }
