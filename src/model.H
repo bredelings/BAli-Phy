@@ -192,8 +192,8 @@ protected:
 
   void insert_submodel(const std::string& name, const SubModel_t& M)
   {
-    add_submodel(name,M);
     sub_models.push_back(M);
+    add_submodel(name,M);
   }
   
   /// Reference the submodels
