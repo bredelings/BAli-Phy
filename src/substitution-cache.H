@@ -176,7 +176,18 @@ public:
   /// Mark cached conditional likelihoods for branch b up to date.
   void validate_branch(int b) {cache->validate_branch(token,b);}
 
-  
+  /// Cached conditional likelihoods for branch b
+  const vector<Matrix>& operator[](int b) const {
+    int loc = cache->location(token,b);
+    return (*cache)[loc];
+  }
+
+  /// Cached conditional likelihoods for branch b
+  vector<Matrix>& operator[](int b) {
+    int loc = cache->location(token,b);
+    return (*cache)[loc];
+  }
+
   /// Cached conditional likelihoods for index i, branch b
   const Matrix& operator()(int i,int b) const {
     int loc = cache->location(token,b);

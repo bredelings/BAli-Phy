@@ -73,7 +73,7 @@ inline void element_prod_assign(Matrix& M1,const Matrix& M2)
     m1[i] *= m2[i];
 }
 
-inline void element_prod_assign3(Matrix& M1,const Matrix& M2,const Matrix& M3)
+inline void element_prod_assign(Matrix& M1,const Matrix& M2,const Matrix& M3)
 {
   assert(M1.size1() == M2.size1());
   assert(M1.size2() == M2.size2());
@@ -101,6 +101,66 @@ inline double element_sum(const Matrix& M1)
   return sum;
 }
 
+
+inline double element_prod_sum(Matrix& M1,const Matrix& M2)
+{
+  assert(M1.size1() == M2.size1());
+  assert(M1.size2() == M2.size2());
+  
+  const int size = M1.data().size();
+  const double * __restrict__ m1 = M1.data().begin();
+  const double * __restrict__ m2 = M2.data().begin();
+
+  double sum = 0;
+  for(int i=0;i<size;i++)
+    sum += m1[i] * m2[i];
+
+  return sum;
+}
+
+inline double element_prod_sum(Matrix& M1,const Matrix& M2,const Matrix& M3)
+{
+  assert(M1.size1() == M2.size1());
+  assert(M1.size2() == M2.size2());
+  
+  assert(M1.size1() == M3.size1());
+  assert(M1.size2() == M3.size2());
+  
+  const int size = M1.data().size();
+  const double * __restrict__ m1 = M1.data().begin();
+  const double * __restrict__ m2 = M2.data().begin();
+  const double * __restrict__ m3 = M3.data().begin();
+
+  double sum = 0;
+  for(int i=0;i<size;i++)
+    sum += m1[i] * m2[i] * m3[i];
+
+  return sum;
+}
+
+inline double element_prod_sum(Matrix& M1,const Matrix& M2,const Matrix& M3,const Matrix& M4)
+{
+  assert(M1.size1() == M2.size1());
+  assert(M1.size2() == M2.size2());
+  
+  assert(M1.size1() == M3.size1());
+  assert(M1.size2() == M3.size2());
+  
+  assert(M1.size1() == M4.size1());
+  assert(M1.size2() == M4.size2());
+  
+  const int size = M1.data().size();
+  const double * __restrict__ m1 = M1.data().begin();
+  const double * __restrict__ m2 = M2.data().begin();
+  const double * __restrict__ m3 = M3.data().begin();
+  const double * __restrict__ m4 = M4.data().begin();
+
+  double sum = 0;
+  for(int i=0;i<size;i++)
+    sum += m1[i] * m2[i] * m3[i] * m4[i];
+
+  return sum;
+}
 
 namespace substitution {
 
@@ -147,6 +207,8 @@ namespace substitution {
   {
     total_calc_root_prob++;
 
+    assert(index.size2() == rb.size());
+
     const alphabet& a = A.get_alphabet();
 
     const int root = cache.root;
@@ -168,9 +230,23 @@ namespace substitution {
 	F(m,s) = f[s]*p;
     }
 
+    // look up the cache rows now, once, instead of for each column
+    vector< vector<Matrix>* > branch_cache;
+    for(int i=0;i<rb.size();i++)
+      branch_cache.push_back(&cache[rb[i]]);
+    
     efloat_t total = 1;
     for(int i=0;i<index.size1();i++) 
     {
+      double p_col = 0;
+
+      if (index.size2() == 3 and index(i,0) != -1 and index(i,1) != -1 and index(i,2) != -1) {
+	int i0 = index(i,0);
+	int i1 = index(i,1);
+	int i2 = index(i,2);
+	p_col = element_prod_sum(F, (*branch_cache[0])[i0], (*branch_cache[1])[i1], (*branch_cache[2])[i2] );
+      }
+      else {
       //-------------- Set letter & model prior probabilities  ---------------//
       element_assign(S,F); // noalias(S) = F;
 
@@ -178,18 +254,7 @@ namespace substitution {
       for(int j=0;j<rb.size();j++) {
 	int i0 = index(i,j);
 	if (i0 != alphabet::gap)
-	  element_prod_assign(S,cache(i0,rb[j]));
-      }
-
-      //--------- If there is a letter at the root, condition on it ---------//
-      if (root < T.n_leaves()) {
-	int rl = A.seq(root)[i];
-	// How about if its NOT a letter class?
-	if (a.is_letter_class(rl))
-	  for(int s=0;s<n_states;s++)
-	    if (not a.matches(MModel.state_letters()[s],rl))
-	      for(int m=0;m<n_models;m++) 
-		S(m,s) = 0;
+	  element_prod_assign(S,(*branch_cache[j])[i0]);
       }
 
 #ifndef NDEBUG     
@@ -204,11 +269,13 @@ namespace substitution {
 #endif
 
       // What is the total probability of the models?
-      double p_col = element_sum(S);
+      p_col = element_sum(S);
+
+      }
 
       // SOME model must be possible
       assert(0 <= p_col and p_col <= 1.00000000001);
-      
+
       // This does a log( ) operation.
       total *= p_col;
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
@@ -468,6 +535,12 @@ namespace substitution {
     const int n_states = S.size2();
     assert(MModel.n_states() == n_states);
 
+    // look up the cache rows now, once, instead of for each column
+    vector< vector<Matrix>* > branch_cache;
+    for(int i=0;i<b.size();i++)
+      branch_cache.push_back(&cache[b[i]]);
+    branch_cache.push_back(&cache[b0]);
+    
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
     for(int i=0;i<subA_length(A,b0);i++) 
     {
@@ -475,18 +548,21 @@ namespace substitution {
       int i0 = index(i,0);
       int i1 = index(i,1);
       if (i0 != alphabet::gap and i1 != alphabet::gap)
+	/*
 	for(int m=0;m<n_models;m++) 
 	  for(int s=0;s<n_states;s++)
 	    S(m,s) = cache(i0,b[0])(m,s)* cache(i1,b[1])(m,s);
+	*/
+	element_prod_assign(S, (*branch_cache[0])[i0], (*branch_cache[1])[i1] );
       else if (i0 != alphabet::gap)
-	S = cache(i0,b[0]);
+	element_assign(S,(*branch_cache[0])[i0]);
       else if (i1 != alphabet::gap)
-	S = cache(i1,b[1]);
+	element_assign(S,(*branch_cache[1])[i1]);
       else
 	std::abort(); // columns like this should not be in the index
 
       // propagate from the source distribution
-      Matrix& R = cache(i,b0);            //name result matrix
+      Matrix& R = (*branch_cache[2])[i];            //name the result matrix
       for(int m=0;m<n_models;m++) {
 	
 	// FIXME!!! - switch order of MatCache to be MC[b][m]
