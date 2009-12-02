@@ -860,8 +860,9 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 
       if (log_verbose) cerr<<"Went from "<<total;
       // Remove every other alignment
-      for(typeof(alignments.begin()) loc =alignments.begin();loc!=alignments.end();) {
-	typeof(loc) j = loc++;
+      typedef list<alignment>::iterator iterator_t;
+      for(iterator_t loc = alignments.begin();loc!=alignments.end();) {
+	iterator_t j = loc++;
 
 	alignments.erase(j);
 	total--;
@@ -894,10 +895,11 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     std::reverse(kill.begin(),kill.end());
 
     int i=0;
-    for(typeof(alignments.begin()) loc = alignments.begin();loc!=alignments.end();i++) {
+    typedef list<alignment>::iterator iterator_t;
+    for(iterator_t loc = alignments.begin();loc!=alignments.end();i++) {
       if (i == kill.back()) {
 	kill.pop_back();
-	typeof(loc) j = loc++;
+	iterator_t j = loc++;
 	alignments.erase(j);
 	total--;
       }

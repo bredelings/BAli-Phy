@@ -44,13 +44,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 namespace po = boost::program_options;
 using po::variables_map;
-using boost::shared_ptr;
 
 using namespace std;
 
 void load_alignments(vector<alignment>& alignments,
 		     const string& filename, 
-		     const vector<shared_ptr<const alphabet> >& alphabets,
+		     const vector<boost::shared_ptr<const alphabet> >& alphabets,
 		     int maxalignments,
 		     string what)
 {

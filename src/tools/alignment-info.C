@@ -232,7 +232,7 @@ map<gap,unsigned> guess_indels(const alignment& A)
 
     // increment counter and remove current element if count==0.
     {
-      typeof(i) j = i;
+      map<gap,unsigned>::iterator j = i;
       i++;
       if (not j->second)
 	gaps.erase(j);

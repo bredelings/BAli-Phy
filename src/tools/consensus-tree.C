@@ -160,9 +160,10 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const dynamic_bi
 
 
     // for partition in the majority tree
-    for(typeof(majority.begin()) p = majority.begin();p != majority.end();) {
+    typedef list<container_t::iterator>::iterator iterator_t;
+    for(iterator_t p = majority.begin();p != majority.end();) {
       if ((*p)->second.count < min_new) {
-	typeof(p) old = p;
+	iterator_t old = p;
 	p++;
 	majority.erase(old);
       }
@@ -173,7 +174,7 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const dynamic_bi
 
   vector<pair<Partition,unsigned> > partitions;
   partitions.reserve( 2*names.size() );
-  for(typeof(majority.begin()) p = majority.begin();p != majority.end();p++) {
+  for(list<container_t::iterator>::iterator p = majority.begin();p != majority.end();p++) {
     const dynamic_bitset<>& partition =(*p)->first;
  
     Partition pi(names,partition,mask);

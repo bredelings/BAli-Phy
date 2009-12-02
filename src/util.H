@@ -28,7 +28,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "myexception.H"
 #include <map>
 
+#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#define foreach(a,b) for(auto a=(b).begin();a != (b).end();a++)
+#else
 #define foreach(a,b) for(typeof((b).begin()) a=(b).begin();a != (b).end();a++)
+#endif
 
 // this should actually be templatized... <class charT,Alloc,Traits>
 std::istream& getline_handle_dos(std::istream&,std::string&);
@@ -183,7 +187,7 @@ inline T minmax(T x,T min, T max) {
 template <typename T>
 int find_index(const std::vector<T>& v,const T& t) 
 {
-  typeof(v.begin()) loc = std::find(v.begin(),v.end(),t);
+  typename std::vector<T>::const_iterator loc = std::find(v.begin(),v.end(),t);
   if (loc == v.end())
     return -1;
   else
@@ -346,7 +350,7 @@ bool set_if_undef(std::map<std::string,U,T>& m,const std::string& name, const U&
 template <typename U, typename T>
 const U& loadvalue(const std::map<std::string,U,T>& m,const std::string& name, const U& value) 
 {
-  typeof(m.begin()) here = m.find(name);
+  typename std::map<std::string,U,T>::const_iterator here = m.find(name);
   if (here != m.end() )
     return here->second;
   else
@@ -357,7 +361,7 @@ const U& loadvalue(const std::map<std::string,U,T>& m,const std::string& name, c
 template <typename U, typename T>
 const U& loadvalue(std::map<std::string,U,T>& m,const std::string& name) 
 {
-  typeof(m.begin()) here = m.find(name);
+  typename std::map<std::string,U,T>::const_iterator here = m.find(name);
   if (here != m.end() )
     return here->second;
   else

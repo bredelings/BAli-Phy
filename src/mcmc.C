@@ -97,7 +97,7 @@ namespace MCMC {
   {
     int prec = o.precision(4);
 
-    foreach(entry,Stats) 
+    for(std::map<std::string,Result>::const_iterator entry = Stats.begin(); entry != Stats.end();entry++)
     {
       const Result& R = entry->second;
 
