@@ -187,9 +187,100 @@ void remove_duplicates(vector<int>& v) {
   }
 }
 
+MCMC::Result SPR_stats(const Tree& T1, Tree& T2, bool success, int bins, int b1 = -1)
+{
+  MCMC::Result result(2+bins,0);
+
+  result.counts[0] = 1;
+  if (success) result.totals[0] = 1;
+
+  int dist = topology_distance(T1,T2)/2;
+
+  if (b1 != -1) 
+  //---------------- Check if topology changed ----------------//
+  {
+    int n1 = T1.directed_branch(b1).target();
+    int n2 = T1.directed_branch(b1).source();
+    assert( n1 == T2.directed_branch(b1).target() );
+    assert( n2 == T2.directed_branch(b1).source() );
+
+    vector<const_branchview> connected1;
+    append(T1.directed_branch(n2,n1).branches_after(),connected1);
+
+    vector<const_branchview> connected2;
+    append(T2.directed_branch(n2,n1).branches_after(),connected2);
+ 
+    bool same_topology = (
+			  (connected1[0] == connected2[0] and connected1[1] == connected2[1]) or
+			  (connected1[0] == connected2[1] and connected1[1] == connected2[0])
+			  );
+
+    if (same_topology)
+      assert(dist == 0);
+    else
+      assert(dist > 0);
+  }
+
+  // count dist in [0,bins)
+  if (dist > bins) dist = bins;
+  for(int i=0;i<=bins;i++) {
+    if (dist == i) {
+      result.counts[1+i] = 1;
+      if (success) result.totals[1+i] = 1;
+    }
+  }
+
+  return result;
+}
+
+/* 
+ * What causes things to be invalidated in an SPR move?
+ * - Cause #1: branch length changes (propagate away from branch in both directions)
+ *   (This therefore includes one direction -- but not both directions -- of every branch in the tree)
+ * - Cause #2: pruning and regrafting.  This changes subA indices, and also changes cached likelihoods.
+ *
+ * What has to be invalidated in an SPR move?
+ * - All likelihood caches on and after both directions of the now-united branch from which the subtree was pruned.
+ * - All subA indices on and after both directions of the now-united branch from which the subtree was pruned.
+ * - Likelihood caches and subA indices for the direction of that branch that was pointed away from the pruned subtree.
+ * 
+ * - SubA indices on all branches that are after (on the result tree) the branch that the pruned subtree is behind.
+ * - Likelihood caches on all the same branches.
+ * - SubA indices on the pruned tree that are pointing away from the regrafting point.
+ * - Likelihood caches on all the same (directed) branches.
+
+ * - SubA indices and Likelihood caches on and after both directions of the moving branch.
+
+ * Query: is this the same as invalidating all subA indices and likelihood caches on all branches after the attachment node
+          (i) first on the initial tree
+ *        (ii) and then on the target tree?
+ * Answer: Yes, I think so.  At least I don't see what is missing...
+ *
+ *
+ * Also, we have to mark pairwise alignments for updating on the merged-branch and the two parts of the split-branch.
+ */
+
+/*
+ * Q: Now, the procedure below simply changes the length on the merge and split branches (2 or 3 total)
+ *     and also calls invalidate_subA_index_branch( ) on them.
+ *    So, why does the procedure below actually work? 
+ * A: Well, both of these calls go out bidirectionally and invalidate neighbors on both sides.
+ *    o Therefore the fact that we have only one direction of the merged-branch doesn't matter. 
+ *    o Therefore the fact that we don't explicitly invalidate the branches behind b1 is OK - they get invalidated
+        anyway, from one of the directions of their immediate children.
+ *
+ * Actually this is could be overkill.  We don't need to invalidate BOTH directions of their children.
+ * We just need to invalidate the direction that points away from the attachment node.  Of course, the likelihood
+ * caches of both directions are going to get blown away anyway, because the length of the child branches is changing.
+ * But we could preserve the subA indices of the directed branches that point toward the attachment node.
+ *
+ * However, this bi-directional invalidate of the three child branches is fairly simply, and blows away everything with one stone.
+ * We don't need to explicitly blow away both directions of the moveable branch. (i.e. the one unduplicated in remove_duplicates)
+ */
+
 MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false) 
 {
-  const int bins = 4;
+  const int bins = 6;
 
   int n1 = P.T->directed_branch(b1).target();
   int n2 = P.T->directed_branch(b1).source();
@@ -220,9 +311,9 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   assert(branches.size() <= 3);
   for(int i=0;i<branches.size();i++) {
     int bi = branches[i];
-    p[1].setlength(bi,p[1].T->directed_branch(bi).length());
-    p[1].invalidate_subA_index_branch(branches[i]);
-    p[1].note_alignment_changed_on_branch(bi);
+    p[1].setlength(bi,p[1].T->directed_branch(bi).length());     // bidirectional effect
+    p[1].invalidate_subA_index_branch(bi);              // bidirectional effect
+    p[1].note_alignment_changed_on_branch(bi); // Yes, this works even for data_partition's with no indel model.
   }
 
   int C;
@@ -254,41 +345,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     }
   }
 
-
-  //---------------- Check if topology changed ----------------//
-  vector<const_branchview> connected1;
-  append(p[0].T->directed_branch(n2,n1).branches_after(),connected1);
-
-  vector<const_branchview> connected2;
-  append(p[1].T->directed_branch(n2,n1).branches_after(),connected2);
- 
-  bool same_topology = (
-			(connected1[0] == connected2[0] and connected1[1] == connected2[1]) or
-			(connected1[0] == connected2[1] and connected1[1] == connected2[0])
-			);
-
-  MCMC::Result result(2+bins,0);
-
-  result.counts[0] = 1;
-  if (C>0) result.totals[0] = 1;
-
-  int dist = topology_distance(*p[0].T, *p[1].T)/2;
-
-  if (same_topology)
-    assert(dist == 0);
-  else
-    assert(dist > 0);
-
-  // count dist in [0,bins)
-  if (dist > bins) dist = bins;
-  for(int i=0;i<=bins;i++) {
-    if (dist == i) {
-      result.counts[1+i] = 1;
-      if (C>0) result.totals[1+i] = 1;
-    }
-  }
-
-  return result;
+  return SPR_stats(*p[0].T, *p[1].T, C>0, bins, b1);
 }
 
 int choose_subtree_branch_uniform(const Tree& T) {
@@ -322,6 +379,236 @@ void sample_SPR_flat(Parameters& P,MoveStats& Stats)
       MCMC::Result result = sample_SPR(P,b1,b2);
       Stats.inc("SPR (flat)", result);
     }
+  }
+}
+
+// FIXME - maybe I should separate out the SELECTION/PROPOSAL of an attachment branch, from the final proposal of that branch
+//         since that will work different depend on on where or not we have any imodels.
+// FIXME - don't forget to enforce tree constraints.
+
+/**
+ * Sample from a number of SPR attachment points - one per branch.
+ * 
+ * When we calculate L[0], we have calculated the 
+ */
+void sample_SPR_all(Parameters& P,MoveStats& Stats) 
+{
+  const int bins = 6;
+
+  double f = loadvalue(P.keys,"SPR_amount",0.1);
+  int n = poisson(P.T->n_branches()*f);
+
+  double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
+
+  cow_ptr<SequenceTree>& T = P.T;
+
+  //FIXME - how to rule out topologies that conflict with constraints w/o wasting too much CPU time?
+
+  for(int i=0;i<n;i++) 
+  {
+    // Temporarily stop checking subA indices of branches that point away from the cache root
+    P.subA_index_allow_invalid_branches(true);
+
+    // Choose a directed branch to prune and regraft -- pointing away from the pruned subtree.
+    int b1 = choose_subtree_branch_uniform(*T);
+
+    // One of the two branches (B1) that it points to will be considered the current attachment branch
+    // The other branch (BM) will move around to wherever we are currently attaching b1.
+    vector<const_branchview> branches;
+    append(T->directed_branch(b1).branches_after(),branches);
+    assert(branches.size() == 2);
+    int B1 = std::min(branches[0].undirected_name(), branches[1].undirected_name());
+    int BM = std::max(branches[0].undirected_name(), branches[1].undirected_name());
+    double L0 = T->branch(B1).length() + T->branch(BM).length();
+
+    /*----------- get the list of possible attachment points, with [0] being the current one.------- */
+    branches = branches_after(*T,b1);
+
+    branches.erase(branches.begin()); // branches_after(b1) includes b1 -- which we do not want.
+
+    // remove the moving branch name (BM) from the list of attachment branches
+    for(int i=branches.size()-1;i>=0;i--)
+      if (branches[i].undirected_name() == BM)
+	branches.erase(branches.begin()+i);
+
+    // convert the const_branchview's to int names
+    vector<int> branch_names = directed_names(branches);
+
+    /*----------------------- Initialize likelihood for each attachment point ----------------------- */
+
+    // The probability of attaching to each branch, w/o the alignment probability
+    vector<efloat_t> Pr(branches.size(), 0);
+    vector<efloat_t> LLL(branches.size(), 0);
+    int root_node = T->directed_branch(b1).target(); // This node will move around, but we will always 
+                                                     // place the root on it to calculate the likelihood.
+    P.set_root(root_node);
+    Pr[0] = P.likelihood() * P.prior_no_alignment();
+    LLL[0] = P.likelihood();
+
+    // Compute total lengths for each of the possible attachment branches
+    vector<double> L(branches.size());
+    L[0] = L0;
+    for(int i=1;i<branches.size();i++)
+      L[i] = T->directed_branch(branches[i]).length();
+
+    // Actually store the trees, instead of recreating them after picking one.
+    vector<SequenceTree> trees(branches.size());
+    trees[0] = *T;
+
+    /*----------- Begin invalidating caches and subA-indices to reflect the pruned state -------------*/
+
+    // At this point, caches for branches pointing to B1 and BM are accurate -- but everything after them
+    //  still assumes we haven't pruned and is therefore inaccurate.
+
+    P.LC_invalidate_branch(B1);          // invalidate caches       for B1, B1^t and ALL BRANCHES AFTER THEM.
+    P.invalidate_subA_index_branch(B1);  // invalidate subA-indices for B1, B1^t and ALL BRANCHES AFTER THEM.
+
+    P.LC_invalidate_branch(BM);          // invalidate caches       for BM, BM^t and ALL BRANCHES AFTER THEM.
+    P.invalidate_subA_index_branch(BM);  // invalidate subA-indices for BM, BM^t and ALL BRANCHES AFTER THEM.
+
+    // Compute the probability of each attachment point
+    // The LC root should always be After this point, the LC root will now be the same: the attachment point.
+    for(int i=1;i<branch_names.size();i++) 
+    {
+      *T = trees[0];
+
+      // target branch - pointing away from b1
+      int b2 = branch_names[i];
+
+      // Perform the SPR operation
+      int BM2 = SPR(*T, T->directed_branch(b1).reverse(), b2);
+      assert(BM2 == BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
+      P.tree_propagate();
+
+      // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
+      assert(std::abs(T->branch(B1).length() - L0) < 1.0e-9);
+      P.setlength_no_invalidate_LC(B1,L0);   // The likelihood caches (and subA indices) should be correct for
+                                             //  the situation we are setting up here -- no need to invalidate.
+
+      // We want caches for each directed branch not in the PRUNED subtree to be accurate
+      //   for the situation that the PRUNED subtree is not behind them.
+
+      // It would be nice to keep the old exp(tB) as well...
+      double LA = L[i]*uniform();
+      double LB = L[i] - LA;
+
+      // We want to suppress the bidirectional effect here...
+      P.setlength_no_invalidate_LC(b2,LA);                            // Recompute the transition matrix
+      P.LC_invalidate_one_branch(b2);                                 //  ... mark for recomputing.
+      P.LC_invalidate_one_branch(T->directed_branch(b2).reverse());   //  ... mark for recomputing.
+
+      P.setlength_no_invalidate_LC(BM,LB);
+      P.LC_invalidate_one_branch(BM);
+      P.LC_invalidate_one_branch(T->directed_branch(BM).reverse());
+
+      trees[i] = *T;
+      assert(std::abs(length(trees[i]) - length(trees[0])) < 1.0e-9);
+
+      // We invalidate both branch_names[i] and BM after use -- we don't care whether
+      // branch_names[i] or BM is on the upper or lower sub-branch.
+
+      // Theoretically, we don't need to invalidate branches_names[i]^t if it is pointing up -- only
+      // the pointing down version.  Is the direction of branch_names[i] preserved?
+
+      // Also, theoretically we don't need the pointing up version anyway
+
+      // 1. The (surviving) branch does NOT change direction when a subtree is PRUNED.
+
+      // 2. When we GRAFT onto a leaf branch, the branch may be on the opposite side from where we expectd.
+
+      // We don't want to invalidate all branches behind the reverse direction of b2
+
+      // this should be redundant
+      P.set_root(root_node);
+
+      // just to make sure that the problem is not with subA indices
+      //      P.invalidate_subA_index_all();
+
+      Pr[i] = P.likelihood() * P.prior_no_alignment();
+      LLL[i] = P.likelihood();
+      P.tree_propagate();
+      assert(std::abs(log(LLL[i]) - log(P.likelihood())) < 1.0e-9);
+
+      // invalidate the DIRECTED branch that we just landed on and altered
+      P.setlength_no_invalidate_LC(b2,L[i]);                          // Put back the old transition matrix
+      P.LC_invalidate_one_branch(b2);                                 // ... mark for recomputing.
+      P.LC_invalidate_one_branch(T->directed_branch(b2).reverse());   // ... mark for recomputing.
+
+      // this is bidirectional
+      P.invalidate_subA_index_one_branch(BM);
+    }
+
+    // Step N-2: Choose an attachment point
+
+    /* Factoring in branch lengths?
+     *  pi(x) * rho(x,S) * alpha(x,S,y) = pi(y) * rho(y,S) * alpha(y,S,x) 
+     *  rho(x,S) = prod over branches[b] (1/L[b]) * L[x]
+     *           = C * L[x]
+     *  pi(x) * C * L[x] * alpha(x,S,y) = pi(y) * C * L[y] * alpha(y,S,x) 
+     *  alpha(x,S,y) / alpha(y,S,x) = (pi(y)*L[y])/(pi(x)*L(x))
+     *
+     *  Therefore, the probability of choosing+accepting y should be proportional to Pr[y] * L[y].
+     *  In the simplest incarnation, this is Gibbs sampling, and is independent of x.
+     * FIXME - However, check that we can use choose_MH to get a speedup that is up to x2.
+     */
+    for(int i=0;i<Pr.size();i++)
+      Pr[i] *= L[i];
+    int C = choose(Pr);
+
+    // Step N-1: Attach to that point
+    *(P.T) = trees[C]; 
+    P.tree_propagate();
+
+    // Step N: Invalidate subA indices and also likelihood caches that are no longer valid.
+    // Which branches were ALREADY invalid for tree[0]?
+    // - BM / BM^t (?)
+    // - branches after B1 -- these branches reference B1 and assume that b1 is not attached.
+
+    // Which branches are ALREADY invalid for the tree with subtree-after-b1 removed?
+    // - BM / BM^t (?)
+
+    // Which branches are invalidated by the attachment of subtree-behind-b1?
+    // - 
+
+    // Which of these branches might BECOME valid?
+    // - branches after B1 that point to the attachment point.
+
+    // BM is already invalidated (both ways) from the looping code above.
+
+    //FIXME - which branches must be invalidated after an SPR?
+    //FIXME - do we need to invalidate more branches here?
+    //FIXME - do we need to invalidate FEWER branches here? 
+    //      - do we need to call setlength for B1 all over again?
+    // Question - why does sample_SPR( ) only invalidate things after b1 (before) and b1 (after)?
+    //            (this would seem to be 4 branches, but we get BM twice)
+    //          - should we also invalidate b1^t and branches after that, too?
+    // sample_SPR( ) does:
+    //          - set_length( )
+    //          - invalidate_subA_index_branch( )
+    //          - note_alignment_changed_on_branch( )
+    vector<int> btemp; btemp.push_back(B1) ; btemp.push_back(BM) ; btemp.push_back(branch_names[C]);
+    for(int i=0;i<btemp.size();i++) {
+      int bi = btemp[i];
+      P.setlength(bi,P.T->directed_branch(bi).length());   // bidirectional effect
+      P.invalidate_subA_index_branch(bi);         // bidirectional effect
+      P.note_alignment_changed_on_branch(bi); // Yes, this works even for data_partition's with no indel model.
+    }
+    P.subA_index_allow_invalid_branches(false);
+
+#ifndef NDEBUG    
+    assert(std::abs(length(*P.T) - length(trees[0])) < 1.0e-9);
+    efloat_t L_1 = P.likelihood();
+    assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
+#endif
+
+    MCMC::Result result = SPR_stats(trees[0], trees[C], true, bins, b1);
+    // Consider subdividing this into cases based on the length of the connecting branch;
+    Stats.inc("SPR (all)", result);
+    if (T->branch(b1).length() > 1)
+      Stats.inc("SPR (all-long)", result);
+    else
+      Stats.inc("SPR (all-short)", result);
+      
   }
 }
 

@@ -145,7 +145,9 @@ bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2,
 
 bool A_constant(alignment A1, alignment A2, const dynamic_bitset<>& ignore) {
   assert(A1.n_sequences() == A2.n_sequences());
-  assert(ignore.size() == A1.n_sequences());
+
+  // equality holds if we have internal node sequences -- otherwise ignore is larger
+  assert(A1.n_sequences() <= ignore.size());
 
   // convert to feature-number notation
   ublas::matrix<int> M1 = M(A1);
@@ -303,7 +305,13 @@ void connect_leaf_characters(alignment& A,const Tree& T)
 }
 
 /// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore) {
+void check_internal_nodes_connected(const alignment& A,const Tree& T,const vector<int>& ignore) 
+{
+  // Only check if A in fact has internal node sequences.
+  if (A.n_sequences() == T.n_leaves()) return;
+
+  assert(A.n_sequences() == T.n_nodes());
+
   for(int column=0;column<A.length();column++) {
     dynamic_bitset<> present(T.n_nodes());
     for(int i=0;i<T.n_nodes();i++) 

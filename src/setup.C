@@ -46,6 +46,10 @@ alignment standardize(const alignment& A, const SequenceTree& T)
 {
   SequenceTree T2 = T;
 
+  // if we don't have any internal node sequences, then we are already standardized
+  if (A.n_sequences() == T.n_leaves())
+    return A;
+
   // standardize NON-LEAF node and branch names in T
   vector<int> mapping = T2.standardize();
   vector<int> new_order = invert(mapping);
@@ -319,7 +323,7 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
   check_alignment(A,T,internal_sequences);
 }
 
-void link(vector<alignment>& alignments, SequenceTree& T, bool internal_sequences)
+void link(vector<alignment>& alignments, SequenceTree& T, const vector<bool>& internal_sequences)
 {
   for(int i=1;i<alignments.size();i++)
   {
@@ -333,10 +337,10 @@ void link(vector<alignment>& alignments, SequenceTree& T, bool internal_sequence
   }
 
   for(int i=0;i<alignments.size();i++) 
-    link(alignments[i],T,internal_sequences);
+    link(alignments[i],T,internal_sequences[i]);
 }
 
-void link(vector<alignment>& alignments, RootedSequenceTree& T, bool internal_sequences)
+void link(vector<alignment>& alignments, RootedSequenceTree& T, const vector<bool>& internal_sequences)
 {
   for(int i=1;i<alignments.size();i++)
   {
@@ -350,10 +354,20 @@ void link(vector<alignment>& alignments, RootedSequenceTree& T, bool internal_se
   }
 
   for(int i=0;i<alignments.size();i++) 
-    link(alignments[i],T,internal_sequences);
+    link(alignments[i],T,internal_sequences[i]);
 }
 
 void load_As_and_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,bool internal_sequences)
+{
+  //align - filenames
+  vector<string> filenames = args["align"].as<vector<string> >();
+
+  vector<bool> i(filenames.size(),internal_sequences);
+
+  load_As_and_T(args,alignments,T,i);
+}
+
+void load_As_and_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,const vector<bool>& internal_sequences)
 {
   //align - filenames
   vector<string> filenames = args["align"].as<vector<string> >();
@@ -381,7 +395,7 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
       }
 
     //---- Check that internal sequence satisfy constraints ----//
-    check_alignment(alignments[i],T,internal_sequences);
+    check_alignment(alignments[i],T,internal_sequences[i]);
   }
 }
 
@@ -390,6 +404,16 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
   //align - filenames
   vector<string> filenames = args["align"].as<vector<string> >();
 
+  vector<bool> i(filenames.size(),internal_sequences);
+
+  load_As_and_T(args,alignments,T,i);
+}
+
+void load_As_and_T(const variables_map& args,vector<alignment>& alignments,RootedSequenceTree& T,const vector<bool>& internal_sequences)
+{
+  //align - filenames
+  vector<string> filenames = args["align"].as<vector<string> >();
+
   // load the alignments
   alignments = load_alignments(filenames,load_alphabets(args));
 
@@ -413,12 +437,23 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
       }
 
     //---- Check that internal sequence satisfy constraints ----//
-    check_alignment(alignments[i],T,internal_sequences);
+    check_alignment(alignments[i],T,internal_sequences[i]);
   }
 }
 
 
 void load_As_and_random_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,bool internal_sequences)
+{
+  //align - filenames
+  vector<string> filenames = args["align"].as<vector<string> >();
+
+  vector<bool> i(filenames.size(),internal_sequences);
+
+  load_As_and_random_T(args,alignments,T,i);
+}
+
+
+void load_As_and_random_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,const vector<bool>& internal_sequences)
 {
   //align - filenames
   vector<string> filenames = args["align"].as<vector<string> >();
@@ -454,7 +489,7 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
       }
 
     //---- Check that internal sequence satisfy constraints ----//
-    check_alignment(alignments[i],T,internal_sequences);
+    check_alignment(alignments[i],T,internal_sequences[i]);
   }
 }
 

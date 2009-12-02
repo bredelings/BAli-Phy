@@ -117,6 +117,7 @@ public:
   substitution::MultiModel& SModel() {return *SModel_;}
 
   void setlength(int b, double l);
+  void setlength_no_invalidate_LC(int b, double l);
 
   int seqlength(int n) const;
 
@@ -237,6 +238,7 @@ public:
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 
+  void setlength_no_invalidate_LC(int b,double l); 
   
   /// Recalculate all the cached transition matrices
   void recalc_imodels();
@@ -251,8 +253,17 @@ public:
   // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
   void LC_invalidate_branch(int b);
 
+  // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
+  void LC_invalidate_one_branch(int b);
+
   // invalidate subA indices on b and b* and all DIRECTED branches after them
   void invalidate_subA_index_branch(int b);
+  // invalidate subA indices on b and b*
+  void invalidate_subA_index_one_branch(int b);
+  // invalidate subA indices for all branches
+  void invalidate_subA_index_all();
+
+  void subA_index_allow_invalid_branches(bool);
 
   void note_alignment_changed_on_branch(int b);
 

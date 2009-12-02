@@ -816,7 +816,10 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
   // make sure that the Alignment and Tree are linked
   for(int i=0;i<P.n_data_partitions();i++) {
-    assert(P[i].A->n_sequences() == T.n_nodes());
+    if (P[i].has_IModel())
+      assert(P[i].A->n_sequences() == T.n_nodes()); 
+   else
+      assert(P[i].A->n_sequences() == T.n_leaves());
 
     for(int j=0;j<T.n_leaves();j++)
       assert(T.seq(j) == P[i].A->seq(j).name);    

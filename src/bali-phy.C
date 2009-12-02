@@ -335,10 +335,13 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   if (has_imodel) {
     SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat","topology:lengths:nodes:alignment:alignment_branch"));
     SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths:nodes:alignment:alignment_branch"));
+    //    Not Ready Yet
+    //    SPR_move.add(1,SingleMove(sample_SPR_all,"SPR_and_A_all","topology:lengths:nodes:alignment:alignment_branch"));
   }
   else {
     SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat","topology:lengths"));
     SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths"));
+    SPR_move.add(10,SingleMove(sample_SPR_all,"SPR_and_A_all","topology:lengths"));
   }
 
   topology_move.add(1,NNI_move,false);
@@ -945,6 +948,7 @@ public:
   ~teebuf() {sync();}
 };
 
+// return the list of constrained branches
 vector<int> load_alignment_branch_constraints(const string& filename, const SequenceTree& TC)
 {
   // open file
@@ -988,7 +992,10 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
     }
   }
 
-  // check that each group is a fully resolved clade in the constraint tree
+  // 1. check that each group is a fully resolved clade in the constraint tree (no polytomies)
+  // 2. construct the list of constrained branches
+  // FIXME - what if the user specifies nested clades?  Won't we get branches twice, then?
+  //       - SOLUTION: use a bitmask.
   vector<int> branches;
   for(int i=0;i<mask_groups.size();i++) 
   {
@@ -1009,8 +1016,8 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 			 <<join(name_groups[i],' ')
 			 <<"' not found in topology constraint tree.";
     
-    // add child branches if we can find it
-    vector<const_branchview> b2 = branches_after(TC,found);
+    // mark branch and child branches as constrained
+    vector<const_branchview> b2 = branches_after(TC,found); 
     for(int j=0;j<b2.size();j++) {
       if (b2[j].target().degree() > 3)
 	throw myexception()<<"Alignment constraint: clade '"
@@ -1541,15 +1548,43 @@ int main(int argc,char* argv[])
     
     out_cache<<"random seed = "<<seed<<endl<<endl;
 
+    //------ Determine number of partitions ------//
+    vector<string> filenames = args["align"].as<vector<string> >();
+    const int n_partitions = filenames.size();
+
+    //-------------Choose an indel model--------------//
+    //FIXME - make a shared_items-like class that also holds the items to we can put the whole state in one object.
+    //FIXME - make bali-phy.C a more focussed and readable file - remove setup junk to other places? (where?)
+    vector<int> imodel_mapping(n_partitions, -1);
+    shared_items<string> imodel_names_mapping(vector<string>(),imodel_mapping);
+
+    if (args.count("traditional")) {
+      if (args.count("imodel"))
+	throw myexception()<<"Error: you specified both --imodel <arg> and --traditional";
+    }
+    else {
+      imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
+      
+      imodel_mapping = imodel_names_mapping.item_for_partition;
+    }
+
+    vector<polymorphic_cow_ptr<IndelModel> > 
+      full_imodels = get_imodels(imodel_names_mapping);
+
     //----------- Load alignment and tree ---------//
     vector<alignment> A;
     SequenceTree T;
-    if (args.count("tree"))
-      load_As_and_T(args,A,T);
-    else
-      load_As_and_random_T(args,A,T);
+    // FIXME - do I want to allow/remove internal node sequences here?
+    vector<bool> internal_sequences(n_partitions);
+    for(int i=0;i<internal_sequences.size();i++)
+      internal_sequences[i] = (imodel_mapping[i] != -1);
 
-    vector<string> filenames = args["align"].as<vector<string> >();
+    //       - and only if there is an indel model?
+    if (args.count("tree"))
+      load_As_and_T(args,A,T,internal_sequences);
+    else
+      load_As_and_random_T(args,A,T,internal_sequences);
+
     for(int i=0;i<A.size();i++) {
       check_alignment_names(A[i]);
       check_alignment_values(A[i],filenames[i]);
@@ -1563,7 +1598,7 @@ int main(int argc,char* argv[])
       throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".\n(Perhaps you have BLANK LINES in your FASTA file?)";
 
     //--------- Set up the substitution model --------//
-    shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", A.size());
+    shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
     
     vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
 
@@ -1573,23 +1608,6 @@ int main(int argc,char* argv[])
     if (args["letters"].as<string>() == "star")
       for(int i=T.n_leaves();i<T.n_branches();i++)
 	T.branch(i).set_length(0);
-
-    //-------------Choose an indel model--------------//
-    vector<int> imodel_mapping(A.size(),-1);
-    shared_items<string> imodel_names_mapping(vector<string>(),imodel_mapping);
-
-    if (args.count("traditional")) {
-      if (args.count("imodel"))
-	throw myexception()<<"Error: you specified both --imodel <arg> and --traditional";
-    }
-    else {
-      imodel_names_mapping = get_mapping(args, "imodel", A.size());
-
-      imodel_mapping = imodel_names_mapping.item_for_partition;
-    }
-
-    vector<polymorphic_cow_ptr<IndelModel> > 
-      full_imodels = get_imodels(imodel_names_mapping);
 
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());

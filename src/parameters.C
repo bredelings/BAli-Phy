@@ -76,8 +76,10 @@ void data_partition::recalc_smodel()
   MC.recalc(*T,*SModel_);
 }
 
-void data_partition::setlength(int b, double l)
+void data_partition::setlength_no_invalidate_LC(int b, double l)
 {
+  b = T->directed_branch(b).undirected_name();
+
   MC.setlength(b,l,*T,*SModel_); 
 
   if (has_IModel())
@@ -93,6 +95,11 @@ void data_partition::setlength(int b, double l)
     cached_alignment_prior.invalidate();
     cached_alignment_prior_for_branch[b].invalidate();
   }
+}
+
+void data_partition::setlength(int b, double l)
+{
+  setlength_no_invalidate_LC(b,l);
   LC.invalidate_branch(*T,b);
 }
 
@@ -113,6 +120,10 @@ void data_partition::note_sequence_length_changed(int n)
 
 void data_partition::note_alignment_changed_on_branch(int b)
 {
+  if (not has_IModel()) return;
+
+  b = T->directed_branch(b).undirected_name();
+
   cached_alignment_prior.invalidate();
   cached_alignment_prior_for_branch[b].invalidate();
   cached_alignment_counts_for_branch[b].invalidate();
@@ -460,10 +471,46 @@ void Parameters::LC_invalidate_branch(int b)
     data_partitions[i]->LC.invalidate_branch(*data_partitions[i]->T,b);
 }
 
+void Parameters::LC_invalidate_one_branch(int b)
+{
+  for(int i=0;i<n_data_partitions();i++)
+    data_partitions[i]->LC.invalidate_one_branch(b);
+}
+
 void Parameters::invalidate_subA_index_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
     ::invalidate_subA_index_branch(*data_partitions[i]->A,*data_partitions[i]->T,b);
+}
+
+void Parameters::invalidate_subA_index_one_branch(int b)
+{
+  int b2 = T->directed_branch(b).reverse();
+  for(int i=0;i<n_data_partitions();i++) {
+    ::invalidate_subA_index_one(*data_partitions[i]->A,b);
+    ::invalidate_subA_index_one(*data_partitions[i]->A,b2);
+  }
+}
+
+void Parameters::invalidate_subA_index_all()
+{
+  for(int i=0;i<n_data_partitions();i++)
+    ::invalidate_subA_index_all(*data_partitions[i]->A);
+}
+
+void Parameters::subA_index_allow_invalid_branches(bool b)
+{
+  ::subA_index_allow_invalid_branches(b);
+
+#ifndef NDEBUG
+  if (not subA_index_may_have_invalid_branches())
+  {
+    for(int i=0;i<n_data_partitions();i++) {
+      subA_index_check_footprint(*data_partitions[i]->A, *T);
+      subA_index_check_regenerate(*data_partitions[i]->A, *T);
+    }
+  }
+#endif
 }
 
 void Parameters::note_alignment_changed_on_branch(int b)
@@ -556,9 +603,16 @@ const Model& Parameters::SubModels(int i) const
   return *data_partitions[i];
 }
 
+void Parameters::setlength_no_invalidate_LC(int b,double l) 
+{
+  T->directed_branch(b).set_length(l);
+  for(int i=0;i<data_partitions.size();i++) 
+    data_partitions[i]->setlength_no_invalidate_LC(b,l);
+}
+
 void Parameters::setlength(int b,double l) 
 {
-  T->branch(b).set_length(l);
+  T->directed_branch(b).set_length(l);
   for(int i=0;i<data_partitions.size();i++) 
     data_partitions[i]->setlength(b,l);
 }

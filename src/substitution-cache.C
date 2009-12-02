@@ -231,6 +231,10 @@ void Likelihood_Cache::invalidate_node(const Tree& T,int n) {
     cache->invalidate_one_branch(token,branch_list[i]);
 }
 
+void Likelihood_Cache::invalidate_one_branch(int b) {
+  cache->invalidate_one_branch(token,b);
+}
+
 void Likelihood_Cache::invalidate_branch(const Tree& T,int b) {
   invalidate_directed_branch(T,b);
   invalidate_directed_branch(T,T.directed_branch(b).reverse());
