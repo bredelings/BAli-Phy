@@ -218,12 +218,13 @@ namespace substitution {
 
     assert(index.size2() == rb.size());
 
-    const alphabet& a = A.get_alphabet();
+    // const alphabet& a = A.get_alphabet();
 
     const int root = cache.root;
 
     if (T[root].is_leaf_node())
       throw myexception()<<"Trying to accumulate conditional likelihoods at a root node is not allowed.";
+    assert(rb.size() == 3);
 
     // scratch matrix 
     Matrix & S = cache.scratch(0);
@@ -245,19 +246,37 @@ namespace substitution {
       branch_cache.push_back(&cache[rb[i]]);
     
     efloat_t total = 1;
-    for(int i=0;i<index.size1();i++) 
+    for(int i=0;i<index.size1();i++)
     {
       double p_col = 0;
 
-      if (index.size2() == 3 and index(i,0) != -1 and index(i,1) != -1 and index(i,2) != -1) {
-	int i0 = index(i,0);
-	int i1 = index(i,1);
-	int i2 = index(i,2);
-	p_col = element_prod_sum(F, (*branch_cache[0])[i0], (*branch_cache[1])[i1], (*branch_cache[2])[i2] );
-      }
+      int i0 = index(i,0);
+      int i1 = index(i,1);
+      int i2 = index(i,2);
+
+      Matrix* m[3];
+      int mi=0;
+
+      if (i0 != -1)
+	m[mi++] = &((*branch_cache[0])[i0]);
+      if (i1 != -1)
+	m[mi++] = &((*branch_cache[1])[i1]);
+      if (i2 != -1)
+	m[mi++] = &((*branch_cache[2])[i2]);
+
+      if (mi==3)
+	p_col = element_prod_sum(F, *m[0], *m[1], *m[2]);
+      else if (mi==2)
+	p_col = element_prod_sum(F, *m[0], *m[1]);
+      else if (mi==1)
+	p_col = element_prod_sum(F, *m[0]);
       else {
+	p_col = element_sum(F);
+      }
+
+#ifndef NDEBUG
       //-------------- Set letter & model prior probabilities  ---------------//
-      element_assign(S,F); // noalias(S) = F;
+      element_assign(S,F);
 
       //-------------- Propagate and collect information at 'root' -----------//
       for(int j=0;j<rb.size();j++) {
@@ -266,8 +285,7 @@ namespace substitution {
 	  element_prod_modify(S,(*branch_cache[j])[i0]);
       }
 
-#ifndef NDEBUG     
-      //--------- If there is a letter at the root, condition on it ---------//
+      //------------ Check that individual models are not crazy -------------//
       for(int m=0;m<n_models;m++) {
 	double p_model=0;
 	for(int s=0;s<n_states;s++)
@@ -275,12 +293,11 @@ namespace substitution {
 	// A specific model (e.g. the INV model) could be impossible
 	assert(0 <= p_model and p_model <= 1.00000000001);
       }
+
+      double p_col2 = element_sum(S);
+
+      assert((p_col - p_col2)/std::max(p_col,p_col2) < 1.0e-9);
 #endif
-
-      // What is the total probability of the models?
-      p_col = element_sum(S);
-
-      }
 
       // SOME model must be possible
       assert(0 <= p_col and p_col <= 1.00000000001);
@@ -403,7 +420,7 @@ namespace substitution {
     const alphabet& a = A.get_alphabet();
 
     // The number of directed branches is twice the number of undirected branches
-    const int B        = T.n_branches();
+    // const int B        = T.n_branches();
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
