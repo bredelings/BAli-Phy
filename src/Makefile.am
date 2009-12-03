@@ -21,7 +21,7 @@ INCLUDES = -I@top_srcdir@/include
 
 if GCC
 
-CXXFLAGS += -pedantic
+CXXFLAGS += -pedantic @MPI_CXXFLAGS@
 CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
 
 endif
@@ -66,7 +66,6 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  tools/partition.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C
 
-bali_phy_CXXFLAGS = @MPI_CXXFLAGS@
 bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@ 
 
 #-----------------------------------------------------------------
