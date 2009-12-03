@@ -47,6 +47,15 @@ using std::vector;
 // * 
 
 
+inline void element_assign(Matrix& M1,double d)
+{
+  const int size = M1.data().size();
+  double * __restrict__ m1 = M1.data().begin();
+  
+  for(int i=0;i<size;i++)
+    m1[i] = d;
+}
+
 inline void element_assign(Matrix& M1,const Matrix& M2)
 {
   assert(M1.size1() == M2.size1());
@@ -349,6 +358,7 @@ namespace substitution {
 
     for(int i=0;i<subA_length(A,b0);i++)
     {
+      Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
       int l2 = A.note(0,i+1,b0);
 
@@ -356,19 +366,17 @@ namespace substitution {
 	for(int m=0;m<n_models;m++) {
 	  const Matrix& Q = transition_P[m][b0%B];
 	  for(int s1=0;s1<n_states;s1++)
-	    cache(i,b0)(m,s1) = Q(s1,l2);
+	    R(m,s1) = Q(s1,l2);
 	}
       else if (a.is_letter_class(l2)) {
 	for(int m=0;m<n_models;m++) {
 	  const Matrix& Q = transition_P[m][b0%B];
 	  for(int s1=0;s1<n_states;s1++)
-	    cache(i,b0)(m,s1) = sum(Q,s1,l2,a);
+	    R(m,s1) = sum(Q,s1,l2,a);
 	}
       }
       else
-	for(int m=0;m<n_models;m++)
-	  for(int s=0;s<n_states;s++)
-	    cache(i,b0)(m,s) = 1;
+	element_assign(R,1);
     }
   }
 
@@ -426,15 +434,15 @@ namespace substitution {
 
     for(int i=0;i<subA_length(A,b0);i++)
     {
+      Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
       int l2 = A.note(0,i+1,b0);
 
       if (a.is_letter(l2))
 	for(int m=0;m<n_models;m++) {
-	  const valarray<double>& pi = SubModels[m]->frequencies();
 	  for(int s1=0;s1<n_states;s1++)
-	    cache(i,b0)(m,s1) = (1.0-exp_a_t[m])*pi[l2];
-	  cache(i,b0)(m,l2) += exp_a_t[m];
+	    R(m,s1) = (1.0-exp_a_t[m])*F(m,l2);
+	  R(m,l2) += exp_a_t[m];
 	}
       else if (a.is_letter_class(l2)) 
       {
@@ -445,16 +453,14 @@ namespace substitution {
 	    if (a.matches(l,l2))
 	      sum += F(m,l);
 	  for(int s1=0;s1<n_states;s1++)
-	    cache(i,b0)(m,s1) = (1.0-exp_a_t[m])*sum;
+	    R(m,s1) = (1.0-exp_a_t[m])*sum;
 	  for(int l=0;l<a.size();l++)
 	    if (a.matches(l,l2))
-	      cache(i,b0)(m,l) += exp_a_t[m];
+	      R(m,l) += exp_a_t[m];
 	}
       }
       else
-	for(int m=0;m<n_models;m++)
-	  for(int s=0;s<n_states;s++)
-	    cache(i,b0)(m,s) = 1;
+	element_assign(R,1);
     }
   }
 
@@ -485,6 +491,7 @@ namespace substitution {
 
     for(int i=0;i<subA_length(A,b0);i++)
     {
+      Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
       int l2 = A.note(0,i+1,b0);
 
@@ -492,19 +499,17 @@ namespace substitution {
 	for(int m=0;m<n_models;m++) {
 	  const Matrix& Q = transition_P[m][b0%B];
 	  for(int s1=0;s1<n_states;s1++)
-	    cache(i,b0)(m,s1) = sum(Q,smap,n_letters,s1,l2);
+	    R(m,s1) = sum(Q,smap,n_letters,s1,l2);
 	}
       else if (a.is_letter_class(l2)) {
 	for(int m=0;m<n_models;m++) {
 	  const Matrix& Q = transition_P[m][b0%B];
 	  for(int s1=0;s1<n_states;s1++)
-	    cache(i,b0)(m,s1) = sum(Q,smap,s1,l2,a);
+	    R(m,s1) = sum(Q,smap,s1,l2,a);
 	}
       }
       else
-	for(int m=0;m<n_models;m++)
-	  for(int s=0;s<n_states;s++)
-	    cache(i,b0)(m,s) = 1;
+	element_assign(R,1);
     }
   }
 
@@ -606,6 +611,12 @@ namespace substitution {
     const int n_states = S.size2();
     assert(MModel.n_states() == n_states);
 
+    // look up the cache rows now, once, instead of for each column
+    vector< vector<Matrix>* > branch_cache;
+    for(int i=0;i<b.size();i++)
+      branch_cache.push_back(&cache[b[i]]);
+    branch_cache.push_back(&cache[b0]);
+    
     vector<const F81_Model*> SubModels(n_models);
     for(int m=0;m<n_models;m++) {
       SubModels[m] = static_cast<const F81_Model*>(&MModel.base_model(m));
@@ -626,19 +637,22 @@ namespace substitution {
       // compute the source distribution from 2 branch distributions
       int i0 = index(i,0);
       int i1 = index(i,1);
+
+      const Matrix& C1 = (*branch_cache[0])[i0];
+      const Matrix& C2 = (*branch_cache[1])[i1];
+
+      const Matrix* C = &S;
       if (i0 != alphabet::gap and i1 != alphabet::gap)
-	for(int m=0;m<n_models;m++) 
-	  for(int s=0;s<n_states;s++)
-	    S(m,s) = cache(i0,b[0])(m,s)* cache(i1,b[1])(m,s);
+	element_prod_assign(S, C1, C2);
       else if (i0 != alphabet::gap)
-	S = cache(i0,b[0]);
+	C = &C1;
       else if (i1 != alphabet::gap)
-	S = cache(i1,b[1]);
+	C = &C2;
       else
 	std::abort(); // columns like this should not be in the index
 
       // propagate from the source distribution
-      Matrix& R = cache(i,b0);            //name result matrix
+      Matrix& R = (*branch_cache[2])[i];            //name the result matrix
       for(int m=0;m<n_models;m++) 
       {
 	// compute the distribution at the target (parent) node - multiple letters
@@ -646,12 +660,12 @@ namespace substitution {
 	//  sum = (1-exp(-a*t))*(\sum[s2] pi[s2]*L[s2])
 	double sum = 0;
 	for(int s2=0;s2<n_states;s2++)
-	  sum += F(m,s2)*S(m,s2);
+	  sum += F(m,s2)*(*C)(m,s2);
 	sum *= (1.0 - exp_a_t[m]);
 
 	// L'[s1] = exp(-a*t)L[s1] + sum
 	for(int s1=0;s1<n_states;s1++) 
-	  R(m,s1) = exp_a_t[m]*S(m,s1) + sum;
+	  R(m,s1) = exp_a_t[m]*(*C)(m,s1) + sum;
       }
     }
   }
