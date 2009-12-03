@@ -274,7 +274,7 @@ MCMC::Result SPR_stats(const Tree& T1, Tree& T2, bool success, int bins, int b1 
  * caches of both directions are going to get blown away anyway, because the length of the child branches is changing.
  * But we could preserve the subA indices of the directed branches that point toward the attachment node.
  *
- * However, this bi-directional invalidate of the three child branches is fairly simply, and blows away everything with one stone.
+ * However, this bi-directional invalidation of the three child branches is fairly simply, and blows away everything with one stone.
  * We don't need to explicitly blow away both directions of the moveable branch. (i.e. the one unduplicated in remove_duplicates)
  */
 
@@ -298,6 +298,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   //  std::cerr<<"before = "<<p[1].T<<endl;
 
   double ratio = do_SPR(p[1],b1,b2);
+  // enforce tree constraints
   if (not extends(*p[1].T, *P.TC))
     return MCMC::Result(2+bins,0);
 
@@ -382,9 +383,17 @@ void sample_SPR_flat(Parameters& P,MoveStats& Stats)
   }
 }
 
-// FIXME - maybe I should separate out the SELECTION/PROPOSAL of an attachment branch, from the final proposal of that branch
-//         since that will work different depend on on where or not we have any imodels.
-// FIXME - don't forget to enforce tree constraints.
+// In order to make this work for alignment resampling, I suggest
+//  * set rho[0] = choose_MH_P(Pr,0)
+//  * set rho[1] = choose_MH_P(Pr,1)
+// In theory we can use this for both alignment-based and non-alignment based proposals.
+// 
+// We still need to check that
+//  * Evaluating the likelihood at the newly chosen attachment point doesn't requires at most 3(2) branch peels.
+//  * If there is no alignment information, then the probability of moving is always 1.
+//
+// Finally, how can we keep the information for upwards-pointing branches cached, and then restore it?
+
 
 /**
  * Sample from a number of SPR attachment points - one per branch.
@@ -553,7 +562,11 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
      */
     for(int i=0;i<Pr.size();i++)
       Pr[i] *= L[i];
-    int C = choose(Pr);
+    int C = choose_MH(Pr);
+
+    // enforce tree constraints
+    if (not extends(trees[C], *P.TC))
+      C = 0;
 
     // Step N-1: Attach to that point
     *(P.T) = trees[C]; 
