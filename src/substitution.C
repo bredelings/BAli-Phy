@@ -440,8 +440,9 @@ namespace substitution {
 
       if (a.is_letter(l2))
 	for(int m=0;m<n_models;m++) {
+	  double temp = (1.0-exp_a_t[m])*F(m,l2); // move load out of loop for GCC vectorizer
 	  for(int s1=0;s1<n_states;s1++)
-	    R(m,s1) = (1.0-exp_a_t[m])*F(m,l2);
+	    R(m,s1) = temp;
 	  R(m,l2) += exp_a_t[m];
 	}
       else if (a.is_letter_class(l2)) 
@@ -452,8 +453,9 @@ namespace substitution {
 	  for(int l=0;l<a.size();l++)
 	    if (a.matches(l,l2))
 	      sum += F(m,l);
+	  double temp = (1.0-exp_a_t[m])*sum; // move load out of loop for GCC vectorizer
 	  for(int s1=0;s1<n_states;s1++)
-	    R(m,s1) = (1.0-exp_a_t[m])*sum;
+	    R(m,s1) = temp;
 	  for(int l=0;l<a.size();l++)
 	    if (a.matches(l,l2))
 	      R(m,l) += exp_a_t[m];
@@ -664,8 +666,9 @@ namespace substitution {
 	sum *= (1.0 - exp_a_t[m]);
 
 	// L'[s1] = exp(-a*t)L[s1] + sum
+	double temp = exp_a_t[m]; //move load out of loop for GCC 4.5 vectorizer.
 	for(int s1=0;s1<n_states;s1++) 
-	  R(m,s1) = exp_a_t[m]*(*C)(m,s1) + sum;
+	  R(m,s1) = temp*(*C)(m,s1) + sum;
       }
     }
   }
@@ -870,9 +873,7 @@ namespace substitution {
 
     //Add the padding matrices
     {
-      for(int i=0;i<S.size1();i++)
-	for(int j=0;j<S.size2();j++)
-	  S(i,j) = 0;
+      element_assign(S,0);
 
       for(int i=0;i<delta;i++)
 	L.push_back(S);
