@@ -660,7 +660,8 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     // and therefore not be chosen.  So the following SHOULD be safe!
     }
 
-    assert(C2 == 1);
+    if (not P.n_imodels())
+      assert(C2 == 1);
 
     MCMC::Result result = SPR_stats(trees[0], trees[C], C2>0, bins, b1);
     // Consider subdividing this into cases based on the length of the connecting branch;
