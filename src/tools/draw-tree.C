@@ -2540,7 +2540,7 @@ void graph_plotter::operator()(cairo_t* cr)
 
 	/// This is a counter-clockwise path...
 
-	if (c1 != -1 or c2 != -1 and draw_clouds and not draw_type_2_edges) 
+	if ((c1 != -1 or c2 != -1) and draw_clouds and not draw_type_2_edges) 
 	{
 	  /*
 	  cairo_save(cr);
