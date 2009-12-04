@@ -37,6 +37,7 @@ using boost::dynamic_bitset;
 
 int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
 {
+  assert(p.size() == 2);
   assert(p[0].n_imodels() == p[1].n_imodels());
 
   //----------- Generate the Different node lists ---------//
@@ -409,29 +410,31 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
 
   double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
 
-  cow_ptr<SequenceTree>& T = P.T;
-
-  //FIXME - how to rule out topologies that conflict with constraints w/o wasting too much CPU time?
-
   for(int i=0;i<n;i++) 
   {
-    // Temporarily stop checking subA indices of branches that point away from the cache root
-    P.subA_index_allow_invalid_branches(true);
-
     // Choose a directed branch to prune and regraft -- pointing away from the pruned subtree.
-    int b1 = choose_subtree_branch_uniform(*T);
+    int b1 = choose_subtree_branch_uniform(*P.T);
+
+    // attachment node for the pruned subtree
+    // This node will move around, but we will always 
+    //  peel up to this node to calculate the likelihood.
+    int root_node = P.T->directed_branch(b1).target(); 
+
+    P.set_root(root_node);
+    P.likelihood();
+    vector<Parameters> p(2,P);
 
     // One of the two branches (B1) that it points to will be considered the current attachment branch
     // The other branch (BM) will move around to wherever we are currently attaching b1.
     vector<const_branchview> branches;
-    append(T->directed_branch(b1).branches_after(),branches);
+    append(p[1].T->directed_branch(b1).branches_after(),branches);
     assert(branches.size() == 2);
     int B1 = std::min(branches[0].undirected_name(), branches[1].undirected_name());
     int BM = std::max(branches[0].undirected_name(), branches[1].undirected_name());
-    double L0 = T->branch(B1).length() + T->branch(BM).length();
+    double L0 = p[1].T->branch(B1).length() + p[1].T->branch(BM).length();
 
     /*----------- get the list of possible attachment points, with [0] being the current one.------- */
-    branches = branches_after(*T,b1);
+    branches = branches_after(*p[1].T,b1);
 
     branches.erase(branches.begin()); // branches_after(b1) includes b1 -- which we do not want.
 
@@ -448,9 +451,6 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     // The probability of attaching to each branch, w/o the alignment probability
     vector<efloat_t> Pr(branches.size(), 0);
     vector<efloat_t> LLL(branches.size(), 0);
-    int root_node = T->directed_branch(b1).target(); // This node will move around, but we will always 
-                                                     // place the root on it to calculate the likelihood.
-    P.set_root(root_node);
     Pr[0] = P.likelihood() * P.prior_no_alignment();
     LLL[0] = P.likelihood();
 
@@ -458,40 +458,43 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     vector<double> L(branches.size());
     L[0] = L0;
     for(int i=1;i<branches.size();i++)
-      L[i] = T->directed_branch(branches[i]).length();
+      L[i] = p[1].T->directed_branch(branches[i]).length();
 
     // Actually store the trees, instead of recreating them after picking one.
     vector<SequenceTree> trees(branches.size());
-    trees[0] = *T;
+    trees[0] = *p[1].T;
 
     /*----------- Begin invalidating caches and subA-indices to reflect the pruned state -------------*/
 
     // At this point, caches for branches pointing to B1 and BM are accurate -- but everything after them
     //  still assumes we haven't pruned and is therefore inaccurate.
 
-    P.LC_invalidate_branch(B1);          // invalidate caches       for B1, B1^t and ALL BRANCHES AFTER THEM.
-    P.invalidate_subA_index_branch(B1);  // invalidate subA-indices for B1, B1^t and ALL BRANCHES AFTER THEM.
+    p[1].LC_invalidate_branch(B1);          // invalidate caches       for B1, B1^t and ALL BRANCHES AFTER THEM.
+    p[1].invalidate_subA_index_branch(B1);  // invalidate subA-indices for B1, B1^t and ALL BRANCHES AFTER THEM.
 
-    P.LC_invalidate_branch(BM);          // invalidate caches       for BM, BM^t and ALL BRANCHES AFTER THEM.
-    P.invalidate_subA_index_branch(BM);  // invalidate subA-indices for BM, BM^t and ALL BRANCHES AFTER THEM.
+    p[1].LC_invalidate_branch(BM);          // invalidate caches       for BM, BM^t and ALL BRANCHES AFTER THEM.
+    p[1].invalidate_subA_index_branch(BM);  // invalidate subA-indices for BM, BM^t and ALL BRANCHES AFTER THEM.
+
+    // Temporarily stop checking subA indices of branches that point away from the cache root
+    p[1].subA_index_allow_invalid_branches(true);
 
     // Compute the probability of each attachment point
     // The LC root should always be After this point, the LC root will now be the same: the attachment point.
     for(int i=1;i<branch_names.size();i++) 
     {
-      *T = trees[0];
+      *p[1].T = trees[0];
 
       // target branch - pointing away from b1
       int b2 = branch_names[i];
 
       // Perform the SPR operation
-      int BM2 = SPR(*T, T->directed_branch(b1).reverse(), b2);
+      int BM2 = SPR(*p[1].T, p[1].T->directed_branch(b1).reverse(), b2);
       assert(BM2 == BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
-      P.tree_propagate();
+      p[1].tree_propagate();
 
       // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
-      assert(std::abs(T->branch(B1).length() - L0) < 1.0e-9);
-      P.setlength_no_invalidate_LC(B1,L0);   // The likelihood caches (and subA indices) should be correct for
+      assert(std::abs(p[1].T->branch(B1).length() - L0) < 1.0e-9);
+      p[1].setlength_no_invalidate_LC(B1,L0);   // The likelihood caches (and subA indices) should be correct for
                                              //  the situation we are setting up here -- no need to invalidate.
 
       // We want caches for each directed branch not in the PRUNED subtree to be accurate
@@ -502,15 +505,15 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
       double LB = L[i] - LA;
 
       // We want to suppress the bidirectional effect here...
-      P.setlength_no_invalidate_LC(b2,LA);                            // Recompute the transition matrix
-      P.LC_invalidate_one_branch(b2);                                 //  ... mark for recomputing.
-      P.LC_invalidate_one_branch(T->directed_branch(b2).reverse());   //  ... mark for recomputing.
+      p[1].setlength_no_invalidate_LC(b2,LA);                            // Recompute the transition matrix
+      p[1].LC_invalidate_one_branch(b2);                                 //  ... mark for recomputing.
+      p[1].LC_invalidate_one_branch(p[1].T->directed_branch(b2).reverse());   //  ... mark for recomputing.
 
-      P.setlength_no_invalidate_LC(BM,LB);
-      P.LC_invalidate_one_branch(BM);
-      P.LC_invalidate_one_branch(T->directed_branch(BM).reverse());
+      p[1].setlength_no_invalidate_LC(BM,LB);
+      p[1].LC_invalidate_one_branch(BM);
+      p[1].LC_invalidate_one_branch(p[1].T->directed_branch(BM).reverse());
 
-      trees[i] = *T;
+      trees[i] = *p[1].T;
       assert(std::abs(length(trees[i]) - length(trees[0])) < 1.0e-9);
 
       // We invalidate both branch_names[i] and BM after use -- we don't care whether
@@ -528,49 +531,70 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
       // We don't want to invalidate all branches behind the reverse direction of b2
 
       // this should be redundant
-      P.set_root(root_node);
+      p[1].set_root(root_node);
 
       // just to make sure that the problem is not with subA indices
       //      P.invalidate_subA_index_all();
 
-      Pr[i] = P.likelihood() * P.prior_no_alignment();
-      LLL[i] = P.likelihood();
-      P.tree_propagate();
-      assert(std::abs(log(LLL[i]) - log(P.likelihood())) < 1.0e-9);
+      Pr[i] = p[1].likelihood() * p[1].prior_no_alignment();
+      LLL[i] = p[1].likelihood();
+      p[1].tree_propagate();
+      assert(std::abs(log(LLL[i]) - log(p[1].likelihood())) < 1.0e-9);
 
       // invalidate the DIRECTED branch that we just landed on and altered
-      P.setlength_no_invalidate_LC(b2,L[i]);                          // Put back the old transition matrix
-      P.LC_invalidate_one_branch(b2);                                 // ... mark for recomputing.
-      P.LC_invalidate_one_branch(T->directed_branch(b2).reverse());   // ... mark for recomputing.
+      p[1].setlength_no_invalidate_LC(b2,L[i]);                               // Put back the old transition matrix
+      p[1].LC_invalidate_one_branch(b2);                                      // ... mark for recomputing.
+      p[1].LC_invalidate_one_branch(p[1].T->directed_branch(b2).reverse());   // ... mark for recomputing.
 
       // this is bidirectional
-      P.invalidate_subA_index_one_branch(BM);
+      p[1].invalidate_subA_index_one_branch(BM);
     }
 
     // Step N-2: Choose an attachment point
 
-    /* Factoring in branch lengths?
+    /*
+     *  1. Factoring in branch lengths?
      *  pi(x) * rho(x,S) * alpha(x,S,y) = pi(y) * rho(y,S) * alpha(y,S,x) 
      *  rho(x,S) = prod over branches[b] (1/L[b]) * L[x]
      *           = C * L[x]
      *  pi(x) * C * L[x] * alpha(x,S,y) = pi(y) * C * L[y] * alpha(y,S,x) 
-     *  alpha(x,S,y) / alpha(y,S,x) = (pi(y)*L[y])/(pi(x)*L(x))
+     *  alpha(x,S,y) / alpha(y,S,x) = (pi(y)*L[y])/(pi(x)*L[x])
      *
-     *  Therefore, the probability of choosing+accepting y should be proportional to Pr[y] * L[y].
+     *  2. Therefore, the probability of choosing+accepting y should be proportional to Pr[y] * L[y].
      *  In the simplest incarnation, this is Gibbs sampling, and is independent of x.
-     * FIXME - However, check that we can use choose_MH to get a speedup that is up to x2.
+     * 
+     *  3. However, we can also use choose_MH(0,Pr), where Pr[i] = likelihood[i]*prior[i]*L[i]
+     *  since this proposal/acceptance function also has the property that
+     *
+     *       choose_MH_P(i,j,Pr)/choose_MH_P(j,i,Pr) = Pr[j]/Pr[i].
+     *
+     *  4. Now, if we make this whole procedure into a propsal, the ratio forthis 
+     *     proposal density is
+     *
+     *       rho(x,S) * alpha(x,S,y)   (C * L[x]) * (D * pi(y) * L(y) )    pi(y)   1/pi(x)
+     *       ----------------------- = -------------------------------- = ----- = -------
+     *       rho(y,S) * alpha(y,S,x)   (C * L[y]) * (D * pi(x) * L(x) )    pi(x)   1/pi(y)
+     *
+     *  While the result is independent of the lengths L (which we want), the procedure for
+     *  achieving this result need not be independent of the lengths.
+     *
+     *  We must also remember that the variable rho[i] is the proposal density for propsing the set
+     *  {x,y} and so is proportional to rho(x,S) * alpha(x,S,y) = pi(y).  We could also use 1/pi(x)
+     *  and get the same ratio.
+     *
      */
-    for(int i=0;i<Pr.size();i++)
-      Pr[i] *= L[i];
-    int C = choose_MH(Pr);
+    vector<efloat_t> PrL = Pr;
+    for(int i=0;i<PrL.size();i++)
+      PrL[i] *= L[i];
+    int C = choose_MH(0,PrL);
 
     // enforce tree constraints
     if (not extends(trees[C], *P.TC))
       C = 0;
 
     // Step N-1: Attach to that point
-    *(P.T) = trees[C]; 
-    P.tree_propagate();
+    *(p[1].T) = trees[C]; 
+    p[1].tree_propagate();
 
     // Step N: Invalidate subA indices and also likelihood caches that are no longer valid.
     // Which branches were ALREADY invalid for tree[0]?
@@ -602,22 +626,46 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     vector<int> btemp; btemp.push_back(B1) ; btemp.push_back(BM) ; btemp.push_back(branch_names[C]);
     for(int i=0;i<btemp.size();i++) {
       int bi = btemp[i];
-      P.setlength(bi,P.T->directed_branch(bi).length());   // bidirectional effect
-      P.invalidate_subA_index_branch(bi);         // bidirectional effect
-      P.note_alignment_changed_on_branch(bi); // Yes, this works even for data_partition's with no indel model.
+      p[1].setlength(bi, p[1].T->directed_branch(bi).length());   // bidirectional effect
+      p[1].invalidate_subA_index_branch(bi);         // bidirectional effect
+      p[1].note_alignment_changed_on_branch(bi); // Yes, this works even for data_partition's with no indel model.
     }
-    P.subA_index_allow_invalid_branches(false);
+    p[1].subA_index_allow_invalid_branches(false);
 
 #ifndef NDEBUG    
-    assert(std::abs(length(*P.T) - length(trees[0])) < 1.0e-9);
-    efloat_t L_1 = P.likelihood();
+    assert(std::abs(length(*p[1].T) - length(trees[0])) < 1.0e-9);
+    efloat_t L_1 = p[1].likelihood();
     assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
 #endif
 
-    MCMC::Result result = SPR_stats(trees[0], trees[C], true, bins, b1);
+    vector<efloat_t> rho(2,1);
+    rho[0] = Pr[C];
+    rho[1] = Pr[0];
+
+    int n1 = P.T->directed_branch(b1).target();
+    int n2 = P.T->directed_branch(b1).source();
+    int C2 = topology_sample_SPR(p, rho, n1, n2);
+
+    if (C2 != -1) 
+    {
+      for(int i=0;i<P.n_data_partitions();i++) {
+	dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+	dynamic_bitset<> s2 = constraint_satisfied(p[C2][i].alignment_constraint, *p[C2][i].A);
+	
+	report_constraints(s1,s2);
+      }
+      P = p[C2];
+
+    // If the new topology conflicts with the constraints, then it should have P=0
+    // and therefore not be chosen.  So the following SHOULD be safe!
+    }
+
+    assert(C2 == 1);
+
+    MCMC::Result result = SPR_stats(trees[0], trees[C], C2>0, bins, b1);
     // Consider subdividing this into cases based on the length of the connecting branch;
     Stats.inc("SPR (all)", result);
-    if (T->branch(b1).length() > 1)
+    if (P.T->directed_branch(b1).length() > 1)
       Stats.inc("SPR (all-long)", result);
     else
       Stats.inc("SPR (all-short)", result);
