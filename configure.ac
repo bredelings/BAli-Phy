@@ -173,7 +173,7 @@ if test "$GXX" = yes ; then
       CXXFLAGS="$CXXFLAGS -pg"
       LDFLAGS="$LDFLAGS -pg"
   elif test "$profile" = oprofile ; then
-      CXXFLAGS="$CXXFLAGS -g -fno-omit-frame-pointer"
+      CXXFLAGS="$CXXFLAGS -g -fno-omit-frame-pointer -fkeep-inline-functions"
   fi
 
   # --enable-bounds-checking
