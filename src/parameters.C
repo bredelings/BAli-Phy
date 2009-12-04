@@ -500,6 +500,15 @@ void Parameters::invalidate_subA_index_all()
 
 void Parameters::subA_index_allow_invalid_branches(bool b)
 {
+#ifndef NDEBUG
+  if (subA_index_may_have_invalid_branches())
+  {
+    for(int i=0;i<n_data_partitions();i++) {
+      subA_index_check_footprint(*data_partitions[i]->A, *T);
+      subA_index_check_regenerate(*data_partitions[i]->A, *T);
+    }
+  }
+#endif
   ::subA_index_allow_invalid_branches(b);
 
 #ifndef NDEBUG
