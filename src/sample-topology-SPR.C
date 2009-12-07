@@ -410,6 +410,8 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
 
   double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
 
+  efloat_t Pr_initial = P.heated_probability();
+
   for(int i=0;i<n;i++) 
   {
     // Choose a directed branch to prune and regraft -- pointing away from the pruned subtree.
@@ -421,7 +423,7 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     int root_node = P.T->directed_branch(b1).target(); 
 
     P.set_root(root_node);
-    P.likelihood();
+    P.heated_likelihood();
     vector<Parameters> p(2,P);
 
     // One of the two branches (B1) that it points to will be considered the current attachment branch
@@ -450,9 +452,10 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
 
     // The probability of attaching to each branch, w/o the alignment probability
     vector<efloat_t> Pr(branches.size(), 0);
+    Pr[0] = P.heated_likelihood() * P.prior_no_alignment();
+
     vector<efloat_t> LLL(branches.size(), 0);
-    Pr[0] = P.likelihood() * P.prior_no_alignment();
-    LLL[0] = P.likelihood();
+    LLL[0] = P.heated_likelihood();
 
     // Compute total lengths for each of the possible attachment branches
     vector<double> L(branches.size());
@@ -536,10 +539,10 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
       // just to make sure that the problem is not with subA indices
       //      P.invalidate_subA_index_all();
 
-      Pr[i] = p[1].likelihood() * p[1].prior_no_alignment();
-      LLL[i] = p[1].likelihood();
+      Pr[i] = p[1].heated_likelihood() * p[1].prior_no_alignment();
+      LLL[i] = p[1].heated_likelihood();
       p[1].tree_propagate();
-      assert(std::abs(log(LLL[i]) - log(p[1].likelihood())) < 1.0e-9);
+      assert(std::abs(log(LLL[i]) - log(p[1].heated_likelihood())) < 1.0e-9);
 
       // invalidate the DIRECTED branch that we just landed on and altered
       p[1].setlength_no_invalidate_LC(b2,L[i]);                               // Put back the old transition matrix
