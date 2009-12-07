@@ -641,39 +641,47 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
 #endif
 
-    vector<efloat_t> rho(2,1);
-    rho[0] = Pr[C];
-    rho[1] = Pr[0];
-
-    int n1 = P.T->directed_branch(b1).target();
-    int n2 = P.T->directed_branch(b1).source();
-    int C2 = topology_sample_SPR(p, rho, n1, n2);
-
-    if (C2 != -1) 
+    bool moved = true;
+    if (C != 0)
     {
-      for(int i=0;i<P.n_data_partitions();i++) {
-	dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
-	dynamic_bitset<> s2 = constraint_satisfied(p[C2][i].alignment_constraint, *p[C2][i].A);
-	
-	report_constraints(s1,s2);
-      }
-      P = p[C2];
+      vector<efloat_t> rho(2,1);
+      rho[0] = Pr[C];
+      rho[1] = Pr[0];
+    
+      int n1 = P.T->directed_branch(b1).target();
+      int n2 = P.T->directed_branch(b1).source();
+      int C2 = topology_sample_SPR(p, rho, n1, n2);
 
-    // If the new topology conflicts with the constraints, then it should have P=0
-    // and therefore not be chosen.  So the following SHOULD be safe!
+      if (C2 != -1) 
+      {
+	for(int i=0;i<P.n_data_partitions();i++) {
+	  dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+	  dynamic_bitset<> s2 = constraint_satisfied(p[C2][i].alignment_constraint, *p[C2][i].A);
+	  
+	  report_constraints(s1,s2);
+	}
+	P = p[C2];
+	
+	// If the new topology conflicts with the constraints, then it should have P=0
+	// and therefore not be chosen.  So the following SHOULD be safe!
+      }
+      else
+	moved = false;
+
+      if (not P.n_imodels())
+	assert(C2 == 1);
     }
 
-    if (not P.n_imodels())
-      assert(C2 == 1);
-
-    MCMC::Result result = SPR_stats(trees[0], trees[C], C2>0, bins, b1);
-    // Consider subdividing this into cases based on the length of the connecting branch;
+    MCMC::Result result = SPR_stats(trees[0], trees[C], moved, bins, b1);
     Stats.inc("SPR (all)", result);
-    if (P.T->directed_branch(b1).length() > 1)
-      Stats.inc("SPR (all-long)", result);
+    if (P.T->directed_branch(b1).length() < 0.5)
+      Stats.inc("SPR (all-1)", result);
+    else if (P.T->directed_branch(b1).length() < 1)
+      Stats.inc("SPR (all-2)", result);
+    else if (P.T->directed_branch(b1).length() < 2)
+      Stats.inc("SPR (all-3)", result);
     else
-      Stats.inc("SPR (all-short)", result);
-      
+      Stats.inc("SPR (all-4)", result);
   }
 }
 
