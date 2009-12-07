@@ -138,6 +138,14 @@ void data_partition::note_alignment_changed_on_branch(int b)
     note_sequence_length_changed(source);
 }
 
+void data_partition::note_alignment_changed()
+{
+  for(int b=0;b<T->n_branches();b++)
+    note_alignment_changed_on_branch(b);
+
+  // this automatically marks all non-leaf sequence lengths for recomputation.
+}
+
 void data_partition::recalc(const vector<int>& indices)
 {
   if (indices.size())
@@ -526,6 +534,12 @@ void Parameters::note_alignment_changed_on_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
     data_partitions[i]->note_alignment_changed_on_branch(b);
+}
+
+void Parameters::note_alignment_changed()
+{
+  for(int i=0;i<n_data_partitions();i++)
+    data_partitions[i]->note_alignment_changed();
 }
 
 void Parameters::note_sequence_length_changed(int n)

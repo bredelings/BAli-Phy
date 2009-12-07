@@ -123,6 +123,8 @@ public:
 
   void note_alignment_changed_on_branch(int b);
 
+  void note_alignment_changed();
+
   void note_sequence_length_changed(int n);
 
   /// parameter for exponential prior on branch length
@@ -266,6 +268,8 @@ public:
   void subA_index_allow_invalid_branches(bool);
 
   void note_alignment_changed_on_branch(int b);
+
+  void note_alignment_changed();
 
   void note_sequence_length_changed(int n);
 
