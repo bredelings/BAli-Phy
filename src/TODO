@@ -13,7 +13,7 @@ P11. Make post-processing handle multiple chains, assess convergence.
 P12. Speed up likelihood calculations when there are lots of gaps?
 P14. Instead of setting things equal to one in substitution.C, 
      make a generic 1's matrix, and set things equal to that matrix.
-P15. Make matcaches (a) [b][m] instead of [m][b] and (b) be able to invalidate indivual branches.     
+P15. Make matcaches (1) [b][m] instead of [m][b] and (1) be able to invalidate individual branches.     
 P16. Generate better mixing diagnostics
 P17. Better handle lower-case nucleotides.
 P18. Change alphabet parsing not to throw on unhandled letters...
@@ -21,7 +21,15 @@ P18. Change alphabet parsing not to throw on unhandled letters...
      - Handle (optional) synonyms.... atgc for ATGC, but don't allow lower case for amino acids.
      - Make character lookup faster... use a table, not a linear search.
        + Optimize for singlet case?
-P19. Make bali-phy compile with -std=c++0x and -std=gnu++0x
+P20. Adaptive bandwith computation
+- Consider a move with a bandwidth around the current path
+- Consider specifying an input alignment around which to calculate bandwidths.
+  + (?) Use the input alignment in the prior?
+P21. Make debug builds yield the same output.
+P22. Speed up handling of large trees, alignments.
+P23. What should the ideal mixing rate be for topologies? (accept based on MCMC fractions)
+P24. Improve speed of dynamic programming
+- sort states to group those with the same prev state (i.e. same di and dj)
 
 P1. Implement the multi-branch SPR search
  * Figure out how to handle the branch-naming: we can't properly handle SPR to leaf branches.
@@ -29,6 +37,10 @@ P1. Implement the multi-branch SPR search
  * Write more of the SPR_all( ) function.  Make sure the algorithm is the most efficient version.
 
 P3. [Speed up burn-in]
+ * Include a minimum-distance-based proposal?  How?
+   - This would only help if the current state was REALLY bad, but that could actually happen during burnin.
+   - This is a data-driven proposal... which can be good.
+
  * Do, in order:
 Step 1
  * scale parameters
@@ -862,6 +874,8 @@ I. fix: gamma+frequency+INV
 [DONE] Read NEXUS tree files.
 
 [DONE] P17. Speed up trees-distances so that we can compare more distributions, or distributions with more trees.
+
+[DONE] P19. Make bali-phy compile with -std=c++0x
 
 *IDEAS*
 
