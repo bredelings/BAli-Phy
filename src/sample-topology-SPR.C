@@ -42,8 +42,8 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1
 
   //----------- Generate the Different node lists ---------//
   vector< vector<int> > nodes(2);
-  nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);
-  nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);
+  nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);     // Using two random orders can lead to different total
+  nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
 
   return sample_tri_multi(p,nodes,rho,true,true);
 }
@@ -653,6 +653,7 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
       int n1 = P.T->directed_branch(b1).target();
       int n2 = P.T->directed_branch(b1).source();
 
+      // Even when p[0] == p[1], we could still choose C2==0 because of the different node orders in topology_sample_SPR( ).
       int C2 = topology_sample_SPR(p, rho, n1, n2);
 
       if (C2 != -1) 
