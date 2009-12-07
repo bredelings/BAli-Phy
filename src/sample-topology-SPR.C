@@ -641,7 +641,9 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
 #endif
 
-    bool moved = true;
+    bool moved = false;
+    // If the tree hasn't changed, we don't have to do anything.
+    // So, don't resample the alignment, when we have one.
     if (C != 0)
     {
       vector<efloat_t> rho(2,1);
@@ -650,10 +652,13 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     
       int n1 = P.T->directed_branch(b1).target();
       int n2 = P.T->directed_branch(b1).source();
+
       int C2 = topology_sample_SPR(p, rho, n1, n2);
 
       if (C2 != -1) 
       {
+	if (C2 > 0) moved = true;
+	  
 	for(int i=0;i<P.n_data_partitions();i++) {
 	  dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
 	  dynamic_bitset<> s2 = constraint_satisfied(p[C2][i].alignment_constraint, *p[C2][i].A);
@@ -665,12 +670,12 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
 	// If the new topology conflicts with the constraints, then it should have P=0
 	// and therefore not be chosen.  So the following SHOULD be safe!
       }
-      else
-	moved = false;
 
       if (not P.n_imodels())
 	assert(C2 == 1);
     }
+    else
+      moved = true;
 
     MCMC::Result result = SPR_stats(trees[0], trees[C], moved, bins, b1);
     Stats.inc("SPR (all)", result);
