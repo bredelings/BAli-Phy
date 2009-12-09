@@ -25,6 +25,12 @@ using namespace std;
 
 namespace sequence_format {
 
+  void upcase(string& s)
+  {
+    for(int i=0;i<s.size();i++)
+      s[i] = std::toupper(s[i]);
+  }
+
   sequence fasta_parse_header(const string& line)
   {
     //------------ Delete '>' from label -----------//
@@ -107,6 +113,7 @@ namespace sequence_format {
 	letters += line;
       }
       letters = strip(letters," \t");
+      upcase(letters);
 
       // Add the sequence to the list
       sequences.push_back(s);
@@ -163,7 +170,7 @@ namespace sequence_format {
 
   // after "<<i<<" out of "<<ntaxa<<" sequences in the first stanza.";
   //
-  bool phylip_header_line(std::istream& file,string& name,string& letters,const string& location) {
+  bool phylip_header_line(std::istream& file,string& name,string& letters) {
     if (not file) 
       throw myexception()<<"[Error reading PHYLIP alignment] File ends early!";
 
@@ -194,7 +201,7 @@ namespace sequence_format {
       string name;
       string line_letters;
 
-      bool empty_line = not phylip_header_line(file,name,line_letters,"");
+      bool empty_line = not phylip_header_line(file,name,line_letters);
 
       // parse line, and return false it empty;
       if (empty_line) break;
@@ -302,6 +309,8 @@ namespace sequence_format {
 	  sequences[i] += letters[i];
       }
     }
+    for(int i=0;i<sequences.size();i++)
+      upcase(sequences[i]);
 
     // Check that the length matches the supplied length
     if (length > 0 and length != sequences[0].size())
