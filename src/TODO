@@ -1,40 +1,50 @@
 P1. Search SPR w/ multiple attachment sites.
-P2. Determine how much tree sampling could be improved by proposing
-     with the right branch lengths.
 P3. Improve initial alignment / tree search procedure (for burn-in)
-P4. Allow deterministic searching for internal node states, for SPR tree moves without re-aligning.
+
 P5. Speed up post-processing.
 P6. Improve usability. (post-processing?  installation?  visualization?)
+P11. Make post-processing handle multiple chains, assess convergence.
+P16. Generate better mixing diagnostics (RNe1 and RCI1 aren't really working... Report SDSF for each. MSDSF is OK.)
+
 P7. ECR2 moves (for fixed-A, and for variable-A, with P4).
 P9. MCMC / MPI - Construct a heated alignment prior.
-P8. Allow a Gamma branch prior [DONE]
+
+P8. Branch priors
 P10. C20 CAT model
-P11. Make post-processing handle multiple chains, assess convergence.
 P12. Speed up likelihood calculations when there are lots of gaps?
-P14. Instead of setting things equal to one in substitution.C, 
-     make a generic 1's matrix, and set things equal to that matrix.
 P15. Make matcaches (1) [b][m] instead of [m][b] and (1) be able to invalidate individual branches.     
-P16. Generate better mixing diagnostics
-P17. Better handle lower-case nucleotides.
-P18. Change alphabet parsing not to throw on unhandled letters...
-     - Instead, guess alphabet based on fractions of atgcu, 
-     - Handle (optional) synonyms.... atgc for ATGC, but don't allow lower case for amino acids.
-     - Make character lookup faster... use a table, not a linear search.
-       + Optimize for singlet case?
+
+P17. Improve alphabet handling for speed, flexibility, and features.
+P18. Allow alphabets to handle unknown letters in some way... detect alphabet based on fraction of atgcu
+P22. Speed up handling of large trees, alignments.
+
+P21. Make debug builds yield the same output.
+
+P4. Allow deterministic searching for internal node states, for SPR tree moves without re-aligning.
+P23. What should the ideal mixing rate be for topologies? (accept based on MCMC fractions)
 P20. Adaptive bandwith computation
 - Consider a move with a bandwidth around the current path
 - Consider specifying an input alignment around which to calculate bandwidths.
   + (?) Use the input alignment in the prior?
-P21. Make debug builds yield the same output.
-P22. Speed up handling of large trees, alignments.
-P23. What should the ideal mixing rate be for topologies? (accept based on MCMC fractions)
 P24. Improve speed of dynamic programming
 - sort states to group those with the same prev state (i.e. same di and dj)
+P2. Determine how much tree sampling could be improved by proposing with the right branch lengths.
 
 P1. Implement the multi-branch SPR search
- * Figure out how to handle the branch-naming: we can't properly handle SPR to leaf branches.
- * Rewrite SPR to avoid new/delete?  Although this is useful if we aren't regrafting.
- * Write more of the SPR_all( ) function.  Make sure the algorithm is the most efficient version.
+ * Figure out the effective branch length behind each branch...
+ * 
+ * Finish testing.
+
+P17. Improve alphabet handling for speed, flexibility, and features.
+     - Handle lower-case nucleotides by allowing synonym for letters.
+     - Individually add letters: add_letter("a","Adenosine","A")
+     - Single-letter alphabets just use an array to map letters to integers.
+     - Generic word alphabets use a map<string,int>.
+
+P16. Generate better mixing diagnostics
+     - RNe1 and RCI1 aren't really working, though MSDSF is OK.
+     - Report SDSF for each split.
+     - Report what lartillot is reporting, also.
 
 P3. [Speed up burn-in]
  * Include a minimum-distance-based proposal?  How?
@@ -62,8 +72,6 @@ Step 2
 - Issue: we can just try to estimate alignments, BUT
   + How do we score gap penalties?
   + There is A/T interaction.
-
-P14. How often do I do this - is it only in leaf branches?
 
 P10. Make CAT models faster.
  - Can this be virtualized?  How much speed do we lose by computing exp(Qt)*v using a virtual call?
@@ -104,18 +112,18 @@ P6. What different tasks do I want?  How can I make a generic tree processor?
  + Annotate branches of a Query tree with their PP/BF   from a tree sample
 
 consensus ->
- * x[i].topology
- * x[i].PP.topology
- * x[i].mtree
+ * x[i].topology      topology(x[i]) -> Newick
+ * x[i].PP.topology   topology[PP](x[i]) -> Newick
+ * x[i].mtree         
  * x[i]-mctree.svg
  * x[i]-mctree.pdf
  * x[i].ltree
- * x[i].tree
- * x[i].PP.tree
- * MAP.topology
- * MAP.ltree
- * MAP.tree
- * x[i]-tree.pdf
+ * x[i].tree          topology[lengths](x[i]) -> newick
+ * x[i].PP.tree       topology[lengths](x[i]) -> newick
+ * MAP.topology       topology(MAP)           -> newick
+ * MAP.ltree          topology[nodes,lengths](MAP) -> newick+nodes
+ * MAP.tree           topology[PP,lengths](MAP) -> newick
+ * x[i]-tree.pdf      topology[lengths](x[i]) -> newick
  * x[i]-tree.svg
  * partitions (supported partitions)
  * partitions.pred
@@ -127,6 +135,9 @@ consensus ->
  * {c50,partitions}.SRQ.png
  * # of topologies in 95% interval
  ? # of SPLIT in 95% "interval"
+
+-? I need a "verbose" mode that gives feedback for progress.
+-? How do I handle dependencies?
 
 Also, the easiest time to calculate branch lengths would be when we
 are looking up the branches in the first place. Do we really want to
@@ -143,6 +154,7 @@ P8. [Branch priors]
 3. What IS the second-largest eigenvalue... what does it mean?
 4. leaf branches / internal branches
 5. general prior against changes being shared?
+6. How hard would it be to put 1% on zero length?
 
 P16. [Improving Mixing Diagnostics / Improve Distribution-Comparison Diagnostics]
 1. AWTY is right: some of these diagnostics are going to be plots.
