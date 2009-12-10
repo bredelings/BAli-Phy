@@ -409,12 +409,44 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   return SPR_stats(*p[0].T, *p[1].T, C>0, bins, b1);
 }
 
-int choose_subtree_branch_uniform(const Tree& T) {
+int choose_subtree_branch_uniform(const Tree& T) 
+{
   int b1 = -1;
-  do {
+  while (true)
+  {
     b1 = myrandom(T.n_branches()*2);
+
+    // forbid branches leaf branches - no attachment point!
+    if (T.directed_branch(b1).target().is_leaf_node()) continue;
+
+    break;
   }
-  while (T.directed_branch(b1).target().is_leaf_node());
+
+  return b1;
+}
+
+int choose_subtree_branch_uniform2(const Tree& T) 
+{
+  int b1 = -1;
+  while (true)
+  {
+    b1 = myrandom(T.n_branches()*2);
+
+    // forbid branches leaf branches - no attachment point!
+    if (T.directed_branch(b1).target().is_leaf_node()) continue;
+
+    // forbid branches with only 1 attachment point - not very useful.
+    vector<const_branchview> after;
+    append(T.directed_branch(b1).branches_after(), after);
+    bool ok = false;
+    for(int i=0;i<after.size();i++)
+      if (not after[i].target().is_leaf_node())
+	ok = true;
+    if (not ok) continue;
+
+    break;
+  }
+
   return b1;
 }
 
@@ -466,12 +498,12 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
 
   int n = n_SPR_moves(P);
 
-  double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
+  // double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
 
   for(int i=0;i<n;i++) 
   {
     // Choose a directed branch to prune and regraft -- pointing away from the pruned subtree.
-    int b1 = choose_subtree_branch_uniform(*P.T);
+    int b1 = choose_subtree_branch_uniform2(*P.T);
 
     // The attachment node for the pruned subtree.
     // This node will move around, but we will always peel up to this node to calculate the likelihood.
