@@ -35,6 +35,35 @@ using MCMC::MoveStats;
 
 using boost::dynamic_bitset;
 
+int random_int_from_double(double x)
+{
+  int n = (int)x;
+  x -= n;
+  n += poisson(x);
+  return n;
+}
+
+int n_SPR_moves(const Parameters& P)
+{
+  double f = loadvalue(P.keys,"SPR_amount",0.1);
+  int n = random_int_from_double(P.T->n_branches()*f);
+  return n+1;
+}
+
+void SPR_inc(MoveStats& Stats, MCMC::Result result,const string& name,double L)
+{
+  Stats.inc(name, result);
+
+  if (L < 0.5)
+    Stats.inc(name+"-0.5", result);
+  else if (L < 1)
+    Stats.inc(name+"-1.0", result);
+  else if (L < 2.0)
+    Stats.inc(name+"-2.0", result);
+  else 
+    Stats.inc(name+"-2.0+", result);
+}
+
 int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
 {
   assert(p.size() == 2);
@@ -140,6 +169,36 @@ double do_SPR(Parameters& P, int b1, int b2)
   double ratio = do_SPR(*P.T, b1, b2);
   P.tree_propagate();
   return ratio;
+}
+
+vector<double> effective_lengths(const Tree& T)
+{
+  vector<double> lengths(2*T.n_branches(),0);
+
+  vector<const_branchview> branches = branches_from_leaves(T);
+
+  for(int i=0;i<branches.size();i++)
+  {
+    lengths[branches[i].name()] = branches[i].length();
+
+    vector<const_branchview> pre_b;
+    append(branches[i].branches_before(),pre_b);
+    if (pre_b.size() > 0) {
+      double Pr_change_on_all = 1;
+      for(int j=0;j<pre_b.size();j++)
+	Pr_change_on_all *= (1.0-exp(-lengths[pre_b[j].name()]));
+      double Pr_no_change_on_at_least_1 = 1.0-Pr_change_on_all;
+      lengths[branches[i]] += -log(Pr_no_change_on_at_least_1);
+      assert(lengths[branches[i]] >= branches[i].length());
+    }
+  }
+
+  return lengths;
+}
+
+double effective_length(const Tree& T, int b)
+{
+  return effective_lengths(T)[b];
 }
 
 int choose_SPR_target(SequenceTree& T1, int b1_) 
@@ -362,8 +421,7 @@ int choose_subtree_branch_uniform(const Tree& T) {
 
 void sample_SPR_flat(Parameters& P,MoveStats& Stats) 
 {
-  double f = loadvalue(P.keys,"SPR_amount",0.1);
-  int n = poisson(P.T->n_branches()*f);
+  int n = n_SPR_moves(P);
 
   double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
 
@@ -373,17 +431,18 @@ void sample_SPR_flat(Parameters& P,MoveStats& Stats)
 
     int b2 = choose_SPR_target(*P.T,b1);
 
+    double L_effective = effective_length(*P.T, b1);
+
     if (P.n_imodels() == 0 and uniform() < p) {
       MCMC::Result result = sample_SPR(P,b1,b2,true);
-      Stats.inc("SPR (flat/slice)", result);
+      SPR_inc(Stats,result,"SPR (flat/slice)",L_effective);
     }
-    else {
+    else  {
       MCMC::Result result = sample_SPR(P,b1,b2);
-      Stats.inc("SPR (flat)", result);
+      SPR_inc(Stats,result,"SPR (flat)",L_effective);
     }
   }
 }
-
 
 
 /**
@@ -405,8 +464,7 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
 {
   const int bins = 6;
 
-  double f = loadvalue(P.keys,"SPR_amount",0.1);
-  int n = poisson(P.T->n_branches()*f);
+  int n = n_SPR_moves(P);
 
   double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
 
@@ -649,15 +707,8 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
       moved = true;
 
     MCMC::Result result = SPR_stats(trees[0], trees[C], moved, bins, b1);
-    Stats.inc("SPR (all)", result);
-    if (P.T->directed_branch(b1).length() < 0.5)
-      Stats.inc("SPR (all-1)", result);
-    else if (P.T->directed_branch(b1).length() < 1)
-      Stats.inc("SPR (all-2)", result);
-    else if (P.T->directed_branch(b1).length() < 2)
-      Stats.inc("SPR (all-3)", result);
-    else
-      Stats.inc("SPR (all-4)", result);
+    double L_effective = effective_length(*P.T, b1);
+    SPR_inc(Stats, result, "SPR (all)", L_effective);
   }
 }
 
@@ -763,8 +814,7 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
 
 void sample_SPR_nodes(Parameters& P,MoveStats& Stats) 
 {
-  double f = loadvalue(P.keys,"SPR_amount",0.1);
-  int n = poisson(P.T->n_branches()*f);
+  int n = n_SPR_moves(P);
 
   double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
 
@@ -773,13 +823,15 @@ void sample_SPR_nodes(Parameters& P,MoveStats& Stats)
     int b1=-1, b2=-1;
     choose_subtree_branch_nodes(*P.T, b1, b2);
 
+    double L_effective = effective_length(*P.T, b1);
+
     if (P.n_imodels() == 0 and uniform()< p) {
       MCMC::Result result = sample_SPR(P,b1,b2,true);
-      Stats.inc("SPR (path/slice)", result);
+      SPR_inc(Stats,result,"SPR (path/slice)", L_effective);
     }
     else {
       MCMC::Result result = sample_SPR(P,b1,b2);
-      Stats.inc("SPR (path)", result);
+      SPR_inc(Stats,result,"SPR (path)", L_effective);
     }
   }
 }
