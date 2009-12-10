@@ -384,22 +384,22 @@ void sample_SPR_flat(Parameters& P,MoveStats& Stats)
   }
 }
 
-// In order to make this work for alignment resampling, I suggest
-//  * set rho[0] = choose_MH_P(Pr,0)
-//  * set rho[1] = choose_MH_P(Pr,1)
-// In theory we can use this for both alignment-based and non-alignment based proposals.
-// 
-// We still need to check that
-//  * Evaluating the likelihood at the newly chosen attachment point doesn't requires at most 3(2) branch peels.
-//  * If there is no alignment information, then the probability of moving is always 1.
-//
-// Finally, how can we keep the information for upwards-pointing branches cached, and then restore it?
 
 
 /**
  * Sample from a number of SPR attachment points - one per branch.
  * 
- * When we calculate L[0], we have calculated the 
+ * The tricky idea here is that we want caches (likelihood, subA index) for each directed branch
+ * not in the PRUNED subtree to be accurate for the situation that the PRUNED subtree is not
+ * behind them.
+
+ * Then we make the attachment point the likelihood root, and all branches that point towards
+ * the root are valid... branches that do not point toward the root are not used, but may
+ * be used when we attach somewhere else.
+ *
+ * FIXME - how can we keep the information for upwards-pointing branches cached, and then restore it
+ *         after we un-regraft from an attachment branch and move on to the next one? (speedup)
+ *
  */
 void sample_SPR_all(Parameters& P,MoveStats& Stats) 
 {
@@ -410,19 +410,18 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
 
   double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
 
-  efloat_t Pr_initial = P.heated_probability();
-
   for(int i=0;i<n;i++) 
   {
     // Choose a directed branch to prune and regraft -- pointing away from the pruned subtree.
     int b1 = choose_subtree_branch_uniform(*P.T);
 
-    // attachment node for the pruned subtree
-    // This node will move around, but we will always 
-    //  peel up to this node to calculate the likelihood.
+    // The attachment node for the pruned subtree.
+    // This node will move around, but we will always peel up to this node to calculate the likelihood.
     int root_node = P.T->directed_branch(b1).target(); 
-
+    // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
     P.set_root(root_node);
+
+    // Compute and cache conditional likelihoods up to the (likelihood) root node.
     P.heated_likelihood();
     vector<Parameters> p(2,P);
 
@@ -436,6 +435,8 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     double L0 = p[1].T->branch(B1).length() + p[1].T->branch(BM).length();
 
     /*----------- get the list of possible attachment points, with [0] being the current one.------- */
+    // FIXME - With tree constraints, or with a variable alignment and alignment constraints,
+    //          we really should eliminate branches that we couldn't attach to, here.
     branches = branches_after(*p[1].T,b1);
 
     branches.erase(branches.begin()); // branches_after(b1) includes b1 -- which we do not want.
@@ -454,8 +455,10 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     vector<efloat_t> Pr(branches.size(), 0);
     Pr[0] = P.heated_likelihood() * P.prior_no_alignment();
 
+#ifndef NDEBUG
     vector<efloat_t> LLL(branches.size(), 0);
     LLL[0] = P.heated_likelihood();
+#endif
 
     // Compute total lengths for each of the possible attachment branches
     vector<double> L(branches.size());
@@ -516,38 +519,19 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
       p[1].LC_invalidate_one_branch(BM);
       p[1].LC_invalidate_one_branch(p[1].T->directed_branch(BM).reverse());
 
+      // Record the tree and compute the likelihood
       trees[i] = *p[1].T;
       assert(std::abs(length(trees[i]) - length(trees[0])) < 1.0e-9);
-
-      // We invalidate both branch_names[i] and BM after use -- we don't care whether
-      // branch_names[i] or BM is on the upper or lower sub-branch.
-
-      // Theoretically, we don't need to invalidate branches_names[i]^t if it is pointing up -- only
-      // the pointing down version.  Is the direction of branch_names[i] preserved?
-
-      // Also, theoretically we don't need the pointing up version anyway
-
-      // 1. The (surviving) branch does NOT change direction when a subtree is PRUNED.
-
-      // 2. When we GRAFT onto a leaf branch, the branch may be on the opposite side from where we expectd.
-
-      // We don't want to invalidate all branches behind the reverse direction of b2
-
-      // this should be redundant
-      p[1].set_root(root_node);
-
-      // just to make sure that the problem is not with subA indices
-      //      P.invalidate_subA_index_all();
-
       Pr[i] = p[1].heated_likelihood() * p[1].prior_no_alignment();
+#ifndef NDEBUG
       LLL[i] = p[1].heated_likelihood();
-      p[1].tree_propagate();
       assert(std::abs(log(LLL[i]) - log(p[1].heated_likelihood())) < 1.0e-9);
+#endif
 
       // invalidate the DIRECTED branch that we just landed on and altered
       p[1].setlength_no_invalidate_LC(b2,L[i]);                               // Put back the old transition matrix
-      p[1].LC_invalidate_one_branch(b2);                                      // ... mark for recomputing.
-      p[1].LC_invalidate_one_branch(p[1].T->directed_branch(b2).reverse());   // ... mark for recomputing.
+      p[1].LC_invalidate_one_branch(b2);                                      // ... mark likelihood caches for recomputing.
+      p[1].LC_invalidate_one_branch(p[1].T->directed_branch(b2).reverse());   // ... mark likelihood caches for recomputing.
 
       // this is bidirectional
       p[1].invalidate_subA_index_one_branch(BM);
@@ -557,6 +541,12 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
 
     /*
      *  1. Factoring in branch lengths?
+     *
+     *  pi(x) = the desired equilibrium probability.
+     *  rho(x,S) = the probability of x proposing the set S to be sampled from.
+     *  alpha(x,S,y) = the probability of accepting/choosing y from S when S is proposed by x.
+     *  L[x] = the length of attachment branch x.
+     *
      *  pi(x) * rho(x,S) * alpha(x,S,y) = pi(y) * rho(y,S) * alpha(y,S,x) 
      *  rho(x,S) = prod over branches[b] (1/L[b]) * L[x]
      *           = C * L[x]
@@ -571,18 +561,18 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
      *
      *       choose_MH_P(i,j,Pr)/choose_MH_P(j,i,Pr) = Pr[j]/Pr[i].
      *
-     *  4. Now, if we make this whole procedure into a propsal, the ratio forthis 
+     *  4. Now, if we make this whole procedure into a proposal, the ratio for this 
      *     proposal density is
      *
-     *       rho(x,S) * alpha(x,S,y)   (C * L[x]) * (D * pi(y) * L(y) )    pi(y)   1/pi(x)
+     *       rho(x,S) * alpha(x,S,y)   (C * L[x]) * (D * pi(y) * L[y] )    pi(y)   1/pi(x)
      *       ----------------------- = -------------------------------- = ----- = -------
-     *       rho(y,S) * alpha(y,S,x)   (C * L[y]) * (D * pi(x) * L(x) )    pi(x)   1/pi(y)
+     *       rho(y,S) * alpha(y,S,x)   (C * L[y]) * (D * pi(x) * L[x] )    pi(x)   1/pi(y)
      *
      *  While the result is independent of the lengths L (which we want), the procedure for
      *  achieving this result need not be independent of the lengths.
      *
-     *  We must also remember that the variable rho[i] is the proposal density for propsing the set
-     *  {x,y} and so is proportional to rho(x,S) * alpha(x,S,y) = pi(y).  We could also use 1/pi(x)
+     *  We must also remember that the variable rho[i] is the proposal density for proposing the set
+     *  S2 = {x,y} and so is proportional to rho(x,S) * alpha(x,S,y) = pi(y).  We could also use 1/pi(x)
      *  and get the same ratio.
      *
      */
@@ -600,32 +590,8 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     p[1].tree_propagate();
 
     // Step N: Invalidate subA indices and also likelihood caches that are no longer valid.
-    // Which branches were ALREADY invalid for tree[0]?
-    // - BM / BM^t (?)
-    // - branches after B1 -- these branches reference B1 and assume that b1 is not attached.
 
-    // Which branches are ALREADY invalid for the tree with subtree-after-b1 removed?
-    // - BM / BM^t (?)
-
-    // Which branches are invalidated by the attachment of subtree-behind-b1?
-    // - 
-
-    // Which of these branches might BECOME valid?
-    // - branches after B1 that point to the attachment point.
-
-    // BM is already invalidated (both ways) from the looping code above.
-
-    //FIXME - which branches must be invalidated after an SPR?
-    //FIXME - do we need to invalidate more branches here?
-    //FIXME - do we need to invalidate FEWER branches here? 
-    //      - do we need to call setlength for B1 all over again?
-    // Question - why does sample_SPR( ) only invalidate things after b1 (before) and b1 (after)?
-    //            (this would seem to be 4 branches, but we get BM twice)
-    //          - should we also invalidate b1^t and branches after that, too?
-    // sample_SPR( ) does:
-    //          - set_length( )
-    //          - invalidate_subA_index_branch( )
-    //          - note_alignment_changed_on_branch( )
+    // Note that bi-directional invalidation of BM invalidates b1^t and similarly directed branches in the pruned subtree.
     vector<int> btemp; btemp.push_back(B1) ; btemp.push_back(BM) ; btemp.push_back(branch_names[C]);
     for(int i=0;i<btemp.size();i++) {
       int bi = btemp[i];
@@ -640,6 +606,9 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
     efloat_t L_1 = p[1].likelihood();
     assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
 #endif
+
+    // Step N+1: Use the chosen tree as a proposal, allowing us to sample the alignment.
+    //           (This should always succeed, if the alignment is fixed.)
 
     bool moved = false;
     // If the tree hasn't changed, we don't have to do anything.
@@ -672,6 +641,7 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
 	// and therefore not be chosen.  So the following SHOULD be safe!
       }
 
+      // If the alignment is not variable, then we should always accept on this second move.
       if (not P.n_imodels())
 	assert(C2 == 1);
     }
