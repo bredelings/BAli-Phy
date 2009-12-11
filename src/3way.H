@@ -31,7 +31,7 @@ namespace A3 {
 
   namespace states = A2::states;
 
-  vector<int> get_nodes(const Tree& T,int n0);
+  // vector<int> get_nodes(const Tree& T,int n0);
   vector<int> get_nodes_random(const Tree& T,int n0);
 
   vector<int> get_nodes_branch_random(const Tree& T,int n0,int n1);
