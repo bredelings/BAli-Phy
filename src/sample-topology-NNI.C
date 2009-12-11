@@ -96,6 +96,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   vector<int> nodes = A5::get_nodes_random(*P.T, b);
 
   P.select_root(b);
+  // P.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,P);
 
@@ -165,6 +166,7 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
   vector<int> nodes = A5::get_nodes_random(*P.T, b);
 
   P.select_root(b);
+  // P.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,P);
 
@@ -227,6 +229,7 @@ void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b)
   vector<int> nodes = A5::get_nodes_random(*P.T, b);
 
   P.select_root(b);
+  // P.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,P);
 
@@ -287,6 +290,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
   vector<int> nodes = A5::get_nodes_random(*P.T,b);
 
   P.select_root(b);
+  // P.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,P);
 
@@ -367,10 +371,11 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
   if (P.n_imodels())
     return;
 
-  vector<int> nodes = A5::get_nodes(*P.T,b);
+  vector<int> nodes = A5::get_nodes_random(*P.T,b);
 
   //------ Generate Topologies and alter caches ------///
   P.select_root(b);
+  // P.likelihood();  Why does this not make a difference in speed?
   
   vector<Parameters> p(3,P);
 
@@ -450,11 +455,12 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
     return;
   }
 
-  vector<int> nodes = A5::get_nodes(*P.T,b);
+  vector<int> nodes = A5::get_nodes_random(*P.T,b);
 
   //------ Generate Topologies and alter caches ------///
   P.select_root(b);
-  
+  // P.likelihood();  Why does this not make a difference in speed?
+
   vector<Parameters> p(3,P);
 
   int b1 = P.T->directed_branch(nodes[4],nodes[1]);

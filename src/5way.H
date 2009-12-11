@@ -32,7 +32,7 @@ namespace A5 {
 
   namespace states = A2::states;
 
-  vector<int> get_nodes(const Tree& T,int b);
+  // vector<int> get_nodes(const Tree& T,int b);
   vector<int> get_nodes_random(const Tree& T,int b);
 
   // 21 bits used total:
