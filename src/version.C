@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "config.h"
 #endif
 
-#include "revision.H"
+#include "git_version.h"
 
 #ifndef PACKAGE_VERSION
 #define PACKAGE_VERSION "UNKNOWN"
@@ -37,16 +37,10 @@ using namespace std;
 void print_version_info(ostream& file) 
 {
   file<<"VERSION: "<<PACKAGE_VERSION;
-#ifdef REVISION
-  string svn_rev = REVISION;
-  if (not svn_rev.empty())
-    file<<"   ["<<svn_rev<<"]";
-#endif
-
-#ifdef REVISION_DATE
-  string svn_date = REVISION_DATE;
-  if (not svn_date.empty())
-    file<<"   ("<<svn_date<<")";
+#ifdef GIT_MESSAGE
+  string git_rev = GIT_MESSAGE;
+  if (not git_rev.empty())
+    file<<"   ["<<git_rev<<"]";
 #endif
 
   file<<endl;
@@ -59,7 +53,7 @@ void print_version_info(ostream& file)
   file<<"COMPILER: GCC "<<__VERSION__<<endl;
 #endif
 
-#ifdef _CXXFLAGS_
-  file<<"FLAGS: "<<_CXXFLAGS_<<endl;
+#ifdef CONFIG_FLAGS
+  file<<"FLAGS: "<<CONFIG_FLAGS<<endl;
 #endif
 }

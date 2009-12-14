@@ -400,9 +400,9 @@ fi
 ldflags=$LDFLAGS
 AC_SUBST(ldflags)
 
-CXXFLAGS="$CXXFLAGS -D_CXXFLAGS_=\"\\\"$CXXFLAGS $MPI_CXXFLAGS\\\"\" -D_ARCH_=\"\\\"$host\\\"\""
+# Write our compilation flags to config.h so that we can report them with the version info.
+AC_DEFINE_UNQUOTED([CONFIG_FLAGS],["$CXXFLAGS"] , ["CXXFLAGS that we used to compile."])
 
-#AC_CONFIG_FILES([GNUmakefile])
 AC_OUTPUT([
   Makefile 
   src/Makefile 
@@ -423,12 +423,4 @@ if test -n "$cairo" && test "$cairo" != "no"; then
   echo "CAIRO_LIBS = $CAIRO_LIBS"
 fi
 
-
-#------------ 
-# If src/revision.H does not exist in the source tree, then create an empty
-# version in the build tree.
-
-if test ! -f "$srcdir/src/revision.H" ; then
-   touch src/revision.H
-fi
 

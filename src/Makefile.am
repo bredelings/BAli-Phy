@@ -1,3 +1,30 @@
+SED = sed
+GIT_VERSION_CMD = $(SHELL) $(top_srcdir)/scripts/git_version.sh
+git_version.stamp:
+	@if test -f "$(srcdir)/git_version.h"; then \
+		if test -f "git_version.h"; then :; \
+		else \
+			cp "$(srcdir)/git_version.h" "git_version.h"; \
+		fi; \
+	fi
+	$(GIT_VERSION_CMD) -k -s $(top_srcdir) -o git_version.h
+	@if test -s "$(srcdir)/git_version.h"; then \
+		if cmp "$(srcdir)/git_version.h" "git_version.h"; then :; \
+		else \
+			echo "Error: $(srcdir)/git_version.h and git_version.h differ."; \
+			echo "       You probably want to remove the former."; \
+			exit 1; \
+		fi; \
+	fi
+
+dist-hook: git_version.stamp
+	if test -f "git_version.h"; then \
+		$(SED) -e 's|^#undef GIT_IS_DIST.*|#define GIT_IS_DIST 1|' \
+			"git_version.h" > "$(distdir)/git_version.h"; \
+	fi
+
+#-----------------------------------------------------------------
+
 noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            dp-matrix.H mytypes.H setup.H 5way.H eigenvalue.H \
            n_indels.H smodel.H alignment-constraint.H exponential.H \
@@ -67,6 +94,9 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  tools/parsimony.C version.C slice-sampling.C
 
 bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@ 
+
+# always "rebuild" these
+BUILT_SOURCES = version.C git_version.stamp
 
 #-----------------------------------------------------------------
 
