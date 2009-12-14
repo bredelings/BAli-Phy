@@ -303,10 +303,17 @@ Nucleotides::Nucleotides(const string& s, char c)
   insert(t);
   insert("C");
 
-  insert_class("Y",t+"C");
-  insert_class("R","AG");
-  insert_class("W",t+"A");
-  insert_class("S","GC");
+  insert_class("Y",t+"C");    // pYrimidine
+  insert_class("R","AG");     // puRine
+  insert_class("W",t+"A");    // Weak
+  insert_class("S","GC");     // String
+  // insert_class("K",t+"G"); // Ketone
+  // insert_class("M","AC");  // aMino
+
+  // insert_class("B",t+"GC"); // not-A (B is after A)
+  // insert_class("D",t+"AG"); // not-C (D is after C)
+  // insert_class("H",t+"AC"); // not-G (H is after G)
+  // insert_class("V","GAC");  // not-T (V is after U)
 }
 
 DNA::DNA()
