@@ -31,12 +31,17 @@ P24. Improve speed of dynamic programming
 P2. Determine how much tree sampling could be improved by proposing with the right branch lengths.
 
 P1. Implement the multi-branch SPR search
- * Figure out the effective branch length behind each branch...
- * 
+ * Choose subtree to prune based on the effective-branch length?
+ * Improve accuracy, simplicity of "effective-branch" length?
  * Finish testing.
+   - Check profiler results.
+   - Compare Lutzoni-Fungi results with old version. (seems good, so far).
 
 P17. Improve alphabet handling for speed, flexibility, and features.
-     - Handle lower-case nucleotides by allowing synonym for letters.
+     - [!]Speed up mapping of letters to integers.
+
+     - (?) Handle lower-case nucleotides by allowing synonyms for letters.
+     - (?) Make upper-case letters synonyms?
      - Individually add letters: add_letter("a","Adenosine","A")
      - Single-letter alphabets just use an array to map letters to integers.
      - Generic word alphabets use a map<string,int>.
