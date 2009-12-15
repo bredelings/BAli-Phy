@@ -74,6 +74,26 @@ using namespace A5;
 
 ///Sample between 2 topologies, ignoring gap priors on each case
 
+void NNI_inc(MoveStats& Stats, const string& name, MCMC::Result result,const Tree& T,int b)
+{
+  Stats.inc(name, result);
+
+  double L = T.directed_branch(b).length();
+
+  if (L < 0.125)
+    Stats.inc(name+"-0.125", result);
+  else if (L < 0.25)
+    Stats.inc(name+"-0.25", result);
+  else if (L < 0.5)
+    Stats.inc(name+"-0.5", result);
+  else if (L < 1)
+    Stats.inc(name+"-1.0", result);
+  else if (L < 2.0)
+    Stats.inc(name+"-2.0", result);
+  else
+    Stats.inc(name+"-2.0+", result);
+}
+
 int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, int b) 
 {
   assert(p[0].n_imodels() == p[1].n_imodels());
@@ -139,7 +159,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   else
     result.counts[1] = 0;
 
-  Stats.inc("NNI (2-way)", result);
+  NNI_inc(Stats,"NNI (2-way)", result,*p[0].T,b);
 }
 
 #include "slice-sampling.H"
@@ -218,7 +238,7 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
 
   //  if (C == 1) std::cerr<<"slice-diff = "<<Pr2 - Pr1<<"\n";
 
-  Stats.inc("NNI (2-way,slice)", result);
+  NNI_inc(Stats,"NNI (2-way,slice)", result, *p[0].T, b);
 }
 
 void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b) 
@@ -262,7 +282,7 @@ void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b)
     P = p[C];
   }
 
-  Stats.inc("NNI (2-way/SPR)", C>0);
+  NNI_inc(Stats,"NNI (2-way/SPR)", C>0, *p[0].T, b);
 }
 
 vector<int> NNI_branches(const Tree& T, int b) 
@@ -333,7 +353,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
     P = p[C];
   }
 
-  Stats.inc("NNI (2-way) + branches", C>0);
+  NNI_inc(Stats,"NNI (2-way) + branches", C>0, *p[0].T, b);
 }
 
 void two_way_NNI_sample(Parameters& P, MoveStats& Stats, int b) 
@@ -440,7 +460,7 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
   //  if (C == 1) std::cerr<<"slice-diff3 = "<<Pr2 - Pr1<<"\n";
   //  if (C == 2) std::cerr<<"slice-diff3 = "<<Pr3 - Pr1<<"\n";
 
-  Stats.inc("NNI (3-way,slice)", result);
+  NNI_inc(Stats,"NNI (3-way,slice)", result, *p[0].T, b);
 }
 
 void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
@@ -494,7 +514,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
     P = p[C];
   }    
 
-  Stats.inc("NNI (3-way)",C>0);
+  NNI_inc(Stats,"NNI (3-way)",C>0, *p[0].T, b);
 }
 
 void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, int b) 
@@ -544,5 +564,5 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
     P = p[C];
   }
 
-  Stats.inc("NNI (3-way) + A",C>0);
+  NNI_inc(Stats,"NNI (3-way) + A",C>0, *p[0].T, b);
 }

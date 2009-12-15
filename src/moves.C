@@ -310,6 +310,8 @@ void sample_NNI_and_branch_lengths(Parameters& P, MoveStats& Stats)
     int b = branches[i];
 
     if (P.T->branch(b).is_internal_branch()) {
+      // Why is the 3-way acceptance rate not double the 2-way acceptance rate?
+      // When we figure this out, then do 3-way 95% of the time.
       if (myrandomf() < 0.5)
 	three_way_topology_sample(P,Stats,b);
       else
