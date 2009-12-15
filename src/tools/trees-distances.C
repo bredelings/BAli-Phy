@@ -183,7 +183,7 @@ double distance(const tree_record& T,
   return D;
 }
 
-void check_supplied_filenames(int n,vector<string>& files)
+void check_supplied_filenames(int n,vector<string>& files, bool exact=true)
 {
   if (files.size() == n-1)
     files.insert(files.begin(),"-");
@@ -192,7 +192,7 @@ void check_supplied_filenames(int n,vector<string>& files)
 
   if (files.size() < n)
     throw myexception()<<"Wanted "<<n<<" filenames, but got only "<<files.size()<<".";
-  if (files.size() > n)
+  if (exact and files.size() > n)
     cerr<<"Warning: ignoring "<<files.size()-n<<" extra filenames."<<endl;
 }
 
@@ -359,15 +359,24 @@ int main(int argc,char* argv[])
     //----------- task "matrix" ------------//
     if (analysis == "matrix") 
     {
-      check_supplied_filenames(1,files);
-      tree_sample trees;
-      if (files[0] == "-")
-	trees = tree_sample(std::cin,skip,subsample,max);
-      else
-	trees = tree_sample(files[0],skip,subsample,max);
-      //      tree_sample trees(files[0],skip,subsample,max);
+      check_supplied_filenames(1,files,false);
 
-      ublas::matrix<double> D = distances(trees,metric_fn);
+      tree_sample all_trees;
+      for(int i=0;i<files.size();i++) 
+      {
+	tree_sample trees;
+	if (files[i] == "-")
+	  trees = tree_sample(std::cin,skip,subsample,max);
+	else
+	  trees = tree_sample(files[i],skip,subsample,max);      
+	if (log_verbose)
+	  std::cerr<<"read "<<trees.size()<<" trees"<<std::endl;
+
+	for(int j=0;j<trees.size();j++)
+	  all_trees.add_tree(trees.trees[j]);
+      }
+
+      ublas::matrix<double> D = distances(all_trees,metric_fn);
 
       if (args.count("remove-duplicates"))
 	D = remove_duplicates(D);
