@@ -530,6 +530,28 @@ namespace trees_format
   Fixroot::Fixroot(const reader_t& r)
     :wrapped_reader_t(r)
   { }
+
+  const vector<string>& ReorderLeaves::names() const
+  {
+    return leaf_names;
+  }
+
+  bool ReorderLeaves::next_tree_(Tree& T,int& r)
+  {
+    if (wrapped_reader_t::next_tree_(T,r)) {
+      if (mapping.size()) T.standardize(mapping);
+      return true;
+    }
+    else
+      return false;
+  }
+
+  ReorderLeaves::ReorderLeaves(const vector<string>& leaf_order, const reader_t& r)
+    :wrapped_reader_t(r)
+  {
+    leaf_names = leaf_order;
+    mapping = compute_mapping(tfr->names(), leaf_order);
+  }
 }
 
 int cmp(const tree_record& t1, const tree_record& t2)
@@ -726,36 +748,8 @@ tree_sample::tree_sample(const string& filename,int skip,int subsample,int max,c
   file.close();
 }
 
-void scan_trees(istream& file,int skip,int subsample,int max,
-		accumulator<SequenceTree>& op)
-{
-  using namespace trees_format;
-
-  //----------- Construct File Reader / Filter -----------//
-  shared_ptr<reader_t> trees(new Newick_or_NEXUS(file));
-
-  if (skip > 0)
-    trees = shared_ptr<reader_t>(new Skip(skip,*trees));
-
-  if (subsample > 1)
-    trees = shared_ptr<reader_t>(new Subsample(subsample,*trees));
-
-  if (max > 0)
-    trees = shared_ptr<reader_t>(new Max(max,*trees));
-
-  trees = shared_ptr<reader_t>(new Fixroot(*trees));
-
-  //------------------- Process Trees --------------------//
-  RootedSequenceTree T;
-  while (trees->next_tree(T))
-    op(T);
-
-  //---------------------- Finalize ----------------------//
-  op.finalize();
-}
-
 void scan_trees(istream& file,int skip,int subsample,int max, const vector<string>& prune,
-		accumulator<SequenceTree>& op)
+		const vector<string>& leaf_order, accumulator<SequenceTree>& op)
 {
   using namespace trees_format;
 
@@ -776,6 +770,9 @@ void scan_trees(istream& file,int skip,int subsample,int max, const vector<strin
   if (prune.size())
     trees = shared_ptr<reader_t>(new Prune(prune,*trees));
 
+  if (leaf_order.size())
+    trees = shared_ptr<reader_t>(new ReorderLeaves(leaf_order,*trees));
+
   //------------------- Process Trees --------------------//
   RootedSequenceTree T;
   while (trees->next_tree(T))
@@ -784,3 +781,16 @@ void scan_trees(istream& file,int skip,int subsample,int max, const vector<strin
   //---------------------- Finalize ----------------------//
   op.finalize();
 }
+
+void scan_trees(istream& file,int skip,int subsample,int max, const vector<string>& prune,
+		accumulator<SequenceTree>& op)
+{
+  scan_trees(file,skip,subsample,max,prune,vector<string>(),op);
+}
+
+void scan_trees(istream& file,int skip,int subsample,int max,
+		accumulator<SequenceTree>& op)
+{
+  scan_trees(file,skip,subsample,max,vector<string>(),op);
+}
+

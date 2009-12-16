@@ -105,7 +105,7 @@ namespace trees_format {
     bool next_tree_(Tree&,int&);
   public:
     virtual wrapped_reader_t* clone() const=0;
-    const std::vector<std::string>& names() const;
+    virtual const std::vector<std::string>& names() const;
 
     bool skip(int);
     bool done() const;
@@ -175,6 +175,17 @@ namespace trees_format {
     Fixroot* clone() const {return new Fixroot(*this);}
     
     Fixroot(const reader_t&);
+  };
+
+  class ReorderLeaves: public wrapped_reader_t
+  {
+    std::vector<int> mapping;
+    bool next_tree_(Tree&,int& r);
+  public:
+    ReorderLeaves* clone() const {return new ReorderLeaves(*this);}
+    const std::vector<std::string>& names() const;
+
+    ReorderLeaves(const std::vector<std::string>& leaf_order, const reader_t&);
   };
 
 }
@@ -250,5 +261,6 @@ public:
 
 void scan_trees(std::istream&,int skip,int subsample,int max,accumulator<SequenceTree>& op);
 void scan_trees(std::istream&,int skip,int subsample,int max,const std::vector<std::string>& prune,accumulator<SequenceTree>& op);
+void scan_trees(std::istream&,int skip,int subsample,int max,const std::vector<std::string>& prune,const std::vector<std::string>& leaf_order, accumulator<SequenceTree>& op);
 
 #endif
