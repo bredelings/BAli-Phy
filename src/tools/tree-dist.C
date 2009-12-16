@@ -36,6 +36,12 @@ using boost::shared_ptr;
 // FIXME: next_tree_(T) may invoke virtual functions of T that cause trouble.
 // EXAMPLE: T.prune_leaves( ) messeses with sequence names if not prevented by
 //          calling T.Tree::prune_leaves( ).
+// INTENSION: next_tree_(T) is supposed to treat T only as a Tree&, and therefore
+//             NOT call not call any virtual functions.  
+// QUESTION: should I fix the code that calls it, or the code itself, to not have this
+//             assumption?
+// QUESTION: is there some virtual function that should be added to class Tree to handle
+//             some of the things going on here?
 
 namespace trees_format 
 {
