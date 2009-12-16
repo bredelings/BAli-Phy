@@ -28,6 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mctree.H"
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include "rng.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -145,11 +146,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree", value<string>(),"tree to re-root")
     ("skip",value<int>()->default_value(0),"number of tree samples to skip")
     ("max",value<int>(),"maximum number of tree samples to read")
+    ("prune",value<string>(),"Comma-separated taxa to remove")
     ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
     ("var","report standard deviation of branch lengths instead of mean")
     ("no-node-lengths","ignore branches not in the specified topology")
     ("safe","Don't die if no trees match the topology")
     ("drop-partial","Remove partial branches")
+    ("seed", value<unsigned long>(),"random seed")
     ("verbose","Output more log messages on stderr.")
     ;
 
@@ -294,6 +297,15 @@ int main(int argc,char* argv[])
     //----------- Parse command line  ----------//
     variables_map args = parse_cmd_line(argc,argv);
 
+    //---------- Initialize random seed -----------//
+    unsigned long seed = 0;
+    if (args.count("seed")) {
+      seed = args["seed"].as<unsigned long>();
+      myrand_init(seed);
+    }
+    else
+      seed = myrand_init();
+
     int skip = args["skip"].as<int>();
 
     int max = -1;
@@ -302,6 +314,12 @@ int main(int argc,char* argv[])
 
     int subsample = args["sub-sample"].as<int>();
 
+    vector<string> prune;
+    if (args.count("prune")) {
+      string p = args["prune"].as<string>();
+      prune = split(p,',');
+    }
+      
     //----------- Read the topology -----------//
     MC_tree Q = load_MC_tree(args["tree"].as<string>());
 
@@ -309,7 +327,7 @@ int main(int argc,char* argv[])
     accum_branch_lengths A(Q);
 
     try {
-      scan_trees(std::cin,skip,subsample,max,A);
+      scan_trees(std::cin,skip,subsample,max,prune,Q.T.get_sequences(),A);
     }
     catch (std::exception& e) 
     {
