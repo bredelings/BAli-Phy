@@ -2521,9 +2521,11 @@ void graph_plotter::operator()(cairo_t* cr)
     double x2 = L.node_positions[n2].x;
     double y2 = L.node_positions[n2].y;
 
+    if (t == 2 and not draw_type_2_edges) continue;
+
     cairo_save(cr); 
     {
-      if (t == 1) 
+      if (t == 1)
       {
 	if (L.MC.partitions[b].full())
 	  cairo_set_source_rgb (cr, 0, 0 ,0);
@@ -2538,8 +2540,7 @@ void graph_plotter::operator()(cairo_t* cr)
 
 	//	cairo_reset_clip(cr);
 
-	/// This is a counter-clockwise path...
-
+	/// Only clip if we are not drawing type 2 edges
 	if ((c1 != -1 or c2 != -1) and draw_clouds and not draw_type_2_edges) 
 	{
 	  /*
@@ -2568,18 +2569,19 @@ void graph_plotter::operator()(cairo_t* cr)
 	// Um, but BOTH ends might wander!
 	// clip to all the ONE cloud that we wander over
       }
-      else {
+      else //(t == 2)
+      {
 	cairo_set_line_width(cr, line_width/2.0);
 	cairo_set_dash (cr, dashes, 2, 0.0);
       }
+
       if (false) // if (e_cross_v[e])
 	cairo_set_source_rgb (cr, 1 , 0, 0);
       
       cairo_move_to (cr, x1, y1);
       cairo_line_to (cr, x2, y2);
 
-      if (t==1 or draw_type_2_edges)
-	cairo_stroke (cr);
+      cairo_stroke (cr);
     }
     cairo_restore(cr);
   }
