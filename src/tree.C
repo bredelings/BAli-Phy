@@ -1125,7 +1125,7 @@ int Tree::parse_no_names(const string& line)
 	throw myexception()<<"Leaf name '"<<word<<"' is not an integer!\n";
       int leaf_index = convertTo<int>(word)-1;
       if (leaf_index < 0)
-	throw myexception()<<"Leaf index '"<<word<<"' is negative: now allowed!";
+	throw myexception()<<"Leaf index '"<<word<<"' is negative: not allowed!";
 
       BranchNode* BN = new BranchNode(-1,leaf_index,-1);
       BN->out = BN->next = BN->prev = BN;
@@ -1204,7 +1204,7 @@ int Tree::parse_with_names(const string& line,const vector<string>& names)
       if (is_digit(word[0])) {
 	leaf_index = convertTo<int>(word)-1;
 	if (leaf_index < 0)
-	  throw myexception()<<"Leaf index '"<<word<<"' is negative: now allowed!";
+	  throw myexception()<<"Leaf index '"<<word<<"' is negative: not allowed!";
 	if (leaf_index >= names.size())
 	  throw myexception()<<"Leaf index '"<<word<<"' is too high: the taxon set contains only "<<names.size()<<" taxa.";
       }

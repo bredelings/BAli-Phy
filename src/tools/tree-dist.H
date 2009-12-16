@@ -36,6 +36,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 namespace trees_format {
 
+  /// A structure to read and parse a collection of trees with the same leaf set
   struct reader_t
   {
     std::vector<std::string> leaf_names;
@@ -227,7 +228,6 @@ public:
   const tree_record& operator[](int i) const {return trees[i];}
         tree_record& operator[](int i)       {return trees[i];}
 
-  // this should equal trees.size(), but should be MUCH faster!
   unsigned size() const {return trees.size();}
 
   std::valarray<bool> support(const Partition& P) const;
