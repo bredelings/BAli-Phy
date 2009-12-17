@@ -1124,9 +1124,13 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
     out_screen<<"#"<<i+1<<": subst ~ "<<P[i].SModel().name()<<" ("<<s_index+1<<")    ";
 
     int i_index = P.get_imodel_index_for_partition(i);
+    int ti_index = P.get_timodel_index_for_partition(i);
     string i_name = "none";
     if (i_index != -1)
       i_name = P[i].IModel().name();
+    else if (ti_index != -1)
+      i_name = P[i].TIModel().name();
+
     out_screen<<" indel ~ "<<i_name<<" ("<<i_index+1<<")"<<endl;;
   }
   out_screen<<"\n";
