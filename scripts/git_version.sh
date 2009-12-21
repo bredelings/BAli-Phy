@@ -280,7 +280,8 @@ cat<<EOF
  */
 
 #ifdef GIT_DIRTY
-# define GIT_DIRTY_MSG " + changes"
+/*# define GIT_DIRTY_MSG " + changes"*/
+# define GIT_DIRTY_MSG "+"
 #else /* !GIT_DIRTY */
 # define GIT_DIRTY_MSG ""
 #endif /* GIT_DIRTY */
@@ -303,8 +304,8 @@ cat<<EOF
 # else /* !GIT_NOT_FOUND */
 #  define GIT_MESSAGE \\
        GIT_DIST_MSG \\
-       GIT_BRANCH ", " \\
-       "commit " GIT_SHAID " @ " GIT_COMMIT_DATE GIT_DIRTY_MSG \\
+       GIT_BRANCH " " \\
+       "commit " GIT_SHAID GIT_DIRTY_MSG \\
        GIT_ERROR_MSG
 # endif /* GIT_NOT_FOUND */
 #else /* !GIT_REPO */
