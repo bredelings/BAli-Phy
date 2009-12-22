@@ -61,26 +61,16 @@ using std::valarray;
 
 using namespace A5;
 
-// Do we need the different sample_two_nodes_base routines to use the same
-// sub-alignment ordering for different topologies?  No.
-//  o Sub-alignment order should affect only which paths are considered
-//  o We are essentially considering a set of paths for each topology
-//    (So have ALMOST marginalized over the paths: we don't consider some column orders though)
-//  o We then divide them up unto groups (topologies)
-//  o 1st choose between the groups ,
-//  o 2nd choose between the paths in the chosen group.
-// The fact that we don't consider some paths should not make this non-reversible
-// Each combination of order for each topology is a reversible move, because each path proposes the others.
-
-///Sample between 2 topologies, ignoring gap priors on each case
-
+/// Update statistics counters for an NNI move.
 void NNI_inc(MoveStats& Stats, const string& name, MCMC::Result result,const Tree& T,int b)
 {
   Stats.inc(name, result);
 
   double L = T.directed_branch(b).length();
 
-  if (L < 0.125)
+  if (L < 0.065)
+    Stats.inc(name+"-0.065", result);
+  else if (L < 0.125)
     Stats.inc(name+"-0.125", result);
   else if (L < 0.25)
     Stats.inc(name+"-0.25", result);
@@ -93,6 +83,19 @@ void NNI_inc(MoveStats& Stats, const string& name, MCMC::Result result,const Tre
   else
     Stats.inc(name+"-2.0+", result);
 }
+
+// Do we need the different sample_two_nodes_base routines to use the same
+// sub-alignment ordering for different topologies?  No.
+//  o Sub-alignment order should affect only which paths are considered
+//  o We are essentially considering a set of paths for each topology
+//    (So have ALMOST marginalized over the paths: we don't consider some column orders though)
+//  o We then divide them up unto groups (topologies)
+//  o 1st choose between the groups ,
+//  o 2nd choose between the paths in the chosen group.
+// The fact that we don't consider some paths should not make this non-reversible
+// Each combination of order for each topology is a reversible move, because each path proposes the others.
+
+///Sample between 2 topologies, ignoring gap priors on each case
 
 int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, int b) 
 {
@@ -176,6 +179,14 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
 
 //        Finally, the bottom 5% for slice make up the bottom .7%
 //        (unadjusted) for slice...
+
+//        Experiment #1: load in a posterior sample, to find out what the acceptance
+//                       probability *should* be based only on the relative probabilities
+//                       of the topologies.
+//
+//        Experiment #2: for each proposal, do a long MCMC chain where we consider only two
+//                       topologies but allow branch lengths to vary, in order to find out
+//                       what the acceptance probability should be.
 
 
 void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b) 
@@ -282,7 +293,16 @@ void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b)
     P = p[C];
   }
 
-  NNI_inc(Stats,"NNI (2-way/SPR)", C>0, *p[0].T, b);
+
+  MCMC::Result result(2);
+
+  result.totals[0] = (C>0)?1:0;
+  // This gives us the average length of branches prior to successful swaps
+  if (C>0)
+    result.totals[1] = p[0].T->directed_branch(b).length();
+  else
+    result.counts[1] = 0;
+  NNI_inc(Stats,"NNI (2-way/SPR)", result, *p[0].T, b);
 }
 
 vector<int> NNI_branches(const Tree& T, int b) 
@@ -353,7 +373,16 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
     P = p[C];
   }
 
-  NNI_inc(Stats,"NNI (2-way) + branches", C>0, *p[0].T, b);
+  MCMC::Result result(2);
+
+  result.totals[0] = (C>0)?1:0;
+  // This gives us the average length of branches prior to successful swaps
+  if (C>0)
+    result.totals[1] = p[0].T->branch(b).length();
+  else
+    result.counts[1] = 0;
+
+  NNI_inc(Stats,"NNI (2-way) + branches", result, *p[0].T, b);
 }
 
 void two_way_NNI_sample(Parameters& P, MoveStats& Stats, int b) 
@@ -514,7 +543,16 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
     P = p[C];
   }    
 
-  NNI_inc(Stats,"NNI (3-way)",C>0, *p[0].T, b);
+  MCMC::Result result(2);
+
+  result.totals[0] = (C>0)?1:0;
+  // This gives us the average length of branches prior to successful swaps
+  if (C>0)
+    result.totals[1] = p[0].T->branch(b).length();
+  else
+    result.counts[1] = 0;
+
+  NNI_inc(Stats,"NNI (3-way)", result, *p[0].T, b);
 }
 
 void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, int b) 
@@ -564,5 +602,14 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
     P = p[C];
   }
 
-  NNI_inc(Stats,"NNI (3-way) + A",C>0, *p[0].T, b);
+  MCMC::Result result(2);
+
+  result.totals[0] = (C>0)?1:0;
+  // This gives us the average length of branches prior to successful swaps
+  if (C>0)
+    result.totals[1] = p[0].T->branch(b).length();
+  else
+    result.counts[1] = 0;
+
+  NNI_inc(Stats,"NNI (3-way) + A", result, *p[0].T, b);
 }
