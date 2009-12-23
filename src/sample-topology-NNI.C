@@ -458,14 +458,22 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
 
   double L = P.T->branch(b).length();
 
+#ifndef NDEBUG
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
-  //  double Pr1 = log(p[0].probability());
-  //  double Pr2 = log(p[1].probability());
-  //  double Pr3 = log(p[2].probability());
+  efloat_t Pr1 = p[0].probability();
+  efloat_t Pr2 = p[1].probability();
+  efloat_t Pr3 = p[2].probability();
+#endif
 
   branch_length_slice_function logp1(p[0],b);
   branch_length_slice_function logp2(p[1],b);
   branch_length_slice_function logp3(p[2],b);
+
+#ifndef NDEBUG
+  assert(std::abs(Pr1.log() - logp1(L)) < 1.0e-9);
+  assert(std::abs(Pr2.log() - logp2(L)) < 1.0e-9);
+  assert(std::abs(Pr3.log() - logp3(L)) < 1.0e-9);
+#endif
 
   vector<slice_function*> logp;
   logp.push_back(&logp1);
