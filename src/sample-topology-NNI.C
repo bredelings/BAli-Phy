@@ -111,60 +111,6 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, i
 }
 
 
-void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
-{
-  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
-    return;
-
-  vector<int> nodes = A5::get_nodes_random(*P.T, b);
-
-  P.select_root(b);
-  // P.likelihood();  Why does this not make a difference in speed?
-
-  vector<Parameters> p(2,P);
-
-  int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
-
-  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  exchange_subtrees(*p[1].T,b1, b2);
-  p[1].tree_propagate(); 
-  p[1].LC_invalidate_branch(b);
-  p[1].invalidate_subA_index_branch(b);
-  
-  if (not extends(*p[1].T, *P.TC))
-    return;
-
-  //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
-  //  double Pr1 = log(p[0].probability());
-  //  double Pr2 = log(p[1].probability());
-
-  vector<efloat_t> rho(2,1);
-
-  // Because we would select between topologies before selecting
-  // internal node states, the reverse distribution cannot depend on 
-  // the internal node state of the proposed new topology/alignment
-
-  int C = two_way_topology_sample(p,rho,b);
-
-  if (C != -1) {
-    P = p[C];
-  }
-
-  //  if (C == 1) std::cerr<<"MH-diff = "<<Pr2 - Pr1<<"\n";
-
-  MCMC::Result result(2);
-
-  result.totals[0] = (C>0)?1:0;
-  // This gives us the average length of branches prior to successful swaps
-  if (C>0)
-    result.totals[1] = p[0].T->branch(b).length();
-  else
-    result.counts[1] = 0;
-
-  NNI_inc(Stats,"NNI (2-way)", result,*p[0].T,b);
-}
-
 #include "slice-sampling.H"
 
 // Notes: the two-say slice sampler is more likely to accept topologies
@@ -252,6 +198,67 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
   //  if (C == 1) std::cerr<<"slice-diff = "<<Pr2 - Pr1<<"\n";
 
   NNI_inc(Stats,"NNI (2-way,slice)", result, T0, b);
+}
+
+void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
+{
+  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+    return;
+
+  double slice_fraction = loadvalue(P.keys,"NNI_slice_fraction",-0.25);
+
+  if (not P.n_imodels() and uniform() < slice_fraction) {
+    two_way_topology_slice_sample(P,Stats,b);
+    return;
+  }
+
+  vector<int> nodes = A5::get_nodes_random(*P.T, b);
+
+  P.select_root(b);
+  // P.likelihood();  Why does this not make a difference in speed?
+
+  vector<Parameters> p(2,P);
+
+  int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
+
+  // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
+  exchange_subtrees(*p[1].T,b1, b2);
+  p[1].tree_propagate(); 
+  p[1].LC_invalidate_branch(b);
+  p[1].invalidate_subA_index_branch(b);
+  
+  if (not extends(*p[1].T, *P.TC))
+    return;
+
+  //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
+  //  double Pr1 = log(p[0].probability());
+  //  double Pr2 = log(p[1].probability());
+
+  vector<efloat_t> rho(2,1);
+
+  // Because we would select between topologies before selecting
+  // internal node states, the reverse distribution cannot depend on 
+  // the internal node state of the proposed new topology/alignment
+
+  int C = two_way_topology_sample(p,rho,b);
+
+  if (C != -1) {
+    P = p[C];
+  }
+
+  //  if (C == 1) std::cerr<<"MH-diff = "<<Pr2 - Pr1<<"\n";
+
+  MCMC::Result result(2);
+
+  result.totals[0] = (C>0)?1:0;
+  // This gives us the average length of branches prior to successful swaps
+  if (C>0)
+    result.totals[1] = p[0].T->branch(b).length();
+  else
+    result.counts[1] = 0;
+
+  NNI_inc(Stats,"NNI (2-way)", result,*p[0].T,b);
 }
 
 void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b) 
@@ -393,8 +400,9 @@ void two_way_NNI_sample(Parameters& P, MoveStats& Stats, int b)
     return;
 
   double U = uniform();
-  if (U < 0.33333333)
+  if (U < 0.33333333) {
     two_way_topology_sample(P,Stats,b);
+  }
   else if (U < 0.66666666)
     two_way_NNI_SPR_sample(P,Stats,b);
   else
