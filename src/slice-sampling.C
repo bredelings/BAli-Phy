@@ -144,6 +144,9 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P_,int i1,int i
   :count(0),b1(i1),b2(i2),P(P_)
 {
   total = P.T->branch(b1).length() + P.T->branch(b2).length();
+
+  set_lower_bound(0);
+  set_upper_bound(total);
 }
 
 std::pair<double,double> 
