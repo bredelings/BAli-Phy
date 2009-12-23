@@ -194,6 +194,8 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
   if (P.n_imodels() and P.branch_HMM_type[b] == 1)
     return;
 
+  Tree T0 = *P.T;
+
   vector<int> nodes = A5::get_nodes_random(*P.T, b);
 
   P.select_root(b);
@@ -249,7 +251,7 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
 
   //  if (C == 1) std::cerr<<"slice-diff = "<<Pr2 - Pr1<<"\n";
 
-  NNI_inc(Stats,"NNI (2-way,slice)", result, *p[0].T, b);
+  NNI_inc(Stats,"NNI (2-way,slice)", result, T0, b);
 }
 
 void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b) 
@@ -420,6 +422,8 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
   if (P.n_imodels())
     return;
 
+  Tree T0 = *P.T;
+
   vector<int> nodes = A5::get_nodes_random(*P.T,b);
 
   //------ Generate Topologies and alter caches ------///
@@ -489,7 +493,8 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
   //  if (C == 1) std::cerr<<"slice-diff3 = "<<Pr2 - Pr1<<"\n";
   //  if (C == 2) std::cerr<<"slice-diff3 = "<<Pr3 - Pr1<<"\n";
 
-  NNI_inc(Stats,"NNI (3-way,slice)", result, *p[0].T, b);
+  // stats are here mis-reported!
+  NNI_inc(Stats,"NNI (3-way,slice)", result, T0, b);
 }
 
 void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
