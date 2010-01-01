@@ -187,7 +187,11 @@ if [ "x$git_repo_dir" != "x" ] && [ "x${abs_repo_dir}" = "x${abs_srcdir}/.git" ]
         fi
 
 	# I also want the date!
-	git_commit_date=`$GIT log -n 1 --pretty=format:%aD | date +"%b %d %Y %k:%M:%S"`;
+	# git_commit_date=`$GIT log -n 1 --pretty=format:%aD | date +"%b %d %Y %k:%M:%S"`;
+	
+	# git_commit_date=`date +"%b %d %Y %k:%M:%S" -d $($GIT log -n 1 --pretty=format:%aD)
+	git_commit_date=`$GIT log -n 1 --pretty=format:%aD`;
+	git_commit_date=$(date +"%b %d %Y %k:%M:%S" -d "$git_commit_date")
 
         # git-1.4 and probably earlier understand "git-symbolic-ref HEAD"
         git_branch=`$GIT symbolic-ref HEAD | $SED -n 's|^refs/heads/||p'`
