@@ -541,6 +541,44 @@ namespace probability {
 
   Exponential::~Exponential() {}
 
+  string Cauchy::name() const {
+    return "Cauchy";
+  }
+
+  log_double_t Cauchy::pdf(double x) const
+  {
+    return gsl_ran_exponential_pdf(x-m() ,s());
+  }
+
+  double Cauchy::cdf(double x) const
+  {
+    return gsl_ran_exponential_pdf(x -m(), s());
+  }
+
+  double Cauchy::quantile(double p,double) const 
+  {
+    return m() + gsl_cdf_cauchy_Pinv(p, s());
+  }
+
+  double Cauchy::moment(int n) const
+  {
+    std::abort();
+  }
+
+  Cauchy::Cauchy() 
+  {
+    add_parameter("m", 0);
+    add_parameter("s", 1);
+  }
+
+  Cauchy::Cauchy(double m_, double s_)
+  {
+    add_parameter("m", m_);
+    add_parameter("s", s_);
+  }
+
+  Cauchy::~Cauchy() {}
+
   double pointChi2(double prob, double v)
   {
     // Returns z so that Prob{x<z}=prob where x is Chi2 distributed with df
