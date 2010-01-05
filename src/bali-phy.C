@@ -1520,8 +1520,12 @@ int main(int argc,char* argv[])
   int retval=0;
 
   try {
-#if defined(HAVE_FENV_H) && !defined(NDEBUG)
+
+#if defined(HAVE_FEENABLEEXCEPT) && !defined(NDEBUG)
     feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+#endif
+#if defined(HAVE_CLEAREXCEPT) && defined(NDEBUG)
+    feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
     fp_scale::initialize();
     fs::path::default_name_check(fs::portable_posix_name);
