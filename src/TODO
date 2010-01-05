@@ -1,3 +1,5 @@
+FIX: timing of the last commit in version string!
+
 P5. Speed up post-processing.
 P6. Improve usability. (post-processing?  installation?  visualization?)
 P11. Make post-processing handle multiple chains, assess convergence.
@@ -125,30 +127,63 @@ P6. What different tasks do I want?  How can I make a generic tree processor?
  + Annotate branches of a Query tree with their lengths from a tree sample
  + Annotate branches of a Query tree with their PP/BF   from a tree sample
 
+Defaults:If no ">X" part, then >-
+        :If no "[i]" part, then "[0]"
+
+Idea: level[i]>file@format
+
+Questions: Do I have to re-analyze the combined file?
+           Can I share memory && information between different 
+
+Can I get away w/o manually scripting intermediate variables?
+That is, if I do --consensus-tree=0.5>a --consensus-topology=0.5>b, can I re-use
+  the information about topology?
+
 consensus ->
  * x[i].topology      topology(x[i]) -> Newick
+   + --consensus-topology=0.5[i]>file
+   + --write=consensus(0.5,i,lengths=no,format=newick)>file
  * x[i].PP.topology   topology[PP](x[i]) -> Newick
+   + --consensus-topology-PP=0.5[i]>file
  * x[i].mtree         
- * x[i]-mctree.svg
- * x[i]-mctree.pdf
+   + --consensus-mctree=0.5[i]>file
  * x[i].ltree
+   + --consensus-tree-with-nodes=0.5[i]>file
  * x[i].tree          topology[lengths](x[i]) -> newick
+   + --consensus-tree=0.5[i]>file
  * x[i].PP.tree       topology[lengths](x[i]) -> newick
+   + --consensus-tree-PP=0.5[i]>file
  * MAP.topology       topology(MAP)           -> newick
- * MAP.ltree          topology[nodes,lengths](MAP) -> newick+nodes
+   + --MAP-topology=>file
  * MAP.tree           topology[PP,lengths](MAP) -> newick
- * x[i]-tree.pdf      topology[lengths](x[i]) -> newick
- * x[i]-tree.svg
+   + --MAP-tree=file
  * partitions (supported partitions)
+   + partitions=0.5[i]>file
  * partitions.pred
+   + partitions=0.5[i]>file@pred
  * partitions.bs
+   + --mixing-report=file
  * c-levels.plot
- * c-levels.svg
+   + --support-levels=file
  * partitions.SRQ
  * c50.SRQ
  * {c50,partitions}.SRQ.png
  * # of topologies in 95% interval
  ? # of SPLIT in 95% "interval"
+
+ * c-levels.svg
+ * x[i]-mctree.svg
+ * x[i]-mctree.pdf
+ * x[i]-tree.pdf      topology[lengths](x[i]) -> newick
+ * x[i]-tree.svg
+
+mixing ->
+ * compute the mixing of a given predicate OR tree
+ * compute ASDSF of distributions
+ --asdsf=file@report
+ --msdsf=file@report
+ * write out the RANGE of support for each partition, sorted by the average support.
+ --support-range=file
 
 -? I need a "verbose" mode that gives feedback for progress.
 -? How do I handle dependencies?
