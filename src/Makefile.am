@@ -93,6 +93,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  tools/partition.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C
 
+nodist_bali_phy_SOURCES = git_version.h
 bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@ 
 
 # always "rebuild" these
