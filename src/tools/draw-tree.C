@@ -174,7 +174,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: draw-graph <file1>\n";
+    cout<<"Usage: draw-tree [OPTIONS] <tree file>\n";
+    cout<<"Draw NEWICK (and some other) formatted files.\n";
     cout<<all<<"\n";
     exit(0);
   }
