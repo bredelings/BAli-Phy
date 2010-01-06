@@ -39,8 +39,12 @@ void print_version_info(ostream& file)
   file<<"VERSION: "<<PACKAGE_VERSION;
 #ifdef GIT_MESSAGE
   string git_rev = GIT_MESSAGE;
-  if (not git_rev.empty())
-    file<<"  ["<<git_rev<<"]  ("<<GIT_COMMIT_DATE<<")";
+  if (not git_rev.empty()) {
+    file<<"  ["<<git_rev<<"]";
+#ifdef GIT_COMMIT_DATE
+    file<<"  ("<<GIT_COMMIT_DATE<<")";
+#endif
+  }
 #endif
 
   file<<endl;

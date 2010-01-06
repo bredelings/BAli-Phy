@@ -257,6 +257,8 @@ CXXFLAGS="$CXXFLAGS $CPPFLAGS"
 
 AC_CHECK_HEADERS([fenv.h])
 
+AC_CHECK_FUNCS([feenableexcept feclearexcept])
+
 ac_search_lib_dirs="$extra_libs2 /usr/lib /usr/local/lib"
 
 #---------------------- Check for math library ------------------#
