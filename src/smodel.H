@@ -810,7 +810,7 @@ namespace substitution {
 
   //----------------------- MultiModel ---------------------------*/
 
-  //Hmmm [FIXME] ... The peeling algorithm assumes independance across branches
+  //Hmmm [FIXME] ... The peeling algorithm assumes independence across branches
   //                 and a reversible markov chain across each branch.
   //
   //                 The reversible Markov chain on a branch can be generated from
