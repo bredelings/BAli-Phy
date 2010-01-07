@@ -24,6 +24,8 @@
 
 use strict;
 
+use Carp;
+
 use POSIX;
 
 my $home = $ENV{'HOME'};
@@ -37,6 +39,21 @@ my @out_files;
 my @tree_files;
 my @partition_samples;
 my $MAP_file;
+
+sub is_in_path
+{
+  my $file = shift;
+
+  my @dirs = split(':',$ENV{'PATH'});
+
+  for my $dir (@dirs) {
+      if (-x "$dir/$file" ) {
+	  return 1;
+      }
+  }
+
+  return 0;
+}
 
 sub do_init()
 {
@@ -400,6 +417,12 @@ sub tooltip
 
 #----------------------------- SETUP 2 --------------------------#
 
+if (! is_in_path("trees-consensus")) {
+    print "I can't find the program 'trees-consensus' in your PATH!\n";
+    print "See the manual for adding the bali-phy programs to your PATH\n";
+    exit(1);
+}
+
 my $max_iter;
 my $subsample = 1;
 my $min_support;
@@ -529,7 +552,8 @@ else {
 	$parameters_file = "$prefix.log";
     }
     else {
-	die "I can't find file '1.out' or 'C1.out' - are you running this in the right directory?";
+	print "I can't find files '1.out' or 'C1.out'... are you running this in the right directory?\n";
+	exit(1);
     }
 }
 
