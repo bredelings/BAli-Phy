@@ -1595,7 +1595,7 @@ traditional = traditional
 	<title>Testing Convergence</title>
 	<para>
 	  A better (but not perfect) test of convergence is to run
-	  several independant chains starting from many different
+	  several independent chains starting from many different
 	  places.  It is possible that each Markov chain will get
 	  stuck in local optima near its own starting value, but that
 	  the movement between the different local optima will be

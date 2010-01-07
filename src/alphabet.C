@@ -469,7 +469,7 @@ valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,const
     return N_counts;
 }
 
-valarray<double> get_codon_frequencies_from_independant_nucleotide_frequencies(const Triplets& C,const valarray<double>& fN ) {
+valarray<double> get_codon_frequencies_from_independent_nucleotide_frequencies(const Triplets& C,const valarray<double>& fN ) {
     valarray<double> fC(C.size());
     for(int i=0;i<fC.size();i++) {
       fC[i] = 1.0;
@@ -506,7 +506,7 @@ valarray<double> Triplets::get_frequencies_from_counts(const valarray<double>& c
   //--------- Level 1 pseudocount (nucleotides) ---------------//
   valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*this,counts);
   valarray<double> fN = getNucleotides().get_frequencies_from_counts(N_counts);
-  valarray<double> prior_f = get_codon_frequencies_from_independant_nucleotide_frequencies(*this,fN);
+  valarray<double> prior_f = get_codon_frequencies_from_independent_nucleotide_frequencies(*this,fN);
 
   valarray<double> counts1 = counts + pseudocount*counts.size()*prior_f;
 

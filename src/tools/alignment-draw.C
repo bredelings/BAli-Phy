@@ -878,7 +878,7 @@ BODY {\n\
 //    - We still need a bottom layer
 // can we make the cutoff (e.g. min) different for hue and saturation?
 //    - It seems that hsv is a good model - if plugins modify it, then different 
-//      plugins could have different mins. (But it should perhaps be independant of 
+//      plugins could have different mins. (But it should perhaps be independent of 
 //      the "scale" used.)
 
 // plugins:

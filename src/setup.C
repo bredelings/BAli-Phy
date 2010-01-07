@@ -113,7 +113,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
     valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*T,counts);
     valarray<double> fN = T->getNucleotides().get_frequencies_from_counts(N_counts,A.n_sequences()/2);
 
-    frequencies = get_codon_frequencies_from_independant_nucleotide_frequencies(*T,fN);
+    frequencies = get_codon_frequencies_from_independent_nucleotide_frequencies(*T,fN);
   }
 
   // specified frequencies

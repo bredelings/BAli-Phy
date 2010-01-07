@@ -355,7 +355,7 @@ inline bool operator!=(const alphabet& a1,const alphabet& a2) {return not (a1==a
 /// Compute nucleotide counts from codon counts
 std::valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,const std::valarray<double>& C_counts);
 
-/// Compute codon frequences from nucleotide frequencies if the nucleotide positions in the codon are independant
-std::valarray<double> get_codon_frequencies_from_independant_nucleotide_frequencies(const Triplets& C,const std::valarray<double>& fN );
+/// Compute codon frequences from nucleotide frequencies if the nucleotide positions in the codon are independent
+std::valarray<double> get_codon_frequencies_from_independent_nucleotide_frequencies(const Triplets& C,const std::valarray<double>& fN );
 
 #endif

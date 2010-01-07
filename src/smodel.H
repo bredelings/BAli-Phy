@@ -127,7 +127,7 @@ namespace substitution {
 
   //----------------------- Nested Models ------------------------///
 
-  // This models a substitution process in which evolution is independant between
+  // This models a substitution process in which evolution is independent between
   // non-overlapping intervals.  We should have that transition_p(t/2)^2 = transition_p(t)
   // This model must also be reversible
 
@@ -171,7 +171,7 @@ namespace substitution {
   // With an Independant Model, you can chain transition matrices.
   // Q_t(a,b) = sum_c Q[0,tau](a,c) x Q[tau,t](c,b)
 
-  // In an independant additive
+  // In an independent additive
   class IndependantAdditiveModel: virtual public AdditiveModel 
   {
   public:

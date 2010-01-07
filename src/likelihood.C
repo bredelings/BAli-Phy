@@ -169,7 +169,7 @@ int source)
   return prior_branch_from_counts(counts,Q);
 }
 
-/// Probability of a multiple alignment if branch alignments independant
+/// Probability of a multiple alignment if branch alignments independent
 efloat_t prior_HMM_nogiven(const data_partition& P) 
 {
   const alignment& A = *P.A;
