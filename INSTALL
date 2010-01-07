@@ -2,11 +2,11 @@ This file briefly explains how to compile bali-phy.
 
 See doc/README.html for full instructions with much more helpful detail.
 
----- Compiling from subversion source ----
+---- Compiling from GIT source ----
 
-This step is ONLY necessary if you are using the subversion source
-(which you probably are not).  Tarballs of the source should include
-the files that this step generates.  
+This step is ONLY necessary if you are using the GIT source
+(which you probably are not).  Distributed tarballs of the source
+should include the files that this step generates.  
 
 You need automake 1.8 or higher and autoconf 2.59 or higher to
 generate these files.
@@ -17,6 +17,8 @@ generate these files.
 % autoconf
 
 These commands generate the configure script and Makefiles.
+
+You also need to install pkg-config.
 
 --- Ultra Quick Version ---
 
