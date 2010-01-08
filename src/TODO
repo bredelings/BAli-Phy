@@ -1,5 +1,3 @@
-FIX: timing of the last commit in version string!
-
 P5. Speed up post-processing.
 P6. Improve usability. (post-processing?  installation?  visualization?)
 P11. Make post-processing handle multiple chains, assess convergence.
@@ -39,6 +37,9 @@ P25. Fix Slice NNI, and determine why 3-way NNI isn't better than 2-way NNI.
  * Why is the 3-way NNI (choose_MH) only accepting slightly more often than the 2-way NNI?
  * Is choose_MH really the best thing we can think of?
    - In the choose_MH(0,{1,1,0}) scenario, its only slightly better than Gibbs!
+
+P26. Improve drawing of multiconnected trees by using equal-daylight.
+
 
 P1. Implement the multi-branch SPR search
  * Choose subtree to prune based on the effective-branch length?
@@ -229,6 +230,21 @@ P16. [Improving Mixing Diagnostics / Improve Distribution-Comparison Diagnostics
      * This should not allow large changes in the statistic for infinitessimal changes in the distribution.
  (b) 
 
+P26. Improve draw-tree
+ 1. Make draw-tree use device coordinates
+   + But make this a separate, final, step?
+ 2. Put label lengths into leaf branch lengths.
+ 3. Fix equal-daylight to handle the case when there is no daylight available.
+   + If there is no daylight, then make all angles go a /= 2
+   + (?) Recalculate daylight under the condition that distance branches are ignored?
+   * Also: do Dave's monkey-puzzle technique.
+ 4. Represent multiconnected tree as a regular tree, and use equal-daylight to place nodes,
+    although they will have clouds
+   + At first, assume that wandering branches attach at existing nodes, instead of in the middle of branches.
+ 5. Do not draw the line UNDER the cloud.... instead draw the line and cut it off at the cloud boundary. 
+   + This requires some kind of path API.
+
+----
 MPI
 1. Output
 2. Good estimates of LOD score < -3 and > 3
