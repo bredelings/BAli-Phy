@@ -750,10 +750,10 @@ double get_angle(const tree_layout& L, int b)
 // x - y: should always be non-negative
 double circular_minus(double x, double y)
 {
-  x -= 2.0*M_PI*int((x - -M_PI)/(2.0*M_PI));
-  y -= 2.0*M_PI*int((y - -M_PI)/(2.0*M_PI));
+  x = normalize_angle(x);
+  y = normalize_angle(y);
 
-  if (x > y) 
+  if (x >= y) 
     return x-y;
   else
     return (2.0*M_PI - (y-x));
