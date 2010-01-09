@@ -190,7 +190,7 @@ vector<int> constraint_columns(const ublas::matrix<int>& constraint,const alignm
 }
 
 // We need to make sure that the pinned column coordinates always increase.
-// By considering constrains between seq1 and seq2 in the order of seq12 we can guarantee this,
+// By considering constraints between seq1 and seq2 in the order of seq12 we can guarantee this,
 //  or bail out if it is impossible.
 
 vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignment& A,
