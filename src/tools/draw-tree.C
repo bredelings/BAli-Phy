@@ -378,7 +378,71 @@ struct point_position
   double y;
   double z;
   point_position():x(0),y(0),z(0) {}
+  point_position(double x, double y):x(x),y(y),z(0) {}
+  point_position(double x, double y, double z):x(x),y(y),z(z) {}
 };
+
+bool segments_cross(const point_position& m1,
+		 const point_position& m2,
+		 const point_position& n1,
+		 const point_position& n2)
+{
+  double x1 = m1.x;
+  double y1 = m1.y;
+
+  double x2 = m2.x;
+  double y2 = m2.y;
+
+  double x3 = n1.x;
+  double y3 = n1.y;
+
+  double x4 = n2.x;
+  double y4 = n2.y;
+
+  double A = x2 - x1;
+  double B = x3 - x4;
+  double C = y2 - y1;
+  double D = y3 - y4;
+  double E = x3 - x1;
+  double F = y3 - y1;
+
+  double t_top = E*D-F*B;
+  double s_top = A*F-E*C;
+  double   det = A*D-B*C;
+
+  bool cross =  (s_top > 0 and s_top < det) and 
+                (t_top > 0 and t_top < det);
+
+  if (cross) {
+    double t = t_top/det;
+    double s = s_top/det;
+
+    if (std::abs(t) < 1.0e-9 or std::abs(t-1) < 1.0e-9) // alternatively I could check if the edges are connected.
+      return false;
+
+    if (std::abs(s) < 1.0e-9 or std::abs(s-1) < 1.0e-9)
+      return false;
+    cerr<<"t = "<<t_top/det<<endl;
+    cerr<<"s = "<<s_top/det<<endl;
+  }
+  return cross;
+}
+
+double distance_to_line_segment(const point_position& p1,
+				const point_position& p2,
+				const point_position& p3)
+{
+  double t = ((p1.x - p2.x)*(p3.x - p2.x) + (p1.y - p2.y)*(p3.y - p2.y))/
+    ((p3.x - p2.x)*(p3.x - p2.x) + (p3.y - p2.y)*(p3.y - p2.y));
+
+  if (t < 0) t = 0;
+  if (t > 1) t = 1;
+
+  double x = p2.x + t*(p3.x-p2.x);
+  double y = p2.y + t*(p3.y-p2.y);
+
+  return sqrt((p1.x-x)*(p1.x-x) + (p1.y-y)*(p1.y-y));
+}
 
 
 // FIXME - how to handle text layout?
@@ -520,11 +584,58 @@ struct tree_layout: public common_layout
 
   void rotate_subtree(int b, double alpha);
 
+  bool edges_cross() const;
+
+  bool edges_cross(int b1, int b2) const;
+
+  bool subtree_edges_cross(int b1, int b2) const;
+
   tree_layout(const SequenceTree& T1)
     :common_layout(T1.n_nodes()),
      T(T1)
   {}
 };
+
+bool tree_layout::edges_cross(int e1, int e2) const
+{
+  int m1 = T.directed_branch(e1).source();
+  int m2 = T.directed_branch(e1).target();
+
+  int n1 = T.directed_branch(e2).source();
+  int n2 = T.directed_branch(e2).target();
+
+  if (m1 == n1 or m1 == n2) return false;
+  if (m2 == n1 or m2 == n2) return false;
+
+  return segments_cross(node_positions[m1],
+			node_positions[m2],
+			node_positions[n1],
+			node_positions[n2]);
+}
+
+bool tree_layout::edges_cross() const
+{
+  for(int i=0;i<T.n_branches();i++)
+    for(int j=0;j<i;j++)
+      if (edges_cross(i,j))
+	return true;
+
+  return false;
+}
+
+
+bool tree_layout::subtree_edges_cross(int b1, int b2) const
+{
+  vector<const_branchview> branches1 = branches_after(T, b1);
+  vector<const_branchview> branches2 = branches_after(T, b2);
+
+  for(int i=0;i<branches1.size();i++)
+    for(int j=0;j<branches2.size();j++)
+      if (edges_cross(branches1[i],branches2[j]))
+	return true;
+
+  return false;
+}
 
 
 int find_directed_branch(const Tree& T,const Partition& p)
@@ -746,6 +857,14 @@ double get_angle(const tree_layout& L, int b)
   return atan2(t.y - s.y, t.x - s.x);
 }
 
+double normalize_angle(double a)
+{
+  a = fmod(a, 2*M_PI);
+  if (a < 0)
+    a += 2*M_PI;
+  return a;
+}
+
 
 // x - y: should always be non-negative
 double circular_minus(double x, double y)
@@ -760,66 +879,193 @@ double circular_minus(double x, double y)
 }
 
 // A (clockwise) circular range structure
-// All entries should be between 0 and 2 PI
-struct circular_range 
+// All entries should be between 0 and 2 PI... unless we are a full circle range
+class circular_range 
 {
-  double min;
-  double max;
+  double min_;
+  double max_;
+  bool full_circle;
+public:
+  bool is_full_circle()  const {return full_circle;}
 
-  static double standardize(double d) {return d - 2.0*M_PI*int((d - -M_PI)/(2.0*M_PI));}
+  void set_full_circle()  {
+    full_circle = true;
+    min_ = 0;
+    max_ = 0;
+  }
 
-  circular_range() {}
-  circular_range(double d1,double d2):min(standardize(d1)),max(standardize(d2)) {}
+  double min() const {
+    if (full_circle) std::abort();
+    assert(min_ >=0 and min_ <= 2*M_PI);
+    return min_;
+  }
 
-  double measure() {return circular_minus(max,min);}
+  double max() const {
+    if (full_circle) std::abort();
+    assert(max_ >=0 and max_ <= 2*M_PI);
+    return max_;
+  }
+
+  void min(double x) 
+  {
+    if (full_circle) std::abort();
+    min_ = normalize_angle(x); 
+  }
+
+  void max(double x) 
+  {
+    if (full_circle) std::abort();
+    max_ = normalize_angle(x); 
+  }
+
+  circular_range():min_(-1),max_(-1),full_circle(false) {}
+
+  circular_range(double d1,double d2) 
+    :full_circle(false)
+  {
+    min(d1);
+    max(d2);
+  }
+
+  double measure() 
+  {
+    if (full_circle)
+      return 2*M_PI;
+    else
+      return circular_minus(max_,min_);
+  }
 
   circular_range& shift(double d) {
-    min = standardize(min+d);
-    max = standardize(max+d);
+    if (not full_circle) {
+      min(min()+d);
+      max(max()+d);
+    }
     return *this;
   }
 
   bool contains(double d) const 
   {
-    d = standardize(d);
-    if (min <= max) 
-      return ((min <= d) and (d <= max));
+    if (full_circle) return true;
+
+    assert(min_ >=0 and min_ <= 2*M_PI);
+    assert(max_ >=0 and max_ <= 2*M_PI);
+
+    d = normalize_angle(d);
+    if (min() <= max()) 
+      return ((min() <= d) and (d <= max()));
     else
-      return ((d <= max) or (min <= d));
+      return ((d <= max()) or (min() <= d));
   }
 
-  const circular_range& operator+=(double d) 
-  {
-    if (contains(d)) return *this;
-
-    // move whichever boundary is closer, on the circle
-    if (circular_minus(d,max) < circular_minus(min,d))
-      max = d;
-    else
-      min = d;
-
-    return *this;
-  };
-  
   const circular_range& operator+=(circular_range& r);
   
   double operator-(const circular_range& r) const;
 };
 
+ostream& operator<<(ostream& o, const circular_range& R)
+{
+  if (R.is_full_circle())
+    o<<"(full_circle)";
+  else
+    o<<"("<<R.min()<<", "<<R.max()<<")";
+  return o;
+}
+
 bool overlaps(const circular_range& r1, circular_range& r2)
 {
-  if (r1.contains(r2.min) or r1.contains(r2.max)) return true;
-  if (r2.contains(r1.max) or r2.contains(r1.max)) return true;
+  if (r1.is_full_circle() or r2.is_full_circle()) return true;
+  if (r1.contains(r2.min()) or r1.contains(r2.max())) return true;
+  if (r2.contains(r1.max()) or r2.contains(r1.max())) return true;
   return false;
+}
+
+circular_range full_circle_range()
+{
+  circular_range R;
+  R.set_full_circle();
+  return R;
 }
 
 double circular_range::operator-(const circular_range& r) const
 {
-  if (contains(r.max)) return 0.0;
+  if (is_full_circle() or r.is_full_circle() or contains(r.max())) return 0.0;
 
-  return circular_minus(min,r.max);
+  return circular_minus(min(),r.max());
 }
 
+// probably this segment should NOT contain the origin
+circular_range circular_range_from_line_segment(double x1, double y1, double x2, double y2)
+{
+  double xm = 0.5*(x1+x2);
+  double ym = 0.5*(y1+y2);
+
+  double A1 = atan2(y1,x1);
+  double Am = atan2(ym,xm);
+  double A2 = atan2(y2,x2);
+
+  bool O1 = (x1 == 0 and y1 == 0);
+  bool O2 = (x2 == 0 and y2 == 0);
+  if (O1 and not O2) return circular_range(A2,A2);
+  if (O2 and not O1) return circular_range(A1,A1);
+
+  if (distance_to_line_segment(point_position(0,0),point_position(x1,y1),point_position(x2,y2)) == 0)
+    throw myexception()<<"line segments through the origin do not give meaningful ranges.";
+
+  circular_range R1(A1,A2);
+  circular_range R2(A2,A1);
+
+  if (R1.contains(Am))
+    return R1;
+  else
+    return R2;
+}
+
+const circular_range& circular_range::operator+=(circular_range& r)
+{
+  // first handle the case where we have a full circle
+  if (r.is_full_circle())
+    set_full_circle();
+  if (full_circle) return *this;
+
+  //  cout<<"operator+=:"<<endl;
+  //  cout<<(*this)<<endl;
+  //  cout<<r<<endl;
+
+  double M = measure();
+  double rmax = circular_minus(r.max(), min());
+  double rmin = circular_minus(r.min(), min());
+  //  cout<<"M = "<<M<<endl;
+
+  if (rmin <= M) {
+    if (rmax < rmin)
+      set_full_circle();
+    else if (rmax <= M)
+      ;
+    else
+      max(r.max());
+  }
+  else if (rmax <= M)
+  {
+    min(r.min());
+  }
+  else {
+    if (rmax < rmin)
+      *this = r;
+    else if (rmin - M < 2*M_PI - rmax)
+      max(r.max());
+    else
+      min(r.min());
+  }
+
+#ifndef NDEBUG
+  double M2 = measure();
+  assert( M2 >= M);
+#endif
+  
+  return *this;;
+}
+
+  
 circular_range get_angles(const tree_layout& L,int b,int n)
 {
   const Tree& T = L.T;
@@ -829,16 +1075,18 @@ circular_range get_angles(const tree_layout& L,int b,int n)
   circular_range R(A,A);
 
   vector<const_branchview> branches = branches_after(L.T,b);
-  for(int i=0;i<branches.size();i++) 
+  // skip branch b - only consider its children
+  // .. because of the difficulty of handling line segments from the origin
+  //    (This seems to work... for now.)
+  for(int i=1;i<branches.size();i++) 
   {
     int source = T.directed_branch(branches[i]).source();
     int target = T.directed_branch(branches[i]).target();
     
     const point_position& s = L.node_positions[source];
     const point_position& t = L.node_positions[target];
-    
-    double A1 = atan2(s.y - c.y,s.x - c.x);
-    double A2 = atan2(t.y - c.y,t.x - c.x);
+
+    circular_range A2 = circular_range_from_line_segment(s.x - c.x, s.y - c.y, t.x - c.x, t.y - c.y);
 
     // FIXME - we should really determine the angle range of the line,
     //         instead of just the angle of the endpoint.
@@ -865,8 +1113,8 @@ void equalize_daylight(tree_layout& L,int n)
 
   for(int b=0;b<branches.size();b++)
   {
-    vector<double> daylight_before(branches.size(),2.0*M_PI);
-    vector<double> daylight_after(branches.size(),2.0*M_PI);
+    vector<double> daylight_before(branches.size(), 2.0*M_PI);
+    vector<double> daylight_after(branches.size(), 2.0*M_PI);
 
     for(int i=0;i<branches.size();i++) {
       for(int j=0;j<branches.size();j++) 
@@ -1108,6 +1356,8 @@ struct graph_layout: public common_layout
 
   bool edges_cross(int b1,int b2) const;
 
+  bool edges_cross() const;
+
   graph_layout(const MC_tree_with_lengths& T)
     :common_layout(T.n_nodes()),
      MC(T)
@@ -1142,44 +1392,6 @@ struct graph_layout: public common_layout
 };
 
 
-bool segments_cross(const point_position& m1,
-		 const point_position& m2,
-		 const point_position& n1,
-		 const point_position& n2)
-{
-  double x1 = m1.x;
-  double y1 = m1.y;
-
-  double x2 = m2.x;
-  double y2 = m2.y;
-
-  double x3 = n1.x;
-  double y3 = n1.y;
-
-  double x4 = n2.x;
-  double y4 = n2.y;
-
-  double A = x2 - x1;
-  double B = x3 - x4;
-  double C = y2 - y1;
-  double D = y3 - y4;
-  double E = x3 - x1;
-  double F = y3 - y1;
-
-  double t_top = E*D-F*B;
-  double s_top = A*F-E*C;
-  double   det = A*D-B*C;
-
-  bool cross =  (s_top > 0 and s_top < det) and 
-                (t_top > 0 and t_top < det);
-
-  //  if (cross) {
-  //    cerr<<"t = "<<t_top/det<<endl;
-  //    cerr<<"s = "<<s_top/det<<endl;
-  //  }
-  return cross;
-}
-
 bool graph_layout::edges_cross(int e1,int e2) const
 {
   int m1 = MC.edges[e1].from;
@@ -1197,6 +1409,15 @@ bool graph_layout::edges_cross(int e1,int e2) const
 			node_positions[n2]);
 }
 
+
+bool graph_layout::edges_cross() const
+{
+  for(int i=0;i<MC.edges.size();i++)
+    for(int j=0;j<i;j++)
+      if (edges_cross(i,j))
+	return true;
+  return false;
+}
 
 graph_layout layout_on_circle(MC_tree_with_lengths& MC,double R)
 {
@@ -1325,22 +1546,6 @@ double trunc(double t,double D)
   if (t <= 0 or t >= 1)
     D = 0;
   return D;
-}
-
-double distance_to_line_segment(const point_position& p1,
-				const point_position& p2,
-				const point_position& p3)
-{
-  double t = ((p1.x - p2.x)*(p3.x - p2.x) + (p1.y - p2.y)*(p3.y - p2.y))/
-    ((p3.x - p2.x)*(p3.x - p2.x) + (p3.y - p2.y)*(p3.y - p2.y));
-
-  if (t < 0) t = 0;
-  if (t > 1) t = 1;
-
-  double x = p2.x + t*(p3.x-p2.x);
-  double y = p2.y + t*(p3.y-p2.y);
-
-  return sqrt((p1.x-x)*(p1.x-x) + (p1.y-y)*(p1.y-y));
 }
 
 double distance_to_line_segment(const graph_layout& GL,int n1,int n2,int n3)
