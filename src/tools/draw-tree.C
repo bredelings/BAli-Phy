@@ -1135,11 +1135,47 @@ void equalize_daylight(tree_layout& L,int n)
   }
 }
 
+
+// the size of a split is the size of its smallest set.
+// the size of a node (a multi-partition) is the size of its largest partition.
+// this will be the size of the second-largest set.
+int node_size(const Tree& T,int n)
+{
+  if (n < 2) std::abort();
+
+  vector<int> S;
+  for(const_out_edges_iterator i = T[n].branches_out();i;i++)
+    S.push_back(n_children(T,*i));
+
+  std::sort(S.begin(),S.end());
+
+  return S[S.size()-2];
+}
+
+vector<int> node_order(const Tree& T)
+{
+  vector<int> nodes;
+  vector<int> S;
+  for(int i=T.n_leaves();i<T.n_nodes();i++) 
+  {
+    nodes.push_back(i);
+    S.push_back(node_size(T,nodes.back()));
+  }
+
+  std::sort(nodes.begin(), nodes.end(), sequence_order<int>(S));
+  std::reverse(nodes.begin(), nodes.end());
+
+  return nodes;
+}
+
 void equalize_daylight(tree_layout& L)
 {
   const Tree& T = L.T;
-  for(int i=T.n_leaves();i<T.n_nodes();i++)
-    equalize_daylight(L,i);
+
+  vector<int> nodes = node_order(T);
+
+  for(int i=0;i<nodes.size();i++)
+    equalize_daylight(L,nodes[i]);
 }
 
 tree_layout equal_daylight_layout(SequenceTree MF,const vector<double>& node_radius)
@@ -1220,8 +1256,10 @@ void equalize_daylight_greedy(tree_layout& L,int n)
 void equalize_daylight_greedy(tree_layout& L)
 {
   const Tree& T = L.T;
-  for(int i=T.n_leaves();i<T.n_nodes();i++)
-    equalize_daylight_greedy(L,i);
+  vector<int> nodes = node_order(T);
+
+  for(int i=0;i<nodes.size();i++)
+    equalize_daylight_greedy(L,nodes[i]);
 }
 
 
