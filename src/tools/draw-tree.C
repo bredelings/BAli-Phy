@@ -157,6 +157,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
     ("greedy","For equal-daylight layout: take as much daylight as possible?")
+    ("tree-layout-initial","Start an energy layout with positions from the equal-angle layout - only for multifurcating trees")
     ("no-shade","For equal-daylight layout: reject rotations that shade other groups?")
     ("draw-clouds",value<string>(),"Draw wandering-ranges in MC trees as clouds.")
     ("seed", value<unsigned long>(),"Random seed")
@@ -205,6 +206,9 @@ public:
   double  node_length(int n) const {return node_lengths[n];}
   double& node_length(int n)       {return node_lengths[n];}
 
+  double total_length() const;
+  void scale(double s);
+
   //  vector<Partition> mini_branches;
   //  vector<double> mini_branch_lengths;
   //  vector<int> parent_branch_of_mini_branch;
@@ -214,6 +218,34 @@ public:
      node_lengths(n_nodes(),0.0)
   { }
 };
+
+double MC_tree_with_lengths::total_length() const
+{
+  //determine total length
+  double t = 0;
+  for(int i=0;i<branch_order.size();i++) 
+  {
+    int b = branch_order[i];
+    t += branch_length(b);
+  }
+  for(int n=0;n<n_nodes();n++) 
+    t += node_length(n);
+
+  return t;
+}
+
+
+void MC_tree_with_lengths::scale(double s)
+{
+  for(int b=0;b<2*n_branches();b++) 
+    branch_length(b) *= s;
+
+  for(int n=0;n<n_nodes();n++) 
+    node_length(n) *= s;
+
+  for(int b=0;b<T.n_branches();b++)
+    T.branch(b).set_length(T.branch(b).length() * s);
+}
 
 
 /// FIXME - check partitions to see that names are all unique?
@@ -640,6 +672,10 @@ struct tree_layout: public common_layout
 
   void rotate_subtree(int b, double alpha);
 
+  double edge_length_error() const;
+
+  double edge_length_error(int) const;
+
   bool edges_cross() const;
 
   bool edges_cross(int b1, int b2) const;
@@ -651,6 +687,32 @@ struct tree_layout: public common_layout
      T(T1)
   {}
 };
+
+double tree_layout::edge_length_error() const
+{
+  double error = 0;
+  for(int b=0;b<T.n_branches();b++)
+    error += edge_length_error(b);
+  return error;
+}
+
+double tree_layout::edge_length_error(int b) const
+{
+  int n1 = T.directed_branch(b).source();
+  int n2 = T.directed_branch(b).target();
+
+  double L = T.directed_branch(b).length();
+    
+  double x1 = node_positions[n1].x;
+  double y1 = node_positions[n1].y;
+  
+  double x2 = node_positions[n2].x;
+  double y2 = node_positions[n2].y;
+  
+  double D2 = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
+  double D  = sqrt(D2);
+  return std::abs(log(L/D));
+}
 
 bool tree_layout::edges_cross(int e1, int e2) const
 {
@@ -1259,8 +1321,9 @@ void equalize_daylight_greedy(tree_layout& L,int n)
       }
     }
   }
-}
 
+  if (L.edges_cross()) throw myexception()<<"equalize_daylight(L,n): edges cross - should not happen!";
+}
 
 // the size of a split is the size of its smallest set.
 // the size of a node (a multi-partition) is the size of its largest partition.
@@ -1570,26 +1633,14 @@ struct graph_layout: public common_layout
 
   bool edges_cross() const;
 
+  double edge_length_error() const;
+
+  double edge_length_error(int) const;
+
   graph_layout(const MC_tree_with_lengths& T)
     :common_layout(T.n_nodes()),
      MC(T)
   {
-    //determine total length
-    double t = 0;
-    for(int i=0;i<MC.branch_order.size();i++) 
-    {
-      int b = MC.branch_order[i];
-      t += MC.branch_length(b);
-    }
-    for(int n=0;n<MC.n_nodes();n++) 
-      t += MC.node_length(n);
-
-    // rescale length to 1
-    for(int b=0;b<2*MC.n_branches();b++) 
-      MC.branch_length(b) /= t;
-    for(int n=0;n<MC.n_nodes();n++) 
-      MC.node_length(n) /= t;
-    
     // determine node radii
     for(int n=0;n<MC.n_nodes();n++) {
       node_radius[n] = 0;
@@ -1603,6 +1654,38 @@ struct graph_layout: public common_layout
   }
 };
 
+double graph_layout::edge_length_error() const
+{
+  double error = 0;
+  for(int e=0;e<MC.edges.size();e++) 
+    error += edge_length_error(e);
+  return error;
+}
+
+double graph_layout::edge_length_error(int e) const
+{
+  int n1 = MC.edges[e].from;
+  int n2 = MC.edges[e].to;
+  int t = MC.edges[e].type;
+
+  double L = 0;
+  if (t == 1) {
+    int b = MC.edges[e].partition;
+    L = MC.branch_length(b);
+    
+    double x1 = node_positions[n1].x;
+    double y1 = node_positions[n1].y;
+    
+    double x2 = node_positions[n2].x;
+    double y2 = node_positions[n2].y;
+    
+    double D2 = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
+    double D  = sqrt(D2);
+    return std::abs(log(L/D));
+  }
+  else
+    return 0;
+}
 
 bool graph_layout::edges_cross(int e1,int e2) const
 {
@@ -2484,7 +2567,7 @@ void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
     double E1 = E(GL,D);
     assert(E1 >= 0);
     if (log_verbose) 
-      cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<"   dt = "<<dt<<endl;
+      cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<"   dt = "<<dt<<"   edge_length_error = "<<GL.edge_length_error()<<endl;
 
     if (log_verbose)
       cerr<<"  x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
@@ -3448,7 +3531,19 @@ int main(int argc,char* argv[])
     
     
     // lay out as a graph
+    MC.scale(1.0/MC.total_length());
     graph_layout L2 = layout_on_circle(MC,2);
+    
+    if (not args.count("tree-layout-initial"))
+    {
+      tree_layout LA = equal_angle_layout(MC);
+      //cout<<"equal angle edge error = "<<LA.edge_length_error()<<endl;
+      // *Transfer tree layout to graph layout* -- this only works when the graph IS a tree
+      // otherwise, multiple graph nodes would end up at the same position
+      for(int i=0;i<MC.C;i++)
+	L2.node_positions[i] = LA.node_positions[MC.graph_node_to_tree_node(i)];
+    }
+
     graph_layout L3 = L2;
 
 
@@ -3470,10 +3565,12 @@ int main(int argc,char* argv[])
 
 
     // FIXME - the repulsion should actually depend on the number of nodes!
-    energy_layout(L3,energy2(1,1000,stretchy_weight,0),400);
-    energy_layout(L3,energy2(1,10000,stretchy_weight,0),400);
-    energy_layout(L3,energy2(1,100000,stretchy_weight,0),400);
-    energy_layout(L3,energy2(1,1000000,stretchy_weight,0),800);
+    if (not args.count("tree-layout-initial")) {
+      energy_layout(L3,energy2(1,1000,stretchy_weight,0),400);
+      energy_layout(L3,energy2(1,10000,stretchy_weight,0),400);
+      energy_layout(L3,energy2(1,100000,stretchy_weight,0),400);
+      energy_layout(L3,energy2(1,1000000,stretchy_weight,0),800);
+    }
 
     for(int i=0;i<n_iterations;i++) 
     {
