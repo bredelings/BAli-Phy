@@ -153,6 +153,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
     ("font-size",value<double>()->default_value(10),"Font size for taxon names")
     ("angle_iterations",value<int>()->default_value(0),"Number of iterations for layout algorithm with small-angle penalties")
+    ("labels",value<string>()->default_value("horizontal"),"Are the names horizontal or angled?")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
     ("draw-clouds",value<string>(),"Draw wandering-ranges in MC trees as clouds.")
@@ -1319,14 +1320,17 @@ double get_text_height(cairo_t* cr, const string& s)
 
 struct tree_plotter: public cairo_plotter
 {
+  bool horizontal_names;
   tree_layout L;
   void operator()(cairo_t*);
   tree_plotter(const tree_layout& tl,double xw, double yw)
     :cairo_plotter(xw,yw),
+     horizontal_names(true),
      L(tl) 
   {}
   tree_plotter(const tree_layout& tl,double xw, double yw,double fs)
     :cairo_plotter(xw,yw,fs),
+     horizontal_names(true),
      L(tl) 
   {}
 };
@@ -1402,34 +1406,74 @@ void tree_plotter::operator()(cairo_t* cr)
 			  CAIRO_FONT_WEIGHT_BOLD);
   cairo_set_font_size (cr, font_size()/scale);
   
-  for(int l=0;l<L.T.n_leaves();l++)
-  {  
-    double x1 = L.node_positions[l].x;
-    double y1 = L.node_positions[l].y;
+  if (horizontal_names)
+    for(int l=0;l<L.T.n_leaves();l++)
+    { 
+      double x1 = L.node_positions[l].x;
+      double y1 = L.node_positions[l].y;
 
-    int p = L.T.branch(l).target();
+      int p = L.T.branch(l).target();
+      
+      double x2 = L.node_positions[p].x;
+      double y2 = L.node_positions[p].y;
+      
+      double a = atan2(y1-y2,x1-x2);
+      
+      double W = get_text_length(cr, L.T.seq(l));
+      double H = get_text_height(cr, L.T.seq(l));
+      
+      x1 += cos(a)*(line_width+H/8);
+      y1 += sin(a)*(line_width+H/2);
+      
+      y1 += 0.5*H;
+      
+      if (cos(a) < 0) x1 -= W;
+      
+      cairo_move_to (cr, x1, y1);
+      cairo_show_text (cr, L.T.seq(l).c_str());
+    }
+  else
+    for(int l=0;l<L.T.n_leaves();l++)
+    {  
+      double x2 = L.node_positions[l].x;
+      double y2 = L.node_positions[l].y;
 
-    double x2 = L.node_positions[p].x;
-    double y2 = L.node_positions[p].y;
+      int p = L.T.branch(l).target();
 
-    double a = atan2(y1-y2,x1-x2);
+      double x1 = L.node_positions[p].x;
+      double y1 = L.node_positions[p].y;
 
-    double W = get_text_length(cr, L.T.seq(l));
-    double H = get_text_height(cr, L.T.seq(l));
+      double dx = x2 - x1;
+      double dy = y2 - y1;
 
-    x1 += cos(a)*(line_width+H/8);
-    y1 += sin(a)*(line_width+H/2);
+      double a = atan2(dy,dx);
 
-    y1 += 0.5*H;
+      double W = get_text_length(cr, L.T.seq(l));
+      double H = get_text_height(cr, L.T.seq(l));
 
-    if (cos(a) < 0) x1 -= W;
+      //    cout<<L.T.seq(l).c_str()<<"   dx = "<<dx<<"  dy = "<<dy<<"   a = "<<a<<endl;
 
-    cairo_move_to (cr, x1, y1);
-    cairo_show_text (cr, L.T.seq(l).c_str());
-  }
+      cairo_save(cr);
+      {
+	cairo_translate (cr, x2, y2);
+	cairo_move_to(cr, 0, 0);
+	cairo_rotate(cr, a);
+	if (cos(a)>=0)
+	{
+	  cairo_move_to(cr, H/8, H*0.5);
+	  cairo_show_text (cr, L.T.seq(l).c_str());
+	}
+	else
+        {
+	  cairo_move_to(cr, H/4+W, -H*0.5);
 
-    
- 
+	  // cairo_translate(cr, W, 0);
+	  cairo_scale(cr, -1, -1);
+	  cairo_show_text (cr, L.T.seq(l).c_str());
+	}
+      }
+      cairo_restore(cr);
+    }
 }
 
 struct graph_layout: public common_layout
@@ -3274,6 +3318,8 @@ int main(int argc,char* argv[])
       tree_layout L = equal_angle_layout(MC);
       L.rotate_for_aspect_ratio(xw,yw);
       tree_plotter tp(L, xw, yw, font_size);
+      if (args["labels"].as<string>() != "horizontal")
+	tp.horizontal_names = false;
 
       string filename = name+"-tree";
       if (args.count("out"))
@@ -3287,6 +3333,8 @@ int main(int argc,char* argv[])
       tree_layout L = equal_daylight_layout(MC);
       L.rotate_for_aspect_ratio(xw,yw);
       tree_plotter tp(L, xw, yw, font_size);
+      if (args["labels"].as<string>() != "horizontal")
+	tp.horizontal_names = false;
 
       string filename = name+"-tree";
       if (args.count("out"))
@@ -3300,6 +3348,8 @@ int main(int argc,char* argv[])
       tree_layout L = equal_daylight_layout_greedy(MC);
       L.rotate_for_aspect_ratio(xw,yw);
       tree_plotter tp(L, xw, yw, font_size);
+      if (args["labels"].as<string>() != "horizontal")
+	tp.horizontal_names = false;
 
       string filename = name+"-tree";
       if (args.count("out"))
