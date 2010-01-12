@@ -113,8 +113,8 @@ bool implies(const T1& T,const std::vector<T2>& partitions)
   return true;
 }
 
-/// Which branch in @T implies partition @p?
-int which_partition(const SequenceTree& T, const Partition& p);
+/// Which (directed) branch in @T (directedly) implies partition @p?
+int which_branch(const SequenceTree& T, const Partition& p);
 
 /// Write the partition P to stream o (requires 'names' to be set)
 std::ostream& operator<<(std::ostream& o, const Partition& P);

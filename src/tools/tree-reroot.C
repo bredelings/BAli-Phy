@@ -174,7 +174,8 @@ int main(int argc,char* argv[])
 
       Partition P(T.get_sequences(),group1,mask);
       cerr<<P<<endl;
-      int b = which_partition(T,P);
+      int b = which_branch(T,P);
+      if (b == -1) throw myexception()<<"Can't find branch in tree!";
       cerr<<partition_from_branch(T,b)<<endl;
       root = split_branch(T,b);
     }

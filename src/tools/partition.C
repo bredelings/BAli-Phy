@@ -124,7 +124,7 @@ Partition::Partition(const Partition& p,const dynamic_bitset<>& mask)
 }
 
 Partition::Partition(const dynamic_bitset<>& g) 
-  :group1(g),group2(~g)
+  :group1(~g),group2(g)
 { 
   assert(not group1.intersects(group2));
 }
@@ -270,6 +270,14 @@ bool implies(const Partition& p1, const Partition& p2)
   return false;
 }
 
+/// Does the grouping of all nodes bm, imply *this?
+bool directed_implies(const Partition& p1, const Partition& p2) 
+{
+  if (p2.group1.is_subset_of(p1.group1) and p2.group2.is_subset_of(p1.group2)) return true;
+
+  return false;
+}
+
 /// Does any branch in T imply the partition p?
 bool implies(const SequenceTree& T,const Partition& p) {
   bool result = false;
@@ -320,13 +328,14 @@ bool merge_partitions(vector<Partition>& partitions,const vector<Partition>& del
   return changed;
 }
 
-int which_partition(const SequenceTree& T, const Partition& p) {
-  for(int b=0; b<T.n_branches(); b++) {
+int which_branch(const SequenceTree& T, const Partition& p) 
+{
+  for(int b=0; b<2*T.n_branches(); b++) {
     dynamic_bitset<> bp = branch_partition(T,b);
-    if( implies(bp,p) )
+    if( directed_implies(bp,p) )
       return b;
   }
-  throw myexception(string("Partition not found in tree!"));
+  return -1;
 }
 
 bool p_equal(const vector<Partition>& P1,const vector<Partition>& P2) 

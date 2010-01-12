@@ -83,7 +83,8 @@ void run_analysis(const variables_map& args) {
     std::cout << i+1 << "\t" << exists << "\t";
     if( exists ) {
       consistentsamples++;
-      int b = which_partition(T,part);
+      int b = which_branch(T,part);
+      if (b == -1) throw myexception()<<"Can't find branch in tree!";
       //cerr << "Branch number = " << b << endl;
       vector<int> pairwiseA = get_path(A,T.branch(b).target(),T.branch(b).source());
       //cerr << pairwiseA << endl;
