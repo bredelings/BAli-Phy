@@ -1177,6 +1177,88 @@ tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC)
   return equal_daylight_layout(MF,node_radius);
 }
 
+void equalize_daylight_greedy(tree_layout& L,int n)
+{
+  const Tree& T = L.T;
+
+  // get outwards branches - which point to subtrees
+  vector<const_branchview> branches;
+  for(const_out_edges_iterator i = T[n].branches_out();i;i++) {
+    branches.push_back(*i);
+    if ((*i).is_leaf_branch()) {
+      cout<<"";
+    }
+  }
+  
+
+  //get the circular ranges for branch subtree
+  vector<circular_range> angles;
+  double total_occlusion = 0;
+  for(int i=0;i<branches.size();i++)  {
+    angles.push_back( get_angles(L,branches[i],n) );
+    total_occlusion += angles.back().measure();
+  }
+
+  if (total_occlusion < 2*M_PI)
+  {
+    double daylight_per_subtree = (2*M_PI - total_occlusion)/branches.size();
+
+    for(int b=1; b<branches.size(); b++) 
+    {
+      double theta = circular_minus(angles[b].min(), angles[b-1].max());
+      double delta = daylight_per_subtree - theta;
+
+      if (delta != 0) {
+	L.rotate_subtree(branches[b], delta);
+	angles[b].shift(delta);
+      }
+    }
+  }
+}
+
+void equalize_daylight_greedy(tree_layout& L)
+{
+  const Tree& T = L.T;
+  for(int i=T.n_leaves();i<T.n_nodes();i++)
+    equalize_daylight_greedy(L,i);
+}
+
+
+tree_layout equal_daylight_layout_greedy(SequenceTree MF,const vector<double>& node_radius)
+{
+  tree_layout L = equal_angle_layout(MF,node_radius);
+
+  for(int i=0;i<3;i++)
+    equalize_daylight_greedy(L);
+
+  return L;
+}
+
+tree_layout equal_daylight_layout_greedy(const MC_tree_with_lengths& MC)
+{
+  SequenceTree MF = MC.T;
+
+  // determine node lengths
+  vector<double> node_radius(MF.n_nodes(),0);
+
+  for(int n=0;n<MC.n_nodes();n++)
+  {
+    int b = MC.branch_to_node(n);
+    if (not MC.partitions[b].full())
+      throw myexception()<<"Hey!  This procedure only works for full partitions!";
+
+    int mf_n = MF.directed_branch(b).target();
+    int d = MF[mf_n].degree();
+    node_radius[mf_n] = 0;
+
+    // The degree could be zero is this node is at the end of a branch that
+    // directly wanders over another branch.
+    if (d > 0)
+      node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
+  }
+
+  return equal_daylight_layout_greedy(MF,node_radius);
+}
 
 vector<int> walk_tree(const tree_layout& TL, const vector<int>& edges)
 {
@@ -3203,6 +3285,19 @@ int main(int argc,char* argv[])
     else if (args["layout"].as<string>() == "equal-daylight")
     {
       tree_layout L = equal_daylight_layout(MC);
+      L.rotate_for_aspect_ratio(xw,yw);
+      tree_plotter tp(L, xw, yw, font_size);
+
+      string filename = name+"-tree";
+      if (args.count("out"))
+	filename = args["out"].as<string>();
+
+      draw(filename,output,tp);	
+      exit(0);
+    }
+    else if (args["layout"].as<string>() == "equal-daylight-greedy")
+    {
+      tree_layout L = equal_daylight_layout_greedy(MC);
       L.rotate_for_aspect_ratio(xw,yw);
       tree_plotter tp(L, xw, yw, font_size);
 
