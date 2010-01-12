@@ -156,6 +156,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("labels",value<string>()->default_value("horizontal"),"Are the names horizontal or angled?")
     ("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
     ("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
+    ("greedy","For equal-daylight layout: take as much daylight as possible?")
+    ("no-shade","For equal-daylight layout: reject rotations that shade other groups?")
     ("draw-clouds",value<string>(),"Draw wandering-ranges in MC trees as clouds.")
     ("seed", value<unsigned long>(),"Random seed")
     ("verbose","Output more log messages on stderr.")
@@ -383,10 +385,12 @@ struct point_position
   point_position(double x, double y, double z):x(x),y(y),z(z) {}
 };
 
-bool segments_cross(const point_position& m1,
+bool lines_cross(const point_position& m1,
 		 const point_position& m2,
 		 const point_position& n1,
-		 const point_position& n2)
+		 const point_position& n2,
+		 double& t,
+		 double& s)
 {
   double x1 = m1.x;
   double y1 = m1.y;
@@ -400,6 +404,10 @@ bool segments_cross(const point_position& m1,
   double x4 = n2.x;
   double y4 = n2.y;
 
+  //  ((A B)(C D)) * (t s) = (E F)
+  // t is the m1-m2 coordinate
+  // s is the n1-n2 coordinate
+
   double A = x2 - x1;
   double B = x3 - x4;
   double C = y2 - y1;
@@ -407,24 +415,71 @@ bool segments_cross(const point_position& m1,
   double E = x3 - x1;
   double F = y3 - y1;
 
+
   double t_top = E*D-F*B;
   double s_top = A*F-E*C;
-  double   det = A*D-B*C;
+  double det = A*D-B*C;
 
-  bool cross =  (s_top > 0 and s_top < det) and 
-                (t_top > 0 and t_top < det);
+  if (det == 0)
+    return false;
+
+  t = t_top/det;
+  s = s_top/det;
+
+  return true;
+}
+
+bool segments_cross(const point_position& m1,
+		    const point_position& m2,
+		    const point_position& n1,
+		    const point_position& n2)
+{
+  double t,s;
+  if (not lines_cross(m1,m2,n1,n2,t,s)) return false;
+
+  bool cross = ((0 <= s) and (s <= 1) and (0 <= t) and (t <= 1));
 
   if (cross) {
-    double t = t_top/det;
-    double s = s_top/det;
+    //    cerr<<"t = "<<t<<endl;
+    //    cerr<<"s = "<<s<<endl;
+  }
+  return cross;
+}
 
-    if (std::abs(t) < 1.0e-9 or std::abs(t-1) < 1.0e-9) // alternatively I could check if the edges are connected.
-      return false;
+bool segments_cross_with_margin(const point_position& m1,
+				const point_position& m2,
+				const point_position& n1,
+				const point_position& n2,
+				double a,
+				double b,
+				double c,
+				double d)
+{
+  double t,s;
+  if (not lines_cross(m1,m2,n1,n2,t,s)) return false;
 
-    if (std::abs(s) < 1.0e-9 or std::abs(s-1) < 1.0e-9)
-      return false;
-    cerr<<"t = "<<t_top/det<<endl;
-    cerr<<"s = "<<s_top/det<<endl;
+  bool cross = ((-a <= s) and (s <= 1+b) and (-c <= t) and (t <= 1+d));
+
+  if (cross) {
+    //    cerr<<"t = "<<t<<endl;
+    //    cerr<<"s = "<<s<<endl;
+  }
+  return cross;
+}
+
+bool ray_points_to_segment(const point_position& m1,
+			    const point_position& m2,
+			    const point_position& n1,
+			    const point_position& n2)
+{
+  double t,s;
+  if (not lines_cross(m1,m2,n1,n2,t,s)) return false;
+
+  bool cross = ((0 <= s) and (s <= 1) and (0 <= t));
+
+  if (cross) {
+    //    cerr<<"t = "<<t<<endl;
+    //    cerr<<"s = "<<s<<endl;
   }
   return cross;
 }
@@ -1097,6 +1152,38 @@ circular_range get_angles(const tree_layout& L,int b,int n)
   return R;
 }
 
+
+// check if any nodes do not have positive daylight between subtrees
+bool subtrees_of_node_overlap(tree_layout& L,int n)
+{
+  const Tree& T = L.T;
+
+  // get outwards branches - which point to subtrees
+  vector<const_branchview> branches;
+  for(const_out_edges_iterator i = T[n].branches_out();i;i++)
+    branches.push_back(*i);
+  
+  vector<circular_range> angles;
+  for(int i=0;i<branches.size();i++)  {
+    angles.push_back( get_angles(L,branches[i],n) );
+    for(int j=0;j<i;j++)
+      if (overlaps(angles[j],angles[i]))
+	return true;
+  }
+
+  return false;
+}
+
+// check if any nodes do not have positive daylight between subtrees
+bool shades(tree_layout& L)
+{
+  for(int i=0;i<L.T.n_nodes();i++)
+    if (subtrees_of_node_overlap(L,i))
+      return true;
+
+  return false;
+}
+
 void equalize_daylight(tree_layout& L,int n)
 {
   const Tree& T = L.T;
@@ -1133,85 +1220,6 @@ void equalize_daylight(tree_layout& L,int n)
       L.rotate_subtree(branches[b],delta);
     }
   }
-}
-
-
-// the size of a split is the size of its smallest set.
-// the size of a node (a multi-partition) is the size of its largest partition.
-// this will be the size of the second-largest set.
-int node_size(const Tree& T,int n)
-{
-  if (n < 2) std::abort();
-
-  vector<int> S;
-  for(const_out_edges_iterator i = T[n].branches_out();i;i++)
-    S.push_back(n_children(T,*i));
-
-  std::sort(S.begin(),S.end());
-
-  return S[S.size()-2];
-}
-
-vector<int> node_order(const Tree& T)
-{
-  vector<int> nodes;
-  vector<int> S;
-  for(int i=T.n_leaves();i<T.n_nodes();i++) 
-  {
-    nodes.push_back(i);
-    S.push_back(node_size(T,nodes.back()));
-  }
-
-  std::sort(nodes.begin(), nodes.end(), sequence_order<int>(S));
-  std::reverse(nodes.begin(), nodes.end());
-
-  return nodes;
-}
-
-void equalize_daylight(tree_layout& L)
-{
-  const Tree& T = L.T;
-
-  vector<int> nodes = node_order(T);
-
-  for(int i=0;i<nodes.size();i++)
-    equalize_daylight(L,nodes[i]);
-}
-
-tree_layout equal_daylight_layout(SequenceTree MF,const vector<double>& node_radius)
-{
-  tree_layout L = equal_angle_layout(MF,node_radius);
-
-  for(int i=0;i<10;i++)
-    equalize_daylight(L);
-
-  return L;
-}
-
-tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC)
-{
-  SequenceTree MF = MC.T;
-
-  // determine node lengths
-  vector<double> node_radius(MF.n_nodes(),0);
-
-  for(int n=0;n<MC.n_nodes();n++)
-  {
-    int b = MC.branch_to_node(n);
-    if (not MC.partitions[b].full())
-      throw myexception()<<"Hey!  This procedure only works for full partitions!";
-
-    int mf_n = MF.directed_branch(b).target();
-    int d = MF[mf_n].degree();
-    node_radius[mf_n] = 0;
-
-    // The degree could be zero is this node is at the end of a branch that
-    // directly wanders over another branch.
-    if (d > 0)
-      node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
-  }
-
-  return equal_daylight_layout(MF,node_radius);
 }
 
 void equalize_daylight_greedy(tree_layout& L,int n)
@@ -1253,27 +1261,67 @@ void equalize_daylight_greedy(tree_layout& L,int n)
   }
 }
 
-void equalize_daylight_greedy(tree_layout& L)
+
+// the size of a split is the size of its smallest set.
+// the size of a node (a multi-partition) is the size of its largest partition.
+// this will be the size of the second-largest set.
+int node_size(const Tree& T,int n)
+{
+  if (n < 2) std::abort();
+
+  vector<int> S;
+  for(const_out_edges_iterator i = T[n].branches_out();i;i++)
+    S.push_back(n_children(T,*i));
+
+  std::sort(S.begin(),S.end());
+
+  return S[S.size()-2];
+}
+
+vector<int> node_order(const Tree& T)
+{
+  vector<int> nodes;
+  vector<int> S;
+  for(int i=T.n_leaves();i<T.n_nodes();i++) 
+  {
+    nodes.push_back(i);
+    S.push_back(node_size(T,nodes.back()));
+  }
+
+  std::sort(nodes.begin(), nodes.end(), sequence_order<int>(S));
+  std::reverse(nodes.begin(), nodes.end());
+
+  return nodes;
+}
+
+void equalize_daylight(tree_layout& L, bool greedy, bool no_shade)
 {
   const Tree& T = L.T;
   vector<int> nodes = node_order(T);
 
-  for(int i=0;i<nodes.size();i++)
-    equalize_daylight_greedy(L,nodes[i]);
+  for(int i=0;i<nodes.size();i++) {
+    tree_layout L2 = L;
+    if (greedy)
+      equalize_daylight_greedy(L2,nodes[i]);
+    else
+      equalize_daylight(L2,nodes[i]);
+    if (not no_shade or not shades(L2))
+      L = L2;
+  }
 }
 
-
-tree_layout equal_daylight_layout_greedy(SequenceTree MF,const vector<double>& node_radius)
+tree_layout equal_daylight_layout(SequenceTree MF, const vector<double>& node_radius,
+				  bool greedy, bool no_shade)
 {
   tree_layout L = equal_angle_layout(MF,node_radius);
 
   for(int i=0;i<3;i++)
-    equalize_daylight_greedy(L);
+    equalize_daylight(L, greedy, no_shade);
 
   return L;
 }
 
-tree_layout equal_daylight_layout_greedy(const MC_tree_with_lengths& MC)
+tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC,  bool greedy=false, bool no_shade=false)
 {
   SequenceTree MF = MC.T;
 
@@ -1296,7 +1344,7 @@ tree_layout equal_daylight_layout_greedy(const MC_tree_with_lengths& MC)
       node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
   }
 
-  return equal_daylight_layout_greedy(MF,node_radius);
+  return equal_daylight_layout(MF,node_radius,greedy,no_shade);
 }
 
 vector<int> walk_tree(const tree_layout& TL, const vector<int>& edges)
@@ -3368,22 +3416,9 @@ int main(int argc,char* argv[])
     }
     else if (args["layout"].as<string>() == "equal-daylight")
     {
-      tree_layout L = equal_daylight_layout(MC);
-      L.rotate_for_aspect_ratio(xw,yw);
-      tree_plotter tp(L, xw, yw, font_size);
-      if (args["labels"].as<string>() != "horizontal")
-	tp.horizontal_names = false;
-
-      string filename = name+"-tree";
-      if (args.count("out"))
-	filename = args["out"].as<string>();
-
-      draw(filename,output,tp);	
-      exit(0);
-    }
-    else if (args["layout"].as<string>() == "equal-daylight-greedy")
-    {
-      tree_layout L = equal_daylight_layout_greedy(MC);
+      bool greedy = (args.count("greedy") > 0);
+      bool no_shade = (args.count("no-shade") > 0);
+      tree_layout L = equal_daylight_layout(MC,greedy,no_shade);
       L.rotate_for_aspect_ratio(xw,yw);
       tree_plotter tp(L, xw, yw, font_size);
       if (args["labels"].as<string>() != "horizontal")
