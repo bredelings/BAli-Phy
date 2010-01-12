@@ -42,6 +42,21 @@ struct mc_tree_edge {
   {}
 };
 
+// An MC tree is a collection of partitions
+//  * each partition occurs twice - once for each orientation
+//  * each orientation correspond to a node - one of the endpoints of the branch
+//  * some of these endpoints are identified, forming a condensed node
+//    + C is the number of condensed nodes
+//    + the mapping from endpoints to condensed nodes is done via mapping[]
+// There is also a multifurcating tree.
+//  * the full partitions coming first in the list and correspond to the branches on the tree
+//  * each condensed node (and therefore each endpoint) maps to a tree node via 
+//    the function graph_node_to_tree_node().
+// Ideally, we would also make a *second* tree that is an embedded tree of the graph
+//  * we may have to handle parallel edges specially in order to make sure that
+//    every (type 1) edge in the graph corresponds to a unique tree edge.     
+
+
 struct MC_tree 
 {
   // number of branches
@@ -55,6 +70,8 @@ struct MC_tree
 
   // index of reversed branch
   std::vector<int> reverse_;
+
+  std::vector<int> graph_node_to_tree_node_;
 
 public:
   SequenceTree T;
@@ -93,6 +110,8 @@ public:
   int n_branches() const {return N;}
   int n_nodes() const {return C;}
   int reverse(int i) const {return reverse_[i];}
+
+  int graph_node_to_tree_node(int n) const {return graph_node_to_tree_node_[n];}
 
   MC_tree(const std::vector<Partition>&);
 };

@@ -239,6 +239,45 @@ MC_tree::MC_tree(const vector<Partition>& p)
     for(int j=0;j<C;j++)
       if (connected(i,j)==2)
 	edges.push_back(mc_tree_edge(i,j,2,-1));
+
+  // map graph nodes to tree nodes
+  graph_node_to_tree_node_ = vector<int>(C,-1);
+  for(int i=0;i<partitions.size();i++) 
+  {
+    int graph_node = mapping[i];
+    if (graph_node_to_tree_node_[graph_node] != -1) continue;
+
+    // find which branch of the tree, if any, this partition corresponds to.
+    int b = which_branch(T,partitions[i]);
+    if (b == -1) continue;
+    
+    int tree_node = T.directed_branch(b).target();
+    graph_node_to_tree_node_[graph_node] = tree_node;
+  }
+
+  while (1) 
+  {
+    bool done = true;
+    for(int i=0;i<partitions.size();i++) 
+    {
+      int graph_node1 = mapping[i];
+      int graph_node2 = mapping[reverse(i)];
+      if (graph_node_to_tree_node_[graph_node2] == -1) {
+	graph_node_to_tree_node_[graph_node2] = graph_node_to_tree_node_[graph_node1];
+	done = false;
+      }
+      // some checks
+      if (graph_node_to_tree_node_[graph_node1] != -1 and
+	  graph_node_to_tree_node_[graph_node2] != -1)
+      {
+	if (partitions[i].full())
+	  assert(graph_node_to_tree_node_[graph_node1] != graph_node_to_tree_node_[graph_node2]);
+	else
+	  assert(graph_node_to_tree_node_[graph_node1] == graph_node_to_tree_node_[graph_node2]);
+      }
+    }
+    if (done) break;
+  }
 }
 
 int MC_tree::branch_to_node(int n) const
