@@ -1682,7 +1682,15 @@ int main(int argc,char* argv[])
       struct sigaction sa_old;
       struct sigaction sa_new;
       sa_new.sa_handler = &die_on_signal;
-      sigaction(SIGINT,&sa_new,&sa_old);
+
+      sigaction(SIGINT,NULL,&sa_old);
+      if (sa_old.sa_handler != SIG_IGN)
+	sigaction(SIGINT,&sa_new,NULL);
+
+      sigaction(SIGTERM,NULL,&sa_old);
+      if (sa_old.sa_handler != SIG_IGN)
+	sigaction(SIGTERM,&sa_new,NULL);
+
 #endif
 
       long int max_iterations = args["iterations"].as<long int>();
