@@ -48,7 +48,7 @@ INCLUDES = -I@top_srcdir@/include
 
 if GCC
 
-CXXFLAGS += -pedantic @MPI_CXXFLAGS@
+CXXFLAGS += -pedantic @MPI_CXXFLAGS@ ${CAIRO_CFLAGS}
 CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
 
 endif
@@ -296,7 +296,6 @@ trees_distances_SOURCES = tools/trees-distances.C tree.C \
 draw_tree_SOURCES = tools/draw-tree.C tree.C sequencetree.C \
 	tools/tree-dist.C util.C tree-util.C tools/mctree.C rng.C \
 	util-random.C tools/partition.C
-draw_tree_CXXFLAGS = ${CAIRO_CFLAGS}
 draw_tree_LDADD = ${CAIRO_LIBS}
 
 #---------------------------------------------------------------
