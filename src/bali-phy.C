@@ -386,10 +386,22 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   add_slice_moves(P, "mu",      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
   for(int i=0;i<P.n_branch_means();i++)
     add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
-    
-  add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
+
+  // FIXME - make these moves auto-adjust their scales
+  add_slice_moves(P, "HKY::kappa",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "rho",      "rho_slice_window",    0.2, true,0,false,0,slice_moves);
+  add_slice_moves(P, "TN::kappa(pur)",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "TN::kappa(pyr)",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "M0::omega",      "omega_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "M2::omega",      "omega_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "INV::p",         "INV::p_slice_window", 0.1, true,0,true,1,slice_moves);
+  add_slice_moves(P, "f",      "f_slice_window",    0.1, true,0,true,1,slice_moves);
+  add_slice_moves(P, "g",      "g_slice_window",    0.1, true,0,true,1,slice_moves);
+  add_slice_moves(P, "h",      "h_slice_window",    0.1, true,0,true,1,slice_moves);
+  add_slice_moves(P, "beta::mu",      "beta::mu_slice_window",    0.1, true,0,false,0,slice_moves);
   add_slice_moves(P, "gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
-  add_slice_moves(P, "INV::p",         "INV::p_shift_sigma", 0.1, true,0,true,1,slice_moves);
+  add_slice_moves(P, "beta::sigma/mu",      "beta::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
+  add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
 
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "rho",     "rho_scale_sigma",  0.2,  parameter_moves);
