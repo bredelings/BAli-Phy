@@ -79,7 +79,7 @@
 	  </para>
 
 	  <para>You can use <ulink
-	  url="http://fink.sourceforge.net">Fink</ulink> to install
+	  url="http://www.macports.org">MacPorts</ulink> to install
 	  other useful applications, such as gnuplot.
 	  </para>
 	</sect3>
@@ -112,14 +112,6 @@
 	    much simpler.) 
 	    </para>
 
-	<!-- para><ulink url="http://fink.sourceforge.net">Fink</ulink>
-	provides Linux software for Mac OS X.  If you have Fink 0.8,
-	you can use it to install both GSL and BOOST.  However, if you
-	have 0.7 or lower, then you may use it to install the GSL
-	library and include files, but the BOOST libraries from
-	fink 0.7 <emphasis>will not work</emphasis>, because they are
-	compiled with GCC 3.3. You must therefore compile the BOOST
-	libraries yourself, using GCC 3.4 or higher.</para --> 
 	</note></listitem>
 	  <listitem><para>GNU make version 3.80 or higher  (<ulink
 	  url="http://www.gnu.org/software/make">GNU make</ulink>).
