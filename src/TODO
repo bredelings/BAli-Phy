@@ -1,3 +1,6 @@
+Output more things to cout, instead of cerr.
+
+P27. Monitor time spent in various tasks: use push_timevar()/pop_timevar() approach.
 P5. Speed up post-processing.
 P6. Improve usability. (post-processing?  installation?  visualization?)
 P11. Make post-processing handle multiple chains, assess convergence.
@@ -73,13 +76,30 @@ Step 1
  * scale parameters
  * branch lengths
  * substitution model parameters
- * indel model parameters
- * internal node states?
+ * indel model parameters (?)
 
 Step 2
- * topology
+ * search the topology as well using only the likelihood
+
+Step 3
+ * search the topology using minimal interpolated internal node states.
+
+Step 4
+ * internal node states (two_way)
+
+Step 5 
  * alignment
 
+Do we want to freeze the tree while we do our initial alignment updates?
+
+Goals:
+ - Allow quick estimation
+ - Remove the initial constraint on indel parameters changing...
+   ... Yet still avoid temporary unalignment.
+ - If the right alignment is provide, then never get worse.
+ - Improve burnin on Roshan's many-taxon test case.
+
+Ideas:
 - Do an initial MCMC with alternative parameters
   + Where do we send output for this MCMC?
 - Do an initial tree search.  Does this decrease temporary unalignment?
