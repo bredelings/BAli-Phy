@@ -40,7 +40,8 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
            tools/findroot.H tools/parsimony.H distribution.H tools/mctree.H \
            version.H cow-ptr.H tools/index-matrix.H cached_value.H \
-	   tools/consensus-tree.H tools/partition.H slice-sampling.H
+	   tools/consensus-tree.H tools/partition.H slice-sampling.H \
+	   timer_stack.H
 
 LDFLAGS = @ldflags@
 
@@ -91,7 +92,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/partition.C proposals.C n_indels.C distribution.C \
-	  tools/parsimony.C version.C slice-sampling.C
+	  tools/parsimony.C version.C slice-sampling.C timer_stack.C
 
 nodist_bali_phy_SOURCES = git_version.h
 bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@ 

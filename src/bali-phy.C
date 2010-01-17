@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2009 Benjamin Redelings
+   Copyright (C) 2004-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* Version 2: based on operating on multiple alignments */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -34,6 +32,8 @@ extern "C" {
 #include "fenv.h"
 }
 #endif
+
+#include "timer_stack.H"
 
 #ifdef HAVE_MPI
 #include <mpi.h>
@@ -1323,38 +1323,6 @@ string rlim_minutes(rlim_t val)
     return convertToString<>(val/60) + " minutes";
 }
 
-string duration(time_t T)
-{
-  time_t total = T;
-  unsigned long seconds = T%60;
-  T = (T - seconds)/60;
-
-  unsigned long minutes = T%60;
-  T  = (T - minutes)/60;
-
-  unsigned long hours = T%24;
-  T  = (T - hours)/24;
-
-  unsigned long days = T;
-
-  string s = convertToString(total) + " seconds";
-
-  if (not minutes) return s;
-
-  s = convertToString(minutes) + "m " +
-      convertToString(seconds) + "s  (" + s + ")";
-
-  if (not hours) return s;
-
-  s = convertToString(hours) + "h " + s;
-
-  if (not days) return s;
-
-  s = convertToString(days) + "days " + s;
-
-  return s;
-}
-
 void raise_cpu_limit(ostream& o)
 {
   rlimit limits;
@@ -1436,7 +1404,8 @@ void show_ending_messages()
     cout<<endl;
     cout<<"start time: "<<ctime(&start_time)<<endl;
     cout<<"  end time: "<<ctime(&end_time)<<endl;
-    cout<<"total time: "<<duration(end_time-start_time)<<endl;
+    cout<<"total (elapsed) time: "<<duration(end_time-start_time)<<endl;
+    cout<<"total (CPU) time: "<<duration(total_cpu_time())<<endl;
   }
   if (substitution::total_likelihood > 1) {
     cout<<endl;
