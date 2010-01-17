@@ -48,15 +48,25 @@ time_point_t total_cpu_time();
 
 std::string duration(time_t);
 
+struct region_profile 
+{
+  duration_t duration;
+  long int n_calls;
+  region_profile():duration(0),n_calls(0) {}
+};
+
 class timer_stack
 {
   std::vector<std::string> name_stack;
   std::vector<time_point_t> start_time_stack;
 
+  region_profile& lookup_profile(const std::string&);
+  
   void add_duration(const std::string&, duration_t);
+  void inc_calls(const std::string&);
 
 public:
-  std::map<std::string,duration_t> total_times;
+  std::map<std::string,region_profile> total_times;
 
   void credit_active_timers();
   void push_timer(const std::string& s);

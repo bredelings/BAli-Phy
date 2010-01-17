@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "timer_stack.H"
 #include <sstream>
+#include <iomanip>
 #include <cassert>
 #include "util.H"
 
@@ -91,17 +92,26 @@ string duration(time_t T)
   return s;
 }
 
-void timer_stack::add_duration(const string& s, duration_t d)
+region_profile& timer_stack::lookup_profile(const string& s)
 {
-  typedef map<string,duration_t> container_t;
+  typedef map<string,region_profile> container_t;
   container_t::iterator record = total_times.find(s);
   if (record == total_times.end()) {
-    total_times.insert(container_t::value_type(s,duration_t()));
+    total_times.insert(container_t::value_type(s,region_profile()));
     record = total_times.find(s);
     assert(record != total_times.end());
   }
+  return record->second;
+}
 
-  record->second = record->second + d;
+void timer_stack::add_duration(const string& s, duration_t d)
+{
+  lookup_profile(s).duration += d;
+}
+
+void timer_stack::inc_calls(const string& s)
+{
+  lookup_profile(s).n_calls++;
 }
 
 void timer_stack::credit_active_timers()
@@ -120,7 +130,7 @@ void timer_stack::credit_active_timers()
 void timer_stack::push_timer(const string& s)
 {
   name_stack.push_back(s);
-
+  inc_calls(s);
   start_time_stack.push_back( total_cpu_time() );
 }
 
@@ -137,7 +147,7 @@ void timer_stack::pop_timer()
 
 string timer_stack::report()
 {
-  typedef map<string,duration_t> container_t;
+  typedef map<string,region_profile> container_t;
 
   credit_active_timers();
 
@@ -151,8 +161,11 @@ string timer_stack::report()
   o.precision(3);
   for(container_t::iterator i = total_times.begin();i != total_times.end();i++)
   {
-    double t = i->second;
-    o<<(t*100/T)<<"%         "<<t<<" sec          "<<i->first<<"\n";
+    double t = i->second.duration;
+    o<<setw(5)<<(t*100/T)<<"%"
+     <<"         "<<setw(6)<<t<<" sec"
+     <<"         "<<setw(8)<<i->second.n_calls
+     <<"         "<<i->first<<"\n";
   }
 
   if (total_times.empty())
