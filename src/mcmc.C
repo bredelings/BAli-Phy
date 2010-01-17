@@ -40,6 +40,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 
 #include "slice-sampling.H"
+#include "timer_stack.H"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -115,6 +116,8 @@ namespace MCMC {
       }
       o<<endl;
     }
+    if (Stats.empty())
+      o<<"   Transition kernel average-based statistics: no data.\n";
     o.precision(prec);
     return o;
   }
@@ -197,12 +200,15 @@ void MoveGroup::iterate(Parameters& P,MoveStats& Stats) {
 void MoveGroup::iterate(Parameters& P,MoveStats& Stats,int i) {
   assert(i < order.size());
 
+  default_timer_stack.push_timer(name);
+
 #ifndef NDEBUG
   clog<<" move = "<<name<<endl;
   clog<<"   submove = "<<moves[order[i]]->name<<endl;
 #endif
 
   moves[order[i]]->iterate(P,Stats,suborder[i]);
+  default_timer_stack.pop_timer();
 }
 
 int MoveGroup::reset(double l) {
@@ -296,12 +302,15 @@ int SingleMove::reset(double lambda) {
 
 void SingleMove::iterate(Parameters& P,MoveStats& Stats,int) 
 {
+  default_timer_stack.push_timer(name);
+
 #ifndef NDEBUG
   clog<<" [single] move = "<<name<<endl;
 #endif
 
   iterations++;
   (*m)(P,Stats);
+  default_timer_stack.pop_timer();
 }
 
 int MH_Move::reset(double lambda) {
@@ -312,6 +321,8 @@ int MH_Move::reset(double lambda) {
 
 void MH_Move::iterate(Parameters& P,MoveStats& Stats,int) 
 {
+  default_timer_stack.push_timer(name);
+
 #ifndef NDEBUG
   clog<<" [MH] move = "<<name<<endl;
 #endif
@@ -351,6 +362,7 @@ void MH_Move::iterate(Parameters& P,MoveStats& Stats,int)
   }
 
   Stats.inc(name,result);
+  default_timer_stack.pop_timer();
 }
 
 int Slice_Move::reset(double lambda) {
@@ -362,6 +374,8 @@ int Slice_Move::reset(double lambda) {
 void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
 {
   if (P.fixed(index)) return;
+
+  default_timer_stack.push_timer(name);
 
 #ifndef NDEBUG
   clog<<" [Slice] move = "<<name<<endl;
@@ -396,6 +410,7 @@ void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
   result.totals[1] = logp.count;
 
   Stats.inc(name,result);
+  default_timer_stack.pop_timer();
 }
 
 Slice_Move::Slice_Move(const string& s,int i,
@@ -481,8 +496,11 @@ void MoveArg::iterate(Parameters& P,MoveStats& Stats) {
     iterate(P,Stats,i);
 }
 
-void MoveArg::iterate(Parameters& P,MoveStats& Stats,int i) {
+void MoveArg::iterate(Parameters& P,MoveStats& Stats,int i) 
+{
+  default_timer_stack.push_timer(name);
   (*this)(P,Stats,order[i]);
+  default_timer_stack.pop_timer();
 }
 
 
@@ -585,12 +603,14 @@ void MoveEach::show_enabled(ostream& o,int depth) const {
 
 void MoveArgSingle::operator()(Parameters& P,MoveStats& Stats,int arg) 
 {
+  default_timer_stack.push_timer(name);
 #ifndef NDEBUG
   clog<<" [single] move = "<<name<<endl;
 #endif
 
   iterations++;
   (*m)(P,Stats,args[arg]);
+  default_timer_stack.pop_timer();
 }
     
 
@@ -987,9 +1007,12 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       s_parameters<<"\t"<<mu_scale*length(*P.T)<<endl;
     }
 
-    if (iterations%20 == 0) {
-      std::cerr<<endl;
+    if (iterations%20 == 0 or iterations < 20) {
+      std::cerr<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
       std::cerr<<*(MoveStats*)this<<endl;
+      std::cerr<<endl;
+      std::cerr<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
+      std::cerr<<default_timer_stack.report()<<endl;
     }
 
     //---------------------- estimate MAP ----------------------//
