@@ -233,24 +233,88 @@ void add_slice_moves(Parameters& P, const string& name,
 // 1. First estimate tree and parameters with alignment fixed.
 // 2. Then allow the alignment to change.
 
+MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
+{
+  MCMC::MoveAll MH_moves("parameters:MH");
 
-void do_sampling(const variables_map& args,Parameters& P,long int max_iterations,
-		 vector<ostream*>& files)
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu",             "mu_scale_sigma",     0.6,  MH_moves);
+  for(int i=0;i<P.n_branch_means();i++)
+    add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
+
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "rho",     "rho_scale_sigma",  0.2,  MH_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "M0::omega",  "omega_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(more_than(0,shift_cauchy)),
+	                                        "M2::omega",  "omega_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, MH_moves);
+  add_MH_move(P, between(0,1,shift_cauchy),   "f",              "f_shift_sigma",      0.1,  MH_moves);
+  add_MH_move(P, between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  MH_moves);
+  add_MH_move(P, between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  MH_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "beta::mu",       "beta::mu_scale_sigma",     0.2,  MH_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(shift_cauchy),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);
+  MH_moves.add(4,MCMC::SingleMove(scale_means_only,
+				   "scale_means_only","mean")
+		      );
+
+  
+  add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, MH_moves);
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves);
+  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves);
+
+  add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, MH_moves);
+
+  return MH_moves;
+}
+
+MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
+{
+  MCMC::MoveAll slice_moves("parameters:slice");
+
+  // scale parameters
+  add_slice_moves(P, "mu",      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+  for(int i=0;i<P.n_branch_means();i++)
+    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+
+  // smodel parameters
+  add_slice_moves(P, "HKY::kappa",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "rho",      "rho_slice_window",    0.2, true,0,false,0,slice_moves);
+  add_slice_moves(P, "TN::kappa(pur)",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "TN::kappa(pyr)",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "M0::omega",      "omega_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "M2::omega",      "omega_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "INV::p",         "INV::p_slice_window", 0.1, true,0,true,1,slice_moves);
+  add_slice_moves(P, "f",      "f_slice_window",    0.1, true,0,true,1,slice_moves);
+  add_slice_moves(P, "g",      "g_slice_window",    0.1, true,0,true,1,slice_moves);
+  add_slice_moves(P, "h",      "h_slice_window",    0.1, true,0,true,1,slice_moves);
+  add_slice_moves(P, "beta::mu",      "beta::mu_slice_window",    0.1, true,0,false,0,slice_moves);
+  add_slice_moves(P, "gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
+  add_slice_moves(P, "beta::sigma/mu",      "beta::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
+  add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
+
+  // imodel parameters
+  add_slice_moves(P, "delta",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
+  add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
+  add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
+		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
+
+  return slice_moves;
+}
+
+MCMC::MoveAll get_alignment_moves(Parameters& P)
 {
   // args for branch-based stuff
   vector<int> branches(P.T->n_branches());
   for(int i=0;i<branches.size();i++)
     branches[i] = i;
 
-  // args for branch-based stuff
+  // args for node-based stuff
   vector<int> internal_nodes;
   for(int i=P.T->n_leaves();i<P.T->n_nodes();i++)
     internal_nodes.push_back(i);
-
-  // args for branch-based stuff
-  vector<int> internal_branches;
-  for(int i=P.T->n_leaves();i<P.T->n_branches();i++)
-    internal_branches.push_back(i);
 
   using namespace MCMC;
 
@@ -297,6 +361,23 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   int nodes_weight = (int)(loadvalue(P.keys,"nodes_weight",1.0)+0.5);
 
   alignment_moves.add(nodes_weight, nodes_moves);
+ 
+  return alignment_moves;
+}
+
+MCMC::MoveAll get_tree_moves(Parameters& P)
+{
+  // args for branch-based stuff
+  vector<int> branches(P.T->n_branches());
+  for(int i=0;i<branches.size();i++)
+    branches[i] = i;
+
+  // args for branch-based stuff
+  vector<int> internal_branches;
+  for(int i=P.T->n_leaves();i<P.T->n_branches();i++)
+    internal_branches.push_back(i);
+
+  using namespace MCMC;
 
   //-------------------- tree (tree_moves) --------------------//
   MoveAll tree_moves("tree");
@@ -374,67 +455,15 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   tree_moves.add(1,length_moves);
   tree_moves.add(1,SingleMove(sample_NNI_and_branch_lengths,"NNI_and_lengths","topology:lengths"));
 
-  //------------- parameters (parameters_moves) --------------//
+  return tree_moves;
+}
+
+MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
+{
+  using namespace MCMC;
+
   MoveAll parameter_moves("parameters");
-  MoveAll slice_moves("parameters:slice");
-  MoveAll MH_moves("parameters:MH");
 
-  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu",             "mu_scale_sigma",     0.6,  MH_moves);
-  for(int i=0;i<P.n_branch_means();i++)
-    add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
-
-  add_slice_moves(P, "mu",      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
-  for(int i=0;i<P.n_branch_means();i++)
-    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
-
-  // FIXME - make these moves auto-adjust their scales
-  add_slice_moves(P, "HKY::kappa",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
-  add_slice_moves(P, "rho",      "rho_slice_window",    0.2, true,0,false,0,slice_moves);
-  add_slice_moves(P, "TN::kappa(pur)",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
-  add_slice_moves(P, "TN::kappa(pyr)",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
-  add_slice_moves(P, "M0::omega",      "omega_slice_window",    0.3, true,0,false,0,slice_moves);
-  add_slice_moves(P, "M2::omega",      "omega_slice_window",    0.3, true,0,false,0,slice_moves);
-  add_slice_moves(P, "INV::p",         "INV::p_slice_window", 0.1, true,0,true,1,slice_moves);
-  add_slice_moves(P, "f",      "f_slice_window",    0.1, true,0,true,1,slice_moves);
-  add_slice_moves(P, "g",      "g_slice_window",    0.1, true,0,true,1,slice_moves);
-  add_slice_moves(P, "h",      "h_slice_window",    0.1, true,0,true,1,slice_moves);
-  add_slice_moves(P, "beta::mu",      "beta::mu_slice_window",    0.1, true,0,false,0,slice_moves);
-  add_slice_moves(P, "gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
-  add_slice_moves(P, "beta::sigma/mu",      "beta::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
-  add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
-
-  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "rho",     "rho_scale_sigma",  0.2,  parameter_moves);
-  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "M0::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, log_scaled(more_than(0,shift_cauchy)),
-	                                        "M2::omega",  "omega_scale_sigma",  0.3,  parameter_moves);
-  add_MH_move(P, between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, MH_moves);
-  add_MH_move(P, between(0,1,shift_cauchy),   "f",              "f_shift_sigma",      0.1,  parameter_moves);
-  add_MH_move(P, between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  parameter_moves);
-  add_MH_move(P, between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "beta::mu",       "beta::mu_scale_sigma",     0.2,  parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, parameter_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);
-  parameter_moves.add(4,SingleMove(scale_means_only,
-				   "scale_means_only","mean")
-		      );
-
-  
-  add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, MH_moves);
-  add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves);
-  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves);
-
-  // FIXME - check if we are accidentally evaluating the likelihood or something.
-  add_slice_moves(P, "delta",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
-  add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
-  add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
-		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
-
-  add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, parameter_moves);
-  
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
   unsigned total_length = 0;
   for(int i=0;i<P.n_data_partitions();i++)
@@ -522,6 +551,28 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
     //    parameter_moves.add(1, MCMC::MH_Move(m,"sample_M3::omega"));
   }
 
+  return parameter_moves;
+}
+
+void do_sampling(const variables_map& args,Parameters& P,long int max_iterations,
+		 vector<ostream*>& files)
+{
+  using namespace MCMC;
+
+  bool has_imodel = (P.n_imodels() > 0);
+
+  //----------------------- alignment -------------------------//
+  MoveAll alignment_moves = get_alignment_moves(P);
+
+  //------------------------- tree ----------------------------//
+  MoveAll tree_moves = get_tree_moves(P);
+
+  //-------------- parameters (parameters_moves) --------------//
+  MoveAll MH_but_no_slice_moves = get_parameter_MH_but_no_slice_moves(P);
+  MoveAll slice_moves = get_parameter_slice_moves(P);
+  MoveAll MH_moves = get_parameter_MH_moves(P);
+
+  //------------------ Construct the sampler  -----------------//
   int subsample = args["subsample"].as<int>();
 
   // full sampler
@@ -530,12 +581,13 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
     sampler.add(1,alignment_moves);
   sampler.add(2,tree_moves);
 
-  // FIXME - We certainly don't want to do scale_means_only O(branches) times - thats quadratic!
+  // FIXME - We certainly don't want to do MH_sample_mu[i] O(branches) times
+  // - It does call the likelihood function, doesn't it?
   // FIXME - Perhaps we want to do MH_sample_epsilon more times, though.
   // FIXME -   But we should do that by weighting the epsilon moves, above.
   // FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
   // FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
-  sampler.add(5 + log(P.T->n_branches()),parameter_moves);
+  sampler.add(5 + log(P.T->n_branches()), MH_but_no_slice_moves);
   if (P.keys["enable_MH_sampling"] > 0.5)
     sampler.add(5 + log(P.T->n_branches()),MH_moves);
   else
@@ -557,6 +609,8 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   
   for(int i=0;i<enable.size();i++)
     sampler.enable(enable[i]);
+
+  //------------------ Report status before starting MCMC -------------------//
   
   ostream& s_out = *files[0];
   ostream& s_trees = *files[2];
@@ -580,6 +634,11 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
     dynamic_bitset<> s1(s2.size());
     report_constraints(s1,s2);
   } 
+
+  // before we do this, just run 20 iterations of a sampler that keeps the alignment fixed
+  // - first, we need a way to change the tree on a sampler that has internal node sequences?
+  // - well, this should be exactly the -t sampler.
+  // - but then how do we copy stuff over?
 
   sampler.go(P,subsample,max_iterations,s_out,s_trees,s_parameters,s_map,files);
 }
