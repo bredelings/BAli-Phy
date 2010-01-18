@@ -155,13 +155,23 @@ string timer_stack::report()
 
   double T = total_cpu_time();
 
+  vector<duration_t> times(total_times.size());
+  vector<container_t::iterator> records(total_times.size());
+  int j=0;
+  for(container_t::iterator i = total_times.begin();i != total_times.end();i++,j++) {
+    records[j] = i;
+    times[j] = i->second.duration;
+  }
+  vector<int> order = iota<int>(total_times.size());
+  sort(order.begin(), order.end(), sequence_order<duration_t>(times) );
+  std::reverse(order.begin(), order.end());
 
-  // FIXME -- all decimals here should be xxxxx.xx -- pad to same length to align the dots
-  // FIXME - fix 1.13e+03 format to 1130 (or something).  Didn't I figure this out somewhere?
   o.precision(3);
-  for(container_t::iterator i = total_times.begin();i != total_times.end();i++)
+  for(int r=0;r<records.size();r++)
   {
+    container_t::iterator i = records[order[r]];
     double t = i->second.duration;
+
     o<<setw(5)<<(t*100/T)<<"%"
      <<"         "<<setw(6)<<t<<" sec"
      <<"         "<<setw(8)<<i->second.n_calls
