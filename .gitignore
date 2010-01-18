@@ -8,3 +8,6 @@ install-sh
 missing
 autom4te.cache
 *~
+doc/html
+doc/latex
+\#*#
