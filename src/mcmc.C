@@ -1008,11 +1008,11 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     }
 
     if (iterations%20 == 0 or iterations < 20) {
-      std::cerr<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
-      std::cerr<<*(MoveStats*)this<<endl;
-      std::cerr<<endl;
-      std::cerr<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
-      std::cerr<<default_timer_stack.report()<<endl;
+      std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
+      std::cout<<*(MoveStats*)this<<endl;
+      std::cout<<endl;
+      std::cout<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
+      std::cout<<default_timer_stack.report()<<endl;
     }
 
     //---------------------- estimate MAP ----------------------//
@@ -1048,8 +1048,12 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 #endif
   }
 
-  std::cerr<<endl;
-  std::cerr<<*(MoveStats*)this<<endl;
+  std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
+  std::cout<<*(MoveStats*)this<<endl;
+  std::cout<<endl;
+  std::cout<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
+  std::cout<<default_timer_stack.report()<<endl;
+
   s_out<<"total samples = "<<max_iter<<endl;
 }
 
