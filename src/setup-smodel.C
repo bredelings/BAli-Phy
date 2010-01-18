@@ -58,7 +58,7 @@ bool match(vector<string>& sstack,const string& s,string& arg) {
 void guess_markov_model(vector<string>& string_stack,const alphabet& a) 
 {
   if (dynamic_cast<const Nucleotides*>(&a))
-    string_stack.push_back("HKY");
+    string_stack.push_back("TN");
   else if (dynamic_cast<const AminoAcids*>(&a))
     string_stack.push_back("Empirical");
   else if (dynamic_cast<const Codons*>(&a))
