@@ -363,51 +363,6 @@ vector<Partition> Ml_max_Hull(const vector<Partition>& full,const vector<Partiti
 }
 
 
-//FIXME - put leaf partitions back into get_sub_partitions( )
-
-void show_level(const tree_sample& tree_dist,
-		unsigned level,
-		const vector<Partition>& skeleton,
-		const vector<pair<Partition,unsigned> >& all_partitions,
-		bool show_sub,
-		bool show_PP)
-{
-  vector<Partition> full_skeleton = select(skeleton,&Partition::full);
-
-  const unsigned N = tree_dist.size();
-
-  cout.unsetf(ios::fixed | ios::showpoint);
-	
-  const vector<Partition> sub = get_Ml_partitions(all_partitions,level);
-  const vector<Partition> full = select(sub,&Partition::full);
-
-  //  const vector<Partition> moveable = get_moveable_tree(sub);
-  
-  //  vector<Partition> full_hull = Ml_min_Hull(full_skeleton,sub);
-  //  vector<Partition> sub_hull = Ml_min_Hull(skeleton,sub);
-    
-  double fraction = double(level)/N;
-
-  double LOD = log10(odds(level,N,1));
-
-  cout<<"   level = "<<fraction*100
-      <<"   LOD = "<<LOD
-      <<"   full = "<<count(full, informative);
-
-  if (show_sub) {
-    cout<<"   sub = "       <<count(sub,informative);
-    //    cout<<"   consistent = "<<count(moveable,informative);
-    //    cout<<"   sub(50) = "<<count(moveable,informative);
-    //    cout<<"   sub#1 = "     <<count(full_hull,informative);
-    //    cout<<"   sub#2 = "     <<count(sub_hull,informative);
-  }
-
-  if (show_PP)
-    cout<<"   PP = "<<100*tree_dist.PP(full);
-
-  cout<<endl;
-}
-
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
   using namespace po;
@@ -434,6 +389,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("min-support",value<double>()->default_value(0.25),"Only examine partitions w/ PP more than this\n")
     ("consensus",value<string>(),"Report consensus trees at these comma-separated levels in [0.5, 1.0]")
     ("sub-partitions","look for partitions of taxa subsets")
+    ("support-levels",value<string>(),"Filename to report #branches versus LOD")
+    ("support-sub-levels",value<string>(),"Filename to report #sub-branches versus LOD")
     ("depth",value<int>()->default_value(1),"depth at which to look for partitions of taxa subsets")
     ("rooting",value<double>()->default_value(0.9),"depth at which to look for partitions of taxa subsets")
     ("odds-ratio",value<double>()->default_value(1.5),"Report sub-partitions if removing taxa improves the odds by at least this ratio.")
@@ -474,7 +431,58 @@ struct count_more {
     return p1.second > p2.second;
   }
 };
+
+void write_support_level_graph(variables_map& args, const vector<pair<Partition,unsigned> >& all_partitions, unsigned N)
+{
+  if (!args.count("support-levels")) return;
+  const string filename = args["support-levels"].as<string>();
+
+  vector<unsigned> levels = get_Ml_levels(all_partitions, N, 0.5);
+
+  ofstream file(filename.c_str());
+  if (!file)
+    throw myexception()<<"Couldn't open file '"<<filename<<"' for writing.";
+  
+  for(int j=0;j<levels.size();j++) 
+  {
+    double fraction = double(levels[j])/N;
+    double LOD = log10(odds(levels[j],N,1));
     
+    const vector<Partition> sub = get_Ml_partitions(all_partitions,levels[j]);
+    const vector<Partition> full = select(sub,&Partition::full);
+
+    file<<fraction<<"\t"<<LOD<<"\t"<<count(full,informative)<<"\n";
+  }
+  file.close();
+}
+
+void write_support_sub_level_graph(variables_map& args, const vector<pair<Partition,unsigned> >& all_partitions, unsigned N)
+{
+  if (!args.count("support-sub-levels")) return;
+  const string filename = args["support-sub-levels"].as<string>();
+
+  vector<unsigned> levels = get_Ml_levels(all_partitions, N, 0.5);
+
+  ofstream file(filename.c_str());
+  if (!file)
+    throw myexception()<<"Couldn't open file '"<<filename<<"' for writing.";
+  
+  for(int j=0;j<levels.size();j++) 
+  {
+    double fraction = double(levels[j])/N;
+    double LOD = log10(odds(levels[j],N,1));
+    
+    const vector<Partition> sub = get_Ml_partitions(all_partitions,levels[j]);
+    const vector<Partition> full = select(sub,&Partition::full);
+
+    const vector<Partition> moveable = get_moveable_tree(sub);
+    //  vector<Partition> full_hull = Ml_min_Hull(full_skeleton,sub);
+    //  vector<Partition> sub_hull = Ml_min_Hull(skeleton,sub);
+
+    file<<fraction<<"\t"<<LOD<<"\t"<<count(moveable,informative)<<"\n";
+  }
+  file.close();
+}
 
 int main(int argc,char* argv[]) 
 { 
@@ -629,6 +637,10 @@ int main(int argc,char* argv[])
 
 
     //----------- display M[l] consensus levels ----------//
+    write_support_level_graph(args, all_partitions, N);
+    write_support_sub_level_graph(args, all_partitions, N);
+
+    //----------- display M[l] consensus trees ----------//
     std::cout.precision(4);
     cout<<"\n\nConsensus levels:\n\n";
 
@@ -637,68 +649,57 @@ int main(int argc,char* argv[])
     c50_sub_partitions = get_moveable_tree(c50_sub_partitions);
 
 
-    vector<unsigned> levels = get_Ml_levels(all_partitions,N,min_support);
-
-    levels.push_back(N+1);
-
-    for(int j=0,k=0;j<levels.size() and k < consensus_levels.size();j++) 
+    for(int k=0;k < consensus_levels.size();k++) 
     {
       unsigned clevel = (unsigned)(consensus_levels[k]*N);
 
-      while (k<consensus_levels.size() and clevel < levels[j]) 
-      {
-	clevel = (unsigned)(consensus_levels[k]*N);
+      vector<Partition> all  = get_Ml_partitions(all_partitions,consensus_levels[k],N);
+      vector<Partition> sub;
+      vector<Partition> full;
+      for(int i=0;i<all.size();i++)
+	if (all[i].full())
+	  full.push_back(all[i]);
+	else
+	  sub.push_back(all[i]);
 
-	vector<Partition> all  = get_Ml_partitions(all_partitions,consensus_levels[k],N);
-	vector<Partition> sub;
-	vector<Partition> full;
-	for(int i=0;i<all.size();i++)
-	  if (all[i].full())
-	    full.push_back(all[i]);
-	  else
-	    sub.push_back(all[i]);
+      // the raw tree
+      SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
 
-	SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
-	SequenceTree consensus2 = consensus;
+      // the one with PPs
+      SequenceTree consensus2 = consensus;
       
-	double L = consensus_levels[k]*100;
+      cout.unsetf(ios::fixed | ios::showpoint);
 	
-	cout.unsetf(ios::fixed | ios::showpoint);
-	
-	vector<double> bf(consensus.n_branches(),1.0);
-	for(int i=0;i<bf.size();i++) 
-	{
-	  if (consensus.branch(i).is_leaf_branch())
-	    bf[i] = -1.0;
-	  else {
-	    dynamic_bitset<> mask = branch_partition(consensus,i);
-	    Partition p(tree_dist.names(),mask);
-	    unsigned count = get_partition_count(all_partitions,p);
-	    bf[i] = double(count)/N;
-	  }
-	  consensus2.branch(i).set_length(bf[i]);
+      // set branch lengths on consensus2 to the PPs
+      vector<double> bf(consensus.n_branches(),1.0);
+      for(int i=0;i<bf.size();i++) 
+      {
+	if (consensus.branch(i).is_leaf_branch())
+	  bf[i] = -1.0;
+	else {
+	  dynamic_bitset<> mask = branch_partition(consensus,i);
+	  Partition p(tree_dist.names(),mask);
+	  unsigned count = get_partition_count(all_partitions,p);
+	  bf[i] = double(count)/N;
 	}
-
-	
-	cout<<" "<<L<<"-consensus-PP = "<<consensus2.write(true)<<std::endl;
-	//cout<<" "<<L<<"-consensus-PP2 = "<<consensus.write_with_bootstrap_fraction(bf,false)<<std::endl;
-	cout<<" "<<L<<"-consensus = "<<consensus.write(false)<<std::endl;
-	
-	if (show_sub) {
-	  for(int i=0;i<sub.size();i++)
-	    cout<<sub[i]<<endl;
-	}
-	cout<<endl<<endl;
-
-	k++;
+	consensus2.branch(i).set_length(bf[i]);
       }
-	
+      
 
-      if (levels[j] <=N) {
-	show_level(tree_dist,levels[j],c50_sub_partitions,all_partitions,show_sub,false);
-	cout<<endl;
+      // Write the PP tree
+      double L = consensus_levels[k]*100;
+      cout<<" "<<L<<"-consensus-PP = "<<consensus2.write(true)<<std::endl;
+      //cout<<" "<<L<<"-consensus-PP2 = "<<consensus.write_with_bootstrap_fraction(bf,false)<<std::endl;
+
+      // Write the tree/mf tree
+      cout<<" "<<L<<"-consensus = "<<consensus.write(false)<<std::endl;
+      if (show_sub) {
+	for(int i=0;i<sub.size();i++)
+	  cout<<sub[i]<<endl;
       }
+      cout<<endl<<endl;
 
+      k++;
     }
   }
   catch (std::exception& e) {
