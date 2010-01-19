@@ -651,15 +651,30 @@ double tree_sample::PP(const vector<Partition>& partitions) const
 
 tree_record::tree_record(const Tree& T)
   :n_leaves_(T.n_leaves()),
-   partitions(T.n_branches()-T.n_leafbranches())
+   partitions(T.n_branches()-T.n_leafbranches()),
+   branch_lengths(T.n_branches())
 { 
+  vector<dynamic_bitset<> > temp(partitions.size());
+
   const int L = T.n_leafbranches();
   for(int i=L;i<T.n_branches();i++) {
-    partitions[i-L] = branch_partition(T,i);
-    if (not partitions[i-L][0])
-      partitions[i-L].flip();
+    temp[i-L] = branch_partition(T,i);
+    if (not temp[i-L][0])
+      temp[i-L].flip();
   }
-  std::sort(partitions.begin(),partitions.end());
+
+  vector<int> order = iota<int>(partitions.size());
+  std::sort(order.begin(),order.end(),sequence_order<dynamic_bitset<> >(temp));
+
+  for(int i=0;i<L;i++)
+    branch_lengths[i] = T.branch(i).length();
+
+  for(int i=L;i<T.n_branches();i++)
+  {
+    int o = order[i-L];
+    partitions[i-L] = temp[o];
+    branch_lengths[i] = T.branch(o+L).length();
+  }
 }
 
 
