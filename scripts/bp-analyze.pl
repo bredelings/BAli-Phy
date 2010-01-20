@@ -736,6 +736,7 @@ if (! more_recent_than("Results/consensus",$trees_file)) {
 
     my $select_trees_arg = "$max_arg $skip $subsample_string $prune_arg";
     my $levels_arg = "--support-levels=Results/c-levels.plot";
+    $levels_arg = "$levels_arg --extended-support-levels=Results/extended-c-levels.plot" if ($sub_partitions);
     `trees-consensus $trees_file $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg > Results/consensus`;
 }
 print "done.\n";
@@ -1052,14 +1053,25 @@ print "done.\n";
 
 # 11. c-levels.plot - FIXME!
 
+if ($sub_partitions) {
 `gnuplot <<EOF
 set terminal svg
 set output "Results/c-levels.svg"
 set xlabel "Log10 posterior Odds (LOD)"
-set ylabel "Supported Partitions"
+set ylabel "Supported Splits"
+set style data lines
+plot [0:][0:] 'Results/c-levels.plot' title 'Full Splits','Results/extended-c-levels.plot' title 'Partial Splits'
+EOF`;
+}
+else {
+`gnuplot <<EOF
+set terminal svg
+set output "Results/c-levels.svg"
+set xlabel "Log10 posterior Odds (LOD)"
+set ylabel "Supported Splits"
 plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 EOF`;
-
+}
 # 12. Mixing diagnostics - SRQ plots
 my @SRQ = ();
 

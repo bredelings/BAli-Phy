@@ -406,7 +406,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("extended-consensus",value<string>(),"Report extended consensus trees at these comma-separated levels in [0.5, 1.0]")
     ("sub-partitions","look for partitions of taxa subsets")
     ("support-levels",value<string>(),"Filename to report #branches versus LOD")
-    ("support-sub-levels",value<string>(),"Filename to report #sub-branches versus LOD")
+    ("extended-support-levels",value<string>(),"Filename to report #sub-branches versus LOD")
     ("depth",value<int>()->default_value(1),"depth at which to look for partitions of taxa subsets")
     ("rooting",value<double>()->default_value(0.9),"depth at which to look for partitions of taxa subsets")
     ("odds-ratio",value<double>()->default_value(1.5),"Report sub-partitions if removing taxa improves the odds by at least this ratio.")
@@ -485,10 +485,10 @@ void write_support_level_graph(variables_map& args, const vector<pair<Partition,
 /// \param args Command-line arguments
 /// \param all_partitions The count for each partition
 /// \param N The total number of sampled trees
-void write_support_sub_level_graph(variables_map& args, const vector<pair<Partition,unsigned> >& all_partitions, unsigned N)
+void write_extended_support_level_graph(variables_map& args, const vector<pair<Partition,unsigned> >& all_partitions, unsigned N)
 {
-  if (!args.count("support-sub-levels")) return;
-  const string filename = args["support-sub-levels"].as<string>();
+  if (!args.count("extended-support-levels")) return;
+  const string filename = args["extended-support-levels"].as<string>();
 
   vector<unsigned> levels = get_Ml_levels(all_partitions, N, 0.5);
 
@@ -817,7 +817,7 @@ int main(int argc,char* argv[])
 
     //----------- display M[l] consensus levels ----------//
     write_support_level_graph(args, all_partitions, N);
-    write_support_sub_level_graph(args, all_partitions, N);
+    write_extended_support_level_graph(args, all_partitions, N);
 
     //----------- display M[l] consensus trees ----------//
     std::cout.precision(4);
