@@ -358,6 +358,16 @@ bool p_contains(const vector<vector<Partition> >& partitions, const vector<Parti
   return false;
 }
 
+/// \brief Load a list of partition lists from file 'filename'
+///
+/// \param filename    The file from which to load the partition lists
+/// \param partitions  The list of partition lists
+///
+/// Load a list of partition lists from file 'filename'.  Blank
+/// lines separate the collections of partitions. A collection 
+/// can begin with a Newick tree, which is then decomposed into all
+/// of its partitions (both informative and uninformative).
+///
 void load_partitions(const string& filename, vector<vector<Partition> >& partitions) 
 {
   std::ifstream file(filename.c_str());

@@ -608,12 +608,14 @@ valarray<bool> tree_sample::support(const vector<Partition>& partitions) const
 {
   valarray<bool> result(size());
 
+  vector<Partition> informative_partitions = select(partitions,informative);
+
   for(int i=0;i<result.size();i++) 
   {
     // Get a tree with the same topology
     const vector<dynamic_bitset<> >& T = trees[i].partitions;
     
-    result[i] = implies(T,partitions);
+    result[i] = implies(T,informative_partitions);
   }
   return result;
 }
