@@ -71,6 +71,8 @@ bool update_lengths(const MC_tree& Q,const SequenceTree& T,
   for(int b=0;b<T.n_branches();b++)
   {
     Partition P = partition_from_branch(T,b);
+
+    // Find mc tree branches implied by branch b
     vector<int> branches;
     for(int i=0;i<Q.branch_order.size();i++) 
     {
@@ -78,6 +80,7 @@ bool update_lengths(const MC_tree& Q,const SequenceTree& T,
 	branches.push_back(i);
     }
 
+    // Find out which nodes this branch is inside of 
     vector<int> nodes;
     for(int n=0;n<Q.n_nodes();n++) 
     {
@@ -118,15 +121,23 @@ bool update_lengths(const MC_tree& Q,const SequenceTree& T,
 	cerr<<"    "<<Q.partitions[Q.branch_to_node(nodes[i])]<<endl;
     }
     */
+
+    // This branch should be inside only one node, if any.
     assert(nodes.size() < 2);
+
+    // This branch should not be inside a node, if it implies an mc tree branch.
     if (branches.size()) assert(not nodes.size());
+
+    // But this branch should be inside a node if it doesn't imply a branch.
     assert(branches.size() + nodes.size() > 0);
 
     const double L = T.branch(b).length();
 
+    // Divide the branch length evenly between the branches it implies.
     for(int i=0;i<branches.size();i++)
       branch_lengths[branches[i]] += L/branches.size();
 
+    // Divide the branch length evenly between the nodes (node?) it implies.
     for(int i=0;i<nodes.size();i++)
       node_lengths[nodes[i]] += L/nodes.size();
   }
@@ -225,6 +236,8 @@ accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
 
     for(int i=0;i<2*Q.n_branches();i++)
     {
+      // Taxa that wander over any branch pointing to this node wander over this node too.
+      // So, remove them from this node mask.
       if (Q.mapping[i] == n and not Q.directly_wanders[i])
 	mask &= Q.partitions[i].mask();
     }
