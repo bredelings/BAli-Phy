@@ -10,11 +10,6 @@
 #    Annotate alignments with information... ?
 
 
-# 0. (a) Instead of making symbolic links, just use a variable to determine
-#    the correct files to analyze, so that we can handle the single-chain
-#    case without creating a lot of useless files.
-#    (b) This would also make it easier to handle a lot of output from older
-#    versions without using symbolic links.
 # 1. Histogram for distribution of each statistic.
 # 2. alignment properties (#indels, etc)
 # 3. alphabet of each partition
@@ -39,397 +34,9 @@ my @out_files;
 my @tree_files;
 my @partition_samples;
 my $MAP_file;
-
-sub is_in_path
-{
-  my $file = shift;
-
-  my @dirs = split(':',$ENV{'PATH'});
-
-  for my $dir (@dirs) {
-      if (-x "$dir/$file" ) {
-	  return 1;
-      }
-  }
-
-  return 0;
-}
-
-sub do_init()
-{
-    mkdir "Results";
-    mkdir "Results/Work";
-}
-
-sub do_cleanup()
-{
-    rmdir_recursive("Results") if (-e "Results");
-}
-
-sub rmdir_recursive 
-{
-    my $dir = shift;
-    local *DIR;
-
-    opendir DIR, $dir or die "opendir $dir: $!";
-    for (readdir DIR) {
-	next if /^\.{1,2}$/;
-	my $path = "$dir/$_";
-	unlink $path if -f $path;
-	rmdir_recursive($path) if -d $path;
-    }
-    closedir DIR;
-    rmdir $dir or print "error - $!";
-}
-
-sub get_partitions()
-{
-    return [] if ($personality ne "bali-phy");
-
-    local *FILE;
-
-    open FILE, $out_file or die "Can't open $out_file!";
-
-    my @partitions = ();
-
-    while (my $line = <FILE>) 
-    {
-	if ($line =~ /data(.+) = (.+)/) {
-	    my $filename = $2;
-	    $filename =~ s/$home/~/;
-	    push @partitions,$filename;
-	}
-	if ($line =~ /data = (.+)/) {
-	    my $filename = $1;
-	    $filename =~ s/$home/~/;
-	    push @partitions,$filename;
-	}
-	last if ($line =~ /^iterations = 0/);
-    }
-    return [@partitions];
-}
-
-sub get_cmdline_attribute($)
-{
-    return "unknown" if ($personality ne "bali-phy");
-    my $attribute = shift;
-    my $value;
-
-    local *FILE;
-
-    open FILE, $out_file or die "Can't open $out_file!";
-
-    my @partitions = ();
-
-    my $line = <FILE>;
-    {
-	if ($line =~ /--$attribute[ =]([^ ]*)$/) {
-	    $value = $1;
-	    last;
-	}
-	last if ($line =~ /^iterations = 0/);
-    }
-    close FILE;
-
-    return $value;
-}
-
-sub get_header_attribute($)
-{
-    return "unknown" if ($personality ne "bali-phy");
-    my $attribute = shift;
-    my $value;
-
-    local *FILE;
-
-    open FILE, $out_file or die "Can't open $out_file!";
-
-    my @partitions = ();
-
-    while (my $line = <FILE>) 
-    {
-	if ($line =~ /$attribute: (.*)$/) {
-	    $value = $1;
-	    last;
-	}
-	last if ($line =~ /^iterations = 0/);
-    }
-    close FILE;
-
-    return $value;
-}
-
-#Empirical(/home/bredelings/local/share/bali-phy/Data//wag.dat) 
-
-sub sanitize_smodel($)
-{
-    my $smodel = shift;
-
-    if ($smodel =~ m|(Empirical\(.*/(.*).dat\))|)
-    {
-	my $temp1 = $1;
-	my $temp2 = $2;
-	$temp2 =~ tr/a-z/A-Z/;
-	
-	$smodel =~ s/\Q$temp1/$temp2/;
-    }
-
-    return $smodel;
-}
-
-sub get_smodels()
-{
-    return [] if ($personality ne "bali-phy");
-
-    local *FILE;
-
-    open FILE, $out_file or die "Can't open $out_file!";
-
-    my @smodels = ();
-
-    while (my $line = <FILE>) 
-    {
-	if ($line =~ /subst model(.+) = (.+)/) {
-	    push @smodels,$2;
-	}
-	if ($line =~ /subst model = (.+)/) {
-	    push @smodels,$1;
-	}
-	last if ($line =~ /^iterations = 0/);
-    }
-    close FILE;
-
-    return [@smodels];
-}
-
-sub get_imodels()
-{
-    return [] if ($personality ne "bali-phy");
-
-    local *FILE;
-
-    open FILE, $out_file or die "Can't open $out_file!";
-
-    my @imodels = ();
-
-    while (my $line = <FILE>) 
-    {
-	if ($line =~ /indel model(.+) = (.+)/) {
-	    push @imodels,$2;
-	}
-	if ($line =~ /indel model = (.+)/) {
-	    push @imodels,$1;
-	}
-
-	last if ($line =~ /^iterations = 0/);
-    }
-    close FILE;
-
-    push @imodels, "none" if ($#imodels == -1);
-    return [@imodels];
-}
-
-sub get_smodel_indices()
-{
-    return [] if ($personality ne "bali-phy");
-
-    local *FILE;
-
-    open FILE, $out_file or die "Can't open $out_file!";
-
-    my @smodel_indices = ();
-
-    while (my $line = <FILE>) 
-    {
-	if ($line =~ /smodel-index(.+) = (.+)/) {
-	    push @smodel_indices,$2;
-	}
-	last if ($line =~ /^iterations = 0/);
-    }
-    close FILE;
-
-    return [@smodel_indices];
-}
-
-sub get_imodel_indices()
-{
-    return [] if ($personality ne "bali-phy");
-
-    local *FILE;
-
-    open FILE, $out_file or die "Can't open $out_file!";
-
-    my @imodel_indices = ();
-
-    while (my $line = <FILE>) 
-    {
-	if ($line =~ /imodel-index(.+) = (.+)/) {
-	    push @imodel_indices,$2;
-	}
-	last if ($line =~ /^iterations = 0/);
-    }
-    return [@imodel_indices];
-}
-
-sub get_alphabets()
-{
-    return [] if ($personality ne "bali-phy");
-
-    local *FILE;
-
-    open FILE, $out_file or die "Can't open $out_file!";
-
-    my @alphabets = ();
-
-    while (my $line = <FILE>) 
-    {
-	if ($line =~ /alphabet(.+) = (.+)/) {
-	    push @alphabets,$2;
-	}
-	if ($line =~ /alphabet = (.+)/) {
-	    push @alphabets,$1;
-	}
-
-	last if ($line =~ /^iterations = 0/);
-    }
-    close FILE;
-
-    return @alphabets;
-}
-
-sub get_n_lines($)
-{
-    my $filename = shift;
-
-    local *FILE;
-  
-    open FILE, $filename;
-
-    my $n_lines = 0;
-
-    while (<FILE>) {
-	$n_lines++;
-    }
-
-    return $n_lines;
-}
-
-sub get_n_iterations()
-{
-    return get_n_lines($trees_file)-1;
-}
-
-sub more_recent_than($;$)
-{
-    my $filename1 = shift;
-    my $filename2 = shift;
-
-    die "I can't open '$filename2'" if (! -f $filename2);
-    return 0 if (! -f $filename1);
-
-    my $age1 = -M $filename1;
-    my $age2 = -M $filename2;
-
-    return 1 if ($age1 <= $age2);
-    return 0;
-}
-
-sub more_recent_than_all_of($;$)
-{
-    my $filename1 = shift;
-    my $temp = shift;
-    my @filenames2 = @$temp;
-
-    foreach my $filename2 (@filenames2) {
-	return 0 if (!more_recent_than($filename1,$filename2));
-    }
-
-    return 1;
-}
 my $burnin;
 
-sub get_prev_burnin
-{
-    my $prev_burnin;
-    $prev_burnin = `cat Results/burnin` if (-e "Results/burnin");
-    return $prev_burnin;
-}
-
-sub record_burnin
-{
-    open BURN,">Results/burnin";
-    print BURN $burnin;
-    close BURN;
-}
-
-sub get_alignment_info 
-{
-    return {} if ($personality ne "bali-phy");
-
-    my $filename = shift;
-    open INFO,"alignment-info $filename |";
-
-    my %features = ();
-
-    my $indels = 0;
-    while(my $line=<INFO>) {
-	if ($line =~ /Alphabet: (.*)$/) {
-	    $features{"alphabet"} = $1;
-	}
-	if ($line =~ /Alignment: (.+) columns of (.+) sequences/) 
-	{
-	    $features{"length"} = $1;
-	    $features{"n_sequences"} = $2;
-	}
-	if ($line =~ /sequence lengths: ([^ ]+)-([^ ]+)/) {
-	    $features{"min_length"} = $1;
-	    $features{"max_length"} = $2;
-	}
-	if ($line =~ m|w/  indels|) {
-	    $indels = 1;
-	}
-	next if ($indels == 0);
-
-	if ($line =~ / const.: ([^ ]+) \(([^ ]+)\%\)/) {
-	    $features{"n_const"} = $1;
-	    $features{"p_const"} = $2;
-	}
-	if ($line =~ /non-const.: ([^ ]+) \(([^ ]+)\%\)/) {
-	    $features{"n_non-const"} = $1;
-	    $features{"p_non-const"} = $2;
-	}
-	if ($line =~ /inform.: ([^ ]+) \(([^ ]+)\%\)/) {
-	    $features{"n_inform"} = $1;
-	    $features{"p_inform"} = $2;
-	}
-	if ($line =~ / ([^ ]+)% minimum sequence identity/){
-	    $features{"min_p_identity"} = $1;
-	}
-    }
-    return {%features};
-}
-
-sub tooltip
-{
-    my $text = shift;
-    return "<a title=\"$text\">?</a>";
-}
-
-sub get_consensus_arg
-{
-    my $suffix = shift;
-    my $levels = shift;
-    my @pairs = @$levels;
-    for my $level (@pairs)
-    {
-	my $filename = $level*100;
-	$filename = "Results/c$filename.".$suffix;
-	$level = "$level:$filename";
-    }
-    return join(',',@pairs);
-}
-
-#----------------------------- SETUP 2 --------------------------#
+#----------------------------- SETUP 1 --------------------------#
 
 if (! is_in_path("trees-consensus")) {
     print "I can't find the program 'trees-consensus' in your PATH!\n";
@@ -707,9 +314,39 @@ if ($n_chains > 1)
     $parameters_file = "Results/T1.p";
 }
 
-# 1. compute consensus trees
+# 5. Summarize scalar parameters
 my $max_arg = "";
 $max_arg = "--max=$max_iter" if (defined($max_iter));
+
+my $skip="";
+$skip="--skip=$burnin" if ($trees_file ne "Results/T1.trees");
+
+my $subsample_string = "--sub-sample=$subsample";
+$subsample_string = "" if ($subsample == 1);
+
+if ($personality eq "bali-phy") {
+    print "\nSummarizing distribution of numerical parameters... ";
+    if (! more_recent_than("Results/Report",$parameters_file)) {
+	`statreport $subsample_string --ignore=iter $max_arg $skip $parameters_file > Results/Report`;
+    }
+    print "done.\n";
+}
+elsif ($personality eq "beast") {
+    print "\nSummarizing distribution of numerical parameters... ";
+    if (! more_recent_than("Results/Report",$parameters_file)) {
+	`statreport $subsample_string --ignore=state $max_arg $skip $parameters_file > Results/Report`;
+    }
+    print "done.\n";
+}
+elsif ($personality eq "phylobayes") {
+    print "\nSummarizing distribution of numerical parameters... ";
+    if (! more_recent_than("Results/Report",$parameters_file)) {
+	`statreport $subsample_string --ignore=#cycle --ignore=#treegen --ignore=time $max_arg $skip $parameters_file > Results/Report`;
+    }
+    print "done.\n";
+}
+    
+# 1. compute consensus trees
 my $min_support_arg = "";
 $min_support_arg = "--min-support=$min_support" if (defined($min_support));
 
@@ -721,11 +358,6 @@ my $consensus_arg = "$consensus_no_pp_arg $consensus_pp_arg $e_consensus_arg";
 
 my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
-my $skip="";
-$skip="--skip=$burnin" if ($trees_file ne "Results/T1.trees");
-
-my $subsample_string = "--sub-sample=$subsample";
-$subsample_string = "" if ($subsample == 1);
 
 print "Summarizing topology distribution ... ";
 if (! more_recent_than("Results/consensus",$trees_file)) {
@@ -806,29 +438,6 @@ for my $tree (@trees) {
 }
 print "done.\n";
 
-# 5. Summarize scalar parameters
-if ($personality eq "bali-phy") {
-    print "\nSummarizing distribution of numerical parameters... ";
-    if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport $subsample_string --ignore=iter $max_arg $skip $parameters_file > Results/Report`;
-    }
-    print "done.\n";
-}
-elsif ($personality eq "beast") {
-    print "\nSummarizing distribution of numerical parameters... ";
-    if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport $subsample_string --ignore=state $max_arg $skip $parameters_file > Results/Report`;
-    }
-    print "done.\n";
-}
-elsif ($personality eq "phylobayes") {
-    print "\nSummarizing distribution of numerical parameters... ";
-    if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport $subsample_string --ignore=#cycle --ignore=#treegen --ignore=time $max_arg $skip $parameters_file > Results/Report`;
-    }
-    print "done.\n";
-}
-    
 # 6. Compute initial alignments
 
 my @alignments = ();
@@ -1499,3 +1108,392 @@ print INDEX "</table>\n";
 
 print INDEX "  </body>\n";
 print INDEX "</html>\n";
+
+sub is_in_path
+{
+  my $file = shift;
+
+  my @dirs = split(':',$ENV{'PATH'});
+
+  for my $dir (@dirs) {
+      if (-x "$dir/$file" ) {
+	  return 1;
+      }
+  }
+
+  return 0;
+}
+
+sub do_init
+{
+    mkdir "Results";
+    mkdir "Results/Work";
+}
+
+sub do_cleanup
+{
+    rmdir_recursive("Results") if (-e "Results");
+}
+
+sub rmdir_recursive 
+{
+    my $dir = shift;
+    local *DIR;
+
+    opendir DIR, $dir or die "opendir $dir: $!";
+    for (readdir DIR) {
+	next if /^\.{1,2}$/;
+	my $path = "$dir/$_";
+	unlink $path if -f $path;
+	rmdir_recursive($path) if -d $path;
+    }
+    closedir DIR;
+    rmdir $dir or print "error - $!";
+}
+
+sub get_partitions
+{
+    return [] if ($personality ne "bali-phy");
+
+    local *FILE;
+
+    open FILE, $out_file or die "Can't open $out_file!";
+
+    my @partitions = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /data(.+) = (.+)/) {
+	    my $filename = $2;
+	    $filename =~ s/$home/~/;
+	    push @partitions,$filename;
+	}
+	if ($line =~ /data = (.+)/) {
+	    my $filename = $1;
+	    $filename =~ s/$home/~/;
+	    push @partitions,$filename;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    return [@partitions];
+}
+
+sub get_cmdline_attribute
+{
+    return "unknown" if ($personality ne "bali-phy");
+    my $attribute = shift;
+    my $value;
+
+    local *FILE;
+
+    open FILE, $out_file or die "Can't open $out_file!";
+
+    my @partitions = ();
+
+    my $line = <FILE>;
+    {
+	if ($line =~ /--$attribute[ =]([^ ]*)$/) {
+	    $value = $1;
+	    last;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    return $value;
+}
+
+sub get_header_attribute
+{
+    return "unknown" if ($personality ne "bali-phy");
+    my $attribute = shift;
+    my $value;
+
+    local *FILE;
+
+    open FILE, $out_file or die "Can't open $out_file!";
+
+    my @partitions = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /$attribute: (.*)$/) {
+	    $value = $1;
+	    last;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    return $value;
+}
+
+#Empirical(/home/bredelings/local/share/bali-phy/Data//wag.dat) 
+
+sub sanitize_smodel
+{
+    my $smodel = shift;
+
+    if ($smodel =~ m|(Empirical\(.*/(.*).dat\))|)
+    {
+	my $temp1 = $1;
+	my $temp2 = $2;
+	$temp2 =~ tr/a-z/A-Z/;
+	
+	$smodel =~ s/\Q$temp1/$temp2/;
+    }
+
+    return $smodel;
+}
+
+sub get_smodels
+{
+    return [] if ($personality ne "bali-phy");
+
+    local *FILE;
+
+    open FILE, $out_file or die "Can't open $out_file!";
+
+    my @smodels = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /subst model(.+) = (.+)/) {
+	    push @smodels,$2;
+	}
+	if ($line =~ /subst model = (.+)/) {
+	    push @smodels,$1;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    return [@smodels];
+}
+
+sub get_imodels
+{
+    return [] if ($personality ne "bali-phy");
+
+    local *FILE;
+
+    open FILE, $out_file or die "Can't open $out_file!";
+
+    my @imodels = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /indel model(.+) = (.+)/) {
+	    push @imodels,$2;
+	}
+	if ($line =~ /indel model = (.+)/) {
+	    push @imodels,$1;
+	}
+
+	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    push @imodels, "none" if ($#imodels == -1);
+    return [@imodels];
+}
+
+sub get_smodel_indices
+{
+    return [] if ($personality ne "bali-phy");
+
+    local *FILE;
+
+    open FILE, $out_file or die "Can't open $out_file!";
+
+    my @smodel_indices = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /smodel-index(.+) = (.+)/) {
+	    push @smodel_indices,$2;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    return [@smodel_indices];
+}
+
+sub get_imodel_indices
+{
+    return [] if ($personality ne "bali-phy");
+
+    local *FILE;
+
+    open FILE, $out_file or die "Can't open $out_file!";
+
+    my @imodel_indices = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /imodel-index(.+) = (.+)/) {
+	    push @imodel_indices,$2;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    return [@imodel_indices];
+}
+
+sub get_alphabets
+{
+    return [] if ($personality ne "bali-phy");
+
+    local *FILE;
+
+    open FILE, $out_file or die "Can't open $out_file!";
+
+    my @alphabets = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /alphabet(.+) = (.+)/) {
+	    push @alphabets,$2;
+	}
+	if ($line =~ /alphabet = (.+)/) {
+	    push @alphabets,$1;
+	}
+
+	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    return @alphabets;
+}
+
+sub get_n_lines
+{
+    my $filename = shift;
+
+    local *FILE;
+  
+    open FILE, $filename;
+
+    my $n_lines = 0;
+
+    while (<FILE>) {
+	$n_lines++;
+    }
+
+    return $n_lines;
+}
+
+sub get_n_iterations
+{
+    return get_n_lines($trees_file)-1;
+}
+
+sub more_recent_than
+{
+    my $filename1 = shift;
+    my $filename2 = shift;
+
+    die "I can't open '$filename2'" if (! -f $filename2);
+    return 0 if (! -f $filename1);
+
+    my $age1 = -M $filename1;
+    my $age2 = -M $filename2;
+
+    return 1 if ($age1 <= $age2);
+    return 0;
+}
+
+sub more_recent_than_all_of
+{
+    my $filename1 = shift;
+    my $temp = shift;
+    my @filenames2 = @$temp;
+
+    foreach my $filename2 (@filenames2) {
+	return 0 if (!more_recent_than($filename1,$filename2));
+    }
+
+    return 1;
+}
+
+sub get_prev_burnin
+{
+    my $prev_burnin;
+    $prev_burnin = `cat Results/burnin` if (-e "Results/burnin");
+    return $prev_burnin;
+}
+
+sub record_burnin
+{
+    open BURN,">Results/burnin";
+    print BURN $burnin;
+    close BURN;
+}
+
+sub get_alignment_info 
+{
+    return {} if ($personality ne "bali-phy");
+
+    my $filename = shift;
+    open INFO,"alignment-info $filename |";
+
+    my %features = ();
+
+    my $indels = 0;
+    while(my $line=<INFO>) {
+	if ($line =~ /Alphabet: (.*)$/) {
+	    $features{"alphabet"} = $1;
+	}
+	if ($line =~ /Alignment: (.+) columns of (.+) sequences/) 
+	{
+	    $features{"length"} = $1;
+	    $features{"n_sequences"} = $2;
+	}
+	if ($line =~ /sequence lengths: ([^ ]+)-([^ ]+)/) {
+	    $features{"min_length"} = $1;
+	    $features{"max_length"} = $2;
+	}
+	if ($line =~ m|w/  indels|) {
+	    $indels = 1;
+	}
+	next if ($indels == 0);
+
+	if ($line =~ / const.: ([^ ]+) \(([^ ]+)\%\)/) {
+	    $features{"n_const"} = $1;
+	    $features{"p_const"} = $2;
+	}
+	if ($line =~ /non-const.: ([^ ]+) \(([^ ]+)\%\)/) {
+	    $features{"n_non-const"} = $1;
+	    $features{"p_non-const"} = $2;
+	}
+	if ($line =~ /inform.: ([^ ]+) \(([^ ]+)\%\)/) {
+	    $features{"n_inform"} = $1;
+	    $features{"p_inform"} = $2;
+	}
+	if ($line =~ / ([^ ]+)% minimum sequence identity/){
+	    $features{"min_p_identity"} = $1;
+	}
+    }
+    return {%features};
+}
+
+sub tooltip
+{
+    my $text = shift;
+    return "<a title=\"$text\">?</a>";
+}
+
+sub get_consensus_arg
+{
+    my $suffix = shift;
+    my $levels = shift;
+    my @pairs = @$levels;
+    for my $level (@pairs)
+    {
+	my $filename = $level*100;
+	$filename = "Results/c$filename.".$suffix;
+	$level = "$level:$filename";
+    }
+    return join(',',@pairs);
+}
+
