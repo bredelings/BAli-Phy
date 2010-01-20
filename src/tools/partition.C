@@ -130,21 +130,21 @@ Partition::Partition(const dynamic_bitset<>& g)
 }
 
 Partition::Partition(const dynamic_bitset<>& g,const dynamic_bitset<>& mask) 
-  :group1(g & mask),group2((~g) & mask)
+  :group1((~g) & mask),group2(g & mask)
 {
   assert(g.size() == mask.size());
   assert(not group1.intersects(group2));
 }
 
 Partition::Partition(const vector<string>& n,const dynamic_bitset<>& g) 
-  :names(n),group1(g),group2(~g)
+  :names(n),group1(~g),group2(g)
 {
   assert(n.size() == g.size());
   assert(not group1.intersects(group2));
 }
 
 Partition::Partition(const vector<string>& n,const dynamic_bitset<>& g,const dynamic_bitset<>& mask) 
-  :names(n),group1(g & mask),group2((~ g) & mask)
+  :names(n),group1((~ g) & mask),group2(g & mask)
 {
   assert(n.size() == g.size());
   assert(g.size() == mask.size());
