@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2007-2009 Benjamin Redelings
+   Copyright (C) 2007-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -3534,7 +3534,7 @@ int main(int argc,char* argv[])
     MC.scale(1.0/MC.total_length());
     graph_layout L2 = layout_on_circle(MC,2);
     
-    if (not args.count("tree-layout-initial"))
+    if (args.count("tree-layout-initial"))
     {
       tree_layout LA = equal_angle_layout(MC);
       //cout<<"equal angle edge error = "<<LA.edge_length_error()<<endl;

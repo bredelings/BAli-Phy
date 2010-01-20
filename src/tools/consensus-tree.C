@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2009 Benjamin Redelings
+   Copyright (C) 2009-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -93,6 +93,81 @@ struct p_count {
   int last_tree;
   p_count(): count(0),last_tree(-1) {}
 };
+
+/// \brief Get the count and average length for each split
+///
+/// \param sample The tree sample
+///
+map<dynamic_bitset<>,count_and_length>
+get_partition_counts_and_lengths(const tree_sample& sample)
+{
+  // use an rbtree of <partition,count_and_length>, sorted by partition.
+  typedef map<dynamic_bitset<>,count_and_length> container_t;
+  container_t counts;
+
+  vector<string> names = sample.names();
+  const int L = names.size();
+  const int N = sample.trees.size();
+
+  // Setup: add leaf branch records and store references to them
+  vector<container_t::iterator> leaf_branch_records;
+  for(int i=0;i<L;i++) 
+  {
+    // construct leaf branch split
+    dynamic_bitset<> partition(names.size());
+    partition[i] = 1;
+    if (not partition[0]) partition.flip();
+  
+    // insert it a get a reference
+    counts.insert(container_t::value_type(partition,count_and_length(N,0)));
+    container_t::iterator record = counts.find(partition);
+
+    assert(record != counts.end());
+    leaf_branch_records.push_back(record);
+  }
+
+  // Main loop: iterate over all trees
+  for(int i=0;i<sample.trees.size();i++) 
+  {
+    const tree_record& T = sample.trees[i];
+
+    // for each INTERNAL partition in the next tree
+    for(int b=0;b<L;b++) {
+      count_and_length& cl = leaf_branch_records[b]->second;
+      cl.length += T.branch_lengths[b];
+    }
+
+    // for each INTERNAL partition in the next tree
+    dynamic_bitset<> partition(names.size());
+    for(int b=0;b<T.partitions.size();b++) 
+    {
+      partition = T.partitions[b];
+      if (not partition[0]) partition.flip();
+
+      // Look up record for this partition
+      container_t::iterator record = counts.find(partition);
+      if (record == counts.end()) {
+	counts.insert(container_t::value_type(partition,count_and_length()));
+	record = counts.find(partition);          // FIXME - we are doing the lookup twice
+	assert(record != counts.end());
+      }
+
+      // Increment the count and add in the new length
+      count_and_length& cl = record->second;
+      cl.count++;
+      cl.length += T.branch_lengths[L+b];
+    }
+  }
+
+  double factor = 1.0/N;
+  for(container_t::iterator r = counts.begin();r != counts.end();r++) 
+  {
+    count_and_length& cl = r->second;
+    cl.length *= factor;
+  }
+
+  return counts;
+}
 
 vector<pair<Partition,unsigned> > 
 get_Ml_partitions_and_counts(const tree_sample& sample,double l,const dynamic_bitset<>&  mask) 

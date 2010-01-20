@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2009 Benjamin Redelings
+   Copyright (C) 2009-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -16,6 +16,17 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+///
+/// \file   partition.C
+/// \brief  Provides routines to for handling splits: bi-partitions on trees.
+///
+/// In addition to implementing the class Partition, this file
+/// provides numerous other routines for handling partitions.
+///
+/// \author Benjamin Redelings
+/// 
+
 
 #include "partition.H"
 
@@ -209,8 +220,20 @@ Partition::Partition(const vector<string>& n,const string& line)
   assert(not group1.intersects(group2));
 }
 
+/// \brief Check if the split is informative
+///
+/// \param p The split
 bool informative(const Partition& p) {
   return (p.group1.count() >= 2) and (p.group2.count() >= 2);
+}
+
+/// \brief Check if the split is informative
+///
+/// \param p The split
+bool informative(const boost::dynamic_bitset<>& p) {
+  int N = p.size();
+  int C = p.count();
+  return (C >= 2) and ((N-C) >= 2);
 }
 
 bool valid(const Partition& p) {

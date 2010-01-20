@@ -415,6 +415,20 @@ sub tooltip
     return "<a title=\"$text\">?</a>";
 }
 
+sub get_consensus_arg
+{
+    my $suffix = shift;
+    my $levels = shift;
+    my @pairs = @$levels;
+    for my $level (@pairs)
+    {
+	my $filename = $level*100;
+	$filename = "Results/c$filename.".$suffix;
+	$level = "$level:$filename";
+    }
+    return join(',',@pairs);
+}
+
 #----------------------------- SETUP 2 --------------------------#
 
 if (! is_in_path("trees-consensus")) {
@@ -693,13 +707,18 @@ if ($n_chains > 1)
     $parameters_file = "Results/T1.p";
 }
 
-
 # 1. compute consensus trees
 my $max_arg = "";
 $max_arg = "--max=$max_iter" if (defined($max_iter));
 my $min_support_arg = "";
 $min_support_arg = "--min-support=$min_support" if (defined($min_support));
-my $consensus_arg = "--consensus=".join(',',@tree_consensus_values);
+
+my $consensus_no_pp_arg = "--consensus=". get_consensus_arg("tree",\@tree_consensus_values);
+my $consensus_pp_arg = "--consensus-PP=". get_consensus_arg("PP.tree",\@tree_consensus_values);
+my $e_consensus_arg = "";
+$e_consensus_arg = "--extended-consensus=". get_consensus_arg("mtree",\@tree_consensus_values) if ($sub_partitions);
+my $consensus_arg = "$consensus_no_pp_arg $consensus_pp_arg $e_consensus_arg";
+
 my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
 my $skip="";
@@ -714,7 +733,10 @@ if (! more_recent_than("Results/consensus",$trees_file)) {
     $sub_string = "" if (!$sub_partitions);
     my $prune_arg = "";
     $prune_arg = "--ignore $prune" if (defined($prune));
-    `trees-consensus $trees_file $max_arg $min_support_arg $skip $sub_string $consensus_arg $subsample_string $prune_arg > Results/consensus`;
+
+    my $select_trees_arg = "$max_arg $skip $subsample_string $prune_arg";
+    my $levels_arg = "--support-levels=Results/c-levels.plot";
+    `trees-consensus $trees_file $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg > Results/consensus`;
 }
 print "done.\n";
 
@@ -727,16 +749,6 @@ for my $cvalue (@tree_consensus_values)
     my $tree = "c$value";
     push @trees,$tree;
     $tree_name{$tree} = "$value\% consensus";
-
-    if (! more_recent_than("Results/$tree.topology","Results/consensus")) {
-	`pickout $value-consensus -n < Results/consensus > Results/$tree.topology`;
-    }
-    if (! more_recent_than("Results/$tree.PP.topology","Results/consensus")) {
-	`pickout $value-consensus-PP -n < Results/consensus > Results/$tree.PP.topology`;
-    }
-    if (! more_recent_than("Results/$tree.mtree","Results/consensus")) {
-	`pickout $value-consensus -n --multi-line < Results/consensus > Results/$tree.mtree`;
-    }
 
     if ($sub_partitions && ($speed < 2)) 
     {
@@ -751,15 +763,14 @@ for my $cvalue (@tree_consensus_values)
     print "$tree ";
     my $prune_arg = "";
     $prune_arg = "--prune $prune" if defined($prune);
-    if (! more_recent_than("Results/$tree.ltree",$trees_file)) {
-    `tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg < $trees_file > Results/$tree.ltree`;
-    }
-    if (! more_recent_than("Results/$tree.tree","Results/$tree.ltree")) {
-    `head -n1 Results/$tree.ltree > Results/$tree.tree`;
-    }
-    if (! more_recent_than("Results/$tree.PP.tree","Results/$tree.PP.topology")) {
-	`tree-mean-lengths Results/$tree.PP.topology --safe < Results/$tree.tree > Results/$tree.PP.tree`;
-    }
+
+#    Generate trees w/ node lengths.
+#    if (! more_recent_than("Results/$tree.ltree",$trees_file)) {
+#	`tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg < $trees_file > Results/$tree.ltree`;
+#    }
+#    if (! more_recent_than("Results/$tree.tree","Results/$tree.ltree")) {
+#    `head -n1 Results/$tree.ltree > Results/$tree.tree`;
+#    }
 }
 print "done.\n";
 
@@ -784,11 +795,12 @@ print "done.\n";
 # 4. compute images
 print " Drawing trees ... ";
 for my $tree (@trees) {
-    if (! more_recent_than("Results/$tree-tree.pdf","Results/$tree.ltree")) {
-	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight`;
+# FIXME - no node lengths!
+    if (! more_recent_than("Results/$tree-tree.pdf","Results/$tree.tree")) {
+	`cd Results ; draw-tree $tree.tree --layout=equal-daylight`;
     }
-    if (! more_recent_than("Results/$tree-tree.svg","Results/$tree.ltree")) {
-	`cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg`;
+    if (! more_recent_than("Results/$tree-tree.svg","Results/$tree.tree")) {
+	`cd Results ; draw-tree $tree.tree --layout=equal-daylight --output=svg`;
     }
 }
 print "done.\n";
@@ -1040,7 +1052,6 @@ print "done.\n";
 
 # 11. c-levels.plot - FIXME!
 
-`pickout --no-header LOD full < Results/consensus > Results/c-levels.plot`;
 `gnuplot <<EOF
 set terminal svg
 set output "Results/c-levels.svg"
@@ -1062,7 +1073,7 @@ push @SRQ,"partitions";
 
 print "Generate SRQ plot for c50 tree ... ";
 if (!more_recent_than("Results/c50.SRQ",$trees_file)) {
-`trees-to-SRQ Results/c50.topology $max_arg $skip --max-points=1000 < $trees_file > Results/c50.SRQ`;
+`trees-to-SRQ Results/c50.tree $max_arg $skip --max-points=1000 < $trees_file > Results/c50.SRQ`;
 }
 print "done.\n";
 
@@ -1320,7 +1331,7 @@ for my $tree (@trees)
     my $name = $tree_name{$tree};
     print INDEX "<tr>";
     print INDEX "<td>$name</td>";
-    print INDEX "<td><a href=\"$tree.topology\">-L</a></td>";
+#    print INDEX "<td><a href=\"$tree.topology\">-L</a></td>";
     print INDEX "<td><a href=\"$tree.tree\">+L</a></td>";
     print INDEX "<td><a href=\"$tree-tree.pdf\">PDF</a></td>";
     print INDEX "<td><a href=\"$tree-tree.svg\">SVG</a></td>";

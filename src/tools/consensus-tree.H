@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2009 Benjamin Redelings
+   Copyright (C) 2009-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -26,11 +26,19 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "tree-dist.H"
 
+/// The count for a partition in several different tree samples
 struct p_counts {
   std::vector<int> counts;
   p_counts(int n):counts(n,0) {}
 };
 
+/// The count and average length for a partition
+struct count_and_length {
+  unsigned count;
+  double length;
+  count_and_length():count(0),length(0) {}
+  count_and_length(unsigned u, double l):count(u),length(l) {}
+};
 
 std::map< boost::dynamic_bitset<>, p_counts > get_multi_partitions_and_counts(const std::vector<tree_sample>& samples);
 
@@ -42,6 +50,9 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l, const boost::dy
 
 std::vector<std::pair<Partition,unsigned> > 
 get_Ml_partitions_and_counts(const tree_sample& sample,double l);
+
+std::map<boost::dynamic_bitset<>,count_and_length>
+get_partition_counts_and_lengths(const tree_sample& sample);
 
 std::vector<Partition> get_Ml_sub_partitions(const tree_sample& sample,double l,double,int search=1);
 

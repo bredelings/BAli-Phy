@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2009 Benjamin Redelings
+   Copyright (C) 2004-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -90,31 +90,45 @@ unsigned changes(const valarray<bool>& sample,bool value)
 }
 
 
+struct consensus_level_order
+{
+  bool operator()(const pair<double,string>& p1, const pair<double,string>& p2) const
+  {
+    return p1.first < p2.first;
+  }
+};
+
 // FIXME - if n is small, first level may be ~ 0.57 -- good or bad?
-vector<double> get_consensus_levels(const string& s) {
-  vector<double> levels;
+vector<pair<double, string> > get_consensus_levels(const string& s) 
+{
+  // split into comma-separate components
+  vector<string> levels;
   if (s.size())
-    levels = split<double>(s,',');
+    levels = split(s,',');
 
-  std::sort(levels.begin(),levels.end());
+  vector<pair<double, string> > parsed_levels;
 
-  // remove levels below 0.5
-  while(not levels.empty() and levels[0] < 0.5) {
-    std::cerr<<"Ignoring bad consensus level '"<<levels[0]<<"'"<<std::endl;
-    levels.erase(levels.begin());
+  // Split each component level>file into level (a double) and file (a string)
+  for(int i=0;i<levels.size();i++) 
+  {
+    if (not levels[i].size()) continue;
+    vector<string> parts = split(levels[i],':');
+    if (parts.size() > 2) throw myexception()<<"Consensus level '"<<levels[i]<<"' has too many files.";
+    if (parts.size() == 1) parts.push_back("-");
+
+    assert(parts.size() == 2);
+    double L = convertTo<double>(parts[0]);
+    string filename = parts[1];
+
+    if (L<0 or L > 1)
+      throw myexception()<<"Ignoring bad consensus level '"<<L<<"'";
+
+    parsed_levels.push_back( pair<double,string>(L,filename) );
   }
 
-  // remove levels above 1.0
-  while(not levels.empty() and levels.back() > 1.0) {
-    std::cerr<<"Ignoring bad consensus level '"<<levels.back()<<"'"<<std::endl;
-    levels.pop_back();
-  }
-  
-  // Make sure we consider 0.5
-  if (levels.empty() or levels[0] != 0.5)
-    levels.insert(levels.begin(),0.5);
+  std::sort(parsed_levels.begin(), parsed_levels.end(), consensus_level_order());
 
-  return levels;
+  return parsed_levels;
 }
 
 /// Add partitions in 'delta' if none of them are IDENTICAL to any partition in 'partitions'
@@ -388,6 +402,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file")
     ("min-support",value<double>()->default_value(0.25),"Only examine partitions w/ PP more than this\n")
     ("consensus",value<string>(),"Report consensus trees at these comma-separated levels in [0.5, 1.0]")
+    ("consensus-PP",value<string>(),"Report consensus trees with Posterior Probabilities at these comma-separated levels in [0.5, 1.0]")
+    ("extended-consensus",value<string>(),"Report extended consensus trees at these comma-separated levels in [0.5, 1.0]")
     ("sub-partitions","look for partitions of taxa subsets")
     ("support-levels",value<string>(),"Filename to report #branches versus LOD")
     ("support-sub-levels",value<string>(),"Filename to report #sub-branches versus LOD")
@@ -425,13 +441,18 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-
+/// A simple ordering operator to sort pair<Partition,unsigned> by the order of the Partition
 struct count_more {
   bool operator()(const pair<Partition,unsigned>& p1,const pair<Partition,unsigned>& p2) const {
     return p1.second > p2.second;
   }
 };
 
+/// \brief Create a file containing the LOD, #of supported partitions, and PP in 3 tab-separated columsn
+///
+/// \param args Command-line arguments
+/// \param all_partitions The count for each partition
+/// \param N The total number of sampled trees
 void write_support_level_graph(variables_map& args, const vector<pair<Partition,unsigned> >& all_partitions, unsigned N)
 {
   if (!args.count("support-levels")) return;
@@ -451,11 +472,19 @@ void write_support_level_graph(variables_map& args, const vector<pair<Partition,
     const vector<Partition> sub = get_Ml_partitions(all_partitions,levels[j]);
     const vector<Partition> full = select(sub,&Partition::full);
 
-    file<<fraction<<"\t"<<LOD<<"\t"<<count(full,informative)<<"\n";
+    file<<LOD<<"\t"<<count(full,informative)<<"\t"<<fraction<<"\n";
   }
   file.close();
 }
 
+/// \brief Create a file containing the LOD, #of supported partial splits, and PP in 3 tab-separated columsn
+///
+/// Here, the # of partial splits report is reduced to the largest
+/// number of compatible partial splits.
+///
+/// \param args Command-line arguments
+/// \param all_partitions The count for each partition
+/// \param N The total number of sampled trees
 void write_support_sub_level_graph(variables_map& args, const vector<pair<Partition,unsigned> >& all_partitions, unsigned N)
 {
   if (!args.count("support-sub-levels")) return;
@@ -479,9 +508,152 @@ void write_support_sub_level_graph(variables_map& args, const vector<pair<Partit
     //  vector<Partition> full_hull = Ml_min_Hull(full_skeleton,sub);
     //  vector<Partition> sub_hull = Ml_min_Hull(skeleton,sub);
 
-    file<<fraction<<"\t"<<LOD<<"\t"<<count(moveable,informative)<<"\n";
+    file<<LOD<<"\t"<<count(moveable,informative)<<"\t"<<fraction<<"\n";
   }
   file.close();
+}
+
+/// \brief Create a new map<dynamic_bitset<>,count_and_length> that only contains records with a high enough count
+///
+/// \param all The full list of splits
+/// \param count The required count
+///
+map<dynamic_bitset<>, count_and_length> select_splits(const map<dynamic_bitset<>,count_and_length>& all, int count)
+{
+  typedef map<dynamic_bitset<>,count_and_length> container_t;
+
+  container_t some;
+
+  for(container_t::const_iterator i = all.begin(); i != all.end(); i++)
+  {
+    if (i->second.count >= count)
+      some.insert(*i);
+  }
+
+  return some;
+}
+
+/// \brief Write out standard majority consensus trees of various support levels
+///
+/// \param tree_dist The sampled trees
+/// \param full_partitions The count and average lengths of each split
+/// \param consensus_levels The support levels and the output file name for each one
+/// \param with_PP Should the output trees contains Posterior Probabilities in addition to branch lengths?
+///
+void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitset<>,count_and_length>& full_partitions, 
+			   const vector<pair<double, string> >& consensus_levels, bool with_PP)
+{
+  unsigned N = tree_dist.size();
+
+  typedef const map<dynamic_bitset<>,count_and_length> container_t;
+  
+  container_t c50_partitions = select_splits(full_partitions, N*0.5);
+
+  for(int k=0;k < consensus_levels.size();k++) 
+  {
+    const string& filename = consensus_levels[k].second;
+
+    ofstream * file=0;
+    if (filename != "-") {
+      file = new ofstream(filename.c_str());
+      ostream* output = file;
+      if (!*output)
+	throw myexception()<<"Can't open file '"<<filename<<"' for writing.";
+    }
+    ostream& output = *( (file)?file:&cout );
+
+    container_t partitions = select_splits(full_partitions, N*consensus_levels[k].first);
+
+    // construct the consensus topology
+    SequenceTree consensus = star_tree(tree_dist.names());
+    for(container_t::const_iterator i = partitions.begin(); i != partitions.end(); i++)
+    {
+      if (informative(i->first)) {
+	int b = consensus.induce_partition(i->first);
+	consensus.branch(b).set_length(i->second.length);
+      }
+    }
+
+    // set branch lengths and PP on the consensus tree
+    vector<double> PP(consensus.n_branches(),1.0);
+    for(int b=0;b<consensus.n_branches();b++) 
+    {
+      dynamic_bitset<> partition = branch_partition(consensus,b);
+      if (not partition[0]) partition.flip();
+      container_t::const_iterator record = partitions.find(partition);
+      assert(record != partitions.end());
+      double L = record->second.length;
+      unsigned count = record->second.count;
+      consensus.branch(b).set_length(L);
+      if (informative(partition))
+	PP[b] = double(count)/N;
+      else
+	PP[b] = -1;
+    }
+
+    // write out the consensus tree
+    output.unsetf(ios::fixed | ios::showpoint);
+    if (with_PP)
+      output<<consensus.write_with_bootstrap_fraction(PP,true)<<std::endl;
+    else
+      output<<consensus.write(true)<<std::endl;
+
+    if (file) {
+      file->close();
+      delete file;
+    }
+  }
+}
+
+/// \brief Write out extended majority consensus trees of various support levels (no branch lengths)
+///
+/// \param tree_dist The sampled trees
+/// \param full_partitions The count and average lengths of each split
+/// \param consensus_levels The support levels and the output file name for each one
+/// \param with_PP Should the output trees contains Posterior Probabilities in addition to branch lengths?
+///
+void write_extended_consensus_trees(const tree_sample& tree_dist, const vector<pair<Partition,unsigned> >& all_partitions, 
+				    const vector<pair<double, string> >& consensus_levels)
+{
+  unsigned N = tree_dist.size();
+
+  for(int k=0;k < consensus_levels.size();k++) 
+  {
+    const string& filename = consensus_levels[k].second;
+
+    ofstream * file=0;
+    if (filename != "-") {
+      file = new ofstream(filename.c_str());
+      ostream* output = file;
+      if (!*output)
+	throw myexception()<<"Can't open file '"<<filename<<"' for writing.";
+    }
+    ostream& output = *( (file)?file:&cout );
+
+    vector<Partition> all  = get_Ml_partitions(all_partitions,consensus_levels[k].first ,N);
+    vector<Partition> sub;
+    vector<Partition> full;
+    for(int i=0;i<all.size();i++)
+      if (all[i].full())
+	full.push_back(all[i]);
+      else
+	sub.push_back(all[i]);
+
+    // the raw tree
+    SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
+
+    output.unsetf(ios::fixed | ios::showpoint);
+	
+    // Write the tree/mf tree
+    output<<consensus.write(false)<<std::endl;
+    for(int i=0;i<sub.size();i++)
+      output<<sub[i]<<endl;
+
+    if (file) {
+      file->close();
+      delete file;
+    }
+  }
 }
 
 int main(int argc,char* argv[]) 
@@ -519,11 +691,17 @@ int main(int argc,char* argv[])
 
     // consensus levels 
     string c_levels = args.count("consensus") ? args["consensus"].as<string>() : "";
-    vector<double> consensus_levels = get_consensus_levels(c_levels);
+    vector<pair<double,string> > consensus_levels = get_consensus_levels(c_levels);
+    string c_levels_pp = args.count("consensus-PP") ? args["consensus-PP"].as<string>() : "";
+    vector<pair<double,string> > consensus_levels_pp = get_consensus_levels(c_levels_pp);
+    string ec_levels = args.count("extended-consensus") ? args["extended-consensus"].as<string>() : "";
+    vector<pair<double,string> > extended_consensus_levels = get_consensus_levels(ec_levels);
+    if (not args.count("consensus") and not args.count("consensus-PP") and not args.count("extended-consensus"))
+      consensus_levels_pp.push_back(pair<double,string>(0.5,"-"));
 
     double report_ratio = args["odds-ratio"].as<double>();
 
-    bool show_sub = args.count("sub-partitions");
+    bool show_sub = args.count("sub-partitions") or args.count("extended-consensus");
 
     //-------------- Read in tree distributions --------------//
     string filename = args["file"].as<string>();
@@ -537,6 +715,7 @@ int main(int argc,char* argv[])
     dynamic_bitset<> ignore_mask = group_from_names(tree_dist.names(),vector<string>());
 
     //------ Compute Ml partitions or sub-partitions --------//
+    std::map<dynamic_bitset<>,count_and_length> full_partitions = get_partition_counts_and_lengths(tree_dist);
     vector< pair<Partition,unsigned> > all_partitions;
 
     if (show_sub)
@@ -642,65 +821,10 @@ int main(int argc,char* argv[])
 
     //----------- display M[l] consensus trees ----------//
     std::cout.precision(4);
-    cout<<"\n\nConsensus levels:\n\n";
 
-    vector<Partition> c50_sub_partitions = get_Ml_partitions(all_partitions, 0.5, N);
-    vector<Partition> c50_full_partitions = select(c50_sub_partitions,&Partition::full);
-    c50_sub_partitions = get_moveable_tree(c50_sub_partitions);
-
-
-    for(int k=0;k < consensus_levels.size();k++) 
-    {
-      unsigned clevel = (unsigned)(consensus_levels[k]*N);
-
-      vector<Partition> all  = get_Ml_partitions(all_partitions,consensus_levels[k],N);
-      vector<Partition> sub;
-      vector<Partition> full;
-      for(int i=0;i<all.size();i++)
-	if (all[i].full())
-	  full.push_back(all[i]);
-	else
-	  sub.push_back(all[i]);
-
-      // the raw tree
-      SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
-
-      // the one with PPs
-      SequenceTree consensus2 = consensus;
-      
-      cout.unsetf(ios::fixed | ios::showpoint);
-	
-      // set branch lengths on consensus2 to the PPs
-      vector<double> bf(consensus.n_branches(),1.0);
-      for(int i=0;i<bf.size();i++) 
-      {
-	if (consensus.branch(i).is_leaf_branch())
-	  bf[i] = -1.0;
-	else {
-	  dynamic_bitset<> mask = branch_partition(consensus,i);
-	  Partition p(tree_dist.names(),mask);
-	  unsigned count = get_partition_count(all_partitions,p);
-	  bf[i] = double(count)/N;
-	}
-	consensus2.branch(i).set_length(bf[i]);
-      }
-      
-
-      // Write the PP tree
-      double L = consensus_levels[k]*100;
-      cout<<" "<<L<<"-consensus-PP = "<<consensus2.write(true)<<std::endl;
-      //cout<<" "<<L<<"-consensus-PP2 = "<<consensus.write_with_bootstrap_fraction(bf,false)<<std::endl;
-
-      // Write the tree/mf tree
-      cout<<" "<<L<<"-consensus = "<<consensus.write(false)<<std::endl;
-      if (show_sub) {
-	for(int i=0;i<sub.size();i++)
-	  cout<<sub[i]<<endl;
-      }
-      cout<<endl<<endl;
-
-      k++;
-    }
+    write_consensus_trees(tree_dist, full_partitions, consensus_levels,false);
+    write_consensus_trees(tree_dist, full_partitions, consensus_levels_pp,true);
+    write_extended_consensus_trees(tree_dist, all_partitions, extended_consensus_levels);
   }
   catch (std::exception& e) {
     std::cerr<<"trees-consensus: Error! "<<e.what()<<endl;

@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2009 Benjamin Redelings
+   Copyright (C) 2009-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -16,6 +16,16 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+///
+/// \file   partition.H
+/// \brief  Provides routines to for handling splits: bi-partitions on trees.
+///
+/// In addition to implementing the class Partition, this file
+/// provides numerous other routines for handling partitions.
+///
+/// \author Benjamin Redelings
+/// 
 
 #ifndef PARTITION_H
 #define PARTITION_H
@@ -120,6 +130,7 @@ int which_branch(const SequenceTree& T, const Partition& p);
 std::ostream& operator<<(std::ostream& o, const Partition& P);
 
 bool informative(const Partition& p);
+bool informative(const boost::dynamic_bitset<>& p);
 bool valid(const Partition& p);
 
 /// load a collection of partition sets from a file
