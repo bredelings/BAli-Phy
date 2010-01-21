@@ -1104,11 +1104,10 @@ int main(int argc,char* argv[])
 
     set_parameters(P,args);
 
-    log_summary(out_cache,out_screen,out_both,P,args);
+    //------------- Set the branch prior type --------------//
+    if (args["prior-branch"].as<string>() == "Gamma") P.branch_prior_type = 1;
 
-    //-------------Create the Parameters object--------------//
-    if (args["prior-branch"].as<string>() == "Gamma")
-      P.branch_prior_type = 1;
+    log_summary(out_cache,out_screen,out_both,P,args);
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
