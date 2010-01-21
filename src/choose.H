@@ -117,11 +117,11 @@ inline int choose_MH(int i, const std::vector<F>& P)
 
     F Pr_k = prod * accept_k;
 
-    if (I == -1)
-      prod *= (1.0 - accept_k);
-
     sum += Pr_k;
     if (U <= sum) return o[k];
+
+    if (I == -1)
+      prod *= (1.0 - accept_k);
   }
 
   std::cerr<<" sum = "<<sum<<"   i = "<<i<<std::endl;
@@ -171,10 +171,10 @@ inline F choose_MH_P(int i, int j,const std::vector<F>& P)
 
     F Pr_k = prod * accept_k;
 
+    if (o[k] == j) return Pr_k;
+
     if (I == -1)
       prod *= (1.0 - accept_k);
-
-    if (o[k] == j) return Pr_k;
   }
 
   std::cerr<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
