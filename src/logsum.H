@@ -72,10 +72,12 @@ inline void loginc(double& x, double y)
 }
 
 inline double logdiff(double x, double y) {
-  assert(x > y);
+  assert(x >= y);
   double temp = y-x;
   if (temp < -NATS or y < log_limit)
     return x;
+  else if (x == y)
+    return log_0;
   else
     return (x + log1p(-exp(temp)));
 }
