@@ -325,7 +325,7 @@ my $subsample_string = "--sub-sample=$subsample";
 $subsample_string = "" if ($subsample == 1);
 
 if ($personality eq "bali-phy") {
-    print "\nSummarizing distribution of numerical parameters... ";
+    print "Summarizing distribution of numerical parameters...\n";
     if (! more_recent_than("Results/Report",$parameters_file)) {
 	`statreport $subsample_string --ignore=iter $max_arg $skip $parameters_file > Results/Report`;
     }
