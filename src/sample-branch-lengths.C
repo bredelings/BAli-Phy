@@ -136,7 +136,7 @@ void slice_sample_branch_length(Parameters& P,MoveStats& Stats,int b)
   //------------- Find new length --------------//
   
   double sigma = loadvalue(P.keys,"slice_branch_sigma",1.5);
-  // NOTE - it is OK to depend on L below.
+  // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
   double w = sigma*(P.branch_mean()+L);
   branch_length_slice_function logp(P,b);
   double L2 = slice_sample(L,logp,w,100);
