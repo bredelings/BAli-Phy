@@ -736,6 +736,7 @@ my %CI_low = ();
 my %CI_high = ();
 my %ACT = ();
 my %Ne = ();
+my %Burnin = ();
     
 if ("$parameters_file") 
 {
@@ -764,9 +765,10 @@ if ("$parameters_file")
 	    $CI_high{$var} = $4;
 	    $line = <REPORT>;
 	    
-	    $line =~ /t @ (.+)\s+Ne = ([^ ]+)/;
+	    $line =~ /t @ (.+)\s+Ne = ([^ ]+)\s+burnin = ([^ ].+)/;
 	    $ACT{$var} = $1;
 	    $Ne{$var} = $2;
+	    $Burnin{$var} = $3;
 	}
 	elsif ($line =~ /\s+(.+) = (.+)/) {
 	    $median{$1} = $2;
@@ -1062,7 +1064,7 @@ if ($#var_names != -1) {
     print INDEX "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
 
     print INDEX "<table>\n";
-    print INDEX "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th></tr>\n";
+    print INDEX "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th><th>burnin</th></tr>\n";
 }
     
 my $tne_string = `pickout -n Ne < Results/partitions.bs`;
@@ -1090,9 +1092,13 @@ for(my $i=1;$i <= $#var_names; $i++)
 	print INDEX "<td>($CI_low{$var},$CI_high{$var})</td>\n";
 	print INDEX "<td>$ACT{$var}</td>\n";
 	my $style = "";
+	$style = ' style="color:orange"' if ($Ne{$var} < 300);
 	$style = ' style="color:red"' if ($Ne{$var} < 100);
 	$style = ' style="color:red"' if ($Ne{$var} <= $min_Ne);
 	print INDEX "<td $style>$Ne{$var}</td>\n";
+	$style = "";
+	$style = ' style="color:red"' if ($Burnin{$var} eq "Not Converged!");
+	print INDEX "<td $style>$Burnin{$var}</td>\n";
 	print INDEX "<td><a href=\"$i.trace.png\">Trace</a></td>\n";
     }
     else {
