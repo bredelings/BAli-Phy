@@ -46,8 +46,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("align", value<string>(),"file with sequences and initial alignment")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("invariant",value<int>(),"print only sites where this site and <arg> neighbors are invariant.")
-    ("differences",value<int>()->default_value(0),"how many sequences may differ from the majority?")
+    ("differences",value<int>(),"how many sequences may differ from the majority?")
     ("avoid-gaps",value<int>()->default_value(3),"How far from a gap must a column be to be invariant?")
+    ("min-constraints",value<int>(),"Minimum # of constraints per column for a constraint to be emitted")
     ;
 
   // positional options
@@ -102,20 +103,53 @@ std::pair<vector<int>,vector<int> > find_major_character(const alignment& A,int 
     int max_letter = argmax(count);
     majority[c] = max_letter;
     
-    // NOTE! Major character is gap if there is more than 1 gap!
-    if (count[a.size()] > 1)
-      majority[c] = alphabet::gap;
-    else if (A.n_sequences() - count[max_letter] <= allowed_differences)
+    if (A.n_sequences() - count[max_letter] <= allowed_differences)
       safe[c] = 1;
+
+    if (max_letter == a.size()) {
+      majority[c] = alphabet::gap;
+      // Columns with majority gaps are not safe - we should probably get the second-highest letter
+      safe[c] = 0;
+    }
     
-    /*
-      if (safe[c] == 1) {
-      std::cerr<<"Column "<<c+1<<" is safe: "<<a.lookup(max_letter)<<"\n";
-      }
-    */
+    //    if (safe[c]) {
+    //      std::cerr<<"Column "<<c+1<<" is safe: "<<a.lookup(majority[c])<<"\n";
+    //    }
+
   }
   
   return std::pair<vector<int>,vector<int> >(majority,safe);
+}
+
+int n_characters_in_column(const ublas::matrix<int>& M,int c)
+{
+  int count = 0;
+  for(int s=0;s<M.size2();s++)
+    if (M(c,s) >= 0)
+      count++;
+  return count;
+}
+
+bool nearby_gap(const alignment& A, int c, int s, int w)
+{
+  if (w <=0) return false;
+
+  for(int i=c-w;i<=c+w;i++) {
+    if (i < 0) continue;
+    if (i >= A.length()) continue;
+    if (not A.character(i,s)) return true;
+  }
+  return false;
+}
+
+bool nearby_unsafe(const vector<int>& v, int c, int w)
+{
+  for(int i=c-w;i<=c+w;i++) {
+    if (i < 0) continue;
+    if (i >= v.size()) continue;
+    if (not v[i]) return true;
+  }
+  return false;
 }
 
 int main(int argc,char* argv[]) 
@@ -129,6 +163,7 @@ int main(int argc,char* argv[])
     alignment A = load_A(args);
 
     ublas::matrix<int> MA = M(A);
+    ublas::matrix<int> MA2 = MA;
 
     //------- Write the sequence names ------//
     for(int i=0;i<A.n_sequences();i++) {
@@ -143,7 +178,9 @@ int main(int argc,char* argv[])
 
 
     //------- Determine invariant sites -----//
-    int allowed_differences = args["differences"].as<int>();
+    int allowed_differences = (A.n_sequences()+3)/10;
+    if (args.count("differences"))
+      allowed_differences = args["differences"].as<int>();
     int avoid_gaps = args["avoid-gaps"].as<int>();
 
     std::pair<vector<int>,vector<int> > result = find_major_character(A,allowed_differences);
@@ -153,53 +190,57 @@ int main(int argc,char* argv[])
     int invariant = -1;
     vector<int> safe2 = safe;
 
-    if (args.count("invariant")) 
+    if (args.count("invariant"))
     {
       invariant = args["invariant"].as<int>();
 
-      for(int i=0;i<safe2.size();i++) 
+      for(int c=0;c<safe2.size();c++)
       {
-	bool ok = true;
-	if (not safe2[i]) continue;
+	if (not safe2[c]) continue;
 
-	// Unsafe if we are in 3 residues of a gap
-	for(int k=i-avoid_gaps;k<=i+avoid_gaps and ok;k++) 
-        {
-	  if (k < 0 or k >= A.length())
-	    ;
-	  else if (majority[k] == alphabet::gap)
-	    ok = false;
+	// since gap columns are unsafe, insertions make their neighboring columns unsafe, which is probably unfair.
+	if (nearby_unsafe(safe,c,invariant)) safe2[c] = 0;
+
+	// Solution to insertions: 
+	// Determine a majority next/prev column -- allow 
+
+	//count them as an unsafe character... 
+
+	// Don't issue constraints for letters that are non-majority, or near a gap
+	for(int s=0;s<A.n_sequences();s++) {
+	  if (A(c,s) != majority[c] or nearby_gap(A,c,s,avoid_gaps))
+	    MA2(c,s) = alphabet::gap;
 	}
 
-	// Unsafe if we are in @invariant characters of a gap or an unsafe column
-	for(int k=i-invariant;k<=i+invariant and ok;k++) 
-        {
-	  if (k < 0 or k >= A.length())
-	    ok = false;
-	  else if (majority[k] == alphabet::gap)
-	    ok = false;
-	  else if (not safe[k])
-	    ok = false;
-	}
-
-	if (not ok)
-	  safe2[i] = 0;
+	// We should perhaps check for the previous or next columns having the same value...
       }
 
     }
+
+    // Constraining less than 2 characters is not meaningful
+    int min_constraints = 2;
+    if (args.count("min-constraints"))
+      min_constraints = std::max(2,args["min-constraints"].as<int>());
+
+    vector<int> last_constrained(A.n_sequences(),-1);
+    vector<int> largest_block(A.n_sequences(),0);
 
     //------- Write the columns ------//
     for(int c=0;c<MA.size1();c++) 
     {
       if (invariant != -1 and not safe2[c]) continue;
 
+      if (invariant != -1 and n_characters_in_column(MA2,c) < min_constraints) continue;
+
       // write the indices
-      for(int i=0;i<MA.size2();i++) {
-	if (MA(c,i) == alphabet::gap or MA(c,i) == alphabet::unknown
-	    or (invariant != -1 and A(c,i) != majority[c]))
+      for(int i=0;i<MA2.size2();i++) {
+	if (MA2(c,i) == alphabet::gap or MA2(c,i) == alphabet::unknown)
 	  cout<<"-";
-	else
-	  cout<<MA(c,i);
+	else {
+	  largest_block[i] = std::max(largest_block[i], MA2(c,i)-last_constrained[i]);
+	  last_constrained[i] = MA2(c,i);
+	  cout<<MA2(c,i);
+	}
 	cout<<" ";
       } 
 
@@ -210,9 +251,27 @@ int main(int argc,char* argv[])
       cout<<c+1<<"   ";
 
       // write the letters
-      for(int i=0;i<MA.size2();i++)
-	cout<<a.lookup(A(c,i))<<" ";
+      for(int i=0;i<MA.size2();i++) {
+	if (MA(c,i) == MA2(c,i))
+	  cout<<a.lookup(A(c,i))<<" ";
+	else
+	  cout<<"["<<a.lookup(A(c,i))<<"] ";
+      }
       cout<<std::endl;
+    }
+
+    if (invariant != -1)
+    {
+      int L_orig = 0;
+      int L_new = 0;
+      for(int i=0;i<A.n_sequences();i++) {
+	int L1 = A.seqlength(i)+1;
+	int L2 = largest_block[i]+1;
+	cerr<<i<<":   "<<L1<<" -> "<<L2<<endl;
+	L_orig = std::max(L_orig,L1);
+	L_new = std::max(L_new,L2);
+      }
+      cerr<<"max:   "<<L_orig<<" -> "<<L_new<<endl;
     }
   }
   catch (std::exception& e) {
