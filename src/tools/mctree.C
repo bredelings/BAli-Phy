@@ -103,7 +103,7 @@ MC_tree::MC_tree(const vector<Partition>& p)
   T = get_mf_tree(names_, full);
   assert(full.size() == T.n_branches());
 
-  // Add the full partitions
+  // Add the full partitions - from the tree
   partitions.clear();
   for(int b=0;b<2*T.n_branches();b++) {
     partitions.push_back(partition_from_branch(T,b));
@@ -361,6 +361,12 @@ ostream& operator<<(ostream& o, const MC_tree& T)
 
 
 // FIXME - page="8.5,11" ?
+
+/// \brief Generate a graphviz DOT file for the multiconnected tree
+///
+/// \param T The multiconnected tree
+/// \param name The figure name
+///
 void draw_graph(const MC_tree& T,const string& name)
 {
   const int N = T.n_nodes();
@@ -422,6 +428,9 @@ void draw_graph(const MC_tree& T,const string& name)
 
 }
 
+/// \brief Load a multiconnected tree from file 'filename'
+///
+/// \param filename The name of the file
 MC_tree load_MC_tree(const std::string& filename)
 {
   //----------- Load Partitions ---------------//
@@ -493,6 +502,11 @@ bool partition_less_than(const Partition& p1,const Partition& p2)
     p2.group2.is_proper_subset_of(p1.group2);
 }
 
+/// \brief Check that splits p1 and p2 related in a valid way (pairwise)
+///
+/// \param p1 The first split
+/// \param p2 The second split
+///
 bool sub_conflict(Partition p1,Partition p2)
 {
   if (not p1.mask().intersects(p2.mask()))
@@ -620,6 +634,9 @@ std::pair<dynamic_bitset<>, int> solve_conflicts(const ublas::matrix<int>& confl
   return std::pair< dynamic_bitset<>,int>(survives,score);
 }
 
+/// \brief Find the largest subset of the given splits that contains no conflicts
+///
+/// \param partitions The collection of (possibly partial) splits
 vector<Partition> get_moveable_tree(vector<Partition> partitions)
 {
   if (not partitions.size())

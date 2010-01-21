@@ -96,12 +96,18 @@ public:
   // list of unique branches
   vector<int> branch_order;
 
+  /// return a score that is higher for a more resolved tree
   int score() const;
 
+  /// find the index of any partition that points to node n
   int branch_to_node(int n) const;
+  /// find the index of the given partition
   int find_branch(const Partition&) const;
+  /// find the degree of a node n
   int degree(int n) const;
+  /// check if node n is a leaf node
   bool is_leaf_node(int n) const;
+  /// find the name of the leaf node with taxon i
   int leaf(int i) const;
 
   const std::vector<std::string>& names() const {return names_;}
