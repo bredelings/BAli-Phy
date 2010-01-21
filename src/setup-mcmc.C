@@ -124,7 +124,8 @@ vector<int> parameters_with_extension(const Model& M, string name)
 /// \param sigma   A default proposal width, in case the user didn't specify one
 /// \param M       The group of moves to which to add the newly-created sub-move
 ///
-void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, MCMC::MoveAll& M)
+void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, 
+		 MCMC::MoveAll& M,double weight=1)
 {
   if (name.size() and name[name.size()-1] == '*')
   {
@@ -138,7 +139,7 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
     set_if_undef(P.keys, pname, sigma);
     Proposal2 move_mu(p, names, vector<string>(1,pname), P);
 
-    M.add(1, MCMC::MH_Move(move_mu,string("MH_sample_")+name));
+    M.add(weight, MCMC::MH_Move(move_mu,string("MH_sample_")+name));
   }
   else {
     vector<int> indices = parameters_with_extension(P,name);
@@ -146,7 +147,7 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
       if (not P.fixed(indices[i])) {
 	set_if_undef(P.keys, pname, sigma);
 	Proposal2 move_mu(p, P.parameter_name(indices[i]), vector<string>(1,pname), P);
-	M.add(1, MCMC::MH_Move(move_mu,string("MH_sample_")+P.parameter_name(indices[i])));
+	M.add(weight, MCMC::MH_Move(move_mu,string("MH_sample_")+P.parameter_name(indices[i])));
       }
   }
 }
@@ -167,7 +168,8 @@ void add_slice_moves(Parameters& P, const string& name,
 		     const string& pname, double W,
 		     bool lower_bound, double lower,
 		     bool upper_bound, double upper,
-		     MCMC::MoveAll& M)
+		     MCMC::MoveAll& M,
+		     double weight = 1)
 {
   vector<int> indices = parameters_with_extension(P,name);
   for(int i=0;i<indices.size();i++) 
@@ -178,7 +180,7 @@ void add_slice_moves(Parameters& P, const string& name,
     set_if_undef(P.keys, pname, W);
     W = P.keys[pname];
 
-    M.add(1, 
+    M.add(weight, 
 	  MCMC::Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
 			   indices[i],
 			   lower_bound,lower,upper_bound,upper,W)
@@ -205,7 +207,8 @@ void add_slice_moves(Parameters& P, const string& name,
 		     bool upper_bound, double upper,
 		     MCMC::MoveAll& M,
 		     double(&f1)(double),
-		     double(&f2)(double)
+		     double(&f2)(double),
+		     double weight = 1
 		     )
 {
   vector<int> indices = parameters_with_extension(P,name);
@@ -217,7 +220,7 @@ void add_slice_moves(Parameters& P, const string& name,
     set_if_undef(P.keys, pname, W);
     W = P.keys[pname];
 
-    M.add(1, 
+    M.add(weight, 
 	  MCMC::Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
 			   indices[i],
 			   lower_bound,lower,upper_bound,upper,W,f1,f2)
@@ -262,11 +265,11 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 		      );
 
   
-  add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, MH_moves);
-  add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves);
-  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves);
+  add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
 
-  add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, MH_moves);
+  add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, MH_moves, 10);
 
   return MH_moves;
 }
@@ -301,10 +304,10 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
 
   // imodel parameters
-  add_slice_moves(P, "delta",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
-  add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
+  add_slice_moves(P, "delta",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves, 10);
+  add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves, 10);
   add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
-		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
+		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon, 10);
 
   return slice_moves;
 }
