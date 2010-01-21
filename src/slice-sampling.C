@@ -451,6 +451,7 @@ std::pair<int,double> slice_sample_multi(vector<slice_function*>& g, double w, i
 
 double transform_epsilon(double lambda_E)
 {
+  assert(lambda_E < 0);
   double E_length = lambda_E - logdiff(0,lambda_E);
 
   return E_length;

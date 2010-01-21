@@ -396,7 +396,8 @@ void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
   if (upper_bound) logp.set_upper_bound(upper);
 
   double w = W;
-  double v2 = slice_sample(transform(v1),logp,w,100);
+  double tv2 = slice_sample(transform(v1),logp,w,100);
+  double v2 = inverse(tv2);
 
 #ifndef NDEBUG
   show_parameters(std::cerr,P);
