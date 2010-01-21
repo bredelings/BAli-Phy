@@ -1069,20 +1069,14 @@ Tree& Tree::operator=(const Tree& T)
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit
 
-bool is_digit(char c) {
-  if ('0' <= c and c <= '9')
-    return true;
-  else
-    return false;
-}
-
 // FIXME - don't we need to destroy the current tree?
-int Tree::parse_no_names(const string& line)
+int Tree::parse_and_discover_names(const string& line,vector<string>& names)
 {
   // destroy old tree structure
   if (nodes_.size()) TreeView(nodes_[0]).destroy();
 
   vector< vector<BranchNode*> > tree_stack(1);
+  names.clear();
 
   const string delimiters = "(),:;";
   const string whitespace = "\t\n ";
@@ -1121,11 +1115,8 @@ int Tree::parse_no_names(const string& line)
     }
     else if (prev == "(" or prev == "," or prev == "") 
     {
-      if (not is_digit(word[0]))
-	throw myexception()<<"Leaf name '"<<word<<"' is not an integer!\n";
-      int leaf_index = convertTo<int>(word)-1;
-      if (leaf_index < 0)
-	throw myexception()<<"Leaf index '"<<word<<"' is negative: not allowed!";
+      int leaf_index = names.size();
+      names.push_back(word);
 
       BranchNode* BN = new BranchNode(-1,leaf_index,-1);
       BN->out = BN->next = BN->prev = BN;
@@ -1155,9 +1146,16 @@ int Tree::parse_no_names(const string& line)
   return root_->node;
 }
 
-// FIXME - don't we need to destroy the current tree?
 int Tree::parse_with_names(const string& line,const vector<string>& names)
 {
+  return parse_with_names_or_numbers(line,names,false);
+}
+
+int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& names,bool allow_numbers)
+{
+  if (names.size() == 0 and not allow_numbers)
+    throw myexception()<<"Tree::parse_with_names_or_numbers( ): must supply leaf names if integers are not allowed.";
+
   // destroy old tree structure
   if (nodes_.size()) TreeView(nodes_[0]).destroy();
 
@@ -1201,14 +1199,17 @@ int Tree::parse_with_names(const string& line,const vector<string>& names)
     else if (prev == "(" or prev == "," or prev == "") 
     {
       int leaf_index = -1;
-      if (is_digit(word[0])) {
+      if (allow_numbers and can_be_converted_to<int>(word,leaf_index)) {
 	leaf_index = convertTo<int>(word)-1;
 	if (leaf_index < 0)
 	  throw myexception()<<"Leaf index '"<<word<<"' is negative: not allowed!";
 	if (leaf_index >= names.size())
 	  throw myexception()<<"Leaf index '"<<word<<"' is too high: the taxon set contains only "<<names.size()<<" taxa.";
       }
-      else {
+      else if (names.size() == 0)
+	  throw myexception()<<"Leaf name '"<<word<<"' is not an integer!";
+      else 
+      {
 	leaf_index = find_index(names,word);
 	if (leaf_index == -1)
 	  throw myexception()<<"Leaf name '"<<word<<"' is not in the specified taxon set!";
@@ -1404,22 +1405,27 @@ RootedTree& RootedTree::operator=(const RootedTree& RT) {
   return *this;
 }
 
-int RootedTree::parse_no_names(const string& s)
+int RootedTree::parse_and_discover_names(const string& s,vector<string>& names)
 {
-  int r = Tree::parse_no_names(s);
+  int r = Tree::parse_and_discover_names(s, names);
 
   root_ = nodes_[r];
 
   return r;
 }
 
-int RootedTree::parse_with_names(const string& s,const vector<string>& names)
+int RootedTree::parse_with_names_or_numbers(const string& s,const vector<string>& names, bool allow_numbers)
 {
-  int r = Tree::parse_with_names(s,names);
+  int r = Tree::parse_with_names_or_numbers(s, names, allow_numbers);
 
   root_ = nodes_[r];
 
   return r;
+}
+
+int RootedTree::parse_with_names(const string& line,const vector<string>& names)
+{
+  return parse_with_names_or_numbers(line,names,false);
 }
 
 string write(const vector<string>& names, const_branchview b, bool print_lengths)

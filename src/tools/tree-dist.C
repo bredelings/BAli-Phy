@@ -293,10 +293,9 @@ namespace trees_format
       NEXUS_skip_ws(pos,line);
       
       string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos));
-      if (leaf_names.size())
-	r = T.parse_with_names(t, leaf_names);
-      else
-	r = T.parse_no_names(t);
+
+      // if we have no leaf names, for some reason, numbers will be allowed.
+      r = T.parse_with_names_or_numbers(t, leaf_names);
     }
     catch (std::exception& e) {
       cerr<<" Error! "<<e.what()<<endl;

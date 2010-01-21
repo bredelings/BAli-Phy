@@ -27,6 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <algorithm>
 #include "myexception.H"
 #include <map>
+#include <typeinfo>
 
 #ifdef __GXX_EXPERIMENTAL_CXX0X__
 #define foreach(a,b) for(auto a=(b).begin();a != (b).end();a++)
@@ -38,10 +39,22 @@ along with BAli-Phy; see the file COPYING.  If not see
 std::istream& getline_handle_dos(std::istream&,std::string&);
 
 template <class T>
-T convertTo(const std::string& s) { 
+bool can_be_converted_to(const std::string& s, T& t) 
+{ 
   std::istringstream i(s);
-  T t;
   i>>t;
+  if (i and i.eof())
+    return true;
+  else
+    return false;
+}
+
+template <class T>
+T convertTo(const std::string& s) 
+{ 
+  T t;
+  if (not can_be_converted_to<T>(s,t))
+    throw myexception()<<"String '"<<s<<"' is not a "<<typeid(T).name();
   return t;
 }
 

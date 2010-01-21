@@ -315,10 +315,12 @@ public:
   /// Create an identical tree that does not share memory with the original
   Tree& operator=(const Tree& T); 
 
-  /// Parse and load the Newick format string 's', where node names are numerical starting at 1
-  virtual int parse_no_names(const std::string& s);
+  /// Parse and load the Newick format string 's', discovering and reporting leaf names in 'names'
+  virtual int parse_and_discover_names(const std::string& s,std::vector<std::string>& names);
+  /// Parse and load the Newick format string 's', where node names are given in 'names', or numerical starting at 1
+  virtual int parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names, bool allow_numbers=true);
   /// Parse and load the Newick format string 's', where node names are given in 'names'
-  virtual int parse_with_names(const std::string& s,const std::vector<std::string>& names);
+  virtual int parse_with_names(const std::string& s, const std::vector<std::string>& names);
 
   /// Create an empty tree
   Tree():n_leaves_(0) {}
@@ -378,8 +380,9 @@ public:
   RootedTree& operator=(const RootedTree&);
 
   /// load this tree from the string s
-  virtual int parse_no_names(const std::string& s);
-  virtual int parse_with_names(const std::string& s,const std::vector<std::string>& names);
+  virtual int parse_and_discover_names(const std::string& s,std::vector<std::string>& names);
+  virtual int parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names, bool allow_numbers=true);
+  virtual int parse_with_names(const std::string& s, const std::vector<std::string>& names);
 
   /// Create an empty tree with a NULL root
   RootedTree():root_(NULL) {}
