@@ -268,15 +268,22 @@ void var_stats::calculate(double pseudocount, double confidence)
   O = odds(n, N, pseudocount);
 
   //---------- Confidence Interval -------------//
-  CI = statistics::confidence_interval(distributions, confidence);
-  log_CI.first = log10(odds(CI.first));
-  log_CI.second = log10(odds(CI.second));
+  if (distributions.size()) {
+    CI = statistics::confidence_interval(distributions, confidence);
+    log_CI.first = log10(odds(CI.first));
+    log_CI.second = log10(odds(CI.second));
 
+    Var_bootstrap = statistics::Var(distributions);
+
+    stddev_bootstrap = sqrt( Var_bootstrap );
+  }
   
   //--------- LOD distributions ---------------//
-  LOD_distributions.resize(distributions.size());
-  for(int j=0;j<LOD_distributions.size();j++)
-    LOD_distributions[j] = log10(odds(distributions[j]));
+  if (distributions.size()) {
+    LOD_distributions.resize(distributions.size());
+    for(int j=0;j<LOD_distributions.size();j++)
+      LOD_distributions[j] = log10(odds(distributions[j]));
+  }
 
   //------- Numbers of Constant blocks ---------//
   nchanges = changes(results,true) + changes(results,false);
@@ -286,10 +293,6 @@ void var_stats::calculate(double pseudocount, double confidence)
   //----------------- Variances ---------------//
   Var_perfect = P*(1.0-P)/N;
 
-  Var_bootstrap = statistics::Var(distributions);
-  
-  stddev_bootstrap = sqrt( Var_bootstrap );
-  
   // Ne = P*(1.0-P)/Var_bootstrap;
   
   //---------- Autocorrelation times ----------//
@@ -306,7 +309,7 @@ void var_stats::calculate(double pseudocount, double confidence)
 }
 
 bool report_sample(std::ostream& o,
-		   unsigned blocksize,
+		   bool bootstrapped,
 		   const tree_sample_collection& tree_dists,
 		   vector< vector< vector< var_stats > > >& VS,
 		   int p,
@@ -334,7 +337,7 @@ bool report_sample(std::ostream& o,
     }
 
   bool different = (dx <= 0) or tree_dists.n_dists()==1;
-  if (not different) {
+  if (bootstrapped and not different) {
 
     for(int i=0;i<tree_dists.n_dists();i++)
       for(int j=0;j<i;j++) {
@@ -349,7 +352,7 @@ bool report_sample(std::ostream& o,
   {
     if (g > 0) o<<endl;
   
-    int n_dists = tree_dists.n_samples(g);
+    // int n_dists = tree_dists.n_samples(g);
     for(int d=0;d<D[g];d++)
     {
       const var_stats& vs = VS[g][d][p];
@@ -358,7 +361,12 @@ bool report_sample(std::ostream& o,
 	o<<"-"<<d+1;
       else if (any_mixing)
 	o<<"  ";
-      o<<" = "<<vs.P<<"  in  ("<<vs.CI.first<<","<<vs.CI.second<<")        (1="<<vs.n<<"  0="<<vs.N-vs.n<<")  ["<<vs.nchanges_ave;
+      o<<" = "<<vs.P;
+
+      // report confidence interval for the PP if we bootstrapped
+      if (bootstrapped) o<<"  in  ("<<vs.CI.first<<","<<vs.CI.second<<")";
+
+      o<<"       (1="<<vs.n<<"  0="<<vs.N-vs.n<<")  ["<<vs.nchanges_ave;
 
       if (vs.nchanges <= 4) {
 	o<<" !!!";
@@ -370,7 +378,7 @@ bool report_sample(std::ostream& o,
 	o<<" !";
       }
       o<<"]";
-      if (vs.nchanges_ave > 6)
+      if (vs.nchanges_ave > 6 and bootstrapped)
 	o<<"     sigma = "<<vs.stddev_bootstrap;
       o<<endl;
     }
@@ -394,13 +402,17 @@ bool report_sample(std::ostream& o,
 	o<<"-"<<d+1;
       else if (any_mixing)
 	o<<"  ";
-      o<<" = "<<log10(vs.O)<<"  in  ("<<vs.log_CI.first<<","<<vs.log_CI.second<<")";
+      o<<" = "<<log10(vs.O);
+
+      if (bootstrapped) 
+	o<<"  in  ("<<vs.log_CI.first<<","<<vs.log_CI.second<<")";
+
       if (vs.nchanges_ave > 6) {
       //      o<<"    [Var]x = "<<vs.Var_bootstrap/vs.Var_perfect<<"          Ne = "<<vs.Ne<<endl;
 	o<<"       ACT = "<<vs.tau<<"          Ne = "<<vs.N/vs.tau;
       }
       o<<endl;
-      if (d < D[g]-1) {
+      if (d < D[g]-1 and bootstrapped) {
 	sum_CI[g] += std::abs(vs.CI.second - vs.CI.first);
 	sum_tau[g] += vs.tau;
       }
@@ -415,7 +427,7 @@ bool report_sample(std::ostream& o,
     if (n_dists > 1) {
       const var_stats& vs = VS[g][n_dists][p];
       o<<"  RNe"<<g+1<<" = "<<vs.tau/(sum_tau[g]/n_dists)<<endl;
-      o<<"  RCI"<<g+1<<" = "<<std::abs(vs.CI.second - vs.CI.first)/(sum_CI[g]/n_dists)<<endl;
+      if (bootstrapped) o<<"  RCI"<<g+1<<" = "<<std::abs(vs.CI.second - vs.CI.first)/(sum_CI[g]/n_dists)<<endl;
     }
   }
   return true; 
@@ -469,6 +481,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   bootstrap.add_options()
     ("samples",value<unsigned>()->default_value(10000U),"number of bootstrap samples")
     ("pseudocount",value<unsigned>()->default_value(0U),"extra 0/1 to add to bootstrap samples")
+    ("bootstrap","Do block bootstrapping to get a CI on the posterior probabilities")
     ("blocksize",value<unsigned>(),"block size to use in block boostrap")
     ("seed", value<unsigned long>(),"random seed")
     ;
@@ -656,6 +669,7 @@ int main(int argc,char* argv[])
 
     if (args.count("blocksize"))
       blocksize = args["blocksize"].as<unsigned>();
+    bool bootstrapped = (args.count("bootstrap") > 0);
 
     cout<<"# [ seed = "<<seed<<"    pseudocount = "<<pseudocount<<"    blocksize = "<<blocksize<<" ]"<<endl<<endl;
 
@@ -761,6 +775,7 @@ int main(int argc,char* argv[])
 
     const unsigned n_samples = args["samples"].as<unsigned>();
       
+    if (bootstrapped)
     for(int g=0;g<tree_dists.n_dists();g++)
       for(int d=0;d<D[g];d++) 
       {
@@ -776,14 +791,13 @@ int main(int argc,char* argv[])
 	}
       }
 
-
     //------- Print out support for each partition --------//
     cout<<"Support for the different predicates: \n\n";
     for(int p=0;p<partitions.size();p++) 
     {
       std::ostringstream report;
 
-      bool show = report_sample(report, blocksize, tree_dists, VS, p, pseudocount, confidence, compare_dx);
+      bool show = report_sample(report, bootstrapped, tree_dists, VS, p, pseudocount, confidence, compare_dx);
 
       /*
       /// Check if our counts match the ones calculated the hard way.
