@@ -781,7 +781,7 @@ int main(int argc,char* argv[])
       double o = odds(n,N,1);
 
       cout<<"MAP-"<<i<<" = "<<t<<endl;
-      cout<<"   PP = "<<PP<<"       LOD = "<<log10(o)<<endl;
+      cout<<"   PP = "<<PP<<"       LOD = "<<log10(o)<<"     (count = "<<n<<")\n";
       cout<<"\n";
     }
 
