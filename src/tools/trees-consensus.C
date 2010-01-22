@@ -755,7 +755,20 @@ int main(int argc,char* argv[])
     //------  Topologies to analyze -----//
     vector<string> topologies;
 
-    cout<<"# n_trees = "<<tree_dist.size()<<"   n_topologies = "<<topology_counts.size()<<endl;
+    const int L  = tree_dist.names().size();
+    const int B = L-3;
+
+    // # of trees read in
+    cout<<"# n_trees = "<<tree_dist.size();
+    // # of distinct topologies
+    cout<<"   n_topologies = "<<topology_counts.size();
+    // # of leaves
+    cout<<"   n_splits/(Leaves-3) = "<<double(full_partitions.size())/(tree_dist.names().size()-3)<<endl;
+    // # of distinct splits
+    cout<<"# n_splits = "<<full_partitions.size();
+    // # of leaves
+    cout<<"   Leaves = "<<tree_dist.names().size()<<endl;
+
     cout<<"\nTopology support: \n\n";
     for(int i=0;i < args["map-trees"].as<int>() ;i++) 
     {
