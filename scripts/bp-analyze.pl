@@ -325,7 +325,7 @@ my $subsample_string = "--sub-sample=$subsample";
 $subsample_string = "" if ($subsample == 1);
 
 if ($personality eq "bali-phy") {
-    print "Summarizing distribution of numerical parameters...\n";
+    print "Summarizing distribution of numerical parameters...";
     if (! more_recent_than("Results/Report",$parameters_file)) {
 	`statreport $subsample_string --ignore=iter $max_arg $skip $parameters_file > Results/Report`;
     }
@@ -359,7 +359,7 @@ my $consensus_arg = "$consensus_no_pp_arg $consensus_pp_arg $e_consensus_arg";
 my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
 
-print "Summarizing topology distribution ... ";
+print "\nSummarizing topology distribution ... ";
 if (! more_recent_than("Results/consensus",$trees_file)) {
     my $sub_string = "--sub-partitions";
     $sub_string = "" if (!$sub_partitions);
