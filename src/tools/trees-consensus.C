@@ -400,6 +400,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   reporting.add_options()
     ("ignore", value<string>(),"comma-separated list of taxa to ignore in partitions")
     ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file")
+    ("map-tree",value<string>(),"Write out the map tree to the specified file")
     ("min-support",value<double>()->default_value(0.25),"Only examine partitions w/ PP more than this\n")
     ("consensus",value<string>(),"Report consensus trees at these comma-separated levels in [0.5, 1.0]")
     ("consensus-PP",value<string>(),"Report consensus trees with Posterior Probabilities at these comma-separated levels in [0.5, 1.0]")
@@ -533,6 +534,37 @@ map<dynamic_bitset<>, count_and_length> select_splits(const map<dynamic_bitset<>
   return some;
 }
 
+void get_branch_lengths_and_PP(SequenceTree& T,vector<double>& PP,
+			       const map<dynamic_bitset<>,count_and_length>& partitions, unsigned N)
+{
+  typedef const map<dynamic_bitset<>,count_and_length> container_t;
+
+  // set branch lengths and PP on the consensus tree
+  PP.resize(T.n_branches());
+
+  for(int b=0;b<T.n_branches();b++) 
+  {
+    dynamic_bitset<> partition = branch_partition(T,b);
+    if (not partition[0]) partition.flip();
+    container_t::const_iterator record = partitions.find(partition);
+    assert(record != partitions.end());
+    double L = record->second.length;
+    unsigned count = record->second.count;
+    T.branch(b).set_length(L);
+    if (informative(partition))
+      PP[b] = double(count)/N;
+    else
+      PP[b] = -1;
+  }
+}
+
+void get_branch_lengths(SequenceTree& T,
+			const map<dynamic_bitset<>,count_and_length>& partitions, unsigned N)
+{
+  vector<double> v;
+  get_branch_lengths_and_PP(T, v, partitions, N);
+}
+
 /// \brief Write out standard majority consensus trees of various support levels
 ///
 /// \param tree_dist The sampled trees
@@ -562,7 +594,7 @@ void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitse
     }
     ostream& output = *( (file)?file:&cout );
 
-    container_t partitions = select_splits(full_partitions, N*consensus_levels[k].first);
+    container_t partitions = select_splits(c50_partitions, N*consensus_levels[k].first);
 
     // construct the consensus topology
     SequenceTree consensus = star_tree(tree_dist.names());
@@ -575,21 +607,8 @@ void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitse
     }
 
     // set branch lengths and PP on the consensus tree
-    vector<double> PP(consensus.n_branches(),1.0);
-    for(int b=0;b<consensus.n_branches();b++) 
-    {
-      dynamic_bitset<> partition = branch_partition(consensus,b);
-      if (not partition[0]) partition.flip();
-      container_t::const_iterator record = partitions.find(partition);
-      assert(record != partitions.end());
-      double L = record->second.length;
-      unsigned count = record->second.count;
-      consensus.branch(b).set_length(L);
-      if (informative(partition))
-	PP[b] = double(count)/N;
-      else
-	PP[b] = -1;
-    }
+    vector<double> PP;
+    get_branch_lengths_and_PP(consensus, PP, partitions, N);
 
     // write out the consensus tree
     output.unsetf(ios::fixed | ios::showpoint);
@@ -614,6 +633,57 @@ void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitse
 ///
 void write_extended_consensus_trees(const tree_sample& tree_dist, const vector<pair<Partition,unsigned> >& all_partitions, 
 				    const vector<pair<double, string> >& consensus_levels)
+{
+  unsigned N = tree_dist.size();
+
+  for(int k=0;k < consensus_levels.size();k++) 
+  {
+    const string& filename = consensus_levels[k].second;
+
+    ofstream * file=0;
+    if (filename != "-") {
+      file = new ofstream(filename.c_str());
+      ostream* output = file;
+      if (!*output)
+	throw myexception()<<"Can't open file '"<<filename<<"' for writing.";
+    }
+    ostream& output = *( (file)?file:&cout );
+
+    vector<Partition> all  = get_Ml_partitions(all_partitions,consensus_levels[k].first ,N);
+    vector<Partition> sub;
+    vector<Partition> full;
+    for(int i=0;i<all.size();i++)
+      if (all[i].full())
+	full.push_back(all[i]);
+      else
+	sub.push_back(all[i]);
+
+    // the raw tree
+    SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
+
+    output.unsetf(ios::fixed | ios::showpoint);
+	
+    // Write the tree/mf tree
+    output<<consensus.write(false)<<std::endl;
+    for(int i=0;i<sub.size();i++)
+      output<<sub[i]<<endl;
+
+    if (file) {
+      file->close();
+      delete file;
+    }
+  }
+}
+
+/// \brief Write out extended majority consensus trees of various support levels (with branch lengths)
+///
+/// \param tree_dist The sampled trees
+/// \param full_partitions The count and average lengths of each split
+/// \param consensus_levels The support levels and the output file name for each one
+/// \param with_PP Should the output trees contains Posterior Probabilities in addition to branch lengths?
+///
+void write_extended_consensus_trees_with_lengths(const tree_sample& tree_dist, const vector<pair<Partition,unsigned> >& all_partitions, 
+						 const vector<pair<double, string> >& consensus_levels)
 {
   unsigned N = tree_dist.size();
 
@@ -763,11 +833,11 @@ int main(int argc,char* argv[])
     // # of distinct topologies
     cout<<"   n_topologies = "<<topology_counts.size();
     // # of leaves
-    cout<<"   n_splits/(Leaves-3) = "<<double(full_partitions.size())/(tree_dist.names().size()-3)<<endl;
+    cout<<"   n_splits/(Leaves-3) = "<<double(full_partitions.size())/(L-3)<<endl;
     // # of distinct splits
     cout<<"# n_splits = "<<full_partitions.size();
     // # of leaves
-    cout<<"   Leaves = "<<tree_dist.names().size()<<endl;
+    cout<<"   Leaves = "<<L<<endl;
 
     cout<<"\nTopology support: \n\n";
     for(int i=0;i < args["map-trees"].as<int>() ;i++) 
@@ -783,6 +853,28 @@ int main(int argc,char* argv[])
       cout<<"MAP-"<<i<<" = "<<t<<endl;
       cout<<"   PP = "<<PP<<"       LOD = "<<log10(o)<<"     (count = "<<n<<")\n";
       cout<<"\n";
+    }
+    // write out the map tree
+    if (args.count("map-tree")) {
+      string filename = args["map-tree"].as<string>();
+
+      ofstream * file=0;
+      if (filename != "-") {
+	file = new ofstream(filename.c_str());
+	ostream* output = file;
+	if (!*output)
+	  throw myexception()<<"Can't open file '"<<filename<<"' for writing.";
+      }
+      ostream& output = *( (file)?file:&cout );
+
+      SequenceTree map_tree = tree_dist.T(which_topology[order[0]]);
+      get_branch_lengths(map_tree, full_partitions, N);
+      output<<map_tree<<endl;
+
+      if (file) {
+	file->close();
+	delete file;
+      }
     }
 
     

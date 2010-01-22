@@ -369,13 +369,13 @@ if (! more_recent_than("Results/consensus",$trees_file)) {
     my $select_trees_arg = "$max_arg $skip $subsample_string $prune_arg";
     my $levels_arg = "--support-levels=Results/c-levels.plot";
     $levels_arg = "$levels_arg --extended-support-levels=Results/extended-c-levels.plot" if ($sub_partitions);
-    `trees-consensus $trees_file $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg > Results/consensus`;
+    `trees-consensus $trees_file $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.tree > Results/consensus`;
 }
 print "done.\n";
 
 # 2. compute consensus trees
 
-print " Calculating branch lengths for consensus trees:\n   ";
+print " Drawing MC trees:\n   ";
 for my $cvalue (@tree_consensus_values)
 {
     my $value = $cvalue*100;
@@ -405,25 +405,10 @@ for my $cvalue (@tree_consensus_values)
 #    `head -n1 Results/$tree.ltree > Results/$tree.tree`;
 #    }
 }
-print "done.\n";
-
-# 3. compute MAP tree
-
-if (! more_recent_than("Results/MAP.topology","Results/consensus")) {
-    `pickout MAP-0 -n < Results/consensus > Results/MAP.topology`;
-}
-print " Calculating branch lengths for MAP tree... ";
-if (! more_recent_than("Results/MAP.ltree",$trees_file)) {
-    my $prune_arg = "";
-    $prune_arg = "--prune $prune" if defined($prune);
-    `tree-mean-lengths Results/MAP.topology $prune_arg --safe $max_arg $skip $subsample_string < $trees_file > Results/MAP.ltree`;
-}
-if (! more_recent_than("Results/MAP.tree","Results/MAP.ltree")) {
-    `head -n1 Results/MAP.ltree > Results/MAP.tree`;
-}
 push @trees,"MAP";
 $tree_name{"MAP"} = "MAP";
 print "done.\n";
+
 
 # 4. compute images
 print " Drawing trees ... ";
