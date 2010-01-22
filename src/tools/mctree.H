@@ -73,6 +73,8 @@ struct MC_tree
 
   std::vector<int> graph_node_to_tree_node_;
 
+  std::vector<int> map_graph_nodes_to_tree_nodes();
+
 public:
   SequenceTree T;
 

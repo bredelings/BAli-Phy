@@ -25,6 +25,70 @@ using namespace std;
 
 using boost::dynamic_bitset;
 
+vector<int> MC_tree::map_graph_nodes_to_tree_nodes()
+{
+  //---------------------- map graph nodes to tree nodes ----------------//
+  vector<int> graph_node_to_tree_node_mapping(C,-1);
+
+  // first label nodes corresponding to full splits in the tree
+  for(int i=0;i<partitions.size();i++) 
+  {
+    int graph_node = mapping[i];
+    if (graph_node_to_tree_node_mapping[graph_node] != -1) continue;
+
+    // find which branch of the tree, if any, this partition corresponds to.
+    int b = which_branch(T,partitions[i]);
+    if (b == -1) continue;
+    
+    int tree_node = T.directed_branch(b).target();
+    graph_node_to_tree_node_mapping[graph_node] = tree_node;
+  }
+
+  // then propagate labels to cover partial splits
+  bool fully_labelled = true;
+  for(int i=0;i<partitions.size();i++)
+  {
+    fully_labelled = true;
+    for(int i=0;i<partitions.size();i++) 
+    {
+      int graph_node1 = mapping[i];
+      int graph_node2 = mapping[reverse(i)];
+
+      // For partial splits, propagate the node name from the other end of the branch
+      if (graph_node_to_tree_node_mapping[graph_node2] == -1) {
+	graph_node_to_tree_node_mapping[graph_node2] = graph_node_to_tree_node_mapping[graph_node1];
+	fully_labelled = false;
+      }
+
+      // For full or partial splits, propagate our node name onto nodes we wander over
+      if (directly_wanders[i] and graph_node_to_tree_node_mapping[graph_node1] != -1) {
+	for(int j=0;j<partitions.size();j++) 
+	  if (directly_wanders_over(i,j)) {
+	    int graph_node3 = mapping[j];
+	    int graph_node4 = mapping[reverse(j)];
+	    graph_node_to_tree_node_mapping[graph_node3] = graph_node_to_tree_node_mapping[graph_node1];
+	    graph_node_to_tree_node_mapping[graph_node4] = graph_node_to_tree_node_mapping[graph_node1];
+	  }
+      }
+
+      // check: branch endpoints should have the same names if and only if the branches have a full split
+      if (graph_node_to_tree_node_mapping[graph_node1] != -1 and
+	  graph_node_to_tree_node_mapping[graph_node2] != -1)
+      {
+	if (partitions[i].full())
+	  assert(graph_node_to_tree_node_mapping[graph_node1] != graph_node_to_tree_node_mapping[graph_node2]);
+	else
+	  assert(graph_node_to_tree_node_mapping[graph_node1] == graph_node_to_tree_node_mapping[graph_node2]);
+      }
+    }
+    if (fully_labelled) break;
+  }
+  if (!fully_labelled) throw myexception()<<"Mapping tree nodes to graph nodes failed for multiconnected tree.";
+
+  return graph_node_to_tree_node_mapping;
+}
+
+
 // Actually, this assumes that connected-ness is a clique relation.
 // This function doesn't find cliques in a general connectedness matrix.
 
@@ -240,44 +304,8 @@ MC_tree::MC_tree(const vector<Partition>& p)
       if (connected(i,j)==2)
 	edges.push_back(mc_tree_edge(i,j,2,-1));
 
-  // map graph nodes to tree nodes
-  graph_node_to_tree_node_ = vector<int>(C,-1);
-  for(int i=0;i<partitions.size();i++) 
-  {
-    int graph_node = mapping[i];
-    if (graph_node_to_tree_node_[graph_node] != -1) continue;
-
-    // find which branch of the tree, if any, this partition corresponds to.
-    int b = which_branch(T,partitions[i]);
-    if (b == -1) continue;
-    
-    int tree_node = T.directed_branch(b).target();
-    graph_node_to_tree_node_[graph_node] = tree_node;
-  }
-
-  while (1) 
-  {
-    bool done = true;
-    for(int i=0;i<partitions.size();i++) 
-    {
-      int graph_node1 = mapping[i];
-      int graph_node2 = mapping[reverse(i)];
-      if (graph_node_to_tree_node_[graph_node2] == -1) {
-	graph_node_to_tree_node_[graph_node2] = graph_node_to_tree_node_[graph_node1];
-	done = false;
-      }
-      // some checks
-      if (graph_node_to_tree_node_[graph_node1] != -1 and
-	  graph_node_to_tree_node_[graph_node2] != -1)
-      {
-	if (partitions[i].full())
-	  assert(graph_node_to_tree_node_[graph_node1] != graph_node_to_tree_node_[graph_node2]);
-	else
-	  assert(graph_node_to_tree_node_[graph_node1] == graph_node_to_tree_node_[graph_node2]);
-      }
-    }
-    if (done) break;
-  }
+  //---------------------- map graph nodes to tree nodes ----------------//
+  graph_node_to_tree_node_ = map_graph_nodes_to_tree_nodes();
 }
 
 int MC_tree::branch_to_node(int n) const
