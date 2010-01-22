@@ -216,6 +216,7 @@ namespace statistics {
     vector<double> rho(max);
 
     // compute each autocorrelation rho[k]
+    double limit = 0.01/N;
     for(int k=0;k<max;k++) 
     {
       double total = 0;
@@ -224,7 +225,7 @@ namespace statistics {
 
       rho[k] = total/(N-k);
 
-      if (rho[k] < 0.0 and k>0) {
+      if (rho[k] < limit and k>0) {
 	rho.resize(k);
 	break;
       }
@@ -254,6 +255,7 @@ namespace statistics {
     vector<double> rho(max);
 
     // compute each autocorrelation rho[k]
+    double limit = 0.01/N;
     for(int k=0;k<max;k++) 
     {
       double total = 0;
@@ -262,7 +264,7 @@ namespace statistics {
 
       rho[k] = total/(N-k);
 
-      if (rho[k] < 0.0 and k>0) {
+      if (rho[k] < limit and k>0) {
 	rho.resize(k);
 	break;
       }
