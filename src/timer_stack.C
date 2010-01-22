@@ -136,6 +136,7 @@ void timer_stack::push_timer(const string& s)
 
 void timer_stack::pop_timer()
 {
+  if (name_stack.empty()) throw myexception()<<"Trying to remove a non-existent timer!";
   time_point_t end = total_cpu_time();
   time_point_t start = start_time_stack.back();
 

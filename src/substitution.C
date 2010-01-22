@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include <valarray>
 #include <vector>
+#include "timer_stack.H"
 
 #ifdef NDEBUG
 #define IF_DEBUG(x)
@@ -215,6 +216,7 @@ namespace substitution {
 			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
+    default_timer_stack.push_timer("substitution::calc_root");
 
     assert(index.size2() == rb.size());
 
@@ -307,6 +309,7 @@ namespace substitution {
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
 
+    default_timer_stack.pop_timer();
     return total;
   }
 
@@ -354,6 +357,7 @@ namespace substitution {
 			const MatCache& transition_P,const MultiModel& MModel)
   {
     total_peel_leaf_branches++;
+    default_timer_stack.push_timer("substitution::peel_leaf_branch");
 
     const alphabet& a = A.get_alphabet();
 
@@ -395,6 +399,7 @@ namespace substitution {
       else
 	element_assign(R,1);
     }
+    default_timer_stack.pop_timer();
   }
 
   void FrequencyMatrix(Matrix& F, const MultiModel& MModel) 
@@ -414,6 +419,7 @@ namespace substitution {
 			    const MultiModel& MModel)
   {
     total_peel_leaf_branches++;
+    default_timer_stack.push_timer("substitution::peel_leaf_branch");
 
     //    std::cerr<<"got here! (leaf)"<<endl;
 
@@ -481,6 +487,7 @@ namespace substitution {
       else
 	element_assign(R,1);
     }
+    default_timer_stack.pop_timer();
   }
 
   void peel_leaf_branch_modulated(int b0,Likelihood_Cache& cache, const alignment& A, 
@@ -488,6 +495,7 @@ namespace substitution {
 				  const MatCache& transition_P,const MultiModel& MModel)
   {
     total_peel_leaf_branches++;
+    default_timer_stack.push_timer("substitution::peel_leaf_branch");
 
     const alphabet& a = A.get_alphabet();
 
@@ -530,6 +538,7 @@ namespace substitution {
       else
 	element_assign(R,1);
     }
+    default_timer_stack.pop_timer();
   }
 
 
@@ -537,6 +546,7 @@ namespace substitution {
 			    const MatCache& transition_P,const MultiModel& IF_DEBUG(MModel))
   {
     total_peel_internal_branches++;
+    default_timer_stack.push_timer("substitution::peel_internal_branch");
 
     // find the names of the (two) branches behind b0
     vector<int> b;
@@ -598,6 +608,7 @@ namespace substitution {
 	}
       }
     }
+    default_timer_stack.pop_timer();
   }
 
   void peel_internal_branch_F81(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
@@ -605,6 +616,7 @@ namespace substitution {
   {
     //    std::cerr<<"got here! (internal)"<<endl;
     total_peel_internal_branches++;
+    default_timer_stack.push_timer("substitution::peel_internal_branch");
 
     // find the names of the (two) branches behind b0
     vector<int> b;
@@ -682,6 +694,7 @@ namespace substitution {
 	  R(m,s1) = temp*(*C)(m,s1) + sum;
       }
     }
+    default_timer_stack.pop_timer();
   }
 
 
@@ -690,6 +703,7 @@ namespace substitution {
 		   const MatCache& transition_P, const MultiModel& MModel)
   {
     total_peel_branches++;
+    default_timer_stack.push_timer("substitution::peel_branch");
 
     // compute branches-in
     int bb = T.directed_branch(b0).branches_before().size();
@@ -716,6 +730,7 @@ namespace substitution {
       std::abort();
 
     cache.validate_branch(b0);
+    default_timer_stack.pop_timer();
   }
 
 
@@ -850,6 +865,9 @@ namespace substitution {
   get_column_likelihoods(const data_partition& P, const vector<int>& b,
 			 const vector<int>& req,const vector<int>& seq,int delta)
   {
+    default_timer_stack.push_timer("substitution");
+    default_timer_stack.push_timer("substitution::column_likelihoods");
+
     const alphabet& a = P.get_alphabet();
 
     const alignment& A = *P.A;
@@ -916,6 +934,9 @@ namespace substitution {
       }
       L.push_back(S);
     }
+    default_timer_stack.pop_timer();
+    default_timer_stack.pop_timer();
+
     return L;
   }
 
@@ -924,6 +945,9 @@ namespace substitution {
     const alignment& A = *P.A;
     const Tree& T = *P.T;
     Likelihood_Cache& LC = P.LC;
+
+    default_timer_stack.push_timer("substitution");
+    default_timer_stack.push_timer("substitution::other_subst");
 
     IF_DEBUG(int n_br =) calculate_caches(P);
 #ifndef NDEBUG
@@ -948,6 +972,9 @@ namespace substitution {
 
     assert(std::abs(log(Pr1 * Pr2) - log(Pr) ) < 1.0e-9);
 #endif
+
+    default_timer_stack.pop_timer();
+    default_timer_stack.pop_timer();
 
     return Pr1;
   }
@@ -1004,12 +1031,16 @@ namespace substitution {
 	    const MultiModel& MModel)
   {
     total_likelihood++;
+    default_timer_stack.push_timer("substitution");
+    default_timer_stack.push_timer("substitution::likelihood");
 
 #ifndef DEBUG_CACHING
     if (LC.cv_up_to_date()) {
 #ifndef NDEBUG
       std::clog<<"Pr: Using cached value "<<log(LC.cached_value)<<"\n";
 #endif
+      default_timer_stack.pop_timer();
+      default_timer_stack.pop_timer();
       return LC.cached_value;
     }
 #endif
@@ -1038,6 +1069,8 @@ namespace substitution {
     LC.cached_value = Pr;
     LC.cv_up_to_date() = true;
 
+    default_timer_stack.pop_timer();
+    default_timer_stack.pop_timer();
     return Pr;
   }
 

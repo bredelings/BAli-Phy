@@ -285,7 +285,7 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	sequence-format.C randomtree.C model.C  probability.C \
 	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
 	alignment-random.C parameters.C myexception.C monitor.C \
-	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C
+	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C timer_stack.C
 
 #---------------------------------------------------------------
 
