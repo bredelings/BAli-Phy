@@ -174,6 +174,7 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l,const dynamic_bi
 {
   // find the first bit
   int first = mask.find_first();
+  assert(first >= 0);
 
   if (l <= 0.0)
     throw myexception()<<"Consensus level must be > 0.0";
