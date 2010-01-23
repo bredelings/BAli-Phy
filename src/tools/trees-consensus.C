@@ -384,7 +384,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description invisible("Invisible options");
   invisible.add_options()
-    ("file",value<string>(),"tree sample to examine")
+    ("files",value<vector<string> >()->composing(),"tree samples to examine")
     ("seed", value<unsigned long>(),"Random seed")
     ;
 
@@ -409,7 +409,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("support-levels",value<string>(),"Filename to report #branches versus LOD")
     ("extended-support-levels",value<string>(),"Filename to report #sub-branches versus LOD")
     ("depth",value<int>()->default_value(1),"depth at which to look for partitions of taxa subsets")
-    ("rooting",value<double>()->default_value(0.9),"depth at which to look for partitions of taxa subsets")
+    ("rooting",value<double>()->default_value(0.9,"0.9"),"depth at which to look for partitions of taxa subsets")
     ("odds-ratio",value<double>()->default_value(1.5),"Report sub-partitions if removing taxa improves the odds by at least this ratio.")
     ("verbose,v","Output more log messages on stderr.")
     ;
@@ -422,7 +422,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   // positional options
   positional_options_description p;
-  p.add("file", -1);
+  p.add("files", -1);
   
   variables_map args;     
   store(command_line_parser(argc, argv).
@@ -774,12 +774,30 @@ int main(int argc,char* argv[])
     bool show_sub = args.count("sub-partitions") or args.count("extended-consensus");
 
     //-------------- Read in tree distributions --------------//
-    string filename = args["file"].as<string>();
-    ifstream file(filename.c_str());
-    if (not file)
-      throw myexception()<<"Couldn't open file "<<filename;
+    vector<string> files;
+    if (args.count("files"))
+      files = args["files"].as<vector<string> >();
+    if (not files.size())
+      throw myexception()<<"No filenames for trees specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
+
+    tree_sample tree_dist;
+    for(int i=0;i<files.size();i++) 
+    {
+      tree_sample trees;
+      if (files[i] == "-")
+	trees = tree_sample(std::cin,skip,subsample,max,ignore);
+      else
+	trees = tree_sample(files[i],skip,subsample,max,ignore);      
+      if (log_verbose)
+	std::cerr<<"Read "<<trees.size()<<" trees from '"<<files[i]<<"'"<<std::endl;
       
-    tree_sample tree_dist(file,skip,subsample,max,ignore);
+      if (not tree_dist.size())
+	tree_dist = trees;
+      else
+	for(int j=0;j<trees.size();j++)
+	  tree_dist.add_tree(trees.trees[j]);
+    }
+
     const unsigned N = tree_dist.size();
 
     dynamic_bitset<> ignore_mask = group_from_names(tree_dist.names(),vector<string>());
