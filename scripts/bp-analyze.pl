@@ -375,7 +375,7 @@ print "done.\n";
 
 # 2. compute consensus trees
 
-print " Drawing MC trees:\n   ";
+print " Drawing MC trees:  ";
 for my $cvalue (@tree_consensus_values)
 {
     my $value = $cvalue*100;
@@ -411,7 +411,7 @@ print "done.\n";
 
 
 # 4. compute images
-print " Drawing trees ... ";
+print " Drawing trees: ";
 for my $tree (@trees) {
 # FIXME - no node lengths!
     if (! more_recent_than("Results/$tree-tree.pdf","Results/$tree.tree")) {
@@ -422,6 +422,43 @@ for my $tree (@trees) {
     }
 }
 print "done.\n";
+
+# 10. Mixing diagnostics -- block bootstrap
+print "\nGenerate mixing diagnostics for topologies ... ";
+
+if (!more_recent_than("Results/partitions","Results/consensus")) {
+    `pickout --no-header --large pi < Results/consensus > Results/partitions`;
+}
+if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
+    `sed "s/\$/\\n/" < Results/partitions > Results/partitions.pred`;
+}
+
+if (!more_recent_than("Results/partitions.bs",$trees_file)) {
+    `trees-bootstrap $max_arg $trees_file $skip $subsample_string --pred Results/partitions.pred > Results/partitions.bs`;
+}
+print "done.\n";
+
+# 11. c-levels.plot - FIXME!
+
+if ($sub_partitions) {
+`gnuplot <<EOF
+set terminal svg
+set output "Results/c-levels.svg"
+set xlabel "Log10 posterior Odds (LOD)"
+set ylabel "Supported Splits"
+set style data lines
+plot [0:][0:] 'Results/c-levels.plot' title 'Full Splits','Results/extended-c-levels.plot' title 'Partial Splits'
+EOF`;
+}
+else {
+`gnuplot <<EOF
+set terminal svg
+set output "Results/c-levels.svg"
+set xlabel "Log10 posterior Odds (LOD)"
+set ylabel "Supported Splits"
+plot [0:][0:] 'Results/c-levels.plot' with lines notitle
+EOF`;
+}
 
 # 6. Compute initial alignments
 
@@ -630,42 +667,6 @@ if ($personality ne "treefile")
 
 
 
-# 10. Mixing diagnostics -- block bootstrap
-print "Generate mixing diagnostics for topologies ... ";
-
-if (!more_recent_than("Results/partitions","Results/consensus")) {
-    `pickout --no-header --large pi < Results/consensus > Results/partitions`;
-}
-if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
-    `sed "s/\$/\\n/" < Results/partitions > Results/partitions.pred`;
-}
-
-if (!more_recent_than("Results/partitions.bs",$trees_file)) {
-    `trees-bootstrap $max_arg $trees_file $skip $subsample_string --pred Results/partitions.pred > Results/partitions.bs`;
-}
-print "done.\n";
-
-# 11. c-levels.plot - FIXME!
-
-if ($sub_partitions) {
-`gnuplot <<EOF
-set terminal svg
-set output "Results/c-levels.svg"
-set xlabel "Log10 posterior Odds (LOD)"
-set ylabel "Supported Splits"
-set style data lines
-plot [0:][0:] 'Results/c-levels.plot' title 'Full Splits','Results/extended-c-levels.plot' title 'Partial Splits'
-EOF`;
-}
-else {
-`gnuplot <<EOF
-set terminal svg
-set output "Results/c-levels.svg"
-set xlabel "Log10 posterior Odds (LOD)"
-set ylabel "Supported Splits"
-plot [0:][0:] 'Results/c-levels.plot' with lines notitle
-EOF`;
-}
 # 12. Mixing diagnostics - SRQ plots
 my @SRQ = ();
 
