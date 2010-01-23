@@ -145,7 +145,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
     ("smodel",value<vector<string> >()->composing(),"Substitution model.")
     ("imodel",value<vector<string> >()->composing(),"Indel model: RS05, RS07-no-T, or RS07.")
-    ("prior-branch",value<string>()->default_value("Exponential"),"Exponential or Gamma")
+    ("branch-prior",value<string>()->default_value("Gamma"),"Exponential or Gamma")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
     ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
@@ -1105,8 +1105,15 @@ int main(int argc,char* argv[])
     set_parameters(P,args);
 
     //------------- Set the branch prior type --------------//
-    if (args["prior-branch"].as<string>() == "Gamma") P.branch_prior_type = 1;
+    string branch_prior = args["branch-prior"].as<string>();
+    if (branch_prior == "Exponential")  
+      P.branch_prior_type = 0;
+    else if (branch_prior == "Gamma") 
+      P.branch_prior_type = 1;
+    else
+      throw myexception()<<"I don't understand --branch-prior argument '"<<branch_prior<<"'.\n  Only 'Exponential' and 'Gamma' are allowed.";
 
+    //-------------------- Log model -------------------------//
     log_summary(out_cache,out_screen,out_both,P,args);
 
     //----------------- Tree-based constraints ----------------//
