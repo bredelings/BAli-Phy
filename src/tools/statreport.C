@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+//FIXME Can I fix PSRF-80% by finding the SMALLEST 80%-wide interval?
+// * well, no, because a much wider 80.001%-interval would still cause a problem.
+// Also report Lartillot's (mu1-m2)/(s1+s2) or whatver it was.
+
 #include <iostream>
 #include <string>
 #include <cassert>
@@ -308,11 +312,11 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   double RCF = 1;
   if (tables.size() > 1) {
     RNe = tau/sum_tau*tables.size();
-    cout<<"   RNe = "<<RNe;
+    cout<<"   PSRF-Ne = "<<RNe;
     RCI = total_CI/sum_CI;
-    cout<<"       RCI = "<<RCI;
+    cout<<"       PSRF-80%CI = "<<RCI;
     RCF = sum_fraction_contained; //compare_level;
-    cout<<"       RCF = "<<RCF<<endl;
+    cout<<"       PSRF-RCF = "<<RCF<<endl;
   }
 
   cout<<endl;
@@ -456,9 +460,9 @@ int main(int argc,char* argv[])
     cout<<" Ne  >= "<<worst_Ne.value<<"    ("<<field_names[worst_Ne.index]<<")"<<endl;
     cout<<" min burnin <= "<<burnin_value(worst_burnin.value,tables.back().n_rows())<<"    ("<<field_names[worst_burnin.index]<<")"<<endl;
     if (tables.size() > 1) {
-      cout<<" RCI <= "<<worst_RCI.value<<"    ("<<field_names[worst_RCI.index]<<")"<<endl;
-      cout<<" RNe <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
-      cout<<" RCF <= "<<worst_RCF.value<<"    ("<<field_names[worst_RCF.index]<<")"<<endl;
+      cout<<" PSRF-80%CI <= "<<worst_RCI.value<<"    ("<<field_names[worst_RCI.index]<<")"<<endl;
+      cout<<" PSRF-Ne <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
+      cout<<" PSRF-RCF <= "<<worst_RCF.value<<"    ("<<field_names[worst_RCF.index]<<")"<<endl;
     }
   }
   catch (std::exception& e) {
