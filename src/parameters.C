@@ -334,7 +334,7 @@ efloat_t Parameters::prior_no_alignment() const
   // prior on mu[i], the mean branch length for scale i
   for(int i=0;i<n_branch_means();i++) {
     //  return pow(efloat_t(branch_mean()),-1.0);
-    Pr *= exponential_pdf(branch_mean(i), 1.0);
+    Pr *= gamma_pdf(branch_mean(i), 0.5, 2.0);
   }
     
   // prior on the substitution model
