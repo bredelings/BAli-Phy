@@ -624,6 +624,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   if (P.keys["disable_slice_sampling"] < 0.5)
     sampler.add(1,slice_moves);
 
+  //------------------- Enable and Disable moves ---------------------------//
   vector<string> disable;
   vector<string> enable;
   if (args.count("disable"))
@@ -654,7 +655,7 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   if (total_c > 0)
     std::cerr<<"Using "<<total_c<<" constraints.\n";
 
-  //FIXME - partition
+  //FIXME - report which partition constraints are satisfied in.
 
   for(int i=0;i<P.n_data_partitions();i++) {
     dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint,*P[i].A);
