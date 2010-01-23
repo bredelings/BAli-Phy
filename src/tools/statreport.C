@@ -46,16 +46,16 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description visible("All options");
   visible.add_options()
-    ("help", "Produce help message")
-    ("ignore", value<vector<string> >()->composing(),"which fields to print")
-    ("individual","which fields to print")
-    ("skip",value<int>()->default_value(0),"number of trees to skip")
-    ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
-    ("max",value<int>(),"maximum number of trees to read")
-    ("mean", "Show mean and standard deviation")
-    ("median", "Show median and confidence level")
-    ("confidence",value<double>()->default_value(0.95),"Confidence level")
-    ("precision", value<unsigned>()->default_value(4),"Number of significant figures")
+    ("help", "Produce help message.")
+    ("ignore", value<vector<string> >()->composing(),"Do not analyze these fields.")
+    ("individual","Show results for individual files separately also.")
+    ("skip",value<int>()->default_value(0),"Number of initial lines to skip.")
+    ("sub-sample",value<int>()->default_value(1),"Factor by which to sub-sample.")
+    ("max",value<int>(),"Maximum number of lines to read.")
+    ("mean", "Show mean and standard deviation.")
+    ("median", "Show median and confidence level.")
+    ("confidence",value<double>()->default_value(0.95),"Confidence interval level.")
+    ("precision", value<unsigned>()->default_value(4),"Number of significant figures.")
     ("verbose","Output more log messages on stderr.")
     ;
 
@@ -387,17 +387,14 @@ int main(int argc,char* argv[])
     vector<stats_table> tables;
     vector<string> filenames;
 
-    if (not args.count("filenames")) {
-      tables.push_back(stats_table(std::cin,0,subsample,max));
-      filenames.push_back("STDIN");
-    }
-    else {
-      filenames = args["filenames"].as< vector<string> >();
-      for(int i=0;i<filenames.size();i++) {
-	tables.push_back(stats_table(filenames[i],0,subsample,max));
-	if (not tables.back().n_rows())
-	  throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
-      }
+    if (not args.count("filenames"))
+      throw myexception()<<"No filenames specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
+
+    filenames = args["filenames"].as< vector<string> >();
+    for(int i=0;i<filenames.size();i++) {
+      tables.push_back(stats_table(filenames[i],0,subsample,max));
+      if (not tables.back().n_rows())
+	throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
     }
 
     if (tables.size() < 1)
