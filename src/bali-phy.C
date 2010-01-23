@@ -964,11 +964,14 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
   }
   out_screen<<"\n";
 
+  out_both<<"Prior on branch lengths T[b]:\n";
   if (P.branch_prior_type == 0)
-    out_both<<"Branch length mean: Exponential(mu)"<<endl;
+    out_both<<" T[b] ~ Exponential(mu)   [mean=mu, variance=mu^2]"<<endl;
   else
-    out_both<<"Branch length mean: Gamma(0.5, 2*mu)"<<endl;
-  out_both<<" mu ~ Exponential(1)"<<endl;
+    out_both<<" T[b] ~ Gamma(alpha=0.5, beta=2*mu)   [mean=mu, variance=2*mu^2]"<<endl;
+  out_both<<" mu ~ Gamma(alpha=0.5, beta=2)   [mean=1, variance=2]"<<endl;
+  if (P.n_data_partitions() > 1)
+    out_both<<"(Each partition has a separate 'mu' except where specified by --same-scale.)"<<endl;
   out_both<<endl;
 }
 
