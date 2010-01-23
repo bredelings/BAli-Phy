@@ -25,6 +25,14 @@ use POSIX;
 
 my $home = $ENV{'HOME'};
 
+#----------------------------- SETUP 1 --------------------------#
+
+if (! is_in_path("trees-consensus")) {
+    print "I can't find the program 'trees-consensus' in your PATH!\n";
+    print "See the manual for adding the bali-phy programs to your PATH\n";
+    exit(1);
+}
+
 my $personality="";
 my $out_file;
 my $trees_file;
@@ -35,15 +43,6 @@ my @tree_files;
 my @partition_samples;
 my $MAP_file;
 my $burnin;
-
-#----------------------------- SETUP 1 --------------------------#
-
-if (! is_in_path("trees-consensus")) {
-    print "I can't find the program 'trees-consensus' in your PATH!\n";
-    print "See the manual for adding the bali-phy programs to your PATH\n";
-    exit(1);
-}
-
 my $max_iter;
 my $subsample = 1;
 my $min_support;
@@ -51,132 +50,11 @@ my $muscle = 0;
 my $probcons = 0;
 my $sub_partitions=1;
 my $prune;
-
 my $speed=1;
 
-while ($#ARGV > -1) 
-{
-    my $arg = shift;
-    if ($arg eq "clean" || $arg eq "--clean") {
-	do_cleanup();
-	exit;
-    }
-    elsif ($arg =~ /--burnin=(.+)/) {
-	$burnin = $1;
-    }
-    elsif ($arg =~ /--fast/) {
-	$speed = 2;
-    }
-    elsif ($arg =~ /--slow/) {
-	$speed = 0;
-    }
-    elsif ($arg =~ /--subsample=(.+)/) {
-	$subsample = $1;
-    }
-    elsif ($arg =~ /--prune=(.+)/) {
-	$prune = $1;
-    }
-    elsif ($arg =~ /--max=(.+)/) {
-	$max_iter = $1;
-    }
-    elsif ($arg =~ /--min-support=(.+)/) {
-	$min_support = $1;
-    }
-    elsif ($arg =~ /--muscle/) {
-	$muscle = 1;
-    }
-    elsif ($arg =~ /--probcons/) {
-	$probcons = 1;
-    }
-    elsif ($arg =~ /--no-sub/) {
-	$sub_partitions=0;
-    }
-    elsif ($arg =~ /--treefile=(.+)/) {
-	$personality = "treefile";
-	$trees_file = $1;
-    }    
-    else {
-	die "I don't recognize option $arg";
-    }
-}
+&parse_command_line();
 
-
-#----------------------------- SETUP 2 --------------------------#
-if (-e 'C1.out') 
-{
-    $personality = "bali-phy";
-    $out_file = 'C1.out';
-    $n_chains = get_header_attribute("MPI_SIZE");
-    $n_chains=1 if (!defined($n_chains));
-    for(my $i=0;$i<$n_chains;$i++) {
-	push @out_files,"C$i.out" if (-e "C$i.out");
-	push @tree_files,"C$i.trees" if (-e "C$i.trees");
-    }
-
-    if ($n_chains == 1) {
-	$trees_file = 'C1.trees';
-	die "error: I can't find 'C1.trees'" if (! -e 'C1.trees');
-
-	$parameters_file = 'C1.p';
-	die "error: I can't find 'C1.p'" if (! -e 'C1.p');
-
-	$MAP_file = "C1.MAP";
-    }
-}
-elsif (-e '1.out') 
-{
-    $personality = "bali-phy";
-    $out_file = '1.out';
-    $trees_file = '1.trees';
-    $parameters_file = '1.p';
-    die "error: I can't find '1.trees'" if (! -e '1.trees');
-
-    $n_chains = 1;
-    @out_files = ( '1.out' );
-    @tree_files = ( '1.trees' );
-
-    $MAP_file = "1.MAP";
-}
-else {
-    my @treelists = glob("*.treelist");
-    my @beast_trees = glob("*.trees");
-
-    if ($personality eq "treefile") {
-	$out_file = "";
-	$n_chains = 1;
-	$parameters_file = "";
-    }
-    elsif ($#treelists >= 0) {
-	print "I can't find file '1.out' or 'C1.out' - analyzing $treelists[0] as a phylobayes file.\n";
-	# fixme - handle personality=treefile, to analyze raxml bootstrap trees.
-
-	# fixme - I want to be able to handle partitions with no alignment info attached.
-	$personality = "phylobayes";
-	$out_file = "";
-	$n_chains = 1;
-	$trees_file = $treelists[0];
-	my $prefix = $trees_file;
-	$prefix =~ s/.treelist//;
-	$parameters_file = "$prefix.trace";
-    }
-    elsif ($#beast_trees >= 0) {
-	print "I can't find file '1.out' or 'C1.out' - analyzing $beast_trees[0] as a BEAST file.\n";
-	# fixme - handle personality=treefile, to analyze raxml bootstrap trees.
-
-	# fixme - I want to be able to handle partitions with no alignment info attached.
-	$personality = "beast";
-	$out_file = "";
-	$n_chains = 1;
-	$trees_file = $beast_trees[0];
-	my $prefix = $trees_file;
-	$prefix =~ s/.trees//;
-	$parameters_file = "$prefix.log";
-    }
-    else {
-	print "I can't find files '1.out' or 'C1.out'... are you running this in the right directory?\n";
-	exit(1);
-    }
-}
+&determine_personality_and_input_files();
 
 my $command = get_header_attribute("command");
 my $directory = get_header_attribute("directory");
@@ -1100,6 +978,136 @@ print INDEX "</table>\n";
 
 print INDEX "  </body>\n";
 print INDEX "</html>\n";
+
+sub parse_command_line
+{
+    while ($#ARGV > -1) 
+    {
+	my $arg = shift @ARGV;
+	if ($arg eq "clean" || $arg eq "--clean") {
+	    do_cleanup();
+	    exit;
+	}
+	elsif ($arg =~ /--burnin=(.+)/) {
+	    $burnin = $1;
+	}
+	elsif ($arg =~ /--fast/) {
+	    $speed = 2;
+	}
+	elsif ($arg =~ /--slow/) {
+	    $speed = 0;
+	}
+	elsif ($arg =~ /--subsample=(.+)/) {
+	    $subsample = $1;
+	}
+	elsif ($arg =~ /--prune=(.+)/) {
+	    $prune = $1;
+	}
+	elsif ($arg =~ /--max=(.+)/) {
+	    $max_iter = $1;
+	}
+	elsif ($arg =~ /--min-support=(.+)/) {
+	    $min_support = $1;
+	}
+	elsif ($arg =~ /--muscle/) {
+	    $muscle = 1;
+	}
+	elsif ($arg =~ /--probcons/) {
+	    $probcons = 1;
+	}
+	elsif ($arg =~ /--no-sub/) {
+	    $sub_partitions=0;
+	}
+	elsif ($arg =~ /--treefile=(.+)/) {
+	    $personality = "treefile";
+	    $trees_file = $1;
+	}    
+	else {
+	    die "I don't recognize option $arg";
+	}
+    }
+}
+
+
+#----------------------------- SETUP 2 --------------------------#
+sub determine_personality_and_input_files
+{
+    if (-e 'C1.out') 
+    {
+	$personality = "bali-phy";
+	$out_file = 'C1.out';
+	$n_chains = get_header_attribute("MPI_SIZE");
+	$n_chains=1 if (!defined($n_chains));
+	for(my $i=0;$i<$n_chains;$i++) {
+	    push @out_files,"C$i.out" if (-e "C$i.out");
+	    push @tree_files,"C$i.trees" if (-e "C$i.trees");
+	}
+	
+	if ($n_chains == 1) {
+	    $trees_file = 'C1.trees';
+	    die "error: I can't find 'C1.trees'" if (! -e 'C1.trees');
+	    
+	    $parameters_file = 'C1.p';
+	    die "error: I can't find 'C1.p'" if (! -e 'C1.p');
+	    
+	    $MAP_file = "C1.MAP";
+	}
+    }
+    elsif (-e '1.out') 
+    {
+	$personality = "bali-phy";
+	$out_file = '1.out';
+	$trees_file = '1.trees';
+	$parameters_file = '1.p';
+	die "error: I can't find '1.trees'" if (! -e '1.trees');
+	
+	$n_chains = 1;
+	@out_files = ( '1.out' );
+	@tree_files = ( '1.trees' );
+	
+	$MAP_file = "1.MAP";
+    }
+    else {
+	my @treelists = glob("*.treelist");
+	my @beast_trees = glob("*.trees");
+	
+	if ($personality eq "treefile") {
+	    $out_file = "";
+	    $n_chains = 1;
+	    $parameters_file = "";
+	}
+	elsif ($#treelists >= 0) {
+	    print "I can't find file '1.out' or 'C1.out' - analyzing $treelists[0] as a phylobayes file.\n";
+	    # fixme - handle personality=treefile, to analyze raxml bootstrap trees.
+	    
+	    # fixme - I want to be able to handle partitions with no alignment info attached.
+	    $personality = "phylobayes";
+	    $out_file = "";
+	    $n_chains = 1;
+	    $trees_file = $treelists[0];
+	    my $prefix = $trees_file;
+	    $prefix =~ s/.treelist//;
+	    $parameters_file = "$prefix.trace";
+	}
+	elsif ($#beast_trees >= 0) {
+	    print "I can't find file '1.out' or 'C1.out' - analyzing $beast_trees[0] as a BEAST file.\n";
+	    # fixme - handle personality=treefile, to analyze raxml bootstrap trees.
+	    
+	    # fixme - I want to be able to handle partitions with no alignment info attached.
+	    $personality = "beast";
+	    $out_file = "";
+	    $n_chains = 1;
+	    $trees_file = $beast_trees[0];
+	    my $prefix = $trees_file;
+	    $prefix =~ s/.trees//;
+	    $parameters_file = "$prefix.log";
+	}
+	else {
+	    print "I can't find files '1.out' or 'C1.out'... are you running this in the right directory?\n";
+	    exit(1);
+	}
+    }
+}
 
 sub is_in_path
 {
