@@ -37,9 +37,11 @@ my $personality="";
 my $out_file;
 my $trees_file;
 my $parameters_file;
-my $n_chains;
+my $n_chains=1;
+my @directories;
 my @out_files;
 my @tree_files;
+my @parameter_files;
 my @partition_samples;
 my $MAP_file;
 my $burnin;
@@ -54,37 +56,48 @@ my $speed=1;
 
 &parse_command_line();
 
-&determine_personality_and_input_files();
+&determine_personality();
 
-my $command = get_header_attribute("command");
-my $directory = get_header_attribute("directory");
-my $subdir    = get_header_attribute("subdirectory");
+&determine_input_files();
+
+my $command = get_header_attribute($out_files[0],"command");
+my $directory = get_header_attribute($out_files[0],"directory");
+my $subdir    = get_header_attribute($out_files[0], "subdirectory");
 
 my $betas = get_cmdline_attribute("beta");
 my @beta = (1);
 @beta = split(/,/, $betas) if (defined($betas));
 
-
+my $first_dir = $directories[0];
 my @partitions = @{ get_partitions() };
 my $n_partitions = 1+$#partitions;
-if ($out_file eq "C1.out") {
+if ($personality =~ "bali-phy-2.1.*") {
     if ($n_chains == 1) {
-	for(my $p=1;$p<=$n_partitions;$p++) {
-	    push @partition_samples,"C1.P$p.fastas";
+	foreach my $directory (@directories)
+	{
+	    my @samples = ();
+	    for(my $p=1;$p<=$n_partitions;$p++) {
+		push @samples,"$directory/C1.P$p.fastas";
+	    }
+	    push @partition_samples, [@samples];
 	}
     }
     else {
 	## FIXME - How do we construct these?
+	my @samples = ();
 	for(my $p=1;$p<=$n_partitions;$p++) {
-	    push @partition_samples,"C1.P$p.fastas";
+	    push @samples,"$first_dir/C1.P$p.fastas";
 	}
+	push @partition_samples, [@samples];
     }
 }
 else {
+    my @samples = ();
     for(my $p=1;$p<=$n_partitions;$p++) {
-	push @partition_samples,"1.P$p.fastas" if (-e "1.P$p.fastas");
+	push @samples,"$first_dir/1.P$p.fastas" if (-e "$first_dir/1.P$p.fastas");
     }
-    @partition_samples = ("1.out") if ($#partition_samples == -1);
+    @samples = ("$first_dir/1.out") if ($#samples == -1);
+    push @partition_samples, [@samples];
 }
 
 
@@ -202,7 +215,7 @@ $skip="--skip=$burnin" if ($trees_file ne "Results/T1.trees");
 my $subsample_string = "--sub-sample=$subsample";
 $subsample_string = "" if ($subsample == 1);
 
-if ($personality eq "bali-phy") {
+if ($personality =~ "bali-phy.*") {
     print "Summarizing distribution of numerical parameters...";
     if (! more_recent_than("Results/Report",$parameters_file)) {
 	`statreport $subsample_string --ignore=iter $max_arg $skip $parameters_file > Results/Report`;
@@ -344,7 +357,7 @@ my @alignments = ();
 my @AU_alignments = ();
 my %alignment_names = ();
 
-if ($personality eq "bali-phy") {
+if ($personality =~ "bali-phy.*") {
     print "\nComputing initial alignments... ";
     for(my $i=0;$i<$n_partitions;$i++)
     {
@@ -355,7 +368,7 @@ if ($personality eq "bali-phy") {
 	
 	# These initial alignments should never change!
 	if (! -s "Results/Work/$name-unordered.fasta") {
-	    `alignment-find --first < $partition_samples[$i] > Results/Work/$name-unordered.fasta 2>/dev/null`;
+	    `alignment-find --first < $partition_samples[0][$i] > Results/Work/$name-unordered.fasta 2>/dev/null`;
 	    if ($? && $n_chains==1 && defined($MAP_file)) {
 		`alignment-find --first < $MAP_file > Results/Work/$name-unordered.fasta`;
 	    }
@@ -366,7 +379,7 @@ if ($personality eq "bali-phy") {
 
 # 6.5. Compute MUSCLE alignments
 
-if ($personality eq "bali-phy") {
+if ($personality =~ "bali-phy.*") {
     if ($muscle) {
 	print "\nComputing MUSCLE alignment... ";
 
@@ -386,7 +399,7 @@ if ($personality eq "bali-phy") {
 
 # 6.5. Compute ProbCons alignments
 
-if ($personality eq "bali-phy") {
+if ($personality =~ "bali-phy.*") {
     if ($probcons) {
 	print "\nComputing ProbCons alignment... ";
 	
@@ -416,7 +429,7 @@ if ($personality eq "bali-phy") {
 
 # 6.7 Compute maximum (weighted posterior decoding) alignments
 
-if ($personality eq "bali-phy") {
+if ($personality =~ "bali-phy.*") {
     print "\nComputing WPD alignments... ";
 
     for(my $i=0;$i<$n_partitions;$i++) 
@@ -424,7 +437,7 @@ if ($personality eq "bali-phy") {
 	next if ($imodel_indices[$i] == -1);
 	
 	my $p = $i+1;
-	my $infile = $partition_samples[$i];
+	my $infile = $partition_samples[0][$i];
 	
 	my $name = "P$p-max";
 	if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
@@ -446,7 +459,7 @@ for(my $i=0;$i<$n_partitions;$i++)
     next if ($imodel_indices[$i] == -1);
 
     my $p = $i+1;
-    my $infile = $partition_samples[$i];
+    my $infile = $partition_samples[0][$i];
 
     print " Partition $p: Computing consensus alignments: \n   ";
     for my $cvalue (@alignment_consensus_values) {
@@ -515,7 +528,7 @@ for my $alignment (@AU_alignments)
     if ($alignment =~ /^P([^-]+)-.*/) {
 	print "Generating AU values for $alignment... ";
 	my $p = $1;
-	my $infile = $partition_samples[$p-1];
+	my $infile = $partition_samples[0][$p-1];
 
 	if (!more_recent_than("Results/$alignment-AU.prob",$infile)) {
 	`cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob`;
@@ -649,13 +662,13 @@ if ("$parameters_file")
 	next if (!defined($CI_low{$var}));
 	
 	my $file1 = "Results/Work/T1.p.$i";
-	if ($personality eq "bali-phy") {
+	if ($personality =~ "bali-phy.*") {
 	    `stats-select iter '$var' --no-header < $parameters_file > $file1`;
 	}
-	elsif ($personality eq "phylobayes") {
+	elsif ($personality =~ "phylobayes.*") {
 	    `stats-select time '$var' --no-header < $parameters_file > $file1`;
 	}
-	elsif ($personality eq "beast")
+	elsif ($personality =~ "beast.*")
 	{
 	    `stats-select state '$var' --no-header < $parameters_file > $file1`;
 	}
@@ -954,11 +967,12 @@ for(my $i=1;$i <= $#var_names; $i++)
     print INDEX "<td>$median{$var}</td>\n";
     if (defined($CI_low{$var})) {
 	print INDEX "<td>($CI_low{$var},$CI_high{$var})</td>\n";
-	print INDEX "<td>$ACT{$var}</td>\n";
 	my $style = "";
+	$style = ' style="color:red"' if ($Ne{$var} <= $min_Ne);
+	print INDEX "<td $style>$ACT{$var}</td>\n";
+	$style = "";
 	$style = ' style="color:orange"' if ($Ne{$var} < 300);
 	$style = ' style="color:red"' if ($Ne{$var} < 100);
-	$style = ' style="color:red"' if ($Ne{$var} <= $min_Ne);
 	print INDEX "<td $style>$Ne{$var}</td>\n";
 	$style = "";
 	$style = ' style="color:red"' if ($Burnin{$var} eq "Not Converged!");
@@ -1022,90 +1036,131 @@ sub parse_command_line
 	    $personality = "treefile";
 	    $trees_file = $1;
 	}    
-	else {
-	    die "I don't recognize option $arg";
+	elsif ($arg =~ /^-.*/) {
+	    print "Error: I don't recognize option '$arg'\n";
+	    exit(1);
+	}
+	else
+	{
+	    push @directories, $arg;
 	}
     }
+    push @directories,"." if ($#directories == -1);
 }
 
 
 #----------------------------- SETUP 2 --------------------------#
-sub determine_personality_and_input_files
+sub determine_personality
 {
-    if (-e 'C1.out') 
+    # quit if personality is already determined
+    return if ($personality ne "");
+
+    my $first_dir = $directories[0];
+    
+    if (-e "$first_dir/C1.out")
     {
-	$personality = "bali-phy";
-	$out_file = 'C1.out';
-	$n_chains = get_header_attribute("MPI_SIZE");
+	$personality = "bali-phy-2.1";
+	$n_chains = get_header_attribute("$first_dir/C1.out","MPI_SIZE");
 	$n_chains=1 if (!defined($n_chains));
+	$personality = "bali-phy-2.1-heated" if ($n_chains > 1);
+    }
+    elsif (-e "$first_dir/1.out")
+    {
+	$personality = "bali-phy-2.0";
+    }
+    else {
+	my @treelists = glob("$first_dir/*.treelist");
+	my @beast_trees = glob("$first_dir/*.trees");
+	if ($#treelists >= 0) 
+	{
+	    $personality = "phylobayes";
+	}
+	elsif ($#beast_trees >= 0) {
+	    $personality = "beast";
+	}
+	else {
+	    print "Error: No BAli-Phy, phylobayes, or BEAST files in directory '$first_dir'.\n";
+	    exit(1);
+	}
+    }
+}
+
+sub check_file_exists
+{
+    my $filename = shift;
+    if (! -e "$filename") {
+	print "Error: I can't find file '$filename'\n";
+	exit(1);
+    }
+    return $filename;
+}
+
+sub determine_input_files
+{
+    my $first_dir = $directories[0];
+
+    if ($personality eq "bali-phy-2.1")
+    {
+	foreach my $directory (@directories)
+	{
+	    push @out_files, check_file_exists("$directory/C1.out");
+	    push @tree_files, check_file_exists("$directory/C1.trees");
+	    push @parameter_files, check_file_exists("$directory/C1.p");
+	    # also add all the partition files... $partitions_samples[d][p]
+	}
+	$out_file = "$first_dir/C1.out";
+	$trees_file = "$first_dir/C1.trees";
+	$parameters_file = "$first_dir/C1.p";
+	$MAP_file = "$first_dir/C1.MAP";
+    }
+    elsif ($personality eq "bali-phy-2.1-heated")
+    {
+	$out_file = "$first_dir/C1.out";
+	$n_chains = get_header_attribute("MPI_SIZE");
 	for(my $i=0;$i<$n_chains;$i++) {
 	    push @out_files,"C$i.out" if (-e "C$i.out");
 	    push @tree_files,"C$i.trees" if (-e "C$i.trees");
 	}
-	
-	if ($n_chains == 1) {
-	    $trees_file = 'C1.trees';
-	    die "error: I can't find 'C1.trees'" if (! -e 'C1.trees');
-	    
-	    $parameters_file = 'C1.p';
-	    die "error: I can't find 'C1.p'" if (! -e 'C1.p');
-	    
-	    $MAP_file = "C1.MAP";
-	}
     }
-    elsif (-e '1.out') 
+    elsif ($personality eq "bali-phy-2.0")
     {
-	$personality = "bali-phy";
-	$out_file = '1.out';
-	$trees_file = '1.trees';
-	$parameters_file = '1.p';
-	die "error: I can't find '1.trees'" if (! -e '1.trees');
+	$out_file = check_file_exists("$first_dir/C1.out");
+	$trees_file = check_file_exists("$first_dir/1.trees");
+	$parameters_file = check_file_exists("$first_dir/1.p");
 	
-	$n_chains = 1;
-	@out_files = ( '1.out' );
-	@tree_files = ( '1.trees' );
+	@out_files = ( "$first_dir/1.out" );
+	@tree_files = ( "$first_dir/1.trees" );
+	$parameters_file = ( "$first_dir/1.p" );
 	
-	$MAP_file = "1.MAP";
+	$MAP_file = ( "$first_dir/1.p" );
+    }
+    elsif ($personality eq "treefile")
+    {
+	$out_file = "";
+	$parameters_file = "";
+    }
+    elsif ($personality eq "phylobayes")
+    {
+	print "Summarizing output files from phylobayes:\n";
+	my @treelists = glob("$first_dir/*.treelist");
+	$trees_file = $treelists[0];
+	my $prefix = $trees_file;
+	$prefix =~ s/.treelist//;
+	$parameters_file = check_file_exists("$prefix.trace");
+    }
+    elsif ($personality eq "beast")
+    {
+	print "Summarizing output files from BEAST:\n";
+	my @beast_trees = glob("*.trees");
+	$out_file = "";
+	$trees_file = $beast_trees[0];
+	my $prefix = $trees_file;
+	$prefix =~ s/.trees//;
+	$parameters_file = check_file_exists("$prefix.log");
     }
     else {
-	my @treelists = glob("*.treelist");
-	my @beast_trees = glob("*.trees");
-	
-	if ($personality eq "treefile") {
-	    $out_file = "";
-	    $n_chains = 1;
-	    $parameters_file = "";
-	}
-	elsif ($#treelists >= 0) {
-	    print "I can't find file '1.out' or 'C1.out' - analyzing $treelists[0] as a phylobayes file.\n";
-	    # fixme - handle personality=treefile, to analyze raxml bootstrap trees.
-	    
-	    # fixme - I want to be able to handle partitions with no alignment info attached.
-	    $personality = "phylobayes";
-	    $out_file = "";
-	    $n_chains = 1;
-	    $trees_file = $treelists[0];
-	    my $prefix = $trees_file;
-	    $prefix =~ s/.treelist//;
-	    $parameters_file = "$prefix.trace";
-	}
-	elsif ($#beast_trees >= 0) {
-	    print "I can't find file '1.out' or 'C1.out' - analyzing $beast_trees[0] as a BEAST file.\n";
-	    # fixme - handle personality=treefile, to analyze raxml bootstrap trees.
-	    
-	    # fixme - I want to be able to handle partitions with no alignment info attached.
-	    $personality = "beast";
-	    $out_file = "";
-	    $n_chains = 1;
-	    $trees_file = $beast_trees[0];
-	    my $prefix = $trees_file;
-	    $prefix =~ s/.trees//;
-	    $parameters_file = "$prefix.log";
-	}
-	else {
-	    print "I can't find files '1.out' or 'C1.out'... are you running this in the right directory?\n";
-	    exit(1);
-	}
+	print "Error: unrecognized analysis of type '$personality'";
+	exit(1);
     }
 }
 
@@ -1153,7 +1208,7 @@ sub rmdir_recursive
 
 sub get_partitions
 {
-    return [] if ($personality ne "bali-phy");
+    return [] if ($personality !~ "bali-phy.*");
 
     local *FILE;
 
@@ -1180,7 +1235,7 @@ sub get_partitions
 
 sub get_cmdline_attribute
 {
-    return "unknown" if ($personality ne "bali-phy");
+    return "unknown" if ($personality !~ "bali-phy.*");
     my $attribute = shift;
     my $value;
 
@@ -1205,13 +1260,14 @@ sub get_cmdline_attribute
 
 sub get_header_attribute
 {
-    return "unknown" if ($personality ne "bali-phy");
+    return "unknown" if ($personality !~ "bali-phy.*");
+    my $filename = shift;
     my $attribute = shift;
     my $value;
 
     local *FILE;
 
-    open FILE, $out_file or die "Can't open $out_file!";
+    open FILE, $filename or die "Can't open $filename!";
 
     my @partitions = ();
 
@@ -1248,7 +1304,7 @@ sub sanitize_smodel
 
 sub get_smodels
 {
-    return [] if ($personality ne "bali-phy");
+    return [] if ($personality !~ "bali-phy.*");
 
     local *FILE;
 
@@ -1273,7 +1329,7 @@ sub get_smodels
 
 sub get_imodels
 {
-    return [] if ($personality ne "bali-phy");
+    return [] if ($personality !~ "bali-phy.*");
 
     local *FILE;
 
@@ -1300,7 +1356,7 @@ sub get_imodels
 
 sub get_smodel_indices
 {
-    return [] if ($personality ne "bali-phy");
+    return [] if ($personality !~ "bali-phy.*");
 
     local *FILE;
 
@@ -1322,7 +1378,7 @@ sub get_smodel_indices
 
 sub get_imodel_indices
 {
-    return [] if ($personality ne "bali-phy");
+    return [] if ($personality !~ "bali-phy.*");
 
     local *FILE;
 
@@ -1342,7 +1398,7 @@ sub get_imodel_indices
 
 sub get_alphabets
 {
-    return [] if ($personality ne "bali-phy");
+    return [] if ($personality !~ "bali-phy.*");
 
     local *FILE;
 
@@ -1432,7 +1488,7 @@ sub record_burnin
 
 sub get_alignment_info 
 {
-    return {} if ($personality ne "bali-phy");
+    return {} if ($personality !~ "bali-phy.*");
 
     my $filename = shift;
     open INFO,"alignment-info $filename |";
