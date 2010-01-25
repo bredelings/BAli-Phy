@@ -1050,12 +1050,12 @@ namespace substitution {
   GTR::GTR(const Nucleotides& N)
       : NucleotideExchangeModel(N)
     { 
-      add_parameter("GTR::AG", 1.0/6);
-      add_parameter("GTR::AT", 1.0/6);
-      add_parameter("GTR::AC", 1.0/6);
-      add_parameter("GTR::GT", 1.0/6);
-      add_parameter("GTR::GC", 1.0/6);
-      add_parameter("GTR::TC", 1.0/6);
+      add_parameter("GTR::AG", 2.0/8);
+      add_parameter("GTR::AT", 1.0/8);
+      add_parameter("GTR::AC", 1.0/8);
+      add_parameter("GTR::GT", 1.0/8);
+      add_parameter("GTR::GC", 1.0/8);
+      add_parameter("GTR::TC", 2.0/8);
 
       recalc_all();
     }
