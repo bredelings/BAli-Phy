@@ -94,34 +94,6 @@ namespace MCMC {
     (*this)[name].inc(R);
   }
 
-  std::ostream& operator<<(std::ostream& o, const MoveStats& Stats) 
-  {
-    int prec = o.precision(4);
-
-    for(std::map<std::string,Result>::const_iterator entry = Stats.begin(); entry != Stats.end();entry++)
-    {
-      const Result& R = entry->second;
-
-      // print move name
-      o<<entry->first<<":  ";
-
-      // print move stats
-      for(int i=0;i<R.size();i++) {
-	o<<"  X"<<i<<" = ";
-	if (R.counts[i])
-	  o<<R.totals[i]/R.counts[i];
-	else
-	  o<<"?";
-	o<<" ["<<R.counts[i]<<"]";
-      }
-      o<<endl;
-    }
-    if (Stats.empty())
-      o<<"   Transition kernel average-based statistics: no data.\n";
-    o.precision(prec);
-    return o;
-  }
-
   Move::Move(const string& n)
     :enabled_(true),name(n),iterations(0)
   { }
@@ -1010,7 +982,8 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
     if (iterations%20 == 0 or iterations < 20) {
       std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
-      std::cout<<*(MoveStats*)this<<endl;
+      const MoveStats& S = *this;
+      std::cout<<S<<endl;
       std::cout<<endl;
       std::cout<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
       std::cout<<default_timer_stack.report()<<endl;
@@ -1061,3 +1034,32 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
 
 }
+
+std::ostream& operator<<(std::ostream& o, const MCMC::MoveStats& Stats) 
+{
+  int prec = o.precision(4);
+  
+  for(std::map<std::string,MCMC::Result>::const_iterator entry = Stats.begin(); entry != Stats.end();entry++)
+  {
+    const MCMC::Result& R = entry->second;
+
+    // print move name
+    o<<entry->first<<":  ";
+
+    // print move stats
+    for(int i=0;i<R.size();i++) {
+      o<<"  X"<<i<<" = ";
+      if (R.counts[i])
+	o<<R.totals[i]/R.counts[i];
+      else
+	o<<"?";
+      o<<" ["<<R.counts[i]<<"]";
+    }
+    o<<endl;
+  }
+  if (Stats.empty())
+    o<<"   Transition kernel average-based statistics: no data.\n";
+  o.precision(prec);
+  return o;
+}
+

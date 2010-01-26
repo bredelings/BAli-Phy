@@ -55,8 +55,6 @@ namespace MCMC {
     void inc(const string&, const Result&);
   };
 
-  std::ostream& operator<<(const std::ostream& o, const MoveStats& Stats);
-
   //---------------------- Simple Move  ---------------------//
   typedef void (*atomic_move)(Parameters&,MoveStats&);
   typedef void (*atomic_move_arg)(Parameters&,MoveStats&,int);
@@ -366,4 +364,10 @@ namespace MCMC {
 
 }
 
+std::ostream& operator <<(std::ostream& o, const MCMC::MoveStats& Stats);
+
+namespace MCMC
+{
+  using ::operator<<;
+}
 #endif
