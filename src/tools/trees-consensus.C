@@ -405,6 +405,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("consensus",value<string>(),"Report consensus trees at these comma-separated levels in [0.5, 1.0]")
     ("consensus-PP",value<string>(),"Report consensus trees with Posterior Probabilities at these comma-separated levels in [0.5, 1.0]")
     ("extended-consensus",value<string>(),"Report extended consensus trees at these comma-separated levels in [0.5, 1.0]")
+    ("extended-consensus-L",value<string>(),"Report extended consensus trees at these comma-separated levels in [0.5, 1.0] with lengths.")
     ("sub-partitions","look for partitions of taxa subsets")
     ("support-levels",value<string>(),"Filename to report #branches versus LOD")
     ("extended-support-levels",value<string>(),"Filename to report #sub-branches versus LOD")
@@ -675,6 +676,155 @@ void write_extended_consensus_trees(const tree_sample& tree_dist, const vector<p
   }
 }
 
+vector<double> get_mctree_mean_lengths(MC_tree& Q, 
+				       const tree_sample& tree_dist,
+				       const map<dynamic_bitset<>,count_and_length>& full_partitions)
+{
+  unsigned N = tree_dist.size();
+
+  vector<Partition> partitions2;
+
+  // incorporate lengths of branches that map to Q
+  for(int i=0;i<Q.branch_order.size();i++) 
+  {
+    int b = Q.branch_order[i];
+    int n1 = Q.mapping[b];
+    int n2 = Q.mapping[Q.reverse(b)];
+
+    Partition P = Q.partitions[b];
+    dynamic_bitset<> mask = P.mask();
+
+    // find non-wandering branches directly left of me
+    for(int j=0;j<2*Q.n_branches();j++)
+    {
+      if (Q.directly_left_of(j,b)) 
+      {
+	if (Q.directly_wanders[j])
+	  mask &= ~Q.partitions[j].group1;
+	else
+	  mask &= Q.partitions[j].mask();
+      }
+    }
+
+    // find non-wandering branches directly right of me
+    for(int j=0;j<2*Q.n_branches();j++)
+    {
+      if (Q.directly_left_of(b,j)) 
+      {
+	if (Q.directly_wanders[Q.reverse(j)])
+	  mask &= ~Q.partitions[j].group2;
+	else
+	  mask &= Q.partitions[j].mask();
+      }
+    }
+
+    // partition masks should be computable from the masks
+    //    of both endpoint nodes.
+    // but how about degree=0 nodes? this shouldn't work then
+    //    assert(equal(mask,node_masks[n1] and node_masks[n2]));
+
+    P.group1 &= mask;
+    P.group2 &= mask;
+
+    //    cerr<<"Branch: "<<P<<endl;
+    //    cerr<<"   mask = ";show_name_set(cerr,P.names,P.mask())<<endl;
+
+    partitions2.push_back(P);
+  }
+
+
+  // SPEEDUP - If partitions2[i].full(), then just look up the length - don't scan for
+  //           branches that imply it.
+
+  // Find the weighted sum of lengths that contribute to each partitions2[i]
+  vector<double> branch_lengths(partitions2.size(), 0);
+  typedef map<dynamic_bitset<>,count_and_length> container_t;
+  for(container_t::const_iterator i = full_partitions.begin(); i != full_partitions.end(); i++)
+  {
+    Partition P(Q.names(),i->first);
+    // Find mc tree branches implied by branch b
+    vector<int> branches;
+    for(int j=0;j<Q.branch_order.size();j++) 
+    {
+      if (implies(P,partitions2[j]))
+	branches.push_back(j);
+    }
+
+    // Divide the branch length evenly between the branches it implies.
+    double L = i->second.length;
+    double Pr = double(i->second.count)/N;
+
+    for(int j=0;j<branches.size();j++)
+      branch_lengths[branches[j]] += L*Pr/branches.size();
+  }
+
+  // Compute the fraction of trees that imply each partitions2[i]
+  vector<double> total_pr(partitions2.size(), 1);
+  for(int j=0;j<Q.branch_order.size();j++) 
+  {
+    const Partition& P = partitions2[j];
+    // leaf branches are implied by every tree - the default of 1 is correct
+    if (not informative(P))
+      total_pr[j] = 1;
+
+    // If the partition is a full split, then look up its count
+    else if (P.full()) {
+      dynamic_bitset<> p = P.group2;
+      if (not p[0]) p.flip();
+      container_t::const_iterator record = full_partitions.find(p);
+      if (record == full_partitions.end()) throw myexception()<<"This should not happen!";
+      total_pr[j] = double(record->second.count)/N;
+    }
+    // This is the slow one.
+    else 
+      total_pr[j] = tree_dist.PP(P);
+  }
+
+  // Compute the expected length of partitions2[i] given that it exists.
+  for(int i=0;i<branch_lengths.size();i++)
+    branch_lengths[i] /= total_pr[i];
+
+  return branch_lengths;
+}
+
+void output_mctree_with_lengths(ostream& output, MC_tree Q, 
+				const vector<double>& branch_lengths, 
+				const vector<double>& node_lengths)
+{
+  
+  //------- Merge lengths and topology -------//
+  for(int i=0;i<Q.branch_order.size();i++)
+  {
+    int p = Q.branch_order[i];
+    const Partition& P = Q.partitions[p];
+    if (not P.full()) continue;
+    int b = which_branch(Q.T,P);
+    cerr<<" i = "<<i<<"   p = "<<p<<"   b = "<<b<<endl;
+    Q.T.branch(b).set_length(branch_lengths[i]);
+  }
+
+  output<<Q.T<<endl;
+
+  for(int i=0;i<Q.branch_order.size();i++)
+  {
+    int b = Q.branch_order[i];
+    if (not Q.partitions[b].full()) {
+      output<<"branch "<<branch_lengths[i]<<endl;
+      output<<Q.partitions[b]<<endl;
+    }
+  }
+
+  for(int n=0;n<Q.n_nodes();n++) 
+  {
+    if (node_lengths[n] > 0) {
+      output<<"node "<<node_lengths[n]<<endl;
+      int b = Q.branch_to_node(n);
+      output<<Q.partitions[b]<<endl;
+    }
+  }
+}
+
+
 /// \brief Write out extended majority consensus trees of various support levels (with branch lengths)
 ///
 /// \param tree_dist The sampled trees
@@ -682,7 +832,9 @@ void write_extended_consensus_trees(const tree_sample& tree_dist, const vector<p
 /// \param consensus_levels The support levels and the output file name for each one
 /// \param with_PP Should the output trees contains Posterior Probabilities in addition to branch lengths?
 ///
-void write_extended_consensus_trees_with_lengths(const tree_sample& tree_dist, const vector<pair<Partition,unsigned> >& all_partitions, 
+void write_extended_consensus_trees_with_lengths(const tree_sample& tree_dist, 
+						 const vector<pair<Partition,unsigned> >& all_partitions,
+						 const map<dynamic_bitset<>,count_and_length>& full_partitions,
 						 const vector<pair<double, string> >& consensus_levels)
 {
   unsigned N = tree_dist.size();
@@ -710,14 +862,14 @@ void write_extended_consensus_trees_with_lengths(const tree_sample& tree_dist, c
 	sub.push_back(all[i]);
 
     // the raw tree
-    SequenceTree consensus = get_mf_tree(tree_dist.names(),full);
-
+    MC_tree Q(get_moveable_tree(all));
+    vector<double> branch_lengths = get_mctree_mean_lengths(Q,tree_dist,full_partitions);
+    vector<double> node_lengths(Q.n_nodes(), 0);
+    
     output.unsetf(ios::fixed | ios::showpoint);
-	
+
     // Write the tree/mf tree
-    output<<consensus.write(false)<<std::endl;
-    for(int i=0;i<sub.size();i++)
-      output<<sub[i]<<endl;
+    output_mctree_with_lengths(output, Q, branch_lengths, node_lengths);
 
     if (file) {
       file->close();
@@ -754,6 +906,10 @@ int main(int argc,char* argv[])
 
     double min_support = args["min-support"].as<double>();
 
+    double report_ratio = args["odds-ratio"].as<double>();
+
+    bool show_sub = args.count("sub-partitions") or args.count("extended-consensus") or args.count("extended-consensus-L");
+
     // leaf taxa to ignore
     vector<string> ignore;
     if (args.count("ignore") and args["ignore"].as<string>().size() > 0)
@@ -766,12 +922,14 @@ int main(int argc,char* argv[])
     vector<pair<double,string> > consensus_levels_pp = get_consensus_levels(c_levels_pp);
     string ec_levels = args.count("extended-consensus") ? args["extended-consensus"].as<string>() : "";
     vector<pair<double,string> > extended_consensus_levels = get_consensus_levels(ec_levels);
-    if (not args.count("consensus") and not args.count("consensus-PP") and not args.count("extended-consensus"))
+    string ecl_levels = args.count("extended-consensus-L") ? args["extended-consensus-L"].as<string>() : "";
+    vector<pair<double,string> > extended_consensus_L_levels = get_consensus_levels(ecl_levels);
+
+    if (not args.count("consensus") 
+	and not args.count("consensus-PP") 
+	and not args.count("extended-consensus")
+	and not args.count("extended-consensus-L"))
       consensus_levels_pp.push_back(pair<double,string>(0.5,"-"));
-
-    double report_ratio = args["odds-ratio"].as<double>();
-
-    bool show_sub = args.count("sub-partitions") or args.count("extended-consensus");
 
     //-------------- Read in tree distributions --------------//
     vector<string> files;
@@ -948,6 +1106,7 @@ int main(int argc,char* argv[])
     write_consensus_trees(tree_dist, full_partitions, consensus_levels,false);
     write_consensus_trees(tree_dist, full_partitions, consensus_levels_pp,true);
     write_extended_consensus_trees(tree_dist, all_partitions, extended_consensus_levels);
+    write_extended_consensus_trees_with_lengths(tree_dist, all_partitions, full_partitions, extended_consensus_L_levels);
   }
   catch (std::exception& e) {
     std::cerr<<"trees-consensus: Error! "<<e.what()<<endl;
