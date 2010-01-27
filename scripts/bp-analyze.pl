@@ -1143,7 +1143,7 @@ sub determine_input_files
     {
 	print "Summarizing output files from phylobayes:\n";
 	my @treelists = glob("$first_dir/*.treelist");
-	$trees_file = $treelists[0];
+	$trees_file = check_file_exists($treelists[0]);
 	my $prefix = $trees_file;
 	$prefix =~ s/.treelist//;
 	$parameters_file = check_file_exists("$prefix.trace");
@@ -1153,7 +1153,7 @@ sub determine_input_files
 	print "Summarizing output files from BEAST:\n";
 	my @beast_trees = glob("*.trees");
 	$out_file = "";
-	$trees_file = $beast_trees[0];
+	$trees_file = check_file_exists($beast_trees[0]);
 	my $prefix = $trees_file;
 	$prefix =~ s/.trees//;
 	$parameters_file = check_file_exists("$prefix.log");
