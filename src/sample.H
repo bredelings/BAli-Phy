@@ -78,6 +78,7 @@ void two_way_NNI_and_branches_sample(Parameters&, MCMC::MoveStats&, int);
 void three_way_topology_and_alignment_sample(Parameters&, MCMC::MoveStats&, int);
 
 void sample_SPR_all(Parameters&, MCMC::MoveStats&);
+void sample_SPR_search_all(Parameters&, MCMC::MoveStats&);
 void sample_SPR_flat(Parameters&, MCMC::MoveStats&);
 void sample_SPR_nodes(Parameters&, MCMC::MoveStats&);
 void slide_node_move(Parameters&, MCMC::MoveStats&, int);

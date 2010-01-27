@@ -621,8 +621,71 @@ void do_pre_burnin(const variables_map& args, Parameters& P,ostream& out_log,ost
   }
   out_both<<endl;
 
+  // 2. Then do an initial tree search - SPR - ignore indel information
+  if (not args.count("tree"))
+  {
+    MoveAll pre_burnin("pre-burnin");
+    pre_burnin.add(4,get_scale_slice_moves(P));
+    pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
+				      "scale_means_only","mean"));
+    pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths,
+				"walk_tree_sample_branch_lengths","tree:lengths"));
+    pre_burnin.add(1,SingleMove(sample_SPR_search_all,"SPR_search_all",
+				"tree:topology:lengths"));
+    for(int i=0;i<n_pre_burnin;i++) {
+      out_both<<" SPR - Round "<<i+1<<"   likelihood = "<<P.likelihood();
+      for(int j=0;j<P.n_branch_means();j++)
+	out_both<<"     mu"<<j+1<<" = "<<P.branch_mean(j)<<endl;
+      show_parameters(out_log,P);
+      pre_burnin.iterate(P,Stats);
+    }
+  }
+  out_both<<endl;
+
+    // 3. Then do a further tree search - NNI - w/ the actual model
+  if (not args.count("tree"))
+  {
+    MoveAll pre_burnin("pre-burnin");
+
+    pre_burnin.add(1,get_scale_slice_moves(P));
+    pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
+				      "scale_means_only","mean"));
+    pre_burnin.add(1,SingleMove(sample_NNI_and_branch_lengths,
+				"NNI_and_lengths","topology:lengths"));
+    int n_pre_burnin2 = n_pre_burnin + (int)log(P.T->n_leaves());
+    for(int i=0;i<n_pre_burnin2;i++) {
+      out_both<<" NNI - Round "<<i+1<<"   likelihood = "<<P.likelihood();
+      for(int j=0;j<P.n_branch_means();j++)
+	out_both<<"     mu"<<j+1<<" = "<<P.branch_mean(j)<<endl;
+      show_parameters(out_log,P);
+      pre_burnin.iterate(P,Stats);
+    }
+  }
+  out_both<<endl;
+
   // Set all alignments that COULD be variable back to being variable.
   P.variable_alignment(true);
+
+  // 4. Then do a further tree search - NNI - w/ the actual model
+  if (not args.count("tree"))
+  {
+    MoveAll pre_burnin("pre-burnin");
+
+    pre_burnin.add(1,get_scale_slice_moves(P));
+    pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
+				      "scale_means_only2","mean"));
+    pre_burnin.add(1,SingleMove(sample_NNI_and_branch_lengths,
+				"NNI_and_lengths2","topology:lengths"));
+    int n_pre_burnin2 = n_pre_burnin + (int)log(P.T->n_leaves());
+    for(int i=0;i<n_pre_burnin2;i++) {
+      out_both<<" NNI/A - Round "<<i+1<<"   likelihood = "<<P.likelihood()<<"   probability = "<<P.probability();
+      for(int j=0;j<P.n_branch_means();j++)
+	out_both<<"     mu"<<j+1<<" = "<<P.branch_mean(j)<<endl;
+      show_parameters(out_log,P);
+      pre_burnin.iterate(P,Stats);
+    }
+  }
+  out_both<<endl;
 
   out_log<<Stats<<endl;
   double t2 = total_cpu_time();
