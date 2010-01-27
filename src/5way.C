@@ -32,11 +32,11 @@ namespace A5 {
 
   /// Which 5 nodes are adjacent to this branch?
   vector<int> get_nodes(const Tree& T,int b) {
-    assert(T.branch(b).is_internal_branch());
+    assert(T.directed_branch(b).is_internal_branch());
 
     vector<const_branchview> branches;
-    append(T.branch(b).branches_before(),branches);
-    append(T.branch(b).branches_after(),branches);
+    append(T.directed_branch(b).branches_before(),branches);
+    append(T.directed_branch(b).branches_after(),branches);
 
     vector<int> nodes(6);
     
@@ -46,8 +46,8 @@ namespace A5 {
     nodes[2] = branches[2].target();
     nodes[3] = branches[3].target();
 
-    nodes[4] = T.branch(b).source();
-    nodes[5] = T.branch(b).target();
+    nodes[4] = T.directed_branch(b).source();
+    nodes[5] = T.directed_branch(b).target();
     
     return nodes;
   }

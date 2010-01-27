@@ -64,7 +64,7 @@ MCMC::Result change_branch_length_(Parameters& P,int b,double sigma,
   MCMC::Result result(3);
   
   //------------ Propose new length -------------//
-  const double length = P.T->branch(b).length();
+  const double length = P.T->directed_branch(b).length();
   double newlength = length;
 
   double ratio = twiddle(newlength,sigma);
@@ -88,7 +88,7 @@ MCMC::Result change_branch_length_(Parameters& P,int b,double sigma,
 
 void change_branch_length_flat(Parameters& P,MoveStats& Stats,int b,double sigma)
 {
-  const double L = P.T->branch(b).length();
+  const double L = P.T->directed_branch(b).length();
   const double mu = P.branch_mean();
 
   MCMC::Result result = change_branch_length_(P, b, sigma*P.branch_mean(), branch_twiddle_positive);
@@ -106,7 +106,7 @@ void change_branch_length_flat(Parameters& P,MoveStats& Stats,int b,double sigma
 
 void change_branch_length_log_scale(Parameters& P,MoveStats& Stats,int b,double sigma)
 {
-  const double L = P.T->branch(b).length();
+  const double L = P.T->directed_branch(b).length();
   const double mu = P.branch_mean();
 
   MCMC::Result result = change_branch_length_(P, b, sigma, scale_gaussian );
@@ -126,7 +126,7 @@ void change_branch_length_log_scale(Parameters& P,MoveStats& Stats,int b,double 
 
 void slice_sample_branch_length(Parameters& P,MoveStats& Stats,int b)
 {
-  const double L = P.T->branch(b).length();
+  const double L = P.T->directed_branch(b).length();
   const double mu = P.branch_mean();
 
   P.select_root(b);
@@ -185,7 +185,7 @@ void change_branch_length_and_T(Parameters& P,MoveStats& Stats,int b)
   result.counts[0] = 1;
 
   //------------- Propose new length --------------//
-  const double length = P.T->branch(b).length();
+  const double length = P.T->directed_branch(b).length();
   double newlength = length;
   double ratio = branch_twiddle(newlength,P.branch_mean()*0.6);
 
