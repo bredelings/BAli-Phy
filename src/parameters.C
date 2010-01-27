@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "proposals.H"
 #include "probability.H"
+#include "timer_stack.H"
 
 using std::cerr;
 using std::endl;
@@ -96,6 +97,7 @@ void data_partition::recalc_imodel()
 
 void data_partition::recalc_smodel() 
 {
+  default_timer_stack.push_timer("recalc_smodel( )");
   // set the rate to one
   // FIXME - we COPY the smodel here!
   SModel_->set_rate(branch_mean());
@@ -105,10 +107,12 @@ void data_partition::recalc_smodel()
 
   //invalidate the cached transition probabilities in case the model has changed
   MC.recalc(*T,*SModel_);
+  default_timer_stack.pop_timer();
 }
 
 void data_partition::setlength_no_invalidate_LC(int b, double l)
 {
+  default_timer_stack.push_timer("setlength_no_invalidate_LC( )");
   b = T->directed_branch(b).undirected_name();
 
   MC.setlength(b,l,*T,*SModel_); 
@@ -126,6 +130,7 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
     cached_alignment_prior.invalidate();
     cached_alignment_prior_for_branch[b].invalidate();
   }
+  default_timer_stack.pop_timer();
 }
 
 void data_partition::setlength(int b, double l)
