@@ -1224,12 +1224,12 @@ int main(int argc,char* argv[])
       cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
       clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
+      out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
       out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
-      out_screen<<"   - Future debugging output sent to '"<<dir_name<<"/C1.out'"<<endl;
+      out_screen<<"   - Future debugging output sent to '"<<dir_name<<"/C1.err'"<<endl;
       out_screen<<"   - Sampled trees logged to '"<<dir_name<<"/C1.trees'"<<endl;
       out_screen<<"   - Sampled alignments logged to '"<<dir_name<<"/C1.P<partition>.fastas'"<<endl;
       out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.p'"<<endl;
-      out_screen<<"Being quiet while computation ensues."<<endl;
       out_screen<<endl;
       out_screen<<"You can examine 'C1.p' using BAli-Phy tool statreport (command-line)"<<endl;
       out_screen<<"  or the BEAST program Tracer (graphical)."<<endl;
