@@ -22,6 +22,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::vector;
 
+/// \brief Create an alignment with randomized homology
+///
+/// \param A An alignment containing the sequences to re-align
 alignment randomize(const alignment& A,int n) {
   if (n == -1)
     n = A.n_sequences();
@@ -32,18 +35,22 @@ alignment randomize(const alignment& A,int n) {
       maxlength = A.seqlength(s);
   }
 
+  // Choose the length of the new alignment
   alignment A2 = A;
   int newlength = int( maxlength + 2 + 0.1*maxlength);
   A2.changelength(newlength);
 
+  // For each row of the alignment
   const int temp = alphabet::gap;
   for(int i=0;i<n;i++) 
   {
+    /// Collect the letters of the row
     vector<int> s;
     for(int c=0;c<A.length();c++)
       if (A.character(c,i))
 	s.push_back(A(c,i));
 
+    /// Randomly insert gaps until the row is filled
     while(s.size() < newlength) {
       int pos = myrandom(s.size()+1);
       s.insert(s.begin()+pos,temp);
