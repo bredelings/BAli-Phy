@@ -336,11 +336,11 @@ efloat_t NewIndelModel::lengthp(int l) const
 NewIndelModel::NewIndelModel(bool b)
   :time_dependant(b)
 {
-  add_parameter("lambda",   -5);
+  add_parameter("lambda",   -4);
   add_parameter("epsilon",  -0.5);
   add_parameter("invariant",0.1);
-  add_parameter("lambda::prior_median", -5);
-  add_parameter("lambda::prior_stddev", 1.5);
+  add_parameter("lambda::prior_median", -4);
+  add_parameter("lambda::prior_stddev", 1);
   add_parameter("epsilon::prior_length", 5);
 }
 
