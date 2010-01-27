@@ -43,6 +43,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "proposals.H"
 
 
+void do_pre_burnin(const boost::program_options::variables_map& args,
+		   Parameters& P,std::ostream&, std::ostream&);
+
 void do_sampling(const boost::program_options::variables_map& args,
 		 Parameters& P,
 		 long int max_iterations,

@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sample.H"
 #include "alignment-util.H"
 #include "alignment-constraint.H"
-
+#include "timer_stack.H"
 ///
 /// \file   setup-mcmc.C
 /// \brief  Provides routines to create default transition kernels and start a Markov chain.
@@ -228,6 +228,15 @@ void add_slice_moves(Parameters& P, const string& name,
   }
 }
 
+
+MCMC::MoveAll get_scale_MH_moves(Parameters& P)
+{
+  MCMC::MoveAll MH_moves("parameters:scale:MH");
+  for(int i=0;i<P.n_branch_means();i++)
+    add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
+  return MH_moves;
+}
+
 //FIXME - how to make a number of variants with certain things fixed, for burn-in?
 // 0. Get an initial tree estimate using NJ or something? (as an option...)
 // 1. First estimate tree and parameters with alignment fixed.
@@ -272,6 +281,14 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, MH_moves, 10);
 
   return MH_moves;
+}
+
+MCMC::MoveAll get_scale_slice_moves(Parameters& P)
+{
+  MCMC::MoveAll slice_moves("parameters:scale:MH");
+  for(int i=0;i<P.n_branch_means();i++)
+    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+  return slice_moves;
 }
 
 /// \brief Construct 1-D slice-sampling moves for (some) scalar numeric parameters
@@ -574,6 +591,45 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   return parameter_moves;
 }
 
+void do_pre_burnin(const variables_map& args, Parameters& P,ostream& out_log,ostream& out_both)
+{
+  using namespace MCMC;
+
+  int n_pre_burnin = args["pre-burnin"].as<int>();
+
+  if (n_pre_burnin <= 0) return;
+
+  double t1 = total_cpu_time();
+  out_both<<"Beginning pre-burnin: "<<n_pre_burnin<<" iterations."<<endl;
+
+  if (P.variable_alignment() and not args.count("tree"))
+    P.variable_alignment(false);
+
+  MoveStats Stats;
+  // 1. First choose the scale of the tree
+  {
+    MoveAll pre_burnin("pre-burnin");
+
+    pre_burnin.add(3,get_scale_slice_moves(P));
+    for(int i=0;i<3;i++) {
+      out_both<<" Tree size - Round "<<i+1<<"   likelihood = "<<P.likelihood();
+      for(int j=0;j<P.n_branch_means();j++)
+	out_both<<"     mu"<<j+1<<" = "<<P.branch_mean(j)<<endl;
+      show_parameters(out_log,P);
+      pre_burnin.iterate(P,Stats);
+    }
+  }
+  out_both<<endl;
+
+  // Set all alignments that COULD be variable back to being variable.
+  P.variable_alignment(true);
+
+  out_log<<Stats<<endl;
+  double t2 = total_cpu_time();
+  out_log<<default_timer_stack.report()<<endl;
+  out_both<<"Finished pre-burnin in "<<(t2-t1)<<" seconds.\n"<<endl;
+}
+
 /// \brief Create transition kernels and start a Markov chain
 ///
 /// \param args            Contains command line arguments
@@ -614,8 +670,6 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 
   // FIXME - We certainly don't want to do MH_sample_mu[i] O(branches) times
   // - It does call the likelihood function, doesn't it?
-  // FIXME - Perhaps we want to do MH_sample_epsilon more times, though.
-  // FIXME -   But we should do that by weighting the epsilon moves, above.
   // FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
   // FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
   sampler.add(5 + log(P.T->n_branches()), MH_but_no_slice_moves);

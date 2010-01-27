@@ -119,6 +119,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description mcmc("MCMC options");
   mcmc.add_options()
     ("iterations",value<long int>()->default_value(100000),"The number of iterations to run")
+    ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree")
     ("subsample",value<int>()->default_value(1),"Factor by which to subsample")
     ("beta",value<string>(),"MCMCMC temperature")
     ("dbeta",value<string>(),"MCMCMC temperature changes")
@@ -1224,6 +1225,10 @@ int main(int argc,char* argv[])
       cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
       clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
+      //------ Redirect output to files -------//
+
+      do_pre_burnin(args,P,s_out,out_both);
+      
       out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
       out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
       out_screen<<"   - Future debugging output sent to '"<<dir_name<<"/C1.err'"<<endl;
