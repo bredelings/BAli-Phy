@@ -280,6 +280,59 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 			   <<A.seq(i).name<<"': only - and * are allowed";
 }
 
+/// \brief Check if internal node characters are only present between leaf charaters.
+///
+/// \param A The alignment
+/// \param T The tree
+bool check_leaf_characters_minimally_connected(const alignment& A,const Tree& T)
+{
+  assert(A.n_sequences() == T.n_nodes());
+
+  for(int column=0;column<A.length();column++)
+  {
+    // construct leaf presence/absence mask
+    dynamic_bitset<> present(T.n_nodes());
+    for(int i=0;i<T.n_nodes();i++)
+      present[i] = not A.gap(column,i);
+    
+    // compute presence/absence for internal nodes
+    connect_all_characters(T,present);
+
+    // put present characters into the alignment.
+    for(int i=T.n_leaves();i<T.n_nodes();i++)
+      if (present[i] != A.character(column,i))
+	return false;
+  }
+  return true;
+}
+
+
+
+/// Force internal node states are consistent by connecting leaf characters
+void minimally_connect_leaf_characters(alignment& A,const Tree& T)
+{
+  assert(A.n_sequences() == T.n_nodes());
+
+  for(int column=0;column<A.length();column++)
+  {
+    // construct leaf presence/absence mask
+    dynamic_bitset<> present(T.n_nodes());
+    for(int i=0;i<T.n_nodes();i++)
+      present[i] = not A.gap(column,i);
+    
+    // compute presence/absence for internal nodes
+    connect_all_characters(T,present);
+
+    // put present characters into the alignment.
+    for(int i=T.n_leaves();i<T.n_nodes();i++) {
+      if (present[i])
+	A(column,i) = alphabet::not_gap;
+      else
+	A(column,i) = alphabet::gap;
+    }
+  }
+  remove_empty_columns(A);
+}
 
 /// Force internal node states are consistent by connecting leaf characters
 void connect_leaf_characters(alignment& A,const Tree& T)
