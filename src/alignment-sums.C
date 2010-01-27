@@ -31,7 +31,7 @@ efloat_t other_subst(const data_partition& P, const vector<int>& nodes)
 
 efloat_t other_prior(const data_partition& P,const vector<int>& nodes) 
 {
-  if (not P.has_IModel()) 
+  if (not P.variable_alignment()) 
     return 1;
 
   const SequenceTree& T = *P.T;

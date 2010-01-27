@@ -401,7 +401,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
   MoveEach NNI_move("NNI");
   MoveOne SPR_move("SPR");
 
-  bool has_imodel = (P.n_imodels() > 0);
+  bool has_imodel = P.variable_alignment();
 
   if (has_imodel)
     NNI_move.add(1,MoveArgSingle("three_way_NNI","alignment:nodes:topology",
@@ -586,7 +586,11 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
 {
   using namespace MCMC;
 
-  bool has_imodel = (P.n_imodels() > 0);
+  bool has_imodel = P.variable_alignment();
+
+  if (has_imodel)
+    for(int i=0;i<P.n_data_partitions();i++)
+      check_internal_nodes_connected(*P[i].A,*P[i].T);
 
   //----------------------- alignment -------------------------//
   MoveAll alignment_moves = get_alignment_moves(P);

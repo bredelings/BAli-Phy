@@ -76,7 +76,7 @@ void sample_tri_branch_one(Parameters& P, MoveStats& Stats,int b)
 
   MCMC::Result result(2);
 
-  assert(P.n_imodels() > 0); 
+  assert(P.variable_alignment()); 
 
   const SequenceTree& T = *P.T;
 
@@ -110,7 +110,7 @@ void sample_tri_branch_type_one(Parameters& P, MoveStats& Stats,int b)
 
   MCMC::Result result(1);
 
-  assert(P.n_imodels() > 0); 
+  assert(P.variable_alignment()); 
 
   const SequenceTree& T = *P.T;
 
@@ -132,19 +132,19 @@ void sample_tri_branch_type_one(Parameters& P, MoveStats& Stats,int b)
 
 
 void sample_alignments_one(Parameters& P, MoveStats&,int b) {
-  assert(P.n_imodels() > 0); 
+  assert(P.variable_alignment()); 
 
   sample_alignment(P,b);
 }
 
 void sample_node_move(Parameters& P, MoveStats&,int node) {
-  assert(P.n_imodels() > 0); 
+  assert(P.variable_alignment()); 
 
   sample_node(P,node);
 }
 
 void sample_two_nodes_move(Parameters& P, MoveStats&,int n0) {
-  assert(P.n_imodels() > 0); 
+  assert(P.variable_alignment()); 
 
   vector<int> nodes = A3::get_nodes_random(*P.T,n0);
   int n1 = -1;

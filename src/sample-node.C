@@ -56,7 +56,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 {
   const Tree& T = *P.T;
 
-  assert(P.has_IModel());
+  assert(P.variable_alignment());
 
   alignment old = *P.A;
 
@@ -224,7 +224,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   vector< vector< boost::shared_ptr<DParrayConstrained> > > Matrices(p.size());
   for(int i=0;i<p.size();i++) {
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel())
+      if (p[i][j].variable_alignment())
 	Matrices[i].push_back( sample_node_base(p[i][j],nodes[i]) );
       else
 	Matrices[i].push_back( boost::shared_ptr<DParrayConstrained>() );
@@ -239,7 +239,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   {
     if (do_OS)
       for(int j=0;j<p[i].n_data_partitions();j++)
-	if (p[i][j].has_IModel())
+	if (p[i][j].variable_alignment())
 	  OS[i].push_back( p[i][j].likelihood() );
 	else
 	  OS[i].push_back( 1 );
@@ -262,7 +262,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
     // sum of substitution and alignment probability over all paths
     for(int j=0;j<p[i].n_data_partitions();j++)
-      if (p[i][j].has_IModel())
+      if (p[i][j].variable_alignment())
       {
 	Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
 	Pr[i] *= pow(OS[i][j], p[i][j].beta[0]);
@@ -307,7 +307,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   //------------------- Check offsets from path_Q -> P -----------------//
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel())
+      if (p[i][j].variable_alignment())
       {
 	paths[i].push_back( get_path_3way(A3::project(*p[i][j].A,nodes[i]),0,1,2,3) );
 	
@@ -340,7 +340,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     PR[i][2] = rho[i];
     PR[i][3] = choice_ratio;
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel())
+      if (p[i][j].variable_alignment())
       {
 	vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
 	PR[i][0] *= A3::correction(p[i][j],nodes[i]);

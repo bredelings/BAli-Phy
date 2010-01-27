@@ -284,7 +284,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   vector< vector<DParrayConstrained*> > Matrices(p.size());
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel())
+      if (p[i][j].variable_alignment())
       {
 	sample_two_nodes_base(p[i][j],nodes[i],cached_dparrays[i][j]);
 	Matrices[i].push_back(cached_dparrays[i][j]);
@@ -330,7 +330,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
 
     // sum of substitution and alignment probability over all paths
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel())
+      if (p[i][j].variable_alignment())
       {
 	Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
 	Pr[i] *= pow(OS[i][j], p[i][j].beta[0]);
@@ -376,7 +376,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   //------------------- Check offsets from path_Q -> P -----------------//
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel())
+      if (p[i][j].variable_alignment())
       {
 	paths[i].push_back( get_path(A5::project(*p[i][j].A, nodes[i]),newnodes,A5::states_list) );
     
@@ -408,7 +408,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
     PR[i][2] = rho[i];
     PR[i][3] = choice_ratio;
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel()) {
+      if (p[i][j].variable_alignment()) {
 	vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
 	PR[i][0] *= A5::correction(p[i][j],nodes[i]);
 	PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);

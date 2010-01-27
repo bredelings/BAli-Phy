@@ -68,9 +68,15 @@ struct data_partition: public Model
   void branch_mean(double);
   void branch_mean_tricky(double);
 
+  bool variable_alignment_;
+
 public:
 
   bool smodel_full_tree;
+
+  bool variable_alignment() const {return variable_alignment_;}
+  
+  void variable_alignment(bool b);
 
   data_partition* clone() const {return new data_partition(*this);}
 
@@ -171,6 +177,10 @@ public:
   int branch_prior_type;
 
   bool smodel_full_tree;
+
+  bool variable_alignment() const;
+
+  void variable_alignment(bool b);
 
   /// The alignments and cached computations
   vector<cow_ptr<data_partition> > data_partitions;

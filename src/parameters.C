@@ -21,6 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rng.H"
 #include "substitution.H"
 #include "substitution-index.H"
+#include "alignment-util.H"
 #include "likelihood.H"
 #include "util.H"
 #include "proposals.H"
@@ -28,6 +29,36 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::cerr;
 using std::endl;
+
+void data_partition::variable_alignment(bool b)
+{
+  variable_alignment_ = b;
+
+  // Ignore requests to turn on alignment variation when there is no imodel or internal nodes
+  if (not has_IModel() or A->n_sequences() != T->n_nodes())
+    variable_alignment_ = false;
+
+  // turning OFF alignment variation
+  if (not variable_alignment()) 
+  {
+    if (A->n_sequences() == T->n_nodes())
+      if (not check_leaf_characters_minimally_connected(*A,*T))
+	throw myexception()<<"Failing to turn off alignment variability: non-default internal node states";
+  }
+  // turning ON alignment variation
+  else 
+  {
+    assert(has_IModel() and A->n_sequences() == T->n_nodes());
+    minimally_connect_leaf_characters(*A,*T);
+    note_alignment_changed();
+
+    // we need to calculate the branch_HMMs
+    recalc_imodel();
+
+    // Minimally connecting leaf characters may remove empty columns, in theory.
+    LC.invalidate_all();
+  }
+}
 
 const IndelModel& data_partition::IModel() const
 {
@@ -43,7 +74,7 @@ IndelModel& data_partition::IModel()
 
 void data_partition::recalc_imodel() 
 {
-  if (not has_IModel()) return;
+  if (not variable_alignment()) return;
 
   cached_alignment_prior.invalidate();
 
@@ -82,7 +113,7 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
 
   MC.setlength(b,l,*T,*SModel_); 
 
-  if (has_IModel())
+  if (variable_alignment())
   {
     // use the length, unless we are unaligned
     double t = T->branch(b).length();
@@ -120,7 +151,8 @@ void data_partition::note_sequence_length_changed(int n)
 
 void data_partition::note_alignment_changed_on_branch(int b)
 {
-  if (not has_IModel()) return;
+  if (not variable_alignment())
+    throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
 
   b = T->directed_branch(b).undirected_name();
 
@@ -195,7 +227,7 @@ efloat_t data_partition::prior_no_alignment() const
 
 efloat_t data_partition::prior_alignment() const 
 {
-  if (not IModel_) return 1;
+  if (not variable_alignment()) return 1;
 
   if (not cached_alignment_prior.is_valid()) 
   {
@@ -287,6 +319,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
    branch_mean_(1.0),
+   variable_alignment_(true),
    smodel_full_tree(true),
    A(a),
    T(t),
@@ -308,6 +341,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
    branch_mean_(1.0),
+   variable_alignment_(false),
    smodel_full_tree(true),
    A(a),
    T(t),
@@ -346,7 +380,7 @@ efloat_t Parameters::prior_no_alignment() const
     Pr *= IModel(i).prior();
 
   // prior for each branch being aligned/unaliged
-  if (n_imodels() > 0) 
+  if (variable_alignment()) 
   {
     const double p_unaligned = loadvalue(keys,"P_aligned",0.0);
 
@@ -624,6 +658,20 @@ const Model& Parameters::SubModels(int i) const
     i -= IModels.size();
 
   return *data_partitions[i];
+}
+
+bool Parameters::variable_alignment() const
+{
+  for(int i=0;i<n_data_partitions();i++)
+    if (data_partitions[i]->variable_alignment())
+      return true;
+  return false;
+}
+
+void Parameters::variable_alignment(bool b)
+{
+  for(int i=0;i<n_data_partitions();i++)
+    data_partitions[i]->variable_alignment(b);
 }
 
 void Parameters::setlength_no_invalidate_LC(int b,double l) 

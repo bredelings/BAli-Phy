@@ -67,7 +67,7 @@ void SPR_inc(MoveStats& Stats, MCMC::Result result,const string& name,double L)
 int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
 {
   assert(p.size() == 2);
-  assert(p[0].n_imodels() == p[1].n_imodels());
+  assert(p[0].variable_alignment() == p[1].variable_alignment());
 
   //----------- Generate the Different node lists ---------//
   vector< vector<int> > nodes(2);
@@ -374,7 +374,8 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     int bi = branches[i];
     p[1].setlength(bi,p[1].T->directed_branch(bi).length());     // bidirectional effect
     p[1].invalidate_subA_index_branch(bi);              // bidirectional effect
-    p[1].note_alignment_changed_on_branch(bi); // Yes, this works even for data_partition's with no indel model.
+    if (p[1].variable_alignment()) 
+      p[1].note_alignment_changed_on_branch(bi); 
   }
 
   int C;
@@ -465,7 +466,7 @@ void sample_SPR_flat(Parameters& P,MoveStats& Stats)
 
     double L_effective = effective_length(*P.T, b1);
 
-    if (P.n_imodels() == 0 and uniform() < p) {
+    if (not P.variable_alignment() and uniform() < p) {
       MCMC::Result result = sample_SPR(P,b1,b2,true);
       SPR_inc(Stats,result,"SPR (flat/slice)",L_effective);
     }
@@ -489,7 +490,7 @@ void sample_SPR_flat(Parameters& P,MoveStats& Stats)
  * be used when we attach somewhere else.
  *
  * FIXME - how can we keep the information for upwards-pointing branches cached, and then restore it
- *         after we un-regraft from an attachment branch and move on to the next one? (speedup)
+ *         after we un-regraft from an attachment branch and move on to the next one? (30% speedup)
  *
  */
 void sample_SPR_all(Parameters& P,MoveStats& Stats) 
@@ -687,7 +688,8 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
       int bi = btemp[i];
       p[1].setlength(bi, p[1].T->directed_branch(bi).length());   // bidirectional effect
       p[1].invalidate_subA_index_branch(bi);         // bidirectional effect
-      p[1].note_alignment_changed_on_branch(bi); // Yes, this works even for data_partition's with no indel model.
+      if (p[1].variable_alignment()) 
+	p[1].note_alignment_changed_on_branch(bi); 
     }
     p[1].subA_index_allow_invalid_branches(false);
 
@@ -732,7 +734,7 @@ void sample_SPR_all(Parameters& P,MoveStats& Stats)
       }
 
       // If the alignment is not variable, then we should always accept on this second move.
-      if (not P.n_imodels())
+      if (not P.variable_alignment())
 	assert(C2 == 1);
     }
     else
@@ -857,7 +859,7 @@ void sample_SPR_nodes(Parameters& P,MoveStats& Stats)
 
     double L_effective = effective_length(*P.T, b1);
 
-    if (P.n_imodels() == 0 and uniform()< p) {
+    if (not P.variable_alignment() and uniform()< p) {
       MCMC::Result result = sample_SPR(P,b1,b2,true);
       SPR_inc(Stats,result,"SPR (path/slice)", L_effective);
     }

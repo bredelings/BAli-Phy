@@ -550,7 +550,7 @@ namespace A3 {
 
   efloat_t correction(const data_partition& P,const vector<int>& nodes) 
   {
-    if (P.has_IModel()) 
+    if (P.variable_alignment())
     {
       // get the lengths of then internal node
       int length = P.A->seqlength(nodes[0]);

@@ -99,9 +99,9 @@ void NNI_inc(MoveStats& Stats, const string& name, MCMC::Result result,const Tre
 
 int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, int b) 
 {
-  assert(p[0].n_imodels() == p[1].n_imodels());
-  for(int j=0;j<p[0].n_imodels();j++)
-    assert(p[0][j].has_IModel() == p[1][j].has_IModel());
+  assert(p[0].variable_alignment() == p[1].variable_alignment());
+  for(int j=0;j<p[0].n_data_partitions();j++)
+    assert(p[0][j].variable_alignment() == p[1][j].variable_alignment());
 
   vector< vector<int> > nodes(2);
   nodes[0] = A5::get_nodes_random(*p[0].T, b);
@@ -137,7 +137,7 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, i
 
 void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
     return;
 
   Tree T0 = *P.T;
@@ -161,7 +161,7 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
   if (not extends(*p[1].T, *P.TC))
     return;
 
-  double L = P.T->branch(b).length();
+  double L = P.T->directed_branch(b).length();
 
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
   //  double Pr1 = log(p[0].probability());
@@ -193,7 +193,7 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
     result.totals[1] = L;
   else
     result.counts[1] = 0;
-  result.totals[2] = std::abs(P.T->branch(b).length() - L);
+  result.totals[2] = std::abs(P.T->directed_branch(b).length() - L);
 
   //  if (C == 1) std::cerr<<"slice-diff = "<<Pr2 - Pr1<<"\n";
 
@@ -202,12 +202,12 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
 
 void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
     return;
 
   double slice_fraction = loadvalue(P.keys,"NNI_slice_fraction",-0.25);
 
-  if (not P.n_imodels() and uniform() < slice_fraction) {
+  if (not P.variable_alignment() and uniform() < slice_fraction) {
     two_way_topology_slice_sample(P,Stats,b);
     return;
   }
@@ -254,7 +254,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T->branch(b).length();
+    result.totals[1] = p[0].T->directed_branch(b).length();
   else
     result.counts[1] = 0;
 
@@ -263,7 +263,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
 
 void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
     return;
 
   vector<int> nodes = A5::get_nodes_random(*P.T, b);
@@ -333,7 +333,7 @@ vector<int> NNI_branches(const Tree& T, int b)
 
 void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
     return;
 
   vector<int> nodes = A5::get_nodes_random(*P.T,b);
@@ -364,7 +364,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
 
     double factor = exp(gaussian(0,0.05));
 
-    double L = p[1].T->branch( branches[i] ).length() * factor;
+    double L = p[1].T->directed_branch( branches[i] ).length() * factor;
 
     p[1].setlength(branches[i], L);
 
@@ -387,7 +387,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T->branch(b).length();
+    result.totals[1] = p[0].T->directed_branch(b).length();
   else
     result.counts[1] = 0;
 
@@ -396,7 +396,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
 
 void two_way_NNI_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
     return;
 
   double U = uniform();
@@ -413,8 +413,8 @@ void two_way_NNI_sample(Parameters& P, MoveStats& Stats, int b)
 
 int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho, int b) 
 {
-  assert(p[0].n_imodels() == p[1].n_imodels());
-  assert(p[1].n_imodels() == p[2].n_imodels());
+  assert(p[0].variable_alignment() == p[1].variable_alignment());
+  assert(p[1].variable_alignment() == p[2].variable_alignment());
 
   vector< vector<int> > nodes(3);
   nodes[0] = A5::get_nodes_random(*p[0].T, b);
@@ -427,7 +427,7 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho
 
 void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.n_imodels())
+  if (P.variable_alignment())
     return;
 
   Tree T0 = *P.T;
@@ -464,7 +464,7 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
 
   const vector<efloat_t> rho(3,1);
 
-  double L = P.T->branch(b).length();
+  double L = P.T->directed_branch(b).length();
 
 #ifndef NDEBUG
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
@@ -503,7 +503,7 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
     result.totals[1] = L;
   else
     result.counts[1] = 0;
-  result.totals[2] = std::abs(P.T->branch(b).length() - L);
+  result.totals[2] = std::abs(P.T->directed_branch(b).length() - L);
   result.totals[3] = logp1.count + logp2.count + logp3.count;
 
   //  if (C == 1) std::cerr<<"slice-diff3 = "<<Pr2 - Pr1<<"\n";
@@ -515,12 +515,12 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
 
 void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
     return;
 
   double slice_fraction = loadvalue(P.keys,"NNI_slice_fraction",-0.25);
 
-  if (not P.n_imodels() and uniform() < slice_fraction) {
+  if (not P.variable_alignment() and uniform() < slice_fraction) {
     three_way_topology_sample_slice(P,Stats,b);
     return;
   }
@@ -569,7 +569,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T->branch(b).length();
+    result.totals[1] = p[0].T->directed_branch(b).length();
   else
     result.counts[1] = 0;
 
@@ -580,7 +580,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
 {
   assert(b >= P.T->n_leafbranches());
 
-  if (P.n_imodels() and P.branch_HMM_type[b] == 1)
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
     return;
 
   vector<int> two_way_nodes = A5::get_nodes_random(*P.T, b);
@@ -628,7 +628,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T->branch(b).length();
+    result.totals[1] = p[0].T->directed_branch(b).length();
   else
     result.counts[1] = 0;
 

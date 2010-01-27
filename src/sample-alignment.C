@@ -72,7 +72,7 @@ typedef vector< Matrix > (*distributions_t_local)(const data_partition&,
 
 boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b) 
 {
-  assert(P.has_IModel());
+  assert(P.variable_alignment());
 
   dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, *P.A);
 
@@ -171,7 +171,7 @@ void sample_alignment(Parameters& P,int b)
   for(int i=0;i<p.size();i++) 
   {
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel()) 
+      if (p[i][j].variable_alignment()) 
       {
 	Matrices[i].push_back(sample_alignment_base(p[i][j], b));
 #ifndef NDEBUG
@@ -204,7 +204,7 @@ void sample_alignment(Parameters& P,int b)
   //------------------- Check offsets from path_Q -> P -----------------//
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel())
+      if (p[i][j].variable_alignment())
       {
 	paths[i].push_back( get_path(*p[i][j].A, node1, node2) );
     
@@ -228,7 +228,7 @@ void sample_alignment(Parameters& P,int b)
     PR[i] = vector<efloat_t>(4,1);
     PR[i][0] = p[i].heated_probability();
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (p[i][j].has_IModel())
+      if (p[i][j].variable_alignment())
       {
 	vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
 	PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);

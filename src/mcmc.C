@@ -810,9 +810,9 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   // make sure that the Alignment and Tree are linked
   for(int i=0;i<P.n_data_partitions();i++) {
     if (P[i].has_IModel())
-      assert(P[i].A->n_sequences() == T.n_nodes()); 
-   else
-      assert(P[i].A->n_sequences() == T.n_leaves());
+      assert(P[i].A->n_sequences() == T.n_nodes() and P[i].variable_alignment()); 
+    else
+      assert(P[i].A->n_sequences() == T.n_leaves() and P[i].variable_alignment());
 
     for(int j=0;j<T.n_leaves();j++)
       assert(T.seq(j) == P[i].A->seq(j).name);    
@@ -857,7 +857,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   s_parameters<<"likelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
   for(int i=0;i<P.n_data_partitions();i++) {
-    if (P[i].has_IModel()) {
+    if (P[i].variable_alignment()) {
       s_parameters<<"\t|A"<<i+1<<"|";
       s_parameters<<"\t#indels"<<i+1;
       s_parameters<<"\t|indels"<<i+1<<"|";
@@ -869,7 +869,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       s_parameters<<"\t#substs(aa)"<<i+1;
   }
   if (P.n_data_partitions() > 1) {
-    if (P.n_imodels() > 0)
+    if (P.variable_alignment())
       s_parameters<<"\t|A|\t#indels\t|indels|";
     s_parameters<<"\t#substs";
   }
@@ -926,7 +926,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 	for(int i=0;i<P.n_data_partitions();i++) 
 	{
 	  (*files[5+i])<<"iterations = "<<iterations<<"\n\n";
-	  if (not iterations or P[i].has_IModel())
+	  if (not iterations or P[i].variable_alignment())
 	    (*files[5+i])<<standardize(*P[i].A, *P.T)<<"\n";
 	}
       }
@@ -944,7 +944,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       unsigned total_substs=0;
       for(int i=0;i<P.n_data_partitions();i++)
       {
-	if (P[i].has_IModel()) {
+	if (P[i].variable_alignment()) {
 	  unsigned x1 = P[i].A->length();
 	  total_length += x1;
 
@@ -967,7 +967,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 	  s_parameters<<"\t"<<n_mutations(*P[i].A, *P[i].T, amino_acid_cost_matrix(*C));
       }
       if (P.n_data_partitions() > 1) {
-	if (P.n_imodels() > 0) {
+	if (P.variable_alignment()) {
 	  s_parameters<<"\t"<<total_length;
 	  s_parameters<<"\t"<<total_indels;
 	  s_parameters<<"\t"<<total_indel_lengths;
