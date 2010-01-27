@@ -876,9 +876,11 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   s_parameters<<"\t|T|"<<endl;
 
   vector<string> restore_names;
-  restore_names.push_back("lambda");
-  restore_names.push_back("delta");
-  restore_names.push_back("epsilon");
+  if (not defined(P.keys,"free-imodel")) {
+    restore_names.push_back("lambda");
+    restore_names.push_back("delta");
+    restore_names.push_back("epsilon");
+  }
   vector<int> restore;
   for(int i=0;i<restore_names.size();i++) 
   {
