@@ -137,8 +137,9 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, i
 
 void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
-    return;
+  if (P.T->directed_branch(b).is_leaf_branch()) return;
+
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1) return;
 
   Tree T0 = *P.T;
 
@@ -202,8 +203,9 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
 
 void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
-    return;
+  if (P.T->directed_branch(b).is_leaf_branch()) return;
+
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1) return;
 
   double slice_fraction = loadvalue(P.keys,"NNI_slice_fraction",-0.25);
 
@@ -263,8 +265,9 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
 
 void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
-    return;
+  if (P.T->directed_branch(b).is_leaf_branch()) return;
+
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1) return;
 
   vector<int> nodes = A5::get_nodes_random(*P.T, b);
 
@@ -333,8 +336,9 @@ vector<int> NNI_branches(const Tree& T, int b)
 
 void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
-    return;
+  if (P.T->directed_branch(b).is_leaf_branch()) return;
+
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1) return;
 
   vector<int> nodes = A5::get_nodes_random(*P.T,b);
 
@@ -396,8 +400,9 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
 
 void two_way_NNI_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
-    return;
+  if (P.T->directed_branch(b).is_leaf_branch()) return;
+
+  if (P.variable_alignment() and P.branch_HMM_type[b] == 1) return;
 
   double U = uniform();
   if (U < 0.33333333) {
@@ -427,8 +432,9 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho
 
 void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b) 
 {
-  if (P.variable_alignment())
-    return;
+  if (P.T->directed_branch(b).is_leaf_branch()) return;
+
+  if (P.variable_alignment()) return;
 
   Tree T0 = *P.T;
 
@@ -515,6 +521,8 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
 
 void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
 {
+  if (P.T->directed_branch(b).is_leaf_branch()) return;
+
   if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
     return;
 
@@ -578,7 +586,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
 
 void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, int b) 
 {
-  assert(b >= P.T->n_leafbranches());
+  if (P.T->directed_branch(b).is_leaf_branch()) return;
 
   if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
     return;
