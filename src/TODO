@@ -1,48 +1,18 @@
-Replace T.branch(  ) with T.undirected_branch( ) or T.branch( ).undirected(). [step 1]
-Replace T.directed_branch( ) with T.branch( ). [step 2]
-
-Profile SPR_search_all( ) to see what non-substitution task is 
-consuming maybe half of the CPU time?
-
-Also make a version of NNI for searching.
- * Run more iterations of the NNI version.
- * Slice sample the branch length before and after interchanging.
-
-ALSO make slice-sampling ignore alignment_prior()
-
-Maybe I can just make a flag that turns off alignment_prior
-and disallows alignment?
- - This might be safer.
-
-Profile and see how much pre-burnin time is spent in prior().
-
-I need to compare 18S-rna-usman-mafft with GTR+DP[4] -- otherwise its not comparable.
-
-----------
-Branch lengths for mc-trees
-- Can I get branch lengths for the mctree... but without node sizes?
-- For each branch, mask out taxa that wander over 
-  * edges directly connected (mask of A, A<<B, A does not directly wander)
-  * edges that wander over the same region as we do (~A.group1, A<<B, A directly wanders) 
-  Node masks simply mask out all taxa that wander over connected edges.
-
-  Then, if a branch implies a partition with its new, increased, mask, then contribute to that partition.
-
-  What are the resulting corner cases?
-   - the same branch can imply two parallel edges.
-   - if X and Y wander over 12|34, then what if the sample tree has XY|1234 ?
-     + X and Y have the reduced splits X|1234 and Y|1234, so XY|1234 implies both.
-     + we therefore give half the length to each one.
-   - when does each branch in a compatible tree imply just one reduced split?
-
 Documentation
- - Make things more self-documenting.
+ - Make programs more self-documenting.
  - Make a 'front matter' page for Doxygen...?
  - Document: "How do I concatenate two alignments?" alignment-cat A.fasta B.fasta
  - Document: "How do I split up a concatenated alignment?" alignment-cat A.fasta -c1-5 > A1.fasta
  - Document: "How do I construct a constraint file?" alignment-indices A.fasta --c100,500,700 > constraint
+ - Allow `bali-phy --help=topic'
+ - Make an --help=advanced to put the advanced usage options in?
+ - Remove default from --data-dir
+ - Remove --letters=full_tree option.
+ - Remove default option from --iterations?
+ - Remove default argument from --genetic-code
 
-Speed up timers (don't re-lookup on pop) and make a way to turn them off from cmd_line.
+Advanced help options
+ - beta, dbeta, partition-weights, internal, 
 
 Report a 95% confidence interval of splits
  - scale by # of internal branches in tree... then should be < than # of iterations, just like #topologies.
@@ -56,9 +26,7 @@ Make moves report meaningful names for their various statistics.
  - Make SPR report how many branches peeled on average divided T.n_branches()
 
 Handle two-directory case better: make outfile be a list.
- * Does this require trees-consensus to handle two input files?
- * Well, make it take multiple distributions, and let it merge them into one, for now.
- * 
+ * Alignment-max and alignment-consensus should also take multiple input files.
 
 Report
  - I can generate a mixing graph by comparing column probabilities for different alignments...
@@ -103,6 +71,25 @@ Speed up mctree-mean-lengths.
 Branch priors - make into a sub-model, allow a mixture-of-two-{Exponential, Gamma}.
 
 Build constraints the same way FSA does.
+
+Replace T.branch(  ) with T.undirected_branch( ) or T.branch( ).undirected(). [step 1]
+Replace T.directed_branch( ) with T.branch( ). [step 2]
+
+Branch lengths for mc-trees
+- Can I get branch lengths for the mctree... but without node sizes?
+- For each branch, mask out taxa that wander over 
+  * edges directly connected (mask of A, A<<B, A does not directly wander)
+  * edges that wander over the same region as we do (~A.group1, A<<B, A directly wanders) 
+  Node masks simply mask out all taxa that wander over connected edges.
+
+  Then, if a branch implies a partition with its new, increased, mask, then contribute to that partition.
+
+  What are the resulting corner cases?
+   - the same branch can imply two parallel edges.
+   - if X and Y wander over 12|34, then what if the sample tree has XY|1234 ?
+     + X and Y have the reduced splits X|1234 and Y|1234, so XY|1234 implies both.
+     + we therefore give half the length to each one.
+   - when does each branch in a compatible tree imply just one reduced split?
 
 
 P29. See genome-wide transducer paper.  Can I do something similar?
