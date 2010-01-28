@@ -799,7 +799,7 @@ void output_mctree_with_lengths(ostream& output, MC_tree Q,
     const Partition& P = Q.partitions[p];
     if (not P.full()) continue;
     int b = which_branch(Q.T,P);
-    cerr<<" i = "<<i<<"   p = "<<p<<"   b = "<<b<<endl;
+    //    cerr<<" i = "<<i<<"   p = "<<p<<"   b = "<<b<<endl;
     Q.T.branch(b).set_length(branch_lengths[i]);
   }
 
