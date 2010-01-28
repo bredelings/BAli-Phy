@@ -101,59 +101,65 @@ variables_map parse_cmd_line(int argc,char* argv[])
 { 
   using namespace po;
 
+  options_description advanced("Advanced options");
+  advanced.add_options()
+    ("letters",value<string>()->default_value("full_tree"),"If set to 'star', then use a star tree for substitution")
+    ("beta",value<string>(),"MCMCMC temperature")
+    ("dbeta",value<string>(),"MCMCMC temperature changes")
+    ("internal",value<string>(),"If set to '+', then make all internal node entries wildcards")
+    ("partition-weights",value<string>(),"File containing tree with partition weights")
+    ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
+    ("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
+    ("verbose","Print extra output in case of error.")
+    ;
+
   // named options
   options_description general("General options");
   general.add_options()
-    ("help,h", "Produce help message")
-    ("version,v", "Print version information")
-    ("config,c", value<string>(),"Config file to read")
-    ("show-only","Analyze the initial values and exit")
+    ("help,h", "Print usage information.")
+    ("version,v", "Print version information.")
+    ("config,c", value<string>(),"Config file to read.")
+    ("show-only","Analyze the initial values and exit.")
     ("seed", value<unsigned long>(),"Random seed")
-    ("data-dir", value<string>()->default_value("Data"),"Location of the Data/ directory")
-    ("name", value<string>(),"Name for the analysis, instead of the alignment filename.")
-    ("traditional,t","Fix the alignment and don't model indels")
-    ("letters",value<string>()->default_value("full_tree"),"If set to 'star', then use a star tree for substitution")
-    ("verbose","Print extra output in case of error")
+    ("data-dir", value<string>()->default_value("Data"),"Location of the Data/ directory.")
+    ("name", value<string>(),"Name for the analysis directory to create.")
+    ("traditional,t","Fix the alignment and don't model indels.")
     ;
   
   options_description mcmc("MCMC options");
   mcmc.add_options()
-    ("iterations",value<long int>()->default_value(100000),"The number of iterations to run")
-    ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree")
-    ("subsample",value<int>()->default_value(1),"Factor by which to subsample")
-    ("beta",value<string>(),"MCMCMC temperature")
-    ("dbeta",value<string>(),"MCMCMC temperature changes")
-    ("enable",value<string>(),"Comma-separated list of kernels to enable")
-    ("disable",value<string>(),"Comma-separated list of kernels to disable")
-    ("partition-weights",value<string>(),"File containing tree with partition weights")
+    ("iterations",value<long int>()->default_value(100000),"The number of iterations to run.")
+    ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
+    ("subsample",value<int>()->default_value(1),"Factor by which to subsample.")
+    ("enable",value<string>(),"Comma-separated list of kernels to enable.")
+    ("disable",value<string>(),"Comma-separated list of kernels to disable.")
     ;
     
   options_description parameters("Parameter options");
   parameters.add_options()
-    ("align", value<vector<string> >()->composing(),"Files with sequences and initial alignment")
+    ("align", value<vector<string> >()->composing(),"Files with sequences and initial alignment.")
     ("randomize-alignment","Randomly realign the sequences before use.")
-    ("internal",value<string>(),"If set to '+', then make all internal node entries wildcards")
     ("tree",value<string>(),"File with initial tree")
-    ("set",value<vector<string> >()->composing(),"Set parameter=<value>")
+    ("set",value<vector<string> >()->composing(),"Set parameter=<initial value>")
     ("fix",value<vector<string> >()->composing(),"Fix parameter[=<value>]")
-    ("unfix",value<vector<string> >()->composing(),"Un-fix parameter[=<value>]")
+    ("unfix",value<vector<string> >()->composing(),"Un-fix parameter[=<initial value>]")
     ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.") 
     ;
 
   options_description model("Model options");
   model.add_options()
-    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-    ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
+    ("alphabet",value<string>(),"The alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
+    ("genetic-code",value<string>()->default_value("standard-code.txt",""),"Specify alternate genetic code file in data directory.")
     ("smodel",value<vector<string> >()->composing(),"Substitution model.")
     ("imodel",value<vector<string> >()->composing(),"Indel model: RS05, RS07-no-T, or RS07.")
-    ("branch-prior",value<string>()->default_value("Gamma"),"Exponential or Gamma")
+    ("branch-prior",value<string>()->default_value("Gamma"),"Exponential or Gamma.")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
-    ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
-    ("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
     ;
   options_description all("All options");
-  all.add(general).add(mcmc).add(parameters).add(model);
+  all.add(general).add(mcmc).add(parameters).add(model).add(advanced);
+  options_description some("All options");
+  some.add(general).add(mcmc).add(parameters).add(model);
 
   // positional options
   positional_options_description p;
@@ -173,7 +179,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
-    cout<<all<<"\n";
+    cout<<some<<"\n";
     exit(0);
   }
 
@@ -192,7 +198,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   load_bali_phy_rc(args,all);
 
   if (not args.count("align")) 
-    throw myexception()<<"No sequence files given.";
+    throw myexception()<<"No sequence files given.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
   return args;
 }
@@ -1083,7 +1089,7 @@ int main(int argc,char* argv[])
 
     //--------- Do we have enough sequences? ------//
     if (T.n_leaves() < 3)
-      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".\n(Perhaps you have BLANK LINES in your FASTA file?)";
+      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".";
 
     //--------- Set up the substitution model --------//
     shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
