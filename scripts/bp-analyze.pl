@@ -218,21 +218,21 @@ $subsample_string = "" if ($subsample == 1);
 if ($personality =~ "bali-phy.*") {
     print "Summarizing distribution of numerical parameters...";
     if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport $subsample_string --ignore=iter $max_arg $skip $parameters_file > Results/Report`;
+	`statreport $subsample_string --ignore=iter $max_arg $skip @parameter_files > Results/Report`;
     }
     print "done.\n";
 }
 elsif ($personality eq "beast") {
     print "\nSummarizing distribution of numerical parameters... ";
     if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport $subsample_string --ignore=state $max_arg $skip $parameters_file > Results/Report`;
+	`statreport $subsample_string --ignore=state $max_arg $skip @parameter_files > Results/Report`;
     }
     print "done.\n";
 }
 elsif ($personality eq "phylobayes") {
     print "\nSummarizing distribution of numerical parameters... ";
     if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport $subsample_string --ignore=#cycle --ignore=#treegen --ignore=time $max_arg $skip $parameters_file > Results/Report`;
+	`statreport $subsample_string --ignore=#cycle --ignore=#treegen --ignore=time $max_arg $skip @parameter_files > Results/Report`;
     }
     print "done.\n";
 }
@@ -245,7 +245,9 @@ my $consensus_no_pp_arg = "--consensus=". get_consensus_arg("tree",\@tree_consen
 my $consensus_pp_arg = "--consensus-PP=". get_consensus_arg("PP.tree",\@tree_consensus_values);
 my $e_consensus_arg = "";
 $e_consensus_arg = "--extended-consensus=". get_consensus_arg("mtree",\@tree_consensus_values) if ($sub_partitions);
-my $consensus_arg = "$consensus_no_pp_arg $consensus_pp_arg $e_consensus_arg";
+my $el_consensus_arg = "";
+$el_consensus_arg = "--extended-consensus-L=". get_consensus_arg("mlengths",\@tree_consensus_values) if ($sub_partitions);
+my $consensus_arg = "$consensus_no_pp_arg $consensus_pp_arg $e_consensus_arg $el_consensus_arg";
 
 my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
@@ -260,7 +262,7 @@ if (! more_recent_than("Results/consensus",$trees_file)) {
     my $select_trees_arg = "$max_arg $skip $subsample_string $prune_arg";
     my $levels_arg = "--support-levels=Results/c-levels.plot";
     $levels_arg = "$levels_arg --extended-support-levels=Results/extended-c-levels.plot" if ($sub_partitions);
-    `trees-consensus $trees_file $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.tree > Results/consensus`;
+    `trees-consensus @tree_files $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.tree > Results/consensus`;
 }
 print "done.\n";
 
@@ -277,10 +279,10 @@ for my $cvalue (@tree_consensus_values)
     if ($sub_partitions && ($speed < 2)) 
     {
 	if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.mtree")) {
-	    `draw-tree Results/$tree.mtree --out=Results/$tree-mctree --output=svg --draw-clouds=only`;
+	    `draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --output=svg --draw-clouds=only`;
 	}
 	if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.mtree")) {
-	    `draw-tree Results/$tree.mtree --out=Results/$tree-mctree --draw-clouds=only`;
+	    `draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --draw-clouds=only`;
 	}
     }
     
@@ -325,7 +327,8 @@ if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
 }
 
 if (!more_recent_than("Results/partitions.bs",$trees_file)) {
-    `trees-bootstrap $max_arg $trees_file $skip $subsample_string --pred Results/partitions.pred > Results/partitions.bs`;
+    my $trees_arg = join(':',@tree_files);
+    `trees-bootstrap $max_arg $trees_arg $skip $subsample_string --pred Results/partitions.pred > Results/partitions.bs`;
 }
 print "done.\n";
 
@@ -1209,6 +1212,9 @@ sub rmdir_recursive
 sub get_partitions
 {
     return [] if ($personality !~ "bali-phy.*");
+
+    my $file = shift;
+    $file = $out_file if (!defined($file));
 
     local *FILE;
 
