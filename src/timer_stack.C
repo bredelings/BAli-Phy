@@ -92,64 +92,54 @@ string duration(time_t T)
   return s;
 }
 
-region_profile& timer_stack::lookup_profile(const string& s)
+timer_stack::container_t::iterator timer_stack::lookup_profile(const string& s)
 {
-  typedef map<string,region_profile> container_t;
   container_t::iterator record = total_times.find(s);
   if (record == total_times.end()) {
     total_times.insert(container_t::value_type(s,region_profile()));
     record = total_times.find(s);
     assert(record != total_times.end());
   }
-  return record->second;
-}
-
-void timer_stack::add_duration(const string& s, duration_t d)
-{
-  lookup_profile(s).duration += d;
-}
-
-void timer_stack::inc_calls(const string& s)
-{
-  lookup_profile(s).n_calls++;
+  return record;
 }
 
 void timer_stack::credit_active_timers()
 {
-  assert(name_stack.size() == start_time_stack.size());
+  assert(record_stack.size() == start_time_stack.size());
 
   double now = total_cpu_time();
   for(int i=0;i<n_active_timers();i++)
   {
     double elapsed = now - start_time_stack[i];
-    add_duration(name_stack[i], elapsed);
+    record_stack[i]->second.duration += elapsed;
     start_time_stack[i] = now;
   }
 }
 
 void timer_stack::push_timer(const string& s)
 {
-  name_stack.push_back(s);
-  inc_calls(s);
   start_time_stack.push_back( total_cpu_time() );
+  container_t::iterator record = lookup_profile(s);
+  record->second.n_calls++;
+  record_stack.push_back(record);
 }
 
 void timer_stack::pop_timer()
 {
-  if (name_stack.empty()) throw myexception()<<"Trying to remove a non-existent timer!";
-  time_point_t end = total_cpu_time();
+  if (record_stack.empty()) throw myexception()<<"Trying to remove a non-existent timer!";
   time_point_t start = start_time_stack.back();
-
-  add_duration(name_stack.back(), end - start);
-
-  name_stack.pop_back();
   start_time_stack.pop_back();
+
+  container_t::iterator record = record_stack.back();
+  record_stack.pop_back();
+
+  time_point_t end = total_cpu_time();
+
+  record->second.duration += (end-start);
 }
 
 string timer_stack::report()
 {
-  typedef map<string,region_profile> container_t;
-
   credit_active_timers();
 
   ostringstream o;

@@ -57,23 +57,24 @@ struct region_profile
 
 class timer_stack
 {
-  std::vector<std::string> name_stack;
+public:
+  typedef std::map<std::string,region_profile> container_t;
+
+private:
+  std::vector<container_t::iterator> record_stack;
   std::vector<time_point_t> start_time_stack;
 
-  region_profile& lookup_profile(const std::string&);
+  container_t::iterator lookup_profile(const std::string&);
   
-  void add_duration(const std::string&, duration_t);
-  void inc_calls(const std::string&);
-
 public:
-  std::map<std::string,region_profile> total_times;
+  container_t total_times;
 
   void credit_active_timers();
   void push_timer(const std::string& s);
   void pop_timer();
   const std::string& current_timer();
-  const std::vector<std::string>& active_timers() const {return name_stack;}
-  int n_active_timers() const {return name_stack.size();}
+  //  const std::vector<std::string>& active_timers() const {return name_stack;}
+  int n_active_timers() const {return record_stack.size();}
 
   std::string report();
 };
