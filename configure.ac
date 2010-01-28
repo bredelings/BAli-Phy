@@ -24,7 +24,7 @@ if test -n "$use_extra_includes" && test "$use_extra_includes" != "NO"; then
   ac_save_ifs=$IFS
   IFS=':'
   for dir in $use_extra_includes; do
-    extra_includes="$extra_includes -I$dir"
+    extra_includes="$extra_includes -isystem $dir"
   done
   IFS=$ac_save_ifs
 fi
@@ -51,18 +51,16 @@ if test "${host_os_noversion}" = darwin ; then
 
   CXXFLAGS="$CXXFLAGS -fvisibility=default"
 
-  # try to include Fink automagically
-  for dir in /sw /opt /opt/sw ; do
-    extra_includes="$extra_includes -I$dir/include"
-    extra_libs="$extra_libs -L$dir/lib"
-    extra_libs2="$extra_libs2 $dir/lib"
-  done
 fi
 
 AC_SUBST(extra_includes)
 AC_SUBST(extra_libs2)
 
-CPPFLAGS="$CPPFLAGS $extra_includes"
+#Defining CPPFLAGS includes these twice - and they don't include boost!
+#FIXME - What is the proper way to include boost - w/o using 
+#         the variable $(top_srcdir) to refer to the location of boost?
+#CPPFLAGS="$CPPFLAGS $extra_includes"
+
 LDFLAGS="$LDFLAGS $extra_libs"
 
 # Specify extra library paths
@@ -253,7 +251,7 @@ AC_FUNC_SELECT_ARGTYPES
 AC_CHECK_HEADERS([sys/resource.h])
 AC_CHECK_FUNCS([floor pow sqrt strchr log2 getrlimit setrlimit])
 AC_CHECK_TYPE(rlim_t, ,AC_DEFINE(rlim_t, [unsigned long],[declare rlim_t as unsigned long if not found in <sys/resource.h>]),[#include <sys/resource.h>])
-CXXFLAGS="$CXXFLAGS $CPPFLAGS"
+CXXFLAGS="$CXXFLAGS $extra_includes"
 
 AC_CHECK_HEADERS([fenv.h])
 
