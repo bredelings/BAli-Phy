@@ -1,3 +1,5 @@
+Implement the filename@alphabet option.
+
 Documentation
  - Make programs more self-documenting.
  - Make a 'front matter' page for Doxygen...?
@@ -10,9 +12,6 @@ Documentation
  - Remove --letters=full_tree option.
  - Remove default option from --iterations?
  - Remove default argument from --genetic-code
-
-Advanced help options
- - beta, dbeta, partition-weights, internal, 
 
 Report a 95% confidence interval of splits
  - scale by # of internal branches in tree... then should be < than # of iterations, just like #topologies.
@@ -60,6 +59,7 @@ Automatically adjusting step widths:
  * I need an over-arching controller or structure?
  * How do I expose a 'control' interface for MH moves?
    - I need to expose a control knob on the proposal?
+ * How do I adjust (and do I need to) step widths for branch lengths?
 
 Lazily recalculate branch transition matrices.
 
