@@ -941,19 +941,13 @@ int main(int argc,char* argv[])
     tree_sample tree_dist;
     for(int i=0;i<files.size();i++) 
     {
-      tree_sample trees;
+      int count = 0;
       if (files[i] == "-")
-	trees = tree_sample(std::cin,skip,subsample,max,ignore);
+	count = tree_dist.load_file(std::cin,skip,subsample,max,ignore);
       else
-	trees = tree_sample(files[i],skip,subsample,max,ignore);      
+	count = tree_dist.load_file(files[i],skip,subsample,max,ignore);      
       if (log_verbose)
-	std::cerr<<"Read "<<trees.size()<<" trees from '"<<files[i]<<"'"<<std::endl;
-      
-      if (not tree_dist.size())
-	tree_dist = trees;
-      else
-	for(int j=0;j<trees.size();j++)
-	  tree_dist.add_tree(trees.trees[j]);
+	std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
     }
 
     const unsigned N = tree_dist.size();
