@@ -355,7 +355,6 @@ int main(int argc,char* argv[])
     if (args.count("files"))
       files = args["files"].as<vector<string> >();
 
-
     //----------- task "matrix" ------------//
     if (analysis == "matrix") 
     {
@@ -364,16 +363,13 @@ int main(int argc,char* argv[])
       tree_sample all_trees;
       for(int i=0;i<files.size();i++) 
       {
-	tree_sample trees;
+	int count = 0;
 	if (files[i] == "-")
-	  trees = tree_sample(std::cin,skip,subsample,max);
+	  count = all_trees.load_file(std::cin,skip,subsample,max);
 	else
-	  trees = tree_sample(files[i],skip,subsample,max);      
+	  count = all_trees.load_file(files[i],skip,subsample,max);
 	if (log_verbose)
-	  std::cerr<<"read "<<trees.size()<<" trees"<<std::endl;
-
-	for(int j=0;j<trees.size();j++)
-	  all_trees.add_tree(trees.trees[j]);
+	  std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
       }
 
       ublas::matrix<double> D = distances(all_trees,metric_fn);
@@ -441,8 +437,7 @@ int main(int argc,char* argv[])
       const unsigned N2 = trees2.size();
 
       tree_sample both = trees1;
-      for(int i=0;i<trees2.size();i++)
-	both.add_tree(trees2.trees[i]);
+      both.append_trees(trees2);
 
       ublas::matrix<double> D1 = distances(trees1,metric_fn);
       ublas::matrix<double> D2 = distances(trees2,metric_fn);

@@ -717,7 +717,7 @@ void tree_sample::add_tree(RootedTree& T)
 
 
 
-void tree_sample::load_file(istream& file,int skip,int subsample,int max,const vector<string>& prune)
+int tree_sample::load_file(istream& file,int skip,int subsample,int max,const vector<string>& prune)
 {
   using namespace trees_format;
 
@@ -738,15 +738,71 @@ void tree_sample::load_file(istream& file,int skip,int subsample,int max,const v
   if (prune.size())
     trees_in = shared_ptr<reader_t>(new Prune(prune,*trees_in));
 
-  leaf_names = trees_in->names();
+  if (not leaf_names.size())
+    leaf_names = trees_in->names();
+  else 
+  {
+    vector<string> leaf_names2 = trees_in->names();
+    if (leaf_names2.size() != leaf_names.size())
+      throw myexception()<<"New trees with "<<leaf_names2.size()<<" leaves conflict with current trees with "<<leaf_names.size()<<" leaves.";
+
+    try {
+      compute_mapping(leaf_names, leaf_names2);
+    }
+    catch (bad_mapping<string>& b) {
+      throw myexception()<<"New trees are missing leaf '"<<b.missing<<"'";
+    }
+
+  }
 
   //------------------- Process Trees --------------------//
   RootedTree T;
-  while (trees_in->next_tree(T))
+  int t=0;
+  while (trees_in->next_tree(T)) {
     add_tree(T);
+    t++;
+  }
 
   if (size() == 0)
     throw myexception()<<"No trees were read in!";
+
+  return t;
+}
+
+int tree_sample::load_file(const string& filename,int skip,int subsample,int max,const vector<string>& prune)
+{
+  ifstream file(filename.c_str());
+  if (not file)
+    throw myexception()<<"Couldn't open file "<<filename;
+  
+  int count = load_file(file,skip,subsample,max,prune);
+  file.close();
+  return count;
+}
+
+int tree_sample::append_trees(const tree_sample& trees)
+{
+  if (not leaf_names.size())
+    leaf_names = trees.names();
+  else 
+  {
+    if (trees.names().size() != leaf_names.size())
+      throw myexception()<<"New trees with "<<trees.names().size()<<" leaves conflict with current trees with "<<leaf_names.size()<<" leaves.";
+
+    try {
+      compute_mapping(leaf_names, trees.names());
+    }
+    catch (bad_mapping<string>& b) {
+      throw myexception()<<"New trees are missing leaf '"<<b.missing<<"'";
+    }
+
+  }
+
+  for(int i=0;i<trees.size();i++) {
+    add_tree(trees[i]);
+  }
+
+  return trees.size();
 }
 
 tree_sample::tree_sample(istream& file,int skip,int subsample,int max,const vector<string>& prune)
@@ -756,12 +812,7 @@ tree_sample::tree_sample(istream& file,int skip,int subsample,int max,const vect
 
 tree_sample::tree_sample(const string& filename,int skip,int subsample,int max,const vector<string>& prune)
 {
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Couldn't open file "<<filename;
-  
-  load_file(file,skip,subsample,max,prune);
-  file.close();
+  load_file(filename,skip,subsample,max,prune);
 }
 
 void scan_trees(istream& file,int skip,int subsample,int max, const vector<string>& prune,
