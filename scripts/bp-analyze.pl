@@ -33,6 +33,13 @@ if (! is_in_path("trees-consensus")) {
     exit(1);
 }
 
+my $have_draw_tree = 1;
+
+if (! is_in_path("draw-tree")) {
+    print "Program 'draw-tree' not found.  Tree pictures will not be generated.\n\n";
+    $have_draw_tree = 0;
+}
+
 my $personality="";
 my $out_file;
 my $trees_file;
@@ -50,7 +57,7 @@ my $subsample = 1;
 my $min_support;
 my $muscle = 0;
 my $probcons = 0;
-my $sub_partitions=1;
+my $sub_partitions=0;
 my $prune;
 my $speed=1;
 
@@ -279,10 +286,10 @@ for my $cvalue (@tree_consensus_values)
     if ($sub_partitions && ($speed < 2)) 
     {
 	if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.mtree")) {
-	    `draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --output=svg --draw-clouds=only`;
+	    `draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --output=svg --draw-clouds=only` if ($have_draw_tree);
 	}
 	if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.mtree")) {
-	    `draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --draw-clouds=only`;
+	    `draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --draw-clouds=only` if ($have_draw_tree);
 	}
     }
     
@@ -308,10 +315,10 @@ print " Drawing trees: ";
 for my $tree (@trees) {
 # FIXME - no node lengths!
     if (! more_recent_than("Results/$tree-tree.pdf","Results/$tree.tree")) {
-	`cd Results ; draw-tree $tree.tree --layout=equal-daylight`;
+	`cd Results ; draw-tree $tree.tree --layout=equal-daylight --no-shade` if ($have_draw_tree);
     }
     if (! more_recent_than("Results/$tree-tree.svg","Results/$tree.tree")) {
-	`cd Results ; draw-tree $tree.tree --layout=equal-daylight --output=svg`;
+	`cd Results ; draw-tree $tree.tree --layout=equal-daylight --output=svg --no-shade` if ($have_draw_tree);
     }
 }
 print "done.\n";
@@ -1032,8 +1039,8 @@ sub parse_command_line
 	elsif ($arg =~ /--probcons/) {
 	    $probcons = 1;
 	}
-	elsif ($arg =~ /--no-sub/) {
-	    $sub_partitions=0;
+	elsif ($arg =~ /--mc-tree/) {
+	    $sub_partitions=1;
 	}
 	elsif ($arg =~ /--treefile=(.+)/) {
 	    $personality = "treefile";
