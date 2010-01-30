@@ -58,6 +58,7 @@ my $min_support;
 my $muscle = 0;
 my $probcons = 0;
 my $sub_partitions=0;
+my $do_consensus_alignments=0;
 my $prune;
 my $speed=1;
 
@@ -128,8 +129,9 @@ if ($#imodel_indices == -1)
 
 my @alphabets = get_alphabets();
 
-my @trees = ();
 my %tree_name = ();
+# This is necessary to display them in order:
+my @trees = (); 
 
 #
 
@@ -258,12 +260,12 @@ my $consensus_arg = "$consensus_no_pp_arg $consensus_pp_arg $e_consensus_arg $el
 
 my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
+my $prune_arg = "";
 
 print "\nSummarizing topology distribution ... ";
 if (! more_recent_than("Results/consensus",$trees_file)) {
     my $sub_string = "--sub-partitions";
     $sub_string = "" if (!$sub_partitions);
-    my $prune_arg = "";
     $prune_arg = "--ignore $prune" if (defined($prune));
 
     my $select_trees_arg = "$max_arg $skip $subsample_string $prune_arg";
@@ -273,55 +275,20 @@ if (! more_recent_than("Results/consensus",$trees_file)) {
 }
 print "done.\n";
 
-# 2. compute consensus trees
+# 2. Draw trees
 
-print " Drawing MC trees:  ";
 for my $cvalue (@tree_consensus_values)
 {
     my $value = $cvalue*100;
     my $tree = "c$value";
-    push @trees,$tree;
     $tree_name{$tree} = "$value\% consensus";
-
-    if ($sub_partitions && ($speed < 2)) 
-    {
-	if (! more_recent_than("Results/$tree-mctree.svg","Results/$tree.mtree")) {
-	    `draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --output=svg --draw-clouds=only` if ($have_draw_tree);
-	}
-	if (! more_recent_than("Results/$tree-mctree.pdf","Results/$tree.mtree")) {
-	    `draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --draw-clouds=only` if ($have_draw_tree);
-	}
-    }
-    
-    print "$tree ";
-    my $prune_arg = "";
-    $prune_arg = "--prune $prune" if defined($prune);
-
-#    Generate trees w/ node lengths.
-#    if (! more_recent_than("Results/$tree.ltree",$trees_file)) {
-#	`tree-mean-lengths Results/$tree.topology --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg < $trees_file > Results/$tree.ltree`;
-#    }
-#    if (! more_recent_than("Results/$tree.tree","Results/$tree.ltree")) {
-#    `head -n1 Results/$tree.ltree > Results/$tree.tree`;
-#    }
+    push @trees,$tree;
 }
-push @trees,"MAP";
+push @trees, "MAP";
 $tree_name{"MAP"} = "MAP";
-print "done.\n";
 
+&draw_trees();
 
-# 4. compute images
-print " Drawing trees: ";
-for my $tree (@trees) {
-# FIXME - no node lengths!
-    if (! more_recent_than("Results/$tree-tree.pdf","Results/$tree.tree")) {
-	`cd Results ; draw-tree $tree.tree --layout=equal-daylight --no-shade` if ($have_draw_tree);
-    }
-    if (! more_recent_than("Results/$tree-tree.svg","Results/$tree.tree")) {
-	`cd Results ; draw-tree $tree.tree --layout=equal-daylight --output=svg --no-shade` if ($have_draw_tree);
-    }
-}
-print "done.\n";
 
 # 10. Mixing diagnostics -- block bootstrap
 print "\nGenerate mixing diagnostics for topologies ... ";
@@ -437,54 +404,9 @@ if ($personality =~ "bali-phy.*") {
     }
 }
 
-# 6.7 Compute maximum (weighted posterior decoding) alignments
+&compute_wpd_alignments();
 
-if ($personality =~ "bali-phy.*") {
-    print "\nComputing WPD alignments... ";
-
-    for(my $i=0;$i<$n_partitions;$i++) 
-    {
-	next if ($imodel_indices[$i] == -1);
-	
-	my $p = $i+1;
-	my $infile = $partition_samples[0][$i];
-	
-	my $name = "P$p-max";
-	if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
-	    ! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
-	    `cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta`;
-	}
-	push @alignments,$name;
-	$alignment_names{$name} = "Best (WPD)";
-	push @AU_alignments,$name;
-    }
-    
-    print "done.\n";
-}
-
-# 7. Compute consensus-alignments
-
-for(my $i=0;$i<$n_partitions;$i++)
-{
-    next if ($imodel_indices[$i] == -1);
-
-    my $p = $i+1;
-    my $infile = $partition_samples[0][$i];
-
-    print " Partition $p: Computing consensus alignments: \n   ";
-    for my $cvalue (@alignment_consensus_values) {
-	my $value = $cvalue*100;
-	my $name = "P$p-consensus-$value";
-	print "c$value ";
-	if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
-	    `cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta`;
-	}
-	push @alignments,$name;
-	$alignment_names{$name} = "$value% consensus";
-    }
-    print "done.\n\n";
-    push @AU_alignments,"P$p-consensus-10" if ($speed == 0);
-}
+&compute_consensus_alignments() if ($do_consensus_alignments);
 
 if ($#alignments != -1) {
     print "Drawing alignments... ";
@@ -1171,6 +1093,106 @@ sub determine_input_files
     else {
 	print "Error: unrecognized analysis of type '$personality'";
 	exit(1);
+    }
+}
+
+sub draw_trees
+{
+    return if (! $have_draw_tree);
+
+    print " Drawing trees:  ";
+    for my $cvalue (@tree_consensus_values)
+    {
+	my $value = $cvalue*100;
+	
+	my $tree = "c$value";
+
+	# No node lengths???
+	my $filename1 = "Results/$tree.tree";
+	my $filename2 = "Results/$tree.mtree";
+	
+	if ($speed < 2)
+	{
+	    if (-e $filename2 && ! more_recent_than("Results/$tree-mctree.svg",$filename2)) {
+		`draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --output=svg --draw-clouds=only` if ($have_draw_tree);
+	    }
+	    if (-e $filename2 && ! more_recent_than("Results/$tree-mctree.pdf",$filename2)) {
+		`draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --draw-clouds=only` if ($have_draw_tree);
+	    }
+	}
+	
+#    Generate trees w/ node lengths.
+	if (! more_recent_than("Results/$tree.ltree",$trees_file)) {
+	    `tree-mean-lengths Results/$tree.tree --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg < $trees_file > Results/$tree.ltree`;
+	}
+
+
+	if (! more_recent_than("Results/$tree-tree.pdf",$filename1)) {
+	    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight --no-shade` if ($have_draw_tree);
+	}
+	
+	if (! more_recent_than("Results/$tree-tree.svg",$filename1)) {
+	    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg --no-shade` if ($have_draw_tree);
+	}
+	
+	print "$tree ";
+	my $prune_arg = "";
+	$prune_arg = "--prune $prune" if defined($prune);
+	
+    }
+
+    print "done.\n";
+}
+
+sub compute_wpd_alignments
+{
+    if ($personality =~ "bali-phy.*") {
+	print "\nComputing WPD alignments... ";
+
+	for(my $i=0;$i<$n_partitions;$i++) 
+	{
+	    next if ($imodel_indices[$i] == -1);
+	
+	    my $p = $i+1;
+	    my $infile = $partition_samples[0][$i];
+	    
+	    my $name = "P$p-max";
+	    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
+		! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
+		`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta`;
+	    }
+	    push @alignments,$name;
+	    $alignment_names{$name} = "Best (WPD)";
+	    push @AU_alignments,$name;
+	}
+	
+	print "done.\n";
+    }
+}
+
+sub compute_consensus_alignments
+{
+    print "Computing consensus alignments:\n";
+    for(my $i=0;$i<$n_partitions;$i++)
+    {
+	next if ($imodel_indices[$i] == -1);
+
+	my $p = $i+1;
+	my $infile = $partition_samples[0][$i];
+	
+	print " Partition $p: ";
+	for my $cvalue (@alignment_consensus_values) {
+	    my $value = $cvalue*100;
+	    my $name = "P$p-consensus-$value";
+	    print "c$value ";
+	    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
+		`cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta`;
+	    }
+	    push @alignments,$name;
+	    $alignment_names{$name} = "$value% consensus";
+	}
+	print "done.\n\n";
+	push @AU_alignments,"P$p-consensus-10" if ($speed == 0);
     }
 }
 
