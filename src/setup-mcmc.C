@@ -123,6 +123,7 @@ vector<int> parameters_with_extension(const Model& M, string name)
 /// \param pname   The name of the proposal width for this move
 /// \param sigma   A default proposal width, in case the user didn't specify one
 /// \param M       The group of moves to which to add the newly-created sub-move
+/// \param weight  How often to run this move.
 ///
 void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, 
 		 MCMC::MoveAll& M,double weight=1)
@@ -155,14 +156,16 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
 
 /// \brief Add a 1-D slice-sampling sub-move for parameter name to M
 ///
-/// \param P             The model that contains the parameters
-/// \param name          The name of the parameter to create a move for
-/// \param pname         The name of the slice window width for this move
+/// \param P             The model that contains the parameters.
+/// \param name          The name of the parameter to create a move for.
+/// \param pname         The name of the slice window width for this move.
+/// \param W             The default window size, if not specified in P.keys
 /// \param lower_bound   Is there a lower bound on the range of the parameter.
-/// \param lower         The lower bound
+/// \param lower         The lower bound.
 /// \param upper_bound   Is there a upper bound on the range of the parameter.
-/// \param uppper        The upper bound
+/// \param uppper        The upper bound.
 /// \param M             The group of moves to which to add the newly-created sub-move
+/// \param weight        How often to run this move.
 ///
 void add_slice_moves(Parameters& P, const string& name, 
 		     const string& pname, double W,
@@ -193,13 +196,15 @@ void add_slice_moves(Parameters& P, const string& name,
 /// \param P             The model that contains the parameters
 /// \param name          The name of the parameter to create a move for
 /// \param pname         The name of the slice window width for this move
-/// \param lower_bound   Is there a lower bound on the range of the parameter.
-/// \param lower         The lower bound
-/// \param upper_bound   Is there a upper bound on the range of the parameter.
-/// \param uppper        The upper bound
+/// \param W             The default window size, if not specified in P.keys
+/// \param lower_bound   Is there a lower bound on the range of the parameter?
+/// \param lower         The lower bound.
+/// \param upper_bound   Is there a upper bound on the range of the parameter?
+/// \param uppper        The upper bound.
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param f1            The function from the parameter's scale to the transformed scale.
-/// \param f2            The inverse of f1
+/// \param f2            The inverse of f1.
+/// \param weight        How often to run this move.
 ///
 void add_slice_moves(Parameters& P, const string& name, 
 		     const string& pname, double W,
