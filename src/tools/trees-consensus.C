@@ -391,7 +391,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description input("Input options");
   input.add_options()
     ("help,h", "produce help message")
-    ("skip",value<int>()->default_value(0),"number of trees to skip")
+    ("skip",value<string>()->default_value("10%"),"number of trees to skip")
     ("max",value<int>(),"maximum number of trees to read")
     ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
     ;
@@ -896,7 +896,18 @@ int main(int argc,char* argv[])
     else
       myrand_init();
 
-    int skip = args["skip"].as<int>();
+    int skip = 0;
+    double skip_fraction=0;
+    {
+      string s = args["skip"].as<string>();
+      if (not can_be_converted_to<int>(s,skip)) {
+	skip = 0;
+	if (s.size() and s[s.size()-1] == '%')
+	  skip_fraction = convertTo<double>(s.substr(0,s.size()-1))/100;
+	else
+	  throw myexception()<<"Argument to --skip="<<s<<" is neither an integer nor a percent";
+      }
+    }
 
     int subsample=args["sub-sample"].as<int>();
 
@@ -939,16 +950,40 @@ int main(int argc,char* argv[])
       throw myexception()<<"No filenames for trees specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
     tree_sample tree_dist;
+
+    vector<tree_sample> trees(files.size());
+    int min_trees = -1;
     for(int i=0;i<files.size();i++) 
     {
       int count = 0;
       if (files[i] == "-")
-	count = tree_dist.load_file(std::cin,skip,subsample,max,ignore);
+	count = trees[i].load_file(std::cin,skip,subsample,max,ignore);
       else
-	count = tree_dist.load_file(files[i],skip,subsample,max,ignore);      
+	count = trees[i].load_file(files[i],skip,subsample,max,ignore);      
+
       if (log_verbose)
 	std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
+
+      if (min_trees == -1)
+	min_trees = count;
+      else
+	min_trees = std::min(min_trees, count);
     }
+
+    int min_skip = 0;
+    if (skip == 0)
+      min_skip = (int)(skip_fraction * min_trees);
+
+    if (log_verbose and min_skip > 0)
+      cerr<<"Skipping "<<skip_fraction*100<<"% of "<<min_trees<<" = "<<min_skip<<endl;
+    for(int i=0;i<trees.size();i++) {
+      if (skip == 0 and skip_fraction > 0) {
+	min_skip = std::min<int>(min_skip, trees[i].size());
+	trees[i].trees.erase(trees[i].trees.begin(), trees[i].trees.begin() + min_skip);
+      }
+      tree_dist.append_trees(trees[i]);
+    }
+    
 
     const unsigned N = tree_dist.size();
 
