@@ -40,6 +40,13 @@ if (! is_in_path("draw-tree")) {
     $have_draw_tree = 0;
 }
 
+my $have_gnuplot = 1;
+
+if (! is_in_path("gnuplot")) {
+    print "Program 'gnuplot' not found.  Trace plots will not be generated.\n\n";
+    $have_gnuplot = 0;
+}
+
 my $personality="";
 my $out_file;
 my $trees_file;
@@ -308,6 +315,7 @@ print "done.\n";
 
 # 11. c-levels.plot - FIXME!
 
+if ($have_gnuplot) {
 if ($sub_partitions) {
 `gnuplot <<EOF
 set terminal svg
@@ -326,6 +334,7 @@ set xlabel "Log10 posterior Odds (LOD)"
 set ylabel "Supported Splits"
 plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 EOF`;
+}
 }
 
 # 6. Compute initial alignments
@@ -509,6 +518,7 @@ print "done.\n";
 
 push @SRQ,"c50";
 
+if ($have_gnuplot) {
 for my $srq (@SRQ) {
 `gnuplot <<EOF
 set terminal png size 300,300
@@ -521,7 +531,7 @@ plot 'Results/$srq.SRQ' title "$srq" with linespoints lw 1 lt 1, x title "Goal" 
 EOF
 `;
 }
-
+}
 # 13. Get # of topologies sampled
 
 my $n_topologies = `pickout n_topologies -n < Results/consensus`;
@@ -622,7 +632,7 @@ set key right bottom
 set xlabel "Iteration"
 set ylabel "$var"
 plot '$file2' title '$var' with lines
-EOF`;
+EOF` if ($have_gnuplot);
     }
 
     print "done\n";
@@ -1199,10 +1209,12 @@ sub compute_consensus_alignments
 sub is_in_path
 {
   my $file = shift;
+  my $home = $ENV{'HOME'};
 
   my @dirs = split(':',$ENV{'PATH'});
 
   for my $dir (@dirs) {
+      $dir =~ s/^~/$home/;
       if (-x "$dir/$file" ) {
 	  return 1;
       }
