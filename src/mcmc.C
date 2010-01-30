@@ -17,6 +17,17 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file   mcmc.C
+/// \brief  Provides classes for constructing MCMC samplers.
+///
+/// This file provides classes for constructing MCMC samplers.  The
+/// class Sampler is used to run the main loop of the sampler for
+/// bali-phy.
+///
+/// \author Benjamin Redelings
+/// 
+
 #include <boost/numeric/ublas/io.hpp>
 #include <iostream>
 #include <algorithm>

@@ -17,6 +17,17 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file   mcmc.H
+/// \brief  Provides classes for constructing MCMC samplers.
+///
+/// This file provides classes for constructing MCMC samplers.  The
+/// class Sampler is used to run the main loop of the sampler for
+/// bali-phy.
+///
+/// \author Benjamin Redelings
+/// 
+
 #ifndef MCMC_H
 #define MCMC_H
 
@@ -36,12 +47,24 @@ along with BAli-Phy; see the file COPYING.  If not see
 namespace MCMC {
 
   //---------------------- Move Stats ---------------------//
-  struct Result {
+  /// \brief Stores counts, totals, and averages for an MCMC transition kernel
+  /// 
+  /// The averages for the i-th statistic are totals[i]/counts[i]. For 
+  /// example, the success rate for an MH transition kernel would have a
+  /// count (the number of moves run) and a total (the number of successes)
+  /// resulting in an average (the fraction of successes).
+  struct Result 
+  {
+    /// The number of trials for each statistic
     std::valarray<int> counts;
+
+    /// The sum of values over the trials
     std::valarray<double> totals;
 
+    /// The number of statistics we are calculating
     int size() const {return counts.size();}
 
+    /// Increment counts and totals by the counts and totals given.
     void inc(const Result&);
 
     Result() {}
