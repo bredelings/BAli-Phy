@@ -23,14 +23,16 @@
       <sect2 id="hardware_requirements">
 	<title>Hardware Requirements</title>
 
-	<para><application>BAli-Phy</application> should be able to
-	run on any hardware with a modern operating system, including
-	Linux or UNIX, Windows, and Mac OS X.</para>
+	<para><application>BAli-Phy</application> is principally
+	developed on Linux, and so may be easiest to use there.
+	However, it should be able to run on any hardware with a
+	modern operating system, including Windows, and Mac OS
+	X.</para>
 
-	<para>We recommend at least 512Mb of RAM and a 1.5GHz
+	<para>We recommend at least 1Gb of RAM and a pentium4
 	processor.  We typically run
-	<application>BAli-Phy</application> on Pentium 4 processors
-	with 1Gb of RAM and a 3 GHz processor.</para> 
+	<application>BAli-Phy</application> on Core2 processors
+	with 8Gb of RAM.</para> 
       </sect2>
 
       <sect2 id="os_requirements">
@@ -89,6 +91,14 @@
       <sect2 id="software_req">
 	<title>Software Requirements</title>
 
+	<para>You should be able to install the additional software
+	listed below
+	using <ulink url="http://www.macports.org">MacPorts</ulink>
+	(Mac OS X),
+	the <ulink url="http://www.cygwin.com">Cygwin</ulink>
+	installer (Windows), or your distribution's package manager
+	(on Linux).
+	</para>
 	<sect3>
 	  <title>Compilation Requirements</title>
 
@@ -99,8 +109,8 @@
 
 	<itemizedlist>
 	  <listitem><para> A modern C++ compiler (<ulink
-	  url="http://gcc.gnu.org">GCC</ulink> version 3.4, 4.0, and
-	  4.1 are known to work)</para>
+	  url="http://gcc.gnu.org">GCC</ulink> versions 3.4-4.4 are
+	  known to work)</para> 
 
 	  <note>
 	    <title>Mac OS X issues:</title>
@@ -108,7 +118,7 @@
 	    <para>If you want to use the development tools shipped by Apple
 	    (e.g. GCC) then you need OS X version 10.4 (Tiger) or higher, and
 	    you need to install XCode 2.2 or higher.  (You can use a GCC compiler
-	    built from the non-apple FSF sources, but installing XCode is
+	    built from the non-Apple FSF sources, but installing XCode is
 	    much simpler.) 
 	    </para>
 
@@ -117,6 +127,13 @@
 	  url="http://www.gnu.org/software/make">GNU make</ulink>).
 	  </para></listitem>
 	  <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>) version 1.8 or higher.</para></listitem>
+	  <listitem><para> The Cairo graphics library
+	  (<ulink url="http://www.cairographics.org/">Cairo</ulink>)
+	  version 1.6 or higher.</para>  (Cairo is not strictly
+	  necessary, but is a requirement for builing to
+	  tool <application>draw-tree</application> that is used to
+	  draw consensus trees.)</listitem>
+
 	  <!-- listitem><para> The BOOST C++ Library (<ulink
 	  url="http://www.boost.org">BOOST</ulink>) version 1.32 or higher.</para></listitem -->
 	</itemizedlist>
@@ -142,9 +159,6 @@
 	  </itemizedlist>
 
 	  </para>
-	</sect3>
-	<sect3>
-	  <title>Recommendations for analysis and documentation</title>
 
 	  <para>In addition, the following software packages are
 	  strongly recommended.  These packages allow you to view
@@ -183,9 +197,9 @@
       </para>
 
       <para>Also note that in case you are compiling "live" source
-      code that you checked out using subversion (and you probably
+      code that you checked out using GIT (and you probably
       aren't) then you need to follow the directions in <xref
-      linkend="svnsource"/> before you start compiling.
+      linkend="gitsource"/> before you start compiling.
       </para>
 
       <sect2>
@@ -194,13 +208,13 @@
       extract the source code archive, using a graphical archive
       manager, or the command-line tool <command>tar</command>:
       
-      <screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-1.9.9.tgz</userinput></screen>
+      <screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-2.1.0.tgz</userinput></screen>
       Then create a <emphasis>separate</emphasis> build directory, enter it, and run the
       configure command:
 
       <screen><prompt>%</prompt> <userinput>mkdir build</userinput>
 <prompt>%</prompt> <userinput>cd build</userinput>
-<prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure</userinput></screen>
+<prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure</userinput></screen>
  
       If this command succeeds, then you can simply type
 
@@ -208,7 +222,8 @@
 <prompt>%</prompt> <userinput>make install</userinput></screen>
 
       to build and install <command>bali-phy</command> and its
-      associated tools.  (This requires GNU <command>make</command>.)
+      associated tools and install it in <filename>/usr/local/</filename>.
+      (This requires the GNU version of <command>make</command>.)
       To customize the compilation and installation process, read the
       following sections on supplying arguments to the
       <command>configure</command> script.
@@ -227,7 +242,7 @@
 	<application>BAli-Phy</application> under
 	<filename>~/local</filename>, you can do:
 
-<screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure --prefix=&#36;HOME/local</userinput></screen>
+<screen><prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure --prefix=&#36;HOME/local</userinput></screen>
         This is recommended if you do not have permission to install
 	to <filename>/usr/local/</filename>.
 	</para>
@@ -261,7 +276,7 @@
 	<command>g++-4.0</command> as the C++ compiler when compiling
 	<application>BAli-Phy</application>, you would set the CXX
 	environment variable as follows:
-	    <screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure CXX=g++-4.0</userinput></screen>
+	    <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure CXX=g++-4.0</userinput></screen>
 	Alternatively, on Macintosh systems, you can run the command
 	<command>gcc_select 4.0</command> to choose the correct compiler.
 	</para>
@@ -272,11 +287,11 @@
 	<para>You can specify optimizing for a specific brand of CPU,
 	by specifying the <userinput>CHIP</userinput> variable to
 	<command>configure</command>, as follows:
-	    <screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure CHIP=<replaceable>cpu</replaceable></userinput></screen>
+	    <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure CHIP=<replaceable>cpu</replaceable></userinput></screen>
 	You can set CHIP to any of <userinput>pentium3</userinput>,
 	<userinput>pentium4</userinput>,
 	<userinput>nocona</userinput>, <userinput>G3</userinput>,
-	<userinput>G4</userinput>, or <userinput>G5</userinput>.
+	<userinput>G4</userinput>, or <userinput>G5</userinput>.  (On recent versions of GCC, you can set <userinput>CHIP=native</userinput> to auto-detect the type of CPU you have.  However, be aware that the resulting binaries may not run on a different computer.)
 	</para>
       </sect2>
 
@@ -290,21 +305,19 @@
 	</para> 
       </sect2>
 	    
-      <sect2 id="svnsource">
-	<title>Generating Autoconf/Automake files</title> 
-	<para>This step is <emphasis>only</emphasis> necessary if you
-	are using the subversion (SVN) source.  It is
-	<emphasis>not</emphasis> necessary if you are compiling from a
-	distributed tar.gz archive of the source, because these
-	archives already include the files that this step will
-	generate, such as the <filename>configure</filename> script
-	and some Makefiles.
+      <sect2 id="gitsource">
+	<title>Generating the <filename>configure</filename> script
+	and Makefiles</title> 
+	<para>Skip this step unless you are compiling a
+	snapshot of the source code that you checked out using
+	GIT. If you downloaded an official tar.gz archive of the
+	source from the website, then it already includes these files.
 	</para>
 
 	<para>To generate these files, you need automake 1.8 or higher
-	and autoconf 2.59 or higher.  Run these commands inside the
-	<filename>trunk/</filename> directory that you checked out.<screen><prompt>%</prompt> <userinput>autoheader</userinput>
-<prompt>%</prompt> <userinput>aclocal</userinput>
+	and autoconf 2.59 or higher.  Run these commands in the top level
+	directory of the repository that you checked out.<screen><prompt>%</prompt> <userinput>autoheader</userinput>
+<prompt>%</prompt> <userinput>aclocal -I m4</userinput>
 <prompt>%</prompt> <userinput>automake -a</userinput>
 <prompt>%</prompt> <userinput>autoconf</userinput>
 </screen>
@@ -321,7 +334,7 @@
 	<para>
         All these options to <command>configure</command> can be
 	combined, as follows:
-<screen><prompt>%</prompt> <userinput>../bali-phy-1.9.9/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
+<screen><prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
         This example uses <command>g++-4.1</command> to build a
 	pentium4-optimized version of <command>bali-phy</command> with
 	static linkage.
@@ -397,7 +410,7 @@
     command into the files <filename>.profile</filename> (for the
     Bourne shell <command>sh</command>), 
     <filename>.bash_profile</filename> (for BASH), or
-    <filename>.login</filename> (for tcsh).  However, the details are
+    <filename>.login</filename> (for tcsh).  However, those details are
     beyond the scope of this document.
     </para>
 
@@ -411,7 +424,7 @@
     <sect2>
     <title>The simple way</title>
     <para>The simplest way to run <application>BAli-Phy</application> is
-    to invoke the <command>bali-phy</command> executable directly:
+    to type all the arguments on the command line:
 
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --data-dir <replaceable>prefix</replaceable>/share/bali-phy/Data/</userinput>
 </screen>
@@ -422,11 +435,27 @@
     indicate which format it is using.  Here
     <replaceable>prefix</replaceable> stands for the directory
     where you extracted the bali-phy archive.</para>
+    </sect2>
+
+    <sect2>
+      <title>Multiple Data Partitions</title>
+    <para>
+      You may analyze multiple data partitions by specifying one
+      sequence file per partition.  For example, if you want to
+      analyze two genes, you might put the data first the first gene
+      in <replaceable>sequence-file1</replaceable> and the second gene
+      in <replaceable>sequence-file2</replaceable> and then run:
+
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --data-dir <replaceable>prefix</replaceable>/share/bali-phy/Data/</userinput>
+</screen>
+
+      In this case the sequence names in each file must match.
+    </para>
 
     </sect2>
 
     <sect2 id="spec_data_dir">
-      <title>Locating the Data/ directory</title>
+      <title>Locating the <filename>Data/</filename> directory</title>
 
       <para>
 	<application>BAli-Phy</application> stores important
@@ -446,51 +475,15 @@
 
         <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable></userinput></screen>
 
-	If you don't specify where the data directory is, then
-	<application>BAli-Phy</application> will look for it at
-	<filename>./Data</filename>.
       </para>
 
-      <sect3>
-	<title>Put the location in the configuration file</title>
-	<para>
-	  Create a new text file at <filename>~/.bali-phy</filename> and
-	  add the following line:
-<screen>data-dir = <replaceable>somewhere</replaceable>/Data</screen>
-          Then <command>bali-phy</command> will read this file
-	  every time and know where to find the Data directory.  This
-	  is the recommended method.
-	</para>
-      </sect3>
-
-      <sect3>
-	<title>Making a link/shortcut to the Data directory</title>
-	<para>Instead of specifying the location of the data
-	directory, you can make a shortcut to the Data directory:
-
-        <screen><prompt>%</prompt> <userinput>ln -s <replaceable>somewhere</replaceable>/Data</userinput></screen>
-
-	The shortcut will then be at <filename>./Data</filename>.  Then
-	<command>bali-phy</command> will find the data directory  
-	at the default location <filename>Data/</filename>, but only
-	if you run it in the same directory as the shortcut.
-	</para>
-      </sect3>
-
-      <sect3>
-	<title>Making your own copy of the Data directory</title>
-	<para>
-	  Instead of specifying the location of the data
-	  directory, you can make a local copy of the Data directory 
-	  that is also called <filename>Data/</filename>:
-
-    <screen><prompt>%</prompt> <userinput>cp -r <replaceable>somewhere</replaceable>/Data .</userinput></screen>
-
-	Then <command>bali-phy</command> will find the data directory
-	at the default location <filename>Data/</filename>, but only
-	if you run it in the directory as the local copy.
-	</para>
-      </sect3>
+      <para>
+	In order to do this, create a new text file at <filename>~/.bali-phy</filename> and
+	add the following line:
+	<screen>data-dir = <replaceable>somewhere</replaceable>/Data</screen>
+        Then <command>bali-phy</command> will read this file
+	every time and know where to find the Data directory.
+      </para>
 
     </sect2>
 
@@ -501,7 +494,7 @@
 	of on the command line can be more convenient if you are going
 	to run the same analysis many times, or if you have a large
 	number of options.  In addition, the option file may
-	contain comments and blank lines, and can be a good way to
+	contain comments and blank lines, and is a good way to
 	record what options you used in an analysis.
       </para>
 
@@ -593,8 +586,7 @@ traditional = traditional
         or when you close the terminal that started them.  The 
         <command>nohup</command> command is often used to avoid this.
         <application>BAli-Phy</application> ignores the HUP (hangup)
-        signal in versions 1.9.9 and newer, making
-	<command>nohup</command> unnecessary. 
+        signal making the <command>nohup</command> command unnecessary. 
         </para>
       </sect3>
 
@@ -623,7 +615,8 @@ traditional = traditional
 
       <cmdsynopsis>
 	<command>bali-phy</command>
-	<arg choice='req'><replaceable>sequence-file</replaceable></arg>
+	<arg choice='req'><replaceable>sequence-file1</replaceable></arg>
+	<arg><replaceable>sequence-file2</replaceable> <replaceable>sequence-file3</replaceable>...</arg>
 	<arg>OPTIONS</arg>
       </cmdsynopsis>
 
@@ -631,8 +624,7 @@ traditional = traditional
       be either a FastA (*.fasta) file or a PHYLIP (*.phy) file.  The
       file must end in one of these two suffixes or
       <application>BAli-Phy</application> won't know how to read
-      it. In addition your FastA files should not contain any blank
-      lines.</para> 
+      it.</para> 
 
       <para>The optional arguments are described below.  They can also
       be found by typing <userinput>bali-phy --help</userinput> on the
@@ -647,18 +639,18 @@ traditional = traditional
       <variablelist>
 
 	<varlistentry>
-	  <term><option>--help</option></term>
+	  <term><option>-h, --help</option></term>
 	  <listitem><para>Show help message.</para></listitem>
 	</varlistentry>
 
 
 	<varlistentry>
-	  <term><option>--version</option></term>
+	  <term><option>-v, --version</option></term>
 	  <listitem><para>Show version information.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--config <replaceable>file</replaceable></option></term>
+	  <term><option>-c <replaceable>file</replaceable>, --config <replaceable>file</replaceable></option></term>
 	  <listitem><para>Option file to read.</para></listitem>
 	</varlistentry>
 
@@ -689,15 +681,9 @@ traditional = traditional
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--traditional</option></term>
+	  <term><option>-t, --traditional</option></term>
 	  <listitem><para>Fix the alignment and don't model indels.</para></listitem>
 	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--letters star</option></term>
-	  <listitem><para>Use a star tree for the substitution model.</para></listitem>
-	</varlistentry>
-
 
       </variablelist>
     </sect2>
@@ -714,11 +700,6 @@ traditional = traditional
 	<varlistentry>
 	  <term><option>--subsample <replaceable>factor=1</replaceable></option></term>
 	  <listitem><para>Specify a factor by which to subsample.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--T <replaceable>temperature=1</replaceable></option></term>
-	  <listitem><para>Specify a temperature for MCMCMC.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -744,11 +725,6 @@ traditional = traditional
 	<varlistentry>
 	  <term><option>--randomize-alignment</option></term>
 	  <listitem><para>Randomly re-align sequences before use.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--internal +</option></term>
-	  <listitem><para>Set all internal node entries wildcards initially.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -805,6 +781,21 @@ traditional = traditional
 	  <listitem><para>Specify the indel model.</para></listitem>
 	</varlistentry>
 
+	<varlistentry>
+	  <term><option>--branch-prior <replaceable>name</replaceable></option></term>
+	  <listitem><para>Exponential or Gamma.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--same-scale <replaceable>specification</replaceable></option></term>
+	  <listitem><para>Which partitions have the same scale?</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--align-constraint <replaceable>filename</replaceable></option></term>
+	  <listitem><para>File with alignment constraints.</para></listitem>
+	</varlistentry>
+
       </variablelist>
 
     </sect2>
@@ -828,7 +819,8 @@ traditional = traditional
     <replaceable>prefix</replaceable>.
     </para>
 
-    <para>Also note that <command>bali-phy</command> does run until it
+    <para>Also note that <command>bali-phy</command>
+    does <emphasis>not</emphasis> run until it
     is "finished", but continues to gather samples until the user
     stops it.  Thus, it is useful to continually examine the output
     files while the program is running.
@@ -1468,35 +1460,43 @@ traditional = traditional
       
       <variablelist>
 	<varlistentry>
-	  <term>1.out</term>
+	  <term>C1.out</term>
 	  <listitem>
-	    <para>Iteration numbers, alignments, and probabilities.</para>
+	    <para>Iteration numbers, probabilities, success probabilities for transition kernels, etc..</para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>1.err</term>
+	  <term>C1.P<replaceable>p</replaceable>.fastas</term>
 	  <listitem>
-	    <para>Success probabilities for transition kernels.</para>
+	    <para>Sampled alignments for partition <replaceable>p</replaceable></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>C1.err</term>
+	  <listitem>
+	    <para>You can ignore this file.</para>
 	  </listitem>
 	</varlistentry>
 	
 	<varlistentry>
-	  <term>1.MAP</term>
+	  <term>C1.MAP</term>
 	  <listitem>
-	    <para>Successive estimates of the MAP point</para>
+	    <para>Successive estimates of the MAP point, if you have
+	    only one partition.</para>
 	  </listitem>
 	</varlistentry>
 	
 	<varlistentry>
-	  <term>1.p</term>
+	  <term>C1.p</term>
 	  <listitem>
 	    <para>Scalar parameters: indel and substitution parameters, etc.</para>
 	  </listitem>
 	</varlistentry>
 	
 	<varlistentry>
-	  <term>1.trees</term>
+	  <term>C1.trees</term>
 	  <listitem>
 	    <para>Tree samples</para>
 	  </listitem>
@@ -1533,7 +1533,7 @@ traditional = traditional
       To inspect the Markov chain generated by
       <application>BAli-Phy</application>, we recommend the program
       <ulink url="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</ulink>. 
-      You can open the file <filename>1.p</filename> in Tracer to view
+      You can open the file <filename>C1.p</filename> in Tracer to view
       traceplots and to estimate the effective sample size.  However,
       these techniques that work well for numerical parameters do not
       work well for objects such as trees and alignments.  Therefore,
@@ -2120,7 +2120,7 @@ traditional = traditional
 	<question><para>How can I check how many iterations the chain
 	has finished?</para></question>
 	<answer>
-	  <para>Run <command>wc -l 1.p</command> inside the output
+	  <para>Run <command>wc -l C1.p</command> inside the output
 	  directory, and subtract 2.
 	  </para>
 	</answer>
@@ -2131,24 +2131,59 @@ traditional = traditional
     <sect2>
       <title>Interpreting the results.</title>
 
-    <qandaset>
-      <qandaentry>
-	<question><para>Where can I find the clade support?</para></question>
-	<answer>
-	  <para>Actually, BAli-Phy uses unrooted trees, so it only estimates bi-partition support.  A bi-partition is a division of taxa into two groups, but it does not specify which group contains the root. </para>
-	</answer>
-      </qandaentry>
+      <qandaset>
+	<qandaentry>
+	  <question><para>Where can I find the clade support?</para></question>
+	  <answer>
+	    <para>Actually, BAli-Phy uses unrooted trees, so it only estimates bi-partition support.  A bi-partition is a division of taxa into two groups, but it does not specify which group contains the root. </para>
+	  </answer>
+	</qandaentry>
 
-      <qandaentry>
-	<question><para>Where can I find the partition support?</para></question>
-	<answer>
-	  <para>After you analyze the output (<xref
-	  linkend="analysis"/>), the partition support is indicated in
-	  <filename>Results/consensus</filename>.  (see <xref
-	  linkend="consensus"/>. </para> 
-	</answer>
-      </qandaentry>
-    </qandaset>
+	<qandaentry>
+	  <question><para>Where can I find the partition support?</para></question>
+	  <answer>
+	    <para>After you analyze the output (<xref
+						   linkend="analysis"/>), the partition support is indicated in
+	      <filename>Results/consensus</filename>.  (see <xref
+							       linkend="consensus"/>. </para> 
+	  </answer>
+	</qandaentry>
+      </qandaset>
+    </sect2>
+
+    <sect2>
+      <title>How do I...</title>
+      <qandaset>
+	<qandaentry>
+	  <question><para>How do I concatenate alignments?</para></question>
+	  <answer>
+	    <userinput>alignment-cat <replaceable>filename1.fasta</replaceable> <replaceable>filename2.fasta</replaceable>
+	      &gt; result.fasta</userinput>
+	  </answer>
+	</qandaentry>
+
+	<qandaentry>
+	  <question><para>How do I select columns from an alignment?</para></question>
+	  <answer>
+	    <userinput>alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</userinput>
+	  </answer>
+	</qandaentry>
+
+	<qandaentry>
+	  <question><para>How do I create an alignment-constraint file
+	  from an alignment?</para></question>
+	  <answer>
+	    <para>First
+	    run <userinput>alignment-indices <replaceable>filename.fasta</replaceable>
+	    > filename.constraint</userinput>
+	      Then open <filename>filename.constraint</filename> in
+	    text editor.  Each line corresponds to an alignment
+	    column.  Remove the lines you do not wish to constraint.
+	    </para>
+	  </answer>	
+	</qandaentry>
+
+      </qandaset>
     </sect2>
   </sect1>
 
