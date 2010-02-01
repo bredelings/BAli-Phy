@@ -1,3 +1,5 @@
+ACLOCAL_AMFLAGS = -I m4 --install
+
 if NO_SYSTEM_BOOST
   MAYBE_BOOST = boost/
 endif
