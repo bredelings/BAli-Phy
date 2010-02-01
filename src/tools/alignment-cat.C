@@ -102,42 +102,6 @@ vector<sequence> concatenate(const vector<sequence>& S1, const vector<sequence>&
 }
 
 
-void get_range(const string& range,int L,int& begin,int& end)
-{
-  vector<string> R = split(range,'-');
-
-  if (R.size() == 1) {
-    begin = end = convertTo<int>(range)-1;
-  }
-  else if (R.size() != 2)
-    throw myexception()<<"Malformed range '"<<range<<"'";
-  else {
-    begin = 0;
-    if (R[0].size())
-      begin = convertTo<int>(R[0])-1;
-
-    end = L-1;
-    if (R[1].size())
-      end = convertTo<int>(R[1])-1;
-  }
-    
-  if (begin < 0)
-    throw myexception()<<"Bad range '"<<range<<"': begins before 1.";
-    
-  if (begin > L-1)
-    throw myexception()<<"Bad range '"<<range<<"': begins after end of sequence (L="<<L<<").";
-    
-  if (end < 0)
-    throw myexception()<<"Bad range '"<<range<<"': ends before 1!";
-    
-  if (end > L-1)
-    throw myexception()<<"Bad range '"<<range<<"': ends after end of sequence (L="<<L<<").";
-    
-  if (end < begin)
-    throw myexception()<<"Bad range '"<<range<<"': begins after end!";
-}
-
-
 vector<sequence> select(const vector<sequence>& s,const vector<int>& columns)
 {
   assert(all_same_length(s));
@@ -159,18 +123,9 @@ vector<sequence> select(const vector<sequence>& s,const string& range)
 {
   assert(all_same_length(s));
 
-  vector<string> ranges = split(range,',');
+  int L = s[0].size();
 
-  vector<int> columns;
-  for(int i=0;i<ranges.size();i++) 
-  {
-    int begin=-1,end=-1;
-    
-    get_range(ranges[i],s[0].size(),begin,end);
-    
-    for(int c=begin;c<=end;c++)
-      columns.push_back(c);
-  }
+  vector<int> columns = parse_multi_range(range, L);
 
   return select(s,columns);
 }
