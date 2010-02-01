@@ -1171,9 +1171,7 @@ traditional = traditional
 	<para>
 	  The program <command>alignment-indices</command> may be used
 	  to aid in computing a constraint file from an input
-	  alignment.  Each line in the resulting file is a constraint 
-	  corresponding to one column of the input alignment.
-	  Simply remove the constraints that you do not want to keep.
+	  alignment.  See <xref linkend="generating_constraint_files"/>.
 	</para>
       </sect3>
     </sect2>
@@ -1986,6 +1984,9 @@ traditional = traditional
       in its sequence.  Each line in this file corresponds to one
       alignment column.  This can be useful in producing alignment
       constraint files.</para>
+      <para>Also, you can specify which columns to keep using the
+	--columns option.
+      </para>
     </sect2>
     
     <sect2>
@@ -2170,15 +2171,14 @@ traditional = traditional
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>How do I create an alignment-constraint file
+	  <question id="generating_constraint_files"><para>How do I create an alignment-constraint file
 	  from an alignment?</para></question>
 	  <answer>
-	    <para>First
-	    run <userinput>alignment-indices <replaceable>filename.fasta</replaceable>
+	    <para>To constrain the alignment to match some alignment
+	    file <replaceable>filename.fasta</replaceable> in columns
+	    100, 200-250, and 300, run:
+	      <userinput>alignment-indices -c100,200-250,300 <replaceable>filename.fasta</replaceable>
 	    > filename.constraint</userinput>
-	      Then open <filename>filename.constraint</filename> in
-	    text editor.  Each line corresponds to an alignment
-	    column.  Remove the lines you do not wish to constraint.
 	    </para>
 	  </answer>	
 	</qandaentry>
