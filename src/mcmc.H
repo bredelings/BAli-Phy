@@ -39,7 +39,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mytypes.H"
 #include "parameters.H"
 #include "rng.H"
-#include "util.H"
 #include "proposals.H"
 // how to have different models, with different moves
 // and possibly moves between models?

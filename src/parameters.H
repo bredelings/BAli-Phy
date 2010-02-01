@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "matcache.H"
 #include "clone.H"
 #include "substitution-cache.H"
-#include "util.H"
+
 #include "tools/partition.H"
 #include "cow-ptr.H"
 #include "cached_value.H"

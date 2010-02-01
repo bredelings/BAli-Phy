@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#include <vector>
 #include <cassert>
 #include "rng.H"
-#include "util.H"
 
 template <typename T>
 void random_shuffle(std::vector<T>& v) 

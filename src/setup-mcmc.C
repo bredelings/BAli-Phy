@@ -18,6 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "setup-mcmc.H"
+#include "util.H"
 #include "sample.H"
 #include "alignment-util.H"
 #include "alignment-constraint.H"
