@@ -12,13 +12,11 @@ You need automake 1.8 or higher and autoconf 2.59 or higher to
 generate these files.
 
 % autoheader
-% aclocal
+% aclocal -I m4
 % automake -a
 % autoconf
 
 These commands generate the configure script and Makefiles.
-
-You also need to install pkg-config.
 
 --- Ultra Quick Version ---
 
