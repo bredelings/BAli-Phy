@@ -15,7 +15,7 @@
 }
 
 pre.programlisting {
-	background-color: #F4F4F4;
+	background-color: #F0F0F0;
 	padding: 6px;
 }
 
@@ -24,7 +24,7 @@ pre.programlisting {
 tr { margin: 0.2em; padding: 0.2em; }
  
 .variablelist {
-	background-color: #F4F4F4;
+	background-color: #F0F0F0;
 	padding: 6px;
 }
 
@@ -34,10 +34,10 @@ tr { margin: 0.2em; padding: 0.2em; }
 
 table td { vertical-align:top; padding: 0.5em;}
 
-td { background-color: #F4F4F4;  }
+td { background-color: #F0F0F0;  }
 
 .toc {
-	background-color: #F4F4F4;
+	background-color: #F0F0F0;
 	padding: 6px;
 }
 
