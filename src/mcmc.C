@@ -70,15 +70,6 @@ namespace MCMC {
   using std::string;
   using std::ostream;
 
-
-  valarray<double> result(int l,int n) {
-    valarray<double> v(0.0,2*l);
-    for(int i=0;i<l;i++)
-      v[2*i] = n;
-    return v;
-  }
-
-
   void Result::inc(const Result& R) {
     if (not counts.size()) {
       counts.resize(R.size(),0);
