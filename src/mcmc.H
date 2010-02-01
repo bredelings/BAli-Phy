@@ -105,10 +105,10 @@ namespace MCMC {
     /// Disable this move
     void disable() {enabled_=false;}
     
-    /// Enable this move or any submove with attribute 's'
+    /// Enable this move or any submove with name or attribute 's'
     virtual void enable(const string& s);
 
-    /// Disable this move or any submove with attribute 's'
+    /// Disable this move or any submove with name or attribute 's'
     virtual void disable(const string& s);
 
     /// Set up for an iteration of length l, return number of subiterations
@@ -136,7 +136,8 @@ namespace MCMC {
   //    that use it.
 
   /// A collection of moves
-  class MoveGroupBase {
+  class MoveGroupBase 
+  {
   protected:
     /// This list of moves
     std::vector<OwnedPointer<Move> > moves;
