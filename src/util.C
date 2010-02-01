@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 /**
- * @file util.H
+ * @file util.C
  *
  * @brief This file contains a number of utility routines.
  *
