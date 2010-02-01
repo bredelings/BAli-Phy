@@ -45,6 +45,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("align", value<string>(),"file with sequences and initial alignment")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+    ("columns,c", value<string>(),"Ranges of columns to keep, like: 1-10,30-")
     ("invariant",value<int>(),"print only sites where this site and <arg> neighbors are invariant.")
     ("differences",value<int>(),"how many sequences may differ from the majority?")
     ("avoid-gaps",value<int>()->default_value(3),"How far from a gap must a column be to be invariant?")
@@ -190,7 +191,20 @@ int main(int argc,char* argv[])
     int invariant = -1;
     vector<int> safe2 = safe;
 
-    if (args.count("invariant"))
+    bool columns = false;
+
+    if (args.count("columns"))
+    {
+      columns = true;
+      int L = A.length();
+      vector<int> columns = parse_multi_range(args["columns"].as<string>(), L);
+
+      safe2 = vector<int>(L,0);
+      for(int i=0;i<columns.size();i++) {
+	safe2[columns[i]] = 1;
+      }
+    }
+    else if (args.count("invariant"))
     {
       invariant = args["invariant"].as<int>();
 
@@ -228,9 +242,10 @@ int main(int argc,char* argv[])
     //------- Write the columns ------//
     for(int c=0;c<MA.size1();c++) 
     {
-      if (invariant != -1 and not safe2[c]) continue;
+      if (invariant or columns)
+	if (not safe2[c]) continue;
 
-      if (invariant != -1 and n_characters_in_column(MA2,c) < min_constraints) continue;
+      if (invariant  and n_characters_in_column(MA2,c) < min_constraints) continue;
 
       // write the indices
       for(int i=0;i<MA2.size2();i++) {

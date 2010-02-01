@@ -17,6 +17,13 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/**
+ * @file util.H
+ *
+ * @brief This file contains a number of utility routines.
+ *
+ */
+
 #include "util.H"
 
 using std::vector;
@@ -28,6 +35,10 @@ using std::endl;
 
 int log_verbose = 0;
 
+/// \brief Compute the number of 'true' elements in bitvector \a v.
+///
+/// \param v The bitvector.
+/// 
 int n_elements(const vector<bool>& v) {
   int count = 0;
   for(int i=0;i<v.size() ;i++)  
@@ -36,6 +47,11 @@ int n_elements(const vector<bool>& v) {
 }
 
 
+/// \brief Read a line from a file with their UNIX or DOS line endings.
+///
+/// \param file The input stream
+/// \param s The line that was read.
+/// 
 std::istream& getline_handle_dos(std::istream& file,std::string& s)
 {
   getline(file,s);
@@ -46,6 +62,11 @@ std::istream& getline_handle_dos(std::istream& file,std::string& s)
 }
 
 
+/// \brief Combine vector of strings \a v into one string, separating entries with the character \a c.
+///
+/// \param v The strings to combine.
+/// \param c The separator.
+///
 string join(const vector<string>& v,char c) {
   string s;
   if (v.size())
@@ -57,6 +78,11 @@ string join(const vector<string>& v,char c) {
   return s;
 }
 
+/// \brief Combine vector of strings \a v into one string, separating entries with the string \a token.
+///
+/// \param v The strings to combine.
+/// \param token The separator.
+///
 string join(const vector<string>& v,const string& token) {
   string s;
   if (v.size())
@@ -69,6 +95,11 @@ string join(const vector<string>& v,const string& token) {
 }
 
 
+/// \brief Divide a string \a s into several strings by break it at the character \a c
+///
+/// \param s The string to split.
+/// \param c The separator.
+///
 vector<string> split(const string& s, char c) 
 {
   vector<string> strings;
@@ -85,6 +116,11 @@ vector<string> split(const string& s, char c)
   return strings;
 }
 
+/// \brief Divide a string \a s into several strings by break it at the string \a token.
+///
+/// \param s The string to split.
+/// \param token The separator.
+///
 vector<string> split(const string& s, const string& token)
 {
   vector<string> strings;
@@ -110,6 +146,12 @@ vector<string> split(const string& s, const string& token)
   return strings;
 }
 
+/// \brief Remove the character \a c from the string \a s.
+///
+/// \param s The string to strip.
+/// \param c The character to remove.
+/// \return the stripped string.
+///
 string strip(const string& s,char c) {
   string s2;
   for(int i=0;i<s.size();i++)
@@ -120,6 +162,12 @@ string strip(const string& s,char c) {
 }
 
 
+/// \brief Remove all characters in string \a chars from the string \a s.
+///
+/// \param s The string to strip.
+/// \param chars The string containing characters to remove.
+/// \return the stripped string.
+///
 string strip(const string& s,const string& chars) {
   string s2;
   for(int i=0;i<s.size();i++) {
@@ -157,6 +205,10 @@ vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2) {
   return mapping;
 }
 
+/// \brief Check if \a mapping[i] == i
+///
+/// \param mapping The mapping.
+///
 bool is_identity(const std::vector<int>& mapping)
 {
   for(int i=0;i<mapping.size();i++)
@@ -165,6 +217,12 @@ bool is_identity(const std::vector<int>& mapping)
   return true;
 }
 
+/// \brief Check if a string \a s contains a character \a c.
+///
+/// \param s The string.
+/// \param c The character.
+/// \return true if \a s contains \a c.
+/// 
 bool contains_char(const string& s,char c) {
   for(int i=0;i<s.size();i++)
     if (s[i] == c)
@@ -231,6 +289,10 @@ vector<string> load_lines(std::istream& file,int skip,int subsample, int max)
   return lines;
 }
 
+/// \brief Get the basename of a filename (i.e. remove parent directories.)
+///
+/// \param filename The filename.
+///
 std::string get_basename(std::string filename)
 {
   // remove the pathname 
@@ -240,6 +302,10 @@ std::string get_basename(std::string filename)
   return filename;
 }
 
+/// \brief Remove the extension from a filename
+///
+/// \param filename The filename.
+///
 std::string remove_extension(std::string filename)
 {
   // remove the extension
@@ -248,4 +314,102 @@ std::string remove_extension(std::string filename)
   if (dot != -1)
     name = filename.substr(0,dot);
   return name;
+}
+
+/// \brief Parse a range of the form <begin>-<end> which should be a subset of [1,L]
+///
+/// \param range The string to parse.
+/// \param L The upper bound.
+/// \param begin Parameter for passing back the beginning of the range.
+/// \param end Parameter for passing back the end of the range.
+///
+void parse_simple_range(const string& range,int L,int& begin,int& end)
+{
+  vector<string> R = split(range,'-');
+
+  if (R.size() == 1) {
+    begin = end = convertTo<int>(range)-1;
+  }
+  else if (R.size() != 2)
+    throw myexception()<<"Malformed range '"<<range<<"'";
+  else {
+    begin = 0;
+    if (R[0].size())
+      begin = convertTo<int>(R[0])-1;
+
+    end = L-1;
+    if (R[1].size())
+      end = convertTo<int>(R[1])-1;
+  }
+    
+  if (begin < 0)
+    throw myexception()<<"Bad range '"<<range<<"': begins before 1.";
+    
+  if (begin > L-1)
+    throw myexception()<<"Bad range '"<<range<<"': begins after end of sequence (L="<<L<<").";
+    
+  if (end < 0)
+    throw myexception()<<"Bad range '"<<range<<"': ends before 1!";
+    
+  if (end > L-1)
+    throw myexception()<<"Bad range '"<<range<<"': ends after end of sequence (L="<<L<<").";
+    
+  if (end < begin)
+    throw myexception()<<"Bad range '"<<range<<"': begins after end!";
+}
+
+/// \brief Parse a range of the form <begin>-<end>/<step> which should be a subset of [1,L]
+///
+/// \param range The string to parse.
+/// \param L The upper bound.
+/// \param begin Parameter for passing back the beginning of the range.
+/// \param end Parameter for passing back the end of the range.
+/// \param end Parameter for passing back the step size.
+///
+void parse_modulo_range(const string& range,int L,int& begin, int& end, int& step)
+{
+  vector<string> R = split(range,'/');
+
+  if (R.size() == 1) 
+    step = 1;
+  else if (R.size() == 2) {
+    try {
+      step = convertTo<int>(R[1]);
+    }
+    catch (...) {
+      throw myexception()<<"Malformed step size '"<<R[1]<<"' in range '"<<range<<"'";
+    }
+    if (step < 1)
+      throw myexception()<<"Step is not positive in range '"<<range<<"'";
+  }
+  else
+    throw myexception()<<"Malformed range '"<<range<<"'";
+
+  parse_simple_range(R[0],L,begin,end);
+}
+
+/// \brief Parse a comma-separated list of ranges <begin>-<end>/<step> and construct an ordered list.
+///
+/// \param range The string to parse.
+/// \param L The upper bound.
+/// \return On ordered list constructed by concatenating the elements in the individual ranges.
+///
+vector<int> parse_multi_range(const string& range,int L)
+{
+  vector<string> ranges = split(range,',');
+
+  vector<int> columns;
+  for(int i=0;i<ranges.size();i++) 
+  {
+    int begin = -1;
+    int end = -1;
+    int step = -1;
+
+    parse_modulo_range(ranges[i], L, begin, end, step);
+    
+    for(int c=begin;c<=end;c++)
+      if ((c-begin)%step == 0)
+	columns.push_back(c);
+  }
+  return columns;
 }

@@ -17,6 +17,13 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/**
+ * @file util.H
+ *
+ * @brief This file contains a number of utility routines.
+ *
+ */
+
 #ifndef UTIL_H
 #define UTIL_H
 
@@ -510,6 +517,9 @@ struct index_value
   index_value(const T& t):index(-1),value(t) {}
 };
   
+void parse_simple_range(const std::string& range,int L,int& begin,int& end);
+void parse_modulo_range(const std::string& range,int L,int& begin,int& end,int& step);
+std::vector<int> parse_multi_range(const std::string& range,int L);
 
 void scan_lines(std::istream& file,int skip,int subsample, int max, 
 		accumulator<std::string>& op);
