@@ -268,15 +268,15 @@ echo " * Looking for GSL headers..."
 
 
 # Checks for libraries
-AC_CHECK_HEADERS([gsl/gsl_rng.h])
-AC_CHECK_HEADERS([gsl/gsl_cdf.h])
-AC_CHECK_HEADERS([gsl/gsl_randist.h])
+AC_CHECK_HEADERS([gsl/gsl_rng.h],[],[echo "Error: I can't find the GSL library header <gsl/gsl_rng.h> (CXXFLAGS='$CXXFLAGS').  If GSL is installed in a non-standard location you may need to specify --with-extra-includes=DIR to tell the configure script to look for it in directory DIR"])
+AC_CHECK_HEADERS([gsl/gsl_cdf.h],[],[echo "Error: I can't find the GSL library header <gsl/gsl_cdf.h> (CXXFLAGS='$CXXFLAGS').  If GSL is installed in a non-standard location you may need to specify --with-extra-includes=DIR to tell the configure script to look for it in directory DIR"])
+AC_CHECK_HEADERS([gsl/gsl_randist.h],[],[echo "Error: I can't find the GSL library header <gsl/gsl_randist.h> (CXXFLAGS='$CXXFLAGS').  If GSL is installed in a non-standard location you may need to specify --with-extra-includes=DIR to tell the configure script to look for it in directory DIR"])
 
 echo " * Looking for GSL libraries..."
 
-AC_CHECK_LIB2(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas)" ; exit 1])
-AC_CHECK_LIB2(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl LIBs=$LIBS)" ; exit 1])
-AC_CHECK_LIB(gsl, gsl_cdf_beta_Pinv, [echo "Good... you've got GSL version 1.8 or higher."], [echo "Error: You have the GSL library, but not version 1.8 or higher" ; exit 1])
+AC_CHECK_LIB2(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas LIBS='$LIBS').  If GSL is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
+AC_CHECK_LIB2(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl LIBS='$LIBS')  If GSL is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
+AC_CHECK_LIB(gsl, gsl_cdf_beta_Pinv, [echo "Good... you've got GSL version 1.8 or higher."], [echo "Error: You have the GSL library, but not version 1.8 or higher (LIBS='$LIBS').  If GSL 1.8 or higher is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
 
 AC_MSG_CHECKING(include/compile/link for the GSL library)
 
