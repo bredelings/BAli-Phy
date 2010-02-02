@@ -26,7 +26,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef MYTYPES_H
 #define MYTYPES_H
 
-#include <cassert>
 #include <vector>
 #include <string>
 #include <fstream>
