@@ -903,8 +903,9 @@ namespace substitution {
     return "Empirical(" + modelname +")";
   }
 
-  void Empirical::load_file(const string& filename) {
-    modelname = filename;
+  void Empirical::load_file(const string& filename) 
+  {
+    modelname = get_basename(filename);
 
     std::ifstream ifile(filename.c_str());
 
