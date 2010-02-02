@@ -49,7 +49,7 @@ namespace fs = boost::filesystem;
 using namespace boost::program_options;
 using boost::shared_ptr;
 
-/// Reorder internal sequences of A to correspond to standardized node names for T
+/// Reorder internal sequences of \a A to correspond to standardized node names for \a T
 alignment standardize(const alignment& A, const SequenceTree& T) 
 {
   SequenceTree T2 = T;
@@ -65,6 +65,7 @@ alignment standardize(const alignment& A, const SequenceTree& T)
   return reorder_sequences(A,new_order);
 }
 
+/// Count the number of times the letter with index \a l occurs in \a A.
 int letter_count(const alignment& A,int l) 
 {
   // Count the occurrence of the different letters
@@ -77,7 +78,7 @@ int letter_count(const alignment& A,int l)
   return count;
 }
 
-
+/// Compute the number of times each letter of the alphabet occurs in \a A.
 valarray<double> letter_counts(const alignment& A) 
 {
   const alphabet& a = A.get_alphabet();
@@ -95,7 +96,11 @@ valarray<double> letter_counts(const alignment& A)
 }
 
 
-/// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
+/// \brief Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
+///
+/// \param args The command line parameters.
+/// \param A The alignment.
+///
 valarray<double> empirical_frequencies(const variables_map& args,const alignment& A) 
 {
   const alphabet& a = A.get_alphabet();
@@ -139,7 +144,11 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
   return frequencies;
 }
 
-/// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
+/// \brief Estimate the empirical frequencies of different letters from alignments, with pseudocounts
+///
+/// \param args The command line parameters.
+/// \param alignments The alignments.
+///
 valarray<double> empirical_frequencies(const variables_map& args,const vector<alignment>& alignments) 
 {
   int total=0;
@@ -161,7 +170,11 @@ valarray<double> empirical_frequencies(const variables_map& args,const vector<al
   return empirical_frequencies(args,A);
 }
 
-
+/// \brief Re-index the leaves of tree \a T so that the labels have the same ordering as in \a names.
+///
+/// \param T The leaf-labelled tree.
+/// \param names The ordered leaf labels.
+///
 void remap_T_indices(SequenceTree& T,const vector<string>& names)
 {
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
@@ -181,6 +194,11 @@ void remap_T_indices(SequenceTree& T,const vector<string>& names)
   }
 }
 
+/// \brief Re-index the leaves of tree \a T so that the labels have the same ordering as in \a A.
+///
+/// \param T The leaf-labelled tree.
+/// \param A A multiple sequence alignment.
+///
 void remap_T_indices(SequenceTree& T,const alignment& A)
 {
   if (A.n_sequences() < T.n_leaves())
@@ -203,6 +221,11 @@ void remap_T_indices(SequenceTree& T,const alignment& A)
   }
 }
 
+/// \brief Re-index the leaves of tree \a T1 so that the labels have the same ordering as in \a T2.
+///
+/// \param T1 The leaf-labelled tree to re-index.
+/// \param T2 The leaf-labelled tree to match.
+///
 void remap_T_indices(SequenceTree& T1,const SequenceTree& T2)
 {
   if (T1.n_leaves() != T2.n_leaves())
@@ -223,7 +246,12 @@ void remap_T_indices(SequenceTree& T1,const SequenceTree& T2)
   }
 }
 
-/// Remap T leaf indices to match A: check the result
+/// \brief  Remap the leaf indices of tree \a T to match the alignment \a A: check the result
+///
+/// \param A The alignment.
+/// \param T The tree.
+/// \param internal_sequences Should the resulting alignment have sequences for internal nodes on the tree?
+///
 void link(alignment& A,SequenceTree& T,bool internal_sequences) 
 {
   check_names_unique(A);
@@ -279,7 +307,12 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
   check_alignment(A,T,internal_sequences);
 }
 
-/// Remap T leaf indices to match A: check the result
+/// \brief  Remap the leaf indices of tree \a T to match the alignment \a A: check the result
+///
+/// \param A The alignment.
+/// \param T The tree.
+/// \param internal_sequences Should the resulting alignment have sequences for internal nodes on the tree?
+///
 void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) 
 {
   check_names_unique(A);
@@ -331,6 +364,12 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
   check_alignment(A,T,internal_sequences);
 }
 
+/// \brief Reorder leaf indices of T and sequences indices of alignments to match alignments[0]; check the result.
+///
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+///
 void link(vector<alignment>& alignments, SequenceTree& T, const vector<bool>& internal_sequences)
 {
   for(int i=1;i<alignments.size();i++)
@@ -348,6 +387,12 @@ void link(vector<alignment>& alignments, SequenceTree& T, const vector<bool>& in
     link(alignments[i],T,internal_sequences[i]);
 }
 
+/// \brief Reorder leaf indices of T and sequences indices of alignments to match alignments[0]; check the result.
+///
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+///
 void link(vector<alignment>& alignments, RootedSequenceTree& T, const vector<bool>& internal_sequences)
 {
   for(int i=1;i<alignments.size();i++)
@@ -385,6 +430,13 @@ vector<alignment> load_As(const variables_map& args)
   return alignments;
 }
 
+/// \brief Load a tree and a collection of alignments based on command line parameters.
+///
+/// \param args The command line parameters.
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+/// 
 void load_As_and_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,bool internal_sequences)
 {
   //align - filenames
@@ -395,6 +447,13 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
   load_As_and_T(args,alignments,T,i);
 }
 
+/// \brief Load a tree and a collection of alignments based on command line parameters.
+///
+/// \param args The command line parameters.
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+/// 
 void load_As_and_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,const vector<bool>& internal_sequences)
 {
   alignments = load_As(args);
@@ -423,6 +482,13 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
   }
 }
 
+/// \brief Load a tree and a collection of alignments based on command line parameters.
+///
+/// \param args The command line parameters.
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+/// 
 void load_As_and_T(const variables_map& args,vector<alignment>& alignments,RootedSequenceTree& T,bool internal_sequences)
 {
   //align - filenames
@@ -433,6 +499,13 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
   load_As_and_T(args,alignments,T,i);
 }
 
+/// \brief Load a tree and a collection of alignments based on command line parameters.
+///
+/// \param args The command line parameters.
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+/// 
 void load_As_and_T(const variables_map& args,vector<alignment>& alignments,RootedSequenceTree& T,const vector<bool>& internal_sequences)
 {
   alignments = load_As(args);
@@ -462,6 +535,13 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
 }
 
 
+/// \brief Load a collection of alignments based on command line parameters and generate a random tree.
+///
+/// \param args The command line parameters.
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+/// 
 void load_As_and_random_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,bool internal_sequences)
 {
   //align - filenames
@@ -473,6 +553,13 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
 }
 
 
+/// \brief Load a collection of alignments based on command line parameters and generate a random tree.
+///
+/// \param args The command line parameters.
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+/// 
 void load_As_and_random_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,const vector<bool>& internal_sequences)
 {
   alignments = load_As(args);
@@ -509,14 +596,13 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
   }
 }
 
-// FIXME - we might still want to link things if
-// (a) they have nodes of degree 2
-// (b) they have nodes of degree >3
-// (c) however, this linking would be limitted to leaf nodes...
-// So, we should do some kind of check that when we have internal sequences, we have
-// a Cayley tree.
-
-// FIXME - should I make this more generic, so that it doesn't rely on a file?
+/// \brief Load a tree and an alignment based on command line parameters.
+///
+/// \param args The command line parameters.
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+/// 
 void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,bool internal_sequences)
 {
   A = load_A(args,internal_sequences);
@@ -542,6 +628,13 @@ void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,b
   check_alignment(A,T,internal_sequences);
 }
 
+/// \brief Load a tree and an alignment based on command line parameters.
+///
+/// \param args The command line parameters.
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+/// 
 void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
 {
   RootedSequenceTree RT;
@@ -549,6 +642,13 @@ void load_A_and_T(const variables_map& args,alignment& A,SequenceTree& T,bool in
   T = RT;
 }
 
+/// \brief Load an alignment based on command line parameters and generate a random tree.
+///
+/// \param args The command line parameters.
+/// \param alignments The alignments.
+/// \param T The leaf-labelled tree.
+/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
+/// 
 void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,bool internal_sequences)
 {
   // NO internal sequences, yet!
@@ -581,6 +681,12 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
   check_alignment(A,T,internal_sequences);
 }
 
+/// Construct a multifurcating tree representing topology constraints from file \a filename.
+///
+/// \param filename The name of the file to load the tree from.
+/// \param names The order of the leaf labels.
+/// \return a multifurcating tree.
+///
 SequenceTree load_constraint_tree(const string& filename,const vector<string>& names)
 {
   RootedSequenceTree RT;
@@ -604,6 +710,7 @@ SequenceTree load_constraint_tree(const string& filename,const vector<string>& n
   return constraint;
 }
 
+/// Return an OwnedPointer (possibly NULL) to an IndelModel or type \a name.
 OwnedPointer<IndelModel> get_imodel(string name) 
 {
   //-------------Choose an indel model--------------//
@@ -627,6 +734,11 @@ OwnedPointer<IndelModel> get_imodel(string name)
   return imodel;
 }
 
+/// Parse the file $HOME/.bali-phy and add the options it contains to the command line arguments.
+///
+/// \param args The command line arguments.
+/// \param options The allowed options.
+///
 void load_bali_phy_rc(variables_map& args,const options_description& options)
 {
   if (fs::path::default_name_check_writable())
