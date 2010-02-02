@@ -17,6 +17,13 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file parameters.H
+///
+/// \brief This file defines the Parameters class which holds the model and state
+///        for the MCMC.
+///
+
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 

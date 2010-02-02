@@ -24,6 +24,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///        the bali-phy program.
 ///
 
+/// \mainpage
+/// \section intro_sec Introduction
+///
+/// BAli-Phy is an MCMC sampler to jointly estimate alignments and a phylogeny.
+///
+///  
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
