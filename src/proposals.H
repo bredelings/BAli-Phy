@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2006-2008 Benjamin Redelings
+   Copyright (C) 2006-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -139,9 +139,9 @@ public:
   const std::vector<int>& get_indices() const {return indices;}
   Proposal2* clone() const {return new Proposal2(*this);}
   double operator()(Parameters& P) const;
-  Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
+  Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<std::string>& v,
 	    const Parameters& P);
-  Proposal2(const Proposal_Fn& p,const std::vector<std::string>& s, const std::vector<string>& v,
+  Proposal2(const Proposal_Fn& p,const std::vector<std::string>& s, const std::vector<std::string>& v,
 	    const Parameters& P);
 };
 

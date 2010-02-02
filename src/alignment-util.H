@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file alignment-util.H
+///
+/// \brief This file implements alignment utility functions.
+///
+
 #ifndef ALIGNMENT_UTIL_H
 #define ALIGNMENT_UTIL_H
 

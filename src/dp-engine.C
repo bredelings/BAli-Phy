@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2007 Benjamin Redelings
+   Copyright (C) 2004-2007,2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -17,10 +17,18 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/**
+ * @file dp-engine.C
+ *
+ * @brief This file contains a generic dynamic programming class.
+ *
+ */
+
 #include <iostream>
 #include "dp-engine.H"
 #include "myexception.H"
 
+using std::vector;
 using std::cerr;
 using std::endl;
 

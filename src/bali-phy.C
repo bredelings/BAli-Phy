@@ -17,6 +17,13 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file bali-phy.C
+///
+/// \brief This file contains routines to parse and check input and initiate
+///        the bali-phy program.
+///
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -81,7 +88,11 @@ using std::cout;
 using std::cerr;
 using std::clog;
 using std::endl;
+using std::ifstream;
+using std::ofstream;
 using std::ostream;
+using std::string;
+using std::vector;
 
 using boost::dynamic_bitset;
 

@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2008 Benjamin Redelings
+   Copyright (C) 2004-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -56,7 +56,7 @@ void sample_two_nodes(Parameters& P,int b);
 bool three_way_topology_sample(Parameters& P1,const Parameters& P2,const Parameters& P3,int b);
 
 /// Resample between 2 NNI topologies around branch b
-int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho,int b);
+int two_way_topology_sample(std::vector<Parameters>& p,const std::vector<efloat_t>& rho,int b);
 
 
 /*-------------- Top Level Sampling Routines -----------*/

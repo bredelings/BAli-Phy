@@ -43,7 +43,7 @@ struct edge_comp {
 
 class Edges: public std::multiset<Edge,edge_comp>
 {
-  vector<vector<vector<std::multiset<Edge,edge_comp>::iterator> > > lookup;
+  std::vector<std::vector<std::vector<std::multiset<Edge,edge_comp>::iterator> > > lookup;
 
 public:
   void build_index();
@@ -51,15 +51,15 @@ public:
   double PP(int s1,int x1,int s2,int x2) const;
   int index_in_sequence(int s1,int x1,int s2) const;
 
-  Edges(const vector<int>& L);
+  Edges(const std::vector<int>& L);
 };
 
-void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
+void add_edges(Edges& E, const std::vector< ublas::matrix<int> >& Ms,
 	       int s1,int s2,int L1, int L2,double cutoff);
 
 class index_matrix: public ublas::matrix<int> 
 {
-  vector<vector<int> > column_index;
+  std::vector<std::vector<int> > column_index;
 
 public:
 
@@ -90,11 +90,11 @@ public:
 
   unsigned n_columns() const;
 
-  index_matrix(int C, const vector<int>& L)
+  index_matrix(int C, const std::vector<int>& L)
     :ublas::matrix<int>(C,L.size()),columns(C),unknowns(0)
   {
     for(int i=0;i<L.size();i++)
-      column_index.push_back(vector<int>(L[i]));
+      column_index.push_back(std::vector<int>(L[i]));
   }
 
   index_matrix(const alignment& A);

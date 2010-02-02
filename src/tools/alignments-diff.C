@@ -40,6 +40,10 @@ namespace po = boost::program_options;
 using po::variables_map;
 using boost::shared_ptr;
 
+using std::string;
+using std::vector;
+using std::endl;
+
 // FIXME - also show which COLUMNS are more that 99% conserved?
 
 // With characters, you take i~j~k and split the column, then if i and j
@@ -287,7 +291,7 @@ int main(int argc,char* argv[])
 
 	// write out header: sequence names
 	string filename = args["differences-file"].as<string>();
-	ofstream d(filename.c_str());
+	std::ofstream d(filename.c_str());
 	for(int i=0;i<O.n_sequences();i++) {
 	  d<<O.seq(i).name;
 	  if (i !=  O.n_sequences()-1)

@@ -24,6 +24,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <gsl/gsl_sf_gamma.h>
 #include "util.H"
 
+using std::string;
+
 namespace probability {
 
   double  Distribution::mean() const {

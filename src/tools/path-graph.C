@@ -32,6 +32,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 namespace po = boost::program_options;
 using po::variables_map;
 
+using std::vector;
+using std::string;
 using std::cout;
 using std::cerr;
 using std::endl;

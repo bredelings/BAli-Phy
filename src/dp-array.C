@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2005-2007 Benjamin Redelings
+   Copyright (C) 2005-2007,2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -17,11 +17,19 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/**
+ * @file dp-array.C
+ *
+ * @brief This file contains routines for 1-dimensional dynamic programming.
+ */
+
 #include <cmath>
 #include "dp-array.H"
 #include "pow2.H"
 #include "choose.H"
 #include "util.H"
+
+using std::vector;
 
 // We can ignore scale(i) here, because it factors out.
 efloat_t DParray::path_P(const vector<int>& g_path) const 
@@ -322,7 +330,7 @@ void DParrayConstrained::prune() {
   }
 
   unsigned order2 = order_of_computation();
-  std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<endl;
+  std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<std::endl;
 }
 
 efloat_t DParrayConstrained::Pr_sum_all_paths() const 

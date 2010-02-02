@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2007,2009 Benjamin Redelings
+   Copyright (C) 2004-2007,2009-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file 5way.C
+///
+/// \brief Defines the HMM for pairwise alignments on 5 branches in an NNI configuration.
+///
+
 #include "5way.H"
 #include "bits.H"
 #include "logsum.H"
@@ -25,7 +31,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution-index.H"
 
 using boost::dynamic_bitset;
+using std::vector;
 
+/// Namespace for the HMM for pairwise alignments on 5 branches in an NNI configuration.
 namespace A5 {
 
   vector<int> states_list = construct_states();

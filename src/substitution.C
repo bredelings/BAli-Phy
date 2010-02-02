@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2005,2007,2009 Benjamin Redelings
+   Copyright (C) 2004-2005,2007,2009-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -1005,7 +1005,7 @@ namespace substitution {
     if (equal)
       ; //std::cerr<<"branch "<<b<<": caches are equal"<<endl;
     else
-      std::cerr<<"branch "<<b<<": caches are NOT equal"<<endl;
+      std::cerr<<"branch "<<b<<": caches are NOT equal"<<std::endl;
   }
 
   void compare_caches(const alignment& A1, const alignment& A2, const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, const Tree& T)

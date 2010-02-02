@@ -17,12 +17,20 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file hmm.H
+///
+/// \brief This file implements the generic HMM class.
+///
+
 #include <cmath>
 #include "hmm.H"
 #include "logsum.H"
 #include "choose.H"
 
 using std::abs;
+using std::vector;
+using std::valarray;
 
 // Is this state silent and in a loop of silent states?
 bool HMM::silent_network(int S) const {

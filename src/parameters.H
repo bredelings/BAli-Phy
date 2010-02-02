@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2009 Benjamin Redelings
+   Copyright (C) 2004-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -51,17 +51,17 @@ struct data_partition: public Model
   /// The substitution::Model
   polymorphic_cow_ptr<substitution::MultiModel> SModel_;
 
-  string partition_name;
+  std::string partition_name;
 
-  void recalc(const vector<int>&);
+  void recalc(const std::vector<int>&);
 
   mutable cached_value<efloat_t> cached_alignment_prior;
 
-  mutable vector<cached_value<efloat_t> > cached_alignment_prior_for_branch;
+  mutable std::vector<cached_value<efloat_t> > cached_alignment_prior_for_branch;
 
-  mutable vector<cached_value<ublas::matrix<int> > > cached_alignment_counts_for_branch;
+  mutable std::vector<cached_value<ublas::matrix<int> > > cached_alignment_counts_for_branch;
 
-  mutable vector<cached_value<int> > cached_sequence_lengths;
+  mutable std::vector<cached_value<int> > cached_sequence_lengths;
 
   double branch_mean_;
 
@@ -95,14 +95,14 @@ public:
   /// cached branch HMMs
   //FIXME - WHy not a cached_value< >?
   //REASON: Dynamic Programming uses this and assumes its always up-to-date.
-  vector<indel::PairHMM> branch_HMMs;
-  vector<int> branch_HMM_type;
+  std::vector<indel::PairHMM> branch_HMMs;
+  std::vector<int> branch_HMM_type;
 
   /// Alignment constraint
   ublas::matrix<int> alignment_constraint;
 
   /// Temperatures -    0:likelihood     1:prior?
-  vector<double> beta;
+  std::vector<double> beta;
 
   // get the alphabet for partition i
   const alphabet& get_alphabet() const {return A->get_alphabet();}
@@ -146,11 +146,11 @@ public:
   efloat_t heated_likelihood() const;
   efloat_t heated_probability() const;
 
-  string name() const;
+  std::string name() const;
 
-  data_partition(const string& n, const alignment&, const SequenceTree&,
+  data_partition(const std::string& n, const alignment&, const SequenceTree&,
 		 const substitution::MultiModel&);
-  data_partition(const string& n, const alignment&, const SequenceTree&,
+  data_partition(const std::string& n, const alignment&, const SequenceTree&,
 		 const substitution::MultiModel&, const IndelModel&);
 };
 
@@ -158,18 +158,18 @@ public:
 class Parameters: public SuperModel
 {
   /// The substitution::Model
-  vector<polymorphic_cow_ptr<substitution::MultiModel> > SModels;
-  vector<int> smodel_for_partition;
+  std::vector<polymorphic_cow_ptr<substitution::MultiModel> > SModels;
+  std::vector<int> smodel_for_partition;
 
   /// The IndelModel
-  vector<polymorphic_cow_ptr<IndelModel> > IModels;
-  vector<int> imodel_for_partition;
+  std::vector<polymorphic_cow_ptr<IndelModel> > IModels;
+  std::vector<int> imodel_for_partition;
 
   // Scale for partition
-  vector<int> scale_for_partition;
+  std::vector<int> scale_for_partition;
   int n_scales;
 
-  void recalc(const vector<int>&);
+  void recalc(const std::vector<int>&);
 
 public:
 
@@ -183,7 +183,7 @@ public:
   void variable_alignment(bool b);
 
   /// The alignments and cached computations
-  vector<cow_ptr<data_partition> > data_partitions;
+  std::vector<cow_ptr<data_partition> > data_partitions;
 
   int n_data_partitions() const {return data_partitions.size();}
 
@@ -203,23 +203,23 @@ public:
   /// Alignment-constrained branches
   std::vector<int> AC;
 
-  vector<int> branch_HMM_type;
+  std::vector<int> branch_HMM_type;
 
   /// An object for key-value pairs.
   std::map<std::string,double> keys;
 
-  vector<double> beta;
-  vector<double> beta_series;
+  std::vector<double> beta;
+  std::vector<double> beta_series;
 
   /// Did we most recently hit beta==1 (1) or beta=0 (0)
   int updown;
 
   /// Tree partitions to weight
-  vector<Partition> partitions;
-  vector<efloat_t> partition_weights;
+  std::vector<Partition> partitions;
+  std::vector<efloat_t> partition_weights;
 
   /// Is pinning enabled or not?
-  vector<double> constants;
+  std::vector<double> constants;
   /// Is pinning enabled or not?
   int features;
 
@@ -293,22 +293,22 @@ public:
 
   Parameters* clone() const {return new Parameters(*this);}
 
-  string name() const {return "Full Model";}
+  std::string name() const {return "Full Model";}
 
   const Model& SubModels(int) const;
   Model& SubModels(int);
 
-  Parameters(const vector<alignment>& A, const SequenceTree&, 
-	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
-	     const vector<int>&,
-	     const vector<int>&);
+  Parameters(const std::vector<alignment>& A, const SequenceTree&, 
+	     const std::vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
+	     const std::vector<int>&,
+	     const std::vector<int>&);
 
-  Parameters(const vector<alignment>& A, const SequenceTree&, 
-	     const vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
-	     const vector<int>&,
-	     const vector<polymorphic_cow_ptr<IndelModel> >&,
-	     const vector<int>&,
-	     const vector<int>&);
+  Parameters(const std::vector<alignment>& A, const SequenceTree&, 
+	     const std::vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
+	     const std::vector<int>&,
+	     const std::vector<polymorphic_cow_ptr<IndelModel> >&,
+	     const std::vector<int>&,
+	     const std::vector<int>&);
 };
 
 bool accept_MH(const Parameters& P1,const Parameters& P2,double rho);

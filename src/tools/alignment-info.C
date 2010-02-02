@@ -32,8 +32,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 
+using std::vector;
 using std::valarray;
 using std::map;
+using std::string;
+using std::endl;
 
 namespace po = boost::program_options;
 using po::variables_map;

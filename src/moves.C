@@ -31,6 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 using MCMC::MoveStats;
 
 using std::valarray;
+using std::vector;
 
 void slide_node_move(Parameters& P, MoveStats& Stats,int b) 
 {

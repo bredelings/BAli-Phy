@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2007,2009 Benjamin Redelings
+   Copyright (C) 2004-2007,2009-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -17,12 +17,21 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file alignment-sums.H
+///
+/// \brief Contains utility functions for sampling from and summing over parts of the alignment.
+///
+
 #include "alignment-sums.H"
 #include "likelihood.H"
 #include "substitution.H"
 #include "util.H"
 
 using boost::dynamic_bitset;
+using std::vector;
+using std::cerr;
+using std::endl;
 
 efloat_t other_subst(const data_partition& P, const vector<int>& nodes) 
 {
@@ -160,7 +169,7 @@ void check_match_P(const data_partition& P, efloat_t OS, efloat_t OP, const vect
   efloat_t qpGQ = Matrices.path_GQ_path(path_g) *  Matrices.generalize_P(path);
   efloat_t qpQ  = Matrices.path_Q_path(path);
 
-  std::cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
+  cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
   assert(std::abs(log(qpGQ)-log(qpQ)) < 1.0e-9);
   
   //--- Compare the path transition probabilities (Q) and the alignment prior
@@ -171,17 +180,17 @@ void check_match_P(const data_partition& P, efloat_t OS, efloat_t OP, const vect
   efloat_t qt = qs * qp * P.prior_no_alignment();
   efloat_t lt = P.heated_probability();
 
-  std::cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;
-  std::cerr<<"lp = "<<lp<<"    qp = "<<qp
+  cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;
+  cerr<<"lp = "<<lp<<"    qp = "<<qp
 	   <<" = "<<Matrices.path_GQ_path(path_g)<<" + "<<Matrices.generalize_P(path)<<" + "<<OP<<endl;
-  std::cerr<<"lt = "<<lt<<"    qt = "<<qt<<endl;
-  std::cerr<<endl;
+  cerr<<"lt = "<<lt<<"    qt = "<<qt<<endl;
+  cerr<<endl;
 
   if ( (std::abs(log(qs) - log(ls)) > 1.0e-9) or 
        (std::abs(log(qp) - log(lp)) > 1.0e-9) or 
        (std::abs(log(qt) - log(lt)) > 1.0e-9)) {
-    std::cerr<<*P.A<<endl;
-    std::cerr<<"Can't match up DP probabilities to real probabilities!\n"<<show_stack_trace();
+    cerr<<*P.A<<endl;
+    cerr<<"Can't match up DP probabilities to real probabilities!\n"<<show_stack_trace();
     std::abort();
   }
 
@@ -208,7 +217,7 @@ vector<efloat_t> sample_P(const data_partition& P,
   // Ratio of P_0i/P_i0
   PR[3] = ratio;
 
-  //  std::cerr<<"PrS = "<<P_choice<<" + "<<Matrices.path_P(path_g)<<" + "<<Matrices.generalize_P(path)<<endl;
+  //  cerr<<"PrS = "<<P_choice<<" + "<<Matrices.path_P(path_g)<<" + "<<Matrices.generalize_P(path)<<endl;
 
   return PR;
 }
@@ -233,21 +242,21 @@ void check_sampling_probabilities(const vector< vector<efloat_t> >& PR)
     
     if (P2[0] == 0.0) continue;
 
-    std::cerr<<"\noption = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
+    cerr<<"\noption = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
 
-    //    std::cerr<<" Pr1 * Rho1  = "<<P1[0]*P1[2]<<"    Pr2 * Rho2  = "<<P2[0]*P2[2]<<
+    //    cerr<<" Pr1 * Rho1  = "<<P1[0]*P1[2]<<"    Pr2 * Rho2  = "<<P2[0]*P2[2]<<
     //      "    Pr2 * Rho2  - Pr1 * Rho1  = "<<P2[0]*P2[2]/(P1[0]*P1[2])<<endl;
 
-    //    std::cerr<<" PrS1 = "<<P1[1]<<"    PrS2 = "<<P2[1]<<"    PrS2 - PrS1 = "<<P2[1] / PR.back()[1]<<endl;
+    //    cerr<<" PrS1 = "<<P1[1]<<"    PrS2 = "<<P2[1]<<"    PrS2 - PrS1 = "<<P2[1] / PR.back()[1]<<endl;
     
     efloat_t ratio2 = (P2[0]*P2[2]/P2[1]) / P2[3];
     double diff = log(ratio2/ratio1);
 
-    std::cerr<<"diff = "<<diff<<endl;
+    cerr<<"diff = "<<diff<<endl;
     if (std::abs(diff) > 1.0e-9) {
-      //      std::cerr<<a.back()<<endl;
-      //      std::cerr<<a[i]<<endl;
-      std::cerr<<"i = "<<i<<endl;
+      //      cerr<<a.back()<<endl;
+      //      cerr<<a[i]<<endl;
+      cerr<<"i = "<<i<<endl;
       
       throw myexception()<<"Sampling probabilities were incorrect\n"<<show_stack_trace();
     }

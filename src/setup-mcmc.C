@@ -37,6 +37,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 using boost::program_options::variables_map;
 using boost::dynamic_bitset;
 using std::vector;
+using std::endl;
 using std::string;
 using std::ostream;
 

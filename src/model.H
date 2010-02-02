@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2006,2009 Benjamin Redelings
+   Copyright (C) 2004-2006,2009-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file imodel.H
+///
+/// \brief This file defines a generic Model class.
+///
+
 #ifndef MODEL_H
 #define MODEL_H
 
@@ -33,7 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 //   2. but then when you modify the class member models, you need to notify the parent..
 //   3. we COULD have an upwards-pointing chain as well...
 
-std::string parameter_name(const string& prefix,int i,int n);
+std::string parameter_name(const std::string& prefix,int i,int n);
 
 class Model: public Cloneable 
 {
@@ -50,7 +56,7 @@ protected:
   /// Recalculate internal data based on changing one parameter
   void recalc_one(int);
   /// Recalculate internal data based on current parameters
-  virtual void recalc(const vector<int>&) {}
+  virtual void recalc(const std::vector<int>&) {}
 
 public:
   /// Recalculate all internal data based on current parameters
@@ -107,10 +113,10 @@ public:
 class SuperModel: virtual public Model 
 {
 protected:
-  vector<std::string> short_parameter_names;
-  vector<std::string> model_prefix;
-  vector<int> first_index_of_model;
-  vector<int> model_of_index;
+  std::vector<std::string> short_parameter_names;
+  std::vector<std::string> model_prefix;
+  std::vector<int> first_index_of_model;
+  std::vector<int> model_of_index;
 
   int n_super_parameters() const;
 
@@ -129,7 +135,7 @@ protected:
   /// Store ONE parameter down into submodels
   void write(int i,double p);
   /// Store SOME parameters down into submodels
-  void write(const std::vector<int>&,vector<double>::const_iterator&);
+  void write(const std::vector<int>&,std::vector<double>::const_iterator&);
 
   void prefix_names();
 

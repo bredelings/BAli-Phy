@@ -34,8 +34,6 @@ Report
  - I can generate more plots, if R is installed.
    * Generate the mixing diagnostics chart.  If one chain only, take 2,3,4 quarters.
 
-Turn off sub-partitions by default (at least for release).
-
 Have I fixed the debug trap?
 
 Timers:

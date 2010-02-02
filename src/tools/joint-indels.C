@@ -41,6 +41,8 @@ using std::cerr;
 using std::istream;
 using std::ifstream;
 using std::vector;
+using std::string;
+using std::endl;
 //using namespace optimize;
 
 namespace po = boost::program_options;

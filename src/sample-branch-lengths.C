@@ -31,6 +31,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <gsl/gsl_cdf.h>
 
 using MCMC::MoveStats;
+using std::vector;
+using std::string;
 
 bool do_MH_move(Parameters& P,const Parameters& P2,double rho) 
 {

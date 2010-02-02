@@ -55,11 +55,11 @@ double slice_sample(double x0, slice_function& g, double w, int m);
 
 double slice_sample(slice_function& g, double w, int m);
 
-std::pair<int,double> slice_sample_multi(double x0, vector<slice_function*>& g, double w, int m);
+std::pair<int,double> slice_sample_multi(double x0, std::vector<slice_function*>& g, double w, int m);
 
-std::pair<int,double> slice_sample_multi(vector<double>& X0, vector<slice_function*>& g, double w, int m);
+std::pair<int,double> slice_sample_multi(std::vector<double>& X0, std::vector<slice_function*>& g, double w, int m);
 
-std::pair<int,double> slice_sample_multi(vector<slice_function*>& g, double w, int m);
+std::pair<int,double> slice_sample_multi(std::vector<slice_function*>& g, double w, int m);
 
 struct parameter_slice_function:public slice_function
 {

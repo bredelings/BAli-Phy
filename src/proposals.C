@@ -24,6 +24,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 
 using std::valarray;
+using std::vector;
+using std::string;
 
 valarray<double> convert(const vector<double>& v1)
 {

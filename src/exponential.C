@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file exponential.C
+///
+/// \brief Contains function for computing matrix exponentials.
+///
+
 #include <vector>
 #include "exponential.H"
 #include "eigenvalue.H"

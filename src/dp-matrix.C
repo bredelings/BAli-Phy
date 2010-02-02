@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/**
+ * @file dp-matrix.C
+ *
+ * @brief This file contains routines for 2-dimensional dynamic programming.
+ */
+
 #include <cmath>
 #include <climits>
 #include "dp-matrix.H"
@@ -24,7 +30,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "choose.H"
 #include "util.H"
 
+using std::vector;
+using std::valarray;
 using std::max;
+using std::endl;
 using std::isnan;
 using std::isfinite;
 

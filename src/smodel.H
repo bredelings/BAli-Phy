@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2009 Benjamin Redelings
+   Copyright (C) 2004-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -70,6 +70,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/numeric/ublas/symmetric.hpp>
 #include "mytypes.H"
 #include "alphabet.H"
 #include "rates.H"
@@ -111,7 +112,7 @@ namespace substitution {
   {
   public:
     
-    virtual const vector<unsigned>& state_letters() const=0;
+    virtual const std::vector<unsigned>& state_letters() const=0;
 
     unsigned n_states() const { return state_letters().size();}
 
@@ -204,7 +205,7 @@ namespace substitution {
     /// Rate matrix
     Matrix Q;
 
-    vector<unsigned> state_letters_;
+    std::vector<unsigned> state_letters_;
 
   public:
 
@@ -216,7 +217,7 @@ namespace substitution {
     /// The transition probability matrix
     virtual Matrix transition_p(double t) const =0;
 
-    virtual const vector<unsigned>& state_letters() const {return state_letters_;}
+    virtual const std::vector<unsigned>& state_letters() const {return state_letters_;}
 
     /// Construct a Makov model on alphabet 'a_'
     MarkovModel(const alphabet& a);
@@ -230,7 +231,7 @@ namespace substitution {
   class ExchangeModel: virtual public ::Model
   {
   protected:
-    SMatrix S;
+    ublas::symmetric_matrix<double> S;
 
   public:
     
@@ -247,7 +248,7 @@ namespace substitution {
 
   class SimpleExchangeModel: public ExchangeModel
   {
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
   public:
 
@@ -346,7 +347,7 @@ namespace substitution {
   /// The Hasegawa, Kishino, Yano (1985)
   class HKY: public NucleotideExchangeModel
   {
-    virtual void recalc(const vector<int>&);
+    virtual void recalc(const std::vector<int>&);
   public:
 
     virtual HKY* clone() const {return new HKY(*this);}
@@ -367,7 +368,7 @@ namespace substitution {
   /// The Tamura-Nei (1993) model
   class TN: public NucleotideExchangeModel 
   {
-    virtual void recalc(const vector<int>&);
+    virtual void recalc(const std::vector<int>&);
   public:
 
     virtual TN* clone() const {return new TN(*this);}
@@ -393,7 +394,7 @@ namespace substitution {
   /// The General Time Reversible model
   class GTR: public NucleotideExchangeModel 
   {
-    virtual void recalc(const vector<int>&);
+    virtual void recalc(const std::vector<int>&);
   public:
     
     virtual GTR* clone() const {return new GTR(*this);}
@@ -421,7 +422,7 @@ namespace substitution {
   class SingletToTripletExchangeModel: public TripletExchangeModel,
 				       public SuperModelOver<NucleotideExchangeModel>
   {
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
   public:
 
     efloat_t prior() const { return SuperModelOver<NucleotideExchangeModel>::prior(); }
@@ -454,7 +455,7 @@ namespace substitution {
   class M0: public CodonAlphabetExchangeModel,
 		public SuperModelOver<NucleotideExchangeModel>
   {
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
   public:
     efloat_t super_prior() const;
 
@@ -500,7 +501,7 @@ namespace substitution {
 			      public ModelWithAlphabet<alphabet>
   {
   protected:
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
   public:
     
@@ -525,7 +526,7 @@ namespace substitution {
 			      public ModelWithAlphabet<alphabet>
   {
   protected:
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
   public:
     
@@ -556,7 +557,7 @@ namespace substitution {
   {
     OwnedPointer<SimpleFrequencyModel> triplets;
 
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
   public:
     IndependentNucleotideFrequencyModel* clone() const {return new IndependentNucleotideFrequencyModel(*this);}
@@ -571,7 +572,7 @@ namespace substitution {
 				public SuperModelOver<SimpleFrequencyModel>
   {
   protected:
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
   public:
     TripletsFrequencyModel* clone() const {return new TripletsFrequencyModel(*this);}
@@ -598,7 +599,7 @@ namespace substitution {
   protected:
     OwnedPointer<SimpleFrequencyModel> codons;
 
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
     int aa_size() const {return Alphabet().getAminoAcids().size();}
   public:
@@ -613,7 +614,7 @@ namespace substitution {
 			      public SuperModelOver<TripletsFrequencyModel>
   {
   protected:
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
     int aa_size() const {return Alphabet().getAminoAcids().size();}
 
@@ -632,7 +633,7 @@ namespace substitution {
 			      public SuperModelOver<TripletsFrequencyModel>
   {
   protected:
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
     int aa_size() const {return Alphabet().getAminoAcids().size();}
 
@@ -689,7 +690,7 @@ namespace substitution {
     double alpha_;
     valarray<double> pi;
 
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
   public:
     double rate() const;
     void set_rate(double);
@@ -726,7 +727,7 @@ namespace substitution {
     /// The frequency model
     OwnedPointer<ReversibleFrequencyModel> R;
 
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
     const ::Model& SubModels(int i) const {
       if (i==0)
@@ -846,7 +847,7 @@ namespace substitution {
     double rate() const;
     void set_rate(double);
 
-    virtual const vector<unsigned>& state_letters() const {return base_model(0).state_letters();}
+    virtual const std::vector<unsigned>& state_letters() const {return base_model(0).state_letters();}
 
     /// Get the probability of each base models
     virtual std::vector<double> distribution() const=0;
@@ -874,7 +875,7 @@ namespace substitution {
     const Base_Model_t& base_model(int) const {return SubModel();}
           Base_Model_t& base_model(int)       {return SubModel();}
 
-    std::vector<double> distribution() const {return vector<double>(1,1);}
+    std::vector<double> distribution() const {return std::vector<double>(1,1);}
 
     string name() const;
 
@@ -890,16 +891,16 @@ namespace substitution {
   {
   protected:
     /// Components of the mixture - Reversible Markov models express as S+R
-    vector<OwnedPointer<SimpleReversibleMarkovModel> > sub_parameter_models;
+    std::vector<OwnedPointer<SimpleReversibleMarkovModel> > sub_parameter_models;
 
     /// Fraction of the sites with each parameter value (weights on the mixture components)
-    vector<double> fraction;
+    std::vector<double> fraction;
 
     // a(m,l) is the probability that a letter is in component "m" given that it is of type "l"
     inline double& a(int m,int l)       {return parameters_[m+l*fraction.size()];}
     inline double  a(int m,int l) const {return parameters_[m+l*fraction.size()];}
 
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
 
   public:
@@ -933,10 +934,10 @@ namespace substitution {
   {
   protected:
     /// Components of the mixture - Reversible Markov models express as S+R
-    vector<OwnedPointer<F81_Model> > sub_parameter_models;
+    std::vector<OwnedPointer<F81_Model> > sub_parameter_models;
 
     /// Fraction of the sites with each parameter value (weights on the mixture components)
-    vector<double> fraction;
+    std::vector<double> fraction;
 
     string model_name;
 
@@ -975,14 +976,14 @@ namespace substitution {
   {
   protected:
     /// MultiModels w/ different values of the parameter set
-    vector<OwnedPointer<MultiModel> > sub_parameter_models;
+    std::vector<OwnedPointer<MultiModel> > sub_parameter_models;
     /// Fraction of the sites with each parameter value
-    vector<double> fraction;
+    std::vector<double> fraction;
 
     /// The parameter which is varying;
     int p_change;
     /// The values it takes on
-    vector<double> p_values;
+    std::vector<double> p_values;
 
     void recalc_submodel_instances();
   public:
@@ -1013,7 +1014,7 @@ namespace substitution {
   protected:
     efloat_t super_prior() const;
 
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
   public:
 
@@ -1035,7 +1036,7 @@ namespace substitution {
 
     efloat_t super_prior() const;
 
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
   public:
 
@@ -1084,7 +1085,7 @@ namespace substitution {
   public:
     virtual WithINV* clone() const {return new WithINV(*this);}
 
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
     efloat_t super_prior() const;
 
@@ -1131,7 +1132,7 @@ namespace substitution {
 
     const alphabet& Alphabet() const {return VAR().Alphabet();}
 
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
     efloat_t super_prior() const;
 
@@ -1154,7 +1155,7 @@ namespace substitution {
 
   class M2: public MultiParameterModel
   {
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
   public:
     
@@ -1170,7 +1171,7 @@ namespace substitution {
 
   class M3: public MultiParameterModel 
   {
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
   public:
     
     efloat_t super_prior() const;
@@ -1203,7 +1204,7 @@ namespace substitution {
   class MixtureModel: public MultiModel, public SuperModelOver<MultiModel> 
   {
     efloat_t super_prior() const;
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
     valarray<double> pi;
 
@@ -1241,7 +1242,7 @@ namespace substitution {
 
     valarray<double> pi;
 
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
 
     const ::Model& SubModels(int i) const {
       if (i==0)

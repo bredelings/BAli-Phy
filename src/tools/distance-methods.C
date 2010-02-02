@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "inverse.H"
 
 using std::list;
+using std::vector;
 
 using boost::dynamic_bitset;
 

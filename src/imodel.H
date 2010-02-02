@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2007 Benjamin Redelings
+   Copyright (C) 2004-2007,2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -16,6 +16,12 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+///
+/// \file imodel.H
+///
+/// \brief This file defines classes and functions related to insertions and deletions.
+///
 
 #ifndef IMODEL_H
 #define IMODEL_H
@@ -60,7 +66,7 @@ public:
 
 class SimpleIndelModel : public IndelModel {
 protected:
-  void recalc(const vector<int>&);
+  void recalc(const std::vector<int>&);
 
   /// The transition matrix with G2 state removed
   indel::PairHMM Q1;

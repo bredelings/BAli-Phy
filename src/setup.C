@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2009 Benjamin Redelings
+   Copyright (C) 2004-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -40,6 +40,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree-util.H"
 #include "substitution-index.H"
 
+using std::ifstream;
+using std::string;
 using std::vector;
 using std::valarray;
 using std::cout;

@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file sample-topology-SPR.C
+///
+/// \brief Contains functions for subtree-prune-and-regraft (SPR) transition kernels.
+///
+
 #include <cmath>
 #include <iostream>
 #include "sample.H"
@@ -34,6 +40,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 using MCMC::MoveStats;
 
 using boost::dynamic_bitset;
+using std::vector;
+using std::string;
 
 int random_int_from_double(double x)
 {

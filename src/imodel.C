@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file imodel.H
+///
+/// \brief This file implements classes and functions related to insertions and deletions.
+///
+
 #include <cmath>
 #include "imodel.H"
 #include "logsum.H"
@@ -29,6 +35,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "logsum.H"
 
 using std::vector;
+using std::string;
 using namespace A2;
 
 namespace indel 

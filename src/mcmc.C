@@ -63,7 +63,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 namespace mpi = boost::mpi;
 #endif
 
+using std::endl;
+
 namespace MCMC {
+  using std::vector;
   using std::valarray;
   using std::cerr;
   using std::clog;

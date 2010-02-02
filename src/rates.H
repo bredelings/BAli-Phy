@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2007 Benjamin Redelings
+   Copyright (C) 2004-2007,2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -34,7 +34,7 @@ namespace substitution {
   /// A Gamma distribution for rate variation
   class Gamma: public DistributionWrapper<probability::Gamma>
   {
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
   public:
     Gamma* clone() const {return new Gamma(*this);}
     efloat_t prior() const;
@@ -44,7 +44,7 @@ namespace substitution {
   /// A Beta distribution for rate variation
   class Beta: public DistributionWrapper<probability::Beta>
   {
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
   public:
     Beta* clone() const {return new Beta(*this);}
     efloat_t prior() const;
@@ -54,7 +54,7 @@ namespace substitution {
 
   class LogNormal: public DistributionWrapper<probability::LogNormal>
   {
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
   public:
     LogNormal* clone() const {return new LogNormal(*this);}
     efloat_t prior() const;
@@ -65,7 +65,7 @@ namespace substitution {
   /// A Uniform distribution for rate variation
   class Uniform: public DistributionWrapper<probability::Uniform>
   {
-    void recalc(const vector<int>&);
+    void recalc(const std::vector<int>&);
   public:
     Uniform* clone() const {return new Uniform(*this);}
     Uniform();
@@ -118,11 +118,11 @@ namespace substitution {
   /// A Discretization of a Distribution
   struct Discretization
   {
-    vector<double> p;
-    vector<double> r;
+    std::vector<double> p;
+    std::vector<double> r;
     
-    vector<double> b;
-    vector<double> f;
+    std::vector<double> b;
+    std::vector<double> f;
     
     double A;
     

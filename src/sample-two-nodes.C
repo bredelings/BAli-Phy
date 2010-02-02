@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file sample-two-nodes.C
+///
+/// \brief Contains routines for resampling the sequence at two adjacent internal nodes (5way).
+///
+
 #include <iostream>
 #include <cmath>
 #include <cassert>
@@ -50,6 +56,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 // Branches are labelled 0-3, as are the leaves.  Internal nodes
 // are 4,5; internal branch is 5.
 
+using std::vector;
 using std::abs;
 
 using boost::dynamic_bitset;

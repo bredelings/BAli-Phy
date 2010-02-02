@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2009 Benjamin Redelings
+   Copyright (C) 2004-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -74,7 +74,7 @@ namespace MCMC {
   class MoveStats: public std::map<std::string,Result>
   {
   public:
-    void inc(const string&, const Result&);
+    void inc(const std::string&, const Result&);
   };
 
   //---------------------- Simple Move  ---------------------//
@@ -87,9 +87,9 @@ namespace MCMC {
     bool enabled_;
 
   public:
-    string name;
+    std::string name;
 
-    vector<string> attributes;
+    std::vector<std::string> attributes;
 
     double iterations;
 
@@ -106,10 +106,10 @@ namespace MCMC {
     void disable() {enabled_=false;}
     
     /// Enable this move or any submove with name or attribute 's'
-    virtual void enable(const string& s);
+    virtual void enable(const std::string& s);
 
     /// Disable this move or any submove with name or attribute 's'
-    virtual void disable(const string& s);
+    virtual void disable(const std::string& s);
 
     /// Set up for an iteration of length l, return number of subiterations
     virtual int reset(double l) =0;
@@ -124,8 +124,8 @@ namespace MCMC {
     virtual void show_enabled(std::ostream&,int depth=0) const;
 
     /// construct a new move called 's'
-    Move(const string& s);
-    Move(const string& s, const string& v);
+    Move(const std::string& s);
+    Move(const std::string& s, const std::string& v);
 
     virtual ~Move() {}
   };
@@ -153,14 +153,15 @@ namespace MCMC {
   };
 
   /// A Move which runs parts of a number of submoves each round
-  class MoveGroup: public Move,public MoveGroupBase {
+  class MoveGroup: public Move,public MoveGroupBase 
+  {
   protected:
 
     /// An ordered list of submoves to run this round
-    vector<int> order;
+    std::vector<int> order;
 
     /// suborder[i] is the n-th time we've run order[i]
-    vector<int> suborder;
+    std::vector<int> suborder;
     
     double sum() const;
 
@@ -170,8 +171,8 @@ namespace MCMC {
 
     MoveGroup* clone() const =0;
 
-    void enable(const string&);
-    void disable(const string&);
+    void enable(const std::string&);
+    void disable(const std::string&);
 
     int reset(double);
     void iterate(Parameters&,MoveStats&);
@@ -179,8 +180,8 @@ namespace MCMC {
 
     void show_enabled(std::ostream&,int depth=0) const;
 
-    MoveGroup(const string& s):Move(s) {}
-    MoveGroup(const string& s, const string& v):Move(s,v) {}
+    MoveGroup(const std::string& s):Move(s) {}
+    MoveGroup(const std::string& s, const std::string& v):Move(s,v) {}
 
     virtual ~MoveGroup() {}
   };
@@ -191,8 +192,8 @@ namespace MCMC {
   public:
     MoveAll* clone() const {return new MoveAll(*this);}
 
-    MoveAll(const string& s):MoveGroup(s) {}
-    MoveAll(const string& s, const string& v):MoveGroup(s,v) {}
+    MoveAll(const std::string& s):MoveGroup(s) {}
+    MoveAll(const std::string& s, const std::string& v):MoveGroup(s,v) {}
     virtual ~MoveAll() {}
   };
 
@@ -203,8 +204,8 @@ namespace MCMC {
   public:
     MoveOne* clone() const {return new MoveOne(*this);}
 
-    MoveOne(const string& s):MoveGroup(s) {}
-    MoveOne(const string& s, const string& v):MoveGroup(s,v) {}
+    MoveOne(const std::string& s):MoveGroup(s) {}
+    MoveOne(const std::string& s, const std::string& v):MoveGroup(s,v) {}
     virtual ~MoveOne() {}
   };
 
@@ -220,9 +221,9 @@ namespace MCMC {
 
     void iterate(Parameters& P,MoveStats&,int);
 
-    SingleMove(atomic_move m1,const string& s)
+    SingleMove(atomic_move m1,const std::string& s)
       :Move(s),m(m1) {}
-    SingleMove(atomic_move m1,const string& s, const string& v)
+    SingleMove(atomic_move m1,const std::string& s, const std::string& v)
       :Move(s,v),m(m1) {}
   };
 
@@ -239,9 +240,9 @@ namespace MCMC {
 
     void iterate(Parameters& P,MoveStats&,int);
 
-    MH_Move(const Proposal& P,const string& s)
+    MH_Move(const Proposal& P,const std::string& s)
       :Move(s),proposal(P) {}
-    MH_Move(const Proposal& P,const string& s, const string& v)
+    MH_Move(const Proposal& P,const std::string& s, const std::string& v)
       :Move(s,v),proposal(P) {}
   };
 
@@ -268,24 +269,24 @@ namespace MCMC {
 
     void iterate(Parameters& P,MoveStats&,int);
 
-    Slice_Move(const string& s,int i,
+    Slice_Move(const std::string& s,int i,
 	       bool lb,double l,bool ub,double u,double W_);
 
-    Slice_Move(const string& s, const string& v,int i,
+    Slice_Move(const std::string& s, const std::string& v,int i,
 	       bool lb,double l,bool ub,double u,double W_);
 
-    Slice_Move(const string& s,int i,
+    Slice_Move(const std::string& s,int i,
 	       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&));
 
-    Slice_Move(const string& s, const string& v,int i,
+    Slice_Move(const std::string& s, const std::string& v,int i,
 	       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&));
 
-    Slice_Move(const string& s,int i,
+    Slice_Move(const std::string& s,int i,
 	       bool lb,double l,bool ub,double u,double W_,
 	       double(*f1)(double),
 	       double(*f2)(double));
 
-    Slice_Move(const string& s, const string& v,int i,
+    Slice_Move(const std::string& s, const std::string& v,int i,
 	       bool lb,double l,bool ub,double u,double W_,
 	       double(*f1)(double),
 	       double(*f2)(double));
@@ -295,13 +296,13 @@ namespace MCMC {
   /// A move which takes an integer argument from a supplied list
   class MoveArg: public Move {
     /// The ordered list of args to operate on this round
-    vector<int> order;
+    std::vector<int> order;
 
   public:
     MoveArg* clone() const=0;
 
     /// A list of arguments to be passed to submoves
-    vector<int> args;
+    std::vector<int> args;
 
     int reset(double);
     void iterate(Parameters&,MoveStats&);
@@ -310,8 +311,8 @@ namespace MCMC {
     /// Operate on the 'a'-th arg
     virtual void operator()(Parameters&,MoveStats&,int a)=0;
 
-    MoveArg(const string& s):Move(s) { }
-    MoveArg(const string& s, const string& v):Move(s,v) { }
+    MoveArg(const std::string& s):Move(s) { }
+    MoveArg(const std::string& s, const std::string& v):Move(s,v) { }
 
     virtual ~MoveArg() {}
   };
@@ -324,7 +325,7 @@ namespace MCMC {
   class MoveEach: public MoveArg, protected MoveGroupBase {
 
     /// The n-th arg of this move, is the subarg[m][n]-th arg of move m
-    vector< vector<int> > subarg;
+    std::vector< std::vector<int> > subarg;
 
     /// Get the sum of the weights for the i-th arg
     double sum(int i) const;
@@ -339,15 +340,15 @@ namespace MCMC {
 
     void add(double l,const MoveArg& m,bool=true);
 
-    void enable(const string&);
-    void disable(const string&);
+    void enable(const std::string&);
+    void disable(const std::string&);
 
     void operator()(Parameters&,MoveStats&,int);
     
     void show_enabled(std::ostream&,int depth=0) const;
 
-    MoveEach(const string& s):MoveArg(s) {}
-    MoveEach(const string& s,const string& v):MoveArg(s,v) {}
+    MoveEach(const std::string& s):MoveArg(s) {}
+    MoveEach(const std::string& s,const std::string& v):MoveArg(s,v) {}
 
     virtual ~MoveEach() {}
   };
@@ -360,11 +361,11 @@ namespace MCMC {
 
     void operator()(Parameters&,MoveStats&,int);
 
-    MoveArgSingle(const string& s,atomic_move_arg m1,const vector<int>& a)
+    MoveArgSingle(const std::string& s,atomic_move_arg m1,const std::vector<int>& a)
       :MoveArg(s),m(m1) 
     {args=a;}
 
-    MoveArgSingle(const string& s,const string& v,atomic_move_arg m1,const vector<int>& a)
+    MoveArgSingle(const std::string& s,const std::string& v,atomic_move_arg m1,const std::vector<int>& a)
       :MoveArg(s,v),m(m1) 
     {args=a;}
 
@@ -381,7 +382,7 @@ namespace MCMC {
     void go(Parameters& P, int subsample, int max, 
 	    std::ostream&,std::ostream&,std::ostream&,std::ostream&,std::vector<std::ostream*>& files);
 
-    Sampler(const string& s)
+    Sampler(const std::string& s)
       :MoveAll(s) {};
   };
 

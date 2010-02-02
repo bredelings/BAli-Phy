@@ -38,6 +38,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/dynamic_bitset.hpp>
 
 namespace po = boost::program_options;
+using std::vector;
+using std::string;
+using std::endl;
 using po::variables_map;
 using boost::shared_ptr;
 using boost::dynamic_bitset;

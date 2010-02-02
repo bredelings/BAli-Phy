@@ -42,6 +42,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 
 using MCMC::MoveStats;
+using std::string;
+using std::vector;
 
 // We are sampling from a 5-way alignment (along 5 branches)
 

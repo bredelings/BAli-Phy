@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2005-2007 Benjamin Redelings
+   Copyright (C) 2005-2007,2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -16,6 +16,12 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+/**
+ * @file dp-matrix.H
+ *
+ * @brief This file contains routines for 2-dimensional dynamic programming.
+ */
 
 #ifndef DP_MATRIX_H
 #define DP_MATRIX_H
@@ -115,28 +121,28 @@ public:
   void forward_band(int);
 
   /// compute FP for entire matrix, with some points on path pinned
-  void forward_constrained(const vector<vector<int> >&);
+  void forward_constrained(const std::vector<std::vector<int> >&);
 
   /// Sample a path from the HMM
-  vector<int> sample_path() const;
+  std::vector<int> sample_path() const;
 
   /// Compute the forward probabilities and back sample
-  vector<int> forward(const vector<vector<int> >&);
+  std::vector<int> forward(const std::vector<std::vector<int> >&);
 
-  efloat_t path_P(const vector<int>& path) const;
+  efloat_t path_P(const std::vector<int>& path) const;
 
   /// Construct a 2D DP matrix from the dimensions, and an HMM
   DPmatrix(int i1,
 	   int i2,
-	   const vector<int>& v1,
-	   const vector<double>& v2,
+	   const std::vector<int>& v1,
+	   const std::vector<double>& v2,
 	   const Matrix& M,
 	   double Beta);
   virtual ~DPmatrix() {}
 };
 
-int bandwidth(const DPmatrix&,const vector<int>&);
-int bandwidth2(const DPmatrix&,const vector<int>&);
+int bandwidth(const DPmatrix&,const std::vector<int>&);
+int bandwidth2(const DPmatrix&,const std::vector<int>&);
 
 
 /// 2D Dynamic Programming Matrix for chains which only emit or don't emit
@@ -145,12 +151,12 @@ public:
   /// Compute the forward probabilities for a cell
   void forward_cell(int,int);
 
-  efloat_t path_Q_subst(const vector<int>&) const {return 1;}
+  efloat_t path_Q_subst(const std::vector<int>&) const {return 1;}
 
   DPmatrixNoEmit(int i1,
 		 int i2,
-		 const vector<int>& v1,
-		 const vector<double>& v2,
+		 const std::vector<int>& v1,
+		 const std::vector<double>& v2,
 		 const Matrix& M,
 		 double Beta
 		 )
@@ -176,17 +182,17 @@ protected:
 
 public:
   /// Probabilities of the different rates
-  vector<double> distribution;
+  std::vector<double> distribution;
   /// Emission probabilities for first sequence
-  vector< Matrix > dists1;
+  std::vector< Matrix > dists1;
   /// Emission probabilities for second sequence
-  vector< Matrix > dists2;
+  std::vector< Matrix > dists2;
   /// Frequencies at the root node - and equilibrium frequencies
   Matrix frequency;
   /// The number of different rates
   int nrates() const {return dists1[0].size1();}
 
-  efloat_t path_Q_subst(const vector<int>& path) const;
+  efloat_t path_Q_subst(const std::vector<int>& path) const;
 
   /// Emission probabilities for ++
   double emitMM(int i,int j) const;
@@ -198,13 +204,13 @@ public:
   double emit__(int i,int j) const;
 
   /// Construct a DP array from an HMM, emission probabilities, and substitution model
-  DPmatrixEmit(const vector<int>&,
-	       const vector<double>&,
+  DPmatrixEmit(const std::vector<int>&,
+	       const std::vector<double>&,
 	       const Matrix&,
 	       double Beta,
-	       const vector< double >&,
-	       const vector< Matrix >&,
-	       const vector< Matrix >&, 
+	       const std::vector< double >&,
+	       const std::vector< Matrix >&,
+	       const std::vector< Matrix >&, 
 	       const Matrix&);
   
   virtual ~DPmatrixEmit() {}
@@ -217,13 +223,13 @@ class DPmatrixSimple: public DPmatrixEmit {
 public:
   void forward_cell(int,int);
 
-  DPmatrixSimple(const vector<int> & v1,
-		 const vector<double> & v2,
+  DPmatrixSimple(const std::vector<int> & v1,
+		 const std::vector<double> & v2,
 		 const Matrix& M,
 		 double Beta,
-		 const vector< double >& d0,
-		 const vector< Matrix >& d1,
-		 const vector< Matrix >& d2, 
+		 const std::vector< double >& d0,
+		 const std::vector< Matrix >& d1,
+		 const std::vector< Matrix >& d2, 
 		 const Matrix& f):
     DPmatrixEmit(v1,v2,M,Beta,d0,d1,d2,f)
   { }
@@ -237,32 +243,32 @@ public:
 class DPmatrixConstrained: public DPmatrixEmit 
 {
   int order_of_computation() const;
-  vector< vector<int> > allowed_states;
+  std::vector< std::vector<int> > allowed_states;
 
   virtual void compute_Pr_sum_all_paths();
 public:
 
-  efloat_t path_P(const vector<int>& path) const;
+  efloat_t path_P(const std::vector<int>& path) const;
 
 
   /// Sample a path from the HMM
-  vector<int> sample_path() const;
+  std::vector<int> sample_path() const;
 
-  const vector<int>& states(int j) const {return allowed_states[j];}
-  vector<int>& states(int j) {return allowed_states[j];}
+  const std::vector<int>& states(int j) const {return allowed_states[j];}
+  std::vector<int>& states(int j) {return allowed_states[j];}
 
   void clear_cell(int,int);
   void forward_cell(int,int);
 
   void prune();
 
-  DPmatrixConstrained(const vector<int> & v1,
-		      const vector<double> & v2,
+  DPmatrixConstrained(const std::vector<int> & v1,
+		      const std::vector<double> & v2,
 		      const Matrix& M,
 		      double Beta,
-		      const vector< double >& d0,
-		      const vector< Matrix >& d1,
-		      const vector< Matrix >& d2, 
+		      const std::vector< double >& d0,
+		      const std::vector< Matrix >& d1,
+		      const std::vector< Matrix >& d2, 
 		      const Matrix& f):
     DPmatrixEmit(v1,v2,M,Beta,d0,d1,d2,f), allowed_states(d2.size())
   { }

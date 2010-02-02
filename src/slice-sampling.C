@@ -21,6 +21,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rng.H"
 #include "choose.H"
 
+using std::vector;
+
 namespace slice_sampling {
   double identity(double x) {return x;}
 }

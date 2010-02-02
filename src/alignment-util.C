@@ -17,14 +17,23 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file alignment-util.C
+///
+/// \brief This file implements alignment utility functions.
+///
+
 #include "alignment-util.H"
 #include "substitution-index.H"
 #include "util.H"
 #include "setup.H"
 
+using std::string;
+using std::vector;
 using std::valarray;
 using std::cout;
 using std::cerr;
+using std::endl;
 using std::istream;
 
 using boost::dynamic_bitset;

@@ -34,6 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 // for both sequences, this process is symmetric
 
 using std::abs;
+using std::vector;
 using boost::dynamic_bitset;
 using namespace A2;
 

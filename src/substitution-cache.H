@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2005,2007 Benjamin Redelings
+   Copyright (C) 2004-2005,2007,2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -177,13 +177,13 @@ public:
   void validate_branch(int b) {cache->validate_branch(token,b);}
 
   /// Cached conditional likelihoods for branch b
-  const vector<Matrix>& operator[](int b) const {
+  const std::vector<Matrix>& operator[](int b) const {
     int loc = cache->location(token,b);
     return (*cache)[loc];
   }
 
   /// Cached conditional likelihoods for branch b
-  vector<Matrix>& operator[](int b) {
+  std::vector<Matrix>& operator[](int b) {
     int loc = cache->location(token,b);
     return (*cache)[loc];
   }

@@ -38,6 +38,8 @@ namespace po = boost::program_options;
 using po::variables_map;
 
 using std::vector;
+using std::string;
+using std::endl;
 
 //--------------------------- Class joint_A_T ----------------------------//
 

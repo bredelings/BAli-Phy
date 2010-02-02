@@ -48,6 +48,8 @@ using std::cerr;
 using std::istream;
 using std::ifstream;
 using std::vector;
+using std::string;
+using std::endl;
 
 namespace po = boost::program_options;
 using po::variables_map;

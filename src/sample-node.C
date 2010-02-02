@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file sample-node.C
+///
+/// \brief Contains routines for resampling the sequence at an internal node (3way).
+///
+
 #include <iostream>
 #include <cmath>
 #include "sample.H"
@@ -47,6 +53,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 //     sequence in each of the sub-alignments
 
 using std::abs;
+using std::vector;
 
 using boost::dynamic_bitset;
 

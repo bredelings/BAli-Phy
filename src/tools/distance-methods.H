@@ -29,16 +29,16 @@ Matrix DistanceMatrix(const Tree& T);
 
 Matrix EdgesDistanceMatrix(const Tree& T);
 
-vector<double> FastMTM(const Tree& T,const Matrix& D,
-		       const vector<vector<int> >& leaf_set);
+std::vector<double> FastMTM(const Tree& T,const Matrix& D,
+		       const std::vector<std::vector<int> >& leaf_set);
 
-vector<double> LeastSquares(const Tree& T, const Matrix & D,
-			    const vector<vector<int> >& leaf_set);
+std::vector<double> LeastSquares(const Tree& T, const Matrix & D,
+			    const std::vector<std::vector<int> >& leaf_set);
 
-vector<double> LeastSquares(const Tree& T, const Matrix & D, const Matrix& W,
-			    const vector<vector<int> >& leaf_set);
+std::vector<double> LeastSquares(const Tree& T, const Matrix & D, const Matrix& W,
+			    const std::vector<std::vector<int> >& leaf_set);
 
-vector<double> FastLeastSquares(const Tree& T, const Matrix & D,
-				const vector<vector<int> >& leaf_set);
+std::vector<double> FastLeastSquares(const Tree& T, const Matrix & D,
+				const std::vector<std::vector<int> >& leaf_set);
 
 #endif

@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2007,2009 Benjamin Redelings
+   Copyright (C) 2004-2007,2009-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file 3way.C
+///
+/// \brief Defines the HMM for three pairwise alignments on adjacent branches of a tree.
+///
+
 #include "3way.H"
 #include "bits.H"
 #include "logsum.H"
@@ -26,6 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution-index.H"
 
 using boost::dynamic_bitset;
+using std::vector;
 
 using namespace A3;
 

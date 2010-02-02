@@ -39,6 +39,7 @@ extern "C" {
 #include "alignment-util.H"
 
 using std::valarray;
+using std::endl;
 
 void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<double>& f) {
     for(int i=0;i<a.size();i++)

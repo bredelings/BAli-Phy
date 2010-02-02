@@ -33,6 +33,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 using std::vector;
 using std::valarray;
 using std::string;
+using std::cerr;
+using std::endl;
 
 namespace substitution {
 
@@ -660,7 +662,7 @@ namespace substitution {
     const unsigned n = n_states();
 
 #ifdef DEBUG_RATE_MATRIX
-    std::cerr<<"scale = "<<rate()<<endl;
+    cerr<<"scale = "<<rate()<<endl;
 
     assert(std::abs(frequencies().sum()-1.0) < 1.0e-6);
     for(int i=0;i<n;i++) {
@@ -680,7 +682,7 @@ namespace substitution {
     }
 
     //--------------- Calculate eigensystem -----------------//
-    SMatrix S(n,n);
+    ublas::symmetric_matrix<double> S(n,n);
     for(int i=0;i<n;i++)
       for(int j=0;j<=i;j++) {
 	S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
@@ -1272,7 +1274,7 @@ namespace substitution {
 	fraction[m] += a(m,l)*f[l];
     }
 
-    if (std::abs(sum(fraction) - 1.0) > 1.0e-5) std::cerr<<"ERROR: sum(fraction) = "<<sum(fraction)<<endl;
+    if (std::abs(sum(fraction) - 1.0) > 1.0e-5) cerr<<"ERROR: sum(fraction) = "<<sum(fraction)<<endl;
 
     // recalculate sub-models
     valarray<double> fm(Alphabet().size());
@@ -1282,7 +1284,7 @@ namespace substitution {
       for(int l=0;l<fm.size();l++)
 	fm[l] = a(m,l)*f[l]/fraction[m];
 
-      if (std::abs(fm.sum() - 1.0) > 1.0e-5) std::cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<fm.sum()<<endl;
+      if (std::abs(fm.sum() - 1.0) > 1.0e-5) cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<fm.sum()<<endl;
 
       // get a new copy of the sub-model and set the frequencies
       sub_parameter_models[m] = &SubModel();
@@ -1337,7 +1339,7 @@ namespace substitution {
 
   /// Get the equilibrium frequencies
   const std::valarray<double>& CAT_FixedFrequencyModel::frequencies() const {
-    std::cerr<<"CAT model with fixed frequences does not HAVE an 'overall' frequencies method."<<endl;
+    cerr<<"CAT model with fixed frequences does not HAVE an 'overall' frequencies method."<<endl;
     std::abort();
   }
 

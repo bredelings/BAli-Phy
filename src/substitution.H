@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2005,2007,2009 Benjamin Redelings
+   Copyright (C) 2004-2005,2007,2009-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file substitution.H
+///
+/// \brief Contains functions related to calculating the substitution likelihood.
+///
+
 #ifndef SUBSTITUTION_H
 #define SUBSTITUTION_H
 
@@ -28,6 +34,7 @@ class Parameters;
 #include "parameters.H"
 #include "substitution-cache.H"
 
+/// A namespace for functions related to calculating the substitution likelihood.
 namespace substitution {
 
   inline double sum(const std::vector<double>& f,int l1,const alphabet& a)
@@ -58,9 +65,9 @@ namespace substitution {
   }
 
   /// Find the probabilities of all the data give each letter at the root
-  vector<Matrix>
-  get_column_likelihoods(const data_partition&, const vector<int>& b,
-			 const vector<int>& req, const vector<int>& seq,int delta=0);
+  std::vector<Matrix>
+  get_column_likelihoods(const data_partition&, const std::vector<int>& b,
+			 const std::vector<int>& req, const std::vector<int>& seq,int delta=0);
 
   Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
 				const MultiModel& MModel);
@@ -68,7 +75,7 @@ namespace substitution {
   /// Full likelihood - all columns, all rates
   efloat_t Pr(const data_partition&);
 
-  efloat_t other_subst(const data_partition&, const vector<int>& nodes);
+  efloat_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
   efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
 	    const MultiModel& MModel);

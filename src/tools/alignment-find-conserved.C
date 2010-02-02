@@ -39,6 +39,8 @@ using po::variables_map;
 using std::string;
 using std::cout;
 using std::cerr;
+using std::endl;
+using std::vector;
 using std::valarray;
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
@@ -93,7 +95,7 @@ vector<sequence_group> load_groups(const alignment& A,const string& filename)
   vector<string> seq_names = sequence_names(A);
   vector<sequence_group> groups;
 
-  ifstream file(filename.c_str());
+  std::ifstream file(filename.c_str());
   string line;
   for(int g=1;getline(file,line);g++)
   {

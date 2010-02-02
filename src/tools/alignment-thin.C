@@ -31,6 +31,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "index-matrix.H"
 
 using std::pair;
+using std::vector;
+using std::string;
+using std::endl;
 
 #include <boost/program_options.hpp>
 

@@ -28,6 +28,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "probability.H"
 #include "timer_stack.H"
 
+using std::vector;
+using std::string;
 using std::cerr;
 using std::endl;
 
