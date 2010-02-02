@@ -720,23 +720,24 @@ long int splits_distance2(const ublas::matrix<int>& M1,const vector< vector<int>
 }
 
 
-vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args) 
+vector<shared_ptr<const alphabet> > load_alphabets()
 {
   vector<shared_ptr<const alphabet> > alphabets; 
 
-  if (not args.count("alphabet")) {
-    alphabets.push_back(shared_ptr<const alphabet>(new DNA));
-    alphabets.push_back(shared_ptr<const alphabet>(new RNA));
-    alphabets.push_back(shared_ptr<const alphabet>(new AminoAcids));
-    alphabets.push_back(shared_ptr<const alphabet>(new AminoAcidsWithStop));
+  alphabets.push_back(shared_ptr<const alphabet>(new DNA));
+  alphabets.push_back(shared_ptr<const alphabet>(new RNA));
+  alphabets.push_back(shared_ptr<const alphabet>(new AminoAcids));
+  alphabets.push_back(shared_ptr<const alphabet>(new AminoAcidsWithStop));
 
-    return alphabets;
-  }
+  return alphabets;
+}
 
-  const string name = args["alphabet"].as<string>();
+vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args,const string& name)
+{
+  vector<shared_ptr<const alphabet> > alphabets; 
 
-  if (name == "Codons" or name == "Codons+stop") {
-
+  if (name == "Codons" or name == "Codons+stop")
+  {
     shared_ptr<const AminoAcids> AA;
     if (name == "Codons")
       AA = shared_ptr<const AminoAcids>(new AminoAcids);
@@ -768,6 +769,18 @@ vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args)
     throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
 
   return alphabets;
+}
+
+vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args) 
+{
+  vector<shared_ptr<const alphabet> > alphabets; 
+
+  if (not args.count("alphabet"))
+    return load_alphabets();
+
+  const string name = args["alphabet"].as<string>();
+
+  return load_alphabets(args, name);
 }
 
 alignment load_alignment(const string& filename,const vector<shared_ptr<const alphabet> >& alphabets)

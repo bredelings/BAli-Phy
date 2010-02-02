@@ -148,10 +148,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description model("Model options");
   model.add_options()
-    ("alphabet",value<string>(),"The alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
+    ("alphabet",value<vector<string> >()->composing(),"The alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("genetic-code",value<string>()->default_value("standard-code.txt",""),"Specify alternate genetic code file in data directory.")
     ("smodel",value<vector<string> >()->composing(),"Substitution model.")
-    ("imodel",value<vector<string> >()->composing(),"Indel model: RS05, RS07-no-T, or RS07.")
+    ("imodel",value<vector<string> >()->composing(),"Indel model: none, RS05, RS07-no-T, or RS07.")
     ("branch-prior",value<string>()->default_value("Gamma"),"Exponential or Gamma.")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
@@ -664,127 +664,6 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
       }
     }
   }
-}
-
-// how about --smodel=1,3,5:HKY  --smodel=4,5,6:Empirical[WAG]
-
-string parse_partitions_and_model(string model, vector<int>& partitions)
-{
-  partitions.clear();
-
-  int colon = model.find(':');
-  if (colon == -1)
-    return model;
-
-  string prefix = model.substr(0,colon);
-  model = model.substr(colon+1);
-
-  partitions = split<int>(prefix,',');
-
-  return model;
-}
-
-template <typename T>
-class shared_items
-{
-  // unique items
-  vector<T> items;
-
-public:
-
-  // from partition -> item
-  vector<int> item_for_partition;  
-
-  // from item -> partition
-  vector<vector<int> > partitions_for_item;
-
-  int n_unique_items() const {return items.size();}
-
-  int n_partitions() const {return item_for_partition.size();}
-
-  const T& unique(int i) const {return items[i];}
-        T& unique(int i)       {return items[i];}
-
-  const T& operator[](int i) const {return items[item_for_partition[i]];}
-        T& operator[](int i)       {return items[item_for_partition[i]];}
-
-  int n_partitions_for_item(int i) const {return partitions_for_item[i].size();}
-
-  shared_items(const vector<T>& v1, const vector<int>& v2)
-    :items(v1),
-     item_for_partition(v2),
-     partitions_for_item(items.size())
-  {
-    for(int i=0;i<n_partitions();i++) {
-      int item = item_for_partition[i];
-      if (item != -1)
-	partitions_for_item[item].push_back(i);
-    }
-  }
-};
-
-
-//allow partition NAMES from filename?
-shared_items<string> get_mapping(const variables_map& args, const string& key, int n)
-{
-  vector<string> models;
-  if (args.count(key))
-    models = args[key].as<vector<string> >();
-
-  vector<int> mapping(n,-2);
-  vector<string> model_names;
-
-  for(int i=0;i<models.size();i++) 
-  {
-    vector<int> partitions;
-
-    int index = model_names.size();
-    string model_name = parse_partitions_and_model(models[i],partitions);
-    if (model_name == "none")
-      index = -1;
-    else 
-      model_names.push_back(model_name);
-
-    // partitions must be specified, ...
-    if (partitions.size() == 0) 
-    {
-      //unless there is only one partition, or..
-      if (n == 1)
-	partitions.push_back(1);
-      //this is the only model is specified, and then it gets ALL partitions
-      else if (models.size() == 1) {
-	for(int i=1;i<=n;i++)
-	  partitions.push_back(i);
-      }
-      else
-	throw myexception()<<"Failed to specify partition number(s) for '"<<key<<"' specification '"<<models[i];
-    }
-
-    // map partitions to this model, unless they are already mapped
-    for(int j=0;j<partitions.size();j++) 
-    {
-      // check for bad partition numbers
-      if (partitions[j] < 1 or partitions[j] > n)
-	throw myexception()<<"Partition "<<partitions[j]<<" doesn't exist.";
-
-      // check for partition already mapped
-      if (mapping[partitions[j]-1] != -2)
-	throw myexception()<<"Trying to set '"<<key<<"' for partition "<<partitions[j]<<" twice.";
-
-      // map partition to this model
-      mapping[partitions[j]-1] = index;
-    }
-  }
-
-  // fill in default model mappings
-  for(int i=0;i<mapping.size();i++)
-    if (mapping[i] == -2) 
-    {
-      mapping[i] = model_names.size();
-      model_names.push_back("");
-    }
-
-  return shared_items<string>(model_names,mapping);
 }
 
 vector<polymorphic_cow_ptr<substitution::MultiModel> > 

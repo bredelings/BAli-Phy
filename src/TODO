@@ -1,23 +1,23 @@
-Implement the filename@alphabet option.
+Make trees-consensus write out a list of partitions directly, so we dont' need 'sed'.
+
+Implement --output=svg,pdf in draw-tree.
 
 Documentation
  - Make programs more self-documenting.
  - Make a 'front matter' page for Doxygen...?
- - Document: "How do I concatenate two alignments?" alignment-cat A.fasta B.fasta
- - Document: "How do I split up a concatenated alignment?" alignment-cat A.fasta -c1-5 > A1.fasta
- - Document: "How do I construct a constraint file?" alignment-indices A.fasta --c100,500,700 > constraint
  - Allow `bali-phy --help=topic'
  - Make an --help=advanced to put the advanced usage options in?
  - Remove default from --data-dir
  - Remove --letters=full_tree option.
  - Remove default option from --iterations?
- - Remove default argument from --genetic-code
 
 Report a 95% confidence interval of splits
  - scale by # of internal branches in tree... then should be < than # of iterations, just like #topologies.
 
 Alignment-indices: intelligently find the previous/next column.
  - Command line: constrain columns... use range parsing code from alignment-cat
+ - Actually, do something more intelligent based on pairwise things, like FSA does...
+   + But then how would you take advantage of local conservation... "ALL sequences have a G"
 
 Make moves report meaningful names for their various statistics.
  - Make the MCMC::stats( ) object into a map<string,pair<int,double> > or something.

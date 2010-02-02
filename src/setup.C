@@ -17,6 +17,14 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/**
+ * @file setup.C
+ *
+ * @brief This file contains routines for parsing the command line and
+ *        loading information from files in order to start the MCMC
+ *        analysis.
+ */
+
 #include <vector>
 
 #include <boost/filesystem/operations.hpp>
@@ -357,6 +365,26 @@ void link(vector<alignment>& alignments, RootedSequenceTree& T, const vector<boo
     link(alignments[i],T,internal_sequences[i]);
 }
 
+/// Load an collections of alignments from command line args "--align filename1 --align filename2 ... "
+vector<alignment> load_As(const variables_map& args)
+{
+  vector<string> filenames = args["align"].as<vector<string> >();
+
+  shared_items<string> alphabet_names = get_mapping(args, "alphabet", filenames.size());
+
+  vector<alignment> alignments;
+
+  for(int i=0;i<filenames.size();i++) {
+    const string alphabet_name = alphabet_names[i];
+    if (alphabet_name.size())
+      alignments.push_back( load_alignment(filenames[i], load_alphabets(args, alphabet_name) ) );
+    else
+      alignments.push_back( load_alignment(filenames[i], load_alphabets() ) );
+  }
+
+  return alignments;
+}
+
 void load_As_and_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,bool internal_sequences)
 {
   //align - filenames
@@ -369,11 +397,7 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
 
 void load_As_and_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,const vector<bool>& internal_sequences)
 {
-  //align - filenames
-  vector<string> filenames = args["align"].as<vector<string> >();
-
-  // load the alignments
-  alignments = load_alignments(filenames,load_alphabets(args));
+  alignments = load_As(args);
 
   T = load_T(args);
 
@@ -411,11 +435,7 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
 
 void load_As_and_T(const variables_map& args,vector<alignment>& alignments,RootedSequenceTree& T,const vector<bool>& internal_sequences)
 {
-  //align - filenames
-  vector<string> filenames = args["align"].as<vector<string> >();
-
-  // load the alignments
-  alignments = load_alignments(filenames,load_alphabets(args));
+  alignments = load_As(args);
 
   T = load_T(args);
 
@@ -455,11 +475,7 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
 
 void load_As_and_random_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,const vector<bool>& internal_sequences)
 {
-  //align - filenames
-  vector<string> filenames = args["align"].as<vector<string> >();
-
-  // load the alignments
-  alignments = load_alignments(filenames,load_alphabets(args));
+  alignments = load_As(args);
 
   //------------- Load random tree ------------------------//
   SequenceTree TC = star_tree(sequence_names(alignments[0]));
@@ -642,4 +658,99 @@ void load_bali_phy_rc(variables_map& args,const options_description& options)
   }
   else
     cerr<<"Environment variable HOME not set!"<<endl;
+}
+
+/// \brief Parse a string of the form int,int,int:string 
+///
+/// \param model The string to parse.
+/// \param partitions The list of integers.
+/// \return the string.
+///
+string parse_partitions_and_model(string model, vector<int>& partitions)
+{
+  partitions.clear();
+
+  int colon = model.find(':');
+  if (colon == -1)
+    return model;
+
+  string prefix = model.substr(0,colon);
+  model = model.substr(colon+1);
+
+  partitions = split<int>(prefix,',');
+
+  return model;
+}
+
+/// \brief Parse command line arguments of the form --key int,int,int:name1 --key int,int:name2
+///
+/// Here the integers refer to partitions 1..n and so cannot be referred to twice.
+///
+/// \param args The command line arguments.
+/// \param key The key.
+/// \param n The number of partitions that exist.
+/// \return a mapping from partitions to names.
+///
+shared_items<string> get_mapping(const variables_map& args, const string& key, int n)
+{
+  vector<string> models;
+  if (args.count(key))
+    models = args[key].as<vector<string> >();
+
+  vector<int> mapping(n,-2);
+  vector<string> model_names;
+
+  /// For each argument --key {int}+:name
+  for(int i=0;i<models.size();i++) 
+  {
+    // 1. Parse {int}+:name into partitions and model_name
+    vector<int> partitions;
+
+    int index = model_names.size();
+    string model_name = parse_partitions_and_model(models[i],partitions);
+    if (model_name == "none")
+      index = -1;
+    else 
+      model_names.push_back(model_name);
+
+    // 2. Check that partitions have been specified ...
+    if (partitions.size() == 0) 
+    {
+      // unless there is only one partition, or ...
+      if (n == 1)
+	partitions.push_back(1);
+      // this is the only model is specified, and then it gets ALL partitions
+      else if (models.size() == 1) {
+	for(int i=1;i<=n;i++)
+	  partitions.push_back(i);
+      }
+      else
+	throw myexception()<<"Failed to specify partition number(s) for '"<<key<<"' specification '"<<models[i];
+    }
+
+    // 3. Map partitions to this model, unless they are already mapped
+    for(int j=0;j<partitions.size();j++) 
+    {
+      // Check for bad partition numbers.
+      if (partitions[j] < 1 or partitions[j] > n)
+	throw myexception()<<"Partition "<<partitions[j]<<" doesn't exist.";
+
+      // Check for partition already mapped.
+      if (mapping[partitions[j]-1] != -2)
+	throw myexception()<<"Trying to set '"<<key<<"' for partition "<<partitions[j]<<" twice.";
+
+      // Map the partition to this model.
+      mapping[partitions[j]-1] = index;
+    }
+  }
+
+  // fill in default model mappings
+  for(int i=0;i<mapping.size();i++)
+    if (mapping[i] == -2) 
+    {
+      mapping[i] = model_names.size();
+      model_names.push_back("");
+    }
+
+  return shared_items<string>(model_names,mapping);
 }

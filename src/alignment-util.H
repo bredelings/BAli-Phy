@@ -41,7 +41,7 @@ alignment chop_internal(alignment A,bool keep_empty_columns=false);
 // Add sequences to A corresponding to internal nodes in T
 alignment add_internal(alignment A,const Tree& T);
 
-/// Load an alignment from command line args align=filename
+/// Load an alignment from command line args --align=filename
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
 
 /// Load an alignment from command line args align=filename
@@ -137,6 +137,10 @@ std::vector<alignment> load_alignments(std::istream&, const std::vector<boost::s
 alignment find_last_alignment(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
 
 alignment find_first_alignment(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
+
+std::vector<boost::shared_ptr<const alphabet> > load_alphabets();
+
+std::vector<boost::shared_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args, const std::string&);
 
 std::vector<boost::shared_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args);
 
