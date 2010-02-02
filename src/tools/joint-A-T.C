@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "logsum.H"
 #include "util.H"
 #include "setup.H"
+#include "smodel.H"
 
 #include "alignment-util.H"
 #include "tree-util.H"

@@ -31,6 +31,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/shared_ptr.hpp>
 
 #include "setup.H"
+#include "smodel.H"
+#include "imodel.H"
 #include "util.H"
 #include "rates.H"
 #include "alphabet.H"

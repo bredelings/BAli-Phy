@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <boost/program_options.hpp>
 #include "setup.H"
+#include "smodel.H"
 #include "util.H"
 #include "rates.H"
 #include "myexception.H"

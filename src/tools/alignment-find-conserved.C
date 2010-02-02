@@ -460,7 +460,7 @@ int main(int argc,char* argv[])
       for(int g=0;g<groups.size();g++)
 	if (value[g] != alphabet::gap)
 	  for(int i=0;i<groups[g].taxa.size();i++)
-	    C(c,groups[g].taxa[i]) = max(0.5, C(c,groups[g].taxa[i]));
+	    C(c,groups[g].taxa[i]) = std::max(0.5, C(c,groups[g].taxa[i]));
     }
 
 

@@ -30,8 +30,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include <valarray>
-#include "smodel.H"
-#include "imodel.H"
 #include "alignment.H"
 #include "sequencetree.H"
 #include "clone.H"
@@ -46,12 +44,12 @@ std::valarray<double> empirical_frequencies(const boost::program_options::variab
 
 /// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
 std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,
-					    const vector<alignment>& A);
+					    const std::vector<alignment>& A);
 
 //----------------- Load trees and alignments ---------------------//
 
 
-void remap_T_indices(SequenceTree& T1, const vector<std::string>& names);
+void remap_T_indices(SequenceTree& T1, const std::vector<std::string>& names);
 void remap_T_indices(SequenceTree& T1, const alignment& T2);
 void remap_T_indices(SequenceTree& T1, const SequenceTree& T2);
 
@@ -90,7 +88,7 @@ void load_A_and_T(const boost::program_options::variables_map& args,
 void load_A_and_random_T(const boost::program_options::variables_map& args,
 			 alignment& A,SequenceTree& T,bool internal_sequences=true);
 
-SequenceTree load_constraint_tree(const std::string& filename,const std::vector<string>&);
+SequenceTree load_constraint_tree(const std::string& filename,const std::vector<std::string>&);
 
 
 /// Count how many times each letter occurs in A
@@ -104,6 +102,7 @@ void load_bali_phy_rc(boost::program_options::variables_map&,
 		      const boost::program_options::options_description&);
 
 //------------------------ Substitution stuff ----------------------//
+namespace substitution { class MultiModel; }
 
 /// Return a substitution::Model specified by args
 OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
@@ -111,7 +110,7 @@ OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::
 
 /// Return a substitution::Model specified by name
 OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
-						  const string&,
+						  const std::string&,
 						  const alignment& A);
 
 /// Return a substitution::Model specified by args
@@ -120,11 +119,12 @@ OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::
 
 /// Return a substitution::Model specified by name
 OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
-						  const string&,
-						  const vector<alignment>& A);
+						  const std::string&,
+						  const std::vector<alignment>& A);
 
 //--------------------------- Indel stuff --------------------------//
-OwnedPointer<IndelModel> get_imodel(string);
+class IndelModel;
+OwnedPointer<IndelModel> get_imodel(std::string);
 
 template <typename T>
 class shared_items

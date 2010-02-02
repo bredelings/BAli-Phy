@@ -184,9 +184,9 @@ int main(int argc,char* argv[])
     for(int i=0;i<F.size1();i++)
       for(int j=0;j<F.size2();j++) {
 	F(i,j) = 0;
-	if (i>0)         F(i,j) = max(F(i,j),F(i-1,j  ));
-	if (j>0)         F(i,j) = max(F(i,j),F(i  ,j-1));
-	if (i>0 and j>0) F(i,j) = max(F(i,j),F(i-1,j-1)+score(M1,M2,i-1,j-1));
+	if (i>0)         F(i,j) = std::max(F(i,j),F(i-1,j  ));
+	if (j>0)         F(i,j) = std::max(F(i,j),F(i  ,j-1));
+	if (i>0 and j>0) F(i,j) = std::max(F(i,j),F(i-1,j-1)+score(M1,M2,i-1,j-1));
       }
 
     //-------------- Find best path --------------//

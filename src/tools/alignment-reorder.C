@@ -35,6 +35,7 @@ using po::variables_map;
 using std::cout;
 using std::cerr;
 using std::endl;
+using std::vector;
 using std::valarray;
 
 using std::string;
