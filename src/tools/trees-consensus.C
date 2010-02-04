@@ -391,9 +391,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description input("Input options");
   input.add_options()
     ("help,h", "produce help message")
-    ("skip",value<string>()->default_value("10%"),"number of trees to skip")
-    ("max",value<int>(),"maximum number of trees to read")
-    ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
+    ("skip,s",value<string>()->default_value("10%"),"number of trees to skip")
+    ("max,m",value<int>(),"maximum number of trees to read")
+    ("sub-sample,x",value<int>()->default_value(1),"factor by which to sub-sample")
     ;
   
   options_description reporting("Reporting options");
