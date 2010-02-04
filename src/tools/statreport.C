@@ -58,7 +58,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("max",value<int>(),"Maximum number of lines to read.")
     ("mean", "Show mean and standard deviation.")
     ("median", "Show median and confidence level.")
-    ("confidence",value<double>()->default_value(0.95),"Confidence interval level.")
+    ("confidence",value<double>()->default_value(0.95,"0.95"),"Confidence interval level.")
     ("precision", value<unsigned>()->default_value(4),"Number of significant figures.")
     ("verbose,v","Output more log messages on stderr.")
     ;
@@ -251,7 +251,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
   if (monotonic_increasing(tables,index))
   {
-    cout<<"   "<<name<<" = monotonic-increasing"<<endl;
+    cout<<"   "<<name<<" = [increasing]"<<endl;
     var_stats V;
     V.increasing = true;
     return V;
@@ -259,7 +259,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
   if (monotonic_increasing(tables,index))
   {
-    cout<<"   "<<name<<" = monotonic-decreasing"<<endl;
+    cout<<"   "<<name<<" = [decreasing]"<<endl;
     var_stats V;
     V.decreasing = true;
     return V;
@@ -352,7 +352,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
       if (show_individual) {
 	cout<<"   "<<spacer<<"t @ "<<tau;
-	cout<<"   Ne = "<<values.size()/tau;
+	cout<<"   Ne = "<<int(values.size()/tau);
 	cout<<"   burnin = "<<burnin_value(b,values.size())<<endl;
       }
       worst_burnin.check_max(i,b);
@@ -364,7 +364,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
   cout<<"   "<<spacer<<"t @ "<<tau;
   double Ne = values.size()/tau;
-  cout<<"   Ne = "<<Ne;
+  cout<<"   Ne = "<<int(Ne);
   int individual_size_worst = values.size();
   if (tables.size() == 1)
     worst_burnin.value = burnin[0][index];
