@@ -17,6 +17,18 @@
 #    and substitutions (really - not just parsimony score?)     
 # 5. Include links from top to sections.
 
+# FIX: Handling different temperatures is probably broken:
+#      + Treat every chain as a separate run.
+#      + However, select out the samples with beta=1
+# PROBLEM: Our output format of separate files makes it difficult to 
+#            selecting trees & alignments with a given temperature.
+#          I suppose we could write out a list of iterations to select, and then
+#            select them using that.
+#
+#          This may be related to the fact that it is hard to subsample alignments
+#          because our current format (a giant list) makes it hard to tag them with info.
+
+
 use strict;
 
 use Carp;
@@ -504,7 +516,7 @@ my @SRQ = ();
 
 print "Generate SRQ plot for partitions ... ";
 if (!more_recent_than("Results/partitions.SRQ",$trees_file)) {
-`trees-to-SRQ Results/partitions.pred $max_arg $skip --max-points=1000 < $trees_file > Results/partitions.SRQ`;
+`trees-to-SRQ Results/partitions.pred $max_arg $skip $subsample_string --max-points=1000 < $trees_file > Results/partitions.SRQ`;
 }
 print "done.\n";
 
@@ -512,7 +524,7 @@ push @SRQ,"partitions";
 
 print "Generate SRQ plot for c50 tree ... ";
 if (!more_recent_than("Results/c50.SRQ",$trees_file)) {
-`trees-to-SRQ Results/c50.tree $max_arg $skip --max-points=1000 < $trees_file > Results/c50.SRQ`;
+`trees-to-SRQ Results/c50.tree $max_arg $subsample_string $skip --max-points=1000 < $trees_file > Results/c50.SRQ`;
 }
 print "done.\n";
 
