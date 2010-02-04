@@ -465,35 +465,43 @@ variables_map parse_cmd_line(int argc,char* argv[])
   using namespace po;
 
   // named options
+  options_description invisible("Invisible options");
+  invisible.add_options()
+    ("files",value<vector<string> >(),"Tree files to examine.")
+    ;
+
+  // named options
   options_description input("Input options");
   input.add_options()
-    ("help,h", "produce help message")
-    ("skip,s",value<unsigned>()->default_value(0),"number of trees to skip")
-    ("max,m",value<unsigned>(),"maximum number of trees to read")
-    ("sub-sample,x",value<unsigned>(),"factor by which to sub-sample")
-    ("files",value<vector<string> >(),"tree files to examine")
-    ("predicates",value<string>(),"predicates to examine")
-    ("min-support",value<double>()->default_value(0.1),"Minimum value of predicates to consider interesting.")
+    ("help,h", "Produce help message.")
+    ("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
+    ("max,m",value<unsigned>(),"Maximum number of trees to read.")
+    ("sub-sample,x",value<unsigned>(),"Factor by which to sub-sample.")
+    ("predicates",value<string>(),"Predicates to examine.")
+    ("min-support",value<double>()->default_value(0.1,"0.1"),"Minimum value of predicates to consider interesting..")
     ("verbose,v","Output more log messages on stderr.")
     ;
   
   options_description bootstrap("Block bootstrap options");
   bootstrap.add_options()
-    ("samples",value<unsigned>()->default_value(10000U),"number of bootstrap samples")
-    ("pseudocount",value<unsigned>()->default_value(0U),"extra 0/1 to add to bootstrap samples")
-    ("bootstrap","Do block bootstrapping to get a CI on the posterior probabilities")
-    ("blocksize",value<unsigned>(),"block size to use in block boostrap")
-    ("seed", value<unsigned long>(),"random seed")
+    ("bootstrap","Do block bootstrapping to get a CI on the posterior probabilities.")
+    ("samples",value<unsigned>()->default_value(10000U),"Number of bootstrap samples.")
+    ("pseudocount",value<unsigned>()->default_value(0U),"Extra 0/1 to add to bootstrap samples.")
+    ("blocksize",value<unsigned>(),"Block size to use in block boostrap.")
+    ("seed", value<unsigned long>(),"Random seed.")
     ;
     
   options_description reporting("Reporting options");
   reporting.add_options()
     ("separation",value<double>()->default_value(0),"Only report trees/partitions if they differ by this many LODs")
-    ("confidence",value<double>()->default_value(0.95),"Width of confidence intervals")
+    ("confidence",value<double>()->default_value(0.95,"0.95"),"Width of confidence intervals")
     ;
     
   options_description all("All options");
-  all.add(input).add(bootstrap).add(reporting);
+  all.add(invisible).add(input).add(bootstrap).add(reporting);
+
+  options_description visible("All options");
+  visible.add(input).add(bootstrap).add(reporting);
 
   // positional options
   positional_options_description p;
@@ -508,7 +516,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   if (args.count("help")) {
     cout<<"Usage: trees-bootstrap <file1> [<file2> ... ] --predicates <predicate file> [OPTIONS]\n";
     cout<<"Compare support for partitions between different files.\n\n";
-    cout<<all<<"\n";
+    cout<<visible<<"\n";
     exit(0);
   }
 
@@ -634,7 +642,20 @@ int main(int argc,char* argv[])
 
     double min_support = args["min-support"].as<double>();
 
-    int skip = args["skip"].as<unsigned>();
+    int skip = 0;
+    double skip_fraction=0;
+    {
+      string s = args["skip"].as<string>();
+      if (not can_be_converted_to<int>(s,skip))
+      {
+	skip = 0;
+	if (not s.size() or s[s.size()-1] != '%')
+	  throw myexception()<<"Argument to --skip="<<s<<" is neither an integer nor a percent";
+	else
+	  skip_fraction = convertTo<double>(s.substr(0,s.size()-1))/100;
+      }
+    }
+
 
     int max = -1;
     if (args.count("max"))
@@ -662,10 +683,34 @@ int main(int argc,char* argv[])
 	D[d]++;
     }
 
+    //----------  Skip some fraction of trees, if asked ----------//
+    int min_trees = tree_dists.sample(0).size();
+
+    for(int i=1;i<tree_dists.n_samples();i++) 
+      min_trees = std::min<int>( min_trees, tree_dists.sample(i).size());
+
+    int min_skip = 0;
+    if (skip == 0)
+      min_skip = (int)(skip_fraction * min_trees);
+
+    if (log_verbose and min_skip > 0)
+      cerr<<"Skipping "<<skip_fraction*100<<"% of "<<min_trees<<" = "<<min_skip<<endl;
+
+    for(int i=0;i<tree_dists.n_samples();i++) 
+    {
+      tree_sample& trees = tree_dists.sample(i);
+      if (skip == 0 and skip_fraction > 0) {
+	int my_skip = std::min<int>(min_skip, trees.trees.size());
+	trees.trees.erase(trees.trees.begin(), trees.trees.begin() + my_skip);
+      }
+    }
+
+    min_trees = tree_dists.sample(0).size();
+    for(int i=1;i<tree_dists.n_samples();i++) 
+      min_trees = std::min<int>( min_trees, tree_dists.sample(i).size());
+
     //----------  Determine block size ----------//
-    unsigned blocksize = tree_dists.sample(0).size()/50+1;
-    for(int i=1;i<tree_dists.n_samples();i++)
-      blocksize = std::min(blocksize,tree_dists.sample(i).size()/50+1);
+    unsigned blocksize = min_trees/50+1;
 
     if (args.count("blocksize"))
       blocksize = args["blocksize"].as<unsigned>();
