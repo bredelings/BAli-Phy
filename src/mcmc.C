@@ -312,8 +312,11 @@ void MH_Move::iterate(Parameters& P,MoveStats& Stats,int)
 
   int n = 1;
   Proposal2* p2 = dynamic_cast<Proposal2*>(&(*proposal));
-  if (p2 and p2->get_indices().size() == 1)
+  int n_indices = -1;
+  if (p2) {
+    n_indices = p2->get_indices().size();
     n = 2;
+  }
   Result result(n);
 
 #ifndef NDEBUG
@@ -329,11 +332,25 @@ void MH_Move::iterate(Parameters& P,MoveStats& Stats,int)
   if (accept_MH(P,P2,ratio)) {
     result.totals[0] = 1;
     if (n == 2) {
-      int i = p2->get_indices()[0];
-      double v1 = P.parameter(i);
-      double v2 = P2.parameter(i);
-      //      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
-      result.totals[1] = std::abs(v2-v1);
+      if (n_indices == 1) {
+	int i = p2->get_indices()[0];
+	double v1 = P.parameter(i);
+	double v2 = P2.parameter(i);
+	//      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
+	result.totals[1] = std::abs(v2-v1);
+      }
+      else //currently this can only be a dirichlet proposal
+      {
+	double total = 0;
+	for(int i=0;i<n_indices;i++) 
+	{
+	  int j = p2->get_indices()[i];
+	  double v1 = P.parameter(j);
+	  double v2 = P2.parameter(j);
+	  total += std::abs(log(v1/v2));
+	}
+	result.totals[1] = total;
+      }
     }
     P = P2;
   }
