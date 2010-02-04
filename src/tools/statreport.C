@@ -52,14 +52,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
   visible.add_options()
     ("help,h", "Produce help message.")
     ("ignore", value<vector<string> >()->composing(),"Do not analyze these fields.")
-    ("individual","Show results for individual files separately also.")
-    ("skip",value<int>()->default_value(0),"Number of initial lines to skip.")
-    ("sub-sample",value<int>()->default_value(1),"Factor by which to sub-sample.")
-    ("max",value<int>(),"Maximum number of lines to read.")
+    ("individual,i","Show results for individual files separately also.")
+    ("skip,s",value<string>()->default_value("10%"),"Number of initial lines to skip.")
+    ("sub-sample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
+    ("max,m",value<int>(),"Maximum number of lines to read.")
     ("mean", "Show mean and standard deviation.")
     ("median", "Show median and confidence level.")
     ("confidence",value<double>()->default_value(0.95,"0.95"),"Confidence interval level.")
-    ("precision", value<unsigned>()->default_value(4),"Number of significant figures.")
+    ("precision,", value<unsigned>()->default_value(4),"Number of significant figures.")
     ("verbose,v","Output more log messages on stderr.")
     ;
 
@@ -444,10 +444,7 @@ int main(int argc,char* argv[])
 
     cout.precision(args["precision"].as<unsigned>());
 
-    int skip = args["skip"].as<int>();
-
     int subsample=args["sub-sample"].as<int>();
-    skip /= subsample; //FIXME!  This is a side-effect of passing in 0 below.
 
     int max = -1;
     if (args.count("max"))
@@ -472,7 +469,11 @@ int main(int argc,char* argv[])
 
     const vector<string> field_names = tables[0].names();
 
-    for(int i=0;i<tables.size();i++) {
+    int min_table_rows = tables[0].n_rows();
+    for(int i=0;i<tables.size();i++) 
+    {
+      min_table_rows = std::min(min_table_rows, tables[i].n_rows());
+
       if (tables[i].names() != field_names)
 	throw myexception()<<filenames[i]<<": Column names differ from names in '"<<filenames[0]<<"'";
       if (tables[i].n_rows() == 0)
@@ -485,6 +486,25 @@ int main(int argc,char* argv[])
     
     if (args.count("ignore"))
       mask = get_mask_by_ignoring(args["ignore"].as<vector<string> >(), field_names, mask);
+
+    //------------- Determine burnin ---------------//
+    int skip = 0;
+    {
+      string s = args["skip"].as<string>();
+      if (can_be_converted_to<int>(s,skip))
+	skip /= subsample; //FIXME!  This is a side-effect of passing in 0 below.
+      else 
+      {
+	if (not s.size() or s[s.size()-1] != '%')
+	  throw myexception()<<"Argument to --skip="<<s<<" is neither an integer nor a percent";
+
+	double f = convertTo<double>(s.substr(0,s.size()-1))/100;
+	skip = (int)(f*min_table_rows);
+	if (log_verbose)
+	  cerr<<"Skipping "<<s<<" of "<<min_table_rows<<" = "<<skip<<endl;
+      }
+    }
+    // FIXME - for the fraction, make a skip-a-fraction reader?
 
     //------------ Handle Burnin ------------//
     vector< vector<int> > burnin(tables.size(), vector<int>(n_columns,1));
