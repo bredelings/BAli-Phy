@@ -50,7 +50,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description visible("All options");
   visible.add_options()
-    ("help", "Produce help message.")
+    ("help,h", "Produce help message.")
     ("ignore", value<vector<string> >()->composing(),"Do not analyze these fields.")
     ("individual","Show results for individual files separately also.")
     ("skip",value<int>()->default_value(0),"Number of initial lines to skip.")
@@ -60,7 +60,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("median", "Show median and confidence level.")
     ("confidence",value<double>()->default_value(0.95),"Confidence interval level.")
     ("precision", value<unsigned>()->default_value(4),"Number of significant figures.")
-    ("verbose","Output more log messages on stderr.")
+    ("verbose,v","Output more log messages on stderr.")
     ;
 
   options_description all("All options");
@@ -95,14 +95,39 @@ bool constant(const vector<double>& values)
   return true;
 }
 
+bool monotonic_increasing(const vector<double>& values)
+{
+  for(int i=1;i<values.size();i++)
+    if (values[i] < values[i-1])
+      return false;
+
+  return true;
+}
+
+bool monotonic_decreasing(const vector<double>& values)
+{
+  for(int i=1;i<values.size();i++)
+    if (values[i] > values[i-1])
+      return false;
+  return true;
+}
+
 struct var_stats
 {
   double Ne;
   double RCI;
   double RNe;
   double RCF;
+  bool ignored;
+  bool increasing;
+  bool decreasing;
+  bool constant;
+  var_stats()
+    :ignored(true), increasing(false),decreasing(false),constant(false)
+  {}
+
   var_stats(double a, double b, double c, double d)
-    :Ne(a), RCI(b), RNe(c), RCF(d)
+    :Ne(a), RCI(b), RNe(c), RCF(d), ignored(false), increasing(false),decreasing(false),constant(false)
   {}
 };
 
@@ -146,6 +171,10 @@ int get_burn_in(const vector<double>& data, double alpha,int n)
 
   if (constant(data)) return 1;
 
+  if (monotonic_increasing(data)) return 1;
+
+  if (monotonic_decreasing(data)) return 1;
+
   /// construct the sample representing the equilibrium
   vector<double> equilibrium;
 
@@ -179,6 +208,24 @@ string burnin_value(int b,unsigned total)
     return "Not Converged!";
 }
 
+bool monotonic_increasing(const vector<stats_table>& tables, int index)
+{
+  bool increasing = true;
+  for(int i=0;i<tables.size();i++)
+    if (not monotonic_increasing(tables[i].column(index)))
+	increasing = false;
+  return increasing;
+}
+
+bool monotonic_decreasing(const vector<stats_table>& tables, int index)
+{
+  bool increasing = true;
+  for(int i=0;i<tables.size();i++)
+    if (not monotonic_decreasing(tables[i].column(index)))
+	increasing = false;
+  return increasing;
+}
+
 
 var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index,const vector<vector<int> >& burnin)
 {
@@ -196,7 +243,26 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
   if (constant(total)) {
     cout<<"   "<<name<<" = "<<total[0]<<endl;
-    return var_stats(total.size(),1,1,1);
+    // hack to not print out ignored CONSTANTs
+    var_stats V;
+    V.constant = true;
+    return V;
+  }
+
+  if (monotonic_increasing(tables,index))
+  {
+    cout<<"   "<<name<<" = monotonic-increasing"<<endl;
+    var_stats V;
+    V.increasing = true;
+    return V;
+  }
+
+  if (monotonic_increasing(tables,index))
+  {
+    cout<<"   "<<name<<" = monotonic-decreasing"<<endl;
+    var_stats V;
+    V.decreasing = true;
+    return V;
   }
 
   // Print out mean and standard deviation
@@ -444,16 +510,24 @@ int main(int argc,char* argv[])
     index_value<double> worst_RNe;
     index_value<double> worst_RCF;
 
+    vector<string> increasing_names;
+    vector<string> decreasing_names;
     for(int i=0;i<n_columns;i++) 
     {
       if (mask[i]) {
 	var_stats S = show_stats(args, tables, i, burnin);
 	cout<<endl;
 
-	worst_Ne.check_min(i,S.Ne);
-	worst_RCI.check_max(i,S.RCI);
-	worst_RNe.check_max(i,S.RNe);
-	worst_RCF.check_max(i,S.RCF);
+	if (not S.ignored) {
+	  worst_Ne.check_min(i,S.Ne);
+	  worst_RCI.check_max(i,S.RCI);
+	  worst_RNe.check_max(i,S.RNe);
+	  worst_RCF.check_max(i,S.RCF);
+	}
+	else if (S.increasing)
+	  increasing_names.push_back(field_names[i]);
+	else if (S.decreasing)
+	  decreasing_names.push_back(field_names[i]);
       }
     }
 
@@ -464,6 +538,10 @@ int main(int argc,char* argv[])
       cout<<" PSRF-Ne <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
       cout<<" PSRF-RCF <= "<<worst_RCF.value<<"    ("<<field_names[worst_RCF.index]<<")"<<endl;
     }
+    if (increasing_names.size())
+      cout<<"\nIncreasing: "<<join(increasing_names,' ')<<endl;
+    if (decreasing_names.size())
+      cout<<"\nDecreasing: "<<join(decreasing_names,' ')<<endl;
   }
   catch (std::exception& e) {
     std::cerr<<"statreport: Error! "<<e.what()<<endl;
