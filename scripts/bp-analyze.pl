@@ -243,24 +243,10 @@ $skip="--skip=$burnin" if ($trees_file ne "Results/T1.trees");
 my $subsample_string = "--sub-sample=$subsample";
 $subsample_string = "" if ($subsample == 1);
 
-if ($personality =~ "bali-phy.*") {
+if ($personality =~ "bali-phy.*" || $personality eq "beast" || $personality eq "phylobayes") {
     print "Summarizing distribution of numerical parameters...";
     if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport $subsample_string --ignore=iter $max_arg $skip @parameter_files > Results/Report`;
-    }
-    print "done.\n";
-}
-elsif ($personality eq "beast") {
-    print "\nSummarizing distribution of numerical parameters... ";
-    if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport $subsample_string --ignore=state $max_arg $skip @parameter_files > Results/Report`;
-    }
-    print "done.\n";
-}
-elsif ($personality eq "phylobayes") {
-    print "\nSummarizing distribution of numerical parameters... ";
-    if (! more_recent_than("Results/Report",$parameters_file)) {
-	`statreport $subsample_string --ignore=#cycle --ignore=#treegen --ignore=time $max_arg $skip @parameter_files > Results/Report`;
+	`statreport $subsample_string $max_arg $skip @parameter_files > Results/Report`;
     }
     print "done.\n";
 }
