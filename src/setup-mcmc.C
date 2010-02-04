@@ -17,12 +17,6 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "setup-mcmc.H"
-#include "util.H"
-#include "sample.H"
-#include "alignment-util.H"
-#include "alignment-constraint.H"
-#include "timer_stack.H"
 ///
 /// \file   setup-mcmc.C
 /// \brief  Provides routines to create default transition kernels and start a Markov chain.
@@ -33,6 +27,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///
 /// \author Benjamin Redelings
 /// 
+
+#include "setup-mcmc.H"
+#include "util.H"
+#include "sample.H"
+#include "alignment-util.H"
+#include "alignment-constraint.H"
+#include "timer_stack.H"
 
 using boost::program_options::variables_map;
 using boost::dynamic_bitset;
