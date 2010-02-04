@@ -105,10 +105,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description input("Input options");
   input.add_options()
-    ("help", "produce help message")
-    ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
-    ("max",value<int>(),"maximum number of tree samples to read")
-    ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
+    ("help,h", "produce help message")
+    ("skip,s",value<unsigned>()->default_value(0),"number of tree samples to skip")
+    ("max,m",value<int>(),"maximum number of tree samples to read")
+    ("sub-sample,x",value<int>()->default_value(1),"factor by which to sub-sample")
     ("verbose,v","Output more log messages on stderr.")
     ;
 

@@ -156,18 +156,18 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("tree", value<string>(),"tree to re-root")
-    ("skip",value<int>()->default_value(0),"number of tree samples to skip")
-    ("max",value<int>(),"maximum number of tree samples to read")
+    ("skip,s",value<int>()->default_value(0),"number of tree samples to skip")
+    ("max,m",value<int>(),"maximum number of tree samples to read")
     ("prune",value<string>(),"Comma-separated taxa to remove")
     ("simple","Ignore all branches not in the query tree")
-    ("sub-sample",value<int>()->default_value(1),"factor by which to sub-sample")
+    ("sub-sample,x",value<int>()->default_value(1),"factor by which to sub-sample")
     ("var","report standard deviation of branch lengths instead of mean")
     ("no-node-lengths","ignore branches not in the specified topology")
     ("safe","Don't die if no trees match the topology")
     ("show-node-lengths","Output special format")
-    ("verbose","Output more log messages on stderr.")
+    ("verbose,v","Output more log messages on stderr.")
     ;
 
   // positional options
