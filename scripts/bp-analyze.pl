@@ -304,7 +304,7 @@ if (!more_recent_than("Results/partitions","Results/consensus")) {
     `pickout --no-header --large pi < Results/consensus > Results/partitions`;
 }
 if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
-    `sed "s/\$/\\n/" < Results/partitions > Results/partitions.pred`;
+    `perl -e 'while(<>) {s/\$/\\n/;print;}' < Results/partitions > Results/partitions.pred`;
 }
 
 if (!more_recent_than("Results/partitions.bs",$trees_file)) {
