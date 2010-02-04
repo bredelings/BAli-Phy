@@ -902,10 +902,10 @@ int main(int argc,char* argv[])
       string s = args["skip"].as<string>();
       if (not can_be_converted_to<int>(s,skip)) {
 	skip = 0;
-	if (s.size() and s[s.size()-1] == '%')
-	  skip_fraction = convertTo<double>(s.substr(0,s.size()-1))/100;
-	else
+	if (not s.size() or s[s.size()-1] != '%')
 	  throw myexception()<<"Argument to --skip="<<s<<" is neither an integer nor a percent";
+	else
+	  skip_fraction = convertTo<double>(s.substr(0,s.size()-1))/100;
       }
     }
 
@@ -978,8 +978,8 @@ int main(int argc,char* argv[])
       cerr<<"Skipping "<<skip_fraction*100<<"% of "<<min_trees<<" = "<<min_skip<<endl;
     for(int i=0;i<trees.size();i++) {
       if (skip == 0 and skip_fraction > 0) {
-	min_skip = std::min<int>(min_skip, trees[i].size());
-	trees[i].trees.erase(trees[i].trees.begin(), trees[i].trees.begin() + min_skip);
+	int my_skip = std::min<int>(min_skip, trees[i].trees.size());
+	trees[i].trees.erase(trees[i].trees.begin(), trees[i].trees.begin() + my_skip);
       }
       tree_dist.append_trees(trees[i]);
     }
