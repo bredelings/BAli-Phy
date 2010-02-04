@@ -110,9 +110,9 @@ struct var_stats
 
 int time_to_cross_above(const vector<double>& data, int start, double x)
 {
-  for(int i=start+2;i<data.size();i++)
+  for(int i=start+1;i<data.size();i++)
   {
-    if (data[i-1] < x and data[i] >= x)
+    if (/*data[i-1] < x and */ data[i] >= x)
       return i;
   }
   // never occurs
@@ -123,7 +123,7 @@ int time_to_cross_below(const vector<double>& data, int start, double x)
 {
   for(int i=start+1;i<data.size();i++)
   {
-    if (data[i-1] > x and data[i] <= x)
+    if (/*data[i-1] < x and */ data[i] <= x)
       return i;
   }
   // never occurs
