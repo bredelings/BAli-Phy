@@ -875,7 +875,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   s_parameters<<"iter\t";
   s_parameters<<"prior\t";
   for(int i=0;i<P.n_data_partitions();i++)
-    s_parameters<<"prior_A"<<i+1<<"\t";
+    if (P[i].variable_alignment()) s_parameters<<"prior_A"<<i+1<<"\t";
   s_parameters<<"likelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
   for(int i=0;i<P.n_data_partitions();i++) {
@@ -958,7 +958,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       s_parameters<<iterations<<"\t";
       s_parameters<<prior<<"\t";
       for(int i=0;i<P.n_data_partitions();i++)
-	s_parameters<<P[i].prior_alignment()<<"\t";
+	if (P[i].variable_alignment()) s_parameters<<P[i].prior_alignment()<<"\t";
       s_parameters<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
       s_parameters<<P.state();
 
