@@ -59,7 +59,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("mean", "Show mean and standard deviation.")
     ("median", "Show median and confidence level.")
     ("confidence",value<double>()->default_value(0.95,"0.95"),"Confidence interval level.")
-    ("precision,", value<unsigned>()->default_value(4),"Number of significant figures.")
+    ("precision,p", value<unsigned>()->default_value(4),"Number of significant figures.")
     ("verbose,v","Output more log messages on stderr.")
     ;
 
