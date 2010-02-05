@@ -139,14 +139,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("config,c", value<string>(),"Config file to read.")
     ("show-only","Analyze the initial values and exit.")
     ("seed", value<unsigned long>(),"Random seed")
-    ("data-dir", value<string>()->default_value("Data"),"Location of the Data/ directory.")
+    ("data-dir", value<string>(),"Location of the Data/ directory.")
     ("name", value<string>(),"Name for the analysis directory to create.")
     ("traditional,t","Fix the alignment and don't model indels.")
     ;
   
   options_description mcmc("MCMC options");
   mcmc.add_options()
-    ("iterations",value<long int>()->default_value(100000),"The number of iterations to run.")
+    ("iterations,i",value<long int>()->default_value(100000),"The number of iterations to run.")
     ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
     ("subsample",value<int>()->default_value(1),"Factor by which to subsample.")
     ("enable",value<string>(),"Comma-separated list of kernels to enable.")
@@ -217,6 +217,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (not args.count("align")) 
     throw myexception()<<"No sequence files given.\n\nTry `"<<argv[0]<<" --help' for more information.";
+
+  if (not args.count("iterations"))
+    throw myexception()<<"The number of iterations was not specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
   return args;
 }
@@ -569,24 +572,28 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 
 
 /// Check that we can find the data directory, return true if we can.
-bool check_data_dir(const string& dir_name)
+bool check_data_dir(const variables_map& args)
 {
+  if (not args.count("data-dir"))
+    throw myexception()<<"You must use --data-dir <dir> to specify the Data/ directory.";
+
+  string dir_name = args["data-dir"].as<string>();
   fs::path data_dir = dir_name;
 
   if (not fs::exists(data_dir)) {
-    cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' does not exist!"<<endl;
-    cerr<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
+    cout<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' does not exist!"<<endl;
+    cout<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
     return false;
   }
   else if (not fs::is_directory(data_dir)) {
-    cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' is not a directory!"<<endl;
-    cerr<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
+    cout<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' is not a directory!"<<endl;
+    cout<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
     return false;
   }
   else if (not fs::exists( data_dir / "WAG.dat")) {
-    cerr<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' exists, but doesn't contain the"<<endl;
-    cerr<<"               important file 'WAG.dat'."<<endl;
-    cerr<<"         Have you correctly specified the data directory using --data-dir <dir>?"<<endl<<endl;
+    cout<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' exists, but doesn't contain the"<<endl;
+    cout<<"               important file 'WAG.dat'."<<endl;
+    cout<<"         Have you correctly specified the data directory using --data-dir <dir>?"<<endl<<endl;
     return false;
   }
   return true;
@@ -932,7 +939,7 @@ int main(int argc,char* argv[])
     }
 
     //---------- Determine Data dir ---------------//
-    check_data_dir(args["data-dir"].as<string>());
+    check_data_dir(args);
 
     //---------- Initialize random seed -----------//
     unsigned long seed = init_rng_and_get_seed(args);
