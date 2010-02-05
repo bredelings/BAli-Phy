@@ -77,8 +77,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: statreport [OPTIONS] file1 [file2 file3 ... ] \n";
-    cout<<"Compute summary statistics for Tracer format (tab-delimited) data files.\n\n";
+    cout<<"Compute summary statistics for tab-delimited data files.\n\n";
     cout<<visible<<"\n";
+    cout<<"Default: Report the median and 95% credible interval for each column.\n\n";
     exit(0);
   }
 
