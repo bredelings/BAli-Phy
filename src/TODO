@@ -1,3 +1,9 @@
+Resampling DP::f[] shouldn't require peeling along the tree.
+ * The same is true with the gamma width parameter and the fraction of invariant sites.
+ * Only changing the rates in each category should require re-peeling.
+
+How to handle resampling of DP::rate* parameters, since they are SORTED?
+
 Make trees-consensus write out a list of partitions directly, so we dont' need 'sed'.
 
 Implement --output=svg,pdf in draw-tree.
