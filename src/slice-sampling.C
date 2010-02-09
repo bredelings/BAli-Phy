@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file slice-sampling.C
+///
+/// \brief This file implements classes and functions for uniform slice sampling.
+///
+
 #include "slice-sampling.H"
 #include "rng.H"
 #include "choose.H"
@@ -146,6 +152,130 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P_,int i1,int i
   :count(0),b1(i1),b2(i2),P(P_)
 {
   total = P.T->branch(b1).length() + P.T->branch(b2).length();
+
+  set_lower_bound(0);
+  set_upper_bound(total);
+}
+
+/// \brief Compute the sum of the branch mean parameters for \a P
+double sum_of_means(const Parameters& P)
+{
+  double sum = 0;
+  for(int i=0;i<P.n_branch_means();i++) 
+    sum += P.branch_mean(i);
+  return sum;
+}
+
+/// \brief Scale the branch means of \a P so that they sum to \a t, but do not invalidate cached values.
+///
+/// \param P The model state to modify.
+/// \param t The sum of the branch means after modification.
+///
+/// Neither recalc_smodel() nor recalc_imodel() is called on the data_partitions.
+///
+double set_sum_of_means_tricky(Parameters& P, double t)
+{
+  double sum = sum_of_means(P);
+  double scale = t/sum;
+  for(int i=0;i<P.n_branch_means();i++) 
+    P.branch_mean_tricky(i,P.branch_mean(i)*scale);
+
+  return scale;
+}
+
+double scale_means_only_slice_function::operator()(double t)
+{
+  // Set the values of \mu[i]
+  double scale = set_sum_of_means_tricky(P, initial_sum_of_means * exp(t));
+
+  // Scale the tree in the opposite direction
+  SequenceTree& T = *P.T;
+
+  for(int b=0;b<T.n_branches();b++) 
+  {
+    const double L = T.branch(b).length();
+    T.branch(b).set_length(L/scale);
+  }
+  P.tree_propagate();
+
+  return operator()();
+}
+
+double scale_means_only_slice_function::operator()()
+{
+  count++;
+
+  SequenceTree& T = *P.T;
+  const int B = T.n_branches();
+  const int n = P.n_branch_means();
+
+  // return pi * (\sum_i \mu_i)^(n-B)
+  return log(P.probability()) + log(sum_of_means(P))*(n-B);
+}
+
+double scale_means_only_slice_function::current_value() const
+{
+  double t = log(sum_of_means(P)/initial_sum_of_means);
+  return t;
+}
+
+scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
+  :count(0),
+   initial_sum_of_means(sum_of_means(P_)),
+   P(P_)
+{ }
+
+double constant_sum_slice_function::operator()(double t)
+{
+  vector<double> x = P.parameters(indices);
+
+  double total = sum(x);
+
+  double factor = (total - t)/(total - x[n]);
+
+  for(int i=0;i<indices.size();i++)
+    if (i == n)
+      x[i] = t;
+    else
+      x[i] *= factor;
+
+  assert(std::abs(::sum(x) - total) < 1.0e-9);
+
+  P.parameters(indices,x);
+  return operator()();
+}
+
+
+double constant_sum_slice_function::operator()()
+{
+  count++;
+
+  vector<double> x = P.parameters(indices);
+
+  double total = sum(x);
+
+  double t = current_value();
+
+  const int N = indices.size();
+
+  // return pi * (1-x)^(N-1)
+  return log(P.probability()) + (N-1)*log(total-t);
+}
+
+double constant_sum_slice_function::current_value() const
+{
+  return P.parameter(indices[n]);
+}
+
+
+constant_sum_slice_function::constant_sum_slice_function(Parameters& P_, const vector<int>& indices_,int n_)
+  :count(0),
+   indices(indices_),
+   n(n_),
+   P(P_)
+{ 
+  vector<double> x = P.parameters(indices);
+  double total = sum(x);
 
   set_lower_bound(0);
   set_upper_bound(total);
