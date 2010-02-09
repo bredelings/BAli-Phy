@@ -237,6 +237,44 @@ void add_slice_moves(Parameters& P, const string& name,
 }
 
 
+/// \brief Add a 1-D slice-sampling sub-move for a collection of parameters that sum to 1.
+///
+/// \param P             The model that contains the parameters
+/// \param name          The name of the parameter to create a move for
+/// \param pname         The name of the slice window width for this move
+/// \param W             The default window size, if not specified in P.keys
+/// \param M             The group of moves to which to add the newly-created sub-move
+/// \param weight        How often to run this move.
+///
+void add_dirichlet_slice_moves(Parameters& P, const string& name, 
+			       const string& pname, 
+			       double W,
+			       MCMC::MoveAll& M,
+			       double weight = 1
+			       )
+{
+  vector<int> indices = parameters_with_extension(P,name);
+  
+  if (not indices.size()) return;
+
+  /// Create a parent move that will choose one child each time it is called
+  MCMC::MoveOne M2(string("slice_sample_")+name);
+
+  /// Add the moves for individual components of the vector as child moves of M2
+  for(int i=0;i<indices.size();i++)
+  {
+    M2.add(1,
+	  MCMC::Dirichlet_Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
+				     indices,
+				     i
+				     )
+	  );
+  }
+
+  /// Add the move to resample one of the components at random to M
+  M.add(weight,M2);
+}
+
 MCMC::MoveAll get_scale_MH_moves(Parameters& P)
 {
   MCMC::MoveAll MH_moves("parameters:scale:MH");
