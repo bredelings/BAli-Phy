@@ -196,8 +196,9 @@ namespace MCMC {
     virtual ~MoveAll() {}
   };
 
-  /// A Move which runs one submoves each round
-  class MoveOne: public MoveGroup {
+  /// A Move which runs one of its submoves each round
+  class MoveOne: public MoveGroup 
+  {
     int choose() const;
     void getorder(double l);
   public:

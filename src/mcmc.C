@@ -140,21 +140,24 @@ namespace MCMC {
       o<<"DISABLED.\n";
   }
   
+  /// Add a sub-move \a m with weight \a l
+  void MoveGroupBase::add(double l,const Move& m,bool enabled) 
+  {
+    moves.push_back(m);
+    if (not enabled)
+      moves.back()->disable();
+    lambda.push_back(l);
+  }
 
-void MoveGroupBase::add(double l,const Move& m,bool enabled) {
-  moves.push_back(m);
-  if (not enabled)
-    moves.back()->disable();
-  lambda.push_back(l);
-}
-
-double MoveGroup::sum() const {
-  double total=0;
-  for(int i=0;i<lambda.size();i++)
-    if (moves[i]->enabled())
+  /// Calculate the sum of the weights of enabled moves in this group
+  double MoveGroup::sum() const 
+  {
+    double total=0;
+    for(int i=0;i<lambda.size();i++)
+      if (moves[i]->enabled())
 	total += lambda[i];
-  return total;
-}
+    return total;
+  }
 
 void MoveGroup::enable(const string& s) {
   // Operate on this move
