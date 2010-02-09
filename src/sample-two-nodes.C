@@ -58,6 +58,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::vector;
 using std::abs;
+using std::endl;
 
 using boost::dynamic_bitset;
 

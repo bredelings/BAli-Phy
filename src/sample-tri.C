@@ -38,6 +38,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::abs;
 using std::vector;
+using std::endl;
 using boost::dynamic_bitset;
 
 using namespace A3;
