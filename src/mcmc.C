@@ -470,6 +470,100 @@ Slice_Move::Slice_Move(const string& s, const string& v,int i,
    inverse(f2)
 {}
 
+  void Dirichlet_Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
+  {
+    for(int i=0;i<indices.size();i++)
+      if (P.fixed(indices[i])) return;
+
+    default_timer_stack.push_timer(name);
+
+#ifndef NDEBUG
+    clog<<" [Dirichlet slice] move = "<<name<<endl;
+#endif
+
+    iterations++;
+
+  //------------- Find new value --------------//
+#ifndef NDEBUG
+    show_parameters(std::cerr,P);
+    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+    std::cerr<<endl<<endl;
+#endif
+
+    double v1 = P.parameter(indices[n]);
+    constant_sum_slice_function slice_levels_function(P,indices,n);
+
+    double v2 = slice_sample(v1, slice_levels_function, W, 100);
+
+#ifndef NDEBUG
+    show_parameters(std::cerr,P);
+    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+    std::cerr<<endl<<endl;
+#endif
+    //---------- Record Statistics - -------------//
+    Result result(2);
+    vector<double> x = P.parameters(indices);
+    double total = sum(x);
+    double factor = (total - v2)/(total-v1);
+    result.totals[0] = std::abs(log(v2/v1)) + (indices.size()-1)*(std::abs(log(factor)));
+    result.totals[1] = slice_levels_function.count;
+
+    Stats.inc(name,result);
+    default_timer_stack.pop_timer();
+  }
+
+  Dirichlet_Slice_Move::Dirichlet_Slice_Move(const string& s, const vector<int>& indices_, int n_)
+    :Move(s),W(0.2/indices_.size()),indices(indices_),n(n_)
+  {
+  }
+
+  void Scale_Means_Only_Slice_Move::iterate(Parameters& P, MoveStats& Stats,int)
+  {
+    // If any of the branch means are fixed, then bail
+    for(int i=0;i<P.n_branch_means();i++)
+      if (P.fixed(i)) return;
+
+    default_timer_stack.push_timer(name);
+
+#ifndef NDEBUG
+    clog<<" [Scale_means_only slice] move = "<<name<<endl;
+#endif
+
+    iterations++;
+
+  //------------- Find new value --------------//
+#ifndef NDEBUG
+    show_parameters(std::cerr,P);
+    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior()<<endl;
+    std::cerr<<"window = "<<W<<std::endl;
+    std::cerr<<endl;
+#endif
+
+    double v1 = 0;
+    scale_means_only_slice_function slice_levels_function(P);
+
+    double v2 = slice_sample(v1, slice_levels_function, W, 100);
+
+#ifndef NDEBUG
+    show_parameters(std::cerr,P);
+    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+    std::cerr<<endl<<endl;
+#endif
+    //---------- Record Statistics - -------------//
+    Result result(2);
+    result.totals[0] = std::abs(v2);
+    result.totals[1] = slice_levels_function.count;
+
+    Stats.inc(name,result);
+    default_timer_stack.pop_timer();
+  }
+
+  Scale_Means_Only_Slice_Move::Scale_Means_Only_Slice_Move(const string& s, double W_)
+    :Move(s),
+     W(W_)
+  {
+  }
+
 int MoveArg::reset(double l) 
 {
   vector<int> numbers(args.size());
