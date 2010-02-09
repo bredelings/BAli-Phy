@@ -111,7 +111,7 @@ namespace MCMC {
     virtual void disable(const std::string& s);
 
     /// Set up for an iteration of length l, return number of subiterations
-    virtual int reset(double l) =0;
+    virtual int reset(double l);
 
     /// Do a complete iteration (a top-level routine)
     virtual void iterate(Parameters&,MoveStats&) =0;

@@ -123,16 +123,23 @@ namespace MCMC {
 	}
   }
 
-void Move::show_enabled(ostream& o,int depth) const {
-  for(int i=0;i<depth;i++)
-    o<<"  ";
-  o<<"move "<<name<<": ";
-  if (enabled_)
-    o<<"enabled.\n";
-  else 
-    o<<"DISABLED.\n";
-}
+  int Move::reset(double lambda)
+  {
+    int l = (int)lambda;
+    lambda -= l;
+    return l + poisson(lambda);
+  }
 
+  void Move::show_enabled(ostream& o,int depth) const {
+    for(int i=0;i<depth;i++)
+      o<<"  ";
+    o<<"move "<<name<<": ";
+    if (enabled_)
+      o<<"enabled.\n";
+    else 
+      o<<"DISABLED.\n";
+  }
+  
 
 void MoveGroupBase::add(double l,const Move& m,bool enabled) {
   moves.push_back(m);
