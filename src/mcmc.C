@@ -841,7 +841,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     if (P[i].has_IModel())
       assert(P[i].A->n_sequences() == T.n_nodes() and P[i].variable_alignment()); 
     else
-      assert(P[i].A->n_sequences() == T.n_leaves() and P[i].variable_alignment());
+      assert(P[i].A->n_sequences() == T.n_leaves() and not P[i].variable_alignment());
 
     for(int j=0;j<T.n_leaves();j++)
       assert(T.seq(j) == P[i].A->seq(j).name);    
