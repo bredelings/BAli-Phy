@@ -38,10 +38,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree.H"
 #include "clone.H"
 
-/// Reorder the sequences of @A according to the permutation @mapping
+/// Reorder the sequences of \a A according to the permutation @mapping
 alignment reorder_sequences(const alignment& A, const std::vector<int>& mapping);
 
-// Remove sequences to A corresponding to internal nodes in T
+// Remove sequences to \a A corresponding to internal nodes in \a T
 alignment chop_internal(alignment A,bool keep_empty_columns=false);
 
 // Add sequences to A corresponding to internal nodes in T

@@ -37,14 +37,14 @@ namespace substitution {
   /// align sub-alignments corresponding to branches in b
   ublas::matrix<int> subA_index_select(const std::vector<int>& b,const alignment& A,const Tree& T);
 
-  /// align sub-alignments corresponding to branches in b, and select columns with a node in @nodes
+  /// align sub-alignments corresponding to branches in b, and select columns with a node in \a nodes
   ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A,const Tree& T,const std::vector<int>& nodes);
 
   /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
   ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A, const Tree& T,
 				    const std::vector<int>& nodes, const std::vector<int>& seq);
 
-  /// align sub-alignments corresponding to branches in b, and reject columns with a node in @nodes
+  /// align sub-alignments corresponding to branches in b, and reject columns with a node in \a nodes
   ublas::matrix<int> subA_index_none(const std::vector<int>& b,const alignment& A, const Tree& T,
 				     const std::vector<int>& nodes);
 

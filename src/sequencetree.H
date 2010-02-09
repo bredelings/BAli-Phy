@@ -72,26 +72,26 @@ public:
   /// compute a string representing the tree, w/ or w/o branch lengths
   virtual std::string write_with_bootstrap_fraction(const std::vector<double>& bf, bool print_lengths=true) const;
 
-  /// load this tree from the string @s
+  /// load this tree from the string \a s
   virtual int parse(const std::string& s);
   virtual int parse_nexus(const std::string& s,const std::vector<std::string>& names);
 
-  /// load this tree from the file @file
+  /// load this tree from the file \a file
   virtual void read(std::istream& file);
 
-  /// load this tree from the file "@filename"
+  /// load this tree from the file "\a filename"
   virtual void read(const std::string& filename);
 
   /// make an empty sequenctree
   SequenceTree() {}
 
-  /// create from  @file
+  /// create from  \a file
   explicit SequenceTree(std::istream& file);
 
-  /// create a copy of @T with leaves named according to @names
+  /// create a copy of \a T with leaves named according to \a names
   explicit SequenceTree(const Tree& T,const std::vector<std::string>& names);
 
-  /// create a tree with a single node named @s
+  /// create a tree with a single node named \a s
   explicit SequenceTree(const std::string& s);
 
   /// Create a SequenceTree from a RootedSequenceTree (doesn't delete the root node)
@@ -114,28 +114,28 @@ public:
 
   std::string write_with_bootstrap_fraction(const std::vector<double>&, bool print_lengths=true) const;
 
-  /// load this tree from the string @s
+  /// load this tree from the string \a s
   int parse(const std::string& s);
   int parse_nexus(const std::string& s,const std::vector<std::string>&);
 
   RootedSequenceTree& operator=(const RootedSequenceTree&);
 
-  /// create from  @file
+  /// create from  \a file
   RootedSequenceTree() {}
 
-  /// create from  @file
+  /// create from  \a file
   explicit RootedSequenceTree(std::istream& file);
 
-  /// create a tree with a single node named @s
+  /// create a tree with a single node named \a s
   explicit RootedSequenceTree(const std::string& s);
 
-  /// create a copy of @RT with leaves named according to @names
+  /// create a copy of \a RT with leaves named according to \a names
   explicit RootedSequenceTree(const RootedTree& RT,const std::vector<std::string>& names);
 
   /// Create the tree (T1,T2)
   RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2);
 
-  /// Create a RootedSequenceTree from a SequenceTree, naming node @r as the root
+  /// Create a RootedSequenceTree from a SequenceTree, naming node \a r as the root
   RootedSequenceTree(const SequenceTree&,int r);
 };
 
