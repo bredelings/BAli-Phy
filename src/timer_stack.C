@@ -40,12 +40,14 @@ using namespace std;
 /// This timer stack is a global variable that is always available.
 timer_stack default_timer_stack;
 
+#ifdef HAVE_SYS_RESOURCE_H
 double total_time(const timeval& t)
 {
   double T = t.tv_sec;
   T += double(t.tv_usec)/1000000;
   return T;
 }
+#endif
 
 time_point_t total_cpu_time()
 {
