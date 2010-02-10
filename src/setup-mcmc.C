@@ -247,8 +247,6 @@ void add_slice_moves(Parameters& P, const string& name,
 /// \param weight        How often to run this move.
 ///
 void add_dirichlet_slice_moves(Parameters& P, const string& name, 
-			       const string& pname, 
-			       double W,
 			       MCMC::MoveAll& M,
 			       double weight = 1
 			       )
@@ -372,10 +370,46 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
 		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon, 10);
 
-  add_dirichlet_slice_moves(P, "pi*", "", 1, slice_moves, 3);
-  add_dirichlet_slice_moves(P, "GTR*", "", 1, slice_moves, 3);
-  add_dirichlet_slice_moves(P, "DP::f*", "", 1, slice_moves, 3);
-  add_dirichlet_slice_moves(P, "DP::rate*", "", 1, slice_moves, 3);
+  for(int s=0;s<=P.n_smodels();s++) 
+  {
+    string index = convertToString(s+1);
+    string prefix = "^S" + index + "::";
+
+    if (s==P.n_smodels()) prefix = "^";
+
+    add_dirichlet_slice_moves(P, prefix + "pi*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "GTR*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "DP::f*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "DP::rate*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "INV::pi*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "v*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "b*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "M2::f*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "M3::f*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "multi::p*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "Mixture::p*", slice_moves, 3);
+
+    if (s >= P.n_smodels()) continue;
+
+    // Handle multi-frequency models
+    const alphabet& a = P.SModel(s).Alphabet();
+    const int asize = a.size();
+
+    for(int l=0;l<asize;l++) {
+      string pname = prefix+ "a" + a.lookup(l) + "*";
+      add_dirichlet_slice_moves(P, pname, slice_moves, 3);
+    }
+
+  }
+
+  for(int i=0;;i++) 
+  {
+    string name = "M3::omega" + convertToString(i+1);
+    if (not has_parameter(P,name))
+      break;
+    
+    add_slice_moves(P,name, "M3::omega_slice_window", 1.0, false, 0, false, 0, slice_moves);
+  }
 
   slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
 
