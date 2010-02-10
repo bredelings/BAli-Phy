@@ -10,12 +10,23 @@ Implement --output=svg,pdf in draw-tree.
 
 Documentation
  - Make programs more self-documenting.
- - Make a 'front matter' page for Doxygen...?
+ - Describe post-processing
+   - C1.trees -> trees-consensus
+   - C1.trees -> trees-bootstrap
+   - C1.p     -> statreport
+   - C1.P1.fastas -> alignments-max
+   - C1.P1.fastas -> alignments-draw
+   - C1.P1.fastas -> alignment-gild
+   - C1.MAP -> alignment-find
+ - Doxygen 'front matter' page.
+   + Describe dynamic programming overview and specific functions.
+   + Describe substitution overview and specific classes and functions.
+   + Describe MCMC overview and specific classes and functions.
+   + Describe 'Model' overview and specific classes and functions.
  - Allow `bali-phy --help=topic'
+ - Describe how to specify partition-specific options.
  - Make an --help=advanced to put the advanced usage options in?
- - Remove default from --data-dir
- - Remove --letters=full_tree option.
- - Remove default option from --iterations?
+ - Remove default from --iterations?
 
 Report a 95% confidence interval of splits
  - scale by # of internal branches in tree... then should be < than # of iterations, just like #topologies.
@@ -54,23 +65,11 @@ Timers:
    + How does this depend on whether there is an alignment present?
    + Should I do more NNIs?
 
-Is the beginning EXTRA slow because the size of the likelihood cache is changed a lot???
- - each resize has a cost that is probably about that of 2 MH updates on mu1.
- - if this was does for each branch alignment, that that would be O(B^2)
- - (check with --verbose)
-
 Automatically adjusting step widths:
  * I need an over-arching controller or structure?
  * How do I expose a 'control' interface for MH moves?
    - I need to expose a control knob on the proposal?
  * How do I adjust (and do I need to) step widths for branch lengths?
-
-Lazily recalculate branch transition matrices.
-
-Can I fix PSRF-80% by finding the SMALLEST 80%-wide interval?
- * well, no, because a much larger 80.001% would still cause a problem.
-
-Speed up mctree-mean-lengths.
 
 Branch priors - make into a sub-model, allow a mixture-of-two-{Exponential, Gamma}.
 
@@ -97,33 +96,25 @@ Branch lengths for mc-trees
 
 
 P29. See genome-wide transducer paper.  Can I do something similar?
- * How do they record/store their bandwidths?
+ * How do they record/store their bandwidths on the DP matrix?
 
-P28. Make alignment-indices handle the one-sequence-is-entirely-gaps case.
- * Count conservation w/o looking at gaps.
- * Even in a conserved column, a non-gap character is unsafe if there is a gap IN THAT SEQUENCE w/in three columns.
-  - Of course... COLUMNS isn't quite the issue... We'd need at tree etc...
- * (How to derived such constraints from MCMC alignment output?)
- * Idea: randomly propose alignment constraints based on past samples?
- * But, still getting THOSE samples can benefit from a priori constraints.
+P28. Improve alignment-indices.
 P5. Speed up post-processing.
 P6. Improve usability. (post-processing?  installation?  visualization?)
 P11. Make post-processing handle multiple chains, assess convergence.
-P16. Generate better mixing diagnostics (RNe1 and RCI1 aren't really working... Report SDSF for each. MSDSF is OK.)
+P16. Generate better mixing diagnostics (RNe1 and RCI1 aren't really working.... Report SDSF for each. MSDSF is OK.)
 
 P7. ECR2 moves (for fixed-A, and for variable-A, with P4).
 P9. MCMC / MPI - Construct a heated alignment prior.
 P25. Why isn't 3-way NNI isn't better than 2-way NNI?
 
-P8. Branch priors - make into a sub-model.
- - Allow a mixture-of-two-{Exponential, Gamma}.
+P8. Branch priors - make into a sub-model and allow a mixture-of-two-{Exponential, Gamma}.
 P10. C20 CAT model
 P12. Speed up likelihood calculations when there are lots of gaps?
 P15. Make matcaches (1) [b][m] instead of [m][b] and (2) be able to invalidate individual branches.     
 
 P1. Search SPR w/ multiple attachment sites.
 P3. Improve initial alignment / tree search procedure (for burn-in)
- - The number of iterations should depend on the number of leaves, though.
 
 P17. Improve alphabet handling for speed, flexibility, and features.
 P18. Allow alphabets to handle unknown letters in some way... detect alphabet based on fraction of atgcu
@@ -159,6 +150,8 @@ P33. Slice sampling for scale-means-only.... rethink parameterization?
 P34. How to make the sub-level graphs less spiky?
  - implement back-off - that is, allow thinning out of 
 P35. [Cleanup] Move MC_tree_with_lengths to mctree.H, and make an operator<<( ) for it.
+P36. Lazily recalculate branch transition matrices.
+
 
 P1. Implement the multi-branch SPR search
  * Choose subtree to prune based on the effective-branch length?
