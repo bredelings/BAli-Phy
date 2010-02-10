@@ -198,6 +198,19 @@ namespace MCMC {
     default_timer_stack.pop_timer();
   }
 
+  void MoveGroup::start_learning(int i) 
+  {
+    // Operate on children
+    for(int i=0;i<moves.size();i++)
+      moves[i]->start_learning(i);
+  }
+
+  void MoveGroup::stop_learning(int) {
+    // Operate on children
+    for(int i=0;i<moves.size();i++)
+      moves[i]->stop_learning(i);
+  }
+
   int MoveGroup::reset(double l) {
     iterations += l;
     getorder(l);
@@ -389,6 +402,16 @@ namespace MCMC {
     double transformed_v2 = slice_sample(transformed_v1,slice_levels,W,100);
     double v2 = inverse(transformed_v2);
 
+    if (n_learning_iterations-- > 0) 
+    {
+      n_tries++;
+      total_movement += std::abs(transformed_v2 - transformed_v1);
+      
+      double W_predicted = 4.0*total_movement/n_tries;
+      if (n_tries > 3)
+	W = 0.95*W + 0.05*W_predicted;
+    }
+
 #ifndef NDEBUG
     show_parameters(std::cerr,P);
     std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
@@ -398,32 +421,56 @@ namespace MCMC {
     return v2;
   }
 
+  void Slice_Move::start_learning(int n)
+  {
+    n_learning_iterations = n;
+    n_tries = 0;
+    total_movement = 0;
+  }
+
+  void Slice_Move::stop_learning(int n)
+  {
+    n_learning_iterations = 0;
+  }
+
   Slice_Move::Slice_Move(const string& s)
     :Move(s),
      W(1),
      transform(slice_sampling::identity),
-     inverse(slice_sampling::identity)
+     inverse(slice_sampling::identity),
+     n_learning_iterations(0),
+     n_tries(0),
+     total_movement(0)
   {}
 
   Slice_Move::Slice_Move(const string& s, const string& v)
     :Move(s,v),
      W(1),
      transform(slice_sampling::identity),
-     inverse(slice_sampling::identity)
+     inverse(slice_sampling::identity),
+     n_learning_iterations(0),
+     n_tries(0),
+     total_movement(0)
   {}
 
   Slice_Move::Slice_Move(const string& s, const string& v, double W_)
     :Move(s,v),
      W(W_),
      transform(slice_sampling::identity),
-     inverse(slice_sampling::identity)
+     inverse(slice_sampling::identity),
+     n_learning_iterations(0),
+     n_tries(0),
+     total_movement(0)
   {}
 
   Slice_Move::Slice_Move(const string& s, double W_)
     :Move(s),
      W(W_),
      transform(slice_sampling::identity),
-     inverse(slice_sampling::identity)
+     inverse(slice_sampling::identity),
+     n_learning_iterations(0),
+     n_tries(0),
+     total_movement(0)
   {}
 
   Slice_Move::Slice_Move(const string& s, const string& v, double W_,
@@ -432,7 +479,10 @@ namespace MCMC {
     :Move(s,v),
      W(W_),
      transform(f1),
-     inverse(f2)
+     inverse(f2),
+     n_learning_iterations(0),
+     n_tries(0),
+     total_movement(0)
   {}
 
   void Parameter_Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
@@ -1000,6 +1050,12 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     if (iterations < P.beta_series.size())
       for(int i=0;i < P.n_data_partitions();i++)
 	P.beta[0] = P[i].beta[0] = P.beta_series[iterations];
+
+    if (iterations == 5)
+      start_learning(100);
+
+    if (iterations == 500)
+      stop_learning(0);
 
     //------------------ record statistics ---------------------//
     s_out<<"iterations = "<<iterations<<"\n";

@@ -106,6 +106,12 @@ namespace MCMC {
     /// Disable this move
     void disable() {enabled_=false;}
     
+    /// Start learning
+    virtual void start_learning(int) {}
+
+    /// Stop learning
+    virtual void stop_learning(int) {}
+
     /// Enable this move or any submove with name or attribute 's'
     virtual void enable(const std::string& s);
 
@@ -174,6 +180,11 @@ namespace MCMC {
 
     void enable(const std::string&);
     void disable(const std::string&);
+
+    /// Start learning
+    void start_learning(int);
+    /// Stop learning
+    void stop_learning(int);
 
     int reset(double);
     void iterate(Parameters&,MoveStats&);
@@ -258,10 +269,18 @@ namespace MCMC {
     double (*transform)(double);
     double (*inverse)(double);
 
+    int n_learning_iterations;
+    int n_tries;
+    double total_movement;
+
   public:
     Slice_Move* clone() const=0;
 
     double sample(Parameters& P, slice_function& f, double);
+
+    void start_learning(int);
+
+    void stop_learning(int);
 
     Slice_Move(const std::string& s);
 
