@@ -1,6 +1,14 @@
+Rename s/lambda/weight/ in mcmc.{H,C}
+Rename s/reset/setup/
+
+Can I eliminate MCMC::Move.iterate(P,Stats,int) for moves that do not need the int?
+
+Make MoveOne do sampling W/O replacement!
+
 Resampling DP::f[] shouldn't require peeling along the tree.
  * The same is true with the gamma width parameter and the fraction of invariant sites.
  * Only changing the rates in each category should require re-peeling.
+ * Can we have the smodel... notify? ... when only the mixture parameters change?
 
 How to handle resampling of DP::rate* parameters, since they are SORTED?
 
