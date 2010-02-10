@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2009 Benjamin Redelings
+   Copyright (C) 2004-2010 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -159,347 +159,340 @@ namespace MCMC {
     return total;
   }
 
-void MoveGroup::enable(const string& s) {
-  // Operate on this move
-  Move::enable(s);
+  void MoveGroup::enable(const string& s) {
+    // Operate on this move
+    Move::enable(s);
 
-  // Operate on children
-  for(int i=0;i<moves.size();i++)
-    moves[i]->enable(s);
-}
+    // Operate on children
+    for(int i=0;i<moves.size();i++)
+      moves[i]->enable(s);
+  }
 
-void MoveGroup::disable(const string& s) {
-  // Operate on this move
-  Move::disable(s);
+  void MoveGroup::disable(const string& s) {
+    // Operate on this move
+    Move::disable(s);
 
-  // Operate on children
-  for(int i=0;i<moves.size();i++)
-    moves[i]->disable(s);
-}
+    // Operate on children
+    for(int i=0;i<moves.size();i++)
+      moves[i]->disable(s);
+  }
 
-void MoveGroup::iterate(Parameters& P,MoveStats& Stats) {
-  reset(1.0);
-  for(int i=0;i<order.size();i++)
-    iterate(P,Stats,i);
-}
+  void MoveGroup::iterate(Parameters& P,MoveStats& Stats) {
+    reset(1.0);
+    for(int i=0;i<order.size();i++)
+      iterate(P,Stats,i);
+  }
 
 
-void MoveGroup::iterate(Parameters& P,MoveStats& Stats,int i) {
-  assert(i < order.size());
+  void MoveGroup::iterate(Parameters& P,MoveStats& Stats,int i) {
+    assert(i < order.size());
 
-  default_timer_stack.push_timer(name);
+    default_timer_stack.push_timer(name);
 
 #ifndef NDEBUG
-  clog<<" move = "<<name<<endl;
-  clog<<"   submove = "<<moves[order[i]]->name<<endl;
+    clog<<" move = "<<name<<endl;
+    clog<<"   submove = "<<moves[order[i]]->name<<endl;
 #endif
 
-  moves[order[i]]->iterate(P,Stats,suborder[i]);
-  default_timer_stack.pop_timer();
-}
-
-int MoveGroup::reset(double l) {
-  iterations += l;
-  getorder(l);
-  order = randomize(order);
-
-  // calculate suborder
-  vector<int> total(nmoves(),0);
-  suborder.resize(order.size(),0);
-  for(int i=0;i<suborder.size();i++) {
-    suborder[i] = total[order[i]];
-    total[order[i]]++;
+    moves[order[i]]->iterate(P,Stats,suborder[i]);
+    default_timer_stack.pop_timer();
   }
 
-  return order.size();
-}
+  int MoveGroup::reset(double l) {
+    iterations += l;
+    getorder(l);
+    order = randomize(order);
 
-void MoveGroup::show_enabled(ostream& o,int depth) const {
-  Move::show_enabled(o,depth);
-  
-  for(int i=0;i<nmoves();i++)
-    moves[i]->show_enabled(o,depth+1);
-}
-
-void MoveAll::getorder(double l) {
-  order.clear();
-  for(int i=0;i<nmoves();i++) {
-    if (not moves[i]->enabled()) continue;
-
-    int n = moves[i]->reset(l*lambda[i]);
-    for(int j=0;j<n;j++)
-      order.insert(order.end(),i);
-  }
-}
-
-
-int MoveOne::choose() const 
-{
-  double r = myrandomf()*sum();
-
-  double sum = 0;
-  int i = 0;
-  int enabled_submoves=0;
-  for(;i < moves.size();i++) {
-
-    if (not moves[i]->enabled())
-      continue;
-    else
-      enabled_submoves++;
-
-    sum += lambda[i];
-    if (r<sum) break;
-  }
-
-  if (not enabled_submoves)
-    throw myexception()<<"move "<<name<<" has no enabled submoves";
-
-  return i;
-}
-
-void MoveOne::getorder(double l) 
-{
-  // get total count
-  int total = (int)l;
-  double frac = l-total;
-  total += poisson(frac);
-
-  // get count per type
-  vector<int> count(nmoves(),0);
-  for(int i=0;i<total;i++) {
-    int m = choose();
-    count[m]++;
-  }
-
-  order.clear();
-  for(int i=0;i<nmoves();i++) {
-    int n = moves[i]->reset(count[i]);
-    if (not moves[i]->enabled())
-      assert(n==0);
-    for(int j=0;j<n;j++)
-      order.insert(order.end(),i);
-  }
-}
-
-int SingleMove::reset(double lambda) {
-  int l = (int)lambda;
-  lambda -= l;
-  return l + poisson(lambda);
-}
-
-void SingleMove::iterate(Parameters& P,MoveStats& Stats,int) 
-{
-  default_timer_stack.push_timer(name);
-
-#ifndef NDEBUG
-  clog<<" [single] move = "<<name<<endl;
-#endif
-
-  iterations++;
-  (*m)(P,Stats);
-  default_timer_stack.pop_timer();
-}
-
-int MH_Move::reset(double lambda) {
-  int l = (int)lambda;
-  lambda -= l;
-  return l + poisson(lambda);
-}
-
-void MH_Move::iterate(Parameters& P,MoveStats& Stats,int) 
-{
-  default_timer_stack.push_timer(name);
-
-#ifndef NDEBUG
-  clog<<" [MH] move = "<<name<<endl;
-#endif
-
-  iterations++;
-
-  Parameters P2 = P;
-
-  double ratio = (*proposal)(P2);
-
-  int n = 1;
-  Proposal2* p2 = dynamic_cast<Proposal2*>(&(*proposal));
-  int n_indices = -1;
-  if (p2) {
-    n_indices = p2->get_indices().size();
-    n = 2;
-  }
-  Result result(n);
-
-#ifndef NDEBUG
-  show_parameters(std::cerr,P);
-  std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
-  std::cerr<<endl<<endl;
-
-  show_parameters(std::cerr,P2);
-  std::cerr<<P2.probability()<<" = "<<P2.likelihood()<<" + "<<P2.prior();
-  std::cerr<<endl<<endl;
-#endif
-
-  if (accept_MH(P,P2,ratio)) {
-    result.totals[0] = 1;
-    if (n == 2) {
-      if (n_indices == 1) {
-	int i = p2->get_indices()[0];
-	double v1 = P.parameter(i);
-	double v2 = P2.parameter(i);
-	//      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
-	result.totals[1] = std::abs(v2-v1);
-      }
-      else //currently this can only be a dirichlet proposal
-      {
-	double total = 0;
-	for(int i=0;i<n_indices;i++) 
-	{
-	  int j = p2->get_indices()[i];
-	  double v1 = P.parameter(j);
-	  double v2 = P2.parameter(j);
-	  total += std::abs(log(v1/v2));
-	}
-	result.totals[1] = total;
-      }
+    // calculate suborder
+    vector<int> total(nmoves(),0);
+    suborder.resize(order.size(),0);
+    for(int i=0;i<suborder.size();i++) {
+      suborder[i] = total[order[i]];
+      total[order[i]]++;
     }
-    P = P2;
+
+    return order.size();
   }
 
-  Stats.inc(name,result);
-  default_timer_stack.pop_timer();
-}
+  void MoveGroup::show_enabled(ostream& o,int depth) const {
+    Move::show_enabled(o,depth);
+  
+    for(int i=0;i<nmoves();i++)
+      moves[i]->show_enabled(o,depth+1);
+  }
 
-int Slice_Move::reset(double lambda) {
-  int l = (int)lambda;
-  lambda -= l;
-  return l + poisson(lambda);
-}
+  void MoveAll::getorder(double l) {
+    order.clear();
+    for(int i=0;i<nmoves();i++) {
+      if (not moves[i]->enabled()) continue;
 
-void Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
-{
-  if (P.fixed(index)) return;
+      int n = moves[i]->reset(l*lambda[i]);
+      for(int j=0;j<n;j++)
+	order.insert(order.end(),i);
+    }
+  }
 
-  default_timer_stack.push_timer(name);
+
+  int MoveOne::choose() const 
+  {
+    double r = myrandomf()*sum();
+
+    double sum = 0;
+    int i = 0;
+    int enabled_submoves=0;
+    for(;i < moves.size();i++) {
+
+      if (not moves[i]->enabled())
+	continue;
+      else
+	enabled_submoves++;
+
+      sum += lambda[i];
+      if (r<sum) break;
+    }
+
+    if (not enabled_submoves)
+      throw myexception()<<"move "<<name<<" has no enabled submoves";
+
+    return i;
+  }
+
+  void MoveOne::getorder(double l) 
+  {
+    // get total count
+    int total = (int)l;
+    double frac = l-total;
+    total += poisson(frac);
+
+    // get count per type
+    vector<int> count(nmoves(),0);
+    for(int i=0;i<total;i++) {
+      int m = choose();
+      count[m]++;
+    }
+
+    order.clear();
+    for(int i=0;i<nmoves();i++) {
+      int n = moves[i]->reset(count[i]);
+      if (not moves[i]->enabled())
+	assert(n==0);
+      for(int j=0;j<n;j++)
+	order.insert(order.end(),i);
+    }
+  }
+
+  int SingleMove::reset(double lambda) {
+    int l = (int)lambda;
+    lambda -= l;
+    return l + poisson(lambda);
+  }
+
+  void SingleMove::iterate(Parameters& P,MoveStats& Stats,int) 
+  {
+    default_timer_stack.push_timer(name);
 
 #ifndef NDEBUG
-  clog<<" [Slice] move = "<<name<<endl;
+    clog<<" [single] move = "<<name<<endl;
 #endif
 
-  iterations++;
+    iterations++;
+    (*m)(P,Stats);
+    default_timer_stack.pop_timer();
+  }
 
-  //------------- Find new value --------------//
-#ifndef NDEBUG
-  show_parameters(std::cerr,P);
-  std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
-  std::cerr<<endl<<endl;
-#endif
+  int MH_Move::reset(double lambda) {
+    int l = (int)lambda;
+    lambda -= l;
+    return l + poisson(lambda);
+  }
 
-  double v1 = P.parameter(index);
-  parameter_slice_function logp(P,index,transform,inverse);
-  if (lower_bound) logp.set_lower_bound(lower);
-  if (upper_bound) logp.set_upper_bound(upper);
-
-  double w = W;
-  double tv2 = slice_sample(transform(v1),logp,w,100);
-  double v2 = inverse(tv2);
+  void MH_Move::iterate(Parameters& P,MoveStats& Stats,int) 
+  {
+    default_timer_stack.push_timer(name);
 
 #ifndef NDEBUG
-  show_parameters(std::cerr,P);
-  std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
-  std::cerr<<endl<<endl;
+    clog<<" [MH] move = "<<name<<endl;
 #endif
 
-  //---------- Record Statistics - -------------//
-  Result result(2);
-  result.totals[0] = std::abs(v2-v1);
-  result.totals[1] = logp.count;
+    iterations++;
 
-  Stats.inc(name,result);
-  default_timer_stack.pop_timer();
-}
+    Parameters P2 = P;
 
-Slice_Move::Slice_Move(const string& s,int i,
-		       bool lb,double l,bool ub,double u,double W_)
-  :Move(s),index(i),
-   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),window(0),
-   transform(slice_sampling::identity),
-   inverse(slice_sampling::identity)
-{}
+    double ratio = (*proposal)(P2);
 
-Slice_Move::Slice_Move(const string& s, const string& v,int i,
-		       bool lb,double l,bool ub,double u,double W_)
-  :Move(s,v),index(i),
-   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),window(0),
-   transform(slice_sampling::identity),
-   inverse(slice_sampling::identity)
-{}
+    int n = 1;
+    Proposal2* p2 = dynamic_cast<Proposal2*>(&(*proposal));
+    int n_indices = -1;
+    if (p2) {
+      n_indices = p2->get_indices().size();
+      n = 2;
+    }
+    Result result(n);
 
-Slice_Move::Slice_Move(const string& s,int i,
-		       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&))
-  :Move(s),index(i),
-   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(0),window(W_),
-   transform(slice_sampling::identity),
-   inverse(slice_sampling::identity)
-{}
+#ifndef NDEBUG
+    show_parameters(std::cerr,P);
+    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+    std::cerr<<endl<<endl;
 
-Slice_Move::Slice_Move(const string& s, const string& v,int i,
-		       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&))
-  :Move(s,v),index(i),
-   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(0),window(W_),
-   transform(slice_sampling::identity),
-   inverse(slice_sampling::identity)
-{}
+    show_parameters(std::cerr,P2);
+    std::cerr<<P2.probability()<<" = "<<P2.likelihood()<<" + "<<P2.prior();
+    std::cerr<<endl<<endl;
+#endif
 
-Slice_Move::Slice_Move(const string& s,int i,
-		       bool lb,double l,bool ub,double u,double W_,
-		       double(*f1)(double),
-		       double(*f2)(double))
-  :Move(s),index(i),
-   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),
-   transform(f1),
-   inverse(f2)
-{}
+    if (accept_MH(P,P2,ratio)) {
+      result.totals[0] = 1;
+      if (n == 2) {
+	if (n_indices == 1) {
+	  int i = p2->get_indices()[0];
+	  double v1 = P.parameter(i);
+	  double v2 = P2.parameter(i);
+	  //      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
+	  result.totals[1] = std::abs(v2-v1);
+	}
+	else //currently this can only be a dirichlet proposal
+	{
+	  double total = 0;
+	  for(int i=0;i<n_indices;i++) 
+	  {
+	    int j = p2->get_indices()[i];
+	    double v1 = P.parameter(j);
+	    double v2 = P2.parameter(j);
+	    total += std::abs(log(v1/v2));
+	  }
+	  result.totals[1] = total;
+	}
+      }
+      P = P2;
+    }
 
-Slice_Move::Slice_Move(const string& s, const string& v,int i,
-		       bool lb,double l,bool ub,double u,double W_,
-		       double(*f1)(double),
-		       double(*f2)(double))
-  :Move(s,v),index(i),
-   lower_bound(lb),lower(l),upper_bound(ub),upper(u),W(W_),
-   transform(f1),
-   inverse(f2)
-{}
+    Stats.inc(name,result);
+    default_timer_stack.pop_timer();
+  }
+
+  double Slice_Move::sample(Parameters& P, slice_function& slice_levels, double v1)
+  {
+    default_timer_stack.push_timer(name);
+
+#ifndef NDEBUG
+    clog<<" [Slice] move = "<<name<<endl;
+#endif
+
+    iterations++;
+
+    //------------- Find new value --------------//
+#ifndef NDEBUG
+    show_parameters(std::cerr,P);
+    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+    std::cerr<<endl<<endl;
+#endif
+
+    double transformed_v2 = slice_sample(transform(v1),slice_levels,W,100);
+    double v2 = inverse(transformed_v2);
+
+#ifndef NDEBUG
+    show_parameters(std::cerr,P);
+    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+    std::cerr<<endl<<endl;
+#endif
+    default_timer_stack.pop_timer();
+    return v2;
+  }
+
+  Slice_Move::Slice_Move(const string& s)
+    :Move(s),
+     W(1),
+     transform(slice_sampling::identity),
+     inverse(slice_sampling::identity)
+  {}
+
+  Slice_Move::Slice_Move(const string& s, const string& v)
+    :Move(s,v),
+     W(1),
+     transform(slice_sampling::identity),
+     inverse(slice_sampling::identity)
+  {}
+
+  Slice_Move::Slice_Move(const string& s, const string& v, double W_)
+    :Move(s,v),
+     W(W_),
+     transform(slice_sampling::identity),
+     inverse(slice_sampling::identity)
+  {}
+
+  Slice_Move::Slice_Move(const string& s, double W_)
+    :Move(s),
+     W(W_),
+     transform(slice_sampling::identity),
+     inverse(slice_sampling::identity)
+  {}
+
+  Slice_Move::Slice_Move(const string& s, const string& v, double W_,
+			 double(*f1)(double),
+			 double(*f2)(double))
+    :Move(s,v),
+     W(W_),
+     transform(f1),
+     inverse(f2)
+  {}
+
+  void Parameter_Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
+  {
+    if (P.fixed(index)) return;
+
+    double v1 = P.parameter(index);
+
+    parameter_slice_function logp(P,index,transform,inverse);
+    if (lower_bound) logp.set_lower_bound(lower);
+    if (upper_bound) logp.set_upper_bound(upper);
+
+    double v2 = sample(P,logp,v1);
+
+    //---------- Record Statistics - -------------//
+    Result result(2);
+    result.totals[0] = std::abs(v2-v1);
+    result.totals[1] = logp.count;
+    
+    Stats.inc(name,result);
+  }
+
+  Parameter_Slice_Move::Parameter_Slice_Move(const string& s,int i,
+					     bool lb,double l,bool ub,double u,double W_)
+    :Slice_Move(s,W_),index(i),
+     lower_bound(lb),lower(l),upper_bound(ub),upper(u)
+  {}
+
+  Parameter_Slice_Move::Parameter_Slice_Move(const string& s, const string& v,int i,
+					     bool lb,double l,bool ub,double u,double W_)
+    :Slice_Move(s,v,W_),index(i),
+     lower_bound(lb),lower(l),upper_bound(ub),upper(u)
+  {}
+
+  Parameter_Slice_Move::Parameter_Slice_Move(const string& s,int i,
+					     bool lb,double l,bool ub,double u,double W_,
+					     double(*f1)(double),
+					     double(*f2)(double))
+    :Slice_Move(s,"",W_,f1,f2),index(i),
+     lower_bound(lb),lower(l),upper_bound(ub),upper(u)
+  {}
+
+  Parameter_Slice_Move::Parameter_Slice_Move(const string& s, const string& v,int i,
+					     bool lb,double l,bool ub,double u,double W_,
+					     double(*f1)(double),
+					     double(*f2)(double))
+    :Slice_Move(s,v,W_,f1,f2),index(i),
+     lower_bound(lb),lower(l),upper_bound(ub),upper(u)
+  {}
 
   void Dirichlet_Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
   {
     for(int i=0;i<indices.size();i++)
       if (P.fixed(indices[i])) return;
 
-    default_timer_stack.push_timer(name);
-
-#ifndef NDEBUG
-    clog<<" [Dirichlet slice] move = "<<name<<endl;
-#endif
-
-    iterations++;
-
-  //------------- Find new value --------------//
-#ifndef NDEBUG
-    show_parameters(std::cerr,P);
-    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
-    std::cerr<<endl<<endl;
-#endif
-
     double v1 = P.parameter(indices[n]);
     constant_sum_slice_function slice_levels_function(P,indices,n);
 
-    double v2 = slice_sample(v1, slice_levels_function, W, 100);
+    double v2 = sample(P,slice_levels_function,v1);
 
-#ifndef NDEBUG
-    show_parameters(std::cerr,P);
-    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
-    std::cerr<<endl<<endl;
-#endif
     //---------- Record Statistics - -------------//
     Result result(2);
     vector<double> x = P.parameters(indices);
@@ -509,13 +502,11 @@ Slice_Move::Slice_Move(const string& s, const string& v,int i,
     result.totals[1] = slice_levels_function.count;
 
     Stats.inc(name,result);
-    default_timer_stack.pop_timer();
   }
 
   Dirichlet_Slice_Move::Dirichlet_Slice_Move(const string& s, const vector<int>& indices_, int n_)
-    :Move(s),W(0.2/indices_.size()),indices(indices_),n(n_)
-  {
-  }
+    :Slice_Move(s,0.2/indices_.size()),indices(indices_),n(n_)
+  { }
 
   void Scale_Means_Only_Slice_Move::iterate(Parameters& P, MoveStats& Stats,int)
   {
@@ -523,46 +514,23 @@ Slice_Move::Slice_Move(const string& s, const string& v,int i,
     for(int i=0;i<P.n_branch_means();i++)
       if (P.fixed(i)) return;
 
-    default_timer_stack.push_timer(name);
-
-#ifndef NDEBUG
-    clog<<" [Scale_means_only slice] move = "<<name<<endl;
-#endif
-
-    iterations++;
-
-  //------------- Find new value --------------//
-#ifndef NDEBUG
-    show_parameters(std::cerr,P);
-    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior()<<endl;
-    std::cerr<<"window = "<<W<<std::endl;
-    std::cerr<<endl;
-#endif
-
     double v1 = 0;
     scale_means_only_slice_function slice_levels_function(P);
 
-    double v2 = slice_sample(v1, slice_levels_function, W, 100);
+    double v2 = sample(P,slice_levels_function, v1);
 
-#ifndef NDEBUG
-    show_parameters(std::cerr,P);
-    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
-    std::cerr<<endl<<endl;
-#endif
-    //---------- Record Statistics - -------------//
+    //---------- Record Statistics --------------//
     Result result(2);
     result.totals[0] = std::abs(v2);
     result.totals[1] = slice_levels_function.count;
 
     Stats.inc(name,result);
-    default_timer_stack.pop_timer();
   }
 
   Scale_Means_Only_Slice_Move::Scale_Means_Only_Slice_Move(const string& s, double W_)
-    :Move(s),
-     W(W_)
-  {
-  }
+		:Slice_Move(s,W_)
+  { }
+
 
 int MoveArg::reset(double l) 
 {

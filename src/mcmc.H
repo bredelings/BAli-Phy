@@ -42,6 +42,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 // how to have different models, with different moves
 // and possibly moves between models?
 
+class slice_function;
+
 namespace MCMC {
 
   //---------------------- Move Stats ---------------------//
@@ -209,7 +211,7 @@ namespace MCMC {
     virtual ~MoveOne() {}
   };
 
-  /// A Move which runs a specific moves each round
+  /// A Move which runs a specific move each round
   class SingleMove: public Move {
     atomic_move m;
   public:
@@ -238,6 +240,7 @@ namespace MCMC {
 
     void iterate(Parameters& P,MoveStats& Stats) { iterate(P,Stats,0); }
 
+    // FIXME, can I get rid of this for all groups that aren't using it?
     void iterate(Parameters& P,MoveStats&,int);
 
     MH_Move(const Proposal& P,const std::string& s)
@@ -247,55 +250,75 @@ namespace MCMC {
   };
 
   // Improve: make W into a FUNCTION to determine the initial width
-  class Slice_Move: public Move 
+  class Slice_Move: public Move
   {
-    int index;
-    bool lower_bound;
-    double lower;
-    bool upper_bound;
-    double upper;
+  protected:
     double W;
-    double (*window)(const Parameters&);
 
     double (*transform)(double);
     double (*inverse)(double);
 
   public:
-    Slice_Move* clone() const {return new Slice_Move(*this);}
+    Slice_Move* clone() const=0;
 
-    int reset(double lambda);
+    double sample(Parameters& P, slice_function& f, double);
+
+    Slice_Move(const std::string& s);
+
+    Slice_Move(const std::string& s, const std::string& v);
+
+    Slice_Move(const std::string& s, double W_);
+
+    Slice_Move(const std::string& s, const std::string& v, double W_);
+
+    Slice_Move(const std::string& s, const std::string& v,
+	       double W_,
+	       double(*f1)(double),
+	       double(*f2)(double));
+  };
+
+  class Parameter_Slice_Move: public Slice_Move
+  {
+    int index;
+
+    bool lower_bound;
+    double lower;
+
+    bool upper_bound;
+    double upper;
+
+  public:
+    Parameter_Slice_Move* clone() const {return new Parameter_Slice_Move(*this);}
 
     void iterate(Parameters& P,MoveStats& Stats) { iterate(P,Stats,0); }
 
     void iterate(Parameters& P,MoveStats&,int);
 
-    Slice_Move(const std::string& s,int i,
+    Parameter_Slice_Move(const std::string& s,int i,
 	       bool lb,double l,bool ub,double u,double W_);
 
-    Slice_Move(const std::string& s, const std::string& v,int i,
+    Parameter_Slice_Move(const std::string& s, const std::string& v,int i,
 	       bool lb,double l,bool ub,double u,double W_);
 
-    Slice_Move(const std::string& s,int i,
+    Parameter_Slice_Move(const std::string& s,int i,
 	       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&));
 
-    Slice_Move(const std::string& s, const std::string& v,int i,
+    Parameter_Slice_Move(const std::string& s, const std::string& v,int i,
 	       bool lb,double l,bool ub,double u,double (*W_)(const Parameters&));
 
-    Slice_Move(const std::string& s,int i,
+    Parameter_Slice_Move(const std::string& s,int i,
 	       bool lb,double l,bool ub,double u,double W_,
 	       double(*f1)(double),
 	       double(*f2)(double));
 
-    Slice_Move(const std::string& s, const std::string& v,int i,
+    Parameter_Slice_Move(const std::string& s, const std::string& v,int i,
 	       bool lb,double l,bool ub,double u,double W_,
 	       double(*f1)(double),
 	       double(*f2)(double));
   };
 
-  class Dirichlet_Slice_Move: public Move
+  class Dirichlet_Slice_Move: public Slice_Move
   {
-    double W;
-
     std::vector<int> indices;
 
     int n;
@@ -310,10 +333,8 @@ namespace MCMC {
     Dirichlet_Slice_Move(const std::string&, const std::vector<int>&, int);
   };
 
-  class Scale_Means_Only_Slice_Move: public Move
+  class Scale_Means_Only_Slice_Move: public Slice_Move
   {
-    double W;
-
   public:
     Scale_Means_Only_Slice_Move* clone() const {return new Scale_Means_Only_Slice_Move(*this);}
  

@@ -187,7 +187,7 @@ void add_slice_moves(Parameters& P, const string& name,
     W = P.keys[pname];
 
     M.add(weight, 
-	  MCMC::Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
+	  MCMC::Parameter_Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
 			   indices[i],
 			   lower_bound,lower,upper_bound,upper,W)
 	  );
@@ -229,7 +229,7 @@ void add_slice_moves(Parameters& P, const string& name,
     W = P.keys[pname];
 
     M.add(weight, 
-	  MCMC::Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
+	  MCMC::Parameter_Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
 			   indices[i],
 			   lower_bound,lower,upper_bound,upper,W,f1,f2)
 	  );
