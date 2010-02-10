@@ -385,8 +385,8 @@ namespace MCMC {
     std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
     std::cerr<<endl<<endl;
 #endif
-
-    double transformed_v2 = slice_sample(transform(v1),slice_levels,W,100);
+    double transformed_v1 = transform(v1);
+    double transformed_v2 = slice_sample(transformed_v1,slice_levels,W,100);
     double v2 = inverse(transformed_v2);
 
 #ifndef NDEBUG
