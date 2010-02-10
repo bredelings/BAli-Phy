@@ -372,13 +372,10 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
 		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon, 10);
 
-  if (P.keys["dirichlet_slice_sampling"] > 0.5)
-  {
-    add_dirichlet_slice_moves(P, "pi*", "", 1, slice_moves, 3);
-    add_dirichlet_slice_moves(P, "GTR*", "", 1, slice_moves, 3);
-    add_dirichlet_slice_moves(P, "DP::f*", "", 1, slice_moves, 3);
-    add_dirichlet_slice_moves(P, "DP::rate*", "", 1, slice_moves, 3);
-  }
+  add_dirichlet_slice_moves(P, "pi*", "", 1, slice_moves, 3);
+  add_dirichlet_slice_moves(P, "GTR*", "", 1, slice_moves, 3);
+  add_dirichlet_slice_moves(P, "DP::f*", "", 1, slice_moves, 3);
+  add_dirichlet_slice_moves(P, "DP::rate*", "", 1, slice_moves, 3);
 
   slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
 
