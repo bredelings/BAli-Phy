@@ -438,6 +438,15 @@ std::vector<T> select(const std::vector<T>& v1,bool (T::*pred)() const)
   return v2;
 }
 
+template <typename T>
+std::vector<T> select(const std::vector<T>& v,const std::vector<int>& indices)
+{
+  std::vector<T> v2(indices.size());
+  for(int i=0;i<v2.size();i++)
+    v2[i] = v[indices[i]];
+  return v2;
+}
+
 template<typename T>
 unsigned count(const std::vector<T>& v1,bool pred(const T&))
 {
