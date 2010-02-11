@@ -216,4 +216,7 @@ int find_parameter(const Model& M,const std::string& name);
 
 void show_parameters(std::ostream& o,const Model& M);
 
+bool has_parameter(const Model& M, const std::string& name);
+
+std::vector<int> parameters_with_extension(const Model& M, std::string name);
 #endif
