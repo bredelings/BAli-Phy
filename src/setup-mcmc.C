@@ -563,7 +563,8 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
     //FIXME - this should probably be 20*#rate_categories...
     if (s==0) P.keys["DP::rate_dirichlet_N"] *= 10*10;
-    add_MH_move(P, sorted(dirichlet_proposal), prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
+    // add_MH_move(P, sorted(dirichlet_proposal), prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal, prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
 
     set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
     if (s==0) P.keys["Mixture::p_dirichlet_N"] *= 10*10;
