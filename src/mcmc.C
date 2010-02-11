@@ -944,6 +944,64 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
 }
 #endif
 
+
+/// \brief Force identifiability by sorting certain parameters according to the order of indices[0]
+///
+/// \param v The values of all parameters.
+/// \param indices The indices of parameter values to reorder.
+///
+/// Parameter values indexed by indices[i] are sorted so that the parameter values indexed
+/// by indices[0] are in increasing order.
+///
+vector<double> make_identifiable(const vector<double>& v,const vector< vector<int> >& indices)
+{
+  assert(indices.size());
+  int N = indices[0].size();
+
+  vector<double> v_sub = select(v,indices[0]);
+
+  vector<int> O = iota(N);
+  std::sort(O.begin(),O.end(), sequence_order<double>(v_sub));
+
+  vector<int> O_all = iota<int>(v.size());
+  for(int i=0;i<indices.size();i++) 
+  {
+    assert(indices[i].size() == N);
+    for(int j=0;j<N;j++) {
+      // indices[i][j] -> indices[i][O[j]]
+      O_all[indices[i][j]] = indices[i][O[j]];
+    }
+  }
+  vector<double> v2 = apply_mapping(v,invert(O_all));
+
+  return v2;
+}
+
+/// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
+vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M)
+{
+  vector< vector< vector<int> > > indices;
+
+  vector< vector<int> > DP;
+
+  if (parameters_with_extension(M, "DP::rate*").size()  )
+  {
+    DP.push_back( parameters_with_extension(M, "DP::rate*") );
+    DP.push_back( parameters_with_extension(M, "DP::f*") );
+    indices.push_back( DP );
+  }
+
+  vector< vector<int> > M3;
+  if (parameters_with_extension(M, "M3::omega*").size() )
+  {
+    M3.push_back( parameters_with_extension(M, "M3::omega*") );
+    M3.push_back( parameters_with_extension(M, "M3::f*") );
+    indices.push_back( M3 );
+  }
+
+  return indices;
+}
+
 void Sampler::go(Parameters& P,int subsample,const int max_iter,
 		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map,
 		 vector<ostream*>& files)
@@ -1045,6 +1103,8 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     weights[i] = max(sequence_lengths(*P[i].A, P.T->n_leaves()));
   weights /= weights.sum();
 
+
+  vector< vector< vector<int> > > un_identifiable_indices = get_un_identifiable_indices(P);
       
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max_iter; iterations++) 
@@ -1100,7 +1160,12 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       for(int i=0;i<P.n_data_partitions();i++)
 	if (P[i].variable_alignment()) s_parameters<<P[i].prior_alignment()<<"\t";
       s_parameters<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
-      s_parameters<<P.state();
+
+      // Sort parameter values to resolve identifiability and then output them.
+      vector<double> values = P.parameters();
+      for(int i=0;i<un_identifiable_indices.size();i++) 
+	values = make_identifiable(values,un_identifiable_indices[i]);
+      s_parameters<<join(values,'\t');
 
       unsigned total_length=0;
       unsigned total_indels=0;
