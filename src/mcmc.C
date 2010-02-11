@@ -421,6 +421,7 @@ namespace MCMC {
     return v2;
   }
 
+  /// FIXME - how to learn differently for different temperatures?
   void Slice_Move::start_learning(int n)
   {
     n_learning_iterations = n;
@@ -1038,7 +1039,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     }
   }
 
-  /// Compute the relative number of letters in each partition.
+  // Compute the relative number of letters in each partition.
   valarray<double> weights(P.n_data_partitions());
   for(int i=0;i<weights.size();i++)
     weights[i] = max(sequence_lengths(*P[i].A, P.T->n_leaves()));
@@ -1048,17 +1049,21 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max_iter; iterations++) 
   {
+    // Free temporarily fixed parameters at iteration 5
     if (iterations == 5)
       for(int i=0;i<restore.size();i++)
 	P.fixed(restore[i],false);
 
+    // Change the temperature according to the pattern suggested
     if (iterations < P.beta_series.size())
       for(int i=0;i < P.n_data_partitions();i++)
 	P.beta[0] = P[i].beta[0] = P.beta_series[iterations];
 
+    // Start learning step sizes at iteration 5
     if (iterations == 5)
       start_learning(100);
 
+    // Stop learning set sizes at iteration 500
     if (iterations == 500)
       stop_learning(0);
 
@@ -1162,17 +1167,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 #ifdef HAVE_MPI
     //------------------ Exchange Temperatures -----------------//
 
-    // FIXME
-    // 1. How do I log the results in a meaningful way?
-    // 3. What statistics should we print?
-    //   (a) # of transitions between low/high temp?
-    //   (b)
-    // 4. How am I going to allow larger proposals for different temperatures?
-    // 5. How am I going to merge results for the same temperature, while
-    //     keeping track of the threading of each change through the temperatures?
-    // 6. Switch to BOOST MPI
-
-    // FIXME - let the temperatures go equilibrium, given likelihoods?
+    // FIXME: How am I going to allow larger proposals for different temperatures?
 
     // This move doesn't respect up/down at the moment
     //exchange_random_pairs(iterations,P,*this);
