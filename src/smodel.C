@@ -440,9 +440,9 @@ namespace substitution {
     : CodonFrequencyModel(C),
       codons(SimpleFrequencyModel(C))
   {
-    recalc_all();
-
     insert_submodel("1",SimpleFrequencyModel(C.getAminoAcids()));
+
+    recalc_all();
   }
 
 
