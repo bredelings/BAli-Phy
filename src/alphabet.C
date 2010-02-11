@@ -483,15 +483,15 @@ valarray<double> get_codon_frequencies_from_independent_nucleotide_frequencies(c
 
 int Triplets::get_triplet(int n1, int n2, int n3) const
 {
-  if (is_feature(n1) and is_feature(n2) and is_feature(n3)) 
+  if (N->is_feature(n1) and N->is_feature(n2) and N->is_feature(n3)) 
   {
-    if (is_letter(n1) and is_letter(n2) and is_letter(n3))
-      {
-	int index = codon_table[n1][n2][n3];
-	if (index == -1) 
-	  throw myexception()<<"get_triplet: Triplet is not in this alphabet";
-	return index;
-      }
+    if (N->is_letter(n1) and N->is_letter(n2) and N->is_letter(n3))
+    {
+      int index = codon_table[n1][n2][n3];
+      if (index == -1) 
+	throw myexception()<<"get_triplet: Triplet is not in this alphabet";
+      return index;
+    }
     else 
       return alphabet::not_gap;
   }
