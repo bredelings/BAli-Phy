@@ -951,7 +951,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
   const SequenceTree& T = *P.T;
 
-  // make sure that the Alignment and Tree are linked
+  // Check that the Alignments and Tree are properly linked
   for(int i=0;i<P.n_data_partitions();i++) {
     if (P[i].has_IModel())
       assert(P[i].A->n_sequences() == T.n_nodes() and P[i].variable_alignment()); 
@@ -968,10 +968,11 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
   efloat_t MAP_score = 0;
 
-  string tag = string("sample (")+convertToString(subsample)+")";
+  /// string tag = string("sample (")+convertToString(subsample)+")";
 
   s_out<<"\n\n\n";
 
+  /// Output extra initial frequences if we have a triplets alphabet
   for(int i=0;i<P.n_data_partitions();i++)
   {
     const alignment& A = *P[i].A;
@@ -994,6 +995,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       }
   }
 
+  /// Output headers to log file
   s_parameters<<"iter\t";
   s_parameters<<"prior\t";
   for(int i=0;i<P.n_data_partitions();i++)
@@ -1019,6 +1021,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   }
   s_parameters<<"\t|T|"<<endl;
 
+  /// Find parameters to fix for the first 5 iterations
   vector<string> restore_names;
   if (not defined(P.keys,"free-imodel")) {
     restore_names.push_back("lambda");
@@ -1034,6 +1037,8 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       P.fixed(index,true);
     }
   }
+
+  /// Compute the relative number of letters in each partition.
   valarray<double> weights(P.n_data_partitions());
   for(int i=0;i<weights.size();i++)
     weights[i] = max(sequence_lengths(*P[i].A, P.T->n_leaves()));
@@ -1067,15 +1072,16 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
     if (iterations%subsample == 0) 
     {
+      // Log the alignments every 10th sample - they take a lot of space!
       bool show_alignment = (iterations%(10*subsample) == 0);
 
-      // Don't print alignments here - hard to separate alignments
-      //                               from different partitions.
+      // Don't print alignments into console log file:
+      //  - Its hard to separate alignments from different partitions.
       print_stats(s_out,s_trees,P,false);
 
       // Print the alignments here instead
       if (show_alignment) {
-	for(int i=0;i<P.n_data_partitions();i++) 
+	for(int i=0;i<P.n_data_partitions();i++)
 	{
 	  (*files[5+i])<<"iterations = "<<iterations<<"\n\n";
 	  if (not iterations or P[i].variable_alignment())
@@ -1083,6 +1089,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 	}
       }
 
+      // Write parameter values to parameter log file
       s_parameters<<iterations<<"\t";
       s_parameters<<prior<<"\t";
       for(int i=0;i<P.n_data_partitions();i++)
@@ -1174,6 +1181,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 #endif
   }
 
+  /// Write a summary after the chain has finished.
   std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
   std::cout<<*(MoveStats*)this<<endl;
   std::cout<<endl;
