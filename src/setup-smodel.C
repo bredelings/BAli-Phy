@@ -35,24 +35,20 @@ bool match(vector<string>& sstack,const string& s,string& arg) {
   if (not sstack.size())
     return false;
   
-  bool success=false;
-  string top = sstack.back();
+  string name = sstack.back();
 
-  if (top == s) {
+  vector<string> arguments = get_arguments(name,'[',']');
+
+  if (name != s) return false;
+
+  if (arguments.size() == 0)
     arg = "";
-    success=true;
-  }
-  else if (top.size() > 1 and top[top.size()-1] == ']') {
-    int loc = top.find('[');
-    if (loc == -1) return false;
-    string name = top.substr(0,loc);
-    arg = top.substr(loc+1,top.size()-loc-2);
-    success = (name == s);
-  }
+  else if (arguments.size() > 0)
+    arg = arguments[0];
 
-  if (success)
-    sstack.pop_back();
-  return success;
+  sstack.pop_back();
+
+  return true;
 }
 
 /// If no markov model is specified, try to add one.
