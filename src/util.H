@@ -539,5 +539,7 @@ std::string get_basename(std::string filename);
 
 std::string remove_extension(std::string filename);
 
+std::vector<std::string> get_arguments(std::string& s,char begin, char end);
+
 extern int log_verbose;
 #endif

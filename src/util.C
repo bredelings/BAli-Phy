@@ -413,3 +413,15 @@ vector<int> parse_multi_range(const string& range,int L)
   }
   return columns;
 }
+
+vector<string> get_arguments(string& s,char begin, char end)
+{
+  if (not s.size() or s[s.size()-1] != end) 
+    return vector<string>();
+  
+  int loc = s.find(begin);
+  if (loc == -1) 
+    return vector<string>();
+  
+  return split(s.substr(loc+1, s.size()-loc-2),',');
+}
