@@ -420,8 +420,11 @@ vector<string> get_arguments(string& s,char begin, char end)
     return vector<string>();
   
   int loc = s.find(begin);
+  string args = s.substr(loc+1, s.size()-loc-2);
+  s = s.substr(0,loc);
+
   if (loc == -1) 
     return vector<string>();
   
-  return split(s.substr(loc+1, s.size()-loc-2),',');
+  return split(args,',');
 }
