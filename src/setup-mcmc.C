@@ -227,24 +227,24 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "rho",     "rho_scale_sigma",  0.2,  MH_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "M0::omega",  "omega_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, log_scaled(more_than(0,shift_cauchy)),
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "M0::omega",  "omega_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(between(0,20,shift_cauchy)),
 	                                        "M2::omega",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, MH_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "f",              "f_shift_sigma",      0.1,  MH_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  MH_moves);
   add_MH_move(P, between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  MH_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "beta::mu",       "beta::mu_scale_sigma",     0.2,  MH_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, MH_moves);
-  add_MH_move(P, log_scaled(shift_cauchy),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "beta::mu",       "beta::mu_scale_sigma",     0.2,  MH_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);
   MH_moves.add(4,MCMC::SingleMove(scale_means_only,
 				   "scale_means_only","mean")
 		      );
 
   
   add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
-  add_MH_move(P, less_than(0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+  add_MH_move(P, between(-40,0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
   add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
 
   add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, MH_moves, 10);
@@ -596,7 +596,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     if (not has_parameter(P,name))
       break;
 
-    add_MH_move(P, log_scaled(shift_cauchy), name, "omega_scale_sigma", 1, parameter_moves);
+    add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)), name, "omega_scale_sigma", 1, parameter_moves);
     //    Proposal2 m(log_scaled(shift_cauchy), name, vector<string>(1,"omega_scale_sigma"), P);
     //    parameter_moves.add(1, MCMC::MH_Move(m,"sample_M3::omega"));
   }
