@@ -25,6 +25,63 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///
 
 /// \mainpage
+/// \section main Main
+/// The program is initiated from the file bali-phy.C
+///
+/// \section subst Substitution
+/// The substitution likelihood is calculated in the file
+/// substitution.C.  In order to speed up likelihood calculations, we
+/// cache conditional likelihoods (substitution-cache.C).  However,
+/// because the alignments is changing, column numbers may change and
+/// cannot be relied on.  Therefore, we compute indices for a branch
+/// that do not change if the alignment of the subtree behind the
+/// branch does not change (substitution-index.C).  Exponentials are
+/// computed in exponential.C .
+/// 
+/// \section mcmc MCMC
+/// The Markov Chain Monte Carlo (MCMC) routines are all called from
+/// the file mcmc.C.  Markov chains are constructed in setup-mcmc.C.
+/// Proposals for Metropolis-Hastings moves are defined in
+/// proposals.C . Slice sampling routines are defined in
+/// slice-sampling.C. 
+///
+/// \section objects Objects
+/// Trees are defined in tree.C and tree-branchnode.H. Leaf-labelled
+/// trees are defined in sequencetree.C.  Sequences are defined in
+/// sequence.C. The types of sequence are defined in alphabet.C, which
+/// contains classes that related letters like A, T, G, and C to
+/// integers.  Alignments are defined in alignment.C and place 
+/// collection of sequences in a matrix to depict homology.  Methods
+/// for reading FASTA and PHYLIP files are defined in
+/// sequence-format.C.
+///
+/// \section DP Dynamic Programming
+/// Many of the sampling routines rely on dynamic programming.
+/// Dynamic programming in turn relies on Hidden Markov Models
+/// (HMMs).  A general HMM class is defined in hmm.C.  Specific HMMs
+/// are define in 2way.C (pairwise alignments), 3way.C (three adjacent
+/// pairwise alignments) and 5way.C (pairwise alignments on a branch
+/// and its 4 adjacent branches).  Objects for performing 1-D dynamic
+/// programming are defined in dp-array.C.  Objects for performing 2-D 
+/// dynamic programming are defined in dp-matrix.C. 
+///
+/// There are a number of dynamic programming problems, and each of
+/// them involves both (a) summing over all the alignments in some
+/// set, and (b) sampling from the posterior distribution of
+/// alignments in that set.  Each problem is distinguished by the
+/// different set of alignments.  The file sample-alignment.C
+/// implements summing/sampling the alignment on one branch (2D) using
+/// the HMM in 2way.C.  The file sample-node.C implements resampling
+/// the +/- state in each column for a specific internal node
+/// sequence (1D) using the HMM in 3way.C. The file sample-tri.C
+/// implements resampling the alignment along a branch, and also
+/// resampling the +/- state in each column for a sequence at an
+/// internal node on one end of the branch (2D) using the HMM in
+/// 3way.C.  The file sample-two-nodes.C implements resample the +/-
+/// state for sequence at two internal nodes connected by a branch
+/// (1D) using the HMM in 5way.C.  The interface for these routes and
+/// other related utility routines is in alignment-sums.H.
+/// 
 /// \section intro_sec Introduction
 ///
 /// BAli-Phy is an MCMC sampler to jointly estimate alignments and a phylogeny.
@@ -917,7 +974,8 @@ int main(int argc,char* argv[])
   try {
 
 #if defined(HAVE_FEENABLEEXCEPT) && !defined(NDEBUG)
-    feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+    //    feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+    feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
 #if defined(HAVE_CLEAREXCEPT) && defined(NDEBUG)
     feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
