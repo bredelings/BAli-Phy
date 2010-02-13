@@ -70,7 +70,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "produces help message")
     ("subsample",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
-    ("data-dir", value<string>()->default_value("Data"),"subdirectory that contains genetic code files")
     ;
 
   options_description all("All options");

@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <boost/shared_ptr.hpp>
 #include "myexception.H"
 #include "clone.H"
 
@@ -68,6 +69,9 @@ protected:
 
   /// Remove a letter from the alphabet
   void remove(const std::string& l);
+  
+  /// Remove a letter from the alphabet
+  void remove(int);
   
   /// Add letters to letter classes and set masks
   virtual void setup_letter_classes();
@@ -278,16 +282,19 @@ public:
 /// An Amino Acid alphabet that includes a "stop" amino acid
 class AminoAcidsWithStop: public AminoAcids {
 public:
+  virtual AminoAcidsWithStop* clone() const {return new AminoAcidsWithStop(*this);}
+
   AminoAcidsWithStop();
 };
-
 
 /// An alphabet of triplets of nucleotides
 class Triplets: public alphabet {
 protected:
   OwnedPointer<Nucleotides> N;
 
+  /// (codon,position) -> nucleotide
   std::vector<std::vector<int> > sub_nuc_table;
+  /// (n1,n2,n3) -> codon
   std::vector<std::vector<std::vector<int> > > codon_table;
 
   void setup_sub_nuc_table();
@@ -301,6 +308,7 @@ public:
   /// The alphabet of nucleotides that we construct triplets from
   int sub_nuc(int codon,int pos) const;
 
+  /// Find the triplet made of nucleotides n1, n2, and n3
   int get_triplet(int n1, int n2, int n3) const;
 
   std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
@@ -309,16 +317,109 @@ public:
   Triplets(const std::string& s,const Nucleotides& N);
 };
 
+/// A Class that maps 3 nucleotides to an outcome in the amino_acid+stop alphabet
+class Genetic_Code: public Cloneable
+{
+  std::string name_;
+
+  RNA rna;
+  DNA dna;
+  AminoAcidsWithStop A;
+
+  std::vector< std::vector< std::vector<int> > > translation_table;
+
+  void add_entry(char c1, char c2, char c3, char aa);
+
+protected:
+  void setup_table(const std::string&, const std::string&, const std::string&, const std::string&);
+
+  void setup_table(const std::string&);
+
+  void setup_table(std::istream&);
+
+  void setup_table_from_file(const std::string& filename);
+
+public:
+  Genetic_Code* clone() const=0;
+
+  const std::string& name() const {return name_;}
+
+  const RNA& get_RNA() const {return rna;}
+  const DNA& get_DNA() const {return dna;}
+
+  const AminoAcidsWithStop& get_amino_acids() const {return A;}
+
+  /// Find out which amino acid (or stop codon) the letter maps to.
+  int translate(int,int,int) const;
+
+  /// Is letter codon a stop codon?
+  bool is_stop_codon(int, int, int) const;
+
+  Genetic_Code(const std::string& name);
+
+  Genetic_Code(const std::string& name, std::istream&);
+
+  Genetic_Code(const std::string& name, const std::string& filename);
+};
+
+
+class Standard_Genetic_Code: public Genetic_Code
+{
+public:
+  Standard_Genetic_Code* clone() const {return new Standard_Genetic_Code(*this);}
+
+  Standard_Genetic_Code();
+};
+
+class Mt_Invertebrate_Genetic_Code: public Genetic_Code
+{
+public:
+  Mt_Invertebrate_Genetic_Code* clone() const {return new Mt_Invertebrate_Genetic_Code(*this);}
+
+  Mt_Invertebrate_Genetic_Code();
+};
+
+class Mt_Vertebrate_Genetic_Code: public Genetic_Code
+{
+public:
+  Mt_Vertebrate_Genetic_Code* clone() const {return new Mt_Vertebrate_Genetic_Code(*this);}
+
+  Mt_Vertebrate_Genetic_Code();
+};
+
+class Mt_Protozoan_Genetic_Code: public Genetic_Code
+{
+public:
+  Mt_Protozoan_Genetic_Code* clone() const {return new Mt_Protozoan_Genetic_Code(*this);}
+
+  Mt_Protozoan_Genetic_Code();
+};
+
+class Mt_Yeast_Genetic_Code: public Genetic_Code
+{
+public:
+  Mt_Yeast_Genetic_Code* clone() const {return new Mt_Yeast_Genetic_Code(*this);}
+
+  Mt_Yeast_Genetic_Code();
+};
+
+class Mt_Echinoderm_Genetic_Code: public Genetic_Code
+{
+public:
+  Mt_Echinoderm_Genetic_Code* clone() const {return new Mt_Echinoderm_Genetic_Code(*this);}
+
+  Mt_Echinoderm_Genetic_Code();
+};
 
 /// A Triplets alphabet with a mapping to an AminoAcids alphabet
 class Codons: public Triplets {
 protected:
   OwnedPointer<AminoAcids> A;
+  OwnedPointer<Genetic_Code> G;
   std::vector<int> translation_table;
 
-  void setup_table(const std::vector<std::string>&,const std::vector<std::string>&);
-  void setup_table(std::istream&);
-  void setup_table(const std::string&);
+  void setup_table();
+
 public:
   virtual Codons* clone() const {return new Codons(*this);}
 
@@ -335,14 +436,10 @@ public:
   /// What AminoAcids alphabet are we using?
   const AminoAcids& getAminoAcids() const {return *A;}
 
-  /// Construct a Codons alphabet from Nucleotides, AminoAcids, and a correspondance table.
-  Codons(const Nucleotides& N1,const AminoAcids& A1,std::vector<std::string>,std::vector<std::string>);
+  const Genetic_Code& getGenetic_Code() const {return *G;}
 
-  /// Construct a Codons alphabet from Nucleotides, AminoAcids, and a file handle.
-  Codons(const Nucleotides& N1,const AminoAcids& A1,std::istream&);
-
-  /// Construct a Codons alphabet from Nucleotides, AminoAcids, and a filename.
-  Codons(const Nucleotides& N1,const AminoAcids& A1,const std::string&);
+  /// Construct a Codons alphabet from Nucleotides, AminoAcids, and a Genetic Code
+  Codons(const Nucleotides& N1,const AminoAcids& A1, const Genetic_Code& G);
 };
 
 
@@ -358,4 +455,9 @@ std::valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,
 /// Compute codon frequences from nucleotide frequencies if the nucleotide positions in the codon are independent
 std::valarray<double> get_codon_frequencies_from_independent_nucleotide_frequencies(const Triplets& C,const std::valarray<double>& fN );
 
+std::vector<boost::shared_ptr<const alphabet> > load_alphabets();
+
+std::vector<boost::shared_ptr<const alphabet> > load_alphabets(const std::string&);
+
+boost::shared_ptr<const Genetic_Code> get_genetic_code(const std::string& name);
 #endif

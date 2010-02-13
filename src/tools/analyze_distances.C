@@ -420,7 +420,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("fix",value<vector<string> >()->composing(),"fix parameter[=<value>]")
     ("unfix",value<vector<string> >()->composing(),"un-fix parameter")
     ("frequencies",value<string>(),"comma-separated vector of frequencies to use as initial condition") 
-    ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("search",value<string>(),"search model_parameters?")
     ;

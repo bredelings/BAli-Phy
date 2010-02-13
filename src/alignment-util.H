@@ -144,10 +144,6 @@ alignment find_last_alignment(std::istream& ifile, const std::vector<boost::shar
 
 alignment find_first_alignment(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
 
-std::vector<boost::shared_ptr<const alphabet> > load_alphabets();
-
-std::vector<boost::shared_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args, const std::string&);
-
 std::vector<boost::shared_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args);
 
 void check_disconnected(const alignment& A, const Tree& T, const std::vector<int>& disconnected);

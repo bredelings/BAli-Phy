@@ -51,8 +51,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help,h", "produce help message")
-    ("data-dir", value<string>()->default_value("Data"),"data directory")
-    ("genetic-code",value<string>()->default_value("standard-code.txt"),"Specify alternate genetic code file in data directory.")
+    ("genetic-code,g",value<string>()->default_value("standard"),"Specify alternate genetic code.")
     ("frame,f",value<int>()->default_value(1),"frame 1, 2, 3, -1, -2, or -3")
     ("reverse,r","Just return the reverse")
     ("complement,c","Just return the complement")
@@ -69,8 +68,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<all<<"\n";
     exit(0);
   }
-
-  load_bali_phy_rc(args,all);
 
   return args;
 }
@@ -127,14 +124,10 @@ int main(int argc,char* argv[])
       A1 = reverse_complement(A1);
 
     //------- Construct the alphabets that we are using  --------//
-    string genetic_code_filename = "standard-code.txt";
-    if (args.count("genetic-code"))
-      genetic_code_filename = args["genetic-code"].as<string>();
-    genetic_code_filename = args["data-dir"].as<string>() + "/" + genetic_code_filename;
+    boost::shared_ptr<const Genetic_Code> G = get_genetic_code(args["genetic-code"].as<string>());
 
     AminoAcidsWithStop AA;
-    Codons C(*N, AA, genetic_code_filename);
-    
+
     //------- Convert sequence codons to amino acids  --------//
     alignment A2(AA);
 
@@ -150,9 +143,7 @@ int main(int argc,char* argv[])
 	int n1 = A1(column+1,i);
 	int n2 = A1(column+2,i);
 
-	int cc = C.get_triplet(n0,n1,n2);
-
-	int aa = C.translate(cc);
+	int aa = G->translate(n0,n1,n2);
 
 	S += AA.lookup(aa);
       }

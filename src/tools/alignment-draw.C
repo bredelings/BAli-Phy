@@ -591,7 +591,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "produce help message")
     ("align", value<string>(),"file with sequences and initial alignment")
     ("alphabet",value<string>(),"Set to 'Codons' to prefer codon alphabets")
-    ("data-dir", value<string>()->default_value("Data"),"data directory")
     ;
   
   options_description output("Output");

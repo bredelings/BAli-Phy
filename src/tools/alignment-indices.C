@@ -42,7 +42,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help", "produce help message")
-    ("data-dir", value<string>()->default_value("Data"),"data directory")
     ("align", value<string>(),"file with sequences and initial alignment")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("columns,c", value<string>(),"Ranges of columns to keep, like: 1-10,30-")

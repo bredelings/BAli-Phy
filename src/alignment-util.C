@@ -729,57 +729,6 @@ long int splits_distance2(const ublas::matrix<int>& M1,const vector< vector<int>
 }
 
 
-vector<shared_ptr<const alphabet> > load_alphabets()
-{
-  vector<shared_ptr<const alphabet> > alphabets; 
-
-  alphabets.push_back(shared_ptr<const alphabet>(new DNA));
-  alphabets.push_back(shared_ptr<const alphabet>(new RNA));
-  alphabets.push_back(shared_ptr<const alphabet>(new AminoAcids));
-  alphabets.push_back(shared_ptr<const alphabet>(new AminoAcidsWithStop));
-
-  return alphabets;
-}
-
-vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args,const string& name)
-{
-  vector<shared_ptr<const alphabet> > alphabets; 
-
-  if (name == "Codons" or name == "Codons+stop")
-  {
-    shared_ptr<const AminoAcids> AA;
-    if (name == "Codons")
-      AA = shared_ptr<const AminoAcids>(new AminoAcids);
-    else
-      AA = shared_ptr<const AminoAcids>(new AminoAcidsWithStop);
-    
-    string genetic_code_filename = "standard-code.txt";
-    if (args.count("genetic-code"))
-      genetic_code_filename = args["genetic-code"].as<string>();
-
-    genetic_code_filename = args["data-dir"].as<string>() + "/" + genetic_code_filename;
-
-    alphabets.push_back(shared_ptr<const alphabet>(new Codons(DNA(),*AA,genetic_code_filename)));
-    alphabets.push_back(shared_ptr<const alphabet>(new Codons(RNA(),*AA,genetic_code_filename)));
-  }
-  else if (name == "Triplets") {
-    alphabets.push_back(shared_ptr<const alphabet>(new Triplets(DNA())));
-    alphabets.push_back(shared_ptr<const alphabet>(new Triplets(RNA())));
-  }
-  else if (name == "DNA")
-    alphabets.push_back(shared_ptr<const alphabet>(new DNA()));
-  else if (name == "RNA")
-    alphabets.push_back(shared_ptr<const alphabet>(new RNA()));
-  else if (name == "Amino-Acids")
-    alphabets.push_back(shared_ptr<const alphabet>(new AminoAcids()));
-  else if (name == "Amino-Acids+stop")
-    alphabets.push_back(shared_ptr<const alphabet>(new AminoAcidsWithStop()));
-  else 
-    throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
-
-  return alphabets;
-}
-
 vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args) 
 {
   vector<shared_ptr<const alphabet> > alphabets; 
@@ -789,7 +738,7 @@ vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args)
 
   const string name = args["alphabet"].as<string>();
 
-  return load_alphabets(args, name);
+  return load_alphabets(name);
 }
 
 alignment load_alignment(const string& filename,const vector<shared_ptr<const alphabet> >& alphabets)

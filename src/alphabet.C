@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 
 using namespace std;
+using boost::shared_ptr;
 
 namespace {
 string sanitize(const string& s1)
@@ -172,6 +173,10 @@ void alphabet::insert(const string& l)
 
 void alphabet::remove(const string& l) {
   int index = find_letter(l);
+  remove(index);
+}
+
+void alphabet::remove(int index) {
   letters_.erase(letters_.begin()+index);
   setup_letter_classes();
 }
@@ -550,75 +555,193 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
   setup_letter_classes();
 }
 
-void Codons::setup_table(const vector<string>& cc,const vector<string>& aa) 
+char convert_DNA_or_RNA_to(char c, Nucleotides& N)
 {
-  // check that we actually have a one-to-one and onto mapping
-  assert(cc.size() == aa.size());
-  translation_table.clear();
+  //---- Convert U to U/T ----//
+  string T_letter = N.lookup(2);
+  assert(T_letter.size() == 1);
+  char T = T_letter[0];
 
-  // Remove codons/letters in (*this) that map to amino acids not in *A.
-  for(int i=cc.size()-1; i>=0; i--) 
+  if (c == 'U' or c == 'T')
+    return T;
+  else
+    return c;
+}
+
+void Genetic_Code::add_entry(char c1, char c2, char c3, char aa)
+{
+  int n1 = dna[ c1 ];
+  int n2 = dna[ c2 ];
+  int n3 = dna[ c3 ];
+
+  if (not dna.is_letter(n1)) throw myexception()<<"add_entry( ): in codon '"<<c1<<c2<<c3<<"' -> '"<<aa<<"', '"<<c1<<" is not a nucleotide.";
+  if (not dna.is_letter(n2)) throw myexception()<<"add_entry( ): in codon '"<<c1<<c2<<c3<<"' -> '"<<aa<<"', '"<<c2<<" is not a nucleotide.";
+  if (not dna.is_letter(n3)) throw myexception()<<"add_entry( ): in codon '"<<c1<<c2<<c3<<"' -> '"<<aa<<"', '"<<c3<<" is not a nucleotide.";
+
+  int aa_index = A[aa];
+
+  if (not A.is_letter(aa_index)) throw myexception()<<"add_entry( ): in codon '"<<c1<<c2<<c3<<"' -> '"<<aa<<"', '"<<aa<<"' is not a valid amino acid.";
+
+  translation_table[n1][n2][n3] = aa_index;
+}
+
+void Genetic_Code::setup_table(const string& n1, const string& n2, const string& n3, const string& aa)
+{
+  const int N = 64;
+  assert(n1.size() == N);
+  assert(n2.size() == N);
+  assert(n3.size() == N);
+  assert(aa.size() == N);
+
+  translation_table = vector< vector< vector<int> > >(4,
+						      vector<vector<int> >(4,
+									   vector<int>(4,-1)
+									   )
+						      );
+
+  for(int i=0;i<N;i++)
+    add_entry(n1[i],n2[i],n3[i],aa[i]);
+
+  for(int i=0;i<4;i++)
+    for(int j=0;j<4;j++)
+      for(int k=0;k<4;k++)
+	if (translation_table[i][j][k] == -1)
+	  throw myexception()<<"Codon "<<i<<","<<j<<","<<k<<" has no translation!";
+}
+
+void Genetic_Code::setup_table(const string& aa)
+{
+  string n1 = "TTTTTTTTTTTTTTTTCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAGGGGGGGGGGGGGGGG";
+  string n2 = "TTTTCCCCAAAAGGGGTTTTCCCCAAAAGGGGTTTTCCCCAAAAGGGGTTTTCCCCAAAAGGGG";
+  string n3 = "TCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAG";
+  setup_table(n1,n2,n3,aa);
+}
+
+void Genetic_Code::setup_table(std::istream& file)
+{
+  string aa;
+  getline_handle_dos(file,aa);
+
+  string n1;
+  getline_handle_dos(file,n1);
+
+  string n2;
+  getline_handle_dos(file,n2);
+
+  string n3;
+  getline_handle_dos(file,n3);
+
+  //---- Create the lookup table ----//
+  setup_table(n1,n2,n3,aa);
+}
+
+void Genetic_Code::setup_table_from_file(const std::string& filename)
+{
+  ifstream file(filename.c_str());
+  if (not file)
+    throw myexception()<<"Couldn't open file '"<<filename<<"'";
+
+  setup_table(file);
+}
+
+int Genetic_Code::translate(int n1, int n2, int n3) const
+{
+  if (rna.is_feature(n1) and rna.is_feature(n2) and rna.is_feature(n3)) 
   {
-    // check that cc[i] is in the alphabet
-    if (not contains(cc[i]))
-      throw myexception()<<"Codon table has entry: "<<cc[i]<<" -> "<<aa[i]
-			 <<", but alphabet does not contain "<<cc[i]<<".";
+    if (rna.is_letter(n1) and rna.is_letter(n2) and rna.is_letter(n3))
+    {
+      int index = translation_table[n1][n2][n3];
+      if (index == -1) 
+	throw myexception()<<"Genetic Code: "<<name()<<" has no entry for "<<n1<<","<<n2<<","<<n3;
+      return index;
+    }
+    else 
+      return alphabet::not_gap;
+  }
+  else if (n1 == alphabet::gap or n2 == alphabet::gap or n3 == alphabet::gap)
+    return alphabet::gap;
+  else
+    return alphabet::unknown;
+}
 
-    // remove cc[i] if we don't recognize its amino acid
-    if (not A->contains(aa[i]))
-      remove(cc[i]);
+Genetic_Code::Genetic_Code(const string& n)
+  :name_(n)
+{
+  
+}
+
+Genetic_Code::Genetic_Code(const string& n, istream& file)
+  :name_(n)
+{
+  setup_table(file);
+}
+
+Genetic_Code::Genetic_Code(const string& n, const string& filename)
+  :name_(n)
+{
+  setup_table_from_file(filename);
+}
+
+Standard_Genetic_Code::Standard_Genetic_Code()
+  :Genetic_Code("Standard_Genetic_Code")
+{
+  setup_table("FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG");
+}
+
+Mt_Invertebrate_Genetic_Code::Mt_Invertebrate_Genetic_Code()
+  :Genetic_Code("Mt_Invertebrate_Genetic_Code")
+{
+  setup_table("FFLLSSSSYY**CCWWLLLLPPPPHHQQRRRRIIMMTTTTNNKKSSSSVVVVAAAADDEEGGGG");
+}
+
+Mt_Vertebrate_Genetic_Code::Mt_Vertebrate_Genetic_Code()
+  :Genetic_Code("Mt_Vertebrate_Genetic_Code")
+{
+  setup_table("FFLLSSSSYY**CCWWLLLLPPPPHHQQRRRRIIMMTTTTNNKKSS**VVVVAAAADDEEGGGG");
+}
+
+Mt_Yeast_Genetic_Code::Mt_Yeast_Genetic_Code()
+  :Genetic_Code("Mt_Yeast_Genetic_Code")
+{
+  setup_table("FFLLSSSSYY**CCWWTTTTPPPPHHQQRRRRIIMMTTTTNNKKSSRRVVVVAAAADDEEGGGG");
+}
+
+Mt_Protozoan_Genetic_Code::Mt_Protozoan_Genetic_Code()
+  :Genetic_Code("Mt_Protozoan_Genetic_Code")
+{
+  setup_table("FFLLSSSSYY**CCWWTTTTPPPPHHQQRRRRIIMMTTTTNNKKSSRRVVVVAAAADDEEGGGG");
+}
+
+void Codons::setup_table() 
+{
+  const AminoAcidsWithStop& GAA = G->get_amino_acids();
+
+  // Remove codons/letters in (*this) do not map to amino acids in *A.
+  for(int i=size()-1; i>=0; i--) 
+  {
+    int n1 = sub_nuc(i,0);
+    int n2 = sub_nuc(i,1);
+    int n3 = sub_nuc(i,2);
+
+    string aa_letter = GAA.letter(G->translate(n1,n2,n3));
+    if (not A->contains(aa_letter))
+      remove(i);
   }
 
   translation_table.resize( size() );
+  setup_sub_nuc_table();
+  setup_letter_classes();
+
   // Compute the indices for the remaining ones
-  for(int i=0;i<translation_table.size();i++) 
+  for(int i=0;i<size();i++) 
   {
-    if (not includes(cc,lookup(i)))
-	throw myexception()<<"Codon table has no entry for codon '"<<lookup(i)<<"'!";
+    int n1 = sub_nuc(i,0);
+    int n2 = sub_nuc(i,1);
+    int n3 = sub_nuc(i,2);
 
-    int entry = find_index(cc,lookup(i));
-    translation_table[i] = (*A)[ aa[entry] ];
+    translation_table[i] = (*A)[ GAA.letter(G->translate(n1,n2,n3)) ];
   }
 }
-
-void Codons::setup_table(istream& file) 
-{
-  //------ Load the file ------//
-  vector<string> cc;
-  vector<string> aa;
-  for(int i=0;i<size();i++) {
-    string temp;
-    file>>temp;
-    cc.push_back(temp);
-    
-    file>>temp;
-    aa.push_back(temp);
-  }
-  
-  //---- Convert U to U/T ----//
-  string TT = N->lookup(2);
-  assert(TT.size() == 1);
-  char T = TT[0];
-
-  for(int i=0;i<cc.size();i++)
-    for(int j=0;j<cc[i].size();j++)
-      if (cc[i][j] == 'U')
-	cc[i][j] = T;
-
-  //---- Setup the table ----//
-  setup_table(cc,aa);
-}
-				    
-void Codons::setup_table(const string& filename) {
-  ifstream genetic_code(filename.c_str());
-  if (not genetic_code)
-    throw myexception()<<"Couldn't open file '"<<filename<<"'";
-
-  setup_table(genetic_code);
-
-  genetic_code.close();
-}
-
 
 /// What amino acid does codon map to?
 int Codons::translate(int codon) const
@@ -645,33 +768,82 @@ int Codons::translate(int codon) const
 }
 
 
-Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
-	       const vector<string> cc,const vector<string> aa) 
-  :Triplets(N1),A(A1)
+Codons::Codons(const Nucleotides& N1,const AminoAcids& A1, const Genetic_Code& G_)
+  :Triplets(N1),A(A1),G(G_)
 {
-  setup_table(cc,aa);
+  setup_table();
   setup_sub_nuc_table();
+  setup_letter_classes();
 
-  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
+  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name + " [" + G->name() + "]";
 }
 
-
-Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
-	       istream& file) 
-  :Triplets(N1),A(A1)
+vector<shared_ptr<const alphabet> > load_alphabets()
 {
-  setup_table(file);
-  setup_sub_nuc_table();
+  vector<shared_ptr<const alphabet> > alphabets; 
 
-  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
+  alphabets.push_back(shared_ptr<const alphabet>(new DNA));
+  alphabets.push_back(shared_ptr<const alphabet>(new RNA));
+  alphabets.push_back(shared_ptr<const alphabet>(new AminoAcids));
+  alphabets.push_back(shared_ptr<const alphabet>(new AminoAcidsWithStop));
+
+  return alphabets;
 }
 
-Codons::Codons(const Nucleotides& N1,const AminoAcids& A1,
-	       const string& filename) 
-  :Triplets(N1),A(A1)
+shared_ptr<const Genetic_Code> get_genetic_code(const string& name)
 {
-  setup_table(filename);
-  setup_sub_nuc_table();
-
-  name = string("Codons of ") + getNucleotides().name + " -> " + A1.name;
+  if (name == "standard")
+    return shared_ptr<const Genetic_Code>(new Standard_Genetic_Code());
+  else if (name == "mt-vert")
+    return shared_ptr<const Genetic_Code>(new Mt_Vertebrate_Genetic_Code());
+  else if (name == "mt-invert")
+    return shared_ptr<const Genetic_Code>(new Mt_Invertebrate_Genetic_Code());
+  else if (name == "mt-yeast")
+    return shared_ptr<const Genetic_Code>(new Mt_Yeast_Genetic_Code());
+  else if (name == "mt-protozoan")
+    return shared_ptr<const Genetic_Code>(new Mt_Protozoan_Genetic_Code());
+  else
+    throw myexception()<<"I don't recognize genetic code name '"<<name<<"'.\n"
+      "  Try one of 'standard', 'mt-vert', 'mt-invert', 'mt-protozoan', 'mt-yeast'.";
 }
+
+vector<shared_ptr<const alphabet> > load_alphabets(const string& name_)
+{
+  vector<shared_ptr<const alphabet> > alphabets; 
+
+  string name = name_;
+  vector<string> arguments = get_arguments(name,'[',']');
+
+  if (name == "Codons" or name == "Codons*" or name == "Codons+stop")
+  {
+    shared_ptr<const AminoAcids> AA;
+    if (name == "Codons")
+      AA = shared_ptr<const AminoAcids>(new AminoAcids);
+    else
+      AA = shared_ptr<const AminoAcids>(new AminoAcidsWithStop);
+    
+    shared_ptr<const Genetic_Code> G(new Standard_Genetic_Code());
+    if (arguments.size())
+      G = get_genetic_code(arguments[0]);
+
+    alphabets.push_back(shared_ptr<const alphabet>(new Codons(DNA(),*AA,*G)));
+    alphabets.push_back(shared_ptr<const alphabet>(new Codons(RNA(),*AA,*G)));
+  }
+  else if (name == "Triplets") {
+    alphabets.push_back(shared_ptr<const alphabet>(new Triplets(DNA())));
+    alphabets.push_back(shared_ptr<const alphabet>(new Triplets(RNA())));
+  }
+  else if (name == "DNA")
+    alphabets.push_back(shared_ptr<const alphabet>(new DNA()));
+  else if (name == "RNA")
+    alphabets.push_back(shared_ptr<const alphabet>(new RNA()));
+  else if (name == "Amino-Acids" or name == "AA")
+    alphabets.push_back(shared_ptr<const alphabet>(new AminoAcids()));
+  else if (name == "Amino-Acids+stop" or name == "AA*")
+    alphabets.push_back(shared_ptr<const alphabet>(new AminoAcidsWithStop()));
+  else 
+    throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
+
+  return alphabets;
+}
+

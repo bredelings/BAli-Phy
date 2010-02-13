@@ -426,7 +426,7 @@ vector<alignment> load_As(const variables_map& args)
   for(int i=0;i<filenames.size();i++) {
     const string alphabet_name = alphabet_names[i];
     if (alphabet_name.size())
-      alignments.push_back( load_alignment(filenames[i], load_alphabets(args, alphabet_name) ) );
+      alignments.push_back( load_alignment(filenames[i], load_alphabets(alphabet_name) ) );
     else
       alignments.push_back( load_alignment(filenames[i], load_alphabets() ) );
   }

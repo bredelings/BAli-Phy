@@ -91,7 +91,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("align", value<string>(),"file with sequences and initial alignment")
     ("tree",value<string>(),"file with initial tree")
     ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
-    ("data-dir", value<string>()->default_value("Data"),"data directory")
     ;
 
   // positional options
@@ -112,7 +111,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     exit(0);
   }
 
-  load_bali_phy_rc(args,all);
   cout<<endl;
   return args;
 }

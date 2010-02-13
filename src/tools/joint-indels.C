@@ -146,7 +146,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("subsample",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
     ("partition", value<string>(), "find indels along internal branch that bi-partitions given taxa (<taxa1>:<taxa2>:...)")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
-    ("data-dir", value<string>()->default_value("Data"),"subdirectory that contains genetic code files")
     ("verbose","Output more log messages on stderr.")
     ;
 
