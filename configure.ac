@@ -186,6 +186,7 @@ if test "$GXX" = yes ; then
           CXXFLAGS="$CXXFLAGS -DBOOST_UBLAS_INLINE=inline"
           CXXFLAGS="$CXXFLAGS -DBOOST_UBLAS_CHECK_ENABLE=0"
           CXXFLAGS="$CXXFLAGS -DBOOST_UBLAS_TYPE_CHECK=0"
+          CXXFLAGS="$CXXFLAGS -DTNT_BOUNDS_CHECK"
       fi
   elif test "$bounds_checking" != boost ; then
       echo "I don't recognize --enable-bounds-checking=$bounds_checking."
