@@ -333,7 +333,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     if (not has_parameter(P,name))
       break;
     
-    add_slice_moves(P,name, "M3::omega_slice_window", 1.0, false, 0, false, 0, slice_moves);
+    add_slice_moves(P,name, "M3::omega_slice_window", 1.0, true, 0, false, 0, slice_moves);
   }
 
   slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
