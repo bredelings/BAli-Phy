@@ -5,7 +5,7 @@
 #include "tnt_array1d.h"
 #include "tnt_array2d.h"
 #include "tnt_math_utils.h"
-
+#include "myexception.H"
 
 using namespace TNT;
 
@@ -270,6 +270,7 @@ class Eigenvalue
    
                // Implicit QL transformation.
    
+	       if (m >= d.dim()) throw myexception()<<"tql2: fail";
                p = d[m];
                Real c = 1.0;
                Real c2 = c;
