@@ -11,8 +11,10 @@ bin_SCRIPTS = scripts/bali-phy-sge scripts/pairwise-alignment-distances scripts/
 docdir = $(datadir)/doc/@PACKAGE@
 doc_DATA = scripts/GNUmakefile doc/README.xhtml doc/docbook.css # doc/README.pdf
 
-stuffdir = $(datadir)/@PACKAGE@/
-nobase_stuff_DATA = Data/WAGSTAR.dat Data/C20.dat Data/C10.dat
+# This is the stuff that formly was distributed as being in the Data/ dir.
+# The 'nobase' means that if its starts as dir/file, then it is distributed as dir/file.
+#stuffdir = $(datadir)/@PACKAGE@/
+#nobase_stuff_DATA = Data/file1 Data/file2
 
 examplesdir = $(datadir)/@PACKAGE@/
 nobase_examples_DATA = examples/EF-Tu/5d.fasta examples/EF-Tu/12d.fasta examples/EF-Tu/48b.fasta \

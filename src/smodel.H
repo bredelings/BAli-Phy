@@ -975,11 +975,14 @@ namespace substitution {
     /// Fraction of the sites with each parameter value (weights on the mixture components)
     std::vector<double> fraction;
 
-    string model_name;
-
-    void load_file(const string& filename);
+    string name_;
 
   public:
+    /// Load the site frequencies from \a file
+    void load_file(std::istream& file);
+
+    /// Load the site frequencies from \a filename
+    void load_file(const string& filename);
 
     // no parameters: super_prior() == 1
 
@@ -998,13 +1001,33 @@ namespace substitution {
     /// Get the equilibrium frequencies - Gotta define this, cuz MultiModel is reversible...
     const valarray<double>& frequencies() const;
 
-    string name() const;
+    string name() const {return name_;}
 
-    CAT_FixedFrequencyModel(const alphabet& a, const string& filename);
+    /// Create a CAT_FixedFrequencyModel with alphabet \a a.
+    CAT_FixedFrequencyModel(const alphabet& a);
+
+    /// Create a CAT_FixedFrequencyModel with alphabet \a a and name \a n.
+    CAT_FixedFrequencyModel(const alphabet& a, const string& n);
 
     ~CAT_FixedFrequencyModel() {}
   };
 
+
+  class C10_CAT_FixedFrequencyModel: public CAT_FixedFrequencyModel
+  {
+  public:
+    C10_CAT_FixedFrequencyModel* clone() const {return new C10_CAT_FixedFrequencyModel(*this);}
+
+    C10_CAT_FixedFrequencyModel();
+  };
+
+  class C20_CAT_FixedFrequencyModel: public CAT_FixedFrequencyModel
+  {
+  public:
+    C20_CAT_FixedFrequencyModel* clone() const {return new C20_CAT_FixedFrequencyModel(*this);}
+
+    C20_CAT_FixedFrequencyModel();
+  };
 
   /// A substitution model based on running Reversible Models with the same equilibrium at different rates
   class MultiParameterModel: public MultiModel, 

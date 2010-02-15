@@ -144,12 +144,14 @@ bool process_stack_Markov(vector<string>& string_stack,
     M.load_file(arg);
     model_stack.push_back(M);
   }
+  else if (match(string_stack,"C10",arg))
+    model_stack.push_back(C10_CAT_FixedFrequencyModel());
+  else if (match(string_stack,"C20",arg))
+    model_stack.push_back(C20_CAT_FixedFrequencyModel());
   else if (match(string_stack,"CAT-Fix",arg)) {
-    string filename = arg;
-    if (filename.empty()) filename = "C20";
-    filename = args["data-dir"].as<string>() + "/" + filename + ".dat";
-
-    model_stack.push_back(CAT_FixedFrequencyModel(a,filename));
+    CAT_FixedFrequencyModel M(a);
+    M.load_file(arg);
+    model_stack.push_back(M);
   }
 
   else if (match(string_stack,"M0",arg)) 
