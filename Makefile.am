@@ -12,8 +12,7 @@ docdir = $(datadir)/doc/@PACKAGE@
 doc_DATA = scripts/GNUmakefile doc/README.xhtml doc/docbook.css # doc/README.pdf
 
 stuffdir = $(datadir)/@PACKAGE@/
-nobase_stuff_DATA = Data/WAG.dat Data/WAGSTAR.dat Data/JTT.dat Data/PAM.dat \
-		Data/C20.dat Data/C10.dat
+nobase_stuff_DATA = Data/WAGSTAR.dat Data/C20.dat Data/C10.dat
 
 examplesdir = $(datadir)/@PACKAGE@/
 nobase_examples_DATA = examples/EF-Tu/5d.fasta examples/EF-Tu/12d.fasta examples/EF-Tu/48b.fasta \

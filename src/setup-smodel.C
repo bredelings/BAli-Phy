@@ -57,7 +57,7 @@ void guess_markov_model(vector<string>& string_stack,const alphabet& a)
   if (dynamic_cast<const Nucleotides*>(&a))
     string_stack.push_back("TN");
   else if (dynamic_cast<const AminoAcids*>(&a))
-    string_stack.push_back("Empirical");
+    string_stack.push_back("LG");
   else if (dynamic_cast<const Codons*>(&a))
     string_stack.push_back("M0");
   else if (dynamic_cast<const Triplets*>(&a))
@@ -131,12 +131,18 @@ bool process_stack_Markov(vector<string>& string_stack,
     else
       throw myexception()<<"GTRx3:: '"<<a.name<<"' is not a triplet alphabet.";
   }
+  else if (match(string_stack,"PAM",arg)) 
+    model_stack.push_back(PAM());
+  else if (match(string_stack,"JTT",arg))
+    model_stack.push_back(JTT());
+  else if (match(string_stack,"WAG",arg))
+    model_stack.push_back(WAG());
+  else if (match(string_stack,"LG",arg))
+    model_stack.push_back(LG());
   else if (match(string_stack,"Empirical",arg)) {
-    string filename = arg;
-    if (filename.empty()) filename = "WAG";
-    filename = args["data-dir"].as<string>() + "/" + filename + ".dat";
-
-    model_stack.push_back(Empirical(a,filename));
+    Empirical M(a);
+    M.load_file(arg);
+    model_stack.push_back(M);
   }
   else if (match(string_stack,"CAT-Fix",arg)) {
     string filename = arg;
@@ -484,7 +490,7 @@ get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,
     process_stack_Multi(string_stack,model_stack,frequencies);
 
     if (string_stack.size() == length)
-      throw myexception()<<"Error: Couldn't process substitution model level \""<<string_stack.back()<<"\"";
+      throw myexception()<<"Couldn't process substitution model level \""<<string_stack.back()<<"\"";
   }
 
   //---------------------- Stack should be empty now ----------------------//

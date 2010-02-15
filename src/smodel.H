@@ -316,20 +316,56 @@ namespace substitution {
   class Empirical: public AlphabetExchangeModel,public ModelWithAlphabet<alphabet> 
   {
     /// Specificy this model based on the matrix that was loaded
-    string modelname;
+    string name_;
+
+  public:
+    /// Load the exhangeability matrix from file 'filename'
+    void load_file(std::istream&);
 
     /// Load the exhangeability matrix from file 'filename'
     void load_file(const string& filename);
 
-  public:
-
     virtual Empirical* clone() const {return new Empirical(*this);}
 
-    string name() const;
+    string name() const {return name_;}
 
-    Empirical(const alphabet& a,const string& filename); 
+    Empirical(const alphabet& a); 
+
+    Empirical(const alphabet& a, const string& n); 
 
     ~Empirical() {}
+  };
+
+  class PAM: public Empirical
+  {
+  public:
+    virtual PAM* clone() const {return new PAM(*this);}
+
+    PAM();
+  };
+
+  class JTT: public Empirical
+  {
+  public:
+    virtual JTT* clone() const {return new JTT(*this);}
+
+    JTT();
+  };
+
+  class WAG: public Empirical
+  {
+  public:
+    virtual WAG* clone() const {return new WAG(*this);}
+
+    WAG();
+  };
+
+  class LG: public Empirical
+  {
+  public:
+    virtual LG* clone() const {return new LG(*this);}
+
+    LG();
   };
 
   class NucleotideExchangeModel: public AlphabetExchangeModel,
