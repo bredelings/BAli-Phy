@@ -1,5 +1,3 @@
-Eliminate --data-dir.
-
 Cleanups:
  * Rename s/lambda/weight/ in mcmc.{H,C}
  * Make MoveOne do sampling W/O replacement!
@@ -10,7 +8,7 @@ Resampling the following parameters shouldn't require peeling along the tree:
 
 Make trees-consensus write out a list of partitions directly, so we don't need perl?
 
-Implement --output=svg,pdf in draw-tree.
+Speedup: implement --output=svg,pdf in draw-tree.
 
 Documentation
  - Make programs more self-documenting.
@@ -45,7 +43,7 @@ Make moves report meaningful names for their various statistics.
  - Make NNI report how many branches peeled on average,
  - Make SPR report how many branches peeled on average divided T.n_branches()
 
-Handle two-directory case better: make outfile be a list.
+Handle two-directory case better: make outfile into list.
  * Alignment-max and alignment-consensus should also take multiple input files.
 
 Report
