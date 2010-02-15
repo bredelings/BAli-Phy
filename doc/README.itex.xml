@@ -20,187 +20,98 @@
   <sect1 id="pre-requisites">
     <title>Pre-requisites</title>
 
-      <sect2 id="hardware_requirements">
-	<title>Hardware Requirements</title>
+    <para><application>BAli-Phy</application> is developed
+      primarily for on Linux, but also runs on Windows and Mac OS X.
+      We typically run <application>BAli-Phy</application> on Core2
+      processors  with 8Gb of RAM. </para>
+    
+      <para><application>BAli-Phy</application> is a command-line
+	application, not a graphical application.  The Windows and
+	Macintosh version assume that you understand some
+	UNIX commands, or at least are not intimidated by them.
+      </para>
 
-	<para><application>BAli-Phy</application> is principally
-	developed on Linux, and so may be easiest to use there.
-	However, it should be able to run on any hardware with a
-	modern operating system, including Windows, and Mac OS
-	X.</para>
-
-	<para>We recommend at least 1Gb of RAM and a pentium4
-	processor.  We typically run
-	<application>BAli-Phy</application> on Core2 processors
-	with 8Gb of RAM.</para> 
-      </sect2>
-
-      <sect2 id="os_requirements">
-	<title>Operating System requirements</title>
-
-	  <note>
-	    <title>Command line ahead!</title>
-	    
-	    <para><application>BAli-Phy</application> is not a
-	    graphical application.  While there are Mac and Windows
-	    versions available, these assume that you understand some
-	    UNIX commands, or at least are not intimidated by them.
-	    BAli-Phy is (hopefully) usable, but it is not "user-friendly"!
-	    </para>
-	  </note>
-
-	<sect3>
+	<sect2>
 	  <title>Linux and UNIX</title>
 
-	  <para>A Linux or UNIX system should be able to install and
-	  run <application>BAli-Phy</application> without any modification.</para>
-	</sect3>
+	  <para>On Linux, you should be able to install and
+	  run <application>BAli-Phy</application> without any
+	  modification.  For other UNIX systems, you may need to
+	  compile <application>BAli-Phy</application> before running it.</para>
+	</sect2>
 
-	<sect3>
+	<sect2>
 	  <title>Windows</title>
 
 	  <para>On Windows you must first install <ulink
 	  url="http://www.cygwin.com">cygwin</ulink>.  Cygwin is a
-	  Linux environment for Windows.  You can use the cygwin
-	  installer to install other software packages that you
-	  need (See <xref linkend="software_req"/>). You can access the
+	  Unix/Linux command-line environment for Windows.  You can access the
 	  Cygwin command line (not the normal windows command line)
 	  through the Start menu.</para> 
-	</sect3>
+	</sect2>
 
-	<sect3>
+	<sect2>
 	  <title>Mac OS X</title>
-
-	  <para>A Mac OS X system is based on UNIX, and should be able to
-	  compile and run <application>BAli-Phy</application>.  The version
-	  of OS X must be 10.1 or higher.  If you want to use the
-	  development tools from Apple to compile
-	  <application>BAli-Phy</application>, the system must be 10.4 or
-	  higher, and you must upgrade to XCode 2.2 or higher (see Software
-	  Requirements).
-	  </para>
-
-	  <para>You can use <ulink
-	  url="http://www.macports.org">MacPorts</ulink> to install
-	  other useful applications, such as gnuplot.
-	  </para>
-	</sect3>
-
-      </sect2>
-
-      <sect2 id="software_req">
-	<title>Software Requirements</title>
-
-	<para>You should be able to install the additional software
-	listed below
-	using <ulink url="http://www.macports.org">MacPorts</ulink>
-	(Mac OS X),
-	the <ulink url="http://www.cygwin.com">Cygwin</ulink>
-	installer (Windows), or your distribution's package manager
-	(on Linux).
-	</para>
-	<sect3>
-	  <title>Compilation Requirements</title>
-
-	<para>The following software packages are required for
-	compiling BAli-Phy.  (Note that precompiled binaries are
-	available on the website, so that you may not need to do any
-	compilation.  In that case these requirements are not necessary.)
-
-	<itemizedlist>
-	  <listitem><para> A modern C++ compiler (<ulink
-	  url="http://gcc.gnu.org">GCC</ulink> versions 3.4-4.4 are
-	  known to work)</para> 
-
-	  <note>
-	    <title>Mac OS X issues:</title>
-	    
-	    <para>If you want to use the development tools shipped by Apple
-	    (e.g. GCC) then you need OS X version 10.4 (Tiger) or higher, and
-	    you need to install XCode 2.2 or higher.  (You can use a GCC compiler
-	    built from the non-Apple FSF sources, but installing XCode is
-	    much simpler.) 
-	    </para>
-
-	</note></listitem>
-	  <listitem><para>GNU make version 3.80 or higher  (<ulink
-	  url="http://www.gnu.org/software/make">GNU make</ulink>).
-	  </para></listitem>
-	  <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>) version 1.8 or higher.</para></listitem>
-	  <listitem><para> The Cairo graphics library
-	  (<ulink url="http://www.cairographics.org/">Cairo</ulink>)
-	  version 1.6 or higher.</para>  (Cairo is not strictly
-	  necessary, but is a requirement for builing to
-	  tool <application>draw-tree</application> that is used to
-	  draw consensus trees.)</listitem>
-
-	  <!-- listitem><para> The BOOST C++ Library (<ulink
-	  url="http://www.boost.org">BOOST</ulink>) version 1.32 or higher.</para></listitem -->
-	</itemizedlist>
-	</para>
-
-
-	</sect3>
-
-	<sect3>
-	  <title>Requirements for analyzing <application>BAli-Phy</application> output</title>
-
-	  <para>After you run <command>bali-phy</command> you will
-	  need to run an analysis of the resulting files (See <xref
-	  linkend="analysis"/>).  This analysis depends on the
-	  following software packages: 
-
-	  <itemizedlist>
-	    <listitem><para>GNU make version 3.80 or higher  (<ulink
-	    url="http://www.gnu.org/software/make">GNU make</ulink>).
-	    </para></listitem>
-
-	    <listitem><para>PERL</para></listitem>
-	  </itemizedlist>
-
-	  </para>
-
-	  <para>In addition, the following software packages are
-	  strongly recommended.  These packages allow you to view
-	  plots and diagnostics for
-	  <application>BAli-Phy</application>, or to view the
-	  documentation correctly.
-
-	  <itemizedlist>
-	    <listitem><para><application>Tracer</application> - to
-	    analyze MCMC diagnostics 
-	    (<ulink
-	    url="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</ulink>) 
-	    </para></listitem>
-
-	    <listitem><para>The plotting program
-	    <application>gnuplot</application> (<ulink
-	    url="http://www.gnuplot.info/">gnuplot</ulink>)</para></listitem> 
-
-	    <listitem><para>Mozilla or Mozilla/Firefox - to view the math in
-	    the XHTML documentation. (<ulink url="http://www.mozilla.org/products/firefox/">Firefox</ulink>)</para></listitem>
-	  </itemizedlist>
-	  </para>
-	</sect3>
-	
-      </sect2>
+	  <para>We recommend Mac OS X version 10.4 (or higher).</para>
+	</sect2>
     </sect1>
 
     <sect1 id="compilation">
       <title>Compiling <application>BAli-Phy</application></title>
 
-      <para>Note that precompiled binaries are available on the web
-      for Linux, Mac, and Windows so that compilation may not be
-      necessary.  However, in case you want to compile your own binaries
-      for some reason, compiling <application>BAli-Phy</application>
+      <para>Most users will not need to
+      compile <application>BAli-Phy</application>, because they can
+      use the precompiled
+      executables from the official website for Linux, Mac, and
+      Windows.  However, compiling <application>BAli-Phy</application>
       is intended to be a relatively painless process.
       </para>
 
-      <para>Also note that in case you are compiling "live" source
+      <para>Mote that in case you are compiling "live" source
       code that you checked out using GIT (and you probably
       aren't) then you need to follow the directions in <xref
       linkend="gitsource"/> before you start compiling.
       </para>
+
+      <sect2>
+	<title>Software requirements</title>
+
+	<para>The following software packages are required for
+	  compiling BAli-Phy.
+	  
+	  <itemizedlist>
+	    <listitem><para> The GNU C++ Compiler (<ulink url="http://gcc.gnu.org">GCC</ulink>)
+		version 3.4 (or higher).
+	      </para> 
+	      
+	      <note>
+		<title>Mac OS X issues:</title>
+		
+		<para>Apple's XCode software works, but only if you
+		  use OS X 10.4 (Tiger) or higher, and install XCode
+		  2.2 or higher.
+		</para>
+	    </note>
+	    </listitem>
+	    <listitem><para>
+		<ulink url="http://www.gnu.org/software/make">
+		  GNU make</ulink> version 3.80 (or higher).
+	    </para></listitem>
+	    <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>) version 1.8 (or higher).</para></listitem>
+	    <listitem><para> The Cairo graphics library
+		(<ulink url="http://www.cairographics.org/">Cairo</ulink>)
+		version 1.6 (or higher).</para>  (Cairo is not strictly
+	      necessary, but is a requirement for building the
+	      tool <application>draw-tree</application> that is used to
+	      draw consensus trees.)</listitem>
+	    
+	    <!-- listitem><para> The BOOST C++ Library (<ulink
+							   url="http://www.boost.org">BOOST</ulink>) version 1.32 (or higher).</para></listitem -->
+	  </itemizedlist>
+	</para>
+	
+
+	</sect2>
 
       <sect2>
 	<title>Quick Start</title>
@@ -231,11 +142,14 @@
       </sect2>
 
       <sect2>
+	<title>Options to <command>configure</command></title>
+
+      <sect3 id="install-prefix">
 	<title>Installing to a location besides	<filename>/usr/local/</filename></title>
 	<para>The configure script chooses to install
 	<command>bali-phy</command> in the directory
 	<filename>/usr/local/</filename> by default. We can install
-	binaries to another directory <replaceable>dir</replaceable>
+	executables to another directory <replaceable>dir</replaceable>
 	by passing
 	<userinput>--prefix=<replaceable>dir</replaceable></userinput>.
 	For example, in order to install
@@ -247,9 +161,9 @@
 	to <filename>/usr/local/</filename>.
 	</para>
 
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
 	<title>Specifying where to find libraries and header files (e.g. GSL)</title>
 	<para>You can instruct the compiler to look for include files
 	in directory <replaceable>dir</replaceable> by passing
@@ -264,9 +178,9 @@
 	</para> 
 
 	<para>For example, if your system has GSL installed in <filename>/usr/local/</filename>, then you might need to add "<userinput>--with-extra-includes=/usr/local/include --with-extra-libs=/usr/local/lib</userinput>" to the configure script arguments so that the compiler can find the GSL include files and libraries.</para>
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
 	<title>Selecting a non-default C++ compiler</title>
 	
 	<para>The default C++ compiler is <command>g++</command>.  On
@@ -280,9 +194,9 @@
 	Alternatively, on Macintosh systems, you can run the command
 	<command>gcc_select 4.0</command> to choose the correct compiler.
 	</para>
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
 	<title>Optimizing for a specific architecture</title>
 	<para>You can specify optimizing for a specific brand of CPU,
 	by specifying the <userinput>CHIP</userinput> variable to
@@ -291,11 +205,11 @@
 	You can set CHIP to any of <userinput>pentium3</userinput>,
 	<userinput>pentium4</userinput>,
 	<userinput>nocona</userinput>, <userinput>G3</userinput>,
-	<userinput>G4</userinput>, or <userinput>G5</userinput>.  (On recent versions of GCC, you can set <userinput>CHIP=native</userinput> to auto-detect the type of CPU you have.  However, be aware that the resulting binaries may not run on a different computer.)
+	<userinput>G4</userinput>, or <userinput>G5</userinput>.  (On recent versions of GCC, you can set <userinput>CHIP=native</userinput> to auto-detect the type of CPU you have.  However, be aware that the resulting executables may not run on a different computer.)
 	</para>
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
 	<title>Statically linked executables</title>
 	<para>Call <command>configure</command> with the flag
 	<userinput>--enable-static</userinput> to build static
@@ -303,60 +217,98 @@
 	computers with the with the same type of CPU but slightly
 	different versions of the operating system. 
 	</para> 
-      </sect2>
+      </sect3>
 	    
+      <sect3>
+	<title>Examples</title>
+	<para>
+          All these options to <command>configure</command> can be
+	  combined, as follows:
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
+          This example uses <command>g++-4.1</command> to build a
+	  pentium4-optimized version of <command>bali-phy</command> with
+	  static linkage.
+	</para>
+      </sect3>
+      </sect2>
       <sect2 id="gitsource">
 	<title>Generating the <filename>configure</filename> script
-	and Makefiles</title> 
+	and Makefiles (<application>git</application> only)</title> 
 	<para>Skip this step unless you are compiling a
 	snapshot of the source code that you checked out using
 	GIT. If you downloaded an official tar.gz archive of the
 	source from the website, then it already includes these files.
 	</para>
 
-	<para>To generate these files, you need automake 1.8 or higher
-	and autoconf 2.59 or higher.  Run these commands in the top level
+	<para>To generate these files, you need automake 1.8 (or higher)
+	and autoconf 2.59 (or higher).  Run these commands in the top level
 	directory of the repository that you checked out.<screen><prompt>%</prompt> <userinput>autoheader</userinput>
 <prompt>%</prompt> <userinput>aclocal -I m4</userinput>
 <prompt>%</prompt> <userinput>automake -a</userinput>
 <prompt>%</prompt> <userinput>autoconf</userinput>
 </screen>
         If your system has multiple versions of automake, then you may
-	have to type e.g. <userinput>automake-1.8 -a</userinput> and
-	<userinput>aclocal-1.8</userinput> instead in order to specify which
+	have to type e.g. <userinput>automake-1.11 -a</userinput> and
+	<userinput>aclocal-1.11</userinput> instead in order to specify which
 	version to use.
 	</para>
       </sect2>
 
 
-      <sect2>
-	<title>Examples</title>
-	<para>
-        All these options to <command>configure</command> can be
-	combined, as follows:
-<screen><prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
-        This example uses <command>g++-4.1</command> to build a
-	pentium4-optimized version of <command>bali-phy</command> with
-	static linkage.
-	</para>
-      </sect2>
-  </sect1>
 
-  <sect1 id="installation">
-    <title>Installation</title>
     <sect2>
       <title>Installing when compiling from source</title>
       <para>
       After compiling <application>BAli-Phy</application>, you can
       simply type <command>make install</command>.  This will copy the
-      compiled binaries to the directory chosen when you ran
-      <command>configure</command>. 
+      compiled executables to the destination directory (See <xref linkend="install-prefix"/>).
       </para>
     </sect2>
 
+  </sect1>
+
+  <sect1 id="installation">
+    <title>Installation</title>
+
+      <sect2 id="software_req">
+	<title>Software Requirements</title>
+
+	<para>We recommend that you install some additional software in order
+	to graphically view the simple text files
+	that <application>BALi-Phy</application> outputs:
+
+	  <itemizedlist>
+	    <listitem><para><application>Tracer</application> - to
+	    analyze MCMC diagnostics 
+	    (<ulink
+	    url="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</ulink>) 
+	    </para></listitem>
+
+	    <listitem><para>PERL - to script an analysis
+	    of <application>BALi-Phy</application> output files</para></listitem>
+
+	    <listitem><para>The plotting program
+	    <application>gnuplot</application> (<ulink
+	    url="http://www.gnuplot.info/">gnuplot</ulink>) - to script an analysis
+	    of <application>BALi-Phy</application> output files</para></listitem> 
+
+	    <listitem><para>Mozilla or Mozilla/Firefox - to view the math in
+	    the XHTML documentation. (<ulink url="http://www.mozilla.org/products/firefox/">Firefox</ulink>)</para></listitem>
+	  </itemizedlist>
+	</para>
+	
+	<para>On Mac OS X, PERL should already be installed, you should be
+	able to install <application>gnuplot</application>
+	  using <ulink url="http://www.macports.org">MacPorts</ulink>.
+	On Windows, you can install PERL and gnuplot using
+	the <ulink url="http://www.cygwin.com">Cygwin</ulink>
+	installer. On Linux, use your distribution's package manager.
+	</para>
+      </sect2>
+
     <sect2>
-      <title>Installing precompiled binaries</title>
-      <para>To install pre-compiled binaries, simply extract the
+      <title>Installing precompiled executables</title>
+      <para>To install pre-compiled executables, simply extract the
       compressed archive in the directory of your choice.  If you have
       root access you might extract in
       <filename>/usr/local</filename>; if not, you might make a
@@ -422,7 +374,7 @@
     <title>Running the program</title>
 
     <sect2>
-    <title>The simple way</title>
+    <title>Quick Start</title>
     <para>The simplest way to run <application>BAli-Phy</application> is
     to type all the arguments on the command line:
 
@@ -430,26 +382,36 @@
 </screen>
 
     Here <replaceable>sequence-file</replaceable> is a FastA or PHYLIP
-    file containing the sequences you wish to analyze.  It should end
+    file containing the sequences you wish to analyze.  The filename should end
     in <userinput>.fasta</userinput> or <userinput>.phy</userinput> to
-    indicate which format it is using.  Here
-    <replaceable>prefix</replaceable> stands for the directory
-    where you extracted the bali-phy archive.</para>
+    indicate which format it is using.</para>
+
+    <para>In this simple the example, default values are used for several command line options.  Thus, if <replaceable>sequence-file</replaceable> contains DNA, then this is equivalent to the more verbose command line
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --alphabet DNA --smodel TN --imodel RS07 --iterations=100000</userinput></screen>  Here the substitution model is Tamura-Nei, the insertion/deletion model is RS07, and the number of iterations is 100,000.  If <replaceable>sequence-file</replaceable> contains amino acids, then the defaults will be:<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --alphabet Amino-Acids --smodel LG --imodel RS07 --iterations=100000</userinput></screen> 
+    </para>
     </sect2>
 
     <sect2>
-      <title>Multiple Data Partitions</title>
-    <para>
-      You may analyze multiple data partitions by specifying one
-      sequence file per partition.  For example, if you want to
-      analyze two genes, you might put the data first the first gene
-      in <replaceable>sequence-file1</replaceable> and the second gene
-      in <replaceable>sequence-file2</replaceable> and then run:
+      <title>Command line options</title>
 
+      <para>You can specify more a more complex substitution model as follows:
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel WAG+gamma+gamma</userinput></screen>
+	You may specify an indel model of <userinput>none</userinput> to fix the alignment and ignore information in shared insertions or deletions.
+  	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --imodel none</userinput></screen>
+If you desire to use a codon model, you must specify the alphabet:
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</userinput></screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Multiple genes</title>
+    <para>You may analyze multiple genes by 
+      specifying mulitple sequence files:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable></userinput>
 </screen>
-
-      In this case the sequence names in each file must match.
+In this case, you should put the data from the first gene
+      in <replaceable>sequence-file1</replaceable> and the second gene
+      in <replaceable>sequence-file2</replaceable>.  In this case the
+      sequence names in each file must match.
     </para>
 
     </sect2>
@@ -468,7 +430,7 @@
       <sect3>
 	<title>Syntax</title>
       <para>
-	An option file is specified by the option "<userinput>--config
+	An option file is specified by the command line option "<userinput>--config
 	<replaceable>file</replaceable></userinput>" and uses the same
 	option names as the command line.  However, the syntax is
 	different.  In the option file, each given option is
@@ -513,9 +475,9 @@ traditional = traditional
 	<para>
 	  The file <filename>~/.bali-phy</filename> is a special
 	  option file called the <emphasis>configuration
-	  file.</emphasis>  If it exists, it is always loaded.  If
-	  options are given on the command line or an option file they
-	  always override values given in <filename>~/.bali-phy</filename>.
+	  file.</emphasis>  If it exists, it is always loaded.
+	  Options given on the command line or an option file always
+	  override values given in <filename>~/.bali-phy</filename>. 
 	</para>
       </sect3>
     </sect2>
@@ -571,7 +533,7 @@ traditional = traditional
     <sect2>
       <title>Usage</title>
 
-      <para>The syntax for the program is:</para>
+      <para>The syntax for <command>bali-phy</command> is:</para>
 
       <cmdsynopsis>
 	<command>bali-phy</command>
