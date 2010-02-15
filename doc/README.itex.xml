@@ -186,13 +186,11 @@
 	<para>The default C++ compiler is <command>g++</command>.  On
 	some systems, <command>g++</command> invokes GCC version 3.3,
 	and the correct compiler is called something else, such as
-	<command>g++-4.0</command>.  To use
-	<command>g++-4.0</command> as the C++ compiler when compiling
+	<command>g++-4.2</command>.  To use
+	<command>g++-4.2</command> as the C++ compiler when compiling
 	<application>BAli-Phy</application>, you would set the CXX
 	environment variable as follows:
-	    <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure CXX=g++-4.0</userinput></screen>
-	Alternatively, on Macintosh systems, you can run the command
-	<command>gcc_select 4.0</command> to choose the correct compiler.
+	    <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure CXX=g++-4.2</userinput></screen>
 	</para>
       </sect3>
 
@@ -220,12 +218,12 @@
       </sect3>
 	    
       <sect3>
-	<title>Examples</title>
+	<title>Example</title>
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.1 CHIP=pentium4</userinput></screen>
-          This example uses <command>g++-4.1</command> to build a
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.4 CHIP=pentium4</userinput></screen>
+          This example uses <command>g++-4.4</command> to build a
 	  pentium4-optimized version of <command>bali-phy</command> with
 	  static linkage.
 	</para>
@@ -261,7 +259,7 @@
       <para>
       After compiling <application>BAli-Phy</application>, you can
       simply type <command>make install</command>.  This will copy the
-      compiled executables to the destination directory (See <xref linkend="install-prefix"/>).
+      compiled executables to the installation directory (See <xref linkend="install-prefix"/>).
       </para>
     </sect2>
 
@@ -297,7 +295,7 @@
 	  </itemizedlist>
 	</para>
 	
-	<para>On Mac OS X, PERL should already be installed, you should be
+	<para>On Mac OS X, PERL should already be installed, and you should be
 	able to install <application>gnuplot</application>
 	  using <ulink url="http://www.macports.org">MacPorts</ulink>.
 	On Windows, you can install PERL and gnuplot using
