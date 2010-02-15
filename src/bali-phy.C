@@ -223,7 +223,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description model("Model options");
   model.add_options()
     ("alphabet",value<vector<string> >()->composing(),"The alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-    ("genetic-code",value<string>()->default_value("standard-code.txt",""),"Specify alternate genetic code file in data directory.")
     ("smodel",value<vector<string> >()->composing(),"Substitution model.")
     ("imodel",value<vector<string> >()->composing(),"Indel model: none, RS05, RS07-no-T, or RS07.")
     ("branch-prior",value<string>()->default_value("Gamma"),"Exponential or Gamma.")
