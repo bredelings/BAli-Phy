@@ -196,7 +196,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("config,c", value<string>(),"Config file to read.")
     ("show-only","Analyze the initial values and exit.")
     ("seed", value<unsigned long>(),"Random seed")
-    ("data-dir", value<string>(),"Location of the Data/ directory.")
     ("name", value<string>(),"Name for the analysis directory to create.")
     ("traditional,t","Fix the alignment and don't model indels.")
     ;
@@ -628,34 +627,6 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 }
 
 
-/// Check that we can find the data directory, return true if we can.
-bool check_data_dir(const variables_map& args)
-{
-  if (not args.count("data-dir"))
-    throw myexception()<<"You must use --data-dir <dir> to specify the Data/ directory.";
-
-  string dir_name = args["data-dir"].as<string>();
-  fs::path data_dir = dir_name;
-
-  if (not fs::exists(data_dir)) {
-    cout<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' does not exist!"<<endl;
-    cout<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
-    return false;
-  }
-  else if (not fs::is_directory(data_dir)) {
-    cout<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' is not a directory!"<<endl;
-    cout<<"         You must correctly specify the data directory using --data-dir <dir>."<<endl<<endl;
-    return false;
-  }
-  else if (not fs::exists( data_dir / "WAG.dat")) {
-    cout<<"Warning: BAli-Phy data directory '"<<data_dir.string()<<"' exists, but doesn't contain the"<<endl;
-    cout<<"               important file 'WAG.dat'."<<endl;
-    cout<<"         Have you correctly specified the data directory using --data-dir <dir>?"<<endl<<endl;
-    return false;
-  }
-  return true;
-}
-
 /// Initialize the default random number generator and return the seed
 unsigned long init_rng_and_get_seed(const variables_map& args)
 {
@@ -995,9 +966,6 @@ int main(int argc,char* argv[])
     else {
       if (proc_id) return 0;
     }
-
-    //---------- Determine Data dir ---------------//
-    check_data_dir(args);
 
     //---------- Initialize random seed -----------//
     unsigned long seed = init_rng_and_get_seed(args);
