@@ -1663,7 +1663,10 @@ traditional = traditional
   <sect1 id="tuning_the_markov_chain">
     <title>Tuning the Markov Chain</title>
 
-    <para>These parameters can be set using the command line syntax "<userinput>--set <replaceable>parameter</replaceable>=<replaceable>value</replaceable></userinput>".</para>
+    <para>The Markov chain should be largely self-tuning, since all
+    numerical parameters are now sampled using slice samplers.  However,
+    the following parameters affect the size of Metropolis-Hastings
+    proposals.  You can modify them using the command line syntax "<userinput>--set <replaceable>parameter</replaceable>=<replaceable>value</replaceable></userinput>".</para>
 
     <sect2>
       <title>Parameters</title>
