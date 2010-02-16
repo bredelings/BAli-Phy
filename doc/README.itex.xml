@@ -424,28 +424,32 @@ Finally, you may specify the option <userinput>--traditional</userinput>, or its
     <sect2>
       <title>Option files (Scripts)</title>
       <para>
-	Putting the analysis options in an option file instead
-	of on the command line can be more convenient if you are going
-	to run the same analysis many times, or if you have a large
-	number of options.  In addition, the option file may
-	contain comments and blank lines, and is a good way to
-	record what options you used in an analysis.
+	In addition to using the command line, you may also specify
+	options in a file. Using an option file can be more convenient
+	if you are going to run the same analysis many times, or if
+	the number of options is large. Furthermore, the option file
+	may contain comments and blank lines.  Option files are a good
+	way, and is a good way to record what options you used in an
+	analysis. 
       </para>
 
+	<para>
+	  An option file is specified with the command line option "<userinput>--config
+	    <replaceable>file</replaceable></userinput>". If values
+	    for an option are given both on the the command line and
+	    in an option file, then the command line value overrides
+	    the value in the option file. 
+	</para>
       <sect3>
 	<title>Syntax</title>
-	<para>
-	  An option file is specified by the command line option "<userinput>--config
-	    <replaceable>file</replaceable></userinput>" and uses the same
-	  option names as the command line.  However, the syntax is
-	  different.  In the option file, each given option is
+
+	<para>Option files use the same option names as the command
+	line.  However, the syntax is different:  each option is given
 	  on its own line using the syntax "<userinput>option =
 	    value</userinput>" instead of the syntax "<userinput>--option
 	    value</userinput>".  If the option has no value then it is
 	  given using the syntax  "<userinput>option =
-	    option</userinput>".  If values for an option are given both
-	  on the the command line and in an option file, then the
-	  command line value overrides the value in the option file.
+	    option</userinput>".  
 	</para>
       </sect3>
 
@@ -470,8 +474,7 @@ traditional = traditional
 	  the option name as the value, because it does not take a
 	  value.  Thus, this configuration file corresponds to the
 	  command line
-	  <screen><prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal+INV --traditional</userinput>
-	  </screen>
+	  <screen><prompt>%</prompt>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal+INV --traditional</screen>
 	</para>
       </sect3>
 
@@ -481,7 +484,7 @@ traditional = traditional
 	  The file <filename>~/.bali-phy</filename> is a special
 	  option file called the <emphasis>configuration
 	    file.</emphasis>  If it exists, it is always loaded.
-	  Options given on the command line or an option file always
+	  Options given on the command line or an option file 
 	  override values given in <filename>~/.bali-phy</filename>. 
 	</para>
       </sect3>
@@ -795,6 +798,244 @@ traditional = traditional
 
   </sect1>
 
+  <sect1 id="output">
+    <title>Output</title>
+
+    <sect2>
+      <title>Output directory</title>
+      <para><application>BAli-Phy</application> creates a new
+	directory to store its output files each time it is run.  By default, the
+	directory name is the name of the sequence file, with a number
+	added on the end to make it unique. <application>BAli-Phy</application>
+	first checks  if there is already a directory called
+	<filename><replaceable>file</replaceable>-1/</filename>, and then moves on to
+	<filename><replaceable>file</replaceable>-2/</filename>, etc. until it finds an
+	unused directory name.</para> 
+      
+      <para>You can specify a different name to use instead of the
+	sequence-file name by using the <userinput>--name</userinput> option.</para>
+    </sect2>
+
+    <sect2>
+      <title>Output files</title>
+      <para><application>BAli-Phy</application> produces the following output
+	files inside the directory that it creates:</para>
+      
+      <variablelist>
+	<varlistentry>
+	  <term>C1.out</term>
+	  <listitem>
+	    <para>Iteration numbers, probabilities, success probabilities for transition kernels, etc..</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>C1.P<replaceable>p</replaceable>.fastas</term>
+	  <listitem>
+	    <para>Sampled alignments for partition <replaceable>p</replaceable></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>C1.err</term>
+	  <listitem>
+	    <para>You can ignore this file.</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>C1.MAP</term>
+	  <listitem>
+	    <para>Successive estimates of the MAP point, if you have
+	      only one partition.</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>C1.p</term>
+	  <listitem>
+	    <para>Scalar parameters: indel and substitution parameters, etc.</para>
+	  </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	  <term>C1.trees</term>
+	  <listitem>
+	    <para>Tree samples</para>
+	  </listitem>
+	</varlistentry>
+	
+      </variablelist>
+      
+      <para>For the last two files, each line in these files corresponds to one iteration.</para>
+    </sect2>
+
+    <sect2>
+      <title>Summarizing the output - manually</title>
+
+      <sect3>
+	<title>Finding the consensus tree</title>
+<screen><prompt>%</prompt> trees-consensus C1.trees</screen>	
+      </sect3>
+
+      <sect3>
+	<title>Checking topology convergence</title>
+<screen><prompt>%</prompt> trees-bootstrap <replaceable>dir1</replaceable>/C1.trees <replaceable>dir2</replaceable>/C1.trees</screen>	
+      </sect3>
+
+      <sect3>
+	<title>Summarizing numerical parameters</title>
+<screen><prompt>%</prompt> statreport C1.p > Report </screen>	
+      </sect3>
+
+      <sect3>
+	<title>Computing an alignment using Posterior Decoding</title>
+<screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignments-max > P<replaceable>p</replaceable>-max.fasta</screen>
+      </sect3>      
+
+      <sect3>
+	<title>Find the alignment from the maximum a posterior (MAP) point</title>
+<screen><prompt>%</prompt> alignment-find C1.P<replaceable>p</replaceable>.fastas > P<replaceable>p</replaceable>-MAP.fasta</screen>
+
+      </sect3>      
+
+      <sect3>
+	<title>Create an Au (Alignment Uncertainty) plot</title>
+<screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignment-gild C1.P<replaceable>p</replaceable>.max  &gt; P<replaceable>p</replaceable>-max.AU
+<prompt>%</prompt> alignment-draw P<replaceable>p</replaceable>-max.fasta --AU P<replaceable>p</replaceable>-max.AU > P<replaceable>p</replaceable>-max-AU.html</screen>
+      </sect3>
+
+
+    </sect2>
+
+
+  <sect2 id="analysis">
+    <title>Summarizing the output - scripted</title>
+    
+    <para>
+      You may also run the analysis PERL script
+      <command>bp-analyze.pl</command> inside the output directory in
+      order to summary the output files.  
+    </para>
+
+    <para>Running the above command will produce the following files in
+    the <filename>Results/</filename> directory:</para>
+
+      <variablelist>
+
+	<varlistentry><term>analysis</term><listitem>
+	    <para>A description of the analysis:  burn-in, length, time completed.
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>Report</term><listitem>
+	    <para>A summary of numerical parameters: credible
+	    intervals and mixing.</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>consensus</term><listitem>
+	    <para>A summary of supported splits (clades). </para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>c-levels.plot</term><listitem>
+	    <para>The number of splits (clades) supported at each LOD level.</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>c50.tree</term><listitem>	<para>The majority consensus topology + branch lengths (Newick format)</para> 
+	</listitem></varlistentry>
+
+	<varlistentry><term>c50.PP.tree</term><listitem>
+	<para>The majority consensus topology + branch lengths +
+	Posterior Probabilities (Newick format)</para> 
+	</listitem></varlistentry>
+
+	<varlistentry><term>MAP.tree</term><listitem>
+	    <para>An estimate of the MAP topology + branch lengths (Newick format)</para>
+	</listitem></varlistentry>
+
+      </variablelist>
+      <para> 
+	The following files will be generated to summarize alignment uncertainty, unless the analysis uses a fixed alignment.
+
+      </para>
+
+      <variablelist>
+	<varlistentry><term>MAP.fasta</term><listitem>
+	    <para>An estimate of the MAP alignment, w/ taxa sorted by similarity.
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>P<replaceable>p</replaceable>-max.fasta</term><listitem>
+	    <para>An estimate of the alignment for partition
+	    <replaceable>p</replaceable> using posterior decoding.</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot of the MAP alignment (AA/DNA color-cheme).
+	</para></listitem></varlistentry>
+	
+	<varlistentry><term>P<replaceable>p</replaceable>-max-AU.html</term><listitem>
+	    <para>An AU plot of the posterior decoding alignment for partition
+	    <replaceable>p</replaceable>  (AA/DNA color-cheme).</para>
+	</listitem></varlistentry>
+
+	<!-- varlistentry><term>consensus.fasta</term><listitem>
+	    <para>A consensus alignment, representing information shared by most alignment samples.
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>consensus-AU.html</term><listitem><para>An AU plot of the consensus alignment (rainbow color-scheme).
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>consensus-AU2.html</term><listitem><para>An AU plot of the MAP alignment (AA/DNA color-scheme).
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>consensus-AU.prob</term><listitem><para>The probabilities for each letter in the consensus alignment AU plot.
+	</para></listitem></varlistentry -->
+	
+      </variablelist>
+
+
+      <para>The following files describe convergence and mixing:</para>
+
+
+      <variablelist>
+
+	<varlistentry><term>partitions.bs</term><listitem>
+	    <para>Confidence intervals on the support for partitions, generated
+	      using a block bootstrap.</para>
+	</listitem></varlistentry>
+
+	<varlistentry><term>partitions.SRQ</term><listitem><para>A collection of
+	      SRQ plots for the supported partitions.
+	</para></listitem></varlistentry>
+
+	<varlistentry><term>c50.SRQ</term><listitem><para>An
+	      SRQ plot for the majority consensus tree.
+	</para></listitem></varlistentry>
+
+
+      </variablelist>
+
+      <para>The SRQ plots can be viewed by typing "<userinput>plot
+	  '<replaceable>file</replaceable>' with lines</userinput>" in
+	<application>gnuplot</application>.</para>
+
+
+      <sect3>
+	<title><filename>Mixing/partitions.bs</filename>: partition mixing</title>
+	<para>
+	  This file reports the quality of estimates of support for each
+	  partition,in terms of the auto-correlation time (ACT),
+	  effective sample size (Ne), and a 95% confidence interval for
+	  posterior probability (PP) and log-10 odds (LOD).  It also
+	  reports the number of samples that support (1) or do not
+	  support (0) the partition, as well as the number of regenerations.
+
+	  Only partitions with PP>0.5 are shown by default.
+	</para>
+      </sect3>
+
+
+
+  </sect2>
+  </sect1>
   <sect1 id="models">
     <title>Models</title>
 
@@ -1297,79 +1538,6 @@ traditional = traditional
 
   </sect1>
 
-  <sect1 id="output">
-    <title>Output</title>
-
-    <sect2>
-      <title>Output directory</title>
-      <para><application>BAli-Phy</application> creates a new
-	directory to store its output files each time it is run.  By default, the
-	directory name is the name of the sequence file, with a number
-	added on the end to make it unique. <application>BAli-Phy</application>
-	first checks  if there is already a directory called
-	<filename><replaceable>file</replaceable>-1/</filename>, and then moves on to
-	<filename><replaceable>file</replaceable>-2/</filename>, etc. until it finds an
-	unused directory name.</para> 
-      
-      <para>You can specify a different name to use instead of the
-	sequence-file name by using the <userinput>--name</userinput> option.</para>
-    </sect2>
-
-    <sect2>
-      <title>Output files</title>
-      <para><application>BAli-Phy</application> produces the following output
-	files inside the directory that it creates:</para>
-      
-      <variablelist>
-	<varlistentry>
-	  <term>C1.out</term>
-	  <listitem>
-	    <para>Iteration numbers, probabilities, success probabilities for transition kernels, etc..</para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term>C1.P<replaceable>p</replaceable>.fastas</term>
-	  <listitem>
-	    <para>Sampled alignments for partition <replaceable>p</replaceable></para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term>C1.err</term>
-	  <listitem>
-	    <para>You can ignore this file.</para>
-	  </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	  <term>C1.MAP</term>
-	  <listitem>
-	    <para>Successive estimates of the MAP point, if you have
-	      only one partition.</para>
-	  </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	  <term>C1.p</term>
-	  <listitem>
-	    <para>Scalar parameters: indel and substitution parameters, etc.</para>
-	  </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	  <term>C1.trees</term>
-	  <listitem>
-	    <para>Tree samples</para>
-	  </listitem>
-	</varlistentry>
-	
-      </variablelist>
-      
-      <para>For the last two files, each line in these files corresponds to one iteration.</para>
-    </sect2>
-  </sect1>
-
   <sect1 id="mixing_and_convergence">
     <title>Convergence and Mixing: Is it done yet?</title>
 
@@ -1490,203 +1658,6 @@ traditional = traditional
     </sect2>
 
     
-  </sect1>
-
-  <sect1 id="analysis">
-    <title>Analyzing the output</title>
-    
-    <para>
-      In addition to running the full analysis, it will be helpful
-      to analyze the numerical parameters using
-      <application>Tracer</application> (<xref
-					    linkend="mixing_and_convergence"/>).  The full analysis should
-      be run repeatedly as the simulation progresses, to determine
-      when enough samples have been collected.
-    </para>
-
-
-    <sect2>
-      <title>How to run the full analysis</title>
-
-      <para>
-	First, enter the output directory.  Then make a local copy of
-	the the analysis makefile:
-	<screen><prompt>%</prompt> <userinput>cp <replaceable>prefix</replaceable>/share/doc/bali-phy/GNUmakefile .</userinput></screen>
-	Here, <replaceable>prefix</replaceable> is the directory where
-	you installed <application>BAli-Phy</application>.
-      </para>
-
-      <para>After you have installed the analysis makefile, run the command:
-
-	<screen> <prompt>%</prompt> <userinput>make SKIP=<replaceable>burn-in</replaceable></userinput></screen>
-
-	or
-
-	<screen> <prompt>%</prompt> <userinput>make SKIP=<replaceable>burn-in</replaceable> SIZE=<replaceable>iterations</replaceable></userinput></screen>
-
-	Here, <replaceable>burn-in</replaceable> represents the
-	number of iterations to skip as burn-in, and
-	<replaceable>iterations</replaceable> represents the maximum
-	number of iterations to use in the analysis. Extra samples are
-	discarded.  In order for this to work, the directory containing
-	the <application>BAli-Phy</application> tools must be in your
-	PATH. </para>
-
-      <para>Running the analysis will produce the three directories:
-	<filename>Results/</filename>, <filename>Mixing/</filename>, and
-	<filename>Work/</filename>.  The <filename>Results/</filename>
-	directory contains tree and alignment estimates and confidence
-	levels.   The <filename>Mixing/</filename> directory contains various
-	measures of whether the chain ran long enough given its Mixing.
-	The <filename>Work/</filename> directory contains various
-	intermediate files that you probably do not need.</para>
-
-
-    </sect2>
-
-    <sect2>
-
-      <title>Results/</title>
-
-      <para>Running the above command will produce the following files in
-	the <filename>Results/</filename> directory:</para>
-
-      <variablelist>
-
-	<varlistentry><term>analysis</term><listitem>
-	    <para>A description of the analysis:  burn-in, length, time completed.
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>Report</term><listitem>
-	    <para>A summary of results: posterior means and credible intervals,
-	      etc..</para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>consensus</term><listitem>
-	    <para>Summary of MAP and consensus topologies, as well as supported
-	      partitions (clades). </para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>c-levels.plot</term><listitem>
-	    <para>The number of partitions (clades) supported at each LOD level.</para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>c<replaceable>level</replaceable>.topology</term><listitem>
-	    <para>The consensus topology at level
-	      <replaceable>level</replaceable> (Newick format)</para> 
-	</listitem></varlistentry>
-
-	<varlistentry><term>c<replaceable>level</replaceable>.tree</term><listitem>	<para>The majority consensus topology + branch lengths (Newick format)</para> 
-	</listitem></varlistentry>
-
-	<varlistentry><term>MAP.topology</term><listitem>
-	    <para>An estimate of the MAP tree (Newick format)</para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>MAP.tree</term><listitem>
-	    <para>An estimate of the MAP topology + branch lengths (Newick format)</para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>MAP.fasta</term><listitem>
-	    <para>An estimate of the MAP alignment, w/ taxa sorted by similarity.
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>MAP.phy</term><listitem>
-	    <para>An estimate of the MAP alignment, w/ taxa sorted by similarity.
-	</para></listitem></varlistentry>
-
-      </variablelist>
-      <para> 
-	In addition, the following files will be generated to summarize alignment uncertainty, unless the analysis uses a fixed alignment.
-
-      </para>
-
-      <variablelist>
-	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot of the MAP alignment (rainbow color-cheme).
-	</para></listitem></varlistentry>
-	<varlistentry><term>MAP-AU2.html</term><listitem><para>An AU plot of the MAP alignment (AA/DNA color-scheme).
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>MAP-AU.prob</term><listitem><para>The probabilities for each letter in the MAP alignment AU plot.
-	</para></listitem></varlistentry>
-	
-	<varlistentry><term>consensus.fasta</term><listitem>
-	    <para>A consensus alignment, representing information shared by most alignment samples.
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>consensus-AU.html</term><listitem><para>An AU plot of the consensus alignment (rainbow color-scheme).
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>consensus-AU2.html</term><listitem><para>An AU plot of the MAP alignment (AA/DNA color-scheme).
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>consensus-AU.prob</term><listitem><para>The probabilities for each letter in the consensus alignment AU plot.
-	</para></listitem></varlistentry>
-	
-      </variablelist>
-
-      <sect3 id="consensus">
-	<title><filename>Results/consensus</filename>: partition support</title>
-	<para>
-	  This file reports the support of each bi-partition in terms
-	  of its posterior probability (PP) and posterior log-10 odds
-	  (LOD).
-
-	  Only partitions with PP>0.5 are shown by default.
-	</para>
-      </sect3>
-
-    </sect2>
-
-    <sect2>
-      <title>Mixing/</title>
-
-      <para>In addition, the following files will be produced in the
-	<filename>Mixing/</filename> directory:</para> 
-
-      <para></para>
-      <variablelist>
-
-	<varlistentry><term>partitions.bs</term><listitem>
-	    <para>Confidence intervals on the support for partitions, generated
-	      using a block bootstrap.</para>
-	</listitem></varlistentry>
-
-	<varlistentry><term>partitions.SRQ</term><listitem><para>A collection of
-	      SRQ plots for the supported partitions.
-	</para></listitem></varlistentry>
-
-	<varlistentry><term>c50.SRQ</term><listitem><para>An
-	      SRQ plot for the majority consensus tree.
-	</para></listitem></varlistentry>
-
-
-      </variablelist>
-
-      <para>The SRQ plots can be viewed by typing "<userinput>plot
-	  '<replaceable>file</replaceable>' with lines</userinput>" in
-	<application>gnuplot</application>.</para>
-
-
-      <sect3>
-	<title><filename>Mixing/partitions.bs</filename>: partition mixing</title>
-	<para>
-	  This file reports the quality of estimates of support for each
-	  partition,in terms of the auto-correlation time (ACT),
-	  effective sample size (Ne), and a 95% confidence interval for
-	  posterior probability (PP) and log-10 odds (LOD).  It also
-	  reports the number of samples that support (1) or do not
-	  support (0) the partition, as well as the number of regenerations.
-
-	  Only partitions with PP>0.5 are shown by default.
-	</para>
-      </sect3>
-
-
-
-    </sect2>
-
-
   </sect1>
 
   <sect1 id="tuning_the_markov_chain">
@@ -2009,8 +1980,7 @@ traditional = traditional
 	  <answer>
 	    <para>After you analyze the output (<xref
 						   linkend="analysis"/>), the partition support is indicated in
-	      <filename>Results/consensus</filename>.  (see <xref
-							       linkend="consensus"/>. </para> 
+	      <filename>Results/consensus</filename> and in <filename>Results/c50.PP.tree</filename>. </para> 
 	  </answer>
 	</qandaentry>
       </qandaset>
@@ -2022,15 +1992,20 @@ traditional = traditional
 	<qandaentry>
 	  <question><para>How do I concatenate alignments?</para></question>
 	  <answer><para>
- 	    <userinput>alignment-cat <replaceable>filename1.fasta</replaceable> <replaceable>filename2.fasta</replaceable>
-	      &gt; result.fasta</userinput></para>
+ 	    <screen><prompt>%</prompt>alignment-cat <replaceable>filename1.fasta</replaceable> <replaceable>filename2.fasta</replaceable> &gt; result.fasta</screen>
+	      The alignments must have the same sequence names, but
+	      not necessarily in the same order.
+	    </para>
 	  </answer>
 	</qandaentry>
 
 	<qandaentry>
 	  <question><para>How do I select columns from an alignment?</para></question>
 	  <answer><para>
-	    <userinput>alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</userinput></para>
+	    <screen><prompt>%</prompt>alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</screen>
+	    The resulting alignment will contain the selected columns
+	    in the order you specified.
+	  </para>
 	  </answer>
 	</qandaentry>
 
@@ -2041,8 +2016,7 @@ traditional = traditional
 	    <para>To constrain the alignment to match some alignment
 	      file <replaceable>filename.fasta</replaceable> in columns
 	      100, 200-250, and 300, run:
-	      <userinput>alignment-indices -c100,200-250,300 <replaceable>filename.fasta</replaceable>
-		> filename.constraint</userinput>
+	      <screen><prompt>%</prompt>alignment-indices -c100,200-250,300 <replaceable>filename.fasta</replaceable> &gt; filename.constraint</screen>
 	    </para>
 	  </answer>	
 	</qandaentry>

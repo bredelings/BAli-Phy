@@ -1,5 +1,3 @@
-Move "Examples" to "Running the program".
-
 Cleanups:
  * Rename s/lambda/weight/ in mcmc.{H,C}
  * Make MoveOne do sampling W/O replacement!
@@ -22,14 +20,8 @@ Documentation
    - C1.P1.fastas -> alignments-draw
    - C1.P1.fastas -> alignment-gild
    - C1.MAP -> alignment-find
- - Doxygen 'front matter' page.
-   + Describe dynamic programming overview and specific functions.
-   + Describe substitution overview and specific classes and functions.
-   + Describe MCMC overview and specific classes and functions.
-   + Describe 'Model' overview and specific classes and functions.
- - Allow `bali-phy --help=topic'
- - Describe how to specify partition-specific options.
- - Make an --help=advanced to put the advanced usage options in?
+ - Doxygen 'front matter' page:  Describe 'Model' overview and specific classes and functions.
+ - Allow `bali-phy --help=topic'.  Allow --help=advanced to report the invisible advance options.
  - Remove default from --iterations?
 
 Report a 95% confidence interval of splits
