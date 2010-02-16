@@ -195,6 +195,8 @@ namespace substitution {
 
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
   {
+    assert(pi2.size() == n_letters());
+
     // set the frequency parameters
     for(int i=0;i<n_letters();i++)
       parameters_[i+1] = pi2[i];
@@ -261,6 +263,9 @@ namespace substitution {
     :ReversibleFrequencyModel(a),
      ModelWithAlphabet<alphabet>(a)
   {
+    if (pi.size() != a.size())
+      throw myexception()<<"Constructing a frequency model on alphabet '"<<a.name<<"' but got frequencies of "<<pi.size()<<" letters instead of the expected "<<a.size();
+
     // Start with *f = 1
     add_parameter("f",1.0);
     fixed_[0] = true;

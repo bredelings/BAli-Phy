@@ -17,6 +17,12 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+///
+/// \file setup-smodel.C
+///
+/// \brief Create substitution models from strings of the form model+...+model.
+///
+
 #include <vector>
 #include <boost/program_options.hpp>
 #include "setup.H"
@@ -30,7 +36,12 @@ using std::valarray;
 using namespace substitution;
 using boost::program_options::variables_map;
 
-/// Take something off the string stack, if its present
+/// \brief Take a string of the form \a s[\a arg] off the top of \a sstack, if its present
+///
+/// \param sstack A stack of strings that represent a substitution model.
+/// \param s The model name to match.
+/// \param arg A posible argument.
+///
 bool match(vector<string>& sstack,const string& s,string& arg) {
   if (not sstack.size())
     return false;
@@ -51,26 +62,36 @@ bool match(vector<string>& sstack,const string& s,string& arg) {
   return true;
 }
 
-/// If no markov model is specified, try to add one.
-void guess_markov_model(vector<string>& string_stack,const alphabet& a) 
+/// \brief Return the default substitution model name for alphabet \a a, and "" if there is no default.
+string default_markov_model(const alphabet& a) 
 {
   if (dynamic_cast<const Nucleotides*>(&a))
-    string_stack.push_back("TN");
+    return "TN";
+  else if (dynamic_cast<const AminoAcidsWithStop*>(&a))
+    return "";
   else if (dynamic_cast<const AminoAcids*>(&a))
-    string_stack.push_back("LG");
+    return "LG";
   else if (dynamic_cast<const Codons*>(&a))
-    string_stack.push_back("M0");
+    return "M0";
   else if (dynamic_cast<const Triplets*>(&a))
-    string_stack.push_back("HKYx3");
+    return "HKYx3";
+  else
+    return "";
 }
 
 OwnedPointer< ::Model> 
-get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,const valarray<double>&);
+get_smodel_(const string& smodel,const alphabet& a,const valarray<double>&);
 
+/// \brief Construct a model from the top of the string stack
+///
+/// \param string_stack The list of strings representing the substitution model.
+/// \param model_stack The list of models that may be used as components of the current model.
+/// \param a The alphabet on which the model lives.
+/// \param frequencies The initial frequencies for the model.
+///
 bool process_stack_Markov(vector<string>& string_stack,
 			  vector<OwnedPointer< ::Model> >& model_stack,
 			  const alphabet& a,
-			  const variables_map& args,
 			  const valarray<double>& frequencies)
 {
   string arg;
@@ -78,30 +99,35 @@ bool process_stack_Markov(vector<string>& string_stack,
   //------ Get the base markov model (Reversible Markov) ------//
   if (match(string_stack,"EQU",arg))
     model_stack.push_back(EQU(a));
+
   else if (match(string_stack,"F81",arg))
     model_stack.push_back(F81_Model(a,frequencies));
-  else if (match(string_stack,"HKY",arg)) {
+
+  else if (match(string_stack,"HKY",arg)) 
+  {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
     if (N)
       model_stack.push_back(HKY(*N));
     else
-      throw myexception()<<"HKY:: '"<<a.name<<"' is not a nucleotide alphabet.";
+      throw myexception()<<"HKY: '"<<a.name<<"' is not a nucleotide alphabet.";
   }
-  else if (match(string_stack,"TN",arg)) {
+  else if (match(string_stack,"TN",arg)) 
+  {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
     if (N)
       model_stack.push_back(TN(*N));
     else
-      throw myexception()<<"TN::  '"<<a.name<<"' is not a nucleotide alphabet.";
+      throw myexception()<<"TN: '"<<a.name<<"' is not a nucleotide alphabet.";
   }
-  else if (match(string_stack,"GTR",arg)) {
+  else if (match(string_stack,"GTR",arg)) 
+  {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
     if (N)
       model_stack.push_back(GTR(*N));
     else
-      throw myexception()<<"GTR:: '"<<a.name<<"' is not a nucleotide alphabet.";
+      throw myexception()<<"GTR: '"<<a.name<<"' is not a nucleotide alphabet.";
   }
-  /* THINKO
+  /* THINKO - Must tripletmodels be constructed from nucleotide-specific models?
   else if (match(string_stack,"EQUx3",arg)) {
     const Triplets* T = dynamic_cast<const Triplets*>(&a);
     if (T) 
@@ -110,35 +136,50 @@ bool process_stack_Markov(vector<string>& string_stack,
       throw myexception()<<"EQUx3:: '"<<a.name<<"' is not a triplet alphabet.";
   }
   */      
-  else if (match(string_stack,"HKYx3",arg)) {
+  else if (match(string_stack,"HKYx3",arg)) 
+  {
     const Triplets* T = dynamic_cast<const Triplets*>(&a);
     if (T) 
       model_stack.push_back(SingletToTripletExchangeModel(*T,HKY(T->getNucleotides())));
     else
-      throw myexception()<<"HKYx3:: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"HKYx3: '"<<a.name<<"' is not a triplet alphabet.";
   }
-  else if (match(string_stack,"TNx3",arg)) {
+  else if (match(string_stack,"TNx3",arg)) 
+  {
     const Triplets* T = dynamic_cast<const Triplets*>(&a);
     if (T) 
       model_stack.push_back(SingletToTripletExchangeModel(*T,TN(T->getNucleotides())));
     else
-      throw myexception()<<"TNx3:: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"TNx3: '"<<a.name<<"' is not a triplet alphabet.";
   }
-  else if (match(string_stack,"GTRx3",arg)) {
+  else if (match(string_stack,"GTRx3",arg)) 
+  {
     const Triplets* T = dynamic_cast<const Triplets*>(&a);
     if (T) 
       model_stack.push_back(SingletToTripletExchangeModel(*T,GTR(T->getNucleotides())));
     else
-      throw myexception()<<"GTRx3:: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"GTRx3: '"<<a.name<<"' is not a triplet alphabet.";
   }
-  else if (match(string_stack,"PAM",arg)) 
+  else if (match(string_stack,"PAM",arg)) {
+    if (a != AminoAcids())
+      throw myexception()<<"PAM: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(PAM());
-  else if (match(string_stack,"JTT",arg))
+  }
+  else if (match(string_stack,"JTT",arg)) {
+    if (a != AminoAcids())
+      throw myexception()<<"JTT: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(JTT());
-  else if (match(string_stack,"WAG",arg))
+  }
+  else if (match(string_stack,"WAG",arg)) {
+    if (a != AminoAcids())
+      throw myexception()<<"WAG: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(WAG());
-  else if (match(string_stack,"LG",arg))
+  }
+  else if (match(string_stack,"LG",arg)) {
+    if (a != AminoAcids())
+      throw myexception()<<"LG: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(LG());
+  }
   else if (match(string_stack,"Empirical",arg)) {
     Empirical M(a);
     M.load_file(arg);
@@ -163,7 +204,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     OwnedPointer<NucleotideExchangeModel> N_submodel = HKY(C->getNucleotides());
 
     if (not arg.empty()) {
-      OwnedPointer< ::Model> submodel = get_smodel_(args,arg,C->getNucleotides(),valarray<double>());
+      OwnedPointer< ::Model> submodel = get_smodel_(arg,C->getNucleotides(),valarray<double>());
       NucleotideExchangeModel* temp = dynamic_cast<NucleotideExchangeModel*>( submodel.get());
       if (not temp)
 	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide replacement model.";
@@ -178,26 +219,37 @@ bool process_stack_Markov(vector<string>& string_stack,
   return true;
 }
 
+/// \brief Construct an AlphabetExchangeModel from model \a M
 OwnedPointer<AlphabetExchangeModel> get_EM(::Model* M, const string& name)
 {
+  assert(M);
+
   AlphabetExchangeModel* AEM = dynamic_cast<AlphabetExchangeModel*>(M);
 
-  if (not AEM) 
-    throw myexception()<<name<<":couldn't find an exchange-model to use.";
+  if (not AEM)
+    throw myexception()<<name<<": '"<<M->name()<<"' is not an exchange model.";
 
   return *AEM;
 }
 
 
+/// \brief Construct an AlphabetExchangeModel from the top of the model stack
 OwnedPointer<AlphabetExchangeModel> get_EM(vector<OwnedPointer< ::Model> >& model_stack, const string& name)
 {
   if (model_stack.empty())
-    throw myexception()<<name<<": couldn't find any model to use.";
+    throw myexception()<<name<<": Needed an exchange model, but no model was given.";
 
   return get_EM(model_stack.back().get(),name);
 }
 
 
+/// \brief Construct a model from the top of the string stack
+///
+/// \param string_stack The list of strings representing the substitution model.
+/// \param model_stack The list of models that may be used as components of the current model.
+/// \param a The alphabet on which the model lives.
+/// \param frequencies The initial frequencies for the model.
+///
 bool process_stack_Frequencies(vector<string>& string_stack,
 			       vector<OwnedPointer< ::Model> >& model_stack,
 			       const alphabet& a,
@@ -284,7 +336,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   return true;
 }
 
-
+/// \brief Construct a ReversibleAdditiveModel from model \a M
 OwnedPointer<ReversibleAdditiveModel> get_RA(::Model* M, const string& name,
 					     const valarray<double>& frequencies)
 {
@@ -292,13 +344,15 @@ OwnedPointer<ReversibleAdditiveModel> get_RA(::Model* M, const string& name,
     return *RA;
 
   try {
+    // If the frequencies.size() != alphabet.size(), this call with throw a meaningful exception.
     return SimpleReversibleMarkovModel(*get_EM(M,name),frequencies); 
   }
   catch (std::exception& e) { 
-    throw myexception()<<name<<":couldn't find a reversible+additive model to use.";
+    throw myexception()<<name<<": Can't construct a SimpleReversibleMarkovModel from '"<<M->name()<<"':\n "<<e.what();
   }
 }
 
+/// \brief Construct a ReversibleAdditiveModel from the top of the model stack
 OwnedPointer<ReversibleAdditiveModel> get_RA(vector<OwnedPointer< ::Model> >& model_stack, 
 					     const string& name,
 					     const valarray<double>& frequencies)
@@ -310,7 +364,9 @@ OwnedPointer<ReversibleAdditiveModel> get_RA(vector<OwnedPointer< ::Model> >& mo
 }
 
 
-OwnedPointer<MultiModel> get_MM(::Model *M, const string& name, const valarray<double>& frequencies)
+/// \brief Construct a MultiModel from model \a M
+OwnedPointer<MultiModel> 
+get_MM(::Model *M, const string& name, const valarray<double>& frequencies)
 {
   if (MultiModel* MM = dynamic_cast<MultiModel*>(M))
     return *MM;
@@ -319,15 +375,16 @@ OwnedPointer<MultiModel> get_MM(::Model *M, const string& name, const valarray<d
     return UnitModel(*get_RA(M,name,frequencies)) ; 
   }
   catch (std::exception& e) { 
-    throw myexception()<<name<<":couldn't find a multimodel model to use.";
+    throw myexception()<<name<<": Can't construct a UnitModel from '"<<M->name()<<"':\n"<<e.what();
   }
 }
 
-OwnedPointer<MultiModel> get_MM(vector<OwnedPointer< ::Model> >& model_stack, const string& name,
-				const valarray<double>& frequencies)
+/// \brief Construct a MultiModel from the top of the model stack.
+OwnedPointer<MultiModel>
+get_MM(vector<OwnedPointer< ::Model> >& model_stack, const string& name,const valarray<double>& frequencies)
 {
   if (model_stack.empty())
-    throw myexception()<<name<<": couldn't find any model to use.";
+    throw myexception()<<name<<": Trying to construct a MultiModel, but no model was given.";
 
   return get_MM(model_stack.back().get(), name, frequencies);
 }
@@ -463,8 +520,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 }
 
 OwnedPointer< ::Model> 
-get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,
-	   const valarray<double>& frequencies) 
+get_smodel_(const string& smodel,const alphabet& a,const valarray<double>& frequencies) 
 {
   // Initialize the string stack from the model name
   vector<string> string_stack;
@@ -474,9 +530,13 @@ get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,
 
   // Initialize the model stack 
   vector<OwnedPointer< ::Model> > model_stack;
-  if (not process_stack_Markov(string_stack,model_stack,a,args,frequencies)) {
-    guess_markov_model(string_stack,a);
-    if (not process_stack_Markov(string_stack,model_stack,a,args,frequencies))
+  if (not process_stack_Markov(string_stack,model_stack,a,frequencies)) 
+  {
+    string model_name = default_markov_model(a);
+    if (not model_name.size())
+      throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
+    string_stack.push_back(model_name);
+    if (not process_stack_Markov(string_stack,model_stack,a,frequencies))
       throw myexception()<<"Can't guess the base CTMC model for alphabet '"<<a.name<<"'";
   }
 
@@ -485,7 +545,7 @@ get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,
   while(string_stack.size()) {
     int length = string_stack.size();
 
-    process_stack_Markov(string_stack,model_stack,a,args,frequencies);
+    process_stack_Markov(string_stack,model_stack,a,frequencies);
 
     process_stack_Frequencies(string_stack,model_stack,a,frequencies);
 
@@ -504,14 +564,21 @@ get_smodel_(const variables_map& args,const string& smodel,const alphabet& a,
 }
 
 
+/// \brief Constrict a substitution::MultiModel for a specific alphabet
+///
+/// \param smodel_name The name of the substitution model.
+/// \param a The alphabet.
+/// \param frequencies The initial letter frequencies in the model.
+///
 OwnedPointer<MultiModel>
-get_smodel(const variables_map& args, 
-	   const string& smodel_name, 
-	   const alphabet& a,
-	   const valarray<double>& frequencies) 
+get_smodel(const string& smodel_name, const alphabet& a, const valarray<double>& frequencies) 
 {
+  assert(frequencies.size() == a.size());
+
   //------------------ Get smodel ----------------------//
-  OwnedPointer< ::Model> smodel = get_smodel_(args,smodel_name,a,frequencies);
+  OwnedPointer< ::Model> smodel = get_smodel_(smodel_name,a,frequencies);
+
+  // check if the model actually fits alphabet a...
 
   // --------- Convert smodel to MultiModel ------------//
   OwnedPointer<MultiModel> full_smodel = get_MM(smodel.get(),"Final",frequencies);
@@ -519,26 +586,28 @@ get_smodel(const variables_map& args,
   return full_smodel;
 }
 
-OwnedPointer<MultiModel> get_smodel(const variables_map& args, 
-				    const string& smodel_name,
-				    const alignment& A) {
-  return get_smodel(args,smodel_name,A.get_alphabet(),empirical_frequencies(args,A));
-}
-
-OwnedPointer<MultiModel> get_smodel(const variables_map& args, 
-				    const alignment& A) 
-{
-  string smodel_name = args["smodel"].as<string>();
-  return get_smodel(args,smodel_name,A.get_alphabet(),empirical_frequencies(args,A));
-}
-
-OwnedPointer<MultiModel> get_smodel(const variables_map& args, 
-				    const string& smodel_name,
-				    const vector<alignment>& A) 
+/// \brief Construct a substitution::MultiModel model for a collection of alignments
+///
+/// \param smodel_name The name of the substitution model.
+/// \param A The alignments.
+///
+/// This routine constructs the initial frequencies based on all of the alignments.
+///
+OwnedPointer<MultiModel> get_smodel(const variables_map& args, const string& smodel_name,const vector<alignment>& A) 
 {
   for(int i=1;i<A.size();i++)
     if (A[i].get_alphabet() != A[0].get_alphabet())
       throw myexception()<<"alignments in partition don't all have the same alphabet!";
-  return get_smodel(args,smodel_name,A[0].get_alphabet(),empirical_frequencies(args,A));
+  return get_smodel(smodel_name,A[0].get_alphabet(),empirical_frequencies(args,A));
 }
 
+OwnedPointer<MultiModel> get_smodel(const variables_map& args, const string& smodel_name,const alignment& A) 
+{
+  return get_smodel(smodel_name,A.get_alphabet(),empirical_frequencies(args,A));
+}
+
+OwnedPointer<MultiModel> get_smodel(const variables_map& args, const alignment& A) 
+{
+  string smodel_name = args["smodel"].as<string>();
+  return get_smodel(smodel_name,A.get_alphabet(),empirical_frequencies(args,A));
+}
