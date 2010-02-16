@@ -816,6 +816,26 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
   vector<int> mapping(n,-2);
   vector<string> model_names;
 
+  // If we just have --key=name, then each partition gets a separate version of 'name'
+  if (models.size() == 1) 
+  {
+    vector<int> partitions;
+    string model_name = parse_partitions_and_model(models[0],partitions);
+      
+    if (partitions.size() == 0) 
+    {
+      if (model_name == "none")
+	mapping = vector<int>(n,-1);
+      else 
+	for(int i=0;i<mapping.size();i++)
+	{
+	  mapping[i] = i;
+	  model_names.push_back(model_name);
+	}
+      return shared_items<string>(model_names,mapping);
+    }
+  }
+
   /// For each argument --key {int}+:name
   for(int i=0;i<models.size();i++) 
   {
@@ -835,13 +855,10 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
       // unless there is only one partition, or ...
       if (n == 1)
 	partitions.push_back(1);
-      // this is the only model is specified, and then it gets ALL partitions
-      else if (models.size() == 1) {
-	for(int i=1;i<=n;i++)
-	  partitions.push_back(i);
-      }
-      else
+      else {
+	assert(models.size() > 1);
 	throw myexception()<<"Failed to specify partition number(s) for '"<<key<<"' specification '"<<models[i];
+      }
     }
 
     // 3. Map partitions to this model, unless they are already mapped
@@ -860,7 +877,7 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
     }
   }
 
-  // fill in default model mappings
+  // Every unmentioned partition gets a mapping to a unique ""
   for(int i=0;i<mapping.size();i++)
     if (mapping[i] == -2) 
     {
