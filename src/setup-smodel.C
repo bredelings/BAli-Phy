@@ -199,7 +199,7 @@ bool process_stack_Markov(vector<string>& string_stack,
   {
     const Codons* C = dynamic_cast<const Codons*>(&a);
     if (not C)
-      throw myexception()<<"Can't figure out how to make a codon model from non-codon alphabet '"<<a.name<<"'";
+      throw myexception()<<"M0: '"<<a.name<<"' is not a 'Codons' alphabet";
 
     OwnedPointer<NucleotideExchangeModel> N_submodel = HKY(C->getNucleotides());
 
