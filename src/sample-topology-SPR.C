@@ -705,14 +705,17 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // Step N+1: Use the chosen tree as a proposal, allowing us to sample the alignment.
   //           (This should always succeed, if the alignment is fixed.)
 
+  // BUG! - We can't calculate the reverse proposal probabilities until we select the new alignment!
+  // Speedup: We shoul realign at at least one other attachment location, if P.variable_alignment()
+
   bool moved = false;
   // If the tree hasn't changed, we don't have to do anything.
   // So, don't resample the alignment, when we have one.
   if (C != 0)
   {
     vector<efloat_t> rho(2,1);
-    rho[0] = Pr[C];
-    rho[1] = Pr[0];
+    rho[0] = Pr[C]; // Pr(proposing 0->C) = Pr(C)
+    rho[1] = Pr[0]; // Pr(proposing C->0) = Pr(0)
     
     int n1 = P.T->directed_branch(b1).target();
     int n2 = P.T->directed_branch(b1).source();
