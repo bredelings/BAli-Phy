@@ -585,7 +585,7 @@ void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitse
 
   typedef const map<dynamic_bitset<>,count_and_length> container_t;
   
-  container_t c50_partitions = select_splits(full_partitions, N*0.5);
+  container_t c50_partitions = select_splits(full_partitions, 1+N/2);
 
   for(int k=0;k < consensus_levels.size();k++) 
   {
