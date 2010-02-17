@@ -95,7 +95,7 @@ namespace trees_format
   bool Newick::next_tree_(Tree& T,int& r)
   {
     if (not line.size())
-      while (getline(*file,line) and not line.size());
+      while (getline_handle_dos(*file,line) and not line.size());
     if (not line.size()) return false;
     try {
       r = T.parse_with_names(line,leaf_names);
@@ -118,7 +118,7 @@ namespace trees_format
       n--;
     }
     for(int i=0;i<n and *file;i++)
-      getline(*file,line);
+      getline_handle_dos(*file,line);
     line.clear();
     return not done();
   }
@@ -131,7 +131,7 @@ namespace trees_format
   void Newick::initialize()
   {
     SequenceTree T;
-    getline(*file,line);
+    getline_handle_dos(*file,line);
     T.parse(line);
     leaf_names = T.get_sequences();
     std::sort(leaf_names.begin(),leaf_names.end());
@@ -161,7 +161,7 @@ namespace trees_format
       n--;
     }
     for(int i=0;i<n and *file;i++)
-      getline(*file,line,';');
+      getline_handle_dos(*file,line,';');
     line.clear();
     return not done();
   }
@@ -175,7 +175,7 @@ namespace trees_format
   {
     static const string eol = "\n\r";
 
-    istream& is = getline(file,s,';');
+    istream& is = getline_handle_dos(file,s,';');
     s = strip(s,eol);
     return is;
   }
@@ -281,11 +281,13 @@ namespace trees_format
       string word;
       int pos=0;
       get_word_NEXUS(word,pos,line);
-      if (uppercase(word) == "END") {
+      if (uppercase(word) == "END" or uppercase(word) == "ENDBLOCK") {
 	file->setstate(std::ios::badbit);
 	return false;
       }
       get_word_NEXUS(word,pos,line);
+      if (word == "*")
+	get_word_NEXUS(word,pos,line);
       if (not (word == "=")) {
 	get_word_NEXUS(word,pos,line);
 	assert(word == "=");
@@ -330,7 +332,7 @@ namespace trees_format
   void NEXUS::initialize()
   {
     // Check #NEXUS
-    getline(*file,line);
+    getline_handle_dos(*file,line);
     if (line != "#NEXUS")
       throw myexception()<<"NEXUS trees reader: File does not begin with '#NEXUS' and may not be a NEXUS file.";
   
@@ -365,12 +367,15 @@ namespace trees_format
 	line.clear();
 	return;
       }
-      else if (uppercase(word) == "TREE") {
+      else if (uppercase(word) == "TREE" or uppercase(word) == "UTREE") {
 	try {
 	  get_word_NEXUS(word,pos,line);
+	  if (word == "*")
+	    get_word_NEXUS(word,pos,line);
 	  if (not (word == "="))
 	    get_word_NEXUS(word,pos,line);
 	  NEXUS_skip_ws(pos,line);
+
 	  SequenceTree T;
 	  string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos));
 	  T.parse(t);
