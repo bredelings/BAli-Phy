@@ -616,12 +616,17 @@ void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitse
     vector<double> PP;
     get_branch_lengths_and_PP(consensus, PP, partitions, N);
 
+    bool show_branch_lengths = false;
+    for(int b=0;b<consensus.n_branches();b++)
+      if (consensus.branch(b).length() >= 0)
+	show_branch_lengths = true;
+
     // write out the consensus tree
     output.unsetf(ios::fixed | ios::showpoint);
     if (with_PP)
-      output<<consensus.write_with_bootstrap_fraction(PP,true)<<std::endl;
+      output<<consensus.write_with_bootstrap_fraction(PP,show_branch_lengths)<<std::endl;
     else
-      output<<consensus.write(true)<<std::endl;
+      output<<consensus.write(show_branch_lengths)<<std::endl;
 
     if (file) {
       file->close();
