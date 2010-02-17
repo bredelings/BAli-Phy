@@ -268,7 +268,7 @@ $size_arg = "--size=$max_iter" if defined($max_iter);
 my $prune_arg = "";
 
 print "\nSummarizing topology distribution ... ";
-if (! more_recent_than("Results/consensus",$trees_file)) {
+if (-z "Results/consensus" || ! more_recent_than("Results/consensus",$trees_file)) {
     my $sub_string = "--sub-partitions";
     $sub_string = "" if (!$sub_partitions);
     $prune_arg = "--ignore $prune" if (defined($prune));
@@ -975,6 +975,10 @@ sub parse_command_line
 	elsif ($arg =~ /--treefile=(.+)/) {
 	    $personality = "treefile";
 	    $trees_file = $1;
+	    if (! -e $trees_file) {
+		print "Error: I can't find treefile '$trees_file'\n";
+		exit(1);
+	    }
 	}    
 	elsif ($arg =~ /^-.*/) {
 	    print "Error: I don't recognize option '$arg'\n";
