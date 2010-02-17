@@ -477,9 +477,10 @@ MC_tree load_MC_tree(const std::string& filename)
 vector<Partition> check_MC_partitions(const vector<Partition>& partitions)
 {
   //--------- Check Partitions --------------//
-  vector<string> names = partitions[0].names;
-  for(int i=0;i<partitions.size();i++) {
-    
+  for(int i=1;i<partitions.size();i++) 
+  {
+    const vector<string>& names = partitions[0].names;
+
     if (partitions[i].size() != names.size())
       throw myexception()<<"Partition "<<i+1<<" has "<<partitions[i].size()<<" taxa instead of "<<partitions[0].size();
     
