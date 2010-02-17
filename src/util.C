@@ -52,9 +52,9 @@ int n_elements(const vector<bool>& v) {
 /// \param file The input stream
 /// \param s The line that was read.
 /// 
-std::istream& getline_handle_dos(std::istream& file,std::string& s)
+std::istream& getline_handle_dos(std::istream& file,std::string& s, char c)
 {
-  getline(file,s);
+  getline(file,s,c);
   while(s.size() and (s[s.size()-1] == char(13) or s[s.size()-1] == char(10)))
     s.erase(s.size()-1,1);
 
