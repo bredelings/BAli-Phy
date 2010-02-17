@@ -1076,6 +1076,7 @@ sub determine_input_files
     }
     elsif ($personality eq "treefile")
     {
+	@tree_files = ( $trees_file );
 	$out_file = "";
 	$parameters_file = "";
     }
