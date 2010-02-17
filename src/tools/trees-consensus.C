@@ -545,13 +545,18 @@ void get_branch_lengths_and_PP(SequenceTree& T,vector<double>& PP,
 
   for(int b=0;b<T.n_branches();b++) 
   {
+    // Look up the record for this branch
     dynamic_bitset<> partition = branch_partition(T,b);
     if (not partition[0]) partition.flip();
     container_t::const_iterator record = partitions.find(partition);
     assert(record != partitions.end());
+
+    // Record the length
     double L = record->second.length;
-    unsigned count = record->second.count;
     T.branch(b).set_length(L);
+
+    // Record the PP
+    unsigned count = record->second.count;
     if (informative(partition))
       PP[b] = double(count)/N;
     else

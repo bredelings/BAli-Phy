@@ -159,11 +159,10 @@ get_partition_counts_and_lengths(const tree_sample& sample)
     }
   }
 
-  double factor = 1.0/N;
   for(container_t::iterator r = counts.begin();r != counts.end();r++) 
   {
     count_and_length& cl = r->second;
-    cl.length *= factor;
+    cl.length /= cl.count;
   }
 
   return counts;
