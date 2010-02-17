@@ -873,10 +873,10 @@ traditional = traditional
     </sect2>
 
     <sect2>
-      <title>Summarizing the output - manually</title>
+      <title>Summarizing the output</title>
 
       <sect3>
-	<title>Finding the consensus tree</title>
+	<title>Finding the consensus tree (<filename>C1.trees</filename>)</title>
 	<para>
 <screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> C1.trees --consensus-PP 0.5:c50.PP.tree</screen>	
 The program <ulink url="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</ulink> allows you to view the consensus tree graphically.
@@ -884,7 +884,7 @@ The program <ulink url="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</uli
       </sect3>
 
       <sect3>
-	<title>Checking topology convergence</title>
+	<title>Checking topology convergence (<filename>C1.trees</filename>)</title>
 <para>
 <screen><prompt>%</prompt> trees-bootstrap <replaceable>dir1</replaceable>/C1.trees <replaceable>dir2</replaceable>/C1.trees</screen>	
 This command computes the effective sample size for the posterior probability of each split.  It also computes the Average Standard Deviation of Split Frequencies (ASDSF) between two or more independent runs.
@@ -892,7 +892,7 @@ This command computes the effective sample size for the posterior probability of
       </sect3>
 
       <sect3>
-	<title>Summarizing numerical parameters</title>
+	<title>Summarizing numerical parameters (<filename>C1.p</filename>)</title>
 <para>
 <screen><prompt>%</prompt> statreport C1.p > Report </screen>	
 The program <ulink url="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</ulink> allows you to view the same summaries graphically.
@@ -900,7 +900,7 @@ The program <ulink url="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</ulink
       </sect3>
 
       <sect3>
-	<title>Computing an alignment using Posterior Decoding</title>
+	<title>Computing an alignment using Posterior Decoding (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title>
 <para>
 <screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignments-max > P<replaceable>p</replaceable>-max.fasta</screen>
 You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.html">seaview</ulink> to view the alignment graphically.
@@ -908,13 +908,13 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       </sect3>      
 
       <sect3>
-	<title>Find the alignment from the maximum a posterior (MAP) point</title>
+	<title>Find the alignment from the maximum a posterior (MAP) point (<filename>C1.MAP</filename>)</title>
 <screen><prompt>%</prompt> alignment-find C1.P<replaceable>p</replaceable>.fastas > P<replaceable>p</replaceable>-MAP.fasta</screen>
 
       </sect3>      
 
       <sect3>
-	<title>Create an Au (Alignment Uncertainty) plot</title>
+	<title>Create an Au (Alignment Uncertainty) plot (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title>
 <screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignment-gild C1.P<replaceable>p</replaceable>.max  &gt; P<replaceable>p</replaceable>-max.AU
 <prompt>%</prompt> alignment-draw P<replaceable>p</replaceable>-max.fasta --AU P<replaceable>p</replaceable>-max.AU > P<replaceable>p</replaceable>-max-AU.html</screen>
       </sect3>
@@ -974,7 +974,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 
       <variablelist>
 	<varlistentry><term>MAP.fasta</term><listitem>
-	    <para>An estimate of the MAP alignment, w/ taxa sorted by similarity.
+	    <para>An estimate of the MAP alignment.
 	</para></listitem></varlistentry>
 
 	<varlistentry><term>P<replaceable>p</replaceable>-max.fasta</term><listitem>
