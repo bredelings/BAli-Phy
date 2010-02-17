@@ -929,17 +929,15 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
     <para>
       You may also run the analysis PERL script
       <command>bp-analyze.pl</command> inside the output directory in
-      order to summary the output files.  
+      order to summary the output files.  The script will create a WWW
+      page <filename>Results/index.html</filename> that summarizes the
+      posterior distribution.
     </para>
 
-    <para>Running the above command will produce the following files in
-    the <filename>Results/</filename> directory:</para>
+    <para>The <filename>Results/</filename> directory will also contain
+    the following useful files:</para>
 
       <variablelist>
-
-	<varlistentry><term>analysis</term><listitem>
-	    <para>A description of the analysis:  burn-in, length, time completed.
-	</para></listitem></varlistentry>
 
 	<varlistentry><term>Report</term><listitem>
 	    <para>A summary of numerical parameters: credible
