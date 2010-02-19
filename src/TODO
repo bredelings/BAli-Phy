@@ -1,7 +1,7 @@
 Mostly: Documentation, Reporting/Summarization
 Also: Constraints, Speed
-BUG: Is SPR_all using the right proposal probabilities when the alignment isn't fixed?
-Search: Can we force it to evaluate sum over alignments for at least a few others if the
+BUG: Is SPR_all using the right REVERSE proposal probabilities when the alignment CHANGES?
+Search: Can we force it to evaluate a sum over alignments for at least a few other trees if the
       current branch comes out best?
 
 Cleanups:
@@ -34,6 +34,12 @@ Make moves report meaningful names for their various statistics.
  - Make SPR report how many branches peeled on average divided T.n_branches()
 
 *Report* - Make the SDSF plot.
+ - Report LOD1 LOD2 LOD3 LOD-GROUPED sorted by increasing LOD score.
+ - Outputing LOD-GROUPED allows the user to be ignorant of the sample sizes of each part...
+   + although actually perhaps we should require the parts to be the same... other wise we aren't sampling from the same dist.
+ - Construct the range plot.... how?  Report the stddev how?
+ - Can we report 3 separate measurements for each run, somehow?
+ - Well, first just report min->max
 
 *Report* - Handle two-directory case better: make outfile into list.
  * Alignment-max and alignment-consensus should also take multiple input files.
