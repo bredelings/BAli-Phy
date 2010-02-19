@@ -266,6 +266,7 @@ my $consensus_arg = "$consensus_no_pp_arg $consensus_pp_arg $e_consensus_arg $el
 my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
 my $prune_arg = "";
+my $prune_arg2 = "";
 
 print "\nSummarizing topology distribution ... ";
 if (-z "Results/consensus" || ! more_recent_than("Results/consensus",$trees_file)) {
@@ -1136,7 +1137,8 @@ sub draw_trees
 	
 #    Generate trees w/ node lengths.
 	if (! more_recent_than("Results/$tree.ltree",$trees_file)) {
-	    `tree-mean-lengths Results/$tree.tree --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg < $trees_file > Results/$tree.ltree`;
+	    $prune_arg2 = "--prune $prune" if (defined($prune));
+	    `tree-mean-lengths Results/$tree.tree --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg2 < $trees_file > Results/$tree.ltree`;
 	}
 
 
