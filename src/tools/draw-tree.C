@@ -28,6 +28,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 //       - Figure out how to use boost's Kamada-Kawai layout.
 //       - Change the coloring algorithm to find conflicts based on shared NODES.
 
+// FIXME - the energy_layout2 changes are still not incorporated.
+
 #include <cairo.h>
 #include <cairo-ps.h>
 #include <cairo-pdf.h>
