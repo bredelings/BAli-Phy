@@ -107,6 +107,9 @@ log_double_t exp_exponential_pdf(double y, double mu, double delta) {
 }
 
 log_double_t exponential_pdf(double x, double mu) {
+  if (x < 0) 
+    return 0;
+
   return exp<log_double_t>(-x/mu)/mu;
 }
 
@@ -133,6 +136,9 @@ log_double_t beta_pdf(double p,double a, double b)
 
 log_double_t gamma_pdf(double x,double a, double b) 
 {
+  if (x < 0) 
+    return 0;
+
   log_double_t Pr = 1;
 
   Pr.log() = (a-1)*log(x) - x/b - log_gamma(a) - a*log(b);
