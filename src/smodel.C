@@ -2049,13 +2049,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // prior on frequencies
     P *= dirichlet_pdf(parameters_, 0, n, 4.0);
 
-    // prior on omegas: the first N-1 omegas cannot be positive.
-    for(int i=0; i < n-1; i++)
-      P *= exponential_pdf(-log(omega(i)),0.1)/omega(i);
-
-    // prior on omegas: the last omega has a 5% chance of being positive.
-    double w = omega(n-1);
-    P *= (0.95*exponential_pdf(-log(w),0.1)/w + 0.05*exponential_pdf(log(w),0.3)/w);
+    // prior on omegas
+    double f = 0.05/n;
+    for(int i=0; i < n; i++) 
+    {
+      double w = omega(i);
+      P *= ((1-f)*exponential_pdf(-log(w),0.05)/w + f*exponential_pdf(log(w),0.05)/w);
+    }
 
     return P;
   }
