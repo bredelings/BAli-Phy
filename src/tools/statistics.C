@@ -254,9 +254,19 @@ namespace statistics {
     // allocate covariances
     vector<double> rho(max);
 
+    // Run iteration 0 separately - to use rho[0] in the limit calculation
+    {
+      int k=0;
+      double total = 0;
+      for(int i=0;i<N-k;i++)
+	total += (x[i]-mean)*(x[i+k]-mean);
+
+      rho[k] = total/(N-k);
+    }
+
     // compute each autocorrelation rho[k]
-    double limit = 0.01/N;
-    for(int k=0;k<max;k++) 
+    double limit = rho[0]*(0.01/N);
+    for(int k=1;k<max;k++) 
     {
       double total = 0;
       for(int i=0;i<N-k;i++)
@@ -264,7 +274,7 @@ namespace statistics {
 
       rho[k] = total/(N-k);
 
-      if (rho[k] < limit and k>0) {
+      if (rho[k] < limit and k>3) {
 	rho.resize(k);
 	break;
       }
