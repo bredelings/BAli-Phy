@@ -115,7 +115,7 @@ namespace substitution {
   {}
 
   efloat_t SimpleExchangeModel::prior() const {
-    return laplace_pdf(log(rho()), -3, 1);
+    return laplace_pdf(log(rho()), -3, 1)/rho();
   }
 
   void SimpleExchangeModel::recalc(const vector<int>&)
@@ -1065,7 +1065,7 @@ namespace substitution {
 
   efloat_t HKY::prior() const 
   {
-    return laplace_pdf(log(kappa()), log(2), 0.25);
+    return laplace_pdf(log(kappa()), log(2), 0.25)/kappa();
   }
 
   void HKY::recalc(const vector<int>&) {
@@ -1094,14 +1094,12 @@ namespace substitution {
     return "TN";
   }
 
-  // This should be OK - the increments are linear combinations of gaussians...
 
-  /// return the LOG of the prior
   efloat_t TN::prior() const 
   {
     efloat_t P = 1;
-    P *= laplace_pdf(log(kappa1()), log(2), 0.25);
-    P *= laplace_pdf(log(kappa2()), log(2), 0.25);
+    P *= laplace_pdf(log(kappa1()), log(2), 0.25)/kappa1();
+    P *= laplace_pdf(log(kappa2()), log(2), 0.25)/kappa2();
     return P;
   }
 
@@ -1291,7 +1289,7 @@ namespace substitution {
   }
 
   efloat_t M0::super_prior() const {
-    return laplace_pdf(log(omega()), 0, 0.1);
+    return laplace_pdf(log(omega()), 0, 0.1)/omega();
   }
 
   efloat_t M0::prior() const {
@@ -1986,7 +1984,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // prior on omega
     double omega = parameter(3);
-    P *= exponential_pdf(log(omega),0.05);
+    P *= exponential_pdf(log(omega),0.05)/omega;
     return P;
   }
 
@@ -2050,7 +2048,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // prior on rates
     for(int i=0;i<fraction.size();i++)
-      P *= laplace_pdf(log(omega(i)), 0, 0.1);
+      P *= laplace_pdf(log(omega(i)), 0, 0.1)/omega(i);
 
     return P;
   }
