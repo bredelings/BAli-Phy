@@ -1,15 +1,26 @@
 Mostly: Documentation, Reporting/Summarization
 Also: Constraints, Speed
 BUG: Is SPR_all using the right REVERSE proposal probabilities when the alignment CHANGES?
+BUG: How can the no-sequence version of bglobin.fasta be SLOW?
+- spending a fair bit of time in recalc_smodel( )
+- spending all its time exponentiating branch lengths?
+
 Search: Can we force it to evaluate a sum over alignments for at least a few other trees if the
       current branch comes out best?
+
+TEST: What will decrease the burnin time for Globins-few.fasta?
+ - Will NNI+A decrease the time?
+ - Will removing SPR decrease the time?
+
+ADD a 'Covarion' model from an exchange matrix and with n levels of invariance.
+- How to allow column-to-column variation in rho?
 
 Cleanups:
  * Rename s/lambda/weight/ in mcmc.{H,C}
  * Make MoveOne do sampling W/O replacement!
 
 Resampling the following parameters shouldn't require peeling along the tree:
- * DP::f[], C10/C20::f[]
+ * DP::f[], C10/C20::f[], M3::f[]
  * Only changing the rates in each category should require re-peeling.
 
 *Report* Make trees-consensus write out a list of partitions directly, so we don't need perl?
@@ -51,7 +62,13 @@ Make moves report meaningful names for their various statistics.
  - I can generate more plots, if R is installed.
    * Generate the mixing diagnostics chart.  If one chain only, take 2,3,4 quarters.
 
-Timers:
+*Timing*
+ - Make a cheap NNI move that doesn't change branch lengths.
+   + Changing branch lengths is more expensive for codon models.
+ - What is the affect of NNI_AND_A on 18S burnin?
+ - Allow altering frequency of various moves.
+ - Decrease default frequency of proposals for substitution moves.
+   + Increase dirichlet priors from 1.0 -> 2.0?
  - Why is SPR_and_A_all taking essentially the same amount of CPU time as each of SPR_and_A_flat,
      despite being (I think) called more?
  - Are SPR_and_A_flat( ) and SPR_and_A_path( ) really taking twice as much CPU time as SPR_and_A_all( )?
