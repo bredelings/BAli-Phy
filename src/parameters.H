@@ -46,9 +46,28 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 //------------------------------- parameter-containing class --------------------------//
 
-/// Each data_partition is a model with one parameter: mu (the branch mean)
 
-struct data_partition: public Model
+// We could derive from ::Model in order to avoid conflicts with its name() function when we define that.
+class Probability_Model //: virtual public Model
+{
+public:
+  virtual Probability_Model* clone() const =0;
+
+  // The prior, likelihood, and probability
+  virtual efloat_t prior() const {return 1.0;}
+  virtual efloat_t likelihood() const {return 1.0;}
+  virtual efloat_t probability() const {return prior() * likelihood();}
+
+  virtual efloat_t heated_prior() const {return prior();}
+  virtual efloat_t heated_likelihood() const {return likelihood();}
+  virtual efloat_t heated_probability() const {return heated_prior() * heated_likelihood();}
+
+  virtual std::string name() const =0;
+};
+
+
+/// Each data_partition is a model with one parameter: mu (the branch mean)
+struct data_partition: public Model, public Probability_Model
 {
   friend class Parameters;
 
@@ -146,12 +165,11 @@ public:
   // The prior, likelihood, and probability
   efloat_t prior_no_alignment() const;
   efloat_t prior_alignment() const;
+
   efloat_t prior() const;
   efloat_t likelihood() const;
-  efloat_t probability() const {return prior() * likelihood();}
-  efloat_t heated_prior() const;
+
   efloat_t heated_likelihood() const;
-  efloat_t heated_probability() const;
 
   std::string name() const;
 
@@ -162,7 +180,7 @@ public:
 };
 
 /// A class to contain all the MCMC state except the alignment
-class Parameters: public SuperModel
+class Parameters: public SuperModel, public Probability_Model
 {
   /// The substitution::Model
   std::vector<polymorphic_cow_ptr<substitution::MultiModel> > SModels;
@@ -237,9 +255,7 @@ public:
   efloat_t likelihood() const;
   efloat_t probability() const { return prior() * likelihood(); }
 
-  efloat_t heated_prior() const;
   efloat_t heated_likelihood() const;
-  efloat_t heated_probability() const;
 
   /// How many substitution models?
   int n_smodels() const {return SModels.size();}
