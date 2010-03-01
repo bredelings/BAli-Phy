@@ -334,7 +334,7 @@ void walk_tree_sample_NNI_and_branch_lengths(Parameters& P, MoveStats& Stats)
 }
 
 
-void walk_tree_sample_NNI(Parameters& P, MoveStats& Stats) 
+void walk_tree_sample_NNI(Parameters& P, MoveStats& Stats)
 {
   vector<int> branches = walk_tree_path(*P.T, P[0].LC.root);
 
@@ -356,10 +356,10 @@ void walk_tree_sample_NNI_and_A(Parameters& P, MoveStats& Stats)
   for(int i=0;i<branches.size();i++) 
   {
     int b = branches[i];
-    if (myrandomf() < 0.05)
+    if (myrandomf() < 0.025)
       three_way_topology_and_alignment_sample(P,Stats,b);
     else
-      if (myrandomf() < 0.5)
+      if (myrandomf() < 0.95)
 	three_way_topology_sample(P,Stats,b);
       else
 	two_way_NNI_sample(P,Stats,b);
