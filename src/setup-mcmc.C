@@ -499,9 +499,14 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 
   tree_moves.add(1,length_moves);
   tree_moves.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,"walk_tree_NNI_and_lengths","topology:lengths"));
-  tree_moves.add(1,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI","topology:lengths"),false);
+
   if (has_imodel)
-    tree_moves.add(1,SingleMove(walk_tree_sample_NNI_and_A,"walk_tree_NNI_and_A","topology:lengths"),false);
+    tree_moves.add(2,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI","topology:lengths"));
+  else  // w/o integrating over 5way alignments, this move is REALLY cheap!
+    tree_moves.add(4,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI","topology:lengths"));
+
+  if (has_imodel)
+    tree_moves.add(0.5,SingleMove(walk_tree_sample_NNI_and_A,"walk_tree_NNI_and_A","topology:lengths"));
 
   return tree_moves;
 }
