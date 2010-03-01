@@ -498,7 +498,10 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 		   );
 
   tree_moves.add(1,length_moves);
-  tree_moves.add(1,SingleMove(sample_NNI_and_branch_lengths,"NNI_and_lengths","topology:lengths"));
+  tree_moves.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,"walk_tree_NNI_and_lengths","topology:lengths"));
+  tree_moves.add(1,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI","topology:lengths"),false);
+  if (has_imodel)
+    tree_moves.add(1,SingleMove(walk_tree_sample_NNI_and_A,"walk_tree_NNI_and_A","topology:lengths"),false);
 
   return tree_moves;
 }
@@ -663,7 +666,7 @@ void do_pre_burnin(const variables_map& args, Parameters& P,ostream& out_log,ost
     pre_burnin.add(4,get_scale_slice_moves(P));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
 				      "scale_means_only","mean"));
-    pre_burnin.add(1,SingleMove(sample_NNI_and_branch_lengths,
+    pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,
 				"NNI_and_lengths","topology:lengths"));
     int n_pre_burnin2 = n_pre_burnin + (int)log(P.T->n_leaves());
     for(int i=0;i<n_pre_burnin2;i++) {
@@ -687,7 +690,7 @@ void do_pre_burnin(const variables_map& args, Parameters& P,ostream& out_log,ost
     pre_burnin.add(4,get_scale_slice_moves(P));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
 				      "scale_means_only2","mean"));
-    pre_burnin.add(1,SingleMove(sample_NNI_and_branch_lengths,
+    pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,
 				"NNI_and_lengths2","topology:lengths"));
     int n_pre_burnin2 = n_pre_burnin + (int)log(P.T->n_leaves());
     for(int i=0;i<n_pre_burnin2;i++) {

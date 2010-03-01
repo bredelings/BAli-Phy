@@ -63,6 +63,10 @@ int two_way_topology_sample(std::vector<Parameters>& p,const std::vector<efloat_
 
 void walk_tree_sample_alignments(Parameters&, MCMC::MoveStats&);
 void walk_tree_sample_branch_lengths(Parameters&, MCMC::MoveStats&);
+void walk_tree_sample_NNI_and_branch_lengths(Parameters&, MCMC::MoveStats&);
+void walk_tree_sample_NNI(Parameters&, MCMC::MoveStats&);
+void walk_tree_sample_NNI_and_A(Parameters&, MCMC::MoveStats&);
+
 void sample_alignments_one(Parameters&, MCMC::MoveStats&, int);
 void sample_tri_one(Parameters&, MCMC::MoveStats&, int);
 void sample_tri_branch_one(Parameters&, MCMC::MoveStats&, int);
@@ -89,6 +93,5 @@ void change_branch_length_and_T(Parameters&, MCMC::MoveStats&, int);
 void change_3_branch_lengths(Parameters& P, MCMC::MoveStats& Stats,int); 
 
 
-void sample_NNI_and_branch_lengths(Parameters&, MCMC::MoveStats&);
 
 #endif
