@@ -316,10 +316,13 @@ void walk_tree_sample_NNI_and_branch_lengths(Parameters& P, MoveStats& Stats)
     if (U < 0.1)
       slice_sample_branch_length(P,Stats,b);
 
-    if (P.T->branch(b).is_internal_branch()) {
-      // Why is the 3-way acceptance rate not double the 2-way acceptance rate?
-      // When we figure this out, then do 3-way 95% of the time.
-      if (myrandomf() < 0.5)
+    if (P.T->branch(b).is_internal_branch()) 
+    {
+      // In theory the 3-way move should have twice the acceptance rate, when the branch length
+      // is non-zero, and one of the two other topologies is good while one is bad.
+      //
+      // This seems to actually occur for the Enolase-48 data set.
+      if (myrandomf() < 0.95)
 	three_way_topology_sample(P,Stats,b);
       else
 	two_way_NNI_sample(P,Stats,b);
