@@ -166,13 +166,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description visible("All options");
   visible.add_options()
-    ("help", "produce help message")
-    ("output", value<string>()->default_value("fasta"),"which output format: fasta or phylip?")
+    ("help,h", "Produce help message")
+    ("output", value<string>()->default_value("fasta"),"Which output format: fasta or phylip?")
     ("columns,c", value<string>(),"Ranges of columns to keep, like: 1-10,30-")
     ("taxa,t", value<string>(),"Taxa to keep, comma-separated")
     ("pad", "Add gaps to make sequence lengths identical")
-    ("remove-empty-columns,r","Remove columns with no characters (e.g. all-gap columns)")
-    ("missing",value<string>()->default_value("-?"),"Letters which don't count as characters (e.g. gaps)")
+    ("remove-empty-columns,r","Remove columns with no characters (all gaps).")
+    ("missing",value<string>()->default_value("-?"),"What letters are not characters (e.g. gaps)?")
     ;
 
   options_description all("All options");
@@ -193,6 +193,15 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<"Usage: alignment-cat [file1] {[file2] ...} \n";
     cout<<"Concatenate several alignments (with the same sequence names) end-to-end.\n\n";
     cout<<visible<<"\n";
+    cout<<" Examples:\n\n";
+    cout<<"  To select columns from an alignment:\n";
+    cout<<"    % alignment-cat -c1-10,50-100,600- filename.fasta > result.fasta\n";
+    cout<<"    % alignment-cat -c5-250/3 filename.fasta > first_codon_position.fasta\n";
+    cout<<"    % alignment-cat -c6-250/3 filename.fasta > second_codon_position.fasta\n\n";
+
+    cout<<"  To concatenate two or more alignments:\n";
+    cout<<"    % alignment-cat filename1.fasta filename2.fasta > all.fasta\n";
+    
     exit(0);
   }
 

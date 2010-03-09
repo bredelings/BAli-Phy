@@ -50,12 +50,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help,h", "produce help message")
+    ("help,h", "Produce help message")
     ("genetic-code,g",value<string>()->default_value("standard"),"Specify alternate genetic code.")
-    ("frame,f",value<int>()->default_value(1),"frame 1, 2, 3, -1, -2, or -3")
+    ("frame,f",value<int>()->default_value(1),"Frame 1, 2, 3, -1, -2, or -3")
     ("reverse,r","Just return the reverse")
     ("complement,c","Just return the complement")
-    ("translate,t",value<bool>()->default_value(true),"Translate the sequences")
+    ("translate,t",value<bool>()->default_value(true,"yes"),"Translate the sequences")
     ;
 
   variables_map args;     
@@ -66,6 +66,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<"Usage: alignment-translate [OPTIONS] < sequence-file [OPTIONS]\n";
     cout<<"Translate a DNA/RNA alignment into amino acids.\n\n";
     cout<<all<<"\n";
+    cout<<" Examples:\n\n";
+    cout<<"  Translate DNA or RNA to amino acids in reading frame 1:\n";
+    cout<<"    % alignment-translate < dna.fasta > aa.fasta\n\n";
+    cout<<"  Give the reverse complement without translation:\n";
+    cout<<"    % alignment-translate -rc --translate=no < dna.fasta > dna2.fasta\n\n";
+    cout<<"  The following commands are identical:\n";
+    cout<<"    % alignment-translate --frame=-2 < dna.fasta > aa2.fasta\n";
+    cout<<"    % alignment-translate -rc --frame=2 < dna.fasta > aa2.fasta\n";
     exit(0);
   }
 
