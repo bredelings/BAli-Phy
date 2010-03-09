@@ -1,3 +1,5 @@
+Is the NNI+A thing really TWICE as slow on 18S?
+
 Mostly: Documentation, Reporting/Summarization
 Also: Constraints, Speed
 BUG: Is SPR_all using the right REVERSE proposal probabilities when the alignment CHANGES?
