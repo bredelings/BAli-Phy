@@ -71,10 +71,12 @@ Make moves report meaningful names for their various statistics.
  - Allow altering frequency of various moves.
  - Decrease default frequency of proposals for substitution moves.
    + Increase dirichlet priors from 1.0 -> 2.0?
- - Why is SPR_and_A_all taking essentially the same amount of CPU time as each of SPR_and_A_flat,
-     despite being (I think) called more?
  - Are SPR_and_A_flat( ) and SPR_and_A_path( ) really taking twice as much CPU time as SPR_and_A_all( )?
    + Might this relate to SPR_and_A_all( ) ignoring cherries?
+   + Or, perhaps it is because SPR_and_A_all doesn't resample the alignment
+     when the proposed tree is not different from the current one.
+     - Probably it SHOULD resample the alignment... but only once, not twice.
+     - Probably we should FORCE it to propose a different tree.
  - Run nodes_master more often.... for long sequences?  When substitution is slow?
  - Why am I getting +-1.0e-15 errors in some times?
  - Why does SPR_and_A_nodes sometimes register 0 CPU time despite having 100 calls?
