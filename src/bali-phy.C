@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// The substitution likelihood is calculated in the file
 /// substitution.C.  In order to speed up likelihood calculations, we
 /// cache conditional likelihoods (substitution-cache.C).  However,
-/// because the alignments is changing, column numbers may change and
+/// because the alignment is changing, column numbers may change and
 /// cannot be relied on.  Therefore, we compute indices for a branch
 /// that do not change if the alignment of the subtree behind the
 /// branch does not change (substitution-index.C).  Exponentials are
@@ -49,7 +49,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// Trees are defined in tree.C and tree-branchnode.H. Leaf-labelled
 /// trees are defined in sequencetree.C.  Sequences are defined in
 /// sequence.C. The types of sequence are defined in alphabet.C, which
-/// contains classes that related letters like A, T, G, and C to
+/// contains classes that relate letters like A, T, G, and C to
 /// integers.  Alignments are defined in alignment.C and place 
 /// collection of sequences in a matrix to depict homology.  Methods
 /// for reading FASTA and PHYLIP files are defined in
