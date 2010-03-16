@@ -55,6 +55,21 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// for reading FASTA and PHYLIP files are defined in
 /// sequence-format.C.
 ///
+/// \section models Models
+/// In BAli-Phy, models are built from class Model.  Model objects
+///   - depend on some number of parameters (all of type double)
+///   - implement prior distributions on their parameters.
+///
+/// A Model object that implements the SuperModel interface can
+/// contain other Model objects as parts - child Model parameters are
+/// mapped to parameters in the parent Model.  However, two child
+/// Models cannot (easily) share a parameter, because each Model
+/// manages and 'owns' its own parameters.  This ownership 
+/// means that a Model specifies:
+/// - a prior distribution on its parameter vector
+/// - a name (a string) for each parameter
+/// - an attribute (a boolean) that determinies whether each parameter is fixed or variable
+///
 /// \section DP Dynamic Programming
 /// Many of the sampling routines rely on dynamic programming.
 /// Dynamic programming in turn relies on Hidden Markov Models
