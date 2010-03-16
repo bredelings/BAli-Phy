@@ -356,7 +356,7 @@ void walk_tree_sample_NNI_and_A(Parameters& P, MoveStats& Stats)
   for(int i=0;i<branches.size();i++) 
   {
     int b = branches[i];
-    if (myrandomf() < 0.025)
+    if (myrandomf() < 0.01)
       three_way_topology_and_alignment_sample(P,Stats,b);
     else
       if (myrandomf() < 0.95)
