@@ -341,6 +341,7 @@ AminoAcids::AminoAcids()
 {
   insert_class("B","DN");
   insert_class("Z","EQ");
+  insert_class("J","IL");
 }
 
 AminoAcids::AminoAcids(const string& s, const string& letters) 
@@ -348,6 +349,7 @@ AminoAcids::AminoAcids(const string& s, const string& letters)
 {
   insert_class("B","DN");
   insert_class("Z","EQ");
+  insert_class("J","IL");
 }
 
 AminoAcidsWithStop::AminoAcidsWithStop() 
