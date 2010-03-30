@@ -104,6 +104,15 @@ void data_partition::recalc_imodel()
   }
 }
 
+/// \brief Recalculate cached values relating to the substitution model.
+///
+/// Specifically, we invalidate:
+///  - cached conditional likelihoods
+///  - cached transition matrices
+/// We also rescale the substitution model to use branch_mean() as its
+/// rate, which effectively rescales the tree to have mean branch
+/// length \a branch_mean() instead of 1. 
+///
 void data_partition::recalc_smodel() 
 {
   default_timer_stack.push_timer("recalc_smodel( )");
@@ -198,11 +207,13 @@ void data_partition::recalc(const vector<int>& indices)
     throw myexception()<<"What parameter is this???";
 }
 
+/// Get the mean branch length
 double data_partition::branch_mean() const 
 {
   return branch_mean_;
 }
 
+/// Set the mean branch length to \a mu
 void data_partition::branch_mean(double mu)
 {
   // unsafe!  Must then read this value into parent.
@@ -215,6 +226,12 @@ void data_partition::branch_mean(double mu)
   recalc_imodel();
 }
 
+/// \brief Set the mean branch length to \a mu without invalidating cached values
+///
+/// This model rescales the substitution model, but does not
+/// invalidate any cached values.  This is because we assume branch
+/// lengths have changed so that mu*T remains constant.
+///
 void data_partition::branch_mean_tricky(double mu)
 {
   branch_mean_ = mu;

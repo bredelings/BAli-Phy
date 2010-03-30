@@ -18,10 +18,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 ///
-/// \file imodel.H
+/// \file model.H
 ///
 /// \brief This file defines a generic Model class.
 ///
+
 
 #ifndef MODEL_H
 #define MODEL_H
@@ -41,6 +42,19 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 std::string parameter_name(const std::string& prefix,int i,int n);
 
+/// \brief An object that depends on a number of parameters, and updates itself when they change.
+///
+/// Model objects
+///   - depend on some number of parameters (all of type double)
+///   - update themselves when their parameters change.
+///
+/// Two Model objects cannot (easily) share a parameter, because 
+/// each Model manages and 'owns' its own parameters.  This ownership
+/// means that a Model specifies:
+/// - a prior distribution on its parameter vector
+/// - a name (a string) for each parameter
+/// - an attribute (a boolean) that determinies whether each parameter is fixed or variable
+///
 class Model: public Cloneable 
 {
 protected:
@@ -53,10 +67,15 @@ protected:
 
   virtual void add_parameter(const std::string&,double);
   
-  /// Recalculate internal data based on changing one parameter
-  void recalc_one(int);
-  /// Recalculate internal data based on current parameters
-  virtual void recalc(const std::vector<int>&) {}
+  /// \brief Recalculate internal data based on changing one parameter
+  ///
+  /// \param p The parmeter that changed.
+  void recalc_one(int p);
+
+  /// \brief Recalculate internal data based on current parameters
+  ///
+  ////  \param indices The indices of the parameters that changed.
+  virtual void recalc(const std::vector<int>& indices) {}
 
 public:
   /// Recalculate all internal data based on current parameters
@@ -109,7 +128,24 @@ public:
 };
 
 
-/// Abstract class for substitution models built on submodels
+/// \brief Abstract class for Model objects that are built out of other Model objects.
+///
+/// A Model object that implements the SuperModel interface can
+/// contain other Model objects as parts - child Model parameters are
+/// mapped to parameters in the parent Model.  However, two child
+/// Models cannot (easily) share a parameter; this follows from the
+/// fact that each child Model 'owns' its parameters.
+///
+/// Names of child Model parameters are unchanged in the parent Model
+/// as long as they are unique.  However, if two child Models contain
+/// parameters with the same name, the parameters are disambiguated
+/// using the name of the child Model as a prefix, separated by '::'.
+///
+/// Changes to child Model parameters are propagated down into child
+/// Model objects using the various write( ) functions.  Values from
+/// child Models are propagated into parameters in the parent Models
+/// using the read() function.
+///
 class SuperModel: virtual public Model 
 {
 protected:
@@ -130,7 +166,7 @@ protected:
   /// Load parameters from sub-models
   void read();
 
-  /// Store ALL parameters down into submodels
+  /// Propagate changes to child model parameters down to child Model objects.
   void write();
   /// Store ONE parameter down into submodels
   void write(int i,double p);
@@ -166,7 +202,7 @@ public:
   /// Set ALL model parameters
   void parameters(const std::vector<double>& p);
 
-  /// Access the submodel
+  /// Access a child Model as type T
   template<typename T>
   const T& SubModelAs(int i) const {
     const T* t = dynamic_cast<const T*>(&SubModels(i));
@@ -174,6 +210,7 @@ public:
     return *t;
   }
 
+  /// Access a child Model as type T
   template<typename T>
   T& SubModelAs(int i) {
     T* t = dynamic_cast<T*>(&SubModels(i));
@@ -181,8 +218,13 @@ public:
     return *t;
   }
 
+  /// Access a child Model
   virtual const Model& SubModels(int) const=0;
+
+  /// Access a child Model
   virtual Model& SubModels(int)=0;
+
+  /// How many child models are there?
   int n_submodels() const;
 
   SuperModel();

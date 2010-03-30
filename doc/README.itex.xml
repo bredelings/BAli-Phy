@@ -848,8 +848,8 @@ traditional = traditional
 	<varlistentry>
 	  <term>C1.MAP</term>
 	  <listitem>
-	    <para>Successive estimates of the MAP point, if you have
-	      only one partition.</para>
+	    <para>Successive estimates of the MAP point (if you have
+	      only one partition).</para>
 	  </listitem>
 	</varlistentry>
 	
@@ -909,7 +909,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 
       <sect3>
 	<title>Find the alignment from the maximum a posterior (MAP) point (<filename>C1.MAP</filename>)</title>
-<screen><prompt>%</prompt> alignment-find C1.P<replaceable>p</replaceable>.fastas > P<replaceable>p</replaceable>-MAP.fasta</screen>
+<screen><prompt>%</prompt> alignment-find &lt; C1.MAP > P1-MAP.fasta</screen>
 
       </sect3>      
 

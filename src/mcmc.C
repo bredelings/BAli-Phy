@@ -201,14 +201,14 @@ namespace MCMC {
   void MoveGroup::start_learning(int i) 
   {
     // Operate on children
-    for(int i=0;i<moves.size();i++)
-      moves[i]->start_learning(i);
+    for(int j=0;j<moves.size();j++)
+      moves[j]->start_learning(i);
   }
 
-  void MoveGroup::stop_learning(int) {
+  void MoveGroup::stop_learning(int i) {
     // Operate on children
-    for(int i=0;i<moves.size();i++)
-      moves[i]->stop_learning(i);
+    for(int j=0;j<moves.size();j++)
+      moves[j]->stop_learning(i);
   }
 
   int MoveGroup::reset(double l) {

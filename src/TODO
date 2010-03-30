@@ -1,14 +1,17 @@
-Is the NNI+A thing really TWICE as slow on 18S?
-
+2.1.0
+------------
 Mostly: Documentation, Reporting/Summarization
 Also: Constraints, Speed
-BUG: Is SPR_all using the right REVERSE proposal probabilities when the alignment CHANGES?
-BUG: How can the no-sequence version of bglobin.fasta be SLOW?
+FIX: Make SPR recompute the attachment probability when the alignment changes.
+BUG: Is the NNI+A thing really TWICE as slow on 18S?
+BUG: How can the no-sequence version of bglobin.fasta be SLOW (with codon models?)
 - spending a fair bit of time in recalc_smodel( )
 - spending all its time exponentiating branch lengths?
 
 Search: Can we force it to evaluate a sum over alignments for at least a few other trees if the
       current branch comes out best?
+
+examples: add more?
 
 TEST: What will decrease the burnin time for Globins-few.fasta?
  - Will NNI+A decrease the time?
@@ -21,7 +24,7 @@ Cleanups:
  * Rename s/lambda/weight/ in mcmc.{H,C}
  * Make MoveOne do sampling W/O replacement!
 
-Resampling the following parameters shouldn't require peeling along the tree:
+SPEED: Resampling the following parameters shouldn't require peeling along the tree:
  * DP::f[], C10/C20::f[], M3::f[]
  * Only changing the rates in each category should require re-peeling.
 
@@ -31,8 +34,12 @@ Resampling the following parameters shouldn't require peeling along the tree:
 
 *Documentation*
  - Make programs more self-documenting.
+ - Question: Can I fix the topology?
+ - Question: Can I fix the tree?
  - Describe post-processing in more detail.
- - Doxygen 'front matter' page:  Describe 'Model' overview and specific classes and functions.
+ - Doxygen 'front matter' page:  
+    + Describe 'Model' overview and specific classes and functions.
+ - Doxygen: document 'Parameters'    
  - Allow `bali-phy --help=topic'.  Allow --help=advanced to report the invisible advance options.
 
 *Report* Report a 95% confidence interval of splits?
@@ -71,10 +78,12 @@ Make moves report meaningful names for their various statistics.
  - Allow altering frequency of various moves.
  - Decrease default frequency of proposals for substitution moves.
    + Increase dirichlet priors from 1.0 -> 2.0?
- - Why is SPR_and_A_all taking essentially the same amount of CPU time as each of SPR_and_A_flat,
-     despite being (I think) called more?
  - Are SPR_and_A_flat( ) and SPR_and_A_path( ) really taking twice as much CPU time as SPR_and_A_all( )?
    + Might this relate to SPR_and_A_all( ) ignoring cherries?
+   + Or, perhaps it is because SPR_and_A_all doesn't resample the alignment
+     when the proposed tree is not different from the current one.
+     - Probably it SHOULD resample the alignment... but only once, not twice.
+     - Probably we should FORCE it to propose a different tree.
  - Run nodes_master more often.... for long sequences?  When substitution is slow?
  - Why am I getting +-1.0e-15 errors in some times?
  - Why does SPR_and_A_nodes sometimes register 0 CPU time despite having 100 calls?
@@ -106,6 +115,14 @@ Replace T.directed_branch( ) with T.branch( ). [step 2]
      + X and Y have the reduced splits X|1234 and Y|1234, so XY|1234 implies both.
      + we therefore give half the length to each one.
    - when does each branch in a compatible tree imply just one reduced split?
+
+--
+2.2.0:
+SPEED: Implement a bandwidth around the current path
+ - 2x penalty, because we need to look at the reverse proposal :-(
+ - How do we handle multiple partitions?
+ - How do we handle rejection based on sequence length?
+   + Latex up this kind of thing!
 
 --
 P29. See genome-wide transducer paper.  Can I impose similar constraints?
@@ -1098,6 +1115,8 @@ I. fix: gamma+frequency+INV
 [DONE] P19. Make bali-phy compile with -std=c++0x
 
 [DONE] Fix choose_MH( ) to be good enough that adding more options is always an improvement.
+
+[DONE] Automatic step-size adjustment for Slice Sampling.
 
 *IDEAS*
 

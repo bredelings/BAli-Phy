@@ -100,8 +100,10 @@ public:
 
   bool smodel_full_tree;
 
+  /// Is the alignment allowed to vary?
   bool variable_alignment() const {return variable_alignment_;}
   
+  /// Set alignment variability
   void variable_alignment(bool b);
 
   data_partition* clone() const {return new data_partition(*this);}
