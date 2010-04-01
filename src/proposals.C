@@ -399,7 +399,7 @@ sorted::sorted(const Proposal_Fn& P)
   :proposal(P)
 { }
 
-double Proposal2::operator()(Parameters& P) const
+double Proposal2::operator()(Probability_Model& P) const
 {
   vector<double> parameters = P.parameters();
   vector<bool> fixed = P.fixed();
@@ -423,7 +423,7 @@ double Proposal2::operator()(Parameters& P) const
 }
 
 Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
-	  const Parameters& P)
+	  const Probability_Model& P)
   :proposal(p),
    pnames(v)
 {
@@ -435,7 +435,7 @@ Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vecto
 
 
 Proposal2::Proposal2(const Proposal_Fn& p,const vector<std::string>& s, const std::vector<string>& v,
-	  const Parameters& P)
+	  const Probability_Model& P)
   :proposal(p),
    pnames(v)
 {

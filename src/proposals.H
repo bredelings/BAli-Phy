@@ -37,10 +37,10 @@ double scale_gaussian(double& x,double sigma);
 class Proposal: public Cloneable {
 public:
   Proposal* clone() const =0;
-  virtual double operator()(Parameters& P) const=0;
+  virtual double operator()(Probability_Model& P) const=0;
 };
 
-typedef double (*generic_proposal)(Parameters& P);
+typedef double (*generic_proposal)(Probability_Model& P);
 
 class Generic_Proposal: public Proposal
 {
@@ -48,7 +48,7 @@ class Generic_Proposal: public Proposal
   
 public:
   Generic_Proposal* clone() const {return new Generic_Proposal(*this);}
-  double operator()(Parameters& P) const {return proposal(P);}
+  double operator()(Probability_Model& P) const {return proposal(P);}
   Generic_Proposal(generic_proposal gp):proposal(gp) {}
 };
 
@@ -138,11 +138,11 @@ class Proposal2: public Proposal
 public:
   const std::vector<int>& get_indices() const {return indices;}
   Proposal2* clone() const {return new Proposal2(*this);}
-  double operator()(Parameters& P) const;
+  double operator()(Probability_Model& P) const;
   Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<std::string>& v,
-	    const Parameters& P);
+	    const Probability_Model& P);
   Proposal2(const Proposal_Fn& p,const std::vector<std::string>& s, const std::vector<std::string>& v,
-	    const Parameters& P);
+	    const Probability_Model& P);
 };
 
 

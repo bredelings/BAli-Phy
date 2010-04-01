@@ -86,7 +86,7 @@ struct parameter_slice_function:public slice_function
 {
   int count;
 
-  Parameters& P;
+  Probability_Model& P;
 
   int n;
 
@@ -101,8 +101,8 @@ struct parameter_slice_function:public slice_function
   // function to go from the value on which the prior is to the stored value.
   double (*inverse)(double);
 
-  parameter_slice_function(Parameters&,int);
-  parameter_slice_function(Parameters&,int,double(*)(double),double(*)(double));
+  parameter_slice_function(Probability_Model&,int);
+  parameter_slice_function(Probability_Model&,int,double(*)(double),double(*)(double));
 };
 
 
@@ -192,7 +192,7 @@ struct constant_sum_slice_function:public slice_function
   int n;
 
   /// The object whose parameters we are sampling
-  Parameters& P;
+  Probability_Model& P;
 
   /// return the probability * mu^(B-1)
   double operator()(double);
@@ -201,7 +201,7 @@ struct constant_sum_slice_function:public slice_function
 
   double current_value() const;
 
-  constant_sum_slice_function(Parameters&,const std::vector<int>&,int);
+  constant_sum_slice_function(Probability_Model&,const std::vector<int>&,int);
 };
 
 double transform_epsilon(double);

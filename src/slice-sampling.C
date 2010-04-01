@@ -73,13 +73,13 @@ double parameter_slice_function::current_value() const
   return P.parameter(n);
 }
 
-parameter_slice_function::parameter_slice_function(Parameters& P_,int n_)
+parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_)
   :count(0),P(P_),n(n_),
    transform(slice_sampling::identity),
    inverse(slice_sampling::identity)
 { }
 
-parameter_slice_function::parameter_slice_function(Parameters& P_,int n_,
+parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_,
 						   double(*f1)(double),
 						   double(*f2)(double))
   :count(0),P(P_),n(n_),transform(f1),inverse(f2)
@@ -268,7 +268,7 @@ double constant_sum_slice_function::current_value() const
 }
 
 
-constant_sum_slice_function::constant_sum_slice_function(Parameters& P_, const vector<int>& indices_,int n_)
+constant_sum_slice_function::constant_sum_slice_function(Probability_Model& P_, const vector<int>& indices_,int n_)
   :count(0),
    indices(indices_),
    n(n_),
