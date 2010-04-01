@@ -98,7 +98,7 @@ namespace MCMC {
     virtual Move* clone() const =0;
 
     /// Is this move enabled?
-    bool enabled() {return enabled_;}
+    bool enabled() const {return enabled_;}
 
     /// Enable this move
     void enable() {enabled_=true;}
