@@ -3,10 +3,12 @@
 Mostly: Documentation, Reporting/Summarization
 Also: Constraints, Speed
 FIX: Make SPR recompute the attachment probability when the alignment changes.
+FIX: Remove 'invariant'
 BUG: Is the NNI+A thing really TWICE as slow on 18S?
 BUG: How can the no-sequence version of bglobin.fasta be SLOW (with codon models?)
 - spending a fair bit of time in recalc_smodel( )
 - spending all its time exponentiating branch lengths?
+ISSUE: How can we handle correlation of lambda & invariant?
 
 Search: Can we force it to evaluate a sum over alignments for at least a few other trees if the
       current branch comes out best?
@@ -44,7 +46,7 @@ SPEED: Resampling the following parameters shouldn't require peeling along the t
 
 *Report* Report a 95% confidence interval of splits?
 
-Alignment-indices: intelligently find the previous/next column.
+Alignment-indices [constraints]: intelligently find the previous/next column.
  - Actually, do something more intelligent based on pairwise things, like FSA does...
    + But then how would you take advantage of local conservation... "ALL sequences have a G"
 
@@ -70,6 +72,8 @@ Make moves report meaningful names for their various statistics.
  - This is only going to be meaningful when the column support is not too small or too large.
  - I can generate more plots, if R is installed.
    * Generate the mixing diagnostics chart.  If one chain only, take 2,3,4 quarters.
+   * Make trees-bootstrap write out the LOD's for each group to a tab-delimited file,
+     if asked.
 
 *Timing*
  - Make a cheap NNI move that doesn't change branch lengths.
@@ -123,6 +127,8 @@ SPEED: Implement a bandwidth around the current path
  - How do we handle multiple partitions?
  - How do we handle rejection based on sequence length?
    + Latex up this kind of thing!
+
+DOC: Change FIXME to Doxygen \todo
 
 --
 P29. See genome-wide transducer paper.  Can I impose similar constraints?
