@@ -75,7 +75,7 @@ protected:
   /// \brief Recalculate internal data based on current parameters
   ///
   ////  \param indices The indices of the parameters that changed.
-  virtual void recalc(const std::vector<int>& indices) {}
+  virtual void recalc(const std::vector<int>& /*indices*/) {}
 
 public:
   /// Recalculate all internal data based on current parameters
