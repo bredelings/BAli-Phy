@@ -880,7 +880,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
 }
 
-bool accept_MH(const Parameters& P1,const Parameters& P2,double rho)
+bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho)
 {
   efloat_t p1 = P1.heated_probability();
   efloat_t p2 = P2.heated_probability();

@@ -48,26 +48,27 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 
 // We could derive from ::Model in order to avoid conflicts with its name() function when we define that.
-class Probability_Model //: virtual public Model
+class Probability_Model: virtual public Model
 {
 public:
+  /// An object for key-value pairs.
+  std::map<std::string,double> keys;
+
   virtual Probability_Model* clone() const =0;
 
   // The prior, likelihood, and probability
-  virtual efloat_t prior() const {return 1.0;}
-  virtual efloat_t likelihood() const {return 1.0;}
+  //  (We inherit 'this->prior()' from class Model)
   virtual efloat_t probability() const {return prior() * likelihood();}
+  virtual efloat_t likelihood() const {return 1.0;}
 
   virtual efloat_t heated_prior() const {return prior();}
   virtual efloat_t heated_likelihood() const {return likelihood();}
   virtual efloat_t heated_probability() const {return heated_prior() * heated_likelihood();}
-
-  virtual std::string name() const =0;
 };
 
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
-struct data_partition: public Model, public Probability_Model
+struct data_partition: public Probability_Model
 {
   friend class Parameters;
 
@@ -232,9 +233,6 @@ public:
 
   std::vector<int> branch_HMM_type;
 
-  /// An object for key-value pairs.
-  std::map<std::string,double> keys;
-
   std::vector<double> beta;
   std::vector<double> beta_series;
 
@@ -336,7 +334,7 @@ public:
 	     const std::vector<int>&);
 };
 
-bool accept_MH(const Parameters& P1,const Parameters& P2,double rho);
+bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho);
 
 
 #endif
